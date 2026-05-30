@@ -3957,24 +3957,6 @@ function showPlayer(id){
       </div>
     </div>
 
-    <div class="pp-sec" style="animation-delay:.5s">
-      <div class="pp-sec-title">
-        <div class="l">${svgI('chartBar')}<h4>Positions-Profil</h4></div>
-        <div class="m">${posLabel}</div>
-      </div>
-      <div class="pp-posprof" style="--atk:${atkPct}%">
-        <div class="pph">
-          <span class="lf">${svgI('bolt')}Sturm</span>
-          <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
-          <span class="rt">Abwehr${svgI('shield')}</span>
-        </div>
-        <div class="pp-slider">
-          <div class="pp-fill" style="width:${atkPct}%"></div>
-          <span class="pp-thumb" style="left:${atkPct}%"></span>
-        </div>
-        <div class="ppf">Eingestuft als <span class="lab" style="display:inline-flex;align-items:center;gap:4px">${posIcon}${posLabel}</span></div>
-      </div>
-    </div>
 
     ${sa.length?`
     <div class="pp-sec" style="animation-delay:.55s">
@@ -4032,6 +4014,25 @@ function showPlayer(id){
         <div class="m">Perzentil-Rang</div>
       </div>
       ${rankProgHtml}
+    </div>
+
+    <div class="pp-sec" style="animation-delay:.8s">
+      <div class="pp-sec-title">
+        <div class="l">${svgI('chartBar')}<h4>Positions-Profil</h4></div>
+        <div class="m">${posLabel}</div>
+      </div>
+      <div class="pp-posprof" style="--atk:${atkPct}%">
+        <div class="pph">
+          <span class="lf">${svgI('bolt')}Sturm</span>
+          <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
+          <span class="rt">Abwehr${svgI('shield')}</span>
+        </div>
+        <div class="pp-slider">
+          <div class="pp-fill" style="width:${atkPct}%"></div>
+          <span class="pp-thumb" style="left:${atkPct}%"></span>
+        </div>
+        <div class="ppf">Eingestuft als <span class="lab" style="display:inline-flex;align-items:center;gap:4px">${posIcon}${posLabel}</span></div>
+      </div>
     </div>
 
     <div class="pp-del">
