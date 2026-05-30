@@ -3808,24 +3808,36 @@ function showPlayer(id){
   const avBg = hasEmoji ? '' : `style="background:${avColor(id)}"`;
   const avClass = hasEmoji ? 'pp-av-inner icon-av' : 'pp-av-inner';
 
-  const playerTitles = sa.filter(x=>x.player_id===id);
-  const teamTitles   = sa.filter(x=>x.team_p1===id||x.team_p2===id);
+  // Eine Karte pro Auszeichnung (chronologisch, neueste zuerst)
+  // Wenn ein Spieler in einer Saison sowohl Player als auch Team-Champion war,
+  // bekommt er beide Karten separat.
+  const trophies = [];
+  sa.forEach(s=>{
+    if(s.player_id===id){
+      trophies.push({type:'player', label:s.label||'', date:s.id||s.start_date||''});
+    }
+    if(s.team_p1===id||s.team_p2===id){
+      trophies.push({type:'team', label:s.label||'', date:s.id||s.start_date||''});
+    }
+  });
+  // Sortierung: neueste zuerst (Saison-ID ist 'YYYY-MM', String-Sort = chronologisch)
+  trophies.sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   const trophyHtml = `
     <div class="pp-trophies">
-      ${playerTitles.length?`
-        <div class="pp-tr" id="ppTrPlayer">
-          <span class="ct">${playerTitles.length}×</span>
+      ${trophies.map(t=>{
+        if(t.type==='player') return `
+        <div class="pp-tr">
           <span class="ic svg-ic">${svgI('trophy')}</span>
           <div class="ti">Player of<br>the Season</div>
-          <div class="su">${esc(playerTitles[0].label||'')}</div>
-        </div>`:''}
-      ${teamTitles.length?`
-        <div class="pp-tr team" id="ppTrTeam">
-          <span class="ct">${teamTitles.length}×</span>
+          <div class="su">${esc(t.label)}</div>
+        </div>`;
+        return `
+        <div class="pp-tr team">
           <span class="ic svg-ic">${svgI('handshake')}</span>
           <div class="ti">Team of<br>the Season</div>
-          <div class="su">${esc(teamTitles[0].label||'')}</div>
-        </div>`:''}
+          <div class="su">${esc(t.label)}</div>
+        </div>`;
+      }).join('')}
     </div>`;
 
   const seasonRailHtml = seasonHistory.length ? `
@@ -4052,6 +4064,9 @@ function showPlayer(id){
   if(tp) tp.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
   const tt=document.getElementById('ppTrTeam');
   if(tt) tt.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
+  document.querySelectorAll('.pp-trophies .pp-tr').forEach(el=>{
+    el.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
+  });
 
   // Delete-Handler – identisch zur Original-Logik
   const dp=document.getElementById('delPlayer');
