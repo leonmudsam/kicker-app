@@ -705,7 +705,7 @@
   .pp-sn .rc{margin-top:9px;text-align:center;font-family:'Sometype Mono',monospace;font-size:10.5px;
     color:var(--ink2);padding-top:7px;border-top:1px solid rgba(255,255,255,.05)}
 
-  /* Globaler Rang – PROZENT-basiert */
+  /* Karriere-Rang – PROZENT-basiert auf Ø Saison-Elo */
   .pp-ranks{display:flex;gap:7px;padding-bottom:4px}
   .pp-rk{flex:1;padding:12px 5px 10px;background:var(--surface2);
     border:1px solid rgba(255,255,255,.05);border-radius:var(--r-sm);text-align:center;
@@ -1851,8 +1851,9 @@ function isoWeek(d){
 // Berechnet Saison-Elo: alle Spieler starten bei start_elo, nur Saison-Matches zählen
 
 // ════════ ZENTRALE ELO-ENGINE ════════
-// EINE Funktion für Saison-, Wochen- und Gesamt-Elo.
-// Alle Modifikatoren identisch. Gibt Breakdown-Daten pro Spieler pro Match zurück.
+// Pro Saison isoliert: Bei jedem Monatswechsel werden Elo/Played auf start_elo zurückgesetzt.
+// Positions-Tracker bleibt saison-übergreifend. Karriere-Elo = gewichteter Durchschnitt
+// der Saison-End-Elos (gewichtet nach Spielanzahl pro Saison).
 function simulateElo(matchSubset, opts={}){
   const startElo=opts.startElo ?? cfg.start_elo;
   const elo={}, played={}, wins={}, losses={}, curStreak={}, bestStreak={};
@@ -3076,7 +3077,8 @@ function vSettings(){
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${Math.round((cfg.win_boost||1.12)*100-100)}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${Math.round((cfg.mov_loss_damp||0.5)*100)}% so stark. Eine 0:10 Niederlage bestraft nicht mehr 3× so hart wie 5:10.<br>
         <b style="color:var(--acid)">Spielbonus</b> — +${(cfg.match_bonus||1.5).toFixed(1)} Elo pro Match, egal ob Sieg oder Niederlage. Belohnt aktive Spieler.<br>
-        <b style="color:var(--acid)">Erfahrungs-Schutz</b> — Spieler verlieren mit zunehmender Match-Zahl graduell weniger Elo (max 30% Schutz ab 30 Matches). Schützt erfahrene Spieler vor Absturz.
+        <b style="color:var(--acid)">Erfahrungs-Schutz</b> — Spieler verlieren mit zunehmender Match-Zahl graduell weniger Elo (max 10% Schutz ab 30 Matches in einer Saison). Schützt erfahrene Spieler vor Absturz.<br>
+        <b style="color:var(--acid)">Saison-Reset</b> — Jeden Monatswechsel werden alle Elo-Werte auf den Start-Wert zurückgesetzt. Karriere-Elo = gewichteter Durchschnitt der Saison-End-Elos.
       </div>
     </div>
     <button class="btn" id="recalcBtn" style="margin-top:8px;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('cycle')} Alle Elo-Werte neu berechnen</button>
@@ -3904,7 +3906,7 @@ function showPlayer(id){
       }).join('')}
     </div>` : '';
 
-  // Globaler Rang Progression – PROZENT-basiert
+  // Karriere-Rang Progression – PROZENT-basiert auf Ø Saison-Elo
   const rankProgHtml = `
     <div class="pp-ranks" id="ppRanksBtn" style="cursor:pointer">
       ${RANKS.map(r=>{
