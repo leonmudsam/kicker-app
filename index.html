@@ -1835,7 +1835,7 @@ function matchesInPeriod(period){
 
 function periodLabel(period){
   const now=new Date();
-  if(period==='season'){ const dl=seasonDaysLeft(); return seasonLabel(currentSeason().id)+(dl>0?' · noch '+dl+' Tag'+(dl!==1?'e':''):''); }
+  if(period==='season'){ return seasonLabel(currentSeason().id); }
   if(period==='week'){ const s=periodStart('week');
     return 'KW '+isoWeek(now)+' · ab '+s.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}); }
   return 'Gesamte Liga';
@@ -2198,14 +2198,10 @@ function vRanking(){
     `;
 
     return `
-      <div class="view-head"><h2>Liga</h2><p>${periodLabel(period)}</p></div>
+      <div class="view-head"><h2>Liga</h2><p>${periodLabel(period)} · ${ps.length} aktiv · ${totalMatches} Matches</p></div>
       ${periodBar}
       ${countdownHtml}
       ${heroSection}
-      <div class="stat-strip" style="margin-bottom:8px">
-        <div class="s"><div class="v num">${ps.length}</div><div class="l">aktiv</div></div>
-        <div class="s"><div class="v num">${totalMatches}</div><div class="l">Matches</div></div>
-      </div>
       ${period==='week'?`<div class="seg"><button data-periodsort="wins" class="${periodSort==='wins'?'on':''}">Nach Siegen</button>
         <button data-periodsort="elo" class="${periodSort==='elo'?'on':''}">Nach Elo</button></div>`:''}
       ${ps.length?`<div class="rlist">${rows}</div>`:emptyState('calendar','Keine Matches in diesem Zeitraum')}`;
