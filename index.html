@@ -204,13 +204,14 @@
   .team-season-card::before{content:"";position:absolute;right:-10px;top:50%;width:88px;height:88px;
     transform:translateY(-50%);opacity:.08;
     background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2356b4e8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='9' cy='7' r='3'/><circle cx='17' cy='9' r='2.5'/><path d='M3 20v-1a6 6 0 0112 0v1M15 20v-1a5 5 0 015-1'/></svg>") center/contain no-repeat}
-  .defender-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
-    padding:12px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px}
-  .defender-card .shield{width:24px;height:24px;color:var(--blue);display:grid;place-items:center}
-  .defender-card .shield svg{width:22px;height:22px}
-  .defender-card .info{flex:1;min-width:0}
-  .defender-card .info .label{font-size:9px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);font-weight:700}
-  .defender-card .info .name{font-family:'Archivo Black',sans-serif;font-size:14px;margin-top:2px}
+  .defender-card{background:linear-gradient(135deg,rgba(167,139,250,.08),rgba(247,207,74,.03));
+    border:1px solid rgba(167,139,250,.22);border-radius:var(--r);padding:16px;margin-bottom:10px;text-align:center;position:relative;overflow:hidden}
+  .defender-card::before{content:"";position:absolute;right:-10px;top:50%;width:88px;height:88px;
+    transform:translateY(-50%);opacity:.10;
+    background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a78bfa' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z'/><path d='M9 12l2 2 4-4'/></svg>") center/contain no-repeat}
+  .defender-card .label{font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--purple);font-weight:700}
+  .defender-card .name{font-family:'Archivo Black',sans-serif;font-size:15px;margin-top:4px}
+  .defender-card .sub{font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace;margin-top:3px}
   .season-countdown{text-align:center;font-size:11px;color:var(--muted);padding:6px 0 10px;font-family:'Sometype Mono',monospace}
 
   /* ============ MATCH BUILDER ============ */
@@ -2159,11 +2160,11 @@ function vRanking(){
         const last=seasons.find(s=>s.id!==currentSeason().id);
         if(last&&last.player_id){
           const titleCount=seasons.filter(s=>s.id!==currentSeason().id&&s.player_id===last.player_id).length;
-          defenderCards=`<div class="defender-card" id="defenderCard" style="cursor:pointer;margin-bottom:0">
-            <div class="shield">${svgI('shield')}</div>
-            <div class="info"><div class="label">Defending Champion</div>
-              <div class="name">${esc(pname(last.player_id))}</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:1px">${last.label}${titleCount>1?' · '+titleCount+' Titel':''}</div></div></div>`;
+          defenderCards=`<div class="defender-card" id="defenderCard" style="cursor:pointer;margin-bottom:0;padding:14px">
+            <div class="label">Defending Champion</div>
+            <div class="name">${esc(pname(last.player_id))}</div>
+            <div class="sub">${last.label}${titleCount>1?' · '+titleCount+' Titel':''}</div>
+          </div>`;
         }
       }
     }
@@ -3812,7 +3813,7 @@ function showPlayer(id){
   const avClass = hasEmoji ? 'pp-av-inner icon-av' : 'pp-av-inner';
 
   const playerTitles = sa.filter(x=>x.player_id===id);
-  const teamTitles   = sa.filter(x=>x.player_id!==id);
+  const teamTitles   = sa.filter(x=>x.team_p1===id||x.team_p2===id);
   const trophyHtml = `
     <div class="pp-trophies">
       ${playerTitles.length?`
@@ -3962,7 +3963,7 @@ function showPlayer(id){
     <div class="pp-sec" style="animation-delay:.55s">
       <div class="pp-sec-title">
         <div class="l">${svgI('trophy')}<h4>Liga Titel</h4></div>
-        <div class="m">${sa.length} Titel</div>
+        <div class="m">${(()=>{let n=0;sa.forEach(s=>{if(s.player_id===id)n++;if(s.team_p1===id||s.team_p2===id)n++;});return n;})()} Titel</div>
       </div>
       ${trophyHtml}
     </div>`:''}
@@ -4328,10 +4329,13 @@ function seasonBtnHtml(id){
       <div style="display:flex;align-items:center;gap:12px">
         <span class="ic svg-ic" style="font-size:22px;color:var(--gold)">${svgI('trophy')}</span>
         <div><div class="rname">Saison-Titel</div>
-          <div class="rmeta">${sa.length} Titel</div></div>
+          <div class="rmeta">${(()=>{let n=0;sa.forEach(s=>{if(s.player_id===id)n++;if(s.team_p1===id||s.team_p2===id)n++;});return n;})()} Titel</div></div>
       </div>
       <div style="display:flex;align-items:center;gap:6px;color:var(--ink2)">
-        ${sa.slice(0,3).map(s=>`<span class="ic svg-ic" style="font-size:14px;color:${s.player_id===id?'var(--gold)':'var(--blue)'}">${svgI(s.player_id===id?'trophy':'handshake')}</span>`).join('')}
+        ${(()=>{const out=[];sa.forEach(s=>{
+          if(s.player_id===id) out.push(`<span class="ic svg-ic" style="font-size:14px;color:var(--gold)">${svgI('trophy')}</span>`);
+          if(s.team_p1===id||s.team_p2===id) out.push(`<span class="ic svg-ic" style="font-size:14px;color:var(--blue)">${svgI('handshake')}</span>`);
+        });return out.slice(0,4).join('');})()}
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
       </div>
     </div>`;
@@ -4339,19 +4343,27 @@ function seasonBtnHtml(id){
 function showPlayerSeasons(playerId){
   const p=pmap()[playerId];if(!p)return;
   const sa=playerSeasonAwards(playerId);
-  const rows=sa.map(s=>{
+  const rows=sa.flatMap(s=>{
     const isPlayer=s.player_id===playerId;
-    const mate=isPlayer?null:(s.team_p1===playerId?s.team_p2:s.team_p1);
-    return `<div class="rrow" style="cursor:default">
-      <span class="ic svg-ic" style="font-size:22px;color:${isPlayer?'var(--gold)':'var(--blue)'}">${svgI(isPlayer?'trophy':'handshake')}</span>
-      <div class="rmid"><div class="rname">${isPlayer?'Player of the Season':'Team of the Season'}</div>
+    const isTeam=s.team_p1===playerId||s.team_p2===playerId;
+    const mate=isTeam?(s.team_p1===playerId?s.team_p2:s.team_p1):null;
+    const out=[];
+    if(isPlayer) out.push(`<div class="rrow" style="cursor:default">
+      <span class="ic svg-ic" style="font-size:22px;color:var(--gold)">${svgI('trophy')}</span>
+      <div class="rmid"><div class="rname">Player of the Season</div>
+        <div class="rmeta">${s.label}</div></div>
+    </div>`);
+    if(isTeam) out.push(`<div class="rrow" style="cursor:default">
+      <span class="ic svg-ic" style="font-size:22px;color:var(--blue)">${svgI('handshake')}</span>
+      <div class="rmid"><div class="rname">Team of the Season</div>
         <div class="rmeta">${s.label}${mate?' · mit '+esc(pname(mate)):''}</div></div>
-    </div>`;
+    </div>`);
+    return out;
   }).join('');
   openSheet(`
     <div style="display:flex;align-items:center;gap:14px">
       ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div><h3>Saison-Titel</h3><div class="sheet-sub">${esc(p.name)} · ${sa.length} Titel</div></div>
+      <div><h3>Saison-Titel</h3><div class="sheet-sub">${esc(p.name)} · ${(()=>{let n=0;sa.forEach(s=>{if(s.player_id===playerId)n++;if(s.team_p1===playerId||s.team_p2===playerId)n++;});return n;})()} Titel</div></div>
     </div>
     <div class="rlist" style="margin-top:16px">${rows}</div>
     <button class="btn ghost sm" id="backToPlayer3" style="margin-top:14px">← Zurück zum Profil</button>
