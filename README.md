@@ -1,1 +1,1 @@
-# eso-kicker-app
+# kicker-app
