@@ -1952,10 +1952,10 @@ function simulateElo(matchSubset, opts={}){
         bd.winBoost=boost; bd.winBoostEffect=rawBase*mov*boost-rawBase*mov;
 
         // Erfahrungs-Schutz: greift erst ab Match 5, linear hochskaliert,
-        // voll bei Match 20 (20% Schutz). Saison-basiert (Reset jeden Monat).
+        // voll bei Match 30 (10% Schutz). Saison-basiert (Reset jeden Monat).
         const g=played[slot.id]||0;
-        const protectShare=Math.max(0,Math.min(1,(g-5)/15));
-        const expProtect=won?1:(1-0.2*protectShare);
+        const protectShare=Math.max(0,Math.min(1,(g-5)/25));
+        const expProtect=won?1:(1-0.1*protectShare);
         bd.expProtect=expProtect; bd.expProtectEffect=won?0:rawBase*mov*boost*expProtect-rawBase*mov*boost;
 
         // Underdog-Boost: basiert auf Elo-Differenz zum Gegnerteam + Spielanzahl-Differenz
