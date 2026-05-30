@@ -60,12 +60,23 @@
   }
   .appbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .logo{display:flex;align-items:center;gap:10px;min-width:0}
-  .logo-mark{
-    width:38px;height:38px;border-radius:11px;flex-shrink:0;
-    background:linear-gradient(135deg,var(--acid),var(--acid2));
-    display:grid;place-items:center;box-shadow:var(--shadow-acid);
-    transform:rotate(-4deg);
-  }
+.logo-mark{
+  width:38px;
+  height:38px;
+  border-radius:11px;
+  flex-shrink:0;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.logo-mark img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  border-radius:11px;
+}
   .logo-mark span{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--acid-deep);transform:rotate(4deg)}
   .logo-txt{min-width:0}
   .logo-txt h1{font-family:'Archivo Black',sans-serif;font-size:16px;line-height:1;
@@ -881,7 +892,7 @@
   <div class="appbar">
     <div class="appbar-row">
       <div class="logo" id="logoHome" style="cursor:pointer">
-        <div class="logo-mark"><span>E</span></div>
+       <div class="logo-mark"><img src="icon.png" alt="Eso Kicker Liga Logo"></div>
         <div class="logo-txt">
           <h1>Eso Kicker Liga</h1>
           <div class="sub">Elo · 2v2</div>
