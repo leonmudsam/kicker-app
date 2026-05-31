@@ -2184,6 +2184,11 @@ function vRanking(){
           <div class="champ-label" style="color:var(--blue)">Team of the Season</div>
           <div style="font-family:'Archivo Black',sans-serif;font-size:15px;margin-top:4px">${esc(tn)}</div>
           <div style="font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace;margin-top:3px">${eloGain>=0?'+':''}${eloGain} Elo${tData?' · '+tData.w+'/'+tData.g:''}</div>`;
+      } else {
+        teamBannerHtml=`
+          <div class="champ-label" style="color:var(--blue)">Team of the Season</div>
+          <div style="font-family:'Archivo Black',sans-serif;font-size:15px;margin-top:4px">noch offen</div>
+          <div style="font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace;margin-top:3px">min. 2 gemeinsame Spiele</div>`;
       }
       if(seasons.length){
         const last=seasons.find(s=>s.id!==currentSeason().id);
