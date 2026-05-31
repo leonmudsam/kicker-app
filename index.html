@@ -910,7 +910,7 @@
         </div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="lock-btn" id="recapBtn" title="Saison-Recap" style="display:none"><svg viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0010 0V4H7zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3M12 15v3M9 21h6"/></svg></button>
+        <button class="lock-btn" id="recapBtn" title="Saison-Recap" style="visibility:hidden"><svg viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0010 0V4H7zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3M12 15v3M9 21h6"/></svg></button>
         <button class="lock-btn" id="settingsBtn" title="Einstellungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       </div>
     </div>
@@ -4902,7 +4902,7 @@ document.getElementById('settingsBtn').onclick=openSettingsLock;
   // updateRecapBtn wird auch nach Saison-Archivierung aufgerufen
   window._updateRecapBtn=function(){
     const past=seasons.filter(s=>s.id!==currentSeason().id);
-    btn.style.display=past.length?'inline-flex':'none';
+    btn.style.visibility=past.length?'visible':'hidden';
   };
   btn.onclick=()=>{
     const past=seasons.filter(s=>s.id!==currentSeason().id);
