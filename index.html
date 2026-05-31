@@ -3757,7 +3757,14 @@ function showPlayer(id){
   const wr=Math.round(s.wr*100);
   const atkWr=s.atkWr!==null?Math.round(s.atkWr*100):null;
   const defWr=s.defWr!==null?Math.round(s.defWr*100):null;
-  const rank=activePlayers().sort((a,b)=>b.elo-a.elo).findIndex(x=>x.id===id)+1;
+  // Saison-Platzierung: nur Spieler mit Saison-Spielen werden gerankt.
+  // Wer 0 Saison-Spiele hat, bekommt keinen #-Badge.
+  // Sortierung: Saison-Elo (gSim.elo enthält nach Saison-Reset die aktuelle Saison-Elo).
+  const gSim=getGlobalSim();
+  const rankedSeason=activePlayers()
+    .filter(x=>(gSim.played[x.id]||0)>0)
+    .sort((a,b)=>(gSim.elo[b.id]??cfg.start_elo)-(gSim.elo[a.id]??cfg.start_elo));
+  const rank=rankedSeason.findIndex(x=>x.id===id)+1;
   const streak=s.curStreak;
   const autoAtk=atkStrength(id);
   const atkPct=Math.round(autoAtk*100);
