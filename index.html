@@ -909,7 +909,10 @@
           <div class="sub">Elo · 2v2</div>
         </div>
       </div>
-      <button class="lock-btn" id="settingsBtn" title="Einstellungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+      <div style="display:flex;gap:8px">
+        <button class="lock-btn" id="recapBtn" title="Saison-Recap" style="display:none"><svg viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0010 0V4H7zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3M12 15v3M9 21h6"/></svg></button>
+        <button class="lock-btn" id="settingsBtn" title="Einstellungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+      </div>
     </div>
     <div class="conn-pill"><span class="dot load" id="connDot"></span><span id="connText">verbinde…</span></div>
   </div>
@@ -1498,6 +1501,7 @@ async function loadAll(){
     const active=activePlayers();
     setConn(active.length+' Spieler · '+matches.length+' Matches','ok');
     await autoArchiveSeasons();
+    if(window._updateRecapBtn) window._updateRecapBtn();
     render();
   }catch(e){
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
@@ -1509,16 +1513,40 @@ async function loadAll(){
 // Automatischer Saison-Abschluss: archiviert vergangene Monate
 async function autoArchiveSeasons(){
   const past=allPastSeasons(); // alle vergangenen Saison-IDs
-  const stored=new Set(seasons.map(s=>s.id));
+  // Erkennt veraltete Archive: alle top_elo-Werte == 0 deutet auf alten Bug hin
+  // → re-archivieren mit aktuellen (korrekten) Werten
+  const isStale=(s)=>{
+    try{
+      const t=typeof s.top_elo==='string'?JSON.parse(s.top_elo):(s.top_elo||[]);
+      return t.length>0 && t.every(x=>!x.elo);
+    }catch{return false;}
+  };
+  const validStored=new Set(seasons.filter(s=>!isStale(s)).map(s=>s.id));
   for(const sid of past){
-    if(stored.has(sid))continue; // schon archiviert
+    if(validStored.has(sid))continue; // schon (korrekt) archiviert
     const ms=matchesInSeason(sid);
     if(!ms.length)continue; // keine Matches → nichts zu archivieren
-    // Saison-Ergebnisse berechnen
-    const sim=simulateElo(ms);
-    const top=Object.entries(sim.played).filter(([,g])=>g>0)
-      .map(([id])=>({id,elo:Math.round(sim.elo[id]),wins:sim.wins[id],losses:sim.losses[id]}))
+    // Saison-Ergebnisse aus dem globalen Sim lesen — gleicher Snapshot wie im
+    // Saisonverlauf im Spielerprofil, damit Recap und Profil identische Werte zeigen.
+    const gSim=getGlobalSim();
+    const snap=gSim.seasonEndElos[sid]||{};
+    const seasonPlayedMap=gSim.seasonPlayed[sid]||{};
+    // Wins/Losses pro Spieler in dieser Saison zählen (saison-isoliert)
+    const sw={}, sl={};
+    ms.forEach(m=>{
+      [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']].forEach(([x,y,won])=>{
+        [x,y].forEach(id=>{
+          if(won){ sw[id]=(sw[id]||0)+1; }
+          else { sl[id]=(sl[id]||0)+1; }
+        });
+      });
+    });
+    const top=Object.keys(seasonPlayedMap).filter(id=>seasonPlayedMap[id]>0)
+      .map(id=>({id,elo:Math.round(snap[id] ?? cfg.start_elo),wins:sw[id]||0,losses:sl[id]||0}))
       .sort((a,b)=>b.elo-a.elo);
+    if(!top.length)continue;
+    // Bestes Team: höchster gemeinsamer Elo-Zuwachs, mind. 2 gemeinsame Spiele
+    // Spielanzahl pro Duo zählen
     if(!top.length)continue;
     // Bestes Team: höchster gemeinsamer Elo-Zuwachs, mind. 2 gemeinsame Spiele
     // Spielanzahl pro Duo zählen
@@ -1529,7 +1557,8 @@ async function autoArchiveSeasons(){
         teamGames[k]=(teamGames[k]||0)+1;
       });
     });
-    const teamEntries=Object.entries(sim.teamElo)
+    const seasonTeamMap = gSim.seasonTeamElo[sid] || {};
+    const teamEntries=Object.entries(seasonTeamMap)
       .filter(([k,v])=>v>0 && (teamGames[k]||0)>=2)
       .sort((a,b)=>b[1]-a[1]);
     const bestTeam=teamEntries[0]?teamEntries[0][0].split('|'):null;
@@ -1544,7 +1573,11 @@ async function autoArchiveSeasons(){
       top_elo:JSON.stringify(top.slice(0,3))
     };
     const{error}=await sb.from('seasons').upsert(entry,{onConflict:'id'});
-    if(!error){seasons.unshift(entry);console.log('Saison archiviert:',sid);}
+    if(!error){
+      const existIdx=seasons.findIndex(s=>s.id===sid);
+      if(existIdx>=0) seasons[existIdx]=entry; else seasons.unshift(entry);
+      console.log('Saison archiviert:',sid);
+    }
     else console.error('Saison archivieren fehlgeschlagen:',sid,error);
   }
   // Recap-Popup: in den ersten 3 Tagen des neuen Monats anzeigen
@@ -1819,6 +1852,7 @@ function simulateElo(matchSubset, opts={}){
   const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
   const eloGain={}, eloLoss={}, gd={};
   const teamElo={};
+  const seasonTeamElo={}; // seasonId → {teamKey → cumulative Elo-Zuwachs in dieser Saison}
   const history=[];
   players.forEach(p=>{elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;});
   // Inkrementeller Positions-Tracker (ersetzt atkStrengthFrom(id, prior))
@@ -2000,12 +2034,18 @@ function simulateElo(matchSubset, opts={}){
       if(curStreak[id]>bestStreak[id])bestStreak[id]=curStreak[id];
     });
 
-    // Team-Elo tracking
+    // Team-Elo tracking (global + pro Saison)
     const winnerIds=aWon?[m.a1,m.a2]:[m.b1,m.b2];
     const loserIds=aWon?[m.b1,m.b2]:[m.a1,m.a2];
     const wKey=winnerIds.sort().join('|'),lKey=loserIds.sort().join('|');
-    teamElo[wKey]=(teamElo[wKey]||0)+winnerIds.reduce((s,id)=>s+(res[id]||0),0);
-    teamElo[lKey]=(teamElo[lKey]||0)+loserIds.reduce((s,id)=>s+(res[id]||0),0);
+    const wDelta=winnerIds.reduce((s,id)=>s+(res[id]||0),0);
+    const lDelta=loserIds.reduce((s,id)=>s+(res[id]||0),0);
+    teamElo[wKey]=(teamElo[wKey]||0)+wDelta;
+    teamElo[lKey]=(teamElo[lKey]||0)+lDelta;
+    // Pro Saison
+    if(!seasonTeamElo[mSeason])seasonTeamElo[mSeason]={};
+    seasonTeamElo[mSeason][wKey]=(seasonTeamElo[mSeason][wKey]||0)+wDelta;
+    seasonTeamElo[mSeason][lKey]=(seasonTeamElo[mSeason][lKey]||0)+lDelta;
 
     history.push({matchId:m.id,eloBefore,eloAfter:{...elo},deltas:res,expA,breakdowns});
     // Positions-Tracker inkrementell updaten
@@ -2029,6 +2069,17 @@ function simulateElo(matchSubset, opts={}){
         seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
       }
     });
+
+    // Falls die aktuelle Kalender-Saison NACH der letzten Match-Saison liegt
+    // (z.B. neuer Monat ohne Matches), Elo zurücksetzen — sonst zeigt die UI
+    // noch die Werte vom Vormonat.
+    try {
+      const currentCalSeason = currentSeason().id;
+      if(currentCalSeason !== _curSeason){
+        resetSeason();
+        _curSeason = currentCalSeason;
+      }
+    } catch(e){}
   }
   // Karriere-Elo: gewichteter Durchschnitt der End-Elos, gewichtet nach Spielanzahl pro Saison.
   // So zählt eine Saison mit 30 Spielen 30× stärker als eine mit 1 Spiel.
@@ -2044,7 +2095,7 @@ function simulateElo(matchSubset, opts={}){
     });
     careerElo[p.id]=sumGames>0?sumElo/sumGames:null;
   });
-  return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,teamElo,history,seasonEndElos,seasonPlayed,careerElo,posTracker,curSeason:_curSeason};
+  return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,careerElo,posTracker,curSeason:_curSeason};
 }
 
 // recalcHistory nutzt simulateElo
@@ -2168,9 +2219,10 @@ function vRanking(){
         .forEach(([x,y,won])=>{const k=[x,y].sort().join('|');
           if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0};T[k].g++;if(won)T[k].w++;});
       });
-      // Team of Season = höchster gemeinsamer Elo-Zuwachs
-      const sim=simulateElo(seasonMs);
-      const teamEntries=Object.entries(sim.teamElo).filter(([k])=>{
+      // Team of Season = höchster gemeinsamer Elo-Zuwachs (aus globalSim für Konsistenz)
+      const _gsim=getGlobalSim();
+      const _seasonTeamMap=_gsim.seasonTeamElo[currentSeason().id]||{};
+      const teamEntries=Object.entries(_seasonTeamMap).filter(([k])=>{
         const ids=k.split('|');const tms=Object.values(T);
         return tms.some(t=>t.ids[0]===ids[0]&&t.ids[1]===ids[1]&&t.g>=2);
       }).sort((a,b)=>b[1]-a[1]);
@@ -4631,8 +4683,13 @@ function bindSlider(id,key,toState,toLabel){
 
 function showMatchDetail(mid){
   const m=matches.find(x=>x.id===mid);if(!m)return;
-  const line=(id,pos)=>{const d=(m.deltas||{})[id]||0;
-    return `<div class="delta-row"><span class="dn">${esc(pname(id))} <span class="chip ${pos}">${pos==='atk'?'STU':'ABW'}</span></span><span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></div>`;};
+  // Live aus globalSim lesen — m.deltas ist evtl. veraltet/leer bei alten Matches.
+  const liveBd=matchBreakdown(mid);
+  const line=(id,pos)=>{
+    const b=liveBd[id];
+    const d=b?b.finalDelta:((m.deltas||{})[id]||0);
+    return `<div class="delta-row"><span class="dn">${esc(pname(id))} <span class="chip ${pos}">${pos==='atk'?'STU':'ABW'}</span></span><span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></div>`;
+  };
   // Auszeichnungen durch dieses Match
   const earned=badgesEarnedInMatch(mid);
   const earnedHtml=earned.length?`
@@ -4837,6 +4894,23 @@ async function openSettingsLock(){
 }
 
 document.getElementById('settingsBtn').onclick=openSettingsLock;
+
+// Recap-Button: nur sichtbar wenn es archivierte Saisons gibt
+(function setupRecapBtn(){
+  const btn=document.getElementById('recapBtn');
+  if(!btn)return;
+  // updateRecapBtn wird auch nach Saison-Archivierung aufgerufen
+  window._updateRecapBtn=function(){
+    const past=seasons.filter(s=>s.id!==currentSeason().id);
+    btn.style.display=past.length?'inline-flex':'none';
+  };
+  btn.onclick=()=>{
+    const past=seasons.filter(s=>s.id!==currentSeason().id);
+    if(!past.length)return;
+    // Jüngste vergangene Saison zeigen
+    showSeasonRecap(past[0]);
+  };
+})();
 document.getElementById('logoHome').onclick=()=>{tab='ranking';period='season';rankSearch='';closeSheet();render();window.scrollTo(0,0);};
 document.getElementById('fab').onclick=()=>{tab='match';render();window.scrollTo(0,0);};
 
