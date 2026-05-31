@@ -3792,21 +3792,25 @@ function showPlayer(id){
   const awards=playerAwards(id).filter(a=>a.rank===0);
   const awardCount=awards.length;
 
-  // Awards-Kategorisierung (rein visuell)
-  const POSITIVE_KEYS = new Set(['wins','mvt','streaks','onFire','scorer','wall','ice','endgegner','clutch','carryKing','bestDuo','upset','biggest','perfect','grinder','showmaster','solo']);
-  const NEGATIVE_KEYS = new Set(['worstWr','coldStreak','lossStreaks','worstAtk','worstDef','worstTeam','formtief','zirkus','baustelle']);
-  const ELO_KEYS      = new Set(['upset','formtief','perfect']);
-  const WR_KEYS       = new Set(['perfect','endgegner','clutch']);
-  const STREAK_KEYS   = new Set(['streaks','onFire','coldStreak','lossStreaks']);
-  const ROLE_KEYS     = new Set(['scorer','wall','ice','worstAtk','worstDef']);
+  // Awards-Kategorisierung: jede Award gehört zu GENAU EINER Kategorie,
+  // damit die Summe der Kategorien = Gesamt-Award-Zahl ergibt.
+  const ELO_KEYS    = new Set(['upset','biggest','formtief']);
+  const WR_KEYS     = new Set(['perfect','endgegner','clutch','worstWr']);
+  const STREAK_KEYS = new Set(['streaks','onFire','coldStreak','lossStreaks']);
+  const ROLE_KEYS   = new Set(['scorer','wall','ice','worstAtk','worstDef']);
+  // Negative Awards die in keine speziellere Kategorie fallen
+  const NEG_GENERIC = new Set(['worstTeam','zirkus','baustelle']);
+  // Positive Awards die in keine speziellere Kategorie fallen
+  const POS_GENERIC = new Set(['wins','mvt','carryKing','bestDuo','grinder','showmaster','solo']);
+
   const cnt = (set) => awards.filter(a => set.has(a.key)).length;
   const awCats = [
-    {ic:'star',      nm:'Positive<br>Awards',   n: awards.filter(a => POSITIVE_KEYS.has(a.key)).length},
-    {ic:'chartDown', nm:'Negative<br>Awards',   n: awards.filter(a => NEGATIVE_KEYS.has(a.key)).length},
-    {ic:'bolt',      nm:'Elo<br>Awards',        n: cnt(ELO_KEYS)},
-    {ic:'target',    nm:'Winrate<br>Awards',    n: cnt(WR_KEYS)},
-    {ic:'flame',     nm:'Streak<br>Awards',     n: cnt(STREAK_KEYS)},
-    {ic:'shield',    nm:'Rollen<br>Awards',     n: cnt(ROLE_KEYS)},
+    {ic:'star',      nm:'Positive<br>Awards', n: cnt(POS_GENERIC)},
+    {ic:'chartDown', nm:'Negative<br>Awards', n: cnt(NEG_GENERIC)},
+    {ic:'bolt',      nm:'Elo<br>Awards',      n: cnt(ELO_KEYS)},
+    {ic:'target',    nm:'Winrate<br>Awards',  n: cnt(WR_KEYS)},
+    {ic:'flame',     nm:'Streak<br>Awards',   n: cnt(STREAK_KEYS)},
+    {ic:'shield',    nm:'Rollen<br>Awards',   n: cnt(ROLE_KEYS)},
   ];
 
   const badges=getCachedBadges(id);
