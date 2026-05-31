@@ -2336,10 +2336,16 @@ function vPositions(){
       const g=pos==='atk'?s.atkG:s.defG, w=pos==='atk'?s.atkW:s.defW;
       const perf=posPerfFrom(p.id,matches);
       const pAvg=pos==='atk'?perf.aPerfAvg:perf.dPerfAvg;
-      return {p,g,w,wr:g?w/g:0,pAvg:pAvg||0};
+      const wr=g?w/g:0;
+      // Score: Siegrate + Performance-Bonus, gewichtet nach Erfahrung.
+      // Erfahrungsgewicht wächst asymptotisch — bei 25+ Spielen praktisch voll vertrauenswürdig.
+      const expWeight=1-Math.exp(-g/5);
+      const perfBonus=(pAvg||0)*0.3;
+      const score=(wr+perfBonus)*expWeight;
+      return {p,g,w,wr,pAvg:pAvg||0,score};
     }).filter(x=>x.g>0)
-      // Sortierung: meiste Siege; bei Gleichstand höhere Leistung-über-Erwartung
-      .sort((a,b)=> b.w-a.w || b.pAvg-a.pAvg || b.wr-a.wr);
+      // Sortierung: Position-Score (kombiniert WR, Performance, Erfahrung)
+      .sort((a,b)=> b.score-a.score || b.pAvg-a.pAvg || b.wr-a.wr);
   }
   const atk=posList('atk'), def=posList('def');
   const block=(arr,pos)=>{
@@ -2359,7 +2365,7 @@ function vPositions(){
   };
   const which = rankMetric==='def'?'def':'atk';
   return `
-    <div class="view-head"><h2>Positionen</h2><p>Sortiert nach Siegen · Siegrate in Klammern</p></div>
+    <div class="view-head"><h2>Positionen</h2><p>Beste Spieler je Position · Performance + Erfahrung</p></div>
     <div class="seg accent">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('bolt')}Sturm</span></button>
       <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('shield')}Abwehr</span></button>
@@ -2931,11 +2937,11 @@ function mscoreLabel(m){return m.score_a+':'+m.score_b;}
 
 // ════════ VIEW: TEAMS ════════
 function vTeams(){
-  const T=teamStats().filter(t=>t.g>=2);
-  if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Min. 2 gemeinsame Spiele</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
+  const T=teamStats().filter(t=>t.g>=4);
+  if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Min. 4 gemeinsame Spiele</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
   const showBest=teamView!=='worst';
   const sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
-  const arr=showBest?sorted.slice(0,8):[...sorted].reverse().slice(0,8);
+  const arr=showBest?sorted:[...sorted].reverse();
   const rows=arr.map((t,i)=>{
     const wr=Math.round(t.w/t.g*100),gd=t.gf-t.ga;
     const medal=showBest?medalB(i):'';
