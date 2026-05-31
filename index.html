@@ -1189,14 +1189,11 @@ function getCachedAwardRankings(period){
 
 function getSeasonEloMap(){
   try{
-    const sid=currentSeason().id;
-    const seasonMs=matchesInSeason(sid);
+    // Aus getGlobalSim lesen — der Saison-Reset im Hauptdurchlauf garantiert,
+    // dass sim.elo die aktuelle Saison-Elo enthält. Positions-Tracker
+    // ist konsistent saison-übergreifend (s. simulateElo).
+    const sim=getGlobalSim();
     const map={};
-    if(!seasonMs.length){
-      players.forEach(p=>{ map[p.id]=cfg.start_elo; });
-      return map;
-    }
-    const sim=simulateElo(seasonMs);
     players.forEach(p=>{
       map[p.id]=sim.elo[p.id]!==undefined ? sim.elo[p.id] : cfg.start_elo;
     });
@@ -1231,34 +1228,14 @@ const RANKS=[
 ];
 
 function getSeasonAvgElos(){
-  const key='seasonAvg_'+matches.length+'_'+_cache.version+'_'+currentSeason().id;
-
-  if(_cache._seasonAvgKey===key) return _cache._seasonAvgData;
-  const allSeasonIds=[...allPastSeasons(), currentSeason().id];
-  // Gewichteter Durchschnitt: jede Saison fließt proportional zu ihrer Spielanzahl
-  // ein. Eine 1-Spiel-Saison kann den Schnitt damit nicht so verzerren wie eine
-  // 25-Spiel-Saison. weightedSum = Σ(saisonElo × saisonSpiele), totalGames = Σ(saisonSpiele).
-  const weightedSum={}, totalGames={}, seasonsPlayed={};
-  players.forEach(p=>{ weightedSum[p.id]=0; totalGames[p.id]=0; seasonsPlayed[p.id]=0; });
-  allSeasonIds.forEach(sid=>{
-    const ms=matchesInSeason(sid);
-    if(!ms.length) return;
-    const sim=simulateElo(ms);
-    players.forEach(p=>{
-      const g=sim.played[p.id]||0;
-      if(g>0){
-        weightedSum[p.id]+=(sim.elo[p.id] ?? cfg.start_elo)*g;
-        totalGames[p.id]+=g;
-        seasonsPlayed[p.id]++;
-      }
-    });
-  });
+  // Direkter Lookup aus getGlobalSim — der globale Sim hat bereits Karriere-Elo
+  // (gewichteter Durchschnitt aller Saison-End-Elos). Vermeidet Doppelberechnung.
+  const sim=getGlobalSim();
   const avgs={};
   players.forEach(p=>{
-    avgs[p.id]=totalGames[p.id]>0 ? Math.round(weightedSum[p.id]/totalGames[p.id]) : null;
+    avgs[p.id]=sim.careerElo[p.id]!==null && sim.careerElo[p.id]!==undefined
+      ? Math.round(sim.careerElo[p.id]) : null;
   });
-  _cache._seasonAvgKey=key;
-  _cache._seasonAvgData=avgs;
   return avgs;
 }
 function getAllPlayerRanks(){
@@ -3950,10 +3927,10 @@ function showPlayer(id){
       <h1 class="pp-name">${esc(p.name)}${streakBadge?` ${streakBadge}`:''}</h1>
       <div class="pp-meta">
         ${(()=>{
-          const seasonSim=simulateElo(matchesInSeason(currentSeason().id));
-          const games=seasonSim.played[id]||0;
+          const gSim=getGlobalSim();
+          const games=gSim.played[id]||0;
           if(games===0) return `<span class="pp-elo" style="color:var(--muted)">— Elo</span>`;
-          return `<span class="pp-elo">${Math.round(seasonSim.elo[id])} Elo</span>`;
+          return `<span class="pp-elo">${Math.round(gSim.elo[id])} Elo</span>`;
         })()}
         ${rInfo?`<span class="pp-badge-inline">
           <span class="ic svg-ic" style="font-size:11px;color:${rInfo.color}">
@@ -4249,13 +4226,15 @@ function computeSeasonHistory(playerId, limit){
       const won=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
       if(won) w++; else l++;
     });
-    const sim = simulateElo(matchesInSeason(sid));
+    const gSim = getGlobalSim();
+    const snapshot = gSim.seasonEndElos[sid] || {};
+    const seasonPlayedMap = gSim.seasonPlayed[sid] || {};
     const startElo = cfg.start_elo;
-    const endElo = sim.elo[playerId] ?? startElo;
+    const endElo = snapshot[playerId] ?? startElo;
     const eloDelta = Math.round(endElo - startElo);
     const playersInSeason = players.filter(pp=>!pp.hidden);
     const seasonRanking = playersInSeason.map(pp=>({
-      id:pp.id, e: (sim.elo[pp.id] ?? startElo), g: (sim.played[pp.id]||0)
+      id:pp.id, e: (snapshot[pp.id] ?? startElo), g: (seasonPlayedMap[pp.id]||0)
     })).filter(x=>x.g>0).sort((a,b)=>b.e-a.e);
     const place = seasonRanking.findIndex(x=>x.id===playerId)+1;
     return {
@@ -4677,19 +4656,14 @@ function showMatchDetail(mid){
     const bd=matchBreakdown(mid);
     const slot=document.getElementById('breakdownSlot');
     if(!bd||!Object.keys(bd).length){slot.innerHTML='<p style="font-size:12px;color:var(--muted);text-align:center">Keine Daten verfügbar</p>';return;}
-    // Saison-Sim für dieses Match — zeigt Saison-Elo-Kontext
-    const matchSeason=seasonOf(m.created_at);
-    const seasonMs=matchesInSeason(matchSeason.id);
-    const seasonSim=simulateElo(seasonMs);
-    const seasonHistEntry=seasonSim.history.find(h=>h.matchId===mid);
+    // bd kommt aus getGlobalSim().history — nach Saison-Reset sind startElo/endElo
+    // bereits die korrekten Saison-Werte. Keine separate Sim mehr nötig.
     const ids=[m.a1,m.a2,m.b1,m.b2];
     const rows=ids.map(id=>{
       const b=bd[id]; if(!b)return '';
       const sign=v=>v>=0?'+'+v.toFixed(1):v.toFixed(1);
-      const seasonBefore=seasonHistEntry&&seasonHistEntry.eloBefore[id]!==undefined
-        ?Math.round(seasonHistEntry.eloBefore[id]):'–';
-      const seasonAfter=seasonHistEntry&&seasonHistEntry.eloAfter[id]!==undefined
-        ?Math.round(seasonHistEntry.eloAfter[id]):'–';
+      const seasonBefore=Math.round(b.startElo);
+      const seasonAfter=Math.round(b.endElo);
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
       if(Math.abs(b.movEffect)>0.1) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
