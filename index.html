@@ -1095,8 +1095,6 @@ function availableSeasons(){
   return [cur,...past];
 }
 
-// ════════ SAISON-SYSTEM ════════
-// Frühling: Jan-März, Sommer: Apr-Juni, Herbst: Jul-Sep, Winter: Okt-Dez
 // ════════ SAISON-SYSTEM (monatlich) ════════
 // Jeder Kalendermonat ist eine eigene Saison mit Elo-Reset.
 function currentSeason(){
@@ -1260,7 +1258,6 @@ function getPlayerRank(id){
   return getAllPlayerRanks()[id]||null;
 }
 
-
 function rankBadgeHtml(id, size='sm'){
   const r=getPlayerRank(id); if(!r) return '';
   const pad=size==='lg'?'6px 14px':'3px 10px';
@@ -1272,8 +1269,6 @@ function rankBadgeHtml(id, size='sm'){
     <span class="ic svg-ic" style="font-size:${icSize};color:${r.color}"><svg viewBox="0 0 24 24">${ICONS[r.icon]||''}</svg></span>${r.label}
   </span>`;
 }
-
-
 
 // Metriken der Gesamt-Rangliste (Filter-Buttons)
 const METRICS=[['elo','Elo'],['winrate','Siegrate'],['goaldiff','Tordiff'],['streak','Serie'],['games','Spiele']];
@@ -1361,7 +1356,6 @@ function dynK(pl){
   return cfg.k_factor;
 }
 
-
 // Margin-of-Victory Multiplikator (klares Ergebnis zählt mehr, knappes weniger)
 function movMult(sa,sb){
   const diff=Math.abs(sa-sb), total=Math.max(sa+sb,1);
@@ -1377,11 +1371,8 @@ function movMult(sa,sb){
 // an die aktuelle Saison-Matchliste an und lassen simulateElo darüber laufen.
 // Die Deltas/exp_a des hypothetischen Matches lesen wir aus dem History-Eintrag.
 function computeMatch(teamA, teamB, winner, sa, sb){
-  const sid = currentSeason().id;
-  const seasonMs = matchesInSeason(sid);
-
-  // Hypothetisches Match — selbe Struktur wie eine echte DB-Zeile.
-  // created_at = jetzt, damit es ans Ende der chronologischen Reihenfolge sortiert.
+  // Optimierung: Wir starten vom End-State des gecachten globalen Sim und simulieren
+  // nur das eine hypothetische Match darauf. Bei großen Match-Historien ~100× schneller.
   const HYPO_ID = '__hypo__';
   const hypo = {
     id: HYPO_ID,
@@ -1393,7 +1384,11 @@ function computeMatch(teamA, teamB, winner, sa, sb){
     created_at: new Date().toISOString()
   };
 
-  const sim = simulateElo([...seasonMs, hypo]);
+  const globalSim = getGlobalSim();
+  const sim = simulateElo([hypo], {
+    initialState: globalSim,
+    initialCurSeason: globalSim.curSeason
+  });
   const entry = sim.history.find(h => h.matchId === HYPO_ID);
   const res = entry ? {...entry.deltas} : {};
   const expA = entry ? entry.expA : 0.5;
@@ -1402,7 +1397,6 @@ function computeMatch(teamA, teamB, winner, sa, sb){
   const rawMov = movMult(sa, sb);
   return {res, expA, mov: rawMov};
 }
-
 
 async function persistNewMatch(newMatchId) {
   // Ein neues Match am Ende ändert nie vorherige Match-Deltas.
@@ -1430,9 +1424,6 @@ async function persistNewMatch(newMatchId) {
   await syncSeasonEloToDB();
 }
 
-
-
-
 // Schreibt eine neu berechnete Historie in die DB (Spieler-Elos + atk + Match-Deltas).
 // Updates laufen in Batches parallel, um Rate-Limits zu respektieren (Supabase ~100 req/s).
 async function persistRecalc(matchList){
@@ -1459,7 +1450,6 @@ async function persistRecalc(matchList){
   // Saison-Elo in DB synchronisieren
   await syncSeasonEloToDB();
 }
-
 
 // ════════ DATA ════════
 function pmap(){
@@ -1507,7 +1497,7 @@ async function loadAll(){
     seasons=se.data||[];
     invalidateCache();
     // Nur aktive Spieler zählen für Anzeige
-    const active=players.filter(p=>!p.hidden);
+    const active=activePlayers();
     setConn(active.length+' Spieler · '+matches.length+' Matches','ok');
     await autoArchiveSeasons();
     render();
@@ -1517,7 +1507,6 @@ async function loadAll(){
       <div class="ee">⚠️</div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
   }
 }
-
 
 // Automatischer Saison-Abschluss: archiviert vergangene Monate
 async function autoArchiveSeasons(){
@@ -1570,7 +1559,6 @@ if(last && last.id !== currentSeason().id
 }
 
   }
-
 
 }
 
@@ -1787,8 +1775,7 @@ function render(){
   bind();
 }
 
-// ════════ VIEW: RANKING (mit Filtern) ════════
-// ════════ ZEITRÄUME (Saison/Woche/Monat/Gesamt) ════════
+// ════════ ZEITRÄUME (Saison/Woche/Gesamt) ════════
 function periodStart(period){
   const now=new Date();
   if(period==='season') return seasonStart();
@@ -1824,8 +1811,6 @@ function isoWeek(d){
   const fd=(firstThu.getUTCDay()+6)%7; firstThu.setUTCDate(firstThu.getUTCDate()-fd+3);
   return 1+Math.round((date-firstThu)/(7*24*3600*1000));
 }
-// Statistik pro Spieler INNERHALB eines Zeitraums (Siege + gewonnene Elo-Punkte)
-// Berechnet Saison-Elo: alle Spieler starten bei start_elo, nur Saison-Matches zählen
 
 // ════════ ZENTRALE ELO-ENGINE ════════
 // Pro Saison isoliert: Bei jedem Monatswechsel werden Elo/Played auf start_elo zurückgesetzt.
@@ -1833,14 +1818,39 @@ function isoWeek(d){
 // der Saison-End-Elos (gewichtet nach Spielanzahl pro Saison).
 function simulateElo(matchSubset, opts={}){
   const startElo=opts.startElo ?? cfg.start_elo;
-  const elo={}, played={}, wins={}, losses={}, curStreak={}, bestStreak={};
+  const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
   const eloGain={}, eloLoss={}, gd={};
   const teamElo={};
   const history=[];
-  players.forEach(p=>{elo[p.id]=startElo;played[p.id]=0;wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;});
+  players.forEach(p=>{elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;});
   // Inkrementeller Positions-Tracker (ersetzt atkStrengthFrom(id, prior))
   const posTracker={};
   players.forEach(p=>{posTracker[p.id]={aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0};});
+
+  // Optional: initialer State (für schnelle Vorschau eines einzelnen Hypo-Matches)
+  // Erwartet ein Objekt mit den gleichen Keys wie der Return-Value von simulateElo.
+  // Achtung: opts.initialCurSeason wird benötigt damit der Saison-Reset korrekt greift.
+  let _curSeason=null;
+  if(opts.initialState){
+    const s=opts.initialState;
+    Object.assign(elo, s.elo||{});
+    Object.assign(played, s.played||{});
+    Object.assign(playedSeason, s.playedSeason||{});
+    Object.assign(wins, s.wins||{});
+    Object.assign(losses, s.losses||{});
+    Object.assign(curStreak, s.curStreak||{});
+    Object.assign(bestStreak, s.bestStreak||{});
+    Object.assign(eloGain, s.eloGain||{});
+    Object.assign(eloLoss, s.eloLoss||{});
+    Object.assign(gd, s.gd||{});
+    // posTracker ist ein nested object → tief kopieren
+    if(s.posTracker){
+      Object.keys(s.posTracker).forEach(id=>{
+        posTracker[id]={...s.posTracker[id]};
+      });
+    }
+    _curSeason=opts.initialCurSeason||null;
+  }
   const atkFromTracker=(id)=>{
     const t=posTracker[id]||{aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0};
     const total=t.aG+t.dG;
@@ -1861,18 +1871,17 @@ function simulateElo(matchSubset, opts={}){
 
   const ordered=[...matchSubset].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   const localExp=(a,b)=>1/(1+Math.pow(10,(b-a)/400));
-  const localDynK=(id)=>{const g=played[id]||0,e=elo[id];
+  const localDynK=(id)=>{const g=playedSeason[id]||0,e=elo[id];
     if(g<5)return cfg.k_factor*1.5;if(g<15)return cfg.k_factor*1.2;
     if(e>cfg.start_elo+400)return cfg.k_factor*0.85;return cfg.k_factor;};
 
   // Saison-Reset Tracking: bei jedem Monatswechsel werden Elo/Played zurückgesetzt
   // Positions-Tracker bleibt erhalten (saison-übergreifend gewollt).
   // Per-Saison Snapshots: Karriere-Elo = Durchschnitt der End-Elos pro Saison
-  let _curSeason=null;
   const seasonEndElos={}; // seasonId → {playerId → endElo}
   const seasonPlayed={};  // seasonId → {playerId → games}
   const resetSeason=()=>{
-    players.forEach(p=>{elo[p.id]=startElo;played[p.id]=0;});
+    players.forEach(p=>{elo[p.id]=startElo;playedSeason[p.id]=0;});
   };
 
   ordered.forEach((m)=>{
@@ -1882,9 +1891,9 @@ function simulateElo(matchSubset, opts={}){
       seasonEndElos[_curSeason]={};
       seasonPlayed[_curSeason]={};
       players.forEach(p=>{
-        if((played[p.id]||0)>0){
+        if((playedSeason[p.id]||0)>0){
           seasonEndElos[_curSeason][p.id]=elo[p.id];
-          seasonPlayed[_curSeason][p.id]=played[p.id];
+          seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
         }
       });
       resetSeason();
@@ -1904,10 +1913,8 @@ function simulateElo(matchSubset, opts={}){
     const rawMov=movMult(m.score_a,m.score_b);
     const res={}, breakdowns={};
 
-
-
     // Durchschnittliche Spielanzahl aller 4 Spieler (für Underdog-Berechnung)
-    const avgGames=ids.reduce((s,id)=>s+(played[id]||0),0)/4;
+    const avgGames=ids.reduce((s,id)=>s+(playedSeason[id]||0),0)/4;
     const avgElo=ids.reduce((s,id)=>s+elo[id],0)/4;
 
     const applyTeam=(team,opp,won,exp)=>{
@@ -1931,15 +1938,15 @@ function simulateElo(matchSubset, opts={}){
 
         // Erfahrungs-Schutz: greift erst ab Match 5, linear hochskaliert,
         // voll bei Match 30 (10% Schutz). Saison-basiert (Reset jeden Monat).
-        const g=played[slot.id]||0;
+        const g=playedSeason[slot.id]||0;
         const protectShare=Math.max(0,Math.min(1,(g-5)/25));
         const expProtect=won?1:(1-0.1*protectShare);
         bd.expProtect=expProtect; bd.expProtectEffect=won?0:rawBase*mov*boost*expProtect-rawBase*mov*boost;
 
-        // Underdog-Boost: basiert auf Elo-Differenz zum Gegnerteam + Spielanzahl-Differenz
+        // Underdog-Boost: basiert auf Elo-Differenz zum Gegnerteam + Spielanzahl-Differenz (Saison)
         const myElo=elo[slot.id];
         const eloDiff=oppAvg-myElo; // positiv = ich bin schwächer
-        const gamesDiff=avgGames-(played[slot.id]||0); // positiv = ich habe weniger Spiele
+        const gamesDiff=avgGames-(playedSeason[slot.id]||0); // positiv = ich habe weniger Spiele in dieser Saison
         // Sigmoid-artiger Boost: sanft skaliert, gecappt bei ±20%
         const eloFactor=Math.tanh(eloDiff/400)*0.15; // max ±15% aus Elo-Differenz
         const gamesFactor=Math.tanh(gamesDiff/30)*0.05; // max ±5% aus Spielanzahl
@@ -1982,7 +1989,7 @@ function simulateElo(matchSubset, opts={}){
 
     // Apply
     Object.entries(res).forEach(([id,d])=>{
-      elo[id]+=d;played[id]++;
+      elo[id]+=d;played[id]++;playedSeason[id]++;
       if(d>=0)eloGain[id]=(eloGain[id]||0)+d; else eloLoss[id]=(eloLoss[id]||0)+d;
     });
     ids.forEach(id=>{
@@ -2019,9 +2026,9 @@ function simulateElo(matchSubset, opts={}){
     seasonEndElos[_curSeason]={};
     seasonPlayed[_curSeason]={};
     players.forEach(p=>{
-      if((played[p.id]||0)>0){
+      if((playedSeason[p.id]||0)>0){
         seasonEndElos[_curSeason][p.id]=elo[p.id];
-        seasonPlayed[_curSeason][p.id]=played[p.id];
+        seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
       }
     });
   }
@@ -2039,7 +2046,7 @@ function simulateElo(matchSubset, opts={}){
     });
     careerElo[p.id]=sumGames>0?sumElo/sumGames:null;
   });
-  return {elo,played,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,teamElo,history,seasonEndElos,seasonPlayed,careerElo};
+  return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,teamElo,history,seasonEndElos,seasonPlayed,careerElo,posTracker,curSeason:_curSeason};
 }
 
 // recalcHistory nutzt simulateElo
@@ -2054,7 +2061,6 @@ function matchBreakdown(matchId){
   const entry=sim.history.find(h=>h.matchId===matchId);
   return entry?entry.breakdowns:{};
 }
-
 
 function periodPlayerStats(period){
   const sid=period==='season'?currentSeason().id:'';
@@ -2076,8 +2082,7 @@ function periodPlayerStats(period){
   return result;
 }
 
-
-
+// ════════ VIEW: RANKING ════════
 function vRanking(){
   const periodBar=`
     <div class="seg accent" style="margin-bottom:14px">
@@ -2198,7 +2203,6 @@ function vRanking(){
 
     const countdownHtml=period==='season'?`<div class="season-countdown">noch ${seasonDaysLeft()} Tag${seasonDaysLeft()!==1?'e':''} in dieser Saison</div>`:'';
 
-
     // Player of Season: Vorsprung auf Platz 2
     const gap2=ps.length>=2&&winner?Math.round(winner.elo-(ps.find(x=>x.id!==winner.id)||{elo:0}).elo):0;
 
@@ -2307,7 +2311,6 @@ function rrow(p, s, i, metric, globalElo){
         ${esc(p.name)}${fireTag}
       </div>
 
-
       <div class="rmeta">
         <span>${s.wins}–${s.losses}</span>
         <span class="wbar"><i style="width:${Math.round(s.wr*100)}%"></i></span>
@@ -2324,7 +2327,6 @@ function rrow(p, s, i, metric, globalElo){
 
   </div>`;
 }
-
 
 // ════════ VIEW: POSITIONS-RANGLISTE ════════
 function vPositions(){
@@ -2518,7 +2520,7 @@ upsets.push({sp:1-we,m});
     // Carry-King & Einzelkämpfer: historisches Bottom-3 per Match-Snapshot
   const snapMap={};
   getGlobalSim().history.forEach(h=>{snapMap[h.matchId]=h.eloBefore;});
-  const allActivePlayers=players.filter(p=>!p.hidden);
+  const allActivePlayers=activePlayers();
   const carryKing={};
   ms.forEach(m=>{
     const aWon=m.winner==='A';
@@ -2606,7 +2608,6 @@ if(period==='all'){
   }
   const formtief=players.map(p=>({id:p.id,drop:peakElo[p.id]-curElo[p.id],peak:Math.round(peakElo[p.id]),cur:Math.round(curElo[p.id])}))
     .filter(x=>x.drop>10).sort((a,b)=>b.drop-a.drop);
-
 
   // 🎪 Zirkus: Team mit den meisten Niederlagen mit 5+ Toren Unterschied
   const zirkus={};
@@ -3074,10 +3075,9 @@ function vSettings(){
           </div>`).join('')}
       </div>
     </div>`:''}
-    
+
     `;
 }
-
 
 // ════════ MATCH PREVIEW & LOGIC ════════
 function readM(){
@@ -3093,10 +3093,12 @@ function updatePreview(){
   const save = document.getElementById('saveM');
   if(!slot) return;
   const P = pmap();
+  const gSim = getGlobalSim();
+  const seasonElo = id => gSim.elo[id] ?? cfg.start_elo;
 
   const setAvg = (el,a,b) => {
     const e = document.getElementById(el);
-    if(e && P[a] && P[b]) e.textContent = 'Ø '+Math.round((P[a].elo+P[b].elo)/2)+' (Saison)';
+    if(e && P[a] && P[b]) e.textContent = 'Ø '+Math.round((seasonElo(a)+seasonElo(b))/2)+' (Saison)';
     else if(e) e.textContent = '';
   };
   setAvg('avgA', M.A1, M.A2); setAvg('avgB', M.B1, M.B2);
@@ -3144,8 +3146,6 @@ function updatePreview(){
   save.disabled = false;
 }
 
-
-
 async function doSaveMatch(){
   readM(); if(!validM()){toast('Match unvollständig',true);return;}
   const winner = M.sa > M.sb ? 'A' : 'B';
@@ -3175,13 +3175,10 @@ async function doSaveMatch(){
   invalidateCache();
   await persistNewMatch(savedRow.id);
 
-
   toast('Match gespeichert', 'ok');
   M = {A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
   tab = 'ranking'; await loadAll();
 }
-
-
 
 // ════════ DETAIL SHEET ════════
 function openSheet(html){
@@ -3207,7 +3204,6 @@ function closeSheet(){
   bg.style.opacity='';
   bg.classList.remove('show');
 }
-
 
 function bindSheetSwipe(){
   const sheet=document.getElementById('sheet');
@@ -3327,11 +3323,8 @@ function bindSheetSwipe(){
   sheet._swipeCleanup=cleanup;
 }
 
-
-
 // Hintergrund-Klick schließt Sheet
 document.getElementById('sheetBg').onclick=closeSheet;
-
 
 // ════════ BADGE-SYSTEM (permanente Auszeichnungen) ════════
 // Badges sind dauerhafte Achievements, die ein Spieler einmal freischaltet und für immer behält.
@@ -3674,7 +3667,6 @@ function badgesEarnedInMatch(matchId){
   return getBadgeEarnedCache()[matchId]||[];
 }
 
-
 // Ermittelt alle Awards, die ein Spieler aktuell hält (Platz 1–3)
 function playerAwards(id){
   const R=awardRankings('all');
@@ -3758,7 +3750,6 @@ function playerAwards(id){
 
   return found;
 }
-
 
 function showPlayer(id){
   const p=pmap()[id];if(!p)return;const s=playerStats(id);
@@ -3998,7 +3989,6 @@ function showPlayer(id){
       </div>
     </div>
 
-
     ${sa.length?`
     <div class="pp-sec" style="animation-delay:.55s">
       <div class="pp-sec-title">
@@ -4007,8 +3997,6 @@ function showPlayer(id){
       </div>
       ${trophyHtml}
     </div>`:''}
-
-
 
     ${badgeTotal?`
     <div class="pp-sec" style="animation-delay:.6s">
@@ -4107,7 +4095,7 @@ function showPlayer(id){
     if(inMatches){
       openSheet(`
         <h3>Spieler entfernen</h3>
-        <div class="sheet-sub">${esc(p.name)} · ${matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id)).length} Matches</div>
+        <div class="sheet-sub">${esc(p.name)} · ${gamesPlayed(id)} Matches</div>
         <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
           <button class="btn ghost" id="hidePlayerBtn" style="text-align:left;padding:16px">
             <div style="font-weight:700">Aus Rangliste ausblenden</div>
@@ -4244,7 +4232,6 @@ function computeSeasonHistory(playerId, limit){
     };
   }).filter(Boolean).reverse();
 }
-
 
 // Awards-Sheet für einen Spieler: listet alle gehaltenen Awards auf, jeweils anklickbar
 function showRangSystem(){
@@ -4455,8 +4442,6 @@ function bind(){
       cont.querySelectorAll('[data-detail]').forEach(el=>el.onclick=()=>showPlayer(el.dataset.detail));
     }
 
-
-
   };
   document.querySelectorAll('[data-metric]').forEach(b=>b.onclick=()=>{rankMetric=b.dataset.metric;render();});
   document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{period=b.dataset.period;rankSearch='';render();});
@@ -4483,7 +4468,6 @@ function bind(){
     const last=seasons.find(s=>s.id!==currentSeason().id);
     if(last&&last.player_id) showPlayer(last.player_id);
   };
-
 
   // history filter
   const hs=document.getElementById('histSel');if(hs)hs.onchange=()=>{histFilter=hs.value;render();};
@@ -4571,7 +4555,6 @@ function bind(){
   });
 }
 
-
 // Combobox: Tippen filtert Spieler, Auswahl setzt M[key]
 function bindCombo(inp){
   const key=inp.dataset.combo;
@@ -4579,10 +4562,13 @@ function bindCombo(inp){
   const chosenIds=()=>[M.A1,M.A2,M.B1,M.B2].filter((v,i)=>['A1','A2','B1','B2'][i]!==key&&v);
   const renderList=(q)=>{
     const taken=chosenIds();
-    let arr=[...players].filter(p=>!p.hidden).sort((a,b)=>b.elo-a.elo).filter(p=>!taken.includes(p.id));
+    const gSim=getGlobalSim();
+    const rankElo=p=>gSim.careerElo[p.id]??p.elo; // Karriere-Elo für Sortierung
+    const dispElo=p=>Math.round(gSim.elo[p.id]??cfg.start_elo); // Saison-Elo für Anzeige
+    let arr=[...activePlayers()].sort((a,b)=>rankElo(b)-rankElo(a)).filter(p=>!taken.includes(p.id));
     if(q)arr=arr.filter(p=>p.name.toLowerCase().includes(q.toLowerCase()));
     if(!arr.length){list.innerHTML=`<div class="combo-opt empty">Kein Treffer</div>`;list.classList.add('show');return;}
-    list.innerHTML=arr.slice(0,8).map(p=>`<div class="combo-opt" data-pick="${p.id}">${esc(p.name)}<span class="ce">${Math.round(p.elo)}</span></div>`).join('');
+    list.innerHTML=arr.slice(0,8).map(p=>`<div class="combo-opt" data-pick="${p.id}">${esc(p.name)}<span class="ce">${dispElo(p)}</span></div>`).join('');
     list.classList.add('show');
     list.querySelectorAll('[data-pick]').forEach(o=>o.onclick=()=>{
       M[key]=o.dataset.pick; const p=pmap()[M[key]];
@@ -4715,8 +4701,11 @@ let E={};  // Edit-Zustand
 function showEditMatch(mid){
   const m=matches.find(x=>x.id===mid);if(!m)return;
   E={id:m.id,A1:m.a1,A2:m.a2,B1:m.b1,B2:m.b2,pA1:m.a1_pos,pA2:m.a2_pos,pB1:m.b1_pos,pB2:m.b2_pos,sa:m.score_a,sb:m.score_b};
+  const gSim=getGlobalSim();
+  const sortElo=p=>gSim.careerElo[p.id]??p.elo;
+  const showElo=p=>Math.round(gSim.elo[p.id]??cfg.start_elo);
   const opts=sel=>`<option value="">Spieler…</option>`+
-    [...players].sort((a,b)=>b.elo-a.elo).map(p=>`<option value="${p.id}" ${E[sel]===p.id?'selected':''}>${esc(p.name)} · ${Math.round(p.elo)}</option>`).join('');
+    [...players].sort((a,b)=>sortElo(b)-sortElo(a)).map(p=>`<option value="${p.id}" ${E[sel]===p.id?'selected':''}>${esc(p.name)} · ${showElo(p)}</option>`).join('');
   const pos=k=>`<select data-epos="${k}"><option value="atk" ${E['p'+k]==='atk'?'selected':''}>↑ Sturm</option><option value="def" ${E['p'+k]==='def'?'selected':''}>↓ Abwehr</option></select>`;
   const slot=(t,n)=>`<div class="slot">
     <div class="psel"><select data-ep="${t}${n}">${opts(t+n)}</select></div>
