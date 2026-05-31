@@ -1053,20 +1053,18 @@ function medalB(i){
   if(i<0||i>2) return '';
   return `<span class="medal-b m${i+1}">${i+1}</span>`;
 }
-// Streak-Badge: 1/2/3 Flammen je nach Stärke (ab 3 / 5 / 7)
+// Streak-Badge: 1/2/3 Flammen je nach Stärke (ab 3 / 5 / 7) — alle in Standard-Farbe
 function streakBadge(cs){
   if(cs<3) return '';
   if(cs<=-3) return ''; // Niederlagen über streakInline
   const flames = cs>=7 ? 'flameTriple' : cs>=5 ? 'flameDouble' : 'flame';
-  const cls = cs>=7?'fire':cs>=5?'hot':'';
-  return `<span class="streak-badge ${cls}" title="${cs}er Siegesserie">${svgI(flames)}</span>`;
+  return `<span class="streak-badge" title="${cs}er Siegesserie">${svgI(flames)}</span>`;
 }
 // Inline-Variante neben Namen: dasselbe Schema, plus Niederlagen-Variante mit Tropfen
 function streakInline(cs){
   if(cs>=3){
     const flames = cs>=7 ? 'flameTriple' : cs>=5 ? 'flameDouble' : 'flame';
-    const cls = cs>=7?'fire':cs>=5?'hot':'';
-    return `<span class="streak-badge ${cls}" title="${cs}er Siegesserie">${svgI(flames)}</span>`;
+    return `<span class="streak-badge" title="${cs}er Siegesserie">${svgI(flames)}</span>`;
   }
   if(cs<=-3){
     const drops = cs<=-7 ? 'dropTriple' : cs<=-5 ? 'dropDouble' : 'drop';
@@ -2124,12 +2122,11 @@ function vRanking(){
           const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
           return `<div class="dot ${w?'w':'l'}"></div>`;}).join('');
       };
-      // Streak-Badge: 1/2/3 Flammen je nach Stärke
+      // Streak-Badge: 1/2/3 Flammen je nach Stärke — alle in Standard-Farbe
       const streakBadge=(cs)=>{
         if(cs>=3){
           const flames = cs>=7 ? 'flameTriple' : cs>=5 ? 'flameDouble' : 'flame';
-          const cls = cs>=7?'fire':cs>=5?'hot':'';
-          return `<span class="streak-badge ${cls}" title="${cs}er Siegesserie">${svgI(flames)}</span>`;
+          return `<span class="streak-badge" title="${cs}er Siegesserie">${svgI(flames)}</span>`;
         }
         if(cs<=-3){
           const drops = cs<=-7 ? 'dropTriple' : cs<=-5 ? 'dropDouble' : 'drop';
