@@ -910,7 +910,7 @@
         </div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="lock-btn" id="recapBtn" title="Saison-Recap" style="visibility:hidden"><svg viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0010 0V4H7zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3M12 15v3M9 21h6"/></svg></button>
+        <button class="lock-btn" id="recapBtn" title="Saison-Recap" style="display:none"><svg viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0010 0V4H7zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3M12 15v3M9 21h6"/></svg></button>
         <button class="lock-btn" id="settingsBtn" title="Einstellungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       </div>
     </div>
@@ -2116,12 +2116,16 @@ function periodPlayerStats(period){
   const key='periodStats_'+period+'_'+sid+'_'+matches.length+'_'+_cache.version;
   if(_cache._periodStatsKey===key) return _cache._periodStatsData;
   const ms=matchesInPeriod(period);
+  // Separater Sim für saison-isolierte Stats (wins/losses/streaks/gd/eloGain/Loss).
   const sim=simulateElo(ms);
+  // Bei 'season': Elo-Werte aus globalSim übernehmen für Konsistenz mit Profil
+  // (sonst hat periodSim einen leeren Positions-Tracker → andere posBonus-Mults).
+  const eloSrc=period==='season'?getGlobalSim().elo:sim.elo;
   const hidden=new Set(players.filter(p=>p.hidden).map(p=>p.id));
   const result=Object.keys(sim.played).filter(id=>sim.played[id]>0&&!hidden.has(id)).map(id=>({
     id, wins:sim.wins[id], losses:sim.losses[id], games:sim.played[id],
-    elo:sim.elo[id]!==undefined?Math.round(sim.elo[id]):cfg.start_elo,
-    eloNet:Math.round((sim.elo[id] ?? cfg.start_elo)-cfg.start_elo),
+    elo:eloSrc[id]!==undefined?Math.round(eloSrc[id]):cfg.start_elo,
+    eloNet:Math.round((eloSrc[id] ?? cfg.start_elo)-cfg.start_elo),
     eloGain:Math.round(sim.eloGain[id]||0), eloLoss:Math.round(sim.eloLoss[id]||0),
     gd:sim.gd[id]||0,
     curStreak:sim.curStreak[id]||0
@@ -3817,12 +3821,12 @@ function showPlayer(id){
   const wr=Math.round(s.wr*100);
   const atkWr=s.atkWr!==null?Math.round(s.atkWr*100):null;
   const defWr=s.defWr!==null?Math.round(s.defWr*100):null;
-  // Saison-Platzierung: nur Spieler mit Saison-Spielen werden gerankt.
+  // Saison-Platzierung: nur Spieler mit Spielen IN DIESER SAISON werden gerankt.
   // Wer 0 Saison-Spiele hat, bekommt keinen #-Badge.
   // Sortierung: Saison-Elo (gSim.elo enthält nach Saison-Reset die aktuelle Saison-Elo).
   const gSim=getGlobalSim();
   const rankedSeason=activePlayers()
-    .filter(x=>(gSim.played[x.id]||0)>0)
+    .filter(x=>(gSim.playedSeason[x.id]||0)>0)
     .sort((a,b)=>(gSim.elo[b.id]??cfg.start_elo)-(gSim.elo[a.id]??cfg.start_elo));
   const rank=rankedSeason.findIndex(x=>x.id===id)+1;
   const streak=s.curStreak;
@@ -3990,7 +3994,7 @@ function showPlayer(id){
       <div class="pp-meta">
         ${(()=>{
           const gSim=getGlobalSim();
-          const games=gSim.played[id]||0;
+          const games=gSim.playedSeason[id]||0;
           if(games===0) return `<span class="pp-elo" style="color:var(--muted)">— Elo</span>`;
           return `<span class="pp-elo">${Math.round(gSim.elo[id])} Elo</span>`;
         })()}
@@ -4902,7 +4906,7 @@ document.getElementById('settingsBtn').onclick=openSettingsLock;
   // updateRecapBtn wird auch nach Saison-Archivierung aufgerufen
   window._updateRecapBtn=function(){
     const past=seasons.filter(s=>s.id!==currentSeason().id);
-    btn.style.visibility=past.length?'visible':'hidden';
+    btn.style.display=past.length?'inline-flex':'none';
   };
   btn.onclick=()=>{
     const past=seasons.filter(s=>s.id!==currentSeason().id);
