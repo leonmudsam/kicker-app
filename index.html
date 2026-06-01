@@ -2115,21 +2115,59 @@ function periodPlayerStats(period){
   const sid=period==='season'?currentSeason().id:'';
   const key='periodStats_'+period+'_'+sid+'_'+matches.length+'_'+_cache.version;
   if(_cache._periodStatsKey===key) return _cache._periodStatsData;
-  const ms=matchesInPeriod(period);
-  // Separater Sim für saison-isolierte Stats (wins/losses/streaks/gd/eloGain/Loss).
-  const sim=simulateElo(ms);
-  // Bei 'season': Elo-Werte aus globalSim übernehmen für Konsistenz mit Profil
-  // (sonst hat periodSim einen leeren Positions-Tracker → andere posBonus-Mults).
-  const eloSrc=period==='season'?getGlobalSim().elo:sim.elo;
+  // EINE Wahrheit: alle Werte aus globalSim ableiten. Vorher gab es einen separaten
+  // Sim für die Periode mit LEEREM Positions-Tracker → andere posBonus-Multiplikatoren
+  // → andere Deltas → Anzeige "+X -Y" passte nicht zu "Elo" und Wochen-Werte
+  // wichen vom Saison-Tab ab.
+  const gSim=getGlobalSim();
+  const ms=[...matchesInPeriod(period)].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  // Index der History-Einträge für schnellen Lookup
+  const histById={};
+  gSim.history.forEach(h=>{ histById[h.matchId]=h; });
+  // Akkumulatoren initialisieren (nur für Spieler die in der Periode gespielt haben)
+  const stats={};
+  const ensure=(id)=>{
+    if(!stats[id]) stats[id]={wins:0,losses:0,games:0,eloGain:0,eloLoss:0,gd:0,curStreak:0};
+    return stats[id];
+  };
+  ms.forEach(m=>{
+    const h=histById[m.id];
+    const deltas=h&&h.deltas?h.deltas:{};
+    // Wenn das Match keine Deltas hat (z.B. weil ein Spieler unbekannt ist und die
+    // Sim-Engine es übersprungen hat), zählt es auch nicht als gespieltes Match —
+    // konsistent mit dem Vorgänger-Code (simulateElo überspringt solche Matches).
+    if(!Object.keys(deltas).length) return;
+    const aWon=m.winner==='A';
+    [m.a1,m.a2,m.b1,m.b2].forEach(id=>{
+      const s=ensure(id);
+      const d=deltas[id]||0;
+      s.games++;
+      if(d>=0) s.eloGain+=d; else s.eloLoss+=d;
+      const onA=[m.a1,m.a2].includes(id);
+      const won=(onA&&aWon)||(!onA&&!aWon);
+      const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
+      s.gd+=(gf-ga);
+      if(won){s.wins++; s.curStreak=s.curStreak>0?s.curStreak+1:1;}
+      else  {s.losses++; s.curStreak=s.curStreak<0?s.curStreak-1:-1;}
+    });
+  });
   const hidden=new Set(players.filter(p=>p.hidden).map(p=>p.id));
-  const result=Object.keys(sim.played).filter(id=>sim.played[id]>0&&!hidden.has(id)).map(id=>({
-    id, wins:sim.wins[id], losses:sim.losses[id], games:sim.played[id],
-    elo:eloSrc[id]!==undefined?Math.round(eloSrc[id]):cfg.start_elo,
-    eloNet:Math.round((eloSrc[id] ?? cfg.start_elo)-cfg.start_elo),
-    eloGain:Math.round(sim.eloGain[id]||0), eloLoss:Math.round(sim.eloLoss[id]||0),
-    gd:sim.gd[id]||0,
-    curStreak:sim.curStreak[id]||0
-  }));
+  // Für 'season': absoluter Elo-Stand aus globalSim (deckt sich mit Profil & Recap).
+  // Für 'week'/'all': eloNet = Summe der Deltas in der Periode (Net = Gain + Loss).
+  const result=Object.keys(stats).filter(id=>stats[id].games>0&&!hidden.has(id)).map(id=>{
+    const s=stats[id];
+    const net=s.eloGain+s.eloLoss; // eloLoss ist negativ
+    const absElo=gSim.elo[id]!==undefined?gSim.elo[id]:cfg.start_elo;
+    return {
+      id, wins:s.wins, losses:s.losses, games:s.games,
+      elo: period==='season' ? Math.round(absElo) : Math.round(cfg.start_elo+net),
+      eloNet: Math.round(net),
+      eloGain: Math.round(s.eloGain),
+      eloLoss: Math.round(s.eloLoss),
+      gd: s.gd,
+      curStreak: s.curStreak
+    };
+  });
   _cache._periodStatsKey=key;
   _cache._periodStatsData=result;
   return result;
