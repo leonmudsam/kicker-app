@@ -2565,25 +2565,26 @@ upsets.push({sp:1-we,m});
   const worstElo=Object.entries(pElo).map(([id,v])=>({id,v})).sort((a,b)=>a.v-b.v);
 
   // ═══ NEUE AWARDS ═══
-  // Endgegner: Spieler mit der höchsten Siegrate (als Gegner gefürchtet)
-  // Einfach: für jeden Spieler → Spiele und Siege zählen
-  const egStats={};
+  // Endgegner: Paar das am häufigsten als Gegner aufeinandertrifft (Team-Award).
+  // Pro Match werden alle 4 Gegnerpaarungen gezählt: (a1,b1), (a1,b2), (a2,b1), (a2,b2).
+  // Bilanz w1/w2 = Siege des jeweils ersten/zweiten Spielers im sortierten Paar.
+  const egPairs={};
   ms.forEach(m=>{
-    [m.a1,m.a2,m.b1,m.b2].forEach(id=>{
-      if(!egStats[id])egStats[id]={g:0,w:0};
-      egStats[id].g++;
-      const onA=[m.a1,m.a2].includes(id);
-      if((onA&&m.winner==='A')||(!onA&&m.winner==='B')) egStats[id].w++;
-    });
+    const ATeam=[m.a1,m.a2], BTeam=[m.b1,m.b2];
+    const aWon=m.winner==='A';
+    ATeam.forEach(aId=>BTeam.forEach(bId=>{
+      const sorted=[aId,bId].sort();
+      const k=sorted.join('|');
+      if(!egPairs[k]) egPairs[k]={ids:sorted,g:0,w1:0,w2:0};
+      egPairs[k].g++;
+      // w1 = Siege des Spielers an Position 0 im sortierten Paar
+      const firstWon = (sorted[0]===aId && aWon) || (sorted[0]===bId && !aWon);
+      if(firstWon) egPairs[k].w1++; else egPairs[k].w2++;
+    }));
   });
-  // Endgegner: gefürchteter Gegner = höchste Siegrate, ABER nur bei substantieller
-  // Spielanzahl, und Tiebreaker = mehr Spiele (je mehr Erfahrung, desto gefürchteter).
-  // Unterscheidet sich von "Beste Bilanz" (perfect) dadurch:
-  //   perfect → reine Effizienz, dynamische Mindestschwelle, Tiebreaker = mehr Spiele
-  //   endgegner → konstante Mindestschwelle von 5 Spielen, sonst gleiche Sortierung
-  // Damit ist endgegner eine "Härte-Variante" der besten Bilanz.
-  const endgegner=Object.entries(egStats).filter(([,v])=>v.g>=5)
-    .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
+  // Mind. 2 Begegnungen damit es überhaupt eine "Rivalität" ist.
+  const endgegner=Object.values(egPairs).filter(p=>p.g>=2)
+    .sort((a,b)=>b.g-a.g);
 
   // Clutch-Player: höchste Siegrate in knappen Spielen (Differenz ≤ 2)
   const clutch={};
@@ -2888,7 +2889,7 @@ function vAwards(){
 
   // ── SPEZIAL ──
   const special=[];
-  special.push(eg0?card('endgegner','purple','☠️','Endgegner',esc(pname(eg0.id)),eg0.w+'/'+eg0.g+' gewonnen',Math.round(eg0.wr*100)+'%'):empty('endgegner','purple','☠️','Endgegner'));
+  special.push(eg0?card('endgegner','purple','☠️','Endgegner',esc(tn(eg0.ids)),eg0.g+' Begegnungen',eg0.g):empty('endgegner','purple','☠️','Endgegner'));
   special.push(cl0?card('clutch','acid','🎯','Clutch-Player',esc(pname(cl0.id)),cl0.g+' knappe Spiele',Math.round(cl0.wr*100)+'%'):empty('clutch','acid','🎯','Clutch-Player'));
   special.push(ck0&&ck0.v>=1?card('carryKing','acid','🏋️','Carry-King',esc(topNames(R.carryList,x=>x.v,x=>pname(x.id))),ck0.v+'× mit schwachem Mate',ck0.v):empty('carryKing','acid','🏋️','Carry-King'));
   special.push(sl0?card('solo','acid','🐺','Einzelkämpfer',esc(pname(sl0.id)),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%'):empty('solo','acid','🐺','Einzelkämpfer'));
@@ -2926,7 +2927,7 @@ const AWARD_META={
   scorer:{em:'⚽',title:'Torjäger',cls:'orange',why:'Höchster Tore-Durchschnitt pro Spiel als Stürmer (min. 2 Spiele). Team-Tore gehen an den Stürmer.'},
   wall:{em:'🧱',title:'Eiserne Abwehr',cls:'blue',why:'Wenigste Gegentore pro Spiel — nur in Spielen als Verteidiger (min. 2 Spiele).'},
   ice:{em:'🧊',title:'Eiskalt',cls:'blue',why:'Meiste Zu-Null-Siege (max. 2 Gegentore) als Abwehrspieler.'},
-  endgegner:{em:'☠️',title:'Endgegner',cls:'purple',why:'Höchste Siegrate bei min. 5 Spielen — der Spieler, gegen den die Gegner am häufigsten verlieren. Strenger als "Beste Bilanz" durch höhere Mindest-Spielanzahl.'},
+  endgegner:{em:'☠️',title:'Endgegner',cls:'purple',why:'Duo, das am häufigsten als Gegner aufeinandertrifft — die größte Rivalität der Liga (min. 2 Begegnungen).'},
   clutch:{em:'🎯',title:'Clutch-Player',cls:'acid',why:'Höchste Siegrate in knappen Spielen (Tordifferenz ≤ 2). Wer behält in engen Matches die Nerven?'},
   carryKing:{em:'🏋️',title:'Carry-King',cls:'acid',why:'Meiste Siege mit einem Mitspieler aus den unteren 3 der Elo-Rangliste. Wer kann auch schwächere Partner zum Sieg tragen?'},
   bestDuo:{em:'🤝',title:'Unzertrennlich',cls:'blue',why:'Duo mit den meisten gemeinsamen Spielen im Zeitraum.'},
@@ -2993,7 +2994,7 @@ function showAward(key){
   else if(key==='worstWr')rows=ranked(R.worstWr,x=>Math.round(x.wr*100),(x,r)=>podium(r,esc(pname(x.id)),x.w+'–'+(x.g-x.w),Math.round(x.wr*100)+'%'));
   else if(key==='worstAtk')rows=ranked(R.worstAtk,x=>Math.round(x.v/x.g*10),(x,r)=>podium(r,esc(pname(x.id)),x.g+' Sturm-Spiele',(x.v/x.g).toFixed(1)+' Tore/Sp.'));
   else if(key==='worstDef')rows=ranked(R.worstDef,x=>Math.round(x.v/x.g*10),(x,r)=>podium(r,esc(pname(x.id)),x.g+' Abwehr-Spiele',(x.v/x.g).toFixed(1)+' Gegen/Sp.'));
-  else if(key==='endgegner')rows=ranked(R.endgegner,x=>Math.round(x.wr*100),(x,r)=>podium(r,esc(pname(x.id)),x.w+'/'+x.g+' gewonnen',Math.round(x.wr*100)+'%'));
+  else if(key==='endgegner')rows=ranked(R.endgegner,x=>x.g,(x,r)=>podium(r,esc(tn(x.ids)),x.w1+'–'+x.w2+' Bilanz',x.g+' Beg.'));
   else if(key==='clutch')rows=ranked(R.clutchList,x=>Math.round(x.wr*100),(x,r)=>podium(r,esc(pname(x.id)),x.g+' knappe Spiele',Math.round(x.wr*100)+'%'));
   else if(key==='ice')rows=ranked(R.iceList,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),'Zu-Null-Siege als Verteidiger',x.v+'×'));
   else if(key==='worstTeam'){rows=ranked(R.worstTeam,x=>Math.round(x.w/x.g*100),(x,r)=>podium(r,esc(tn(x.ids)),x.w+'–'+(x.g-x.w),Math.round(x.w/x.g*100)+'%'));}
@@ -3794,7 +3795,7 @@ function playerAwards(id){
     wins:R.winsList, streaks:R.streaks, scorer:R.scorer, wall:R.wall,
     perfect:R.perfect, grinder:R.grinder, worstWr:R.worstWr,
     worstAtk:R.worstAtk, worstDef:R.worstDef,
-    endgegner:R.endgegner, clutch:R.clutchList, carryKing:R.carryList,
+    clutch:R.clutchList, carryKing:R.carryList,
     onFire:R.onFire, coldStreak:R.coldStreak, lossStreaks:R.lossStreaks,
     solo:R.soloList, formtief:R.formtief, showmaster:R.showmasterList,
     ice:R.iceList
@@ -3806,7 +3807,7 @@ function playerAwards(id){
     worstWr:x=>-Math.round(x.wr*100), // weniger = "besser" für Schandtafel → negieren
     worstAtk:x=>-Math.round(x.v/x.g*10),
     worstDef:x=>Math.round(x.v/x.g*10),
-    endgegner:x=>Math.round(x.wr*100), clutch:x=>Math.round(x.wr*100),
+    clutch:x=>Math.round(x.wr*100),
     carryKing:x=>x.v, onFire:x=>x.v, coldStreak:x=>x.v,
     lossStreaks:x=>x.v, solo:x=>Math.round(x.wr*100),
     formtief:x=>Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v
@@ -3822,11 +3823,13 @@ function playerAwards(id){
   // Team-Awards
   const teamKeys={
     mvt:R.mvt, bestDuo:R.bestDuo, worstTeam:R.worstTeam,
+    endgegner:R.endgegner,
     zirkus:R.zirkusList, baustelle:R.baustelleList
   };
   const teamValFns={
     mvt:x=>Math.round(x.v), bestDuo:x=>x.g,
     worstTeam:x=>-Math.round(x.w/x.g*100),
+    endgegner:x=>x.g,
     zirkus:x=>x.v, baustelle:x=>x.best
   };
   Object.entries(teamKeys).forEach(([key,arr])=>{
@@ -3891,13 +3894,13 @@ function showPlayer(id){
   // Awards-Kategorisierung: jede Award gehört zu GENAU EINER Kategorie,
   // damit die Summe der Kategorien = Gesamt-Award-Zahl ergibt.
   const ELO_KEYS    = new Set(['upset','biggest','formtief']);
-  const WR_KEYS     = new Set(['perfect','endgegner','clutch','worstWr']);
+  const WR_KEYS     = new Set(['perfect','clutch','worstWr']);
   const STREAK_KEYS = new Set(['streaks','onFire','coldStreak','lossStreaks']);
   const ROLE_KEYS   = new Set(['scorer','wall','ice','worstAtk','worstDef']);
   // Negative Awards die in keine speziellere Kategorie fallen
   const NEG_GENERIC = new Set(['worstTeam','zirkus','baustelle']);
   // Positive Awards die in keine speziellere Kategorie fallen
-  const POS_GENERIC = new Set(['wins','mvt','carryKing','bestDuo','grinder','showmaster','solo']);
+  const POS_GENERIC = new Set(['wins','mvt','carryKing','bestDuo','endgegner','grinder','showmaster','solo']);
 
   const cnt = (set) => awards.filter(a => set.has(a.key)).length;
   const awCats = [
