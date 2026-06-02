@@ -2599,13 +2599,15 @@ upsets.push({sp:1-we,m});
   const clutchList=Object.entries(clutch).filter(([,v])=>v.g>=2)
     .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
 
-  // Eiskalt: Zu-Null-Siege (≤2 Gegentore) als Abwehrspieler
+  // Eiskalt: Zu-Null-Siege (strikt 0 Gegentore) als Abwehrspieler
+  // Nur der Verteidiger des Siegerteams bekommt den Punkt — und nur wenn das Match
+  // wörtlich zu null endete.
   const iceWins={};
   ms.forEach(m=>{
     const defA=m.a1_pos==='def'?m.a1:m.a2;
     const defB=m.b1_pos==='def'?m.b1:m.b2;
-    if(m.winner==='A'&&m.score_b<=2){ensure(iceWins,defA); iceWins[defA]++;}
-    if(m.winner==='B'&&m.score_a<=2){ensure(iceWins,defB); iceWins[defB]++;}
+    if(m.winner==='A'&&m.score_b===0){ensure(iceWins,defA); iceWins[defA]++;}
+    if(m.winner==='B'&&m.score_a===0){ensure(iceWins,defB); iceWins[defB]++;}
   });
   const iceList=Object.entries(iceWins).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
 
@@ -2926,7 +2928,7 @@ const AWARD_META={
   onFire:{em:'🔥',title:'On Fire',cls:'acid',why:'Längste aktuell noch laufende Siegesserie. Wer ist gerade am heißesten?'},
   scorer:{em:'⚽',title:'Torjäger',cls:'orange',why:'Höchster Tore-Durchschnitt pro Spiel als Stürmer (min. 2 Spiele). Team-Tore gehen an den Stürmer.'},
   wall:{em:'🧱',title:'Eiserne Abwehr',cls:'blue',why:'Wenigste Gegentore pro Spiel — nur in Spielen als Verteidiger (min. 2 Spiele).'},
-  ice:{em:'🧊',title:'Eiskalt',cls:'blue',why:'Meiste Zu-Null-Siege (max. 2 Gegentore) als Abwehrspieler.'},
+  ice:{em:'🧊',title:'Eiskalt',cls:'blue',why:'Meiste Zu-Null-Siege (keine Gegentore) als Abwehrspieler.'},
   endgegner:{em:'☠️',title:'Endgegner',cls:'purple',why:'Duo, das am häufigsten als Gegner aufeinandertrifft — die größte Rivalität der Liga (min. 2 Begegnungen).'},
   clutch:{em:'🎯',title:'Clutch-Player',cls:'acid',why:'Höchste Siegrate in knappen Spielen (Tordifferenz ≤ 2). Wer behält in engen Matches die Nerven?'},
   carryKing:{em:'🏋️',title:'Carry-King',cls:'acid',why:'Meiste Siege mit einem Mitspieler aus den unteren 3 der Elo-Rangliste. Wer kann auch schwächere Partner zum Sieg tragen?'},
