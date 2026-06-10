@@ -1887,6 +1887,90 @@ function teamStats(){
   });
   return Object.values(T);
 }
+// Detaillierte Team-Stats für das Team-Profil-Sheet.
+// Ein Walk durch alle Matches → komplettes Detail. Gecached pro Team-Key + Cache-Version.
+function teamDetail(p1,p2){
+  const ids=[p1,p2].sort();
+  const key=ids.join('|');
+  if(!_cache._teamDetail) _cache._teamDetail={};
+  if(_cache._teamDetail[key]) return _cache._teamDetail[key];
+
+  let wins=0,losses=0,gf=0,ga=0,eloDelta=0;
+  const oppStats={}; // einzelner Gegnerspieler → {g,w}
+  const teamMatches=[]; // Matches in denen das Duo zusammen gespielt hat
+  let biggestWin=null, biggestLoss=null, biggestUpset=null;
+
+  for(const m of matches){
+    const onA=(m.a1===ids[0]&&m.a2===ids[1])||(m.a1===ids[1]&&m.a2===ids[0]);
+    const onB=(m.b1===ids[0]&&m.b2===ids[1])||(m.b1===ids[1]&&m.b2===ids[0]);
+    if(!onA&&!onB) continue;
+    const won=(onA&&m.winner==='A')||(onB&&m.winner==='B');
+    const myGf=onA?m.score_a:m.score_b;
+    const myGa=onA?m.score_b:m.score_a;
+    const diff=myGf-myGa;
+    const expected=onA?(m.exp_a||0.5):(1-(m.exp_a||0.5));
+    const t=new Date(m.created_at).getTime();
+
+    gf+=myGf; ga+=myGa;
+    if(won) wins++; else losses++;
+    eloDelta+=((m.deltas&&m.deltas[ids[0]])||0)+((m.deltas&&m.deltas[ids[1]])||0);
+
+    const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
+    opps.forEach(oid=>{
+      if(!oppStats[oid]) oppStats[oid]={g:0,w:0};
+      oppStats[oid].g++; if(won) oppStats[oid].w++;
+    });
+
+    teamMatches.push({m,onA,won,myGf,myGa,diff,expected,t});
+
+    if(won){
+      // Höchster Sieg: größte Tor-Diff, bei Gleichstand der neueste
+      if(!biggestWin || diff>biggestWin.diff || (diff===biggestWin.diff && t>biggestWin.t)){
+        biggestWin={m,diff,t,score:myGf+':'+myGa};
+      }
+      // Größter Upset: niedrigste Erwartung (gewonnenes Spiel), bei Gleichstand der neueste
+      if(!biggestUpset || expected<biggestUpset.expected || (expected===biggestUpset.expected && t>biggestUpset.t)){
+        biggestUpset={m,expected,t,score:myGf+':'+myGa};
+      }
+    } else {
+      // Schlimmste Niederlage: größte negative Diff, bei Gleichstand der neueste
+      const lossDiff=-diff;
+      if(!biggestLoss || lossDiff>biggestLoss.lossDiff || (lossDiff===biggestLoss.lossDiff && t>biggestLoss.t)){
+        biggestLoss={m,lossDiff,t,score:myGf+':'+myGa};
+      }
+    }
+  }
+
+  // Erz-/Lieblingsgegner: einzelne Spieler, min. 2 Begegnungen
+  let nemesis=null, favorite=null;
+  Object.entries(oppStats).forEach(([oid,s])=>{
+    if(s.g<2) return;
+    const wr=s.w/s.g;
+    if(!nemesis || wr<nemesis.wr || (wr===nemesis.wr && s.g>nemesis.g)) nemesis={oid,wr,g:s.g,w:s.w};
+    if(!favorite || wr>favorite.wr || (wr===favorite.wr && s.g>favorite.g)) favorite={oid,wr,g:s.g,w:s.w};
+  });
+  // Wenn Erzgegner == Lieblingsgegner (alle Gegner gleiche WR), nicht doppelt anzeigen
+  if(nemesis && favorite && nemesis.oid===favorite.oid){ favorite=null; }
+
+  // Upset nur zeigen wenn tatsächlich ein Underdog-Sieg (Erwartung < 45%)
+  if(biggestUpset && biggestUpset.expected>=0.45) biggestUpset=null;
+
+  // Letzte 5 Matches (neueste zuerst)
+  const recent=[...teamMatches].sort((a,b)=>b.t-a.t).slice(0,5);
+
+  const games=teamMatches.length;
+  const result={
+    ids, games, wins, losses, gf, ga,
+    gd: gf-ga,
+    wr: games?wins/games:0,
+    eloDelta: Math.round(eloDelta),
+    nemesis, favorite,
+    biggestWin, biggestLoss, biggestUpset,
+    recent
+  };
+  _cache._teamDetail[key]=result;
+  return result;
+}
 function monthlyElo(){
   const now=new Date(), ym=now.getFullYear()+'-'+now.getMonth();
   const pS={},tS={};
@@ -3199,7 +3283,7 @@ function vTeams(){
   const rows=arr.map((t,i)=>{
     const wr=Math.round(t.w/t.g*100),gd=t.gf-t.ga;
     const medal=showBest?medalB(i):'';
-    return `<div class="rrow ${showBest&&i<3?'top'+(i+1):''}">
+    return `<div class="rrow ${showBest&&i<3?'top'+(i+1):''}" data-team="${esc(t.ids.join('|'))}">
       ${medal?`<span class="medal">${medal}</span><span class="pos" style="opacity:0"></span>`:`<span class="pos num">${i+1}</span>`}
       <div class="rmid" style="margin-left:4px"><div class="rname">${esc(t.ids.map(pname).join(' & '))}</div>
         <div class="rmeta"><span>${t.w}–${t.g-t.w}</span><span>TD ${gd>=0?'+':''}${gd}</span></div></div>
@@ -4251,9 +4335,9 @@ function showPlayer(id){
 
     <div class="pp-sec" style="animation-delay:.45s">
       <div class="pp-rel">
-        <div class="pp-r good"><div class="l">${svgI('handshake')} Bester Mate</div>
+        <div class="pp-r good"${best?` data-team="${esc([id,best.mid].sort().join('|'))}" style="cursor:pointer"`:''}><div class="l">${svgI('handshake')} Bester Mate</div>
           <div class="v">${best?esc(pname(best.mid))+' <span class="pct">'+Math.round(best.wr*100)+'%</span> <span class="g">('+Math.round(best.wr*best.g)+'/'+best.g+')</span>':'–'}</div></div>
-        <div class="pp-r bad"><div class="l">${svgI('chartDown')} Schlechtester Mate</div>
+        <div class="pp-r bad"${worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}" style="cursor:pointer"`:''}><div class="l">${svgI('chartDown')} Schlechtester Mate</div>
           <div class="v">${worst&&best&&worst.mid!==best.mid?esc(pname(worst.mid))+' <span class="pct">'+Math.round(worst.wr*100)+'%</span> <span class="g">('+Math.round(worst.wr*worst.g)+'/'+worst.g+')</span>':'–'}</div></div>
         <div class="pp-r fav"><div class="l">${svgI('target')} Lieblingsgegner</div>
           <div class="v">${fav?esc(pname(fav.oid))+' <span class="pct">'+Math.round(fav.wr*100)+'%</span> <span class="g">('+Math.round(fav.wr*fav.g)+'/'+fav.g+')</span>':'–'}</div></div>
@@ -4359,6 +4443,14 @@ function showPlayer(id){
   if(tt) tt.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
   document.querySelectorAll('.pp-trophies .pp-tr').forEach(el=>{
     el.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
+  });
+  // Mate-Karten öffnen das Team-Profil (Spieler + Mate)
+  document.querySelectorAll('[data-team]').forEach(el=>{
+    el.onclick=()=>{
+      const [a,b]=el.dataset.team.split('|');
+      if(!a||!b) return;
+      closeSheet(); setTimeout(()=>showTeam(a,b),350);
+    };
   });
 
   // Delete-Handler – identisch zur Original-Logik
@@ -4736,6 +4828,11 @@ function bind(){
 
   // detail
   document.querySelectorAll('[data-detail]').forEach(el=>el.onclick=()=>showPlayer(el.dataset.detail));
+  // team detail
+  document.querySelectorAll('[data-team]').forEach(el=>el.onclick=()=>{
+    const [a,b]=el.dataset.team.split('|');
+    if(a&&b) showTeam(a,b);
+  });
   const dc=document.getElementById('defenderCard');
   if(dc) dc.onclick=()=>{
     const last=seasons.find(s=>s.id!==currentSeason().id);
@@ -4883,6 +4980,186 @@ function bindSlider(id,key,toState,toLabel){
   sl.onchange=async()=>{const o={};o[key]=toState(+sl.value);await sb.from('config').update(o).eq('id',1);cfg[key]=o[key];invalidateCache();toast('Gespeichert','ok');};
 }
 
+// ════════ TEAM PROFIL SHEET ════════
+function showTeam(p1Id,p2Id){
+  const pm=pmap();
+  const pA=pm[p1Id], pB=pm[p2Id];
+  if(!pA||!pB) return;
+  const d=teamDetail(p1Id,p2Id);
+  if(!d.games){
+    openSheet(`
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Team</div>
+        <h3 style="margin-top:8px">${esc(pA.name)} &amp; ${esc(pB.name)}</h3>
+      </div>
+      ${emptyState('handshake','Noch keine gemeinsamen Spiele')}
+    `);
+    return;
+  }
+
+  const wr=Math.round(d.wr*100);
+  const gdStr=(d.gd>=0?'+':'')+d.gd;
+  const eloStr=(d.eloDelta>=0?'+':'')+d.eloDelta;
+  const eloColor=d.eloDelta>=0?'var(--acid)':'var(--red)';
+
+  // Großes Avatar je Spieler (64px)
+  const avBig=(p)=>{
+    const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
+    if(em) return `<div style="width:64px;height:64px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:32px;border:2px solid var(--line2)">${em}</div>`;
+    return `<div style="width:64px;height:64px;border-radius:50%;background:${avColor(p.id)};display:grid;place-items:center;font-size:22px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;border:2px solid var(--line2)">${esc(initials(p.name))}</div>`;
+  };
+  // Kleines Avatar (für Gegner-Rows, 30px)
+  const avSm=(p,marginLeft)=>{
+    if(!p) return '';
+    const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
+    const ml=marginLeft?'margin-left:-8px;':'';
+    if(em) return `<div style="width:30px;height:30px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:14px;border:2px solid var(--surface);${ml}">${em}</div>`;
+    return `<div style="width:30px;height:30px;border-radius:50%;background:${avColor(p.id)};display:grid;place-items:center;font-size:11px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;border:2px solid var(--surface);${ml}">${esc(initials(p.name))}</div>`;
+  };
+
+  // Gegnerspieler-Karte (einzelner Spieler)
+  const oppRow=(opp,label,labelColor)=>{
+    const op=pm[opp.oid]; if(!op) return '';
+    return `<div style="margin-bottom:14px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">${label}</div>
+      <div class="rrow" data-detail="${esc(op.id)}" style="padding:12px 14px">
+        ${avSm(op,false)}
+        <div class="rmid" style="margin-left:11px">
+          <div class="rname" style="font-size:13px">${esc(op.name)}</div>
+          <div class="rmeta"><span class="num">${opp.g} Begegnungen</span></div>
+        </div>
+        <div class="num" style="font-size:13px;font-weight:600;flex-shrink:0">
+          <span style="color:var(--acid)">${opp.w}</span><span style="color:var(--faint)"> · </span><span style="color:var(--red)">${opp.g-opp.w}</span>
+        </div>
+      </div>
+    </div>`;
+  };
+
+  // Highlight-Karte (höchster Sieg / Upset / schlimmste Pleite)
+  const highlightRow=(entry,kind)=>{
+    if(!entry) return '';
+    const m=entry.m;
+    const onA=(m.a1===d.ids[0]&&m.a2===d.ids[1])||(m.a1===d.ids[1]&&m.a2===d.ids[0]);
+    const oppIds=onA?[m.b1,m.b2]:[m.a1,m.a2];
+    const o1=pm[oppIds[0]], o2=pm[oppIds[1]];
+    const won=kind!=='loss';
+    const meta = kind==='upset'
+      ? `Erwartung ${Math.round(entry.expected*100)}%`
+      : dateStr(m.created_at);
+    const labelMap={
+      win:    {l:'Höchster Sieg',     ic:'explosion', col:'var(--acid)'},
+      upset:  {l:'Größter Upset',     ic:'tornado',   col:'var(--purple)'},
+      loss:   {l:'Schlimmste Pleite', ic:'skull',     col:'var(--red)'}
+    };
+    const cfg=labelMap[kind];
+    return `<div class="rrow" data-match="${esc(m.id)}" style="padding:11px 13px;display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--bg2);color:${cfg.col};display:grid;place-items:center;flex-shrink:0">
+        <span class="ic svg-ic" style="font-size:16px">${svgI(cfg.ic)}</span>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;color:${cfg.col};font-weight:700;text-transform:uppercase;letter-spacing:.08em;line-height:1">${cfg.l}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px" class="num">vs ${esc((o1?o1.name:'?')+' & '+(o2?o2.name:'?'))} · ${meta}</div>
+      </div>
+      <div class="num" style="font-size:14px;font-weight:700;color:${won?'var(--acid)':'var(--red)'};flex-shrink:0">${entry.score}</div>
+    </div>`;
+  };
+
+  const highlights=[
+    highlightRow(d.biggestWin,'win'),
+    highlightRow(d.biggestUpset,'upset'),
+    highlightRow(d.biggestLoss,'loss')
+  ].filter(Boolean).join('');
+
+  // Letzte 5 Matches
+  const recentRows=d.recent.map(r=>{
+    const m=r.m;
+    const oppIds=r.onA?[m.b1,m.b2]:[m.a1,m.a2];
+    const o1=pm[oppIds[0]], o2=pm[oppIds[1]];
+    const won=r.won;
+    return `<div class="rrow" data-match="${esc(m.id)}" style="padding:10px 13px;display:flex;align-items:center;gap:10px">
+      <div style="width:24px;height:24px;border-radius:50%;background:${won?'rgba(200,255,77,.12)':'rgba(240,86,106,.12)'};color:${won?'var(--acid)':'var(--red)'};display:grid;place-items:center;flex-shrink:0">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          ${won?'<polyline points="4,12 10,18 20,6"/>':'<path d="M6 6L18 18M6 18L18 6"/>'}
+        </svg>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;line-height:1.2">vs <span style="color:var(--ink2)">${esc((o1?o1.name:'?')+' & '+(o2?o2.name:'?'))}</span></div>
+        <div class="num" style="font-size:10px;color:var(--muted);margin-top:2px">${dateStr(m.created_at)}</div>
+      </div>
+      <div class="num" style="font-size:13px;font-weight:600;color:var(--ink);flex-shrink:0">${m.score_a} : ${m.score_b}</div>
+    </div>`;
+  }).join('');
+
+  openSheet(`
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Team</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:14px">
+        <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--muted)">&amp;</div>
+        <div data-detail="${esc(pB.id)}" style="cursor:pointer">${avBig(pB)}</div>
+      </div>
+      <div style="font-family:'Archivo Black',sans-serif;font-size:20px;letter-spacing:-.02em;line-height:1.1;margin-top:14px">${esc(pA.name)} &amp; ${esc(pB.name)}</div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-bottom:18px">
+      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
+        <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${d.games}</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Spiele</div>
+      </div>
+      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
+        <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--acid);line-height:1">${wr}%</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Quote</div>
+      </div>
+      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
+        <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${gdStr}</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Tordiff</div>
+      </div>
+      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
+        <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:${eloColor};line-height:1">${eloStr}</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Elo</div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Bilanz</div>
+      <div style="display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--line)">
+        <div style="width:${d.games?(d.wins/d.games*100):0}%;background:var(--acid)"></div>
+        <div style="width:${d.games?(d.losses/d.games*100):0}%;background:var(--red)"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px" class="num">
+        <span style="color:var(--acid)">${d.wins} Siege</span>
+        <span style="color:var(--red)">${d.losses} Pleiten</span>
+      </div>
+    </div>
+
+    ${d.nemesis?oppRow(d.nemesis,'Erzgegner'):''}
+    ${d.favorite?oppRow(d.favorite,'Lieblingsgegner'):''}
+
+    ${highlights?`
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Highlights</div>
+      <div style="display:flex;flex-direction:column;gap:6px">${highlights}</div>
+    </div>`:''}
+
+    ${recentRows?`
+    <div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Letzte Spiele</div>
+      <div style="display:flex;flex-direction:column;gap:6px">${recentRows}</div>
+    </div>`:''}
+  `);
+
+  // Innerhalb des Sheets klickbar machen
+  const sheetEl=document.getElementById('sheet');
+  if(sheetEl){
+    sheetEl.querySelectorAll('[data-detail]').forEach(el=>{
+      el.onclick=()=>{const pid=el.dataset.detail; closeSheet(); setTimeout(()=>showPlayer(pid),350);};
+    });
+    sheetEl.querySelectorAll('[data-match]').forEach(el=>{
+      el.onclick=()=>{const mid=el.dataset.match; closeSheet(); setTimeout(()=>showMatchDetail(mid),350);};
+    });
+  }
+}
+
 function showMatchDetail(mid){
   const m=matches.find(x=>x.id===mid);if(!m)return;
   // Live aus globalSim lesen — m.deltas ist evtl. veraltet/leer bei alten Matches.
@@ -4905,6 +5182,16 @@ function showMatchDetail(mid){
     </div>`:''
   ;
   openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · Team ${m.winner} gewinnt</div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <div data-team="${esc([m.a1,m.a2].sort().join('|'))}" style="flex:1;background:var(--surface);border:1px solid ${m.winner==='A'?'var(--acid2)':'var(--line)'};border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Sometype Mono',monospace">Team A</div>
+        <div style="font-size:12px;margin-top:2px;line-height:1.2">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
+      </div>
+      <div data-team="${esc([m.b1,m.b2].sort().join('|'))}" style="flex:1;background:var(--surface);border:1px solid ${m.winner==='B'?'var(--acid2)':'var(--line)'};border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Sometype Mono',monospace">Team B</div>
+        <div style="font-size:12px;margin-top:2px;line-height:1.2">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
+      </div>
+    </div>
     <div class="preview" style="margin-top:16px"><div class="delta-list">
       ${line(m.a1,m.a1_pos)}${line(m.a2,m.a2_pos)}<div class="delta-div"></div>${line(m.b1,m.b1_pos)}${line(m.b2,m.b2_pos)}
     </div></div>
@@ -4972,6 +5259,14 @@ function showMatchDetail(mid){
     await persistRecalc(rest);
     toast('Gelöscht & neu berechnet','ok'); await loadAll();
   };
+  // Team-Chips → Team-Profil
+  document.querySelectorAll('[data-team]').forEach(el=>{
+    el.onclick=()=>{
+      const [a,b]=el.dataset.team.split('|');
+      if(!a||!b) return;
+      closeSheet(); setTimeout(()=>showTeam(a,b),350);
+    };
+  });
 }
 
 // ════════ MATCH BEARBEITEN ════════
