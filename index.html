@@ -214,6 +214,67 @@
   .defender-card .sub{font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace;margin-top:3px}
   .season-countdown{text-align:center;font-size:11px;color:var(--muted);padding:6px 0 10px;font-family:'Sometype Mono',monospace}
 
+  /* === SAISON-ÜBERSICHT REDESIGN === */
+  /* Fortschritts-Balken */
+  .season-progress{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin-bottom:10px}
+  .season-progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+  .season-progress-label{font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--muted);font-family:'Sometype Mono',monospace;font-weight:600}
+  .season-progress-days{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--ink);font-weight:600}
+  .season-progress-days b{color:var(--acid)}
+  .season-progress-bar{height:5px;background:var(--bg2);border-radius:99px;overflow:hidden;position:relative}
+  .season-progress-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--acid),#a3e635);border-radius:99px;box-shadow:0 0 8px rgba(200,255,77,.4);transition:width .4s ease}
+
+  /* Champion-Hero */
+  .season-hero{position:relative;background:linear-gradient(135deg,rgba(247,207,74,.10),var(--surface) 55%);border:1px solid rgba(247,207,74,.4);border-radius:20px;padding:18px;margin-bottom:10px;overflow:hidden}
+  .season-hero::before{content:"";position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(247,207,74,.15),transparent 70%);pointer-events:none}
+  .sh-row{display:flex;align-items:center;gap:14px;position:relative}
+  .sh-av-wrap{position:relative;flex-shrink:0}
+  .sh-av{width:72px;height:72px;border-radius:50%;display:grid;place-items:center;font-size:36px;
+    border:3px solid var(--gold);box-shadow:0 0 18px rgba(247,207,74,.4)}
+  .sh-av.tier-legende  {border-color:var(--gold);  box-shadow:0 0 18px rgba(247,207,74,.4)}
+  .sh-av.tier-elite    {border-color:var(--purple);box-shadow:0 0 18px rgba(167,139,250,.4)}
+  .sh-av.tier-stark    {border-color:var(--acid);  box-shadow:0 0 18px rgba(200,255,77,.4)}
+  .sh-av.tier-solide   {border-color:var(--blue);  box-shadow:0 0 18px rgba(86,180,232,.4)}
+  .sh-av.tier-einsteiger{border-color:var(--orange);box-shadow:0 0 18px rgba(255,120,73,.4)}
+  .sh-av .em{font-size:36px}
+  .sh-av:not(.has-emoji){font-family:'Archivo Black',sans-serif;font-size:22px;color:#0a0c0b}
+  .sh-crown{position:absolute;top:-12px;left:50%;transform:translateX(-50%);font-size:20px;line-height:1;z-index:3}
+  .sh-info{flex:1;min-width:0}
+  .sh-label{font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--gold);font-weight:700;font-family:'Sometype Mono',monospace}
+  .sh-name{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;margin-top:4px;line-height:1}
+  .sh-name-empty{font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--muted);margin-top:4px;line-height:1}
+  .sh-meta{font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted);margin-top:5px}
+  .sh-elo-wrap{text-align:right;flex-shrink:0}
+  .sh-elo-v{font-family:'Archivo Black',sans-serif;font-size:24px;color:var(--acid);line-height:1}
+  .sh-elo-l{font-size:8.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-family:'Sometype Mono',monospace;font-weight:700;margin-top:3px}
+  .sh-stats{display:flex;align-items:center;gap:14px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(247,207,74,.18);position:relative}
+  .sh-stat{flex:0 0 auto;min-width:0}
+  .sh-stat .v{font-family:'Archivo Black',sans-serif;font-size:15px;line-height:1}
+  .sh-stat .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-family:'Sometype Mono',monospace;margin-top:3px;font-weight:600}
+  .sh-stat .v.acid{color:var(--acid)}
+  .sh-stat .v.red {color:var(--red)}
+  .sh-form{margin-left:auto;display:flex;gap:3px;align-items:center}
+  .sh-form .dot{width:7px;height:7px;border-radius:50%}
+  .sh-form .dot.w{background:var(--acid)}
+  .sh-form .dot.l{background:var(--red)}
+
+  /* Kompakte Side-Chips (Team + Defender) */
+  .sh-side{display:flex;gap:8px;margin-bottom:10px}
+  .sh-chip{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 13px;min-width:0;position:relative;overflow:hidden}
+  .sh-chip.team{background:linear-gradient(135deg,rgba(86,180,232,.06),var(--surface) 70%);border-color:rgba(86,180,232,.3)}
+  .sh-chip.def {background:linear-gradient(135deg,rgba(167,139,250,.05),var(--surface) 70%);border-color:rgba(167,139,250,.25)}
+  .sh-chip.clickable{cursor:pointer;transition:.16s}
+  .sh-chip.clickable:active{transform:scale(.985);background:var(--surface2)}
+  .sh-chip-label{font-size:8.5px;text-transform:uppercase;letter-spacing:.13em;font-weight:700;font-family:'Sometype Mono',monospace;margin-bottom:7px}
+  .sh-chip.team .sh-chip-label{color:var(--blue)}
+  .sh-chip.def  .sh-chip-label{color:var(--purple)}
+  .sh-chip-row{display:flex;align-items:center;gap:8px}
+  .sh-chip-pair{display:flex;flex-shrink:0}
+  .sh-chip-av,.sh-chip-pair .sh-chip-av{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;border:1.5px solid var(--surface);flex-shrink:0;font-family:'Archivo Black',sans-serif;color:#0a0c0b}
+  .sh-chip-pair .sh-chip-av+.sh-chip-av{margin-left:-7px}
+  .sh-chip-name{font-family:'Archivo Black',sans-serif;font-size:12px;letter-spacing:-.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+  .sh-chip-detail{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:4px}
+
   /* ============ MATCH BUILDER ============ */
   .builder{display:flex;flex-direction:column;gap:12px}
   .team-block{border-radius:var(--r);padding:15px;border:1px solid var(--line);position:relative}
@@ -449,6 +510,24 @@
   .aw-pod-block.gold  {background:linear-gradient(180deg,var(--gold),rgba(247,207,74,.3));color:#1d1700;height:62px}
   .aw-pod-block.silver{background:linear-gradient(180deg,#c8d0cb,rgba(200,208,203,.3));color:#1a1f1c;height:48px}
   .aw-pod-block.bronze{background:linear-gradient(180deg,var(--orange),rgba(255,120,73,.3));color:#2a1108;height:36px}
+
+  /* Geteilte Plätze: mehrere Einträge im selben Podium-Slot */
+  .aw-pod-tied-avs{display:flex;align-items:center;justify-content:center;position:relative;z-index:2}
+  .aw-pod-tied-avs .aw-pod-av+.aw-pod-av{margin-left:-12px}
+  .aw-pod.tied .aw-pod-av{width:38px;height:38px;font-size:18px;border:2px solid var(--surface)}
+  .aw-pod.tied.first .aw-pod-av{width:44px;height:44px;font-size:20px;border-color:var(--gold);box-shadow:0 0 14px rgba(247,207,74,.3)}
+  .aw-pod.tied .aw-pod-pair .aw-pod-av{width:32px;height:32px;font-size:14px}
+  .aw-pod.tied.first .aw-pod-pair .aw-pod-av{width:38px;height:38px;font-size:16px}
+  .aw-pod-tied-names{margin-top:8px;display:flex;flex-direction:column;gap:1px;max-width:100%;text-align:center}
+  .aw-pod-tied-names .nm{font-family:'Archivo Black',sans-serif;font-size:10.5px;letter-spacing:-.01em;line-height:1.25;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .aw-pod.tied.first .aw-pod-tied-names .nm{font-size:12px}
+  .aw-pod-tied-names .more{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted);font-weight:600;margin-top:2px;letter-spacing:.04em}
+  /* Tied-Badge unter den Namen */
+  .aw-pod-tied-badge{font-family:'Sometype Mono',monospace;font-size:8.5px;color:var(--muted);font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
+
+  /* Empty-Slot dezenter „—" Hinweis */
+  .aw-pod.empty .aw-pod-empty-hint{font-family:'Sometype Mono',monospace;font-size:14px;color:var(--faint);margin-bottom:6px}
 
   /* Match-Award detail (Upset / Höchster Sieg) */
   .aw-match{margin-top:18px;background:linear-gradient(135deg,rgba(247,207,74,.06),var(--surface) 55%);
@@ -869,6 +948,85 @@
     font-size:13px;font-weight:400}
   .pp-percentile-foot .top{color:var(--pp-tier-1);font-weight:700;
     font-family:'Archivo Black',sans-serif;font-size:13px}
+
+  /* === SPIELERPROFIL REDESIGN === */
+  /* Elo-Sparkline im Header */
+  .pp-spark{margin:14px auto 4px;max-width:300px;height:42px;position:relative}
+  .pp-spark svg{width:100%;height:100%;display:block;overflow:visible}
+  .pp-spark-foot{display:flex;justify-content:space-between;align-items:baseline;
+    font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);letter-spacing:.08em;
+    text-transform:uppercase;margin-top:5px;max-width:300px;margin-left:auto;margin-right:auto}
+  .pp-spark-foot .delta{font-weight:700;letter-spacing:.04em}
+  .pp-spark-foot .delta.pos{color:var(--acid)}
+  .pp-spark-foot .delta.neg{color:var(--red)}
+
+  /* Tier-Pill: dezent in Tier-Farbe getönt */
+  .pp-tier-legende    .pp-badge-inline{background:rgba(247,207,74,.12);border-color:rgba(247,207,74,.3);color:var(--gold)}
+  .pp-tier-elite      .pp-badge-inline{background:rgba(167,139,250,.12);border-color:rgba(167,139,250,.3);color:var(--purple)}
+  .pp-tier-stark      .pp-badge-inline{background:rgba(200,255,77,.12);border-color:rgba(200,255,77,.3);color:var(--acid)}
+  .pp-tier-solide     .pp-badge-inline{background:rgba(86,180,232,.12);border-color:rgba(86,180,232,.3);color:var(--blue)}
+  .pp-tier-einsteiger .pp-badge-inline{background:rgba(255,120,73,.12);border-color:rgba(255,120,73,.3);color:var(--orange)}
+
+  /* Combined Position Card (Sturm + Abwehr in einer Karte) */
+  .pp-pos-combined{position:relative;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:14px;overflow:hidden}
+  .pp-pos-combined .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:11px}
+  .pp-pos-combined .head .t{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace}
+  .pp-pos-combined .head .vol{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted)}
+  .pp-pos-combined .head .vol b{color:var(--ink);font-weight:600}
+  .pp-pos-split{display:flex;height:54px;border-radius:12px;overflow:hidden;background:var(--bg2);min-width:0}
+  .pp-pos-side{display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:'Archivo Black',sans-serif;position:relative;min-width:0;padding:0 4px;transition:flex .3s ease}
+  .pp-pos-side.atk{background:linear-gradient(135deg,rgba(255,120,73,.18),rgba(255,120,73,.04));color:var(--orange);border-right:1px solid var(--line)}
+  .pp-pos-side.def{background:linear-gradient(135deg,rgba(86,180,232,.04),rgba(86,180,232,.18));color:var(--blue)}
+  .pp-pos-side.empty{color:var(--muted);background:var(--bg2)}
+  .pp-pos-side .ic{position:absolute;top:5px;opacity:.55}
+  .pp-pos-side.atk .ic{left:8px}
+  .pp-pos-side.def .ic{right:8px}
+  .pp-pos-side .ic svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2}
+  .pp-pos-side .v{font-size:18px;line-height:1}
+  .pp-pos-side .v small{font-size:11px;font-weight:400;opacity:.7}
+  .pp-pos-side .lbl{font-size:8px;letter-spacing:.16em;text-transform:uppercase;font-family:'Sometype Mono',monospace;font-weight:700;margin-top:3px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+
+  /* Relationship-Cards mit Mate/Gegner-Avatar */
+  .pp-r-rich{padding:11px 12px;background:var(--surface);border:1px solid rgba(255,255,255,.05);
+    border-radius:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:transform .12s,background .12s;border-left-width:2px;border-left-style:solid}
+  .pp-r-rich:active{transform:scale(.985);background:var(--surface2)}
+  .pp-r-rich.good{border-left-color:var(--acid);background:linear-gradient(135deg,rgba(200,255,77,.04),var(--surface) 70%)}
+  .pp-r-rich.bad {border-left-color:var(--red); background:linear-gradient(135deg,rgba(240,86,106,.03),var(--surface) 70%)}
+  .pp-r-rich.fav {border-left-color:var(--blue);background:linear-gradient(135deg,rgba(86,180,232,.04),var(--surface) 70%)}
+  .pp-r-rich.nem {border-left-color:var(--orange);background:linear-gradient(135deg,rgba(255,120,73,.04),var(--surface) 70%)}
+  .pp-r-rich .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex-shrink:0;border:1.5px solid var(--surface);font-family:'Archivo Black',sans-serif;color:#0a0c0b}
+  .pp-r-rich .av.empty{background:var(--surface3);color:var(--muted);font-size:14px}
+  .pp-r-rich .info{flex:1;min-width:0}
+  .pp-r-rich .l{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:'Sometype Mono',monospace;display:flex;align-items:center;gap:4px;line-height:1}
+  .pp-r-rich .l svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
+  .pp-r-rich .name{font-family:'Archivo Black',sans-serif;font-size:12.5px;letter-spacing:-.01em;margin-top:4px;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pp-r-rich .stat{font-family:'Sometype Mono',monospace;font-size:10.5px;margin-top:3px;font-weight:600}
+  .pp-r-rich.good .stat .v{color:var(--acid)}
+  .pp-r-rich.bad  .stat .v{color:var(--red)}
+  .pp-r-rich.fav  .stat .v{color:var(--blue)}
+  .pp-r-rich.nem  .stat .v{color:var(--orange)}
+  .pp-r-rich .stat .g{color:var(--muted);font-weight:400;margin-left:3px}
+
+  /* Karriere-Rang Journey-Bar */
+  .pp-ranks-journey{position:relative;height:58px;padding:0 16px;margin-top:4px}
+  .pp-rj-track{position:absolute;left:24px;right:24px;top:18px;height:3px;background:var(--surface3);border-radius:99px}
+  .pp-rj-tiers{display:flex;justify-content:space-between;position:relative}
+  .pp-rj-tier{display:flex;flex-direction:column;align-items:center;width:48px}
+  .pp-rj-dot{width:14px;height:14px;border-radius:50%;background:var(--bg2);border:2px solid var(--line);position:relative;z-index:2;margin-top:11px;transition:.2s}
+  .pp-rj-tier.done .pp-rj-dot{background:var(--surface3);border-color:var(--surface3)}
+  .pp-rj-tier.active .pp-rj-dot{transform:scale(1.4);background:var(--pp-tier-1);border-color:var(--pp-tier-1);box-shadow:0 0 12px var(--pp-tier-glow)}
+  .pp-rj-lbl{font-family:'Archivo Black',sans-serif;font-size:8.5px;letter-spacing:.04em;color:var(--faint);margin-top:7px;transition:.2s;white-space:nowrap}
+  .pp-rj-tier.done .pp-rj-lbl{color:var(--muted)}
+  .pp-rj-tier.active .pp-rj-lbl{color:var(--pp-tier-1);font-size:9.5px}
+
+  /* Section-Title mit Trend (Saisons-Rail) */
+  .pp-sec-title .trend{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--acid);font-weight:600;letter-spacing:.04em}
+  .pp-sec-title .trend.neg{color:var(--red)}
+  .pp-sec-title .trend.neutral{color:var(--muted)}
+  /* Erstplatz-Marker im Rail */
+  .pp-sn.gold{position:relative}
+  .pp-sn.gold::before{content:"";position:absolute;top:-4px;left:50%;transform:translateX(-50%);width:6px;height:6px;background:var(--gold);border-radius:50%;box-shadow:0 0 8px rgba(247,207,74,.6);z-index:2}
 
   .pp-del{margin-top:18px;text-align:center}
   .pp-del button{background:transparent;border:1px solid rgba(240,86,106,.2);color:var(--red);
@@ -2653,6 +2811,14 @@ function vRanking(){
     })();
     // Team of the Season + Titelverteidiger
     let teamBannerHtml='', defenderCards='', bestTeamKey='';
+    // Hilfsfunktion für kleine Chip-Avatare (22 px)
+    const chipAv=(pid)=>{
+      const pp=pmap()[pid];
+      if(!pp) return `<div class="sh-chip-av" style="background:var(--surface3);color:var(--muted)">?</div>`;
+      const em=pp.avatar_id?avatarEmoji(pp.avatar_id):null;
+      if(em) return `<div class="sh-chip-av" style="background:var(--surface3);color:inherit;font-size:13px">${em}</div>`;
+      return `<div class="sh-chip-av" style="background:${avColor(pid)}">${esc(initials(pp.name))}</div>`;
+    };
     if(period==='season'){
       const seasonMs=periodMs; // bereits gecacht
       const T={};
@@ -2672,63 +2838,149 @@ function vRanking(){
       if(bestTeamEntry){
         const ids=bestTeamEntry[0].split('|');
         bestTeamKey=ids.sort().join('|');
-        const tn=ids.map(pname).join(' & ');
         const eloGain=Math.round(bestTeamEntry[1]);
         const tData=Object.values(T).find(t=>t.ids[0]===ids[0]&&t.ids[1]===ids[1]);
         teamBannerHtml=`
-          <div class="champ-label" style="color:var(--blue)">Team of the Season</div>
-          <div style="font-family:'Archivo Black',sans-serif;font-size:15px;margin-top:4px">${esc(tn)}</div>
-          <div style="font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace;margin-top:3px">${eloGain>=0?'+':''}${eloGain} Elo${tData?' · '+tData.w+'/'+tData.g:''}</div>`;
+          <div class="sh-chip team clickable" id="seasonTeamCard" data-team="${esc(bestTeamKey)}">
+            <div class="sh-chip-label">Team of the Season</div>
+            <div class="sh-chip-row">
+              <div class="sh-chip-pair">${chipAv(ids[0])}${chipAv(ids[1])}</div>
+              <div class="sh-chip-name">${esc(ids.map(pname).join(' & '))}</div>
+            </div>
+            <div class="sh-chip-detail">${eloGain>=0?'+':''}${eloGain} Elo${tData?' · '+tData.w+'/'+tData.g:''}</div>
+          </div>`;
       } else {
         teamBannerHtml=`
-          <div class="champ-label" style="color:var(--blue)">Team of the Season</div>
-          <div style="font-family:'Archivo Black',sans-serif;font-size:15px;margin-top:4px">noch offen</div>
-          <div style="font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace;margin-top:3px">min. 2 gemeinsame Spiele</div>`;
+          <div class="sh-chip team" id="seasonTeamCard">
+            <div class="sh-chip-label">Team of the Season</div>
+            <div class="sh-chip-row">
+              <div class="sh-chip-av" style="background:var(--surface3);color:var(--muted)">?</div>
+              <div class="sh-chip-name" style="color:var(--muted)">noch offen</div>
+            </div>
+            <div class="sh-chip-detail">min. 2 gemeinsame Spiele</div>
+          </div>`;
       }
       if(seasons.length){
         const last=seasons.find(s=>s.id!==currentSeason().id);
         if(last&&last.player_id){
           const titleCount=seasons.filter(s=>s.id!==currentSeason().id&&s.player_id===last.player_id).length;
-          defenderCards=`<div class="defender-card" id="defenderCard" style="cursor:pointer;margin-bottom:0;padding:14px">
-            <div class="label">Defending Champion</div>
-            <div class="name">${esc(pname(last.player_id))}</div>
-            <div class="sub">${last.label}${titleCount>1?' · '+titleCount+' Titel':''}</div>
-          </div>`;
+          defenderCards=`
+            <div class="sh-chip def clickable" id="defenderCard">
+              <div class="sh-chip-label">Defending Champion</div>
+              <div class="sh-chip-row">
+                ${chipAv(last.player_id)}
+                <div class="sh-chip-name">${esc(pname(last.player_id))}</div>
+              </div>
+              <div class="sh-chip-detail">${last.label}${titleCount>1?' · '+titleCount+' Titel':''}</div>
+            </div>`;
         }
       }
     }
 
-    const countdownHtml=period==='season'?`<div class="season-countdown">noch ${seasonDaysLeft()} Tag${seasonDaysLeft()!==1?'e':''} in dieser Saison</div>`:'';
+    // Saison-Fortschritt: Tag X von Y mit Balken (ersetzt den alten Countdown)
+    let seasonProgressHtml='';
+    if(period==='season'){
+      const sStart=seasonStart();
+      const sEnd=seasonEnd();
+      const totalMs=sEnd-sStart;
+      const elapsedMs=Math.max(0,Math.min(totalMs,Date.now()-sStart));
+      const dayElapsed=Math.max(1,Math.ceil(elapsedMs/(1000*60*60*24)));
+      const dayTotal=Math.ceil(totalMs/(1000*60*60*24));
+      const pct=Math.round((elapsedMs/totalMs)*100);
+      seasonProgressHtml=`
+        <div class="season-progress">
+          <div class="season-progress-top">
+            <span class="season-progress-label">Saison-Fortschritt</span>
+            <span class="season-progress-days">Tag <b>${dayElapsed}</b> von ${dayTotal}</span>
+          </div>
+          <div class="season-progress-bar"><i style="width:${pct}%"></i></div>
+        </div>`;
+    }
 
     // Player of Season: Vorsprung auf Platz 2
     const gap2=ps.length>=2&&winner?Math.round(winner.elo-(ps.find(x=>x.id!==winner.id)||{elo:0}).elo):0;
 
-    // Kompakte Hero-Section für Saison
-    const heroSection=period==='season'?`
-      <div style="display:flex;gap:10px;margin-bottom:10px">
-        <div class="champ-banner" style="flex:1;margin-bottom:0;padding:16px 14px" id="seasonLeaderCard">
-          <div class="champ-label">Player of the Season</div>
-          <div class="champ-name" style="font-size:22px">${winner?esc(pmap()[winner.id].name):'noch offen'}</div>
-          <div class="champ-detail">${winner?winner.elo+' Elo · '+winner.wins+'W'+winner.losses+'L':'–'}</div>
-          ${gap2>0?`<div style="font-size:10px;color:var(--gold);margin-top:4px">+${gap2} Vorsprung</div>`:''}
-        </div>
-      </div>
-      <div style="display:flex;gap:10px;margin-bottom:10px">
-        ${teamBannerHtml?`<div class="team-season-card" style="flex:1;margin-bottom:0;padding:14px${bestTeamKey?';cursor:pointer':''}" id="seasonTeamCard"${bestTeamKey?` data-team="${esc(bestTeamKey)}"`:''}>${teamBannerHtml}</div>`:''}
-        ${defenderCards?`<div style="flex:1">${defenderCards}</div>`:''}
-      </div>
-    `:`
-      <div class="champ-banner" style="margin-bottom:10px">
-        <div class="champ-label">Wochensieger</div>
-        <div class="champ-name">${winner?esc(pmap()[winner.id].name):'noch offen'}</div>
-        <div class="champ-detail">${winner?winner.wins+' Siege · '+Math.round(winner.wins/winner.games*100)+'% WR':'min. 5 Siege benötigt'}</div>
-      </div>
-    `;
+    // Champion-Hero-Card (Saison-Modus) bzw. Wochensieger-Card (Wochen-Modus)
+    let heroSection='';
+    if(period==='season'){
+      if(winner){
+        const wp=pmap()[winner.id];
+        const wWr=winner.games?Math.round(winner.wins/winner.games*100):0;
+        // Tier-Klasse für den Avatar-Glow
+        const rinf=getPlayerRank(winner.id);
+        const tierCls=rinf?('tier-'+rinf.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u')):'';
+        const isLegend=rinf&&rinf.label==='Legende';
+        // Avatar (72 px, getöntem Border je Tier)
+        const em=wp.avatar_id?avatarEmoji(wp.avatar_id):null;
+        const avInner=em
+          ? `<div class="sh-av has-emoji ${tierCls}" style="background:var(--surface3)"><span class="em">${em}</span></div>`
+          : `<div class="sh-av ${tierCls}" style="background:${avColor(wp.id)}">${esc(initials(wp.name))}</div>`;
+        // Form-Dots des Champions (letzte 5 Saison-Matches)
+        const winnerForm=(()=>{
+          const ms2=periodMs.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(winner.id))
+            .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5).reverse();
+          return ms2.map(m=>{const onA=[m.a1,m.a2].includes(winner.id);
+            const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
+            return `<div class="dot ${w?'w':'l'}"></div>`;}).join('');
+        })();
+        const gdColor=winner.gd>=0?'var(--ink)':'var(--red)';
+        heroSection=`
+          <div class="season-hero" id="seasonLeaderCard">
+            <div class="sh-row">
+              <div class="sh-av-wrap">
+                ${isLegend?'<div class="sh-crown">👑</div>':''}
+                ${avInner}
+              </div>
+              <div class="sh-info">
+                <div class="sh-label">Player of the Season</div>
+                <div class="sh-name">${esc(wp.name)}</div>
+                <div class="sh-meta">${gap2>0?'+'+gap2+' Vorsprung · ':''}${wWr}% Quote</div>
+              </div>
+              <div class="sh-elo-wrap">
+                <div class="sh-elo-v">${winner.elo}</div>
+                <div class="sh-elo-l">Elo</div>
+              </div>
+            </div>
+            <div class="sh-stats">
+              <div class="sh-stat"><div class="v acid">${winner.wins}</div><div class="l">Siege</div></div>
+              <div class="sh-stat"><div class="v red">${winner.losses}</div><div class="l">Pleiten</div></div>
+              <div class="sh-stat"><div class="v" style="color:${gdColor}">${winner.gd>=0?'+':''}${winner.gd}</div><div class="l">Tordiff</div></div>
+              ${winnerForm?`<div class="sh-form">${winnerForm}</div>`:''}
+            </div>
+          </div>`;
+      } else {
+        heroSection=`
+          <div class="season-hero" id="seasonLeaderCard">
+            <div class="sh-row">
+              <div class="sh-av-wrap">
+                <div class="sh-av" style="background:var(--surface3);border-color:var(--line);box-shadow:none;color:var(--muted);font-size:32px">?</div>
+              </div>
+              <div class="sh-info">
+                <div class="sh-label">Player of the Season</div>
+                <div class="sh-name-empty">noch offen</div>
+                <div class="sh-meta">Saison läuft</div>
+              </div>
+            </div>
+          </div>`;
+      }
+      // Side-Chips (Team + Defender)
+      if(teamBannerHtml||defenderCards){
+        heroSection+=`<div class="sh-side">${teamBannerHtml}${defenderCards}</div>`;
+      }
+    } else {
+      // Woche: bisheriges schlichteres Layout
+      heroSection=`
+        <div class="champ-banner" style="margin-bottom:10px">
+          <div class="champ-label">Wochensieger</div>
+          <div class="champ-name">${winner?esc(pmap()[winner.id].name):'noch offen'}</div>
+          <div class="champ-detail">${winner?winner.wins+' Siege · '+Math.round(winner.wins/winner.games*100)+'% WR':'min. 5 Siege benötigt'}</div>
+        </div>`;
+    }
 
     return `
       <div class="view-head"><h2>Liga</h2><p>${periodLabel(period)} · ${ps.length} aktiv · ${totalMatches} Matches</p></div>
       ${periodBar}
-      ${countdownHtml}
+      ${seasonProgressHtml}
       ${heroSection}
       ${period==='week'?`<div class="seg"><button data-periodsort="wins" class="${periodSort==='wins'?'on':''}">Nach Siegen</button>
         <button data-periodsort="elo" class="${periodSort==='elo'?'on':''}">Nach Elo</button></div>`:''}
@@ -3521,39 +3773,72 @@ function showAward(key){
 
     // 2) Top-3 mit geteilten Plätzen ermitteln (gleicher Wert = gleicher Rang).
     // Liste ist bereits durch awardRankings vorsortiert (besser oben). Wir nutzen sort-Feld nur für Tie-Erkennung.
-    const top3 = [];
+    // Top-3 mit geteilten Plätzen: gruppieren statt überschreiben.
+    // Bei Gleichstand (gleicher sort-Wert) landen alle Einträge im gleichen Rang.
+    // Nach einer Gruppe von n Einträgen springt der Rang auf i+1 (Standard-Tied-Ranking).
+    const grouped={1:[],2:[],3:[]};
     let rank=1;
     for(let i=0;i<arr.length && rank<=3;i++){
       if(i>0 && arr[i].sort!==arr[i-1].sort) rank=i+1;
       if(rank>3) break;
-      top3.push({...arr[i], rank});
+      grouped[rank].push(arr[i]);
     }
 
-    if(!top3.length){
+    const totalEntries=grouped[1].length+grouped[2].length+grouped[3].length;
+    if(!totalEntries){
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     } else {
-      // Podium-Step für einen Eintrag
       const isTeam = TEAM_AWARDS.has(key);
-      const step = (entry, place, blockCls, label) => {
-        if(!entry) return `<div class="aw-pod"><div class="aw-pod-block ${blockCls}">${label}</div></div>`;
-        const avHtml = isTeam ? awPodPair(entry.ids[0],entry.ids[1]) : awPodAv(entry.ids[0]);
+
+      // Avatar-Renderer je Eintrag (Single = Pair bei Team, sonst Einzel-Avatar)
+      const avForEntry = (e) => isTeam ? awPodPair(e.ids[0],e.ids[1]) : awPodAv(e.ids[0]);
+
+      // Podium-Step: rendert 0, 1 oder mehrere geteilte Einträge in einem Slot
+      const step = (entries, place, blockCls, label) => {
         const isFirst = place===1;
-        return `<div class="aw-pod${isFirst?' first':''}">
+        // Leerer Slot (z. B. wenn alle nach oben durchgereicht wurden wegen Tie)
+        if(!entries.length){
+          return `<div class="aw-pod empty">
+            <div class="aw-pod-empty-hint">—</div>
+            <div class="aw-pod-block ${blockCls}">${label}</div>
+          </div>`;
+        }
+        // Genau ein Eintrag → Standard-Layout (wie bisher)
+        if(entries.length===1){
+          const e=entries[0];
+          return `<div class="aw-pod${isFirst?' first':''}">
+            ${isFirst?'<div class="aw-pod-crown">👑</div>':''}
+            ${avForEntry(e)}
+            <div class="aw-pod-name">${esc(e.name)}</div>
+            <div class="aw-pod-val">${esc(e.val)}</div>
+            <div class="aw-pod-block ${blockCls}">${label}</div>
+          </div>`;
+        }
+        // Mehrere geteilte Einträge → Tied-Layout
+        const showMax = 3;
+        const visible = entries.slice(0,showMax);
+        const extra = entries.length-visible.length;
+        // Avatare: bei Player-Awards mehrere kleine überlappend; bei Team-Awards
+        // nur das erste Paar als visueller Repräsentant (sonst zu voll).
+        const avsHtml = isTeam
+          ? avForEntry(visible[0])
+          : `<div class="aw-pod-tied-avs">${visible.map(avForEntry).join('')}</div>`;
+        const namesHtml = visible.map(e=>`<div class="nm">${esc(e.name)}</div>`).join('') +
+          (extra>0?`<div class="more">+${extra} weitere</div>`:'');
+        return `<div class="aw-pod tied${isFirst?' first':''}">
           ${isFirst?'<div class="aw-pod-crown">👑</div>':''}
-          ${avHtml}
-          <div class="aw-pod-name">${esc(entry.name)}</div>
-          <div class="aw-pod-val">${esc(entry.val)}</div>
+          ${avsHtml}
+          <div class="aw-pod-tied-names">${namesHtml}</div>
+          <div class="aw-pod-val">${esc(entries[0].val)}</div>
+          <div class="aw-pod-tied-badge">geteilt · ${entries.length}×</div>
           <div class="aw-pod-block ${blockCls}">${label}</div>
         </div>`;
       };
       // Visuelle Reihenfolge: 2 - 1 - 3
-      const first  = top3.find(x=>x.rank===1) || null;
-      const second = top3.find(x=>x.rank===2) || null;
-      const third  = top3.find(x=>x.rank===3) || null;
       bodyHtml = `<div class="aw-podium">
-        ${step(second,2,'silver','2')}
-        ${step(first,1,'gold','1')}
-        ${step(third,3,'bronze','3')}
+        ${step(grouped[2],2,'silver','2')}
+        ${step(grouped[1],1,'gold','1')}
+        ${step(grouped[3],3,'bronze','3')}
       </div>`;
     }
   }
@@ -4476,6 +4761,56 @@ function showPlayer(id){
     const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
     return `<div class="pd ${w?'w':'l'}"></div>`;}).join('');
 
+  // Elo-Sparkline für die aktuelle Saison (zeigt Saison-Verlauf)
+  let sparkHtml='';
+  {
+    const seasonMs=matchesInSeason().filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
+      .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    if(seasonMs.length>=2){
+      let eloTrace=cfg.start_elo;
+      const series=[eloTrace];
+      for(const m of seasonMs){
+        eloTrace += (m.deltas||{})[id] || 0;
+        series.push(eloTrace);
+      }
+      const minE=Math.min(...series), maxE=Math.max(...series);
+      const range=Math.max(20, maxE-minE); // mind. 20 Elo-Range für Sichtbarkeit
+      const W=300, H=42, pad=4;
+      const usableH=H-2*pad;
+      const points=series.map((e,i)=>{
+        const x=(i/(series.length-1))*W;
+        const y=pad+(1-(e-minE)/range)*usableH;
+        return [x,y];
+      });
+      const linePath='M'+points.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
+      const fillPath=linePath+` L${W},${H} L0,${H} Z`;
+      const last=points[points.length-1];
+      const net=Math.round(series[series.length-1]-series[0]);
+      const netCls=net>=0?'pos':'neg';
+      const netTxt=(net>=0?'+':'')+net;
+      const lineCol=net>=0?'var(--acid)':'var(--red)';
+      const gradId='ppspark-'+id;
+      sparkHtml=`
+        <div class="pp-spark">
+          <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="${esc(gradId)}" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="${lineCol}" stop-opacity=".35"/>
+                <stop offset="100%" stop-color="${lineCol}" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path d="${fillPath}" fill="url(#${esc(gradId)})"/>
+            <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="2.5" fill="${lineCol}"/>
+          </svg>
+        </div>
+        <div class="pp-spark-foot">
+          <span>Elo · ${esc(seasonLabel(currentSeason().id))}</span>
+          <span class="delta ${netCls}">${netTxt}</span>
+        </div>`;
+    }
+  }
+
   const streakBadge = streakInline(streak);
   const posIcon = autoAtk>=0.6?svgI('bolt'):autoAtk<=0.4?svgI('shield'):svgI('cycle');
   const posLabel = autoAtk>=0.6?'Stürmer':autoAtk<=0.4?'Verteidiger':'Flex';
@@ -4510,6 +4845,24 @@ function showPlayer(id){
 
   const sa = playerSeasonAwards(id);
   const seasonHistory = computeSeasonHistory(id, 5);
+  // Saison-Trend: vergleicht jüngste mit älteren Platzierungen
+  const seasonTrend = (() => {
+    if(!seasonHistory || seasonHistory.length < 2) return null;
+    const places = seasonHistory.map(h => h.place).filter(p => p > 0);
+    if(places.length < 2) return null;
+    const half = Math.ceil(places.length / 2);
+    const recent = places.slice(0, half);
+    const older = places.slice(half);
+    if(!older.length) return null;
+    const recentAvg = recent.reduce((a,b)=>a+b, 0) / recent.length;
+    const olderAvg  = older.reduce((a,b)=>a+b, 0) / older.length;
+    if(recentAvg < olderAvg - 0.5) return {arrow:'↗', cls:'', text:'Form steigend'};
+    if(recentAvg > olderAvg + 0.5) return {arrow:'↘', cls:'neg', text:'Form fallend'};
+    const avg = places.reduce((a,b)=>a+b, 0) / places.length;
+    if(avg <= 3) return {arrow:'→', cls:'', text:'stabil top 3'};
+    if(avg <= 5) return {arrow:'→', cls:'neutral', text:'stabil top 5'};
+    return {arrow:'→', cls:'neutral', text:'Ø Platz '+Math.round(avg)};
+  })();
 
   const rInfo = getPlayerRank(id);
   const tierClass = rInfo ? ('pp-tier-' + rInfo.label.toLowerCase()
@@ -4585,20 +4938,24 @@ function showPlayer(id){
       }).join('')}
     </div>` : '';
 
-  // Karriere-Rang Progression – PROZENT-basiert auf Ø Saison-Elo
+  // Karriere-Rang als Journey-Bar: Einsteiger → Legende (links → rechts), aktiver Tier markiert
+  const reversedRanks = [...RANKS].reverse();
+  const activeIdx = rInfo ? reversedRanks.findIndex(r => r.label === rInfo.label) : -1;
   const rankProgHtml = `
-    <div class="pp-ranks" id="ppRanksBtn" style="cursor:pointer">
-      ${RANKS.map(r=>{
-        const isActive = rInfo && r.label===rInfo.label;
-        const cls = 'pp-rk' + (isActive?' active pp-tier-'+r.label.toLowerCase()
-          .replace('ä','a').replace('ö','o').replace('ü','u'):'');
-        const pctTxt = 'Top ' + Math.round(r.pct*100) + '%';
-        return `<div class="${cls}">
-          <span class="ic svg-ic">${svgI(r.icon)}</span>
-          <div class="nm">${r.label}</div>
-          <div class="rg">${pctTxt}</div>
-        </div>`;
-      }).join('')}
+    <div class="pp-ranks-journey" id="ppRanksBtn" style="cursor:pointer">
+      <div class="pp-rj-track"></div>
+      <div class="pp-rj-tiers">
+        ${reversedRanks.map((r, i) => {
+          const state = i < activeIdx ? 'done' : (i === activeIdx ? 'active' : '');
+          const tierCls = i === activeIdx
+            ? ('pp-tier-'+r.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u'))
+            : '';
+          return `<div class="pp-rj-tier ${state} ${tierCls}">
+            <div class="pp-rj-dot"></div>
+            <div class="pp-rj-lbl">${esc(r.label)}</div>
+          </div>`;
+        }).join('')}
+      </div>
     </div>
     ${rInfo?`
       <div class="pp-percentile ${tierClass}">
@@ -4642,24 +4999,38 @@ function showPlayer(id){
         </span>`:''}
         <span style="display:inline-flex;align-items:center;gap:4px;line-height:1">${posIcon}${posLabel}</span>
       </div>
+      ${sparkHtml}
       ${formHtml?`<div class="pp-form">${formHtml}</div>`:''}
     </header>
 
     <div class="pp-sec" style="animation-delay:.3s">
-      <div class="pp-pos">
-        <div class="pp-pos-c atk">
-          <div class="h">${svgI('bolt')}<span>STURM</span></div>
-          <div class="v">${atkWr!==null?atkWr+'<span class="pct">%</span>':'<span class="pct" style="font-size:32px;color:var(--muted)">–</span>'}</div>
-          <div class="g">${s.atkG?s.atkW+'/'+s.atkG+' Siege':'Keine Spiele'}</div>
-          <div class="bar"><i style="width:${atkWr||0}%"></i></div>
-        </div>
-        <div class="pp-pos-c def">
-          <div class="h">${svgI('shield')}<span>ABWEHR</span></div>
-          <div class="v">${defWr!==null?defWr+'<span class="pct">%</span>':'<span class="pct" style="font-size:32px;color:var(--muted)">–</span>'}</div>
-          <div class="g">${s.defG?s.defW+'/'+s.defG+' Siege':'Keine Spiele'}</div>
-          <div class="bar"><i style="width:${defWr||0}%"></i></div>
-        </div>
-      </div>
+      ${(()=>{
+        // Rollen-Performance: ein Card mit Split-Bar (Sturm-Anteil:Abwehr-Anteil)
+        const tot = s.atkG + s.defG;
+        const atkSide = s.atkG>0
+          ? `<div class="pp-pos-side atk" style="flex:${s.atkG}">
+              <div class="ic">${svgI('bolt')}</div>
+              <div class="v">${atkWr!==null?atkWr:'–'}<small>%</small></div>
+              <div class="lbl">Sturm ${s.atkW}/${s.atkG}</div>
+            </div>` : '';
+        const defSide = s.defG>0
+          ? `<div class="pp-pos-side def" style="flex:${s.defG}">
+              <div class="ic">${svgI('shield')}</div>
+              <div class="v">${defWr!==null?defWr:'–'}<small>%</small></div>
+              <div class="lbl">Abwehr ${s.defW}/${s.defG}</div>
+            </div>` : '';
+        const emptySide = tot===0
+          ? `<div class="pp-pos-side empty" style="flex:1">
+              <div class="v" style="opacity:.5">–</div>
+              <div class="lbl">Keine Spiele</div>
+            </div>` : '';
+        return `<div class="pp-pos-combined">
+          <div class="head">
+            <div class="t">Rollen-Performance</div>
+          </div>
+          <div class="pp-pos-split">${atkSide}${defSide}${emptySide}</div>
+        </div>`;
+      })()}
     </div>
 
     <div class="pp-sec" style="animation-delay:.35s">
@@ -4689,14 +5060,49 @@ function showPlayer(id){
 
     <div class="pp-sec" style="animation-delay:.45s">
       <div class="pp-rel">
-        <div class="pp-r good"${best?` data-team="${esc([id,best.mid].sort().join('|'))}" style="cursor:pointer"`:''}><div class="l">${svgI('handshake')} Bester Mate</div>
-          <div class="v">${best?esc(pname(best.mid))+' <span class="pct">'+Math.round(best.wr*100)+'%</span> <span class="g">('+Math.round(best.wr*best.g)+'/'+best.g+')</span>':'–'}</div></div>
-        <div class="pp-r bad"${worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}" style="cursor:pointer"`:''}><div class="l">${svgI('chartDown')} Schlechtester Mate</div>
-          <div class="v">${worst&&best&&worst.mid!==best.mid?esc(pname(worst.mid))+' <span class="pct">'+Math.round(worst.wr*100)+'%</span> <span class="g">('+Math.round(worst.wr*worst.g)+'/'+worst.g+')</span>':'–'}</div></div>
-        <div class="pp-r fav"><div class="l">${svgI('target')} Lieblingsgegner</div>
-          <div class="v">${fav?esc(pname(fav.oid))+' <span class="pct">'+Math.round(fav.wr*100)+'%</span> <span class="g">('+Math.round(fav.wr*fav.g)+'/'+fav.g+')</span>':'–'}</div></div>
-        <div class="pp-r nem"><div class="l">${svgI('crown')} Angstgegner</div>
-          <div class="v">${nem&&fav&&nem.oid!==fav.oid?esc(pname(nem.oid))+' <span class="pct">'+Math.round(nem.wr*100)+'%</span> <span class="g">('+Math.round(nem.wr*nem.g)+'/'+nem.g+')</span>':'–'}</div></div>
+        ${(()=>{
+          // Hilfsfunktion: Mate-/Gegner-Avatar (34 px)
+          const relAv=(pid)=>{
+            const pp=pmap()[pid];
+            if(!pp) return `<div class="av empty">?</div>`;
+            const em=pp.avatar_id?avatarEmoji(pp.avatar_id):null;
+            if(em) return `<div class="av" style="background:var(--surface3);color:inherit">${em}</div>`;
+            return `<div class="av" style="background:${avColor(pid)}">${esc(initials(pp.name))}</div>`;
+          };
+          // Eine Karte mit Avatar links + Info rechts
+          const card=(cls, attr, icKey, label, name, wr, w, g)=>{
+            const empty = !name;
+            return `<div class="pp-r-rich ${cls}"${attr}>
+              ${empty?`<div class="av empty">–</div>`:relAv(name.id)}
+              <div class="info">
+                <div class="l">${svgI(icKey)}${label}</div>
+                <div class="name">${empty?'–':esc(name.label)}</div>
+                <div class="stat">${empty?'':`<span class="v">${Math.round(wr*100)}%</span> <span class="g">(${Math.round(wr*g)}/${g})</span>`}</div>
+              </div>
+            </div>`;
+          };
+          // Bester Mate
+          const bestAttr  = best?` data-team="${esc([id,best.mid].sort().join('|'))}"`:'';
+          const bestCard  = best
+            ? card('good', bestAttr, 'handshake', 'Bester Mate', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
+            : card('good', '', 'handshake', 'Bester Mate', null);
+          // Schlechtester Mate (nur wenn ≠ Bester)
+          const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}"`:'';
+          const worstCard = worst&&best&&worst.mid!==best.mid
+            ? card('bad', worstAttr, 'chartDown', 'Schlecht. Mate', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
+            : card('bad', '', 'chartDown', 'Schlecht. Mate', null);
+          // Lieblingsgegner → klickbar zum Gegnerprofil
+          const favAttr  = fav?` data-detail="${esc(fav.oid)}"`:'';
+          const favCard  = fav
+            ? card('fav', favAttr, 'target', 'Lieblingsgegner', {id:fav.oid,label:pname(fav.oid)}, fav.wr, Math.round(fav.wr*fav.g), fav.g)
+            : card('fav', '', 'target', 'Lieblingsgegner', null);
+          // Angstgegner (nur wenn ≠ Liebling)
+          const nemAttr  = nem&&fav&&nem.oid!==fav.oid?` data-detail="${esc(nem.oid)}"`:'';
+          const nemCard  = nem&&fav&&nem.oid!==fav.oid
+            ? card('nem', nemAttr, 'crown', 'Angstgegner', {id:nem.oid,label:pname(nem.oid)}, nem.wr, Math.round(nem.wr*nem.g), nem.g)
+            : card('nem', '', 'crown', 'Angstgegner', null);
+          return bestCard + worstCard + favCard + nemCard;
+        })()}
       </div>
     </div>
 
@@ -4743,7 +5149,7 @@ function showPlayer(id){
     <div class="pp-sec" style="animation-delay:.7s">
       <div class="pp-sec-title">
         <div class="l">${svgI('calendar')}<h4>Saisonverlauf <span style="color:var(--muted);font-weight:500;letter-spacing:.02em;text-transform:none">(letzte ${seasonHistory.length})</span></h4></div>
-        <div class="m">${seasonHistory.length} Saisons</div>
+        <div class="m">${seasonTrend ? `<span class="trend ${seasonTrend.cls}">${seasonTrend.arrow} ${esc(seasonTrend.text)}</span>` : seasonHistory.length+' Saisons'}</div>
       </div>
       ${seasonRailHtml}
     </div>`:''}
@@ -4804,6 +5210,14 @@ function showPlayer(id){
       const [a,b]=el.dataset.team.split('|');
       if(!a||!b) return;
       closeSheet(); setTimeout(()=>showTeam(a,b),350);
+    };
+  });
+  // Lieblings-/Angstgegner-Karten öffnen das Gegner-Profil
+  document.querySelectorAll('.pp-r-rich[data-detail]').forEach(el=>{
+    el.onclick=()=>{
+      const oid=el.dataset.detail;
+      if(!oid) return;
+      closeSheet(); setTimeout(()=>showPlayer(oid),350);
     };
   });
 
