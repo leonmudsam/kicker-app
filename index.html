@@ -2943,7 +2943,7 @@ function vRanking(){
             </div>
             <div class="sh-stats">
               <div class="sh-stat"><div class="v acid">${winner.wins}</div><div class="l">Siege</div></div>
-              <div class="sh-stat"><div class="v red">${winner.losses}</div><div class="l">Pleiten</div></div>
+              <div class="sh-stat"><div class="v red">${winner.losses}</div><div class="l">Niederlagen</div></div>
               <div class="sh-stat"><div class="v" style="color:${gdColor}">${winner.gd>=0?'+':''}${winner.gd}</div><div class="l">Tordiff</div></div>
               ${winnerForm?`<div class="sh-form">${winnerForm}</div>`:''}
             </div>
@@ -5896,7 +5896,7 @@ function showTeam(p1Id,p2Id){
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px" class="num">
         <span style="color:var(--acid)">${d.wins} Siege</span>
-        <span style="color:var(--red)">${d.losses} Pleiten</span>
+        <span style="color:var(--red)">${d.losses} Niederlagen</span>
       </div>
     </div>
 
