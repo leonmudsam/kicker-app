@@ -346,6 +346,133 @@
     font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--red);font-weight:700}
   .neg-divider::after{content:"";flex:1;height:1px;background:rgba(240,86,106,.2)}
 
+  /* ============ AWARDS V2 ============ */
+  .awcard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:13px 14px;cursor:pointer;transition:.16s;position:relative;overflow:hidden}
+  .awcard:active{transform:scale(.985);background:var(--surface2)}
+  .awcard.hero{padding:14px}
+  .awcard-row{display:flex;align-items:center;gap:12px}
+  .awcard.hero .awcard-row{gap:13px}
+  .awcard-icon{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;flex-shrink:0}
+  .awcard.hero .awcard-icon{width:48px;height:48px;border-radius:14px}
+  .awcard-icon svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .awcard.hero .awcard-icon svg{width:24px;height:24px}
+  .awcard-ai{flex:1;min-width:0}
+  .awcard-al{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:700}
+  .awcard-winner{display:flex;align-items:center;gap:7px;margin-top:4px}
+  .awcard.hero .awcard-winner{gap:8px;margin-top:5px}
+  .awcard-name{font-family:'Archivo Black',sans-serif;font-size:14.5px;letter-spacing:-.01em;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .awcard.hero .awcard-name{font-size:16px;line-height:1.1}
+  .awcard-ad{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .awcard-av-wrap{flex-shrink:0;text-align:right}
+  .awcard-av{font-family:'Archivo Black',sans-serif;font-size:20px;line-height:1}
+  .awcard.hero .awcard-av{font-size:24px}
+  .awcard-av-suffix{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:3px}
+  .aw-mini-av{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:10px;flex-shrink:0;
+    color:var(--bg);font-family:'Archivo Black',sans-serif}
+  .awcard.hero .aw-mini-av{width:24px;height:24px;font-size:11px}
+  .aw-mini-pair{display:flex;flex-shrink:0}
+  .aw-mini-pair .aw-mini-av{border:1.5px solid var(--surface)}
+  .aw-mini-pair .aw-mini-av+.aw-mini-av{margin-left:-6px}
+  /* Color variants — icon container tint + value color */
+  .aw-gold .awcard-icon{background:rgba(247,207,74,.12);color:var(--gold)}
+  .aw-acid .awcard-icon{background:rgba(200,255,77,.1);color:var(--acid)}
+  .aw-blue .awcard-icon{background:rgba(86,180,232,.1);color:var(--blue)}
+  .aw-red  .awcard-icon{background:rgba(240,86,106,.12);color:var(--red)}
+  .aw-orange .awcard-icon{background:rgba(255,120,73,.1);color:var(--orange)}
+  .aw-purple .awcard-icon{background:rgba(167,139,250,.1);color:var(--purple)}
+  .aw-gold .awcard-av{color:var(--gold)}
+  .aw-acid .awcard-av{color:var(--acid)}
+  .aw-blue .awcard-av{color:var(--blue)}
+  .aw-red  .awcard-av{color:var(--red)}
+  .aw-orange .awcard-av{color:var(--orange)}
+  .aw-purple .awcard-av{color:var(--purple)}
+  /* Hero variant — subtle gradient bg */
+  .awcard.hero.aw-gold  {background:linear-gradient(135deg,rgba(247,207,74,.08),var(--surface) 55%);border-color:rgba(247,207,74,.4)}
+  .awcard.hero.aw-acid  {background:linear-gradient(135deg,rgba(200,255,77,.06),var(--surface) 55%);border-color:rgba(200,255,77,.35)}
+  .awcard.hero.aw-blue  {background:linear-gradient(135deg,rgba(86,180,232,.06),var(--surface) 55%);border-color:rgba(86,180,232,.35)}
+  .awcard.hero.aw-red   {background:linear-gradient(135deg,rgba(240,86,106,.06),var(--surface) 55%);border-color:rgba(240,86,106,.3)}
+  .awcard.hero.aw-orange{background:linear-gradient(135deg,rgba(255,120,73,.06),var(--surface) 55%);border-color:rgba(255,120,73,.3)}
+  .awcard.hero.aw-purple{background:linear-gradient(135deg,rgba(167,139,250,.06),var(--surface) 55%);border-color:rgba(167,139,250,.3)}
+  .awcard.neg{background:linear-gradient(135deg,rgba(240,86,106,.04),var(--surface) 60%);border-color:rgba(240,86,106,.22)}
+
+  /* Section header with icon */
+  .aw-sect{display:flex;align-items:center;gap:8px;margin:18px 0 11px;color:var(--muted);
+    font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600}
+  .aw-sect-icon svg{width:13px;height:13px;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .aw-sect-icon.gold svg{stroke:var(--gold)}
+  .aw-sect-icon.blue svg{stroke:var(--blue)}
+  .aw-sect-icon.acid svg{stroke:var(--acid)}
+  .aw-sect-icon.purple svg{stroke:var(--purple)}
+  .aw-sect-line{flex:1;height:1px;background:var(--line)}
+  .aw-sect:first-child{margin-top:0}
+
+  /* Schandtafel divider */
+  .aw-neg-divider{margin:24px -2px 12px;padding:11px 16px;
+    background:linear-gradient(90deg,rgba(240,86,106,.12),rgba(240,86,106,.02) 60%,transparent);
+    border-left:3px solid var(--red);border-radius:0 12px 12px 0;
+    display:flex;align-items:center;gap:9px}
+  .aw-neg-divider svg{width:16px;height:16px;stroke:var(--red);fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .aw-neg-divider-text{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--red);letter-spacing:.04em}
+
+  /* ============ AWARDS V2 — DETAIL SHEET ============ */
+  .aw-hero-icon{display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
+  .aw-hero-icon-glow{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;position:relative}
+  .aw-hero-icon-glow svg{width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .aw-hero-icon-glow.gold  {background:rgba(247,207,74,.12); color:var(--gold);  box-shadow:0 0 60px rgba(247,207,74,.18)}
+  .aw-hero-icon-glow.acid  {background:rgba(200,255,77,.12); color:var(--acid);  box-shadow:0 0 60px rgba(200,255,77,.18)}
+  .aw-hero-icon-glow.blue  {background:rgba(86,180,232,.12); color:var(--blue);  box-shadow:0 0 60px rgba(86,180,232,.18)}
+  .aw-hero-icon-glow.red   {background:rgba(240,86,106,.12); color:var(--red);   box-shadow:0 0 60px rgba(240,86,106,.18)}
+  .aw-hero-icon-glow.orange{background:rgba(255,120,73,.12); color:var(--orange);box-shadow:0 0 60px rgba(255,120,73,.18)}
+  .aw-hero-icon-glow.purple{background:rgba(167,139,250,.12);color:var(--purple);box-shadow:0 0 60px rgba(167,139,250,.18)}
+  .aw-hero-title{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;margin:14px 0 0;text-align:center}
+  .aw-hero-sub{color:var(--muted);font-size:11px;margin-top:4px;font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.16em;text-align:center}
+
+  /* Podium */
+  .aw-podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin-top:22px;padding:0 4px 14px}
+  .aw-pod{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
+  .aw-pod-av{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:26px;
+    border:2px solid var(--surface);position:relative;z-index:2;
+    font-family:'Archivo Black',sans-serif;color:var(--bg)}
+  .aw-pod-pair{display:flex;align-items:center;position:relative;z-index:2}
+  .aw-pod-pair .aw-pod-av{width:42px;height:42px;font-size:18px}
+  .aw-pod-pair .aw-pod-av+.aw-pod-av{margin-left:-10px}
+  .aw-pod.first .aw-pod-av{width:64px;height:64px;font-size:30px;border-color:var(--gold);box-shadow:0 0 20px rgba(247,207,74,.4)}
+  .aw-pod.first .aw-pod-pair .aw-pod-av{width:48px;height:48px;font-size:20px;box-shadow:0 0 20px rgba(247,207,74,.4)}
+  .aw-pod-crown{position:absolute;top:-14px;font-size:22px;z-index:3;line-height:1}
+  .aw-pod-name{font-family:'Archivo Black',sans-serif;font-size:13px;margin-top:8px;text-align:center;line-height:1.1;letter-spacing:-.01em;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .aw-pod.first .aw-pod-name{font-size:14.5px}
+  .aw-pod-val{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);margin-top:3px;font-weight:600;text-align:center;
+    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .aw-pod.first .aw-pod-val{color:var(--gold);font-size:12.5px}
+  .aw-pod-block{margin-top:8px;width:100%;border-radius:8px 8px 0 0;font-family:'Archivo Black',sans-serif;display:grid;place-items:center;font-size:15px}
+  .aw-pod-block.gold  {background:linear-gradient(180deg,var(--gold),rgba(247,207,74,.3));color:#1d1700;height:62px}
+  .aw-pod-block.silver{background:linear-gradient(180deg,#c8d0cb,rgba(200,208,203,.3));color:#1a1f1c;height:48px}
+  .aw-pod-block.bronze{background:linear-gradient(180deg,var(--orange),rgba(255,120,73,.3));color:#2a1108;height:36px}
+
+  /* Match-Award detail (Upset / Höchster Sieg) */
+  .aw-match{margin-top:18px;background:linear-gradient(135deg,rgba(247,207,74,.06),var(--surface) 55%);
+    border:1px solid rgba(247,207,74,.3);border-radius:18px;padding:18px 16px}
+  .aw-match.upset{background:linear-gradient(135deg,rgba(255,120,73,.06),var(--surface) 55%);border-color:rgba(255,120,73,.3)}
+  .aw-match-score{font-family:'Archivo Black',sans-serif;font-size:36px;letter-spacing:-.02em;text-align:center;line-height:1}
+  .aw-match-meta{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:6px}
+  .aw-match-teams{display:flex;align-items:flex-start;justify-content:space-between;margin-top:18px;gap:10px}
+  .aw-match-team{flex:1;text-align:center;font-size:12px;min-width:0}
+  .aw-match-team .aw-mini-pair{justify-content:center;margin-bottom:6px}
+  .aw-match-team-name{font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:-.01em;line-height:1.2;color:var(--ink);
+    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .aw-match-vs{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);align-self:center;flex-shrink:0;padding-top:18px}
+  .aw-match-winner{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--acid);font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
+
+  /* Why card */
+  .aw-why{margin-top:18px;background:linear-gradient(135deg,rgba(200,255,77,.04),var(--surface) 55%);
+    border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start}
+  .aw-why-ic{color:var(--acid);flex-shrink:0;margin-top:1px}
+  .aw-why-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .aw-why-content{flex:1;min-width:0}
+  .aw-why-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace;margin-bottom:5px}
+  .aw-why-body{font-size:12.5px;color:var(--ink2);line-height:1.55}
+
   /* ============ HISTORY ============ */
   .mlist{display:flex;flex-direction:column;gap:7px}
   .mrow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;cursor:pointer;transition:.15s}
@@ -1044,6 +1171,7 @@ const ICONS = {
   drop:          `<path d="M12 3s5 6 5 11a5 5 0 01-10 0c0-5 5-11 5-11z"/>`,
   dropDouble:    `<path d="M7 3s3 4 3 7.5a3 3 0 11-6 0c0-3.5 3-7.5 3-7.5z"/><path d="M17 3s3 4 3 7.5a3 3 0 11-6 0c0-3.5 3-7.5 3-7.5z"/>`,
   dropTriple:    `<path d="M5 6s2 3 2 5a2 2 0 11-4 0c0-2 2-5 2-5z"/><path d="M12 3s3 4 3 7.5a3 3 0 11-6 0c0-3.5 3-7.5 3-7.5z"/><path d="M19 6s2 3 2 5a2 2 0 11-4 0c0-2 2-5 2-5z"/>`,
+  info:          `<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -1604,7 +1732,7 @@ function showSeasonRecap(season){
   ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(id=>playerIdsInSeason.add(id)));
   // Bestes Team
   const teamHtml=season.team_p1&&season.team_p2?`
-    <div style="margin-top:14px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);text-align:center">
+    <div data-team="${esc([season.team_p1,season.team_p2].sort().join('|'))}" style="margin-top:14px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);text-align:center;cursor:pointer">
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--blue);font-weight:700">Team of the Season</div>
       <div style="font-family:'Archivo Black',sans-serif;font-size:15px;margin-top:4px">${esc(pname(season.team_p1)+' & '+pname(season.team_p2))}</div>
     </div>`:''
@@ -1635,6 +1763,15 @@ function showSeasonRecap(season){
     localStorage.setItem('recap_shown_'+season.id,'1');
     closeSheet();
   };
+  // Team of the Season → Team-Profil
+  document.querySelectorAll('[data-team]').forEach(el=>{
+    el.onclick=()=>{
+      const [a,b]=el.dataset.team.split('|');
+      if(!a||!b) return;
+      localStorage.setItem('recap_shown_'+season.id,'1');
+      closeSheet(); setTimeout(()=>showTeam(a,b),350);
+    };
+  });
 }
 
 // Player-of-the-Day Recap: zeigt einmal pro Tag pro Gerät den Sieger des letzten Spieltags.
@@ -2019,6 +2156,30 @@ function avHtml(player, extraStyle){
   return `<span class="av" style="background:${avColor(player.id)};${extraStyle||''}">${initials(player.name)}</span>`;
 }
 function initials(n){return n.trim().slice(0,2).toUpperCase();}
+
+// ════════ AWARD AVATAR HELPERS ════════
+// Kleines Avatar (22px) für Award-Cards.
+function awMiniAv(pid){
+  const p=pmap()[pid];
+  if(!p) return '<div class="aw-mini-av" style="background:var(--surface3);color:var(--muted)">?</div>';
+  const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
+  if(em) return `<div class="aw-mini-av" style="background:var(--surface3);color:var(--ink);font-size:13px">${em}</div>`;
+  return `<div class="aw-mini-av" style="background:${avColor(p.id)}">${esc(initials(p.name))}</div>`;
+}
+function awMiniPair(p1,p2){
+  return `<div class="aw-mini-pair">${awMiniAv(p1)}${awMiniAv(p2)}</div>`;
+}
+// Podium-Avatar (56px / 64px first) für showAward Sheet.
+function awPodAv(pid){
+  const p=pmap()[pid];
+  if(!p) return '<div class="aw-pod-av" style="background:var(--surface3);color:var(--muted)">?</div>';
+  const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
+  if(em) return `<div class="aw-pod-av" style="background:var(--surface3);color:var(--ink);font-size:30px">${em}</div>`;
+  return `<div class="aw-pod-av" style="background:${avColor(p.id)};font-size:18px">${esc(initials(p.name))}</div>`;
+}
+function awPodPair(p1,p2){
+  return `<div class="aw-pod-pair">${awPodAv(p1)}${awPodAv(p2)}</div>`;
+}
 
 // ════════ NAV ════════
 const NAV=[
@@ -2491,7 +2652,7 @@ function vRanking(){
         </div>`;}).join('');
     })();
     // Team of the Season + Titelverteidiger
-    let teamBannerHtml='', defenderCards='';
+    let teamBannerHtml='', defenderCards='', bestTeamKey='';
     if(period==='season'){
       const seasonMs=periodMs; // bereits gecacht
       const T={};
@@ -2510,6 +2671,7 @@ function vRanking(){
       const bestTeamEntry=teamEntries[0];
       if(bestTeamEntry){
         const ids=bestTeamEntry[0].split('|');
+        bestTeamKey=ids.sort().join('|');
         const tn=ids.map(pname).join(' & ');
         const eloGain=Math.round(bestTeamEntry[1]);
         const tData=Object.values(T).find(t=>t.ids[0]===ids[0]&&t.ids[1]===ids[1]);
@@ -2552,7 +2714,7 @@ function vRanking(){
         </div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px">
-        ${teamBannerHtml?`<div class="team-season-card" style="flex:1;margin-bottom:0;padding:14px" id="seasonTeamCard">${teamBannerHtml}</div>`:''}
+        ${teamBannerHtml?`<div class="team-season-card" style="flex:1;margin-bottom:0;padding:14px${bestTeamKey?';cursor:pointer':''}" id="seasonTeamCard"${bestTeamKey?` data-team="${esc(bestTeamKey)}"`:''}>${teamBannerHtml}</div>`:''}
         ${defenderCards?`<div style="flex:1">${defenderCards}</div>`:''}
       </div>
     `:`
@@ -3063,7 +3225,7 @@ function vAwards(){
   if(!R.counts.matches)
     return `<div class="view-head"><h2>Awards</h2><p>${pl}</p></div>${periodBar}${emptyState('trophy','Keine Matches in diesem Zeitraum')}`;
   const tn=ids=>ids.map(pname).join(' & ');
-  // Award-Key → SVG-Icon-Name (zentrale Map, keine Emojis mehr)
+  // Award-Key → SVG-Icon-Name
   const AW_IC = {
     wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
     showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
@@ -3073,20 +3235,44 @@ function vAwards(){
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
     zirkus:'circus',       baustelle:'cone'
   };
-  const ic = key => `<div class="emoji svg-ic">${svgI(AW_IC[key]||'trophy')}</div>`;
-  const card=(key,cls,em,label,topName,topDetail,topVal)=>`
-    <div class="award ${cls}" data-award="${key}">
-      ${ic(key)}
-      <div class="ai"><div class="al">${label}</div><div class="an">${topName}</div><div class="ad">${topDetail}</div></div>
-      ${topVal!==''?`<div class="av num">${topVal}</div>`:''}
+  const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
+
+  // Award-Card-Builder.
+  //   key, cls(color), label, ids(array of 1 or 2 player ids; null = empty), name(escaped),
+  //   detail, val, opts={hero, neg, valSuffix}
+  const card = (key, cls, label, ids, name, detail, val, opts) => {
+    opts = opts || {};
+    const heroCls = opts.hero ? ' hero' : '';
+    const negCls  = opts.neg  ? ' neg'  : '';
+    let avHtml = '';
+    if(ids && ids.length===1) avHtml = awMiniAv(ids[0]);
+    else if(ids && ids.length===2) avHtml = awMiniPair(ids[0], ids[1]);
+    const nameStyle = ids && ids.length ? '' : 'color:var(--muted)';
+    const winnerHtml = `<div class="awcard-winner">${avHtml}<div class="awcard-name" style="${nameStyle}">${name}</div></div>`;
+    const valHtml = val===''
+      ? ''
+      : (opts.hero && opts.valSuffix
+          ? `<div class="awcard-av-wrap"><div class="awcard-av">${val}</div><div class="awcard-av-suffix">${opts.valSuffix}</div></div>`
+          : `<div class="awcard-av">${val}</div>`);
+    return `<div class="awcard${heroCls}${negCls} aw-${cls}" data-award="${esc(key)}">
+      <div class="awcard-row">
+        <div class="awcard-icon">${ic(key)}</div>
+        <div class="awcard-ai">
+          <div class="awcard-al">${label}</div>
+          ${winnerHtml}
+          ${detail?`<div class="awcard-ad">${detail}</div>`:''}
+        </div>
+        ${valHtml}
+      </div>
     </div>`;
+  };
+
   // Sammelt alle Platz-1-Namen bei Gleichstand (für Einzel-Awards)
   const topNames=(arr,valFn,nameFn)=>{
     if(!arr||!arr.length)return null;
     const topVal=valFn(arr[0]);
     return arr.filter(x=>valFn(x)===topVal).map(nameFn).join(', ');
   };
-  // Für Team-Awards
   const topTeamNames=(arr,valFn)=>{
     if(!arr||!arr.length)return null;
     const topVal=valFn(arr[0]);
@@ -3103,55 +3289,115 @@ function vAwards(){
         sm0=g(R.showmasterList);
 
   let html='';
-  const sec=(title,cards)=>{html+=`<div class="award-section"><div class="award-section-title">${title}</div><div class="award-grid">${cards.join('')}</div></div>`;};
-  const empty=(key,cls,em,label)=>card(key,cls,em,label,'–','noch keine Daten','');
+  // Section header mit Icon. firstHero=true → erste Karte wird Hero
+  const sect = (iconKey, iconCol, title, cards) => {
+    html += `<div class="aw-sect">
+      <span class="aw-sect-icon ${iconCol}"><svg viewBox="0 0 24 24">${ICONS[iconKey]||''}</svg></span>
+      <span>${title}</span>
+      <span class="aw-sect-line"></span>
+    </div>${cards.join('')}`;
+  };
+  const empty=(key,cls,label)=>card(key,cls,label,null,'–','noch keine Daten','');
 
   // ── HIGHLIGHTS ──
   const highlights=[];
-  highlights.push(wn0?card('wins','gold','🏅','Meiste Siege',esc(topNames(R.winsList,x=>x.v,x=>pname(x.id))),pl,wn0.v):empty('wins','gold','🏅','Meiste Siege'));
-  if(of0&&of0.v>=2) highlights.push(card('onFire','acid','🔥','On Fire',esc(pname(of0.id)),'aktuelle Serie',of0.v+'er'));
-  highlights.push(pf0?card('perfect','gold','💎','Beste Bilanz',esc(pname(pf0.id)),pf0.w+'–'+(pf0.g-pf0.w),Math.round(pf0.wr*100)+'%'):empty('perfect','gold','💎','Beste Bilanz'));
-  highlights.push(st0?card('streaks','acid','🔥','Längste Siegesserie',esc(topNames(R.streaks,x=>x.v,x=>pname(x.id))),pl,st0.v+'er'):empty('streaks','acid','🔥','Längste Siegesserie'));
-  highlights.push(sm0?card('showmaster','gold','🎪','Showmaster',esc(topNames(R.showmasterList,x=>x.v,x=>pname(x.id))),sm0.v+'× 10:0',sm0.v):empty('showmaster','gold','🎪','Showmaster'));
-  sec('Highlights',highlights);
+  // Hero: Meiste Siege
+  highlights.push(wn0
+    ? card('wins','gold','Meiste Siege',[wn0.id],esc(topNames(R.winsList,x=>x.v,x=>pname(x.id))),pl,wn0.v,{hero:true,valSuffix:'Siege'})
+    : empty('wins','gold','Meiste Siege'));
+  if(of0&&of0.v>=2) highlights.push(card('onFire','acid','On Fire',[of0.id],esc(pname(of0.id)),'aktuelle Serie',of0.v+'er'));
+  highlights.push(pf0
+    ? card('perfect','gold','Beste Bilanz',[pf0.id],esc(pname(pf0.id)),pf0.w+'–'+(pf0.g-pf0.w),Math.round(pf0.wr*100)+'%')
+    : empty('perfect','gold','Beste Bilanz'));
+  highlights.push(st0
+    ? card('streaks','acid','Längste Siegesserie',[st0.id],esc(topNames(R.streaks,x=>x.v,x=>pname(x.id))),pl,st0.v+'er')
+    : empty('streaks','acid','Längste Siegesserie'));
+  highlights.push(sm0
+    ? card('showmaster','gold','Showmaster',[sm0.id],esc(topNames(R.showmasterList,x=>x.v,x=>pname(x.id))),sm0.v+'× 10:0',sm0.v)
+    : empty('showmaster','gold','Showmaster'));
+  sect('star','gold','Highlights',highlights);
 
   // ── TEAMS ──
   const teams=[];
-  teams.push(mvt0?card('mvt','gold','🤝','Bestes Team',esc(tn(mvt0.ids)),pl,(mvt0.v>=0?'+':'')+Math.round(mvt0.v)):empty('mvt','gold','🤝','Bestes Team'));
-  teams.push(bd0&&bd0.g>=2?card('bestDuo','blue','🤝','Unzertrennlich',esc(tn(bd0.ids)),bd0.g+' gemeinsame Spiele',bd0.g):empty('bestDuo','blue','🤝','Unzertrennlich'));
-  sec('Teams',teams);
+  teams.push(mvt0
+    ? card('mvt','blue','Bestes Team',mvt0.ids,esc(tn(mvt0.ids)),'gemeinsamer Elo-Zuwachs · '+pl,(mvt0.v>=0?'+':'')+Math.round(mvt0.v))
+    : empty('mvt','blue','Bestes Team'));
+  teams.push(bd0&&bd0.g>=2
+    ? card('bestDuo','blue','Unzertrennlich',bd0.ids,esc(tn(bd0.ids)),bd0.g+' gemeinsame Spiele',bd0.g)
+    : empty('bestDuo','blue','Unzertrennlich'));
+  sect('handshake','blue','Teams',teams);
 
   // ── ANGRIFF & VERTEIDIGUNG ──
   const combat=[];
-  combat.push(sc0?card('scorer','orange','⚽','Torjäger',esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+sc0.avg.toFixed(1)+' Tore/Sp.',sc0.avg.toFixed(1)):empty('scorer','orange','⚽','Torjäger'));
-  combat.push(wl0?card('wall','blue','🧱','Eiserne Abwehr',esc(pname(wl0.id)),(wl0.v/wl0.g).toFixed(1)+' Gegentore/Sp.',wl0.v):empty('wall','blue','🧱','Eiserne Abwehr'));
-  combat.push(ic0&&ic0.v>=1?card('ice','blue','🧊','Eiskalt',esc(pname(ic0.id)),ic0.v+'× Zu-Null als Verteidiger',ic0.v):empty('ice','blue','🧊','Eiskalt'));
-  sec('Angriff & Verteidigung',combat);
+  combat.push(sc0
+    ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+sc0.avg.toFixed(1)+' Tore/Sp.',sc0.avg.toFixed(1))
+    : empty('scorer','orange','Torjäger'));
+  combat.push(wl0
+    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(pname(wl0.id)),(wl0.v/wl0.g).toFixed(1)+' Gegentore/Sp.',wl0.v)
+    : empty('wall','blue','Eiserne Abwehr'));
+  combat.push(ic0&&ic0.v>=1
+    ? card('ice','blue','Eiskalt',[ic0.id],esc(pname(ic0.id)),ic0.v+'× Zu-Null als Verteidiger',ic0.v)
+    : empty('ice','blue','Eiskalt'));
+  sect('shield','blue','Angriff & Verteidigung',combat);
 
   // ── SPEZIAL ──
   const special=[];
-  special.push(eg0?card('endgegner','purple','☠️','Endgegner',esc(tn(eg0.ids)),eg0.g+' Begegnungen',eg0.g):empty('endgegner','purple','☠️','Endgegner'));
-  special.push(cl0?card('clutch','acid','🎯','Clutch-Player',esc(pname(cl0.id)),cl0.g+' knappe Spiele',Math.round(cl0.wr*100)+'%'):empty('clutch','acid','🎯','Clutch-Player'));
-  special.push(ck0&&ck0.v>=1?card('carryKing','acid','🏋️','Carry-King',esc(topNames(R.carryList,x=>x.v,x=>pname(x.id))),ck0.v+'× mit schwachem Mate',ck0.v):empty('carryKing','acid','🏋️','Carry-King'));
-  special.push(sl0?card('solo','acid','🐺','Einzelkämpfer',esc(pname(sl0.id)),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%'):empty('solo','acid','🐺','Einzelkämpfer'));
-  special.push(u0?card('upset','orange','😱','Größte Überraschung',esc(mlabel(u0.m)),u0.m.score_a+':'+u0.m.score_b+' · '+Math.round((1-u0.sp)*100)+'%',Math.round(u0.sp*100)+'%'):empty('upset','orange','😱','Größte Überraschung'));
-  special.push(b0?card('biggest','purple','💥','Höchster Sieg',esc(mlabel(b0.m)),b0.m.score_a+':'+b0.m.score_b,'+'+b0.diff):empty('biggest','purple','💥','Höchster Sieg'));
-  special.push(gr0?card('grinder','blue','🎮','Vielspieler',esc(topNames(R.grinder,x=>x.v,x=>pname(x.id))),pl,gr0.v):empty('grinder','blue','🎮','Vielspieler'));
-  sec('Spezial',special);
+  special.push(eg0
+    ? card('endgegner','purple','Endgegner',eg0.ids,esc(tn(eg0.ids)),eg0.g+' Begegnungen',eg0.g)
+    : empty('endgegner','purple','Endgegner'));
+  special.push(cl0
+    ? card('clutch','acid','Clutch-Player',[cl0.id],esc(pname(cl0.id)),cl0.g+' knappe Spiele',Math.round(cl0.wr*100)+'%')
+    : empty('clutch','acid','Clutch-Player'));
+  special.push(ck0&&ck0.v>=1
+    ? card('carryKing','acid','Carry-King',[ck0.id],esc(topNames(R.carryList,x=>x.v,x=>pname(x.id))),ck0.v+'× mit schwachem Mate',ck0.v)
+    : empty('carryKing','acid','Carry-King'));
+  special.push(sl0
+    ? card('solo','acid','Einzelkämpfer',[sl0.id],esc(pname(sl0.id)),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%')
+    : empty('solo','acid','Einzelkämpfer'));
+  // Match-Awards: zeigen die Avatare des Gewinner-Teams (winnerSide via m.winner)
+  special.push(u0
+    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),u0.m.score_a+':'+u0.m.score_b+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round(u0.sp*100)+'%')
+    : empty('upset','orange','Größte Überraschung'));
+  special.push(b0
+    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),b0.m.score_a+':'+b0.m.score_b,'+'+b0.diff)
+    : empty('biggest','purple','Höchster Sieg'));
+  special.push(gr0
+    ? card('grinder','blue','Vielspieler',[gr0.id],esc(topNames(R.grinder,x=>x.v,x=>pname(x.id))),pl,gr0.v)
+    : empty('grinder','blue','Vielspieler'));
+  sect('bolt','purple','Spezial',special);
 
   // ── SCHANDTAFEL ──
   const neg=[];
-  neg.push(wwr0?card('worstWr','red','💀','Schlechtester Spieler',esc(pname(wwr0.id)),wwr0.w+'–'+(wwr0.g-wwr0.w),Math.round(wwr0.wr*100)+'%'):empty('worstWr','red','💀','Schlechtester Spieler'));
-  if(cs0&&cs0.v>=2) neg.push(card('coldStreak','red','❄️','Eiskalt erwischt',esc(pname(cs0.id)),'aktuelle Serie',cs0.v+'er'));
+  neg.push(wwr0
+    ? card('worstWr','red','Schlechtester Spieler',[wwr0.id],esc(pname(wwr0.id)),wwr0.w+'–'+(wwr0.g-wwr0.w),Math.round(wwr0.wr*100)+'%',{neg:true})
+    : empty('worstWr','red','Schlechtester Spieler'));
+  if(cs0&&cs0.v>=2) neg.push(card('coldStreak','red','Eiskalt erwischt',[cs0.id],esc(pname(cs0.id)),'aktuelle Serie',cs0.v+'er',{neg:true}));
   const ls0=g(R.lossStreaks);
-  neg.push(ls0?card('lossStreaks','red','📉','Längste Niederlagenserie',esc(pname(ls0.id)),'insgesamt',ls0.v+'er'):empty('lossStreaks','red','📉','Längste Niederlagenserie'));
-  neg.push(ft0?card('formtief','red','🫠','Formtief',esc(pname(ft0.id)),'Peak '+ft0.peak+' → jetzt '+ft0.cur,'-'+Math.round(ft0.drop)):empty('formtief','red','🫠','Formtief'));
-  neg.push(wa0?card('worstAtk','red','🚫','Zahnloser Stürmer',esc(pname(wa0.id)),(wa0.v/wa0.g).toFixed(1)+' Tore/Sp.',(wa0.v/wa0.g).toFixed(1)):empty('worstAtk','red','🚫','Zahnloser Stürmer'));
-  neg.push(wd0?card('worstDef','red','🕳️','Löchrigste Abwehr',esc(pname(wd0.id)),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1)):empty('worstDef','red','🕳️','Löchrigste Abwehr'));
-  neg.push(zk0?card('zirkus','red','🎪','Zirkus',esc(tn(zk0.ids)),zk0.v+'× 5+ Tore kassiert',zk0.v):empty('zirkus','red','🎪','Zirkus'));
-  neg.push(wt0?card('worstTeam','red','💔','Schlechtestes Team',esc(tn(wt0.ids)),wt0.w+'–'+(wt0.g-wt0.w),Math.round(wt0.w/wt0.g*100)+'%'):empty('worstTeam','red','💔','Schlechtestes Team'));
-  neg.push(bs0?card('baustelle','red','🚧','Baustelle',esc(tn(bs0.ids)),'Niederlagenserie',bs0.best+'er'):empty('baustelle','red','🚧','Baustelle'));
-  html+=`<div class="neg-divider">Schandtafel</div><div class="award-grid">${neg.join('')}</div>`;
+  neg.push(ls0
+    ? card('lossStreaks','red','Längste Niederlagenserie',[ls0.id],esc(pname(ls0.id)),'insgesamt',ls0.v+'er',{neg:true})
+    : empty('lossStreaks','red','Längste Niederlagenserie'));
+  neg.push(ft0
+    ? card('formtief','red','Formtief',[ft0.id],esc(pname(ft0.id)),'Peak '+ft0.peak+' → jetzt '+ft0.cur,'-'+Math.round(ft0.drop),{neg:true})
+    : empty('formtief','red','Formtief'));
+  neg.push(wa0
+    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(pname(wa0.id)),(wa0.v/wa0.g).toFixed(1)+' Tore/Sp.',(wa0.v/wa0.g).toFixed(1),{neg:true})
+    : empty('worstAtk','red','Zahnloser Stürmer'));
+  neg.push(wd0
+    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(pname(wd0.id)),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1),{neg:true})
+    : empty('worstDef','red','Löchrigste Abwehr'));
+  neg.push(zk0
+    ? card('zirkus','red','Zirkus',zk0.ids,esc(tn(zk0.ids)),zk0.v+'× 5+ Tore kassiert',zk0.v,{neg:true})
+    : empty('zirkus','red','Zirkus'));
+  neg.push(wt0
+    ? card('worstTeam','red','Schlechtestes Team',wt0.ids,esc(tn(wt0.ids)),wt0.w+'–'+(wt0.g-wt0.w),Math.round(wt0.w/wt0.g*100)+'%',{neg:true})
+    : empty('worstTeam','red','Schlechtestes Team'));
+  neg.push(bs0
+    ? card('baustelle','red','Baustelle',bs0.ids,esc(tn(bs0.ids)),'Niederlagenserie',bs0.best+'er',{neg:true})
+    : empty('baustelle','red','Baustelle'));
+  html+=`<div class="aw-neg-divider">
+    <svg viewBox="0 0 24 24">${ICONS['skull']||''}</svg>
+    <span class="aw-neg-divider-text">Schandtafel</span>
+  </div>${neg.join('')}`;
 
   return `
     <div class="view-head"><h2>Awards</h2><p>${pl} · tippen für Top 3</p></div>
@@ -3191,65 +3437,7 @@ const AWARD_META={
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
   const tn=ids=>ids.map(pname).join(' & ');
-  const medal=r=>r>=1&&r<=3 ? medalB(r-1) : '';
-  const podium=(rank,name,detail,val)=>`
-    <div class="rrow ${rank<=3?'top'+rank:''}" style="cursor:default">
-      <span class="medal">${medal(rank)}</span><span class="pos num" style="${rank<=3?'opacity:0':''}">${rank}</span>
-      <div class="rmid" style="margin-left:${rank<=3?'4px':'0'}"><div class="rname">${name}</div>
-        <div class="rmeta"><span>${detail}</span></div></div>
-      <div class="rval"><div class="big num">${val}</div></div>
-    </div>`;
-  // Rang-Berechnung mit geteilten Plätzen: gleicher Wert = gleicher Rang
-  // ranked(arr, valFn, renderFn) → rendert mit korrekten Rängen, filtert bis Rang ≤ 3
-  const ranked=(arr,valFn,renderFn)=>{
-    if(!arr||!arr.length)return '';
-    let rank=1;
-    return arr.slice(0,6).map((x,i)=>{
-      if(i>0&&valFn(x)!==valFn(arr[i-1]))rank=i+1;
-      if(rank>3)return '';
-      return renderFn(x,rank);
-    }).join('');
-  };
-  let rows='';
-  if(key==='wins')      rows=ranked(R.winsList,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),x.g+' Spiele',x.v));
-  else if(key==='mvt')  rows=ranked(R.mvt,x=>Math.round(x.v),(x,r)=>podium(r,esc(tn(x.ids)),pl,(x.v>=0?'+':'')+Math.round(x.v)));
-  else if(key==='streaks')rows=ranked(R.streaks,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),'Siege in Folge',x.v+'er'));
-  else if(key==='scorer')rows=ranked(R.scorer,x=>Math.round(x.avg*10),(x,r)=>podium(r,esc(pname(x.id)),x.g+' Spiele als Stürmer','Ø '+x.avg.toFixed(1)));
-  else if(key==='wall') rows=ranked(R.wall,x=>Math.round(x.v/x.g*10),(x,r)=>podium(r,esc(pname(x.id)),x.g+' Abwehr-Spiele',(x.v/x.g).toFixed(1)+'/Sp.'));
-  else if(key==='upset'){
-    rows=ranked(R.upsets,x=>Math.round(x.sp*100),(x,r)=>{
-      const m=x.m; const teams=pname(m.a1)+' & '+pname(m.a2)+' vs '+pname(m.b1)+' & '+pname(m.b2);
-      return podium(r,m.score_a+':'+m.score_b+' · '+esc(teams),
-        dateStr(m.created_at)+' · Siegchance war nur '+Math.round((1-x.sp)*100)+'%',
-        Math.round(x.sp*100)+'% Upset');
-    });
-  }
-  else if(key==='biggest'){
-    rows=ranked(R.biggest,x=>x.diff,(x,r)=>{
-      const m=x.m; const teams=pname(m.a1)+' & '+pname(m.a2)+' vs '+pname(m.b1)+' & '+pname(m.b2);
-      return podium(r,m.score_a+':'+m.score_b+' · '+esc(teams),dateStr(m.created_at),'+'+x.diff);
-    });
-  }
-  else if(key==='perfect')rows=ranked(R.perfect,x=>Math.round(x.wr*100),(x,r)=>podium(r,esc(pname(x.id)),x.w+'–'+(x.g-x.w),Math.round(x.wr*100)+'%'));
-  else if(key==='grinder')rows=ranked(R.grinder,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),pl,x.v+' Spiele'));
-  else if(key==='worstWr')rows=ranked(R.worstWr,x=>Math.round(x.wr*100),(x,r)=>podium(r,esc(pname(x.id)),x.w+'–'+(x.g-x.w),Math.round(x.wr*100)+'%'));
-  else if(key==='worstAtk')rows=ranked(R.worstAtk,x=>Math.round(x.v/x.g*10),(x,r)=>podium(r,esc(pname(x.id)),x.g+' Sturm-Spiele',(x.v/x.g).toFixed(1)+' Tore/Sp.'));
-  else if(key==='worstDef')rows=ranked(R.worstDef,x=>Math.round(x.v/x.g*10),(x,r)=>podium(r,esc(pname(x.id)),x.g+' Abwehr-Spiele',(x.v/x.g).toFixed(1)+' Gegen/Sp.'));
-  else if(key==='endgegner')rows=ranked(R.endgegner,x=>x.g,(x,r)=>podium(r,esc(tn(x.ids)),x.w1+'–'+x.w2+' Bilanz',x.g+' Beg.'));
-  else if(key==='clutch')rows=ranked(R.clutchList,x=>Math.round(x.wr*100),(x,r)=>podium(r,esc(pname(x.id)),x.g+' knappe Spiele',Math.round(x.wr*100)+'%'));
-  else if(key==='ice')rows=ranked(R.iceList,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),'Zu-Null-Siege als Verteidiger',x.v+'×'));
-  else if(key==='worstTeam'){rows=ranked(R.worstTeam,x=>Math.round(x.w/x.g*100),(x,r)=>podium(r,esc(tn(x.ids)),x.w+'–'+(x.g-x.w),Math.round(x.w/x.g*100)+'%'));}
-  else if(key==='bestDuo')rows=ranked(R.bestDuo,x=>x.g,(x,r)=>podium(r,esc(tn(x.ids)),x.w+'–'+(x.g-x.w),x.g+' Sp.'));
-  else if(key==='onFire')rows=ranked(R.onFire,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),'aktuelle Serie',x.v+'er'));
-  else if(key==='coldStreak')rows=ranked(R.coldStreak,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),'aktuelle Niederlagenserie',x.v+'er'));
-  else if(key==='lossStreaks')rows=ranked(R.lossStreaks,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),'längste Niederlagenserie',x.v+'er'));
-  else if(key==='carryKing')rows=ranked(R.carryList,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),'Siege mit Bottom-3 Mate',x.v+'×'));
-  else if(key==='showmaster')rows=ranked(R.showmasterList,x=>x.v,(x,r)=>podium(r,esc(pname(x.id)),'10:0 Siege',x.v+'×'));
-  else if(key==='solo')rows=ranked(R.soloList,x=>Math.round(x.wr*100),(x,r)=>podium(r,esc(pname(x.id)),x.g+' Spiele mit Bottom-3',Math.round(x.wr*100)+'%'));
-  else if(key==='formtief')rows=ranked(R.formtief,x=>Math.round(x.drop),(x,r)=>podium(r,esc(pname(x.id)),'Peak '+x.peak+' → '+x.cur,'-'+Math.round(x.drop)));
-  else if(key==='zirkus')rows=ranked(R.zirkusList,x=>x.v,(x,r)=>podium(r,esc(tn(x.ids)),'5+ Tore Differenz',x.v+'×'));
-  else if(key==='baustelle')rows=ranked(R.baustelleList,x=>x.best,(x,r)=>podium(r,esc(tn(x.ids)),'Niederlagen in Folge',x.best+'er'));
-  // Award-Key → Icon (gleiche Map wie in vAwards.card)
+  // Award-Key → SVG-Icon
   const AW_IC = {
     wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
     showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
@@ -3259,16 +3447,148 @@ function showAward(key){
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
     zirkus:'circus',       baustelle:'cone'
   };
+
+  // Awards die ein einzelnes Match darstellen (kein Podium, ein großes Match-Card)
+  const MATCH_AWARDS = new Set(['upset','biggest']);
+  // Team-Awards (zwei Spieler je Eintrag → Avatar-Paar im Podium)
+  const TEAM_AWARDS = new Set(['mvt','bestDuo','endgegner','worstTeam','zirkus','baustelle']);
+
+  let bodyHtml='';
+
+  if(MATCH_AWARDS.has(key)){
+    // Match-Card-Layout — zeigt das Match prominent
+    const arr = key==='upset' ? R.upsets : R.biggest;
+    if(arr&&arr.length){
+      const top = arr[0];
+      const m = top.m;
+      const winnerSide = m.winner;
+      const isUpsetVariant = key==='upset';
+      const upsetWinPct = isUpsetVariant ? Math.round((1-top.sp)*100) : null;
+      const diffStr = key==='biggest' ? '+'+top.diff+' Tore' : 'Siegchance nur '+upsetWinPct+'%';
+      bodyHtml = `
+        <div class="aw-match${isUpsetVariant?' upset':''}">
+          <div class="aw-match-score">${m.score_a} : ${m.score_b}</div>
+          <div class="aw-match-meta">${dateStr(m.created_at)} · ${diffStr}</div>
+          <div class="aw-match-teams">
+            <div class="aw-match-team">
+              ${winnerSide==='A'?'<div class="aw-match-winner">Gewinner</div>':''}
+              ${awMiniPair(m.a1,m.a2)}
+              <div class="aw-match-team-name">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
+            </div>
+            <div class="aw-match-vs">vs</div>
+            <div class="aw-match-team">
+              ${winnerSide==='B'?'<div class="aw-match-winner">Gewinner</div>':''}
+              ${awMiniPair(m.b1,m.b2)}
+              <div class="aw-match-team-name">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+    }
+  } else {
+    // Podium 2-1-3 für Player- und Team-Awards.
+    // 1) Top-3-Liste je Award-Key ermitteln, mit (ids, name, valFormatted, detail)
+    const arr = (() => {
+      switch(key){
+        case 'wins':       return R.winsList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Siege',sort:x.v}));
+        case 'mvt':        return R.mvt.map(x=>({ids:x.ids,name:tn(x.ids),val:(x.v>=0?'+':'')+Math.round(x.v)+' Elo',sort:Math.round(x.v)}));
+        case 'streaks':    return R.streaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
+        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+x.avg.toFixed(1)+' Tore',sort:Math.round(x.avg*10)}));
+        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'perfect':    return R.perfect.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
+        case 'grinder':    return R.grinder.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Spiele',sort:x.v}));
+        case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
+        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
+        case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:x.g+' Beg.',sort:x.g}));
+        case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
+        case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Zu-Null',sort:x.v}));
+        case 'worstTeam':  return R.worstTeam.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.w/x.g*100)+'%',sort:-Math.round(x.w/x.g*100)}));
+        case 'bestDuo':    return R.bestDuo.map(x=>({ids:x.ids,name:tn(x.ids),val:x.g+' Spiele',sort:x.g}));
+        case 'onFire':     return R.onFire.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
+        case 'coldStreak': return R.coldStreak.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Niederlagen',sort:x.v}));
+        case 'lossStreaks':return R.lossStreaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
+        case 'carryKing':  return R.carryList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Carries',sort:x.v}));
+        case 'showmaster': return R.showmasterList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× 10:0',sort:x.v}));
+        case 'solo':       return R.soloList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
+        case 'formtief':   return R.formtief.map(x=>({ids:[x.id],name:pname(x.id),val:'-'+Math.round(x.drop)+' Elo',sort:Math.round(x.drop)}));
+        case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+'× 5+ Tore',sort:x.v}));
+        case 'baustelle':  return R.baustelleList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.best+'er Serie',sort:x.best}));
+        default: return [];
+      }
+    })();
+
+    // 2) Top-3 mit geteilten Plätzen ermitteln (gleicher Wert = gleicher Rang).
+    // Liste ist bereits durch awardRankings vorsortiert (besser oben). Wir nutzen sort-Feld nur für Tie-Erkennung.
+    const top3 = [];
+    let rank=1;
+    for(let i=0;i<arr.length && rank<=3;i++){
+      if(i>0 && arr[i].sort!==arr[i-1].sort) rank=i+1;
+      if(rank>3) break;
+      top3.push({...arr[i], rank});
+    }
+
+    if(!top3.length){
+      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+    } else {
+      // Podium-Step für einen Eintrag
+      const isTeam = TEAM_AWARDS.has(key);
+      const step = (entry, place, blockCls, label) => {
+        if(!entry) return `<div class="aw-pod"><div class="aw-pod-block ${blockCls}">${label}</div></div>`;
+        const avHtml = isTeam ? awPodPair(entry.ids[0],entry.ids[1]) : awPodAv(entry.ids[0]);
+        const isFirst = place===1;
+        return `<div class="aw-pod${isFirst?' first':''}">
+          ${isFirst?'<div class="aw-pod-crown">👑</div>':''}
+          ${avHtml}
+          <div class="aw-pod-name">${esc(entry.name)}</div>
+          <div class="aw-pod-val">${esc(entry.val)}</div>
+          <div class="aw-pod-block ${blockCls}">${label}</div>
+        </div>`;
+      };
+      // Visuelle Reihenfolge: 2 - 1 - 3
+      const first  = top3.find(x=>x.rank===1) || null;
+      const second = top3.find(x=>x.rank===2) || null;
+      const third  = top3.find(x=>x.rank===3) || null;
+      bodyHtml = `<div class="aw-podium">
+        ${step(second,2,'silver','2')}
+        ${step(first,1,'gold','1')}
+        ${step(third,3,'bronze','3')}
+      </div>`;
+    }
+  }
+
+  // Hero-Icon-Color: aus AWARD_META.cls
+  const heroCls = meta.cls || 'gold';
+
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px">
-      <span class="emoji svg-ic" style="width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--surface2);font-size:24px;color:var(--ink2)"><svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">${ICONS[AW_IC[key]||'trophy']||''}</svg></span>
-      <div><h3>${meta.title}</h3><div class="sheet-sub">Top 3 · ${pl}</div></div>
+    <div class="aw-hero-icon">
+      <div class="aw-hero-icon-glow ${heroCls}">
+        <svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>
+      </div>
+      <div class="aw-hero-title">${meta.title}</div>
+      <div class="aw-hero-sub">${pl}</div>
     </div>
-    <div class="rlist" style="margin-top:16px">${rows||'<div class="empty">Keine Daten</div>'}</div>
-    <div class="card" style="margin-top:14px;background:var(--surface)">
-      <div class="mini-label">Warum?</div>
-      <div style="font-size:13px;color:var(--ink2);line-height:1.6">${meta.why}</div>
+    ${bodyHtml}
+    <div class="aw-why">
+      <div class="aw-why-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg></div>
+      <div class="aw-why-content">
+        <div class="aw-why-label">So wird gewertet</div>
+        <div class="aw-why-body">${meta.why}</div>
+      </div>
     </div>`);
+
+  // Match-Card optional klickbar → öffnet Match-Detail
+  if(MATCH_AWARDS.has(key)){
+    const arr = key==='upset' ? R.upsets : R.biggest;
+    if(arr&&arr.length){
+      const el = document.querySelector('.aw-match');
+      if(el){
+        el.style.cursor='pointer';
+        el.onclick=()=>{ const mid=arr[0].m.id; closeSheet(); setTimeout(()=>showMatchDetail(mid),350); };
+      }
+    }
+  }
 }
 function dedupeBy(arr,keyFn){const seen=new Set(),out=[];for(const x of arr){const k=keyFn(x);if(seen.has(k))continue;seen.add(k);out.push(x);}return out;}
 function mscoreLabel(m){return m.score_a+':'+m.score_b;}
@@ -3280,17 +3600,49 @@ function vTeams(){
   const showBest=teamView!=='worst';
   const sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
   const arr=showBest?sorted:[...sorted].reverse();
+
+  // Top-3 Akzente (Gold/Silber/Bronze) — Border + Rang-Kachel-Hintergrund
+  const TOP=[
+    {border:'rgba(247,207,74,.45)', bg:'#f7cf4a', fg:'#1d1700'},
+    {border:'rgba(200,208,203,.35)',bg:'#c8d0cb', fg:'#1a1f1c'},
+    {border:'rgba(255,120,73,.3)',  bg:'#ff7849', fg:'#2a1108'}
+  ];
+
+  const pm=pmap();
+  const avPair=(idA,idB)=>{
+    const a=pm[idA], b=pm[idB];
+    const one=(p,offset)=>{
+      if(!p) return `<div style="width:32px;height:32px;border-radius:50%;background:var(--surface3);border:2px solid var(--surface);${offset?'margin-left:-9px':''}"></div>`;
+      const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
+      if(em) return `<div style="width:32px;height:32px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:15px;border:2px solid var(--surface);${offset?'margin-left:-9px':''}">${em}</div>`;
+      return `<div style="width:32px;height:32px;border-radius:50%;background:${avColor(p.id)};display:grid;place-items:center;font-size:11px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;border:2px solid var(--surface);${offset?'margin-left:-9px':''}">${esc(initials(p.name))}</div>`;
+    };
+    return `<div style="display:flex;align-items:center;flex-shrink:0">${one(a,false)}${one(b,true)}</div>`;
+  };
+
   const rows=arr.map((t,i)=>{
     const wr=Math.round(t.w/t.g*100),gd=t.gf-t.ga;
-    const medal=showBest?medalB(i):'';
-    return `<div class="rrow ${showBest&&i<3?'top'+(i+1):''}" data-team="${esc(t.ids.join('|'))}">
-      ${medal?`<span class="medal">${medal}</span><span class="pos" style="opacity:0"></span>`:`<span class="pos num">${i+1}</span>`}
-      <div class="rmid" style="margin-left:4px"><div class="rname">${esc(t.ids.map(pname).join(' & '))}</div>
-        <div class="rmeta"><span>${t.w}–${t.g-t.w}</span><span>TD ${gd>=0?'+':''}${gd}</span></div></div>
-      <div class="rval"><div class="big num">${wr}%</div><div class="small">${t.g} Sp.</div></div></div>`;
+    const isTop=showBest&&i<3;
+    const top=isTop?TOP[i]:null;
+    const borderColor=top?top.border:'var(--line)';
+    const rankBlock=top
+      ? `<div style="width:24px;height:24px;border-radius:8px;background:${top.bg};color:${top.fg};display:grid;place-items:center;font-family:'Archivo Black',sans-serif;font-size:12px;flex-shrink:0">${i+1}</div>`
+      : `<div style="width:24px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--faint);flex-shrink:0">${i+1}</div>`;
+    return `<div class="rrow" data-team="${esc(t.ids.join('|'))}" style="background:var(--surface);border:1px solid ${borderColor};border-radius:18px;padding:13px 15px;display:block">
+      <div style="display:flex;align-items:center;gap:12px">
+        ${rankBlock}
+        ${avPair(t.ids[0],t.ids[1])}
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em;line-height:1.1">${esc(t.ids.map(pname).join(' & '))}</div>
+          <div class="num" style="margin-top:4px;font-size:10.5px;color:var(--muted)">${t.w}–${t.g-t.w} · TD ${gd>=0?'+':''}${gd}</div>
+        </div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--acid);line-height:1;flex-shrink:0">${wr}%</div>
+      </div>
+    </div>`;
   }).join('');
+
   return `
-    <div class="view-head"><h2>Teams</h2><p>Beste & schlechteste Duos</p></div>
+    <div class="view-head"><h2>Teams</h2><p>${arr.length} Duo${arr.length===1?'':'s'} mit min. 4 gemeinsamen Spielen</p></div>
     <div class="seg accent">
       <button data-teamtoggle="best" class="${showBest?'on':''}">▲ Beste</button>
       <button data-teamtoggle="worst" class="${!showBest?'on':''}">▼ Schlechteste</button>
@@ -4192,7 +4544,8 @@ function showPlayer(id){
       trophies.push({type:'player', label:s.label||'', date:s.id||s.start_date||''});
     }
     if(s.team_p1===id||s.team_p2===id){
-      trophies.push({type:'team', label:s.label||'', date:s.id||s.start_date||''});
+      const mate = s.team_p1===id ? s.team_p2 : s.team_p1;
+      trophies.push({type:'team', label:s.label||'', date:s.id||s.start_date||'', mate});
     }
   });
   // Sortierung: neueste zuerst (Saison-ID ist 'YYYY-MM', String-Sort = chronologisch)
@@ -4206,8 +4559,9 @@ function showPlayer(id){
           <div class="ti">Player of<br>the Season</div>
           <div class="su">${esc(t.label)}</div>
         </div>`;
+        const teamAttr = t.mate ? ` data-team="${esc([id,t.mate].sort().join('|'))}"` : '';
         return `
-        <div class="pp-tr team">
+        <div class="pp-tr team"${teamAttr}>
           <span class="ic svg-ic">${svgI('handshake')}</span>
           <div class="ti">Team of<br>the Season</div>
           <div class="su">${esc(t.label)}</div>
