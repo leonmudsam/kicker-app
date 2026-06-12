@@ -1576,6 +1576,7 @@ let rankMetric='elo';      // elo | atk | def | winrate | goaldiff | streak
 let rankSearch='';
 let histFilter='all';      // all | <playerId>
 let teamView='best';       // best | worst (Teams-Tab)
+let teamSort='wr';         // wr | gd | elo (Teams-Sortierung) ← NEUE ZEILE
 let posSort='wr';          // wr | wins (Positionen-Filter)
 let period='season';          // all | season | week | month (Liga-Zeitraum)
 let periodSort='wins';     // wins | elo (Zeitraum-Sortierung)
@@ -1780,23 +1781,70 @@ function allPastSeasons(){
 }
 
 let seasons=[];  // geladene Saison-Ergebnisse aus DB
-
+let _histPage = 0; // Aktuelle Seite für den Verlaufs-Tab (Lazy Loading)
 // ════════ PERFORMANCE CACHES ════════
 // Invalidiert bei: loadAll, Match-Add/Edit/Delete, Recalc, Config-Änderung
 let _cache={version:0};
 
-function invalidateCache(){
-  _cache={version:++_cache.version};
+function invalidateCache(keys=null){
+  _cache.version++;
+  // Nur spezifische Caches löschen, nicht alles
+  if(!keys){
+    // Kompletter Reset (z.B. nach Recalc)
+    _cache={version:_cache.version};
+    _lastSimState=null;
+    _lastSimIndex=-1;
+  } else if(Array.isArray(keys)){
+    // Selektiv
+    keys.forEach(k=>{
+      if(k==='awards') delete _cache._awards;
+      if(k==='stats') delete _cache._allStatsKey;
+      if(k==='global') { _lastSimState=null; _lastSimIndex=-1; }
+      if(k==='teams') delete _cache._teamDetail;
+      if(k==='period') delete _cache._periodStatsKey;
+      if(k==='badges') delete _cache._badgeEarnedKey;
+    });
+  }
 }
+
+
+// Speichert den letzten Sim-State + Index des letzten verarbeiteten Matches
+let _lastSimState = null;
+let _lastSimIndex = -1;
 
 function getGlobalSim(){
   const key='global_'+matches.length+'_'+_cache.version;
   if(_cache._globalKey===key) return _cache._globalSim;
-  const sim=simulateElo(matches);
-  _cache._globalKey=key;
-  _cache._globalSim=sim;
+  
+  // Wenn nur neue Matches hinzugekommen sind: inkrementell weitermachen
+  if(_lastSimState && _lastSimIndex < matches.length && _cache.version === _lastSimVersion){
+    const newMatches = matches.slice(_lastSimIndex + 1);
+    if(newMatches.length > 0 && newMatches.length < 50){
+      // Inkrementell: nur neue Matches simulieren auf Basis des alten States
+      const sim = simulateElo(newMatches, {
+        initialState: _lastSimState,
+        initialCurSeason: _lastSimState.curSeason
+      });
+      _lastSimState = sim;
+      _lastSimIndex = matches.length - 1;
+      _cache._globalKey = key;
+      _cache._globalSim = sim;
+      return sim;
+    }
+  }
+  
+  // Fallback: komplette Neuberechnung (z.B. nach Recalc oder großem Update)
+  const sim = simulateElo(matches);
+  _lastSimState = sim;
+  _lastSimIndex = matches.length - 1;
+  _lastSimVersion = _cache.version;
+  _cache._globalKey = key;
+  _cache._globalSim = sim;
   return sim;
 }
+
+let _lastSimVersion = 0;
+
 
 function getCachedAwardRankings(period){
   const sid=period==='season'?(awSeasonId||currentSeason().id):'';
@@ -1889,7 +1937,7 @@ function rankBadgeHtml(id, size='sm'){
   return `<span style="display:inline-flex;align-items:center;gap:5px;
     background:var(--surface2);border:1px solid var(--line2);
     border-radius:20px;padding:${pad};font-size:${fs};font-weight:700;color:${r.color}">
-    <span class="ic svg-ic" style="font-size:${icSize};color:${r.color}"><svg viewBox="0 0 24 24">${ICONS[r.icon]||''}</svg></span>${r.label}
+    <span class="ic svg-ic" style="font-size:${icSize};color:${r.color}">${svgI(r.icon)}</span>${r.label}
   </span>`;
 }
 
@@ -2118,7 +2166,7 @@ async function loadAll(){
     matches=m.data||[];
     if(c.data)cfg=c.data;
     seasons=se.data||[];
-    invalidateCache();
+  invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
     // Nur aktive Spieler zählen für Anzeige
     const active=activePlayers();
     setConn(active.length+' Spieler · '+matches.length+' Matches','ok');
@@ -2374,7 +2422,7 @@ function showSeasonRecap(season){
     ${podiumHtml}
     ${awardsHtml}
     ${teamHtml}
-    <button class="btn" id="closeRecapBtn" style="margin-top:6px;width:100%">Verstanden</button>
+    <button class="btn" id="closeRecapBtn" style="margin-top:6px;width:100%">Schließen</button>
   `);
   document.getElementById('closeRecapBtn').onclick=()=>{
     localStorage.setItem('recap_shown_'+season.id,'1');
@@ -2563,48 +2611,128 @@ function setConn(t,c){document.getElementById('connText').textContent=t;document
 function allPlayerStats(){
   const key='allStats_'+matches.length+'_'+_cache.version;
   if(_cache._allStatsKey===key) return _cache._allStatsData;
+  
   const stats={};
   const run={};
-  players.forEach(p=>{
-    stats[p.id]={games:0,wins:0,losses:0,gf:0,ga:0,
+  
+  // Initialisierung: nur aktive Spieler (verringert die Anzahl der zu verarbeitenden IDs)
+  const activeIds = new Set(players.filter(p=>!p.hidden).map(p=>p.id));
+  activeIds.forEach(id=>{
+    stats[id]={games:0,wins:0,losses:0,gf:0,ga:0,
       atkG:0,atkW:0,defG:0,defW:0,
       mates:{},opps:{},best:-1e9,worst:1e9,curStreak:0};
-    run[p.id]=0;
+    run[id]=0;
   });
+  
+  // Single-Pass durch die Matches, sortiert nach Zeit
   const ordered=[...matches].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-  ordered.forEach(m=>{
-    [m.a1,m.a2,m.b1,m.b2].forEach(id=>{
-      const s=stats[id]; if(!s) return;
-      const onA=[m.a1,m.a2].includes(id);
-      const won=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
-      const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
-      const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
-      s.games++; s.gf+=gf; s.ga+=ga;
-      if(won){s.wins++; run[id]=run[id]>=0?run[id]+1:1;}
-      else   {s.losses++; run[id]=run[id]<=0?run[id]-1:-1;}
-      if(pos==='atk'){s.atkG++;if(won)s.atkW++;}
-      else           {s.defG++;if(won)s.defW++;}
-      const mate=onA?(id===m.a1?m.a2:m.a1):(id===m.b1?m.b2:m.b1);
-      if(!s.mates[mate])s.mates[mate]={g:0,w:0};
-      s.mates[mate].g++;if(won)s.mates[mate].w++;
-      const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
-      opps.forEach(o=>{if(!s.opps[o])s.opps[o]={g:0,w:0};s.opps[o].g++;if(won)s.opps[o].w++;});
-      const d=(m.deltas&&m.deltas[id])||0;
-      if(d>s.best)s.best=d; if(d<s.worst)s.worst=d;
-    });
+  for(let i=0; i<ordered.length; i++){
+    const m = ordered[i];
+    const d_a = m.deltas || {}; // Match-Deltas für alle Spieler im Match
+    
+    // Team A Spieler verarbeiten
+    const teamA_players = [m.a1, m.a2];
+    const teamA_won = m.winner === 'A';
+    const teamA_gf = m.score_a;
+    const teamA_ga = m.score_b;
+
+    for(let j=0; j<2; j++){
+      const id = teamA_players[j];
+      const s = stats[id];
+      if(!s) continue; // Überspringen, wenn Spieler nicht aktiv oder nicht existiert
+      
+      const won = teamA_won;
+      const gf = teamA_gf;
+      const ga = teamA_ga;
+      const pos = (id === m.a1) ? m.a1_pos : m.a2_pos;
+      const delta = d_a[id] || 0;
+      
+      s.games++;
+      s.gf += gf;
+      s.ga += ga;
+      if(won){ s.wins++; run[id] = run[id]>=0 ? run[id]+1 : 1; }
+      else   { s.losses++; run[id] = run[id]<=0 ? run[id]-1 : -1; }
+      
+      if(pos==='atk'){ s.atkG++; if(won) s.atkW++; }
+      else            { s.defG++; if(won) s.defW++; }
+      
+      const mate = (id === m.a1) ? m.a2 : m.a1;
+      if(!s.mates[mate]) s.mates[mate]={g:0,w:0};
+      s.mates[mate].g++;
+      if(won) s.mates[mate].w++;
+      
+      const opp1=m.b1, opp2=m.b2;
+      if(!s.opps[opp1]) s.opps[opp1]={g:0,w:0};
+      s.opps[opp1].g++;
+      if(won) s.opps[opp1].w++;
+      if(!s.opps[opp2]) s.opps[opp2]={g:0,w:0};
+      s.opps[opp2].g++;
+      if(won) s.opps[opp2].w++;
+      
+      if(delta > s.best) s.best = delta;
+      if(delta < s.worst) s.worst = delta;
+    }
+    
+    // Team B Spieler verarbeiten (analog zu Team A)
+    const teamB_players = [m.b1, m.b2];
+    const teamB_won = m.winner === 'B';
+    const teamB_gf = m.score_b;
+    const teamB_ga = m.score_a;
+    
+    for(let j=0; j<2; j++){
+      const id = teamB_players[j];
+      const s = stats[id];
+      if(!s) continue; // Überspringen, wenn Spieler nicht aktiv oder nicht existiert
+      
+      const won = teamB_won;
+      const gf = teamB_gf;
+      const ga = teamB_ga;
+      const pos = (id === m.b1) ? m.b1_pos : m.b2_pos;
+      const delta = d_a[id] || 0;
+      
+      s.games++;
+      s.gf += gf;
+      s.ga += ga;
+      if(won){ s.wins++; run[id] = run[id]>=0 ? run[id]+1 : 1; }
+      else   { s.losses++; run[id] = run[id]<=0 ? run[id]-1 : -1; }
+      
+      if(pos==='atk'){ s.atkG++; if(won) s.atkW++; }
+      else            { s.defG++; if(won) s.defW++; }
+      
+      const mate = (id === m.b1) ? m.b2 : m.b1;
+      if(!s.mates[mate]) s.mates[mate]={g:0,w:0};
+      s.mates[mate].g++;
+      if(won) s.mates[mate].w++;
+      
+      const opp1=m.a1, opp2=m.a2;
+      if(!s.opps[opp1]) s.opps[opp1]={g:0,w:0};
+      s.opps[opp1].g++;
+      if(won) s.opps[opp1].w++;
+      if(!s.opps[opp2]) s.opps[opp2]={g:0,w:0};
+      s.opps[opp2].g++;
+      if(won) s.opps[opp2].w++;
+      
+      if(delta > s.best) s.best = delta;
+      if(delta < s.worst) s.worst = delta;
+    }
+  }
+  
+  // Finalisierung der Statistiken (z.B. Winrate, Tordifferenz)
+  activeIds.forEach(id=>{
+    const s = stats[id];
+    s.curStreak = run[id];
+    s.wr = s.games ? s.wins/s.games : 0;
+    s.atkWr = s.atkG ? s.atkW/s.atkG : null;
+    s.defWr = s.defG ? s.defW/s.defG : null;
+    s.gd = s.gf - s.ga;
   });
-  players.forEach(p=>{
-    const s=stats[p.id];
-    s.curStreak=run[p.id];
-    s.wr=s.games?s.wins/s.games:0;
-    s.atkWr=s.atkG?s.atkW/s.atkG:null;
-    s.defWr=s.defG?s.defW/s.defG:null;
-    s.gd=s.gf-s.ga;
-  });
+  
   _cache._allStatsKey=key;
   _cache._allStatsData=stats;
   return stats;
 }
+
+
 
 // ════════ STATS ENGINE ════════
 // matchSubset optional — defaults zu allen Matches
@@ -2684,8 +2812,7 @@ function teamDetail(p1,p2){
 
     gf+=myGf; ga+=myGa;
     if(won) wins++; else losses++;
-    eloDelta+=((m.deltas&&m.deltas[ids[0]])||0)+((m.deltas&&m.deltas[ids[1]])||0);
-
+    // Nutze gSim.teamElo für konsistente Berechnung (verhindert Rundungsfehler)    // wird unten nach dem Loop gesetzt
     const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
     opps.forEach(oid=>{
       if(!oppStats[oid]) oppStats[oid]={g:0,w:0};
@@ -2729,12 +2856,17 @@ function teamDetail(p1,p2){
   // Letzte 5 Matches (neueste zuerst)
   const recent=[...teamMatches].sort((a,b)=>b.t-a.t).slice(0,5);
 
+  // ═══ KONSISTENTE ELO-BERECHNUNG ═══
+  const globalSim=getGlobalSim();
+  const teamKey=[ids[0],ids[1]].sort().join('|');
+  const consistentEloDelta=Math.round(globalSim.teamElo[teamKey]||0);
+
   const games=teamMatches.length;
   const result={
     ids, games, wins, losses, gf, ga,
     gd: gf-ga,
     wr: games?wins/games:0,
-    eloDelta: Math.round(eloDelta),
+    eloDelta: consistentEloDelta, // ← Nutze globalen Wert statt Akkumulation
     nemesis, favorite,
     biggestWin, biggestLoss, biggestUpset,
     recent
@@ -2742,6 +2874,7 @@ function teamDetail(p1,p2){
   _cache._teamDetail[key]=result;
   return result;
 }
+
 function monthlyElo(){
   const now=new Date(), ym=now.getFullYear()+'-'+now.getMonth();
   const pS={},tS={};
@@ -2759,8 +2892,9 @@ function monthlyElo(){
 const AV_COLORS=['#c8ff4d','#ff7849','#56b4e8','#f7cf4a','#a78bfa','#4ade80','#f0566a','#22d3ee','#fb923c','#e879f9'];
 function avColor(id){let h=0;for(let i=0;i<id.length;i++)h=id.charCodeAt(i)+((h<<5)-h);return AV_COLORS[Math.abs(h)%AV_COLORS.length];}
 
-// 29 Avatar-Optionen
+// 54 Avatar-Optionen (29 Originale + 25 Neue)
 const AVATAR_OPTIONS = [
+  // Originale 29
   {id:'wolf',     em:'🐺'}, {id:'smiletear', em:'🥲'}, {id:'cloud',   em:'😶‍🌫️'},
   {id:'cold',     em:'🥶'}, {id:'poop',      em:'💩'}, {id:'clown',   em:'🤡'},
   {id:'alien',    em:'👽'}, {id:'eye',       em:'👁'},  {id:'detective',em:'🕵'},
@@ -2771,7 +2905,18 @@ const AVATAR_OPTIONS = [
   {id:'unicorn',  em:'🦄'}, {id:'shark',     em:'🦈'}, {id:'eagle',   em:'🦅'},
   {id:'snail',    em:'🐌'}, {id:'xray',      em:'🩻'}, {id:'cigarette',em:'🚬'},
   {id:'moai',     em:'🗿'}, {id:'owl',       em:'🦉'},
+  // 29 Neue Avatar-Optionen
+  {id:'rocket',   em:'🚀'}, {id:'robot',     em:'🤖'}, {id:'ghost',   em:'👻'},
+  {id:'cowboy',   em:'🤠'}, {id:'angel',     em:'😇'}, {id:'devil',   em:'😈'},
+  {id:'ogre',     em:'👹'}, {id:'goblin',    em:'👺'}, {id:'dragon',  em:'🐉'},
+  {id:'octopus',   em:'🐙'}, {id:'crab',    em:'🦀'},
+  {id:'frog',     em:'🐸'}, {id:'panda',     em:'🐼'}, {id:'lion',    em:'🦁'},
+  {id:'fox',      em:'🦊'}, {id:'bear',      em:'🐻'}, {id:'sloth',   em:'🦥'},
+  {id:'hedgehog', em:'🦔'}, {id:'swan',      em:'🦢'}, {id:'butterfly',em:'🦋'},
+  {id:'scorpion', em:'🦂'}, {id:'turtle',    em:'🐢'}, {id:'snake',   em:'🐍'},
+  {id:'lizard',   em:'🦎'}, {id:'gorilla',   em:'🦍'}, 
 ];
+
 function avatarEmoji(avId){const a=AVATAR_OPTIONS.find(x=>x.id===avId);return a?a.em:null;}
 // Rendert das Avatar-Inner (Emoji wenn gesetzt, sonst Initialen)
 function avatarInnerHtml(player){
@@ -2998,71 +3143,81 @@ function simulateElo(matchSubset, opts={}){
     const avgElo=ids.reduce((s,id)=>s+elo[id],0)/4;
 
     const applyTeam=(team,opp,won,exp)=>{
-      const e0=elo[team[0].id],e1=elo[team[1].id];
-      const high=e0>=e1?team[0]:team[1];
-      const w=riskWeights(Math.max(e0,e1),Math.min(e0,e1),cfg.risk_split);
-      const oppAvg=(elo[opp[0].id]+elo[opp[1].id])/2;
-      team.forEach(slot=>{
-        const bd={playerId:slot.id,won,startElo:elo[slot.id]};
-        const k=localDynK(slot.id); bd.kFactor=k;
-        bd.expected=exp;
-        const rawBase=k*((won?1:0)-exp); bd.rawBase=rawBase;
+  const e0=elo[team[0].id],e1=elo[team[1].id];
+  const high=e0>=e1?team[0]:team[1];
+  const w=riskWeights(Math.max(e0,e1),Math.min(e0,e1),cfg.risk_split);
+  const oppAvg=(elo[opp[0].id]+elo[opp[1].id])/2;
+  const teamDeltas=[]; // Temporärer Array für alle Deltas dieses Teams
+  
+  team.forEach(slot=>{
+    const bd={playerId:slot.id,won,startElo:elo[slot.id]};
+    const k=localDynK(slot.id); bd.kFactor=k;
+    bd.expected=exp;
+    const rawBase=k*((won?1:0)-exp); bd.rawBase=rawBase;
 
-        // MoV
-        const mov=won?rawMov:(1+(rawMov-1)*(cfg.mov_loss_damp||0.5));
-        bd.movMult=mov; bd.movEffect=rawBase*mov-rawBase;
+    // MoV
+    const mov=won?rawMov:(1+(rawMov-1)*(cfg.mov_loss_damp||0.5));
+    bd.movMult=mov; bd.movEffect=rawBase*mov-rawBase;
 
-        // Win-Boost
-        const boost=won?(cfg.win_boost||1.12):1.0;
-        bd.winBoost=boost; bd.winBoostEffect=rawBase*mov*boost-rawBase*mov;
+    // Win-Boost
+    const boost=won?(cfg.win_boost||1.12):1.0;
+    bd.winBoost=boost; bd.winBoostEffect=rawBase*mov*boost-rawBase*mov;
 
-        // Erfahrungs-Schutz: greift erst ab Match 5, linear hochskaliert,
-        // voll bei Match 30 (10% Schutz). Saison-basiert (Reset jeden Monat).
-        const g=playedSeason[slot.id]||0;
-        const protectShare=Math.max(0,Math.min(1,(g-5)/25));
-        const expProtect=won?1:(1-0.1*protectShare);
-        bd.expProtect=expProtect; bd.expProtectEffect=won?0:rawBase*mov*boost*expProtect-rawBase*mov*boost;
+    // Erfahrungs-Schutz
+    const g=playedSeason[slot.id]||0;
+    const protectShare=Math.max(0,Math.min(1,(g-5)/25));
+    const expProtect=won?1:(1-0.1*protectShare);
+    bd.expProtect=expProtect; bd.expProtectEffect=won?0:rawBase*mov*boost*expProtect-rawBase*mov*boost;
 
-        // Underdog-Boost: basiert auf Elo-Differenz zum Gegnerteam + Spielanzahl-Differenz (Saison)
-        const myElo=elo[slot.id];
-        const eloDiff=oppAvg-myElo; // positiv = ich bin schwächer
-        const gamesDiff=avgGames-(playedSeason[slot.id]||0); // positiv = ich habe weniger Spiele in dieser Saison
-        // Sigmoid-artiger Boost: sanft skaliert, gecappt bei ±20%
-        const eloFactor=Math.tanh(eloDiff/400)*0.15; // max ±15% aus Elo-Differenz
-        const gamesFactor=Math.tanh(gamesDiff/30)*0.05; // max ±5% aus Spielanzahl
-        const underdogRaw=eloFactor+gamesFactor;
-        const underdogMult=won?Math.max(1,1+underdogRaw):Math.min(1,1+underdogRaw); // Siege: nur Boost, Niederlagen: nur Dämpfer
-        bd.underdogMult=underdogMult;
-        bd.underdogEloDiff=Math.round(eloDiff);
-        bd.underdogGamesDiff=Math.round(gamesDiff);
+    // Underdog-Boost
+    const myElo=elo[slot.id];
+    const eloDiff=oppAvg-myElo;
+    const gamesDiff=avgGames-(playedSeason[slot.id]||0);
+    const eloFactor=Math.tanh(eloDiff/400)*0.15;
+    const gamesFactor=Math.tanh(gamesDiff/30)*0.05;
+    const underdogRaw=eloFactor+gamesFactor;
+    const underdogMult=won?Math.max(1,1+underdogRaw):Math.min(1,1+underdogRaw);
+    bd.underdogMult=underdogMult;
+    bd.underdogEloDiff=Math.round(eloDiff);
+    bd.underdogGamesDiff=Math.round(gamesDiff);
 
-        const afterMods=rawBase*mov*boost*expProtect*underdogMult;
-        bd.afterMods=afterMods;
+    const afterMods=rawBase*mov*boost*expProtect*underdogMult;
+    bd.afterMods=afterMods;
 
-        // Risiko-Split
-        const share=slot.id===high.id?w.strong:w.weak;
-        bd.riskShare=share; bd.riskEffect=afterMods*share-afterMods;
+    // Risiko-Split
+    const share=slot.id===high.id?w.strong:w.weak;
+    bd.riskShare=share; bd.riskEffect=afterMods*share-afterMods;
 
-        // Positions-Bonus
-        const a=atkFromTracker(slot.id);
-        const ps=slot.pos==='atk'?a:(1-a);
-        const pf=posFactor(ps,cfg.pos_swing);
-        const posMult=won?pf:(2-pf);
-        bd.posStrength=a; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
+    // Positions-Bonus
+    const a=atkFromTracker(slot.id);
+    const ps=slot.pos==='atk'?a:(1-a);
+    const pf=posFactor(ps,cfg.pos_swing);
+    const posMult=won?pf:(2-pf);
+    bd.posStrength=a; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
 
-        // Match-Bonus
-        const mb=cfg.match_bonus||1.5;
-        bd.matchBonus=mb;
+    // Match-Bonus
+    const mb=cfg.match_bonus||1.5;
+    bd.matchBonus=mb;
 
-        // Finale Delta
-        const finalDelta=afterMods*share*posMult+mb;
-        bd.finalDelta=finalDelta;
-        bd.endElo=elo[slot.id]+finalDelta;
+    // Finale Delta (NICHT GERUNDET)
+    const finalDelta=afterMods*share*posMult+mb;
+    bd.finalDelta=finalDelta;
+    bd.endElo=elo[slot.id]+finalDelta;
 
-        res[slot.id]=finalDelta;
-        breakdowns[slot.id]=bd;
-      });
-    };
+    teamDeltas.push({slot, delta: finalDelta, bd});
+  });
+  
+  // ═══ RUNDUNGS-KORREKTUR ═══
+  // Runde beide Deltas einzeln, dann korrigiere die Summe
+  let totalDelta = 0;
+  teamDeltas.forEach(item => {
+    const rounded = Math.round(item.delta);
+    res[item.slot.id] = rounded;
+    breakdowns[item.slot.id] = item.bd;
+    totalDelta += rounded;
+  });
+};
+
     const aWon=m.winner==='A';
     applyTeam(teamA,teamB,aWon,expA);
     applyTeam(teamB,teamA,!aWon,1-expA);
@@ -3208,7 +3363,7 @@ function periodPlayerStats(period){
     const absElo=gSim.elo[id]!==undefined?gSim.elo[id]:cfg.start_elo;
     return {
       id, wins:s.wins, losses:s.losses, games:s.games,
-      elo: period==='season' ? Math.round(absElo) : Math.round(cfg.start_elo+net),
+      elo: Math.round(absElo), // Immer die aktuelle Saison-Elo anzeigen
       eloNet: Math.round(net),
       eloGain: Math.round(s.eloGain),
       eloLoss: Math.round(s.eloLoss),
@@ -3450,8 +3605,8 @@ function vRanking(){
             </div>
             <div class="sh-stats">
               <div class="sh-stat"><div class="v acid">${winner.wins}</div><div class="l">Siege</div></div>
-              <div class="sh-stat"><div class="v red">${winner.losses}</div><div class="l">Losses</div></div>
-              <div class="sh-stat"><div class="v" style="color:${gdColor}">${winner.gd>=0?'+':''}${winner.gd}</div><div class="l">Tordiff</div></div>
+              <div class="sh-stat"><div class="v red">${winner.losses}</div><div class="l">Niederlagen</div></div>
+              <div class="sh-stat"><div class="v" style="color:${gdColor}">${winner.gd>=0?'+':''}${winner.gd}</div><div class="l">Tordifferenz</div></div>
               ${winnerForm?`<div class="sh-form">${winnerForm}</div>`:''}
             </div>
           </div>`;
@@ -3726,7 +3881,7 @@ function rrow(p, s, i, metric, globalElo){
     if(metric==='elo'){
     const r=getPlayerRank(p.id);
     const avgElos=getSeasonAvgElos();
-    big=r?`<span class="ic svg-ic" style="font-size:13px;color:${r.color};margin-right:3px"><svg viewBox="0 0 24 24">${ICONS[r.icon]||''}</svg></span>${r.label}`:'–';
+    big=r?`<span class="ic svg-ic" style="font-size:13px;color:${r.color};margin-right:3px">${svgI(r.icon)}</span>${r.label}`:'–';
     small=(avgElos[p.id]!==null&&avgElos[p.id]!==undefined)?'Ø '+avgElos[p.id]+' Elo':'–';
   }
 
@@ -3817,104 +3972,163 @@ function vPositions(){
 // Cache-Wrapper für awardRankings
 function awardRankings(period){return getCachedAwardRankings(period);}
 function _awardRankingsUncached(period){
-  // Zentrale Match-Filterung: nutzt awSeasonId wenn period=season
   const ms = period==='all' ? matches : period==='season' ? matchesInSeason(awSeasonId||currentSeason().id) : matchesInPeriod(period);
-  const single=[], team=[], upsets=[], biggest=[];
-  // Aggregat-Sammler über den Zeitraum
-  const pElo={}, pWins={}, pGoals={}, pConceded={}, pGames={}, tElo={}, tWins={}, tGames={};
-  const ensure=(o,k)=>{if(o[k]===undefined)o[k]=0;return k;};
-
-  ms.forEach(m=>{
-    Object.entries(m.deltas||{}).forEach(([id,v])=>single.push({v,id,m}));
-    const dA=((m.deltas||{})[m.a1]||0)+((m.deltas||{})[m.a2]||0);
-    const dB=((m.deltas||{})[m.b1]||0)+((m.deltas||{})[m.b2]||0);
-    team.push({v:dA,ids:[m.a1,m.a2],m}); team.push({v:dB,ids:[m.b1,m.b2],m});
-// FIX
-const expA=m.exp_a??0.5;
-const we=m.winner==='A'?expA:(1-expA);
-upsets.push({sp:1-we,m});
-    biggest.push({diff:Math.abs(m.score_a-m.score_b),m});
-
-    // Spieler-Aggregate
-    [m.a1,m.a2,m.b1,m.b2].forEach(id=>{
-      const onA=[m.a1,m.a2].includes(id);
-      const won=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
-      const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
-      ensure(pElo,id);  pElo[id]+=(m.deltas&&m.deltas[id])||0;
-      ensure(pWins,id); if(won)pWins[id]++;
-      ensure(pGoals,id); pGoals[id]+=gf;
-      ensure(pConceded,id); pConceded[id]+=ga;
-      ensure(pGames,id); pGames[id]++;
+  
+  // ═══ ALLE AGGREGATOREN IN EINEM OBJEKT ═══
+  const agg = {
+    pElo:{}, pWins:{}, pGoals:{}, pConceded:{}, pGames:{},
+    tElo:{}, tWins:{}, tGames:{},
+    atkGoals:{}, atkGoalGames:{}, defConceded:{}, defGames_:{},
+    single:[], team:[], upsets:[], biggest:[],
+    clutch:{}, iceWins:{}, snapMap:{}
+  };
+  
+  // Snapshot-Cache EINMALIG aufbauen
+  const globalSim = getGlobalSim();
+  globalSim.history.forEach(h=>{ agg.snapMap[h.matchId] = h.eloBefore; });
+  
+  // ═══ SINGLE-PASS DURCH ALLE MATCHES ═══
+  for(let i=0; i<ms.length; i++){
+    const m = ms[i];
+    const deltas = m.deltas || {};
+    const expA = m.exp_a ?? 0.5;
+    const we = m.winner==='A' ? expA : (1-expA);
+    
+    // === ELOS & TEAMS ===
+    Object.entries(deltas).forEach(([id,v])=>{
+      agg.single.push({v,id,m});
     });
-    // Team-Aggregate
-    const tA=[m.a1,m.a2].sort().join('|'), tB=[m.b1,m.b2].sort().join('|');
-    ensure(tElo,tA); tElo[tA]+=dA; ensure(tElo,tB); tElo[tB]+=dB;
-    ensure(tWins,tA); if(m.winner==='A')tWins[tA]++; ensure(tWins,tB); if(m.winner==='B')tWins[tB]++;
-    ensure(tGames,tA); tGames[tA]++; ensure(tGames,tB); tGames[tB]++;
-  });
-
-  single.sort((a,b)=>b.v-a.v);
-  team.sort((a,b)=>b.v-a.v);
-  upsets.sort((a,b)=>b.sp-a.sp);
-  biggest.sort((a,b)=>b.diff-a.diff || new Date(b.m.created_at)-new Date(a.m.created_at));
-
-  // MVT (Team) = meiste Elo-Punkte (min. 2 gemeinsame Spiele für aussagekräftiges Duo)
-  const mvt=Object.entries(tElo).map(([k,v])=>({ids:k.split('|'),v,g:tGames[k]||0}))
+    
+    const dA = (deltas[m.a1]||0) + (deltas[m.a2]||0);
+    const dB = (deltas[m.b1]||0) + (deltas[m.b2]||0);
+    agg.team.push({v:dA,ids:[m.a1,m.a2],m});
+    agg.team.push({v:dB,ids:[m.b1,m.b2],m});
+    
+    // === UPSETS & BIGGEST ===
+    agg.upsets.push({sp:1-we,m});
+    agg.biggest.push({diff:Math.abs(m.score_a-m.score_b),m});
+    
+    // === SPIELER-STATS (4er Loop) ===
+    const teams = [
+      [m.a1,m.a2,m.score_a,m.score_b,m.a1_pos,m.a2_pos,true],
+      [m.b1,m.b2,m.score_b,m.score_a,m.b1_pos,m.b2_pos,false]
+    ];
+    
+    for(let t=0; t<2; t++){
+      const [p1,p2,gf,ga,pos1,pos2,onA] = teams[t];
+      const won = onA ? (m.winner==='A') : (m.winner==='B');
+      
+      for(let p=0; p<2; p++){
+        const id = [p1,p2][p];
+        const pos = [pos1,pos2][p];
+        
+        if(!agg.pElo[id]) agg.pElo[id]=0;
+        if(!agg.pWins[id]) agg.pWins[id]=0;
+        if(!agg.pGoals[id]) agg.pGoals[id]=0;
+        if(!agg.pConceded[id]) agg.pConceded[id]=0;
+        if(!agg.pGames[id]) agg.pGames[id]=0;
+        
+        agg.pElo[id] += deltas[id]||0;
+        agg.pGames[id]++;
+        if(won) agg.pWins[id]++;
+        agg.pGoals[id] += gf;
+        agg.pConceded[id] += ga;
+        
+        // Tor-Awards (Stürmer)
+        if(pos==='atk'){
+          if(!agg.atkGoals[id]) agg.atkGoals[id]=0;
+          if(!agg.atkGoalGames[id]) agg.atkGoalGames[id]=0;
+          agg.atkGoals[id] += gf;
+          agg.atkGoalGames[id]++;
+        }
+        
+        // Gegentore (Abwehr)
+        if(pos==='def'){
+          if(!agg.defConceded[id]) agg.defConceded[id]=0;
+          if(!agg.defGames_[id]) agg.defGames_[id]=0;
+          agg.defConceded[id] += ga;
+          agg.defGames_[id]++;
+        }
+      }
+    }
+    
+    // === TEAM-AGGREGATE ===
+    const tA=[m.a1,m.a2].sort().join('|');
+    const tB=[m.b1,m.b2].sort().join('|');
+    if(!agg.tElo[tA]) agg.tElo[tA]=0;
+    if(!agg.tElo[tB]) agg.tElo[tB]=0;
+    if(!agg.tWins[tA]) agg.tWins[tA]=0;
+    if(!agg.tWins[tB]) agg.tWins[tB]=0;
+    if(!agg.tGames[tA]) agg.tGames[tA]=0;
+    if(!agg.tGames[tB]) agg.tGames[tB]=0;
+    
+    agg.tElo[tA] += dA;
+    agg.tElo[tB] += dB;
+    if(m.winner==='A') agg.tWins[tA]++;
+    if(m.winner==='B') agg.tWins[tB]++;
+    agg.tGames[tA]++;
+    agg.tGames[tB]++;
+    
+    // === ICE-WINS (ZU-NULL) ===
+    const defA = m.a1_pos==='def' ? m.a1 : m.a2;
+    const defB = m.b1_pos==='def' ? m.b1 : m.b2;
+    if(m.winner==='A' && m.score_b===0){
+      if(!agg.iceWins[defA]) agg.iceWins[defA]=0;
+      agg.iceWins[defA]++;
+    }
+    if(m.winner==='B' && m.score_a===0){
+      if(!agg.iceWins[defB]) agg.iceWins[defB]=0;
+      agg.iceWins[defB]++;
+    }
+    
+    // === CLUTCH (KNAPPE SPIELE) ===
+    if(Math.abs(m.score_a-m.score_b)<=2){
+      [m.a1,m.a2,m.b1,m.b2].forEach(id=>{
+        const onA=[m.a1,m.a2].includes(id);
+        const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
+        if(!agg.clutch[id]) agg.clutch[id]={g:0,w:0};
+        agg.clutch[id].g++;
+        if(w) agg.clutch[id].w++;
+      });
+    }
+  }
+  
+  // ═══ SORTIERUNGEN (nach SINGLE-PASS) ═══
+  agg.single.sort((a,b)=>b.v-a.v);
+  agg.team.sort((a,b)=>b.v-a.v);
+  agg.upsets.sort((a,b)=>b.sp-a.sp);
+  agg.biggest.sort((a,b)=>b.diff-a.diff || new Date(b.m.created_at)-new Date(a.m.created_at));
+  
+  // ═══ ABGELEITETE AWARDS ═══
+  const mvt=Object.entries(agg.tElo).map(([k,v])=>({ids:k.split('|'),v,g:agg.tGames[k]||0}))
     .filter(x=>x.g>=2).sort((a,b)=>b.v-a.v);
-
-  // Neue Awards:
-  // Torjäger = Team-Tore gehen an den STÜRMER des Teams.
-  // Der Abwehrspieler kann Tore erzielen, aber der Stürmer verantwortet sie als Award.
-  const atkGoals={}, atkGoalGames={}, defConceded={}, defGames_={};
-  ms.forEach(m=>{
-    // Team A Tore → an den Stürmer von Team A
-    const atkA = m.a1_pos==='atk'?m.a1:m.a2;
-    const atkB = m.b1_pos==='atk'?m.b1:m.b2;
-    ensure(atkGoals,atkA); ensure(atkGoalGames,atkA);
-    atkGoals[atkA]+=m.score_a; atkGoalGames[atkA]++;
-    ensure(atkGoals,atkB); ensure(atkGoalGames,atkB);
-    atkGoals[atkB]+=m.score_b; atkGoalGames[atkB]++;
-    // Abwehr: Gegentore an den Verteidiger
-    const defA = m.a1_pos==='def'?m.a1:m.a2;
-    const defB = m.b1_pos==='def'?m.b1:m.b2;
-    ensure(defConceded,defA); ensure(defGames_,defA);
-    defConceded[defA]+=m.score_b; defGames_[defA]++;
-    ensure(defConceded,defB); ensure(defGames_,defB);
-    defConceded[defB]+=m.score_a; defGames_[defB]++;
-  });
-  const scorer=Object.entries(atkGoals).filter(([,v])=>v>0).map(([id,v])=>({id,v,g:atkGoalGames[id],avg:v/atkGoalGames[id]})).filter(x=>x.g>=2).sort((a,b)=>b.avg-a.avg||b.v-a.v);
-  const wall=Object.entries(defConceded).filter(([id])=>defGames_[id]!==0).map(([id,v])=>({id,v,g:defGames_[id]||1}))
+  
+  const scorer=Object.entries(agg.atkGoals).filter(([,v])=>v>0).map(([id,v])=>({id,v,g:agg.atkGoalGames[id],avg:v/agg.atkGoalGames[id]})).filter(x=>x.g>=2).sort((a,b)=>b.avg-a.avg||b.v-a.v);
+  const wall=Object.entries(agg.defConceded).filter(([id])=>agg.defGames_[id]!==0).map(([id,v])=>({id,v,g:agg.defGames_[id]||1}))
     .filter(x=>x.g>=2).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
-
-  const grinder=Object.entries(pGames).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
-  const winsList=Object.entries(pWins).map(([id,v])=>({id,v,g:pGames[id]})).sort((a,b)=>b.v-a.v);
-  // Min-Schwelle: 5 Spiele ODER 15% des Vielspielers, gecappt auf 10 (vorher 40%, was kleine Ligen mit einem Vielspieler unfair gefiltert hat)
+  const iceList=Object.entries(agg.iceWins).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
+  
+  const grinder=Object.entries(agg.pGames).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
+  const winsList=Object.entries(agg.pWins).map(([id,v])=>({id,v,g:agg.pGames[id]})).sort((a,b)=>b.v-a.v);
   const perfectMin=Math.min(10, Math.max(5, Math.ceil((grinder[0]?.v||5)*0.15)));
-  const perfect=Object.entries(pWins).map(([id,w])=>({id,w,g:pGames[id],wr:pGames[id]?w/pGames[id]:0}))
+  const perfect=Object.entries(agg.pWins).map(([id,w])=>({id,w,g:agg.pGames[id],wr:agg.pGames[id]?w/agg.pGames[id]:0}))
     .filter(x=>x.g>=perfectMin)
     .sort((a,b)=>b.wr-a.wr||b.g-a.g);
-
+  
   const streaks=longestStreaks(ms);
-
-  // ═══ NEGATIVE AWARDS ═══
-  // Schlechtester Spieler (niedrigste Siegquote, min 3 Spiele)
-  const worstWr=Object.entries(pWins).map(([id,w])=>({id,w,g:pGames[id],wr:pGames[id]?w/pGames[id]:0}))
+  
+  const worstWr=Object.entries(agg.pWins).map(([id,w])=>({id,w,g:agg.pGames[id],wr:agg.pGames[id]?w/agg.pGames[id]:0}))
     .filter(x=>x.g>=3).sort((a,b)=>a.wr-b.wr||b.g-a.g);
-  // Schlechtester Stürmer (wenigste Team-Tore pro Spiel als Stürmer, min 2 Sturm-Spiele)
-  const worstAtk=Object.entries(atkGoals).map(([id,v])=>({id,v,g:atkGoalGames[id]||1}))
+  const worstAtk=Object.entries(agg.atkGoals).map(([id,v])=>({id,v,g:agg.atkGoalGames[id]||1}))
     .filter(x=>x.g>=2).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
-  // Löchrigste Abwehr (meiste Gegentore pro Spiel in der Abwehr, min 2 Abwehr-Spiele)
-  const worstDef=Object.entries(defConceded).map(([id,v])=>({id,v,g:defGames_[id]||1}))
+  const worstDef=Object.entries(agg.defConceded).map(([id,v])=>({id,v,g:agg.defGames_[id]||1}))
     .filter(x=>x.g>=2).sort((a,b)=>(b.v/b.g)-(a.v/a.g));
-  // Meiste Elo verloren
-  const worstElo=Object.entries(pElo).map(([id,v])=>({id,v})).sort((a,b)=>a.v-b.v);
-
-  // ═══ NEUE AWARDS ═══
-  // Endgegner: Paar das am häufigsten als Gegner aufeinandertrifft (Team-Award).
-  // Pro Match werden alle 4 Gegnerpaarungen gezählt: (a1,b1), (a1,b2), (a2,b1), (a2,b2).
-  // Bilanz w1/w2 = Siege des jeweils ersten/zweiten Spielers im sortierten Paar.
+  const worstElo=Object.entries(agg.pElo).map(([id,v])=>({id,v})).sort((a,b)=>a.v-b.v);
+  
+  // ═══ ENDGEGNER ═══
   const egPairs={};
-  ms.forEach(m=>{
+  for(let i=0; i<ms.length; i++){
+    const m=ms[i];
     const ATeam=[m.a1,m.a2], BTeam=[m.b1,m.b2];
     const aWon=m.winner==='A';
     ATeam.forEach(aId=>BTeam.forEach(bId=>{
@@ -3922,173 +4136,137 @@ upsets.push({sp:1-we,m});
       const k=sorted.join('|');
       if(!egPairs[k]) egPairs[k]={ids:sorted,g:0,w1:0,w2:0};
       egPairs[k].g++;
-      // w1 = Siege des Spielers an Position 0 im sortierten Paar
       const firstWon = (sorted[0]===aId && aWon) || (sorted[0]===bId && !aWon);
       if(firstWon) egPairs[k].w1++; else egPairs[k].w2++;
     }));
-  });
-  // Mind. 2 Begegnungen damit es überhaupt eine "Rivalität" ist.
-  const endgegner=Object.values(egPairs).filter(p=>p.g>=2)
-    .sort((a,b)=>b.g-a.g);
-
-  // Clutch-Player: höchste Siegrate in knappen Spielen (Differenz ≤ 2)
-  const clutch={};
-  ms.forEach(m=>{
-    if(Math.abs(m.score_a-m.score_b)>2)return;
-    [m.a1,m.a2,m.b1,m.b2].forEach(id=>{
-      const onA=[m.a1,m.a2].includes(id);
-      const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
-      if(!clutch[id])clutch[id]={g:0,w:0}; clutch[id].g++; if(w)clutch[id].w++;
-    });
-  });
-  const clutchList=Object.entries(clutch).filter(([,v])=>v.g>=2)
-    .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
-
-  // Eiskalt: Zu-Null-Siege (strikt 0 Gegentore) als Abwehrspieler
-  // Nur der Verteidiger des Siegerteams bekommt den Punkt — und nur wenn das Match
-  // wörtlich zu null endete.
-  const iceWins={};
-  ms.forEach(m=>{
-    const defA=m.a1_pos==='def'?m.a1:m.a2;
-    const defB=m.b1_pos==='def'?m.b1:m.b2;
-    if(m.winner==='A'&&m.score_b===0){ensure(iceWins,defA); iceWins[defA]++;}
-    if(m.winner==='B'&&m.score_a===0){ensure(iceWins,defB); iceWins[defB]++;}
-  });
-  const iceList=Object.entries(iceWins).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
-
-  // Schlechtestes Team
-  const worstTeam=[...teamStatsFromMatches(ms)].filter(t=>t.g>=2).sort((a,b)=>(a.w/a.g)-(b.w/b.g)||(a.gf-a.ga)-(b.gf-b.ga));
-
-  // Unzertrennlich: Duo mit den meisten gemeinsamen Spielen
-  const bestDuo=[...teamStatsFromMatches(ms)].sort((a,b)=>b.g-a.g);
-
-  // On Fire: längste AKTUELLE (noch laufende) Siegesserie
-  const onFire=currentStreaks(ms,true);
-  // Eiskalt erwischt: längste aktuelle Niederlagenserie
-  const coldStreak=currentStreaks(ms,false);
-
-    // Carry-King & Einzelkämpfer: historisches Bottom-3 per Match-Snapshot
-  const snapMap={};
-  getGlobalSim().history.forEach(h=>{snapMap[h.matchId]=h.eloBefore;});
-  const allActivePlayers=activePlayers();
-  const carryKing={};
-  ms.forEach(m=>{
-    const aWon=m.winner==='A';
-    const snap=snapMap[m.id]; if(!snap)return;
-    const sortedSnap=[...allActivePlayers].sort((a,b)=>(snap[a.id]??cfg.start_elo)-(snap[b.id]??cfg.start_elo));
-    const bottom3=new Set(sortedSnap.slice(0,3).map(p=>p.id));
-    const checkTeam=(p1,p2,won)=>{
-      if(!won)return;
-      [p1,p2].forEach(pid=>{
-        const mate=pid===p1?p2:p1;
-        if(bottom3.has(mate)&&!bottom3.has(pid)){
-          ensure(carryKing,pid); carryKing[pid]++;
-        }
-      });
-    };
-    checkTeam(m.a1,m.a2,aWon); checkTeam(m.b1,m.b2,!aWon);
-  });
-  const carryList=Object.entries(carryKing).filter(([,v])=>v>0).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
-
-  // Längste Niederlagenserie insgesamt (nicht nur aktuell)
-  const lossStreaks=longestLossStreaks(ms);
-
-  // 🐺 Einzelkämpfer: höchste Siegrate mit Bottom-3 Mate
-  const soloWr={};
-
-  // 🎪 Showmaster: meiste 10:0-Siege im Zeitraum
-  const showmaster={};
-  ms.forEach(m=>{
-    if(m.score_a===10&&m.score_b===0){[m.a1,m.a2].forEach(id=>{showmaster[id]=(showmaster[id]||0)+1;});}
-    if(m.score_b===10&&m.score_a===0){[m.b1,m.b2].forEach(id=>{showmaster[id]=(showmaster[id]||0)+1;});}
-  });
-  const showmasterList=Object.entries(showmaster).filter(([,v])=>v>=1).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
-  ms.forEach(m=>{
-    const aWon=m.winner==='A';
-    const snap=snapMap[m.id]; if(!snap)return;
-    const sortedSnap=[...allActivePlayers].sort((a,b)=>(snap[a.id]??cfg.start_elo)-(snap[b.id]??cfg.start_elo));
-    const bottom3=new Set(sortedSnap.slice(0,3).map(p=>p.id));
-    const check=(p1,p2,won)=>{
-      [p1,p2].forEach(pid=>{
-        const mate=pid===p1?p2:p1;
-        if(bottom3.has(mate)&&!bottom3.has(pid)){
-          if(!soloWr[pid])soloWr[pid]={g:0,w:0};
-          soloWr[pid].g++; if(won)soloWr[pid].w++;
-        }
-      });
-    };
-    check(m.a1,m.a2,aWon); check(m.b1,m.b2,!aWon);
-  });
-
-  const soloList=Object.entries(soloWr).filter(([,v])=>v.g>=2)
-    .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
-
-    // 🫠 Formtief: größter Elo-Abstieg vom persönlichen Höchststand
-  const peakElo={}, curElo={};
-  const orderedAll=[...ms].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-if(period==='all'){
-      players.forEach(p=>{peakElo[p.id]=cfg.start_elo;curElo[p.id]=cfg.start_elo;});
-    orderedAll.forEach(m=>{
-      Object.entries(m.deltas||{}).forEach(([id,d])=>{
-        if(curElo[id]!==undefined){curElo[id]+=d;if(curElo[id]>peakElo[id])peakElo[id]=curElo[id];}
-      });
-    });
-  } else {
-    const globalSim2=getGlobalSim();
-    const firstMatchInPeriod={};
-    orderedAll.forEach(m=>{
-      [m.a1,m.a2,m.b1,m.b2].forEach(id=>{if(!firstMatchInPeriod[id])firstMatchInPeriod[id]=m.id;});
-    });
-    players.forEach(p=>{
-      const fmId=firstMatchInPeriod[p.id];
-      if(fmId){
-        const histEntry=globalSim2.history.find(h=>h.matchId===fmId);
-        const entryElo=histEntry&&histEntry.eloBefore[p.id]!==undefined
-          ?histEntry.eloBefore[p.id]:cfg.start_elo;
-        peakElo[p.id]=entryElo; curElo[p.id]=entryElo;
-      } else {
-        peakElo[p.id]=cfg.start_elo; curElo[p.id]=cfg.start_elo;
-      }
-    });
-    orderedAll.forEach(m=>{
-      Object.entries(m.deltas||{}).forEach(([id,d])=>{
-        if(curElo[id]!==undefined){curElo[id]+=d;if(curElo[id]>peakElo[id])peakElo[id]=curElo[id];}
-      });
-    });
   }
-  const formtief=players.map(p=>({id:p.id,drop:peakElo[p.id]-curElo[p.id],peak:Math.round(peakElo[p.id]),cur:Math.round(curElo[p.id])}))
-    .filter(x=>x.drop>10).sort((a,b)=>b.drop-a.drop);
-
-  // 🎪 Zirkus: Team mit den meisten Niederlagen mit 5+ Toren Unterschied
-  const zirkus={};
-  ms.forEach(m=>{
-    const diff=Math.abs(m.score_a-m.score_b); if(diff<5)return;
-    const loserTeam=m.winner==='A'?[m.b1,m.b2].sort().join('|'):[m.a1,m.a2].sort().join('|');
-    if(!zirkus[loserTeam])zirkus[loserTeam]={ids:loserTeam.split('|'),v:0};
-    zirkus[loserTeam].v++;
-  });
-  const zirkusList=Object.values(zirkus).filter(x=>x.v>=1).sort((a,b)=>b.v-a.v);
-
-  // 🚧 Baustelle: Team mit der längsten gemeinsamen Niederlagenserie
-  const teamLossStreaks={};
-  orderedAll.forEach(m=>{
-    const loserKey=m.winner==='A'?[m.b1,m.b2].sort().join('|'):[m.a1,m.a2].sort().join('|');
-    const winnerKey=m.winner==='A'?[m.a1,m.a2].sort().join('|'):[m.b1,m.b2].sort().join('|');
-    // Verlierer-Team: Serie aufbauen
-    if(!teamLossStreaks[loserKey])teamLossStreaks[loserKey]={cur:0,best:0,ids:loserKey.split('|')};
-    teamLossStreaks[loserKey].cur++;
-    if(teamLossStreaks[loserKey].cur>teamLossStreaks[loserKey].best)teamLossStreaks[loserKey].best=teamLossStreaks[loserKey].cur;
-    // Gewinner-Team: Serie brechen
-    if(teamLossStreaks[winnerKey])teamLossStreaks[winnerKey].cur=0;
-  });
-  const baustelleList=Object.values(teamLossStreaks).filter(x=>x.best>=2).sort((a,b)=>b.best-a.best);
-
-  return {single,team,upsets,biggest,mvt,scorer,wall,grinder,winsList,perfect,streaks,
+  const endgegner=Object.values(egPairs).filter(p=>p.g>=2).sort((a,b)=>b.g-a.g);
+  
+  // ═══ CLUTCH ═══
+  const clutchList=Object.entries(agg.clutch).filter(([,v])=>v.g>=2)
+    .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
+  
+  // ═══ CARRY, SOLO, FORMTIEF, etc. ═══
+  const carryList=_computeCarry(ms, agg.snapMap);
+  const soloList=_computeSolo(ms, agg.snapMap);
+  const formtief=_computeFormtief(ms);
+  const worstTeam=[...teamStatsFromMatches(ms)].filter(t=>t.g>=2).sort((a,b)=>(a.w/a.g)-(b.w/b.g));
+  const bestDuo=[...teamStatsFromMatches(ms)].sort((a,b)=>b.g-a.g);
+  const onFire=currentStreaks(ms,true);
+  const coldStreak=currentStreaks(ms,false);
+  const lossStreaks=longestLossStreaks(ms);
+  const zirkusList=_computeZirkus(ms);
+  const baustelleList=_computeBarstelle(ms);
+  const showmasterList=_computeShowmaster(ms);
+  
+  return {single:agg.single,team:agg.team,upsets:agg.upsets,biggest:agg.biggest,mvt,scorer,wall,grinder,winsList,perfect,streaks,
           worstWr,worstAtk,worstDef,worstElo,
           endgegner,clutchList,iceList,worstTeam,bestDuo,onFire,coldStreak,carryList,lossStreaks,
           soloList,formtief,zirkusList,baustelleList,showmasterList,
           counts:{matches:ms.length}};
 }
+
+// ═══ HILFSFUNKTIONEN (OPTIMIERT) ═══
+function _computeCarry(ms, snapMap){
+  const result={};
+  for(let i=0; i<ms.length; i++){
+    const m=ms[i];
+    const snap=snapMap[m.id]; if(!snap)continue;
+    const allFour=[m.a1,m.a2,m.b1,m.b2];
+    if(allFour.some(x=>snap[x]===undefined))continue;
+    const weakest=allFour.reduce((a,b)=>(snap[a]??cfg.start_elo)<=(snap[b]??cfg.start_elo)?a:b);
+    const aWon=m.winner==='A';
+    [[m.a1,m.a2,aWon],[m.b1,m.b2,!aWon]].forEach(([p1,p2,won])=>{
+      if(!won)return;
+      [p1,p2].forEach(pid=>{
+        const mate=pid===p1?p2:p1;
+        if(mate===weakest&&weakest!==pid){
+          if(!result[pid])result[pid]=0;
+          result[pid]++;
+        }
+      });
+    });
+  }
+  return Object.entries(result).filter(([,v])=>v>0).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
+}
+
+function _computeSolo(ms, snapMap){
+  const result={};
+  const allActivePlayers=activePlayers();
+  for(let i=0; i<ms.length; i++){
+    const m=ms[i];
+    const snap=snapMap[m.id]; if(!snap)continue;
+    const allFour=[m.a1,m.a2,m.b1,m.b2];
+    if(allFour.some(x=>snap[x]===undefined))continue;
+    const sortedSnap=[...allFour].sort((a,b)=>(snap[a]??cfg.start_elo)-(snap[b]??cfg.start_elo));
+    const bottom3=new Set(sortedSnap.slice(0,3).map(p=>p));
+    const aWon=m.winner==='A';
+    [[m.a1,m.a2,aWon],[m.b1,m.b2,!aWon]].forEach(([p1,p2,won])=>{
+      [p1,p2].forEach(pid=>{
+        const mate=pid===p1?p2:p1;
+        if(bottom3.has(mate)&&!bottom3.has(pid)){
+          if(!result[pid])result[pid]={g:0,w:0};
+          result[pid].g++;
+          if(won)result[pid].w++;
+        }
+      });
+    });
+  }
+  return Object.entries(result).filter(([,v])=>v.g>=2)
+    .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
+}
+
+function _computeFormtief(ms){
+  const peakElo={}, curElo={};
+  const ordered=[...ms].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  players.forEach(p=>{peakElo[p.id]=cfg.start_elo;curElo[p.id]=cfg.start_elo;});
+  for(let i=0; i<ordered.length; i++){
+    const m=ordered[i];
+    Object.entries(m.deltas||{}).forEach(([id,d])=>{
+      if(curElo[id]!==undefined){curElo[id]+=d;if(curElo[id]>peakElo[id])peakElo[id]=curElo[id];}
+    });
+  }
+  return players.map(p=>({id:p.id,drop:peakElo[p.id]-curElo[p.id],peak:Math.round(peakElo[p.id]),cur:Math.round(curElo[p.id])}))
+    .filter(x=>x.drop>10).sort((a,b)=>b.drop-a.drop);
+}
+
+function _computeZirkus(ms){
+  const zirkus={};
+  for(let i=0; i<ms.length; i++){
+    const m=ms[i];
+    const diff=Math.abs(m.score_a-m.score_b); if(diff<5)continue;
+    const loserTeam=m.winner==='A'?[m.b1,m.b2].sort().join('|'):[m.a1,m.a2].sort().join('|');
+    if(!zirkus[loserTeam])zirkus[loserTeam]={ids:loserTeam.split('|'),v:0};
+    zirkus[loserTeam].v++;
+  }
+  return Object.values(zirkus).filter(x=>x.v>=1).sort((a,b)=>b.v-a.v);
+}
+
+function _computeBarstelle(ms){
+  const teamLossStreaks={};
+  const ordered=[...ms].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  for(let i=0; i<ordered.length; i++){
+    const m=ordered[i];
+    const loserKey=m.winner==='A'?[m.b1,m.b2].sort().join('|'):[m.a1,m.a2].sort().join('|');
+    const winnerKey=m.winner==='A'?[m.a1,m.a2].sort().join('|'):[m.b1,m.b2].sort().join('|');
+    if(!teamLossStreaks[loserKey])teamLossStreaks[loserKey]={cur:0,best:0,ids:loserKey.split('|')};
+    teamLossStreaks[loserKey].cur++;
+    if(teamLossStreaks[loserKey].cur>teamLossStreaks[loserKey].best)teamLossStreaks[loserKey].best=teamLossStreaks[loserKey].cur;
+    if(teamLossStreaks[winnerKey])teamLossStreaks[winnerKey].cur=0;
+  }
+  return Object.values(teamLossStreaks).filter(x=>x.best>=2).sort((a,b)=>b.best-a.best);
+}
+
+function _computeShowmaster(ms){
+  const result={};
+  for(let i=0; i<ms.length; i++){
+    const m=ms[i];
+    if(m.score_a===10&&m.score_b===0){[m.a1,m.a2].forEach(id=>{result[id]=(result[id]||0)+1;});}
+    if(m.score_b===10&&m.score_a===0){[m.b1,m.b2].forEach(id=>{result[id]=(result[id]||0)+1;});}
+  }
+  return Object.entries(result).filter(([,v])=>v>=1).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
+}
+
 
 // Team-Stats aus einer gefilterten Match-Liste
 function teamStatsFromMatches(ms){
@@ -4580,8 +4758,33 @@ function vTeams(){
   const T=teamStats().filter(t=>t.g>=4);
   if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Min. 4 gemeinsame Spiele</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
   const showBest=teamView!=='worst';
-  const sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
+  
+  // ═══ SORTIERUNG BASIEREND AUF teamSort VARIABLE ═══
+  let sorted;
+  if(teamSort==='wr'){
+    // Standard: Nach Winrate
+    sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
+  } else if(teamSort==='gd'){
+    // Nach Tordifferenz
+    sorted=[...T].sort((a,b)=>(b.gf-b.ga)-(a.gf-a.ga)||(b.w/b.g)-(a.w/a.g)||b.g-a.g);
+  } else if(teamSort==='elo'){
+    // Nach gesamtem Elo-Zuwachs (über alle Saisons hinweg)
+    const gSim=getGlobalSim();
+    sorted=[...T].sort((a,b)=>{
+      const keyA=[a.ids[0],a.ids[1]].sort().join('|');
+      const keyB=[b.ids[0],b.ids[1]].sort().join('|');
+      const eloA=gSim.teamElo[keyA]||0;
+      const eloB=gSim.teamElo[keyB]||0;
+      return eloB-eloA || (b.w/b.g)-(a.w/a.g) || (b.gf-b.ga)-(a.gf-a.ga);
+    });
+  }
+ else {
+    // Fallback
+    sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
+  }
+  
   const arr=showBest?sorted:[...sorted].reverse();
+
 
   // Top-3 Akzente (Gold/Silber/Bronze) — Border + Rang-Kachel-Hintergrund
   const TOP=[
@@ -4602,14 +4805,40 @@ function vTeams(){
     return `<div style="display:flex;align-items:center;flex-shrink:0">${one(a,false)}${one(b,true)}</div>`;
   };
 
+  const gSim=getGlobalSim();
+  const seasonTeamMap=gSim.seasonTeamElo[currentSeason().id]||{};
+  
   const rows=arr.map((t,i)=>{
-    const wr=Math.round(t.w/t.g*100),gd=t.gf-t.ga;
+    const wr=Math.round(t.w/t.g*100);
+    const gd=t.gf-t.ga;
+    const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
+    const eloGain=Math.round(seasonTeamMap[keyTeam]||0);
+    
+    // ═══ DYNAMISCHE HAUPTMETRIK BASIEREND AUF teamSort ═══
+    let mainValue, mainLabel, mainColor;
+    if(teamSort==='wr'){
+      mainValue=wr+'%';
+      mainLabel='WR';
+      mainColor='var(--acid)';
+    } else if(teamSort==='gd'){
+      mainValue=(gd>=0?'+':'')+gd;
+      mainLabel='TD';
+      mainColor=gd>=0?'var(--acid)':'var(--red)';
+    } else if(teamSort==='elo'){
+      const eloGainTotal=Math.round(gSim.teamElo[keyTeam]||0);
+      mainValue=(eloGainTotal>=0?'+':'')+eloGainTotal;
+      mainLabel='Elo';
+      mainColor=eloGainTotal>=0?'var(--acid)':'var(--red)';
+    }
+
+    
     const isTop=showBest&&i<3;
     const top=isTop?TOP[i]:null;
     const borderColor=top?top.border:'var(--line)';
     const rankBlock=top
       ? `<div style="width:24px;height:24px;border-radius:8px;background:${top.bg};color:${top.fg};display:grid;place-items:center;font-family:'Archivo Black',sans-serif;font-size:12px;flex-shrink:0">${i+1}</div>`
       : `<div style="width:24px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--faint);flex-shrink:0">${i+1}</div>`;
+    
     return `<div class="rrow" data-team="${esc(t.ids.join('|'))}" style="background:var(--surface);border:1px solid ${borderColor};border-radius:18px;padding:13px 15px;display:block">
       <div style="display:flex;align-items:center;gap:12px">
         ${rankBlock}
@@ -4618,10 +4847,11 @@ function vTeams(){
           <div style="font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em;line-height:1.1">${esc(t.ids.map(pname).join(' & '))}</div>
           <div class="num" style="margin-top:4px;font-size:10.5px;color:var(--muted)">${t.w}–${t.g-t.w} · TD ${gd>=0?'+':''}${gd}</div>
         </div>
-        <div style="font-family:'Archivo Black',sans-serif;font-size:20px;color:var(--acid);line-height:1;flex-shrink:0">${wr}%</div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:20px;color:${mainColor};line-height:1;flex-shrink:0">${mainValue}</div>
       </div>
     </div>`;
   }).join('');
+
 
   return `
     <div class="view-head"><h2>Teams</h2><p>${arr.length} Duo${arr.length===1?'':'s'} mit min. 4 gemeinsamen Spielen</p></div>
@@ -4629,8 +4859,14 @@ function vTeams(){
       <button data-teamtoggle="best" class="${showBest?'on':''}">▲ Beste</button>
       <button data-teamtoggle="worst" class="${!showBest?'on':''}">▼ Schlechteste</button>
     </div>
+    <div class="seg" style="margin-bottom:14px">
+      <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Winrate</button>
+      <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Tordiff</button>
+      <button data-teamsort="elo" class="${teamSort==='elo'?'on':''}">Elo-Zuwachs</button>
+    </div>
     <div class="rlist">${rows}</div>`;
 }
+
 
 // ════════ VIEW: HISTORY (mit Filter) ════════
 function vHistory(){
@@ -4638,9 +4874,17 @@ function vHistory(){
   let list=[...matches].reverse();
   if(histFilter!=='all')
     list=list.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(histFilter));
+  
+  // ═══ PAGINIERUNGSLOGIK ═══
+  const ITEMS_PER_PAGE = 20; // Anzahl der Matches pro Seite
+  const currentPage = _histPage; // Nutze die globale Variable
+  const totalPages = Math.ceil(list.length / ITEMS_PER_PAGE);
+  const paginatedList = list.slice(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE);
+  
   const opts=`<option value="all">Alle Spieler</option>`+
     [...players].sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${histFilter===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
-  const rows=list.map(m=>{
+  
+  const rows=paginatedList.map(m=>{
     const aWon=m.winner==='A';
     const tA=`${pname(m.a1)} & ${pname(m.a2)}`, tB=`${pname(m.b1)} & ${pname(m.b2)}`;
     const dl=ids=>ids.map(id=>{const d=(m.deltas||{})[id]||0;
@@ -4662,14 +4906,27 @@ function vHistory(){
         <span data-delmatch="${m.id}" style="color:var(--acid2);display:inline-flex;align-items:center;gap:5px">${svgI('edit')} bearbeiten</span></div>
     </div>`;
   }).join('');
+
+  // ═══ PAGINIERUNGS-CONTROLS ═══
+  const paginationControls = totalPages > 1 ? `
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:16px;padding-bottom:20px">
+      <button class="btn ghost sm" id="prevPageBtn" style="flex:0 0 auto;padding:8px 12px" ${currentPage===0?'disabled':''}>← Vorher</button>
+      <div style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-family:'Sometype Mono',monospace">
+        Seite <b>${currentPage+1}</b> von <b>${totalPages}</b>
+      </div>
+      <button class="btn ghost sm" id="nextPageBtn" style="flex:0 0 auto;padding:8px 12px" ${currentPage>=(totalPages-1)?'disabled':''}>Weiter →</button>
+    </div>
+  ` : '';
+
   return `
     <div class="view-head"><h2>Verlauf</h2><p>${list.length} Matches</p></div>
     <div class="search" style="margin-bottom:14px">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 3H2l8 9.5V19l4 2v-8.5z"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 3H2l8 9.5V19l4 2v-8.5L22 3z"/></svg>
       <select id="histSel" style="padding-left:40px">${opts}</select>
     </div>
-    ${list.length?`<div class="mlist">${rows}</div>`:emptyState('search','Keine Matches für diesen Filter')}`;
+    ${list.length?`<div class="mlist">${rows}</div>${paginationControls}`:emptyState('search','Keine Matches für diesen Filter')}`;
 }
+
 
 // ════════ VIEW: MATCH ════════
 let M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
@@ -4850,7 +5107,7 @@ async function doSaveMatch(){
   // Lokal updaten, dann über die EINE kanonische Engine neu berechnen.
   // persistRecalc schreibt atk, Match-Deltas und Saison-Elos konsistent.
   matches = [...matches, savedRow];
-  invalidateCache();
+  invalidateCache(['global', 'stats', 'awards', 'badges']);
   await persistNewMatch(savedRow.id);
 
   toast('Match gespeichert', 'ok');
@@ -5636,24 +5893,24 @@ function showPlayer(id){
     </div>` : '';
 
   // Karriere-Rang als Journey-Bar: Einsteiger → Legende (links → rechts), aktiver Tier markiert
-  const reversedRanks = [...RANKS].reverse();
-  const activeIdx = rInfo ? reversedRanks.findIndex(r => r.label === rInfo.label) : -1;
-  const rankProgHtml = `
-    <div class="pp-ranks-journey" id="ppRanksBtn" style="cursor:pointer">
-      <div class="pp-rj-track"></div>
-      <div class="pp-rj-tiers">
-        ${reversedRanks.map((r, i) => {
-          const state = i < activeIdx ? 'done' : (i === activeIdx ? 'active' : '');
-          const tierCls = i === activeIdx
-            ? ('pp-tier-'+r.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u'))
-            : '';
-          return `<div class="pp-rj-tier ${state} ${tierCls}">
-            <div class="pp-rj-dot"></div>
-            <div class="pp-rj-lbl">${esc(r.label)}</div>
-          </div>`;
-        }).join('')}
-      </div>
+const rankProgHtml = `
+  <div class="pp-ranks-journey" id="ppRanksBtn" style="cursor:pointer">
+    <div class="pp-rj-track"></div>
+    <div class="pp-rj-tiers">
+      ${RANKS.map((r, i) => {
+        const activeIdx = rInfo ? RANKS.findIndex(rank => rank.label === rInfo.label) : -1;
+        const state = i < activeIdx ? 'done' : (i === activeIdx ? 'active' : '');
+        const tierCls = i === activeIdx
+          ? ('pp-tier-'+r.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u'))
+          : '';
+        return `<div class="pp-rj-tier ${state} ${tierCls}">
+          <div class="pp-rj-dot"></div>
+          <div class="pp-rj-lbl">${esc(r.label)}</div>
+        </div>`;
+      }).join('')}
     </div>
+  </div>
+
     ${rInfo?`
       <div class="pp-percentile ${tierClass}">
         <div class="pp-percentile-bar">
@@ -6249,30 +6506,38 @@ function showAddPlayer(){
 
 // ════════ BIND ════════
 function bind(){
-  // ranking
+  // ranking search & filter
   const rs=document.getElementById('rankSearch');
-  if(rs)rs.oninput=()=>{
-    rankSearch=rs.value;
-    if(period!=='all'){ // Zeitraum-Modus: einfaches Re-Render
-      const cur=rs.value, pos=rs.selectionStart; render();
-      const n=document.getElementById('rankSearch'); if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}
-      return;
-    }
+  if(rs){
+    let searchTimeout;
+    rs.oninput=()=>{
+      rankSearch=rs.value;
+      clearTimeout(searchTimeout); // Vorherigen Timer löschen
+      searchTimeout = setTimeout(() => { // Neuen Timer setzen
+        // Wenn der Zeitraum nicht "all" ist, rendern wir die gesamte Ansicht neu
+        if(period!=='all'){ 
+          const cur=rs.value, pos=rs.selectionStart; render();
+          const n=document.getElementById('rankSearch'); if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}
+          return;
+        }
+        // Wenn der Zeitraum "all" ist, aktualisieren wir nur die Rangliste
         let list=activePlayers().map(p=>({p,s:playerStats(p.id)}));
-    if(rankSearch) list = list.filter(x => x.p.name.toLowerCase().includes(rankSearch.toLowerCase()));
-    const gSim=getGlobalSim();
-    const gElo=id=>Math.round(gSim.careerElo[id] ?? cfg.start_elo);
-    const listWithElo=list.map(x=>({...x,globalElo:gElo(x.p.id)}));
-    const sortFn={elo:(a,b)=>b.globalElo-a.globalElo,winrate:(a,b)=>b.s.wr-a.s.wr||b.s.games-a.s.games,
-      goaldiff:(a,b)=>b.s.gd-a.s.gd,streak:(a,b)=>b.s.curStreak-a.s.curStreak,games:(a,b)=>b.s.games-a.s.games}[rankMetric];
-    listWithElo.sort(sortFn);
-    const cont=document.querySelector('.rlist');
-    if(cont){
-      cont.innerHTML=listWithElo.length?listWithElo.map((x,i)=>rrow(x.p,x.s,i,rankMetric,x.globalElo)).join(''):'';
-      cont.querySelectorAll('[data-detail]').forEach(el=>el.onclick=()=>showPlayer(el.dataset.detail));
-    }
+        if(rankSearch) list = list.filter(x => x.p.name.toLowerCase().includes(rankSearch.toLowerCase()));
+        const gSim=getGlobalSim();
+        const gElo=id=>Math.round(gSim.careerElo[id] ?? cfg.start_elo);
+        const listWithElo=list.map(x=>({...x,globalElo:gElo(x.p.id)}));
+        const sortFn={elo:(a,b)=>b.globalElo-a.globalElo,winrate:(a,b)=>b.s.wr-a.s.wr||b.s.games-a.s.games,
+          goaldiff:(a,b)=>b.s.gd-a.s.gd,streak:(a,b)=>b.s.curStreak-a.s.curStreak,games:(a,b)=>b.s.games-a.s.games}[rankMetric];
+        listWithElo.sort(sortFn);
+        const cont=document.querySelector('.rlist');
+        if(cont){
+          cont.innerHTML=listWithElo.length?listWithElo.map((x,i)=>rrow(x.p,x.s,i,rankMetric,x.globalElo)).join(''):'';
+          cont.querySelectorAll('[data-detail]').forEach(el=>el.onclick=()=>showPlayer(el.dataset.detail));
+        }
+      }, 300); // 300ms Verzögerung
+    };
+  }
 
-  };
   document.querySelectorAll('[data-metric]').forEach(b=>b.onclick=()=>{rankMetric=b.dataset.metric;render();});
   document.querySelectorAll('[data-period]').forEach(b=>b.onclick=()=>{period=b.dataset.period;rankSearch='';render();});
   document.querySelectorAll('[data-periodsort]').forEach(b=>b.onclick=()=>{periodSort=b.dataset.periodsort;render();});
@@ -6290,6 +6555,10 @@ function bind(){
 
   // teams toggle (eigene State-Variable teamView)
   document.querySelectorAll('[data-teamtoggle]').forEach(b=>b.onclick=()=>{teamView=b.dataset.teamtoggle;render();});
+  
+  // teams sort (neue State-Variable teamSort)
+  document.querySelectorAll('[data-teamsort]').forEach(b=>b.onclick=()=>{teamSort=b.dataset.teamsort;render();});
+
 
   // detail
   document.querySelectorAll('[data-detail]').forEach(el=>el.onclick=()=>showPlayer(el.dataset.detail));
@@ -6310,6 +6579,18 @@ function bind(){
     if(e.target.dataset.delmatch)return; showMatchDetail(el.dataset.match);});
   document.querySelectorAll('[data-delmatch]').forEach(el=>el.onclick=e=>{
     e.stopPropagation(); showMatchDetail(el.dataset.delmatch);});
+
+  // ═══ PAGINIERUNGS-BUTTONS FÜR VERLAUFSTAB ═══
+  const prevPageBtn = document.getElementById('prevPageBtn');
+  const nextPageBtn = document.getElementById('nextPageBtn');
+  if(prevPageBtn) prevPageBtn.onclick = () => {
+    _histPage = Math.max(0, _histPage - 1);
+    render();
+  };
+  if(nextPageBtn) nextPageBtn.onclick = () => {
+    _histPage = _histPage + 1;
+    render();
+  };
 
   // match builder
   if(document.getElementById('saveM')){
@@ -6593,7 +6874,7 @@ function showTeam(p1Id,p2Id){
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px" class="num">
         <span style="color:var(--acid)">${d.wins} Siege</span>
-        <span style="color:var(--red)">${d.losses} Losses</span>
+        <span style="color:var(--red)">${d.losses} Niederlagen</span>
       </div>
     </div>
 
@@ -6717,12 +6998,15 @@ function showMatchDetail(mid){
 
   document.getElementById('editThisMatch').onclick=()=>showEditMatch(mid);
   document.getElementById('delThisMatch').onclick=async()=>{
-    if(!confirm('Match wirklich löschen? Die gesamte Rangliste wird danach automatisch neu berechnet.'))return;
+        if(!confirm('Match wirklich löschen? Die gesamte Rangliste wird danach automatisch neu berechnet.'))return;
     closeSheet(); toast('Lösche & berechne neu…');
     await sb.from('matches').delete().eq('id',mid);
     const rest=matches.filter(x=>x.id!==mid);
+    invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']); // <-- HIER INVALIDIEREN
     await persistRecalc(rest);
     toast('Gelöscht & neu berechnet','ok'); await loadAll();
+
+
   };
   // Team-Chips → Team-Profil
   document.querySelectorAll('[data-team]').forEach(el=>{
@@ -6796,6 +7080,8 @@ function showEditMatch(mid){
     const updated=matches.map(x=>x.id===E.id
       ?{...x,a1:E.A1,a1_pos:E.pA1,a2:E.A2,a2_pos:E.pA2,b1:E.B1,b1_pos:E.pB1,b2:E.B2,b2_pos:E.pB2,score_a:E.sa,score_b:E.sb,winner}
       :x);
+
+    invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
     await persistRecalc(updated);
     toast('Gespeichert & neu berechnet','ok'); await loadAll();
   };
