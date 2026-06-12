@@ -2804,7 +2804,7 @@ function showPotwRecap(){
         </div>
         <div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
           <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--red);line-height:1">${mainPotwStats.losses}</div>
-          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Pleite</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Niederlage</div>
         </div>
         <div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
           <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${winrate}%</div>
@@ -2998,7 +2998,7 @@ function showPotdRecap(){
         </div>
         <div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
           <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--red);line-height:1">${s.losses}</div>
-          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Pleite</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Niederlage</div>
         </div>
         <div style="flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
           <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${winrate}%</div>
@@ -7298,7 +7298,7 @@ function showTeam(p1Id,p2Id){
     </div>`;
   };
 
-  // Highlight-Karte (höchster Sieg / Upset / schlimmste Pleite)
+  // Highlight-Karte (höchster Sieg / Upset / schlimmste Niederlage)
   const highlightRow=(entry,kind)=>{
     if(!entry) return '';
     const m=entry.m;
@@ -7312,7 +7312,7 @@ function showTeam(p1Id,p2Id){
     const labelMap={
       win:    {l:'Höchster Sieg',     ic:'explosion', col:'var(--acid)'},
       upset:  {l:'Größter Upset',     ic:'tornado',   col:'var(--purple)'},
-      loss:   {l:'Schlimmste Pleite', ic:'skull',     col:'var(--red)'}
+      loss:   {l:'Schlimmste Niederlage', ic:'skull',     col:'var(--red)'}
     };
     const cfg=labelMap[kind];
     return `<div class="rrow" data-match="${esc(m.id)}" style="padding:11px 13px;display:flex;align-items:center;gap:10px">
