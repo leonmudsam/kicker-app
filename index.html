@@ -1171,6 +1171,341 @@
   .match-small.svg-ic.tie{color:var(--ink2)}
   .match-small.svg-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ============ V2 ZUSATZ-STYLES ============ */
+  /* SVG-Crown im sh-crown / aw-pod-crown (ersetzt 👑) */
+  .sh-crown svg, .aw-pod-crown svg{width:22px;height:22px;fill:var(--gold);stroke:none;display:block;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+  .aw-pod-crown svg{width:18px;height:18px}
+
+  /* ============ WOCHEN-HIGHLIGHTS (Woche-Ansicht) ============ */
+  .wk-highlights{display:flex;gap:8px;margin-bottom:14px}
+  .wk-hl{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:10px 11px;min-width:0;position:relative;overflow:hidden;cursor:pointer;transition:.16s}
+  .wk-hl:active{transform:scale(.985);background:var(--surface2)}
+  .wk-hl-ic{position:absolute;top:8px;right:8px;color:var(--faint);opacity:.55}
+  .wk-hl-ic svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .wk-hl-label{font-size:8.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+    font-family:'Sometype Mono',monospace;font-weight:700}
+  .wk-hl-val{font-family:'Archivo Black',sans-serif;font-size:14px;margin-top:6px;
+    letter-spacing:-.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .wk-hl-detail{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:3px}
+  .wk-hl.scorer{background:linear-gradient(135deg,rgba(255,120,73,.06),var(--surface) 70%);border-color:rgba(255,120,73,.2)}
+  .wk-hl.scorer .wk-hl-label{color:var(--orange)}
+  .wk-hl.streak{background:linear-gradient(135deg,rgba(200,255,77,.06),var(--surface) 70%);border-color:rgba(200,255,77,.2)}
+  .wk-hl.streak .wk-hl-label{color:var(--acid)}
+  .wk-hl.upset{background:linear-gradient(135deg,rgba(167,139,250,.06),var(--surface) 70%);border-color:rgba(167,139,250,.2)}
+  .wk-hl.upset .wk-hl-label{color:var(--purple)}
+  .wk-hl.empty{opacity:.55}
+  .wk-hl.empty .wk-hl-val{color:var(--muted);font-size:13px}
+
+  /* ============ HALL OF FAME (Gesamt-Ansicht) ============ */
+  .hof-hero{position:relative;
+    background:linear-gradient(135deg,rgba(247,207,74,.14),rgba(167,139,250,.06) 50%,var(--surface) 90%);
+    border:1px solid rgba(247,207,74,.45);border-radius:22px;padding:20px 18px 18px;margin-bottom:10px;overflow:hidden;cursor:pointer}
+  .hof-hero:active{transform:scale(.99)}
+  .hof-hero::before{content:"";position:absolute;top:-40px;right:-40px;width:180px;height:180px;
+    background:radial-gradient(circle,rgba(247,207,74,.16),transparent 65%);pointer-events:none}
+  .hof-hero::after{content:"";position:absolute;bottom:-30px;left:-20px;width:140px;height:140px;
+    background:radial-gradient(circle,rgba(167,139,250,.10),transparent 65%);pointer-events:none}
+  .hof-ribbon{display:inline-flex;align-items:center;gap:6px;font-family:'Sometype Mono',monospace;
+    font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
+    padding:5px 10px;background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.3);border-radius:99px;position:relative;z-index:1}
+  .hof-ribbon svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .hof-main{display:flex;align-items:flex-end;gap:16px;margin-top:14px;position:relative;z-index:1}
+  .hof-av-wrap{position:relative;flex-shrink:0}
+  .hof-av{width:84px;height:84px;border-radius:50%;display:grid;place-items:center;font-size:42px;
+    background:linear-gradient(155deg,#3a4540,#212824);border:3px solid var(--gold);box-shadow:0 0 24px rgba(247,207,74,.45)}
+  .hof-av.has-emoji .em{font-size:1em;line-height:1;
+    font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .hof-av:not(.has-emoji){font-family:'Archivo Black',sans-serif;font-size:28px;color:var(--bg)}
+  .hof-crown{position:absolute;top:-14px;left:50%;transform:translateX(-50%);z-index:3;line-height:1}
+  .hof-crown svg{width:22px;height:22px;fill:var(--gold);stroke:none;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+  .hof-info{flex:1;min-width:0;padding-bottom:4px}
+  .hof-name{font-family:'Archivo Black',sans-serif;font-size:28px;line-height:1;letter-spacing:-.03em;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hof-tier-row{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .hof-tier{display:inline-flex;align-items:center;gap:5px;font-family:'Sometype Mono',monospace;
+    font-size:12px;font-weight:700;letter-spacing:.06em;
+    padding:4px 11px;border-radius:8px;border:1px solid currentColor}
+  .hof-tier svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+  .hof-tier.t-legende    {color:var(--gold);background:rgba(247,207,74,.12)}
+  .hof-tier.t-elite      {color:var(--purple);background:rgba(167,139,250,.12)}
+  .hof-tier.t-stark      {color:var(--acid);background:rgba(200,255,77,.12)}
+  .hof-tier.t-solide     {color:var(--blue);background:rgba(86,180,232,.12)}
+  .hof-tier.t-einsteiger {color:var(--orange);background:rgba(255,120,73,.12)}
+  .hof-elo{font-family:'Sometype Mono',monospace;font-size:12px;color:var(--ink2);font-weight:600}
+  .hof-elo b{color:var(--acid);font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em}
+  .hof-stats{display:flex;gap:12px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(247,207,74,.18);position:relative;z-index:1}
+  .hof-stat{flex:1;min-width:0}
+  .hof-stat .v{font-family:'Archivo Black',sans-serif;font-size:17px;line-height:1}
+  .hof-stat .v.acid{color:var(--acid)} .hof-stat .v.red{color:var(--red)}
+  .hof-stat .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;
+    font-family:'Sometype Mono',monospace;font-weight:600;margin-top:4px}
+
+  /* All-Time Records Strip */
+  .records-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+  .rec{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 10px;
+    position:relative;overflow:hidden;min-width:0;cursor:pointer;transition:.16s}
+  .rec:active{transform:scale(.985);background:var(--surface2)}
+  .rec-ic{position:absolute;top:8px;right:8px;color:var(--faint);opacity:.55}
+  .rec-ic svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rec-label{font-size:8.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+    font-family:'Sometype Mono',monospace;font-weight:700}
+  .rec-val{font-family:'Archivo Black',sans-serif;font-size:18px;margin-top:6px;line-height:1;letter-spacing:-.02em}
+  .rec-name{font-size:11px;color:var(--ink2);margin-top:4px;font-weight:600;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rec.peak{background:linear-gradient(135deg,rgba(247,207,74,.06),var(--surface) 70%);border-color:rgba(247,207,74,.22)}
+  .rec.peak .rec-val{color:var(--gold)}
+  .rec.wins{background:linear-gradient(135deg,rgba(200,255,77,.05),var(--surface) 70%);border-color:rgba(200,255,77,.20)}
+  .rec.wins .rec-val{color:var(--acid)}
+  .rec.wr{background:linear-gradient(135deg,rgba(86,180,232,.05),var(--surface) 70%);border-color:rgba(86,180,232,.20)}
+  .rec.wr .rec-val{color:var(--blue)}
+
+  /* Tier Pill in Liga-Liste (Gesamt-Ansicht) */
+  .tier-pill{display:inline-flex;align-items:center;gap:4px;font-family:'Sometype Mono',monospace;
+    font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.02em}
+  .tier-pill svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .tier-pill.t-legende    {color:var(--gold);background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.22)}
+  .tier-pill.t-elite      {color:var(--purple);background:rgba(167,139,250,.10);border:1px solid rgba(167,139,250,.22)}
+  .tier-pill.t-stark      {color:var(--acid);background:rgba(200,255,77,.10);border:1px solid rgba(200,255,77,.22)}
+  .tier-pill.t-solide     {color:var(--blue);background:rgba(86,180,232,.10);border:1px solid rgba(86,180,232,.22)}
+  .tier-pill.t-einsteiger {color:var(--orange);background:rgba(255,120,73,.10);border:1px solid rgba(255,120,73,.22)}
+
+  /* ============ SEASON RECAP REDESIGN ============ */
+  .rcp-head{text-align:center;margin-bottom:18px}
+  .rcp-label{display:inline-flex;align-items:center;gap:6px;font-family:'Sometype Mono',monospace;
+    font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
+    padding:5px 12px;background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.3);border-radius:99px}
+  .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-month{font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-.03em;margin-top:10px;line-height:1}
+  .rcp-meta{font-size:11.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:6px;letter-spacing:.04em}
+
+  .rcp-champ{position:relative;
+    background:linear-gradient(135deg,rgba(247,207,74,.16),rgba(200,255,77,.04) 60%,var(--surface) 90%);
+    border:1px solid rgba(247,207,74,.45);border-radius:22px;padding:20px 18px 16px;margin-bottom:14px;overflow:hidden;text-align:center}
+  .rcp-champ::before{content:"";position:absolute;top:-50px;right:-30px;width:180px;height:180px;
+    background:radial-gradient(circle,rgba(247,207,74,.18),transparent 65%);pointer-events:none}
+  .rcp-champ::after{content:"";position:absolute;bottom:-30px;left:-20px;width:140px;height:140px;
+    background:radial-gradient(circle,rgba(200,255,77,.08),transparent 65%);pointer-events:none}
+  .rcp-champ-label{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--gold);position:relative;z-index:1}
+  .rcp-champ-av-wrap{position:relative;display:inline-block;margin:14px 0 10px}
+  .rcp-champ-av{width:88px;height:88px;border-radius:50%;display:grid;place-items:center;font-size:44px;
+    background:linear-gradient(155deg,#3a4540,#212824);border:3px solid var(--gold);
+    box-shadow:0 0 32px rgba(247,207,74,.5)}
+  .rcp-champ-av.has-emoji .em{font-size:1em;line-height:1;
+    font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .rcp-champ-av:not(.has-emoji){font-family:'Archivo Black',sans-serif;font-size:30px;color:var(--bg)}
+  .rcp-champ-crown{position:absolute;top:-18px;left:50%;transform:translateX(-50%);z-index:3;line-height:1}
+  .rcp-champ-crown svg{width:26px;height:26px;fill:var(--gold);stroke:none;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+  .rcp-champ-name{font-family:'Archivo Black',sans-serif;font-size:28px;letter-spacing:-.03em;line-height:1;position:relative;z-index:1}
+  .rcp-champ-stats{display:flex;justify-content:center;gap:18px;margin-top:14px;padding-top:14px;
+    border-top:1px solid rgba(247,207,74,.18);position:relative;z-index:1}
+  .rcp-champ-stats .s{text-align:center}
+  .rcp-champ-stats .s .v{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1}
+  .rcp-champ-stats .s .v.acid{color:var(--acid)} .rcp-champ-stats .s .v.red{color:var(--red)}
+  .rcp-champ-stats .s .l{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;
+    font-family:'Sometype Mono',monospace;margin-top:4px;font-weight:700}
+
+  .rcp-pod{display:flex;align-items:flex-end;gap:8px;background:var(--bg2);
+    border:1px solid var(--line);border-radius:18px;padding:14px 10px 10px;margin-bottom:14px}
+  .rcp-pod-col{flex:1;text-align:center;display:flex;flex-direction:column;align-items:center;min-width:0}
+  .rcp-pod-av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;font-size:24px;
+    background:linear-gradient(155deg,#3a4540,#212824);border:2px solid var(--line2);margin-bottom:6px;position:relative}
+  .rcp-pod-av:not(.has-emoji){font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--bg)}
+  .rcp-pod-av.has-emoji .em{font-size:1em;line-height:1;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .rcp-pod-col.first .rcp-pod-av{width:60px;height:60px;font-size:30px;border-color:var(--gold);box-shadow:0 0 14px rgba(247,207,74,.35)}
+  .rcp-pod-col.first .rcp-pod-av:not(.has-emoji){font-size:18px}
+  .rcp-pod-col.second .rcp-pod-av{border-color:#c8d0cb;box-shadow:0 0 10px rgba(200,208,203,.3)}
+  .rcp-pod-col.third .rcp-pod-av{border-color:var(--orange);box-shadow:0 0 10px rgba(255,120,73,.3)}
+  .rcp-pod-mini-crown{position:absolute;top:-14px;left:50%;transform:translateX(-50%);z-index:3}
+  .rcp-pod-mini-crown svg{width:18px;height:18px;fill:var(--gold);stroke:none}
+  .rcp-pod-name{font-family:'Archivo Black',sans-serif;font-size:13px;line-height:1.1;letter-spacing:-.01em;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .rcp-pod-col.first .rcp-pod-name{font-size:15px}
+  .rcp-pod-elo{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--ink2);margin-top:3px;font-weight:600}
+  .rcp-pod-col.first .rcp-pod-elo{color:var(--gold)}
+  .rcp-pod-col.second .rcp-pod-elo{color:#c8d0cb}
+  .rcp-pod-col.third .rcp-pod-elo{color:var(--orange)}
+  .rcp-pod-wl{font-size:9.5px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace}
+  .rcp-pod-block{margin-top:8px;width:100%;font-family:'Archivo Black',sans-serif;font-size:14px;
+    padding:6px 0;border-radius:6px 6px 0 0;color:var(--bg)}
+  .rcp-pod-col.first .rcp-pod-block{background:var(--gold);height:50px;line-height:38px}
+  .rcp-pod-col.second .rcp-pod-block{background:#c8d0cb;height:36px;line-height:24px}
+  .rcp-pod-col.third .rcp-pod-block{background:var(--orange);height:28px;line-height:16px}
+
+  .rcp-section{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:4px 2px 10px;
+    display:flex;align-items:center;gap:8px}
+  .rcp-section::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .rcp-awards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .rcp-aw{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:12px;display:flex;gap:11px;align-items:center;position:relative;overflow:hidden;
+    cursor:pointer;transition:.16s;min-width:0}
+  .rcp-aw:active{transform:scale(.985);background:var(--surface2)}
+  .rcp-aw::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px}
+  .rcp-aw.orange::before{background:var(--orange)}
+  .rcp-aw.purple::before{background:var(--purple)}
+  .rcp-aw.acid::before{background:var(--acid)}
+  .rcp-aw.blue::before{background:var(--blue)}
+  .rcp-aw-ic{width:32px;height:32px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;flex-shrink:0}
+  .rcp-aw-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-aw.orange .rcp-aw-ic{color:var(--orange)}
+  .rcp-aw.purple .rcp-aw-ic{color:var(--purple)}
+  .rcp-aw.acid .rcp-aw-ic{color:var(--acid)}
+  .rcp-aw.blue .rcp-aw-ic{color:var(--blue)}
+  .rcp-aw-info{flex:1;min-width:0}
+  .rcp-aw-label{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
+    font-family:'Sometype Mono',monospace;font-weight:700}
+  .rcp-aw-name{font-family:'Archivo Black',sans-serif;font-size:13px;margin-top:3px;
+    letter-spacing:-.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rcp-aw-val{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--ink2);margin-top:3px;font-weight:600}
+
+  .rcp-tos{background:linear-gradient(135deg,rgba(86,180,232,.10),var(--surface) 70%);
+    border:1px solid rgba(86,180,232,.35);border-radius:16px;padding:14px;
+    display:flex;align-items:center;gap:14px;margin-bottom:16px;cursor:pointer;transition:.16s}
+  .rcp-tos:active{transform:scale(.985)}
+  .rcp-tos-pair{display:flex;flex-shrink:0}
+  .rcp-tos-pair .rcp-tos-av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:20px;
+    background:linear-gradient(155deg,#3a4540,#212824);border:2px solid var(--surface)}
+  .rcp-tos-pair .rcp-tos-av+.rcp-tos-av{margin-left:-10px}
+  .rcp-tos-pair .rcp-tos-av:not(.has-emoji){font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--bg)}
+  .rcp-tos-pair .rcp-tos-av.has-emoji .em{font-size:1em;line-height:1;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
+  .rcp-tos-info{flex:1;min-width:0}
+  .rcp-tos-label{font-size:9px;text-transform:uppercase;letter-spacing:.18em;color:var(--blue);
+    font-family:'Sometype Mono',monospace;font-weight:700}
+  .rcp-tos-name{font-family:'Archivo Black',sans-serif;font-size:16px;margin-top:4px;letter-spacing:-.01em;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rcp-tos-detail{font-size:10.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:2px}
+  .rcp-tos-arrow{color:var(--muted);flex-shrink:0}
+  .rcp-tos-arrow svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* ============ AWARD SHEET REDESIGN (Winner Hero + Liste) ============ */
+  /* Winner-Hero positiv */
+  .aw-winner{position:relative;
+    background:linear-gradient(135deg,rgba(247,207,74,.14),rgba(200,255,77,.04) 60%,var(--surface) 90%);
+    border:1px solid rgba(247,207,74,.4);border-radius:20px;padding:20px 18px;
+    margin-bottom:8px;overflow:hidden;text-align:center}
+  .aw-winner::before{content:"";position:absolute;top:-40px;right:-30px;width:150px;height:150px;
+    background:radial-gradient(circle,rgba(247,207,74,.16),transparent 65%);pointer-events:none}
+  .aw-winner-badge{display:inline-flex;align-items:center;gap:5px;font-family:'Sometype Mono',monospace;
+    font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
+    padding:4px 11px;background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.3);
+    border-radius:99px;position:relative;z-index:1}
+  .aw-winner-badge svg{width:11px;height:11px;fill:currentColor;stroke:none}
+  .aw-winner-av-wrap{position:relative;display:inline-block;margin:14px 0 10px}
+  .aw-winner-av{width:82px;height:82px;border-radius:50%;display:grid;place-items:center;font-size:40px;
+    background:linear-gradient(155deg,#3a4540,#212824);border:3px solid var(--gold);
+    box-shadow:0 0 24px rgba(247,207,74,.45);position:relative}
+  .aw-winner-av.has-emoji .em{font-size:1em;line-height:1;
+    font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .aw-winner-av:not(.has-emoji){font-family:'Archivo Black',sans-serif;font-size:26px;color:var(--bg)}
+  .aw-winner-pair{display:inline-flex;margin:14px 0 10px;position:relative}
+  .aw-winner-pair .aw-winner-av{width:62px;height:62px;font-size:30px;margin:0 -8px;border-width:2.5px}
+  .aw-winner-pair .aw-winner-av:not(.has-emoji){font-size:20px}
+  .aw-winner-crown{position:absolute;top:-16px;left:50%;transform:translateX(-50%);z-index:3;line-height:1}
+  .aw-winner-crown svg{width:26px;height:26px;fill:var(--gold);stroke:none;
+    filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
+  .aw-winner-name{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;
+    line-height:1.1;position:relative;z-index:1;padding:0 8px}
+  .aw-winner-val{font-family:'Sometype Mono',monospace;font-size:13px;color:var(--gold);
+    margin-top:8px;font-weight:700;letter-spacing:.04em;position:relative;z-index:1}
+  .aw-winner-val b{font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.01em}
+  .aw-winner-meta{font-size:11px;color:var(--muted);margin-top:6px;
+    font-family:'Sometype Mono',monospace;position:relative;z-index:1}
+  .aw-winner-tied{margin-top:8px;font-family:'Sometype Mono',monospace;font-size:10px;
+    color:var(--gold);text-transform:uppercase;letter-spacing:.12em;font-weight:700;position:relative;z-index:1}
+
+  /* Loser-Hero negativ (Schandtafel) */
+  .aw-loser{position:relative;
+    background:linear-gradient(135deg,rgba(240,86,106,.13),rgba(240,86,106,.03) 60%,var(--surface) 90%);
+    border:1px solid rgba(240,86,106,.4);border-radius:20px;padding:20px 18px;
+    margin-bottom:8px;overflow:hidden;text-align:center}
+  .aw-loser::before{content:"";position:absolute;top:-40px;right:-30px;width:150px;height:150px;
+    background:radial-gradient(circle,rgba(240,86,106,.16),transparent 65%);pointer-events:none}
+  .aw-loser::after{content:"";position:absolute;bottom:-30px;left:-20px;width:120px;height:120px;
+    background:radial-gradient(circle,rgba(220,38,38,.06),transparent 65%);pointer-events:none}
+  .aw-loser-badge{display:inline-flex;align-items:center;gap:5px;font-family:'Sometype Mono',monospace;
+    font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--red);
+    padding:4px 11px;background:rgba(240,86,106,.10);border:1px solid rgba(240,86,106,.35);
+    border-radius:99px;position:relative;z-index:1}
+  .aw-loser-badge svg{width:11px;height:11px;fill:currentColor;stroke:none}
+  .aw-loser-av-wrap{position:relative;display:inline-block;margin:14px 0 10px}
+  .aw-loser-av{width:82px;height:82px;border-radius:50%;display:grid;place-items:center;font-size:40px;
+    background:linear-gradient(155deg,#3a2528,#231518);border:3px solid var(--red);
+    box-shadow:0 0 24px rgba(240,86,106,.4);filter:saturate(.8);position:relative}
+  .aw-loser-av.has-emoji .em{font-size:1em;line-height:1;
+    font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;
+    filter:drop-shadow(0 1px 2px rgba(0,0,0,.4))}
+  .aw-loser-av:not(.has-emoji){font-family:'Archivo Black',sans-serif;font-size:26px;color:var(--bg)}
+  .aw-loser-pair{display:inline-flex;margin:14px 0 10px;position:relative}
+  .aw-loser-pair .aw-loser-av{width:62px;height:62px;font-size:30px;margin:0 -8px;border-width:2.5px}
+  .aw-loser-pair .aw-loser-av:not(.has-emoji){font-size:20px}
+  .aw-loser-marker{position:absolute;top:-8px;right:-6px;width:28px;height:28px;border-radius:50%;
+    background:#dc2626;border:2px solid var(--surface);display:grid;place-items:center;line-height:1;
+    box-shadow:0 4px 12px rgba(220,38,38,.4);z-index:3}
+  .aw-loser-marker svg{width:14px;height:14px;fill:#fff;stroke:none}
+  .aw-loser-name{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;
+    line-height:1.1;position:relative;z-index:1;padding:0 8px}
+  .aw-loser-val{font-family:'Sometype Mono',monospace;font-size:13px;color:var(--red);
+    margin-top:8px;font-weight:700;letter-spacing:.04em;position:relative;z-index:1}
+  .aw-loser-val b{font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.01em}
+  .aw-loser-meta{font-size:11px;color:var(--muted);margin-top:6px;
+    font-family:'Sometype Mono',monospace;position:relative;z-index:1}
+  .aw-loser-tied{margin-top:8px;font-family:'Sometype Mono',monospace;font-size:10px;
+    color:var(--red);text-transform:uppercase;letter-spacing:.12em;font-weight:700;position:relative;z-index:1}
+
+  /* Saubere Award-Liste statt Podium */
+  .aw-list-label{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:18px 4px 8px;
+    display:flex;align-items:center;gap:8px}
+  .aw-list-label::after{content:"";flex:1;height:1px;background:var(--line)}
+  .aw-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .aw-li{display:flex;align-items:center;gap:12px;background:var(--surface);
+    border:1px solid var(--line);border-radius:14px;padding:10px 14px;position:relative;overflow:hidden;
+    cursor:pointer;transition:.16s}
+  .aw-li:active{transform:scale(.99);background:var(--surface2)}
+  .aw-li.shame::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--red);opacity:.45}
+  .aw-li .aw-li-rank{font-family:'Archivo Black',sans-serif;font-size:14px;width:22px;
+    text-align:center;color:var(--muted);flex-shrink:0}
+  .aw-li.shame .aw-li-rank{color:var(--red);opacity:.65}
+  .aw-li-av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:18px;
+    background:linear-gradient(155deg,#3a4540,#212824);flex-shrink:0}
+  .aw-li-av:not(.has-emoji){font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--bg)}
+  .aw-li-av.has-emoji .em{font-size:1em;line-height:1;font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif}
+  .aw-li-pair{display:flex;flex-shrink:0}
+  .aw-li-pair .aw-li-av+.aw-li-av{margin-left:-10px;border:1.5px solid var(--surface)}
+  .aw-li-info{flex:1;min-width:0}
+  .aw-li-name{font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em;
+    line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .aw-li-detail{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace}
+  .aw-li-val{font-family:'Sometype Mono',monospace;font-size:13px;font-weight:700;color:var(--ink);flex-shrink:0}
+  .aw-li.shame .aw-li-val{color:var(--red)}
+
+  /* Tied-Variante: mehrere Spieler in einem Listeneintrag */
+  .aw-li.tied{padding:12px 14px;align-items:flex-start}
+  .aw-li.tied .aw-li-rank{padding-top:4px}
+  .aw-li.tied .aw-li-tied-stack{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0}
+  .aw-li.tied .aw-li-tied-row{display:flex;align-items:center;gap:10px;min-width:0}
+  .aw-li.tied .aw-li-tied-row .aw-li-av{width:30px;height:30px;font-size:16px}
+  .aw-li.tied .aw-li-tied-row .aw-li-av:not(.has-emoji){font-size:11px}
+  .aw-li.tied .aw-li-tied-row .aw-li-name{font-size:13.5px}
+  .aw-li-tie-badge{display:inline-flex;align-items:center;font-family:'Sometype Mono',monospace;
+    font-size:9px;font-weight:700;color:var(--muted);background:var(--surface3);
+    padding:2px 7px;border-radius:6px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;align-self:flex-start}
+
+  /* Loser-Hero-Icon-Variante */
+  .aw-hero-icon-glow.red{
+    background:linear-gradient(155deg,rgba(240,86,106,.15),rgba(240,86,106,.04));
+    border:1px solid rgba(240,86,106,.35);color:var(--red);
+    box-shadow:0 0 24px rgba(240,86,106,.25)}
 </style>
 </head>
 <body>
@@ -1888,46 +2223,186 @@ function showSeasonRecap(season){
   const ms=matchesInSeason(season.id);
   const playerIdsInSeason=new Set();
   ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(id=>playerIdsInSeason.add(id)));
-  // Bestes Team
-  const teamHtml=season.team_p1&&season.team_p2?`
-    <div data-team="${esc([season.team_p1,season.team_p2].sort().join('|'))}" style="margin-top:14px;padding:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);text-align:center;cursor:pointer">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--blue);font-weight:700">Team of the Season</div>
-      <div style="font-family:'Archivo Black',sans-serif;font-size:15px;margin-top:4px">${esc(pname(season.team_p1)+' & '+pname(season.team_p2))}</div>
-    </div>`:''
-  ;
-  // Podium
-  const podium=top.slice(0,3).map((t,i)=>{
-    const colors=['var(--gold)','#c8d0cb','var(--orange)'][i];
-    const icSize=i===0?'42px':'30px';
-    const icKey=i===0?'trophy':'medal';
-    return `<div style="text-align:center;flex:1;${i===0?'order:2':'order:'+(i===1?1:3)}">
-      <div style="margin-bottom:6px;display:flex;justify-content:center;color:${colors};font-size:${icSize}"><span class="ic svg-ic" style="font-size:${icSize}">${svgI(icKey)}</span></div>
-      <div style="font-family:'Archivo Black',sans-serif;font-size:${i===0?'16':'13'}px">${esc(pname(t.id))}</div>
-      <div style="font-size:12px;color:${colors};font-family:'Sometype Mono',monospace;margin-top:2px">${t.elo} Elo</div>
-      <div style="font-size:10px;color:var(--muted)">${t.wins}W ${t.losses}L</div>
+  const totalGoals=ms.reduce((s,m)=>s+(m.score_a||0)+(m.score_b||0),0);
+
+  // ─── Awards der Saison berechnen ───
+  const prevAw=awSeasonId;
+  awSeasonId=season.id;
+  const R=awardRankings('season');
+  awSeasonId=prevAw;
+
+  // Avatar-Helper für das Recap-Sheet
+  const recapAv=(pid,cls)=>{
+    const p=pmap()[pid];
+    if(!p) return `<div class="${cls}" style="background:var(--surface3);color:var(--muted)">?</div>`;
+    const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
+    if(em) return `<div class="${cls} has-emoji"><span class="em">${em}</span></div>`;
+    return `<div class="${cls}" style="background:${avColor(p.id)}">${esc(initials(p.name))}</div>`;
+  };
+
+  // ─── Champion Hero ───
+  let championHtml='';
+  if(top[0]){
+    const t=top[0];
+    const p=pmap()[t.id];
+    if(p){
+      const wTot=t.wins+t.losses;
+      const wr=wTot>0?Math.round(t.wins/wTot*100):0;
+      const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
+      const champAv=em
+        ? `<div class="rcp-champ-av has-emoji" style="background:var(--surface3)"><span class="em">${em}</span></div>`
+        : `<div class="rcp-champ-av" style="background:${avColor(p.id)}">${esc(initials(p.name))}</div>`;
+      championHtml=`
+        <div class="rcp-champ" data-detail="${esc(t.id)}">
+          <div class="rcp-champ-label">Saison-Sieger</div>
+          <div class="rcp-champ-av-wrap">
+            <div class="rcp-champ-crown">${svgI('crown')}</div>
+            ${champAv}
+          </div>
+          <div class="rcp-champ-name">${esc(p.name)}</div>
+          <div class="rcp-champ-stats">
+            <div class="s"><div class="v acid">${t.elo}</div><div class="l">Elo</div></div>
+            <div class="s"><div class="v">${t.wins}–${t.losses}</div><div class="l">Bilanz</div></div>
+            <div class="s"><div class="v">${wr}%</div><div class="l">Siegrate</div></div>
+          </div>
+        </div>`;
+    }
+  }
+
+  // ─── Podium Top 3 ───
+  let podiumHtml='';
+  const podiumOrder=[{e:top[1],cls:'second',n:2},{e:top[0],cls:'first',n:1},{e:top[2],cls:'third',n:3}];
+  if(top.length>0){
+    const podCols=podiumOrder.map(({e,cls,n})=>{
+      if(!e){
+        return `<div class="rcp-pod-col ${cls}">
+          <div class="rcp-pod-av" style="border-color:var(--line);color:var(--muted);background:var(--surface3);font-size:18px">?</div>
+          <div class="rcp-pod-name" style="color:var(--muted)">–</div>
+          <div class="rcp-pod-elo">–</div>
+          <div class="rcp-pod-wl"></div>
+          <div class="rcp-pod-block">${n}</div>
+        </div>`;
+      }
+      const p=pmap()[e.id];
+      const em=p&&p.avatar_id?avatarEmoji(p.avatar_id):null;
+      const avInner=em
+        ? `<div class="rcp-pod-av has-emoji" style="background:var(--surface3)">${cls==='first'?`<div class="rcp-pod-mini-crown">${svgI('crown')}</div>`:''}<span class="em">${em}</span></div>`
+        : `<div class="rcp-pod-av" style="background:${avColor(e.id)}">${cls==='first'?`<div class="rcp-pod-mini-crown">${svgI('crown')}</div>`:''}${esc(initials(p?p.name:'?'))}</div>`;
+      return `<div class="rcp-pod-col ${cls}" data-detail="${esc(e.id)}" style="cursor:pointer">
+        ${avInner}
+        <div class="rcp-pod-name">${esc(pname(e.id))}</div>
+        <div class="rcp-pod-elo">${e.elo} Elo</div>
+        <div class="rcp-pod-wl">${e.wins}W · ${e.losses}L</div>
+        <div class="rcp-pod-block">${n}</div>
+      </div>`;
+    }).join('');
+    podiumHtml=`
+      <div class="rcp-section">Saison-Podium</div>
+      <div class="rcp-pod">${podCols}</div>`;
+  }
+
+  // ─── Awards Grid (4 Awards der Saison) ───
+  const scorer=R.scorer&&R.scorer[0];
+  const wall=R.wall&&R.wall[0];
+  const streak=R.streaks&&R.streaks[0];
+  const upset=R.upsets&&R.upsets[0];
+  const awItem=(cls,iconKey,label,name,val,awKey)=>{
+    return `<div class="rcp-aw ${cls}" data-award="${awKey}">
+      <div class="rcp-aw-ic">${svgI(iconKey)}</div>
+      <div class="rcp-aw-info">
+        <div class="rcp-aw-label">${label}</div>
+        <div class="rcp-aw-name">${esc(name)}</div>
+        <div class="rcp-aw-val">${esc(val)}</div>
+      </div>
     </div>`;
-  }).join('');
+  };
+  let awardsHtml='';
+  const awCards=[];
+  if(scorer) awCards.push(awItem('orange','ball','Torjäger',pname(scorer.id),'Ø '+scorer.avg.toFixed(1)+' Tore','scorer'));
+  if(wall) awCards.push(awItem('purple','shieldCheck','Eiserne Abwehr',pname(wall.id),(wall.v/wall.g).toFixed(1)+' Gegen/Sp.','wall'));
+  if(streak) awCards.push(awItem('acid','flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks'));
+  if(upset){
+    const winners=upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];
+    const winPct=Math.round((1-upset.sp)*100);
+    awCards.push(awItem('blue','bolt','Größter Upset',pname(winners[0])+' & '+pname(winners[1]),winPct+'% Chance','upset'));
+  }
+  if(awCards.length){
+    awardsHtml=`<div class="rcp-section">Awards der Saison</div><div class="rcp-awards">${awCards.join('')}</div>`;
+  }
+
+  // ─── Team of the Season ───
+  let teamHtml='';
+  if(season.team_p1 && season.team_p2){
+    const a=season.team_p1, b=season.team_p2;
+    const pa=pmap()[a], pb=pmap()[b];
+    const avForChip=(pid)=>{
+      const p=pmap()[pid];
+      if(!p) return `<div class="rcp-tos-av" style="background:var(--surface3);color:var(--muted)">?</div>`;
+      const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
+      if(em) return `<div class="rcp-tos-av has-emoji" style="background:var(--surface3)"><span class="em">${em}</span></div>`;
+      return `<div class="rcp-tos-av" style="background:${avColor(p.id)}">${esc(initials(p.name))}</div>`;
+    };
+    // Gemeinsame Siege berechnen
+    let teamW=0, teamG=0;
+    ms.forEach(m=>{
+      const onA=(m.a1===a||m.a2===a)&&(m.a1===b||m.a2===b);
+      const onB=(m.b1===a||m.b2===a)&&(m.b1===b||m.b2===b);
+      if(onA){ teamG++; if(m.winner==='A')teamW++; }
+      else if(onB){ teamG++; if(m.winner==='B')teamW++; }
+    });
+    const teamWr=teamG>0?Math.round(teamW/teamG*100):0;
+    teamHtml=`
+      <div class="rcp-tos" data-team="${esc([a,b].sort().join('|'))}">
+        <div class="rcp-tos-pair">${avForChip(a)}${avForChip(b)}</div>
+        <div class="rcp-tos-info">
+          <div class="rcp-tos-label">Team of the Season</div>
+          <div class="rcp-tos-name">${esc((pa?pa.name:'?')+' & '+(pb?pb.name:'?'))}</div>
+          <div class="rcp-tos-detail">${teamG>0?teamG+' Spiele · '+teamWr+'% WR':'–'}</div>
+        </div>
+        <div class="rcp-tos-arrow">${svgI('chartUp')||'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>'}</div>
+      </div>`;
+  }
+
   openSheet(`
-    <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--gold);font-weight:700">Saison beendet</div>
-      <h3 style="margin-top:6px">${season.label}</h3>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">${ms.length} Matches · ${playerIdsInSeason.size} Spieler</div>
+    <div class="rcp-head">
+      <span class="rcp-label">${svgI('trophy')}Saison beendet</span>
+      <div class="rcp-month">${esc(season.label)}</div>
+      <div class="rcp-meta">${ms.length} Matches · ${playerIdsInSeason.size} Spieler${totalGoals?' · '+totalGoals+' Tore':''}</div>
     </div>
-    <div style="display:flex;align-items:flex-end;gap:8px;padding:10px 0 16px">${podium}</div>
+    ${championHtml}
+    ${podiumHtml}
+    ${awardsHtml}
     ${teamHtml}
-    <button class="btn" id="closeRecapBtn" style="margin-top:16px;width:100%">Verstanden</button>
+    <button class="btn" id="closeRecapBtn" style="margin-top:6px;width:100%">Verstanden</button>
   `);
   document.getElementById('closeRecapBtn').onclick=()=>{
     localStorage.setItem('recap_shown_'+season.id,'1');
     closeSheet();
   };
-  // Team of the Season → Team-Profil
-  document.querySelectorAll('[data-team]').forEach(el=>{
+  // Spieler-Karten klickbar → Spielerprofil
+  document.querySelectorAll('.rcp-champ[data-detail], .rcp-pod-col[data-detail]').forEach(el=>{
+    el.onclick=()=>{
+      const id=el.dataset.detail; if(!id) return;
+      localStorage.setItem('recap_shown_'+season.id,'1');
+      closeSheet(); setTimeout(()=>showPlayer(id),350);
+    };
+  });
+  // Team-Card klickbar → Team-Profil
+  document.querySelectorAll('.rcp-tos[data-team]').forEach(el=>{
     el.onclick=()=>{
       const [a,b]=el.dataset.team.split('|');
       if(!a||!b) return;
       localStorage.setItem('recap_shown_'+season.id,'1');
       closeSheet(); setTimeout(()=>showTeam(a,b),350);
+    };
+  });
+  // Award-Karten klickbar → Award-Detail (mit ausgewählter Saison)
+  document.querySelectorAll('.rcp-aw[data-award]').forEach(el=>{
+    el.onclick=()=>{
+      const k=el.dataset.award; if(!k) return;
+      localStorage.setItem('recap_shown_'+season.id,'1');
+      awPeriod='season'; awSeasonId=season.id;
+      closeSheet(); setTimeout(()=>showAward(k),350);
     };
   });
 }
@@ -2895,6 +3370,23 @@ function vRanking(){
           </div>
           <div class="season-progress-bar"><i style="width:${pct}%"></i></div>
         </div>`;
+    } else if(period==='week'){
+      // Wochen-Fortschritt: Tag X von 7
+      const wkStart=periodStart('week');
+      const wkEnd=new Date(wkStart); wkEnd.setDate(wkEnd.getDate()+7);
+      const wkTotalMs=wkEnd-wkStart;
+      const wkElapsedMs=Math.max(0,Math.min(wkTotalMs,Date.now()-wkStart));
+      const wkDayElapsed=Math.max(1,Math.min(7,Math.ceil(wkElapsedMs/(1000*60*60*24))));
+      const wkPct=Math.round((wkElapsedMs/wkTotalMs)*100);
+      const wkRemain=7-wkDayElapsed;
+      seasonProgressHtml=`
+        <div class="season-progress">
+          <div class="season-progress-top">
+            <span class="season-progress-label">Woche läuft</span>
+            <span class="season-progress-days">Tag <b>${wkDayElapsed}</b> von 7${wkRemain>0?' · noch '+wkRemain+(wkRemain===1?' Tag':' Tage'):''}</span>
+          </div>
+          <div class="season-progress-bar"><i style="width:${wkPct}%"></i></div>
+        </div>`;
     }
 
     // Player of Season: Vorsprung auf Platz 2
@@ -2928,7 +3420,7 @@ function vRanking(){
           <div class="season-hero" id="seasonLeaderCard">
             <div class="sh-row">
               <div class="sh-av-wrap">
-                ${isLegend?'<div class="sh-crown">👑</div>':''}
+                ${isLegend?`<div class="sh-crown">${svgI('crown')}</div>`:''}
                 ${avInner}
               </div>
               <div class="sh-info">
@@ -2943,7 +3435,7 @@ function vRanking(){
             </div>
             <div class="sh-stats">
               <div class="sh-stat"><div class="v acid">${winner.wins}</div><div class="l">Siege</div></div>
-              <div class="sh-stat"><div class="v red">${winner.losses}</div><div class="l">Niederlagen</div></div>
+              <div class="sh-stat"><div class="v red">${winner.losses}</div><div class="l">Pleiten</div></div>
               <div class="sh-stat"><div class="v" style="color:${gdColor}">${winner.gd>=0?'+':''}${winner.gd}</div><div class="l">Tordiff</div></div>
               ${winnerForm?`<div class="sh-form">${winnerForm}</div>`:''}
             </div>
@@ -2968,12 +3460,110 @@ function vRanking(){
         heroSection+=`<div class="sh-side">${teamBannerHtml}${defenderCards}</div>`;
       }
     } else {
-      // Woche: bisheriges schlichteres Layout
-      heroSection=`
-        <div class="champ-banner" style="margin-bottom:10px">
-          <div class="champ-label">Wochensieger</div>
-          <div class="champ-name">${winner?esc(pmap()[winner.id].name):'noch offen'}</div>
-          <div class="champ-detail">${winner?winner.wins+' Siege · '+Math.round(winner.wins/winner.games*100)+'% WR':'min. 5 Siege benötigt'}</div>
+      // ═══ WOCHE: Hero im season-hero-Stil + Highlights ═══
+      if(winner){
+        const wp=pmap()[winner.id];
+        const wWr=winner.games?Math.round(winner.wins/winner.games*100):0;
+        const em=wp.avatar_id?avatarEmoji(wp.avatar_id):null;
+        const avInner=em
+          ? `<div class="sh-av has-emoji tier-legende" style="background:var(--surface3)"><span class="em">${em}</span></div>`
+          : `<div class="sh-av tier-legende" style="background:${avColor(wp.id)}">${esc(initials(wp.name))}</div>`;
+        const winnerForm=(()=>{
+          const ms2=periodMs.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(winner.id))
+            .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,5).reverse();
+          return ms2.map(m=>{const onA=[m.a1,m.a2].includes(winner.id);
+            const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
+            return `<div class="dot ${w?'w':'l'}"></div>`;}).join('');
+        })();
+        heroSection=`
+          <div class="season-hero" data-detail="${winner.id}" style="cursor:pointer">
+            <div class="sh-row">
+              <div class="sh-av-wrap">
+                <div class="sh-crown">${svgI('crown')}</div>
+                ${avInner}
+              </div>
+              <div class="sh-info">
+                <div class="sh-label">Wochensieger</div>
+                <div class="sh-name">${esc(wp.name)}</div>
+                <div class="sh-meta">${winner.wins}W · ${winner.losses}L · ${wWr}% Quote</div>
+              </div>
+              <div class="sh-elo-wrap">
+                <div class="sh-elo-v" style="color:${winner.eloNet>=0?'var(--acid)':'var(--red)'}">${winner.eloNet>=0?'+':''}${winner.eloNet}</div>
+                <div class="sh-elo-l">Elo Woche</div>
+              </div>
+            </div>
+            <div class="sh-stats">
+              <div class="sh-stat"><div class="v acid">+${winner.eloGain}</div><div class="l">Gewonnen</div></div>
+              <div class="sh-stat"><div class="v red">${winner.eloLoss}</div><div class="l">Verloren</div></div>
+              ${winnerForm?`<div class="sh-form">${winnerForm}</div>`:''}
+            </div>
+          </div>`;
+      } else {
+        heroSection=`
+          <div class="season-hero">
+            <div class="sh-row">
+              <div class="sh-av-wrap">
+                <div class="sh-av" style="background:var(--surface3);border-color:var(--line);box-shadow:none;color:var(--muted);font-size:32px">?</div>
+              </div>
+              <div class="sh-info">
+                <div class="sh-label">Wochensieger</div>
+                <div class="sh-name-empty">noch offen</div>
+                <div class="sh-meta">min. 5 Siege benötigt</div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      // Wochen-Highlights: Top-Tor / Heißeste Serie / Größter Upset
+      // Top-Tor: Stürmer mit den meisten Toren pro Spiel (min 1 Sturm-Spiel)
+      const wkAtk={};
+      periodMs.forEach(m=>{
+        const atkA=m.a1_pos==='atk'?m.a1:m.a2;
+        const atkB=m.b1_pos==='atk'?m.b1:m.b2;
+        if(!wkAtk[atkA])wkAtk[atkA]={g:0,goals:0};
+        wkAtk[atkA].g++; wkAtk[atkA].goals+=m.score_a;
+        if(!wkAtk[atkB])wkAtk[atkB]={g:0,goals:0};
+        wkAtk[atkB].g++; wkAtk[atkB].goals+=m.score_b;
+      });
+      const topScorer=Object.entries(wkAtk).filter(([,v])=>v.g>=1)
+        .map(([id,v])=>({id,goals:v.goals,g:v.g,avg:v.goals/v.g}))
+        .sort((a,b)=>b.avg-a.avg||b.goals-a.goals)[0];
+
+      // Heißeste Serie: längste Siegesserie innerhalb der Woche
+      const wkStreaks=longestStreaks(periodMs);
+      const topStreak=wkStreaks[0];
+
+      // Größter Upset: niedrigste Sieg-Wahrscheinlichkeit des Gewinners
+      const wkUps=periodMs.map(m=>{
+        const expA=m.exp_a??0.5;
+        const we=m.winner==='A'?expA:(1-expA);
+        return {sp:1-we, m, winPct:Math.round(we*100)};
+      }).sort((a,b)=>b.sp-a.sp);
+      const topUpset=wkUps[0];
+
+      const renderHl=(cls,labelTxt,iconKey,nameTxt,detailTxt)=>{
+        if(!nameTxt) return `<div class="wk-hl empty">
+          <div class="wk-hl-ic">${svgI(iconKey)}</div>
+          <div class="wk-hl-label">${labelTxt}</div>
+          <div class="wk-hl-val">–</div>
+          <div class="wk-hl-detail">noch keine Daten</div>
+        </div>`;
+        return `<div class="wk-hl ${cls}">
+          <div class="wk-hl-ic">${svgI(iconKey)}</div>
+          <div class="wk-hl-label">${labelTxt}</div>
+          <div class="wk-hl-val">${esc(nameTxt)}</div>
+          <div class="wk-hl-detail">${detailTxt}</div>
+        </div>`;
+      };
+
+      const upsetWinners=topUpset?(topUpset.m.winner==='A'?[topUpset.m.a1,topUpset.m.a2]:[topUpset.m.b1,topUpset.m.b2]):null;
+      const upsetName=upsetWinners?(pname(upsetWinners[0])+' & '+pname(upsetWinners[1])):null;
+
+      heroSection += `
+        <div class="wk-highlights">
+          ${renderHl('scorer','Top-Tor','ball', topScorer?pname(topScorer.id):null, topScorer?`Ø ${topScorer.avg.toFixed(1)} Tore`:'')}
+          ${renderHl('streak','Heißeste Serie','flame', topStreak?pname(topStreak.id):null, topStreak?`${topStreak.v} in Folge`:'')}
+          ${renderHl('upset','Größter Upset','bolt', upsetName, topUpset?`${topUpset.winPct}% Chance`:'')}
         </div>`;
     }
 
@@ -3007,14 +3597,99 @@ function vRanking(){
   const top = list.length ? list[0].globalElo : 0;
   const rows = list.map((x,i) => rrow(x.p, x.s, i, rankMetric, x.globalElo)).join('');
 
+  // ═══ HALL OF FAME: #1 nach Karriere-Elo ═══
+  const hofList=activePlayers().map(p=>({p, e:getGlobalElo(p.id), s:_allStats[p.id]||playerStats(p.id)})).sort((a,b)=>b.e-a.e);
+  const hof=hofList[0];
+  let hofHtml='';
+  if(hof && hof.s.games>0){
+    const hp=hof.p;
+    const em=hp.avatar_id?avatarEmoji(hp.avatar_id):null;
+    const avInner=em
+      ? `<div class="hof-av has-emoji" style="background:var(--surface3)"><span class="em">${em}</span></div>`
+      : `<div class="hof-av" style="background:${avColor(hp.id)}">${esc(initials(hp.name))}</div>`;
+    const r=getPlayerRank(hp.id);
+    const tierKey=r?r.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u'):'';
+    const tierHtml=r?`<span class="hof-tier t-${tierKey}">${svgI(r.icon)}${r.label}</span>`:'';
+    // Saison-Titel zählen
+    const titleCount=seasons.filter(s=>s.id!==currentSeason().id&&s.player_id===hp.id).length;
+    const wr=hof.s.wr?Math.round(hof.s.wr*100):0;
+    const gdColor=hof.s.gd>=0?'var(--acid)':'var(--red)';
+    hofHtml=`
+      <div class="hof-hero" data-detail="${hp.id}">
+        <span class="hof-ribbon">${svgI('trophy')}Hall of Fame · #1 All-Time</span>
+        <div class="hof-main">
+          <div class="hof-av-wrap">
+            <div class="hof-crown">${svgI('crown')}</div>
+            ${avInner}
+          </div>
+          <div class="hof-info">
+            <div class="hof-name">${esc(hp.name)}</div>
+            <div class="hof-tier-row">
+              ${tierHtml}
+              <span class="hof-elo">Ø <b>${hof.e}</b> Karriere-Elo</span>
+            </div>
+          </div>
+        </div>
+        <div class="hof-stats">
+          <div class="hof-stat"><div class="v acid">${hof.s.wins}–${hof.s.losses}</div><div class="l">Bilanz</div></div>
+          <div class="hof-stat"><div class="v acid">${wr}%</div><div class="l">Siegrate</div></div>
+          <div class="hof-stat"><div class="v">${titleCount}</div><div class="l">Saison-Titel</div></div>
+          <div class="hof-stat"><div class="v" style="color:${gdColor}">${hof.s.gd>=0?'+':''}${hof.s.gd}</div><div class="l">Tordiff.</div></div>
+        </div>
+      </div>`;
+  }
+
+  // ═══ ALL-TIME RECORDS ═══
+  // Peak Elo: höchste Saison-End-Elo aller Spieler über alle Saisons
+  let peakEloVal=null, peakEloId=null, peakSeason=null;
+  Object.entries(globalSim.seasonEndElos||{}).forEach(([sid,eloMap])=>{
+    Object.entries(eloMap).forEach(([pid,e])=>{
+      if(peakEloVal===null || e>peakEloVal){ peakEloVal=e; peakEloId=pid; peakSeason=sid; }
+    });
+  });
+  // Meiste Siege (Karriere)
+  const winsArr=activePlayers().map(p=>({id:p.id, v:globalSim.wins[p.id]||0})).sort((a,b)=>b.v-a.v);
+  const mostWins=winsArr[0];
+  // Beste WR (min 10 Spiele Karriere)
+  const wrArr=activePlayers().map(p=>{
+    const g=globalSim.played[p.id]||0, w=globalSim.wins[p.id]||0;
+    return {id:p.id, g, w, wr:g?w/g:0};
+  }).filter(x=>x.g>=10).sort((a,b)=>b.wr-a.wr||b.g-a.g);
+  const bestWr=wrArr[0];
+
+  const formatSeason=(sid)=>{ if(!sid)return ''; const [y,m]=sid.split('-'); const months=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez']; return months[parseInt(m,10)-1]+" '"+y.slice(2); };
+
+  const recordsHtml=`
+    <div class="records-grid">
+      <div class="rec peak"${peakEloId?` data-detail="${peakEloId}"`:''}>
+        <div class="rec-ic">${svgI('trendUp')}</div>
+        <div class="rec-label">Peak-Elo</div>
+        <div class="rec-val">${peakEloVal!==null?Math.round(peakEloVal):'–'}</div>
+        <div class="rec-name">${peakEloId?esc(pname(peakEloId))+' · '+formatSeason(peakSeason):'–'}</div>
+      </div>
+      <div class="rec wins"${mostWins&&mostWins.v>0?` data-detail="${mostWins.id}"`:''}>
+        <div class="rec-ic">${svgI('trophyStar')}</div>
+        <div class="rec-label">Meiste Siege</div>
+        <div class="rec-val">${mostWins?mostWins.v:'–'}</div>
+        <div class="rec-name">${mostWins&&mostWins.v>0?esc(pname(mostWins.id)):'–'}</div>
+      </div>
+      <div class="rec wr"${bestWr?` data-detail="${bestWr.id}"`:''}>
+        <div class="rec-ic">${svgI('target')}</div>
+        <div class="rec-label">Beste WR</div>
+        <div class="rec-val">${bestWr?Math.round(bestWr.wr*100)+'%':'–'}</div>
+        <div class="rec-name">${bestWr?esc(pname(bestWr.id))+' · '+bestWr.g+' Sp.':'min. 10 Spiele'}</div>
+      </div>
+    </div>`;
+
   return `
     <div class="view-head"><h2>Liga</h2><p>${players.length} Spieler · ${matches.length} Matches</p></div>
     ${periodBar}
-    <div class="stat-strip">
+    ${hofHtml || `<div class="stat-strip">
       <div class="s"><div class="v num">${activePlayers().length}</div><div class="l">Spieler</div></div>
       <div class="s"><div class="v num">${matches.length}</div><div class="l">Matches</div></div>
       <div class="s"><div class="v num">${top||'–'}</div><div class="l">Top-Elo</div></div>
-    </div>
+    </div>`}
+    ${recordsHtml}
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
@@ -3198,8 +3873,10 @@ upsets.push({sp:1-we,m});
 
   const grinder=Object.entries(pGames).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
   const winsList=Object.entries(pWins).map(([id,v])=>({id,v,g:pGames[id]})).sort((a,b)=>b.v-a.v);
+  // Min-Schwelle: 5 Spiele ODER 15% des Vielspielers, gecappt auf 10 (vorher 40%, was kleine Ligen mit einem Vielspieler unfair gefiltert hat)
+  const perfectMin=Math.min(10, Math.max(5, Math.ceil((grinder[0]?.v||5)*0.15)));
   const perfect=Object.entries(pWins).map(([id,w])=>({id,w,g:pGames[id],wr:pGames[id]?w/pGames[id]:0}))
-    .filter(x=>x.g>=Math.max(3, Math.ceil((grinder[0]?.v||3)*0.4)))
+    .filter(x=>x.g>=perfectMin)
     .sort((a,b)=>b.wr-a.wr||b.g-a.g);
 
   const streaks=longestStreaks(ms);
@@ -5896,7 +6573,7 @@ function showTeam(p1Id,p2Id){
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px" class="num">
         <span style="color:var(--acid)">${d.wins} Siege</span>
-        <span style="color:var(--red)">${d.losses} Niederlagen</span>
+        <span style="color:var(--red)">${d.losses} Pleiten</span>
       </div>
     </div>
 
