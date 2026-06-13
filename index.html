@@ -654,6 +654,14 @@
   input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--acid);
     cursor:pointer;border:none}
 
+  /* Config-Sektion-Titel zwischen den Slider-Karten */
+  .cfg-section-title{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--acid);
+    margin:18px 2px 8px;display:flex;align-items:center;gap:8px}
+  .cfg-section-title::after{content:"";flex:1;height:1px;
+    background:linear-gradient(to right,var(--line),transparent)}
+  .cfg-section-title:first-of-type{margin-top:4px}
+
   .setup{max-width:440px;margin:0 auto;padding:calc(var(--safe-top) + 60px) 24px}
   .setup .card{background:var(--surface)}
   .code{font-family:'Sometype Mono',monospace;background:var(--bg);border:1px solid var(--line);
@@ -1011,11 +1019,11 @@
   /* Karriere-Rang Journey-Bar */
   .pp-ranks-journey{position:relative;height:58px;padding:0 16px;margin-top:4px}
   .pp-rj-track{position:absolute;left:24px;right:24px;top:18px;height:3px;background:var(--surface3);border-radius:99px}
-  /* Gold-Strahl: rechts verankert, fließt nach links bis zum aktiven Tier.
+  /* Strahl: links verankert, fließt nach rechts bis zum aktiven Tier (Einsteiger→Legende).
      Erbt --pp-tier-1 / --pp-tier-glow vom Parent (.pp-ranks-journey.pp-tier-…) */
   .pp-rj-fill-track{position:absolute;left:24px;right:24px;top:18px;height:3px;pointer-events:none;overflow:visible}
-  .pp-rj-fill{position:absolute;top:0;right:0;height:100%;
-    background:linear-gradient(to left,var(--pp-tier-1,var(--acid)),var(--pp-tier-2,var(--pp-tier-1,var(--acid))));
+  .pp-rj-fill{position:absolute;top:0;left:0;height:100%;
+    background:linear-gradient(to right,var(--pp-tier-2,var(--pp-tier-1,var(--acid))),var(--pp-tier-1,var(--acid)));
     border-radius:99px;
     box-shadow:0 0 10px var(--pp-tier-glow,rgba(200,255,77,.35));
     transition:width .45s cubic-bezier(.22,.61,.36,1)}
@@ -1345,6 +1353,23 @@
   .rcp-month{font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-.03em;margin-top:10px;line-height:1}
   .rcp-meta{font-size:11.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:6px;letter-spacing:.04em}
 
+  /* Saison-Picker im Recap-Header */
+  .rcp-picker{position:relative;display:inline-flex;align-items:center;margin-top:12px;
+    background:var(--surface2);border:1px solid var(--line);border-radius:99px;
+    padding:4px 4px 4px 14px;transition:.18s}
+  .rcp-picker:hover{border-color:var(--line2)}
+  .rcp-picker:focus-within{border-color:var(--gold);box-shadow:0 0 0 3px rgba(247,207,74,.12)}
+  .rcp-picker-select{appearance:none;-webkit-appearance:none;background:transparent;border:none;outline:none;
+    font-family:'Sometype Mono',monospace;font-size:11px;font-weight:700;color:var(--ink);
+    letter-spacing:.06em;padding:6px 28px 6px 0;cursor:pointer;
+    text-transform:uppercase;line-height:1}
+  .rcp-picker-select option{background:var(--surface);color:var(--ink);
+    font-family:'Sometype Mono',monospace;text-transform:none;letter-spacing:0}
+  .rcp-picker-chevron{position:absolute;right:10px;top:50%;transform:translateY(-50%) rotate(0deg);
+    pointer-events:none;color:var(--muted);display:grid;place-items:center}
+  .rcp-picker-chevron svg{width:14px;height:14px;stroke:currentColor;fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
   .rcp-champ{position:relative;
     background:linear-gradient(135deg,rgba(247,207,74,.16),rgba(200,255,77,.04) 60%,var(--surface) 90%);
     border:1px solid rgba(247,207,74,.45);border-radius:22px;padding:20px 18px 16px;margin-bottom:14px;overflow:hidden;text-align:center}
@@ -1527,6 +1552,10 @@
   .aw-winner-pair .aw-winner-av+.aw-winner-av{margin-left:-16px;border-color:rgb(var(--c,247,207,74))}
   .aw-winner-crown{position:absolute;top:-14px;left:50%;transform:translateX(-50%);
     font-size:24px;line-height:1;z-index:3}
+  /* SVG-Krone: gold mit Glow, ähnlich Spielerprofil .pp-crown */
+  .aw-winner-crown svg{width:28px;height:28px;stroke:var(--gold);fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+    filter:drop-shadow(0 4px 8px rgba(247,207,74,.45))}
   .aw-winner-marker{position:absolute;top:-10px;right:-6px;width:28px;height:28px;border-radius:50%;
     background:#dc2626;border:2px solid var(--surface);display:grid;place-items:center;
     font-size:14px;line-height:1;box-shadow:0 4px 12px rgba(220,38,38,.4);z-index:3}
@@ -1548,6 +1577,10 @@
   .aw-winner.shared:active{transform:none}
   .aw-winner-shared-marker{position:relative;display:inline-block;font-size:26px;line-height:1;
     margin:14px 0 4px;z-index:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
+  /* SVG-Krone für Shared Hero (Gold-Glow) */
+  .aw-winner-shared-marker svg{width:30px;height:30px;stroke:var(--gold);fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+    filter:drop-shadow(0 4px 8px rgba(247,207,74,.45))}
   .aw-winner-shared-marker.shame{filter:drop-shadow(0 2px 8px rgba(220,38,38,.5))}
   .aw-winner-shared-grid{display:flex;flex-direction:column;gap:8px;margin:12px 0 10px;position:relative;z-index:1}
   .aw-winner-tied-entry{display:flex;align-items:center;gap:11px;
@@ -1679,6 +1712,7 @@ let period='season';          // all | season | week | month (Liga-Zeitraum)
 let periodSort='wins';     // wins | elo (Zeitraum-Sortierung)
 let awPeriod='all';      // all | season | week
 let awSeasonId=null;        // konkrete Saison für Award-Filter (null = aktuelle)
+let awWeekStart=null;       // konkrete Woche (Date für Montag, lokale Zeit) für Award-Filter (null = aktuelle KW)
 
 // ════════ ICON LIBRARY (SVG line-icons – ersetzt alle Emojis außer Spieler-Avatare) ════════
 const ICONS = {
@@ -1802,11 +1836,26 @@ function matchesForAwards(){
     const sid=awSeasonId||currentSeason().id;
     return matchesInSeason(sid);
   }
+  if(awPeriod==='week' && awWeekStart){
+    const start=new Date(awWeekStart); start.setHours(0,0,0,0);
+    const end=new Date(start); end.setDate(end.getDate()+7);
+    return matches.filter(m=>{
+      const d=new Date(m.created_at);
+      return d>=start && d<end;
+    });
+  }
   return matchesInPeriod(awPeriod);
 }
 function awPeriodLabel(){
   if(awPeriod==='season') return seasonLabel(awSeasonId||currentSeason().id);
-  if(awPeriod==='week') return periodLabel('week');
+  if(awPeriod==='week'){
+    if(awWeekStart){
+      const start=new Date(awWeekStart); start.setHours(0,0,0,0);
+      const end=new Date(start); end.setDate(end.getDate()+6);
+      return 'KW '+isoWeek(start)+' · '+start.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'–'+end.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    }
+    return periodLabel('week');
+  }
   return 'Gesamte Liga';
 }
 // Alle verfügbaren Saisons (vergangene + aktuelle), neueste zuerst
@@ -1926,6 +1975,9 @@ function getGlobalSim(){
       _lastSimIndex = matches.length - 1;
       _cache._globalKey = key;
       _cache._globalSim = sim;
+      // Abgeleitete Maps invalidieren — werden lazy neu gebaut
+      _cache._historyByMatchId = null;
+      _cache._snapMap = null;
       return sim;
     }
   }
@@ -1937,15 +1989,43 @@ function getGlobalSim(){
   _lastSimVersion = _cache.version;
   _cache._globalKey = key;
   _cache._globalSim = sim;
+  _cache._historyByMatchId = null;
+  _cache._snapMap = null;
   return sim;
+}
+
+// ─── Abgeleitete Sim-Maps (gecached pro Global-Sim) ───
+// Vermeidet wiederholte O(n) Loops in showPlayer, vAwards, _awardRankingsUncached etc.
+function getHistoryByMatchId(){
+  // Garantiert frische Sim
+  const sim=getGlobalSim();
+  if(_cache._historyByMatchId) return _cache._historyByMatchId;
+  const map=new Map();
+  for(let i=0; i<sim.history.length; i++){
+    map.set(sim.history[i].matchId, sim.history[i]);
+  }
+  _cache._historyByMatchId = map;
+  return map;
+}
+function getSnapMap(){
+  const sim=getGlobalSim();
+  if(_cache._snapMap) return _cache._snapMap;
+  const map={};
+  for(let i=0; i<sim.history.length; i++){
+    map[sim.history[i].matchId] = sim.history[i].eloBefore;
+  }
+  _cache._snapMap = map;
+  return map;
 }
 
 let _lastSimVersion = 0;
 
 
 function getCachedAwardRankings(period){
-  const sid=period==='season'?(awSeasonId||currentSeason().id):'';
-  const key=period+'_'+sid+'_'+matches.length+'_'+_cache.version;
+  let cacheSuffix='';
+  if(period==='season') cacheSuffix=awSeasonId||currentSeason().id;
+  else if(period==='week') cacheSuffix=awWeekStart?('w'+new Date(awWeekStart).getTime()):'cur';
+  const key=period+'_'+cacheSuffix+'_'+matches.length+'_'+_cache.version;
   if(!_cache._awards) _cache._awards={};
   if(_cache._awards[key]) return _cache._awards[key];
   const r=_awardRankingsUncached(period);
@@ -2055,8 +2135,11 @@ function riskWeights(hi,lo,rs){ const gap=Math.min(Math.abs(hi-lo)/400,1); const
 // Wer 90% der Spiele in der Abwehr macht, hat dort einen Erfahrungs-Bonus —
 // auch wenn die Siegrate schlecht ist. Sonst wird jemand, der 9/10 als Verteidiger
 // spielt und dort schlecht abschneidet, fälschlich als "Stürmer" eingestuft.
-const POS_MIN_GAMES = 3;
-const EXP_WEIGHT = 0.5;    // Gewicht des Erfahrungs-Anteils (0 = nur Performance, 1 = nur Häufigkeit)
+// ─── Konstanten sind jetzt cfg-getunt (Defaults als Fallback) ───
+const POS_MIN_GAMES_DEFAULT = 3;
+const EXP_WEIGHT_DEFAULT = 0.5;
+const _posMinGames = () => cfg.pos_min_games ?? POS_MIN_GAMES_DEFAULT;
+const _expWeight  = () => cfg.exp_weight ?? EXP_WEIGHT_DEFAULT;
 
 function posPerfFrom(id, matchSubset){
   let aG=0,aW=0,dG=0,dW=0, aPerf=0, dPerf=0;
@@ -2081,7 +2164,8 @@ function posPerfFrom(id, matchSubset){
 function atkStrengthFrom(id, matchSubset){
   const p=posPerfFrom(id,matchSubset);
   const total = p.aG + p.dG;
-  const aOk = p.aG>=POS_MIN_GAMES, dOk = p.dG>=POS_MIN_GAMES;
+  const minG = _posMinGames();
+  const aOk = p.aG>=minG, dOk = p.dG>=minG;
   if(!aOk && !dOk) return 0.5;
 
   // ── Faktor 1: Spielanzahl-gewichtete Performance ──
@@ -2107,8 +2191,9 @@ function atkStrengthFrom(id, matchSubset){
   const expAtk = total>0 ? p.aG/total : 0.5;
 
   // ── Kombination ──
-  // EXP_WEIGHT steuert den Mix. Bei 0.4: 60% gewichtete Performance, 40% Erfahrung.
-  const combined = (1-EXP_WEIGHT)*perfAtk + EXP_WEIGHT*expAtk;
+  // exp_weight steuert den Mix. Bei 0.4: 60% gewichtete Performance, 40% Erfahrung.
+  const ew = _expWeight();
+  const combined = (1-ew)*perfAtk + ew*expAtk;
   return Math.max(0.1, Math.min(0.9, combined));
 }
 function clampHalf(v){return Math.max(0.1,Math.min(0.9,v));}
@@ -2118,17 +2203,18 @@ function atkStrength(id){ return atkStrengthFrom(id, matches); }
 // dynamischer K: neue Spieler (wenige Spiele) bewegen sich schneller
 function dynK(pl){
   const g = gamesPlayed(pl.id); // Gesamt für Kompatibilität mit simulateElo
-  if(g < 5)  return cfg.k_factor * 1.5;
-  if(g < 15) return cfg.k_factor * 1.2;
-  if(pl.elo > cfg.start_elo + 400) return cfg.k_factor * 0.85;
+  if(g < 5)  return cfg.k_factor * (cfg.new_player_mult ?? 1.5);
+  if(g < 15) return cfg.k_factor * (cfg.new_player_mid_mult ?? 1.2);
+  if(pl.elo > cfg.start_elo + 400) return cfg.k_factor * (cfg.veteran_damp ?? 0.85);
   return cfg.k_factor;
 }
 
 // Margin-of-Victory Multiplikator (klares Ergebnis zählt mehr, knappes weniger)
 function movMult(sa,sb){
   const diff=Math.abs(sa-sb), total=Math.max(sa+sb,1);
-  // 1.0 bei knapp, bis ~1.4 bei Kantersieg; logarithmisch gedämpft
-  return 1 + 0.4*(diff/(total)) * (Math.log(diff+1)/Math.log(11));
+  // 1.0 bei knapp, bis ~1+mov_max_boost bei Kantersieg; logarithmisch gedämpft
+  const maxBoost = cfg.mov_max_boost ?? 0.4;
+  return 1 + maxBoost*(diff/(total)) * (Math.log(diff+1)/Math.log(11));
 }
 
 // computeMatch nutzt jetzt DIESELBE Engine wie der Recalc (simulateElo),
@@ -2262,6 +2348,34 @@ async function loadAll(){
     });
     matches=m.data||[];
     if(c.data)cfg=c.data;
+    // localStorage-Overrides für neue cfg-Felder, die noch nicht in der DB-Spalte existieren
+    try{
+      const overrides=JSON.parse(localStorage.getItem('cfg_overrides')||'{}');
+      Object.keys(overrides).forEach(k=>{
+        if(overrides[k]!==undefined && overrides[k]!==null) cfg[k]=overrides[k];
+      });
+      // Auto-Migration: wenn die DB inzwischen die Spalten kennt, Overrides synchronisieren
+      // und localStorage aufräumen. Läuft fire-and-forget im Hintergrund — blockt loadAll nicht.
+      const overrideKeys=Object.keys(overrides);
+      if(overrideKeys.length){
+        (async()=>{
+          // Pro Key einzeln updaten: andere bleiben heile wenn einer fehlschlägt
+          const remaining={};
+          for(const k of overrideKeys){
+            try{
+              const o={};o[k]=overrides[k];
+              const {error}=await sb.from('config').update(o).eq('id',1);
+              if(error) remaining[k]=overrides[k];
+              // Bei !error: Spalte existiert nun → Override darf raus
+            }catch(e){ remaining[k]=overrides[k]; }
+          }
+          try{
+            if(Object.keys(remaining).length) localStorage.setItem('cfg_overrides',JSON.stringify(remaining));
+            else localStorage.removeItem('cfg_overrides');
+          }catch(e){}
+        })();
+      }
+    }catch(e){}
     seasons=se.data||[];
   invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
     // Nur aktive Spieler zählen für Anzeige
@@ -2511,11 +2625,26 @@ function showSeasonRecap(season){
       </div>`;
   }
 
+  // Verfügbare vergangene Saisons (für den Recap-Picker) — neueste zuerst
+  const pastSeasons = seasons
+    .filter(s => s.id !== currentSeason().id)
+    .slice()
+    .sort((a,b) => (a.id < b.id ? 1 : a.id > b.id ? -1 : 0));
+  const showPicker = pastSeasons.length > 1;
+  const pickerHtml = showPicker ? `
+    <div class="rcp-picker">
+      <select id="rcpSeasonPicker" class="rcp-picker-select">
+        ${pastSeasons.map(s => `<option value="${esc(s.id)}" ${s.id===season.id?'selected':''}>${esc(s.label)}</option>`).join('')}
+      </select>
+      <span class="rcp-picker-chevron">${svgI('chartDown')}</span>
+    </div>` : '';
+
   openSheet(`
     <div class="rcp-head">
       <span class="rcp-label">${svgI('trophy')}Saison beendet</span>
       <div class="rcp-month">${esc(season.label)}</div>
       <div class="rcp-meta">${ms.length} Matches · ${playerIdsInSeason.size} Spieler${totalGoals?' · '+totalGoals+' Tore':''}</div>
+      ${pickerHtml}
     </div>
     ${championHtml}
     ${podiumHtml}
@@ -2523,6 +2652,15 @@ function showSeasonRecap(season){
     ${teamHtml}
     <button class="btn" id="closeRecapBtn" style="margin-top:6px;width:100%">Schließen</button>
   `);
+  // Saison-Picker: bei Auswahl Recap neu rendern (ohne `recap_shown_…` zu markieren)
+  const rcpPicker = document.getElementById('rcpSeasonPicker');
+  if(rcpPicker){
+    rcpPicker.onchange = () => {
+      const sid = rcpPicker.value;
+      const sel = seasons.find(s => s.id === sid);
+      if(sel) showSeasonRecap(sel);
+    };
+  }
   document.getElementById('closeRecapBtn').onclick=()=>{
     localStorage.setItem('recap_shown_'+season.id,'1');
     closeSheet();
@@ -2599,31 +2737,46 @@ function showPotwRecap(){
 
     const orderedMatchesForWeek = [...ms].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
 
-    // Temporäre Elo-Simulation für die Woche, um Team-Elo-Deltas zu erhalten
-    // Starte von einem neutralen Zustand, da wir nur die Elo-Änderungen *innerhalb* der Woche wollen
-    const weekSim = simulateElo(orderedMatchesForWeek, {
-      initialState: {
-        elo: Object.fromEntries(players.map(p => [p.id, cfg.start_elo])),
-        played: Object.fromEntries(players.map(p => [p.id, 0])),
-        playedSeason: Object.fromEntries(players.map(p => [p.id, 0])),
-        wins: Object.fromEntries(players.map(p => [p.id, 0])),
-        losses: Object.fromEntries(players.map(p => [p.id, 0])),
-        curStreak: Object.fromEntries(players.map(p => [p.id, 0])),
-        bestStreak: Object.fromEntries(players.map(p => [p.id, 0])),
-        eloGain: Object.fromEntries(players.map(p => [p.id, 0])),
-        eloLoss: Object.fromEntries(players.map(p => [p.id, 0])),
-        gd: Object.fromEntries(players.map(p => [p.id, 0])),
-        teamElo: {},
-        seasonTeamElo: {},
-        history: [],
-        seasonEndElos: {},
-        seasonPlayed: {},
-        careerElo: {},
-        posTracker: {}, 
-        curSeason: null
-      },
-      startElo: cfg.start_elo
-    });
+    // Cache-Schlüssel: pro Woche + Match-Count + Cache-Version
+    const weekSimKey = 'potwSim_'+wkKey+'_'+matches.length+'_'+_cache.version;
+    let weekSim;
+    if(_cache._potwSim && _cache._potwSimKey === weekSimKey){
+      weekSim = _cache._potwSim;
+    } else {
+      // Temporäre Elo-Simulation für die Woche, um Team-Elo-Deltas zu erhalten
+      // Starte von einem neutralen Zustand, da wir nur die Elo-Änderungen *innerhalb* der Woche wollen
+      weekSim = simulateElo(orderedMatchesForWeek, {
+        initialState: {
+          elo: Object.fromEntries(players.map(p => [p.id, cfg.start_elo])),
+          played: Object.fromEntries(players.map(p => [p.id, 0])),
+          playedSeason: Object.fromEntries(players.map(p => [p.id, 0])),
+          wins: Object.fromEntries(players.map(p => [p.id, 0])),
+          losses: Object.fromEntries(players.map(p => [p.id, 0])),
+          curStreak: Object.fromEntries(players.map(p => [p.id, 0])),
+          bestStreak: Object.fromEntries(players.map(p => [p.id, 0])),
+          eloGain: Object.fromEntries(players.map(p => [p.id, 0])),
+          eloLoss: Object.fromEntries(players.map(p => [p.id, 0])),
+          gd: Object.fromEntries(players.map(p => [p.id, 0])),
+          teamElo: {},
+          seasonTeamElo: {},
+          history: [],
+          seasonEndElos: {},
+          seasonPlayed: {},
+          careerElo: {},
+          posTracker: {}, 
+          curSeason: null
+        },
+        startElo: cfg.start_elo
+      });
+      _cache._potwSim = weekSim;
+      _cache._potwSimKey = weekSimKey;
+    }
+
+    // History-Lookup einmalig für O(1) Zugriff (statt history.find pro Match)
+    const weekHistById = new Map();
+    for(let i=0; i<weekSim.history.length; i++){
+      weekHistById.set(weekSim.history[i].matchId, weekSim.history[i]);
+    }
 
     orderedMatchesForWeek.forEach(m=>{
       const aWon=m.winner==='A';
@@ -2660,7 +2813,7 @@ function showPotwRecap(){
         teamGames[k]++;
         if(wonTeam) teamWins[k]++;
 
-        const matchHistoryEntry = weekSim.history.find(h => h.matchId === m.id);
+        const matchHistoryEntry = weekHistById.get(m.id);
         if (matchHistoryEntry) {
             teamEloDeltaRaw[k] += (matchHistoryEntry.deltas[p1] || 0) + (matchHistoryEntry.deltas[p2] || 0);
         }
@@ -2823,12 +2976,16 @@ function showPotwRecap(){
     };
 
     const hlCards=[];
+    // Wir öffnen die Award-Detail-Ansicht (showAward) mit awPeriod='week' + awWeekStart=letzte Woche.
+    // Das gibt konsistent die Daten der POTW-Woche aus, exakt wie bei der Saison-Recap-Mechanik.
+    const wkStartMs = weekStart.getTime();
+    const openWeekAward = (key) => `closeSheet(); setTimeout(()=>{ awPeriod='week'; awWeekStart=new Date(${wkStartMs}); showAward('${key}'); },350);`;
+
     if(teamOfTheWeek){
       // Korrektur: `pname()` gibt unescaped Namen zurück, die dann von `renderHl` escaped werden
       const teamName = pname(teamOfTheWeek.ids[0])+' & '+pname(teamOfTheWeek.ids[1]); 
       const teamDetail = `${teamOfTheWeek.games} Sp. · ${Math.round(teamOfTheWeek.wins/teamOfTheWeek.games*100)}% WR`;
-      const teamClick = `closeSheet(); setTimeout(()=>showTeam('${teamOfTheWeek.ids[0]}','${teamOfTheWeek.ids[1]}'),350);`;
-      hlCards.push(renderHl('blue','Team der Woche','handshake', teamName, teamDetail, teamClick));
+      hlCards.push(renderHl('blue','Team der Woche','handshake', teamName, teamDetail, openWeekAward('mvt')));
     } else {
       hlCards.push(renderHl('blue','Team der Woche','handshake', null, null));
     }
@@ -2836,23 +2993,21 @@ function showPotwRecap(){
     if(biggestEloGain){
       const player = pm[biggestEloGain[0]];
       const gain = Math.round(biggestEloGain[1].eloDelta);
+      // Größter Elo-Aufstieg ist kein Award-Detail-Typ → wir öffnen das Spielerprofil
       const gainClick = `closeSheet(); setTimeout(()=>showPlayer('${player.id}'),350);`;
-      // Korrektur: `player.name` ist unescaped
       hlCards.push(renderHl('acid','Größter Elo-Aufstieg','chartUp', player.name, `+${gain} Elo`, gainClick)); 
     } else {
       hlCards.push(renderHl('acid','Größter Elo-Aufstieg','chartUp', null, null));
     }
 
     if(topScorer){
-      const scorerClick = `closeSheet(); setTimeout(()=>showPlayer('${topScorer.id}'),350);`;
-      hlCards.push(renderHl('orange','Top-Tor','ball', pname(topScorer.id), `Ø ${topScorer.avg.toFixed(1)} Tore`, scorerClick));
+      hlCards.push(renderHl('orange','Top-Tor','ball', pname(topScorer.id), `Ø ${topScorer.avg.toFixed(1)} Tore`, openWeekAward('scorer')));
     } else {
       hlCards.push(renderHl('orange','Top-Tor','ball', null, null));
     }
 
     if(bestDefender){
-      const defenderClick = `closeSheet(); setTimeout(()=>showPlayer('${bestDefender.id}'),350);`;
-      hlCards.push(renderHl('purple','Eiserne Abwehr','shieldCheck', pname(bestDefender.id), `Ø ${bestDefender.avg.toFixed(1)} Gegentore`, defenderClick));
+      hlCards.push(renderHl('purple','Eiserne Abwehr','shieldCheck', pname(bestDefender.id), `Ø ${bestDefender.avg.toFixed(1)} Gegentore`, openWeekAward('wall')));
     } else {
       hlCards.push(renderHl('purple','Eiserne Abwehr','shieldCheck', null, null));
     }
@@ -2860,8 +3015,7 @@ function showPotwRecap(){
     if(topUpset && upsetNames){
       // KORREKTUR: Zeigt direkt die Siegwahrscheinlichkeit des Underdogs
       const winPct=Math.round(topUpset.sp*100); 
-      const upsetClick = `closeSheet(); setTimeout(()=>showMatchDetail('${topUpset.m.id}'),350);`;
-      hlCards.push(renderHl('blue','Größter Upset','bolt', upsetNames.join(' & '), `${winPct}% Chance`, upsetClick));
+      hlCards.push(renderHl('blue','Größter Upset','bolt', upsetNames.join(' & '), `${winPct}% Chance`, openWeekAward('upset')));
     } else {
       hlCards.push(renderHl('blue','Größter Upset','bolt', null, null));
     }
@@ -3599,7 +3753,8 @@ function simulateElo(matchSubset, opts={}){
   const atkFromTracker=(id)=>{
     const t=posTracker[id]||{aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0};
     const total=t.aG+t.dG;
-    const aOk=t.aG>=POS_MIN_GAMES, dOk=t.dG>=POS_MIN_GAMES;
+    const minG = _posMinGames();
+    const aOk=t.aG>=minG, dOk=t.dG>=minG;
     if(!aOk&&!dOk) return 0.5;
     let perfAtk;
     if(aOk&&dOk){
@@ -3611,14 +3766,17 @@ function simulateElo(matchSubset, opts={}){
       perfAtk=0.5-(t.dPerf/t.dG)*0.3;
     }
     const expAtk=total>0?t.aG/total:0.5;
-    return Math.max(0.1,Math.min(0.9,(1-EXP_WEIGHT)*perfAtk+EXP_WEIGHT*expAtk));
+    const ew = _expWeight();
+    return Math.max(0.1,Math.min(0.9,(1-ew)*perfAtk+ew*expAtk));
   };
 
   const ordered=[...matchSubset].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   const localExp=(a,b)=>1/(1+Math.pow(10,(b-a)/400));
   const localDynK=(id)=>{const g=playedSeason[id]||0,e=elo[id];
-    if(g<5)return cfg.k_factor*1.5;if(g<15)return cfg.k_factor*1.2;
-    if(e>cfg.start_elo+400)return cfg.k_factor*0.85;return cfg.k_factor;};
+    if(g<5)return cfg.k_factor*(cfg.new_player_mult ?? 1.5);
+    if(g<15)return cfg.k_factor*(cfg.new_player_mid_mult ?? 1.2);
+    if(e>cfg.start_elo+400)return cfg.k_factor*(cfg.veteran_damp ?? 0.85);
+    return cfg.k_factor;};
 
   // Saison-Reset Tracking: bei jedem Monatswechsel werden Elo/Played zurückgesetzt
   // Positions-Tracker bleibt erhalten (saison-übergreifend gewollt).
@@ -3686,15 +3844,18 @@ function simulateElo(matchSubset, opts={}){
     // Erfahrungs-Schutz
     const g=playedSeason[slot.id]||0;
     const protectShare=Math.max(0,Math.min(1,(g-5)/25));
-    const expProtect=won?1:(1-0.1*protectShare);
+    const protectMax = cfg.exp_protect_max ?? 0.1;
+    const expProtect=won?1:(1-protectMax*protectShare);
     bd.expProtect=expProtect; bd.expProtectEffect=won?0:rawBase*mov*boost*expProtect-rawBase*mov*boost;
 
     // Underdog-Boost
     const myElo=elo[slot.id];
     const eloDiff=oppAvg-myElo;
     const gamesDiff=avgGames-(playedSeason[slot.id]||0);
-    const eloFactor=Math.tanh(eloDiff/400)*0.15;
-    const gamesFactor=Math.tanh(gamesDiff/30)*0.05;
+    const eloMax = cfg.underdog_elo_max ?? 0.15;
+    const gamesMax = cfg.underdog_games_max ?? 0.05;
+    const eloFactor=Math.tanh(eloDiff/400)*eloMax;
+    const gamesFactor=Math.tanh(gamesDiff/30)*gamesMax;
     const underdogRaw=eloFactor+gamesFactor;
     const underdogMult=won?Math.max(1,1+underdogRaw):Math.min(1,1+underdogRaw);
     bd.underdogMult=underdogMult;
@@ -3829,8 +3990,7 @@ function recalcHistory(matchList){
 
 // Berechnet Breakdown für ein einzelnes Match (für Match-Detail Anzeige)
 function matchBreakdown(matchId){
-  const sim=getGlobalSim();
-  const entry=sim.history.find(h=>h.matchId===matchId);
+  const entry=getHistoryByMatchId().get(matchId);
   return entry?entry.breakdowns:{};
 }
 
@@ -3842,11 +4002,9 @@ function periodPlayerStats(period){
   // Sim für die Periode mit LEEREM Positions-Tracker → andere posBonus-Multiplikatoren
   // → andere Deltas → Anzeige "+X -Y" passte nicht zu "Elo" und Wochen-Werte
   // wichen vom Saison-Tab ab.
-  const gSim=getGlobalSim();
   const ms=[...matchesInPeriod(period)].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-  // Index der History-Einträge für schnellen Lookup
-  const histById={};
-  gSim.history.forEach(h=>{ histById[h.matchId]=h; });
+  // Gecachter History-Lookup (Map) statt ad-hoc Object-Aufbau pro Aufruf
+  const histById=getHistoryByMatchId();
   // Akkumulatoren initialisieren (nur für Spieler die in der Periode gespielt haben)
   const stats={};
   const ensure=(id)=>{
@@ -3854,7 +4012,7 @@ function periodPlayerStats(period){
     return stats[id];
   };
   ms.forEach(m=>{
-    const h=histById[m.id];
+    const h=histById.get(m.id);
     const deltas=h&&h.deltas?h.deltas:{};
     // Wenn das Match keine Deltas hat (z.B. weil ein Spieler unbekannt ist und die
     // Sim-Engine es übersprungen hat), zählt es auch nicht als gespieltes Match —
@@ -3877,6 +4035,7 @@ function periodPlayerStats(period){
   const hidden=new Set(players.filter(p=>p.hidden).map(p=>p.id));
   // Für 'season': absoluter Elo-Stand aus globalSim (deckt sich mit Profil & Recap).
   // Für 'week'/'all': eloNet = Summe der Deltas in der Periode (Net = Gain + Loss).
+  const gSim=getGlobalSim();
   const result=Object.keys(stats).filter(id=>stats[id].games>0&&!hidden.has(id)).map(id=>{
     const s=stats[id];
     const net=s.eloGain+s.eloLoss; // eloLoss ist negativ
@@ -4584,7 +4743,17 @@ function vPositions(){
 // Cache-Wrapper für awardRankings
 function awardRankings(period){return getCachedAwardRankings(period);}
 function _awardRankingsUncached(period){
-  const ms = period==='all' ? matches : period==='season' ? matchesInSeason(awSeasonId||currentSeason().id) : matchesInPeriod(period);
+  let ms;
+  if(period==='all') ms = matches;
+  else if(period==='season') ms = matchesInSeason(awSeasonId||currentSeason().id);
+  else if(period==='week' && awWeekStart){
+    const start=new Date(awWeekStart); start.setHours(0,0,0,0);
+    const end=new Date(start); end.setDate(end.getDate()+7);
+    ms = matches.filter(m=>{
+      const d=new Date(m.created_at);
+      return d>=start && d<end;
+    });
+  } else ms = matchesInPeriod(period);
   
   // ═══ ALLE AGGREGATOREN IN EINEM OBJEKT ═══
   const agg = {
@@ -4592,12 +4761,11 @@ function _awardRankingsUncached(period){
     tElo:{}, tWins:{}, tGames:{},
     atkGoals:{}, atkGoalGames:{}, defConceded:{}, defGames_:{},
     single:[], team:[], upsets:[], biggest:[],
-    clutch:{}, iceWins:{}, snapMap:{}
+    clutch:{}, iceWins:{}, snapMap:null
   };
   
-  // Snapshot-Cache EINMALIG aufbauen
-  const globalSim = getGlobalSim();
-  globalSim.history.forEach(h=>{ agg.snapMap[h.matchId] = h.eloBefore; });
+  // Snapshot-Map: gecached, wird nur 1× pro Sim-Generation gebaut
+  agg.snapMap = getSnapMap();
   
   // ═══ SINGLE-PASS DURCH ALLE MATCHES ═══
   for(let i=0; i<ms.length; i++){
@@ -4937,6 +5105,9 @@ function longestLossStreaks(ms){
 }
 
 function vAwards(){
+  // Beim Tab-Rendern: stale awWeekStart vom POTW-Click zurücksetzen, damit der Awards-Tab
+  // immer die aktuelle Woche zeigt (POTW-Detail wird per Sheet überlagert).
+  awWeekStart=null;
   // Saison-Picker: Dropdown mit allen verfügbaren Saisons
   const seasons_list=availableSeasons();
   const selSeason=awSeasonId||currentSeason().id;
@@ -5039,9 +5210,9 @@ function vAwards(){
   highlights.push(wn0
     ? card('wins','gold','Meiste Siege',[wn0.id],esc(topNames(R.winsList,x=>x.v,x=>pname(x.id))),pl,wn0.v,{hero:true,valSuffix:'Siege'})
     : empty('wins','gold','Meiste Siege'));
-  if(of0&&of0.v>=2) highlights.push(card('onFire','acid','On Fire',[of0.id],esc(pname(of0.id)),'aktuelle Serie',of0.v+'er'));
+  if(of0&&of0.v>=2) highlights.push(card('onFire','acid','On Fire',[of0.id],esc(topNames(R.onFire,x=>x.v,x=>pname(x.id))),'aktuelle Serie',of0.v+'er'));
   highlights.push(pf0
-    ? card('perfect','gold','Beste Bilanz',[pf0.id],esc(pname(pf0.id)),pf0.w+'–'+(pf0.g-pf0.w),Math.round(pf0.wr*100)+'%')
+    ? card('perfect','gold','Beste Bilanz',[pf0.id],esc(topNames(R.perfect,x=>Math.round(x.wr*100),x=>pname(x.id))),pf0.w+'–'+(pf0.g-pf0.w),Math.round(pf0.wr*100)+'%')
     : empty('perfect','gold','Beste Bilanz'));
   highlights.push(st0
     ? card('streaks','acid','Längste Siegesserie',[st0.id],esc(topNames(R.streaks,x=>x.v,x=>pname(x.id))),pl,st0.v+'er')
@@ -5054,10 +5225,10 @@ function vAwards(){
   // ── TEAMS ──
   const teams=[];
   teams.push(mvt0
-    ? card('mvt','blue','Bestes Team',mvt0.ids,esc(tn(mvt0.ids)),'gemeinsamer Elo-Zuwachs · '+pl,(mvt0.v>=0?'+':'')+Math.round(mvt0.v))
+    ? card('mvt','blue','Bestes Team',mvt0.ids,esc(topTeamNames(R.mvt,x=>Math.round(x.v))),'gemeinsamer Elo-Zuwachs · '+pl,(mvt0.v>=0?'+':'')+Math.round(mvt0.v))
     : empty('mvt','blue','Bestes Team'));
   teams.push(bd0&&bd0.g>=2
-    ? card('bestDuo','blue','Unzertrennlich',bd0.ids,esc(tn(bd0.ids)),bd0.g+' gemeinsame Spiele',bd0.g)
+    ? card('bestDuo','blue','Unzertrennlich',bd0.ids,esc(topTeamNames(R.bestDuo,x=>x.g)),bd0.g+' gemeinsame Spiele',bd0.g)
     : empty('bestDuo','blue','Unzertrennlich'));
   sect('handshake','blue','Teams',teams);
 
@@ -5067,28 +5238,29 @@ function vAwards(){
     ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+sc0.avg.toFixed(1)+' Tore/Sp.',sc0.avg.toFixed(1))
     : empty('scorer','orange','Torjäger'));
   combat.push(wl0
-    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(pname(wl0.id)),(wl0.v/wl0.g).toFixed(1)+' Gegentore/Sp.',wl0.v)
+    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wl0.v/wl0.g).toFixed(1)+' Gegentore/Sp.',wl0.v)
     : empty('wall','blue','Eiserne Abwehr'));
   combat.push(ic0&&ic0.v>=1
-    ? card('ice','blue','Eiskalt',[ic0.id],esc(pname(ic0.id)),ic0.v+'× Zu-Null als Verteidiger',ic0.v)
+    ? card('ice','blue','Eiskalt',[ic0.id],esc(topNames(R.iceList,x=>x.v,x=>pname(x.id))),ic0.v+'× Zu-Null als Verteidiger',ic0.v)
     : empty('ice','blue','Eiskalt'));
   sect('shield','blue','Angriff & Verteidigung',combat);
 
   // ── SPEZIAL ──
   const special=[];
   special.push(eg0
-    ? card('endgegner','purple','Endgegner',eg0.ids,esc(tn(eg0.ids)),eg0.g+' Begegnungen',eg0.g)
+    ? card('endgegner','purple','Endgegner',eg0.ids,esc(topTeamNames(R.endgegner,x=>x.g)),eg0.g+' Begegnungen',eg0.g)
     : empty('endgegner','purple','Endgegner'));
   special.push(cl0
-    ? card('clutch','acid','Clutch-Player',[cl0.id],esc(pname(cl0.id)),cl0.g+' knappe Spiele',Math.round(cl0.wr*100)+'%')
+    ? card('clutch','acid','Clutch-Player',[cl0.id],esc(topNames(R.clutchList,x=>Math.round(x.wr*100),x=>pname(x.id))),cl0.g+' knappe Spiele',Math.round(cl0.wr*100)+'%')
     : empty('clutch','acid','Clutch-Player'));
   special.push(ck0&&ck0.v>=1
     ? card('carryKing','acid','Carry-King',[ck0.id],esc(topNames(R.carryList,x=>x.v,x=>pname(x.id))),ck0.v+'× mit schwachem Mate',ck0.v)
     : empty('carryKing','acid','Carry-King'));
   special.push(sl0
-    ? card('solo','acid','Einzelkämpfer',[sl0.id],esc(pname(sl0.id)),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%')
+    ? card('solo','acid','Einzelkämpfer',[sl0.id],esc(topNames(R.soloList,x=>Math.round(x.wr*100),x=>pname(x.id))),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%')
     : empty('solo','acid','Einzelkämpfer'));
   // Match-Awards: zeigen die Avatare des Gewinner-Teams (winnerSide via m.winner)
+  // Match-Awards haben pro Match nur einen Eintrag → keine Komma-Liste nötig
   special.push(u0
     ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),u0.m.score_a+':'+u0.m.score_b+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round(u0.sp*100)+'%')
     : empty('upset','orange','Größte Überraschung'));
@@ -5103,30 +5275,30 @@ function vAwards(){
   // ── SCHANDTAFEL ──
   const neg=[];
   neg.push(wwr0
-    ? card('worstWr','red','Schlechtester Spieler',[wwr0.id],esc(pname(wwr0.id)),wwr0.w+'–'+(wwr0.g-wwr0.w),Math.round(wwr0.wr*100)+'%',{neg:true})
+    ? card('worstWr','red','Schlechtester Spieler',[wwr0.id],esc(topNames(R.worstWr,x=>Math.round(x.wr*100),x=>pname(x.id))),wwr0.w+'–'+(wwr0.g-wwr0.w),Math.round(wwr0.wr*100)+'%',{neg:true})
     : empty('worstWr','red','Schlechtester Spieler'));
-  if(cs0&&cs0.v>=2) neg.push(card('coldStreak','red','Eiskalt erwischt',[cs0.id],esc(pname(cs0.id)),'aktuelle Serie',cs0.v+'er',{neg:true}));
+  if(cs0&&cs0.v>=2) neg.push(card('coldStreak','red','Eiskalt erwischt',[cs0.id],esc(topNames(R.coldStreak,x=>x.v,x=>pname(x.id))),'aktuelle Serie',cs0.v+'er',{neg:true}));
   const ls0=g(R.lossStreaks);
   neg.push(ls0
-    ? card('lossStreaks','red','Längste Niederlagenserie',[ls0.id],esc(pname(ls0.id)),'insgesamt',ls0.v+'er',{neg:true})
+    ? card('lossStreaks','red','Längste Niederlagenserie',[ls0.id],esc(topNames(R.lossStreaks,x=>x.v,x=>pname(x.id))),'insgesamt',ls0.v+'er',{neg:true})
     : empty('lossStreaks','red','Längste Niederlagenserie'));
   neg.push(ft0
-    ? card('formtief','red','Formtief',[ft0.id],esc(pname(ft0.id)),'Peak '+ft0.peak+' → jetzt '+ft0.cur,'-'+Math.round(ft0.drop),{neg:true})
+    ? card('formtief','red','Formtief',[ft0.id],esc(topNames(R.formtief,x=>Math.round(x.drop),x=>pname(x.id))),'Peak '+ft0.peak+' → jetzt '+ft0.cur,'-'+Math.round(ft0.drop),{neg:true})
     : empty('formtief','red','Formtief'));
   neg.push(wa0
-    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(pname(wa0.id)),(wa0.v/wa0.g).toFixed(1)+' Tore/Sp.',(wa0.v/wa0.g).toFixed(1),{neg:true})
+    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(topNames(R.worstAtk,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wa0.v/wa0.g).toFixed(1)+' Tore/Sp.',(wa0.v/wa0.g).toFixed(1),{neg:true})
     : empty('worstAtk','red','Zahnloser Stürmer'));
   neg.push(wd0
-    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(pname(wd0.id)),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1),{neg:true})
+    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1),{neg:true})
     : empty('worstDef','red','Löchrigste Abwehr'));
   neg.push(zk0
-    ? card('zirkus','red','Zirkus',zk0.ids,esc(tn(zk0.ids)),zk0.v+'× 5+ Tore kassiert',zk0.v,{neg:true})
+    ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>x.v)),zk0.v+'× 5+ Tore kassiert',zk0.v,{neg:true})
     : empty('zirkus','red','Zirkus'));
   neg.push(wt0
-    ? card('worstTeam','red','Schlechtestes Team',wt0.ids,esc(tn(wt0.ids)),wt0.w+'–'+(wt0.g-wt0.w),Math.round(wt0.w/wt0.g*100)+'%',{neg:true})
+    ? card('worstTeam','red','Schlechtestes Team',wt0.ids,esc(topTeamNames(R.worstTeam,x=>Math.round(x.w/x.g*100))),wt0.w+'–'+(wt0.g-wt0.w),Math.round(wt0.w/wt0.g*100)+'%',{neg:true})
     : empty('worstTeam','red','Schlechtestes Team'));
   neg.push(bs0
-    ? card('baustelle','red','Baustelle',bs0.ids,esc(tn(bs0.ids)),'Niederlagenserie',bs0.best+'er',{neg:true})
+    ? card('baustelle','red','Baustelle',bs0.ids,esc(topTeamNames(R.baustelleList,x=>x.best)),'Niederlagenserie',bs0.best+'er',{neg:true})
     : empty('baustelle','red','Baustelle'));
   html+=`<div class="aw-neg-divider">
     <svg viewBox="0 0 24 24">${ICONS['skull']||''}</svg>
@@ -5278,7 +5450,7 @@ function showAward(key){
         const heroAv = isTeamAward ? awHeroPair(top.ids[0], top.ids[1]) : awHeroAv(top.ids[0]);
         const heroMarker = isNeg
           ? `<div class="aw-winner-marker">💀</div>`
-          : `<div class="aw-winner-crown">👑</div>`;
+          : `<div class="aw-winner-crown">${svgI('crown')}</div>`;
         const heroBadge = isNeg
           ? `<span class="aw-winner-badge">💩 Schandfleck · #1</span>`
           : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Best · #1</span>`;
@@ -5300,7 +5472,7 @@ function showAward(key){
           : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Geteilt · #1 · ${topGroup.length} ${isTeamAward?'Teams':'Spieler'}</span>`;
         const sharedMarker = isNeg
           ? `<div class="aw-winner-shared-marker shame">💀</div>`
-          : `<div class="aw-winner-shared-marker">👑</div>`;
+          : `<div class="aw-winner-shared-marker">${svgI('crown')}</div>`;
         const entries = topGroup.map(e => {
           const av = isTeamAward
             ? `<div class="aw-winner-tied-pair">${awLiAv(e.ids[0])}${awLiAv(e.ids[1])}</div>`
@@ -5655,26 +5827,83 @@ function vSettings(){
   const sl=(id,name,val,min,max,suf)=>`<div class="slider-wrap">
     <div class="sh"><span class="sn">${name}</span><span class="sv"><span id="${id}v">${val}</span>${suf||''}</span></div>
     <input type="range" id="${id}" min="${min}" max="${max}" value="${val}"></div>`;
+  // Aktuelle Werte für Erklärungen (mit Fallbacks)
+  const c = {
+    k:          Math.round(cfg.k_factor),
+    risk:       Math.round((cfg.risk_split ?? 0.6)*100),
+    pos:        Math.round((cfg.pos_swing ?? 0.45)*100),
+    winBoost:   Math.round((cfg.win_boost ?? 1.12)*100),
+    movDamp:    Math.round((cfg.mov_loss_damp ?? 0.5)*100),
+    bonus:      ((cfg.match_bonus ?? 1.5)).toFixed(1),
+    startElo:   Math.round(cfg.start_elo ?? 0),
+    posMin:     Math.round(cfg.pos_min_games ?? 3),
+    expW:       Math.round((cfg.exp_weight ?? 0.5)*100),
+    npMult:     Math.round((cfg.new_player_mult ?? 1.5)*100),
+    npMidMult:  Math.round((cfg.new_player_mid_mult ?? 1.2)*100),
+    vetDamp:    Math.round((cfg.veteran_damp ?? 0.85)*100),
+    movMax:     Math.round((cfg.mov_max_boost ?? 0.4)*100),
+    expProt:    Math.round((cfg.exp_protect_max ?? 0.1)*100),
+    udElo:      Math.round((cfg.underdog_elo_max ?? 0.15)*100),
+    udGames:    Math.round((cfg.underdog_games_max ?? 0.05)*100),
+  };
   return `
     <div class="view-head"><h2>Formel</h2><p>Feintuning der Elo-Berechnung</p></div>
+
+    <div class="cfg-section-title">Grundparameter</div>
     <div class="card">
-      ${sl('cfgK','K-Faktor (Tempo)',Math.round(cfg.k_factor),8,64,'')}
-      ${sl('cfgRisk','Risiko-Split (schwacher Mate)',Math.round(cfg.risk_split*100),0,100,'%')}
-      ${sl('cfgPos','Positions-Swing',Math.round(cfg.pos_swing*100),0,100,'%')}
-      ${sl('cfgWinBoost','Sieg-Boost',Math.round((cfg.win_boost||1.12)*100),100,140,'%')}
-      ${sl('cfgMovDamp','MoV-Dämpfung Niederlage',Math.round((cfg.mov_loss_damp||0.5)*100),0,100,'%')}
-      ${sl('cfgBonus','Spielbonus pro Match',Math.round((cfg.match_bonus||1.5)*10),0,50,'/10')}
+      ${sl('cfgK','K-Faktor (Tempo)',c.k,8,64,'')}
+      ${sl('cfgStartElo','Start-Elo pro Saison',c.startElo,0,100,'')}
     </div>
+
+    <div class="cfg-section-title">Spielerlast & Position</div>
+    <div class="card">
+      ${sl('cfgRisk','Risiko-Split (schwacher Mate)',c.risk,0,100,'%')}
+      ${sl('cfgPos','Positions-Swing',c.pos,0,100,'%')}
+      ${sl('cfgExpW','Positions-Erfahrungs-Gewicht',c.expW,0,100,'%')}
+      ${sl('cfgPosMin','Min. Spiele für Positions-Wertung',c.posMin,1,10,'')}
+    </div>
+
+    <div class="cfg-section-title">Sieg & Niederlage</div>
+    <div class="card">
+      ${sl('cfgWinBoost','Sieg-Boost',c.winBoost,100,140,'%')}
+      ${sl('cfgMovDamp','MoV-Dämpfung Niederlage',c.movDamp,0,100,'%')}
+      ${sl('cfgMovMax','MoV-Max-Boost (Kantersieg)',c.movMax,0,100,'%')}
+    </div>
+
+    <div class="cfg-section-title">Bonus-System</div>
+    <div class="card">
+      ${sl('cfgBonus','Spielbonus pro Match',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,'/10')}
+      ${sl('cfgExpProt','Erfahrungs-Schutz Maximum',c.expProt,0,30,'%')}
+      ${sl('cfgUdElo','Underdog-Boost (Elo-Gap)',c.udElo,0,50,'%')}
+      ${sl('cfgUdGames','Underdog-Boost (Spiele-Gap)',c.udGames,0,30,'%')}
+    </div>
+
+    <div class="cfg-section-title">K-Faktor-Dynamik</div>
+    <div class="card">
+      ${sl('cfgNpMult','Neuling-Multi (&lt;5 Spiele)',c.npMult,100,200,'%')}
+      ${sl('cfgNpMidMult','Anfänger-Multi (&lt;15 Spiele)',c.npMidMult,100,200,'%')}
+      ${sl('cfgVetDamp','Veteran-Dämpfung (&gt;Start+400 Elo)',c.vetDamp,50,100,'%')}
+    </div>
+
     <div class="card">
       <div class="mini-label">Mechaniken</div>
       <div style="font-size:12px;color:var(--ink2);line-height:1.8">
         <b style="color:var(--acid)">K-Faktor</b> — Wie stark einzelne Matches die Elo verändern. Hoch = schnelle Änderungen, niedrig = stabile Elo.<br>
-        <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei 60% verlierst du weniger Elo wenn dein Mate deutlich schlechter ist.<br>
+        <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
+        <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk}% verlierst du weniger Elo wenn dein Mate deutlich schlechter ist.<br>
         <b style="color:var(--acid)">Positions-Swing</b> — Bonus für Siege auf der schwachen Position. Ein Abwehr-Spieler der im Sturm gewinnt bekommt extra Elo.<br>
-        <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${Math.round((cfg.win_boost||1.12)*100-100)}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
-        <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${Math.round((cfg.mov_loss_damp||0.5)*100)}% so stark. Eine 0:10 Niederlage bestraft nicht mehr 3× so hart wie 5:10.<br>
-        <b style="color:var(--acid)">Spielbonus</b> — +${(cfg.match_bonus||1.5).toFixed(1)} Elo pro Match, egal ob Sieg oder Niederlage. Belohnt aktive Spieler.<br>
-        <b style="color:var(--acid)">Erfahrungs-Schutz</b> — Spieler verlieren mit zunehmender Match-Zahl graduell weniger Elo (max 10% Schutz ab 30 Matches in einer Saison). Schützt erfahrene Spieler vor Absturz.<br>
+        <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Performance. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur Über-Erwartungs-Performance zählt.<br>
+        <b style="color:var(--acid)">Min. Spiele Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
+        <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
+        <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
+        <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
+        <b style="color:var(--acid)">Spielbonus</b> — +${c.bonus} Elo pro Match, egal ob Sieg oder Niederlage. Belohnt aktive Spieler.<br>
+        <b style="color:var(--acid)">Erfahrungs-Schutz Max</b> — Erfahrene Spieler verlieren bei Niederlagen bis zu ${c.expProt}% weniger Elo (linear ab 5 bis 30 Saison-Matches). Schützt vor Absturz durch Pech-Serien.<br>
+        <b style="color:var(--acid)">Underdog-Boost (Elo-Gap)</b> — Schwächere Spieler bekommen bis zu ${c.udElo}% Bonus bei Siegen gegen stärkere Gegner (tanh-skaliert nach 400 Elo-Differenz). Stärkere Spieler verlieren bei Niederlagen entsprechend mehr.<br>
+        <b style="color:var(--acid)">Underdog-Boost (Spiele-Gap)</b> — Spieler mit weniger Matches bekommen bis zu ${c.udGames}% zusätzlichen Boost (tanh-skaliert nach 30 Spiele-Differenz). Hilft Neueinsteigern beim Aufholen.<br>
+        <b style="color:var(--acid)">Neuling-Multi</b> — In den ersten 5 Saison-Spielen wirkt K-Faktor um ${c.npMult}% verstärkt. Neue Spieler finden so schnell ihr Niveau.<br>
+        <b style="color:var(--acid)">Anfänger-Multi</b> — Zwischen 5–14 Saison-Spielen wirkt K-Faktor um ${c.npMidMult}% verstärkt. Sanfter Übergang zur Normal-Bewertung.<br>
+        <b style="color:var(--acid)">Veteran-Dämpfung</b> — Sehr starke Spieler (&gt; Start+400 Elo) bewegen sich um ${c.vetDamp}% des K-Faktors. Verhindert dass Top-Spieler durch Pflicht-Siege ewig weiter wachsen.<br>
         <b style="color:var(--acid)">Saison-Reset</b> — Jeden Monatswechsel werden alle Elo-Werte auf den Start-Wert zurückgesetzt. Karriere-Elo = gewichteter Durchschnitt der Saison-End-Elos.
       </div>
     </div>
@@ -6113,9 +6342,7 @@ function countLossStreakOccurrences(id,ms,n){
 // Carry: Sieg wenn dein Mate der schwächste der 4 Spieler im Match war
 // Nutzt globalen Elo-History-Cache für historische Elo-Stände
 function countCarries(id,ms){
-  const sim=getGlobalSim();
-  const snapMap={};
-  sim.history.forEach(h=>{snapMap[h.matchId]=h.eloBefore;});
+  const snapMap=getSnapMap();
   return ms.filter(m=>{
     if(!matchOf(id,m)||!won(id,m))return false;
     const snap=snapMap[m.id]; if(!snap)return false;
@@ -6162,10 +6389,8 @@ function getBadgeEarnedCache(){
   const map={};
   const ordered=[...matches].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
 
-  // Globale Sim für Carry (historische Elo-Stände vor jedem Match)
-  const globalSim=getGlobalSim();
-  const snapMap={};
-  globalSim.history.forEach(h=>{ snapMap[h.matchId]=h.eloBefore; });
+  // Globale Sim für Carry (historische Elo-Stände vor jedem Match) — gecached
+  const snapMap=getSnapMap();
 
   // Inkrementeller State pro Spieler
   const st={};
@@ -6405,10 +6630,22 @@ function showPlayer(id){
     const seasonMs=matchesInSeason().filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
       .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
     if(seasonMs.length>=2){
-      let eloTrace=cfg.start_elo;
-      const series=[eloTrace];
+      // FIX: Spark-Trace aus der echten Sim-History bauen, NICHT aus m.deltas (DB).
+      // m.deltas kann durch Algo-Tweaks vs. live-Sim divergieren → Anzeige zeigt 222 Elo,
+      // Spark zeigt aber +221 weil die Summe der DB-Deltas leicht abweicht.
+      // Mit sim.history.eloAfter[id] endet die Linie exakt auf dem angezeigten Elo-Wert.
+      const histById = getHistoryByMatchId();
+      let eloTrace = cfg.start_elo;
+      const series = [eloTrace];
       for(const m of seasonMs){
-        eloTrace += (m.deltas||{})[id] || 0;
+        const h = histById.get(m.id);
+        if(h && h.eloAfter && h.eloAfter[id] !== undefined){
+          eloTrace = h.eloAfter[id];
+        } else {
+          // Fallback (z.B. Match liegt außerhalb der Sim wegen versteckter Spieler):
+          // DB-Delta verwenden, damit die Linie weiterläuft
+          eloTrace += (m.deltas||{})[id] || 0;
+        }
         series.push(eloTrace);
       }
       const minE=Math.min(...series), maxE=Math.max(...series);
@@ -6423,7 +6660,8 @@ function showPlayer(id){
       const linePath='M'+points.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
       const fillPath=linePath+` L${W},${H} L0,${H} Z`;
       const last=points[points.length-1];
-      const net=Math.round(series[series.length-1]-series[0]);
+      // Konsistenz mit der Elo-Anzeige: gerundete Endsumme minus gerundeter Start
+      const net=Math.round(series[series.length-1])-Math.round(series[0]);
       const netCls=net>=0?'pos':'neg';
       const netTxt=(net>=0?'+':'')+net;
       const lineCol=net>=0?'var(--acid)':'var(--red)';
@@ -6576,25 +6814,29 @@ function showPlayer(id){
       }).join('')}
     </div>` : '';
 
-  // Karriere-Rang als Journey-Bar: Einsteiger → Legende (rechts → links progressiver Strahl).
+  // Karriere-Rang als Journey-Bar: Einsteiger (links) → Legende (rechts) progressiver Strahl.
   // Je besser der Rang, desto länger der Strahl. Die Tier-Farbe wird auf das Parent-Element
   // gesetzt, damit der Strahl die richtige Farbe (z.B. Gold bei Legende) erbt.
-  const _activeIdx = rInfo ? RANKS.findIndex(rank => rank.label === rInfo.label) : -1;
+  // RANKS ist intern sortiert: Legende(0)…Einsteiger(4). Wir kehren für die Anzeige um.
+  const _activeIdxRaw = rInfo ? RANKS.findIndex(rank => rank.label === rInfo.label) : -1;
+  // Display-Index: 0 = Einsteiger (links), 4 = Legende (rechts)
+  const _activeIdx = _activeIdxRaw >= 0 ? (RANKS.length - 1 - _activeIdxRaw) : -1;
+  const _ranksReversed = RANKS.slice().reverse();
   const _journeyTier = rInfo
     ? ('pp-tier-'+rInfo.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u'))
     : '';
-  // Strahl-Breite: bei Legende (idx 0) volle 100 %, bei Einsteiger (idx 4) 0 %.
-  const _fillPct = _activeIdx >= 0 ? (4 - _activeIdx) * 25 : 0;
+  // Strahl-Breite: bei Legende (display-idx 4) volle 100 %, bei Einsteiger (display-idx 0) 0 %.
+  const _fillPct = _activeIdx >= 0 ? _activeIdx * 25 : 0;
 const rankProgHtml = `
   <div class="pp-ranks-journey ${_journeyTier}" id="ppRanksBtn" style="cursor:pointer">
     <div class="pp-rj-track"></div>
     <div class="pp-rj-fill-track"><div class="pp-rj-fill" style="width:${_fillPct}%"></div></div>
     <div class="pp-rj-tiers">
-      ${RANKS.map((r, i) => {
-        // i > activeIdx = unterhalb des Spielers (bereits durchlaufene Tiers, vom Strahl beleuchtet)
+      ${_ranksReversed.map((r, i) => {
+        // i < activeIdx = unterhalb des Spielers (bereits durchlaufene Tiers, vom Strahl beleuchtet)
         // i === activeIdx = aktueller Tier
-        // i < activeIdx = noch nicht erreicht
-        const state = _activeIdx < 0 ? '' : (i > _activeIdx ? 'done' : (i === _activeIdx ? 'active' : ''));
+        // i > activeIdx = noch nicht erreicht
+        const state = _activeIdx < 0 ? '' : (i < _activeIdx ? 'done' : (i === _activeIdx ? 'active' : ''));
         return `<div class="pp-rj-tier ${state}">
           <div class="pp-rj-dot"></div>
           <div class="pp-rj-lbl">${esc(r.label)}</div>
@@ -7237,7 +7479,7 @@ function bind(){
 
   // awards anklickbar
   document.querySelectorAll('[data-award]').forEach(el=>el.onclick=()=>showAward(el.dataset.award));
-  document.querySelectorAll('[data-awperiod]').forEach(b=>b.onclick=()=>{awPeriod=b.dataset.awperiod;if(awPeriod!=='season')awSeasonId=null;render();});
+  document.querySelectorAll('[data-awperiod]').forEach(b=>b.onclick=()=>{awPeriod=b.dataset.awperiod;if(awPeriod!=='season')awSeasonId=null;if(awPeriod!=='week')awWeekStart=null;render();});
   const awSP=document.getElementById('awSeasonPicker');
   if(awSP) awSP.onchange=()=>{awSeasonId=awSP.value;render();};
 
@@ -7342,6 +7584,17 @@ function bind(){
   bindSlider('cfgWinBoost','win_boost',v=>v/100,v=>Math.round(v));
   bindSlider('cfgMovDamp','mov_loss_damp',v=>v/100,v=>Math.round(v));
   bindSlider('cfgBonus','match_bonus',v=>v/10,v=>Math.round(v));
+  // Neue Slider
+  bindSlider('cfgStartElo','start_elo',v=>v,v=>Math.round(v));
+  bindSlider('cfgExpW','exp_weight',v=>v/100,v=>Math.round(v));
+  bindSlider('cfgPosMin','pos_min_games',v=>v,v=>Math.round(v));
+  bindSlider('cfgMovMax','mov_max_boost',v=>v/100,v=>Math.round(v));
+  bindSlider('cfgExpProt','exp_protect_max',v=>v/100,v=>Math.round(v));
+  bindSlider('cfgUdElo','underdog_elo_max',v=>v/100,v=>Math.round(v));
+  bindSlider('cfgUdGames','underdog_games_max',v=>v/100,v=>Math.round(v));
+  bindSlider('cfgNpMult','new_player_mult',v=>v/100,v=>Math.round(v));
+  bindSlider('cfgNpMidMult','new_player_mid_mult',v=>v/100,v=>Math.round(v));
+  bindSlider('cfgVetDamp','veteran_damp',v=>v/100,v=>Math.round(v));
   const recalcBtn=document.getElementById('recalcBtn');
   if(recalcBtn) recalcBtn.onclick=async()=>{
     toast('Berechne alle Matches neu…');
@@ -7418,7 +7671,43 @@ function makeScoreEditable(span){
 function bindSlider(id,key,toState,toLabel){
   const sl=document.getElementById(id);if(!sl)return;
   sl.oninput=()=>{document.getElementById(id+'v').textContent=toLabel(+sl.value);};
-  sl.onchange=async()=>{const o={};o[key]=toState(+sl.value);await sb.from('config').update(o).eq('id',1);cfg[key]=o[key];invalidateCache();toast('Gespeichert','ok');};
+  sl.onchange=async()=>{
+    const newVal=toState(+sl.value);
+    const o={};o[key]=newVal;
+    // Lokales State sofort updaten (synchron) damit die Vorschau & nächster Match-Save den
+    // neuen Wert sieht. DB- und localStorage-Persistenz folgt asynchron.
+    cfg[key]=newVal;
+    invalidateCache();
+    // DB-Update versuchen
+    let dbOk=false;
+    try{
+      const {error}=await sb.from('config').update(o).eq('id',1);
+      if(!error) dbOk=true;
+      else console.warn('Config DB-Update fehlgeschlagen für',key,':',error.message);
+    }catch(e){
+      console.warn('Config DB-Update Exception:',e);
+    }
+    // localStorage-Fallback (z.B. neue Spalten die noch nicht in DB existieren)
+    // Diese Overrides werden bei loadAll auf das DB-cfg geschmolzen.
+    if(!dbOk){
+      try{
+        const overrides=JSON.parse(localStorage.getItem('cfg_overrides')||'{}');
+        overrides[key]=newVal;
+        localStorage.setItem('cfg_overrides',JSON.stringify(overrides));
+      }catch(e){}
+    } else {
+      // Wenn DB jetzt klappt: alten localStorage-Override entfernen (sonst überschreibt
+      // er bei loadAll den frischen DB-Wert).
+      try{
+        const overrides=JSON.parse(localStorage.getItem('cfg_overrides')||'{}');
+        if(key in overrides){
+          delete overrides[key];
+          localStorage.setItem('cfg_overrides',JSON.stringify(overrides));
+        }
+      }catch(e){}
+    }
+    toast(dbOk?'Gespeichert':'Lokal gespeichert','ok');
+  };
 }
 
 // ════════ TEAM PROFIL SHEET ════════
