@@ -1266,6 +1266,8 @@
   .wk-hl-detail{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:3px}
   .wk-hl.scorer{background:linear-gradient(135deg,rgba(255,120,73,.06),var(--surface) 70%);border-color:rgba(255,120,73,.2)}
   .wk-hl.scorer .wk-hl-label{color:var(--orange)}
+  .wk-hl.team{background:linear-gradient(135deg,rgba(86,180,232,.06),var(--surface) 70%);border-color:rgba(86,180,232,.2)}
+  .wk-hl.team .wk-hl-label{color:var(--blue)}
   .wk-hl.streak{background:linear-gradient(135deg,rgba(190,242,100,.06),var(--surface) 70%);border-color:rgba(190,242,100,.2)}
   .wk-hl.streak .wk-hl-label{color:var(--acid)}
   .wk-hl.upset{background:linear-gradient(135deg,rgba(167,139,250,.06),var(--surface) 70%);border-color:rgba(167,139,250,.2)}
@@ -1387,8 +1389,17 @@
   .hof-pod.bronze .hof-pod-stats{border-top:1px solid rgba(205,127,50,.18)}
   .hof-pod-stat-sep{color:var(--faint);opacity:.6}
   @media (max-width: 360px){
-    .hof-pods{grid-template-columns:1fr}
-    .hof-pod-name{font-size:15px}
+    .hof-pods{gap:6px}
+    .hof-pod{padding:10px 9px 9px;border-radius:14px}
+    .hof-pod-row{gap:8px;margin-top:8px}
+    .hof-pod-av{width:38px;height:38px;font-size:19px}
+    .hof-pod-av:not(.has-emoji){font-size:12px}
+    .hof-pod-name{font-size:13.5px}
+    .hof-pod-rank{font-size:8px;padding:2px 6px;letter-spacing:.12em}
+    .hof-pod-elo{font-size:9.5px}
+    .hof-pod-elo b{font-size:10px}
+    .hof-pod .tier-pill{font-size:8.5px;padding:2px 5px}
+    .hof-pod-stats{font-size:9.5px;gap:5px;margin-top:8px;padding-top:7px}
   }
 
   /* Tier Pill in Liga-Liste (Gesamt-Ansicht) */
@@ -4478,20 +4489,21 @@ function vRanking(){
           </div>`;
       }
 
-      // Wochen-Highlights: Top-Tor / Heißeste Serie / Größter Upset
-      // Top-Tor: Stürmer mit den meisten Toren pro Spiel (min 1 Sturm-Spiel)
-      const wkAtk={};
+      // Wochen-Highlights: Bestes Team / Heißeste Serie / Größter Upset
+      // Bestes Team: Duo mit der höchsten kumulierten Elo-Summe in der Woche
+      const wkTeams={}; // teamKey → {ids:[id1,id2], elo, games}
       periodMs.forEach(m=>{
-        const atkA=m.a1_pos==='atk'?m.a1:m.a2;
-        const atkB=m.b1_pos==='atk'?m.b1:m.b2;
-        if(!wkAtk[atkA])wkAtk[atkA]={g:0,goals:0};
-        wkAtk[atkA].g++; wkAtk[atkA].goals+=m.score_a;
-        if(!wkAtk[atkB])wkAtk[atkB]={g:0,goals:0};
-        wkAtk[atkB].g++; wkAtk[atkB].goals+=m.score_b;
+        const tA=[m.a1,m.a2].sort(); const kA=tA.join('|');
+        const tB=[m.b1,m.b2].sort(); const kB=tB.join('|');
+        const dA=((m.deltas||{})[m.a1]||0)+((m.deltas||{})[m.a2]||0);
+        const dB=((m.deltas||{})[m.b1]||0)+((m.deltas||{})[m.b2]||0);
+        if(!wkTeams[kA]) wkTeams[kA]={ids:tA, elo:0, games:0};
+        if(!wkTeams[kB]) wkTeams[kB]={ids:tB, elo:0, games:0};
+        wkTeams[kA].elo+=dA; wkTeams[kA].games++;
+        wkTeams[kB].elo+=dB; wkTeams[kB].games++;
       });
-      const topScorer=Object.entries(wkAtk).filter(([,v])=>v.g>=1)
-        .map(([id,v])=>({id,goals:v.goals,g:v.g,avg:v.goals/v.g}))
-        .sort((a,b)=>b.avg-a.avg||b.goals-a.goals)[0];
+      const bestTeam=Object.values(wkTeams).filter(t=>t.elo>0)
+        .sort((a,b)=>b.elo-a.elo||b.games-a.games)[0];
 
       // Heißeste Serie: längste Siegesserie innerhalb der Woche
       const wkStreaks=longestStreaks(periodMs);
@@ -4562,15 +4574,16 @@ function vRanking(){
     }
 
     // Click-Attribute für Highlights — bind() verdrahtet [data-detail] → showPlayer,
-    // [data-match] → showMatchDetail automatisch.
-    const scorerClick = topScorer ? `data-detail="${esc(topScorer.id)}"` : '';
+    // [data-match] → showMatchDetail, [data-team] → showTeam automatisch.
+    const teamClick   = bestTeam  ? `data-team="${esc(bestTeam.ids.join('|'))}"` : '';
+    const teamName    = bestTeam  ? `${pname(bestTeam.ids[0])} & ${pname(bestTeam.ids[1])}` : null;
     const streakClick = topStreak ? `data-detail="${esc(topStreak.id)}"` : '';
     const upsetClick  = topUpset  ? `data-match="${esc(topUpset.m.id)}"` : '';
 
     heroSection += `
       ${potwRecapBtn}
       <div class="wk-highlights">
-        ${renderHl('scorer','Top-Tor','ball', topScorer?pname(topScorer.id):null, topScorer?`Ø ${topScorer.avg.toFixed(1)} Tore`:'', scorerClick)}
+        ${renderHl('team','Bestes Team','handshake', teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', teamClick)}
         ${renderHl('streak','Heißeste Serie','flame', topStreak?pname(topStreak.id):null, topStreak?`${topStreak.v} in Folge`:'', streakClick)}
         ${renderHl('upset','Größter Upset','bolt', upsetName, topUpset?`${topUpset.winPct}% Chance`:'', upsetClick)}
       </div>`;
@@ -5925,12 +5938,12 @@ function vHistory(){
 
   // ═══ PAGINIERUNGS-CONTROLS ═══
   const paginationControls = totalPages > 1 ? `
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:16px;padding-bottom:20px">
-      <button class="btn ghost sm" id="prevPageBtn" style="flex:0 0 auto;padding:8px 12px" ${currentPage===0?'disabled':''}>← Vorher</button>
-      <div style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;font-family:'Sometype Mono',monospace">
-        Seite <b>${currentPage+1}</b> von <b>${totalPages}</b>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:16px;padding-bottom:20px;width:100%">
+      <button class="btn ghost sm" id="prevPageBtn" style="flex:1;min-width:0;padding:10px 8px;white-space:nowrap" ${currentPage===0?'disabled':''}>← Vorher</button>
+      <div style="flex-shrink:0;color:var(--muted);font-size:11px;font-family:'Sometype Mono',monospace;text-align:center;padding:0 2px;white-space:nowrap">
+        <b style="color:var(--ink)">${currentPage+1}</b> / <b style="color:var(--ink)">${totalPages}</b>
       </div>
-      <button class="btn ghost sm" id="nextPageBtn" style="flex:0 0 auto;padding:8px 12px" ${currentPage>=(totalPages-1)?'disabled':''}>Weiter →</button>
+      <button class="btn ghost sm" id="nextPageBtn" style="flex:1;min-width:0;padding:10px 8px;white-space:nowrap" ${currentPage>=(totalPages-1)?'disabled':''}>Weiter →</button>
     </div>
   ` : '';
 
