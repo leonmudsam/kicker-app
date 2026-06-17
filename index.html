@@ -1573,6 +1573,28 @@
   .rcp-tos-arrow{color:var(--muted);flex-shrink:0}
   .rcp-tos-arrow svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
+  /* Saison-Recap: Rangliste Platz 4+ unter dem Podium */
+  .rcp-rest{display:flex;flex-direction:column;border-radius:14px;overflow:hidden;
+    background:var(--surface);border:1px solid var(--line);margin-top:4px}
+  .rcp-rest-row{display:flex;align-items:center;gap:11px;padding:11px 13px;
+    background:var(--surface);cursor:pointer;transition:background .12s;min-width:0}
+  .rcp-rest-row:active{background:var(--surface2)}
+  .rcp-rest-row + .rcp-rest-row{border-top:1px solid rgba(255,255,255,.04)}
+  .rcp-rest-rank{font-family:'Sometype Mono',monospace;font-size:11px;font-weight:700;
+    color:var(--muted);min-width:20px;text-align:center;letter-spacing:.04em;flex-shrink:0}
+  .rcp-rest-av{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+    font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--bg);flex-shrink:0;
+    background:linear-gradient(155deg,#3a4540,#212824)}
+  .rcp-rest-av.has-emoji{font-size:18px;background:var(--surface3)}
+  .rcp-rest-av.has-emoji .em{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;line-height:1}
+  .rcp-rest-name{flex:1;min-width:0;font-weight:600;font-size:13.5px;overflow:hidden;
+    text-overflow:ellipsis;white-space:nowrap;letter-spacing:-.01em}
+  .rcp-rest-stats{display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .rcp-rest-wl{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted);
+    letter-spacing:.02em;font-variant-numeric:tabular-nums}
+  .rcp-rest-elo{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink);
+    font-variant-numeric:tabular-nums;letter-spacing:-.02em;min-width:34px;text-align:right}
+
   /* ============ AWARD SHEET REDESIGN (Winner Hero + Liste) ============ */
   /* Saubere Award-Liste statt Podium */
   .aw-list-label{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
@@ -2680,6 +2702,62 @@ function showSeasonRecap(season){
       <div class="rcp-pod">${podCols}</div>`;
   }
 
+  // ─── Rangliste Platz 4+ (basierend auf Saison-End-Elo, gleiche Quelle wie Podium) ───
+  let restListHtml='';
+  {
+    const gSim=getGlobalSim();
+    const snap=gSim.seasonEndElos[season.id]||{};
+    const playedMap=gSim.seasonPlayed[season.id]||{};
+    // Saison-isolierte Wins/Losses
+    const sw={}, sl={};
+    ms.forEach(m=>{
+      [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']].forEach(([x,y,won])=>{
+        [x,y].forEach(id=>{
+          if(won) sw[id]=(sw[id]||0)+1;
+          else sl[id]=(sl[id]||0)+1;
+        });
+      });
+    });
+    // Vollständige Saison-Rangliste (alle Spieler mit Saison-Spielen), nach End-Elo
+    const fullRank=Object.keys(playedMap)
+      .filter(id=>playedMap[id]>0)
+      .map(id=>({
+        id,
+        elo:Math.round(snap[id] ?? cfg.start_elo),
+        wins:sw[id]||0,
+        losses:sl[id]||0
+      }))
+      .sort((a,b)=>b.elo-a.elo);
+    // Platz 4+: alle ohne Podium (filtert die archivierten Top-3-IDs heraus,
+    // falls die Live-Reihenfolge minimal von der archivierten abweicht)
+    const podiumIds=new Set((top||[]).filter(t=>t&&t.id).map(t=>t.id));
+    const restRank=fullRank.filter(e=>!podiumIds.has(e.id));
+    if(restRank.length){
+      const rows=restRank.map((e,i)=>{
+        const p=pmap()[e.id];
+        if(!p) return '';
+        const rank=podiumIds.size+i+1;
+        const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
+        const av=em
+          ? `<div class="rcp-rest-av has-emoji"><span class="em">${em}</span></div>`
+          : `<div class="rcp-rest-av" style="background:${avColor(p.id)}">${esc(initials(p.name))}</div>`;
+        return `<div class="rcp-rest-row" data-detail="${esc(e.id)}">
+          <div class="rcp-rest-rank">${rank}</div>
+          ${av}
+          <div class="rcp-rest-name">${esc(p.name)}</div>
+          <div class="rcp-rest-stats">
+            <div class="rcp-rest-wl">${e.wins}–${e.losses}</div>
+            <div class="rcp-rest-elo">${e.elo}</div>
+          </div>
+        </div>`;
+      }).filter(Boolean).join('');
+      if(rows){
+        restListHtml=`<div class="rcp-section">Rangliste</div>
+          <div class="rcp-rest">${rows}</div>`;
+      }
+    }
+  }
+
   // ─── Awards Grid (4 Awards der Saison) ───
   const scorer=R.scorer&&R.scorer[0];
   const wall=R.wall&&R.wall[0];
@@ -2765,6 +2843,7 @@ function showSeasonRecap(season){
     </div>
     ${championHtml}
     ${podiumHtml}
+    ${restListHtml}
     ${awardsHtml}
     ${teamHtml}
     <button class="btn" id="closeRecapBtn" style="margin-top:6px;width:100%">Schließen</button>
@@ -2783,7 +2862,7 @@ function showSeasonRecap(season){
     closeSheet();
   };
   // Spieler-Karten klickbar → Spielerprofil
-  document.querySelectorAll('.rcp-champ[data-detail], .rcp-pod-col[data-detail]').forEach(el=>{
+  document.querySelectorAll('.rcp-champ[data-detail], .rcp-pod-col[data-detail], .rcp-rest-row[data-detail]').forEach(el=>{
     el.onclick=()=>{
       const id=el.dataset.detail; if(!id) return;
       localStorage.setItem('recap_shown_'+season.id,'1');
