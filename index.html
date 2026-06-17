@@ -2378,7 +2378,7 @@ function computeMatch(teamA, teamB, winner, sa, sb){
   };
 
   const globalSim = getGlobalSim();
-  const sim = simulateElo([hypo], {
+  const sim = simulateEloWithSliders([hypo], {
     initialState: globalSim,
     initialCurSeason: globalSim.curSeason
   });
@@ -2418,6 +2418,8 @@ async function persistNewMatch(newMatchId) {
 }
 
 // Schreibt eine neu berechnete Historie in die DB (Spieler-Elos + atk + Match-Deltas).
+// WICHTIG: invalidiert auch die archivierten Saison-Snapshots (seasons.top_elo),
+// damit das Recap-Podium nach Recalc konsistent zu der frischen Berechnung ist.
 // Updates laufen in Batches parallel, um Rate-Limits zu respektieren (Supabase ~100 req/s).
 async function persistRecalc(matchList){
   const BATCH_SIZE = 25;
@@ -2431,7 +2433,7 @@ async function persistRecalc(matchList){
     const atk = atkStrengthFrom(p.id, matchList);
     return sb.from('players').update({atk}).eq('id', p.id);
   });
-  // Match-Deltas/exp_a aktualisieren
+  // Match-Deltas/exp_a aktualisieren (Slider-basiert)
   const{matchPatches} = recalcHistory(matchList);
   const matchUpdates = matchPatches.map(patch =>
     sb.from('matches').update({
@@ -2440,8 +2442,30 @@ async function persistRecalc(matchList){
     }).eq('id', patch.id)
   );
   await runBatch([...atkUpdates, ...matchUpdates]);
+  // Lokale Matches mit neuen Deltas updaten, damit die nachfolgende Archivierung
+  // die frischen Werte sieht
+  const patchById = {};
+  matchPatches.forEach(p => { patchById[p.id] = p; });
+  matches.forEach(m => {
+    const p = patchById[m.id];
+    if(p){ m.deltas = p.deltas; m.exp_a = p.exp_a; }
+  });
+  invalidateCache();
+  // Archivierte Saison-Snapshots invalidieren → autoArchiveSeasons wird sie neu schreiben
+  // (mit den frisch berechneten DB-Deltas → konsistent zu Profil/Recap).
+  const pastIds = allPastSeasons();
+  const wipeArchives = pastIds.map(sid =>
+    sb.from('seasons').update({top_elo: JSON.stringify([])}).eq('id', sid)
+  );
+  await runBatch(wipeArchives);
+  // Lokal: top_elo leeren, damit autoArchiveSeasons sie als stale erkennt
+  seasons.forEach(s => {
+    if(pastIds.includes(s.id)) s.top_elo = JSON.stringify([]);
+  });
   // Saison-Elo in DB synchronisieren
   await syncSeasonEloToDB();
+  // Saisons neu archivieren mit den frischen Werten
+  await autoArchiveSeasons();
 }
 
 // ════════ DATA ════════
@@ -2538,12 +2562,25 @@ async function loadAll(){
 // Automatischer Saison-Abschluss: archiviert vergangene Monate
 async function autoArchiveSeasons(){
   const past=allPastSeasons(); // alle vergangenen Saison-IDs
-  // Erkennt veraltete Archive: alle top_elo-Werte == 0 deutet auf alten Bug hin
-  // → re-archivieren mit aktuellen (korrekten) Werten
+  // gSim einmal pro Aufruf für isStale + Archive nutzen → konsistent
+  const gSim=getGlobalSim();
+  // Erkennt veraltete Archive in drei Fällen:
+  //   1. Alle top_elo-Werte == 0 (alter Bug)
+  //   2. Archivierte Top-Elo weicht von DB-aggregierter Sim ab → vor Slider-Recalc geschrieben
+  //   3. Bestes Team weicht von DB-aggregierter Sim ab
+  // → re-archivieren mit aktuellen DB-Werten (= gSim, da DB-First).
   const isStale=(s)=>{
     try{
       const t=typeof s.top_elo==='string'?JSON.parse(s.top_elo):(s.top_elo||[]);
-      return t.length>0 && t.every(x=>!x.elo);
+      if(!t.length) return true; // noch nie archiviert
+      if(t.every(x=>!x.elo)) return true; // alter Bug
+      // Konsistenz-Check: archivierte Top-Elo vs aggregierte gSim
+      const snap=gSim.seasonEndElos[s.id]||{};
+      for(const entry of t){
+        const live=Math.round(snap[entry.id] ?? cfg.start_elo);
+        if(live !== entry.elo) return true; // Inkonsistenz → re-archive
+      }
+      return false;
     }catch{return false;}
   };
   const validStored=new Set(seasons.filter(s=>!isStale(s)).map(s=>s.id));
@@ -2551,9 +2588,6 @@ async function autoArchiveSeasons(){
     if(validStored.has(sid))continue; // schon (korrekt) archiviert
     const ms=matchesInSeason(sid);
     if(!ms.length)continue; // keine Matches → nichts zu archivieren
-    // Saison-Ergebnisse aus dem globalen Sim lesen — gleicher Snapshot wie im
-    // Saisonverlauf im Spielerprofil, damit Recap und Profil identische Werte zeigen.
-    const gSim=getGlobalSim();
     const snap=gSim.seasonEndElos[sid]||{};
     const seasonPlayedMap=gSim.seasonPlayed[sid]||{};
     // Wins/Losses pro Spieler in dieser Saison zählen (saison-isoliert)
@@ -3967,7 +4001,181 @@ function isoWeek(d){
 // Pro Saison isoliert: Bei jedem Monatswechsel werden Elo/Played auf start_elo zurückgesetzt.
 // Positions-Tracker bleibt saison-übergreifend. Karriere-Elo = gewichteter Durchschnitt
 // der Saison-End-Elos (gewichtet nach Spielanzahl pro Saison).
+// ════════════════════════════════════════════════════════════════════════
+// ELO-AGGREGATION (DB-First Architektur)
+// ════════════════════════════════════════════════════════════════════════
+// simulateElo()           → aggregiert m.deltas aus DB (KEINE Slider-Berechnung)
+// simulateEloWithSliders()→ berechnet Deltas neu mit aktuellen Slidern
+// computeMatchDelta()     → berechnet Delta für EIN Match mit Slidern (Match-Eingabe)
+//
+// Die DB ist die Wahrheit. simulateEloWithSliders wird nur aufgerufen bei:
+//   • Match-Eingabe (für das frische Delta) → via computeMatch
+//   • Komplett-Neuberechnung (Settings) → via recalcHistory → persistRecalc
+//
+// Slider-Änderungen wirken NUR auf neue Matches. Vergangene Saisons bleiben
+// stabil, weil sie aus den persistierten m.deltas aggregiert werden.
+// ════════════════════════════════════════════════════════════════════════
+
+// ─── NEU: DB-First Aggregation (default simulateElo) ────────────────────
 function simulateElo(matchSubset, opts={}){
+  const startElo=opts.startElo ?? cfg.start_elo;
+  const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
+  const eloGain={}, eloLoss={}, gd={};
+  const peakElo={};
+  const teamElo={};
+  const seasonTeamElo={};
+  const history=[];
+  const posTracker={};
+  players.forEach(p=>{
+    elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;
+    wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;
+    eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;peakElo[p.id]=startElo;
+    posTracker[p.id]={aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0};
+  });
+
+  // Initial-State (für inkrementelle Sim)
+  let _curSeason=null;
+  if(opts.initialState){
+    const s=opts.initialState;
+    Object.assign(elo, s.elo||{});
+    Object.assign(played, s.played||{});
+    Object.assign(playedSeason, s.playedSeason||{});
+    Object.assign(wins, s.wins||{});
+    Object.assign(losses, s.losses||{});
+    Object.assign(curStreak, s.curStreak||{});
+    Object.assign(bestStreak, s.bestStreak||{});
+    Object.assign(eloGain, s.eloGain||{});
+    Object.assign(eloLoss, s.eloLoss||{});
+    Object.assign(gd, s.gd||{});
+    Object.assign(peakElo, s.peakElo||{});
+    if(s.posTracker){
+      Object.keys(s.posTracker).forEach(id=>{ posTracker[id]={...s.posTracker[id]}; });
+    }
+    _curSeason=opts.initialCurSeason||null;
+  }
+
+  const ordered=[...matchSubset].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+
+  const seasonEndElos={};
+  const seasonPlayed={};
+  const resetSeason=()=>{ players.forEach(p=>{elo[p.id]=startElo;playedSeason[p.id]=0;}); };
+
+  ordered.forEach(m=>{
+    const mSeason=seasonOf(m.created_at).id;
+    if(_curSeason && _curSeason!==mSeason){
+      // Snapshot der abgelaufenen Saison
+      seasonEndElos[_curSeason]={};
+      seasonPlayed[_curSeason]={};
+      players.forEach(p=>{
+        if((playedSeason[p.id]||0)>0){
+          seasonEndElos[_curSeason][p.id]=elo[p.id];
+          seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
+        }
+      });
+      resetSeason();
+    }
+    _curSeason=mSeason;
+
+    const ids=[m.a1,m.a2,m.b1,m.b2];
+    if(ids.some(id=>elo[id]===undefined)){
+      history.push({matchId:m.id,eloBefore:{},eloAfter:{},deltas:{},expA:0.5,breakdowns:{}});
+      return;
+    }
+
+    const eloBefore={}; ids.forEach(id=>eloBefore[id]=elo[id]);
+
+    // ★ DB-First: Deltas aus DB lesen, NICHT mit Slidern berechnen
+    const dbDeltas=m.deltas||{};
+    const expA=m.exp_a ?? 0.5;
+    const res={};
+    ids.forEach(id=>{ res[id]=dbDeltas[id]||0; });
+
+    const aWon=m.winner==='A';
+
+    // Apply (gleiche Aggregation wie vorher)
+    ids.forEach(id=>{
+      const d=res[id];
+      elo[id]+=d; played[id]++; playedSeason[id]++;
+      if(d>=0) eloGain[id]=(eloGain[id]||0)+d;
+      else     eloLoss[id]=(eloLoss[id]||0)+d;
+      if(elo[id] > (peakElo[id] ?? startElo)) peakElo[id]=elo[id];
+    });
+
+    ids.forEach(id=>{
+      const onA=[m.a1,m.a2].includes(id);
+      const won=(onA&&aWon)||(!onA&&!aWon);
+      const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
+      gd[id]=(gd[id]||0)+(gf-ga);
+      if(won){wins[id]++; curStreak[id]=curStreak[id]>0?curStreak[id]+1:1;}
+      else{losses[id]++; curStreak[id]=curStreak[id]<0?curStreak[id]-1:-1;}
+      if(curStreak[id]>bestStreak[id]) bestStreak[id]=curStreak[id];
+    });
+
+    // Team-Elo
+    const winnerIds=aWon?[m.a1,m.a2]:[m.b1,m.b2];
+    const loserIds =aWon?[m.b1,m.b2]:[m.a1,m.a2];
+    const wKey=winnerIds.slice().sort().join('|'), lKey=loserIds.slice().sort().join('|');
+    const wDelta=winnerIds.reduce((s,id)=>s+(res[id]||0),0);
+    const lDelta=loserIds.reduce((s,id)=>s+(res[id]||0),0);
+    teamElo[wKey]=(teamElo[wKey]||0)+wDelta;
+    teamElo[lKey]=(teamElo[lKey]||0)+lDelta;
+    if(!seasonTeamElo[mSeason]) seasonTeamElo[mSeason]={};
+    seasonTeamElo[mSeason][wKey]=(seasonTeamElo[mSeason][wKey]||0)+wDelta;
+    seasonTeamElo[mSeason][lKey]=(seasonTeamElo[mSeason][lKey]||0)+lDelta;
+
+    history.push({matchId:m.id,eloBefore,eloAfter:{...elo},deltas:res,expA,breakdowns:{}});
+
+    // Position-Tracker
+    [[m.a1,m.a1_pos,aWon,expA],[m.a2,m.a2_pos,aWon,expA],
+     [m.b1,m.b1_pos,!aWon,1-expA],[m.b2,m.b2_pos,!aWon,1-expA]]
+    .forEach(([id,pos,won,myExp])=>{
+      const t=posTracker[id]; if(!t) return;
+      const perf=(won?1:0)-myExp;
+      if(pos==='atk'){t.aG++; if(won)t.aW++; t.aPerf+=perf;}
+      else           {t.dG++; if(won)t.dW++; t.dPerf+=perf;}
+    });
+  });
+
+  // Letzten Saison-Snapshot + ggf. Reset auf Kalender-Saison
+  if(_curSeason){
+    seasonEndElos[_curSeason]={};
+    seasonPlayed[_curSeason]={};
+    players.forEach(p=>{
+      if((playedSeason[p.id]||0)>0){
+        seasonEndElos[_curSeason][p.id]=elo[p.id];
+        seasonPlayed[_curSeason][p.id]=playedSeason[p.id];
+      }
+    });
+    try {
+      const currentCalSeason=currentSeason().id;
+      if(currentCalSeason !== _curSeason){
+        resetSeason();
+        _curSeason=currentCalSeason;
+      }
+    } catch(e){}
+  }
+
+  // Karriere-Elo
+  const careerElo={};
+  players.forEach(p=>{
+    let sumElo=0, sumGames=0;
+    Object.keys(seasonEndElos).forEach(sid=>{
+      if(seasonEndElos[sid][p.id]!==undefined){
+        const g=seasonPlayed[sid][p.id]||0;
+        sumElo+=seasonEndElos[sid][p.id]*g;
+        sumGames+=g;
+      }
+    });
+    careerElo[p.id]=sumGames>0?sumElo/sumGames:null;
+  });
+
+  return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,
+          teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,careerElo,
+          posTracker,peakElo,curSeason:_curSeason};
+}
+
+// ─── ALT: Slider-basierte Berechnung (für Match-Eingabe + Komplett-Neuberechnung) ───
+function simulateEloWithSliders(matchSubset, opts={}){
   const startElo=opts.startElo ?? cfg.start_elo;
   const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
   const eloGain={}, eloLoss={}, gd={};
@@ -4239,16 +4447,28 @@ function simulateElo(matchSubset, opts={}){
   return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,careerElo,posTracker,peakElo,curSeason:_curSeason};
 }
 
-// recalcHistory nutzt simulateElo
+// recalcHistory nutzt simulateEloWithSliders — berechnet ALLE Deltas mit aktuellen
+// Slidern neu. Wird nur bei "Komplett neu berechnen" aufgerufen.
 function recalcHistory(matchList){
-  const sim=simulateElo(matchList);
+  const sim=simulateEloWithSliders(matchList);
   return {playerElos:sim.elo, matchPatches:sim.history.map(h=>({id:h.matchId,deltas:h.deltas,exp_a:h.expA}))};
 }
 
 // Berechnet Breakdown für ein einzelnes Match (für Match-Detail Anzeige)
 function matchBreakdown(matchId){
-  const entry=getHistoryByMatchId().get(matchId);
-  return entry?entry.breakdowns:{};
+  // DB-First: Breakdowns sind nicht persistiert. Bei Bedarf berechnen wir sie
+  // on-demand mit den AKTUELLEN Slidern für die Visualisierung. Das tatsächliche
+  // Match-Delta in der DB kann von der Slider-Berechnung abweichen wenn der User
+  // die Slider seit Match-Eingabe geändert hat. Die Delta-Anzeige im UI nutzt
+  // deshalb immer den DB-Wert, nur die analytischen Komponenten sind Slider-basiert.
+  const key='breakdownSim_'+matches.length+'_'+_cache.version;
+  if(_cache._breakdownSimKey !== key){
+    const sim=simulateEloWithSliders(matches);
+    _cache._breakdownSim=new Map();
+    sim.history.forEach(h=>_cache._breakdownSim.set(h.matchId, h.breakdowns||{}));
+    _cache._breakdownSimKey=key;
+  }
+  return _cache._breakdownSim.get(matchId) || {};
 }
 
 function periodPlayerStats(period){
@@ -6236,8 +6456,20 @@ function vSettings(){
         <b style="color:var(--acid)">Saison-Reset</b> — Jeden Monatswechsel werden alle Elo-Werte auf den Start-Wert zurückgesetzt. Karriere-Elo = gewichteter Durchschnitt der Saison-End-Elos.
       </div>
     </div>
-    <button class="btn" id="recalcBtn" style="margin-top:8px;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('cycle')} Alle Elo-Werte neu berechnen</button>
-            <p style="font-size:11px;color:var(--muted);margin-top:8px">Rechnet alle Matches mit den aktuellen Einstellungen neu durch.</p>
+    <div class="card" style="margin-top:14px;border:1px solid rgba(190,242,100,.18);background:linear-gradient(155deg,rgba(190,242,100,.06),var(--surface) 80%)">
+      <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Slider-Verhalten</div>
+      <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:8px">
+        Slider-Änderungen wirken <b style="color:var(--acid)">nur auf neue Matches</b>.
+        Vergangene Matches behalten ihre damaligen Elo-Werte — abgeschlossene Saisons bleiben stabil,
+        Awards &amp; Achievements ändern sich nicht.
+      </p>
+      <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:6px">
+        Falls du die Slider <b>rückwirkend</b> auf die gesamte Historie anwenden willst, kannst du alle
+        Matches neu berechnen lassen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
+        gespeicherten Match-Deltas überschrieben.
+      </p>
+      <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('cycle')} Alle Matches rückwirkend neu berechnen</button>
+    </div>
     ${players.filter(p=>p.hidden).length?`
     <div class="card" style="margin-top:14px">
       <div class="mini-label">Ausgeblendete Spieler</div>
@@ -7932,6 +8164,7 @@ function bind(){
   bindSlider('cfgVetDamp','veteran_damp',v=>v/100,v=>Math.round(v));
   const recalcBtn=document.getElementById('recalcBtn');
   if(recalcBtn) recalcBtn.onclick=async()=>{
+    if(!confirm('Wirklich alle Matches mit aktuellen Slidern rückwirkend neu berechnen?\n\nAlle gespeicherten Match-Deltas werden überschrieben. Vergangene Saison-Ergebnisse und Awards können sich dadurch ändern.\n\nDieser Vorgang kann nicht rückgängig gemacht werden.')) return;
     toast('Berechne alle Matches neu…');
     await persistRecalc(matches);
     toast('Neuberechnung abgeschlossen ✓');
@@ -8346,11 +8579,10 @@ function showTeam(p1Id,p2Id){
 
 function showMatchDetail(mid){
   const m=matches.find(x=>x.id===mid);if(!m)return;
-  // Live aus globalSim lesen — m.deltas ist evtl. veraltet/leer bei alten Matches.
-  const liveBd=matchBreakdown(mid);
+  // DB-First: Delta-Anzeige immer aus m.deltas (Wahrheitsquelle).
+  // matchBreakdown() bleibt für Slider-Detail-Komponenten verfügbar.
   const line=(id,pos)=>{
-    const b=liveBd[id];
-    const d=b?b.finalDelta:((m.deltas||{})[id]||0);
+    const d=(m.deltas||{})[id]||0;
     return `<div class="delta-row"><span class="dn">${esc(pname(id))} <span class="chip ${pos}">${pos==='atk'?'STU':'ABW'}</span></span><span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></div>`;
   };
   // Auszeichnungen durch dieses Match
