@@ -504,11 +504,17 @@
   .awcard.hero .awcard-crown svg{width:16px;height:16px;stroke:var(--bg);filter:none}
 
   /* ─── Empty state ─── */
-  .awcard.empty{opacity:.55;min-height:78px}
-  .awcard.empty .awcard-name{color:var(--muted);font-family:'Sometype Mono',monospace;
-    font-size:14px;letter-spacing:.04em;font-weight:600}
+  .awcard.empty{opacity:.55;min-height:0;padding:9px 16px;gap:10px;
+    background:transparent;border:1px solid rgba(255,255,255,.05);
+    box-shadow:none;margin-bottom:6px}
+  .awcard.empty .awcard-info{display:flex;align-items:center;gap:12px;min-width:0}
+  .awcard.empty .awcard-label{margin-bottom:0;font-size:9.5px;color:var(--muted);flex-shrink:0}
+  .awcard.empty .awcard-name{display:none}
+  .awcard.empty .awcard-stat{margin-top:0;font-size:9.5px;color:var(--faint);
+    text-transform:uppercase;letter-spacing:.1em;font-family:'Sometype Mono',monospace;font-weight:500;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .awcard.empty .awcard-watermark{display:none}
-  .awcard.empty .awcard-av{opacity:.4}
+  .awcard.empty .awcard-av-wrap{display:none}
   .awcard.empty .awcard-crown,.awcard.empty .awcard-skull{display:none}
 
   /* ─── Section label ─── */
@@ -1051,6 +1057,32 @@
   .pp-pos-side .v{font-size:18px;line-height:1}
   .pp-pos-side .v small{font-size:11px;font-weight:400;opacity:.7}
   .pp-pos-side .lbl{font-size:8px;letter-spacing:.16em;text-transform:uppercase;font-family:'Sometype Mono',monospace;font-weight:700;margin-top:3px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+
+  /* Cleaner Rollen-Performance: vertikale Liste mit Progress-Bars */
+  .pp-roles{display:flex;flex-direction:column;gap:13px}
+  .pp-role{display:flex;flex-direction:column;gap:7px}
+  .pp-role-head{display:flex;align-items:center;gap:9px;min-width:0}
+  .pp-role-head .ic{display:inline-flex;align-items:center;flex-shrink:0;width:14px;height:14px}
+  .pp-role-head .ic svg{width:14px;height:14px;stroke-width:2.2;fill:none;stroke:currentColor}
+  .pp-role-head .lbl{font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.12em;flex-shrink:0}
+  .pp-role-head .games{font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted);
+    letter-spacing:.04em;margin-left:auto;font-variant-numeric:tabular-nums}
+  .pp-role-head .wr{font-family:'Archivo Black',sans-serif;font-size:16px;letter-spacing:-.02em;
+    line-height:1;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
+  .pp-role-head .wr small{font-size:10px;opacity:.6;font-weight:400;margin-left:1px}
+  .pp-role.atk .ic,.pp-role.atk .lbl,.pp-role.atk .wr{color:var(--orange)}
+  .pp-role.def .ic,.pp-role.def .lbl,.pp-role.def .wr{color:var(--blue)}
+  .pp-role-bar{height:5px;border-radius:3px;background:var(--bg2);overflow:hidden;position:relative}
+  .pp-role-fill{height:100%;border-radius:3px;transform-origin:left center;
+    animation:roleSlide .9s cubic-bezier(.2,.8,.2,1) .15s both}
+  @keyframes roleSlide{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  .pp-role.atk .pp-role-fill{background:linear-gradient(90deg,var(--orange),#ffa078);
+    box-shadow:0 0 8px rgba(255,120,73,.35)}
+  .pp-role.def .pp-role-fill{background:linear-gradient(90deg,var(--blue),#8fcef0);
+    box-shadow:0 0 8px rgba(86,180,232,.3)}
+  .pp-roles-empty{text-align:center;color:var(--muted);padding:18px 0;
+    font-family:'Sometype Mono',monospace;font-size:11px;letter-spacing:.08em}
 
   /* Relationship-Cards mit Mate/Gegner-Avatar */
   .pp-r-rich{padding:11px 12px;background:var(--surface);border:1px solid rgba(255,255,255,.05);
@@ -1867,6 +1899,8 @@ const ICONS = {
   dropDouble:    `<path d="M7 3s3 4 3 7.5a3 3 0 11-6 0c0-3.5 3-7.5 3-7.5z"/><path d="M17 3s3 4 3 7.5a3 3 0 11-6 0c0-3.5 3-7.5 3-7.5z"/>`,
   dropTriple:    `<path d="M5 6s2 3 2 5a2 2 0 11-4 0c0-2 2-5 2-5z"/><path d="M12 3s3 4 3 7.5a3 3 0 11-6 0c0-3.5 3-7.5 3-7.5z"/><path d="M19 6s2 3 2 5a2 2 0 11-4 0c0-2 2-5 2-5z"/>`,
   info:          `<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/>`,
+  // Peak Elo: zwei Berggipfel mit Stern oben am höchsten
+  peak:          `<path d="M3 20h18M5 20l5-10 3 6 2-3 4 7"/><polygon points="10,4 11,6 13,6.2 11.6,7.5 12,9.5 10,8.5 8,9.5 8.4,7.5 7,6.2 9,6"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -3858,10 +3892,11 @@ function simulateElo(matchSubset, opts={}){
   const startElo=opts.startElo ?? cfg.start_elo;
   const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
   const eloGain={}, eloLoss={}, gd={};
+  const peakElo={}; // saison-übergreifender Allzeit-Höchst-Elo pro Spieler
   const teamElo={};
   const seasonTeamElo={}; // seasonId → {teamKey → cumulative Elo-Zuwachs in dieser Saison}
   const history=[];
-  players.forEach(p=>{elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;});
+  players.forEach(p=>{elo[p.id]=startElo;played[p.id]=0;playedSeason[p.id]=0;wins[p.id]=0;losses[p.id]=0;curStreak[p.id]=0;bestStreak[p.id]=0;eloGain[p.id]=0;eloLoss[p.id]=0;gd[p.id]=0;peakElo[p.id]=startElo;});
   // Inkrementeller Positions-Tracker (ersetzt atkStrengthFrom(id, prior))
   const posTracker={};
   players.forEach(p=>{posTracker[p.id]={aG:0,aW:0,dG:0,dW:0,aPerf:0,dPerf:0};});
@@ -3882,6 +3917,7 @@ function simulateElo(matchSubset, opts={}){
     Object.assign(eloGain, s.eloGain||{});
     Object.assign(eloLoss, s.eloLoss||{});
     Object.assign(gd, s.gd||{});
+    Object.assign(peakElo, s.peakElo||{});
     // posTracker ist ein nested object → tief kopieren
     if(s.posTracker){
       Object.keys(s.posTracker).forEach(id=>{
@@ -4047,6 +4083,8 @@ function simulateElo(matchSubset, opts={}){
     Object.entries(res).forEach(([id,d])=>{
       elo[id]+=d;played[id]++;playedSeason[id]++;
       if(d>=0)eloGain[id]=(eloGain[id]||0)+d; else eloLoss[id]=(eloLoss[id]||0)+d;
+      // Peak Elo: höchster je erreichter Saison-Elo (überlebt Saison-Resets)
+      if(elo[id] > (peakElo[id] ?? startElo)) peakElo[id]=elo[id];
     });
     ids.forEach(id=>{
       const onA=[m.a1,m.a2].includes(id);
@@ -4119,7 +4157,7 @@ function simulateElo(matchSubset, opts={}){
     });
     careerElo[p.id]=sumGames>0?sumElo/sumGames:null;
   });
-  return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,careerElo,posTracker,curSeason:_curSeason};
+  return {elo,played,playedSeason,wins,losses,curStreak,bestStreak,eloGain,eloLoss,gd,teamElo,seasonTeamElo,history,seasonEndElos,seasonPlayed,careerElo,posTracker,peakElo,curSeason:_curSeason};
 }
 
 // recalcHistory nutzt simulateElo
@@ -5080,11 +5118,28 @@ function _awardRankingsUncached(period){
   const zirkusList=_computeZirkus(ms);
   const baustelleList=_computeBarstelle(ms);
   const showmasterList=_computeShowmaster(ms);
-  
+
+  // Peak Elo: höchster je in einer Saison erreichter Elo-Stand. NUR im Gesamt-Modus.
+  // Wert überdauert Saison-Resets, ist also der Allzeit-Höchststand pro Spieler.
+  let peakEloList=[];
+  if(period==='all'){
+    const pk = getGlobalSim().peakElo || {};
+    const startElo = cfg.start_elo ?? 0;
+    peakEloList = Object.entries(pk)
+      .map(([id,v])=>({id, v:Math.round(v)}))
+      .filter(x => {
+        const p = pmap()[x.id];
+        if(!p || p.hidden) return false;
+        // Nur Spieler die jemals über start_elo lagen
+        return x.v > startElo;
+      })
+      .sort((a,b)=>b.v-a.v);
+  }
+
   return {single:agg.single,team:agg.team,upsets:agg.upsets,biggest:agg.biggest,mvt,scorer,wall,grinder,winsList,perfect,streaks,
           worstWr,worstAtk,worstDef,worstElo,
           endgegner,clutchList,iceList,worstTeam,bestDuo,onFire,coldStreak,carryList,lossStreaks,
-          soloList,formtief,zirkusList,baustelleList,showmasterList,
+          soloList,formtief,zirkusList,baustelleList,showmasterList,peakEloList,
           counts:{matches:ms.length}};
 }
 
@@ -5280,7 +5335,7 @@ function vAwards(){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone'
+    zirkus:'circus',       baustelle:'cone',     peakElo:'peak'
   };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
@@ -5373,7 +5428,7 @@ function vAwards(){
         eg0=g(R.endgegner),cl0=g(R.clutchList),ic0=g(R.iceList),
         wt0=g(R.worstTeam),bd0=g(R.bestDuo),of0=g(R.onFire),cs0=g(R.coldStreak),ck0=g(R.carryList),
         sl0=g(R.soloList),ft0=g(R.formtief),zk0=g(R.zirkusList),bs0=g(R.baustelleList),
-        sm0=g(R.showmasterList);
+        sm0=g(R.showmasterList),pk0=g(R.peakEloList);
 
   let html='';
   // Section header: kleiner farbiger Punkt + Caps-Label + verlaufende Linie.
@@ -5403,6 +5458,12 @@ function vAwards(){
   highlights.push(sm0
     ? card('showmaster','gold','Showmaster',[sm0.id],esc(topNames(R.showmasterList,x=>x.v,x=>pname(x.id))),sm0.v+'× 10:0',sm0.v)
     : empty('showmaster','gold','Showmaster'));
+  // Peak Elo: nur in Gesamt-Ansicht. Allzeit-Höchster Elo-Stand, saison-übergreifend.
+  if(awPeriod==='all'){
+    highlights.push(pk0
+      ? card('peakElo','gold','Peak Elo',[pk0.id],esc(topNames(R.peakEloList,x=>x.v,x=>pname(x.id))),'Allzeit-Höchststand',pk0.v)
+      : empty('peakElo','gold','Peak Elo'));
+  }
   sect('star','gold','Highlights',highlights);
 
   // ── TEAMS ──
@@ -5525,7 +5586,8 @@ const AWARD_META={
   solo:{em:'🐺',title:'Einzelkämpfer',cls:'acid',why:'Höchste Siegrate mit einem Mitspieler aus den unteren 3 der Elo-Rangliste (min. 2 Spiele). Wer gewinnt auch alleine?'},
   formtief:{em:'🫠',title:'Formtief',cls:'red',why:'Größter Elo-Abstieg vom persönlichen Höchststand. Peak-Elo minus aktuelle Elo.'},
   zirkus:{em:'🎪',title:'Zirkus',cls:'red',why:'Team mit den meisten Niederlagen mit 5+ Toren Unterschied. Wird regelmäßig abgeschossen.'},
-  baustelle:{em:'🚧',title:'Baustelle',cls:'red',why:'Team mit der längsten gemeinsamen Niederlagenserie. Zusammen funktioniert es einfach nicht.'}
+  baustelle:{em:'🚧',title:'Baustelle',cls:'red',why:'Team mit der längsten gemeinsamen Niederlagenserie. Zusammen funktioniert es einfach nicht.'},
+  peakElo:{em:'⛰️',title:'Peak Elo',cls:'gold',why:'Höchster jemals erreichter Elo-Stand. Saison-übergreifender Allzeit-Höchststand — auch wenn nach Saisonreset die Elo wieder bei 0 startet, bleibt der historische Peak erhalten.'}
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
@@ -5537,7 +5599,7 @@ function showAward(key){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone'
+    zirkus:'circus',       baustelle:'cone',     peakElo:'peak'
   };
 
   const MATCH_AWARDS = new Set(['upset','biggest']);
@@ -5603,6 +5665,7 @@ function showAward(key){
         case 'formtief':   return R.formtief.map(x=>({ids:[x.id],name:pname(x.id),val:'-'+Math.round(x.drop)+' Elo',sort:Math.round(x.drop)}));
         case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+'× 5+ Tore',sort:x.v}));
         case 'baustelle':  return R.baustelleList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.best+'er Serie',sort:x.best}));
+        case 'peakElo':    return (R.peakEloList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Elo',sort:x.v}));
         default: return [];
       }
     })();
@@ -6726,7 +6789,7 @@ function playerAwards(id){
     clutch:R.clutchList, carryKing:R.carryList,
     onFire:R.onFire, coldStreak:R.coldStreak, lossStreaks:R.lossStreaks,
     solo:R.soloList, formtief:R.formtief, showmaster:R.showmasterList,
-    ice:R.iceList
+    ice:R.iceList, peakElo:R.peakEloList
   };
   const singleValFns={
     wins:x=>x.v, streaks:x=>x.v, scorer:x=>Math.round(x.avg*10),
@@ -6738,7 +6801,8 @@ function playerAwards(id){
     clutch:x=>Math.round(x.wr*100),
     carryKing:x=>x.v, onFire:x=>x.v, coldStreak:x=>x.v,
     lossStreaks:x=>x.v, solo:x=>Math.round(x.wr*100),
-    formtief:x=>Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v
+    formtief:x=>Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
+    peakElo:x=>x.v
   };
 
   Object.entries(singleKeys).forEach(([key,arr])=>{
@@ -6883,25 +6947,22 @@ function showPlayer(id){
   const awards=playerAwards(id).filter(a=>a.rank===0);
   const awardCount=awards.length;
 
-  // Awards-Kategorisierung: jede Award gehört zu GENAU EINER Kategorie,
-  // damit die Summe der Kategorien = Gesamt-Award-Zahl ergibt.
-  const ELO_KEYS    = new Set(['upset','biggest','formtief']);
-  const WR_KEYS     = new Set(['perfect','clutch','worstWr']);
-  const STREAK_KEYS = new Set(['streaks','onFire','coldStreak','lossStreaks']);
-  const ROLE_KEYS   = new Set(['scorer','wall','ice','worstAtk','worstDef']);
-  // Negative Awards die in keine speziellere Kategorie fallen
-  const NEG_GENERIC = new Set(['worstTeam','zirkus','baustelle']);
-  // Positive Awards die in keine speziellere Kategorie fallen
-  const POS_GENERIC = new Set(['wins','mvt','carryKing','bestDuo','endgegner','grinder','showmaster','solo']);
+  // Awards-Kategorisierung: jede Award gehört zu GENAU EINER Kategorie (exklusiv).
+  // Aufteilung in 3 thematische Cluster für klare Übersicht.
+  const POSITIVE_KEYS = new Set([
+    'wins','mvt','bestDuo','perfect','clutch','carryKing','solo',
+    'endgegner','grinder','showmaster','onFire','streaks','upset','biggest','peakElo'
+  ]);
+  const ROLE_KEYS = new Set(['scorer','wall','ice','worstAtk','worstDef']);
+  const NEGATIVE_KEYS = new Set([
+    'worstWr','coldStreak','lossStreaks','formtief','worstTeam','zirkus','baustelle'
+  ]);
 
   const cnt = (set) => awards.filter(a => set.has(a.key)).length;
   const awCats = [
-    {ic:'star',      nm:'Positive<br>Awards', n: cnt(POS_GENERIC)},
-    {ic:'chartDown', nm:'Negative<br>Awards', n: cnt(NEG_GENERIC)},
-    {ic:'bolt',      nm:'Elo<br>Awards',      n: cnt(ELO_KEYS)},
-    {ic:'target',    nm:'Winrate<br>Awards',  n: cnt(WR_KEYS)},
-    {ic:'flame',     nm:'Streak<br>Awards',   n: cnt(STREAK_KEYS)},
-    {ic:'shield',    nm:'Rollen<br>Awards',   n: cnt(ROLE_KEYS)},
+    {ic:'star',   nm:'Positive<br>Awards', n: cnt(POSITIVE_KEYS)},
+    {ic:'shield', nm:'Rollen<br>Awards',   n: cnt(ROLE_KEYS)},
+    {ic:'skull',  nm:'Negative<br>Awards', n: cnt(NEGATIVE_KEYS)},
   ];
 
   const badges=getCachedBadges(id);
@@ -7077,30 +7138,37 @@ const rankProgHtml = `
 
     <div class="pp-sec" style="animation-delay:.3s">
       ${(()=>{
-        // Rollen-Performance: ein Card mit Split-Bar (Sturm-Anteil:Abwehr-Anteil)
+        // Rollen-Performance: vertikale Liste mit Progress-Bars (cleaner als Side-by-Side)
         const tot = s.atkG + s.defG;
-        const atkSide = s.atkG>0
-            ? `<div class="pp-pos-side atk" style="flex:1">
-              <div class="ic">${svgI('bolt')}</div>
-              <div class="v">${atkWr!==null?atkWr:'–'}<small>%</small></div>
-              <div class="lbl">Sturm ${s.atkW}/${s.atkG}</div>
-            </div>` : '';
-        const defSide = s.defG>0
-            ? `<div class="pp-pos-side def" style="flex:1">
-              <div class="ic">${svgI('shield')}</div>
-              <div class="v">${defWr!==null?defWr:'–'}<small>%</small></div>
-              <div class="lbl">Abwehr ${s.defW}/${s.defG}</div>
-            </div>` : '';
-        const emptySide = tot===0
-          ? `<div class="pp-pos-side empty" style="flex:1">
-              <div class="v" style="opacity:.5">–</div>
-              <div class="lbl">Keine Spiele</div>
-            </div>` : '';
+        if(tot === 0){
+          return `<div class="pp-pos-combined">
+            <div class="head"><div class="t">Rollen-Performance</div></div>
+            <div class="pp-roles-empty">Keine Spiele</div>
+          </div>`;
+        }
+        const atkRow = s.atkG>0 ? `
+          <div class="pp-role atk">
+            <div class="pp-role-head">
+              <span class="ic">${svgI('bolt')}</span>
+              <span class="lbl">Sturm</span>
+              <span class="games">${s.atkW}/${s.atkG}</span>
+              <span class="wr">${atkWr!==null?atkWr:'–'}<small>%</small></span>
+            </div>
+            <div class="pp-role-bar"><div class="pp-role-fill" style="width:${atkWr!==null?atkWr:0}%"></div></div>
+          </div>` : '';
+        const defRow = s.defG>0 ? `
+          <div class="pp-role def">
+            <div class="pp-role-head">
+              <span class="ic">${svgI('shield')}</span>
+              <span class="lbl">Abwehr</span>
+              <span class="games">${s.defW}/${s.defG}</span>
+              <span class="wr">${defWr!==null?defWr:'–'}<small>%</small></span>
+            </div>
+            <div class="pp-role-bar"><div class="pp-role-fill" style="width:${defWr!==null?defWr:0}%"></div></div>
+          </div>` : '';
         return `<div class="pp-pos-combined">
-          <div class="head">
-            <div class="t">Rollen-Performance</div>
-          </div>
-          <div class="pp-pos-split">${atkSide}${defSide}${emptySide}</div>
+          <div class="head"><div class="t">Rollen-Performance</div></div>
+          <div class="pp-roles">${atkRow}${defRow}</div>
         </div>`;
       })()}
     </div>
@@ -7492,7 +7560,7 @@ function showPlayerAwards(playerId, awards){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone'
+    zirkus:'circus',       baustelle:'cone',     peakElo:'peak'
   };
   const pl='Gesamte Liga';
   const rows=awards.length?awards.map(a=>{
