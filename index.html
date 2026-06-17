@@ -6401,7 +6401,7 @@ function vSettings(){
     <div class="cfg-section-title">Grundparameter</div>
     <div class="card">
       ${sl('cfgK','K-Faktor (Tempo)',c.k,8,64,'')}
-      ${sl('cfgStartElo','Start-Elo pro Saison',c.startElo,0,100,'')}
+      ${sl('cfgStartElo','Start-Elo pro Saison',c.startElo,0,1000,'')}
     </div>
 
     <div class="cfg-section-title">Spielerlast & Position</div>
@@ -6421,7 +6421,7 @@ function vSettings(){
 
     <div class="cfg-section-title">Bonus-System</div>
     <div class="card">
-      ${sl('cfgBonus','Spielbonus pro Match',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,'/10')}
+      ${sl('cfgBonus','Spielbonus pro Match',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,)}
       ${sl('cfgExpProt','Erfahrungs-Schutz Maximum',c.expProt,0,30,'%')}
       ${sl('cfgUdElo','Underdog-Boost (Elo-Gap)',c.udElo,0,50,'%')}
       ${sl('cfgUdGames','Underdog-Boost (Spiele-Gap)',c.udGames,0,30,'%')}
@@ -6431,7 +6431,7 @@ function vSettings(){
     <div class="card">
       ${sl('cfgNpMult','Neuling-Multi (&lt;5 Spiele)',c.npMult,100,200,'%')}
       ${sl('cfgNpMidMult','Anfänger-Multi (&lt;15 Spiele)',c.npMidMult,100,200,'%')}
-      ${sl('cfgVetDamp','Veteran-Dämpfung (&gt;Start+400 Elo)',c.vetDamp,50,100,'%')}
+      ${sl('cfgVetDamp','Veteran-Dämpfung (&gt;Start+400 Elo)',c.vetDamp,0,100,'%')}
     </div>
 
     <div class="card">
