@@ -6856,14 +6856,14 @@ const BADGES=[
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
   {id:'carry',em:'🎯',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
-  // Zeile 11 — Losing Streak, Unschlagbar
+  // Zeile 11 — Losing Streak, Upset-König
   {id:'losing5',em:'📉',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
     multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
-  {id:'unbeatable',em:'👑',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
-    multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
-  // Zeile 12 — Upset-König, Vize-Meister
   {id:'upset_king',em:'🌪️',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&myExp(id,m)<0.35).length},
+  // Zeile 12 —  Unschlagbar, Vize-Meister
+  {id:'unbeatable',em:'👑',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
+    multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
   {id:'vice_champion',em:'🥈',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
     multi:true,count:(id,ms)=>countViceChampion(id)},
   // Zeile 13 — Player of the Week, Player of the Day
