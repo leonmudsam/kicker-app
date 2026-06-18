@@ -1825,7 +1825,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.18.1';
+const BUILD_VERSION='2026.06.18.4';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -3515,7 +3515,7 @@ function showPotdRecap(){
 
     openSheet(`
       <div style="text-align:center;margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace">Player of the last Day</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace">Player of the Day</div>
         <h3 style="margin-top:8px;font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;line-height:1">${esc(dayStr)}</h3>
         <div class="num" style="font-size:12px;color:var(--muted);margin-top:6px">${dayMatches.length} Matches · ${uniquePlayers.size} Spieler</div>
       </div>
@@ -4350,8 +4350,12 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const gamesDiff=avgGames-(playedSeason[slot.id]||0);
     const eloMax = cfg.underdog_elo_max ?? 0.15;
     const gamesMax = cfg.underdog_games_max ?? 0.05;
-    const eloFactor=Math.tanh(eloDiff/400)*eloMax;
-    const gamesFactor=Math.tanh(gamesDiff/30)*gamesMax;
+    // Jede Komponente einzeln auf >=0 begrenzt: der Bonus belohnt nur, die Faktoren
+    // bestrafen sich nicht gegenseitig. Ein Veteran mit Elo-Rückstand bekommt den
+    // Elo-Boost trotz vieler Spiele; ein Neuling mit hohem Elo bekommt den
+    // Spiele-Boost trotz Top-Elo. Niemand wird durch eine zweite Komponente bestraft.
+    const eloFactor=Math.max(0, Math.tanh(eloDiff/400)*eloMax);
+    const gamesFactor=Math.max(0, Math.tanh(gamesDiff/30)*gamesMax);
     const underdogRaw=eloFactor+gamesFactor;
     // Favoriten-Malus entfernt: nur Underdog-Boost (Sieg als Schwächerer) wirkt.
     // Favoriten/Veteranen, die verlieren, nehmen den vollen Elo-Hit.
@@ -6483,8 +6487,8 @@ function vSettings(){
         <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
         <b style="color:var(--acid)">Spielbonus</b> — +${c.bonus} Elo pro Match, egal ob Sieg oder Niederlage. Belohnt aktive Spieler.<br>
         <b style="color:var(--acid)">Erfahrungs-Schutz Max</b> — Erfahrene Spieler verlieren bei Niederlagen bis zu ${c.expProt}% weniger Elo (linear ab 5 bis 30 Saison-Matches). Schützt vor Absturz durch Pech-Serien.<br>
-        <b style="color:var(--acid)">Underdog-Boost (Elo-Gap)</b> — Schwächere Spieler bekommen bis zu ${c.udElo}% Bonus bei Siegen gegen stärkere Gegner (tanh-skaliert nach 400 Elo-Differenz). Stärkere Spieler verlieren bei Niederlagen entsprechend mehr.<br>
-        <b style="color:var(--acid)">Underdog-Boost (Spiele-Gap)</b> — Spieler mit weniger Matches bekommen bis zu ${c.udGames}% zusätzlichen Boost (tanh-skaliert nach 30 Spiele-Differenz). Hilft Neueinsteigern beim Aufholen.<br>
+        <b style="color:var(--acid)">Underdog-Boost (Elo-Gap)</b> — Schwächere Spieler bekommen bis zu ${c.udElo}% Bonus bei Siegen gegen stärkere Gegner (tanh-skaliert nach 400 Elo-Differenz). Wirkt nur als Belohnung, nie als Bestrafung.<br>
+        <b style="color:var(--acid)">Underdog-Boost (Spiele-Gap)</b> — Spieler mit weniger Matches bekommen bis zu ${c.udGames}% zusätzlichen Boost (tanh-skaliert nach 30 Spiele-Differenz). Hilft Neueinsteigern beim Aufholen. Veteranen werden nicht bestraft — beide Komponenten wirken unabhängig.<br>
         <b style="color:var(--acid)">Neuling-Multi</b> — In den ersten 5 Saison-Spielen wirkt K-Faktor um ${c.npMult}% verstärkt. Neue Spieler finden so schnell ihr Niveau.<br>
         <b style="color:var(--acid)">Anfänger-Multi</b> — Zwischen 5–14 Saison-Spielen wirkt K-Faktor um ${c.npMidMult}% verstärkt. Sanfter Übergang zur Normal-Bewertung.<br>
         <b style="color:var(--acid)">Veteran-Dämpfung</b> — Sehr starke Spieler (&gt; Start+400 Elo) bewegen sich um ${c.vetDamp}% des K-Faktors. Verhindert dass Top-Spieler durch Pflicht-Siege ewig weiter wachsen.<br>
@@ -8687,26 +8691,37 @@ function showMatchDetail(mid){
     });
     const rows=ids.map(id=>{
       const b=bd[id]; if(!b)return '';
-      const sign=v=>v>=0?'+'+v.toFixed(1):v.toFixed(1);
-      // Primär: DB-Werte (Elo-Verlauf wie real getrackt). Fallback: Sim.
+      // Elo-Analyse zeigt exakte Werte mit 2 Nachkommastellen — keine Rundung wie überall sonst.
+      const sign=v=>v>=0 ? '+'+v.toFixed(2) : v.toFixed(2);
+      // Der Detail-Header zeigt IMMER den präzisen Sim-Wert, damit die große Zahl
+      // exakt der Summe der Faktoren-Liste darunter entspricht. Der gerundete DB-Wert
+      // bleibt nur oben in der Match-Übersicht sichtbar (eigener Render-Pfad).
       const hasDb=dbDeltas[id]!==undefined;
-      const headerDelta=hasDb?dbDeltas[id]:b.finalDelta;
-      const seasonBefore=Math.round(hasDb?dbBefore[id]:b.startElo);
-      const seasonAfter=Math.round(hasDb?dbAfter[id]:b.endElo);
+      const headerDelta=b.finalDelta;
+      // Saison-Elo: bei DB-Werten sind das gespeicherte Integer (deshalb keine zusätzliche
+      // Präzision möglich). Bei Sim-Fallback geben wir 1 Nachkommastelle aus.
+      const fmtElo=v=>Number.isInteger(v)?String(v):v.toFixed(1);
+      const seasonBefore=fmtElo(hasDb?dbBefore[id]:b.startElo);
+      const seasonAfter=fmtElo(hasDb?dbAfter[id]:b.endElo);
       const simDelta=b.finalDelta;
       const rowDiverged=hasDb&&Math.abs(dbDeltas[id]-simDelta)>=1;
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
       if(Math.abs(b.movEffect)>0.1) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
-      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+Math.round((b.winBoost-1)*100)+'% für Siege'});
-      if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:Math.round((1-b.expProtect)*100)+'% Schutz'});
+      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+((b.winBoost-1)*100).toFixed(1)+'% für Siege'});
+      if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:((1-b.expProtect)*100).toFixed(1)+'% Schutz'});
       if(b.underdogMult>1.005){
-        factors.push({label:'Underdog-Boost',val:b.afterMods-b.rawBase*b.movMult*b.winBoost*b.expProtect,
-          desc:Math.abs(b.underdogEloDiff)+' Elo schwächer als Gegner'});
+        // Underdog-Boost setzt sich aus zwei unabhängig clampten Komponenten zusammen
+        // (Elo-Gap + Spiele-Gap). Wir zeigen nur die wirksamen (positiven) Anteile,
+        // weil negative Differenzen keinen Effekt mehr haben.
+        const eloPart   = b.underdogEloDiff>0   ? b.underdogEloDiff+' Elo schwächer'   : null;
+        const gamesPart = b.underdogGamesDiff>0 ? b.underdogGamesDiff+' Spiele weniger' : null;
+        const desc = [eloPart, gamesPart].filter(Boolean).join(' · ') || 'Underdog';
+        factors.push({label:'Underdog-Boost',val:b.afterMods-b.rawBase*b.movMult*b.winBoost*b.expProtect, desc});
       }
       if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Mate-Stärke-Verteilung'});
       if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posMult>1?'Schwache':'Starke')+' Position'});
-      factors.push({label:'Spielbonus',val:b.matchBonus,desc:'Flat +'+b.matchBonus.toFixed(1)+' pro Match'});
+      factors.push({label:'Spielbonus',val:b.matchBonus,desc:'Flat +'+b.matchBonus.toFixed(2)+' pro Match'});
       const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
         <span style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
@@ -8720,7 +8735,7 @@ function showMatchDetail(mid){
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between">
             <span>${seasonBefore} → ${seasonAfter}</span>
-            <span>K=${Math.round(b.kFactor)} · Erw. ${Math.round(b.expected*100)}%</span>
+            <span>K=${b.kFactor.toFixed(1)} · Erw. ${(b.expected*100).toFixed(1)}%</span>
           </div>
         </div>
         ${factorRows}
