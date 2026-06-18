@@ -6429,8 +6429,8 @@ function vSettings(){
     <div class="card">
       ${sl('cfgBonus','Spielbonus pro Match',Math.round((cfg.match_bonus ?? 1.5)*10),0,50,)}
       ${sl('cfgExpProt','Erfahrungs-Schutz Maximum',c.expProt,0,30,'%')}
-      ${sl('cfgUdElo','Underdog-Boost (Elo-Gap)',c.udElo,0,50,'%')}
-      ${sl('cfgUdGames','Underdog-Boost (Spiele-Gap)',c.udGames,0,30,'%')}
+      ${sl('cfgUdElo','Underdog-Boost (Elo-Gap)',c.udElo,0,100,'%')}
+      ${sl('cfgUdGames','Underdog-Boost (Spiele-Gap)',c.udGames,0,100,'%')}
     </div>
 
     <div class="cfg-section-title">K-Faktor-Dynamik</div>
