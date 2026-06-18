@@ -1825,7 +1825,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.18.4';
+const BUILD_VERSION='2026.06.18.6';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -1952,6 +1952,19 @@ const ICONS = {
   info:          `<circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/>`,
   // Peak Elo: zwei Berggipfel mit Stern oben am höchsten
   peak:          `<path d="M3 20h18M5 20l5-10 3 6 2-3 4 7"/><polygon points="10,4 11,6 13,6.2 11.6,7.5 12,9.5 10,8.5 8,9.5 8.4,7.5 7,6.2 9,6"/>`,
+  // ─── Neue Badge-Icons (keine Dopplung zu bestehenden) ───
+  // Vize-Meister: Medaille mit nach-oben-Pfeil (so nah am Gold, aber nicht ganz)
+  medal2:        `<circle cx="12" cy="14" r="6"/><path d="M9 8L7 3h10l-2 5"/><polyline points="10,15 12,12 14,15"/>`,
+  // Aufsteiger: Bergprofil mit Aufwärts-Pfeil oben rechts
+  climb:         `<path d="M3 20h18M3 20l5-8 4 4 5-7 4 4"/><polyline points="15,7 19,3 21,7"/><path d="M19 3v6"/>`,
+  // Dominator: 5-zackige große Krone mit Stein in der Mitte
+  dominator:     `<path d="M2 7l3 5 4-7 3 7 4-7 3 7 3-5v13H2z"/><circle cx="12" cy="15" r="1.6"/>`,
+  // Dynastie: antiker Tempel — Dach, Architrav, vier Säulen, Stufe
+  temple:        `<path d="M3 21h18M2 18h20M5 18L12 4l7 14M6 18v-7M10 18v-7M14 18v-7M18 18v-7"/>`,
+  // Frühschicht: aufgehende Sonne mit Strahlen über Horizont
+  sunrise:       `<circle cx="12" cy="17" r="4"/><path d="M2 21h20M12 11V8M5.6 14.4L4 12.8M18.4 14.4L20 12.8M3 18h2M19 18h2M9 6l3-3 3 3"/>`,
+  // Nerven aus Stahl: Herz mit EKG-Linie quer durch
+  nerves:        `<path d="M12 21s-7-4-9-9c-1.5-4 2-8 5-8 2 0 3 1 4 3 1-2 2-3 4-3 3 0 6.5 4 5 8-2 5-9 9-9 9z"/><polyline points="4,13 8,13 10,10 12,16 14,11 16,13 20,13"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -6788,51 +6801,133 @@ document.getElementById('sheetBg').onclick=closeSheet;
 // ════════ BADGE-SYSTEM (permanente Auszeichnungen) ════════
 // Badges sind dauerhafte Achievements, die ein Spieler einmal freischaltet und für immer behält.
 // Berechnet clientseitig aus der Match-Historie — kein DB-Umbau nötig.
+// Reihenfolge im Array = Anzeige-Reihenfolge im Badge-Sheet (Grid mit 2 Spalten).
+// Paare unten: jede Zeile hier = eine Zeile im 2-Spalten-Grid (links/rechts).
 const BADGES=[
-  // Alle mehrfach erreichbar
+  // Zeile 1 — Debütant, Stammgast
   {id:'first_match',em:'🐣',ic:'egg',name:'Debütant',desc:'Match gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=1?1:0},
   {id:'games25',em:'🎮',ic:'controller',name:'Stammgast',desc:'25 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=25?1:0},
+  // Zeile 2 — Legende, Allrounder
   {id:'games150',em:'💎',ic:'diamond',name:'Legende',desc:'150 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=150?1:0},
   {id:'allrounder',em:'🔄',ic:'refresh',name:'Allrounder',desc:'20+ Siege auf jeder Position',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return(s.atkW>=20&&s.defW>=20)?1:0;}},
+  // Zeile 3 — Abwehrchef, Mittelstürmer
   {id:'def50',em:'🛡️',ic:'shieldStar',name:'Abwehrchef',desc:'50 Spiele als Abwehrspieler',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.defG>=50?1:0;}},
   {id:'atk50',em:'⚡',ic:'bolt2',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.atkG>=50?1:0;}},
+  // Zeile 4 — Aufsteiger, Dominator
+  {id:'climber_100',em:'📈',ic:'climb',name:'Aufsteiger',desc:'100 Elo in einer Saison erreicht (bleibt erhalten)',
+    multi:false,count:(id,ms)=>seasonPeakFor(id)>=100?1:0},
+  {id:'dominator_400',em:'👑',ic:'dominator',name:'Dominator',desc:'400 Elo in einer Saison erreicht (bleibt erhalten)',
+    multi:false,count:(id,ms)=>seasonPeakFor(id)>=400?1:0},
+  // Zeile 5 — Dynastie, Frühschicht
+  {id:'dynasty_600',em:'🏛',ic:'temple',name:'Dynastie',desc:'600 Elo in einer Saison erreicht (bleibt erhalten)',
+    multi:false,count:(id,ms)=>seasonPeakFor(id)>=600?1:0},
+  {id:'early_bird',em:'🌅',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
+    multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
+  // Zeile 6 — Nerven aus Stahl, Zittersieg
+  {id:'nerves_of_steel',em:'❤️',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
+    multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
+  {id:'nail_biter',em:'🤏',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
+    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
+  // Zeile 7 — Absoluter Sieger, Absoluter Verlierer
   {id:'perfect_win',em:'💯',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&shutout(id,m,10,0)).length},
   {id:'perfect_loss',em:'😵',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&!won(id,m)&&shutout(id,m,0,10)).length},
+  // Zeile 8 — 5er Serie, 10er Serie
   {id:'streak5',em:'🔥',ic:'flame',name:'5er Serie',desc:'5 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,5)},
   {id:'streak10',em:'🔥🔥',ic:'flameDouble',name:'10er Serie',desc:'10 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,10)},
+  // Zeile 9 — 15er Serie, 30er Serie
   {id:'streak15',em:'🔥🔥🔥',ic:'flameTriple',name:'15er Serie',desc:'15 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,15)},
   {id:'streak30',em:'👑🔥',ic:'crownFlame',name:'30er Serie',desc:'30 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,30)},
-  {id:'nail_biter',em:'🤏',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
+  // Zeile 10 — Mauer, Carry
   {id:'wall_badge',em:'🧱',ic:'brick',name:'Mauer',desc:'Sieg mit max. 2 Gegentoren als Verteidiger',
     multi:true,count:(id,ms)=>ms.filter(m=>{if(!matchOf(id,m)||!won(id,m))return false;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
-  {id:'losing5',em:'📉',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
-    multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
   {id:'carry',em:'🎯',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
+  // Zeile 11 — Losing Streak, Unschlagbar
+  {id:'losing5',em:'📉',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
+    multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
   {id:'unbeatable',em:'👑',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
     multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
+  // Zeile 12 — Upset-König, Vize-Meister
   {id:'upset_king',em:'🌪️',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&myExp(id,m)<0.35).length},
+  {id:'vice_champion',em:'🥈',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
+    multi:true,count:(id,ms)=>countViceChampion(id)},
+  // Zeile 13 — Player of the Week, Player of the Day
   {id:'potw',em:'🏅',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
     multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
   {id:'potd',em:'🏆',ic:'trophyDay',name:'Player of the Day',desc:'Meiste Siege an einem Tag (min. 3)',
     multi:true,count:(id,ms)=>countDayWins(id,ms)},
 ];
+
+// ─── Helfer für die neuen Badges ───
+// Saison-Peak-Elo eines Spielers: höchster jemals erreichter Saison-Elo,
+// überlebt Saison-Resets (kommt direkt aus dem globalen Sim-Cache).
+function seasonPeakFor(id){
+  const pk=getGlobalSim().peakElo||{};
+  return pk[id]!==undefined ? pk[id] : cfg.start_elo;
+}
+
+// Anzahl abgeschlossener Saisons, in denen der Spieler auf Platz 2 endete.
+// Nutzt die archivierten seasons (top_elo enthält die Top-3 als JSON-Array).
+function countViceChampion(id){
+  if(!seasons||!seasons.length) return 0;
+  const curId=currentSeason().id;
+  let c=0;
+  seasons.forEach(s=>{
+    if(s.id===curId) return; // laufende Saison zählt nicht
+    let top=s.top_elo;
+    if(typeof top==='string'){ try{ top=JSON.parse(top); }catch(e){ top=[]; } }
+    if(Array.isArray(top) && top[1] && top[1].id===id) c++;
+  });
+  return c;
+}
+
+// Tage, an denen der Spieler beim chronologisch ersten Match des Tages
+// dabei war und es gewonnen hat. Max. 1 pro Tag (durch die Logik garantiert).
+function countEarlyBirdDays(id,ms){
+  const byDay={};
+  ms.forEach(m=>{
+    const day=new Date(m.created_at).toISOString().slice(0,10);
+    if(!byDay[day]||new Date(m.created_at)<new Date(byDay[day].created_at)) byDay[day]=m;
+  });
+  let c=0;
+  Object.values(byDay).forEach(first=>{
+    if(matchOf(id,first)&&won(id,first)) c++;
+  });
+  return c;
+}
+
+// Wie oft eine Serie von n aufeinanderfolgenden 10:n-Siegen erreicht wurde.
+// Nach Erreichen Serie zurücksetzen (analog zu countStreakOccurrences).
+// Unterbrochen wird die Serie durch jede Niederlage UND durch jeden Sieg ohne 10:9.
+function countNailBiterStreaks(id,ms,n){
+  const ordered=[...ms].filter(m=>matchOf(id,m))
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  let cur=0,count=0;
+  ordered.forEach(m=>{
+    if(won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9){
+      cur++;
+      if(cur>=n){count++;cur=0;}
+    } else {
+      cur=0;
+    }
+  });
+  return count;
+}
 
 // Hilfsfunktion: Badge → SVG-Icon-HTML (mit Fallback auf Emoji)
 function badgeIc(b, size){
@@ -7002,6 +7097,10 @@ function getBadgeEarnedCache(){
 
   // Globale Sim für Carry (historische Elo-Stände vor jedem Match) — gecached
   const snapMap=getSnapMap();
+  // History-Map für eloAfter-Lookup (Saison-Peak-Tracking pro Match)
+  const histById=getHistoryByMatchId();
+  // Tages-Tracker (global, nicht per-player): welcher Tag hatte schon sein erstes Match?
+  const firstOfDaySeen={};
 
   // Inkrementeller State pro Spieler
   const st={};
@@ -7017,12 +7116,25 @@ function getBadgeEarnedCache(){
       la5:false,
       // Tages-Tracker für Unbeatable
       days:{}, // "YYYY-MM-DD" → { g, l }
+      // ── Neue Badges ──
+      // Saison-Peak-Elo (überlebt Saison-Reset, einmalige Schwellen-Badges)
+      peakElo: cfg.start_elo,
+      climbed: false, dominated: false, dynastic: false,
+      // 10:9-Serien-Counter (resettet bei Nicht-10:9 oder Niederlage)
+      nailStreak: 0,
     };
   });
 
   ordered.forEach(m=>{
     const earned=[];
     const ids=[m.a1,m.a2,m.b1,m.b2];
+    const day=new Date(m.created_at).toISOString().slice(0,10);
+    // Ist dies das erste Match dieses Tages? (Global, eine Frage pro Match)
+    const isFirstOfDay = !firstOfDaySeen[day];
+    if(isFirstOfDay) firstOfDaySeen[day]=true;
+    // Saison-Peak-Tracking nutzt die Sim-History (Elo-Stand nach diesem Match)
+    const hist=histById.get(m.id);
+    const eloAfter=(hist&&hist.eloAfter)||{};
 
     ids.forEach(id=>{
       if(!st[id]) return;
@@ -7033,7 +7145,6 @@ function getBadgeEarnedCache(){
       const ga=onA?m.score_b:m.score_a;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       const myExp=onA?(m.exp_a||0.5):(1-(m.exp_a||0.5));
-      const day=new Date(m.created_at).toISOString().slice(0,10);
 
       // Werte VOR diesem Match sichern (für Schwellen-Checks)
       const pg=s.games, pAtkW=s.atkW, pDefW=s.defW, pAtkG=s.atkG, pDefG=s.defG;
@@ -7106,8 +7217,37 @@ function getBadgeEarnedCache(){
       const d=s.days[day];
       if(d.g===3 && d.l===0) fire('unbeatable');
 
+      // ── Frühschicht: Sieg im chronologisch ersten Match des Tages ──
+      // isFirstOfDay ist für ALLE 4 Spieler dieses Matches identisch true,
+      // garantiert max. 1 Trigger pro Spieler+Tag (mehr als 1 erstes Match gibt's nicht).
+      if(isFirstOfDay && w) fire('early_bird');
+
+      // ── Nerven aus Stahl: 3 Zittersiege (10:9) in Folge ──
+      // Jeder Nicht-10:9-Ausgang (auch normaler Sieg oder Niederlage) bricht die Serie.
+      // Bei Erreichen wird der Counter zurückgesetzt → mehrfach erreichbar.
+      if(w && gf===10 && ga===9){
+        s.nailStreak++;
+        if(s.nailStreak>=3){ fire('nerves_of_steel'); s.nailStreak=0; }
+      } else {
+        s.nailStreak=0;
+      }
+
+      // ── Saison-Peak-Schwellen (einmalige Unlocks) ──
+      // Nutzt den Elo-Stand nach diesem Match aus der zentralen Sim-History.
+      // Über Saison-Resets hinweg gilt der höchste je erreichte Wert — wir tracken
+      // hier den lokalen Spieler-Peak in s.peakElo und feuern bei Schwellen-Überschreitung.
+      const myEloAfter=eloAfter[id];
+      if(myEloAfter!==undefined && myEloAfter>s.peakElo){
+        s.peakElo=myEloAfter;
+        if(!s.climbed   && s.peakElo>=100){ s.climbed=true;   fire('climber_100');   }
+        if(!s.dominated && s.peakElo>=400){ s.dominated=true; fire('dominator_400'); }
+        if(!s.dynastic  && s.peakElo>=600){ s.dynastic=true;  fire('dynasty_600');   }
+      }
+
       // potw / potd: erfordern Vergleich aller Spieler am Periodenende →
       // zu komplex für inkrementell, werden in computeBadges() lazy berechnet
+      // vice_champion: Saison-End-Event, nicht an ein einzelnes Match gebunden →
+      // wird ebenfalls in computeBadges() aus dem seasons-Archiv ermittelt
     });
 
     map[m.id]=earned;
@@ -7954,7 +8094,8 @@ function showPlayerBadges(playerId){
   const earned=getCachedBadges(playerId);
   const earnedIds=new Map(earned.map(b=>[b.id,b.count]));
   const totalEarned=earned.reduce((s,b)=>s+b.count,0);
-  const ONCE_ONLY=new Set(['first_match','games25','games150','allrounder','def50','atk50']);
+  const ONCE_ONLY=new Set(['first_match','games25','games150','allrounder','def50','atk50',
+    'climber_100','dominator_400','dynasty_600']);
   const rows=BADGES.map(b=>{
     const cnt=earnedIds.get(b.id)||0;
     const unlocked=cnt>0;
