@@ -4282,6 +4282,10 @@ function simulateEloWithSliders(matchSubset, opts={}){
     // Durchschnittliche Spielanzahl aller 4 Spieler (für Underdog-Berechnung)
     const avgGames=ids.reduce((s,id)=>s+(playedSeason[id]||0),0)/4;
     const avgElo=ids.reduce((s,id)=>s+elo[id],0)/4;
+    // Match-Ø-K: alle 4 Spieler eines Matches teilen denselben K-Faktor (Mittelwert
+    // ihrer individuellen dyn. K-Werte). Innerhalb eines Matches gilt damit dieselbe
+    // Bewegungs-Skala für alle — keine 18-vs-35-Diskrepanz mehr zwischen Teamkollegen.
+    const matchK=ids.reduce((s,id)=>s+localDynK(id),0)/4;
 
     const applyTeam=(team,opp,won,exp)=>{
   const e0=elo[team[0].id],e1=elo[team[1].id];
@@ -4292,7 +4296,7 @@ function simulateEloWithSliders(matchSubset, opts={}){
   
   team.forEach(slot=>{
     const bd={playerId:slot.id,won,startElo:elo[slot.id]};
-    const k=localDynK(slot.id); bd.kFactor=k;
+    const k=matchK; bd.kFactor=k;
     bd.expected=exp;
     const rawBase=k*((won?1:0)-exp); bd.rawBase=rawBase;
 
@@ -4320,7 +4324,9 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const eloFactor=Math.tanh(eloDiff/400)*eloMax;
     const gamesFactor=Math.tanh(gamesDiff/30)*gamesMax;
     const underdogRaw=eloFactor+gamesFactor;
-    const underdogMult=won?Math.max(1,1+underdogRaw):Math.min(1,1+underdogRaw);
+    // Favoriten-Malus entfernt: nur Underdog-Boost (Sieg als Schwächerer) wirkt.
+    // Favoriten/Veteranen, die verlieren, nehmen den vollen Elo-Hit.
+    const underdogMult=(won&&underdogRaw>0)?1+underdogRaw:1;
     bd.underdogMult=underdogMult;
     bd.underdogEloDiff=Math.round(eloDiff);
     bd.underdogGamesDiff=Math.round(gamesDiff);
@@ -8623,23 +8629,38 @@ function showMatchDetail(mid){
     const bd=matchBreakdown(mid);
     const slot=document.getElementById('breakdownSlot');
     if(!bd||!Object.keys(bd).length){slot.innerHTML='<p style="font-size:12px;color:var(--muted);text-align:center">Keine Daten verfügbar</p>';return;}
-    // bd kommt aus getGlobalSim().history — nach Saison-Reset sind startElo/endElo
-    // bereits die korrekten Saison-Werte. Keine separate Sim mehr nötig.
+    // DB-First-Werte (was tatsächlich in der DB steht & oben angezeigt wird).
+    // Die Aufschlüsselungs-Faktoren stammen aus simulateEloWithSliders und können
+    // abweichen, wenn Slider oder Code-Logik seit dem Match geändert wurden.
+    const histById=getHistoryByMatchId();
+    const hist=histById.get(mid);
+    const dbDeltas=(hist&&hist.deltas)||{};
+    const dbBefore=(hist&&hist.eloBefore)||{};
+    const dbAfter=(hist&&hist.eloAfter)||{};
     const ids=[m.a1,m.a2,m.b1,m.b2];
+    // Divergenz erkennen: weicht die Slider-Summe relevant von der DB ab?
+    const anyDiverged=ids.some(id=>{
+      const b=bd[id]; if(!b||dbDeltas[id]===undefined)return false;
+      return Math.abs(dbDeltas[id]-b.finalDelta)>=1;
+    });
     const rows=ids.map(id=>{
       const b=bd[id]; if(!b)return '';
       const sign=v=>v>=0?'+'+v.toFixed(1):v.toFixed(1);
-      const seasonBefore=Math.round(b.startElo);
-      const seasonAfter=Math.round(b.endElo);
+      // Primär: DB-Werte (Elo-Verlauf wie real getrackt). Fallback: Sim.
+      const hasDb=dbDeltas[id]!==undefined;
+      const headerDelta=hasDb?dbDeltas[id]:b.finalDelta;
+      const seasonBefore=Math.round(hasDb?dbBefore[id]:b.startElo);
+      const seasonAfter=Math.round(hasDb?dbAfter[id]:b.endElo);
+      const simDelta=b.finalDelta;
+      const rowDiverged=hasDb&&Math.abs(dbDeltas[id]-simDelta)>=1;
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
       if(Math.abs(b.movEffect)>0.1) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
       if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+Math.round((b.winBoost-1)*100)+'% für Siege'});
       if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:Math.round((1-b.expProtect)*100)+'% Schutz'});
-      if(Math.abs(b.underdogMult-1)>0.005){
-        const pct=Math.round((b.underdogMult-1)*100);
-        factors.push({label:pct>0?'Underdog-Boost':'Favoriten-Malus',val:b.afterMods-b.rawBase*b.movMult*b.winBoost*b.expProtect,
-          desc:b.underdogEloDiff>0?Math.abs(b.underdogEloDiff)+' Elo schwächer als Gegner':'Stärker als Gegner'});
+      if(b.underdogMult>1.005){
+        factors.push({label:'Underdog-Boost',val:b.afterMods-b.rawBase*b.movMult*b.winBoost*b.expProtect,
+          desc:Math.abs(b.underdogEloDiff)+' Elo schwächer als Gegner'});
       }
       if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Mate-Stärke-Verteilung'});
       if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posMult>1?'Schwache':'Starke')+' Position'});
@@ -8648,10 +8669,11 @@ function showMatchDetail(mid){
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
         <span style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
       </div>`).join('');
+      const divergeNote=rowDiverged?`<div style="font-size:10px;color:var(--gold);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);font-family:'Sometype Mono',monospace">↻ Aktuelle Regler: ${sign(simDelta)} (Σ Faktoren)</div>`:'';
       return `<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:12px;margin-top:8px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <span style="font-weight:700;font-size:13px">${esc(pname(id))}</span>
-          <span style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${b.finalDelta>=0?'var(--acid)':'var(--red)'}">${sign(b.finalDelta)}</span>
+          <span style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${headerDelta>=0?'var(--acid)':'var(--red)'}">${sign(headerDelta)}</span>
         </div>
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between">
@@ -8660,9 +8682,13 @@ function showMatchDetail(mid){
           </div>
         </div>
         ${factorRows}
+        ${divergeNote}
       </div>`;
     }).join('');
-    slot.innerHTML=`<div class="mini-label" style="margin-top:14px">Elo-Analyse</div>${rows}`;
+    const banner=anyDiverged?`<div style="background:rgba(247,207,74,.08);border:1px solid rgba(247,207,74,.3);border-radius:10px;padding:10px 12px;margin-top:10px;font-size:11.5px;color:var(--gold);line-height:1.5">
+      <b>Hinweis:</b> Die Faktoren unten werden mit den <i>aktuellen</i> Reglern berechnet. Die gespeicherten Deltas (oben) stammen aus der Berechnung zum Zeitpunkt des Matches. <b>Settings → Neu berechnen</b> bringt beides in Deckung.
+    </div>`:'';
+    slot.innerHTML=`<div class="mini-label" style="margin-top:14px">Elo-Analyse</div>${banner}${rows}`;
     document.getElementById('showBreakdownBtn').style.display='none';
   };
 
