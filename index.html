@@ -2235,7 +2235,14 @@ function matchesInSeason(seasonId){
 }
 
 function allPastSeasons(){
-  if(!matches.length)return[];
+  const key='allPastSeasons_'+matches.length+'_'+seasons.length+'_'+_cache.version; // NEU: seasons.length im Key
+  if(_cache._allPastSeasonsKey===key) return _cache._allPastSeasonsData;
+
+  if(!matches.length) {
+    _cache._allPastSeasonsKey = key;
+    _cache._allPastSeasonsData = [];
+    return [];
+  }
   const first=new Date(matches[0].created_at);
   const now=new Date(); const cur=currentSeason();
   const ids=[];
@@ -2247,8 +2254,12 @@ function allPastSeasons(){
     ids.push(id);
     m++; if(m>11){m=0;y++;}
   }
+  _cache._allPastSeasonsKey=key;
+  _cache._allPastSeasonsData=ids;
   return ids;
 }
+
+
 
 let seasons=[];  // geladene Saison-Ergebnisse aus DB
 let _histPage = 0; // Aktuelle Seite für den Verlaufs-Tab (Lazy Loading)
@@ -2271,11 +2282,16 @@ function invalidateCache(keys=null){
       if(k==='stats') delete _cache._allStatsKey;
       if(k==='global') { _lastSimState=null; _lastSimIndex=-1; }
       if(k==='teams') delete _cache._teamDetail;
+      if(k==='allTeamStats') delete _cache._allTeamStatsKey; // NEU: Cache für teamStats()
       if(k==='period') delete _cache._periodStatsKey;
       if(k==='badges') delete _cache._badgeEarnedKey;
+      if(k==='playerSeasonAwards') delete _cache._playerSeasonAwards; // NEU: Cache für playerSeasonAwards(id)
+      if(k==='allPastSeasons') delete _cache._allPastSeasonsKey; // NEU: Cache für allPastSeasons()
     });
   }
 }
+
+
 
 
 // Speichert den letzten Sim-State + Index des letzten verarbeiteten Matches
@@ -2466,6 +2482,19 @@ const _posMinGames = () => cfg.pos_min_games ?? POS_MIN_GAMES_DEFAULT;
 const _expWeight  = () => cfg.exp_weight ?? EXP_WEIGHT_DEFAULT;
 
 function posPerfFrom(id, matchSubset){
+  if (!matchSubset || matchSubset === matches) {
+    const sim = getGlobalSim();
+    const t = sim.posTracker[id];
+    if (t) {
+      return {
+        aG: t.aG, aW: t.aW, dG: t.dG, dW: t.dW,
+        aWr: t.aG ? t.aW / t.aG : null,
+        dWr: t.dG ? t.dW / t.dG : null,
+        aPerfAvg: t.aG ? t.aPerf / t.aG : null,
+        dPerfAvg: t.dG ? t.dPerf / t.dG : null
+      };
+    }
+  }
   let aG=0,aW=0,dG=0,dW=0, aPerf=0, dPerf=0;
   for(const m of matchSubset){
     const onA=[m.a1,m.a2].includes(id), onB=[m.b1,m.b2].includes(id);
@@ -2481,6 +2510,7 @@ function posPerfFrom(id, matchSubset){
     aWr:aG?aW/aG:null, dWr:dG?dW/dG:null,
     aPerfAvg:aG?aPerf/aG:null, dPerfAvg:dG?dPerf/dG:null};
 }
+
 
 // Sturm-Anteil 0..1, kombiniert Performance + Erfahrung.
 // Performance wird GEWICHTET nach Spielanzahl auf der Position (mehr Spiele = höheres Vertrauen).
@@ -2614,8 +2644,9 @@ async function persistNewMatch(newMatchId) {
     await Promise.all(writes.slice(i, i + BATCH));
   }
   await syncSeasonEloToDB();
+  // NEU: Zusätzliche Caches invalidieren, die durch ein neues Match beeinflusst werden
+  invalidateCache(['global', 'stats', 'awards', 'badges', 'allTeamStats', 'allPastSeasons']);
 }
-
 // Schreibt eine neu berechnete Historie in die DB (Spieler-Elos + atk + Match-Deltas).
 // WICHTIG: invalidiert auch die archivierten Saison-Snapshots (seasons.top_elo),
 // damit das Recap-Podium nach Recalc konsistent zu der frischen Berechnung ist.
@@ -2739,7 +2770,8 @@ async function loadAll(){
       }
     }catch(e){}
     seasons=se.data||[];
-  invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
+  // NEU: Alle relevanten Caches invalidieren
+  invalidateCache(['global', 'stats', 'awards', 'teams', 'allTeamStats', 'period', 'badges', 'playerSeasonAwards', 'allPastSeasons']);
     // Nur aktive Spieler zählen für Anzeige
     const active=activePlayers();
     setConn(active.length+' Spieler · '+matches.length+' Matches','ok');
@@ -2835,6 +2867,8 @@ async function autoArchiveSeasons(){
       const existIdx=seasons.findIndex(s=>s.id===sid);
       if(existIdx>=0) seasons[existIdx]=entry; else seasons.unshift(entry);
       console.log('Saison archiviert:',sid);
+      // NEU: playerSeasonAwards und allPastSeasons invalidieren
+      invalidateCache(['playerSeasonAwards', 'allPastSeasons']);
     }
     else console.error('Saison archivieren fehlgeschlagen:',sid,error);
   }
@@ -2850,6 +2884,7 @@ if(last && last.id !== currentSeason().id
   }
 
 }
+
 
 // Saison-Recap-Popup
 function showSeasonRecap(season){
@@ -3720,7 +3755,7 @@ function showPotdRecap(opts){
 
     openSheet(`
       <div style="text-align:center;margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace">Player of the Day</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace">Player of the last Day</div>
         <h3 style="margin-top:8px;font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;line-height:1">${esc(dayStr)}</h3>
         <div class="num" style="font-size:12px;color:var(--muted);margin-top:6px">${dayMatches.length} Matches · ${uniquePlayers.size} Spieler</div>
       </div>
@@ -3898,8 +3933,22 @@ function allPlayerStats(){
 // matchSubset optional — defaults zu allen Matches
 function playerStats(id, matchSubset){
   const ms = matchSubset || matches;
+
+  // Wenn Statistiken für ALLE Matches angefragt werden, den bereits gecachten globalen Datensatz verwenden
+  if (ms === matches) {
+    const allStats = allPlayerStats(); // Dieser Datensatz ist bereits gecacht
+    // allPlayerStats enthält nur aktive Spieler. Wenn ein versteckter Spieler angefragt wird,
+    // der nicht im Cache ist, fällt die Logik auf die vollständige Berechnung zurück.
+    if (allStats[id]) {
+      // WICHTIG: Erstelle eine Kopie, um Änderungen am Cache-Objekt zu vermeiden,
+      // da `bestWorstMate` und `nemesis` direkt in das Objekt schreiben könnten.
+      return { ...allStats[id] };
+    }
+  }
+
+  // Ursprüngliche Berechnungslogik für Teilmengen oder versteckte Spieler
   const s={games:0,wins:0,losses:0,gf:0,ga:0,atkG:0,atkW:0,defG:0,defW:0,
-           mates:{},opps:{},best:-1e9,worst:1e9,streak:0,curStreak:0,eloPeak:0};
+           mates:{},opps:{},best:-1e9,worst:1e9,curStreak:0};
   let run=0;
   ms.forEach(m=>{
     const onA=[m.a1,m.a2].includes(id),onB=[m.b1,m.b2].includes(id);
@@ -3924,19 +3973,28 @@ function playerStats(id, matchSubset){
   s.gd=s.gf-s.ga;
   return s;
 }
-function bestWorstMate(id){
-  const s=playerStats(id); let best=null,worst=null;
+
+
+function bestWorstMate(id, s_param){
+  const s= s_param || playerStats(id); // Nutzt übergebene Stats oder berechnet neu (was jetzt gecacht ist)
+  let best=null,worst=null;
   Object.entries(s.mates).forEach(([mid,v])=>{ if(v.g<2)return; const wr=v.w/v.g;
     if(!best||wr>best.wr)best={mid,wr,g:v.g}; if(!worst||wr<worst.wr)worst={mid,wr,g:v.g}; });
   return {best,worst};
 }
-function nemesis(id){
-  const s=playerStats(id); let n=null,f=null;
+function nemesis(id, s_param){
+  const s= s_param || playerStats(id); // Nutzt übergebene Stats oder berechnet neu (was jetzt gecacht ist)
+  let n=null,f=null;
   Object.entries(s.opps).forEach(([oid,v])=>{ if(v.g<2)return; const wr=v.w/v.g;
     if(!n||wr<n.wr)n={oid,wr,g:v.g}; if(!f||wr>f.wr)f={oid,wr,g:v.g}; });
   return {nemesis:n,favorite:f};
 }
+
+
 function teamStats(){
+  const key='allTeamStats_'+matches.length+'_'+_cache.version;
+  if(_cache._allTeamStatsKey===key) return _cache._allTeamStatsData;
+
   const T={};
   matches.forEach(m=>{
     [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],[m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]]
@@ -3944,8 +4002,13 @@ function teamStats(){
       if(!T[k])T[k]={ids:[x,y].sort(),g:0,w:0,gf:0,ga:0};
       T[k].g++; if(won)T[k].w++; T[k].gf+=gf; T[k].ga+=ga; });
   });
-  return Object.values(T);
+  const result = Object.values(T);
+  _cache._allTeamStatsKey = key;
+  _cache._allTeamStatsData = result;
+  return result;
 }
+
+
 // Detaillierte Team-Stats für das Team-Profil-Sheet.
 // Ein Walk durch alle Matches → komplettes Detail. Gecached pro Team-Key + Cache-Version.
 function teamDetail(p1,p2){
@@ -5452,8 +5515,9 @@ function rrow(p, s, i, metric, globalElo){
 // ════════ VIEW: POSITIONS-RANGLISTE ════════
 function vPositions(){
   function posList(pos){
+    const statsMap = allPlayerStats();
     return activePlayers().map(p=>{
-      const s=playerStats(p.id);
+      const s = statsMap[p.id] || playerStats(p.id);
       const g=pos==='atk'?s.atkG:s.defG, w=pos==='atk'?s.atkW:s.defW;
       const perf=posPerfFrom(p.id,matches);
       const pAvg=pos==='atk'?perf.aPerfAvg:perf.dPerfAvg;
@@ -5468,6 +5532,7 @@ function vPositions(){
       // Sortierung: Position-Score (kombiniert WR, Performance, Erfahrung)
       .sort((a,b)=> b.score-a.score || b.pAvg-a.pAvg || b.wr-a.wr);
   }
+
   const atk=posList('atk'), def=posList('def');
   const block=(arr,pos)=>{
     if(!arr.length)return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
@@ -7575,8 +7640,11 @@ function playerAwards(id){
 }
 
 function showPlayer(id){
-  const p=pmap()[id];if(!p)return;const s=playerStats(id);
-  const {best,worst}=bestWorstMate(id);const {nemesis:nem,favorite:fav}=nemesis(id);
+  const p=pmap()[id];if(!p)return;
+  const allStats = allPlayerStats(); // Hole den globalen Cache einmal
+  const s = allStats[id] || playerStats(id); // Nutze Cache, Fallback für versteckte Spieler
+  const {best,worst}=bestWorstMate(id, s); // Übergebe 's'
+  const {nemesis:nem,favorite:fav}=nemesis(id, s); // Übergebe 's'
   const wr=Math.round(s.wr*100);
   const atkWr=s.atkWr!==null?Math.round(s.atkWr*100):null;
   const defWr=s.defWr!==null?Math.round(s.defWr*100):null;
@@ -8434,8 +8502,18 @@ function showPlayerBadges(playerId){
 
 // Saison-Auszeichnungen eines Spielers
 function playerSeasonAwards(id){
-  return seasons.filter(s=>s.player_id===id||s.team_p1===id||s.team_p2===id);
+  // Cache-Schlüssel muss auch die Version der 'seasons' berücksichtigen,
+  // da sich diese unabhängig von `matches` ändern können.
+  const key='playerSeasonAwards_'+id+'_'+seasons.length+'_'+_cache.version;
+  if(!_cache._playerSeasonAwards) _cache._playerSeasonAwards={};
+  if(_cache._playerSeasonAwards[key]) return _cache._playerSeasonAwards[key];
+
+  const result=seasons.filter(s=>s.player_id===id||s.team_p1===id||s.team_p2===id);
+  _cache._playerSeasonAwards[key]=result;
+  return result;
 }
+
+
 function seasonBtnHtml(id){
   const sa=playerSeasonAwards(id);
   if(!sa.length) return '';
