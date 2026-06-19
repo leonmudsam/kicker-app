@@ -7236,10 +7236,11 @@ const BADGES=[
   // Zeile 5 — Dynastie, Vize-Meister
   {id:'dynasty_600',em:'🏛',ic:'temple',name:'Dynastie',desc:'600 Elo in einer Saison erreicht',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=600?1:0},
-  {id:'vice_champion',em:'🥈',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
-    multi:true,count:(id,ms)=>countViceChampion(id)},
 
-  // ══ MEHRFACH-BADGES — gruppiert nach Thema ══
+    // ══ MEHRFACH-BADGES — gruppiert nach Thema ══
+//Reihenfolge überarbeitet / Möglciherweise Abweichung von Namen in //
+  {id:'upset_king',em:'🌪️',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
+    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&myExp(id,m)<0.35).length},
   // Zeile 6 — Frühschicht, Unschlagbar (Tages-Patterns)
   {id:'early_bird',em:'🌅',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
@@ -7288,8 +7289,8 @@ const BADGES=[
   {id:'carry',em:'🎯',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
   // Zeile 15 — Upset-König, Königsklasse (Sieg gegen Stärkere)
-  {id:'upset_king',em:'🌪️',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&myExp(id,m)<0.35).length},
+  {id:'vice_champion',em:'🥈',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
+    multi:true,count:(id,ms)=>countViceChampion(id)},
  /* {id:'koenigsklasse',em:'👑',ic:'kingClass',name:'Königsklasse',desc:'Sieg gegen mindestens einen Gegner aus den Top 3 der Saison-Endrangliste',
     multi:true,count:(id,ms)=>countTopThreeWins(id,ms)},
   // Zeile 16 — Pflichtaufgabe, Award-Sammler
