@@ -1982,7 +1982,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.19.1';
+const BUILD_VERSION='2026.06.19.3';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -3114,10 +3114,10 @@ function showSeasonRecap(season){
       ${pickerHtml}
     </div>
     ${championHtml}
+    ${teamHtml}
     ${podiumHtml}
     ${restListHtml}
     ${awardsHtml}
-    ${teamHtml}
     <button class="btn" id="closeRecapBtn" style="margin-top:6px;width:100%">Schließen</button>
   `);
   // Saison-Picker: bei Auswahl Recap neu rendern (ohne `recap_shown_…` zu markieren)
@@ -7257,15 +7257,22 @@ function countEarlyBirdDays(id,ms){
 // Nach Erreichen Serie zurücksetzen (analog zu countStreakOccurrences).
 // Unterbrochen wird die Serie durch jede Niederlage UND durch jeden Sieg ohne 10:9.
 function countNailBiterStreaks(id,ms,n){
+  // Zählt wie oft n Zittersiege in Folge erreicht wurden — nur knappe Partien (9:10/10:9)
+  // werden überhaupt betrachtet. Klare Siege oder klare Niederlagen sind irrelevant
+  // und werden übersprungen, ohne die Serie zu unterbrechen. Nur eine knappe Niederlage
+  // (9:10) bricht die Serie.
   const ordered=[...ms].filter(m=>matchOf(id,m))
     .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   let cur=0,count=0;
   ordered.forEach(m=>{
-    if(won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9){
+    const gf=goalsFor(id,m), ga=goalsAgainst(id,m);
+    const isClose=(gf===10&&ga===9)||(gf===9&&ga===10);
+    if(!isClose) return; // nicht-knappe Partien ignorieren
+    if(won(id,m)){
       cur++;
       if(cur>=n){count++;cur=0;}
     } else {
-      cur=0;
+      cur=0; // knappe Niederlage bricht die Serie
     }
   });
   return count;
@@ -7564,15 +7571,20 @@ function getBadgeEarnedCache(){
       // garantiert max. 1 Trigger pro Spieler+Tag (mehr als 1 erstes Match gibt's nicht).
       if(isFirstOfDay && w) fire('early_bird');
 
-      // ── Nerven aus Stahl: 3 Zittersiege (10:9) in Folge ──
-      // Jeder Nicht-10:9-Ausgang (auch normaler Sieg oder Niederlage) bricht die Serie.
+      // ── Nerven aus Stahl: 3 Zittersiege in Folge — nur knappe Partien zählen ──
+      // Nicht-knappe Partien (klare Siege/Niederlagen) sind irrelevant und ändern die
+      // Serie nicht. Nur eine knappe Niederlage (9:10) bricht die Serie.
       // Bei Erreichen wird der Counter zurückgesetzt → mehrfach erreichbar.
-      if(w && gf===10 && ga===9){
-        s.nailStreak++;
-        if(s.nailStreak>=3){ fire('nerves_of_steel'); s.nailStreak=0; }
-      } else {
-        s.nailStreak=0;
+      const isClose=(gf===10&&ga===9)||(gf===9&&ga===10);
+      if(isClose){
+        if(w){
+          s.nailStreak++;
+          if(s.nailStreak>=3){ fire('nerves_of_steel'); s.nailStreak=0; }
+        } else {
+          s.nailStreak=0;
+        }
       }
+      // sonst: nicht-knappe Partie → nailStreak bleibt unverändert
 
       // ── Saison-Peak-Schwellen (einmalige Unlocks) ──
       // Nutzt den Elo-Stand nach diesem Match aus der zentralen Sim-History.
