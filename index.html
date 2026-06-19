@@ -1278,6 +1278,163 @@
   .match-small.svg-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
+  /* ════════════════════════════════════════════════════════════
+     ─── PLAYER PROFILE — V3 OVERHAUL ───
+     Trinity-Box, Spark-Row, Streaks-Splitter. Bestehende Klassen
+     bleiben unangetastet (Tier, Journey, Roles, Beziehungen, Rail).
+     ════════════════════════════════════════════════════════════ */
+
+  /* Pill-Set unterhalb des Namens — Tier + Position uniform */
+  .pp-pills{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .pp-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border-radius:8px;
+    background:var(--surface);border:1px solid var(--line);
+    font-size:11px;color:var(--ink2);font-weight:500;line-height:1}
+  .pp-pill svg{width:12px;height:12px;stroke:currentColor;fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .pp-tier-legende    .pp-pill.tier{background:linear-gradient(180deg,rgba(247,207,74,.16),rgba(247,207,74,.06));border-color:rgba(247,207,74,.4);color:var(--gold)}
+  .pp-tier-elite      .pp-pill.tier{background:linear-gradient(180deg,rgba(167,139,250,.16),rgba(167,139,250,.06));border-color:rgba(167,139,250,.4);color:var(--purple)}
+  .pp-tier-stark      .pp-pill.tier{background:linear-gradient(180deg,rgba(190,242,100,.16),rgba(190,242,100,.06));border-color:rgba(190,242,100,.4);color:var(--acid)}
+  .pp-tier-solide     .pp-pill.tier{background:linear-gradient(180deg,rgba(86,180,232,.16),rgba(86,180,232,.06));border-color:rgba(86,180,232,.4);color:var(--blue)}
+  .pp-tier-einsteiger .pp-pill.tier{background:linear-gradient(180deg,rgba(255,120,73,.16),rgba(255,120,73,.06));border-color:rgba(255,120,73,.4);color:var(--orange)}
+
+  /* ─── SIGNATURE: Peak-Elo-Trinity ─── */
+  /* Drei zusammenhängende Spalten mit Hairline-Trennern. Linke Spalte = Aktuell (Acid),
+     mittlere = Peak diese Saison, rechte = Peak Allzeit (Gold/Tier-getönt). */
+  .pp-elo-trinity{
+    margin:22px 0 0;
+    display:grid;grid-template-columns:1fr 1fr 1fr;
+    gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  }
+  .pp-et-col{background:var(--surface);padding:14px 8px 12px;text-align:center;position:relative;min-width:0}
+  .pp-et-col.now{background:linear-gradient(180deg,rgba(190,242,100,.06),transparent 70%)}
+  .pp-et-col .label{
+    font-family:'Sometype Mono',monospace;font-size:8.5px;
+    text-transform:uppercase;letter-spacing:.16em;color:var(--muted);
+    display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;line-height:1;
+  }
+  .pp-et-col .label svg{width:10px;height:10px;stroke:currentColor;fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .pp-et-col .val{font-family:'Archivo Black',sans-serif;font-size:24px;
+    letter-spacing:-.02em;line-height:1;color:var(--ink)}
+  .pp-et-col.now .val{color:var(--acid)}
+  .pp-et-col .sub{margin-top:5px;font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);
+    line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Allzeit-Spalte trägt die Tier-Farbe (Gold bei Legende) — fällt zurück auf Acid */
+  .pp-et-col.alltime .label{color:var(--pp-tier-1,var(--acid))}
+  .pp-et-col.alltime .label svg{color:var(--pp-tier-1,var(--acid))}
+  .pp-et-col.alltime .val{color:var(--pp-tier-1,var(--ink))}
+
+  /* ─── Spark-Row: Sparkline + Form-Dots in EINEM Container ─── */
+  .pp-spark-row{
+    margin-top:14px;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px 11px;
+  }
+  .pp-spark-row .pp-spark{margin:0 0 4px;max-width:none;height:38px}
+  .pp-spark-row .pp-spark-foot{margin-top:2px;padding-top:0;border-top:none}
+  .pp-spark-row .pp-form{margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)}
+
+  /* ─── Streaks: kompakter Zwei-Spalter ─── */
+  .pp-streaks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .pp-st{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .pp-st .l{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);
+    font-family:'Sometype Mono',monospace;margin-bottom:5px;line-height:1}
+  .pp-st .v{font-family:'Archivo Black',sans-serif;font-size:17px;letter-spacing:-.01em;color:var(--ink);line-height:1}
+  .pp-st .v.empty{color:var(--muted);font-size:14px}
+  .pp-st .dots{display:flex;gap:3px;margin-top:7px}
+  .pp-st .dots i{width:5px;height:5px;border-radius:50%;background:var(--acid);
+    box-shadow:0 0 6px rgba(190,242,100,.5)}
+  .pp-st .dots.loss i{background:var(--red);box-shadow:0 0 6px rgba(240,86,106,.4)}
+
+  /* Beziehungen — 2×2 Grid (Wrapper für die bestehenden .pp-r-rich Karten) */
+  .pp-rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .pp-rel-grid > .pp-r-rich{display:flex;align-items:center;gap:10px;border-radius:14px;border-left-width:1px;border-left-style:solid}
+
+  /* Auszeichnungs-Strip (Übersicht im Profil) — vereinfacht */
+  .pp-badges-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer}
+  .pp-badges-card:active{transform:scale(.985)}
+  .pp-badges-strip{display:flex;gap:7px;flex-wrap:wrap;color:var(--ink2);flex:1;min-width:0}
+  .pp-badges-strip svg{width:20px;height:20px;stroke:currentColor;fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .pp-badges-card .chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
+  .pp-badges-card .chev svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;
+    stroke-linecap:round;stroke-linejoin:round}
+
+  /* Trophäen-Rail — feiner als das alte mit Goldener/Blauer Akzent-Fläche */
+  .pp-trophies{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;margin:0;scrollbar-width:none}
+  .pp-trophies::-webkit-scrollbar{display:none}
+  .pp-tr{flex-shrink:0;width:130px;border-radius:14px;padding:12px;cursor:pointer;
+    background:linear-gradient(180deg,rgba(247,207,74,.1),rgba(247,207,74,.02));
+    border:1px solid rgba(247,207,74,.3);transition:.2s}
+  .pp-tr:active{transform:scale(.985)}
+  .pp-tr.team{background:linear-gradient(180deg,rgba(86,180,232,.1),rgba(86,180,232,.02));
+    border-color:rgba(86,180,232,.3)}
+  .pp-tr .ic.svg-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+    margin:0 0 10px;background:rgba(247,207,74,.15);color:var(--gold);filter:none}
+  .pp-tr.team .ic.svg-ic{background:rgba(86,180,232,.15);color:var(--blue);filter:none}
+  .pp-tr .ic.svg-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .pp-tr .ti{font-size:11px;font-weight:700;line-height:1.25;margin-bottom:4px;color:var(--ink)}
+  .pp-tr .su{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace}
+
+  /* Awards-Grid — Stern/Schild/Smiley als SVG (Emojis raus) */
+  .pp-awards{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .pp-aw{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:14px 8px;text-align:center;position:relative}
+  .pp-aw.empty{opacity:.45}
+  .pp-aw .ic.svg-ic{width:32px;height:32px;border-radius:10px;background:var(--surface3);
+    color:var(--ink2);display:grid;place-items:center;margin:0 auto 8px}
+  .pp-aw .ic.svg-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .pp-aw .nm{font-size:9.5px;line-height:1.25;color:var(--ink2);margin-bottom:6px}
+  .pp-aw .num{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--acid);line-height:1}
+  .pp-aw.empty .num{color:var(--muted)}
+
+  /* Saison-Rail-Karten — größere Platzziffer als Anker */
+  .pp-seasons{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;margin:0;scrollbar-width:none}
+  .pp-seasons::-webkit-scrollbar{display:none}
+  .pp-sn{flex-shrink:0;width:74px;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:10px 8px;text-align:center}
+  .pp-sn.silver{border-color:rgba(185,196,189,.3)}
+  .pp-sn.bronze{border-color:rgba(180,120,73,.3)}
+  .pp-sn .mo{font-size:8.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;
+    font-family:'Sometype Mono',monospace}
+  .pp-sn .pl{margin:6px 0;font-family:'Archivo Black',sans-serif;font-size:22px;
+    letter-spacing:-.02em;color:var(--ink);line-height:1}
+  .pp-sn.gold .pl{color:var(--gold)}
+  .pp-sn .pl .n{display:inline-block}
+  .pp-sn .el{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700}
+  .pp-sn .el.pos{color:var(--acid)}
+  .pp-sn .el.neg{color:var(--red)}
+  .pp-sn .rc{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px}
+
+  /* Positions-Profil-Slider — kompakter */
+  .pp-posprof{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .pp-posprof .pph{display:flex;justify-content:space-between;align-items:center;
+    font-size:10px;color:var(--muted);margin-bottom:10px;font-family:'Sometype Mono',monospace}
+  .pp-posprof .pph .lf,.pp-posprof .pph .rt{display:inline-flex;align-items:center;gap:4px}
+  .pp-posprof .pph svg{width:11px;height:11px;stroke:currentColor;fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .pp-posprof .pph .pct{color:var(--ink);font-weight:700}
+  .pp-posprof .pp-slider{position:relative;height:6px;background:var(--surface3);border-radius:3px}
+  .pp-posprof .pp-fill{height:100%;background:linear-gradient(90deg,var(--acid2),var(--acid));border-radius:3px}
+  .pp-posprof .pp-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);
+    width:14px;height:14px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);
+    box-shadow:0 2px 8px rgba(0,0,0,.5)}
+  .pp-posprof .ppf{margin-top:10px;font-size:11px;color:var(--ink2);text-align:center}
+  .pp-posprof .ppf .lab{font-weight:700;color:var(--ink)}
+
+  /* Delete-Button — etwas warmer ohne aggressiv zu sein */
+  .pp-del{margin-top:24px;padding-top:8px}
+  .pp-del button{width:100%;background:transparent;border:1px solid rgba(240,86,106,.3);
+    color:var(--red);padding:12px;border-radius:13px;font-family:inherit;font-size:12px;
+    font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .pp-del button svg{width:13px;height:13px;stroke:currentColor;fill:none;
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  /* ─── ENDE PLAYER PROFILE V3 OVERHAUL ─── */
+
+
   /* ============ V2 ZUSATZ-STYLES ============ */
   /* SVG-Crown im sh-crown / aw-pod-crown (ersetzt 👑) */
   .sh-crown svg, .aw-pod-crown svg{width:22px;height:22px;fill:var(--gold);stroke:none;display:block;
@@ -1825,7 +1982,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.18.6';
+const BUILD_VERSION='2026.06.18.8';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -3414,45 +3571,80 @@ function autoShowPotwRecap(){
   } catch(e){ console.error('POTW auto:',e); }
 }
 
+// Ermittelt den letzten Spieltag VOR heute, der einen POTD-Kandidaten hatte (min. 3 Siege).
+// Wird sowohl vom Auto-Recap als auch vom manuellen "Letzten Tag ansehen"-Button genutzt.
+// Kein eigener Cache nötig — Aufruf ist nur 1× pro Render, der Hot-Path ist Profil/Sheet.
+function _potdLastDayData(){
+  if(!matches.length) return null;
+  const now=new Date();
+  const todayStart=new Date(now); todayStart.setHours(0,0,0,0);
+  const byDay={};
+  for(const m of matches){
+    const d=new Date(m.created_at);
+    if(d>=todayStart) continue;
+    const dk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    if(!byDay[dk]) byDay[dk]=[];
+    byDay[dk].push(m);
+  }
+  const days=Object.keys(byDay).sort().reverse();
+  if(!days.length) return null;
+  // Erstes Datum mit qualifiziertem Kandidat (min. 3 Siege)
+  const pm=pmap();
+  for(const dk of days){
+    const dms=byDay[dk];
+    const wins={};
+    dms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(id=>{
+      const onA=[m.a1,m.a2].includes(id);
+      const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
+      if(!wins[id]) wins[id]=0;
+      if(w) wins[id]++;
+    }));
+    const qualified=Object.entries(wins).some(([id,w])=>w>=3 && pm[id] && !pm[id].hidden);
+    if(qualified) return {dayKey:dk, dayMatches:dms};
+  }
+  return null;
+}
+
+// True wenn es einen abgeschlossenen Spieltag mit ≥3-Siegen-Kandidat gibt (für Button-Sichtbarkeit)
+function potdHasData(){ return _potdLastDayData()!==null; }
+
 // Player-of-the-Day Recap: zeigt einmal pro Tag pro Gerät den Sieger des letzten Spieltags.
-function showPotdRecap(){
+// Mit opts.force=true (vom "Letzten Tag ansehen"-Button) wird der localStorage-Check und
+// das Setzen des "shown"-Flags übersprungen, damit der manuelle Aufruf den Auto-Trigger
+// für heute nicht unterdrückt.
+function showPotdRecap(opts){
+  opts = opts || {};
   try{
     const now=new Date();
     const todayKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-    if(localStorage.getItem('potd_shown_'+todayKey)) return;
-    if(!matches.length) return;
+    if(!opts.force && localStorage.getItem('potd_shown_'+todayKey)) return;
+    if(!matches.length){ if(opts.force) toast('Keine Matches vorhanden','info'); return; }
 
     // Konflikte vermeiden: nicht zeigen wenn ein Sheet offen ist
     // oder der Saison-Recap heute noch ansteht (Vorrang Saison-Recap).
-    const sheetEl=document.getElementById('sheet');
-    if(sheetEl && sheetEl.classList.contains('show')) return;
-    if(seasons.length && now.getDate()<=3){
-      const last=seasons[0];
-      if(last && last.id!==currentSeason().id && !localStorage.getItem('recap_shown_'+last.id)) return;
-    }
-    // POTW hat Vorrang am Mo/Di der neuen Woche
-    {
-      const wd=(now.getDay()+6)%7;
-      if(wd<2 && potwHasData()){
-        const {start}=_potwLastWeekRange();
-        if(!localStorage.getItem('potw_shown_'+_potwKeyOf(start))) return;
+    // Beim manuellen Force-Aufruf werden diese Auto-Trigger-Konflikte übersprungen.
+    if(!opts.force){
+      const sheetEl=document.getElementById('sheet');
+      if(sheetEl && sheetEl.classList.contains('show')) return;
+      if(seasons.length && now.getDate()<=3){
+        const last=seasons[0];
+        if(last && last.id!==currentSeason().id && !localStorage.getItem('recap_shown_'+last.id)) return;
+      }
+      // POTW hat Vorrang am Mo/Di der neuen Woche
+      {
+        const wd=(now.getDay()+6)%7;
+        if(wd<2 && potwHasData()){
+          const {start}=_potwLastWeekRange();
+          if(!localStorage.getItem('potw_shown_'+_potwKeyOf(start))) return;
+        }
       }
     }
 
-    // Letzten Spieltag VOR heute ermitteln (nach lokaler Zeit gruppiert)
-    const todayStart=new Date(now); todayStart.setHours(0,0,0,0);
-    const byDay={};
-    for(const m of matches){
-      const d=new Date(m.created_at);
-      if(d>=todayStart) continue;
-      const dk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      if(!byDay[dk]) byDay[dk]=[];
-      byDay[dk].push(m);
-    }
-    const days=Object.keys(byDay).sort().reverse();
-    if(!days.length) return;
-    const lastDayKey=days[0];
-    const dayMatches=byDay[lastDayKey];
+    // Letzten Spieltag mit Kandidat ermitteln (zentral, identisch zum Auto-Trigger)
+    const lastDay=_potdLastDayData();
+    if(!lastDay){ if(opts.force) toast('Kein qualifizierter Spieltag','info'); return; }
+    const lastDayKey=lastDay.dayKey;
+    const dayMatches=lastDay.dayMatches;
 
     // Spieler-Stats für diesen Tag (inkl. längster Serie innerhalb des Tages)
     const ps={};
@@ -3565,7 +3757,9 @@ function showPotdRecap(){
     `);
 
     // Flag SOFORT setzen — sonst löst Swipe-Schließen beim nächsten Reload erneut aus.
-    localStorage.setItem('potd_shown_'+todayKey,'1');
+    // Bei opts.force (manueller "Letzten Tag ansehen"-Button) NICHT setzen, damit der
+    // automatische Auto-Recap für heute später noch triggern kann.
+    if(!opts.force) localStorage.setItem('potd_shown_'+todayKey,'1');
     const cb=document.getElementById('closePotdBtn');
     if(cb) cb.onclick=closeSheet;
   } catch(e){
@@ -4008,6 +4202,7 @@ function periodStart(period){
   if(period==='season') return seasonStart();
   if(period==='week'){ const d=new Date(now); d.setHours(0,0,0,0);
     const wd=(d.getDay()+6)%7; d.setDate(d.getDate()-wd); return d; }
+  if(period==='day'){ const d=new Date(now); d.setHours(0,0,0,0); return d; }
   return null; // all
 }
 function matchesInPeriod(period){
@@ -4029,6 +4224,8 @@ function periodLabel(period){
   if(period==='season'){ return seasonLabel(currentSeason().id); }
   if(period==='week'){ const s=periodStart('week');
     return 'KW '+isoWeek(now)+' · ab '+s.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}); }
+  if(period==='day'){ const s=periodStart('day');
+    return s.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'}); }
   return 'Gesamte Liga';
 }
 function isoWeek(d){
@@ -4590,6 +4787,7 @@ function vRanking(){
     <div class="seg accent" style="margin-bottom:14px">
       <button data-period="season" class="${period==='season'?'on':''}">Saison</button>
       <button data-period="week" class="${period==='week'?'on':''}">Woche</button>
+      <button data-period="day" class="${period==='day'?'on':''}">Tag</button>
       <button data-period="all" class="${period==='all'?'on':''}">Gesamt</button>
     </div>`;
 
@@ -4608,12 +4806,12 @@ function vRanking(){
         :(a,b)=>b.wins-a.wins||(b.wins/b.games||0)-(a.wins/a.games||0)||b.gd-a.gd||b.eloNet-a.eloNet);
     }
     const totalMatches=periodMs.length;
-    // Saison-Champion: höchste Saison-Elo. Woche: Winrate bei Mindest-Siegen.
+    // Saison-Champion: höchste Saison-Elo. Woche/Tag: Winrate bei Mindest-Siegen.
     let winner;
     if(period==='season'){
       winner=ps.length&&ps[0].games>0?ps[0]:null;
     } else {
-      const minWins=period==='week'?5:1;
+      const minWins = period==='week' ? 5 : period==='day' ? 3 : 1;
       const qual=ps.filter(x=>x.wins>=minWins);
       winner=qual.length?[...qual].sort((a,b)=>(b.wins/b.games)-(a.wins/a.games)||b.wins-a.wins)[0]:null;
     }
@@ -4765,6 +4963,22 @@ function vRanking(){
           </div>
           <div class="season-progress-bar"><i style="width:${wkPct}%"></i></div>
         </div>`;
+    } else if(period==='day'){
+      // Tages-Fortschritt: Stunde X von 24 (exakt gleicher Stil wie Woche)
+      const dyStart=periodStart('day');
+      const dyEnd=new Date(dyStart); dyEnd.setDate(dyEnd.getDate()+1);
+      const dyTotalMs=dyEnd-dyStart;
+      const dyElapsedMs=Math.max(0,Math.min(dyTotalMs,Date.now()-dyStart));
+      const dyHourElapsed=Math.max(1,Math.min(24,Math.ceil(dyElapsedMs/(1000*60*60))));
+      const dyPct=Math.round((dyElapsedMs/dyTotalMs)*100);
+      seasonProgressHtml=`
+        <div class="season-progress">
+          <div class="season-progress-top">
+            <span class="season-progress-label">Tag läuft</span>
+            <span class="season-progress-days">Stunde <b>${dyHourElapsed}</b> von 24</span>
+          </div>
+          <div class="season-progress-bar"><i style="width:${dyPct}%"></i></div>
+        </div>`;
     }
 
     // Player of Season: Vorsprung auf Platz 2
@@ -4838,7 +5052,12 @@ function vRanking(){
         heroSection+=`<div class="sh-side">${teamBannerHtml}${defenderCards}</div>`;
       }
     } else {
-      // ═══ WOCHE: Hero im season-hero-Stil + Highlights ═══
+      // ═══ WOCHE / TAG: Hero im season-hero-Stil + Highlights ═══
+      // Period-spezifische Labels — Logik darunter ist für beide identisch,
+      // da alles über das gefilterte periodMs läuft (eine Wahrheit für Elo/Stats).
+      const heroLabel    = period==='day' ? 'Tagessieger'           : 'Wochensieger';
+      const heroEloLabel = period==='day' ? 'Elo Tag'               : 'Elo Woche';
+      const minWinsTxt   = period==='day' ? 'min. 3 Siege benötigt' : 'min. 5 Siege benötigt';
       if(winner){
         const wp=pmap()[winner.id];
         const wWr=winner.games?Math.round(winner.wins/winner.games*100):0;
@@ -4861,13 +5080,13 @@ function vRanking(){
                 ${avInner}
               </div>
               <div class="sh-info">
-                <div class="sh-label">Wochensieger</div>
+                <div class="sh-label">${heroLabel}</div>
                 <div class="sh-name">${esc(wp.name)}</div>
                 <div class="sh-meta">${winner.wins}W · ${winner.losses}L · ${wWr}% Quote</div>
               </div>
               <div class="sh-elo-wrap">
                 <div class="sh-elo-v" style="color:${winner.eloNet>=0?'var(--acid)':'var(--red)'}">${winner.eloNet>=0?'+':''}${winner.eloNet}</div>
-                <div class="sh-elo-l">Elo Woche</div>
+                <div class="sh-elo-l">${heroEloLabel}</div>
               </div>
             </div>
             <div class="sh-stats">
@@ -4884,9 +5103,9 @@ function vRanking(){
                 <div class="sh-av" style="background:var(--surface3);border-color:var(--line);box-shadow:none;color:var(--muted);font-size:32px">?</div>
               </div>
               <div class="sh-info">
-                <div class="sh-label">Wochensieger</div>
+                <div class="sh-label">${heroLabel}</div>
                 <div class="sh-name-empty">noch offen</div>
-                <div class="sh-meta">min. 5 Siege benötigt</div>
+                <div class="sh-meta">${minWinsTxt}</div>
               </div>
             </div>
           </div>`;
@@ -4939,11 +5158,17 @@ function vRanking(){
       const upsetName=upsetWinners?(pname(upsetWinners[0])+' & '+pname(upsetWinners[1])):null;
 
       
-    // POTW Recap Button
-    let potwRecapBtn = '';
-    if(potwHasData()){
-      potwRecapBtn = `
-        <button id="potwRecapWeekBtn" style="
+    // POTW / POTD Recap Button — je nach Period
+    let recapBtn = '';
+    const recapPeriod = period==='day' ? 'potd' : period==='week' ? 'potw' : null;
+    const showRecap   = recapPeriod==='potw' ? potwHasData() : recapPeriod==='potd' ? potdHasData() : false;
+    if(showRecap){
+      const recapTitle    = recapPeriod==='potd' ? 'Player of the Day'  : 'Player of the Week';
+      const recapSubtitle = recapPeriod==='potd' ? 'Letzten Tag ansehen' : 'Letzte Woche ansehen';
+      const recapBtnId    = recapPeriod==='potd' ? 'potdRecapDayBtn'    : 'potwRecapWeekBtn';
+      const recapIconKey  = recapPeriod==='potd' ? 'trophyDay'          : 'weekly';
+      recapBtn = `
+        <button id="${recapBtnId}" style="
           width:100%;
           background:linear-gradient(135deg,rgba(190,242,100,.08),rgba(190,242,100,.03));
           border:1px solid rgba(190,242,100,.3);
@@ -4962,12 +5187,12 @@ function vRanking(){
           <div style="display:flex;align-items:center;gap:12px;flex:1">
             <div style="width:40px;height:40px;border-radius:11px;background:rgba(190,242,100,.12);display:grid;place-items:center;color:var(--acid);flex-shrink:0">
               <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM5 9a2 2 0 01-2-2V5h4M19 9a2 2 0 002-2V5h-4"/>
+                ${ICONS[recapIconKey]||''}
               </svg>
             </div>
             <div style="text-align:left;min-width:0">
-              <div style="font-weight:700;font-size:13px;letter-spacing:-.01em">Player of the Week</div>
-              <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace">Letzte Woche ansehen</div>
+              <div style="font-weight:700;font-size:13px;letter-spacing:-.01em">${recapTitle}</div>
+              <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace">${recapSubtitle}</div>
             </div>
           </div>
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -4984,7 +5209,7 @@ function vRanking(){
     const upsetClick  = topUpset  ? `data-match="${esc(topUpset.m.id)}"` : '';
 
     heroSection += `
-      ${potwRecapBtn}
+      ${recapBtn}
       <div class="wk-highlights">
         ${renderHl('team','Bestes Team','handshake', teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', teamClick)}
         ${renderHl('streak','Heißeste Serie','flame', topStreak?pname(topStreak.id):null, topStreak?`${topStreak.v} in Folge`:'', streakClick)}
@@ -5001,7 +5226,7 @@ function vRanking(){
       ${periodBar}
       ${seasonProgressHtml}
       ${heroSection}
-      ${period==='week'?`<div class="seg"><button data-periodsort="wins" class="${periodSort==='wins'?'on':''}">Nach Siegen</button>
+      ${(period==='week'||period==='day')?`<div class="seg"><button data-periodsort="wins" class="${periodSort==='wins'?'on':''}">Nach Siegen</button>
         <button data-periodsort="elo" class="${periodSort==='elo'?'on':''}">Nach Elo</button></div>`:''}
       ${ps.length?`<div class="rlist">${rows}</div>`:emptyState('calendar','Keine Matches in diesem Zeitraum')}`;
   }
@@ -6820,12 +7045,12 @@ const BADGES=[
   {id:'atk50',em:'⚡',ic:'bolt2',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.atkG>=50?1:0;}},
   // Zeile 4 — Aufsteiger, Dominator
-  {id:'climber_100',em:'📈',ic:'climb',name:'Aufsteiger',desc:'100 Elo in einer Saison erreicht',
+  {id:'climber_100',em:'📈',ic:'climb',name:'Aufsteiger',desc:'100 Elo in einer Saison erreicht (bleibt erhalten)',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=100?1:0},
-  {id:'dominator_400',em:'👑',ic:'dominator',name:'Dominator',desc:'400 Elo in einer Saison erreicht',
+  {id:'dominator_400',em:'👑',ic:'dominator',name:'Dominator',desc:'400 Elo in einer Saison erreicht (bleibt erhalten)',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=400?1:0},
   // Zeile 5 — Dynastie, Frühschicht
-  {id:'dynasty_600',em:'🏛',ic:'temple',name:'Dynastie',desc:'600 Elo in einer Saison erreicht',
+  {id:'dynasty_600',em:'🏛',ic:'temple',name:'Dynastie',desc:'600 Elo in einer Saison erreicht (bleibt erhalten)',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=600?1:0},
   {id:'early_bird',em:'🌅',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
@@ -6856,14 +7081,14 @@ const BADGES=[
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
   {id:'carry',em:'🎯',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
-  // Zeile 11 — Losing Streak, Upset-König
+  // Zeile 11 — Losing Streak, Unschlagbar
   {id:'losing5',em:'📉',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
     multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
-  {id:'upset_king',em:'🌪️',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&myExp(id,m)<0.35).length},
-  // Zeile 12 —  Unschlagbar, Vize-Meister
   {id:'unbeatable',em:'👑',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
     multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
+  // Zeile 12 — Upset-König, Vize-Meister
+  {id:'upset_king',em:'🌪️',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
+    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&myExp(id,m)<0.35).length},
   {id:'vice_champion',em:'🥈',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
     multi:true,count:(id,ms)=>countViceChampion(id)},
   // Zeile 13 — Player of the Week, Player of the Day
@@ -7444,6 +7669,50 @@ function showPlayer(id){
   const posIcon = svgI(_posCls.icon);
   const posLabel = _posCls.label;
 
+  // ── Peak-Elo (Saison + Allzeit) für die Trinity-Box ──
+  // Peak Saison: höchster Stand in der LAUFENDEN Saison — aus History rekonstruiert
+  // Peak Allzeit: höchster je erreichter Saison-Elo (saison-übergreifend, aus globalSim)
+  // Zusätzlich: Saison-Label des Allzeit-Peaks als Sub-Text ("Mai 2026")
+  let peakSeason = null, peakAlltime = null, peakAlltimeSeason = '';
+  {
+    const histByMatch = getHistoryByMatchId();
+    // Peak Saison: über alle Saison-Matches des Spielers in chronologischer Reihenfolge
+    const seasonMsForPeak = matchesInSeason()
+      .filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
+      .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+    if(seasonMsForPeak.length){
+      let v = cfg.start_elo, mx = v;
+      for(const m of seasonMsForPeak){
+        const h = histByMatch.get(m.id);
+        if(h && h.eloAfter && h.eloAfter[id]!==undefined) v = h.eloAfter[id];
+        else v += (m.deltas||{})[id] || 0;
+        if(v > mx) mx = v;
+      }
+      peakSeason = Math.round(mx);
+    }
+    // Peak Allzeit: bevorzugt aus globalSim.peakElo, sonst über alle Matches scannen
+    const peakV = gSim.peakElo ? gSim.peakElo[id] : undefined;
+    if(peakV !== undefined){
+      peakAlltime = Math.round(peakV);
+      // Saison-Label des Peak-Matches finden (höchster eloAfter[id] über alle Matches).
+      // Einmaliger O(n)-Scan beim Öffnen des Profils — getHistoryByMatchId ist gecached.
+      let bestMatch = null, bestVal = -Infinity;
+      for(const m of matches){
+        if(![m.a1,m.a2,m.b1,m.b2].includes(id)) continue;
+        const h = histByMatch.get(m.id);
+        if(!h || !h.eloAfter || h.eloAfter[id] === undefined) continue;
+        if(h.eloAfter[id] > bestVal){
+          bestVal = h.eloAfter[id];
+          bestMatch = m;
+        }
+      }
+      if(bestMatch){
+        const sn = seasonOf(bestMatch.created_at);
+        peakAlltimeSeason = sn.label;
+      }
+    }
+  }
+
   // Awards: NUR Platz 1
   const awards=playerAwards(id).filter(a=>a.rank===0);
   const awardCount=awards.length;
@@ -7618,23 +7887,46 @@ const rankProgHtml = `
         ${rank>0?`<span class="pp-rank-pos">#${rank}</span>`:''}
       </div>
       <h1 class="pp-name">${esc(p.name)}${streakBadge?` ${streakBadge}`:''}</h1>
-      <div class="pp-meta">
-        ${(()=>{
-          const gSim=getGlobalSim();
-          const games=gSim.playedSeason[id]||0;
-          if(games===0) return `<span class="pp-elo" style="color:var(--muted)">— Elo</span>`;
-          return `<span class="pp-elo">${Math.round(gSim.elo[id])} Elo</span>`;
-        })()}
-        ${rInfo?`<span class="pp-badge-inline">
-          <span class="ic svg-ic" style="font-size:11px;color:${rInfo.color}">
-            <svg viewBox="0 0 24 24">${ICONS[rInfo.icon]||''}</svg>
-          </span>
-          <span>${rInfo.label}</span>
+
+      <div class="pp-pills">
+        ${rInfo?`<span class="pp-pill tier">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[rInfo.icon]||''}</svg>
+          ${esc(rInfo.label)}
         </span>`:''}
-        <span style="display:inline-flex;align-items:center;gap:4px;line-height:1">${posIcon}${posLabel}</span>
+        <span class="pp-pill">${posIcon}${esc(posLabel)}</span>
       </div>
-      ${sparkHtml}
-      ${formHtml?`<div class="pp-form">${formHtml}</div>`:''}
+
+      ${(()=>{
+        // ── SIGNATURE: Peak-Elo-Trinity ──
+        // Drei zusammenhängende Werte: Aktuell (acid) | Peak Saison | Peak Allzeit (tier-getönt)
+        const games=gSim.playedSeason[id]||0;
+        const curElo = games>0 ? Math.round(gSim.elo[id]) : '—';
+        const ps = peakSeason !== null ? peakSeason : '—';
+        const pa = peakAlltime !== null ? peakAlltime : '—';
+        const paSub = peakAlltimeSeason ? esc(peakAlltimeSeason) : 'saison-übergreifend';
+        return `<div class="pp-elo-trinity">
+          <div class="pp-et-col now">
+            <div class="label">Aktuell</div>
+            <div class="val">${curElo}</div>
+            <div class="sub">Saison</div>
+          </div>
+          <div class="pp-et-col peak">
+            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Peak</div>
+            <div class="val">${ps}</div>
+            <div class="sub">diese Saison</div>
+          </div>
+          <div class="pp-et-col alltime">
+            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['star']||''}</svg> Allzeit</div>
+            <div class="val">${pa}</div>
+            <div class="sub">${paSub}</div>
+          </div>
+        </div>`;
+      })()}
+
+      ${(sparkHtml || formHtml) ? `<div class="pp-spark-row">
+        ${sparkHtml}
+        ${formHtml?`<div class="pp-form">${formHtml}</div>`:''}
+      </div>` : ''}
     </header>
 
     <div class="pp-sec" style="animation-delay:.3s">
@@ -7675,6 +7967,10 @@ const rankProgHtml = `
     </div>
 
     <div class="pp-sec" style="animation-delay:.35s">
+      <div class="pp-sec-title">
+        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Saison-Stats</h4></div>
+        <div class="m">${s.games} Spiele</div>
+      </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.games}</div><div class="l">Spiele</div></div>
         <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegrate</div></div>
@@ -7683,24 +7979,29 @@ const rankProgHtml = `
     </div>
 
     <div class="pp-sec" style="animation-delay:.4s">
-      <div class="pp-streak">
-        <div class="pp-s">
+      <div class="pp-sec-title">
+        <div class="l"><span class="ic svg-ic">${svgI('flame')}</span><h4>Siegesserien</h4></div>
+      </div>
+      <div class="pp-streaks">
+        <div class="pp-st">
           <div class="l">Aktuelle Serie</div>
-          <div class="v">${streak>0?streak+' Siege':streak<0?(-streak)+' Niederlagen':'–'}
-            ${streak>0?`<div class="dots">${'<i></i>'.repeat(Math.min(streak,6))}</div>`:''}
-          </div>
+          <div class="v ${streak===0?'empty':''}">${streak>0?streak+' Siege':streak<0?(-streak)+' Niederlagen':'–'}</div>
+          ${streak>0?`<div class="dots">${'<i></i>'.repeat(Math.min(streak,6))}</div>`:''}
+          ${streak<0?`<div class="dots loss">${'<i></i>'.repeat(Math.min(-streak,6))}</div>`:''}
         </div>
-        <div class="pp-s">
+        <div class="pp-st">
           <div class="l">Längste Serie</div>
-          <div class="v">${longestStr>=2?longestStr+' Siege':'–'}
-            ${longestStr>=2?`<div class="dots">${'<i></i>'.repeat(Math.min(longestStr,6))}</div>`:''}
-          </div>
+          <div class="v ${longestStr<2?'empty':''}">${longestStr>=2?longestStr+' Siege':'–'}</div>
+          ${longestStr>=2?`<div class="dots">${'<i></i>'.repeat(Math.min(longestStr,6))}</div>`:''}
         </div>
       </div>
     </div>
 
     <div class="pp-sec" style="animation-delay:.45s">
-      <div class="pp-rel">
+      <div class="pp-sec-title">
+        <div class="l"><span class="ic svg-ic">${svgI('users')}</span><h4>Beziehungen</h4></div>
+      </div>
+      <div class="pp-rel-grid">
         ${(()=>{
           // Hilfsfunktion: Mate-/Gegner-Avatar (34 px)
           const relAv=(pid)=>{
@@ -7762,11 +8063,13 @@ const rankProgHtml = `
         <div class="l">${svgI('star')}<h4>Auszeichnungen</h4></div>
         <div class="m">${badgeTotal} erreicht</div>
       </div>
-      <div class="pp-card" id="ppBadgesBtn" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;color:var(--ink2);font-size:18px">
+      <div class="pp-badges-card" id="ppBadgesBtn">
+        <div class="pp-badges-strip">
           ${badges.slice(0,8).map(b=>badgeIc(b,'18px')).join('')}
         </div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        <span class="chev">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        </span>
       </div>
     </div>`:''}
 
@@ -7823,7 +8126,12 @@ const rankProgHtml = `
     </div>
 
     <div class="pp-del">
-      <button id="delPlayer">Spieler löschen</button>
+      <button id="delPlayer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3,6 5,6 21,6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/>
+        </svg>
+        Spieler löschen
+      </button>
     </div>
   `);
 
@@ -8375,6 +8683,11 @@ function bind(){
 const potwRecapWeekBtn = document.getElementById('potwRecapWeekBtn');
 if(potwRecapWeekBtn){
   potwRecapWeekBtn.onclick = () => showPotwRecap();
+}
+// POTD Recap Button in Tagesansicht — force-Aufruf umgeht localStorage-Check
+const potdRecapDayBtn = document.getElementById('potdRecapDayBtn');
+if(potdRecapDayBtn){
+  potdRecapDayBtn.onclick = () => showPotdRecap({force:true});
 }
 
   };
