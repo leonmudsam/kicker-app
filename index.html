@@ -7110,12 +7110,12 @@ const BADGES=[
   {id:'atk50',em:'⚡',ic:'bolt2',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.atkG>=50?1:0;}},
   // Zeile 4 — Aufsteiger, Dominator
-  {id:'climber_100',em:'📈',ic:'climb',name:'Aufsteiger',desc:'100 Elo in einer Saison erreicht (bleibt erhalten)',
+  {id:'climber_100',em:'📈',ic:'climb',name:'Aufsteiger',desc:'100 Elo in einer Saison erreicht',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=100?1:0},
-  {id:'dominator_400',em:'👑',ic:'dominator',name:'Dominator',desc:'400 Elo in einer Saison erreicht (bleibt erhalten)',
+  {id:'dominator_400',em:'👑',ic:'dominator',name:'Dominator',desc:'400 Elo in einer Saison erreicht',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=400?1:0},
   // Zeile 5 — Dynastie, Frühschicht
-  {id:'dynasty_600',em:'🏛',ic:'temple',name:'Dynastie',desc:'600 Elo in einer Saison erreicht (bleibt erhalten)',
+  {id:'dynasty_600',em:'🏛',ic:'temple',name:'Dynastie',desc:'600 Elo in einer Saison erreicht',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=600?1:0},
   {id:'early_bird',em:'🌅',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
