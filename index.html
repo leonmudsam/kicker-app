@@ -7255,21 +7255,21 @@ const BADGES=[
     multi:true,count:(id,ms)=>countClearWins(id,ms)},
   {id:'krimi',em:'🎬',ic:'thriller',name:'Krimi-Reihe',desc:'5 Spiele in Folge mit Tordifferenz ≤ 2 (Sieg oder Niederlage)',
     multi:true,count:(id,ms)=>countKrimiStreaks(id,ms)},
-  // Zeile 9 — Wiederholungstäter, Zittersieg (Score-Spezial)
+  // Zeile 9 — Wiederholungstäter, Losing Streak
   {id:'repeat_score',em:'🪞',ic:'duplicate',name:'Wiederholungstäter',desc:'3 Siege in Folge mit identischem Endstand',
     multi:true,count:(id,ms)=>countRepeatScoreStreaks(id,ms)},
-  {id:'nail_biter',em:'🤏',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
-  // Zeile 10 — Nerven aus Stahl, Absoluter Sieger
-  {id:'nerves_of_steel',em:'❤️',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
-    multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
-  {id:'perfect_win',em:'💯',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&shutout(id,m,10,0)).length},
-  // Zeile 11 — Absoluter Verlierer, Losing Streak
-  {id:'perfect_loss',em:'😵',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&!won(id,m)&&shutout(id,m,0,10)).length},
   {id:'losing5',em:'📉',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
     multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
+  // Zeile 10 — Absoluter Verlierer, Absoluter Sieger
+  {id:'perfect_loss',em:'😵',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',
+    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&!won(id,m)&&shutout(id,m,0,10)).length},
+  {id:'perfect_win',em:'💯',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
+    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&shutout(id,m,10,0)).length},
+  // Zeile 11 — Nerven aus Stahl,  Zittersieg (Score-Spezial)
+   {id:'nerves_of_steel',em:'❤️',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
+    multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
+  {id:'nail_biter',em:'🤏',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
+    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
   // Zeile 12 — 5er Serie, 10er Serie
   {id:'streak5',em:'🔥',ic:'flame',name:'5er Serie',desc:'5 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,5)},
