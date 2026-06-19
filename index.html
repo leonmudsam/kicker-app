@@ -7261,7 +7261,7 @@ const BADGES=[
   {id:'nail_biter',em:'🤏',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
   // Zeile 10 — Nerven aus Stahl, Absoluter Sieger
-  {id:'nerves_of_steel',em:'❤️',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge — knappe Niederlagen brechen die Serie, andere Matches sind irrelevant',
+  {id:'nerves_of_steel',em:'❤️',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
     multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
   {id:'perfect_win',em:'💯',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&shutout(id,m,10,0)).length},
