@@ -1982,7 +1982,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.18.8';
+const BUILD_VERSION='2026.06.19.1';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2009,7 +2009,7 @@ async function checkForUpdate(){
 
 // ---- STATE ----
 let players=[], matches=[], cfg={k_factor:32,risk_split:0.6,pos_swing:0.45,start_elo:0,
-  win_boost:1.12,mov_loss_damp:0.5,match_bonus:1.5};
+  win_boost:1.12,mov_loss_damp:0.5,match_bonus:1.5,low_elo_loss_damp:0};
 let tab='ranking', unlocked=true;
 let rankMetric='elo';      // elo | atk | def | winrate | goaldiff | streak
 let rankSearch='';
@@ -2122,6 +2122,10 @@ const ICONS = {
   sunrise:       `<circle cx="12" cy="17" r="4"/><path d="M2 21h20M12 11V8M5.6 14.4L4 12.8M18.4 14.4L20 12.8M3 18h2M19 18h2M9 6l3-3 3 3"/>`,
   // Nerven aus Stahl: Herz mit EKG-Linie quer durch
   nerves:        `<path d="M12 21s-7-4-9-9c-1.5-4 2-8 5-8 2 0 3 1 4 3 1-2 2-3 4-3 3 0 6.5 4 5 8-2 5-9 9-9 9z"/><polyline points="4,13 8,13 10,10 12,16 14,11 16,13 20,13"/>`,
+  // Award: Meiste POTW-Auszeichnungen (Kalender mit Krone) — saison-/all-time Sammler-Award
+  weekKing:      `<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M8 7v4M16 7v4"/><polygon points="5,7 8,3 12,6 16,3 19,7" fill="none" stroke-linejoin="round"/>`,
+  // Award: Meiste POTD-Auszeichnungen (Trophäe mit Krone) — saison-/all-time Sammler-Award
+  dayKing:       `<path d="M8 21h8M12 17v4M7 8h10v4a5 5 0 01-10 0zM5 11a2 2 0 01-2-2V7h4M19 11a2 2 0 002-2V7h-4"/><polygon points="5,5 8,2 12,4 16,2 19,5" fill="none" stroke-linejoin="round"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -4637,7 +4641,20 @@ function simulateEloWithSliders(matchSubset, opts={}){
     bd.underdogEloDiff=Math.round(eloDiff);
     bd.underdogGamesDiff=Math.round(gamesDiff);
 
-    const afterMods=rawBase*mov*boost*expProtect*underdogMult;
+    // ── Low-Elo Verlustschutz ──
+    // Spieler unter dem Match-Durchschnitts-Elo werden bei Niederlagen gedämpft.
+    // Symmetrisch zum Underdog-Boost (gleiche tanh-Skala auf 200 Elo), wirkt aber
+    // nur bei Niederlagen. Slider 0..1 bestimmt die maximale Dämpfung.
+    // Beispiel (Slider=70%, Spieler 80 Elo unter Match-Avg): tanh(80/200)≈0.38,
+    //   Dämpfung = 1 - 0.7*0.38 = 0.733 → Verlust auf 73% reduziert.
+    const lowEloMax = cfg.low_elo_loss_damp ?? 0;
+    const eloBelowAvg = Math.max(0, avgElo - myElo);
+    const lowEloShare = Math.tanh(eloBelowAvg/200);
+    const lowEloDamp = won ? 1 : (1 - lowEloMax*lowEloShare);
+    bd.lowEloDamp=lowEloDamp; bd.lowEloShare=lowEloShare;
+    bd.lowEloEffect=won?0:rawBase*mov*boost*expProtect*underdogMult*lowEloDamp - rawBase*mov*boost*expProtect*underdogMult;
+
+    const afterMods=rawBase*mov*boost*expProtect*underdogMult*lowEloDamp;
     bd.afterMods=afterMods;
 
     // Risiko-Split
@@ -5777,10 +5794,25 @@ function _awardRankingsUncached(period){
       .sort((a,b)=>b.v-a.v);
   }
 
+  // ═══ POTW-/POTD-KÖNIG: kumulierte Player-of-the-Week / Player-of-the-Day Auszeichnungen ═══
+  // Beide Funktionen schließen den laufenden Zeitraum automatisch aus und sind identisch
+  // mit dem Zähler der POTW-/POTD-Badges → konsistent zwischen Award und Badge.
+  // Für period='week' bleibt die Liste leer (Zeitraum = 1 Woche, läuft noch).
+  const visiblePlayers = activePlayers();
+  const weekKingList = visiblePlayers
+    .map(p=>({id:p.id, v:countPeriodWins(p.id, ms, 'week')}))
+    .filter(x=>x.v>0)
+    .sort((a,b)=>b.v-a.v);
+  const dayKingList = visiblePlayers
+    .map(p=>({id:p.id, v:countDayWins(p.id, ms)}))
+    .filter(x=>x.v>0)
+    .sort((a,b)=>b.v-a.v);
+
   return {single:agg.single,team:agg.team,upsets:agg.upsets,biggest:agg.biggest,mvt,scorer,wall,grinder,winsList,perfect,streaks,
           worstWr,worstAtk,worstDef,worstElo,
           endgegner,clutchList,iceList,worstTeam,bestDuo,onFire,coldStreak,carryList,lossStreaks,
           soloList,formtief,zirkusList,baustelleList,showmasterList,peakEloList,
+          weekKingList,dayKingList,
           counts:{matches:ms.length}};
 }
 
@@ -5976,7 +6008,8 @@ function vAwards(){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak'
+    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
+    weekKing:'weekKing',   dayKing:'dayKing'
   };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
@@ -6069,7 +6102,8 @@ function vAwards(){
         eg0=g(R.endgegner),cl0=g(R.clutchList),ic0=g(R.iceList),
         wt0=g(R.worstTeam),bd0=g(R.bestDuo),of0=g(R.onFire),cs0=g(R.coldStreak),ck0=g(R.carryList),
         sl0=g(R.soloList),ft0=g(R.formtief),zk0=g(R.zirkusList),bs0=g(R.baustelleList),
-        sm0=g(R.showmasterList),pk0=g(R.peakEloList);
+        sm0=g(R.showmasterList),pk0=g(R.peakEloList),
+        wk0=g(R.weekKingList),dk0=g(R.dayKingList);
 
   let html='';
   // Section header: kleiner farbiger Punkt + Caps-Label + verlaufende Linie.
@@ -6104,6 +6138,16 @@ function vAwards(){
     highlights.push(pk0
       ? card('peakElo','gold','Peak Elo',[pk0.id],esc(topNames(R.peakEloList,x=>x.v,x=>pname(x.id))),'Allzeit-Höchststand',pk0.v)
       : empty('peakElo','gold','Peak Elo'));
+  }
+  // Wochenkönig & Tageskönig: nur in Saison/Gesamt sinnvoll (in Woche wäre Zeitraum=1).
+  // Beide nutzen exakt die Zähler-Logik der POTW-/POTD-Badges (Konsistenz garantiert).
+  if(awPeriod!=='week'){
+    highlights.push(wk0
+      ? card('weekKing','gold','Wochenkönig',[wk0.id],esc(topNames(R.weekKingList,x=>x.v,x=>pname(x.id))),wk0.v+'× Player of the Week',wk0.v)
+      : empty('weekKing','gold','Wochenkönig'));
+    highlights.push(dk0
+      ? card('dayKing','gold','Tageskönig',[dk0.id],esc(topNames(R.dayKingList,x=>x.v,x=>pname(x.id))),dk0.v+'× Player of the Day',dk0.v)
+      : empty('dayKing','gold','Tageskönig'));
   }
   sect('star','gold','Highlights',highlights);
 
@@ -6228,7 +6272,9 @@ const AWARD_META={
   formtief:{em:'🫠',title:'Formtief',cls:'red',why:'Größter Elo-Abstieg vom persönlichen Höchststand. Peak-Elo minus aktuelle Elo.'},
   zirkus:{em:'🎪',title:'Zirkus',cls:'red',why:'Team mit den meisten Niederlagen mit 5+ Toren Unterschied. Wird regelmäßig abgeschossen.'},
   baustelle:{em:'🚧',title:'Baustelle',cls:'red',why:'Team mit der längsten gemeinsamen Niederlagenserie. Zusammen funktioniert es einfach nicht.'},
-  peakElo:{em:'⛰️',title:'Peak Elo',cls:'gold',why:'Höchster jemals erreichter Elo-Stand. Saison-übergreifender Allzeit-Höchststand — auch wenn nach Saisonreset die Elo wieder bei 0 startet, bleibt der historische Peak erhalten.'}
+  peakElo:{em:'⛰️',title:'Peak Elo',cls:'gold',why:'Höchster jemals erreichter Elo-Stand. Saison-übergreifender Allzeit-Höchststand — auch wenn nach Saisonreset die Elo wieder bei 0 startet, bleibt der historische Peak erhalten.'},
+  weekKing:{em:'📅',title:'Wochenkönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Week-Auszeichnungen im Zeitraum. POTW bekommt, wer in einer Kalenderwoche die höchste Siegquote hat (min. 5 Siege). Die laufende Woche wird nicht gezählt — gleiche Logik wie das POTW-Badge.'},
+  dayKing:{em:'🏆',title:'Tageskönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Day-Auszeichnungen im Zeitraum. POTD bekommt, wer an einem Tag die meisten Siege geholt hat (min. 3). Der laufende Tag wird nicht gezählt — gleiche Logik wie das POTD-Badge.'}
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
@@ -6240,7 +6286,8 @@ function showAward(key){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak'
+    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
+    weekKing:'weekKing',   dayKing:'dayKing'
   };
 
   const MATCH_AWARDS = new Set(['upset','biggest']);
@@ -6307,6 +6354,8 @@ function showAward(key){
         case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+'× 5+ Tore',sort:x.v}));
         case 'baustelle':  return R.baustelleList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.best+'er Serie',sort:x.best}));
         case 'peakElo':    return (R.peakEloList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Elo',sort:x.v}));
+        case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTW',sort:x.v}));
+        case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTD',sort:x.v}));
         default: return [];
       }
     })();
@@ -6736,6 +6785,7 @@ function vSettings(){
     expProt:    Math.round((cfg.exp_protect_max ?? 0.1)*100),
     udElo:      Math.round((cfg.underdog_elo_max ?? 0.15)*100),
     udGames:    Math.round((cfg.underdog_games_max ?? 0.05)*100),
+    lowDamp:    Math.round((cfg.low_elo_loss_damp ?? 0)*100),
   };
   return `
     <div class="view-head"><h2>Formel</h2><p>Feintuning der Elo-Berechnung</p></div>
@@ -6759,6 +6809,7 @@ function vSettings(){
       ${sl('cfgWinBoost','Sieg-Boost',c.winBoost,100,140,'%')}
       ${sl('cfgMovDamp','MoV-Dämpfung Niederlage',c.movDamp,0,100,'%')}
       ${sl('cfgMovMax','MoV-Max-Boost (Kantersieg)',c.movMax,0,100,'%')}
+      ${sl('cfgLowEloLossDamp','Low-Elo Verlustschutz',c.lowDamp,0,100,'%')}
     </div>
 
     <div class="cfg-section-title">Bonus-System</div>
@@ -6788,6 +6839,7 @@ function vSettings(){
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
         <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
+        <b style="color:var(--acid)">Low-Elo Verlustschutz</b> — Spieler unter dem Match-Durchschnitts-Elo verlieren bei Niederlagen bis zu ${c.lowDamp}% weniger Elo (tanh-skaliert nach 200 Elo Abstand zum Match-Durchschnitt). Symmetrisch zum Underdog-Boost — schützt schwache Spieler vor Elo-Absturz, aber nur wenn sie tatsächlich schwächer als der Schnitt im Match sind.<br>
         <b style="color:var(--acid)">Spielbonus</b> — +${c.bonus} Elo pro Match, egal ob Sieg oder Niederlage. Belohnt aktive Spieler.<br>
         <b style="color:var(--acid)">Erfahrungs-Schutz Max</b> — Erfahrene Spieler verlieren bei Niederlagen bis zu ${c.expProt}% weniger Elo (linear ab 5 bis 30 Saison-Matches). Schützt vor Absturz durch Pech-Serien.<br>
         <b style="color:var(--acid)">Underdog-Boost (Elo-Gap)</b> — Schwächere Spieler bekommen bis zu ${c.udElo}% Bonus bei Siegen gegen stärkere Gegner (tanh-skaliert nach 400 Elo-Differenz). Wirkt nur als Belohnung, nie als Bestrafung.<br>
@@ -8437,7 +8489,8 @@ function showPlayerAwards(playerId, awards){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak'
+    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
+    weekKing:'weekKing',   dayKing:'dayKing'
   };
   const pl='Gesamte Liga';
   const rows=awards.length?awards.map(a=>{
@@ -8727,6 +8780,7 @@ function bind(){
   bindSlider('cfgPos','pos_swing',v=>v/100,v=>Math.round(v));
   bindSlider('cfgWinBoost','win_boost',v=>v/100,v=>Math.round(v));
   bindSlider('cfgMovDamp','mov_loss_damp',v=>v/100,v=>Math.round(v));
+  bindSlider('cfgLowEloLossDamp','low_elo_loss_damp',v=>v/100,v=>Math.round(v));
   bindSlider('cfgBonus','match_bonus',v=>v/10,v=>Math.round(v));
   // Neue Slider
   bindSlider('cfgStartElo','start_elo',v=>v,v=>Math.round(v));
@@ -9242,6 +9296,9 @@ function showMatchDetail(mid){
       if(Math.abs(b.movEffect)>0.1) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
       if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+((b.winBoost-1)*100).toFixed(1)+'% für Siege'});
       if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:((1-b.expProtect)*100).toFixed(1)+'% Schutz'});
+      if(b.lowEloDamp!==undefined && b.lowEloDamp<0.995){
+        factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:((1-b.lowEloDamp)*100).toFixed(1)+'% Schutz (schwacher Spieler)'});
+      }
       if(b.underdogMult>1.005){
         // Underdog-Boost setzt sich aus zwei unabhängig clampten Komponenten zusammen
         // (Elo-Gap + Spiele-Gap). Wir zeigen nur die wirksamen (positiven) Anteile,
@@ -9249,7 +9306,9 @@ function showMatchDetail(mid){
         const eloPart   = b.underdogEloDiff>0   ? b.underdogEloDiff+' Elo schwächer'   : null;
         const gamesPart = b.underdogGamesDiff>0 ? b.underdogGamesDiff+' Spiele weniger' : null;
         const desc = [eloPart, gamesPart].filter(Boolean).join(' · ') || 'Underdog';
-        factors.push({label:'Underdog-Boost',val:b.afterMods-b.rawBase*b.movMult*b.winBoost*b.expProtect, desc});
+        // Effekt ohne lowElo-Anteil: rawBase*mov*boost*expProtect*(underdogMult-1)
+        const undEffect = b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1);
+        factors.push({label:'Underdog-Boost',val:undEffect, desc});
       }
       if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Mate-Stärke-Verteilung'});
       if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posMult>1?'Schwache':'Starke')+' Position'});
