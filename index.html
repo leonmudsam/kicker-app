@@ -1982,7 +1982,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.19.3';
+const BUILD_VERSION='2026.06.19.4';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2126,6 +2126,23 @@ const ICONS = {
   weekKing:      `<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M8 7v4M16 7v4"/><polygon points="5,7 8,3 12,6 16,3 19,7" fill="none" stroke-linejoin="round"/>`,
   // Award: Meiste POTD-Auszeichnungen (Trophäe mit Krone) — saison-/all-time Sammler-Award
   dayKing:       `<path d="M8 21h8M12 17v4M7 8h10v4a5 5 0 01-10 0zM5 11a2 2 0 01-2-2V7h4M19 11a2 2 0 002-2V7h-4"/><polygon points="5,5 8,2 12,4 16,2 19,5" fill="none" stroke-linejoin="round"/>`,
+  // ── Neue Badge-Icons ──
+  // Krimi-Reihe: zackige Achterbahn-Linie (viele knappe, dramatische Spiele)
+  thriller:      `<polyline points="3 18 6 8 9 16 12 10 15 17 18 8 21 14"/>`,
+  // Klares Ding: Daumen hoch (eindeutiger, deutlicher Sieg)
+  thumbsUp:      `<rect x="3" y="11" width="4" height="10" rx="1"/><path d="M7 11l3-5c.2-.5.7-.7 1.2-.7 1.1 0 1.8 1 1.5 2L12 10h4.5c1 0 1.7.7 1.5 1.7l-1.3 5c-.2.8-.9 1.3-1.7 1.3H7z"/>`,
+  // Wiederholungstäter: zwei überlappende Karten (Duplikat-Score)
+  duplicate:     `<rect x="4" y="4" width="13" height="13" rx="2"/><rect x="8" y="8" width="13" height="13" rx="2"/>`,
+  // Comeback-Tag: V-Kurve mit Endpunkt oben (Talsohle → Wiederaufstieg)
+  comeback:      `<polyline points="3 4 9 19 21 4"/><circle cx="21" cy="4" r="1.5"/>`,
+  // Revanchist: zwei gegenläufige Refresh-Bögen (Rück-Match gewonnen)
+  rematch:       `<polyline points="4 4 4 10 10 10"/><path d="M4 10a8 8 0 0114-3"/><polyline points="20 20 20 14 14 14"/><path d="M20 14a8 8 0 01-14 3"/>`,
+  // Königsklasse: Krone mit drei Edelsteinen darunter (Top-3 der Liga)
+  kingClass:     `<polygon points="3,9 6,5 9,9 12,5 15,9 18,5 21,9 21,17 3,17" fill="none" stroke-linejoin="round"/><circle cx="7" cy="14" r="1.3"/><circle cx="12" cy="14" r="1.3"/><circle cx="17" cy="14" r="1.3"/>`,
+  // Pflichtaufgabe: Klemmbrett mit Häkchen (Pflicht erfüllt)
+  clipboard:     `<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><polyline points="9 13 11 15 15 11"/>`,
+  // Award-Sammler: drei Medaillen mit Bändern (Sammlung von Auszeichnungen)
+  medalTrio:     `<circle cx="7" cy="15" r="3.5"/><circle cx="12" cy="10" r="3.5"/><circle cx="17" cy="15" r="3.5"/><path d="M6 12l-1-3M11 7l-1-3M16 12l1-3M18 7l-1-3M13 7l-1-3M8 12l-1-3"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -2322,6 +2339,8 @@ function getGlobalSim(){
       // Abgeleitete Maps invalidieren — werden lazy neu gebaut
       _cache._historyByMatchId = null;
       _cache._snapMap = null;
+      _cache._seasonRankings = null;
+      _cache._matchesBySeason = null;
       return sim;
     }
   }
@@ -2335,6 +2354,8 @@ function getGlobalSim(){
   _cache._globalSim = sim;
   _cache._historyByMatchId = null;
   _cache._snapMap = null;
+  _cache._seasonRankings = null;
+  _cache._matchesBySeason = null;
   return sim;
 }
 
@@ -2360,6 +2381,51 @@ function getSnapMap(){
   }
   _cache._snapMap = map;
   return map;
+}
+
+// ─── Matches-pro-Saison Cache (lazy, einmalig pro Sim) ───
+// Gruppiert alle Matches nach ihrer Saison-ID. Wird vom Award-Sammler-Badge
+// und potentiell weiteren Saison-aggregierenden Funktionen genutzt.
+function getMatchesBySeason(){
+  if(_cache._matchesBySeason) return _cache._matchesBySeason;
+  const map={};
+  for(let i=0; i<matches.length; i++){
+    const sid=seasonOf(matches[i].created_at).id;
+    if(!map[sid]) map[sid]=[];
+    map[sid].push(matches[i]);
+  }
+  _cache._matchesBySeason=map;
+  return map;
+}
+
+// ─── Saison-Rangliste Cache (lazy, einmalig pro Sim) ───
+// Pro Saison: Top-3 und Bottom-3 Spieler nach Saison-End-Elo.
+// Bottom-3 nur definiert wenn mindestens 6 Saison-Teilnehmer (sonst überlappt es mit Top-3).
+// Genutzt von Königsklasse + Pflichtaufgabe Badges.
+function getSeasonRankingsCache(){
+  if(_cache._seasonRankings) return _cache._seasonRankings;
+  const gSim=getGlobalSim();
+  const out={};
+  const pm=pmap();
+  Object.keys(gSim.seasonEndElos||{}).forEach(sid=>{
+    const endElos=gSim.seasonEndElos[sid]||{};
+    const playedMap=gSim.seasonPlayed[sid]||{};
+    const list=Object.keys(endElos)
+      .filter(pid=>{
+        const p=pm[pid];
+        if(!p||p.hidden) return false;
+        return (playedMap[pid]||0)>0;
+      })
+      .map(pid=>({pid,elo:endElos[pid]}))
+      .sort((a,b)=>b.elo-a.elo);
+    const top3=new Set(list.slice(0,3).map(x=>x.pid));
+    const bottom3 = list.length>=6
+      ? new Set(list.slice(-3).map(x=>x.pid))
+      : new Set();
+    out[sid]={top3,bottom3};
+  });
+  _cache._seasonRankings=out;
+  return out;
 }
 
 let _lastSimVersion = 0;
@@ -7146,6 +7212,7 @@ document.getElementById('sheetBg').onclick=closeSheet;
 // Reihenfolge im Array = Anzeige-Reihenfolge im Badge-Sheet (Grid mit 2 Spalten).
 // Paare unten: jede Zeile hier = eine Zeile im 2-Spalten-Grid (links/rechts).
 const BADGES=[
+  // ══ EINMALIGE BADGES (Karriere-Meilensteine) ══
   // Zeile 1 — Debütant, Stammgast
   {id:'first_match',em:'🐣',ic:'egg',name:'Debütant',desc:'Match gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=1?1:0},
@@ -7166,49 +7233,71 @@ const BADGES=[
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=100?1:0},
   {id:'dominator_400',em:'👑',ic:'dominator',name:'Dominator',desc:'400 Elo in einer Saison erreicht',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=400?1:0},
-  // Zeile 5 — Dynastie, Frühschicht
+  // Zeile 5 — Dynastie, Vize-Meister
   {id:'dynasty_600',em:'🏛',ic:'temple',name:'Dynastie',desc:'600 Elo in einer Saison erreicht',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=600?1:0},
+  {id:'vice_champion',em:'🥈',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
+    multi:true,count:(id,ms)=>countViceChampion(id)},
+
+  // ══ MEHRFACH-BADGES — gruppiert nach Thema ══
+  // Zeile 6 — Frühschicht, Unschlagbar (Tages-Patterns)
   {id:'early_bird',em:'🌅',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
-  // Zeile 6 — Nerven aus Stahl, Zittersieg
-  {id:'nerves_of_steel',em:'❤️',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
-    multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
+  {id:'unbeatable',em:'👑',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
+    multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
+  // Zeile 7 — Comeback-Tag, Revanchist (Wiedergutmachung)
+  {id:'comeback_day',em:'🔁',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit Niederlage gestartet und mit Sieg beendet (min. 3 Matches an dem Tag)',
+    multi:true,count:(id,ms)=>countComebackDays(id,ms)},
+  {id:'revanchist',em:'⚔️',ic:'rematch',name:'Revanchist',desc:'Nach Niederlage gegen ein Team direkt im nächsten Match wieder auf dasselbe Team getroffen und gewonnen',
+    multi:true,count:(id,ms)=>countRevenge(id,ms)},
+  // Zeile 8 — Klares Ding, Krimi-Reihe (Tordifferenz-Pattern)
+  {id:'clear_win',em:'✊',ic:'thumbsUp',name:'Klares Ding',desc:'Sieg mit Tordifferenz ≥ 7',
+    multi:true,count:(id,ms)=>countClearWins(id,ms)},
+  {id:'krimi',em:'🎬',ic:'thriller',name:'Krimi-Reihe',desc:'5 Spiele in Folge mit Tordifferenz ≤ 2 (Sieg oder Niederlage)',
+    multi:true,count:(id,ms)=>countKrimiStreaks(id,ms)},
+  // Zeile 9 — Wiederholungstäter, Zittersieg (Score-Spezial)
+  {id:'repeat_score',em:'🪞',ic:'duplicate',name:'Wiederholungstäter',desc:'3 Siege in Folge mit identischem Endstand',
+    multi:true,count:(id,ms)=>countRepeatScoreStreaks(id,ms)},
   {id:'nail_biter',em:'🤏',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
-  // Zeile 7 — Absoluter Sieger, Absoluter Verlierer
+  // Zeile 10 — Nerven aus Stahl, Absoluter Sieger
+  {id:'nerves_of_steel',em:'❤️',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge — knappe Niederlagen brechen die Serie, andere Matches sind irrelevant',
+    multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
   {id:'perfect_win',em:'💯',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&shutout(id,m,10,0)).length},
+  // Zeile 11 — Absoluter Verlierer, Losing Streak
   {id:'perfect_loss',em:'😵',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&!won(id,m)&&shutout(id,m,0,10)).length},
-  // Zeile 8 — 5er Serie, 10er Serie
+  {id:'losing5',em:'📉',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
+    multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
+  // Zeile 12 — 5er Serie, 10er Serie
   {id:'streak5',em:'🔥',ic:'flame',name:'5er Serie',desc:'5 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,5)},
   {id:'streak10',em:'🔥🔥',ic:'flameDouble',name:'10er Serie',desc:'10 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,10)},
-  // Zeile 9 — 15er Serie, 30er Serie
+  // Zeile 13 — 15er Serie, 30er Serie
   {id:'streak15',em:'🔥🔥🔥',ic:'flameTriple',name:'15er Serie',desc:'15 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,15)},
   {id:'streak30',em:'👑🔥',ic:'crownFlame',name:'30er Serie',desc:'30 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,30)},
-  // Zeile 10 — Mauer, Carry
+  // Zeile 14 — Mauer, Carry
   {id:'wall_badge',em:'🧱',ic:'brick',name:'Mauer',desc:'Sieg mit max. 2 Gegentoren als Verteidiger',
     multi:true,count:(id,ms)=>ms.filter(m=>{if(!matchOf(id,m)||!won(id,m))return false;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
   {id:'carry',em:'🎯',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
-  // Zeile 11 — Losing Streak, Unschlagbar
-  {id:'losing5',em:'📉',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
-    multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
-  {id:'unbeatable',em:'👑',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
-    multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
-  // Zeile 12 — Upset-König, Vize-Meister
+  // Zeile 15 — Upset-König, Königsklasse (Sieg gegen Stärkere)
   {id:'upset_king',em:'🌪️',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&myExp(id,m)<0.35).length},
-  {id:'vice_champion',em:'🥈',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
-    multi:true,count:(id,ms)=>countViceChampion(id)},
-  // Zeile 13 — Player of the Week, Player of the Day
+ /* {id:'koenigsklasse',em:'👑',ic:'kingClass',name:'Königsklasse',desc:'Sieg gegen mindestens einen Gegner aus den Top 3 der Saison-Endrangliste',
+    multi:true,count:(id,ms)=>countTopThreeWins(id,ms)},
+  // Zeile 16 — Pflichtaufgabe, Award-Sammler
+  {id:'pflichtaufgabe',em:'📋',ic:'clipboard',name:'Pflichtaufgabe',desc:'Sieg gegen mindestens einen Gegner aus den Bottom 3 der Saison-Endrangliste (ab 6 Saison-Teilnehmern)',
+    multi:true,count:(id,ms)=>countBottomThreeWins(id,ms)}, */
+  {id:'award_collector',em:'🏅',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Player-of-the-Day und 2 Player-of-the-Week Auszeichnungen gesammelt',
+    multi:true,count:(id,ms)=>countAwardCollector(id)},
+  // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
   {id:'potw',em:'🏅',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
     multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
   {id:'potd',em:'🏆',ic:'trophyDay',name:'Player of the Day',desc:'Meiste Siege an einem Tag (min. 3)',
@@ -7371,6 +7460,126 @@ function countDayWins(id,allMs){
   return count;
 }
 
+// ─── Krimi-Reihe: 5 Spiele in Folge mit Tordifferenz ≤ 2 (Sieg ODER Niederlage) ───
+// Sobald 5 erreicht, wird die Serie zurückgesetzt → mehrfach erreichbar.
+function countKrimiStreaks(id,ms){
+  const ordered=[...ms].filter(m=>matchOf(id,m))
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  let cur=0,count=0;
+  ordered.forEach(m=>{
+    const diff=Math.abs(m.score_a-m.score_b);
+    if(diff<=2){
+      cur++;
+      if(cur>=5){count++; cur=0;}
+    } else {
+      cur=0;
+    }
+  });
+  return count;
+}
+
+// ─── Klares Ding: Sieg mit Tordifferenz ≥ 7 ───
+function countClearWins(id,ms){
+  return ms.filter(m=>matchOf(id,m)&&won(id,m)
+    &&Math.abs(m.score_a-m.score_b)>=7).length;
+}
+
+// ─── Wiederholungstäter: 3 Siege in Folge mit identischem Endstand ───
+// Niederlagen oder Siege mit anderem Score brechen die Serie.
+function countRepeatScoreStreaks(id,ms){
+  const ordered=[...ms].filter(m=>matchOf(id,m))
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  let lastScore=null,cur=0,count=0;
+  ordered.forEach(m=>{
+    if(!won(id,m)){cur=0; lastScore=null; return;}
+    const score=goalsFor(id,m)+':'+goalsAgainst(id,m);
+    if(score===lastScore){
+      cur++;
+      if(cur>=3){count++; cur=0; lastScore=null;}
+    } else {
+      cur=1; lastScore=score;
+    }
+  });
+  return count;
+}
+
+// ─── Comeback-Tag: Tag mit Niederlage gestartet, mit Sieg beendet, min. 3 Matches ───
+function countComebackDays(id,ms){
+  const mine=ms.filter(m=>matchOf(id,m))
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const byDay={};
+  mine.forEach(m=>{
+    const d=new Date(m.created_at).toISOString().slice(0,10);
+    if(!byDay[d]) byDay[d]=[];
+    byDay[d].push(m);
+  });
+  let count=0;
+  Object.values(byDay).forEach(dayMs=>{
+    if(dayMs.length<3) return;
+    const first=dayMs[0], last=dayMs[dayMs.length-1];
+    if(!won(id,first) && won(id,last)) count++;
+  });
+  return count;
+}
+
+// ─── Revanchist: nach Niederlage gegen Team X im direkt folgenden Match Sieg gegen X ───
+// Strikt: das unmittelbar nächste Match muss gegen das gleiche Gegner-Team sein.
+function countRevenge(id,ms){
+  const mine=ms.filter(m=>matchOf(id,m))
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const oppKey=(m)=>{
+    const onA=[m.a1,m.a2].includes(id);
+    return (onA?[m.b1,m.b2]:[m.a1,m.a2]).slice().sort().join('|');
+  };
+  let count=0;
+  for(let i=0;i<mine.length-1;i++){
+    if(won(id,mine[i])) continue; // M_i muss Niederlage sein
+    if(!won(id,mine[i+1])) continue; // M_{i+1} muss Sieg sein
+    if(oppKey(mine[i])===oppKey(mine[i+1])) count++;
+  }
+  return count;
+}
+
+// ─── Königsklasse: Sieg gegen mind. 1 Gegner aus den Top 3 der Saison-Endrangliste ───
+function countTopThreeWins(id,ms){
+  const rk=getSeasonRankingsCache();
+  return ms.filter(m=>{
+    if(!matchOf(id,m)||!won(id,m)) return false;
+    const r=rk[seasonOf(m.created_at).id];
+    if(!r||!r.top3.size) return false;
+    const onA=[m.a1,m.a2].includes(id);
+    const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
+    return opps.some(oId=>r.top3.has(oId));
+  }).length;
+}
+
+// ─── Pflichtaufgabe: Sieg gegen mind. 1 Gegner aus den Bottom 3 der Saison-Endrangliste ───
+function countBottomThreeWins(id,ms){
+  const rk=getSeasonRankingsCache();
+  return ms.filter(m=>{
+    if(!matchOf(id,m)||!won(id,m)) return false;
+    const r=rk[seasonOf(m.created_at).id];
+    if(!r||!r.bottom3.size) return false;
+    const onA=[m.a1,m.a2].includes(id);
+    const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
+    return opps.some(oId=>r.bottom3.has(oId));
+  }).length;
+}
+
+// ─── Award-Sammler: in einer Saison min. 5 POTD UND min. 2 POTW Auszeichnungen ───
+// Pro qualifizierter Saison vergeben (mehrfach über Karriere).
+function countAwardCollector(id){
+  const bySeason=getMatchesBySeason();
+  let count=0;
+  Object.values(bySeason).forEach(seasonMs=>{
+    const potd=countDayWins(id,seasonMs);
+    if(potd<5) return; // billiger Vorab-Filter
+    const potw=countPeriodWins(id,seasonMs,'week');
+    if(potw>=2) count++;
+  });
+  return count;
+}
+
 function longestPlayerStreak(id,ms){
   const ordered=[...ms].filter(m=>matchOf(id,m)).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   let cur=0,best=0;
@@ -7471,6 +7680,15 @@ function getBadgeEarnedCache(){
       climbed: false, dominated: false, dynastic: false,
       // 10:9-Serien-Counter (resettet bei Nicht-10:9 oder Niederlage)
       nailStreak: 0,
+      // Krimi-Reihe: aufeinanderfolgende Spiele mit Tordifferenz ≤ 2
+      krimiCur: 0,
+      // Wiederholungstäter: letzter Sieg-Score und aktueller Counter
+      lastWinScore: null, wtCur: 0,
+      // Comeback-Tag: erstes Match-Ergebnis pro Tag + Trigger-Flag
+      firstResOfDay: {},   // "YYYY-MM-DD" → 'W' | 'L'
+      comebackFired: {},   // "YYYY-MM-DD" → true (schon gefeuert)
+      // Revanchist: letztes verlorenes Gegner-Team (sortierter String "p1|p2")
+      lastLossOpp: null,
     };
   });
 
@@ -7598,7 +7816,70 @@ function getBadgeEarnedCache(){
         if(!s.dynastic  && s.peakElo>=600){ s.dynastic=true;  fire('dynasty_600');   }
       }
 
-      // potw / potd: erfordern Vergleich aller Spieler am Periodenende →
+      // ── Klares Ding: Sieg mit Tordifferenz ≥ 7 ──
+      const goalDiff=Math.abs(gf-ga);
+      if(w && goalDiff>=7) fire('clear_win');
+
+      // ── Krimi-Reihe: 5 Spiele in Folge mit Tordifferenz ≤ 2 ──
+      // Egal ob Sieg oder Niederlage; sobald 5 erreicht → Counter-Reset.
+      if(goalDiff<=2){
+        s.krimiCur++;
+        if(s.krimiCur>=5){ fire('krimi'); s.krimiCur=0; }
+      } else {
+        s.krimiCur=0;
+      }
+
+      // ── Wiederholungstäter: 3 Siege in Folge mit identischem Endstand ──
+      // Niederlagen oder Siege mit anderem Score brechen die Serie.
+      if(w){
+        const score=gf+':'+ga;
+        if(score===s.lastWinScore){
+          s.wtCur++;
+          if(s.wtCur>=3){ fire('repeat_score'); s.wtCur=0; s.lastWinScore=null; }
+        } else {
+          s.wtCur=1; s.lastWinScore=score;
+        }
+      } else {
+        s.wtCur=0; s.lastWinScore=null;
+      }
+
+      // ── Comeback-Tag: Tag mit Niederlage gestartet, mit Sieg beendet, min. 3 Matches ──
+      // Erstes Match des Tages für diesen Spieler? → Ergebnis als Tag-Start merken.
+      if(s.days[day].g===1){
+        s.firstResOfDay[day] = w ? 'W' : 'L';
+      }
+      // Aktueller Sieg + Tag startete mit Niederlage + min. 3 Matches + noch nicht gefeuert
+      if(w && s.days[day].g>=3 && s.firstResOfDay[day]==='L' && !s.comebackFired[day]){
+        s.comebackFired[day]=true;
+        fire('comeback_day');
+      }
+
+      // ── Revanchist: Sieg gegen das Team, gegen das man im direkt vorigen Match verloren hat ──
+      // Strikt: das unmittelbar nächste Match nach einer Niederlage muss gegen X sein.
+      const currentOpp=(onA?[m.b1,m.b2]:[m.a1,m.a2]).slice().sort().join('|');
+      if(s.lastLossOpp){
+        if(currentOpp===s.lastLossOpp && w){
+          fire('revanchist');
+        }
+        // Egal ob Revanche gelang oder nicht: Counter resetten (nicht mehr "direkt nächstes Match")
+        s.lastLossOpp=null;
+      }
+      // Wenn aktuelles Match Niederlage: setze lastLossOpp für nächstes Match
+      if(!w) s.lastLossOpp=currentOpp;
+
+      // ── Königsklasse / Pflichtaufgabe: Sieg gegen Top-3 / Bottom-3 der Saison-Endrangliste ──
+      // Cache ist nach erstem Aufruf für alle weiteren Matches verfügbar.
+      if(w){
+        const rk=getSeasonRankingsCache();
+        const r=rk[seasonOf(m.created_at).id];
+        if(r){
+          const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
+          if(r.top3.size && opps.some(oId=>r.top3.has(oId))) fire('koenigsklasse');
+          if(r.bottom3.size && opps.some(oId=>r.bottom3.has(oId))) fire('pflichtaufgabe');
+        }
+      }
+
+      // potw / potd / award_collector: erfordern Vergleich aller Spieler am Periodenende →
       // zu komplex für inkrementell, werden in computeBadges() lazy berechnet
       // vice_champion: Saison-End-Event, nicht an ein einzelnes Match gebunden →
       // wird ebenfalls in computeBadges() aus dem seasons-Archiv ermittelt
