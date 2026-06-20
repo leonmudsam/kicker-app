@@ -696,6 +696,29 @@
   .toast.err{background:var(--red);color:#fff}
   .toast.ok{background:var(--acid);color:var(--acid-deep)}
 
+  /* ─── Achievement-Toast: gestapelt über dem normalen Toast, mit Badge-Icon ─── */
+  .ach-toast{position:fixed;left:50%;bottom:calc(160px + var(--safe-bot));z-index:201;
+    transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
+    display:flex;align-items:center;gap:12px;
+    background:linear-gradient(135deg,rgba(190,242,100,.14),rgba(247,207,74,.08) 60%,var(--surface) 100%);
+    border:1px solid rgba(190,242,100,.45);
+    padding:11px 14px 11px 11px;border-radius:14px;
+    box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.2);
+    max-width:88vw;min-width:240px;transition:.35s cubic-bezier(.16,1,.3,1)}
+  .ach-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .ach-toast-ic{width:36px;height:36px;border-radius:10px;
+    background:rgba(190,242,100,.16);display:grid;place-items:center;
+    color:var(--acid);flex-shrink:0;font-size:22px;line-height:1;
+    filter:drop-shadow(0 2px 4px rgba(190,242,100,.3))}
+  .ach-toast-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ach-toast-text{flex:1;min-width:0}
+  .ach-toast-cat{font-size:9px;text-transform:uppercase;letter-spacing:.14em;
+    color:var(--acid);font-family:'Sometype Mono',monospace;font-weight:700;line-height:1}
+  .ach-toast-name{font-size:13px;font-weight:700;line-height:1.2;margin-top:3px;
+    color:var(--ink);letter-spacing:-.01em}
+  .ach-toast-sub{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;
+    margin-top:3px;letter-spacing:.02em}
+
   /* ============ MISC ============ */
   .empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
   .empty .ee{font-size:34px;margin-bottom:12px;opacity:.5}
@@ -1442,8 +1465,8 @@
   .aw-pod-crown svg{width:18px;height:18px}
 
   /* ============ WOCHEN-HIGHLIGHTS (Woche-Ansicht) ============ */
-  .wk-highlights{display:flex;gap:8px;margin-bottom:14px}
-  .wk-hl{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  .wk-highlights{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .wk-hl{background:var(--surface);border:1px solid var(--line);border-radius:14px;
     padding:10px 11px;min-width:0;position:relative;overflow:hidden;cursor:pointer;transition:.16s}
   .wk-hl:active{transform:scale(.985);background:var(--surface2)}
   .wk-hl-ic{position:absolute;top:8px;right:8px;color:var(--faint);opacity:.55}
@@ -1461,6 +1484,8 @@
   .wk-hl.streak .wk-hl-label{color:var(--acid)}
   .wk-hl.upset{background:linear-gradient(135deg,rgba(167,139,250,.06),var(--surface) 70%);border-color:rgba(167,139,250,.2)}
   .wk-hl.upset .wk-hl-label{color:var(--purple)}
+  .wk-hl.king{background:linear-gradient(135deg,rgba(247,207,74,.07),var(--surface) 70%);border-color:rgba(247,207,74,.22)}
+  .wk-hl.king .wk-hl-label{color:var(--gold)}
   .wk-hl.empty{opacity:.55}
   .wk-hl.empty .wk-hl-val{color:var(--muted);font-size:13px}
 
@@ -1982,7 +2007,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.19.4';
+const BUILD_VERSION='2026.06.20.8';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2042,6 +2067,7 @@ const ICONS = {
   chartBar:  `<path d="M3 3v18h18M7 14v4M12 9v9M17 5v13"/>`,
   // Soziale Symbole
   handshake: `<circle cx="6" cy="10" r="3"/><circle cx="18" cy="10" r="3"/><path d="M9 10h6"/><path d="M3 20a4 4 0 014-4h2M21 20a4 4 0 00-4-4h-2"/>`,
+  swords:    `<path d="M14.5 17.5L3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M9.5 17.5L21 6V3h-3L6.5 14.5"/><path d="M11 19l-6-6"/><path d="M8 16l-4 4"/><path d="M5 21l-2-2"/>`,
   users:     `<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20v-1a6 6 0 0112 0v1M15 20v-1a5 5 0 015-1"/>`,
   user:      `<circle cx="12" cy="8" r="4"/><path d="M5 21v-1a7 7 0 0114 0v1"/>`,
   // Status
@@ -2856,7 +2882,7 @@ async function loadAll(){
   }catch(e){
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
     document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
-      <div class="ee">⚠️</div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
+      <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
   }
 }
 
@@ -4193,6 +4219,118 @@ function teamDetail(p1,p2){
   return result;
 }
 
+// ════════════════════════════════════════════════════════════════════
+// H2H-DETAIL: Bilanz zweier Spieler in zwei Dimensionen
+// ════════════════════════════════════════════════════════════════════
+// Liefert für Spieler-Paar (idA, idB) ALLES, was das H2H-Sheet braucht:
+//   • asTeam     — gemeinsame Matches als Teamkollegen
+//   • asOppForA  — Matches als Gegner, ALLES AUS SICHT VON idA
+//                  (Wins zählen idA-Siege gegen idB; eloDelta = Σ idA-Deltas;
+//                   gf/ga = idA-Team's Score)
+//   • lastEncounters — die jüngsten 6 gemeinsamen Matches (Team ∪ Gegner)
+//
+// Achtung: Cache-Key behält die Reihenfolge (idA + '|' + idB), weil asOppForA
+// asymmetrisch ist — h2hDetail(X,Y).asOppForA ≠ h2hDetail(Y,X).asOppForA.
+// ════════════════════════════════════════════════════════════════════
+function h2hDetail(idA, idB){
+  const key = idA + '|' + idB;
+  if(!_cache._h2hDetail) _cache._h2hDetail = {};
+  if(_cache._h2hDetail[key]) return _cache._h2hDetail[key];
+
+  const asTeam = {g:0, w:0, gf:0, ga:0, eloDelta:0};
+  const asOppForA = {g:0, w:0, gf:0, ga:0, eloDelta:0};
+  const encounters = [];
+
+  for(const m of matches){
+    const aInA = m.a1===idA || m.a2===idA;
+    const bInA = m.a1===idB || m.a2===idB;
+    const aInB = m.b1===idA || m.b2===idA;
+    const bInB = m.b1===idB || m.b2===idB;
+
+    const dA = (m.deltas||{})[idA] || 0;
+    const dB = (m.deltas||{})[idB] || 0;
+
+    if(aInA && bInA){
+      // Beide im Team A
+      asTeam.g++;
+      if(m.winner==='A') asTeam.w++;
+      asTeam.gf += m.score_a;
+      asTeam.ga += m.score_b;
+      asTeam.eloDelta += (dA + dB);
+      encounters.push({m, type:'team', wonForA: m.winner==='A'});
+    } else if(aInB && bInB){
+      // Beide im Team B
+      asTeam.g++;
+      if(m.winner==='B') asTeam.w++;
+      asTeam.gf += m.score_b;
+      asTeam.ga += m.score_a;
+      asTeam.eloDelta += (dA + dB);
+      encounters.push({m, type:'team', wonForA: m.winner==='B'});
+    } else if((aInA && bInB) || (aInB && bInA)){
+      // Gegeneinander — aus Sicht von idA aggregieren
+      asOppForA.g++;
+      const aSideWon = aInA ? (m.winner==='A') : (m.winner==='B');
+      if(aSideWon) asOppForA.w++;
+      asOppForA.gf += aInA ? m.score_a : m.score_b;
+      asOppForA.ga += aInA ? m.score_b : m.score_a;
+      asOppForA.eloDelta += dA;
+      encounters.push({m, type:'opp', wonForA: aSideWon});
+    }
+  }
+
+  encounters.sort((a,b)=> new Date(b.m.created_at) - new Date(a.m.created_at));
+
+  const result = {
+    asTeam,
+    asOppForA,
+    total: asTeam.g + asOppForA.g,
+    lastEncounters: encounters.slice(0, 6)
+  };
+  _cache._h2hDetail[key] = result;
+  return result;
+}
+
+// Aggregierte Liste aller Mitspieler-Bilanzen für einen Spieler.
+// Pro Mitspieler: Anzahl Team-Matches + Anzahl Gegner-Matches.
+// Sortiert nach Gesamt-Häufigkeit, gefiltert ≥ min Spiele.
+function playerH2HList(id, minTotal=3){
+  if(!_cache._h2hList) _cache._h2hList = {};
+  const ckey = id+'|'+minTotal;
+  if(_cache._h2hList[ckey]) return _cache._h2hList[ckey];
+
+  const stats = {}; // otherId → {teamG, teamW, oppG, oppW}
+  for(const m of matches){
+    const ids = [m.a1, m.a2, m.b1, m.b2];
+    if(!ids.includes(id)) continue;
+    const inA = m.a1===id || m.a2===id;
+    const sameTeam = inA ? [m.a1, m.a2] : [m.b1, m.b2];
+    const oppTeam  = inA ? [m.b1, m.b2] : [m.a1, m.a2];
+    const won = (inA && m.winner==='A') || (!inA && m.winner==='B');
+
+    sameTeam.forEach(other=>{
+      if(other===id) return;
+      if(!stats[other]) stats[other]={teamG:0,teamW:0,oppG:0,oppW:0};
+      stats[other].teamG++;
+      if(won) stats[other].teamW++;
+    });
+    oppTeam.forEach(other=>{
+      if(!stats[other]) stats[other]={teamG:0,teamW:0,oppG:0,oppW:0};
+      stats[other].oppG++;
+      if(won) stats[other].oppW++;
+    });
+  }
+  const pm = pmap();
+  const out = Object.entries(stats)
+    .filter(([oid, s]) => {
+      const p = pm[oid];
+      return p && !p.hidden && (s.teamG + s.oppG) >= minTotal;
+    })
+    .map(([oid, s]) => ({oid, ...s, total: s.teamG + s.oppG}))
+    .sort((a,b)=> b.total - a.total);
+  _cache._h2hList[ckey] = out;
+  return out;
+}
+
 function monthlyElo(){
   const now=new Date(), ym=now.getFullYear()+'-'+now.getMonth();
   const pS={},tS={};
@@ -4640,7 +4778,6 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const ids=[m.a1,m.a2,m.b1,m.b2];
     if(ids.some(id=>elo[id]===undefined)){
       history.push({matchId:m.id,eloBefore:{},eloAfter:{},deltas:{},expA:0.5,breakdowns:{}});
-      priorMatches.push(m);
       return;
     }
     const eloBefore={};ids.forEach(id=>eloBefore[id]=elo[id]);
@@ -5354,19 +5491,29 @@ function vRanking(){
     const streakClick = topStreak ? `data-detail="${esc(topStreak.id)}"` : '';
     const upsetClick  = topUpset  ? `data-match="${esc(topUpset.m.id)}"` : '';
 
+    // All-Time POTW-/POTD-König (Award "Wochenkönig"/"Tageskönig" aus dem Awards-Tab).
+    // weekKingList/dayKingList werden in _awardRankingsUncached('all') aus countPeriodWins/
+    // countDayWins über die gesamte Match-Historie aufgebaut — laufender Zeitraum wird
+    // dort bereits ausgeschlossen. Cache-Wrapper (getCachedAwardRankings) verhindert
+    // teure Re-Berechnung pro Re-Render.
+    const _allRanks   = getCachedAwardRankings('all');
+    const _kingList   = period==='week' ? (_allRanks.weekKingList||[]) : (_allRanks.dayKingList||[]);
+    const topKing     = _kingList[0] || null;
+    const kingClick   = topKing ? `data-detail="${esc(topKing.id)}"` : '';
+    const kingLabel   = period==='week' ? 'Wochenkönig'   : 'Tageskönig';
+    const kingIcon    = period==='week' ? 'weekKing'      : 'dayKing';
+    const kingDetail  = topKing ? `${topKing.v}× ${period==='week'?'Player of Week':'Player of Day'}` : '';
+
     heroSection += `
       ${recapBtn}
       <div class="wk-highlights">
         ${renderHl('team','Bestes Team','handshake', teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', teamClick)}
         ${renderHl('streak','Heißeste Serie','flame', topStreak?pname(topStreak.id):null, topStreak?`${topStreak.v} in Folge`:'', streakClick)}
         ${renderHl('upset','Größter Upset','bolt', upsetName, topUpset?`${topUpset.winPct}% Chance`:'', upsetClick)}
+        ${renderHl('king', kingLabel, kingIcon, topKing?pname(topKing.id):null, kingDetail, kingClick)}
       </div>`;
     }
     
-    // ... Rest der vRanking Funktion bleibt gleich ...
-
-    
-
     return `
       <div class="view-head"><h2>Liga</h2><p>${periodLabel(period)} · ${ps.length} aktiv · ${totalMatches} Matches</p></div>
       ${periodBar}
@@ -5874,12 +6021,40 @@ function _awardRankingsUncached(period){
     .filter(x=>x.v>0)
     .sort((a,b)=>b.v-a.v);
 
-  return {single:agg.single,team:agg.team,upsets:agg.upsets,biggest:agg.biggest,mvt,scorer,wall,grinder,winsList,perfect,streaks,
-          worstWr,worstAtk,worstDef,worstElo,
-          endgegner,clutchList,iceList,worstTeam,bestDuo,onFire,coldStreak,carryList,lossStreaks,
-          soloList,formtief,zirkusList,baustelleList,showmasterList,peakEloList,
-          weekKingList,dayKingList,
-          counts:{matches:ms.length}};
+  // ════════════════════════════════════════════════════════════════════
+  // HIDDEN-FILTER für ALLE Award-Listen (zentral, konsistent)
+  // ════════════════════════════════════════════════════════════════════
+  // Hidden-Spieler werden aus allen Single- und Team-Listen entfernt.
+  // Bei Team-Awards fliegt das Team raus, sobald EIN Mitglied hidden ist.
+  // Sortierung bleibt erhalten, ranks/medals werden weiter korrekt vergeben.
+  // ════════════════════════════════════════════════════════════════════
+  const _pm = pmap();
+  const _isHidden = id => { const p = _pm[id]; return !p || p.hidden; };
+  const _fSingle = arr => arr.filter(x => !_isHidden(x.id));
+  const _fTeam   = arr => arr.filter(x => !x.ids.some(_isHidden));
+
+  return {
+    single:_fSingle(agg.single),
+    team:_fTeam(agg.team),
+    upsets:agg.upsets, biggest:agg.biggest,
+    mvt:_fTeam(mvt),
+    scorer:_fSingle(scorer), wall:_fSingle(wall),
+    grinder:_fSingle(grinder), winsList:_fSingle(winsList),
+    perfect:_fSingle(perfect), streaks:_fSingle(streaks),
+    worstWr:_fSingle(worstWr), worstAtk:_fSingle(worstAtk),
+    worstDef:_fSingle(worstDef), worstElo:_fSingle(worstElo),
+    endgegner:_fTeam(endgegner),
+    clutchList:_fSingle(clutchList), iceList:_fSingle(iceList),
+    worstTeam:_fTeam(worstTeam), bestDuo:_fTeam(bestDuo),
+    onFire:_fSingle(onFire), coldStreak:_fSingle(coldStreak),
+    carryList:_fSingle(carryList), lossStreaks:_fSingle(lossStreaks),
+    soloList:_fSingle(soloList), formtief, // formtief filtert hidden bereits intern
+    zirkusList:_fTeam(zirkusList), baustelleList:_fTeam(baustelleList),
+    showmasterList:_fSingle(showmasterList),
+    peakEloList:_fSingle(peakEloList),
+    weekKingList, dayKingList, // weekKingList/dayKingList nutzen activePlayers() bereits
+    counts:{matches:ms.length}
+  };
 }
 
 // ═══ HILFSFUNKTIONEN (OPTIMIERT) ═══
@@ -5933,17 +6108,74 @@ function _computeSolo(ms, snapMap){
 }
 
 function _computeFormtief(ms){
-  const peakElo={}, curElo={};
-  const ordered=[...ms].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
-  players.forEach(p=>{peakElo[p.id]=cfg.start_elo;curElo[p.id]=cfg.start_elo;});
+  // ════════════════════════════════════════════════════════════════════
+  // FORMTIEF — saison-bewusste Peak-zu-Aktuell-Berechnung
+  // ════════════════════════════════════════════════════════════════════
+  // Liest die echten eloBefore/eloAfter Werte aus globalSim.history.
+  // Diese Werte sind bereits saison-isoliert, weil simulateElo bei jedem
+  // Monatswechsel `resetSeason()` auf start_elo durchführt — peak und
+  // last werden daher PRO SAISON getrackt, nicht durchgängig kumuliert.
+  //
+  //   • 'season'      → Drop in der einen Saison (Peak − End)
+  //   • 'week'/'day'  → bleibt korrekt auch wenn die Periode einen
+  //                     Monatswechsel überspannt (Reset zerstört nicht
+  //                     den Peak des Vormonats — beide Saisons werden
+  //                     separat ausgewertet, max gewinnt)
+  //   • 'all'         → max Saison-Drop über die gesamte Karriere
+  //
+  // Der initiale Peak einer Saison ist max(eloBefore, eloAfter) des
+  // ersten Periode-Matches in jener Saison: ein Spieler kann VOR der
+  // Periode in derselben Saison bereits höher gestanden haben — sein
+  // Eingangs-Elo zählt als Periodenstart-Peak.
+  //
+  // Hidden-Spieler werden hier (anders als im alten Code) korrekt
+  // herausgefiltert. Schwelle drop > 10 wie zuvor.
+  // ════════════════════════════════════════════════════════════════════
+  const gSim = getGlobalSim();
+  const histById = {};
+  (gSim.history||[]).forEach(h => { histById[h.matchId] = h; });
+  const pm = pmap();
+  const startElo = cfg.start_elo;
+
+  const ordered = [...ms].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+
+  // perPlayer[id] = { seasons: { sId: { peak, last } } }
+  const perPlayer = {};
   for(let i=0; i<ordered.length; i++){
-    const m=ordered[i];
-    Object.entries(m.deltas||{}).forEach(([id,d])=>{
-      if(curElo[id]!==undefined){curElo[id]+=d;if(curElo[id]>peakElo[id])peakElo[id]=curElo[id];}
-    });
+    const m = ordered[i];
+    const h = histById[m.id];
+    if(!h || !h.eloAfter) continue;
+    const sId = seasonOf(m.created_at).id;
+    const ids = [m.a1,m.a2,m.b1,m.b2];
+    for(let j=0; j<ids.length; j++){
+      const id = ids[j];
+      const eloAfter = h.eloAfter[id];
+      if(eloAfter === undefined) continue;
+      if(!perPlayer[id]) perPlayer[id] = { seasons:{} };
+      const slot = perPlayer[id].seasons[sId];
+      if(!slot){
+        const eloBefore = (h.eloBefore && h.eloBefore[id]!==undefined) ? h.eloBefore[id] : startElo;
+        perPlayer[id].seasons[sId] = { peak: Math.max(eloBefore, eloAfter), last: eloAfter };
+      } else {
+        if(eloAfter > slot.peak) slot.peak = eloAfter;
+        slot.last = eloAfter;
+      }
+    }
   }
-  return players.map(p=>({id:p.id,drop:peakElo[p.id]-curElo[p.id],peak:Math.round(peakElo[p.id]),cur:Math.round(curElo[p.id])}))
-    .filter(x=>x.drop>10).sort((a,b)=>b.drop-a.drop);
+
+  const result = [];
+  Object.entries(perPlayer).forEach(([id, data])=>{
+    const p = pm[id]; if(!p || p.hidden) return;
+    let bestDrop=0, bestPeak=0, bestLast=0;
+    Object.values(data.seasons).forEach(s=>{
+      const d = s.peak - s.last;
+      if(d > bestDrop){ bestDrop=d; bestPeak=s.peak; bestLast=s.last; }
+    });
+    if(bestDrop > 10){
+      result.push({ id, drop: bestDrop, peak: Math.round(bestPeak), cur: Math.round(bestLast) });
+    }
+  });
+  return result.sort((a,b)=>b.drop-a.drop);
 }
 
 function _computeZirkus(ms){
@@ -6112,7 +6344,7 @@ function vAwards(){
     // ── Crown (für positive Awards) bzw. Skull (Schandtafel) ──
     const markerHtml = isEmpty ? ''
       : (opts.neg
-          ? `<div class="awcard-skull">💀</div>`
+          ? `<div class="awcard-skull"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS.skull}</svg></div>`
           : `<div class="awcard-crown"><svg viewBox="0 0 24 24"><path d="M3 7l4 4 5-6 5 6 4-4-2 13H5z" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`);
 
     // ── Watermark: val (mit optional valSuffix dahinter) als kleine String-Repräsentation ──
@@ -6312,35 +6544,35 @@ function vAwards(){
 
 // Award-Detail mit Platz 1–3 und Erklärung
 const AWARD_META={
-  wins:{em:'🏅',title:'Meiste Siege',cls:'gold',why:'Wer hat im Zeitraum die meisten Spiele gewonnen?'},
-  mvt:{em:'🤝',title:'Bestes Team',cls:'gold',why:'Welches Duo hat im Zeitraum zusammen die meisten Elo-Punkte geholt?'},
-  streaks:{em:'🔥',title:'Längste Siegesserie',cls:'acid',why:'Meiste Siege in Folge ohne Niederlage im Zeitraum.'},
-  onFire:{em:'🔥',title:'On Fire',cls:'acid',why:'Längste aktuell noch laufende Siegesserie. Wer ist gerade am heißesten?'},
-  scorer:{em:'⚽',title:'Torjäger',cls:'orange',why:'Höchster Tore-Durchschnitt pro Spiel als Stürmer (min. 2 Spiele). Team-Tore gehen an den Stürmer.'},
-  wall:{em:'🧱',title:'Eiserne Abwehr',cls:'blue',why:'Wenigste Gegentore pro Spiel — nur in Spielen als Verteidiger (min. 2 Spiele).'},
-  ice:{em:'🧊',title:'Eiskalt',cls:'blue',why:'Meiste Zu-Null-Siege (keine Gegentore) als Abwehrspieler.'},
-  endgegner:{em:'☠️',title:'Endgegner',cls:'purple',why:'Duo, das am häufigsten als Gegner aufeinandertrifft — die größte Rivalität der Liga (min. 2 Begegnungen).'},
-  clutch:{em:'🎯',title:'Clutch-Player',cls:'acid',why:'Höchste Siegrate in knappen Spielen (Tordifferenz ≤ 2). Wer behält in engen Matches die Nerven?'},
-  carryKing:{em:'🏋️',title:'Carry-King',cls:'acid',why:'Meiste Siege mit einem Mitspieler aus den unteren 3 der Elo-Rangliste. Wer kann auch schwächere Partner zum Sieg tragen?'},
-  bestDuo:{em:'🤝',title:'Unzertrennlich',cls:'blue',why:'Duo mit den meisten gemeinsamen Spielen im Zeitraum.'},
-  upset:{em:'😱',title:'Größte Überraschung',cls:'orange',why:'Sieg gegen die niedrigste Siegerwartung. Das Team, das laut Elo hätte verlieren sollen, hat gewonnen.'},
-  biggest:{em:'💥',title:'Höchster Sieg',cls:'purple',why:'Match mit der größten Tordifferenz.'},
-  perfect:{em:'💎',title:'Beste Bilanz',cls:'gold',why:'Höchste Siegrate (Mindestanzahl Spiele vorausgesetzt).'},
-  grinder:{em:'🎮',title:'Vielspieler',cls:'blue',why:'Wer hat im Zeitraum die meisten Matches gespielt?'},
-  worstWr:{em:'💀',title:'Schlechtester Spieler',cls:'red',why:'Niedrigste Siegquote im Zeitraum (min. 3 Spiele).'},
-  coldStreak:{em:'❄️',title:'Eiskalt erwischt',cls:'red',why:'Längste aktuell noch laufende Niederlagenserie.'},
-  lossStreaks:{em:'💀',title:'Längste Niederlagenserie',cls:'red',why:'Meiste Niederlagen in Folge im Zeitraum — egal ob die Serie aktuell noch läuft oder schon gebrochen wurde.'},
-  worstAtk:{em:'🚫',title:'Zahnloser Stürmer',cls:'red',why:'Wenigste erzielte Tore pro Spiel als Stürmer (min. 2 Sturm-Spiele).'},
-  worstDef:{em:'🕳️',title:'Löchrigste Abwehr',cls:'red',why:'Meiste kassierte Gegentore pro Spiel als Verteidiger (min. 2 Abwehr-Spiele).'},
-  worstTeam:{em:'💔',title:'Schlechtestes Team',cls:'red',why:'Duo mit der niedrigsten Siegrate im Zeitraum (min. 2 gemeinsame Spiele).'},
-  showmaster:{em:'🎪',title:'Showmaster',cls:'gold',why:'Spieler mit den meisten 10:0-Siegen im Zeitraum.'},
-  solo:{em:'🐺',title:'Einzelkämpfer',cls:'acid',why:'Höchste Siegrate mit einem Mitspieler aus den unteren 3 der Elo-Rangliste (min. 2 Spiele). Wer gewinnt auch alleine?'},
-  formtief:{em:'🫠',title:'Formtief',cls:'red',why:'Größter Elo-Abstieg vom persönlichen Höchststand. Peak-Elo minus aktuelle Elo.'},
-  zirkus:{em:'🎪',title:'Zirkus',cls:'red',why:'Team mit den meisten Niederlagen mit 5+ Toren Unterschied. Wird regelmäßig abgeschossen.'},
-  baustelle:{em:'🚧',title:'Baustelle',cls:'red',why:'Team mit der längsten gemeinsamen Niederlagenserie. Zusammen funktioniert es einfach nicht.'},
-  peakElo:{em:'⛰️',title:'Peak Elo',cls:'gold',why:'Höchster jemals erreichter Elo-Stand. Saison-übergreifender Allzeit-Höchststand — auch wenn nach Saisonreset die Elo wieder bei 0 startet, bleibt der historische Peak erhalten.'},
-  weekKing:{em:'📅',title:'Wochenkönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Week-Auszeichnungen im Zeitraum. POTW bekommt, wer in einer Kalenderwoche die höchste Siegquote hat (min. 5 Siege). Die laufende Woche wird nicht gezählt — gleiche Logik wie das POTW-Badge.'},
-  dayKing:{em:'🏆',title:'Tageskönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Day-Auszeichnungen im Zeitraum. POTD bekommt, wer an einem Tag die meisten Siege geholt hat (min. 3). Der laufende Tag wird nicht gezählt — gleiche Logik wie das POTD-Badge.'}
+  wins:{title:'Meiste Siege',cls:'gold',why:'Wer hat im Zeitraum die meisten Spiele gewonnen?'},
+  mvt:{title:'Bestes Team',cls:'gold',why:'Welches Duo hat im Zeitraum zusammen die meisten Elo-Punkte geholt?'},
+  streaks:{title:'Längste Siegesserie',cls:'acid',why:'Meiste Siege in Folge ohne Niederlage im Zeitraum.'},
+  onFire:{title:'On Fire',cls:'acid',why:'Längste aktuell noch laufende Siegesserie. Wer ist gerade am heißesten?'},
+  scorer:{title:'Torjäger',cls:'orange',why:'Höchster Tore-Durchschnitt pro Spiel als Stürmer (min. 2 Spiele). Team-Tore gehen an den Stürmer.'},
+  wall:{title:'Eiserne Abwehr',cls:'blue',why:'Wenigste Gegentore pro Spiel — nur in Spielen als Verteidiger (min. 2 Spiele).'},
+  ice:{title:'Eiskalt',cls:'blue',why:'Meiste Zu-Null-Siege (keine Gegentore) als Abwehrspieler.'},
+  endgegner:{title:'Endgegner',cls:'purple',why:'Duo, das am häufigsten als Gegner aufeinandertrifft — die größte Rivalität der Liga (min. 2 Begegnungen).'},
+  clutch:{title:'Clutch-Player',cls:'acid',why:'Höchste Siegrate in knappen Spielen (Tordifferenz ≤ 2). Wer behält in engen Matches die Nerven?'},
+  carryKing:{title:'Carry-King',cls:'acid',why:'Meiste Siege mit einem Mitspieler aus den unteren 3 der Elo-Rangliste. Wer kann auch schwächere Partner zum Sieg tragen?'},
+  bestDuo:{title:'Unzertrennlich',cls:'blue',why:'Duo mit den meisten gemeinsamen Spielen im Zeitraum.'},
+  upset:{title:'Größte Überraschung',cls:'orange',why:'Sieg gegen die niedrigste Siegerwartung. Das Team, das laut Elo hätte verlieren sollen, hat gewonnen.'},
+  biggest:{title:'Höchster Sieg',cls:'purple',why:'Match mit der größten Tordifferenz.'},
+  perfect:{title:'Beste Bilanz',cls:'gold',why:'Höchste Siegrate (Mindestanzahl Spiele vorausgesetzt).'},
+  grinder:{title:'Vielspieler',cls:'blue',why:'Wer hat im Zeitraum die meisten Matches gespielt?'},
+  worstWr:{title:'Schlechtester Spieler',cls:'red',why:'Niedrigste Siegquote im Zeitraum (min. 3 Spiele).'},
+  coldStreak:{title:'Eiskalt erwischt',cls:'red',why:'Längste aktuell noch laufende Niederlagenserie.'},
+  lossStreaks:{title:'Längste Niederlagenserie',cls:'red',why:'Meiste Niederlagen in Folge im Zeitraum — egal ob die Serie aktuell noch läuft oder schon gebrochen wurde.'},
+  worstAtk:{title:'Zahnloser Stürmer',cls:'red',why:'Wenigste erzielte Tore pro Spiel als Stürmer (min. 2 Sturm-Spiele).'},
+  worstDef:{title:'Löchrigste Abwehr',cls:'red',why:'Meiste kassierte Gegentore pro Spiel als Verteidiger (min. 2 Abwehr-Spiele).'},
+  worstTeam:{title:'Schlechtestes Team',cls:'red',why:'Duo mit der niedrigsten Siegrate im Zeitraum (min. 2 gemeinsame Spiele).'},
+  showmaster:{title:'Showmaster',cls:'gold',why:'Spieler mit den meisten 10:0-Siegen im Zeitraum.'},
+  solo:{title:'Einzelkämpfer',cls:'acid',why:'Höchste Siegrate mit einem Mitspieler aus den unteren 3 der Elo-Rangliste (min. 2 Spiele). Wer gewinnt auch alleine?'},
+  formtief:{title:'Formtief',cls:'red',why:'Größter Elo-Abstieg vom persönlichen Höchststand. Peak-Elo minus aktuelle Elo.'},
+  zirkus:{title:'Zirkus',cls:'red',why:'Team mit den meisten Niederlagen mit 5+ Toren Unterschied. Wird regelmäßig abgeschossen.'},
+  baustelle:{title:'Baustelle',cls:'red',why:'Team mit der längsten gemeinsamen Niederlagenserie. Zusammen funktioniert es einfach nicht.'},
+  peakElo:{title:'Peak Elo',cls:'gold',why:'Höchster jemals erreichter Elo-Stand. Saison-übergreifender Allzeit-Höchststand — auch wenn nach Saisonreset die Elo wieder bei 0 startet, bleibt der historische Peak erhalten.'},
+  weekKing:{title:'Wochenkönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Week-Auszeichnungen im Zeitraum. POTW bekommt, wer in einer Kalenderwoche die höchste Siegquote hat (min. 5 Siege). Die laufende Woche wird nicht gezählt — gleiche Logik wie das POTW-Badge.'},
+  dayKing:{title:'Tageskönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Day-Auszeichnungen im Zeitraum. POTD bekommt, wer an einem Tag die meisten Siege geholt hat (min. 3). Der laufende Tag wird nicht gezählt — gleiche Logik wie das POTD-Badge.'}
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
@@ -6455,10 +6687,10 @@ function showAward(key){
           : `data-li-player="${esc(top.ids[0])}"`;
         const heroAv = isTeamAward ? awHeroPair(top.ids[0], top.ids[1]) : awHeroAv(top.ids[0]);
         const heroMarker = isNeg
-          ? `<div class="aw-winner-marker">💀</div>`
+          ? `<div class="aw-winner-marker"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS.skull}</svg></div>`
           : `<div class="aw-winner-crown">${svgI('crown')}</div>`;
         const heroBadge = isNeg
-          ? `<span class="aw-winner-badge">💩 Schandfleck · #1</span>`
+          ? `<span class="aw-winner-badge">Schandfleck · #1</span>`
           : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Best · #1</span>`;
 
         heroHtml = `
@@ -6474,10 +6706,10 @@ function showAward(key){
       } else {
         // ─── Shared Hero: mehrere Spieler/Teams teilen sich #1 ───
         const sharedBadge = isNeg
-          ? `<span class="aw-winner-badge">💩 Geteilt · #1 · ${topGroup.length} ${isTeamAward?'Teams':'Sünder'}</span>`
+          ? `<span class="aw-winner-badge">Geteilt · #1 · ${topGroup.length} ${isTeamAward?'Teams':'Sünder'}</span>`
           : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Geteilt · #1 · ${topGroup.length} ${isTeamAward?'Teams':'Spieler'}</span>`;
         const sharedMarker = isNeg
-          ? `<div class="aw-winner-shared-marker shame">💀</div>`
+          ? `<div class="aw-winner-shared-marker shame"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS.skull}</svg></div>`
           : `<div class="aw-winner-shared-marker">${svgI('crown')}</div>`;
         const entries = topGroup.map(e => {
           const av = isTeamAward
@@ -7055,7 +7287,18 @@ async function doSaveMatch(){
   invalidateCache(['global', 'stats', 'awards', 'badges']);
   await persistNewMatch(savedRow.id);
 
-  toast('Match gespeichert', 'ok');
+  // ─── ACHIEVEMENT-TOASTS ───────────────────────────────────────────
+  // Nach dem persist+invalidate liefert badgesEarnedInMatch genau die in
+  // DIESEM Match neu erreichten Badges (Pre-State-Vergleich → echte Neu-
+  // erreichungen, keine Wiederholungen). Sequenzielle Queue zeigt sie der
+  // Reihe nach, jeder Toast 2.6s. Spielername aus pname() konsistent zur
+  // gesamten App.
+  const newBadges = badgesEarnedInMatch(savedRow.id);
+  if(newBadges.length){
+    newBadges.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
+  } else {
+    toast('Match gespeichert', 'ok');
+  }
   M = {A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
   tab = 'ranking'; await loadAll();
 }
@@ -7214,94 +7457,94 @@ document.getElementById('sheetBg').onclick=closeSheet;
 const BADGES=[
   // ══ EINMALIGE BADGES (Karriere-Meilensteine) ══
   // Zeile 1 — Debütant, Stammgast
-  {id:'first_match',em:'🐣',ic:'egg',name:'Debütant',desc:'Match gespielt',
+  {id:'first_match',ic:'egg',name:'Debütant',desc:'Match gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=1?1:0},
-  {id:'games25',em:'🎮',ic:'controller',name:'Stammgast',desc:'25 Matches gespielt',
+  {id:'games25',ic:'controller',name:'Stammgast',desc:'25 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=25?1:0},
   // Zeile 2 — Legende, Allrounder
-  {id:'games150',em:'💎',ic:'diamond',name:'Legende',desc:'150 Matches gespielt',
+  {id:'games150',ic:'diamond',name:'Legende',desc:'150 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=150?1:0},
-  {id:'allrounder',em:'🔄',ic:'refresh',name:'Allrounder',desc:'20+ Siege auf jeder Position',
+  {id:'allrounder',ic:'refresh',name:'Allrounder',desc:'20+ Siege auf jeder Position',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return(s.atkW>=20&&s.defW>=20)?1:0;}},
   // Zeile 3 — Abwehrchef, Mittelstürmer
-  {id:'def50',em:'🛡️',ic:'shieldStar',name:'Abwehrchef',desc:'50 Spiele als Abwehrspieler',
+  {id:'def50',ic:'shieldStar',name:'Abwehrchef',desc:'50 Spiele als Abwehrspieler',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.defG>=50?1:0;}},
-  {id:'atk50',em:'⚡',ic:'bolt2',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
+  {id:'atk50',ic:'bolt2',name:'Mittelstürmer',desc:'50 Spiele als Stürmer',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return s.atkG>=50?1:0;}},
   // Zeile 4 — Aufsteiger, Dominator
-  {id:'climber_100',em:'📈',ic:'climb',name:'Aufsteiger',desc:'100 Elo in einer Saison erreicht',
+  {id:'climber_100',ic:'climb',name:'Aufsteiger',desc:'100 Elo in einer Saison erreicht',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=100?1:0},
-  {id:'dominator_400',em:'👑',ic:'dominator',name:'Dominator',desc:'400 Elo in einer Saison erreicht',
+  {id:'dominator_400',ic:'dominator',name:'Dominator',desc:'400 Elo in einer Saison erreicht',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=400?1:0},
   // Zeile 5 — Dynastie, Vize-Meister
-  {id:'dynasty_600',em:'🏛',ic:'temple',name:'Dynastie',desc:'600 Elo in einer Saison erreicht',
+  {id:'dynasty_600',ic:'temple',name:'Dynastie',desc:'600 Elo in einer Saison erreicht',
     multi:false,count:(id,ms)=>seasonPeakFor(id)>=600?1:0},
 
     // ══ MEHRFACH-BADGES — gruppiert nach Thema ══
 //Reihenfolge überarbeitet / Möglciherweise Abweichung von Namen in //
-  {id:'upset_king',em:'🌪️',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
+  {id:'upset_king',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&myExp(id,m)<0.35).length},
   // Zeile 6 — Frühschicht, Unschlagbar (Tages-Patterns)
-  {id:'early_bird',em:'🌅',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
+  {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
-  {id:'unbeatable',em:'👑',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
+  {id:'unbeatable',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
     multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
   // Zeile 7 — Comeback-Tag, Revanchist (Wiedergutmachung)
-  {id:'comeback_day',em:'🔁',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit Niederlage gestartet und mit Sieg beendet (min. 3 Matches an dem Tag)',
+  {id:'comeback_day',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit Niederlage gestartet und mit Sieg beendet (min. 3 Matches an dem Tag)',
     multi:true,count:(id,ms)=>countComebackDays(id,ms)},
-  {id:'revanchist',em:'⚔️',ic:'rematch',name:'Revanchist',desc:'Nach Niederlage gegen ein Team direkt im nächsten Match wieder auf dasselbe Team getroffen und gewonnen',
+  {id:'revanchist',ic:'rematch',name:'Revanchist',desc:'Nach Niederlage gegen ein Team direkt im nächsten Match wieder auf dasselbe Team getroffen und gewonnen',
     multi:true,count:(id,ms)=>countRevenge(id,ms)},
   // Zeile 8 — Klares Ding, Krimi-Reihe (Tordifferenz-Pattern)
-  {id:'clear_win',em:'✊',ic:'thumbsUp',name:'Klares Ding',desc:'Sieg mit Tordifferenz ≥ 7',
+  {id:'clear_win',ic:'thumbsUp',name:'Klares Ding',desc:'Sieg mit Tordifferenz ≥ 7',
     multi:true,count:(id,ms)=>countClearWins(id,ms)},
-  {id:'krimi',em:'🎬',ic:'thriller',name:'Krimi-Reihe',desc:'5 Spiele in Folge mit Tordifferenz ≤ 2 (Sieg oder Niederlage)',
+  {id:'krimi',ic:'thriller',name:'Krimi-Reihe',desc:'5 Spiele in Folge mit Tordifferenz ≤ 2 (Sieg oder Niederlage)',
     multi:true,count:(id,ms)=>countKrimiStreaks(id,ms)},
   // Zeile 9 — Wiederholungstäter, Losing Streak
-  {id:'repeat_score',em:'🪞',ic:'duplicate',name:'Wiederholungstäter',desc:'3 Siege in Folge mit identischem Endstand',
+  {id:'repeat_score',ic:'duplicate',name:'Wiederholungstäter',desc:'3 Siege in Folge mit identischem Endstand',
     multi:true,count:(id,ms)=>countRepeatScoreStreaks(id,ms)},
-  {id:'losing5',em:'📉',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
+  {id:'losing5',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
     multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
   // Zeile 10 — Absoluter Verlierer, Absoluter Sieger
-  {id:'perfect_loss',em:'😵',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',
+  {id:'perfect_loss',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&!won(id,m)&&shutout(id,m,0,10)).length},
-  {id:'perfect_win',em:'💯',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
+  {id:'perfect_win',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&shutout(id,m,10,0)).length},
   // Zeile 11 — Nerven aus Stahl,  Zittersieg (Score-Spezial)
-   {id:'nerves_of_steel',em:'❤️',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
+   {id:'nerves_of_steel',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
     multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
-  {id:'nail_biter',em:'🤏',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
+  {id:'nail_biter',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
     multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
   // Zeile 12 — 5er Serie, 10er Serie
-  {id:'streak5',em:'🔥',ic:'flame',name:'5er Serie',desc:'5 Siege in Folge',
+  {id:'streak5',ic:'flame',name:'5er Serie',desc:'5 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,5)},
-  {id:'streak10',em:'🔥🔥',ic:'flameDouble',name:'10er Serie',desc:'10 Siege in Folge',
+  {id:'streak10',ic:'flameDouble',name:'10er Serie',desc:'10 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,10)},
   // Zeile 13 — 15er Serie, 30er Serie
-  {id:'streak15',em:'🔥🔥🔥',ic:'flameTriple',name:'15er Serie',desc:'15 Siege in Folge',
+  {id:'streak15',ic:'flameTriple',name:'15er Serie',desc:'15 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,15)},
-  {id:'streak30',em:'👑🔥',ic:'crownFlame',name:'30er Serie',desc:'30 Siege in Folge',
+  {id:'streak30',ic:'crownFlame',name:'30er Serie',desc:'30 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,30)},
   // Zeile 14 — Mauer, Carry
-  {id:'wall_badge',em:'🧱',ic:'brick',name:'Mauer',desc:'Sieg mit max. 2 Gegentoren als Verteidiger',
+  {id:'wall_badge',ic:'brick',name:'Mauer',desc:'Sieg mit max. 2 Gegentoren als Verteidiger',
     multi:true,count:(id,ms)=>ms.filter(m=>{if(!matchOf(id,m)||!won(id,m))return false;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
-  {id:'carry',em:'🎯',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
+  {id:'carry',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
   // Zeile 15 — Upset-König, Königsklasse (Sieg gegen Stärkere)
-  {id:'vice_champion',em:'🥈',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
+  {id:'vice_champion',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
     multi:true,count:(id,ms)=>countViceChampion(id)},
- /* {id:'koenigsklasse',em:'👑',ic:'kingClass',name:'Königsklasse',desc:'Sieg gegen mindestens einen Gegner aus den Top 3 der Saison-Endrangliste',
+ /* {id:'koenigsklasse',ic:'kingClass',name:'Königsklasse',desc:'Sieg gegen mindestens einen Gegner aus den Top 3 der Saison-Endrangliste',
     multi:true,count:(id,ms)=>countTopThreeWins(id,ms)},
   // Zeile 16 — Pflichtaufgabe, Award-Sammler
-  {id:'pflichtaufgabe',em:'📋',ic:'clipboard',name:'Pflichtaufgabe',desc:'Sieg gegen mindestens einen Gegner aus den Bottom 3 der Saison-Endrangliste (ab 6 Saison-Teilnehmern)',
+  {id:'pflichtaufgabe',ic:'clipboard',name:'Pflichtaufgabe',desc:'Sieg gegen mindestens einen Gegner aus den Bottom 3 der Saison-Endrangliste (ab 6 Saison-Teilnehmern)',
     multi:true,count:(id,ms)=>countBottomThreeWins(id,ms)}, */
-  {id:'award_collector',em:'🏅',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Player-of-the-Day und 2 Player-of-the-Week Auszeichnungen gesammelt',
+  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Player-of-the-Day und 2 Player-of-the-Week Auszeichnungen gesammelt',
     multi:true,count:(id,ms)=>countAwardCollector(id)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
-  {id:'potw',em:'🏅',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
+  {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
     multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
-  {id:'potd',em:'🏆',ic:'trophyDay',name:'Player of the Day',desc:'Meiste Siege an einem Tag (min. 3)',
+  {id:'potd',ic:'trophyDay',name:'Player of the Day',desc:'Meiste Siege an einem Tag (min. 3)',
     multi:true,count:(id,ms)=>countDayWins(id,ms)},
 ];
 
@@ -7376,7 +7619,7 @@ function badgeIc(b, size){
   if(key && ICONS[key]) {
     return `<span class="ic svg-ic" style="font-size:${size}"><svg viewBox="0 0 24 24">${ICONS[key]}</svg></span>`;
   }
-  return b.em || '';
+  return '';
 }
 
 // Badge-Hilfsfunktionen
@@ -7926,7 +8169,8 @@ function playerAwards(id){
     clutch:R.clutchList, carryKing:R.carryList,
     onFire:R.onFire, coldStreak:R.coldStreak, lossStreaks:R.lossStreaks,
     solo:R.soloList, formtief:R.formtief, showmaster:R.showmasterList,
-    ice:R.iceList, peakElo:R.peakEloList
+    ice:R.iceList, peakElo:R.peakEloList,
+    weekKing:R.weekKingList, dayKing:R.dayKingList
   };
   const singleValFns={
     wins:x=>x.v, streaks:x=>x.v, scorer:x=>Math.round(x.avg*10),
@@ -7939,7 +8183,8 @@ function playerAwards(id){
     carryKing:x=>x.v, onFire:x=>x.v, coldStreak:x=>x.v,
     lossStreaks:x=>x.v, solo:x=>Math.round(x.wr*100),
     formtief:x=>Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
-    peakElo:x=>x.v
+    peakElo:x=>x.v,
+    weekKing:x=>x.v, dayKing:x=>x.v
   };
 
   Object.entries(singleKeys).forEach(([key,arr])=>{
@@ -8135,7 +8380,8 @@ function showPlayer(id){
   // Aufteilung in 3 thematische Cluster für klare Übersicht.
   const POSITIVE_KEYS = new Set([
     'wins','mvt','bestDuo','perfect','clutch','carryKing','solo',
-    'endgegner','grinder','showmaster','onFire','streaks','upset','biggest','peakElo'
+    'endgegner','grinder','showmaster','onFire','streaks','upset','biggest','peakElo',
+    'weekKing','dayKing'
   ]);
   const ROLE_KEYS = new Set(['scorer','wall','ice','worstAtk','worstDef']);
   const NEGATIVE_KEYS = new Set([
@@ -8462,6 +8708,42 @@ const rankProgHtml = `
       </div>
     </div>
 
+    ${(()=>{
+      // ─── BILANZEN-CARD (kompakt): Strip aus Mitspieler-Avataren + Chevron ───
+      // Komplette Card ist klickbar (id=ppH2HBtn → showPlayerH2HList). Die
+      // Mini-Avatare zeigen die TOP-Mitspieler nach gemeinsamer Häufigkeit;
+      // im Sheet erscheint die volle, scrollbare Liste mit T/G-Bilanz pro Zeile.
+      const h2hList = playerH2HList(id, 3);
+      if(h2hList.length < 2) return '';
+      const pmL = pmap();
+      // 5 Mini-Avatare im Strip; bei mehr Mitspielern zusätzlich "+N" Chip.
+      const STRIP_MAX = 5;
+      const stripItems = h2hList.slice(0, STRIP_MAX).map(x=>{
+        const pp = pmL[x.oid]; if(!pp) return '';
+        const em = pp.avatar_id ? avatarEmoji(pp.avatar_id) : null;
+        if(em) return `<div style="width:26px;height:26px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:14px;border:1.5px solid var(--surface);flex-shrink:0">${em}</div>`;
+        return `<div style="width:26px;height:26px;border-radius:50%;background:${avColor(pp.id)};display:grid;place-items:center;font-size:9px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;border:1.5px solid var(--surface);flex-shrink:0">${esc(initials(pp.name))}</div>`;
+      }).join('');
+      const overflow = h2hList.length > STRIP_MAX
+        ? `<div style="height:26px;display:grid;place-items:center;padding:0 8px;border-radius:13px;background:var(--surface3);font-size:10px;font-weight:700;color:var(--ink2);font-family:'Sometype Mono',monospace;flex-shrink:0">+${h2hList.length-STRIP_MAX}</div>`
+        : '';
+      return `
+    <div class="pp-sec" style="animation-delay:.5s">
+      <div class="pp-sec-title">
+        <div class="l"><span class="ic svg-ic">${svgI('swords')}</span><h4>Bilanzen</h4></div>
+        <div class="m">${h2hList.length} Mitspieler</div>
+      </div>
+      <div class="pp-badges-card" id="ppH2HBtn">
+        <div class="pp-badges-strip" style="align-items:center">
+          ${stripItems}${overflow}
+        </div>
+        <span class="chev">
+          <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+        </span>
+      </div>
+    </div>`;
+    })()}
+
     ${sa.length?`
     <div class="pp-sec" style="animation-delay:.55s">
       <div class="pp-sec-title">
@@ -8556,6 +8838,8 @@ const rankProgHtml = `
   if(ag) ag.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerAwards(id,awards),350); };
   const bb=document.getElementById('ppBadgesBtn');
   if(bb) bb.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerBadges(id),350); };
+  const h2hb=document.getElementById('ppH2HBtn');
+  if(h2hb) h2hb.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerH2HList(id),350); };
   const sr=document.getElementById('ppSeasonsRail');
   if(sr) sr.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
   const rk=document.getElementById('ppRanksBtn');
@@ -8573,6 +8857,14 @@ const rankProgHtml = `
       const [a,b]=el.dataset.team.split('|');
       if(!a||!b) return;
       closeSheet(); setTimeout(()=>showTeam(a,b),350);
+    };
+  });
+  // Bilanzen-Zeilen öffnen das H2H-Sheet (Reihenfolge bewahren — Profil-Spieler zuerst)
+  document.querySelectorAll('[data-h2h]').forEach(el=>{
+    el.onclick=()=>{
+      const [a,b]=el.dataset.h2h.split('|');
+      if(!a||!b) return;
+      closeSheet(); setTimeout(()=>showH2H(a,b),350);
     };
   });
   // Lieblings-/Angstgegner-Karten öffnen das Gegner-Profil
@@ -8847,6 +9139,68 @@ function showPlayerBadges(playerId){
   if(back) back.onclick=()=>{closeSheet();setTimeout(()=>showPlayer(playerId),350);};
 }
 
+// ════════ BILANZEN-SHEET (volle Mitspieler-Liste) ════════
+// Aufgerufen aus dem Profil-Sheet via ppH2HBtn. Zeigt ALLE Mitspieler mit
+// ≥3 gemeinsamen Matches, sortiert nach Häufigkeit. Pro Zeile: Avatar,
+// Name, T/G-Bilanz, Total. Klick → showH2H (asymmetrisch: Profil-Spieler
+// zuerst, damit "asOppForA" aus seiner Sicht aggregiert).
+function showPlayerH2HList(playerId){
+  const p = pmap()[playerId]; if(!p) return;
+  const h2hList = playerH2HList(playerId, 3);
+  const pmL = pmap();
+
+  const miniAv = (pp) => {
+    const em = pp.avatar_id ? avatarEmoji(pp.avatar_id) : null;
+    if(em) return `<div style="width:36px;height:36px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:18px;flex-shrink:0">${em}</div>`;
+    return `<div style="width:36px;height:36px;border-radius:50%;background:${avColor(pp.id)};display:grid;place-items:center;font-size:13px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;flex-shrink:0">${esc(initials(pp.name))}</div>`;
+  };
+
+  const rows = h2hList.map(x => {
+    const other = pmL[x.oid]; if(!other) return '';
+    const teamChip = x.teamG
+      ? `<span style="color:var(--blue);font-weight:700">${x.teamW}-${x.teamG-x.teamW}</span><span style="color:var(--muted);font-size:9px;margin-left:2px">T</span>`
+      : '';
+    const oppChip = x.oppG
+      ? `<span style="color:var(--purple);font-weight:700">${x.oppW}-${x.oppG-x.oppW}</span><span style="color:var(--muted);font-size:9px;margin-left:2px">G</span>`
+      : '';
+    const sep = (teamChip && oppChip) ? `<span style="color:var(--faint);margin:0 6px">·</span>` : '';
+    return `<div class="rrow" data-h2h="${esc(playerId+'|'+x.oid)}" style="padding:11px 13px;display:flex;align-items:center;gap:10px;cursor:pointer">
+      ${miniAv(other)}
+      <div style="flex:1;min-width:0">
+        <div class="rname" style="font-size:13px;line-height:1.15">${esc(other.name)}</div>
+        <div class="num" style="font-size:11px;margin-top:3px;font-family:'Sometype Mono',monospace">${teamChip}${sep}${oppChip}</div>
+      </div>
+      <div class="num" style="font-size:11px;color:var(--muted);flex-shrink:0">${x.total}</div>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;opacity:.7"><path d="M9 18l6-6-6-6"/></svg>
+    </div>`;
+  }).join('');
+
+  openSheet(`
+    <div style="display:flex;align-items:center;gap:14px">
+      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
+      <div><h3>Bilanzen</h3><div class="sheet-sub">${esc(p.name)} · ${h2hList.length} Mitspieler</div></div>
+    </div>
+    <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em;margin-top:14px;margin-bottom:10px">
+      <span style="color:var(--blue);font-weight:700">T</span> = als Team · <span style="color:var(--purple);font-weight:700">G</span> = als Gegner · Tap für Details
+    </div>
+    ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('swords','Noch keine Mitspieler mit min. 3 Begegnungen')}
+    <button class="btn ghost sm" id="backToPlayerH2H" style="margin-top:16px">← Zurück zum Profil</button>
+  `);
+
+  // Sheet-lokale Handler: H2H-Klicks öffnen das H2H-Detail-Sheet
+  const sheetEl = document.getElementById('sheet');
+  if(sheetEl){
+    sheetEl.querySelectorAll('[data-h2h]').forEach(el=>{
+      el.onclick = () => {
+        const [a,b] = el.dataset.h2h.split('|');
+        if(a && b){ closeSheet(); setTimeout(()=>showH2H(a,b), 350); }
+      };
+    });
+  }
+  const back = document.getElementById('backToPlayerH2H');
+  if(back) back.onclick = () => { closeSheet(); setTimeout(()=>showPlayer(playerId), 350); };
+}
+
 // Saison-Auszeichnungen eines Spielers
 function playerSeasonAwards(id){
   // Cache-Schlüssel muss auch die Version der 'seasons' berücksichtigen,
@@ -8988,6 +9342,12 @@ function bind(){
     const [a,b]=el.dataset.team.split('|');
     if(a&&b) showTeam(a,b);
   });
+  // head-to-head detail (asymmetrisch: erste ID = "Du", zweite = Gegenüber)
+  document.querySelectorAll('[data-h2h]').forEach(el=>el.onclick=(e)=>{
+    e.stopPropagation();
+    const [a,b]=el.dataset.h2h.split('|');
+    if(a&&b) showH2H(a,b);
+  });
   const dc=document.getElementById('defenderCard');
   if(dc) dc.onclick=()=>{
     const last=seasons.find(s=>s.id!==currentSeason().id);
@@ -9062,7 +9422,7 @@ function bind(){
       M.pA1=M.A1===tA.s?'atk':'def'; M.pA2=M.A2===tA.s?'atk':'def';
       const tB=assignPos(M.B1,M.B2);
       M.pB1=M.B1===tB.s?'atk':'def'; M.pB2=M.B2===tB.s?'atk':'def';
-      toast('Teams gemischt 🔀');render();
+      toast('Teams gemischt','ok');render();
     };
     document.getElementById('saveM').onclick=doSaveMatch;
     readM();updatePreview();
@@ -9092,7 +9452,7 @@ function bind(){
     if(!confirm('Wirklich alle Matches mit aktuellen Slidern rückwirkend neu berechnen?\n\nAlle gespeicherten Match-Deltas werden überschrieben. Vergangene Saison-Ergebnisse und Awards können sich dadurch ändern.\n\nDieser Vorgang kann nicht rückgängig gemacht werden.')) return;
     toast('Berechne alle Matches neu…');
     await persistRecalc(matches);
-    toast('Neuberechnung abgeschlossen ✓');
+    toast('Neuberechnung abgeschlossen','ok');
     await loadAll();
   };
   const forceReloadBtn=document.getElementById('forceReloadBtn');
@@ -9102,7 +9462,7 @@ function bind(){
   // Ausgeblendete Spieler wieder einblenden
   document.querySelectorAll('[data-unhide]').forEach(btn=>btn.onclick=async()=>{
     await sb.from('players').update({hidden:false}).eq('id',btn.dataset.unhide);
-    toast('Eingeblendet ✓','ok');
+    toast('Eingeblendet','ok');
     await loadAll();
   });
 // POTW Recap Button in Wochenansicht
@@ -9208,6 +9568,181 @@ function bindSlider(id,key,toState,toLabel){
     }
     toast(dbOk?'Gespeichert':'Lokal gespeichert','ok');
   };
+}
+
+// ════════ HEAD-TO-HEAD PROFIL SHEET ════════
+// Zwei-Spieler-Bilanz: zusammen (als Teamkollegen) UND gegen (als Gegner).
+// Aus Sicht von Spieler A; tauscht man die Reihenfolge der Args, dreht sich
+// die Gegner-Perspektive um. Konsistent zum showTeam-Sheet-Design.
+function showH2H(idA, idB){
+  const pm = pmap();
+  const pA = pm[idA], pB = pm[idB];
+  if(!pA || !pB) return;
+  if(idA === idB) return;
+
+  const d = h2hDetail(idA, idB);
+
+  // Avatar-Helper (konsistent mit showTeam)
+  const avBig = (p) => {
+    const em = p.avatar_id ? avatarEmoji(p.avatar_id) : null;
+    if(em) return `<div style="width:60px;height:60px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:28px;border:2px solid var(--line2)">${em}</div>`;
+    return `<div style="width:60px;height:60px;border-radius:50%;background:${avColor(p.id)};display:grid;place-items:center;font-size:20px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;border:2px solid var(--line2)">${esc(initials(p.name))}</div>`;
+  };
+
+  // Empty state — beide Spieler kennen sich, aber keine gemeinsamen Matches
+  if(d.total === 0){
+    openSheet(`
+      <div style="text-align:center;margin-bottom:18px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Head-to-Head</div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
+          <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
+          <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>
+          <div data-detail="${esc(pB.id)}" style="cursor:pointer">${avBig(pB)}</div>
+        </div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.02em;line-height:1.1;margin-top:12px">${esc(pA.name)} <span style="color:var(--muted);font-size:14px">vs</span> ${esc(pB.name)}</div>
+      </div>
+      ${emptyState('swords','Noch keine gemeinsamen Matches')}
+    `);
+    return;
+  }
+
+  const teamWr  = d.asTeam.g ? Math.round(d.asTeam.w / d.asTeam.g * 100) : 0;
+  const oppWr   = d.asOppForA.g ? Math.round(d.asOppForA.w / d.asOppForA.g * 100) : 0;
+  const teamGdRaw  = d.asTeam.gf - d.asTeam.ga;
+  const oppGdRaw   = d.asOppForA.gf - d.asOppForA.ga;
+  const teamGd  = (teamGdRaw>=0?'+':'') + teamGdRaw;
+  const oppGd   = (oppGdRaw>=0?'+':'') + oppGdRaw;
+  const teamElo = Math.round(d.asTeam.eloDelta);
+  const oppElo  = Math.round(d.asOppForA.eloDelta);
+  const teamEloStr = (teamElo>=0?'+':'') + teamElo;
+  const oppEloStr  = (oppElo>=0?'+':'') + oppElo;
+  const teamEloCol = teamElo>=0 ? 'var(--acid)' : 'var(--red)';
+  const oppEloCol  = oppElo>=0  ? 'var(--acid)' : 'var(--red)';
+
+  // ─── ALS-TEAM BLOCK ───
+  const teamBlock = d.asTeam.g ? `
+    <div style="background:var(--surface);border:1px solid rgba(86,180,232,.22);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span class="svg-ic" style="color:var(--blue);width:16px;height:16px">${svgI('handshake')}</span>
+        <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--blue);font-weight:700;font-family:'Sometype Mono',monospace">Als Team</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asTeam.g} Spiele</span>
+      </div>
+      <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--line);margin-bottom:6px">
+        <div style="width:${teamWr}%;background:var(--acid)"></div>
+        <div style="width:${100-teamWr}%;background:var(--red);opacity:.85"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Sometype Mono',monospace;margin-bottom:11px">
+        <span style="color:var(--acid);font-weight:700">${d.asTeam.w} Siege</span>
+        <span style="font-weight:700">${teamWr}%</span>
+        <span style="color:var(--red);font-weight:700">${d.asTeam.g-d.asTeam.w} Niederlagen</span>
+      </div>
+      <div style="display:flex;gap:7px">
+        <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
+          <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1">${teamGd}</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Tordiff</div>
+        </div>
+        <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
+          <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1;color:${teamEloCol}">${teamEloStr}</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Σ Elo</div>
+        </div>
+        <button data-team="${esc([idA,idB].sort().join('|'))}" style="flex:1.2;background:rgba(86,180,232,.1);border:1px solid rgba(86,180,232,.3);border-radius:9px;padding:8px;color:var(--blue);font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
+          Team-Sheet
+          <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>` : '';
+
+  // ─── ALS-GEGNER BLOCK (aus Sicht idA) ───
+  const oppBlock = d.asOppForA.g ? `
+    <div style="background:var(--surface);border:1px solid rgba(167,139,250,.22);border-radius:14px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span class="svg-ic" style="color:var(--purple);width:16px;height:16px">${svgI('swords')}</span>
+        <span style="font-size:10px;text-transform:uppercase;letter-spacing:.14em;color:var(--purple);font-weight:700;font-family:'Sometype Mono',monospace">Als Gegner</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.asOppForA.g} Spiele</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-family:'Sometype Mono',monospace">
+        <span style="color:var(--ink)">${esc(pA.name)}</span> vs <span style="color:var(--ink)">${esc(pB.name)}</span>
+      </div>
+      <div style="display:flex;height:7px;border-radius:99px;overflow:hidden;background:var(--line);margin-bottom:6px">
+        <div style="width:${oppWr}%;background:var(--acid)"></div>
+        <div style="width:${100-oppWr}%;background:var(--red);opacity:.85"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-family:'Sometype Mono',monospace;margin-bottom:11px">
+        <span style="color:var(--acid);font-weight:700">${d.asOppForA.w}× gewonnen</span>
+        <span style="font-weight:700">${oppWr}%</span>
+        <span style="color:var(--red);font-weight:700">${d.asOppForA.g-d.asOppForA.w}× verloren</span>
+      </div>
+      <div style="display:flex;gap:7px">
+        <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
+          <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1">${oppGd}</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Tordiff</div>
+        </div>
+        <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
+          <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1;color:${oppEloCol}">${oppEloStr}</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Elo (für ${esc(pA.name.split(' ')[0])})</div>
+        </div>
+      </div>
+    </div>` : '';
+
+  // ─── LETZTE BEGEGNUNGEN ───
+  const lastRows = d.lastEncounters.map(enc => {
+    const m = enc.m;
+    const won = enc.wonForA;
+    const isTeam = enc.type === 'team';
+    const score = m.score_a + ':' + m.score_b;
+    const typeChip = isTeam
+      ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(86,180,232,.12);color:var(--blue);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:6px;font-family:'Sometype Mono',monospace">Team</span>`
+      : `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(167,139,250,.12);color:var(--purple);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:6px;font-family:'Sometype Mono',monospace">Gegner</span>`;
+    return `<div class="rrow" data-match="${esc(m.id)}" style="padding:10px 12px;display:flex;align-items:center;gap:10px">
+      <div style="width:24px;height:24px;border-radius:50%;background:${won?'rgba(190,242,100,.12)':'rgba(240,86,106,.12)'};color:${won?'var(--acid)':'var(--red)'};display:grid;place-items:center;flex-shrink:0">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          ${won?'<polyline points="4,12 10,18 20,6"/>':'<path d="M6 6L18 18M6 18L18 6"/>'}
+        </svg>
+      </div>
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:7px">
+        ${typeChip}
+        <span class="num" style="font-size:10px;color:var(--muted)">${dateStr(m.created_at)}</span>
+      </div>
+      <div class="num" style="font-size:13px;font-weight:600;color:var(--ink);flex-shrink:0">${score}</div>
+    </div>`;
+  }).join('');
+
+  const lastBlock = d.lastEncounters.length ? `
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Letzte Begegnungen</div>
+      <div class="rlist">${lastRows}</div>
+    </div>` : '';
+
+  openSheet(`
+    <div style="text-align:center;margin-bottom:18px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Head-to-Head</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
+        <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
+        <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>
+        <div data-detail="${esc(pB.id)}" style="cursor:pointer">${avBig(pB)}</div>
+      </div>
+      <div style="font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.02em;line-height:1.1;margin-top:12px">${esc(pA.name)} <span style="color:var(--muted);font-size:14px">vs</span> ${esc(pB.name)}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;font-family:'Sometype Mono',monospace">${d.total} ${d.total===1?'gemeinsame Begegnung':'gemeinsame Begegnungen'}</div>
+    </div>
+
+    ${teamBlock}
+    ${oppBlock}
+    ${lastBlock}
+  `);
+
+  // Sheet-Handler — analog zu showTeam
+  const sheetEl = document.getElementById('sheet');
+  if(sheetEl){
+    sheetEl.querySelectorAll('[data-detail]').forEach(el=>{
+      el.onclick=()=>{const pid=el.dataset.detail; closeSheet(); setTimeout(()=>showPlayer(pid),350);};
+    });
+    sheetEl.querySelectorAll('[data-team]').forEach(el=>{
+      el.onclick=()=>{const [a,b]=el.dataset.team.split('|'); if(a&&b){closeSheet(); setTimeout(()=>showTeam(a,b),350);}};
+    });
+    sheetEl.querySelectorAll('[data-match]').forEach(el=>{
+      el.onclick=()=>{const mid=el.dataset.match; closeSheet(); setTimeout(()=>showMatchDetail(mid),350);};
+    });
+  }
 }
 
 // ════════ TEAM PROFIL SHEET ════════
@@ -9696,9 +10231,9 @@ function showEditMatch(mid){
     const samePosA=E.pA1===E.pA2, samePosB=E.pB1===E.pB2;
     let ok=true,msg='';
     if(incomplete){ok=false;}
-    else if(dup){ok=false;msg='⚠️ Ein Spieler steht doppelt.';}
-    else if(tie){ok=false;msg='⚠️ Unentschieden ist nicht möglich.';}
-    else if(samePosA||samePosB){ok=false;msg='⚠️ Jedes Team braucht Sturm + Abwehr.';}
+    else if(dup){ok=false;msg='Ein Spieler steht doppelt.';}
+    else if(tie){ok=false;msg='Unentschieden ist nicht möglich.';}
+    else if(samePosA||samePosB){ok=false;msg='Jedes Team braucht Sturm + Abwehr.';}
     if(warn)warn.textContent=msg; document.getElementById('saveEdit').disabled=!ok;};
   document.querySelectorAll('[data-ep],[data-epos]').forEach(s=>s.onchange=()=>{readE();checkE();});
   document.querySelectorAll('[data-estep]').forEach(b=>b.onclick=()=>{const[k,d]=b.dataset.estep.split(',');
@@ -9814,6 +10349,42 @@ function toast(msg,kind){let t=document.querySelector('.toast');
   if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
   t.textContent=msg;t.className='toast '+(kind===true?'err':kind||'');void t.offsetWidth;t.classList.add('show');
   clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2400);}
+
+// ─── Achievement-Toast: gestapelte Anzeige für neue Badges nach Match-Eingabe ───
+// Sequenzielle Queue verhindert, dass mehrere Achievements einander überschreiben.
+// Jeder Toast 2.6s sichtbar + 0.4s Pause zwischen den Slides.
+let _achToastQueue=[], _achToastBusy=false, _achToastTimer=null;
+function showAchievementToast(playerName, badge){
+  _achToastQueue.push({playerName, badge});
+  _processAchToastQueue();
+}
+function _processAchToastQueue(){
+  if(_achToastBusy || !_achToastQueue.length) return;
+  _achToastBusy=true;
+  const {playerName, badge}=_achToastQueue.shift();
+  let el=document.querySelector('.ach-toast');
+  if(!el){el=document.createElement('div');el.className='ach-toast';document.body.appendChild(el);}
+  // Badge-Icon: zentrale badgeIc()-Logik nutzen (SVG zuerst, Emoji als Fallback)
+  // — konsistent mit Profil, Awards-Sheet und Match-Detail. Mein CSS-Selektor
+  // .ach-toast-ic svg übernimmt Größe/Stroke; das umliegende <span> ist neutral.
+  const icHtml = badgeIc(badge, '22px');
+  const subParts=[esc(playerName)];
+  if(badge.count && badge.count>1) subParts.push(badge.count+'×');
+  el.innerHTML=`
+    <div class="ach-toast-ic">${icHtml}</div>
+    <div class="ach-toast-text">
+      <div class="ach-toast-cat">Neue Auszeichnung</div>
+      <div class="ach-toast-name">${esc(badge.name)}</div>
+      <div class="ach-toast-sub">${subParts.join(' · ')}</div>
+    </div>`;
+  void el.offsetWidth;
+  el.classList.add('show');
+  clearTimeout(_achToastTimer);
+  _achToastTimer=setTimeout(()=>{
+    el.classList.remove('show');
+    setTimeout(()=>{ _achToastBusy=false; _processAchToastQueue(); }, 400);
+  }, 2600);
+}
 
 // ════════ BOOT ════════
 loadAll();
