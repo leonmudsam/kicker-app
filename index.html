@@ -2211,7 +2211,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.20.15';
+const BUILD_VERSION='2026.06.20.17';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2363,6 +2363,11 @@ const ICONS = {
   underdog:      `<path d="M12 21v-9"/><path d="M8 16l4-4 4 4"/><path d="M7 8l5-3 5 3v2H7z"/>`,
   // Pechvogel: Regenwolke mit drei schräg fallenden Tropfen
   rainCloud:     `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3"/>`,
+  // ── NEUE BADGES v4 ──
+  // Thronfäller: Krone mit "X" durchgestrichen — Sieg gegen den Top-1 Spieler der Saison
+  kingFall:      `<path d="M5 9l3-3 4 2 4-2 3 3v9H5z"/><path d="M8 13l8 4M16 13l-8 4"/>`,
+  // Überholmanöver: Klassisches Swap-Pfeile-Symbol — versetzte horizontale Pfeile in entgegengesetzte Richtung
+  overtake:      `<path d="M3 7h13"/><path d="M12 3l4 4-4 4"/><path d="M21 17H8"/><path d="M12 13l-4 4 4 4"/>`,
   // ── Neue Badge-Icons ──
   // Krimi-Reihe: zackige Achterbahn-Linie (viele knappe, dramatische Spiele)
   thriller:      `<polyline points="3 18 6 8 9 16 12 10 15 17 18 8 21 14"/>`,
@@ -2578,6 +2583,7 @@ function getGlobalSim(){
       _cache._snapMap = null;
       _cache._seasonRankings = null;
       _cache._matchesBySeason = null;
+      _cache._rankSnapshots = null;
       return sim;
     }
   }
@@ -2593,6 +2599,7 @@ function getGlobalSim(){
   _cache._snapMap = null;
   _cache._seasonRankings = null;
   _cache._matchesBySeason = null;
+  _cache._rankSnapshots = null;
   return sim;
 }
 
@@ -2618,6 +2625,48 @@ function getSnapMap(){
   }
   _cache._snapMap = map;
   return map;
+}
+
+// ─── Saison-Rank-Snapshots (lazy, einmalig pro Sim) ───────────────────
+// Für jedes Match: die laufende Saison-Rangliste VOR und NACH dem Match.
+// Berechnet wird das per O(n) Walk durch alle Matches; pro Match werden
+// die Deltas aus globalSim.history auf einen seasonElo-Akkumulator addiert.
+// Ergebnis: { matchId: { preRank: {pid: rank}, postRank: {pid: rank} } }
+// wobei rank = 1 für höchstes Saison-Elo zum jeweiligen Zeitpunkt.
+// Genutzt von den Badges "Thronfäller" (kingslayer) und "Überholmanöver".
+// Tie-Break bei gleichem Elo: alphabetisch nach playerId — deterministisch.
+function getRankSnapshots(){
+  if(_cache._rankSnapshots) return _cache._rankSnapshots;
+  getGlobalSim(); // garantiert Sim ist aktuell
+  const histMap = getHistoryByMatchId();
+  const out = {};
+  const seasonElo = {}; // sid → {pid: elo}
+  for(let i=0; i<matches.length; i++){
+    const m = matches[i];
+    const sid = seasonOf(m.created_at).id;
+    if(!seasonElo[sid]) seasonElo[sid] = {};
+    const elos = seasonElo[sid];
+    // Pre-Rank: aktueller Stand VOR diesem Match
+    const preEntries = Object.entries(elos);
+    preEntries.sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const preRank = {};
+    preEntries.forEach(([pid], idx) => preRank[pid] = idx + 1);
+    // Apply this match's deltas (vom globalSim)
+    const histEntry = histMap.get(m.id);
+    if(histEntry && histEntry.deltas){
+      Object.entries(histEntry.deltas).forEach(([pid, d]) => {
+        elos[pid] = (elos[pid] || 0) + d;
+      });
+    }
+    // Post-Rank: Stand NACH diesem Match
+    const postEntries = Object.entries(elos);
+    postEntries.sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    const postRank = {};
+    postEntries.forEach(([pid], idx) => postRank[pid] = idx + 1);
+    out[m.id] = {preRank, postRank};
+  }
+  _cache._rankSnapshots = out;
+  return out;
 }
 
 // ─── Matches-pro-Saison Cache (lazy, einmalig pro Sim) ───
@@ -7919,8 +7968,8 @@ const BADGES=[
   // Zeile 13 — 15er Serie, 30er Serie
   {id:'streak15',ic:'flameTriple',name:'15er Serie',desc:'15 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,15)},
-  {id:'streak30',ic:'crownFlame',name:'30er Serie',desc:'30 Siege in Folge',
-    multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,30)},
+  {id:'streak20',ic:'crownFlame',name:'20er Serie',desc:'20 Siege in Folge',
+    multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,20)},
   // Zeile 14 — Mauer, Carry
   {id:'wall_badge',ic:'brick',name:'Mauer',desc:'Sieg mit max. 2 Gegentoren als Verteidiger',
     multi:true,count:(id,ms)=>ms.filter(m=>{if(!matchOf(id,m)||!won(id,m))return false;
@@ -7936,37 +7985,46 @@ const BADGES=[
   // Zeile 16 — Pflichtaufgabe, Award-Sammler
   {id:'pflichtaufgabe',ic:'clipboard',name:'Pflichtaufgabe',desc:'Sieg gegen mindestens einen Gegner aus den Bottom 3 der Saison-Endrangliste (ab 6 Saison-Teilnehmern)',
     multi:true,count:(id,ms)=>countBottomThreeWins(id,ms)}, */
-  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Player-of-the-Day und 2 Player-of-the-Week Auszeichnungen gesammelt',
+  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison min. 5 Player-of-the-Day und 2 Player-of-the-Week',
     multi:true,count:(id,ms)=>countAwardCollector(id)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
   {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
     multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
   {id:'potd',ic:'trophyDay',name:'Player of the Day',desc:'Meiste Siege an einem Tag (min. 3)',
     multi:true,count:(id,ms)=>countDayWins(id,ms)},
+  // ── NEUE BADGES v4 ──
+  // Thronfäller: Sieg gegen den Top-1 der laufenden Saison-Rangliste (Stand vor dem Match)
+  {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Top-1 Spieler der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
+    multi:true,count:(id,ms)=>countKingslayer(id,ms)},
+  // Überholmanöver: Sieg gegen einen Spieler, der dadurch in der Saison-Rangliste überholt wurde
+  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Spieler im Match besiegt und ihn dadurch in der Saison-Rangliste überholt',
+    multi:true,count:(id,ms)=>countOvertake(id,ms)},
 ];
 
 // ════════════════════════════════════════════════════════════════════
 // BADGE-RARITY-SYSTEM — vier Stufen + Negative eigenständig
 // ════════════════════════════════════════════════════════════════════
-// Datenbasierte Klassifizierung (kalibriert auf reale Spieler-Verteilung):
-//   • LEGENDARY (4)  — extrem selten, Karriere-Highlight
-//   • RARE      (12) — schwer, brauchen Skill/Konstanz
-//   • COMMON    (14) — bei aktivem Spiel oft erreicht
+// Neue Klassifizierung (v4): kalibriert auf reale Achievement-Häufigkeit:
+//   • LEGENDARY (6)  — extrem selten, Karriere-Highlight
+//   • RARE      (14) — schwer, brauchen Skill/Konstanz
+//   • COMMON    (12) — bei aktivem Spiel oft erreicht
 //   • NEGATIVE  (2)  — "Schande", eigenständig (rot, abgesetzt)
 // Jeder Bucket hat eine GERADE Anzahl, damit das 2-Spalten-Grid im Sheet
-// sauber aufgeht. Total = 32 Badges, exakt die BADGES-Array-Länge.
+// sauber aufgeht. Total = 34 Badges (= BADGES-Array-Länge).
 // Reihenfolge innerhalb jeder Gruppe folgt der thematischen BADGES-Reihenfolge.
 // ════════════════════════════════════════════════════════════════════
 const BADGE_RARITY = {
-  // LEGENDARY (4)
-  games150:        'legendary', // Legende (150 Matches)
+  // LEGENDARY (6)
   dynasty_600:     'legendary', // Dynastie (600 Elo)
+  dominator_400:   'legendary', // Dominator (400 Elo) — hochgestuft von Rare
+  award_collector: 'legendary', // Award-Sammler (5 POTD + 2 POTW) — hochgestuft von Rare
+  perfect_win:     'legendary', // Absoluter Sieger (10:0) — hochgestuft von Common
   streak15:        'legendary', // 15er Serie
-  streak30:        'legendary', // 30er Serie
-  // RARE (12)
+  streak20:        'legendary', // 20er Serie (vorher streak30)
+  // RARE (14)
+  games150:        'rare',      // Legende (150 Matches) — herabgestuft von Legendary
   allrounder:      'rare',      // Allrounder
-  def50:           'rare',      // Abwehrchef
-  dominator_400:   'rare',      // Dominator (400 Elo)
+  wall_badge:      'rare',      // Mauer — hochgestuft von Common
   upset_king:      'rare',      // Upset-König
   unbeatable:      'rare',      // Unschlagbar
   krimi:           'rare',      // Krimi-Reihe
@@ -7974,32 +8032,33 @@ const BADGE_RARITY = {
   nerves_of_steel: 'rare',      // Nerven aus Stahl
   streak10:        'rare',      // 10er Serie
   vice_champion:   'rare',      // Vize-Meister
-  award_collector: 'rare',      // Award-Sammler
+  clear_win:       'rare',      // Klares Ding — hochgestuft von Common
+  streak5:         'rare',      // 5er Serie — hochgestuft von Common
   potw:            'rare',      // Player of the Week
-  // COMMON (14)
+  potd:            'rare',      // Player of the Day — hochgestuft von Common
+  // COMMON (12)
   first_match:     'common',    // Debütant
   games25:         'common',    // Stammgast
   atk50:           'common',    // Mittelstürmer
+  def50:           'common',    // Abwehrchef — herabgestuft von Rare
   climber_100:     'common',    // Aufsteiger
   early_bird:      'common',    // Frühschicht
   comeback_day:    'common',    // Comeback-Tag
   revanchist:      'common',    // Revanchist
-  clear_win:       'common',    // Klares Ding
-  perfect_win:     'common',    // Absoluter Sieger
   nail_biter:      'common',    // Zittersieg
-  streak5:         'common',    // 5er Serie
-  wall_badge:      'common',    // Mauer
   carry:           'common',    // Carry
-  potd:            'common',    // Player of the Day
+  // ── NEUE BADGES v4 ──
+  kingslayer:      'common',    // Thronfäller — Sieg gegen Top-1
+  overtake:        'common',    // Überholmanöver — Spieler in Rangliste überholt
   // NEGATIVE (2)
   losing5:         'negative',  // Losing Streak
   perfect_loss:    'negative',  // Absoluter Verlierer
 };
 
 const RARITY_META = {
-  legendary: {label:'Legendary', color:'var(--gold)',   total:4},
-  rare:      {label:'Rare',      color:'var(--purple)', total:12},
-  common:    {label:'Common',    color:'var(--acid)',   total:14},
+  legendary: {label:'Legendary', color:'var(--gold)',   total:6},
+  rare:      {label:'Rare',      color:'var(--purple)', total:14},
+  common:    {label:'Common',    color:'var(--acid)',   total:12},
   negative:  {label:'Schande',   color:'var(--red)',    total:2},
 };
 const RARITY_ORDER = ['legendary','rare','common','negative'];
@@ -8270,6 +8329,63 @@ function countBottomThreeWins(id,ms){
   }).length;
 }
 
+// ─── Thronfäller: Sieg gegen den Top-1 der laufenden Saison-Rangliste ───
+// Top-1 = der Spieler mit dem höchsten Saison-Elo zum Zeitpunkt VOR dem Match
+// (aus getRankSnapshots, das den live-Stand pro Match aus den Sim-Deltas
+// aufbaut). Pflicht: Top-1 darf nicht der Spieler selbst sein und muss im
+// gegnerischen Team stehen. Hidden-Spieler werden NICHT ausgeschlossen,
+// weil der Match selbst stattfand — die Rangliste-Logik basiert auf realem
+// Elo-Stand, nicht auf Visibility.
+function countKingslayer(id,ms){
+  const snaps = getRankSnapshots();
+  let count = 0;
+  for(let i=0; i<ms.length; i++){
+    const m = ms[i];
+    if(!matchOf(id,m) || !won(id,m)) continue;
+    const snap = snaps[m.id]; if(!snap) continue;
+    // Wer war Top-1 in der Saison-Rangliste VOR dem Match?
+    let top1 = null;
+    for(const pid in snap.preRank){
+      if(snap.preRank[pid] === 1){ top1 = pid; break; }
+    }
+    if(!top1 || top1 === id) continue;
+    // War Top-1 ein direkter Gegner?
+    const onA = [m.a1,m.a2].includes(id);
+    const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
+    if(opps.includes(top1)) count++;
+  }
+  return count;
+}
+
+// ─── Überholmanöver: Sieg gegen einen Spieler, der dadurch in der ───
+// ─── Saison-Rangliste überholt wurde ─────────────────────────────────
+// Pro überholtem Gegner zählt 1× (also wenn man im 2v2 beide Gegner
+// überholt, zählt das als 2 Treffer für dieses Match).
+// Bedingungen pro Gegner Y:
+//   • X war vor Match unter Y in der Rangliste (rank_X > rank_Y)
+//   • X ist nach Match über Y (rank_X < rank_Y)
+//   • → +1 für X
+function countOvertake(id,ms){
+  const snaps = getRankSnapshots();
+  let count = 0;
+  for(let i=0; i<ms.length; i++){
+    const m = ms[i];
+    if(!matchOf(id,m) || !won(id,m)) continue;
+    const snap = snaps[m.id]; if(!snap) continue;
+    const preX = snap.preRank[id], postX = snap.postRank[id];
+    if(!preX || !postX) continue; // X muss schon einen Rang gehabt haben
+    const onA = [m.a1,m.a2].includes(id);
+    const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
+    for(const opId of opps){
+      const preY = snap.preRank[opId], postY = snap.postRank[opId];
+      if(!preY || !postY) continue;
+      // X war unter Y (höherer Rangzahl = schlechter), jetzt drüber
+      if(preX > preY && postX < postY) count++;
+    }
+  }
+  return count;
+}
+
 // ─── Award-Sammler: in einer Saison min. 5 POTD UND min. 2 POTW Auszeichnungen ───
 // Pro qualifizierter Saison vergeben (mehrfach über Karriere).
 function countAwardCollector(id){
@@ -8361,6 +8477,8 @@ function getBadgeEarnedCache(){
   const snapMap=getSnapMap();
   // History-Map für eloAfter-Lookup (Saison-Peak-Tracking pro Match)
   const histById=getHistoryByMatchId();
+  // Rangliste-Snapshots pro Match (für Thronfäller + Überholmanöver)
+  const rankSnaps=getRankSnapshots();
   // Tages-Tracker (global, nicht per-player): welcher Tag hatte schon sein erstes Match?
   const firstOfDaySeen={};
 
@@ -8373,7 +8491,7 @@ function getBadgeEarnedCache(){
       defG:0, defW:0,
       curStreak:0, curLoss:0,
       // Streak-Awards: werden zurückgesetzt wenn Serie bricht
-      sa5:false, sa10:false, sa15:false, sa30:false,
+      sa5:false, sa10:false, sa15:false, sa20:false,
       // Loss-Streak-Award: wird zurückgesetzt wenn Sieg kommt
       la5:false,
       // Tages-Tracker für Unbeatable
@@ -8434,7 +8552,7 @@ function getBadgeEarnedCache(){
       } else {
         s.curLoss=s.curLoss>0?s.curLoss+1:1;
         s.curStreak=0;
-        s.sa5=false; s.sa10=false; s.sa15=false; s.sa30=false;
+        s.sa5=false; s.sa10=false; s.sa15=false; s.sa20=false;
       }
 
       if(!s.days[day]) s.days[day]={g:0,l:0};
@@ -8466,7 +8584,7 @@ function getBadgeEarnedCache(){
       if(w && s.curStreak>=5  && !s.sa5)  { s.sa5=true;  fire('streak5');  }
       if(w && s.curStreak>=10 && !s.sa10) { s.sa10=true; fire('streak10'); }
       if(w && s.curStreak>=15 && !s.sa15) { s.sa15=true; fire('streak15'); }
-      if(w && s.curStreak>=30 && !s.sa30) { s.sa30=true; fire('streak30'); }
+      if(w && s.curStreak>=20 && !s.sa20) { s.sa20=true; fire('streak20'); }
 
       // ── Loss-Streak-Badge ──
       if(!w && s.curLoss>=5 && !s.la5)   { s.la5=true;  fire('losing5');  }
@@ -8580,6 +8698,35 @@ function getBadgeEarnedCache(){
           const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
           if(r.top3.size && opps.some(oId=>r.top3.has(oId))) fire('koenigsklasse');
           if(r.bottom3.size && opps.some(oId=>r.bottom3.has(oId))) fire('pflichtaufgabe');
+        }
+      }
+
+      // ── Thronfäller: Sieg gegen den Top-1 der Saison-Rangliste (Stand vor Match) ──
+      // ── Überholmanöver: Sieg gegen Gegner, der dadurch in der Rangliste überholt wurde ──
+      // Beide nutzen rankSnaps (preRank/postRank pro Match aus globalSim-Deltas).
+      // Match-Trigger feuert je Badge maximal 1× pro Spieler pro Match — auch wenn
+      // 2 Gegner überholt werden, gibts nur 1 Toast/Eintrag im Match-Review.
+      // Der Counter (countOvertake) zählt die tatsächlichen 2 Überholungen für
+      // das Profil-Aggregat — die beiden Pfade sind absichtlich getrennt.
+      if(w){
+        const rs=rankSnaps[m.id];
+        if(rs && rs.preRank && rs.postRank){
+          const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
+          // Thronfäller: Wer war Top-1 in der Saison vor dem Match?
+          let top1=null;
+          for(const pid in rs.preRank){
+            if(rs.preRank[pid]===1){ top1=pid; break; }
+          }
+          if(top1 && top1!==id && opps.includes(top1)) fire('kingslayer');
+          // Überholmanöver: Hat X mindestens einen Gegner überholt?
+          const preX=rs.preRank[id], postX=rs.postRank[id];
+          if(preX && postX){
+            const overtook=opps.some(oId=>{
+              const preY=rs.preRank[oId], postY=rs.postRank[oId];
+              return preY && postY && preX>preY && postX<postY;
+            });
+            if(overtook) fire('overtake');
+          }
         }
       }
 
@@ -9127,6 +9274,52 @@ const rankProgHtml = `
       </div>
     </div>
 
+    ${badgeTotal?(()=>{
+      // ─── Auszeichnungen-Card (Variante 4): Strip seltenster Achievements + Tier-Bar ───
+      // Strip: max 8 freigeschaltete Badges, sortiert nach Rarität (Legendary→Common),
+      // innerhalb jeder Gruppe in BADGES-Reihenfolge. Mini-Icons bekommen Tier-Border.
+      // Dünne Bar darunter zeigt segmentiert den Gesamt-Fortschritt nach Tier.
+      const _STRIP_MAX = 8;
+      const _byRarity = {legendary:[], rare:[], common:[], negative:[]};
+      badges.forEach(b => { const r = rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
+      const _strip = [];
+      RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
+      const _visible = _strip.slice(0, _STRIP_MAX);
+      const _rest = Math.max(0, _strip.length - _visible.length);
+      const _stripHtml = _visible.map(({b,r}) => {
+        const ic = ICONS[b.ic] ? `<svg viewBox="0 0 24 24">${ICONS[b.ic]}</svg>` : '';
+        return `<div class="pp-bmini ${r}">${ic}</div>`;
+      }).join('') + (_rest ? `<span class="pp-bcard-rest">+${_rest}</span>` : '');
+      // Bar-Segmente: ein Stück pro Tier-Count, Rest dunkel
+      const _seg = (r) => _byRarity[r].length;
+      const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
+      const _missing = BADGES.length - _have;
+      const _barHtml = `
+        <div class="pp-bcard-bar">
+          ${_seg('legendary')?`<div class="seg legendary" style="flex:${_seg('legendary')}"></div>`:''}
+          ${_seg('rare')?`<div class="seg rare" style="flex:${_seg('rare')}"></div>`:''}
+          ${_seg('common')?`<div class="seg common" style="flex:${_seg('common')}"></div>`:''}
+          ${_seg('negative')?`<div class="seg negative" style="flex:${_seg('negative')}"></div>`:''}
+          ${_missing?`<div class="seg" style="flex:${_missing};background:var(--surface3);opacity:.5"></div>`:''}
+        </div>`;
+      return `
+    <div class="pp-sec" style="animation-delay:.425s">
+      <div class="pp-sec-title">
+        <div class="l">${svgI('star')}<h4>Auszeichnungen</h4></div>
+        <div class="m">${_have} / ${BADGES.length}</div>
+      </div>
+      <div class="pp-bcard" id="ppBadgesBtn">
+        <div class="pp-bcard-row">
+          <div class="pp-bcard-strip">${_stripHtml}</div>
+          <span class="pp-bcard-chev">
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
+        </div>
+        ${_barHtml}
+      </div>
+    </div>`;
+    })():''}
+
     <div class="pp-sec" style="animation-delay:.45s">
       <div class="pp-sec-title">
         <div class="l"><span class="ic svg-ic">${svgI('users')}</span><h4>Beziehungen</h4></div>
@@ -9222,52 +9415,6 @@ const rankProgHtml = `
       </div>
       ${trophyHtml}
     </div>`:''}
-
-    ${badgeTotal?(()=>{
-      // ─── Auszeichnungen-Card (Variante 4): Strip seltenster Achievements + Tier-Bar ───
-      // Strip: max 8 freigeschaltete Badges, sortiert nach Rarität (Legendary→Common),
-      // innerhalb jeder Gruppe in BADGES-Reihenfolge. Mini-Icons bekommen Tier-Border.
-      // Dünne Bar darunter zeigt segmentiert den Gesamt-Fortschritt nach Tier.
-      const _STRIP_MAX = 8;
-      const _byRarity = {legendary:[], rare:[], common:[], negative:[]};
-      badges.forEach(b => { const r = rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
-      const _strip = [];
-      RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
-      const _visible = _strip.slice(0, _STRIP_MAX);
-      const _rest = Math.max(0, _strip.length - _visible.length);
-      const _stripHtml = _visible.map(({b,r}) => {
-        const ic = ICONS[b.ic] ? `<svg viewBox="0 0 24 24">${ICONS[b.ic]}</svg>` : '';
-        return `<div class="pp-bmini ${r}">${ic}</div>`;
-      }).join('') + (_rest ? `<span class="pp-bcard-rest">+${_rest}</span>` : '');
-      // Bar-Segmente: ein Stück pro Tier-Count, Rest dunkel
-      const _seg = (r) => _byRarity[r].length;
-      const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
-      const _missing = BADGES.length - _have;
-      const _barHtml = `
-        <div class="pp-bcard-bar">
-          ${_seg('legendary')?`<div class="seg legendary" style="flex:${_seg('legendary')}"></div>`:''}
-          ${_seg('rare')?`<div class="seg rare" style="flex:${_seg('rare')}"></div>`:''}
-          ${_seg('common')?`<div class="seg common" style="flex:${_seg('common')}"></div>`:''}
-          ${_seg('negative')?`<div class="seg negative" style="flex:${_seg('negative')}"></div>`:''}
-          ${_missing?`<div class="seg" style="flex:${_missing};background:var(--surface3);opacity:.5"></div>`:''}
-        </div>`;
-      return `
-    <div class="pp-sec" style="animation-delay:.6s">
-      <div class="pp-sec-title">
-        <div class="l">${svgI('star')}<h4>Auszeichnungen</h4></div>
-        <div class="m">${_have} / ${BADGES.length}</div>
-      </div>
-      <div class="pp-bcard" id="ppBadgesBtn">
-        <div class="pp-bcard-row">
-          <div class="pp-bcard-strip">${_stripHtml}</div>
-          <span class="pp-bcard-chev">
-            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
-          </span>
-        </div>
-        ${_barHtml}
-      </div>
-    </div>`;
-    })():''}
 
     ${awardCount?`
     <div class="pp-sec" style="animation-delay:.65s">
