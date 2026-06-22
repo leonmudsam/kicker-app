@@ -538,6 +538,106 @@
   .aw-shame-divider .lbl svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;
     stroke-linecap:round;stroke-linejoin:round}
 
+  /* ════════════════════════════════════════════════════════════════
+     AWARD-SAMMLER-PODIUM (Top-3 nach Anzahl gewonnener Awards)
+     ════════════════════════════════════════════════════════════════ */
+  .aw-collectors{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px;align-items:end;
+    margin-bottom:18px;
+    background:linear-gradient(180deg,rgba(247,207,74,.07),var(--surface) 80%);
+    border:1px solid var(--line);border-radius:18px;padding:16px 14px 14px}
+  .aw-collectors-title{grid-column:1/-1;text-align:center;
+    font-family:'Sometype Mono',monospace;font-size:9.5px;text-transform:uppercase;
+    letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:10px}
+  .aw-collector{display:flex;flex-direction:column;align-items:center;gap:6px;
+    position:relative;cursor:pointer;transition:.15s;min-width:0}
+  .aw-collector:active{transform:scale(.985)}
+  .aw-collector-av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;
+    font-size:21px;background:var(--surface3);border:2px solid var(--line2);flex-shrink:0;
+    font-family:'Archivo Black',sans-serif;color:#0a0c0b}
+  .aw-collector.gold .aw-collector-av{border-color:var(--gold);box-shadow:0 0 14px rgba(247,207,74,.3)}
+  .aw-collector.silver .aw-collector-av{border-color:#c0c0c0}
+  .aw-collector.bronze .aw-collector-av{border-color:var(--bronze)}
+  .aw-collector-rank{position:absolute;top:-5px;right:-2px;width:18px;height:18px;border-radius:50%;
+    background:var(--surface3);display:grid;place-items:center;
+    font-family:'Archivo Black',sans-serif;font-size:10px;border:1px solid var(--line2)}
+  .aw-collector.gold .aw-collector-rank{background:var(--gold);color:#0a0c0b;border-color:var(--gold)}
+  .aw-collector.silver .aw-collector-rank{background:#c0c0c0;color:#0a0c0b;border-color:#c0c0c0}
+  .aw-collector.bronze .aw-collector-rank{background:var(--bronze);color:#0a0c0b;border-color:var(--bronze)}
+  .aw-collector-name{font-size:12px;font-weight:700;line-height:1.15;text-align:center;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+  .aw-collector-count{font-family:'Archivo Black',sans-serif;font-size:22px;line-height:1;color:var(--gold)}
+  .aw-collector.silver .aw-collector-count{color:#c0c0c0;font-size:18px}
+  .aw-collector.bronze .aw-collector-count{color:var(--bronze);font-size:16px}
+  .aw-collector-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--muted);font-family:'Sometype Mono',monospace;font-weight:700}
+  .aw-collector-bar{width:80%;border-radius:99px 99px 0 0;margin-top:4px}
+  .aw-collector.gold .aw-collector-bar{height:14px;background:var(--gold);opacity:.55}
+  .aw-collector.silver .aw-collector-bar{height:9px;background:#c0c0c0;opacity:.55}
+  .aw-collector.bronze .aw-collector-bar{height:6px;background:var(--bronze);opacity:.55}
+
+  /* ════════════════════════════════════════════════════════════════
+     TROPHY-VITRINE (Pokal-Schaukasten)
+     ════════════════════════════════════════════════════════════════ */
+  .aw-vitrine{display:grid;grid-template-columns:1fr 1fr;gap:10px;
+    background:linear-gradient(180deg,rgba(255,255,255,.02),var(--surface2));
+    border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+  .aw-trophy{background-color:var(--bg2);
+    background-image:radial-gradient(circle at 50% 30%,rgba(247,207,74,.1),transparent 60%);
+    border:1px solid var(--line2);border-radius:12px;padding:14px 12px 14px;text-align:center;
+    position:relative;cursor:pointer;transition:.15s;overflow:hidden}
+  .aw-trophy:active{transform:translateY(-2px)}
+  .aw-trophy::before{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
+  .aw-trophy-cup{position:relative;width:48px;height:48px;margin:0 auto 8px;
+    display:grid;place-items:center;color:var(--gold)}
+  .aw-trophy-cup svg{width:42px;height:42px;stroke:currentColor;fill:none;stroke-width:1.5;
+    stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 8px rgba(247,207,74,.4))}
+  .aw-trophy-cup-base{position:absolute;left:50%;bottom:-2px;transform:translateX(-50%);
+    width:30px;height:3px;border-radius:50%;
+    background:linear-gradient(90deg,transparent,currentColor,transparent);opacity:.4}
+  .aw-trophy-lbl{font-size:8.5px;text-transform:uppercase;letter-spacing:.16em;
+    font-family:'Sometype Mono',monospace;color:var(--muted);font-weight:700;margin-bottom:6px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .aw-trophy-val{font-family:'Archivo Black',sans-serif;font-size:22px;line-height:1;
+    color:var(--gold);text-shadow:0 0 12px rgba(247,207,74,.4)}
+  .aw-trophy-plaque{margin-top:10px;padding:5px 8px;background:rgba(255,255,255,.03);
+    border:1px solid var(--line);border-radius:99px;
+    display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+    max-width:100%}
+  .aw-trophy-plaque-av{width:18px;height:18px;border-radius:50%;background:var(--surface3);
+    display:grid;place-items:center;font-size:11px;flex-shrink:0;
+    font-family:'Archivo Black',sans-serif;color:#0a0c0b}
+  .aw-trophy-plaque-av.pair{width:auto;padding:0 4px;height:18px;font-size:10px;gap:2px}
+  .aw-trophy-plaque-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* Tier-Farben — überschreiben Default-Gold */
+  .aw-trophy.blue{background-image:radial-gradient(circle at 50% 30%,rgba(86,180,232,.1),transparent 60%)}
+  .aw-trophy.blue .aw-trophy-cup{color:var(--blue)}
+  .aw-trophy.blue .aw-trophy-cup svg{filter:drop-shadow(0 0 8px rgba(86,180,232,.4))}
+  .aw-trophy.blue .aw-trophy-val{color:var(--blue);text-shadow:0 0 12px rgba(86,180,232,.4)}
+  .aw-trophy.purple{background-image:radial-gradient(circle at 50% 30%,rgba(167,139,250,.1),transparent 60%)}
+  .aw-trophy.purple .aw-trophy-cup{color:var(--purple)}
+  .aw-trophy.purple .aw-trophy-cup svg{filter:drop-shadow(0 0 8px rgba(167,139,250,.4))}
+  .aw-trophy.purple .aw-trophy-val{color:var(--purple);text-shadow:0 0 12px rgba(167,139,250,.4)}
+  .aw-trophy.acid{background-image:radial-gradient(circle at 50% 30%,rgba(190,242,100,.1),transparent 60%)}
+  .aw-trophy.acid .aw-trophy-cup{color:var(--acid)}
+  .aw-trophy.acid .aw-trophy-cup svg{filter:drop-shadow(0 0 8px rgba(190,242,100,.4))}
+  .aw-trophy.acid .aw-trophy-val{color:var(--acid);text-shadow:0 0 12px rgba(190,242,100,.4)}
+  .aw-trophy.orange{background-image:radial-gradient(circle at 50% 30%,rgba(255,120,73,.1),transparent 60%)}
+  .aw-trophy.orange .aw-trophy-cup{color:var(--orange)}
+  .aw-trophy.orange .aw-trophy-cup svg{filter:drop-shadow(0 0 8px rgba(255,120,73,.4))}
+  .aw-trophy.orange .aw-trophy-val{color:var(--orange);text-shadow:0 0 12px rgba(255,120,73,.4)}
+  .aw-trophy.red{background-image:radial-gradient(circle at 50% 30%,rgba(240,86,106,.1),transparent 60%)}
+  .aw-trophy.red .aw-trophy-cup{color:var(--red)}
+  .aw-trophy.red .aw-trophy-cup svg{filter:drop-shadow(0 0 8px rgba(240,86,106,.4))}
+  .aw-trophy.red .aw-trophy-val{color:var(--red);text-shadow:0 0 12px rgba(240,86,106,.4)}
+
+  /* Empty-State: graustichig, kein Glow */
+  .aw-trophy.empty{opacity:.4;background-image:none}
+  .aw-trophy.empty .aw-trophy-cup{color:var(--faint)}
+  .aw-trophy.empty .aw-trophy-cup svg{filter:none}
+  .aw-trophy.empty .aw-trophy-val{color:var(--muted);text-shadow:none;font-size:18px}
+
   /* ============ AWARDS V2 — DETAIL SHEET ============ */
   .aw-hero-icon{display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
   .aw-hero-icon-glow{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;position:relative}
@@ -1384,6 +1484,110 @@
   .pp-badges-card .chev svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;
     stroke-linecap:round;stroke-linejoin:round}
 
+  /* ════════════════════════════════════════════════════════════════
+     AUSZEICHNUNGS-CARD im Profil (Variante 4: Strip + dünne Tier-Bar)
+     ════════════════════════════════════════════════════════════════ */
+  .pp-bcard{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:13px 14px;cursor:pointer;transition:.15s}
+  .pp-bcard:active{transform:scale(.985)}
+  .pp-bcard-row{display:flex;align-items:center;gap:10px}
+  .pp-bcard-strip{flex:1;min-width:0;display:flex;gap:6px;align-items:center}
+  .pp-bmini{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    border:1px solid var(--line2);background:var(--bg2);flex-shrink:0;color:var(--ink2)}
+  .pp-bmini svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  .pp-bmini.legendary{color:var(--gold);border-color:rgba(247,207,74,.4)}
+  .pp-bmini.rare{color:var(--purple);border-color:rgba(167,139,250,.38)}
+  .pp-bmini.common{color:var(--acid);border-color:rgba(190,242,100,.25)}
+  .pp-bmini.negative{color:var(--red);border-color:rgba(240,86,106,.38)}
+  .pp-bcard-rest{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;
+    font-weight:700;margin-left:3px}
+  .pp-bcard-chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
+  .pp-bcard-chev svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;
+    stroke-linecap:round}
+  .pp-bcard-bar{height:3px;background:var(--bg2);border-radius:99px;display:flex;
+    overflow:hidden;gap:2px;margin-top:10px}
+  .pp-bcard-bar .seg{height:100%}
+  .pp-bcard-bar .seg.legendary{background:var(--gold)}
+  .pp-bcard-bar .seg.rare{background:var(--purple)}
+  .pp-bcard-bar .seg.common{background:var(--acid);opacity:.85}
+  .pp-bcard-bar .seg.negative{background:var(--red)}
+
+  /* ════════════════════════════════════════════════════════════════
+     AUSZEICHNUNGS-SHEET (Tier-Counter + gruppierte Cards + Schande-Block)
+     ════════════════════════════════════════════════════════════════ */
+  .bsh-counter{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:9px 11px;margin-bottom:16px;display:flex;justify-content:space-between;
+    align-items:center;gap:6px}
+  .bsh-counter .tc-pill{display:inline-flex;align-items:center;gap:5px;
+    font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.04em}
+  .bsh-counter .tc-pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+  .bsh-counter .tc-pill.dim{opacity:.4}
+  .bsh-counter .tc-pill.dim .dot{background:var(--faint)}
+  .bsh-counter .tc-pill .n{color:var(--ink);font-family:'Archivo Black',sans-serif;font-size:11.5px}
+  .bsh-counter .tc-pill.legendary{color:var(--gold)}
+  .bsh-counter .tc-pill.rare{color:var(--purple)}
+  .bsh-counter .tc-pill.common{color:var(--acid)}
+  .bsh-counter .tc-pill.negative{color:var(--red)}
+  .bsh-counter .tc-sep{width:1px;height:14px;background:var(--line2);opacity:.6}
+
+  .bsh-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .bsh-neg-divider{display:flex;align-items:center;gap:10px;margin:20px 4px 12px}
+  .bsh-neg-divider-line{flex:1;height:1px;
+    background:linear-gradient(90deg,transparent,var(--line2),transparent)}
+  .bsh-neg-divider-label{font-family:'Sometype Mono',monospace;font-size:10px;
+    text-transform:uppercase;letter-spacing:.2em;color:var(--red);font-weight:700;
+    display:flex;align-items:center;gap:5px;opacity:.75}
+  .bsh-neg-divider-label .dot{width:5px;height:5px;border-radius:50%;background:var(--red)}
+
+  .bsh-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:14px;padding-top:18px;text-align:center;position:relative;overflow:hidden;transition:.15s}
+  .bsh-card-ic{font-size:30px;margin-bottom:10px;display:flex;justify-content:center;
+    align-items:center;min-height:32px}
+  .bsh-card-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:2;
+    stroke-linecap:round;stroke-linejoin:round}
+  .bsh-card-name{font-weight:700;font-size:13px;margin-bottom:4px;letter-spacing:-.005em}
+  .bsh-card-desc{font-size:10.5px;color:var(--muted);line-height:1.4;margin-bottom:8px}
+  .bsh-card-count{font-family:'Archivo Black',sans-serif;font-size:16px}
+  .bsh-card-once{font-size:9.5px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.12em;font-family:'Sometype Mono',monospace}
+
+  /* Locked: alles farbneutral, winziger Tier-Dot oben links */
+  .bsh-card.locked{opacity:.4;border-color:var(--line)}
+  .bsh-card.locked .bsh-card-ic{color:var(--faint)}
+  .bsh-card.locked .bsh-card-name{color:var(--ink2)}
+  .bsh-card.locked .tier-dot{position:absolute;top:8px;left:9px;width:5px;height:5px;
+    border-radius:50%;background:currentColor;opacity:.55}
+  .bsh-card.locked.legendary{color:var(--gold)}
+  .bsh-card.locked.rare{color:var(--purple)}
+  .bsh-card.locked.common{color:var(--acid)}
+  .bsh-card.locked.negative{color:var(--red)}
+
+  /* Unlocked: Tier-Farbe sichtbar */
+  .bsh-card.unlocked.legendary{color:var(--gold)}
+  .bsh-card.unlocked.rare{color:var(--purple)}
+  .bsh-card.unlocked.common{color:var(--acid)}
+  .bsh-card.unlocked.negative{color:var(--red)}
+  .bsh-card.unlocked .bsh-card-ic,
+  .bsh-card.unlocked .bsh-card-count,
+  .bsh-card.unlocked .bsh-card-once{color:currentColor}
+
+  /* Akzent-Strich oben (nur unlocked) */
+  .bsh-card.unlocked::before{content:"";position:absolute;top:0;left:14px;right:14px;height:2px;
+    background:currentColor;border-radius:0 0 99px 99px;opacity:.65}
+  .bsh-card.unlocked.legendary{border-color:rgba(247,207,74,.55);
+    background:radial-gradient(circle at 50% 0%,rgba(247,207,74,.16),var(--surface) 65%);
+    box-shadow:0 0 20px rgba(247,207,74,.14)}
+  .bsh-card.unlocked.legendary::before{height:3px;box-shadow:0 0 12px var(--gold);opacity:1}
+  .bsh-card.unlocked.legendary .bsh-card-ic{filter:drop-shadow(0 0 6px rgba(247,207,74,.4))}
+  .bsh-card.unlocked.rare{border-color:rgba(167,139,250,.4)}
+  .bsh-card.unlocked.rare .bsh-card-ic{filter:drop-shadow(0 0 4px rgba(167,139,250,.25))}
+  .bsh-card.unlocked.common{border-color:rgba(190,242,100,.28)}
+  .bsh-card.unlocked.common::before{opacity:.35}
+  .bsh-card.unlocked.negative{border-color:rgba(240,86,106,.4);
+    background:radial-gradient(circle at 50% 0%,rgba(240,86,106,.08),var(--surface) 75%)}
+  .bsh-card.unlocked.negative .bsh-card-ic{filter:drop-shadow(0 0 4px rgba(240,86,106,.25))}
+
   /* Trophäen-Rail — feiner als das alte mit Goldener/Blauer Akzent-Fläche */
   .pp-trophies{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;margin:0;scrollbar-width:none}
   .pp-trophies::-webkit-scrollbar{display:none}
@@ -2007,7 +2211,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.20.8';
+const BUILD_VERSION='2026.06.20.12';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2152,6 +2356,13 @@ const ICONS = {
   weekKing:      `<rect x="3" y="9" width="18" height="12" rx="2"/><path d="M3 13h18M8 7v4M16 7v4"/><polygon points="5,7 8,3 12,6 16,3 19,7" fill="none" stroke-linejoin="round"/>`,
   // Award: Meiste POTD-Auszeichnungen (Trophäe mit Krone) — saison-/all-time Sammler-Award
   dayKing:       `<path d="M8 21h8M12 17v4M7 8h10v4a5 5 0 01-10 0zM5 11a2 2 0 01-2-2V7h4M19 11a2 2 0 002-2V7h-4"/><polygon points="5,5 8,2 12,4 16,2 19,5" fill="none" stroke-linejoin="round"/>`,
+  // ── NEUE AWARDS v3 ──
+  // Plus-Minus (Saldofürst): klassisches ± Symbol in Kreis — Plus oben, Minus unten
+  plusMinus:     `<circle cx="12" cy="12" r="9"/><path d="M12 7v4M10 9h4"/><path d="M10 16h4"/>`,
+  // Underdog-Held (David): Aufwärtspfeil mit Krone darüber — Außenseiter mit Königskrönung
+  underdog:      `<path d="M12 21v-9"/><path d="M8 16l4-4 4 4"/><path d="M7 8l5-3 5 3v2H7z"/>`,
+  // Pechvogel: Regenwolke mit drei schräg fallenden Tropfen
+  rainCloud:     `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3"/>`,
   // ── Neue Badge-Icons ──
   // Krimi-Reihe: zackige Achterbahn-Linie (viele knappe, dramatische Spiele)
   thriller:      `<polyline points="3 18 6 8 9 16 12 10 15 17 18 8 21 14"/>`,
@@ -5812,7 +6023,10 @@ function _awardRankingsUncached(period){
     tElo:{}, tWins:{}, tGames:{},
     atkGoals:{}, atkGoalGames:{}, defConceded:{}, defGames_:{},
     single:[], team:[], upsets:[], biggest:[],
-    clutch:{}, iceWins:{}, snapMap:null
+    clutch:{}, iceWins:{}, snapMap:null,
+    // ── NEUE AWARDS v3 ──
+    underdogWins:{},  // playerId → Anzahl Underdog-Siege (myExp < 0.35 & gewonnen)
+    closeLosses:{}    // playerId → Anzahl knapper Niederlagen (verloren & |Diff| ≤ 2)
   };
   
   // Snapshot-Map: gecached, wird nur 1× pro Sim-Generation gebaut
@@ -5848,23 +6062,27 @@ function _awardRankingsUncached(period){
     for(let t=0; t<2; t++){
       const [p1,p2,gf,ga,pos1,pos2,onA] = teams[t];
       const won = onA ? (m.winner==='A') : (m.winner==='B');
-      
+      // ── NEUE AWARDS v3 ──
+      // myExp: Wahrscheinlichkeit dieses Teams zu gewinnen (vor dem Match)
+      const myExp = onA ? expA : (1 - expA);
+      const goalDiff = Math.abs(gf - ga);
+
       for(let p=0; p<2; p++){
         const id = [p1,p2][p];
         const pos = [pos1,pos2][p];
-        
+
         if(!agg.pElo[id]) agg.pElo[id]=0;
         if(!agg.pWins[id]) agg.pWins[id]=0;
         if(!agg.pGoals[id]) agg.pGoals[id]=0;
         if(!agg.pConceded[id]) agg.pConceded[id]=0;
         if(!agg.pGames[id]) agg.pGames[id]=0;
-        
+
         agg.pElo[id] += deltas[id]||0;
         agg.pGames[id]++;
         if(won) agg.pWins[id]++;
         agg.pGoals[id] += gf;
         agg.pConceded[id] += ga;
-        
+
         // Tor-Awards (Stürmer)
         if(pos==='atk'){
           if(!agg.atkGoals[id]) agg.atkGoals[id]=0;
@@ -5872,13 +6090,25 @@ function _awardRankingsUncached(period){
           agg.atkGoals[id] += gf;
           agg.atkGoalGames[id]++;
         }
-        
+
         // Gegentore (Abwehr)
         if(pos==='def'){
           if(!agg.defConceded[id]) agg.defConceded[id]=0;
           if(!agg.defGames_[id]) agg.defGames_[id]=0;
           agg.defConceded[id] += ga;
           agg.defGames_[id]++;
+        }
+
+        // ── NEUE AWARDS v3 ──
+        // Underdog-Held: Sieg trotz < 35% Erwartung
+        if(won && myExp < 0.35){
+          if(!agg.underdogWins[id]) agg.underdogWins[id]=0;
+          agg.underdogWins[id]++;
+        }
+        // Pechvogel: Niederlage mit max. 2 Toren Differenz
+        if(!won && goalDiff <= 2){
+          if(!agg.closeLosses[id]) agg.closeLosses[id]=0;
+          agg.closeLosses[id]++;
         }
       }
     }
@@ -5955,6 +6185,37 @@ function _awardRankingsUncached(period){
   const worstDef=Object.entries(agg.defConceded).map(([id,v])=>({id,v,g:agg.defGames_[id]||1}))
     .filter(x=>x.g>=2).sort((a,b)=>(b.v/b.g)-(a.v/a.g));
   const worstElo=Object.entries(agg.pElo).map(([id,v])=>({id,v})).sort((a,b)=>a.v-b.v);
+
+  // ═══ NEUE AWARDS v3 ═══
+  // Plus-Minus: Ø Tor-Saldo pro Spiel (Tore_für − Tore_gegen), min. 10 Spiele.
+  // Schwelle 10 ist konsistent mit der Logik der anderen "Durchschnitt"-Awards
+  // (perfect: dynamisch zwischen 5-10, scorer: min 2, wall: min 2). Plus-Minus
+  // braucht etwas mehr Volumen, weil ein einzelnes 10:0-Spiel den Saldo stark
+  // verzerren würde — bei 10+ Spielen ist der Wert robust.
+  const plusMinusList = Object.entries(agg.pGames)
+    .filter(([id,g]) => g >= 10)
+    .map(([id,g]) => ({
+      id,
+      v: (agg.pGoals[id] - agg.pConceded[id]) / g,  // Saldo pro Spiel
+      gf: agg.pGoals[id], ga: agg.pConceded[id], g
+    }))
+    .sort((a,b) => b.v - a.v);
+
+  // Underdog-Held: Anzahl Underdog-Siege (myExp < 0.35), absoluter Counter,
+  // keine Mindestschwelle — wer 1 Underdog-Sieg hat, kommt schon ins Ranking,
+  // aber 0-Werte werden rausgefiltert.
+  const underdogList = Object.entries(agg.underdogWins)
+    .filter(([,v]) => v > 0)
+    .map(([id,v]) => ({id,v}))
+    .sort((a,b) => b.v - a.v);
+
+  // Pechvogel: Anzahl knapper Niederlagen (Diff ≤ 2). Auch absoluter Counter,
+  // aber wir verlangen min. 2 — bei 1 knapper Niederlage ist das eher Pech-Anekdote
+  // als Pechvogel-Status.
+  const pechvogelList = Object.entries(agg.closeLosses)
+    .filter(([,v]) => v >= 2)
+    .map(([id,v]) => ({id,v}))
+    .sort((a,b) => b.v - a.v);
   
   // ═══ ENDGEGNER ═══
   const egPairs={};
@@ -6053,6 +6314,10 @@ function _awardRankingsUncached(period){
     showmasterList:_fSingle(showmasterList),
     peakEloList:_fSingle(peakEloList),
     weekKingList, dayKingList, // weekKingList/dayKingList nutzen activePlayers() bereits
+    // ── NEUE AWARDS v3 ──
+    plusMinusList:_fSingle(plusMinusList),
+    underdogList:_fSingle(underdogList),
+    pechvogelList:_fSingle(pechvogelList),
     counts:{matches:ms.length}
   };
 }
@@ -6307,79 +6572,46 @@ function vAwards(){
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
     zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
-    weekKing:'weekKing',   dayKing:'dayKing'
+    weekKing:'weekKing',   dayKing:'dayKing',
+    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud'
   };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
-  // Award-Card-Builder (Story Cards).
-  //   key, cls(color), label, ids(array of 1 or 2 player ids; null = empty), name(escaped),
-  //   detail, val, opts={hero, neg, valSuffix}
-  // Struktur: Watermark-Zahl (val) als BG, Info-Block (Label+Name+Stat) links, Avatar+Crown rechts.
-  const card = (key, cls, label, ids, name, detail, val, opts) => {
-    opts = opts || {};
+  // Trophy-Builder für die Vitrine.
+  //   key, cls(color), label, ids(array of 1 or 2 player ids; null = empty),
+  //   name (Komma-Liste bei Gleichstand), detail (im Sheet, hier ignoriert),
+  //   val (große Zahl auf der Trophäe), opts (legacy, hier ignoriert).
+  // Signatur kompatibel zur alten card()-Funktion → minimal-invasive Umstellung.
+  const trophy = (key, cls, label, ids, name, detail, val, opts) => {
     const isEmpty = !ids || !ids.length;
-    const heroCls  = (opts.hero && !isEmpty) ? ' hero' : '';
-    const negCls   = opts.neg ? ' neg' : '';
     const emptyCls = isEmpty ? ' empty' : '';
 
-    // ── Avatar(s) ──
-    const buildAv = (pid) => {
-      const p = pmap()[pid];
-      if(!p) return `<div class="awcard-av">?</div>`;
-      const em = p.avatar_id ? avatarEmoji(p.avatar_id) : null;
-      if(em) return `<div class="awcard-av">${em}</div>`;
-      return `<div class="awcard-av av-init" style="background:${avColor(p.id)}">${esc(initials(p.name))}</div>`;
-    };
-    let avInner, pairCls = '';
+    // ── Plakette: Avatar + Name bei Single, "X & Y" Text bei Team ──
+    let plaqueContent;
     if(isEmpty){
-      avInner = `<div class="awcard-av" style="opacity:.4">·</div>`;
+      plaqueContent = `<span class="aw-trophy-plaque-name" style="color:var(--muted)">noch keine Daten</span>`;
     } else if(ids.length === 1){
-      avInner = buildAv(ids[0]);
+      const p = pmap()[ids[0]];
+      const em = p && p.avatar_id ? avatarEmoji(p.avatar_id) : null;
+      const avHtml = em
+        ? `<span class="aw-trophy-plaque-av">${em}</span>`
+        : `<span class="aw-trophy-plaque-av" style="background:${avColor(ids[0])}">${esc(initials(p ? p.name : '?'))}</span>`;
+      // Der "name" String kann bei Gleichstand mehrere Namen kommagetrennt enthalten
+      plaqueContent = `${avHtml}<span class="aw-trophy-plaque-name">${name}</span>`;
     } else {
-      // 2 ids → Pair-Layout
-      pairCls = ' pair';
-      avInner = `<div class="awcard-av-pair">${buildAv(ids[0])}${buildAv(ids[1])}</div>`;
+      // Team-Award: nur Namen als Text "X & Y" (ohne Avatare in der Plakette)
+      plaqueContent = `<span class="aw-trophy-plaque-name" style="font-size:10.5px">${name}</span>`;
     }
 
-    // ── Crown (für positive Awards) bzw. Skull (Schandtafel) ──
-    const markerHtml = isEmpty ? ''
-      : (opts.neg
-          ? `<div class="awcard-skull"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS.skull}</svg></div>`
-          : `<div class="awcard-crown"><svg viewBox="0 0 24 24"><path d="M3 7l4 4 5-6 5 6 4-4-2 13H5z" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`);
-
-    // ── Watermark: val (mit optional valSuffix dahinter) als kleine String-Repräsentation ──
-    let watermarkText = '';
-    if(!isEmpty && val !== '' && val !== null && val !== undefined){
-      watermarkText = String(val);
-      // valSuffix nur im Headliner als kleines Anhängsel - aber in Watermark passt das nicht.
-      // Wir nutzen valSuffix in der stat-Zeile statt.
-    }
-    const wmCls = watermarkText.length > 4 ? ' small' : '';
-    const wmHtml = watermarkText ? `<div class="awcard-watermark${wmCls}">${esc(watermarkText)}</div>` : '';
-
-    // ── Stat-Zeile: detail bevorzugt, sonst val + valSuffix ──
-    let statText = '';
-    if(isEmpty){
-      statText = 'noch keine Daten';
-    } else if(detail){
-      statText = detail;
-    } else if(val !== '' && val !== null && val !== undefined){
-      statText = String(val) + (opts.valSuffix ? ' ' + opts.valSuffix : '');
-    }
-
-    return `<div class="awcard${heroCls}${negCls}${emptyCls} aw-${cls}" data-award="${esc(key)}">
-      ${wmHtml}
-      <div class="awcard-info">
-        <div class="awcard-label">${label}</div>
-        <div class="awcard-name">${name}</div>
-        ${statText ? `<div class="awcard-stat">${esc(statText)}</div>` : ''}
-      </div>
-      <div class="awcard-av-wrap${pairCls}">
-        ${avInner}
-        ${markerHtml}
-      </div>
+    return `<div class="aw-trophy ${cls}${emptyCls}" data-award="${esc(key)}">
+      <div class="aw-trophy-cup">${ic(key)}<div class="aw-trophy-cup-base"></div></div>
+      <div class="aw-trophy-lbl">${label}</div>
+      <div class="aw-trophy-val">${isEmpty ? '—' : esc(String(val))}</div>
+      <div class="aw-trophy-plaque">${plaqueContent}</div>
     </div>`;
   };
+  // Alias für Rückwärtskompatibilität — alle bestehenden card(...)-Aufrufe nutzen jetzt trophy()
+  const card = trophy;
 
   // Sammelt alle Platz-1-Namen bei Gleichstand (für Einzel-Awards)
   const topNames=(arr,valFn,nameFn)=>{
@@ -6401,17 +6633,101 @@ function vAwards(){
         wt0=g(R.worstTeam),bd0=g(R.bestDuo),of0=g(R.onFire),cs0=g(R.coldStreak),ck0=g(R.carryList),
         sl0=g(R.soloList),ft0=g(R.formtief),zk0=g(R.zirkusList),bs0=g(R.baustelleList),
         sm0=g(R.showmasterList),pk0=g(R.peakEloList),
-        wk0=g(R.weekKingList),dk0=g(R.dayKingList);
+        wk0=g(R.weekKingList),dk0=g(R.dayKingList),
+        // ── NEUE AWARDS v3 ──
+        pm0=g(R.plusMinusList),uh0=g(R.underdogList),pv0=g(R.pechvogelList);
 
   let html='';
+  // ════════════════════════════════════════════════════════════════
+  // AWARD-SAMMLER-PODIUM (Top-3 Spieler nach Anzahl gewonnener Awards)
+  // ════════════════════════════════════════════════════════════════
+  // Zählt jeden Platz-1-Award pro Spieler. Bei Team-Awards (mvt, bestDuo,
+  // endgegner, biggest, upset, zirkus, baustelle, worstTeam) zählen beide
+  // Teammitglieder. Schandtafel-Awards sind NICHT positiv und fließen daher
+  // NICHT in den Sammler-Counter ein.
+  // ════════════════════════════════════════════════════════════════
+  const _coll = {}; // playerId → count
+  const _addColl = (ids) => {
+    if(!ids) return;
+    ids.forEach(id => { if(id) _coll[id] = (_coll[id] || 0) + 1; });
+  };
+  // Highlights
+  if(wn0) _addColl([wn0.id]);
+  if(of0 && of0.v >= 2) _addColl([of0.id]);
+  if(pf0) _addColl([pf0.id]);
+  if(st0) _addColl([st0.id]);
+  if(sm0) _addColl([sm0.id]);
+  if(awPeriod === 'all' && pk0) _addColl([pk0.id]);
+  if(awPeriod !== 'week'){
+    if(wk0) _addColl([wk0.id]);
+    if(dk0) _addColl([dk0.id]);
+  }
+  // Teams
+  if(mvt0) _addColl(mvt0.ids);
+  if(bd0 && bd0.g >= 2) _addColl(bd0.ids);
+  // Angriff & Verteidigung
+  if(sc0) _addColl([sc0.id]);
+  if(wl0) _addColl([wl0.id]);
+  if(ic0 && ic0.v >= 1) _addColl([ic0.id]);
+  if(pm0) _addColl([pm0.id]);
+  // Spezial
+  if(eg0) _addColl(eg0.ids);
+  if(cl0) _addColl([cl0.id]);
+  if(ck0 && ck0.v >= 1) _addColl([ck0.id]);
+  if(sl0) _addColl([sl0.id]);
+  if(u0) _addColl(u0.m.winner === 'A' ? [u0.m.a1, u0.m.a2] : [u0.m.b1, u0.m.b2]);
+  if(b0) _addColl(b0.m.winner === 'A' ? [b0.m.a1, b0.m.a2] : [b0.m.b1, b0.m.b2]);
+  if(gr0) _addColl([gr0.id]);
+  if(uh0) _addColl([uh0.id]);
+  // Schandtafel-Awards (inkl. Pechvogel) fließen bewusst NICHT in den Sammler.
+
+  const _collTop = Object.entries(_coll)
+    .map(([id, count]) => ({id, count}))
+    .sort((a, b) => b.count - a.count || pname(a.id).localeCompare(pname(b.id)))
+    .slice(0, 3);
+
+  if(_collTop.length){
+    const _avTrophyHtml = (pid) => {
+      const p = pmap()[pid];
+      const em = p && p.avatar_id ? avatarEmoji(p.avatar_id) : null;
+      if(em) return em;
+      return `<span style="font-family:'Archivo Black',sans-serif;font-size:14px;color:#0a0c0b;background:${avColor(pid)};width:100%;height:100%;display:grid;place-items:center;border-radius:50%">${esc(initials(p ? p.name : '?'))}</span>`;
+    };
+    // Render-Reihenfolge: Silber-Gold-Bronze (Treppe), aber Daten-Reihenfolge bleibt 1-2-3.
+    const _slot = (rank, tier) => {
+      const c = _collTop[rank];
+      if(!c) return `<div class="aw-collector ${tier}" style="opacity:.3">
+        <div class="aw-collector-av">·</div>
+        <div class="aw-collector-name">—</div>
+        <div class="aw-collector-count">0</div>
+        <div class="aw-collector-lbl">Awards</div>
+        <div class="aw-collector-bar"></div>
+      </div>`;
+      return `<div class="aw-collector ${tier}" data-detail="${esc(c.id)}">
+        <div class="aw-collector-av">${_avTrophyHtml(c.id)}</div>
+        <span class="aw-collector-rank">${rank+1}</span>
+        <div class="aw-collector-name">${esc(pname(c.id))}</div>
+        <div class="aw-collector-count">${c.count}</div>
+        <div class="aw-collector-lbl">${c.count===1?'Award':'Awards'}</div>
+        <div class="aw-collector-bar"></div>
+      </div>`;
+    };
+    html += `<div class="aw-collectors">
+      <div class="aw-collectors-title">Award-Sammler</div>
+      ${_slot(1, 'silver')}
+      ${_slot(0, 'gold')}
+      ${_slot(2, 'bronze')}
+    </div>`;
+  }
+
   // Section header: kleiner farbiger Punkt + Caps-Label + verlaufende Linie.
-  // iconCol bestimmt die Farbe (gold/blue/acid/purple).
+  // Cards landen in einer aw-vitrine (Schaukasten-Container) darunter.
   const sect = (iconKey, iconCol, title, cards) => {
     html += `<div class="aw-sect ${iconCol}">
       <span class="aw-sect-dot"></span>
       <span>${title}</span>
       <span class="aw-sect-line"></span>
-    </div>${cards.join('')}`;
+    </div><div class="aw-vitrine">${cards.join('')}</div>`;
   };
   const empty=(key,cls,label)=>card(key,cls,label,null,'–','noch keine Daten','');
 
@@ -6470,6 +6786,10 @@ function vAwards(){
   combat.push(ic0&&ic0.v>=1
     ? card('ice','blue','Eiskalt',[ic0.id],esc(topNames(R.iceList,x=>x.v,x=>pname(x.id))),ic0.v+'× Zu-Null als Verteidiger',ic0.v)
     : empty('ice','blue','Eiskalt'));
+  // Plus-Minus: Ø Tor-Saldo pro Spiel. Vorzeichen vor dem Wert für klares "Plus"-Gefühl.
+  combat.push(pm0
+    ? card('plusMinus','orange','Plus-Minus',[pm0.id],esc(topNames(R.plusMinusList,x=>Math.round(x.v*10),x=>pname(x.id))),pm0.gf+':'+pm0.ga+' · '+pm0.g+' Spiele',(pm0.v>=0?'+':'')+pm0.v.toFixed(1))
+    : empty('plusMinus','orange','Plus-Minus'));
   sect('shield','blue','Angriff & Verteidigung',combat);
 
   // ── SPEZIAL ──
@@ -6497,6 +6817,11 @@ function vAwards(){
   special.push(gr0
     ? card('grinder','blue','Vielspieler',[gr0.id],esc(topNames(R.grinder,x=>x.v,x=>pname(x.id))),pl,gr0.v)
     : empty('grinder','blue','Vielspieler'));
+  // Underdog-Held: meiste Underdog-Siege (myExp < 35%). Anders als die Match-Trophy
+  // "Größte Überraschung" (= einzelner Match) ist das hier ein Saison-Counter.
+  special.push(uh0
+    ? card('underdog','purple','Underdog-Held',[uh0.id],esc(topNames(R.underdogList,x=>x.v,x=>pname(x.id))),uh0.v+'× als Außenseiter gewonnen',uh0.v)
+    : empty('underdog','purple','Underdog-Held'));
   sect('bolt','purple','Spezial',special);
 
   // ── SCHANDTAFEL ──
@@ -6527,6 +6852,11 @@ function vAwards(){
   neg.push(bs0
     ? card('baustelle','red','Baustelle',bs0.ids,esc(topTeamNames(R.baustelleList,x=>x.best)),'Niederlagenserie',bs0.best+'er',{neg:true})
     : empty('baustelle','red','Baustelle'));
+  // Pechvogel: meiste knappe Niederlagen (Diff ≤ 2). Symmetrisch zum Clutch-Player
+  // (gewinnt knapp) — der Pechvogel verliert knapp.
+  neg.push(pv0
+    ? card('pechvogel','red','Pechvogel',[pv0.id],esc(topNames(R.pechvogelList,x=>x.v,x=>pname(x.id))),pv0.v+'× knapp verloren',pv0.v,{neg:true})
+    : empty('pechvogel','red','Pechvogel'));
   html+=`<div class="aw-shame-divider">
     <div class="line"></div>
     <div class="lbl">
@@ -6534,7 +6864,7 @@ function vAwards(){
       Schandtafel
     </div>
     <div class="line r"></div>
-  </div>${neg.join('')}`;
+  </div><div class="aw-vitrine">${neg.join('')}</div>`;
 
   return `
     <div class="view-head"><h2>Awards</h2><p>${pl} · tippen für Top 3</p></div>
@@ -6572,7 +6902,11 @@ const AWARD_META={
   baustelle:{title:'Baustelle',cls:'red',why:'Team mit der längsten gemeinsamen Niederlagenserie. Zusammen funktioniert es einfach nicht.'},
   peakElo:{title:'Peak Elo',cls:'gold',why:'Höchster jemals erreichter Elo-Stand. Saison-übergreifender Allzeit-Höchststand — auch wenn nach Saisonreset die Elo wieder bei 0 startet, bleibt der historische Peak erhalten.'},
   weekKing:{title:'Wochenkönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Week-Auszeichnungen im Zeitraum. POTW bekommt, wer in einer Kalenderwoche die höchste Siegquote hat (min. 5 Siege). Die laufende Woche wird nicht gezählt — gleiche Logik wie das POTW-Badge.'},
-  dayKing:{title:'Tageskönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Day-Auszeichnungen im Zeitraum. POTD bekommt, wer an einem Tag die meisten Siege geholt hat (min. 3). Der laufende Tag wird nicht gezählt — gleiche Logik wie das POTD-Badge.'}
+  dayKing:{title:'Tageskönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Day-Auszeichnungen im Zeitraum. POTD bekommt, wer an einem Tag die meisten Siege geholt hat (min. 3). Der laufende Tag wird nicht gezählt — gleiche Logik wie das POTD-Badge.'},
+  // ── NEUE AWARDS v3 ──
+  plusMinus:{title:'Plus-Minus',cls:'orange',why:'Höchster Tor-Saldo pro Spiel (Tore_für minus Tore_gegen, durchschnittlich). Kombiniert Angriff und Verteidigung — wer beeinflusst das Tor-Verhältnis seines Teams am meisten? Min. 10 Spiele für stabile Berechnung.'},
+  underdog:{title:'Underdog-Held',cls:'purple',why:'Meiste Siege als Außenseiter (Siegerwartung unter 35% laut Elo). Anders als die „Größte Überraschung" — Einzelmatch — ist das hier ein Saison-Counter: wer kippt das System am häufigsten?'},
+  pechvogel:{title:'Pechvogel',cls:'red',why:'Meiste knappe Niederlagen (Tordifferenz max. 2). Symmetrisch zum Clutch-Player — der gewinnt knapp, der Pechvogel verliert knapp.'}
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
@@ -6585,12 +6919,13 @@ function showAward(key){
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
     zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
-    weekKing:'weekKing',   dayKing:'dayKing'
+    weekKing:'weekKing',   dayKing:'dayKing',
+    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud'
   };
 
   const MATCH_AWARDS = new Set(['upset','biggest']);
   const TEAM_AWARDS = new Set(['mvt','bestDuo','endgegner','worstTeam','zirkus','baustelle']);
-  const NEG_KEYS = new Set(['worstWr','worstAtk','worstDef','worstTeam','formtief','coldStreak','lossStreaks','zirkus','baustelle']);
+  const NEG_KEYS = new Set(['worstWr','worstAtk','worstDef','worstTeam','formtief','coldStreak','lossStreaks','zirkus','baustelle','pechvogel']);
 
   let bodyHtml='';
 
@@ -6654,6 +6989,10 @@ function showAward(key){
         case 'peakElo':    return (R.peakEloList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Elo',sort:x.v}));
         case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTW',sort:x.v}));
         case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTD',sort:x.v}));
+        // ── NEUE AWARDS v3 ──
+        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+x.v.toFixed(1)+' /Sp.',sort:Math.round(x.v*10)}));
+        case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Underdog-Sieg',sort:x.v}));
+        case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× knapp verloren',sort:-x.v}));
         default: return [];
       }
     })();
@@ -7312,6 +7651,10 @@ function openSheet(html){
   // stapeln sich window-mousemove/mouseup-Listener und lecken.
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
   sheet.innerHTML=`<div class="sheet-grab" id="sheetGrab"></div>${html}`;
+  // Scroll-Position zurücksetzen — sonst landet man im neuen Sheet dort, wo
+  // im vorigen Sheet (oder bei vorigem Öffnen desselben Sheets) gescrollt war.
+  // Muss nach innerHTML kommen, damit das Layout schon steht.
+  sheet.scrollTop = 0;
   bg.classList.add('show');
   sheet.classList.add('show');
   bindSheetSwipe();
@@ -7547,6 +7890,69 @@ const BADGES=[
   {id:'potd',ic:'trophyDay',name:'Player of the Day',desc:'Meiste Siege an einem Tag (min. 3)',
     multi:true,count:(id,ms)=>countDayWins(id,ms)},
 ];
+
+// ════════════════════════════════════════════════════════════════════
+// BADGE-RARITY-SYSTEM — vier Stufen + Negative eigenständig
+// ════════════════════════════════════════════════════════════════════
+// Datenbasierte Klassifizierung (kalibriert auf reale Spieler-Verteilung):
+//   • LEGENDARY (4)  — extrem selten, Karriere-Highlight
+//   • RARE      (12) — schwer, brauchen Skill/Konstanz
+//   • COMMON    (14) — bei aktivem Spiel oft erreicht
+//   • NEGATIVE  (2)  — "Schande", eigenständig (rot, abgesetzt)
+// Jeder Bucket hat eine GERADE Anzahl, damit das 2-Spalten-Grid im Sheet
+// sauber aufgeht. Total = 32 Badges, exakt die BADGES-Array-Länge.
+// Reihenfolge innerhalb jeder Gruppe folgt der thematischen BADGES-Reihenfolge.
+// ════════════════════════════════════════════════════════════════════
+const BADGE_RARITY = {
+  // LEGENDARY (4)
+  games150:        'legendary', // Legende (150 Matches)
+  dynasty_600:     'legendary', // Dynastie (600 Elo)
+  streak15:        'legendary', // 15er Serie
+  streak30:        'legendary', // 30er Serie
+  // RARE (12)
+  allrounder:      'rare',      // Allrounder
+  def50:           'rare',      // Abwehrchef
+  dominator_400:   'rare',      // Dominator (400 Elo)
+  upset_king:      'rare',      // Upset-König
+  unbeatable:      'rare',      // Unschlagbar
+  krimi:           'rare',      // Krimi-Reihe
+  repeat_score:    'rare',      // Wiederholungstäter
+  nerves_of_steel: 'rare',      // Nerven aus Stahl
+  streak10:        'rare',      // 10er Serie
+  vice_champion:   'rare',      // Vize-Meister
+  award_collector: 'rare',      // Award-Sammler
+  potw:            'rare',      // Player of the Week
+  // COMMON (14)
+  first_match:     'common',    // Debütant
+  games25:         'common',    // Stammgast
+  atk50:           'common',    // Mittelstürmer
+  climber_100:     'common',    // Aufsteiger
+  early_bird:      'common',    // Frühschicht
+  comeback_day:    'common',    // Comeback-Tag
+  revanchist:      'common',    // Revanchist
+  clear_win:       'common',    // Klares Ding
+  perfect_win:     'common',    // Absoluter Sieger
+  nail_biter:      'common',    // Zittersieg
+  streak5:         'common',    // 5er Serie
+  wall_badge:      'common',    // Mauer
+  carry:           'common',    // Carry
+  potd:            'common',    // Player of the Day
+  // NEGATIVE (2)
+  losing5:         'negative',  // Losing Streak
+  perfect_loss:    'negative',  // Absoluter Verlierer
+};
+
+const RARITY_META = {
+  legendary: {label:'Legendary', color:'var(--gold)',   total:4},
+  rare:      {label:'Rare',      color:'var(--purple)', total:12},
+  common:    {label:'Common',    color:'var(--acid)',   total:14},
+  negative:  {label:'Schande',   color:'var(--red)',    total:2},
+};
+const RARITY_ORDER = ['legendary','rare','common','negative'];
+
+// Liefert die Rarity eines Badges (Default: common falls jemand neu hinzukommt
+// und vergisst BADGE_RARITY zu erweitern — verhindert undefined-Bugs).
+function rarityOf(badgeId){ return BADGE_RARITY[badgeId] || 'common'; }
 
 // ─── Helfer für die neuen Badges ───
 // Saison-Peak-Elo eines Spielers: höchster jemals erreichter Saison-Elo,
@@ -8170,7 +8576,9 @@ function playerAwards(id){
     onFire:R.onFire, coldStreak:R.coldStreak, lossStreaks:R.lossStreaks,
     solo:R.soloList, formtief:R.formtief, showmaster:R.showmasterList,
     ice:R.iceList, peakElo:R.peakEloList,
-    weekKing:R.weekKingList, dayKing:R.dayKingList
+    weekKing:R.weekKingList, dayKing:R.dayKingList,
+    // ── NEUE AWARDS v3 ──
+    plusMinus:R.plusMinusList, underdog:R.underdogList, pechvogel:R.pechvogelList
   };
   const singleValFns={
     wins:x=>x.v, streaks:x=>x.v, scorer:x=>Math.round(x.avg*10),
@@ -8184,7 +8592,11 @@ function playerAwards(id){
     lossStreaks:x=>x.v, solo:x=>Math.round(x.wr*100),
     formtief:x=>Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
     peakElo:x=>x.v,
-    weekKing:x=>x.v, dayKing:x=>x.v
+    weekKing:x=>x.v, dayKing:x=>x.v,
+    // ── NEUE AWARDS v3 ──
+    plusMinus:x=>Math.round(x.v*10), // höchster Tor-Saldo gewinnt
+    underdog:x=>x.v,                  // meiste Underdog-Siege gewinnt
+    pechvogel:x=>x.v                  // meiste knappe Niederlagen "gewinnt" (für Schandtafel)
   };
 
   Object.entries(singleKeys).forEach(([key,arr])=>{
@@ -8381,11 +8793,15 @@ function showPlayer(id){
   const POSITIVE_KEYS = new Set([
     'wins','mvt','bestDuo','perfect','clutch','carryKing','solo',
     'endgegner','grinder','showmaster','onFire','streaks','upset','biggest','peakElo',
-    'weekKing','dayKing'
+    'weekKing','dayKing',
+    // ── NEUE AWARDS v3 ──
+    'plusMinus','underdog'
   ]);
   const ROLE_KEYS = new Set(['scorer','wall','ice','worstAtk','worstDef']);
   const NEGATIVE_KEYS = new Set([
-    'worstWr','coldStreak','lossStreaks','formtief','worstTeam','zirkus','baustelle'
+    'worstWr','coldStreak','lossStreaks','formtief','worstTeam','zirkus','baustelle',
+    // ── NEUE AWARDS v3 ──
+    'pechvogel'
   ]);
 
   const cnt = (set) => awards.filter(a => set.has(a.key)).length;
@@ -8753,21 +9169,51 @@ const rankProgHtml = `
       ${trophyHtml}
     </div>`:''}
 
-    ${badgeTotal?`
+    ${badgeTotal?(()=>{
+      // ─── Auszeichnungen-Card (Variante 4): Strip seltenster Achievements + Tier-Bar ───
+      // Strip: max 8 freigeschaltete Badges, sortiert nach Rarität (Legendary→Common),
+      // innerhalb jeder Gruppe in BADGES-Reihenfolge. Mini-Icons bekommen Tier-Border.
+      // Dünne Bar darunter zeigt segmentiert den Gesamt-Fortschritt nach Tier.
+      const _STRIP_MAX = 8;
+      const _byRarity = {legendary:[], rare:[], common:[], negative:[]};
+      badges.forEach(b => { const r = rarityOf(b.id); if(_byRarity[r]) _byRarity[r].push(b); });
+      const _strip = [];
+      RARITY_ORDER.forEach(r => _byRarity[r].forEach(b => _strip.push({b, r})));
+      const _visible = _strip.slice(0, _STRIP_MAX);
+      const _rest = Math.max(0, _strip.length - _visible.length);
+      const _stripHtml = _visible.map(({b,r}) => {
+        const ic = ICONS[b.ic] ? `<svg viewBox="0 0 24 24">${ICONS[b.ic]}</svg>` : '';
+        return `<div class="pp-bmini ${r}">${ic}</div>`;
+      }).join('') + (_rest ? `<span class="pp-bcard-rest">+${_rest}</span>` : '');
+      // Bar-Segmente: ein Stück pro Tier-Count, Rest dunkel
+      const _seg = (r) => _byRarity[r].length;
+      const _have = _seg('legendary')+_seg('rare')+_seg('common')+_seg('negative');
+      const _missing = BADGES.length - _have;
+      const _barHtml = `
+        <div class="pp-bcard-bar">
+          ${_seg('legendary')?`<div class="seg legendary" style="flex:${_seg('legendary')}"></div>`:''}
+          ${_seg('rare')?`<div class="seg rare" style="flex:${_seg('rare')}"></div>`:''}
+          ${_seg('common')?`<div class="seg common" style="flex:${_seg('common')}"></div>`:''}
+          ${_seg('negative')?`<div class="seg negative" style="flex:${_seg('negative')}"></div>`:''}
+          ${_missing?`<div class="seg" style="flex:${_missing};background:var(--surface3);opacity:.5"></div>`:''}
+        </div>`;
+      return `
     <div class="pp-sec" style="animation-delay:.6s">
       <div class="pp-sec-title">
         <div class="l">${svgI('star')}<h4>Auszeichnungen</h4></div>
-        <div class="m">${badgeTotal} erreicht</div>
+        <div class="m">${_have} / ${BADGES.length}</div>
       </div>
-      <div class="pp-badges-card" id="ppBadgesBtn">
-        <div class="pp-badges-strip">
-          ${badges.slice(0,8).map(b=>badgeIc(b,'18px')).join('')}
+      <div class="pp-bcard" id="ppBadgesBtn">
+        <div class="pp-bcard-row">
+          <div class="pp-bcard-strip">${_stripHtml}</div>
+          <span class="pp-bcard-chev">
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </span>
         </div>
-        <span class="chev">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
-        </span>
+        ${_barHtml}
       </div>
-    </div>`:''}
+    </div>`;
+    })():''}
 
     ${awardCount?`
     <div class="pp-sec" style="animation-delay:.65s">
@@ -9105,38 +9551,97 @@ function showPlayerAwards(playerId, awards){
 
 // Badges-Sheet: zeigt alle Badges (freigeschaltet vs. gesperrt)
 function showPlayerBadges(playerId){
-  const p=pmap()[playerId];if(!p)return;
-  const earned=getCachedBadges(playerId);
-  const earnedIds=new Map(earned.map(b=>[b.id,b.count]));
-  const totalEarned=earned.reduce((s,b)=>s+b.count,0);
-  const ONCE_ONLY=new Set(['first_match','games25','games150','allrounder','def50','atk50',
+  const p = pmap()[playerId]; if(!p) return;
+  const earned = getCachedBadges(playerId);
+  const earnedIds = new Map(earned.map(b => [b.id, b.count]));
+  // ONCE_ONLY: Badges, die man nur einmal erreicht (keine Wiederholung als ×N)
+  const ONCE_ONLY = new Set(['first_match','games25','games150','allrounder','def50','atk50',
     'climber_100','dominator_400','dynasty_600']);
-  const rows=BADGES.map(b=>{
-    const cnt=earnedIds.get(b.id)||0;
-    const unlocked=cnt>0;
-    const isRepeatable=!ONCE_ONLY.has(b.id);
-    const label=unlocked?(isRepeatable
-      ?`<div style="margin-top:6px;font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid)">×${cnt}</div>`
-      :`<div style="margin-top:8px;font-size:10px;color:var(--acid);font-weight:700;text-transform:uppercase;letter-spacing:.1em">Freigeschaltet</div>`)
-      :'';
-    return `<div style="background:var(--surface);border:1px solid ${unlocked?'var(--line2)':'var(--line)'};border-radius:16px;
-      padding:20px;text-align:center;${unlocked?'':'opacity:0.45'}">
-      <div style="font-size:30px;margin-bottom:10px;color:${unlocked?'var(--ink2)':'var(--faint)'};display:flex;justify-content:center">${unlocked?badgeIc(b,'30px'):svgI('lock')}</div>
-      <div style="font-weight:700;font-size:14px;margin-bottom:4px">${b.name}</div>
-      <div style="font-size:11px;color:var(--muted);line-height:1.4">${b.desc}</div>
-      ${label}
+
+  // ─── Aggregation pro Tier ───
+  // Pro Rarity: BADGES-Array in Reihenfolge durchgehen, in Buckets sortieren.
+  // Innerhalb des Buckets bleibt die thematische Reihenfolge erhalten.
+  const buckets = {legendary:[], rare:[], common:[], negative:[]};
+  BADGES.forEach(b => {
+    const r = rarityOf(b.id);
+    if(buckets[r]) buckets[r].push(b);
+  });
+  const have = (r) => buckets[r].filter(b => earnedIds.has(b.id)).length;
+  const haveTotal = have('legendary')+have('rare')+have('common')+have('negative');
+  const trigCount = earned.reduce((s,b)=>s+b.count,0);
+
+  // ─── Tier-Counter-Bar (oben im Sheet) ───
+  const pill = (r) => {
+    const meta = RARITY_META[r];
+    const h = have(r);
+    const dim = h===0 ? 'dim' : '';
+    return `<span class="tc-pill ${r} ${dim}"><span class="dot"></span><span class="n">${h} / ${meta.total}</span></span>`;
+  };
+  const counterHtml = `
+    <div class="bsh-counter">
+      ${pill('legendary')}
+      ${pill('rare')}
+      ${pill('common')}
+      <span class="tc-sep"></span>
+      ${pill('negative')}
     </div>`;
-  }).join('');
-  openSheet(`
-    <div style="display:flex;align-items:center;gap:14px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div><h3>Auszeichnungen</h3><div class="sheet-sub">${esc(p.name)} · ${totalEarned} erreicht</div></div>
+
+  // ─── Card-Renderer (eine Badge → eine Card) ───
+  const renderCard = (b, r) => {
+    const cnt = earnedIds.get(b.id) || 0;
+    const unlocked = cnt > 0;
+    const isRepeatable = !ONCE_ONLY.has(b.id);
+    if(!unlocked){
+      // Locked: neutral grau, Lock-Icon zentral, winziger Tier-Dot oben links
+      return `<div class="bsh-card locked ${r}">
+        <span class="tier-dot"></span>
+        <div class="bsh-card-ic">${svgI('lock')}</div>
+        <div class="bsh-card-name">${esc(b.name)}</div>
+        <div class="bsh-card-desc">${esc(b.desc)}</div>
+      </div>`;
+    }
+    // Unlocked: Tier-Farbe + Akzent-Strich oben (per CSS)
+    const meta = isRepeatable
+      ? `<div class="bsh-card-count">×${cnt}</div>`
+      : `<div class="bsh-card-once">Freigeschaltet</div>`;
+    return `<div class="bsh-card unlocked ${r}">
+      <div class="bsh-card-ic">${badgeIc(b,'30px')}</div>
+      <div class="bsh-card-name">${esc(b.name)}</div>
+      <div class="bsh-card-desc">${esc(b.desc)}</div>
+      ${meta}
+    </div>`;
+  };
+
+  // Positive Tiers (Legendary → Rare → Common) zusammengefasst in einem Grid
+  const positiveCards = ['legendary','rare','common']
+    .flatMap(r => buckets[r].map(b => renderCard(b, r)))
+    .join('');
+
+  // Negative-Block separat mit Schande-Trennlinie
+  const negativeCards = buckets.negative.map(b => renderCard(b, 'negative')).join('');
+  const negativeBlock = negativeCards ? `
+    <div class="bsh-neg-divider">
+      <div class="bsh-neg-divider-line"></div>
+      <div class="bsh-neg-divider-label"><span class="dot"></span>Schande</div>
+      <div class="bsh-neg-divider-line"></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px">${rows}</div>
-    <button class="btn ghost sm" id="backToPlayer2" style="margin-top:16px">← Zurück zum Profil</button>
+    <div class="bsh-grid">${negativeCards}</div>` : '';
+
+  openSheet(`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
+      <div>
+        <h3>Auszeichnungen</h3>
+        <div class="sheet-sub">${esc(p.name)} · <b style="color:var(--acid)">${haveTotal}</b> von ${BADGES.length} · ${trigCount}× ausgelöst</div>
+      </div>
+    </div>
+    ${counterHtml}
+    <div class="bsh-grid">${positiveCards}</div>
+    ${negativeBlock}
+    <button class="btn ghost sm" id="backToPlayer2" style="margin-top:18px">← Zurück zum Profil</button>
   `);
-  const back=document.getElementById('backToPlayer2');
-  if(back) back.onclick=()=>{closeSheet();setTimeout(()=>showPlayer(playerId),350);};
+  const back = document.getElementById('backToPlayer2');
+  if(back) back.onclick = () => { closeSheet(); setTimeout(()=>showPlayer(playerId), 350); };
 }
 
 // ════════ BILANZEN-SHEET (volle Mitspieler-Liste) ════════
