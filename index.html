@@ -2211,7 +2211,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.20.12';
+const BUILD_VERSION='2026.06.20.13';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5299,15 +5299,38 @@ function vRanking(){
         ?(a,b)=>b.eloNet-a.eloNet||b.wins-a.wins||(b.wins/b.games||0)-(a.wins/a.games||0)||b.gd-a.gd
         :(a,b)=>b.wins-a.wins||(b.wins/b.games||0)-(a.wins/a.games||0)||b.gd-a.gd||b.eloNet-a.eloNet);
     }
+    // Saison-Champion: höchste Saison-Elo. Woche/Tag: identisch zur POTW/POTD-Badge-Logik.
     const totalMatches=periodMs.length;
-    // Saison-Champion: höchste Saison-Elo. Woche/Tag: Winrate bei Mindest-Siegen.
     let winner;
     if(period==='season'){
       winner=ps.length&&ps[0].games>0?ps[0]:null;
     } else {
       const minWins = period==='week' ? 5 : period==='day' ? 3 : 1;
       const qual=ps.filter(x=>x.wins>=minWins);
-      winner=qual.length?[...qual].sort((a,b)=>(b.wins/b.games)-(a.wins/a.games)||b.wins-a.wins)[0]:null;
+      // ────────────────────────────────────────────────────────────────
+      // Tie-Break IDENTISCH zur POTW/POTD-Badge-Logik:
+      //   • Woche: WR desc → Siege desc → Elo-Delta desc
+      //     (siehe POTW-Recap, Zeile ~3604)
+      //   • Tag:   Siege desc → Elo-Delta desc
+      //     (siehe showPotdRecap, Zeile ~4015)
+      // Wichtig: der Sieger darf NICHT vom periodSort abhängen — sonst
+      // wechselt die Hero-Card je nach "Nach Siegen"/"Nach Elo"-Filter
+      // (das war der Bug: zwei Spieler mit 4W-1L 80% wurden je nach
+      // Sortierung verschieden als Tagessieger angezeigt).
+      // ────────────────────────────────────────────────────────────────
+      if(period==='week'){
+        winner=qual.length?[...qual].sort((a,b)=>
+          (b.wins/b.games)-(a.wins/a.games)
+          ||b.wins-a.wins
+          ||b.eloNet-a.eloNet
+        )[0]:null;
+      } else {
+        // period==='day' — exakt analog showPotdRecap
+        winner=qual.length?[...qual].sort((a,b)=>
+          b.wins-a.wins
+          ||b.eloNet-a.eloNet
+        )[0]:null;
+      }
     }
     const rows=(()=>{
       // Form der letzten 5 Matches (W/L Punkte) — nutzt das gecachte periodMs
