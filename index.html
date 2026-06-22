@@ -2211,7 +2211,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.20.13';
+const BUILD_VERSION='2026.06.20.14';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6716,30 +6716,51 @@ function vAwards(){
       if(em) return em;
       return `<span style="font-family:'Archivo Black',sans-serif;font-size:14px;color:#0a0c0b;background:${avColor(pid)};width:100%;height:100%;display:grid;place-items:center;border-radius:50%">${esc(initials(p ? p.name : '?'))}</span>`;
     };
-    // Render-Reihenfolge: Silber-Gold-Bronze (Treppe), aber Daten-Reihenfolge bleibt 1-2-3.
-    const _slot = (rank, tier) => {
-      const c = _collTop[rank];
-      if(!c) return `<div class="aw-collector ${tier}" style="opacity:.3">
+    // ────────────────────────────────────────────────────────────────
+    // EFFEKTIVER RANG mit Standard Competition Ranking ("1224"-Stil):
+    //   [10, 7, 7]  → ränge [1, 2, 2]
+    //   [10, 10, 5] → ränge [1, 1, 3]
+    //   [7, 7, 7]   → ränge [1, 1, 1]
+    //   [10, 7, 5]  → ränge [1, 2, 3]
+    // Tier folgt dem effektiven Rang: 1=gold, 2=silver, 3=bronze.
+    // Layout bleibt 3-spaltig (silver-slot|gold-slot|bronze-slot), aber
+    // die Tier-CSS-Klasse pro Slot kommt aus dem effektiven Rang, sodass
+    // bei Gleichstand alle gleich aussehen (gold-Border, gold-Bar, gold-Zahl).
+    // ────────────────────────────────────────────────────────────────
+    const _eRank = _collTop.map((c,i,a) =>
+      i === 0 ? 1 : (c.count === a[i-1].count ? null : i + 1)
+    );
+    // Zweiter Durchgang: null-Werte (Gleichstand) auf den vorigen Rang setzen
+    for(let i = 1; i < _eRank.length; i++) if(_eRank[i] === null) _eRank[i] = _eRank[i-1];
+    const _tierOf = r => r === 1 ? 'gold' : r === 2 ? 'silver' : 'bronze';
+
+    const _slot = (idx) => {
+      const c = _collTop[idx];
+      if(!c) return `<div class="aw-collector" style="opacity:.3">
         <div class="aw-collector-av">·</div>
         <div class="aw-collector-name">—</div>
         <div class="aw-collector-count">0</div>
         <div class="aw-collector-lbl">Awards</div>
         <div class="aw-collector-bar"></div>
       </div>`;
+      const tier = _tierOf(_eRank[idx]);
       return `<div class="aw-collector ${tier}" data-detail="${esc(c.id)}">
         <div class="aw-collector-av">${_avTrophyHtml(c.id)}</div>
-        <span class="aw-collector-rank">${rank+1}</span>
+        <span class="aw-collector-rank">${_eRank[idx]}</span>
         <div class="aw-collector-name">${esc(pname(c.id))}</div>
         <div class="aw-collector-count">${c.count}</div>
         <div class="aw-collector-lbl">${c.count===1?'Award':'Awards'}</div>
         <div class="aw-collector-bar"></div>
       </div>`;
     };
+    // Render-Reihenfolge: Daten-Index 1 links, 0 mittig, 2 rechts (Treppe).
+    // Mittig steht IMMER der erste Sammler (höchste Awards-Anzahl bzw. erste
+    // alphabetisch bei Gleichstand) — auch wenn er nicht alleine Rang 1 ist.
     html += `<div class="aw-collectors">
       <div class="aw-collectors-title">Award-Sammler</div>
-      ${_slot(1, 'silver')}
-      ${_slot(0, 'gold')}
-      ${_slot(2, 'bronze')}
+      ${_slot(1)}
+      ${_slot(0)}
+      ${_slot(2)}
     </div>`;
   }
 
