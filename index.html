@@ -2211,7 +2211,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.20.14';
+const BUILD_VERSION='2026.06.20.15';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6232,13 +6232,19 @@ function _awardRankingsUncached(period){
     .map(([id,v]) => ({id,v}))
     .sort((a,b) => b.v - a.v);
 
-  // Pechvogel: Anzahl knapper Niederlagen (Diff ≤ 2). Auch absoluter Counter,
-  // aber wir verlangen min. 2 — bei 1 knapper Niederlage ist das eher Pech-Anekdote
-  // als Pechvogel-Status.
+  // Pechvogel: Anteil knapper Niederlagen an allen Spielen. Prozentual statt
+  // absolut — sonst gewinnen reine Vielspieler durch Volumen, nicht durch
+  // tatsächliches Pech. Schwelle: min. 2 knappe Niederlagen UND min. 5 Spiele,
+  // damit der Pct-Wert robust ist (bei 2/3 wäre er 67% — wenig aussagekräftig).
   const pechvogelList = Object.entries(agg.closeLosses)
-    .filter(([,v]) => v >= 2)
-    .map(([id,v]) => ({id,v}))
-    .sort((a,b) => b.v - a.v);
+    .filter(([id,v]) => v >= 2 && agg.pGames[id] >= 5)
+    .map(([id,v]) => ({
+      id,
+      v,                              // Anzahl knapper Niederlagen (für Anzeige)
+      g: agg.pGames[id],              // Gesamtspiele
+      pct: v / agg.pGames[id]         // Sortier-Kriterium
+    }))
+    .sort((a,b) => b.pct - a.pct);
   
   // ═══ ENDGEGNER ═══
   const egPairs={};
@@ -6896,10 +6902,14 @@ function vAwards(){
   neg.push(bs0
     ? card('baustelle','red','Baustelle',bs0.ids,esc(topTeamNames(R.baustelleList,x=>x.best)),'Niederlagenserie',bs0.best+'er',{neg:true})
     : empty('baustelle','red','Baustelle'));
-  // Pechvogel: meiste knappe Niederlagen (Diff ≤ 2). Symmetrisch zum Clutch-Player
-  // (gewinnt knapp) — der Pechvogel verliert knapp.
+  // Pechvogel: meiste knappe Niederlagen prozentual (Diff ≤ 2). Symmetrisch
+  // zum Clutch-Player (gewinnt knapp prozentual) — der Pechvogel verliert knapp prozentual.
   neg.push(pv0
-    ? card('pechvogel','red','Pechvogel',[pv0.id],esc(topNames(R.pechvogelList,x=>x.v,x=>pname(x.id))),pv0.v+'× knapp verloren',pv0.v,{neg:true})
+    ? card('pechvogel','red','Pechvogel',[pv0.id],
+        esc(topNames(R.pechvogelList,x=>Math.round(x.pct*1000),x=>pname(x.id))),
+        pv0.v+' knappe Niederlagen in '+pv0.g+' Spielen',
+        Math.round(pv0.pct*100)+'%',
+        {neg:true})
     : empty('pechvogel','red','Pechvogel'));
   html+=`<div class="aw-shame-divider">
     <div class="line"></div>
@@ -6950,7 +6960,7 @@ const AWARD_META={
   // ── NEUE AWARDS v3 ──
   plusMinus:{title:'Plus-Minus',cls:'orange',why:'Höchster Tor-Saldo pro Spiel (Tore_für minus Tore_gegen, durchschnittlich). Kombiniert Angriff und Verteidigung — wer beeinflusst das Tor-Verhältnis seines Teams am meisten? Min. 10 Spiele für stabile Berechnung.'},
   underdog:{title:'Underdog-Held',cls:'purple',why:'Meiste Siege als Außenseiter (Siegerwartung unter 35% laut Elo). Anders als die „Größte Überraschung" — Einzelmatch — ist das hier ein Saison-Counter: wer kippt das System am häufigsten?'},
-  pechvogel:{title:'Pechvogel',cls:'red',why:'Meiste knappe Niederlagen (Tordifferenz max. 2). Symmetrisch zum Clutch-Player — der gewinnt knapp, der Pechvogel verliert knapp.'}
+  pechvogel:{title:'Pechvogel',cls:'red',why:'Höchster Anteil knapper Niederlagen (Tordifferenz max. 2) an allen Spielen. Prozentual statt absolut — sonst gewinnen Vielspieler durch Volumen. Schwelle: min. 2 knappe Niederlagen und min. 5 Spiele für stabile Berechnung. Spiegelbild zum Clutch-Player.'}
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
@@ -7036,7 +7046,7 @@ function showAward(key){
         // ── NEUE AWARDS v3 ──
         case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+x.v.toFixed(1)+' /Sp.',sort:Math.round(x.v*10)}));
         case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Underdog-Sieg',sort:x.v}));
-        case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× knapp verloren',sort:-x.v}));
+        case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         default: return [];
       }
     })();
@@ -8640,7 +8650,7 @@ function playerAwards(id){
     // ── NEUE AWARDS v3 ──
     plusMinus:x=>Math.round(x.v*10), // höchster Tor-Saldo gewinnt
     underdog:x=>x.v,                  // meiste Underdog-Siege gewinnt
-    pechvogel:x=>x.v                  // meiste knappe Niederlagen "gewinnt" (für Schandtafel)
+    pechvogel:x=>Math.round(x.pct*1000)  // höchstes Pct an knappen Niederlagen = Top-1
   };
 
   Object.entries(singleKeys).forEach(([key,arr])=>{
