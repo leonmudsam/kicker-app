@@ -9389,11 +9389,11 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.35s">
       <div class="pp-sec-title">
-        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Saison-Stats</h4></div>
+        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamt-Stats</h4></div>
         <div class="m">${s.games} Spiele</div>
       </div>
       <div class="pp-kpi">
-        <div class="pp-k"><div class="v">${s.games}</div><div class="l">Spiele</div></div>
+        <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Spiele</div></div>
         <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegrate</div></div>
         <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Tordiff</div></div>
       </div>
@@ -9463,12 +9463,22 @@ const rankProgHtml = rInfo ? `
       </div>
     </div>`;
     })():''}
-
+    
+    ${sa.length?`
+    <div class="pp-sec" style="animation-delay:.435s">
+      <div class="pp-sec-title">
+        <div class="l">${svgI('trophy')}<h4>Liga Titel</h4></div>
+        <div class="m">${(()=>{let n=0;sa.forEach(s=>{if(s.player_id===id)n++;if(s.team_p1===id||s.team_p2===id)n++;});return n;})()} Titel</div>
+      </div>
+      ${trophyHtml}
+    </div>`:''}
+    
     <div class="pp-sec" style="animation-delay:.45s">
       <div class="pp-sec-title">
         <div class="l"><span class="ic svg-ic">${svgI('users')}</span><h4>Beziehungen</h4></div>
       </div>
       <div class="pp-rel-grid">
+  
         ${(()=>{
           // Hilfsfunktion: Mate-/Gegner-Avatar (34 px)
           const relAv=(pid)=>{
@@ -9551,14 +9561,7 @@ const rankProgHtml = rInfo ? `
     </div>`;
     })()}
 
-    ${sa.length?`
-    <div class="pp-sec" style="animation-delay:.55s">
-      <div class="pp-sec-title">
-        <div class="l">${svgI('trophy')}<h4>Liga Titel</h4></div>
-        <div class="m">${(()=>{let n=0;sa.forEach(s=>{if(s.player_id===id)n++;if(s.team_p1===id||s.team_p2===id)n++;});return n;})()} Titel</div>
-      </div>
-      ${trophyHtml}
-    </div>`:''}
+
 
     ${awardCount?`
     <div class="pp-sec" style="animation-delay:.65s">
@@ -9594,7 +9597,7 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.8s">
       <div class="pp-sec-title">
-        <div class="l">${svgI('chartBar')}<h4>Positions-Profil</h4></div>
+        <div class="l">${svgI('target')}<h4>Positions-Profil</h4></div>
         <div class="m">${posLabel}</div>
       </div>
       <div class="pp-posprof" style="--atk:${atkPct}%">
