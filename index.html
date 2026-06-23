@@ -1631,7 +1631,7 @@
   .pp-tr.team{background:linear-gradient(180deg,rgba(86,180,232,.1),rgba(86,180,232,.02));
     border-color:rgba(86,180,232,.3)}
   .pp-tr .ic.svg-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
-    margin:0 0 10px;background:rgba(247,207,74,.15);color:var(--gold);filter:none}
+    margin:0 auto 10px;background:rgba(247,207,74,.15);color:var(--gold);filter:none}
   .pp-tr.team .ic.svg-ic{background:rgba(86,180,232,.15);color:var(--blue);filter:none}
   .pp-tr .ic.svg-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -2244,7 +2244,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.20.18';
+const BUILD_VERSION='2026.06.23.01';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2396,6 +2396,19 @@ const ICONS = {
   underdog:      `<path d="M12 21v-9"/><path d="M8 16l4-4 4 4"/><path d="M7 8l5-3 5 3v2H7z"/>`,
   // Pechvogel: Regenwolke mit drei schräg fallenden Tropfen
   rainCloud:     `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3"/>`,
+  // ── NEUE TEAM-AWARDS v4 ──
+  // Unaufhaltsam: Loderndes Feuer mit Aufwärts-Pfeil — Team-Siegesserie
+  unstoppable:   `<path d="M12 3s5 5 5 10a5 5 0 01-10 0c0-2 1-3 1-3s.5 2 2 2c-1-3 2-4 2-9z"/><polyline points="10,15 12,12 14,15"/>`,
+  // Betonmauer: Massive Backstein-Wand mit Schild-Andeutung — defensiv-stärkstes Team
+  concreteWall:  `<rect x="3" y="3" width="18" height="6" rx="1"/><rect x="3" y="9" width="18" height="6" rx="1"/><rect x="3" y="15" width="18" height="6" rx="1"/><path d="M8 3v6M16 3v6M5 9v6M12 9v6M19 9v6M8 15v6M16 15v6"/>`,
+  // Glückspilze: Vierblättriges Kleeblatt — Glück bei knappen Siegen
+  clover:        `<path d="M12 12s-3-1-3-4 3-3 3 0c0-3 3-3 3 0s-3 4-3 4z"/><path d="M12 12s-1 3-4 3-3-3 0-3c-3 0-3-3 0-3s4 3 4 3z"/><path d="M12 12s3 1 3 4-3 3-3 0c0 3-3 3-3 0s3-4 3-4z"/><path d="M12 12s1-3 4-3 3 3 0 3c3 0 3 3 0 3s-4-3-4-3z"/><path d="M12 16v5"/>`,
+  // Giant Slayer: Schwert kreuzt sich mit Krone — Underdog-Sieg gegen Favoriten als Team
+  giantSlayer:   `<path d="M5 19l8-8M5 19l3 0M5 19l0-3M13 11l6-6M13 11l3 0M13 11l0-3"/><polygon points="9,4 12,2 15,4 14,7 10,7" fill="none" stroke-linejoin="round"/>`,
+  // Favoritenschreck: Teufelsmaske mit Hörnern — Schock-Sieg gegen weit stärkere Gegner
+  devilMask:     `<path d="M5 8l2-4 3 2M19 8l-2-4-3 2"/><path d="M4 11a8 8 0 0116 0v4a8 8 0 01-16 0z"/><circle cx="9" cy="13" r="1.3"/><circle cx="15" cy="13" r="1.3"/><path d="M9 18c1 .8 2 1 3 1s2-.2 3-1"/>`,
+  // Erzfeinde: Zwei gekreuzte Schwerter — Team-Rivalität
+  crossedSwords: `<path d="M3 3l9 9M3 8V3h5M14.5 14.5L21 21M16 21h5v-5"/><path d="M21 3l-9 9M21 8V3h-5M9.5 14.5L3 21M8 21H3v-5"/>`,
   // ── NEUE BADGES v4 ──
   // Thronfäller: Krone mit "X" durchgestrichen — Sieg gegen den Top-1 Spieler der Saison
   kingFall:      `<path d="M5 9l3-3 4 2 4-2 3 3v9H5z"/><path d="M8 13l8 4M16 13l-8 4"/>`,
@@ -5891,8 +5904,15 @@ function vRanking(){
     const r=getPlayerRank(hp.id);
     const tierKey=r?r.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u'):'';
     const tierHtml=r?`<span class="hof-tier t-${tierKey}">${svgI(r.icon)}${r.label}</span>`:'';
-    // Saison-Titel zählen
-    const titleCount=seasons.filter(s=>s.id!==currentSeason().id&&s.player_id===hp.id).length;
+    // Saison-Titel zählen: Player of the Season + Team of the Season getrennt zählen
+    // (analog zur Profile-Anzeige), abgelaufene Saisons.
+    const titleCount = seasons.filter(s=>s.id!==currentSeason().id)
+      .reduce((sum,s)=>{
+        let n=0;
+        if(s.player_id===hp.id) n++;
+        if(s.team_p1===hp.id || s.team_p2===hp.id) n++;
+        return sum+n;
+      },0);
     const wr=hof.s.wr?Math.round(hof.s.wr*100):0;
     const gdColor=hof.s.gd>=0?'var(--acid)':'var(--red)';
     hofHtml=`
@@ -6163,13 +6183,18 @@ function _awardRankingsUncached(period){
   // ═══ ALLE AGGREGATOREN IN EINEM OBJEKT ═══
   const agg = {
     pElo:{}, pWins:{}, pGoals:{}, pConceded:{}, pGames:{},
-    tElo:{}, tWins:{}, tGames:{},
+    tElo:{}, tWins:{}, tGames:{}, tGoalsFor:{}, tGoalsAgainst:{},
     atkGoals:{}, atkGoalGames:{}, defConceded:{}, defGames_:{},
     single:[], team:[], upsets:[], biggest:[],
     clutch:{}, iceWins:{}, snapMap:null,
     // ── NEUE AWARDS v3 ──
     underdogWins:{},  // playerId → Anzahl Underdog-Siege (myExp < 0.35 & gewonnen)
-    closeLosses:{}    // playerId → Anzahl knapper Niederlagen (verloren & |Diff| ≤ 2)
+    closeLosses:{},   // playerId → Anzahl knapper Niederlagen (verloren & |Diff| ≤ 2)
+    // ── NEUE TEAM-AWARDS v4 ──
+    tCloseWins:{},      // teamKey → Anzahl 1-Tor-Siege (Glückspilze)
+    tGiantSlayer:{},    // teamKey → Anzahl Siege gegen stärkeres Team (Pre-Match-Team-Elo)
+    tFavoritenschreck:{},// teamKey → {best: maxOvercome, m: match, eloDiff} (höchster gewonnener Upset)
+    rivalries:{}        // pairKey "teamA|teamB" sortiert → {idsA, idsB, g, wA, wB, gfA, gfB}
   };
   
   // Snapshot-Map: gecached, wird nur 1× pro Sim-Generation gebaut
@@ -6265,6 +6290,10 @@ function _awardRankingsUncached(period){
     if(!agg.tWins[tB]) agg.tWins[tB]=0;
     if(!agg.tGames[tA]) agg.tGames[tA]=0;
     if(!agg.tGames[tB]) agg.tGames[tB]=0;
+    if(!agg.tGoalsFor[tA]) agg.tGoalsFor[tA]=0;
+    if(!agg.tGoalsFor[tB]) agg.tGoalsFor[tB]=0;
+    if(!agg.tGoalsAgainst[tA]) agg.tGoalsAgainst[tA]=0;
+    if(!agg.tGoalsAgainst[tB]) agg.tGoalsAgainst[tB]=0;
     
     agg.tElo[tA] += dA;
     agg.tElo[tB] += dB;
@@ -6272,6 +6301,69 @@ function _awardRankingsUncached(period){
     if(m.winner==='B') agg.tWins[tB]++;
     agg.tGames[tA]++;
     agg.tGames[tB]++;
+    agg.tGoalsFor[tA] += m.score_a;
+    agg.tGoalsFor[tB] += m.score_b;
+    agg.tGoalsAgainst[tA] += m.score_b;
+    agg.tGoalsAgainst[tB] += m.score_a;
+
+    // ── NEUE TEAM-AWARDS v4 ──
+    const goalDiffM = Math.abs(m.score_a - m.score_b);
+    const winnerKey = m.winner==='A' ? tA : tB;
+    // Glückspilze: 1-Tor-Sieg pro Team zählen
+    if(goalDiffM === 1){
+      if(!agg.tCloseWins[winnerKey]) agg.tCloseWins[winnerKey]=0;
+      agg.tCloseWins[winnerKey]++;
+    }
+    // Giant Slayer + Favoritenschreck: brauchen Pre-Match-Team-Elo aus snapMap.
+    // snapMap[m.id] enthält eloBefore aller 4 Spieler (saison-isoliert via globalSim).
+    // Fehlt der Snap (z.B. hidden Player), wird das Match übersprungen — sicher.
+    const snapPre = agg.snapMap[m.id];
+    if(snapPre && snapPre[m.a1]!==undefined && snapPre[m.a2]!==undefined
+       && snapPre[m.b1]!==undefined && snapPre[m.b2]!==undefined){
+      const eloA = snapPre[m.a1] + snapPre[m.a2];
+      const eloB = snapPre[m.b1] + snapPre[m.b2];
+      const winnerElo = m.winner==='A' ? eloA : eloB;
+      const loserElo  = m.winner==='A' ? eloB : eloA;
+      const loserKey  = m.winner==='A' ? tB : tA;
+      // Giant Slayer: Sieger-Team hatte vor dem Spiel weniger Team-Elo
+      if(winnerElo < loserElo){
+        if(!agg.tGiantSlayer[winnerKey]) agg.tGiantSlayer[winnerKey]=0;
+        agg.tGiantSlayer[winnerKey]++;
+        // Favoritenschreck: höchster jemals überwundener Elo-Unterschied (pro Team)
+        const overcome = loserElo - winnerElo;
+        const cur = agg.tFavoritenschreck[winnerKey];
+        if(!cur || overcome > cur.eloDiff){
+          agg.tFavoritenschreck[winnerKey] = {
+            eloDiff: overcome,
+            m,
+            winnerKey,
+            loserKey
+          };
+        }
+      }
+    }
+    // Erzfeinde: Begegnung Team-A vs Team-B (sortiert als Pair-Key)
+    const sortedPair = [tA, tB].sort();
+    const pairKey = sortedPair.join('::');
+    if(tA !== tB){ // gleiches Team auf beiden Seiten unmöglich, aber defensiv
+      if(!agg.rivalries[pairKey]){
+        agg.rivalries[pairKey] = {
+          idsA: sortedPair[0].split('|'),
+          idsB: sortedPair[1].split('|'),
+          g:0, wA:0, wB:0, gfA:0, gfB:0
+        };
+      }
+      const r = agg.rivalries[pairKey];
+      r.g++;
+      // wA/gfA gehören zum SORTIERTEN ersten Team (idsA)
+      if(tA === sortedPair[0]){
+        r.gfA += m.score_a; r.gfB += m.score_b;
+        if(m.winner==='A') r.wA++; else r.wB++;
+      } else {
+        r.gfA += m.score_b; r.gfB += m.score_a;
+        if(m.winner==='B') r.wA++; else r.wB++;
+      }
+    }
     
     // === ICE-WINS (ZU-NULL) ===
     const defA = m.a1_pos==='def' ? m.a1 : m.a2;
@@ -6432,6 +6524,81 @@ function _awardRankingsUncached(period){
     .sort((a,b)=>b.v-a.v);
 
   // ════════════════════════════════════════════════════════════════════
+  // NEUE TEAM-AWARDS v4 — saison-übergreifend gemäß Anforderung
+  // ════════════════════════════════════════════════════════════════════
+  // unstoppable    — längste Team-Siegesserie (Sieg-Streak pro Team-Key)
+  // concreteWall   — niedrigster Gegentore-Schnitt pro Spiel (min. 10 Sp.)
+  // luckyCharm     — meiste 1-Tor-Siege pro Team
+  // giantSlayer    — meiste Siege gegen stärkeres Team (Pre-Match-Team-Elo)
+  // favoritenschreck — höchster überwundener Team-Elo-Unterschied (Match-Award je Team)
+  // rivalryList    — Team-Paar mit den meisten direkten Duellen
+  // ════════════════════════════════════════════════════════════════════
+
+  // Unstoppable: chronologisch durchwandern, pro Team-Key cur/best Streak
+  const _orderedForStreak = [...ms].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const _tStreak = {}; // teamKey → {cur, best, ids}
+  for(let i=0;i<_orderedForStreak.length;i++){
+    const m=_orderedForStreak[i];
+    const wKey = m.winner==='A' ? [m.a1,m.a2].sort().join('|') : [m.b1,m.b2].sort().join('|');
+    const lKey = m.winner==='A' ? [m.b1,m.b2].sort().join('|') : [m.a1,m.a2].sort().join('|');
+    if(!_tStreak[wKey]) _tStreak[wKey]={cur:0,best:0,ids:wKey.split('|')};
+    if(!_tStreak[lKey]) _tStreak[lKey]={cur:0,best:0,ids:lKey.split('|')};
+    _tStreak[wKey].cur++;
+    if(_tStreak[wKey].cur>_tStreak[wKey].best) _tStreak[wKey].best=_tStreak[wKey].cur;
+    _tStreak[lKey].cur=0;
+  }
+  const unstoppableList = Object.values(_tStreak)
+    .filter(x=>x.best>=2)
+    .map(x=>({ids:x.ids, v:x.best}))
+    .sort((a,b)=>b.v-a.v);
+
+  // Concrete Wall: Σ Gegentore / Anzahl Team-Spiele, min. 10 Spiele
+  const concreteWallList = Object.keys(agg.tGames)
+    .filter(k=>agg.tGames[k]>=10)
+    .map(k=>({
+      ids:k.split('|'),
+      v: agg.tGoalsAgainst[k] / agg.tGames[k],   // Sortierwert (niedriger=besser)
+      ga: agg.tGoalsAgainst[k],
+      g: agg.tGames[k]
+    }))
+    .sort((a,b)=>a.v-b.v);
+
+  // Lucky Charm: meiste 1-Tor-Siege pro Team
+  const luckyCharmList = Object.entries(agg.tCloseWins)
+    .filter(([,v])=>v>0)
+    .map(([k,v])=>({ids:k.split('|'), v}))
+    .sort((a,b)=>b.v-a.v);
+
+  // Giant Slayer: meiste Siege gegen stärkeres Team
+  const giantSlayerList = Object.entries(agg.tGiantSlayer)
+    .filter(([,v])=>v>0)
+    .map(([k,v])=>({ids:k.split('|'), v}))
+    .sort((a,b)=>b.v-a.v);
+
+  // Favoritenschreck: pro Team höchsten überwundenen Elo-Unterschied,
+  // dann sortiert nach diesem maximalen Wert.
+  const favoritenschreckList = Object.entries(agg.tFavoritenschreck)
+    .map(([k,info])=>({
+      ids:k.split('|'),
+      v: Math.round(info.eloDiff),
+      m: info.m,
+      loserIds: info.loserKey.split('|')
+    }))
+    .sort((a,b)=>b.v-a.v);
+
+  // Erzfeinde: Team-Paar mit meisten direkten Duellen (min. 2)
+  const rivalryList = Object.values(agg.rivalries)
+    .filter(r=>r.g>=2)
+    .map(r=>({
+      idsA: r.idsA,
+      idsB: r.idsB,
+      ids:  [...r.idsA, ...r.idsB], // für Hidden-Filter (alle 4 müssen sichtbar sein)
+      g: r.g, wA: r.wA, wB: r.wB,
+      gfA: r.gfA, gfB: r.gfB
+    }))
+    .sort((a,b)=>b.g-a.g);
+
+  // ════════════════════════════════════════════════════════════════════
   // HIDDEN-FILTER für ALLE Award-Listen (zentral, konsistent)
   // ════════════════════════════════════════════════════════════════════
   // Hidden-Spieler werden aus allen Single- und Team-Listen entfernt.
@@ -6467,6 +6634,13 @@ function _awardRankingsUncached(period){
     plusMinusList:_fSingle(plusMinusList),
     underdogList:_fSingle(underdogList),
     pechvogelList:_fSingle(pechvogelList),
+    // ── NEUE TEAM-AWARDS v4 ──
+    unstoppableList:_fTeam(unstoppableList),
+    concreteWallList:_fTeam(concreteWallList),
+    luckyCharmList:_fTeam(luckyCharmList),
+    giantSlayerList:_fTeam(giantSlayerList),
+    favoritenschreckList:_fTeam(favoritenschreckList),
+    rivalryList:_fTeam(rivalryList), // _fTeam prüft x.ids → alle 4 Spieler müssen sichtbar sein
     counts:{matches:ms.length}
   };
 }
@@ -6722,7 +6896,10 @@ function vAwards(){
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
     zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
     weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud'
+    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
+    // ── NEUE TEAM-AWARDS v4 ──
+    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
+    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords'
   };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
@@ -6735,7 +6912,7 @@ function vAwards(){
     const isEmpty = !ids || !ids.length;
     const emptyCls = isEmpty ? ' empty' : '';
 
-    // ── Plakette: Avatar + Name bei Single, "X & Y" Text bei Team ──
+    // ── Plakette: Avatar + Name bei Single, "X & Y" Text bei Team, "X&Y vs Z&W" bei Rivalry ──
     let plaqueContent;
     if(isEmpty){
       plaqueContent = `<span class="aw-trophy-plaque-name" style="color:var(--muted)">noch keine Daten</span>`;
@@ -6747,6 +6924,9 @@ function vAwards(){
         : `<span class="aw-trophy-plaque-av" style="background:${avColor(ids[0])}">${esc(initials(p ? p.name : '?'))}</span>`;
       // Der "name" String kann bei Gleichstand mehrere Namen kommagetrennt enthalten
       plaqueContent = `${avHtml}<span class="aw-trophy-plaque-name">${name}</span>`;
+    } else if(ids.length === 4){
+      // Rivalität (Erzfeinde): vier Spieler, Plakette zeigt "TeamA vs TeamB" kompakt
+      plaqueContent = `<span class="aw-trophy-plaque-name" style="font-size:9.5px;line-height:1.2">${name}</span>`;
     } else {
       // Team-Award: nur Namen als Text "X & Y" (ohne Avatare in der Plakette)
       plaqueContent = `<span class="aw-trophy-plaque-name" style="font-size:10.5px">${name}</span>`;
@@ -6784,7 +6964,10 @@ function vAwards(){
         sm0=g(R.showmasterList),pk0=g(R.peakEloList),
         wk0=g(R.weekKingList),dk0=g(R.dayKingList),
         // ── NEUE AWARDS v3 ──
-        pm0=g(R.plusMinusList),uh0=g(R.underdogList),pv0=g(R.pechvogelList);
+        pm0=g(R.plusMinusList),uh0=g(R.underdogList),pv0=g(R.pechvogelList),
+        // ── NEUE TEAM-AWARDS v4 ──
+        un0=g(R.unstoppableList), cw0=g(R.concreteWallList), lc0=g(R.luckyCharmList),
+        gs0=g(R.giantSlayerList), fs0=g(R.favoritenschreckList), rv0=g(R.rivalryList);
 
   let html='';
   // ════════════════════════════════════════════════════════════════
@@ -6847,6 +7030,18 @@ function vAwards(){
   if(b0) _addColl(b0.m.winner === 'A' ? [b0.m.a1, b0.m.a2] : [b0.m.b1, b0.m.b2]);
   if(gr0) _addColl(_topSingleIds(R.grinder, x => x.v));
   if(uh0) _addColl(_topSingleIds(R.underdogList, x => x.v));
+  // ── NEUE TEAM-AWARDS v4 (positive Awards → in Sammler-Counter) ──
+  if(un0) _addColl(_topTeamIds(R.unstoppableList, x => x.v));
+  if(cw0) _addColl(_topTeamIds(R.concreteWallList, x => -Math.round(x.v*100))); // niedriger = besser
+  if(lc0) _addColl(_topTeamIds(R.luckyCharmList, x => x.v));
+  if(gs0) _addColl(_topTeamIds(R.giantSlayerList, x => x.v));
+  // Rivalry zählt für alle 4 Spieler beider Teams (idsA + idsB)
+  if(rv0){
+    const topVal = rv0.g;
+    R.rivalryList.filter(x => x.g === topVal).forEach(x => _addColl([...x.idsA, ...x.idsB]));
+  }
+  // Favoritenschreck ist semantisch negativ/dramatisch (für den Verlierer) — wir werten
+  // ihn neutral, also NICHT im Award-Sammler.
   // Schandtafel-Awards (inkl. Pechvogel) fließen bewusst NICHT in den Sammler.
 
   const _collTop = Object.entries(_coll)
@@ -6962,6 +7157,34 @@ function vAwards(){
   teams.push(bd0&&bd0.g>=2
     ? card('bestDuo','blue','Unzertrennlich',bd0.ids,esc(topTeamNames(R.bestDuo,x=>x.g)),bd0.g+' gemeinsame Spiele',bd0.g)
     : empty('bestDuo','blue','Unzertrennlich'));
+  // ── NEUE TEAM-AWARDS v4 ──
+  // Unaufhaltsam: längste Team-Siegesserie
+  teams.push(un0
+    ? card('unstoppable','acid','Unaufhaltsam',un0.ids,esc(topTeamNames(R.unstoppableList,x=>x.v)),un0.v+' Siege in Folge',un0.v)
+    : empty('unstoppable','acid','Unaufhaltsam'));
+  // Betonmauer: niedrigster Gegentor-Schnitt (min. 10 Sp.)
+  teams.push(cw0
+    ? card('concreteWall','blue','Betonmauer',cw0.ids,esc(topTeamNames(R.concreteWallList,x=>-Math.round(x.v*100))),cw0.v.toFixed(2)+' Gegentore/Sp.',cw0.v.toFixed(2))
+    : empty('concreteWall','blue','Betonmauer'));
+  // Glückspilze: meiste 1-Tor-Siege
+  teams.push(lc0
+    ? card('luckyCharm','acid','Glückspilze',lc0.ids,esc(topTeamNames(R.luckyCharmList,x=>x.v)),lc0.v+'× mit 1 Tor Vorsprung',lc0.v)
+    : empty('luckyCharm','acid','Glückspilze'));
+  // Giant Slayer: meiste Siege gegen stärkere Teams
+  teams.push(gs0
+    ? card('giantSlayer','orange','Giant Slayer',gs0.ids,esc(topTeamNames(R.giantSlayerList,x=>x.v)),gs0.v+' Favoriten besiegt',gs0.v)
+    : empty('giantSlayer','orange','Giant Slayer'));
+  // Favoritenschreck: höchster überwundener Team-Elo-Unterschied (Match-Award je Team)
+  teams.push(fs0
+    ? card('favoritenschreck','red','Favoritenschreck',fs0.ids,esc(topTeamNames(R.favoritenschreckList,x=>x.v)),fs0.v+' Elo überwunden · '+dateStr(fs0.m.created_at),fs0.v)
+    : empty('favoritenschreck','red','Favoritenschreck'));
+  // Erzfeinde: 4-Spieler-Rivalität — beide Teams im name-String "X & Y vs Z & W"
+  if(rv0){
+    const rivalryName = pname(rv0.idsA[0])+' & '+pname(rv0.idsA[1])+' vs '+pname(rv0.idsB[0])+' & '+pname(rv0.idsB[1]);
+    teams.push(card('rivalry','purple','Erzfeinde',[...rv0.idsA, ...rv0.idsB],esc(rivalryName),rv0.g+' direkte Duelle',rv0.g));
+  } else {
+    teams.push(empty('rivalry','purple','Erzfeinde'));
+  }
   sect('handshake','blue','Teams',teams);
 
   // ── ANGRIFF & VERTEIDIGUNG ──
@@ -7099,7 +7322,14 @@ const AWARD_META={
   // ── NEUE AWARDS v3 ──
   plusMinus:{title:'Plus-Minus',cls:'orange',why:'Höchster Tor-Saldo pro Spiel (Tore_für minus Tore_gegen, durchschnittlich). Kombiniert Angriff und Verteidigung — wer beeinflusst das Tor-Verhältnis seines Teams am meisten? Min. 10 Spiele für stabile Berechnung.'},
   underdog:{title:'Underdog-Held',cls:'purple',why:'Meiste Siege als Außenseiter (Siegerwartung unter 35% laut Elo). Anders als die „Größte Überraschung" — Einzelmatch — ist das hier ein Saison-Counter: wer kippt das System am häufigsten?'},
-  pechvogel:{title:'Pechvogel',cls:'red',why:'Höchster Anteil knapper Niederlagen (Tordifferenz max. 2) an allen Spielen. Prozentual statt absolut — sonst gewinnen Vielspieler durch Volumen. Schwelle: min. 2 knappe Niederlagen und min. 5 Spiele für stabile Berechnung. Spiegelbild zum Clutch-Player.'}
+  pechvogel:{title:'Pechvogel',cls:'red',why:'Höchster Anteil knapper Niederlagen (Tordifferenz max. 2) an allen Spielen. Prozentual statt absolut — sonst gewinnen Vielspieler durch Volumen. Schwelle: min. 2 knappe Niederlagen und min. 5 Spiele für stabile Berechnung. Spiegelbild zum Clutch-Player.'},
+  // ── NEUE TEAM-AWARDS v4 ──
+  unstoppable:{title:'Unaufhaltsam',cls:'acid',why:'Team mit der längsten zusammenhängenden Siegesserie. Eine Niederlage beendet die Serie sofort. Saison-übergreifend gewertet.'},
+  concreteWall:{title:'Betonmauer',cls:'blue',why:'Defensiv stärkstes Team — niedrigster Gegentor-Schnitt pro Spiel. Min. 10 gemeinsame Spiele für eine stabile Bewertung.'},
+  luckyCharm:{title:'Glückspilze',cls:'acid',why:'Team mit den meisten knappen Siegen (genau ein Tor Vorsprung). Wer holt regelmäßig die engen Spiele über die Ziellinie?'},
+  giantSlayer:{title:'Giant Slayer',cls:'orange',why:'Team mit den meisten Siegen gegen einen vor dem Spiel stärkeren Gegner (gemessen am Team-Elo-Stand unmittelbar vor dem Match). Wer schlägt am häufigsten die Favoriten?'},
+  favoritenschreck:{title:'Favoritenschreck',cls:'red',why:'Größter Upset der Geschichte — höchster Team-Elo-Unterschied, der durch einen Sieg überwunden wurde. Pro Team zählt der jeweils stärkste Coup; im Ranking gewinnt der absolut höchste überwundene Abstand.'},
+  rivalry:{title:'Erzfeinde',cls:'purple',why:'Die intensivste Rivalität der Liga — das Team-Paar mit den meisten direkten Aufeinandertreffen (min. 2 Begegnungen).'}
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
@@ -7113,12 +7343,24 @@ function showAward(key){
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
     zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
     weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud'
+    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
+    // ── NEUE TEAM-AWARDS v4 ──
+    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
+    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords'
   };
 
+  // ── NEUE TEAM-AWARDS v4 ──
+  // favoritenschreck verhält sich wie ein Match-Award (zeigt ein konkretes Spiel),
+  // gewinner/verlierer sind aber TEAMS — daher haben wir ein eigenes Layout unten.
+  // rivalry ist ein 4-Spieler-Award mit Sonderlayout (Team A vs Team B).
   const MATCH_AWARDS = new Set(['upset','biggest']);
-  const TEAM_AWARDS = new Set(['mvt','bestDuo','endgegner','worstTeam','zirkus','baustelle']);
-  const NEG_KEYS = new Set(['worstWr','worstAtk','worstDef','worstTeam','formtief','coldStreak','lossStreaks','zirkus','baustelle','pechvogel']);
+  const TEAM_AWARDS = new Set([
+    'mvt','bestDuo','endgegner','worstTeam','zirkus','baustelle',
+    'unstoppable','concreteWall','luckyCharm','giantSlayer'
+  ]);
+  const RIVALRY_AWARDS = new Set(['rivalry']);
+  const FAVS_AWARDS = new Set(['favoritenschreck']);
+  const NEG_KEYS = new Set(['worstWr','worstAtk','worstDef','worstTeam','formtief','coldStreak','lossStreaks','zirkus','baustelle','pechvogel','favoritenschreck']);
 
   let bodyHtml='';
 
@@ -7149,6 +7391,99 @@ function showAward(key){
             </div>
           </div>
         </div>`;
+    } else {
+      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+    }
+  } else if(FAVS_AWARDS.has(key)){
+    // Favoritenschreck: Match-Detail aus dem Top-Eintrag der Liste rendern.
+    // Wie biggest/upset zeigen wir das konkrete Spiel mit Score + Teams. Zusätzlich
+    // wird die überwundene Team-Elo-Differenz oben prominent dargestellt.
+    const arr = R.favoritenschreckList;
+    if(arr && arr.length){
+      const top = arr[0];
+      const m = top.m;
+      const winnerSide = m.winner;
+      bodyHtml = `
+        <div class="aw-match upset">
+          <div class="aw-match-score">${m.score_a} : ${m.score_b}</div>
+          <div class="aw-match-meta">${dateStr(m.created_at)} · ${top.v} Elo überwunden</div>
+          <div class="aw-match-teams">
+            <div class="aw-match-team">
+              ${winnerSide==='A'?'<div class="aw-match-winner">Sieger</div>':''}
+              ${awMiniPair(m.a1,m.a2)}
+              <div class="aw-match-team-name">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
+            </div>
+            <div class="aw-match-vs">vs</div>
+            <div class="aw-match-team">
+              ${winnerSide==='B'?'<div class="aw-match-winner">Sieger</div>':''}
+              ${awMiniPair(m.b1,m.b2)}
+              <div class="aw-match-team-name">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
+            </div>
+          </div>
+        </div>`;
+      // Weitere Plätze als kompakte Liste — andere Teams mit ihren best-Coups
+      if(arr.length > 1){
+        const rest = arr.slice(1, 7);
+        const items = rest.map((e, idx) => {
+          const teamName = pname(e.ids[0]) + ' & ' + pname(e.ids[1]);
+          return `<div class="aw-li" data-li-team="${esc(e.ids.slice().sort().join('|'))}">
+            <div class="aw-li-rank">${idx+2}.</div>
+            ${awLiPair(e.ids[0], e.ids[1])}
+            <div class="aw-li-info"><div class="aw-li-name">${esc(teamName)}</div></div>
+            <div class="aw-li-val">${e.v} Elo</div>
+          </div>`;
+        }).join('');
+        bodyHtml += `<div class="aw-list-label">Weitere Coups</div><div class="aw-list">${items}</div>`;
+      }
+    } else {
+      bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
+    }
+  } else if(RIVALRY_AWARDS.has(key)){
+    // Erzfeinde: Team-Paar mit zwei Bilanz-Boxen (Team A | Team B) + Torverhältnis.
+    const arr = R.rivalryList;
+    if(arr && arr.length){
+      const top = arr[0];
+      const teamAName = pname(top.idsA[0]) + ' & ' + pname(top.idsA[1]);
+      const teamBName = pname(top.idsB[0]) + ' & ' + pname(top.idsB[1]);
+      const aLeading = top.wA > top.wB;
+      const bLeading = top.wB > top.wA;
+      bodyHtml = `
+        <div class="aw-match">
+          <div class="aw-match-score">${top.g}</div>
+          <div class="aw-match-meta">direkte Duelle · ${top.gfA}:${top.gfB} Tore gesamt</div>
+          <div class="aw-match-teams">
+            <div class="aw-match-team" data-li-team="${esc(top.idsA.slice().sort().join('|'))}" style="cursor:pointer">
+              ${aLeading?'<div class="aw-match-winner">Führt</div>':''}
+              ${awMiniPair(top.idsA[0],top.idsA[1])}
+              <div class="aw-match-team-name">${esc(teamAName)}</div>
+              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} Siege</div>
+            </div>
+            <div class="aw-match-vs">vs</div>
+            <div class="aw-match-team" data-li-team="${esc(top.idsB.slice().sort().join('|'))}" style="cursor:pointer">
+              ${bLeading?'<div class="aw-match-winner">Führt</div>':''}
+              ${awMiniPair(top.idsB[0],top.idsB[1])}
+              <div class="aw-match-team-name">${esc(teamBName)}</div>
+              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} Siege</div>
+            </div>
+          </div>
+        </div>`;
+      // Weitere Rivalitäten
+      if(arr.length > 1){
+        const rest = arr.slice(1, 7);
+        const items = rest.map((e, idx) => {
+          const aN = pname(e.idsA[0]) + ' & ' + pname(e.idsA[1]);
+          const bN = pname(e.idsB[0]) + ' & ' + pname(e.idsB[1]);
+          return `<div class="aw-li">
+            <div class="aw-li-rank">${idx+2}.</div>
+            <div class="aw-li-info" style="min-width:0">
+              <div class="aw-li-name" style="font-size:12px">${esc(aN)}</div>
+              <div class="aw-li-name" style="font-size:9.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px">vs ${esc(bN)}</div>
+            </div>
+            <div class="aw-li-val">${e.g} Duelle</div>
+          </div>`;
+        }).join('');
+        bodyHtml += `<div class="aw-list-label">Weitere Rivalitäten</div><div class="aw-list">${items}</div>`;
+      }
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     }
@@ -7186,6 +7521,11 @@ function showAward(key){
         case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+x.v.toFixed(1)+' /Sp.',sort:Math.round(x.v*10)}));
         case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Underdog-Sieg',sort:x.v}));
         case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
+        // ── NEUE TEAM-AWARDS v4 ──
+        case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
+        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
+        case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' knappe Siege',sort:x.v}));
+        case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Favoriten besiegt',sort:x.v}));
         default: return [];
       }
     })();
@@ -7363,15 +7703,25 @@ function showAward(key){
       if(el){ el.style.cursor='pointer'; el.onclick=()=>{ closeSheet(); setTimeout(()=>showMatchDetail(arr[0].m.id),350); }; }
     }
   }
+  // Favoritenschreck: Hauptkarte führt zum Match-Detail
+  if(FAVS_AWARDS.has(key)){
+    const arr = R.favoritenschreckList;
+    if(arr && arr.length){
+      const el = document.querySelector('.aw-match');
+      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ closeSheet(); setTimeout(()=>showMatchDetail(arr[0].m.id),350); }; }
+    }
+  }
+  // Erzfeinde: die zwei Team-Boxen tragen data-li-team und werden durch den
+  // generischen Team-Handler unten (querySelectorAll[data-li-team]) klickbar.
 
   // Listen-Einträge klickbar
   document.querySelectorAll('.aw-li[data-li-player], .aw-li-tied-row[data-li-player], .aw-winner[data-li-player], .aw-winner-tied-entry[data-li-player]').forEach(el=>{
     el.style.cursor='pointer';
     el.onclick=()=>{ const pid=el.dataset.liPlayer; closeSheet(); setTimeout(()=>showPlayer(pid),350); };
   });
-  document.querySelectorAll('.aw-li[data-li-team], .aw-li-tied-row[data-li-team], .aw-winner[data-li-team], .aw-winner-tied-entry[data-li-team]').forEach(el=>{
+  document.querySelectorAll('.aw-li[data-li-team], .aw-li-tied-row[data-li-team], .aw-winner[data-li-team], .aw-winner-tied-entry[data-li-team], .aw-match-team[data-li-team]').forEach(el=>{
     el.style.cursor='pointer';
-    el.onclick=()=>{ const [a,b]=el.dataset.liTeam.split('|'); closeSheet(); setTimeout(()=>showTeam(a,b),350); };
+    el.onclick=(ev)=>{ ev.stopPropagation(); const [a,b]=el.dataset.liTeam.split('|'); closeSheet(); setTimeout(()=>showTeam(a,b),350); };
   });
 }
 
@@ -8075,7 +8425,7 @@ const BADGES=[
   // Zeile 16 — Pflichtaufgabe, Award-Sammler
   {id:'pflichtaufgabe',ic:'clipboard',name:'Pflichtaufgabe',desc:'Sieg gegen mindestens einen Gegner aus den Bottom 3 der Saison-Endrangliste (ab 6 Saison-Teilnehmern)',
     multi:true,count:(id,ms)=>countBottomThreeWins(id,ms)}, */
-  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Tagessieger und 2 Wochensieger',
+  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Player-of-the-Day und 2 Player-of-the-Week Auszeichnungen gesammelt',
     multi:true,count:(id,ms)=>countAwardCollector(id)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
   {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
@@ -8923,23 +9273,39 @@ function playerAwards(id){
     }
   });
 
-  // Team-Awards
+  // Team-Awards (2 Spieler)
   const teamKeys={
     mvt:R.mvt, bestDuo:R.bestDuo, worstTeam:R.worstTeam,
     endgegner:R.endgegner,
-    zirkus:R.zirkusList, baustelle:R.baustelleList
+    zirkus:R.zirkusList, baustelle:R.baustelleList,
+    // ── NEUE TEAM-AWARDS v4 ──
+    unstoppable:R.unstoppableList, concreteWall:R.concreteWallList,
+    luckyCharm:R.luckyCharmList, giantSlayer:R.giantSlayerList,
+    favoritenschreck:R.favoritenschreckList
   };
   const teamValFns={
     mvt:x=>Math.round(x.v), bestDuo:x=>x.g,
     worstTeam:x=>-Math.round(x.w/x.g*100),
     endgegner:x=>x.g,
-    zirkus:x=>x.v, baustelle:x=>x.best
+    zirkus:x=>x.v, baustelle:x=>x.best,
+    // ── NEUE TEAM-AWARDS v4 ──
+    unstoppable:x=>x.v,
+    concreteWall:x=>-Math.round(x.v*100), // niedriger = besser → negieren
+    luckyCharm:x=>x.v,
+    giantSlayer:x=>x.v,
+    favoritenschreck:x=>x.v
   };
   const teamDisplayFns={
     mvt:x=>(x.v>=0?'+':'')+Math.round(x.v), bestDuo:x=>x.g+' Sp.',
     worstTeam:x=>Math.round(x.w/x.g*100)+'%',
     endgegner:x=>x.g+'×',
-    zirkus:x=>x.v+'×', baustelle:x=>x.best+'er'
+    zirkus:x=>x.v+'×', baustelle:x=>x.best+'er',
+    // ── NEUE TEAM-AWARDS v4 ──
+    unstoppable:x=>x.v+'er',
+    concreteWall:x=>x.v.toFixed(2),
+    luckyCharm:x=>x.v+'×',
+    giantSlayer:x=>x.v+'×',
+    favoritenschreck:x=>x.v+' Elo'
   };
   Object.entries(teamKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;
@@ -8952,6 +9318,24 @@ function playerAwards(id){
       found.push({key,rank,partner,val:entry?String(dispFn(entry)):''});
     }
   });
+
+  // Rivalry-Award (4 Spieler) — alle 4 erhalten den Award.
+  // Partner-Anzeige: das jeweils andere Team ("vs X & Y")
+  if(R.rivalryList && R.rivalryList.length){
+    const rArr = R.rivalryList;
+    const valFn = x => x.g;
+    const rank = getRank(rArr, valFn, x => [...x.idsA, ...x.idsB].includes(id));
+    if(rank>=0 && rank<=2){
+      const entry = rArr.find(x => [...x.idsA, ...x.idsB].includes(id));
+      if(entry){
+        const onA = entry.idsA.includes(id);
+        const opponentIds = onA ? entry.idsB : entry.idsA;
+        const partnerLabel = pname(opponentIds[0])+' & '+pname(opponentIds[1]);
+        // partner=null signalisiert dem Renderer "Spezial-Label statt Avatar-Plaque"
+        found.push({key:'rivalry', rank, partner:null, partnerLabel:'vs '+partnerLabel, val:entry.g+' Duelle'});
+      }
+    }
+  }
 
   // Match-Awards
   const matchKeys={upset:R.upsets, biggest:R.biggest};
@@ -9120,25 +9504,38 @@ function showPlayer(id){
 
   // Awards-Kategorisierung: jede Award gehört zu GENAU EINER Kategorie (exklusiv).
   // Aufteilung in 3 thematische Cluster für klare Übersicht.
+  // Positive: rein individuelle Leistung + (positive) Rollen-Awards (Torjäger, Abwehr, Eiskalt).
+  // Team:     alle Awards, die ein DUO/Team ausmachen (mvt, bestDuo, endgegner, neue Team-Awards
+  //           inkl. Erzfeinde/Rivalry).
+  // Negative: Schandtafel + negative Rollen-Awards (Zahnloser Stürmer, Löchrigste Abwehr).
   const POSITIVE_KEYS = new Set([
-    'wins','mvt','bestDuo','perfect','clutch','carryKing','solo',
-    'endgegner','grinder','showmaster','onFire','streaks','upset','biggest','peakElo',
+    'wins','perfect','clutch','carryKing','solo',
+    'grinder','showmaster','onFire','streaks','upset','biggest','peakElo',
     'weekKing','dayKing',
+    // Rollen-Awards (positiv)
+    'scorer','wall','ice',
     // ── NEUE AWARDS v3 ──
     'plusMinus','underdog'
   ]);
-  const ROLE_KEYS = new Set(['scorer','wall','ice','worstAtk','worstDef']);
+  const TEAM_KEYS = new Set([
+    'mvt','bestDuo','endgegner',
+    // ── NEUE TEAM-AWARDS v4 ──
+    'unstoppable','concreteWall','luckyCharm','giantSlayer','rivalry'
+  ]);
   const NEGATIVE_KEYS = new Set([
     'worstWr','coldStreak','lossStreaks','formtief','worstTeam','zirkus','baustelle',
+    'worstAtk','worstDef',
     // ── NEUE AWARDS v3 ──
-    'pechvogel'
+    'pechvogel',
+    // ── NEUE TEAM-AWARDS v4 ──
+    'favoritenschreck'
   ]);
 
   const cnt = (set) => awards.filter(a => set.has(a.key)).length;
   const awCats = [
-    {ic:'star',   nm:'Positive<br>Awards', n: cnt(POSITIVE_KEYS)},
-    {ic:'shield', nm:'Rollen<br>Awards',   n: cnt(ROLE_KEYS)},
-    {ic:'skull',  nm:'Negative<br>Awards', n: cnt(NEGATIVE_KEYS)},
+    {ic:'star',      nm:'Positive<br>Awards', n: cnt(POSITIVE_KEYS)},
+    {ic:'handshake', nm:'Team<br>Awards',     n: cnt(TEAM_KEYS)},
+    {ic:'skull',     nm:'Negative<br>Awards', n: cnt(NEGATIVE_KEYS)},
   ];
 
   const badges=getCachedBadges(id);
@@ -9866,19 +10263,30 @@ function showPlayerAwards(playerId, awards){
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
     zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
     weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud'
+    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
+    // ── NEUE TEAM-AWARDS v4 ──
+    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
+    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords'
   };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
   // Award-Trophäe für das Sheet: gleiche Optik wie im Awards-Tab.
-  // Plakette zeigt den Award-Wert + Partner (bei Team-Awards) — der Spielername
-  // steht oben im Sheet-Header und wäre in jeder einzelnen Plakette redundant.
+  // Plakette: bei Team-Awards zeigen wir den Partner-NAMEN als reinen Text
+  // (kein Profilbild) — konsistent zum Wunsch des Users und sauber für den
+  // 4-Spieler-Award "Erzfeinde" (a.partnerLabel statt a.partner).
   const trophy = (a) => {
     const m = AWARD_META[a.key]; if(!m) return '';
     const valDisplay = a.val ? esc(a.val) : '#1';
-    const plaqueContent = a.partner
-      ? `<span class="aw-trophy-plaque-av" style="background:${avColor(a.partner)}">${esc(initials((pmap()[a.partner]||{}).name||'?'))}</span><span class="aw-trophy-plaque-name">mit ${esc(pname(a.partner))}</span>`
-      : `<span class="aw-trophy-plaque-name" style="color:var(--muted);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase">Top-1</span>`;
+    let plaqueContent;
+    if(a.partnerLabel){
+      // Rivalry / 4-Spieler: keine Partner-Plaque, sondern Beschriftung "vs X & Y"
+      plaqueContent = `<span class="aw-trophy-plaque-name" style="font-size:10px">${esc(a.partnerLabel)}</span>`;
+    } else if(a.partner){
+      // Team-Award (2 Spieler): Partner-Name ohne Avatar/Initial-Bubble
+      plaqueContent = `<span class="aw-trophy-plaque-name" style="font-size:10.5px">mit ${esc(pname(a.partner))}</span>`;
+    } else {
+      plaqueContent = `<span class="aw-trophy-plaque-name" style="color:var(--muted);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase">Top-1</span>`;
+    }
     return `<div class="aw-trophy ${m.cls}" data-paward2="${esc(a.key)}">
       <div class="aw-trophy-cup">${ic(a.key)}<div class="aw-trophy-cup-base"></div></div>
       <div class="aw-trophy-lbl">${esc(m.title)}</div>
