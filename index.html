@@ -2252,7 +2252,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.23.03';
+const BUILD_VERSION='2026.06.23.04';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -9042,8 +9042,10 @@ function getBadgeEarnedCache(){
   const snapMap=getSnapMap();
   // History-Map für eloAfter-Lookup (Saison-Peak-Tracking pro Match)
   const histById=getHistoryByMatchId();
-  // Rangliste-Snapshots pro Match (für Thronfäller + Überholmanöver)
+  // Rangliste-Snapshots pro Match (für Thronfäller + Überholmanöver + Pflichterfüller)
   const rankSnaps=getRankSnapshots();
+  // Siegesserien-Snapshots pro Match (für Serienbrecher — Streak des Gegners VOR dem Match)
+  const streakSnaps=getStreakSnapshots();
   // Tages-Tracker (global, nicht per-player): welcher Tag hatte schon sein erstes Match?
   const firstOfDaySeen={};
 
@@ -9268,7 +9270,8 @@ function getBadgeEarnedCache(){
 
       // ── Thronfäller: Sieg gegen den Top-1 der Saison-Rangliste (Stand vor Match) ──
       // ── Überholmanöver: Sieg gegen Gegner, der dadurch in der Rangliste überholt wurde ──
-      // Beide nutzen rankSnaps (preRank/postRank pro Match aus globalSim-Deltas).
+      // ── Pflichterfüller: Sieg gegen mind. einen Bottom-2-Gegner (preRank-Stand vor Match) ──
+      // Alle drei nutzen rankSnaps (preRank/postRank pro Match aus globalSim-Deltas).
       // Match-Trigger feuert je Badge maximal 1× pro Spieler pro Match — auch wenn
       // 2 Gegner überholt werden, gibts nur 1 Toast/Eintrag im Match-Review.
       // Der Counter (countOvertake) zählt die tatsächlichen 2 Überholungen für
@@ -9292,6 +9295,24 @@ function getBadgeEarnedCache(){
             });
             if(overtook) fire('overtake');
           }
+          // Pflichterfüller: Bottom-2-Gegner (rank >= N-1), ab 5 Spielern in der Saison
+          const N = Object.keys(rs.preRank).length;
+          if(N >= 5){
+            const hit = opps.some(oId => rs.preRank[oId] && rs.preRank[oId] >= N-1);
+            if(hit) fire('duty_done');
+          }
+        }
+      }
+
+      // ── Serienbrecher: Sieg, der eine Siegesserie (≥4) eines Gegners beendet hat ──
+      // Nutzt den globalen streakSnaps-Cache (Stand der Streaks VOR dem Match) —
+      // damit ist die Logik konsistent mit countStreakBreaker im Profil und unabhängig
+      // davon, in welcher Reihenfolge die 4 Spieler im inneren Loop verarbeitet werden.
+      if(w){
+        const ss=streakSnaps[m.id];
+        if(ss){
+          const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
+          if(opps.some(oId=>(ss[oId]||0)>=4)) fire('streak_breaker');
         }
       }
 
