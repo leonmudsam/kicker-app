@@ -1181,29 +1181,33 @@
   .pp-pos-side .v small{font-size:11px;font-weight:400;opacity:.7}
   .pp-pos-side .lbl{font-size:8px;letter-spacing:.16em;text-transform:uppercase;font-family:'Sometype Mono',monospace;font-weight:700;margin-top:3px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 
-  /* Cleaner Rollen-Performance: vertikale Liste mit Progress-Bars */
-  .pp-roles{display:flex;flex-direction:column;gap:13px}
-  .pp-role{display:flex;flex-direction:column;gap:7px}
-  .pp-role-head{display:flex;align-items:center;gap:9px;min-width:0}
-  .pp-role-head .ic{display:inline-flex;align-items:center;flex-shrink:0;width:14px;height:14px}
-  .pp-role-head .ic svg{width:14px;height:14px;stroke-width:2.2;fill:none;stroke:currentColor}
-  .pp-role-head .lbl{font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;
-    text-transform:uppercase;letter-spacing:.12em;flex-shrink:0}
-  .pp-role-head .games{font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted);
-    letter-spacing:.04em;margin-left:auto;font-variant-numeric:tabular-nums}
-  .pp-role-head .wr{font-family:'Archivo Black',sans-serif;font-size:16px;letter-spacing:-.02em;
-    line-height:1;min-width:42px;text-align:right;font-variant-numeric:tabular-nums}
-  .pp-role-head .wr small{font-size:10px;opacity:.6;font-weight:400;margin-left:1px}
-  .pp-role.atk .ic,.pp-role.atk .lbl,.pp-role.atk .wr{color:var(--orange)}
-  .pp-role.def .ic,.pp-role.def .lbl,.pp-role.def .wr{color:var(--blue)}
-  .pp-role-bar{height:5px;border-radius:3px;background:var(--bg2);overflow:hidden;position:relative}
-  .pp-role-fill{height:100%;border-radius:3px;transform-origin:left center;
-    animation:roleSlide .9s cubic-bezier(.2,.8,.2,1) .15s both}
-  @keyframes roleSlide{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-  .pp-role.atk .pp-role-fill{background:linear-gradient(90deg,var(--orange),#ffa078);
-    box-shadow:0 0 8px rgba(255,120,73,.35)}
-  .pp-role.def .pp-role-fill{background:linear-gradient(90deg,var(--blue),#8fcef0);
-    box-shadow:0 0 8px rgba(86,180,232,.3)}
+  /* Rollen-Performance: zwei Donut-Diagramme (Sturm orange / Abwehr blau) */
+  .pp-roles-donuts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .pp-rd{background:var(--bg2);border:1px solid var(--line2);border-radius:12px;
+    padding:14px 8px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;
+    position:relative;overflow:hidden}
+  .pp-rd::before{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent)}
+  .pp-rd-ring{width:78px;height:78px;border-radius:50%;
+    display:grid;place-items:center;position:relative;
+    transition:transform .25s}
+  .pp-rd-ring::after{content:"";position:absolute;inset:8px;border-radius:50%;
+    background:var(--bg2)}
+  .pp-rd-inner{position:relative;z-index:1;text-align:center}
+  .pp-rd-wr{font-family:'Archivo Black',sans-serif;font-size:20px;line-height:1;color:var(--ink)}
+  .pp-rd-wr small{font-size:10px;color:var(--muted);font-weight:700;margin-left:1px}
+  .pp-rd-lbl{display:flex;align-items:center;gap:6px;font-size:10px;
+    font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.14em;
+    font-weight:700;line-height:1}
+  .pp-rd-lbl .ic{display:grid;place-items:center;width:13px;height:13px}
+  .pp-rd-lbl .ic svg{width:13px;height:13px;stroke-width:2;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .pp-rd.atk .pp-rd-lbl{color:var(--orange)}
+  .pp-rd.def .pp-rd-lbl{color:var(--blue)}
+  .pp-rd-meta{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.45;
+    font-family:'Sometype Mono',monospace;letter-spacing:.02em}
+  .pp-rd-meta b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+  .pp-rd-empty{font-size:10.5px;color:var(--muted);font-family:'Sometype Mono',monospace;
+    letter-spacing:.06em;text-align:center;padding:8px 0 2px}
   .pp-roles-empty{text-align:center;color:var(--muted);padding:18px 0;
     font-family:'Sometype Mono',monospace;font-size:11px;letter-spacing:.08em}
 
@@ -1230,6 +1234,35 @@
 
   /* Karriere-Rang Journey-Bar */
   .pp-ranks-journey{position:relative;height:58px;padding:0 16px;margin-top:4px}
+
+  /* Karriere-Rang Hero-Card: prominenter Tier-Name + Ø Saison-Elo + Journey-Bar */
+  .pp-rank-card{background:linear-gradient(180deg,var(--surface),var(--bg2));
+    border:1px solid var(--line);border-radius:14px;overflow:hidden;position:relative}
+  .pp-rank-card::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;
+    background:linear-gradient(90deg,transparent,var(--pp-tier-1,var(--acid)),transparent);opacity:.65}
+  .pp-rank-hero{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    padding:14px 14px 13px;border-bottom:1px solid var(--line)}
+  .pp-rank-tier-block{display:flex;align-items:center;gap:11px;min-width:0}
+  .pp-rank-icon{width:38px;height:38px;border-radius:10px;
+    background:linear-gradient(135deg,var(--pp-tier-1,var(--acid)),var(--pp-tier-2,var(--acid2)));
+    display:grid;place-items:center;flex-shrink:0;
+    box-shadow:0 0 14px var(--pp-tier-glow,rgba(190,242,100,.3))}
+  .pp-rank-icon svg{width:20px;height:20px;stroke:#0a0c0b;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .pp-rank-tier-text{min-width:0}
+  .pp-rank-label{font-family:'Archivo Black',sans-serif;font-size:17px;letter-spacing:-.01em;
+    color:var(--pp-tier-1,var(--ink));line-height:1;
+    text-shadow:0 0 12px var(--pp-tier-glow,transparent)}
+  .pp-rank-sub{font-size:9.5px;color:var(--muted);font-family:'Sometype Mono',monospace;
+    text-transform:uppercase;letter-spacing:.13em;font-weight:700;margin-top:4px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pp-rank-elo-block{text-align:right;flex-shrink:0}
+  .pp-rank-elo{font-family:'Archivo Black',sans-serif;font-size:26px;line-height:1;color:var(--ink);
+    font-variant-numeric:tabular-nums}
+  .pp-rank-elo-lbl{font-size:8.5px;color:var(--muted);font-family:'Sometype Mono',monospace;
+    text-transform:uppercase;letter-spacing:.13em;font-weight:700;margin-top:4px}
+  .pp-rank-card .pp-ranks-journey{margin:6px 0 0}
+  .pp-rank-empty{padding:18px 14px;text-align:center;color:var(--muted);
+    font-family:'Sometype Mono',monospace;font-size:11px;letter-spacing:.06em}
   .pp-rj-track{position:absolute;left:24px;right:24px;top:18px;height:3px;background:var(--surface3);border-radius:99px}
   /* Strahl: links verankert, fließt nach rechts bis zum aktiven Tier (Einsteiger→Legende).
      Erbt --pp-tier-1 / --pp-tier-glow vom Parent (.pp-ranks-journey.pp-tier-…) */
@@ -2211,7 +2244,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.20.17';
+const BUILD_VERSION='2026.06.20.18';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2539,17 +2572,22 @@ function invalidateCache(keys=null){
     _lastSimState=null;
     _lastSimIndex=-1;
   } else if(Array.isArray(keys)){
-    // Selektiv
+    // Selektiv. Die abgeleiteten Caches (history/snap/rankSnap/matchesBySeason/
+    // seasonRankings) sind alle version-gebunden — _cache.version++ oben reicht,
+    // beim nächsten Lookup wird der Key-Mismatch erkannt und neu berechnet.
     keys.forEach(k=>{
-      if(k==='awards') delete _cache._awards;
+      if(k==='awards') {
+        delete _cache._awards;
+        delete _cache._playerAwards;  // playerAwards baut auf awardRankings auf
+      }
       if(k==='stats') delete _cache._allStatsKey;
       if(k==='global') { _lastSimState=null; _lastSimIndex=-1; }
       if(k==='teams') delete _cache._teamDetail;
-      if(k==='allTeamStats') delete _cache._allTeamStatsKey; // NEU: Cache für teamStats()
+      if(k==='allTeamStats') delete _cache._allTeamStatsKey;
       if(k==='period') delete _cache._periodStatsKey;
       if(k==='badges') delete _cache._badgeEarnedKey;
-      if(k==='playerSeasonAwards') delete _cache._playerSeasonAwards; // NEU: Cache für playerSeasonAwards(id)
-      if(k==='allPastSeasons') delete _cache._allPastSeasonsKey; // NEU: Cache für allPastSeasons()
+      if(k==='playerSeasonAwards') delete _cache._playerSeasonAwards;
+      if(k==='allPastSeasons') delete _cache._allPastSeasonsKey;
     });
   }
 }
@@ -2605,24 +2643,29 @@ function getGlobalSim(){
 
 // ─── Abgeleitete Sim-Maps (gecached pro Global-Sim) ───
 // Vermeidet wiederholte O(n) Loops in showPlayer, vAwards, _awardRankingsUncached etc.
+// WICHTIG: Cache-Key bindet an matches.length + _cache.version, damit selektives
+// invalidateCache(['global', ...]) korrekt invalidiert. Sonst stale nach Match-Add/Edit.
 function getHistoryByMatchId(){
-  // Garantiert frische Sim
   const sim=getGlobalSim();
-  if(_cache._historyByMatchId) return _cache._historyByMatchId;
+  const key='hist_'+matches.length+'_'+_cache.version;
+  if(_cache._historyByMatchIdKey===key) return _cache._historyByMatchId;
   const map=new Map();
   for(let i=0; i<sim.history.length; i++){
     map.set(sim.history[i].matchId, sim.history[i]);
   }
+  _cache._historyByMatchIdKey = key;
   _cache._historyByMatchId = map;
   return map;
 }
 function getSnapMap(){
   const sim=getGlobalSim();
-  if(_cache._snapMap) return _cache._snapMap;
+  const key='snap_'+matches.length+'_'+_cache.version;
+  if(_cache._snapMapKey===key) return _cache._snapMap;
   const map={};
   for(let i=0; i<sim.history.length; i++){
     map[sim.history[i].matchId] = sim.history[i].eloBefore;
   }
+  _cache._snapMapKey = key;
   _cache._snapMap = map;
   return map;
 }
@@ -2636,7 +2679,8 @@ function getSnapMap(){
 // Genutzt von den Badges "Thronfäller" (kingslayer) und "Überholmanöver".
 // Tie-Break bei gleichem Elo: alphabetisch nach playerId — deterministisch.
 function getRankSnapshots(){
-  if(_cache._rankSnapshots) return _cache._rankSnapshots;
+  const key='ranksnap_'+matches.length+'_'+_cache.version;
+  if(_cache._rankSnapshotsKey===key) return _cache._rankSnapshots;
   getGlobalSim(); // garantiert Sim ist aktuell
   const histMap = getHistoryByMatchId();
   const out = {};
@@ -2665,6 +2709,7 @@ function getRankSnapshots(){
     postEntries.forEach(([pid], idx) => postRank[pid] = idx + 1);
     out[m.id] = {preRank, postRank};
   }
+  _cache._rankSnapshotsKey = key;
   _cache._rankSnapshots = out;
   return out;
 }
@@ -2673,13 +2718,15 @@ function getRankSnapshots(){
 // Gruppiert alle Matches nach ihrer Saison-ID. Wird vom Award-Sammler-Badge
 // und potentiell weiteren Saison-aggregierenden Funktionen genutzt.
 function getMatchesBySeason(){
-  if(_cache._matchesBySeason) return _cache._matchesBySeason;
+  const key='msBySeason_'+matches.length+'_'+_cache.version;
+  if(_cache._matchesBySeasonKey===key) return _cache._matchesBySeason;
   const map={};
   for(let i=0; i<matches.length; i++){
     const sid=seasonOf(matches[i].created_at).id;
     if(!map[sid]) map[sid]=[];
     map[sid].push(matches[i]);
   }
+  _cache._matchesBySeasonKey=key;
   _cache._matchesBySeason=map;
   return map;
 }
@@ -2689,7 +2736,8 @@ function getMatchesBySeason(){
 // Bottom-3 nur definiert wenn mindestens 6 Saison-Teilnehmer (sonst überlappt es mit Top-3).
 // Genutzt von Königsklasse + Pflichtaufgabe Badges.
 function getSeasonRankingsCache(){
-  if(_cache._seasonRankings) return _cache._seasonRankings;
+  const _srcKey='seasonRk_'+matches.length+'_'+_cache.version;
+  if(_cache._seasonRankingsKey===_srcKey) return _cache._seasonRankings;
   const gSim=getGlobalSim();
   const out={};
   const pm=pmap();
@@ -2710,6 +2758,7 @@ function getSeasonRankingsCache(){
       : new Set();
     out[sid]={top3,bottom3};
   });
+  _cache._seasonRankingsKey=_srcKey;
   _cache._seasonRankings=out;
   return out;
 }
@@ -4171,6 +4220,7 @@ function allPlayerStats(){
   activeIds.forEach(id=>{
     stats[id]={games:0,wins:0,losses:0,gf:0,ga:0,
       atkG:0,atkW:0,defG:0,defW:0,
+      atkGoals:0,defConceded:0, // Ø Tore (Sturm) / Ø Gegentore (Abwehr) — Basis für Rollen-Donuts und Positionen-Tab
       mates:{},opps:{},best:-1e9,worst:1e9,curStreak:0};
     run[id]=0;
   });
@@ -4204,8 +4254,8 @@ function allPlayerStats(){
       if(won){ s.wins++; run[id] = run[id]>=0 ? run[id]+1 : 1; }
       else   { s.losses++; run[id] = run[id]<=0 ? run[id]-1 : -1; }
       
-      if(pos==='atk'){ s.atkG++; if(won) s.atkW++; }
-      else            { s.defG++; if(won) s.defW++; }
+      if(pos==='atk'){ s.atkG++; if(won) s.atkW++; s.atkGoals += gf; }
+      else            { s.defG++; if(won) s.defW++; s.defConceded += ga; }
       
       const mate = (id === m.a1) ? m.a2 : m.a1;
       if(!s.mates[mate]) s.mates[mate]={g:0,w:0};
@@ -4247,8 +4297,8 @@ function allPlayerStats(){
       if(won){ s.wins++; run[id] = run[id]>=0 ? run[id]+1 : 1; }
       else   { s.losses++; run[id] = run[id]<=0 ? run[id]-1 : -1; }
       
-      if(pos==='atk'){ s.atkG++; if(won) s.atkW++; }
-      else            { s.defG++; if(won) s.defW++; }
+      if(pos==='atk'){ s.atkG++; if(won) s.atkW++; s.atkGoals += gf; }
+      else            { s.defG++; if(won) s.defW++; s.defConceded += ga; }
       
       const mate = (id === m.b1) ? m.b2 : m.b1;
       if(!s.mates[mate]) s.mates[mate]={g:0,w:0};
@@ -4304,6 +4354,7 @@ function playerStats(id, matchSubset){
 
   // Ursprüngliche Berechnungslogik für Teilmengen oder versteckte Spieler
   const s={games:0,wins:0,losses:0,gf:0,ga:0,atkG:0,atkW:0,defG:0,defW:0,
+           atkGoals:0,defConceded:0, // Pos-spezifische Tore/Gegentore (Donut + Positionen-Tab)
            mates:{},opps:{},best:-1e9,worst:1e9,curStreak:0};
   let run=0;
   ms.forEach(m=>{
@@ -4314,7 +4365,7 @@ function playerStats(id, matchSubset){
     const gf=onA?m.score_a:m.score_b, ga=onA?m.score_b:m.score_a;
     s.games++; s.gf+=gf; s.ga+=ga;
     if(won){s.wins++; run=run>=0?run+1:1;} else {s.losses++; run=run<=0?run-1:-1;}
-    if(myPos==='atk'){s.atkG++; if(won)s.atkW++;} else {s.defG++; if(won)s.defW++;}
+    if(myPos==='atk'){s.atkG++; if(won)s.atkW++; s.atkGoals+=gf;} else {s.defG++; if(won)s.defW++; s.defConceded+=ga;}
     const mate=onA?(id===m.a1?m.a2:m.a1):(id===m.b1?m.b2:m.b1);
     if(!s.mates[mate])s.mates[mate]={g:0,w:0}; s.mates[mate].g++; if(won)s.mates[mate].w++;
     const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
@@ -6031,40 +6082,60 @@ function vPositions(){
     const statsMap = allPlayerStats();
     return activePlayers().map(p=>{
       const s = statsMap[p.id] || playerStats(p.id);
-      const g=pos==='atk'?s.atkG:s.defG, w=pos==='atk'?s.atkW:s.defW;
+      const g  = pos==='atk' ? s.atkG       : s.defG;
+      const w  = pos==='atk' ? s.atkW       : s.defW;
+      // Positionsspezifische Tor-Stats — kommen aus playerStats (atkGoals, defConceded)
+      const goalsSum = pos==='atk' ? (s.atkGoals||0)  : (s.defConceded||0);
+      const goalsAvg = g ? goalsSum/g : 0;
       const perf=posPerfFrom(p.id,matches);
       const pAvg=pos==='atk'?perf.aPerfAvg:perf.dPerfAvg;
       const wr=g?w/g:0;
-      // Score: Siegrate + Performance-Bonus, gewichtet nach Erfahrung.
-      // Erfahrungsgewicht wächst asymptotisch — bei 25+ Spielen praktisch voll vertrauenswürdig.
+      // ────────────────────────────────────────────────────────────────
+      // Score-Modell: kombiniert Siegrate, Performance vs. Erwartung,
+      // positions-spezifische Tor-Bilanz, gewichtet nach Erfahrung.
+      //   • Stürmer: viele Ø Tore = besser  → goalsAvg / 10 als Bonus
+      //   • Abwehr: wenige Ø Gegentore = besser → (10-concededAvg) / 10 als Bonus
+      // Baseline-Annahme: 5 Tore/Sp. ist neutral, 10 ist exzellent, 0 ist katastrophal.
+      // expWeight wächst asymptotisch — bei 25+ Spielen praktisch voll vertrauenswürdig.
+      // ────────────────────────────────────────────────────────────────
       const expWeight=1-Math.exp(-g/5);
-      const perfBonus=(pAvg||0)*0.3;
-      const score=(wr+perfBonus)*expWeight;
-      return {p,g,w,wr,pAvg:pAvg||0,score};
+      const perfBonus=(pAvg||0)*0.25;
+      const roleBonus = pos==='atk'
+        ? Math.max(0, Math.min(1, goalsAvg/10)) * 0.2
+        : Math.max(0, Math.min(1, (10-goalsAvg)/10)) * 0.2;
+      const score=(wr+perfBonus+roleBonus)*expWeight;
+      return {p,g,w,wr,pAvg:pAvg||0,goalsAvg,score};
     }).filter(x=>x.g>0)
-      // Sortierung: Position-Score (kombiniert WR, Performance, Erfahrung)
+      // Sortierung: Positions-Score (kombiniert WR, Performance, Tor-Bilanz, Erfahrung)
       .sort((a,b)=> b.score-a.score || b.pAvg-a.pAvg || b.wr-a.wr);
   }
 
   const atk=posList('atk'), def=posList('def');
   const block=(arr,pos)=>{
     if(!arr.length)return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
+    const valLbl = pos==='atk' ? 'Tore/Sp.' : 'Geg./Sp.';
     return `<div class="rlist">${arr.map((x,i)=>{
       const medal=medalB(i);
-      // Performance-Indikator: über/unter Erwartung
       const perfChip = x.pAvg>0.08?'<span class="perf-up">▲</span>':x.pAvg<-0.08?'<span class="perf-dn">▼</span>':'';
+      const goalsTxt = x.goalsAvg.toFixed(1);
       return `<div class="rrow ${i<3?'top'+(i+1):''}" data-detail="${x.p.id}">
         ${medal?`<span class="medal">${medal}</span><span class="pos" style="opacity:0"></span>`:`<span class="pos num">${i+1}</span>`}
         ${avHtml(x.p)}
-        <div class="rmid"><div class="rname">${esc(x.p.name)} ${perfChip}</div>
-          <div class="rmeta"><span>${x.w}–${x.g-x.w}</span>
-          <span class="wbar"><i style="width:${Math.round(x.wr*100)}%"></i></span></div></div>
-        <div class="rval"><div class="big num">${x.w}</div><div class="small">${Math.round(x.wr*100)}% WR</div></div>
+        <div class="rmid">
+          <div class="rname">${esc(x.p.name)} ${perfChip}</div>
+          <div class="rmeta">
+            <span>${x.w}–${x.g-x.w}</span>
+            <span class="wbar"><i style="width:${Math.round(x.wr*100)}%"></i></span>
+            <span>${Math.round(x.wr*100)}%</span>
+          </div>
+        </div>
+        <div class="rval"><div class="big num">${goalsTxt}</div><div class="small">${valLbl}</div></div>
       </div>`;}).join('')}</div>`;
   };
   const which = rankMetric==='def'?'def':'atk';
+  const subLbl = which==='atk' ? 'Performance · Erfahrung · Ø Tore' : 'Performance · Erfahrung · Ø Gegentore';
   return `
-    <div class="view-head"><h2>Positionen</h2><p>Beste Spieler je Position · Performance + Erfahrung</p></div>
+    <div class="view-head"><h2>Positionen</h2><p>Beste Spieler je Position · ${subLbl}</p></div>
     <div class="seg accent">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('bolt')}Sturm</span></button>
       <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('shield')}Abwehr</span></button>
@@ -6729,34 +6800,53 @@ function vAwards(){
     if(!ids) return;
     ids.forEach(id => { if(id) _coll[id] = (_coll[id] || 0) + 1; });
   };
+  // ────────────────────────────────────────────────────────────────
+  // Tie-aware Top-1-Sammler. Bei geteilten Platz-1-Auszeichnungen
+  // werden ALLE Spieler/Teams mit demselben Top-Wert gezählt.
+  // valFn muss zur Sort-Logik der jeweiligen Award-Card passen (die
+  // Listen sind bereits desc nach valFn sortiert; list[0] = Top-Wert).
+  // ────────────────────────────────────────────────────────────────
+  const _topSingleIds = (list, valFn) => {
+    if(!list || !list.length) return [];
+    const topVal = valFn(list[0]);
+    return list.filter(x => valFn(x) === topVal).map(x => x.id);
+  };
+  const _topTeamIds = (list, valFn) => {
+    if(!list || !list.length) return [];
+    const topVal = valFn(list[0]);
+    const out = [];
+    list.filter(x => valFn(x) === topVal).forEach(x => x.ids.forEach(id => out.push(id)));
+    return out;
+  };
   // Highlights
-  if(wn0) _addColl([wn0.id]);
-  if(of0 && of0.v >= 2) _addColl([of0.id]);
-  if(pf0) _addColl([pf0.id]);
-  if(st0) _addColl([st0.id]);
-  if(sm0) _addColl([sm0.id]);
-  if(awPeriod === 'all' && pk0) _addColl([pk0.id]);
+  if(wn0) _addColl(_topSingleIds(R.winsList, x => x.v));
+  if(of0 && of0.v >= 2) _addColl(_topSingleIds(R.onFire, x => x.v));
+  if(pf0) _addColl(_topSingleIds(R.perfect, x => Math.round(x.wr*100)));
+  if(st0) _addColl(_topSingleIds(R.streaks, x => x.v));
+  if(sm0) _addColl(_topSingleIds(R.showmasterList, x => x.v));
+  if(awPeriod === 'all' && pk0) _addColl(_topSingleIds(R.peakEloList, x => x.v));
   if(awPeriod !== 'week'){
-    if(wk0) _addColl([wk0.id]);
-    if(dk0) _addColl([dk0.id]);
+    if(wk0) _addColl(_topSingleIds(R.weekKingList, x => x.v));
+    if(dk0) _addColl(_topSingleIds(R.dayKingList, x => x.v));
   }
   // Teams
-  if(mvt0) _addColl(mvt0.ids);
-  if(bd0 && bd0.g >= 2) _addColl(bd0.ids);
+  if(mvt0) _addColl(_topTeamIds(R.mvt, x => Math.round(x.v)));
+  if(bd0 && bd0.g >= 2) _addColl(_topTeamIds(R.bestDuo, x => x.g));
   // Angriff & Verteidigung
-  if(sc0) _addColl([sc0.id]);
-  if(wl0) _addColl([wl0.id]);
-  if(ic0 && ic0.v >= 1) _addColl([ic0.id]);
-  if(pm0) _addColl([pm0.id]);
+  if(sc0) _addColl(_topSingleIds(R.scorer, x => Math.round(x.avg*10)));
+  if(wl0) _addColl(_topSingleIds(R.wall, x => Math.round(x.v/x.g*10)));
+  if(ic0 && ic0.v >= 1) _addColl(_topSingleIds(R.iceList, x => x.v));
+  if(pm0) _addColl(_topSingleIds(R.plusMinusList, x => Math.round(x.v*10)));
   // Spezial
-  if(eg0) _addColl(eg0.ids);
-  if(cl0) _addColl([cl0.id]);
-  if(ck0 && ck0.v >= 1) _addColl([ck0.id]);
-  if(sl0) _addColl([sl0.id]);
+  if(eg0) _addColl(_topTeamIds(R.endgegner, x => x.g));
+  if(cl0) _addColl(_topSingleIds(R.clutchList, x => Math.round(x.wr*100)));
+  if(ck0 && ck0.v >= 1) _addColl(_topSingleIds(R.carryList, x => x.v));
+  if(sl0) _addColl(_topSingleIds(R.soloList, x => Math.round(x.wr*100)));
+  // upset / biggest sind Einzel-Match-Awards (kein Top-1-Konzept wie bei Listen)
   if(u0) _addColl(u0.m.winner === 'A' ? [u0.m.a1, u0.m.a2] : [u0.m.b1, u0.m.b2]);
   if(b0) _addColl(b0.m.winner === 'A' ? [b0.m.a1, b0.m.a2] : [b0.m.b1, b0.m.b2]);
-  if(gr0) _addColl([gr0.id]);
-  if(uh0) _addColl([uh0.id]);
+  if(gr0) _addColl(_topSingleIds(R.grinder, x => x.v));
+  if(uh0) _addColl(_topSingleIds(R.underdogList, x => x.v));
   // Schandtafel-Awards (inkl. Pechvogel) fließen bewusst NICHT in den Sammler.
 
   const _collTop = Object.entries(_coll)
@@ -7985,7 +8075,7 @@ const BADGES=[
   // Zeile 16 — Pflichtaufgabe, Award-Sammler
   {id:'pflichtaufgabe',ic:'clipboard',name:'Pflichtaufgabe',desc:'Sieg gegen mindestens einen Gegner aus den Bottom 3 der Saison-Endrangliste (ab 6 Saison-Teilnehmern)',
     multi:true,count:(id,ms)=>countBottomThreeWins(id,ms)}, */
-  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison min. 5 Player-of-the-Day und 2 Player-of-the-Week',
+  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Player-of-the-Day und 2 Player-of-the-Week Auszeichnungen gesammelt',
     multi:true,count:(id,ms)=>countAwardCollector(id)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
   {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
@@ -8750,6 +8840,12 @@ function badgesEarnedInMatch(matchId){
 
 // Ermittelt alle Awards, die ein Spieler aktuell hält (Platz 1–3)
 function playerAwards(id){
+  // Cache pro Spieler — wird beim Profil-Öffnen UND von showPlayerAwards aufgerufen.
+  // Key bindet an matches.length + cache.version → invalidiert automatisch bei
+  // neuem Match oder Sim-Reset.
+  const _pawKey = 'paw_'+id+'_'+matches.length+'_'+_cache.version;
+  if(!_cache._playerAwards) _cache._playerAwards = {};
+  if(_cache._playerAwards[_pawKey]) return _cache._playerAwards[_pawKey];
   const R=awardRankings('all');
   const found=[];
 
@@ -8800,11 +8896,31 @@ function playerAwards(id){
     pechvogel:x=>Math.round(x.pct*1000)  // höchstes Pct an knappen Niederlagen = Top-1
   };
 
+  // Display-Werte für die Trophäen-Anzeige im Spieler-Awards-Sheet.
+  // Format ist konsistent mit den Card-Aufrufen in vAwards (Awards-Tab).
+  const singleDisplayFns={
+    wins:x=>x.v, streaks:x=>x.v+'er', scorer:x=>x.avg.toFixed(1),
+    wall:x=>(x.v/x.g).toFixed(1), perfect:x=>Math.round(x.wr*100)+'%', grinder:x=>x.v,
+    worstWr:x=>Math.round(x.wr*100)+'%',
+    worstAtk:x=>(x.v/x.g).toFixed(1), worstDef:x=>(x.v/x.g).toFixed(1),
+    clutch:x=>Math.round(x.wr*100)+'%',
+    carryKing:x=>x.v, onFire:x=>x.v+'er', coldStreak:x=>x.v+'er',
+    lossStreaks:x=>x.v+'er', solo:x=>Math.round(x.wr*100)+'%',
+    formtief:x=>'-'+Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
+    peakElo:x=>x.v, weekKing:x=>x.v, dayKing:x=>x.v,
+    plusMinus:x=>(x.v>=0?'+':'')+x.v.toFixed(1), underdog:x=>x.v,
+    pechvogel:x=>Math.round(x.pct*100)+'%'
+  };
+
   Object.entries(singleKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;
     const valFn=singleValFns[key]||(x=>x.v);
     const rank=getRank(arr,valFn,x=>x.id===id);
-    if(rank>=0 && rank<=2) found.push({key,rank});
+    if(rank>=0 && rank<=2){
+      const entry=arr.find(x=>x.id===id);
+      const dispFn=singleDisplayFns[key]||(x=>x.v);
+      found.push({key,rank,val:entry?String(dispFn(entry)):''});
+    }
   });
 
   // Team-Awards
@@ -8819,6 +8935,12 @@ function playerAwards(id){
     endgegner:x=>x.g,
     zirkus:x=>x.v, baustelle:x=>x.best
   };
+  const teamDisplayFns={
+    mvt:x=>(x.v>=0?'+':'')+Math.round(x.v), bestDuo:x=>x.g+' Sp.',
+    worstTeam:x=>Math.round(x.w/x.g*100)+'%',
+    endgegner:x=>x.g+'×',
+    zirkus:x=>x.v+'×', baustelle:x=>x.best+'er'
+  };
   Object.entries(teamKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;
     const valFn=teamValFns[key]||(x=>x.v);
@@ -8826,20 +8948,27 @@ function playerAwards(id){
     if(rank>=0 && rank<=2){
       const entry=arr.find(x=>x.ids&&x.ids.includes(id));
       const partner=entry?entry.ids.find(x=>x!==id):null;
-      found.push({key,rank,partner});
+      const dispFn=teamDisplayFns[key]||(x=>x.v);
+      found.push({key,rank,partner,val:entry?String(dispFn(entry)):''});
     }
   });
 
   // Match-Awards
   const matchKeys={upset:R.upsets, biggest:R.biggest};
   const matchValFns={upset:x=>Math.round(x.sp*100), biggest:x=>x.diff};
+  const matchDisplayFns={upset:x=>Math.round(x.sp*100)+'%', biggest:x=>x.diff+' Tore'};
   Object.entries(matchKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;
     const valFn=matchValFns[key];
     const rank=getRank(arr,valFn,x=>[x.m.a1,x.m.a2,x.m.b1,x.m.b2].includes(id));
-    if(rank>=0 && rank<=2) found.push({key,rank});
+    if(rank>=0 && rank<=2){
+      const entry=arr.find(x=>[x.m.a1,x.m.a2,x.m.b1,x.m.b2].includes(id));
+      const dispFn=matchDisplayFns[key];
+      found.push({key,rank,val:entry?String(dispFn(entry)):''});
+    }
   });
 
+  _cache._playerAwards[_pawKey] = found;
   return found;
 }
 
@@ -9110,44 +9239,52 @@ function showPlayer(id){
       }).join('')}
     </div>` : '';
 
-  // Karriere-Rang als Journey-Bar: Einsteiger (links) → Legende (rechts) progressiver Strahl.
-  // Je besser der Rang, desto länger der Strahl. Die Tier-Farbe wird auf das Parent-Element
-  // gesetzt, damit der Strahl die richtige Farbe (z.B. Gold bei Legende) erbt.
-  // RANKS ist intern sortiert: Legende(0)…Einsteiger(4). Wir kehren für die Anzeige um.
+  // Karriere-Rang als Hero-Card: prominenter Tier-Name + Ø Saison-Elo + Journey-Bar.
+  // Die Tier-Farbvariablen (--pp-tier-1/2/glow) werden vom Parent-Element (pp-sec.{tier})
+  // vererbt — daher färben sich Icon, Label, Glow, Strahl automatisch nach Tier.
   const _activeIdxRaw = rInfo ? RANKS.findIndex(rank => rank.label === rInfo.label) : -1;
-  // Display-Index: 0 = Einsteiger (links), 4 = Legende (rechts)
   const _activeIdx = _activeIdxRaw >= 0 ? (RANKS.length - 1 - _activeIdxRaw) : -1;
   const _ranksReversed = RANKS.slice().reverse();
   const _journeyTier = rInfo
     ? ('pp-tier-'+rInfo.label.toLowerCase().replace('ä','a').replace('ö','o').replace('ü','u'))
     : '';
-  // Strahl-Breite: bei Legende (display-idx 4) volle 100 %, bei Einsteiger (display-idx 0) 0 %.
   const _fillPct = _activeIdx >= 0 ? _activeIdx * 25 : 0;
-const rankProgHtml = `
-  <div class="pp-ranks-journey ${_journeyTier}" id="ppRanksBtn" style="cursor:pointer">
-    <div class="pp-rj-track"></div>
-    <div class="pp-rj-fill-track"><div class="pp-rj-fill" style="width:${_fillPct}%"></div></div>
-    <div class="pp-rj-tiers">
-      ${_ranksReversed.map((r, i) => {
-        // i < activeIdx = unterhalb des Spielers (bereits durchlaufene Tiers, vom Strahl beleuchtet)
-        // i === activeIdx = aktueller Tier
-        // i > activeIdx = noch nicht erreicht
-        const state = _activeIdx < 0 ? '' : (i < _activeIdx ? 'done' : (i === _activeIdx ? 'active' : ''));
-        return `<div class="pp-rj-tier ${state}">
-          <div class="pp-rj-dot"></div>
-          <div class="pp-rj-lbl">${esc(r.label)}</div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>
+  const _tierIcon = rInfo && rInfo.icon ? ICONS[rInfo.icon] : ICONS.chartBar;
 
-    ${rInfo?`
-      <div class="pp-percentile ${tierClass}">
-        <div class="pp-percentile-foot">
-          <span>Ø Saison-Elo <strong>${rInfo.avg}</strong></span>
-          <span class="top">${percentileTxt}</span>
+const rankProgHtml = rInfo ? `
+  <div class="pp-rank-card ${_journeyTier}" id="ppRanksBtn" style="cursor:pointer">
+    <div class="pp-rank-hero">
+      <div class="pp-rank-tier-block">
+        <div class="pp-rank-icon">
+          <svg viewBox="0 0 24 24">${_tierIcon||''}</svg>
         </div>
-      </div>`:''}`;
+        <div class="pp-rank-tier-text">
+          <div class="pp-rank-label">${esc(rInfo.label)}</div>
+          <div class="pp-rank-sub">${percentileTxt||'—'}</div>
+        </div>
+      </div>
+      <div class="pp-rank-elo-block">
+        <div class="pp-rank-elo">${rInfo.avg}</div>
+        <div class="pp-rank-elo-lbl">Ø Saison-Elo</div>
+      </div>
+    </div>
+    <div class="pp-ranks-journey">
+      <div class="pp-rj-track"></div>
+      <div class="pp-rj-fill-track"><div class="pp-rj-fill" style="width:${_fillPct}%"></div></div>
+      <div class="pp-rj-tiers">
+        ${_ranksReversed.map((r, i) => {
+          const state = _activeIdx < 0 ? '' : (i < _activeIdx ? 'done' : (i === _activeIdx ? 'active' : ''));
+          return `<div class="pp-rj-tier ${state}">
+            <div class="pp-rj-dot"></div>
+            <div class="pp-rj-lbl">${esc(r.label)}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>` : `
+  <div class="pp-rank-card" id="ppRanksBtn" style="cursor:pointer">
+    <div class="pp-rank-empty">Noch keine Saison-Daten</div>
+  </div>`;
 
   openSheet(`
     <header class="pp-header ${tierClass}">
@@ -9208,7 +9345,11 @@ const rankProgHtml = `
 
     <div class="pp-sec" style="animation-delay:.3s">
       ${(()=>{
-        // Rollen-Performance: vertikale Liste mit Progress-Bars (cleaner als Side-by-Side)
+        // Rollen-Performance: zwei Donut-Diagramme (orange = Sturm, blau = Abwehr).
+        // Ring zeigt die Win-Rate visuell, Zahl in der Mitte konkret. Subtext zeigt
+        // Tor/Gegentor-Schnitt — passt zu den Awards Torjäger / Eiserne Abwehr
+        // und zum Positionen-Tab. Werte kommen aus playerStats: s.atkGoals und
+        // s.defConceded (positions-spezifisch akkumuliert).
         const tot = s.atkG + s.defG;
         if(tot === 0){
           return `<div class="pp-pos-combined">
@@ -9216,29 +9357,32 @@ const rankProgHtml = `
             <div class="pp-roles-empty">Keine Spiele</div>
           </div>`;
         }
-        const atkRow = s.atkG>0 ? `
-          <div class="pp-role atk">
-            <div class="pp-role-head">
-              <span class="ic">${svgI('bolt')}</span>
-              <span class="lbl">Sturm</span>
-              <span class="games">${s.atkW}/${s.atkG}</span>
-              <span class="wr">${atkWr!==null?atkWr:'–'}<small>%</small></span>
-            </div>
-            <div class="pp-role-bar"><div class="pp-role-fill" style="width:${atkWr!==null?atkWr:0}%"></div></div>
-          </div>` : '';
-        const defRow = s.defG>0 ? `
-          <div class="pp-role def">
-            <div class="pp-role-head">
-              <span class="ic">${svgI('shield')}</span>
-              <span class="lbl">Abwehr</span>
-              <span class="games">${s.defW}/${s.defG}</span>
-              <span class="wr">${defWr!==null?defWr:'–'}<small>%</small></span>
-            </div>
-            <div class="pp-role-bar"><div class="pp-role-fill" style="width:${defWr!==null?defWr:0}%"></div></div>
-          </div>` : '';
+        const donut = (cls, lbl, icon, wr, w, g, valLbl, valNum, color) => {
+          if(g === 0) return `
+            <div class="pp-rd ${cls}">
+              <div class="pp-rd-ring" style="background:var(--surface3)">
+                <div class="pp-rd-inner"><div class="pp-rd-wr" style="color:var(--muted)">–</div></div>
+              </div>
+              <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
+              <div class="pp-rd-empty">noch keine Spiele</div>
+            </div>`;
+          return `
+            <div class="pp-rd ${cls}">
+              <div class="pp-rd-ring" style="background:conic-gradient(${color} ${wr}%, var(--surface3) 0)">
+                <div class="pp-rd-inner"><div class="pp-rd-wr">${wr}<small>%</small></div></div>
+              </div>
+              <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
+              <div class="pp-rd-meta"><b>${w}</b>/<b>${g}</b> Spiele<br>Ø <b>${valNum}</b> ${valLbl}</div>
+            </div>`;
+        };
+        const atkAvg = s.atkG ? (s.atkGoals/s.atkG).toFixed(1) : '–';
+        const defAvg = s.defG ? (s.defConceded/s.defG).toFixed(1) : '–';
         return `<div class="pp-pos-combined">
           <div class="head"><div class="t">Rollen-Performance</div></div>
-          <div class="pp-roles">${atkRow}${defRow}</div>
+          <div class="pp-roles-donuts">
+            ${donut('atk','Sturm','bolt',atkWr,s.atkW,s.atkG,'Tore/Sp.',atkAvg,'var(--orange)')}
+            ${donut('def','Abwehr','shield',defWr,s.defW,s.defG,'Gegentore/Sp.',defAvg,'var(--blue)')}
+          </div>
         </div>`;
       })()}
     </div>
@@ -9444,7 +9588,6 @@ const rankProgHtml = `
     <div class="pp-sec ${tierClass}" style="animation-delay:.75s">
       <div class="pp-sec-title">
         <div class="l">${svgI('chartBar')}<h4>Karriere-Rang</h4></div>
-        <div class="m">Ø Saison-Elo</div>
       </div>
       ${rankProgHtml}
     </div>
@@ -9714,7 +9857,7 @@ function showRangSystem(){
 }
 function showPlayerAwards(playerId, awards){
   const p=pmap()[playerId]; if(!p)return;
-  // gleiche Map wie in vAwards
+  // Mapping wie in vAwards/AW_IC für konsistente Icons
   const AW_IC = {
     wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
     showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
@@ -9723,25 +9866,45 @@ function showPlayerAwards(playerId, awards){
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
     zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
-    weekKing:'weekKing',   dayKing:'dayKing'
+    weekKing:'weekKing',   dayKing:'dayKing',
+    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud'
   };
-  const pl='Gesamte Liga';
-  const rows=awards.length?awards.map(a=>{
-    const m=AWARD_META[a.key]; if(!m)return '';
-    return `<div class="award ${m.cls}" data-paward2="${a.key}" style="padding:12px;cursor:pointer">
-      <div class="emoji svg-ic" style="width:38px;height:38px;border-radius:11px">${svgI(AW_IC[a.key]||'trophy')}</div>
-      <div class="ai"><div class="an">${m.title}</div>
-        ${a.partner?`<div class="ad">mit ${esc(pname(a.partner))}</div>`:''}</div>
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
+  const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
+
+  // Award-Trophäe für das Sheet: gleiche Optik wie im Awards-Tab.
+  // Plakette zeigt den Award-Wert + Partner (bei Team-Awards) — der Spielername
+  // steht oben im Sheet-Header und wäre in jeder einzelnen Plakette redundant.
+  const trophy = (a) => {
+    const m = AWARD_META[a.key]; if(!m) return '';
+    const valDisplay = a.val ? esc(a.val) : '#1';
+    const plaqueContent = a.partner
+      ? `<span class="aw-trophy-plaque-av" style="background:${avColor(a.partner)}">${esc(initials((pmap()[a.partner]||{}).name||'?'))}</span><span class="aw-trophy-plaque-name">mit ${esc(pname(a.partner))}</span>`
+      : `<span class="aw-trophy-plaque-name" style="color:var(--muted);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase">Top-1</span>`;
+    return `<div class="aw-trophy ${m.cls}" data-paward2="${esc(a.key)}">
+      <div class="aw-trophy-cup">${ic(a.key)}<div class="aw-trophy-cup-base"></div></div>
+      <div class="aw-trophy-lbl">${esc(m.title)}</div>
+      <div class="aw-trophy-val">${valDisplay}</div>
+      <div class="aw-trophy-plaque">${plaqueContent}</div>
     </div>`;
-  }).join(''):`<div class="empty"><div class="ee svg-ic" style="color:var(--faint)">${svgI('trophy')}</div>Keine Awards im Zeitraum „${pl}"</div>`;
+  };
+
+  const body = awards.length
+    ? `<div class="aw-vitrine" style="margin-top:16px">${awards.map(trophy).join('')}</div>`
+    : `<div class="empty" style="margin-top:24px;text-align:center;color:var(--muted)">
+        <div class="ee svg-ic" style="color:var(--faint);margin-bottom:6px">${svgI('trophy')}</div>
+        Noch keine Top-1-Auszeichnungen
+       </div>`;
+
   openSheet(`
     <div style="display:flex;align-items:center;gap:14px">
       ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div><h3>Awards</h3><div class="sheet-sub">${esc(p.name)} · ${pl}</div></div>
+      <div>
+        <h3>Awards</h3>
+        <div class="sheet-sub">${esc(p.name)} · ${awards.length} Top-1-Auszeichnung${awards.length===1?'':'en'}</div>
+      </div>
     </div>
-    <div class="award-grid" style="margin-top:16px">${rows}</div>
-    <button class="btn ghost sm" id="backToPlayer" style="margin-top:14px">← Zurück zum Profil</button>
+    ${body}
+    <button class="btn ghost sm" id="backToPlayer" style="margin-top:14px;width:100%">← Zurück zum Profil</button>
   `);
   document.querySelectorAll('[data-paward2]').forEach(el=>el.onclick=()=>{
     closeSheet();setTimeout(()=>showAward(el.dataset.paward2),350);
