@@ -9393,7 +9393,7 @@ const rankProgHtml = rInfo ? `
         <div class="m">${s.games} Spiele</div>
       </div>
       <div class="pp-kpi">
-        <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Spiele</div></div>
+        <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
         <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegrate</div></div>
         <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Tordiff</div></div>
       </div>
@@ -9546,10 +9546,6 @@ const rankProgHtml = rInfo ? `
         : '';
       return `
     <div class="pp-sec" style="animation-delay:.5s">
-      <div class="pp-sec-title">
-        <div class="l"><span class="ic svg-ic">${svgI('swords')}</span><h4>Bilanzen</h4></div>
-        <div class="m">${h2hList.length} Mitspieler</div>
-      </div>
       <div class="pp-badges-card" id="ppH2HBtn">
         <div class="pp-badges-strip" style="align-items:center">
           ${stripItems}${overflow}
