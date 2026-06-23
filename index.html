@@ -1501,6 +1501,14 @@
   .pp-st .dots i{width:5px;height:5px;border-radius:50%;background:var(--acid);
     box-shadow:0 0 6px rgba(190,242,100,.5)}
   .pp-st .dots.loss i{background:var(--red);box-shadow:0 0 6px rgba(240,86,106,.4)}
+  /* Mixed: zeigt sowohl Win (grün) als auch Loss (rot, .l) Dots in derselben Reihe.
+     Genutzt für „letzte 10 Spiele" unter Aktuelle Serie. */
+  .pp-st .dots.mixed i{background:var(--faint);box-shadow:none}
+  .pp-st .dots.mixed i:not(.l){background:var(--acid);box-shadow:0 0 6px rgba(190,242,100,.5)}
+  .pp-st .dots.mixed i.l{background:var(--red);box-shadow:0 0 6px rgba(240,86,106,.35)}
+  /* Sub-Label unter Längste Serie: dezenter Hinweis wann erreicht. */
+  .pp-st-sub{margin-top:6px;font-family:'Sometype Mono',monospace;font-size:9px;
+    color:var(--muted);letter-spacing:.08em;text-transform:uppercase;line-height:1}
 
   /* Beziehungen — 2×2 Grid (Wrapper für die bestehenden .pp-r-rich Karten) */
   .pp-rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -2244,7 +2252,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.23.01';
+const BUILD_VERSION='2026.06.23.02';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2409,6 +2417,11 @@ const ICONS = {
   devilMask:     `<path d="M5 8l2-4 3 2M19 8l-2-4-3 2"/><path d="M4 11a8 8 0 0116 0v4a8 8 0 01-16 0z"/><circle cx="9" cy="13" r="1.3"/><circle cx="15" cy="13" r="1.3"/><path d="M9 18c1 .8 2 1 3 1s2-.2 3-1"/>`,
   // Erzfeinde: Zwei gekreuzte Schwerter — Team-Rivalität
   crossedSwords: `<path d="M3 3l9 9M3 8V3h5M14.5 14.5L21 21M16 21h5v-5"/><path d="M21 3l-9 9M21 8V3h-5M9.5 14.5L3 21M8 21H3v-5"/>`,
+  // ── NEUE BADGES v5 ──
+  // Pflichterfüller: Trophäe mit Häkchen unten — Sieg gegen Bottom-3 zum Match-Zeitpunkt
+  trophyCheck:   `<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM5 9a2 2 0 01-2-2V5h4M19 9a2 2 0 002-2V5h-4"/><polyline points="9,11 11,13 15,8"/>`,
+  // Serienbrecher: brennende Flamme von horizontaler Linie durchgestrichen — Streak gestoppt
+  flameBreak:    `<path d="M12 2s5 5 5 10a5 5 0 01-10 0c0-2 1-3 1-3s.5 2 2 2c-1-3 2-4 2-9z"/><line x1="3" y1="13" x2="21" y2="13" stroke-width="2.5" stroke-linecap="round"/>`,
   // ── NEUE BADGES v4 ──
   // Thronfäller: Krone mit "X" durchgestrichen — Sieg gegen den Top-1 Spieler der Saison
   kingFall:      `<path d="M5 9l3-3 4 2 4-2 3 3v9H5z"/><path d="M8 13l8 4M16 13l-8 4"/>`,
@@ -2635,6 +2648,7 @@ function getGlobalSim(){
       _cache._seasonRankings = null;
       _cache._matchesBySeason = null;
       _cache._rankSnapshots = null;
+      _cache._streakSnap = null;
       return sim;
     }
   }
@@ -2651,6 +2665,7 @@ function getGlobalSim(){
   _cache._seasonRankings = null;
   _cache._matchesBySeason = null;
   _cache._rankSnapshots = null;
+  _cache._streakSnap = null;
   return sim;
 }
 
@@ -2670,6 +2685,41 @@ function getHistoryByMatchId(){
   _cache._historyByMatchId = map;
   return map;
 }
+// ─── Streak-Snapshots (lazy, einmalig pro Sim) ───────────────────────
+// Für jedes Match: die aktuelle Win-Siegesserie aller 4 beteiligten Spieler
+// VOR diesem Match. Berechnet per O(n) Walk durch alle Matches chronologisch;
+// pro Match werden die Streaks der 4 Spieler vorher gesnapshottet, dann
+// aktualisiert (Sieg → +1, Niederlage → 0).
+// Ergebnis: { matchId: { pid: cur_streak_before_match (sparse, nur 4 pids) } }
+// Genutzt vom Badge "Serienbrecher" — beendet eine ≥4er Serie eines Gegners
+// durch direkten Sieg. Saison-Resets beeinflussen Streaks NICHT (analog zu
+// longestPlayerStreak), da Serien semantisch durchgehend laufen.
+function getStreakSnapshots(){
+  const key='streakSnap_'+matches.length+'_'+_cache.version;
+  if(_cache._streakSnapKey===key) return _cache._streakSnap;
+  const ordered=[...matches].sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const cur={}; // pid → laufende Siegesserie (live)
+  const out={}; // matchId → snapshot
+  for(let i=0;i<ordered.length;i++){
+    const m=ordered[i];
+    const ids=[m.a1,m.a2,m.b1,m.b2];
+    // Pre-Snapshot: nur die 4 beteiligten Spieler tracken
+    const snap={};
+    ids.forEach(pid=>{ snap[pid]=cur[pid]||0; });
+    out[m.id]=snap;
+    // Apply: update cur für die 4 Spieler
+    ids.forEach(pid=>{
+      const onA=[m.a1,m.a2].includes(pid);
+      const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
+      if(w) cur[pid]=(cur[pid]||0)+1;
+      else cur[pid]=0;
+    });
+  }
+  _cache._streakSnapKey=key;
+  _cache._streakSnap=out;
+  return out;
+}
+
 function getSnapMap(){
   const sim=getGlobalSim();
   const key='snap_'+matches.length+'_'+_cache.version;
@@ -7193,7 +7243,7 @@ function vAwards(){
     ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+sc0.avg.toFixed(1)+' Tore/Sp.',sc0.avg.toFixed(1))
     : empty('scorer','orange','Torjäger'));
   combat.push(wl0
-    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wl0.v/wl0.g).toFixed(1)+' Gegentore/Sp.',wl0.v)
+    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wl0.v/wl0.g).toFixed(1)+' Gegentore/Sp.',(wl0.v/wl0.g).toFixed(1))
     : empty('wall','blue','Eiserne Abwehr'));
   combat.push(ic0&&ic0.v>=1
     ? card('ice','blue','Eiskalt',[ic0.id],esc(topNames(R.iceList,x=>x.v,x=>pname(x.id))),ic0.v+'× Zu-Null als Verteidiger',ic0.v)
@@ -7290,46 +7340,46 @@ function vAwards(){
 
 // Award-Detail mit Platz 1–3 und Erklärung
 const AWARD_META={
-  wins:{title:'Meiste Siege',cls:'gold',why:'Wer hat im Zeitraum die meisten Spiele gewonnen?'},
-  mvt:{title:'Bestes Team',cls:'gold',why:'Welches Duo hat im Zeitraum zusammen die meisten Elo-Punkte geholt?'},
-  streaks:{title:'Längste Siegesserie',cls:'acid',why:'Meiste Siege in Folge ohne Niederlage im Zeitraum.'},
-  onFire:{title:'On Fire',cls:'acid',why:'Längste aktuell noch laufende Siegesserie. Wer ist gerade am heißesten?'},
-  scorer:{title:'Torjäger',cls:'orange',why:'Höchster Tore-Durchschnitt pro Spiel als Stürmer (min. 2 Spiele). Team-Tore gehen an den Stürmer.'},
-  wall:{title:'Eiserne Abwehr',cls:'blue',why:'Wenigste Gegentore pro Spiel — nur in Spielen als Verteidiger (min. 2 Spiele).'},
-  ice:{title:'Eiskalt',cls:'blue',why:'Meiste Zu-Null-Siege (keine Gegentore) als Abwehrspieler.'},
-  endgegner:{title:'Endgegner',cls:'purple',why:'Duo, das am häufigsten als Gegner aufeinandertrifft — die größte Rivalität der Liga (min. 2 Begegnungen).'},
-  clutch:{title:'Clutch-Player',cls:'acid',why:'Höchste Siegrate in knappen Spielen (Tordifferenz ≤ 2). Wer behält in engen Matches die Nerven?'},
-  carryKing:{title:'Carry-King',cls:'acid',why:'Meiste Siege mit einem Mitspieler aus den unteren 3 der Elo-Rangliste. Wer kann auch schwächere Partner zum Sieg tragen?'},
-  bestDuo:{title:'Unzertrennlich',cls:'blue',why:'Duo mit den meisten gemeinsamen Spielen im Zeitraum.'},
-  upset:{title:'Größte Überraschung',cls:'orange',why:'Sieg gegen die niedrigste Siegerwartung. Das Team, das laut Elo hätte verlieren sollen, hat gewonnen.'},
-  biggest:{title:'Höchster Sieg',cls:'purple',why:'Match mit der größten Tordifferenz.'},
-  perfect:{title:'Beste Bilanz',cls:'gold',why:'Höchste Siegrate (Mindestanzahl Spiele vorausgesetzt).'},
-  grinder:{title:'Vielspieler',cls:'blue',why:'Wer hat im Zeitraum die meisten Matches gespielt?'},
-  worstWr:{title:'Schlechtester Spieler',cls:'red',why:'Niedrigste Siegquote im Zeitraum (min. 3 Spiele).'},
-  coldStreak:{title:'Eiskalt erwischt',cls:'red',why:'Längste aktuell noch laufende Niederlagenserie.'},
-  lossStreaks:{title:'Längste Niederlagenserie',cls:'red',why:'Meiste Niederlagen in Folge im Zeitraum — egal ob die Serie aktuell noch läuft oder schon gebrochen wurde.'},
-  worstAtk:{title:'Zahnloser Stürmer',cls:'red',why:'Wenigste erzielte Tore pro Spiel als Stürmer (min. 2 Sturm-Spiele).'},
-  worstDef:{title:'Löchrigste Abwehr',cls:'red',why:'Meiste kassierte Gegentore pro Spiel als Verteidiger (min. 2 Abwehr-Spiele).'},
-  worstTeam:{title:'Schlechtestes Team',cls:'red',why:'Duo mit der niedrigsten Siegrate im Zeitraum (min. 2 gemeinsame Spiele).'},
-  showmaster:{title:'Showmaster',cls:'gold',why:'Spieler mit den meisten 10:0-Siegen im Zeitraum.'},
-  solo:{title:'Einzelkämpfer',cls:'acid',why:'Höchste Siegrate mit einem Mitspieler aus den unteren 3 der Elo-Rangliste (min. 2 Spiele). Wer gewinnt auch alleine?'},
-  formtief:{title:'Formtief',cls:'red',why:'Größter Elo-Abstieg vom persönlichen Höchststand. Peak-Elo minus aktuelle Elo.'},
-  zirkus:{title:'Zirkus',cls:'red',why:'Team mit den meisten Niederlagen mit 5+ Toren Unterschied. Wird regelmäßig abgeschossen.'},
-  baustelle:{title:'Baustelle',cls:'red',why:'Team mit der längsten gemeinsamen Niederlagenserie. Zusammen funktioniert es einfach nicht.'},
-  peakElo:{title:'Peak Elo',cls:'gold',why:'Höchster jemals erreichter Elo-Stand. Saison-übergreifender Allzeit-Höchststand — auch wenn nach Saisonreset die Elo wieder bei 0 startet, bleibt der historische Peak erhalten.'},
-  weekKing:{title:'Wochenkönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Week-Auszeichnungen im Zeitraum. POTW bekommt, wer in einer Kalenderwoche die höchste Siegquote hat (min. 5 Siege). Die laufende Woche wird nicht gezählt — gleiche Logik wie das POTW-Badge.'},
-  dayKing:{title:'Tageskönig',cls:'gold',why:'Spieler mit den meisten Player-of-the-Day-Auszeichnungen im Zeitraum. POTD bekommt, wer an einem Tag die meisten Siege geholt hat (min. 3). Der laufende Tag wird nicht gezählt — gleiche Logik wie das POTD-Badge.'},
-  // ── NEUE AWARDS v3 ──
-  plusMinus:{title:'Plus-Minus',cls:'orange',why:'Höchster Tor-Saldo pro Spiel (Tore_für minus Tore_gegen, durchschnittlich). Kombiniert Angriff und Verteidigung — wer beeinflusst das Tor-Verhältnis seines Teams am meisten? Min. 10 Spiele für stabile Berechnung.'},
-  underdog:{title:'Underdog-Held',cls:'purple',why:'Meiste Siege als Außenseiter (Siegerwartung unter 35% laut Elo). Anders als die „Größte Überraschung" — Einzelmatch — ist das hier ein Saison-Counter: wer kippt das System am häufigsten?'},
-  pechvogel:{title:'Pechvogel',cls:'red',why:'Höchster Anteil knapper Niederlagen (Tordifferenz max. 2) an allen Spielen. Prozentual statt absolut — sonst gewinnen Vielspieler durch Volumen. Schwelle: min. 2 knappe Niederlagen und min. 5 Spiele für stabile Berechnung. Spiegelbild zum Clutch-Player.'},
-  // ── NEUE TEAM-AWARDS v4 ──
-  unstoppable:{title:'Unaufhaltsam',cls:'acid',why:'Team mit der längsten zusammenhängenden Siegesserie. Eine Niederlage beendet die Serie sofort. Saison-übergreifend gewertet.'},
-  concreteWall:{title:'Betonmauer',cls:'blue',why:'Defensiv stärkstes Team — niedrigster Gegentor-Schnitt pro Spiel. Min. 10 gemeinsame Spiele für eine stabile Bewertung.'},
-  luckyCharm:{title:'Glückspilze',cls:'acid',why:'Team mit den meisten knappen Siegen (genau ein Tor Vorsprung). Wer holt regelmäßig die engen Spiele über die Ziellinie?'},
-  giantSlayer:{title:'Giant Slayer',cls:'orange',why:'Team mit den meisten Siegen gegen einen vor dem Spiel stärkeren Gegner (gemessen am Team-Elo-Stand unmittelbar vor dem Match). Wer schlägt am häufigsten die Favoriten?'},
-  favoritenschreck:{title:'Favoritenschreck',cls:'red',why:'Größter Upset der Geschichte — höchster Team-Elo-Unterschied, der durch einen Sieg überwunden wurde. Pro Team zählt der jeweils stärkste Coup; im Ranking gewinnt der absolut höchste überwundene Abstand.'},
-  rivalry:{title:'Erzfeinde',cls:'purple',why:'Die intensivste Rivalität der Liga — das Team-Paar mit den meisten direkten Aufeinandertreffen (min. 2 Begegnungen).'}
+  wins:        {title:'Meiste Siege',          cls:'gold',  why:'Wer hat im Zeitraum die meisten Spiele gewonnen.'},
+  mvt:         {title:'Bestes Team',           cls:'gold',  why:'Das Duo, das im Zeitraum zusammen die meisten Elo-Punkte geholt hat.'},
+  streaks:     {title:'Längste Siegesserie',   cls:'acid',  why:'Meiste Siege in Folge im Zeitraum.'},
+  onFire:      {title:'On Fire',               cls:'acid',  why:'Längste aktuell noch laufende Siegesserie.'},
+  scorer:      {title:'Torjäger',              cls:'orange',why:'Höchster Tore-Schnitt pro Spiel als Stürmer. Min. 2 Sturm-Spiele.'},
+  wall:        {title:'Eiserne Abwehr',        cls:'blue',  why:'Niedrigster Gegentore-Schnitt pro Spiel als Verteidiger. Min. 2 Abwehr-Spiele.'},
+  ice:         {title:'Eiskalt',               cls:'blue',  why:'Meiste Zu-Null-Siege als Verteidiger.'},
+  endgegner:   {title:'Endgegner',             cls:'purple',why:'Das Spieler-Duo, das am häufigsten als Gegner aufeinandertrifft. Min. 2 Begegnungen.'},
+  clutch:      {title:'Clutch-Player',         cls:'acid',  why:'Höchste Siegrate in knappen Spielen (Tordifferenz ≤ 2). Min. 2 knappe Spiele.'},
+  carryKing:   {title:'Carry-King',            cls:'acid',  why:'Meiste Siege, bei denen der Mitspieler einer der drei schwächsten Spieler im Match war.'},
+  bestDuo:     {title:'Unzertrennlich',        cls:'blue',  why:'Duo mit den meisten gemeinsamen Spielen im Zeitraum.'},
+  upset:       {title:'Größte Überraschung',   cls:'orange',why:'Das Match mit der niedrigsten Sieg-Wahrscheinlichkeit für den späteren Sieger.'},
+  biggest:     {title:'Höchster Sieg',         cls:'purple',why:'Das Match mit der größten Tordifferenz.'},
+  perfect:     {title:'Beste Bilanz',          cls:'gold',  why:'Höchste Siegrate im Zeitraum, mit einer dynamischen Mindest-Spielzahl für Stabilität.'},
+  grinder:     {title:'Vielspieler',           cls:'blue',  why:'Wer hat im Zeitraum die meisten Matches gespielt.'},
+  worstWr:     {title:'Schlechtester Spieler', cls:'red',   why:'Niedrigste Siegrate im Zeitraum. Min. 3 Spiele.'},
+  coldStreak:  {title:'Eiskalt erwischt',      cls:'red',   why:'Längste aktuell noch laufende Niederlagenserie.'},
+  lossStreaks: {title:'Längste Niederlagenserie',cls:'red', why:'Meiste Niederlagen in Folge im Zeitraum.'},
+  worstAtk:    {title:'Zahnloser Stürmer',     cls:'red',   why:'Wenigste erzielte Tore pro Spiel als Stürmer. Min. 2 Sturm-Spiele.'},
+  worstDef:    {title:'Löchrigste Abwehr',     cls:'red',   why:'Meiste kassierte Tore pro Spiel als Verteidiger. Min. 2 Abwehr-Spiele.'},
+  worstTeam:   {title:'Schlechtestes Team',    cls:'red',   why:'Duo mit der niedrigsten Siegrate. Min. 2 gemeinsame Spiele.'},
+  showmaster:  {title:'Showmaster',            cls:'gold',  why:'Meiste 10:0-Siege im Zeitraum.'},
+  solo:        {title:'Einzelkämpfer',         cls:'acid',  why:'Höchste Siegrate in Spielen mit einem Bottom-3-Mitspieler. Min. 2 solche Spiele.'},
+  formtief:    {title:'Formtief',              cls:'red',   why:'Größter Abstand zwischen persönlichem Peak-Elo und aktueller Elo (innerhalb einer Saison).'},
+  zirkus:      {title:'Zirkus',                cls:'red',   why:'Team mit den meisten Niederlagen mit 5+ Toren Unterschied.'},
+  baustelle:   {title:'Baustelle',             cls:'red',   why:'Team mit der längsten gemeinsamen Niederlagenserie.'},
+  peakElo:     {title:'Peak Elo',              cls:'gold',  why:'Höchster jemals erreichter Saison-Elo-Stand, saison-übergreifend.'},
+  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:'Spieler mit den meisten Player-of-the-Week-Auszeichnungen. Die laufende Woche wird nicht gezählt.'},
+  dayKing:     {title:'Tageskönig',            cls:'gold',  why:'Spieler mit den meisten Player-of-the-Day-Auszeichnungen. Der laufende Tag wird nicht gezählt.'},
+  // ── AWARDS v3 ──
+  plusMinus:   {title:'Plus-Minus',            cls:'orange',why:'Höchster Tor-Saldo pro Spiel (Tore minus Gegentore). Min. 10 Spiele.'},
+  underdog:    {title:'Underdog-Held',         cls:'purple',why:'Meiste Siege mit weniger als 35 % Sieg-Wahrscheinlichkeit.'},
+  pechvogel:   {title:'Pechvogel',             cls:'red',   why:'Höchster Anteil knapper Niederlagen (Tordiff. ≤ 2) an allen Spielen. Min. 2 knappe Niederlagen und 5 Spiele.'},
+  // ── TEAM-AWARDS v4 ──
+  unstoppable: {title:'Unaufhaltsam',          cls:'acid',  why:'Team mit der längsten Siegesserie. Eine Niederlage beendet die Serie sofort.'},
+  concreteWall:{title:'Betonmauer',            cls:'blue',  why:'Team mit dem niedrigsten Gegentore-Schnitt pro Spiel. Min. 10 gemeinsame Spiele.'},
+  luckyCharm:  {title:'Glückspilze',           cls:'acid',  why:'Team mit den meisten Siegen mit nur einem Tor Vorsprung.'},
+  giantSlayer: {title:'Giant Slayer',          cls:'orange',why:'Team mit den meisten Siegen gegen einen vor dem Spiel stärkeren Gegner.'},
+  favoritenschreck:{title:'Favoritenschreck',  cls:'red',   why:'Größter Team-Elo-Unterschied, der durch einen Sieg überwunden wurde.'},
+  rivalry:     {title:'Erzfeinde',             cls:'purple',why:'Team-Paar mit den meisten direkten Aufeinandertreffen. Min. 2 Duelle.'}
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
@@ -8439,6 +8489,14 @@ const BADGES=[
   // Überholmanöver: Sieg gegen einen Spieler, der dadurch in der Saison-Rangliste überholt wurde
   {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Spieler im Match besiegt und ihn dadurch in der Saison-Rangliste überholt',
     multi:true,count:(id,ms)=>countOvertake(id,ms)},
+  // ── NEUE BADGES v5 ──
+  // Pflichterfüller: Sieg gegen mindestens einen Gegner aus den Bottom-3 der
+  // Saison-Rangliste (Stand vor dem Match). Erst ab 6 Spielern in der Saison sinnvoll.
+  {id:'duty_done',ic:'trophyCheck',name:'Pflichterfüller',desc:'Sieg gegen mind. einen Gegner aus den Bottom-3 der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
+    multi:true,count:(id,ms)=>countBottomThreeMatchWins(id,ms)},
+  // Serienbrecher: Direktsieg, der eine laufende Siegesserie (≥4) eines Gegners beendet hat.
+  {id:'streak_breaker',ic:'flameBreak',name:'Serienbrecher',desc:'Siegesserie eines Gegners (mind. 4 in Folge) durch direkten Sieg gestoppt',
+    multi:true,count:(id,ms)=>countStreakBreaker(id,ms)},
 ];
 
 // ════════════════════════════════════════════════════════════════════
@@ -8450,7 +8508,7 @@ const BADGES=[
 //   • COMMON    (12) — bei aktivem Spiel oft erreicht
 //   • NEGATIVE  (2)  — "Schande", eigenständig (rot, abgesetzt)
 // Jeder Bucket hat eine GERADE Anzahl, damit das 2-Spalten-Grid im Sheet
-// sauber aufgeht. Total = 34 Badges (= BADGES-Array-Länge).
+// sauber aufgeht. Total = 36 Badges (= BADGES-Array-Länge).
 // Reihenfolge innerhalb jeder Gruppe folgt der thematischen BADGES-Reihenfolge.
 // ════════════════════════════════════════════════════════════════════
 const BADGE_RARITY = {
@@ -8490,6 +8548,9 @@ const BADGE_RARITY = {
   // ── NEUE BADGES v4 ──
   kingslayer:      'common',    // Thronfäller — Sieg gegen Top-1
   overtake:        'common',    // Überholmanöver — Spieler in Rangliste überholt
+  // ── NEUE BADGES v5 ──
+  duty_done:       'common',    // Pflichterfüller — Sieg gegen Bottom-3 zum Match-Zeitpunkt
+  streak_breaker:  'common',    // Serienbrecher — Streak ≥4 eines Gegners gestoppt
   // NEGATIVE (2)
   losing5:         'negative',  // Losing Streak
   perfect_loss:    'negative',  // Absoluter Verlierer
@@ -8498,7 +8559,7 @@ const BADGE_RARITY = {
 const RARITY_META = {
   legendary: {label:'Legendary', color:'var(--gold)',   total:6},
   rare:      {label:'Rare',      color:'var(--purple)', total:14},
-  common:    {label:'Common',    color:'var(--acid)',   total:12},
+  common:    {label:'Common',    color:'var(--acid)',   total:14},
   negative:  {label:'Schande',   color:'var(--red)',    total:2},
 };
 const RARITY_ORDER = ['legendary','rare','common','negative'];
@@ -8846,6 +8907,23 @@ function longestPlayerStreak(id,ms){
   ordered.forEach(m=>{if(won(id,m)){cur++;if(cur>best)best=cur;}else cur=0;});
   return best;
 }
+// Erweiterte Variante: liefert auch das Datum des Match, das die längste
+// Siegesserie abgeschlossen hat (also den Peak-Match). Bei mehreren Serien
+// mit demselben Maximum wird die NEUESTE genommen — analog zum Verhalten
+// im Awards-Tab (jüngere Leistungen sind salient).
+function longestPlayerStreakInfo(id,ms){
+  const ordered=[...ms].filter(m=>matchOf(id,m)).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  let cur=0,best=0,peakMatch=null;
+  ordered.forEach(m=>{
+    if(won(id,m)){
+      cur++;
+      if(cur>=best){ best=cur; peakMatch=m; } // ≥ → neueste gleichlange Serie gewinnt
+    } else {
+      cur=0;
+    }
+  });
+  return {best, peakDate: peakMatch ? peakMatch.created_at : null};
+}
 // Zählt wie oft eine Siegesserie der Länge >= n erreicht wurde (separate Serien)
 function countStreakOccurrences(id,ms,n){
   const ordered=[...ms].filter(m=>matchOf(id,m)).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
@@ -8886,6 +8964,53 @@ function countUnbeatableDays(id,ms){
     if(!byDay[d])byDay[d]={games:0,losses:0}; byDay[d].games++; if(!won(id,m))byDay[d].losses++;});
   return Object.values(byDay).filter(d=>d.games>=3&&d.losses===0).length;
 }
+// ─── Pflichterfüller: Sieg gegen mind. 1 Gegner aus Bottom-3 der ─────
+// ─── Saison-Rangliste zum Zeitpunkt des Matches ──────────────────────
+// Unterschied zur bestehenden countBottomThreeWins-Funktion (Saison-END-
+// Rangliste): hier wird der live-Stand der Saison-Rangliste VOR dem Match
+// verwendet (getRankSnapshots → preRank). Bottom-3 = die letzten drei Plätze.
+// Erst sinnvoll ab 6 Spielern in der Rangliste — sonst überlappen Top und
+// Bottom (und der Award würde trivial fallen). Hidden-Spieler werden NICHT
+// ausgeschlossen, weil das Match stattfand und der Rangzeitpunkt real ist.
+function countBottomThreeMatchWins(id,ms){
+  const snaps = getRankSnapshots();
+  let count = 0;
+  for(let i=0; i<ms.length; i++){
+    const m = ms[i];
+    if(!matchOf(id,m) || !won(id,m)) continue;
+    const snap = snaps[m.id]; if(!snap || !snap.preRank) continue;
+    const ranks = snap.preRank;
+    const N = Object.keys(ranks).length;
+    if(N < 6) continue; // Bottom-3 ist erst ab 6 Spielern in der Rangliste sinnvoll
+    const onA = [m.a1,m.a2].includes(id);
+    const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
+    // Mind. ein Gegner mit Rang im Bottom-3 (rank >= N-2)
+    const hit = opps.some(oId => ranks[oId] && ranks[oId] >= N-2);
+    if(hit) count++;
+  }
+  return count;
+}
+
+// ─── Serienbrecher: Sieg, der eine laufende Siegesserie (≥4) eines ───
+// ─── Gegners gestoppt hat ────────────────────────────────────────────
+// Nutzt getStreakSnapshots, das pro Match den live-Streak-Stand aller
+// 4 Spieler liefert. Ein Sieg zählt pro Match nur EINMAL — auch wenn beide
+// Gegner gerade eine 4er+ Serie laufen hatten (kommt praktisch kaum vor,
+// vermeidet aber doppelte Belohnung).
+function countStreakBreaker(id,ms){
+  const snaps = getStreakSnapshots();
+  let count = 0;
+  for(let i=0; i<ms.length; i++){
+    const m = ms[i];
+    if(!matchOf(id,m) || !won(id,m)) continue;
+    const snap = snaps[m.id]; if(!snap) continue;
+    const onA = [m.a1,m.a2].includes(id);
+    const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
+    if(opps.some(oId => (snap[oId]||0) >= 4)) count++;
+  }
+  return count;
+}
+
 function getCachedBadges(id){
   const key='badges_'+id+'_'+matches.length+'_'+_cache.version;
   if(!_cache._badges) _cache._badges={};
@@ -9377,7 +9502,22 @@ function showPlayer(id){
   const autoAtk=atkStrength(id);
   const atkPct=Math.round(autoAtk*100);
   const defPct=100-atkPct;
-  const longestStr=longestPlayerStreak(id,matches);
+  const _streakInfo=longestPlayerStreakInfo(id,matches);
+  const longestStr=_streakInfo.best;
+  // Peak-Datum als kompakter "Monat Jahr"-String (dezent), z.B. "Mai 2026"
+  const longestPeakLabel = _streakInfo.peakDate
+    ? new Date(_streakInfo.peakDate).toLocaleDateString('de-DE',{month:'long',year:'numeric'})
+    : '';
+  // Letzte 10 Spiele (chronologisch alt→neu) für die "Aktuelle Serie"-Card.
+  // Ergänzt den bisherigen "letzte 5"-Form-Trail oben, der in der Header-Sektion bleibt.
+  const _last10 = matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
+    .slice(0,10).reverse();
+  const last10DotsHtml = _last10.map(m=>{
+    const onA=[m.a1,m.a2].includes(id);
+    const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
+    return `<i class="${w?'':'l'}"></i>`;
+  }).join('');
 
   // Form: letzte 5 Matches
   const formMs=matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
@@ -9804,13 +9944,12 @@ const rankProgHtml = rInfo ? `
         <div class="pp-st">
           <div class="l">Aktuelle Serie</div>
           <div class="v ${streak===0?'empty':''}">${streak>0?streak+' Siege':streak<0?(-streak)+' Niederlagen':'–'}</div>
-          ${streak>0?`<div class="dots">${'<i></i>'.repeat(Math.min(streak,16))}</div>`:''}
-          ${streak<0?`<div class="dots loss">${'<i></i>'.repeat(Math.min(-streak,16))}</div>`:''}
+          ${_last10.length?`<div class="dots mixed">${last10DotsHtml}</div>`:''}
         </div>
         <div class="pp-st">
           <div class="l">Längste Serie</div>
           <div class="v ${longestStr<2?'empty':''}">${longestStr>=2?longestStr+' Siege':'–'}</div>
-          ${longestStr>=2?`<div class="dots">${'<i></i>'.repeat(Math.min(longestStr,16))}</div>`:''}
+          ${longestStr>=2&&longestPeakLabel?`<div class="pp-st-sub">${esc(longestPeakLabel)}</div>`:''}
         </div>
       </div>
     </div>
