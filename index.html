@@ -9407,13 +9407,13 @@ const rankProgHtml = rInfo ? `
         <div class="pp-st">
           <div class="l">Aktuelle Serie</div>
           <div class="v ${streak===0?'empty':''}">${streak>0?streak+' Siege':streak<0?(-streak)+' Niederlagen':'–'}</div>
-          ${streak>0?`<div class="dots">${'<i></i>'.repeat(Math.min(streak,6))}</div>`:''}
-          ${streak<0?`<div class="dots loss">${'<i></i>'.repeat(Math.min(-streak,6))}</div>`:''}
+          ${streak>0?`<div class="dots">${'<i></i>'.repeat(Math.min(streak,16))}</div>`:''}
+          ${streak<0?`<div class="dots loss">${'<i></i>'.repeat(Math.min(-streak,16))}</div>`:''}
         </div>
         <div class="pp-st">
           <div class="l">Längste Serie</div>
           <div class="v ${longestStr<2?'empty':''}">${longestStr>=2?longestStr+' Siege':'–'}</div>
-          ${longestStr>=2?`<div class="dots">${'<i></i>'.repeat(Math.min(longestStr,6))}</div>`:''}
+          ${longestStr>=2?`<div class="dots">${'<i></i>'.repeat(Math.min(longestStr,16))}</div>`:''}
         </div>
       </div>
     </div>
