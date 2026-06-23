@@ -2252,7 +2252,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.23.02';
+const BUILD_VERSION='2026.06.23.03';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -8490,10 +8490,10 @@ const BADGES=[
   {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Spieler im Match besiegt und ihn dadurch in der Saison-Rangliste überholt',
     multi:true,count:(id,ms)=>countOvertake(id,ms)},
   // ── NEUE BADGES v5 ──
-  // Pflichterfüller: Sieg gegen mindestens einen Gegner aus den Bottom-3 der
-  // Saison-Rangliste (Stand vor dem Match). Erst ab 6 Spielern in der Saison sinnvoll.
-  {id:'duty_done',ic:'trophyCheck',name:'Pflichterfüller',desc:'Sieg gegen mind. einen Gegner aus den Bottom-3 der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
-    multi:true,count:(id,ms)=>countBottomThreeMatchWins(id,ms)},
+  // Pflichterfüller: Sieg gegen mindestens einen Gegner aus den Bottom-2 der
+  // Saison-Rangliste (Stand vor dem Match). Erst ab 5 Spielern in der Saison sinnvoll.
+  {id:'duty_done',ic:'trophyCheck',name:'Pflichterfüller',desc:'Sieg gegen mind. einen Gegner aus den Bottom-2 der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
+    multi:true,count:(id,ms)=>countBottomTwoMatchWins(id,ms)},
   // Serienbrecher: Direktsieg, der eine laufende Siegesserie (≥4) eines Gegners beendet hat.
   {id:'streak_breaker',ic:'flameBreak',name:'Serienbrecher',desc:'Siegesserie eines Gegners (mind. 4 in Folge) durch direkten Sieg gestoppt',
     multi:true,count:(id,ms)=>countStreakBreaker(id,ms)},
@@ -8964,15 +8964,15 @@ function countUnbeatableDays(id,ms){
     if(!byDay[d])byDay[d]={games:0,losses:0}; byDay[d].games++; if(!won(id,m))byDay[d].losses++;});
   return Object.values(byDay).filter(d=>d.games>=3&&d.losses===0).length;
 }
-// ─── Pflichterfüller: Sieg gegen mind. 1 Gegner aus Bottom-3 der ─────
+// ─── Pflichterfüller: Sieg gegen mind. 1 Gegner aus Bottom-2 der ─────
 // ─── Saison-Rangliste zum Zeitpunkt des Matches ──────────────────────
 // Unterschied zur bestehenden countBottomThreeWins-Funktion (Saison-END-
 // Rangliste): hier wird der live-Stand der Saison-Rangliste VOR dem Match
-// verwendet (getRankSnapshots → preRank). Bottom-3 = die letzten drei Plätze.
-// Erst sinnvoll ab 6 Spielern in der Rangliste — sonst überlappen Top und
+// verwendet (getRankSnapshots → preRank). Bottom-2 = die letzten zwei Plätze.
+// Erst sinnvoll ab 5 Spielern in der Rangliste — sonst überlappt Top und
 // Bottom (und der Award würde trivial fallen). Hidden-Spieler werden NICHT
 // ausgeschlossen, weil das Match stattfand und der Rangzeitpunkt real ist.
-function countBottomThreeMatchWins(id,ms){
+function countBottomTwoMatchWins(id,ms){
   const snaps = getRankSnapshots();
   let count = 0;
   for(let i=0; i<ms.length; i++){
@@ -8981,11 +8981,11 @@ function countBottomThreeMatchWins(id,ms){
     const snap = snaps[m.id]; if(!snap || !snap.preRank) continue;
     const ranks = snap.preRank;
     const N = Object.keys(ranks).length;
-    if(N < 6) continue; // Bottom-3 ist erst ab 6 Spielern in der Rangliste sinnvoll
+    if(N < 5) continue; // Bottom-2 ist erst ab 5 Spielern in der Rangliste sinnvoll
     const onA = [m.a1,m.a2].includes(id);
     const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
-    // Mind. ein Gegner mit Rang im Bottom-3 (rank >= N-2)
-    const hit = opps.some(oId => ranks[oId] && ranks[oId] >= N-2);
+    // Mind. ein Gegner mit Rang im Bottom-2 (rank >= N-1)
+    const hit = opps.some(oId => ranks[oId] && ranks[oId] >= N-1);
     if(hit) count++;
   }
   return count;
@@ -9508,12 +9508,12 @@ function showPlayer(id){
   const longestPeakLabel = _streakInfo.peakDate
     ? new Date(_streakInfo.peakDate).toLocaleDateString('de-DE',{month:'long',year:'numeric'})
     : '';
-  // Letzte 10 Spiele (chronologisch alt→neu) für die "Aktuelle Serie"-Card.
+  // Letzte 15 Spiele (chronologisch alt→neu) für die "Aktuelle Serie"-Card.
   // Ergänzt den bisherigen "letzte 5"-Form-Trail oben, der in der Header-Sektion bleibt.
-  const _last10 = matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
+  const _last15 = matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
     .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
-    .slice(0,10).reverse();
-  const last10DotsHtml = _last10.map(m=>{
+    .slice(0,15).reverse();
+  const last15DotsHtml = _last15.map(m=>{
     const onA=[m.a1,m.a2].includes(id);
     const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
     return `<i class="${w?'':'l'}"></i>`;
@@ -9944,7 +9944,7 @@ const rankProgHtml = rInfo ? `
         <div class="pp-st">
           <div class="l">Aktuelle Serie</div>
           <div class="v ${streak===0?'empty':''}">${streak>0?streak+' Siege':streak<0?(-streak)+' Niederlagen':'–'}</div>
-          ${_last10.length?`<div class="dots mixed">${last10DotsHtml}</div>`:''}
+          ${_last15.length?`<div class="dots mixed">${last15DotsHtml}</div>`:''}
         </div>
         <div class="pp-st">
           <div class="l">Längste Serie</div>
