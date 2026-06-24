@@ -2426,7 +2426,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.23.08';
+const BUILD_VERSION='2026.06.23.09';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2616,6 +2616,15 @@ const ICONS = {
   blackDay:      `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z" fill="currentColor" fill-opacity="0.25"/><path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><line x1="8" y1="18" x2="7" y2="21"/><line x1="12" y1="18" x2="11" y2="21"/><line x1="16" y1="18" x2="15" y2="21"/>`,
   // Krimi-Versager: Theatermaske mit Träne — Drama mit Pech-Note
   dramaTear:     `<path d="M12 3c4 0 7 3 7 7v3c0 4-3 7-7 7s-7-3-7-7v-3c0-4 3-7 7-7z"/><circle cx="9.5" cy="11" r="0.9"/><circle cx="14.5" cy="11" r="0.9"/><path d="M9 15.5c1 1 2 1.3 3 1.3s2-.3 3-1.3"/><path d="M15 12.5l0.6 2.5"/>`,
+  // ── NEUE LEGENDARY-BADGES v7 ──
+  // Untouchable: Schild mit innerem Stern — unangefochten an der Spitze
+  shieldStar:    `<path d="M12 2l8 4v6c0 5-4 8-8 10-4-2-8-5-8-10V6z"/><polygon points="12,7.5 13.5,11 17,11.3 14.3,13.6 15.1,17 12,15.1 8.9,17 9.7,13.6 7,11.3 10.5,11"/>`,
+  // Mr. Perfect: drei kleine Pokale nebeneinander — dreifach perfekt in einer Saison
+  tripleCup:     `<path d="M3 4h4v3a2 2 0 01-4 0zM10 4h4v3a2 2 0 01-4 0zM17 4h4v3a2 2 0 01-4 0z"/><line x1="5" y1="7" x2="5" y2="10"/><line x1="12" y1="7" x2="12" y2="10"/><line x1="19" y1="7" x2="19" y2="10"/><line x1="3" y1="10" x2="7" y2="10"/><line x1="10" y1="10" x2="14" y2="10"/><line x1="17" y1="10" x2="21" y2="10"/><line x1="4" y1="20" x2="20" y2="20"/><path d="M5 14l-1 6M19 14l1 6M12 14v6"/>`,
+  // Allwetter: Sonne + Wolke + Regen kombiniert — alle Wochentage abgedeckt
+  weatherMix:    `<circle cx="7" cy="7" r="2.5"/><line x1="7" y1="2.5" x2="7" y2="3.5"/><line x1="2.5" y1="7" x2="3.5" y2="7"/><line x1="4" y1="4" x2="4.5" y2="4.5"/><line x1="10" y1="4" x2="9.5" y2="4.5"/><path d="M14 14a3.5 3.5 0 010-7 4.5 4.5 0 014.5 3.5 2.5 2.5 0 010 5h-4.5z"/><line x1="10" y1="18" x2="9" y2="21"/><line x1="14" y1="18" x2="13" y2="21"/><line x1="18" y1="18" x2="17" y2="21"/>`,
+  // Tag der Götter: Sonne mit Stern im Zentrum + Strahlen — göttliche Dominanz
+  godRay:        `<circle cx="12" cy="13" r="3.5"/><polygon points="12,10.5 12.8,12.5 12,14.5 11.2,12.5" fill="currentColor" fill-opacity="0.6"/><line x1="12" y1="3" x2="12" y2="5.5"/><line x1="21" y1="13" x2="18.5" y2="13"/><line x1="3" y1="13" x2="5.5" y2="13"/><line x1="18.5" y1="6.5" x2="16.7" y2="8.3"/><line x1="5.5" y1="6.5" x2="7.3" y2="8.3"/><line x1="18.5" y1="19.5" x2="16.7" y2="17.7"/><line x1="5.5" y1="19.5" x2="7.3" y2="17.7"/>`,
   // ── NEUE BADGES v4 ──
   // Thronfäller: Krone mit "X" durchgestrichen — Sieg gegen den Top-1 Spieler der Saison
   kingFall:      `<path d="M5 9l3-3 4 2 4-2 3 3v9H5z"/><path d="M8 13l8 4M16 13l-8 4"/>`,
@@ -8923,7 +8932,7 @@ const BADGES=[
   // Zeile 16 — Pflichtaufgabe, Award-Sammler
   {id:'pflichtaufgabe',ic:'clipboard',name:'Pflichtaufgabe',desc:'Sieg gegen mindestens einen Gegner aus den Bottom 3 der Saison-Endrangliste (ab 6 Saison-Teilnehmern)',
     multi:true,count:(id,ms)=>countBottomThreeWins(id,ms)}, */
-  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Player-of-the-Day und 2 Player-of-the-Week Auszeichnungen gesammelt',
+  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison min. 5 Tagessieger und 2 Wochensieger',
     multi:true,count:(id,ms)=>countAwardCollector(id)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
   {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
@@ -8952,6 +8961,19 @@ const BADGES=[
   // Krimi-Versager: 3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge.
   {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge',
     multi:true,count:(id,ms)=>countCloseLossStreaks(id,ms,3)},
+  // ── NEUE LEGENDARY-BADGES v7 ──
+  // Untouchable: 3 Saisons in Folge unter den Top-3 abgeschlossen.
+  {id:'untouchable',ic:'shieldStar',name:'Untouchable',desc:'3 Saisons in Folge unter den Top-3 abgeschlossen',
+    multi:true,count:(id,ms)=>countUntouchable(id)},
+  // Mr. Perfect: 3× 10:0-Sieg in einer einzigen Saison.
+  {id:'mr_perfect',ic:'tripleCup',name:'Mr. Perfect',desc:'3× 10:0-Sieg in einer Saison',
+    multi:true,count:(id,ms)=>countMrPerfect(id)},
+  // Allwetter: an 5 verschiedenen Wochentagen Player-of-the-Day geworden.
+  {id:'allwetter',ic:'weatherMix',name:'Allwetter',desc:'An 5 verschiedenen Wochentagen Player-of-the-Day geworden',
+    multi:true,count:(id,ms)=>countAllwetter(id)},
+  // Tag der Götter: 3 eigene Spieltage in Folge als POTD gewonnen.
+  {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 Spieltagen in Folge Player-of-the-Day geworden (nur mitgespielte Tage)',
+    multi:true,count:(id,ms)=>countGodlyStreak(id)},
 ];
 
 // ════════════════════════════════════════════════════════════════════
@@ -8963,7 +8985,7 @@ const BADGES=[
 //   • COMMON    (12) — bei aktivem Spiel oft erreicht
 //   • NEGATIVE  (2)  — "Schande", eigenständig (rot, abgesetzt)
 // Jeder Bucket hat eine GERADE Anzahl, damit das 2-Spalten-Grid im Sheet
-// sauber aufgeht. Total = 38 Badges (= BADGES-Array-Länge).
+// sauber aufgeht. Total = 42 Badges (= BADGES-Array-Länge).
 // Reihenfolge innerhalb jeder Gruppe folgt der thematischen BADGES-Reihenfolge.
 // ════════════════════════════════════════════════════════════════════
 // ⚑ HOTSPOT — BADGE_RARITY: ordnet jeder Badge-ID eine Rarity-Klasse zu.
@@ -9012,13 +9034,18 @@ const BADGE_RARITY = {
   // ── NEUE NEGATIV-BADGES v6 ──
   black_day:       'negative',  // Schwarzer Tag — Tag mit ≥3 Spielen, alle verloren
   krimi_loser:     'negative',  // Krimi-Versager — 3 knappe Niederlagen in Folge
+  // ── NEUE LEGENDARY-BADGES v7 ──
+  untouchable:     'legendary', // Untouchable — 3 Saisons in Folge Top-3
+  mr_perfect:      'legendary', // Mr. Perfect — 3× 10:0 in einer Saison
+  allwetter:       'legendary', // Allwetter — POTD an 5 verschiedenen Wochentagen
+  godly_streak:    'legendary', // Tag der Götter — 3 eigene POTD-Spieltage in Folge
   // NEGATIVE (2)
   losing5:         'negative',  // Losing Streak
   perfect_loss:    'negative',  // Absoluter Verlierer
 };
 
 const RARITY_META = {
-  legendary: {label:'Legendary', color:'var(--gold)',   total:6},
+  legendary: {label:'Legendary', color:'var(--gold)',   total:10},
   rare:      {label:'Rare',      color:'var(--purple)', total:14},
   common:    {label:'Common',    color:'var(--acid)',   total:14},
   negative:  {label:'Schande',   color:'var(--red)',    total:4},
@@ -9362,6 +9389,124 @@ function countAwardCollector(id){
   return count;
 }
 
+// ═══ LEGENDARY-BADGES v7 ════════════════════════════════════════════════════
+// Saison-/Karriere-aggregierte Counter. Werden in computeBadges() pro Profil
+// lazy berechnet — kein Match-Trigger, weil sie nicht an einen Einzelmatch
+// gebunden sind (analog award_collector / potd / potw).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Untouchable: 3 Saisons IN FOLGE Top-3 abgeschlossen.
+// "In Folge" bezieht sich auf chronologische Reihenfolge ABGESCHLOSSENER
+// Saisons. Die laufende Saison wird ausgeschlossen. Sids haben das Format
+// "YYYY-MM" und sind damit lexikographisch chronologisch sortierbar.
+// Counter steigt um 1 pro überlappungsfreier Drei-Saisons-Strecke (also bei
+// 6 Saisons in Folge in Top-3 → counter = 2). Implementation analog zu
+// countStreakOccurrences (separate Serien).
+function countUntouchable(id){
+  const rk = getSeasonRankingsCache();
+  const curId = currentSeason().id;
+  const sids = Object.keys(rk).filter(s => s !== curId).sort();
+  let cur = 0, count = 0;
+  for(const sid of sids){
+    if(rk[sid] && rk[sid].top3 && rk[sid].top3.has(id)){
+      cur++;
+      if(cur >= 3){ count++; cur = 0; }  // separate Drei-Strecken
+    } else {
+      cur = 0;
+    }
+  }
+  return count;
+}
+
+// Mr. Perfect: 3× 10:0-Sieg in EINER Saison.
+// Counter = Anzahl Saisons, in denen der Spieler ≥3 Mal 10:0 gewonnen hat.
+// Auch die laufende Saison wird gezählt (zur Toast-Konsistenz mit dem
+// Match-Trigger weiter unten in getBadgeEarnedCache).
+function countMrPerfect(id){
+  const bySeason = getMatchesBySeason();
+  let count = 0;
+  Object.values(bySeason).forEach(seasonMs => {
+    let perfect = 0;
+    for(const m of seasonMs){
+      if(!matchOf(id,m) || !won(id,m)) continue;
+      const gf = goalsFor(id,m), ga = goalsAgainst(id,m);
+      if(gf === 10 && ga === 0) perfect++;
+      if(perfect >= 3) break; // billiger Early-Exit
+    }
+    if(perfect >= 3) count++;
+  });
+  return count;
+}
+
+// Allwetter: an mind. 5 verschiedenen Wochentagen je mind. 1× POTD geworden.
+// Karriere-Stat — sobald 5 erreicht, bleibt das Badge dauerhaft erreicht.
+// Counter ist deshalb max. 1 (entweder erreicht oder nicht).
+function countAllwetter(id){
+  // POTD-Logik 1:1 aus countDayWins. Statt eines Counters: Wochentage sammeln.
+  const byDay = {};
+  matches.forEach(m => {
+    const day = new Date(m.created_at).toISOString().slice(0,10);
+    if(!byDay[day]) byDay[day] = { ms: [], jsDate: new Date(m.created_at) };
+    byDay[day].ms.push(m);
+  });
+  const today = new Date().toISOString().slice(0,10);
+  const weekdays = new Set();
+  Object.entries(byDay).forEach(([day, info]) => {
+    if(day === today) return;       // laufender Tag (noch nicht abgeschlossen)
+    if(info.ms.length < 2) return;  // POTD benötigt min. 2 Spiele am Tag
+    const winsById = {};
+    info.ms.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(pid => {
+      if(!winsById[pid]) winsById[pid] = 0;
+      const onA = [m.a1,m.a2].includes(pid);
+      if((onA && m.winner==='A') || (!onA && m.winner==='B')) winsById[pid]++;
+    }));
+    const maxW = Math.max(...Object.values(winsById));
+    if(maxW < 3) return;
+    if((winsById[id]||0) === maxW){
+      weekdays.add(info.jsDate.getDay()); // 0=Sonntag, 1=Montag, …, 6=Samstag
+    }
+  });
+  return weekdays.size >= 5 ? 1 : 0;
+}
+
+// Tag der Götter: 3 aufeinanderfolgende EIGENE Spieltage als POTD gewonnen.
+// "Eigene Spieltage" = Tage, an denen der Spieler beteiligt war. Tage, an
+// denen die Liga ohne ihn spielte, BRECHEN die Serie NICHT — sie werden
+// übersprungen. Karriere-aggregiert (separate Drei-Strecken zählen einzeln).
+function countGodlyStreak(id){
+  // Einmalig nach Tag gruppieren (über alle Matches, nicht nur die des Spielers).
+  const byDay = {};
+  matches.forEach(m => {
+    const day = new Date(m.created_at).toISOString().slice(0,10);
+    if(!byDay[day]) byDay[day] = [];
+    byDay[day].push(m);
+  });
+  const today = new Date().toISOString().slice(0,10);
+  const sortedDays = Object.keys(byDay).filter(d => d !== today).sort();
+  let cur = 0, count = 0;
+  for(const day of sortedDays){
+    const dayMs = byDay[day];
+    const involved = dayMs.some(m => [m.a1,m.a2,m.b1,m.b2].includes(id));
+    if(!involved) continue;             // Tag ohne Spieler → SKIP (kein Reset)
+    if(dayMs.length < 2){ cur = 0; continue; }
+    const winsById = {};
+    dayMs.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(pid => {
+      if(!winsById[pid]) winsById[pid] = 0;
+      const onA = [m.a1,m.a2].includes(pid);
+      if((onA && m.winner==='A') || (!onA && m.winner==='B')) winsById[pid]++;
+    }));
+    const maxW = Math.max(...Object.values(winsById));
+    if(maxW < 3){ cur = 0; continue; }
+    if((winsById[id]||0) === maxW){
+      cur++;
+      if(cur >= 3){ count++; cur = 0; } // separate Drei-Strecken zählen
+    } else {
+      cur = 0;
+    }
+  }
+  return count;
+}
+
 function longestPlayerStreak(id,ms){
   const ordered=[...ms].filter(m=>matchOf(id,m)).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
   let cur=0,best=0;
@@ -9578,6 +9723,10 @@ function getBadgeEarnedCache(){
       krimiLossCur: 0, krimiLossFired: false,
       // Schwarzer Tag: pro Tag merken, ob schon gefeuert wurde
       blackDayFired: {},   // "YYYY-MM-DD" → true (schon gefeuert für diesen Tag)
+      // ── NEUE LEGENDARY-BADGES v7 ──
+      // Mr. Perfect: pro Saison 10:0-Siege zählen + bei ≥3 einmalig feuern
+      mrPerfectPerSeason: {}, // sid → Anzahl 10:0-Siege in dieser Saison
+      mrPerfectFired: {},     // sid → true (schon gefeuert)
       // Wiederholungstäter: letzter Sieg-Score und aktueller Counter
       lastWinScore: null, wtCur: 0,
       // Comeback-Tag: erstes Match-Ergebnis pro Tag + Trigger-Flag
@@ -9653,6 +9802,19 @@ function getBadgeEarnedCache(){
       if(w  && gf===10 && ga===9)                   fire('nail_biter');
       if(w  && pos==='def' && ga<=2)                fire('wall_badge');
       if(w  && myExp<0.35)                          fire('upset_king');
+
+      // ── Mr. Perfect: 3× 10:0-Sieg in DERSELBEN Saison ──
+      // Saison-IDs per seasonOf() bestimmen (sid-Format YYYY-MM). Counter pro
+      // Saison; einmal gefeuert wird kein weiterer Toast für die selbe Saison
+      // ausgelöst — aber der count() sieht alle qualifizierten Saisons.
+      if(w && gf===10 && ga===0){
+        const sid = seasonOf(m.created_at).id;
+        s.mrPerfectPerSeason[sid] = (s.mrPerfectPerSeason[sid]||0) + 1;
+        if(s.mrPerfectPerSeason[sid] >= 3 && !s.mrPerfectFired[sid]){
+          s.mrPerfectFired[sid] = true;
+          fire('mr_perfect');
+        }
+      }
 
       // ── Streak-Badges (nur wenn Schwelle NEU in dieser Serie) ──
       if(w && s.curStreak>=5  && !s.sa5)  { s.sa5=true;  fire('streak5');  }
@@ -9854,6 +10016,8 @@ function getBadgeEarnedCache(){
       // zu komplex für inkrementell, werden in computeBadges() lazy berechnet
       // vice_champion: Saison-End-Event, nicht an ein einzelnes Match gebunden →
       // wird ebenfalls in computeBadges() aus dem seasons-Archiv ermittelt
+      // untouchable / allwetter / godly_streak: Saison-/Karriere-aggregiert →
+      // ebenfalls nur via count-Funktion (kein Live-Trigger, kein Toast).
     });
 
     map[m.id]=earned;
