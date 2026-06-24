@@ -2426,7 +2426,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.23.06';
+const BUILD_VERSION='2026.06.23.07';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2607,6 +2607,15 @@ const ICONS = {
   trophyCheck:   `<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM5 9a2 2 0 01-2-2V5h4M19 9a2 2 0 002-2V5h-4"/><polyline points="9,11 11,13 15,8"/>`,
   // Serienbrecher: brennende Flamme von horizontaler Linie durchgestrichen — Streak gestoppt
   flameBreak:    `<path d="M12 2s5 5 5 10a5 5 0 01-10 0c0-2 1-3 1-3s.5 2 2 2c-1-3 2-4 2-9z"/><line x1="3" y1="13" x2="21" y2="13" stroke-width="2.5" stroke-linecap="round"/>`,
+  // ── NEUE NEGATIV-AWARDS/BADGES v6 ──
+  // Käseteller: Kreis mit drei "Löchern" — symbolisiert löchrige Defensive
+  cheese:        `<circle cx="12" cy="12" r="9"/><circle cx="9" cy="9" r="1.3"/><circle cx="15" cy="11" r="1.7"/><circle cx="10" cy="15" r="1.4"/><circle cx="15.5" cy="15.5" r="0.9"/>`,
+  // Favoriten-Versager: gestürzte Krone (Zacken nach unten)
+  crownFallen:   `<path d="M2 16l4-6 6 9 6-9 4 6v0a1 1 0 01-1 1H3a1 1 0 01-1-1z"/><line x1="3" y1="20" x2="21" y2="20"/>`,
+  // Schwarzer Tag: dichte Regenwolke mit Strichen (kompakter als rainCloud)
+  blackDay:      `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z" fill="currentColor" fill-opacity="0.25"/><path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><line x1="8" y1="18" x2="7" y2="21"/><line x1="12" y1="18" x2="11" y2="21"/><line x1="16" y1="18" x2="15" y2="21"/>`,
+  // Krimi-Versager: Theatermaske mit Träne — Drama mit Pech-Note
+  dramaTear:     `<path d="M12 3c4 0 7 3 7 7v3c0 4-3 7-7 7s-7-3-7-7v-3c0-4 3-7 7-7z"/><circle cx="9.5" cy="11" r="0.9"/><circle cx="14.5" cy="11" r="0.9"/><path d="M9 15.5c1 1 2 1.3 3 1.3s2-.3 3-1.3"/><path d="M15 12.5l0.6 2.5"/>`,
   // ── NEUE BADGES v4 ──
   // Thronfäller: Krone mit "X" durchgestrichen — Sieg gegen den Top-1 Spieler der Saison
   kingFall:      `<path d="M5 9l3-3 4 2 4-2 3 3v9H5z"/><path d="M8 13l8 4M16 13l-8 4"/>`,
@@ -6473,6 +6482,9 @@ function _awardRankingsUncached(period){
     // ── NEUE AWARDS v3 ──
     underdogWins:{},  // playerId → Anzahl Underdog-Siege (myExp < 0.35 & gewonnen)
     closeLosses:{},   // playerId → Anzahl knapper Niederlagen (verloren & |Diff| ≤ 2)
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    favLosses:{},     // playerId → Anzahl Niederlagen in Favoriten-Rolle (myExp ≥ 0.65 & verloren)
+    favMatches:{},    // playerId → Anzahl Spiele in Favoriten-Rolle (myExp ≥ 0.65)
     // ── NEUE TEAM-AWARDS v4 ──
     tCloseWins:{},      // teamKey → Anzahl 1-Tor-Siege (Glückspilze, Zähler)
     tGiantSlayer:{},    // teamKey → Anzahl Siege gegen stärkeres Team (Giant Slayer, Zähler)
@@ -6561,6 +6573,17 @@ function _awardRankingsUncached(period){
         if(!won && goalDiff <= 2){
           if(!agg.closeLosses[id]) agg.closeLosses[id]=0;
           agg.closeLosses[id]++;
+        }
+        // ── NEUE NEGATIV-AWARDS v6 ──
+        // Favoriten-Versager: Anteil Niederlagen, wenn die Sieg-Erwartung ≥ 65 % war.
+        // Zählt sowohl Favoritenspiele (Nenner) als auch Niederlagen dort (Zähler).
+        if(myExp >= 0.65){
+          if(!agg.favMatches[id]) agg.favMatches[id]=0;
+          agg.favMatches[id]++;
+          if(!won){
+            if(!agg.favLosses[id]) agg.favLosses[id]=0;
+            agg.favLosses[id]++;
+          }
         }
       }
     }
@@ -6749,6 +6772,24 @@ function _awardRankingsUncached(period){
       pct: v / agg.pGames[id]         // Sortier-Kriterium
     }))
     .sort((a,b) => b.pct - a.pct);
+
+  // ── NEUE NEGATIV-AWARDS v6 ──
+  // Favoriten-Versager: Quote = Niederlagen in Favoriten-Rolle / Favoriten-Spiele.
+  // Spiegel zu Underdog-Held (Sieg trotz < 35% Erwartung) — hier: Niederlage trotz
+  // ≥ 65% Erwartung. Schwelle: min. 5 Favoriten-Matches für stabile Quote.
+  const favoriteLoserList = Object.keys(agg.favMatches)
+    .filter(id => agg.favMatches[id] >= 5)
+    .map(id => {
+      const losses = agg.favLosses[id] || 0;
+      const games = agg.favMatches[id];
+      return {
+        id,
+        v: losses / games,              // Sortier-Kriterium (Quote)
+        losses, games                   // Zähler/Nenner für Anzeige
+      };
+    })
+    .filter(x => x.losses > 0)          // 0-Werte raus (kein "Versager")
+    .sort((a,b) => b.v - a.v);
   
   // ═══ ENDGEGNER ═══
   // Anteil "wir treffen als Gegner aufeinander" an der gemeinsamen Match-Aktivität.
@@ -6875,6 +6916,19 @@ function _awardRankingsUncached(period){
     }))
     .sort((a,b)=>a.v-b.v);
 
+  // ── NEUE NEGATIV-AWARDS v6 ──
+  // Käseteller: Spiegel zu Concrete Wall — höchster Gegentor-Schnitt als Team.
+  // Sortierung ist absteigend (hoch = schlecht), gleiche Schwelle min. 10 Sp.
+  const cheesePlatterList = Object.keys(agg.tGames)
+    .filter(k=>agg.tGames[k]>=10)
+    .map(k=>({
+      ids:k.split('|'),
+      v: agg.tGoalsAgainst[k] / agg.tGames[k],   // Sortierwert (höher = schlechter)
+      ga: agg.tGoalsAgainst[k],
+      g: agg.tGames[k]
+    }))
+    .sort((a,b)=>b.v-a.v);
+
   // Lucky Charm: Anteil knapper Siege (1 Tor Vorsprung) an gemeinsamen Team-Spielen.
   // Verhindert, dass Vielspieler-Teams durch reine Match-Zahl gewinnen.
   // Schwelle: min. 10 gemeinsame Spiele für stabile Quote.
@@ -6982,6 +7036,9 @@ function _awardRankingsUncached(period){
     plusMinusList:_fSingle(plusMinusList),
     underdogList:_fSingle(underdogList),
     pechvogelList:_fSingle(pechvogelList),
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    favoriteLoserList:_fSingle(favoriteLoserList),
+    cheesePlatterList:_fTeam(cheesePlatterList),
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppableList:_fTeam(unstoppableList),
     concreteWallList:_fTeam(concreteWallList),
@@ -7268,7 +7325,9 @@ function vAwards(){
     plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords'
+    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
   };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
@@ -7336,7 +7395,9 @@ function vAwards(){
         pm0=g(R.plusMinusList),uh0=g(R.underdogList),pv0=g(R.pechvogelList),
         // ── NEUE TEAM-AWARDS v4 ──
         un0=g(R.unstoppableList), cw0=g(R.concreteWallList), lc0=g(R.luckyCharmList),
-        gs0=g(R.giantSlayerList), fs0=g(R.favoritenschreckList), rv0=g(R.rivalryList);
+        gs0=g(R.giantSlayerList), fs0=g(R.favoritenschreckList), rv0=g(R.rivalryList),
+        // ── NEUE NEGATIV-AWARDS v6 ──
+        cp0=g(R.cheesePlatterList), fl0=g(R.favoriteLoserList);
 
   let html='';
   // ════════════════════════════════════════════════════════════════
@@ -7642,6 +7703,19 @@ function vAwards(){
         Math.round(pv0.pct*100)+'%',
         {neg:true})
     : empty('pechvogel','red','Pechvogel'));
+  // ── NEUE NEGATIV-AWARDS v6 ──
+  // Käseteller: Spiegel zu Concrete Wall — höchster Gegentor-Schnitt als Team.
+  neg.push(cp0
+    ? card('cheesePlatter','red','Käseteller',cp0.ids,esc(topTeamNames(R.cheesePlatterList,x=>Math.round(x.v*100))),cp0.v.toFixed(2)+' Gegentore/Sp.',cp0.v.toFixed(2),{neg:true})
+    : empty('cheesePlatter','red','Käseteller'));
+  // Favoriten-Versager: Spiegel zu Underdog-Held — höchste Niederlagen-Quote bei myExp ≥ 65%.
+  neg.push(fl0
+    ? card('favoriteLoser','red','Favoriten-Versager',[fl0.id],
+        esc(topNames(R.favoriteLoserList,x=>Math.round(x.v*1000),x=>pname(x.id))),
+        fl0.losses+' verloren in '+fl0.games+' Favoriten-Spielen',
+        Math.round(fl0.v*100)+'%',
+        {neg:true})
+    : empty('favoriteLoser','red','Favoriten-Versager'));
   html+=`<div class="aw-shame-divider">
     <div class="line"></div>
     <div class="lbl">
@@ -7704,7 +7778,10 @@ const AWARD_META={
   luckyCharm:  {title:'Glückspilze',           cls:'acid',  why:'Team mit dem höchsten Anteil knapper Siege (1 Tor Vorsprung) an den gemeinsamen Spielen. Min. 10 Team-Spiele.'},
   giantSlayer: {title:'Giant Slayer',          cls:'orange',why:'Team mit der höchsten Erfolgsquote als Underdog (Quote: Siege gegen stärkeres Team / Spiele gegen ein stärkeres Team). Min. 5 Underdog-Matches.'},
   favoritenschreck:{title:'Favoritenschreck',  cls:'red',   why:'Größter Team-Elo-Unterschied, der durch einen Sieg überwunden wurde.'},
-  rivalry:     {title:'Erzfeinde',             cls:'purple',why:'Team-Paar mit dem höchsten Anteil direkter Duelle an der gemeinsamen Match-Aktivität. Min. 3 Duelle, beide Teams min. 5 Spiele.'}
+  rivalry:     {title:'Erzfeinde',             cls:'purple',why:'Team-Paar mit dem höchsten Anteil direkter Duelle an der gemeinsamen Match-Aktivität. Min. 3 Duelle, beide Teams min. 5 Spiele.'},
+  // ── NEUE NEGATIV-AWARDS v6 ──
+  cheesePlatter:{title:'Käseteller',           cls:'red',   why:'Team mit dem höchsten Gegentor-Schnitt pro Spiel. Min. 10 gemeinsame Spiele.'},
+  favoriteLoser:{title:'Favoriten-Versager',   cls:'red',   why:'Höchste Niederlagen-Quote in Favoriten-Rollen (Siegerwartung ≥ 65 %). Min. 5 Favoriten-Matches.'}
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
@@ -7723,7 +7800,9 @@ function showAward(key){
     plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords'
+    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
   };
 
   // ── NEUE TEAM-AWARDS v4 ──
@@ -7733,11 +7812,13 @@ function showAward(key){
   const MATCH_AWARDS = new Set(['upset','biggest']);
   const TEAM_AWARDS = new Set([
     'mvt','bestDuo','endgegner','worstTeam','zirkus','baustelle',
-    'unstoppable','concreteWall','luckyCharm','giantSlayer'
+    'unstoppable','concreteWall','luckyCharm','giantSlayer',
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    'cheesePlatter'
   ]);
   const RIVALRY_AWARDS = new Set(['rivalry']);
   const FAVS_AWARDS = new Set(['favoritenschreck']);
-  const NEG_KEYS = new Set(['worstWr','worstAtk','worstDef','worstTeam','formtief','coldStreak','lossStreaks','zirkus','baustelle','pechvogel','favoritenschreck']);
+  const NEG_KEYS = new Set(['worstWr','worstAtk','worstDef','worstTeam','formtief','coldStreak','lossStreaks','zirkus','baustelle','pechvogel','favoritenschreck','cheesePlatter','favoriteLoser']);
 
   let bodyHtml='';
 
@@ -7903,6 +7984,9 @@ function showAward(key){
         case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
         case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
+        // ── NEUE NEGATIV-AWARDS v6 ──
+        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
+        case 'favoriteLoser': return R.favoriteLoserList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.v*100)+'% ('+x.losses+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         default: return [];
       }
     })();
@@ -8856,6 +8940,13 @@ const BADGES=[
   // Serienbrecher: Direktsieg, der eine laufende Siegesserie (≥4) eines Gegners beendet hat.
   {id:'streak_breaker',ic:'flameBreak',name:'Serienbrecher',desc:'Siegesserie eines Gegners (mind. 4 in Folge) durch direkten Sieg gestoppt',
     multi:true,count:(id,ms)=>countStreakBreaker(id,ms)},
+  // ── NEUE NEGATIV-BADGES v6 ──
+  // Schwarzer Tag: ein Tag mit mind. 3 absolvierten Spielen, alle verloren.
+  {id:'black_day',ic:'blackDay',name:'Schwarzer Tag',desc:'Tag mit mind. 3 Spielen, alle verloren',
+    multi:true,count:(id,ms)=>countBlackDays(id,ms)},
+  // Krimi-Versager: 3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge.
+  {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge',
+    multi:true,count:(id,ms)=>countCloseLossStreaks(id,ms,3)},
 ];
 
 // ════════════════════════════════════════════════════════════════════
@@ -8867,7 +8958,7 @@ const BADGES=[
 //   • COMMON    (12) — bei aktivem Spiel oft erreicht
 //   • NEGATIVE  (2)  — "Schande", eigenständig (rot, abgesetzt)
 // Jeder Bucket hat eine GERADE Anzahl, damit das 2-Spalten-Grid im Sheet
-// sauber aufgeht. Total = 36 Badges (= BADGES-Array-Länge).
+// sauber aufgeht. Total = 38 Badges (= BADGES-Array-Länge).
 // Reihenfolge innerhalb jeder Gruppe folgt der thematischen BADGES-Reihenfolge.
 // ════════════════════════════════════════════════════════════════════
 // ⚑ HOTSPOT — BADGE_RARITY: ordnet jeder Badge-ID eine Rarity-Klasse zu.
@@ -8913,6 +9004,9 @@ const BADGE_RARITY = {
   // ── NEUE BADGES v5 ──
   duty_done:       'common',    // Pflichterfüller — Sieg gegen Bottom-3 zum Match-Zeitpunkt
   streak_breaker:  'common',    // Serienbrecher — Streak ≥4 eines Gegners gestoppt
+  // ── NEUE NEGATIV-BADGES v6 ──
+  black_day:       'negative',  // Schwarzer Tag — Tag mit ≥3 Spielen, alle verloren
+  krimi_loser:     'negative',  // Krimi-Versager — 3 knappe Niederlagen in Folge
   // NEGATIVE (2)
   losing5:         'negative',  // Losing Streak
   perfect_loss:    'negative',  // Absoluter Verlierer
@@ -8922,7 +9016,7 @@ const RARITY_META = {
   legendary: {label:'Legendary', color:'var(--gold)',   total:6},
   rare:      {label:'Rare',      color:'var(--purple)', total:14},
   common:    {label:'Common',    color:'var(--acid)',   total:14},
-  negative:  {label:'Schande',   color:'var(--red)',    total:2},
+  negative:  {label:'Schande',   color:'var(--red)',    total:4},
 };
 const RARITY_ORDER = ['legendary','rare','common','negative'];
 
@@ -9373,6 +9467,47 @@ function countStreakBreaker(id,ms){
   return count;
 }
 
+// ─── Schwarzer Tag: Tag mit mind. 3 Spielen, alle verloren ───────────
+// Gruppiert die Matches eines Spielers nach Datum (YYYY-MM-DD) und zählt,
+// an wie vielen Tagen mind. 3 Matches stattfanden, die ALLE verloren wurden.
+function countBlackDays(id,ms){
+  const byDay={}; // day → {g, l}
+  for(let i=0; i<ms.length; i++){
+    const m=ms[i];
+    if(!matchOf(id,m)) continue;
+    const day=new Date(m.created_at).toISOString().slice(0,10);
+    if(!byDay[day]) byDay[day]={g:0, l:0};
+    byDay[day].g++;
+    if(!won(id,m)) byDay[day].l++;
+  }
+  let count=0;
+  for(const day in byDay){
+    const d=byDay[day];
+    if(d.g >= 3 && d.l === d.g) count++;
+  }
+  return count;
+}
+
+// ─── Krimi-Versager: n knappe Niederlagen (Tordiff. ≤ 2) in Folge ────
+// Spiegel zu countLossStreakOccurrences, aber gefiltert auf "knappe" Niederlagen.
+// Ein Sieg ODER eine deutliche Niederlage (>2 Tore Diff) bricht die Serie.
+function countCloseLossStreaks(id,ms,n){
+  const ordered=[...ms].filter(m=>matchOf(id,m))
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  let cur=0, count=0, awarded=false;
+  ordered.forEach(m=>{
+    const isLoss = !won(id,m);
+    const diff = Math.abs(m.score_a - m.score_b);
+    if(isLoss && diff <= 2){
+      cur++;
+      if(cur>=n && !awarded){ count++; awarded=true; }
+    } else {
+      cur=0; awarded=false;
+    }
+  });
+  return count;
+}
+
 function getCachedBadges(id){
   const key='badges_'+id+'_'+matches.length+'_'+_cache.version;
   if(!_cache._badges) _cache._badges={};
@@ -9433,6 +9568,11 @@ function getBadgeEarnedCache(){
       nailStreak: 0,
       // Krimi-Reihe: aufeinanderfolgende Spiele mit Tordifferenz ≤ 2
       krimiCur: 0,
+      // ── NEUE NEGATIV-BADGES v6 ──
+      // Krimi-Versager: aufeinanderfolgende knappe Niederlagen (Diff ≤ 2)
+      krimiLossCur: 0, krimiLossFired: false,
+      // Schwarzer Tag: pro Tag merken, ob schon gefeuert wurde
+      blackDayFired: {},   // "YYYY-MM-DD" → true (schon gefeuert für diesen Tag)
       // Wiederholungstäter: letzter Sieg-Score und aktueller Counter
       lastWinScore: null, wtCur: 0,
       // Comeback-Tag: erstes Match-Ergebnis pro Tag + Trigger-Flag
@@ -9578,6 +9718,33 @@ function getBadgeEarnedCache(){
         if(s.krimiCur>=5){ fire('krimi'); s.krimiCur=0; }
       } else {
         s.krimiCur=0;
+      }
+
+      // ── NEUE NEGATIV-BADGES v6 ──
+      // ── Krimi-Versager: 3 knappe Niederlagen (Diff ≤ 2) in Folge ──
+      // Sieg ODER deutliche Niederlage (Diff > 2) bricht die Serie. Feuert beim
+      // Erreichen der 3, dann erst wieder nach Reset (krimiLossFired-Flag).
+      if(!w && goalDiff<=2){
+        s.krimiLossCur++;
+        if(s.krimiLossCur>=3 && !s.krimiLossFired){
+          fire('krimi_loser');
+          s.krimiLossFired=true;
+        }
+      } else {
+        s.krimiLossCur=0;
+        s.krimiLossFired=false;
+      }
+
+      // ── Schwarzer Tag: Tag mit mind. 3 Spielen, alle verloren ──
+      // s.days[day] wurde bereits oben aktualisiert (g/l). Wir prüfen nach dem
+      // Update: g>=3 und l===g → alle verloren. Pro Tag nur EIN Toast — über
+      // blackDayFired-Tag-Set. Trigger nur bei Niederlage (sonst kann's eh nicht
+      // sein) — und feuert beim Übergang von 2 auf 3 Niederlagen (oder höher,
+      // falls vorher schon entgangen).
+      if(!w && s.days[day] && s.days[day].g >= 3 && s.days[day].l === s.days[day].g
+         && !s.blackDayFired[day]){
+        fire('black_day');
+        s.blackDayFired[day] = true;
       }
 
       // ── Wiederholungstäter: 3 Siege in Folge mit identischem Endstand ──
@@ -9733,7 +9900,9 @@ function playerAwards(id){
     ice:R.iceList, peakElo:R.peakEloList,
     weekKing:R.weekKingList, dayKing:R.dayKingList,
     // ── NEUE AWARDS v3 ──
-    plusMinus:R.plusMinusList, underdog:R.underdogList, pechvogel:R.pechvogelList
+    plusMinus:R.plusMinusList, underdog:R.underdogList, pechvogel:R.pechvogelList,
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    favoriteLoser:R.favoriteLoserList
   };
   const singleValFns={
     wins:x=>x.v, streaks:x=>x.v, scorer:x=>Math.round(x.avg*10),
@@ -9751,7 +9920,9 @@ function playerAwards(id){
     // ── NEUE AWARDS v3 ──
     plusMinus:x=>Math.round(x.v*10), // höchster Tor-Saldo gewinnt
     underdog:x=>x.v,                  // meiste Underdog-Siege gewinnt
-    pechvogel:x=>Math.round(x.pct*1000)  // höchstes Pct an knappen Niederlagen = Top-1
+    pechvogel:x=>Math.round(x.pct*1000),  // höchstes Pct an knappen Niederlagen = Top-1
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    favoriteLoser:x=>Math.round(x.v*1000) // rate-basiert (v = Quote)
   };
 
   // Display-Werte für die Trophäen-Anzeige im Spieler-Awards-Sheet.
@@ -9767,7 +9938,9 @@ function playerAwards(id){
     formtief:x=>'-'+Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
     peakElo:x=>x.v, weekKing:x=>x.v, dayKing:x=>x.v,
     plusMinus:x=>(x.v>=0?'+':'')+x.v.toFixed(1), underdog:x=>x.v,
-    pechvogel:x=>Math.round(x.pct*100)+'%'
+    pechvogel:x=>Math.round(x.pct*100)+'%',
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    favoriteLoser:x=>Math.round(x.v*100)+'%'
   };
 
   Object.entries(singleKeys).forEach(([key,arr])=>{
@@ -9789,7 +9962,9 @@ function playerAwards(id){
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppable:R.unstoppableList, concreteWall:R.concreteWallList,
     luckyCharm:R.luckyCharmList, giantSlayer:R.giantSlayerList,
-    favoritenschreck:R.favoritenschreckList
+    favoritenschreck:R.favoritenschreckList,
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    cheesePlatter:R.cheesePlatterList
   };
   const teamValFns={
     mvt:x=>Math.round(x.v), bestDuo:x=>x.g,
@@ -9802,7 +9977,9 @@ function playerAwards(id){
     concreteWall:x=>-Math.round(x.v*100),      // niedriger = besser → negieren
     luckyCharm:x=>Math.round(x.v*1000),        // rate-basiert (v = Quote)
     giantSlayer:x=>Math.round(x.v*1000),       // rate-basiert (v = Quote)
-    favoritenschreck:x=>x.v
+    favoritenschreck:x=>x.v,
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    cheesePlatter:x=>Math.round(x.v*100)       // höher = schlechter, direkt sortieren
   };
   const teamDisplayFns={
     mvt:x=>(x.v>=0?'+':'')+Math.round(x.v), bestDuo:x=>x.g+' Sp.',
@@ -9815,7 +9992,9 @@ function playerAwards(id){
     concreteWall:x=>x.v.toFixed(2),
     luckyCharm:x=>Math.round(x.v*100)+'%',
     giantSlayer:x=>Math.round(x.v*100)+'%',
-    favoritenschreck:x=>x.v+' Elo'
+    favoritenschreck:x=>x.v+' Elo',
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    cheesePlatter:x=>x.v.toFixed(2)
   };
   Object.entries(teamKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;
@@ -10055,7 +10234,9 @@ function showPlayer(id){
     // ── NEUE AWARDS v3 ──
     'pechvogel',
     // ── NEUE TEAM-AWARDS v4 ──
-    'favoritenschreck'
+    'favoritenschreck',
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    'cheesePlatter','favoriteLoser'
   ]);
 
   const cnt = (set) => awards.filter(a => set.has(a.key)).length;
@@ -10794,7 +10975,9 @@ function showPlayerAwards(playerId, awards){
     plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords'
+    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
+    // ── NEUE NEGATIV-AWARDS v6 ──
+    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
   };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
