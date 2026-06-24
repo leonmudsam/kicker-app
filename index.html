@@ -1,4 +1,31 @@
 <!DOCTYPE html>
+<!--
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  ESO KICKER LIGA · Single-File PWA                                           ║
+║  ──────────────────────────────────────────────────────────────────────────  ║
+║  Stack:   Vanilla JS + Supabase + Web-Crypto                                 ║
+║  Aufbau:  <head> · <style>(CSS) · <body> · <script>(Logik)                   ║
+║                                                                              ║
+║  NAVIGATION                                                                  ║
+║  ──────────                                                                  ║
+║  Direkt nach <style> steht ein CSS-Inhaltsverzeichnis.                       ║
+║  Direkt nach <script> steht ein detailliertes JS-Inhaltsverzeichnis          ║
+║  mit Section-IDs der Form [§N.M].                                            ║
+║                                                                              ║
+║  GREP-NAVIGATION                                                             ║
+║  ──────────────                                                              ║
+║    [§3.2]    → springt zur Sektion "awardRankings (Award-Engine)"            ║
+║    "// ╔ §"  → listet alle Hauptsektionen                                    ║
+║    "// ─ §"  → listet alle Untersektionen                                    ║
+║                                                                              ║
+║  MAINTENANCE                                                                 ║
+║  ───────────                                                                 ║
+║  Beim Hinzufügen neuer Sektionen, Awards, Badges, Icons usw. müssen die      ║
+║  Inhaltsverzeichnisse (HTML, CSS, JS) MIT-AKTUALISIERT werden — sonst        ║
+║  verliert die Navigation ihren Sinn. Kritische Stellen mit mehreren          ║
+║  zusammenhängenden Updates sind im Code mit ⚑ HOTSPOT markiert.              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+-->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -16,6 +43,36 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sometype+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ════════════════════════════════════════════════════════════════════════
+   *  CSS-INHALTSVERZEICHNIS (suche nach [§Cn] für direkten Sprung)
+   * ════════════════════════════════════════════════════════════════════════
+   *  [§C0]   Variablen & Reset (--bg, --acid, Fonts ...)
+   *  [§C1]   App-Shell  ......... Layout, Topbar, Container
+   *  [§C2]   Content  ........... Tab-Inhaltsbereich
+   *  [§C3]   Stat-Strip ......... 3-Spalten-Header (Spiele/Win-Rate/Elo)
+   *  [§C4]   Segmented Control .. Filter-Switcher Saison/Woche/Gesamt
+   *  [§C5]   Rank-List .......... Tabelle Spieler-Rangliste
+   *  [§C6]   Saison-Übersicht ... Champion-Hero, Fortschritts-Balken
+   *  [§C7]   Match-Builder ...... Spieler-Auswahl + Score-Eingabe
+   *  [§C8]   Awards ............. Trophäen-Cards, Story-Cards (V3)
+   *  [§C9]   Award-Sheet ........ Detail-Sheet mit Winner-Hero + Liste
+   *  [§C10]  History ............ Match-Liste mit Filtern
+   *  [§C11]  Modal / Sheet ...... Bottom-Sheet-System
+   *  [§C12]  Bottom-Nav ......... Tab-Bar unten
+   *  [§C13]  FAB ................ Floating-Action-Button (Match hinzufügen)
+   *  [§C14]  Toast .............. Snackbar / Achievement-Toast
+   *  [§C15]  Misc ............... Reset, Empty-State, kleine Helpers
+   *  [§C16]  Icon-System ........ SVG-Icons, Player-Profil-Layout
+   *  [§C17]  V2-Zusatzstyles .... ergänzende Komponenten
+   *  [§C18]  Wochen-Highlights .. POTD/POTW Karten
+   *  [§C19]  Hall of Fame ....... Gesamt-Tab All-Time-Übersicht
+   *  [§C20]  Season-Recap ....... Saisonende-Vollbild
+   *  [§C21]  Award-Sheet Redesign Modernisiertes Winner-Layout
+   *
+   *  ⚑ Wenn neue Sections hinzukommen: Banner als
+   *    [§Cn] (slash-stern) ============ NAME ============ (stern-slash) schreiben
+   *    UND HIER eintragen.
+   * ════════════════════════════════════════════════════════════════════════ */
   :root{
     --bg:#0a0c0b; --bg2:#0f1311; --surface:#141a16; --surface2:#1a221d;
     --surface3:#222b25; --line:#28332b; --line2:#34423a;
@@ -47,7 +104,7 @@
   .num{font-family:'Sometype Mono',monospace;font-variant-numeric:tabular-nums}
   .display{font-family:'Archivo Black',sans-serif;letter-spacing:-.02em}
 
-  /* ============ APP SHELL ============ */
+  /* ============ [§C1] APP SHELL ============ */
   #app{position:relative;z-index:1;max-width:520px;margin:0 auto;
     padding-bottom:calc(160px + var(--safe-bot));min-height:100vh}
 
@@ -100,7 +157,7 @@
   .dot.load{background:var(--gold);animation:pulse 1s infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 
-  /* ============ CONTENT ============ */
+  /* ============ [§C2] CONTENT ============ */
   main{padding:6px 16px 0}
   .view{display:none;animation:slideup .32s cubic-bezier(.2,.7,.2,1)}
   .view.active{display:block}
@@ -113,14 +170,14 @@
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px}
   .card.flush{padding:6px}
 
-  /* ============ STAT STRIP ============ */
+  /* ============ [§C3] STAT STRIP ============ */
   .stat-strip{display:flex;gap:8px;margin-bottom:10px}
   .stat-strip .s{flex:1;background:var(--surface);border:1px solid var(--line);
     border-radius:var(--r-sm);padding:8px 10px;text-align:center;position:relative;overflow:hidden}
   .stat-strip .s .v{font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1}
   .stat-strip .s .l{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:3px}
 
-  /* ============ SEGMENTED CONTROL (filters) ============ */
+  /* ============ [§C4] SEGMENTED CONTROL (filters) ============ */
   .seg{display:flex;gap:4px;background:var(--bg2);border:1px solid var(--line);
     border-radius:13px;padding:4px;margin-bottom:14px;overflow-x:auto;scrollbar-width:none}
   .seg::-webkit-scrollbar{display:none}
@@ -137,7 +194,7 @@
   .search input:focus{border-color:var(--acid2)}
   .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted)}
 
-  /* ============ RANK LIST ============ */
+  /* ============ [§C5] RANK LIST ============ */
   .rlist{display:flex;flex-direction:column;gap:8px}
   .rrow{display:flex;align-items:center;gap:13px;background:var(--surface);border:1px solid var(--line);
     border-radius:var(--r);padding:13px 15px;cursor:pointer;transition:.16s;position:relative;overflow:hidden}
@@ -214,7 +271,7 @@
   .defender-card .sub{font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace;margin-top:3px}
   .season-countdown{text-align:center;font-size:11px;color:var(--muted);padding:6px 0 10px;font-family:'Sometype Mono',monospace}
 
-  /* === SAISON-ÜBERSICHT REDESIGN === */
+  /* === [§C6] SAISON-ÜBERSICHT REDESIGN === */
   /* Fortschritts-Balken */
   .season-progress{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 14px;margin-bottom:10px}
   .season-progress-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
@@ -275,7 +332,7 @@
   .sh-chip-name{font-family:'Archivo Black',sans-serif;font-size:12px;letter-spacing:-.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
   .sh-chip-detail{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:4px}
 
-  /* ============ MATCH BUILDER ============ */
+  /* ============ [§C7] MATCH BUILDER ============ */
   .builder{display:flex;flex-direction:column;gap:12px}
   .team-block{border-radius:var(--r);padding:15px;border:1px solid var(--line);position:relative}
   .team-block.A{background:linear-gradient(180deg,rgba(190,242,100,.05),transparent),var(--surface)}
@@ -367,7 +424,7 @@
   .btn.sm{padding:12px;font-size:13px}
   .btn-row{display:flex;gap:10px}
 
-  /* ============ AWARDS ============ */
+  /* ============ [§C8] AWARDS ============ */
   .award-grid{display:flex;flex-direction:column;gap:10px}
   .award-section{margin-top:20px}
   .award-section:first-child{margin-top:0}
@@ -407,7 +464,7 @@
     font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--red);font-weight:700}
   .neg-divider::after{content:"";flex:1;height:1px;background:rgba(240,86,106,.2)}
 
-  /* ============ AWARDS V3 — Story Cards ============ */
+  /* ============ [§C8b] AWARDS V3 — Story Cards ============ */
   .awcard{position:relative;border-radius:18px;padding:16px 18px;overflow:hidden;cursor:pointer;
     transition:transform .15s;margin-bottom:9px;min-height:88px;
     display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line)}
@@ -638,7 +695,7 @@
   .aw-trophy.empty .aw-trophy-cup svg{filter:none}
   .aw-trophy.empty .aw-trophy-val{color:var(--muted);text-shadow:none;font-size:18px}
 
-  /* ============ AWARDS V2 — DETAIL SHEET ============ */
+  /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============ */
   .aw-hero-icon{display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
   .aw-hero-icon-glow{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;position:relative}
   .aw-hero-icon-glow svg{width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -715,7 +772,7 @@
   .aw-why-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace;margin-bottom:5px}
   .aw-why-body{font-size:12.5px;color:var(--ink2);line-height:1.55}
 
-  /* ============ HISTORY ============ */
+  /* ============ [§C10] HISTORY ============ */
   .mlist{display:flex;flex-direction:column;gap:7px}
   .mrow{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;cursor:pointer;transition:.15s}
   .mrow:active{background:var(--surface2)}
@@ -730,7 +787,7 @@
   .mdeltas{display:flex;gap:9px;flex-wrap:wrap}
   .mdeltas span b{color:var(--ink2);font-weight:600}
 
-  /* ============ MODAL / SHEET ============ */
+  /* ============ [§C11] MODAL / SHEET ============ */
   .sheet-bg{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.6);
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:.25s}
   .sheet-bg.show{opacity:1;pointer-events:auto}
@@ -765,7 +822,7 @@
   .posbar .pg{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace}
   .ring{position:relative;width:54px;height:54px;margin:0 auto 6px}
 
-  /* ============ BOTTOM NAV ============ */
+  /* ============ [§C12] BOTTOM NAV ============ */
   .botnav{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:520px;margin:0 auto;
     padding:8px 10px calc(8px + var(--safe-bot));
     background:linear-gradient(0deg,var(--bg) 70%,rgba(10,12,11,.9) 90%,transparent);
@@ -779,7 +836,7 @@
   .botnav button.on .ic{transform:translateY(-1px)}
   .botnav button:active{transform:scale(.9)}
 
-  /* ============ FAB ============ */
+  /* ============ [§C13] FAB ============ */
   .fab{position:fixed;z-index:55;right:max(18px,calc(50% - 260px + 18px));
     bottom:calc(86px + var(--safe-bot));width:58px;height:58px;border-radius:19px;
     background:linear-gradient(135deg,var(--acid),var(--acid2));border:none;cursor:pointer;
@@ -787,7 +844,7 @@
     transition:.2s;color:var(--acid-deep)}
   .fab:active{transform:scale(.9) rotate(90deg)}
 
-  /* ============ TOAST ============ */
+  /* ============ [§C14] TOAST ============ */
   .toast{position:fixed;left:50%;bottom:calc(100px + var(--safe-bot));z-index:200;
     transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
     background:var(--ink);color:var(--bg);padding:13px 22px;border-radius:14px;font-weight:700;
@@ -819,7 +876,7 @@
   .ach-toast-sub{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;
     margin-top:3px;letter-spacing:.02em}
 
-  /* ============ MISC ============ */
+  /* ============ [§C15] MISC ============ */
   .empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
   .empty .ee{font-size:34px;margin-bottom:12px;opacity:.5}
   .skeleton{background:linear-gradient(90deg,var(--surface),var(--surface2),var(--surface));
@@ -1333,7 +1390,7 @@
     color:var(--ink);padding:14px;border-radius:13px;outline:none;transition:.18s}
   .text-in:focus{border-color:var(--acid2)}
 
-  /* ============ ICON SYSTEM ============ */
+  /* ============ [§C16] ICON SYSTEM ============ */
   .ic{display:inline-grid;place-items:center;vertical-align:middle;line-height:1}
   .ic svg{display:block;width:1em;height:1em;stroke:currentColor;fill:none;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -1703,13 +1760,13 @@
   /* ─── ENDE PLAYER PROFILE V3 OVERHAUL ─── */
 
 
-  /* ============ V2 ZUSATZ-STYLES ============ */
+  /* ============ [§C17] V2 ZUSATZ-STYLES ============ */
   /* SVG-Crown im sh-crown / aw-pod-crown (ersetzt 👑) */
   .sh-crown svg, .aw-pod-crown svg{width:22px;height:22px;fill:var(--gold);stroke:none;display:block;
     filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}
   .aw-pod-crown svg{width:18px;height:18px}
 
-  /* ============ WOCHEN-HIGHLIGHTS (Woche-Ansicht) ============ */
+  /* ============ [§C18] WOCHEN-HIGHLIGHTS (Woche-Ansicht) ============ */
   .wk-highlights{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
   .wk-hl{background:var(--surface);border:1px solid var(--line);border-radius:14px;
     padding:10px 11px;min-width:0;position:relative;overflow:hidden;cursor:pointer;transition:.16s}
@@ -1734,7 +1791,7 @@
   .wk-hl.empty{opacity:.55}
   .wk-hl.empty .wk-hl-val{color:var(--muted);font-size:13px}
 
-  /* ============ HALL OF FAME (Gesamt-Ansicht) ============ */
+  /* ============ [§C19] HALL OF FAME (Gesamt-Ansicht) ============ */
   .hof-hero{position:relative;
     background:linear-gradient(135deg,rgba(247,207,74,.14),rgba(167,139,250,.06) 50%,var(--surface) 90%);
     border:1px solid rgba(247,207,74,.45);border-radius:22px;padding:20px 18px 18px;margin-bottom:10px;overflow:hidden;cursor:pointer}
@@ -1871,7 +1928,7 @@
   .tier-pill.t-solide     {color:var(--blue);background:rgba(86,180,232,.10);border:1px solid rgba(86,180,232,.22)}
   .tier-pill.t-einsteiger {color:var(--orange);background:rgba(255,120,73,.10);border:1px solid rgba(255,120,73,.22)}
 
-  /* ============ SEASON RECAP REDESIGN ============ */
+  /* ============ [§C20] SEASON RECAP REDESIGN ============ */
   .rcp-head{text-align:center;margin-bottom:18px}
   .rcp-label{display:inline-flex;align-items:center;gap:6px;font-family:'Sometype Mono',monospace;
     font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
@@ -2022,7 +2079,7 @@
   .rcp-rest-elo{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink);
     font-variant-numeric:tabular-nums;letter-spacing:-.02em;min-width:34px;text-align:right}
 
-  /* ============ AWARD SHEET REDESIGN (Winner Hero + Liste) ============ */
+  /* ============ [§C21] AWARD SHEET REDESIGN (Winner Hero + Liste) ============ */
   /* Saubere Award-Liste statt Podium */
   .aw-list-label{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
     letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:18px 4px 8px;
@@ -2232,9 +2289,123 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ════════════════════════════════════════════════════════════
-//  ZUGANGSDATEN
-// ════════════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════════════════════════
+ *  JAVASCRIPT-INHALTSVERZEICHNIS
+ *  Suche nach "[§N.M]" für direkten Sprung in eine Sektion.
+ *  Alle Hauptsektionen-Banner enthalten den Anker — z. B. "// ╔ §3 STATS".
+ * ════════════════════════════════════════════════════════════════════════════
+ *
+ *  §0  PROLOG & SETUP
+ *      [§0.1]  Supabase-Zugangsdaten
+ *      [§0.2]  Build-Version & Update-Check
+ *
+ *  §1  STAMMDATEN
+ *      [§1.1]  ICONS — SVG-Library                       ⚑ HOTSPOT: Awards/Badges
+ *      [§1.2]  Saison-System (monatlich, automatisch)
+ *
+ *  §2  CORE ENGINE
+ *      [§2.1]  Performance-Caches & Invalidierung
+ *      [§2.2]  Sim-Maps (snapMap, historyByMatchId)
+ *      [§2.3]  Streak-Snapshots (für "Serienbrecher" Badge)
+ *      [§2.4]  Saison-Rank-Snapshots (preRank/postRank pro Match)
+ *      [§2.5]  Matches-pro-Saison Cache
+ *      [§2.6]  Saison-Rangliste Cache
+ *      [§2.7]  Rang-System (Durchschnitts-Saison-Elo)
+ *      [§2.8]  Erweitertes Elo + automatische Position
+ *      [§2.9]  Positions-Klassifizierung (7 Stufen)
+ *
+ *  §3  DATEN & STATS
+ *      [§3.1]  Datenbank-Layer (loadAll, persistRecalc, Saison-Archiv)
+ *      [§3.2]  awardRankings — zentrale Award-Engine    ⚑ HOTSPOT: Awards
+ *      [§3.3]  POTW/POTD Recap
+ *      [§3.4]  Stats Engine (winRate, atkW/defW etc.)
+ *      [§3.5]  Zentrale Elo-Engine (simulateElo)
+ *      [§3.6]  Slider-basierte Berechnung (Match-Eingabe + Recalc)
+ *
+ *  §4  UI-INFRASTRUKTUR
+ *      [§4.1]  Avatar-Farben & -Emojis
+ *      [§4.2]  Award-Avatar-Helper (Hero/Mini/Li)
+ *      [§4.3]  Navigation (Tabs, Filter, History-State)
+ *      [§4.4]  Zeiträume (Saison/Woche/Gesamt)
+ *
+ *  §5  VIEWS
+ *      [§5.1]  Ranking-View (Saison/Woche/Gesamt)
+ *      [§5.2]  Positions-Rangliste
+ *      [§5.3]  Awards-View                              ⚑ HOTSPOT: Awards
+ *      [§5.4]  Teams-View
+ *      [§5.5]  History-View (mit Filter)
+ *      [§5.6]  Match-Eingabe-View
+ *      [§5.7]  Settings-View
+ *      [§5.8]  Match-Preview-Logik & Save
+ *
+ *  §6  SHEETS / OVERLAYS
+ *      [§6.1]  Detail-Sheet-Infrastruktur (openSheet/closeSheet)
+ *
+ *  §7  BADGE-SYSTEM (permanente Auszeichnungen)
+ *      [§7.1]  BADGES-Array (Definitionen)              ⚑ HOTSPOT
+ *      [§7.2]  BADGE_RARITY + RARITY_META               ⚑ HOTSPOT
+ *      [§7.3]  Count-Funktionen (countKingslayer etc.)
+ *      [§7.4]  getBadgeEarnedCache (chronologischer
+ *              Trigger-Cache → liefert badgesEarnedInMatch)
+ *
+ *  §8  SPIELER-AWARDS / PROFILE
+ *      [§8.1]  playerAwards (Aggregat aus awardRankings)
+ *      [§8.2]  showPlayer (Profil-Sheet)
+ *      [§8.3]  showAward (Award-Detail-Sheet)
+ *      [§8.4]  showPlayerAwards (Award-Sammlung-Sheet)
+ *      [§8.5]  showBadgeSheet (alle Badges)
+ *      [§8.6]  Spieler bearbeiten + Saison-Verlauf
+ *
+ *  §9  WEITERE SHEETS
+ *      [§9.1]  Bilanzen-Sheet (Mitspieler-Liste)
+ *      [§9.2]  Head-to-Head Profil-Sheet
+ *      [§9.3]  Team-Profil-Sheet
+ *      [§9.4]  Match bearbeiten
+ *
+ *  §10 INTERAKTION & SYSTEM
+ *      [§10.1] bind() — globaler Click-Dispatcher
+ *      [§10.2] Lock-System (Settings-Passwort)
+ *      [§10.3] Helpers (Achievement-Toasts, Utils)
+ *      [§10.4] Boot — Initialisierung
+ *
+ * ════════════════════════════════════════════════════════════════════════════
+ *  MAINTENANCE-REGELN
+ * ════════════════════════════════════════════════════════════════════════════
+ *  Mit ⚑ HOTSPOT markierte Stellen erfordern parallele Updates an mehreren
+ *  Orten. Beim Hinzufügen eines neuen Awards oder Badges:
+ *
+ *    NEUES AWARD
+ *      1. ICONS — neues SVG-Icon hinzufügen (falls nötig)         [§1.1]
+ *      2. awardRankings — Berechnung + Hidden-Filter + Return     [§3.2]
+ *      3. AW_IC — Icon-Mapping (3×! in vAwards/showAward/         [§5.3, §8.3,
+ *         showPlayerAwards)                                        §8.4]
+ *      4. AWARD_META — Titel + Klasse + Erklärung                 [§5.3]
+ *      5. vAwards — Card im richtigen Section-Block               [§5.3]
+ *      6. showAward — TEAM_AWARDS/MATCH_AWARDS-Set + switch-case  [§8.3]
+ *      7. playerAwards — teamKeys/teamValFns/teamDisplayFns       [§8.1]
+ *      8. showPlayer — POSITIVE_KEYS/TEAM_KEYS/NEGATIVE_KEYS      [§8.2]
+ *
+ *    NEUES BADGE
+ *      1. ICONS — neues SVG-Icon hinzufügen                       [§1.1]
+ *      2. Count-Funktion implementieren (falls aggregiert)        [§7.3]
+ *      3. BADGES-Array — neues Objekt mit ic/name/desc/count      [§7.1]
+ *      4. BADGE_RARITY + RARITY_META.total                        [§7.2]
+ *      5. getBadgeEarnedCache — fire('badge_id') für Match-       [§7.4]
+ *         Trigger (sonst kein Eintrag im Match-Review!)
+ *
+ *    NEUE SEKTION
+ *      → Banner-Format: "// ╔ §N.M ─── NAME ────────────────"
+ *      → Hier oben im Inhaltsverzeichnis MIT EINTRAGEN
+ *      → Bei Hotspot ggf. ⚑ markieren
+ *
+ *  Inkonsistenzen sind die Regel, nicht die Ausnahme — die App ist gewachsen
+ *  und nicht alle Banner haben das neue Format. Bei Aufräum-Touren Section-IDs
+ *  schrittweise nachziehen.
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+// ╔═══ §0.1 ────────────────────────────────────────────────────────────────╗
+//     ZUGANGSDATEN
+// ╚═════════════════════════════════════════════════════════════════════════╝
 const SUPABASE_URL = "https://aravpsynckgzradserxs.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFyYXZwc3luY2tnenJhZHNlcnhzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzODU1NzMsImV4cCI6MjA5NDk2MTU3M30.HKylQnVlSimk1sCFBlw4vRqfzRnLH7r7kqWd4h-lmR8";
 // ════════════════════════════════════════════════════════════
@@ -2248,11 +2419,14 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ════════ BUILD-VERSION & UPDATE-CHECK ════════
+// ╔═══ §0.2 ─── BUILD-VERSION & UPDATE-CHECK ───────────────────────────╗
+//     Bumpe BUILD_VERSION bei jedem Deploy. Banner zeigt sich, wenn ein
+//     remote-gefetchtes index.html eine neuere Version trägt.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.23.04';
+const BUILD_VERSION='2026.06.23.06';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -2293,7 +2467,18 @@ let awPeriod='all';      // all | season | week
 let awSeasonId=null;        // konkrete Saison für Award-Filter (null = aktuelle)
 let awWeekStart=null;       // konkrete Woche (Date für Montag, lokale Zeit) für Award-Filter (null = aktuelle KW)
 
-// ════════ ICON LIBRARY (SVG line-icons – ersetzt alle Emojis außer Spieler-Avatare) ════════
+// ╔═══ §1.1 ─── ICON LIBRARY (SVG line-icons) ──────────────────────────╗
+//     ⚑ HOTSPOT — Wer hier ein Icon hinzufügt, sollte es ggf. auch im
+//     AW_IC-Mapping (§5.3, §8.3, §8.4) und/oder im BADGES-Array (§7.1)
+//     referenzieren.
+//     Konvention: Path-Strings ohne viewBox/svg-Wrapper. Wrapper kommt
+//     von svgI() / ic() Helper-Funktionen.
+// ╚═════════════════════════════════════════════════════════════════════════╝
+// ⚑ HOTSPOT — ICONS-Library (SVG-Paths). Wer hier ergänzt, sollte das Icon
+// dann auch verwenden — sonst tote Definition. Konventionen:
+//   - 24x24 viewBox (vom Wrapper svgI/ic gesetzt, hier NICHT setzen)
+//   - stroke-basiert; Wrapper setzt stroke="currentColor", fill="none"
+//   - Keine viewBox/svg-Tags hier — nur die Path-/Circle-/Polygon-Strings.
 const ICONS = {
   // Trophäen / Rang
   trophy:    `<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM5 9a2 2 0 01-2-2V5h4M19 9a2 2 0 002-2V5h-4"/>`,
@@ -2511,7 +2696,10 @@ function availableSeasons(){
   return [cur,...past];
 }
 
-// ════════ SAISON-SYSTEM (monatlich) ════════
+// ╔═══ §1.2 ─── SAISON-SYSTEM (monatlich) ──────────────────────────────╗
+//     Saisons starten automatisch am Monatsersten. currentSeason() liefert
+//     die laufende Saison; archivierte Saisons stehen in `seasons[]`.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Jeder Kalendermonat ist eine eigene Saison mit Elo-Reset.
 function currentSeason(){
   const now=new Date();
@@ -2585,7 +2773,12 @@ function allPastSeasons(){
 
 let seasons=[];  // geladene Saison-Ergebnisse aus DB
 let _histPage = 0; // Aktuelle Seite für den Verlaufs-Tab (Lazy Loading)
-// ════════ PERFORMANCE CACHES ════════
+// ╔═══ §2.1 ─── PERFORMANCE CACHES & INVALIDIERUNG ─────────────────────╗
+//     Alle Caches hängen am globalen `_cache`-Objekt und werden per
+//     `_cache.version`-Tick oder selektivem `invalidateCache([tags])`
+//     ungültig gemacht. Cache-Keys sind ENTITY_LENGTH_VERSION — der
+//     Version-Tick ist die universelle Bust-Strategie.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Invalidiert bei: loadAll, Match-Add/Edit/Delete, Recalc, Config-Änderung
 let _cache={version:0};
 
@@ -2669,7 +2862,7 @@ function getGlobalSim(){
   return sim;
 }
 
-// ─── Abgeleitete Sim-Maps (gecached pro Global-Sim) ───
+// ─── §2.2 Abgeleitete Sim-Maps (snapMap, historyByMatchId) ───────────
 // Vermeidet wiederholte O(n) Loops in showPlayer, vAwards, _awardRankingsUncached etc.
 // WICHTIG: Cache-Key bindet an matches.length + _cache.version, damit selektives
 // invalidateCache(['global', ...]) korrekt invalidiert. Sonst stale nach Match-Add/Edit.
@@ -2685,7 +2878,7 @@ function getHistoryByMatchId(){
   _cache._historyByMatchId = map;
   return map;
 }
-// ─── Streak-Snapshots (lazy, einmalig pro Sim) ───────────────────────
+// ─── §2.3 Streak-Snapshots (für "Serienbrecher"-Badge) ───────────────
 // Für jedes Match: die aktuelle Win-Siegesserie aller 4 beteiligten Spieler
 // VOR diesem Match. Berechnet per O(n) Walk durch alle Matches chronologisch;
 // pro Match werden die Streaks der 4 Spieler vorher gesnapshottet, dann
@@ -2733,7 +2926,7 @@ function getSnapMap(){
   return map;
 }
 
-// ─── Saison-Rank-Snapshots (lazy, einmalig pro Sim) ───────────────────
+// ─── §2.4 Saison-Rank-Snapshots (preRank/postRank pro Match) ─────────
 // Für jedes Match: die laufende Saison-Rangliste VOR und NACH dem Match.
 // Berechnet wird das per O(n) Walk durch alle Matches; pro Match werden
 // die Deltas aus globalSim.history auf einen seasonElo-Akkumulator addiert.
@@ -2777,7 +2970,7 @@ function getRankSnapshots(){
   return out;
 }
 
-// ─── Matches-pro-Saison Cache (lazy, einmalig pro Sim) ───
+// ─── §2.5 Matches-pro-Saison Cache ───────────────────────────────────
 // Gruppiert alle Matches nach ihrer Saison-ID. Wird vom Award-Sammler-Badge
 // und potentiell weiteren Saison-aggregierenden Funktionen genutzt.
 function getMatchesBySeason(){
@@ -2794,7 +2987,7 @@ function getMatchesBySeason(){
   return map;
 }
 
-// ─── Saison-Rangliste Cache (lazy, einmalig pro Sim) ───
+// ─── §2.6 Saison-Rangliste Cache (Saison-End-Stand) ──────────────────
 // Pro Saison: Top-3 und Bottom-3 Spieler nach Saison-End-Elo.
 // Bottom-3 nur definiert wenn mindestens 6 Saison-Teilnehmer (sonst überlappt es mit Top-3).
 // Genutzt von Königsklasse + Pflichtaufgabe Badges.
@@ -2872,7 +3065,10 @@ async function syncSeasonEloToDB(){
   if(updates.length) await Promise.all(updates);
 }
 
-// ════════ RANG-SYSTEM (Durchschnitts-Saison-Elo) ════════
+// ╔═══ §2.7 ─── RANG-SYSTEM (Durchschnitts-Saison-Elo) ─────────────────╗
+//     Spieler-Rang ergibt sich aus dem durchschnittlichen Saison-Elo über
+//     alle absolvierten Saisons.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 const RANKS=[
   {label:'Legende',   icon:'crown',  color:'var(--gold)',   pct:0.10},
   {label:'Elite',     icon:'star',   color:'var(--purple)', pct:0.30},
@@ -2929,14 +3125,16 @@ function rankBadgeHtml(id, size='sm'){
 // Metriken der Gesamt-Rangliste (Filter-Buttons)
 const METRICS=[['elo','Elo'],['winrate','Siegrate'],['goaldiff','Tordiff'],['streak','Serie'],['games','Spiele']];
 
-// ════════ ERWEITERTES ELO ════════
+// ╔═══ §2.8 ─── ERWEITERTES ELO + AUTO-POSITION ────────────────────────╗
+//     K-Faktor + Gewichtung + Score-Spread laut cfg.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Bestehende DB-Felder bleiben gleich. Neu: dynamischer K + Margin-of-Victory,
 // rein clientseitig berechnet (kein Schema-Umbau nötig).
 function expected(a,b){ return 1/(1+Math.pow(10,(b-a)/400)); }
 function posFactor(ps,sw){ return 1+sw*(0.5-ps)*2; }
 function riskWeights(hi,lo,rs){ const gap=Math.min(Math.abs(hi-lo)/400,1); const s=rs*gap; return {strong:1-s,weak:1+s}; }
 
-// ════════ AUTOMATISCHE POSITION (erwartungsbasiert + Erfahrung) ════════
+// ─── §2.8a Automatische Position (erwartungsbasiert + Erfahrung) ─────
 // Misst NICHT nur rohe Siege, sondern:
 //   1) Leistung ÜBER der Erwartung je Position (Performance)
 //   2) Wie OFT der Spieler auf der Position spielt (Erfahrung)
@@ -3022,7 +3220,10 @@ function clampHalf(v){return Math.max(0.1,Math.min(0.9,v));}
 // Live-Stärke aus allen aktuellen Matches (für Anzeige & Vorschau)
 function atkStrength(id){ return atkStrengthFrom(id, matches); }
 
-// ════════ POSITIONS-KLASSIFIZIERUNG (7 Stufen) ════════
+// ╔═══ §2.9 ─── POSITIONS-KLASSIFIZIERUNG (7 Stufen) ───────────────────╗
+//     Reine Sturm-Spieler -> "Stürmer", reine Abwehr -> "Verteidiger",
+//     Mischformen -> 5 Zwischenstufen.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Wandelt atkStrength (0.1 - 0.9) in ein Label + Icon um.
 // Feingranular: 60/40-Splits sollen NICHT als reines "Flex" durchrutschen.
 function posClassify(autoAtk){
@@ -3166,7 +3367,11 @@ async function persistRecalc(matchList){
   await autoArchiveSeasons();
 }
 
-// ════════ DATA ════════
+// ╔═══ §3.1 ─── DATENBANK-LAYER ────────────────────────────────────────╗
+//     loadAll() lädt Spieler/Matches/Config/Seasons, persistRecalc()
+//     schreibt Elos/Deltas atomar zurück. Saison-Archivierung am
+//     Monatswechsel via archiveSeasonAndStartNew().
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function pmap(){
   const key='pmap_'+players.length+'_'+_cache.version;
   if(_cache._pmapKey===key) return _cache._pmapData;
@@ -3626,7 +3831,7 @@ function showSeasonRecap(season){
 }
 
 // Player-of-the-Day Recap: zeigt einmal pro Tag pro Gerät den Sieger des letzten Spieltags.
-// ═══ Player-of-the-Week Recap ═══
+// ─── §3.3 Player-of-the-Week / Player-of-the-Day Recap ───────────────
 // Helfer: Bereich der zuletzt abgeschlossenen Woche (Mo 00:00 – So 23:59:59.999)
 function _potwLastWeekRange(){
   const now=new Date();
@@ -4398,7 +4603,9 @@ function allPlayerStats(){
 
 
 
-// ════════ STATS ENGINE ════════
+// ╔═══ §3.4 ─── STATS ENGINE ───────────────────────────────────────────╗
+//     winRate, atkW/defW, Pos-Klasse, allgemeine Player-Aggregate.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // matchSubset optional — defaults zu allen Matches
 function playerStats(id, matchSubset){
   const ms = matchSubset || matches;
@@ -4718,7 +4925,9 @@ function monthlyElo(){
   return {pS,tS};
 }
 
-// ════════ AVATAR COLORS ════════
+// ╔═══ §4.1 ─── AVATAR COLORS & EMOJIS ─────────────────────────────────╗
+//     Hash-basierte Farbzuweisung pro Spieler-ID. Emoji-Avatar überschreibt.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 const AV_COLORS=['#BEF264','#ff7849','#56b4e8','#f7cf4a','#a78bfa','#4ade80','#f0566a','#22d3ee','#fb923c','#e879f9'];
 function avColor(id){let h=0;for(let i=0;i<id.length;i++)h=id.charCodeAt(i)+((h<<5)-h);return AV_COLORS[Math.abs(h)%AV_COLORS.length];}
 
@@ -4766,7 +4975,10 @@ function avHtml(player, extraStyle){
 }
 function initials(n){return n.trim().slice(0,2).toUpperCase();}
 
-// ════════ AWARD AVATAR HELPERS ════════
+// ╔═══ §4.2 ─── AWARD AVATAR HELPER (Hero/Mini/Li) ─────────────────────╗
+//     awHeroAv, awMiniAv etc. — einheitliche Avatar-Rendering-Funktionen für
+//     Award-Details, Pair-Avatare für Team-Awards.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Kleines Avatar (22px) für Award-Cards.
 function awMiniAv(pid){
   const p=pmap()[pid];
@@ -4816,7 +5028,10 @@ function awHeroPair(p1,p2){
 }
 
 
-// ════════ NAV ════════
+// ╔═══ §4.3 ─── NAVIGATION (Tabs/Filter/History-State) ─────────────────╗
+//     setTab() ist die zentrale Wechsel-Funktion. tab + period + filterPos +
+//     filterPlayer steuern, was render() zeichnet.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 const NAV=[
   ['ranking','Liga',`<path d="M3 13h4v7H3zM10 4h4v16h-4zM17 9h4v11h-4z"/>`],
   ['positions','Positionen',`<circle cx="12" cy="8" r="4"/><path d="M5 21v-1a7 7 0 0114 0v1"/>`],
@@ -4841,7 +5056,10 @@ function render(){
   bind();
 }
 
-// ════════ ZEITRÄUME (Saison/Woche/Gesamt) ════════
+// ╔═══ §4.4 ─── ZEITRÄUME (Saison/Woche/Gesamt) ────────────────────────╗
+//     periodBounds() liefert {from,to} für die aktuelle Periode.
+//     periodMatches() filtert matches[] entsprechend.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function periodStart(period){
   const now=new Date();
   if(period==='season') return seasonStart();
@@ -4881,7 +5099,10 @@ function isoWeek(d){
   return 1+Math.round((date-firstThu)/(7*24*3600*1000));
 }
 
-// ════════ ZENTRALE ELO-ENGINE ════════
+// ╔═══ §3.5 ─── ZENTRALE ELO-ENGINE (simulateElo) ──────────────────────╗
+//     Eine kanonische Engine, die aus den DB-Match-Deltas Saison-Elo, History
+//     und peakElo rekonstruiert. Wird per Cache (globalSim) abgeschirmt.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Pro Saison isoliert: Bei jedem Monatswechsel werden Elo/Played auf start_elo zurückgesetzt.
 // Positions-Tracker bleibt saison-übergreifend. Karriere-Elo = gewichteter Durchschnitt
 // der Saison-End-Elos (gewichtet nach Spielanzahl pro Saison).
@@ -4900,7 +5121,7 @@ function isoWeek(d){
 // stabil, weil sie aus den persistierten m.deltas aggregiert werden.
 // ════════════════════════════════════════════════════════════════════════
 
-// ─── NEU: DB-First Aggregation (default simulateElo) ────────────────────
+// ─── §3.5a DB-First Aggregation (default simulateElo) ────────────────
 function simulateElo(matchSubset, opts={}){
   const startElo=opts.startElo ?? cfg.start_elo;
   const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
@@ -5058,7 +5279,7 @@ function simulateElo(matchSubset, opts={}){
           posTracker,peakElo,curSeason:_curSeason};
 }
 
-// ─── ALT: Slider-basierte Berechnung (für Match-Eingabe + Komplett-Neuberechnung) ───
+// ─── §3.6 Slider-basierte Berechnung (für Match-Eingabe + Recalc) ────
 function simulateEloWithSliders(matchSubset, opts={}){
   const startElo=opts.startElo ?? cfg.start_elo;
   const elo={}, played={}, playedSeason={}, wins={}, losses={}, curStreak={}, bestStreak={};
@@ -5438,7 +5659,9 @@ function periodPlayerStats(period){
   return result;
 }
 
-// ════════ VIEW: RANKING ════════
+// ╔═══ §5.1 ─── VIEW: RANKING ──────────────────────────────────────────╗
+//     Zeigt Saison/Woche/Gesamt-Rangliste, Hall of Fame, POTW/POTD.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function vRanking(){
   const periodBar=`
     <div class="seg accent" style="margin-bottom:14px">
@@ -6146,7 +6369,9 @@ function rrow(p, s, i, metric, globalElo){
   </div>`;
 }
 
-// ════════ VIEW: POSITIONS-RANGLISTE ════════
+// ╔═══ §5.2 ─── VIEW: POSITIONS-RANGLISTE ──────────────────────────────╗
+//     Spezial-View für Sturm/Abwehr-Rangliste.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function vPositions(){
   function posList(pos){
     const statsMap = allPlayerStats();
@@ -6214,7 +6439,15 @@ function vPositions(){
     ${which==='atk'?block(atk,'atk'):block(def,'def')}`;
 }
 
-// ════════ VIEW: AWARDS ════════
+// ╔═══ §5.3 ─── VIEW: AWARDS ───────────────────────────────────────────╗
+//     ⚑ HOTSPOT — neue Awards benötigen Updates an mehreren Stellen.
+//     Siehe Maintenance-Block oben für die volle Checkliste.
+//
+//     Reihenfolge in dieser Sektion:
+//       1. AWARD_META       — Titel, Klasse (Farbe), Erklärung
+//       2. AW_IC (1/3)      — Award-ID -> Icon-Name (gespiegelt in §8.3, §8.4)
+//       3. vAwards()        — baut Awards-Tab mit Story-Cards
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Cache-Wrapper für awardRankings
 function awardRankings(period){return getCachedAwardRankings(period);}
 function _awardRankingsUncached(period){
@@ -6241,8 +6474,9 @@ function _awardRankingsUncached(period){
     underdogWins:{},  // playerId → Anzahl Underdog-Siege (myExp < 0.35 & gewonnen)
     closeLosses:{},   // playerId → Anzahl knapper Niederlagen (verloren & |Diff| ≤ 2)
     // ── NEUE TEAM-AWARDS v4 ──
-    tCloseWins:{},      // teamKey → Anzahl 1-Tor-Siege (Glückspilze)
-    tGiantSlayer:{},    // teamKey → Anzahl Siege gegen stärkeres Team (Pre-Match-Team-Elo)
+    tCloseWins:{},      // teamKey → Anzahl 1-Tor-Siege (Glückspilze, Zähler)
+    tGiantSlayer:{},    // teamKey → Anzahl Siege gegen stärkeres Team (Giant Slayer, Zähler)
+    tFavoriteMatches:{},// teamKey → Anzahl Matches in denen das Team Underdog war (Giant Slayer Nenner)
     tFavoritenschreck:{},// teamKey → {best: maxOvercome, m: match, eloDiff} (höchster gewonnener Upset)
     rivalries:{}        // pairKey "teamA|teamB" sortiert → {idsA, idsB, g, wA, wB, gfA, gfB}
   };
@@ -6375,6 +6609,14 @@ function _awardRankingsUncached(period){
       const winnerElo = m.winner==='A' ? eloA : eloB;
       const loserElo  = m.winner==='A' ? eloB : eloA;
       const loserKey  = m.winner==='A' ? tB : tA;
+      // Underdog-Match-Counter (Nenner für Giant-Slayer-Rate):
+      // pro Match das Team mit niedrigerer Pre-Match-Team-Elo zählt — egal ob Sieg
+      // oder Niederlage. Bei Elo-Gleichstand zählt KEIN Team (kein Favorit definiert).
+      if(eloA !== eloB){
+        const underdogKey = eloA < eloB ? tA : tB;
+        if(!agg.tFavoriteMatches[underdogKey]) agg.tFavoriteMatches[underdogKey]=0;
+        agg.tFavoriteMatches[underdogKey]++;
+      }
       // Giant Slayer: Sieger-Team hatte vor dem Spiel weniger Team-Elo
       if(winnerElo < loserElo){
         if(!agg.tGiantSlayer[winnerKey]) agg.tGiantSlayer[winnerKey]=0;
@@ -6509,6 +6751,10 @@ function _awardRankingsUncached(period){
     .sort((a,b) => b.pct - a.pct);
   
   // ═══ ENDGEGNER ═══
+  // Anteil "wir treffen als Gegner aufeinander" an der gemeinsamen Match-Aktivität.
+  // Genutzt: g / min(pGames[a], pGames[b]) — der dominantere Anteil (für den
+  // Spieler mit weniger Spielen ist die Begegnung relativ wichtiger).
+  // Schwellen: min. 3 Begegnungen UND beide Spieler min. 5 Spiele insgesamt.
   const egPairs={};
   for(let i=0; i<ms.length; i++){
     const m=ms[i];
@@ -6523,7 +6769,23 @@ function _awardRankingsUncached(period){
       if(firstWon) egPairs[k].w1++; else egPairs[k].w2++;
     }));
   }
-  const endgegner=Object.values(egPairs).filter(p=>p.g>=2).sort((a,b)=>b.g-a.g);
+  const endgegner=Object.values(egPairs)
+    .filter(p => {
+      const ga = agg.pGames[p.ids[0]] || 0;
+      const gb = agg.pGames[p.ids[1]] || 0;
+      return p.g >= 3 && ga >= 5 && gb >= 5;
+    })
+    .map(p => {
+      const ga = agg.pGames[p.ids[0]];
+      const gb = agg.pGames[p.ids[1]];
+      const denom = Math.min(ga, gb);
+      return {
+        ...p,
+        gA: ga, gB: gb,
+        pct: p.g / denom              // Sortier-Wert
+      };
+    })
+    .sort((a,b) => b.pct - a.pct);
   
   // ═══ CLUTCH ═══
   const clutchList=Object.entries(agg.clutch).filter(([,v])=>v.g>=2)
@@ -6613,17 +6875,38 @@ function _awardRankingsUncached(period){
     }))
     .sort((a,b)=>a.v-b.v);
 
-  // Lucky Charm: meiste 1-Tor-Siege pro Team
-  const luckyCharmList = Object.entries(agg.tCloseWins)
-    .filter(([,v])=>v>0)
-    .map(([k,v])=>({ids:k.split('|'), v}))
-    .sort((a,b)=>b.v-a.v);
+  // Lucky Charm: Anteil knapper Siege (1 Tor Vorsprung) an gemeinsamen Team-Spielen.
+  // Verhindert, dass Vielspieler-Teams durch reine Match-Zahl gewinnen.
+  // Schwelle: min. 10 gemeinsame Spiele für stabile Quote.
+  const luckyCharmList = Object.keys(agg.tCloseWins)
+    .filter(k => (agg.tGames[k]||0) >= 10)
+    .map(k => {
+      const wins = agg.tCloseWins[k];
+      const games = agg.tGames[k];
+      return {
+        ids: k.split('|'),
+        v: wins / games,        // Sortier-Wert: Anteil
+        wins, games             // für Anzeige "X/Y"
+      };
+    })
+    .sort((a,b) => b.v - a.v);
 
-  // Giant Slayer: meiste Siege gegen stärkeres Team
-  const giantSlayerList = Object.entries(agg.tGiantSlayer)
-    .filter(([,v])=>v>0)
-    .map(([k,v])=>({ids:k.split('|'), v}))
-    .sort((a,b)=>b.v-a.v);
+  // Giant Slayer: Anteil der gewonnenen Underdog-Spiele an allen Underdog-Spielen
+  // (=Spielen, in denen das Team vor Match-Beginn die niedrigere Team-Elo hatte).
+  // Sicherstellt, dass die Wertung nicht von Vielspielern dominiert wird.
+  // Schwelle: min. 5 Underdog-Matches für stabile Quote.
+  const giantSlayerList = Object.keys(agg.tGiantSlayer)
+    .filter(k => (agg.tFavoriteMatches[k]||0) >= 5)
+    .map(k => {
+      const wins = agg.tGiantSlayer[k];
+      const games = agg.tFavoriteMatches[k]; // Nenner
+      return {
+        ids: k.split('|'),
+        v: wins / games,        // Sortier-Wert: Quote
+        wins, games
+      };
+    })
+    .sort((a,b) => b.v - a.v);
 
   // Favoritenschreck: pro Team höchsten überwundenen Elo-Unterschied,
   // dann sortiert nach diesem maximalen Wert.
@@ -6636,17 +6919,32 @@ function _awardRankingsUncached(period){
     }))
     .sort((a,b)=>b.v-a.v);
 
-  // Erzfeinde: Team-Paar mit meisten direkten Duellen (min. 2)
+  // Erzfeinde: Team-Paar mit höchstem Anteil "direkte Duelle" an der gemeinsamen
+  // Match-Aktivität beider Teams. Genutzt: g / min(tGamesA, tGamesB) — gibt den
+  // dominantesten Aspekt der Rivalität wieder (für das Team mit weniger Spielen
+  // ist es der größere Anteil).
+  // Schwellen: min. 3 direkte Duelle UND beide Teams min. 5 Spiele insgesamt.
   const rivalryList = Object.values(agg.rivalries)
-    .filter(r=>r.g>=2)
-    .map(r=>({
-      idsA: r.idsA,
-      idsB: r.idsB,
-      ids:  [...r.idsA, ...r.idsB], // für Hidden-Filter (alle 4 müssen sichtbar sein)
-      g: r.g, wA: r.wA, wB: r.wB,
-      gfA: r.gfA, gfB: r.gfB
-    }))
-    .sort((a,b)=>b.g-a.g);
+    .filter(r => {
+      const gA = agg.tGames[r.idsA.slice().sort().join('|')] || 0;
+      const gB = agg.tGames[r.idsB.slice().sort().join('|')] || 0;
+      return r.g >= 3 && gA >= 5 && gB >= 5;
+    })
+    .map(r => {
+      const gA = agg.tGames[r.idsA.slice().sort().join('|')];
+      const gB = agg.tGames[r.idsB.slice().sort().join('|')];
+      const denom = Math.min(gA, gB);
+      return {
+        idsA: r.idsA,
+        idsB: r.idsB,
+        ids:  [...r.idsA, ...r.idsB], // für Hidden-Filter
+        g: r.g, wA: r.wA, wB: r.wB,
+        gfA: r.gfA, gfB: r.gfB,
+        gA, gB,                       // Team-Total-Spiele (für Anzeige im Detail)
+        pct: r.g / denom              // Sortier-Wert: Quote der Rivalität
+      };
+    })
+    .sort((a,b) => b.pct - a.pct);
 
   // ════════════════════════════════════════════════════════════════════
   // HIDDEN-FILTER für ALLE Award-Listen (zentral, konsistent)
@@ -6695,7 +6993,7 @@ function _awardRankingsUncached(period){
   };
 }
 
-// ═══ HILFSFUNKTIONEN (OPTIMIERT) ═══
+// ─── §5.3a Award-Hilfsfunktionen (topNames, topTeamNames, _addColl) ──
 function _computeCarry(ms, snapMap){
   const result={};
   for(let i=0; i<ms.length; i++){
@@ -6817,15 +7115,32 @@ function _computeFormtief(ms){
 }
 
 function _computeZirkus(ms){
-  const zirkus={};
+  // Zirkus = Anteil hoher Niederlagen (Tordifferenz ≥ 5) an gemeinsamen Team-Spielen.
+  // Verhindert Vielspieler-Bias. Schwelle: min. 5 gemeinsame Team-Spiele.
+  const zirkus={};      // teamKey → {ids, v: # hohe Niederlagen, g: # Spiele insgesamt}
+  const tGames={};      // teamKey → # Spiele insgesamt (lokal, da _computeZirkus
+                        //   nicht den globalen agg.tGames sehen kann)
   for(let i=0; i<ms.length; i++){
     const m=ms[i];
-    const diff=Math.abs(m.score_a-m.score_b); if(diff<5)continue;
-    const loserTeam=m.winner==='A'?[m.b1,m.b2].sort().join('|'):[m.a1,m.a2].sort().join('|');
-    if(!zirkus[loserTeam])zirkus[loserTeam]={ids:loserTeam.split('|'),v:0};
+    const teamA=[m.a1,m.a2].sort().join('|');
+    const teamB=[m.b1,m.b2].sort().join('|');
+    tGames[teamA] = (tGames[teamA]||0) + 1;
+    tGames[teamB] = (tGames[teamB]||0) + 1;
+    const diff=Math.abs(m.score_a-m.score_b);
+    if(diff<5) continue;
+    const loserTeam=m.winner==='A'?teamB:teamA;
+    if(!zirkus[loserTeam]) zirkus[loserTeam]={ids:loserTeam.split('|'), v:0};
     zirkus[loserTeam].v++;
   }
-  return Object.values(zirkus).filter(x=>x.v>=1).sort((a,b)=>b.v-a.v);
+  // Anreichern + Mindestschwelle anwenden
+  return Object.values(zirkus)
+    .map(z => {
+      const key = z.ids.slice().sort().join('|');
+      const g = tGames[key] || 0;
+      return { ...z, g, pct: g>0 ? z.v / g : 0 };
+    })
+    .filter(z => z.g >= 5 && z.v >= 1)
+    .sort((a,b) => b.pct - a.pct);
 }
 
 function _computeBarstelle(ms){
@@ -6936,7 +7251,11 @@ function vAwards(){
   if(!R.counts.matches)
     return `<div class="view-head"><h2>Awards</h2><p>${pl}</p></div>${periodBar}${emptyState('trophy','Keine Matches in diesem Zeitraum')}`;
   const tn=ids=>ids.map(pname).join(' & ');
-  // Award-Key → SVG-Icon-Name
+  // ⚑ HOTSPOT — Award-ID -> Icon-Name. DIESE Map existiert 3x identisch in:
+  //   §5.3 vAwards()       (Awards-Tab)
+  //   §8.3 showAward()     (Award-Detail-Sheet)
+  //   §8.4 showPlayerAwards() (Spieler-Awards-Sheet)
+  // Neue Awards brauchen einen Eintrag in ALLEN 3 Maps, sonst fallback auf 'trophy'.
   const AW_IC = {
     wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
     showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
@@ -7071,7 +7390,7 @@ function vAwards(){
   if(ic0 && ic0.v >= 1) _addColl(_topSingleIds(R.iceList, x => x.v));
   if(pm0) _addColl(_topSingleIds(R.plusMinusList, x => Math.round(x.v*10)));
   // Spezial
-  if(eg0) _addColl(_topTeamIds(R.endgegner, x => x.g));
+  if(eg0) _addColl(_topTeamIds(R.endgegner, x => Math.round(x.pct*1000)));
   if(cl0) _addColl(_topSingleIds(R.clutchList, x => Math.round(x.wr*100)));
   if(ck0 && ck0.v >= 1) _addColl(_topSingleIds(R.carryList, x => x.v));
   if(sl0) _addColl(_topSingleIds(R.soloList, x => Math.round(x.wr*100)));
@@ -7083,12 +7402,12 @@ function vAwards(){
   // ── NEUE TEAM-AWARDS v4 (positive Awards → in Sammler-Counter) ──
   if(un0) _addColl(_topTeamIds(R.unstoppableList, x => x.v));
   if(cw0) _addColl(_topTeamIds(R.concreteWallList, x => -Math.round(x.v*100))); // niedriger = besser
-  if(lc0) _addColl(_topTeamIds(R.luckyCharmList, x => x.v));
-  if(gs0) _addColl(_topTeamIds(R.giantSlayerList, x => x.v));
-  // Rivalry zählt für alle 4 Spieler beider Teams (idsA + idsB)
+  if(lc0) _addColl(_topTeamIds(R.luckyCharmList, x => Math.round(x.v*1000)));   // Quote
+  if(gs0) _addColl(_topTeamIds(R.giantSlayerList, x => Math.round(x.v*1000)));  // Quote
+  // Rivalry zählt für alle 4 Spieler beider Teams (idsA + idsB), Sortierung per Quote.
   if(rv0){
-    const topVal = rv0.g;
-    R.rivalryList.filter(x => x.g === topVal).forEach(x => _addColl([...x.idsA, ...x.idsB]));
+    const topPct = rv0.pct;
+    R.rivalryList.filter(x => x.pct === topPct).forEach(x => _addColl([...x.idsA, ...x.idsB]));
   }
   // Favoritenschreck ist semantisch negativ/dramatisch (für den Verlierer) — wir werten
   // ihn neutral, also NICHT im Award-Sammler.
@@ -7218,11 +7537,11 @@ function vAwards(){
     : empty('concreteWall','blue','Betonmauer'));
   // Glückspilze: meiste 1-Tor-Siege
   teams.push(lc0
-    ? card('luckyCharm','acid','Glückspilze',lc0.ids,esc(topTeamNames(R.luckyCharmList,x=>x.v)),lc0.v+'× mit 1 Tor Vorsprung',lc0.v)
+    ? card('luckyCharm','acid','Glückspilze',lc0.ids,esc(topTeamNames(R.luckyCharmList,x=>Math.round(x.v*1000))),Math.round(lc0.v*100)+'% knappe Siege ('+lc0.wins+'/'+lc0.games+')',Math.round(lc0.v*100)+'%')
     : empty('luckyCharm','acid','Glückspilze'));
   // Giant Slayer: meiste Siege gegen stärkere Teams
   teams.push(gs0
-    ? card('giantSlayer','orange','Giant Slayer',gs0.ids,esc(topTeamNames(R.giantSlayerList,x=>x.v)),gs0.v+' Favoriten besiegt',gs0.v)
+    ? card('giantSlayer','orange','Giant Slayer',gs0.ids,esc(topTeamNames(R.giantSlayerList,x=>Math.round(x.v*1000))),Math.round(gs0.v*100)+'% Favoriten besiegt ('+gs0.wins+'/'+gs0.games+')',Math.round(gs0.v*100)+'%')
     : empty('giantSlayer','orange','Giant Slayer'));
   // Favoritenschreck: höchster überwundener Team-Elo-Unterschied (Match-Award je Team)
   teams.push(fs0
@@ -7231,7 +7550,7 @@ function vAwards(){
   // Erzfeinde: 4-Spieler-Rivalität — beide Teams im name-String "X & Y vs Z & W"
   if(rv0){
     const rivalryName = pname(rv0.idsA[0])+' & '+pname(rv0.idsA[1])+' vs '+pname(rv0.idsB[0])+' & '+pname(rv0.idsB[1]);
-    teams.push(card('rivalry','purple','Erzfeinde',[...rv0.idsA, ...rv0.idsB],esc(rivalryName),rv0.g+' direkte Duelle',rv0.g));
+    teams.push(card('rivalry','purple','Erzfeinde',[...rv0.idsA, ...rv0.idsB],esc(rivalryName),Math.round(rv0.pct*100)+'% ihrer Spiele ('+rv0.g+' Duelle)',Math.round(rv0.pct*100)+'%'));
   } else {
     teams.push(empty('rivalry','purple','Erzfeinde'));
   }
@@ -7257,7 +7576,7 @@ function vAwards(){
   // ── SPEZIAL ──
   const special=[];
   special.push(eg0
-    ? card('endgegner','purple','Endgegner',eg0.ids,esc(topTeamNames(R.endgegner,x=>x.g)),eg0.g+' Begegnungen',eg0.g)
+    ? card('endgegner','purple','Endgegner',eg0.ids,esc(topTeamNames(R.endgegner,x=>Math.round(x.pct*1000))),Math.round(eg0.pct*100)+'% als Gegner ('+eg0.g+'×)',Math.round(eg0.pct*100)+'%')
     : empty('endgegner','purple','Endgegner'));
   special.push(cl0
     ? card('clutch','acid','Clutch-Player',[cl0.id],esc(topNames(R.clutchList,x=>Math.round(x.wr*100),x=>pname(x.id))),cl0.g+' knappe Spiele',Math.round(cl0.wr*100)+'%')
@@ -7306,7 +7625,7 @@ function vAwards(){
     ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1),{neg:true})
     : empty('worstDef','red','Löchrigste Abwehr'));
   neg.push(zk0
-    ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>x.v)),zk0.v+'× 5+ Tore kassiert',zk0.v,{neg:true})
+    ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>Math.round(x.pct*1000))),Math.round(zk0.pct*100)+'% hohe Niederlagen ('+zk0.v+'/'+zk0.g+')',Math.round(zk0.pct*100)+'%',{neg:true})
     : empty('zirkus','red','Zirkus'));
   neg.push(wt0
     ? card('worstTeam','red','Schlechtestes Team',wt0.ids,esc(topTeamNames(R.worstTeam,x=>Math.round(x.w/x.g*100))),wt0.w+'–'+(wt0.g-wt0.w),Math.round(wt0.w/wt0.g*100)+'%',{neg:true})
@@ -7338,7 +7657,13 @@ function vAwards(){
     ${html}`;
 }
 
-// Award-Detail mit Platz 1–3 und Erklärung
+// ⚑ HOTSPOT — Award-Metadaten (Titel, Klasse, Erklärung).
+// Eine fehlende Erweiterung hier führt dazu, dass das Detail-Sheet im
+// showAward() nicht öffnen kann (meta = undefined -> return).
+// Reihenfolge der Felder pro Award:
+//   title — Anzeigename
+//   cls   — Farbklasse (acid|blue|gold|orange|purple|red)
+//   why   — Knappe Erklärung (1 Satz, idealerweise inkl. Mindestschwellen)
 const AWARD_META={
   wins:        {title:'Meiste Siege',          cls:'gold',  why:'Wer hat im Zeitraum die meisten Spiele gewonnen.'},
   mvt:         {title:'Bestes Team',           cls:'gold',  why:'Das Duo, das im Zeitraum zusammen die meisten Elo-Punkte geholt hat.'},
@@ -7347,7 +7672,7 @@ const AWARD_META={
   scorer:      {title:'Torjäger',              cls:'orange',why:'Höchster Tore-Schnitt pro Spiel als Stürmer. Min. 2 Sturm-Spiele.'},
   wall:        {title:'Eiserne Abwehr',        cls:'blue',  why:'Niedrigster Gegentore-Schnitt pro Spiel als Verteidiger. Min. 2 Abwehr-Spiele.'},
   ice:         {title:'Eiskalt',               cls:'blue',  why:'Meiste Zu-Null-Siege als Verteidiger.'},
-  endgegner:   {title:'Endgegner',             cls:'purple',why:'Das Spieler-Duo, das am häufigsten als Gegner aufeinandertrifft. Min. 2 Begegnungen.'},
+  endgegner:   {title:'Endgegner',             cls:'purple',why:'Spieler-Paar mit dem höchsten Anteil "wir treffen als Gegner aufeinander" an der gemeinsamen Match-Aktivität. Min. 3 Begegnungen, beide Spieler min. 5 Spiele.'},
   clutch:      {title:'Clutch-Player',         cls:'acid',  why:'Höchste Siegrate in knappen Spielen (Tordifferenz ≤ 2). Min. 2 knappe Spiele.'},
   carryKing:   {title:'Carry-King',            cls:'acid',  why:'Meiste Siege, bei denen der Mitspieler einer der drei schwächsten Spieler im Match war.'},
   bestDuo:     {title:'Unzertrennlich',        cls:'blue',  why:'Duo mit den meisten gemeinsamen Spielen im Zeitraum.'},
@@ -7364,7 +7689,7 @@ const AWARD_META={
   showmaster:  {title:'Showmaster',            cls:'gold',  why:'Meiste 10:0-Siege im Zeitraum.'},
   solo:        {title:'Einzelkämpfer',         cls:'acid',  why:'Höchste Siegrate in Spielen mit einem Bottom-3-Mitspieler. Min. 2 solche Spiele.'},
   formtief:    {title:'Formtief',              cls:'red',   why:'Größter Abstand zwischen persönlichem Peak-Elo und aktueller Elo (innerhalb einer Saison).'},
-  zirkus:      {title:'Zirkus',                cls:'red',   why:'Team mit den meisten Niederlagen mit 5+ Toren Unterschied.'},
+  zirkus:      {title:'Zirkus',                cls:'red',   why:'Team mit dem höchsten Anteil hoher Niederlagen (5+ Tore Unterschied) an den gemeinsamen Spielen. Min. 5 Team-Spiele.'},
   baustelle:   {title:'Baustelle',             cls:'red',   why:'Team mit der längsten gemeinsamen Niederlagenserie.'},
   peakElo:     {title:'Peak Elo',              cls:'gold',  why:'Höchster jemals erreichter Saison-Elo-Stand, saison-übergreifend.'},
   weekKing:    {title:'Wochenkönig',           cls:'gold',  why:'Spieler mit den meisten Player-of-the-Week-Auszeichnungen. Die laufende Woche wird nicht gezählt.'},
@@ -7376,14 +7701,16 @@ const AWARD_META={
   // ── TEAM-AWARDS v4 ──
   unstoppable: {title:'Unaufhaltsam',          cls:'acid',  why:'Team mit der längsten Siegesserie. Eine Niederlage beendet die Serie sofort.'},
   concreteWall:{title:'Betonmauer',            cls:'blue',  why:'Team mit dem niedrigsten Gegentore-Schnitt pro Spiel. Min. 10 gemeinsame Spiele.'},
-  luckyCharm:  {title:'Glückspilze',           cls:'acid',  why:'Team mit den meisten Siegen mit nur einem Tor Vorsprung.'},
-  giantSlayer: {title:'Giant Slayer',          cls:'orange',why:'Team mit den meisten Siegen gegen einen vor dem Spiel stärkeren Gegner.'},
+  luckyCharm:  {title:'Glückspilze',           cls:'acid',  why:'Team mit dem höchsten Anteil knapper Siege (1 Tor Vorsprung) an den gemeinsamen Spielen. Min. 10 Team-Spiele.'},
+  giantSlayer: {title:'Giant Slayer',          cls:'orange',why:'Team mit der höchsten Erfolgsquote als Underdog (Quote: Siege gegen stärkeres Team / Spiele gegen ein stärkeres Team). Min. 5 Underdog-Matches.'},
   favoritenschreck:{title:'Favoritenschreck',  cls:'red',   why:'Größter Team-Elo-Unterschied, der durch einen Sieg überwunden wurde.'},
-  rivalry:     {title:'Erzfeinde',             cls:'purple',why:'Team-Paar mit den meisten direkten Aufeinandertreffen. Min. 2 Duelle.'}
+  rivalry:     {title:'Erzfeinde',             cls:'purple',why:'Team-Paar mit dem höchsten Anteil direkter Duelle an der gemeinsamen Match-Aktivität. Min. 3 Duelle, beide Teams min. 5 Spiele.'}
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
   const tn=ids=>ids.map(pname).join(' & ');
+  // ⚑ HOTSPOT — Spiegel von AW_IC aus §5.3 (vAwards). Bei neuen Awards HIER
+  //  und in den anderen 2 AW_IC-Definitionen gleichzeitig erweitern.
   const AW_IC = {
     wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
     showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
@@ -7499,21 +7826,21 @@ function showAward(key){
       const bLeading = top.wB > top.wA;
       bodyHtml = `
         <div class="aw-match">
-          <div class="aw-match-score">${top.g}</div>
-          <div class="aw-match-meta">direkte Duelle · ${top.gfA}:${top.gfB} Tore gesamt</div>
+          <div class="aw-match-score">${Math.round(top.pct*100)}%</div>
+          <div class="aw-match-meta">${top.g} direkte Duelle · ${top.gfA}:${top.gfB} Tore gesamt</div>
           <div class="aw-match-teams">
             <div class="aw-match-team" data-li-team="${esc(top.idsA.slice().sort().join('|'))}" style="cursor:pointer">
               ${aLeading?'<div class="aw-match-winner">Führt</div>':''}
               ${awMiniPair(top.idsA[0],top.idsA[1])}
               <div class="aw-match-team-name">${esc(teamAName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} Siege</div>
+              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} S · ${top.gA} Sp.</div>
             </div>
             <div class="aw-match-vs">vs</div>
             <div class="aw-match-team" data-li-team="${esc(top.idsB.slice().sort().join('|'))}" style="cursor:pointer">
               ${bLeading?'<div class="aw-match-winner">Führt</div>':''}
               ${awMiniPair(top.idsB[0],top.idsB[1])}
               <div class="aw-match-team-name">${esc(teamBName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} Siege</div>
+              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} S · ${top.gB} Sp.</div>
             </div>
           </div>
         </div>`;
@@ -7529,7 +7856,7 @@ function showAward(key){
               <div class="aw-li-name" style="font-size:12px">${esc(aN)}</div>
               <div class="aw-li-name" style="font-size:9.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px">vs ${esc(bN)}</div>
             </div>
-            <div class="aw-li-val">${e.g} Duelle</div>
+            <div class="aw-li-val">${Math.round(e.pct*100)}% · ${e.g}×</div>
           </div>`;
         }).join('');
         bodyHtml += `<div class="aw-list-label">Weitere Rivalitäten</div><div class="aw-list">${items}</div>`;
@@ -7550,7 +7877,7 @@ function showAward(key){
         case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
         case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
         case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
-        case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:x.g+' Beg.',sort:x.g}));
+        case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.g+'×)',sort:Math.round(x.pct*1000)}));
         case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Zu-Null',sort:x.v}));
         case 'worstTeam':  return R.worstTeam.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.w/x.g*100)+'%',sort:-Math.round(x.w/x.g*100)}));
@@ -7562,7 +7889,7 @@ function showAward(key){
         case 'showmaster': return R.showmasterList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× 10:0',sort:x.v}));
         case 'solo':       return R.soloList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'formtief':   return R.formtief.map(x=>({ids:[x.id],name:pname(x.id),val:'-'+Math.round(x.drop)+' Elo',sort:Math.round(x.drop)}));
-        case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+'× 5+ Tore',sort:x.v}));
+        case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         case 'baustelle':  return R.baustelleList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.best+'er Serie',sort:x.best}));
         case 'peakElo':    return (R.peakEloList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Elo',sort:x.v}));
         case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTW',sort:x.v}));
@@ -7574,8 +7901,8 @@ function showAward(key){
         // ── NEUE TEAM-AWARDS v4 ──
         case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
         case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
-        case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' knappe Siege',sort:x.v}));
-        case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Favoriten besiegt',sort:x.v}));
+        case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
+        case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         default: return [];
       }
     })();
@@ -7779,7 +8106,9 @@ function showAward(key){
 function dedupeBy(arr,keyFn){const seen=new Set(),out=[];for(const x of arr){const k=keyFn(x);if(seen.has(k))continue;seen.add(k);out.push(x);}return out;}
 function mscoreLabel(m){return m.score_a+':'+m.score_b;}
 
-// ════════ VIEW: TEAMS ════════
+// ╔═══ §5.4 ─── VIEW: TEAMS ────────────────────────────────────────────╗
+//     Team-Tab mit Team-Statistiken und Top-Teams.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function vTeams(){
   const T=teamStats().filter(t=>t.g>=4);
   if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Min. 4 gemeinsame Spiele</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
@@ -7894,7 +8223,9 @@ function vTeams(){
 }
 
 
-// ════════ VIEW: HISTORY (mit Filter) ════════
+// ╔═══ §5.5 ─── VIEW: HISTORY (Match-Liste mit Filter) ─────────────────╗
+//     Filterbar nach Spieler. Zeigt Badge-Chips pro Match.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function vHistory(){
   if(!matches.length)return `<div class="view-head"><h2>Verlauf</h2></div>${emptyState('scroll','Noch keine Matches')}`;
   let list=[...matches].reverse();
@@ -7954,7 +8285,9 @@ function vHistory(){
 }
 
 
-// ════════ VIEW: MATCH ════════
+// ╔═══ §5.6 ─── VIEW: MATCH-EINGABE ────────────────────────────────────╗
+//     Spieler-Auswahl + Score-Eingabe für neues Match.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 let M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
 function vMatch(){
   const pos=k=>`<select data-pos="${k}"><option value="atk" ${M['p'+k]==='atk'?'selected':''}>↑ Sturm</option><option value="def" ${M['p'+k]==='def'?'selected':''}>↓ Abwehr</option></select>`;
@@ -7992,7 +8325,9 @@ function vMatch(){
     </div>`;
 }
 
-// ════════ VIEW: SETTINGS ════════
+// ╔═══ §5.7 ─── VIEW: SETTINGS ─────────────────────────────────────────╗
+//     Spieler verwalten, Saison-Recap, App-Reset (hinter Passwort-Lock).
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function vSettings(){
   const sl=(id,name,val,min,max,suf)=>`<div class="slider-wrap">
     <div class="sh"><span class="sn">${name}</span><span class="sv"><span id="${id}v">${val}</span>${suf||''}</span></div>
@@ -8123,7 +8458,10 @@ function vSettings(){
     `;
 }
 
-// ════════ MATCH PREVIEW & LOGIC ════════
+// ╔═══ §5.8 ─── MATCH PREVIEW & SAVE-LOGIK ─────────────────────────────╗
+//     Live-Preview der Elo-Deltas + doSaveMatch() schreibt Match und zeigt
+//     Achievement-Toasts (Badge-Trigger via getBadgeEarnedCache).
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function readM(){
   document.querySelectorAll('[data-p]').forEach(s=>M[s.dataset.p]=s.value);
   document.querySelectorAll('[data-pos]').forEach(s=>M['p'+s.dataset.pos]=s.value);
@@ -8235,7 +8573,9 @@ async function doSaveMatch(){
   tab = 'ranking'; await loadAll();
 }
 
-// ════════ DETAIL SHEET ════════
+// ╔═══ §6.1 ─── DETAIL-SHEET-INFRASTRUKTUR ─────────────────────────────╗
+//     Bottom-Sheet-System mit Swipe-to-close. openSheet()/closeSheet().
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function openSheet(html){
   const sheet=document.getElementById('sheet');
   const bg=document.getElementById('sheetBg');
@@ -8385,11 +8725,30 @@ function bindSheetSwipe(){
 // Hintergrund-Klick schließt Sheet
 document.getElementById('sheetBg').onclick=closeSheet;
 
-// ════════ BADGE-SYSTEM (permanente Auszeichnungen) ════════
+// ╔═══ §7 ─── BADGE-SYSTEM (permanente Auszeichnungen) ─────────────────╗
+//     ⚑ HOTSPOT — neue Badges benötigen Updates an MEHREREN Stellen.
+//
+//     Architektur:
+//       BADGES[]              — Definitionen [§7.1]
+//       BADGE_RARITY{}        — Klassen-Map  [§7.2]
+//       RARITY_META{}         — Anzeige-Map  [§7.2]
+//       count*-Funktionen     — Aggregat-Counter (für Profil) [§7.3]
+//       getBadgeEarnedCache() — Match-Trigger fire() [§7.4]
+//
+//     Pro Match werden im Cache-Walk inkrementelle States pro Spieler
+//     geführt; fire('badge_id') schreibt einen Eintrag. Ohne fire() taucht
+//     das Badge NICHT im Match-Review/Achievement-Toast auf — nur im Profil.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Badges sind dauerhafte Achievements, die ein Spieler einmal freischaltet und für immer behält.
 // Berechnet clientseitig aus der Match-Historie — kein DB-Umbau nötig.
 // Reihenfolge im Array = Anzeige-Reihenfolge im Badge-Sheet (Grid mit 2 Spalten).
 // Paare unten: jede Zeile hier = eine Zeile im 2-Spalten-Grid (links/rechts).
+// ⚑ HOTSPOT — BADGES-Array. Neue Badges brauchen:
+//   - Eintrag hier (mit ic/name/desc/count)
+//   - Eintrag in BADGE_RARITY (§7.2) — sonst kein Rarity-Bucket!
+//   - ggf. fire('badge_id') in getBadgeEarnedCache (§7.4) — sonst kein
+//     Match-Trigger / kein Achievement-Toast / keine Chip im Match-Review
+//   - RARITY_META.<rarity>.total +1 setzen
 const BADGES=[
   // ══ EINMALIGE BADGES (Karriere-Meilensteine) ══
   // Zeile 1 — Debütant, Stammgast
@@ -8511,6 +8870,9 @@ const BADGES=[
 // sauber aufgeht. Total = 36 Badges (= BADGES-Array-Länge).
 // Reihenfolge innerhalb jeder Gruppe folgt der thematischen BADGES-Reihenfolge.
 // ════════════════════════════════════════════════════════════════════
+// ⚑ HOTSPOT — BADGE_RARITY: ordnet jeder Badge-ID eine Rarity-Klasse zu.
+// MUSS alle IDs aus BADGES (§7.1) abdecken — fehlt eine, fliegt die Badge
+// aus der UI (kein Bucket, kein Icon-Wrapper).
 const BADGE_RARITY = {
   // LEGENDARY (6)
   dynasty_600:     'legendary', // Dynastie (600 Elo)
@@ -8568,7 +8930,7 @@ const RARITY_ORDER = ['legendary','rare','common','negative'];
 // und vergisst BADGE_RARITY zu erweitern — verhindert undefined-Bugs).
 function rarityOf(badgeId){ return BADGE_RARITY[badgeId] || 'common'; }
 
-// ─── Helfer für die neuen Badges ───
+// ─── §7.3 Count-Funktionen für die neuen Badges ──────────────────────
 // Saison-Peak-Elo eines Spielers: höchster jemals erreichter Saison-Elo,
 // überlebt Saison-Resets (kommt direkt aus dem globalen Sim-Cache).
 function seasonPeakFor(id){
@@ -9432,25 +9794,27 @@ function playerAwards(id){
   const teamValFns={
     mvt:x=>Math.round(x.v), bestDuo:x=>x.g,
     worstTeam:x=>-Math.round(x.w/x.g*100),
-    endgegner:x=>x.g,
-    zirkus:x=>x.v, baustelle:x=>x.best,
+    endgegner:x=>Math.round(x.pct*1000),       // rate-basiert
+    zirkus:x=>Math.round(x.pct*1000),          // rate-basiert
+    baustelle:x=>x.best,
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppable:x=>x.v,
-    concreteWall:x=>-Math.round(x.v*100), // niedriger = besser → negieren
-    luckyCharm:x=>x.v,
-    giantSlayer:x=>x.v,
+    concreteWall:x=>-Math.round(x.v*100),      // niedriger = besser → negieren
+    luckyCharm:x=>Math.round(x.v*1000),        // rate-basiert (v = Quote)
+    giantSlayer:x=>Math.round(x.v*1000),       // rate-basiert (v = Quote)
     favoritenschreck:x=>x.v
   };
   const teamDisplayFns={
     mvt:x=>(x.v>=0?'+':'')+Math.round(x.v), bestDuo:x=>x.g+' Sp.',
     worstTeam:x=>Math.round(x.w/x.g*100)+'%',
-    endgegner:x=>x.g+'×',
-    zirkus:x=>x.v+'×', baustelle:x=>x.best+'er',
+    endgegner:x=>Math.round(x.pct*100)+'%',
+    zirkus:x=>Math.round(x.pct*100)+'%',
+    baustelle:x=>x.best+'er',
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppable:x=>x.v+'er',
     concreteWall:x=>x.v.toFixed(2),
-    luckyCharm:x=>x.v+'×',
-    giantSlayer:x=>x.v+'×',
+    luckyCharm:x=>Math.round(x.v*100)+'%',
+    giantSlayer:x=>Math.round(x.v*100)+'%',
     favoritenschreck:x=>x.v+' Elo'
   };
   Object.entries(teamKeys).forEach(([key,arr])=>{
@@ -9469,7 +9833,7 @@ function playerAwards(id){
   // Partner-Anzeige: das jeweils andere Team ("vs X & Y")
   if(R.rivalryList && R.rivalryList.length){
     const rArr = R.rivalryList;
-    const valFn = x => x.g;
+    const valFn = x => Math.round(x.pct*1000); // rate-basiert
     const rank = getRank(rArr, valFn, x => [...x.idsA, ...x.idsB].includes(id));
     if(rank>=0 && rank<=2){
       const entry = rArr.find(x => [...x.idsA, ...x.idsB].includes(id));
@@ -9478,7 +9842,7 @@ function playerAwards(id){
         const opponentIds = onA ? entry.idsB : entry.idsA;
         const partnerLabel = pname(opponentIds[0])+' & '+pname(opponentIds[1]);
         // partner=null signalisiert dem Renderer "Spezial-Label statt Avatar-Plaque"
-        found.push({key:'rivalry', rank, partner:null, partnerLabel:'vs '+partnerLabel, val:entry.g+' Duelle'});
+        found.push({key:'rivalry', rank, partner:null, partnerLabel:'vs '+partnerLabel, val:Math.round(entry.pct*100)+'%'});
       }
     }
   }
@@ -9671,7 +10035,7 @@ function showPlayer(id){
   // Negative: Schandtafel + negative Rollen-Awards (Zahnloser Stürmer, Löchrigste Abwehr).
   const POSITIVE_KEYS = new Set([
     'wins','perfect','clutch','carryKing','solo',
-    'grinder','showmaster','onFire','streaks','upset','biggest','peakElo',
+    'grinder','showmaster','onFire','streaks','peakElo',
     'weekKing','dayKing',
     // Rollen-Awards (positiv)
     'scorer','wall','ice',
@@ -9680,6 +10044,8 @@ function showPlayer(id){
   ]);
   const TEAM_KEYS = new Set([
     'mvt','bestDuo','endgegner',
+    // Match-Awards sind Team-Leistungen — Sieg/Coup eines konkreten Duos.
+    'upset','biggest',
     // ── NEUE TEAM-AWARDS v4 ──
     'unstoppable','concreteWall','luckyCharm','giantSlayer','rivalry'
   ]);
@@ -10414,6 +10780,8 @@ function showRangSystem(){
 function showPlayerAwards(playerId, awards){
   const p=pmap()[playerId]; if(!p)return;
   // Mapping wie in vAwards/AW_IC für konsistente Icons
+  // ⚑ HOTSPOT — Spiegel von AW_IC aus §5.3 (vAwards). Bei neuen Awards HIER
+  //  und in den anderen 2 AW_IC-Definitionen gleichzeitig erweitern.
   const AW_IC = {
     wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
     showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
@@ -10575,7 +10943,9 @@ function showPlayerBadges(playerId){
   if(back) back.onclick = () => { closeSheet(); setTimeout(()=>showPlayer(playerId), 350); };
 }
 
-// ════════ BILANZEN-SHEET (volle Mitspieler-Liste) ════════
+// ╔═══ §9.1 ─── BILANZEN-SHEET (Mitspieler-Liste) ──────────────────────╗
+//     H2H-Bilanz gegen alle Mitspieler.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Aufgerufen aus dem Profil-Sheet via ppH2HBtn. Zeigt ALLE Mitspieler mit
 // ≥3 gemeinsamen Matches, sortiert nach Häufigkeit. Pro Zeile: Avatar,
 // Name, T/G-Bilanz, Total. Klick → showH2H (asymmetrisch: Profil-Spieler
@@ -10715,7 +11085,9 @@ function showAddPlayer(){
   ni.onkeydown=e=>{if(e.key==='Enter')go();};
 }
 
-// ════════ BIND ════════
+// ╔═══ §10.1 ─── BIND (globaler Click-Dispatcher) ──────────────────────╗
+//     Zentrale Stelle, die data-* Attribute auf Click-Handler mappt.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function bind(){
   // ranking search & filter
   const rs=document.getElementById('rankSearch');
@@ -11006,7 +11378,9 @@ function bindSlider(id,key,toState,toLabel){
   };
 }
 
-// ════════ HEAD-TO-HEAD PROFIL SHEET ════════
+// ╔═══ §9.2 ─── HEAD-TO-HEAD PROFIL SHEET ──────────────────────────────╗
+//     Vergleich zweier Spieler in direkten Begegnungen.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 // Zwei-Spieler-Bilanz: zusammen (als Teamkollegen) UND gegen (als Gegner).
 // Aus Sicht von Spieler A; tauscht man die Reihenfolge der Args, dreht sich
 // die Gegner-Perspektive um. Konsistent zum showTeam-Sheet-Design.
@@ -11181,7 +11555,9 @@ function showH2H(idA, idB){
   }
 }
 
-// ════════ TEAM PROFIL SHEET ════════
+// ╔═══ §9.3 ─── TEAM PROFIL SHEET ──────────────────────────────────────╗
+//     Statistiken für ein konkretes Duo.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 function showTeam(p1Id,p2Id){
   const pm=pmap();
   const pA=pm[p1Id], pB=pm[p2Id];
@@ -11627,7 +12003,9 @@ function showMatchDetail(mid){
   });
 }
 
-// ════════ MATCH BEARBEITEN ════════
+// ╔═══ §9.4 ─── MATCH BEARBEITEN ───────────────────────────────────────╗
+//     Edit-Sheet für nachträgliche Korrektur eines Matches.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 let E={};  // Edit-Zustand
 function showEditMatch(mid){
   const m=matches.find(x=>x.id===mid);if(!m)return;
@@ -11697,7 +12075,9 @@ function showEditMatch(mid){
   checkE();
 }
 
-// ════════ LOCK ════════
+// ╔═══ §10.2 ─── LOCK-SYSTEM (Settings-Passwort) ───────────────────────╗
+//     SHA-256-Hash, Hash gespeichert in config.
+// ╚═════════════════════════════════════════════════════════════════════════╝
 const SETTINGS_HASH='03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4';
 let settingsUnlocked=false;
 
@@ -11771,7 +12151,7 @@ document.getElementById('settingsBtn').onclick=openSettingsLock;
 document.getElementById('logoHome').onclick=()=>{tab='ranking';period='season';rankSearch='';closeSheet();render();window.scrollTo(0,0);};
 document.getElementById('fab').onclick=()=>{tab='match';render();window.scrollTo(0,0);};
 
-// ════════ HELPERS ════════
+// ╔═══ §10.3 ─── HELPERS (Achievement-Toasts, Utils) ───────────────────╗
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 function dateStr(ts){return new Date(ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}
 function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
@@ -11822,7 +12202,7 @@ function _processAchToastQueue(){
   }, 2600);
 }
 
-// ════════ BOOT ════════
+// ╔═══ §10.4 ─── BOOT (Initialisierung) ────────────────────────────────╗
 loadAll();
 checkForUpdate();
 // Alle 5 Min nochmal prüfen, ob neue Version deployed wurde
