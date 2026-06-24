@@ -8918,7 +8918,7 @@ const BADGES=[
   // Zeile 16 — Pflichtaufgabe, Award-Sammler
   {id:'pflichtaufgabe',ic:'clipboard',name:'Pflichtaufgabe',desc:'Sieg gegen mindestens einen Gegner aus den Bottom 3 der Saison-Endrangliste (ab 6 Saison-Teilnehmern)',
     multi:true,count:(id,ms)=>countBottomThreeWins(id,ms)}, */
-  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Player-of-the-Day und 2 Player-of-the-Week Auszeichnungen gesammelt',
+  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison min. 5x Tagessieger und 2x Wochensieger',
     multi:true,count:(id,ms)=>countAwardCollector(id)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
   {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
