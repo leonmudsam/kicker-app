@@ -2426,7 +2426,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.23.09';
+const BUILD_VERSION='2026.06.23.10';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -4719,6 +4719,13 @@ function teamDetail(p1,p2){
   // Positions-Tracking für ids[0]; ids[1] ist immer die Gegenposition
   // (im 2v2-Modell hat der Partner immer atk↔def zum Mate).
   let p0Atk=0, p0Def=0;
+  // Aufstellungs-Quote pro Variante (für "Beste Aufstellung")
+  let p0AtkWins=0, p0DefWins=0;
+  // Fun-Facts-Aggregate
+  let shutouts=0;       // Zu-Null-Siege (myGa===0 und gewonnen)
+  let shutoutsAgainst=0;// Zu-Null-Niederlagen (myGf===0 und verloren)
+  let perfectWins=0;    // 10:0-Siege
+  let scoreCounts={};   // "myGf:myGa" → Anzahl (häufigster Endstand)
 
   for(const m of matches){
     const onA=(m.a1===ids[0]&&m.a2===ids[1])||(m.a1===ids[1]&&m.a2===ids[0]);
@@ -4736,11 +4743,11 @@ function teamDetail(p1,p2){
       ? (m.a1===ids[0] ? 'a1' : 'a2')
       : (m.b1===ids[0] ? 'b1' : 'b2');
     const p0Pos = m[slot+'_pos'] || 'atk';
-    if(p0Pos==='atk') p0Atk++; else p0Def++;
+    if(p0Pos==='atk'){ p0Atk++; if(won) p0AtkWins++; }
+    else             { p0Def++; if(won) p0DefWins++; }
 
     gf+=myGf; ga+=myGa;
     if(won) wins++; else losses++;
-    // Nutze gSim.teamElo für konsistente Berechnung (verhindert Rundungsfehler)    // wird unten nach dem Loop gesetzt
     const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
     opps.forEach(oid=>{
       if(!oppStats[oid]) oppStats[oid]={g:0,w:0};
@@ -4749,17 +4756,21 @@ function teamDetail(p1,p2){
 
     teamMatches.push({m,onA,won,myGf,myGa,diff,expected,t});
 
+    // Fun-Facts-Tracking
+    if(won && myGa===0) shutouts++;
+    if(!won && myGf===0) shutoutsAgainst++;
+    if(won && myGf===10 && myGa===0) perfectWins++;
+    const scoreKey = myGf+':'+myGa;
+    scoreCounts[scoreKey] = (scoreCounts[scoreKey]||0) + 1;
+
     if(won){
-      // Höchster Sieg: größte Tor-Diff, bei Gleichstand der neueste
       if(!biggestWin || diff>biggestWin.diff || (diff===biggestWin.diff && t>biggestWin.t)){
         biggestWin={m,diff,t,score:myGf+':'+myGa};
       }
-      // Größter Upset: niedrigste Erwartung (gewonnenes Spiel), bei Gleichstand der neueste
       if(!biggestUpset || expected<biggestUpset.expected || (expected===biggestUpset.expected && t>biggestUpset.t)){
         biggestUpset={m,expected,t,score:myGf+':'+myGa};
       }
     } else {
-      // Schlimmste Niederlage: größte negative Diff, bei Gleichstand der neueste
       const lossDiff=-diff;
       if(!biggestLoss || lossDiff>biggestLoss.lossDiff || (lossDiff===biggestLoss.lossDiff && t>biggestLoss.t)){
         biggestLoss={m,lossDiff,t,score:myGf+':'+myGa};
@@ -4775,14 +4786,33 @@ function teamDetail(p1,p2){
     if(!nemesis || wr<nemesis.wr || (wr===nemesis.wr && s.g>nemesis.g)) nemesis={oid,wr,g:s.g,w:s.w};
     if(!favorite || wr>favorite.wr || (wr===favorite.wr && s.g>favorite.g)) favorite={oid,wr,g:s.g,w:s.w};
   });
-  // Wenn Erzgegner == Lieblingsgegner (alle Gegner gleiche WR), nicht doppelt anzeigen
   if(nemesis && favorite && nemesis.oid===favorite.oid){ favorite=null; }
 
   // Upset nur zeigen wenn tatsächlich ein Underdog-Sieg (Erwartung < 45%)
   if(biggestUpset && biggestUpset.expected>=0.45) biggestUpset=null;
 
-  // Letzte 5 Matches (neueste zuerst)
-  const recent=[...teamMatches].sort((a,b)=>b.t-a.t).slice(0,5);
+  // ═══ STREAKS (chronologisch) ═══
+  const chronoMatches=[...teamMatches].sort((a,b)=>a.t-b.t);
+  let currentStreak=0; // positiv=Sieges-, negativ=Niederlagen-Serie
+  let longestWinStreak=0, longestLossStreak=0;
+  let curWin=0, curLoss=0;
+  chronoMatches.forEach(tm=>{
+    if(tm.won){
+      curWin++; if(curWin>longestWinStreak) longestWinStreak=curWin;
+      curLoss=0;
+    } else {
+      curLoss++; if(curLoss>longestLossStreak) longestLossStreak=curLoss;
+      curWin=0;
+    }
+  });
+  // Aktuell-Streak: laufender Wert nach dem letzten Spiel
+  if(chronoMatches.length){
+    const last=chronoMatches[chronoMatches.length-1];
+    currentStreak = last.won ? curWin : -curLoss;
+  }
+
+  // Letzte 10 Matches (neueste zuerst) — vorher waren es 5
+  const recent=[...teamMatches].sort((a,b)=>b.t-a.t).slice(0,10);
 
   // ═══ KONSISTENTE ELO-BERECHNUNG ═══
   const globalSim=getGlobalSim();
@@ -4790,9 +4820,11 @@ function teamDetail(p1,p2){
   const consistentEloDelta=Math.round(globalSim.teamElo[teamKey]||0);
 
   const games=teamMatches.length;
-  // Positions-Aggregat: ids[0] hat p0Atk/p0Def, ids[1] hat die Mirror-Werte.
-  // dominantCount = wie oft die Mehrheits-Aufstellung gespielt wurde (10/12 → 10)
-  // swapped       = wie oft die getauschte Aufstellung gespielt wurde (10/12 → 2)
+  // ═══ AUFSTELLUNGS-ANALYSE ═══
+  // Typische Aufstellung = häufigere; Beste Aufstellung = höhere Siegrate.
+  // "Beste" wird nur angezeigt, wenn (a) beide Aufstellungen je ≥2× vorkamen
+  // (Mindestschwelle für stabile Quote) und (b) die "Beste" tatsächlich
+  // VON DER TYPISCHEN ABWEICHT (= seltenere Aufstellung mit besserer Quote).
   const p0Dom = p0Atk>=p0Def ? 'atk' : 'def';
   const dominantCount = Math.max(p0Atk, p0Def);
   const swapped = Math.min(p0Atk, p0Def);
@@ -4800,22 +4832,175 @@ function teamDetail(p1,p2){
     [ids[0]]: {atk:p0Atk, def:p0Def, dom:p0Dom},
     [ids[1]]: {atk:p0Def, def:p0Atk, dom:p0Dom==='atk'?'def':'atk'}
   };
+  // Aufstellungs-Siegraten (nur wenn jede Variante ≥2× vorkam)
+  let bestLineup = null;
+  if(p0Atk>=2 && p0Def>=2){
+    const atkWr = p0AtkWins/p0Atk;
+    const defWr = p0DefWins/p0Def;
+    const bestP0Pos = atkWr >= defWr ? 'atk' : 'def';
+    if(bestP0Pos !== p0Dom){ // nur wenn anders als typische
+      bestLineup = {
+        p0: bestP0Pos,
+        wr: bestP0Pos==='atk' ? atkWr : defWr,
+        wins: bestP0Pos==='atk' ? p0AtkWins : p0DefWins,
+        games: bestP0Pos==='atk' ? p0Atk : p0Def,
+        // Vergleichswert: wie viel besser als typische?
+        typicalWr: p0Dom==='atk' ? atkWr : defWr
+      };
+    }
+  }
+
   // Chronologisch sortierte Match-IDs für den Form-Spark (älteste zuerst)
-  const matchIdsChrono = [...teamMatches].sort((a,b)=>a.t-b.t).map(tm=>tm.m.id);
+  const matchIdsChrono = chronoMatches.map(tm=>tm.m.id);
+
+  // ═══ GEMEINSAME SAISON-TITEL ═══
+  // Team of the Season aus seasons[]: team_p1/team_p2 sind die archivierten Sieger-Duo-IDs
+  const seasonTitles = seasons.filter(srow => {
+    if(!srow.team_p1 || !srow.team_p2) return false;
+    const t1 = srow.team_p1, t2 = srow.team_p2;
+    return (t1===ids[0] && t2===ids[1]) || (t1===ids[1] && t2===ids[0]);
+  }).map(srow => {
+    let label = srow.id || '';
+    if(srow.id){
+      const [y, mo] = srow.id.split('-').map(Number);
+      if(y && mo) label = new Date(y, mo-1, 1).toLocaleDateString('de-DE', {month:'long', year:'numeric'});
+    }
+    return { id: srow.id, label };
+  });
+
+  // ═══ HÄUFIGSTER ENDSTAND ═══
+  let topScore = null, topScoreCount = 0;
+  Object.entries(scoreCounts).forEach(([s, c]) => {
+    if(c > topScoreCount){ topScoreCount = c; topScore = s; }
+  });
+  // Nur als "Lieblings-Score" anzeigen, wenn er ≥2× vorkam
+  if(topScoreCount < 2) topScore = null;
+
+  // Erstes/letztes gemeinsames Match-Datum (für "aktiv seit")
+  const firstMatchDate = chronoMatches.length ? chronoMatches[0].m.created_at : null;
+  const lastMatchDate  = chronoMatches.length ? chronoMatches[chronoMatches.length-1].m.created_at : null;
 
   const result={
     ids, games, wins, losses, gf, ga,
     gd: gf-ga,
     wr: games?wins/games:0,
-    eloDelta: consistentEloDelta, // ← Nutze globalen Wert statt Akkumulation
+    eloDelta: consistentEloDelta,
     nemesis, favorite,
     biggestWin, biggestLoss, biggestUpset,
     recent,
-    posStats, dominantCount, swapped,
-    matchIdsChrono
+    posStats, dominantCount, swapped, bestLineup,
+    matchIdsChrono,
+    // Streaks
+    currentStreak, longestWinStreak, longestLossStreak,
+    // Fun Facts
+    shutouts, shutoutsAgainst, perfectWins,
+    topScore, topScoreCount,
+    firstMatchDate, lastMatchDate,
+    // Karriere
+    seasonTitles
   };
   _cache._teamDetail[key]=result;
   return result;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// RANG-HELPER (extracted aus playerAwards für Wiederverwendung)
+// ════════════════════════════════════════════════════════════════════
+// Liefert 0-basierten Rang (0,1,2) wenn der Eintrag in den Top-3 einer
+// Liste vorkommt — oder -1 wenn nicht. Tie-aware (Spieler mit gleichem
+// Wert teilen sich den Rang).
+function getRankInList(arr, valFn, checkFn){
+  if(!arr || !arr.length) return -1;
+  let rank = 1;
+  for(let i=0; i<Math.min(arr.length, 10); i++){
+    if(i>0 && valFn(arr[i]) !== valFn(arr[i-1])) rank = i+1;
+    if(rank > 3) break;
+    if(checkFn(arr[i])) return rank - 1;
+  }
+  return -1;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// TEAM-ACHIEVEMENTS: alle Team-Awards (Lifetime), in denen dieses
+// konkrete Duo Top-3 erreicht hat. Genutzt vom Team-Profil-Sheet, um
+// die Auszeichnungen des Duos prominent zu zeigen.
+// ════════════════════════════════════════════════════════════════════
+// Nutzt den globalen awardRankings('all')-Cache. Pro Award-Key prüfen
+// wir, ob die Liste einen Eintrag enthält dessen ids === Duo-IDs (sortiert).
+// Sonderbehandlung für Rivalry (4-Spieler-Award): das Duo kann entweder
+// in idsA oder idsB sein.
+function teamAchievements(p1Id, p2Id){
+  const R = awardRankings('all');
+  const sortKey = [p1Id, p2Id].sort().join('|');
+
+  const TEAM_AWARD_LISTS = {
+    mvt:              R.mvt,
+    bestDuo:          R.bestDuo,
+    worstTeam:        R.worstTeam,
+    zirkus:           R.zirkusList,
+    baustelle:        R.baustelleList,
+    unstoppable:      R.unstoppableList,
+    concreteWall:     R.concreteWallList,
+    cheesePlatter:    R.cheesePlatterList,
+    luckyCharm:       R.luckyCharmList,
+    giantSlayer:      R.giantSlayerList,
+    favoritenschreck: R.favoritenschreckList
+  };
+  // Sortier-Funktionen — konsistent mit playerAwards (teamValFns)
+  const VAL_FNS = {
+    mvt:              x => Math.round(x.v),
+    bestDuo:          x => x.g,
+    worstTeam:        x => -Math.round(x.w/x.g*100),
+    zirkus:           x => Math.round(x.pct*1000),
+    baustelle:        x => x.best,
+    unstoppable:      x => x.v,
+    concreteWall:     x => -Math.round(x.v*100),
+    cheesePlatter:    x => Math.round(x.v*100),
+    luckyCharm:       x => Math.round(x.v*1000),
+    giantSlayer:      x => Math.round(x.v*1000),
+    favoritenschreck: x => x.v
+  };
+  // Display-Werte für die Anzeige der erreichten Quote/Anzahl
+  const DISP_FNS = {
+    mvt:              x => (x.v>=0?'+':'')+Math.round(x.v),
+    bestDuo:          x => x.g+' Sp.',
+    worstTeam:        x => Math.round(x.w/x.g*100)+'%',
+    zirkus:           x => Math.round(x.pct*100)+'%',
+    baustelle:        x => x.best+'er',
+    unstoppable:      x => x.v+'er',
+    concreteWall:     x => x.v.toFixed(2),
+    cheesePlatter:    x => x.v.toFixed(2),
+    luckyCharm:       x => Math.round(x.v*100)+'%',
+    giantSlayer:      x => Math.round(x.v*100)+'%',
+    favoritenschreck: x => x.v+' Elo'
+  };
+
+  const found = [];
+  Object.entries(TEAM_AWARD_LISTS).forEach(([key, arr]) => {
+    if(!arr || !arr.length) return;
+    const matchFn = x => x.ids && x.ids.slice().sort().join('|') === sortKey;
+    const rank = getRankInList(arr, VAL_FNS[key], matchFn);
+    if(rank >= 0 && rank <= 2){
+      const entry = arr.find(matchFn);
+      if(entry) found.push({key, rank, val: DISP_FNS[key](entry)});
+    }
+  });
+
+  // Rivalry: 4-Spieler-Award — Duo kann entweder idsA oder idsB sein
+  if(R.rivalryList && R.rivalryList.length){
+    const matchFn = x => {
+      const a = x.idsA.slice().sort().join('|');
+      const b = x.idsB.slice().sort().join('|');
+      return a === sortKey || b === sortKey;
+    };
+    const rank = getRankInList(R.rivalryList, x => Math.round(x.pct*1000), matchFn);
+    if(rank >= 0 && rank <= 2){
+      const entry = R.rivalryList.find(matchFn);
+      if(entry) found.push({key:'rivalry', rank, val: Math.round(entry.pct*100)+'%'});
+    }
+  }
+
+  return found;
 }
 
 // ════════════════════════════════════════════════════════════════════
@@ -10196,15 +10381,21 @@ function playerAwards(id){
   }
 
   // Match-Awards
+  // ⚠ BUG-FIX: Match-Awards (upset/biggest) gelten NUR für das Gewinner-Team.
+  // Vorher hat .includes(id) ALLE 4 Spieler des Matches erkannt — auch die
+  // Verlierer haben "Größte Überraschung" als positiven Award bekommen.
+  // Konsistent mit vAwards()/_addColl und showAward(), die jeweils die
+  // Avatare des Gewinner-Teams (m.winner) zeigen.
   const matchKeys={upset:R.upsets, biggest:R.biggest};
   const matchValFns={upset:x=>Math.round(x.sp*100), biggest:x=>x.diff};
   const matchDisplayFns={upset:x=>Math.round(x.sp*100)+'%', biggest:x=>x.diff+' Tore'};
+  const winnerIds = x => x.m.winner === 'A' ? [x.m.a1, x.m.a2] : [x.m.b1, x.m.b2];
   Object.entries(matchKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;
     const valFn=matchValFns[key];
-    const rank=getRank(arr,valFn,x=>[x.m.a1,x.m.a2,x.m.b1,x.m.b2].includes(id));
+    const rank=getRank(arr,valFn,x=>winnerIds(x).includes(id));
     if(rank>=0 && rank<=2){
-      const entry=arr.find(x=>[x.m.a1,x.m.a2,x.m.b1,x.m.b2].includes(id));
+      const entry=arr.find(x=>winnerIds(x).includes(id));
       const dispFn=matchDisplayFns[key];
       found.push({key,rank,val:entry?String(dispFn(entry)):''});
     }
@@ -12057,10 +12248,10 @@ function showTeam(p1Id,p2Id){
       </div>`;
   }
 
-  // ─── TYPISCHE AUFSTELLUNG ───
-  // Bei nur 1 Spiel: zeige die einzige Aufstellung ohne Tausch-Hinweis.
-  // Bei 2+ Spielen: zeige die Mehrheits-Aufstellung; bei perfektem Split 50/50
-  // bekommen beide einen neutralen "Wechselt"-Tag.
+  // ─── AUFSTELLUNG: TYPISCH + (optional) BESTE ───
+  // Wenn beide Aufstellungen je ≥2× vorkamen UND die beste Quote von der
+  // typischen abweicht (in teamDetail.bestLineup gesetzt), zeigen wir beide
+  // Karten nebeneinander. Sonst nur die typische wie bisher.
   const POS_LABEL = {atk:'Sturm', def:'Abwehr'};
   const POS_ICON  = {atk:svgI('bolt'), def:svgI('shield')};
   const POS_COLOR = {atk:'var(--orange)', def:'var(--blue)'};
@@ -12069,45 +12260,197 @@ function showTeam(p1Id,p2Id){
   const pB_pos = d.posStats[pB.id].dom;
   const isSplit = d.games >= 2 && d.dominantCount === d.swapped; // 50/50
 
-  const renderPlayerLineup = (player, pos) => {
-    const em = player.avatar_id ? avatarEmoji(player.avatar_id) : null;
-    const ring = isSplit ? 'var(--line2)' : POS_RING[pos];
-    const avInner = em
-      ? `<div style="width:48px;height:48px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:24px;margin:0 auto 8px;border:2px solid ${ring}">${em}</div>`
-      : `<div style="width:48px;height:48px;border-radius:50%;background:${avColor(player.id)};display:grid;place-items:center;font-size:16px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;margin:0 auto 8px;border:2px solid ${ring}">${esc(initials(player.name))}</div>`;
-    const posLabelStyle = isSplit ? 'color:var(--ink2)' : `color:${POS_COLOR[pos]}`;
-    const posLabel = isSplit ? 'Wechselt' : POS_LABEL[pos];
-    return `<div style="flex:1;text-align:center;cursor:pointer" data-detail="${esc(player.id)}">
-      <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:8px;${posLabelStyle}">
-        <span class="svg-ic" style="width:13px;height:13px;display:inline-flex">${POS_ICON[pos]}</span>
-        <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em">${posLabel}</span>
+  const buildLineupCard = (label, sublabel, p0Pos, ringOverride) => {
+    const ring = ringOverride || POS_RING[p0Pos];
+    const opos = p0Pos==='atk' ? 'def' : 'atk';
+    const buildSide = (player, pos) => {
+      const em = player.avatar_id ? avatarEmoji(player.avatar_id) : null;
+      const avInner = em
+        ? `<div style="width:40px;height:40px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:20px;margin:0 auto 6px;border:2px solid ${ring}">${em}</div>`
+        : `<div style="width:40px;height:40px;border-radius:50%;background:${avColor(player.id)};display:grid;place-items:center;font-size:14px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;margin:0 auto 6px;border:2px solid ${ring}">${esc(initials(player.name))}</div>`;
+      return `<div style="flex:1;text-align:center;cursor:pointer" data-detail="${esc(player.id)}">
+        <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;color:${POS_COLOR[pos]}">
+          <span class="svg-ic" style="width:11px;height:11px;display:inline-flex">${POS_ICON[pos]}</span>
+          <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em">${POS_LABEL[pos]}</span>
+        </div>
+        ${avInner}
+        <div style="font-size:11px;font-weight:600">${esc(player.name)}</div>
+      </div>`;
+    };
+    return `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">${label}</div>
+        <div style="font-size:9px;color:var(--ink2);font-family:'Sometype Mono',monospace;letter-spacing:.04em">${sublabel}</div>
       </div>
-      ${avInner}
-      <div style="font-size:13px;font-weight:600">${esc(player.name)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        ${buildSide(pA, p0Pos)}
+        <span style="color:var(--muted);font-size:10px">vs</span>
+        ${buildSide(pB, opos)}
+      </div>
     </div>`;
   };
 
-  // Bottom-Zeile: bei 1 Spiel weglassen, sonst Anzahl + Tausch-Counter
-  const lineupFooter = d.games >= 2 ? `
-    <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:'Sometype Mono',monospace;font-size:10.5px">
-      <span style="color:var(--ink2)">In <span style="color:var(--ink);font-weight:700">${d.dominantCount} / ${d.games}</span> Spielen</span>
-      <span style="color:var(--ink2)"><span style="color:var(--muted)">⇄</span> ${d.swapped}× getauscht</span>
+  let lineupHtml;
+
+  if(d.bestLineup){
+    // Zwei Karten nebeneinander: TYPISCH (Mehrheits) + BESTE (höhere Quote)
+    // typGames/typWr aus teamDetail.bestLineup ableiten: bestLineup.p0 ist
+    // die seltenere (=bessere) Pos, also die typische = die andere.
+    const typGames = d.dominantCount;
+    const typWr = Math.round(d.bestLineup.typicalWr * 100);
+    const bestWr = Math.round(d.bestLineup.wr * 100);
+    lineupHtml = `
+      <div style="margin-bottom:18px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:10px;font-family:'Sometype Mono',monospace">Aufstellungs-Vergleich</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          ${buildLineupCard('Typisch', typGames+' Sp · '+typWr+'%', d.posStats[d.ids[0]].dom)}
+          ${buildLineupCard('Beste Quote', d.bestLineup.games+' Sp · '+bestWr+'%', d.bestLineup.p0, 'rgba(247,207,74,.55)')}
+        </div>
+      </div>`;
+  } else {
+    // Single-Card: bestehende Logik (typische Aufstellung)
+    const renderPlayerLineup = (player, pos) => {
+      const em = player.avatar_id ? avatarEmoji(player.avatar_id) : null;
+      const ring = isSplit ? 'var(--line2)' : POS_RING[pos];
+      const avInner = em
+        ? `<div style="width:48px;height:48px;border-radius:50%;background:var(--surface3);display:grid;place-items:center;font-size:24px;margin:0 auto 8px;border:2px solid ${ring}">${em}</div>`
+        : `<div style="width:48px;height:48px;border-radius:50%;background:${avColor(player.id)};display:grid;place-items:center;font-size:16px;font-family:'Archivo Black',sans-serif;color:#0a0c0b;margin:0 auto 8px;border:2px solid ${ring}">${esc(initials(player.name))}</div>`;
+      const posLabelStyle = isSplit ? 'color:var(--ink2)' : `color:${POS_COLOR[pos]}`;
+      const posLabel = isSplit ? 'Wechselt' : POS_LABEL[pos];
+      return `<div style="flex:1;text-align:center;cursor:pointer" data-detail="${esc(player.id)}">
+        <div style="display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:8px;${posLabelStyle}">
+          <span class="svg-ic" style="width:13px;height:13px;display:inline-flex">${POS_ICON[pos]}</span>
+          <span style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em">${posLabel}</span>
+        </div>
+        ${avInner}
+        <div style="font-size:13px;font-weight:600">${esc(player.name)}</div>
+      </div>`;
+    };
+    const lineupFooter = d.games >= 2 ? `
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-family:'Sometype Mono',monospace;font-size:10.5px">
+        <span style="color:var(--ink2)">In <span style="color:var(--ink);font-weight:700">${d.dominantCount} / ${d.games}</span> Spielen</span>
+        <span style="color:var(--ink2)"><span style="color:var(--muted)">⇄</span> ${d.swapped}× getauscht</span>
+      </div>` : '';
+    lineupHtml = `
+      <div style="margin-bottom:18px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:12px;font-family:'Sometype Mono',monospace">Typische Aufstellung</div>
+        <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            ${renderPlayerLineup(pA, d.posStats[pA.id].dom)}
+            <div style="display:flex;flex-direction:column;align-items:center;color:var(--muted);font-size:11px">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/><polyline points="12,5 5,12 12,19"/></svg>
+            </div>
+            ${renderPlayerLineup(pB, d.posStats[pB.id].dom)}
+          </div>
+          ${lineupFooter}
+        </div>
+      </div>`;
+  }
+
+  // ─── TEAM-AWARDS (Lifetime — alle Saisons) ───
+  // Spiegel des Spieler-Awards-Konzepts: zeigt die Top-3-Platzierungen des
+  // Duos in der saison-übergreifenden awardRankings('all')-Liste.
+  const TEAM_AW_IC = {
+    mvt:'handshake', bestDuo:'duo', worstTeam:'crashTeam',
+    zirkus:'circus', baustelle:'construction', unstoppable:'unstoppable',
+    concreteWall:'concreteWall', cheesePlatter:'cheese', luckyCharm:'clover',
+    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords'
+  };
+  const tAch = teamAchievements(p1Id, p2Id);
+  const RANK_LABEL = ['#1','#2','#3'];
+  const teamAwardsHtml = tAch.length ? `
+    <div style="margin-bottom:18px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Auszeichnungen als Team</div>
+      <div class="pp-awards" style="grid-template-columns:repeat(3,1fr)">
+        ${tAch.map(a => {
+          const meta = AWARD_META[a.key]; if(!meta) return '';
+          const icKey = TEAM_AW_IC[a.key] || 'trophy';
+          // Farb-Klasse aus AWARD_META, Wertanzeige in Farbe
+          const colorMap = {acid:'var(--acid)', blue:'var(--blue)', gold:'var(--gold)', orange:'var(--orange)', purple:'var(--purple)', red:'var(--red)'};
+          const col = colorMap[meta.cls] || 'var(--ink)';
+          return `<div class="pp-aw" data-team-award="${esc(a.key)}" style="border-top:2px solid ${col}">
+            <span class="ic svg-ic" style="color:${col}">${svgI(icKey)}</span>
+            <div class="nm">${esc(meta.title)}</div>
+            <div class="num" style="color:${col};font-size:11px">${esc(a.val)}</div>
+            <div style="font-size:8.5px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace">${RANK_LABEL[a.rank]||''}</div>
+          </div>`;
+        }).join('')}
+      </div>
     </div>` : '';
 
-  const lineupHtml = `
-    <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:12px;font-family:'Sometype Mono',monospace">Typische Aufstellung</div>
-      <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px">
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
-          ${renderPlayerLineup(pA, d.posStats[pA.id].dom)}
-          <div style="display:flex;flex-direction:column;align-items:center;color:var(--muted);font-size:11px">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12,5 19,12 12,19"/><polyline points="12,5 5,12 12,19"/></svg>
+  // ─── STREAKS (aktuelle + längste) ───
+  // Verzichten auf Last-N-Dots wie im Spieler-Profil — hier ist die reine
+  // Zahlen-Anzeige übersichtlicher (Form-Spark daneben deckt die Verlaufs-
+  // Visualisierung schon ab).
+  let streaksHtml = '';
+  if(d.games >= 2){
+    const curLabel = d.currentStreak === 0 ? '–'
+      : d.currentStreak > 0 ? d.currentStreak+' Siege'
+      : (-d.currentStreak)+' Niederl.';
+    const curColor = d.currentStreak > 0 ? 'var(--acid)' : (d.currentStreak < 0 ? 'var(--red)' : 'var(--muted)');
+    streaksHtml = `
+      <div style="margin-bottom:18px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Serien</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
+            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:${curColor};line-height:1">${curLabel}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Aktuell</div>
           </div>
-          ${renderPlayerLineup(pB, d.posStats[pB.id].dom)}
+          <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
+            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1">${d.longestWinStreak||'–'}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Sieges</div>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
+            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--red);line-height:1">${d.longestLossStreak||'–'}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Pleiten</div>
+          </div>
         </div>
-        ${lineupFooter}
+      </div>`;
+  }
+
+  // ─── LIGA-TITEL (Team of the Season) ───
+  const titlesHtml = d.seasonTitles.length ? `
+    <div style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Liga-Titel</div>
+        <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.seasonTitles.length} ${d.seasonTitles.length===1?'Titel':'Titel'}</div>
       </div>
-    </div>`;
+      <div class="pp-trophies" style="margin:0 -16px;padding:4px 16px">
+        ${d.seasonTitles.map(t => `<div class="pp-tr team">
+          <span class="ic svg-ic">${svgI('handshake')}</span>
+          <div class="ti">Team of<br>the Season</div>
+          <div class="su">${esc(t.label)}</div>
+        </div>`).join('')}
+      </div>
+    </div>` : '';
+
+  // ─── FUN FACTS ───
+  // Selektion: Tore/Spiel, Gegentore/Spiel, Zu-Null-Siege, ggf. Lieblings-Score.
+  // Bewusst kompakt — vier 1/2-Spalten-Cards (oder 1/3 wenn topScore vorhanden).
+  let funFactsHtml = '';
+  if(d.games >= 2){
+    const avgGf = (d.gf / d.games).toFixed(1);
+    const avgGa = (d.ga / d.games).toFixed(1);
+    const facts = [
+      { label:'Ø Tore', value:avgGf, color:'var(--acid)' },
+      { label:'Ø Gegen', value:avgGa, color:'var(--red)' },
+    ];
+    if(d.shutouts > 0) facts.push({ label:'Zu Null', value:d.shutouts+'×', color:'var(--blue)' });
+    if(d.perfectWins > 0) facts.push({ label:'10:0', value:d.perfectWins+'×', color:'var(--gold)' });
+    if(d.topScore) facts.push({ label:'Top-Stand', value:d.topScore, color:'var(--purple)', sub:d.topScoreCount+'×' });
+    const cols = facts.length >= 4 ? 'repeat(4,1fr)' : 'repeat('+facts.length+',1fr)';
+    funFactsHtml = `
+      <div style="margin-bottom:18px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Fun Facts</div>
+        <div style="display:grid;grid-template-columns:${cols};gap:8px">
+          ${facts.map(f => `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center">
+            <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${f.color};line-height:1">${f.value}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:4px">${f.label}</div>
+            ${f.sub?`<div style="font-size:8px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace">${f.sub}</div>`:''}
+          </div>`).join('')}
+        </div>
+      </div>`;
+  }
 
   const highlights=[
     highlightRow(d.biggestWin,'win'),
@@ -12115,7 +12458,7 @@ function showTeam(p1Id,p2Id){
     highlightRow(d.biggestLoss,'loss')
   ].filter(Boolean).join('');
 
-  // Letzte 5 Matches
+  // Letzte 10 Matches (vorher 5) — slice in teamDetail bereits auf 10 erweitert
   const recentRows=d.recent.map(r=>{
     const m=r.m;
     const oppIds=r.onA?[m.b1,m.b2]:[m.a1,m.a2];
@@ -12177,8 +12520,12 @@ function showTeam(p1Id,p2Id){
       </div>
     </div>
 
+    ${teamAwardsHtml}
+    ${streaksHtml}
+    ${titlesHtml}
     ${teamFormHtml}
     ${lineupHtml}
+    ${funFactsHtml}
 
     ${d.nemesis?oppRow(d.nemesis,'Erzgegner'):''}
     ${d.favorite?oppRow(d.favorite,'Lieblingsgegner'):''}
@@ -12191,7 +12538,7 @@ function showTeam(p1Id,p2Id){
 
     ${recentRows?`
     <div>
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Letzte Spiele</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Letzte ${Math.min(10,d.recent.length)} Spiele</div>
       <div style="display:flex;flex-direction:column;gap:6px">${recentRows}</div>
     </div>`:''}
   `);
@@ -12204,6 +12551,10 @@ function showTeam(p1Id,p2Id){
     });
     sheetEl.querySelectorAll('[data-match]').forEach(el=>{
       el.onclick=()=>{const mid=el.dataset.match; closeSheet(); setTimeout(()=>showMatchDetail(mid),350);};
+    });
+    // Team-Award-Chips: Klick öffnet Award-Detail-Sheet
+    sheetEl.querySelectorAll('[data-team-award]').forEach(el=>{
+      el.onclick=()=>{const key=el.dataset.teamAward; closeSheet(); setTimeout(()=>{ awPeriod='all'; awSeasonId=null; showAward(key); },350);};
     });
   }
 }
