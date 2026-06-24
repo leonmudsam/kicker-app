@@ -2426,7 +2426,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.23.07';
+const BUILD_VERSION='2026.06.23.08';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -8647,9 +8647,14 @@ async function doSaveMatch(){
   // erreichungen, keine Wiederholungen). Sequenzielle Queue zeigt sie der
   // Reihe nach, jeder Toast 2.6s. Spielername aus pname() konsistent zur
   // gesamten App.
+  //
+  // ⚠ Common-Badges (grün) werden NICHT als Toast gezeigt, weil sie zu
+  // häufig feuern und sonst eine Toast-Kaskade von 5+ PopUps entsteht.
+  // Sie bleiben im Match-Review sichtbar und zählen im Profil weiter.
   const newBadges = badgesEarnedInMatch(savedRow.id);
-  if(newBadges.length){
-    newBadges.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
+  const toastWorthy = newBadges.filter(e => rarityOf(e.badge.id) !== 'common');
+  if(toastWorthy.length){
+    toastWorthy.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
   } else {
     toast('Match gespeichert', 'ok');
   }
@@ -8918,7 +8923,7 @@ const BADGES=[
   // Zeile 16 — Pflichtaufgabe, Award-Sammler
   {id:'pflichtaufgabe',ic:'clipboard',name:'Pflichtaufgabe',desc:'Sieg gegen mindestens einen Gegner aus den Bottom 3 der Saison-Endrangliste (ab 6 Saison-Teilnehmern)',
     multi:true,count:(id,ms)=>countBottomThreeWins(id,ms)}, */
-  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison min. 5x Tagessieger und 2x Wochensieger',
+  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5 Player-of-the-Day und 2 Player-of-the-Week Auszeichnungen gesammelt',
     multi:true,count:(id,ms)=>countAwardCollector(id)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
   {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
@@ -12052,11 +12057,18 @@ function showMatchDetail(mid){
   const earnedHtml=earned.length?`
     <div class="mini-label" style="margin-top:14px">Auszeichnungen in diesem Match</div>
     <div style="display:flex;flex-direction:column;gap:5px">
-      ${earned.map(e=>`<div class="rrow" style="padding:10px 13px;cursor:default">
-        <span class="ic svg-ic" style="font-size:18px;width:32px;text-align:center;color:var(--ink2)">${badgeIc(e.badge,'18px')}</span>
-        <div class="rmid"><div class="rname" style="font-size:13px">${esc(pname(e.playerId))}</div>
-          <div class="rmeta"><span>${e.badge.name}</span></div></div>
-      </div>`).join('')}
+      ${earned.map(e=>{
+        // Rarity-Farbe pro Badge: legendary=gold, rare=purple, common=acid, negative=red.
+        // Bewusst dezent — nur Icon + Border-Akzent + Badge-Name in der Farbe,
+        // damit die Liste auseinanderhaltbar bleibt, aber nicht überladen wirkt.
+        const rarity = rarityOf(e.badge.id);
+        const color = (RARITY_META[rarity]||{}).color || 'var(--ink2)';
+        return `<div class="rrow" style="padding:10px 13px;cursor:default;border-left:3px solid ${color}">
+          <span class="ic svg-ic" style="font-size:18px;width:32px;text-align:center;color:${color}">${badgeIc(e.badge,'18px')}</span>
+          <div class="rmid"><div class="rname" style="font-size:13px">${esc(pname(e.playerId))}</div>
+            <div class="rmeta"><span style="color:${color};opacity:.85">${e.badge.name}</span></div></div>
+        </div>`;
+      }).join('')}
     </div>`:''
   ;
   openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · Team ${m.winner} gewinnt</div>
