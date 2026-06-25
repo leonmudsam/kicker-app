@@ -803,6 +803,13 @@
 .sheet.is-dragging{transition:none !important;}
 
   .sheet-grab{width:38px;height:4px;border-radius:2px;background:var(--line2);margin:6px auto 16px}
+  /* Nudge-Animation: wenn Backdrop-Click während Schutz-Phase blockiert wird,
+     bewegt sich das Sheet kurz, um zu signalisieren: "ich existiere noch". */
+  @keyframes sheetNudge { 0%,100%{transform:translateY(0)} 25%{transform:translateY(-4px)} 75%{transform:translateY(2px)} }
+  .sheet.sheet-nudge{animation:sheetNudge .28s ease-out}
+  /* Pulsierender Grab-Handle im Recap (signalisiert "ich bin wegziehbar") */
+  @keyframes grabPulse { 0%,100%{opacity:.6;transform:scaleX(1)} 50%{opacity:1;transform:scaleX(1.4)} }
+  .sheet-grab.grab-pulse{animation:grabPulse 1.6s ease-in-out 2}
   .sheet h3{font-family:'Archivo Black',sans-serif;font-size:23px;letter-spacing:-.02em}
   .sheet-sub{color:var(--muted);font-size:12px;margin-top:3px;font-family:'Sometype Mono',monospace}
 
@@ -2025,12 +2032,23 @@
   .rcp-aw.purple::before{background:var(--purple)}
   .rcp-aw.acid::before{background:var(--acid)}
   .rcp-aw.blue::before{background:var(--blue)}
+  .rcp-aw.red::before{background:var(--red)}
+  .rcp-aw.gold::before{background:var(--gold)}
   .rcp-aw-ic{width:32px;height:32px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;flex-shrink:0}
   .rcp-aw-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .rcp-aw.orange .rcp-aw-ic{color:var(--orange)}
   .rcp-aw.purple .rcp-aw-ic{color:var(--purple)}
   .rcp-aw.acid .rcp-aw-ic{color:var(--acid)}
   .rcp-aw.blue .rcp-aw-ic{color:var(--blue)}
+  .rcp-aw.red .rcp-aw-ic{color:var(--red)}
+  .rcp-aw.gold .rcp-aw-ic{color:var(--gold)}
+  /* Recap "Verstanden"-Button am Ende — deutlich sichtbar, klare Aktion */
+  .recap-done-btn{display:block;width:100%;margin-top:18px;padding:14px;
+    background:linear-gradient(180deg,var(--surface2),var(--surface));
+    border:1px solid var(--line2);border-radius:14px;color:var(--ink);
+    font-family:'Archivo Black',sans-serif;font-size:13px;letter-spacing:-.01em;
+    cursor:pointer;transition:.16s;text-transform:uppercase}
+  .recap-done-btn:active{transform:scale(.985);background:var(--surface3)}
   .rcp-aw-info{flex:1;min-width:0}
   .rcp-aw-label{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
     font-family:'Sometype Mono',monospace;font-weight:700}
@@ -2426,7 +2444,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.06.23.10';
+const BUILD_VERSION='2026.06.23.11';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -3717,11 +3735,20 @@ function showSeasonRecap(season){
     }
   }
 
-  // ─── Awards Grid (4 Awards der Saison) ───
-  const scorer=R.scorer&&R.scorer[0];
-  const wall=R.wall&&R.wall[0];
-  const streak=R.streaks&&R.streaks[0];
-  const upset=R.upsets&&R.upsets[0];
+  // ─── Awards Grid (Saison-Awards, sortiert: erst positive, dann Schande) ───
+  const scorer    = R.scorer && R.scorer[0];
+  const wall      = R.wall && R.wall[0];
+  const streak    = R.streaks && R.streaks[0];
+  const upset     = R.upsets && R.upsets[0];
+  // Erweiterte Auswahl
+  const grinder   = R.grinder && R.grinder[0];
+  const perfect   = R.perfect && R.perfect[0];
+  const weekKing  = R.weekKingList && R.weekKingList[0];
+  const dayKing   = R.dayKingList && R.dayKingList[0];
+  const worstWr   = R.worstWr && R.worstWr[0];
+  const baustelle = R.baustelleList && R.baustelleList[0];
+  const pechvogel = R.pechvogelList && R.pechvogelList[0];
+
   const awItem=(cls,iconKey,label,name,val,awKey)=>{
     return `<div class="rcp-aw ${cls}" data-award="${awKey}">
       <div class="rcp-aw-ic">${svgI(iconKey)}</div>
@@ -3734,14 +3761,23 @@ function showSeasonRecap(season){
   };
   let awardsHtml='';
   const awCards=[];
-  if(scorer) awCards.push(awItem('orange','ball','Torjäger',pname(scorer.id),'Ø '+scorer.avg.toFixed(1)+' Tore','scorer'));
-  if(wall) awCards.push(awItem('purple','shieldCheck','Eiserne Abwehr',pname(wall.id),(wall.v/wall.g).toFixed(1)+' Gegen/Sp.','wall'));
-  if(streak) awCards.push(awItem('acid','flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks'));
+  // POSITIVE Saison-Highlights
+  if(scorer)  awCards.push(awItem('orange','ball','Torjäger',pname(scorer.id),'Ø '+scorer.avg.toFixed(1)+' Tore','scorer'));
+  if(wall)    awCards.push(awItem('purple','shieldCheck','Eiserne Abwehr',pname(wall.id),(wall.v/wall.g).toFixed(1)+' Gegen/Sp.','wall'));
+  if(streak)  awCards.push(awItem('acid','flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks'));
+  if(perfect) awCards.push(awItem('gold','star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegrate','perfect'));
+  if(weekKing)awCards.push(awItem('gold','crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× POTW','weekKing'));
+  if(dayKing) awCards.push(awItem('gold','crown','Tageskönig',pname(dayKing.id),dayKing.v+'× POTD','dayKing'));
+  if(grinder) awCards.push(awItem('blue','gamepad','Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder'));
   if(upset){
     const winners=upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];
     const winPct=Math.round((1-upset.sp)*100);
     awCards.push(awItem('blue','bolt','Größter Upset',pname(winners[0])+' & '+pname(winners[1]),winPct+'% Chance','upset'));
   }
+  // SCHANDE-Tafel der Saison
+  if(worstWr)  awCards.push(awItem('red','ghost','Schlechtester',pname(worstWr.id),Math.round(worstWr.wr*100)+'% Siegrate','worstWr'));
+  if(pechvogel)awCards.push(awItem('red','ghost','Pechvogel',pname(pechvogel.id),Math.round(pechvogel.pct*100)+'% knapp verloren','pechvogel'));
+  if(baustelle)awCards.push(awItem('red','construction','Baustelle',pname(baustelle.ids[0])+' & '+pname(baustelle.ids[1]),baustelle.best+' Pleiten am Stück','baustelle'));
   if(awCards.length){
     awardsHtml=`<div class="rcp-section">Awards der Saison</div><div class="rcp-awards">${awCards.join('')}</div>`;
   }
@@ -3805,8 +3841,11 @@ function showSeasonRecap(season){
     ${podiumHtml}
     ${restListHtml}
     ${awardsHtml}
-    <button class="btn" id="closeRecapBtn" style="margin-top:6px;width:100%">Schließen</button>
-  `);
+    <button class="recap-done-btn" id="closeRecapBtn">✓ Verstanden</button>
+  `, {protectMs: 800});
+  // Grab-Hint: kurz pulsieren, signalisiert "wegziehen geht auch"
+  const _grab = document.getElementById('sheetGrab');
+  if(_grab) _grab.classList.add('grab-pulse');
   // Saison-Picker: bei Auswahl Recap neu rendern (ohne `recap_shown_…` zu markieren)
   const rcpPicker = document.getElementById('rcpSeasonPicker');
   if(rcpPicker){
@@ -4228,8 +4267,10 @@ function showPotwRecap(){
       </div>
       ${funFact}
       ${highlightsHtml}
-      <button id="closePotwBtn" style="width:100%;background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:13px;padding:12px;font-family:inherit;font-weight:500;font-size:13px;cursor:pointer;margin-top:6px">Schließen</button>
-    `);
+      <button id="closePotwBtn" class="recap-done-btn">✓ Verstanden</button>
+    `, {protectMs: 800});
+    const _grab = document.getElementById('sheetGrab');
+    if(_grab) _grab.classList.add('grab-pulse');
 
     localStorage.setItem('potw_shown_'+wkKey,'1');
 
@@ -4479,8 +4520,10 @@ function showPotdRecap(opts){
         </div>
       </div>
       ${funFact}
-      <button id="closePotdBtn" style="width:100%;background:transparent;color:var(--ink2);border:1px solid var(--line);border-radius:13px;padding:12px;font-family:inherit;font-weight:500;font-size:13px;cursor:pointer">Schließen</button>
-    `);
+      <button id="closePotdBtn" class="recap-done-btn">✓ Verstanden</button>
+    `, {protectMs: 800});
+    const _grab = document.getElementById('sheetGrab');
+    if(_grab) _grab.classList.add('grab-pulse');
 
     // Flag SOFORT setzen — sonst löst Swipe-Schließen beim nächsten Reload erneut aus.
     // Bei opts.force (manueller "Letzten Tag ansehen"-Button) NICHT setzen, damit der
@@ -8859,7 +8902,8 @@ async function doSaveMatch(){
 // ╔═══ §6.1 ─── DETAIL-SHEET-INFRASTRUKTUR ─────────────────────────────╗
 //     Bottom-Sheet-System mit Swipe-to-close. openSheet()/closeSheet().
 // ╚═════════════════════════════════════════════════════════════════════════╝
-function openSheet(html){
+function openSheet(html, opts){
+  opts = opts || {};
   const sheet=document.getElementById('sheet');
   const bg=document.getElementById('sheetBg');
   // Falls bereits ein Sheet offen war (openSheet direkt nach openSheet, ohne
@@ -8873,6 +8917,15 @@ function openSheet(html){
   sheet.scrollTop = 0;
   bg.classList.add('show');
   sheet.classList.add('show');
+  // ⚠ Schutz-Phase: für auto-getriggerte Pop-Ups (Saison-/POTW-/POTD-Recap)
+  // wird der Backdrop-Click für protectMs ms unterdrückt — verhindert
+  // versehentliches Schließen bei direkt-nach-App-Start-Scroll-Aktionen.
+  // Swipe-down und der "Verstanden"-Button bleiben jederzeit aktiv.
+  if(opts.protectMs && opts.protectMs > 0){
+    sheet._protectedUntil = Date.now() + opts.protectMs;
+  } else {
+    sheet._protectedUntil = 0;
+  }
   bindSheetSwipe();
 }
 
@@ -9006,7 +9059,21 @@ function bindSheetSwipe(){
 }
 
 // Hintergrund-Klick schließt Sheet
-document.getElementById('sheetBg').onclick=closeSheet;
+document.getElementById('sheetBg').onclick=()=>{
+  // Schutz-Phase respektieren (auto-getriggerte Recap-Pop-Ups).
+  // Während der Schutz-Phase gibt es leichtes haptisches Feedback via
+  // CSS-Klassen-Toggle, damit der User merkt: "hier passiert was, aber
+  // ich muss bewusst schließen".
+  const sheet=document.getElementById('sheet');
+  if(sheet && sheet._protectedUntil && Date.now() < sheet._protectedUntil){
+    // Optisches Mini-Bounce-Feedback statt schließen
+    sheet.classList.remove('sheet-nudge');
+    void sheet.offsetWidth; // Re-trigger Animation
+    sheet.classList.add('sheet-nudge');
+    return;
+  }
+  closeSheet();
+};
 
 // ╔═══ §7 ─── BADGE-SYSTEM (permanente Auszeichnungen) ─────────────────╗
 //     ⚑ HOTSPOT — neue Badges benötigen Updates an MEHREREN Stellen.
@@ -9352,28 +9419,40 @@ function countPeriodWins(id,allMs,periodType){
   Object.entries(buckets).forEach(([key,ms])=>{
     if(key===curKey)return; // noch laufend
     if(ms.length<2)return;  // min. 2 Spiele im Zeitraum
-    // Siege pro Spieler in diesem Zeitraum
-    const winsById={},gamesById={};
+    // Siege + Spiele + Elo-Delta pro Spieler in diesem Zeitraum
+    const winsById={}, gamesById={}, eloById={};
     ms.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(pid=>{
-      if(!winsById[pid])winsById[pid]=0; if(!gamesById[pid])gamesById[pid]=0;
+      if(!winsById[pid])winsById[pid]=0;
+      if(!gamesById[pid])gamesById[pid]=0;
+      if(!eloById[pid])eloById[pid]=0;
       gamesById[pid]++;
       const onA=[m.a1,m.a2].includes(pid);
-      if((onA&&m.winner==='A')||(!onA&&m.winner==='B'))winsById[pid]++
+      if((onA&&m.winner==='A')||(!onA&&m.winner==='B'))winsById[pid]++;
+      eloById[pid] += (m.deltas && m.deltas[pid]) || 0;
     }));
     const minW=periodType==='week'?5:10;
-    // Nur Spieler mit genug Siegen qualifiziert, dann nach Winrate
-    const qual=Object.entries(winsById).filter(([,w])=>w>=minW);
+    // ⚠ Tiebreak-Konsistenz zum Pop-Up (showPotwRecap):
+    // 1. Höchste Siegrate, dann 2. mehr absolute Siege, dann 3. höheres Elo-Delta.
+    // Nur DIESER Spieler bekommt das Badge — analog zum Pop-Up "mainPotwPlayerId".
+    const qual=Object.keys(winsById).filter(pid=>winsById[pid]>=minW);
     if(!qual.length)return;
-    const wrs=qual.map(([pid,w])=>w/(gamesById[pid]||1));
-    if(!wrs.length)return;
-    const bestWr=Math.max(...wrs);
-    const myW=winsById[id]||0;
-    if(myW>=minW && myW/(gamesById[id]||1)>=bestWr-0.001) count++;
+    qual.sort((a,b)=>{
+      const wrA=winsById[a]/(gamesById[a]||1);
+      const wrB=winsById[b]/(gamesById[b]||1);
+      if(Math.abs(wrA-wrB)>0.001) return wrB-wrA;
+      if(winsById[a]!==winsById[b]) return winsById[b]-winsById[a];
+      return eloById[b]-eloById[a];
+    });
+    if(qual[0]===id) count++;
   });
   return count;
 }
 
-// Player of the Day: zählt Tage an denen dieser Spieler die meisten Siege hatte (min 3 Siege am Tag)
+// Player of the Day: zählt Tage an denen dieser Spieler den POTD-Titel
+// erringen würde (analog zur Recap-Pop-Up-Logik in showPotdRecap).
+// ⚠ Tiebreak-Konsistenz: Bei gleichem Maximum von Tagessiegen gewinnt
+// das höhere Elo-Delta des Tages — exakt wie das Pop-Up sortiert. Nur DIESER
+// Spieler bekommt das Badge (vorher: alle Spieler mit max wins → mehrfach).
 function countDayWins(id,allMs){
   const byDay={};
   allMs.forEach(m=>{
@@ -9384,15 +9463,20 @@ function countDayWins(id,allMs){
   let count=0;
   Object.values(byDay).forEach(dayMs=>{
     if(dayMs.length<2)return;
-    const winsById={};
+    const winsById={}, eloById={};
     dayMs.forEach(m=>[m.a1,m.a2,m.b1,m.b2].forEach(pid=>{
       if(!winsById[pid])winsById[pid]=0;
+      if(!eloById[pid])eloById[pid]=0;
       const onA=[m.a1,m.a2].includes(pid);
       if((onA&&m.winner==='A')||(!onA&&m.winner==='B'))winsById[pid]++;
+      eloById[pid] += (m.deltas && m.deltas[pid]) || 0;
     }));
     const maxW=Math.max(...Object.values(winsById));
     if(maxW<3)return;
-    if((winsById[id]||0)===maxW) count++;
+    // Tiebreak: bei gleichen max-Siegen gewinnt höchstes eloDelta
+    const candidates=Object.keys(winsById).filter(pid=>winsById[pid]===maxW);
+    candidates.sort((a,b)=>eloById[b]-eloById[a]);
+    if(candidates[0]===id) count++;
   });
   return count;
 }
