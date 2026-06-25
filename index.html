@@ -4152,7 +4152,7 @@ function showSeasonRecap(season, opts){
     ${podiumHtml}
     ${restListHtml}
     ${awardsHtml}
-    <button class="recap-done-btn" id="closeRecapBtn">✓ Verstanden</button>
+    <button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>
   `, {protectMs: opts.auto ? 2500 : 0});
   // Grab-Hint: kurz pulsieren, signalisiert "wegziehen geht auch"
   const _grab = document.getElementById('sheetGrab');
@@ -4908,7 +4908,7 @@ function showPotwRecap(opts){
       </div>
       ${funFact}
       ${highlightsHtml}
-      <button id="closePotwBtn" class="recap-done-btn">✓ Verstanden</button>
+      <button id="closePotwBtn" class="recap-done-btn">Verstanden</button>
     `, {protectMs: opts.auto ? 2500 : 0});
     const _grab = document.getElementById('sheetGrab');
     if(_grab) _grab.classList.add('grab-pulse');
@@ -5162,7 +5162,7 @@ function showPotdRecap(opts){
         </div>
       </div>
       ${funFact}
-      <button id="closePotdBtn" class="recap-done-btn">✓ Verstanden</button>
+      <button id="closePotdBtn" class="recap-done-btn">Verstanden</button>
     `, {protectMs: opts.force ? 0 : 2500});
     const _grab = document.getElementById('sheetGrab');
     if(_grab) _grab.classList.add('grab-pulse');
