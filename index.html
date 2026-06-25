@@ -3660,7 +3660,7 @@ async function autoArchiveSeasons(){
 // FIX
 if(last && last.id !== currentSeason().id
    && !localStorage.getItem('recap_shown_'+last.id)){
-  setTimeout(()=>showSeasonRecap(last),600);
+  setTimeout(()=>showSeasonRecap(last, {auto:true}),600);
 }
 
   }
@@ -3669,7 +3669,12 @@ if(last && last.id !== currentSeason().id
 
 
 // Saison-Recap-Popup
-function showSeasonRecap(season){
+// opts.auto=true  → Schutz-Phase (protectMs) gegen versehentliches Schließen aktiv,
+//                   wird nur beim automatischen Auto-Trigger (Monatsanfang) gesetzt.
+// Beim manuellen Öffnen (Header-Recap-Button, Saison-Picker) bleibt opts.auto leer
+// → keine Schutz-Phase, Sheet lässt sich sofort per Backdrop-Klick schließen.
+function showSeasonRecap(season, opts){
+  opts = opts || {};
   const top=typeof season.top_elo==='string'?JSON.parse(season.top_elo):season.top_elo||[];
   const ms=matchesInSeason(season.id);
   const playerIdsInSeason=new Set();
@@ -3915,7 +3920,7 @@ function showSeasonRecap(season){
     ${restListHtml}
     ${awardsHtml}
     <button class="recap-done-btn" id="closeRecapBtn">✓ Verstanden</button>
-  `, {protectMs: 800});
+  `, {protectMs: opts.auto ? 2500 : 0});
   // Grab-Hint: kurz pulsieren, signalisiert "wegziehen geht auch"
   const _grab = document.getElementById('sheetGrab');
   if(_grab) _grab.classList.add('grab-pulse');
@@ -3985,7 +3990,11 @@ function potwHasData(){
 
 
 // HIER BEGINNT DER KORRIGIERTE showPotwRecap FUNKTIONSBLOCK
-function showPotwRecap(){
+// opts.auto=true → Schutz-Phase aktiv (gegen versehentliches Schließen beim
+// Auto-Trigger am Wochenanfang). Beim manuellen Aufruf via Hall-of-Fame-Button
+// bleibt opts.auto leer → keine Schutz-Phase, sofort schließbar.
+function showPotwRecap(opts){
+  opts = opts || {};
   try{
     const {start:weekStart, end:weekEnd}=_potwLastWeekRange();
     const ms=_potwMatchesInRange(weekStart,weekEnd);
@@ -4341,7 +4350,7 @@ function showPotwRecap(){
       ${funFact}
       ${highlightsHtml}
       <button id="closePotwBtn" class="recap-done-btn">✓ Verstanden</button>
-    `, {protectMs: 800});
+    `, {protectMs: opts.auto ? 2500 : 0});
     const _grab = document.getElementById('sheetGrab');
     if(_grab) _grab.classList.add('grab-pulse');
 
@@ -4407,7 +4416,7 @@ function autoShowPotwRecap(){
       if(last && last.id!==currentSeason().id && !localStorage.getItem('recap_shown_'+last.id)) return;
     }
     if(!potwHasData()) return;
-    showPotwRecap();
+    showPotwRecap({auto:true});
   } catch(e){ console.error('POTW auto:',e); }
 }
 
@@ -4451,7 +4460,8 @@ function potdHasData(){ return _potdLastDayData()!==null; }
 // Player-of-the-Day Recap: zeigt einmal pro Tag pro Gerät den Sieger des letzten Spieltags.
 // Mit opts.force=true (vom "Letzten Tag ansehen"-Button) wird der localStorage-Check und
 // das Setzen des "shown"-Flags übersprungen, damit der manuelle Aufruf den Auto-Trigger
-// für heute nicht unterdrückt.
+// für heute nicht unterdrückt. Zusätzlich wird beim Force-Aufruf die Schutz-Phase
+// (protectMs) deaktiviert → manueller Aufruf ist sofort per Backdrop-Klick schließbar.
 function showPotdRecap(opts){
   opts = opts || {};
   try{
@@ -4594,7 +4604,7 @@ function showPotdRecap(opts){
       </div>
       ${funFact}
       <button id="closePotdBtn" class="recap-done-btn">✓ Verstanden</button>
-    `, {protectMs: 800});
+    `, {protectMs: opts.force ? 0 : 2500});
     const _grab = document.getElementById('sheetGrab');
     if(_grab) _grab.classList.add('grab-pulse');
 
