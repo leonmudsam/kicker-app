@@ -2826,6 +2826,15 @@ const ICONS = {
   clipboard:     `<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><polyline points="9 13 11 15 15 11"/>`,
   // Award-Sammler: drei Medaillen mit Bändern (Sammlung von Auszeichnungen)
   medalTrio:     `<circle cx="7" cy="15" r="3.5"/><circle cx="12" cy="10" r="3.5"/><circle cx="17" cy="15" r="3.5"/><path d="M6 12l-1-3M11 7l-1-3M16 12l1-3M18 7l-1-3M13 7l-1-3M8 12l-1-3"/>`,
+  // ── NEUE NEGATIV-BADGES v8 ──
+  // Mr. Disaster: drei umgekehrte Pokale (Stiel nach oben) — verlorene/gestürzte Trophäen
+  tripleCrash:   `<path d="M3 20h4v-3a2 2 0 00-4 0zM10 20h4v-3a2 2 0 00-4 0zM17 20h4v-3a2 2 0 00-4 0z"/><line x1="5" y1="17" x2="5" y2="14"/><line x1="12" y1="17" x2="12" y2="14"/><line x1="19" y1="17" x2="19" y2="14"/><line x1="4" y1="4" x2="20" y2="4"/><line x1="5" y1="14" x2="4" y2="4"/><line x1="19" y1="14" x2="20" y2="4"/><line x1="12" y1="14" x2="12" y2="4"/>`,
+  // Zusammenbruch: invertierte V-Kurve (Höhenflug → Absturz) mit Crash-Punkt unten rechts
+  crashDay:      `<polyline points="3 19 12 4 21 19"/><circle cx="21" cy="19" r="1.5"/>`,
+  // Bittere Pille / Tragische Niederlage: zerbrochenes Herz mit Zickzack-Bruch
+  heartBroken:   `<path d="M12 21s-7-4.5-7-11a4 4 0 017-3 4 4 0 017 3c0 6.5-7 11-7 11z"/><polyline points="10 8 12 12 10 15 13 11"/>`,
+  // Angstgegner / Nemesis: klassischer Geist (welliger Unterrand, zwei Augen) — bedrohliche Präsenz
+  ghost:         `<path d="M5 10a7 7 0 0114 0v10l-2.3-1.7L14 20l-2-1.7L10 20l-2.3-1.7L5 20z"/><circle cx="10" cy="11" r="1.2"/><circle cx="14" cy="11" r="1.2"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -9591,9 +9600,16 @@ function bindSheetSwipe(){
   const bg=document.getElementById('sheetBg');
   let startY=0, startScrollTop=0, dragging=false;
   let lastY=0, lastT=0;
-  const CLOSE_THRESHOLD=120;
-  const VELOCITY_THRESHOLD=0.5;
-  const DRAG_INTENT_THRESHOLD=10;
+  // Sheet-Close-Schwellen (kalibriert für versehentliche Touches vs echte Geste):
+  // - CLOSE_THRESHOLD: lange, langsame Geste schließt erst nach 200 px Wegstrecke
+  // - VELOCITY_THRESHOLD: 1.2 px/ms = echter Wisch (≈1200 px/s)
+  // - MIN_DY_FOR_VEL_CLOSE: ein schneller Wisch braucht zusätzlich min. 60 px Strecke,
+  //   damit kurze Flicks nicht ungewollt schließen
+  // - DRAG_INTENT_THRESHOLD: ab dieser Strecke wird das Sheet visuell mitgezogen
+  const CLOSE_THRESHOLD=200;
+  const VELOCITY_THRESHOLD=1.2;
+  const MIN_DY_FOR_VEL_CLOSE=60;
+  const DRAG_INTENT_THRESHOLD=12;
 
   // ── TOUCH (Smartphone) ──
   const onTouchStart=(e)=>{
@@ -9660,7 +9676,7 @@ function bindSheetSwipe(){
 
   // ── GEMEINSAME SNAP/CLOSE LOGIK ──
   function snapOrClose(dy,velocity){
-    if(dy>CLOSE_THRESHOLD||velocity>VELOCITY_THRESHOLD){
+    if(dy>CLOSE_THRESHOLD || (velocity>VELOCITY_THRESHOLD && dy>=MIN_DY_FOR_VEL_CLOSE)){
       sheet.style.transition='transform .28s cubic-bezier(.4,0,1,1)';
       sheet.style.transform='translateY(100%)';
       bg.style.transition='opacity .28s';
@@ -9885,18 +9901,31 @@ const BADGES=[
   // Tag der Götter: 3 eigene Spieltage in Folge als POTD gewonnen.
   {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 Spieltagen in Folge Player-of-the-Day geworden (nur mitgespielte Tage)',
     multi:true,count:(id,ms)=>countGodlyStreak(id)},
+  // ── NEUE NEGATIV-BADGES v8 ──
+  // Bittere Pille: 9:10-Niederlage (Pendant zu nail_biter / 10:9-Sieg).
+  {id:'bitter_loss',ic:'heartBroken',name:'Bittere Pille',desc:'9:10 Niederlage',
+    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&!won(id,m)&&goalsFor(id,m)===9&&goalsAgainst(id,m)===10).length},
+  // Mr. Disaster: 3× 0:10-Niederlage in einer Saison (Pendant zu mr_perfect).
+  {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
+    multi:true,count:(id,ms)=>countMrDisaster(id)},
+  // Zusammenbruch: Tag mit Sieg gestartet, mit Niederlage beendet, min. 3 Matches (Pendant zu comeback_day).
+  {id:'crash_day',ic:'crashDay',name:'Zusammenbruch',desc:'Tag mit Sieg gestartet und mit Niederlage beendet (min. 3 Matches an dem Tag)',
+    multi:true,count:(id,ms)=>countCrashDays(id,ms)},
+  // Angstgegner: 5× in Folge gegen denselben Gegner-Spieler verloren (egal in welcher Konstellation).
+  {id:'nemesis',ic:'ghost',name:'Angstgegner',desc:'5× in Folge gegen denselben Gegner verloren',
+    multi:true,count:(id,ms)=>countNemesis(id,ms)},
 ];
 
 // ════════════════════════════════════════════════════════════════════
 // BADGE-RARITY-SYSTEM — vier Stufen + Negative eigenständig
 // ════════════════════════════════════════════════════════════════════
-// Neue Klassifizierung (v4): kalibriert auf reale Achievement-Häufigkeit:
-//   • LEGENDARY (6)  — extrem selten, Karriere-Highlight
+// Neue Klassifizierung (v8): kalibriert auf reale Achievement-Häufigkeit:
+//   • LEGENDARY (10) — extrem selten, Karriere-Highlight
 //   • RARE      (14) — schwer, brauchen Skill/Konstanz
-//   • COMMON    (12) — bei aktivem Spiel oft erreicht
-//   • NEGATIVE  (2)  — "Schande", eigenständig (rot, abgesetzt)
+//   • COMMON    (14) — bei aktivem Spiel oft erreicht
+//   • NEGATIVE  (8)  — "Schande", eigenständig (rot, abgesetzt)
 // Jeder Bucket hat eine GERADE Anzahl, damit das 2-Spalten-Grid im Sheet
-// sauber aufgeht. Total = 42 Badges (= BADGES-Array-Länge).
+// sauber aufgeht. Total = 46 Badges (= BADGES-Array-Länge).
 // Reihenfolge innerhalb jeder Gruppe folgt der thematischen BADGES-Reihenfolge.
 // ════════════════════════════════════════════════════════════════════
 // ⚑ HOTSPOT — BADGE_RARITY: ordnet jeder Badge-ID eine Rarity-Klasse zu.
@@ -9950,16 +9979,21 @@ const BADGE_RARITY = {
   mr_perfect:      'legendary', // Mr. Perfect — 3× 10:0 in einer Saison
   allwetter:       'legendary', // Allwetter — POTD an 5 verschiedenen Wochentagen
   godly_streak:    'legendary', // Tag der Götter — 3 eigene POTD-Spieltage in Folge
-  // NEGATIVE (2)
+  // NEGATIVE (8)
   losing5:         'negative',  // Losing Streak
   perfect_loss:    'negative',  // Absoluter Verlierer
+  // ── v8 Erweiterungen ──
+  bitter_loss:     'negative',  // Bittere Pille — 9:10-Niederlage (Pendant zu nail_biter)
+  mr_disaster:     'negative',  // Mr. Disaster — 3× 0:10 in einer Saison (Pendant zu mr_perfect)
+  crash_day:       'negative',  // Zusammenbruch — Tag mit Sieg gestartet, mit Niederlage beendet (Pendant zu comeback_day)
+  nemesis:         'negative',  // Angstgegner — 5× in Folge gegen denselben Spieler verloren
 };
 
 const RARITY_META = {
   legendary: {label:'Legendary', color:'var(--gold)',   total:10},
   rare:      {label:'Rare',      color:'var(--purple)', total:14},
   common:    {label:'Common',    color:'var(--acid)',   total:14},
-  negative:  {label:'Schande',   color:'var(--red)',    total:4},
+  negative:  {label:'Schande',   color:'var(--red)',    total:8},
 };
 const RARITY_ORDER = ['legendary','rare','common','negative'];
 
@@ -10586,6 +10620,79 @@ function countCloseLossStreaks(id,ms,n){
   return count;
 }
 
+// ─── Mr. Disaster: 3× 0:10-Niederlage in einer Saison ────────────────
+// Spiegel zu countMrPerfect (3× 10:0-Sieg). Pro Saison getrennt zählen;
+// sobald 3 erreicht → Saison qualifiziert, count++.
+function countMrDisaster(id){
+  const bySeason = getMatchesBySeason();
+  let count = 0;
+  Object.values(bySeason).forEach(seasonMs => {
+    let disasters = 0;
+    for(const m of seasonMs){
+      if(!matchOf(id,m) || won(id,m)) continue;
+      if(goalsFor(id,m) === 0 && goalsAgainst(id,m) === 10) disasters++;
+      if(disasters >= 3) break; // billiger Early-Exit
+    }
+    if(disasters >= 3) count++;
+  });
+  return count;
+}
+
+// ─── Zusammenbruch: Tag mit Sieg gestartet, mit Niederlage beendet, ──
+// ─── min. 3 Matches ──────────────────────────────────────────────────
+// Spiegel zu countComebackDays. Strikt: erstes Match Sieg, letztes Niederlage,
+// ≥3 Matches an dem Tag. Pro Tag max. 1 Eintrag (siehe Match-Trigger).
+function countCrashDays(id,ms){
+  const mine=ms.filter(m=>matchOf(id,m))
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const byDay={};
+  mine.forEach(m=>{
+    const d=new Date(m.created_at).toISOString().slice(0,10);
+    if(!byDay[d]) byDay[d]=[];
+    byDay[d].push(m);
+  });
+  let count=0;
+  Object.values(byDay).forEach(dayMs=>{
+    if(dayMs.length<3) return;
+    const first=dayMs[0], last=dayMs[dayMs.length-1];
+    if(won(id,first) && !won(id,last)) count++;
+  });
+  return count;
+}
+
+// ─── Angstgegner: 5× in Folge gegen denselben Gegner-SPIELER verloren ─
+// Jeder Gegner wird einzeln getrackt (Mate-Wechsel egal). Bei Sieg gegen
+// einen Gegner → dessen Counter wird zurückgesetzt; bei Niederlage gegen
+// ihn → Counter +1. Erreicht der Counter 5 → +1 zum Gesamt-Count, danach
+// muss erst ein Sieg gegen diesen Gegner kommen, bevor erneut gezählt wird.
+// Konsistent zum Match-Trigger: pro Match max. 1 Eintrag, selbst wenn
+// beide Gegner gleichzeitig die Schwelle erreichen (selten).
+function countNemesis(id,ms){
+  const mine=ms.filter(m=>matchOf(id,m))
+    .sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
+  const vsStreak={};  // opponentId → aktueller Niederlagen-Streak
+  const fired={};     // opponentId → schon gefeuert (wartet auf Reset durch Sieg)
+  let count=0;
+  mine.forEach(m=>{
+    const onA=[m.a1,m.a2].includes(id);
+    const w=(onA && m.winner==='A')||(!onA && m.winner==='B');
+    const opps=onA?[m.b1,m.b2]:[m.a1,m.a2];
+    if(w){
+      opps.forEach(oId=>{ vsStreak[oId]=0; fired[oId]=false; });
+    } else {
+      let firedThisMatch=false;
+      opps.forEach(oId=>{
+        vsStreak[oId]=(vsStreak[oId]||0)+1;
+        if(vsStreak[oId]>=5 && !fired[oId]){
+          fired[oId]=true;
+          if(!firedThisMatch){ count++; firedThisMatch=true; }
+        }
+      });
+    }
+  });
+  return count;
+}
+
 function getCachedBadges(id){
   const key='badges_'+id+'_'+matches.length+'_'+_cache.version;
   if(!_cache._badges) _cache._badges={};
@@ -10655,6 +10762,18 @@ function getBadgeEarnedCache(){
       // Mr. Perfect: pro Saison 10:0-Siege zählen + bei ≥3 einmalig feuern
       mrPerfectPerSeason: {}, // sid → Anzahl 10:0-Siege in dieser Saison
       mrPerfectFired: {},     // sid → true (schon gefeuert)
+      // ── NEUE NEGATIV-BADGES v8 ──
+      // Mr. Disaster: pro Saison 0:10-Niederlagen zählen + bei ≥3 einmalig feuern
+      // (Spiegel zu mrPerfect — Saison-Reset implizit durch sid-Wechsel)
+      mrDisasterPerSeason: {},
+      mrDisasterFired: {},
+      // Zusammenbruch: pro Tag merken, ob schon gefeuert wurde
+      crashFired: {},         // "YYYY-MM-DD" → true
+      // Angstgegner: pro Gegner-Spieler aktueller Niederlagen-Streak + Fired-Flag
+      // Reset des Counters bei Sieg gegen denselben Gegner; Fired-Flag wird
+      // ebenfalls zurückgesetzt, sobald wieder ein Sieg gegen X gelingt.
+      nemesisVs: {},          // oppId → Streak
+      nemesisFired: {},       // oppId → schon gefeuert (wartet auf Reset)
       // Wiederholungstäter: letzter Sieg-Score und aktueller Counter
       lastWinScore: null, wtCur: 0,
       // Comeback-Tag: erstes Match-Ergebnis pro Tag + Trigger-Flag
@@ -10747,6 +10866,7 @@ function getBadgeEarnedCache(){
       if(w  && gf===10 && ga===0)                   fire('perfect_win');
       if(!w && gf===0  && ga===10)                  fire('perfect_loss');
       if(w  && gf===10 && ga===9)                   fire('nail_biter');
+      if(!w && gf===9  && ga===10)                  fire('bitter_loss');
       if(w  && pos==='def' && ga<=2)                fire('wall_badge');
       if(w  && myExp<0.35)                          fire('upset_king');
 
@@ -10760,6 +10880,18 @@ function getBadgeEarnedCache(){
         if(s.mrPerfectPerSeason[sid] >= 3 && !s.mrPerfectFired[sid]){
           s.mrPerfectFired[sid] = true;
           fire('mr_perfect');
+        }
+      }
+
+      // ── Mr. Disaster: 3× 0:10-Niederlage in DERSELBEN Saison ──
+      // Spiegel zu mr_perfect. Counter ist saison-lokal (sid-Format YYYY-MM)
+      // → automatischer Reset bei Saisonwechsel ohne expliziten Reset-Pfad.
+      if(!w && gf===0 && ga===10){
+        const sid = seasonOf(m.created_at).id;
+        s.mrDisasterPerSeason[sid] = (s.mrDisasterPerSeason[sid]||0) + 1;
+        if(s.mrDisasterPerSeason[sid] >= 3 && !s.mrDisasterFired[sid]){
+          s.mrDisasterFired[sid] = true;
+          fire('mr_disaster');
         }
       }
 
@@ -10889,6 +11021,33 @@ function getBadgeEarnedCache(){
       if(w && s.days[day].g>=3 && s.firstResOfDay[day]==='L' && !s.comebackFired[day]){
         s.comebackFired[day]=true;
         fire('comeback_day');
+      }
+
+      // ── Zusammenbruch: Tag mit Sieg gestartet, mit Niederlage beendet, min. 3 Matches ──
+      // Spiegel zu comeback_day. firstResOfDay wird oben bereits gesetzt (erstes
+      // Match-Ergebnis pro Tag). Triggert beim Übergang ≥3 Matches, wenn der
+      // aktuelle (letzte) Trigger eine Niederlage ist.
+      if(!w && s.days[day].g>=3 && s.firstResOfDay[day]==='W' && !s.crashFired[day]){
+        s.crashFired[day]=true;
+        fire('crash_day');
+      }
+
+      // ── Angstgegner: 5× in Folge gegen denselben Gegner-SPIELER verloren ──
+      // Pro Gegner-Spieler aus diesem Match: bei Niederlage Counter +1, bei
+      // Sieg Reset. Max. 1 fire pro Match (analog streak_breaker), auch wenn
+      // beide Gegner gleichzeitig die Schwelle erreichen sollten.
+      const oppPair = onA?[m.b1,m.b2]:[m.a1,m.a2];
+      if(w){
+        oppPair.forEach(oId=>{ s.nemesisVs[oId]=0; s.nemesisFired[oId]=false; });
+      } else {
+        let nemFired=false;
+        oppPair.forEach(oId=>{
+          s.nemesisVs[oId] = (s.nemesisVs[oId]||0) + 1;
+          if(s.nemesisVs[oId]>=5 && !s.nemesisFired[oId]){
+            s.nemesisFired[oId]=true;
+            if(!nemFired){ fire('nemesis'); nemFired=true; }
+          }
+        });
       }
 
       // ── Revanchist: Sieg gegen das Team, gegen das man im direkt vorigen Match verloren hat ──
@@ -12354,6 +12513,33 @@ function _badgeProgress(badgeId, playerId){
       const atkW = stats.atkW || 0, defW = stats.defW || 0;
       const cur = Math.min(atkW, defW, 20);
       return {cur, tgt: 20, label: 'min. Sturm- & Abwehr-Siege'};
+    }
+    case 'mr_disaster': {
+      // Aktuelle Saison: wie viele 0:10-Niederlagen hat der Spieler bereits?
+      // Spiegel zu mr_perfect-Fortschritt (würde gleich aussehen).
+      const sid = currentSeason().id;
+      const seasonMs = matchesInSeason(sid);
+      const disasters = seasonMs.filter(m => matchOf(playerId,m) && !won(playerId,m)
+        && goalsFor(playerId,m)===0 && goalsAgainst(playerId,m)===10).length;
+      return {cur: Math.min(disasters, 3), tgt: 3, label: '0:10 in aktueller Saison'};
+    }
+    case 'nemesis': {
+      // Höchster AKTUELLER Niederlagen-Streak gegen einen einzelnen Gegner.
+      // Lauf chronologisch durch alle Matches, halte vsCounter pro Gegner.
+      // Sieg gegen X → vsCounter[X]=0; Niederlage gegen X → +1.
+      // Anzeige: max() über alle finalen Counter (= aktueller laufender Streak).
+      const mine = matches.filter(m => matchOf(playerId,m))
+        .sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+      const vs = {};
+      mine.forEach(m => {
+        const onA = [m.a1,m.a2].includes(playerId);
+        const w = (onA && m.winner==='A') || (!onA && m.winner==='B');
+        const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
+        if(w) opps.forEach(o => { vs[o] = 0; });
+        else  opps.forEach(o => { vs[o] = (vs[o]||0) + 1; });
+      });
+      const best = Object.values(vs).reduce((a,b) => a>b?a:b, 0);
+      return {cur: Math.min(best, 5), tgt: 5, label: 'akt. Niederlagen gg. selben Gegner'};
     }
   }
   return null;
