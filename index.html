@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║  ESO KICKER LIGA · Single-File PWA                                           ║
+║  KICKER LIGA · Single-File PWA                                               ║
 ║  ──────────────────────────────────────────────────────────────────────────  ║
 ║  Stack:   Vanilla JS + Supabase + Web-Crypto                                 ║
 ║  Aufbau:  <head> · <style>(CSS) · <body> · <script>(Logik)                   ║
@@ -33,7 +33,7 @@
 <meta name="theme-color" content="#0a0c0b">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Eso Kicker Liga</title>
+<title>Kicker Liga</title>
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -115,6 +115,24 @@
     background:linear-gradient(180deg,var(--bg) 60%,rgba(10,12,11,.85) 85%,transparent);
     backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   }
+  /* News-Toast: kleine acid-grüne Pille mit Pfeil zum News-Button (v8.1).
+     display:none Default → JS schaltet .visible + .show in zwei Stufen für
+     saubere fade-in/slide-up Animationen. */
+  .news-toast{position:absolute;right:60px;top:calc(var(--safe-top) + 56px);
+    z-index:45;background:var(--acid);color:#000;
+    padding:8px 13px;border-radius:12px;
+    font-family:'Archivo Black',sans-serif;font-size:11.5px;letter-spacing:-.005em;
+    box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 0 1px rgba(190,242,100,.25),
+      0 2px 12px rgba(190,242,100,.35);
+    opacity:0;transform:translateY(-8px) scale(.94);pointer-events:none;
+    transition:opacity .25s ease, transform .3s cubic-bezier(.2,.8,.2,1);
+    white-space:nowrap;display:none;cursor:pointer;user-select:none}
+  .news-toast.visible{display:block}
+  .news-toast.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+  .news-toast::before{content:'';position:absolute;top:-5px;right:18px;
+    width:10px;height:10px;background:var(--acid);
+    transform:rotate(45deg);border-radius:2px;z-index:-1}
+  .news-toast:active{transform:translateY(0) scale(.97)}
   .appbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .logo{display:flex;align-items:center;gap:10px;min-width:0}
 .logo-mark{
@@ -1762,6 +1780,168 @@
     font-family:'Archivo Black',sans-serif;letter-spacing:-.005em;text-transform:uppercase}
   .bp-close:active{transform:scale(.985);background:var(--surface2)}
 
+  /* ════════════════════════════════════════════════════════════════════
+     §C11 — NEWS / STORY SYSTEM
+     ════════════════════════════════════════════════════════════════════ */
+  /* News-Button im App-Header (analog .lock-btn) */
+  .news-btn{position:relative}
+  .news-btn-badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;
+    border-radius:9px;background:var(--acid);color:#000;font-size:9.5px;font-weight:800;
+    line-height:16px;text-align:center;padding:0 4px;
+    font-family:'Sometype Mono',monospace;letter-spacing:-.02em;
+    box-shadow:0 0 0 2px var(--bg);pointer-events:none}
+  /* Mini-Popup über dem News-Button: Popover-Layer (z 130, über Sheet 100 und bp 120) */
+  .nv-bg{position:fixed;inset:0;z-index:130;background:rgba(0,0,0,.5);
+    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+    opacity:0;pointer-events:none;transition:.18s;
+    display:flex;align-items:flex-start;justify-content:center;padding:74px 16px 24px}
+  .nv-bg.show{opacity:1;pointer-events:auto}
+  .nv{background:var(--bg2);border:1px solid var(--line);border-radius:16px;
+    width:100%;max-width:380px;overflow:hidden;
+    transform:translateY(-12px) scale(.96);transition:transform .22s cubic-bezier(.2,.8,.2,1);
+    z-index:131;position:relative}
+  .nv-bg.show .nv{transform:translateY(0) scale(1)}
+  .nv-head{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+  .nv-head-ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    background:rgba(190,242,100,.12);color:var(--acid)}
+  .nv-head-ic svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .nv-head-title{font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1;letter-spacing:-.01em;flex:1}
+  .nv-head-sub{color:var(--muted);font-size:9.5px;font-family:'Sometype Mono',monospace;
+    text-transform:uppercase;letter-spacing:.12em;margin-top:3px}
+  .nv-head-close{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;line-height:1}
+  .nv-list{max-height:60vh;overflow-y:auto}
+  .nv-empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
+  /* Story-Card (im Mini-Popup UND im Feed) */
+  .nv-story{display:flex;align-items:flex-start;gap:11px;padding:11px 16px;
+    border-bottom:1px solid var(--line);cursor:pointer;transition:.15s;position:relative}
+  .nv-story:last-child{border-bottom:0}
+  .nv-story:active{background:var(--surface)}
+  .nv-story-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--surface)}
+  .nv-story-ic svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  /* Kategorie-Farbcodes (Icon-Tint + Cat-Label-Color) */
+  .nv-cat-highlight  .nv-story-ic,.nv-cat-tag.highlight  {background:rgba(247,207,74,.12);color:var(--gold)}
+  .nv-cat-season     .nv-story-ic,.nv-cat-tag.season     {background:rgba(173,154,243,.12);color:var(--purple)}
+  .nv-cat-badge      .nv-story-ic,.nv-cat-tag.badge      {background:rgba(190,242,100,.12);color:var(--acid)}
+  .nv-cat-fun        .nv-story-ic,.nv-cat-tag.fun        {background:rgba(255,160,90,.12);color:#ffa05a}
+  .nv-cat-rivalry    .nv-story-ic,.nv-cat-tag.rivalry    {background:rgba(240,86,106,.12);color:var(--red)}
+  .nv-cat-team       .nv-story-ic,.nv-cat-tag.team       {background:rgba(86,180,232,.12);color:var(--blue)}
+  .nv-cat-comeback   .nv-story-ic,.nv-cat-tag.comeback   {background:rgba(247,207,74,.12);color:var(--gold)}
+  .nv-cat-personal   .nv-story-ic,.nv-cat-tag.personal   {background:rgba(173,154,243,.12);color:var(--purple)}
+  .nv-cat-history    .nv-story-ic,.nv-cat-tag.history    {background:rgba(86,180,232,.12);color:var(--blue)}
+  .nv-cat-misfortune .nv-story-ic,.nv-cat-tag.misfortune {background:rgba(240,86,106,.12);color:var(--red)}
+  .nv-story-body{flex:1;min-width:0}
+  .nv-story-cat{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+    font-family:'Sometype Mono',monospace;color:var(--muted);margin-bottom:2px;display:inline-block}
+  .nv-cat-tag{padding:1px 5px;border-radius:4px}
+  .nv-story-title{font-family:'Archivo Black',sans-serif;font-size:12.5px;line-height:1.25;
+    letter-spacing:-.01em;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .nv-story-desc{color:var(--ink2);font-size:11px;line-height:1.4;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .nv-story-when{color:var(--muted);font-size:9.5px;font-family:'Sometype Mono',monospace;
+    margin-top:5px;letter-spacing:.04em}
+  .nv-story-dot{position:absolute;top:14px;right:14px;width:7px;height:7px;border-radius:50%;
+    background:var(--acid);box-shadow:0 0 6px rgba(190,242,100,.5)}
+  .nv-story.read{opacity:.72}
+  .nv-story.read .nv-story-title{font-weight:700}
+  /* Footer im Mini-Popup */
+  .nv-foot{padding:12px 16px;border-top:1px solid var(--line);text-align:center}
+  .nv-foot-btn{background:none;border:0;color:var(--acid);font-size:11.5px;
+    font-family:'Archivo Black',sans-serif;letter-spacing:-.005em;cursor:pointer;
+    padding:6px 10px;border-radius:8px;transition:.15s}
+  .nv-foot-btn:active{background:var(--surface)}
+  .nv-foot-btn .arr{margin-left:4px}
+  /* Filter-Pills im Full-Feed */
+  .nv-filters{display:flex;gap:6px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none;margin-bottom:4px}
+  .nv-filters::-webkit-scrollbar{display:none}
+  .nv-filter{flex-shrink:0;padding:6px 11px;border-radius:14px;background:var(--surface);
+    border:1px solid var(--line);color:var(--ink2);font-size:10.5px;font-weight:700;
+    cursor:pointer;font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.08em;
+    transition:.15s}
+  .nv-filter.active{background:var(--acid);color:#000;border-color:var(--acid)}
+  .nv-filter:active{transform:scale(.96)}
+  /* Story-Detail-Popover (Layer auf z-index 140, ÜBER Mini-Popup 130) */
+  .nd-bg{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.65);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    opacity:0;pointer-events:none;transition:.2s;
+    display:flex;align-items:center;justify-content:center;padding:24px}
+  .nd-bg.show{opacity:1;pointer-events:auto}
+  .nd{background:var(--bg2);border:1px solid var(--line);border-radius:18px;
+    padding:18px 20px 16px;max-width:380px;width:100%;max-height:80vh;overflow-y:auto;
+    transform:scale(.92);transition:transform .22s cubic-bezier(.2,.8,.2,1);
+    z-index:141;position:relative}
+  .nd-bg.show .nd{transform:scale(1)}
+  .nd-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+  .nd-ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;background:var(--surface)}
+  .nd-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .nd-title-wrap{flex:1;min-width:0}
+  .nd-cat{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;
+    font-family:'Sometype Mono',monospace;color:var(--muted);margin-bottom:3px}
+  .nd-title{font-family:'Archivo Black',sans-serif;font-size:17px;line-height:1.2;letter-spacing:-.01em}
+  .nd-when{color:var(--muted);font-size:9.5px;font-family:'Sometype Mono',monospace;
+    margin-top:5px;letter-spacing:.04em}
+  .nd-desc{color:var(--ink2);font-size:12.5px;line-height:1.5;
+    background:var(--surface);border-radius:10px;padding:11px 13px;margin-bottom:12px}
+  .nd-section{font-size:9.5px;text-transform:uppercase;letter-spacing:.14em;
+    color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace;margin:14px 0 8px}
+  .nd-stat-row{display:flex;align-items:center;justify-content:space-between;
+    padding:9px 12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:10px;margin-bottom:6px}
+  .nd-stat-label{font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace}
+  .nd-stat-val{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--ink)}
+  .nd-stat-val.acid{color:var(--acid)}
+  .nd-stat-val.red{color:var(--red)}
+  .nd-stat-val.gold{color:var(--gold)}
+  /* Versus-Block (für Rivalität/Endspurt-Stories) */
+  .nd-vs{display:flex;align-items:center;gap:12px;background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;padding:14px 12px;margin-bottom:10px}
+  .nd-vs-p{flex:1;text-align:center;min-width:0}
+  .nd-vs-p .av{margin:0 auto 7px;display:inline-flex;align-items:center;justify-content:center;
+    width:44px;height:44px;border-radius:50%;font-family:'Archivo Black',sans-serif;font-size:13px}
+  .nd-vs-name{font-family:'Archivo Black',sans-serif;font-size:12px;line-height:1.1;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px}
+  .nd-vs-elo{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--ink2)}
+  .nd-vs-mid{flex-shrink:0;text-align:center;color:var(--muted);font-family:'Archivo Black',sans-serif;
+    font-size:15px;letter-spacing:.08em;line-height:1}
+  .nd-vs-mid-sub{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;
+    font-family:'Sometype Mono',monospace;margin-top:4px;font-weight:700}
+  /* Match-VS-Block (v8.1): 2v2 Layout mit Score-Pille in der Mitte (klickbar) */
+  .nd-match{display:flex;align-items:center;gap:8px;padding:12px 10px;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    margin-bottom:10px;cursor:pointer;transition:.15s}
+  .nd-match:active{transform:scale(.99);background:var(--surface2)}
+  .nd-match-side{flex:1;text-align:center;min-width:0}
+  .nd-match-side.won .nd-match-names{color:var(--acid)}
+  .nd-match-side.lost .nd-match-names{color:var(--ink2)}
+  .nd-match-avs{display:flex;justify-content:center;margin-bottom:6px}
+  .nd-match-avs .av{width:30px;height:30px;font-size:11px;margin-left:-6px;
+    border:2px solid var(--surface);border-radius:50%}
+  .nd-match-avs .av:first-child{margin-left:0}
+  .nd-match-names{font-family:'Sometype Mono',monospace;font-size:10px;line-height:1.25;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .nd-match-score{flex-shrink:0;text-align:center;padding:0 6px;min-width:62px}
+  .nd-match-score-val{font-family:'Archivo Black',sans-serif;font-size:19px;line-height:1;letter-spacing:-.02em}
+  .nd-match-score-date{font-family:'Sometype Mono',monospace;font-size:8.5px;
+    color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:5px}
+  /* Form-Strip (letzte 10 Matches als W/L Balken) */
+  .nd-form-strip{display:flex;gap:4px;margin-bottom:10px;padding:10px 12px;
+    background:var(--surface);border:1px solid var(--line);border-radius:10px}
+  .nd-form-dot{flex:1;height:8px;border-radius:3px;min-width:8px}
+  .nd-form-dot.w{background:var(--acid)}
+  .nd-form-dot.l{background:var(--red);opacity:.65}
+  /* Elo-Delta in nd-stat-val */
+  .nd-stat-val.pos{color:var(--acid)}
+  .nd-stat-val.neg{color:var(--red)}
+  .nd-close{display:block;width:100%;margin-top:14px;padding:14px;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    color:var(--ink);font-size:13px;cursor:pointer;font-weight:700;
+    font-family:'Archivo Black',sans-serif;letter-spacing:-.005em;text-transform:uppercase}
+  .nd-close:active{transform:scale(.985);background:var(--surface2)}
+  /* X-Button oben rechts (v8.1 — bewusstes Schließen) */
+  .nd-x{background:none;border:0;color:var(--muted);font-size:26px;line-height:1;
+    cursor:pointer;padding:0 6px;border-radius:8px;flex-shrink:0;transition:.15s;
+    align-self:flex-start;margin-top:-2px}
+  .nd-x:active{background:var(--surface);color:var(--ink)}
+
   /* Trophäen-Rail — feiner als das alte mit Goldener/Blauer Akzent-Fläche */
   .pp-trophies{display:flex;gap:8px;overflow-x:auto;padding:2px 0 4px;margin:0;scrollbar-width:none}
   .pp-trophies::-webkit-scrollbar{display:none}
@@ -2435,19 +2615,28 @@
   <div class="appbar">
     <div class="appbar-row">
       <div class="logo" id="logoHome" style="cursor:pointer">
-       <div class="logo-mark"><img src="icon.png" alt="Eso Kicker Liga Logo"></div>
+       <div class="logo-mark"><img src="icon.png" alt="Kicker Liga Logo"></div>
         <div class="logo-txt">
-          <h1>Eso Kicker Liga</h1>
+          <h1>Kicker Liga</h1>
           <div class="sub">Elo · 2v2</div>
         </div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="lock-btn" id="posHistBtn" title="Saison-Positionsverlauf" style="visibility:hidden"><svg viewBox="0 0 24 24"><path d="M5 21V11M12 21V7M19 21V3M3 21h18" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         <button class="lock-btn" id="recapBtn" title="Saison-Recap" style="visibility:hidden"><svg viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0010 0V4H7zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3M12 15v3M9 21h6"/></svg></button>
+        <button class="lock-btn news-btn" id="newsBtn" title="Liga News" style="visibility:hidden">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="15" height="16" rx="2"/><line x1="18" y1="8" x2="21" y2="8"/><path d="M18 8v9a2 2 0 002 2 1 1 0 001-1V8"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="6" y1="11" x2="14" y2="11"/><line x1="6" y1="14" x2="11" y2="14"/></svg>
+          <span class="news-btn-badge" id="newsBtnBadge" style="display:none">0</span>
+        </button>
         <button class="lock-btn" id="settingsBtn" title="Einstellungen"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
       </div>
     </div>
     <div class="conn-pill"><span class="dot load" id="connDot"></span><span id="connText">verbinde…</span></div>
+    <!-- News-Toast: kurzes "X neue Stories"-Pop unter dem News-Icon (v8.1).
+         Cooldown + Anzeige-Logik liegen in newsBadgeRefresh → _maybeShowNewsToast. -->
+    <div class="news-toast" id="newsToast" role="status" aria-live="polite">
+      <span id="newsToastTxt">Neue Stories</span>
+    </div>
   </div>
 
   <main id="main"></main>
@@ -2465,6 +2654,11 @@
      Wird via showBadgePopover() befüllt; Schließen mit click außerhalb der Karte,
      dem "Schließen"-Button oder ESC. Das darunter liegende Sheet bleibt offen. -->
 <div class="bp-bg" id="bpBg"><div class="bp" id="bp"></div></div>
+
+<!-- News-System: Mini-Popup (z 130) und Story-Detail (z 140). Liegen über
+     allem (Sheet, Badge-Popover). Beide werden lazy befüllt. -->
+<div class="nv-bg" id="nvBg"><div class="nv" id="nv"></div></div>
+<div class="nd-bg" id="ndBg"><div class="nd" id="nd"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -2835,6 +3029,11 @@ const ICONS = {
   heartBroken:   `<path d="M12 21s-7-4.5-7-11a4 4 0 017-3 4 4 0 017 3c0 6.5-7 11-7 11z"/><polyline points="10 8 12 12 10 15 13 11"/>`,
   // Angstgegner / Nemesis: klassischer Geist (welliger Unterrand, zwei Augen) — bedrohliche Präsenz
   ghost:         `<path d="M5 10a7 7 0 0114 0v10l-2.3-1.7L14 20l-2-1.7L10 20l-2.3-1.7L5 20z"/><circle cx="10" cy="11" r="1.2"/><circle cx="14" cy="11" r="1.2"/>`,
+  // ── NEWS / STORY SYSTEM v9 ──
+  // Newspaper (Header-Button + leere News-Liste)
+  newspaper:     `<rect x="3" y="4" width="15" height="16" rx="2"/><line x1="18" y1="8" x2="21" y2="8"/><path d="M18 8v9a2 2 0 002 2 1 1 0 001-1V8"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="6" y1="11" x2="14" y2="11"/><line x1="6" y1="14" x2="11" y2="14"/>`,
+  // Clock (Quiet-Week, Prime-Time)
+  clock:         `<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -3802,6 +4001,10 @@ async function loadAll(){
     if(window._updateRecapBtn) window._updateRecapBtn();
     if(window._updatePosHistBtn) window._updatePosHistBtn();
     render();
+    // News-Badge nach jedem Daten-Refresh aktualisieren (matches.length änderte
+    // sich evtl. → Story-Cache invalidiert sich beim nächsten Lookup, Badge
+    // refresht entsprechend). Defensiv: try/catch, damit Render nie blockiert.
+    try { if(window.newsBadgeRefresh) window.newsBadgeRefresh(); } catch(e){}
     // Player-of-the-Day Recap (zeigt einmal pro Tag den letzten Spieltag).
     // Verzögerung > Saison-Recap (600ms), damit der bei Bedarf Vorrang hat.
     // POTW (900ms) kommt davor und blockt POTD am Mo/Di.
@@ -9745,6 +9948,17 @@ document.getElementById('bpBg').addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
+    // Reihenfolge: News-Detail > News-Popover > Badge-Popover (innerster zuerst)
+    const ndBg = document.getElementById('ndBg');
+    if(ndBg && ndBg.classList.contains('show')){
+      if(typeof closeNewsDetail === 'function') closeNewsDetail();
+      return;
+    }
+    const nvBg = document.getElementById('nvBg');
+    if(nvBg && nvBg.classList.contains('show')){
+      if(typeof closeNewsPopover === 'function') closeNewsPopover();
+      return;
+    }
     const bpBg = document.getElementById('bpBg');
     if(bpBg && bpBg.classList.contains('show')) closeBadgePopover();
   }
@@ -14099,6 +14313,1347 @@ function _processAchToastQueue(){
     setTimeout(()=>{ _achToastBusy=false; _processAchToastQueue(); }, 400);
   }, 2600);
 }
+
+// ╔═══════════════════════════════════════════════════════════════════════╗
+// ║  §11  LIGA NEWS / STORY-SYSTEM                                        ║
+// ║  ───────────────────────────────────────────────────────────────────  ║
+// ║  Erzeugt redaktionelle "Schlagzeilen" aus bestehenden Liga-Daten.     ║
+// ║  KEINE neuen Berechnungen — nur Interpretation existierender Caches.  ║
+// ║                                                                       ║
+// ║   §11.1  Story-Generator (alle Typen)                                 ║
+// ║   §11.2  Cache (versionsgebunden an matches.length + _cache.version)  ║
+// ║   §11.3  LocalStorage (Read-State, Ring-Buffer max 200)               ║
+// ║   §11.4  Header-Badge-Refresh                                         ║
+// ║   §11.5  Mini-Popup (newsPopover)                                     ║
+// ║   §11.6  Voller Feed mit Filter (newsFeedFull)                        ║
+// ║   §11.7  Story-Detail (newsDetail) — dynamisch je Typ                 ║
+// ╚═══════════════════════════════════════════════════════════════════════╝
+
+// ─── §11.0 — Konstanten ──────────────────────────────────────────────
+// Kategorien (Filter-Pills + CSS-Klassen über `nv-cat-${cat}`).
+// label = Anzeige im Filter; descLabel = im Detail- und Story-Header.
+const NEWS_CATEGORIES = {
+  highlight:  {label:'Highlights',  descLabel:'Highlight',        ic:'crown'},
+  season:     {label:'Saison',      descLabel:'Saison',           ic:'rocket'},
+  badge:      {label:'Awards',      descLabel:'Badge & Awards',   ic:'medalTrio'},
+  fun:        {label:'Fun Facts',   descLabel:'Fun Fact',         ic:'thriller'},
+  rivalry:    {label:'Rivalität',   descLabel:'Rivalität',        ic:'crossedSwords'},
+  team:       {label:'Teams',       descLabel:'Team',             ic:'users'},
+  comeback:   {label:'Comebacks',   descLabel:'Comeback',         ic:'comeback'},
+  personal:   {label:'Persönlich',  descLabel:'Persönlich',       ic:'trendUp'},
+  history:    {label:'Historie',    descLabel:'Historie',         ic:'calendar'},
+  misfortune: {label:'Pechvogel',   descLabel:'Pechvogel',        ic:'dramaTear'},
+};
+
+// LocalStorage-Keys (versioniert für künftige Migrations)
+const NEWS_LS_SEEN  = 'eso_news_seen_v1';
+const NEWS_LS_VISIT = 'eso_news_lastVisit_v1';
+const NEWS_LS_TOAST = 'eso_news_toast_v1';  // v8.1: zeitstempel + count des letzten Toasts
+const NEWS_LS_MAX_SEEN = 200; // Ring-Buffer-Limit
+const NEWS_TOAST_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h zwischen identischen Toast-Counts
+
+// Generator-Limits — Schutz gegen zu viele Stories pro Typ
+const NEWS_LIMITS = {
+  topForm: 3,       // max 3 Spieler "in Top-Form" gleichzeitig
+  lossStreak: 3,
+  jubilee: 5,
+  badgeUnlocked: 5, // letzte 5 freigeschalteten Badges
+  rivalry: 3,
+  total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
+};
+
+// ─── §11.0b — Badge-Whitelist (v8.1) ─────────────────────────────────
+// Nur seltene & besondere Badges erzeugen News. Common-Badges sind in der
+// Liga zu häufig und würden den Feed verstopfen ("Achievement-Spam").
+// Negative: nur die wirklich krassen (perfect_loss, mr_disaster, nemesis),
+// nicht die alltäglichen wie bitter_loss/krimi_loser.
+//
+// PFLEGEHINWEIS: bei neuen Badges (§7.1) hier ergänzen, wenn sie als News
+// auftauchen sollen. Default: nicht-newsworthy (bewusste Entscheidung).
+const NEWS_BADGE_WHITELIST = new Set([
+  // Legendary — alle 10 sind News-würdig
+  'dynasty_600','dominator_400','award_collector','perfect_win','streak15','streak20',
+  'untouchable','mr_perfect','allwetter','godly_streak',
+  // Rare — kuratierte Auswahl: nur die mit besonderer Story
+  'wall_badge','upset_king','unbeatable','streak10','vice_champion','potw','krimi',
+  // Negative — nur die seltenen, "krassen" Niederlagen
+  'mr_disaster','nemesis','perfect_loss',
+]);
+
+// ─── §11.1 — Story-Generator ─────────────────────────────────────────
+// Iteriert genau einmal über bestehende Caches. Gibt ein Array von
+// Story-Objekten {id, cat, ic, title, desc, when, prio, dataRef} zurück.
+// Performance: O(N_matches) — dominante Kosten durch top-form-Filterung,
+// die aber auf die letzten 10 Matches pro Spieler eingeschränkt ist.
+function _buildStories(){
+  const stories = [];
+  const now = new Date();
+  const pm = pmap();
+  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const sortedMatches = [...matches].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)); // neueste zuerst
+
+  // ── Pre-Group: matches pro Spieler ──
+  // O(N) statt O(N × N_players) für jeden späteren filter()-Aufruf.
+  // matches ist asc-sortiert (loadAll) → byPlayer[pid] ist ebenfalls asc.
+  // Bei 100k Matches × 50 Spielern: ~400k push-ops vs ~50M filter-ops.
+  const byPlayer = {};
+  matches.forEach(m => {
+    const ids = [m.a1, m.a2, m.b1, m.b2];
+    for(let i=0; i<4; i++){
+      const pid = ids[i];
+      if(!byPlayer[pid]) byPlayer[pid] = [];
+      byPlayer[pid].push(m);
+    }
+  });
+
+  // ── 1. Saison-Endspurt ──
+  // Letzte 7 Tage einer Saison + min. 2 Spieler im Saison-Top mit kleinem Abstand.
+  try {
+    const daysLeft = seasonDaysLeft();
+    if(daysLeft > 0 && daysLeft <= 7){
+      const sid = currentSeason().id;
+      const sim = getGlobalSim();
+      const endElos = sim.elo || {};
+      const playedMap = (sim.seasonPlayed && sim.seasonPlayed[sid]) || {};
+      const rankList = Object.keys(endElos)
+        .filter(pid => pm[pid] && !pm[pid].hidden && (playedMap[pid]||0) > 0)
+        .map(pid => ({pid, elo: Math.round(endElos[pid])}))
+        .sort((a,b)=>b.elo-a.elo);
+      if(rankList.length >= 2){
+        const gap = rankList[0].elo - rankList[1].elo;
+        stories.push({
+          id: 'season_endspurt_'+sid,
+          cat: 'highlight',
+          ic: 'rocket',
+          title: `Noch ${daysLeft} ${daysLeft===1?'Tag':'Tage'}!`,
+          desc: gap <= 50
+            ? `Die Top 2 trennen nur ${gap} Elo. Das wird knapp.`
+            : `Saison-Endspurt: ${nameOf(rankList[0].pid)} führt mit ${gap} Elo Vorsprung.`,
+          when: now,
+          prio: gap <= 15 ? 10 : (gap <= 50 ? 9 : 7),
+          dataRef: {type:'season_endgame', sid, leader:rankList[0], second:rankList[1], daysLeft, gap}
+        });
+      }
+    }
+  } catch(e){ /* defensiv */ }
+
+  // ── 2. Saisonstart ──
+  // Aktuelle Saison startete in den letzten 3 Tagen.
+  try {
+    const sStart = seasonStart();
+    const ageDays = Math.floor((now - sStart) / 86400000);
+    if(ageDays >= 0 && ageDays <= 3){
+      stories.push({
+        id: 'season_start_'+currentSeason().id,
+        cat: 'season',
+        ic: 'rocket',
+        title: ageDays === 0 ? 'Neue Saison ist gestartet!' : `Saison läuft seit ${ageDays} ${ageDays===1?'Tag':'Tagen'}`,
+        desc: `${currentSeason().label} — alle Elo-Stände wurden zurückgesetzt. Die Jagd beginnt von vorn.`,
+        when: sStart,
+        prio: ageDays === 0 ? 8 : 5,
+        dataRef: {type:'season_start', sid: currentSeason().id}
+      });
+    }
+  } catch(e){}
+
+  // ── 3. Führungswechsel ──
+  // Vergleicht aktuellen Top-1 der Saison mit dem Top-1 vor 10 Matches.
+  try {
+    const rankSnaps = getRankSnapshots();
+    const sid = currentSeason().id;
+    const seasonMs = matchesInSeason(sid);
+    if(seasonMs.length >= 4){
+      // Aktueller Top-1
+      const sim = getGlobalSim();
+      const endElos = sim.elo || {};
+      const playedMap = (sim.seasonPlayed && sim.seasonPlayed[sid]) || {};
+      const cur = Object.keys(endElos)
+        .filter(pid => pm[pid] && !pm[pid].hidden && (playedMap[pid]||0) > 0)
+        .map(pid => ({pid, elo: Math.round(endElos[pid])}))
+        .sort((a,b)=>b.elo-a.elo);
+      // Letztes Match → preRank des letzten Matches (= "Stand vor dem letzten Spiel")
+      // Top-1 davor: aus preRank des letzten Matches der Saison
+      const lastSeasonMatch = [...seasonMs].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
+      const snap = lastSeasonMatch && rankSnaps[lastSeasonMatch.id];
+      if(cur.length && snap && snap.preRank){
+        let prevTop = null;
+        for(const pid in snap.preRank){
+          if(snap.preRank[pid] === 1){ prevTop = pid; break; }
+        }
+        if(prevTop && prevTop !== cur[0].pid && pm[prevTop] && pm[cur[0].pid]){
+          stories.push({
+            id: 'lead_change_'+sid+'_'+lastSeasonMatch.id,
+            cat: 'highlight',
+            ic: 'kingClass',
+            title: `${nameOf(cur[0].pid)} übernimmt die Tabellenführung`,
+            desc: `Nach dem letzten Spiel ist ${nameOf(cur[0].pid)} neuer Spitzenreiter — vor ${nameOf(prevTop)}.`,
+            when: new Date(lastSeasonMatch.created_at),
+            prio: 10,
+            dataRef: {type:'lead_change', newLeader: cur[0].pid, prevLeader: prevTop, matchId: lastSeasonMatch.id}
+          });
+        }
+      }
+    }
+  } catch(e){}
+
+  // ── 4. Top-Form (≥8/10 letzte Spiele) ──
+  // Iteriert über aktive Spieler, schaut letzte 10 Matches → Win-Rate.
+  // O(N_players × min(10, matches_per_player)) — sehr günstig.
+  try {
+    const candidates = [];
+    activePlayers().forEach(p => {
+      // byPlayer ist asc-sortiert (=ältestes first). Letzte 10 = slice(-10), für Recency desc reversen.
+      const arr = byPlayer[p.id] || [];
+      if(arr.length < 10) return;
+      const last10 = arr.slice(-10);
+      const wins = last10.filter(m => won(p.id, m)).length;
+      if(wins >= 8){
+        candidates.push({pid: p.id, wins, when: new Date(last10[last10.length-1].created_at)});
+      }
+    });
+    candidates.sort((a,b) => b.wins - a.wins || b.when - a.when);
+    candidates.slice(0, NEWS_LIMITS.topForm).forEach(c => {
+      stories.push({
+        id: 'top_form_'+c.pid+'_'+c.when.toISOString().slice(0,10),
+        cat: 'highlight',
+        ic: 'flame',
+        title: `${nameOf(c.pid)} in Top-Form`,
+        desc: `${c.wins} Siege aus den letzten 10 Spielen. Aktuell kaum zu stoppen.`,
+        when: c.when,
+        prio: c.wins === 10 ? 8 : (c.wins === 9 ? 7 : 6),
+        dataRef: {type:'top_form', pid: c.pid, wins: c.wins}
+      });
+    });
+  } catch(e){}
+
+  // ── 5. Niederlagenserie (≥5 in Folge, aktuell laufend) ──
+  // Nur Spieler, deren JÜNGSTES Match Niederlage war + Serie ≥ 5.
+  try {
+    const candidates = [];
+    activePlayers().forEach(p => {
+      // byPlayer asc → von hinten iterieren = neueste zuerst. Frühzeitig brechen.
+      const arr = byPlayer[p.id] || [];
+      if(!arr.length) return;
+      let streak = 0;
+      for(let i = arr.length - 1; i >= 0; i--){
+        if(won(p.id, arr[i])) break;
+        streak++;
+        if(streak > 12) break; // Schutz
+      }
+      if(streak >= 5){
+        candidates.push({pid: p.id, streak, when: new Date(arr[arr.length-1].created_at)});
+      }
+    });
+    candidates.sort((a,b) => b.streak - a.streak);
+    candidates.slice(0, NEWS_LIMITS.lossStreak).forEach(c => {
+      stories.push({
+        id: 'loss_streak_'+c.pid+'_'+c.when.toISOString().slice(0,10),
+        cat: 'misfortune',
+        ic: c.streak >= 7 ? 'dropTriple' : 'dropDouble',
+        title: `${nameOf(c.pid)} im Pleiten-Modus`,
+        desc: `${c.streak} Niederlagen in Folge. Der Knoten muss platzen.`,
+        when: c.when,
+        prio: c.streak >= 8 ? 6 : 4,
+        dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak}
+      });
+    });
+  } catch(e){}
+
+  // ── 6. Badge freigeschaltet (letzte 7 Tage) ──
+  // Tap-Quelle: getBadgeEarnedCache. Wir zeigen die NEUSTEN N freigeschalteten,
+  // Dubletten pro Spieler+Badge dedupliziert.
+  try {
+    const cutoff = now.getTime() - 7*86400000;
+    const bMap = getBadgeEarnedCache();
+    const events = [];
+    for(const mid in bMap){
+      const arr = bMap[mid];
+      if(!arr || !arr.length) continue;
+      const matchObj = matches.find(m => m.id === mid);
+      if(!matchObj) continue;
+      const t = new Date(matchObj.created_at).getTime();
+      if(t < cutoff) continue;
+      arr.forEach(e => events.push({...e, when: new Date(matchObj.created_at), matchId: mid}));
+    }
+    // Pro (Spieler, Badge-ID): nur das jüngste Event
+    const dedupe = {};
+    events.forEach(ev => {
+      const k = ev.playerId+'|'+ev.badge.id;
+      if(!dedupe[k] || dedupe[k].when < ev.when) dedupe[k] = ev;
+    });
+    const list = Object.values(dedupe).sort((a,b) => b.when - a.when).slice(0, NEWS_LIMITS.badgeUnlocked);
+    list.forEach(ev => {
+      if(!pm[ev.playerId]) return;
+      // v8.1: Whitelist-Filter — nur seltene/besondere Badges erzeugen News.
+      // Common-Badges (Stammgast, Frühschicht, Comeback-Tag …) sind zu häufig
+      // und würden den Feed mit "Achievement-Spam" füllen.
+      if(!NEWS_BADGE_WHITELIST.has(ev.badge.id)) return;
+      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      // Legendary erzwingt Top-Prio (Bucket >=9 im Final-Sort), damit echte
+      // Achievements zuverlässig ganz oben im Feed landen.
+      const rarPrio = {legendary:10, rare:7, common:5, negative:8}[rar] || 5;
+      stories.push({
+        id: 'badge_'+ev.playerId+'_'+ev.badge.id+'_'+ev.matchId,
+        cat: 'badge',
+        ic: ev.badge.ic || 'trophy',
+        title: `${nameOf(ev.playerId)}: ${ev.badge.name}`,
+        desc: ev.badge.desc || 'Neues Badge freigeschaltet.',
+        when: ev.when,
+        prio: rarPrio,
+        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, matchId: ev.matchId, rarity: rar}
+      });
+    });
+  } catch(e){}
+
+  // ── 7. Rivalität (≥50 H2H-Duelle) ──
+  // H2H = wie oft 2 Spieler in irgendeinem Match GEGENEINANDER waren (egal welcher Mate).
+  // Iteriere matches 1×, baue Counter-Map auf.
+  try {
+    const pairCnt = {}; // "minId|maxId" → {n, lastDate}
+    matches.forEach(m => {
+      const A = [m.a1, m.a2], B = [m.b1, m.b2];
+      A.forEach(a => B.forEach(b => {
+        if(a === b) return;
+        const k = a < b ? a+'|'+b : b+'|'+a;
+        if(!pairCnt[k]) pairCnt[k] = {n:0, last:m.created_at};
+        pairCnt[k].n++;
+        if(m.created_at > pairCnt[k].last) pairCnt[k].last = m.created_at;
+      }));
+    });
+    const ranked = Object.entries(pairCnt)
+      .filter(([k,v]) => v.n >= 50)
+      .map(([k,v]) => {
+        const [a,b] = k.split('|');
+        return {a, b, n: v.n, when: new Date(v.last)};
+      })
+      .filter(r => pm[r.a] && pm[r.b] && !pm[r.a].hidden && !pm[r.b].hidden)
+      .sort((a,b) => b.n - a.n)
+      .slice(0, NEWS_LIMITS.rivalry);
+    ranked.forEach(r => {
+      const tier = r.n >= 200 ? 'legendäre' : r.n >= 100 ? 'große' : 'wachsende';
+      stories.push({
+        id: 'rivalry_'+r.a+'_'+r.b,
+        cat: 'rivalry',
+        ic: 'crossedSwords',
+        title: `${r.n} Duelle: ${nameOf(r.a)} vs ${nameOf(r.b)}`,
+        desc: `Eine ${tier} Rivalität — die Liga liebt's.`,
+        when: r.when,
+        prio: r.n >= 200 ? 7 : r.n >= 100 ? 5 : 3,
+        dataRef: {type:'rivalry', a: r.a, b: r.b, n: r.n}
+      });
+    });
+  } catch(e){}
+
+  // ── 8. Jubiläum (50/100/200/500 Spiele) ──
+  // Trigger NUR wenn das jüngste Match dieses Spielers genau die Schwelle reißt.
+  // → keine Wiederholung in späteren Generator-Läufen (ID enthält Match-ID).
+  try {
+    const thresholds = [50, 100, 200, 500, 1000];
+    const candidates = [];
+    activePlayers().forEach(p => {
+      // byPlayer ist bereits asc-sortiert (matches asc → push behält Reihenfolge).
+      // Keine zusätzliche Filterung/Sortierung nötig.
+      const arr = byPlayer[p.id] || [];
+      const total = arr.length;
+      if(!total) return;
+      for(const t of thresholds){
+        if(total === t){
+          const last = arr[arr.length-1];
+          candidates.push({pid: p.id, total: t, when: new Date(last.created_at), matchId: last.id});
+          break;
+        }
+      }
+    });
+    candidates.sort((a,b) => b.when - a.when).slice(0, NEWS_LIMITS.jubilee).forEach(c => {
+      stories.push({
+        id: 'jubilee_'+c.pid+'_'+c.total,
+        cat: 'history',
+        ic: 'calendar',
+        title: `${nameOf(c.pid)} feiert ${c.total}. Spiel`,
+        desc: `Ein Karriere-Meilenstein. Glückwunsch.`,
+        when: c.when,
+        prio: c.total >= 500 ? 8 : c.total >= 200 ? 6 : 4,
+        dataRef: {type:'jubilee', pid: c.pid, total: c.total, matchId: c.matchId}
+      });
+    });
+  } catch(e){}
+
+  // ── 9. Stille Woche (Aktivitäts-Fun-Fact) ──
+  // Vergleicht Spielzahl letzte 7 Tage mit Schnitt der vorangegangenen 4 Wochen.
+  try {
+    const wk = 7 * 86400000;
+    const tsNow = now.getTime();
+    const lastWeek = matches.filter(m => {
+      const t = new Date(m.created_at).getTime();
+      return t > tsNow - wk && t <= tsNow;
+    }).length;
+    const prev4w = matches.filter(m => {
+      const t = new Date(m.created_at).getTime();
+      return t > tsNow - 5*wk && t <= tsNow - wk;
+    }).length;
+    const avg = prev4w / 4;
+    if(avg >= 20 && lastWeek <= avg * 0.5){
+      stories.push({
+        id: 'quiet_week_'+now.toISOString().slice(0,10),
+        cat: 'fun',
+        ic: 'clock',
+        title: 'Ruhige Woche',
+        desc: `Nur ${lastWeek} Spiele in den letzten 7 Tagen. Normal wären ${Math.round(avg)}.`,
+        when: now,
+        prio: 2,
+        dataRef: {type:'quiet_week', lastWeek, avg: Math.round(avg)}
+      });
+    }
+  } catch(e){}
+
+  // ── 10. Saisonende-Recap (Saison gerade zu Ende) ──
+  // Wenn aktuelle Saison weniger als 2 Tage alt ist UND es eine archivierte
+  // Vorgängersaison gibt → kurzer Verweis auf den Champion.
+  try {
+    const sStart = seasonStart();
+    const ageDays = (now - sStart) / 86400000;
+    if(ageDays <= 2 && seasons && seasons.length){
+      // letzte archivierte Saison
+      const lastArchived = [...seasons].sort((a,b)=>(b.id||'').localeCompare(a.id||''))[0];
+      if(lastArchived){
+        const topElo = (typeof lastArchived.top_elo === 'string')
+          ? JSON.parse(lastArchived.top_elo || '[]')
+          : (lastArchived.top_elo || []);
+        if(topElo.length && topElo[0] && topElo[0].id && pm[topElo[0].id]){
+          stories.push({
+            id: 'season_recap_'+lastArchived.id,
+            cat: 'season',
+            ic: 'crown',
+            title: `${nameOf(topElo[0].id)} ist Saison-Champion`,
+            desc: `Die Saison ${lastArchived.id} ist abgeschlossen — ${nameOf(topElo[0].id)} mit ${topElo[0].elo} Elo an der Spitze.`,
+            when: sStart,
+            prio: 9,
+            dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id, championElo: topElo[0].elo, topElo}
+          });
+        }
+      }
+    }
+  } catch(e){}
+
+  // ── 11. Persönliche Sieg-Milestones (100/250/500/1000) ──
+  // Nutzt byPlayer + bestehendes won(). Trigger nur, wenn die Gesamt-Siege
+  // GENAU eine Schwelle treffen → die Story ist stabil und erscheint einmalig.
+  try {
+    const winThresholds = [100, 250, 500, 1000];
+    activePlayers().forEach(p => {
+      const arr = byPlayer[p.id] || [];
+      if(!arr.length) return;
+      let wins = 0;
+      for(let i = 0; i < arr.length; i++) if(won(p.id, arr[i])) wins++;
+      for(const t of winThresholds){
+        if(wins === t){
+          // Trigger-Match = letzter Sieg
+          let trigger = null;
+          for(let i = arr.length - 1; i >= 0; i--){
+            if(won(p.id, arr[i])){ trigger = arr[i]; break; }
+          }
+          if(!trigger) break;
+          stories.push({
+            id: 'milestone_wins_'+p.id+'_'+t,
+            cat: 'personal',
+            ic: 'trophy',
+            title: `${nameOf(p.id)}: ${t}. Sieg!`,
+            desc: `Karriere-Meilenstein — ${t} Siege stehen jetzt zu Buche.`,
+            when: new Date(trigger.created_at),
+            prio: t >= 500 ? 9 : t >= 250 ? 7 : 5,
+            dataRef: {type:'milestone_wins', pid: p.id, milestone: t+'. Sieg', matchId: trigger.id}
+          });
+          break;
+        }
+      }
+    });
+  } catch(e){}
+
+  // ── 12. Elo-Anstieg der Woche (größter Aufsteiger 7d) ──
+  // Aggregiert sim.deltas pro Spieler über die letzten 7 Tage. O(N_recent) total.
+  try {
+    const wk = 7 * 86400000;
+    const tsNow = now.getTime();
+    const histMap = getHistoryByMatchId();
+    const gains = {};
+    for(let i = 0; i < matches.length; i++){
+      const m = matches[i];
+      const t = new Date(m.created_at).getTime();
+      if(t < tsNow - wk || t > tsNow) continue;
+      const hist = histMap.get(m.id);
+      if(!hist || !hist.deltas) continue;
+      for(const pid in hist.deltas){
+        gains[pid] = (gains[pid] || 0) + hist.deltas[pid];
+      }
+    }
+    let topPid = null, topGain = 0;
+    for(const pid in gains){
+      if(!pm[pid] || pm[pid].hidden) continue;
+      if(gains[pid] > topGain){ topGain = gains[pid]; topPid = pid; }
+    }
+    if(topPid && topGain >= 50){
+      const delta = Math.round(topGain);
+      stories.push({
+        id: 'elo_swing_week_'+topPid+'_'+now.toISOString().slice(0,10),
+        cat: 'personal',
+        ic: 'trendUp',
+        title: `${nameOf(topPid)} im Aufwind`,
+        desc: `+${delta} Elo in den letzten 7 Tagen — größter Anstieg der Woche.`,
+        when: now,
+        prio: 7,
+        dataRef: {type:'elo_swing', pid: topPid, delta, period: 'Letzte 7 Tage'}
+      });
+    }
+  } catch(e){}
+
+  // ── 13. Härtester Elo-Verlust des Tages (Pechvogel) ──
+  try {
+    const day = 86400000;
+    const tsNow = now.getTime();
+    const histMap = getHistoryByMatchId();
+    const losses = {};
+    for(let i = 0; i < matches.length; i++){
+      const m = matches[i];
+      const t = new Date(m.created_at).getTime();
+      if(t < tsNow - day || t > tsNow) continue;
+      const hist = histMap.get(m.id);
+      if(!hist || !hist.deltas) continue;
+      for(const pid in hist.deltas){
+        losses[pid] = (losses[pid] || 0) + hist.deltas[pid];
+      }
+    }
+    let worstPid = null, worstDelta = 0;
+    for(const pid in losses){
+      if(!pm[pid] || pm[pid].hidden) continue;
+      if(losses[pid] < worstDelta){ worstDelta = losses[pid]; worstPid = pid; }
+    }
+    if(worstPid && worstDelta <= -20){
+      const delta = Math.round(worstDelta);
+      stories.push({
+        id: 'elo_swing_day_'+worstPid+'_'+now.toISOString().slice(0,10),
+        cat: 'misfortune',
+        ic: 'dropDouble',
+        title: `${nameOf(worstPid)} mit hartem Tag`,
+        desc: `${delta} Elo — der größte Verlust der letzten 24 Stunden.`,
+        when: now,
+        prio: 5,
+        dataRef: {type:'elo_swing', pid: worstPid, delta, period: 'Letzte 24 Stunden'}
+      });
+    }
+  } catch(e){}
+
+  // ── 14. Größter Kantersieg der Woche ──
+  // Tordifferenz ≥ 8 in den letzten 7 Tagen. Story bezieht sich auf das Match.
+  try {
+    const wk = 7 * 86400000;
+    const tsNow = now.getTime();
+    let biggest = null;
+    for(let i = 0; i < matches.length; i++){
+      const m = matches[i];
+      const t = new Date(m.created_at).getTime();
+      if(t < tsNow - wk || t > tsNow) continue;
+      const diff = Math.abs((m.score_a||0) - (m.score_b||0));
+      if(!biggest || diff > biggest.diff){
+        biggest = {m, diff, t};
+      }
+    }
+    if(biggest && biggest.diff >= 8){
+      stories.push({
+        id: 'biggest_blowout_'+biggest.m.id,
+        cat: 'highlight',
+        ic: 'thriller',
+        title: `Kantersieg: ${biggest.m.score_a}:${biggest.m.score_b}`,
+        desc: `+${biggest.diff} Tordifferenz — der dickste Sieg der Woche.`,
+        when: new Date(biggest.t),
+        prio: biggest.diff >= 10 ? 8 : 6,
+        dataRef: {type:'biggest_blowout', matchId: biggest.m.id, diff: biggest.diff}
+      });
+    }
+  } catch(e){}
+
+  // ── 15. Vor genau einem Jahr (Anniversary) ──
+  // Match suchen, dessen created_at ±1 Tag um (now - 365d) liegt.
+  // Nimm das Match mit der geringsten Abweichung.
+  try {
+    const year = 365 * 86400000;
+    const tsNow = now.getTime();
+    const targetTs = tsNow - year;
+    const tolerance = 86400000;
+    let ann = null;
+    for(let i = 0; i < matches.length; i++){
+      const m = matches[i];
+      const t = new Date(m.created_at).getTime();
+      const diff = Math.abs(t - targetTs);
+      if(diff <= tolerance){
+        if(!ann || diff < ann.diff) ann = {m, diff};
+      }
+    }
+    if(ann){
+      const m = ann.m;
+      const dt = new Date(m.created_at);
+      const dStr = dt.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
+      stories.push({
+        id: 'anniversary_'+m.id+'_'+now.toISOString().slice(0,10),
+        cat: 'history',
+        ic: 'calendar',
+        title: 'Vor genau einem Jahr',
+        desc: `Erinnerst du dich? ${m.score_a}:${m.score_b} am ${dStr}.`,
+        when: now,
+        prio: 4,
+        dataRef: {type:'anniversary', matchId: m.id, dateLabel: dStr}
+      });
+    }
+  } catch(e){}
+
+  // ── Final-Sort + Limit ──
+  // Prio-Stufen-Modell (v8.1):
+  //   - Prio ≥ 9 (Saisonentscheidungen, Lead-Change, Saison-Recap, legendary
+  //     Badges, neue Rekorde): immer ganz oben, Datum egal.
+  //   - Prio 7-8 (große Rekorde, Top-Form, große Rivalitäten): zweite Reihe.
+  //   - Prio ≤ 6: rein chronologisch, neueste zuerst.
+  // Innerhalb gleicher Klasse: Datum desc primär, Prio desc als Tiebreaker.
+  const prioBucket = p => p >= 9 ? 2 : p >= 7 ? 1 : 0;
+  stories.sort((a,b) => {
+    const ba = prioBucket(a.prio), bb = prioBucket(b.prio);
+    if(ba !== bb) return bb - ba;
+    const dt = b.when - a.when;
+    if(dt !== 0) return dt;
+    return b.prio - a.prio;
+  });
+
+  // ── Anti-Spam: Per-Player-Limit (v8.1) ──
+  // Verhindert, dass ein einzelner Spieler den Feed dominiert. Nach dem
+  // Sort sind die wichtigsten Stories pro Spieler bereits zuerst — wir nehmen
+  // also die ersten N und kappen den Rest. Stories ohne Spieler-Bezug
+  // (saison_endgame, season_recap, quiet_week, biggest_blowout, anniversary)
+  // sind nicht limitiert.
+  const PER_PLAYER_LIMIT = 3;
+  const perPlayer = {};
+  const deduped = [];
+  for(const s of stories){
+    const d = s.dataRef || {};
+    const pid = d.pid || d.playerId || d.newLeader || null;
+    if(!pid){
+      deduped.push(s);
+      continue;
+    }
+    if(!perPlayer[pid]) perPlayer[pid] = 0;
+    if(perPlayer[pid] >= PER_PLAYER_LIMIT) continue;
+    perPlayer[pid]++;
+    deduped.push(s);
+  }
+  return deduped.slice(0, NEWS_LIMITS.total);
+}
+
+// ─── §11.2 — Versions-gebundener Cache ───────────────────────────────
+// Generator läuft nur 1× pro matches.length+_cache.version-Kombination.
+// Time-sensitive Stories (Endspurt, Stille Woche) werden zusätzlich an den
+// aktuellen Tag gebunden, damit sich Datums-abhängige Inhalte täglich
+// refreshen, ohne dass matches-Änderungen nötig sind.
+function getStoriesCache(){
+  const today = new Date().toISOString().slice(0,10);
+  const key = 'news_'+matches.length+'_'+_cache.version+'_'+today;
+  if(_cache._newsKey === key) return _cache._newsList;
+  const list = _buildStories();
+  _cache._newsKey = key;
+  _cache._newsList = list;
+  return list;
+}
+
+// ─── §11.3 — LocalStorage (Read-State) ───────────────────────────────
+// Ring-Buffer-Pattern: max 200 IDs werden gespeichert, älteste fallen raus.
+// Lesen ist O(N), Schreiben ist O(N) (Array-Operations). Bei N=200 vernachlässigbar.
+function _newsLoadSeen(){
+  try {
+    const raw = localStorage.getItem(NEWS_LS_SEEN);
+    if(!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch(e){ return new Set(); }
+}
+function _newsSaveSeen(set){
+  try {
+    // Ring-Buffer: bei Überlauf älteste IDs verwerfen (chronologische Reihenfolge
+    // = Einfüge-Reihenfolge → Set-Iteration garantiert das in JS).
+    let arr = [...set];
+    if(arr.length > NEWS_LS_MAX_SEEN) arr = arr.slice(-NEWS_LS_MAX_SEEN);
+    localStorage.setItem(NEWS_LS_SEEN, JSON.stringify(arr));
+  } catch(e){}
+}
+function _newsMarkSeen(ids){
+  const seen = _newsLoadSeen();
+  const list = Array.isArray(ids) ? ids : [ids];
+  list.forEach(id => seen.add(id));
+  _newsSaveSeen(seen);
+}
+function _newsMarkAllSeen(){
+  const stories = getStoriesCache();
+  _newsMarkSeen(stories.map(s => s.id));
+  try { localStorage.setItem(NEWS_LS_VISIT, new Date().toISOString()); } catch(e){}
+}
+function newsUnreadCount(){
+  const stories = getStoriesCache();
+  const seen = _newsLoadSeen();
+  return stories.filter(s => !seen.has(s.id)).length;
+}
+
+// ─── §11.4 — Header-Badge-Refresh ────────────────────────────────────
+// Wird nach loadAll() und nach gezielten UI-Aktionen aufgerufen.
+// Stellt das News-Button-Sichtbarkeit und die Unread-Pille korrekt ein.
+// Zusätzlich (v8.1): zeigt einmalig den "X neue Stories"-Toast, wenn neue
+// Stories vorliegen und der Cooldown abgelaufen ist.
+function newsBadgeRefresh(){
+  const btn = document.getElementById('newsBtn');
+  const badge = document.getElementById('newsBtnBadge');
+  if(!btn || !badge) return;
+  btn.style.visibility = 'visible';
+  let n = 0;
+  try { n = newsUnreadCount(); } catch(e){ n = 0; }
+  if(n > 0){
+    badge.style.display = '';
+    badge.textContent = n > 9 ? '9+' : String(n);
+    // Toast nur bei "echten" Neuigkeiten (nicht bei jedem Refresh)
+    _maybeShowNewsToast(n);
+  } else {
+    badge.style.display = 'none';
+    // Falls alles gelesen → Toast sofort ausblenden (Zustände konsistent)
+    try { _hideNewsToast(); } catch(e){}
+  }
+}
+// Global verfügbar machen, damit loadAll und onclick-Handler dranzukommen
+window.newsBadgeRefresh = newsBadgeRefresh;
+
+// ─── §11.4b — Toast-Logik (v8.1) ─────────────────────────────────────
+// Cooldown-basierter Hinweis "X neue Stories" unter dem News-Icon.
+// Vermeidet Spam durch zweistufige Bedingung:
+//   1. unread > zuletzt gezeigte Anzahl  → es gibt WIRKLICH mehr Stories
+//   2. ODER seit letztem Toast > 6h verstrichen → erneut sanft erinnern
+// Auto-hide nach 4s. Tap → Mini-Popup. Toast bleibt persistent als sticky
+// Hinweis-Pille NICHT — Badge übernimmt das.
+let _newsToastHideTimer = null;
+function _newsLoadToastState(){
+  try {
+    const raw = localStorage.getItem(NEWS_LS_TOAST);
+    if(!raw) return {lastCount: 0, lastTs: 0};
+    const o = JSON.parse(raw);
+    return {lastCount: o.lastCount|0, lastTs: o.lastTs|0};
+  } catch(e){ return {lastCount: 0, lastTs: 0}; }
+}
+function _newsSaveToastState(state){
+  try { localStorage.setItem(NEWS_LS_TOAST, JSON.stringify(state)); } catch(e){}
+}
+function _maybeShowNewsToast(unreadCount){
+  const toast = document.getElementById('newsToast');
+  const txt = document.getElementById('newsToastTxt');
+  if(!toast || !txt || unreadCount <= 0) return;
+  const state = _newsLoadToastState();
+  const now = Date.now();
+  const moreThanBefore = unreadCount > state.lastCount;
+  const cooledDown = (now - state.lastTs) > NEWS_TOAST_COOLDOWN_MS;
+  if(!moreThanBefore && !cooledDown) return;
+  // Anzeigen
+  txt.textContent = unreadCount + (unreadCount === 1 ? ' neue Story' : ' neue Stories');
+  toast.classList.add('visible');
+  // Reflow erzwingen für CSS-Animation
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  _newsSaveToastState({lastCount: unreadCount, lastTs: now});
+  // Auto-hide nach 4s
+  if(_newsToastHideTimer) clearTimeout(_newsToastHideTimer);
+  _newsToastHideTimer = setTimeout(() => _hideNewsToast(), 4000);
+  // Click → Mini-Popup, Toast sofort ausblenden
+  toast.onclick = () => {
+    _hideNewsToast();
+    try { openNewsPopover(); } catch(e){}
+  };
+}
+function _hideNewsToast(){
+  const toast = document.getElementById('newsToast');
+  if(!toast) return;
+  if(_newsToastHideTimer){ clearTimeout(_newsToastHideTimer); _newsToastHideTimer = null; }
+  toast.classList.remove('show');
+  setTimeout(() => toast.classList.remove('visible'), 300);
+}
+
+// ─── §11.5 — Mini-Popup ──────────────────────────────────────────────
+// Klein, kompakt, max 5 Stories. Beim Öffnen: Stories werden NICHT als
+// gelesen markiert; das passiert erst beim Schließen/Wechsel zum Vollfeed.
+// Ein einzelner Story-Tap markiert nur diese eine Story.
+function openNewsPopover(){
+  // Falls der "X neue Stories"-Toast gerade läuft, sofort ausblenden —
+  // er hat seinen Job (User auf News aufmerksam machen) erfüllt.
+  try { _hideNewsToast(); } catch(e){}
+  const stories = getStoriesCache();
+  const seen = _newsLoadSeen();
+  const top = stories.slice(0, 5);
+  const nv = document.getElementById('nv');
+  const bg = document.getElementById('nvBg');
+  if(!nv || !bg) return;
+  const newCount = stories.filter(s => !seen.has(s.id)).length;
+  const headerSub = newCount > 0
+    ? (newCount === 1 ? '1 neue Story' : newCount+' neue Stories')
+    : (stories.length ? 'Aktuelles aus der Liga' : 'Noch keine Stories');
+  nv.innerHTML = `
+    <div class="nv-head">
+      <div class="nv-head-ic">${svgI('newspaper')}</div>
+      <div style="flex:1;min-width:0">
+        <div class="nv-head-title">Liga News</div>
+        <div class="nv-head-sub">${esc(headerSub)}</div>
+      </div>
+      <button class="nv-head-close" id="nvCloseBtn" aria-label="Schließen">×</button>
+    </div>
+    <div class="nv-list" id="nvList">
+      ${top.length
+        ? top.map(s => _newsCardHtml(s, seen.has(s.id))).join('')
+        : '<div class="nv-empty">Sobald sich etwas in der Liga tut, erscheint es hier.</div>'}
+    </div>
+    <div class="nv-foot">
+      <button class="nv-foot-btn" id="nvOpenFeed">Alle Stories anzeigen<span class="arr">›</span></button>
+    </div>`;
+  bg.classList.add('show');
+  document.getElementById('nvCloseBtn').onclick = closeNewsPopover;
+  document.getElementById('nvOpenFeed').onclick = () => {
+    closeNewsPopover();
+    // Kurz warten bis Popover ausgeblendet ist (vermeidet z-index-Stacking-Glitch)
+    setTimeout(openNewsFeed, 180);
+  };
+  // Story-Click: Detail öffnen, sofort als gelesen markieren, Card visuell updaten
+  nv.querySelectorAll('.nv-story[data-sid]').forEach(el => {
+    el.onclick = () => {
+      const sid = el.dataset.sid;
+      _newsMarkSeen(sid);
+      el.classList.add('read');
+      el.querySelector('.nv-story-dot')?.remove();
+      newsBadgeRefresh();
+      openNewsDetail(sid);
+    };
+  });
+}
+function closeNewsPopover(){
+  const bg = document.getElementById('nvBg');
+  if(bg) bg.classList.remove('show');
+}
+
+// Story-Card-HTML — wird im Popover UND im Vollfeed verwendet
+function _newsCardHtml(s, isRead){
+  const cat = NEWS_CATEGORIES[s.cat] || NEWS_CATEGORIES.fun;
+  return `<div class="nv-story nv-cat-${s.cat} ${isRead?'read':''}" data-sid="${esc(s.id)}">
+    <div class="nv-story-ic">${svgI(s.ic || cat.ic)}</div>
+    <div class="nv-story-body">
+      <div class="nv-story-cat nv-cat-tag ${s.cat}">${esc(cat.descLabel)}</div>
+      <div class="nv-story-title">${esc(s.title)}</div>
+      <div class="nv-story-desc">${esc(s.desc)}</div>
+      <div class="nv-story-when">${esc(_newsWhenLabel(s.when))}</div>
+    </div>
+    ${!isRead ? '<div class="nv-story-dot"></div>' : ''}
+  </div>`;
+}
+
+// Datumsformatierung: "Heute, 16:07" / "Gestern, 21:11" / "12.06., 14:30"
+function _newsWhenLabel(when){
+  const d = new Date(when);
+  const now = new Date();
+  const todayKey = now.toISOString().slice(0,10);
+  const yest = new Date(now.getTime() - 86400000).toISOString().slice(0,10);
+  const dKey = d.toISOString().slice(0,10);
+  const hhmm = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  if(dKey === todayKey) return 'Heute, '+hhmm;
+  if(dKey === yest) return 'Gestern, '+hhmm;
+  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+', '+hhmm;
+}
+
+// ─── §11.6 — Voller Feed (im Sheet) mit Filter-Pills ─────────────────
+let _newsFeedFilter = 'all'; // 'all' | 'new' | cat-Key
+function openNewsFeed(){
+  // Beim Öffnen des Vollfeeds: einmalig Visit-Timestamp aktualisieren —
+  // markiert NICHT alle als gelesen (das geschieht pro Tap).
+  try { localStorage.setItem(NEWS_LS_VISIT, new Date().toISOString()); } catch(e){}
+  _newsFeedFilter = 'all';
+  _renderNewsFeed();
+}
+function _renderNewsFeed(){
+  const stories = getStoriesCache();
+  const seen = _newsLoadSeen();
+  // Filter-Definition (v8.1): kuratierte Liste statt aller Kategorien.
+  //   - "Neu":       ungelesen UND jünger als 24h (echte Aktualität)
+  //   - "Ungelesen": jede ungelesene Story, unabhängig vom Alter
+  //   - Kategorie-Filter: nur Highlights/Saison/Awards/Teams/Fun Facts
+  //     (übrige Kategorien sind über "Alle" erreichbar).
+  const filters = [
+    {k:'all',       label:'Alle'},
+    {k:'new',       label:'Neu'},
+    {k:'unread',    label:'Ungelesen'},
+    {k:'highlight', label:'Highlights'},
+    {k:'season',    label:'Saison'},
+    {k:'badge',     label:'Awards'},
+    {k:'team',      label:'Teams'},
+    {k:'fun',       label:'Fun Facts'},
+  ];
+  const ONE_DAY = 86400000;
+  const nowTs = Date.now();
+  let filtered = stories;
+  if(_newsFeedFilter === 'new'){
+    filtered = stories.filter(s => !seen.has(s.id) && (nowTs - new Date(s.when).getTime()) < ONE_DAY);
+  } else if(_newsFeedFilter === 'unread'){
+    filtered = stories.filter(s => !seen.has(s.id));
+  } else if(_newsFeedFilter !== 'all'){
+    filtered = stories.filter(s => s.cat === _newsFeedFilter);
+  }
+  const filterBar = `<div class="nv-filters">
+    ${filters.map(f => `<button class="nv-filter ${_newsFeedFilter===f.k?'active':''}" data-f="${f.k}">${esc(f.label)}</button>`).join('')}
+  </div>`;
+  const listHtml = filtered.length
+    ? filtered.map(s => _newsCardHtml(s, seen.has(s.id))).join('')
+    : '<div class="nv-empty">Keine Stories in dieser Auswahl.</div>';
+  openSheet(`
+    <div style="padding:14px 18px 4px">
+      <div class="nv-head-title" style="font-size:18px;display:flex;align-items:center;gap:10px">
+        <span class="nv-head-ic" style="width:32px;height:32px">${svgI('newspaper')}</span>
+        Liga Stories
+      </div>
+      <div class="nv-head-sub" style="margin:4px 0 6px">Aktuelles, Trends und Fun Facts</div>
+      ${filterBar}
+    </div>
+    <div class="nv-list" style="padding-bottom:24px">${listHtml}</div>
+  `);
+  // Filter-Click → re-render (cheap, da Daten aus Cache)
+  const sheet = document.getElementById('sheet');
+  sheet.querySelectorAll('.nv-filter[data-f]').forEach(el => {
+    el.onclick = () => { _newsFeedFilter = el.dataset.f; _renderNewsFeed(); };
+  });
+  sheet.querySelectorAll('.nv-story[data-sid]').forEach(el => {
+    el.onclick = () => {
+      const sid = el.dataset.sid;
+      _newsMarkSeen(sid);
+      el.classList.add('read');
+      el.querySelector('.nv-story-dot')?.remove();
+      newsBadgeRefresh();
+      openNewsDetail(sid);
+    };
+  });
+}
+
+// ─── §11.7 — Story-Detail (dynamisch je Typ) ─────────────────────────
+// Detail-Popover (z-index 140) — kann ÜBER Sheet (100) und nvBg (130)
+// liegen und ist unabhängig schließbar.
+function openNewsDetail(sid){
+  const stories = getStoriesCache();
+  const s = stories.find(x => x.id === sid);
+  if(!s) return;
+  // ── Read-State (Bugfix v8.1) ──
+  // Story IMMER hier markieren — egal über welchen Pfad geöffnet wurde
+  // (Mini-Popup, Feed-Card, Direkt-Aufruf). _newsMarkSeen ist idempotent
+  // (Set-Add), kein Risiko bei mehrfachem Aufruf.
+  try {
+    _newsMarkSeen(sid);
+    newsBadgeRefresh();
+    // Sichtbare Cards (Mini-Popup + Feed) visuell synchron halten.
+    // CSS.escape ist seit 2015 in allen relevanten Browsern verfügbar; defensiv
+    // mit Fallback auf simples Escape für Edge-Cases.
+    const escId = (window.CSS && CSS.escape) ? CSS.escape(sid) : sid.replace(/[\\"']/g, '\\$&');
+    document.querySelectorAll('.nv-story[data-sid="'+escId+'"]').forEach(el => {
+      el.classList.add('read');
+      el.querySelector('.nv-story-dot')?.remove();
+    });
+  } catch(e){}
+  const cat = NEWS_CATEGORIES[s.cat] || NEWS_CATEGORIES.fun;
+  // Body-HTML dynamisch je Typ — nutzt vorhandene Avatar/Stat-Helper
+  const body = _newsDetailBody(s);
+  const nd = document.getElementById('nd');
+  const bg = document.getElementById('ndBg');
+  if(!nd || !bg) return;
+  nd.innerHTML = `
+    <div class="nd-head">
+      <div class="nd-ic nv-cat-${s.cat}">${svgI(s.ic || cat.ic)}</div>
+      <div class="nd-title-wrap">
+        <div class="nd-cat nv-cat-tag ${s.cat}" style="display:inline-block">${esc(cat.descLabel)}</div>
+        <div class="nd-title">${esc(s.title)}</div>
+        <div class="nd-when">${esc(_newsWhenLabel(s.when))}</div>
+      </div>
+      <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>
+    </div>
+    <div class="nd-desc">${esc(s.desc)}</div>
+    ${body}
+    <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
+  bg.classList.add('show');
+  document.getElementById('ndCloseBtn').onclick = closeNewsDetail;
+  document.getElementById('ndXBtn').onclick = closeNewsDetail;
+  // Match-Refs: bei Klick zum Match-Detail springen
+  nd.querySelectorAll('[data-mid]').forEach(el => {
+    el.onclick = () => {
+      const mid = el.dataset.mid;
+      closeNewsDetail();
+      closeNewsPopover();
+      closeSheet();
+      setTimeout(() => { try { showMatchDetail(mid); } catch(e){} }, 320);
+    };
+  });
+  // Player-Refs: zum Spielerprofil
+  nd.querySelectorAll('[data-pid]').forEach(el => {
+    el.onclick = () => {
+      const pid = el.dataset.pid;
+      closeNewsDetail();
+      closeNewsPopover();
+      closeSheet();
+      setTimeout(() => { try { showPlayer(pid); } catch(e){} }, 320);
+    };
+  });
+}
+function closeNewsDetail(){
+  const bg = document.getElementById('ndBg');
+  if(bg) bg.classList.remove('show');
+}
+
+// Detail-Body-HTML — schaltet nach dataRef.type. Für unbekannte Typen
+// wird nur die Description angezeigt (Fallback).
+//
+// v8.1: massiv erweitert. Helper-Funktionen unten liefern wiederverwendbare
+// Bausteine (Match-VS-Block, Elo-Delta, Form-Strip), die in mehreren Cases
+// gemeinsam genutzt werden. Vermeidet duplizierte Berechnungen.
+function _newsDetailBody(s){
+  const d = s.dataRef || {};
+  const pm = pmap();
+  const avM = (pid) => (typeof avHtml === 'function' && pm[pid]) ? avHtml(pm[pid]) : '';
+  const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';
+  try {
+    switch(d.type){
+      case 'season_endgame': {
+        const pA = d.leader, pB = d.second;
+        return `<div class="nd-section">Top-2 Stand</div>
+          <div class="nd-vs">
+            <div class="nd-vs-p" data-pid="${esc(pA.pid)}">
+              ${avM(pA.pid)}
+              <div class="nd-vs-name">${esc(nameOf(pA.pid))}</div>
+              <div class="nd-vs-elo">${pA.elo} Elo</div>
+            </div>
+            <div class="nd-vs-mid">${d.gap}<div class="nd-vs-mid-sub">Elo Diff</div></div>
+            <div class="nd-vs-p" data-pid="${esc(pB.pid)}">
+              ${avM(pB.pid)}
+              <div class="nd-vs-name">${esc(nameOf(pB.pid))}</div>
+              <div class="nd-vs-elo">${pB.elo} Elo</div>
+            </div>
+          </div>
+          <div class="nd-stat-row"><div class="nd-stat-label">Verbleibend</div><div class="nd-stat-val acid">${d.daysLeft} ${d.daysLeft===1?'Tag':'Tage'}</div></div>`;
+      }
+      case 'lead_change': {
+        const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
+        const eloChg = d.matchId ? _newsEloDelta(d.newLeader, d.matchId) : null;
+        const rankInfo = d.matchId ? _newsRankChange(d.newLeader, d.matchId) : null;
+        return `<div class="nd-section">Wechsel an der Spitze</div>
+          <div class="nd-vs">
+            <div class="nd-vs-p" data-pid="${esc(d.newLeader)}">
+              ${avM(d.newLeader)}
+              <div class="nd-vs-name">${esc(nameOf(d.newLeader))}</div>
+              <div class="nd-vs-elo" style="color:var(--acid)">neuer #1</div>
+            </div>
+            <div class="nd-vs-mid">↑<div class="nd-vs-mid-sub">übernimmt</div></div>
+            <div class="nd-vs-p" data-pid="${esc(d.prevLeader)}">
+              ${avM(d.prevLeader)}
+              <div class="nd-vs-name">${esc(nameOf(d.prevLeader))}</div>
+              <div class="nd-vs-elo">vorher #1</div>
+            </div>
+          </div>
+          ${eloChg !== null ? `<div class="nd-stat-row">
+            <div class="nd-stat-label">Elo-Veränderung</div>
+            <div class="nd-stat-val ${eloChg>=0?'pos':'neg'}">${eloChg>=0?'+':''}${eloChg}</div>
+          </div>` : ''}
+          ${rankInfo ? `<div class="nd-stat-row">
+            <div class="nd-stat-label">Tabelle</div>
+            <div class="nd-stat-val acid">#${rankInfo.pre} → #${rankInfo.post}</div>
+          </div>` : ''}
+          ${matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : ''}`;
+      }
+      case 'top_form': {
+        const form = _newsRecentForm(d.pid, 10);
+        return `<div class="nd-section">Letzte 10 Matches</div>
+          ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
+          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
+            <div class="nd-stat-val acid">${d.wins}/10 Siege</div></div>
+          ${form.currentStreak >= 2 ? `<div class="nd-stat-row">
+            <div class="nd-stat-label">Aktuelle Serie</div>
+            <div class="nd-stat-val acid">${form.currentStreak}× Sieg</div></div>` : ''}`;
+      }
+      case 'loss_streak': {
+        const form = _newsRecentForm(d.pid, 10);
+        return `<div class="nd-section">Letzte 10 Matches</div>
+          ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
+          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
+            <div class="nd-stat-val neg">${d.streak}× Niederlage in Folge</div></div>`;
+      }
+      case 'badge_unlocked': {
+        const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
+        const eloChg = d.matchId ? _newsEloDelta(d.playerId, d.matchId) : null;
+        const rarLabel = d.rarity ? (d.rarity[0].toUpperCase()+d.rarity.slice(1)) : '';
+        return `<div class="nd-section">Spieler</div>
+          <div class="nd-stat-row" data-pid="${esc(d.playerId)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(d.playerId))}</div><div class="nd-stat-val">›</div></div>
+          ${rarLabel ? `<div class="nd-stat-row">
+            <div class="nd-stat-label">Seltenheit</div>
+            <div class="nd-stat-val ${d.rarity==='legendary'?'gold':d.rarity==='negative'?'neg':'acid'}">${esc(rarLabel)}</div></div>` : ''}
+          ${eloChg !== null ? `<div class="nd-stat-row">
+            <div class="nd-stat-label">Match-Elo</div>
+            <div class="nd-stat-val ${eloChg>=0?'pos':'neg'}">${eloChg>=0?'+':''}${eloChg}</div></div>` : ''}
+          ${matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : ''}`;
+      }
+      case 'rivalry': {
+        // Live-Bilanz aus matches berechnen — günstig, da rivalry-Stories selten sind.
+        const h2h = _newsH2HRecord(d.a, d.b);
+        return `<div class="nd-section">Die Kontrahenten</div>
+          <div class="nd-vs">
+            <div class="nd-vs-p" data-pid="${esc(d.a)}">
+              ${avM(d.a)}
+              <div class="nd-vs-name">${esc(nameOf(d.a))}</div>
+              <div class="nd-vs-elo">${h2h.aWins} Siege</div>
+            </div>
+            <div class="nd-vs-mid">VS<div class="nd-vs-mid-sub">${d.n} Duelle</div></div>
+            <div class="nd-vs-p" data-pid="${esc(d.b)}">
+              ${avM(d.b)}
+              <div class="nd-vs-name">${esc(nameOf(d.b))}</div>
+              <div class="nd-vs-elo">${h2h.bWins} Siege</div>
+            </div>
+          </div>
+          ${h2h.lastMatchId ? `<div class="nd-section">Letztes Duell</div>${_newsMatchVsBlock(h2h.lastMatchId)}` : ''}`;
+      }
+      case 'jubilee': {
+        // Karriere-Bilanz nutzen statt nur Total — bestehende Stats-Funktion.
+        const stats = _newsPlayerCareer(d.pid);
+        return `<div class="nd-section">Karriere</div>
+          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
+            <div class="nd-stat-val gold">${d.total} Spiele</div></div>
+          ${stats ? `<div class="nd-stat-row">
+            <div class="nd-stat-label">Siege / Niederlagen</div>
+            <div class="nd-stat-val">${stats.wins} / ${stats.losses}</div></div>
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Win-Rate</div>
+            <div class="nd-stat-val acid">${stats.winRate}%</div></div>` : ''}
+          ${d.matchId ? `<div class="nd-section">Jubiläums-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+      }
+      case 'quiet_week': {
+        return `<div class="nd-section">Aktivität</div>
+          <div class="nd-stat-row"><div class="nd-stat-label">Letzte 7 Tage</div><div class="nd-stat-val">${d.lastWeek} Spiele</div></div>
+          <div class="nd-stat-row"><div class="nd-stat-label">4-Wochen-Schnitt</div><div class="nd-stat-val">${d.avg} Spiele</div></div>`;
+      }
+      case 'season_recap': {
+        // Top-3 Aufstellung statt nur Champion
+        const top = (d.topElo || []).slice(0,3);
+        const rows = top.map((p, i) => p && p.id && pm[p.id] ? `
+          <div class="nd-stat-row" data-pid="${esc(p.id)}" style="cursor:pointer">
+            <div class="nd-stat-label">${i+1}. ${esc(nameOf(p.id))}</div>
+            <div class="nd-stat-val ${i===0?'gold':i===1?'':''}">${p.elo} Elo</div></div>` : '').join('');
+        return `<div class="nd-section">Saison-Top-3</div>
+          ${rows}
+          <div class="nd-stat-row"><div class="nd-stat-label">Saison</div><div class="nd-stat-val">${esc(d.sid)}</div></div>`;
+      }
+      case 'season_start': {
+        return `<div class="nd-section">Aktuelle Saison</div>
+          <div class="nd-stat-row"><div class="nd-stat-label">Saison-ID</div><div class="nd-stat-val">${esc(d.sid)}</div></div>`;
+      }
+      // Neue Typen (Phase 8) hängen sich hier dran an
+      case 'milestone_wins':
+      case 'milestone_goals':
+      case 'milestone_elo': {
+        const stats = _newsPlayerCareer(d.pid);
+        return `<div class="nd-section">Meilenstein</div>
+          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
+            <div class="nd-stat-val gold">${esc(d.milestone)}</div></div>
+          ${stats ? `<div class="nd-stat-row">
+            <div class="nd-stat-label">Karriere-Bilanz</div>
+            <div class="nd-stat-val">${stats.wins}W · ${stats.losses}L</div></div>` : ''}
+          ${d.matchId ? `<div class="nd-section">Meilenstein-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+      }
+      case 'biggest_blowout': {
+        return `<div class="nd-section">Kantersieg</div>
+          ${_newsMatchVsBlock(d.matchId)}
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Tordifferenz</div>
+            <div class="nd-stat-val gold">+${d.diff}</div></div>`;
+      }
+      case 'elo_swing': {
+        return `<div class="nd-section">Spieler</div>
+          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
+            <div class="nd-stat-val ${d.delta>=0?'pos':'neg'}">${d.delta>=0?'+':''}${d.delta} Elo</div></div>
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Zeitraum</div>
+            <div class="nd-stat-val">${esc(d.period)}</div></div>`;
+      }
+      case 'anniversary': {
+        return `<div class="nd-section">Vor genau einem Jahr</div>
+          ${d.matchId ? _newsMatchVsBlock(d.matchId) : ''}
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Damals</div>
+            <div class="nd-stat-val">${esc(d.dateLabel || '')}</div></div>`;
+      }
+    }
+  } catch(e){ /* defensiv */ }
+  return '';
+}
+
+// ─── §11.7b — Detail-Body Helper (v8.1) ──────────────────────────────
+// Wiederverwendbare Sub-Renderer und Stats-Funktionen für die einzelnen
+// Detail-Body-Cases. Alle nutzen bestehende Caches; keine eigenen Walks.
+
+// Match-VS-Block: 2v2 Layout mit Spieler-Avataren, Namen, Score und Datum.
+// Klickbar (data-mid) → springt zum Match-Detail über den existierenden
+// Click-Handler in openNewsDetail.
+function _newsMatchVsBlock(matchId){
+  try {
+    const m = matches.find(x => x.id === matchId);
+    if(!m) return '';
+    const pm = pmap();
+    const av = pid => (pm[pid] && typeof avHtml === 'function')
+      ? avHtml(pm[pid], '')
+      : '<span class="av" style="background:var(--surface)"></span>';
+    const nm = pid => (pm[pid] && pm[pid].name) || '?';
+    const aWon = m.winner === 'A';
+    const dt = new Date(m.created_at);
+    const dStr = dt.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    return `<div class="nd-match" data-mid="${esc(m.id)}">
+      <div class="nd-match-side ${aWon?'won':'lost'}">
+        <div class="nd-match-avs">${av(m.a1)}${av(m.a2)}</div>
+        <div class="nd-match-names">${esc(nm(m.a1))} & ${esc(nm(m.a2))}</div>
+      </div>
+      <div class="nd-match-score">
+        <div class="nd-match-score-val">${m.score_a}:${m.score_b}</div>
+        <div class="nd-match-score-date">${dStr}</div>
+      </div>
+      <div class="nd-match-side ${!aWon?'won':'lost'}">
+        <div class="nd-match-avs">${av(m.b1)}${av(m.b2)}</div>
+        <div class="nd-match-names">${esc(nm(m.b1))} & ${esc(nm(m.b2))}</div>
+      </div>
+    </div>`;
+  } catch(e){ return ''; }
+}
+
+// Elo-Delta für einen Spieler in einem bestimmten Match. Nutzt bestehenden
+// getHistoryByMatchId-Cache (Map<matchId, {deltas, eloBefore, eloAfter}>).
+function _newsEloDelta(pid, matchId){
+  try {
+    const hist = getHistoryByMatchId();
+    const entry = hist.get(matchId);
+    if(!entry || !entry.deltas) return null;
+    const d = entry.deltas[pid];
+    if(d === undefined || d === null) return null;
+    return Math.round(d);
+  } catch(e){ return null; }
+}
+
+// Pre/Post-Rank für einen Spieler an einem Match. Nutzt getRankSnapshots-Cache.
+function _newsRankChange(pid, matchId){
+  try {
+    const snaps = getRankSnapshots();
+    const snap = snaps[matchId];
+    if(!snap || !snap.preRank || !snap.postRank) return null;
+    const pre = snap.preRank[pid];
+    const post = snap.postRank[pid];
+    if(!pre || !post) return null;
+    return {pre, post};
+  } catch(e){ return null; }
+}
+
+// Form-Strip + Win-Streak der letzten N Matches. Walks die filter()-Variante
+// nur über matches (gesamt) — wird im Detail aufgerufen, also einmalig.
+function _newsRecentForm(pid, n){
+  const arr = [];
+  for(let i = matches.length - 1; i >= 0 && arr.length < n; i--){
+    if(matchOf(pid, matches[i])) arr.unshift(matches[i]);
+  }
+  if(!arr.length) return {strip:'', currentStreak:0};
+  const strip = arr.map(m => {
+    const w = won(pid, m);
+    return `<div class="nd-form-dot ${w?'w':'l'}" title="${w?'Sieg':'Niederlage'}"></div>`;
+  }).join('');
+  // Aktuelle Sieges-Streak (von hinten zählen)
+  let curStreak = 0;
+  for(let i = arr.length - 1; i >= 0; i--){
+    if(won(pid, arr[i])) curStreak++;
+    else break;
+  }
+  return {strip, currentStreak: curStreak};
+}
+
+// H2H-Bilanz Spieler A vs Spieler B (egal welche Teamkonstellation).
+// Iteriert einmal über matches; bei großen Datensätzen kann das auf
+// getPairsCache umgestellt werden — derzeit aber günstig genug.
+function _newsH2HRecord(aPid, bPid){
+  let aWins = 0, bWins = 0;
+  let lastMatchId = null, lastTs = 0;
+  for(let i = 0; i < matches.length; i++){
+    const m = matches[i];
+    const aOnA = m.a1 === aPid || m.a2 === aPid;
+    const aOnB = m.b1 === aPid || m.b2 === aPid;
+    const bOnA = m.a1 === bPid || m.a2 === bPid;
+    const bOnB = m.b1 === bPid || m.b2 === bPid;
+    // Nur zählen wenn A & B auf verschiedenen Seiten
+    if((aOnA && bOnB) || (aOnB && bOnA)){
+      const aWon = (aOnA && m.winner === 'A') || (aOnB && m.winner === 'B');
+      if(aWon) aWins++; else bWins++;
+      const ts = new Date(m.created_at).getTime();
+      if(ts > lastTs){ lastTs = ts; lastMatchId = m.id; }
+    }
+  }
+  return {aWins, bWins, lastMatchId};
+}
+
+// Karriere-Bilanz (wins, losses, winRate) eines Spielers. Nutzt bestehende
+// playerStats falls verfügbar, sonst einmaliger walk.
+function _newsPlayerCareer(pid){
+  try {
+    if(typeof playerStats === 'function'){
+      const st = playerStats(pid);
+      if(st && (st.wins !== undefined || st.gp !== undefined)){
+        const wins = st.wins || 0;
+        const losses = st.losses || ((st.gp || 0) - wins);
+        const total = wins + losses;
+        const winRate = total ? Math.round((wins/total)*100) : 0;
+        return {wins, losses, winRate};
+      }
+    }
+  } catch(e){}
+  // Fallback: schneller direkter walk
+  let wins = 0, losses = 0;
+  for(let i = 0; i < matches.length; i++){
+    if(!matchOf(pid, matches[i])) continue;
+    if(won(pid, matches[i])) wins++; else losses++;
+  }
+  const total = wins + losses;
+  return {wins, losses, winRate: total ? Math.round((wins/total)*100) : 0};
+}
+
+// ─── Hookup: News-Button-Click + Backdrop-Close ──────────────────────
+(function attachNewsHandlers(){
+  const ready = () => {
+    const btn = document.getElementById('newsBtn');
+    if(btn && !btn._newsBound){
+      btn._newsBound = true;
+      btn.onclick = openNewsPopover;
+    }
+    // Backdrop-Bindings:
+    //   nvBg (Mini-Popup): Backdrop-Click schließt — ist nur ein Vorschau-Layer.
+    //   ndBg (Story-Detail): KEIN Backdrop-Close mehr (User-Wunsch v8.1):
+    //     Stories sollen bewusst konsumiert werden → nur X-Button oder
+    //     "Schließen"-Button unten beenden den Detail-View.
+    const nvBg = document.getElementById('nvBg');
+    if(nvBg && !nvBg._newsBound){
+      nvBg._newsBound = true;
+      nvBg.addEventListener('click', (e) => {
+        if(e.target === nvBg) closeNewsPopover();
+      });
+    }
+    const ndBg = document.getElementById('ndBg');
+    if(ndBg && !ndBg._newsBound){
+      ndBg._newsBound = true;
+      // Backdrop-Click schließt das Detail NICHT mehr — bewusstes Schließen
+      // erfolgt nur via X-Button oder Schließen-Button.
+    }
+  };
+  if(document.readyState !== 'loading') ready();
+  else document.addEventListener('DOMContentLoaded', ready);
+})();
 
 // ╔═══ §10.4 ─── BOOT (Initialisierung) ────────────────────────────────╗
 loadAll();
