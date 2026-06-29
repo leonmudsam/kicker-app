@@ -1806,10 +1806,23 @@
     background:rgba(190,242,100,.12);color:var(--acid)}
   .nv-head-ic svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .nv-head-title{font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1;letter-spacing:-.01em;flex:1}
+  /* "Alle gelesen"-Button im Feed-Header (v8.2) */
+  .nv-mark-all{display:inline-flex;align-items:center;gap:5px;
+    background:var(--surface);border:1px solid var(--line);
+    color:var(--ink2);font-size:10px;font-family:'Sometype Mono',monospace;
+    text-transform:uppercase;letter-spacing:.08em;font-weight:700;
+    padding:6px 9px;border-radius:9px;cursor:pointer;transition:.15s;flex-shrink:0;
+    margin-left:auto}
+  .nv-mark-all svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  .nv-mark-all:active{transform:scale(.96);background:var(--acid);color:#000;border-color:var(--acid)}
   .nv-head-sub{color:var(--muted);font-size:9.5px;font-family:'Sometype Mono',monospace;
     text-transform:uppercase;letter-spacing:.12em;margin-top:3px}
   .nv-head-close{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;line-height:1}
   .nv-list{max-height:60vh;overflow-y:auto}
+  /* Im vollen Feed (im Sheet) soll die Liste KEIN eigener Scroll-Container
+     sein — das Sheet selbst scrollt. Sonst kollidiert die innere Scroll-Geste
+     mit dem Sheet-Swipe-Close. */
+  .nv-list-flat{max-height:none;overflow-y:visible}
   .nv-empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
   /* Story-Card (im Mini-Popup UND im Feed) */
   .nv-story{display:flex;align-items:flex-start;gap:11px;padding:11px 16px;
@@ -9796,6 +9809,9 @@ function closeSheet(){
   // Match-Detail → Sheet schließt mit), Popover auch schließen.
   const bpBg = document.getElementById('bpBg');
   if(bpBg && bpBg.classList.contains('show')) bpBg.classList.remove('show');
+  // v8.2: gequeuten News-Toast nachholen, falls beim Boot ein Recap
+  // ihn blockiert hat. Verzögerung kommt aus _processDeferredNewsToast.
+  try { if(window._processDeferredNewsToast) window._processDeferredNewsToast(); } catch(e){}
 }
 
 function bindSheetSwipe(){
@@ -9818,7 +9834,29 @@ function bindSheetSwipe(){
   const onTouchStart=(e)=>{
     const touch=e.touches[0];
     startY=touch.clientY;
-    startScrollTop=sheet.scrollTop;
+    // ── Inner-Scroll-Tracking (Bugfix v8.1) ──────────────────────────
+    // Häufige UX-Falle: Sheet enthält INNERE Scroll-Container (z.B.
+    // .nv-list mit max-height:60vh + overflow-y:auto). Wenn der User
+    // dort scrollt, bleibt sheet.scrollTop=0, und ein Hochziehen aus
+    // einer Liste, die unten gescrollt war, wird fälschlich als Sheet-
+    // Schließen interpretiert.
+    //
+    // Lösung: beim touchstart innersten scrollbaren Vorfahr finden und
+    // dessen scrollTop tracken. Der Sheet-Swipe darf NUR greifen, wenn
+    // sowohl Sheet als auch innerer Container am Top sind.
+    let scrollEl = e.target;
+    while(scrollEl && scrollEl !== sheet && scrollEl !== document.body){
+      const cs = window.getComputedStyle(scrollEl);
+      if((cs.overflowY === 'auto' || cs.overflowY === 'scroll')
+         && scrollEl.scrollHeight > scrollEl.clientHeight){
+        break;
+      }
+      scrollEl = scrollEl.parentElement;
+    }
+    if(!scrollEl || scrollEl === document.body) scrollEl = sheet;
+    sheet._innerScrollEl = scrollEl;
+    sheet._innerScrollTopStart = scrollEl.scrollTop;
+    startScrollTop = sheet.scrollTop;
     lastY=startY; lastT=Date.now();
     dragging=false;
   };
@@ -9827,7 +9865,15 @@ function bindSheetSwipe(){
     const touch=e.touches[0];
     const dy=touch.clientY-startY;
     lastY=touch.clientY; lastT=Date.now();
+    // (1) Wenn das äußere Sheet bereits gescrollt war → kein Swipe
     if(startScrollTop>0) return;
+    // (2) Wenn ein INNERER Scroll-Container bereits gescrollt war → kein Swipe
+    if(sheet._innerScrollTopStart > 0) return;
+    // (3) Wenn der innere Container WÄHREND der Geste runterscrollt (= User
+    //     hat innen hochgezogen, Browser scrollt die Liste runter) → auch
+    //     kein Sheet-Swipe. Verhindert "Scroll-Ende → Sheet zieht mit".
+    if(sheet._innerScrollEl && sheet._innerScrollEl !== sheet
+       && sheet._innerScrollEl.scrollTop > 0) return;
     if(dy<0) return;
     if(dy<DRAG_INTENT_THRESHOLD) return;
     if(!dragging){ dragging=true; sheet.classList.add('is-dragging'); }
@@ -14905,17 +14951,247 @@ function _buildStories(){
     }
   } catch(e){}
 
+  // ── 16. Upset des Tages (Underdog schlägt Top-Spieler) ──
+  // Sucht in den letzten 7 Tagen das Match mit dem größten preRank-Vorteil
+  // des Verlierers (= Sieger war schwächer rangiert). Nutzt getRankSnapshots.
+  try {
+    const wk = 7 * 86400000;
+    const tsNow = now.getTime();
+    const snaps = getRankSnapshots();
+    let bestUpset = null;
+    for(let i = 0; i < matches.length; i++){
+      const m = matches[i];
+      const t = new Date(m.created_at).getTime();
+      if(t < tsNow - wk || t > tsNow) continue;
+      const snap = snaps[m.id];
+      if(!snap || !snap.preRank) continue;
+      const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+      const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+      // beste preRank der Sieger (niedrigste Zahl = besser)
+      // beste preRank der Verlierer
+      const winnerBest = Math.min(...winners.map(p => snap.preRank[p] || 99));
+      const loserBest  = Math.min(...losers.map(p  => snap.preRank[p] || 99));
+      // Upset: Sieger waren SCHLECHTER (höhere Zahl) als Verlierer
+      const gap = winnerBest - loserBest;
+      if(gap >= 3 && (!bestUpset || gap > bestUpset.gap)){
+        bestUpset = {m, gap, t, winners, losers, winnerBest, loserBest};
+      }
+    }
+    if(bestUpset){
+      const m = bestUpset.m;
+      stories.push({
+        id: 'upset_match_'+m.id,
+        cat: 'highlight',
+        ic: 'thriller',
+        title: 'Upset der Woche!',
+        desc: `Underdog schlägt Favorit: #${bestUpset.winnerBest} besiegt #${bestUpset.loserBest}.`,
+        when: new Date(bestUpset.t),
+        prio: bestUpset.gap >= 5 ? 8 : 6,
+        dataRef: {type:'upset_match', matchId: m.id, gap: bestUpset.gap,
+                  winnerRank: bestUpset.winnerBest, loserRank: bestUpset.loserBest}
+      });
+    }
+  } catch(e){}
+
+  // ── 17. Serienkiller (Match beendete ≥6er Sieges-Streak des Gegners) ──
+  // Nutzt getStreakSnapshots — pro Match {pid: streak_VOR_match}.
+  try {
+    const wk = 14 * 86400000;
+    const tsNow = now.getTime();
+    const streakSnaps = (typeof getStreakSnapshots === 'function') ? getStreakSnapshots() : {};
+    let bestKill = null;
+    for(let i = 0; i < matches.length; i++){
+      const m = matches[i];
+      const t = new Date(m.created_at).getTime();
+      if(t < tsNow - wk || t > tsNow) continue;
+      const snap = streakSnaps[m.id];
+      if(!snap) continue;
+      const losers = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+      // Höchste laufende Streak unter den Verlierern VOR diesem Match
+      let maxLoserStreak = 0, victimPid = null;
+      losers.forEach(pid => {
+        const s = snap[pid] || 0;
+        if(s > maxLoserStreak){ maxLoserStreak = s; victimPid = pid; }
+      });
+      if(maxLoserStreak >= 6 && (!bestKill || maxLoserStreak > bestKill.streak)){
+        bestKill = {m, streak: maxLoserStreak, victimPid, t};
+      }
+    }
+    if(bestKill){
+      const m = bestKill.m;
+      stories.push({
+        id: 'streak_killer_'+m.id,
+        cat: 'highlight',
+        ic: 'crossedSwords',
+        title: 'Siegesserie beendet!',
+        desc: `${nameOf(bestKill.victimPid)}'s ${bestKill.streak}er-Serie ist gerissen.`,
+        when: new Date(bestKill.t),
+        prio: bestKill.streak >= 10 ? 9 : 7,
+        dataRef: {type:'streak_killer', matchId: m.id, streak: bestKill.streak, victimPid: bestKill.victimPid}
+      });
+    }
+  } catch(e){}
+
+  // ── 18. Krimi der Woche (knappstes Match, Tordifferenz = 1) ──
+  try {
+    const wk = 7 * 86400000;
+    const tsNow = now.getTime();
+    let thriller = null;
+    for(let i = 0; i < matches.length; i++){
+      const m = matches[i];
+      const t = new Date(m.created_at).getTime();
+      if(t < tsNow - wk || t > tsNow) continue;
+      const diff = Math.abs((m.score_a||0) - (m.score_b||0));
+      // Nur 1-Tor-Krimis ab Score ≥ 8 (anders sind 1:0 oder 2:1 wenig spannend)
+      if(diff !== 1) continue;
+      const totalScore = (m.score_a||0) + (m.score_b||0);
+      if(totalScore < 17) continue;
+      if(!thriller || totalScore > thriller.totalScore){
+        thriller = {m, totalScore, t};
+      }
+    }
+    if(thriller){
+      const m = thriller.m;
+      stories.push({
+        id: 'thriller_'+m.id,
+        cat: 'highlight',
+        ic: 'thriller',
+        title: `Krimi: ${m.score_a}:${m.score_b}`,
+        desc: `Entscheidung erst im letzten Tor — knappster Sieg der Woche.`,
+        when: new Date(thriller.t),
+        prio: 7,
+        dataRef: {type:'thriller_match', matchId: m.id, diff: 1, total: thriller.totalScore}
+      });
+    }
+  } catch(e){}
+
+  // ── 19. Rivalitäts-Meilenstein (50/100/200/500 H2H-Duelle ERREICHT) ──
+  // Im Gegensatz zu Story 7 (Rivalry) triggert das nur, wenn das jüngste
+  // Match der Paarung gerade eine Schwelle riss → "100. Aufeinandertreffen!".
+  try {
+    const pairThresholds = [50, 100, 200, 500];
+    const pairCnt = {};
+    matches.forEach(m => {
+      const A = [m.a1, m.a2], B = [m.b1, m.b2];
+      A.forEach(a => B.forEach(b => {
+        if(a === b) return;
+        const k = a < b ? a+'|'+b : b+'|'+a;
+        if(!pairCnt[k]) pairCnt[k] = {n:0, lastId:null, lastTs:0};
+        pairCnt[k].n++;
+        const ts = new Date(m.created_at).getTime();
+        if(ts > pairCnt[k].lastTs){ pairCnt[k].lastTs = ts; pairCnt[k].lastId = m.id; }
+      }));
+    });
+    Object.entries(pairCnt).forEach(([k, v]) => {
+      if(!pairThresholds.includes(v.n)) return;
+      const [a, b] = k.split('|');
+      if(!pm[a] || !pm[b] || pm[a].hidden || pm[b].hidden) return;
+      stories.push({
+        id: 'rivalry_milestone_'+k+'_'+v.n,
+        cat: 'rivalry',
+        ic: 'crossedSwords',
+        title: `${v.n}. Duell: ${nameOf(a)} vs ${nameOf(b)}`,
+        desc: `Historisches ${v.n}. Aufeinandertreffen — die Rivalität wächst.`,
+        when: new Date(v.lastTs),
+        prio: v.n >= 200 ? 9 : v.n >= 100 ? 8 : 6,
+        dataRef: {type:'rivalry_milestone', a, b, n: v.n, matchId: v.lastId}
+      });
+    });
+  } catch(e){}
+
+  // ── 20. Tor-Meilensteine (500/1000/2500 Karriere-Tore) ──
+  try {
+    const goalThresholds = [500, 1000, 2500];
+    activePlayers().forEach(p => {
+      const arr = byPlayer[p.id] || [];
+      if(!arr.length) return;
+      let goals = 0;
+      for(let i = 0; i < arr.length; i++){
+        const m = arr[i];
+        const onA = [m.a1, m.a2].includes(p.id);
+        goals += onA ? (m.score_a||0) : (m.score_b||0);
+      }
+      for(const t of goalThresholds){
+        if(goals >= t && goals < t + 10){
+          // letzte Schwelle gerade erst gerissen (innerhalb 10 Tore Toleranz)
+          const last = arr[arr.length-1];
+          stories.push({
+            id: 'milestone_goals_'+p.id+'_'+t,
+            cat: 'personal',
+            ic: 'target',
+            title: `${nameOf(p.id)}: ${t}. Tor`,
+            desc: `Karriere-Meilenstein — ${goals} Tore stehen jetzt zu Buche.`,
+            when: new Date(last.created_at),
+            prio: t >= 1000 ? 8 : 6,
+            dataRef: {type:'milestone_goals', pid: p.id, milestone: t+'. Tor', matchId: last.id}
+          });
+          break;
+        }
+      }
+    });
+  } catch(e){}
+
+  // ── 21. Aktive Sieges-Streak (≥5 in Folge, läuft noch) ──
+  // Pendant zu loss_streak. Spieler dessen jüngstes Match Sieg war und
+  // davor noch ≥4 weitere Siege.
+  try {
+    const candidates = [];
+    activePlayers().forEach(p => {
+      const arr = byPlayer[p.id] || [];
+      if(!arr.length) return;
+      let streak = 0;
+      for(let i = arr.length - 1; i >= 0; i--){
+        if(!won(p.id, arr[i])) break;
+        streak++;
+        if(streak > 20) break;
+      }
+      if(streak >= 5){
+        candidates.push({pid: p.id, streak, when: new Date(arr[arr.length-1].created_at)});
+      }
+    });
+    candidates.sort((a,b) => b.streak - a.streak);
+    candidates.slice(0, 3).forEach(c => {
+      stories.push({
+        id: 'win_streak_'+c.pid+'_'+c.when.toISOString().slice(0,10),
+        cat: 'highlight',
+        ic: 'flame',
+        title: `${nameOf(c.pid)} ungeschlagen`,
+        desc: `${c.streak} Siege in Folge — aktuelle heißeste Form der Liga.`,
+        when: c.when,
+        prio: c.streak >= 10 ? 9 : c.streak >= 7 ? 7 : 6,
+        dataRef: {type:'win_streak', pid: c.pid, streak: c.streak}
+      });
+    });
+  } catch(e){}
+
+  // ── 22. Längste Pause (kein Spielbetrieb in den letzten X Tagen) ──
+  // Story zeigt sich erst, wenn die aktuelle "Stille" ≥3 Tage andauert.
+  try {
+    if(matches.length){
+      const lastMatchTs = new Date(matches[matches.length-1].created_at).getTime();
+      const sinceLastDays = Math.floor((now.getTime() - lastMatchTs) / 86400000);
+      if(sinceLastDays >= 3){
+        stories.push({
+          id: 'dry_spell_'+now.toISOString().slice(0,10),
+          cat: 'fun',
+          ic: 'clock',
+          title: `${sinceLastDays} Tage ohne Spiel`,
+          desc: `Längste Pause seit Langem — Zeit für ein Match?`,
+          when: now,
+          prio: 3,
+          dataRef: {type:'dry_spell', daysSince: sinceLastDays, lastMatchId: matches[matches.length-1].id}
+        });
+      }
+    }
+  } catch(e){}
+
   // ── Final-Sort + Limit ──
-  // Prio-Stufen-Modell (v8.1):
-  //   - Prio ≥ 9 (Saisonentscheidungen, Lead-Change, Saison-Recap, legendary
-  //     Badges, neue Rekorde): immer ganz oben, Datum egal.
-  //   - Prio 7-8 (große Rekorde, Top-Form, große Rivalitäten): zweite Reihe.
-  //   - Prio ≤ 6: rein chronologisch, neueste zuerst.
-  // Innerhalb gleicher Klasse: Datum desc primär, Prio desc als Tiebreaker.
-  const prioBucket = p => p >= 9 ? 2 : p >= 7 ? 1 : 0;
+  // v8.2: PURE Chronologie (User-Wunsch). Neueste Story zuerst, älteste
+  // zuletzt — in ALLEN Views (Mini-Popup, Feed, Filter) konsistent.
+  // Wichtige Stories landen ohnehin oben, weil ihre `when`-Werte meist
+  // "jetzt" sind (saison_endspurt, anniversary, elo_swing*). Bei gleichem
+  // Timestamp dient Prio als deterministischer Tiebreaker.
   stories.sort((a,b) => {
-    const ba = prioBucket(a.prio), bb = prioBucket(b.prio);
-    if(ba !== bb) return bb - ba;
     const dt = b.when - a.when;
     if(dt !== 0) return dt;
     return b.prio - a.prio;
@@ -15007,6 +15283,14 @@ function newsBadgeRefresh(){
   const badge = document.getElementById('newsBtnBadge');
   if(!btn || !badge) return;
   btn.style.visibility = 'visible';
+  // v8.2: erste Aufruf nach Page-Load → Boot-Grace setzen, damit der
+  // Toast den Auto-Recaps Vorrang gibt.
+  if(!_newsBootGuardSet){
+    _newsBootGuardSet = true;
+    _newsBootGuardUntil = Date.now() + NEWS_BOOT_GRACE_MS;
+    // Nach Ablauf der Grace einmal nachversuchen
+    setTimeout(() => { try { _processDeferredNewsToast(); } catch(e){} }, NEWS_BOOT_GRACE_MS + 100);
+  }
   let n = 0;
   try { n = newsUnreadCount(); } catch(e){ n = 0; }
   if(n > 0){
@@ -15023,14 +15307,30 @@ function newsBadgeRefresh(){
 // Global verfügbar machen, damit loadAll und onclick-Handler dranzukommen
 window.newsBadgeRefresh = newsBadgeRefresh;
 
-// ─── §11.4b — Toast-Logik (v8.1) ─────────────────────────────────────
+// ─── §11.4b — Toast-Logik (v8.1, erweitert v8.2) ─────────────────────
 // Cooldown-basierter Hinweis "X neue Stories" unter dem News-Icon.
-// Vermeidet Spam durch zweistufige Bedingung:
+//
+// Defer-Logik (v8.2): Toast darf NICHT erscheinen, solange ein Sheet
+// (Saison-/POTW-/POTD-Recap, Profil etc.) offen ist — sonst überdeckt
+// das Recap den Toast und der User sieht ihn nie. Stattdessen wird die
+// Anzeige gequeued und beim closeSheet() erneut versucht.
+//
+// Cooldown gegen Spam (zweistufig):
 //   1. unread > zuletzt gezeigte Anzahl  → es gibt WIRKLICH mehr Stories
 //   2. ODER seit letztem Toast > 6h verstrichen → erneut sanft erinnern
-// Auto-hide nach 4s. Tap → Mini-Popup. Toast bleibt persistent als sticky
-// Hinweis-Pille NICHT — Badge übernimmt das.
+// Auto-hide nach 4s. Tap → Mini-Popup.
 let _newsToastHideTimer = null;
+let _newsToastDeferredCount = 0; // wartet auf Sheet-Close
+// v8.2: Boot-Grace gegen Race-Condition mit Auto-Recaps.
+//   Saison-Recap   → 600ms nach loadAll
+//   POTW-Recap     → 900ms
+//   POTD-Recap     → 1200ms
+// → Für 2500ms nach erstem newsBadgeRefresh wird Toast ZURÜCKGESTELLT,
+//   damit Recaps Vorrang haben. _processDeferredNewsToast (closeSheet-Hook)
+//   holt ihn nach. Das macht Recaps + Toast nacheinander statt überlappend.
+let _newsBootGuardSet = false;
+let _newsBootGuardUntil = 0;
+const NEWS_BOOT_GRACE_MS = 2500;
 function _newsLoadToastState(){
   try {
     const raw = localStorage.getItem(NEWS_LS_TOAST);
@@ -15042,6 +15342,21 @@ function _newsLoadToastState(){
 function _newsSaveToastState(state){
   try { localStorage.setItem(NEWS_LS_TOAST, JSON.stringify(state)); } catch(e){}
 }
+// True, wenn aktuell ein Sheet offen ODER ein Recap in Schutz-Phase
+// ODER die Boot-Grace-Period noch läuft. Während Boot-Grace warten wir,
+// damit Auto-Recaps (Saison/POTW/POTD) ihre 600-1200ms-Verzögerung sicher
+// nutzen können, BEVOR der Toast erscheint.
+function _isSheetActive(){
+  try {
+    // Boot-Grace: Toast erst nach Recap-Trigger-Fenster zulassen
+    if(_newsBootGuardUntil && Date.now() < _newsBootGuardUntil) return true;
+    const sheet = document.getElementById('sheet');
+    if(sheet && sheet.classList.contains('show')) return true;
+    // Auch wenn das Sheet gleich auftaucht (Schutz-Phase aktiv) → warten
+    if(sheet && sheet._protectedUntil && Date.now() < sheet._protectedUntil) return true;
+  } catch(e){}
+  return false;
+}
 function _maybeShowNewsToast(unreadCount){
   const toast = document.getElementById('newsToast');
   const txt = document.getElementById('newsToastTxt');
@@ -15051,6 +15366,11 @@ function _maybeShowNewsToast(unreadCount){
   const moreThanBefore = unreadCount > state.lastCount;
   const cooledDown = (now - state.lastTs) > NEWS_TOAST_COOLDOWN_MS;
   if(!moreThanBefore && !cooledDown) return;
+  // ── Defer wenn Recap/Sheet aktiv ─────────────────────────────────
+  if(_isSheetActive()){
+    _newsToastDeferredCount = unreadCount;
+    return;
+  }
   // Anzeigen
   txt.textContent = unreadCount + (unreadCount === 1 ? ' neue Story' : ' neue Stories');
   toast.classList.add('visible');
@@ -15058,6 +15378,7 @@ function _maybeShowNewsToast(unreadCount){
   void toast.offsetWidth;
   toast.classList.add('show');
   _newsSaveToastState({lastCount: unreadCount, lastTs: now});
+  _newsToastDeferredCount = 0;
   // Auto-hide nach 4s
   if(_newsToastHideTimer) clearTimeout(_newsToastHideTimer);
   _newsToastHideTimer = setTimeout(() => _hideNewsToast(), 4000);
@@ -15074,6 +15395,35 @@ function _hideNewsToast(){
   toast.classList.remove('show');
   setTimeout(() => toast.classList.remove('visible'), 300);
 }
+// Wird in closeSheet() aufgerufen — versucht gequeuten Toast nach
+// kurzem Delay (User soll Sheet-Close-Animation sehen, bevor der nächste
+// Hinweis aufpoppt).
+function _processDeferredNewsToast(){
+  if(!_newsToastDeferredCount) return;
+  setTimeout(() => {
+    // erneut prüfen: vielleicht hat sich währenddessen ein neues Sheet geöffnet
+    if(_isSheetActive()) return;
+    const n = _newsToastDeferredCount;
+    _newsToastDeferredCount = 0;
+    // Direkt anzeigen — Cooldown-Check schon im _maybeShowNewsToast wurde
+    // bereits beim ersten Aufruf erfüllt; hier zwingen wir die Anzeige.
+    const toast = document.getElementById('newsToast');
+    const txt = document.getElementById('newsToastTxt');
+    if(!toast || !txt || n <= 0) return;
+    txt.textContent = n + (n === 1 ? ' neue Story' : ' neue Stories');
+    toast.classList.add('visible');
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    _newsSaveToastState({lastCount: n, lastTs: Date.now()});
+    if(_newsToastHideTimer) clearTimeout(_newsToastHideTimer);
+    _newsToastHideTimer = setTimeout(() => _hideNewsToast(), 4000);
+    toast.onclick = () => {
+      _hideNewsToast();
+      try { openNewsPopover(); } catch(e){}
+    };
+  }, 500);
+}
+window._processDeferredNewsToast = _processDeferredNewsToast;
 
 // ─── §11.5 — Mini-Popup ──────────────────────────────────────────────
 // Klein, kompakt, max 5 Stories. Beim Öffnen: Stories werden NICHT als
@@ -15210,17 +15560,38 @@ function _renderNewsFeed(){
       <div class="nv-head-title" style="font-size:18px;display:flex;align-items:center;gap:10px">
         <span class="nv-head-ic" style="width:32px;height:32px">${svgI('newspaper')}</span>
         Liga Stories
+        <button class="nv-mark-all" id="nvMarkAllBtn" type="button" title="Alle als gelesen markieren">
+          ${svgI('check')}
+          <span>Alle gelesen</span>
+        </button>
       </div>
       <div class="nv-head-sub" style="margin:4px 0 6px">Aktuelles, Trends und Fun Facts</div>
       ${filterBar}
     </div>
-    <div class="nv-list" style="padding-bottom:24px">${listHtml}</div>
+    <div class="nv-list nv-list-flat" style="padding-bottom:24px">${listHtml}</div>
   `);
   // Filter-Click → re-render (cheap, da Daten aus Cache)
   const sheet = document.getElementById('sheet');
   sheet.querySelectorAll('.nv-filter[data-f]').forEach(el => {
     el.onclick = () => { _newsFeedFilter = el.dataset.f; _renderNewsFeed(); };
   });
+  // "Alle als gelesen markieren" — nutzt bestehendes _newsMarkAllSeen
+  // (markiert ALLE Stories aus dem aktuellen Cache, nicht nur die im
+  // gefilterten View). Danach: Badge + Feed neu rendern.
+  const markBtn = document.getElementById('nvMarkAllBtn');
+  if(markBtn){
+    markBtn.onclick = () => {
+      try { _newsMarkAllSeen(); } catch(e){}
+      try { newsBadgeRefresh(); } catch(e){}
+      // Sichtbar: alle Cards "read" stylen, Dots entfernen
+      sheet.querySelectorAll('.nv-story').forEach(el => {
+        el.classList.add('read');
+        el.querySelector('.nv-story-dot')?.remove();
+      });
+      // Falls "Ungelesen" oder "Neu" aktiv: re-render leert die Liste
+      if(_newsFeedFilter === 'unread' || _newsFeedFilter === 'new') _renderNewsFeed();
+    };
+  }
   sheet.querySelectorAll('.nv-story[data-sid]').forEach(el => {
     el.onclick = () => {
       const sid = el.dataset.sid;
@@ -15487,6 +15858,70 @@ function _newsDetailBody(s){
           <div class="nd-stat-row">
             <div class="nd-stat-label">Damals</div>
             <div class="nd-stat-val">${esc(d.dateLabel || '')}</div></div>`;
+      }
+      // ── v8.2 Neue Typen ──
+      case 'upset_match': {
+        return `<div class="nd-section">Underdog-Sieg</div>
+          ${_newsMatchVsBlock(d.matchId)}
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Sieger-Rang vorher</div>
+            <div class="nd-stat-val acid">#${d.winnerRank}</div></div>
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Verlierer-Rang vorher</div>
+            <div class="nd-stat-val">#${d.loserRank}</div></div>
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Klassenunterschied</div>
+            <div class="nd-stat-val gold">${d.gap} Plätze</div></div>`;
+      }
+      case 'streak_killer': {
+        return `<div class="nd-section">Serien-Ende</div>
+          ${_newsMatchVsBlock(d.matchId)}
+          <div class="nd-stat-row" data-pid="${esc(d.victimPid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(d.victimPid))}</div>
+            <div class="nd-stat-val neg">−${d.streak}er Serie</div></div>`;
+      }
+      case 'thriller_match': {
+        return `<div class="nd-section">Knappes Match</div>
+          ${_newsMatchVsBlock(d.matchId)}
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Tordifferenz</div>
+            <div class="nd-stat-val gold">${d.diff} Tor</div></div>
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Tore gesamt</div>
+            <div class="nd-stat-val">${d.total}</div></div>`;
+      }
+      case 'rivalry_milestone': {
+        const h2h = _newsH2HRecord(d.a, d.b);
+        return `<div class="nd-section">Historische Bilanz</div>
+          <div class="nd-vs">
+            <div class="nd-vs-p" data-pid="${esc(d.a)}">
+              ${avM(d.a)}
+              <div class="nd-vs-name">${esc(nameOf(d.a))}</div>
+              <div class="nd-vs-elo">${h2h.aWins} Siege</div>
+            </div>
+            <div class="nd-vs-mid">${d.n}<div class="nd-vs-mid-sub">Duelle</div></div>
+            <div class="nd-vs-p" data-pid="${esc(d.b)}">
+              ${avM(d.b)}
+              <div class="nd-vs-name">${esc(nameOf(d.b))}</div>
+              <div class="nd-vs-elo">${h2h.bWins} Siege</div>
+            </div>
+          </div>
+          ${d.matchId ? `<div class="nd-section">Jubiläums-Duell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+      }
+      case 'win_streak': {
+        const form = _newsRecentForm(d.pid, Math.min(d.streak, 10));
+        return `<div class="nd-section">Aktuelle Serie</div>
+          ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
+          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
+            <div class="nd-stat-val acid">${d.streak}× Sieg in Folge</div></div>`;
+      }
+      case 'dry_spell': {
+        return `<div class="nd-section">Liga-Pause</div>
+          <div class="nd-stat-row">
+            <div class="nd-stat-label">Tage ohne Match</div>
+            <div class="nd-stat-val gold">${d.daysSince}</div></div>
+          ${d.lastMatchId ? `<div class="nd-section">Letztes Match</div>${_newsMatchVsBlock(d.lastMatchId)}` : ''}`;
       }
     }
   } catch(e){ /* defensiv */ }
