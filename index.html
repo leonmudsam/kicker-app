@@ -14984,7 +14984,7 @@ function _buildStories(){
         cat: 'highlight',
         ic: 'thriller',
         title: `Kantersieg: ${biggest.m.score_a}:${biggest.m.score_b}`,
-        desc: `+${biggest.diff} Tordifferenz — der dickste Sieg der Woche.`,
+        desc: `${biggest.diff} Tore Unterschied — der höchste Sieg der Woche.`,
         when: new Date(biggest.t),
         prio: biggest.diff >= 10 ? 8 : 6,
         dataRef: {type:'biggest_blowout', matchId: biggest.m.id, diff: biggest.diff}
@@ -15058,7 +15058,7 @@ function _buildStories(){
         cat: 'highlight',
         ic: 'thriller',
         title: 'Upset der Woche!',
-        desc: `${bestUpset.winners.map(nameOf).join(' & ')} als Underdog: #${bestUpset.winnerBest} schlägt #${bestUpset.loserBest}.`,
+        desc: `${bestUpset.winners.map(nameOf).join(' & ')} als Außenseiter: Platz ${bestUpset.winnerBest} schlägt Platz ${bestUpset.loserBest}.`,
         when: new Date(bestUpset.t),
         prio: bestUpset.gap >= 5 ? 8 : 6,
         dataRef: {type:'upset_match', matchId: m.id, gap: bestUpset.gap,
@@ -15629,7 +15629,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
       title:`Duell der Liga: ${nameOf(best.pa)} vs ${nameOf(best.pb)}`,
-      desc:`Schon ${best.total} Aufeinandertreffen — Bilanz ${best.wa}:${best.wb}.`,
+      desc:`${best.total} direkte Duelle — Siege: ${nameOf(best.pa)} ${best.wa}, ${nameOf(best.pb)} ${best.wb}.`,
       dataRef:{ ambientPids:[best.pa, best.pb] } };
   }});
 
@@ -15649,7 +15649,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
       title:`Kopf-an-Kopf: ${nameOf(best.pa)} & ${nameOf(best.pb)}`,
-      desc:`${best.total} Duelle, nur ${best.diff} auseinander (${best.wa}:${best.wb}).`,
+      desc:`${best.total} direkte Duelle, ${best.diff === 0 ? 'absolut ausgeglichen' : 'nur ' + best.diff + ' Sieg' + (best.diff === 1 ? '' : 'e') + ' Unterschied'}: ${nameOf(best.pa)} ${best.wa} – ${best.wb} ${nameOf(best.pb)}.`,
       dataRef:{ ambientPids:[best.pa, best.pb] } };
   }});
 
