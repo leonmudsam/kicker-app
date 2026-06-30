@@ -14425,10 +14425,23 @@ const NEWS_LIMITS = {
   topForm: 3,       // max 3 Spieler "in Top-Form" gleichzeitig
   lossStreak: 3,
   jubilee: 5,
-  badgeUnlocked: 5, // letzte 5 freigeschalteten Badges
+  badgeUnlocked: 8, // letzte N freigeschalteten Badges (v8.7: 5→8, da jetzt alle gold/lila zählen)
   rivalry: 3,
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
+
+// Ambiente Tages-Stories (v8.5) — Fun Facts / persönliche Nuggets, die ÜBER DEN
+// TAG VERTEILT erscheinen, damit der Feed auch ohne neue Matches lebt.
+//   AMBIENT_SLOTS  = lokale Stunden, je Slot genau 1 Story; erscheint erst ab
+//                    dieser Uhrzeit. 2/Tag (8 Uhr früh + 13 Uhr mittags) =
+//                    lebendig, aber spamarm. Auf [8,13,19] erweitern für 3/Tag.
+//   Anti-Spam:     IDs sind tages-deterministisch (`ambient_<datum>_<stunde>`)
+//                  → ON CONFLICT DO NOTHING → keine Doppel über Geräte/Syncs.
+//                  Der Pool wird tages-seeded gezogen (Pseudo-Zufall, überall
+//                  identisch). Pro Tag werden keine zwei gleichen Typen gewählt.
+const AMBIENT_SLOTS = [8, 13];
+// Auto-Sync-Intervall, damit neue Slots ohne Reload auftauchen (ms).
+const NEWS_AUTOSYNC_MS = 10 * 60 * 1000;
 
 // ─── §11.0b — Badge-Whitelist (v8.1) ─────────────────────────────────
 // Nur seltene & besondere Badges erzeugen News. Common-Badges sind in der
@@ -14444,6 +14457,7 @@ const NEWS_BADGE_WHITELIST = new Set([
   'untouchable','mr_perfect','allwetter','godly_streak',
   // Rare — kuratierte Auswahl: nur die mit besonderer Story
   'wall_badge','upset_king','unbeatable','streak10','vice_champion','potw','krimi',
+  'games150', // "Legende" (150 Matches) — Karriere-Meilenstein, v8.6 ergänzt
   // Negative — nur die seltenen, "krassen" Niederlagen
   'mr_disaster','nemesis','perfect_loss',
 ]);
@@ -14482,7 +14496,11 @@ function _buildStories(){
   // KOMPLETT überspringen. Bei Match-Insert ändert sich matches.length, bei
   // Recalc/Config _cache.version → Key bricht automatisch.
   // Explizite Invalidierung zusätzlich über invalidateCache(['news']) in §3.
-  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey;
+  // Slot-Signatur (v8.5): wie viele Ambient-Slots heute schon "offen" sind.
+  // Steigt über den Tag (z.B. 0→1 um 12:00, 1→2 um 19:00) und bricht so den
+  // Memo-Key, sobald ein neuer Slot fällig wird — auch ohne neues Match.
+  const _ambientSlotSig = AMBIENT_SLOTS.filter(h => now.getHours() >= h).length;
+  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig;
   if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
     return _cache._buildStoriesResult;
   }
@@ -14689,8 +14707,11 @@ function _buildStories(){
       // v8.1: Whitelist-Filter — nur seltene/besondere Badges erzeugen News.
       // Common-Badges (Stammgast, Frühschicht, Comeback-Tag …) sind zu häufig
       // und würden den Feed mit "Achievement-Spam" füllen.
-      if(!NEWS_BADGE_WHITELIST.has(ev.badge.id)) return;
       const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      // v8.7: ALLE goldenen (legendary) und lilanen (rare) Badges sind
+      // News-würdig; zusätzlich die explizit gewhitelisteten Specials
+      // (z.B. seltene negative Badges wie mr_disaster/nemesis/perfect_loss).
+      if(rar !== 'legendary' && rar !== 'rare' && !NEWS_BADGE_WHITELIST.has(ev.badge.id)) return;
       // Legendary erzwingt Top-Prio (Bucket >=9 im Final-Sort), damit echte
       // Achievements zuverlässig ganz oben im Feed landen.
       const rarPrio = {legendary:10, rare:7, common:5, negative:8}[rar] || 5;
@@ -14702,7 +14723,7 @@ function _buildStories(){
         desc: ev.badge.desc || 'Neues Badge freigeschaltet.',
         when: ev.when,
         prio: rarPrio,
-        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, matchId: ev.matchId, rarity: rar}
+        dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar}
       });
     });
   } catch(e){}
@@ -15037,7 +15058,7 @@ function _buildStories(){
         cat: 'highlight',
         ic: 'thriller',
         title: 'Upset der Woche!',
-        desc: `Underdog schlägt Favorit: #${bestUpset.winnerBest} besiegt #${bestUpset.loserBest}.`,
+        desc: `${bestUpset.winners.map(nameOf).join(' & ')} als Underdog: #${bestUpset.winnerBest} schlägt #${bestUpset.loserBest}.`,
         when: new Date(bestUpset.t),
         prio: bestUpset.gap >= 5 ? 8 : 6,
         dataRef: {type:'upset_match', matchId: m.id, gap: bestUpset.gap,
@@ -15240,6 +15261,75 @@ function _buildStories(){
     }
   } catch(e){}
 
+  // ── Spieler der Woche (POTW) der Vorwoche (v8.7) ──
+  // Persistente News zu Wochenbeginn (Mo früh), analog zum POTW-Recap-Sheet.
+  // Deterministische ID pro Woche → kein Doppel, Cross-Device-stabil.
+  try {
+    if(typeof _potwLastWeekRange === 'function' && typeof _potwKeyOf === 'function'){
+      const range = _potwLastWeekRange();
+      const wm = matches.filter(m => { const d = new Date(m.created_at); return d >= range.start && d <= range.end; });
+      const res = _newsPeriodWinner(wm, 5);
+      if(res){
+        const wk = _potwKeyOf(range.start);
+        const rep = new Date(range.start); rep.setDate(rep.getDate() + 7); rep.setHours(7, 0, 0, 0);
+        const names = res.winners.map(w => nameOf(w.id));
+        const titleNames = names.length > 1 ? names.slice(0, -1).join(', ') + ' & ' + names[names.length-1] : names[0];
+        const main = res.main;
+        stories.push({
+          id: 'potw_' + wk,
+          cat: 'season',
+          ic: 'weekKing',
+          title: names.length > 1 ? `${titleNames}: Spieler der Woche` : `${titleNames} ist Spieler der Woche`,
+          desc: `Beste Bilanz der Vorwoche: ${main.wins} Siege bei ${Math.round(main.wr*100)}% Siegquote.`,
+          when: rep,
+          prio: 8,
+          dataRef: {type:'potw', weekKey: wk, playerId: main.id, playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
+        });
+      }
+    }
+  } catch(e){}
+
+  // ── Spieler des Tages (POTD) des letzten Spieltags (v8.7) ──
+  // Persistente News am Folgetag (früh), analog zum POTD-Recap-Sheet.
+  try {
+    if(typeof _potdLastDayData === 'function'){
+      const data = _potdLastDayData(); // {dayKey, dayMatches} | null
+      if(data){
+        const res = _newsPeriodWinner(data.dayMatches, 3);
+        if(res){
+          const rep = new Date(data.dayKey + 'T00:00:00'); rep.setDate(rep.getDate() + 1); rep.setHours(7, 0, 0, 0);
+          const main = res.main;
+          const names = res.winners.map(w => nameOf(w.id));
+          const titleNames = names.length > 1 ? names.slice(0, -1).join(', ') + ' & ' + names[names.length-1] : names[0];
+          const p = data.dayKey.split('-');
+          const dLabel = p[2] + '.' + p[1] + '.';
+          stories.push({
+            id: 'potd_' + data.dayKey,
+            cat: 'highlight',
+            ic: 'dayKing',
+            title: names.length > 1 ? `${titleNames}: Spieler des Tages` : `${titleNames} ist Spieler des Tages`,
+            desc: `Bester Spieler am ${dLabel}: ${main.wins} Siege bei ${Math.round(main.wr*100)}% Siegquote.`,
+            when: rep,
+            prio: 7,
+            dataRef: {type:'potd', dayKey: data.dayKey, playerId: main.id, playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
+          });
+        }
+      }
+    }
+  } catch(e){}
+
+  // Hinweis (v8.6): Die Konsolidierung gegen Match-Event-Spam (mehrere fast
+  // identische Karten pro Match) passiert bewusst NICHT hier im Generator,
+  // sondern beim Anzeigen (_consolidateStories, §11.2) — siehe Begründung dort.
+
+  // ── Ambiente Tages-Stories (v8.5) ──
+  // Zeitlich verteilte Fun Facts / Nuggets, damit der Feed auch ohne neue
+  // Matches lebt. Tages-deterministisch → kein Cross-Device-Spam.
+  try {
+    const amb = _buildAmbientStories(now, pm, nameOf);
+    for(const a of amb) stories.push(a);
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ambient build failed', e); }
+
   // ── Final-Sort + Limit ──
   // v8.2: PURE Chronologie (User-Wunsch). Neueste Story zuerst, älteste
   // zuletzt — in ALLEN Views (Mini-Popup, Feed, Filter) konsistent.
@@ -15280,6 +15370,269 @@ function _buildStories(){
   return _result;
 }
 
+// Gewinner einer Periode (POTW/POTD) — gleiche Regel wie die Recap-Sheets
+// (showPotwRecap/showPotdRecap): min. N Siege, höchste Siegquote, Tiebreak
+// mehr Siege → mehr Elo-Delta. Geteilter Sieg bei identischer Siegquote.
+// Liefert {winners:[…], main} oder null. (v8.7)
+function _newsPeriodWinner(rangeMatches, minWins){
+  if(!Array.isArray(rangeMatches) || !rangeMatches.length) return null;
+  const ps = {};
+  for(const m of rangeMatches){
+    const aWon = m.winner === 'A';
+    [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+      if(!ps[id]) ps[id] = {wins:0, losses:0, eloDelta:0};
+      const onA = (m.a1 === id || m.a2 === id);
+      const won = (onA && aWon) || (!onA && !aWon);
+      ps[id].eloDelta += (m.deltas && m.deltas[id]) || 0;
+      if(won) ps[id].wins++; else ps[id].losses++;
+    });
+  }
+  const pm = pmap();
+  const cand = Object.entries(ps)
+    .filter(([id, s]) => s.wins >= minWins && pm[id] && !pm[id].hidden)
+    .map(([id, s]) => { const g = s.wins + s.losses; return {id, wins: s.wins, losses: s.losses, eloDelta: s.eloDelta, wr: g ? s.wins/g : 0}; })
+    .sort((a, b) => { if(b.wr !== a.wr) return b.wr - a.wr; if(b.wins !== a.wins) return b.wins - a.wins; return b.eloDelta - a.eloDelta; });
+  if(!cand.length) return null;
+  const topWr = cand[0].wr;
+  return { winners: cand.filter(c => Math.abs(c.wr - topWr) < 0.001), main: cand[0] };
+}
+
+// ─── §11.1b — Ambiente Tages-Stories (v8.5) ──────────────────────────
+// Erzeugt über den Tag verteilte Fun Facts / persönliche Nuggets / Rivalitäten
+// / Historie, damit der Feed auch OHNE neue Matches lebendig wirkt.
+//
+// KERNPRINZIP (kein Spam, Cross-Device-konsistent):
+//   - Pro Tag gibt es feste Zeit-Slots (AMBIENT_SLOTS). Je Slot genau 1 Story,
+//     die erst ab der Slot-Stunde erscheint (gating über _ambientSlotSig im
+//     Memo-Key von _buildStories).
+//   - Story-IDs sind tages-deterministisch: `ambient_<datum>_<stunde>`.
+//     → ON CONFLICT DO NOTHING beim Upload: der erste Insert gewinnt den
+//       Timestamp, alle Geräte sehen exakt dieselbe Story.
+//   - Welche Story ein Slot zeigt, entscheidet ein aus Datum+Slot geseedeter
+//     Pseudo-Zufall (mulberry32). "Random" fürs Gefühl, aber überall identisch.
+//   - Pro Tag werden keine zwei gleichen Typen gewählt (usedKeys).
+//   - Die Inhalte stammen aus echten Daten (allPlayerStats, H2H-Map, Scores) —
+//     nichts wird erfunden. Liefert ein Template kein Ergebnis (zu wenig
+//     Daten), wird deterministisch das nächste genommen.
+function _buildAmbientStories(now, pm, nameOf){
+  const out = [];
+  if(!Array.isArray(AMBIENT_SLOTS) || !AMBIENT_SLOTS.length) return out;
+  const dateKey = now.toISOString().slice(0,10);
+  const curHour = now.getHours();
+  const activeSlots = AMBIENT_SLOTS.filter(h => curHour >= h);
+  if(!activeSlots.length) return out;
+
+  const templates = _ambientTemplatePool(now, pm, nameOf);
+  if(!templates.length) return out;
+
+  const usedKeys = new Set();
+  const usedCats = new Set();
+  for(const slotHour of activeSlots){
+    const rng = _ambientRng(_ambientHash(dateKey + '_' + slotHour));
+    // Templates in geseedeter Reihenfolge prüfen, erstes nicht-genutztes mit
+    // Ergebnis gewinnt → variiert pro Tag/Slot, bleibt aber deterministisch.
+    const order = _ambientShuffle(templates.map((_, i) => i), rng);
+    let chosen = null, chosenKey = null;
+    // 2 Durchläufe: erst eine NOCH NICHT genutzte Kategorie bevorzugen
+    // (mehr Abwechslung pro Tag), sonst ohne Kategorie-Constraint.
+    for(let pass = 0; pass < 2 && !chosen; pass++){
+      for(const idx of order){
+        const t = templates[idx];
+        if(usedKeys.has(t.key)) continue;
+        if(pass === 0 && usedCats.has(t.key.split('_')[0])) continue;
+        let res = null;
+        try { res = t.make(rng); } catch(e){ res = null; }
+        if(res){ chosen = res; chosenKey = t.key; break; }
+      }
+    }
+    if(!chosen) continue;
+    usedKeys.add(chosenKey);
+    usedCats.add(chosen.cat);
+    const when = new Date(now.getFullYear(), now.getMonth(), now.getDate(), slotHour, 0, 0, 0);
+    out.push({
+      id:    'ambient_' + dateKey + '_' + slotHour,
+      cat:   chosen.cat,
+      ic:    chosen.ic,
+      title: chosen.title,
+      desc:  chosen.desc,
+      when,
+      // Niedrige Prio + KEIN limitierender dataRef.pid (nur ambientPid/-Pids),
+      // damit ambiente Stories nicht vom Per-Player-Limit geschluckt werden.
+      prio:  chosen.prio || 4,
+      dataRef: Object.assign({type:'ambient', sub: chosenKey}, chosen.dataRef || {})
+    });
+  }
+  return out;
+}
+
+// FNV-1a-Hash → 32-bit Seed (deterministisch, schnell).
+function _ambientHash(str){
+  let h = 2166136261 >>> 0;
+  for(let i = 0; i < str.length; i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+// mulberry32 PRNG → reproduzierbare Pseudo-Zufallszahlen [0,1).
+function _ambientRng(seed){
+  let a = seed >>> 0;
+  return function(){
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+// Fisher-Yates mit geseedetem rng (verändert das Original nicht).
+function _ambientShuffle(arr, rng){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+// Template-Pool: jede make()-Funktion liefert {cat, ic, title, desc, prio?,
+// dataRef?} aus ECHTEN Daten — oder null, wenn die Datenlage nicht reicht.
+// Icons sind bewusst auf die in NEWS_CATEGORIES bekannten beschränkt.
+function _ambientTemplatePool(now, pm, nameOf){
+  const stats = (typeof allPlayerStats === 'function') ? (allPlayerStats() || {}) : {};
+  const activePids = Object.keys(pm).filter(pid => pm[pid] && !pm[pid].hidden);
+  const withStats = activePids.filter(pid => stats[pid] && stats[pid].games > 0);
+  const T = [];
+
+  // ── Fun Fact: Tore insgesamt ──
+  T.push({ key:'fun_goals', make: () => {
+    if(matches.length < 5) return null;
+    let g = 0; for(const m of matches) g += (m.score_a||0) + (m.score_b||0);
+    return { cat:'fun', ic:'thriller', prio:3,
+      title:'Tor-Bilanz der Liga',
+      desc:`Insgesamt fielen ${g} Tore in ${matches.length} Spielen — Ø ${(g/matches.length).toFixed(1)} pro Match.` };
+  }});
+
+  // ── Fun Fact: aktivster Wochentag ──
+  T.push({ key:'fun_weekday', make: () => {
+    if(matches.length < 8) return null;
+    const wd = [0,0,0,0,0,0,0];
+    for(const m of matches){ wd[new Date(m.created_at).getDay()]++; }
+    let bi = 0; for(let i = 1; i < 7; i++) if(wd[i] > wd[bi]) bi = i;
+    if(!wd[bi]) return null;
+    const names = ['sonntags','montags','dienstags','mittwochs','donnerstags','freitags','samstags'];
+    return { cat:'fun', ic:'calendar', prio:3,
+      title:'Kicker-Tag der Liga',
+      desc:`Am häufigsten wird ${names[bi]} gekickt — ${wd[bi]} Spiele bisher.` };
+  }});
+
+  // ── Fun Fact: Liga in Zahlen ──
+  T.push({ key:'fun_numbers', make: () => {
+    if(matches.length < 3) return null;
+    return { cat:'fun', ic:'users', prio:2,
+      title:'Liga in Zahlen',
+      desc:`${matches.length} Duelle, ${activePids.length} aktive Spieler — und es werden mehr.` };
+  }});
+
+  // ── Persönlich: Siegquoten-Führer (min. 5 Spiele) ──
+  T.push({ key:'personal_wr', make: () => {
+    const elig = withStats.filter(pid => stats[pid].games >= 5);
+    if(!elig.length) return null;
+    elig.sort((a,b) => stats[b].wr - stats[a].wr);
+    const pid = elig[0], st = stats[pid];
+    return { cat:'personal', ic:'crown', prio:4,
+      title:`${nameOf(pid)} an der Spitze`,
+      desc:`Beste Siegquote der Liga: ${Math.round(st.wr*100)}% aus ${st.games} Spielen.`,
+      dataRef:{ ambientPid: pid } };
+  }});
+
+  // ── Persönlich: Vielspieler ──
+  T.push({ key:'personal_grinder', make: () => {
+    if(!withStats.length) return null;
+    const pid = withStats.slice().sort((a,b) => stats[b].games - stats[a].games)[0];
+    if(stats[pid].games < 10) return null;
+    return { cat:'personal', ic:'medalTrio', prio:3,
+      title:`${nameOf(pid)} ist Dauergast`,
+      desc:`Niemand spielt mehr: ${stats[pid].games} Partien auf dem Konto.`,
+      dataRef:{ ambientPid: pid } };
+  }});
+
+  // ── Persönlich: heißeste aktuelle Serie ──
+  T.push({ key:'personal_streak', make: () => {
+    if(!withStats.length) return null;
+    const pid = withStats.slice().sort((a,b) => (stats[b].curStreak||0) - (stats[a].curStreak||0))[0];
+    const cs = stats[pid].curStreak || 0;
+    if(cs < 3) return null;
+    return { cat:'personal', ic:'trendUp', prio:5,
+      title:`${nameOf(pid)} läuft heiß`,
+      desc:`${cs} Siege in Folge — aktuell die heißeste Serie der Liga.`,
+      dataRef:{ ambientPid: pid } };
+  }});
+
+  // ── Persönlich: Torjäger (Ø Tore/Spiel, min. 5) ──
+  T.push({ key:'personal_scorer', make: () => {
+    const elig = withStats.filter(pid => stats[pid].games >= 5);
+    if(!elig.length) return null;
+    elig.sort((a,b) => (stats[b].gf/stats[b].games) - (stats[a].gf/stats[a].games));
+    const pid = elig[0], avg = stats[pid].gf / stats[pid].games;
+    if(avg <= 0) return null;
+    return { cat:'personal', ic:'thriller', prio:3,
+      title:`${nameOf(pid)} trifft am laufenden Band`,
+      desc:`Ø ${avg.toFixed(1)} Tore pro Spiel — Bestwert der Liga.`,
+      dataRef:{ ambientPid: pid } };
+  }});
+
+  // ── Rivalität: meistgespieltes Duell ──
+  T.push({ key:'rivalry_most', make: () => {
+    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    if(!map || !map.size) return null;
+    let best = null;
+    for(const [k, e] of map){
+      const [pa, pb] = k.split('|');
+      if(!pm[pa] || !pm[pb] || pm[pa].hidden || pm[pb].hidden) continue;
+      const wa = e.wins[pa]||0, wb = e.wins[pb]||0, total = wa + wb;
+      if(total < 3) continue;
+      if(!best || total > best.total) best = { pa, pb, total, wa, wb };
+    }
+    if(!best) return null;
+    return { cat:'rivalry', ic:'crossedSwords', prio:4,
+      title:`Duell der Liga: ${nameOf(best.pa)} vs ${nameOf(best.pb)}`,
+      desc:`Schon ${best.total} Aufeinandertreffen — Bilanz ${best.wa}:${best.wb}.`,
+      dataRef:{ ambientPids:[best.pa, best.pb] } };
+  }});
+
+  // ── Rivalität: engste Bilanz (min. 4) ──
+  T.push({ key:'rivalry_close', make: () => {
+    const map = (typeof _ensureH2HMap === 'function') ? _ensureH2HMap() : null;
+    if(!map || !map.size) return null;
+    let best = null;
+    for(const [k, e] of map){
+      const [pa, pb] = k.split('|');
+      if(!pm[pa] || !pm[pb] || pm[pa].hidden || pm[pb].hidden) continue;
+      const wa = e.wins[pa]||0, wb = e.wins[pb]||0, total = wa + wb;
+      if(total < 4) continue;
+      const diff = Math.abs(wa - wb);
+      if(!best || diff < best.diff || (diff === best.diff && total > best.total)) best = { pa, pb, wa, wb, total, diff };
+    }
+    if(!best) return null;
+    return { cat:'rivalry', ic:'crossedSwords', prio:4,
+      title:`Kopf-an-Kopf: ${nameOf(best.pa)} & ${nameOf(best.pb)}`,
+      desc:`${best.total} Duelle, nur ${best.diff} auseinander (${best.wa}:${best.wb}).`,
+      dataRef:{ ambientPids:[best.pa, best.pb] } };
+  }});
+
+  // ── Historie: Liga-Alter ──
+  T.push({ key:'history_age', make: () => {
+    if(!matches.length) return null;
+    const first = new Date(matches[0].created_at); // matches ist asc-sortiert (loadAll)
+    const days = Math.floor((now - first) / 86400000);
+    if(days < 14) return null;
+    const dd = String(first.getDate()).padStart(2,'0');
+    const mm = String(first.getMonth()+1).padStart(2,'0');
+    return { cat:'history', ic:'calendar', prio:2,
+      title:'Die Liga lebt',
+      desc:`Seit ${days} Tagen wird gekickt — das erste Match war am ${dd}.${mm}.${first.getFullYear()}.` };
+  }});
+
+  return T;
+}
+
 // ─── §11.2 — Versions-gebundener Cache ───────────────────────────────
 // ─── §11.2 — Story-Cache (DB-basiert, v8.3) ──────────────────────────
 // Stories werden in der Supabase-Tabelle `stories` persistiert. Der
@@ -15303,9 +15656,88 @@ function _buildStories(){
 // weiter. Die App ist somit auch OHNE Migration sofort funktional.
 function getStoriesCache(){
   // v8.4: _cache._stories hält bis zu 100 Stories (DB-Load + Realtime-Reserve,
-  // §11.8). Die UI zeigt aber nur die NEWS_LIMITS.total (50) neuesten — der
-  // Cache ist newest-first sortiert, also sind das die obersten 50.
-  return Array.isArray(_cache._stories) ? _cache._stories.slice(0, NEWS_LIMITS.total) : [];
+  // §11.8). v8.6: vor dem UI-Limit (NEWS_LIMITS.total) werden Match-Event-
+  // Doppel zusammengefasst (_consolidateStories). Cache ist newest-first.
+  const base = Array.isArray(_cache._stories) ? _cache._stories : [];
+  return _consolidateStories(base).slice(0, NEWS_LIMITS.total);
+}
+
+// Display-seitige Konsolidierung gegen Match-Event-Spam (v8.6).
+// Bewusst beim ANZEIGEN, nicht beim Erzeugen — Gründe:
+//   • Stories sind in der DB persistiert (ON CONFLICT DO NOTHING). Würde man im
+//     Generator zusammenfassen, blieben bereits gespeicherte Doppel-Rows im
+//     Feed. Display-seitig wirkt es auf bestehende UND neue Rows.
+//   • "Welches Match ist DER Upset der Woche" ist zeitabhängig (wandert
+//     wöchentlich) und darf nicht fix in die DB gebrannt werden.
+// Regeln:
+//   (a) Gleicher Badge, im selben Match von MEHREREN Spielern → EINE Karte
+//       ("Leo & Maxi: Upset-König") statt einer pro Spieler.
+//   (b) Der upset_king GENAU des Matches, das schon als "Upset der Woche"-
+//       Highlight läuft → entfällt (sonst dasselbe Ereignis doppelt).
+// VERSCHIEDENE Badges desselben Matches (z.B. Legende UND Upset-König) bleiben
+// getrennt. Memoisiert per Eingabe-Referenz (billiger O(N)-Lauf).
+function _consolidateStories(list){
+  if(!Array.isArray(list)) return [];
+  if(_cache._consolFrom === list && Array.isArray(_cache._consolList)) return _cache._consolList;
+  const pm = (typeof pmap === 'function') ? pmap() : {};
+  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+
+  // Regel-Tabelle (v8.7): Highlights, die einen Badge inhaltlich ABDECKEN →
+  // der Badge entfällt, sonst stünde dasselbe Ereignis doppelt im Feed.
+  //   upset_match     deckt upset_king                      (pro Match)
+  //   biggest_blowout deckt perfect_win (10:0)              (pro Match)
+  //   win_streak      deckt 10er/15er/20er-Serie-Badges     (pro Spieler)
+  const HL_COVERS = {
+    upset_match:     { badges:['upset_king'],                     by:'matchId' },
+    biggest_blowout: { badges:['perfect_win'],                    by:'matchId' },
+    win_streak:      { badges:['streak10','streak15','streak20'], by:'pid'     },
+  };
+  const suppressMatch = new Set();  // 'badgeId|matchId'
+  const suppressPlayer = new Set(); // 'badgeId|playerId'
+  for(const s of list){
+    const d = s.dataRef || {};
+    const rule = HL_COVERS[d.type];
+    if(!rule) continue;
+    const keyVal = rule.by === 'matchId' ? d.matchId : d.pid;
+    if(!keyVal) continue;
+    for(const b of rule.badges){
+      (rule.by === 'matchId' ? suppressMatch : suppressPlayer).add(b + '|' + keyVal);
+    }
+  }
+  // badge_unlocked nach (Badge, Match) gruppieren, Reihenfolge erhalten.
+  const groups = new Map();
+  const slots = [];
+  for(const s of list){
+    const d = s.dataRef || {};
+    if(d.type === 'badge_unlocked' && d.badgeId){
+      if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
+      if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
+      const gk = d.badgeId + '|' + (d.matchId || '');
+      let g = groups.get(gk);
+      if(!g){ g = { rep: s, pids: [], seen: new Set() }; groups.set(gk, g); slots.push({ g: gk }); }
+      if(!g.seen.has(d.playerId)){ g.seen.add(d.playerId); g.pids.push(d.playerId); }
+    } else {
+      slots.push({ s });
+    }
+  }
+  const result = [];
+  for(const slot of slots){
+    if(slot.s){ result.push(slot.s); continue; }
+    const g = groups.get(slot.g);
+    if(g.pids.length <= 1){ result.push(g.rep); continue; } // Einzel: Original unverändert
+    const rep = g.rep, d = rep.dataRef || {};
+    const names = g.pids.map(nameOf).sort((a, b) => a.localeCompare(b, 'de'));
+    const titleNames = names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
+    const bn = d.badgeName || (rep.title.includes(': ') ? rep.title.split(': ').slice(1).join(': ') : 'Badge');
+    result.push(Object.assign({}, rep, {
+      id: 'badgegrp_' + d.badgeId + '_' + (d.matchId || ''),
+      title: `${titleNames}: ${bn}`,
+      dataRef: Object.assign({}, d, { playerIds: g.pids })
+    }));
+  }
+  _cache._consolFrom = list;
+  _cache._consolList = result;
+  return result;
 }
 
 // Wird in loadAll() aufgerufen. Generator → DB-Upsert → DB-Read → Cache.
@@ -15323,6 +15755,7 @@ async function syncStoriesViaDb(){
     if(Array.isArray(fromDb)){
       _cache._stories = fromDb;
       _ensureStoriesRealtime(); // v8.4: Realtime erst nach erstem erfolgreichen DB-Sync
+      _startNewsAutoSync();     // v8.5: ambiente Tages-Stories ohne Reload erscheinen lassen
       return;
     }
   } catch(e){
@@ -15464,14 +15897,12 @@ function _onStoryRealtimeInsert(row){
   if(_cache._stories.some(s => s.id === row.id)) return;
   const story = _rowToStory(row);
   // Einsortieren (newest-first nach event_at) + auf 100 kürzen (Reserve, §11.2).
-  _cache._stories.push(story);
-  _cache._stories.sort((a, b) => b.when - a.when);
-  if(_cache._stories.length > 100) _cache._stories.length = 100;
-  // Badge + Toast aktualisieren.
-  try { if(typeof newsBadgeRefresh === 'function') newsBadgeRefresh(); } catch(e){}
-  // Offene Views live re-rendern — Story-Detail (#ndBg) NICHT stören.
-  try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
-  try { if(_isNewsPopoverOpen()) openNewsPopover(); } catch(e){}
+  // NEUE Array-Referenz → Konsolidierungs-Memo (§11.2) bricht sauber.
+  const next = _cache._stories.concat([story]);
+  next.sort((a, b) => b.when - a.when);
+  _cache._stories = next.slice(0, 100);
+  // Badge + Toast + offene Views aktualisieren (Story-Detail #ndBg bleibt unberührt).
+  _refreshOpenNewsViews();
 }
 
 // DELETE: abgelaufene/gelöschte Story aus dem Memory-Cache entfernen.
@@ -15501,6 +15932,42 @@ function _isNewsPopoverOpen(){
 window.addEventListener('beforeunload', () => {
   try { if(_storiesChannel) _storiesChannel.unsubscribe(); } catch(e){}
 });
+
+// Offene News-Views konsistent aktualisieren (Badge/Toast + Feed + Mini-Popup).
+// Story-Detail (#ndBg) wird bewusst NICHT angefasst (User liest gerade etwas).
+function _refreshOpenNewsViews(){
+  try { if(typeof newsBadgeRefresh === 'function') newsBadgeRefresh(); } catch(e){}
+  try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
+  try { if(_isNewsPopoverOpen()) openNewsPopover(); } catch(e){}
+}
+
+// ─── §11.9 — Periodischer News-Auto-Sync (v8.5) ──────────────────────
+// Lässt ambiente Tages-Stories (§11.1b) OHNE Reload erscheinen: alle paar
+// Minuten neu synchronisieren. Pausiert bei verstecktem Tab (spart Requests)
+// und holt beim Wieder-Sichtbarwerden sofort nach (verpasster Mittags-Slot).
+// Spamfrei: Inserts sind tages-deterministisch (ON CONFLICT) → max.
+// AMBIENT_SLOTS.length neue Rows pro Tag, egal wie oft der Tick läuft.
+let _newsAutoSyncTimer = null;
+let _newsAutoSyncRunning = false;
+async function _newsAutoSyncTick(){
+  if(_newsAutoSyncRunning) return;                       // kein Overlap
+  if(typeof document !== 'undefined' && document.hidden) return; // Tab im Hintergrund
+  if(typeof syncStoriesViaDb !== 'function') return;
+  _newsAutoSyncRunning = true;
+  try {
+    await syncStoriesViaDb();   // Generator (memo) → ggf. neuer Slot → Upload → Reload
+    _refreshOpenNewsViews();
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] auto-sync failed', e); }
+  finally { _newsAutoSyncRunning = false; }
+}
+function _startNewsAutoSync(){
+  if(_newsAutoSyncTimer) return;                         // nur einmal starten
+  if(typeof setInterval !== 'function') return;
+  _newsAutoSyncTimer = setInterval(_newsAutoSyncTick, NEWS_AUTOSYNC_MS);
+  if(typeof document !== 'undefined'){
+    document.addEventListener('visibilitychange', () => { if(!document.hidden) _newsAutoSyncTick(); });
+  }
+}
 
 // ─── §11.3 — LocalStorage (Read-State) ───────────────────────────────
 // Ring-Buffer-Pattern: max 200 IDs werden gespeichert, älteste fallen raus.
@@ -15950,6 +16417,40 @@ function _newsDetailBody(s){
   const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';
   try {
     switch(d.type){
+      case 'potw':
+      case 'potd': {
+        // v8.7: Spieler der Woche/des Tages — Sieger als tappbare Chips.
+        const pids = (Array.isArray(d.playerIds) && d.playerIds.length) ? d.playerIds : [d.playerId];
+        const rows = pids.map(pid => `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(pid))}</div><div class="nd-stat-val">›</div></div>`).join('');
+        const wrLine = (d.wins != null && d.wr != null) ? `<div class="nd-stat-row">
+            <div class="nd-stat-label">Bilanz</div>
+            <div class="nd-stat-val acid">${d.wins} Siege · ${Math.round(d.wr*100)}%</div></div>` : '';
+        return `<div class="nd-section">${pids.length > 1 ? 'Sieger' : 'Sieger'}</div>${rows}${wrLine}`;
+      }
+      case 'ambient': {
+        // v8.5: ambiente Tages-Story. Header (Titel/Desc/Zeit) reicht inhaltlich;
+        // bei Spieler-/Duell-Bezug zusätzlich tappbare Chips zum Durchspringen.
+        if(d.ambientPid && pm[d.ambientPid]){
+          return `<div class="nd-section">Im Fokus</div>
+            <div class="nd-vs">
+              <div class="nd-vs-p" data-pid="${esc(d.ambientPid)}">
+                ${avM(d.ambientPid)}
+                <div class="nd-vs-name">${esc(nameOf(d.ambientPid))}</div>
+              </div>
+            </div>`;
+        }
+        if(Array.isArray(d.ambientPids) && d.ambientPids.length === 2 && pm[d.ambientPids[0]] && pm[d.ambientPids[1]]){
+          const [pa, pb] = d.ambientPids;
+          return `<div class="nd-section">Duell</div>
+            <div class="nd-vs">
+              <div class="nd-vs-p" data-pid="${esc(pa)}">${avM(pa)}<div class="nd-vs-name">${esc(nameOf(pa))}</div></div>
+              <div class="nd-vs-mid">vs</div>
+              <div class="nd-vs-p" data-pid="${esc(pb)}">${avM(pb)}<div class="nd-vs-name">${esc(nameOf(pb))}</div></div>
+            </div>`;
+        }
+        return '';
+      }
       case 'season_endgame': {
         const pA = d.leader, pB = d.second;
         return `<div class="nd-section">Top-2 Stand</div>
@@ -16016,12 +16517,16 @@ function _newsDetailBody(s){
             <div class="nd-stat-val neg">${d.streak}× Niederlage in Folge</div></div>`;
       }
       case 'badge_unlocked': {
+        // v8.6: bei konsolidierten Karten (mehrere Spieler, gleicher Badge im
+        // selben Match) alle Beteiligten listen; sonst der einzelne Spieler.
+        const pids = (Array.isArray(d.playerIds) && d.playerIds.length) ? d.playerIds : [d.playerId];
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
-        const eloChg = d.matchId ? _newsEloDelta(d.playerId, d.matchId) : null;
+        const eloChg = (pids.length === 1 && d.matchId) ? _newsEloDelta(pids[0], d.matchId) : null;
         const rarLabel = d.rarity ? (d.rarity[0].toUpperCase()+d.rarity.slice(1)) : '';
-        return `<div class="nd-section">Spieler</div>
-          <div class="nd-stat-row" data-pid="${esc(d.playerId)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.playerId))}</div><div class="nd-stat-val">›</div></div>
+        const playersHtml = pids.map(pid => `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(pid))}</div><div class="nd-stat-val">›</div></div>`).join('');
+        return `<div class="nd-section">${pids.length > 1 ? pids.length + ' Spieler' : 'Spieler'}</div>
+          ${playersHtml}
           ${rarLabel ? `<div class="nd-stat-row">
             <div class="nd-stat-label">Seltenheit</div>
             <div class="nd-stat-val ${d.rarity==='legendary'?'gold':d.rarity==='negative'?'neg':'acid'}">${esc(rarLabel)}</div></div>` : ''}
