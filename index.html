@@ -1832,6 +1832,7 @@
   .nv-story-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--surface)}
   .nv-story-ic svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   /* Kategorie-Farbcodes (Icon-Tint + Cat-Label-Color) */
+  .nv-cat-breaking   .nv-story-ic,.nv-cat-tag.breaking,.nd-ic.nv-cat-breaking {background:rgba(255,90,77,.14);color:#ff5a4d}
   .nv-cat-highlight  .nv-story-ic,.nv-cat-tag.highlight  {background:rgba(247,207,74,.12);color:var(--gold)}
   .nv-cat-season     .nv-story-ic,.nv-cat-tag.season     {background:rgba(173,154,243,.12);color:var(--purple)}
   .nv-cat-badge      .nv-story-ic,.nv-cat-tag.badge      {background:rgba(190,242,100,.12);color:var(--acid)}
@@ -1872,6 +1873,105 @@
     transition:.15s}
   .nv-filter.active{background:var(--acid);color:#000;border-color:var(--acid)}
   .nv-filter:active{transform:scale(.96)}
+
+  /* ════════ NEWS-FEED v9 — „Matchday"-Layout (Variante M2) ════════
+     Eigene .nf-* Klassen, damit Mini-Popup (.nv-*) unberührt bleibt.
+     Kategorie-Akzent via CSS-Var --cc (+ Tint --cct, Glow --ccg). */
+  .nfc-breaking  {--cc:#ff5a4d;--cct:rgba(255,90,77,.14);--ccg:rgba(255,90,77,.45)}
+  .nfc-highlight {--cc:#f7cf4a;--cct:rgba(247,207,74,.12);--ccg:rgba(247,207,74,.4)}
+  .nfc-badge     {--cc:#A3E635;--cct:rgba(163,230,53,.12);--ccg:rgba(163,230,53,.4)}
+  .nfc-season    {--cc:#a78bfa;--cct:rgba(167,139,250,.12)}
+  .nfc-fun       {--cc:#ffa05a;--cct:rgba(255,160,90,.12)}
+  .nfc-rivalry   {--cc:#f0566a;--cct:rgba(240,86,106,.12)}
+  .nfc-team      {--cc:#56b4e8;--cct:rgba(86,180,232,.12)}
+  .nfc-comeback  {--cc:#f7cf4a;--cct:rgba(247,207,74,.12)}
+  .nfc-personal  {--cc:#a78bfa;--cct:rgba(167,139,250,.12)}
+  .nfc-history   {--cc:#56b4e8;--cct:rgba(86,180,232,.12)}
+  .nfc-misfortune{--cc:#f0566a;--cct:rgba(240,86,106,.12)}
+
+  /* Kopf + Steuerleiste */
+  .nf-wrap{padding:6px 16px 4px}
+  .nf-title{font-family:'Archivo Black',sans-serif;font-size:19px;letter-spacing:-.02em;display:flex;align-items:center;gap:9px;line-height:1}
+  .nf-title .nv-head-ic{width:30px;height:30px}
+  .nf-sub{color:var(--muted);font-size:9.5px;font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.12em;margin:5px 0 8px}
+  .nf-ctrls{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 0 10px}
+  .nf-markall{display:inline-flex;align-items:center;gap:7px;background:rgba(190,242,100,.12);
+    border:1px solid rgba(190,242,100,.32);color:var(--acid);font-size:12px;font-weight:700;
+    font-family:'Space Grotesk',sans-serif;padding:9px 14px;border-radius:999px;cursor:pointer;transition:.15s}
+  .nf-markall svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  .nf-markall:active{transform:scale(.97);background:var(--acid);color:#000;border-color:var(--acid)}
+  .nf-markall.done{opacity:.5}
+  .nf-sort{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:var(--muted);font-family:'Sometype Mono',monospace;flex-shrink:0}
+  .nf-sort svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* BREAKING-Hero — das Herzstück, bewusst dramatisch */
+  .nf-hero{position:relative;margin:2px 0 14px;border-radius:18px;overflow:hidden;min-height:150px;
+    display:flex;flex-direction:column;justify-content:flex-end;cursor:pointer;
+    border:1px solid rgba(255,90,77,.4);box-shadow:0 14px 38px -16px rgba(255,90,77,.5)}
+  .nf-hero .nf-hero-bg{position:absolute;inset:0;background:
+      radial-gradient(120% 90% at 82% 6%,rgba(255,90,77,.6),transparent 55%),
+      radial-gradient(95% 120% at 12% 112%,rgba(255,140,73,.34),transparent 60%),
+      linear-gradient(158deg,#2c1011,#0a0c0b 76%)}
+  .nf-hero .nf-hero-spot{position:absolute;right:8%;top:-12%;width:160px;height:160px;border-radius:50%;
+    background:radial-gradient(circle,rgba(255,225,190,.2),transparent 65%);filter:blur(3px)}
+  .nf-hero .nf-hero-wm{position:absolute;right:6px;bottom:-26px;width:150px;height:150px;
+    opacity:.07;color:#fff;transform:rotate(-8deg)}
+  .nf-hero .nf-hero-wm svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.4}
+  .nf-hero .nf-hero-ct{position:relative;padding:16px}
+  .nf-hero-pill{display:inline-flex;align-items:center;gap:6px;background:#ff3b30;color:#fff;
+    font-family:'Sometype Mono',monospace;font-weight:700;font-size:10px;letter-spacing:.16em;
+    text-transform:uppercase;padding:5px 10px;border-radius:7px;box-shadow:0 4px 14px rgba(255,59,48,.5)}
+  .nf-hero-pill svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  .nf-hero-pill .pulse{width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 0 0 rgba(255,255,255,.7);animation:nfpulse 1.6s infinite}
+  @keyframes nfpulse{0%{box-shadow:0 0 0 0 rgba(255,255,255,.6)}70%{box-shadow:0 0 0 7px rgba(255,255,255,0)}100%{box-shadow:0 0 0 0 rgba(255,255,255,0)}}
+  .nf-hero h2{font-family:'Archivo Black',sans-serif;font-size:22px;line-height:1.04;letter-spacing:-.02em;
+    margin:11px 0 5px;max-width:84%;text-shadow:0 2px 16px rgba(0,0,0,.55)}
+  .nf-hero .nf-hero-sub{font-size:12.5px;color:#ecd9d4;font-weight:500;max-width:90%}
+  .nf-hero .nf-hero-when{position:absolute;top:13px;right:14px;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.06em}
+
+  /* Tages-Trenner + Sektionstitel */
+  .nf-daydiv{font-family:'Sometype Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);padding:4px 0 2px;display:flex;align-items:center;gap:9px}
+  .nf-daydiv::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* M2-Karte — getönt, Pill-Chip, Glow bei wichtigen News */
+  .nf-feed{display:flex;flex-direction:column;gap:10px;padding-bottom:24px}
+  .nf-card{position:relative;background:linear-gradient(122deg,var(--cct,var(--surface)),var(--surface) 72%);
+    border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;transition:.15s}
+  .nf-card:active{transform:scale(.992)}
+  .nf-card.read{opacity:.6;background:var(--surface)}
+  .nf-card.important{border-color:var(--cc);box-shadow:0 0 0 1px var(--ccg,transparent),0 8px 24px -12px var(--ccg,transparent)}
+  .nf-card.read.important{box-shadow:none;border-color:var(--line)}
+  .nf-top{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+  .nf-chip{display:inline-flex;align-items:center;gap:5px;font-family:'Sometype Mono',monospace;
+    font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--cc);
+    background:var(--cct);padding:3px 9px 3px 7px;border-radius:999px;flex-shrink:0}
+  .nf-chip svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .nf-when{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
+  .nf-dot{width:8px;height:8px;border-radius:50%;background:var(--cc);box-shadow:0 0 6px var(--cc)}
+  .nf-grid{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+  .nf-h{font-family:'Archivo Black',sans-serif;font-size:15px;line-height:1.16;letter-spacing:-.01em;
+    margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .nf-d{color:var(--ink2);font-size:11.5px;line-height:1.4;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+  /* Mini-Visuals (rechts) — datengetrieben aus dataRef */
+  .nf-v{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:54px}
+  .nf-v-streak{display:flex;align-items:center;gap:1px}
+  .nf-v-streak svg{width:18px;height:18px;fill:currentColor;stroke:none}
+  .nf-v-streak .fl{color:#ff7849}.nf-v-streak .fl:nth-child(2){color:#ff5a4d}.nf-v-streak .fl:nth-child(3){color:var(--red)}
+  .nf-v-streak .n{font-family:'Sometype Mono',monospace;font-weight:700;font-size:17px;margin-left:5px;color:var(--cc)}
+  .nf-bigchip{font-family:'Sometype Mono',monospace;font-weight:700;font-size:17px;color:var(--cc);
+    background:var(--cct);padding:6px 11px;border-radius:10px;white-space:nowrap}
+  .nf-vlabel{font-family:'Sometype Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .nf-v-badge{width:50px;height:50px;border-radius:13px;display:grid;place-items:center;
+    background:radial-gradient(circle at 50% 35%,rgba(247,207,74,.32),rgba(247,207,74,.07));border:1px solid rgba(247,207,74,.42)}
+  .nf-v-badge svg{width:26px;height:26px;fill:none;stroke:#f7cf4a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .nf-v-crown{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--cc)}
+  .nf-v-crown svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .nf-v-crown .rk{font-family:'Archivo Black',sans-serif;font-size:15px}
   /* Story-Detail-Popover (Layer auf z-index 140, ÜBER Mini-Popup 130) */
   .nd-bg{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.65);
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
@@ -3047,6 +3147,8 @@ const ICONS = {
   newspaper:     `<rect x="3" y="4" width="15" height="16" rx="2"/><line x1="18" y1="8" x2="21" y2="8"/><path d="M18 8v9a2 2 0 002 2 1 1 0 001-1V8"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="6" y1="11" x2="14" y2="11"/><line x1="6" y1="14" x2="11" y2="14"/>`,
   // Clock (Quiet-Week, Prime-Time)
   clock:         `<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/>`,
+  // Sort (News-Feed „Neueste zuerst")
+  sort:          `<path d="M3 6h12M3 12h8M3 18h5"/><path d="M17 9l3-3 3 3M20 6v12"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -14402,6 +14504,11 @@ const NEWS_DEBUG = false;
 // Kategorien (Filter-Pills + CSS-Klassen über `nv-cat-${cat}`).
 // label = Anzeige im Filter; descLabel = im Detail- und Story-Header.
 const NEWS_CATEGORIES = {
+  // v9: „Breaking" ist KEIN eigener Generator-Typ, sondern eine ANZEIGE-Kategorie.
+  // _isBreaking() promotet die ultra-seltenen, liga-relevanten Ereignisse
+  // (neuer Spitzenreiter, Platz-1-Duell, legendäres Badge, Saison-Klimax)
+  // display-seitig hierher — wirkt auf bestehende UND neue persistierte Rows.
+  breaking:   {label:'Breaking',    descLabel:'Breaking News',    ic:'bolt'},
   highlight:  {label:'Highlights',  descLabel:'Highlight',        ic:'crown'},
   season:     {label:'Saison',      descLabel:'Saison',           ic:'rocket'},
   badge:      {label:'Awards',      descLabel:'Badge & Awards',   ic:'medalTrio'},
@@ -15463,7 +15570,31 @@ function _buildAmbientStories(now, pm, nameOf){
 
   const usedKeys = new Set();
   const usedCats = new Set();
+
+  // v8.9: Bereits für HEUTE in der DB persistierte Ambient-Stories vorab als
+  // „benutzt" markieren — und ihre Slots NICHT neu ableiten.
+  // Hintergrund des Bugs: Die Slots entstehen an verschiedenen Tageszeiten und
+  // damit in GETRENNTEN Builds (Slot 8 wird morgens eingefroren — ON CONFLICT —,
+  // Slot 13 erst mittags erzeugt). Der Mittags-Build leitete den Vormittags-Slot
+  // bisher nur aus den AKTUELLEN Daten neu ab; hat sich die Datenlage über den
+  // Tag geändert, weicht diese Ableitung vom eingefrorenen Slot 8 ab, und der
+  // In-Build-Dedup schützt dann gegen das FALSCHE Template → Slot 13 durfte
+  // dasselbe Template wie der bereits gespeicherte Slot 8 ziehen (zwei
+  // identische News). Fix: aus dem seeden, was WIRKLICH in der DB steht.
+  const knownToday = (Array.isArray(_cache._stories) ? _cache._stories : [])
+    .filter(s => s && typeof s.id === 'string' && s.id.indexOf('ambient_' + dateKey + '_') === 0);
+  const persistedSlots = new Set();
+  for(const s of knownToday){
+    const slot = parseInt(s.id.slice(s.id.lastIndexOf('_') + 1), 10);
+    if(!isNaN(slot)) persistedSlots.add(slot);
+    const sub = s.dataRef && s.dataRef.sub;
+    if(sub){ usedKeys.add(sub); usedCats.add(String(sub).split('_')[0]); }
+  }
+
   for(const slotHour of activeSlots){
+    // Schon in der DB → nicht neu ableiten. Die Story kommt ohnehin aus dem
+    // DB-Cache in den Feed; ein Neu-Erzeugen brächte nur Daten-Drift-Risiko.
+    if(persistedSlots.has(slotHour)) continue;
     const rng = _ambientRng(_ambientHash(dateKey + '_' + slotHour));
     // Templates in geseedeter Reihenfolge prüfen, erstes nicht-genutztes mit
     // Ergebnis gewinnt → variiert pro Tag/Slot, bleibt aber deterministisch.
@@ -15483,7 +15614,10 @@ function _buildAmbientStories(now, pm, nameOf){
     }
     if(!chosen) continue;
     usedKeys.add(chosenKey);
-    usedCats.add(chosen.cat);
+    // Kategorie-Avoidance konsistent am Key-Präfix führen (deckt sich mit dem
+    // Check oben; chosen.cat konnte bei v8.8-Templates abweichen, z.B.
+    // fun_leader → cat 'personal').
+    usedCats.add(chosenKey.split('_')[0]);
     const when = new Date(now.getFullYear(), now.getMonth(), now.getDate(), slotHour, 0, 0, 0);
     out.push({
       id:    'ambient_' + dateKey + '_' + slotHour,
@@ -16249,10 +16383,10 @@ function _maybeShowNewsToast(unreadCount){
   // Auto-hide nach 4s
   if(_newsToastHideTimer) clearTimeout(_newsToastHideTimer);
   _newsToastHideTimer = setTimeout(() => _hideNewsToast(), 4000);
-  // Click → Mini-Popup, Toast sofort ausblenden
+  // Click → volles Sheet (v8.9, konsistent mit dem News-Button), Toast aus
   toast.onclick = () => {
     _hideNewsToast();
-    try { openNewsPopover(); } catch(e){}
+    try { openNewsFeed(); } catch(e){}
   };
 }
 function _hideNewsToast(){
@@ -16286,7 +16420,7 @@ function _processDeferredNewsToast(){
     _newsToastHideTimer = setTimeout(() => _hideNewsToast(), 4000);
     toast.onclick = () => {
       _hideNewsToast();
-      try { openNewsPopover(); } catch(e){}
+      try { openNewsFeed(); } catch(e){}
     };
   }, 500);
 }
@@ -16385,18 +16519,101 @@ function openNewsFeed(){
   _newsFeedFilter = 'all';
   _renderNewsFeed();
 }
+// ─── §11.6b — Breaking-Erkennung + M2-Karten (v9) ────────────────────
+// „Breaking" ist eine ANZEIGE-Kategorie, kein Generator-Typ: ultra-seltene,
+// liga-relevante Ereignisse werden display-seitig hierher promotet (wirkt auf
+// bestehende UND neue persistierte Rows, ohne Regenerierung).
+function _isBreaking(s){
+  const d = (s && s.dataRef) || {};
+  switch(d.type){
+    case 'lead_change':    // neuer Spitzenreiter der Liga
+    case 'top_clash':      // Platz 1 schlägt Platz 2
+    case 'season_endgame': // Saison-Endspurt (Titelentscheidung)
+    case 'season_recap':   // Saison-Champion steht fest
+      return true;
+    case 'badge_unlocked':
+      return d.rarity === 'legendary'; // nur goldene/legendäre Badges
+    default:
+      return false;
+  }
+}
+// Anzeige-Kategorie: Breaking überschreibt die echte cat NUR fürs Styling.
+function _displayCat(s){ return _isBreaking(s) ? 'breaking' : ((s && s.cat) || 'fun'); }
+// Wichtige Karten bekommen den farbigen Glow-Rahmen (nur solange ungelesen).
+function _isImportant(s){
+  const d = (s && s.dataRef) || {};
+  return _isBreaking(s) || (s && s.cat === 'highlight') || d.rarity === 'legendary' || d.rarity === 'rare';
+}
+
+// Mini-Visual rechts auf der Karte — rein aus dataRef (kein Match-Lookup).
+function _newsVisual(s){
+  const d = (s && s.dataRef) || {};
+  const flames = n => `<div class="nf-v-streak"><span class="fl">${svgI('flame')}</span><span class="fl">${svgI('flame')}</span><span class="fl">${svgI('flame')}</span><span class="n">${n}</span></div>`;
+  const chip = (val, label) => `<div class="nf-v"><div class="nf-bigchip">${val}</div>${label?`<span class="nf-vlabel">${label}</span>`:''}</div>`;
+  switch(d.type){
+    case 'top_form':    return d.wins!=null   ? `<div class="nf-v">${flames(d.wins+'/10')}</div>` : '';
+    case 'win_streak':  return d.streak!=null ? `<div class="nf-v">${flames(d.streak)}</div>` : '';
+    case 'loss_streak': return d.streak!=null ? chip(d.streak+'×','in Folge') : '';
+    case 'elo_swing':   return chip(((d.delta||0)>0?'+':'')+(d.delta||0),'Elo');
+    case 'jubilee':     return d.total!=null ? chip(d.total+'.','Spiel') : '';
+    case 'milestone_wins':
+    case 'milestone_goals': {
+      const m = String(d.milestone||'').match(/\d+/);
+      return m ? chip(m[0], d.type==='milestone_goals'?'Tore':'Siege') : '';
+    }
+    case 'badge_unlocked':  return `<div class="nf-v"><div class="nf-v-badge">${svgI(s.ic||'trophy')}</div></div>`;
+    case 'lead_change':     return `<div class="nf-v"><div class="nf-v-crown">${svgI('crown')}<span class="rk">#1</span></div></div>`;
+    case 'top_clash':       return `<div class="nf-v"><div class="nf-v-crown">${svgI('swords')}</div></div>`;
+    case 'biggest_blowout': return d.diff!=null ? chip('+'+d.diff,'Tore') : '';
+    case 'potw':
+    case 'potd':            return d.wins!=null ? chip(d.wins,'Siege') : '';
+    case 'group':           return Array.isArray(d.playerIds) ? chip(d.playerIds.length+'×','') : '';
+    default: return '';
+  }
+}
+
+// M2-Karte: getönt, Kategorie-Pill-Chip, Glow bei wichtigen News, Mini-Visual.
+function _newsCardHtmlM2(s, isRead){
+  const dcat = _displayCat(s);
+  const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
+  const vis = _newsVisual(s);
+  const imp = (_isImportant(s) && !isRead) ? ' important' : '';
+  return `<div class="nf-card nfc-${dcat}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
+    <div class="nf-top">
+      <span class="nf-chip">${svgI(s.ic || meta.ic)} ${esc(meta.descLabel)}</span>
+      <span class="nf-when">${esc(_newsWhenLabel(s.when))}${isRead?'':'<span class="nf-dot"></span>'}</span>
+    </div>
+    <div class="nf-grid">
+      <div><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${esc(s.desc)}</div></div>
+      ${vis}
+    </div>
+  </div>`;
+}
+
+// Breaking-Hero — das Herzstück oben im Sheet, bewusst dramatisch.
+function _newsHeroHtml(s){
+  const meta = NEWS_CATEGORIES.breaking;
+  return `<div class="nf-hero nfc-breaking" data-sid="${esc(s.id)}">
+    <div class="nf-hero-bg"></div><div class="nf-hero-spot"></div>
+    <div class="nf-hero-wm">${svgI(s.ic || meta.ic)}</div>
+    <div class="nf-hero-when">${esc(_newsWhenLabel(s.when))}</div>
+    <div class="nf-hero-ct">
+      <span class="nf-hero-pill"><span class="pulse"></span>${svgI('bolt')} Breaking News</span>
+      <h2>${esc(s.title)}</h2>
+      <div class="nf-hero-sub">${esc(s.desc)}</div>
+    </div>
+  </div>`;
+}
+
 function _renderNewsFeed(){
   const stories = getStoriesCache();
   const seen = _newsLoadSeen();
-  // Filter-Definition (v8.1): kuratierte Liste statt aller Kategorien.
-  //   - "Neu":       ungelesen UND jünger als 24h (echte Aktualität)
-  //   - "Ungelesen": jede ungelesene Story, unabhängig vom Alter
-  //   - Kategorie-Filter: nur Highlights/Saison/Awards/Teams/Fun Facts
-  //     (übrige Kategorien sind über "Alle" erreichbar).
+  // Kuratierte Filter-Liste (+ „Breaking" v9).
   const filters = [
     {k:'all',       label:'Alle'},
     {k:'new',       label:'Neu'},
     {k:'unread',    label:'Ungelesen'},
+    {k:'breaking',  label:'Breaking'},
     {k:'highlight', label:'Highlights'},
     {k:'season',    label:'Saison'},
     {k:'badge',     label:'Awards'},
@@ -16410,58 +16627,69 @@ function _renderNewsFeed(){
     filtered = stories.filter(s => !seen.has(s.id) && (nowTs - new Date(s.when).getTime()) < ONE_DAY);
   } else if(_newsFeedFilter === 'unread'){
     filtered = stories.filter(s => !seen.has(s.id));
+  } else if(_newsFeedFilter === 'breaking'){
+    filtered = stories.filter(_isBreaking);
   } else if(_newsFeedFilter !== 'all'){
     filtered = stories.filter(s => s.cat === _newsFeedFilter);
   }
+
+  // Breaking-Hero: jüngste Breaking-Story (max. 14 Tage alt). Nur bei „Alle"/
+  // „Breaking" und aus der Kartenliste herausgelöst, damit kein Doppel.
+  const HERO_MAX_AGE = 14 * ONE_DAY;
+  let hero = null;
+  if(_newsFeedFilter === 'all' || _newsFeedFilter === 'breaking'){
+    hero = filtered.find(s => _isBreaking(s) && (nowTs - new Date(s.when).getTime()) < HERO_MAX_AGE) || null;
+  }
+  const cards = hero ? filtered.filter(s => s.id !== hero.id) : filtered;
+
   const filterBar = `<div class="nv-filters">
     ${filters.map(f => `<button class="nv-filter ${_newsFeedFilter===f.k?'active':''}" data-f="${f.k}">${esc(f.label)}</button>`).join('')}
   </div>`;
-  const listHtml = filtered.length
-    ? filtered.map(s => _newsCardHtml(s, seen.has(s.id))).join('')
-    : '<div class="nv-empty">Keine Stories in dieser Auswahl.</div>';
+  const heroHtml = hero ? _newsHeroHtml(hero) : '';
+  const listHtml = cards.length
+    ? `<div class="nf-daydiv">Aktuelle Stories</div><div class="nf-feed">${cards.map(s => _newsCardHtmlM2(s, seen.has(s.id))).join('')}</div>`
+    : (hero ? '' : '<div class="nv-empty">Keine Stories in dieser Auswahl.</div>');
+
   openSheet(`
-    <div style="padding:14px 18px 4px">
-      <div class="nv-head-title" style="font-size:18px;display:flex;align-items:center;gap:10px">
-        <span class="nv-head-ic" style="width:32px;height:32px">${svgI('newspaper')}</span>
-        Liga Stories
-        <button class="nv-mark-all" id="nvMarkAllBtn" type="button" title="Alle als gelesen markieren">
-          ${svgI('check')}
-          <span>Alle gelesen</span>
-        </button>
-      </div>
-      <div class="nv-head-sub" style="margin:4px 0 6px">Aktuelles, Trends und Fun Facts</div>
+    <div class="nf-wrap">
+      <div class="nf-title"><span class="nv-head-ic">${svgI('newspaper')}</span>Liga News</div>
+      <div class="nf-sub">Aktuelles · Trends · Fun Facts</div>
       ${filterBar}
+      <div class="nf-ctrls">
+        <button class="nf-markall" id="nvMarkAllBtn" type="button">${svgI('check')}<span>Alle als gelesen markieren</span></button>
+        <span class="nf-sort">Neueste zuerst ${svgI('sort')}</span>
+      </div>
+      ${heroHtml}
     </div>
-    <div class="nv-list nv-list-flat" style="padding-bottom:24px">${listHtml}</div>
+    <div class="nf-wrap" style="padding-top:0">${listHtml}</div>
   `);
-  // Filter-Click → re-render (cheap, da Daten aus Cache)
+
+  // Filter-Click → re-render (billig, Daten aus Cache).
   const sheet = document.getElementById('sheet');
   sheet.querySelectorAll('.nv-filter[data-f]').forEach(el => {
     el.onclick = () => { _newsFeedFilter = el.dataset.f; _renderNewsFeed(); };
   });
-  // "Alle als gelesen markieren" — nutzt bestehendes _newsMarkAllSeen
-  // (markiert ALLE Stories aus dem aktuellen Cache, nicht nur die im
-  // gefilterten View). Danach: Badge + Feed neu rendern.
+  // „Alle als gelesen markieren" — markiert ALLE Cache-Stories.
   const markBtn = document.getElementById('nvMarkAllBtn');
   if(markBtn){
     markBtn.onclick = () => {
       try { _newsMarkAllSeen(); } catch(e){}
       try { newsBadgeRefresh(); } catch(e){}
-      // Sichtbar: alle Cards "read" stylen, Dots entfernen
-      sheet.querySelectorAll('.nv-story').forEach(el => {
-        el.classList.add('read');
-        el.querySelector('.nv-story-dot')?.remove();
+      sheet.querySelectorAll('.nf-card, .nf-hero').forEach(el => {
+        el.classList.add('read'); el.classList.remove('important');
+        el.querySelector('.nf-dot')?.remove();
       });
-      // Falls "Ungelesen" oder "Neu" aktiv: re-render leert die Liste
+      markBtn.classList.add('done');
       if(_newsFeedFilter === 'unread' || _newsFeedFilter === 'new') _renderNewsFeed();
     };
   }
-  sheet.querySelectorAll('.nv-story[data-sid]').forEach(el => {
+  // Karten + Hero klickbar → Detail.
+  sheet.querySelectorAll('[data-sid]').forEach(el => {
     el.onclick = () => {
       const sid = el.dataset.sid;
       _newsMarkSeen(sid);
-      el.classList.add('read');
-      el.querySelector('.nv-story-dot')?.remove();
+      el.classList.add('read'); el.classList.remove('important');
+      el.querySelector('.nf-dot')?.remove();
       newsBadgeRefresh();
       openNewsDetail(sid);
     };
@@ -16486,12 +16714,15 @@ function openNewsDetail(sid){
     // CSS.escape ist seit 2015 in allen relevanten Browsern verfügbar; defensiv
     // mit Fallback auf simples Escape für Edge-Cases.
     const escId = (window.CSS && CSS.escape) ? CSS.escape(sid) : sid.replace(/[\\"']/g, '\\$&');
-    document.querySelectorAll('.nv-story[data-sid="'+escId+'"]').forEach(el => {
-      el.classList.add('read');
+    document.querySelectorAll('.nv-story[data-sid="'+escId+'"], .nf-card[data-sid="'+escId+'"], .nf-hero[data-sid="'+escId+'"]').forEach(el => {
+      el.classList.add('read'); el.classList.remove('important');
       el.querySelector('.nv-story-dot')?.remove();
+      el.querySelector('.nf-dot')?.remove();
     });
   } catch(e){}
-  const cat = NEWS_CATEGORIES[s.cat] || NEWS_CATEGORIES.fun;
+  // v9: Breaking-Stories im Detail ebenfalls in der Breaking-Optik anzeigen.
+  const dcat = _displayCat(s);
+  const cat = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   // Body-HTML dynamisch je Typ — nutzt vorhandene Avatar/Stat-Helper
   const body = _newsDetailBody(s);
   const nd = document.getElementById('nd');
@@ -16499,9 +16730,9 @@ function openNewsDetail(sid){
   if(!nd || !bg) return;
   nd.innerHTML = `
     <div class="nd-head">
-      <div class="nd-ic nv-cat-${s.cat}">${svgI(s.ic || cat.ic)}</div>
+      <div class="nd-ic nv-cat-${dcat}">${svgI(s.ic || cat.ic)}</div>
       <div class="nd-title-wrap">
-        <div class="nd-cat nv-cat-tag ${s.cat}" style="display:inline-block">${esc(cat.descLabel)}</div>
+        <div class="nd-cat nv-cat-tag ${dcat}" style="display:inline-block">${esc(cat.descLabel)}</div>
         <div class="nd-title">${esc(s.title)}</div>
         <div class="nd-when">${esc(_newsWhenLabel(s.when))}</div>
       </div>
@@ -17009,7 +17240,10 @@ function _newsPlayerCareer(pid){
     const btn = document.getElementById('newsBtn');
     if(btn && !btn._newsBound){
       btn._newsBound = true;
-      btn.onclick = openNewsPopover;
+      // v8.9 (User-Wunsch): Klick öffnet direkt das volle Sheet statt des
+      // kleinen Vorschau-Popovers. openNewsPopover bleibt für interne Reuse
+      // (z.B. Toast-Tap, _refreshOpenNewsViews) erhalten.
+      btn.onclick = openNewsFeed;
     }
     // Backdrop-Bindings:
     //   nvBg (Mini-Popup): Backdrop-Click schließt — ist nur ein Vorschau-Layer.
