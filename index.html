@@ -4014,9 +4014,17 @@ async function loadAll(){
     if(window._updateRecapBtn) window._updateRecapBtn();
     if(window._updatePosHistBtn) window._updatePosHistBtn();
     render();
-    // News-Badge nach jedem Daten-Refresh aktualisieren (matches.length änderte
-    // sich evtl. → Story-Cache invalidiert sich beim nächsten Lookup, Badge
-    // refresht entsprechend). Defensiv: try/catch, damit Render nie blockiert.
+    // News-System v8.3: Stories aus DB synchronisieren.
+    //   1. Generator erzeugt Story-Objekte aus Live-Daten
+    //   2. INSERT ON CONFLICT DO NOTHING in Supabase
+    //   3. SELECT der letzten 100 → memory cache
+    //   4. Badge refresht aus memory cache
+    // Bei DB-Fehler (Tabelle fehlt, Netz down): in-memory Fallback.
+    // await blockiert loadAll, aber der vorherige render() ist schon durch
+    // — User sieht UI, News-Badge folgt 100-500ms später.
+    try {
+      await syncStoriesViaDb();
+    } catch(e){ console.warn('[news] sync failed', e); }
     try { if(window.newsBadgeRefresh) window.newsBadgeRefresh(); } catch(e){}
     // Player-of-the-Day Recap (zeigt einmal pro Tag den letzten Spieltag).
     // Verzögerung > Saison-Recap (600ms), damit der bei Bedarf Vorrang hat.
@@ -14393,7 +14401,6 @@ const NEWS_CATEGORIES = {
 
 // LocalStorage-Keys (versioniert für künftige Migrations)
 const NEWS_LS_SEEN  = 'eso_news_seen_v1';
-const NEWS_LS_VISIT = 'eso_news_lastVisit_v1';
 const NEWS_LS_TOAST = 'eso_news_toast_v1';  // v8.1: zeitstempel + count des letzten Toasts
 const NEWS_LS_MAX_SEEN = 200; // Ring-Buffer-Limit
 const NEWS_TOAST_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h zwischen identischen Toast-Counts
@@ -14437,6 +14444,21 @@ function _buildStories(){
   const pm = pmap();
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
   const sortedMatches = [...matches].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)); // neueste zuerst
+
+  // ── ISO-Wochen-Helper (v8.3) ──
+  // Liefert "2026-W26" als stabile Pro-Woche-Kennung. Vermeidet, dass
+  // "Ruhige Woche"-Stories täglich neu erzeugt werden. ISO-Wochen starten
+  // Montag → eine Woche ergibt EINE Story, nicht sieben.
+  const isoWeek = (d) => {
+    const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = t.getUTCDay() || 7;
+    t.setUTCDate(t.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    const weekNum = Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
+    return t.getUTCFullYear() + '-W' + String(weekNum).padStart(2, '0');
+  };
+  const todayKey = now.toISOString().slice(0,10);
+  const weekKey  = isoWeek(now);
 
   // ── Pre-Group: matches pro Spieler ──
   // O(N) statt O(N × N_players) für jeden späteren filter()-Aufruf.
@@ -14740,7 +14762,7 @@ function _buildStories(){
     const avg = prev4w / 4;
     if(avg >= 20 && lastWeek <= avg * 0.5){
       stories.push({
-        id: 'quiet_week_'+now.toISOString().slice(0,10),
+        id: 'quiet_week_'+weekKey,
         cat: 'fun',
         ic: 'clock',
         title: 'Ruhige Woche',
@@ -14840,7 +14862,7 @@ function _buildStories(){
     if(topPid && topGain >= 50){
       const delta = Math.round(topGain);
       stories.push({
-        id: 'elo_swing_week_'+topPid+'_'+now.toISOString().slice(0,10),
+        id: 'elo_swing_week_'+topPid+'_'+weekKey,
         cat: 'personal',
         ic: 'trendUp',
         title: `${nameOf(topPid)} im Aufwind`,
@@ -14876,7 +14898,7 @@ function _buildStories(){
     if(worstPid && worstDelta <= -20){
       const delta = Math.round(worstDelta);
       stories.push({
-        id: 'elo_swing_day_'+worstPid+'_'+now.toISOString().slice(0,10),
+        id: 'elo_swing_day_'+worstPid+'_'+todayKey,
         cat: 'misfortune',
         ic: 'dropDouble',
         title: `${nameOf(worstPid)} mit hartem Tag`,
@@ -14939,7 +14961,7 @@ function _buildStories(){
       const dt = new Date(m.created_at);
       const dStr = dt.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});
       stories.push({
-        id: 'anniversary_'+m.id+'_'+now.toISOString().slice(0,10),
+        id: 'anniversary_'+m.id,
         cat: 'history',
         ic: 'calendar',
         title: 'Vor genau einem Jahr',
@@ -15172,7 +15194,9 @@ function _buildStories(){
       const sinceLastDays = Math.floor((now.getTime() - lastMatchTs) / 86400000);
       if(sinceLastDays >= 3){
         stories.push({
-          id: 'dry_spell_'+now.toISOString().slice(0,10),
+          // Pro Pause genau 1 Story (lastMatchId bleibt stabil bis zum
+          // nächsten Match) — kein täglicher Spam mehr.
+          id: 'dry_spell_'+matches[matches.length-1].id,
           cat: 'fun',
           ic: 'clock',
           title: `${sinceLastDays} Tage ohne Spiel`,
@@ -15222,18 +15246,127 @@ function _buildStories(){
 }
 
 // ─── §11.2 — Versions-gebundener Cache ───────────────────────────────
-// Generator läuft nur 1× pro matches.length+_cache.version-Kombination.
-// Time-sensitive Stories (Endspurt, Stille Woche) werden zusätzlich an den
-// aktuellen Tag gebunden, damit sich Datums-abhängige Inhalte täglich
-// refreshen, ohne dass matches-Änderungen nötig sind.
+// ─── §11.2 — Story-Cache (DB-basiert, v8.3) ──────────────────────────
+// Stories werden in der Supabase-Tabelle `stories` persistiert. Der
+// Generator (_buildStories) läuft weiterhin clientseitig und produziert
+// Story-Objekte aus Live-Daten. Die werden idempotent in die DB geschrieben
+// (ON CONFLICT DO NOTHING) — erste INSERT-Zeit gewinnt also den Timestamp.
+//
+// Lese-Pfad ist ausschließlich aus der DB:
+//   syncStoriesViaDb() läuft in loadAll → befüllt _cache._stories
+//   getStoriesCache() returns _cache._stories synchron
+//
+// Vorteile:
+//   - Story-Timestamps stabil über Geräte und App-Starts
+//     ("Heute, 02:10" bleibt "Heute, 02:10", nicht "Heute, 14:30" beim Reload)
+//   - Cross-Device-Konsistenz (alle Spieler sehen dieselben Stories)
+//   - Historische Stories über 90 Tage erhalten (auch wenn der Generator
+//     sie längst nicht mehr produzieren würde)
+//
+// Fallback: wenn DB-Calls fehlschlagen (Migration noch nicht eingespielt,
+// Netzwerk down etc.), läuft _buildStories als rein in-memory Generator
+// weiter. Die App ist somit auch OHNE Migration sofort funktional.
 function getStoriesCache(){
-  const today = new Date().toISOString().slice(0,10);
-  const key = 'news_'+matches.length+'_'+_cache.version+'_'+today;
-  if(_cache._newsKey === key) return _cache._newsList;
-  const list = _buildStories();
-  _cache._newsKey = key;
-  _cache._newsList = list;
-  return list;
+  return Array.isArray(_cache._stories) ? _cache._stories : [];
+}
+
+// Wird in loadAll() aufgerufen. Generator → DB-Upsert → DB-Read → Cache.
+// Vollständig in try/catch gewrappt — Failures degradieren auf Fallback.
+async function syncStoriesViaDb(){
+  let generated = [];
+  try { generated = _buildStories() || []; }
+  catch(e){ console.warn('[news] generator failed', e); }
+
+  // Versuch 1: DB-Pfad
+  try {
+    await _cleanupExpiredStoriesInDb();        // 1× pro Sync, idempotent
+    await _uploadNewStoriesToDb(generated);    // INSERT ON CONFLICT DO NOTHING
+    const fromDb = await _loadStoriesFromDb(); // SELECT die letzten 100
+    if(Array.isArray(fromDb)){
+      _cache._stories = fromDb;
+      return;
+    }
+  } catch(e){
+    // Migration evtl. noch nicht eingespielt → Tabelle fehlt → 42P01
+    // oder Netzfehler. Defensiv: in-memory Fallback nutzen, App bleibt nutzbar.
+    console.warn('[news] DB sync failed, falling back to in-memory', e?.message || e);
+  }
+
+  // Versuch 2: in-memory Fallback (alter Zustand)
+  _cache._stories = generated;
+}
+window.syncStoriesViaDb = syncStoriesViaDb;
+
+// ── DB-Helper ──
+// Storage-Form ⇄ Runtime-Form Konversion. Story-Objekte des Generators
+// haben `when` als Date; in der DB lebt das als `event_at` TIMESTAMPTZ.
+function _storyToRow(s){
+  return {
+    id:          s.id,
+    type:        (s.dataRef && s.dataRef.type) || s.id.split('_')[0] || 'unknown',
+    category:    s.cat,
+    icon:        s.ic || null,
+    title:       s.title,
+    description: s.desc,
+    data_ref:    s.dataRef || {},
+    priority:    s.prio | 0,
+    event_at:    (s.when instanceof Date ? s.when : new Date(s.when)).toISOString(),
+  };
+}
+function _rowToStory(r){
+  return {
+    id:       r.id,
+    cat:      r.category,
+    ic:       r.icon || undefined,
+    title:    r.title,
+    desc:     r.description,
+    dataRef:  r.data_ref || {},
+    prio:     r.priority | 0,
+    when:     new Date(r.event_at),
+  };
+}
+
+// Batch-INSERT mit ON CONFLICT DO NOTHING. PostgREST/Supabase macht das per
+// `upsert(...,{ignoreDuplicates:true})` — der spannende Teil ist: WIR verändern
+// vorhandene Zeilen nicht (kein UPDATE), damit `event_at`/`created_at` der
+// ersten Generation erhalten bleiben.
+async function _uploadNewStoriesToDb(stories){
+  if(!stories || !stories.length) return;
+  const rows = stories.map(_storyToRow);
+  // In Batches von 100 → schützt vor Payload-Limits bei großen Datensätzen
+  for(let i = 0; i < rows.length; i += 100){
+    const chunk = rows.slice(i, i + 100);
+    const { error } = await sb.from('stories').upsert(chunk, {
+      onConflict: 'id',
+      ignoreDuplicates: true,
+    });
+    if(error) throw error;
+  }
+}
+
+// Read: neueste 100 nicht-abgelaufene Stories, sortiert nach event_at desc.
+// Die Anzeige-Limits (NEWS_LIMITS.total = 50) werden weiterhin im UI greifen.
+async function _loadStoriesFromDb(){
+  const { data, error } = await sb.from('stories')
+    .select('*')
+    .gt('expires_at', new Date().toISOString())
+    .order('event_at', { ascending: false })
+    .limit(100);
+  if(error) throw error;
+  return (data || []).map(_rowToStory);
+}
+
+// Cleanup: löscht alle abgelaufenen Stories. Idempotent, 1× pro Sync.
+// Die RLS-Policy "stories_delete_old" erlaubt nur DELETE WHERE expires_at < NOW().
+async function _cleanupExpiredStoriesInDb(){
+  const { error } = await sb.from('stories')
+    .delete()
+    .lt('expires_at', new Date().toISOString());
+  if(error){
+    // 42P01 = Tabelle existiert nicht → Migration nicht eingespielt
+    // → bubblen, syncStoriesViaDb fällt auf in-memory zurück
+    throw error;
+  }
 }
 
 // ─── §11.3 — LocalStorage (Read-State) ───────────────────────────────
@@ -15265,7 +15398,6 @@ function _newsMarkSeen(ids){
 function _newsMarkAllSeen(){
   const stories = getStoriesCache();
   _newsMarkSeen(stories.map(s => s.id));
-  try { localStorage.setItem(NEWS_LS_VISIT, new Date().toISOString()); } catch(e){}
 }
 function newsUnreadCount(){
   const stories = getStoriesCache();
@@ -15515,9 +15647,6 @@ function _newsWhenLabel(when){
 // ─── §11.6 — Voller Feed (im Sheet) mit Filter-Pills ─────────────────
 let _newsFeedFilter = 'all'; // 'all' | 'new' | cat-Key
 function openNewsFeed(){
-  // Beim Öffnen des Vollfeeds: einmalig Visit-Timestamp aktualisieren —
-  // markiert NICHT alle als gelesen (das geschieht pro Tap).
-  try { localStorage.setItem(NEWS_LS_VISIT, new Date().toISOString()); } catch(e){}
   _newsFeedFilter = 'all';
   _renderNewsFeed();
 }
