@@ -14605,7 +14605,7 @@ function _buildStories(){
             id: 'lead_change_'+sid+'_'+lastSeasonMatch.id,
             cat: 'highlight',
             ic: 'kingClass',
-            title: `${nameOf(cur[0].pid)} übernimmt die Tabellenführung`,
+            title: `Neuer Spitzenreiter: ${nameOf(cur[0].pid)}`,
             desc: `Nach dem letzten Spiel ist ${nameOf(cur[0].pid)} neuer Spitzenreiter — vor ${nameOf(prevTop)}.`,
             when: new Date(lastSeasonMatch.created_at),
             prio: 10,
@@ -14627,7 +14627,7 @@ function _buildStories(){
       if(arr.length < 10) return;
       const last10 = arr.slice(-10);
       const wins = last10.filter(m => won(p.id, m)).length;
-      if(wins >= 8){
+      if(wins >= 9){ // v8.8: 8→9 — nur noch echte Top-Form (9-10/10) ist News
         candidates.push({pid: p.id, wins, when: new Date(last10[last10.length-1].created_at)});
       }
     });
@@ -14948,7 +14948,7 @@ function _buildStories(){
       if(!pm[pid] || pm[pid].hidden) continue;
       if(losses[pid] < worstDelta){ worstDelta = losses[pid]; worstPid = pid; }
     }
-    if(worstPid && worstDelta <= -20){
+    if(worstPid && worstDelta <= -25){ // v8.8: -20→-25 — nur echte Pech-Tage
       const delta = Math.round(worstDelta);
       stories.push({
         id: 'elo_swing_day_'+worstPid+'_'+todayKey,
@@ -15063,6 +15063,42 @@ function _buildStories(){
         prio: bestUpset.gap >= 5 ? 8 : 6,
         dataRef: {type:'upset_match', matchId: m.id, gap: bestUpset.gap,
                   winnerRank: bestUpset.winnerBest, loserRank: bestUpset.loserBest}
+      });
+    }
+  } catch(e){}
+
+  // ── 16b. Gipfeltreffen: Platz 1 schlägt Platz 2 (v8.8) ──
+  // Sucht in den letzten 7 Tagen das JÜNGSTE Match, in dem der Pre-Rank-#1
+  // gegen den #2 antrat und der #1 gewann ("zieht weiter davon").
+  try {
+    const wk = 7 * 86400000;
+    const tsNow = now.getTime();
+    let best = null;
+    for(let i = matches.length - 1; i >= 0; i--){
+      const m = matches[i];
+      const t = new Date(m.created_at).getTime();
+      if(t > tsNow) continue;
+      if(t < tsNow - wk) break; // matches asc → ab hier nur noch älter
+      const snap = snaps[m.id];
+      if(!snap || !snap.preRank) continue;
+      const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+      const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+      const winnerBest = Math.min(...winners.map(p => snap.preRank[p] || 99));
+      const loserBest  = Math.min(...losers.map(p  => snap.preRank[p] || 99));
+      if(winnerBest === 1 && loserBest === 2){ best = {m, t, winners, losers}; break; }
+    }
+    if(best){
+      const m = best.m;
+      const wNames = best.winners.filter(p => pm[p] && !pm[p].hidden).map(nameOf);
+      stories.push({
+        id: 'top_clash_'+m.id,
+        cat: 'highlight',
+        ic: 'kingClass',
+        title: 'Gipfeltreffen: Platz 1 schlägt Platz 2',
+        desc: `${wNames.join(' & ')} setzt sich im Spitzenspiel durch und zieht weiter davon.`,
+        when: new Date(best.t),
+        prio: 9,
+        dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers}
       });
     }
   } catch(e){}
@@ -15630,6 +15666,66 @@ function _ambientTemplatePool(now, pm, nameOf){
       desc:`Seit ${days} Tagen wird gekickt — das erste Match war am ${dd}.${mm}.${first.getFullYear()}.` };
   }});
 
+  // ── Fun Fact: Torschützenkönig (meiste Karriere-Tore, v8.8) ──
+  T.push({ key:'fun_top_scorer', make: () => {
+    const elig = withStats.filter(pid => stats[pid].games >= 5 && stats[pid].gf > 0);
+    if(!elig.length) return null;
+    const pid = elig.slice().sort((a,b) => stats[b].gf - stats[a].gf)[0];
+    return { cat:'personal', ic:'thriller', prio:3,
+      title:`${nameOf(pid)} ist Torschützenkönig`,
+      desc:`${stats[pid].gf} Tore insgesamt — kein Spieler hat mehr erzielt.`,
+      dataRef:{ ambientPid: pid } };
+  }});
+
+  // ── Fun Fact: aktueller Spitzenreiter (Elo-#1, v8.8) ──
+  T.push({ key:'fun_leader', make: () => {
+    if(typeof getGlobalSim !== 'function') return null;
+    const elo = (getGlobalSim() || {}).elo || {};
+    const ranked = activePids
+      .filter(pid => elo[pid] != null && stats[pid] && stats[pid].games >= 3)
+      .sort((a,b) => elo[b] - elo[a]);
+    if(ranked.length < 2) return null;
+    const lead = Math.round(elo[ranked[0]] - elo[ranked[1]]);
+    return { cat:'personal', ic:'crown', prio:4,
+      title:`${nameOf(ranked[0])} thront an der Spitze`,
+      desc:`${Math.round(elo[ranked[0]])} Elo — ${lead} Punkte vor ${nameOf(ranked[1])}.`,
+      dataRef:{ ambientPid: ranked[0] } };
+  }});
+
+  // ── Fun Fact: höchster Sieg aller Zeiten (v8.8) ──
+  T.push({ key:'fun_biggest_win', make: () => {
+    if(matches.length < 5) return null;
+    let best = null;
+    for(const m of matches){
+      const hi = Math.max(m.score_a||0, m.score_b||0), lo = Math.min(m.score_a||0, m.score_b||0);
+      const diff = hi - lo;
+      if(!best || diff > best.diff) best = {diff, hi, lo, m};
+    }
+    if(!best || best.diff < 6) return null;
+    const dt = new Date(best.m.created_at);
+    return { cat:'fun', ic:'thriller', prio:3,
+      title:'Klarste Klatsche der Liga',
+      desc:`Höchster Sieg aller Zeiten: ${best.hi}:${best.lo} am ${String(dt.getDate()).padStart(2,'0')}.${String(dt.getMonth()+1).padStart(2,'0')}.` };
+  }});
+
+  // ── Fun Fact: aktivster Spieltag (v8.8) ──
+  T.push({ key:'fun_busiest_day', make: () => {
+    if(matches.length < 8) return null;
+    const byDay = {};
+    for(const m of matches){
+      const d = new Date(m.created_at);
+      const dk = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      byDay[dk] = (byDay[dk] || 0) + 1;
+    }
+    let bk = null, bn = 0;
+    for(const dk in byDay){ if(byDay[dk] > bn){ bn = byDay[dk]; bk = dk; } }
+    if(bn < 5) return null;
+    const p = bk.split('-');
+    return { cat:'fun', ic:'calendar', prio:2,
+      title:'Rekord-Spieltag',
+      desc:`Meiste Spiele an einem Tag: ${bn} Partien am ${p[2]}.${p[1]}.${p[0]}.` };
+  }});
+
   return T;
 }
 
@@ -15681,12 +15777,10 @@ function _consolidateStories(list){
   if(_cache._consolFrom === list && Array.isArray(_cache._consolList)) return _cache._consolList;
   const pm = (typeof pmap === 'function') ? pmap() : {};
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const fmtNames = arr => arr.length <= 1 ? (arr[0] || '') : arr.slice(0, -1).join(', ') + ' & ' + arr[arr.length - 1];
 
   // Regel-Tabelle (v8.7): Highlights, die einen Badge inhaltlich ABDECKEN →
   // der Badge entfällt, sonst stünde dasselbe Ereignis doppelt im Feed.
-  //   upset_match     deckt upset_king                      (pro Match)
-  //   biggest_blowout deckt perfect_win (10:0)              (pro Match)
-  //   win_streak      deckt 10er/15er/20er-Serie-Badges     (pro Spieler)
   const HL_COVERS = {
     upset_match:     { badges:['upset_king'],                     by:'matchId' },
     biggest_blowout: { badges:['perfect_win'],                    by:'matchId' },
@@ -15704,8 +15798,21 @@ function _consolidateStories(list){
       (rule.by === 'matchId' ? suppressMatch : suppressPlayer).add(b + '|' + keyVal);
     }
   }
-  // badge_unlocked nach (Badge, Match) gruppieren, Reihenfolge erhalten.
-  const groups = new Map();
+
+  // Gruppierbare Typen (v8.8): mehrere gleichartige Per-Spieler-Stories werden
+  // zu EINER Karte zusammengefasst ("3 Pechvögel: Maxi, Alex & Tom") statt
+  // einzeln den Feed zu fluten. frag() liefert den Pro-Spieler-Schnipsel.
+  const GROUPABLE = {
+    loss_streak:     { label:'Pechvögel',           ic:'dropDouble', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Niederlagen in Folge: ${f}. Wer dreht es zuerst?` },
+    top_form:        { label:'Spieler in Top-Form', ic:'flame',      frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.wins}/10)`, desc:f=>`Überragende letzte 10 Spiele: ${f}.` },
+    win_streak:      { label:'ungeschlagene Spieler', ic:'flame',    frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Siege in Folge: ${f}.` },
+    jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Spiele-Meilensteine: ${f}.` },
+    milestone_wins:  { label:'Sieg-Meilensteine',   ic:'medalTrio',  frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Glückwunsch: ${f}.` },
+    milestone_goals: { label:'Tor-Meilensteine',    ic:'thriller',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Glückwunsch: ${f}.` },
+  };
+
+  const badgeGroups = new Map();
+  const typeGroups = new Map();
   const slots = [];
   for(const s of list){
     const d = s.dataRef || {};
@@ -15713,27 +15820,55 @@ function _consolidateStories(list){
       if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
       const gk = d.badgeId + '|' + (d.matchId || '');
-      let g = groups.get(gk);
-      if(!g){ g = { rep: s, pids: [], seen: new Set() }; groups.set(gk, g); slots.push({ g: gk }); }
+      let g = badgeGroups.get(gk);
+      if(!g){ g = { rep: s, pids: [], seen: new Set() }; badgeGroups.set(gk, g); slots.push({ b: gk }); }
       if(!g.seen.has(d.playerId)){ g.seen.add(d.playerId); g.pids.push(d.playerId); }
+    } else if(GROUPABLE[d.type] && d.pid){
+      let g = typeGroups.get(d.type);
+      if(!g){ g = { rep: s, members: [] }; typeGroups.set(d.type, g); slots.push({ t: d.type }); }
+      g.members.push(s);
     } else {
       slots.push({ s });
     }
   }
+
   const result = [];
   for(const slot of slots){
     if(slot.s){ result.push(slot.s); continue; }
-    const g = groups.get(slot.g);
-    if(g.pids.length <= 1){ result.push(g.rep); continue; } // Einzel: Original unverändert
-    const rep = g.rep, d = rep.dataRef || {};
-    const names = g.pids.map(nameOf).sort((a, b) => a.localeCompare(b, 'de'));
-    const titleNames = names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1];
-    const bn = d.badgeName || (rep.title.includes(': ') ? rep.title.split(': ').slice(1).join(': ') : 'Badge');
-    result.push(Object.assign({}, rep, {
-      id: 'badgegrp_' + d.badgeId + '_' + (d.matchId || ''),
-      title: `${titleNames}: ${bn}`,
-      dataRef: Object.assign({}, d, { playerIds: g.pids })
-    }));
+    if(slot.b){
+      const g = badgeGroups.get(slot.b);
+      if(g.pids.length <= 1){ result.push(g.rep); continue; }
+      const rep = g.rep, d = rep.dataRef || {};
+      const names = g.pids.map(nameOf).sort((a, b) => a.localeCompare(b, 'de'));
+      const bn = d.badgeName || (rep.title.includes(': ') ? rep.title.split(': ').slice(1).join(': ') : 'Badge');
+      result.push(Object.assign({}, rep, {
+        id: 'badgegrp_' + d.badgeId + '_' + (d.matchId || ''),
+        title: `${fmtNames(names)}: ${bn}`,
+        dataRef: Object.assign({}, d, { playerIds: g.pids })
+      }));
+      continue;
+    }
+    if(slot.t){
+      const g = typeGroups.get(slot.t);
+      if(g.members.length <= 1){ result.push(g.rep); continue; } // Einzel: Original unverändert
+      const cfg = GROUPABLE[slot.t], rep = g.rep;
+      const members = g.members.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
+      const pids = members.map(m => (m.dataRef||{}).pid).filter(Boolean);
+      const names = pids.map(nameOf);
+      const frags = members.map(m => cfg.frag(m));
+      const when = members.reduce((mx, m) => (m.when > mx ? m.when : mx), members[0].when);
+      const prio = members.reduce((mx, m) => ((m.prio||0) > mx ? (m.prio||0) : mx), 0);
+      result.push({
+        id: 'grp_' + slot.t + '_' + pids.slice().sort().join('-'),
+        cat: rep.cat,
+        ic: cfg.ic || rep.ic,
+        title: `${members.length} ${cfg.label}: ${fmtNames(names)}`,
+        desc: cfg.desc(frags.join(', ')),
+        when, prio,
+        dataRef: { type:'group', sub: slot.t, playerIds: pids, frags }
+      });
+      continue;
+    }
   }
   _cache._consolFrom = list;
   _cache._consolList = result;
@@ -16417,6 +16552,24 @@ function _newsDetailBody(s){
   const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';
   try {
     switch(d.type){
+      case 'top_clash': {
+        // v8.8: Spitzenspiel #1 vs #2 — Match-VS-Block zum Durchspringen.
+        const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
+        return matchHtml ? `<div class="nd-section">Das Spitzenspiel</div>${matchHtml}` : '';
+      }
+      case 'group': {
+        // v8.8: zusammengefasste Karte ("N Pechvögel: …") — alle Beteiligten
+        // tappbar, mit ihrem jeweiligen Wert (frag).
+        const pids = Array.isArray(d.playerIds) ? d.playerIds : [];
+        const frags = Array.isArray(d.frags) ? d.frags : [];
+        const rows = pids.map((pid, i) => {
+          const m = (frags[i] || '').match(/\(([^)]*)\)/);
+          const val = m ? m[1] : '›';
+          return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+            <div class="nd-stat-label">${esc(nameOf(pid))}</div><div class="nd-stat-val">${esc(val)}</div></div>`;
+        }).join('');
+        return `<div class="nd-section">Beteiligte</div>${rows}`;
+      }
       case 'potw':
       case 'potd': {
         // v8.7: Spieler der Woche/des Tages — Sieger als tappbare Chips.
