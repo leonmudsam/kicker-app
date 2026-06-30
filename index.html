@@ -3225,6 +3225,15 @@ function invalidateCache(keys=null){
       if(k==='badges') delete _cache._badgeEarnedKey;
       if(k==='playerSeasonAwards') delete _cache._playerSeasonAwards;
       if(k==='allPastSeasons') delete _cache._allPastSeasonsKey;
+      if(k==='news') {
+        // v8.4: News-Generator-Memo (_buildStories) + H2H-Lookup-Map.
+        // _cache.version++ oben bricht die Keys ohnehin — dies ist der
+        // explizite, selbst-dokumentierende Reset-Pfad.
+        delete _cache._buildStoriesKey;
+        delete _cache._buildStoriesResult;
+        delete _cache._h2hMap;
+        delete _cache._h2hKey;
+      }
     });
   }
 }
@@ -14384,6 +14393,12 @@ function _processAchToastQueue(){
 // ╚═══════════════════════════════════════════════════════════════════════╝
 
 // ─── §11.0 — Konstanten ──────────────────────────────────────────────
+// News-Debug-Flag (v8.4): hält console-Logs des News-Systems aus der
+// Produktiv-Konsole heraus. Standard: aus. Zur Laufzeit aktivierbar über
+// DevTools — KEIN Reload nötig:  window.NEWS_DEBUG = true
+// Alle News-Logs laufen über `if(NEWS_DEBUG || window.NEWS_DEBUG) console…`.
+const NEWS_DEBUG = false;
+
 // Kategorien (Filter-Pills + CSS-Klassen über `nv-cat-${cat}`).
 // label = Anzeige im Filter; descLabel = im Detail- und Story-Header.
 const NEWS_CATEGORIES = {
@@ -14460,6 +14475,26 @@ function _buildStories(){
   const todayKey = now.toISOString().slice(0,10);
   const weekKey  = isoWeek(now);
 
+  // ── Memoization (v8.4) ──
+  // _buildStories ist teuer (~67ms @1k×12 Spieler, ~244ms @10k×20). Solange
+  // sich weder Match-Zahl noch _cache.version noch ISO-Woche noch Tag ändern,
+  // liefert der Generator dasselbe Ergebnis → Cache zurückgeben, Generator
+  // KOMPLETT überspringen. Bei Match-Insert ändert sich matches.length, bei
+  // Recalc/Config _cache.version → Key bricht automatisch.
+  // Explizite Invalidierung zusätzlich über invalidateCache(['news']) in §3.
+  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey;
+  if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
+    return _cache._buildStoriesResult;
+  }
+
+  // ── Helper-Refs einmalig (v8.4) ──
+  // getHistoryByMatchId() und getRankSnapshots() sind bereits gecached, aber
+  // jeder Aufruf prüft den Cache-Key neu. Einmal pro Generator-Lauf
+  // referenzieren spart wiederholten Lookup-Overhead — mehrere Story-Typen
+  // (elo_swing_week, elo_swing_day, upset_match, Führungswechsel) brauchen sie.
+  const histMap = getHistoryByMatchId();
+  const snaps   = getRankSnapshots();
+
   // ── Pre-Group: matches pro Spieler ──
   // O(N) statt O(N × N_players) für jeden späteren filter()-Aufruf.
   // matches ist asc-sortiert (loadAll) → byPlayer[pid] ist ebenfalls asc.
@@ -14527,7 +14562,6 @@ function _buildStories(){
   // ── 3. Führungswechsel ──
   // Vergleicht aktuellen Top-1 der Saison mit dem Top-1 vor 10 Matches.
   try {
-    const rankSnaps = getRankSnapshots();
     const sid = currentSeason().id;
     const seasonMs = matchesInSeason(sid);
     if(seasonMs.length >= 4){
@@ -14542,7 +14576,7 @@ function _buildStories(){
       // Letztes Match → preRank des letzten Matches (= "Stand vor dem letzten Spiel")
       // Top-1 davor: aus preRank des letzten Matches der Saison
       const lastSeasonMatch = [...seasonMs].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))[0];
-      const snap = lastSeasonMatch && rankSnaps[lastSeasonMatch.id];
+      const snap = lastSeasonMatch && snaps[lastSeasonMatch.id];
       if(cur.length && snap && snap.preRank){
         let prevTop = null;
         for(const pid in snap.preRank){
@@ -14842,7 +14876,6 @@ function _buildStories(){
   try {
     const wk = 7 * 86400000;
     const tsNow = now.getTime();
-    const histMap = getHistoryByMatchId();
     const gains = {};
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
@@ -14878,7 +14911,6 @@ function _buildStories(){
   try {
     const day = 86400000;
     const tsNow = now.getTime();
-    const histMap = getHistoryByMatchId();
     const losses = {};
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
@@ -14979,7 +15011,6 @@ function _buildStories(){
   try {
     const wk = 7 * 86400000;
     const tsNow = now.getTime();
-    const snaps = getRankSnapshots();
     let bestUpset = null;
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
@@ -15242,7 +15273,11 @@ function _buildStories(){
     perPlayer[pid]++;
     deduped.push(s);
   }
-  return deduped.slice(0, NEWS_LIMITS.total);
+  // Ergebnis memoisieren (v8.4) — siehe Memoization-Guard oben.
+  const _result = deduped.slice(0, NEWS_LIMITS.total);
+  _cache._buildStoriesKey = _buildStoriesKey;
+  _cache._buildStoriesResult = _result;
+  return _result;
 }
 
 // ─── §11.2 — Versions-gebundener Cache ───────────────────────────────
@@ -15267,7 +15302,10 @@ function _buildStories(){
 // Netzwerk down etc.), läuft _buildStories als rein in-memory Generator
 // weiter. Die App ist somit auch OHNE Migration sofort funktional.
 function getStoriesCache(){
-  return Array.isArray(_cache._stories) ? _cache._stories : [];
+  // v8.4: _cache._stories hält bis zu 100 Stories (DB-Load + Realtime-Reserve,
+  // §11.8). Die UI zeigt aber nur die NEWS_LIMITS.total (50) neuesten — der
+  // Cache ist newest-first sortiert, also sind das die obersten 50.
+  return Array.isArray(_cache._stories) ? _cache._stories.slice(0, NEWS_LIMITS.total) : [];
 }
 
 // Wird in loadAll() aufgerufen. Generator → DB-Upsert → DB-Read → Cache.
@@ -15275,7 +15313,7 @@ function getStoriesCache(){
 async function syncStoriesViaDb(){
   let generated = [];
   try { generated = _buildStories() || []; }
-  catch(e){ console.warn('[news] generator failed', e); }
+  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] generator failed', e); }
 
   // Versuch 1: DB-Pfad
   try {
@@ -15284,12 +15322,13 @@ async function syncStoriesViaDb(){
     const fromDb = await _loadStoriesFromDb(); // SELECT die letzten 100
     if(Array.isArray(fromDb)){
       _cache._stories = fromDb;
+      _ensureStoriesRealtime(); // v8.4: Realtime erst nach erstem erfolgreichen DB-Sync
       return;
     }
   } catch(e){
     // Migration evtl. noch nicht eingespielt → Tabelle fehlt → 42P01
     // oder Netzfehler. Defensiv: in-memory Fallback nutzen, App bleibt nutzbar.
-    console.warn('[news] DB sync failed, falling back to in-memory', e?.message || e);
+    if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] DB sync failed, falling back to in-memory', e?.message || e);
   }
 
   // Versuch 2: in-memory Fallback (alter Zustand)
@@ -15333,9 +15372,12 @@ function _rowToStory(r){
 async function _uploadNewStoriesToDb(stories){
   if(!stories || !stories.length) return;
   const rows = stories.map(_storyToRow);
-  // In Batches von 100 → schützt vor Payload-Limits bei großen Datensätzen
-  for(let i = 0; i < rows.length; i += 100){
-    const chunk = rows.slice(i, i + 100);
+  // In Batches → schützt vor Payload-Limits bei großen Datensätzen. (v8.4)
+  // Realistisch sind ~30 Stories pro Sync → ein einziger Batch. 200 deckt auch
+  // den Erststart nach langer Pause ab (Postgres erlaubt 1000+ Rows/INSERT).
+  const BATCH_SIZE = 200;
+  for(let i = 0; i < rows.length; i += BATCH_SIZE){
+    const chunk = rows.slice(i, i + BATCH_SIZE);
     const { error } = await sb.from('stories').upsert(chunk, {
       onConflict: 'id',
       ignoreDuplicates: true,
@@ -15368,6 +15410,97 @@ async function _cleanupExpiredStoriesInDb(){
     throw error;
   }
 }
+
+// ─── §11.8 — Realtime-Subscription auf `stories` (v8.4) ──────────────
+// Wenn ein ANDERES Gerät neue Stories inserted (via syncStoriesViaDb auf der
+// Gegenstelle), bekommt dieses Gerät das ohne App-Reload mit. Der Channel wird
+// EINMAL beim ersten erfolgreichen DB-Sync aufgebaut und danach
+// wiederverwendet — loadAll re-subscribed NICHT (Guard über _storiesChannel).
+//
+// VORAUSSETZUNG (Dashboard, einmalig): Replication muss für `stories` aktiv
+// sein — Database → Replication → supabase_realtime → stories. Ist sie NICHT
+// aktiv, liefert subscribe() trotzdem 'SUBSCRIBED', es kommen aber keine
+// Events. Das ist clientseitig nicht erkennbar → hier nur dokumentiert.
+//
+// Graceful degradation: schlägt der Channel fehl (CHANNEL_ERROR/TIMED_OUT),
+// läuft die App mit dem bestehenden loadAll-basierten Sync normal weiter —
+// kein UI-Block, nur console.warn (hinter NEWS_DEBUG).
+let _storiesChannel = null;
+
+function _ensureStoriesRealtime(){
+  if(_storiesChannel) return;                       // bereits abonniert
+  if(typeof sb === 'undefined' || !sb || !sb.channel) return;
+  try {
+    // Sofort referenzieren → verhindert doppeltes subscribe bei zwei schnell
+    // aufeinanderfolgenden loadAll, bevor der async subscribe-Callback feuert.
+    _storiesChannel = sb.channel('stories_changes')
+      .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'stories' },
+          (payload) => { try { _onStoryRealtimeInsert(payload.new); }
+                         catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] realtime insert failed', e); } })
+      .on('postgres_changes',
+          { event: 'DELETE', schema: 'public', table: 'stories' },
+          (payload) => { try { _onStoryRealtimeDelete(payload.old); }
+                         catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] realtime delete failed', e); } })
+      .subscribe((status) => {
+        if(NEWS_DEBUG || window.NEWS_DEBUG) console.log('[news] realtime status:', status);
+        if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED'){
+          // Channel verwerfen → ein späterer syncStoriesViaDb darf neu versuchen.
+          if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] realtime inactive ('+status+') — loadAll-Sync bleibt aktiv');
+          _storiesChannel = null;
+        }
+      });
+  } catch(e){
+    if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] realtime subscribe failed', e);
+    _storiesChannel = null;
+  }
+}
+
+// INSERT: neue Story eines anderen Geräts in den Memory-Cache übernehmen.
+function _onStoryRealtimeInsert(row){
+  if(!row || !row.id) return;
+  if(!Array.isArray(_cache._stories)) _cache._stories = [];
+  // Eigener Insert / Duplikat → ignorieren.
+  if(_cache._stories.some(s => s.id === row.id)) return;
+  const story = _rowToStory(row);
+  // Einsortieren (newest-first nach event_at) + auf 100 kürzen (Reserve, §11.2).
+  _cache._stories.push(story);
+  _cache._stories.sort((a, b) => b.when - a.when);
+  if(_cache._stories.length > 100) _cache._stories.length = 100;
+  // Badge + Toast aktualisieren.
+  try { if(typeof newsBadgeRefresh === 'function') newsBadgeRefresh(); } catch(e){}
+  // Offene Views live re-rendern — Story-Detail (#ndBg) NICHT stören.
+  try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
+  try { if(_isNewsPopoverOpen()) openNewsPopover(); } catch(e){}
+}
+
+// DELETE: abgelaufene/gelöschte Story aus dem Memory-Cache entfernen.
+function _onStoryRealtimeDelete(row){
+  if(!row || !row.id) return;
+  if(!Array.isArray(_cache._stories)) return;
+  const before = _cache._stories.length;
+  _cache._stories = _cache._stories.filter(s => s.id !== row.id);
+  if(_cache._stories.length === before) return; // war nicht im Cache → nichts tun
+  // Feed re-rendern (Karte verschwindet). Badge NICHT anfassen — newsBadgeRefresh
+  // zählt beim nächsten Lauf ohnehin nur noch vorhandene Stories.
+  try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
+}
+
+// Offen-Zustände (DOM): Feed lebt im #sheet (enthält .nv-list-flat), Mini-Popup
+// im #nvBg (Klasse 'show'). Story-Detail (#ndBg) wird bewusst nicht live verändert.
+function _isNewsFeedOpen(){
+  const sheet = document.getElementById('sheet');
+  return !!(sheet && sheet.classList.contains('show') && sheet.querySelector('.nv-list-flat'));
+}
+function _isNewsPopoverOpen(){
+  const bg = document.getElementById('nvBg');
+  return !!(bg && bg.classList.contains('show'));
+}
+
+// Cleanup beim App-Close: sauberer Realtime-Disconnect.
+window.addEventListener('beforeunload', () => {
+  try { if(_storiesChannel) _storiesChannel.unsubscribe(); } catch(e){}
+});
 
 // ─── §11.3 — LocalStorage (Read-State) ───────────────────────────────
 // Ring-Buffer-Pattern: max 200 IDs werden gespeichert, älteste fallen raus.
@@ -16143,24 +16276,48 @@ function _newsRecentForm(pid, n){
 // H2H-Bilanz Spieler A vs Spieler B (egal welche Teamkonstellation).
 // Iteriert einmal über matches; bei großen Datensätzen kann das auf
 // getPairsCache umgestellt werden — derzeit aber günstig genug.
-function _newsH2HRecord(aPid, bPid){
-  let aWins = 0, bWins = 0;
-  let lastMatchId = null, lastTs = 0;
+// H2H-Lazy-Cache (v8.4): Statt für jedes Detail ALLE matches zu walken
+// (O(N) pro Lookup → bei 100k Matches teuer), wird beim ersten H2H-Lookup
+// EINE Map über alle Spieler-Paarungen gebaut und gecached. Danach ist jeder
+// _newsH2HRecord-Lookup O(1). Build-Kosten: einmalig O(N × 4) (4 Kreuz-Paare
+// pro Match), amortisiert über alle Detail-Aufrufe.
+// Key bindet an matches.length + _cache.version → invalidateCache(['news'])
+// (§3) löscht _h2hMap/_h2hKey, der Version-Tick bricht den Key zusätzlich.
+function _ensureH2HMap(){
+  const key = 'h2h_' + matches.length + '_' + _cache.version;
+  if(_cache._h2hKey === key && _cache._h2hMap) return _cache._h2hMap;
+  const map = new Map();
   for(let i = 0; i < matches.length; i++){
     const m = matches[i];
-    const aOnA = m.a1 === aPid || m.a2 === aPid;
-    const aOnB = m.b1 === aPid || m.b2 === aPid;
-    const bOnA = m.a1 === bPid || m.a2 === bPid;
-    const bOnB = m.b1 === bPid || m.b2 === bPid;
-    // Nur zählen wenn A & B auf verschiedenen Seiten
-    if((aOnA && bOnB) || (aOnB && bOnA)){
-      const aWon = (aOnA && m.winner === 'A') || (aOnB && m.winner === 'B');
-      if(aWon) aWins++; else bWins++;
-      const ts = new Date(m.created_at).getTime();
-      if(ts > lastTs){ lastTs = ts; lastMatchId = m.id; }
+    const sideA = [m.a1, m.a2], sideB = [m.b1, m.b2];
+    const ts = new Date(m.created_at).getTime();
+    const aWon = m.winner === 'A';
+    // Alle 4 Kreuz-Paare (je 1 Spieler aus A gegen 1 aus B) sind H2H-Gegner.
+    for(let x = 0; x < 2; x++){
+      for(let y = 0; y < 2; y++){
+        const pa = sideA[x], pb = sideB[y];
+        if(!pa || !pb) continue;
+        const k = pa < pb ? pa + '|' + pb : pb + '|' + pa;
+        let e = map.get(k);
+        if(!e){ e = {wins:{}, lastMatchId:null, lastTs:0}; map.set(k, e); }
+        const winnerPid = aWon ? pa : pb;
+        e.wins[winnerPid] = (e.wins[winnerPid] || 0) + 1;
+        if(ts > e.lastTs){ e.lastTs = ts; e.lastMatchId = m.id; }
+      }
     }
   }
-  return {aWins, bWins, lastMatchId};
+  _cache._h2hKey = key;
+  _cache._h2hMap = map;
+  return map;
+}
+function _newsH2HRecord(aPid, bPid){
+  const map = _ensureH2HMap();
+  const k = aPid < bPid ? aPid + '|' + bPid : bPid + '|' + aPid;
+  const e = map.get(k);
+  if(!e) return {aWins:0, bWins:0, lastMatchId:null};
+  // aWins/bWins richten sich nach der Aufruf-Reihenfolge (nicht nach dem
+  // kanonischen Map-Key) → korrekt unabhängig von der Argument-Sortierung.
+  return {aWins: e.wins[aPid] || 0, bWins: e.wins[bPid] || 0, lastMatchId: e.lastMatchId};
 }
 
 // Karriere-Bilanz (wins, losses, winRate) eines Spielers. Nutzt bestehende
