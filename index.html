@@ -14788,11 +14788,12 @@ const NEWS_TOAST_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h zwischen identischen To
 
 // Generator-Limits — Schutz gegen zu viele Stories pro Typ
 const NEWS_LIMITS = {
-  topForm: 3,       // max 3 Spieler "in Top-Form" gleichzeitig
-  lossStreak: 3,
-  jubilee: 5,
-  badgeUnlocked: 8, // letzte N freigeschalteten Badges (v8.7: 5→8, da jetzt alle gold/lila zählen)
-  rivalry: 3,
+  // v9.4: bewusst kleiner → weniger News-Flut direkt nach Matches.
+  topForm: 2,       // max Spieler "in Top-Form" gleichzeitig
+  lossStreak: 2,
+  jubilee: 3,
+  badgeUnlocked: 6, // letzte N freigeschalteten Badges
+  rivalry: 2,
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
 
@@ -14829,6 +14830,58 @@ const NEWS_BADGE_WHITELIST = new Set([
 ]);
 
 // ─── §11.1 — Story-Generator ─────────────────────────────────────────
+// v9.4: All-Time-Ligarekorde für Breaking News (Elo-Höchststand & längste
+// Siegesserie), plus der Zeitpunkt (Match), an dem der aktuelle Rekord
+// aufgestellt wurde. Ein O(N_matches)-Lauf, gecacht per matches.length+version.
+//   • Elo: aus globalSim.history (season-isoliertes eloAfter) — der höchste je
+//     erreichte Wert und das Match, das ihn zuletzt neu setzte.
+//   • Serie: eigener Karriere-Walk (kein Saison-Reset — „jemals").
+function _allTimeRecords(){
+  const key = 'allTimeRec_'+matches.length+'_'+_cache.version;
+  if(_cache._allTimeRecKey === key) return _cache._allTimeRec;
+  const startElo = cfg.start_elo ?? 0;
+  let eloRec = null;    // {val, pid, matchId}
+  let streakRec = null; // {val, pid, matchId}
+  try {
+    const sim = getGlobalSim();
+    let runMax = startElo;
+    for(const h of (sim.history || [])){
+      const after = h.eloAfter;
+      if(!after) continue;
+      for(const pid in after){
+        if(after[pid] > runMax + 1e-6){
+          runMax = after[pid];
+          eloRec = { val: Math.round(after[pid]), pid, matchId: h.matchId };
+        }
+      }
+    }
+  } catch(e){}
+  try {
+    const cur = {};
+    let maxStreak = 0;
+    for(const m of matches){
+      const aWon = m.winner === 'A';
+      const sides = [[m.a1, m.a2, aWon], [m.b1, m.b2, !aWon]];
+      for(const [x, y, won] of sides){
+        for(const id of [x, y]){
+          if(!id) continue;
+          cur[id] = won ? (cur[id] || 0) + 1 : 0;
+          if(cur[id] > maxStreak){ maxStreak = cur[id]; streakRec = { val: cur[id], pid: id, matchId: m.id }; }
+        }
+      }
+    }
+  } catch(e){}
+  // Zeitstempel des Rekord-Matches nachtragen.
+  const mm = {};
+  for(const m of matches) mm[m.id] = m;
+  if(eloRec && mm[eloRec.matchId]) eloRec.when = mm[eloRec.matchId].created_at;
+  if(streakRec && mm[streakRec.matchId]) streakRec.when = mm[streakRec.matchId].created_at;
+  const result = { eloRec, streakRec };
+  _cache._allTimeRecKey = key;
+  _cache._allTimeRec = result;
+  return result;
+}
+
 // Iteriert genau einmal über bestehende Caches. Gibt ein Array von
 // Story-Objekten {id, cat, ic, title, desc, when, prio, dataRef} zurück.
 // Performance: O(N_matches) — dominante Kosten durch top-form-Filterung,
@@ -15530,6 +15583,80 @@ function _buildStories(){
           when: new Date(best.t),
           prio: 9,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2}
+        });
+      }
+    }
+  } catch(e){}
+
+  // ── 16c. Breaking: All-Time-Rekorde & Giant Slayer (v9.4) ──
+  try {
+    const rec = _allTimeRecords();
+    const RECENT = 14 * 86400000;
+    const nowTs = now.getTime();
+    const startElo = cfg.start_elo ?? 0;
+    const mature = matches.length >= 30; // erst bei genug Liga-Historie
+
+    // Neuer Elo-Rekord: höchster je erreichter Elo-Stand der Liga
+    if(mature && rec.eloRec && rec.eloRec.when){
+      const pid = rec.eloRec.pid;
+      if((nowTs - new Date(rec.eloRec.when).getTime()) < RECENT && pm[pid] && !pm[pid].hidden && rec.eloRec.val >= startElo + 40){
+        stories.push({
+          id: 'elo_record_'+rec.eloRec.matchId,
+          cat: 'highlight', ic: 'peak',
+          title: `Neuer Elo-Rekord: ${nameOf(pid)}`,
+          desc: `${nameOf(pid)} schraubt die Bestmarke auf ${rec.eloRec.val} Elo — so hoch stand in der Liga noch nie jemand.`,
+          when: new Date(rec.eloRec.when), prio: 10,
+          dataRef: {type:'elo_record', pid, elo: rec.eloRec.val, matchId: rec.eloRec.matchId}
+        });
+      }
+    }
+
+    // Längste Siegesserie aller Zeiten
+    if(mature && rec.streakRec && rec.streakRec.when && rec.streakRec.val >= 6){
+      const pid = rec.streakRec.pid;
+      if((nowTs - new Date(rec.streakRec.when).getTime()) < RECENT && pm[pid] && !pm[pid].hidden){
+        stories.push({
+          id: 'streak_record_'+rec.streakRec.matchId,
+          cat: 'highlight', ic: 'crownFlame',
+          title: `Serien-Rekord: ${nameOf(pid)}`,
+          desc: `${rec.streakRec.val} Siege am Stück — die längste Siegesserie, die die Liga je gesehen hat.`,
+          when: new Date(rec.streakRec.when), prio: 10,
+          dataRef: {type:'streak_record', pid, streak: rec.streakRec.val, matchId: rec.streakRec.matchId}
+        });
+      }
+    }
+
+    // Giant Slayer: ein Team gewinnt mit unter 10% Siegchance (letzte 7 Tage,
+    // das extremste Match). Suppress-Regel gegen Upset-Doppel siehe Consolidation.
+    {
+      const wk = 7 * 86400000;
+      let gs = null;
+      for(let i = matches.length - 1; i >= 0; i--){
+        const m = matches[i];
+        const t = new Date(m.created_at).getTime();
+        if(t > nowTs) continue;
+        if(t < nowTs - wk) break;
+        const expA = (m.exp_a == null) ? 0.5 : m.exp_a;
+        const winnerChance = m.winner === 'A' ? expA : (1 - expA);
+        if(winnerChance < 0.10){
+          const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+          const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+          if(winners.every(p => pm[p] && !pm[p].hidden) && (!gs || winnerChance < gs.chance)){
+            gs = { m, chance: winnerChance, winners, losers };
+          }
+        }
+      }
+      if(gs){
+        const wNames = gs.winners.map(nameOf).join(' & ');
+        const lNames = gs.losers.map(nameOf).join(' & ');
+        const pct = Math.max(1, Math.round(gs.chance * 100));
+        stories.push({
+          id: 'giant_slayer_'+gs.m.id,
+          cat: 'highlight', ic: 'giantSlayer',
+          title: `Giant Slayer: ${wNames}`,
+          desc: `Nur ${pct}% Siegchance — und trotzdem gewonnen: ${wNames} zwingen ${lNames} in einer echten Sensation in die Knie.`,
+          when: new Date(gs.m.created_at), prio: 10,
+          dataRef: {type:'giant_slayer', matchId: gs.m.id, winners: gs.winners, losers: gs.losers, chance: gs.chance}
         });
       }
     }
@@ -16330,8 +16457,14 @@ function _consolidateStories(list){
   };
   const suppressMatch = new Set();  // 'badgeId|matchId'
   const suppressPlayer = new Set(); // 'badgeId|playerId'
+  // v9.4: Paare, die schon eine „N. Aufeinandertreffen"-Meilenstein-Story haben
+  // → die allgemeine „rivalry"-Story (gleiche Paarung) entfällt (sonst doppelt).
+  const rivalryMsPairs = new Set();
+  const giantSlayerMatches = new Set(); // matchIds mit Giant-Slayer-Breaking
   for(const s of list){
     const d = s.dataRef || {};
+    if(d.type === 'rivalry_milestone' && d.a && d.b) rivalryMsPairs.add([d.a, d.b].sort().join('|'));
+    if(d.type === 'giant_slayer' && d.matchId) giantSlayerMatches.add(d.matchId);
     const rule = HL_COVERS[d.type];
     if(!rule) continue;
     const keyVal = rule.by === 'matchId' ? d.matchId : d.pid;
@@ -16358,6 +16491,12 @@ function _consolidateStories(list){
   const slots = [];
   for(const s of list){
     const d = s.dataRef || {};
+    // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
+    // eine (spezifischere) Meilenstein-Story hat.
+    if(d.type === 'rivalry' && d.a && d.b && rivalryMsPairs.has([d.a, d.b].sort().join('|'))) continue;
+    // v9.4: „Upset der Woche" entfällt, wenn dasselbe Match schon als
+    // (stärkeres) Giant-Slayer-Breaking läuft.
+    if(d.type === 'upset_match' && d.matchId && giantSlayerMatches.has(d.matchId)) continue;
     if(d.type === 'badge_unlocked' && d.badgeId){
       if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
@@ -16367,8 +16506,10 @@ function _consolidateStories(list){
       if(!g.seen.has(d.playerId)){ g.seen.add(d.playerId); g.pids.push(d.playerId); }
     } else if(GROUPABLE[d.type] && d.pid){
       let g = typeGroups.get(d.type);
-      if(!g){ g = { rep: s, members: [] }; typeGroups.set(d.type, g); slots.push({ t: d.type }); }
-      g.members.push(s);
+      if(!g){ g = { rep: s, members: [], seen: new Set() }; typeGroups.set(d.type, g); slots.push({ t: d.type }); }
+      // v9.4: pro Spieler nur EINMAL (list ist newest-first → jüngster Stand
+      // bleibt). Verhindert Duplikate wie „Maxi, Maxi, Alex … Alex".
+      if(!g.seen.has(d.pid)){ g.seen.add(d.pid); g.members.push(s); }
     } else {
       slots.push({ s });
     }
@@ -16961,6 +17102,9 @@ function _isBreaking(s){
     case 'top_clash':      // Platz 1 schlägt Platz 2
     case 'season_endgame': // Saison-Endspurt (Titelentscheidung)
     case 'season_recap':   // Saison-Champion steht fest
+    case 'elo_record':     // neuer All-Time-Elo-Rekord der Liga
+    case 'streak_record':  // längste Siegesserie aller Zeiten
+    case 'giant_slayer':   // Sieg mit < 10% Siegchance
       return true;
     case 'badge_unlocked':
       return d.rarity === 'legendary'; // nur goldene/legendäre Badges
@@ -16996,6 +17140,9 @@ function _newsVisual(s){
     case 'badge_unlocked':  return `<div class="nf-v"><div class="nf-v-badge">${svgI(s.ic||'trophy')}</div></div>`;
     case 'lead_change':     return `<div class="nf-v"><div class="nf-v-crown">${svgI('crown')}<span class="rk">#1</span></div></div>`;
     case 'top_clash':       return `<div class="nf-v"><div class="nf-v-crown">${svgI('swords')}</div></div>`;
+    case 'elo_record':      return d.elo!=null ? chip(d.elo,'Rekord-Elo') : '';
+    case 'streak_record':   return d.streak!=null ? `<div class="nf-v">${flames(d.streak)}</div>` : '';
+    case 'giant_slayer':    return d.chance!=null ? chip(Math.max(1,Math.round(d.chance*100))+'%','Chance') : '';
     case 'biggest_blowout': return d.diff!=null ? chip('+'+d.diff,'Tore') : '';
     case 'potw':
     case 'potd':            return d.wins!=null ? chip(d.wins,'Siege') : '';
@@ -17063,6 +17210,16 @@ function _breakingHeroText(s){
       }
       case 'badge_unlocked':
         return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga — das gelingt fast niemandem.`;
+      case 'elo_record':
+        return `${nm(d.pid)} schreibt Liga-Geschichte: Mit ${d.elo} Elo steht kein Spieler jemals höher. Eine neue Bestmarke für die Ewigkeit — wer traut sich, sie anzugreifen?`;
+      case 'streak_record':
+        return `${nm(d.pid)} stellt einen Liga-Rekord für die Ewigkeit auf: ${d.streak} Siege in Folge — keine Serie war jemals länger. Wer stoppt diesen Lauf?`;
+      case 'giant_slayer': {
+        const w = Array.isArray(d.winners) ? d.winners.map(nm).join(' & ') : '';
+        const l = Array.isArray(d.losers) ? d.losers.map(nm).join(' & ') : 'den Favoriten';
+        const pct = d.chance!=null ? Math.max(1, Math.round(d.chance*100)) : null;
+        return `Die Sensation des Spieltags: Mit nur ${pct!=null?pct+'%':'minimaler'} Siegchance bezwingt ${w} das Favoriten-Team ${l}. So einen Coup sieht man in der Liga fast nie.`;
+      }
     }
   } catch(e){}
   return s.desc || '';
@@ -17265,6 +17422,23 @@ function _newsDetailBody(s){
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return (rankRows ? `<div class="nd-section">Duell an der Spitze</div>${rankRows}` : '')
              + (matchHtml ? `<div class="nd-section">Das Spitzenspiel</div>${matchHtml}` : '');
+      }
+      case 'elo_record': {
+        // v9.4: Rekordhalter (antippbar) + Rekordwert + auslösendes Match.
+        const row = d.pid ? `<div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer"><div class="nd-stat-label">Rekordhalter</div><div class="nd-stat-val acid">${esc(nameOf(d.pid))} ›</div></div>` : '';
+        const eloRow = d.elo!=null ? `<div class="nd-stat-row"><div class="nd-stat-label">Höchststand</div><div class="nd-stat-val acid">${d.elo} Elo</div></div>` : '';
+        const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
+        return `<div class="nd-section">Liga-Rekord</div>${row}${eloRow}` + (matchHtml ? `<div class="nd-section">Rekord-Match</div>${matchHtml}` : '');
+      }
+      case 'streak_record': {
+        const row = d.pid ? `<div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer"><div class="nd-stat-label">Rekordhalter</div><div class="nd-stat-val acid">${esc(nameOf(d.pid))} ›</div></div>` : '';
+        const sRow = d.streak!=null ? `<div class="nd-stat-row"><div class="nd-stat-label">Siege in Folge</div><div class="nd-stat-val acid">${d.streak}</div></div>` : '';
+        return `<div class="nd-section">Liga-Rekord</div>${row}${sRow}`;
+      }
+      case 'giant_slayer': {
+        const pct = d.chance!=null ? `<div class="nd-stat-row"><div class="nd-stat-label">Siegchance</div><div class="nd-stat-val red">${Math.max(1,Math.round(d.chance*100))}%</div></div>` : '';
+        const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
+        return `<div class="nd-section">Die Sensation</div>${pct}` + (matchHtml ? matchHtml : '');
       }
       case 'group': {
         // v8.8: zusammengefasste Karte ("N Pechvögel: …") — alle Beteiligten
