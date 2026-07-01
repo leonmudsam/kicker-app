@@ -14850,6 +14850,41 @@ function _buildStories(){
     }
   } catch(e){}
 
+  // ── 3b. Team-News: gemeinsame Siegesserie eines Duos (v9.1) ──
+  // Match-getriggert (when = Match-Zeit) → erscheint direkt „nach Spielen".
+  // Nur bei Meilenstein-Serienlängen, damit es nicht nach jedem Sieg spammt.
+  // Ein Pass über alle Matches (matches ist asc-sortiert) → O(N).
+  try {
+    const TEAM_STREAK_MS = new Set([3,5,7,10,15,20]);
+    const tstate = {}; // teamKey → {cur, ids, lastT}
+    for(const m of matches){
+      const sides = [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']];
+      for(const [x,y,won] of sides){
+        if(!x || !y) continue;
+        const ids = [x,y].sort(), k = ids.join('|');
+        if(!tstate[k]) tstate[k] = {cur:0, ids};
+        tstate[k].cur = won ? tstate[k].cur + 1 : 0;
+        tstate[k].lastT = new Date(m.created_at);
+      }
+    }
+    const teamCands = Object.values(tstate).filter(t =>
+      TEAM_STREAK_MS.has(t.cur) &&
+      pm[t.ids[0]] && pm[t.ids[1]] && !pm[t.ids[0]].hidden && !pm[t.ids[1]].hidden);
+    teamCands.sort((a,b) => b.cur - a.cur || b.lastT - a.lastT);
+    teamCands.slice(0, 3).forEach(t => {
+      stories.push({
+        id: 'team_streak_'+t.ids.join('_')+'_'+t.cur,
+        cat: 'team',
+        ic: 'unstoppable',
+        title: `${nameOf(t.ids[0])} & ${nameOf(t.ids[1])} sind als Team nicht zu stoppen`,
+        desc: `${t.cur} gemeinsame Siege in Folge — dieses Duo harmoniert gerade perfekt.`,
+        when: t.lastT,
+        prio: t.cur >= 7 ? 9 : 8,
+        dataRef: {type:'team_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
+      });
+    });
+  } catch(e){}
+
   // ── 4. Top-Form (≥8/10 letzte Spiele) ──
   // Iteriert über aktive Spieler, schaut letzte 10 Matches → Win-Rate.
   // O(N_players × min(10, matches_per_player)) — sehr günstig.
@@ -14948,7 +14983,9 @@ function _buildStories(){
       if(rar !== 'legendary' && rar !== 'rare' && !NEWS_BADGE_WHITELIST.has(ev.badge.id)) return;
       // Legendary erzwingt Top-Prio (Bucket >=9 im Final-Sort), damit echte
       // Achievements zuverlässig ganz oben im Feed landen.
-      const rarPrio = {legendary:10, rare:7, common:5, negative:8}[rar] || 5;
+      // v9.1: Badges bewusst niedriger priorisiert (außer legendär), damit bei
+      // gleichem Zeitstempel Team-News/Fun Facts nach Spielen auch mal oben stehen.
+      const rarPrio = {legendary:10, rare:5, common:3, negative:4}[rar] || 3;
       stories.push({
         id: 'badge_'+ev.playerId+'_'+ev.badge.id+'_'+ev.matchId,
         cat: 'badge',
@@ -16001,6 +16038,89 @@ function _ambientTemplatePool(now, pm, nameOf){
       desc:`Meiste Spiele an einem Tag: ${bn} Partien am ${p[2]}.${p[1]}.${p[0]}.` };
   }});
 
+  // ══ Neue lebendige Fun Facts (v9.1) ══
+  const _gsim = () => (typeof getGlobalSim === 'function') ? (getGlobalSim() || {}) : {};
+
+  // ── Fun Fact: Random Top-1 eines Awards/Rankings ──
+  T.push({ key:'fun_award_leader', make: (rng) => {
+    const career = _gsim().careerElo || {};
+    const elig = withStats.filter(pid => stats[pid].games >= 5);
+    if(elig.length < 2) return null;
+    const cats = [
+      { noun:'Meiste Siege',         ic:'trophy',  val: pid => stats[pid].wins,                 fmt: v => v+' Siege' },
+      { noun:'Bestes Torverhältnis', ic:'chartUp', val: pid => stats[pid].gf - stats[pid].ga,   fmt: v => (v>0?'+':'')+v+' Tordifferenz' },
+      { noun:'Meiste Tore',          ic:'ball',    val: pid => stats[pid].gf,                    fmt: v => v+' Tore' },
+      { noun:'Höchste Karriere-Elo', ic:'crown',   val: pid => Math.round(career[pid]||0),       fmt: v => v+' Elo' },
+    ];
+    const c = cats[Math.floor(rng()*cats.length)];
+    let best = null;
+    for(const pid of elig){ const v = c.val(pid); if(best===null || v > best.v) best = {pid, v}; }
+    if(!best) return null;
+    return { cat:'personal', ic:c.ic, prio:5,
+      title:`${c.noun}: ${nameOf(best.pid)} führt`,
+      desc:`${nameOf(best.pid)} hält den Liga-Bestwert — ${c.fmt(best.v)}.`,
+      dataRef:{ ambientPid: best.pid } };
+  }});
+
+  // ── Fun Fact: Random Stat zu random Spieler ──
+  T.push({ key:'fun_random_stat', make: (rng) => {
+    const elig = withStats.filter(pid => stats[pid].games >= 5);
+    if(!elig.length) return null;
+    const pid = elig[Math.floor(rng()*elig.length)];
+    const st = stats[pid];
+    const wrPct = st.games ? Math.round(st.wins/st.games*100) : 0;
+    const facts = [
+      `hat bereits ${st.games} Partien bestritten.`,
+      `gewinnt ${wrPct}% seiner Spiele.`,
+      `hat insgesamt ${st.gf} Tore erzielt.`,
+      `steht bei ${st.wins} Siegen und ${st.losses} Niederlagen.`,
+      `trifft im Schnitt ${(st.gf/st.games).toFixed(1)}× pro Spiel.`,
+    ];
+    return { cat:'personal', ic:'chartBar', prio:4,
+      title:'Wusstest du schon?',
+      desc:`${nameOf(pid)} ${facts[Math.floor(rng()*facts.length)]}`,
+      dataRef:{ ambientPid: pid } };
+  }});
+
+  // ── Fun Fact: Platzierung in der ewigen Gesamt-Rangliste (random Spieler) ──
+  T.push({ key:'fun_overall_rank', make: (rng) => {
+    const career = _gsim().careerElo || {};
+    const ranked = activePids
+      .filter(pid => stats[pid] && stats[pid].games >= 3 && career[pid] != null)
+      .sort((a,b) => career[b] - career[a]);
+    if(ranked.length < 3) return null;
+    // bewusst nicht #1 (langweilig) → aus dem Rest ziehen
+    const idx = 1 + Math.floor(rng()*(ranked.length-1));
+    const pid = ranked[idx];
+    return { cat:'personal', ic:'medalTrio', prio:4,
+      title:`${nameOf(pid)} auf Platz ${idx+1}`,
+      desc:`In der ewigen Rangliste steht ${nameOf(pid)} auf Rang ${idx+1} von ${ranked.length} — ${Math.round(career[pid])} Karriere-Elo.`,
+      dataRef:{ ambientPid: pid } };
+  }});
+
+  // ── Fun Fact: längste gemeinsame Team-Serie (random Rekord-Duo) ──
+  T.push({ key:'fun_team_record', make: (rng) => {
+    const rec = {}; // teamKey → {ids, best, cur}
+    for(const m of matches){
+      const sides = [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']];
+      for(const [x,y,won] of sides){
+        if(!x || !y) continue;
+        const ids = [x,y].sort(), k = ids.join('|');
+        if(!rec[k]) rec[k] = {ids, best:0, cur:0};
+        rec[k].cur = won ? rec[k].cur + 1 : 0;
+        if(rec[k].cur > rec[k].best) rec[k].best = rec[k].cur;
+      }
+    }
+    const cands = Object.values(rec).filter(t =>
+      t.best >= 3 && pm[t.ids[0]] && pm[t.ids[1]] && !pm[t.ids[0]].hidden && !pm[t.ids[1]].hidden);
+    if(!cands.length) return null;
+    const t = cands[Math.floor(rng()*cands.length)];
+    return { cat:'team', ic:'unstoppable', prio:5,
+      title:`Rekord-Duo: ${nameOf(t.ids[0])} & ${nameOf(t.ids[1])}`,
+      desc:`Als Team schafften sie schon mal ${t.best} Siege in Serie — einer der besten gemeinsamen Läufe der Liga.`,
+      dataRef:{ ambientPids:[t.ids[0], t.ids[1]] } };
+  }});
+
   return T;
 }
 
@@ -16716,7 +16836,8 @@ function _newsVisual(s){
   const chip = (val, label) => `<div class="nf-v"><div class="nf-bigchip">${val}</div>${label?`<span class="nf-vlabel">${label}</span>`:''}</div>`;
   switch(d.type){
     case 'top_form':    return d.wins!=null   ? `<div class="nf-v">${flames(d.wins+'/10')}</div>` : '';
-    case 'win_streak':  return d.streak!=null ? `<div class="nf-v">${flames(d.streak)}</div>` : '';
+    case 'win_streak':
+    case 'team_streak': return d.streak!=null ? `<div class="nf-v">${flames(d.streak)}</div>` : '';
     case 'loss_streak': return d.streak!=null ? chip(d.streak+'×','in Folge') : '';
     case 'elo_swing':   return chip(((d.delta||0)>0?'+':'')+(d.delta||0),'Elo');
     case 'jubilee':     return d.total!=null ? chip(d.total+'.','Spiel') : '';
@@ -16755,6 +16876,45 @@ function _newsCardHtmlM2(s, isRead){
 }
 
 // Breaking-Hero — das Herzstück oben im Sheet, bewusst dramatisch.
+// v9.1: etwas längerer, spannenderer Hero-Text je Breaking-Typ — display-seitig
+// aus dataRef gebaut (wirkt auch auf bereits persistierte Rows). Bewusst 1–2
+// Sätze: soll neugierig machen, aber nicht von den Stories darunter ablenken.
+// Fällt auf s.desc zurück, wenn die Datenlage nicht reicht.
+function _breakingHeroText(s){
+  const d = (s && s.dataRef) || {};
+  const pm = (typeof pmap === 'function') ? pmap() : {};
+  const nm = id => (pm[id] && pm[id].name) || '?';
+  try {
+    switch(d.type){
+      case 'season_recap': {
+        const te = Array.isArray(d.topElo) ? d.topElo : [];
+        const champ = nm(d.championId || (te[0] && te[0].id));
+        const runner = te[1] && te[1].id ? nm(te[1].id) : null;
+        const elo = d.championElo != null ? d.championElo : (te[0] && te[0].elo);
+        return `Die Saison ${d.sid || ''} ist Geschichte: ${champ} krönt sich mit ${elo} Elo zum Champion`
+          + (runner ? ` — vor ${runner}.` : '.')
+          + ` Wer stürzt ${champ} in der neuen Saison vom Thron?`;
+      }
+      case 'lead_change':
+        return `Machtwechsel an der Tabellenspitze: ${nm(d.newLeader)} verdrängt ${nm(d.prevLeader)} und übernimmt die Führung. Das Titelrennen ist wieder völlig offen.`;
+      case 'top_clash': {
+        const w = Array.isArray(d.winners) ? d.winners.map(nm).join(' & ') : '';
+        return `Gipfeltreffen an der Spitze: ${w} setzt sich im direkten Duell Platz 1 gegen Platz 2 durch und zieht davon.`;
+      }
+      case 'season_endgame': {
+        const leader = d.leader && d.leader.pid ? nm(d.leader.pid) : '';
+        const dl = d.daysLeft;
+        const dtxt = dl != null ? `Nur noch ${dl} ${dl === 1 ? 'Tag' : 'Tage'} bis zum Saisonende` : 'Der Saison-Endspurt läuft';
+        return `${dtxt}: ${leader} führt`
+          + (d.gap != null ? `, doch der Vorsprung von ${d.gap} Elo ist alles andere als sicher.` : '.')
+          + ' Jetzt zählt jedes Spiel.';
+      }
+      case 'badge_unlocked':
+        return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga — das gelingt fast niemandem.`;
+    }
+  } catch(e){}
+  return s.desc || '';
+}
 function _newsHeroHtml(s){
   const meta = NEWS_CATEGORIES.breaking;
   return `<div class="nf-hero nfc-breaking" data-sid="${esc(s.id)}">
@@ -16764,7 +16924,7 @@ function _newsHeroHtml(s){
     <div class="nf-hero-ct">
       <span class="nf-hero-pill"><span class="pulse"></span>${svgI('bolt')} Breaking News</span>
       <h2>${esc(s.title)}</h2>
-      <div class="nf-hero-sub">${esc(s.desc)}</div>
+      <div class="nf-hero-sub">${esc(_breakingHeroText(s))}</div>
     </div>
   </div>`;
 }
@@ -16772,14 +16932,12 @@ function _newsHeroHtml(s){
 function _renderNewsFeed(){
   const stories = getStoriesCache();
   const seen = _newsLoadSeen();
-  // Kuratierte Filter-Liste (+ „Breaking" v9).
+  // Kuratierte, bewusst KURZE Filter-Liste (v9.1): „Neu"/„Ungelesen"/„Saison"
+  // entfernt — der Feed ist ohnehin neueste-zuerst; das reduziert Rauschen.
   const filters = [
     {k:'all',       label:'Alle'},
-    {k:'new',       label:'Neu'},
-    {k:'unread',    label:'Ungelesen'},
     {k:'breaking',  label:'Breaking'},
     {k:'highlight', label:'Highlights'},
-    {k:'season',    label:'Saison'},
     {k:'badge',     label:'Awards'},
     {k:'team',      label:'Teams'},
     {k:'fun',       label:'Fun Facts'},
