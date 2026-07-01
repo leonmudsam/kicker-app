@@ -3363,7 +3363,7 @@ function invalidateCache(keys=null){
       if(k==='global') { _lastSimState=null; _lastSimIndex=-1; }
       if(k==='teams') delete _cache._teamDetail;
       if(k==='allTeamStats') delete _cache._allTeamStatsKey;
-      if(k==='period') delete _cache._periodStatsKey;
+      if(k==='period'){ delete _cache._periodStatsKey; delete _cache._mperiod; } // v9.3: _mperiod-Dict nicht über Versionen anwachsen lassen
       if(k==='badges') delete _cache._badgeEarnedKey;
       if(k==='playerSeasonAwards') delete _cache._playerSeasonAwards;
       if(k==='allPastSeasons') delete _cache._allPastSeasonsKey;
@@ -10045,14 +10045,45 @@ function _pushCurrentSheet(){
   const sheet = document.getElementById('sheet');
   _sheetStack.push({ fn: _sheetReopen, scroll: sheet ? sheet.scrollTop : 0 });
 }
-// Vorwärts-Navigation: aktuelles Sheet stapeln, dann Kind öffnen (OHNE close).
+// Sauberer Übergang beim Stapeln/Zurückgehen: aktuelles Sheet nach unten
+// „schließen", Inhalt tauschen, neues Sheet hochschieben — genau wie beim
+// normalen Öffnen/Schließen (kein hartes Aufpoppen). swapFn ersetzt den Inhalt
+// (ruft intern openSheet + ggf. Scroll-Restore).
+let _sheetAnimating = false;
+function _animateSheetSwap(swapFn){
+  const sheet = document.getElementById('sheet');
+  const bg = document.getElementById('sheetBg');
+  // Kein sichtbares Sheet oder schon eine Animation aktiv → sofort tauschen.
+  if(!sheet || !bg || !bg.classList.contains('show') || _sheetAnimating){ swapFn(); return; }
+  _sheetAnimating = true;
+  if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
+  sheet.classList.remove('is-dragging');
+  // 1) aktuelles Sheet nach unten (schließen)
+  sheet.style.transition = 'transform .2s cubic-bezier(.4,0,1,1)';
+  sheet.style.transform = 'translateY(100%)';
+  setTimeout(() => {
+    // 2) Inhalt tauschen, unsichtbar unten halten
+    sheet.style.transition = 'none';
+    try { swapFn(); } catch(e){}
+    sheet.style.transform = 'translateY(100%)';
+    void sheet.offsetWidth; // Reflow, damit die Aufwärts-Transition greift
+    // 3) hochschieben (öffnen)
+    sheet.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)';
+    sheet.style.transform = 'translateY(0)';
+    setTimeout(() => { sheet.style.transition=''; sheet.style.transform=''; _sheetAnimating=false; }, 300);
+  }, 200);
+}
+// Vorwärts-Navigation: aktuelles Sheet stapeln, dann Kind sauber „öffnen".
 // Ersetzt das frühere Schließen-und-neu-öffnen-Muster bei Navigationen.
 function sheetNav(openChild){
   const sheet = document.getElementById('sheet');
-  if(sheet && sheet.classList.contains('show') && _sheetReopen && !_sheetPopping){
+  const stacking = sheet && sheet.classList.contains('show') && _sheetReopen && !_sheetPopping;
+  if(stacking){
     _pushCurrentSheet();
+    _animateSheetSwap(() => { try { openChild(); } catch(e){ _sheetStack.pop(); } });
+  } else {
+    try { openChild(); } catch(e){ _sheetStack.pop(); }
   }
-  try { openChild(); } catch(e){ _sheetStack.pop(); }
 }
 window.sheetNav = sheetNav;
 
@@ -10095,20 +10126,19 @@ function closeSheet(force){
   const sheet=document.getElementById('sheet');
   const bg=document.getElementById('sheetBg');
   if(!force && _sheetStack.length){
-    // Zurück zum Eltern-Sheet: Swipe/Transform zurücksetzen, Eltern neu bauen.
-    if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
-    sheet.classList.remove('is-dragging');
-    sheet.style.transition=''; sheet.style.transform='';
+    // Zurück zum Eltern-Sheet — mit sauberer Schließen/Öffnen-Animation.
     bg.style.transition=''; bg.style.opacity='';
     const entry = _sheetStack.pop();
-    _sheetPopping = true;
-    try {
-      entry.fn();
-      // Scroll-Position des Eltern-Sheets wiederherstellen (openSheet setzt 0).
-      try { if(entry.scroll) sheet.scrollTop = entry.scroll; } catch(e){}
-    }
-    catch(e){ _sheetForceClose(sheet,bg); }
-    _sheetPopping = false;
+    _animateSheetSwap(() => {
+      _sheetPopping = true;
+      try {
+        entry.fn();
+        // Scroll-Position des Eltern-Sheets wiederherstellen (openSheet setzt 0).
+        try { if(entry.scroll) sheet.scrollTop = entry.scroll; } catch(e){}
+      }
+      catch(e){ _sheetForceClose(sheet,bg); }
+      _sheetPopping = false;
+    });
     return;
   }
   _sheetForceClose(sheet,bg);
@@ -10242,6 +10272,9 @@ function bindSheetSwipe(){
   // ── GEMEINSAME SNAP/CLOSE LOGIK ──
   function snapOrClose(dy,velocity){
     if(dy>CLOSE_THRESHOLD || (velocity>VELOCITY_THRESHOLD && dy>=MIN_DY_FOR_VEL_CLOSE)){
+      // Gibt es ein Eltern-Sheet? → NICHT hart schließen, sondern animiert eine
+      // Ebene zurück (closeSheet → _animateSheetSwap übernimmt den Übergang).
+      if(_sheetStack.length){ closeSheet(); return; }
       sheet.style.transition='transform .28s cubic-bezier(.4,0,1,1)';
       sheet.style.transform='translateY(100%)';
       bg.style.transition='opacity .28s';
@@ -15451,39 +15484,54 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── 16b. Gipfeltreffen: Platz 1 schlägt Platz 2 (v8.8) ──
-  // Sucht in den letzten 7 Tagen das JÜNGSTE Match, in dem der Pre-Rank-#1
-  // gegen den #2 antrat und der #1 gewann ("zieht weiter davon").
+  // ── 16b. Gipfeltreffen: Platz 1 bezwingt Platz 2 (v8.8, v9.3) ──
+  // Sucht in den letzten 7 Tagen das JÜNGSTE Match, in dem das Team des
+  // Pre-Rank-#1 gegen das Team des #2 antrat und der #1 gewann.
+  // v9.3: Am SAISONANFANG unterdrückt — dann haben erst wenige Spieler gespielt
+  // und die Ränge sind instabil; ein „Gipfeltreffen" wirkt verfrüht. Solange
+  // bleibt der Champion der Vorsaison (season_recap) im Breaking-Rampenlicht.
   try {
-    const wk = 7 * 86400000;
-    const tsNow = now.getTime();
-    let best = null;
-    for(let i = matches.length - 1; i >= 0; i--){
-      const m = matches[i];
-      const t = new Date(m.created_at).getTime();
-      if(t > tsNow) continue;
-      if(t < tsNow - wk) break; // matches asc → ab hier nur noch älter
-      const snap = snaps[m.id];
-      if(!snap || !snap.preRank) continue;
-      const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
-      const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
-      const winnerBest = Math.min(...winners.map(p => snap.preRank[p] || 99));
-      const loserBest  = Math.min(...losers.map(p  => snap.preRank[p] || 99));
-      if(winnerBest === 1 && loserBest === 2){ best = {m, t, winners, losers}; break; }
-    }
-    if(best){
-      const m = best.m;
-      const wNames = best.winners.filter(p => pm[p] && !pm[p].hidden).map(nameOf);
-      stories.push({
-        id: 'top_clash_'+m.id,
-        cat: 'highlight',
-        ic: 'kingClass',
-        title: 'Gipfeltreffen: Platz 1 schlägt Platz 2',
-        desc: `${wNames.join(' & ')} setzt sich im Spitzenspiel durch und zieht weiter davon.`,
-        when: new Date(best.t),
-        prio: 9,
-        dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers}
-      });
+    const _clashSeasonAge = (now - seasonStart()) / 86400000;
+    const _clashSeasonMs  = matchesInSeason(currentSeason().id);
+    const _clashPlayers   = new Set();
+    _clashSeasonMs.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(id => _clashPlayers.add(id)));
+    const _seasonMature   = _clashSeasonAge >= 8 && _clashSeasonMs.length >= 12 && _clashPlayers.size >= 5;
+    if(_seasonMature){
+      const wk = 7 * 86400000;
+      const tsNow = now.getTime();
+      let best = null;
+      for(let i = matches.length - 1; i >= 0; i--){
+        const m = matches[i];
+        const t = new Date(m.created_at).getTime();
+        if(t > tsNow) continue;
+        if(t < tsNow - wk) break; // matches asc → ab hier nur noch älter
+        const snap = snaps[m.id];
+        if(!snap || !snap.preRank) continue;
+        const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+        const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+        const winnerBest = Math.min(...winners.map(p => snap.preRank[p] || 99));
+        const loserBest  = Math.min(...losers.map(p  => snap.preRank[p] || 99));
+        if(winnerBest === 1 && loserBest === 2){
+          const p1 = winners.find(p => (snap.preRank[p]||99) === 1); // Platz-1-Spieler (Sieger-Team)
+          const p2 = losers.find(p  => (snap.preRank[p]||99) === 2); // Platz-2-Spieler (Verlierer-Team)
+          if(p1 && p2 && pm[p1] && pm[p2] && !pm[p1].hidden && !pm[p2].hidden){
+            best = {m, t, winners, losers, p1, p2}; break;
+          }
+        }
+      }
+      if(best){
+        const m = best.m;
+        stories.push({
+          id: 'top_clash_'+m.id,
+          cat: 'highlight',
+          ic: 'kingClass',
+          title: `Gipfeltreffen: ${nameOf(best.p1)} bezwingt ${nameOf(best.p2)}`,
+          desc: `Tabellenführer ${nameOf(best.p1)} setzt sich im direkten Duell gegen Verfolger ${nameOf(best.p2)} durch und baut den Vorsprung an der Spitze aus.`,
+          when: new Date(best.t),
+          prio: 9,
+          dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2}
+        });
+      }
     }
   } catch(e){}
 
@@ -16997,8 +17045,13 @@ function _breakingHeroText(s){
       case 'lead_change':
         return `Machtwechsel an der Tabellenspitze: ${nm(d.newLeader)} verdrängt ${nm(d.prevLeader)} und übernimmt die Führung. Das Titelrennen ist wieder völlig offen.`;
       case 'top_clash': {
-        const w = Array.isArray(d.winners) ? d.winners.map(nm).join(' & ') : '';
-        return `Gipfeltreffen an der Spitze: ${w} setzt sich im direkten Duell Platz 1 gegen Platz 2 durch und zieht davon.`;
+        // p1/p2 (v9.3): Platz-1- bzw. Platz-2-Spieler namentlich. Fallback auf
+        // Sieger-Team für alte, vor v9.3 persistierte Stories.
+        const a = d.p1 ? nm(d.p1) : (Array.isArray(d.winners) ? d.winners.map(nm).join(' & ') : '');
+        const b = d.p2 ? nm(d.p2) : null;
+        return b
+          ? `Gipfeltreffen an der Spitze: Tabellenführer ${a} bezwingt Verfolger ${b} im direkten Duell und baut den Vorsprung an der Spitze aus.`
+          : `Gipfeltreffen an der Spitze: ${a} setzt sich im Spitzenspiel durch und zieht weiter davon.`;
       }
       case 'season_endgame': {
         const leader = d.leader && d.leader.pid ? nm(d.leader.pid) : '';
@@ -17204,9 +17257,14 @@ function _newsDetailBody(s){
   try {
     switch(d.type){
       case 'top_clash': {
-        // v8.8: Spitzenspiel #1 vs #2 — Match-VS-Block zum Durchspringen.
+        // v9.3: Ränge explizit — Platz 1 (Sieger) & Platz 2 (Verfolger),
+        // beide antippbar; darunter das Spitzenspiel als Match-VS-Block.
+        const rankRows = (d.p1 && d.p2) ? `
+          <div class="nd-stat-row" data-pid="${esc(d.p1)}" style="cursor:pointer"><div class="nd-stat-label">Platz 1</div><div class="nd-stat-val acid">${esc(nameOf(d.p1))} ›</div></div>
+          <div class="nd-stat-row" data-pid="${esc(d.p2)}" style="cursor:pointer"><div class="nd-stat-label">Platz 2</div><div class="nd-stat-val">${esc(nameOf(d.p2))} ›</div></div>` : '';
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
-        return matchHtml ? `<div class="nd-section">Das Spitzenspiel</div>${matchHtml}` : '';
+        return (rankRows ? `<div class="nd-section">Duell an der Spitze</div>${rankRows}` : '')
+             + (matchHtml ? `<div class="nd-section">Das Spitzenspiel</div>${matchHtml}` : '');
       }
       case 'group': {
         // v8.8: zusammengefasste Karte ("N Pechvögel: …") — alle Beteiligten
