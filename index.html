@@ -15139,12 +15139,13 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── 3b. Team-News: gemeinsame Siegesserie eines Duos (v9.1) ──
+  // ── 3b. Team-News: gemeinsame Siegesserie eines Duos (v9.1, v9.5) ──
   // Match-getriggert (when = Match-Zeit) → erscheint direkt „nach Spielen".
   // Nur bei Meilenstein-Serienlängen, damit es nicht nach jedem Sieg spammt.
+  // v9.5: erst ab 5 gemeinsamen Siegen (vorher 3) — 3 war zu schnell erreicht.
   // Ein Pass über alle Matches (matches ist asc-sortiert) → O(N).
   try {
-    const TEAM_STREAK_MS = new Set([3,5,7,10,15,20]);
+    const TEAM_STREAK_MS = new Set([5,7,10,15,20]);
     const tstate = {}; // teamKey → {cur, ids, lastT}
     for(const m of matches){
       const sides = [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']];
@@ -15170,6 +15171,40 @@ function _buildStories(){
         when: t.lastT,
         prio: t.cur >= 7 ? 9 : 8,
         dataRef: {type:'team_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
+      });
+    });
+  } catch(e){}
+
+  // ── 3c. Team-News: gemeinsame Niederlagenserie eines Duos (v9.5) ──
+  // Pendant zu 3b, aber ab 3 gemeinsamen Niederlagen in Folge. Gleiche
+  // Mechanik (Match-getriggert, Meilenstein-Serienlängen, O(N)).
+  try {
+    const TEAM_LOSS_MS = new Set([3,5,7,10]);
+    const lstate = {}; // teamKey → {cur, ids, lastT}
+    for(const m of matches){
+      const sides = [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']];
+      for(const [x,y,won] of sides){
+        if(!x || !y) continue;
+        const ids = [x,y].sort(), k = ids.join('|');
+        if(!lstate[k]) lstate[k] = {cur:0, ids};
+        lstate[k].cur = won ? 0 : lstate[k].cur + 1;
+        lstate[k].lastT = new Date(m.created_at);
+      }
+    }
+    const lossCands = Object.values(lstate).filter(t =>
+      TEAM_LOSS_MS.has(t.cur) &&
+      pm[t.ids[0]] && pm[t.ids[1]] && !pm[t.ids[0]].hidden && !pm[t.ids[1]].hidden);
+    lossCands.sort((a,b) => b.cur - a.cur || b.lastT - a.lastT);
+    lossCands.slice(0, 3).forEach(t => {
+      stories.push({
+        id: 'team_loss_streak_'+t.ids.join('_')+'_'+t.cur,
+        cat: 'team',
+        ic: 'trendCrash',
+        title: `${nameOf(t.ids[0])} & ${nameOf(t.ids[1])} kommen als Team nicht in Tritt`,
+        desc: `${t.cur} gemeinsame Niederlagen in Folge — dieses Duo braucht dringend einen Befreiungsschlag.`,
+        when: t.lastT,
+        prio: t.cur >= 7 ? 7 : 6,
+        dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
       });
     });
   } catch(e){}
@@ -16567,6 +16602,10 @@ function _consolidateStories(list){
     upset_match:     { badges:['upset_king'],                     by:'matchId' },
     biggest_blowout: { badges:['perfect_win'],                    by:'matchId' },
     win_streak:      { badges:['streak10','streak15','streak20'], by:'pid'     },
+    // v9.5: die „Losing Streak"-Badge (losing5) beschreibt exakt dasselbe
+    // Ereignis wie die individuelle Niederlagenserie-Story (5 Pleiten in Folge)
+    // → Badge entfällt, die reichere „Pechvögel"-Story bleibt.
+    loss_streak:     { badges:['losing5'],                        by:'pid'     },
   };
   const suppressMatch = new Set();  // 'badgeId|matchId'
   const suppressPlayer = new Set(); // 'badgeId|playerId'
@@ -16574,10 +16613,14 @@ function _consolidateStories(list){
   // → die allgemeine „rivalry"-Story (gleiche Paarung) entfällt (sonst doppelt).
   const rivalryMsPairs = new Set();
   const giantSlayerMatches = new Set(); // matchIds mit Giant-Slayer-Breaking
+  // v9.5: Spieler mit laufender „Siege in Folge"-Story → deren Top-Form-Story
+  // (≥8/10) beschreibt dieselbe heiße Phase und entfällt (kein Doppel).
+  const winStreakPids = new Set();
   for(const s of list){
     const d = s.dataRef || {};
     if(d.type === 'rivalry_milestone' && d.a && d.b) rivalryMsPairs.add([d.a, d.b].sort().join('|'));
     if(d.type === 'giant_slayer' && d.matchId) giantSlayerMatches.add(d.matchId);
+    if(d.type === 'win_streak' && d.pid) winStreakPids.add(d.pid);
     const rule = HL_COVERS[d.type];
     if(!rule) continue;
     const keyVal = rule.by === 'matchId' ? d.matchId : d.pid;
@@ -16611,6 +16654,10 @@ function _consolidateStories(list){
     // v9.4: „Upset der Woche" entfällt, wenn dasselbe Match schon als
     // (stärkeres) Giant-Slayer-Breaking läuft.
     if(d.type === 'upset_match' && d.matchId && giantSlayerMatches.has(d.matchId)) continue;
+    // v9.5: Top-Form-Story entfällt für Spieler, die ohnehin schon eine
+    // (konkretere) „Siege in Folge"-Story haben — sonst steht dieselbe heiße
+    // Phase doppelt im Feed.
+    if(d.type === 'top_form' && d.pid && winStreakPids.has(d.pid)) continue;
     if(d.type === 'badge_unlocked' && d.badgeId){
       if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
@@ -16964,7 +17011,11 @@ function newsBadgeRefresh(){
     _maybeShowNewsToast(n);
   } else {
     badge.style.display = 'none';
-    // Falls alles gelesen → Toast sofort ausblenden (Zustände konsistent)
+    // Falls alles gelesen → Toast sofort ausblenden (Zustände konsistent) UND
+    // einen evtl. für den Sheet-Close gequeuten Toast verwerfen (v9.5-Fix),
+    // damit nach „alle gelesen" + schnellem Schließen kein „X neue Stories"
+    // mehr aufpoppt.
+    _newsToastDeferredCount = 0;
     try { _hideNewsToast(); } catch(e){}
   }
 }
@@ -17089,13 +17140,21 @@ function _processDeferredNewsToast(){
   setTimeout(() => {
     // erneut prüfen: vielleicht hat sich währenddessen ein neues Sheet geöffnet
     if(_isSheetActive()) return;
-    const n = _newsToastDeferredCount;
+    // v9.5-Fix: den Unread-Stand HIER NEU berechnen statt den gemerkten Count
+    // zu verwenden. Der gemerkte Count wurde beim Öffnen des Sheets eingefroren;
+    // hat der User danach im Sheet Stories (oder „alle") als gelesen markiert
+    // und das Sheet schnell geschlossen, war der gemerkte Count veraltet und
+    // der Toast poppte mit „X neue Stories" auf, obwohl keine mehr offen sind.
+    // Jetzt zeigt der Toast nur, wenn WIRKLICH noch ungelesene Stories da sind.
+    let n = 0;
+    try { n = newsUnreadCount(); } catch(e){ n = 0; }
     _newsToastDeferredCount = 0;
+    if(n <= 0) return;
     // Direkt anzeigen — Cooldown-Check schon im _maybeShowNewsToast wurde
     // bereits beim ersten Aufruf erfüllt; hier zwingen wir die Anzeige.
     const toast = document.getElementById('newsToast');
     const txt = document.getElementById('newsToastTxt');
-    if(!toast || !txt || n <= 0) return;
+    if(!toast || !txt) return;
     txt.textContent = n + (n === 1 ? ' neue Story' : ' neue Stories');
     _positionNewsToast();
     toast.classList.add('visible');
@@ -17243,6 +17302,7 @@ function _newsVisual(s){
     case 'top_form':    return d.wins!=null   ? `<div class="nf-v">${flames(d.wins+'/10')}</div>` : '';
     case 'win_streak':
     case 'team_streak': return d.streak!=null ? `<div class="nf-v">${flames(d.streak)}</div>` : '';
+    case 'team_loss_streak':
     case 'loss_streak': return d.streak!=null ? chip(d.streak+'×','in Folge') : '';
     case 'elo_swing':   return chip(((d.delta||0)>0?'+':'')+(d.delta||0),'Elo');
     case 'jubilee':     return d.total!=null ? chip(d.total+'.','Spiel') : '';
