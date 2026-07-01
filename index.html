@@ -14797,16 +14797,22 @@ const NEWS_LIMITS = {
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
 
-// Ambiente Tages-Stories (v8.5) — Fun Facts / persönliche Nuggets, die ÜBER DEN
-// TAG VERTEILT erscheinen, damit der Feed auch ohne neue Matches lebt.
-//   AMBIENT_SLOTS  = lokale Stunden, je Slot genau 1 Story; erscheint erst ab
-//                    dieser Uhrzeit. 2/Tag (8 Uhr früh + 13 Uhr mittags) =
-//                    lebendig, aber spamarm. Auf [8,13,19] erweitern für 3/Tag.
+// Ambiente Fun-Fact-Stories (v8.5, v9.5) — Fun Facts / persönliche Nuggets,
+// damit der Feed auch ohne neue Matches lebt.
+//   RHYTHMUS (v9.5): NICHT mehr täglich, sondern ALLE 2 TAGE genau 1 Fun Fact,
+//                    und zwar um 19:00 (Feierabend). „Alle 2 Tage" = gerader
+//                    Epoch-Tagesindex (_isAmbientDay) → geräteübergreifend gleich.
+//   AMBIENT_SLOTS  = die Slot-Stunde(n); die Story erscheint erst ab dieser Zeit.
 //   Anti-Spam:     IDs sind tages-deterministisch (`ambient_<datum>_<stunde>`)
 //                  → ON CONFLICT DO NOTHING → keine Doppel über Geräte/Syncs.
-//                  Der Pool wird tages-seeded gezogen (Pseudo-Zufall, überall
-//                  identisch). Pro Tag werden keine zwei gleichen Typen gewählt.
-const AMBIENT_SLOTS = [8, 13];
+//   Auswahl:       tages-seeded gezogen (Pseudo-Zufall, überall identisch) plus
+//                  COOLDOWN: zuletzt (letzte AMBIENT_COOLDOWN_DAYS Tage)
+//                  verwendete Fun-Fact-Typen werden gesperrt → Rotation statt
+//                  vorhersehbarer Reihenfolge, keine schnellen Wiederholungen.
+const AMBIENT_SLOTS = [19];
+// Cooldown-Fenster (Tage): so lange wird ein bereits gezeigter Fun-Fact-Typ
+// nicht erneut gewählt. Bei 1 Fun Fact / 2 Tage sperrt das die letzten ~7 Typen.
+const AMBIENT_COOLDOWN_DAYS = 14;
 // Auto-Sync-Intervall, damit neue Slots ohne Reload auftauchen (ms).
 const NEWS_AUTOSYNC_MS = 10 * 60 * 1000;
 
@@ -14827,6 +14833,12 @@ const NEWS_BADGE_WHITELIST = new Set([
   'games150', // "Legende" (150 Matches) — Karriere-Meilenstein, v8.6 ergänzt
   // Negative — nur die seltenen, "krassen" Niederlagen
   'mr_disaster','nemesis','perfect_loss',
+  // v9.5: explizit als News gewünscht (negativ, aber „immer newsworthy")
+  'krimi_loser', // Krimi-Versager — 3 knappe Niederlagen in Folge
+  'losing5',     // Losing Streak — 5 Niederlagen in Folge
+  // Hinweis: Die gewünschten POSITIVEN Auszeichnungen (Nerven aus Stahl,
+  // Wiederholungstäter, Krimi-Reihe, 10er Serie) sind bereits 'rare' und
+  // laufen daher ohnehin über die generische Badge-News-Regel unten.
 ]);
 
 // ─── §11.1 — Story-Generator ─────────────────────────────────────────
@@ -14882,6 +14894,78 @@ function _allTimeRecords(){
   return result;
 }
 
+// ─── §11.0c — Unbegrenzte Meilenstein-Leiter (v9.5) ──────────────────
+// Ersetzt feste Schwellen-Arrays (…, 500, 1000 → ENDE) durch eine Leiter
+// nach dem 1–2.5–5 ×10^k-Muster: 10, 25, 50, 100, 250, 500, 1000, 2500,
+// 5000, 10000, 25000, 50000, … So laufen Meilensteine bei hohen Zahlen
+// sinnvoll weiter, statt an einer Obergrenze zu enden.
+//   `_ladderCrossing(before, after, min)` = die höchste Leiter-Marke, die
+//   zwischen `before` (exkl.) und `after` (inkl.) NEU überschritten wurde,
+//   sonst null. So feuert eine Meilenstein-News genau auf dem Match, das die
+//   Marke reißt — idempotent (ID enthält die Marke) und ohne Verlaufs-Backfill.
+function _ladderCrossing(before, after, min){
+  min = min || 1;
+  if(!Number.isFinite(after) || after < min) return null;
+  let hit = null, p = 1;
+  while(p <= after){
+    for(const r of [1, 2.5, 5]){
+      const v = r * p;
+      if(Number.isInteger(v) && v >= min && v > before && v <= after){
+        if(hit === null || v > hit) hit = v;
+      }
+    }
+    p *= 10;
+  }
+  return hit;
+}
+
+// Ambient-Tag (v9.5): Fun Facts erscheinen nur ALLE 2 TAGE (um 19:00). Ein
+// gerader Epoch-Tagesindex ist geräteübergreifend identisch (gleiche Zeitzone)
+// → alle Clients erzeugen dieselbe deterministische Story-ID.
+function _isAmbientDay(d){
+  const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  return Math.floor(startOfDay / 86400000) % 2 === 0;
+}
+
+// ─── §11.0d — Persönliche Elo-Meilensteine (v9.5) ────────────────────
+// Allzeit-Höchst-Elo eines Spielers überschreitet eine runde 100er-Marke
+// (ab Start-Elo + 200, danach unbegrenzt: 1200, 1300, 1400, …). Ein
+// O(N)-Walk über die (saison-isolierte) Elo-Historie, gecacht per
+// matches.length + _cache.version. Liefert pro (Spieler, Marke) das Match,
+// das die Marke erstmals riss — der Generator filtert danach auf „kürzlich".
+function _eloMilestones(){
+  const key = 'eloMile_'+matches.length+'_'+_cache.version;
+  if(_cache._eloMileKey === key) return _cache._eloMile;
+  const startElo = cfg.start_elo ?? 1000;
+  const floor0 = startElo + 200;          // erste Marke
+  const markOf = v => { const m = Math.floor(v/100)*100; return m >= floor0 ? m : null; };
+  const out = [];
+  try {
+    const sim = getGlobalSim();
+    const mm = {};
+    for(const m of matches) mm[m.id] = m;
+    const runMax = {};    // pid → laufendes Allzeit-Peak
+    const firedFor = {};  // pid → höchste bereits erfasste Marke
+    for(const h of (sim.history || [])){
+      const after = h.eloAfter;
+      if(!after) continue;
+      for(const pid in after){
+        const v = after[pid];
+        if(v <= (runMax[pid] ?? startElo)) continue;
+        runMax[pid] = v;
+        const mark = markOf(v);
+        if(mark != null && mark > (firedFor[pid] || 0)){
+          firedFor[pid] = mark;
+          out.push({ pid, mark, matchId: h.matchId, when: mm[h.matchId] ? mm[h.matchId].created_at : null, val: Math.round(v) });
+        }
+      }
+    }
+  } catch(e){}
+  _cache._eloMileKey = key;
+  _cache._eloMile = out;
+  return out;
+}
+
 // Iteriert genau einmal über bestehende Caches. Gibt ein Array von
 // Story-Objekten {id, cat, ic, title, desc, when, prio, dataRef} zurück.
 // Performance: O(N_matches) — dominante Kosten durch top-form-Filterung,
@@ -14908,6 +14992,22 @@ function _buildStories(){
   const todayKey = now.toISOString().slice(0,10);
   const weekKey  = isoWeek(now);
 
+  // ── Abgeschlossene Zeiträume (v9.5) ──
+  // Superlativ-Stories ("größter Elo-Gewinner/-Verlierer", "höchster Sieg",
+  // "Krimi", "Upset" … der Woche/des Tages) dürfen sich NUR auf einen bereits
+  // ABGESCHLOSSENEN Zeitraum beziehen. Sonst ist die Aussage nicht belastbar —
+  // mitten am Tag/in der Woche kann sich der „Gewinner" noch ändern. Wir
+  // rechnen deshalb auf „gestern" (voller Kalendertag) bzw. die „vergangene
+  // Woche" (letzte abgeschlossene ISO-Woche, Mo–So).
+  const _dayMs = 86400000;
+  const _startOfToday     = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const _startOfYesterday = _startOfToday - _dayMs;
+  const _weekStartOf = (ts) => { const x = new Date(ts); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x.getTime(); };
+  const _thisWeekStart = _weekStartOf(now.getTime());
+  const _prevWeekStart = _thisWeekStart - 7*_dayMs;
+  const _yesterdayKey  = new Date(_startOfYesterday).toISOString().slice(0,10);
+  const _lastWeekKey   = isoWeek(new Date(_prevWeekStart));
+
   // ── Memoization (v8.4) ──
   // _buildStories ist teuer (~67ms @1k×12 Spieler, ~244ms @10k×20). Solange
   // sich weder Match-Zahl noch _cache.version noch ISO-Woche noch Tag ändern,
@@ -14918,7 +15018,11 @@ function _buildStories(){
   // Slot-Signatur (v8.5): wie viele Ambient-Slots heute schon "offen" sind.
   // Steigt über den Tag (z.B. 0→1 um 12:00, 1→2 um 19:00) und bricht so den
   // Memo-Key, sobald ein neuer Slot fällig wird — auch ohne neues Match.
-  const _ambientSlotSig = AMBIENT_SLOTS.filter(h => now.getHours() >= h).length;
+  // v9.5: Der Fun-Fact-Slot (19:00) ist nur an „Ambient-Tagen" (alle 2 Tage)
+  // offen. Signatur 1, sobald heute ein Ambient-Tag ist und 19:00 erreicht —
+  // bricht dann den Memo-Key (zusammen mit todayKey), damit der neue Fun Fact
+  // ohne neues Match erscheint.
+  const _ambientSlotSig = (_isAmbientDay(now) && now.getHours() >= AMBIENT_SLOTS[0]) ? 1 : 0;
   const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig;
   if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
     return _cache._buildStoriesResult;
@@ -15155,17 +15259,24 @@ function _buildStories(){
       const k = ev.playerId+'|'+ev.badge.id;
       if(!dedupe[k] || dedupe[k].when < ev.when) dedupe[k] = ev;
     });
-    const list = Object.values(dedupe).sort((a,b) => b.when - a.when).slice(0, NEWS_LIMITS.badgeUnlocked);
+    // v9.5: Whitelist-Filter ZUERST, dann limitieren. Vorher wurde erst auf die
+    // 6 jüngsten Events geschnitten und danach gefiltert — häufige Common-Badges
+    // konnten so news-würdige (rare/negative) Badges aus dem Budget verdrängen.
+    // Jetzt zählt das Limit nur echte News, damit gewünschte Auszeichnungen
+    // (Nerven aus Stahl, 10er Serie, Losing Streak …) zuverlässig erscheinen.
+    // v8.1: nur seltene/besondere Badges erzeugen News (Common wäre Spam).
+    // v8.7: ALLE goldenen (legendary) und lilanen (rare) Badges sind News-würdig;
+    // zusätzlich die explizit gewhitelisteten Specials (seltene negative Badges).
+    const list = Object.values(dedupe)
+      .filter(ev => {
+        if(!pm[ev.playerId]) return false;
+        const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+        return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
+      })
+      .sort((a,b) => b.when - a.when)
+      .slice(0, NEWS_LIMITS.badgeUnlocked);
     list.forEach(ev => {
-      if(!pm[ev.playerId]) return;
-      // v8.1: Whitelist-Filter — nur seltene/besondere Badges erzeugen News.
-      // Common-Badges (Stammgast, Frühschicht, Comeback-Tag …) sind zu häufig
-      // und würden den Feed mit "Achievement-Spam" füllen.
       const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
-      // v8.7: ALLE goldenen (legendary) und lilanen (rare) Badges sind
-      // News-würdig; zusätzlich die explizit gewhitelisteten Specials
-      // (z.B. seltene negative Badges wie mr_disaster/nemesis/perfect_loss).
-      if(rar !== 'legendary' && rar !== 'rare' && !NEWS_BADGE_WHITELIST.has(ev.badge.id)) return;
       // Legendary erzwingt Top-Prio (Bucket >=9 im Final-Sort), damit echte
       // Achievements zuverlässig ganz oben im Feed landen.
       // v9.1: Badges bewusst niedriger priorisiert (außer legendär), damit bei
@@ -15223,11 +15334,10 @@ function _buildStories(){
     });
   } catch(e){}
 
-  // ── 8. Jubiläum (50/100/200/500 Spiele) ──
+  // ── 8. Jubiläum (Spiele-Meilensteine, unbegrenzte Leiter ab 10) ──
   // Trigger NUR wenn das jüngste Match dieses Spielers genau die Schwelle reißt.
   // → keine Wiederholung in späteren Generator-Läufen (ID enthält Match-ID).
   try {
-    const thresholds = [50, 100, 200, 500, 1000];
     const candidates = [];
     activePlayers().forEach(p => {
       // byPlayer ist bereits asc-sortiert (matches asc → push behält Reihenfolge).
@@ -15235,12 +15345,12 @@ function _buildStories(){
       const arr = byPlayer[p.id] || [];
       const total = arr.length;
       if(!total) return;
-      for(const t of thresholds){
-        if(total === t){
-          const last = arr[arr.length-1];
-          candidates.push({pid: p.id, total: t, when: new Date(last.created_at), matchId: last.id});
-          break;
-        }
+      // v9.5: unbegrenzte Leiter (10, 25, 50, 100, 250, 500, 1000, 2500 …).
+      // Spiele wachsen um genau 1 pro Match → das jüngste Match reißt die Marke.
+      const mark = _ladderCrossing(total - 1, total, 10);
+      if(mark){
+        const last = arr[arr.length-1];
+        candidates.push({pid: p.id, total: mark, when: new Date(last.created_at), matchId: last.id});
       }
     });
     candidates.sort((a,b) => b.when - a.when).slice(0, NEWS_LIMITS.jubilee).forEach(c => {
@@ -15251,7 +15361,7 @@ function _buildStories(){
         title: `${nameOf(c.pid)} feiert ${c.total}. Spiel`,
         desc: `Ein Karriere-Meilenstein. Glückwunsch.`,
         when: c.when,
-        prio: c.total >= 500 ? 8 : c.total >= 200 ? 6 : 4,
+        prio: c.total >= 1000 ? 9 : c.total >= 250 ? 6 : 4,
         dataRef: {type:'jubilee', pid: c.pid, total: c.total, matchId: c.matchId}
       });
     });
@@ -15328,50 +15438,43 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── 11. Persönliche Sieg-Milestones (100/250/500/1000) ──
-  // Nutzt byPlayer + bestehendes won(). Trigger nur, wenn die Gesamt-Siege
-  // GENAU eine Schwelle treffen → die Story ist stabil und erscheint einmalig.
+  // ── 11. Persönliche Sieg-Milestones (unbegrenzte Leiter ab 100) ──
+  // Nutzt byPlayer + bestehendes won(). Trigger nur, wenn das JÜNGSTE Match
+  // (ein Sieg) eine Leiter-Marke reißt → stabil & einmalig (ID enthält Marke).
   try {
-    const winThresholds = [100, 250, 500, 1000];
     activePlayers().forEach(p => {
       const arr = byPlayer[p.id] || [];
       if(!arr.length) return;
       let wins = 0;
       for(let i = 0; i < arr.length; i++) if(won(p.id, arr[i])) wins++;
-      for(const t of winThresholds){
-        if(wins === t){
-          // Trigger-Match = letzter Sieg
-          let trigger = null;
-          for(let i = arr.length - 1; i >= 0; i--){
-            if(won(p.id, arr[i])){ trigger = arr[i]; break; }
-          }
-          if(!trigger) break;
-          stories.push({
-            id: 'milestone_wins_'+p.id+'_'+t,
-            cat: 'personal',
-            ic: 'trophy',
-            title: `${nameOf(p.id)}: ${t}. Sieg!`,
-            desc: `Karriere-Meilenstein — ${t} Siege stehen jetzt zu Buche.`,
-            when: new Date(trigger.created_at),
-            prio: t >= 500 ? 9 : t >= 250 ? 7 : 5,
-            dataRef: {type:'milestone_wins', pid: p.id, milestone: t+'. Sieg', matchId: trigger.id}
-          });
-          break;
-        }
+      const last = arr[arr.length-1];
+      const lastWon = won(p.id, last);
+      // v9.5: 100, 250, 500, 1000, 2500, 5000, … statt fixem Ende bei 1000.
+      const mark = _ladderCrossing(wins - (lastWon ? 1 : 0), wins, 100);
+      if(mark){
+        stories.push({
+          id: 'milestone_wins_'+p.id+'_'+mark,
+          cat: 'personal',
+          ic: 'trophy',
+          title: `${nameOf(p.id)}: ${mark}. Sieg!`,
+          desc: `Karriere-Meilenstein — ${mark} Siege stehen jetzt zu Buche.`,
+          when: new Date(last.created_at),
+          prio: mark >= 500 ? 9 : mark >= 250 ? 7 : 5,
+          dataRef: {type:'milestone_wins', pid: p.id, milestone: mark+'. Sieg', matchId: last.id}
+        });
       }
     });
   } catch(e){}
 
-  // ── 12. Elo-Anstieg der Woche (größter Aufsteiger 7d) ──
-  // Aggregiert sim.deltas pro Spieler über die letzten 7 Tage. O(N_recent) total.
+  // ── 12. Elo-Anstieg der VERGANGENEN Woche (größter Aufsteiger) ──
+  // v9.5: abgeschlossene ISO-Woche statt rollende 7 Tage — der „größte
+  // Anstieg" steht erst fest, wenn die Woche vorbei ist (belastbar/final).
   try {
-    const wk = 7 * 86400000;
-    const tsNow = now.getTime();
     const gains = {};
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
       const t = new Date(m.created_at).getTime();
-      if(t < tsNow - wk || t > tsNow) continue;
+      if(t < _prevWeekStart || t >= _thisWeekStart) continue;
       const hist = histMap.get(m.id);
       if(!hist || !hist.deltas) continue;
       for(const pid in hist.deltas){
@@ -15386,27 +15489,27 @@ function _buildStories(){
     if(topPid && topGain >= 50){
       const delta = Math.round(topGain);
       stories.push({
-        id: 'elo_swing_week_'+topPid+'_'+weekKey,
+        id: 'elo_swing_week_'+topPid+'_'+_lastWeekKey,
         cat: 'personal',
         ic: 'trendUp',
         title: `${nameOf(topPid)} im Aufwind`,
-        desc: `+${delta} Elo in den letzten 7 Tagen — größter Anstieg der Woche.`,
-        when: now,
+        desc: `+${delta} Elo in der vergangenen Woche — größter Anstieg.`,
+        when: new Date(_thisWeekStart),
         prio: 7,
-        dataRef: {type:'elo_swing', pid: topPid, delta, period: 'Letzte 7 Tage'}
+        dataRef: {type:'elo_swing', pid: topPid, delta, period: 'Vergangene Woche'}
       });
     }
   } catch(e){}
 
-  // ── 13. Härtester Elo-Verlust des Tages (Pechvogel) ──
+  // ── 13. Härtester Elo-Verlust von GESTERN (Pechvogel) ──
+  // v9.5: voller Kalendertag „gestern" statt rollende 24 h — nur ein
+  // abgeschlossener Tag liefert einen endgültigen „größten Verlust".
   try {
-    const day = 86400000;
-    const tsNow = now.getTime();
     const losses = {};
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
       const t = new Date(m.created_at).getTime();
-      if(t < tsNow - day || t > tsNow) continue;
+      if(t < _startOfYesterday || t >= _startOfToday) continue;
       const hist = histMap.get(m.id);
       if(!hist || !hist.deltas) continue;
       for(const pid in hist.deltas){
@@ -15421,28 +15524,27 @@ function _buildStories(){
     if(worstPid && worstDelta <= -25){ // v8.8: -20→-25 — nur echte Pech-Tage
       const delta = Math.round(worstDelta);
       stories.push({
-        id: 'elo_swing_day_'+worstPid+'_'+todayKey,
+        id: 'elo_swing_day_'+worstPid+'_'+_yesterdayKey,
         cat: 'misfortune',
         ic: 'dropDouble',
         title: `${nameOf(worstPid)} mit hartem Tag`,
-        desc: `${delta} Elo — der größte Verlust der letzten 24 Stunden.`,
-        when: now,
+        desc: `${delta} Elo — der größte Verlust von gestern.`,
+        when: new Date(_startOfToday),
         prio: 5,
-        dataRef: {type:'elo_swing', pid: worstPid, delta, period: 'Letzte 24 Stunden'}
+        dataRef: {type:'elo_swing', pid: worstPid, delta, period: 'Gestern'}
       });
     }
   } catch(e){}
 
-  // ── 14. Größter Kantersieg der Woche ──
-  // Tordifferenz ≥ 8 in den letzten 7 Tagen. Story bezieht sich auf das Match.
+  // ── 14. Größter Kantersieg der VERGANGENEN Woche ──
+  // v9.5: abgeschlossene Woche — der „höchste Sieg" steht erst nach Wochenende
+  // fest. Tordifferenz ≥ 8, Story verweist aufs Match.
   try {
-    const wk = 7 * 86400000;
-    const tsNow = now.getTime();
     let biggest = null;
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
       const t = new Date(m.created_at).getTime();
-      if(t < tsNow - wk || t > tsNow) continue;
+      if(t < _prevWeekStart || t >= _thisWeekStart) continue;
       const diff = Math.abs((m.score_a||0) - (m.score_b||0));
       if(!biggest || diff > biggest.diff){
         biggest = {m, diff, t};
@@ -15454,8 +15556,8 @@ function _buildStories(){
         cat: 'highlight',
         ic: 'thriller',
         title: `Kantersieg: ${biggest.m.score_a}:${biggest.m.score_b}`,
-        desc: `${biggest.diff} Tore Unterschied — der höchste Sieg der Woche.`,
-        when: new Date(biggest.t),
+        desc: `${biggest.diff} Tore Unterschied — der höchste Sieg der vergangenen Woche.`,
+        when: new Date(_thisWeekStart),
         prio: biggest.diff >= 10 ? 8 : 6,
         dataRef: {type:'biggest_blowout', matchId: biggest.m.id, diff: biggest.diff}
       });
@@ -15496,17 +15598,16 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── 16. Upset des Tages (Underdog schlägt Top-Spieler) ──
-  // Sucht in den letzten 7 Tagen das Match mit dem größten preRank-Vorteil
+  // ── 16. Upset der Woche (Underdog schlägt Top-Spieler) ──
+  // Sucht in der vergangenen Woche das Match mit dem größten preRank-Vorteil
   // des Verlierers (= Sieger war schwächer rangiert). Nutzt getRankSnapshots.
+  // v9.5: abgeschlossene Woche — der „größte Upset" ist erst nach Wochenende final.
   try {
-    const wk = 7 * 86400000;
-    const tsNow = now.getTime();
     let bestUpset = null;
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
       const t = new Date(m.created_at).getTime();
-      if(t < tsNow - wk || t > tsNow) continue;
+      if(t < _prevWeekStart || t >= _thisWeekStart) continue;
       const snap = snaps[m.id];
       if(!snap || !snap.preRank) continue;
       const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
@@ -15529,7 +15630,7 @@ function _buildStories(){
         ic: 'thriller',
         title: 'Upset der Woche!',
         desc: `${bestUpset.winners.map(nameOf).join(' & ')} als Außenseiter: Platz ${bestUpset.winnerBest} schlägt Platz ${bestUpset.loserBest}.`,
-        when: new Date(bestUpset.t),
+        when: new Date(_thisWeekStart),
         prio: bestUpset.gap >= 5 ? 8 : 6,
         dataRef: {type:'upset_match', matchId: m.id, gap: bestUpset.gap,
                   winnerRank: bestUpset.winnerBest, loserRank: bestUpset.loserBest}
@@ -15626,7 +15727,7 @@ function _buildStories(){
       }
     }
 
-    // Giant Slayer: ein Team gewinnt mit unter 10% Siegchance (letzte 7 Tage,
+    // Giant Slayer: ein Team gewinnt mit unter 20% Siegchance (letzte 7 Tage,
     // das extremste Match). Suppress-Regel gegen Upset-Doppel siehe Consolidation.
     {
       const wk = 7 * 86400000;
@@ -15638,7 +15739,7 @@ function _buildStories(){
         if(t < nowTs - wk) break;
         const expA = (m.exp_a == null) ? 0.5 : m.exp_a;
         const winnerChance = m.winner === 'A' ? expA : (1 - expA);
-        if(winnerChance < 0.10){
+        if(winnerChance < 0.20){
           const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
           const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
           if(winners.every(p => pm[p] && !pm[p].hidden) && (!gs || winnerChance < gs.chance)){
@@ -15701,15 +15802,15 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── 18. Krimi der Woche (knappstes Match, Tordifferenz = 1) ──
+  // ── 18. Krimi der VERGANGENEN Woche (knappstes Match, Tordifferenz = 1) ──
+  // v9.5: abgeschlossene Woche — der „knappste Sieg" ist erst final, wenn die
+  // Woche vorbei ist.
   try {
-    const wk = 7 * 86400000;
-    const tsNow = now.getTime();
     let thriller = null;
     for(let i = 0; i < matches.length; i++){
       const m = matches[i];
       const t = new Date(m.created_at).getTime();
-      if(t < tsNow - wk || t > tsNow) continue;
+      if(t < _prevWeekStart || t >= _thisWeekStart) continue;
       const diff = Math.abs((m.score_a||0) - (m.score_b||0));
       // Nur 1-Tor-Krimis ab Score ≥ 8 (anders sind 1:0 oder 2:1 wenig spannend)
       if(diff !== 1) continue;
@@ -15726,8 +15827,8 @@ function _buildStories(){
         cat: 'highlight',
         ic: 'thriller',
         title: `Krimi: ${m.score_a}:${m.score_b}`,
-        desc: `Entscheidung erst im letzten Tor — knappster Sieg der Woche.`,
-        when: new Date(thriller.t),
+        desc: `Entscheidung erst im letzten Tor — knappster Sieg der vergangenen Woche.`,
+        when: new Date(_thisWeekStart),
         prio: 7,
         dataRef: {type:'thriller_match', matchId: m.id, diff: 1, total: thriller.totalScore}
       });
@@ -15768,9 +15869,8 @@ function _buildStories(){
     });
   } catch(e){}
 
-  // ── 20. Tor-Meilensteine (500/1000/2500 Karriere-Tore) ──
+  // ── 20. Tor-Meilensteine (unbegrenzte Leiter ab 500 Karriere-Tore) ──
   try {
-    const goalThresholds = [500, 1000, 2500];
     activePlayers().forEach(p => {
       const arr = byPlayer[p.id] || [];
       if(!arr.length) return;
@@ -15780,23 +15880,46 @@ function _buildStories(){
         const onA = [m.a1, m.a2].includes(p.id);
         goals += onA ? (m.score_a||0) : (m.score_b||0);
       }
-      for(const t of goalThresholds){
-        if(goals >= t && goals < t + 10){
-          // letzte Schwelle gerade erst gerissen (innerhalb 10 Tore Toleranz)
-          const last = arr[arr.length-1];
-          stories.push({
-            id: 'milestone_goals_'+p.id+'_'+t,
-            cat: 'personal',
-            ic: 'target',
-            title: `${nameOf(p.id)}: ${t}. Tor`,
-            desc: `Karriere-Meilenstein — ${goals} Tore stehen jetzt zu Buche.`,
-            when: new Date(last.created_at),
-            prio: t >= 1000 ? 8 : 6,
-            dataRef: {type:'milestone_goals', pid: p.id, milestone: t+'. Tor', matchId: last.id}
-          });
-          break;
-        }
+      // v9.5: das jüngste Match liefert die letzten Tore → prüfen, ob damit eine
+      // Leiter-Marke gerissen wurde (500, 1000, 2500, 5000, 10000, …).
+      const last = arr[arr.length-1];
+      const lastGoals = [last.a1, last.a2].includes(p.id) ? (last.score_a||0) : (last.score_b||0);
+      const mark = _ladderCrossing(goals - lastGoals, goals, 500);
+      if(mark){
+        stories.push({
+          id: 'milestone_goals_'+p.id+'_'+mark,
+          cat: 'personal',
+          ic: 'target',
+          title: `${nameOf(p.id)}: ${mark}. Tor`,
+          desc: `Karriere-Meilenstein — ${goals} Tore stehen jetzt zu Buche.`,
+          when: new Date(last.created_at),
+          prio: mark >= 1000 ? 8 : 6,
+          dataRef: {type:'milestone_goals', pid: p.id, milestone: mark+'. Tor', matchId: last.id}
+        });
       }
+    });
+  } catch(e){}
+
+  // ── 20b. Persönliche Elo-Meilensteine (unbegrenzt, v9.5) ──
+  // Allzeit-Höchst-Elo überschreitet eine runde 100er-Marke (ab Start-Elo+200).
+  // Nur „frische" Marken (Rekord-Match ≤ 14 Tage alt) werden zur News — sonst
+  // würde beim ersten Lauf die gesamte Historie nachträglich einfließen.
+  try {
+    const RECENT = 14 * _dayMs;
+    const nowTs = now.getTime();
+    _eloMilestones().forEach(e => {
+      if(!e.when || !pm[e.pid] || pm[e.pid].hidden) return;
+      if(nowTs - new Date(e.when).getTime() > RECENT) return;
+      stories.push({
+        id: 'milestone_elo_'+e.pid+'_'+e.mark,
+        cat: 'personal',
+        ic: 'peak',
+        title: `${nameOf(e.pid)} knackt ${e.mark} Elo`,
+        desc: `Persönlicher Höchststand — erstmals über die ${e.mark}-Elo-Marke.`,
+        when: new Date(e.when),
+        prio: e.mark >= (cfg.start_elo ?? 1000) + 500 ? 8 : 6,
+        dataRef: {type:'milestone_elo', pid: e.pid, milestone: e.mark+' Elo', mark: e.mark, matchId: e.matchId}
+      });
     });
   } catch(e){}
 
@@ -15992,98 +16115,88 @@ function _newsPeriodWinner(rangeMatches, minWins){
   return { winners: cand.filter(c => Math.abs(c.wr - topWr) < 0.001), main: cand[0] };
 }
 
-// ─── §11.1b — Ambiente Tages-Stories (v8.5) ──────────────────────────
-// Erzeugt über den Tag verteilte Fun Facts / persönliche Nuggets / Rivalitäten
-// / Historie, damit der Feed auch OHNE neue Matches lebendig wirkt.
+// ─── §11.1b — Ambiente Fun-Fact-Stories (v8.5, v9.5) ─────────────────
+// Erzeugt Fun Facts / persönliche Nuggets / Rivalitäten / Historie, damit der
+// Feed auch OHNE neue Matches lebendig wirkt.
 //
 // KERNPRINZIP (kein Spam, Cross-Device-konsistent):
-//   - Pro Tag gibt es feste Zeit-Slots (AMBIENT_SLOTS). Je Slot genau 1 Story,
-//     die erst ab der Slot-Stunde erscheint (gating über _ambientSlotSig im
-//     Memo-Key von _buildStories).
-//   - Story-IDs sind tages-deterministisch: `ambient_<datum>_<stunde>`.
+//   - RHYTHMUS (v9.5): genau 1 Fun Fact ALLE 2 TAGE, um 19:00. „Alle 2 Tage" =
+//     gerader Epoch-Tagesindex (_isAmbientDay) → alle Geräte gleich. Vor 19:00
+//     oder an Nicht-Ambient-Tagen entsteht nichts.
+//   - Story-ID ist tages-deterministisch: `ambient_<datum>_19`.
 //     → ON CONFLICT DO NOTHING beim Upload: der erste Insert gewinnt den
 //       Timestamp, alle Geräte sehen exakt dieselbe Story.
-//   - Welche Story ein Slot zeigt, entscheidet ein aus Datum+Slot geseedeter
-//     Pseudo-Zufall (mulberry32). "Random" fürs Gefühl, aber überall identisch.
-//   - Pro Tag werden keine zwei gleichen Typen gewählt (usedKeys).
+//   - Welchen Fun Fact der Slot zeigt, entscheidet ein aus dem Datum geseedeter
+//     Pseudo-Zufall (mulberry32) — „random" fürs Gefühl, aber überall identisch.
+//   - COOLDOWN: Fun-Fact-Typen, die in den letzten AMBIENT_COOLDOWN_DAYS Tagen
+//     schon liefen, werden gesperrt → Rotation statt vorhersehbarer Reihenfolge,
+//     keine schnellen Wiederholungen. Ist alles gesperrt, wird die Sperre gelöst.
 //   - Die Inhalte stammen aus echten Daten (allPlayerStats, H2H-Map, Scores) —
-//     nichts wird erfunden. Liefert ein Template kein Ergebnis (zu wenig
-//     Daten), wird deterministisch das nächste genommen.
+//     nichts wird erfunden. Liefert ein Template kein Ergebnis (zu wenig Daten),
+//     wird deterministisch das nächste genommen.
 function _buildAmbientStories(now, pm, nameOf){
   const out = [];
   if(!Array.isArray(AMBIENT_SLOTS) || !AMBIENT_SLOTS.length) return out;
+  // v9.5: nur alle 2 Tage, und erst ab der Slot-Stunde (19:00).
+  if(!_isAmbientDay(now)) return out;
+  const slotHour = AMBIENT_SLOTS[0];
+  if(now.getHours() < slotHour) return out;
+
   const dateKey = now.toISOString().slice(0,10);
-  const curHour = now.getHours();
-  const activeSlots = AMBIENT_SLOTS.filter(h => curHour >= h);
-  if(!activeSlots.length) return out;
+  const todayId = 'ambient_' + dateKey + '_' + slotHour;
 
   const templates = _ambientTemplatePool(now, pm, nameOf);
   if(!templates.length) return out;
 
-  const usedKeys = new Set();
-  const usedCats = new Set();
+  // Bereits persistierte Ambient-Stories: (a) heutige → nicht neu ableiten
+  // (Daten-Drift-Schutz, die Story kommt ohnehin aus dem DB-Cache); (b) die der
+  // letzten COOLDOWN-Tage → deren Fun-Fact-Typ vorübergehend sperren.
+  const known = (Array.isArray(_cache._stories) ? _cache._stories : [])
+    .filter(s => s && typeof s.id === 'string' && s.id.indexOf('ambient_') === 0);
+  if(known.some(s => s.id === todayId)) return out;
 
-  // v8.9: Bereits für HEUTE in der DB persistierte Ambient-Stories vorab als
-  // „benutzt" markieren — und ihre Slots NICHT neu ableiten.
-  // Hintergrund des Bugs: Die Slots entstehen an verschiedenen Tageszeiten und
-  // damit in GETRENNTEN Builds (Slot 8 wird morgens eingefroren — ON CONFLICT —,
-  // Slot 13 erst mittags erzeugt). Der Mittags-Build leitete den Vormittags-Slot
-  // bisher nur aus den AKTUELLEN Daten neu ab; hat sich die Datenlage über den
-  // Tag geändert, weicht diese Ableitung vom eingefrorenen Slot 8 ab, und der
-  // In-Build-Dedup schützt dann gegen das FALSCHE Template → Slot 13 durfte
-  // dasselbe Template wie der bereits gespeicherte Slot 8 ziehen (zwei
-  // identische News). Fix: aus dem seeden, was WIRKLICH in der DB steht.
-  const knownToday = (Array.isArray(_cache._stories) ? _cache._stories : [])
-    .filter(s => s && typeof s.id === 'string' && s.id.indexOf('ambient_' + dateKey + '_') === 0);
-  const persistedSlots = new Set();
-  for(const s of knownToday){
-    const slot = parseInt(s.id.slice(s.id.lastIndexOf('_') + 1), 10);
-    if(!isNaN(slot)) persistedSlots.add(slot);
+  const cooldownKeys = new Set();
+  const cooldownMs = AMBIENT_COOLDOWN_DAYS * 86400000;
+  for(const s of known){
+    const md = /^ambient_(\d{4}-\d{2}-\d{2})_/.exec(s.id);
+    if(!md) continue;
+    const ts = new Date(md[1] + 'T00:00:00').getTime();
+    if(now.getTime() - ts > cooldownMs) continue;
     const sub = s.dataRef && s.dataRef.sub;
-    if(sub){ usedKeys.add(sub); usedCats.add(String(sub).split('_')[0]); }
+    if(sub) cooldownKeys.add(sub);
   }
 
-  for(const slotHour of activeSlots){
-    // Schon in der DB → nicht neu ableiten. Die Story kommt ohnehin aus dem
-    // DB-Cache in den Feed; ein Neu-Erzeugen brächte nur Daten-Drift-Risiko.
-    if(persistedSlots.has(slotHour)) continue;
-    const rng = _ambientRng(_ambientHash(dateKey + '_' + slotHour));
-    // Templates in geseedeter Reihenfolge prüfen, erstes nicht-genutztes mit
-    // Ergebnis gewinnt → variiert pro Tag/Slot, bleibt aber deterministisch.
-    const order = _ambientShuffle(templates.map((_, i) => i), rng);
-    let chosen = null, chosenKey = null;
-    // 2 Durchläufe: erst eine NOCH NICHT genutzte Kategorie bevorzugen
-    // (mehr Abwechslung pro Tag), sonst ohne Kategorie-Constraint.
-    for(let pass = 0; pass < 2 && !chosen; pass++){
-      for(const idx of order){
-        const t = templates[idx];
-        if(usedKeys.has(t.key)) continue;
-        if(pass === 0 && usedCats.has(t.key.split('_')[0])) continue;
-        let res = null;
-        try { res = t.make(rng); } catch(e){ res = null; }
-        if(res){ chosen = res; chosenKey = t.key; break; }
-      }
+  const rng = _ambientRng(_ambientHash(dateKey + '_' + slotHour));
+  // Templates in geseedeter Reihenfolge prüfen; erstes passende mit Ergebnis
+  // gewinnt → variiert pro Tag, bleibt aber deterministisch.
+  const order = _ambientShuffle(templates.map((_, i) => i), rng);
+  let chosen = null, chosenKey = null;
+  // Pass 0: Cooldown respektieren (keine kürzlich genutzten Typen).
+  // Pass 1: Fallback ohne Cooldown, falls alles gesperrt war.
+  for(let pass = 0; pass < 2 && !chosen; pass++){
+    for(const idx of order){
+      const t = templates[idx];
+      if(pass === 0 && cooldownKeys.has(t.key)) continue;
+      let res = null;
+      try { res = t.make(rng); } catch(e){ res = null; }
+      if(res){ chosen = res; chosenKey = t.key; break; }
     }
-    if(!chosen) continue;
-    usedKeys.add(chosenKey);
-    // Kategorie-Avoidance konsistent am Key-Präfix führen (deckt sich mit dem
-    // Check oben; chosen.cat konnte bei v8.8-Templates abweichen, z.B.
-    // fun_leader → cat 'personal').
-    usedCats.add(chosenKey.split('_')[0]);
-    const when = new Date(now.getFullYear(), now.getMonth(), now.getDate(), slotHour, 0, 0, 0);
-    out.push({
-      id:    'ambient_' + dateKey + '_' + slotHour,
-      cat:   chosen.cat,
-      ic:    chosen.ic,
-      title: chosen.title,
-      desc:  chosen.desc,
-      when,
-      // Niedrige Prio + KEIN limitierender dataRef.pid (nur ambientPid/-Pids),
-      // damit ambiente Stories nicht vom Per-Player-Limit geschluckt werden.
-      prio:  chosen.prio || 4,
-      dataRef: Object.assign({type:'ambient', sub: chosenKey}, chosen.dataRef || {})
-    });
   }
+  if(!chosen) return out;
+
+  const when = new Date(now.getFullYear(), now.getMonth(), now.getDate(), slotHour, 0, 0, 0);
+  out.push({
+    id:    todayId,
+    cat:   chosen.cat,
+    ic:    chosen.ic,
+    title: chosen.title,
+    desc:  chosen.desc,
+    when,
+    // Niedrige Prio + KEIN limitierender dataRef.pid (nur ambientPid/-Pids),
+    // damit ambiente Stories nicht vom Per-Player-Limit geschluckt werden.
+    prio:  chosen.prio || 4,
+    dataRef: Object.assign({type:'ambient', sub: chosenKey}, chosen.dataRef || {})
+  });
   return out;
 }
 
@@ -16484,6 +16597,7 @@ function _consolidateStories(list){
     jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Spiele-Meilensteine: ${f}.` },
     milestone_wins:  { label:'Sieg-Meilensteine',   ic:'medalTrio',  frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Glückwunsch: ${f}.` },
     milestone_goals: { label:'Tor-Meilensteine',    ic:'thriller',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Glückwunsch: ${f}.` },
+    milestone_elo:   { label:'Elo-Meilensteine',    ic:'peak',       frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Neue Bestwerte: ${f}.` },
   };
 
   const badgeGroups = new Map();
@@ -16760,11 +16874,11 @@ function _refreshOpenNewsViews(){
 }
 
 // ─── §11.9 — Periodischer News-Auto-Sync (v8.5) ──────────────────────
-// Lässt ambiente Tages-Stories (§11.1b) OHNE Reload erscheinen: alle paar
+// Lässt ambiente Fun-Fact-Stories (§11.1b) OHNE Reload erscheinen: alle paar
 // Minuten neu synchronisieren. Pausiert bei verstecktem Tab (spart Requests)
-// und holt beim Wieder-Sichtbarwerden sofort nach (verpasster Mittags-Slot).
-// Spamfrei: Inserts sind tages-deterministisch (ON CONFLICT) → max.
-// AMBIENT_SLOTS.length neue Rows pro Tag, egal wie oft der Tick läuft.
+// und holt beim Wieder-Sichtbarwerden sofort nach (verpasster 19-Uhr-Slot).
+// Spamfrei: Inserts sind tages-deterministisch (ON CONFLICT) → max. 1 neue
+// Ambient-Row alle 2 Tage, egal wie oft der Tick läuft.
 let _newsAutoSyncTimer = null;
 let _newsAutoSyncRunning = false;
 async function _newsAutoSyncTick(){
@@ -17104,7 +17218,7 @@ function _isBreaking(s){
     case 'season_recap':   // Saison-Champion steht fest
     case 'elo_record':     // neuer All-Time-Elo-Rekord der Liga
     case 'streak_record':  // längste Siegesserie aller Zeiten
-    case 'giant_slayer':   // Sieg mit < 10% Siegchance
+    case 'giant_slayer':   // Sieg mit < 20% Siegchance
       return true;
     case 'badge_unlocked':
       return d.rarity === 'legendary'; // nur goldene/legendäre Badges
@@ -17133,9 +17247,11 @@ function _newsVisual(s){
     case 'elo_swing':   return chip(((d.delta||0)>0?'+':'')+(d.delta||0),'Elo');
     case 'jubilee':     return d.total!=null ? chip(d.total+'.','Spiel') : '';
     case 'milestone_wins':
-    case 'milestone_goals': {
+    case 'milestone_goals':
+    case 'milestone_elo': {
       const m = String(d.milestone||'').match(/\d+/);
-      return m ? chip(m[0], d.type==='milestone_goals'?'Tore':'Siege') : '';
+      const lbl = d.type==='milestone_goals' ? 'Tore' : d.type==='milestone_elo' ? 'Elo' : 'Siege';
+      return m ? chip(m[0], lbl) : '';
     }
     case 'badge_unlocked':  return `<div class="nf-v"><div class="nf-v-badge">${svgI(s.ic||'trophy')}</div></div>`;
     case 'lead_change':     return `<div class="nf-v"><div class="nf-v-crown">${svgI('crown')}<span class="rk">#1</span></div></div>`;
