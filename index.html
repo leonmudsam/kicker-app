@@ -15070,8 +15070,22 @@ function _buildStories(){
     const sStart = seasonStart();
     const ageDays = (now - sStart) / 86400000;
     if(ageDays <= 2 && seasons && seasons.length){
-      // letzte archivierte Saison
-      const lastArchived = [...seasons].sort((a,b)=>(b.id||'').localeCompare(a.id||''))[0];
+      // v9-Fix: NUR die unmittelbar vorige Saison (Vormonat der aktuellen)
+      // recap'en. Vorher wurde blind „die höchste vorhandene id" genommen —
+      // war das seasons-Array noch nicht voll synchronisiert (die gerade
+      // beendete Saison fehlte), wählte das die VORLETZTE Saison und
+      // persistierte eine dauerhaft falsche „Saison-Champion"-Story mit
+      // when = aktueller Saisonstart, die als Breaking-Hero konkurrierte.
+      // Jetzt matchen wir exakt den erwarteten Vormonat; fehlt er → nichts.
+      const _prevSeasonId = (curId) => {
+        const mm = /^(\d{4})-(\d{2})$/.exec(String(curId||''));
+        if(!mm) return null;
+        let yy = +mm[1], mo = +mm[2] - 1;
+        if(mo < 1){ mo = 12; yy--; }
+        return yy + '-' + String(mo).padStart(2,'0');
+      };
+      const prevId = _prevSeasonId(currentSeason().id);
+      const lastArchived = prevId ? seasons.find(s => s.id === prevId) : null;
       if(lastArchived){
         const topElo = (typeof lastArchived.top_elo === 'string')
           ? JSON.parse(lastArchived.top_elo || '[]')
