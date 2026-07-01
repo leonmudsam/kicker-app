@@ -2982,6 +2982,7 @@ let players=[], matches=[], cfg={k_factor:32,risk_split:0.6,pos_swing:0.45,start
 let tab='ranking', unlocked=true;
 let rankMetric='elo';      // elo | atk | def | winrate | goaldiff | streak
 let rankSearch='';
+let teamSearch='';         // Suchfilter im Teams-Tab (Spieler- oder Team-Name)
 let histFilter='all';      // all | <playerId>
 let teamView='best';       // best | worst (Teams-Tab)
 let teamSort='wr';         // wr | gd | elo (Teams-Sortierung) ← NEUE ZEILE
@@ -4323,6 +4324,7 @@ function _recapPosMiniSVG(ph){
 // → keine Schutz-Phase, Sheet lässt sich sofort per Backdrop-Klick schließen.
 function showSeasonRecap(season, opts){
   opts = opts || {};
+  _sheetSetReopen(()=>showSeasonRecap(season));
   const top=typeof season.top_elo==='string'?JSON.parse(season.top_elo):season.top_elo||[];
   const ms=matchesInSeason(season.id);
   const playerIdsInSeason=new Set();
@@ -4576,10 +4578,10 @@ function showSeasonRecap(season, opts){
       ${pickerHtml}
     </div>
     ${championHtml}
-    ${posMiniHtml}
     ${teamHtml}
     ${podiumHtml}
     ${restListHtml}
+    ${posMiniHtml}
     ${awardsHtml}
     <button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>
   `, {protectMs: opts.auto ? 2500 : 0});
@@ -4604,7 +4606,7 @@ function showSeasonRecap(season, opts){
     el.onclick=()=>{
       const id=el.dataset.detail; if(!id) return;
       localStorage.setItem('recap_shown_'+season.id,'1');
-      closeSheet(); setTimeout(()=>showPlayer(id),350);
+      sheetNav(()=>showPlayer(id));
     };
   });
   // Team-Card klickbar → Team-Profil
@@ -4613,7 +4615,7 @@ function showSeasonRecap(season, opts){
       const [a,b]=el.dataset.team.split('|');
       if(!a||!b) return;
       localStorage.setItem('recap_shown_'+season.id,'1');
-      closeSheet(); setTimeout(()=>showTeam(a,b),350);
+      sheetNav(()=>showTeam(a,b));
     };
   });
   // Award-Karten klickbar → Award-Detail (mit ausgewählter Saison)
@@ -4622,7 +4624,7 @@ function showSeasonRecap(season, opts){
       const k=el.dataset.award; if(!k) return;
       localStorage.setItem('recap_shown_'+season.id,'1');
       awPeriod='season'; awSeasonId=season.id;
-      closeSheet(); setTimeout(()=>showAward(k),350);
+      sheetNav(()=>showAward(k));
     };
   });
   // v9: Mini-Positionsverlauf-Button → voller Positionsverlauf dieser Saison
@@ -4630,7 +4632,7 @@ function showSeasonRecap(season, opts){
     el.onclick=()=>{
       const sid=el.dataset.poshist; if(!sid) return;
       localStorage.setItem('recap_shown_'+season.id,'1');
-      closeSheet(); setTimeout(()=>showPositionHistory(sid),350);
+      sheetNav(()=>showPositionHistory(sid));
     };
   });
 }
@@ -4911,6 +4913,7 @@ function _attachPosvHighlight(rootEl, data){
 // Hauptfunktion: öffnet das Sheet. Saison-Argument optional (default: aktuelle).
 function showPositionHistory(seasonId){
   if(!seasonId) seasonId = currentSeason().id;
+  _sheetSetReopen(()=>showPositionHistory(seasonId));
   const data = getSeasonPositionHistory(seasonId);
   const sLabel = seasonLabel(seasonId);
 
@@ -4991,6 +4994,7 @@ function showPositionHistory(seasonId){
 // bleibt opts.auto leer → keine Schutz-Phase, sofort schließbar.
 function showPotwRecap(opts){
   opts = opts || {};
+  _sheetSetReopen(()=>showPotwRecap());
   try{
     const {start:weekStart, end:weekEnd}=_potwLastWeekRange();
     const ms=_potwMatchesInRange(weekStart,weekEnd);
@@ -5357,13 +5361,13 @@ function showPotwRecap(opts){
         if(el.closest('.sheet')!==document.getElementById('sheet')) return;
         el.onclick=()=>{
           const id=el.dataset.detail; if(!id) return;
-          closeSheet(); setTimeout(()=>showPlayer(id),350);
+          sheetNav(()=>showPlayer(id));
         };
       });
     }
     
     const cb=document.getElementById('closePotwBtn');
-    if(cb) cb.onclick=closeSheet;
+    if(cb) cb.onclick=()=>closeSheet();
 
     // POTW Award-Detail Klicks: Award-Karten öffnen showAward für die POTW-Woche.
     // Inline onclick wäre Global Scope und sähe closeSheet/showAward nicht (IIFE).
@@ -5371,20 +5375,18 @@ function showPotwRecap(opts){
       el.onclick=()=>{
         const k = el.dataset.potwAward;
         const wkMs = +el.dataset.potwWeek;
-        closeSheet();
-        setTimeout(()=>{
+        sheetNav(()=>{
           awPeriod='week';
           awWeekStart=new Date(wkMs);
           showAward(k);
-        }, 350);
+        });
       };
     });
     // Größter Elo-Aufstieg: direkt zum Spielerprofil
     document.querySelectorAll('.potw-hl[data-potw-player]').forEach(el=>{
       el.onclick=()=>{
         const pid = el.dataset.potwPlayer;
-        closeSheet();
-        setTimeout(()=>showPlayer(pid), 350);
+        sheetNav(()=>showPlayer(pid));
       };
     });
   } catch(e){
@@ -5460,6 +5462,7 @@ function potdHasData(){ return _potdLastDayData()!==null; }
 // (protectMs) deaktiviert → manueller Aufruf ist sofort per Backdrop-Klick schließbar.
 function showPotdRecap(opts){
   opts = opts || {};
+  _sheetSetReopen(()=>showPotdRecap());
   try{
     const now=new Date();
     const todayKey=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
@@ -5609,7 +5612,7 @@ function showPotdRecap(opts){
     // automatische Auto-Recap für heute später noch triggern kann.
     if(!opts.force) localStorage.setItem('potd_shown_'+todayKey,'1');
     const cb=document.getElementById('closePotdBtn');
-    if(cb) cb.onclick=closeSheet;
+    if(cb) cb.onclick=()=>closeSheet();
   } catch(e){
     console.error('POTD Recap Fehler:',e);
   }
@@ -6369,7 +6372,7 @@ function renderNav(){
     `<button data-nav="${id}" class="${tab===id?'on':''}">
       <span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg></span>
       <span class="lb">${lb}</span></button>`).join('');
-  document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{tab=b.dataset.nav;window.scrollTo(0,0);render();});
+  document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{tab=b.dataset.nav;teamSearch='';window.scrollTo(0,0);render();});
   // FAB nur außerhalb des Match-Tabs sinnvoll
   document.getElementById('fab').style.display = 'grid';
 }
@@ -9129,6 +9132,7 @@ const AWARD_META={
 };
 function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
+  _sheetSetReopen(()=>showAward(key));
   const tn=ids=>ids.map(pname).join(' & ');
   // ⚑ HOTSPOT — Spiegel von AW_IC aus §5.3 (vAwards). Bei neuen Awards HIER
   //  und in den anderen 2 AW_IC-Definitionen gleichzeitig erweitern.
@@ -9505,7 +9509,7 @@ function showAward(key){
     const arr = key==='upset' ? R.upsets : R.biggest;
     if(arr&&arr.length){
       const el = document.querySelector('.aw-match');
-      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ closeSheet(); setTimeout(()=>showMatchDetail(arr[0].m.id),350); }; }
+      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ sheetNav(()=>showMatchDetail(arr[0].m.id)); }; }
     }
   }
   // Favoritenschreck: Hauptkarte führt zum Match-Detail
@@ -9513,7 +9517,7 @@ function showAward(key){
     const arr = R.favoritenschreckList;
     if(arr && arr.length){
       const el = document.querySelector('.aw-match');
-      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ closeSheet(); setTimeout(()=>showMatchDetail(arr[0].m.id),350); }; }
+      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ sheetNav(()=>showMatchDetail(arr[0].m.id)); }; }
     }
   }
   // Erzfeinde: die zwei Team-Boxen tragen data-li-team und werden durch den
@@ -9522,11 +9526,11 @@ function showAward(key){
   // Listen-Einträge klickbar
   document.querySelectorAll('.aw-li[data-li-player], .aw-li-tied-row[data-li-player], .aw-winner[data-li-player], .aw-winner-tied-entry[data-li-player]').forEach(el=>{
     el.style.cursor='pointer';
-    el.onclick=()=>{ const pid=el.dataset.liPlayer; closeSheet(); setTimeout(()=>showPlayer(pid),350); };
+    el.onclick=()=>{ const pid=el.dataset.liPlayer; sheetNav(()=>showPlayer(pid)); };
   });
   document.querySelectorAll('.aw-li[data-li-team], .aw-li-tied-row[data-li-team], .aw-winner[data-li-team], .aw-winner-tied-entry[data-li-team], .aw-match-team[data-li-team]').forEach(el=>{
     el.style.cursor='pointer';
-    el.onclick=(ev)=>{ ev.stopPropagation(); const [a,b]=el.dataset.liTeam.split('|'); closeSheet(); setTimeout(()=>showTeam(a,b),350); };
+    el.onclick=(ev)=>{ ev.stopPropagation(); const [a,b]=el.dataset.liTeam.split('|'); sheetNav(()=>showTeam(a,b)); };
   });
 }
 
@@ -9590,8 +9594,16 @@ function vTeams(){
 
   const gSim=getGlobalSim();
   const seasonTeamMap=gSim.seasonTeamElo[currentSeason().id]||{};
-  
-  const rows=arr.map((t,i)=>{
+
+  // Dezente Team-/Spieler-Suche: filtert das aktuelle (sortierte) Feld nach
+  // Spielername ODER kombiniertem Team-Namen. Beim Suchen keine Top-3-Medaillen.
+  const _tq = (teamSearch||'').trim().toLowerCase();
+  const arrF = _tq
+    ? arr.filter(t => t.ids.some(id => ((pm[id]&&pm[id].name)||'').toLowerCase().includes(_tq))
+        || t.ids.map(pname).join(' & ').toLowerCase().includes(_tq))
+    : arr;
+
+  const rows=arrF.map((t,i)=>{
     const wr=Math.round(t.w/t.g*100);
     const gd=t.gf-t.ga;
     const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
@@ -9615,7 +9627,7 @@ function vTeams(){
     }
 
     
-    const isTop=showBest&&i<3;
+    const isTop=showBest&&i<3&&!_tq;
     const top=isTop?TOP[i]:null;
     const borderColor=top?top.border:'var(--line)';
     const rankBlock=top
@@ -9637,7 +9649,13 @@ function vTeams(){
 
 
   return `
-    <div class="view-head"><h2>Teams</h2><p>${arr.length} Duo${arr.length===1?'':'s'} mit min. 4 gemeinsamen Spielen</p></div>
+    <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' mit min. 4 gemeinsamen Spielen'}</p></div>
+    <div class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+        <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
+      </svg>
+      <input type="text" id="teamSearch" placeholder="Spieler oder Team suchen…" value="${esc(teamSearch)}">
+    </div>
     <div class="seg accent">
       <button data-teamtoggle="best" class="${showBest?'on':''}">▲ Beste</button>
       <button data-teamtoggle="worst" class="${!showBest?'on':''}">▼ Schlechteste</button>
@@ -9647,7 +9665,7 @@ function vTeams(){
       <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Tordiff</button>
       <button data-teamsort="elo" class="${teamSort==='elo'?'on':''}">Elo-Zuwachs</button>
     </div>
-    <div class="rlist">${rows}</div>`;
+    ${arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden')}`;
 }
 
 
@@ -10009,10 +10027,42 @@ async function doSaveMatch(){
 // ╔═══ §6.1 ─── DETAIL-SHEET-INFRASTRUKTUR ─────────────────────────────╗
 //     Bottom-Sheet-System mit Swipe-to-close. openSheet()/closeSheet().
 // ╚═════════════════════════════════════════════════════════════════════════╝
+// ── Sheet-Navigations-Stack (v9.2) ──────────────────────────────────
+// Ermöglicht ÜBERLAPPENDE Sheets: ein Kind-Sheet (z.B. Spielerprofil aus dem
+// Recap) legt sich „über" das aktuelle. closeSheet() — egal ob Button, Swipe
+// oder Backdrop — geht dann Schritt für Schritt EINE Ebene zurück, statt alles
+// zu schließen. Kein zweites DOM-Sheet nötig: pro Ebene merken wir uns eine
+// reopen-Funktion und bauen das Eltern-Sheet frisch auf (Handler werden korrekt
+// neu gebunden). Das einzelne #sheet + die Swipe-Geste bleiben unverändert.
+let _sheetStack = [];      // {fn, scroll} der darunterliegenden Sheets (unten→oben)
+let _sheetReopen = null;   // wie das AKTUELL sichtbare Sheet neu gebaut wird
+let _sheetPopping = false; // true, während closeSheet ein Eltern-Sheet wiederherstellt
+// Jeder stapelbare Sheet-Builder meldet zu Beginn, wie er sich neu öffnen lässt.
+function _sheetSetReopen(fn){ _sheetReopen = (typeof fn === 'function') ? fn : null; }
+// Aktuelles Sheet (samt Scroll-Position) auf den Stack legen.
+function _pushCurrentSheet(){
+  if(!_sheetReopen) return;
+  const sheet = document.getElementById('sheet');
+  _sheetStack.push({ fn: _sheetReopen, scroll: sheet ? sheet.scrollTop : 0 });
+}
+// Vorwärts-Navigation: aktuelles Sheet stapeln, dann Kind öffnen (OHNE close).
+// Ersetzt das frühere Schließen-und-neu-öffnen-Muster bei Navigationen.
+function sheetNav(openChild){
+  const sheet = document.getElementById('sheet');
+  if(sheet && sheet.classList.contains('show') && _sheetReopen && !_sheetPopping){
+    _pushCurrentSheet();
+  }
+  try { openChild(); } catch(e){ _sheetStack.pop(); }
+}
+window.sheetNav = sheetNav;
+
 function openSheet(html, opts){
   opts = opts || {};
   const sheet=document.getElementById('sheet');
   const bg=document.getElementById('sheetBg');
+  // Frischer Root-Open (kein Sheet war offen, kein Pop läuft) → Stack leeren.
+  // Bei Navigation/Pop bleibt das Sheet sichtbar → Stack unangetastet.
+  if(!bg.classList.contains('show') && !_sheetPopping){ _sheetStack.length = 0; }
   // Falls bereits ein Sheet offen war (openSheet direkt nach openSheet, ohne
   // closeSheet dazwischen), zuerst dessen Swipe-Listener aufräumen — sonst
   // stapeln sich window-mousemove/mouseup-Listener und lecken.
@@ -10036,9 +10086,35 @@ function openSheet(html, opts){
   bindSheetSwipe();
 }
 
-function closeSheet(){
+// closeSheet(force):
+//   • Standard: EINE Ebene zurück, falls der Stack noch Eltern-Sheets enthält
+//     (Button/Swipe/Backdrop wirken so als „Zurück").
+//   • force=true: hart komplett schließen + Stack leeren (für terminale Aktionen
+//     wie Löschen/Anlegen/Neuberechnen/Home, nach denen render() ohnehin greift).
+function closeSheet(force){
   const sheet=document.getElementById('sheet');
   const bg=document.getElementById('sheetBg');
+  if(!force && _sheetStack.length){
+    // Zurück zum Eltern-Sheet: Swipe/Transform zurücksetzen, Eltern neu bauen.
+    if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
+    sheet.classList.remove('is-dragging');
+    sheet.style.transition=''; sheet.style.transform='';
+    bg.style.transition=''; bg.style.opacity='';
+    const entry = _sheetStack.pop();
+    _sheetPopping = true;
+    try {
+      entry.fn();
+      // Scroll-Position des Eltern-Sheets wiederherstellen (openSheet setzt 0).
+      try { if(entry.scroll) sheet.scrollTop = entry.scroll; } catch(e){}
+    }
+    catch(e){ _sheetForceClose(sheet,bg); }
+    _sheetPopping = false;
+    return;
+  }
+  _sheetForceClose(sheet,bg);
+}
+function _sheetForceClose(sheet,bg){
+  _sheetStack.length = 0; _sheetReopen = null;
   // Swipe-Listener aufräumen
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
   sheet.classList.remove('show','is-dragging');
@@ -11833,6 +11909,7 @@ function playerAwards(id){
 
 function showPlayer(id){
   const p=pmap()[id];if(!p)return;
+  _sheetSetReopen(()=>showPlayer(id));
   const allStats = allPlayerStats(); // Hole den globalen Cache einmal
   const s = allStats[id] || playerStats(id); // Nutze Cache, Fallback für versteckte Spieler
   const {best,worst}=bestWorstMate(id, s); // Übergebe 's'
@@ -12512,30 +12589,30 @@ const rankProgHtml = rInfo ? `
 
   // Click-Handler
   const eb=document.getElementById('ppEditBtn');
-  if(eb) eb.onclick=()=>{ closeSheet(); setTimeout(()=>showEditPlayer(id),350); };
+  if(eb) eb.onclick=()=>{ sheetNav(()=>showEditPlayer(id)); };
   const ag=document.getElementById('ppAwardsGrid');
-  if(ag) ag.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerAwards(id,awards),350); };
+  if(ag) ag.onclick=()=>{ sheetNav(()=>showPlayerAwards(id,awards)); };
   const bb=document.getElementById('ppBadgesBtn');
-  if(bb) bb.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerBadges(id),350); };
+  if(bb) bb.onclick=()=>{ sheetNav(()=>showPlayerBadges(id)); };
   const h2hb=document.getElementById('ppH2HBtn');
-  if(h2hb) h2hb.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerH2HList(id),350); };
+  if(h2hb) h2hb.onclick=()=>{ sheetNav(()=>showPlayerH2HList(id)); };
   const sr=document.getElementById('ppSeasonsRail');
-  if(sr) sr.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
+  if(sr) sr.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   const rk=document.getElementById('ppRanksBtn');
-  if(rk) rk.onclick=()=>{ closeSheet(); setTimeout(()=>showRangSystem(),350); };
+  if(rk) rk.onclick=()=>{ sheetNav(()=>showRangSystem()); };
   const tp=document.getElementById('ppTrPlayer');
-  if(tp) tp.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
+  if(tp) tp.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   const tt=document.getElementById('ppTrTeam');
-  if(tt) tt.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
+  if(tt) tt.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   document.querySelectorAll('.pp-trophies .pp-tr').forEach(el=>{
-    el.onclick=()=>{ closeSheet(); setTimeout(()=>showPlayerSeasons(id),350); };
+    el.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   });
   // Mate-Karten öffnen das Team-Profil (Spieler + Mate)
   document.querySelectorAll('[data-team]').forEach(el=>{
     el.onclick=()=>{
       const [a,b]=el.dataset.team.split('|');
       if(!a||!b) return;
-      closeSheet(); setTimeout(()=>showTeam(a,b),350);
+      sheetNav(()=>showTeam(a,b));
     };
   });
   // Bilanzen-Zeilen öffnen das H2H-Sheet (Reihenfolge bewahren — Profil-Spieler zuerst)
@@ -12543,7 +12620,7 @@ const rankProgHtml = rInfo ? `
     el.onclick=()=>{
       const [a,b]=el.dataset.h2h.split('|');
       if(!a||!b) return;
-      closeSheet(); setTimeout(()=>showH2H(a,b),350);
+      sheetNav(()=>showH2H(a,b));
     };
   });
   // Lieblings-/Angstgegner-Karten öffnen das Gegner-Profil
@@ -12551,7 +12628,7 @@ const rankProgHtml = rInfo ? `
     el.onclick=()=>{
       const oid=el.dataset.detail;
       if(!oid) return;
-      closeSheet(); setTimeout(()=>showPlayer(oid),350);
+      sheetNav(()=>showPlayer(oid));
     };
   });
 
@@ -12560,6 +12637,7 @@ const rankProgHtml = rInfo ? `
   if(dp) dp.onclick=async()=>{
     const inMatches=matches.some(m=>[m.a1,m.a2,m.b1,m.b2].includes(id));
     if(inMatches){
+      _pushCurrentSheet(); // Spielerprofil stapeln → „Zurück" möglich
       openSheet(`
         <h3>Spieler entfernen</h3>
         <div class="sheet-sub">${esc(p.name)} · ${gamesPlayed(id)} Matches</div>
@@ -12583,20 +12661,20 @@ const rankProgHtml = rInfo ? `
       `);
       document.getElementById('hidePlayerBtn').onclick=async()=>{
         await sb.from('players').update({hidden:true}).eq('id',id);
-        closeSheet(); toast(esc(p.name)+' ausgeblendet'); await loadAll();
+        closeSheet(true); toast(esc(p.name)+' ausgeblendet'); await loadAll();
       };
       document.getElementById('deletePlayerBtn').onclick=async()=>{
         if(!confirm('Wirklich komplett löschen? Namen erscheinen dann als "?" in allen Matches.')) return;
         await sb.from('players').delete().eq('id',id);
-        closeSheet(); toast('Gelöscht'); await loadAll();
+        closeSheet(true); toast('Gelöscht'); await loadAll();
       };
       document.getElementById('cancelDelBtn').onclick=()=>{
-        closeSheet(); setTimeout(()=>showPlayer(id),350);
+        closeSheet(); // zurück zum Spielerprofil (Stack-Pop)
       };
     } else {
       if(!confirm(`Spieler "${p.name}" löschen?`)) return;
       await sb.from('players').delete().eq('id',id);
-      closeSheet(); toast('Gelöscht'); await loadAll();
+      closeSheet(true); toast('Gelöscht'); await loadAll();
     }
   };
 }
@@ -12604,6 +12682,7 @@ const rankProgHtml = rInfo ? `
 // ─── Spieler bearbeiten: Spitzname + Avatar wählen ───
 function showEditPlayer(id){
   const p=pmap()[id]; if(!p) return;
+  _sheetSetReopen(()=>showEditPlayer(id));
   let selectedAvatar = p.avatar_id || null;
 
   const avPickerHtml = `
@@ -12642,7 +12721,7 @@ function showEditPlayer(id){
   }
 
   document.getElementById('editCancel').onclick=()=>{
-    closeSheet(); setTimeout(()=>showPlayer(id),350);
+    closeSheet(); // zurück zum Spielerprofil (Stack-Pop)
   };
 
   document.getElementById('editSave').onclick=async()=>{
@@ -12663,8 +12742,7 @@ function showEditPlayer(id){
     } else {
       toast('Gespeichert','ok');
     }
-    closeSheet();
-    setTimeout(()=>showPlayer(id),350);
+    closeSheet(); // zurück zum Spielerprofil (Stack-Pop, zeigt aktualisiertes Avatar)
   };
 }
 
@@ -12702,6 +12780,7 @@ function computeSeasonHistory(playerId, limit){
 
 // Awards-Sheet für einen Spieler: listet alle gehaltenen Awards auf, jeweils anklickbar
 function showRangSystem(){
+  _sheetSetReopen(()=>showRangSystem());
   const avgs=getSeasonAvgElos();
   const ranked=players.filter(p=>!p.hidden&&avgs[p.id]!==null)
     .sort((a,b)=>avgs[b.id]-avgs[a.id]);
@@ -12746,6 +12825,7 @@ function showRangSystem(){
 }
 function showPlayerAwards(playerId, awards){
   const p=pmap()[playerId]; if(!p)return;
+  _sheetSetReopen(()=>showPlayerAwards(playerId, awards));
   // Mapping wie in vAwards/AW_IC für konsistente Icons
   // ⚑ HOTSPOT — Spiegel von AW_IC aus §5.3 (vAwards). Bei neuen Awards HIER
   //  und in den anderen 2 AW_IC-Definitionen gleichzeitig erweitern.
@@ -12811,15 +12891,16 @@ function showPlayerAwards(playerId, awards){
     <button class="btn ghost sm" id="backToPlayer" style="margin-top:14px;width:100%">← Zurück zum Profil</button>
   `);
   document.querySelectorAll('[data-paward2]').forEach(el=>el.onclick=()=>{
-    closeSheet();setTimeout(()=>showAward(el.dataset.paward2),350);
+    sheetNav(()=>showAward(el.dataset.paward2));
   });
   const back=document.getElementById('backToPlayer');
-  if(back) back.onclick=()=>{closeSheet();setTimeout(()=>showPlayer(playerId),350);};
+  if(back) back.onclick=()=>closeSheet();
 }
 
 // Badges-Sheet: zeigt alle Badges (freigeschaltet vs. gesperrt)
 function showPlayerBadges(playerId){
   const p = pmap()[playerId]; if(!p) return;
+  _sheetSetReopen(()=>showPlayerBadges(playerId));
   const earned = getCachedBadges(playerId);
   const earnedIds = new Map(earned.map(b => [b.id, b.count]));
   // ONCE_ONLY: Badges, die man nur einmal erreicht (keine Wiederholung als ×N)
@@ -12919,7 +13000,7 @@ function showPlayerBadges(playerId){
     <button class="btn ghost sm" id="backToPlayer2" style="margin-top:18px">← Zurück zum Profil</button>
   `);
   const back = document.getElementById('backToPlayer2');
-  if(back) back.onclick = () => { closeSheet(); setTimeout(()=>showPlayer(playerId), 350); };
+  if(back) back.onclick = () => closeSheet();
   // Badge-Card-Click → öffnet Detail-Popover ÜBER dem Sheet (Sheet bleibt offen!)
   document.querySelectorAll('.bsh-card[data-bid]').forEach(el => {
     el.onclick = () => showBadgePopover(el.dataset.bid, playerId);
@@ -13150,8 +13231,7 @@ function showBadgePopover(badgeId, playerId){
     el.onclick = () => {
       const mid = el.dataset.mid;
       closeBadgePopover();
-      closeSheet();
-      setTimeout(() => showMatchDetail(mid), 350);
+      sheetNav(() => showMatchDetail(mid)); // Match-Detail über das aktuelle Sheet stapeln
     };
   });
   document.getElementById('bpCloseBtn').onclick = closeBadgePopover;
@@ -13171,6 +13251,7 @@ function closeBadgePopover(){
 // zuerst, damit "asOppForA" aus seiner Sicht aggregiert).
 function showPlayerH2HList(playerId){
   const p = pmap()[playerId]; if(!p) return;
+  _sheetSetReopen(()=>showPlayerH2HList(playerId));
   const h2hList = playerH2HList(playerId, 3);
   const pmL = pmap();
 
@@ -13218,12 +13299,12 @@ function showPlayerH2HList(playerId){
     sheetEl.querySelectorAll('[data-h2h]').forEach(el=>{
       el.onclick = () => {
         const [a,b] = el.dataset.h2h.split('|');
-        if(a && b){ closeSheet(); setTimeout(()=>showH2H(a,b), 350); }
+        if(a && b){ sheetNav(()=>showH2H(a,b)); }
       };
     });
   }
   const back = document.getElementById('backToPlayerH2H');
-  if(back) back.onclick = () => { closeSheet(); setTimeout(()=>showPlayer(playerId), 350); };
+  if(back) back.onclick = () => closeSheet();
 }
 
 // Saison-Auszeichnungen eines Spielers
@@ -13261,6 +13342,7 @@ function seasonBtnHtml(id){
 }
 function showPlayerSeasons(playerId){
   const p=pmap()[playerId];if(!p)return;
+  _sheetSetReopen(()=>showPlayerSeasons(playerId));
   const sa=playerSeasonAwards(playerId);
   const rows=sa.flatMap(s=>{
     const isPlayer=s.player_id===playerId;
@@ -13288,7 +13370,7 @@ function showPlayerSeasons(playerId){
     <button class="btn ghost sm" id="backToPlayer3" style="margin-top:14px">← Zurück zum Profil</button>
   `);
   const back=document.getElementById('backToPlayer3');
-  if(back) back.onclick=()=>{closeSheet();setTimeout(()=>showPlayer(playerId),350);};
+  if(back) back.onclick=()=>closeSheet();
 }
 
 function showAddPlayer(){
@@ -13299,7 +13381,7 @@ function showAddPlayer(){
   const go=async()=>{const n=ni.value.trim();if(!n){toast('Name fehlt',true);return;}
     const{error}=await sb.from('players').insert({name:n,elo:cfg.start_elo,atk:0.5});
     if(error){toast(error.message.includes('duplicate')?'Name existiert':'Fehler',true);return;}
-    closeSheet();toast('Spieler angelegt','ok');await loadAll();};
+    closeSheet(true);toast('Spieler angelegt','ok');await loadAll();};
   document.getElementById('confirmAdd').onclick=go;
   ni.onkeydown=e=>{if(e.key==='Enter')go();};
 }
@@ -13337,6 +13419,20 @@ function bind(){
           cont.querySelectorAll('[data-detail]').forEach(el=>el.onclick=()=>showPlayer(el.dataset.detail));
         }
       }, 300); // 300ms Verzögerung
+    };
+  }
+
+  // Teams-Tab-Suche (Spieler oder Team) — analog rankSearch, mit Fokus-Restore.
+  const ts=document.getElementById('teamSearch');
+  if(ts){
+    let teamSearchTimeout;
+    ts.oninput=()=>{
+      teamSearch=ts.value;
+      clearTimeout(teamSearchTimeout);
+      teamSearchTimeout=setTimeout(()=>{
+        const pos=ts.selectionStart; render();
+        const n=document.getElementById('teamSearch'); if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}
+      }, 300);
     };
   }
 
@@ -13613,6 +13709,7 @@ function showH2H(idA, idB){
   const pm = pmap();
   const pA = pm[idA], pB = pm[idB];
   if(!pA || !pB) return;
+  _sheetSetReopen(()=>showH2H(idA, idB));
   if(idA === idB) return;
 
   const d = h2hDetail(idA, idB);
@@ -13769,13 +13866,13 @@ function showH2H(idA, idB){
   const sheetEl = document.getElementById('sheet');
   if(sheetEl){
     sheetEl.querySelectorAll('[data-detail]').forEach(el=>{
-      el.onclick=()=>{const pid=el.dataset.detail; closeSheet(); setTimeout(()=>showPlayer(pid),350);};
+      el.onclick=()=>{const pid=el.dataset.detail; sheetNav(()=>showPlayer(pid));};
     });
     sheetEl.querySelectorAll('[data-team]').forEach(el=>{
-      el.onclick=()=>{const [a,b]=el.dataset.team.split('|'); if(a&&b){closeSheet(); setTimeout(()=>showTeam(a,b),350);}};
+      el.onclick=()=>{const [a,b]=el.dataset.team.split('|'); if(a&&b){sheetNav(()=>showTeam(a,b));}};
     });
     sheetEl.querySelectorAll('[data-match]').forEach(el=>{
-      el.onclick=()=>{const mid=el.dataset.match; closeSheet(); setTimeout(()=>showMatchDetail(mid),350);};
+      el.onclick=()=>{const mid=el.dataset.match; sheetNav(()=>showMatchDetail(mid));};
     });
   }
 }
@@ -13787,6 +13884,7 @@ function showTeam(p1Id,p2Id){
   const pm=pmap();
   const pA=pm[p1Id], pB=pm[p2Id];
   if(!pA||!pB) return;
+  _sheetSetReopen(()=>showTeam(p1Id,p2Id));
   const d=teamDetail(p1Id,p2Id);
   if(!d.games){
     openSheet(`
@@ -14229,20 +14327,21 @@ function showTeam(p1Id,p2Id){
   const sheetEl=document.getElementById('sheet');
   if(sheetEl){
     sheetEl.querySelectorAll('[data-detail]').forEach(el=>{
-      el.onclick=()=>{const pid=el.dataset.detail; closeSheet(); setTimeout(()=>showPlayer(pid),350);};
+      el.onclick=()=>{const pid=el.dataset.detail; sheetNav(()=>showPlayer(pid));};
     });
     sheetEl.querySelectorAll('[data-match]').forEach(el=>{
-      el.onclick=()=>{const mid=el.dataset.match; closeSheet(); setTimeout(()=>showMatchDetail(mid),350);};
+      el.onclick=()=>{const mid=el.dataset.match; sheetNav(()=>showMatchDetail(mid));};
     });
     // Team-Award-Chips: Klick öffnet Award-Detail-Sheet
     sheetEl.querySelectorAll('[data-team-award]').forEach(el=>{
-      el.onclick=()=>{const key=el.dataset.teamAward; closeSheet(); setTimeout(()=>{ awPeriod='all'; awSeasonId=null; showAward(key); },350);};
+      el.onclick=()=>{const key=el.dataset.teamAward; sheetNav(()=>{ awPeriod='all'; awSeasonId=null; showAward(key); });};
     });
   }
 }
 
 function showMatchDetail(mid){
   const m=matches.find(x=>x.id===mid);if(!m)return;
+  _sheetSetReopen(()=>showMatchDetail(mid));
   // DB-First: Delta-Anzeige immer aus m.deltas (Wahrheitsquelle).
   // matchBreakdown() bleibt für Slider-Detail-Komponenten verfügbar.
   const line=(id,pos)=>{
@@ -14376,7 +14475,7 @@ function showMatchDetail(mid){
   document.getElementById('editThisMatch').onclick=()=>showEditMatch(mid);
   document.getElementById('delThisMatch').onclick=async()=>{
         if(!confirm('Match wirklich löschen? Die gesamte Rangliste wird danach automatisch neu berechnet.'))return;
-    closeSheet(); toast('Lösche & berechne neu…');
+    closeSheet(true); toast('Lösche & berechne neu…');
     await sb.from('matches').delete().eq('id',mid);
     const rest=matches.filter(x=>x.id!==mid);
     invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']); // <-- HIER INVALIDIEREN
@@ -14390,7 +14489,7 @@ function showMatchDetail(mid){
     el.onclick=()=>{
       const [a,b]=el.dataset.team.split('|');
       if(!a||!b) return;
-      closeSheet(); setTimeout(()=>showTeam(a,b),350);
+      sheetNav(()=>showTeam(a,b));
     };
   });
 }
@@ -14448,7 +14547,7 @@ function showEditMatch(mid){
   document.getElementById('saveEdit').onclick=async()=>{
     readE(); const ids=[E.A1,E.A2,E.B1,E.B2];
     if(ids.some(x=>!x)||new Set(ids).size!==4||E.sa===E.sb){toast('Eingabe unvollständig',true);return;}
-    closeSheet(); toast('Speichere & berechne neu…');
+    closeSheet(true); toast('Speichere & berechne neu…');
     const winner=E.sa>E.sb?'A':'B';
     // Match-Zeile aktualisieren (Deltas folgen aus der Neuberechnung)
     await sb.from('matches').update({
@@ -14552,7 +14651,7 @@ document.getElementById('settingsBtn').onclick=openSettingsLock;
   };
   btn.onclick = () => showPositionHistory();
 })();
-document.getElementById('logoHome').onclick=()=>{tab='ranking';period='season';rankSearch='';closeSheet();render();window.scrollTo(0,0);};
+document.getElementById('logoHome').onclick=()=>{tab='ranking';period='season';rankSearch='';closeSheet(true);render();window.scrollTo(0,0);};
 document.getElementById('fab').onclick=()=>{tab='match';render();window.scrollTo(0,0);};
 
 // ╔═══ §10.3 ─── HELPERS (Achievement-Toasts, Utils) ───────────────────╗
@@ -16930,6 +17029,7 @@ function _newsHeroHtml(s){
 }
 
 function _renderNewsFeed(){
+  _sheetSetReopen(()=>_renderNewsFeed());
   const stories = getStoriesCache();
   const seen = _newsLoadSeen();
   // Kuratierte, bewusst KURZE Filter-Liste (v9.1): „Neu"/„Ungelesen"/„Saison"
@@ -17072,8 +17172,7 @@ function openNewsDetail(sid){
       const mid = el.dataset.mid;
       closeNewsDetail();
       closeNewsPopover();
-      closeSheet();
-      setTimeout(() => { try { showMatchDetail(mid); } catch(e){} }, 320);
+      sheetNav(() => { try { showMatchDetail(mid); } catch(e){} }); // über den News-Feed stapeln
     };
   });
   // Player-Refs: zum Spielerprofil
@@ -17082,8 +17181,7 @@ function openNewsDetail(sid){
       const pid = el.dataset.pid;
       closeNewsDetail();
       closeNewsPopover();
-      closeSheet();
-      setTimeout(() => { try { showPlayer(pid); } catch(e){} }, 320);
+      sheetNav(() => { try { showPlayer(pid); } catch(e){} }); // über den News-Feed stapeln
     };
   });
 }
