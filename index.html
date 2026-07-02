@@ -16770,6 +16770,31 @@ function getStoriesCache(){
   return _consolidateStories(base).slice(0, NEWS_LIMITS.total);
 }
 
+// v9.6: Aktuelle (LEBENDE) Niederlagenserie je Spieler aus Live-Matches.
+// Nötig, weil persistierte „loss_streak"-Stories bis expires_at im Feed bleiben
+// und sonst „N Pechvögel" zeigen, obwohl die Serie längst durch einen Sieg
+// gebrochen ist. Zählt zusammenhängende Nicht-Siege vom jüngsten Match rückwärts
+// (Cap 12, exakt wie der Generator). Gecacht per matches.length + _cache.version.
+function _liveLossStreaks(){
+  const key = matches.length + '_' + _cache.version;
+  if(_cache._liveLossKey === key) return _cache._liveLoss;
+  const byP = {};
+  for(const m of matches){
+    const ids = [m.a1, m.a2, m.b1, m.b2];
+    for(let i = 0; i < 4; i++){ const pid = ids[i]; if(!pid) continue; (byP[pid] || (byP[pid] = [])).push(m); }
+  }
+  const out = {};
+  for(const pid in byP){
+    const arr = byP[pid];
+    let s = 0;
+    for(let i = arr.length - 1; i >= 0; i--){ if(won(pid, arr[i])) break; s++; if(s > 12) break; }
+    out[pid] = s;
+  }
+  _cache._liveLossKey = key;
+  _cache._liveLoss = out;
+  return out;
+}
+
 // Display-seitige Konsolidierung gegen Match-Event-Spam (v8.6).
 // Bewusst beim ANZEIGEN, nicht beim Erzeugen — Gründe:
 //   • Stories sind in der DB persistiert (ON CONFLICT DO NOTHING). Würde man im
@@ -16791,6 +16816,19 @@ function _consolidateStories(list){
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
   const fmtNames = arr => arr.length <= 1 ? (arr[0] || '') : arr.slice(0, -1).join(', ') + ' & ' + arr[arr.length - 1];
 
+  // v9.6: Veraltete „loss_streak"-Stories rausfiltern, BEVOR gruppiert/suppress-
+  // iert wird. Eine Story bleibt nur, wenn die AKTUELLE Niederlagenserie des
+  // Spielers die genannte Länge noch erreicht. Hat er die Serie durch einen Sieg
+  // gebrochen (live=0) oder eine neue, kürzere Serie begonnen, ist die alte Story
+  // stale → raus. Sonst zeigt „N Pechvögel" Spieler, die längst nicht mehr in
+  // Serie verlieren (z.B. jemand mit 1-0-Bilanz als angeblicher 6er-Pechvogel).
+  const _liveLoss = _liveLossStreaks();
+  const src = list.filter(s => {
+    const d = (s && s.dataRef) || {};
+    if(d.type === 'loss_streak' && d.pid) return (_liveLoss[d.pid] || 0) >= (d.streak || 0);
+    return true;
+  });
+
   // Regel-Tabelle (v8.7): Highlights, die einen Badge inhaltlich ABDECKEN →
   // der Badge entfällt, sonst stünde dasselbe Ereignis doppelt im Feed.
   const HL_COVERS = {
@@ -16811,7 +16849,7 @@ function _consolidateStories(list){
   // v9.5: Spieler mit laufender „Siege in Folge"-Story → deren Top-Form-Story
   // (≥8/10) beschreibt dieselbe heiße Phase und entfällt (kein Doppel).
   const winStreakPids = new Set();
-  for(const s of list){
+  for(const s of src){
     const d = s.dataRef || {};
     if(d.type === 'rivalry_milestone' && d.a && d.b) rivalryMsPairs.add([d.a, d.b].sort().join('|'));
     if(d.type === 'giant_slayer' && d.matchId) giantSlayerMatches.add(d.matchId);
@@ -16841,7 +16879,7 @@ function _consolidateStories(list){
   const badgeGroups = new Map();
   const typeGroups = new Map();
   const slots = [];
-  for(const s of list){
+  for(const s of src){
     const d = s.dataRef || {};
     // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
     // eine (spezifischere) Meilenstein-Story hat.
