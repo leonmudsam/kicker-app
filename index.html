@@ -1768,6 +1768,19 @@
     border-radius:10px;padding:11px 13px;text-align:center;font-size:11.5px;
     color:var(--ink2);line-height:1.5}
   .bp-locked-hint .bp-locked-em{color:var(--ink);font-weight:700}
+  /* Aktueller-Lauf-Zähler (Kontext-/Serien-Badges) */
+  .bp-run-hint{font-size:10px;color:var(--muted);margin-top:7px;line-height:1.45;
+    font-family:'Sometype Mono',monospace}
+  .bp-run-label{margin-top:9px;font-family:'Sometype Mono',monospace;
+    font-size:10.5px;color:var(--ink2);font-weight:600}
+  /* Wochentags-Chips (z. B. Allwetter) */
+  .bp-weekdays{display:flex;gap:6px}
+  .bp-wd{flex:1;text-align:center;padding:8px 0;border-radius:9px;
+    background:var(--surface3);border:1px solid var(--line);
+    font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;
+    color:var(--muted);transition:.16s}
+  .bp-wd.on{background:rgba(247,207,74,.14);border-color:rgba(247,207,74,.45);
+    color:var(--gold)}
   /* Status-Pill (×N oder Freigeschaltet) */
   .bp-status{margin-left:auto;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end}
   .bp-status-count{font-family:'Archivo Black',sans-serif;font-size:18px;color:currentColor;line-height:1}
@@ -9598,9 +9611,15 @@ function vTeams(){
   // Dezente Team-/Spieler-Suche: filtert das aktuelle (sortierte) Feld nach
   // Spielername ODER kombiniertem Team-Namen. Beim Suchen keine Top-3-Medaillen.
   const _tq = (teamSearch||'').trim().toLowerCase();
-  const arrF = _tq
-    ? arr.filter(t => t.ids.some(id => ((pm[id]&&pm[id].name)||'').toLowerCase().includes(_tq))
-        || t.ids.map(pname).join(' & ').toLowerCase().includes(_tq))
+  // Tokenisierte Suche: „&" und Leerzeichen trennen die Terme, Reihenfolge egal.
+  // Dadurch findet „Leon & Martin", „Martin & Leon", „Leon Martin" und „Martin Leon"
+  // dasselbe Duo. Jeder Term muss auf mind. einen der beiden Spielernamen passen.
+  const _tqTokens = _tq.split(/[\s&]+/).filter(Boolean);
+  const arrF = _tqTokens.length
+    ? arr.filter(t => {
+        const names = t.ids.map(id => ((pm[id]&&pm[id].name)||'').toLowerCase());
+        return _tqTokens.every(tok => names.some(nm => nm.includes(tok)));
+      })
     : arr;
 
   const rows=arrF.map((t,i)=>{
@@ -13137,26 +13156,184 @@ function _badgeProgress(badgeId, playerId){
         && goalsFor(playerId,m)===0 && goalsAgainst(playerId,m)===10).length;
       return {cur: Math.min(disasters, 3), tgt: 3, label: '0:10 in aktueller Saison'};
     }
+    // nemesis: siehe _badgeStreakState — dort als „Aktueller Lauf" (locked + unlocked).
+  }
+  return null;
+}
+
+// Aktueller (laufender) Zähler für Kontext-/Serien-Badges, der sich je nach
+// Spielverlauf wieder zurücksetzt (z. B. „Zittersiege in Folge"). Anders als
+// _badgeProgress (kumulativer Rekord/Bestwert) zeigt das den LEBENDEN Stand
+// bis zum letzten Match — also wie nah der Spieler an der nächsten Auslösung ist.
+// Reused die Loop-Logik der jeweiligen count*-Funktion, gibt aber den End-Wert
+// des laufenden Zählers zurück statt der Anzahl der Auslösungen.
+// Läuft nur beim Öffnen des Badge-Popovers (Klick) → keine Render-Hotpath-Kosten.
+// Rückgabe: {cur, tgt, label, hint} · für Wochentag-Badges {weekdays:Set, tgt,
+// label, kind:'weekday'} · sonst null (Badge hat keinen resettbaren Zähler).
+function _badgeStreakState(badgeId, playerId){
+  if(badgeId === 'award_collector'){
+    // Reset pro Saison: laufender Stand der AKTUELLEN Saison (5 Tagessiege UND
+    // 2 Wochensiege nötig). Wiederverwendung von countDayWins/countPeriodWins auf
+    // den (bereits gecachten) Saison-Matches — beide schließen den laufenden Tag
+    // bzw. die laufende Woche aus, zählen also nur abgeschlossene Perioden.
+    const sid = currentSeason().id;
+    const key = 'awColl_'+playerId+'_'+sid+'_'+matches.length+'_'+_cache.version;
+    if(!_cache._awColl) _cache._awColl = {};
+    let res = _cache._awColl[key];
+    if(!res){
+      const seasonMs = matchesInSeason(sid);
+      res = { potd: countDayWins(playerId, seasonMs), potw: countPeriodWins(playerId, seasonMs, 'week') };
+      _cache._awColl[key] = res;
+    }
+    return {
+      kind:'dual',
+      metrics:[
+        {cur:res.potd, tgt:5, label:'Tagessiege'},
+        {cur:res.potw, tgt:2, label:'Wochensiege'}
+      ],
+      hint:'Zählt nur die laufende Saison — beide Ziele nötig, Reset zu Saisonbeginn.'
+    };
+  }
+  if(badgeId === 'allwetter'){
+    // Wochentage, an denen bereits Player-of-the-Day — 1:1 aus countAllwetter,
+    // aber wir behalten das Set (statt nur size≥5) für die Chip-Anzeige.
+    const byDay = {};
+    matches.forEach(m => {
+      const day = new Date(m.created_at).toISOString().slice(0,10);
+      if(!byDay[day]) byDay[day] = { ms: [], jsDate: new Date(m.created_at) };
+      byDay[day].ms.push(m);
+    });
+    const today = new Date().toISOString().slice(0,10);
+    const weekdays = new Set();
+    Object.entries(byDay).forEach(([day, info]) => {
+      if(day === today) return;       // laufender Tag zählt nicht
+      if(info.ms.length < 2) return;  // POTD braucht min. 2 Spiele am Tag
+      const winsById = {};
+      info.ms.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(pid => {
+        if(!winsById[pid]) winsById[pid] = 0;
+        const onA = [m.a1,m.a2].includes(pid);
+        if((onA && m.winner==='A') || (!onA && m.winner==='B')) winsById[pid]++;
+      }));
+      const maxW = Math.max(...Object.values(winsById));
+      if(maxW < 3) return;
+      if((winsById[playerId]||0) === maxW) weekdays.add(info.jsDate.getDay());
+    });
+    return {weekdays, tgt:5, label:'Wochentage als Tagessieger', kind:'weekday'};
+  }
+
+  // Alle übrigen Fälle laufen chronologisch durch die Matches des Spielers.
+  const ordered = matches.filter(m => matchOf(playerId,m))
+    .sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+
+  switch(badgeId){
+    case 'nerves_of_steel': {
+      // Zittersiege (10:9) in Folge — nicht-knappe Partien überspringen die Serie
+      // ohne sie zu brechen; nur eine knappe Niederlage (9:10) setzt zurück.
+      let cur = 0;
+      ordered.forEach(m => {
+        const gf=goalsFor(playerId,m), ga=goalsAgainst(playerId,m);
+        const isClose=(gf===10&&ga===9)||(gf===9&&ga===10);
+        if(!isClose) return;
+        cur = won(playerId,m) ? cur+1 : 0;
+      });
+      return {cur, tgt:3, label:'Zittersiege in Folge', hint:'Setzt bei knapper Niederlage (9:10) zurück'};
+    }
+    case 'krimi': {
+      // Partien mit Tordifferenz ≤ 2 in Folge — ein klares Ergebnis bricht die Serie.
+      let cur = 0;
+      ordered.forEach(m => {
+        cur = Math.abs(m.score_a-m.score_b) <= 2 ? cur+1 : 0;
+      });
+      return {cur, tgt:5, label:'Krimis in Folge (Tordiff ≤ 2)', hint:'Setzt bei klarem Ergebnis (Tordiff > 2) zurück'};
+    }
+    case 'repeat_score': {
+      // Siege mit identischem Endstand in Folge — Niederlage oder anderer Score bricht.
+      let lastScore=null, cur=0;
+      ordered.forEach(m => {
+        if(!won(playerId,m)){cur=0;lastScore=null;return;}
+        const score=goalsFor(playerId,m)+':'+goalsAgainst(playerId,m);
+        if(score===lastScore) cur++; else {cur=1;lastScore=score;}
+      });
+      return {cur, tgt:3, label:'Siege mit gleichem Endstand in Folge', hint:'Setzt bei Niederlage oder anderem Ergebnis zurück'};
+    }
+    case 'losing5': {
+      let cur=0;
+      ordered.forEach(m => { cur = won(playerId,m) ? 0 : cur+1; });
+      return {cur, tgt:5, label:'Niederlagen in Folge', hint:'Setzt bei einem Sieg zurück'};
+    }
+    case 'streak5': case 'streak10': case 'streak15': case 'streak20': {
+      const tgts={streak5:5,streak10:10,streak15:15,streak20:20};
+      let cur=0;
+      ordered.forEach(m => { cur = won(playerId,m) ? cur+1 : 0; });
+      return {cur, tgt:tgts[badgeId], label:'Siege in Folge', hint:'Setzt bei einer Niederlage zurück'};
+    }
     case 'nemesis': {
-      // Höchster AKTUELLER Niederlagen-Streak gegen einen einzelnen Gegner.
-      // Lauf chronologisch durch alle Matches, halte vsCounter pro Gegner.
-      // Sieg gegen X → vsCounter[X]=0; Niederlage gegen X → +1.
-      // Anzeige: max() über alle finalen Counter (= aktueller laufender Streak).
-      const mine = matches.filter(m => matchOf(playerId,m))
-        .sort((a,b) => new Date(a.created_at) - new Date(b.created_at));
+      // Aktueller Niederlagen-Streak gegen denselben Gegner (max. über alle Gegner).
       const vs = {};
-      mine.forEach(m => {
+      ordered.forEach(m => {
         const onA = [m.a1,m.a2].includes(playerId);
         const w = (onA && m.winner==='A') || (!onA && m.winner==='B');
         const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
         if(w) opps.forEach(o => { vs[o] = 0; });
         else  opps.forEach(o => { vs[o] = (vs[o]||0) + 1; });
       });
-      const best = Object.values(vs).reduce((a,b) => a>b?a:b, 0);
-      return {cur: Math.min(best, 5), tgt: 5, label: 'akt. Niederlagen gg. selben Gegner'};
+      const cur = Object.values(vs).reduce((a,b) => a>b?a:b, 0);
+      return {cur, tgt:5, label:'Niederlagen gg. denselben Gegner in Folge', hint:'Setzt bei einem Sieg gegen diesen Gegner zurück'};
     }
   }
   return null;
+}
+
+// Rendert den „Aktueller Lauf"-Abschnitt für ein Kontext-/Serien-Badge.
+// Gibt '' zurück, wenn das Badge keinen resettbaren Zähler hat.
+const _WEEKDAY_ABBR = ['Mo','Di','Mi','Do','Fr','Sa','So']; // Index = (getDay()+6)%7
+function _badgeStreakSectionHtml(badgeId, playerId, rarity){
+  const st = _badgeStreakState(badgeId, playerId);
+  if(!st) return '';
+  if(st.kind === 'dual'){
+    // Zwei parallele Ziele (z. B. Award-Sammler: Tagessiege + Wochensiege).
+    const bars = st.metrics.map(mt => {
+      const done = mt.cur >= mt.tgt;
+      const pct = Math.round(Math.min(mt.cur / mt.tgt, 1) * 100);
+      return `
+      <div class="bp-prog">
+        <div class="bp-prog-bar"><div class="bp-prog-fill ${rarity}" style="width:${pct}%"></div></div>
+        <div class="bp-prog-label">
+          <span>${mt.cur} / ${mt.tgt} <span class="bp-prog-target">${esc(mt.label)}</span></span>
+          <span>${done?'✓':pct+'%'}</span>
+        </div>
+      </div>`;
+    }).join('');
+    return `
+      <div class="bp-section">Aktuelle Saison</div>
+      ${bars}
+      <div class="bp-run-hint">${esc(st.hint)}</div>`;
+  }
+  if(st.kind === 'weekday'){
+    const have = st.weekdays.size;
+    const chips = _WEEKDAY_ABBR.map((abbr, i) => {
+      // i = (getDay()+6)%7 → 0=Mo … 6=So; zurückrechnen auf getDay()
+      const jsDay = (i + 1) % 7;
+      const on = st.weekdays.has(jsDay);
+      return `<div class="bp-wd ${on?'on':''}">${abbr}</div>`;
+    }).join('');
+    return `
+      <div class="bp-section">Wochentage gesammelt</div>
+      <div class="bp-weekdays">${chips}</div>
+      <div class="bp-run-label"><span>${have} / ${st.tgt} <span class="bp-prog-target">${esc(st.label)}</span></span></div>`;
+  }
+  const cur = st.cur || 0;
+  const pct = Math.round(Math.min(cur / st.tgt, 1) * 100);
+  return `
+    <div class="bp-section">Aktueller Lauf</div>
+    <div class="bp-prog">
+      <div class="bp-prog-bar"><div class="bp-prog-fill ${rarity}" style="width:${pct}%"></div></div>
+      <div class="bp-prog-label">
+        <span>${cur} / ${st.tgt} <span class="bp-prog-target">${esc(st.label)}</span></span>
+        <span>${pct}%</span>
+      </div>
+    </div>
+    <div class="bp-run-hint">${esc(st.hint)}</div>`;
 }
 
 function showBadgePopover(badgeId, playerId){
@@ -13234,6 +13411,11 @@ function showBadgePopover(badgeId, playerId){
         </div>`;
     }
   }
+
+  // Kontext-/Serien-Badges: laufender Zähler (resettet je nach Spielverlauf).
+  // Erscheint zusätzlich zur Match-Liste/zum Fortschritt — sowohl locked als
+  // auch unlocked, damit man sieht, wie nah man an der nächsten Auslösung ist.
+  bodyHtml += _badgeStreakSectionHtml(badgeId, playerId, r);
 
   // Status-Pill rechts oben in der Card (×N oder "Freigeschaltet")
   const statusHtml = unlocked
@@ -14799,9 +14981,9 @@ const NEWS_LIMITS = {
 
 // Ambiente Fun-Fact-Stories (v8.5, v9.5) — Fun Facts / persönliche Nuggets,
 // damit der Feed auch ohne neue Matches lebt.
-//   RHYTHMUS (v9.5): NICHT mehr täglich, sondern ALLE 2 TAGE genau 1 Fun Fact,
-//                    und zwar um 19:00 (Feierabend). „Alle 2 Tage" = gerader
-//                    Epoch-Tagesindex (_isAmbientDay) → geräteübergreifend gleich.
+//   RHYTHMUS (v9.6): TÄGLICH genau 1 Fun Fact, und zwar um 19:00 (Feierabend).
+//                    Früher (v9.5) nur alle 2 Tage — jetzt jeden Abend einer.
+//                    _isAmbientDay ist immer true → jeder Tag hat einen Slot.
 //   AMBIENT_SLOTS  = die Slot-Stunde(n); die Story erscheint erst ab dieser Zeit.
 //   Anti-Spam:     IDs sind tages-deterministisch (`ambient_<datum>_<stunde>`)
 //                  → ON CONFLICT DO NOTHING → keine Doppel über Geräte/Syncs.
@@ -14811,7 +14993,8 @@ const NEWS_LIMITS = {
 //                  vorhersehbarer Reihenfolge, keine schnellen Wiederholungen.
 const AMBIENT_SLOTS = [19];
 // Cooldown-Fenster (Tage): so lange wird ein bereits gezeigter Fun-Fact-Typ
-// nicht erneut gewählt. Bei 1 Fun Fact / 2 Tage sperrt das die letzten ~7 Typen.
+// nicht erneut gewählt. Bei 1 Fun Fact / Tag sperrt das die letzten 14 Typen
+// (der Pool hat ~18) → genug Rotation, keine schnellen Wiederholungen.
 const AMBIENT_COOLDOWN_DAYS = 14;
 // Auto-Sync-Intervall, damit neue Slots ohne Reload auftauchen (ms).
 const NEWS_AUTOSYNC_MS = 10 * 60 * 1000;
@@ -14919,12 +15102,12 @@ function _ladderCrossing(before, after, min){
   return hit;
 }
 
-// Ambient-Tag (v9.5): Fun Facts erscheinen nur ALLE 2 TAGE (um 19:00). Ein
-// gerader Epoch-Tagesindex ist geräteübergreifend identisch (gleiche Zeitzone)
-// → alle Clients erzeugen dieselbe deterministische Story-ID.
+// Ambient-Tag (v9.6): Fun Facts erscheinen TÄGLICH (um 19:00). Früher (v9.5)
+// nur alle 2 Tage über einen geraden Epoch-Tagesindex — jetzt ist jeder Tag ein
+// Ambient-Tag, damit jeden Abend genau 1 Fun Fact kommt. Die Story-ID bleibt
+// tages-deterministisch (`ambient_<datum>_19`) → geräteübergreifend identisch.
 function _isAmbientDay(d){
-  const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  return Math.floor(startOfDay / 86400000) % 2 === 0;
+  return true;
 }
 
 // ─── §11.0d — Persönliche Elo-Meilensteine (v9.5) ────────────────────
@@ -15018,12 +15201,16 @@ function _buildStories(){
   // Slot-Signatur (v8.5): wie viele Ambient-Slots heute schon "offen" sind.
   // Steigt über den Tag (z.B. 0→1 um 12:00, 1→2 um 19:00) und bricht so den
   // Memo-Key, sobald ein neuer Slot fällig wird — auch ohne neues Match.
-  // v9.5: Der Fun-Fact-Slot (19:00) ist nur an „Ambient-Tagen" (alle 2 Tage)
-  // offen. Signatur 1, sobald heute ein Ambient-Tag ist und 19:00 erreicht —
-  // bricht dann den Memo-Key (zusammen mit todayKey), damit der neue Fun Fact
-  // ohne neues Match erscheint.
+  // v9.6: Der Fun-Fact-Slot (19:00) ist täglich offen. Signatur 1, sobald heute
+  // 19:00 erreicht ist — bricht dann den Memo-Key (zusammen mit todayKey), damit
+  // der neue Fun Fact ohne neues Match erscheint.
   const _ambientSlotSig = (_isAmbientDay(now) && now.getHours() >= AMBIENT_SLOTS[0]) ? 1 : 0;
-  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig;
+  // Morgen-Slot (07:00): POTW/POTD-Stories dürfen erst AB 07:00 erscheinen (nicht
+  // schon nachts um 00:xx). Die Signatur kippt 0→1 um 07:00 und bricht dann den
+  // Memo-Key, damit die Story ohne neues Match / ohne Reload auftaucht — analog
+  // zum 19:00-Slot.
+  const _morningSlotSig = now.getHours() >= 7 ? 1 : 0;
+  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig;
   if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
     return _cache._buildStoriesResult;
   }
@@ -16025,19 +16212,24 @@ function _buildStories(){
       if(res){
         const wk = _potwKeyOf(range.start);
         const rep = new Date(range.start); rep.setDate(rep.getDate() + 7); rep.setHours(7, 0, 0, 0);
-        const names = res.winners.map(w => nameOf(w.id));
-        const titleNames = names.length > 1 ? names.slice(0, -1).join(', ') + ' & ' + names[names.length-1] : names[0];
-        const main = res.main;
-        stories.push({
-          id: 'potw_' + wk,
-          cat: 'season',
-          ic: 'weekKing',
-          title: names.length > 1 ? `${titleNames}: Spieler der Woche` : `${titleNames} ist Spieler der Woche`,
-          desc: `Beste Bilanz der Vorwoche: ${main.wins} Siege bei ${Math.round(main.wr*100)}% Siegquote.`,
-          when: rep,
-          prio: 8,
-          dataRef: {type:'potw', weekKey: wk, playerId: main.id, playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
-        });
+        // v9.6: Trigger erst AB 07:00 des Folge-Montags — nicht schon nachts um
+        // 00:xx (sonst „für 07:00 eingetragen, obwohl noch nicht 07:00"). Der
+        // Memo-Key kippt um 07:00 (_morningSlotSig), daher taucht sie dann auf.
+        if(now.getTime() >= rep.getTime()){
+          const names = res.winners.map(w => nameOf(w.id));
+          const titleNames = names.length > 1 ? names.slice(0, -1).join(', ') + ' & ' + names[names.length-1] : names[0];
+          const main = res.main;
+          stories.push({
+            id: 'potw_' + wk,
+            cat: 'season',
+            ic: 'weekKing',
+            title: names.length > 1 ? `${titleNames}: Spieler der Woche` : `${titleNames} ist Spieler der Woche`,
+            desc: `Beste Bilanz der Vorwoche: ${main.wins} Siege bei ${Math.round(main.wr*100)}% Siegquote.`,
+            when: rep,
+            prio: 8,
+            dataRef: {type:'potw', weekKey: wk, playerId: main.id, playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
+          });
+        }
       }
     }
   } catch(e){}
@@ -16051,21 +16243,25 @@ function _buildStories(){
         const res = _newsPeriodWinner(data.dayMatches, 3);
         if(res){
           const rep = new Date(data.dayKey + 'T00:00:00'); rep.setDate(rep.getDate() + 1); rep.setHours(7, 0, 0, 0);
-          const main = res.main;
-          const names = res.winners.map(w => nameOf(w.id));
-          const titleNames = names.length > 1 ? names.slice(0, -1).join(', ') + ' & ' + names[names.length-1] : names[0];
-          const p = data.dayKey.split('-');
-          const dLabel = p[2] + '.' + p[1] + '.';
-          stories.push({
-            id: 'potd_' + data.dayKey,
-            cat: 'highlight',
-            ic: 'dayKing',
-            title: names.length > 1 ? `${titleNames}: Spieler des Tages` : `${titleNames} ist Spieler des Tages`,
-            desc: `Bester Spieler am ${dLabel}: ${main.wins} Siege bei ${Math.round(main.wr*100)}% Siegquote.`,
-            when: rep,
-            prio: 7,
-            dataRef: {type:'potd', dayKey: data.dayKey, playerId: main.id, playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
-          });
+          // v9.6: Trigger erst AB 07:00 des Folgetags — nicht schon nachts um
+          // 00:xx. Der Memo-Key kippt um 07:00 (_morningSlotSig) → erscheint dann.
+          if(now.getTime() >= rep.getTime()){
+            const main = res.main;
+            const names = res.winners.map(w => nameOf(w.id));
+            const titleNames = names.length > 1 ? names.slice(0, -1).join(', ') + ' & ' + names[names.length-1] : names[0];
+            const p = data.dayKey.split('-');
+            const dLabel = p[2] + '.' + p[1] + '.';
+            stories.push({
+              id: 'potd_' + data.dayKey,
+              cat: 'highlight',
+              ic: 'dayKing',
+              title: names.length > 1 ? `${titleNames}: Spieler des Tages` : `${titleNames} ist Spieler des Tages`,
+              desc: `Bester Spieler am ${dLabel}: ${main.wins} Siege bei ${Math.round(main.wr*100)}% Siegquote.`,
+              when: rep,
+              prio: 7,
+              dataRef: {type:'potd', dayKey: data.dayKey, playerId: main.id, playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
+            });
+          }
         }
       }
     }
@@ -16155,9 +16351,8 @@ function _newsPeriodWinner(rangeMatches, minWins){
 // Feed auch OHNE neue Matches lebendig wirkt.
 //
 // KERNPRINZIP (kein Spam, Cross-Device-konsistent):
-//   - RHYTHMUS (v9.5): genau 1 Fun Fact ALLE 2 TAGE, um 19:00. „Alle 2 Tage" =
-//     gerader Epoch-Tagesindex (_isAmbientDay) → alle Geräte gleich. Vor 19:00
-//     oder an Nicht-Ambient-Tagen entsteht nichts.
+//   - RHYTHMUS (v9.6): genau 1 Fun Fact pro TAG, um 19:00. _isAmbientDay ist
+//     immer true (jeder Tag ein Slot); vor 19:00 entsteht noch nichts.
 //   - Story-ID ist tages-deterministisch: `ambient_<datum>_19`.
 //     → ON CONFLICT DO NOTHING beim Upload: der erste Insert gewinnt den
 //       Timestamp, alle Geräte sehen exakt dieselbe Story.
@@ -16172,7 +16367,7 @@ function _newsPeriodWinner(rangeMatches, minWins){
 function _buildAmbientStories(now, pm, nameOf){
   const out = [];
   if(!Array.isArray(AMBIENT_SLOTS) || !AMBIENT_SLOTS.length) return out;
-  // v9.5: nur alle 2 Tage, und erst ab der Slot-Stunde (19:00).
+  // v9.6: täglich, aber erst ab der Slot-Stunde (19:00).
   if(!_isAmbientDay(now)) return out;
   const slotHour = AMBIENT_SLOTS[0];
   if(now.getHours() < slotHour) return out;
@@ -17249,9 +17444,13 @@ function _newsCardHtml(s, isRead){
 function _newsWhenLabel(when){
   const d = new Date(when);
   const now = new Date();
-  const todayKey = now.toISOString().slice(0,10);
-  const yest = new Date(now.getTime() - 86400000).toISOString().slice(0,10);
-  const dKey = d.toISOString().slice(0,10);
+  // Datumskeys in LOKALER Zeit bilden (nicht via toISOString → UTC): sonst zeigt
+  // eine Story mit when=heute 00:00 Lokalzeit in Zonen mit positivem UTC-Offset
+  // fälschlich „Gestern", obwohl die Uhrzeit lokal (toLocaleTimeString) heute ist.
+  const _lkey = x => x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+  const todayKey = _lkey(now);
+  const yest = _lkey(new Date(now.getTime() - 86400000));
+  const dKey = _lkey(d);
   const hhmm = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
   if(dKey === todayKey) return 'Heute, '+hhmm;
   if(dKey === yest) return 'Gestern, '+hhmm;
