@@ -159,8 +159,8 @@ function bindSheetSwipe(){
     startX=touch.clientX;
     richtung='';
     // ── Inner-Scroll-Tracking (Bugfix v8.1) ──────────────────────────
-    // Häufige UX-Falle: Sheet enthält INNERE Scroll-Container (z.B.
-    // .nv-list mit max-height:60vh + overflow-y:auto). Wenn der User
+    // Häufige UX-Falle: Sheet enthält INNERE Scroll-Container (eine Liste
+    // mit max-height + overflow-y:auto). Wenn der User
     // dort scrollt, bleibt sheet.scrollTop=0, und ein Hochziehen aus
     // einer Liste, die unten gescrollt war, wird fälschlich als Sheet-
     // Schließen interpretiert.
@@ -335,15 +335,10 @@ document.getElementById('bpBg').addEventListener('click', (e) => {
 });
 document.addEventListener('keydown', (e) => {
   if(e.key === 'Escape'){
-    // Reihenfolge: News-Detail > News-Popover > Badge-Popover (innerster zuerst)
+    // Reihenfolge: News-Detail > Badge-Popover (innerster zuerst)
     const ndBg = document.getElementById('ndBg');
     if(ndBg && ndBg.classList.contains('show')){
       if(typeof closeNewsDetail === 'function') closeNewsDetail();
-      return;
-    }
-    const nvBg = document.getElementById('nvBg');
-    if(nvBg && nvBg.classList.contains('show')){
-      if(typeof closeNewsPopover === 'function') closeNewsPopover();
       return;
     }
     const bpBg = document.getElementById('bpBg');

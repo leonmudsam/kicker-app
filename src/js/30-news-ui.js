@@ -221,79 +221,13 @@ function _processDeferredNewsToast(){
 }
 window._processDeferredNewsToast = _processDeferredNewsToast;
 
-// ─── §11.5 — Mini-Popup ──────────────────────────────────────────────
-// Klein, kompakt, max 5 Stories. Beim Öffnen: Stories werden NICHT als
-// gelesen markiert; das passiert erst beim Schließen/Wechsel zum Vollfeed.
-// Ein einzelner Story-Tap markiert nur diese eine Story.
-function openNewsPopover(){
-  // Falls der "X neue Stories"-Toast gerade läuft, sofort ausblenden —
-  // er hat seinen Job (User auf News aufmerksam machen) erfüllt.
-  try { _hideNewsToast(); } catch(e){}
-  const stories = getStoriesCache();
-  const seen = _newsLoadSeen();
-  const top = stories.slice(0, 5);
-  const nv = document.getElementById('nv');
-  const bg = document.getElementById('nvBg');
-  if(!nv || !bg) return;
-  const newCount = stories.filter(s => !seen.has(s.id)).length;
-  const headerSub = newCount > 0
-    ? (newCount === 1 ? '1 neue Story' : newCount+' neue Stories')
-    : (stories.length ? 'Aktuelles aus der Liga' : 'Noch keine Stories');
-  nv.innerHTML = `
-    <div class="nv-head">
-      <div class="nv-head-ic">${svgI('newspaper')}</div>
-      <div style="flex:1;min-width:0">
-        <div class="nv-head-title">Liga News</div>
-        <div class="nv-head-sub">${esc(headerSub)}</div>
-      </div>
-      <button class="nv-head-close" id="nvCloseBtn" aria-label="Schließen">×</button>
-    </div>
-    <div class="nv-list" id="nvList">
-      ${top.length
-        ? top.map(s => _newsCardHtml(s, seen.has(s.id))).join('')
-        : '<div class="nv-empty">Sobald sich etwas in der Liga tut, erscheint es hier.</div>'}
-    </div>
-    <div class="nv-foot">
-      <button class="nv-foot-btn" id="nvOpenFeed">Alle Stories anzeigen<span class="arr">›</span></button>
-    </div>`;
-  bg.classList.add('show');
-  document.getElementById('nvCloseBtn').onclick = closeNewsPopover;
-  document.getElementById('nvOpenFeed').onclick = () => {
-    closeNewsPopover();
-    // Kurz warten bis Popover ausgeblendet ist (vermeidet z-index-Stacking-Glitch)
-    setTimeout(openNewsFeed, 180);
-  };
-  // Story-Click: Detail öffnen, sofort als gelesen markieren, Card visuell updaten
-  nv.querySelectorAll('.nv-story[data-sid]').forEach(el => {
-    el.onclick = () => {
-      const sid = el.dataset.sid;
-      _newsMarkSeen(sid);
-      el.classList.add('read');
-      el.querySelector('.nv-story-dot')?.remove();
-      newsBadgeRefresh();
-      openNewsDetail(sid);
-    };
-  });
-}
-function closeNewsPopover(){
-  const bg = document.getElementById('nvBg');
-  if(bg) bg.classList.remove('show');
-}
-
-// Story-Card-HTML — wird im Popover UND im Vollfeed verwendet
-function _newsCardHtml(s, isRead){
-  const cat = NEWS_CATEGORIES[s.cat] || NEWS_CATEGORIES.fun;
-  return `<div class="nv-story nv-cat-${s.cat} ${isRead?'read':''}" data-sid="${esc(s.id)}">
-    <div class="nv-story-ic">${svgI(s.ic || cat.ic)}</div>
-    <div class="nv-story-body">
-      <div class="nv-story-cat nv-cat-tag ${s.cat}">${esc(cat.descLabel)}</div>
-      <div class="nv-story-title">${esc(s.title)}</div>
-      <div class="nv-story-desc">${esc(s.desc)}</div>
-      <div class="nv-story-when">${esc(_newsWhenLabel(s.when))}</div>
-    </div>
-    ${!isRead ? '<div class="nv-story-dot"></div>' : ''}
-  </div>`;
-}
+// ─── §11.5 — Das Mini-Popup ist entfallen ────────────────────────────
+// Es zeigte fünf Stories in einer eigenen, viel einfacheren Karte: Kategorie-
+// Pille aus der Datenbank („Badge & Awards"), Titel, Text. Genau die Pille,
+// die der Feed seit dem Rubrikband nicht mehr trägt [§C33], und ohne Motiv,
+// ohne Sammelband, ohne Gesicht. Erreichbar war es zuletzt gar nicht mehr:
+// der Glockenknopf öffnet seit v8.9 direkt den vollen Feed, und geöffnet
+// wurde das Popup nur noch von der Auffrischung — wenn es schon offen war.
 
 // Datumsformatierung: "Heute, 16:07" / "Gestern, 21:11" / "12.06., 14:30"
 function _newsWhenLabel(when){
@@ -441,6 +375,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     ? `<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING`
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
+  // Eine Sammelkarte behaelt Rubrik und Motiv ihres staerksten Ereignisses —
+  // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
+  // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
+  const sammelBand = (d.type === 'sammel')
+    ? _newsSammelBand(d.teile, s.title) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -546,6 +485,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       <div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc)}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
+    ${sammelBand}
     ${fuss}
     ${brk ? `<div class="nf-brk-sub">${esc(_breakingHeroText(s))}</div>` : ''}
   </div>`;
@@ -666,6 +606,28 @@ function _newsSerienBand(laenge, verloren){
     + Array.from({length: zeige}, () => '<i></i>').join('')
     + (n > zeige ? `<em>+${n - zeige}</em>` : '')
     + `<span>${n} ${verloren ? 'Pleiten' : 'Siege'} nacheinander</span></div>`;
+}
+
+// ── Das Sammelband ──────────────────────────────────────────────────
+// Eine Sammelkarte trug die Schlagzeile ihres staerksten Ereignisses und
+// sonst nichts: „Maxi: Nerven aus Stahl" stand erst im Blatt, und wer die
+// Karte nur ueberflog, hat es nie gesehen. Buendeln darf nichts verstecken
+// [§C33] — jede weitere Zeile steht deshalb mit ihrem Zeichen auf der Karte
+// selbst, kurz und in einer Reihe.
+//
+// Gezeigt werden nur die Zeilen, die der Kopf NICHT schon ist: bei einer
+// Spiel-Sammelkarte gehoert ihm die Schlagzeile, und sie ein zweites Mal
+// darunter waere die Wiederholung, die §C33 gerade verhindert.
+function _newsSammelBand(teile, kopfTitel){
+  const alle = Array.isArray(teile) ? teile : [];
+  const kt = String(kopfTitel || '').trim();
+  const rest = alle.filter(t => String(t.titel || '').trim() !== kt);
+  if(!rest.length) return '';
+  return `<div class="nf-sam">${rest.slice(0, 3).map(t =>
+    `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
+    + `<span>${_newsBetont(t.titel || '')}</span></div>`).join('')}`
+    + (rest.length > 3 ? `<div class="nf-sam-m">und ${rest.length - 3} weitere</div>` : '')
+    + `</div>`;
 }
 
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie
@@ -934,7 +896,7 @@ function _renderNewsFeed(){
   // gezogen — es trägt stattdessen einen roten Kopfbalken.
   let listHtml;
   if(!cards.length){
-    listHtml = '<div class="nv-empty">Keine Stories in dieser Auswahl.</div>';
+    listHtml = '<div class="nf-empty">Keine Stories in dieser Auswahl.</div>';
   } else {
     const gruppen = [];
     cards.forEach(st => {

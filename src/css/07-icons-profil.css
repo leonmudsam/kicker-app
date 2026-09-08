@@ -416,83 +416,12 @@
   .st-card .st-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .st-card .st-tt{display:block;font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1.1;letter-spacing:-.01em}
   .st-card .st-su{display:block;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:4px}
-  /* Mini-Popup über dem News-Button: Popover-Layer (z 130, über Sheet 100 und bp 120) */
-  .nv-bg{position:fixed;inset:0;z-index:130;background:rgba(0,0,0,.5);
-    backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
-    opacity:0;pointer-events:none;transition:.18s;
-    display:flex;align-items:flex-start;justify-content:center;padding:74px 16px 24px}
-  .nv-bg.show{opacity:1;pointer-events:auto}
-  .nv{background:var(--bg2);border:1px solid var(--line);border-radius:16px;
-    width:100%;max-width:380px;overflow:hidden;
-    transform:translateY(-12px) scale(.96);transition:transform .22s cubic-bezier(.2,.8,.2,1);
-    z-index:131;position:relative}
-  .nv-bg.show .nv{transform:translateY(0) scale(1)}
-  .nv-head{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;border-bottom:1px solid var(--line)}
-  .nv-head-ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
-    background:rgba(190,242,100,.12);color:var(--acid)}
-  .nv-head-ic svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .nv-head-title{font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1;letter-spacing:-.01em;flex:1}
-  /* "Alle gelesen"-Button im Feed-Header (v8.2) */
-  .nv-mark-all{display:inline-flex;align-items:center;gap:5px;
-    background:var(--surface);border:1px solid var(--line);
-    color:var(--ink2);font-size:10px;font-family:'Sometype Mono',monospace;
-    text-transform:uppercase;letter-spacing:.08em;font-weight:700;
-    padding:6px 9px;border-radius:9px;cursor:pointer;transition:.15s;flex-shrink:0;
-    margin-left:auto}
-  .nv-mark-all svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
-  .nv-mark-all:active{transform:scale(.96);background:var(--acid);color:#000;border-color:var(--acid)}
-  .nv-head-sub{color:var(--muted);font-size:9.5px;font-family:'Sometype Mono',monospace;
-    text-transform:uppercase;letter-spacing:.12em;margin-top:3px}
-  .nv-head-close{background:none;border:0;color:var(--muted);font-size:18px;cursor:pointer;padding:4px;line-height:1}
-  .nv-list{max-height:60vh;overflow-y:auto}
-  /* Im vollen Feed (im Sheet) soll die Liste KEIN eigener Scroll-Container
-     sein — das Sheet selbst scrollt. Sonst kollidiert die innere Scroll-Geste
-     mit dem Sheet-Swipe-Close. */
-  .nv-list-flat{max-height:none;overflow-y:visible}
-  .nv-empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
-  /* Story-Card (im Mini-Popup UND im Feed) */
-  .nv-story{display:flex;align-items:flex-start;gap:11px;padding:11px 16px;
-    border-bottom:1px solid var(--line);cursor:pointer;transition:.15s;position:relative}
-  .nv-story:last-child{border-bottom:0}
-  .nv-story:active{background:var(--surface)}
-  .nv-story-ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;background:var(--surface)}
-  .nv-story-ic svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  /* Kategorie-Farbcodes (Icon-Tint + Cat-Label-Color) */
-  .nv-cat-breaking   .nv-story-ic,.nv-cat-tag.breaking,.nd-ic.nv-cat-breaking {background:rgba(255,90,77,.14);color:#ff5a4d}
-  .nv-cat-highlight  .nv-story-ic,.nv-cat-tag.highlight  {background:rgba(247,207,74,.12);color:var(--gold)}
-  .nv-cat-season     .nv-story-ic,.nv-cat-tag.season     {background:rgba(173,154,243,.12);color:var(--purple)}
-  .nv-cat-badge      .nv-story-ic,.nv-cat-tag.badge      {background:rgba(190,242,100,.12);color:var(--acid)}
-  .nv-cat-fun        .nv-story-ic,.nv-cat-tag.fun        {background:rgba(255,160,90,.12);color:#ffa05a}
-  .nv-cat-rivalry    .nv-story-ic,.nv-cat-tag.rivalry    {background:rgba(240,86,106,.12);color:var(--red)}
-  .nv-cat-team       .nv-story-ic,.nv-cat-tag.team       {background:rgba(86,180,232,.12);color:var(--blue)}
-  .nv-cat-comeback   .nv-story-ic,.nv-cat-tag.comeback   {background:rgba(247,207,74,.12);color:var(--gold)}
-  .nv-cat-personal   .nv-story-ic,.nv-cat-tag.personal   {background:rgba(173,154,243,.12);color:var(--purple)}
-  .nv-cat-history    .nv-story-ic,.nv-cat-tag.history    {background:rgba(86,180,232,.12);color:var(--blue)}
-  .nv-cat-misfortune .nv-story-ic,.nv-cat-tag.misfortune {background:rgba(240,86,106,.12);color:var(--red)}
-  .nv-story-body{flex:1;min-width:0}
-  .nv-story-cat{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;
-    font-family:'Sometype Mono',monospace;color:var(--muted);margin-bottom:2px;display:inline-block}
-  .nv-cat-tag{padding:1px 5px;border-radius:4px}
-  .nv-story-title{font-family:'Archivo Black',sans-serif;font-size:12.5px;line-height:1.25;
-    letter-spacing:-.01em;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .nv-story-desc{color:var(--ink2);font-size:11px;line-height:1.4;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  .nv-story-when{color:var(--muted);font-size:9.5px;font-family:'Sometype Mono',monospace;
-    margin-top:5px;letter-spacing:.04em}
-  .nv-story-dot{position:absolute;top:14px;right:14px;width:7px;height:7px;border-radius:50%;
-    background:var(--acid);box-shadow:0 0 6px rgba(190,242,100,.5)}
-  .nv-story.read{opacity:.72}
-  .nv-story.read .nv-story-title{font-weight:700}
-  /* Footer im Mini-Popup */
-  .nv-foot{padding:12px 16px;border-top:1px solid var(--line);text-align:center}
-  .nv-foot-btn{background:none;border:0;color:var(--acid);font-size:11.5px;
-    font-family:'Archivo Black',sans-serif;letter-spacing:-.005em;cursor:pointer;
-    padding:6px 10px;border-radius:8px;transition:.15s}
-  .nv-foot-btn:active{background:var(--surface)}
-  .nv-foot-btn .arr{margin-left:4px}
-  /* Filter-Pills im Full-Feed */
-  /* .nv-filters/.nv-filter sind entfallen: der Feed filtert über .ui-tabs,
-     das Mini-Popup hat gar keine Filter. */
+  /* Das Mini-Popup ist entfallen [§11.5]; mit ihm die .nv-* Karte, ihre
+     Kategorie-Pille und der Popover-Layer. Geblieben ist, was der Feed
+     wirklich benutzt. */
+  .nf-empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
+  /* Der Kopf des Story-Blatts tönt sein Zeichen, wenn die Story Breaking ist. */
+  .nd-ic.nv-cat-breaking{background:rgba(255,90,77,.14);color:#ff5a4d}
 
   /* ════════ NEWS-FEED v9 — „Matchday"-Layout (Variante M2) ════════
      Eigene .nf-* Klassen, damit Mini-Popup (.nv-*) unberührt bleibt.
@@ -825,6 +754,24 @@
     text-overflow:ellipsis;white-space:nowrap}
   .nf-wl-z b{margin-left:auto;font-family:'Sometype Mono',monospace;color:var(--gold);flex:0 0 auto}
   .nf-wl-m{padding:7px 13px;font-size:10px;color:var(--faint);border-top:1px solid var(--line)}
+
+  /* Das Sammelband: was die Karte ausser ihrer Schlagzeile noch buendelt.
+     Es stand vorher nur im Blatt, und wer die Karte ueberflog, sah von der
+     zweiten Meldung nichts [§C33]. Leiser als die Schlagzeile, aber mit
+     Zeichen — sonst waeren es drei graue Zeilen. */
+  .nf-sam{border-top:1px solid var(--line);display:flex;flex-direction:column}
+  .nf-sam-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
+    border-bottom:1px solid var(--line);font-size:11px;color:var(--ink2);
+    min-width:0}
+  .nf-sam-z:last-child{border-bottom:0}
+  .nf-sam-z span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nf-sam-z b{color:var(--ink);font-weight:700}
+  .nf-sam-i{width:20px;height:20px;flex:0 0 auto;border-radius:6px;
+    display:grid;place-items:center;background:var(--surface2);
+    border:1px solid var(--line);color:var(--muted)}
+  .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+  .nf-sam-m{padding:6px 13px;font-size:10px;color:var(--faint);
+    border-top:1px solid var(--line)}
 
   /* Sorte 6 Duo: zwei Wappen nebeneinander, kein Rang [§C27]. */
   .nf-duo{gap:0}

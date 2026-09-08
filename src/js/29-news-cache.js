@@ -414,27 +414,80 @@ function _consolidateStories(list){
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   const _zahlwort = n => ['','ein','zwei','drei','vier'][n] || String(n);
-  const sammelGruppen = new Map();
-  result.forEach((st, idx) => {
-    const d = (st && st.dataRef) || {};
-    let brk = false;
-    try { brk = (typeof _isBreaking === 'function') && _isBreaking(st); } catch(e){}
-    if(brk) return;
-    let key = null;
-    if(SAMMEL_SPIEL.has(d.type)) key = 'spiel|' + _minKey(st.when);
-    else if(SAMMEL_TAFEL.has(d.type)) key = 'tafel|' + _tagKey(st.when);
-    if(!key) return;
-    let g = sammelGruppen.get(key);
-    if(!g){ g = {key, teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
-    // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels'
-    // aus" stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit
-    // demselben Wert und nur einer anderen Spielzahl im Fliesstext. Die
-    // Buendelung soll den Tag zusammenfassen, nicht dieselbe Meldung
-    // vervierfachen.
+  // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels' aus"
+  // stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit demselben
+  // Wert und nur einer anderen Spielzahl im Fliesstext. Die Buendelung soll
+  // den Moment zusammenfassen, nicht dieselbe Meldung vervierfachen.
+  const _sammelZeile = (g, st) => {
     const tk = String(st.title || '').trim();
     if(tk && g.titel.has(tk)) return;
     if(tk) g.titel.add(tk);
     if(g.teile.length < SAMMEL_MAX) g.teile.push(st);
+  };
+  // ── Wer einzeln bleibt ─────────────────────────────────────────────
+  // Zwei Sorten gehen nie in ein Buendel: Breaking, weil ein erstmals
+  // vergebener Liga-Rekord nicht als vierte Zeile enden soll, und ein
+  // SELTENES oder LEGENDAERES Badge. „Nerven aus Stahl" (drei Zittersiege
+  // in Folge) stand als Zeile unter „Johannes und Anton verlieren zusammen
+  // alles" — zwei fremde Spieler, und das Seltenere von beiden im
+  // Kleingedruckten.
+  const _sammelEinzeln = (st, d) => {
+    try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return true; } catch(e){}
+    return d.type === 'badge_unlocked'
+        && (d.rarity === 'rare' || d.rarity === 'legendary');
+  };
+  const sammelGruppen = new Map();
+  // Die Minute allein reicht nicht. Gebuendelt wird, was denselben Moment UND
+  // dasselbe SUBJEKT teilt: „Leon und Maxi gewinnen zusammen alles" trug
+  // „Leo: Angstgegner" als zweite Zeile, und Leo spielte in dieser Partie gar
+  // nicht mit. Eine Karte, die von zwei fremden Ereignissen erzaehlt, ist
+  // keine Zusammenfassung, sondern eine Verwechslung.
+  //
+  // Innerhalb einer Minute bilden die Beteiligten die Gruppen: wer einen
+  // Spieler mit einer bestehenden Gruppe teilt, kommt dazu und zieht die
+  // Gruppen zusammen, die er verbindet. Mehr als vier Karten hat eine Minute
+  // nie, die Verschmelzung kostet also nichts.
+  const spielMinuten = new Map();
+  const _pidsVon = st => { try { return _newsPids(st) || []; } catch(e){ return []; } };
+  result.forEach((st, idx) => {
+    const d = (st && st.dataRef) || {};
+    if(_sammelEinzeln(st, d)) return;
+    if(SAMMEL_TAFEL.has(d.type)){
+      const key = 'tafel|' + _tagKey(st.when);
+      let g = sammelGruppen.get(key);
+      if(!g){ g = {key, teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
+      _sammelZeile(g, st);
+      return;
+    }
+    if(!SAMMEL_SPIEL.has(d.type)) return;
+    const mk = _minKey(st.when);
+    let liste = spielMinuten.get(mk);
+    if(!liste){ liste = []; spielMinuten.set(mk, liste); }
+    liste.push({st, idx, pids: _pidsVon(st)});
+  });
+  spielMinuten.forEach((liste, mk) => {
+    const gruppen = [];
+    liste.forEach(k => {
+      const treffer = gruppen.filter(g => k.pids.some(p => g.pids.has(p)));
+      let ziel = treffer[0];
+      if(!ziel){ ziel = {pids:new Set(), eintraege:[], erster:k.idx}; gruppen.push(ziel); }
+      // Verbindet er zwei bestehende Gruppen, werden sie eine.
+      treffer.slice(1).forEach(g => {
+        g.pids.forEach(p => ziel.pids.add(p));
+        g.eintraege.forEach(e => ziel.eintraege.push(e));
+        if(g.erster < ziel.erster) ziel.erster = g.erster;
+        gruppen.splice(gruppen.indexOf(g), 1);
+      });
+      k.pids.forEach(p => ziel.pids.add(p));
+      ziel.eintraege.push(k);
+    });
+    gruppen.forEach((gr, i) => {
+      if(gr.eintraege.length < 2) return;
+      const key = 'spiel|' + mk + '|' + i;
+      const g = {key, teile:[], titel:new Set(), erster: gr.erster};
+      sammelGruppen.set(key, g);
+      gr.eintraege.sort((a, b) => a.idx - b.idx).forEach(e => _sammelZeile(g, e.st));
+    });
   });
   const inSammel = new Set();
   sammelGruppen.forEach(g => { if(g.teile.length >= 2) g.teile.forEach(st => inSammel.add(st.id)); });
@@ -487,8 +540,12 @@ function _consolidateStories(list){
       dataRef: {type:'sammel', quelle: istTafel ? 'tafel' : 'spiel',
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
+                // Die Beteiligten je Zeile: die Buendelung haengt an ihnen
+                // [§C33], und im Blatt fuehrt die Zeile damit zu dem, von dem
+                // sie handelt.
                 teile: teile.map(t => ({ic: t.ic, titel: t.title, text: t.desc,
-                                        typ: (t.dataRef||{}).type || ''}))}
+                                        typ: (t.dataRef||{}).type || '',
+                                        pids: _pidsVon(t).slice(0, 2)}))}
     });
   });
 
@@ -715,28 +772,25 @@ function _onStoryRealtimeDelete(row){
   try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
 }
 
-// Offen-Zustände (DOM): Feed lebt im #sheet (enthält .nv-list-flat), Mini-Popup
-// im #nvBg (Klasse 'show'). Story-Detail (#ndBg) wird bewusst nicht live verändert.
+// Offen-Zustand (DOM): der Feed lebt im #sheet und ist an `.nf-wrap`
+// erkennbar. Gefragt war hier `.nv-list-flat` — eine Klasse aus dem alten
+// Mini-Popup, die der Feed seit dem Umbau nicht mehr setzt. Damit war er nie
+// „offen", und eine Story, die per Realtime hereinkam, erschien erst beim
+// nächsten Öffnen. Story-Detail (#ndBg) wird bewusst nicht live verändert.
 function _isNewsFeedOpen(){
   const sheet = document.getElementById('sheet');
-  return !!(sheet && sheet.classList.contains('show') && sheet.querySelector('.nv-list-flat'));
+  return !!(sheet && sheet.classList.contains('show') && sheet.querySelector('.nf-wrap'));
 }
-function _isNewsPopoverOpen(){
-  const bg = document.getElementById('nvBg');
-  return !!(bg && bg.classList.contains('show'));
-}
-
 // Cleanup beim App-Close: sauberer Realtime-Disconnect.
 window.addEventListener('beforeunload', () => {
   try { if(_storiesChannel) _storiesChannel.unsubscribe(); } catch(e){}
 });
 
-// Offene News-Views konsistent aktualisieren (Badge/Toast + Feed + Mini-Popup).
+// Offene News-Views konsistent aktualisieren (Badge/Toast + Feed).
 // Story-Detail (#ndBg) wird bewusst NICHT angefasst (User liest gerade etwas).
 function _refreshOpenNewsViews(){
   try { if(typeof newsBadgeRefresh === 'function') newsBadgeRefresh(); } catch(e){}
   try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
-  try { if(_isNewsPopoverOpen()) openNewsPopover(); } catch(e){}
 }
 
 // ─── §11.9 — Periodischer News-Auto-Sync (v8.5) ──────────────────────

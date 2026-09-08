@@ -1,5 +1,5 @@
 // ─── §11.7 — Story-Detail (dynamisch je Typ) ─────────────────────────
-// Detail-Popover (z-index 140) — kann ÜBER Sheet (100) und nvBg (130)
+// Detail-Popover (z-index 140) — kann ÜBER dem Sheet (100)
 // liegen und ist unabhängig schließbar.
 function openNewsDetail(sid){
   const stories = getStoriesCache();
@@ -12,13 +12,12 @@ function openNewsDetail(sid){
   try {
     _newsMarkSeen(sid);
     newsBadgeRefresh();
-    // Sichtbare Cards (Mini-Popup + Feed) visuell synchron halten.
+    // Sichtbare Cards im Feed visuell synchron halten.
     // CSS.escape ist seit 2015 in allen relevanten Browsern verfügbar; defensiv
     // mit Fallback auf simples Escape für Edge-Cases.
     const escId = (window.CSS && CSS.escape) ? CSS.escape(sid) : sid.replace(/[\\"']/g, '\\$&');
-    document.querySelectorAll('.nv-story[data-sid="'+escId+'"], .nf-card[data-sid="'+escId+'"], .nf-hero[data-sid="'+escId+'"]').forEach(el => {
+    document.querySelectorAll('.nf-card[data-sid="'+escId+'"], .nf-hero[data-sid="'+escId+'"]').forEach(el => {
       el.classList.add('read'); el.classList.remove('important');
-      el.querySelector('.nv-story-dot')?.remove();
       el.querySelector('.nf-dot')?.remove();
     });
   } catch(e){}
@@ -60,7 +59,6 @@ function openNewsDetail(sid){
     el.onclick = () => {
       const mid = el.dataset.mid;
       closeNewsDetail();
-      closeNewsPopover();
       sheetNav(() => { try { showMatchDetail(mid); } catch(e){} }); // über den News-Feed stapeln
     };
   });
@@ -69,7 +67,6 @@ function openNewsDetail(sid){
     el.onclick = () => {
       const pid = el.dataset.pid;
       closeNewsDetail();
-      closeNewsPopover();
       sheetNav(() => { try { showPlayer(pid); } catch(e){} }); // über den News-Feed stapeln
     };
   });
@@ -77,14 +74,14 @@ function openNewsDetail(sid){
   nd.querySelectorAll('[data-tplayer]').forEach(el => {
     el.onclick = () => {
       const pid = el.dataset.tplayer;
-      closeNewsDetail(); closeNewsPopover();
+      closeNewsDetail();
       sheetNav(() => { try { showPlayer(pid); } catch(e){} });
     };
   });
   nd.querySelectorAll('[data-season-table]').forEach(el => {
     el.onclick = () => {
       const sid = el.dataset.seasonTable;
-      closeNewsDetail(); closeNewsPopover();
+      closeNewsDetail();
       sheetNav(() => { try { showSeasonTable(sid); } catch(e){} });
     };
   });
@@ -97,7 +94,7 @@ function openNewsDetail(sid){
   nd.querySelectorAll('[data-chron]').forEach(el => {
     el.onclick = () => {
       const cid = el.dataset.chron;
-      closeNewsDetail(); closeNewsPopover();
+      closeNewsDetail();
       sheetNav(() => { try { showChronicle(cid); } catch(e){} });
     };
   });
@@ -558,7 +555,8 @@ function _newsDetailMitte(s){
         // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
         const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
         const teile = neu.length ? neu : alle;
-        const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}">
+        const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}"${
+              (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
               ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
@@ -1072,23 +1070,13 @@ function _newsPlayerCareer(pid){
     const btn = document.getElementById('newsBtn');
     if(btn && !btn._newsBound){
       btn._newsBound = true;
-      // v8.9 (User-Wunsch): Klick öffnet direkt das volle Sheet statt des
-      // kleinen Vorschau-Popovers. openNewsPopover bleibt für interne Reuse
-      // (z.B. Toast-Tap, _refreshOpenNewsViews) erhalten.
+      // Der Knopf öffnet direkt den vollen Feed. Das Vorschau-Popup davor
+      // gibt es nicht mehr [§11.5].
       btn.onclick = openNewsFeed;
     }
-    // Backdrop-Bindings:
-    //   nvBg (Mini-Popup): Backdrop-Click schließt — ist nur ein Vorschau-Layer.
-    //   ndBg (Story-Detail): KEIN Backdrop-Close mehr (User-Wunsch v8.1):
-    //     Stories sollen bewusst konsumiert werden → nur X-Button oder
-    //     "Schließen"-Button unten beenden den Detail-View.
-    const nvBg = document.getElementById('nvBg');
-    if(nvBg && !nvBg._newsBound){
-      nvBg._newsBound = true;
-      nvBg.addEventListener('click', (e) => {
-        if(e.target === nvBg) closeNewsPopover();
-      });
-    }
+    // ndBg (Story-Detail): KEIN Backdrop-Close (User-Wunsch v8.1): Stories
+    // sollen bewusst konsumiert werden → nur X-Button oder der
+    // „Schließen"-Knopf unten beenden den Detail-View.
     const ndBg = document.getElementById('ndBg');
     if(ndBg && !ndBg._newsBound){
       ndBg._newsBound = true;
