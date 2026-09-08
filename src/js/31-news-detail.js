@@ -538,10 +538,17 @@ function _newsDetailMitte(s){
       // Der Kopf gehoert dem groessten Ereignis. Was dazugehoert, steht
       // darunter als Liste mit eigenem Beleg, nicht als zweite Schlagzeile.
       case 'sammel': {
-        const teile = Array.isArray(d.teile) ? d.teile : [];
+        const alle = Array.isArray(d.teile) ? d.teile : [];
+        // Was oben steht, steht unten nicht noch einmal [§C33]. Bei einer
+        // Spiel-Sammelkarte gehören Schlagzeile und Text dem stärksten
+        // Ereignis — dessen Zeile stand darunter wortgleich ein zweites Mal
+        // und trug keine einzige neue Zahl. Bleibt dabei nichts übrig, wird
+        // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
+        const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
+        const teile = neu.length ? neu : alle;
         const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}">
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
-              <div class="nw-satz">${esc(t.text || '')}</div>
+              ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">${d.quelle === 'tafel' ? 'An der Ewigen Tafel' : 'In dieser Partie'}</div>

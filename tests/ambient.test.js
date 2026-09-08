@@ -794,6 +794,40 @@ ok(_dop.zeilenDoppelt === 0, 'keine Sammelkarte wiederholt eine Zeile',
 ok(_dop.minutenMitMehreren === 0, 'in einer Minute steht hoechstens eine Karte',
    _dop.minutenMitMehreren + ' Minuten');
 
+// ── Die Sammelkarte wiederholt ihren eigenen Kopf nicht ─────────────
+// Bei einer Spiel-Sammelkarte gehoeren Schlagzeile und Text dem staerksten
+// Ereignis. Dessen Zeile stand im Blatt darunter wortgleich ein zweites Mal,
+// und der Text der Tafel-Karte haengte die Schlagzeilen ALLER Zeilen
+// aneinander — die Karte trug damit die Liste, die das Blatt darunter fuehrt.
+const _sam = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const norm = t => String(t||'').replace(/<[^>]*>/g,' ')
+    .replace(/&[a-z]+;/g,' ').replace(/[^0-9a-zA-ZäöüÄÖÜß%]+/g,' ').trim().toLowerCase();
+  const sicht = getStoriesCache().filter(x => (x.dataRef||{}).type === 'sammel');
+  let kopfZeile = 0, textListe = 0, leer = 0;
+  sicht.forEach(x => {
+    const b = _newsDetailBody(x);
+    const oben = norm(x.title + ' ' + x.desc);
+    const labels = (b.match(/class="nw-label">([^<]*)</g)||[])
+      .map(t => norm(t.replace(/^[^>]*>/,'').replace(/<$/,'')));
+    if(!labels.length) leer++;
+    labels.forEach(l => { if(l.length >= 12 && oben.indexOf(l) >= 0) kopfZeile++; });
+    // Der Text der Karte darf nicht die Schlagzeilen aller Zeilen sein.
+    const alle = (x.dataRef.teile||[]).map(t => norm(t.titel));
+    if(alle.length > 1 && alle.every(t => t && norm(x.desc).indexOf(t) >= 0)) textListe++;
+  });
+  return {n: sicht.length, kopfZeile, textListe, leer};
+})())`));
+ok(_sam.n > 0, 'es gibt Sammelkarten mit Blatt', _sam.n + '');
+ok(_sam.kopfZeile === 0, 'keine Sammelkarte wiederholt ihren Kopf als Zeile',
+   _sam.kopfZeile + ' Zeilen');
+ok(_sam.textListe === 0, 'der Kartentext ist eine Zusammenfassung, keine Liste',
+   _sam.textListe + ' Karten');
+ok(_sam.leer === 0, 'und keine Sammelkarte oeffnet ein leeres Blatt',
+   _sam.leer + ' leer');
+
 // ── Derselbe Halter in anderer Reihenfolge ist kein Wechsel ─────────
 // „Maxi, Leo und Julian uebernehmen" stand im Feed, und darunter „Vorher
 // gehoerte er Maxi, Julian und Leo" — dieselben drei, nur anders sortiert.

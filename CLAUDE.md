@@ -185,7 +185,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache | 880 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 155 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 159 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt — **im echten Browser gemessen** | 76 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -438,6 +438,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Fels' aus" untereinander war eine Zeile und drei Wiederholungen.
   Und ihr Titel folgt der Zahl der Namen — „Martin bewegen die Ewige Tafel"
   stand über einer Karte mit einem einzigen Namen.
+  **Die Karte fasst zusammen, das Blatt zeigt alles.** Der Text der
+  Tafel-Karte hängte die Schlagzeilen aller Zeilen aneinander und trug damit
+  die Liste, die das Blatt darunter ohnehin führt; er nennt jetzt das
+  stärkste Ereignis und zählt den Rest. Und im Blatt fällt die Zeile weg,
+  die der Kopf schon ist [§C33 `_ndNeu`]: bei einer Spiel-Sammelkarte
+  gehören Schlagzeile und Text dem stärksten Ereignis, dessen Zeile stand
+  darunter wortgleich ein zweites Mal. Bleibt dabei nichts übrig, wird die
+  ganze Liste gezeigt — ein leeres Blatt ist schlimmer als eine Wiederholung.
 
   **Zwei Karten mit derselben Schlagzeile sind eine zu viel.** Der Feed
   entfernt Doubletten nach Text UND nach Titel: zwei Rekordkarten

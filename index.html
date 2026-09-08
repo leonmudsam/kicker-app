@@ -4993,7 +4993,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.08.f1d1356b';
+const BUILD_VERSION='2026.09.08.6d536c5a';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21810,8 +21810,15 @@ function _consolidateStories(list){
               + `${pids.length > 1 ? 'bewegen' : 'bewegt'} die Ewige Tafel`
             : `${_zahlwort(teile.length)} Wechsel an der Ewigen Tafel`)
         : kopf.title,
+      // Die Karte fasst zusammen, das Blatt zeigt alles. Als der Text die
+      // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
+      // Liste, die das Blatt darunter noch einmal führte — und bei vier
+      // Einträgen war die Karte höher als jede andere im Feed.
       desc: istTafel
-        ? teile.map(t => t.title).join('. ') + '.'
+        ? kopf.desc + (rest.length
+            ? ` Und ${_zahlwort(rest.length)} ${rest.length === 1
+                ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
+            : '')
         : kopf.desc,
       when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
       prio: (kopf.prio || 0) + 1,
@@ -23657,10 +23664,17 @@ function _newsDetailMitte(s){
       // Der Kopf gehoert dem groessten Ereignis. Was dazugehoert, steht
       // darunter als Liste mit eigenem Beleg, nicht als zweite Schlagzeile.
       case 'sammel': {
-        const teile = Array.isArray(d.teile) ? d.teile : [];
+        const alle = Array.isArray(d.teile) ? d.teile : [];
+        // Was oben steht, steht unten nicht noch einmal [§C33]. Bei einer
+        // Spiel-Sammelkarte gehören Schlagzeile und Text dem stärksten
+        // Ereignis — dessen Zeile stand darunter wortgleich ein zweites Mal
+        // und trug keine einzige neue Zahl. Bleibt dabei nichts übrig, wird
+        // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
+        const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
+        const teile = neu.length ? neu : alle;
         const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}">
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
-              <div class="nw-satz">${esc(t.text || '')}</div>
+              ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">${d.quelle === 'tafel' ? 'An der Ewigen Tafel' : 'In dieser Partie'}</div>

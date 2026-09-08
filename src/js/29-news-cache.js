@@ -461,8 +461,15 @@ function _consolidateStories(list){
               + `${pids.length > 1 ? 'bewegen' : 'bewegt'} die Ewige Tafel`
             : `${_zahlwort(teile.length)} Wechsel an der Ewigen Tafel`)
         : kopf.title,
+      // Die Karte fasst zusammen, das Blatt zeigt alles. Als der Text die
+      // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
+      // Liste, die das Blatt darunter noch einmal führte — und bei vier
+      // Einträgen war die Karte höher als jede andere im Feed.
       desc: istTafel
-        ? teile.map(t => t.title).join('. ') + '.'
+        ? kopf.desc + (rest.length
+            ? ` Und ${_zahlwort(rest.length)} ${rest.length === 1
+                ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
+            : '')
         : kopf.desc,
       when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
       prio: (kopf.prio || 0) + 1,
