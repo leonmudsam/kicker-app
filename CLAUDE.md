@@ -86,7 +86,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **631**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **634**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -185,9 +185,9 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache | 880 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo | 133 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 146 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, Breaking, der Inhalt, der Kopf und der Schmuck im Blatt — **im echten Browser gemessen** | 69 |
+| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt — **im echten Browser gemessen** | 76 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -234,13 +234,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   (innere Ebene, rahmenlos), das Rangabzeichen ist `.rangab`
   (`rankBadgeHtml`).
   Im Feed gliedert der **Tageskopf** (`.nf-tag`) die Tafel: Wochentag
-  ausgeschrieben, Datum daneben, die Zahl der neuen Karten rechts, darunter die
-  **Bilanz des Tages** (`_newsTagBilanz`: wie viele Partien, wie viele Spieler)
-  und die Gesichter. Er trug zuerst die Schlagzeile der wichtigsten Karte, und
-  die stand damit zweimal untereinander — im Kopf und als erste Karte darunter.
+  ausgeschrieben, Datum daneben, die Zahl der Karten rechts — und sonst
+  nichts. Er trug zuerst die Schlagzeile der wichtigsten Karte, und
+  die stand damit zweimal untereinander; danach die Bilanz des Tages und die
+  Gesichter, die wiederholten, was die Karten darunter ohnehin zeigen: vier
+  Wappen über vier Karten, auf denen dieselben vier Wappen stehen.
   Er ist eine **Marke auf dem Zeitstrahl, keine Karte**: mit Rahmen und Füllung
   sah er aus wie eine ungeöffnete Story und stand mit den Karten darunter auf
-  einer Ebene. Jetzt trägt er nur Datum, Bilanz und eine Linie bis zum Rand.
+  einer Ebene. Sein `data-tag` trägt den Tagesschlüssel, damit sich prüfen
+  lässt, ob an diesem Tag gespielt wurde — `_newsTagBilanz` beantwortet das,
+  seit die Bilanz aus dem Markup verschwunden ist.
   Über jeder Karte steht das **Rubrikband** (`.nf-top`, `_newsRubrik`,
   `_newsSorteIcon`): Zeichen und Rubrik links, Uhrzeit rechts, wie in einer
   Zeitung. Vorher trug jede Karte eine gefärbte Pille mit dem Kategorienamen
@@ -286,7 +289,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   vier Chips mit Anzahl und Zeichen (`.nf-chip-f`) statt elf Rubriken, und der
   **Gelesen-Knopf** (`.nf-gelesen`) steht neben der Zahl, die ihn erklärt.
   **Breaking bricht die Spalte**: die Karte steht breiter als jede andere und
-  ist daran erkannt, bevor ein Wort gelesen ist.
+  ist daran erkannt, bevor ein Wort gelesen ist; ihr Rahmen glimmt, weil ein
+  stehender roter Rahmen beim Scrollen ein Farbton unter vielen war. Die
+  **Karte des Tages** bewegt sich leiser: ein Licht wandert einmal alle sieben
+  Sekunden durch ihr Band, der Stern atmet. Beides ruht bei
+  `prefers-reduced-motion`, und `tests/blatt` misst das nach.
+  **Der Rand sagt, wie schwer eine Karte wiegt** (`--kante`, `--rahmen`): Gold
+  am stärksten, der Spieltag darunter, der Fun Fact am dünnsten, Rot für die
+  Richtung. „Wichtig" leuchtet und verbreitert nicht — als es die Kante auf
+  vier Pixel setzte, trug ein Fun Fact denselben Rand wie ein Liga-Rekord.
   Eine Karte, die von einer Pleitenserie oder einer Schande erzählt, trägt
   `.nf-neg` und damit Rot in Rubrik und Motiv [§C25] — die Durststrecke stand
   vorher im selben Grün wie die Siegesserie.
@@ -304,6 +315,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   [§C27]; dort stand statt seiner die Zeile „Rang 6" als nackter Text. Vorher stand oben der
   Kategorienname aus der Datenbank, den es auf der Karte seit dem Rubrikband
   nicht mehr gibt.
+
+  **Was oben steht, steht unten nicht noch einmal** (`_ndNeu`, `_ndOben`). Der
+  Kopf des Blatts zeigt Schlagzeile und Text der Karte; steht derselbe Satz
+  darunter ein zweites Mal, liest man ihn zweimal und erfährt nichts. Beim
+  Angstgegner stand „5× in Folge gegen denselben Gegner" als Bedingung im
+  Medaillon und drei Zeilen darüber im Text schon „Fünf Pleiten in Folge gegen
+  Maxi". Die **Beschriftung** einer Zeichnung ist davon ausgenommen: der Name
+  des Zeichens steht neben dem Zeichen, weil er dazugehört.
 
   **Jedes Blatt zeigt, wovon seine Story handelt.** Die Karte „X trägt den
   Schildring" öffnete ein Blatt mit NULL Zeichen Inhalt, und fünf ambiente
@@ -443,6 +462,31 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   `_consolidateStories` — der genau dafür gebaut ist — schlug nie an:
   gemessen null Treffer in fünf Aufrufen, bei einem Aufruf nach jedem
   `loadAll` und bei jedem Zeichnen des Feeds. `tests/ambient` misst das alles.
+
+  **So spricht die Liga.** Leicht und unkompliziert, aber mit den Zahlen dran.
+  Kein Gedankenstrich — er trennte Sätze, die als zwei Sätze klarer sind. Die
+  Schlagzeile sagt, was passiert ist, und steht nicht noch einmal im Text:
+  „Serie gerissen: Martin" trug den Verlierer in der Zeile und die Tat im
+  Kleingedruckten, jetzt heißt es „Leon und Maxi brechen Martins 8er-Serie".
+  Jeder Text nennt eine Zahl (ausgenommen die Auszeichnung, deren Text die
+  Bedingung aus dem Katalog ist), und jeder Name im Satz ist aufgelöst: „Holt
+  er ihn" stand direkt hinter dem Namen des HALTERS und zeigte auf den
+  Falschen. `tests/ambient` misst das alles.
+
+  **„Ausgebaut" heißt besser geworden** (`_rekordArt`). Die Meldung feuerte,
+  sobald sich die angezeigte Zahl änderte — egal wohin. „Der Fels" ging von
+  6,9 auf 7,0 Gegentore und „Der Platzhirsch" von 44 auf 42 %, beides eine
+  Verschlechterung, und beides stand als „baut seinen Rekord aus" im Feed. Wer
+  den Rekord hält und verschlechtert, hat nichts getan: die anderen sind nur
+  nicht vorbeigezogen.
+
+  **Ein überschrittener Meilenstein bleibt auffrischbar.** Die ID trägt die
+  Zahl (`rivalry_milestone_A|B_50`); stand das Paar bei 52, bildete der
+  Generator die 50er-ID nicht mehr, und „Historisches 50. Aufeinandertreffen"
+  blieb mit seinem alten Wortlaut stehen. Gemeldet wird deshalb **jede
+  überschrittene Schwelle**, mit dem Zeitpunkt der kreuzenden Partie und dem
+  Zwischenstand von damals — „Das 50. Aufeinandertreffen dieser beiden" stand
+  sonst wortgleich unter zwei Karten und nannte keine einzige Zahl.
 
   **Der Text kommt aus dem Generator, nicht aus der Datenbank.** Stories
   werden persistiert, damit alle Geräte dieselbe Karte zur selben Zeit sehen —

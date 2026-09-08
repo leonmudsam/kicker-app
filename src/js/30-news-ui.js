@@ -895,21 +895,6 @@ function _newsTagKarte(items, dayKey){
   })[0];
   return beste ? beste.id : null;
 }
-// Die Gesichter des Tages, höchstens vier. Ab 26 Pixeln abwärts bleibt vom
-// Zeichen nichts übrig [§C26], deshalb stehen hier Wappen und keine Punkte.
-function _newsTagGesichter(items){
-  const ids = [];
-  (items || []).forEach(st => {
-    let p = [];
-    try { p = _newsPids(st) || []; } catch(e){}
-    p.forEach(id => { if(ids.indexOf(id) < 0) ids.push(id); });
-  });
-  if(!ids.length) return '';
-  const zeig = ids.slice(0, 4).map(id => avHtml(pmap()[id], '', {ins:true, px:26, feuer:0})).join('');
-  const rest = ids.length - 4;
-  return zeig + (rest > 0 ? `<span class="nf-tag-mehr">und ${rest} weitere</span>` : '');
-}
-
 function _renderNewsFeed(){
   _sheetSetReopen(()=>_renderNewsFeed());
   const stories = getStoriesCache();
@@ -960,15 +945,19 @@ function _renderNewsFeed(){
     });
     listHtml = gruppen.map(g => {
       const neu = g.items.filter(st => !seen.has(st.id)).length;
-      const bilanz = _newsTagBilanz(g.k);
-      const gesichter = _newsTagGesichter(g.items);
       const tagesKarte = _newsTagKarte(g.items, g.k);
-      return `<div class="nf-tag">
+      // Der Kopf traegt Wochentag, Datum und die Zahl der Karten — sonst
+      // nichts. Die Bilanz („3 Partien · 4 Spieler") und die Gesichter standen
+      // darunter und wiederholten, was die Karten des Tages ohnehin zeigen:
+      // vier Wappen ueber vier Karten, auf denen dieselben vier Wappen
+      // stehen. Der Kopf ist eine Marke auf dem Zeitstrahl, kein Vorspann.
+      // Der Tagesschluessel steht am Kopf: die Bilanz des Tages ist aus dem
+      // Markup verschwunden, und ohne ihn liesse sich nicht mehr pruefen, ob
+      // an diesem Tag ueberhaupt gespielt wurde.
+      return `<div class="nf-tag" data-tag="${esc(g.k)}">
         <div class="nf-tag-z1"><span class="nf-tag-wt">${esc(g.label)}</span>`
         + `<span class="nf-tag-dt">${esc(g.datum)}</span>`
         + `<span class="nf-tag-n${neu?' neu':''}">${neu ? neu + ' NEU' : g.items.length + (g.items.length===1?' KARTE':' KARTEN')}</span></div>`
-        + (bilanz ? `<div class="nf-tag-b">${esc(bilanz)}</div>` : '')
-        + (gesichter ? `<div class="nf-tag-ges">${gesichter}</div>` : '')
         + `</div>
         <div class="nf-feed">${g.items.map(st =>
             _newsCardHtmlM2(st, seen.has(st.id), st.id === tagesKarte)).join('')}</div>`;

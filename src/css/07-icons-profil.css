@@ -579,12 +579,7 @@
   .nf-tag-n{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:9.5px;
     letter-spacing:.11em;color:var(--faint);white-space:nowrap}
   .nf-tag-n.neu{color:var(--acid)}
-  /* Die Bilanz des Tages, nicht die Schlagzeile: die stand sonst zweimal
-     untereinander, im Kopf und auf der ersten Karte. */
-  .nf-tag-b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--ink2);
-    letter-spacing:.03em;margin-top:8px}
-  .nf-tag-ges{display:flex;align-items:center;gap:6px;margin-top:10px}
-  .nf-tag-mehr{font-size:10px;color:var(--muted);margin-left:2px}
+
   .nf-masthead{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1;
     letter-spacing:.03em;color:var(--ink)}
   .nf-datum{margin-top:6px;font-family:'Sometype Mono',monospace;font-size:10px;
@@ -658,10 +653,24 @@
      an der der Blick haengen bleiben soll; der Rest des Tages steht ruhig
      darunter. Metall und nicht Gold: sie ist eine Auswahl, keine
      Auszeichnung [§C25]. */
-  .nf-gross-band{display:flex;align-items:center;gap:7px;padding:8px 13px;
+  /* Die Karte des Tages bewegt sich, aber leiser als Breaking: ein Licht
+     wandert einmal alle sieben Sekunden durch das Band, und der Stern atmet.
+     Vorher stand sie still da und war von einer Rubrikzeile nur durch ihren
+     Text zu unterscheiden. */
+  .nf-gross-band{display:flex;align-items:center;gap:7px;padding:8px 13px;position:relative;
+    overflow:hidden;
     background:linear-gradient(96deg,var(--surface3),var(--surface2));
     border-bottom:1px solid var(--line2);font-family:'Sometype Mono',monospace;
     font-size:9px;font-weight:700;letter-spacing:.2em;color:var(--ink)}
+  .nf-gross-band::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(105deg,transparent 40%,rgba(247,207,74,.16) 50%,transparent 60%);
+    transform:translateX(-100%);animation:nfSweep 7s ease-in-out infinite}
+  .nf-gross-band svg{animation:nfAtem 4.5s ease-in-out infinite}
+  @keyframes nfAtem{0%,100%{opacity:.55;transform:scale(1)}
+    50%{opacity:1;transform:scale(1.14)}}
+  @media(prefers-reduced-motion:reduce){
+    .nf-gross-band::after{animation:none;opacity:0}
+    .nf-gross-band svg{animation:none;opacity:1}}
   .nf-gross-band svg{width:12px;height:12px;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--ink2)}
   .nf-gross .nf-h{font-size:19px;line-height:1.1;-webkit-line-clamp:5}
@@ -678,8 +687,13 @@
   /* „Wichtig" verstärkt die Kante, es umrandet nicht die ganze Karte. Als
      Vollrahmen leuchtete die halbe Liste gold — und was die halbe Liste
      trägt, hebt nichts mehr hervor. */
-  .nf-card.important{border-left-width:4px;box-shadow:-6px 0 18px -12px var(--ccg,transparent)}
-  .nf-card.read.important{border-left-width:2px;box-shadow:none;border-left-color:var(--line2)}
+  /* „Wichtig" leuchtet, es verbreitert nicht. Die Kante gehoert der SORTE
+     — als „wichtig" sie auf vier Pixel setzte, trug ein Fun Fact denselben
+     Rand wie ein Liga-Rekord, und der Rand sagte nichts mehr ueber das
+     Gewicht der Karte. */
+  .nf-card.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
+    -7px 0 20px -12px var(--ccg,transparent)}
+  .nf-card.read.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
   .nf-when{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
     font-size:9.5px;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
   .nf-dot{width:8px;height:8px;border-radius:50%;background:var(--cc);box-shadow:0 0 6px var(--cc)}
@@ -760,7 +774,7 @@
   .nf-erg-sc i{font-style:normal;color:var(--faint);font-size:15px}
 
   /* Sorte 2 Tafel: der Wert ist die Hauptsache, nicht der Satz darueber. */
-  .nf-s-tafel{border-color:rgba(247,207,74,.34);--tint:rgba(247,207,74,.1)}
+  .nf-s-tafel{--tint:rgba(247,207,74,.1)}
   .nf-wert{display:flex;flex-direction:column;align-items:flex-start;min-width:62px}
   .nf-wert b{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1;
     letter-spacing:-.03em;color:var(--ink)}
@@ -773,7 +787,6 @@
     text-transform:uppercase;max-width:80px;line-height:1.3}
 
   /* Sorte 3 Insignium: die Leiter zeigt den Weg. */
-  .nf-s-ins{border-color:rgba(247,207,74,.34)}
   .nf-leiter{display:flex;align-items:center;gap:7px;padding:10px 13px;
     border-top:1px solid var(--line)}
   .nf-lt-p{width:16px;height:16px;border-radius:50%;flex:0 0 auto;opacity:.28;
@@ -803,7 +816,6 @@
   .nf-zb span{display:block;font-size:9px;color:var(--muted);margin-top:4px;line-height:1.3}
 
   /* Sorte 5 Woche: die Wertungen als Zeilen, drei davon als Vorschau. */
-  .nf-s-woche{border-color:rgba(247,207,74,.3)}
   .nf-wl{border-top:1px solid var(--line)}
   .nf-wl-z{display:flex;align-items:baseline;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px}
@@ -842,6 +854,28 @@
   .nf-s-ins,.nf-s-badge,.nf-s-woche{--tint:rgba(247,207,74,.075)}
   .nf-card.nf-neg{--tint:rgba(240,86,106,.07)}
   .nf-card.read{--tint:rgba(255,255,255,.02)}
+
+  /* ── Der Rand sagt, wie schwer eine Karte wiegt ────────────────────
+     Vier Gewichte, mehr nicht — genau die vier Rollen des Farbgesetzes
+     [§C25]. Die Kante links traegt die Farbe, der Rahmen die Staerke:
+     zehn gleich starke Rahmen untereinander sind eine Liste, keine
+     Rangfolge. Die Werte stehen als Variable, damit die Zustaende
+     (gelesen, wichtig, Breaking) sie ueberschreiben koennen, ohne dass
+     jede Sorte eine eigene Regel braucht. */
+  .nf-card{--kante:2px;--rahmen:rgba(255,255,255,.055)}
+  /* Gold wiegt am schwersten: Titel und heute gehaltene Rekorde. */
+  .nf-s-tafel,.nf-s-ins,.nf-s-badge,.nf-s-woche,.nf-s-held{
+    --kante:3px;--rahmen:rgba(247,207,74,.26)}
+  /* Der Spieltag ist die zweite Ebene: es ist passiert, aber es bleibt nicht. */
+  .nf-s-spiel,.nf-s-duell,.nf-s-serie{--kante:3px;--rahmen:rgba(190,242,100,.2)}
+  /* Rot bleibt der Richtung. */
+  .nf-card.nf-neg{--rahmen:rgba(240,86,106,.24)}
+  /* Der Fun Fact ist der leiseste Bau und traegt deshalb den duennsten Rand. */
+  .nf-s-fakt{--kante:2px;--rahmen:rgba(255,255,255,.05)}
+  .nf-card{border-color:var(--rahmen);border-left-width:var(--kante)}
+  /* Gelesen faellt alles auf das leiseste Mass zurueck: der Feed soll zeigen,
+     was noch offen ist, nicht was schon abgehakt wurde. */
+  .nf-card.read{--kante:2px;--rahmen:var(--line)}
   /* Rot bleibt der Richtung [§C25]: die Durststrecke stand im selben Gruen
      wie die Siegesserie. */
   .nf-card.nf-neg .nf-rub{color:var(--red)}
@@ -941,7 +975,18 @@
      erkannt, bevor ein Wort gelesen ist. */
   /* Breaking traegt immer den vollen Rahmen — auch wenn seine Sorte sonst
      gestrichelt ist. */
-  .nf-brk{margin:6px -5px;border-width:2px;border-style:solid}
+  .nf-brk{margin:6px -5px;border-width:2px;border-style:solid;
+    animation:nfBrkGlut 3.6s ease-in-out infinite}
+  /* Der Rahmen glimmt. Ein stehender roter Rahmen war beim Scrollen ein
+     Farbton unter vielen; ein Schein, der kommt und geht, ist ein Signal. */
+  @keyframes nfBrkGlut{
+    0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
+                       0 0 0 0 rgba(240,86,106,0),
+                       0 14px 34px -22px rgba(240,86,106,.5)}
+    50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
+                   0 0 22px -4px rgba(240,86,106,.34),
+                   0 14px 34px -18px rgba(240,86,106,.7)}}
+  @media(prefers-reduced-motion:reduce){.nf-brk{animation:none}}
   .nf-brk .nf-motiv{color:var(--red);opacity:.16;width:120px;height:120px;right:12px}
   .nf-brk-band{background:linear-gradient(90deg,rgba(240,86,106,.34),rgba(240,86,106,.08));
     color:#ffdde1;font-size:10.5px;letter-spacing:.26em;position:relative;overflow:hidden}

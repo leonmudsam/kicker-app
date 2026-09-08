@@ -127,6 +127,26 @@ function _eloMilestones(){
 // Story-Objekten {id, cat, ic, title, desc, when, prio, dataRef} zurück.
 // Performance: O(N_matches) — dominante Kosten durch top-form-Filterung,
 // die aber auf die letzten 10 Matches pro Spieler eingeschränkt ist.
+// ── Was ist an einem Rekord passiert? ────────────────────────────────
+// Drei Aussagen, und die dritte war richtungsblind: „ausgebaut" feuerte,
+// sobald sich die ANGEZEIGTE Zahl änderte — egal wohin. „Der Fels" ging von
+// 6,9 auf 7,0 Gegentore und „Der Platzhirsch" von 44 auf 42 Prozent, beides
+// eine Verschlechterung, und beides stand als „baut seinen Rekord aus" im
+// Feed. Wer den Rekord weiter hält, ihn aber verschlechtert, ist keine
+// Nachricht: er hat nichts getan, die anderen sind nur nicht vorbeigezogen.
+//
+// `val` ist der Sortierwert der Bestenliste, groß heißt besser — daran
+// entscheidet sich die Richtung. Dass die Zahl SICHTBAR anders sein muss,
+// bleibt: ein Anteil rückt an fast jedem Spieltag um ein Tausendstel weiter,
+// und das ergab neun Karten an einem Morgen, auf denen dieselbe Zahl stand.
+function _rekordArt(alt, neu){
+  if(!neu) return '';
+  if(!alt) return 'erstmals';
+  if(alt.pids.join(',') !== neu.pids.join(',')) return 'geholt';
+  if(_chronKurz(alt.ev) === _chronKurz(neu.ev)) return '';
+  return (neu.val > alt.val) ? 'gesteigert' : '';
+}
+
 function _buildStories(){
   const stories = [];
   const now = new Date();
@@ -358,8 +378,8 @@ function _buildStories(){
         id: 'team_streak_'+t.ids.join('_')+'_'+t.cur,
         cat: 'team',
         ic: 'unstoppable',
-        title: `${nameOf(t.ids[0])} & ${nameOf(t.ids[1])} sind als Team nicht zu stoppen`,
-        desc: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} haben ${t.cur} Spiele nacheinander zusammen gewonnen.`,
+        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen alles`,
+        desc: `${t.cur} gemeinsame Spiele, ${t.cur} Siege. Die Serie läuft noch.`,
         when: t.lastT,
         prio: t.cur >= 7 ? 9 : 8,
         dataRef: {type:'team_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
@@ -395,12 +415,13 @@ function _buildStories(){
         id: 'team_loss_streak_'+t.ids.join('_')+'_'+t.cur,
         cat: 'team',
         ic: 'trendCrash',
-        title: `${nameOf(t.ids[0])} & ${nameOf(t.ids[1])} kommen als Team nicht in Tritt`,
+        title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} verlieren zusammen alles`,
         // Der Satz war für jedes Duo derselbe und stand damit wortgleich
-        // zweimal im Feed. Jetzt trägt er die Namen und den Zeitraum.
-        desc: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} verlieren seit dem `
+        // zweimal im Feed. Die Namen stehen schon in der Schlagzeile; hier
+        // steht, seit wann und wie oft.
+        desc: `Seit dem `
             + `${new Date(t.firstT || t.lastT).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
-            + `jede gemeinsame Partie. ${t.cur} am Stück.`,
+            + `geht jedes gemeinsame Spiel verloren. ${t.cur} am Stück.`,
         when: t.lastT,
         prio: t.cur >= 7 ? 7 : 6,
         dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
@@ -462,8 +483,8 @@ function _buildStories(){
         id: 'loss_streak_'+c.pid+'_'+c.when.toISOString().slice(0,10),
         cat: 'misfortune',
         ic: c.streak >= 7 ? 'dropTriple' : 'dropDouble',
-        title: `${nameOf(c.pid)} im Pleiten-Modus`,
-        desc: `${c.streak} Niederlagen nacheinander. Der letzte Sieg liegt ${c.streak} Partien zurück.`,
+        title: `${nameOf(c.pid)} findet gerade kein Mittel`,
+        desc: `${c.streak} Niederlagen am Stück. So lange hat ${nameOf(c.pid)} nicht mehr gewonnen.`,
         when: c.when,
         prio: c.streak >= 8 ? 6 : 4,
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak}
@@ -561,7 +582,7 @@ function _buildStories(){
       if(_nemOpp){
         // Der Name der Auszeichnung steht schon in der Schlagzeile; er stand
         // hier ein zweites Mal, gleich darunter.
-        _bdesc = `Fünf Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
+        _bdesc = `5 Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
       } else if(ev.badge.id === 'games250' && typeof countGames === 'function'){
         _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht jetzt bei ${countGames(ev.playerId, matches)} Spielen.`;
       } else if(ev.badge.id === 'wins200' && typeof countWins === 'function'){
@@ -617,13 +638,15 @@ function _buildStories(){
         id: 'rivalry_'+r.a+'_'+r.b,
         cat: 'rivalry',
         ic: 'crossedSwords',
-        title: `${r.n} Duelle. Eine ${tier} Rivalität`,
+        // Die Schlagzeile war ein Satzfragment und nannte niemanden:
+        // „188 Duelle. Eine große Rivalität". Jetzt stehen die beiden drin.
+        title: `${nameOf(r.a)} gegen ${nameOf(r.b)}: ${r.n} Duelle`,
         // „Eine große Rivalität — die Liga liebt's" stand wortgleich unter
         // zwei Karten untereinander und nannte keine einzige Zahl.
         desc: (() => { const va = r.aw, vb = r.n - r.aw;
           return va === vb
             ? `${nameOf(r.a)} und ${nameOf(r.b)} stehen nach ${r.n} Duellen exakt bei ${va}:${vb}.`
-            : `${nameOf(va > vb ? r.a : r.b)} führt mit ${Math.max(va, vb)}:${Math.min(va, vb)} gegen ${nameOf(va > vb ? r.b : r.a)}.`;
+            : `${nameOf(va > vb ? r.a : r.b)} führt ${Math.max(va, vb)}:${Math.min(va, vb)}. Öfter ist sich in der Liga kein Paar begegnet.`;
         })(),
         when: r.when,
         prio: r.n >= 200 ? 7 : r.n >= 100 ? 5 : 3,
@@ -838,8 +861,8 @@ function _buildStories(){
         id: 'elo_swing_day_'+worstPid+'_'+_yesterdayKey,
         cat: 'misfortune',
         ic: 'dropDouble',
-        title: `${nameOf(worstPid)} mit hartem Tag`,
-        desc: `${delta} Elo. Der größte Verlust von gestern.`,
+        title: `Harter Tag für ${nameOf(worstPid)}`,
+        desc: `${Math.abs(delta)} Elo weg an einem Tag. Mehr hat gestern niemand verloren.`,
         when: new Date(_startOfToday),
         prio: 5,
         dataRef: {type:'elo_swing', pid: worstPid, delta, period: 'Gestern'}
@@ -951,8 +974,8 @@ function _buildStories(){
           id: 'top_clash_'+m.id,
           cat: 'highlight',
           ic: 'kingClass',
-          title: `Gipfeltreffen: ${nameOf(best.p1)} bezwingt ${nameOf(best.p2)}`,
-          desc: `Tabellenführer ${nameOf(best.p1)} setzt sich im direkten Duell gegen Verfolger ${nameOf(best.p2)} durch und baut den Vorsprung an der Spitze aus.`,
+          title: `${nameOf(best.p1)} schlägt ${nameOf(best.p2)} im Spitzenspiel`,
+          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Der Abstand nach vorn wird größer.`,
           when: new Date(best.t),
           prio: 9,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2,
@@ -1076,13 +1099,20 @@ function _buildStories(){
     chosen.forEach(kill => {
       const m = kill.m;
       const breakerIds = (kill.winners || []).filter(Boolean);
-      const breakerNames = breakerIds.map(nameOf).join(' & ');
+      // „Julian und Maxi brechen Martins 6er-Serie" sagt in der Schlagzeile,
+      // was passiert ist. Vorher stand dort „Serie gerissen: Martin" und der
+      // Satz darunter nannte die Namen — die Schlagzeile trug damit den
+      // Verlierer und nicht die Tat.
+      const _killNamen = breakerIds.map(nameOf);
+      const breakerNames = _killNamen.length > 1
+        ? _killNamen.slice(0, -1).join(', ') + ' und ' + _killNamen[_killNamen.length-1]
+        : (_killNamen[0] || '');
       stories.push({
         id: 'streak_killer_'+m.id,
         cat: 'highlight',
         ic: 'crossedSwords',
-        title: `Serie gerissen: ${nameOf(kill.victimPid)}`,
-        desc: `${breakerNames} stoppen die Serie nach ${kill.streak} Siegen am Stück.`,
+        title: `${breakerNames} brechen ${nameOf(kill.victimPid)}s ${kill.streak}er-Serie`,
+        desc: `${nameOf(kill.victimPid)} hatte ${kill.streak} Spiele in Folge gewonnen. Jetzt ist Schluss.`,
         when: new Date(kill.t),
         prio: kill.streak >= 10 ? 9 : 7,
         dataRef: {type:'streak_killer', matchId: m.id, streak: kill.streak, victimPid: kill.victimPid, breakerIds}
@@ -1123,32 +1153,52 @@ function _buildStories(){
   // Im Gegensatz zu Story 7 (Rivalry) triggert das nur, wenn das jüngste
   // Match der Paarung gerade eine Schwelle riss → "100. Aufeinandertreffen!".
   try {
+    // Gemeldet wird JEDE ueberschrittene Schwelle, nicht nur die, auf der ein
+    // Paar gerade steht. Der Grund ist der Wortlaut: die ID traegt die Zahl
+    // (`rivalry_milestone_A|B_50`), und wenn das Paar bei 52 steht, bildet der
+    // Generator die 50er-ID nicht mehr. `_newsTexteAuffrischen` kann sie dann
+    // nicht auffrischen, und „Historisches 50. Aufeinandertreffen — die
+    // Rivalitaet waechst" stand mit Gedankenstrich und leerem Satz im Feed,
+    // Monate nachdem der Text ersetzt worden war.
+    //
+    // Der Zeitpunkt ist der der KREUZENDEN Partie, nicht der letzten: die
+    // Karte gehoert an den Tag, an dem das 50. Duell gespielt wurde.
     const pairThresholds = [50, 100, 200, 500];
     const pairCnt = {};
-    matches.forEach(m => {
+    const gekreuzt = [];
+    [...matches].sort((x, y) => mts(x) - mts(y)).forEach(m => {
       const A = [m.a1, m.a2], B = [m.b1, m.b2];
       A.forEach(a => B.forEach(b => {
         if(a === b) return;
         const k = a < b ? a+'|'+b : b+'|'+a;
-        if(!pairCnt[k]) pairCnt[k] = {n:0, lastId:null, lastTs:0};
+        if(!pairCnt[k]) pairCnt[k] = {n:0, w:{}};
         pairCnt[k].n++;
-        const ts = mts(m);
-        if(ts > pairCnt[k].lastTs){ pairCnt[k].lastTs = ts; pairCnt[k].lastId = m.id; }
+        // Der Zwischenstand im selben Durchlauf: „Das 50. Aufeinandertreffen
+        // dieser beiden" stand wortgleich unter zwei Karten, weil zwei Paare
+        // dieselbe Schwelle rissen — und nannte keine einzige Zahl [§C33].
+        const sieger = (m.winner === 'A') ? (A.indexOf(a) >= 0 ? a : b)
+                                          : (B.indexOf(a) >= 0 ? a : b);
+        pairCnt[k].w[sieger] = (pairCnt[k].w[sieger] || 0) + 1;
+        if(pairThresholds.includes(pairCnt[k].n))
+          gekreuzt.push({k, n: pairCnt[k].n, ts: mts(m), mid: m.id,
+                         wa: pairCnt[k].w[a] || 0, wb: pairCnt[k].w[b] || 0});
       }));
     });
-    Object.entries(pairCnt).forEach(([k, v]) => {
-      if(!pairThresholds.includes(v.n)) return;
-      const [a, b] = k.split('|');
+    gekreuzt.forEach(g => {
+      const [a, b] = g.k.split('|');
       if(!pm[a] || !pm[b] || pm[a].hidden || pm[b].hidden) return;
       stories.push({
-        id: 'rivalry_milestone_'+k+'_'+v.n,
+        id: 'rivalry_milestone_'+g.k+'_'+g.n,
         cat: 'rivalry',
         ic: 'crossedSwords',
-        title: `${v.n}. Duell: ${nameOf(a)} vs ${nameOf(b)}`,
-        desc: `Das ${v.n}. Aufeinandertreffen dieser beiden.`,
-        when: new Date(v.lastTs),
-        prio: v.n >= 200 ? 9 : v.n >= 100 ? 8 : 6,
-        dataRef: {type:'rivalry_milestone', a, b, n: v.n, matchId: v.lastId}
+        title: `${g.n}. Duell: ${nameOf(a)} vs ${nameOf(b)}`,
+        desc: g.wa === g.wb
+          ? `Nach ${g.n} Duellen steht es ${g.wa}:${g.wb}. Keiner liegt vorn.`
+          : `Nach ${g.n} Duellen steht es ${Math.max(g.wa, g.wb)}:${Math.min(g.wa, g.wb)} `
+            + `für ${nameOf(g.wa > g.wb ? a : b)}.`,
+        when: new Date(g.ts),
+        prio: g.n >= 200 ? 9 : g.n >= 100 ? 8 : 6,
+        dataRef: {type:'rivalry_milestone', a, b, n: g.n, matchId: g.mid}
       });
     });
   } catch(e){}
@@ -1301,7 +1351,7 @@ function _buildStories(){
         _wochenTeile.unshift({
           art: 'potw', ic: 'weekKing', label: 'Spieler der Woche', held: true,
           pids: res.winners.map(w => w.id), wert: Math.round(main.wr*100) + ' %',
-          satz: `${names.join(' und ')} gewinnt ${main.wins} von ${main.wins + main.losses} Partien. Das ist die beste Quote der Woche.`,
+          satz: `${names.join(' und ')} gewinnt ${main.wins} von ${main.wins + main.losses} Spielen und hat damit die beste Quote.`,
           potw: {weekKey: _potwKeyOf(range.start), playerId: main.id,
                  playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
         });
@@ -1338,7 +1388,7 @@ function _buildStories(){
               // v9.17: Die Siegquote steht NICHT mehr vorn — der Titel wird über
               // die absoluten Tagessiege vergeben (siehe _newsPeriodWinner). Die
               // Quote bleibt als Kontext, damit die Zahl einordbar ist.
-              desc: `${main.wins} von ${main.wins + main.losses} Partien gewonnen, ${Math.round(main.wr*100)} % Siegquote. Kein anderer holte am ${dLabel} mehr Siege.`,
+              desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, das sind ${Math.round(main.wr*100)} %. Am ${dLabel} hat niemand mehr geholt.`,
               when: rep,
               prio: 7,
               dataRef: {type:'potd', dayKey: data.dayKey, playerId: main.id, playerIds: res.winners.map(w => w.id),
@@ -1405,7 +1455,7 @@ function _buildStories(){
         cat: 'season',
         ic: 'weekKing',
         title: _wHeld.art === 'potw' ? `Die Woche gehört ${_wName}` : `Die Woche der Liga`,
-        desc: `${_wSpiele.length} Partien an ${_wTage} ${_wTage === 1 ? 'Tag' : 'Tagen'}. `
+        desc: `${_wSpiele.length} Spiele an ${_wTage} ${_wTage === 1 ? 'Tag' : 'Tagen'}. `
             + _wHeld.satz,
         when: _wSchluss,
         prio: 9,
@@ -1443,15 +1493,7 @@ function _buildStories(){
         // den Feed gemeinsam [§C33].
         if(def.kind === 'shame') return;
         const a = _vorher[def.id];
-        let art = '';
-        if(!a) art = 'erstmals';
-        else if(a.pids.join(',') !== n.pids.join(',')) art = 'geholt';
-        // „Ausgebaut" nur, wenn man es SIEHT. Ein Anteil rückt an fast jedem
-        // Spieltag um ein Tausendstel weiter; das ergab neun Karten „X baut
-        // seinen Rekord aus" an einem Morgen, auf denen dieselbe Zahl stand
-        // wie vorher. Verglichen wird deshalb der angezeigte Wert — dieselbe
-        // Zahl, die auch das Podest zeigt.
-        else if(_chronKurz(a.ev) !== _chronKurz(n.ev)) art = 'gesteigert';
+        const art = _rekordArt(a, n);
         if(!art) return;
         const neuN = n.pids.map(nameOf);
         const namen = neuN.length > 1
@@ -1468,7 +1510,11 @@ function _buildStories(){
         } else if(art === 'geholt'){
           const altN = (a.pids || []).map(nameOf).join(' & ') || 'der bisherige Halter';
           title = `${namen} übernimmt „${def.name}"`;
-          desc = `${n.ev}. ${altN} stand bei ${wertAlt}.`;
+          // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
+          // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
+          // damit gar nichts.
+          desc = `${n.ev}.` + (wertAlt && wertAlt !== wertNeu
+            ? ` Vorher hielt ${altN} den Rekord mit ${wertAlt}.` : ` Vorher gehörte er ${altN}.`);
         } else {
           title = `${namen} baut „${def.name}" aus`;
           desc = `${n.ev}. Vorher ${wertAlt}.`;
@@ -1569,7 +1615,7 @@ function _buildStories(){
         cat: 'tafel',
         ic: 'award',
         title: `${p.name} trägt den ${INSIGNIEN[P.stufe].name}`,
-        desc: `${P.teile.auszeichnung} aus Auszeichnungen, ${P.teile.monat} aus Monaten, `
+        desc: `${P.punkte} Prestige zusammen: ${P.teile.auszeichnung} aus Auszeichnungen, ${P.teile.monat} aus Monatswertungen, `
             + `${P.teile.rekord} aus Rekorden.`
             + (P.naechste ? ` Bis zum ${P.naechste.name} fehlen ${P.fehlt}.` : ''),
         when: matches.length ? mts(matches[matches.length-1]) : now.getTime(),

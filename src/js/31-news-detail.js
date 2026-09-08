@@ -224,7 +224,7 @@ function _newsMedaillon(ic, rarity, name, bedingung, badgeId){
     <div class="nd-med-t">
       <div class="nd-med-n">${esc(name || '')}</div>
       <div class="nd-med-k">${esc(_newsRarityLabel(r))}</div>
-      ${bedingung ? `<div class="nd-med-b">${esc(bedingung)}</div>` : ''}
+      ${_ndNeu(bedingung) ? `<div class="nd-med-b">${esc(bedingung)}</div>` : ''}
     </div>
     ${halter ? `<div class="nd-med-h">${esc(halter)}</div>` : ''}
   </div>`;
@@ -268,6 +268,27 @@ function _newsTagPartien(dayKey, pid){
       return !pid || [m.a1, m.a2, m.b1, m.b2].indexOf(pid) >= 0;
     });
   } catch(e){ return []; }
+}
+
+// ── Was oben steht, steht unten nicht noch einmal ────────────────────
+// Der Kopf des Blatts zeigt Schlagzeile und Text der Karte. Steht derselbe
+// Satz darunter ein zweites Mal, liest man ihn zweimal und erfaehrt nichts:
+// beim Angstgegner stand „5× in Folge gegen denselben Gegner" als Bedingung
+// im Medaillon, und drei Zeilen darueber im Text schon „Fuenf Pleiten in
+// Folge gegen Maxi". Verglichen wird ohne Auszeichnung und ohne
+// Grossschreibung, damit auch eine leicht umgestellte Fassung auffaellt.
+let _ndOben = '';
+function _ndNormal(t){
+  return String(t == null ? '' : t)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/[„""»«.,;:!?()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim().toLowerCase();
+}
+function _ndNeu(txt){
+  const n = _ndNormal(txt);
+  if(!n || n.length < 12) return txt;
+  return _ndOben.indexOf(n) >= 0 ? '' : txt;
 }
 
 // ── Das Insignium im Blatt ───────────────────────────────────────────
@@ -319,9 +340,11 @@ function _newsDetailBody(s){
   // unten steht: sonst nannte er „Reif · 168 Prestige" und der Block darunter
   // sagte dasselbe noch einmal, mit Bild.
   _ndKopfMatch = d.matchId || null;
+  _ndOben = _ndNormal((s.title || '') + ' ' + (s.desc || ''));
   let mitte = '';
   try { mitte = _newsDetailMitte(s) || ''; } catch(e){ mitte = ''; }
   _ndKopfMatch = null;
+  _ndOben = '';
   _ndZeichenUnten = mitte.indexOf('nd-ins') >= 0;
   const kopf = _newsBlattKopf(s);
   _ndZeichenUnten = false;
@@ -359,7 +382,7 @@ function _newsDetailMitte(s){
         // zweites Mal, Wort fuer Wort.
         return `<div class="nd-gwert ${d.zufall ? 'metall' : 'gold'}">
             <b>${esc(wert)}</b><span>${esc(d.kammerLabel || 'Bestmarke')}</span></div>
-          ${d.cond ? `<div class="nd-stat-row"><div class="nd-stat-label">Bedingung</div>
+          ${_ndNeu(d.cond) ? `<div class="nd-stat-row"><div class="nd-stat-label">Bedingung</div>
             <div class="nd-stat-val" style="font-size:11px;text-align:right;max-width:62%">${esc(d.cond)}</div></div>` : ''}
           ${vor.length ? `<div class="nd-stat-row" data-pid="${esc(vor[0])}" style="cursor:pointer">
             <div class="nd-stat-label">Vorher gehalten von</div>
@@ -398,9 +421,9 @@ function _newsDetailMitte(s){
             <div class="nd-med-t">
               <div class="nd-med-n">${esc((t && t.name) || d.titel || '')}</div>
               <div class="nd-med-k">${esc(seasonLabel(d.sid) || '')}</div>
-              ${def && def.cond ? `<div class="nd-med-b">${esc(def.cond)}</div>` : ''}
+              ${def && _ndNeu(def.cond) ? `<div class="nd-med-b">${esc(def.cond)}</div>` : ''}
             </div>
-            ${t && t.ev ? `<div class="nd-med-h">${_newsBetont(t.ev)}</div>` : ''}
+            ${t && _ndNeu(t.ev) ? `<div class="nd-med-h">${_newsBetont(t.ev)}</div>` : ''}
           </div>
           <button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
       }
@@ -488,9 +511,12 @@ function _newsDetailMitte(s){
       // Feed traegt statt sechs Karten eine.
       case 'woche': {
         const teile = Array.isArray(d.teile) ? d.teile : [];
-        const kopf = `<div class="nd-stat-row">
+        // „3 Partien an 2 Tagen" steht schon im Text der Karte, drei Zeilen
+        // darueber. Die Zeile bleibt nur, wenn er sie nicht nennt.
+        const kopfWert = `${d.spiele || 0} an ${d.tage || 0} ${d.tage === 1 ? 'Tag' : 'Tagen'}`;
+        const kopf = _ndOben.indexOf(_ndNormal(kopfWert)) >= 0 ? '' : `<div class="nd-stat-row">
             <div class="nd-stat-label">Partien in dieser Woche</div>
-            <div class="nd-stat-val acid">${d.spiele || 0} an ${d.tage || 0} ${d.tage === 1 ? 'Tag' : 'Tagen'}</div></div>`;
+            <div class="nd-stat-val acid">${esc(kopfWert)}</div></div>`;
         const zeilen = teile.map(t => {
           const ids = Array.isArray(t.pids) ? t.pids : [];
           const chips = ids.slice(0, 2).map(pid =>
@@ -500,7 +526,7 @@ function _newsDetailMitte(s){
                 <span class="nw-label">${esc(t.label || '')}</span>
                 <span class="nw-wert">${esc(t.wert || '')}</span>
               </div>
-              <div class="nw-satz">${esc(t.satz || '')}</div>
+              ${_ndNeu(t.satz) ? `<div class="nw-satz">${esc(t.satz)}</div>` : ''}
               <div class="nw-chips">${chips}</div>
             </div>`;
         }).join('');
@@ -652,7 +678,10 @@ function _newsDetailMitte(s){
               `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
                 <div class="nd-stat-label">${esc(nameOf(pid))}</div><div class="nd-stat-val">›</div></div>`).join('')
           : '';
-        const nemRow = d.nemesisOppId ? `<div class="nd-stat-row" data-pid="${esc(d.nemesisOppId)}" style="cursor:pointer">
+        // Den Gegner nennt der Text der Karte schon; die Zeile bleibt nur,
+        // wenn er dort nicht steht — antippbar ist sie in beiden Faellen.
+        const nemRow = (d.nemesisOppId && _ndNormal(_ndOben).indexOf(_ndNormal(nameOf(d.nemesisOppId))) < 0)
+          ? `<div class="nd-stat-row" data-pid="${esc(d.nemesisOppId)}" style="cursor:pointer">
             <div class="nd-stat-label">Gegen wen</div>
             <div class="nd-stat-val neg">${esc(nameOf(d.nemesisOppId))} ›</div></div>` : '';
         return medaille + playersHtml + nemRow
