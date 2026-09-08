@@ -349,13 +349,61 @@ const ok = (c, msg, det) => {
   const gefiltert = await page.evaluate(() => {
     window.__k.eval('rekKammer = "fuegung"; render()');
     const n = document.querySelectorAll('#app .rek-g-n').length;
+    // Gemessen wird die KAMMER, nicht die Farbe: eine Fuegung, die von einer
+    // Niederlage erzaehlt, traegt Rot und bleibt trotzdem eine Fuegung.
     const nurFuegung = [...document.querySelectorAll('#app .rek')]
-      .every(e => e.classList.contains('fuegung') || e.classList.contains('offen'));
+      .every(e => e.dataset.kammer === 'fuegung');
     window.__k.eval('rekKammer = ""; render()');
     return {n, nurFuegung};
   });
   ok(gefiltert.n === 1 && gefiltert.nurFuegung,
      'der Kammerfilter zeigt genau eine Kammer', JSON.stringify(gefiltert));
+
+  // ── Was negativ ist, traegt Rot und zaehlt nicht ──────────────────
+  // „Die bitterste Pleite" stand im Profil golden zwischen den Titeln und
+  // machte aus sechs Rekorden sieben. Rot ist die Richtung [§C25], und ein
+  // Rekord ist etwas, das man geholt hat.
+  const negRot = await page.evaluate(() => {
+    const K = s => window.__k.eval(s);
+    // Ein Spieler, der etwas Negatives haelt.
+    const pid = K(`(function(){ const p = players.find(p => chroniclesOfPlayer(p.id)
+      .some(x => x.neg) && chroniclesOfPlayer(p.id).some(x => !x.neg));
+      return p ? p.id : ''; })()`);
+    if(!pid) return {keiner:true};
+    const alle = K(`chroniclesOfPlayer('${pid}').length`);
+    const positiv = K(`chroniclesOfPlayer('${pid}').filter(x => !x.neg).length`);
+    K(`tab = "ranking"; render(); showPlayer('${pid}')`);
+    const wrap = document.querySelector('#sheet .pp-root') || document.querySelector('#sheet');
+    const karten = [...wrap.querySelectorAll('.chron-one')];
+    const rot = karten.filter(e => {
+      const c = getComputedStyle(e).getPropertyValue('--tt').trim();
+      return /f0566a/i.test(c);
+    }).length;
+    // Das Profil hat mehrere Abschnittsköpfe — gesucht ist der ueber den
+    // Rekord-Karten, nicht der erste im Blatt.
+    const kopf = [...wrap.querySelectorAll('.pp-sec-title')].find(e => {
+      const h = e.querySelector('h4');
+      return h && /^(Liga-Rekord|Schattenseite)/.test(h.textContent.trim());
+    });
+    const zahl = kopf ? kopf.querySelector('.m') : null;
+    // Steht die Schattenseite hinten?
+    const negIdx = karten.map((e, i) => e.classList.contains('schatten') ? i : -1)
+      .filter(i => i >= 0);
+    const erste = karten.length ? Math.min(...negIdx) : -1;
+    K('closeSheet && closeSheet()');
+    return {alle, positiv, karten: karten.length, rot,
+            zahl: zahl ? +zahl.textContent.trim() : null,
+            negZuerst: erste === 0 && positiv > 0};
+  });
+  ok(!negRot.keiner, 'es gibt ein Profil mit Rekord und Schattenseite',
+     JSON.stringify(negRot));
+  ok(negRot.rot === negRot.alle - negRot.positiv,
+     'jede negative Karte im Profil ist rot, keine andere',
+     negRot.rot + ' rot von ' + (negRot.alle - negRot.positiv) + ' negativen');
+  ok(negRot.zahl === negRot.positiv,
+     'die Zahl neben „Liga-Rekorde" zaehlt nur das Positive',
+     negRot.zahl + ' statt ' + negRot.positiv);
+  ok(negRot.negZuerst === false, 'und das Negative steht nicht an erster Stelle');
 
   console.log('\n═══ DIE TAFEL ═══');
   // Gemessen am gerenderten Feed: ein Tageskopf je Kalendertag, jede Karte

@@ -503,8 +503,11 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round((1-v)*100)} % mittlere Siegchance über den ganzen Tag`,
       zeit:p => p.hartTagLabel || ''}},
 
+  // `negativ` faerbt und zaehlt, `art` wiegt: die Fuegung bleibt ein Ereignis
+  // [§C35], erzaehlt aber von einer Niederlage. Im Profil stand sie in Gold
+  // neben den Titeln und wurde als Rekord mitgezaehlt.
   {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'dramaTear', tone:'purple',
-    art:'ereignis', zufall:'quote',
+    art:'ereignis', zufall:'quote', negativ:true,
     allzeit:{
       wie:'Eine einzige Partie, kein Durchschnitt: die höchste Siegchance, mit der je jemand in ein Spiel ging und es trotzdem verlor.',
       cond:'Höchste Siegchance, die trotzdem verloren ging — mindestens 65 %',
@@ -547,7 +550,7 @@ const DISZIPLINEN = [
       zeit:p => p.beidesLabel || ''}},
 
   {id:'coldshower', name:'Die kalte Dusche', short:'Dusche', ic:'showerHead', tone:'blue',
-    art:'ereignis', zufall:'fund',
+    art:'ereignis', zufall:'fund', negativ:true,
     allzeit:{
       cond:'Ein 10:0 gewinnen und die unmittelbar nächste Partie 0:10 verlieren',
       val:p => p.dusche > 0 ? p.dusche : null,

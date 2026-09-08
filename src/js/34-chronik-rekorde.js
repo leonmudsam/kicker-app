@@ -67,6 +67,12 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   kind: d.zufall ? 'fuegung' : d.art === 'schatten' ? 'shame'
       : d.art === 'ereignis' ? 'mark' : 'record',
   zufall: d.zufall || '',
+  // Rot ist die Richtung [§C25]. Eine Schattenseite ist immer negativ, eine
+  // Fuegung nur dann, wenn sie von einer Niederlage erzaehlt — „Die bitterste
+  // Pleite" stand im Profil in Gold neben den Titeln und wurde als Rekord
+  // mitgezaehlt. Die Kammer bleibt davon unberuehrt, und `art` auch: sonst
+  // wuerde sich das Prestige verschieben [§C34].
+  neg: d.art === 'schatten' || d.negativ === true,
   cond:d.allzeit.cond, wie:d.allzeit.wie || '', val:d.allzeit.val, raw:d.allzeit.raw,
   unit:d.allzeit.unit, min:d.allzeit.min, ev:d.allzeit.ev,
   // Wann er erreicht wurde — nur dort, wo es einen Zeitpunkt GIBT. Ein
@@ -451,7 +457,7 @@ function allChronicles(bisMs){
     };
     const holders = pids.map(id => ({pid:id, ev:def.ev(C.P[id], bv, C), zeit:_zeit(id)}));
     const entry = {
-      id:def.id, name:def.name, ic:def.ic, tone:def.tone, kind:def.kind,
+      id:def.id, name:def.name, ic:def.ic, tone:def.tone, kind:def.kind, neg:def.neg,
       cond:def.cond, ord:def.ord, pid:pids[0], pids, holders,
       shared:pids.length > 1, val:bv, ev:holders[0].ev, zeit:holders[0].zeit
     };
@@ -541,8 +547,9 @@ function _chronHolderNames(entry){
 }
 
 // Was fehlt einem Spieler ohne Rekord bis zum nächstgelegenen? Nur zählbare
-// Rekorde kommen infrage (`unit`) — und keine Schattenseiten: „noch drei
-// 0:10-Niederlagen" wäre ein Ziel, das niemand haben will.
+// Rekorde kommen infrage (`unit`) — und nichts Negatives: „noch drei
+// 0:10-Niederlagen" wäre ein Ziel, das niemand haben will, und „noch 5 %
+// Siegchance mehr, die trotzdem verloren geht" genauso wenig.
 // Gewählt wird der RELATIV nächste, damit nicht immer derselbe Rekord mit
 // der kleinsten absoluten Zahl vorschlägt.
 function nextRecordFor(pid){
@@ -552,7 +559,7 @@ function nextRecordFor(pid){
   if(!p || all.byPid[pid]) return null;
   let best = null;
   CHRONICLES.forEach(def => {
-    if(!def.unit || def.kind === 'shame') return;
+    if(!def.unit || def.neg) return;
     const mine = def.raw(p, C);
     if(mine == null || !isFinite(mine)) return;
     const lead = all.byId[def.id];

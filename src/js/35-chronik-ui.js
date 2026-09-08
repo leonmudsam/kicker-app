@@ -97,10 +97,19 @@ function _chronStripHtml(pid){
     // Wer mehr als einen Rekord haelt, soll auch alle sehen koennen. Sichtbar
     // ist der wertvollste; der Rest kommt auf Tippen. Andersherum waere die
     // Karte bei Leon zehn Zeilen lang, bevor irgendetwas anderes im Profil kommt.
-    const mine = chroniclesOfPlayer(pid);
+    // Was negativ ist, steht hinten und zaehlt nicht mit: „Die bitterste
+    // Pleite" stand in Gold zwischen den Titeln und machte aus sechs Rekorden
+    // sieben. Gezeigt wird sie weiter — sie gehoert ihm ja —, aber in Rot und
+    // ausserhalb der Zahl [§C25].
+    const alle = chroniclesOfPlayer(pid);
+    const mine = alle.filter(x => !x.neg).concat(alle.filter(x => x.neg));
+    const zaehlt = alle.filter(x => !x.neg).length;
+    // Wer NUR eine Schattenseite hält, bekommt keine Überschrift „Liga-Rekord"
+    // darüber: „Das Scheunentor" ist keiner, und die Zahl daneben wäre null.
+    const nurNeg = zaehlt === 0;
     const card = (x) => {
       const tt = titleTone(x.tone);
-      return `<div class="chron-one${x.kind === 'shame' ? ' schatten' : ''}" style="--tt:${tt.c};--ttr:${tt.rgb}" data-chron="${esc(x.id)}">
+      return `<div class="chron-one${x.neg ? ' schatten' : ''}" style="--tt:${tt.c};--ttr:${tt.rgb}" data-chron="${esc(x.id)}">
       <span class="ic">${svgI(x.ic)}</span>
       <span class="tx">
         <span class="n">${esc(x.name)}${x.shared
@@ -114,9 +123,11 @@ function _chronStripHtml(pid){
     const rest = mine.slice(1);
     chronBlock = `
     <div class="pp-sec-title">
-      <div class="l"><span class="ic svg-ic">${svgI('trophyStar')}</span><h4>Liga-Rekord${
-        mine.length > 1 ? 'e' : ''}</h4></div>
-      ${mine.length > 1 ? `<div class="m num">${mine.length}</div>` : ''}
+      <div class="l"><span class="ic svg-ic">${svgI(nurNeg ? 'ghost' : 'trophyStar')}</span>
+        <h4>${nurNeg ? (alle.length === 1 ? 'Schattenseite' : 'Schattenseiten')
+                     : (zaehlt === 1 ? 'Liga-Rekord' : 'Liga-Rekorde')}</h4></div>
+      ${(nurNeg ? alle.length : zaehlt) > 1
+        ? `<div class="m num">${nurNeg ? alle.length : zaehlt}</div>` : ''}
     </div>
     ${card(mine[0] || c)}
     ${rest.length ? `<div class="chron-rest">${rest.map(card).join('')}</div>
@@ -376,7 +387,7 @@ function ligaRekordeHtml(weit){
     // Ein Rekord, den noch niemand geholt hat, wird GESTRICHELT gezeigt und
     // nicht weggelassen: weggelassen ist er unsichtbar, halbdurchsichtig
     // liest er sich als Fehler.
-    if(!h) return `<div class="rek offen" data-chron="${esc(d.id)}">
+    if(!h) return `<div class="rek offen" data-chron="${esc(d.id)}" data-kammer="${esc(d.kind)}">
       <div class="rek-ic">${svgI(d.ic)}</div>
       <div class="rek-b">
         <div class="rek-z1"><span class="rek-nt">${esc(d.name)}</span>
@@ -389,7 +400,7 @@ function ligaRekordeHtml(weit){
     // Rekorden [§C25] — wenn aber fünfunddreißig Karten golden sind, sagt
     // Gold nichts mehr. Eine Fügung trägt deshalb Metall: sie ist kein
     // Können. Eine Schattenseite bleibt rot, die Richtung [§C25].
-    const kl = d.kind === 'shame' ? ' schatten' : d.kind === 'fuegung' ? ' fuegung' : '';
+    const kl = d.neg ? ' schatten' : d.kind === 'fuegung' ? ' fuegung' : '';
     const zeit = h.zeit ? `<span class="rek-zeit">${esc(String(h.zeit))}</span>` : '';
     // Der Beleg beginnt fast immer mit seiner Zahl. Sie ist die Aussage der
     // Karte und stand bisher klein und grau unter dem Namen — als Letztes,
@@ -397,7 +408,11 @@ function ligaRekordeHtml(weit){
     const ev = String(h.ev || '');
     const m = ev.match(/^([+\u2212-]?\d[^\s]*(?:\s?%)?)\s+(.*)$/);
     const beleg = m ? `<span class="rek-w">${esc(m[1])}</span> ${esc(m[2])}` : esc(ev);
-    return `<div class="rek${kl}" data-chron="${esc(d.id)}">
+    // Die Kammer steht als Datum an der Karte, nicht als Farbklasse: eine
+    // Fuegung, die von einer Niederlage erzaehlt, traegt Rot und bleibt
+    // trotzdem eine Fuegung. Ueber die Klasse waeren Kammer und Farbe
+    // dasselbe, und dann kann die eine die andere nicht ueberstimmen.
+    return `<div class="rek${kl}" data-chron="${esc(d.id)}" data-kammer="${esc(d.kind)}">
       <div class="rek-ic">${svgI(d.ic)}</div>
       <div class="rek-b">
         <div class="rek-z1"><span class="rek-nt">${esc(d.name)}</span>

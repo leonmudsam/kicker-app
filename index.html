@@ -4993,7 +4993,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.08.de56b4e4';
+const BUILD_VERSION='2026.09.08.3ccba6fb';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -10162,9 +10162,10 @@ function _vRankingCore(){
       // hier nur die Titelzahl — und die Spielzahl nur beim Ersten; wer
       // keinen Titel hatte, sah dort ausschließlich seine Spiele und damit
       // eine andere Zeile als sein Nachbar.
-      // Die Schattenseiten zählen nicht mit: dies ist ein Podest, und die
-      // längste Niederlagenserie der Liga ist kein Verdienst.
-      const rek = chroniclesOfPlayer(pp.id).filter(x => x.kind !== 'shame').length;
+      // Was negativ ist, zählt nicht mit: dies ist ein Podest, und die
+      // längste Niederlagenserie der Liga ist kein Verdienst — die bitterste
+      // Pleite auch nicht.
+      const rek = chroniclesOfPlayer(pp.id).filter(x => !x.neg).length;
       const sub = [t ? t + ' Titel' : '', entry.s.games + ' Sp.',
                    rek ? rek + ' Rek.' : '']
         .filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
@@ -19276,10 +19277,15 @@ function _buildStories(){
         cat: 'misfortune',
         ic: 'dropDouble',
         title: `Harter Tag für ${nameOf(worstPid)}`,
-        desc: `${Math.abs(delta)} Elo weg an einem Tag. Mehr hat gestern niemand verloren.`,
-        when: new Date(_startOfToday),
+        desc: `${Math.abs(delta)} Elo weg an einem Tag. Mehr hat an diesem Tag niemand verloren.`,
+        // Die Karte gehoert auf den Tag, von dem sie handelt. Um 00:00 des
+        // Folgetages stand sie unter einem Tageskopf, an dem gar nicht
+        // gespielt wurde — derselbe Fehler, den der Spieler des Tages hatte.
+        // 23:58, damit der Sieger des Tages (23:59) im Feed darueber steht.
+        when: (function(){ const d = new Date(_startOfToday); d.setDate(d.getDate() - 1);
+          d.setHours(23, 58, 0, 0); return d; })(),
         prio: 5,
-        dataRef: {type:'elo_swing', pid: worstPid, delta, period: 'Gestern'}
+        dataRef: {type:'elo_swing', pid: worstPid, delta}
       });
     }
   } catch(e){}
@@ -23963,7 +23969,7 @@ function _newsDetailMitte(s){
         let elo = null;
         try { elo = Math.round(((getGlobalSim() || {}).careerElo || {})[d.pid]); } catch(e){}
         return `<div class="nd-gwert ${d.delta >= 0 ? '' : 'rot'}">
-            <b>${d.delta >= 0 ? '+' : ''}${d.delta}</b><span>Elo ${esc(d.period || '')}</span></div>
+            <b>${d.delta >= 0 ? '+' : ''}${d.delta}</b><span>Elo an diesem Tag</span></div>
           ${form.strip ? `<div class="nd-section">Die letzten Partien</div>
             <div class="nd-form-strip">${form.strip}</div>` : ''}
           ${elo ? `<div class="nd-stat-row"><div class="nd-stat-label">Stand jetzt</div>
@@ -24743,8 +24749,11 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round((1-v)*100)} % mittlere Siegchance über den ganzen Tag`,
       zeit:p => p.hartTagLabel || ''}},
 
+  // `negativ` faerbt und zaehlt, `art` wiegt: die Fuegung bleibt ein Ereignis
+  // [§C35], erzaehlt aber von einer Niederlage. Im Profil stand sie in Gold
+  // neben den Titeln und wurde als Rekord mitgezaehlt.
   {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'dramaTear', tone:'purple',
-    art:'ereignis', zufall:'quote',
+    art:'ereignis', zufall:'quote', negativ:true,
     allzeit:{
       wie:'Eine einzige Partie, kein Durchschnitt: die höchste Siegchance, mit der je jemand in ein Spiel ging und es trotzdem verlor.',
       cond:'Höchste Siegchance, die trotzdem verloren ging — mindestens 65 %',
@@ -24787,7 +24796,7 @@ const DISZIPLINEN = [
       zeit:p => p.beidesLabel || ''}},
 
   {id:'coldshower', name:'Die kalte Dusche', short:'Dusche', ic:'showerHead', tone:'blue',
-    art:'ereignis', zufall:'fund',
+    art:'ereignis', zufall:'fund', negativ:true,
     allzeit:{
       cond:'Ein 10:0 gewinnen und die unmittelbar nächste Partie 0:10 verlieren',
       val:p => p.dusche > 0 ? p.dusche : null,
@@ -25662,6 +25671,12 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   kind: d.zufall ? 'fuegung' : d.art === 'schatten' ? 'shame'
       : d.art === 'ereignis' ? 'mark' : 'record',
   zufall: d.zufall || '',
+  // Rot ist die Richtung [§C25]. Eine Schattenseite ist immer negativ, eine
+  // Fuegung nur dann, wenn sie von einer Niederlage erzaehlt — „Die bitterste
+  // Pleite" stand im Profil in Gold neben den Titeln und wurde als Rekord
+  // mitgezaehlt. Die Kammer bleibt davon unberuehrt, und `art` auch: sonst
+  // wuerde sich das Prestige verschieben [§C34].
+  neg: d.art === 'schatten' || d.negativ === true,
   cond:d.allzeit.cond, wie:d.allzeit.wie || '', val:d.allzeit.val, raw:d.allzeit.raw,
   unit:d.allzeit.unit, min:d.allzeit.min, ev:d.allzeit.ev,
   // Wann er erreicht wurde — nur dort, wo es einen Zeitpunkt GIBT. Ein
@@ -26046,7 +26061,7 @@ function allChronicles(bisMs){
     };
     const holders = pids.map(id => ({pid:id, ev:def.ev(C.P[id], bv, C), zeit:_zeit(id)}));
     const entry = {
-      id:def.id, name:def.name, ic:def.ic, tone:def.tone, kind:def.kind,
+      id:def.id, name:def.name, ic:def.ic, tone:def.tone, kind:def.kind, neg:def.neg,
       cond:def.cond, ord:def.ord, pid:pids[0], pids, holders,
       shared:pids.length > 1, val:bv, ev:holders[0].ev, zeit:holders[0].zeit
     };
@@ -26136,8 +26151,9 @@ function _chronHolderNames(entry){
 }
 
 // Was fehlt einem Spieler ohne Rekord bis zum nächstgelegenen? Nur zählbare
-// Rekorde kommen infrage (`unit`) — und keine Schattenseiten: „noch drei
-// 0:10-Niederlagen" wäre ein Ziel, das niemand haben will.
+// Rekorde kommen infrage (`unit`) — und nichts Negatives: „noch drei
+// 0:10-Niederlagen" wäre ein Ziel, das niemand haben will, und „noch 5 %
+// Siegchance mehr, die trotzdem verloren geht" genauso wenig.
 // Gewählt wird der RELATIV nächste, damit nicht immer derselbe Rekord mit
 // der kleinsten absoluten Zahl vorschlägt.
 function nextRecordFor(pid){
@@ -26147,7 +26163,7 @@ function nextRecordFor(pid){
   if(!p || all.byPid[pid]) return null;
   let best = null;
   CHRONICLES.forEach(def => {
-    if(!def.unit || def.kind === 'shame') return;
+    if(!def.unit || def.neg) return;
     const mine = def.raw(p, C);
     if(mine == null || !isFinite(mine)) return;
     const lead = all.byId[def.id];
@@ -26379,10 +26395,19 @@ function _chronStripHtml(pid){
     // Wer mehr als einen Rekord haelt, soll auch alle sehen koennen. Sichtbar
     // ist der wertvollste; der Rest kommt auf Tippen. Andersherum waere die
     // Karte bei Leon zehn Zeilen lang, bevor irgendetwas anderes im Profil kommt.
-    const mine = chroniclesOfPlayer(pid);
+    // Was negativ ist, steht hinten und zaehlt nicht mit: „Die bitterste
+    // Pleite" stand in Gold zwischen den Titeln und machte aus sechs Rekorden
+    // sieben. Gezeigt wird sie weiter — sie gehoert ihm ja —, aber in Rot und
+    // ausserhalb der Zahl [§C25].
+    const alle = chroniclesOfPlayer(pid);
+    const mine = alle.filter(x => !x.neg).concat(alle.filter(x => x.neg));
+    const zaehlt = alle.filter(x => !x.neg).length;
+    // Wer NUR eine Schattenseite hält, bekommt keine Überschrift „Liga-Rekord"
+    // darüber: „Das Scheunentor" ist keiner, und die Zahl daneben wäre null.
+    const nurNeg = zaehlt === 0;
     const card = (x) => {
       const tt = titleTone(x.tone);
-      return `<div class="chron-one${x.kind === 'shame' ? ' schatten' : ''}" style="--tt:${tt.c};--ttr:${tt.rgb}" data-chron="${esc(x.id)}">
+      return `<div class="chron-one${x.neg ? ' schatten' : ''}" style="--tt:${tt.c};--ttr:${tt.rgb}" data-chron="${esc(x.id)}">
       <span class="ic">${svgI(x.ic)}</span>
       <span class="tx">
         <span class="n">${esc(x.name)}${x.shared
@@ -26396,9 +26421,11 @@ function _chronStripHtml(pid){
     const rest = mine.slice(1);
     chronBlock = `
     <div class="pp-sec-title">
-      <div class="l"><span class="ic svg-ic">${svgI('trophyStar')}</span><h4>Liga-Rekord${
-        mine.length > 1 ? 'e' : ''}</h4></div>
-      ${mine.length > 1 ? `<div class="m num">${mine.length}</div>` : ''}
+      <div class="l"><span class="ic svg-ic">${svgI(nurNeg ? 'ghost' : 'trophyStar')}</span>
+        <h4>${nurNeg ? (alle.length === 1 ? 'Schattenseite' : 'Schattenseiten')
+                     : (zaehlt === 1 ? 'Liga-Rekord' : 'Liga-Rekorde')}</h4></div>
+      ${(nurNeg ? alle.length : zaehlt) > 1
+        ? `<div class="m num">${nurNeg ? alle.length : zaehlt}</div>` : ''}
     </div>
     ${card(mine[0] || c)}
     ${rest.length ? `<div class="chron-rest">${rest.map(card).join('')}</div>
@@ -26658,7 +26685,7 @@ function ligaRekordeHtml(weit){
     // Ein Rekord, den noch niemand geholt hat, wird GESTRICHELT gezeigt und
     // nicht weggelassen: weggelassen ist er unsichtbar, halbdurchsichtig
     // liest er sich als Fehler.
-    if(!h) return `<div class="rek offen" data-chron="${esc(d.id)}">
+    if(!h) return `<div class="rek offen" data-chron="${esc(d.id)}" data-kammer="${esc(d.kind)}">
       <div class="rek-ic">${svgI(d.ic)}</div>
       <div class="rek-b">
         <div class="rek-z1"><span class="rek-nt">${esc(d.name)}</span>
@@ -26671,7 +26698,7 @@ function ligaRekordeHtml(weit){
     // Rekorden [§C25] — wenn aber fünfunddreißig Karten golden sind, sagt
     // Gold nichts mehr. Eine Fügung trägt deshalb Metall: sie ist kein
     // Können. Eine Schattenseite bleibt rot, die Richtung [§C25].
-    const kl = d.kind === 'shame' ? ' schatten' : d.kind === 'fuegung' ? ' fuegung' : '';
+    const kl = d.neg ? ' schatten' : d.kind === 'fuegung' ? ' fuegung' : '';
     const zeit = h.zeit ? `<span class="rek-zeit">${esc(String(h.zeit))}</span>` : '';
     // Der Beleg beginnt fast immer mit seiner Zahl. Sie ist die Aussage der
     // Karte und stand bisher klein und grau unter dem Namen — als Letztes,
@@ -26679,7 +26706,11 @@ function ligaRekordeHtml(weit){
     const ev = String(h.ev || '');
     const m = ev.match(/^([+\u2212-]?\d[^\s]*(?:\s?%)?)\s+(.*)$/);
     const beleg = m ? `<span class="rek-w">${esc(m[1])}</span> ${esc(m[2])}` : esc(ev);
-    return `<div class="rek${kl}" data-chron="${esc(d.id)}">
+    // Die Kammer steht als Datum an der Karte, nicht als Farbklasse: eine
+    // Fuegung, die von einer Niederlage erzaehlt, traegt Rot und bleibt
+    // trotzdem eine Fuegung. Ueber die Klasse waeren Kammer und Farbe
+    // dasselbe, und dann kann die eine die andere nicht ueberstimmen.
+    return `<div class="rek${kl}" data-chron="${esc(d.id)}" data-kammer="${esc(d.kind)}">
       <div class="rek-ic">${svgI(d.ic)}</div>
       <div class="rek-b">
         <div class="rek-z1"><span class="rek-nt">${esc(d.name)}</span>
