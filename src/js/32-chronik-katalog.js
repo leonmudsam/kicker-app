@@ -237,6 +237,17 @@ const DISZIPLINEN = [
       val:p => (p.days >= 12 && p.potd/p.days >= 0.25) ? p.potd/p.days : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.days} Spieltage beherrscht · ${p.potd}× Player of the Day`}},
 
+  // Dieselbe Frage wie beim Platzhirsch, eine Zeitebene hoeher — und dieselbe
+  // Zeichnung wie die Wochenkoenig-Kachel im Awards-Reiter [§C27]: Player of
+  // the Week ist dasselbe Ereignis, egal wo es steht. Nur `allzeit`: ein Monat
+  // hat vier Wochen, und ein Anteil aus vier Werten misst nichts [§10.2].
+  {id:'weeklord', name:'Der Wochenherr', short:'Wochenherr', ic:'weekKing', tone:'gold', art:'leistung',
+    allzeit:{
+      wie:'Player of the Week ist, wer in einer abgeschlossenen Woche die beste Siegquote hat, bei mindestens fünf Siegen. Gezählt wird der Anteil an den Wochen, in denen er selbst gespielt hat.',
+      cond:'Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen und mindestens 25 %',
+      val:p => (p.weeks >= 10 && p.potw/p.weeks >= 0.25) ? p.potw/p.weeks : null,
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.weeks} Wochen gewonnen · ${p.potw}× Player of the Week`}},
+
   {id:'reliable', name:'Der Verlässliche', short:'Konstanz', ic:'shieldCheck', tone:'gold', art:'leistung',
     monat:{
       wie:'Positiv heißt: an diesem Spieltag mehr Siege als Niederlagen.',

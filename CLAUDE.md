@@ -183,7 +183,7 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache | 880 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr | 893 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 162 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
@@ -810,12 +810,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Ohne das hätte man zehn Einträge dazugebaut und nichts verändert.
   Jeder gewertete Spieler trägt mindestens einen Liga-Eintrag.
   `tests/disziplinen` misst das alles nach.
-  Was **nicht** in die Kammer gehört: acht Rekorde, die einen Nachbarn
-  doppelten — „Der Wochenkönig" neben „Der Platzhirsch", „Der Vollstrecker"
-  neben „Der Zerstörer", „Der perfekte Abend" neben „Der makellose Tag".
-  Dieselbe Frage in einem anderen Zeitfenster sammelt sich beim selben
-  Halter. Vier von ihnen behalten ihre Monatswertung und verlieren nur den
-  Liga-Rekord; vier gibt es nicht mehr.
+  Was **nicht** in die Kammer gehört: sieben Rekorde, die einen Nachbarn
+  doppelten — „Der Vollstrecker" neben „Der Zerstörer", „Der perfekte Abend"
+  neben „Der makellose Tag". Dieselbe Frage mit derselben Antwort sammelt
+  sich beim selben Halter. Vier von ihnen behalten ihre Monatswertung und
+  verlieren nur den Liga-Rekord; drei gibt es nicht mehr.
+  Ein anderes **Zeitfenster** ist dagegen eine eigene Frage: „Der Wochenherr"
+  steht neben „Der Platzhirsch", weil eine Woche fünf Siege am Stück verlangt
+  und ein Spieltag drei — gemessen halten sie zwei verschiedene Spieler.
   Billig dürfen Fügungen trotzdem nicht sein: eine Bestmarke, die jeder
   geschenkt bekommt, ist keine mehr.
   Und gemessen wird überall der **Anteil**, nicht die Anzahl — sonst hält den
