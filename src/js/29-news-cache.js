@@ -226,6 +226,17 @@ function _consolidateStories(list){
       return !k || (_tsWin[k] || 0) >= (d.streak || 0); }
     if(d.type === 'team_loss_streak'){ const k = _paarKey(d);
       return !k || (_tsLoss[k] || 0) >= (d.streak || 0); }
+    // Eine Uebernahme, bei der Halter und Vorgaenger dieselben sind, hat es
+    // nie gegeben. Der Vergleich lief einmal ueber die REIHENFOLGE der Halter,
+    // und daraus wurde „Maxi, Leo und Julian uebernehmen" mit „Vorher gehoerte
+    // der Rekord Maxi, Julian und Leo" darunter. Der Generator bildet diese
+    // ID nicht mehr, also kann `_newsTexteAuffrischen` sie auch nicht
+    // umschreiben — die persistierte Karte bliebe fuer immer stehen.
+    if(d.type === 'rekord_geholt'){
+      const a = (d.playerIds || []).slice().sort().join(',');
+      const b = (d.vorher || []).slice().sort().join(',');
+      return !b || a !== b;
+    }
     return true;
   });
 
@@ -289,7 +300,14 @@ function _consolidateStories(list){
   // Deduplizierung — sie wirkt auf bestehende UND neue Rows. list ist newest-first
   // → die JÜNGSTE Karte bleibt, ältere inhaltsgleiche entfallen. Gilt für
   // ungruppierte Stories (Gruppen dedupen bereits per Spieler/Match).
+  // §C33 sagt: keine zwei Karten tragen dieselbe SCHLAGZEILE oder denselben
+  // TEXT. Gemessen wurde bisher nur das Paar aus beidem, und damit rutschte
+  // durch, was sich nur in einer Zahl im Fliesstext unterscheidet: „Martin
+  // baut ‚Der Fels' aus" stand zweimal untereinander, einmal mit 151 und
+  // einmal mit 152 Spielen. Zwei gleiche Schlagzeilen sind fuer den, der
+  // scrollt, dieselbe Karte.
   const seenContent = new Set();
+  const seenTitel = new Set();
   for(const s of src){
     const d = s.dataRef || {};
     // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
@@ -315,7 +333,10 @@ function _consolidateStories(list){
     } else {
       const ck = (s.title || '') + '\u0000' + (s.desc || '');
       if(seenContent.has(ck)) continue;   // inhaltsgleiche Doublette → überspringen
+      const tk = String(s.title || '').trim();
+      if(tk && seenTitel.has(tk)) continue;
       seenContent.add(ck);
+      seenTitel.add(tk);
       slots.push({ s });
     }
   }
@@ -373,12 +394,25 @@ function _consolidateStories(list){
   // Vier Zeilen sind die Grenze: darüber ist es kein Ereignis mehr, sondern
   // ein Tagesrückblick. Breaking bleibt immer einzeln — ein erstmals
   // vergebener Liga-Rekord soll nicht als vierte Zeile enden.
+  // Gebuendelt wird nach der MINUTE, nicht nach der Partie-ID. Die Regel hiess
+  // „dieselbe Partie", und genau ein Story-Typ trug ueberhaupt eine
+  // `matchId`: `badge_unlocked`. Alles andere, was im selben Moment entsteht
+  // — eine Pleitenserie, eine Duo-Serie, ein Rivalitaets-Meilenstein — fiel
+  // durch und stand als eigene Karte daneben. Gemessen: vier Minuten mit je
+  // zwei bis drei Karten, die nichts zusammenhielt. „Anton findet gerade kein
+  // Mittel" und „Anton: Angstgegner" standen um 16:21 untereinander.
+  //
+  // Genau eine Minute der ganzen Ligageschichte traegt zwei Partien; dort
+  // bedeutet die Minute dasselbe wie der Moment.
   const SAMMEL_SPIEL = new Set(['badge_unlocked','streak_killer','giant_slayer',
-    'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee']);
+    'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee',
+    'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
+    'rivalry','rivalry_milestone']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling']);
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
+  const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   const _zahlwort = n => ['','ein','zwei','drei','vier'][n] || String(n);
   const sammelGruppen = new Map();
   result.forEach((st, idx) => {
@@ -387,11 +421,19 @@ function _consolidateStories(list){
     try { brk = (typeof _isBreaking === 'function') && _isBreaking(st); } catch(e){}
     if(brk) return;
     let key = null;
-    if(SAMMEL_SPIEL.has(d.type) && d.matchId) key = 'spiel|' + d.matchId;
+    if(SAMMEL_SPIEL.has(d.type)) key = 'spiel|' + _minKey(st.when);
     else if(SAMMEL_TAFEL.has(d.type)) key = 'tafel|' + _tagKey(st.when);
     if(!key) return;
     let g = sammelGruppen.get(key);
-    if(!g){ g = {key, teile:[], erster: idx}; sammelGruppen.set(key, g); }
+    if(!g){ g = {key, teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
+    // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels'
+    // aus" stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit
+    // demselben Wert und nur einer anderen Spielzahl im Fliesstext. Die
+    // Buendelung soll den Tag zusammenfassen, nicht dieselbe Meldung
+    // vervierfachen.
+    const tk = String(st.title || '').trim();
+    if(tk && g.titel.has(tk)) return;
+    if(tk) g.titel.add(tk);
     if(g.teile.length < SAMMEL_MAX) g.teile.push(st);
   });
   const inSammel = new Set();
@@ -422,13 +464,23 @@ function _consolidateStories(list){
       // Der Titel muss den Tag benennen, an dem es passiert ist. „Zwei Wechsel
       // an der Ewigen Tafel" stand sonst wortgleich über zwei Karten aus zwei
       // Monaten, und keine der beiden nannte einen Namen.
+      // Einer bewegt, mehrere bewegen. „Martin bewegen die Ewige Tafel"
+      // stand ueber einer Karte mit einem einzigen Namen.
       title: istTafel
         ? (pids.length
-            ? `${pids.slice(0, 2).map(nameOf).join(' und ')} bewegen die Ewige Tafel`
+            ? `${pids.slice(0, 2).map(nameOf).join(' und ')} `
+              + `${pids.length > 1 ? 'bewegen' : 'bewegt'} die Ewige Tafel`
             : `${_zahlwort(teile.length)} Wechsel an der Ewigen Tafel`)
         : kopf.title,
+      // Die Karte fasst zusammen, das Blatt zeigt alles. Als der Text die
+      // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
+      // Liste, die das Blatt darunter noch einmal führte — und bei vier
+      // Einträgen war die Karte höher als jede andere im Feed.
       desc: istTafel
-        ? teile.map(t => t.title).join('. ') + '.'
+        ? kopf.desc + (rest.length
+            ? ` Und ${_zahlwort(rest.length)} ${rest.length === 1
+                ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
+            : '')
         : kopf.desc,
       when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
       prio: (kopf.prio || 0) + 1,

@@ -4993,7 +4993,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.08.53753ef2';
+const BUILD_VERSION='2026.09.08.de56b4e4';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18543,9 +18543,22 @@ function _eloMilestones(){
 function _rekordArt(alt, neu){
   if(!neu) return '';
   if(!alt) return 'erstmals';
-  if(alt.pids.join(',') !== neu.pids.join(',')) return 'geholt';
+  // SORTIERT vergleichen. Die beiden Listen kommen aus zwei getrennten
+  // Durchläufen, und ihre Reihenfolge muss nicht dieselbe sein: „Maxi, Leo
+  // und Julian übernehmen" stand im Feed, und darunter „Vorher gehörte er
+  // Maxi, Julian und Leo" — dieselben drei, nur anders sortiert.
+  const k = a => (a || []).slice().sort().join(',');
+  if(k(alt.pids) !== k(neu.pids)) return 'geholt';
   if(_chronKurz(alt.ev) === _chronKurz(neu.ev)) return '';
   return (neu.val > alt.val) ? 'gesteigert' : '';
+}
+
+// Namen als Aufzählung: „Maxi, Julian und Leo". Mit `&` zwischen jedem Paar
+// las sich eine Dreiergruppe wie eine Formel.
+function _namenListe(namen){
+  const a = (namen || []).filter(Boolean);
+  if(a.length <= 1) return a[0] || '';
+  return a.slice(0, -1).join(', ') + ' und ' + a[a.length - 1];
 }
 
 function _buildStories(){
@@ -19897,8 +19910,10 @@ function _buildStories(){
         const art = _rekordArt(a, n);
         if(!art) return;
         const neuN = n.pids.map(nameOf);
-        const namen = neuN.length > 1
-          ? neuN.slice(0, -1).join(', ') + ' & ' + neuN[neuN.length-1] : neuN[0];
+        const namen = _namenListe(neuN);
+        // Drei Halter „uebernimmt" nicht, sie uebernehmen.
+        const verb = neuN.length > 1 ? 'übernehmen' : 'übernimmt';
+        const baut = neuN.length > 1 ? 'bauen' : 'baut';
         // Im Vergleich steht nur die ZAHL, nicht der ganze Beleg. Zwei volle
         // Belege nebeneinander („20 % seiner 25 Siege endeten 10:9 · 5 —
         // Jane stand bei 18 % seiner 55 Siege endeten 10:9 · 10") sind kein
@@ -19909,20 +19924,29 @@ function _buildStories(){
           title = `Erstmals vergeben: ${def.name}`;
           desc = `${n.ev}. Vor ${neuN.length > 1 ? 'ihnen' : 'ihm'} hat diesen Rekord niemand gehalten.`;
         } else if(art === 'geholt'){
-          const altN = (a.pids || []).map(nameOf).join(' & ') || 'der bisherige Halter';
-          title = `${namen} übernimmt „${def.name}"`;
+          const altN = _namenListe((a.pids || []).map(nameOf)) || 'der bisherige Halter';
+          title = `${namen} ${verb} „${def.name}"`;
           // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
           desc = `${n.ev}.` + (wertAlt && wertAlt !== wertNeu
-            ? ` Vorher hielt ${altN} den Rekord mit ${wertAlt}.` : ` Vorher gehörte er ${altN}.`);
+            ? ` Vorher hielt ${altN} den Rekord mit ${wertAlt}.`
+            : ` Vorher gehörte der Rekord ${altN}.`);
         } else {
-          title = `${namen} baut „${def.name}" aus`;
+          title = `${namen} ${baut} „${def.name}" aus`;
           desc = `${n.ev}. Vorher ${wertAlt}.`;
         }
         if(art === 'gesteigert' && ++_rekAusbau > NEWS_LIMITS.rekordAusbau) return;
         stories.push({
-          id: `rek_${def.id}_${art}_${n.pids.join('-')}_${Math.round(n.val * 1e4)}`,
+          // Die ID traegt den ANGEZEIGTEN Wert, nicht den rohen. Mit
+          // `Math.round(val * 1e4)` bekam jede Partie eine eigene ID: nach zwei
+          // Spielen standen zwei Karten „Martin baut ‚Der Fels' aus" im Feed,
+          // beide mit 6.9 gegen 7.0, nur einmal mit 151 und einmal mit 152
+          // Spielen. Gemeldet wird, was man SIEHT — also ist auch die Identitaet
+          // der Karte das, was man sieht. Die Halter stehen sortiert darin,
+          // sonst ergaebe dieselbe Gruppe in anderer Reihenfolge eine zweite ID.
+          id: `rek_${def.id}_${art}_${n.pids.slice().sort().join('-')}`
+            + `_${String(wertNeu).replace(/[^0-9a-zA-Z]/g, '')}`,
           cat: 'tafel',
           ic: def.ic,
           title, desc,
@@ -21552,6 +21576,17 @@ function _consolidateStories(list){
       return !k || (_tsWin[k] || 0) >= (d.streak || 0); }
     if(d.type === 'team_loss_streak'){ const k = _paarKey(d);
       return !k || (_tsLoss[k] || 0) >= (d.streak || 0); }
+    // Eine Uebernahme, bei der Halter und Vorgaenger dieselben sind, hat es
+    // nie gegeben. Der Vergleich lief einmal ueber die REIHENFOLGE der Halter,
+    // und daraus wurde „Maxi, Leo und Julian uebernehmen" mit „Vorher gehoerte
+    // der Rekord Maxi, Julian und Leo" darunter. Der Generator bildet diese
+    // ID nicht mehr, also kann `_newsTexteAuffrischen` sie auch nicht
+    // umschreiben — die persistierte Karte bliebe fuer immer stehen.
+    if(d.type === 'rekord_geholt'){
+      const a = (d.playerIds || []).slice().sort().join(',');
+      const b = (d.vorher || []).slice().sort().join(',');
+      return !b || a !== b;
+    }
     return true;
   });
 
@@ -21615,7 +21650,14 @@ function _consolidateStories(list){
   // Deduplizierung — sie wirkt auf bestehende UND neue Rows. list ist newest-first
   // → die JÜNGSTE Karte bleibt, ältere inhaltsgleiche entfallen. Gilt für
   // ungruppierte Stories (Gruppen dedupen bereits per Spieler/Match).
+  // §C33 sagt: keine zwei Karten tragen dieselbe SCHLAGZEILE oder denselben
+  // TEXT. Gemessen wurde bisher nur das Paar aus beidem, und damit rutschte
+  // durch, was sich nur in einer Zahl im Fliesstext unterscheidet: „Martin
+  // baut ‚Der Fels' aus" stand zweimal untereinander, einmal mit 151 und
+  // einmal mit 152 Spielen. Zwei gleiche Schlagzeilen sind fuer den, der
+  // scrollt, dieselbe Karte.
   const seenContent = new Set();
+  const seenTitel = new Set();
   for(const s of src){
     const d = s.dataRef || {};
     // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
@@ -21641,7 +21683,10 @@ function _consolidateStories(list){
     } else {
       const ck = (s.title || '') + '\u0000' + (s.desc || '');
       if(seenContent.has(ck)) continue;   // inhaltsgleiche Doublette → überspringen
+      const tk = String(s.title || '').trim();
+      if(tk && seenTitel.has(tk)) continue;
       seenContent.add(ck);
+      seenTitel.add(tk);
       slots.push({ s });
     }
   }
@@ -21699,12 +21744,25 @@ function _consolidateStories(list){
   // Vier Zeilen sind die Grenze: darüber ist es kein Ereignis mehr, sondern
   // ein Tagesrückblick. Breaking bleibt immer einzeln — ein erstmals
   // vergebener Liga-Rekord soll nicht als vierte Zeile enden.
+  // Gebuendelt wird nach der MINUTE, nicht nach der Partie-ID. Die Regel hiess
+  // „dieselbe Partie", und genau ein Story-Typ trug ueberhaupt eine
+  // `matchId`: `badge_unlocked`. Alles andere, was im selben Moment entsteht
+  // — eine Pleitenserie, eine Duo-Serie, ein Rivalitaets-Meilenstein — fiel
+  // durch und stand als eigene Karte daneben. Gemessen: vier Minuten mit je
+  // zwei bis drei Karten, die nichts zusammenhielt. „Anton findet gerade kein
+  // Mittel" und „Anton: Angstgegner" standen um 16:21 untereinander.
+  //
+  // Genau eine Minute der ganzen Ligageschichte traegt zwei Partien; dort
+  // bedeutet die Minute dasselbe wie der Moment.
   const SAMMEL_SPIEL = new Set(['badge_unlocked','streak_killer','giant_slayer',
-    'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee']);
+    'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee',
+    'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
+    'rivalry','rivalry_milestone']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling']);
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
+  const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   const _zahlwort = n => ['','ein','zwei','drei','vier'][n] || String(n);
   const sammelGruppen = new Map();
   result.forEach((st, idx) => {
@@ -21713,11 +21771,19 @@ function _consolidateStories(list){
     try { brk = (typeof _isBreaking === 'function') && _isBreaking(st); } catch(e){}
     if(brk) return;
     let key = null;
-    if(SAMMEL_SPIEL.has(d.type) && d.matchId) key = 'spiel|' + d.matchId;
+    if(SAMMEL_SPIEL.has(d.type)) key = 'spiel|' + _minKey(st.when);
     else if(SAMMEL_TAFEL.has(d.type)) key = 'tafel|' + _tagKey(st.when);
     if(!key) return;
     let g = sammelGruppen.get(key);
-    if(!g){ g = {key, teile:[], erster: idx}; sammelGruppen.set(key, g); }
+    if(!g){ g = {key, teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
+    // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels'
+    // aus" stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit
+    // demselben Wert und nur einer anderen Spielzahl im Fliesstext. Die
+    // Buendelung soll den Tag zusammenfassen, nicht dieselbe Meldung
+    // vervierfachen.
+    const tk = String(st.title || '').trim();
+    if(tk && g.titel.has(tk)) return;
+    if(tk) g.titel.add(tk);
     if(g.teile.length < SAMMEL_MAX) g.teile.push(st);
   });
   const inSammel = new Set();
@@ -21748,13 +21814,23 @@ function _consolidateStories(list){
       // Der Titel muss den Tag benennen, an dem es passiert ist. „Zwei Wechsel
       // an der Ewigen Tafel" stand sonst wortgleich über zwei Karten aus zwei
       // Monaten, und keine der beiden nannte einen Namen.
+      // Einer bewegt, mehrere bewegen. „Martin bewegen die Ewige Tafel"
+      // stand ueber einer Karte mit einem einzigen Namen.
       title: istTafel
         ? (pids.length
-            ? `${pids.slice(0, 2).map(nameOf).join(' und ')} bewegen die Ewige Tafel`
+            ? `${pids.slice(0, 2).map(nameOf).join(' und ')} `
+              + `${pids.length > 1 ? 'bewegen' : 'bewegt'} die Ewige Tafel`
             : `${_zahlwort(teile.length)} Wechsel an der Ewigen Tafel`)
         : kopf.title,
+      // Die Karte fasst zusammen, das Blatt zeigt alles. Als der Text die
+      // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
+      // Liste, die das Blatt darunter noch einmal führte — und bei vier
+      // Einträgen war die Karte höher als jede andere im Feed.
       desc: istTafel
-        ? teile.map(t => t.title).join('. ') + '.'
+        ? kopf.desc + (rest.length
+            ? ` Und ${_zahlwort(rest.length)} ${rest.length === 1
+                ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
+            : '')
         : kopf.desc,
       when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
       prio: (kopf.prio || 0) + 1,
@@ -23294,25 +23370,32 @@ function _newsMedaillon(ic, rarity, name, bedingung, badgeId){
 
 // ── Die Verfolger ────────────────────────────────────────────────────
 // Ein Rekord ohne Verfolger ist eine Zahl ohne Maßstab. Die drei Besten
-// stehen deshalb im Blatt, der Halter oben und in Gold [§C25]. Gelesen wird
-// dieselbe Rangfolge, aus der auch der Rekorde-Reiter zeichnet [§C27].
-function _newsVerfolger(rekordId){
+// stehen deshalb im Blatt. Gelesen wird dieselbe Rangfolge, aus der auch der
+// Rekorde-Reiter zeichnet [§C27].
+//
+// Wer den Rekord HÄLT, steht hier nicht: bei einem Rekord, den sich drei
+// punktgleich teilen, füllten genau diese drei die Liste, und unter der
+// Überschrift „Wer sonst noch vorne steht" standen dieselben drei Namen mit
+// derselben Zahl, die der Kopf zwei Zeilen darüber schon nennt [§C33].
+function _newsVerfolger(rekordId, halter){
   if(!rekordId) return '';
   try {
     const rang = chronicleRang(rekordId);
     if(!Array.isArray(rang) || rang.length < 2) return '';
     const pm = pmap();
-    const zeilen = rang.slice(0, 3).map((r, i) => {
+    const oben = (Array.isArray(halter) ? halter : []);
+    const zeilen = rang.filter(r => oben.indexOf(r.pid || r.id) < 0)
+      .slice(0, 3).map((r, i) => {
       const pid = r.pid || r.id;
       if(!pm[pid]) return '';
-      return `<div class="nd-vf-z${i === 0 ? ' hat' : ''}" data-pid="${esc(pid)}">
-        <span class="nd-vf-n">${i + 1}</span>
+      return `<div class="nd-vf-z" data-pid="${esc(pid)}">
+        <span class="nd-vf-n">${oben.length + i + 1}</span>
         ${avHtml(pm[pid], '', {ins:true, px:30, feuer:0})}
         <span class="nd-vf-nm">${esc(pm[pid].name)}</span>
         <b>${esc(_chronKurz(r.ev))}</b>
       </div>`;
     }).filter(Boolean).join('');
-    return zeilen ? `<div class="nd-section">Wer sonst noch vorne steht</div>
+    return zeilen ? `<div class="nd-section">Wer dahinter liegt</div>
       <div class="nd-vf">${zeilen}</div>` : '';
   } catch(e){ return ''; }
 }
@@ -23439,7 +23522,12 @@ function _newsDetailMitte(s){
       case 'rekord_geholt': {
         const def = (typeof CHRONICLE_BY_ID !== 'undefined') ? CHRONICLE_BY_ID[d.rekordId] : null;
         const wert = _chronKurz(d.ev);
-        const vor = (Array.isArray(d.vorher) ? d.vorher : []).filter(pid => pm[pid]);
+        // Dieselben Halter in anderer Reihenfolge sind kein Wechsel: „Maxi,
+        // Leo und Julian übernehmen" und darunter „Vorher gehalten von Maxi
+        // und Julian und Leo" nannte dreimal dieselben drei Namen.
+        const jetzt = (Array.isArray(d.playerIds) ? d.playerIds : []).slice().sort().join(',');
+        const vorRoh = (Array.isArray(d.vorher) ? d.vorher : []).filter(pid => pm[pid]);
+        const vor = vorRoh.slice().sort().join(',') === jetzt ? [] : vorRoh;
         // Der Beleg steht schon im Satz ueber dem Blatt — er stand hier ein
         // zweites Mal, Wort fuer Wort.
         return `<div class="nd-gwert ${d.zufall ? 'metall' : 'gold'}">
@@ -23448,8 +23536,8 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val" style="font-size:11px;text-align:right;max-width:62%">${esc(d.cond)}</div></div>` : ''}
           ${vor.length ? `<div class="nd-stat-row" data-pid="${esc(vor[0])}" style="cursor:pointer">
             <div class="nd-stat-label">Vorher gehalten von</div>
-            <div class="nd-stat-val">${esc(vor.map(nameOf).join(' und '))} ›</div></div>` : ''}
-          ${_newsVerfolger(d.rekordId)}
+            <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
+          ${_newsVerfolger(d.rekordId, d.playerIds)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen
@@ -23600,10 +23688,17 @@ function _newsDetailMitte(s){
       // Der Kopf gehoert dem groessten Ereignis. Was dazugehoert, steht
       // darunter als Liste mit eigenem Beleg, nicht als zweite Schlagzeile.
       case 'sammel': {
-        const teile = Array.isArray(d.teile) ? d.teile : [];
+        const alle = Array.isArray(d.teile) ? d.teile : [];
+        // Was oben steht, steht unten nicht noch einmal [§C33]. Bei einer
+        // Spiel-Sammelkarte gehören Schlagzeile und Text dem stärksten
+        // Ereignis — dessen Zeile stand darunter wortgleich ein zweites Mal
+        // und trug keine einzige neue Zahl. Bleibt dabei nichts übrig, wird
+        // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
+        const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
+        const teile = neu.length ? neu : alle;
         const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}">
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
-              <div class="nw-satz">${esc(t.text || '')}</div>
+              ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">${d.quelle === 'tafel' ? 'An der Ewigen Tafel' : 'In dieser Partie'}</div>

@@ -232,25 +232,32 @@ function _newsMedaillon(ic, rarity, name, bedingung, badgeId){
 
 // ── Die Verfolger ────────────────────────────────────────────────────
 // Ein Rekord ohne Verfolger ist eine Zahl ohne Maßstab. Die drei Besten
-// stehen deshalb im Blatt, der Halter oben und in Gold [§C25]. Gelesen wird
-// dieselbe Rangfolge, aus der auch der Rekorde-Reiter zeichnet [§C27].
-function _newsVerfolger(rekordId){
+// stehen deshalb im Blatt. Gelesen wird dieselbe Rangfolge, aus der auch der
+// Rekorde-Reiter zeichnet [§C27].
+//
+// Wer den Rekord HÄLT, steht hier nicht: bei einem Rekord, den sich drei
+// punktgleich teilen, füllten genau diese drei die Liste, und unter der
+// Überschrift „Wer sonst noch vorne steht" standen dieselben drei Namen mit
+// derselben Zahl, die der Kopf zwei Zeilen darüber schon nennt [§C33].
+function _newsVerfolger(rekordId, halter){
   if(!rekordId) return '';
   try {
     const rang = chronicleRang(rekordId);
     if(!Array.isArray(rang) || rang.length < 2) return '';
     const pm = pmap();
-    const zeilen = rang.slice(0, 3).map((r, i) => {
+    const oben = (Array.isArray(halter) ? halter : []);
+    const zeilen = rang.filter(r => oben.indexOf(r.pid || r.id) < 0)
+      .slice(0, 3).map((r, i) => {
       const pid = r.pid || r.id;
       if(!pm[pid]) return '';
-      return `<div class="nd-vf-z${i === 0 ? ' hat' : ''}" data-pid="${esc(pid)}">
-        <span class="nd-vf-n">${i + 1}</span>
+      return `<div class="nd-vf-z" data-pid="${esc(pid)}">
+        <span class="nd-vf-n">${oben.length + i + 1}</span>
         ${avHtml(pm[pid], '', {ins:true, px:30, feuer:0})}
         <span class="nd-vf-nm">${esc(pm[pid].name)}</span>
         <b>${esc(_chronKurz(r.ev))}</b>
       </div>`;
     }).filter(Boolean).join('');
-    return zeilen ? `<div class="nd-section">Wer sonst noch vorne steht</div>
+    return zeilen ? `<div class="nd-section">Wer dahinter liegt</div>
       <div class="nd-vf">${zeilen}</div>` : '';
   } catch(e){ return ''; }
 }
@@ -377,7 +384,12 @@ function _newsDetailMitte(s){
       case 'rekord_geholt': {
         const def = (typeof CHRONICLE_BY_ID !== 'undefined') ? CHRONICLE_BY_ID[d.rekordId] : null;
         const wert = _chronKurz(d.ev);
-        const vor = (Array.isArray(d.vorher) ? d.vorher : []).filter(pid => pm[pid]);
+        // Dieselben Halter in anderer Reihenfolge sind kein Wechsel: „Maxi,
+        // Leo und Julian übernehmen" und darunter „Vorher gehalten von Maxi
+        // und Julian und Leo" nannte dreimal dieselben drei Namen.
+        const jetzt = (Array.isArray(d.playerIds) ? d.playerIds : []).slice().sort().join(',');
+        const vorRoh = (Array.isArray(d.vorher) ? d.vorher : []).filter(pid => pm[pid]);
+        const vor = vorRoh.slice().sort().join(',') === jetzt ? [] : vorRoh;
         // Der Beleg steht schon im Satz ueber dem Blatt — er stand hier ein
         // zweites Mal, Wort fuer Wort.
         return `<div class="nd-gwert ${d.zufall ? 'metall' : 'gold'}">
@@ -386,8 +398,8 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val" style="font-size:11px;text-align:right;max-width:62%">${esc(d.cond)}</div></div>` : ''}
           ${vor.length ? `<div class="nd-stat-row" data-pid="${esc(vor[0])}" style="cursor:pointer">
             <div class="nd-stat-label">Vorher gehalten von</div>
-            <div class="nd-stat-val">${esc(vor.map(nameOf).join(' und '))} ›</div></div>` : ''}
-          ${_newsVerfolger(d.rekordId)}
+            <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
+          ${_newsVerfolger(d.rekordId, d.playerIds)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen
@@ -538,10 +550,17 @@ function _newsDetailMitte(s){
       // Der Kopf gehoert dem groessten Ereignis. Was dazugehoert, steht
       // darunter als Liste mit eigenem Beleg, nicht als zweite Schlagzeile.
       case 'sammel': {
-        const teile = Array.isArray(d.teile) ? d.teile : [];
+        const alle = Array.isArray(d.teile) ? d.teile : [];
+        // Was oben steht, steht unten nicht noch einmal [§C33]. Bei einer
+        // Spiel-Sammelkarte gehören Schlagzeile und Text dem stärksten
+        // Ereignis — dessen Zeile stand darunter wortgleich ein zweites Mal
+        // und trug keine einzige neue Zahl. Bleibt dabei nichts übrig, wird
+        // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
+        const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
+        const teile = neu.length ? neu : alle;
         const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}">
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
-              <div class="nw-satz">${esc(t.text || '')}</div>
+              ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">${d.quelle === 'tafel' ? 'An der Ewigen Tafel' : 'In dieser Partie'}</div>
