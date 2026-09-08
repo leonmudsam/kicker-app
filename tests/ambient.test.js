@@ -950,6 +950,32 @@ ok(_wenig.funFacts > 0 && _wenig.funAmLautenTag.length === 0,
 ok(_wenig.marken <= _wenig.markenDeckel,
    'nur die juengsten Duell-Meilensteine werden ueberhaupt gebildet',
    _wenig.marken + ' von hoechstens ' + _wenig.markenDeckel);
+
+// Der Deckel darf nicht die Zusammenfassung des Tages nehmen. In einer
+// simulierten Liga aus hundert Partien fiel „Tobi ist Spieler des Tages" als
+// siebtstaerkste Karte heraus, waehrend zwei Auszeichnungen und eine laufende
+// Serie darueber standen — der Tag hatte danach keinen Sieger mehr.
+const _pflicht = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  // Einen Spieltag kuenstlich ueberfuellen: zehn Karten mit hoher Prio zur
+  // Zeit des Spielers des Tages.
+  const potd = roh.find(s => (s.dataRef||{}).type === 'potd');
+  if(!potd) return {keine:true};
+  // Zehn verschiedene Sorten, sonst raeumt schon der Deckel je Sorte auf und
+  // der Tag laeuft gar nicht ueber.
+  const sorten = ['milestone_wins','milestone_goals','milestone_elo','jubilee','top_form'];
+  const fuell = [];
+  for(let i = 0; i < 10; i++) fuell.push(Object.assign({}, potd, {
+    id: 'fuell_' + i, title: 'Fuellkarte ' + i, desc: 'Zehn Karten mehr an diesem Tag. ' + i,
+    prio: 99, dataRef: {type: sorten[i % sorten.length], pid: potd.dataRef.playerId}}));
+  _cache._stories = fuell.concat(roh);
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const sicht = getStoriesCache();
+  return {potdDrin: sicht.some(x => x.id === potd.id),
+          fuellDrin: sicht.filter(x => String(x.id).indexOf('fuell_') === 0).length};
+})())`));
+ok(!_pflicht.keine && _pflicht.potdDrin === true,
+   'der Spieler des Tages ueberlebt einen ueberfuellten Tag', JSON.stringify(_pflicht));
 console.log('  ' + _wenig.roh + ' erzeugt, ' + _wenig.sicht
   + ' im Feed, hoechstens ' + _wenig.maxTag + ' an einem Tag');
 

@@ -59,7 +59,10 @@ tests/ziel.js         entscheidet, welche Datei geprüft wird (dist vor Wurzel)
 tests/fixtures/       die echten Partien der Liga, gepackt
 index.html            das ausgelieferte Ergebnis, mitversioniert
 mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
-                      Vorlage für einen Umbau — kein Teil der App
+                      Vorlage für einen Umbau — kein Teil der App.
+                      Dort liegt auch die Story-Simulation: hundert erfundene
+                      Partien, gerechnet und erzählt mit dem Code der App
+                      (README-story-simulation.md)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
@@ -185,7 +188,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr | 893 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel | 171 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel | 172 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -441,7 +444,13 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Tafel mehr, das ist ein Protokoll. Der Tag behält seine stärksten, gemessen
   an `prio` — der Reihenfolge, die der Generator ohnehin vergibt und nach der
   auch die Sammelkarte ihren Kopf wählt [§C27]. **Breaking zählt nicht mit**:
-  es ist das Seltenste und darf nie an einem Deckel scheitern. Gedeckelt wird,
+  es ist das Seltenste und darf nie an einem Deckel scheitern. Und was es je
+  Tag, Woche oder Monat genau einmal gibt, fällt nie darunter (`TAG_PFLICHT`:
+  Spieler des Tages, Wochenkarte, Monatschronik, Saison-Rückblick) — der
+  Spieler des Tages IST die Schlagzeile seines Spieltags. In einer simulierten
+  Liga aus hundert Partien fiel er als siebtstärkste Karte heraus, während zwei
+  Auszeichnungen und eine laufende Serie darüber standen, und der Tag hatte
+  danach keinen Sieger mehr. Gedeckelt wird,
   was wegfällt, nicht wo etwas steht — die Reihenfolge bleibt die Zeit.
   `prio` sortiert den Feed seit dem chronologischen Umbau nicht mehr; sie
   entscheidet nur noch, wer ein Bündel anführt und wer den Deckel überlebt.

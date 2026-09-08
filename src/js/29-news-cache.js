@@ -615,6 +615,12 @@ function _consolidateStories(list){
   // Breaking zählt nicht mit: es ist das Seltenste und darf nie an einem
   // Deckel scheitern. Und die Reihenfolge bleibt die Zeit — gedeckelt wird,
   // was wegfällt, nicht wo etwas steht.
+  // Was es je Tag, Woche oder Monat genau einmal gibt, fällt nie unter den
+  // Deckel: der Spieler des Tages IST die Schlagzeile seines Spieltags, und
+  // ein Tag ohne seinen Sieger hat keine Zusammenfassung mehr. Gemessen fiel
+  // er an einem Tag mit neun Karten als siebtstärkste heraus, während zwei
+  // Auszeichnungen und eine laufende Serie darüber standen.
+  const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap']);
   const _proTagKey = s => { const d = new Date(s.when);
     return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
   const _tagRang = {};
@@ -631,6 +637,7 @@ function _consolidateStories(list){
   });
   const fertig = entzerrt.filter(s => {
     if(_behalten.has(s.id)) return true;
+    if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
     try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
   });
   _cache._consolFrom = list;
