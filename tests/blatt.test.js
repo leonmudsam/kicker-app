@@ -416,7 +416,10 @@ const ok = (c, msg, det) => {
       // An einem Tag ohne Partie ist nichts passiert, was ihn von einem
       // anderen unterscheidet: dort stand sonst ein Fun Fact gross im Bild.
       const kopf = koepfe[i];
-      const hatBilanz = kopf && kopf.querySelector('.nf-tag-b');
+      // Gefragt wird die App, nicht das Markup: die Bilanz des Tages stand
+      // frueher als Zeile im Kopf und diente hier als Ersatzsignal — sie ist
+      // raus, der Tagesschluessel steht dafuer am Kopf.
+      const hatBilanz = kopf && window.__k.eval('_newsTagBilanz')(kopf.dataset.tag);
       if(!hatBilanz && feed.querySelector('.nf-card.nf-gross')) tagOhneSpiel++;
     });
     gruppen.forEach(feed => {
@@ -689,6 +692,58 @@ const ok = (c, msg, det) => {
   ok(luecken.baender === 0 || luecken.ohneLabel === 0,
      'das Serienband nennt, was es zaehlt', luecken.ohneLabel + ' ohne');
 
+  console.log('\n═══ DER RAND SAGT, WAS WIEGT ═══');
+  const raender = await page.evaluate(() => {
+    const sheet = document.getElementById('sheet');
+    const mess = klasse => {
+      const c = sheet.querySelector('.' + klasse);
+      if(!c) return null;
+      const cs = getComputedStyle(c);
+      return {kante: parseFloat(cs.borderLeftWidth), farbe: cs.borderTopColor};
+    };
+    return {gold: mess('nf-s-tafel') || mess('nf-s-badge'), fakt: mess('nf-s-fakt'),
+            spiel: mess('nf-s-spiel'), neg: mess('nf-neg')};
+  });
+  ok(raender.gold && raender.fakt && raender.gold.kante > raender.fakt.kante,
+     'die goldene Karte traegt die staerkere Kante als der Fun Fact',
+     JSON.stringify(raender));
+  ok(raender.gold && raender.spiel && raender.gold.farbe !== raender.spiel.farbe,
+     'Gold und Spieltag tragen nicht denselben Rahmen',
+     (raender.gold||{}).farbe + ' / ' + (raender.spiel||{}).farbe);
+  ok(!raender.neg || !raender.spiel || raender.neg.farbe !== raender.spiel.farbe,
+     'die Schattenseite traegt ihren eigenen Rahmen [§C25]',
+     (raender.neg||{}).farbe);
+
+  console.log('\n═══ WAS SICH BEWEGT, RUHT AUF WUNSCH ═══');
+  const bewegt = await page.evaluate(() => {
+    const sheet = document.getElementById('sheet');
+    const band = sheet.querySelector('.nf-gross-band');
+    const stern = band && band.querySelector('svg');
+    return {
+      band: band ? getComputedStyle(band, '::after').animationName : null,
+      stern: stern ? getComputedStyle(stern).animationName : null
+    };
+  });
+  ok(bewegt.band && bewegt.band !== 'none',
+     'die Karte des Tages bewegt sich', String(bewegt.band));
+  ok(bewegt.stern && bewegt.stern !== 'none',
+     'und ihr Stern atmet', String(bewegt.stern));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const ruhig = await page.evaluate(() => {
+    const sheet = document.getElementById('sheet');
+    const band = sheet.querySelector('.nf-gross-band');
+    const stern = band && band.querySelector('svg');
+    const punkt = sheet.querySelector('.nf-brk-punkt');
+    return {
+      band: band ? getComputedStyle(band, '::after').animationName : 'none',
+      stern: stern ? getComputedStyle(stern).animationName : 'none',
+      punkt: punkt ? getComputedStyle(punkt).animationName : 'none'
+    };
+  });
+  ok(ruhig.band === 'none' && ruhig.stern === 'none' && ruhig.punkt === 'none',
+     'bei prefers-reduced-motion steht alles still', JSON.stringify(ruhig));
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+
   console.log('\n═══ BREAKING BRICHT DIE SPALTE ═══');
   const brk = await page.evaluate(() => {
     // Kein Breaking im Fenster: eines nachbauen und in denselben Feed haengen.
@@ -766,6 +821,47 @@ const ok = (c, msg, det) => {
      'und die Leiter dazu', inhalt.mitLeiter + ' von ' + inhalt.insBlaetter);
   ok(inhalt.kopfDoppelt === 0, 'der Kopf nennt das Prestige nicht ein zweites Mal',
      inhalt.kopfDoppelt + ' doppelt');
+
+  console.log('\n═══ NICHTS SAGT ZWEIMAL DASSELBE ═══');
+  const doppelt = await page.evaluate(() => {
+    const roh = window.__k.eval('_buildStories()');
+    const body = window.__k.eval('_newsDetailBody');
+    const box = document.createElement('div');
+    document.body.appendChild(box);
+    const norm = t => String(t || '').replace(/[„""»«.,;:!?()]/g, ' ')
+      .replace(/\s+/g, ' ').trim().toLowerCase();
+    const seen = {};
+    let typen = 0, treffer = 0, bsp = '';
+    roh.forEach(s => {
+      const d = s.dataRef || {};
+      const k = (d.type || '?') + (d.sub ? ':' + d.sub : '');
+      if(seen[k]) return; seen[k] = 1;
+      typen++;
+      let h = ''; try { h = body(s) || ''; } catch(e){ return; }
+      box.innerHTML = h;
+      // Der KOPF darf den Spieler und die Partie nennen — das ist seine
+      // Aufgabe. Gemessen wird, was darunter steht.
+      box.querySelectorAll('.nd-held, .nd-erg').forEach(e => e.remove());
+      // Und die BESCHRIFTUNG einer Zeichnung ist keine Wiederholung: der Name
+      // des Zeichens steht neben dem Zeichen, weil er dazugehoert — genau wie
+      // der Name einer Auszeichnung neben ihrem Medaillon [§C27].
+      box.querySelectorAll('.nd-med-n, .nd-ins-n').forEach(e => e.remove());
+      const oben = norm((s.title || '') + ' ' + (s.desc || ''));
+      // Ein SATZ, nicht ein Wort: der Name eines Zeichens neben seiner
+      // Zeichnung ist eine Beschriftung, keine Wiederholung.
+      const lauf = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+      let n;
+      while((n = lauf.nextNode())){
+        const t = norm(n.nodeValue);
+        if(t.length < 20 || t.indexOf(' ') < 0) continue;
+        if(oben.indexOf(t) >= 0){ treffer++; bsp = bsp || (k + ': ' + t.slice(0, 44)); }
+      }
+    });
+    box.remove();
+    return {typen, treffer, bsp};
+  });
+  ok(doppelt.treffer === 0, 'kein Satz aus der Karte steht im Blatt noch einmal',
+     doppelt.treffer + ' in ' + doppelt.typen + ' Arten (' + doppelt.bsp + ')');
 
   console.log('\n═══ DER KOPF DES BLATTS ═══');
   const kopf = await page.evaluate(() => {

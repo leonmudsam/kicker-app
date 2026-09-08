@@ -708,7 +708,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'shieldCheck', prio:5,
       title:`${nameOf(best.pid)} macht die Bude dicht`,
-      desc:`Bester Abwehrspieler der letzten 14 Tage: nur Ø ${(a.dGa/a.dG).toFixed(1)} Gegentore in ${a.dG} Abwehr-Spielen.`,
+      desc:`Hinten kommt kaum etwas durch: ${(a.dGa/a.dG).toFixed(1)} Gegentore im Schnitt aus ${a.dG} Spielen in der Abwehr, gerechnet über die letzten 14 Tage.`,
       vv: (a.dGa/a.dG).toFixed(1), vl:'Ø Gegentore',
       dataRef:{ ambientPid: best.pid } };
   }});
@@ -1030,8 +1030,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'highlight', ic:'trophyStar', prio:5,
       title:`${nameOf(rang[0])} führt das Prestige an`,
       desc:`${a.punkte} Punkte, ${a.punkte - b.punkte} mehr als ${nameOf(rang[1])}. `
-        + `Getragen wird der ${e.insignie.name}`
-        + (e.naechste ? `. Noch ${e.fehlt} bis zum ${e.naechste.name}.` : `.`),
+        + `Am Wappen trägt ${nameOf(rang[0])} damit den ${e.insignie.name}`
+        + (e.naechste ? `, bis zum ${e.naechste.name} fehlen ${e.fehlt}.` : `, die letzte Stufe.`),
       vv:String(a.punkte), vl:'Prestige',
       dataRef:{ ambientPid:rang[0], prestige:true } };
   }});
@@ -1052,9 +1052,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     const spanne = best.naechste.min - best.insignie.min;
     return { cat:'season', ic:'peak', prio:5,
       title:`${nameOf(best.pid)} steht kurz vor dem ${best.naechste.name}`,
-      desc:`${best.punkte} Prestige. Noch ${best.fehlt} Punkte, `
+      desc:`Noch ${best.fehlt} Punkte bis zum ${best.naechste.name}, `
         + `${Math.round((1 - best.fehlt / spanne) * 100)} % der Stufe sind geschafft. `
-        + `Danach wechselt der Reif um das Wappen die Form.`,
+        + `Dann ändert der Reif um das Wappen seine Form.`,
       vv:String(best.fehlt), vl:'fehlen',
       dataRef:{ ambientPid:best.pid, prestige:true } };
   }});
@@ -1070,8 +1070,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!s) return null;
     return { cat:'personal', ic:s.ic, prio:5,
       title:`${nameOf(pid)} liegt „${s.name}" am nächsten`,
-      desc:`${s.txt}. Holt er ihn, bringt das ${s.gewinn} Prestige. `
-        + `Von allem, was offen ist, ist das der kürzeste Weg.`,
+      // „Holt er ihn" stand direkt hinter dem Namen des HALTERS und zeigte
+      // damit auf den Falschen. Wer gemeint ist, steht jetzt da.
+      desc:`${s.txt}. Holt ${nameOf(pid)} den Rekord, bringt das ${s.gewinn} Prestige. `
+        + `Kein anderer ist gerade so nah dran.`,
       vv:'+' + s.gewinn, vl:'Prestige',
       dataRef:{ ambientPid:pid, prestige:true } };
   }});

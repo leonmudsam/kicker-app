@@ -715,5 +715,99 @@ const _fehlend = JSON.parse(K.eval(`JSON.stringify(${JSON.stringify(_historisch)
 ok(_fehlend.length === 0, 'jedes einmal gebildete, tote Praefix ist abgemeldet',
    _fehlend.join(', '));
 
+// ── Wie die Liga spricht ────────────────────────────────────────────
+// Leicht und unkompliziert, aber mit den Zahlen dran. Der Gedankenstrich ist
+// raus: er trennte Saetze, die als zwei Saetze klarer sind. Und die
+// Schlagzeile steht nicht noch einmal im Text — „Serie gerissen: Martin"
+// mit „Leon & Maxi stoppen die Serie" darunter trug den Verlierer in der
+// Zeile und die Tat im Kleingedruckten.
+const _sprache = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const seen = {}; const arten = [];
+  roh.forEach(s => { const d = s.dataRef||{};
+    const k = (d.type||'?') + (d.sub ? ':'+d.sub : '');
+    if(seen[k]) return; seen[k] = 1; arten.push({k, t:s.title||'', d:s.desc||''}); });
+  const norm = t => String(t).replace(/[„""»«.,;:!?()]/g,' ').replace(/\\s+/g,' ').trim().toLowerCase();
+  return {
+    n: arten.length,
+    strich: arten.filter(a => /[—–]/.test(a.t + a.d)).map(a => a.k),
+    // Ausgenommen ist die Auszeichnung: ihr Text ist die Bedingung aus dem
+    // Katalog, und „Debuetant: Match gespielt" braucht keine Zahl.
+    ohneZahl: arten.filter(a => a.k !== 'badge_unlocked' && !/\\d/.test(a.d)).map(a => a.k),
+    titelDoppelt: arten.filter(a => norm(a.t).length >= 12
+      && norm(a.d).indexOf(norm(a.t)) >= 0).map(a => a.k),
+    // Ein Fragezeichen im Text heisst, dass ein Name nicht aufgeloest wurde.
+    ohneNamen: arten.filter(a => /\\B\\?\\B|: \\?|\\? /.test(a.d)).map(a => a.k)
+  };
+})())`));
+ok(_sprache.strich.length === 0, 'kein Gedankenstrich in einem Story-Text',
+   _sprache.strich.join(', '));
+ok(_sprache.ohneZahl.length === 0, 'jeder Story-Text nennt eine Zahl',
+   _sprache.ohneZahl.join(', '));
+ok(_sprache.titelDoppelt.length === 0, 'kein Text wiederholt seine Schlagzeile',
+   _sprache.titelDoppelt.join(', '));
+ok(_sprache.ohneNamen.length === 0, 'kein unaufgeloester Name im Text',
+   _sprache.ohneNamen.join(', '));
+
+// ── „Ausgebaut" heisst besser geworden ──────────────────────────────
+// Die Meldung feuerte, sobald sich die ANGEZEIGTE Zahl aenderte — egal
+// wohin. „Der Fels" ging von 6,9 auf 7,0 Gegentore und „Der Platzhirsch"
+// von 44 auf 42 Prozent, beides eine Verschlechterung, und beides stand als
+// „baut seinen Rekord aus" im Feed. Wer den Rekord haelt und verschlechtert,
+// hat nichts getan: die anderen sind nur nicht vorbeigezogen.
+const _art = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p = ['p1'], q = ['p2'];
+  const f = (a, n) => _rekordArt(a, n);
+  return {
+    ohneVorher:   f(null, {pids:p, ev:'7 Siege', val:7}),
+    halterWechsel:f({pids:q, ev:'6 Siege', val:6}, {pids:p, ev:'7 Siege', val:7}),
+    besser:       f({pids:p, ev:'6 Siege', val:6}, {pids:p, ev:'7 Siege', val:7}),
+    schlechter:   f({pids:p, ev:'7 Siege', val:7}, {pids:p, ev:'6 Siege', val:6}),
+    gleich:       f({pids:p, ev:'7 Siege', val:7}, {pids:p, ev:'7 Siege', val:7.0001})
+  };
+})())`));
+ok(_art.ohneVorher === 'erstmals', 'ein Rekord ohne Vorgaenger ist erstmals vergeben', _art.ohneVorher);
+ok(_art.halterWechsel === 'geholt', 'ein neuer Halter hat ihn geholt', _art.halterWechsel);
+ok(_art.besser === 'gesteigert', 'ein besserer Wert ist ausgebaut', _art.besser);
+ok(_art.schlechter === '', 'ein SCHLECHTERER Wert ist keine Nachricht', _art.schlechter || 'leer');
+ok(_art.gleich === '', 'und eine unsichtbare Aenderung auch nicht', _art.gleich || 'leer');
+
+// ── Ein ueberschrittener Meilenstein bleibt auffrischbar ────────────
+// Die ID traegt die Zahl (`rivalry_milestone_A|B_50`). Stand das Paar bei 52,
+// bildete der Generator die 50er-ID nicht mehr — und „Historisches 50.
+// Aufeinandertreffen — die Rivalitaet waechst" stand mit Gedankenstrich und
+// leerem Satz im Feed, Monate nach dem Umbau. Gemeldet wird deshalb JEDE
+// ueberschrittene Schwelle, mit dem Zeitpunkt der kreuzenden Partie.
+const _ms = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const ms = roh.filter(s => (s.dataRef||{}).type === 'rivalry_milestone');
+  // Eine persistierte Zeile mit dem ALTEN Wortlaut nachstellen.
+  const alt = ms.map(s => Object.assign({}, s, {title: 'ALTER TITEL',
+    desc: 'Historisches ' + s.dataRef.n + '. Aufeinandertreffen — die Rivalitaet waechst.'}));
+  _cache._stories = alt.concat(roh.filter(s => (s.dataRef||{}).type !== 'rivalry_milestone'));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const sicht = getStoriesCache();
+  const gezeigt = sicht.filter(s => (s.dataRef||{}).type === 'rivalry_milestone');
+  return {
+    erzeugt: ms.length,
+    // Steht ein Paar auf mehr als einer Schwelle, wird auch die alte gebildet.
+    mehrfach: ms.some(a => ms.some(b => b !== a
+      && b.dataRef.a === a.dataRef.a && b.dataRef.b === a.dataRef.b)),
+    gezeigt: gezeigt.length,
+    nochAlt: gezeigt.filter(s => s.title === 'ALTER TITEL'
+      || String(s.desc||'').indexOf('—') >= 0).length,
+    // Der Zeitpunkt gehoert der kreuzenden Partie, nicht dem letzten Duell.
+    zeitOk: ms.every(s => {
+      const m = matches.find(x => x.id === s.dataRef.matchId);
+      return m && Math.abs(new Date(s.when).getTime() - mts(m)) < 1000;
+    })
+  };
+})())`));
+ok(_ms.erzeugt > 0, 'Meilensteine werden gebildet', _ms.erzeugt + ' Schwellen');
+ok(_ms.mehrfach, 'auch ueberschrittene Schwellen, nicht nur die aktuelle');
+ok(_ms.nochAlt === 0, 'ein alter Meilenstein-Wortlaut wird aufgefrischt',
+   _ms.nochAlt + ' von ' + _ms.gezeigt);
+ok(_ms.zeitOk, 'der Meilenstein steht am Tag der kreuzenden Partie');
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);
