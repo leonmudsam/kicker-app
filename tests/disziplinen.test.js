@@ -1509,5 +1509,35 @@ ok(_pw.atk.spiele >= 50 && _pw.def.spiele >= 50,
    'beide Positionsrekorde stehen auf mindestens 50 Partien',
    'Sturm ' + _pw.atk.spiele + ' · Abwehr ' + _pw.def.spiele);
 
+// ── Der Wochenherr: Zaehler und Nenner aus derselben Zeit ───────────
+// Die Titel kamen aus `matches`, die Wochen aus der Zeitscheibe. In einem
+// Schnitt stand damit die Titelzahl von HEUTE ueber den Wochen von damals,
+// und der Anteil konnte ueber 100 % steigen. Dasselbe galt fuer den
+// Platzhirsch und seine Spieltage.
+const _wh = JSON.parse(K.eval(`JSON.stringify((function(){
+  const raus = [];
+  const pruefe = (bis) => {
+    const C = _chronicleCtx(bis);
+    Object.keys(C.P).forEach(id => {
+      const p = C.P[id];
+      if(p.weeks && p.potw > p.weeks) raus.push('potw ' + p.potw + '/' + p.weeks);
+      if(p.days && p.potd > p.days) raus.push('potd ' + p.potd + '/' + p.days);
+    });
+  };
+  pruefe(null);
+  [40, 120, 260].forEach(n => { const m = matches[matches.length - n];
+    if(m) pruefe(mts(m)); });
+  const h = chronicleHolders()['weeklord'];
+  const r = chronicleRang('weeklord') || [];
+  return {raus, halter: h ? (h.pids || [h.pid]).length : 0,
+          rang: r.length, ev: h ? String(h.ev) : ''};
+})())`));
+ok(_wh.raus.length === 0, 'kein Anteil steht über 100 %, auch nicht im Zeitschnitt',
+   _wh.raus.slice(0, 3).join(' · ') || 'keiner');
+ok(_wh.halter > 0, 'Der Wochenherr ist vergeben', _wh.halter + ' Halter');
+ok(_wh.rang >= 2, 'und er hat einen Verfolger', _wh.rang + ' im Rennen');
+ok(/^\d+ %/.test(_wh.ev), 'sein Beleg beginnt mit dem Anteil, nach dem sortiert wird',
+   _wh.ev);
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

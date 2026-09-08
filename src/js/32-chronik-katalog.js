@@ -237,6 +237,17 @@ const DISZIPLINEN = [
       val:p => (p.days >= 12 && p.potd/p.days >= 0.25) ? p.potd/p.days : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.days} Spieltage beherrscht · ${p.potd}× Player of the Day`}},
 
+  // Dieselbe Frage wie beim Platzhirsch, eine Zeitebene hoeher — und dieselbe
+  // Zeichnung wie die Wochenkoenig-Kachel im Awards-Reiter [§C27]: Player of
+  // the Week ist dasselbe Ereignis, egal wo es steht. Nur `allzeit`: ein Monat
+  // hat vier Wochen, und ein Anteil aus vier Werten misst nichts [§10.2].
+  {id:'weeklord', name:'Der Wochenherr', short:'Wochenherr', ic:'weekKing', tone:'gold', art:'leistung',
+    allzeit:{
+      wie:'Player of the Week ist, wer in einer abgeschlossenen Woche die beste Siegquote hat, bei mindestens fünf Siegen. Gezählt wird der Anteil an den Wochen, in denen er selbst gespielt hat.',
+      cond:'Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen und mindestens 25 %',
+      val:p => (p.weeks >= 10 && p.potw/p.weeks >= 0.25) ? p.potw/p.weeks : null,
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.weeks} Wochen gewonnen · ${p.potw}× Player of the Week`}},
+
   {id:'reliable', name:'Der Verlässliche', short:'Konstanz', ic:'shieldCheck', tone:'gold', art:'leistung',
     monat:{
       wie:'Positiv heißt: an diesem Spieltag mehr Siege als Niederlagen.',
@@ -503,8 +514,11 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round((1-v)*100)} % mittlere Siegchance über den ganzen Tag`,
       zeit:p => p.hartTagLabel || ''}},
 
+  // `negativ` faerbt und zaehlt, `art` wiegt: die Fuegung bleibt ein Ereignis
+  // [§C35], erzaehlt aber von einer Niederlage. Im Profil stand sie in Gold
+  // neben den Titeln und wurde als Rekord mitgezaehlt.
   {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'dramaTear', tone:'purple',
-    art:'ereignis', zufall:'quote',
+    art:'ereignis', zufall:'quote', negativ:true,
     allzeit:{
       wie:'Eine einzige Partie, kein Durchschnitt: die höchste Siegchance, mit der je jemand in ein Spiel ging und es trotzdem verlor.',
       cond:'Höchste Siegchance, die trotzdem verloren ging — mindestens 65 %',
@@ -547,7 +561,7 @@ const DISZIPLINEN = [
       zeit:p => p.beidesLabel || ''}},
 
   {id:'coldshower', name:'Die kalte Dusche', short:'Dusche', ic:'showerHead', tone:'blue',
-    art:'ereignis', zufall:'fund',
+    art:'ereignis', zufall:'fund', negativ:true,
     allzeit:{
       cond:'Ein 10:0 gewinnen und die unmittelbar nächste Partie 0:10 verlieren',
       val:p => p.dusche > 0 ? p.dusche : null,

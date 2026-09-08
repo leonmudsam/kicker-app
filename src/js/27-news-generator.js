@@ -875,10 +875,15 @@ function _buildStories(){
         cat: 'misfortune',
         ic: 'dropDouble',
         title: `Harter Tag für ${nameOf(worstPid)}`,
-        desc: `${Math.abs(delta)} Elo weg an einem Tag. Mehr hat gestern niemand verloren.`,
-        when: new Date(_startOfToday),
+        desc: `${Math.abs(delta)} Elo weg an einem Tag. Mehr hat an diesem Tag niemand verloren.`,
+        // Die Karte gehoert auf den Tag, von dem sie handelt. Um 00:00 des
+        // Folgetages stand sie unter einem Tageskopf, an dem gar nicht
+        // gespielt wurde — derselbe Fehler, den der Spieler des Tages hatte.
+        // 23:58, damit der Sieger des Tages (23:59) im Feed darueber steht.
+        when: (function(){ const d = new Date(_startOfToday); d.setDate(d.getDate() - 1);
+          d.setHours(23, 58, 0, 0); return d; })(),
         prio: 5,
-        dataRef: {type:'elo_swing', pid: worstPid, delta, period: 'Gestern'}
+        dataRef: {type:'elo_swing', pid: worstPid, delta}
       });
     }
   } catch(e){}

@@ -67,6 +67,12 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   kind: d.zufall ? 'fuegung' : d.art === 'schatten' ? 'shame'
       : d.art === 'ereignis' ? 'mark' : 'record',
   zufall: d.zufall || '',
+  // Rot ist die Richtung [§C25]. Eine Schattenseite ist immer negativ, eine
+  // Fuegung nur dann, wenn sie von einer Niederlage erzaehlt — „Die bitterste
+  // Pleite" stand im Profil in Gold neben den Titeln und wurde als Rekord
+  // mitgezaehlt. Die Kammer bleibt davon unberuehrt, und `art` auch: sonst
+  // wuerde sich das Prestige verschieben [§C34].
+  neg: d.art === 'schatten' || d.negativ === true,
   cond:d.allzeit.cond, wie:d.allzeit.wie || '', val:d.allzeit.val, raw:d.allzeit.raw,
   unit:d.allzeit.unit, min:d.allzeit.min, ev:d.allzeit.ev,
   // Wann er erreicht wurde — nur dort, wo es einen Zeitpunkt GIBT. Ein
@@ -131,7 +137,7 @@ function _chronicleCtx(bisMs){
   const run = {}, runL = {};              // laufende Sieg-/Niederlagenserie
   const runStart = {}, runLStart = {};
   const altRun = {}, altStart = {};      // laufende Wechselserie Sieg/Pleite
-  const daySet = {}, dayCount = {}, dayWins = {};
+  const daySet = {}, dayCount = {}, dayWins = {}, weekSet = {};
   const dayElo = {};                      // pid → {Tages-Key: Elo-Summe des Tages}
   // Was ein Abend an FÜGUNGEN hergibt [§C35]: Siegchance, Torkonto,
   // Ergebnis-Häufigkeiten und die beiden Höchstmaße. Eine Karte je Spieler
@@ -159,7 +165,7 @@ function _chronicleCtx(bisMs){
     uplift:null, upliftMates:0,      // Effekt auf die eigenen Mitspieler
     perfDays:0, bigDays:0,           // volle Spieltage / davon ohne Niederlage
     seasons:0, firstDay:'', firstLabel:'', lastDay:'',
-    peak:0, potw:0, potd:0, founder:false,
+    peak:0, potw:0, potd:0, weeks:0, founder:false,
     afterLoss:0, afterLossOpp:0,     // Antwort auf die eigene letzte Niederlage
     dayElo:null, dayEloLabel:'',     // bester Elo-Tag der Laufbahn
     alt:0, altSpan:'',               // laengste Serie aus abwechselnd Sieg und Pleite
@@ -180,6 +186,10 @@ function _chronicleCtx(bisMs){
   ms.forEach(m => {
     const day = mdayKey(m);
     allDays.add(day);
+    // Der Wochenschluessel muss EXAKT der aus `_periodWinnerMap` sein, sonst
+    // zaehlen Zaehler (Titel) und Nenner (Wochen) ueber verschiedene Wochen.
+    const _wd = new Date(m.created_at);
+    const wkey = _wd.getFullYear() + '-W' + isoWeek(_wd);
     const sid = (seasonOf(m.created_at) || {}).id;
     if(sid) allSeasons.add(sid);
     const ids = [m.a1, m.a2, m.b1, m.b2];
@@ -229,6 +239,8 @@ function _chronicleCtx(bisMs){
       p.lastDay = day;
       if(!daySet[id]) daySet[id] = new Set();
       daySet[id].add(day);
+      if(!weekSet[id]) weekSet[id] = new Set();
+      weekSet[id].add(wkey);
       if(!dayCount[id]) dayCount[id] = {};
       dayCount[id][day] = (dayCount[id][day] || 0) + 1;
       if(dayCount[id][day] > p.maxDay){ p.maxDay = dayCount[id][day]; p.maxDayLabel = dLabel(day); }
@@ -306,8 +318,15 @@ function _chronicleCtx(bisMs){
     if(!pm[id] || pm[id].hidden || P[id].games < CHRON_MIN_GAMES){ delete P[id]; return; }
   });
 
-  const potwCounts = _winnerCountsOf(matches, 'week');
-  const potdCounts = _winnerCountsOf(matches, 'day');
+  // Im Zeitschnitt wird ueber die Scheibe gezaehlt, sonst ueber `matches`
+  // selbst: `_winnerCountsOf` merkt sich sein Ergebnis an der IDENTITAET des
+  // Arrays, und `ms` ist auch ohne Schnitt eine frische Kopie — der Memo, den
+  // sich Badges und Chronik teilen, haette nie mehr getroffen. Ueber
+  // `matches` gezaehlt stand im Schnitt dagegen die Titelzahl von HEUTE ueber
+  // den Wochen von damals, und der Anteil konnte ueber 100 % steigen.
+  const winSrc = bisMs ? ms : matches;
+  const potwCounts = _winnerCountsOf(winSrc, 'week');
+  const potdCounts = _winnerCountsOf(winSrc, 'day');
 
   Object.keys(P).forEach(id => {
     const p = P[id];
@@ -357,6 +376,7 @@ function _chronicleCtx(bisMs){
     p.peak = Math.round(gSim.peakElo[id] || cfg.start_elo);
     p.potw = potwCounts[id] || 0;
     p.potd = potdCounts[id] || 0;
+    p.weeks = weekSet[id] ? weekSet[id].size : 0;
     p.founder = !!(firstDayKey && p.firstDay === firstDayKey);
 
     // Uplift über die ganze Laufbahn: Wie viel häufiger gewinnen seine Partner
@@ -451,7 +471,7 @@ function allChronicles(bisMs){
     };
     const holders = pids.map(id => ({pid:id, ev:def.ev(C.P[id], bv, C), zeit:_zeit(id)}));
     const entry = {
-      id:def.id, name:def.name, ic:def.ic, tone:def.tone, kind:def.kind,
+      id:def.id, name:def.name, ic:def.ic, tone:def.tone, kind:def.kind, neg:def.neg,
       cond:def.cond, ord:def.ord, pid:pids[0], pids, holders,
       shared:pids.length > 1, val:bv, ev:holders[0].ev, zeit:holders[0].zeit
     };
@@ -541,8 +561,9 @@ function _chronHolderNames(entry){
 }
 
 // Was fehlt einem Spieler ohne Rekord bis zum nächstgelegenen? Nur zählbare
-// Rekorde kommen infrage (`unit`) — und keine Schattenseiten: „noch drei
-// 0:10-Niederlagen" wäre ein Ziel, das niemand haben will.
+// Rekorde kommen infrage (`unit`) — und nichts Negatives: „noch drei
+// 0:10-Niederlagen" wäre ein Ziel, das niemand haben will, und „noch 5 %
+// Siegchance mehr, die trotzdem verloren geht" genauso wenig.
 // Gewählt wird der RELATIV nächste, damit nicht immer derselbe Rekord mit
 // der kleinsten absoluten Zahl vorschlägt.
 function nextRecordFor(pid){
@@ -552,7 +573,7 @@ function nextRecordFor(pid){
   if(!p || all.byPid[pid]) return null;
   let best = null;
   CHRONICLES.forEach(def => {
-    if(!def.unit || def.kind === 'shame') return;
+    if(!def.unit || def.neg) return;
     const mine = def.raw(p, C);
     if(mine == null || !isFinite(mine)) return;
     const lead = all.byId[def.id];

@@ -533,9 +533,10 @@ function _vRankingCore(){
       // hier nur die Titelzahl — und die Spielzahl nur beim Ersten; wer
       // keinen Titel hatte, sah dort ausschließlich seine Spiele und damit
       // eine andere Zeile als sein Nachbar.
-      // Die Schattenseiten zählen nicht mit: dies ist ein Podest, und die
-      // längste Niederlagenserie der Liga ist kein Verdienst.
-      const rek = chroniclesOfPlayer(pp.id).filter(x => x.kind !== 'shame').length;
+      // Was negativ ist, zählt nicht mit: dies ist ein Podest, und die
+      // längste Niederlagenserie der Liga ist kein Verdienst — die bitterste
+      // Pleite auch nicht.
+      const rek = chroniclesOfPlayer(pp.id).filter(x => !x.neg).length;
       const sub = [t ? t + ' Titel' : '', entry.s.games + ' Sp.',
                    rek ? rek + ' Rek.' : '']
         .filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');

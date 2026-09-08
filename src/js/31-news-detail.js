@@ -825,7 +825,7 @@ function _newsDetailMitte(s){
         let elo = null;
         try { elo = Math.round(((getGlobalSim() || {}).careerElo || {})[d.pid]); } catch(e){}
         return `<div class="nd-gwert ${d.delta >= 0 ? '' : 'rot'}">
-            <b>${d.delta >= 0 ? '+' : ''}${d.delta}</b><span>Elo ${esc(d.period || '')}</span></div>
+            <b>${d.delta >= 0 ? '+' : ''}${d.delta}</b><span>Elo an diesem Tag</span></div>
           ${form.strip ? `<div class="nd-section">Die letzten Partien</div>
             <div class="nd-form-strip">${form.strip}</div>` : ''}
           ${elo ? `<div class="nd-stat-row"><div class="nd-stat-label">Stand jetzt</div>
