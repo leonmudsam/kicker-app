@@ -185,7 +185,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr | 893 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 168 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel | 171 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -434,6 +434,36 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Die Verteilung trägt jetzt allein der Generator (`PER_PLAYER_LIMIT`,
   `NEBENROLLEN_LIMIT`); gemessen steht danach kein Spieler auf mehr als einem
   Drittel der Karten, und jeder gewertete Spieler kommt vor.
+
+  **Ein Tag trägt sechs Karten** (`NEWS_LIMITS.proTag`). Gemessen trug ein
+  Spieltag neun: zwei Sammelkarten, zwei Serien, zwei Auszeichnungen, den
+  Spieler des Tages, den Elo-Ausschlag und einen Serienbrecher. Das ist keine
+  Tafel mehr, das ist ein Protokoll. Der Tag behält seine stärksten, gemessen
+  an `prio` — der Reihenfolge, die der Generator ohnehin vergibt und nach der
+  auch die Sammelkarte ihren Kopf wählt [§C27]. **Breaking zählt nicht mit**:
+  es ist das Seltenste und darf nie an einem Deckel scheitern. Gedeckelt wird,
+  was wegfällt, nicht wo etwas steht — die Reihenfolge bleibt die Zeit.
+  `prio` sortiert den Feed seit dem chronologischen Umbau nicht mehr; sie
+  entscheidet nur noch, wer ein Bündel anführt und wer den Deckel überlebt.
+  Eine **seltene Auszeichnung** steht darin über einer laufenden Serie: die
+  Serie läuft weiter, die Auszeichnung ist geholt. Sie stand auf 5 und damit
+  unter der Duo-Pleitenserie, mit der Begründung, Team-News sollten „auch mal
+  oben stehen" — was seit dem chronologischen Feed niemand mehr entscheidet.
+
+  **Der Fun Fact füllt einen stillen Tag, er ergänzt keinen lauten.** „Leon
+  führt das Prestige an" gilt seit Wochen und stand neben dem Spieltag, an dem
+  gerade etwas passierte. Der Abend-Slot schweigt an Spieltagen seit jeher; der
+  Vormittags-Slot kann es nicht wissen, weil er vor der ersten Partie entsteht.
+  Entschieden wird es deshalb bei der Anzeige: trägt der Tag eine echte
+  Nachricht, fällt sein Fun Fact weg. Der Countdown zählt dabei nicht als
+  Nachricht — „Noch fünf Tage" steht an jedem Tag der Saison.
+
+  **Gebildet wird nur, was auch erscheinen kann.** Über die ganze
+  Ligageschichte reißen viele Paare eine Duell-Schwelle: gemessen sechzehn, von
+  denen zwei im Feed standen. Die anderen vierzehn wurden trotzdem gebildet und
+  **persistiert** — Zeilen in der Datenbank für Karten, die niemand je sieht.
+  Gemeldet werden die jüngsten (`NEWS_LIMITS.rivalryMarke`); ein Meilenstein
+  von vor drei Monaten ist keine Nachricht mehr.
 
   **Was im selben Moment passiert, kommt in eine Karte.** Ein Spieltag trug
   gemessen zehn Karten, vier davon in derselben Minute: ein Rekordwechsel,
@@ -859,7 +889,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Anzahl, und das Podest zeigte genau diese 32 über der 10 des Spielers, der
   den höheren Anteil hält.
 - **Detail folgt der Größe.** Unter 26 px weder Sterne noch Feuer, unter
-  etwa 48 px kein Wappen — darunter bleibt vom Gesicht ein Punkt.
+  48 px kein Wappen — darunter bleibt vom Gesicht ein Punkt. Beide Grenzen
+  stehen im Code (`znWrap`, `insAvWrap`), nicht nur hier: das Ergebnisband
+  zeichnete vier Wappen bei 30 px, und das waren gemessen 225 der 258 Kilobyte
+  Markup einer Tafel. Wer aus einem Blatt zurückwischte, sah das als Stocken —
+  der Feed wird dabei neu gebaut.
 - **Ein Duo hat keinen Rang**, also auch kein Wappen: zwei überlappende
   Chips. (Nebeneffekt: 62 Wappen in einer Duo-Tabelle waren eine
   Viertelmillion Zeichen HTML.)

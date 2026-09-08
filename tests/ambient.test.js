@@ -913,6 +913,46 @@ ok(_band.zeilen > 0, 'die Sammelkarte traegt ihr Band', _band.zeilen + ' Zeilen'
 ok(_band.ohneBand === 0, 'jede gebuendelte Meldung steht auf der Karte, nicht nur im Blatt',
    _band.ohneBand + ' Karten ohne');
 
+// ── Nur die wichtigsten ────────────────────────────────────────────
+// Gemessen trug ein Spieltag neun Karten und der Feed zweiundzwanzig, davon
+// vier Fun Facts — einer an jedem Tag, auch an denen, an denen wirklich etwas
+// passiert ist. „Leon fuehrt das Prestige an" gilt seit Wochen.
+const _wenig = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const sicht = getStoriesCache();
+  const tag = s => { const d = new Date(s.when);
+    return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
+  const proTag = {};
+  sicht.forEach(s => { const k = tag(s);
+    let brk = false; try { brk = _isBreaking(s); } catch(e){}
+    if(!brk) proTag[k] = (proTag[k]||0) + 1; });
+  const zuViel = Object.keys(proTag).filter(k => proTag[k] > NEWS_LIMITS.proTag);
+  // Ein Fun Fact steht nur an einem Tag ohne Nachricht.
+  const echteTage = new Set();
+  sicht.forEach(s => { const t = (s.dataRef||{}).type;
+    if(t !== 'ambient' && t !== 'season_endgame') echteTage.add(tag(s)); });
+  const funFacts = sicht.filter(s => (s.dataRef||{}).type === 'ambient');
+  return {sicht: sicht.length, roh: roh.length,
+          maxTag: Math.max.apply(null, Object.keys(proTag).map(k => proTag[k])),
+          zuViel,
+          funFacts: funFacts.length,
+          funAmLautenTag: funFacts.filter(s => echteTage.has(tag(s))).map(s => s.title),
+          marken: roh.filter(s => (s.dataRef||{}).type === 'rivalry_milestone').length,
+          deckel: NEWS_LIMITS.proTag, markenDeckel: NEWS_LIMITS.rivalryMarke};
+})())`));
+ok(_wenig.zuViel.length === 0, 'kein Tag traegt mehr Karten als der Deckel erlaubt',
+   _wenig.zuViel.join(', ') || 'hoechstens ' + _wenig.maxTag);
+ok(_wenig.funFacts > 0 && _wenig.funAmLautenTag.length === 0,
+   'ein Fun Fact steht nur an einem Tag ohne Nachricht',
+   _wenig.funAmLautenTag.join(' | ') || _wenig.funFacts + ' an stillen Tagen');
+ok(_wenig.marken <= _wenig.markenDeckel,
+   'nur die juengsten Duell-Meilensteine werden ueberhaupt gebildet',
+   _wenig.marken + ' von hoechstens ' + _wenig.markenDeckel);
+console.log('  ' + _wenig.roh + ' erzeugt, ' + _wenig.sicht
+  + ' im Feed, hoechstens ' + _wenig.maxTag + ' an einem Tag');
+
 // ── Das Rekord-Blatt nennt niemanden zweimal ────────────────────────
 // „Maxi, Leo und Julian uebernehmen" stand im Kopf, „Vorher gehalten von Maxi
 // und Julian und Leo" darunter, und unter „Wer sonst noch vorne steht" noch
@@ -1051,9 +1091,21 @@ const _ms = JSON.parse(K.eval(`JSON.stringify((function(){
   const gezeigt = sicht.filter(s => (s.dataRef||{}).type === 'rivalry_milestone');
   return {
     erzeugt: ms.length,
-    // Steht ein Paar auf mehr als einer Schwelle, wird auch die alte gebildet.
-    mehrfach: ms.some(a => ms.some(b => b !== a
-      && b.dataRef.a === a.dataRef.a && b.dataRef.b === a.dataRef.b)),
+    // Gemeldet wird die ueberschrittene Schwelle, nicht die aktuelle Zahl:
+    // steht ein Paar bei 52, gehoert ihm die 50er-Karte. Gezaehlt wird
+    // deshalb, ob eine Schwelle UNTER dem heutigen Stand des Paares steht.
+    // (Frueher stand hier „dasselbe Paar zweimal" — das galt nur, solange
+    // jede Schwelle der ganzen Ligageschichte gebildet wurde.)
+    mehrfach: ms.some(x => {
+      const a = x.dataRef.a, b = x.dataRef.b;
+      let n = 0;
+      matches.forEach(m => {
+        const A = [m.a1, m.a2], B = [m.b1, m.b2];
+        if((A.indexOf(a) >= 0 && B.indexOf(b) >= 0)
+        || (A.indexOf(b) >= 0 && B.indexOf(a) >= 0)) n++;
+      });
+      return n > x.dataRef.n;
+    }),
     gezeigt: gezeigt.length,
     nochAlt: gezeigt.filter(s => s.title === 'ALTER TITEL'
       || String(s.desc||'').indexOf('—') >= 0).length,

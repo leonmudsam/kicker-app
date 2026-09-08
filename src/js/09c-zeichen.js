@@ -290,6 +290,13 @@ function _znTitelTxt(t, f, pid){
 function insAvWrap(pid, innerHtml, opts){
   opts = opts || {};
   const px = opts.px || 52;
+  // Detail folgt der Größe [§6]. Der Avatar ist 46 % des Reifs, bei 30 px
+  // bleibt also ein Punkt von vierzehn hinter einem Ring, den niemand als
+  // Wappen erkennt. `znWrap` hält seine Grenze seit jeher selbst; hier fehlte
+  // sie, und drei Aufrufer im Feed zeichneten Wappen bei 30 px. Gemessen
+  // waren das 225 der 258 Kilobyte Markup einer Tafel — vier Wappen je
+  // Ergebnisband.
+  if(px < 48) return innerHtml;
   const band = !!(opts && opts.band);
   const t = opts.titel !== undefined ? opts.titel : znTitel(pid);
   const f = opts.feuer !== undefined ? opts.feuer : znFeuer(pid);

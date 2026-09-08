@@ -4939,7 +4939,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.08.349c5cb3';
+const BUILD_VERSION='2026.09.08.d526fa61';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -8980,6 +8980,13 @@ function _znTitelTxt(t, f, pid){
 function insAvWrap(pid, innerHtml, opts){
   opts = opts || {};
   const px = opts.px || 52;
+  // Detail folgt der Größe [§6]. Der Avatar ist 46 % des Reifs, bei 30 px
+  // bleibt also ein Punkt von vierzehn hinter einem Ring, den niemand als
+  // Wappen erkennt. `znWrap` hält seine Grenze seit jeher selbst; hier fehlte
+  // sie, und drei Aufrufer im Feed zeichneten Wappen bei 30 px. Gemessen
+  // waren das 225 der 258 Kilobyte Markup einer Tafel — vier Wappen je
+  // Ergebnisband.
+  if(px < 48) return innerHtml;
   const band = !!(opts && opts.band);
   const t = opts.titel !== undefined ? opts.titel : znTitel(pid);
   const f = opts.feuer !== undefined ? opts.feuer : znFeuer(pid);
@@ -18229,10 +18236,18 @@ const NEWS_LIMITS = {
   // sind kein Paar, sondern eine Wiederholung. Es bleibt die mit den meisten
   // Duellen.
   rivalry: 1,
+  // Meilensteine eines Paares (50., 100., …). Über die Ligageschichte reißen
+  // viele Paare eine Schwelle; gemeldet werden die jüngsten. Gemessen wurden
+  // sechzehn gebildet und persistiert, von denen zwei im Feed standen.
+  rivalryMarke: 4,
   // „X baut seinen Rekord aus" ist die schwächste der drei Rekordmeldungen —
   // gewechselt hat nichts. Zwei davon reichen; „geholt" und „erstmals
   // vergeben" sind ungedeckelt, weil sie selten sind und wirklich etwas sagen.
   rekordAusbau: 2,
+  // Ein Tag trägt sechs Karten. Gemessen trug ein Spieltag neun, und die
+  // schwächsten drei waren ein Elo-Ausschlag, eine Auszeichnung und ein Fun
+  // Fact — Zeilen, die niemand vermisst. Breaking zählt nicht mit [§C33].
+  proTag: 6,
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
 
@@ -18924,11 +18939,14 @@ function _buildStories(){
       });
     list.forEach(ev => {
       const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
-      // Legendary erzwingt Top-Prio (Bucket >=9 im Final-Sort), damit echte
-      // Achievements zuverlässig ganz oben im Feed landen.
-      // v9.1: Badges bewusst niedriger priorisiert (außer legendär), damit bei
-      // gleichem Zeitstempel Team-News/Fun Facts nach Spielen auch mal oben stehen.
-      const rarPrio = {legendary:10, rare:5, common:3, negative:4}[rar] || 3;
+      // `prio` sortiert den Feed nicht mehr — er steht chronologisch [§C33].
+      // Sie entscheidet nur noch zweierlei: wer eine Sammelkarte anführt und
+      // wer den Tagesdeckel überlebt. Dort gehört eine seltene Auszeichnung
+      // über eine laufende Serie: die Serie läuft weiter, die Auszeichnung ist
+      // geholt. Sie stand auf 5 und damit unter der Duo-Pleitenserie — mit der
+      // alten Begründung, dass Team-News „auch mal oben stehen" sollten, was
+      // seit dem chronologischen Feed niemand mehr entscheidet.
+      const rarPrio = {legendary:10, rare:8, common:4, negative:4}[rar] || 4;
       // v9.7: Angstgegner-News benennt den Gegner (aus fire()-Meta durchgereicht).
       const _nemOpp = (ev.badge.id === 'nemesis' && ev.meta && ev.meta.oppId) ? ev.meta.oppId : null;
       // v9.17: Die Langzeit-Auszeichnungen bekommen einen eigenen Text mit dem
@@ -19545,7 +19563,13 @@ function _buildStories(){
                          wa: pairCnt[k].w[a] || 0, wb: pairCnt[k].w[b] || 0});
       }));
     });
-    gekreuzt.forEach(g => {
+    // Über die ganze Ligageschichte reißen viele Paare eine Schwelle: gemessen
+    // sechzehn, von denen zwei im Feed standen. Die anderen vierzehn wurden
+    // trotzdem gebildet und persistiert — Zeilen in der Datenbank für Karten,
+    // die niemand je sieht. Gemeldet werden die jüngsten; ein Meilenstein von
+    // vor drei Monaten ist keine Nachricht mehr.
+    gekreuzt.sort((x, y) => y.ts - x.ts);
+    gekreuzt.slice(0, NEWS_LIMITS.rivalryMarke).forEach(g => {
       const [a, b] = g.k.split('|');
       if(!pm[a] || !pm[b] || pm[a].hidden || pm[b].hidden) return;
       stories.push({
@@ -21510,9 +21534,24 @@ function _consolidateStories(list){
   const { loss: _liveLoss, win: _liveWin, form: _liveForm } = _liveStreakForm();
   const { win: _tsWin, loss: _tsLoss } = _liveTeamStreak();
   const _paarKey = d => (d.a && d.b) ? [d.a, d.b].sort().join('|') : null;
+  // Der Fun Fact ist die Füllung eines stillen Tages, nicht die Zugabe zu einem
+  // lauten. „Leon führt das Prestige an" gilt seit Wochen und stand neben dem
+  // Spieltag, an dem gerade etwas passierte. Der Abend-Slot schweigt an
+  // Spieltagen seit jeher; der Vormittags-Slot konnte es nicht wissen, weil er
+  // vor der ersten Partie entsteht. Entschieden wird deshalb hier: hat der Tag
+  // eine echte Nachricht, fällt sein Fun Fact weg.
+  const _fdKey = w => { const d = new Date(w);
+    return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+  const _tageMitNachricht = new Set();
+  // Der Countdown zählt nicht als Nachricht: „Noch fünf Tage" steht an jedem
+  // Tag der Saison und würde damit jeden Fun Fact verdrängen.
+  list.forEach(s => { const d = (s && s.dataRef) || {};
+    if(d.type !== 'ambient' && d.type !== 'season_endgame' && !_storyAbgemeldet(s && s.id))
+      _tageMitNachricht.add(_fdKey(s.when)); });
   const src = list.filter(s => {
     const d = (s && s.dataRef) || {};
     if(_storyAbgemeldet(s && s.id)) return false;
+    if(d.type === 'ambient') return !_tageMitNachricht.has(_fdKey(s.when));
     if(d.type === 'loss_streak' && d.pid) return (_liveLoss[d.pid] || 0) >= (d.streak || 0);
     if(d.type === 'win_streak' && d.pid) return (_liveWin[d.pid] || 0) >= (d.streak || 0);
     if(d.type === 'top_form' && d.pid) return (_liveForm[d.pid] || 0) >= (d.wins || 0);
@@ -21886,7 +21925,35 @@ function _consolidateStories(list){
   // der Generator (PER_PLAYER_LIMIT und NEBENROLLEN_LIMIT, §11.1), und die
   // Reihenfolge ist wieder die Zeit. Gemessen steht danach kein Spieler auf
   // mehr als einem Drittel der Karten, und jeder gewertete Spieler kommt vor.
-  const fertig = entzerrt;
+  // ── Ein Tag trägt so viele Karten, wie man an einem Tag liest ──────
+  // Gemessen trug ein Spieltag neun Karten: zwei Sammelkarten, zwei Serien,
+  // zwei Auszeichnungen, den Spieler des Tages, den Elo-Ausschlag und einen
+  // Serienbrecher. Das ist keine Tafel mehr, das ist ein Protokoll. Der Tag
+  // behält seine stärksten `NEWS_LIMITS.proTag` — gemessen an `prio`, der
+  // Reihenfolge, die der Generator ohnehin vergibt und nach der auch die
+  // Sammelkarte ihren Kopf wählt [§C27].
+  //
+  // Breaking zählt nicht mit: es ist das Seltenste und darf nie an einem
+  // Deckel scheitern. Und die Reihenfolge bleibt die Zeit — gedeckelt wird,
+  // was wegfällt, nicht wo etwas steht.
+  const _proTagKey = s => { const d = new Date(s.when);
+    return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+  const _tagRang = {};
+  entzerrt.forEach(s => {
+    const k = _proTagKey(s);
+    (_tagRang[k] = _tagRang[k] || []).push(s);
+  });
+  const _behalten = new Set();
+  Object.keys(_tagRang).forEach(k => {
+    _tagRang[k].slice()
+      .sort((a, b) => (b.prio || 0) - (a.prio || 0))
+      .slice(0, NEWS_LIMITS.proTag)
+      .forEach(s => _behalten.add(s.id));
+  });
+  const fertig = entzerrt.filter(s => {
+    if(_behalten.has(s.id)) return true;
+    try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
+  });
   _cache._consolFrom = list;
   _cache._consolList = fertig;
   return fertig;
@@ -22506,7 +22573,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // untereinander sahen alle gleich aus.
   let kopf = '', fuss = '', gesicht = '';
   const pm = pmap();
-  const av = (pid, px) => (pm[pid] ? avHtml(pm[pid], '', {ins:true, px:px||44, feuer:0}) : '');
+  // 48 px ist die Untergrenze fuer ein Wappen [§6]; darunter gibt `insAvWrap`
+  // nur den Avatar zurueck, und die Karte verloere ihr Gesicht [§C33].
+  const av = (pid, px) => (pm[pid] ? avHtml(pm[pid], '', {ins:true, px:px||48, feuer:0}) : '');
 
   if(sorte === 'spiel'){
     kopf = _newsErgebnisBand(d.matchId);
@@ -22552,10 +22621,10 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     const verloren = String(d.type || '').indexOf('loss') >= 0;
     gesicht = d.a && d.b
       ? `<div class="nf-gr-l nf-duo">${av(d.a, 38)}${av(d.b, 38)}</div>`
-      : `<div class="nf-gr-l">${av(d.pid || d.playerId, 44)}</div>`;
+      : `<div class="nf-gr-l">${av(d.pid || d.playerId, 48)}</div>`;
     fuss = _newsSerienBand(d.streak, verloren);
   } else if(sorte === 'badge'){
-    gesicht = `<div class="nf-gr-l">${av(d.playerId, 44)}</div>`;
+    gesicht = `<div class="nf-gr-l">${av(d.playerId, 48)}</div>`;
     // Der Name der Auszeichnung steht schon in der Schlagzeile. Im Fuss stand
     // er ein zweites Mal darunter — jetzt steht dort, was die Schlagzeile
     // nicht sagt: wie selten sie ist und wie viele sie tragen.
@@ -22570,7 +22639,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     const wert = d.delta != null ? (d.delta > 0 ? '+' + d.delta : String(d.delta))
                : (d.streak != null ? String(d.streak) : (d.milestone || null));
     const label = d.delta != null ? 'Elo' : (d.streak != null ? 'in Folge' : 'erreicht');
-    gesicht = `<div class="nf-gr-l">${av(d.pid, 44)}`
+    gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}`
       + (wert ? _newsWertBlock(wert, label, d.delta < 0 ? 'rot' : 'metall') : '') + `</div>`;
   } else {
     // Fun Fact: die Zahl links, der Satz rechts. Bewusst der leiseste Bau.
@@ -23256,7 +23325,7 @@ function _newsBlattKopf(s){
   // darunter, die es fuer beide gaebe.
   if(ids.length > 1){
     return erg + `<div class="nd-held nd-held-duo">
-      <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:44, feuer:0})).join('')}</div>
+      <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
       <div><div class="nd-held-nm">${esc(ids.slice(0, 2).map(nm).join(' und '))}</div>
       <div class="nd-held-un">${esc(ids.length > 2 ? 'und ' + (ids.length - 2) + ' weitere'
         : (_newsSorte(s) === 'duell' ? 'im direkten Duell' : 'als Duo'))}</div></div></div>`;

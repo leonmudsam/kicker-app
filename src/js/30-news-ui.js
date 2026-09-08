@@ -386,7 +386,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // untereinander sahen alle gleich aus.
   let kopf = '', fuss = '', gesicht = '';
   const pm = pmap();
-  const av = (pid, px) => (pm[pid] ? avHtml(pm[pid], '', {ins:true, px:px||44, feuer:0}) : '');
+  // 48 px ist die Untergrenze fuer ein Wappen [§6]; darunter gibt `insAvWrap`
+  // nur den Avatar zurueck, und die Karte verloere ihr Gesicht [§C33].
+  const av = (pid, px) => (pm[pid] ? avHtml(pm[pid], '', {ins:true, px:px||48, feuer:0}) : '');
 
   if(sorte === 'spiel'){
     kopf = _newsErgebnisBand(d.matchId);
@@ -432,10 +434,10 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     const verloren = String(d.type || '').indexOf('loss') >= 0;
     gesicht = d.a && d.b
       ? `<div class="nf-gr-l nf-duo">${av(d.a, 38)}${av(d.b, 38)}</div>`
-      : `<div class="nf-gr-l">${av(d.pid || d.playerId, 44)}</div>`;
+      : `<div class="nf-gr-l">${av(d.pid || d.playerId, 48)}</div>`;
     fuss = _newsSerienBand(d.streak, verloren);
   } else if(sorte === 'badge'){
-    gesicht = `<div class="nf-gr-l">${av(d.playerId, 44)}</div>`;
+    gesicht = `<div class="nf-gr-l">${av(d.playerId, 48)}</div>`;
     // Der Name der Auszeichnung steht schon in der Schlagzeile. Im Fuss stand
     // er ein zweites Mal darunter — jetzt steht dort, was die Schlagzeile
     // nicht sagt: wie selten sie ist und wie viele sie tragen.
@@ -450,7 +452,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     const wert = d.delta != null ? (d.delta > 0 ? '+' + d.delta : String(d.delta))
                : (d.streak != null ? String(d.streak) : (d.milestone || null));
     const label = d.delta != null ? 'Elo' : (d.streak != null ? 'in Folge' : 'erreicht');
-    gesicht = `<div class="nf-gr-l">${av(d.pid, 44)}`
+    gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}`
       + (wert ? _newsWertBlock(wert, label, d.delta < 0 ? 'rot' : 'metall') : '') + `</div>`;
   } else {
     // Fun Fact: die Zahl links, der Satz rechts. Bewusst der leiseste Bau.

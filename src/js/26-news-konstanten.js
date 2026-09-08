@@ -67,10 +67,18 @@ const NEWS_LIMITS = {
   // sind kein Paar, sondern eine Wiederholung. Es bleibt die mit den meisten
   // Duellen.
   rivalry: 1,
+  // Meilensteine eines Paares (50., 100., …). Über die Ligageschichte reißen
+  // viele Paare eine Schwelle; gemeldet werden die jüngsten. Gemessen wurden
+  // sechzehn gebildet und persistiert, von denen zwei im Feed standen.
+  rivalryMarke: 4,
   // „X baut seinen Rekord aus" ist die schwächste der drei Rekordmeldungen —
   // gewechselt hat nichts. Zwei davon reichen; „geholt" und „erstmals
   // vergeben" sind ungedeckelt, weil sie selten sind und wirklich etwas sagen.
   rekordAusbau: 2,
+  // Ein Tag trägt sechs Karten. Gemessen trug ein Spieltag neun, und die
+  // schwächsten drei waren ein Elo-Ausschlag, eine Auszeichnung und ein Fun
+  // Fact — Zeilen, die niemand vermisst. Breaking zählt nicht mit [§C33].
+  proTag: 6,
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
 
