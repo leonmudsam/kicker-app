@@ -226,6 +226,17 @@ function _consolidateStories(list){
       return !k || (_tsWin[k] || 0) >= (d.streak || 0); }
     if(d.type === 'team_loss_streak'){ const k = _paarKey(d);
       return !k || (_tsLoss[k] || 0) >= (d.streak || 0); }
+    // Eine Uebernahme, bei der Halter und Vorgaenger dieselben sind, hat es
+    // nie gegeben. Der Vergleich lief einmal ueber die REIHENFOLGE der Halter,
+    // und daraus wurde „Maxi, Leo und Julian uebernehmen" mit „Vorher gehoerte
+    // der Rekord Maxi, Julian und Leo" darunter. Der Generator bildet diese
+    // ID nicht mehr, also kann `_newsTexteAuffrischen` sie auch nicht
+    // umschreiben — die persistierte Karte bliebe fuer immer stehen.
+    if(d.type === 'rekord_geholt'){
+      const a = (d.playerIds || []).slice().sort().join(',');
+      const b = (d.vorher || []).slice().sort().join(',');
+      return !b || a !== b;
+    }
     return true;
   });
 

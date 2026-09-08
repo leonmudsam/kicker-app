@@ -828,6 +828,51 @@ ok(_sam.textListe === 0, 'der Kartentext ist eine Zusammenfassung, keine Liste',
 ok(_sam.leer === 0, 'und keine Sammelkarte oeffnet ein leeres Blatt',
    _sam.leer + ' leer');
 
+// ── Das Rekord-Blatt nennt niemanden zweimal ────────────────────────
+// „Maxi, Leo und Julian uebernehmen" stand im Kopf, „Vorher gehalten von Maxi
+// und Julian und Leo" darunter, und unter „Wer sonst noch vorne steht" noch
+// einmal dieselben drei mit derselben Zahl. Drei Bloecke, ein Inhalt.
+// Und eine Uebernahme, deren Vorgaenger die heutigen Halter SIND, hat es nie
+// gegeben: der Generator bildet ihre ID nicht mehr, also bliebe die
+// persistierte Karte fuer immer stehen.
+const _rek = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const vorlage = roh.find(s => (s.dataRef||{}).type === 'rekord_geholt')
+               || roh.find(s => ((s.dataRef||{}).type||'').indexOf('rekord_') === 0);
+  if(!vorlage) return {keine:true};
+  const ids = (vorlage.dataRef.playerIds || []).slice();
+  // Eine Uebernahme von sich selbst, wie sie der alte Vergleich erzeugte.
+  const falsch = Object.assign({}, vorlage, {id: vorlage.id + '_selbst',
+    title: 'X uebernimmt den Rekord von sich selbst',
+    desc: 'Derselbe Halter wie vorher, nur anders sortiert. 3 Stueck.',
+    dataRef: Object.assign({}, vorlage.dataRef,
+      {type:'rekord_geholt', vorher: ids.slice().reverse()})});
+  _cache._stories = [falsch].concat(roh);
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const sicht = getStoriesCache();
+  // Und ein echtes Blatt: steht ein Halter unter den Verfolgern?
+  const echt = Object.assign({}, vorlage, {dataRef: Object.assign({}, vorlage.dataRef,
+    {type:'rekord_geholt'})});
+  const b = _newsDetailBody(echt);
+  const vf = (b.match(/class="nd-vf-nm">([^<]*)</g)||[])
+    .map(t => t.replace(/^[^>]*>/,'').replace(/<$/,''));
+  const _pm = pmap();
+  const halterNamen = ids.map(id => (_pm[id]||{}).name).filter(Boolean);
+  // Gezaehlt wird die AUSSAGE: die Karte kann als Zeile in einer Sammelkarte
+  // stehen, und dann steht sie trotzdem im Feed.
+  const zeilen = [];
+  sicht.forEach(x => { const t = ((x.dataRef||{}).teile||[]);
+    if(t.length > 1) t.forEach(u => zeilen.push(u.titel)); else zeilen.push(x.title); });
+  return {selbstDurch: zeilen.filter(t => t === falsch.title).length,
+          halterUnterVerfolgern: vf.filter(n => halterNamen.indexOf(n) >= 0).length,
+          verfolger: vf.length};
+})())`));
+ok(!_rek.keine, 'es gibt eine Rekord-Uebernahme', JSON.stringify(_rek));
+ok(_rek.selbstDurch === 0, 'niemand uebernimmt einen Rekord von sich selbst',
+   _rek.selbstDurch + ' durch');
+ok(_rek.halterUnterVerfolgern === 0, 'der Halter steht nicht unter den Verfolgern',
+   _rek.halterUnterVerfolgern + ' von ' + _rek.verfolger);
+
 // ── Derselbe Halter in anderer Reihenfolge ist kein Wechsel ─────────
 // „Maxi, Leo und Julian uebernehmen" stand im Feed, und darunter „Vorher
 // gehoerte er Maxi, Julian und Leo" — dieselben drei, nur anders sortiert.

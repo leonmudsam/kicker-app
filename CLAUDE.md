@@ -185,7 +185,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache | 880 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 159 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 162 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt — **im echten Browser gemessen** | 76 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -557,7 +557,17 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Zeitschnitt — `allChronicles(bisMs)` vor dem letzten Spieltag gegen heute;
   er kostet einmal ~18 ms und liegt danach im Cache.
   Drei Sorten, drei Aussagen: **erstmals vergeben** (den Rekord hatte vorher
-  niemand), **übernommen** (der Halter wechselt) und **ausgebaut**. Das
+  niemand), **übernommen** (der Halter wechselt) und **ausgebaut**.
+  Der Halter wird dafür **sortiert** verglichen, und eine Übernahme, deren
+  Vorgänger die heutigen Halter sind, verschwindet aus dem Feed: „Maxi, Leo
+  und Julian übernehmen" stand über „Vorher gehörte der Rekord Maxi, Julian
+  und Leo" — dieselben drei, nur anders sortiert. Der Generator bildet diese
+  ID nicht mehr, also kann `_newsTexteAuffrischen` sie auch nicht umschreiben;
+  die persistierte Karte bliebe sonst für immer stehen.
+  Im Rekord-Blatt steht unter den **Verfolgern**, wer DAHINTER liegt. Teilen
+  sich drei den Rekord punktgleich, füllten genau diese drei die Liste, und
+  unter „wer sonst noch vorne steht" standen dieselben Namen mit derselben
+  Zahl, die der Kopf zwei Zeilen darüber schon nennt. Das
   Ausbauen ist die schwächste davon und deshalb gedeckelt und an eine
   Bedingung geknüpft: gemeldet wird nur, wenn sich die **angezeigte** Zahl
   ändert. Ein Anteil rückt an fast jedem Spieltag um ein Tausendstel weiter,

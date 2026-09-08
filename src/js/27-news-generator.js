@@ -1529,7 +1529,8 @@ function _buildStories(){
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
           desc = `${n.ev}.` + (wertAlt && wertAlt !== wertNeu
-            ? ` Vorher hielt ${altN} den Rekord mit ${wertAlt}.` : ` Vorher gehörte er ${altN}.`);
+            ? ` Vorher hielt ${altN} den Rekord mit ${wertAlt}.`
+            : ` Vorher gehörte der Rekord ${altN}.`);
         } else {
           title = `${namen} ${baut} „${def.name}" aus`;
           desc = `${n.ev}. Vorher ${wertAlt}.`;
