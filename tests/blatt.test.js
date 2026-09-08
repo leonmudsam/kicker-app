@@ -405,6 +405,38 @@ const ok = (c, msg, det) => {
      negRot.zahl + ' statt ' + negRot.positiv);
   ok(negRot.negZuerst === false, 'und das Negative steht nicht an erster Stelle');
 
+  // ── Der offene Feed frischt sich auf ──────────────────────────────
+  // `_isNewsFeedOpen` fragte nach `.nv-list-flat` — einer Klasse aus dem
+  // alten Mini-Popup, die der Feed seit dem Umbau nicht mehr setzt. Damit war
+  // er nie „offen", und eine Story, die per Realtime hereinkam, erschien erst
+  // beim naechsten Oeffnen.
+  const feedOffen = await page.evaluate(() => {
+    const K = s => window.__k.eval(s);
+    K('_cache._stories = _buildStories(); _cache._consolFrom = null; _cache._frischVon = null;');
+    K('openNewsFeed()');
+    const offen = K('_isNewsFeedOpen()');
+    const karten = document.querySelectorAll('#sheet .nf-card').length;
+    // Und die Auffrischung zeichnet wirklich NEU. Gezaehlt reicht nicht:
+    // dieselbe Zahl steht auch da, wenn gar nichts passiert ist. Eine Marke
+    // an einer Karte ueberlebt nur, wenn niemand neu zeichnet.
+    const erste = document.querySelector('#sheet .nf-card');
+    if(erste) erste.dataset.marke = 'alt';
+    K('_refreshOpenNewsViews()');
+    const nachher = document.querySelectorAll('#sheet .nf-card').length;
+    const markeWeg = !document.querySelector('#sheet .nf-card[data-marke="alt"]');
+    K('closeSheet && closeSheet()');
+    const zu = K('_isNewsFeedOpen()');
+    return {offen, karten, nachher, zu, markeWeg};
+  });
+  ok(feedOffen.offen === true, 'der offene News-Feed wird als offen erkannt',
+     JSON.stringify(feedOffen));
+  ok(feedOffen.karten > 0 && feedOffen.nachher === feedOffen.karten
+     && feedOffen.markeWeg === true,
+     'und die Auffrischung zeichnet ihn wirklich neu',
+     feedOffen.karten + ' → ' + feedOffen.nachher
+     + (feedOffen.markeWeg ? ', neu gezeichnet' : ', die alte Karte steht noch'));
+  ok(feedOffen.zu === false, 'geschlossen ist er nicht mehr offen');
+
   console.log('\n═══ DIE TAFEL ═══');
   // Gemessen am gerenderten Feed: ein Tageskopf je Kalendertag, jede Karte
   // unter ihrem eigenen Tag, Filterchips mit Anzahl und ein Gelesen-Knopf,

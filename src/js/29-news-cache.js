@@ -772,28 +772,25 @@ function _onStoryRealtimeDelete(row){
   try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
 }
 
-// Offen-Zustände (DOM): Feed lebt im #sheet (enthält .nv-list-flat), Mini-Popup
-// im #nvBg (Klasse 'show'). Story-Detail (#ndBg) wird bewusst nicht live verändert.
+// Offen-Zustand (DOM): der Feed lebt im #sheet und ist an `.nf-wrap`
+// erkennbar. Gefragt war hier `.nv-list-flat` — eine Klasse aus dem alten
+// Mini-Popup, die der Feed seit dem Umbau nicht mehr setzt. Damit war er nie
+// „offen", und eine Story, die per Realtime hereinkam, erschien erst beim
+// nächsten Öffnen. Story-Detail (#ndBg) wird bewusst nicht live verändert.
 function _isNewsFeedOpen(){
   const sheet = document.getElementById('sheet');
-  return !!(sheet && sheet.classList.contains('show') && sheet.querySelector('.nv-list-flat'));
+  return !!(sheet && sheet.classList.contains('show') && sheet.querySelector('.nf-wrap'));
 }
-function _isNewsPopoverOpen(){
-  const bg = document.getElementById('nvBg');
-  return !!(bg && bg.classList.contains('show'));
-}
-
 // Cleanup beim App-Close: sauberer Realtime-Disconnect.
 window.addEventListener('beforeunload', () => {
   try { if(_storiesChannel) _storiesChannel.unsubscribe(); } catch(e){}
 });
 
-// Offene News-Views konsistent aktualisieren (Badge/Toast + Feed + Mini-Popup).
+// Offene News-Views konsistent aktualisieren (Badge/Toast + Feed).
 // Story-Detail (#ndBg) wird bewusst NICHT angefasst (User liest gerade etwas).
 function _refreshOpenNewsViews(){
   try { if(typeof newsBadgeRefresh === 'function') newsBadgeRefresh(); } catch(e){}
   try { if(_isNewsFeedOpen()) _renderNewsFeed(); } catch(e){}
-  try { if(_isNewsPopoverOpen()) openNewsPopover(); } catch(e){}
 }
 
 // ─── §11.9 — Periodischer News-Auto-Sync (v8.5) ──────────────────────

@@ -86,7 +86,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **636**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **632**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -187,7 +187,7 @@ globalem Zustand ist.
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 168 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil — **im echten Browser gemessen** | 80 |
+| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -297,6 +297,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   wie `_isBreaking`, also auch an persistierten Karten. Der **Filter** sind
   vier Chips mit Anzahl und Zeichen (`.nf-chip-f`) statt elf Rubriken, und der
   **Gelesen-Knopf** (`.nf-gelesen`) steht neben der Zahl, die ihn erklärt.
+  Es gibt **eine** Kartenform, nicht zwei: das Mini-Popup über dem
+  Glockenknopf ist entfallen. Es zeigte dieselben Stories in einer viel
+  einfacheren Karte — Kategorie-Pille aus der Datenbank, Titel, Text, ohne
+  Motiv, ohne Sammelband, ohne Gesicht —, und erreichbar war es zuletzt gar
+  nicht mehr: der Knopf öffnet seit langem direkt den vollen Feed. Der Feed
+  ist an `.nf-wrap` erkennbar; `_isNewsFeedOpen` fragte nach der Popup-Klasse
+  `.nv-list-flat`, war damit immer falsch, und eine Story, die per Realtime
+  hereinkam, erschien erst beim nächsten Öffnen.
   **Breaking bricht die Spalte**: die Karte steht breiter als jede andere und
   ist daran erkannt, bevor ein Wort gelesen ist; ihr Rahmen glimmt, weil ein
   stehender roter Rahmen beim Scrollen ein Farbton unter vielen war. Die
