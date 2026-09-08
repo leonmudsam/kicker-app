@@ -361,6 +361,11 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
   sichtbar.forEach(s => { const t=(s.dataRef&&s.dataRef.type)||'-'; zaehl[t]=(zaehl[t]||0)+1; });
   return {
     roh: roh.length, sichtbar: sichtbar.length,
+    // Gemessen wird die Verteilung ueber die EREIGNISSE, nicht ueber die
+    // Karten: eine Sammelkarte buendelt bis zu vier davon, und wer sie als
+    // eine zaehlt, bestraft genau die Buendelung.
+    ereignisse: sichtbar.reduce((n, s) => {
+      const t = ((s.dataRef||{}).teile||[]); return n + (t.length > 1 ? t.length : 1); }, 0),
     // Wer in der Geschichte vorkommt, bekommt sein Gesicht.
     mitSpieler: sichtbar.filter(s => _newsPids(s).length > 0).length,
     ohneGesicht: sichtbar.filter(s => _newsPids(s).length > 0 && !_newsGesichtHtml(s)).length,
@@ -398,8 +403,13 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
       const tg = x => { const d = new Date(x.when);
         return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
       let n = 0;
+      // Eine Sammelkarte traegt die Sorte ihres Kopfs: zwei Buendel derselben
+      // Minute sind der Fall, den die Buendelung gerade verhindert, und zwei
+      // Sammelkarten mit verschiedenen Koepfen sehen nicht gleich aus.
+      const art = x => { const d = x.dataRef || {};
+        return d.type === 'sammel' ? (d.kopfTyp || 'sammel') : d.type; };
       for(let i = 1; i < sichtbar.length; i++){
-        const a = (sichtbar[i-1].dataRef||{}).type, b = (sichtbar[i].dataRef||{}).type;
+        const a = art(sichtbar[i-1]), b = art(sichtbar[i]);
         if(a && a === b && tg(sichtbar[i-1]) === tg(sichtbar[i])) n++;
       }
       return n;
@@ -444,12 +454,20 @@ ok(_feed.nachbarn === 0, 'keine zwei Karten derselben Sorte am selben Tag direkt
    _feed.nachbarn + ' Paare');
 ok(_feed.ausDerReihe === 0, 'der Feed steht chronologisch, von neu nach alt',
    _feed.ausDerReihe + ' Karten aus der Reihe');
-// Der Feed ist durch die Sammel- und Wochenkarte kuerzer und traegt je Karte
-// mehr Gesichter. Ein Viertel war auf einunddreissig Karten kalibriert und
-// misst seitdem die Buendelung statt der Verteilung. Gefragt bleibt, ob
-// jemand den Feed beherrscht: ein Drittel ist die Grenze.
-ok(_feed.gesichter.max <= Math.max(4, Math.ceil(_feed.sichtbar / 3)),
-   'kein Spieler steht auf einem Drittel aller Karten',
+// Gefragt ist, ob jemand den Feed BEHERRSCHT. Gezaehlt wird deshalb gegen die
+// Zahl der EREIGNISSE, nicht gegen die der Karten: eine Sammelkarte fasst bis
+// zu vier Meldungen zusammen, und wer auf ihr steht, steht auf einer Karte,
+// die vier Dinge erzaehlt. Gemessen an den Karten kam der Spitzenwert auf
+// 9 von 23 (39 %), an den Ereignissen auf 9 von 35 (26 %) — dieselbe Person,
+// dieselbe Woche, zwei Nenner. Der Nenner, der die Frage beantwortet, ist der
+// zweite.
+ok(_feed.gesichter.max <= Math.max(4, Math.ceil(_feed.ereignisse / 3)),
+   'kein Spieler steht auf einem Drittel aller Ereignisse',
+   _feed.gesichter.max + ' von ' + _feed.ereignisse);
+// Die Gegenrechnung, damit die Buendelung keine Beherrschung verstecken kann:
+// die HAELFTE der Karten bleibt in jedem Fall die Grenze.
+ok(_feed.gesichter.max <= Math.ceil(_feed.sichtbar / 2),
+   'und auf keiner Haelfte der Karten',
    _feed.gesichter.max + ' von ' + _feed.sichtbar);
 ok(_feed.gesichter.ohne.length === 0,
    'jeder gewertete Spieler kommt im Feed vor',
@@ -585,9 +603,12 @@ const _auffr = JSON.parse(K.eval(`JSON.stringify((function(){
     nochAlt: sicht.filter(x => x.title === 'ALTER TITEL').length,
     mitStrich: sicht.filter(x => (x.desc||'').indexOf('—') >= 0).length,
     // Zeitpunkt und ID muessen bleiben, sonst springt eine Karte im Feed.
+    // Ausgenommen ist, was die Konsolidierung SELBST baut: Sammelkarte,
+    // Badge-Gruppe und Typ-Gruppe fassen mehrere Zeilen zusammen und bekommen
+    // dafuer eine eigene ID. Erkennbar am Praefix, nicht am Typ — die
+    // Badge-Gruppe traegt weiter den Typ badge_unlocked, weil sie davon erzaehlt.
     idsGleich: sicht.every(x => frisch.some(f => f.id === x.id)
-                              || (x.dataRef||{}).type === 'sammel'
-                              || (x.dataRef||{}).type === 'group')
+                              || /^(sammel_|badgegrp_|grp_)/.test(x.id || ''))
   };
 })())`));
 ok(_auffr.n > 0, 'der Feed steht', _auffr.n + ' Karten');
@@ -673,8 +694,16 @@ const _ts = JSON.parse(K.eval(`JSON.stringify((function(){
   _cache._stories = [ueberholt].concat(frisch);
   _cache._consolFrom = null; _cache._frischVon = null;
   const sicht = getStoriesCache();
+  // Gezaehlt wird die AUSSAGE, nicht die Karte: die laufende Serie kann als
+  // Zeile in einer Sammelkarte stehen, und dann steht sie trotzdem im Feed.
+  const zeilen = [];
+  sicht.forEach(x => {
+    const t = ((x.dataRef||{}).teile||[]);
+    if(t.length > 1) t.forEach(u => zeilen.push(u.titel));
+    else zeilen.push(x.title);
+  });
   return {ueberholtDurch: sicht.filter(x => x.id === ueberholt.id).length,
-          echteBleibt: sicht.filter(x => x.id === echt.id).length};
+          echteBleibt: zeilen.filter(t => t === echt.title).length};
 })())`));
 ok(!_ts.keine && _ts.ueberholtDurch === 0,
    'eine ueberholte Duo-Serie steht nicht mehr im Feed', JSON.stringify(_ts));
@@ -714,6 +743,74 @@ const _fehlend = JSON.parse(K.eval(`JSON.stringify(${JSON.stringify(_historisch)
   .filter(p => !STORY_ABGEMELDET.includes(p)))`));
 ok(_fehlend.length === 0, 'jedes einmal gebildete, tote Praefix ist abgemeldet',
    _fehlend.join(', '));
+
+// ── Nichts steht zweimal untereinander ──────────────────────────────
+// Nach zwei Partien standen zwei Karten „Martin baut ‚Der Fels' aus"
+// untereinander, beide mit 6.9 gegen 7.0 und nur einer anderen Spielzahl im
+// Fliesstext — und in einer Sammelkarte stand dieselbe Zeile VIERMAL. Die ID
+// trug den rohen Wert, also bekam jede Partie eine eigene Karte, obwohl die
+// ANGEZEIGTE Zahl dieselbe blieb.
+//
+// Und gebuendelt wird nach der Minute statt nach der Partie: genau ein
+// Story-Typ trug ueberhaupt eine `matchId`, alles andere fiel durch.
+const _dop = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const basis = roh.find(s => ((s.dataRef||{}).type||'').indexOf('rekord_') === 0) || roh[0];
+  // Vier persistierte Zeilen mit derselben Schlagzeile, wie sie nach vier
+  // Partien an einem Tag entstanden sind.
+  const vier = [1,2,3,4].map(i => Object.assign({}, basis, {
+    id: 'rek_fels_' + i, title: 'X baut „Der Fels" aus',
+    desc: '6.9 Gegentore je Abwehrspiel · ' + (152+i) + ' Spiele. Vorher 7.0.',
+    dataRef: Object.assign({}, basis.dataRef || {}, {type:'rekord_gesteigert'})}));
+  _cache._stories = vier.concat(roh);
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const sicht = getStoriesCache();
+  const titel = sicht.map(s => String(s.title||''));
+  const zeilen = [];
+  sicht.forEach(s => ((s.dataRef||{}).teile || []).forEach(t => {
+    if(t && t.titel) zeilen.push(String(t.titel)); }));
+  // Je Sammelkarte: keine zwei Zeilen mit derselben Schlagzeile.
+  let zeilenDoppelt = 0;
+  sicht.forEach(s => { const ts = ((s.dataRef||{}).teile||[]).map(t => String(t.titel||''));
+    ts.forEach((t, i) => { if(t && ts.indexOf(t) !== i) zeilenDoppelt++; }); });
+  // Und im ganzen Feed steht keine Minute zweimal.
+  const proMin = {};
+  sicht.forEach(s => { const k = new Date(s.when).toISOString().slice(0,16);
+    proMin[k] = (proMin[k]||0) + 1; });
+  return {
+    felsGesamt: titel.filter(t => t.indexOf('Der Fels') >= 0).length
+              + zeilen.filter(t => t.indexOf('Der Fels') >= 0).length,
+    titelDoppelt: titel.filter((t, i) => t && titel.indexOf(t) !== i).length,
+    zeilenDoppelt,
+    minutenMitMehreren: Object.keys(proMin).filter(k => proMin[k] > 1).length
+  };
+})())`));
+ok(_dop.felsGesamt === 1, 'vier gleiche Meldungen werden zu einer',
+   _dop.felsGesamt + ' mal im Feed');
+ok(_dop.titelDoppelt === 0, 'keine zwei Karten tragen dieselbe Schlagzeile',
+   _dop.titelDoppelt + ' doppelt');
+ok(_dop.zeilenDoppelt === 0, 'keine Sammelkarte wiederholt eine Zeile',
+   _dop.zeilenDoppelt + ' doppelt');
+ok(_dop.minutenMitMehreren === 0, 'in einer Minute steht hoechstens eine Karte',
+   _dop.minutenMitMehreren + ' Minuten');
+
+// ── Derselbe Halter in anderer Reihenfolge ist kein Wechsel ─────────
+// „Maxi, Leo und Julian uebernehmen" stand im Feed, und darunter „Vorher
+// gehoerte er Maxi, Julian und Leo" — dieselben drei, nur anders sortiert.
+const _halter = JSON.parse(K.eval(`JSON.stringify((function(){
+  const A = {pids:['a','b','c'], ev:'7 Siege', val:7};
+  const B = {pids:['c','a','b'], ev:'7 Siege', val:7};
+  const C = {pids:['a','b'],     ev:'7 Siege', val:7};
+  return {gleicheGruppe: _rekordArt(A, B), andereGruppe: _rekordArt(A, C),
+          liste1: _namenListe(['Maxi']), liste3: _namenListe(['Maxi','Julian','Leo'])};
+})())`));
+ok(_halter.gleicheGruppe === '', 'dieselbe Haltergruppe ist kein Wechsel',
+   _halter.gleicheGruppe || 'leer');
+ok(_halter.andereGruppe === 'geholt', 'eine andere Haltergruppe schon',
+   _halter.andereGruppe);
+ok(_halter.liste3 === 'Maxi, Julian und Leo', 'drei Namen lesen sich als Aufzaehlung',
+   _halter.liste3);
+ok(_halter.liste1 === 'Maxi', 'ein Name bleibt ein Name', _halter.liste1);
 
 // ── Wie die Liga spricht ────────────────────────────────────────────
 // Leicht und unkompliziert, aber mit den Zahlen dran. Der Gedankenstrich ist

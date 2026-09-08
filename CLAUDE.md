@@ -86,7 +86,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **634**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **635**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -185,7 +185,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache | 880 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 146 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 155 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt — **im echten Browser gemessen** | 76 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -424,12 +424,27 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   und zwei Spieler bekamen im selben Spiel dieselbe Auszeichnung auf zwei
   Karten. `_consolidateStories` bündelt das zur **Sammelkarte** (`sammel`),
   aber nur, wenn alle drei Bedingungen zutreffen: **derselbe Moment**
-  (dieselbe Partie, oder derselbe Tag an der Ewigen Tafel), **dieselbe Art**
+  (dieselbe Minute, oder derselbe Tag an der Ewigen Tafel), **dieselbe Art**
   (Spieltags-Ereignisse untereinander, Tafel-Ereignisse untereinander — ein
   Fun Fact gehört nie dazu, der stand gestern genauso da) und **ein
   gemeinsamer Satz**, den die stärkste Story liefert. Vier Zeilen sind die
   Grenze; darüber ist es ein Tagesrückblick. **Breaking bleibt einzeln** —
   ein erstmals vergebener Liga-Rekord soll nicht als vierte Zeile enden.
+  Der Moment ist die **Minute**, nicht die Partie: nur EINE Story trägt eine
+  `matchId`, alle anderen tragen bloß ihren Zeitstempel, und über die Partie
+  gebündelt fand die Regel fast nie zwei Zeilen. Genau eine Minute der
+  Ligageschichte trägt zwei Partien, also kostet das nichts. Innerhalb einer
+  Sammelkarte steht **jede Schlagzeile einmal**: viermal „Martin baut ‚Der
+  Fels' aus" untereinander war eine Zeile und drei Wiederholungen.
+  Und ihr Titel folgt der Zahl der Namen — „Martin bewegen die Ewige Tafel"
+  stand über einer Karte mit einem einzigen Namen.
+
+  **Zwei Karten mit derselben Schlagzeile sind eine zu viel.** Der Feed
+  entfernt Doubletten nach Text UND nach Titel: zwei Rekordkarten
+  unterschieden sich im Beleg und trugen wortgleich dieselbe Zeile, und nach
+  zwei Partien stand sie zweimal untereinander. Wer den Rekord hält, wird
+  dafür **sortiert** verglichen — dieselben zwei Halter in anderer
+  Reihenfolge galten sonst als Halterwechsel.
 
   **Was der Generator nicht mehr erzeugt, verschwindet auch.** Der
   Wochenrückblick war einmal sechs eigene Karten über den Montag verteilt.

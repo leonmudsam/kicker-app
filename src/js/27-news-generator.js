@@ -142,9 +142,22 @@ function _eloMilestones(){
 function _rekordArt(alt, neu){
   if(!neu) return '';
   if(!alt) return 'erstmals';
-  if(alt.pids.join(',') !== neu.pids.join(',')) return 'geholt';
+  // SORTIERT vergleichen. Die beiden Listen kommen aus zwei getrennten
+  // Durchläufen, und ihre Reihenfolge muss nicht dieselbe sein: „Maxi, Leo
+  // und Julian übernehmen" stand im Feed, und darunter „Vorher gehörte er
+  // Maxi, Julian und Leo" — dieselben drei, nur anders sortiert.
+  const k = a => (a || []).slice().sort().join(',');
+  if(k(alt.pids) !== k(neu.pids)) return 'geholt';
   if(_chronKurz(alt.ev) === _chronKurz(neu.ev)) return '';
   return (neu.val > alt.val) ? 'gesteigert' : '';
+}
+
+// Namen als Aufzählung: „Maxi, Julian und Leo". Mit `&` zwischen jedem Paar
+// las sich eine Dreiergruppe wie eine Formel.
+function _namenListe(namen){
+  const a = (namen || []).filter(Boolean);
+  if(a.length <= 1) return a[0] || '';
+  return a.slice(0, -1).join(', ') + ' und ' + a[a.length - 1];
 }
 
 function _buildStories(){
@@ -1496,8 +1509,10 @@ function _buildStories(){
         const art = _rekordArt(a, n);
         if(!art) return;
         const neuN = n.pids.map(nameOf);
-        const namen = neuN.length > 1
-          ? neuN.slice(0, -1).join(', ') + ' & ' + neuN[neuN.length-1] : neuN[0];
+        const namen = _namenListe(neuN);
+        // Drei Halter „uebernimmt" nicht, sie uebernehmen.
+        const verb = neuN.length > 1 ? 'übernehmen' : 'übernimmt';
+        const baut = neuN.length > 1 ? 'bauen' : 'baut';
         // Im Vergleich steht nur die ZAHL, nicht der ganze Beleg. Zwei volle
         // Belege nebeneinander („20 % seiner 25 Siege endeten 10:9 · 5 —
         // Jane stand bei 18 % seiner 55 Siege endeten 10:9 · 10") sind kein
@@ -1508,20 +1523,28 @@ function _buildStories(){
           title = `Erstmals vergeben: ${def.name}`;
           desc = `${n.ev}. Vor ${neuN.length > 1 ? 'ihnen' : 'ihm'} hat diesen Rekord niemand gehalten.`;
         } else if(art === 'geholt'){
-          const altN = (a.pids || []).map(nameOf).join(' & ') || 'der bisherige Halter';
-          title = `${namen} übernimmt „${def.name}"`;
+          const altN = _namenListe((a.pids || []).map(nameOf)) || 'der bisherige Halter';
+          title = `${namen} ${verb} „${def.name}"`;
           // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
           desc = `${n.ev}.` + (wertAlt && wertAlt !== wertNeu
             ? ` Vorher hielt ${altN} den Rekord mit ${wertAlt}.` : ` Vorher gehörte er ${altN}.`);
         } else {
-          title = `${namen} baut „${def.name}" aus`;
+          title = `${namen} ${baut} „${def.name}" aus`;
           desc = `${n.ev}. Vorher ${wertAlt}.`;
         }
         if(art === 'gesteigert' && ++_rekAusbau > NEWS_LIMITS.rekordAusbau) return;
         stories.push({
-          id: `rek_${def.id}_${art}_${n.pids.join('-')}_${Math.round(n.val * 1e4)}`,
+          // Die ID traegt den ANGEZEIGTEN Wert, nicht den rohen. Mit
+          // `Math.round(val * 1e4)` bekam jede Partie eine eigene ID: nach zwei
+          // Spielen standen zwei Karten „Martin baut ‚Der Fels' aus" im Feed,
+          // beide mit 6.9 gegen 7.0, nur einmal mit 151 und einmal mit 152
+          // Spielen. Gemeldet wird, was man SIEHT — also ist auch die Identitaet
+          // der Karte das, was man sieht. Die Halter stehen sortiert darin,
+          // sonst ergaebe dieselbe Gruppe in anderer Reihenfolge eine zweite ID.
+          id: `rek_${def.id}_${art}_${n.pids.slice().sort().join('-')}`
+            + `_${String(wertNeu).replace(/[^0-9a-zA-Z]/g, '')}`,
           cat: 'tafel',
           ic: def.ic,
           title, desc,
