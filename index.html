@@ -2648,6 +2648,24 @@
   .nf-wl-z b{margin-left:auto;font-family:'Sometype Mono',monospace;color:var(--gold);flex:0 0 auto}
   .nf-wl-m{padding:7px 13px;font-size:10px;color:var(--faint);border-top:1px solid var(--line)}
 
+  /* Das Sammelband: was die Karte ausser ihrer Schlagzeile noch buendelt.
+     Es stand vorher nur im Blatt, und wer die Karte ueberflog, sah von der
+     zweiten Meldung nichts [§C33]. Leiser als die Schlagzeile, aber mit
+     Zeichen — sonst waeren es drei graue Zeilen. */
+  .nf-sam{border-top:1px solid var(--line);display:flex;flex-direction:column}
+  .nf-sam-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
+    border-bottom:1px solid var(--line);font-size:11px;color:var(--ink2);
+    min-width:0}
+  .nf-sam-z:last-child{border-bottom:0}
+  .nf-sam-z span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nf-sam-z b{color:var(--ink);font-weight:700}
+  .nf-sam-i{width:20px;height:20px;flex:0 0 auto;border-radius:6px;
+    display:grid;place-items:center;background:var(--surface2);
+    border:1px solid var(--line);color:var(--muted)}
+  .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+  .nf-sam-m{padding:6px 13px;font-size:10px;color:var(--faint);
+    border-top:1px solid var(--line)}
+
   /* Sorte 6 Duo: zwei Wappen nebeneinander, kein Rang [§C27]. */
   .nf-duo{gap:0}
   .nf-duo > *:nth-child(2){margin-left:-10px}
@@ -4993,7 +5011,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.08.19392413';
+const BUILD_VERSION='2026.09.08.1085a2da';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21770,27 +21788,80 @@ function _consolidateStories(list){
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   const _zahlwort = n => ['','ein','zwei','drei','vier'][n] || String(n);
-  const sammelGruppen = new Map();
-  result.forEach((st, idx) => {
-    const d = (st && st.dataRef) || {};
-    let brk = false;
-    try { brk = (typeof _isBreaking === 'function') && _isBreaking(st); } catch(e){}
-    if(brk) return;
-    let key = null;
-    if(SAMMEL_SPIEL.has(d.type)) key = 'spiel|' + _minKey(st.when);
-    else if(SAMMEL_TAFEL.has(d.type)) key = 'tafel|' + _tagKey(st.when);
-    if(!key) return;
-    let g = sammelGruppen.get(key);
-    if(!g){ g = {key, teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
-    // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels'
-    // aus" stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit
-    // demselben Wert und nur einer anderen Spielzahl im Fliesstext. Die
-    // Buendelung soll den Tag zusammenfassen, nicht dieselbe Meldung
-    // vervierfachen.
+  // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels' aus"
+  // stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit demselben
+  // Wert und nur einer anderen Spielzahl im Fliesstext. Die Buendelung soll
+  // den Moment zusammenfassen, nicht dieselbe Meldung vervierfachen.
+  const _sammelZeile = (g, st) => {
     const tk = String(st.title || '').trim();
     if(tk && g.titel.has(tk)) return;
     if(tk) g.titel.add(tk);
     if(g.teile.length < SAMMEL_MAX) g.teile.push(st);
+  };
+  // ── Wer einzeln bleibt ─────────────────────────────────────────────
+  // Zwei Sorten gehen nie in ein Buendel: Breaking, weil ein erstmals
+  // vergebener Liga-Rekord nicht als vierte Zeile enden soll, und ein
+  // SELTENES oder LEGENDAERES Badge. „Nerven aus Stahl" (drei Zittersiege
+  // in Folge) stand als Zeile unter „Johannes und Anton verlieren zusammen
+  // alles" — zwei fremde Spieler, und das Seltenere von beiden im
+  // Kleingedruckten.
+  const _sammelEinzeln = (st, d) => {
+    try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return true; } catch(e){}
+    return d.type === 'badge_unlocked'
+        && (d.rarity === 'rare' || d.rarity === 'legendary');
+  };
+  const sammelGruppen = new Map();
+  // Die Minute allein reicht nicht. Gebuendelt wird, was denselben Moment UND
+  // dasselbe SUBJEKT teilt: „Leon und Maxi gewinnen zusammen alles" trug
+  // „Leo: Angstgegner" als zweite Zeile, und Leo spielte in dieser Partie gar
+  // nicht mit. Eine Karte, die von zwei fremden Ereignissen erzaehlt, ist
+  // keine Zusammenfassung, sondern eine Verwechslung.
+  //
+  // Innerhalb einer Minute bilden die Beteiligten die Gruppen: wer einen
+  // Spieler mit einer bestehenden Gruppe teilt, kommt dazu und zieht die
+  // Gruppen zusammen, die er verbindet. Mehr als vier Karten hat eine Minute
+  // nie, die Verschmelzung kostet also nichts.
+  const spielMinuten = new Map();
+  const _pidsVon = st => { try { return _newsPids(st) || []; } catch(e){ return []; } };
+  result.forEach((st, idx) => {
+    const d = (st && st.dataRef) || {};
+    if(_sammelEinzeln(st, d)) return;
+    if(SAMMEL_TAFEL.has(d.type)){
+      const key = 'tafel|' + _tagKey(st.when);
+      let g = sammelGruppen.get(key);
+      if(!g){ g = {key, teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
+      _sammelZeile(g, st);
+      return;
+    }
+    if(!SAMMEL_SPIEL.has(d.type)) return;
+    const mk = _minKey(st.when);
+    let liste = spielMinuten.get(mk);
+    if(!liste){ liste = []; spielMinuten.set(mk, liste); }
+    liste.push({st, idx, pids: _pidsVon(st)});
+  });
+  spielMinuten.forEach((liste, mk) => {
+    const gruppen = [];
+    liste.forEach(k => {
+      const treffer = gruppen.filter(g => k.pids.some(p => g.pids.has(p)));
+      let ziel = treffer[0];
+      if(!ziel){ ziel = {pids:new Set(), eintraege:[], erster:k.idx}; gruppen.push(ziel); }
+      // Verbindet er zwei bestehende Gruppen, werden sie eine.
+      treffer.slice(1).forEach(g => {
+        g.pids.forEach(p => ziel.pids.add(p));
+        g.eintraege.forEach(e => ziel.eintraege.push(e));
+        if(g.erster < ziel.erster) ziel.erster = g.erster;
+        gruppen.splice(gruppen.indexOf(g), 1);
+      });
+      k.pids.forEach(p => ziel.pids.add(p));
+      ziel.eintraege.push(k);
+    });
+    gruppen.forEach((gr, i) => {
+      if(gr.eintraege.length < 2) return;
+      const key = 'spiel|' + mk + '|' + i;
+      const g = {key, teile:[], titel:new Set(), erster: gr.erster};
+      sammelGruppen.set(key, g);
+      gr.eintraege.sort((a, b) => a.idx - b.idx).forEach(e => _sammelZeile(g, e.st));
+    });
   });
   const inSammel = new Set();
   sammelGruppen.forEach(g => { if(g.teile.length >= 2) g.teile.forEach(st => inSammel.add(st.id)); });
@@ -21843,8 +21914,12 @@ function _consolidateStories(list){
       dataRef: {type:'sammel', quelle: istTafel ? 'tafel' : 'spiel',
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
+                // Die Beteiligten je Zeile: die Buendelung haengt an ihnen
+                // [§C33], und im Blatt fuehrt die Zeile damit zu dem, von dem
+                // sie handelt.
                 teile: teile.map(t => ({ic: t.ic, titel: t.title, text: t.desc,
-                                        typ: (t.dataRef||{}).type || ''}))}
+                                        typ: (t.dataRef||{}).type || '',
+                                        pids: _pidsVon(t).slice(0, 2)}))}
     });
   });
 
@@ -22566,6 +22641,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     ? `<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING`
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
+  // Eine Sammelkarte behaelt Rubrik und Motiv ihres staerksten Ereignisses —
+  // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
+  // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
+  const sammelBand = (d.type === 'sammel')
+    ? _newsSammelBand(d.teile, s.title) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -22671,6 +22751,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       <div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc)}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
+    ${sammelBand}
     ${fuss}
     ${brk ? `<div class="nf-brk-sub">${esc(_breakingHeroText(s))}</div>` : ''}
   </div>`;
@@ -22791,6 +22872,28 @@ function _newsSerienBand(laenge, verloren){
     + Array.from({length: zeige}, () => '<i></i>').join('')
     + (n > zeige ? `<em>+${n - zeige}</em>` : '')
     + `<span>${n} ${verloren ? 'Pleiten' : 'Siege'} nacheinander</span></div>`;
+}
+
+// ── Das Sammelband ──────────────────────────────────────────────────
+// Eine Sammelkarte trug die Schlagzeile ihres staerksten Ereignisses und
+// sonst nichts: „Maxi: Nerven aus Stahl" stand erst im Blatt, und wer die
+// Karte nur ueberflog, hat es nie gesehen. Buendeln darf nichts verstecken
+// [§C33] — jede weitere Zeile steht deshalb mit ihrem Zeichen auf der Karte
+// selbst, kurz und in einer Reihe.
+//
+// Gezeigt werden nur die Zeilen, die der Kopf NICHT schon ist: bei einer
+// Spiel-Sammelkarte gehoert ihm die Schlagzeile, und sie ein zweites Mal
+// darunter waere die Wiederholung, die §C33 gerade verhindert.
+function _newsSammelBand(teile, kopfTitel){
+  const alle = Array.isArray(teile) ? teile : [];
+  const kt = String(kopfTitel || '').trim();
+  const rest = alle.filter(t => String(t.titel || '').trim() !== kt);
+  if(!rest.length) return '';
+  return `<div class="nf-sam">${rest.slice(0, 3).map(t =>
+    `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
+    + `<span>${_newsBetont(t.titel || '')}</span></div>`).join('')}`
+    + (rest.length > 3 ? `<div class="nf-sam-m">und ${rest.length - 3} weitere</div>` : '')
+    + `</div>`;
 }
 
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie
@@ -23702,7 +23805,8 @@ function _newsDetailMitte(s){
         // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
         const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
         const teile = neu.length ? neu : alle;
-        const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}">
+        const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}"${
+              (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
               ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');

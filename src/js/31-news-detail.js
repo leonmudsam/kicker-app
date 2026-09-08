@@ -558,7 +558,8 @@ function _newsDetailMitte(s){
         // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
         const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
         const teile = neu.length ? neu : alle;
-        const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}">
+        const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}"${
+              (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
               ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');

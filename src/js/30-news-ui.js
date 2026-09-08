@@ -441,6 +441,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     ? `<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING`
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
+  // Eine Sammelkarte behaelt Rubrik und Motiv ihres staerksten Ereignisses —
+  // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
+  // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
+  const sammelBand = (d.type === 'sammel')
+    ? _newsSammelBand(d.teile, s.title) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -546,6 +551,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       <div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc)}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
+    ${sammelBand}
     ${fuss}
     ${brk ? `<div class="nf-brk-sub">${esc(_breakingHeroText(s))}</div>` : ''}
   </div>`;
@@ -666,6 +672,28 @@ function _newsSerienBand(laenge, verloren){
     + Array.from({length: zeige}, () => '<i></i>').join('')
     + (n > zeige ? `<em>+${n - zeige}</em>` : '')
     + `<span>${n} ${verloren ? 'Pleiten' : 'Siege'} nacheinander</span></div>`;
+}
+
+// ── Das Sammelband ──────────────────────────────────────────────────
+// Eine Sammelkarte trug die Schlagzeile ihres staerksten Ereignisses und
+// sonst nichts: „Maxi: Nerven aus Stahl" stand erst im Blatt, und wer die
+// Karte nur ueberflog, hat es nie gesehen. Buendeln darf nichts verstecken
+// [§C33] — jede weitere Zeile steht deshalb mit ihrem Zeichen auf der Karte
+// selbst, kurz und in einer Reihe.
+//
+// Gezeigt werden nur die Zeilen, die der Kopf NICHT schon ist: bei einer
+// Spiel-Sammelkarte gehoert ihm die Schlagzeile, und sie ein zweites Mal
+// darunter waere die Wiederholung, die §C33 gerade verhindert.
+function _newsSammelBand(teile, kopfTitel){
+  const alle = Array.isArray(teile) ? teile : [];
+  const kt = String(kopfTitel || '').trim();
+  const rest = alle.filter(t => String(t.titel || '').trim() !== kt);
+  if(!rest.length) return '';
+  return `<div class="nf-sam">${rest.slice(0, 3).map(t =>
+    `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
+    + `<span>${_newsBetont(t.titel || '')}</span></div>`).join('')}`
+    + (rest.length > 3 ? `<div class="nf-sam-m">und ${rest.length - 3} weitere</div>` : '')
+    + `</div>`;
 }
 
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie

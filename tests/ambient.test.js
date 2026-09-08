@@ -773,10 +773,30 @@ const _dop = JSON.parse(K.eval(`JSON.stringify((function(){
   let zeilenDoppelt = 0;
   sicht.forEach(s => { const ts = ((s.dataRef||{}).teile||[]).map(t => String(t.titel||''));
     ts.forEach((t, i) => { if(t && ts.indexOf(t) !== i) zeilenDoppelt++; }); });
-  // Und im ganzen Feed steht keine Minute zweimal.
+  // Und in einer Minute steht hoechstens eine Karte JE SUBJEKT: zwei Karten
+  // derselben Minute sind erlaubt, wenn sie von verschiedenen Leuten handeln
+  // — genau das ist der Grund, warum die Buendelung nicht mehr nur nach der
+  // Minute geht. Zwei Karten ueber DENSELBEN Spieler in derselben Minute
+  // waeren dagegen die Doublette, die sie verhindern soll.
   const proMin = {};
-  sicht.forEach(s => { const k = new Date(s.when).toISOString().slice(0,16);
-    proMin[k] = (proMin[k]||0) + 1; });
+  const gesehen = {};
+  sicht.forEach(s => {
+    const k = new Date(s.when).toISOString().slice(0,16);
+    const dd = s.dataRef || {};
+    // Was absichtlich einzeln bleibt, ist keine Doublette: Breaking und eine
+    // seltene Auszeichnung stehen fuer sich, auch wenn in derselben Minute
+    // eine Sammelkarte ueber dieselbe Person steht.
+    let einzeln = false;
+    try { einzeln = _isBreaking(s); } catch(e){}
+    if(dd.type === 'badge_unlocked' && (dd.rarity === 'rare' || dd.rarity === 'legendary'))
+      einzeln = true;
+    if(einzeln) return;
+    let ids = []; try { ids = _newsPids(s) || []; } catch(e){}
+    if(!gesehen[k]) gesehen[k] = {};
+    let kollision = false;
+    ids.forEach(id => { if(gesehen[k][id]) kollision = true; gesehen[k][id] = 1; });
+    if(kollision) proMin[k] = (proMin[k]||1) + 1;
+  });
   return {
     felsGesamt: titel.filter(t => t.indexOf('Der Fels') >= 0).length
               + zeilen.filter(t => t.indexOf('Der Fels') >= 0).length,
@@ -791,7 +811,8 @@ ok(_dop.titelDoppelt === 0, 'keine zwei Karten tragen dieselbe Schlagzeile',
    _dop.titelDoppelt + ' doppelt');
 ok(_dop.zeilenDoppelt === 0, 'keine Sammelkarte wiederholt eine Zeile',
    _dop.zeilenDoppelt + ' doppelt');
-ok(_dop.minutenMitMehreren === 0, 'in einer Minute steht hoechstens eine Karte',
+ok(_dop.minutenMitMehreren === 0,
+   'in einer Minute steht hoechstens eine Karte je Spieler',
    _dop.minutenMitMehreren + ' Minuten');
 
 // ── Die Sammelkarte wiederholt ihren eigenen Kopf nicht ─────────────
@@ -827,6 +848,70 @@ ok(_sam.textListe === 0, 'der Kartentext ist eine Zusammenfassung, keine Liste',
    _sam.textListe + ' Karten');
 ok(_sam.leer === 0, 'und keine Sammelkarte oeffnet ein leeres Blatt',
    _sam.leer + ' leer');
+
+// ── Gebuendelt wird nur, was ein Subjekt teilt ──────────────────────
+// Die Minute allein reichte nicht: „Leon und Maxi gewinnen zusammen alles"
+// trug „Leo: Angstgegner" als zweite Zeile, und Leo spielte in dieser Partie
+// gar nicht mit. Gemessen waren drei von fuenf Spiel-Buendeln so gebaut.
+// Und was selten ist, bleibt eine eigene Karte: „Nerven aus Stahl" (drei
+// Zittersiege in Folge) stand als Kleingedrucktes unter der Duo-Serie zweier
+// Fremder.
+const _sub = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const sicht = getStoriesCache();
+  const sammel = sicht.filter(x => (x.dataRef||{}).type === 'sammel');
+  // Je Spiel-Buendel: jede Zeile teilt mindestens einen Spieler mit dem Rest.
+  const fremd = [];
+  sammel.filter(x => x.dataRef.quelle === 'spiel').forEach(x => {
+    const t = x.dataRef.teile || [];
+    t.forEach((z, i) => {
+      const andere = t.filter((_, j) => j !== i)
+        .reduce((a, u) => a.concat(u.pids || []), []);
+      if(!(z.pids || []).some(p => andere.indexOf(p) >= 0))
+        fremd.push(x.title + ' / ' + z.titel);
+    });
+  });
+  // Seltene und legendaere Auszeichnungen stehen nie als Zeile.
+  const zeilenTitel = [];
+  sammel.forEach(x => (x.dataRef.teile||[]).forEach(z => zeilenTitel.push(z.titel)));
+  const selten = roh.filter(s => { const d = s.dataRef || {};
+    return d.type === 'badge_unlocked' && (d.rarity === 'rare' || d.rarity === 'legendary'); });
+  const versteckt = selten.filter(s => zeilenTitel.indexOf(s.title) >= 0).map(s => s.title);
+  return {sammel: sammel.length, fremd, selten: selten.length, versteckt,
+          ohnePids: sammel.reduce((n, x) => n + (x.dataRef.teile||[])
+            .filter(z => !(z.pids||[]).length).length, 0)};
+})())`));
+ok(_sub.sammel > 0, 'es gibt Sammelkarten', _sub.sammel + '');
+ok(_sub.fremd.length === 0, 'jede Zeile eines Spiel-Buendels teilt einen Spieler mit dem Rest',
+   _sub.fremd.slice(0, 3).join(' | ') || 'keine fremde Zeile');
+ok(_sub.selten > 0 && _sub.versteckt.length === 0,
+   'eine seltene Auszeichnung steht nie als Zeile in einem Buendel',
+   _sub.versteckt.join(', ') || _sub.selten + ' seltene, alle einzeln');
+ok(_sub.ohnePids === 0, 'jede Zeile weiss, von wem sie handelt',
+   _sub.ohnePids + ' ohne');
+
+// Und das Gebuendelte steht auf der KARTE, nicht erst im Blatt.
+const _band = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const sammel = getStoriesCache().filter(x => (x.dataRef||{}).type === 'sammel');
+  let ohneBand = 0, zeilen = 0;
+  sammel.forEach(x => {
+    const h = _newsCardHtmlM2(x, false, false);
+    const n = (h.split('nf-sam-z').length - 1);
+    zeilen += n;
+    // Was nicht die Schlagzeile selbst ist, muss als Zeile auf der Karte stehen.
+    const rest = (x.dataRef.teile||[]).filter(t => t.titel !== x.title).length;
+    if(Math.min(rest, 3) !== n) ohneBand++;
+  });
+  return {n: sammel.length, ohneBand, zeilen};
+})())`));
+ok(_band.zeilen > 0, 'die Sammelkarte traegt ihr Band', _band.zeilen + ' Zeilen');
+ok(_band.ohneBand === 0, 'jede gebuendelte Meldung steht auf der Karte, nicht nur im Blatt',
+   _band.ohneBand + ' Karten ohne');
 
 // ── Das Rekord-Blatt nennt niemanden zweimal ────────────────────────
 // „Maxi, Leo und Julian uebernehmen" stand im Kopf, „Vorher gehalten von Maxi

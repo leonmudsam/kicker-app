@@ -86,7 +86,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **635**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **636**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -185,7 +185,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr | 893 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 162 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine | 168 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil — **im echten Browser gemessen** | 80 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -265,8 +265,9 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   (`_newsErgebnisBand`) beim Spieltag, der **große Wert** (`_newsWertBlock`)
   bei einem Rekord, die **Leiter** (`_newsLeiter`) beim Insignium, der
   **Bilanzbalken** (`_newsBilanzBalken`) beim Duell, der **Serienlauf**
-  (`_newsSerienBand`) bei einer Serie, das **Zahlenband** (`_newsZahlband`) im
-  Fuß. Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
+  (`_newsSerienBand`) bei einer Serie, das **Sammelband**
+  (`_newsSammelBand`) unter einer Sammelkarte, das **Zahlenband**
+  (`_newsZahlband`) im Fuß. Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
   untereinander sahen alle gleich aus. Rivalität, Serie und Duo waren zuletzt
   noch EINE Sorte, und an einem Spieltag standen drei Karten „ZU ZWEIT"
   untereinander, die von drei verschiedenen Dingen erzählten.
@@ -431,21 +432,44 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   eine Insignium-Stufe und zwei Rivalitäten standen als Fremde nebeneinander,
   und zwei Spieler bekamen im selben Spiel dieselbe Auszeichnung auf zwei
   Karten. `_consolidateStories` bündelt das zur **Sammelkarte** (`sammel`),
-  aber nur, wenn alle drei Bedingungen zutreffen: **derselbe Moment**
-  (dieselbe Minute, oder derselbe Tag an der Ewigen Tafel), **dieselbe Art**
-  (Spieltags-Ereignisse untereinander, Tafel-Ereignisse untereinander — ein
-  Fun Fact gehört nie dazu, der stand gestern genauso da) und **ein
-  gemeinsamer Satz**, den die stärkste Story liefert. Vier Zeilen sind die
-  Grenze; darüber ist es ein Tagesrückblick. **Breaking bleibt einzeln** —
-  ein erstmals vergebener Liga-Rekord soll nicht als vierte Zeile enden.
+  aber nur, wenn alle vier Bedingungen zutreffen: **derselbe Moment**
+  (dieselbe Minute, oder derselbe Tag an der Ewigen Tafel), **dasselbe
+  Subjekt** (ein gemeinsamer Spieler), **dieselbe Art** (Spieltags-Ereignisse
+  untereinander, Tafel-Ereignisse untereinander — ein Fun Fact gehört nie
+  dazu, der stand gestern genauso da) und **ein gemeinsamer Satz**, den die
+  stärkste Story liefert. Vier Zeilen sind die Grenze; darüber ist es ein
+  Tagesrückblick.
   Der Moment ist die **Minute**, nicht die Partie: nur EINE Story trägt eine
   `matchId`, alle anderen tragen bloß ihren Zeitstempel, und über die Partie
   gebündelt fand die Regel fast nie zwei Zeilen. Genau eine Minute der
-  Ligageschichte trägt zwei Partien, also kostet das nichts. Innerhalb einer
-  Sammelkarte steht **jede Schlagzeile einmal**: viermal „Martin baut ‚Der
-  Fels' aus" untereinander war eine Zeile und drei Wiederholungen.
-  Und ihr Titel folgt der Zahl der Namen — „Martin bewegen die Ewige Tafel"
-  stand über einer Karte mit einem einzigen Namen.
+  Ligageschichte trägt zwei Partien, also kostet das nichts.
+  **Die Minute allein reicht nicht.** „Johannes und Anton verlieren zusammen
+  alles" trug „Maxi: Nerven aus Stahl" als zweite Zeile — drei fremde Spieler
+  in einer Karte, die nur ihr Zeitstempel verband. Innerhalb einer Minute
+  bilden deshalb die **Beteiligten** die Gruppen: wer einen Spieler mit einer
+  bestehenden Gruppe teilt, kommt dazu und zieht die Gruppen zusammen, die er
+  verbindet. Eine Minute trägt nie mehr als vier Karten, die Verschmelzung
+  kostet also nichts. Zwei Karten in derselben Minute sind danach erlaubt,
+  solange sie von verschiedenen Leuten handeln.
+  Innerhalb einer Sammelkarte steht **jede Schlagzeile einmal**: viermal
+  „Martin baut ‚Der Fels' aus" untereinander war eine Zeile und drei
+  Wiederholungen. Und ihr Titel folgt der Zahl der Namen — „Martin bewegen
+  die Ewige Tafel" stand über einer Karte mit einem einzigen Namen.
+
+  **Bündeln darf nichts verstecken.** Die Sammelkarte trägt Rubrik, Motiv und
+  Schlagzeile ihrer stärksten Story — und darunter das **Sammelband**
+  (`_newsSammelBand`, `.nf-sam`): jede weitere Meldung mit ihrem Zeichen, kurz
+  und in einer Reihe, auf der KARTE und nicht erst im Blatt. Vorher stand dort
+  nur die Schlagzeile des Kopfs, und wer die Karte überflog, sah von der
+  zweiten Meldung nichts. Jede Zeile trägt ihre Beteiligten (`pids`) — daran
+  hängt die Bündelung, und im Blatt führt die Zeile damit zu dem, von dem sie
+  handelt.
+
+  **Was wichtig ist, bleibt eine eigene Karte** (`_sammelEinzeln`): Breaking,
+  weil ein erstmals vergebener Liga-Rekord nicht als vierte Zeile enden soll,
+  und jede **seltene oder legendäre Auszeichnung**. „Nerven aus Stahl" (drei
+  Zittersiege in Folge) ist der Grund, warum jemand die App öffnet — es steht
+  nicht als Kleingedrucktes unter der Duo-Serie zweier anderer.
   **Die Karte fasst zusammen, das Blatt zeigt alles.** Der Text der
   Tafel-Karte hängte die Schlagzeilen aller Zeilen aneinander und trug damit
   die Liste, die das Blatt darunter ohnehin führt; er nennt jetzt das
