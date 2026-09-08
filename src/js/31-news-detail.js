@@ -155,7 +155,7 @@ function _newsBlattKopf(s){
   // darunter, die es fuer beide gaebe.
   if(ids.length > 1){
     return erg + `<div class="nd-held nd-held-duo">
-      <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:44, feuer:0})).join('')}</div>
+      <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
       <div><div class="nd-held-nm">${esc(ids.slice(0, 2).map(nm).join(' und '))}</div>
       <div class="nd-held-un">${esc(ids.length > 2 ? 'und ' + (ids.length - 2) + ' weitere'
         : (_newsSorte(s) === 'duell' ? 'im direkten Duell' : 'als Duo'))}</div></div></div>`;

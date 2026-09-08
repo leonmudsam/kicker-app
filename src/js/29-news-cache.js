@@ -213,9 +213,24 @@ function _consolidateStories(list){
   const { loss: _liveLoss, win: _liveWin, form: _liveForm } = _liveStreakForm();
   const { win: _tsWin, loss: _tsLoss } = _liveTeamStreak();
   const _paarKey = d => (d.a && d.b) ? [d.a, d.b].sort().join('|') : null;
+  // Der Fun Fact ist die Füllung eines stillen Tages, nicht die Zugabe zu einem
+  // lauten. „Leon führt das Prestige an" gilt seit Wochen und stand neben dem
+  // Spieltag, an dem gerade etwas passierte. Der Abend-Slot schweigt an
+  // Spieltagen seit jeher; der Vormittags-Slot konnte es nicht wissen, weil er
+  // vor der ersten Partie entsteht. Entschieden wird deshalb hier: hat der Tag
+  // eine echte Nachricht, fällt sein Fun Fact weg.
+  const _fdKey = w => { const d = new Date(w);
+    return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+  const _tageMitNachricht = new Set();
+  // Der Countdown zählt nicht als Nachricht: „Noch fünf Tage" steht an jedem
+  // Tag der Saison und würde damit jeden Fun Fact verdrängen.
+  list.forEach(s => { const d = (s && s.dataRef) || {};
+    if(d.type !== 'ambient' && d.type !== 'season_endgame' && !_storyAbgemeldet(s && s.id))
+      _tageMitNachricht.add(_fdKey(s.when)); });
   const src = list.filter(s => {
     const d = (s && s.dataRef) || {};
     if(_storyAbgemeldet(s && s.id)) return false;
+    if(d.type === 'ambient') return !_tageMitNachricht.has(_fdKey(s.when));
     if(d.type === 'loss_streak' && d.pid) return (_liveLoss[d.pid] || 0) >= (d.streak || 0);
     if(d.type === 'win_streak' && d.pid) return (_liveWin[d.pid] || 0) >= (d.streak || 0);
     if(d.type === 'top_form' && d.pid) return (_liveForm[d.pid] || 0) >= (d.wins || 0);
@@ -589,7 +604,35 @@ function _consolidateStories(list){
   // der Generator (PER_PLAYER_LIMIT und NEBENROLLEN_LIMIT, §11.1), und die
   // Reihenfolge ist wieder die Zeit. Gemessen steht danach kein Spieler auf
   // mehr als einem Drittel der Karten, und jeder gewertete Spieler kommt vor.
-  const fertig = entzerrt;
+  // ── Ein Tag trägt so viele Karten, wie man an einem Tag liest ──────
+  // Gemessen trug ein Spieltag neun Karten: zwei Sammelkarten, zwei Serien,
+  // zwei Auszeichnungen, den Spieler des Tages, den Elo-Ausschlag und einen
+  // Serienbrecher. Das ist keine Tafel mehr, das ist ein Protokoll. Der Tag
+  // behält seine stärksten `NEWS_LIMITS.proTag` — gemessen an `prio`, der
+  // Reihenfolge, die der Generator ohnehin vergibt und nach der auch die
+  // Sammelkarte ihren Kopf wählt [§C27].
+  //
+  // Breaking zählt nicht mit: es ist das Seltenste und darf nie an einem
+  // Deckel scheitern. Und die Reihenfolge bleibt die Zeit — gedeckelt wird,
+  // was wegfällt, nicht wo etwas steht.
+  const _proTagKey = s => { const d = new Date(s.when);
+    return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+  const _tagRang = {};
+  entzerrt.forEach(s => {
+    const k = _proTagKey(s);
+    (_tagRang[k] = _tagRang[k] || []).push(s);
+  });
+  const _behalten = new Set();
+  Object.keys(_tagRang).forEach(k => {
+    _tagRang[k].slice()
+      .sort((a, b) => (b.prio || 0) - (a.prio || 0))
+      .slice(0, NEWS_LIMITS.proTag)
+      .forEach(s => _behalten.add(s.id));
+  });
+  const fertig = entzerrt.filter(s => {
+    if(_behalten.has(s.id)) return true;
+    try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
+  });
   _cache._consolFrom = list;
   _cache._consolList = fertig;
   return fertig;

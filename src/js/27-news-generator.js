@@ -581,11 +581,14 @@ function _buildStories(){
       });
     list.forEach(ev => {
       const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
-      // Legendary erzwingt Top-Prio (Bucket >=9 im Final-Sort), damit echte
-      // Achievements zuverlässig ganz oben im Feed landen.
-      // v9.1: Badges bewusst niedriger priorisiert (außer legendär), damit bei
-      // gleichem Zeitstempel Team-News/Fun Facts nach Spielen auch mal oben stehen.
-      const rarPrio = {legendary:10, rare:5, common:3, negative:4}[rar] || 3;
+      // `prio` sortiert den Feed nicht mehr — er steht chronologisch [§C33].
+      // Sie entscheidet nur noch zweierlei: wer eine Sammelkarte anführt und
+      // wer den Tagesdeckel überlebt. Dort gehört eine seltene Auszeichnung
+      // über eine laufende Serie: die Serie läuft weiter, die Auszeichnung ist
+      // geholt. Sie stand auf 5 und damit unter der Duo-Pleitenserie — mit der
+      // alten Begründung, dass Team-News „auch mal oben stehen" sollten, was
+      // seit dem chronologischen Feed niemand mehr entscheidet.
+      const rarPrio = {legendary:10, rare:8, common:4, negative:4}[rar] || 4;
       // v9.7: Angstgegner-News benennt den Gegner (aus fire()-Meta durchgereicht).
       const _nemOpp = (ev.badge.id === 'nemesis' && ev.meta && ev.meta.oppId) ? ev.meta.oppId : null;
       // v9.17: Die Langzeit-Auszeichnungen bekommen einen eigenen Text mit dem
@@ -1202,7 +1205,13 @@ function _buildStories(){
                          wa: pairCnt[k].w[a] || 0, wb: pairCnt[k].w[b] || 0});
       }));
     });
-    gekreuzt.forEach(g => {
+    // Über die ganze Ligageschichte reißen viele Paare eine Schwelle: gemessen
+    // sechzehn, von denen zwei im Feed standen. Die anderen vierzehn wurden
+    // trotzdem gebildet und persistiert — Zeilen in der Datenbank für Karten,
+    // die niemand je sieht. Gemeldet werden die jüngsten; ein Meilenstein von
+    // vor drei Monaten ist keine Nachricht mehr.
+    gekreuzt.sort((x, y) => y.ts - x.ts);
+    gekreuzt.slice(0, NEWS_LIMITS.rivalryMarke).forEach(g => {
       const [a, b] = g.k.split('|');
       if(!pm[a] || !pm[b] || pm[a].hidden || pm[b].hidden) return;
       stories.push({
