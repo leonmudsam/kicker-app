@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **642**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **646**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,9 +219,9 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen | 898 |
-| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen | 171 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte | 202 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes | 910 |
+| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 179 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck | 204 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -767,6 +767,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   gibt es bewusst keins: eine Duo-Karte an jedem Spieltag wäre die
   Wiederholung, die §C33 gerade verhindert.
   `tests/ambient` misst das alles.
+- **§C38 Die Chronik gehört nicht nur den besten Drei.** Wer eine Quote
+  gewinnt, gewinnt fast jede: gemessen gingen sechzig Prozent der
+  Monatseinträge an die besten Drei der Siegquote, und der Monatserste allein
+  hielt ein Drittel der Tafel. Ein Eintrag für die Mitte des Feldes misst
+  deshalb nicht das Niveau, sondern den **Abstand zum eigenen** — so wie „Das
+  Übersoll", das jeder erreichen kann. „Auf Augenhöhe" vergleicht die Quote in
+  den Partien, die die Elo-Rechnung offen sah, mit der eigenen Gesamtquote;
+  „Die Steigerung" die zweite Hälfte der Spieltage mit der ersten; „Der
+  Sonntagsschuss" ist eine einzige Partie, in der die Rechnung dagegen stand.
+  Gemessen stehen ihre Halter im Mittel jenseits des ersten Drittels, und der
+  Anteil der Einträge an die besten Drei fiel von sechzig auf fünfundfünfzig
+  Prozent. `tests/disziplinen` fällt, wenn eine davon wieder an die Spitze
+  geht.
 - **§C32 Ein Chronik-Eintrag gehört dem, der ihn hält.** Jeder Monatseintrag
   geht an den, der den Bestwert in diesem Monat wirklich hält — oder an
   niemanden. Halten ihn mehrere punktgleich, tragen ihn alle. Genau wie bei
@@ -983,6 +996,30 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   „32 seiner 134 Siege waren Kantersiege" las sich als Bestenliste der
   Anzahl, und das Podest zeigte genau diese 32 über der 10 des Spielers, der
   den höheren Anteil hält.
+- **§C37 Ein Anteil misst gegen die Menge, um die es geht.** „Pechvogel"
+  zählte knappe Niederlagen gegen ALLE Partien und kürte damit den, der viele
+  enge Spiele hatte, statt den, der sie verliert: wer zwanzig Partien spielt,
+  davon zwei enge, und beide verliert, stand bei 10 % — hinter jemandem mit
+  acht knappen Niederlagen aus vierzig Spielen, der die Hälfte seiner engen
+  Partien gewonnen hat. Der Nenner ist die **Teilmenge**: enge Partien beim
+  Pechvogel und beim Clutch-Player (beide aus `agg.clutch`, eine Zählung für
+  zwei Kacheln [§C27]), enge Partien des Duos bei den Glückspilzen, die
+  **Pleiten** des Duos beim Zirkus (dieselbe Frage wie „Der Schadensbegrenzer"
+  in der Chronik, also derselbe Nenner), die Partien als Außenseiter beim
+  Underdog-Held — der zählte gar keinen Nenner und war damit eine
+  Anwesenheitsliste, obwohl sein Zwilling auf Team-Ebene, der Giant Slayer,
+  seit jeher die Quote rechnet. Auf der Kachel steht deshalb immer „x von y",
+  nicht nur der Anteil: die Stichprobe gehört zur Aussage.
+
+  **Und die Mindestzahlen passen zum Zeitraum** (`AW_MIN`). Die Awards gibt es
+  nur noch je Saison und je Woche; die Schwellen stammen aus der Zeit, in der
+  es auch „Gesamt" gab. Gemessen spielt ein Duo in einer Woche im Mittel drei
+  Partien und über einen ganzen Monat ebenfalls drei — sieben von
+  sechsunddreißig Kacheln verlangten zehn gemeinsame Spiele und standen damit
+  jede Woche leer. Sie stehen an einer Stelle beisammen, damit sich das nicht
+  wieder über die Datei verteilt. Keine steigt über fünf, und `tests/tafel`
+  zählt nach, was nach einer vollen Woche noch leer bleibt: erlaubt sind nur
+  Ereignisse, die es nicht gab, kein 10:0 heißt kein Showmaster.
 - **Detail folgt der Größe.** Unter 26 px weder Sterne noch Feuer, unter
   48 px kein Wappen — darunter bleibt vom Gesicht ein Punkt. Beide Grenzen
   stehen im Code (`znWrap`, `insAvWrap`), nicht nur hier: das Ergebnisband
@@ -1140,6 +1177,7 @@ Raster — je zwei Einträge sind eine Zeile.
 | dort `short` | höchstens zehn Zeichen | die Chronik-Zelle bricht; `tests/disziplinen` misst es |
 | dort `ic` | ein Icon, das keine andere Disziplin trägt | in einer Zelle von 62 Pixeln ist die Zeichnung das Erste, was man sieht — zwei gleiche sind dort nicht zu unterscheiden. `tests/disziplinen` misst es |
 | dort `monat.wie` | ein Satz, was die Zahl im Beleg bedeutet | nur nötig, wenn die Größe nicht selbsterklärend ist. Er steht im Detail-Blatt unter der Bedingung; ohne ihn liest sich „+15 Prozentpunkte" wie Elo oder wie Prestige |
+| dort `monat` | `mind`, `wert`, `ab` und `ev` über `_stWertung` | ohne die vier gibt es keine Vergabe. `mind` sagt, wer gewertet wird, `wert` die Größe (größer ist besser, bei einer Schattenseite steht ein Minus davor), `ab` die Schwelle. Getrennt aufgeschrieben, weil sonst niemand sagen kann, wer knapp daneben liegt: wer die Schwelle reißt, bekam einen leeren Wert, und leere Werte haben keine Reihenfolge |
 | `33-chronik-engine.js` `_seasonTitleCtx` | das Feld, das `monat:` liest | die Monatstafel bleibt leer |
 | `34-chronik-rekorde.js` `_chronicleCtx` | **dasselbe Feld noch einmal** | der häufigste Fehler: die Monatstafel zeigt den Eintrag, der Liga-Rekord bleibt unbesetzt. Zwei getrennte Durchläufe über dieselbe Frage — sie müssen gleich zählen |
 | dort `negativ` | `true`, **nur** wenn die Fügung von einer Niederlage erzählt | sie steht im Profil golden zwischen den Titeln und wird als Rekord mitgezählt [§C25]. Eine `art:'schatten'`-Disziplin braucht das Feld nicht — sie ist ohnehin negativ |

@@ -3534,15 +3534,20 @@
   .tempty span{display:block;font-size:10.5px;color:var(--muted);margin-top:3px;
     font-family:'Sometype Mono',monospace}
   .tunawarded{display:flex;flex-direction:column;gap:6px;margin-top:8px}
-  .tun{display:grid;grid-template-columns:18px auto 1fr;align-items:center;gap:9px;
+  /* Drei Spalten fuer Zeichen, Namen und Bedingung, darunter ueber die ganze
+     Breite die Zeile „Am naechsten dran". Sie steht unter der Bedingung und
+     nicht daneben: nebeneinander bleiben von beidem zwei Woerter je Zeile. */
+  .tun{display:grid;grid-template-columns:18px auto 1fr;align-items:center;gap:4px 9px;
     padding:7px 11px;border:1px dashed var(--line2);border-radius:11px;opacity:.62}
   .tun .i{color:var(--faint);display:flex}
   .tun .i svg{width:15px;height:15px}
   .tun .n{font-size:12px;font-weight:700;color:var(--ink2);white-space:nowrap}
   .tun .c{font-size:10px;color:var(--muted);text-align:right;line-height:1.3;
     font-family:'Sometype Mono',monospace}
-  .tun-more{font-size:10.5px;color:var(--faint);text-align:center;padding:6px 0 2px;
+  .tun .w{grid-column:1 / -1;font-size:10px;color:var(--faint);cursor:pointer;
+    border-top:1px solid var(--line);padding-top:5px;margin-top:1px;
     font-family:'Sometype Mono',monospace}
+  .tun .w b{color:var(--ink2);font-weight:700}
 
   /* Titel-Pille im Profilkopf */
   .pp-title-row{display:flex;flex-direction:column;align-items:center;gap:5px;margin-top:10px}
@@ -4653,7 +4658,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.09.60b53955';
+const BUILD_VERSION='2026.09.09.f5030396';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -10029,6 +10034,28 @@ function vPositions(){
 // das Profil zeigt IMMER den laufenden Monat, auch wenn im Awards-Tab gerade
 // der Juli ausgewählt ist. Ohne diesen Weg müsste jemand awSeasonId setzen,
 // rendern und zurücksetzen — und dabei die halbe Oberfläche mitverschieben.
+// ── Die Mindestzahlen ────────────────────────────────────────────────
+// Die Awards gibt es nur noch je Saison und je Woche. Die Schwellen stammen
+// aus der Zeit, in der es auch „Gesamt" gab, und waren fuer eine Woche nie
+// erreichbar: gemessen spielt ein Duo in einer Woche im Mittel DREI Partien
+// (Bestwert sieben), und sieben von sechsunddreissig Kacheln standen selbst
+// nach einer vollen Woche leer, weil sie zehn gemeinsame Spiele verlangten.
+// Ein Duo kommt auch ueber einen ganzen Monat im Mittel nur auf drei.
+// Sie stehen hier an EINER Stelle, damit sich das nicht wieder ueber die
+// Datei verteilt.
+const AW_MIN = {
+  teamSpiele: 3,     // Team-Durchschnitte (Betonmauer, Kaeseteller)
+  teamEnge: 2,       // enge Team-Partien (Gluueckspilze)
+  teamUnter: 2,      // Underdog-Partien eines Duos (Giant Slayer)
+  teamPleiten: 2,    // Pleiten eines Duos (Zirkus)
+  duell: 2,          // direkte Duelle (Erzfeinde, Endgegner)
+  spieler: 3,        // Partien eines Spielers, wenn ein Schnitt gebildet wird
+  spielerSaldo: 5,   // Tor-Saldo je Spiel — ein 10:0 verzerrt sonst zu stark
+  enge: 2,           // enge Partien eines Spielers (Clutch, Pechvogel)
+  favorit: 3,        // Partien als Favorit (Favoriten-Versager)
+  unter: 2           // Partien als Aussenseiter (Underdog-Held)
+};
+
 function awardRankings(period, sid){return getCachedAwardRankings(period, sid);}
 function _awardRankingsUncached(period, sid){
   let ms;
@@ -10052,12 +10079,13 @@ function _awardRankingsUncached(period, sid){
     clutch:{}, iceWins:{}, snapMap:null,
     // ── NEUE AWARDS v3 ──
     underdogWins:{},  // playerId → Anzahl Underdog-Siege (myExp < 0.35 & gewonnen)
-    closeLosses:{},   // playerId → Anzahl knapper Niederlagen (verloren & |Diff| ≤ 2)
     // ── NEUE NEGATIV-AWARDS v6 ──
     favLosses:{},     // playerId → Anzahl Niederlagen in Favoriten-Rolle (myExp ≥ 0.65 & verloren)
     favMatches:{},    // playerId → Anzahl Spiele in Favoriten-Rolle (myExp ≥ 0.65)
     // ── NEUE TEAM-AWARDS v4 ──
     tCloseWins:{},      // teamKey → Anzahl 1-Tor-Siege (Glückspilze, Zähler)
+    tCloseGames:{},     // teamKey → Anzahl 1-Tor-Partien (Glückspilze, Nenner)
+    underdogMatches:{}, // pid → Partien als Außenseiter (Underdog-Held, Nenner)
     tGiantSlayer:{},    // teamKey → Anzahl Siege gegen stärkeres Team (Giant Slayer, Zähler)
     tFavoriteMatches:{},// teamKey → Anzahl Matches in denen das Team Underdog war (Giant Slayer Nenner)
     tFavoritenschreck:{},// teamKey → {best: maxOvercome, m: match, eloDiff} (höchster gewonnener Upset)
@@ -10134,16 +10162,16 @@ function _awardRankingsUncached(period, sid){
           agg.defGames_[id]++;
         }
 
-        // ── NEUE AWARDS v3 ──
-        // Underdog-Held: Sieg trotz < 35% Erwartung
-        if(won && myExp < 0.35){
-          if(!agg.underdogWins[id]) agg.underdogWins[id]=0;
-          agg.underdogWins[id]++;
-        }
-        // Pechvogel: Niederlage mit max. 2 Toren Differenz
-        if(!won && goalDiff <= 2){
-          if(!agg.closeLosses[id]) agg.closeLosses[id]=0;
-          agg.closeLosses[id]++;
+        // Underdog-Held: Partien als Aussenseiter (Siegchance unter 35 %) und
+        // die davon gewonnenen. Der Nenner fehlte, und ohne ihn war der Award
+        // eine Anwesenheitsliste.
+        if(myExp < 0.35){
+          if(!agg.underdogMatches[id]) agg.underdogMatches[id]=0;
+          agg.underdogMatches[id]++;
+          if(won){
+            if(!agg.underdogWins[id]) agg.underdogWins[id]=0;
+            agg.underdogWins[id]++;
+          }
         }
         // ── NEUE NEGATIV-AWARDS v6 ──
         // Favoriten-Versager: Anteil Niederlagen, wenn die Sieg-Erwartung ≥ 65 % war.
@@ -10187,8 +10215,15 @@ function _awardRankingsUncached(period, sid){
     // ── NEUE TEAM-AWARDS v4 ──
     const goalDiffM = Math.abs(m.score_a - m.score_b);
     const winnerKey = m.winner==='A' ? tA : tB;
-    // Glückspilze: 1-Tor-Sieg pro Team zählen
+    // Glückspilze: die engen Partien eines Duos und die davon gewonnenen.
+    // Gezaehlt wurden nur die Siege, geteilt wurde durch ALLE Partien des
+    // Duos: damit gewann ihn, wer viel spielt, und nicht, wer die engen
+    // Partien fuer sich entscheidet.
     if(goalDiffM === 1){
+      if(!agg.tCloseGames[tA]) agg.tCloseGames[tA]=0;
+      if(!agg.tCloseGames[tB]) agg.tCloseGames[tB]=0;
+      agg.tCloseGames[tA]++;
+      agg.tCloseGames[tB]++;
       if(!agg.tCloseWins[winnerKey]) agg.tCloseWins[winnerKey]=0;
       agg.tCloseWins[winnerKey]++;
     }
@@ -10292,7 +10327,7 @@ function _awardRankingsUncached(period, sid){
   
   const grinder=Object.entries(agg.pGames).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
   const winsList=Object.entries(agg.pWins).map(([id,v])=>({id,v,g:agg.pGames[id]})).sort((a,b)=>b.v-a.v);
-  const perfectMin=Math.min(10, Math.max(5, Math.ceil((grinder[0]?.v||5)*0.15)));
+  const perfectMin=Math.min(6, Math.max(AW_MIN.spieler, Math.ceil((grinder[0]?.v||5)*0.15)));
   const perfect=Object.entries(agg.pWins).map(([id,w])=>({id,w,g:agg.pGames[id],wr:agg.pGames[id]?w/agg.pGames[id]:0}))
     .filter(x=>x.g>=perfectMin)
     .sort((a,b)=>b.wr-a.wr||b.g-a.g);
@@ -10308,13 +10343,11 @@ function _awardRankingsUncached(period, sid){
   const worstElo=Object.entries(agg.pElo).map(([id,v])=>({id,v})).sort((a,b)=>a.v-b.v);
 
   // ═══ NEUE AWARDS v3 ═══
-  // Plus-Minus: Ø Tor-Saldo pro Spiel (Tore_für − Tore_gegen), min. 10 Spiele.
-  // Schwelle 10 ist konsistent mit der Logik der anderen "Durchschnitt"-Awards
-  // (perfect: dynamisch zwischen 5-10, scorer: min 2, wall: min 2). Plus-Minus
-  // braucht etwas mehr Volumen, weil ein einzelnes 10:0-Spiel den Saldo stark
-  // verzerren würde — bei 10+ Spielen ist der Wert robust.
+  // Plus-Minus: Ø Tor-Saldo pro Spiel (Tore für minus Tore gegen). Etwas mehr
+  // Volumen als die anderen Durchschnitte, weil ein einzelnes 10:0 den Saldo
+  // stark verzerrt.
   const plusMinusList = Object.entries(agg.pGames)
-    .filter(([id,g]) => g >= 10)
+    .filter(([id,g]) => g >= AW_MIN.spielerSaldo)
     .map(([id,g]) => ({
       id,
       v: (agg.pGoals[id] - agg.pConceded[id]) / g,  // Saldo pro Spiel
@@ -10322,34 +10355,41 @@ function _awardRankingsUncached(period, sid){
     }))
     .sort((a,b) => b.v - a.v);
 
-  // Underdog-Held: Anzahl Underdog-Siege (myExp < 0.35), absoluter Counter,
-  // keine Mindestschwelle — wer 1 Underdog-Sieg hat, kommt schon ins Ranking,
-  // aber 0-Werte werden rausgefiltert.
-  const underdogList = Object.entries(agg.underdogWins)
-    .filter(([,v]) => v > 0)
-    .map(([id,v]) => ({id,v}))
-    .sort((a,b) => b.v - a.v);
+  // Underdog-Held: Anteil gewonnener Aussenseiter-Partien an den Partien, in
+  // die jemand als Aussenseiter ging (Siegchance unter 35 %). Gezaehlt wurde
+  // hier die reine Anzahl, und damit gewann ihn, wer am meisten spielt — sein
+  // Zwilling auf Team-Ebene, der Giant Slayer, rechnet seit jeher die Quote.
+  const underdogList = Object.entries(agg.underdogMatches)
+    .filter(([id,g]) => g >= AW_MIN.unter && (agg.underdogWins[id] || 0) > 0)
+    .map(([id,g]) => ({id, v: agg.underdogWins[id] || 0, g,
+                       pct: (agg.underdogWins[id] || 0) / g}))
+    .sort((a,b) => b.pct - a.pct || b.v - a.v);
 
-  // Pechvogel: Anteil knapper Niederlagen an allen Spielen. Prozentual statt
-  // absolut — sonst gewinnen reine Vielspieler durch Volumen, nicht durch
-  // tatsächliches Pech. Schwelle: min. 2 knappe Niederlagen UND min. 5 Spiele,
-  // damit der Pct-Wert robust ist (bei 2/3 wäre er 67% — wenig aussagekräftig).
-  const pechvogelList = Object.entries(agg.closeLosses)
-    .filter(([id,v]) => v >= 2 && agg.pGames[id] >= 5)
-    .map(([id,v]) => ({
+  // Pechvogel: Anteil knapper Niederlagen an den KNAPPEN Partien. Gemessen an
+  // allen Partien gewann ihn, wer viele enge Spiele hatte, nicht wer sie
+  // verlor: wer zwanzig Partien spielt, davon zwei enge und beide verliert,
+  // stand bei 10 % — hinter jemandem mit acht knappen Niederlagen aus vierzig
+  // Spielen, der die Haelfte seiner engen Partien gewonnen hat.
+  // Der Pechvogel ist der Spiegel des Clutch-Players, also teilt er sich
+  // dessen Zaehlung: `agg.clutch` haelt je Spieler die engen Partien und die
+  // davon gewonnenen [§C27]. Zwei Rechnungen ueber dieselbe Frage nennen
+  // irgendwann zwei verschiedene Namen.
+  const pechvogelList = Object.entries(agg.clutch)
+    .filter(([, c]) => c.g >= AW_MIN.enge && (c.g - c.w) > 0)
+    .map(([id, c]) => ({
       id,
-      v,                              // Anzahl knapper Niederlagen (für Anzeige)
-      g: agg.pGames[id],              // Gesamtspiele
-      pct: v / agg.pGames[id]         // Sortier-Kriterium
+      v: c.g - c.w,                   // Anzahl knapper Niederlagen (für Anzeige)
+      g: c.g,                         // enge Partien
+      pct: (c.g - c.w) / c.g          // Sortier-Kriterium
     }))
-    .sort((a,b) => b.pct - a.pct);
+    .sort((a,b) => b.pct - a.pct || b.v - a.v);
 
   // ── NEUE NEGATIV-AWARDS v6 ──
   // Favoriten-Versager: Quote = Niederlagen in Favoriten-Rolle / Favoriten-Spiele.
   // Spiegel zu Underdog-Held (Sieg trotz < 35% Erwartung) — hier: Niederlage trotz
   // ≥ 65% Erwartung. Schwelle: min. 5 Favoriten-Matches für stabile Quote.
   const favoriteLoserList = Object.keys(agg.favMatches)
-    .filter(id => agg.favMatches[id] >= 5)
+    .filter(id => agg.favMatches[id] >= AW_MIN.favorit)
     .map(id => {
       const losses = agg.favLosses[id] || 0;
       const games = agg.favMatches[id];
@@ -10385,7 +10425,7 @@ function _awardRankingsUncached(period, sid){
     .filter(p => {
       const ga = agg.pGames[p.ids[0]] || 0;
       const gb = agg.pGames[p.ids[1]] || 0;
-      return p.g >= 3 && ga >= 5 && gb >= 5;
+      return p.g >= AW_MIN.duell && ga >= AW_MIN.spieler && gb >= AW_MIN.spieler;
     })
     .map(p => {
       const ga = agg.pGames[p.ids[0]];
@@ -10400,7 +10440,7 @@ function _awardRankingsUncached(period, sid){
     .sort((a,b) => b.pct - a.pct);
   
   // ═══ CLUTCH ═══
-  const clutchList=Object.entries(agg.clutch).filter(([,v])=>v.g>=2)
+  const clutchList=Object.entries(agg.clutch).filter(([,v])=>v.g>=AW_MIN.enge)
     .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
   
   // ═══ CARRY, SOLO, FORMTIEF, etc. ═══
@@ -10476,9 +10516,9 @@ function _awardRankingsUncached(period, sid){
     .map(x=>({ids:x.ids, v:x.best}))
     .sort((a,b)=>b.v-a.v);
 
-  // Concrete Wall: Σ Gegentore / Anzahl Team-Spiele, min. 10 Spiele
+  // Concrete Wall: Σ Gegentore / Anzahl Team-Spiele
   const concreteWallList = Object.keys(agg.tGames)
-    .filter(k=>agg.tGames[k]>=10)
+    .filter(k=>agg.tGames[k]>=AW_MIN.teamSpiele)
     .map(k=>({
       ids:k.split('|'),
       v: agg.tGoalsAgainst[k] / agg.tGames[k],   // Sortierwert (niedriger=besser)
@@ -10488,10 +10528,10 @@ function _awardRankingsUncached(period, sid){
     .sort((a,b)=>a.v-b.v);
 
   // ── NEUE NEGATIV-AWARDS v6 ──
-  // Käseteller: Spiegel zu Concrete Wall — höchster Gegentor-Schnitt als Team.
-  // Sortierung ist absteigend (hoch = schlecht), gleiche Schwelle min. 10 Sp.
+  // Käseteller: Spiegel zur Betonmauer, höchster Gegentor-Schnitt als Team.
+  // Sortierung absteigend (hoch = schlecht), dieselbe Schwelle.
   const cheesePlatterList = Object.keys(agg.tGames)
-    .filter(k=>agg.tGames[k]>=10)
+    .filter(k=>agg.tGames[k]>=AW_MIN.teamSpiele)
     .map(k=>({
       ids:k.split('|'),
       v: agg.tGoalsAgainst[k] / agg.tGames[k],   // Sortierwert (höher = schlechter)
@@ -10500,14 +10540,15 @@ function _awardRankingsUncached(period, sid){
     }))
     .sort((a,b)=>b.v-a.v);
 
-  // Lucky Charm: Anteil knapper Siege (1 Tor Vorsprung) an gemeinsamen Team-Spielen.
-  // Verhindert, dass Vielspieler-Teams durch reine Match-Zahl gewinnen.
-  // Schwelle: min. 10 gemeinsame Spiele für stabile Quote.
+  // Glückspilze: Anteil gewonnener 1-Tor-Partien an den 1-Tor-Partien des
+  // Duos. Geteilt wurde durch ALLE gemeinsamen Spiele, und damit stand ein Duo
+  // mit zwei knappen Siegen aus zehn Partien vor einem, das seine drei engen
+  // Partien alle gewonnen hat.
   const luckyCharmList = Object.keys(agg.tCloseWins)
-    .filter(k => (agg.tGames[k]||0) >= 10)
+    .filter(k => (agg.tCloseGames[k]||0) >= AW_MIN.teamEnge)
     .map(k => {
       const wins = agg.tCloseWins[k];
-      const games = agg.tGames[k];
+      const games = agg.tCloseGames[k];
       return {
         ids: k.split('|'),
         v: wins / games,        // Sortier-Wert: Anteil
@@ -10521,7 +10562,7 @@ function _awardRankingsUncached(period, sid){
   // Sicherstellt, dass die Wertung nicht von Vielspielern dominiert wird.
   // Schwelle: min. 5 Underdog-Matches für stabile Quote.
   const giantSlayerList = Object.keys(agg.tGiantSlayer)
-    .filter(k => (agg.tFavoriteMatches[k]||0) >= 5)
+    .filter(k => (agg.tFavoriteMatches[k]||0) >= AW_MIN.teamUnter)
     .map(k => {
       const wins = agg.tGiantSlayer[k];
       const games = agg.tFavoriteMatches[k]; // Nenner
@@ -10553,7 +10594,7 @@ function _awardRankingsUncached(period, sid){
     .filter(r => {
       const gA = agg.tGames[r.idsA.slice().sort().join('|')] || 0;
       const gB = agg.tGames[r.idsB.slice().sort().join('|')] || 0;
-      return r.g >= 3 && gA >= 5 && gB >= 5;
+      return r.g >= AW_MIN.duell && gA >= AW_MIN.teamSpiele && gB >= AW_MIN.teamSpiele;
     })
     .map(r => {
       const gA = agg.tGames[r.idsA.slice().sort().join('|')];
@@ -10743,31 +10784,34 @@ function _computeFormtief(ms){
 }
 
 function _computeZirkus(ms){
-  // Zirkus = Anteil hoher Niederlagen (Tordifferenz ≥ 5) an gemeinsamen Team-Spielen.
-  // Verhindert Vielspieler-Bias. Schwelle: min. 5 gemeinsame Team-Spiele.
-  const zirkus={};      // teamKey → {ids, v: # hohe Niederlagen, g: # Spiele insgesamt}
-  const tGames={};      // teamKey → # Spiele insgesamt (lokal, da _computeZirkus
-                        //   nicht den globalen agg.tGames sehen kann)
+  // Zirkus = Anteil hoher Niederlagen (Tordifferenz ab 5) an den NIEDERLAGEN
+  // des Duos. Geteilt wurde durch alle gemeinsamen Spiele, und damit sagte der
+  // Award zwei Dinge auf einmal: wie oft ein Duo verliert und wie deutlich.
+  // Ein Duo, das viel gewinnt und seine drei Pleiten alle 10:2 kassiert, stand
+  // damit hinter einem, das die Haelfte verliert und dabei mithaelt. Gefragt
+  // ist das Zweite: wenn es schiefgeht, wie schlimm wird es.
+  // Dieselbe Frage stellt „Der Schadensbegrenzer" in der Chronik, und zwar
+  // mit demselben Nenner [§C27].
+  const zirkus={};      // teamKey → {ids, v: # hohe Niederlagen}
+  const tPleiten={};    // teamKey → # Niederlagen (Nenner; _computeZirkus sieht
+                        //   den globalen agg nicht)
   for(let i=0; i<ms.length; i++){
     const m=ms[i];
     const teamA=[m.a1,m.a2].sort().join('|');
     const teamB=[m.b1,m.b2].sort().join('|');
-    tGames[teamA] = (tGames[teamA]||0) + 1;
-    tGames[teamB] = (tGames[teamB]||0) + 1;
-    const diff=Math.abs(m.score_a-m.score_b);
-    if(diff<5) continue;
     const loserTeam=m.winner==='A'?teamB:teamA;
+    tPleiten[loserTeam] = (tPleiten[loserTeam]||0) + 1;
+    if(Math.abs(m.score_a-m.score_b)<5) continue;
     if(!zirkus[loserTeam]) zirkus[loserTeam]={ids:loserTeam.split('|'), v:0};
     zirkus[loserTeam].v++;
   }
-  // Anreichern + Mindestschwelle anwenden
   return Object.values(zirkus)
     .map(z => {
       const key = z.ids.slice().sort().join('|');
-      const g = tGames[key] || 0;
+      const g = tPleiten[key] || 0;
       return { ...z, g, pct: g>0 ? z.v / g : 0 };
     })
-    .filter(z => z.g >= 5 && z.v >= 1)
+    .filter(z => z.g >= AW_MIN.teamPleiten && z.v >= 1)
     .sort((a,b) => b.pct - a.pct);
 }
 
@@ -11077,7 +11121,7 @@ function _vAwardsCore(){
   if(u0) _addColl(u0.m.winner === 'A' ? [u0.m.a1, u0.m.a2] : [u0.m.b1, u0.m.b2]);
   if(b0) _addColl(b0.m.winner === 'A' ? [b0.m.a1, b0.m.a2] : [b0.m.b1, b0.m.b2]);
   if(gr0) _addColl(_topSingleIds(R.grinder, x => x.v));
-  if(uh0) _addColl(_topSingleIds(R.underdogList, x => x.v));
+  if(uh0) _addColl(_topSingleIds(R.underdogList, x => Math.round(x.pct * 1000)));
   // ── NEUE TEAM-AWARDS v4 (positive Awards → in Sammler-Counter) ──
   if(un0) _addColl(_topTeamIds(R.unstoppableList, x => x.v));
   if(cw0) _addColl(_topTeamIds(R.concreteWallList, x => -Math.round(x.v*100))); // niedriger = besser
@@ -11233,7 +11277,7 @@ function _vAwardsCore(){
     : empty('concreteWall','blue','Betonmauer'));
   // Glückspilze: meiste 1-Tor-Siege
   teams.push(lc0
-    ? card('luckyCharm','acid','Glückspilze',lc0.ids,esc(topTeamNames(R.luckyCharmList,x=>Math.round(x.v*1000))),Math.round(lc0.v*100)+'% knappe Siege ('+lc0.wins+'/'+lc0.games+')',Math.round(lc0.v*100)+'%')
+    ? card('luckyCharm','acid','Glückspilze',lc0.ids,esc(topTeamNames(R.luckyCharmList,x=>Math.round(x.v*1000))),lc0.wins+' von '+lc0.games+' engen Partien gewonnen',Math.round(lc0.v*100)+'%')
     : empty('luckyCharm','acid','Glückspilze'));
   // Giant Slayer: meiste Siege gegen stärkere Teams
   teams.push(gs0
@@ -11297,7 +11341,10 @@ function _vAwardsCore(){
   // Underdog-Held: meiste Underdog-Siege (myExp < 35%). Anders als die Match-Trophy
   // "Größte Überraschung" (= einzelner Match) ist das hier ein Saison-Counter.
   special.push(uh0
-    ? card('underdog','purple','Underdog-Held',[uh0.id],esc(topNames(R.underdogList,x=>x.v,x=>pname(x.id))),uh0.v+'× als Außenseiter gewonnen',uh0.v)
+    ? card('underdog','purple','Underdog-Held',[uh0.id],
+        esc(topNames(R.underdogList,x=>Math.round(x.pct*1000),x=>pname(x.id))),
+        uh0.v+' von '+uh0.g+' Partien als Außenseiter gewonnen',
+        Math.round(uh0.pct*100)+'%')
     : empty('underdog','purple','Underdog-Held'));
   // Spezial trägt Metall: es ist die Gruppe für alles, was in keine der
   // anderen passt — eine eigene Buntfarbe würde ihr eine Bedeutung geben,
@@ -11324,7 +11371,7 @@ function _vAwardsCore(){
     ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1),{neg:true})
     : empty('worstDef','red','Löchrigste Abwehr'));
   neg.push(zk0
-    ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>Math.round(x.pct*1000))),Math.round(zk0.pct*100)+'% hohe Niederlagen ('+zk0.v+'/'+zk0.g+')',Math.round(zk0.pct*100)+'%',{neg:true})
+    ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>Math.round(x.pct*1000))),zk0.v+' von '+zk0.g+' Pleiten waren Debakel',Math.round(zk0.pct*100)+'%',{neg:true})
     : empty('zirkus','red','Zirkus'));
   neg.push(wt0
     ? card('worstTeam','red','Schlechtestes Team',wt0.ids,esc(topTeamNames(R.worstTeam,x=>Math.round(x.w/x.g*100))),wt0.w+'–'+(wt0.g-wt0.w),Math.round(wt0.w/wt0.g*100)+'%',{neg:true})
@@ -11332,12 +11379,12 @@ function _vAwardsCore(){
   neg.push(bs0
     ? card('baustelle','red','Baustelle',bs0.ids,esc(topTeamNames(R.baustelleList,x=>x.best)),'Niederlagenserie',bs0.best+'er',{neg:true})
     : empty('baustelle','red','Baustelle'));
-  // Pechvogel: meiste knappe Niederlagen prozentual (Diff ≤ 2). Symmetrisch
-  // zum Clutch-Player (gewinnt knapp prozentual) — der Pechvogel verliert knapp prozentual.
+  // Pechvogel: Anteil verlorener enger Partien. Der Spiegel des Clutch-Players,
+  // aus derselben Zaehlung [§C27].
   neg.push(pv0
     ? card('pechvogel','red','Pechvogel',[pv0.id],
         esc(topNames(R.pechvogelList,x=>Math.round(x.pct*1000),x=>pname(x.id))),
-        pv0.v+' knappe Niederlagen in '+pv0.g+' Spielen',
+        pv0.v+' von '+pv0.g+' engen Partien verloren',
         Math.round(pv0.pct*100)+'%',
         {neg:true})
     : empty('pechvogel','red','Pechvogel'));
@@ -21790,12 +21837,34 @@ function _consolidateStories(list){
                                'season_recap','season_endgame','ambient','group','sammel','woche']);
   const NF_DECKEL = 2;
   const gezaehlt = {};
-  const entdoppelt = gesammelt.filter(s => {
+  const behalten = gesammelt.filter(s => {
     const t = (s && s.dataRef && s.dataRef.type) || '';
     if(!t || OHNE_DECKEL.has(t)) return true;
     gezaehlt[t] = (gezaehlt[t] || 0) + 1;
     return gezaehlt[t] <= NF_DECKEL;
   });
+  // ── Der Deckel darf niemanden ganz verschwinden lassen ─────────────
+  // Im Feed hat jeder ein Gesicht, und jeder gewertete Spieler kommt vor
+  // [§C33]. Der Deckel je Sorte kannte diese Regel nicht: die dritte
+  // Duo-Pleitenserie fiel weg, und mit ihr die einzige Karte, auf der die
+  // beiden Beteiligten in dieser Woche ueberhaupt standen. Gemessen fehlten
+  // danach drei von zwoelf Spielern im Feed, obwohl der Generator fuer jeden
+  // etwas gebildet hatte. Wer sonst nirgends vorkommt, holt seine Karte
+  // deshalb zurueck — die juengste, und nur diese eine.
+  const gesicht = st => { try { return _newsPids(st) || []; } catch(e){ return []; } };
+  const schonDa = new Set();
+  behalten.forEach(s => gesicht(s).forEach(p => schonDa.add(p)));
+  const nachgeholt = new Set();
+  gesammelt.forEach(s => {
+    if(behalten.indexOf(s) >= 0) return;
+    const neu = gesicht(s).filter(p => !schonDa.has(p));
+    if(!neu.length) return;
+    neu.forEach(p => schonDa.add(p));
+    nachgeholt.add(s);
+  });
+  const entdoppelt = nachgeholt.size
+    ? gesammelt.filter(s => behalten.indexOf(s) >= 0 || nachgeholt.has(s))
+    : behalten;
   // ── Die Reihenfolge ist die Zeit ───────────────────────────────────
   // Vorher tauschte hier ein Durchgang zwei gleichartige Nachbarn, damit sich
   // nicht zweimal dieselbe Sorte untereinander liest. Das kostete genau eine
@@ -24340,73 +24409,64 @@ const DISZIPLINEN = [
     monat:{
       wie:'Die Elo-Rechnung gibt jeder Partie vorab eine Siegchance. Gemittelt über den Monat sagt sie, wie schwer die Gegner waren.',
       cond:'Im Schnitt unter 45 % Siegchance und trotzdem mehr Siege als Niederlagen, ab 20 Partien',
-      pick:(C,t)=>_stPickTop(C,t,p=>{
-        if(p.games < 20 || p.wins <= p.losses) return null;
-        const soll = p.expSum / p.games;
-        return soll <= 0.45 ? 0.45 - soll : null;
-      }, (p)=>`Ø ${Math.round(p.expSum/p.games*100)} % Siegchance · ${p.wins}:${p.losses}`)}},
+            ...(_stWertung(p=>p.games>=20 && p.wins>p.losses, p=>0.45 - p.expSum/p.games, 0,
+        (p)=>`Ø ${Math.round(p.expSum/p.games*100)} % Siegchance · ${p.wins}:${p.losses}`))}},
 
   {id:'uebersoll', name:'Das Übersoll', short:'Übersoll', ic:'trendUp', tone:'gold', art:'leistung',
     monat:{
       wie:'Die Siegquote minus der Siegchance, die die Elo-Rechnung vorab ausgewiesen hat. Ein Prozentpunkt ist ein Prozentpunkt Siegquote, nicht Elo und nicht Prestige.',
       cond:'Mindestens 12 Prozentpunkte über der eigenen Elo-Erwartung, ab 20 Partien',
-      pick:(C,t)=>_stPickTop(C,t,p=>{
-        if(p.games < 20) return null;
-        const d = p.wins/p.games - p.expSum/p.games;
-        return d >= 0.12 ? d : null;
-      }, (p,v)=>`+${Math.round(v*100)} %-Punkte über der Erwartung · ${p.games} Partien`)}},
+            ...(_stWertung(p=>p.games>=20, p=>p.wins/p.games - p.expSum/p.games, 0.12,
+        (p,v)=>`+${Math.round(v*100)} %-Punkte über der Erwartung · ${p.games} Partien`))}},
 
   {id:'keinpflicht', name:'Kein geschenkter Sieg', short:'Erkämpft', ic:'giantSlayer', tone:'acid', art:'leistung',
     monat:{
       wie:'Ein Sieg gegen die Rechnung ist einer aus einer Partie mit unter 50 % Siegchance vorab.',
       cond:'Mindestens die Hälfte aller Siege gegen die Rechnung geholt, ab 15 Siegen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.wins>=15 && p.favW/p.wins>=0.50)?p.favW/p.wins:null,
-        (p)=>`${p.favW} der ${p.wins} Siege waren keine Pflichtsiege`)}},
+            ...(_stWertung(p=>p.wins>=15, p=>p.favW/p.wins, 0.50,
+        (p)=>`${p.favW} der ${p.wins} Siege waren keine Pflichtsiege`))}},
 
   {id:'spaetform', name:'Die Spätform', short:'Spätform', ic:'flameDouble', tone:'purple', art:'leistung',
     monat:{
       wie:'Verglichen werden zwei Siegquoten desselben Spielers: die ab der sechsten Partie eines Tages gegen die der ersten drei. Die Differenz steht in Prozentpunkten.',
       cond:'Ab der 6. Partie eines Tages mindestens 18 Prozentpunkte stärker als in den ersten drei',
-      pick:(C,t)=>_stPickTop(C,t,p=>{
-        if(p.spaetG < 8 || p.fruehG < 8) return null;
-        const d = p.spaetW/p.spaetG - p.fruehW/p.fruehG;
-        return d >= 0.18 ? d : null;
-      }, (p,v)=>`+${Math.round(v*100)} %-Punkte ab der 6. Partie · ${p.spaetW} von ${p.spaetG}`)}},
+            ...(_stWertung(p=>p.spaetG>=8 && p.fruehG>=8, p=>p.spaetW/p.spaetG - p.fruehW/p.fruehG, 0.18,
+        (p,v)=>`+${Math.round(v*100)} %-Punkte ab der 6. Partie · ${p.spaetW} von ${p.spaetG}`))}},
 
   {id:'trotzig', name:'Der Trotzige', short:'Trotzdem', ic:'unstoppable', tone:'acid', art:'leistung',
     monat:{
       wie:'Außenseiter heißt: die Elo-Rechnung wies vorab unter 50 % Siegchance aus. Gezählt wird, wie viele dieser Partien trotzdem gewonnen wurden.',
       cond:'Mindestens 45 % der Partien als Außenseiter gewonnen, ab 15 solchen Partien',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.favG>=15 && p.favW/p.favG>=0.45)?p.favW/p.favG:null,
-        (p)=>`${p.favW} von ${p.favG} Partien als Außenseiter gewonnen`)}},
+            ...(_stWertung(p=>p.favG>=15, p=>p.favW/p.favG, 0.45,
+        (p)=>`${p.favW} von ${p.favG} Partien als Außenseiter gewonnen`))}},
 
   {id:'gegenoben', name:'Gegen die Besten', short:'Oben', ic:'temple', tone:'gold', art:'leistung',
     monat:{
       wie:'Die besten Drei sind die drei Ersten der Elo-Rangliste am Monatsende. Gezählt wird jede Partie gegen mindestens einen von ihnen.',
       cond:'Mindestens 60 % gegen die drei Ersten des Monats, ab 12 solchen Partien',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.vsTop3Games>=12 && p.vsTop3/p.vsTop3Games>=0.60)?p.vsTop3/p.vsTop3Games:null,
-        (p)=>`${p.vsTop3} von ${p.vsTop3Games} Partien gegen die besten Drei`)}},
+            ...(_stWertung(p=>p.vsTop3Games>=12, p=>p.vsTop3/p.vsTop3Games, 0.60,
+        (p)=>`${p.vsTop3} von ${p.vsTop3Games} Partien gegen die besten Drei`))}},
 
   {id:'favoritenpflicht', name:'Die Favoritenpflicht', short:'Pflicht', ic:'trophyCheck', tone:'gold', art:'leistung',
     monat:{
       wie:'Favorit heißt: die Elo-Rechnung wies vorab mindestens 60 % Siegchance aus. Ein Patzer ist eine verlorene Favoritenpartie.',
       cond:'Als Favorit (ab 60 % Siegchance) mindestens 85 % geholt, ab 10 solchen Partien',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.favoritG>=10 && p.favoritW/p.favoritG>=0.85)?p.favoritW/p.favoritG:null,
-        (p)=>`${p.favoritW} von ${p.favoritG} Favoritenpartien · ${p.favoritG-p.favoritW} Patzer`)}},
+            ...(_stWertung(p=>p.favoritG>=10, p=>p.favoritW/p.favoritG, 0.85,
+        (p)=>`${p.favoritW} von ${p.favoritG} Favoritenpartien · ${p.favoritG-p.favoritW} Patzer`))}},
 
   {id:'mitjedem', name:'Mit jedem', short:'Mit jedem', ic:'users', tone:'gold', art:'leistung',
     monat:{
       wie:'Von allen Partnern mit mindestens fünf gemeinsamen Spielen zählt der, neben dem es am schlechtesten lief, nicht der Schnitt.',
       cond:'Auch neben dem schwächsten Partner mindestens 50 %, ab 3 Partnern mit je 5 Spielen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.partnerMin!=null && p.partnerMin>=0.50)?p.partnerMin:null,
-        (p)=>`${p.partnerW} von ${p.partnerG} selbst neben ${pname(p.partnerX)} · ${p.partnerN} Partner`)}},
+            ...(_stWertung(p=>p.partnerMin!=null, p=>p.partnerMin, 0.50,
+        (p)=>`${p.partnerW} von ${p.partnerG} selbst neben ${pname(p.partnerX)} · ${p.partnerN} Partner`))}},
 
   {id:'gegenalle', name:'Gegen alle', short:'Gegen alle', ic:'target', tone:'gold', art:'leistung',
     monat:{
       wie:'Regelmäßig heißt: mindestens vier Duelle im Monat. Gegen jeden davon müssen mehr Siege als Niederlagen stehen.',
       cond:'Gegen jeden regelmäßigen Gegner mehr Siege als Niederlagen, ab 5 Gegnern mit je 4 Duellen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.breiteN>=5 && p.breiteOk===p.breiteN)?p.breiteN:null,
-        (p,v)=>`gegen alle ${v} regelmäßigen Gegner im Plus`)}},
+            ...(_stWertung(p=>p.breiteOk===p.breiteN, p=>p.breiteN, 5,
+        (p,v)=>`gegen alle ${v} regelmäßigen Gegner im Plus`))}},
 
   {id:'best_record', name:'Der Maßstab', short:'Maßstab', ic:'medal2', tone:'gold', art:'leistung',
     allzeit:{
@@ -24419,8 +24479,8 @@ const DISZIPLINEN = [
     monat:{
       wie:'Player of the Day ist, wer an einem Spieltag die beste Bilanz hat. Gezählt wird der Anteil an den eigenen Spieltagen.',
       cond:'An mindestens 35 % der eigenen Spieltage Player of the Day, ab 5 Spieltagen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.days>=5 && p.potd/p.days>=0.35)?p.potd/p.days:null,
-        (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${Math.round(v*100)} %`)},
+            ...(_stWertung(p=>p.days>=5, p=>p.potd/p.days, 0.35,
+        (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${Math.round(v*100)} %`))},
     allzeit:{
       cond:'Höchster Anteil eigener Spieltage als Player of the Day, ab 12 Spieltagen und mindestens 25 %',
       val:p => (p.days >= 12 && p.potd/p.days >= 0.25) ? p.potd/p.days : null,
@@ -24441,23 +24501,20 @@ const DISZIPLINEN = [
     monat:{
       wie:'Positiv heißt: an diesem Spieltag mehr Siege als Niederlagen.',
       cond:'Mindestens 78 % der eigenen Spieltage mit positiver Bilanz beendet, ab 6 Spieltagen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.days>=6 && p.posDays/p.days>=0.78)?p.posDays/p.days:null,
-        (p,v)=>`${p.posDays} der ${p.days} Spieltage mit mehr Siegen als Pleiten · ${Math.round(v*100)} %`)}},
+            ...(_stWertung(p=>p.days>=6, p=>p.posDays/p.days, 0.78,
+        (p,v)=>`${p.posDays} der ${p.days} Spieltage mit mehr Siegen als Pleiten · ${Math.round(v*100)} %`))}},
 
   {id:'twoway', name:'Der Doppelbegabte', short:'Beidseitig', ic:'diamond', tone:'gold', art:'leistung',
     monat:{
       cond:'Mindestens 63 % Siege vorne UND hinten, je 12 Spiele',
-      pick:(C,t)=>_stPickTop(C,t,p=>{
-        if(p.atkG<12 || p.defG<12) return null;
-        const lo=Math.min(p.atkW/p.atkG, p.defW/p.defG);
-        return lo>=0.63?lo:null;
-      }, (p)=>`${Math.round(p.atkW/p.atkG*100)} % vorne, ${Math.round(p.defW/p.defG*100)} % hinten`)}},
+            ...(_stWertung(p=>p.atkG>=12 && p.defG>=12, p=>Math.min(p.atkW/p.atkG, p.defW/p.defG), 0.63,
+        (p)=>`${Math.round(p.atkW/p.atkG*100)} % vorne, ${Math.round(p.defW/p.defG*100)} % hinten`))}},
 
   {id:'spotless', name:'Der makellose Tag', short:'Makellos', ic:'trophyDay', tone:'gold', art:'leistung',
     monat:{
       cond:'Ein Spieltag mit mindestens 5 Partien und keiner einzigen Niederlage',
-      pick:(C,t)=>_stPickTop(C,t,p=>p.bestPerfTag>=5?p.bestPerfTag:null,
-        (p,v)=>`${v} Partien an einem Tag, keine davon verloren`)},
+            ...(_stWertung(()=>true, p=>p.bestPerfTag, 5,
+        (p,v)=>`${v} Partien an einem Tag, keine davon verloren`))},
     allzeit:{
       cond:'Höchster Anteil voller Spieltage (4+ Partien) ohne eine einzige Niederlage, ab 8 solchen Tagen',
       val:p => (p.bigDays >= 8 && p.perfDays >= 1) ? p.perfDays/p.bigDays : null,
@@ -24467,8 +24524,8 @@ const DISZIPLINEN = [
     monat:{
       wie:'Für jeden Partner wird verglichen, wie oft DIESER Partner an dieser Seite gewinnt und wie oft ohne. Der Abstand steht in Prozentpunkten und misst damit nicht das eigene Ergebnis, sondern die Wirkung auf andere.',
       cond:'Partner gewinnen an dieser Seite mindestens 20 Prozentpunkte häufiger als ohne, ab 3 Partnern',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.upliftMates>=3 && p.uplift!=null && p.uplift>=0.20)?p.uplift:null,
-        (p,v)=>`Seine ${p.upliftMates} Partner gewinnen neben ihm ${Math.round(v*100)} %-Punkte häufiger`)},
+            ...(_stWertung(p=>p.upliftMates>=3 && p.uplift!=null, p=>p.uplift, 0.20,
+        (p,v)=>`Die ${p.upliftMates} Partner gewinnen an dieser Seite ${Math.round(v*100)} %-Punkte häufiger`))},
     allzeit:{
       cond:'Die Partner gewinnen an dieser Seite am deutlichsten häufiger als ohne, mindestens 3 Partner mit je 25 gemeinsamen Spielen',
       val:p => (p.upliftMates >= 3 && p.uplift != null && p.uplift >= 0.10) ? p.uplift : null,
@@ -24478,11 +24535,8 @@ const DISZIPLINEN = [
     monat:{
       wie:'Eng heißt höchstens zwei Tore Unterschied. Verglichen wird die Quote in diesen Partien mit der Quote über alle Partien.',
       cond:'In engen Spielen deutlich stärker als sonst, mindestens 8 Prozentpunkte, ab 12 engen Spielen',
-      pick:(C,t)=>_stPickTop(C,t,p=>{
-        if(p.close < 12) return null;
-        const d = (p.closeW/p.close) - (p.wins/p.games);
-        return d >= 0.08 ? d : null;
-      }, (p,v)=>`${Math.round(p.closeW/p.close*100)} % in ${p.close} engen Spielen · +${Math.round(v*100)} %-Punkte`)},
+            ...(_stWertung(p=>p.close>=12, p=>(p.closeW/p.close) - (p.wins/p.games), 0.08,
+        (p,v)=>`${Math.round(p.closeW/p.close*100)} % in ${p.close} engen Spielen · +${Math.round(v*100)} %-Punkte`))},
     allzeit:{
       cond:'Stärkster Sprung nach oben in engen Spielen, mindestens 9 Prozentpunkte',
       val:p => {
@@ -24495,8 +24549,8 @@ const DISZIPLINEN = [
   {id:'executioner', name:'Der Vollstrecker', short:'Zu Null', ic:'hundred', tone:'gold', art:'leistung',
     monat:{
       cond:'Mindestens 5 % der eigenen Siege endeten 10:0, ab 20 Siegen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.wins>=20 && p.perfect/p.wins>=0.05)?p.perfect/p.wins:null,
-        (p,v)=>`${p.perfect} der ${p.wins} Siege endeten 10:0 · ${Math.round(v*100)} %`)}},
+            ...(_stWertung(p=>p.wins>=20, p=>p.perfect/p.wins, 0.05,
+        (p,v)=>`${p.perfect} der ${p.wins} Siege endeten 10:0 · ${Math.round(v*100)} %`))}},
 
   {id:'giant_slayer', name:'Der Gigantentöter', short:'Underdog', ic:'tornado', tone:'acid', art:'leistung',
     allzeit:{
@@ -24507,8 +24561,8 @@ const DISZIPLINEN = [
   {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'explosion', tone:'orange', art:'leistung',
     monat:{
       cond:'Mindestens 26 % der eigenen Siege mit 7+ Toren Vorsprung, ab 20 Siegen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.wins>=20 && p.blowouts/p.wins>=0.26)?p.blowouts/p.wins:null,
-        (p,v)=>`${p.blowouts} der ${p.wins} Siege mit 7+ Toren Vorsprung`)},
+            ...(_stWertung(p=>p.wins>=20, p=>p.blowouts/p.wins, 0.26,
+        (p,v)=>`${p.blowouts} der ${p.wins} Siege mit 7+ Toren Vorsprung`))},
     allzeit:{
       cond:'Höchster Anteil Kantersiege, ab 22 Siegen und mindestens 22 %',
       val:p => (p.wins >= 22 && p.blowW/p.wins >= 0.22) ? p.blowW/p.wins : null,
@@ -24554,15 +24608,15 @@ const DISZIPLINEN = [
   {id:'climber', name:'Der Aufsteiger', short:'Aufsteiger', ic:'climb', tone:'acid', art:'leistung',
     monat:{
       cond:'Mindestens 120 Elo mehr als am Ende der Vorsaison',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.growth!=null && p.growth>=120)?p.growth:null,
-        (p,v)=>`+${Math.round(v)} Elo gegenüber der Vorsaison`)}},
+            ...(_stWertung(p=>p.growth!=null, p=>p.growth, 120,
+        (p,v)=>`+${Math.round(v)} Elo gegenüber der Vorsaison`))}},
 
   {id:'comeback_king', name:'Der Stehaufmann', short:'Comeback', ic:'comeback', tone:'acid', art:'leistung',
     monat:{
       wie:'Gezählt wird jede Partie, die unmittelbar auf eine Niederlage folgte, und wie viele davon gewonnen wurden.',
       cond:'Mindestens 70 % der Spiele direkt nach einer Niederlage gewonnen, ab 20 Gelegenheiten',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.afterLossOpp>=20 && p.afterLoss/p.afterLossOpp>=0.70)?p.afterLoss/p.afterLossOpp:null,
-        (p,v)=>`${p.afterLoss} von ${p.afterLossOpp} Antworten nach einer Pleite gewonnen`)},
+            ...(_stWertung(p=>p.afterLossOpp>=20, p=>p.afterLoss/p.afterLossOpp, 0.70,
+        (p,v)=>`${p.afterLoss} von ${p.afterLossOpp} Antworten nach einer Pleite gewonnen`))},
     allzeit:{
       cond:'Stärkster Sprung nach oben direkt nach einer Niederlage, ab 60 Gelegenheiten und mindestens 6 Prozentpunkte',
       val:p => {
@@ -24575,8 +24629,8 @@ const DISZIPLINEN = [
   {id:'thriller', name:'Der Nervenkitzler', short:'Krimi', ic:'thriller', tone:'purple', art:'leistung',
     monat:{
       cond:'Mindestens 20 % der eigenen Siege endeten 10:9, ab 20 Siegen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.wins>=20 && p.nail/p.wins>=0.20)?p.nail/p.wins:null,
-        (p,v)=>`${p.nail} der ${p.wins} Siege endeten 10:9 · ${Math.round(v*100)} %`)},
+            ...(_stWertung(p=>p.wins>=20, p=>p.nail/p.wins, 0.20,
+        (p,v)=>`${p.nail} der ${p.wins} Siege endeten 10:9 · ${Math.round(v*100)} %`))},
     allzeit:{
       cond:'Höchster Anteil 10:9-Siege an allen eigenen Siegen, ab 25 Siegen',
       val:p => (p.wins >= 25 && p.nail/p.wins >= 0.08) ? p.nail/p.wins : null,
@@ -24591,13 +24645,32 @@ const DISZIPLINEN = [
   {id:'unbowed', name:'Der Unerschütterliche', short:'Kein Loch', ic:'concreteWall', tone:'blue', art:'leistung',
     monat:{
       cond:'Nie mehr als 2 Niederlagen am Stück, bei mindestens 25 Spielen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.games>=25 && p.worstLoss<=2)?-p.worstLoss:null,
+            ...(_stWertung(p=>p.games>=25, p=>-p.worstLoss, -2,
         (p)=>p.worstLoss<=1 ? `Nie zwei Niederlagen hintereinander · ${p.wins}:${p.losses}`
-                            : `Nie mehr als 2 Niederlagen am Stück · ${p.wins}:${p.losses}`)},
+                            : `Nie mehr als 2 Niederlagen am Stück · ${p.wins}:${p.losses}`))},
     allzeit:{
       cond:'Kürzeste Niederlagenserie, die je jemand über eine ganze Laufbahn zugelassen hat, ab 80 Spielen',
       val:p => (p.games >= 80 && p.lossStreak > 0) ? -p.lossStreak : null,
       ev:(p,v) => `${-v} Niederlagen am Stück, mehr waren es nie · ${p.games} Partien`}},
+
+  // Zwei Wertungen fuer die Mitte des Feldes. Die Chronik ging zu sechzig
+  // Prozent an die besten Drei, und der Monatserste allein hielt ein Drittel
+  // der Tafel: wer eine Quote gewinnt, gewinnt fast jede. Beide hier messen
+  // deshalb nicht das Niveau, sondern den ABSTAND zum eigenen — genau wie das
+  // Übersoll, das jeder erreichen kann.
+  {id:'augenhoehe', name:'Auf Augenhöhe', short:'Augenhöhe', ic:'weightSmall', tone:'acid', art:'leistung',
+    monat:{
+      wie:'Die Rechnung sah die Partie offen, wenn sie beiden Teams zwischen 45 und 55 Prozent Siegchance gab. Verglichen wird die Quote in diesen Partien mit der eigenen Quote über den ganzen Monat.',
+      cond:'In offenen Partien mindestens 10 Prozentpunkte stärker als sonst, ab 8 solchen Partien',
+      ...(_stWertung(p=>p.gleichG>=8, p=>p.gleichW/p.gleichG - p.wins/p.games, 0.10,
+        (p,v)=>`${p.gleichW} von ${p.gleichG} offenen Partien · +${Math.round(v*100)} %-Punkte`))}},
+
+  {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'chartUp', tone:'acid', art:'leistung',
+    monat:{
+      wie:'Die Spieltage des Monats werden in der Mitte geteilt. Verglichen werden die beiden Siegquoten desselben Spielers, die zweite Hälfte gegen die erste.',
+      cond:'In der zweiten Hälfte des Monats mindestens 12 Prozentpunkte stärker als in der ersten, ab 8 Partien je Hälfte',
+      ...(_stWertung(p=>p.h1G>=8 && p.h2G>=8, p=>p.h2W/p.h2G - p.h1W/p.h1G, 0.12,
+        (p,v)=>`+${Math.round(v*100)} %-Punkte in der zweiten Monatshälfte · ${p.h2W} von ${p.h2G}`))}},
 
   // Die Außenseiter-Quote misst NICHT, wie oft jemand Außenseiter ist —
   // das sagt nur, wie schwach er ist. Gemessen wird der Abstand zwischen
@@ -24675,16 +24748,6 @@ const DISZIPLINEN = [
       unit:'Partien im Wechsel', min:7, raw:p => p.alt,
       ev:(p,v) => `${v} Partien lang immer abwechselnd`,
       zeit:p => p.altSpan || ''}},
-
-  {id:'fluke', name:'Der Sonntagsschuss', short:'Coup', ic:'surprise', tone:'orange', art:'ereignis', zufall:'quote',
-    allzeit:{
-      // Eine einzige Partie genügt, und die Rechnung stand gegen ihn. Der
-      // schwächste Spieler der Liga hat die meisten Gelegenheiten dazu —
-      // das ist hier kein Fehler, sondern der Zweck.
-      cond:'Der unwahrscheinlichste Sieg, den je jemand geholt hat, bei höchstens 30 % Siegchance',
-      val:p => (p.flukeExp != null && p.flukeExp <= 0.30) ? 1 - p.flukeExp : null,
-      ev:(p,v) => `${Math.round((1-v)*100)} % Siegchance, und trotzdem gewonnen`,
-      zeit:p => p.flukeLabel || ''}},
 
   // ── Die Fügungen aus Auslosung und letztem Ball ───────────────────
   // `zufall` sagt zweierlei: welcher Kammer der Eintrag angehört, und wie
@@ -24764,22 +24827,22 @@ const DISZIPLINEN = [
   {id:'ohnedebakel', name:'Ohne Debakel', short:'Standhaft', ic:'lock', tone:'blue', art:'ereignis',
     monat:{
       cond:'Keine einzige Niederlage mit 7 oder mehr Toren Rückstand, ab 20 Partien',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.games>=20 && p.blowL===0)?p.games:null,
-        (p,v)=>`${v} Partien, kein einziges Debakel`)}},
+            ...(_stWertung(p=>p.blowL===0, p=>p.games, 20,
+        (p,v)=>`${v} Partien, kein einziges Debakel`))}},
 
   {id:'bezwinger', name:'Der Bezwinger', short:'Bezwinger', ic:'crossedSwords', tone:'gold', art:'ereignis',
     monat:{
       cond:'Alle Duelle eines Monats gegen denselben Gegner gewonnen, ab 8 Duellen',
-      pick:(C,t)=>_stPickTop(C,t,p=>p.sweepG>=8?p.sweepG:null,
-        (p,v)=>`${v}:0 gegen ${pname(p.sweepX)}`)}},
+            ...(_stWertung(()=>true, p=>p.sweepG, 8,
+        (p,v)=>`${v}:0 gegen ${pname(p.sweepX)}`))}},
 
   {id:'bannbruch', name:'Der Bann bricht', short:'Erlöst', ic:'rematch', tone:'acid', art:'ereignis',
     monat:{
       wie:'Ein Bann ist eine Serie von zwölf Niederlagen in Folge gegen denselben Gegner. Der erste Sieg gegen diesen Gegner beendet den Bann.',
       cond:'Einen Gegner besiegt, gegen den zuvor 12 Duelle in Folge verloren gingen',
-      pick:(C,t)=>_stPickTop(C,t,p=>p.bann>=1?p.bann:null,
+            ...(_stWertung(()=>true, p=>p.bann, 1,
         (p,v)=>v===1 ? 'Angstgegner nach zwölf Niederlagen in Folge besiegt'
-                     : `${v}-mal einen Angstgegner nach zwölf Niederlagen besiegt`)}},
+                     : `${v}-mal einen Angstgegner nach zwölf Niederlagen besiegt`))}},
 
   {id:'gleichmut', name:'Der Gleichmütige', short:'Gleichmut', ic:'snowflake', tone:'blue', art:'ereignis',
     monat:{
@@ -24787,8 +24850,8 @@ const DISZIPLINEN = [
       // Kleiner Wert = gleichmäßiger, deshalb das Vorzeichen: _stPickTop
       // sucht immer den größten Score.
       cond:'Kaum Schwankung zwischen den Spieltagen, ab 4 Spieltagen mit je 3 Partien',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.tagStreuung!=null && p.tagStreuung<=0.10)?-p.tagStreuung:null,
-        (p)=>`Schwankung ${p.tagStreuung.toFixed(2)} über ${p.tageGewertet} Spieltage`)}},
+            ...(_stWertung(p=>p.tagStreuung!=null, p=>-p.tagStreuung, -0.10,
+        (p)=>`Schwankung ${p.tagStreuung.toFixed(2)} über ${p.tageGewertet} Spieltage`))}},
 
   {id:'rueckkehr', name:'Die Rückkehr', short:'Rückkehr', ic:'rocket', tone:'orange', art:'ereignis',
     monat:{
@@ -24796,54 +24859,67 @@ const DISZIPLINEN = [
       // Mal vor. Wer sechsmal am Stück verliert, verliert den Monat fast immer
       // mit — wer ihn trotzdem gewinnt, hat sich zurückgeholt.
       cond:'Eine Niederlagenserie von 5 Spielen überstanden und den Monat trotzdem positiv beendet, ab 25 Partien',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.games>=25 && p.worstLoss>=5 && p.wins>p.losses)?p.worstLoss:null,
-        (p,v)=>`${v} Niederlagen am Stück und trotzdem ${p.wins}:${p.losses}`)}},
+            ...(_stWertung(p=>p.games>=25 && p.wins>p.losses, p=>p.worstLoss, 5,
+        (p,v)=>`${v} Niederlagen am Stück und trotzdem ${p.wins}:${p.losses}`))}},
 
   {id:'spezialist', name:'Der Spezialist', short:'Spezialist', ic:'plusMinus', tone:'purple', art:'ereignis',
     monat:{
       wie:'Der Abstand zwischen der Siegquote im Sturm und der in der Abwehr, in Prozentpunkten. Groß heißt einseitig, nicht gut.',
       cond:'Auf einer Position mindestens 30 Prozentpunkte besser als auf der anderen, ab 10 Partien je Position',
-      pick:(C,t)=>_stPickTop(C,t,p=>{
-        if(p.atkG < 10 || p.defG < 10) return null;
-        const d = Math.abs(p.atkW/p.atkG - p.defW/p.defG);
-        return d >= 0.30 ? d : null;
-      }, (p,v)=>`${Math.round(v*100)} %-Punkte Unterschied, deutlich stärker `
-        + (p.atkW/p.atkG > p.defW/p.defG ? 'vorne' : 'hinten'))}},
+            ...(_stWertung(p=>p.atkG>=10 && p.defG>=10, p=>Math.abs(p.atkW/p.atkG - p.defW/p.defG), 0.30,
+        (p,v)=>`${Math.round(v*100)} %-Punkte Unterschied, deutlich stärker `
+          + (p.atkW/p.atkG > p.defW/p.defG ? 'vorne' : 'hinten')))}},
 
   {id:'antwort', name:'Die Antwort', short:'Antwort', ic:'flameBreak', tone:'acid', art:'ereignis',
     monat:{
       wie:'Ein Debakel ist eine Niederlage mit sieben oder mehr Toren Rückstand. Gezählt wird die Partie unmittelbar danach.',
       cond:'Mindestens 80 % in der Partie direkt nach einem Debakel, ab 5 solchen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.antwortG>=5 && p.antwortW/p.antwortG>=0.80)?p.antwortW/p.antwortG:null,
-        (p)=>`${p.antwortW} von ${p.antwortG} Antworten direkt nach einem Debakel`)}},
+            ...(_stWertung(p=>p.antwortG>=5, p=>p.antwortW/p.antwortG, 0.80,
+        (p)=>`${p.antwortW} von ${p.antwortG} Antworten direkt nach einem Debakel`))}},
 
   {id:'schlussstrich', name:'Der Schlussstrich', short:'Schluss', ic:'clock', tone:'blue', art:'ereignis',
     monat:{
       cond:'Mindestens 75 % der letzten Partien eines Spieltags gewonnen, ab 6 Spieltagen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.lastG>=6 && p.lastW/p.lastG>=0.75)?p.lastW/p.lastG:null,
-        (p)=>`${p.lastW} von ${p.lastG} Schlusspartien gewonnen`)}},
+            ...(_stWertung(p=>p.lastG>=6, p=>p.lastW/p.lastG, 0.75,
+        (p)=>`${p.lastW} von ${p.lastG} Schlusspartien gewonnen`))}},
 
   {id:'auftakt', name:'Der Auftakt', short:'Auftakt', ic:'sunrise', tone:'blue', art:'ereignis',
     monat:{
       cond:'Mindestens 78 % der ersten Partien eines Spieltags gewonnen, ab 6 Spieltagen',
-      pick:(C,t)=>_stPickTop(C,t,p=>(p.firstG>=6 && p.firstW/p.firstG>=0.78)?p.firstW/p.firstG:null,
-        (p)=>`${p.firstW} von ${p.firstG} Auftaktpartien gewonnen`)}},
+            ...(_stWertung(p=>p.firstG>=6, p=>p.firstW/p.firstG, 0.78,
+        (p)=>`${p.firstW} von ${p.firstG} Auftaktpartien gewonnen`))}},
+
+  {id:'fluke', name:'Der Sonntagsschuss', short:'Coup', ic:'surprise', tone:'orange', art:'ereignis', zufall:'quote',
+    // Auch als Monatswertung: eine einzige Partie genuegt, und die Rechnung
+    // stand dagegen. Gemessen ueber die bisherigen Monate ging sie an Platz
+    // sechs und Platz sieben der Siegquote — an Leute, die von den Eintraegen,
+    // die am Koennen haengen, keinen bekommen.
+    monat:{
+      wie:'Die Siegchance ist der Elo-Erwartungswert des eigenen Teams vor der Partie. Gezählt wird die eine Partie des Monats, in der sie am tiefsten stand und trotzdem gewonnen wurde.',
+      cond:'Der unwahrscheinlichste Sieg des Monats, bei höchstens 28 % Siegchance',
+      ...(_stWertung(p=>p.flukeExp!=null, p=>1-p.flukeExp, 0.72,
+        (p,v)=>`${Math.round((1-v)*100)} % Siegchance, und trotzdem gewonnen`))},
+    allzeit:{
+      // Eine einzige Partie genügt, und die Rechnung stand gegen ihn. Der
+      // schwächste Spieler der Liga hat die meisten Gelegenheiten dazu —
+      // das ist hier kein Fehler, sondern der Zweck.
+      cond:'Der unwahrscheinlichste Sieg, den je jemand geholt hat, bei höchstens 30 % Siegchance',
+      val:p => (p.flukeExp != null && p.flukeExp <= 0.30) ? 1 - p.flukeExp : null,
+      ev:(p,v) => `${Math.round((1-v)*100)} % Siegchance, und trotzdem gewonnen`,
+      zeit:p => p.flukeLabel || ''}},
 
   {id:'untersoll', name:'Unter Soll', short:'Unter Soll', ic:'trendDown', tone:'red', art:'schatten',
     monat:{
       wie:'Die Siegquote minus der Siegchance, die die Elo-Rechnung vorab ausgewiesen hat, hier nach unten. Ein Prozentpunkt ist ein Prozentpunkt Siegquote, nicht Elo.',
       cond:'Mindestens 15 Prozentpunkte unter der eigenen Elo-Erwartung, ab 20 Partien',
-      pick:(C,t)=>_stPickTop(C,t,p=>{
-        if(p.games < 20) return null;
-        const d = p.expSum/p.games - p.wins/p.games;
-        return d >= 0.15 ? d : null;
-      }, (p,v)=>`${Math.round(-v*100)} %-Punkte unter der Erwartung · ${p.games} Partien`)}},
+            ...(_stWertung(p=>p.games>=20, p=>p.expSum/p.games - p.wins/p.games, 0.15,
+        (p,v)=>`${Math.round(-v*100)} %-Punkte unter der Erwartung · ${p.games} Partien`))}},
 
   {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'dropTriple', tone:'red', art:'schatten',
     monat:{strict:true,
       cond:'Längste Niederlagenserie des Monats, mindestens 10 Spiele am Stück',
-      pick:(C,t)=>_stPickTop(C,t,p=>p.worstLoss>=10?p.worstLoss:null,
-        (p,v)=>`${v} Niederlagen in Folge${p.lossSpan?' · '+p.lossSpan:''}`, true)},
+            ...(_stWertung(()=>true, p=>p.worstLoss, 10,
+        (p,v)=>`${v} Niederlagen in Folge${p.lossSpan?' · '+p.lossSpan:''}`))},
     allzeit:{
       cond:'Längste Niederlagenserie der Liga-Geschichte',
       min:7, raw:p => p.lossStreak,   // kein `unit`: Schatten sind kein Fortschrittsziel
@@ -24905,6 +24981,46 @@ SEASON_TITLES.forEach(t => { SEASON_TITLE_BY_ID[t.id] = t; });
 //
 // `pid`/`ev` bleiben der beste noch FREIE Spieler — das braucht das
 // Titelrennen für den Verfolger, und sonst niemand.
+// ── Eine Monatswertung, deklarativ ───────────────────────────────────
+// Jede der zweiunddreissig Wertungen hatte dieselbe Form: ein Tor fuer die
+// Stichprobe, eine Groesse, eine Schwelle. Geschrieben stand sie als EIN
+// Ausdruck, in dem die Groesse zweimal vorkam — einmal in der Bedingung,
+// einmal als Ergebnis. Damit liess sich nicht sagen, wer knapp daneben liegt:
+// wer die Schwelle reisst, bekam `null`, und `null` hat keine Reihenfolge.
+// Getrennt aufgeschrieben faellt beides ab: die Vergabe wie bisher, und die
+// Frage „wer kaeme als Naechstes in Frage".
+//   `mind`  Wer ueberhaupt gewertet wird (Stichprobe und Voraussetzung).
+//   `wert`  Die Groesse. Groesser ist besser, auch bei den Schattenseiten —
+//           wo weniger besser ist, steht ein Minus davor.
+//   `ab`    Ab hier ist die Bedingung erfuellt.
+function _stWertung(mind, wert, ab, ev){
+  return {
+    mind, wert, ab, ev,
+    pick:(C, t)=>_stPickTop(C, t, p=>{
+      const v = wert(p);
+      return (mind(p) && v != null && isFinite(v) && v >= ab) ? v : null;
+    }, ev)
+  };
+}
+
+// Wer der Bedingung am naechsten kommt, ohne sie zu erfuellen. Gewertet wird
+// nur, wer die Stichprobe hat: „fast erreicht" von jemandem mit zwei Partien
+// ist keine Aussage.
+function _stNah(C, def){
+  const w = def && def.monat;
+  if(!w || !w.mind || !w.wert) return null;
+  let best = null;
+  Object.keys(C.P).forEach(pid => {
+    const p = C.P[pid];
+    if(!w.mind(p)) return;
+    const v = w.wert(p);
+    if(v == null || !isFinite(v) || v >= w.ab) return;
+    if(!best || v > best.v) best = {pid, v};
+  });
+  return best ? {pid:best.pid, wert:best.v,
+                 ev:w.ev(C.P[best.pid], best.v, C)} : null;
+}
+
 function _stPickTop(C, taken, score, ev){
   let bv = -Infinity;
   const werte = {};
@@ -25006,6 +25122,7 @@ function _seasonTitleCtxRechnen(sid){
     expSum:0,
     favoritG:0, favoritW:0,      // Partien als Favorit (ab 60 % Chance)
     gleichG:0, gleichW:0,        // Partien, die die Rechnung offen sah (45–55 %)
+    h1G:0, h1W:0, h2G:0, h2W:0,  // erste und zweite Haelfte der Spieltage des Monats
     langG:0, langW:0,            // Partien an Abenden mit 8+ eigenen Spielen
     fruehG:0, fruehW:0,          // die ersten drei Partien eines Abends
     spaetG:0, spaetW:0,          // ab der sechsten Partie eines Abends
@@ -25044,6 +25161,12 @@ function _seasonTitleCtxRechnen(sid){
     });
   });
   const daySeen = {};
+  // Die Mitte des Monats ist der mittlere SPIELTAG, nicht der 15. eines
+  // Kalendermonats: gespielt wird an zwei bis drei Tagen die Woche, und ein
+  // Monat, dessen Partien in der zweiten Hälfte liegen, haette sonst eine
+  // leere erste Haelfte.
+  const spielTage = [...new Set(ms.map(m => mdayKey(m)))].sort();
+  const mitteTag = spielTage.length >= 4 ? spielTage[Math.floor(spielTage.length / 2)] : null;
   // Elo-Stand nach jedem Match — dieselbe Quelle wie Rangliste und Profil.
   let histById = null;
   try { histById = getHistoryByMatchId(); } catch(e){ histById = null; }
@@ -25084,6 +25207,8 @@ function _seasonTitleCtxRechnen(sid){
       p.expSum += exp;
       if(exp >= 0.60){ p.favoritG++; if(w) p.favoritW++; }
       if(exp >= 0.45 && exp <= 0.55){ p.gleichG++; if(w) p.gleichW++; }
+      if(mitteTag){ if(day < mitteTag){ p.h1G++; if(w) p.h1W++; }
+                    else { p.h2G++; if(w) p.h2W++; } }
       if(w && gf - ga >= 7) p.blowouts++;
       if(!w && gf - ga <= -7) p.blowL++;
       // Die Antwort auf ein Debakel. Erst auswerten, dann die Marke für die
@@ -26245,6 +26370,24 @@ function playerTitleBadge(pid){
 // Wer führt gerade bei welchem Titel — und wie klar? Genutzt vom
 // „Tafel im Entstehen"-Block und von der Fun-Fact-Vorlage.
 // Nutzt denselben Durchlauf, nur auf die laufende Saison angewendet.
+// Wer einer noch nicht vergebenen Monatswertung am naechsten kommt.
+// Gemerkt je Saison, weil die Chronik-Tafel danach siebenundzwanzig Mal
+// fragt und der Kontext dahinter der ganze Monat ist.
+function _stNahDef(sid, titleId){
+  if(!sid) sid = currentSeason().id;
+  const key = sid + '_' + matches.length + '_' + _cache.version;
+  if(!_cache._stNah) _cache._stNah = {};
+  if(_cache._stNahKey !== key){ _cache._stNah = {}; _cache._stNahKey = key; }
+  if(titleId in _cache._stNah) return _cache._stNah[titleId];
+  let raus = null;
+  try {
+    const def = DISZIPLINEN.find(d => d.id === titleId);
+    if(def && def.monat) raus = _stNah(_seasonTitleCtx(sid), def);
+  } catch(e){ raus = null; }
+  _cache._stNah[titleId] = raus;
+  return raus;
+}
+
 function seasonTitleRace(sid){
   if(!sid) sid = currentSeason().id;
   const t = seasonTitles(sid);
@@ -26340,12 +26483,21 @@ function showSeasonTable(sid){
         stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
     </button>` : ''}
     ${emptyNames.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Ohne Eintrag</h4></div></div>
-      <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt — die Saison zählt trotzdem.</span></div>` : ''}
+      <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt, die Saison zählt trotzdem.</span></div>` : ''}
     ${unawarded.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Nicht vergeben</h4></div><div class="m">${unawarded.length}</div></div>
-      <div class="tunawarded">${unawarded.slice(0, 8).map(t =>
-        `<div class="tun"><span class="i">${svgI(t.ic)}</span><span class="n">${esc(t.name)}</span><span class="c">${esc(t.cond)}</span></div>`
-      ).join('')}${unawarded.length > 8
-        ? `<div class="tun-more">und ${unawarded.length - 8} weitere, die diese Saison niemand erreicht hat</div>` : ''}</div>` : ''}
+      <div class="tunawarded">${unawarded.map(t => {
+        // Wer der Bedingung am naechsten kommt. Vorher stand hier nur die
+        // Bedingung, und acht der siebenundzwanzig Eintraege ueberhaupt: der
+        // Rest war eine Zeile „und 19 weitere". Damit war nicht zu sehen, was
+        // in diesem Monat noch zu holen ist und wer davor steht.
+        const n = _stNahDef(sid, t.id);
+        return `<div class="tun"><span class="i">${svgI(t.ic)}</span>`
+          + `<span class="n">${esc(t.name)}</span>`
+          + `<span class="c">${esc(t.cond)}</span>`
+          + (n ? `<span class="w" data-tplayer="${esc(n.pid)}">Am nächsten dran: `
+                 + `<b>${esc(pname(n.pid))}</b> · ${esc(n.ev)}</span>` : '')
+          + `</div>`;
+      }).join('')}</div>` : ''}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
 }

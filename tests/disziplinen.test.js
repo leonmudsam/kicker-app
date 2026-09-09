@@ -693,6 +693,51 @@ ok(_sprachTreffer.strich.length === 0, 'kein Gedankenstrich in Beleg, Bedingung 
 ok(_sprachTreffer.pron.length === 0, 'und kein Pronomen ueber einen Spieler',
    _sprachTreffer.pron.slice(0, 4).join(', ') || 'keins');
 
+// ── Die Chronik gehoert nicht nur den besten Drei ───────────────────
+// Wer eine Quote gewinnt, gewinnt fast jede: gemessen gingen sechzig Prozent
+// der Monatseintraege an die besten Drei, und der Monatserste allein hielt
+// ein Drittel der Tafel. „Auf Augenhoehe", „Die Steigerung" und der
+// Sonntagsschuss messen deshalb nicht das Niveau, sondern den Abstand zum
+// EIGENEN — so wie das Uebersoll, das jeder erreichen kann. Fielen sie
+// wieder an die Spitze, waeren sie nur drei weitere Eintraege fuer den, der
+// ohnehin alles hat.
+const _mitte = JSON.parse(K.eval(`JSON.stringify((function(){
+  const NEU = ['augenhoehe', 'steigerung', 'fluke'];
+  const sids = allPastSeasons().concat([currentSeason().id])
+    .filter((v,i,a) => a.indexOf(v) === i).sort();
+  const treffer = {}; NEU.forEach(id => { treffer[id] = 0; });
+  const lagen = [];
+  let anDreiAlt = 0, anDreiNeu = 0, gesamt = 0;
+  sids.forEach(sid => {
+    const C = _seasonTitleCtx(sid);
+    const rang = Object.keys(C.P).filter(id => C.P[id].games >= 5)
+      .sort((a,b) => (C.P[b].wins/C.P[b].games) - (C.P[a].wins/C.P[a].games));
+    if(rang.length < 6) return;
+    const platz = {}; rang.forEach((id,i) => { platz[id] = i + 1; });
+    seasonTitles(sid).awarded.forEach(a => {
+      gesamt++;
+      const oben = (platz[a.pid] || 99) <= 3;
+      if(oben) anDreiAlt++;
+      if(NEU.indexOf(a.titleId) >= 0){
+        treffer[a.titleId]++;
+        lagen.push((platz[a.pid] || rang.length) / rang.length);
+        if(oben) anDreiNeu++;
+      }
+    });
+  });
+  return {treffer, n:lagen.length,
+    lage: lagen.length ? lagen.reduce((a,b)=>a+b,0)/lagen.length : 0,
+    anDreiNeu, anteilAlt: gesamt ? anDreiAlt/gesamt : 0};
+})())`));
+ok(Object.keys(_mitte.treffer).every(k => _mitte.treffer[k] > 0),
+   'jede der drei neuen Wertungen wird auch vergeben', JSON.stringify(_mitte.treffer));
+ok(_mitte.lage > 0.4,
+   'ihre Halter stehen im Mittel hinter dem ersten Drittel der Siegquote',
+   'bei ' + Math.round(_mitte.lage * 100) + ' % der Rangliste');
+ok(_mitte.anDreiNeu <= 1,
+   'hoechstens eine davon ging an die besten Drei',
+   _mitte.anDreiNeu + ' von ' + _mitte.n);
+
 // Die Siegesserie ist die eine gewollte Ausnahme: sie steht vor der besten
 // Bilanz, obwohl sie ein Ereignis ist und die Bilanz eine Leistung.
 const iSerie = K.eval("CHRONICLES.findIndex(c=>c.id==='unstoppable')");

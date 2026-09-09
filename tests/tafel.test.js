@@ -958,6 +958,104 @@ const _toteIcons = (function(){
 ok(_toteIcons.length === 0, 'kein Zeichen im Katalog ohne Aufrufer',
    _toteIcons.join(' · ') || 'alle');
 
+// ── Die Awards: jede Kachel muss in einer Woche erreichbar sein ─────
+// Die Schwellen stammen aus der Zeit, in der es den Zeitraum „Gesamt" gab.
+// Gemessen spielt ein Duo in einer Woche im Mittel DREI Partien, und sieben
+// von sechsunddreissig Kacheln verlangten zehn gemeinsame Spiele: sie
+// standen jede Woche leer, egal wie viel gespielt wurde.
+const _awSchwelle = JSON.parse(K.eval(`JSON.stringify((function(){
+  const zu_hoch = [];
+  Object.keys(AW_MIN).forEach(k => { if(AW_MIN[k] > 5) zu_hoch.push(k + '=' + AW_MIN[k]); });
+  // Und die Gegenprobe an den echten Partien: was bleibt nach einer vollen
+  // Woche noch leer?
+  awPeriod = 'week'; awView = 'awards';
+  invalidateCache();
+  const h = _vAwardsCore();
+  const teile = String(h).split('data-award="');
+  const leer = [];
+  for(let i = 1; i < teile.length; i++){
+    const key = teile[i].slice(0, teile[i].indexOf('"'));
+    const nx = teile[i].indexOf('data-award="');
+    const block = nx < 0 ? teile[i] : teile[i].slice(0, nx);
+    if(/aw-t-leer/.test(block)) leer.push(key);
+  }
+  return {zu_hoch, leer, partien: matchesInPeriod('week').length};
+})())`));
+ok(_awSchwelle.zu_hoch.length === 0, 'keine Mindestzahl ueber fuenf',
+   _awSchwelle.zu_hoch.join(', ') || 'keine');
+// Was leer bleibt, sind Ereignisse, die es in dieser Woche nicht gab — kein
+// 10:0 heisst kein Showmaster. Eine Schwelle darf nicht der Grund sein.
+ok(_awSchwelle.leer.length <= 2,
+   'nach einer vollen Woche steht fast jede Award-Kachel',
+   _awSchwelle.leer.length + ' leer: ' + _awSchwelle.leer.join(' '));
+
+// ── Der Nenner ist die Teilmenge, um die es geht ────────────────────
+// „Pechvogel" zaehlte knappe Niederlagen gegen ALLE Partien und kuerte
+// damit den Vielspieler statt den Pechvogel. Er ist der Spiegel des
+// Clutch-Players und teilt sich seither dessen Zaehlung: enge Partien und
+// die davon gewonnenen. Dieselbe Verwechslung steckte in drei weiteren
+// Kacheln.
+const _awNenner = JSON.parse(K.eval(`JSON.stringify((function(){
+  awPeriod = 'season'; invalidateCache();
+  const R = awardRankings('season');
+  const pv = R.pechvogelList[0], cl = R.clutchList.find(c => c.id === (pv||{}).id);
+  const lc = R.luckyCharmList[0], zk = R.zirkusList[0], ud = R.underdogList[0];
+  return {
+    // Pechvogel und Clutch rechnen ueber dieselbe Menge: verloren + gewonnen
+    // ergibt die engen Partien.
+    spiegel: (pv && cl) ? (pv.g === cl.g && pv.v + cl.w === cl.g) : null,
+    // Kein Anteil darf ueber eins liegen — der Nenner muss die Obermenge sein.
+    ueberEins: [].concat(
+      R.pechvogelList.filter(x => x.pct > 1).map(() => 'pechvogel'),
+      R.luckyCharmList.filter(x => x.v > 1).map(() => 'luckyCharm'),
+      R.zirkusList.filter(x => x.pct > 1).map(() => 'zirkus'),
+      R.underdogList.filter(x => x.pct > 1).map(() => 'underdog')),
+    // Und jede dieser Kacheln traegt jetzt eine Quote, keine blanke Anzahl.
+    quoten: {pv: pv ? pv.pct != null : false, lc: lc ? lc.v != null : false,
+             zk: zk ? zk.pct != null : false, ud: ud ? ud.pct != null : false},
+    // Die Quote muss die angezeigten Zahlen sein: Zaehler durch Nenner. Wird
+    // durch etwas anderes geteilt, steht auf der Kachel „5 von 5" und daneben
+    // eine Prozentzahl, die nicht dazu passt.
+    stimmig: [].concat(
+      R.pechvogelList.filter(x => Math.abs(x.pct - x.v / x.g) > 1e-9).map(() => 'pechvogel'),
+      R.zirkusList.filter(x => Math.abs(x.pct - x.v / x.g) > 1e-9).map(() => 'zirkus'),
+      R.underdogList.filter(x => Math.abs(x.pct - x.v / x.g) > 1e-9).map(() => 'underdog'),
+      R.luckyCharmList.filter(x => Math.abs(x.v - x.wins / x.games) > 1e-9).map(() => 'luckyCharm')),
+    // Der Underdog-Held zaehlte die Siege ohne Nenner: dann waeren Zaehler und
+    // Nenner ueberall gleich und jeder staende bei hundert Prozent.
+    udEcht: R.underdogList.some(x => x.g > x.v),
+    // Der Zirkus zaehlte die Debakel gegen ALLE gemeinsamen Spiele und sagte
+    // damit zwei Dinge auf einmal: wie oft ein Duo verliert und wie deutlich.
+    // Gefragt ist das Zweite, also ist der Nenner die Zahl der Pleiten. Sie
+    // wird hier unabhaengig nachgezaehlt.
+    zkNenner: (function(){
+      if(!zk) return null;
+      const key = zk.ids.slice().sort().join('|');
+      let pleiten = 0;
+      matchesInPeriod('season').forEach(m => {
+        const verlierer = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+        if(verlierer.slice().sort().join('|') === key) pleiten++;
+      });
+      return {gemeldet: zk.g, gezaehlt: pleiten};
+    })()
+  };
+})())`));
+ok(_awNenner.spiegel === true,
+   'Pechvogel und Clutch teilen sich die engen Partien', String(_awNenner.spiegel));
+ok(_awNenner.ueberEins.length === 0, 'kein Anteil liegt ueber hundert Prozent',
+   _awNenner.ueberEins.join(', ') || 'keiner');
+ok(Object.keys(_awNenner.quoten).every(k => _awNenner.quoten[k]),
+   'Pechvogel, Gluecklspilze, Zirkus und Underdog rechnen eine Quote',
+   JSON.stringify(_awNenner.quoten));
+ok(_awNenner.stimmig.length === 0, 'die Quote passt zu den Zahlen daneben',
+   _awNenner.stimmig.join(', ') || 'alle');
+ok(_awNenner.udEcht === true,
+   'der Underdog-Held zaehlt auch die verlorenen Aussenseiter-Partien',
+   String(_awNenner.udEcht));
+ok(_awNenner.zkNenner && _awNenner.zkNenner.gemeldet === _awNenner.zkNenner.gezaehlt,
+   'der Zirkus misst an den Pleiten des Duos, nicht an allen Partien',
+   JSON.stringify(_awNenner.zkNenner));
+
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
 process.exit(fails === 0 ? 0 : 1);

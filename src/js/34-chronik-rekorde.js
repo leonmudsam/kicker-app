@@ -687,6 +687,24 @@ function playerTitleBadge(pid){
 // Wer führt gerade bei welchem Titel — und wie klar? Genutzt vom
 // „Tafel im Entstehen"-Block und von der Fun-Fact-Vorlage.
 // Nutzt denselben Durchlauf, nur auf die laufende Saison angewendet.
+// Wer einer noch nicht vergebenen Monatswertung am naechsten kommt.
+// Gemerkt je Saison, weil die Chronik-Tafel danach siebenundzwanzig Mal
+// fragt und der Kontext dahinter der ganze Monat ist.
+function _stNahDef(sid, titleId){
+  if(!sid) sid = currentSeason().id;
+  const key = sid + '_' + matches.length + '_' + _cache.version;
+  if(!_cache._stNah) _cache._stNah = {};
+  if(_cache._stNahKey !== key){ _cache._stNah = {}; _cache._stNahKey = key; }
+  if(titleId in _cache._stNah) return _cache._stNah[titleId];
+  let raus = null;
+  try {
+    const def = DISZIPLINEN.find(d => d.id === titleId);
+    if(def && def.monat) raus = _stNah(_seasonTitleCtx(sid), def);
+  } catch(e){ raus = null; }
+  _cache._stNah[titleId] = raus;
+  return raus;
+}
+
 function seasonTitleRace(sid){
   if(!sid) sid = currentSeason().id;
   const t = seasonTitles(sid);
