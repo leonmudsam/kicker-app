@@ -594,7 +594,7 @@ function nextRecordFor(pid){
     have:Math.round(best.mine), target:Math.round(best.target),
     holder:best.holder,
     txt: `Noch ${best.need} ${best.def.unit}` +
-         (best.holder ? ` — ${best.holder} hält ${Math.round(best.target)}`
+         (best.holder ? `, ${best.holder} hält ${Math.round(best.target)}`
                       : ` bis zur Untergrenze von ${Math.round(best.target)}`)
   };
 }

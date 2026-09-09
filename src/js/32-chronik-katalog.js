@@ -155,7 +155,7 @@ const DISZIPLINEN = [
         if(p.games < 20 || p.wins <= p.losses) return null;
         const soll = p.expSum / p.games;
         return soll <= 0.45 ? 0.45 - soll : null;
-      }, (p)=>`Ø ${Math.round(p.expSum/p.games*100)} % Siegchance · ${p.wins}–${p.losses}`)}},
+      }, (p)=>`Ø ${Math.round(p.expSum/p.games*100)} % Siegchance · ${p.wins}:${p.losses}`)}},
 
   {id:'uebersoll', name:'Das Übersoll', short:'Übersoll', ic:'trendUp', tone:'gold', art:'leistung',
     monat:{
@@ -608,7 +608,7 @@ const DISZIPLINEN = [
       // mit — wer ihn trotzdem gewinnt, hat sich zurückgeholt.
       cond:'Eine Niederlagenserie von 5 Spielen überstanden und den Monat trotzdem positiv beendet, ab 25 Partien',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.games>=25 && p.worstLoss>=5 && p.wins>p.losses)?p.worstLoss:null,
-        (p,v)=>`${v} Niederlagen am Stück und trotzdem ${p.wins}–${p.losses}`)}},
+        (p,v)=>`${v} Niederlagen am Stück und trotzdem ${p.wins}:${p.losses}`)}},
 
   {id:'spezialist', name:'Der Spezialist', short:'Spezialist', ic:'plusMinus', tone:'purple', art:'ereignis',
     monat:{
@@ -618,7 +618,7 @@ const DISZIPLINEN = [
         if(p.atkG < 10 || p.defG < 10) return null;
         const d = Math.abs(p.atkW/p.atkG - p.defW/p.defG);
         return d >= 0.30 ? d : null;
-      }, (p,v)=>`${Math.round(v*100)} %-Punkte Unterschied — deutlich stärker `
+      }, (p,v)=>`${Math.round(v*100)} %-Punkte Unterschied, deutlich stärker `
         + (p.atkW/p.atkG > p.defW/p.defG ? 'vorne' : 'hinten'))}},
 
   {id:'antwort', name:'Die Antwort', short:'Antwort', ic:'flameBreak', tone:'acid', art:'ereignis',

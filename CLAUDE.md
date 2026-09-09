@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **641**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **642**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -221,7 +221,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen | 898 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen | 171 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte | 192 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte | 202 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -726,6 +726,28 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   nächsten" nannte weder, worum es geht, noch was dafür verlangt ist: darunter
   stand allein „Leon hält den Bestwert". Wer ein Ziel zeigt, nennt die
   Bedingung aus dem Katalog, den Stand des Halters und den Gewinn.
+
+  **Was zwei Leute miteinander zu tun haben, sagt der Story-Typ** und nicht die
+  Kartenform (`_ndBeziehung`). Unter zwei Wappen stand „als Duo", sobald eine
+  Karte genau zwei Leute zeigte: bei „Martin schlägt Leo im Spitzenspiel"
+  standen sich die beiden gegenüber, bei „Johannes und Stefan bewegen die
+  Ewige Tafel" holte jeder einen eigenen Rekord. Ein Duo sind nur die beiden
+  Duo-Serien; alles andere nennt seine eigene Beziehung.
+
+  **Das Blatt erklärt nicht die App.** Unter dem Spieler des Tages stand
+  „Gewertet wird der Spieltag ab drei Partien. Die Karte kommt um 23:59, wenn
+  keine Partie mehr dazukommen kann", unter einer Insignium-Stufe „deshalb ist
+  diese Karte Breaking [§C30]". Das ist die Bauanleitung des Feeds samt
+  Paragraph, nicht die Nachricht. Wer ein Blatt öffnet, will wissen, was
+  passiert ist.
+
+  **Die Wochenkarte zeigt alle sechs Wertungen**, und das Team der Woche steht
+  direkt unter dem Spieler der Woche. Sie zeigte drei und darunter „und 3
+  weitere Wertungen": die Überraschung, der Krimi und das Team der Woche kamen
+  auf der Karte gar nicht vor, obwohl sie einmal je Woche erscheint und für
+  nichts anderes da ist. Die Reihenfolge ist die Wertigkeit, nicht die, in der
+  die sechs Blöcke im Generator stehen — das Team entstand als letztes und
+  stand damit auch als letztes.
 
   **Kein Listentrenner im Fließtext** (`_evSatz`). Ein Beleg wie „20 % aller
   25 Siege endeten 10:9 · 5" ist für eine Zelle gebaut: der Mittelpunkt trennt

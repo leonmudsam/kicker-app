@@ -2383,7 +2383,6 @@
   .nf-wl-z i{font-style:normal;color:var(--muted);min-width:0;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap}
   .nf-wl-z b{margin-left:auto;font-family:'Sometype Mono',monospace;color:var(--gold);flex:0 0 auto}
-  .nf-wl-m{padding:7px 13px;font-size:10px;color:var(--faint);border-top:1px solid var(--line)}
 
   /* Das Sammelband: was die Karte ausser ihrer Schlagzeile noch buendelt.
      Es stand vorher nur im Blatt, und wer die Karte ueberflog, sah von der
@@ -4654,7 +4653,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.09.87d2d92c';
+const BUILD_VERSION='2026.09.09.60b53955';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -16195,7 +16194,7 @@ function _badgeStreakState(badgeId, playerId){
         {cur:res.potd, tgt:5, label:'Tagessiege'},
         {cur:res.potw, tgt:2, label:'Wochensiege'}
       ],
-      hint:'Zählt nur die laufende Saison — beide Ziele nötig, Reset zu Saisonbeginn.'
+      hint:'Zählt nur die laufende Saison, beide Ziele nötig, Reset zu Saisonbeginn.'
     };
   }
   if(badgeId === 'allwetter'){
@@ -19641,6 +19640,15 @@ function _buildStories(){
   // keine Partie hatte: ein Wochenrückblick ohne Woche ist ein Kalendereintrag.
   try {
     if(_wocheDue && _wochenTeile.length >= 2){
+      // Die Reihenfolge ist die Wertigkeit, nicht die Reihenfolge, in der die
+      // sechs Bloecke im Generator stehen. Das Team der Woche entstand als
+      // letztes und stand damit auch als letztes: die zwei Wertungen, die
+      // einen Sieger der Woche kueren, standen an Platz eins und Platz sechs.
+      const _wRang = ['potw', 'team', 'riser', 'blowout', 'upset', 'thriller'];
+      _wochenTeile.sort((a, b) => {
+        const ra = _wRang.indexOf(a.art), rb = _wRang.indexOf(b.art);
+        return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb);
+      });
       const _wHeld = _wochenTeile.find(t => t.held) || _wochenTeile[0];
       const _wSpiele = matches.filter(m => { const t = mts(m); return t >= _wocheStart && t < _wocheEnde; });
       const _wTage = new Set(_wSpiele.map(m => new Date(m.created_at).toDateString())).size;
@@ -22487,13 +22495,15 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       {v: _newsRangKurz(pid), l:'in der Liga'}
     ]);
   } else if(sorte === 'woche'){
+    // Alle sechs Wertungen, nicht drei und eine Zeile „und 3 weitere". Die
+    // Wochenkarte gibt es einmal je Woche, und sie IST die Uebersicht: wer
+    // sie ueberflog, sah die Ueberraschung, den Krimi und das Team der Woche
+    // gar nicht, obwohl die Karte fuer nichts anderes da ist.
     const teile = Array.isArray(d.teile) ? d.teile : [];
-    fuss = `<div class="nf-wl">${teile.slice(0, 3).map(t =>
+    fuss = `<div class="nf-wl">${teile.map(t =>
       `<div class="nf-wl-z"><span>${esc(t.label || '')}</span>`
       + `<i>${esc(_namenKurz((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean), 2))}</i>`
-      + `<b>${esc(t.wert || '')}</b></div>`).join('')}`
-      + (teile.length > 3 ? `<div class="nf-wl-m">und ${teile.length - 3} weitere Wertungen</div>` : '')
-      + `</div>`;
+      + `<b>${esc(t.wert || '')}</b></div>`).join('')}</div>`;
   } else if(sorte === 'duell'){
     // Eine Rivalitaet lebt vom Verhaeltnis. Die beiden Wappen standen
     // uebereinander in der linken Spalte und machten die Karte 56 Pixel
@@ -23203,6 +23213,30 @@ function _newsRangZeile(pid){
 //
 // Der Kopf zeigt, um wen es geht: ein Wappen wie ueberall sonst [§C27], den
 // Namen und darunter Rang, Zeichen und Prestige. Bei einer Partie steht das
+// Was die Leute auf einer Karte miteinander zu tun haben, sagt der STORY-TYP
+// und nicht die Kartenform. Gemessen stand unter „Martin schlaegt Leo im
+// Spitzenspiel" die Zeile „als Duo" — die beiden standen sich gegenueber —,
+// und unter „Johannes und Stefan bewegen die Ewige Tafel" ebenfalls: zwei
+// Leute, die am selben Tag je einen eigenen Rekord holten. „als Duo" war die
+// Vorgabe fuer alles, was genau zwei Wappen zeigt, und stimmte nur bei den
+// beiden Duo-Serien.
+function _ndBeziehung(s, anzahl){
+  const t = ((s && s.dataRef) || {}).type || '';
+  if(t === 'rivalry' || t === 'rivalry_milestone') return 'im direkten Duell';
+  if(t === 'team_streak' || t === 'team_loss_streak') return 'als Duo';
+  if(t === 'top_clash') return 'Sieger und Verlierer dieser Partie';
+  if(t === 'streak_killer') return 'auf beiden Seiten der Partie';
+  if(t === 'chronik_monat') return 'die meisten Einträge in diesem Monat';
+  if(t === 'badge_unlocked') return 'mit derselben Auszeichnung';
+  if(t === 'potd' || t === 'potw') return 'punktgleich an der Spitze';
+  // Die Sammelkarte buendelt einen MOMENT, nicht zwingend eine Partie: die
+  // Gruppe entsteht ueber die Minute [§C33].
+  if(t === 'sammel') return ((s.dataRef || {}).quelle === 'tafel')
+    ? 'an der Ewigen Tafel' : 'im selben Moment';
+  if(((s && s.dataRef) || {}).matchId) return 'in derselben Partie';
+  return 'gemeinsam auf dieser Karte';
+}
+
 // Ergebnis darueber, bei einem Duo stehen zwei Wappen nebeneinander.
 function _newsBlattKopf(s){
   const d = s.dataRef || {};
@@ -23218,8 +23252,7 @@ function _newsBlattKopf(s){
     return erg + `<div class="nd-held nd-held-duo">
       <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
       <div><div class="nd-held-nm">${esc(_namenKurz(ids.map(nm)))}</div>
-      <div class="nd-held-un">${esc(ids.length > 2 ? 'gemeinsam auf dieser Karte'
-        : (_newsSorte(s) === 'duell' ? 'im direkten Duell' : 'als Duo'))}</div></div></div>`;
+      <div class="nd-held-un">${esc(_ndBeziehung(s, ids.length))}</div></div></div>`;
   }
   const pid = ids[0];
   // Das Rangabzeichen ist ein Bauteil, das die App schon hat [§C27] — im Blatt
@@ -23546,9 +23579,12 @@ function _newsDetailMitte(s){
         const pids = (Array.isArray(d.playerIds) && d.playerIds.length) ? d.playerIds : [d.playerId];
         const wr = d.wr != null ? Math.round(d.wr * 100) : null;
         const nl = (d.wins != null && d.games != null) ? (d.games - d.wins) : null;
-        const satz = `<div class="nd-satz">${d.type === 'potw'
-            ? 'Gewertet wird die Siegquote der Woche ab fünf Partien.'
-            : 'Gewertet wird der Spieltag ab drei Partien. Die Karte kommt um 23:59, wenn keine Partie mehr dazukommen kann.'}</div>`;
+        // Hier stand, ab wie vielen Partien gewertet wird und wann die Karte
+        // erscheint. Das ist die Bauanleitung des Feeds, nicht die Nachricht:
+        // wer das Blatt oeffnet, will wissen, was passiert ist, und der Kopf
+        // darueber hat es schon gesagt. Die Zahlen darunter erklaeren sich
+        // selbst.
+        const satz = '';
         const gitter = `<div class="nd-gitter">
             ${wr != null ? `<div><b class="g">${wr} %</b><span>Siegquote</span></div>` : ''}
             ${d.wins != null ? `<div><b>${d.wins}${nl != null ? ' : ' + nl : ''}</b><span>Siege${nl != null ? ' zu Niederlagen' : ''}</span></div>` : ''}
@@ -23627,10 +23663,12 @@ function _newsDetailMitte(s){
       }
       // Die Stufe IST die Story — und das Blatt war leer.
       case 'insignium_stufe': {
+        // Darunter stand „Die beiden obersten Stufen erreicht kaum jemand,
+        // deshalb ist diese Karte Breaking [§C30]" — die App erklaerte dem
+        // Leser ihre eigene Regel und zitierte dabei ihren Paragraphen. Dass
+        // die Stufe selten ist, sagt die Leiter im Block darueber.
         return `<div class="nd-section">Die neue Stufe</div>`
-          + _newsInsigniumBlock(d.pid, d.stufe)
-          + (d.oben ? `<div class="nd-satz">Die beiden obersten Stufen erreicht kaum jemand
-              — deshalb ist diese Karte Breaking [§C30].</div>` : '');
+          + _newsInsigniumBlock(d.pid, d.stufe);
       }
       case 'ambient': {
         // Vorher stand hier „Im Fokus: Stefan" — ein Wappen mit dem Namen, den
@@ -24306,7 +24344,7 @@ const DISZIPLINEN = [
         if(p.games < 20 || p.wins <= p.losses) return null;
         const soll = p.expSum / p.games;
         return soll <= 0.45 ? 0.45 - soll : null;
-      }, (p)=>`Ø ${Math.round(p.expSum/p.games*100)} % Siegchance · ${p.wins}–${p.losses}`)}},
+      }, (p)=>`Ø ${Math.round(p.expSum/p.games*100)} % Siegchance · ${p.wins}:${p.losses}`)}},
 
   {id:'uebersoll', name:'Das Übersoll', short:'Übersoll', ic:'trendUp', tone:'gold', art:'leistung',
     monat:{
@@ -24759,7 +24797,7 @@ const DISZIPLINEN = [
       // mit — wer ihn trotzdem gewinnt, hat sich zurückgeholt.
       cond:'Eine Niederlagenserie von 5 Spielen überstanden und den Monat trotzdem positiv beendet, ab 25 Partien',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.games>=25 && p.worstLoss>=5 && p.wins>p.losses)?p.worstLoss:null,
-        (p,v)=>`${v} Niederlagen am Stück und trotzdem ${p.wins}–${p.losses}`)}},
+        (p,v)=>`${v} Niederlagen am Stück und trotzdem ${p.wins}:${p.losses}`)}},
 
   {id:'spezialist', name:'Der Spezialist', short:'Spezialist', ic:'plusMinus', tone:'purple', art:'ereignis',
     monat:{
@@ -24769,7 +24807,7 @@ const DISZIPLINEN = [
         if(p.atkG < 10 || p.defG < 10) return null;
         const d = Math.abs(p.atkW/p.atkG - p.defW/p.defG);
         return d >= 0.30 ? d : null;
-      }, (p,v)=>`${Math.round(v*100)} %-Punkte Unterschied — deutlich stärker `
+      }, (p,v)=>`${Math.round(v*100)} %-Punkte Unterschied, deutlich stärker `
         + (p.atkW/p.atkG > p.defW/p.defG ? 'vorne' : 'hinten'))}},
 
   {id:'antwort', name:'Die Antwort', short:'Antwort', ic:'flameBreak', tone:'acid', art:'ereignis',
@@ -26114,7 +26152,7 @@ function nextRecordFor(pid){
     have:Math.round(best.mine), target:Math.round(best.target),
     holder:best.holder,
     txt: `Noch ${best.need} ${best.def.unit}` +
-         (best.holder ? ` — ${best.holder} hält ${Math.round(best.target)}`
+         (best.holder ? `, ${best.holder} hält ${Math.round(best.target)}`
                       : ` bis zur Untergrenze von ${Math.round(best.target)}`)
   };
 }
@@ -26258,7 +26296,7 @@ function showSeasonTable(sid){
   if(!T.awarded.length && !T.champ){
     openSheet(`<h3>${esc(seasonLabel(sid))}</h3>
       <div class="sheet-sub">Noch keine Chronik-Einträge</div>
-      ${emptyState('trophy', T.live ? 'Die Saison läuft — noch erfüllt niemand eine Bedingung.' : 'Kein Eintrag in dieser Saison')}`);
+      ${emptyState('trophy', T.live ? 'Die Saison läuft, noch erfüllt niemand eine Bedingung.' : 'Kein Eintrag in dieser Saison')}`);
     return;
   }
   const emptyNames = T.empty.map(pname).filter(Boolean);
@@ -26288,7 +26326,7 @@ function showSeasonTable(sid){
   openSheet(`
     <h3>Die Chronik der Saison</h3>
     <div class="sheet-sub num">${esc(T.label)} · ${T.matches} Matches an ${T.days} Spieltag${T.days===1?'':'en'}${T.live ? ' · läuft noch' : ''}</div>
-    ${T.live ? `<div class="tnote">Stand von heute — bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
+    ${T.live ? `<div class="tnote">Stand von heute, bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>
         <span class="tx"><span class="n">${esc(pname(ch.pid))} — ${T.live ? 'führt die Saison an' : 'Meister'}</span>
@@ -28528,7 +28566,7 @@ function showLaufbahn(pid){
   const swFuss = _swRang < 0
     ? 'ab dem ersten Meistertitel'
     : _swRang === _swLetzter
-      ? 'gewachsen ist sie fertig — weiter zählen die Sterne'
+      ? 'gewachsen ist sie fertig, weiter zählen die Sterne'
       : 'noch ' + (INS_SCHWINGE[_swRang + 1].ab - _titel) + ' bis zur nächsten';
 
   const teil = (lab, n, pt, sub) => `<div class="lb-teil">
@@ -29304,7 +29342,7 @@ function _analyseMatchRows(rows, opts){
   if(!rows || rows.length < 2){ res.fehler.push({zeile: 0, grund: 'Die Datei enthält keine Datenzeilen.'}); return res; }
   const idx = _headerIndex(rows[0]);
   if(idx['match-id'] === undefined && idx['tore a'] === undefined){
-    res.fehler.push({zeile: 1, grund: 'Kopfzeile nicht erkannt — erwartet werden die Spalten aus dem Export.'});
+    res.fehler.push({zeile: 1, grund: 'Kopfzeile nicht erkannt, erwartet werden die Spalten aus dem Export.'});
     return res;
   }
   const pm = pmap();

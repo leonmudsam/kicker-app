@@ -142,6 +142,30 @@ function _newsRangZeile(pid){
 //
 // Der Kopf zeigt, um wen es geht: ein Wappen wie ueberall sonst [§C27], den
 // Namen und darunter Rang, Zeichen und Prestige. Bei einer Partie steht das
+// Was die Leute auf einer Karte miteinander zu tun haben, sagt der STORY-TYP
+// und nicht die Kartenform. Gemessen stand unter „Martin schlaegt Leo im
+// Spitzenspiel" die Zeile „als Duo" — die beiden standen sich gegenueber —,
+// und unter „Johannes und Stefan bewegen die Ewige Tafel" ebenfalls: zwei
+// Leute, die am selben Tag je einen eigenen Rekord holten. „als Duo" war die
+// Vorgabe fuer alles, was genau zwei Wappen zeigt, und stimmte nur bei den
+// beiden Duo-Serien.
+function _ndBeziehung(s, anzahl){
+  const t = ((s && s.dataRef) || {}).type || '';
+  if(t === 'rivalry' || t === 'rivalry_milestone') return 'im direkten Duell';
+  if(t === 'team_streak' || t === 'team_loss_streak') return 'als Duo';
+  if(t === 'top_clash') return 'Sieger und Verlierer dieser Partie';
+  if(t === 'streak_killer') return 'auf beiden Seiten der Partie';
+  if(t === 'chronik_monat') return 'die meisten Einträge in diesem Monat';
+  if(t === 'badge_unlocked') return 'mit derselben Auszeichnung';
+  if(t === 'potd' || t === 'potw') return 'punktgleich an der Spitze';
+  // Die Sammelkarte buendelt einen MOMENT, nicht zwingend eine Partie: die
+  // Gruppe entsteht ueber die Minute [§C33].
+  if(t === 'sammel') return ((s.dataRef || {}).quelle === 'tafel')
+    ? 'an der Ewigen Tafel' : 'im selben Moment';
+  if(((s && s.dataRef) || {}).matchId) return 'in derselben Partie';
+  return 'gemeinsam auf dieser Karte';
+}
+
 // Ergebnis darueber, bei einem Duo stehen zwei Wappen nebeneinander.
 function _newsBlattKopf(s){
   const d = s.dataRef || {};
@@ -157,8 +181,7 @@ function _newsBlattKopf(s){
     return erg + `<div class="nd-held nd-held-duo">
       <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
       <div><div class="nd-held-nm">${esc(_namenKurz(ids.map(nm)))}</div>
-      <div class="nd-held-un">${esc(ids.length > 2 ? 'gemeinsam auf dieser Karte'
-        : (_newsSorte(s) === 'duell' ? 'im direkten Duell' : 'als Duo'))}</div></div></div>`;
+      <div class="nd-held-un">${esc(_ndBeziehung(s, ids.length))}</div></div></div>`;
   }
   const pid = ids[0];
   // Das Rangabzeichen ist ein Bauteil, das die App schon hat [§C27] — im Blatt
@@ -485,9 +508,12 @@ function _newsDetailMitte(s){
         const pids = (Array.isArray(d.playerIds) && d.playerIds.length) ? d.playerIds : [d.playerId];
         const wr = d.wr != null ? Math.round(d.wr * 100) : null;
         const nl = (d.wins != null && d.games != null) ? (d.games - d.wins) : null;
-        const satz = `<div class="nd-satz">${d.type === 'potw'
-            ? 'Gewertet wird die Siegquote der Woche ab fünf Partien.'
-            : 'Gewertet wird der Spieltag ab drei Partien. Die Karte kommt um 23:59, wenn keine Partie mehr dazukommen kann.'}</div>`;
+        // Hier stand, ab wie vielen Partien gewertet wird und wann die Karte
+        // erscheint. Das ist die Bauanleitung des Feeds, nicht die Nachricht:
+        // wer das Blatt oeffnet, will wissen, was passiert ist, und der Kopf
+        // darueber hat es schon gesagt. Die Zahlen darunter erklaeren sich
+        // selbst.
+        const satz = '';
         const gitter = `<div class="nd-gitter">
             ${wr != null ? `<div><b class="g">${wr} %</b><span>Siegquote</span></div>` : ''}
             ${d.wins != null ? `<div><b>${d.wins}${nl != null ? ' : ' + nl : ''}</b><span>Siege${nl != null ? ' zu Niederlagen' : ''}</span></div>` : ''}
@@ -566,10 +592,12 @@ function _newsDetailMitte(s){
       }
       // Die Stufe IST die Story — und das Blatt war leer.
       case 'insignium_stufe': {
+        // Darunter stand „Die beiden obersten Stufen erreicht kaum jemand,
+        // deshalb ist diese Karte Breaking [§C30]" — die App erklaerte dem
+        // Leser ihre eigene Regel und zitierte dabei ihren Paragraphen. Dass
+        // die Stufe selten ist, sagt die Leiter im Block darueber.
         return `<div class="nd-section">Die neue Stufe</div>`
-          + _newsInsigniumBlock(d.pid, d.stufe)
-          + (d.oben ? `<div class="nd-satz">Die beiden obersten Stufen erreicht kaum jemand
-              — deshalb ist diese Karte Breaking [§C30].</div>` : '');
+          + _newsInsigniumBlock(d.pid, d.stufe);
       }
       case 'ambient': {
         // Vorher stand hier „Im Fokus: Stefan" — ein Wappen mit dem Namen, den
