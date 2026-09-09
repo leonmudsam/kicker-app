@@ -2,7 +2,6 @@
   .ic{display:inline-grid;place-items:center;vertical-align:middle;line-height:1}
   .ic svg{display:block;width:1em;height:1em;stroke:currentColor;fill:none;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .ic-sm{font-size:14px} .ic-md{font-size:18px} .ic-lg{font-size:22px} .ic-xl{font-size:28px}
 
   /* Medaillen-Badge (Top-3) – ersetzt 🥇🥈🥉 */
   .medal-b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:6px;
@@ -44,11 +43,6 @@
   .ee.svg-ic{display:grid;place-items:center;color:var(--faint)}
   .ee.svg-ic svg{width:48px;height:48px;stroke:currentColor;fill:none;
     stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-
-  /* pp-crown (Krone für Legende) als SVG */
-  .pp-crown svg{width:24px;height:24px;stroke:var(--gold);fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
-    filter:drop-shadow(0 4px 8px rgba(247,207,74,.4))}
 
   /* Award-Card mit SVG-Icon (override emoji font-size) */
   .award .emoji.svg-ic{color:inherit}
@@ -1114,21 +1108,8 @@
     background:radial-gradient(240px 150px at 6% 0%,rgba(240,86,106,.13),transparent 70%),var(--bg2)}
   .nd-brk .nf-brk-band{margin:-18px -20px 14px;border-radius:18px 18px 0 0}
   .nd-brk .nf-motiv{color:var(--red);opacity:.11}
-
-  /* Mini-Visuals (rechts) — datengetrieben aus dataRef */
-  .nf-v{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:46px}
-  .nf-v-streak{display:flex;align-items:center;gap:1px}
-  .nf-v-streak svg{width:18px;height:18px;fill:currentColor;stroke:none}
   .nf-v-streak .fl{color:#ff7849}.nf-v-streak .fl:nth-child(2){color:#ff5a4d}.nf-v-streak .fl:nth-child(3){color:var(--red)}
   .nf-v-streak .n{font-family:'Sometype Mono',monospace;font-weight:700;font-size:17px;margin-left:5px;color:var(--cc)}
-  .nf-bigchip{font-family:'Sometype Mono',monospace;font-weight:700;font-size:17px;color:var(--cc);
-    background:var(--cct);padding:6px 11px;border-radius:10px;white-space:nowrap}
-  .nf-vlabel{font-family:'Sometype Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-  .nf-v-badge{width:50px;height:50px;border-radius:13px;display:grid;place-items:center;
-    background:radial-gradient(circle at 50% 35%,rgba(247,207,74,.32),rgba(247,207,74,.07));border:1px solid rgba(247,207,74,.42)}
-  .nf-v-badge svg{width:26px;height:26px;fill:none;stroke:#f7cf4a;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .nf-v-crown{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--cc)}
-  .nf-v-crown svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .nf-v-crown .rk{font-family:'Archivo Black',sans-serif;font-size:15px}
   /* Story-Detail-Popover (Layer auf z-index 140, ÜBER Mini-Popup 130) */
   .nd-bg{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.65);

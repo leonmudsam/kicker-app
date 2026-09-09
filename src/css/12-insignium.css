@@ -258,7 +258,4 @@
     padding:11px 13px;border-top:1px solid var(--line2);
     background:var(--surface2);font-size:12px;color:var(--ink2)}
   .lb-summe .num{font-family:'Archivo Black',sans-serif;font-size:19px;color:var(--ink)}
-
-  /* Das Insignium als Bild auf einer Story-Karte [§11.6b]. */
-  .nf-v-ins{display:flex;flex-direction:column;align-items:center;gap:3px}
   .nf-v-ins svg.ins{width:52px;height:52px;opacity:.95}

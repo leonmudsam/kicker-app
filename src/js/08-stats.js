@@ -82,12 +82,21 @@ function teamStats(){
 
 
 // Detaillierte Team-Stats für das Team-Profil-Sheet.
-// Ein Walk durch alle Matches → komplettes Detail. Gecached pro Team-Key + Cache-Version.
+// Ein Walk durch alle Matches → komplettes Detail.
+//
+// Der Schlüssel trägt die Cache-Version, wie überall sonst. Er tat es nicht,
+// obwohl der Kommentar darüber es behauptete: geleert wurde der Topf nur über
+// den Tag 'teams', und den reicht der Eingabe-Tab beim Speichern nicht mit.
+// Wer ein Duo-Profil offen hatte und danach eine Partie eintrug, sah gemessen
+// weiter 26:4 statt 27:4. Mit der Version im Schlüssel kann keine Tag-Liste
+// das mehr vergessen.
 function teamDetail(p1,p2){
   const ids=[p1,p2].sort();
-  const key=ids.join('|');
+  const key=ids.join('|')+'_'+matches.length+'_'+_cache.version;
   if(!_cache._teamDetail) _cache._teamDetail={};
   if(_cache._teamDetail[key]) return _cache._teamDetail[key];
+  // Mit der Version im Schlüssel wächst der Topf sonst über jede Version mit.
+  if(Object.keys(_cache._teamDetail).length > 80) _cache._teamDetail={};
 
   let wins=0,losses=0,gf=0,ga=0,eloDelta=0;
   const oppStats={}; // einzelner Gegnerspieler → {g,w}
@@ -394,9 +403,15 @@ function teamAchievements(p1Id, p2Id){
 // asymmetrisch ist — h2hDetail(X,Y).asOppForA ≠ h2hDetail(Y,X).asOppForA.
 // ════════════════════════════════════════════════════════════════════
 function h2hDetail(idA, idB){
-  const key = idA + '|' + idB;
+  // Dieselbe Regel wie überall: die Cache-Version gehört in den Schlüssel.
+  // Ohne sie kam der Topf durch KEINE Invalidierung — gemessen zeigte das
+  // Bilanz-Blatt nach einer neuen Partie weiter 110 Duelle statt 111.
+  const key = idA + '|' + idB + '_' + matches.length + '_' + _cache.version;
   if(!_cache._h2hDetail) _cache._h2hDetail = {};
   if(_cache._h2hDetail[key]) return _cache._h2hDetail[key];
+  // Ein Topf, der nur wächst, ist ein Leck: bei jedem Versionswechsel kämen
+  // alle Paare noch einmal dazu.
+  if(Object.keys(_cache._h2hDetail).length > 80) _cache._h2hDetail = {};
 
   const asTeam = {g:0, w:0, gf:0, ga:0, eloDelta:0};
   const asOppForA = {g:0, w:0, gf:0, ga:0, eloDelta:0};

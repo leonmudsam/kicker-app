@@ -32,90 +32,7 @@
   .award.blue .emoji{color:var(--ink2)}
   .award.purple .emoji{color:var(--ink2)}
   .award.red .emoji{color:var(--red)}
-
-  .neg-divider{margin:24px 0 6px;padding:12px 16px;background:linear-gradient(90deg,rgba(240,86,106,.08),transparent);
-    border-radius:var(--r-sm);display:flex;align-items:center;gap:8px;
-    font-size:10px;text-transform:uppercase;letter-spacing:.16em;color:var(--red);font-weight:700}
-  .neg-divider::after{content:"";flex:1;height:1px;background:rgba(240,86,106,.2)}
-
-  /* ============ [§C8b] AWARDS V3 — Story Cards ============ */
-  .awcard{position:relative;border-radius:18px;padding:16px 18px;overflow:hidden;cursor:pointer;
-    transition:transform .15s;margin-bottom:9px;min-height:88px;
-    display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line)}
-  .awcard:active{transform:scale(.99)}
-  /* Watermark: große Hintergrundzahl rechts. Slightly smaller pro user request. */
-  .awcard-watermark{position:absolute;font-family:'Archivo Black',sans-serif;font-size:74px;
-    letter-spacing:-.05em;line-height:.85;right:-4px;top:50%;transform:translateY(-50%);
-    opacity:.13;pointer-events:none;font-weight:900;z-index:0}
   .awcard-watermark.small{font-size:58px}
-
-  .awcard-info{flex:1;min-width:0;position:relative;z-index:1}
-  .awcard-label{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
-    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .awcard-name{font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.02em;
-    line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .awcard-stat{font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;
-    margin-top:5px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
-  .awcard-av-wrap{position:relative;flex-shrink:0;z-index:1;width:54px;height:54px}
-  .awcard-av{width:54px;height:54px;border-radius:50%;
-    background:linear-gradient(155deg,#3a4540,#212824);display:grid;place-items:center;
-    font-size:26px;border:2px solid var(--line2)}
-  .awcard-av.av-init{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--bg)}
-  .awcard-crown{position:absolute;top:-5px;left:50%;transform:translateX(-50%);
-    background:var(--surface);border-radius:50%;padding:1.5px;line-height:0;z-index:3}
-  .awcard-crown svg{display:block;width:14px;height:14px;fill:none;stroke-width:2.5;
-    stroke-linecap:round;stroke-linejoin:round}
-
-  /* Team-Pair: zwei überlappende Avatare */
-  .awcard-av-pair{position:relative;display:flex;width:auto !important}
-  .awcard-av-wrap.pair{width:auto}
-  .awcard-av-pair .awcard-av{margin:0;width:46px;height:46px;font-size:22px}
-  .awcard-av-pair .awcard-av:nth-child(2){margin-left:-16px}
-
-  /* ─── Color variants ─── */
-  .aw-acid{background:linear-gradient(105deg,rgba(190,242,100,.18),rgba(190,242,100,.04) 65%,var(--surface));
-    border:1px solid rgba(190,242,100,.28)}
-  .aw-acid .awcard-watermark{color:var(--acid)}
-  .aw-acid .awcard-label,.aw-acid .awcard-stat{color:var(--acid)}
-  .aw-acid .awcard-av{border-color:var(--acid)}
-  .aw-acid .awcard-crown svg{stroke:var(--acid);filter:drop-shadow(0 0 4px rgba(190,242,100,.6))}
-
-  .aw-gold{background:linear-gradient(105deg,rgba(247,207,74,.18),rgba(247,207,74,.04) 65%,var(--surface));
-    border:1px solid rgba(247,207,74,.28)}
-  .aw-gold .awcard-watermark{color:var(--gold)}
-  .aw-gold .awcard-label,.aw-gold .awcard-stat{color:var(--gold)}
-  .aw-gold .awcard-av{border-color:var(--gold)}
-  .aw-gold .awcard-crown svg{stroke:var(--gold);filter:drop-shadow(0 0 4px rgba(247,207,74,.6))}
-
-  .aw-orange{background:linear-gradient(105deg,rgba(255,120,73,.18),rgba(255,120,73,.04) 65%,var(--surface));
-    border:1px solid rgba(255,120,73,.28)}
-  .aw-orange .awcard-watermark{color:var(--orange)}
-  .aw-orange .awcard-label,.aw-orange .awcard-stat{color:var(--orange)}
-  .aw-orange .awcard-av{border-color:var(--orange)}
-  .aw-orange .awcard-crown svg{stroke:var(--orange);filter:drop-shadow(0 0 4px rgba(255,120,73,.6))}
-
-  .aw-blue{background:linear-gradient(105deg,rgba(86,180,232,.18),rgba(86,180,232,.04) 65%,var(--surface));
-    border:1px solid rgba(86,180,232,.28)}
-  .aw-blue .awcard-watermark{color:var(--blue)}
-  .aw-blue .awcard-label,.aw-blue .awcard-stat{color:var(--blue)}
-  .aw-blue .awcard-av{border-color:var(--blue)}
-  .aw-blue .awcard-crown svg{stroke:var(--blue);filter:drop-shadow(0 0 4px rgba(86,180,232,.6))}
-
-  .aw-purple{background:linear-gradient(105deg,rgba(167,139,250,.18),rgba(167,139,250,.04) 65%,var(--surface));
-    border:1px solid rgba(167,139,250,.28)}
-  .aw-purple .awcard-watermark{color:var(--purple)}
-  .aw-purple .awcard-label,.aw-purple .awcard-stat{color:var(--purple)}
-  .aw-purple .awcard-av{border-color:var(--purple)}
-  .aw-purple .awcard-crown svg{stroke:var(--purple);filter:drop-shadow(0 0 4px rgba(167,139,250,.6))}
-
-  .aw-red{background:linear-gradient(105deg,rgba(240,86,106,.22),rgba(240,86,106,.04) 65%,#160e0f);
-    border:1px solid rgba(240,86,106,.3)}
-  .aw-red .awcard-watermark{color:var(--red);opacity:.10}
-  .aw-red .awcard-label,.aw-red .awcard-stat{color:var(--red)}
-  .aw-red .awcard-av{border-color:var(--red);opacity:.85;filter:grayscale(.3)}
   .awcard.neg .awcard-av-wrap .awcard-skull{position:absolute;top:-3px;right:-3px;
     width:22px;height:22px;border-radius:50%;background:#dc2626;border:2px solid var(--bg);
     display:grid;place-items:center;font-size:12px;line-height:1;z-index:3}
@@ -317,46 +234,21 @@
   .aw-hero-icon-glow.purple{background:rgba(167,139,250,.12);color:var(--purple);box-shadow:0 0 60px rgba(167,139,250,.18)}
   .aw-hero-title{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;margin:14px 0 0;text-align:center}
   .aw-hero-sub{color:var(--muted);font-size:11px;margin-top:4px;font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.16em;text-align:center}
-
-  /* Podium */
-  .aw-podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin-top:22px;padding:0 4px 14px}
-  .aw-pod{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0}
-  .aw-pod-av{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;font-size:26px;
-    border:2px solid var(--surface);position:relative;z-index:2;
-    font-family:'Archivo Black',sans-serif;color:var(--bg)}
-  .aw-pod-pair{display:flex;align-items:center;position:relative;z-index:2}
-  .aw-pod-pair .aw-pod-av{width:42px;height:42px;font-size:18px}
-  .aw-pod-pair .aw-pod-av+.aw-pod-av{margin-left:-10px}
   .aw-pod.first .aw-pod-av{width:64px;height:64px;font-size:30px;border-color:var(--gold);box-shadow:0 0 20px rgba(247,207,74,.4)}
   .aw-pod.second .aw-pod-av{border-color:var(--silber)}
-  .aw-pod.third .aw-pod-av{border-color:var(--bronze)}
   .aw-pod.first .aw-pod-pair .aw-pod-av{width:48px;height:48px;font-size:20px;box-shadow:0 0 20px rgba(247,207,74,.4)}
-  .aw-pod-crown{position:absolute;top:-14px;font-size:22px;z-index:3;line-height:1}
-  .aw-pod-name{font-family:'Archivo Black',sans-serif;font-size:13px;margin-top:8px;text-align:center;line-height:1.1;letter-spacing:-.01em;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   .aw-pod.first .aw-pod-name{font-size:14.5px}
-  .aw-pod-val{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);margin-top:3px;font-weight:600;text-align:center;
-    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .aw-pod.first .aw-pod-val{color:var(--gold);font-size:12.5px}
-  .aw-pod-block{margin-top:8px;width:100%;border-radius:8px 8px 0 0;font-family:'Archivo Black',sans-serif;display:grid;place-items:center;font-size:15px}
   .aw-pod-block.gold  {background:linear-gradient(180deg,var(--gold),rgba(247,207,74,.3));color:#1d1700;height:62px}
   .aw-pod-block.silver{background:linear-gradient(180deg,var(--silber),rgba(194,201,208,.3));color:#1a1f1c;height:48px}
   .aw-pod-block.bronze{background:linear-gradient(180deg,var(--bronze),rgba(192,132,87,.3));color:#241205;height:36px}
-
-  /* Geteilte Plätze: mehrere Einträge im selben Podium-Slot */
-  .aw-pod-tied-avs{display:flex;align-items:center;justify-content:center;position:relative;z-index:2}
-  .aw-pod-tied-avs .aw-pod-av+.aw-pod-av{margin-left:-12px}
   .aw-pod.tied .aw-pod-av{width:38px;height:38px;font-size:18px;border:2px solid var(--surface)}
   .aw-pod.tied.first .aw-pod-av{width:44px;height:44px;font-size:20px;border-color:var(--gold);box-shadow:0 0 14px rgba(247,207,74,.3)}
   .aw-pod.tied .aw-pod-pair .aw-pod-av{width:32px;height:32px;font-size:14px}
   .aw-pod.tied.first .aw-pod-pair .aw-pod-av{width:38px;height:38px;font-size:16px}
-  .aw-pod-tied-names{margin-top:8px;display:flex;flex-direction:column;gap:1px;max-width:100%;text-align:center}
   .aw-pod-tied-names .nm{font-family:'Archivo Black',sans-serif;font-size:10.5px;letter-spacing:-.01em;line-height:1.25;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
   .aw-pod.tied.first .aw-pod-tied-names .nm{font-size:12px}
-  .aw-pod-tied-names .more{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted);font-weight:600;margin-top:2px;letter-spacing:.04em}
-  /* Tied-Badge unter den Namen */
-  .aw-pod-tied-badge{font-family:'Sometype Mono',monospace;font-size:8.5px;color:var(--muted);font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-top:3px}
 
   /* Empty-Slot dezenter „—" Hinweis */
   .aw-pod.empty .aw-pod-empty-hint{font-family:'Sometype Mono',monospace;font-size:14px;color:var(--faint);margin-bottom:6px}

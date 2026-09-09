@@ -1171,6 +1171,21 @@ ok(_ms.length > 0 && _ms.every(x => x.badge === x.titel && x.punkte > 0),
    _ms.map(x => nm(x.pid) + ' ' + x.titel + ' Titel / Badge ' + x.badge
      + ' / ' + Math.round(x.punkte) + ' P').join(' · '));
 
+// 6. Die Zaehler selbst. Fuenfzig Auszeichnungen haengen an fuenfzig
+//    Zaehlfunktionen, und keine einzige davon war je gemessen — dabei
+//    speist ihr Ergebnis ueber `prestigeTabelle` die ganze Insignium-Leiter.
+//    Ein Zaehler, der beim Umbau eine Partie mehr oder weniger sieht,
+//    verschiebt still, wer welches Zeichen traegt.
+//    Die Fixtures sind fest, also ist die Zahl es auch. Aendert sich der
+//    Katalog absichtlich, nennt das rote Ergebnis die neue Zeile — sie wird
+//    uebernommen, nicht weggeklickt.
+const _bz = K.eval(`players.map(p => {
+  const b = getCachedBadges(p.id) || [];
+  return p.name + ':' + b.length + '/' + b.reduce((n, x) => n + (x.count || 0), 0);
+}).join(' ')`);
+const _bzSoll = 'Alex:18/33 Anton:7/7 Henry:29/131 Jane:26/132 Jannik:22/83 Johannes:24/71 Julian:32/231 Leo:30/234 Leon:39/433 Martin:37/317 Maxi:33/380 Stefan:21/61';
+ok(_bz === _bzSoll, 'jeder Spieler haelt dieselben Auszeichnungen wie gemessen', _bz);
+
 // ══════════════════════════════════════════════════════════════════════
 console.log('\n═══ GLÜCK: EINTRÄGE, DIE NICHT NUR DEN BESTEN GEHÖREN ═══');
 // Wer besser spielt, gewinnt jede Quote und jede Serie — am Ende liegen
@@ -1538,6 +1553,65 @@ ok(_wh.halter > 0, 'Der Wochenherr ist vergeben', _wh.halter + ' Halter');
 ok(_wh.rang >= 2, 'und er hat einen Verfolger', _wh.rang + ' im Rennen');
 ok(/^\d+ %/.test(_wh.ev), 'sein Beleg beginnt mit dem Anteil, nach dem sortiert wird',
    _wh.ev);
+
+// ── „Player of the Day" gibt es genau einmal ────────────────────────
+// Drei Stellen bestimmten den Sieger eines Spieltags: `_periodWinnerMap` mit
+// Tiebreak ueber das Elo-Delta, und daneben „Allwetter" und „Tag der Goetter"
+// mit einer eigenen Rechnung OHNE Tiebreak. Gemessen sind 12 der 51
+// entschiedenen Tage punktgleich — dort trugen beide Spieler den Tag, obwohl
+// nur einer Player of the Day ist. Beide Beschreibungen sagen ausdruecklich
+// „Player of the Day geworden" [§C27].
+//
+// Nachgerechnet wird hier unabhaengig: aus der Siegerliste, die auch das
+// POTD-Badge zaehlt. Wer die tolerante Rechnung zurueckholt, faellt hier auf.
+const _potdEin = JSON.parse(K.eval(`JSON.stringify((function(){
+  const sieger = _periodWinnerMap(matches, 'day');
+  const heute = new Date().toISOString().slice(0,10);
+  const proTag = matchesByDay(matches);
+  // Wie viele entschiedene Tage sind punktgleich? Ohne sie prueft der
+  // Vergleich nichts.
+  let gleich = 0, entschieden = 0;
+  Object.keys(proTag).forEach(d => {
+    if(d === heute) return;
+    const ms = proTag[d]; if(ms.length < 2) return;
+    const w = {};
+    ms.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(pid => {
+      if(!w[pid]) w[pid] = 0;
+      const onA = (pid===m.a1||pid===m.a2);
+      if((onA&&m.winner==='A')||(!onA&&m.winner==='B')) w[pid]++;
+    }));
+    const mx = Math.max.apply(null, Object.values(w));
+    if(mx < 3) return;
+    entschieden++;
+    if(Object.keys(w).filter(p => w[p] === mx).length > 1) gleich++;
+  });
+  const tage = Object.keys(proTag).filter(d => d !== heute).sort();
+  const abweichung = [];
+  players.forEach(p => {
+    // Allwetter: fuenf verschiedene Wochentage als SIEGER.
+    const wt = new Set();
+    tage.forEach(t => { if(sieger[t] !== p.id) return;
+      const [y,mo,d] = t.split('-').map(Number);
+      wt.add(new Date(y, mo-1, d).getDay()); });
+    const sollAll = wt.size >= 5 ? 1 : 0;
+    // Tag der Goetter: drei eigene Spieltage in Folge als SIEGER.
+    let cur = 0, sollGod = 0;
+    tage.forEach(t => {
+      if(!proTag[t].some(m => matchOf(p.id, m))) return;   // Tag ohne ihn
+      if(sieger[t] === p.id){ cur++; if(cur >= 3){ sollGod++; cur = 0; } }
+      else cur = 0;
+    });
+    const istAll = countAllwetter(p.id), istGod = countGodlyStreak(p.id);
+    if(istAll !== sollAll) abweichung.push(pmap()[p.id].name + ' Allwetter ' + istAll + '≠' + sollAll);
+    if(istGod !== sollGod) abweichung.push(pmap()[p.id].name + ' Goetter ' + istGod + '≠' + sollGod);
+  });
+  return {entschieden, gleich, abweichung};
+})())`));
+ok(_potdEin.gleich > 0, 'es gibt punktgleiche Spieltage — sonst prueft der Vergleich nichts',
+   _potdEin.gleich + ' von ' + _potdEin.entschieden + ' entschiedenen Tagen');
+ok(_potdEin.abweichung.length === 0,
+   'Allwetter und Tag der Goetter zaehlen denselben Sieger wie das POTD-Badge',
+   _potdEin.abweichung.join(' · ') || 'alle gleich');
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

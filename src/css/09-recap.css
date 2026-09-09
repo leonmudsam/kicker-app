@@ -204,6 +204,5 @@
   .rcp-mehr.klick:active{color:var(--ink2);border-color:var(--line2);background:var(--surface)}
   .rcp-mehr::after{content:"";width:5px;height:5px;border-right:2px solid currentColor;
     border-top:2px solid currentColor;transform:rotate(45deg);border-radius:1px}
-  .rcp-tplates{margin-top:0}
   /* Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen. */
   .rcp-awards.ungerade > :last-child{grid-column:1 / -1}

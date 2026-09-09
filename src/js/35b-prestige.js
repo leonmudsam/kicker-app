@@ -356,6 +356,8 @@ function meisterTitel(pid){
   const key = 'meister_' + pid + '_' + matches.length + '_' + _cache.version;
   if(!_cache._meister) _cache._meister = {};
   if(_cache._meister[key] != null) return _cache._meister[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._meister).length > 60) _cache._meister = {};
   const cur = currentSeason().id;
   let n = 0;
   (allPastSeasons() || []).forEach(sid => {

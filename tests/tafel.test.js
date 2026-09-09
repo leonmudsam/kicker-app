@@ -799,6 +799,165 @@ ok(K.eval("_seasonTitleCtx('2026-08') === _seasonTitleCtx('2026-08')"),
   ok(r[1] > 0, sid + ': der Rest liegt hinter „Alle anzeigen"', r[1] + ' weitere');
 });
 
+// ─── Kein Topf überlebt eine neue Partie ─────────────────────────────
+// Zwei Caches trugen die Cache-Version nicht im Schlüssel: das Duo-Detail und
+// die Bilanz zweier Spieler. Geleert wurden sie nur über einen Tag, den der
+// Eingabe-Tab beim Speichern gar nicht mitreicht — wer ein Blatt offen hatte
+// und danach eine Partie eintrug, las gemessen weiter die alten Zahlen.
+const _topf = JSON.parse(K.eval(`JSON.stringify((function(){
+  const a = players[8].id, b = players[9].id;
+  const lies = () => ({duo: teamDetail(a,b).wins + ':' + teamDetail(a,b).losses,
+                       bilanz: h2hDetail(a,b).asOppForA.g});
+  const vorher = lies();
+  const letzte = matches[matches.length-1];
+  // Zwei neue Partien: eine gemeinsam (Duo-Bilanz), eine gegeneinander.
+  const zusammen = Object.assign({}, letzte, {id:'topf_a',
+    a1:a, a2:b, b1:players[0].id, b2:players[1].id,
+    score_a:10, score_b:0, winner:'A', deltas:{},
+    created_at:new Date(new Date(letzte.created_at).getTime() + 3600000).toISOString()});
+  const gegen = Object.assign({}, letzte, {id:'topf_b',
+    a1:a, a2:players[0].id, b1:b, b2:players[1].id,
+    score_a:10, score_b:0, winner:'A', deltas:{},
+    created_at:new Date(new Date(letzte.created_at).getTime() + 7200000).toISOString()});
+  const alt = matches;
+  matches = [...matches, zusammen, gegen];
+  invalidateCache(['global', 'stats', 'awards', 'badges']);   // genau wie doSaveMatch
+  const nachher = lies();
+  matches = alt; invalidateCache();
+  return {vorher, nachher};
+})())`));
+ok(_topf.nachher.duo !== _topf.vorher.duo,
+   'das Duo-Detail sieht eine neue gemeinsame Partie',
+   _topf.vorher.duo + ' → ' + _topf.nachher.duo);
+ok(_topf.nachher.bilanz === _topf.vorher.bilanz + 1,
+   'die Bilanz zweier Spieler sieht ein neues Duell',
+   _topf.vorher.bilanz + ' → ' + _topf.nachher.bilanz);
+
+// Und die Regel dahinter, statt Stichproben: JEDER Cache-Schlüssel trägt die
+// Version. Geprüft wird die ausgelieferte Datei — dort steht, was wirklich
+// läuft. Ein Topf ohne Version hängt allein an der Tag-Liste des Aufrufers,
+// und die kennt der Autor eines neuen Topfes nicht.
+const _schluessel = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const zeilen = quelle.split('\n');
+  const ohne = [];
+  zeilen.forEach((z, i) => {
+    const m = z.match(/_cache\.(_[A-Za-z0-9_]*Key)\s*=(?!=)\s*([^;]+);/);
+    if(!m) return;
+    const rechts = m[2].trim();
+    // Steht der Ausdruck direkt da, wird er direkt geprüft.
+    if(!/^[A-Za-z0-9_]+$/.test(rechts)){
+      if(!/_cache\.version/.test(rechts)) ohne.push(m[1] + ' ← ' + rechts.slice(0, 80));
+      return;
+    }
+    const v = rechts;
+    // Die Zuweisung dieser Variablen steht im selben Funktionsrumpf davor —
+    // gesucht wird bis zu dessen Anfang, nicht ein paar Zeilen weit.
+    let anfang = 0;
+    for(let j = i; j >= 0; j--){ if(/^function\s/.test(zeilen[j])){ anfang = j; break; } }
+    for(let j = i; j >= anfang; j--){
+      const d = zeilen[j].match(new RegExp('(?:const|let|var)\\s+' + v + '\\s*='));
+      if(!d) continue;
+      let def = zeilen[j];
+      let k = j;
+      while(!/;\s*$/.test(def) && k + 1 < zeilen.length && k - j < 6) def += ' ' + zeilen[++k];
+      if(!/_cache\.version/.test(def)) ohne.push(m[1] + ' ← ' + def.trim().slice(0, 80));
+      return;
+    }
+    ohne.push(m[1] + ' (Zuweisung nicht gefunden)');
+  });
+  return ohne;
+})();
+ok(_schluessel.length === 0, 'jeder Cache-Schluessel traegt die Version',
+   _schluessel.slice(0, 3).join(' · ') || 'alle');
+
+// Ein Topf, dessen Schluessel die Version traegt, bekommt zu jeder Version
+// einen neuen Eintrag — und behaelt jeden alten. Zwanzig Partien in einer
+// Sitzung heissen dann zwanzig Generationen Auszeichnungslisten im
+// Speicher, von denen neunzehn niemand mehr liest. Jeder solche Topf
+// braucht deshalb einen Deckel.
+const _deckel = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const toepfe = new Set();
+  const mit = new Set();
+  const re = /_cache\.(_[A-Za-z0-9_]+)\s*\[\s*key\s*\]\s*=(?!=)/g;
+  let m;
+  while((m = re.exec(quelle))) toepfe.add(m[1]);
+  const re2 = /Object\.keys\(_cache\.(_[A-Za-z0-9_]+)\)\.length\s*>/g;
+  while((m = re2.exec(quelle))) mit.add(m[1]);
+  return [...toepfe].filter(t => !mit.has(t));
+})();
+ok(_deckel.length === 0, 'jeder Topf mit Schluesseln hat einen Deckel',
+   _deckel.join(' · ') || 'alle');
+
+// Der Bau haengt sechzehn Stylesheets aneinander, und eine Regel fuer eine
+// Ansicht, die es nicht mehr gibt, faellt danach niemandem mehr auf: die
+// Hall of Fame, die alten Award-Karten, das Champion-Banner und die
+// Perzentil-Balken standen mit 157 Regeln in der Auslieferung, ohne dass
+// ein einziges Element sie je getragen haette.
+// Eine Klasse gilt als benutzt, wenn ihr Name im Code steht ODER wenn
+// irgendein Stueck Zeichenkette ein Praefix von ihr ist — das faengt auch
+// `' zn-l' + stufe`. Eine Regel gilt nur dann als tot, wenn JEDER Teil
+// ihres Selektors eine Klasse nennt und alle diese Klassen tot sind:
+// `select,.fld{…}` traegt eine tote Klasse und trotzdem ein lebendes
+// Element.
+const _toteRegeln = (function(){
+  const html = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const css = (html.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || [])
+    .join('\n').replace(/<\/?style[^>]*>/gi, '').replace(/\/\*[\s\S]*?\*\//g, ' ');
+  // Ohne die HTML-Kommentare: der Kopf der Datei erklaert den Aufbau und
+  // nennt dabei <script>. Von dort bis zum ersten </script> lag das ganze
+  // CSS im „Skript" — und jede Klasse galt damit als benutzt.
+  const ohneKomm = html.replace(/<!--[\s\S]*?-->/g, ' ');
+  const skripte = (ohneKomm.match(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi) || []);
+  // Ohne die Kommentare: sie sind auf Deutsch, und ein Wort wie „Karte"
+  // machte jede Klasse, die mit ihm anfaengt, still zu einer benutzten.
+  const js = (skripte.join('\n') + ohneKomm.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' '))
+    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
+  const stuecke = new Set(js.match(/[-A-Za-z0-9_]+/g) || []);
+  const benutzt = n => {
+    if(stuecke.has(n)) return true;
+    for(const st of stuecke) if(st.length >= 4 && n.length > st.length && n.startsWith(st)) return true;
+    return false;
+  };
+  const tot = new Map();
+  const istTot = n => { if(!tot.has(n)) tot.set(n, !benutzt(n)); return tot.get(n); };
+  const raus = [];
+  let tiefe = 0, start = 0, sel = '';
+  for(let i = 0; i < css.length; i++){
+    if(css[i] === '{'){ if(tiefe === 0) sel = css.slice(start, i); tiefe++; }
+    else if(css[i] === '}'){ tiefe--; if(tiefe === 0){
+      const teile = sel.split(',').map(x => x.trim()).filter(Boolean);
+      const weg = teile.length && teile.every(t => {
+        const kl = (t.match(/\.[-A-Za-z_][-\w]*/g) || []).map(x => x.slice(1));
+        return kl.length && kl.every(istTot);
+      });
+      if(weg && !/@/.test(sel)) raus.push(sel.trim().replace(/\s+/g, ' ').slice(0, 50));
+      start = i + 1;
+    }}
+  }
+  return raus;
+})();
+ok(_toteRegeln.length === 0, 'keine CSS-Regel fuer eine Ansicht, die es nicht gibt',
+   _toteRegeln.length + ': ' + _toteRegeln.slice(0, 4).join(' · '));
+
+// Dasselbe fuer den Zeichen-Katalog. Der Kommentar ueber `ICONS` warnt seit
+// jeher vor der toten Definition; nachgezaehlt hat es nie jemand, und zwei
+// Zeichnungen standen ohne einen einzigen Aufrufer in der Auslieferung.
+const _toteIcons = (function(){
+  const html = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const i = html.indexOf('const ICONS = {');
+  if(i < 0) return ['ICONS nicht gefunden'];
+  const ende = html.indexOf('\n};', i);
+  const block = html.slice(i, ende);
+  const namen = [...block.matchAll(/^\s{2}([A-Za-z][\w]*):\s/gm)].map(m => m[1]);
+  const rest = html.slice(0, i) + html.slice(ende);
+  const wort = new Set(rest.match(/[A-Za-z_$][\w$]*/g) || []);
+  return namen.filter(n => !wort.has(n));
+})();
+ok(_toteIcons.length === 0, 'kein Zeichen im Katalog ohne Aufrufer',
+   _toteIcons.join(' · ') || 'alle');
+
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
 process.exit(fails === 0 ? 0 : 1);

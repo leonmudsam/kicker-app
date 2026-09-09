@@ -48,9 +48,13 @@ function invalidateCache(keys=null){
 
 
 
-// Speichert den letzten Sim-State + Index des letzten verarbeiteten Matches
+// Speichert den letzten Sim-State + Index des letzten verarbeiteten Matches.
+// `_lastSimVersion` gehört dazu: nur wenn die Version dieselbe ist, darf der
+// Lauf inkrementell fortgesetzt werden. Sie stand dreihundert Zeilen weiter
+// unten und lebte allein vom Hoisting.
 let _lastSimState = null;
 let _lastSimIndex = -1;
+let _lastSimVersion = 0;
 
 function getGlobalSim(){
   const key='global_'+matches.length+'_'+_cache.version;
@@ -67,15 +71,7 @@ function getGlobalSim(){
       });
       _lastSimState = sim;
       _lastSimIndex = matches.length - 1;
-      _cache._globalKey = key;
-      _cache._globalSim = sim;
-      // Abgeleitete Maps invalidieren — werden lazy neu gebaut
-      _cache._historyByMatchId = null;
-      _cache._snapMap = null;
-      _cache._seasonRankings = null;
-      _cache._matchesBySeason = null;
-      _cache._rankSnapshots = null;
-      _cache._streakSnap = null;
+      _merkeSim(sim);
       return sim;
     }
   }
@@ -85,7 +81,14 @@ function getGlobalSim(){
   _lastSimState = sim;
   _lastSimIndex = matches.length - 1;
   _lastSimVersion = _cache.version;
-  _cache._globalKey = key;
+  _merkeSim(sim);
+  return sim;
+}
+// Der neue Lauf und alles, was aus ihm abgeleitet ist. Die Liste stand zweimal
+// im selben Ablauf; eine Map, die nur in einem der beiden Zweige vergessen
+// wird, ist ein Fehler, den niemand sieht.
+function _merkeSim(sim){
+  _cache._globalKey = 'global_' + matches.length + '_' + _cache.version;
   _cache._globalSim = sim;
   _cache._historyByMatchId = null;
   _cache._snapMap = null;
@@ -93,7 +96,6 @@ function getGlobalSim(){
   _cache._matchesBySeason = null;
   _cache._rankSnapshots = null;
   _cache._streakSnap = null;
-  return sim;
 }
 
 // ─── §2.2 Abgeleitete Sim-Maps (snapMap, historyByMatchId) ───────────
@@ -185,6 +187,10 @@ function getRankSnapshots(){
     preEntries.sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     const preRank = {};
     preEntries.forEach(([pid], idx) => preRank[pid] = idx + 1);
+    // Wer vor dem Match Erster war, steht hier schon sortiert an erster
+    // Stelle. „Thronfäller" suchte ihn stattdessen je Spieler und je Match
+    // durch die ganze Rangtabelle — dieselbe Antwort, zwölfmal gesucht.
+    const preTop1 = preEntries.length ? preEntries[0][0] : null;
     // Apply this match's deltas (vom globalSim)
     const histEntry = histMap.get(m.id);
     if(histEntry && histEntry.deltas){
@@ -197,7 +203,7 @@ function getRankSnapshots(){
     postEntries.sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     const postRank = {};
     postEntries.forEach(([pid], idx) => postRank[pid] = idx + 1);
-    out[m.id] = {preRank, postRank};
+    out[m.id] = {preRank, postRank, preTop1};
   }
   _cache._rankSnapshotsKey = key;
   _cache._rankSnapshots = out;
@@ -397,9 +403,6 @@ function getSeasonRankingsCache(){
   return out;
 }
 
-let _lastSimVersion = 0;
-
-
 // `sid` überschreibt die Saison für EINEN Aufruf (siehe awardRankings). Sie
 // gehört zwingend in den Schlüssel: sonst gibt der zweite Aufruf die Liste
 // der ersten Saison zurück, und das Profil zeigt die Awards eines Monats,
@@ -411,6 +414,8 @@ function getCachedAwardRankings(period, sid){
   const key=period+'_'+cacheSuffix+'_'+matches.length+'_'+_cache.version;
   if(!_cache._awards) _cache._awards={};
   if(_cache._awards[key]) return _cache._awards[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._awards).length > 40) _cache._awards={};
   const r=_awardRankingsUncached(period, sid);
   _cache._awards[key]=r;
   return r;

@@ -71,7 +71,7 @@ const BADGES=[
     // ══ MEHRFACH-BADGES — gruppiert nach Thema ══
 //Reihenfolge überarbeitet / Möglciherweise Abweichung von Namen in //
   {id:'upset_king',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&myExp(id,m)<0.35).length},
+    multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&myExp(id,m)<0.35).length},
   // Zeile 6 — Frühschicht, Unschlagbar (Tages-Patterns)
   {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
@@ -94,14 +94,14 @@ const BADGES=[
     multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
   // Zeile 10 — Absoluter Verlierer, Absoluter Sieger
   {id:'perfect_loss',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&!won(id,m)&&shutout(id,m,0,10)).length},
+    multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&shutout(id,m,0,10)).length},
   {id:'perfect_win',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&shutout(id,m,10,0)).length},
+    multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&shutout(id,m,10,0)).length},
   // Zeile 11 — Nerven aus Stahl,  Zittersieg (Score-Spezial)
    {id:'nerves_of_steel',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
     multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
   {id:'nail_biter',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
+    multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
   // Zeile 12 — 5er Serie, 10er Serie
   {id:'streak5',ic:'flame',name:'5er Serie',desc:'5 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,5)},
@@ -114,7 +114,7 @@ const BADGES=[
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,20)},
   // Zeile 14 — Mauer, Carry
   {id:'wall_badge',ic:'brick',name:'Mauer',desc:'Sieg mit max. 2 Gegentoren als Verteidiger',
-    multi:true,count:(id,ms)=>ms.filter(m=>{if(!matchOf(id,m)||!won(id,m))return false;
+    multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>{if(!won(id,m))return false;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
   {id:'carry',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
@@ -178,7 +178,7 @@ const BADGES=[
   // ── NEUE NEGATIV-BADGES v8 ──
   // Bittere Pille: 9:10-Niederlage (Pendant zu nail_biter / 10:9-Sieg).
   {id:'bitter_loss',ic:'heartBroken',name:'Bittere Pille',desc:'9:10 Niederlage',
-    multi:true,count:(id,ms)=>ms.filter(m=>matchOf(id,m)&&!won(id,m)&&goalsFor(id,m)===9&&goalsAgainst(id,m)===10).length},
+    multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&goalsFor(id,m)===9&&goalsAgainst(id,m)===10).length},
   // Mr. Disaster: 3× 0:10-Niederlage in einer Saison (Pendant zu mr_perfect).
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
     multi:true,count:(id,ms)=>countMrDisaster(id)},
@@ -404,6 +404,19 @@ function countChampion(id){
 // Monat sein Duo behält, auch wenn sich die Rechnung später ändert; ohne sie
 // wird es aus dem Sim abgeleitet.
 function seasonTeamOf(sid){
+  // Das beste Duo einer Saison hängt an der Saison, nicht am Spieler. Gefragt
+  // wurde es aber aus einem Badge-Zähler heraus — also je Spieler neu, und
+  // jedes Mal mit einem vollen Durchlauf durch die Partien des Monats.
+  // Gemessen war das der teuerste Posten im Badge-Durchlauf.
+  const key = 'teamOf_' + sid + '_' + matches.length + '_' + _cache.version;
+  if(!_cache._seasonTeam) _cache._seasonTeam = {};
+  if(key in _cache._seasonTeam) return _cache._seasonTeam[key];
+  const wert = _seasonTeamOfBerechnet(sid);
+  if(Object.keys(_cache._seasonTeam).length > 60) _cache._seasonTeam = {};
+  _cache._seasonTeam[key] = wert;
+  return wert;
+}
+function _seasonTeamOfBerechnet(sid){
   const row = (seasons || []).find(s => s.id === sid);
   if(row && row.team_p1 && row.team_p2) return [row.team_p1, row.team_p2];
   try {
@@ -455,15 +468,23 @@ function countViceChampion(id){
 // Tage, an denen der Spieler beim chronologisch ersten Match des Tages
 // dabei war und es gewonnen hat. Max. 1 pro Tag (durch die Logik garantiert).
 function countEarlyBirdDays(id,ms){
-  const byDay={};
-  ms.forEach(m=>{
-    const day=mdayKey(m);
-    if(!byDay[day]||mts(m)<mts(byDay[day])) byDay[day]=m;
-  });
+  // Nur an Tagen, an denen jemand ueberhaupt gespielt hat, kann er der Erste
+  // gewesen sein. Vorher gruppierte jeder Spieler alle Partien nach Tag neu;
+  // die Gruppierung haengt aber am Match-Array, nicht am Spieler, und liegt
+  // als `matchesByDay` schon vor.
+  const tage=matchesByDay(ms);
+  const meine=matchesOfPlayer(id,ms);
+  const gesehen=Object.create(null);
   let c=0;
-  Object.values(byDay).forEach(first=>{
-    if(matchOf(id,first)&&won(id,first)) c++;
-  });
+  for(let i=0;i<meine.length;i++){
+    const day=mdayKey(meine[i]);
+    if(gesehen[day]) continue;
+    gesehen[day]=true;
+    const amTag=tage[day]||[];
+    let erste=amTag[0];
+    for(let j=1;j<amTag.length;j++) if(mts(amTag[j])<mts(erste)) erste=amTag[j];
+    if(erste&&matchOf(id,erste)&&won(id,erste)) c++;
+  }
   return c;
 }
 
@@ -475,8 +496,7 @@ function countNailBiterStreaks(id,ms,n){
   // werden überhaupt betrachtet. Klare Siege oder klare Niederlagen sind irrelevant
   // und werden übersprungen, ohne die Serie zu unterbrechen. Nur eine knappe Niederlage
   // (9:10) bricht die Serie.
-  const ordered=[...ms].filter(m=>matchOf(id,m))
-    .sort((a,b)=>mts(a)-mts(b));
+  const ordered=matchesOfPlayer(id,ms);
   let cur=0,count=0;
   ordered.forEach(m=>{
     const gf=goalsFor(id,m), ga=goalsAgainst(id,m);
@@ -510,8 +530,45 @@ function goalsFor(id,m){return (id===m.a1||id===m.a2)?m.score_a:m.score_b;}
 function goalsAgainst(id,m){return (id===m.a1||id===m.a2)?m.score_b:m.score_a;}
 function shutout(id,m,myG,theirG){return goalsFor(id,m)===myG&&goalsAgainst(id,m)===theirG;}
 function myExp(id,m){const onA=(id===m.a1||id===m.a2);return onA?(m.exp_a||0.5):(1-(m.exp_a||0.5));}
-function countGames(id,ms){return ms.filter(m=>matchOf(id,m)).length;}
-function countWins(id,ms){return ms.filter(m=>matchOf(id,m)&&won(id,m)).length;}
+// Die Partien eines Spielers, in ihrer Reihenfolge. Zwanzig Zähler bauten
+// dieselbe Liste jedes Mal neu: ein Filter über ALLE Partien der Liga und ein
+// Sort obendrauf, je Zähler und je Spieler. Gemessen war das der größte Posten
+// im Badge-Durchlauf, der nach jeder eingetragenen Partie neu läuft.
+//
+// Gemerkt wird an der IDENTITÄT des Match-Arrays — dieselbe WeakMap-Regel wie
+// bei `_winnerCountsOf`. Ein Aufruf mit einem Saison-Ausschnitt bekommt damit
+// nicht die Liste der ganzen Liga, und ein frisches Array nach `loadAll`
+// verwirft den Memo von selbst.
+//
+// Die zurückgegebene Liste gehört dem Cache: wer sie sortiert oder umdreht,
+// verdreht sie für alle. Gelesen wird sie überall, verändert nirgends.
+const _tagMsMemo = new WeakMap();
+// Die Partien eines Tages. Drei Stellen gruppierten dafür ALLE Partien neu,
+// zwei davon je Spieler — dieselbe Schleife zwölfmal für dieselbe Antwort.
+function matchesByDay(ms){
+  let map = _tagMsMemo.get(ms);
+  if(map) return map;
+  map = Object.create(null);
+  for(let i = 0; i < ms.length; i++){
+    const d = mdayKey(ms[i]);
+    (map[d] || (map[d] = [])).push(ms[i]);
+  }
+  _tagMsMemo.set(ms, map);
+  return map;
+}
+const _spielerMsMemo = new WeakMap();
+function matchesOfPlayer(id, ms){
+  let slot = _spielerMsMemo.get(ms);
+  if(!slot){ slot = Object.create(null); _spielerMsMemo.set(ms, slot); }
+  let liste = slot[id];
+  if(!liste){
+    liste = ms.filter(m => matchOf(id, m)).sort((a, b) => mts(a) - mts(b));
+    slot[id] = liste;
+  }
+  return liste;
+}
+function countGames(id,ms){return matchesOfPlayer(id,ms).length;}
+function countWins(id,ms){return matchesOfPlayer(id,ms).filter(m=>won(id,m)).length;}
 
 // v9.15 PERF: countPeriodWins/countDayWins wurden PRO SPIELER aufgerufen,
 // rechneten aber jedes Mal die komplette spielerUNabhängige Perioden-Sieger-
@@ -625,8 +682,7 @@ function countDayWins(id,allMs){
 // ─── Krimi-Reihe: 5 Spiele in Folge mit Tordifferenz ≤ 2 (Sieg ODER Niederlage) ───
 // Sobald 5 erreicht, wird die Serie zurückgesetzt → mehrfach erreichbar.
 function countKrimiStreaks(id,ms){
-  const ordered=[...ms].filter(m=>matchOf(id,m))
-    .sort((a,b)=>mts(a)-mts(b));
+  const ordered=matchesOfPlayer(id,ms);
   let cur=0,count=0;
   ordered.forEach(m=>{
     const diff=Math.abs(m.score_a-m.score_b);
@@ -642,15 +698,14 @@ function countKrimiStreaks(id,ms){
 
 // ─── Klares Ding: Sieg mit Tordifferenz ≥ 7 ───
 function countClearWins(id,ms){
-  return ms.filter(m=>matchOf(id,m)&&won(id,m)
+  return matchesOfPlayer(id,ms).filter(m=>won(id,m)
     &&Math.abs(m.score_a-m.score_b)>=7).length;
 }
 
 // ─── Wiederholungstäter: 3 Siege in Folge mit identischem Endstand ───
 // Niederlagen oder Siege mit anderem Score brechen die Serie.
 function countRepeatScoreStreaks(id,ms){
-  const ordered=[...ms].filter(m=>matchOf(id,m))
-    .sort((a,b)=>mts(a)-mts(b));
+  const ordered=matchesOfPlayer(id,ms);
   let lastScore=null,cur=0,count=0;
   ordered.forEach(m=>{
     if(!won(id,m)){cur=0; lastScore=null; return;}
@@ -667,8 +722,7 @@ function countRepeatScoreStreaks(id,ms){
 
 // ─── Comeback-Tag: Tag mit Niederlage gestartet, mit Sieg beendet, min. 3 Matches ───
 function countComebackDays(id,ms){
-  const mine=ms.filter(m=>matchOf(id,m))
-    .sort((a,b)=>mts(a)-mts(b));
+  const mine=matchesOfPlayer(id,ms);
   const byDay={};
   mine.forEach(m=>{
     const d=mdayKey(m);
@@ -687,8 +741,7 @@ function countComebackDays(id,ms){
 // ─── Revanchist: nach Niederlage gegen Team X im direkt folgenden Match Sieg gegen X ───
 // Strikt: das unmittelbar nächste Match muss gegen das gleiche Gegner-Team sein.
 function countRevenge(id,ms){
-  const mine=ms.filter(m=>matchOf(id,m))
-    .sort((a,b)=>mts(a)-mts(b));
+  const mine=matchesOfPlayer(id,ms);
   const oppKey=(m)=>{
     const onA=(id===m.a1||id===m.a2);
     return (onA?[m.b1,m.b2]:[m.a1,m.a2]).slice().sort().join('|');
@@ -715,16 +768,15 @@ function countRevenge(id,ms){
 // Elo-Stand, nicht auf Visibility.
 function countKingslayer(id,ms){
   const snaps = getRankSnapshots();
+  const mine = matchesOfPlayer(id, ms);
   let count = 0;
-  for(let i=0; i<ms.length; i++){
-    const m = ms[i];
-    if(!matchOf(id,m) || !won(id,m)) continue;
+  for(let i=0; i<mine.length; i++){
+    const m = mine[i];
+    if(!won(id,m)) continue;
     const snap = snaps[m.id]; if(!snap) continue;
-    // Wer war Top-1 in der Saison-Rangliste VOR dem Match?
-    let top1 = null;
-    for(const pid in snap.preRank){
-      if(snap.preRank[pid] === 1){ top1 = pid; break; }
-    }
+    // Wer war Top-1 in der Saison-Rangliste VOR dem Match? Die Antwort steht
+    // im Schnappschuss — dort ist die Tabelle ohnehin schon sortiert.
+    const top1 = snap.preTop1;
     if(!top1 || top1 === id) continue;
     // War Top-1 ein direkter Gegner?
     const onA = (id===m.a1||id===m.a2);
@@ -744,10 +796,11 @@ function countKingslayer(id,ms){
 //   • → +1 für X
 function countOvertake(id,ms){
   const snaps = getRankSnapshots();
+  const mine = matchesOfPlayer(id, ms);
   let count = 0;
-  for(let i=0; i<ms.length; i++){
-    const m = ms[i];
-    if(!matchOf(id,m) || !won(id,m)) continue;
+  for(let i=0; i<mine.length; i++){
+    const m = mine[i];
+    if(!won(id,m)) continue;
     const snap = snaps[m.id]; if(!snap) continue;
     const preX = snap.preRank[id], postX = snap.postRank[id];
     if(!preX || !postX) continue; // X muss schon einen Rang gehabt haben
@@ -811,18 +864,18 @@ function countUntouchable(id){
 // Auch die laufende Saison wird gezählt (zur Toast-Konsistenz mit dem
 // Match-Trigger weiter unten in getBadgeEarnedCache).
 function countMrPerfect(id){
-  const bySeason = getMatchesBySeason();
-  let count = 0;
-  Object.values(bySeason).forEach(seasonMs => {
-    let perfect = 0;
-    for(const m of seasonMs){
-      if(!matchOf(id,m) || !won(id,m)) continue;
-      const gf = goalsFor(id,m), ga = goalsAgainst(id,m);
-      if(gf === 10 && ga === 0) perfect++;
-      if(perfect >= 3) break; // billiger Early-Exit
-    }
-    if(perfect >= 3) count++;
+  // Gezaehlt werden die eigenen Kantersiege je Saison. Vorher lief der Zaehler
+  // ueber JEDE Partie jeder Saison und verwarf 90 % davon in der ersten Zeile.
+  const proSaison = Object.create(null);
+  matchesOfPlayer(id, matches).forEach(m => {
+    if(!won(id,m)) return;
+    if(goalsFor(id,m) !== 10 || goalsAgainst(id,m) !== 0) return;
+    const sid = (seasonOf(m.created_at)||{}).id;
+    if(!sid) return;
+    proSaison[sid] = (proSaison[sid]||0) + 1;
   });
+  let count = 0;
+  for(const sid in proSaison) if(proSaison[sid] >= 3) count++;
   return count;
 }
 
@@ -830,31 +883,23 @@ function countMrPerfect(id){
 // Karriere-Stat — sobald 5 erreicht, bleibt das Badge dauerhaft erreicht.
 // Counter ist deshalb max. 1 (entweder erreicht oder nicht).
 function countAllwetter(id){
-  // POTD-Logik 1:1 aus countDayWins. Statt eines Counters: Wochentage sammeln.
-  const byDay = {};
-  matches.forEach(m => {
-    const day = mdayKey(m);
-    if(!byDay[day]) byDay[day] = { ms: [], jsDate: new Date(m.created_at) };
-    byDay[day].ms.push(m);
-  });
-  const today = new Date().toISOString().slice(0,10);
-  const weekdays = new Set();
-  Object.entries(byDay).forEach(([day, info]) => {
-    if(day === today) return;       // laufender Tag (noch nicht abgeschlossen)
-    if(info.ms.length < 2) return;  // POTD benötigt min. 2 Spiele am Tag
-    const winsById = {};
-    info.ms.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(pid => {
-      if(!winsById[pid]) winsById[pid] = 0;
-      const onA = (pid===m.a1||pid===m.a2);
-      if((onA && m.winner==='A') || (!onA && m.winner==='B')) winsById[pid]++;
-    }));
-    const maxW = Math.max(...Object.values(winsById));
-    if(maxW < 3) return;
-    if((winsById[id]||0) === maxW){
-      weekdays.add(info.jsDate.getDay()); // 0=Sonntag, 1=Montag, …, 6=Samstag
-    }
-  });
-  return weekdays.size >= 5 ? 1 : 0;
+  // „Player of the Day" gibt es genau einmal im Code: `_periodWinnerMap`
+  // bestimmt den Sieger eines Tages, mit Tiebreak über das Elo-Delta. Hier
+  // stand dieselbe Rechnung ein zweites Mal — und ohne den Tiebreak, also mit
+  // einer anderen Antwort: gemessen sind 12 der 51 entschiedenen Tage
+  // punktgleich, und dort trugen beide Spieler den Tag. Die Beschreibung sagt
+  // „Player of the Day geworden"; dann muss es auch derselbe sein [§C27].
+  const sieger = _periodWinnerMap(matches, 'day');
+  const heute = new Date().toISOString().slice(0, 10);
+  const wochentage = new Set();
+  for(const tag in sieger){
+    if(tag === heute) continue;   // der laufende Tag ist noch nicht vorbei
+    if(sieger[tag] !== id) continue;
+    // Der Schlüssel ist 'YYYY-MM-DD' — daraus den Wochentag, ohne Zeitzone.
+    const [y, mo, d] = tag.split('-').map(Number);
+    wochentage.add(new Date(y, mo - 1, d).getDay());
+  }
+  return wochentage.size >= 5 ? 1 : 0;
 }
 
 // Tag der Götter: 3 aufeinanderfolgende EIGENE Spieltage als POTD gewonnen.
@@ -862,32 +907,20 @@ function countAllwetter(id){
 // denen die Liga ohne ihn spielte, BRECHEN die Serie NICHT — sie werden
 // übersprungen. Karriere-aggregiert (separate Drei-Strecken zählen einzeln).
 function countGodlyStreak(id){
-  // Einmalig nach Tag gruppieren (über alle Matches, nicht nur die des Spielers).
-  const byDay = {};
-  matches.forEach(m => {
-    const day = mdayKey(m);
-    if(!byDay[day]) byDay[day] = [];
-    byDay[day].push(m);
-  });
-  const today = new Date().toISOString().slice(0,10);
-  const sortedDays = Object.keys(byDay).filter(d => d !== today).sort();
+  // Dieselbe eine Quelle wie beim Allwetter [§C27]: wer den Tag gewonnen hat,
+  // sagt `_periodWinnerMap`. Gebraucht wird hier zusätzlich, an welchen Tagen
+  // der Spieler überhaupt gespielt hat — Tage ohne ihn brechen die Serie nicht.
+  const sieger = _periodWinnerMap(matches, 'day');
+  const proTag = matchesByDay(matches);
+  const heute = new Date().toISOString().slice(0, 10);
+  const tage = Object.keys(proTag).filter(d => d !== heute).sort();
   let cur = 0, count = 0;
-  for(const day of sortedDays){
-    const dayMs = byDay[day];
-    const involved = dayMs.some(m => [m.a1,m.a2,m.b1,m.b2].includes(id));
-    if(!involved) continue;             // Tag ohne Spieler → SKIP (kein Reset)
-    if(dayMs.length < 2){ cur = 0; continue; }
-    const winsById = {};
-    dayMs.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(pid => {
-      if(!winsById[pid]) winsById[pid] = 0;
-      const onA = (pid===m.a1||pid===m.a2);
-      if((onA && m.winner==='A') || (!onA && m.winner==='B')) winsById[pid]++;
-    }));
-    const maxW = Math.max(...Object.values(winsById));
-    if(maxW < 3){ cur = 0; continue; }
-    if((winsById[id]||0) === maxW){
+  for(const tag of tage){
+    const dayMs = proTag[tag];
+    if(!dayMs.some(m => matchOf(id, m))) continue;   // Tag ohne ihn → kein Reset
+    if(sieger[tag] === id){
       cur++;
-      if(cur >= 3){ count++; cur = 0; } // separate Drei-Strecken zählen
+      if(cur >= 3){ count++; cur = 0; }              // separate Drei-Strecken zählen einzeln
     } else {
       cur = 0;
     }
@@ -896,7 +929,7 @@ function countGodlyStreak(id){
 }
 
 function longestPlayerStreak(id,ms){
-  const ordered=[...ms].filter(m=>matchOf(id,m)).sort((a,b)=>mts(a)-mts(b));
+  const ordered=matchesOfPlayer(id,ms);
   let cur=0,best=0;
   ordered.forEach(m=>{if(won(id,m)){cur++;if(cur>best)best=cur;}else cur=0;});
   return best;
@@ -906,7 +939,7 @@ function longestPlayerStreak(id,ms){
 // mit demselben Maximum wird die NEUESTE genommen — analog zum Verhalten
 // im Awards-Tab (jüngere Leistungen sind salient).
 function longestPlayerStreakInfo(id,ms){
-  const ordered=[...ms].filter(m=>matchOf(id,m)).sort((a,b)=>mts(a)-mts(b));
+  const ordered=matchesOfPlayer(id,ms);
   let cur=0,best=0,peakMatch=null;
   ordered.forEach(m=>{
     if(won(id,m)){
@@ -920,7 +953,7 @@ function longestPlayerStreakInfo(id,ms){
 }
 // Zählt wie oft eine Siegesserie der Länge >= n erreicht wurde (separate Serien)
 function countStreakOccurrences(id,ms,n){
-  const ordered=[...ms].filter(m=>matchOf(id,m)).sort((a,b)=>mts(a)-mts(b));
+  const ordered=matchesOfPlayer(id,ms);
   let cur=0,count=0,awarded=false;
   ordered.forEach(m=>{
     if(won(id,m)){cur++;if(cur>=n&&!awarded){count++;awarded=true;}}
@@ -930,7 +963,7 @@ function countStreakOccurrences(id,ms,n){
 }
 // Zählt wie oft eine Niederlagenserie >= n erreicht wurde
 function countLossStreakOccurrences(id,ms,n){
-  const ordered=[...ms].filter(m=>matchOf(id,m)).sort((a,b)=>mts(a)-mts(b));
+  const ordered=matchesOfPlayer(id,ms);
   let cur=0,count=0,awarded=false;
   ordered.forEach(m=>{if(!won(id,m)){cur++;if(cur>=n&&!awarded){count++;awarded=true;}}else{cur=0;awarded=false;}});
   return count;
@@ -939,8 +972,8 @@ function countLossStreakOccurrences(id,ms,n){
 // Nutzt globalen Elo-History-Cache für historische Elo-Stände
 function countCarries(id,ms){
   const snapMap=getSnapMap();
-  return ms.filter(m=>{
-    if(!matchOf(id,m)||!won(id,m))return false;
+  return matchesOfPlayer(id,ms).filter(m=>{
+    if(!won(id,m))return false;
     const snap=snapMap[m.id]; if(!snap)return false;
     const allFour=[m.a1,m.a2,m.b1,m.b2];
     if(allFour.some(x=>snap[x]===undefined))return false;
@@ -952,7 +985,7 @@ function countCarries(id,ms){
 }
 // Zählt Tage an denen der Spieler min. 3 Spiele hatte und keines verloren hat
 function countUnbeatableDays(id,ms){
-  const mine=ms.filter(m=>matchOf(id,m));
+  const mine=matchesOfPlayer(id,ms);
   const byDay={};
   mine.forEach(m=>{const d=mdayKey(m);
     if(!byDay[d])byDay[d]={games:0,losses:0}; byDay[d].games++; if(!won(id,m))byDay[d].losses++;});
@@ -968,10 +1001,11 @@ function countUnbeatableDays(id,ms){
 // ausgeschlossen, weil das Match stattfand und der Rangzeitpunkt real ist.
 function countBottomTwoMatchWins(id,ms){
   const snaps = getRankSnapshots();
+  const meine = matchesOfPlayer(id,ms);
   let count = 0;
-  for(let i=0; i<ms.length; i++){
-    const m = ms[i];
-    if(!matchOf(id,m) || !won(id,m)) continue;
+  for(let i=0; i<meine.length; i++){
+    const m = meine[i];
+    if(!won(id,m)) continue;
     const snap = snaps[m.id]; if(!snap || !snap.preRank) continue;
     const ranks = snap.preRank;
     const N = Object.keys(ranks).length;
@@ -993,10 +1027,11 @@ function countBottomTwoMatchWins(id,ms){
 // vermeidet aber doppelte Belohnung).
 function countStreakBreaker(id,ms){
   const snaps = getStreakSnapshots();
+  const meine = matchesOfPlayer(id,ms);
   let count = 0;
-  for(let i=0; i<ms.length; i++){
-    const m = ms[i];
-    if(!matchOf(id,m) || !won(id,m)) continue;
+  for(let i=0; i<meine.length; i++){
+    const m = meine[i];
+    if(!won(id,m)) continue;
     const snap = snaps[m.id]; if(!snap) continue;
     const onA = (id===m.a1||id===m.a2);
     const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
@@ -1010,9 +1045,9 @@ function countStreakBreaker(id,ms){
 // an wie vielen Tagen mind. 3 Matches stattfanden, die ALLE verloren wurden.
 function countBlackDays(id,ms){
   const byDay={}; // day → {g, l}
-  for(let i=0; i<ms.length; i++){
-    const m=ms[i];
-    if(!matchOf(id,m)) continue;
+  const meine=matchesOfPlayer(id,ms);
+  for(let i=0; i<meine.length; i++){
+    const m=meine[i];
     const day=mdayKey(m);
     if(!byDay[day]) byDay[day]={g:0, l:0};
     byDay[day].g++;
@@ -1030,8 +1065,7 @@ function countBlackDays(id,ms){
 // Spiegel zu countLossStreakOccurrences, aber gefiltert auf "knappe" Niederlagen.
 // Ein Sieg ODER eine deutliche Niederlage (>2 Tore Diff) bricht die Serie.
 function countCloseLossStreaks(id,ms,n){
-  const ordered=[...ms].filter(m=>matchOf(id,m))
-    .sort((a,b)=>mts(a)-mts(b));
+  const ordered=matchesOfPlayer(id,ms);
   let cur=0, count=0, awarded=false;
   ordered.forEach(m=>{
     const isLoss = !won(id,m);
@@ -1069,8 +1103,7 @@ function countMrDisaster(id){
 // Spiegel zu countComebackDays. Strikt: erstes Match Sieg, letztes Niederlage,
 // ≥3 Matches an dem Tag. Pro Tag max. 1 Eintrag (siehe Match-Trigger).
 function countCrashDays(id,ms){
-  const mine=ms.filter(m=>matchOf(id,m))
-    .sort((a,b)=>mts(a)-mts(b));
+  const mine=matchesOfPlayer(id,ms);
   const byDay={};
   mine.forEach(m=>{
     const d=mdayKey(m);
@@ -1094,8 +1127,7 @@ function countCrashDays(id,ms){
 // Konsistent zum Match-Trigger: pro Match max. 1 Eintrag, selbst wenn
 // beide Gegner gleichzeitig die Schwelle erreichen (selten).
 function countNemesis(id,ms){
-  const mine=ms.filter(m=>matchOf(id,m))
-    .sort((a,b)=>mts(a)-mts(b));
+  const mine=matchesOfPlayer(id,ms);
   const vsStreak={};  // opponentId → aktueller Niederlagen-Streak
   const fired={};     // opponentId → schon gefeuert (wartet auf Reset durch Sieg)
   let count=0;
@@ -1123,6 +1155,8 @@ function getCachedBadges(id){
   const key='badges_'+id+'_'+matches.length+'_'+_cache.version;
   if(!_cache._badges) _cache._badges={};
   if(_cache._badges[key]) return _cache._badges[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._badges).length > 60) _cache._badges={};
   const r=computeBadges(id);
   _cache._badges[key]=r;
   return r;
