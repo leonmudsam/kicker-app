@@ -12,6 +12,28 @@
 // das Profil zeigt IMMER den laufenden Monat, auch wenn im Awards-Tab gerade
 // der Juli ausgewählt ist. Ohne diesen Weg müsste jemand awSeasonId setzen,
 // rendern und zurücksetzen — und dabei die halbe Oberfläche mitverschieben.
+// ── Die Mindestzahlen ────────────────────────────────────────────────
+// Die Awards gibt es nur noch je Saison und je Woche. Die Schwellen stammen
+// aus der Zeit, in der es auch „Gesamt" gab, und waren fuer eine Woche nie
+// erreichbar: gemessen spielt ein Duo in einer Woche im Mittel DREI Partien
+// (Bestwert sieben), und sieben von sechsunddreissig Kacheln standen selbst
+// nach einer vollen Woche leer, weil sie zehn gemeinsame Spiele verlangten.
+// Ein Duo kommt auch ueber einen ganzen Monat im Mittel nur auf drei.
+// Sie stehen hier an EINER Stelle, damit sich das nicht wieder ueber die
+// Datei verteilt.
+const AW_MIN = {
+  teamSpiele: 3,     // Team-Durchschnitte (Betonmauer, Kaeseteller)
+  teamEnge: 2,       // enge Team-Partien (Gluueckspilze)
+  teamUnter: 2,      // Underdog-Partien eines Duos (Giant Slayer)
+  teamPleiten: 2,    // Pleiten eines Duos (Zirkus)
+  duell: 2,          // direkte Duelle (Erzfeinde, Endgegner)
+  spieler: 3,        // Partien eines Spielers, wenn ein Schnitt gebildet wird
+  spielerSaldo: 5,   // Tor-Saldo je Spiel — ein 10:0 verzerrt sonst zu stark
+  enge: 2,           // enge Partien eines Spielers (Clutch, Pechvogel)
+  favorit: 3,        // Partien als Favorit (Favoriten-Versager)
+  unter: 2           // Partien als Aussenseiter (Underdog-Held)
+};
+
 function awardRankings(period, sid){return getCachedAwardRankings(period, sid);}
 function _awardRankingsUncached(period, sid){
   let ms;
@@ -35,12 +57,13 @@ function _awardRankingsUncached(period, sid){
     clutch:{}, iceWins:{}, snapMap:null,
     // ── NEUE AWARDS v3 ──
     underdogWins:{},  // playerId → Anzahl Underdog-Siege (myExp < 0.35 & gewonnen)
-    closeLosses:{},   // playerId → Anzahl knapper Niederlagen (verloren & |Diff| ≤ 2)
     // ── NEUE NEGATIV-AWARDS v6 ──
     favLosses:{},     // playerId → Anzahl Niederlagen in Favoriten-Rolle (myExp ≥ 0.65 & verloren)
     favMatches:{},    // playerId → Anzahl Spiele in Favoriten-Rolle (myExp ≥ 0.65)
     // ── NEUE TEAM-AWARDS v4 ──
     tCloseWins:{},      // teamKey → Anzahl 1-Tor-Siege (Glückspilze, Zähler)
+    tCloseGames:{},     // teamKey → Anzahl 1-Tor-Partien (Glückspilze, Nenner)
+    underdogMatches:{}, // pid → Partien als Außenseiter (Underdog-Held, Nenner)
     tGiantSlayer:{},    // teamKey → Anzahl Siege gegen stärkeres Team (Giant Slayer, Zähler)
     tFavoriteMatches:{},// teamKey → Anzahl Matches in denen das Team Underdog war (Giant Slayer Nenner)
     tFavoritenschreck:{},// teamKey → {best: maxOvercome, m: match, eloDiff} (höchster gewonnener Upset)
@@ -117,16 +140,16 @@ function _awardRankingsUncached(period, sid){
           agg.defGames_[id]++;
         }
 
-        // ── NEUE AWARDS v3 ──
-        // Underdog-Held: Sieg trotz < 35% Erwartung
-        if(won && myExp < 0.35){
-          if(!agg.underdogWins[id]) agg.underdogWins[id]=0;
-          agg.underdogWins[id]++;
-        }
-        // Pechvogel: Niederlage mit max. 2 Toren Differenz
-        if(!won && goalDiff <= 2){
-          if(!agg.closeLosses[id]) agg.closeLosses[id]=0;
-          agg.closeLosses[id]++;
+        // Underdog-Held: Partien als Aussenseiter (Siegchance unter 35 %) und
+        // die davon gewonnenen. Der Nenner fehlte, und ohne ihn war der Award
+        // eine Anwesenheitsliste.
+        if(myExp < 0.35){
+          if(!agg.underdogMatches[id]) agg.underdogMatches[id]=0;
+          agg.underdogMatches[id]++;
+          if(won){
+            if(!agg.underdogWins[id]) agg.underdogWins[id]=0;
+            agg.underdogWins[id]++;
+          }
         }
         // ── NEUE NEGATIV-AWARDS v6 ──
         // Favoriten-Versager: Anteil Niederlagen, wenn die Sieg-Erwartung ≥ 65 % war.
@@ -170,8 +193,15 @@ function _awardRankingsUncached(period, sid){
     // ── NEUE TEAM-AWARDS v4 ──
     const goalDiffM = Math.abs(m.score_a - m.score_b);
     const winnerKey = m.winner==='A' ? tA : tB;
-    // Glückspilze: 1-Tor-Sieg pro Team zählen
+    // Glückspilze: die engen Partien eines Duos und die davon gewonnenen.
+    // Gezaehlt wurden nur die Siege, geteilt wurde durch ALLE Partien des
+    // Duos: damit gewann ihn, wer viel spielt, und nicht, wer die engen
+    // Partien fuer sich entscheidet.
     if(goalDiffM === 1){
+      if(!agg.tCloseGames[tA]) agg.tCloseGames[tA]=0;
+      if(!agg.tCloseGames[tB]) agg.tCloseGames[tB]=0;
+      agg.tCloseGames[tA]++;
+      agg.tCloseGames[tB]++;
       if(!agg.tCloseWins[winnerKey]) agg.tCloseWins[winnerKey]=0;
       agg.tCloseWins[winnerKey]++;
     }
@@ -275,7 +305,7 @@ function _awardRankingsUncached(period, sid){
   
   const grinder=Object.entries(agg.pGames).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
   const winsList=Object.entries(agg.pWins).map(([id,v])=>({id,v,g:agg.pGames[id]})).sort((a,b)=>b.v-a.v);
-  const perfectMin=Math.min(10, Math.max(5, Math.ceil((grinder[0]?.v||5)*0.15)));
+  const perfectMin=Math.min(6, Math.max(AW_MIN.spieler, Math.ceil((grinder[0]?.v||5)*0.15)));
   const perfect=Object.entries(agg.pWins).map(([id,w])=>({id,w,g:agg.pGames[id],wr:agg.pGames[id]?w/agg.pGames[id]:0}))
     .filter(x=>x.g>=perfectMin)
     .sort((a,b)=>b.wr-a.wr||b.g-a.g);
@@ -291,13 +321,11 @@ function _awardRankingsUncached(period, sid){
   const worstElo=Object.entries(agg.pElo).map(([id,v])=>({id,v})).sort((a,b)=>a.v-b.v);
 
   // ═══ NEUE AWARDS v3 ═══
-  // Plus-Minus: Ø Tor-Saldo pro Spiel (Tore_für − Tore_gegen), min. 10 Spiele.
-  // Schwelle 10 ist konsistent mit der Logik der anderen "Durchschnitt"-Awards
-  // (perfect: dynamisch zwischen 5-10, scorer: min 2, wall: min 2). Plus-Minus
-  // braucht etwas mehr Volumen, weil ein einzelnes 10:0-Spiel den Saldo stark
-  // verzerren würde — bei 10+ Spielen ist der Wert robust.
+  // Plus-Minus: Ø Tor-Saldo pro Spiel (Tore für minus Tore gegen). Etwas mehr
+  // Volumen als die anderen Durchschnitte, weil ein einzelnes 10:0 den Saldo
+  // stark verzerrt.
   const plusMinusList = Object.entries(agg.pGames)
-    .filter(([id,g]) => g >= 10)
+    .filter(([id,g]) => g >= AW_MIN.spielerSaldo)
     .map(([id,g]) => ({
       id,
       v: (agg.pGoals[id] - agg.pConceded[id]) / g,  // Saldo pro Spiel
@@ -305,34 +333,41 @@ function _awardRankingsUncached(period, sid){
     }))
     .sort((a,b) => b.v - a.v);
 
-  // Underdog-Held: Anzahl Underdog-Siege (myExp < 0.35), absoluter Counter,
-  // keine Mindestschwelle — wer 1 Underdog-Sieg hat, kommt schon ins Ranking,
-  // aber 0-Werte werden rausgefiltert.
-  const underdogList = Object.entries(agg.underdogWins)
-    .filter(([,v]) => v > 0)
-    .map(([id,v]) => ({id,v}))
-    .sort((a,b) => b.v - a.v);
+  // Underdog-Held: Anteil gewonnener Aussenseiter-Partien an den Partien, in
+  // die jemand als Aussenseiter ging (Siegchance unter 35 %). Gezaehlt wurde
+  // hier die reine Anzahl, und damit gewann ihn, wer am meisten spielt — sein
+  // Zwilling auf Team-Ebene, der Giant Slayer, rechnet seit jeher die Quote.
+  const underdogList = Object.entries(agg.underdogMatches)
+    .filter(([id,g]) => g >= AW_MIN.unter && (agg.underdogWins[id] || 0) > 0)
+    .map(([id,g]) => ({id, v: agg.underdogWins[id] || 0, g,
+                       pct: (agg.underdogWins[id] || 0) / g}))
+    .sort((a,b) => b.pct - a.pct || b.v - a.v);
 
-  // Pechvogel: Anteil knapper Niederlagen an allen Spielen. Prozentual statt
-  // absolut — sonst gewinnen reine Vielspieler durch Volumen, nicht durch
-  // tatsächliches Pech. Schwelle: min. 2 knappe Niederlagen UND min. 5 Spiele,
-  // damit der Pct-Wert robust ist (bei 2/3 wäre er 67% — wenig aussagekräftig).
-  const pechvogelList = Object.entries(agg.closeLosses)
-    .filter(([id,v]) => v >= 2 && agg.pGames[id] >= 5)
-    .map(([id,v]) => ({
+  // Pechvogel: Anteil knapper Niederlagen an den KNAPPEN Partien. Gemessen an
+  // allen Partien gewann ihn, wer viele enge Spiele hatte, nicht wer sie
+  // verlor: wer zwanzig Partien spielt, davon zwei enge und beide verliert,
+  // stand bei 10 % — hinter jemandem mit acht knappen Niederlagen aus vierzig
+  // Spielen, der die Haelfte seiner engen Partien gewonnen hat.
+  // Der Pechvogel ist der Spiegel des Clutch-Players, also teilt er sich
+  // dessen Zaehlung: `agg.clutch` haelt je Spieler die engen Partien und die
+  // davon gewonnenen [§C27]. Zwei Rechnungen ueber dieselbe Frage nennen
+  // irgendwann zwei verschiedene Namen.
+  const pechvogelList = Object.entries(agg.clutch)
+    .filter(([, c]) => c.g >= AW_MIN.enge && (c.g - c.w) > 0)
+    .map(([id, c]) => ({
       id,
-      v,                              // Anzahl knapper Niederlagen (für Anzeige)
-      g: agg.pGames[id],              // Gesamtspiele
-      pct: v / agg.pGames[id]         // Sortier-Kriterium
+      v: c.g - c.w,                   // Anzahl knapper Niederlagen (für Anzeige)
+      g: c.g,                         // enge Partien
+      pct: (c.g - c.w) / c.g          // Sortier-Kriterium
     }))
-    .sort((a,b) => b.pct - a.pct);
+    .sort((a,b) => b.pct - a.pct || b.v - a.v);
 
   // ── NEUE NEGATIV-AWARDS v6 ──
   // Favoriten-Versager: Quote = Niederlagen in Favoriten-Rolle / Favoriten-Spiele.
   // Spiegel zu Underdog-Held (Sieg trotz < 35% Erwartung) — hier: Niederlage trotz
   // ≥ 65% Erwartung. Schwelle: min. 5 Favoriten-Matches für stabile Quote.
   const favoriteLoserList = Object.keys(agg.favMatches)
-    .filter(id => agg.favMatches[id] >= 5)
+    .filter(id => agg.favMatches[id] >= AW_MIN.favorit)
     .map(id => {
       const losses = agg.favLosses[id] || 0;
       const games = agg.favMatches[id];
@@ -368,7 +403,7 @@ function _awardRankingsUncached(period, sid){
     .filter(p => {
       const ga = agg.pGames[p.ids[0]] || 0;
       const gb = agg.pGames[p.ids[1]] || 0;
-      return p.g >= 3 && ga >= 5 && gb >= 5;
+      return p.g >= AW_MIN.duell && ga >= AW_MIN.spieler && gb >= AW_MIN.spieler;
     })
     .map(p => {
       const ga = agg.pGames[p.ids[0]];
@@ -383,7 +418,7 @@ function _awardRankingsUncached(period, sid){
     .sort((a,b) => b.pct - a.pct);
   
   // ═══ CLUTCH ═══
-  const clutchList=Object.entries(agg.clutch).filter(([,v])=>v.g>=2)
+  const clutchList=Object.entries(agg.clutch).filter(([,v])=>v.g>=AW_MIN.enge)
     .map(([id,v])=>({id,wr:v.w/v.g,g:v.g,w:v.w})).sort((a,b)=>b.wr-a.wr||b.g-a.g);
   
   // ═══ CARRY, SOLO, FORMTIEF, etc. ═══
@@ -459,9 +494,9 @@ function _awardRankingsUncached(period, sid){
     .map(x=>({ids:x.ids, v:x.best}))
     .sort((a,b)=>b.v-a.v);
 
-  // Concrete Wall: Σ Gegentore / Anzahl Team-Spiele, min. 10 Spiele
+  // Concrete Wall: Σ Gegentore / Anzahl Team-Spiele
   const concreteWallList = Object.keys(agg.tGames)
-    .filter(k=>agg.tGames[k]>=10)
+    .filter(k=>agg.tGames[k]>=AW_MIN.teamSpiele)
     .map(k=>({
       ids:k.split('|'),
       v: agg.tGoalsAgainst[k] / agg.tGames[k],   // Sortierwert (niedriger=besser)
@@ -471,10 +506,10 @@ function _awardRankingsUncached(period, sid){
     .sort((a,b)=>a.v-b.v);
 
   // ── NEUE NEGATIV-AWARDS v6 ──
-  // Käseteller: Spiegel zu Concrete Wall — höchster Gegentor-Schnitt als Team.
-  // Sortierung ist absteigend (hoch = schlecht), gleiche Schwelle min. 10 Sp.
+  // Käseteller: Spiegel zur Betonmauer, höchster Gegentor-Schnitt als Team.
+  // Sortierung absteigend (hoch = schlecht), dieselbe Schwelle.
   const cheesePlatterList = Object.keys(agg.tGames)
-    .filter(k=>agg.tGames[k]>=10)
+    .filter(k=>agg.tGames[k]>=AW_MIN.teamSpiele)
     .map(k=>({
       ids:k.split('|'),
       v: agg.tGoalsAgainst[k] / agg.tGames[k],   // Sortierwert (höher = schlechter)
@@ -483,14 +518,15 @@ function _awardRankingsUncached(period, sid){
     }))
     .sort((a,b)=>b.v-a.v);
 
-  // Lucky Charm: Anteil knapper Siege (1 Tor Vorsprung) an gemeinsamen Team-Spielen.
-  // Verhindert, dass Vielspieler-Teams durch reine Match-Zahl gewinnen.
-  // Schwelle: min. 10 gemeinsame Spiele für stabile Quote.
+  // Glückspilze: Anteil gewonnener 1-Tor-Partien an den 1-Tor-Partien des
+  // Duos. Geteilt wurde durch ALLE gemeinsamen Spiele, und damit stand ein Duo
+  // mit zwei knappen Siegen aus zehn Partien vor einem, das seine drei engen
+  // Partien alle gewonnen hat.
   const luckyCharmList = Object.keys(agg.tCloseWins)
-    .filter(k => (agg.tGames[k]||0) >= 10)
+    .filter(k => (agg.tCloseGames[k]||0) >= AW_MIN.teamEnge)
     .map(k => {
       const wins = agg.tCloseWins[k];
-      const games = agg.tGames[k];
+      const games = agg.tCloseGames[k];
       return {
         ids: k.split('|'),
         v: wins / games,        // Sortier-Wert: Anteil
@@ -504,7 +540,7 @@ function _awardRankingsUncached(period, sid){
   // Sicherstellt, dass die Wertung nicht von Vielspielern dominiert wird.
   // Schwelle: min. 5 Underdog-Matches für stabile Quote.
   const giantSlayerList = Object.keys(agg.tGiantSlayer)
-    .filter(k => (agg.tFavoriteMatches[k]||0) >= 5)
+    .filter(k => (agg.tFavoriteMatches[k]||0) >= AW_MIN.teamUnter)
     .map(k => {
       const wins = agg.tGiantSlayer[k];
       const games = agg.tFavoriteMatches[k]; // Nenner
@@ -536,7 +572,7 @@ function _awardRankingsUncached(period, sid){
     .filter(r => {
       const gA = agg.tGames[r.idsA.slice().sort().join('|')] || 0;
       const gB = agg.tGames[r.idsB.slice().sort().join('|')] || 0;
-      return r.g >= 3 && gA >= 5 && gB >= 5;
+      return r.g >= AW_MIN.duell && gA >= AW_MIN.teamSpiele && gB >= AW_MIN.teamSpiele;
     })
     .map(r => {
       const gA = agg.tGames[r.idsA.slice().sort().join('|')];
@@ -726,31 +762,34 @@ function _computeFormtief(ms){
 }
 
 function _computeZirkus(ms){
-  // Zirkus = Anteil hoher Niederlagen (Tordifferenz ≥ 5) an gemeinsamen Team-Spielen.
-  // Verhindert Vielspieler-Bias. Schwelle: min. 5 gemeinsame Team-Spiele.
-  const zirkus={};      // teamKey → {ids, v: # hohe Niederlagen, g: # Spiele insgesamt}
-  const tGames={};      // teamKey → # Spiele insgesamt (lokal, da _computeZirkus
-                        //   nicht den globalen agg.tGames sehen kann)
+  // Zirkus = Anteil hoher Niederlagen (Tordifferenz ab 5) an den NIEDERLAGEN
+  // des Duos. Geteilt wurde durch alle gemeinsamen Spiele, und damit sagte der
+  // Award zwei Dinge auf einmal: wie oft ein Duo verliert und wie deutlich.
+  // Ein Duo, das viel gewinnt und seine drei Pleiten alle 10:2 kassiert, stand
+  // damit hinter einem, das die Haelfte verliert und dabei mithaelt. Gefragt
+  // ist das Zweite: wenn es schiefgeht, wie schlimm wird es.
+  // Dieselbe Frage stellt „Der Schadensbegrenzer" in der Chronik, und zwar
+  // mit demselben Nenner [§C27].
+  const zirkus={};      // teamKey → {ids, v: # hohe Niederlagen}
+  const tPleiten={};    // teamKey → # Niederlagen (Nenner; _computeZirkus sieht
+                        //   den globalen agg nicht)
   for(let i=0; i<ms.length; i++){
     const m=ms[i];
     const teamA=[m.a1,m.a2].sort().join('|');
     const teamB=[m.b1,m.b2].sort().join('|');
-    tGames[teamA] = (tGames[teamA]||0) + 1;
-    tGames[teamB] = (tGames[teamB]||0) + 1;
-    const diff=Math.abs(m.score_a-m.score_b);
-    if(diff<5) continue;
     const loserTeam=m.winner==='A'?teamB:teamA;
+    tPleiten[loserTeam] = (tPleiten[loserTeam]||0) + 1;
+    if(Math.abs(m.score_a-m.score_b)<5) continue;
     if(!zirkus[loserTeam]) zirkus[loserTeam]={ids:loserTeam.split('|'), v:0};
     zirkus[loserTeam].v++;
   }
-  // Anreichern + Mindestschwelle anwenden
   return Object.values(zirkus)
     .map(z => {
       const key = z.ids.slice().sort().join('|');
-      const g = tGames[key] || 0;
+      const g = tPleiten[key] || 0;
       return { ...z, g, pct: g>0 ? z.v / g : 0 };
     })
-    .filter(z => z.g >= 5 && z.v >= 1)
+    .filter(z => z.g >= AW_MIN.teamPleiten && z.v >= 1)
     .sort((a,b) => b.pct - a.pct);
 }
 
@@ -1060,7 +1099,7 @@ function _vAwardsCore(){
   if(u0) _addColl(u0.m.winner === 'A' ? [u0.m.a1, u0.m.a2] : [u0.m.b1, u0.m.b2]);
   if(b0) _addColl(b0.m.winner === 'A' ? [b0.m.a1, b0.m.a2] : [b0.m.b1, b0.m.b2]);
   if(gr0) _addColl(_topSingleIds(R.grinder, x => x.v));
-  if(uh0) _addColl(_topSingleIds(R.underdogList, x => x.v));
+  if(uh0) _addColl(_topSingleIds(R.underdogList, x => Math.round(x.pct * 1000)));
   // ── NEUE TEAM-AWARDS v4 (positive Awards → in Sammler-Counter) ──
   if(un0) _addColl(_topTeamIds(R.unstoppableList, x => x.v));
   if(cw0) _addColl(_topTeamIds(R.concreteWallList, x => -Math.round(x.v*100))); // niedriger = besser
@@ -1216,7 +1255,7 @@ function _vAwardsCore(){
     : empty('concreteWall','blue','Betonmauer'));
   // Glückspilze: meiste 1-Tor-Siege
   teams.push(lc0
-    ? card('luckyCharm','acid','Glückspilze',lc0.ids,esc(topTeamNames(R.luckyCharmList,x=>Math.round(x.v*1000))),Math.round(lc0.v*100)+'% knappe Siege ('+lc0.wins+'/'+lc0.games+')',Math.round(lc0.v*100)+'%')
+    ? card('luckyCharm','acid','Glückspilze',lc0.ids,esc(topTeamNames(R.luckyCharmList,x=>Math.round(x.v*1000))),lc0.wins+' von '+lc0.games+' engen Partien gewonnen',Math.round(lc0.v*100)+'%')
     : empty('luckyCharm','acid','Glückspilze'));
   // Giant Slayer: meiste Siege gegen stärkere Teams
   teams.push(gs0
@@ -1280,7 +1319,10 @@ function _vAwardsCore(){
   // Underdog-Held: meiste Underdog-Siege (myExp < 35%). Anders als die Match-Trophy
   // "Größte Überraschung" (= einzelner Match) ist das hier ein Saison-Counter.
   special.push(uh0
-    ? card('underdog','purple','Underdog-Held',[uh0.id],esc(topNames(R.underdogList,x=>x.v,x=>pname(x.id))),uh0.v+'× als Außenseiter gewonnen',uh0.v)
+    ? card('underdog','purple','Underdog-Held',[uh0.id],
+        esc(topNames(R.underdogList,x=>Math.round(x.pct*1000),x=>pname(x.id))),
+        uh0.v+' von '+uh0.g+' Partien als Außenseiter gewonnen',
+        Math.round(uh0.pct*100)+'%')
     : empty('underdog','purple','Underdog-Held'));
   // Spezial trägt Metall: es ist die Gruppe für alles, was in keine der
   // anderen passt — eine eigene Buntfarbe würde ihr eine Bedeutung geben,
@@ -1307,7 +1349,7 @@ function _vAwardsCore(){
     ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1),{neg:true})
     : empty('worstDef','red','Löchrigste Abwehr'));
   neg.push(zk0
-    ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>Math.round(x.pct*1000))),Math.round(zk0.pct*100)+'% hohe Niederlagen ('+zk0.v+'/'+zk0.g+')',Math.round(zk0.pct*100)+'%',{neg:true})
+    ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>Math.round(x.pct*1000))),zk0.v+' von '+zk0.g+' Pleiten waren Debakel',Math.round(zk0.pct*100)+'%',{neg:true})
     : empty('zirkus','red','Zirkus'));
   neg.push(wt0
     ? card('worstTeam','red','Schlechtestes Team',wt0.ids,esc(topTeamNames(R.worstTeam,x=>Math.round(x.w/x.g*100))),wt0.w+'–'+(wt0.g-wt0.w),Math.round(wt0.w/wt0.g*100)+'%',{neg:true})
@@ -1315,12 +1357,12 @@ function _vAwardsCore(){
   neg.push(bs0
     ? card('baustelle','red','Baustelle',bs0.ids,esc(topTeamNames(R.baustelleList,x=>x.best)),'Niederlagenserie',bs0.best+'er',{neg:true})
     : empty('baustelle','red','Baustelle'));
-  // Pechvogel: meiste knappe Niederlagen prozentual (Diff ≤ 2). Symmetrisch
-  // zum Clutch-Player (gewinnt knapp prozentual) — der Pechvogel verliert knapp prozentual.
+  // Pechvogel: Anteil verlorener enger Partien. Der Spiegel des Clutch-Players,
+  // aus derselben Zaehlung [§C27].
   neg.push(pv0
     ? card('pechvogel','red','Pechvogel',[pv0.id],
         esc(topNames(R.pechvogelList,x=>Math.round(x.pct*1000),x=>pname(x.id))),
-        pv0.v+' knappe Niederlagen in '+pv0.g+' Spielen',
+        pv0.v+' von '+pv0.g+' engen Partien verloren',
         Math.round(pv0.pct*100)+'%',
         {neg:true})
     : empty('pechvogel','red','Pechvogel'));
