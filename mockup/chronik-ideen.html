@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chronik-Ideen an echten Daten</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=Sometype+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c0b;--bg2:#0f1311;--surface:#141a16;--surface2:#1a221d;--surface3:#222b25;
+--line:#28332b;--line2:#34423a;--ink:#eef3ef;--ink2:#b9c4bd;--muted:#717f76;--faint:#4a554e;
+--acid:#BEF264;--orange:#ff7849;--blue:#56b4e8;--red:#f0566a;--gold:#f7cf4a;--purple:#a78bfa;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font:15px/1.55 'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 20px 80px}
+h1{font-family:'Archivo Black',system-ui,sans-serif;font-size:clamp(26px,5vw,42px);
+ line-height:1.05;margin:0 0 10px;letter-spacing:-.02em}
+.lead{color:var(--ink2);max-width:70ch;margin:0 0 8px}
+.lead b{color:var(--ink)}
+.hinweis{color:var(--muted);font-size:13px;max-width:70ch;margin:0 0 26px}
+.zahlen{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 34px}
+.z{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 15px}
+.z .v{font-family:'Sometype Mono',ui-monospace,monospace;font-size:23px;font-weight:600;color:var(--acid)}
+.z .k{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
+.fam-block{margin:0 0 42px}
+.fam-block h2{font-family:'Archivo Black',system-ui,sans-serif;font-size:19px;margin:0 0 4px;
+ color:var(--f);display:flex;align-items:baseline;gap:9px;letter-spacing:-.01em}
+.fam-block h2 .n{font-family:'Sometype Mono',monospace;font-size:12px;font-weight:500;
+ color:var(--muted);border:1px solid var(--line2);border-radius:999px;padding:1px 8px}
+.fam-s{color:var(--ink2);font-size:13.5px;max-width:78ch;margin:0 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.karte{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--f);
+ border-radius:14px;padding:15px 16px 13px;display:flex;flex-direction:column}
+.karte header{margin-bottom:8px}
+.fam{font-family:'Sometype Mono',monospace;font-size:10.5px;text-transform:uppercase;
+ letter-spacing:.1em;color:var(--f);opacity:.85}
+.karte h3{font-family:'Archivo Black',system-ui,sans-serif;font-size:16.5px;margin:2px 0 0;letter-spacing:-.01em}
+.cond{margin:0 0 8px;font-size:13.5px;color:var(--ink);font-weight:500}
+.wie{margin:0 0 12px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.mess{margin-top:auto;border-top:1px solid var(--line);padding-top:9px;display:flex;flex-direction:column;gap:6px}
+.lbl{font-family:'Sometype Mono',monospace;font-size:10px;text-transform:uppercase;
+ letter-spacing:.09em;color:var(--faint)}
+.m{display:grid;grid-template-columns:78px 1fr;gap:4px 10px;font-size:12.5px;align-items:baseline}
+.m .mo{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted)}
+.m .wer b{color:var(--ink)}
+.m .pl{color:var(--muted);font-size:11px;margin-left:7px}
+.m .ev{grid-column:2;color:var(--ink2);font-size:12px}
+.m.leer .kein{color:var(--faint);font-size:12px}
+.m.leer .kein b{color:var(--muted)}
+footer{margin-top:46px;border-top:1px solid var(--line);padding-top:20px;color:var(--muted);
+ font-size:13px;max-width:78ch}
+footer h2{font-family:'Archivo Black',system-ui,sans-serif;font-size:16px;color:var(--ink);margin:0 0 8px}
+footer ul{margin:0 0 16px;padding-left:19px}
+footer li{margin-bottom:5px}
+footer code{font-family:'Sometype Mono',monospace;font-size:12px;color:var(--acid)}
+</style></head><body><div class="wrap">
+<h1>Chronik-Ideen</h1>
+<p class="lead">Zweiundzwanzig Entwürfe für Monatswertungen, die <b>nicht am Niveau hängen</b>, sondern
+an einer Abweichung, an einer Konstanz oder an einem Verhältnis. Jeder Entwurf ist gegen die
+<b>466 echten Partien</b> der Liga gerechnet: darunter steht, wer ihn in Juni, Juli und August
+bekommen hätte, mit welchem Wert und auf welchem Platz der Siegquote dieser Halter stand.</p>
+<p class="hinweis">Das System bleibt, wie es ist: ein Eintrag je Spieler und Monat, Vergabe an den,
+der den Bestwert wirklich hält. Die Schwellen folgen derselben Regel wie im Katalog: eine Wertung
+trifft in vier Monaten höchstens zweimal zu. Dies ist ein Entwurf ohne Bauablauf, kein Teil der App.</p>
+<div class="zahlen">
+ <div class="z"><div class="v">22</div><div class="k">Entwürfe</div></div>
+ <div class="z"><div class="v">29</div><div class="k">Vergaben in 3 Monaten</div></div>
+ <div class="z"><div class="v">11 von 12</div><div class="k">Spieler mit Eintrag</div></div>
+ <div class="z"><div class="v">41 %</div><div class="k">mittlere Lage der Halter</div></div>
+ <div class="z"><div class="v">41 %</div><div class="k">an die besten Drei (heute 58 %)</div></div>
+</div>
+<section class="fam-block" style="--f:var(--acid)">
+    <h2>Abweichung<span class="n">5</span></h2>
+    <p class="fam-s">Wie weit lag es neben dem, was zu erwarten war? Erwartung ist die Elo-Rechnung, die eigene Laufbahn oder der eigene Schnitt. Jeder hat eine Erwartung, also kann jeder sie reißen.</p>
+    <div class="grid"><article class="karte" style="--f:var(--acid)">
+    <header><span class="fam">Abweichung</span><h3>Der Unmögliche Monat</h3></header>
+    <p class="cond">Ein Monat, den die Rechnung mit höchstens 1,5 % erwartet hat, ab 12 Partien</p>
+    <p class="wie">Die Elo-Rechnung gab vor jeder Partie eine Siegchance. Daraus folgt, mit welcher Wahrscheinlichkeit dieser Monat so oder besser ausgeht. Je kleiner sie ist, desto weniger war damit zu rechnen.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Julian</b></span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Julian</b></span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Martin</b><span class="pl">Platz 1 von 11</span></span><span class="ev">36 von 50 Siegen · die Rechnung gab dem 1.1 %</span></div></div>
+  </article><article class="karte" style="--f:var(--acid)">
+    <header><span class="fam">Abweichung</span><h3>Über sich hinaus</h3></header>
+    <p class="cond">Mindestens 10 Prozentpunkte über der eigenen Quote aus allen Vormonaten, ab 12 Partien</p>
+    <p class="wie">Verglichen wird die Siegquote dieses Monats mit der eigenen Quote aus allen Monaten davor. Gemessen wird also niemand am Niveau der Liga, sondern am eigenen.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben</span></div><div class="m"><span class="mo">Juli 2026</span><span class="wer"><b>Stefan</b><span class="pl">Platz 9 von 11</span></span><span class="ev">33 % statt sonst 21 % · +12 %-Punkte</span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Martin</b><span class="pl">Platz 1 von 11</span></span><span class="ev">72 % statt sonst 61 % · +11 %-Punkte</span></div></div>
+  </article><article class="karte" style="--f:var(--acid)">
+    <header><span class="fam">Abweichung</span><h3>Der Beidfüßige</h3></header>
+    <p class="cond">Auf beiden Positionen höchstens 2 Prozentpunkte neben der eigenen Gesamtquote, ab 8 Partien je Position</p>
+    <p class="wie">Die Siegquote im Sturm und die in der Abwehr, beide gegen die eigene Gesamtquote gestellt. Klein heißt: es macht keinen Unterschied, wo dieser Spieler steht.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Maxi</b><span class="pl">Platz 8 von 11</span></span><span class="ev">40 % vorne, 38 % hinten</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Maxi</b></span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Johannes</b><span class="pl">Platz 10 von 11</span></span><span class="ev">30 % vorne, 32 % hinten</span></div></div>
+  </article><article class="karte" style="--f:var(--acid)">
+    <header><span class="fam">Abweichung</span><h3>Der Nachzügler</h3></header>
+    <p class="cond">In den letzten fünf Partien des Monats mindestens 60 Prozentpunkte besser als in den ersten fünf, ab 15 Partien</p>
+    <p class="wie">Verglichen werden die ersten und die letzten fünf Partien des Monats. Nicht die Monatshälften, sondern die Ränder. Dort zeigt sich eine Wende am deutlichsten.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Jane</b></span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Johannes</b></span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Julian</b><span class="pl">Platz 4 von 11</span></span><span class="ev">4 von 5 zum Schluss, 1 von 5 zum Auftakt</span></div></div>
+  </article><article class="karte" style="--f:var(--acid)">
+    <header><span class="fam">Abweichung</span><h3>Der Ausreißer</h3></header>
+    <p class="cond">Ein Spieltag, den die Rechnung mit höchstens 3,5 % erwartet hat, ab 5 Partien am Tag</p>
+    <p class="wie">Für jeden Spieltag rechnet die Elo-Erwartung aus, wie viele Siege zu erwarten waren. Gesucht ist der eine Tag, der am weitesten darüber lag.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Julian</b><span class="pl">Platz 1 von 11</span></span><span class="ev">7 von 8 an einem Tag · die Rechnung gab dem 3 %</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Leon</b></span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Martin</b></span></div></div>
+  </article></div></section><section class="fam-block" style="--f:var(--blue)">
+    <h2>Konstanz<span class="n">3</span></h2>
+    <p class="fam-s">Das Gegenteil: nicht der Ausschlag, sondern seine Abwesenheit. Immer dasselbe zu liefern ist eine eigene Leistung und hängt nicht am Niveau.</p>
+    <div class="grid"><article class="karte" style="--f:var(--blue)">
+    <header><span class="fam">Konstanz</span><h3>Der Erwartungstreue</h3></header>
+    <p class="cond">Höchstens 1 Prozentpunkt neben der eigenen Elo-Erwartung, ab 15 Partien</p>
+    <p class="wie">Der Abstand zwischen der eigenen Siegquote und dem, was die Elo-Rechnung vorher ausgewiesen hat. Klein heißt: genau so gekommen, wie berechnet.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Henry</b></span></div><div class="m"><span class="mo">Juli 2026</span><span class="wer"><b>Leo</b><span class="pl">Platz 6 von 11</span></span><span class="ev">50 % gespielt, 51 % erwartet</span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Maxi</b><span class="pl">Platz 5 von 11</span></span><span class="ev">51 % gespielt, 50 % erwartet</span></div></div>
+  </article><article class="karte" style="--f:var(--blue)">
+    <header><span class="fam">Konstanz</span><h3>Das Metronom</h3></header>
+    <p class="cond">Zwischen bestem und schwächstem Spieltag höchstens 36 Prozentpunkte, ab 5 Spieltagen mit je 3 Partien</p>
+    <p class="wie">Für jeden Spieltag steht eine Tagesquote. Gemessen wird der Abstand zwischen dem besten und dem schwächsten Tag. Klein heißt: jeden Tag dieselbe Leistung.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Jane</b></span></div><div class="m"><span class="mo">Juli 2026</span><span class="wer"><b>Julian</b><span class="pl">Platz 1 von 11</span></span><span class="ev">36 %-Punkte zwischen bestem und schwächstem Tag</span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Julian</b></span></div></div>
+  </article><article class="karte" style="--f:var(--blue)">
+    <header><span class="fam">Konstanz</span><h3>Die Punktlandung</h3></header>
+    <p class="cond">Am Monatsende höchstens 3 Tore Differenz, ab 25 Partien</p>
+    <p class="wie">Erzielte und kassierte Tore über den ganzen Monat. Gleichstand heißt: kein Tor Unterschied nach dreißig Partien und mehr.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Jannik</b></span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Jannik</b></span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Julian</b><span class="pl">Platz 4 von 11</span></span><span class="ev">323:325 nach 40 Partien</span></div></div>
+  </article></div></section><section class="fam-block" style="--f:var(--gold)">
+    <h2>Verhältnis zur Liga<span class="n">6</span></h2>
+    <p class="fam-s">Der eigene Wert gegen den Schnitt aller Partien desselben Monats. Damit wandert die Messlatte mit der Liga, statt fest zu stehen.</p>
+    <div class="grid"><article class="karte" style="--f:var(--gold)">
+    <header><span class="fam">Verhältnis zur Liga</span><h3>Der Torhagel</h3></header>
+    <p class="cond">In den eigenen Partien fallen mindestens 0,7 Tore mehr als im Ligaschnitt, ab 15 Partien</p>
+    <p class="wie">Der Torschnitt der eigenen Partien, verglichen mit dem Torschnitt aller Partien des Monats. Über dem Mittel heißt: es fallen mehr Tore, wenn dieser Spieler am Tisch steht.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Jane</b><span class="pl">Platz 4 von 11</span></span><span class="ev">16.7 Tore je Partie · Liga 16.0</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Jane</b></span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Johannes</b></span></div></div>
+  </article><article class="karte" style="--f:var(--gold)">
+    <header><span class="fam">Verhältnis zur Liga</span><h3>Die Bremse</h3></header>
+    <p class="cond">In den eigenen Partien fallen mindestens 0,5 Tore weniger als im Ligaschnitt, ab 15 Partien</p>
+    <p class="wie">Dieselbe Rechnung anders herum: der Torschnitt der eigenen Partien unter dem Ligaschnitt des Monats.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Jannik</b><span class="pl">Platz 5 von 11</span></span><span class="ev">15.4 Tore je Partie · Liga 16.0</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Henry</b></span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Martin</b></span></div></div>
+  </article><article class="karte" style="--f:var(--gold)">
+    <header><span class="fam">Verhältnis zur Liga</span><h3>Der Nervenkitzel</h3></header>
+    <p class="cond">Mindestens 15 Prozentpunkte mehr enge Partien als im Ligaschnitt, ab 15 Partien</p>
+    <p class="wie">Der Anteil enger Partien (höchstens zwei Tore Unterschied) an den eigenen, verglichen mit demselben Anteil in der ganzen Liga.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Alex</b><span class="pl">Platz 9 von 11</span></span><span class="ev">50 % enge Partien · Liga 34 %</span></div><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Jane</b><span class="pl">Platz 4 von 11</span></span><span class="ev">50 % enge Partien · Liga 34 %</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Jane</b></span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Johannes</b></span></div></div>
+  </article><article class="karte" style="--f:var(--gold)">
+    <header><span class="fam">Verhältnis zur Liga</span><h3>Der Deutliche</h3></header>
+    <p class="cond">Mindestens 2,4 Tore Differenz je Partie, ab 15 Partien</p>
+    <p class="wie">Die eigene Tordifferenz je Partie, verglichen mit dem Ligamittel von null. Sie sagt mehr als die Siegquote, weil auch die Höhe zählt.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Julian</b></span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Martin</b></span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Martin</b><span class="pl">Platz 1 von 11</span></span><span class="ev">+2.4 Tore je Partie · 460:340</span></div></div>
+  </article><article class="karte" style="--f:var(--gold)">
+    <header><span class="fam">Verhältnis zur Liga</span><h3>Das Bollwerk</h3></header>
+    <p class="cond">Mindestens 1,4 Gegentore je Partie unter dem Ligaschnitt, ab 15 Partien</p>
+    <p class="wie">Die Gegentore je Partie, verglichen mit dem Schnitt aller Spieler des Monats.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Julian</b><span class="pl">Platz 1 von 11</span></span><span class="ev">6.8 Gegentore je Partie · Liga 8.3</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Martin</b></span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Martin</b><span class="pl">Platz 1 von 11</span></span><span class="ev">6.8 Gegentore je Partie · Liga 8.3</span></div></div>
+  </article><article class="karte" style="--f:var(--gold)">
+    <header><span class="fam">Verhältnis zur Liga</span><h3>Der Zitterkönig</h3></header>
+    <p class="cond">Mindestens 9 Prozentpunkte mehr knappe Siege als im Ligaschnitt, ab 15 Siegen</p>
+    <p class="wie">Der Anteil der eigenen Siege, die mit höchstens zwei Toren Vorsprung endeten, verglichen mit demselben Anteil in der ganzen Liga.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Jane</b><span class="pl">Platz 4 von 11</span></span><span class="ev">13 von 30 Siegen waren knapp</span></div><div class="m"><span class="mo">Juli 2026</span><span class="wer"><b>Leo</b><span class="pl">Platz 6 von 11</span></span><span class="ev">17 von 42 Siegen waren knapp</span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Maxi</b></span></div></div>
+  </article></div></section><section class="fam-block" style="--f:var(--purple)">
+    <h2>Verhältnis zu anderen<span class="n">5</span></h2>
+    <p class="fam-s">Nicht die eigene Zahl, sondern die im Vergleich zu einem bestimmten anderen: dem Ersten des Monats, dem stärksten und dem schwächsten Partner, den Gegnern über einem.</p>
+    <div class="grid"><article class="karte" style="--f:var(--purple)">
+    <header><span class="fam">Verhältnis zu anderen</span><h3>Der Unbequeme</h3></header>
+    <p class="cond">Mindestens 42 % der Duelle gegen den Ersten des Monats gewonnen, ab 6 solchen Duellen</p>
+    <p class="wie">Der Erste des Monats ist, wer die beste Siegquote des Monats hat. Gezählt werden die Partien gegen ihn.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Leon</b><span class="pl">Platz 3 von 11</span></span><span class="ev">13 von 30 gegen Julian</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Leo</b></span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Leon</b></span></div></div>
+  </article><article class="karte" style="--f:var(--purple)">
+    <header><span class="fam">Verhältnis zu anderen</span><h3>Der Schattenmann</h3></header>
+    <p class="cond">Ein Partner gewinnt an dieser Seite mindestens 50 Prozentpunkte häufiger als ohne, ab 6 gemeinsamen Partien</p>
+    <p class="wie">Für jeden Partner wird die gemeinsame Quote mit der Quote dieses Partners ohne diesen Spieler verglichen. Gezählt wird der Partner, bei dem der Unterschied am größten ist.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Martin</b><span class="pl">Platz 2 von 11</span></span><span class="ev">Henry gewinnt 100 % an dieser Seite · +64 %-Punkte</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Leon</b></span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Martin</b></span></div></div>
+  </article><article class="karte" style="--f:var(--purple)">
+    <header><span class="fam">Verhältnis zu anderen</span><h3>Der Alleingang</h3></header>
+    <p class="cond">Auch neben dem schwächsten Spieler des Monats mindestens 42 %, ab 6 gemeinsamen Partien</p>
+    <p class="wie">Die eigene Quote neben dem schwächsten Partner des Monats, verglichen mit der Quote dieses Partners ohne den Spieler.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Leon</b></span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Leon</b><span class="pl">Platz 2 von 11</span></span><span class="ev">9 von 21 neben Johannes</span></div></div>
+  </article><article class="karte" style="--f:var(--purple)">
+    <header><span class="fam">Verhältnis zu anderen</span><h3>Der Kontrast</h3></header>
+    <p class="cond">Zwischen bestem und schwächstem Partner mindestens 80 Prozentpunkte, ab 3 Partnern mit je 6 Partien</p>
+    <p class="wie">Die Spanne zwischen der Quote neben dem stärksten und der neben dem schwächsten Partner. Groß heißt: es hängt sehr davon ab, wer daneben steht.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Henry</b><span class="pl">Platz 6 von 11</span></span><span class="ev">100 % neben Martin, 17 % neben Leo</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Maxi</b></span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Maxi</b></span></div></div>
+  </article><article class="karte" style="--f:var(--purple)">
+    <header><span class="fam">Verhältnis zu anderen</span><h3>Der Unerschrockene</h3></header>
+    <p class="cond">Gegen die Stärkeren höchstens 21 Prozentpunkte schwächer als gegen alle anderen, ab 10 Partien je Gruppe</p>
+    <p class="wie">Gezählt werden die Partien gegen Gegner, die den Monat mit einer besseren Quote abschließen. Ihnen gegenüber steht die Quote gegen alle übrigen. Gegen oben bricht bei jedem die Quote ein. Gemessen wird, bei wem am wenigsten.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m"><span class="mo">Juni 2026</span><span class="wer"><b>Leon</b><span class="pl">Platz 3 von 11</span></span><span class="ev">53 % gegen die Stärkeren, 74 % gegen den Rest</span></div><div class="m leer"><span class="mo">Juli 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Martin</b></span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Leon</b></span></div></div>
+  </article></div></section><section class="fam-block" style="--f:var(--orange)">
+    <h2>Das seltene Ereignis<span class="n">3</span></h2>
+    <p class="fam-s">Ein einzelner Moment statt einer Quote. Er kann jedem passieren und lässt sich nicht erspielen.</p>
+    <div class="grid"><article class="karte" style="--f:var(--orange)">
+    <header><span class="fam">Das seltene Ereignis</span><h3>Der Doppelschlag</h3></header>
+    <p class="cond">Zwei Siege zu null an einem Spieltag</p>
+    <p class="wie">Ein zweistelliger Sieg ohne Gegentor ist selten. Zwei davon an einem einzigen Spieltag sind es umso mehr.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Julian</b></span></div><div class="m"><span class="mo">Juli 2026</span><span class="wer"><b>Martin</b><span class="pl">Platz 3 von 11</span></span><span class="ev">2 Siege ohne Gegentor an einem Tag</span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Leon</b></span></div></div>
+  </article><article class="karte" style="--f:var(--orange)">
+    <header><span class="fam">Das seltene Ereignis</span><h3>Der Ausbruch</h3></header>
+    <p class="cond">Einen Gegner besiegt, gegen den zuvor mindestens 15 Duelle in Folge verloren gingen</p>
+    <p class="wie">Gegen manche Gegner läuft es über Monate nicht. Gezählt wird die längste Pleitenserie gegen einen Gegner, die in diesem Monat gebrochen wurde.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Leo</b></span></div><div class="m"><span class="mo">Juli 2026</span><span class="wer"><b>Stefan</b><span class="pl">Platz 9 von 11</span></span><span class="ev">nach 15 Pleiten in Folge endlich wieder gewonnen</span></div><div class="m"><span class="mo">August 2026</span><span class="wer"><b>Stefan</b><span class="pl">Platz 8 von 11</span></span><span class="ev">nach 17 Pleiten in Folge endlich wieder gewonnen</span></div></div>
+  </article><article class="karte" style="--f:var(--orange)">
+    <header><span class="fam">Das seltene Ereignis</span><h3>Die Lieblingszahl</h3></header>
+    <p class="cond">Ein Ergebnis in mindestens 24 % der eigenen Partien, ab 20 Partien</p>
+    <p class="wie">Wie oft dasselbe Ergebnis fiel. Gezählt wird das häufigste Ergebnis der eigenen Partien und sein Anteil daran.</p>
+    <div class="mess"><span class="lbl">Gemessen an den 466 echten Partien</span><div class="m leer"><span class="mo">Juni 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Jane</b></span></div><div class="m"><span class="mo">Juli 2026</span><span class="wer"><b>Alex</b><span class="pl">Platz 11 von 11</span></span><span class="ev">5× 5:10 · 25 % aller Partien</span></div><div class="m leer"><span class="mo">August 2026</span><span class="kein">nicht vergeben · am nächsten dran: <b>Martin</b></span></div></div>
+  </article></div></section>
+<footer>
+<h2>Was diese Entwürfe anders machen</h2>
+<ul>
+<li><b>Die Erwartung ist der Gegner, nicht der Nachbar.</b> „Der Unmögliche Monat" rechnet aus der
+Elo-Siegchance jeder einzelnen Partie aus, mit welcher Wahrscheinlichkeit ein Monat so oder besser
+ausgeht. „Über sich hinaus" vergleicht den Monat mit der eigenen Laufbahn davor. Beide messen den
+Abstand zum eigenen Maß, nicht zum besten der Liga.</li>
+<li><b>Konstanz ist eine eigene Disziplin.</b> „Der Erwartungstreue" gewinnt, wer genau so spielt,
+wie die Rechnung es ausweist, und das kann jeder auf jedem Niveau. Gemessen ging er an Platz 5 und
+Platz 6 von elf.</li>
+<li><b>Die Liga ist der Maßstab, nicht eine feste Zahl.</b> Torhagel, Bremse, Nervenkitzel und
+Zitterkönig stellen den eigenen Wert gegen den Schnitt desselben Monats. Damit wandert die Latte
+mit, und ein torarmer Monat verschenkt keine Einträge.</li>
+<li><b>Das Verhältnis zu einem bestimmten anderen.</b> Der Unbequeme misst gegen den Ersten des
+Monats, der Alleingang gegen den schwächsten Partner, der Kontrast die Spanne zwischen bestem und
+schwächstem Partner.</li>
+<li><b>Ein einzelner Moment zählt auch.</b> Der Doppelschlag, der Ausreißer und der Ausbruch hängen
+an einem Tag oder an einer Partie. Sie lassen sich nicht erspielen, und sie gingen gemessen an
+Platz 8 und Platz 9 von elf.</li>
+</ul>
+<h2>Was noch zu klären wäre</h2>
+<ul>
+<li>Die Vergabe braucht je Eintrag ein Feld in <code>_seasonTitleCtx</code> und dasselbe Feld in
+<code>_chronicleCtx</code>, sonst bleibt der Liga-Rekord leer.</li>
+<li>Jeder neue Eintrag ist neues Prestige und verschiebt die Insignium-Leiter. Zweiundzwanzig auf
+einmal wären zu viel; sinnvoll ist eine Auswahl von sechs bis acht.</li>
+<li>Icons fehlen: jede Disziplin braucht ein eigenes, keine zwei dürfen dasselbe tragen.</li>
+</ul>
+</footer>
+</div></body></html>
