@@ -1500,6 +1500,15 @@ function _buildStories(){
   // keine Partie hatte: ein Wochenrückblick ohne Woche ist ein Kalendereintrag.
   try {
     if(_wocheDue && _wochenTeile.length >= 2){
+      // Die Reihenfolge ist die Wertigkeit, nicht die Reihenfolge, in der die
+      // sechs Bloecke im Generator stehen. Das Team der Woche entstand als
+      // letztes und stand damit auch als letztes: die zwei Wertungen, die
+      // einen Sieger der Woche kueren, standen an Platz eins und Platz sechs.
+      const _wRang = ['potw', 'team', 'riser', 'blowout', 'upset', 'thriller'];
+      _wochenTeile.sort((a, b) => {
+        const ra = _wRang.indexOf(a.art), rb = _wRang.indexOf(b.art);
+        return (ra < 0 ? 99 : ra) - (rb < 0 ? 99 : rb);
+      });
       const _wHeld = _wochenTeile.find(t => t.held) || _wochenTeile[0];
       const _wSpiele = matches.filter(m => { const t = mts(m); return t >= _wocheStart && t < _wocheEnde; });
       const _wTage = new Set(_wSpiele.map(m => new Date(m.created_at).toDateString())).size;

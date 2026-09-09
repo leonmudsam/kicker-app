@@ -1501,7 +1501,7 @@ function _badgeStreakState(badgeId, playerId){
         {cur:res.potd, tgt:5, label:'Tagessiege'},
         {cur:res.potw, tgt:2, label:'Wochensiege'}
       ],
-      hint:'Zählt nur die laufende Saison — beide Ziele nötig, Reset zu Saisonbeginn.'
+      hint:'Zählt nur die laufende Saison, beide Ziele nötig, Reset zu Saisonbeginn.'
     };
   }
   if(badgeId === 'allwetter'){

@@ -1551,7 +1551,7 @@ function showLaufbahn(pid){
   const swFuss = _swRang < 0
     ? 'ab dem ersten Meistertitel'
     : _swRang === _swLetzter
-      ? 'gewachsen ist sie fertig — weiter zählen die Sterne'
+      ? 'gewachsen ist sie fertig, weiter zählen die Sterne'
       : 'noch ' + (INS_SCHWINGE[_swRang + 1].ab - _titel) + ' bis zur nächsten';
 
   const teil = (lab, n, pt, sub) => `<div class="lb-teil">

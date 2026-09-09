@@ -747,7 +747,6 @@
   .nf-wl-z i{font-style:normal;color:var(--muted);min-width:0;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap}
   .nf-wl-z b{margin-left:auto;font-family:'Sometype Mono',monospace;color:var(--gold);flex:0 0 auto}
-  .nf-wl-m{padding:7px 13px;font-size:10px;color:var(--faint);border-top:1px solid var(--line)}
 
   /* Das Sammelband: was die Karte ausser ihrer Schlagzeile noch buendelt.
      Es stand vorher nur im Blatt, und wer die Karte ueberflog, sah von der

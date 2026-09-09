@@ -30,7 +30,7 @@ function showSeasonTable(sid){
   if(!T.awarded.length && !T.champ){
     openSheet(`<h3>${esc(seasonLabel(sid))}</h3>
       <div class="sheet-sub">Noch keine Chronik-Einträge</div>
-      ${emptyState('trophy', T.live ? 'Die Saison läuft — noch erfüllt niemand eine Bedingung.' : 'Kein Eintrag in dieser Saison')}`);
+      ${emptyState('trophy', T.live ? 'Die Saison läuft, noch erfüllt niemand eine Bedingung.' : 'Kein Eintrag in dieser Saison')}`);
     return;
   }
   const emptyNames = T.empty.map(pname).filter(Boolean);
@@ -60,7 +60,7 @@ function showSeasonTable(sid){
   openSheet(`
     <h3>Die Chronik der Saison</h3>
     <div class="sheet-sub num">${esc(T.label)} · ${T.matches} Matches an ${T.days} Spieltag${T.days===1?'':'en'}${T.live ? ' · läuft noch' : ''}</div>
-    ${T.live ? `<div class="tnote">Stand von heute — bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
+    ${T.live ? `<div class="tnote">Stand von heute, bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>
         <span class="tx"><span class="n">${esc(pname(ch.pid))} — ${T.live ? 'führt die Saison an' : 'Meister'}</span>

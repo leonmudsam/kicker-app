@@ -409,13 +409,15 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       {v: _newsRangKurz(pid), l:'in der Liga'}
     ]);
   } else if(sorte === 'woche'){
+    // Alle sechs Wertungen, nicht drei und eine Zeile „und 3 weitere". Die
+    // Wochenkarte gibt es einmal je Woche, und sie IST die Uebersicht: wer
+    // sie ueberflog, sah die Ueberraschung, den Krimi und das Team der Woche
+    // gar nicht, obwohl die Karte fuer nichts anderes da ist.
     const teile = Array.isArray(d.teile) ? d.teile : [];
-    fuss = `<div class="nf-wl">${teile.slice(0, 3).map(t =>
+    fuss = `<div class="nf-wl">${teile.map(t =>
       `<div class="nf-wl-z"><span>${esc(t.label || '')}</span>`
       + `<i>${esc(_namenKurz((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean), 2))}</i>`
-      + `<b>${esc(t.wert || '')}</b></div>`).join('')}`
-      + (teile.length > 3 ? `<div class="nf-wl-m">und ${teile.length - 3} weitere Wertungen</div>` : '')
-      + `</div>`;
+      + `<b>${esc(t.wert || '')}</b></div>`).join('')}</div>`;
   } else if(sorte === 'duell'){
     // Eine Rivalitaet lebt vom Verhaeltnis. Die beiden Wappen standen
     // uebereinander in der linken Spalte und machten die Karte 56 Pixel

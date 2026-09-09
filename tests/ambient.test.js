@@ -1172,6 +1172,78 @@ ok(_fliess.klein === 0, 'und kein Satz faengt klein an', String(_fliess.klein));
 ok(_fliess.probe === '20 % aller 25 Siege endeten 10:9, 5 Zittersiege',
    'der Beleg wird fuer den Fliesstext umgestellt', _fliess.probe);
 
+// ── Wer da zusammen steht, und warum ────────────────────────────────
+// Unter zwei Wappen stand „als Duo", sobald eine Karte genau zwei Leute
+// zeigte. Bei „Martin schlaegt Leo im Spitzenspiel" standen sich die beiden
+// gegenueber, und bei „Johannes und Stefan bewegen die Ewige Tafel" holte
+// jeder einen eigenen Rekord. Die Beziehung sagt der STORY-TYP, nicht die
+// Kartenform.
+const _bez = JSON.parse(K.eval(`JSON.stringify((function(){
+  const f = typ => _ndBeziehung({dataRef:{type:typ, matchId:'m1'}}, 2);
+  const roh = _buildStories();
+  const alle = roh.concat(_consolidateStories(roh));
+  const falsch = [];
+  const seen = {};
+  alle.forEach(s => {
+    const d = s.dataRef || {};
+    const t = d.type || '';
+    if(seen[t]) return; seen[t] = 1;
+    let ids = []; try { ids = (_newsPids(s) || []); } catch(e){}
+    if(ids.length < 2) return;
+    const b = _ndBeziehung(s, ids.length);
+    // „als Duo" darf nur dastehen, wo die Karte wirklich von einem Duo handelt.
+    if(b === 'als Duo' && t !== 'team_streak' && t !== 'team_loss_streak') falsch.push(t);
+    if(!b) falsch.push(t + '(leer)');
+  });
+  return {falsch, clash:f('top_clash'), duo:f('team_streak'), duell:f('rivalry'),
+          sammel:_ndBeziehung({dataRef:{type:'sammel', quelle:'tafel'}}, 2)};
+})())`));
+ok(_bez.falsch.length === 0, 'nur ein echtes Duo steht als Duo da', _bez.falsch.join(', ') || 'keins');
+ok(_bez.clash === 'Sieger und Verlierer dieser Partie',
+   'im Spitzenspiel stehen sich zwei gegenueber', _bez.clash);
+ok(_bez.duo === 'als Duo', 'die Duo-Serie bleibt ein Duo', _bez.duo);
+ok(_bez.duell === 'im direkten Duell', 'die Rivalitaet bleibt ein Duell', _bez.duell);
+ok(_bez.sammel === 'an der Ewigen Tafel', 'die Sammelkarte nennt ihren Anlass', _bez.sammel);
+
+// ── Das Blatt erklaert nicht die App ────────────────────────────────
+// Im Blatt des Spielers des Tages stand „Gewertet wird der Spieltag ab drei
+// Partien. Die Karte kommt um 23:59, wenn keine Partie mehr dazukommen
+// kann." Das ist die Bauanleitung des Feeds, nicht die Nachricht. Genauso
+// stand unter einer Insignium-Stufe „deshalb ist diese Karte Breaking
+// [§C30]" — die App erklaerte dem Leser ihre eigene Regel samt Paragraph.
+const _meta = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const treffer = [];
+  roh.concat(_consolidateStories(roh)).forEach(s => {
+    let h = ''; try { h = _newsDetailBody(s); } catch(e){ return; }
+    if(/Gewertet wird|diese Karte Breaking|§C\\d/.test(String(h)))
+      treffer.push((s.dataRef||{}).type || '?');
+  });
+  return treffer;
+})())`));
+ok(_meta.length === 0, 'kein Blatt erklaert die Regeln des Feeds', _meta.join(', ') || 'keins');
+
+// ── Die Wochenkarte zeigt alle sechs Wertungen ──────────────────────
+// Sie zeigte drei und darunter „und 3 weitere Wertungen": die Ueberraschung,
+// der Krimi und das Team der Woche kamen auf der Karte gar nicht vor, obwohl
+// sie einmal je Woche erscheint und fuer nichts anderes da ist. Und das Team
+// der Woche entstand im Generator als letztes und stand damit auch als
+// letztes, obwohl es neben dem Spieler der Woche gehoert.
+const _wo = JSON.parse(K.eval(`JSON.stringify((function(){
+  const s = _consolidateStories(_buildStories()).find(x => (x.dataRef||{}).type === 'woche');
+  if(!s) return {fehlt:true};
+  const teile = (s.dataRef.teile || []);
+  const karte = _newsCardHtmlM2(s, false, false);
+  return {n:teile.length, arten:teile.map(t => t.art),
+          zeilen:(String(karte).match(/nf-wl-z/g) || []).length,
+          rest:/nf-wl-m/.test(String(karte))};
+})())`));
+ok(!_wo.fehlt, 'die Wochenkarte entsteht', JSON.stringify(_wo));
+ok(_wo.arten[0] === 'potw' && _wo.arten[1] === 'team',
+   'Spieler der Woche steht oben, das Team der Woche direkt darunter', (_wo.arten||[]).join(', '));
+ok(_wo.zeilen === _wo.n, 'die Karte zeigt jede Wertung', _wo.zeilen + ' von ' + _wo.n);
+ok(_wo.rest === false, 'und keine Zeile mehr, die den Rest verschweigt', String(_wo.rest));
+
 // ── Wie die Liga spricht ────────────────────────────────────────────
 // Leicht und unkompliziert, aber mit den Zahlen dran. Der Gedankenstrich ist
 // raus: er trennte Saetze, die als zwei Saetze klarer sind. Und die
