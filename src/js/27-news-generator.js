@@ -1612,11 +1612,18 @@ function _buildStories(){
           // Wer zum ERSTEN Mal überhaupt einen Monatseintrag holt, bekommt
           // eine eigene Karte. Das ist der Moment, den ein Neuling oder ein
           // Spieler aus der unteren Hälfte sonst nie im Feed sieht.
+          // Ein Spieler, der in einem Monat ZWEI Einträge holt, steht zweimal
+          // in `T.awarded` — und bekam damit zweimal dieselbe Karte mit
+          // derselben ID. Im Feed standen „Sina steht zum ersten Mal in der
+          // Chronik" doppelt untereinander.
+          const _erstlinge = new Set();
           T.awarded.forEach(x => {
+            if(_erstlinge.has(x.pid)) return;
             let frueher = 0;
             try { frueher = (seasonTitleHistory(x.pid) || [])
               .filter(r => r.title && r.sid !== _vorSid && r.sid < _vorSid).length; } catch(e){ frueher = 1; }
             if(frueher > 0) return;
+            _erstlinge.add(x.pid);
             stories.push({
               id: 'chronik_erst_' + x.pid + '_' + _vorSid,
               cat: 'tafel',
