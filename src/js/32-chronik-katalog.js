@@ -178,36 +178,36 @@ const DISZIPLINEN = [
   {id:'trotzig', name:'Der Trotzige', short:'Trotzdem', ic:'unstoppable', tone:'acid', art:'leistung',
     monat:{
       wie:'Außenseiter heißt: die Elo-Rechnung wies vorab unter 50 % Siegchance aus. Gezählt wird, wie viele dieser Partien trotzdem gewonnen wurden.',
-      cond:'Mindestens 45 % der Partien als Außenseiter gewonnen, ab 15 solchen Partien',
-            ...(_stWertung(p=>p.favG>=15, p=>p.favW/p.favG, 0.45,
+      cond:'Mindestens 48 % der Partien als Außenseiter gewonnen, ab 15 solchen Partien',
+            ...(_stWertung(p=>p.favG>=15, p=>p.favW/p.favG, 0.48,
         (p)=>`${p.favW} von ${p.favG} Partien als Außenseiter gewonnen`))}},
 
   {id:'gegenoben', name:'Gegen die Besten', short:'Oben', ic:'temple', tone:'gold', art:'leistung',
     monat:{
       wie:'Die besten Drei sind die drei Ersten der Elo-Rangliste am Monatsende. Gezählt wird jede Partie gegen mindestens einen von ihnen.',
-      cond:'Mindestens 60 % gegen die drei Ersten des Monats, ab 12 solchen Partien',
-            ...(_stWertung(p=>p.vsTop3Games>=12, p=>p.vsTop3/p.vsTop3Games, 0.60,
+      cond:'Mindestens 63 % gegen die drei Ersten des Monats, ab 12 solchen Partien',
+            ...(_stWertung(p=>p.vsTop3Games>=12, p=>p.vsTop3/p.vsTop3Games, 0.63,
         (p)=>`${p.vsTop3} von ${p.vsTop3Games} Partien gegen die besten Drei`))}},
 
   {id:'favoritenpflicht', name:'Die Favoritenpflicht', short:'Pflicht', ic:'trophyCheck', tone:'gold', art:'leistung',
     monat:{
       wie:'Favorit heißt: die Elo-Rechnung wies vorab mindestens 60 % Siegchance aus. Ein Patzer ist eine verlorene Favoritenpartie.',
-      cond:'Als Favorit (ab 60 % Siegchance) mindestens 85 % geholt, ab 10 solchen Partien',
-            ...(_stWertung(p=>p.favoritG>=10, p=>p.favoritW/p.favoritG, 0.85,
+      cond:'Als Favorit (ab 60 % Siegchance) mindestens 93 % geholt, ab 10 solchen Partien',
+            ...(_stWertung(p=>p.favoritG>=10, p=>p.favoritW/p.favoritG, 0.93,
         (p)=>`${p.favoritW} von ${p.favoritG} Favoritenpartien · ${p.favoritG-p.favoritW} Patzer`))}},
 
   {id:'mitjedem', name:'Mit jedem', short:'Mit jedem', ic:'users', tone:'gold', art:'leistung',
     monat:{
       wie:'Von allen Partnern mit mindestens fünf gemeinsamen Spielen zählt der, neben dem es am schlechtesten lief, nicht der Schnitt.',
-      cond:'Auch neben dem schwächsten Partner mindestens 50 %, ab 3 Partnern mit je 5 Spielen',
-            ...(_stWertung(p=>p.partnerMin!=null, p=>p.partnerMin, 0.50,
+      cond:'Auch neben dem schwächsten Partner mindestens 55 %, ab 3 Partnern mit je 5 Spielen',
+            ...(_stWertung(p=>p.partnerMin!=null, p=>p.partnerMin, 0.55,
         (p)=>`${p.partnerW} von ${p.partnerG} selbst neben ${pname(p.partnerX)} · ${p.partnerN} Partner`))}},
 
   {id:'gegenalle', name:'Gegen alle', short:'Gegen alle', ic:'target', tone:'gold', art:'leistung',
     monat:{
       wie:'Regelmäßig heißt: mindestens vier Duelle im Monat. Gegen jeden davon müssen mehr Siege als Niederlagen stehen.',
-      cond:'Gegen jeden regelmäßigen Gegner mehr Siege als Niederlagen, ab 5 Gegnern mit je 4 Duellen',
-            ...(_stWertung(p=>p.breiteOk===p.breiteN, p=>p.breiteN, 5,
+      cond:'Gegen jeden regelmäßigen Gegner mehr Siege als Niederlagen, ab 8 Gegnern mit je 4 Duellen',
+            ...(_stWertung(p=>p.breiteOk===p.breiteN, p=>p.breiteN, 8,
         (p,v)=>`gegen alle ${v} regelmäßigen Gegner im Plus`))}},
 
   {id:'best_record', name:'Der Maßstab', short:'Maßstab', ic:'medal2', tone:'gold', art:'leistung',
@@ -220,8 +220,8 @@ const DISZIPLINEN = [
   {id:'daylord', name:'Der Platzhirsch', short:'Revier', ic:'dayKing', tone:'gold', art:'leistung',
     monat:{
       wie:'Player of the Day ist, wer an einem Spieltag die beste Bilanz hat. Gezählt wird der Anteil an den eigenen Spieltagen.',
-      cond:'An mindestens 35 % der eigenen Spieltage Player of the Day, ab 5 Spieltagen',
-            ...(_stWertung(p=>p.days>=5, p=>p.potd/p.days, 0.35,
+      cond:'An mindestens 45 % der eigenen Spieltage Player of the Day, ab 5 Spieltagen',
+            ...(_stWertung(p=>p.days>=5, p=>p.potd/p.days, 0.45,
         (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${Math.round(v*100)} %`))},
     allzeit:{
       cond:'Höchster Anteil eigener Spieltage als Player of the Day, ab 12 Spieltagen und mindestens 25 %',
@@ -254,8 +254,8 @@ const DISZIPLINEN = [
 
   {id:'spotless', name:'Der makellose Tag', short:'Makellos', ic:'trophyDay', tone:'gold', art:'leistung',
     monat:{
-      cond:'Ein Spieltag mit mindestens 5 Partien und keiner einzigen Niederlage',
-            ...(_stWertung(()=>true, p=>p.bestPerfTag, 5,
+      cond:'Ein Spieltag mit mindestens 6 Partien und keiner einzigen Niederlage',
+            ...(_stWertung(()=>true, p=>p.bestPerfTag, 6,
         (p,v)=>`${v} Partien an einem Tag, keine davon verloren`))},
     allzeit:{
       cond:'Höchster Anteil voller Spieltage (4+ Partien) ohne eine einzige Niederlage, ab 8 solchen Tagen',
@@ -265,8 +265,8 @@ const DISZIPLINEN = [
   {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'handshake', tone:'gold', art:'leistung',
     monat:{
       wie:'Für jeden Partner wird verglichen, wie oft DIESER Partner an dieser Seite gewinnt und wie oft ohne. Der Abstand steht in Prozentpunkten und misst damit nicht das eigene Ergebnis, sondern die Wirkung auf andere.',
-      cond:'Partner gewinnen an dieser Seite mindestens 20 Prozentpunkte häufiger als ohne, ab 3 Partnern',
-            ...(_stWertung(p=>p.upliftMates>=3 && p.uplift!=null, p=>p.uplift, 0.20,
+      cond:'Partner gewinnen an dieser Seite mindestens 22 Prozentpunkte häufiger als ohne, ab 3 Partnern',
+            ...(_stWertung(p=>p.upliftMates>=3 && p.uplift!=null, p=>p.uplift, 0.22,
         (p,v)=>`Die ${p.upliftMates} Partner gewinnen an dieser Seite ${Math.round(v*100)} %-Punkte häufiger`))},
     allzeit:{
       cond:'Die Partner gewinnen an dieser Seite am deutlichsten häufiger als ohne, mindestens 3 Partner mit je 25 gemeinsamen Spielen',
@@ -302,8 +302,8 @@ const DISZIPLINEN = [
 
   {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'explosion', tone:'orange', art:'leistung',
     monat:{
-      cond:'Mindestens 26 % der eigenen Siege mit 7+ Toren Vorsprung, ab 20 Siegen',
-            ...(_stWertung(p=>p.wins>=20, p=>p.blowouts/p.wins, 0.26,
+      cond:'Mindestens 27 % der eigenen Siege mit 7+ Toren Vorsprung, ab 20 Siegen',
+            ...(_stWertung(p=>p.wins>=20, p=>p.blowouts/p.wins, 0.27,
         (p,v)=>`${p.blowouts} der ${p.wins} Siege mit 7+ Toren Vorsprung`))},
     allzeit:{
       cond:'Höchster Anteil Kantersiege, ab 22 Siegen und mindestens 22 %',
@@ -349,8 +349,8 @@ const DISZIPLINEN = [
 
   {id:'climber', name:'Der Aufsteiger', short:'Aufsteiger', ic:'climb', tone:'acid', art:'leistung',
     monat:{
-      cond:'Mindestens 120 Elo mehr als am Ende der Vorsaison',
-            ...(_stWertung(p=>p.growth!=null, p=>p.growth, 120,
+      cond:'Mindestens 200 Elo mehr als am Ende der Vorsaison',
+            ...(_stWertung(p=>p.growth!=null, p=>p.growth, 200,
         (p,v)=>`+${Math.round(v)} Elo gegenüber der Vorsaison`))}},
 
   {id:'comeback_king', name:'Der Stehaufmann', short:'Comeback', ic:'comeback', tone:'acid', art:'leistung',
@@ -403,15 +403,15 @@ const DISZIPLINEN = [
   {id:'augenhoehe', name:'Auf Augenhöhe', short:'Augenhöhe', ic:'weightSmall', tone:'acid', art:'leistung',
     monat:{
       wie:'Die Rechnung sah die Partie offen, wenn sie beiden Teams zwischen 45 und 55 Prozent Siegchance gab. Verglichen wird die Quote in diesen Partien mit der eigenen Quote über den ganzen Monat.',
-      cond:'In offenen Partien mindestens 10 Prozentpunkte stärker als sonst, ab 8 solchen Partien',
-      ...(_stWertung(p=>p.gleichG>=8, p=>p.gleichW/p.gleichG - p.wins/p.games, 0.10,
+      cond:'In offenen Partien mindestens 15 Prozentpunkte stärker als sonst, ab 8 solchen Partien',
+      ...(_stWertung(p=>p.gleichG>=8, p=>p.gleichW/p.gleichG - p.wins/p.games, 0.15,
         (p,v)=>`${p.gleichW} von ${p.gleichG} offenen Partien · +${Math.round(v*100)} %-Punkte`))}},
 
   {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'chartUp', tone:'acid', art:'leistung',
     monat:{
       wie:'Die Spieltage des Monats werden in der Mitte geteilt. Verglichen werden die beiden Siegquoten desselben Spielers, die zweite Hälfte gegen die erste.',
-      cond:'In der zweiten Hälfte des Monats mindestens 12 Prozentpunkte stärker als in der ersten, ab 8 Partien je Hälfte',
-      ...(_stWertung(p=>p.h1G>=8 && p.h2G>=8, p=>p.h2W/p.h2G - p.h1W/p.h1G, 0.12,
+      cond:'In der zweiten Hälfte des Monats mindestens 20 Prozentpunkte stärker als in der ersten, ab 8 Partien je Hälfte',
+      ...(_stWertung(p=>p.h1G>=8 && p.h2G>=8, p=>p.h2W/p.h2G - p.h1W/p.h1G, 0.20,
         (p,v)=>`+${Math.round(v*100)} %-Punkte in der zweiten Monatshälfte · ${p.h2W} von ${p.h2G}`))}},
 
   // Die Außenseiter-Quote misst NICHT, wie oft jemand Außenseiter ist —
@@ -607,8 +607,8 @@ const DISZIPLINEN = [
   {id:'spezialist', name:'Der Spezialist', short:'Spezialist', ic:'plusMinus', tone:'purple', art:'ereignis',
     monat:{
       wie:'Der Abstand zwischen der Siegquote im Sturm und der in der Abwehr, in Prozentpunkten. Groß heißt einseitig, nicht gut.',
-      cond:'Auf einer Position mindestens 30 Prozentpunkte besser als auf der anderen, ab 10 Partien je Position',
-            ...(_stWertung(p=>p.atkG>=10 && p.defG>=10, p=>Math.abs(p.atkW/p.atkG - p.defW/p.defG), 0.30,
+      cond:'Auf einer Position mindestens 33 Prozentpunkte besser als auf der anderen, ab 10 Partien je Position',
+            ...(_stWertung(p=>p.atkG>=10 && p.defG>=10, p=>Math.abs(p.atkW/p.atkG - p.defW/p.defG), 0.33,
         (p,v)=>`${Math.round(v*100)} %-Punkte Unterschied, deutlich stärker `
           + (p.atkW/p.atkG > p.defW/p.defG ? 'vorne' : 'hinten')))}},
 
@@ -634,12 +634,12 @@ const DISZIPLINEN = [
   {id:'fluke', name:'Der Sonntagsschuss', short:'Coup', ic:'surprise', tone:'orange', art:'ereignis', zufall:'quote',
     // Auch als Monatswertung: eine einzige Partie genuegt, und die Rechnung
     // stand dagegen. Gemessen ueber die bisherigen Monate ging sie an Platz
-    // sechs und Platz sieben der Siegquote — an Leute, die von den Eintraegen,
+    // sieben und Platz zehn der Siegquote — an Leute, die von den Eintraegen,
     // die am Koennen haengen, keinen bekommen.
     monat:{
       wie:'Die Siegchance ist der Elo-Erwartungswert des eigenen Teams vor der Partie. Gezählt wird die eine Partie des Monats, in der sie am tiefsten stand und trotzdem gewonnen wurde.',
-      cond:'Der unwahrscheinlichste Sieg des Monats, bei höchstens 28 % Siegchance',
-      ...(_stWertung(p=>p.flukeExp!=null, p=>1-p.flukeExp, 0.72,
+      cond:'Der unwahrscheinlichste Sieg des Monats, bei höchstens 20 % Siegchance',
+      ...(_stWertung(p=>p.flukeExp!=null, p=>1-p.flukeExp, 0.80,
         (p,v)=>`${Math.round((1-v)*100)} % Siegchance, und trotzdem gewonnen`))},
     allzeit:{
       // Eine einzige Partie genügt, und die Rechnung stand gegen ihn. Der
@@ -658,9 +658,9 @@ const DISZIPLINEN = [
         (p,v)=>`${Math.round(-v*100)} %-Punkte unter der Erwartung · ${p.games} Partien`))}},
 
   {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'dropTriple', tone:'red', art:'schatten',
-    monat:{strict:true,
-      cond:'Längste Niederlagenserie des Monats, mindestens 10 Spiele am Stück',
-            ...(_stWertung(()=>true, p=>p.worstLoss, 10,
+    monat:{
+      cond:'Längste Niederlagenserie des Monats, mindestens 11 Spiele am Stück',
+            ...(_stWertung(()=>true, p=>p.worstLoss, 11,
         (p,v)=>`${v} Niederlagen in Folge${p.lossSpan?' · '+p.lossSpan:''}`))},
     allzeit:{
       cond:'Längste Niederlagenserie der Liga-Geschichte',
@@ -735,6 +735,17 @@ SEASON_TITLES.forEach(t => { SEASON_TITLE_BY_ID[t.id] = t; });
 //   `wert`  Die Groesse. Groesser ist besser, auch bei den Schattenseiten —
 //           wo weniger besser ist, steht ein Minus davor.
 //   `ab`    Ab hier ist die Bedingung erfuellt.
+//
+// Die Schwellen sind an den echten Partien geeicht, nicht geschaetzt, und sie
+// folgen einer Regel: EINE MONATSWERTUNG TRIFFT IN VIER MONATEN HOECHSTENS
+// ZWEIMAL ZU. Vorher lagen sie so niedrig, dass in einem Monat vierundzwanzig
+// der vierunddreissig Wertungen vergeben wurden — drei Viertel des Katalogs,
+// jeden Monat neu, und ein einzelner Spieler trug neun davon. Was fast jeder
+// Monat hergibt, ist keine Auszeichnung mehr, sondern eine Zeile im Protokoll.
+// Mit der Regel bleiben siebzehn bis zweiundzwanzig je Monat, und jede steht
+// fuer eine Leistung, die es in der Ligageschichte erst ein- oder zweimal gab.
+// `tests/disziplinen` zaehlt es nach; ein rotes Ergebnis nennt die Wertung,
+// deren Schwelle zu tief haengt.
 function _stWertung(mind, wert, ab, ev){
   return {
     mind, wert, ab, ev,
