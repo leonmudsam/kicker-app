@@ -395,6 +395,25 @@ const DISZIPLINEN = [
       val:p => (p.games >= 80 && p.lossStreak > 0) ? -p.lossStreak : null,
       ev:(p,v) => `${-v} Niederlagen am Stück, mehr waren es nie · ${p.games} Partien`}},
 
+  // Zwei Wertungen fuer die Mitte des Feldes. Die Chronik ging zu sechzig
+  // Prozent an die besten Drei, und der Monatserste allein hielt ein Drittel
+  // der Tafel: wer eine Quote gewinnt, gewinnt fast jede. Beide hier messen
+  // deshalb nicht das Niveau, sondern den ABSTAND zum eigenen — genau wie das
+  // Übersoll, das jeder erreichen kann.
+  {id:'augenhoehe', name:'Auf Augenhöhe', short:'Augenhöhe', ic:'weightSmall', tone:'acid', art:'leistung',
+    monat:{
+      wie:'Die Rechnung sah die Partie offen, wenn sie beiden Teams zwischen 45 und 55 Prozent Siegchance gab. Verglichen wird die Quote in diesen Partien mit der eigenen Quote über den ganzen Monat.',
+      cond:'In offenen Partien mindestens 10 Prozentpunkte stärker als sonst, ab 8 solchen Partien',
+      ...(_stWertung(p=>p.gleichG>=8, p=>p.gleichW/p.gleichG - p.wins/p.games, 0.10,
+        (p,v)=>`${p.gleichW} von ${p.gleichG} offenen Partien · +${Math.round(v*100)} %-Punkte`))}},
+
+  {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'chartUp', tone:'acid', art:'leistung',
+    monat:{
+      wie:'Die Spieltage des Monats werden in der Mitte geteilt. Verglichen werden die beiden Siegquoten desselben Spielers, die zweite Hälfte gegen die erste.',
+      cond:'In der zweiten Hälfte des Monats mindestens 12 Prozentpunkte stärker als in der ersten, ab 8 Partien je Hälfte',
+      ...(_stWertung(p=>p.h1G>=8 && p.h2G>=8, p=>p.h2W/p.h2G - p.h1W/p.h1G, 0.12,
+        (p,v)=>`+${Math.round(v*100)} %-Punkte in der zweiten Monatshälfte · ${p.h2W} von ${p.h2G}`))}},
+
   // Die Außenseiter-Quote misst NICHT, wie oft jemand Außenseiter ist —
   // das sagt nur, wie schwach er ist. Gemessen wird der Abstand zwischen
   // dem, was er in diesen Partien geholt hat, und dem, was die Quoten ihm
@@ -471,16 +490,6 @@ const DISZIPLINEN = [
       unit:'Partien im Wechsel', min:7, raw:p => p.alt,
       ev:(p,v) => `${v} Partien lang immer abwechselnd`,
       zeit:p => p.altSpan || ''}},
-
-  {id:'fluke', name:'Der Sonntagsschuss', short:'Coup', ic:'surprise', tone:'orange', art:'ereignis', zufall:'quote',
-    allzeit:{
-      // Eine einzige Partie genügt, und die Rechnung stand gegen ihn. Der
-      // schwächste Spieler der Liga hat die meisten Gelegenheiten dazu —
-      // das ist hier kein Fehler, sondern der Zweck.
-      cond:'Der unwahrscheinlichste Sieg, den je jemand geholt hat, bei höchstens 30 % Siegchance',
-      val:p => (p.flukeExp != null && p.flukeExp <= 0.30) ? 1 - p.flukeExp : null,
-      ev:(p,v) => `${Math.round((1-v)*100)} % Siegchance, und trotzdem gewonnen`,
-      zeit:p => p.flukeLabel || ''}},
 
   // ── Die Fügungen aus Auslosung und letztem Ball ───────────────────
   // `zufall` sagt zweierlei: welcher Kammer der Eintrag angehört, und wie
@@ -621,6 +630,25 @@ const DISZIPLINEN = [
       cond:'Mindestens 78 % der ersten Partien eines Spieltags gewonnen, ab 6 Spieltagen',
             ...(_stWertung(p=>p.firstG>=6, p=>p.firstW/p.firstG, 0.78,
         (p)=>`${p.firstW} von ${p.firstG} Auftaktpartien gewonnen`))}},
+
+  {id:'fluke', name:'Der Sonntagsschuss', short:'Coup', ic:'surprise', tone:'orange', art:'ereignis', zufall:'quote',
+    // Auch als Monatswertung: eine einzige Partie genuegt, und die Rechnung
+    // stand dagegen. Gemessen ueber die bisherigen Monate ging sie an Platz
+    // sechs und Platz sieben der Siegquote — an Leute, die von den Eintraegen,
+    // die am Koennen haengen, keinen bekommen.
+    monat:{
+      wie:'Die Siegchance ist der Elo-Erwartungswert des eigenen Teams vor der Partie. Gezählt wird die eine Partie des Monats, in der sie am tiefsten stand und trotzdem gewonnen wurde.',
+      cond:'Der unwahrscheinlichste Sieg des Monats, bei höchstens 28 % Siegchance',
+      ...(_stWertung(p=>p.flukeExp!=null, p=>1-p.flukeExp, 0.72,
+        (p,v)=>`${Math.round((1-v)*100)} % Siegchance, und trotzdem gewonnen`))},
+    allzeit:{
+      // Eine einzige Partie genügt, und die Rechnung stand gegen ihn. Der
+      // schwächste Spieler der Liga hat die meisten Gelegenheiten dazu —
+      // das ist hier kein Fehler, sondern der Zweck.
+      cond:'Der unwahrscheinlichste Sieg, den je jemand geholt hat, bei höchstens 30 % Siegchance',
+      val:p => (p.flukeExp != null && p.flukeExp <= 0.30) ? 1 - p.flukeExp : null,
+      ev:(p,v) => `${Math.round((1-v)*100)} % Siegchance, und trotzdem gewonnen`,
+      zeit:p => p.flukeLabel || ''}},
 
   {id:'untersoll', name:'Unter Soll', short:'Unter Soll', ic:'trendDown', tone:'red', art:'schatten',
     monat:{

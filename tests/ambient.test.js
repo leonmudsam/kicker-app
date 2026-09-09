@@ -469,6 +469,30 @@ ok(_feed.gesichter.max <= Math.max(4, Math.ceil(_feed.ereignisse / 3)),
 ok(_feed.gesichter.max <= Math.ceil(_feed.sichtbar / 2),
    'und auf keiner Haelfte der Karten',
    _feed.gesichter.max + ' von ' + _feed.sichtbar);
+// Der Deckel je Sorte darf niemanden ganz verschwinden lassen: die dritte
+// Duo-Pleitenserie fiel weg, und mit ihr die einzige Karte, auf der die
+// beiden Beteiligten in dieser Woche ueberhaupt standen. Gemessen fehlten
+// danach drei von zwoelf Spielern.
+const _nachhol = JSON.parse(K.eval(`JSON.stringify((function(){
+  const jetzt = Date.now();
+  const l = [];
+  // Vier gleichartige Karten: der Deckel laesst zwei stehen. Die vierte
+  // gehoert zwei Leuten, die sonst nirgends vorkommen.
+  for(let i = 0; i < 4; i++) l.push({
+    id:'ts_' + i, title:'Serie ' + i, desc:'Text ' + i, cat:'team', ic:'flame',
+    prio:7, when:new Date(jetzt - i * 86400000 * 5).toISOString(),
+    dataRef:{type:'team_streak', a:players[i*2].id, b:players[i*2+1].id,
+             playerIds:[players[i*2].id, players[i*2+1].id], streak:0}});
+  const raus = _consolidateStories(l);
+  const drin = new Set();
+  raus.forEach(s => { try { (_newsPids(s)||[]).forEach(p => drin.add(p)); } catch(e){} });
+  return {karten:raus.length, spieler:drin.size};
+})())`));
+ok(_nachhol.karten > 2, 'der Deckel holt zurueck, was sonst ganz fehlte',
+   _nachhol.karten + ' Karten');
+ok(_nachhol.spieler === 8, 'und damit steht jeder Beteiligte wieder im Feed',
+   _nachhol.spieler + ' von 8');
+
 ok(_feed.gesichter.ohne.length === 0,
    'jeder gewertete Spieler kommt im Feed vor',
    _feed.gesichter.ohne.join(', ') || (_feed.gesichter.gewertet + ' gewertet, alle dabei'));

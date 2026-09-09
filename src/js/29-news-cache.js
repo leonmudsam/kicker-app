@@ -614,12 +614,34 @@ function _consolidateStories(list){
                                'season_recap','season_endgame','ambient','group','sammel','woche']);
   const NF_DECKEL = 2;
   const gezaehlt = {};
-  const entdoppelt = gesammelt.filter(s => {
+  const behalten = gesammelt.filter(s => {
     const t = (s && s.dataRef && s.dataRef.type) || '';
     if(!t || OHNE_DECKEL.has(t)) return true;
     gezaehlt[t] = (gezaehlt[t] || 0) + 1;
     return gezaehlt[t] <= NF_DECKEL;
   });
+  // ── Der Deckel darf niemanden ganz verschwinden lassen ─────────────
+  // Im Feed hat jeder ein Gesicht, und jeder gewertete Spieler kommt vor
+  // [§C33]. Der Deckel je Sorte kannte diese Regel nicht: die dritte
+  // Duo-Pleitenserie fiel weg, und mit ihr die einzige Karte, auf der die
+  // beiden Beteiligten in dieser Woche ueberhaupt standen. Gemessen fehlten
+  // danach drei von zwoelf Spielern im Feed, obwohl der Generator fuer jeden
+  // etwas gebildet hatte. Wer sonst nirgends vorkommt, holt seine Karte
+  // deshalb zurueck — die juengste, und nur diese eine.
+  const gesicht = st => { try { return _newsPids(st) || []; } catch(e){ return []; } };
+  const schonDa = new Set();
+  behalten.forEach(s => gesicht(s).forEach(p => schonDa.add(p)));
+  const nachgeholt = new Set();
+  gesammelt.forEach(s => {
+    if(behalten.indexOf(s) >= 0) return;
+    const neu = gesicht(s).filter(p => !schonDa.has(p));
+    if(!neu.length) return;
+    neu.forEach(p => schonDa.add(p));
+    nachgeholt.add(s);
+  });
+  const entdoppelt = nachgeholt.size
+    ? gesammelt.filter(s => behalten.indexOf(s) >= 0 || nachgeholt.has(s))
+    : behalten;
   // ── Die Reihenfolge ist die Zeit ───────────────────────────────────
   // Vorher tauschte hier ein Durchgang zwei gleichartige Nachbarn, damit sich
   // nicht zweimal dieselbe Sorte untereinander liest. Das kostete genau eine

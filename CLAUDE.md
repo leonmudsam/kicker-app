@@ -219,9 +219,9 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen | 898 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes | 910 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 179 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte | 202 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck | 204 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -767,6 +767,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   gibt es bewusst keins: eine Duo-Karte an jedem Spieltag wäre die
   Wiederholung, die §C33 gerade verhindert.
   `tests/ambient` misst das alles.
+- **§C38 Die Chronik gehört nicht nur den besten Drei.** Wer eine Quote
+  gewinnt, gewinnt fast jede: gemessen gingen sechzig Prozent der
+  Monatseinträge an die besten Drei der Siegquote, und der Monatserste allein
+  hielt ein Drittel der Tafel. Ein Eintrag für die Mitte des Feldes misst
+  deshalb nicht das Niveau, sondern den **Abstand zum eigenen** — so wie „Das
+  Übersoll", das jeder erreichen kann. „Auf Augenhöhe" vergleicht die Quote in
+  den Partien, die die Elo-Rechnung offen sah, mit der eigenen Gesamtquote;
+  „Die Steigerung" die zweite Hälfte der Spieltage mit der ersten; „Der
+  Sonntagsschuss" ist eine einzige Partie, in der die Rechnung dagegen stand.
+  Gemessen stehen ihre Halter im Mittel jenseits des ersten Drittels, und der
+  Anteil der Einträge an die besten Drei fiel von sechzig auf fünfundfünfzig
+  Prozent. `tests/disziplinen` fällt, wenn eine davon wieder an die Spitze
+  geht.
 - **§C32 Ein Chronik-Eintrag gehört dem, der ihn hält.** Jeder Monatseintrag
   geht an den, der den Bestwert in diesem Monat wirklich hält — oder an
   niemanden. Halten ihn mehrere punktgleich, tragen ihn alle. Genau wie bei

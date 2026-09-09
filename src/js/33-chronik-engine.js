@@ -68,6 +68,7 @@ function _seasonTitleCtxRechnen(sid){
     expSum:0,
     favoritG:0, favoritW:0,      // Partien als Favorit (ab 60 % Chance)
     gleichG:0, gleichW:0,        // Partien, die die Rechnung offen sah (45–55 %)
+    h1G:0, h1W:0, h2G:0, h2W:0,  // erste und zweite Haelfte der Spieltage des Monats
     langG:0, langW:0,            // Partien an Abenden mit 8+ eigenen Spielen
     fruehG:0, fruehW:0,          // die ersten drei Partien eines Abends
     spaetG:0, spaetW:0,          // ab der sechsten Partie eines Abends
@@ -106,6 +107,12 @@ function _seasonTitleCtxRechnen(sid){
     });
   });
   const daySeen = {};
+  // Die Mitte des Monats ist der mittlere SPIELTAG, nicht der 15. eines
+  // Kalendermonats: gespielt wird an zwei bis drei Tagen die Woche, und ein
+  // Monat, dessen Partien in der zweiten Hälfte liegen, haette sonst eine
+  // leere erste Haelfte.
+  const spielTage = [...new Set(ms.map(m => mdayKey(m)))].sort();
+  const mitteTag = spielTage.length >= 4 ? spielTage[Math.floor(spielTage.length / 2)] : null;
   // Elo-Stand nach jedem Match — dieselbe Quelle wie Rangliste und Profil.
   let histById = null;
   try { histById = getHistoryByMatchId(); } catch(e){ histById = null; }
@@ -146,6 +153,8 @@ function _seasonTitleCtxRechnen(sid){
       p.expSum += exp;
       if(exp >= 0.60){ p.favoritG++; if(w) p.favoritW++; }
       if(exp >= 0.45 && exp <= 0.55){ p.gleichG++; if(w) p.gleichW++; }
+      if(mitteTag){ if(day < mitteTag){ p.h1G++; if(w) p.h1W++; }
+                    else { p.h2G++; if(w) p.h2W++; } }
       if(w && gf - ga >= 7) p.blowouts++;
       if(!w && gf - ga <= -7) p.blowL++;
       // Die Antwort auf ein Debakel. Erst auswerten, dann die Marke für die
