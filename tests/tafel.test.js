@@ -799,6 +799,40 @@ ok(K.eval("_seasonTitleCtx('2026-08') === _seasonTitleCtx('2026-08')"),
   ok(r[1] > 0, sid + ': der Rest liegt hinter „Alle anzeigen"', r[1] + ' weitere');
 });
 
+// ─── Kein Topf überlebt eine neue Partie ─────────────────────────────
+// Zwei Caches trugen die Cache-Version nicht im Schlüssel: das Duo-Detail und
+// die Bilanz zweier Spieler. Geleert wurden sie nur über einen Tag, den der
+// Eingabe-Tab beim Speichern gar nicht mitreicht — wer ein Blatt offen hatte
+// und danach eine Partie eintrug, las gemessen weiter die alten Zahlen.
+const _topf = JSON.parse(K.eval(`JSON.stringify((function(){
+  const a = players[8].id, b = players[9].id;
+  const lies = () => ({duo: teamDetail(a,b).wins + ':' + teamDetail(a,b).losses,
+                       bilanz: h2hDetail(a,b).asOppForA.g});
+  const vorher = lies();
+  const letzte = matches[matches.length-1];
+  // Zwei neue Partien: eine gemeinsam (Duo-Bilanz), eine gegeneinander.
+  const zusammen = Object.assign({}, letzte, {id:'topf_a',
+    a1:a, a2:b, b1:players[0].id, b2:players[1].id,
+    score_a:10, score_b:0, winner:'A', deltas:{},
+    created_at:new Date(new Date(letzte.created_at).getTime() + 3600000).toISOString()});
+  const gegen = Object.assign({}, letzte, {id:'topf_b',
+    a1:a, a2:players[0].id, b1:b, b2:players[1].id,
+    score_a:10, score_b:0, winner:'A', deltas:{},
+    created_at:new Date(new Date(letzte.created_at).getTime() + 7200000).toISOString()});
+  const alt = matches;
+  matches = [...matches, zusammen, gegen];
+  invalidateCache(['global', 'stats', 'awards', 'badges']);   // genau wie doSaveMatch
+  const nachher = lies();
+  matches = alt; invalidateCache();
+  return {vorher, nachher};
+})())`));
+ok(_topf.nachher.duo !== _topf.vorher.duo,
+   'das Duo-Detail sieht eine neue gemeinsame Partie',
+   _topf.vorher.duo + ' → ' + _topf.nachher.duo);
+ok(_topf.nachher.bilanz === _topf.vorher.bilanz + 1,
+   'die Bilanz zweier Spieler sieht ein neues Duell',
+   _topf.vorher.bilanz + ' → ' + _topf.nachher.bilanz);
+
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
 process.exit(fails === 0 ? 0 : 1);

@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **632**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **637**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -140,6 +140,29 @@ und die Saison-Tools darunter (Recap, Positionsverlauf) folgen ihr.
 > **Pflegepflicht.** Kommt eine Zustandsvariable dazu, wird sie hier genannt
 > und ihr Rücksetzverhalten beschrieben.
 
+### Caching
+
+Jeder Topf hängt an `_cache` und trägt **`_cache.version` im Schlüssel**. Das
+ist die ganze Regel: `invalidateCache()` erhöht die Version, und ein Wert mit
+altem Schlüssel wird nie wieder gefunden. Die Tag-Liste
+(`invalidateCache(['global','stats',…])`) löscht darüber hinaus einzelne Töpfe
+sofort — sie ist eine Abkürzung, kein Ersatz.
+
+Wer die Version wegen der Bequemlichkeit weglässt, baut einen stillen Fehler:
+`teamDetail` und `h2hDetail` hatten nur Spieler-IDs im Schlüssel und hingen
+damit allein an ihrem Tag — den der Eingabe-Tab beim Speichern gar nicht
+mitreicht. Gemessen zeigte das Duo-Blatt nach einer neuen Partie weiter 26:4
+statt 27:4 und die Bilanz 110 Duelle statt 111. `tests/tafel` misst das nach.
+
+Ein Topf mit einem Schlüssel, der die Version enthält, **wächst über die
+Versionen**: er braucht eine Obergrenze, ab der er geleert wird. Wo eine
+Rechnung an der Identität eines Arrays hängt statt an einer Version
+(`_winnerCountsOf`, `matchesOfPlayer`, `matchesByDay`), reicht eine `WeakMap`
+— `matches` wird immer **ersetzt**, nie an Ort und Stelle verändert, und ein
+frisches Array verwirft den Memo von selbst.
+
+> **Pflegepflicht.** Kommt ein Topf dazu, steht seine Schlüsselregel hier.
+
 ### Takt
 
 Zwei Zeitgeber laufen dauerhaft (`37-boot.js`): `_tickDaten` alle dreißig
@@ -186,8 +209,8 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr | 893 |
-| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten | 165 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags | 895 |
+| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie | 167 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel | 172 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
@@ -907,7 +930,13 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Chips. (Nebeneffekt: 62 Wappen in einer Duo-Tabelle waren eine
   Viertelmillion Zeichen HTML.)
 - **Nichts sagt zweimal dasselbe.** Steht eine Zahl schon in der Tabelle,
-  gehört sie nicht noch einmal in eine Karte darüber.
+  gehört sie nicht noch einmal in eine Karte darüber. Das gilt auch für
+  Rechnungen: **wer den Spieltag gewonnen hat, sagt `_periodWinnerMap`** —
+  einmal, mit Tiebreak über das Elo-Delta. „Allwetter" und „Tag der Götter"
+  rechneten es je Spieler noch einmal nach, ohne den Tiebreak: gemessen sind
+  12 der 51 entschiedenen Tage punktgleich, und dort trugen beide Spieler den
+  Tag, obwohl beide Beschreibungen „Player of the Day geworden" sagen.
+  `tests/disziplinen` rechnet beide gegen die Siegerliste zurück.
 - **Keine persönliche Ansprache** in der Oberfläche („du", „meine").
 - **Keine Possessivpronomen über einen Spieler.** „42 % seiner Niederlagen"
   heißt „42 % aller Niederlagen". Belege, Bedingungen und Nachrichtentexte
