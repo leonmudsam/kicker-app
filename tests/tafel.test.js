@@ -842,9 +842,15 @@ const _schluessel = (function(){
   const zeilen = quelle.split('\n');
   const ohne = [];
   zeilen.forEach((z, i) => {
-    const m = z.match(/_cache\.(_[A-Za-z0-9_]*Key)\s*=\s*([A-Za-z0-9_]+)\s*;/);
+    const m = z.match(/_cache\.(_[A-Za-z0-9_]*Key)\s*=(?!=)\s*([^;]+);/);
     if(!m) return;
-    const v = m[2];
+    const rechts = m[2].trim();
+    // Steht der Ausdruck direkt da, wird er direkt geprüft.
+    if(!/^[A-Za-z0-9_]+$/.test(rechts)){
+      if(!/_cache\.version/.test(rechts)) ohne.push(m[1] + ' ← ' + rechts.slice(0, 80));
+      return;
+    }
+    const v = rechts;
     // Die Zuweisung dieser Variablen steht im selben Funktionsrumpf davor —
     // gesucht wird bis zu dessen Anfang, nicht ein paar Zeilen weit.
     let anfang = 0;
