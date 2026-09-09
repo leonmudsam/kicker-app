@@ -74,12 +74,21 @@ function showSeasonTable(sid){
         stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
     </button>` : ''}
     ${emptyNames.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Ohne Eintrag</h4></div></div>
-      <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt — die Saison zählt trotzdem.</span></div>` : ''}
+      <div class="tempty">${esc(emptyNames.join(', '))}<span>Keine Bedingung erfüllt, die Saison zählt trotzdem.</span></div>` : ''}
     ${unawarded.length ? `<div class="pp-sec-title" style="margin-top:16px"><div class="l"><h4>Nicht vergeben</h4></div><div class="m">${unawarded.length}</div></div>
-      <div class="tunawarded">${unawarded.slice(0, 8).map(t =>
-        `<div class="tun"><span class="i">${svgI(t.ic)}</span><span class="n">${esc(t.name)}</span><span class="c">${esc(t.cond)}</span></div>`
-      ).join('')}${unawarded.length > 8
-        ? `<div class="tun-more">und ${unawarded.length - 8} weitere, die diese Saison niemand erreicht hat</div>` : ''}</div>` : ''}
+      <div class="tunawarded">${unawarded.map(t => {
+        // Wer der Bedingung am naechsten kommt. Vorher stand hier nur die
+        // Bedingung, und acht der siebenundzwanzig Eintraege ueberhaupt: der
+        // Rest war eine Zeile „und 19 weitere". Damit war nicht zu sehen, was
+        // in diesem Monat noch zu holen ist und wer davor steht.
+        const n = _stNahDef(sid, t.id);
+        return `<div class="tun"><span class="i">${svgI(t.ic)}</span>`
+          + `<span class="n">${esc(t.name)}</span>`
+          + `<span class="c">${esc(t.cond)}</span>`
+          + (n ? `<span class="w" data-tplayer="${esc(n.pid)}">Am nächsten dran: `
+                 + `<b>${esc(pname(n.pid))}</b> · ${esc(n.ev)}</span>` : '')
+          + `</div>`;
+      }).join('')}</div>` : ''}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
 }
