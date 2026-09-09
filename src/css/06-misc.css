@@ -1,8 +1,6 @@
   /* ============ [§C15] MISC ============ */
   .empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
   .empty .ee{font-size:34px;margin-bottom:12px;opacity:.5}
-  .skeleton{background:linear-gradient(90deg,var(--surface),var(--surface2),var(--surface));
-    background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:var(--r);height:66px;margin-bottom:8px}
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
   .mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
@@ -92,39 +90,12 @@
   .pp-av-inner::after{content:"";position:absolute;inset:0;
     background:linear-gradient(160deg,rgba(255,255,255,.14) 0%,transparent 45%);
     border-radius:inherit;pointer-events:none}
-  .pp-rank-pos{position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);
-    background:linear-gradient(180deg,var(--acid),var(--acid2));
-    color:var(--acid-deep);font-family:'Archivo Black',sans-serif;font-size:11px;
-    padding:4px 11px;border-radius:999px;letter-spacing:.02em;
-    box-shadow:0 4px 12px rgba(163,230,53,.4),inset 0 1px 0 rgba(255,255,255,.4);white-space:nowrap}
-  .pp-crown{position:absolute;top:-12px;left:50%;transform:translateX(-50%) rotate(-2deg);
-    font-size:24px;filter:drop-shadow(0 4px 8px rgba(247,207,74,.5));
-    animation:ppFloat 4s ease-in-out infinite}
 
   .pp-name{font-family:'Archivo Black',sans-serif;font-size:30px;line-height:1;
     letter-spacing:-.02em;margin:0;color:var(--ink);
     animation:ppFadeUp .5s cubic-bezier(.2,.7,.2,1) .1s both}
-  .pp-meta{display:inline-flex;align-items:center;gap:9px;margin-top:9px;
-    font-family:'Sometype Mono',monospace;font-size:12px;color:var(--ink2);
-    animation:ppFadeUp .5s cubic-bezier(.2,.7,.2,1) .15s both}
-  .pp-meta .pp-d{width:3px;height:3px;border-radius:50%;background:var(--muted);opacity:.6}
-  .pp-meta .pp-rank{color:var(--acid)}
-  .pp-meta .pp-elo{color:var(--ink);font-weight:600}
   .pp-meta .ic.svg-ic{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;width:1em;height:1em}
   .pp-meta .ic.svg-ic svg{width:1em;height:1em;display:block}
-
-  .pp-badge{display:inline-flex;align-items:center;gap:6px;margin-top:12px;padding:7px 16px;
-    background:linear-gradient(180deg,var(--pp-tier-bg),transparent);
-    border:1px solid var(--pp-tier-border);border-radius:999px;
-    font-size:12.5px;font-weight:700;color:var(--pp-tier-1);
-    box-shadow:0 4px 14px -4px var(--pp-tier-glow),inset 0 1px 0 rgba(255,255,255,.04);
-    animation:ppFadeUp .5s cubic-bezier(.2,.7,.2,1) .2s both}
-
-  .pp-badge-inline{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
-    background:linear-gradient(180deg,var(--pp-tier-bg),transparent);
-    border:1px solid var(--pp-tier-border);border-radius:999px;
-    font-size:12px;font-weight:700;color:var(--pp-tier-1);
-    box-shadow:0 2px 8px -2px var(--pp-tier-glow),inset 0 1px 0 rgba(255,255,255,.04)}
   .pp-form{display:flex;gap:7px;justify-content:center;margin-top:14px;
     animation:ppFadeUp .5s cubic-bezier(.2,.7,.2,1) .25s both}
   .pp-form .pd{width:8px;height:8px;border-radius:50%;background:var(--surface3)}
@@ -138,14 +109,6 @@
   .pp-sec-title h4{margin:0;font-weight:700;font-size:11px;letter-spacing:.16em;
     color:var(--ink2);text-transform:uppercase}
   .pp-sec-title .m{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted)}
-
-  .pp-pos{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .pp-pos-c{position:relative;padding:16px 14px 14px;background:var(--surface);
-    border:1px solid rgba(255,255,255,.05);border-radius:var(--r);
-    box-shadow:0 8px 20px -10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.03);
-    overflow:hidden;transition:transform .15s}
-  .pp-pos-c:active{transform:scale(.985)}
-  .pp-pos-c::before{content:"";position:absolute;top:0;left:0;right:0;height:2px}
   .pp-pos-c.atk::before{background:linear-gradient(90deg,transparent,var(--orange),transparent)}
   .pp-pos-c.def::before{background:linear-gradient(90deg,transparent,var(--blue),transparent)}
   .pp-pos-c .h{display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;
@@ -175,8 +138,6 @@
     text-transform:uppercase;color:var(--muted)}
 
   .pp-streak{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .pp-s{padding:13px;background:var(--surface);border:1px solid rgba(255,255,255,.05);
-    border-radius:var(--r-sm);box-shadow:inset 0 1px 0 rgba(255,255,255,.03)}
   .pp-s .l{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
     color:var(--muted);margin-bottom:7px}
   .pp-s .v{font-family:'Archivo Black',sans-serif;font-size:16px;
@@ -184,11 +145,6 @@
   .pp-s .dots{display:flex;gap:4px;margin-left:auto}
   .pp-s .dots i{width:7px;height:7px;border-radius:50%;background:var(--acid);
     box-shadow:0 0 7px rgba(190,242,100,.4)}
-
-  .pp-rel{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .pp-r{padding:12px 13px;background:var(--surface);border:1px solid rgba(255,255,255,.05);
-    border-radius:var(--r-sm);transition:transform .15s}
-  .pp-r:active{transform:scale(.985)}
   .pp-r.good{border-left:2px solid var(--acid)}
   .pp-r.bad{border-left:2px solid var(--red)}
   .pp-r.fav{border-left:2px solid var(--blue)}
@@ -225,10 +181,6 @@
   .pp-posprof .ppf{margin-top:10px;text-align:center;font-family:'Sometype Mono',monospace;
     font-size:11px;color:var(--muted);letter-spacing:.02em}
   .pp-posprof .ppf .lab{color:var(--ink);font-weight:700;font-family:'Space Grotesk';margin-left:4px}
-
-  .pp-card{background:var(--surface);border:1px solid rgba(255,255,255,.05);
-    border-radius:var(--r);padding:16px;
-    box-shadow:0 8px 20px -10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.03)}
 
   .pp-trophies{display:flex;gap:11px;overflow-x:auto;margin:0 -16px;padding:4px 16px 4px;
     scroll-snap-type:x mandatory;scrollbar-width:none}
@@ -283,13 +235,6 @@
   .pp-sn .el.pos{color:var(--acid)} .pp-sn .el.neg{color:var(--red)}
   .pp-sn .rc{margin-top:9px;text-align:center;font-family:'Sometype Mono',monospace;font-size:10.5px;
     color:var(--ink2);padding-top:7px;border-top:1px solid rgba(255,255,255,.05)}
-
-  /* Karriere-Rang – PROZENT-basiert auf Ø Saison-Elo */
-  .pp-ranks{display:flex;gap:7px;padding-bottom:4px}
-  .pp-rk{flex:1;padding:12px 5px 10px;background:var(--surface2);
-    border:1px solid rgba(255,255,255,.05);border-radius:var(--r-sm);text-align:center;
-    position:relative;transition:transform .2s;
-    --pp-tier-1:var(--ink2);--pp-tier-2:var(--ink2);--pp-tier-glow:rgba(255,255,255,.1)}
   .pp-rk.active{background:linear-gradient(180deg,var(--pp-tier-bg) 0%,transparent 70%);
     border-color:var(--pp-tier-border);
     box-shadow:0 0 24px -8px var(--pp-tier-glow),inset 0 1px 0 rgba(255,255,255,.05);
@@ -303,22 +248,9 @@
     width:22px;height:3px;border-radius:2px;
     background:linear-gradient(90deg,var(--pp-tier-2),var(--pp-tier-1));
     box-shadow:0 0 7px var(--pp-tier-glow)}
-
-  /* Perzentil-Anzeige unter Rank-Steps */
-  .pp-percentile{margin-top:14px;padding:12px 14px;background:var(--surface2);
-    border:1px solid rgba(255,255,255,.05);border-radius:var(--r-sm)}
-  .pp-percentile-bar{position:relative;height:6px;border-radius:3px;background:var(--surface3);overflow:hidden;margin-bottom:9px}
-  .pp-percentile-bar > i{position:absolute;top:0;left:0;height:100%;border-radius:3px;
-    background:linear-gradient(90deg,var(--pp-tier-2),var(--pp-tier-1));
-    box-shadow:0 0 8px var(--pp-tier-glow);
-    animation:ppBarIn 1.2s cubic-bezier(.2,.8,.2,1) .4s both}
   .pp-percentile-bar > .marker{position:absolute;top:-3px;width:2px;height:12px;
     background:var(--ink);border-radius:1px;opacity:.6;
     box-shadow:0 0 4px rgba(255,255,255,.4)}
-  .pp-percentile-foot{display:flex;justify-content:space-between;align-items:center;
-    font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted)}
-  .pp-percentile-foot strong{color:var(--ink);font-family:'Archivo Black',sans-serif;
-    font-size:13px;font-weight:400}
   .pp-percentile-foot .top{color:var(--pp-tier-1);font-weight:700;
     font-family:'Archivo Black',sans-serif;font-size:13px}
 
@@ -347,8 +279,6 @@
   .pp-pos-combined .head .t{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace}
   .pp-pos-combined .head .vol{font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted)}
   .pp-pos-combined .head .vol b{color:var(--ink);font-weight:600}
-  .pp-pos-split{display:flex;height:54px;border-radius:12px;overflow:hidden;background:var(--bg2);min-width:0}
-  .pp-pos-side{display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:'Archivo Black',sans-serif;position:relative;min-width:0;padding:0 4px;transition:flex .3s ease;flex:1}
   .pp-pos-side.atk{background:linear-gradient(135deg,rgba(255,120,73,.18),rgba(255,120,73,.04));color:var(--orange);border-right:1px solid var(--line)}
   .pp-pos-side.def{background:linear-gradient(135deg,rgba(86,180,232,.04),rgba(86,180,232,.18));color:var(--blue)}
   .pp-pos-side.empty{color:var(--muted);background:var(--bg2)}

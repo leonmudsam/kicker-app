@@ -38,20 +38,12 @@
   .sheet-grab.grab-pulse{animation:grabPulse 1.6s ease-in-out 2}
   .sheet h3{font-family:'Archivo Black',sans-serif;font-size:23px;letter-spacing:-.02em}
   .sheet-sub{color:var(--muted);font-size:12px;margin-top:3px;font-family:'Sometype Mono',monospace}
-
-  .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
-  .dcell{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:13px}
-  .dcell.wide{grid-column:1/-1}
   .dcell .dl{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
   .dcell .dv{font-family:'Archivo Black',sans-serif;font-size:16px;margin-top:5px}
   .dcell .dv.sm{font-size:13px}
   .dcell .dv .u{font-size:11px;color:var(--muted);font-family:'Space Grotesk';font-weight:600}
-
-  .posbars{display:flex;gap:10px;margin-top:18px}
-  .posbar{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:13px;text-align:center}
   .posbar .pl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:8px}
   .posbar.atk .pl{color:var(--orange)} .posbar.def .pl{color:var(--blue)}
-  .posbar .pv{font-family:'Archivo Black',sans-serif;font-size:22px}
   .posbar .pg{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace}
   .ring{position:relative;width:54px;height:54px;margin:0 auto 6px}
 

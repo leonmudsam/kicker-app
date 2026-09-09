@@ -890,6 +890,57 @@ const _deckel = (function(){
 ok(_deckel.length === 0, 'jeder Topf mit Schluesseln hat einen Deckel',
    _deckel.join(' · ') || 'alle');
 
+// Der Bau haengt sechzehn Stylesheets aneinander, und eine Regel fuer eine
+// Ansicht, die es nicht mehr gibt, faellt danach niemandem mehr auf: die
+// Hall of Fame, die alten Award-Karten, das Champion-Banner und die
+// Perzentil-Balken standen mit 157 Regeln in der Auslieferung, ohne dass
+// ein einziges Element sie je getragen haette.
+// Eine Klasse gilt als benutzt, wenn ihr Name im Code steht ODER wenn
+// irgendein Stueck Zeichenkette ein Praefix von ihr ist — das faengt auch
+// `' zn-l' + stufe`. Eine Regel gilt nur dann als tot, wenn JEDER Teil
+// ihres Selektors eine Klasse nennt und alle diese Klassen tot sind:
+// `select,.fld{…}` traegt eine tote Klasse und trotzdem ein lebendes
+// Element.
+const _toteRegeln = (function(){
+  const html = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const css = (html.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || [])
+    .join('\n').replace(/<\/?style[^>]*>/gi, '').replace(/\/\*[\s\S]*?\*\//g, ' ');
+  // Ohne die HTML-Kommentare: der Kopf der Datei erklaert den Aufbau und
+  // nennt dabei <script>. Von dort bis zum ersten </script> lag das ganze
+  // CSS im „Skript" — und jede Klasse galt damit als benutzt.
+  const ohneKomm = html.replace(/<!--[\s\S]*?-->/g, ' ');
+  const skripte = (ohneKomm.match(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi) || []);
+  // Ohne die Kommentare: sie sind auf Deutsch, und ein Wort wie „Karte"
+  // machte jede Klasse, die mit ihm anfaengt, still zu einer benutzten.
+  const js = (skripte.join('\n') + ohneKomm.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' '))
+    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
+  const stuecke = new Set(js.match(/[-A-Za-z0-9_]+/g) || []);
+  const benutzt = n => {
+    if(stuecke.has(n)) return true;
+    for(const st of stuecke) if(st.length >= 4 && n.length > st.length && n.startsWith(st)) return true;
+    return false;
+  };
+  const tot = new Map();
+  const istTot = n => { if(!tot.has(n)) tot.set(n, !benutzt(n)); return tot.get(n); };
+  const raus = [];
+  let tiefe = 0, start = 0, sel = '';
+  for(let i = 0; i < css.length; i++){
+    if(css[i] === '{'){ if(tiefe === 0) sel = css.slice(start, i); tiefe++; }
+    else if(css[i] === '}'){ tiefe--; if(tiefe === 0){
+      const teile = sel.split(',').map(x => x.trim()).filter(Boolean);
+      const weg = teile.length && teile.every(t => {
+        const kl = (t.match(/\.[-A-Za-z_][-\w]*/g) || []).map(x => x.slice(1));
+        return kl.length && kl.every(istTot);
+      });
+      if(weg && !/@/.test(sel)) raus.push(sel.trim().replace(/\s+/g, ' ').slice(0, 50));
+      start = i + 1;
+    }}
+  }
+  return raus;
+})();
+ok(_toteRegeln.length === 0, 'keine CSS-Regel fuer eine Ansicht, die es nicht gibt',
+   _toteRegeln.length + ': ' + _toteRegeln.slice(0, 4).join(' · '));
+
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
 process.exit(fails === 0 ? 0 : 1);
