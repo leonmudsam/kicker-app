@@ -941,6 +941,23 @@ const _toteRegeln = (function(){
 ok(_toteRegeln.length === 0, 'keine CSS-Regel fuer eine Ansicht, die es nicht gibt',
    _toteRegeln.length + ': ' + _toteRegeln.slice(0, 4).join(' · '));
 
+// Dasselbe fuer den Zeichen-Katalog. Der Kommentar ueber `ICONS` warnt seit
+// jeher vor der toten Definition; nachgezaehlt hat es nie jemand, und zwei
+// Zeichnungen standen ohne einen einzigen Aufrufer in der Auslieferung.
+const _toteIcons = (function(){
+  const html = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const i = html.indexOf('const ICONS = {');
+  if(i < 0) return ['ICONS nicht gefunden'];
+  const ende = html.indexOf('\n};', i);
+  const block = html.slice(i, ende);
+  const namen = [...block.matchAll(/^\s{2}([A-Za-z][\w]*):\s/gm)].map(m => m[1]);
+  const rest = html.slice(0, i) + html.slice(ende);
+  const wort = new Set(rest.match(/[A-Za-z_$][\w$]*/g) || []);
+  return namen.filter(n => !wort.has(n));
+})();
+ok(_toteIcons.length === 0, 'kein Zeichen im Katalog ohne Aufrufer',
+   _toteIcons.join(' · ') || 'alle');
+
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
 process.exit(fails === 0 ? 0 : 1);

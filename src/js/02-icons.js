@@ -53,7 +53,6 @@ const ICONS = {
   tornado:   `<path d="M3 5h18M5 10h14M7 15h10M10 20h4"/>`,
   lock:      `<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/>`,
   dizzy:     `<circle cx="12" cy="12" r="9"/><path d="M8 9l2 2M10 9l-2 2M14 9l2 2M16 9l-2 2M8 16s1-2 4-2 4 2 4 2"/>`,
-  meltFace:  `<circle cx="12" cy="11" r="8"/><path d="M9 10h.01M15 10h.01M8 16s1 2 4 2 4-2 4-2M6 19c0 2 2 3 6 3s6-1 6-3"/>`,
   // ─── Erweiterungen: einzigartiges Symbol je Award/Badge ───
   // Awards
   trophyStar:    `<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM5 9a2 2 0 01-2-2V5h4M19 9a2 2 0 002-2V5h-4"/><circle cx="12" cy="7" r="1.2"/>`, // Award „Meiste Siege": Trophy mit Punkt
@@ -184,7 +183,6 @@ const ICONS = {
   // Königsklasse: Krone mit drei Edelsteinen darunter (Top-3 der Liga)
   kingClass:     `<polygon points="3,9 6,5 9,9 12,5 15,9 18,5 21,9 21,17 3,17" fill="none" stroke-linejoin="round"/><circle cx="7" cy="14" r="1.3"/><circle cx="12" cy="14" r="1.3"/><circle cx="17" cy="14" r="1.3"/>`,
   // Pflichtaufgabe: Klemmbrett mit Häkchen (Pflicht erfüllt)
-  clipboard:     `<rect x="5" y="5" width="14" height="16" rx="2"/><rect x="9" y="2" width="6" height="4" rx="1"/><polyline points="9 13 11 15 15 11"/>`,
   // Award-Sammler: drei Medaillen mit Bändern (Sammlung von Auszeichnungen)
   medalTrio:     `<circle cx="7" cy="15" r="3.5"/><circle cx="12" cy="10" r="3.5"/><circle cx="17" cy="15" r="3.5"/><path d="M6 12l-1-3M11 7l-1-3M16 12l1-3M18 7l-1-3M13 7l-1-3M8 12l-1-3"/>`,
   // ── NEUE NEGATIV-BADGES v8 ──
