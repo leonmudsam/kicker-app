@@ -154,6 +154,10 @@ damit allein an ihrem Tag — den der Eingabe-Tab beim Speichern gar nicht
 mitreicht. Gemessen zeigte das Duo-Blatt nach einer neuen Partie weiter 26:4
 statt 27:4 und die Bilanz 110 Duelle statt 111. `tests/tafel` misst das nach.
 
+`tests/tafel` liest die ausgelieferte Datei und prüft die Regel für **jeden**
+Topf nach — Stichproben genügen dafür nicht, weil ein neuer Topf gerade der
+ist, an den niemand denkt.
+
 Ein Topf mit einem Schlüssel, der die Version enthält, **wächst über die
 Versionen**: er braucht eine Obergrenze, ab der er geleert wird. Wo eine
 Rechnung an der Identität eines Arrays hängt statt an einer Version
@@ -210,7 +214,7 @@ globalem Zustand ist.
 | Suite | prüft | Checks |
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags | 895 |
-| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie | 167 |
+| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie | 168 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel | 172 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |

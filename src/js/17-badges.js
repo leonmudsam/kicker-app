@@ -760,16 +760,15 @@ function countRevenge(id,ms){
 // Elo-Stand, nicht auf Visibility.
 function countKingslayer(id,ms){
   const snaps = getRankSnapshots();
+  const mine = matchesOfPlayer(id, ms);
   let count = 0;
-  for(let i=0; i<ms.length; i++){
-    const m = ms[i];
-    if(!matchOf(id,m) || !won(id,m)) continue;
+  for(let i=0; i<mine.length; i++){
+    const m = mine[i];
+    if(!won(id,m)) continue;
     const snap = snaps[m.id]; if(!snap) continue;
-    // Wer war Top-1 in der Saison-Rangliste VOR dem Match?
-    let top1 = null;
-    for(const pid in snap.preRank){
-      if(snap.preRank[pid] === 1){ top1 = pid; break; }
-    }
+    // Wer war Top-1 in der Saison-Rangliste VOR dem Match? Die Antwort steht
+    // im Schnappschuss — dort ist die Tabelle ohnehin schon sortiert.
+    const top1 = snap.preTop1;
     if(!top1 || top1 === id) continue;
     // War Top-1 ein direkter Gegner?
     const onA = (id===m.a1||id===m.a2);
@@ -789,10 +788,11 @@ function countKingslayer(id,ms){
 //   • → +1 für X
 function countOvertake(id,ms){
   const snaps = getRankSnapshots();
+  const mine = matchesOfPlayer(id, ms);
   let count = 0;
-  for(let i=0; i<ms.length; i++){
-    const m = ms[i];
-    if(!matchOf(id,m) || !won(id,m)) continue;
+  for(let i=0; i<mine.length; i++){
+    const m = mine[i];
+    if(!won(id,m)) continue;
     const snap = snaps[m.id]; if(!snap) continue;
     const preX = snap.preRank[id], postX = snap.postRank[id];
     if(!preX || !postX) continue; // X muss schon einen Rang gehabt haben

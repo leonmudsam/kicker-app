@@ -833,6 +833,38 @@ ok(_topf.nachher.bilanz === _topf.vorher.bilanz + 1,
    'die Bilanz zweier Spieler sieht ein neues Duell',
    _topf.vorher.bilanz + ' → ' + _topf.nachher.bilanz);
 
+// Und die Regel dahinter, statt Stichproben: JEDER Cache-Schlüssel trägt die
+// Version. Geprüft wird die ausgelieferte Datei — dort steht, was wirklich
+// läuft. Ein Topf ohne Version hängt allein an der Tag-Liste des Aufrufers,
+// und die kennt der Autor eines neuen Topfes nicht.
+const _schluessel = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const zeilen = quelle.split('\n');
+  const ohne = [];
+  zeilen.forEach((z, i) => {
+    const m = z.match(/_cache\.(_[A-Za-z0-9_]*Key)\s*=\s*([A-Za-z0-9_]+)\s*;/);
+    if(!m) return;
+    const v = m[2];
+    // Die Zuweisung dieser Variablen steht im selben Funktionsrumpf davor —
+    // gesucht wird bis zu dessen Anfang, nicht ein paar Zeilen weit.
+    let anfang = 0;
+    for(let j = i; j >= 0; j--){ if(/^function\s/.test(zeilen[j])){ anfang = j; break; } }
+    for(let j = i; j >= anfang; j--){
+      const d = zeilen[j].match(new RegExp('(?:const|let|var)\\s+' + v + '\\s*='));
+      if(!d) continue;
+      let def = zeilen[j];
+      let k = j;
+      while(!/;\s*$/.test(def) && k + 1 < zeilen.length && k - j < 6) def += ' ' + zeilen[++k];
+      if(!/_cache\.version/.test(def)) ohne.push(m[1] + ' ← ' + def.trim().slice(0, 80));
+      return;
+    }
+    ohne.push(m[1] + ' (Zuweisung nicht gefunden)');
+  });
+  return ohne;
+})();
+ok(_schluessel.length === 0, 'jeder Cache-Schluessel traegt die Version',
+   _schluessel.slice(0, 3).join(' · ') || 'alle');
+
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
 process.exit(fails === 0 ? 0 : 1);

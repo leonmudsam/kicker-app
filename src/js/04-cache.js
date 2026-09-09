@@ -185,6 +185,10 @@ function getRankSnapshots(){
     preEntries.sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     const preRank = {};
     preEntries.forEach(([pid], idx) => preRank[pid] = idx + 1);
+    // Wer vor dem Match Erster war, steht hier schon sortiert an erster
+    // Stelle. „Thronfäller" suchte ihn stattdessen je Spieler und je Match
+    // durch die ganze Rangtabelle — dieselbe Antwort, zwölfmal gesucht.
+    const preTop1 = preEntries.length ? preEntries[0][0] : null;
     // Apply this match's deltas (vom globalSim)
     const histEntry = histMap.get(m.id);
     if(histEntry && histEntry.deltas){
@@ -197,7 +201,7 @@ function getRankSnapshots(){
     postEntries.sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0]));
     const postRank = {};
     postEntries.forEach(([pid], idx) => postRank[pid] = idx + 1);
-    out[m.id] = {preRank, postRank};
+    out[m.id] = {preRank, postRank, preTop1};
   }
   _cache._rankSnapshotsKey = key;
   _cache._rankSnapshots = out;
