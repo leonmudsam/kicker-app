@@ -817,6 +817,10 @@ const TREFFER = JSON.parse(K.eval(`(function(){
   const n={};
   ['2026-05','2026-06','2026-07','2026-08'].forEach(sid=>{
     const C=_seasonTitleCtx(sid);
+    // Ein Monat unter der Spieltag-Grenze bekommt gar keine Chronik. Seine
+    // Werte zaehlen deshalb auch nicht als Treffer — sonst misst der Test
+    // eine Vergabe, die es nie gibt.
+    if(C.days < CHRONIK_MIN_TAGE) return;
     SEASON_TITLES.forEach(t=>{
       const r=t.pick(C,new Set());
       n[t.id]=(n[t.id]||0) + ((r && r.halter) ? r.halter.length : 0);
@@ -861,9 +865,14 @@ ok(ICS.every(d => K.eval(`!!ICONS[${JSON.stringify(d.ic)}]`)),
    'jedes Disziplin-Icon gibt es auch im Katalog',
    ICS.filter(d => !K.eval(`!!ICONS[${JSON.stringify(d.ic)}]`)).map(d => d.id + '/' + d.ic).join(', '));
 
-ok(Object.values(TREFFER).every(n => n <= 5),
-   'keine Bedingung trifft haeufiger als fuenfmal in vier Monaten zu',
-   Object.keys(TREFFER).filter(id => TREFFER[id] > 5).map(id => id+'('+TREFFER[id]+')').join(', '));
+// Eine Monatswertung soll besonders sein. Bei den alten Schwellen wurden in
+// einem Monat vierundzwanzig der vierunddreissig Wertungen vergeben, und ein
+// Spieler trug neun davon — was fast jeder Monat hergibt, zeichnet niemanden
+// mehr aus. Die Schwellen haengen jetzt so hoch, dass keine Bedingung in der
+// ganzen Ligageschichte oefter als zweimal erfuellt war.
+ok(Object.values(TREFFER).every(n => n <= 2),
+   'keine Bedingung trifft haeufiger als zweimal in vier Monaten zu',
+   Object.keys(TREFFER).filter(id => TREFFER[id] > 2).map(id => id+'('+TREFFER[id]+')').join(', '));
 
 // Profil: die Meta-Zeile neben „Liga-Rekord" ist weg.
 const profHtml = K.eval(`_chronStripHtml('${IDS[8]}')`);

@@ -797,6 +797,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Einträgen, und was für vier richtig ist, ist für alle richtig.
   Ein Monat unter `CHRONIK_MIN_TAGE` Spieltagen bekommt **gar keine**
   Chronik: aus drei Abenden lässt sich kein Monat ablesen.
+  **Eine Monatswertung trifft in vier Monaten höchstens zweimal zu.** Die
+  Schwellen (`ab` in `_stWertung`) sind an den echten Partien geeicht, nicht
+  geschätzt. Vorher lagen sie so tief, dass ein Monat vierundzwanzig der
+  vierunddreißig Wertungen vergab und ein einzelner Spieler neun davon trug:
+  was fast jeder Monat hergibt, zeichnet niemanden mehr aus. Jetzt sind es
+  siebzehn bis zweiundzwanzig, und jede steht für eine Leistung, die es in
+  der Ligageschichte erst ein- oder zweimal gab. `tests/disziplinen` zählt
+  es nach und nennt die Wertung, deren Schwelle zu tief hängt.
 - **§C31 Drei Rückblicke, ein Baukasten.** Saison, Woche und Tag bauen aus
   denselben Teilen (`05b-recap-teile.js`): `rcpKopfHtml`, `rcpHeldHtml`,
   `rcpZahlenHtml`, `rcpKachelHtml`, `rcpZeileHtml`, `rcpNotizHtml`,
@@ -1177,7 +1185,7 @@ Raster — je zwei Einträge sind eine Zeile.
 | dort `short` | höchstens zehn Zeichen | die Chronik-Zelle bricht; `tests/disziplinen` misst es |
 | dort `ic` | ein Icon, das keine andere Disziplin trägt | in einer Zelle von 62 Pixeln ist die Zeichnung das Erste, was man sieht — zwei gleiche sind dort nicht zu unterscheiden. `tests/disziplinen` misst es |
 | dort `monat.wie` | ein Satz, was die Zahl im Beleg bedeutet | nur nötig, wenn die Größe nicht selbsterklärend ist. Er steht im Detail-Blatt unter der Bedingung; ohne ihn liest sich „+15 Prozentpunkte" wie Elo oder wie Prestige |
-| dort `monat` | `mind`, `wert`, `ab` und `ev` über `_stWertung` | ohne die vier gibt es keine Vergabe. `mind` sagt, wer gewertet wird, `wert` die Größe (größer ist besser, bei einer Schattenseite steht ein Minus davor), `ab` die Schwelle. Getrennt aufgeschrieben, weil sonst niemand sagen kann, wer knapp daneben liegt: wer die Schwelle reißt, bekam einen leeren Wert, und leere Werte haben keine Reihenfolge |
+| dort `monat` | `mind`, `wert`, `ab` und `ev` über `_stWertung` | ohne die vier gibt es keine Vergabe. `mind` sagt, wer gewertet wird, `wert` die Größe (größer ist besser, bei einer Schattenseite steht ein Minus davor), `ab` die Schwelle. Getrennt aufgeschrieben, weil sonst niemand sagen kann, wer knapp daneben liegt: wer die Schwelle reißt, bekam einen leeren Wert, und leere Werte haben keine Reihenfolge. `ab` wird an den echten Partien gemessen, nicht geschätzt: höchstens zweimal in vier Monaten erfüllt [§C32] |
 | `33-chronik-engine.js` `_seasonTitleCtx` | das Feld, das `monat:` liest | die Monatstafel bleibt leer |
 | `34-chronik-rekorde.js` `_chronicleCtx` | **dasselbe Feld noch einmal** | der häufigste Fehler: die Monatstafel zeigt den Eintrag, der Liga-Rekord bleibt unbesetzt. Zwei getrennte Durchläufe über dieselbe Frage — sie müssen gleich zählen |
 | dort `negativ` | `true`, **nur** wenn die Fügung von einer Niederlage erzählt | sie steht im Profil golden zwischen den Titeln und wird als Rekord mitgezählt [§C25]. Eine `art:'schatten'`-Disziplin braucht das Feld nicht — sie ist ohnehin negativ |
