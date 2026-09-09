@@ -1155,6 +1155,8 @@ function getCachedBadges(id){
   const key='badges_'+id+'_'+matches.length+'_'+_cache.version;
   if(!_cache._badges) _cache._badges={};
   if(_cache._badges[key]) return _cache._badges[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._badges).length > 60) _cache._badges={};
   const r=computeBadges(id);
   _cache._badges[key]=r;
   return r;

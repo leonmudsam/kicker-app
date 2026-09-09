@@ -414,6 +414,8 @@ function getCachedAwardRankings(period, sid){
   const key=period+'_'+cacheSuffix+'_'+matches.length+'_'+_cache.version;
   if(!_cache._awards) _cache._awards={};
   if(_cache._awards[key]) return _cache._awards[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._awards).length > 40) _cache._awards={};
   const r=_awardRankingsUncached(period, sid);
   _cache._awards[key]=r;
   return r;

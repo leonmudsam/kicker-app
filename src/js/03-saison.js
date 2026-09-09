@@ -97,6 +97,8 @@ function matchesInSeason(seasonId){
   const key='mseason_'+seasonId+'_'+matches.length+'_'+_cache.version;
   if(!_cache._mseason) _cache._mseason={};
   if(_cache._mseason[key]) return _cache._mseason[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._mseason).length > 40) _cache._mseason={};
   const start=seasonStart(seasonId),end=seasonEnd(seasonId);
   const result=matches.filter(m=>{const d=new Date(m.created_at);return d>=start&&d<=end;});
   _cache._mseason[key]=result;

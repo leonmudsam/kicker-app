@@ -871,6 +871,25 @@ const _schluessel = (function(){
 ok(_schluessel.length === 0, 'jeder Cache-Schluessel traegt die Version',
    _schluessel.slice(0, 3).join(' · ') || 'alle');
 
+// Ein Topf, dessen Schluessel die Version traegt, bekommt zu jeder Version
+// einen neuen Eintrag — und behaelt jeden alten. Zwanzig Partien in einer
+// Sitzung heissen dann zwanzig Generationen Auszeichnungslisten im
+// Speicher, von denen neunzehn niemand mehr liest. Jeder solche Topf
+// braucht deshalb einen Deckel.
+const _deckel = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const toepfe = new Set();
+  const mit = new Set();
+  const re = /_cache\.(_[A-Za-z0-9_]+)\s*\[\s*key\s*\]\s*=(?!=)/g;
+  let m;
+  while((m = re.exec(quelle))) toepfe.add(m[1]);
+  const re2 = /Object\.keys\(_cache\.(_[A-Za-z0-9_]+)\)\.length\s*>/g;
+  while((m = re2.exec(quelle))) mit.add(m[1]);
+  return [...toepfe].filter(t => !mit.has(t));
+})();
+ok(_deckel.length === 0, 'jeder Topf mit Schluesseln hat einen Deckel',
+   _deckel.join(' · ') || 'alle');
+
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
 process.exit(fails === 0 ? 0 : 1);

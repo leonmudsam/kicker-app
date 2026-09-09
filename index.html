@@ -4939,7 +4939,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.09.12aeded3';
+const BUILD_VERSION='2026.09.09.d624397e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5361,6 +5361,8 @@ function matchesInSeason(seasonId){
   const key='mseason_'+seasonId+'_'+matches.length+'_'+_cache.version;
   if(!_cache._mseason) _cache._mseason={};
   if(_cache._mseason[key]) return _cache._mseason[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._mseason).length > 40) _cache._mseason={};
   const start=seasonStart(seasonId),end=seasonEnd(seasonId);
   const result=matches.filter(m=>{const d=new Date(m.created_at);return d>=start&&d<=end;});
   _cache._mseason[key]=result;
@@ -5812,6 +5814,8 @@ function getCachedAwardRankings(period, sid){
   const key=period+'_'+cacheSuffix+'_'+matches.length+'_'+_cache.version;
   if(!_cache._awards) _cache._awards={};
   if(_cache._awards[key]) return _cache._awards[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._awards).length > 40) _cache._awards={};
   const r=_awardRankingsUncached(period, sid);
   _cache._awards[key]=r;
   return r;
@@ -8635,6 +8639,8 @@ function matchesInPeriod(period, seasonId){
   const key='mperiod_'+period+'_'+sid+'_'+matches.length+'_'+_cache.version;
   if(!_cache._mperiod) _cache._mperiod={};
   if(_cache._mperiod[key]) return _cache._mperiod[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._mperiod).length > 40) _cache._mperiod={};
   let result;
   if(period==='season') result=matchesInSeason(sid);
   else{
@@ -14313,6 +14319,8 @@ function getCachedBadges(id){
   const key='badges_'+id+'_'+matches.length+'_'+_cache.version;
   if(!_cache._badges) _cache._badges={};
   if(_cache._badges[key]) return _cache._badges[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._badges).length > 60) _cache._badges={};
   const r=computeBadges(id);
   _cache._badges[key]=r;
   return r;
@@ -16462,6 +16470,8 @@ function _badgeStreakState(badgeId, playerId){
     if(!_cache._awColl) _cache._awColl = {};
     let res = _cache._awColl[key];
     if(!res){
+      // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+      if(Object.keys(_cache._awColl).length > 60) _cache._awColl = {};
       const seasonMs = matchesInSeason(sid);
       res = { potd: countDayWins(playerId, seasonMs), potw: countPeriodWins(playerId, seasonMs, 'week') };
       _cache._awColl[key] = res;
@@ -16810,6 +16820,8 @@ function playerSeasonAwards(id){
   const key='playerSeasonAwards_'+id+'_'+seasons.length+'_'+_cache.version;
   if(!_cache._playerSeasonAwards) _cache._playerSeasonAwards={};
   if(_cache._playerSeasonAwards[key]) return _cache._playerSeasonAwards[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._playerSeasonAwards).length > 60) _cache._playerSeasonAwards={};
 
   const result=seasons.filter(s=>s.player_id===id||s.team_p1===id||s.team_p2===id);
   _cache._playerSeasonAwards[key]=result;
@@ -27506,6 +27518,8 @@ function meisterTitel(pid){
   const key = 'meister_' + pid + '_' + matches.length + '_' + _cache.version;
   if(!_cache._meister) _cache._meister = {};
   if(_cache._meister[key] != null) return _cache._meister[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._meister).length > 60) _cache._meister = {};
   const cur = currentSeason().id;
   let n = 0;
   (allPastSeasons() || []).forEach(sid => {

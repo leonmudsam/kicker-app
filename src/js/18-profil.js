@@ -1489,6 +1489,8 @@ function _badgeStreakState(badgeId, playerId){
     if(!_cache._awColl) _cache._awColl = {};
     let res = _cache._awColl[key];
     if(!res){
+      // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+      if(Object.keys(_cache._awColl).length > 60) _cache._awColl = {};
       const seasonMs = matchesInSeason(sid);
       res = { potd: countDayWins(playerId, seasonMs), potw: countPeriodWins(playerId, seasonMs, 'week') };
       _cache._awColl[key] = res;

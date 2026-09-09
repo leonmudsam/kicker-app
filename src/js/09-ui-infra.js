@@ -182,6 +182,8 @@ function matchesInPeriod(period, seasonId){
   const key='mperiod_'+period+'_'+sid+'_'+matches.length+'_'+_cache.version;
   if(!_cache._mperiod) _cache._mperiod={};
   if(_cache._mperiod[key]) return _cache._mperiod[key];
+  // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
+  if(Object.keys(_cache._mperiod).length > 40) _cache._mperiod={};
   let result;
   if(period==='season') result=matchesInSeason(sid);
   else{
