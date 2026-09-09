@@ -1171,6 +1171,21 @@ ok(_ms.length > 0 && _ms.every(x => x.badge === x.titel && x.punkte > 0),
    _ms.map(x => nm(x.pid) + ' ' + x.titel + ' Titel / Badge ' + x.badge
      + ' / ' + Math.round(x.punkte) + ' P').join(' · '));
 
+// 6. Die Zaehler selbst. Fuenfzig Auszeichnungen haengen an fuenfzig
+//    Zaehlfunktionen, und keine einzige davon war je gemessen — dabei
+//    speist ihr Ergebnis ueber `prestigeTabelle` die ganze Insignium-Leiter.
+//    Ein Zaehler, der beim Umbau eine Partie mehr oder weniger sieht,
+//    verschiebt still, wer welches Zeichen traegt.
+//    Die Fixtures sind fest, also ist die Zahl es auch. Aendert sich der
+//    Katalog absichtlich, nennt das rote Ergebnis die neue Zeile — sie wird
+//    uebernommen, nicht weggeklickt.
+const _bz = K.eval(`players.map(p => {
+  const b = getCachedBadges(p.id) || [];
+  return p.name + ':' + b.length + '/' + b.reduce((n, x) => n + (x.count || 0), 0);
+}).join(' ')`);
+const _bzSoll = 'Alex:18/33 Anton:7/7 Henry:29/131 Jane:26/132 Jannik:22/83 Johannes:24/71 Julian:32/231 Leo:30/234 Leon:39/433 Martin:37/317 Maxi:33/380 Stefan:21/61';
+ok(_bz === _bzSoll, 'jeder Spieler haelt dieselben Auszeichnungen wie gemessen', _bz);
+
 // ══════════════════════════════════════════════════════════════════════
 console.log('\n═══ GLÜCK: EINTRÄGE, DIE NICHT NUR DEN BESTEN GEHÖREN ═══');
 // Wer besser spielt, gewinnt jede Quote und jede Serie — am Ende liegen

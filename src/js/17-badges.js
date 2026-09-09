@@ -114,7 +114,7 @@ const BADGES=[
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,20)},
   // Zeile 14 — Mauer, Carry
   {id:'wall_badge',ic:'brick',name:'Mauer',desc:'Sieg mit max. 2 Gegentoren als Verteidiger',
-    multi:true,count:(id,ms)=>ms.filter(m=>{if(!matchOf(id,m)||!won(id,m))return false;
+    multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>{if(!won(id,m))return false;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
   {id:'carry',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
@@ -468,15 +468,23 @@ function countViceChampion(id){
 // Tage, an denen der Spieler beim chronologisch ersten Match des Tages
 // dabei war und es gewonnen hat. Max. 1 pro Tag (durch die Logik garantiert).
 function countEarlyBirdDays(id,ms){
-  const byDay={};
-  ms.forEach(m=>{
-    const day=mdayKey(m);
-    if(!byDay[day]||mts(m)<mts(byDay[day])) byDay[day]=m;
-  });
+  // Nur an Tagen, an denen jemand ueberhaupt gespielt hat, kann er der Erste
+  // gewesen sein. Vorher gruppierte jeder Spieler alle Partien nach Tag neu;
+  // die Gruppierung haengt aber am Match-Array, nicht am Spieler, und liegt
+  // als `matchesByDay` schon vor.
+  const tage=matchesByDay(ms);
+  const meine=matchesOfPlayer(id,ms);
+  const gesehen=Object.create(null);
   let c=0;
-  Object.values(byDay).forEach(first=>{
-    if(matchOf(id,first)&&won(id,first)) c++;
-  });
+  for(let i=0;i<meine.length;i++){
+    const day=mdayKey(meine[i]);
+    if(gesehen[day]) continue;
+    gesehen[day]=true;
+    const amTag=tage[day]||[];
+    let erste=amTag[0];
+    for(let j=1;j<amTag.length;j++) if(mts(amTag[j])<mts(erste)) erste=amTag[j];
+    if(erste&&matchOf(id,erste)&&won(id,erste)) c++;
+  }
   return c;
 }
 
@@ -856,18 +864,18 @@ function countUntouchable(id){
 // Auch die laufende Saison wird gezählt (zur Toast-Konsistenz mit dem
 // Match-Trigger weiter unten in getBadgeEarnedCache).
 function countMrPerfect(id){
-  const bySeason = getMatchesBySeason();
-  let count = 0;
-  Object.values(bySeason).forEach(seasonMs => {
-    let perfect = 0;
-    for(const m of seasonMs){
-      if(!matchOf(id,m) || !won(id,m)) continue;
-      const gf = goalsFor(id,m), ga = goalsAgainst(id,m);
-      if(gf === 10 && ga === 0) perfect++;
-      if(perfect >= 3) break; // billiger Early-Exit
-    }
-    if(perfect >= 3) count++;
+  // Gezaehlt werden die eigenen Kantersiege je Saison. Vorher lief der Zaehler
+  // ueber JEDE Partie jeder Saison und verwarf 90 % davon in der ersten Zeile.
+  const proSaison = Object.create(null);
+  matchesOfPlayer(id, matches).forEach(m => {
+    if(!won(id,m)) return;
+    if(goalsFor(id,m) !== 10 || goalsAgainst(id,m) !== 0) return;
+    const sid = (seasonOf(m.created_at)||{}).id;
+    if(!sid) return;
+    proSaison[sid] = (proSaison[sid]||0) + 1;
   });
+  let count = 0;
+  for(const sid in proSaison) if(proSaison[sid] >= 3) count++;
   return count;
 }
 
@@ -964,8 +972,8 @@ function countLossStreakOccurrences(id,ms,n){
 // Nutzt globalen Elo-History-Cache für historische Elo-Stände
 function countCarries(id,ms){
   const snapMap=getSnapMap();
-  return ms.filter(m=>{
-    if(!matchOf(id,m)||!won(id,m))return false;
+  return matchesOfPlayer(id,ms).filter(m=>{
+    if(!won(id,m))return false;
     const snap=snapMap[m.id]; if(!snap)return false;
     const allFour=[m.a1,m.a2,m.b1,m.b2];
     if(allFour.some(x=>snap[x]===undefined))return false;
@@ -993,10 +1001,11 @@ function countUnbeatableDays(id,ms){
 // ausgeschlossen, weil das Match stattfand und der Rangzeitpunkt real ist.
 function countBottomTwoMatchWins(id,ms){
   const snaps = getRankSnapshots();
+  const meine = matchesOfPlayer(id,ms);
   let count = 0;
-  for(let i=0; i<ms.length; i++){
-    const m = ms[i];
-    if(!matchOf(id,m) || !won(id,m)) continue;
+  for(let i=0; i<meine.length; i++){
+    const m = meine[i];
+    if(!won(id,m)) continue;
     const snap = snaps[m.id]; if(!snap || !snap.preRank) continue;
     const ranks = snap.preRank;
     const N = Object.keys(ranks).length;
@@ -1018,10 +1027,11 @@ function countBottomTwoMatchWins(id,ms){
 // vermeidet aber doppelte Belohnung).
 function countStreakBreaker(id,ms){
   const snaps = getStreakSnapshots();
+  const meine = matchesOfPlayer(id,ms);
   let count = 0;
-  for(let i=0; i<ms.length; i++){
-    const m = ms[i];
-    if(!matchOf(id,m) || !won(id,m)) continue;
+  for(let i=0; i<meine.length; i++){
+    const m = meine[i];
+    if(!won(id,m)) continue;
     const snap = snaps[m.id]; if(!snap) continue;
     const onA = (id===m.a1||id===m.a2);
     const opps = onA ? [m.b1,m.b2] : [m.a1,m.a2];
@@ -1035,9 +1045,9 @@ function countStreakBreaker(id,ms){
 // an wie vielen Tagen mind. 3 Matches stattfanden, die ALLE verloren wurden.
 function countBlackDays(id,ms){
   const byDay={}; // day → {g, l}
-  for(let i=0; i<ms.length; i++){
-    const m=ms[i];
-    if(!matchOf(id,m)) continue;
+  const meine=matchesOfPlayer(id,ms);
+  for(let i=0; i<meine.length; i++){
+    const m=meine[i];
     const day=mdayKey(m);
     if(!byDay[day]) byDay[day]={g:0, l:0};
     byDay[day].g++;
