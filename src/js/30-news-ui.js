@@ -412,7 +412,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     const teile = Array.isArray(d.teile) ? d.teile : [];
     fuss = `<div class="nf-wl">${teile.slice(0, 3).map(t =>
       `<div class="nf-wl-z"><span>${esc(t.label || '')}</span>`
-      + `<i>${esc((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean).join(' und '))}</i>`
+      + `<i>${esc(_namenKurz((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean), 2))}</i>`
       + `<b>${esc(t.wert || '')}</b></div>`).join('')}`
       + (teile.length > 3 ? `<div class="nf-wl-m">und ${teile.length - 3} weitere Wertungen</div>` : '')
       + `</div>`;

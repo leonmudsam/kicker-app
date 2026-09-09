@@ -145,7 +145,7 @@ const BADGES=[
   {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Top-1 Spieler der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
     multi:true,count:(id,ms)=>countKingslayer(id,ms)},
   // Überholmanöver: Sieg gegen einen Spieler, der dadurch in der Saison-Rangliste überholt wurde
-  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Spieler im Match besiegt und ihn dadurch in der Saison-Rangliste überholt',
+  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Einen Spieler im Match besiegt und dadurch in der Saison-Rangliste überholt',
     multi:true,count:(id,ms)=>countOvertake(id,ms)},
   // ── NEUE BADGES v5 ──
   // Pflichterfüller: Sieg gegen mindestens einen Gegner aus den Bottom-2 der

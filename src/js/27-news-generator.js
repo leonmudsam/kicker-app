@@ -160,6 +160,30 @@ function _namenListe(namen){
   return a.slice(0, -1).join(', ') + ' und ' + a[a.length - 1];
 }
 
+// Zahlwörter bis vier, darüber die Ziffer. Vier ist die Grenze, weil keine
+// Bündelung im Feed mehr als vier Zeilen trägt [§C33].
+function _zahlwortDe(n){ return ['', 'ein', 'zwei', 'drei', 'vier'][n] || String(n); }
+
+// Dieselbe Aufzählung, aber für eine Schlagzeile gedeckelt. Über einer Karte,
+// die von drei Leuten handelte, stand „Leon und Martin bewegen die Ewige
+// Tafel": die Überschrift nannte zwei der drei, und der dritte kam nur in der
+// Liste darunter vor. Genannt werden jetzt alle, und ab dem vierten zählt die
+// Zeile den Rest — sonst sprengt eine Sammelkarte mit sechs Beteiligten jede
+// Schlagzeile.
+function _namenKurz(namen, max){
+  const a = (namen || []).filter(Boolean);
+  const m = max || 3;
+  if(a.length <= m) return _namenListe(a);
+  return a.slice(0, m - 1).join(', ') + ' und ' + _zahlwortDe(a.length - (m - 1)) + ' weitere';
+}
+
+// Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist für eine Liste
+// gebaut: der Mittelpunkt trennt dort zwei Spalten. Im Fließtext einer
+// Nachricht steht er mitten im Satz und liest sich wie ein Tippfehler.
+function _evSatz(ev){
+  return String(ev || '').replace(/\s*·\s*/g, ', ').trim();
+}
+
 function _buildStories(){
   const stories = [];
   const now = new Date();
@@ -604,7 +628,10 @@ function _buildStories(){
       } else if(ev.badge.id === 'wins200' && typeof countWins === 'function'){
         _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält aktuell bei ${countWins(ev.playerId, matches)}.`;
       } else {
-        _bdesc = ev.badge.desc || 'Neues Badge freigeschaltet.';
+        // Die Bedingung aus dem Katalog steht sonst ohne Punkt in der Karte:
+        // sie ist dort eine Zelle in einem Raster, hier ist sie ein Satz.
+        _bdesc = ev.badge.desc || 'Neue Auszeichnung freigeschaltet';
+        if(!/[.!?]$/.test(_bdesc.trim())) _bdesc = _bdesc.trim() + '.';
       }
       stories.push({
         id: 'badge_'+ev.playerId+'_'+ev.badge.id+'_'+ev.matchId,
@@ -1378,7 +1405,8 @@ function _buildStories(){
         _wochenTeile.unshift({
           art: 'potw', ic: 'weekKing', label: 'Spieler der Woche', held: true,
           pids: res.winners.map(w => w.id), wert: Math.round(main.wr*100) + ' %',
-          satz: `${names.join(' und ')} gewinnt ${main.wins} von ${main.wins + main.losses} Spielen und hat damit die beste Quote.`,
+          satz: `${_namenListe(names)} ${names.length > 1 ? 'gewinnen' : 'gewinnt'} `
+              + `${main.wins} von ${main.wins + main.losses} Spielen und ${names.length > 1 ? 'haben' : 'hat'} damit die beste Quote.`,
           potw: {weekKey: _potwKeyOf(range.start), playerId: main.id,
                  playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
         });
@@ -1475,7 +1503,7 @@ function _buildStories(){
       const _wHeld = _wochenTeile.find(t => t.held) || _wochenTeile[0];
       const _wSpiele = matches.filter(m => { const t = mts(m); return t >= _wocheStart && t < _wocheEnde; });
       const _wTage = new Set(_wSpiele.map(m => new Date(m.created_at).toDateString())).size;
-      const _wName = _wHeld.pids.map(nameOf).join(' und ');
+      const _wName = _namenKurz(_wHeld.pids.map(nameOf));
       const _wSchluss = new Date(_wocheSlotTs);
       stories.push({
         id: 'woche_' + _lastWeekKey,
@@ -1533,21 +1561,30 @@ function _buildStories(){
         // Satz mehr. Der Beleg steht dahinter, die Bedingung erklärt ihn.
         const wertNeu = _chronKurz(n.ev), wertAlt = a ? _chronKurz(a.ev) : '';
         let title, desc;
+        // Der Beleg steht hier im Fliesstext, nicht in einer Listenzelle:
+        // der Mittelpunkt darin trennte sonst mitten im Satz zwei Spalten,
+        // die es gar nicht gibt.
+        const belegSatz = _evSatz(n.ev);
         if(art === 'erstmals'){
           title = `Erstmals vergeben: ${def.name}`;
-          desc = `${n.ev}. Vor ${neuN.length > 1 ? 'ihnen' : 'ihm'} hat diesen Rekord niemand gehalten.`;
+          // Kein Pronomen ueber einen Spieler: die Liga kennt kein Geschlecht,
+          // und der Satz steht unter jedem Wappen [§C33].
+          desc = `${belegSatz}. Diesen Rekord hat vorher niemand gehalten. `
+            + `Verlangt ist: ${def.cond}.`;
         } else if(art === 'geholt'){
           const altN = _namenListe((a.pids || []).map(nameOf)) || 'der bisherige Halter';
           title = `${namen} ${verb} „${def.name}"`;
           // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
-          desc = `${n.ev}.` + (wertAlt && wertAlt !== wertNeu
-            ? ` Vorher hielt ${altN} den Rekord mit ${wertAlt}.`
-            : ` Vorher gehörte der Rekord ${altN}.`);
+          desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu
+            ? `Vorher hielt ${altN} den Rekord mit ${wertAlt}.`
+            : `Vorher gehörte der Rekord ${altN}.`);
         } else {
           title = `${namen} ${baut} „${def.name}" aus`;
-          desc = `${n.ev}. Vorher ${wertAlt}.`;
+          // „Vorher 71 %." ist kein Satz. Und die Richtung gehoert dazu: die
+          // Meldung gibt es nur, wenn der Wert besser geworden ist [§C33].
+          desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
         }
         if(art === 'gesteigert' && ++_rekAusbau > NEWS_LIMITS.rekordAusbau) return;
         stories.push({
@@ -1630,7 +1667,7 @@ function _buildStories(){
               ic: x.ic || 'scroll',
               title: `${nameOf(x.pid)} steht zum ersten Mal in der Chronik`,
               desc: `„${x.name}" im ${seasonLabel(_vorSid)} ist der erste Monatseintrag überhaupt.`
-                  + (x.ev ? ` ${x.ev}.` : ''),
+                  + (x.ev ? ` ${_evSatz(x.ev)}.` : ''),
               when: wann + 60000,
               prio: 90,
               dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name}

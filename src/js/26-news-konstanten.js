@@ -79,6 +79,14 @@ const NEWS_LIMITS = {
   // schwächsten drei waren ein Elo-Ausschlag, eine Auszeichnung und ein Fun
   // Fact — Zeilen, die niemand vermisst. Breaking zählt nicht mit [§C33].
   proTag: 6,
+  // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
+  // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
+  // Neue, jedes Mal mit einem Prozentpunkt mehr: die ID ist damit eine andere,
+  // die Karte für den, der scrollt, dieselbe. Gemessen standen an vier
+  // aufeinanderfolgenden Spieltagen vier davon im Feed. Drei Tage, weil die
+  // Liga an zwei bis drei Tagen der Woche spielt und die Meldung damit
+  // höchstens einmal je Spielwoche wiederkommt.
+  sperreTage: 3,
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
 

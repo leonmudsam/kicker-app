@@ -664,6 +664,35 @@ const belegTreffer = JSON.parse(K.eval(`(function(){
 ok(belegTreffer.length === 0, 'kein Beleg und keine Bedingung traegt ein Possessivpronomen',
    belegTreffer.slice(0, 4).join(', '));
 
+// Gemessen wurde bisher nur `cond` und `wie` auf der OBERSTEN Ebene eines
+// Eintrags. Beide stehen im Katalog aber unter `monat` und `allzeit`, und
+// genau dort lagen vierzehn Saetze mit „seine", „ihm" oder „er": „Seine
+// Siegquote minus der Siegchance, die die Elo-Rechnung ihm vorab gegeben
+// hat" stand im Detail-Blatt unter dem Wappen jedes Spielers. Dazu der
+// Gedankenstrich, der Saetze trennte, die als zwei Saetze klarer sind
+// [§C33] — zwanzig Stellen, vom Beleg bis zur Bedingung.
+const PRONOMEN = /\b(seiner|seine|seinem|seinen|sein|ihrer|ihre|ihrem|ihren|ihm|ihn|er)\b/;
+const _sprachTreffer = JSON.parse(K.eval(`JSON.stringify((function(){
+  const strich = [], pron = [];
+  const re = ${'PRONOMEN'};
+  const pruef = (wo, txt) => { const t = String(txt || ''); if(!t) return;
+    if(/[—–]/.test(t)) strich.push(wo);
+    if(re.test(t)) pron.push(wo); };
+  DISZIPLINEN.forEach(d => {
+    ['cond','wie'].forEach(k => pruef(d.id + '.' + k, d[k]));
+    if(d.monat) ['cond','wie'].forEach(k => pruef(d.id + '.monat.' + k, d.monat[k]));
+    if(d.allzeit) ['cond','wie'].forEach(k => pruef(d.id + '.allzeit.' + k, d.allzeit[k]));
+  });
+  const H = chronicleHolders();
+  CHRONICLES.forEach(c => { const h = H[c.id]; if(h) pruef(c.id + '.ev', h.ev); });
+  BADGES.forEach(b => pruef('badge.' + b.id, b.desc));
+  return {strich, pron};
+})())`.replace('${PRONOMEN}', PRONOMEN.toString())));
+ok(_sprachTreffer.strich.length === 0, 'kein Gedankenstrich in Beleg, Bedingung oder Erklaerung',
+   _sprachTreffer.strich.slice(0, 4).join(', ') || 'keiner');
+ok(_sprachTreffer.pron.length === 0, 'und kein Pronomen ueber einen Spieler',
+   _sprachTreffer.pron.slice(0, 4).join(', ') || 'keins');
+
 // Die Siegesserie ist die eine gewollte Ausnahme: sie steht vor der besten
 // Bilanz, obwohl sie ein Ereignis ist und die Bilanz eine Leistung.
 const iSerie = K.eval("CHRONICLES.findIndex(c=>c.id==='unstoppable')");

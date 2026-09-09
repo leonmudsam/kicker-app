@@ -4654,7 +4654,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.09.ef207add';
+const BUILD_VERSION='2026.09.09.87d2d92c';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -13022,7 +13022,7 @@ const BADGES=[
   {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Top-1 Spieler der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
     multi:true,count:(id,ms)=>countKingslayer(id,ms)},
   // Überholmanöver: Sieg gegen einen Spieler, der dadurch in der Saison-Rangliste überholt wurde
-  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Spieler im Match besiegt und ihn dadurch in der Saison-Rangliste überholt',
+  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Einen Spieler im Match besiegt und dadurch in der Saison-Rangliste überholt',
     multi:true,count:(id,ms)=>countOvertake(id,ms)},
   // ── NEUE BADGES v5 ──
   // Pflichterfüller: Sieg gegen mindestens einen Gegner aus den Bottom-2 der
@@ -18023,6 +18023,14 @@ const NEWS_LIMITS = {
   // schwächsten drei waren ein Elo-Ausschlag, eine Auszeichnung und ein Fun
   // Fact — Zeilen, die niemand vermisst. Breaking zählt nicht mit [§C33].
   proTag: 6,
+  // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
+  // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
+  // Neue, jedes Mal mit einem Prozentpunkt mehr: die ID ist damit eine andere,
+  // die Karte für den, der scrollt, dieselbe. Gemessen standen an vier
+  // aufeinanderfolgenden Spieltagen vier davon im Feed. Drei Tage, weil die
+  // Liga an zwei bis drei Tagen der Woche spielt und die Meldung damit
+  // höchstens einmal je Spielwoche wiederkommt.
+  sperreTage: 3,
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
 
@@ -18291,6 +18299,30 @@ function _namenListe(namen){
   const a = (namen || []).filter(Boolean);
   if(a.length <= 1) return a[0] || '';
   return a.slice(0, -1).join(', ') + ' und ' + a[a.length - 1];
+}
+
+// Zahlwörter bis vier, darüber die Ziffer. Vier ist die Grenze, weil keine
+// Bündelung im Feed mehr als vier Zeilen trägt [§C33].
+function _zahlwortDe(n){ return ['', 'ein', 'zwei', 'drei', 'vier'][n] || String(n); }
+
+// Dieselbe Aufzählung, aber für eine Schlagzeile gedeckelt. Über einer Karte,
+// die von drei Leuten handelte, stand „Leon und Martin bewegen die Ewige
+// Tafel": die Überschrift nannte zwei der drei, und der dritte kam nur in der
+// Liste darunter vor. Genannt werden jetzt alle, und ab dem vierten zählt die
+// Zeile den Rest — sonst sprengt eine Sammelkarte mit sechs Beteiligten jede
+// Schlagzeile.
+function _namenKurz(namen, max){
+  const a = (namen || []).filter(Boolean);
+  const m = max || 3;
+  if(a.length <= m) return _namenListe(a);
+  return a.slice(0, m - 1).join(', ') + ' und ' + _zahlwortDe(a.length - (m - 1)) + ' weitere';
+}
+
+// Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist für eine Liste
+// gebaut: der Mittelpunkt trennt dort zwei Spalten. Im Fließtext einer
+// Nachricht steht er mitten im Satz und liest sich wie ein Tippfehler.
+function _evSatz(ev){
+  return String(ev || '').replace(/\s*·\s*/g, ', ').trim();
 }
 
 function _buildStories(){
@@ -18737,7 +18769,10 @@ function _buildStories(){
       } else if(ev.badge.id === 'wins200' && typeof countWins === 'function'){
         _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält aktuell bei ${countWins(ev.playerId, matches)}.`;
       } else {
-        _bdesc = ev.badge.desc || 'Neues Badge freigeschaltet.';
+        // Die Bedingung aus dem Katalog steht sonst ohne Punkt in der Karte:
+        // sie ist dort eine Zelle in einem Raster, hier ist sie ein Satz.
+        _bdesc = ev.badge.desc || 'Neue Auszeichnung freigeschaltet';
+        if(!/[.!?]$/.test(_bdesc.trim())) _bdesc = _bdesc.trim() + '.';
       }
       stories.push({
         id: 'badge_'+ev.playerId+'_'+ev.badge.id+'_'+ev.matchId,
@@ -19511,7 +19546,8 @@ function _buildStories(){
         _wochenTeile.unshift({
           art: 'potw', ic: 'weekKing', label: 'Spieler der Woche', held: true,
           pids: res.winners.map(w => w.id), wert: Math.round(main.wr*100) + ' %',
-          satz: `${names.join(' und ')} gewinnt ${main.wins} von ${main.wins + main.losses} Spielen und hat damit die beste Quote.`,
+          satz: `${_namenListe(names)} ${names.length > 1 ? 'gewinnen' : 'gewinnt'} `
+              + `${main.wins} von ${main.wins + main.losses} Spielen und ${names.length > 1 ? 'haben' : 'hat'} damit die beste Quote.`,
           potw: {weekKey: _potwKeyOf(range.start), playerId: main.id,
                  playerIds: res.winners.map(w => w.id), wins: main.wins, wr: main.wr}
         });
@@ -19608,7 +19644,7 @@ function _buildStories(){
       const _wHeld = _wochenTeile.find(t => t.held) || _wochenTeile[0];
       const _wSpiele = matches.filter(m => { const t = mts(m); return t >= _wocheStart && t < _wocheEnde; });
       const _wTage = new Set(_wSpiele.map(m => new Date(m.created_at).toDateString())).size;
-      const _wName = _wHeld.pids.map(nameOf).join(' und ');
+      const _wName = _namenKurz(_wHeld.pids.map(nameOf));
       const _wSchluss = new Date(_wocheSlotTs);
       stories.push({
         id: 'woche_' + _lastWeekKey,
@@ -19666,21 +19702,30 @@ function _buildStories(){
         // Satz mehr. Der Beleg steht dahinter, die Bedingung erklärt ihn.
         const wertNeu = _chronKurz(n.ev), wertAlt = a ? _chronKurz(a.ev) : '';
         let title, desc;
+        // Der Beleg steht hier im Fliesstext, nicht in einer Listenzelle:
+        // der Mittelpunkt darin trennte sonst mitten im Satz zwei Spalten,
+        // die es gar nicht gibt.
+        const belegSatz = _evSatz(n.ev);
         if(art === 'erstmals'){
           title = `Erstmals vergeben: ${def.name}`;
-          desc = `${n.ev}. Vor ${neuN.length > 1 ? 'ihnen' : 'ihm'} hat diesen Rekord niemand gehalten.`;
+          // Kein Pronomen ueber einen Spieler: die Liga kennt kein Geschlecht,
+          // und der Satz steht unter jedem Wappen [§C33].
+          desc = `${belegSatz}. Diesen Rekord hat vorher niemand gehalten. `
+            + `Verlangt ist: ${def.cond}.`;
         } else if(art === 'geholt'){
           const altN = _namenListe((a.pids || []).map(nameOf)) || 'der bisherige Halter';
           title = `${namen} ${verb} „${def.name}"`;
           // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
-          desc = `${n.ev}.` + (wertAlt && wertAlt !== wertNeu
-            ? ` Vorher hielt ${altN} den Rekord mit ${wertAlt}.`
-            : ` Vorher gehörte der Rekord ${altN}.`);
+          desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu
+            ? `Vorher hielt ${altN} den Rekord mit ${wertAlt}.`
+            : `Vorher gehörte der Rekord ${altN}.`);
         } else {
           title = `${namen} ${baut} „${def.name}" aus`;
-          desc = `${n.ev}. Vorher ${wertAlt}.`;
+          // „Vorher 71 %." ist kein Satz. Und die Richtung gehoert dazu: die
+          // Meldung gibt es nur, wenn der Wert besser geworden ist [§C33].
+          desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
         }
         if(art === 'gesteigert' && ++_rekAusbau > NEWS_LIMITS.rekordAusbau) return;
         stories.push({
@@ -19763,7 +19808,7 @@ function _buildStories(){
               ic: x.ic || 'scroll',
               title: `${nameOf(x.pid)} steht zum ersten Mal in der Chronik`,
               desc: `„${x.name}" im ${seasonLabel(_vorSid)} ist der erste Monatseintrag überhaupt.`
-                  + (x.ev ? ` ${x.ev}.` : ''),
+                  + (x.ev ? ` ${_evSatz(x.ev)}.` : ''),
               when: wann + 60000,
               prio: 90,
               dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name}
@@ -20351,7 +20396,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
       title:`Kopf-an-Kopf: ${nameOf(best.pa)} & ${nameOf(best.pb)}`,
-      desc:`${best.total} direkte Duelle, ${best.diff === 0 ? 'absolut ausgeglichen' : 'nur ' + best.diff + ' Sieg' + (best.diff === 1 ? '' : 'e') + ' Unterschied'}: ${nameOf(best.pa)} ${best.wa} – ${best.wb} ${nameOf(best.pb)}.`,
+      // Zwischen den beiden Zahlen stand ein Halbgeviertstrich, und der ist in
+      // einem Satz ein Gedankenstrich und kein Bilanzstrich. Die Bilanz steht
+      // jetzt als Doppelpunkt-Paar da, wie ueberall sonst in der App.
+      desc:`${best.total} direkte Duelle, ${best.diff === 0 ? 'absolut ausgeglichen' : 'nur ' + best.diff + ' Sieg' + (best.diff === 1 ? '' : 'e') + ' Unterschied'}. ${best.diff === 0 ? `Es steht ${best.wa}:${best.wb}.` : `Es steht ${Math.max(best.wa, best.wb)}:${Math.min(best.wa, best.wb)} für ${nameOf(best.wa > best.wb ? best.pa : best.pb)}.`}`,
       vv: best.wa+':'+best.wb, vl:'Bilanz',
       dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel' } };
   }});
@@ -20568,7 +20616,12 @@ function _ambientTemplatePool(now, pm, nameOf){
     // Bestmarke + Rang aus derselben Liste — keine zweite Berechnung.
     const ranked = cands.slice().sort((a,b) => b.best - a.best || (a.ids[0] < b.ids[0] ? -1 : 1));
     const topBest = ranked[0].best;
-    const t = cands[Math.floor(rng()*cands.length)];
+    // Gezogen wird aus dem vorderen Drittel, nicht aus allen. Gleichverteilt
+    // ueber das Feld stand „Eingespielt: Martin & Stefan" ueber einem Duo auf
+    // Platz 24 von 24 — eine Karte, die einen Spieler feiert und ihm dabei
+    // sagt, dass er Letzter ist [§C33].
+    const feld = ranked.slice(0, Math.max(3, Math.ceil(ranked.length / 3)));
+    const t = feld[Math.floor(rng()*feld.length)] || feld[0];
     const rank = ranked.findIndex(x => x.ids[0] === t.ids[0] && x.ids[1] === t.ids[1]) + 1;
     const isRecord = t.best === topBest;
     const nm = `${nameOf(t.ids[0])} & ${nameOf(t.ids[1])}`;
@@ -20576,7 +20629,8 @@ function _ambientTemplatePool(now, pm, nameOf){
       title: isRecord ? `Rekord-Duo: ${nm}` : `Eingespielt: ${nm}`,
       desc: isRecord
         ? `${t.best} gemeinsame Siege in Serie. Kein Duo der Liga war je länger unschlagbar.`
-        : `${t.best} gemeinsame Siege in Serie. Platz ${rank} von ${ranked.length} Duos, ${topBest - t.best} hinter der Bestmarke.`,
+        : `${t.best} gemeinsame Siege in Serie. Das ist Platz ${rank} von ${ranked.length} Duos, `
+          + `nur ${topBest - t.best} hinter der Bestmarke.`,
       vv: t.best, vl:'in Serie',
       dataRef:{ ambientPids:[t.ids[0], t.ids[1]], pairKind:'team' } };
   }});
@@ -20906,7 +20960,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const held = T2.awarded.length, open = SEASON_TITLES.length - held;
     return { cat:'season', ic:a.ic, prio:5,
       title:`${nameOf(a.pid)} führt bei „${a.name}"`,
-      desc:`${a.ev}. Stand heute. ${held} von ${SEASON_TITLES.length} Chronik-Einträgen sind vergeben, ${open} noch offen.`,
+      desc:`${_evSatz(a.ev)}. Das ist der Stand von heute. ${held} von ${SEASON_TITLES.length} Chronik-Einträgen sind vergeben, ${open} sind noch offen.`,
       vv:held+'/'+SEASON_TITLES.length, vl:'Einträge',
       dataRef:{ ambientPid:a.pid, seasonTable:T2.sid } };
   }});
@@ -20930,7 +20984,11 @@ function _ambientTemplatePool(now, pm, nameOf){
       // Die Bedingung stand hier im Klartext und machte aus zwei Zeilen
       // fünf. Sie gehört ins Detail, nicht auf die Karte — die Karte sagt,
       // WAS jemand hält, das Detail sagt, wofür.
-      desc:`${h.ev}. ${h.shared ? 'punktgleich gehalten.' : 'sonst hält ihn niemand.'}`,
+      // Der Beleg endet mit einem Punkt, und danach stand ein Kleinbuchstabe:
+      // „… gewonnen · 9. sonst hält ihn niemand." Der zweite Satz faengt jetzt
+      // an, wo ein Satz anfaengt, und der Beleg traegt keinen Listentrenner
+      // mehr mitten im Fliesstext.
+      desc:`${_evSatz(h.ev)}. ${h.shared ? 'Diesen Bestwert halten mehrere punktgleich.' : 'Sonst hält diesen Bestwert niemand.'}`,
       vv:'1', vl:'Rekordhalter',
       dataRef:{ ambientPid:h.pid, chronicle:d.id } };
   }});
@@ -20991,11 +21049,18 @@ function _ambientTemplatePool(now, pm, nameOf){
     const pid = kandidaten[Math.floor(rng() * kandidaten.length)] || kandidaten[0];
     const s = prestigeSchritte(pid, 1)[0];
     if(!s) return null;
+    // „X liegt ‚Das Sonntagskind' am naechsten" sagte nicht, worum es geht,
+    // und der Text darunter nannte nur den Halter: was jemand tun muss, um
+    // den Rekord zu holen, stand nirgends. Die Karte sagt jetzt die Aufgabe
+    // (die Bedingung aus dem Katalog), den Stand des Halters und den Gewinn.
+    // „Holt er ihn" stand ausserdem einmal direkt hinter dem Namen des
+    // HALTERS und zeigte damit auf den Falschen.
+    const _bed = s.cond || '';
     return { cat:'personal', ic:s.ic, prio:5,
-      title:`${nameOf(pid)} liegt „${s.name}" am nächsten`,
-      // „Holt er ihn" stand direkt hinter dem Namen des HALTERS und zeigte
-      // damit auf den Falschen. Wer gemeint ist, steht jetzt da.
-      desc:`${s.txt}. Holt ${nameOf(pid)} den Rekord, bringt das ${s.gewinn} Prestige. `
+      title:`${nameOf(pid)} kann „${s.name}" holen`,
+      desc: (_bed ? `Dafür zählt: ${_bed}. ` : '')
+        + `${s.txt}. `
+        + `Gelingt es ${nameOf(pid)}, bringt das ${s.gewinn} Prestige. `
         + `Kein anderer ist gerade so nah dran.`,
       vv:'+' + s.gewinn, vl:'Prestige',
       dataRef:{ ambientPid:pid, prestige:true } };
@@ -21016,7 +21081,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const leer = INSIGNIEN.length - 1 - hoechste;
     return { cat:'history', ic:'medalTrio', prio:4,
       title:`Die Liga trägt ${zahl.filter(v => v > 0).length} verschiedene Insignien`,
-      desc: INSIGNIEN.map((s, i) => `${s.name}: ${zahl[i]}`).join(' · ')
+      desc: INSIGNIEN.map((s, i) => `${s.name}: ${zahl[i]}`).join(', ')
         + `. Höchste getragene Stufe ist der ${oben.name}`
         + (leer > 0 ? `, darüber ${leer === 1 ? 'liegt noch eine Stufe' : 'liegen noch ' + leer + ' Stufen'}, die niemand erreicht hat.` : '.'),
       vv:String(n), vl:'gewertet',
@@ -21426,6 +21491,34 @@ function _consolidateStories(list){
   // scrollt, dieselbe Karte.
   const seenContent = new Set();
   const seenTitel = new Set();
+  // ── Dieselbe Aussage nicht dreimal in einer Woche ──────────────────
+  // Zwei gleiche Schlagzeilen fängt `seenTitel` ab. Eine Aussage, deren ZAHL
+  // sich mitbewegt, entkommt ihm: „Martin baut ‚Der Maßstab' aus" heißt nach
+  // dem nächsten Sieg genauso, nur mit 74 statt 73 Prozent, und bekommt damit
+  // eine eigene ID, einen eigenen Titel und eine eigene Karte. Gemessen
+  // standen so vier davon nebeneinander im Feed.
+  // Der Schlüssel ist die Aussage selbst: Was für ein Ereignis, über wen, und
+  // worum es geht (Rekord, Auszeichnung, Duell). Wer den Rekord übernimmt,
+  // trägt andere Spieler im Schlüssel — eine Übernahme bleibt also Nachricht,
+  // auch am Tag nach einer anderen.
+  // `src` steht von neu nach alt, also überlebt die jüngste Karte und ältere
+  // gleiche fallen weg, solange sie innerhalb der Sperre liegen.
+  const _sperreMs = (NEWS_LIMITS.sperreTage || 0) * 86400000;
+  // Was es je Tag, Woche oder Monat genau einmal gibt, kann sich gar nicht
+  // wiederholen — und Breaking darf an keiner Sperre scheitern [§C33]. Die
+  // ambienten Karten hängen ohnehin an ihrem Slot.
+  const _OHNE_SPERRE = new Set(['ambient', 'sammel', 'season_endgame',
+                                'potd', 'woche', 'chronik_monat', 'season_recap']);
+  const _aussage = st => {
+    const d = (st && st.dataRef) || {};
+    const typ = d.type || '';
+    if(!typ || _OHNE_SPERRE.has(typ)) return null;
+    let ids = [];
+    try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
+    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titel || '';
+    return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
+  };
+  const _zuletzt = new Map();
   for(const s of src){
     const d = s.dataRef || {};
     // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
@@ -21453,6 +21546,13 @@ function _consolidateStories(list){
       if(seenContent.has(ck)) continue;   // inhaltsgleiche Doublette → überspringen
       const tk = String(s.title || '').trim();
       if(tk && seenTitel.has(tk)) continue;
+      const ak = _sperreMs ? _aussage(s) : null;
+      if(ak){
+        const vorherMs = _zuletzt.get(ak);
+        const msJetzt = new Date(s.when).getTime();
+        if(vorherMs != null && Math.abs(vorherMs - msJetzt) < _sperreMs) continue;
+        _zuletzt.set(ak, msJetzt);
+      }
       seenContent.add(ck);
       seenTitel.add(tk);
       slots.push({ s });
@@ -21531,7 +21631,6 @@ function _consolidateStories(list){
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
-  const _zahlwort = n => ['','ein','zwei','drei','vier'][n] || String(n);
   // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels' aus"
   // stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit demselben
   // Wert und nur einer anderen Spielzahl im Fliesstext. Die Buendelung soll
@@ -21637,11 +21736,14 @@ function _consolidateStories(list){
       // Monaten, und keine der beiden nannte einen Namen.
       // Einer bewegt, mehrere bewegen. „Martin bewegen die Ewige Tafel"
       // stand ueber einer Karte mit einem einzigen Namen.
+      // Und die Ueberschrift nennt ALLE: sie zeigte zwei von drei Namen, und
+      // der dritte kam nur in der Liste darunter vor, obwohl die Karte
+      // genauso von ihm handelt [§C33].
       title: istTafel
         ? (pids.length
-            ? `${pids.slice(0, 2).map(nameOf).join(' und ')} `
+            ? `${_namenKurz(pids.map(nameOf))} `
               + `${pids.length > 1 ? 'bewegen' : 'bewegt'} die Ewige Tafel`
-            : `${_zahlwort(teile.length)} Wechsel an der Ewigen Tafel`)
+            : `${_zahlwortDe(teile.length)} Wechsel an der Ewigen Tafel`)
         : kopf.title,
       // Die Karte fasst zusammen, das Blatt zeigt alles. Als der Text die
       // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
@@ -21649,7 +21751,7 @@ function _consolidateStories(list){
       // Einträgen war die Karte höher als jede andere im Feed.
       desc: istTafel
         ? kopf.desc + (rest.length
-            ? ` Und ${_zahlwort(rest.length)} ${rest.length === 1
+            ? ` Und ${_zahlwortDe(rest.length)} ${rest.length === 1
                 ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
             : '')
         : kopf.desc,
@@ -22388,7 +22490,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     const teile = Array.isArray(d.teile) ? d.teile : [];
     fuss = `<div class="nf-wl">${teile.slice(0, 3).map(t =>
       `<div class="nf-wl-z"><span>${esc(t.label || '')}</span>`
-      + `<i>${esc((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean).join(' und '))}</i>`
+      + `<i>${esc(_namenKurz((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean), 2))}</i>`
       + `<b>${esc(t.wert || '')}</b></div>`).join('')}`
       + (teile.length > 3 ? `<div class="nf-wl-m">und ${teile.length - 3} weitere Wertungen</div>` : '')
       + `</div>`;
@@ -23115,8 +23217,8 @@ function _newsBlattKopf(s){
   if(ids.length > 1){
     return erg + `<div class="nd-held nd-held-duo">
       <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
-      <div><div class="nd-held-nm">${esc(ids.slice(0, 2).map(nm).join(' und '))}</div>
-      <div class="nd-held-un">${esc(ids.length > 2 ? 'und ' + (ids.length - 2) + ' weitere'
+      <div><div class="nd-held-nm">${esc(_namenKurz(ids.map(nm)))}</div>
+      <div class="nd-held-un">${esc(ids.length > 2 ? 'gemeinsam auf dieser Karte'
         : (_newsSorte(s) === 'duell' ? 'im direkten Duell' : 'als Duo'))}</div></div></div>`;
   }
   const pid = ids[0];
@@ -24208,7 +24310,7 @@ const DISZIPLINEN = [
 
   {id:'uebersoll', name:'Das Übersoll', short:'Übersoll', ic:'trendUp', tone:'gold', art:'leistung',
     monat:{
-      wie:'Seine Siegquote minus der Siegchance, die die Elo-Rechnung ihm vorab gegeben hat. Ein Prozentpunkt ist ein Prozentpunkt Siegquote — nicht Elo und nicht Prestige.',
+      wie:'Die Siegquote minus der Siegchance, die die Elo-Rechnung vorab ausgewiesen hat. Ein Prozentpunkt ist ein Prozentpunkt Siegquote, nicht Elo und nicht Prestige.',
       cond:'Mindestens 12 Prozentpunkte über der eigenen Elo-Erwartung, ab 20 Partien',
       pick:(C,t)=>_stPickTop(C,t,p=>{
         if(p.games < 20) return null;
@@ -24218,7 +24320,7 @@ const DISZIPLINEN = [
 
   {id:'keinpflicht', name:'Kein geschenkter Sieg', short:'Erkämpft', ic:'giantSlayer', tone:'acid', art:'leistung',
     monat:{
-      wie:'Ein Sieg gegen die Rechnung ist einer aus einer Partie, in die er mit unter 50 % Siegchance ging.',
+      wie:'Ein Sieg gegen die Rechnung ist einer aus einer Partie mit unter 50 % Siegchance vorab.',
       cond:'Mindestens die Hälfte aller Siege gegen die Rechnung geholt, ab 15 Siegen',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.wins>=15 && p.favW/p.wins>=0.50)?p.favW/p.wins:null,
         (p)=>`${p.favW} der ${p.wins} Siege waren keine Pflichtsiege`)}},
@@ -24235,8 +24337,8 @@ const DISZIPLINEN = [
 
   {id:'trotzig', name:'Der Trotzige', short:'Trotzdem', ic:'unstoppable', tone:'acid', art:'leistung',
     monat:{
-      wie:'Außenseiter heißt: die Elo-Rechnung gab ihm vorab unter 50 % Siegchance. Gezählt wird, wie viele dieser Partien er trotzdem gewann.',
-      cond:'Mindestens 45 % gewonnen in Partien, in die er als Außenseiter ging, ab 15 solchen',
+      wie:'Außenseiter heißt: die Elo-Rechnung wies vorab unter 50 % Siegchance aus. Gezählt wird, wie viele dieser Partien trotzdem gewonnen wurden.',
+      cond:'Mindestens 45 % der Partien als Außenseiter gewonnen, ab 15 solchen Partien',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.favG>=15 && p.favW/p.favG>=0.45)?p.favW/p.favG:null,
         (p)=>`${p.favW} von ${p.favG} Partien als Außenseiter gewonnen`)}},
 
@@ -24249,21 +24351,21 @@ const DISZIPLINEN = [
 
   {id:'favoritenpflicht', name:'Die Favoritenpflicht', short:'Pflicht', ic:'trophyCheck', tone:'gold', art:'leistung',
     monat:{
-      wie:'Favorit heißt: die Elo-Rechnung gab ihm vorab mindestens 60 % Siegchance. Ein Patzer ist eine verlorene Favoritenpartie.',
+      wie:'Favorit heißt: die Elo-Rechnung wies vorab mindestens 60 % Siegchance aus. Ein Patzer ist eine verlorene Favoritenpartie.',
       cond:'Als Favorit (ab 60 % Siegchance) mindestens 85 % geholt, ab 10 solchen Partien',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.favoritG>=10 && p.favoritW/p.favoritG>=0.85)?p.favoritW/p.favoritG:null,
         (p)=>`${p.favoritW} von ${p.favoritG} Favoritenpartien · ${p.favoritG-p.favoritW} Patzer`)}},
 
   {id:'mitjedem', name:'Mit jedem', short:'Mit jedem', ic:'users', tone:'gold', art:'leistung',
     monat:{
-      wie:'Von allen Partnern mit mindestens fünf gemeinsamen Spielen zählt der, neben dem es am schlechtesten lief — nicht der Schnitt.',
+      wie:'Von allen Partnern mit mindestens fünf gemeinsamen Spielen zählt der, neben dem es am schlechtesten lief, nicht der Schnitt.',
       cond:'Auch neben dem schwächsten Partner mindestens 50 %, ab 3 Partnern mit je 5 Spielen',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.partnerMin!=null && p.partnerMin>=0.50)?p.partnerMin:null,
         (p)=>`${p.partnerW} von ${p.partnerG} selbst neben ${pname(p.partnerX)} · ${p.partnerN} Partner`)}},
 
   {id:'gegenalle', name:'Gegen alle', short:'Gegen alle', ic:'target', tone:'gold', art:'leistung',
     monat:{
-      wie:'Regelmäßig heißt: mindestens vier Duelle im Monat. Gegen jeden von ihnen muss er mehr Siege als Niederlagen haben.',
+      wie:'Regelmäßig heißt: mindestens vier Duelle im Monat. Gegen jeden davon müssen mehr Siege als Niederlagen stehen.',
       cond:'Gegen jeden regelmäßigen Gegner mehr Siege als Niederlagen, ab 5 Gegnern mit je 4 Duellen',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.breiteN>=5 && p.breiteOk===p.breiteN)?p.breiteN:null,
         (p,v)=>`gegen alle ${v} regelmäßigen Gegner im Plus`)}},
@@ -24277,7 +24379,7 @@ const DISZIPLINEN = [
 
   {id:'daylord', name:'Der Platzhirsch', short:'Revier', ic:'dayKing', tone:'gold', art:'leistung',
     monat:{
-      wie:'Player of the Day ist, wer an einem Spieltag die beste Bilanz hat. Gezählt wird der Anteil an den Tagen, an denen er selbst gespielt hat.',
+      wie:'Player of the Day ist, wer an einem Spieltag die beste Bilanz hat. Gezählt wird der Anteil an den eigenen Spieltagen.',
       cond:'An mindestens 35 % der eigenen Spieltage Player of the Day, ab 5 Spieltagen',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.days>=5 && p.potd/p.days>=0.35)?p.potd/p.days:null,
         (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${Math.round(v*100)} %`)},
@@ -24292,7 +24394,7 @@ const DISZIPLINEN = [
   // hat vier Wochen, und ein Anteil aus vier Werten misst nichts [§10.2].
   {id:'weeklord', name:'Der Wochenherr', short:'Wochenherr', ic:'weekKing', tone:'gold', art:'leistung',
     allzeit:{
-      wie:'Player of the Week ist, wer in einer abgeschlossenen Woche die beste Siegquote hat, bei mindestens fünf Siegen. Gezählt wird der Anteil an den Wochen, in denen er selbst gespielt hat.',
+      wie:'Player of the Week ist, wer in einer abgeschlossenen Woche die beste Siegquote hat, bei mindestens fünf Siegen. Gezählt wird der Anteil an den eigenen Spielwochen.',
       cond:'Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen und mindestens 25 %',
       val:p => (p.weeks >= 10 && p.potw/p.weeks >= 0.25) ? p.potw/p.weeks : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.weeks} Wochen gewonnen · ${p.potw}× Player of the Week`}},
@@ -24321,7 +24423,7 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Höchster Anteil voller Spieltage (4+ Partien) ohne eine einzige Niederlage, ab 8 solchen Tagen',
       val:p => (p.bigDays >= 8 && p.perfDays >= 1) ? p.perfDays/p.bigDays : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.bigDays} vollen Spieltage ohne eine einzige Niederlage · ${p.perfDays}`}},
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.bigDays} vollen Spieltage ohne eine einzige Niederlage · ${p.perfDays} Tage`}},
 
   {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'handshake', tone:'gold', art:'leistung',
     monat:{
@@ -24330,14 +24432,14 @@ const DISZIPLINEN = [
       pick:(C,t)=>_stPickTop(C,t,p=>(p.upliftMates>=3 && p.uplift!=null && p.uplift>=0.20)?p.uplift:null,
         (p,v)=>`Seine ${p.upliftMates} Partner gewinnen neben ihm ${Math.round(v*100)} %-Punkte häufiger`)},
     allzeit:{
-      cond:'Die Partner gewinnen an dieser Seite am deutlichsten häufiger als ohne — mindestens 3 Partner, je 25 gemeinsame Spiele',
+      cond:'Die Partner gewinnen an dieser Seite am deutlichsten häufiger als ohne, mindestens 3 Partner mit je 25 gemeinsamen Spielen',
       val:p => (p.upliftMates >= 3 && p.uplift != null && p.uplift >= 0.10) ? p.uplift : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte gewinnen die ${p.upliftMates} Partner an dieser Seite häufiger`}},
 
   {id:'clutch', name:'Die ruhige Hand', short:'Nerven', ic:'nerves', tone:'gold', art:'leistung',
     monat:{
       wie:'Eng heißt höchstens zwei Tore Unterschied. Verglichen wird die Quote in diesen Partien mit der Quote über alle Partien.',
-      cond:'In engen Spielen deutlich stärker als sonst — mindestens 8 Prozentpunkte, ab 12 engen Spielen',
+      cond:'In engen Spielen deutlich stärker als sonst, mindestens 8 Prozentpunkte, ab 12 engen Spielen',
       pick:(C,t)=>_stPickTop(C,t,p=>{
         if(p.close < 12) return null;
         const d = (p.closeW/p.close) - (p.wins/p.games);
@@ -24362,7 +24464,7 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Höchster Anteil Siege mit unter 35 % Siegchance, ab 60 Spielen',
       val:p => (p.games >= 60 && p.upsets/p.games >= 0.04) ? p.upsets/p.games : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien gegen die Wahrscheinlichkeit gewonnen · ${p.upsets}`}},
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien gegen die Wahrscheinlichkeit gewonnen · ${p.upsets} Siege`}},
 
   {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'explosion', tone:'orange', art:'leistung',
     monat:{
@@ -24372,7 +24474,7 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Höchster Anteil Kantersiege, ab 22 Siegen und mindestens 22 %',
       val:p => (p.wins >= 22 && p.blowW/p.wins >= 0.22) ? p.blowW/p.wins : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.wins} Siege waren Kantersiege · ${p.blowW}`}},
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.wins} Siege waren Kantersiege · ${p.blowW} Kantersiege`}},
 
   // Die beiden Positionen als GANZES, nicht als Einzelmaß. „Der Fels" zählt
   // nur Gegentore, „Der Torjäger" nur eigene — beides sagt nichts darüber,
@@ -24387,17 +24489,17 @@ const DISZIPLINEN = [
   // zu wenig. Über vier Wochen entschiede die Spielzahl statt der Leistung.
   {id:'atk_ace', name:'Der komplette Stürmer', short:'Sturm', ic:'bolt', tone:'orange', art:'leistung',
     allzeit:{
-      cond:'Höchster Sturmwert der Positions-Rangliste — Siegquote, Leistung gegen die Erwartung und Ø Tore, ab 50 Sturmspielen',
+      cond:'Höchster Sturmwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Tore, ab 50 Sturmspielen',
       val:p => (p.atkG >= 50)
         ? posWert('atk', p.atkG, p.atkW, p.atkGoals/p.atkG, p.atkPerf/p.atkG) : null,
-      ev:(p,v) => `${Math.round(v*100)} Sturmwert · ${p.atkW}–${p.atkG-p.atkW} in ${p.atkG} Sturmspielen`}},
+      ev:(p,v) => `${Math.round(v*100)} Sturmwert · ${p.atkW}:${p.atkG-p.atkW} in ${p.atkG} Sturmspielen`}},
 
   {id:'def_ace', name:'Der komplette Verteidiger', short:'Abwehr', ic:'shield', tone:'blue', art:'leistung',
     allzeit:{
-      cond:'Höchster Abwehrwert der Positions-Rangliste — Siegquote, Leistung gegen die Erwartung und Ø Gegentore, ab 50 Abwehrspielen',
+      cond:'Höchster Abwehrwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Gegentore, ab 50 Abwehrspielen',
       val:p => (p.defG >= 50)
         ? posWert('def', p.defG, p.defW, p.defConceded/p.defG, p.defPerf/p.defG) : null,
-      ev:(p,v) => `${Math.round(v*100)} Abwehrwert · ${p.defW}–${p.defG-p.defW} in ${p.defG} Abwehrspielen`}},
+      ev:(p,v) => `${Math.round(v*100)} Abwehrwert · ${p.defW}:${p.defG-p.defW} in ${p.defG} Abwehrspielen`}},
 
   {id:'rock', name:'Der Fels', short:'Fels', ic:'brick', tone:'blue', art:'leistung',
     allzeit:{
@@ -24419,7 +24521,7 @@ const DISZIPLINEN = [
 
   {id:'comeback_king', name:'Der Stehaufmann', short:'Comeback', ic:'comeback', tone:'acid', art:'leistung',
     monat:{
-      wie:'Gezählt wird jede Partie, die unmittelbar auf eine Niederlage folgte — und wie viele davon er gewann.',
+      wie:'Gezählt wird jede Partie, die unmittelbar auf eine Niederlage folgte, und wie viele davon gewonnen wurden.',
       cond:'Mindestens 70 % der Spiele direkt nach einer Niederlage gewonnen, ab 20 Gelegenheiten',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.afterLossOpp>=20 && p.afterLoss/p.afterLossOpp>=0.70)?p.afterLoss/p.afterLossOpp:null,
         (p,v)=>`${p.afterLoss} von ${p.afterLossOpp} Antworten nach einer Pleite gewonnen`)},
@@ -24440,24 +24542,24 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Höchster Anteil 10:9-Siege an allen eigenen Siegen, ab 25 Siegen',
       val:p => (p.wins >= 25 && p.nail/p.wins >= 0.08) ? p.nail/p.wins : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.wins} Siege endeten 10:9 · ${p.nail}`}},
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.wins} Siege endeten 10:9 · ${p.nail} Zittersiege`}},
 
   {id:'damage_control', name:'Der Schadensbegrenzer', short:'Limit', ic:'blockedShot', tone:'blue', art:'leistung',
     allzeit:{
       cond:'Niedrigster Anteil deutlicher Niederlagen (7+ Tore Rückstand), ab 25 Niederlagen',
       val:p => (p.losses >= 25 && p.blowL/p.losses <= 0.12) ? -(p.blowL/p.losses) : null,
-      ev:p => `${Math.round(p.blowL/p.losses*100)} % aller ${p.losses} Niederlagen gingen deutlich verloren · ${p.blowL}`}},
+      ev:p => `${Math.round(p.blowL/p.losses*100)} % aller ${p.losses} Niederlagen gingen deutlich verloren · ${p.blowL} davon`}},
 
   {id:'unbowed', name:'Der Unerschütterliche', short:'Kein Loch', ic:'concreteWall', tone:'blue', art:'leistung',
     monat:{
       cond:'Nie mehr als 2 Niederlagen am Stück, bei mindestens 25 Spielen',
       pick:(C,t)=>_stPickTop(C,t,p=>(p.games>=25 && p.worstLoss<=2)?-p.worstLoss:null,
-        (p)=>p.worstLoss<=1 ? `Nie zwei Niederlagen hintereinander · ${p.wins}–${p.losses}`
-                            : `Nie mehr als 2 Niederlagen am Stück · ${p.wins}–${p.losses}`)},
+        (p)=>p.worstLoss<=1 ? `Nie zwei Niederlagen hintereinander · ${p.wins}:${p.losses}`
+                            : `Nie mehr als 2 Niederlagen am Stück · ${p.wins}:${p.losses}`)},
     allzeit:{
       cond:'Kürzeste Niederlagenserie, die je jemand über eine ganze Laufbahn zugelassen hat, ab 80 Spielen',
       val:p => (p.games >= 80 && p.lossStreak > 0) ? -p.lossStreak : null,
-      ev:(p,v) => `${-v} Niederlagen am Stück — mehr waren es nie · ${p.games} Partien`}},
+      ev:(p,v) => `${-v} Niederlagen am Stück, mehr waren es nie · ${p.games} Partien`}},
 
   // Die Außenseiter-Quote misst NICHT, wie oft jemand Außenseiter ist —
   // das sagt nur, wie schwach er ist. Gemessen wird der Abstand zwischen
@@ -24484,7 +24586,7 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Höchster Elo-Stand, den je ein Spieler erreicht hat',
       unit:'Elo', min:350, raw:p => p.peak,
-      ev:(p,v) => `${Math.round(v)} Elo — nie stand jemand höher`}},
+      ev:(p,v) => `${Math.round(v)} Elo, nie stand jemand höher`}},
 
   {id:'eloday', name:'Der große Sprung', short:'Sprung', ic:'bolt2', tone:'acid', art:'ereignis',
     allzeit:{
@@ -24497,7 +24599,7 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Höchster Abwehr-Anteil, ab 60 Spielen und mindestens 80 %',
       val:p => (p.games >= 60 && p.defG/p.games >= 0.80) ? p.defG/p.games : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien hinten · ${p.defG}`}},
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien hinten · ${p.defG} Abwehrspiele`}},
 
   {id:'switcher', name:'Der Wandler', short:'Wandler', ic:'refresh', tone:'purple', art:'ereignis',
     allzeit:{
@@ -24541,9 +24643,9 @@ const DISZIPLINEN = [
       // Eine einzige Partie genügt, und die Rechnung stand gegen ihn. Der
       // schwächste Spieler der Liga hat die meisten Gelegenheiten dazu —
       // das ist hier kein Fehler, sondern der Zweck.
-      cond:'Der unwahrscheinlichste Sieg, den je jemand geholt hat — höchstens 30 % Siegchance',
+      cond:'Der unwahrscheinlichste Sieg, den je jemand geholt hat, bei höchstens 30 % Siegchance',
       val:p => (p.flukeExp != null && p.flukeExp <= 0.30) ? 1 - p.flukeExp : null,
-      ev:(p,v) => `${Math.round((1-v)*100)} % Siegchance — und trotzdem gewonnen`,
+      ev:(p,v) => `${Math.round((1-v)*100)} % Siegchance, und trotzdem gewonnen`,
       zeit:p => p.flukeLabel || ''}},
 
   // ── Die Fügungen aus Auslosung und letztem Ball ───────────────────
@@ -24557,7 +24659,7 @@ const DISZIPLINEN = [
   {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'rainCloud', tone:'blue',
     art:'ereignis', zufall:'quote',
     allzeit:{
-      wie:'Die Siegchance ist der Elo-Erwartungswert des eigenen Teams gegen das gegnerische; 50 % heißt ausgeglichen. Gemittelt über alle Partien des Tages misst sie, wie die Auslosung an diesem Tag stand — nicht, wie gespielt wurde.',
+      wie:'Die Siegchance ist der Elo-Erwartungswert des eigenen Teams gegen das gegnerische; 50 % heißt ausgeglichen. Gemittelt über alle Partien des Tages misst sie, wie die Auslosung an diesem Tag stand. Über das Spiel selbst sagt sie nichts.',
       cond:'Niedrigste mittlere Siegchance über einen ganzen Spieltag, ab 4 Partien an diesem Tag',
       val:p => (p.hartTag != null && p.hartTag <= 0.45) ? 1 - p.hartTag : null,
       ev:(p,v) => `${Math.round((1-v)*100)} % mittlere Siegchance über den ganzen Tag`,
@@ -24570,9 +24672,9 @@ const DISZIPLINEN = [
     art:'ereignis', zufall:'quote', negativ:true,
     allzeit:{
       wie:'Eine einzige Partie, kein Durchschnitt: die höchste Siegchance, mit der je jemand in ein Spiel ging und es trotzdem verlor.',
-      cond:'Höchste Siegchance, die trotzdem verloren ging — mindestens 65 %',
+      cond:'Höchste Siegchance, die trotzdem verloren ging, mindestens 65 %',
       val:p => (p.pechExp != null && p.pechExp >= 0.65) ? p.pechExp : null,
-      ev:(p,v) => `${Math.round(v*100)} % Siegchance — und trotzdem verloren`,
+      ev:(p,v) => `${Math.round(v*100)} % Siegchance, und trotzdem verloren`,
       zeit:p => p.pechLabel || ''}},
 
   {id:'mirrorday', name:'Der Wiedergänger', short:'Déjà-vu', ic:'duplicate', tone:'blue',
@@ -24586,16 +24688,16 @@ const DISZIPLINEN = [
   {id:'needleeye', name:'Das Nadelöhr', short:'Nadelöhr', ic:'needleEye', tone:'acid',
     art:'ereignis', zufall:'quote',
     allzeit:{
-      wie:'Gezählt wird jede Partie, die auf einen einzigen Ball hinauslief — gewonnen wie verloren. Der Anteil sagt nichts über das Ergebnis, nur darüber, wie eng es zuging.',
+      wie:'Gezählt wird jede Partie, die auf einen einzigen Ball hinauslief, gewonnen wie verloren. Der Anteil sagt nichts über das Ergebnis, nur darüber, wie eng es zuging.',
       cond:'Höchster Anteil Ein-Tor-Partien an der eigenen Laufbahn, ab 60 Partien',
       val:p => (p.games >= 60 && (p.nail + p.bitter) / p.games >= 0.08)
              ? (p.nail + p.bitter) / p.games : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien liefen auf einen Ball hinaus · ${p.nail + p.bitter}`}},
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien liefen auf einen Ball hinaus · ${p.nail + p.bitter} enge Partien`}},
 
   {id:'evenkeel', name:'Die Punktlandung', short:'Punktlandung', ic:'scaleBalance', tone:'gold',
     art:'ereignis', zufall:'fund',
     allzeit:{
-      wie:'Am Ende des Tages stehen genauso viele eigene Tore wie Gegentore. Je mehr Partien der Tag hatte, desto unwahrscheinlicher trifft das zu — deshalb zählt die Größe des Tages, nicht wie oft es vorkam.',
+      wie:'Am Ende des Tages stehen genauso viele eigene Tore wie Gegentore. Je mehr Partien der Tag hatte, desto unwahrscheinlicher trifft das zu. Deshalb zählt die Größe des Tages und nicht, wie oft es vorkam.',
       cond:'Größter Spieltag, an dem das eigene Torkonto exakt aufgeht, ab 4 Partien',
       val:p => p.gleichTag >= 4 ? p.gleichTag : null,
       ev:(p,v) => `${v} Partien, Torkonto ${p.gleichTore}:${p.gleichTore}`,
@@ -24604,7 +24706,7 @@ const DISZIPLINEN = [
   {id:'rollercoaster', name:'Die Achterbahn', short:'Achterbahn', ic:'coasterDip', tone:'orange',
     art:'ereignis', zufall:'fund',
     allzeit:{
-      cond:'Ein 10:0 gewonnen und ein 0:10 kassiert — am selben Tag',
+      cond:'Ein 10:0 gewonnen und ein 0:10 kassiert, beides am selben Tag',
       val:p => p.beidesTag > 0 ? p.beidesTag : null,
       ev:(p,v) => `${v} Tag${v > 1 ? 'e' : ''} mit einem 10:0 UND einem 0:10`,
       zeit:p => p.beidesLabel || ''}},
@@ -24635,7 +24737,7 @@ const DISZIPLINEN = [
 
   {id:'bannbruch', name:'Der Bann bricht', short:'Erlöst', ic:'rematch', tone:'acid', art:'ereignis',
     monat:{
-      wie:'Ein Bann ist eine Serie von zwölf Niederlagen in Folge gegen denselben Gegner. Er bricht mit dem ersten Sieg gegen ihn.',
+      wie:'Ein Bann ist eine Serie von zwölf Niederlagen in Folge gegen denselben Gegner. Der erste Sieg gegen diesen Gegner beendet den Bann.',
       cond:'Einen Gegner besiegt, gegen den zuvor 12 Duelle in Folge verloren gingen',
       pick:(C,t)=>_stPickTop(C,t,p=>p.bann>=1?p.bann:null,
         (p,v)=>v===1 ? 'Angstgegner nach zwölf Niederlagen in Folge besiegt'
@@ -24691,7 +24793,7 @@ const DISZIPLINEN = [
 
   {id:'untersoll', name:'Unter Soll', short:'Unter Soll', ic:'trendDown', tone:'red', art:'schatten',
     monat:{
-      wie:'Seine Siegquote minus der Siegchance, die die Elo-Rechnung ihm vorab gegeben hat — hier nach unten. Ein Prozentpunkt ist ein Prozentpunkt Siegquote, nicht Elo.',
+      wie:'Die Siegquote minus der Siegchance, die die Elo-Rechnung vorab ausgewiesen hat, hier nach unten. Ein Prozentpunkt ist ein Prozentpunkt Siegquote, nicht Elo.',
       cond:'Mindestens 15 Prozentpunkte unter der eigenen Elo-Erwartung, ab 20 Partien',
       pick:(C,t)=>_stPickTop(C,t,p=>{
         if(p.games < 20) return null;
@@ -24714,13 +24816,13 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Höchster Anteil 0:10-Niederlagen an allen eigenen Niederlagen, ab 25 Niederlagen',
       val:p => (p.losses >= 25 && p.debacle/p.losses >= 0.03) ? p.debacle/p.losses : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 0:10 · ${p.debacle}`}},
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 0:10 · ${p.debacle} Debakel`}},
 
   {id:'hardluck', name:'Der Pechvogel', short:'Pechvogel', ic:'heartBroken', tone:'red', art:'schatten',
     allzeit:{
       cond:'Höchster Anteil 9:10-Niederlagen an allen eigenen Niederlagen, ab 25 Niederlagen',
       val:p => (p.losses >= 25 && p.bitter/p.losses >= 0.08) ? p.bitter/p.losses : null,
-      ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 9:10 · ${p.bitter}`}},
+      ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 9:10 · ${p.bitter} davon`}},
 
   {id:'freefall', name:'Der Sturzflug', short:'Sturzflug', ic:'crownFallen', tone:'red', art:'schatten',
     allzeit:{
@@ -28307,10 +28409,19 @@ function prestigeSchritte(pid, n){
         out.push({
           art:'rekord', id:def.id, name:def.name, ic:def.ic, tone:def.tone, rel,
           gewinn:Math.round(gewinn),
+          // Die Bedingung sagt, was zu tun ist. Sie stand hier nur im Fall
+          // „noch niemand haelt es"; sonst las die Karte sich als „Stefan
+          // haelt den Bestwert" und nannte weder die Aufgabe noch den
+          // Rueckstand. Der Gedankenstrich ist mit weg: er trennte einen
+          // Satz, der als zwei Saetze klarer ist [§C33].
+          cond: def.cond || '',
+          stand: halte ? _chronKurz(halte.ev) : '',
+          halter: halte ? _chronHolderNames(halte) : '',
           txt: def.unit
-            ? `Noch ${Math.max(1, Math.ceil(ziel - mein))} ${def.unit}` +
-              (halte ? ` — ${_chronHolderNames(halte)} hält ${Math.round(ziel)}` : '')
-            : (halte ? `${_chronHolderNames(halte)} hält den Bestwert` : def.cond)
+            ? `Noch ${Math.max(1, Math.ceil(ziel - mein))} ${def.unit}`
+              + (halte ? `. ${_chronHolderNames(halte)} hält ${Math.round(ziel)}` : '')
+            : (halte ? `${_chronHolderNames(halte)} hält den Bestwert mit ${_chronKurz(halte.ev)}`
+                     : def.cond)
         });
       });
     }
@@ -28329,7 +28440,11 @@ function prestigeSchritte(pid, n){
           rel: 0.55,          // ein offener Monatseintrag ist immer „diesen Monat noch"
           gewinn: Math.round(PRESTIGE_MONAT * (PRESTIGE_ART[d.art] ?? 1)
                              / Math.sqrt(P.zahlen.monat + 1)),
-          txt: r.pid ? `${pname(r.pid)} führt — ${r.ev || d.monat.cond}` : d.monat.cond
+          cond: (d.monat && d.monat.cond) || '',
+          stand: r.ev ? _chronKurz(r.ev) : '',
+          halter: r.pid ? pname(r.pid) : '',
+          txt: r.pid ? `${pname(r.pid)} führt mit ${_evSatz(r.ev) || (d.monat && d.monat.cond)}`
+                     : (d.monat && d.monat.cond) || ''
         });
       });
     }
