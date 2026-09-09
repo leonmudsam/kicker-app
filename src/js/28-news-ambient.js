@@ -428,7 +428,10 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
       title:`Kopf-an-Kopf: ${nameOf(best.pa)} & ${nameOf(best.pb)}`,
-      desc:`${best.total} direkte Duelle, ${best.diff === 0 ? 'absolut ausgeglichen' : 'nur ' + best.diff + ' Sieg' + (best.diff === 1 ? '' : 'e') + ' Unterschied'}: ${nameOf(best.pa)} ${best.wa} – ${best.wb} ${nameOf(best.pb)}.`,
+      // Zwischen den beiden Zahlen stand ein Halbgeviertstrich, und der ist in
+      // einem Satz ein Gedankenstrich und kein Bilanzstrich. Die Bilanz steht
+      // jetzt als Doppelpunkt-Paar da, wie ueberall sonst in der App.
+      desc:`${best.total} direkte Duelle, ${best.diff === 0 ? 'absolut ausgeglichen' : 'nur ' + best.diff + ' Sieg' + (best.diff === 1 ? '' : 'e') + ' Unterschied'}. ${best.diff === 0 ? `Es steht ${best.wa}:${best.wb}.` : `Es steht ${Math.max(best.wa, best.wb)}:${Math.min(best.wa, best.wb)} für ${nameOf(best.wa > best.wb ? best.pa : best.pb)}.`}`,
       vv: best.wa+':'+best.wb, vl:'Bilanz',
       dataRef:{ ambientPids:[best.pa, best.pb], pairKind:'duel' } };
   }});
@@ -645,7 +648,12 @@ function _ambientTemplatePool(now, pm, nameOf){
     // Bestmarke + Rang aus derselben Liste — keine zweite Berechnung.
     const ranked = cands.slice().sort((a,b) => b.best - a.best || (a.ids[0] < b.ids[0] ? -1 : 1));
     const topBest = ranked[0].best;
-    const t = cands[Math.floor(rng()*cands.length)];
+    // Gezogen wird aus dem vorderen Drittel, nicht aus allen. Gleichverteilt
+    // ueber das Feld stand „Eingespielt: Martin & Stefan" ueber einem Duo auf
+    // Platz 24 von 24 — eine Karte, die einen Spieler feiert und ihm dabei
+    // sagt, dass er Letzter ist [§C33].
+    const feld = ranked.slice(0, Math.max(3, Math.ceil(ranked.length / 3)));
+    const t = feld[Math.floor(rng()*feld.length)] || feld[0];
     const rank = ranked.findIndex(x => x.ids[0] === t.ids[0] && x.ids[1] === t.ids[1]) + 1;
     const isRecord = t.best === topBest;
     const nm = `${nameOf(t.ids[0])} & ${nameOf(t.ids[1])}`;
@@ -653,7 +661,8 @@ function _ambientTemplatePool(now, pm, nameOf){
       title: isRecord ? `Rekord-Duo: ${nm}` : `Eingespielt: ${nm}`,
       desc: isRecord
         ? `${t.best} gemeinsame Siege in Serie. Kein Duo der Liga war je länger unschlagbar.`
-        : `${t.best} gemeinsame Siege in Serie. Platz ${rank} von ${ranked.length} Duos, ${topBest - t.best} hinter der Bestmarke.`,
+        : `${t.best} gemeinsame Siege in Serie. Das ist Platz ${rank} von ${ranked.length} Duos, `
+          + `nur ${topBest - t.best} hinter der Bestmarke.`,
       vv: t.best, vl:'in Serie',
       dataRef:{ ambientPids:[t.ids[0], t.ids[1]], pairKind:'team' } };
   }});
@@ -983,7 +992,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const held = T2.awarded.length, open = SEASON_TITLES.length - held;
     return { cat:'season', ic:a.ic, prio:5,
       title:`${nameOf(a.pid)} führt bei „${a.name}"`,
-      desc:`${a.ev}. Stand heute. ${held} von ${SEASON_TITLES.length} Chronik-Einträgen sind vergeben, ${open} noch offen.`,
+      desc:`${_evSatz(a.ev)}. Das ist der Stand von heute. ${held} von ${SEASON_TITLES.length} Chronik-Einträgen sind vergeben, ${open} sind noch offen.`,
       vv:held+'/'+SEASON_TITLES.length, vl:'Einträge',
       dataRef:{ ambientPid:a.pid, seasonTable:T2.sid } };
   }});
@@ -1007,7 +1016,11 @@ function _ambientTemplatePool(now, pm, nameOf){
       // Die Bedingung stand hier im Klartext und machte aus zwei Zeilen
       // fünf. Sie gehört ins Detail, nicht auf die Karte — die Karte sagt,
       // WAS jemand hält, das Detail sagt, wofür.
-      desc:`${h.ev}. ${h.shared ? 'punktgleich gehalten.' : 'sonst hält ihn niemand.'}`,
+      // Der Beleg endet mit einem Punkt, und danach stand ein Kleinbuchstabe:
+      // „… gewonnen · 9. sonst hält ihn niemand." Der zweite Satz faengt jetzt
+      // an, wo ein Satz anfaengt, und der Beleg traegt keinen Listentrenner
+      // mehr mitten im Fliesstext.
+      desc:`${_evSatz(h.ev)}. ${h.shared ? 'Diesen Bestwert halten mehrere punktgleich.' : 'Sonst hält diesen Bestwert niemand.'}`,
       vv:'1', vl:'Rekordhalter',
       dataRef:{ ambientPid:h.pid, chronicle:d.id } };
   }});
@@ -1068,11 +1081,18 @@ function _ambientTemplatePool(now, pm, nameOf){
     const pid = kandidaten[Math.floor(rng() * kandidaten.length)] || kandidaten[0];
     const s = prestigeSchritte(pid, 1)[0];
     if(!s) return null;
+    // „X liegt ‚Das Sonntagskind' am naechsten" sagte nicht, worum es geht,
+    // und der Text darunter nannte nur den Halter: was jemand tun muss, um
+    // den Rekord zu holen, stand nirgends. Die Karte sagt jetzt die Aufgabe
+    // (die Bedingung aus dem Katalog), den Stand des Halters und den Gewinn.
+    // „Holt er ihn" stand ausserdem einmal direkt hinter dem Namen des
+    // HALTERS und zeigte damit auf den Falschen.
+    const _bed = s.cond || '';
     return { cat:'personal', ic:s.ic, prio:5,
-      title:`${nameOf(pid)} liegt „${s.name}" am nächsten`,
-      // „Holt er ihn" stand direkt hinter dem Namen des HALTERS und zeigte
-      // damit auf den Falschen. Wer gemeint ist, steht jetzt da.
-      desc:`${s.txt}. Holt ${nameOf(pid)} den Rekord, bringt das ${s.gewinn} Prestige. `
+      title:`${nameOf(pid)} kann „${s.name}" holen`,
+      desc: (_bed ? `Dafür zählt: ${_bed}. ` : '')
+        + `${s.txt}. `
+        + `Gelingt es ${nameOf(pid)}, bringt das ${s.gewinn} Prestige. `
         + `Kein anderer ist gerade so nah dran.`,
       vv:'+' + s.gewinn, vl:'Prestige',
       dataRef:{ ambientPid:pid, prestige:true } };
@@ -1093,7 +1113,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const leer = INSIGNIEN.length - 1 - hoechste;
     return { cat:'history', ic:'medalTrio', prio:4,
       title:`Die Liga trägt ${zahl.filter(v => v > 0).length} verschiedene Insignien`,
-      desc: INSIGNIEN.map((s, i) => `${s.name}: ${zahl[i]}`).join(' · ')
+      desc: INSIGNIEN.map((s, i) => `${s.name}: ${zahl[i]}`).join(', ')
         + `. Höchste getragene Stufe ist der ${oben.name}`
         + (leer > 0 ? `, darüber ${leer === 1 ? 'liegt noch eine Stufe' : 'liegen noch ' + leer + ' Stufen'}, die niemand erreicht hat.` : '.'),
       vv:String(n), vl:'gewertet',

@@ -1042,6 +1042,136 @@ ok(_halter.liste3 === 'Maxi, Julian und Leo', 'drei Namen lesen sich als Aufzaeh
    _halter.liste3);
 ok(_halter.liste1 === 'Maxi', 'ein Name bleibt ein Name', _halter.liste1);
 
+// ── Die Schlagzeile nennt alle, um die es geht ──────────────────────
+// Ueber einer Sammelkarte von drei Leuten stand „Leon und Martin bewegen die
+// Ewige Tafel": zwei der drei Namen in der Zeile, der dritte nur in der Liste
+// darunter. Genannt werden jetzt alle, und ab dem vierten zaehlt die Zeile
+// den Rest — sechs Namen sprengen jede Ueberschrift.
+const _nk = JSON.parse(K.eval(`JSON.stringify({
+  eins:  _namenKurz(['Leon']),
+  zwei:  _namenKurz(['Leon','Martin']),
+  drei:  _namenKurz(['Leon','Martin','Julian']),
+  vier:  _namenKurz(['Leon','Martin','Julian','Maxi']),
+  sechs: _namenKurz(['Leon','Martin','Julian','Maxi','Leo','Jane']),
+  paar:  _namenKurz(['Leon','Martin','Julian'], 2)
+})`));
+ok(_nk.eins === 'Leon', 'ein Name steht allein da', _nk.eins);
+ok(_nk.zwei === 'Leon und Martin', 'zwei Namen mit und', _nk.zwei);
+ok(_nk.drei === 'Leon, Martin und Julian', 'drei Namen als Aufzaehlung', _nk.drei);
+ok(_nk.vier === 'Leon, Martin und zwei weitere', 'ab dem vierten zaehlt die Zeile', _nk.vier);
+ok(_nk.sechs === 'Leon, Martin und vier weitere', 'und bei sechs genauso', _nk.sechs);
+ok(_nk.paar === 'Leon und zwei weitere', 'die Grenze ist einstellbar', _nk.paar);
+
+// Und dieselbe Regel an der echten Sammelkarte: drei Rekordwechsel an einem
+// Tag, drei Namen in der Ueberschrift.
+const _samT = JSON.parse(K.eval(`JSON.stringify((function(){
+  const bau = n => {
+    const wann = new Date().toISOString(), teile = [];
+    for(let i = 0; i < n; i++) teile.push({
+      id:'t' + i, title:'Titel ' + i, desc:'Text ' + i, cat:'tafel', ic:'award',
+      when:wann, prio:90 - i,
+      dataRef:{type:'rekord_geholt', rekordId:'r' + i, playerIds:[players[i].id]}});
+    const k = _consolidateStories(teile).find(s => (s.dataRef||{}).type === 'sammel');
+    return k ? k.title : '';
+  };
+  return {zwei:bau(2), drei:bau(3), namen:players.slice(0,3).map(p => p.name)};
+})())`));
+ok(_samT.drei.indexOf(_samT.namen[2]) >= 0,
+   'die Sammelkarte nennt auch den dritten Namen', _samT.drei);
+ok(/ bewegen die Ewige Tafel$/.test(_samT.drei) && /^[^,]+, [^,]+ und /.test(_samT.drei),
+   'und zaehlt sie als Aufzaehlung auf', _samT.drei);
+ok(_samT.zwei === _samT.namen[0] + ' und ' + _samT.namen[1] + ' bewegen die Ewige Tafel',
+   'zwei Namen stehen weiter mit und', _samT.zwei);
+
+// ── Dieselbe Aussage nicht dreimal in einer Woche ───────────────────
+// „Martin baut ‚Der Massstab' aus" gilt nach jedem gewonnenen Spiel aufs
+// Neue, jedes Mal mit einem Prozentpunkt mehr: andere ID, andere Zahl,
+// dieselbe Nachricht. Gemessen standen vier davon nebeneinander im Feed.
+// Gesperrt wird die AUSSAGE — Art, Beteiligte und Sache —, nicht der
+// Wortlaut: der aendert sich ja gerade.
+const _sperre = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tag = 86400000, jetzt = Date.now();
+  const lauf = (abstand, n) => {
+    const l = [];
+    for(let i = 0; i < n; i++) l.push({
+      id:'rek_x_' + i, title:'Martin steht bei ' + (73 + i) + ' %', desc:'Text ' + i,
+      cat:'tafel', ic:'award', prio:70, when:new Date(jetzt - i * abstand * tag).toISOString(),
+      dataRef:{type:'rekord_gesteigert', rekordId:'yardstick', playerIds:[players[9].id]}});
+    return _consolidateStories(l).filter(s => (s.dataRef||{}).type === 'rekord_gesteigert').length;
+  };
+  // Verschiedene Halter sind verschiedene Aussagen und bleiben beide stehen.
+  const wechsel = (() => {
+    const l = [0, 1].map(i => ({
+      id:'rek_w_' + i, title:'Wechsel ' + i, desc:'Text ' + i, cat:'tafel', ic:'award',
+      prio:84, when:new Date(jetzt - i * tag).toISOString(),
+      dataRef:{type:'rekord_geholt', rekordId:'yardstick', playerIds:[players[i].id],
+               vorher:[players[i + 4].id]}}));
+    return _consolidateStories(l).length;
+  })();
+  return {taeglich:lauf(1, 3), weitAuseinander:lauf(4, 2), wechsel, tage:NEWS_LIMITS.sperreTage};
+})())`));
+ok(_sperre.tage >= 1, 'es gibt eine Sperrfrist', String(_sperre.tage));
+ok(_sperre.taeglich === 1, 'drei gleiche Aussagen an drei Tagen ergeben eine Karte',
+   String(_sperre.taeglich));
+ok(_sperre.weitAuseinander === 2, 'vier Tage auseinander bleiben beide stehen',
+   String(_sperre.weitAuseinander));
+ok(_sperre.wechsel === 2, 'ein Halterwechsel ist jedes Mal eine eigene Nachricht',
+   String(_sperre.wechsel));
+
+// ── Eine Karte sagt, was zu tun ist ─────────────────────────────────
+// „Jane liegt ‚Das Sonntagskind' am naechsten" nannte weder, worum es geht,
+// noch was dafuer verlangt ist: darunter stand allein „Leon haelt den
+// Bestwert". Wer die Karte las, wusste danach nur, dass ihm irgendetwas
+// fehlt. Die Bedingung steht im Katalog und gehoert auf die Karte.
+const _ziel = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap();
+  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const T = _ambientTemplatePool(new Date(), pm, nameOf);
+  const v = T.find(x => x.key === 'prestige_schritt');
+  if(!v) return {fehlt:true};
+  const k = v.make(() => 0.42);
+  if(!k) return {leer:true};
+  // Der Schritt, den die Karte meint, mit seiner Bedingung aus dem Katalog.
+  let schritt = null;
+  players.some(p => { const l = prestigeSchritte(p.id, 1); if(l.length){ schritt = l[0]; return true; } });
+  return {t:k.title, d:k.desc, cond:(schritt && schritt.cond) || ''};
+})())`));
+ok(!_ziel.fehlt && !_ziel.leer, 'die Karte zum naechsten Rekord entsteht', JSON.stringify(_ziel));
+ok(!/am nächsten/.test(_ziel.t || ''), 'ihre Schlagzeile sagt nicht nur, wer am naechsten liegt',
+   _ziel.t);
+ok(_ziel.cond && (_ziel.d || '').indexOf(_ziel.cond) >= 0,
+   'und ihr Text nennt die Bedingung aus dem Katalog', (_ziel.d || '').slice(0, 90));
+ok(/Prestige/.test(_ziel.d || ''), 'samt dem, was der Rekord einbringt', (_ziel.d || '').slice(0, 90));
+
+// ── Kein Listentrenner im Fliesstext ────────────────────────────────
+// Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist fuer eine Zelle
+// gebaut: der Mittelpunkt trennt dort zwei Spalten. Mitten in einem Satz
+// steht er wie ein Tippfehler, und danach ging es klein weiter: „… gewonnen
+// · 9. sonst haelt ihn niemand."
+const _fliess = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap();
+  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const texte = _buildStories().map(s => s.desc || '');
+  _ambientTemplatePool(new Date(), pm, nameOf).forEach(v => {
+    let k = null; try { k = v.make(() => 0.42); } catch(e){}
+    if(k) texte.push(k.desc || '');
+  });
+  return {
+    punkt: texte.filter(t => /·/.test(t)).length,
+    // Ein Datum wie „26.08. hat niemand mehr geholt" endet keinen Satz und
+    // wird vorher entfernt, sonst schlaegt die Regel an der falschen Stelle
+    // an statt dort, wo sie hingehoert: „… gewonnen · 9. sonst haelt ihn
+    // niemand."
+    klein: texte.filter(t => /\\.\\s+[a-zäöüß]/
+      .test(String(t).replace(/\\d{1,2}\\.\\d{1,2}\\.\\s/g, ' '))).length,
+    probe: _evSatz('20 % aller 25 Siege endeten 10:9 · 5 Zittersiege')
+  };
+})())`));
+ok(_fliess.punkt === 0, 'kein Story-Text traegt einen Listentrenner', String(_fliess.punkt));
+ok(_fliess.klein === 0, 'und kein Satz faengt klein an', String(_fliess.klein));
+ok(_fliess.probe === '20 % aller 25 Siege endeten 10:9, 5 Zittersiege',
+   'der Beleg wird fuer den Fliesstext umgestellt', _fliess.probe);
+
 // ── Wie die Liga spricht ────────────────────────────────────────────
 // Leicht und unkompliziert, aber mit den Zahlen dran. Der Gedankenstrich ist
 // raus: er trennte Saetze, die als zwei Saetze klarer sind. Und die

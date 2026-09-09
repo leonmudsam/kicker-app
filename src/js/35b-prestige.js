@@ -1432,10 +1432,19 @@ function prestigeSchritte(pid, n){
         out.push({
           art:'rekord', id:def.id, name:def.name, ic:def.ic, tone:def.tone, rel,
           gewinn:Math.round(gewinn),
+          // Die Bedingung sagt, was zu tun ist. Sie stand hier nur im Fall
+          // „noch niemand haelt es"; sonst las die Karte sich als „Stefan
+          // haelt den Bestwert" und nannte weder die Aufgabe noch den
+          // Rueckstand. Der Gedankenstrich ist mit weg: er trennte einen
+          // Satz, der als zwei Saetze klarer ist [§C33].
+          cond: def.cond || '',
+          stand: halte ? _chronKurz(halte.ev) : '',
+          halter: halte ? _chronHolderNames(halte) : '',
           txt: def.unit
-            ? `Noch ${Math.max(1, Math.ceil(ziel - mein))} ${def.unit}` +
-              (halte ? ` — ${_chronHolderNames(halte)} hält ${Math.round(ziel)}` : '')
-            : (halte ? `${_chronHolderNames(halte)} hält den Bestwert` : def.cond)
+            ? `Noch ${Math.max(1, Math.ceil(ziel - mein))} ${def.unit}`
+              + (halte ? `. ${_chronHolderNames(halte)} hält ${Math.round(ziel)}` : '')
+            : (halte ? `${_chronHolderNames(halte)} hält den Bestwert mit ${_chronKurz(halte.ev)}`
+                     : def.cond)
         });
       });
     }
@@ -1454,7 +1463,11 @@ function prestigeSchritte(pid, n){
           rel: 0.55,          // ein offener Monatseintrag ist immer „diesen Monat noch"
           gewinn: Math.round(PRESTIGE_MONAT * (PRESTIGE_ART[d.art] ?? 1)
                              / Math.sqrt(P.zahlen.monat + 1)),
-          txt: r.pid ? `${pname(r.pid)} führt — ${r.ev || d.monat.cond}` : d.monat.cond
+          cond: (d.monat && d.monat.cond) || '',
+          stand: r.ev ? _chronKurz(r.ev) : '',
+          halter: r.pid ? pname(r.pid) : '',
+          txt: r.pid ? `${pname(r.pid)} führt mit ${_evSatz(r.ev) || (d.monat && d.monat.cond)}`
+                     : (d.monat && d.monat.cond) || ''
         });
       });
     }

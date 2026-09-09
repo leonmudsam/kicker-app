@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **638**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **641**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,9 +219,9 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen | 896 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen | 898 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen | 171 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel | 172 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte | 192 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -535,6 +535,12 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   „Martin baut ‚Der Fels' aus" untereinander war eine Zeile und drei
   Wiederholungen. Und ihr Titel folgt der Zahl der Namen — „Martin bewegen
   die Ewige Tafel" stand über einer Karte mit einem einzigen Namen.
+  **Die Schlagzeile nennt alle, um die es geht** (`_namenKurz`): „Leon und
+  Martin bewegen die Ewige Tafel" stand über einer Karte von drei Leuten, und
+  der dritte kam nur in der Liste darunter vor. Einer steht allein, zwei stehen
+  mit „und", drei als Aufzählung, ab dem vierten zählt die Zeile den Rest —
+  sechs Namen sprengen jede Überschrift. Dieselbe Aufzählung gilt im Blattkopf
+  und im Sammelband.
 
   **Bündeln darf nichts verstecken.** Die Sammelkarte trägt Rubrik, Motiv und
   Schlagzeile ihrer stärksten Story — und darunter das **Sammelband**
@@ -558,6 +564,17 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   gehören Schlagzeile und Text dem stärksten Ereignis, dessen Zeile stand
   darunter wortgleich ein zweites Mal. Bleibt dabei nichts übrig, wird die
   ganze Liste gezeigt — ein leeres Blatt ist schlimmer als eine Wiederholung.
+
+  **Dieselbe Aussage kommt drei Tage lang nur einmal** (`NEWS_LIMITS.sperreTage`).
+  Zwei gleiche Schlagzeilen fängt der Feed schon ab. Eine Aussage, deren ZAHL
+  sich mitbewegt, entkommt ihm: „Martin baut ‚Der Maßstab' aus" heißt nach dem
+  nächsten Sieg genauso, nur mit 74 statt 73 Prozent, und bekommt damit eine
+  eigene ID, einen eigenen Titel und eine eigene Karte. Gesperrt wird deshalb
+  die Aussage selbst — Art, Beteiligte und Sache —, nicht der Wortlaut. Wer den
+  Rekord übernimmt, trägt andere Spieler im Schlüssel: eine Übernahme bleibt
+  Nachricht, auch am Tag nach einer anderen. Was es je Tag, Woche oder Monat
+  genau einmal gibt, fällt nie darunter, und die ambienten Karten hängen ohnehin
+  an ihrem Slot.
 
   **Zwei Karten mit derselben Schlagzeile sind eine zu viel.** Der Feed
   entfernt Doubletten nach Text UND nach Titel: zwei Rekordkarten
@@ -701,7 +718,21 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Eine Karte über einen Spieler soll ihn belohnen.** „Henry gewinnt 39 %
   seiner Spiele" stand als Nachricht da und sagte ihrem Helden, dass er
   unterdurchschnittlich ist. Gesucht wird stattdessen die Kennzahl, in der
-  er am weitesten vorne steht, und genannt wird sein Platz darin.
+  er am weitesten vorne steht, und genannt wird sein Platz darin. Aus
+  demselben Grund zieht die Duo-Karte aus dem vorderen Drittel: „Eingespielt:
+  Martin & Stefan" stand über einem Paar auf Platz 24 von 24.
+
+  **Eine Karte sagt, was zu tun ist.** „Jane liegt ‚Das Sonntagskind' am
+  nächsten" nannte weder, worum es geht, noch was dafür verlangt ist: darunter
+  stand allein „Leon hält den Bestwert". Wer ein Ziel zeigt, nennt die
+  Bedingung aus dem Katalog, den Stand des Halters und den Gewinn.
+
+  **Kein Listentrenner im Fließtext** (`_evSatz`). Ein Beleg wie „20 % aller
+  25 Siege endeten 10:9 · 5" ist für eine Zelle gebaut: der Mittelpunkt trennt
+  dort zwei Spalten. Mitten in einem Satz steht er wie ein Tippfehler, und
+  danach ging es klein weiter — „… gewonnen · 9. sonst hält ihn niemand."
+  Neun der fünfunddreißig Belege endeten außerdem auf einer blanken Zahl, die
+  nicht sagte, was sie zählt.
 
   **Wo ein Rückblick existiert, führt die Karte hin.** `showPotwRecap` und
   `showPotdRecap` sind gebaut und öffnen sich am richtigen Tag von selbst —

@@ -323,6 +323,34 @@ function _consolidateStories(list){
   // scrollt, dieselbe Karte.
   const seenContent = new Set();
   const seenTitel = new Set();
+  // ── Dieselbe Aussage nicht dreimal in einer Woche ──────────────────
+  // Zwei gleiche Schlagzeilen fängt `seenTitel` ab. Eine Aussage, deren ZAHL
+  // sich mitbewegt, entkommt ihm: „Martin baut ‚Der Maßstab' aus" heißt nach
+  // dem nächsten Sieg genauso, nur mit 74 statt 73 Prozent, und bekommt damit
+  // eine eigene ID, einen eigenen Titel und eine eigene Karte. Gemessen
+  // standen so vier davon nebeneinander im Feed.
+  // Der Schlüssel ist die Aussage selbst: Was für ein Ereignis, über wen, und
+  // worum es geht (Rekord, Auszeichnung, Duell). Wer den Rekord übernimmt,
+  // trägt andere Spieler im Schlüssel — eine Übernahme bleibt also Nachricht,
+  // auch am Tag nach einer anderen.
+  // `src` steht von neu nach alt, also überlebt die jüngste Karte und ältere
+  // gleiche fallen weg, solange sie innerhalb der Sperre liegen.
+  const _sperreMs = (NEWS_LIMITS.sperreTage || 0) * 86400000;
+  // Was es je Tag, Woche oder Monat genau einmal gibt, kann sich gar nicht
+  // wiederholen — und Breaking darf an keiner Sperre scheitern [§C33]. Die
+  // ambienten Karten hängen ohnehin an ihrem Slot.
+  const _OHNE_SPERRE = new Set(['ambient', 'sammel', 'season_endgame',
+                                'potd', 'woche', 'chronik_monat', 'season_recap']);
+  const _aussage = st => {
+    const d = (st && st.dataRef) || {};
+    const typ = d.type || '';
+    if(!typ || _OHNE_SPERRE.has(typ)) return null;
+    let ids = [];
+    try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
+    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titel || '';
+    return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
+  };
+  const _zuletzt = new Map();
   for(const s of src){
     const d = s.dataRef || {};
     // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
@@ -350,6 +378,13 @@ function _consolidateStories(list){
       if(seenContent.has(ck)) continue;   // inhaltsgleiche Doublette → überspringen
       const tk = String(s.title || '').trim();
       if(tk && seenTitel.has(tk)) continue;
+      const ak = _sperreMs ? _aussage(s) : null;
+      if(ak){
+        const vorherMs = _zuletzt.get(ak);
+        const msJetzt = new Date(s.when).getTime();
+        if(vorherMs != null && Math.abs(vorherMs - msJetzt) < _sperreMs) continue;
+        _zuletzt.set(ak, msJetzt);
+      }
       seenContent.add(ck);
       seenTitel.add(tk);
       slots.push({ s });
@@ -428,7 +463,6 @@ function _consolidateStories(list){
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
-  const _zahlwort = n => ['','ein','zwei','drei','vier'][n] || String(n);
   // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels' aus"
   // stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit demselben
   // Wert und nur einer anderen Spielzahl im Fliesstext. Die Buendelung soll
@@ -534,11 +568,14 @@ function _consolidateStories(list){
       // Monaten, und keine der beiden nannte einen Namen.
       // Einer bewegt, mehrere bewegen. „Martin bewegen die Ewige Tafel"
       // stand ueber einer Karte mit einem einzigen Namen.
+      // Und die Ueberschrift nennt ALLE: sie zeigte zwei von drei Namen, und
+      // der dritte kam nur in der Liste darunter vor, obwohl die Karte
+      // genauso von ihm handelt [§C33].
       title: istTafel
         ? (pids.length
-            ? `${pids.slice(0, 2).map(nameOf).join(' und ')} `
+            ? `${_namenKurz(pids.map(nameOf))} `
               + `${pids.length > 1 ? 'bewegen' : 'bewegt'} die Ewige Tafel`
-            : `${_zahlwort(teile.length)} Wechsel an der Ewigen Tafel`)
+            : `${_zahlwortDe(teile.length)} Wechsel an der Ewigen Tafel`)
         : kopf.title,
       // Die Karte fasst zusammen, das Blatt zeigt alles. Als der Text die
       // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
@@ -546,7 +583,7 @@ function _consolidateStories(list){
       // Einträgen war die Karte höher als jede andere im Feed.
       desc: istTafel
         ? kopf.desc + (rest.length
-            ? ` Und ${_zahlwort(rest.length)} ${rest.length === 1
+            ? ` Und ${_zahlwortDe(rest.length)} ${rest.length === 1
                 ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
             : '')
         : kopf.desc,
