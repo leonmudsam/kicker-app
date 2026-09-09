@@ -529,9 +529,12 @@ JSON.parse(K.eval("JSON.stringify(SEASON_TITLES.map(t=>t.id))")).forEach(tid => 
 });
 
 
-// Neue Eintraege sind vorhanden und liefern in den echten Daten Belege.
-['spotless','clutch','uebersoll','trotzig','mitjedem','bezwinger']
-  .forEach(id => ok(K.eval(`!!SEASON_TITLE_BY_ID['${id}']`), 'neuer Saison-Eintrag ' + id + ' im Katalog'));
+// Der Monatskatalog ist ausgetauscht: keine der Wertungen fragt mehr „wer
+// ist der Beste", sie fragen nach der Abweichung von der Erwartung, nach
+// Konstanz oder nach dem Verhaeltnis zu einem bestimmten anderen [§C39].
+// Stichprobe aus jeder der vier Arten.
+['unmoeglich','schwachstelle','metronom','zitterkoenig','wochenkrone']
+  .forEach(id => ok(K.eval(`!!SEASON_TITLE_BY_ID['${id}']`), 'Monatschronik ' + id + ' im Katalog'));
 ['catalyst','damage_control']
   .forEach(id => ok(K.eval(`!!CHRONICLE_BY_ID['${id}']`), 'neuer Liga-Rekord ' + id + ' im Katalog'));
 ok(K.eval("SEASON_TITLES.every(t=>t.short && t.short.length<=10)"),
@@ -592,9 +595,58 @@ ok(K.eval(`(function(){
   return hits.join(',');
 })()`) === '', 'kein Rekord-Beleg nennt einen anderen Spieler');
 
-// Neue Eintraege sind da und haengen an den neuen Kennzahlen.
-['daylord','thriller','gegenoben','gleichmut','spezialist'].forEach(id =>
-  ok(K.eval(`!!SEASON_TITLE_BY_ID['${id}']`), 'neuer Saison-Eintrag ' + id + ' im Katalog'));
+// Zwei Schwellen sind vorgegeben und werden NICHT kalibriert: Player of the
+// Day an 60 % der eigenen Spieltage, Player of the Week in JEDER eigenen
+// Woche. Sie sind eine Ansage, keine Messgroesse, die sich der Verteilung
+// anpasst — deshalb stehen sie hier als Zahl.
+const _fest = JSON.parse(K.eval(`JSON.stringify({
+  potd: DISZIPLINEN.find(d=>d.id==='tagesregent').monat.ab,
+  potw: DISZIPLINEN.find(d=>d.id==='wochenkrone').monat.ab
+})`));
+ok(_fest.potd === 0.6, 'Der Tagesregent verlangt 60 % der eigenen Spieltage', String(_fest.potd));
+ok(_fest.potw === 1, 'Die Wochenkrone verlangt JEDE eigene Woche', String(_fest.potw));
+// Player of the Week kommt aus derselben Quelle wie die Auszeichnung, sonst
+// zaehlt die Chronik Titel in Wochen, die es fuer den Sieger-Ermittler gar
+// nicht gibt [§C27].
+ok(K.eval(`(function(){
+  const C=_seasonTitleCtx('2026-06');
+  const W=_periodWinnerMap(matches, 'week');
+  let stimmt=true;
+  Object.keys(C.P).forEach(pid=>{
+    const p=C.P[pid];
+    let n=0;
+    Object.keys(p.wochGrp).forEach(k=>{ if(p.wochGrp[k].length>=3 && W[k]===pid) n++; });
+    if(n !== p.potw) stimmt=false;
+  });
+  return stimmt;
+})()`), 'die Wochenkrone zaehlt dieselben Wochen wie _periodWinnerMap');
+
+// Das Prestige einer Chronik folgt der Abweichung, nicht der Seltenheit
+// [§C39]. Nachgerechnet an der Formel selbst, damit ein verstellter Sockel
+// oder ein vertauschter Grundwert auffaellt.
+const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const G={koennen:30, konstanz:24, fuegung:15, schatten:0};
+  const B={legendaer:15, selten:8, besonders:0};
+  const bad=[]; let max=0, min=1e9;
+  SEASON_TITLES.forEach(t=>{
+    const d=DISZIPLINEN.find(x=>x.id===t.id), m=d.monat;
+    const soll=G[m.art] ? Math.round((40 + G[m.art]*m.aus + B[m.klasse])/5)*5 : 0;
+    if(chronikPunkte(t.id) !== soll) bad.push(t.id);
+    if(soll>0){ max=Math.max(max,soll); min=Math.min(min,soll); }
+  });
+  return {bad, max, min};
+})())`));
+ok(_pkt.bad.length === 0, 'jede Chronik ist so viel wert, wie die Formel sagt', _pkt.bad.join(', '));
+ok(_pkt.min >= 60, 'auch die billigste Chronik ist mehr als ein Trostpreis', _pkt.min + ' Punkte');
+ok(_pkt.max <= 200, 'keine Chronik sprengt die Skala', _pkt.max + ' Punkte');
+ok(K.eval("DISZIPLINEN.filter(d=>d.monat&&d.monat.art==='schatten').every(d=>chronikPunkte(d.id)===0)"),
+   'Schattenseiten geben kein Prestige');
+
+// Dieselben Fragen auf zwei Zeitachsen stehen in EINER Disziplin: diese drei
+// tragen jetzt eine Monats- UND eine Allzeitwertung [§13.1].
+['spotless','evenkeel','drought'].forEach(id =>
+  ok(K.eval(`!!SEASON_TITLE_BY_ID['${id}'] && !!CHRONICLE_BY_ID['${id}']`),
+     id + ' traegt beide Zeitachsen'));
 ['daylord','spotless','comeback_king'].forEach(id =>
   ok(K.eval(`!!CHRONICLE_BY_ID['${id}']`), 'neuer Liga-Rekord ' + id + ' im Katalog'));
 
@@ -702,12 +754,9 @@ ok(_sprachTreffer.pron.length === 0, 'und kein Pronomen ueber einen Spieler',
 // wieder an die Spitze, waeren sie nur drei weitere Eintraege fuer den, der
 // ohnehin alles hat.
 const _mitte = JSON.parse(K.eval(`JSON.stringify((function(){
-  const NEU = ['augenhoehe', 'steigerung', 'fluke'];
   const sids = allPastSeasons().concat([currentSeason().id])
     .filter((v,i,a) => a.indexOf(v) === i).sort();
-  const treffer = {}; NEU.forEach(id => { treffer[id] = 0; });
-  const lagen = [];
-  let anDreiAlt = 0, anDreiNeu = 0, gesamt = 0;
+  const lagen = []; let anDrei = 0, gesamt = 0;
   sids.forEach(sid => {
     const C = _seasonTitleCtx(sid);
     const rang = Object.keys(C.P).filter(id => C.P[id].games >= 5)
@@ -716,27 +765,22 @@ const _mitte = JSON.parse(K.eval(`JSON.stringify((function(){
     const platz = {}; rang.forEach((id,i) => { platz[id] = i + 1; });
     seasonTitles(sid).awarded.forEach(a => {
       gesamt++;
-      const oben = (platz[a.pid] || 99) <= 3;
-      if(oben) anDreiAlt++;
-      if(NEU.indexOf(a.titleId) >= 0){
-        treffer[a.titleId]++;
-        lagen.push((platz[a.pid] || rang.length) / rang.length);
-        if(oben) anDreiNeu++;
-      }
+      const p = platz[a.pid] || rang.length;
+      if(p <= 3) anDrei++;
+      lagen.push(p / rang.length);
     });
   });
-  return {treffer, n:lagen.length,
+  return {n:lagen.length, gesamt,
     lage: lagen.length ? lagen.reduce((a,b)=>a+b,0)/lagen.length : 0,
-    anDreiNeu, anteilAlt: gesamt ? anDreiAlt/gesamt : 0};
+    anteilOben: gesamt ? anDrei/gesamt : 0};
 })())`));
-ok(Object.keys(_mitte.treffer).every(k => _mitte.treffer[k] > 0),
-   'jede der drei neuen Wertungen wird auch vergeben', JSON.stringify(_mitte.treffer));
-ok(_mitte.lage > 0.4,
-   'ihre Halter stehen im Mittel hinter dem ersten Drittel der Siegquote',
+ok(_mitte.n > 0, 'der Monatskatalog vergibt ueberhaupt Eintraege', _mitte.n + ' Eintraege');
+ok(_mitte.lage > 0.35,
+   'die Halter stehen im Mittel jenseits des ersten Drittels der Siegquote',
    'bei ' + Math.round(_mitte.lage * 100) + ' % der Rangliste');
-ok(_mitte.anDreiNeu <= 1,
-   'hoechstens eine davon ging an die besten Drei',
-   _mitte.anDreiNeu + ' von ' + _mitte.n);
+ok(_mitte.anteilOben < 0.55,
+   'weniger als die Haelfte der Eintraege geht an die besten Drei',
+   Math.round(_mitte.anteilOben * 100) + ' %');
 
 // Die Siegesserie ist die eine gewollte Ausnahme: sie steht vor der besten
 // Bilanz, obwohl sie ein Ereignis ist und die Bilanz eine Leistung.
@@ -870,9 +914,17 @@ ok(ICS.every(d => K.eval(`!!ICONS[${JSON.stringify(d.ic)}]`)),
 // Spieler trug neun davon — was fast jeder Monat hergibt, zeichnet niemanden
 // mehr aus. Die Schwellen haengen jetzt so hoch, dass keine Bedingung in der
 // ganzen Ligageschichte oefter als zweimal erfuellt war.
-ok(Object.values(TREFFER).every(n => n <= 2),
-   'keine Bedingung trifft haeufiger als zweimal in vier Monaten zu',
-   Object.keys(TREFFER).filter(id => TREFFER[id] > 2).map(id => id+'('+TREFFER[id]+')').join(', '));
+// Die Seltenheitsklasse sagt, wie oft eine Bedingung erfuellt sein DARF:
+// legendaer einmal, selten zweimal, besonders dreimal. Sie steuert damit die
+// Schwelle, nicht den Wert [§C39].
+const KLGRENZE = {legendaer:1, selten:2, besonders:3};
+const _klasseVon = JSON.parse(K.eval(
+  "JSON.stringify(SEASON_TITLES.reduce((o,t)=>(o[t.id]=t.klasse,o),{}))"));
+const _zuOft = Object.keys(TREFFER).filter(id =>
+  TREFFER[id] > (KLGRENZE[_klasseVon[id]] || 3));
+ok(_zuOft.length === 0,
+   'keine Bedingung trifft haeufiger zu, als ihre Klasse erlaubt',
+   _zuOft.map(id => id+'('+TREFFER[id]+', '+_klasseVon[id]+')').join(', '));
 
 // Profil: die Meta-Zeile neben „Liga-Rekord" ist weg.
 const profHtml = K.eval(`_chronStripHtml('${IDS[8]}')`);

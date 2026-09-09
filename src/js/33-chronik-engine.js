@@ -18,6 +18,79 @@ function _seasonTitleCtx(sid){
   _cache._stCtx[ck] = res;
   return res;
 }
+// Der Wochenschluessel, den auch `_periodWinnerMap` bildet. Beide muessen
+// dieselbe Woche meinen, sonst zaehlt „Die Wochenkrone" Titel in Wochen, die
+// es fuer den Sieger-Ermittler gar nicht gibt.
+function _wochenKey(iso){
+  const d = new Date(iso);
+  return d.getFullYear() + '-W' + isoWeek(d);
+}
+
+// Die laengste Pleitenserie gegen EINEN Gegner, die in diesem Monat gebrochen
+// wurde. Sie reicht ueber Monatsgrenzen zurueck — genau das macht sie zur
+// Geschichte —, also laeuft die Zaehlung ueber alle Partien der Liga bis zum
+// Ende des Monats und nicht nur ueber dessen eigene.
+function _bannLaufDerLiga(P, ms){
+  if(!ms.length) return;
+  const bis = Math.max(...ms.map(m => mts(m)));
+  const von = Math.min(...ms.map(m => mts(m)));
+  const lauf = {};
+  (matches || []).slice().sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    const t = mts(m);
+    if(t > bis) return;
+    const imMonat = (t >= von);
+    const seiten = [[[m.a1, m.a2], [m.b1, m.b2], m.winner === 'A'],
+                    [[m.b1, m.b2], [m.a1, m.a2], m.winner === 'B']];
+    seiten.forEach(([eigen, gegner, gewonnen]) => {
+      eigen.forEach(id => {
+        if(!id) return;
+        gegner.forEach(g => {
+          if(!g) return;
+          const k = id + '|' + g;
+          if(gewonnen){
+            if(imMonat && P[id] && (lauf[k] || 0) > P[id].bannLauf) P[id].bannLauf = lauf[k] || 0;
+            lauf[k] = 0;
+          } else {
+            lauf[k] = (lauf[k] || 0) + 1;
+          }
+        });
+      });
+    });
+  });
+}
+
+// Aus der Rohsicht die Gruppen, nach denen die Chroniken fragen: Spieltage,
+// Kalenderwochen, Partner, Gegner. Einmal gebaut, von jeder Wertung gelesen.
+// Der Montag ist der Wochenanfang, damit „Woche" heisst, was im Kalender
+// steht — dieselbe Rechnung wie in `isoWeek`, nur als Datum statt als Zahl.
+function _rohGruppen(pid, p, wochenSieger){
+  const grp = (feld) => {
+    const o = {};
+    p.partien.forEach(s => { const k = feld(s); if(k) (o[k] = o[k] || []).push(s); });
+    return o;
+  };
+  p.pid        = pid;
+  p.tagGrp     = grp(s => s.tag);
+  p.partnerGrp = grp(s => s.mate);
+  p.wochGrp    = grp(s => s.wk);
+  p.gegnerGrp  = (() => {
+    const o = {};
+    p.partien.forEach(s => s.geg.forEach(g => { if(g) (o[g] = o[g] || []).push(s); }));
+    return o;
+  })();
+  p.tagN = Object.keys(p.tagGrp).length;
+  p.exp  = p.partien.map(s => s.exp);
+  p.q    = p.games ? p.wins / p.games : 0;
+  p.expQ = p.games ? p.expSum / p.games : 0;
+  // Player of the Week: gewertet werden die eigenen Wochen mit mindestens
+  // drei Partien, damit ein Kurzbesuch keine Woche ist.
+  Object.keys(p.wochGrp).forEach(k => {
+    if(p.wochGrp[k].length < 3) return;
+    p.potwG++;
+    if(wochenSieger[k] === pid) p.potw++;
+  });
+}
+
 function _seasonTitleCtxRechnen(sid){
   const cur = currentSeason().id;
   const live = (sid === cur);
@@ -84,7 +157,17 @@ function _seasonTitleCtxRechnen(sid){
     bigDays:0, perfDays:0,       // Spieltage mit 4+ Partien / davon ohne Pleite
     uplift:null, upliftMates:0,  // wie viel besser Mitspieler an seiner Seite sind
     // Elo-Verlauf innerhalb der Saison (aus der Sim-History, kein Nachrechnen)
-    eloHigh:null, runHigh:null, runLow:null, maxDD:0, ddLow:null
+    eloHigh:null, runHigh:null, runLow:null, maxDD:0, ddLow:null,
+    potw:0, potwG:0,             // Player-of-the-Week-Titel / gewertete Wochen
+    bannLauf:0,                  // laengste im Monat gebrochene Pleitenserie
+    // ── Die Rohsicht eines Spielers auf seinen Monat ──────────────────
+    // Jede Partie einmal, aus SEINER Perspektive, in der Reihenfolge, in
+    // der sie gespielt wurde. Die Chroniken fragen nach dem schwaechsten
+    // Spieltag, der schwaechsten Woche, dem unangenehmsten Gegner — solche
+    // Fragen lassen sich nicht in vierzig Zaehler aufloesen, ohne fuer jede
+    // neue Frage einen neuen Zaehler zu erfinden. Ein Monat traegt keine
+    // zweitausend Zeilen, das kostet also nichts.
+    partien:[]
   });
   const dLabel = (key) => {
     const [y,m,d] = key.split('-');
@@ -136,6 +219,9 @@ function _seasonTitleCtxRechnen(sid){
       const gf = onA ? m.score_a : m.score_b;
       const ga = onA ? m.score_b : m.score_a;
       const pos = id===m.a1 ? m.a1_pos : id===m.a2 ? m.a2_pos : id===m.b1 ? m.b1_pos : m.b2_pos;
+      p.partien.push({win:w, gf, ga, pos, tag:day, wk:_wochenKey(m.created_at),
+                      mate:mateOf(id),
+                      geg: onA ? [m.b1, m.b2] : [m.a1, m.a2], exp:myExp(id, m)});
       p.games++; p.gf += gf; p.ga += ga; p.gd += (gf - ga);
       if(w) p.wins++; else p.losses++;
       if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; }
@@ -279,6 +365,11 @@ function _seasonTitleCtxRechnen(sid){
   // Vorher entschied dieselbe Schwelle beides. Am zweiten Tag einer neuen
   // Saison zeigte die Liste vier Spieler mit ihren Plätzen, und im Profil
   // blieb das Schild leer, weil noch niemand acht Partien hatte.
+  // Player of the Week: die Sieger-Ermittlung steht genau einmal im Code
+  // (`_periodWinnerMap`), damit Chronik und Auszeichnung nicht auseinander-
+  // laufen. Sie rechnet ueber ALLE Partien, nicht nur die des Monats — eine
+  // Woche kann ueber den Monatswechsel gehen.
+  const wochenSieger = _periodWinnerMap(matches || [], 'week');
   const prevId = _prevSeasonId(sid);
   const prevElos = prevId ? (gSim.seasonEndElos[prevId] || {}) : {};
   const prevPlayed = prevId ? (gSim.seasonPlayed[prevId] || {}) : {};
@@ -294,8 +385,10 @@ function _seasonTitleCtxRechnen(sid){
       p.growth = p.elo - Math.round(prevElos[id] !== undefined ? prevElos[id] : cfg.start_elo);
     }
     roh.push({id, elo:p.elo, games:p.games, wins:p.wins, losses:p.losses});
-    if(p.games < TITLE_MIN_GAMES) delete P[id];
+    if(p.games < TITLE_MIN_GAMES){ delete P[id]; return; }
+    _rohGruppen(id, p, wochenSieger);
   });
+  _bannLaufDerLiga(P, ms);
 
   // Spieltage mit vollem Programm (4+ Partien) und die makellosen darunter.
   // Ein Tag mit zwei Spielen kann kein „makelloser Tag" sein — sonst hätte ihn
@@ -447,8 +540,15 @@ function _seasonTitleCtxRechnen(sid){
   const nightShare   = tg ? tn / tg : 0;
   const morningShare = tg ? tm / tg : 0;
 
+  // Das Ligamittel des Monats. Mehrere Chroniken stellen den eigenen Wert
+  // dagegen, statt gegen eine feste Zahl: damit wandert die Messlatte mit
+  // der Liga, und ein torarmer Monat verschenkt keine Eintraege [§C39].
+  const L = {
+    torSchnitt: ms.length ? ms.reduce((a, m) => a + m.score_a + m.score_b, 0) / ms.length : 0,
+    engAnteil:  ms.length ? ms.filter(m => Math.abs(m.score_a - m.score_b) <= 2).length / ms.length : 0
+  };
   return {
-    sid, label:seasonLabel(sid), live, P, rank, rankAll, topId,
+    sid, label:seasonLabel(sid), live, P, rank, rankAll, topId, L, ms,
     days: allDays.size,
     matches: ms.length,
     gamesBar: Math.ceil(median * 1.6),
