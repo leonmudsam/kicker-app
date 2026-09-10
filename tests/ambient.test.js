@@ -561,6 +561,34 @@ const _plan = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_plan.potdZeit.every(t => t === '23:59'), 'der Spieler des Tages steht um 23:59',
    _plan.potdZeit.join(', ') || 'keiner');
 ok(_plan.potdAmSpieltag, 'und zwar an dem Tag, an dem gespielt wurde');
+
+// Und der Tag steht seinem eigenen Spieltag zur Verfuegung, nicht erst dem
+// naechsten. Die Quelle des Generators liess JEDEN Tag ab Mitternacht aus,
+// damit der Rueckblick nicht mitten im laufenden Spieltag aufspringt — damit
+// konnte die Karte an ihrem eigenen 23:59 nie entstehen. Gemessen wird gegen
+// den letzten Spieltag der Fixtures (26.08.); die Uhr wird dafuer kurz
+// umgestellt und danach zurueck, weil die ganze Suite an FIXED haengt.
+const _potdQuelle = (function(){
+  const Echt = globalThis.Date;
+  const stellen = ms => { globalThis.Date = class extends Echt {
+    constructor(...a){ if(a.length===0) super(ms); else super(...a); }
+    static now(){ return ms; } }; };
+  const lies = () => { try { return K.eval('(_potdLastDayData()||{}).dayKey || null'); }
+                       catch(e){ return 'FEHLER: ' + e.message; } };
+  try {
+    stellen(new Echt(2026, 7, 26, 18, 0, 0).getTime());
+    const waehrend = lies();
+    stellen(new Echt(2026, 7, 26, 23, 59, 0).getTime());
+    const danach = lies();
+    return {waehrend, danach};
+  } finally { globalThis.Date = FakeDate; }
+})();
+ok(_potdQuelle.waehrend !== '2026-08-26',
+   'der laufende Spieltag wird nicht schon um 18 Uhr gewertet',
+   String(_potdQuelle.waehrend));
+ok(_potdQuelle.danach === '2026-08-26',
+   'um 23:59 gehoert der Tag sich selbst',
+   String(_potdQuelle.danach));
 ok(_plan.chrZeit.every(t => t === '0:0'), 'die Chronik erscheint um 00:00',
    _plan.chrZeit.join(', ') || 'keine');
 ok(_plan.chrErster, 'am ersten Tag des Folgemonats');
