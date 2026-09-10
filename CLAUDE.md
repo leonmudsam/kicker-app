@@ -221,7 +221,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen, die Abstufung der Wiederholung, der Wiederholungs-Katalog | 981 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge, der Tag gehört sich selbst, der Rang aus dem Generator, der überholte Halter | 245 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge, der Tag gehört sich selbst, der Rang aus dem Generator, der überholte Halter | 247 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt, die Karte fuer den gemeinsamen Erfolg, die Zahlenreihe der Chronik — **im echten Browser gemessen** | 99 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -697,7 +697,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   jüngere Karte über denselben Rekord steht daneben, und ihr eigener Halter
   ist heute keiner mehr. Ohne die zweite Bedingung verschwände auch eine
   Übernahme, der nichts widerspricht — die erzählt von ihrem Tag und nicht
-  von heute.
+  von heute. **Dieselbe Regel gilt für die Monatschronik**, denn auch ihr Feld
+  wird im Lauf eines Tages enger und weiter: am 08.09. stand „Leo holt ‚Ohne
+  Schwachstelle'", neun Minuten später „Leo und Maxi holen ‚Ohne
+  Schwachstelle'" und drei Stunden danach „Maxi holt ‚Ohne Schwachstelle'".
   **Was wichtig ist, bleibt eine eigene Karte** (`_sammelEinzeln`): Breaking,
   weil ein erstmals vergebener Liga-Rekord nicht als vierte Zeile enden soll,
   und jede **seltene oder legendäre Auszeichnung**. „Nerven aus Stahl" (drei

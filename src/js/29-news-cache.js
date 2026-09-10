@@ -249,22 +249,40 @@ function _consolidateStories(list){
     const r = _rekJetzt[id];
     return (r && Array.isArray(r.pids)) ? r.pids : null;
   };
-  // Je Rekord die juengste Karte suchen. Alles davor, dessen Halter heute
-  // keiner mehr ist, steht im Widerspruch zu ihr und faellt weg.
+  // Wer haelt eine Monatschronik HEUTE? Dieselbe Frage wie beim Rekord, nur
+  // auf der laufenden Saison — auch ein Chronik-Feld wird im Lauf eines Tages
+  // enger und weiter.
+  let _chrJetzt = null;
+  const _chrHalter = tid => {
+    if(_chrJetzt === null){
+      _chrJetzt = {};
+      try {
+        (seasonTitles(currentSeason().id).awarded || []).forEach(a => {
+          (_chrJetzt[a.titleId] || (_chrJetzt[a.titleId] = [])).push(a.pid);
+        });
+      } catch(e){}
+    }
+    return _chrJetzt[tid] || null;
+  };
+  // Je Rekord und je Chronik die juengste Karte suchen. Alles davor, dessen
+  // Halter heute keiner mehr ist, steht im Widerspruch zu ihr und faellt weg.
   const _rekUeberholt = new Set();
   {
-    const proRekord = new Map();
+    const SORTEN = {rekord_geholt:'rekordId', rekord_erstmals:'rekordId',
+                    rekord_gesteigert:'rekordId', chronik_geholt:'titleId'};
+    const proSache = new Map();
     list.forEach(s => {
       const d = (s && s.dataRef) || {};
-      if(!d.rekordId) return;
-      if(d.type !== 'rekord_geholt' && d.type !== 'rekord_erstmals'
-         && d.type !== 'rekord_gesteigert') return;
-      const arr = proRekord.get(d.rekordId) || [];
-      arr.push(s); proRekord.set(d.rekordId, arr);
+      const feld = SORTEN[d.type];
+      if(!feld || !d[feld]) return;
+      const k = feld + ':' + d[feld];
+      const arr = proSache.get(k) || [];
+      arr.push(s); proSache.set(k, arr);
     });
-    proRekord.forEach((arr, rid) => {
+    proSache.forEach((arr, k) => {
       if(arr.length < 2) return;
-      const jetzt = _rekHalter(rid);
+      const [feld, id] = [k.slice(0, k.indexOf(':')), k.slice(k.indexOf(':') + 1)];
+      const jetzt = feld === 'rekordId' ? _rekHalter(id) : _chrHalter(id);
       if(!jetzt) return;
       const hat = new Set(jetzt);
       const neuste = arr.reduce((a, b) => new Date(b.when) > new Date(a.when) ? b : a);
@@ -335,7 +353,7 @@ function _consolidateStories(list){
     // Nur BEIDES zusammen zaehlt. Eine Uebernahme, der nichts widerspricht,
     // bleibt eine Nachricht, auch wenn der Rekord Wochen spaeter weiterwandert
     // — sie erzaehlt von ihrem Tag, nicht von heute [§C33].
-    if(d.rekordId && _rekUeberholt.has(s.id)) return false;
+    if(_rekUeberholt.has(s.id)) return false;
     return true;
   });
 

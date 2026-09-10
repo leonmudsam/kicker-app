@@ -654,6 +654,35 @@ ok(!_rekAlt.keine && _rekAlt.juengereBleibt === true,
 ok(!_rekAlt.keine && _rekAlt.alleine === true,
    'und eine Uebernahme, der nichts widerspricht, bleibt auch',
    String(_rekAlt.alleine));
+
+// Dasselbe fuer die Monatschronik: auch dort wird ein Feld im Lauf eines
+// Tages enger und weiter. Gemessen am 08.09. stand „Leo holt ‚Ohne
+// Schwachstelle'", neun Minuten spaeter „Leo und Maxi holen ‚Ohne
+// Schwachstelle'" und drei Stunden danach „Maxi holt ‚Ohne Schwachstelle'"
+// — dreimal dieselbe Chronik an einem Tag.
+const _chronAlt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const T = seasonTitles(currentSeason().id).awarded || [];
+  if(!T.length) return {keine:true};
+  const tid = T[0].titleId, halter = T.filter(a => a.titleId === tid).map(a => a.pid);
+  const fremd = (players||[]).find(p => p && !halter.includes(p.id));
+  if(!fremd) return {keine:true};
+  const t = Date.now();
+  const mach = (id, pids, ms, titel) => ({id, cat:'tafel', ic:'award', title:titel,
+    desc:'Beleg mit 7 Zahlen.', when:new Date(ms), prio:62,
+    dataRef:{type:'chronik_geholt', titleId:tid, playerIds:pids, vorher:[]}});
+  const alt  = mach('chr_pruef_alt', [fremd.id], t-3600000, 'Fremd holt sie');
+  const neuK = mach('chr_pruef_neu', halter.slice(0,1), t, 'Halter holt sie');
+  const drin = (liste, titel) => liste.some(x => x.title === titel
+    || (((x.dataRef||{}).teile)||[]).some(y => y && y.titel === titel));
+  const zus = _consolidateStories([neuK, alt]);
+  return {alteDrin: drin(zus, 'Fremd holt sie'), neueDrin: drin(zus, 'Halter holt sie')};
+})())`));
+ok(!_chronAlt.keine && _chronAlt.alteDrin === false,
+   'auch bei der Monatschronik faellt der ueberholte Halter weg',
+   String(_chronAlt.alteDrin));
+ok(!_chronAlt.keine && _chronAlt.neueDrin === true,
+   'und die Chronik-Karte, die noch gilt, bleibt',
+   String(_chronAlt.neueDrin));
 ok(_plan.chrZeit.every(t => t === '0:0'), 'die Chronik erscheint um 00:00',
    _plan.chrZeit.join(', ') || 'keine');
 ok(_plan.chrErster, 'am ersten Tag des Folgemonats');
