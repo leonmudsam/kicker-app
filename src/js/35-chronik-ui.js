@@ -299,6 +299,15 @@ function showDisziplin(tid, sid){
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
+      ${/* Der Beiname stand nur im Profilkopf [§C39], und im Blatt der
+            Wertung war nicht zu sehen, wie ihr Halter dort heisst: „Der
+            Nervenkitzel" macht seinen Traeger zum „Dauerzitterer", und
+            beide Namen standen nirgends nebeneinander. Er sitzt IM Kopf
+            des Blatts, weil er zur Wertung gehoert und nicht zu ihren
+            Zahlen — die Zahlenreihe darunter traegt die vier Angaben,
+            die ihren Wert bestimmen [§C39]. */
+        def.beiname ? `<span class="chron-kose"><i>Beiname im Profil</i>`
+        + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
     ${_chronFaktenHtml(def)}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}

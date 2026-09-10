@@ -3684,6 +3684,20 @@
   .tplate-kl{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     text-transform:uppercase;letter-spacing:.13em;color:var(--muted);
     margin-left:7px;vertical-align:1px;white-space:nowrap}
+  /* Der Beiname im Kopf des Blatts. Er bricht auf eine EIGENE Zeile
+     innerhalb des Kopfs (`flex-basis:100%`): als Pille rechts neben der
+     Bedingung blieb auf dem Telefon fuer beide je die halbe Breite, und
+     die Bedingung ist der laengere Satz. Metall, kein Gold — der Beiname
+     zeichnet niemanden aus [§C25]. */
+  .chron-hero{flex-wrap:wrap}
+  .chron-kose{flex:0 0 100%;display:flex;align-items:baseline;gap:8px;
+    margin-top:2px;padding-top:9px;border-top:1px solid rgba(var(--ttr),.16)}
+  .chron-kose i{font-family:'Sometype Mono',monospace;font-size:8.5px;
+    font-weight:700;font-style:normal;text-transform:uppercase;
+    letter-spacing:.13em;color:var(--muted);white-space:nowrap}
+  .chron-kose b{font-size:12.5px;font-weight:700;color:var(--ink);
+    margin-left:auto;text-align:right}
+
   /* Die Zahlenreihe im Chronik-Blatt steht direkt unter der Bedingung. */
   .chron-hero + .rcp-z{margin:-2px 0 12px}
 
@@ -4686,7 +4700,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.5687379c';
+const BUILD_VERSION='2026.09.10.45c59376';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -27780,6 +27794,15 @@ function showDisziplin(tid, sid){
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
+      ${/* Der Beiname stand nur im Profilkopf [§C39], und im Blatt der
+            Wertung war nicht zu sehen, wie ihr Halter dort heisst: „Der
+            Nervenkitzel" macht seinen Traeger zum „Dauerzitterer", und
+            beide Namen standen nirgends nebeneinander. Er sitzt IM Kopf
+            des Blatts, weil er zur Wertung gehoert und nicht zu ihren
+            Zahlen — die Zahlenreihe darunter traegt die vier Angaben,
+            die ihren Wert bestimmen [§C39]. */
+        def.beiname ? `<span class="chron-kose"><i>Beiname im Profil</i>`
+        + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
     ${_chronFaktenHtml(def)}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
