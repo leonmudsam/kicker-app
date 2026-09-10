@@ -1042,11 +1042,16 @@ async function _uploadNewStoriesToDb(stories){
 // Read: neueste 100 nicht-abgelaufene Stories, sortiert nach event_at desc.
 // Die Anzeige-Limits (NEWS_LIMITS.total = 50) werden weiterhin im UI greifen.
 async function _loadStoriesFromDb(){
+  // Geschnitten wird am DATUM [§11.0d]. Mit `.limit(100)` hing die
+  // Fensterbreite daran, wie viel gerade los war: an einem starken Spieltag
+  // entstehen sechsundzwanzig Karten, an einem stillen zwei.
+  const _ab = new Date(Date.now() - NEWS_FENSTER_TAGE * 86400000).toISOString();
   const { data, error } = await sb.from('stories')
     .select('*')
     .gt('expires_at', new Date().toISOString())
+    .gte('event_at', _ab)
     .order('event_at', { ascending: false })
-    .limit(100);
+    .limit(NEWS_DB_ZEILEN);
   if(error) throw error;
   return (data || []).map(_rowToStory);
 }

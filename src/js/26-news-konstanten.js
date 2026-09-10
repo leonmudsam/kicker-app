@@ -53,7 +53,7 @@ const NEWS_CATEGORIES = {
 // LocalStorage-Keys (versioniert für künftige Migrations)
 const NEWS_LS_SEEN  = 'eso_news_seen_v1';
 const NEWS_LS_TOAST = 'eso_news_toast_v1';  // v8.1: zeitstempel + count des letzten Toasts
-const NEWS_LS_MAX_SEEN = 200; // Ring-Buffer-Limit
+const NEWS_LS_MAX_SEEN = 600; // Ring-Buffer-Limit (deckt das ganze Fenster)
 const NEWS_TOAST_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h zwischen identischen Toast-Counts
 
 // Generator-Limits — Schutz gegen zu viele Stories pro Typ
@@ -98,8 +98,27 @@ const NEWS_LIMITS = {
   // Liga an zwei bis drei Tagen der Woche spielt und die Meldung damit
   // höchstens einmal je Spielwoche wiederkommt.
   sperreTage: 3,
-  total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
+  // Die Obergrenze des Feeds. Sie war die eigentliche Fensterbreite: bei
+  // sechs Karten je Tag reichten 50 Karten gerade acht Tage weit, und der
+  // Feed hoerte mitten in der Woche davor auf. Vierzehn Tage mal sechs sind
+  // vierundachtzig; der Rest ist Luft fuer Breaking und die Pflichtkarten,
+  // die nicht gegen den Tagesdeckel zaehlen [§C33].
+  total: 120,
 };
+
+// ─── §11.0d — Wie weit der Feed zurueckreicht ────────────────────────
+// Vierzehn Tage. Vorher stand die Zahl nirgends: der Feed las die 100
+// juengsten Zeilen der Datenbank und zeigte davon 50 — bei achtzehn bis
+// sechsundzwanzig Karten je Spieltag reichte das rund acht Tage weit, und
+// wer nach einer Woche Pause hineinsah, fand seinen eigenen Spieltag nicht
+// mehr. Eine Zeilenzahl ist keine Fensterbreite: sie haengt daran, wie viel
+// gerade los war.
+//
+// Der Schnitt liegt jetzt am DATUM und nicht an der Zeilenzahl. Die Grenze
+// darueber ist nur noch ein Schutz gegen eine Antwort ohne Ende — an den
+// echten Zahlen sind vierzehn Tage rund 250 Zeilen.
+const NEWS_FENSTER_TAGE = 14;
+const NEWS_DB_ZEILEN = 500;
 
 // ─── §11.0c — Wie oft dieselbe Auszeichnung Nachricht ist ────────────
 // Die Karte entstand jedes Mal neu, wenn jemand ein Badge wieder holte.

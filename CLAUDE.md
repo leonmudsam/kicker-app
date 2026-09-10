@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **690**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **692**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -666,6 +666,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   hängt die Bündelung, und im Blatt führt die Zeile damit zu dem, von dem sie
   handelt.
 
+  **Der Feed reicht vierzehn Tage zurück** (`NEWS_FENSTER_TAGE`), und der
+  Schnitt liegt am DATUM. Er lag an der Zeilenzahl: die App las die 100
+  jüngsten Zeilen und zeigte davon 50, und bei achtzehn bis sechsundzwanzig
+  Karten je Spieltag reichte das rund acht Tage weit. Eine Zeilenzahl ist
+  keine Fensterbreite — sie hängt daran, wie viel gerade los war, und wer
+  nach einer Woche Pause hineinsah, fand seinen eigenen Spieltag nicht mehr.
+  `NEWS_LIMITS.total` ist entsprechend auf 120 gesetzt: vierzehn Tage mal
+  sechs Karten sind vierundachtzig, der Rest ist Luft für Breaking und die
+  Pflichtkarten, die nicht gegen den Tagesdeckel zählen.
   **Dieselbe Auszeichnung ist einmal Nachricht, dann an runden Marken**
   (`NEWS_BADGE_MARKEN`: 1, 5, 10, 25, 50, 100). Die Karte entstand jedes Mal
   neu, wenn jemand ein Badge wieder holte: gemessen stand „Martin: Mauer"
