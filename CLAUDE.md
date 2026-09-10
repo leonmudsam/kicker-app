@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **679**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **680**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -221,7 +221,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen | 974 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 176 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck | 204 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat | 215 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt — **im echten Browser gemessen** | 92 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -698,7 +698,29 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Die Ewige Tafel meldet sich.** Der ganze Awards-Reiter kam im Feed nicht
   vor: wer einen Liga-Rekord übernahm, eine Monatschronik holte oder eine
   Insignium-Stufe erreichte, erfuhr es nur, wenn er selbst nachsah. Die
-  Kategorie `tafel` sammelt das. Quelle der Rekordmeldungen ist ein
+  Kategorie `tafel` sammelt das.
+  **Auch der laufende Monat** (`chronik_geholt`, `prio 80`). Die Monatskarte
+  entsteht erst am 1. für den VORmonat; gemessen trug der August dreizehn
+  Chronik-Einträge und dazu keine einzige Karte. Quelle ist derselbe
+  Zeitschnitt wie bei den Rekorden: `seasonTitleHalter(sid)` gegen
+  `seasonTitleHalter(sid, bisMs)` vor dem letzten Spieltag. Gemeldet wird nur
+  der **Wechsel**, in vier Fällen mit vier Verben — `holt` (vorher niemand),
+  `übernimmt` (der Halter wechselt), `hält jetzt allein` (das Feld ist enger
+  geworden) und `zieht gleich` (jemand kommt dazu). „Julian holt ‚Der
+  Nachzügler'. Vorher hielten sie Julian, Martin und Maxi" stand da, als es
+  nur einen Fall gab: er war schon Mithalter, und aus drei Haltern wurde
+  einer. Die Schlagzeile nennt beim Dazukommen die **Neuen**, sonst alle
+  Halter. `prio 80` liegt über der Insignium-Stufe und unter dem übernommenen
+  Liga-Rekord: damit überlebt die Karte den Tagesdeckel, ohne die Ewige Tafel
+  zu überstimmen. Höchstens **zwei je Lauf** (`NEWS_LIMITS.chronikGeholt`),
+  die wertvollsten zuerst — ein starker Spieltag verschiebt mehrere Chroniken
+  gleichzeitig, und der Rest steht am Monatsende ohnehin in der Monatskarte.
+  Eine **legendäre** Chronik bleibt eine eigene Karte (`_sammelEinzeln`), aus
+  demselben Grund wie eine legendäre Auszeichnung. Der große Wert der Karte
+  ist ihr **Prestige**, nicht die erste Zahl im Beleg; der Text nennt es
+  deshalb nicht noch einmal. Das Blatt zeigt die Zahlenreihe aus Klasse, Art,
+  Ausschlag und Prestige [§C39], die Bedingung, das Podest des Monats und
+  einen Knopf in die Tafel. Schattenseiten meldet der Feed auch hier nicht. Quelle der Rekordmeldungen ist ein
   Zeitschnitt — `allChronicles(bisMs)` vor dem letzten Spieltag gegen heute;
   er kostet einmal ~18 ms und liegt danach im Cache.
   Drei Sorten, drei Aussagen: **erstmals vergeben** (den Rekord hatte vorher

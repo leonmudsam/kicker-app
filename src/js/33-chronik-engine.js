@@ -6,12 +6,18 @@
 // jetzt auch vom Detail-Blatt einer Disziplin — bis hierher rechnete jeder
 // dieser Aufrufe alles noch einmal. Gemerkt wird am selben Schlüssel wie
 // überall: Zahl der Partien plus Cache-Stand.
-function _seasonTitleCtx(sid){
-  const ck = sid + '_' + matches.length + '_' + _cache.version;
+// `bisMs` schneidet den Monat an einem Zeitpunkt ab. Der Feed braucht das,
+// um den Halterstand VOR dem letzten Spieltag mit dem von heute zu
+// vergleichen — genau wie die Rekordmeldungen es mit `allChronicles(bisMs)`
+// tun [§C33]. Ohne den Schnitt gibt es keinen „Stand von gestern", und eine
+// Chronik, die im laufenden Monat den Halter wechselt, waere keine Nachricht.
+function _seasonTitleCtx(sid, bisMs){
+  const ck = sid + '_' + matches.length + '_' + _cache.version
+           + (bisMs ? '_' + bisMs : '');
   if(!_cache._stCtx) _cache._stCtx = {};
   const hit = _cache._stCtx[ck];
   if(hit) return hit;
-  const res = _seasonTitleCtxRechnen(sid);
+  const res = _seasonTitleCtxRechnen(sid, bisMs);
   // Nur die letzten Monate behalten — sonst wächst der Topf mit jeder
   // Saison, die jemand im Wähler durchklickt.
   if(Object.keys(_cache._stCtx).length > 8) _cache._stCtx = {};
@@ -134,10 +140,11 @@ function _rohGruppen(pid, p, wochenSieger){
   });
 }
 
-function _seasonTitleCtxRechnen(sid){
+function _seasonTitleCtxRechnen(sid, bisMs){
   const cur = currentSeason().id;
   const live = (sid === cur);
-  const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b));
+  const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b))
+    .filter(m => !bisMs || mts(m) <= bisMs);
   const gSim = getGlobalSim();
   // Elo-Quelle: abgeschlossene Saison → archivierter End-Stand aus dem Sim,
   // laufende Saison → aktueller Stand. Beides derselbe Sim wie die Rangliste.
@@ -757,6 +764,28 @@ function allSeasonTitles(){
 }
 
 // Titel eines Spielers in einer Saison (oder null).
+// Wer haelt die Monatschroniken zu einem Zeitpunkt? Nur die Halter, ohne
+// Meister und ohne Leerliste: der Feed vergleicht damit den Stand vor dem
+// letzten Spieltag mit dem von heute und meldet, was gewechselt hat.
+// `seasonTitles` taugt dafuer nicht — es ist auf HEUTE gemerkt und friert
+// abgeschlossene Monate ein.
+function seasonTitleHalter(sid, bisMs){
+  const out = {};
+  let C = null;
+  try { C = _seasonTitleCtx(sid, bisMs); } catch(e){ return out; }
+  if(!C) return out;
+  SEASON_TITLES.forEach(t => {
+    let r = null;
+    try { r = t.pick(C, new Set()); } catch(e){ r = null; }
+    if(r && r.halter && r.halter.length){
+      let ev = '';
+      try { ev = r.evVon(r.halter[0]) || ''; } catch(e){ ev = ''; }
+      out[t.id] = {pids: r.halter.slice().sort(), ev};
+    }
+  });
+  return out;
+}
+
 function seasonTitleOf(pid, sid){
   const t = seasonTitles(sid);
   return t.awarded.find(a => a.pid === pid) || null;

@@ -424,6 +424,32 @@ function _newsDetailMitte(s){
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen
       // deshalb die Traeger, nicht ein einzelner Eintrag.
+      // Eine Monatschronik hat den Halter gewechselt. Das Blatt zeigt, was
+      // die Chronik wert ist (dieselbe Zahlenreihe wie im Awards-Tab [§C27]),
+      // die Bedingung, das Podest des Monats und den Weg in die Tafel.
+      case 'chronik_geholt': {
+        const def = (typeof SEASON_TITLE_BY_ID !== 'undefined')
+          ? SEASON_TITLE_BY_ID[d.titleId] : null;
+        let podest = '', erfuellt = 0;
+        try {
+          const C = _seasonTitleCtx(d.sid);
+          const r = def && def.pick ? def.pick(C, new Set()) : null;
+          if(r && r.rang && r.rang.length){
+            erfuellt = r.rang.length;
+            podest = _chronPodestHtml(r.rang.map(pid => {
+              let w = ''; try { w = r.evFuer ? r.evFuer(pid) : ''; } catch(e){}
+              return {pid, wert:_chronKurz(w)};
+            }));
+          }
+        } catch(e){}
+        // Die Bedingung nur, wenn sie nicht schon oben steht [§C33 `_ndNeu`].
+        const cond = (def && def.cond && _ndNeu(def.cond)) ? def.cond : '';
+        return (def ? _chronFaktenHtml(def) : '')
+          + (cond ? `<div class="tnote">${esc(cond)}</div>` : '')
+          + (podest ? `<div class="nd-section">Dieser Monat</div>${podest}` : '')
+          + (erfuellt > 1 ? `<div class="tnote">${erfuellt} erfüllen die Bedingung in diesem Monat.</div>` : '')
+          + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
+      }
       case 'chronik_monat': {
         const ids = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
         // Neben dem Namen steht die Wertung, die er in diesem Monat haelt —

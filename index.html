@@ -4686,7 +4686,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.410ee123';
+const BUILD_VERSION='2026.09.10.7181b2bf';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18096,6 +18096,10 @@ const NEWS_LIMITS = {
   // Ein Tag trägt sechs Karten. Gemessen trug ein Spieltag neun, und die
   // schwächsten drei waren ein Elo-Ausschlag, eine Auszeichnung und ein Fun
   // Fact — Zeilen, die niemand vermisst. Breaking zählt nicht mit [§C33].
+  // Ein starker Spieltag verschiebt mehrere Monatschroniken gleichzeitig.
+  // Gemeldet werden die zwei wertvollsten; der Rest steht am Monatsende in
+  // der Monatskarte, die es ohnehin gibt.
+  chronikGeholt: 2,
   proTag: 6,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
@@ -19912,6 +19916,101 @@ function _buildStories(){
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronik', e); }
 
+  // ── Eine Monatschronik wechselt den Halter ───────────────────────────
+  // Der ganze laufende Monat kam im Feed nicht vor. Gemessen trug der August
+  // dreizehn Chronik-Eintraege, und im Feed stand dazu keine einzige Karte:
+  // die Monatskarte entsteht erst am 1. fuer den VORmonat. Wer „Auf dem
+  // Thron" holte, erfuhr es nur, wenn er selbst in den Chronik-Tab sah.
+  //
+  // Quelle ist derselbe Zeitschnitt wie bei den Rekorden: der Halterstand vor
+  // dem letzten Spieltag gegen den von heute. Gemeldet wird nur der WECHSEL,
+  // nicht der Stand — ein Halter, der seinen Wert verbessert, hat nichts
+  // getan, genau wie „ausgebaut" beim Liga-Rekord die schwaechste der drei
+  // Meldungen ist.
+  try {
+    const _letzteMs2 = matches.length ? mts(matches[matches.length - 1]) : 0;
+    const _sid = currentSeason().id;
+    if(_letzteMs2 && typeof seasonTitleHalter === 'function'){
+      const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
+      const _jetztH = seasonTitleHalter(_sid);
+      const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
+      const _meldungen = [];
+      SEASON_TITLES.forEach(t => {
+        const n = _jetztH[t.id];
+        if(!n) return;
+        // Schattenseiten meldet der Feed nicht — die Liga liest ihn
+        // gemeinsam [§C33]. Dieselbe Regel wie bei den Rekorden.
+        if(t.kunst === 'schatten') return;
+        const a = _vorherH[t.id];
+        const neuKey = n.pids.join(',');
+        // Sortiert verglichen: dieselben Halter in anderer Reihenfolge sind
+        // kein Wechsel [§C33].
+        if(a && a.pids.join(',') === neuKey) return;
+        const punkte = (typeof chronikPunkte === 'function') ? chronikPunkte(t.id) : 0;
+        const artikel = t.klasse === 'legendaer' ? 'Eine legendäre' :
+                        t.klasse === 'selten' ? 'Eine seltene' : 'Eine besondere';
+        // Vier Faelle, vier Verben. „Julian holt ‚Der Nachzuegler'. Vorher
+        // hielten sie Julian, Martin und Maxi" stand da, als es nur eines
+        // gab: er war schon Mithalter, und aus drei Haltern wurde einer.
+        const alt = (a && a.pids) || [];
+        const drin = id => alt.indexOf(id) >= 0;
+        const neuLeute = n.pids.filter(id => !drin(id));
+        const art = !alt.length ? 'erstmals'
+                  : !neuLeute.length ? 'allein'          // das Feld ist enger geworden
+                  : (alt.every(id => n.pids.indexOf(id) >= 0) ? 'dazu' : 'uebernommen');
+        // Die Schlagzeile nennt die, um die es geht [§C33]: beim Dazukommen
+        // sind das die Neuen, sonst alle Halter.
+        const wer = art === 'dazu' ? neuLeute : n.pids;
+        const namen = _namenKurz(wer.map(nameOf));
+        const mz = wer.length > 1;
+        const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}"`
+                    : art === 'allein'    ? `${namen} ${mz ? 'halten' : 'hält'} „${t.name}" jetzt allein`
+                    : art === 'dazu'      ? `${namen} ${mz ? 'ziehen' : 'zieht'} bei „${t.name}" gleich`
+                    : `${namen} ${mz ? 'übernehmen' : 'übernimmt'} „${t.name}"`;
+        const nachsatz = art === 'uebernommen'
+            ? ` Vorher ${alt.length > 1 ? 'hielten' : 'hielt'} sie ${_namenKurz(alt.map(nameOf))}.`
+          : art === 'dazu'
+            ? ` Geteilt mit ${_namenKurz(alt.map(nameOf))}.`
+          : art === 'allein'
+            // Nicht „Vorher zu 3. geteilt": eine Ordnungszahl mitten im Satz
+            // liest sich als Satzende, und danach ging es klein weiter. Die
+            // Karte nennt ohnehin lieber Namen als Zahlen [§C33].
+            ? ` Vorher ${_namenKurz(alt.filter(id => n.pids.indexOf(id) < 0).map(nameOf))} auch.`
+            : '';
+        _meldungen.push({t, n, a, punkte, art,
+          title: titel,
+          // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
+          // dieselbe Zahl untereinander sagt nichts Neues [§C33].
+          desc: (n.ev ? _evSatz(n.ev) + '. ' : '')
+              + `${artikel} Chronik.` + nachsatz,
+          klasse: t.klasse});
+      });
+      // Die wertvollsten zuerst, dann greift der Deckel.
+      _meldungen.sort((x, y) => y.punkte - x.punkte);
+      _meldungen.slice(0, NEWS_LIMITS.chronikGeholt).forEach(m => {
+        stories.push({
+          // Die ID traegt Chronik, Monat und die sortierten Halter. Damit ist
+          // sie stabil, solange derselbe sie haelt, und eine Uebernahme
+          // bekommt eine eigene.
+          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}`,
+          cat: 'tafel',
+          ic: m.t.ic,
+          title: m.title,
+          desc: m.desc,
+          when: _letzteMs2,
+          // Ueber der Insignium-Stufe, unter dem uebernommenen Liga-Rekord:
+          // sie ueberlebt damit den Tagesdeckel, ohne die Ewige Tafel zu
+          // ueberstimmen [§C33].
+          prio: 80,
+          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
+                    playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
+                    ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
+                    chronArt:m.t.kunst, aus:m.t.aus, punkte:m.punkte}
+        });
+      });
+    }
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronget', e); }
+
   // ── Eine neue Stufe am Insignium ─────────────────────────────────────
   // Es gibt keinen „Stand von gestern" fürs Prestige — ein zweiter voller
   // Lauf wäre zu teuer. Das Gedächtnis ist stattdessen der Feed selbst: die
@@ -21621,7 +21720,7 @@ function _consolidateStories(list){
     if(!typ || _OHNE_SPERRE.has(typ)) return null;
     let ids = [];
     try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
-    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titel || '';
+    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titleId || d.titel || '';
     return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
   };
   const _zuletzt = new Map();
@@ -21733,7 +21832,7 @@ function _consolidateStories(list){
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'insignium_stufe','chronik_erstling']);
+    'insignium_stufe','chronik_erstling','chronik_geholt']);
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -21756,6 +21855,11 @@ function _consolidateStories(list){
   // Kleingedruckten.
   const _sammelEinzeln = (st, d) => {
     try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return true; } catch(e){}
+    // Eine LEGENDAERE Monatschronik bleibt aus demselben Grund einzeln wie
+    // eine legendaere Auszeichnung: „Auf dem Thron" ist der Grund, warum
+    // jemand die App oeffnet, und steht nicht als vierte Zeile unter dem
+    // Rekord-Ausbau zweier anderer [§C33].
+    if(d.type === 'chronik_geholt' && d.chronKlasse === 'legendaer') return true;
     return d.type === 'badge_unlocked'
         && (d.rarity === 'rare' || d.rarity === 'legendary');
   };
@@ -22875,6 +22979,11 @@ function _newsSpielZahlen(s){
 // vom Satz darüber.
 function _newsTafelWert(s){
   const d = s.dataRef || {};
+  // Bei einer Chronik ist das Prestige die Aussage: der Beleg steht im Satz,
+  // die Klasse dahinter, und was sie WERT ist, sagt sonst nichts auf der
+  // Karte. Die erste Zahl des Belegs waere „4 von 5" gewesen — richtig, aber
+  // ohne Bezug.
+  if(d.type === 'chronik_geholt') return {v: '+' + (d.punkte || 0), l:'Prestige'};
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
   const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
@@ -23657,6 +23766,32 @@ function _newsDetailMitte(s){
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen
       // deshalb die Traeger, nicht ein einzelner Eintrag.
+      // Eine Monatschronik hat den Halter gewechselt. Das Blatt zeigt, was
+      // die Chronik wert ist (dieselbe Zahlenreihe wie im Awards-Tab [§C27]),
+      // die Bedingung, das Podest des Monats und den Weg in die Tafel.
+      case 'chronik_geholt': {
+        const def = (typeof SEASON_TITLE_BY_ID !== 'undefined')
+          ? SEASON_TITLE_BY_ID[d.titleId] : null;
+        let podest = '', erfuellt = 0;
+        try {
+          const C = _seasonTitleCtx(d.sid);
+          const r = def && def.pick ? def.pick(C, new Set()) : null;
+          if(r && r.rang && r.rang.length){
+            erfuellt = r.rang.length;
+            podest = _chronPodestHtml(r.rang.map(pid => {
+              let w = ''; try { w = r.evFuer ? r.evFuer(pid) : ''; } catch(e){}
+              return {pid, wert:_chronKurz(w)};
+            }));
+          }
+        } catch(e){}
+        // Die Bedingung nur, wenn sie nicht schon oben steht [§C33 `_ndNeu`].
+        const cond = (def && def.cond && _ndNeu(def.cond)) ? def.cond : '';
+        return (def ? _chronFaktenHtml(def) : '')
+          + (cond ? `<div class="tnote">${esc(cond)}</div>` : '')
+          + (podest ? `<div class="nd-section">Dieser Monat</div>${podest}` : '')
+          + (erfuellt > 1 ? `<div class="tnote">${erfuellt} erfüllen die Bedingung in diesem Monat.</div>` : '')
+          + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
+      }
       case 'chronik_monat': {
         const ids = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
         // Neben dem Namen steht die Wertung, die er in diesem Monat haelt —
@@ -25788,12 +25923,18 @@ function _stPickTop(C, taken, score, ev){
 // jetzt auch vom Detail-Blatt einer Disziplin — bis hierher rechnete jeder
 // dieser Aufrufe alles noch einmal. Gemerkt wird am selben Schlüssel wie
 // überall: Zahl der Partien plus Cache-Stand.
-function _seasonTitleCtx(sid){
-  const ck = sid + '_' + matches.length + '_' + _cache.version;
+// `bisMs` schneidet den Monat an einem Zeitpunkt ab. Der Feed braucht das,
+// um den Halterstand VOR dem letzten Spieltag mit dem von heute zu
+// vergleichen — genau wie die Rekordmeldungen es mit `allChronicles(bisMs)`
+// tun [§C33]. Ohne den Schnitt gibt es keinen „Stand von gestern", und eine
+// Chronik, die im laufenden Monat den Halter wechselt, waere keine Nachricht.
+function _seasonTitleCtx(sid, bisMs){
+  const ck = sid + '_' + matches.length + '_' + _cache.version
+           + (bisMs ? '_' + bisMs : '');
   if(!_cache._stCtx) _cache._stCtx = {};
   const hit = _cache._stCtx[ck];
   if(hit) return hit;
-  const res = _seasonTitleCtxRechnen(sid);
+  const res = _seasonTitleCtxRechnen(sid, bisMs);
   // Nur die letzten Monate behalten — sonst wächst der Topf mit jeder
   // Saison, die jemand im Wähler durchklickt.
   if(Object.keys(_cache._stCtx).length > 8) _cache._stCtx = {};
@@ -25916,10 +26057,11 @@ function _rohGruppen(pid, p, wochenSieger){
   });
 }
 
-function _seasonTitleCtxRechnen(sid){
+function _seasonTitleCtxRechnen(sid, bisMs){
   const cur = currentSeason().id;
   const live = (sid === cur);
-  const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b));
+  const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b))
+    .filter(m => !bisMs || mts(m) <= bisMs);
   const gSim = getGlobalSim();
   // Elo-Quelle: abgeschlossene Saison → archivierter End-Stand aus dem Sim,
   // laufende Saison → aktueller Stand. Beides derselbe Sim wie die Rangliste.
@@ -26539,6 +26681,28 @@ function allSeasonTitles(){
 }
 
 // Titel eines Spielers in einer Saison (oder null).
+// Wer haelt die Monatschroniken zu einem Zeitpunkt? Nur die Halter, ohne
+// Meister und ohne Leerliste: der Feed vergleicht damit den Stand vor dem
+// letzten Spieltag mit dem von heute und meldet, was gewechselt hat.
+// `seasonTitles` taugt dafuer nicht — es ist auf HEUTE gemerkt und friert
+// abgeschlossene Monate ein.
+function seasonTitleHalter(sid, bisMs){
+  const out = {};
+  let C = null;
+  try { C = _seasonTitleCtx(sid, bisMs); } catch(e){ return out; }
+  if(!C) return out;
+  SEASON_TITLES.forEach(t => {
+    let r = null;
+    try { r = t.pick(C, new Set()); } catch(e){ r = null; }
+    if(r && r.halter && r.halter.length){
+      let ev = '';
+      try { ev = r.evVon(r.halter[0]) || ''; } catch(e){ ev = ''; }
+      out[t.id] = {pids: r.halter.slice().sort(), ev};
+    }
+  });
+  return out;
+}
+
 function seasonTitleOf(pid, sid){
   const t = seasonTitles(sid);
   return t.awarded.find(a => a.pid === pid) || null;

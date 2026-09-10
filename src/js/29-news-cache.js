@@ -347,7 +347,7 @@ function _consolidateStories(list){
     if(!typ || _OHNE_SPERRE.has(typ)) return null;
     let ids = [];
     try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
-    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titel || '';
+    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titleId || d.titel || '';
     return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
   };
   const _zuletzt = new Map();
@@ -459,7 +459,7 @@ function _consolidateStories(list){
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'insignium_stufe','chronik_erstling']);
+    'insignium_stufe','chronik_erstling','chronik_geholt']);
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -482,6 +482,11 @@ function _consolidateStories(list){
   // Kleingedruckten.
   const _sammelEinzeln = (st, d) => {
     try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return true; } catch(e){}
+    // Eine LEGENDAERE Monatschronik bleibt aus demselben Grund einzeln wie
+    // eine legendaere Auszeichnung: „Auf dem Thron" ist der Grund, warum
+    // jemand die App oeffnet, und steht nicht als vierte Zeile unter dem
+    // Rekord-Ausbau zweier anderer [§C33].
+    if(d.type === 'chronik_geholt' && d.chronKlasse === 'legendaer') return true;
     return d.type === 'badge_unlocked'
         && (d.rarity === 'rare' || d.rarity === 'legendary');
   };

@@ -1697,6 +1697,101 @@ function _buildStories(){
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronik', e); }
 
+  // ── Eine Monatschronik wechselt den Halter ───────────────────────────
+  // Der ganze laufende Monat kam im Feed nicht vor. Gemessen trug der August
+  // dreizehn Chronik-Eintraege, und im Feed stand dazu keine einzige Karte:
+  // die Monatskarte entsteht erst am 1. fuer den VORmonat. Wer „Auf dem
+  // Thron" holte, erfuhr es nur, wenn er selbst in den Chronik-Tab sah.
+  //
+  // Quelle ist derselbe Zeitschnitt wie bei den Rekorden: der Halterstand vor
+  // dem letzten Spieltag gegen den von heute. Gemeldet wird nur der WECHSEL,
+  // nicht der Stand — ein Halter, der seinen Wert verbessert, hat nichts
+  // getan, genau wie „ausgebaut" beim Liga-Rekord die schwaechste der drei
+  // Meldungen ist.
+  try {
+    const _letzteMs2 = matches.length ? mts(matches[matches.length - 1]) : 0;
+    const _sid = currentSeason().id;
+    if(_letzteMs2 && typeof seasonTitleHalter === 'function'){
+      const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
+      const _jetztH = seasonTitleHalter(_sid);
+      const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
+      const _meldungen = [];
+      SEASON_TITLES.forEach(t => {
+        const n = _jetztH[t.id];
+        if(!n) return;
+        // Schattenseiten meldet der Feed nicht — die Liga liest ihn
+        // gemeinsam [§C33]. Dieselbe Regel wie bei den Rekorden.
+        if(t.kunst === 'schatten') return;
+        const a = _vorherH[t.id];
+        const neuKey = n.pids.join(',');
+        // Sortiert verglichen: dieselben Halter in anderer Reihenfolge sind
+        // kein Wechsel [§C33].
+        if(a && a.pids.join(',') === neuKey) return;
+        const punkte = (typeof chronikPunkte === 'function') ? chronikPunkte(t.id) : 0;
+        const artikel = t.klasse === 'legendaer' ? 'Eine legendäre' :
+                        t.klasse === 'selten' ? 'Eine seltene' : 'Eine besondere';
+        // Vier Faelle, vier Verben. „Julian holt ‚Der Nachzuegler'. Vorher
+        // hielten sie Julian, Martin und Maxi" stand da, als es nur eines
+        // gab: er war schon Mithalter, und aus drei Haltern wurde einer.
+        const alt = (a && a.pids) || [];
+        const drin = id => alt.indexOf(id) >= 0;
+        const neuLeute = n.pids.filter(id => !drin(id));
+        const art = !alt.length ? 'erstmals'
+                  : !neuLeute.length ? 'allein'          // das Feld ist enger geworden
+                  : (alt.every(id => n.pids.indexOf(id) >= 0) ? 'dazu' : 'uebernommen');
+        // Die Schlagzeile nennt die, um die es geht [§C33]: beim Dazukommen
+        // sind das die Neuen, sonst alle Halter.
+        const wer = art === 'dazu' ? neuLeute : n.pids;
+        const namen = _namenKurz(wer.map(nameOf));
+        const mz = wer.length > 1;
+        const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}"`
+                    : art === 'allein'    ? `${namen} ${mz ? 'halten' : 'hält'} „${t.name}" jetzt allein`
+                    : art === 'dazu'      ? `${namen} ${mz ? 'ziehen' : 'zieht'} bei „${t.name}" gleich`
+                    : `${namen} ${mz ? 'übernehmen' : 'übernimmt'} „${t.name}"`;
+        const nachsatz = art === 'uebernommen'
+            ? ` Vorher ${alt.length > 1 ? 'hielten' : 'hielt'} sie ${_namenKurz(alt.map(nameOf))}.`
+          : art === 'dazu'
+            ? ` Geteilt mit ${_namenKurz(alt.map(nameOf))}.`
+          : art === 'allein'
+            // Nicht „Vorher zu 3. geteilt": eine Ordnungszahl mitten im Satz
+            // liest sich als Satzende, und danach ging es klein weiter. Die
+            // Karte nennt ohnehin lieber Namen als Zahlen [§C33].
+            ? ` Vorher ${_namenKurz(alt.filter(id => n.pids.indexOf(id) < 0).map(nameOf))} auch.`
+            : '';
+        _meldungen.push({t, n, a, punkte, art,
+          title: titel,
+          // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
+          // dieselbe Zahl untereinander sagt nichts Neues [§C33].
+          desc: (n.ev ? _evSatz(n.ev) + '. ' : '')
+              + `${artikel} Chronik.` + nachsatz,
+          klasse: t.klasse});
+      });
+      // Die wertvollsten zuerst, dann greift der Deckel.
+      _meldungen.sort((x, y) => y.punkte - x.punkte);
+      _meldungen.slice(0, NEWS_LIMITS.chronikGeholt).forEach(m => {
+        stories.push({
+          // Die ID traegt Chronik, Monat und die sortierten Halter. Damit ist
+          // sie stabil, solange derselbe sie haelt, und eine Uebernahme
+          // bekommt eine eigene.
+          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}`,
+          cat: 'tafel',
+          ic: m.t.ic,
+          title: m.title,
+          desc: m.desc,
+          when: _letzteMs2,
+          // Ueber der Insignium-Stufe, unter dem uebernommenen Liga-Rekord:
+          // sie ueberlebt damit den Tagesdeckel, ohne die Ewige Tafel zu
+          // ueberstimmen [§C33].
+          prio: 80,
+          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
+                    playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
+                    ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
+                    chronArt:m.t.kunst, aus:m.t.aus, punkte:m.punkte}
+        });
+      });
+    }
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronget', e); }
+
   // ── Eine neue Stufe am Insignium ─────────────────────────────────────
   // Es gibt keinen „Stand von gestern" fürs Prestige — ein zweiter voller
   // Lauf wäre zu teuer. Das Gedächtnis ist stattdessen der Feed selbst: die

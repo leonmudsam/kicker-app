@@ -660,6 +660,11 @@ function _newsSpielZahlen(s){
 // vom Satz darüber.
 function _newsTafelWert(s){
   const d = s.dataRef || {};
+  // Bei einer Chronik ist das Prestige die Aussage: der Beleg steht im Satz,
+  // die Klasse dahinter, und was sie WERT ist, sagt sonst nichts auf der
+  // Karte. Die erste Zahl des Belegs waere „4 von 5" gewesen — richtig, aber
+  // ohne Bezug.
+  if(d.type === 'chronik_geholt') return {v: '+' + (d.punkte || 0), l:'Prestige'};
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
   const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
