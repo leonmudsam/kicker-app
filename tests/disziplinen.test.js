@@ -729,7 +729,15 @@ ok(belegTreffer.length === 0, 'kein Beleg und keine Bedingung traegt ein Possess
 // hat" stand im Detail-Blatt unter dem Wappen jedes Spielers. Dazu der
 // Gedankenstrich, der Saetze trennte, die als zwei Saetze klarer sind
 // [§C33] — zwanzig Stellen, vom Beleg bis zur Bedingung.
-const PRONOMEN = /\b(seiner|seine|seinem|seinen|sein|ihrer|ihre|ihrem|ihren|ihm|ihn|er)\b/;
+// Die Wortgrenze `\b` kennt nur [A-Za-z0-9_]: in „Ausreißer" steht damit
+// hinter dem ß eine Grenze, und `\ber\b` fand dort das Pronomen „er".
+// Deshalb eine eigene Klasse mit Umlauten und ß.
+const _DW = '[A-Za-zÄÖÜäöüß]';
+const PRONOMEN = new RegExp('(?<!' + _DW + ')(seiner|seine|seinem|seinen|sein'
+  + '|ihrer|ihre|ihrem|ihren|ihm|ihn|er)(?!' + _DW + ')', 'i');
+// Gross geschrieben zaehlt auch: die Gegenprobe mit „Seine Beidfuessigkeit"
+// lief durch, weil die Klasse nur Kleinbuchstaben kannte und ein Pronomen am
+// Satzanfang gross steht.
 const _sprachTreffer = JSON.parse(K.eval(`JSON.stringify((function(){
   const strich = [], pron = [];
   const re = ${'PRONOMEN'};
@@ -738,7 +746,9 @@ const _sprachTreffer = JSON.parse(K.eval(`JSON.stringify((function(){
     if(re.test(t)) pron.push(wo); };
   DISZIPLINEN.forEach(d => {
     ['cond','wie'].forEach(k => pruef(d.id + '.' + k, d[k]));
-    if(d.monat) ['cond','wie'].forEach(k => pruef(d.id + '.monat.' + k, d.monat[k]));
+    // Der Beiname steht im Profilkopf unter dem Namen eines Spielers und
+    // gehoert damit zu denselben Texten wie Beleg und Bedingung.
+    if(d.monat) ['cond','wie','beiname'].forEach(k => pruef(d.id + '.monat.' + k, d.monat[k]));
     if(d.allzeit) ['cond','wie'].forEach(k => pruef(d.id + '.allzeit.' + k, d.allzeit[k]));
   });
   const H = chronicleHolders();
@@ -958,6 +968,28 @@ const _flach = JSON.parse(K.eval(`JSON.stringify(SEASON_TITLES
 ok(_flach.length === 0,
    'jede Chronik schiebt ihre Schwelle mindestens 1,5 σ hinaus',
    _flach.join(', '));
+// Der Beiname beschreibt den SPIELER und steht im Profilkopf. Ohne ihn
+// stuende dort der Katalogname, und „Der Endspurt" ist keine Beschreibung
+// eines Spielertyps. Er muss da sein, in die Pille passen und eindeutig
+// sein: zwei Spieler mit demselben Beinamen aus zwei verschiedenen
+// Chroniken saehen im Profil gleich aus.
+const _bei = JSON.parse(K.eval(`JSON.stringify((function(){
+  const t = SEASON_TITLES.map(x => ({id:x.id, bei:x.beiname || ''}));
+  const dop = {}; t.forEach(x => { (dop[x.bei] = dop[x.bei] || []).push(x.id); });
+  return {ohne: t.filter(x => !x.bei).map(x => x.id),
+          lang: t.filter(x => x.bei.length > 20).map(x => x.bei),
+          mehr: Object.keys(dop).filter(k => dop[k].length > 1)};
+})())`));
+ok(_bei.ohne.length === 0, 'jede Chronik traegt ihren Beinamen fuers Profil',
+   _bei.ohne.join(', '));
+ok(_bei.lang.length === 0, 'kein Beiname sprengt die Pille im Profilkopf',
+   _bei.lang.join(', '));
+ok(_bei.mehr.length === 0, 'kein Beiname kommt zweimal vor', _bei.mehr.join(', '));
+ok(K.eval(`(function(){
+  const b = players.filter(p => !p.hidden).map(p => playerTitleBadge(p.id)).filter(Boolean);
+  return b.length > 0 && b.every(x => x.name && x.titel);
+})()`), 'der Profilkopf zeigt den Beinamen und kennt den Katalognamen');
+
 ok(K.eval(`SEASON_TITLES.every(t =>
      ['legendaer','selten','besonders'].indexOf(t.klasse) >= 0
      && ['koennen','konstanz','fuegung','schatten'].indexOf(t.kunst) >= 0)`),

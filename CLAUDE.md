@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **678**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **679**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,7 +219,7 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik | 970 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen | 974 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 176 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck | 204 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
@@ -880,6 +880,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Hand gegeben. Zwei Monate erfüllen sie (Leon im August, Martin im Juni),
   und sie ist trotzdem legendär: die Klasse zählt keine Halter.
 
+  **Im Profilkopf steht der Spielertyp, nicht die Wertung** (`monat.beiname`,
+  `chronBeiname`). Die Pille unter dem Namen trug den Katalognamen, und
+  „Der Endspurt" liest sich dort wie eine Überschrift statt wie eine
+  Beschreibung — „Der Ausdauernde" schon. Überall sonst bleibt der
+  Katalogname: in der Matrix, auf der Plakette, im Blatt und in der Nachricht
+  geht es um die Wertung, im Profilkopf um den Menschen. Ein eingefrorener
+  Monat kann eine Chronik tragen, die es nicht mehr gibt; dann bleibt der
+  gespeicherte Name.
+
   **Die Klasse ist zu sehen, nicht nur zu berechnen.** Von den vier Angaben,
   die den Wert einer Chronik bestimmen, stand keine einzige in der App: wer
   ein Chronik-Blatt öffnete, sah die Bedingung und sonst nichts. Jetzt trägt
@@ -1324,6 +1333,7 @@ Raster — je zwei Einträge sind eine Zeile.
 | dort `short` | ein ganzes Wort, das in 54 px passt | „Umschwung“ ist kürzer als „Nachzügler“ und breiter, also zählt die gerenderte Breite: `tests/blatt` misst sie am Markup, `tests/disziplinen` verbietet die Abkürzung mit Punkt |
 | dort `ic` | ein Icon, das keine andere Disziplin trägt | in einer Zelle von 62 Pixeln ist die Zeichnung das Erste, was man sieht — zwei gleiche sind dort nicht zu unterscheiden. `tests/disziplinen` misst es |
 | dort `monat.wie` | ein Satz, was die Zahl im Beleg bedeutet | nur nötig, wenn die Größe nicht selbsterklärend ist. Er steht im Detail-Blatt unter der Bedingung; ohne ihn liest sich „+15 Prozentpunkte" wie Elo oder wie Prestige |
+| dort `monat.beiname` | der Beiname fürs Spielerprofil: **Der/Die/Das + Spielertyp** | im Profilkopf stünde der Katalogname, und „Der Endspurt“ beschreibt kein Spielertyp — „Der Ausdauernde“ schon. `tests/disziplinen` verlangt ihn für jede Chronik, höchstens 20 Zeichen, eindeutig, und prüft ihn gegen dieselbe Sprachregel wie Beleg und Bedingung |
 | dort `monat.art`, `monat.klasse`, `monat.aus` | die drei festen Angaben einer Chronik [§C39] | ohne `art` gibt es kein Prestige, ohne `klasse` keinen Seltenheitsbonus und kein Gewicht in der Zelle, ohne `aus` ist die Chronik null Punkte wert. `aus` muss mindestens 1,5 σ betragen, sonst liegt der Beste kaum weiter draußen als der Schnitt — `tests/disziplinen` misst es |
 | dort `monat` | `mind`, `wert`, `ab` und `ev` über `_stWertung` | ohne die vier gibt es keine Vergabe. `mind` sagt, wer gewertet wird, `wert` die Größe (größer ist besser, bei einer Schattenseite steht ein Minus davor), `ab` die Schwelle. Getrennt aufgeschrieben, weil sonst niemand sagen kann, wer knapp daneben liegt: wer die Schwelle reißt, bekam einen leeren Wert, und leere Werte haben keine Reihenfolge. `ab` wird an den echten Partien gemessen, nicht geschätzt: höchstens ein Halter je gewerteten Monat [§C32] |
 | `33-chronik-engine.js` `_seasonTitleCtx` | das Feld, das `monat:` liest | die Monatstafel bleibt leer |
@@ -1415,7 +1425,26 @@ Immer im **selben Commit** wie die Änderung, die sie auslöst:
 | Regel für Agenten ändert sich | §9 |
 | Auszeichnung, Disziplin oder Prestige-Konstante ändert sich | §10 |
 | Monatschronik kommt dazu oder ändert Art, Klasse oder Ausschlag | §6 §C39, §10.2 |
+| Ein Katalogfeld kommt dazu (`beiname`, `zufall`, `leiter`, …) | §10.1/§10.2 als eigene Zeile, **und** eine Zusicherung in `tests/disziplinen`, die es für jeden Eintrag verlangt |
 | Eine Anweisung hier hat sich als falsch erwiesen | die Stelle selbst |
+
+### Was zu einer Änderung immer dazugehört
+
+Eine Änderung ist erst fertig, wenn sie an **allen vier** Stellen steht.
+Fehlt eine, wird die Änderung beim nächsten Mal falsch fortgesetzt — und das
+ist jedes Mal passiert, an dem in dieser Datei ein „vorher war es so" steht.
+
+1. **Im Code**, als Kommentar, der den Fehler benennt, den er verhindert.
+   Nicht was die Zeile tut, sondern warum sie so aussieht (§7).
+2. **In dieser Datei**, an der Stelle, die die Regel trägt: das
+   Gestaltungsgesetz in §6, die Pflichtliste in §10, die Zahl in §2 oder §5.
+   Neue Felder eines Katalogeintrags brauchen eine **eigene Zeile** in
+   §10.1 oder §10.2 — sonst weiß niemand, dass sie zu füllen sind.
+3. **In einer Zusicherung**, die die Regel prüfbar macht, und zwar so, dass
+   sie einmal rot war (§5). Eine Regel ohne Test ist eine Bitte.
+4. **Im Commit**, mit dem, was vorher falsch war (§7).
+
+Was das im Einzelnen auslöst, steht in der Tabelle oben.
 
 ### Wie sie geändert wird
 

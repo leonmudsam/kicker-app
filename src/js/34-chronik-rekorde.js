@@ -668,15 +668,30 @@ function chronicleRang(cid){
 // Der Titel, der im Profil unter dem Namen steht: laufender Saisontitel vor
 // letztem abgeschlossenem. Ehrentitel gibt es bewusst nicht mehr — sie waren
 // nur eine zweite Anzeige derselben Aussage.
+// Der BEINAME einer Chronik: er beschreibt den Spieler, nicht das Ereignis.
+// Im Profilkopf steht eine Pille unter dem Namen, und dort las sich „Der
+// Endspurt" wie eine Überschrift und nicht wie eine Beschreibung — „Der
+// Ausdauernde" schon. Der Katalogname bleibt überall sonst: in der Matrix,
+// auf der Plakette, im Blatt und in der Nachricht geht es um die Wertung,
+// im Profilkopf um den Menschen.
+// Ein eingefrorener Monat kann eine Chronik tragen, die es im heutigen
+// Katalog nicht mehr gibt [§13.3a]; dann bleibt der gespeicherte Name.
+function chronBeiname(t){
+  const d = t && t.titleId && SEASON_TITLE_BY_ID[t.titleId];
+  return (d && d.beiname) || (t && t.name) || '';
+}
+
 function playerTitleBadge(pid){
   const rows = seasonTitleHistory(pid);
   const cur = rows.find(r => r.live && r.title);
-  if(cur) return {kind:'season', name:cur.title.name, ic:cur.title.ic, tone:cur.title.tone,
+  if(cur) return {kind:'season', name:chronBeiname(cur.title), titel:cur.title.name,
+                  ic:cur.title.ic, tone:cur.title.tone,
                   sub:cur.label + ' · läuft', live:true, sid:cur.sid, ev:cur.title.ev};
   for(let i = rows.length - 1; i >= 0; i--){
     if(!rows[i].live && rows[i].title){
       const r = rows[i];
-      return {kind:'season', name:r.title.name, ic:r.title.ic, tone:r.title.tone,
+      return {kind:'season', name:chronBeiname(r.title), titel:r.title.name,
+              ic:r.title.ic, tone:r.title.tone,
               sub:r.label, live:false, sid:r.sid, ev:r.title.ev};
     }
   }
