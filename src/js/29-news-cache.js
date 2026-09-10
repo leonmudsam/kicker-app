@@ -347,7 +347,7 @@ function _consolidateStories(list){
     if(!typ || _OHNE_SPERRE.has(typ)) return null;
     let ids = [];
     try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
-    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titel || '';
+    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titleId || d.titel || '';
     return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
   };
   const _zuletzt = new Map();
@@ -459,7 +459,7 @@ function _consolidateStories(list){
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'insignium_stufe','chronik_erstling']);
+    'insignium_stufe','chronik_erstling','chronik_geholt']);
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -482,6 +482,11 @@ function _consolidateStories(list){
   // Kleingedruckten.
   const _sammelEinzeln = (st, d) => {
     try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return true; } catch(e){}
+    // Eine LEGENDAERE Monatschronik bleibt aus demselben Grund einzeln wie
+    // eine legendaere Auszeichnung: „Auf dem Thron" ist der Grund, warum
+    // jemand die App oeffnet, und steht nicht als vierte Zeile unter dem
+    // Rekord-Ausbau zweier anderer [§C33].
+    if(d.type === 'chronik_geholt' && d.chronKlasse === 'legendaer') return true;
     return d.type === 'badge_unlocked'
         && (d.rarity === 'rare' || d.rarity === 'legendary');
   };
@@ -581,8 +586,13 @@ function _consolidateStories(list){
       // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
       // Liste, die das Blatt darunter noch einmal führte — und bei vier
       // Einträgen war die Karte höher als jede andere im Feed.
+      // Auf einer Sammelkarte steht nur der ERSTE Satz des Kopfs. Der zweite
+      // erzaehlt beim Rekord vom Vorgaenger („Vorher gehoerte der Rekord
+      // Jannik") — ein Detail zu einer von vier Meldungen, und als Karte des
+      // Tages stand es gross im Bild, waehrend die anderen drei nur als
+      // Zeile darunter vorkamen. Der Platz gehoert dem Sammelband.
       desc: istTafel
-        ? kopf.desc + (rest.length
+        ? _ersterSatz(kopf.desc) + (rest.length
             ? ` Und ${_zahlwortDe(rest.length)} ${rest.length === 1
                 ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
             : '')
@@ -592,6 +602,10 @@ function _consolidateStories(list){
       dataRef: {type:'sammel', quelle: istTafel ? 'tafel' : 'spiel',
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
+                // Der Titel des Kopfs, damit das Sammelband ihn auslassen
+                // kann: die Karte IST der Kopf, und er stand darunter noch
+                // einmal als erste Zeile [§C33].
+                kopfTitel: kopf.title || '',
                 // Die Beteiligten je Zeile: die Buendelung haengt an ihnen
                 // [§C33], und im Blatt fuehrt die Zeile damit zu dem, von dem
                 // sie handelt.

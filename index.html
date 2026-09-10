@@ -2346,16 +2346,20 @@
     text-transform:uppercase;max-width:80px;line-height:1.3}
 
   /* Sorte 3 Insignium: die Leiter zeigt den Weg. */
-  .nf-leiter{display:flex;align-items:center;gap:7px;padding:10px 13px;
+  .nf-leiter{display:flex;align-items:center;gap:4px;padding:10px 13px;
     border-top:1px solid var(--line)}
-  .nf-lt-p{width:16px;height:16px;border-radius:50%;flex:0 0 auto;opacity:.28;
-    background:linear-gradient(148deg,#9aa39c,#59635e)}
-  .nf-lt-p.st-schild{background:repeating-conic-gradient(#c3ccc5 0 5deg,#59635e 5deg 11deg)}
-  .nf-lt-p.st-volute{background:conic-gradient(#f7cf4a,#7d6420,#f7cf4a,#7d6420,#f7cf4a)}
-  .nf-lt-p.st-lorbeer{background:repeating-conic-gradient(#f7cf4a 0 8deg,#6d5a1c 8deg 17deg)}
-  .nf-lt-p.st-stern{background:conic-gradient(#fff6d0,#f7cf4a,#fff6d0,#f7cf4a,#fff6d0)}
+  /* Die Leiter zeigt die echten Zeichen [§C30]. Sechzehn Pixel waren fuer
+     einen gefaerbten Punkt gedacht; bei achtundzwanzig blieb vom Schildring
+     ein Ring. Vierzig ist das Maximum, bei dem fuenf Stufen und die Zahl
+     daneben in eine 430-px-Karte passen, und die Untergrenze, ab der Reif,
+     Schildring und Volutenkranz zu unterscheiden sind.
+     Die noch nicht erreichten stehen nicht auf .3 sondern auf .45: bei .3
+     war eine Kontur auf dunklem Grund von nichts zu unterscheiden. */
+  .nf-lt-p{width:40px;height:40px;flex:0 0 auto;opacity:.45;
+    display:grid;place-items:center;border-radius:50%}
+  .nf-lt-p .ins{width:100%;height:100%;display:block}
   .nf-lt-p.hat{opacity:1}
-  .nf-lt-p.jetzt{outline:1.5px solid var(--gold);outline-offset:2px;opacity:1}
+  .nf-lt-p.jetzt{outline:1.5px solid var(--gold);outline-offset:1px;opacity:1}
   .nf-lt-t{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
 
   /* Sorte 4 Held: Wappen gross, drei Zahlen im Fuss. */
@@ -4682,7 +4686,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.25005bc8';
+const BUILD_VERSION='2026.09.10.7181b2bf';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18092,6 +18096,10 @@ const NEWS_LIMITS = {
   // Ein Tag trägt sechs Karten. Gemessen trug ein Spieltag neun, und die
   // schwächsten drei waren ein Elo-Ausschlag, eine Auszeichnung und ein Fun
   // Fact — Zeilen, die niemand vermisst. Breaking zählt nicht mit [§C33].
+  // Ein starker Spieltag verschiebt mehrere Monatschroniken gleichzeitig.
+  // Gemeldet werden die zwei wertvollsten; der Rest steht am Monatsende in
+  // der Monatskarte, die es ohnehin gibt.
+  chronikGeholt: 2,
   proTag: 6,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
@@ -18373,6 +18381,16 @@ function _namenListe(namen){
 
 // Zahlwörter bis vier, darüber die Ziffer. Vier ist die Grenze, weil keine
 // Bündelung im Feed mehr als vier Zeilen trägt [§C33].
+// Der erste Satz eines Textes. Auf einer Sammelkarte gehoert nur er dem
+// Kopf; alles danach ist ein Detail zu einer von vier Meldungen.
+// Abkuerzungen mit Punkt gibt es in diesen Texten nicht, ein Datum wie
+// „29.07." aber schon — deshalb wird nur an einem Punkt getrennt, auf den
+// ein Leerzeichen und ein Grossbuchstabe folgt.
+function _ersterSatz(txt){
+  const s = String(txt || '').trim();
+  const m = s.match(/^([\s\S]*?[.!?])\s+[A-ZÄÖÜ]/);
+  return m ? m[1] : s;
+}
 function _zahlwortDe(n){ return ['', 'ein', 'zwei', 'drei', 'vier'][n] || String(n); }
 
 // Dieselbe Aufzählung, aber für eine Schlagzeile gedeckelt. Über einer Karte,
@@ -19898,19 +19916,127 @@ function _buildStories(){
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronik', e); }
 
+  // ── Eine Monatschronik wechselt den Halter ───────────────────────────
+  // Der ganze laufende Monat kam im Feed nicht vor. Gemessen trug der August
+  // dreizehn Chronik-Eintraege, und im Feed stand dazu keine einzige Karte:
+  // die Monatskarte entsteht erst am 1. fuer den VORmonat. Wer „Auf dem
+  // Thron" holte, erfuhr es nur, wenn er selbst in den Chronik-Tab sah.
+  //
+  // Quelle ist derselbe Zeitschnitt wie bei den Rekorden: der Halterstand vor
+  // dem letzten Spieltag gegen den von heute. Gemeldet wird nur der WECHSEL,
+  // nicht der Stand — ein Halter, der seinen Wert verbessert, hat nichts
+  // getan, genau wie „ausgebaut" beim Liga-Rekord die schwaechste der drei
+  // Meldungen ist.
+  try {
+    const _letzteMs2 = matches.length ? mts(matches[matches.length - 1]) : 0;
+    const _sid = currentSeason().id;
+    if(_letzteMs2 && typeof seasonTitleHalter === 'function'){
+      const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
+      const _jetztH = seasonTitleHalter(_sid);
+      const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
+      const _meldungen = [];
+      SEASON_TITLES.forEach(t => {
+        const n = _jetztH[t.id];
+        if(!n) return;
+        // Schattenseiten meldet der Feed nicht — die Liga liest ihn
+        // gemeinsam [§C33]. Dieselbe Regel wie bei den Rekorden.
+        if(t.kunst === 'schatten') return;
+        const a = _vorherH[t.id];
+        const neuKey = n.pids.join(',');
+        // Sortiert verglichen: dieselben Halter in anderer Reihenfolge sind
+        // kein Wechsel [§C33].
+        if(a && a.pids.join(',') === neuKey) return;
+        const punkte = (typeof chronikPunkte === 'function') ? chronikPunkte(t.id) : 0;
+        const artikel = t.klasse === 'legendaer' ? 'Eine legendäre' :
+                        t.klasse === 'selten' ? 'Eine seltene' : 'Eine besondere';
+        // Vier Faelle, vier Verben. „Julian holt ‚Der Nachzuegler'. Vorher
+        // hielten sie Julian, Martin und Maxi" stand da, als es nur eines
+        // gab: er war schon Mithalter, und aus drei Haltern wurde einer.
+        const alt = (a && a.pids) || [];
+        const drin = id => alt.indexOf(id) >= 0;
+        const neuLeute = n.pids.filter(id => !drin(id));
+        const art = !alt.length ? 'erstmals'
+                  : !neuLeute.length ? 'allein'          // das Feld ist enger geworden
+                  : (alt.every(id => n.pids.indexOf(id) >= 0) ? 'dazu' : 'uebernommen');
+        // Die Schlagzeile nennt die, um die es geht [§C33]: beim Dazukommen
+        // sind das die Neuen, sonst alle Halter.
+        const wer = art === 'dazu' ? neuLeute : n.pids;
+        const namen = _namenKurz(wer.map(nameOf));
+        const mz = wer.length > 1;
+        const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}"`
+                    : art === 'allein'    ? `${namen} ${mz ? 'halten' : 'hält'} „${t.name}" jetzt allein`
+                    : art === 'dazu'      ? `${namen} ${mz ? 'ziehen' : 'zieht'} bei „${t.name}" gleich`
+                    : `${namen} ${mz ? 'übernehmen' : 'übernimmt'} „${t.name}"`;
+        const nachsatz = art === 'uebernommen'
+            ? ` Vorher ${alt.length > 1 ? 'hielten' : 'hielt'} sie ${_namenKurz(alt.map(nameOf))}.`
+          : art === 'dazu'
+            ? ` Geteilt mit ${_namenKurz(alt.map(nameOf))}.`
+          : art === 'allein'
+            // Nicht „Vorher zu 3. geteilt": eine Ordnungszahl mitten im Satz
+            // liest sich als Satzende, und danach ging es klein weiter. Die
+            // Karte nennt ohnehin lieber Namen als Zahlen [§C33].
+            ? ` Vorher ${_namenKurz(alt.filter(id => n.pids.indexOf(id) < 0).map(nameOf))} auch.`
+            : '';
+        _meldungen.push({t, n, a, punkte, art,
+          title: titel,
+          // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
+          // dieselbe Zahl untereinander sagt nichts Neues [§C33].
+          desc: (n.ev ? _evSatz(n.ev) + '. ' : '')
+              + `${artikel} Chronik.` + nachsatz,
+          klasse: t.klasse});
+      });
+      // Die wertvollsten zuerst, dann greift der Deckel.
+      _meldungen.sort((x, y) => y.punkte - x.punkte);
+      _meldungen.slice(0, NEWS_LIMITS.chronikGeholt).forEach(m => {
+        stories.push({
+          // Die ID traegt Chronik, Monat und die sortierten Halter. Damit ist
+          // sie stabil, solange derselbe sie haelt, und eine Uebernahme
+          // bekommt eine eigene.
+          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}`,
+          cat: 'tafel',
+          ic: m.t.ic,
+          title: m.title,
+          desc: m.desc,
+          when: _letzteMs2,
+          // Ueber der Insignium-Stufe, unter dem uebernommenen Liga-Rekord:
+          // sie ueberlebt damit den Tagesdeckel, ohne die Ewige Tafel zu
+          // ueberstimmen [§C33].
+          prio: 80,
+          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
+                    playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
+                    ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
+                    chronArt:m.t.kunst, aus:m.t.aus, punkte:m.punkte}
+        });
+      });
+    }
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronget', e); }
+
   // ── Eine neue Stufe am Insignium ─────────────────────────────────────
   // Es gibt keinen „Stand von gestern" fürs Prestige — ein zweiter voller
   // Lauf wäre zu teuer. Das Gedächtnis ist stattdessen der Feed selbst: die
   // Story-ID trägt Spieler und Stufe, und persistierte Stories werden nie
   // doppelt eingefügt. Gemeldet wird nur, wer die Schwelle GERADE erst
-  // überschritten hat (weniger als ein Viertel darüber) — sonst stünden
-  // beim ersten Lauf alle zwölf Stufen auf einmal im Feed.
+  // überschritten hat — sonst stünden beim ersten Lauf alle zwölf Stufen
+  // auf einmal im Feed.
+  //
+  // „Gerade erst" war ein Viertel ÜBER der Schwelle, und das war zweimal
+  // falsch. Erstens hing das Fenster an der Höhe der Schwelle statt an der
+  // Strecke bis zur nächsten: am Schildring waren es 60 Punkte, am
+  // Volutenkranz 180. Zweitens ist eine einzige legendäre Chronik 140 Punkte
+  // wert [§C39] — ein Fenster, das schmaler ist als der kleinste Schritt,
+  // wird übersprungen. Gemessen meldete der Feed danach KEINE Stufe mehr,
+  // weil der volle Katalog jeden Spieler weit über sein Fenster hob.
+  // Jetzt: das erste Viertel der Strecke zur nächsten Stufe, mindestens aber
+  // so breit wie der größte Einzelgewinn.
+  const INS_SPRUNG = 150;
   try {
     (players || []).filter(p => p && !p.hidden).forEach(p => {
       const P = prestigeOf(p.id);
       if(!P || P.stufe < 1) return;
       const schwelle = INSIGNIEN[P.stufe].min;
-      if(P.punkte >= schwelle * 1.25) return;
+      const naechste = INSIGNIEN[P.stufe + 1];
+      const spanne = naechste ? (naechste.min - schwelle) : schwelle;
+      if(P.punkte >= schwelle + Math.max(spanne * 0.25, INS_SPRUNG)) return;
       const oben = P.stufe >= 3;   // Lorbeerreif und Ordensstern
       stories.push({
         id: 'ins_' + p.id + '_' + INSIGNIEN[P.stufe].key,
@@ -21594,7 +21720,7 @@ function _consolidateStories(list){
     if(!typ || _OHNE_SPERRE.has(typ)) return null;
     let ids = [];
     try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
-    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titel || '';
+    const sache = d.rekordId || d.badgeId || d.disziplinId || d.titleId || d.titel || '';
     return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
   };
   const _zuletzt = new Map();
@@ -21706,7 +21832,7 @@ function _consolidateStories(list){
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
-    'insignium_stufe','chronik_erstling']);
+    'insignium_stufe','chronik_erstling','chronik_geholt']);
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
@@ -21729,6 +21855,11 @@ function _consolidateStories(list){
   // Kleingedruckten.
   const _sammelEinzeln = (st, d) => {
     try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return true; } catch(e){}
+    // Eine LEGENDAERE Monatschronik bleibt aus demselben Grund einzeln wie
+    // eine legendaere Auszeichnung: „Auf dem Thron" ist der Grund, warum
+    // jemand die App oeffnet, und steht nicht als vierte Zeile unter dem
+    // Rekord-Ausbau zweier anderer [§C33].
+    if(d.type === 'chronik_geholt' && d.chronKlasse === 'legendaer') return true;
     return d.type === 'badge_unlocked'
         && (d.rarity === 'rare' || d.rarity === 'legendary');
   };
@@ -21828,8 +21959,13 @@ function _consolidateStories(list){
       // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
       // Liste, die das Blatt darunter noch einmal führte — und bei vier
       // Einträgen war die Karte höher als jede andere im Feed.
+      // Auf einer Sammelkarte steht nur der ERSTE Satz des Kopfs. Der zweite
+      // erzaehlt beim Rekord vom Vorgaenger („Vorher gehoerte der Rekord
+      // Jannik") — ein Detail zu einer von vier Meldungen, und als Karte des
+      // Tages stand es gross im Bild, waehrend die anderen drei nur als
+      // Zeile darunter vorkamen. Der Platz gehoert dem Sammelband.
       desc: istTafel
-        ? kopf.desc + (rest.length
+        ? _ersterSatz(kopf.desc) + (rest.length
             ? ` Und ${_zahlwortDe(rest.length)} ${rest.length === 1
                 ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
             : '')
@@ -21839,6 +21975,10 @@ function _consolidateStories(list){
       dataRef: {type:'sammel', quelle: istTafel ? 'tafel' : 'spiel',
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
+                // Der Titel des Kopfs, damit das Sammelband ihn auslassen
+                // kann: die Karte IST der Kopf, und er stand darunter noch
+                // einmal als erste Zeile [§C33].
+                kopfTitel: kopf.title || '',
                 // Die Beteiligten je Zeile: die Buendelung haengt an ihnen
                 // [§C33], und im Blatt fuehrt die Zeile damit zu dem, von dem
                 // sie handelt.
@@ -22558,7 +22698,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
   // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, s.title) : '';
+    ? _newsSammelBand(d.teile, [s.title, d.kopfTitel]) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -22803,8 +22943,16 @@ function _newsSerienBand(laenge, verloren){
 // darunter waere die Wiederholung, die §C33 gerade verhindert.
 function _newsSammelBand(teile, kopfTitel){
   const alle = Array.isArray(teile) ? teile : [];
-  const kt = String(kopfTitel || '').trim();
-  const rest = alle.filter(t => String(t.titel || '').trim() !== kt);
+  // Ausgelassen wird, was die Karte oben schon IST — und das sind zwei
+  // Titel: der der Karte und der des Kopfs. Bei einer Tafel-Sammelkarte
+  // sind sie verschieden („Henry, Martin und zwei weitere bewegen die
+  // Ewige Tafel" gegen „Henry uebernimmt ‚Der Gigantentoeter'"), und
+  // verglichen wurde nur der erste. Damit stand der Kopf als erste Zeile
+  // des Bandes noch einmal da, sein Text darueber, und von der vierten
+  // Meldung blieb „und 1 weitere".
+  const kt = (Array.isArray(kopfTitel) ? kopfTitel : [kopfTitel])
+    .map(x => String(x || '').trim()).filter(Boolean);
+  const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
   if(!rest.length) return '';
   return `<div class="nf-sam">${rest.slice(0, 3).map(t =>
     `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
@@ -22831,6 +22979,11 @@ function _newsSpielZahlen(s){
 // vom Satz darüber.
 function _newsTafelWert(s){
   const d = s.dataRef || {};
+  // Bei einer Chronik ist das Prestige die Aussage: der Beleg steht im Satz,
+  // die Klasse dahinter, und was sie WERT ist, sagt sonst nichts auf der
+  // Karte. Die erste Zahl des Belegs waere „4 von 5" gewesen — richtig, aber
+  // ohne Bezug.
+  if(d.type === 'chronik_geholt') return {v: '+' + (d.punkte || 0), l:'Prestige'};
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
   const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
@@ -22927,8 +23080,23 @@ function _newsLeiter(pid){
     const P = prestigeOf(pid);
     if(!P) return '';
     const stufe = P.stufe || 0;
-    const punkte = INSIGNIEN.map((ins, i) =>
-      `<span class="nf-lt-p st-${ins.key}${i <= stufe ? ' hat' : ''}${i === stufe ? ' jetzt' : ''}"></span>`).join('');
+    // Die ECHTEN fünf Zeichen, nicht fünf gefärbte Punkte. Vorher stand hier
+    // ein CSS-Kreis je Stufe (`repeating-conic-gradient`), und der hatte mit
+    // dem Zeichen, das ein Spieler trägt, nichts zu tun: fünf Rosetten in
+    // fünf Farben, wo Reif, Schildring, Volutenkranz, Lorbeerreif und
+    // Ordensstern stehen müssten. `insigniumStufeSvg` trägt seine Verläufe
+    // selbst [§C30] und funktioniert deshalb auch im Blatt.
+    // Der Grad ist der eigene nur an der eigenen Stufe; die übrigen stehen
+    // im ersten Grad, sonst behauptete die Leiter einen Ausbau, den es an
+    // dieser Stufe nie gab.
+    const rangLabel = (getPlayerRank(pid) || {}).label;
+    const punkte = INSIGNIEN.map((ins, i) => {
+      let z = '';
+      try { z = insigniumStufeSvg(ins.key, rangLabel,
+                  i === stufe ? (P.zacken || 0) : 0,
+                  i === stufe ? (P.grad || 0) : 0) || ''; } catch(e){ z = ''; }
+      return `<span class="nf-lt-p${i <= stufe ? ' hat' : ''}${i === stufe ? ' jetzt' : ''}">${z}</span>`;
+    }).join('');
     const rest = P.naechste ? `${P.punkte} / ${P.naechste.min}` : `${P.punkte}`;
     return `<div class="nf-leiter">${punkte}<span class="nf-lt-t">${esc(rest)}</span></div>`;
   } catch(e){ return ''; }
@@ -23031,6 +23199,16 @@ function _newsTagBilanz(dayKey){
 function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || items.length < 2) return null;
   if(!_newsTagBilanz(dayKey)) return null;   // an diesem Tag wurde nicht gespielt
+  // Erst wenn keine Partie mehr dazukommen kann. Vorher wurde die Karte des
+  // Tages zwanzig Minuten nach dem ersten Spiel vergeben: der Rekord, der
+  // gerade wechselte, war die einzige Karte des Tages und damit automatisch
+  // die staerkste — waehrend der Spieltag noch lief und der Spieler des
+  // Tages noch gar nicht feststand. 23:59 ist derselbe Zeitpunkt, an dem
+  // auch der Spieler des Tages erscheint, und die spaeteste Partie der Liga
+  // hat um 18 Uhr angefangen [§C33].
+  const schluss = new Date(dayKey + 'T00:00:00');
+  schluss.setHours(23, 59, 0, 0);
+  if(Date.now() < schluss.getTime()) return null;
   const OHNE = new Set(['ambient', 'dry_spell', 'season_endgame', 'quiet_week', 'season_start']);
   const kandidaten = items.filter(x => !OHNE.has((x.dataRef || {}).type));
   if(!kandidaten.length) return null;
@@ -23588,6 +23766,32 @@ function _newsDetailMitte(s){
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen
       // deshalb die Traeger, nicht ein einzelner Eintrag.
+      // Eine Monatschronik hat den Halter gewechselt. Das Blatt zeigt, was
+      // die Chronik wert ist (dieselbe Zahlenreihe wie im Awards-Tab [§C27]),
+      // die Bedingung, das Podest des Monats und den Weg in die Tafel.
+      case 'chronik_geholt': {
+        const def = (typeof SEASON_TITLE_BY_ID !== 'undefined')
+          ? SEASON_TITLE_BY_ID[d.titleId] : null;
+        let podest = '', erfuellt = 0;
+        try {
+          const C = _seasonTitleCtx(d.sid);
+          const r = def && def.pick ? def.pick(C, new Set()) : null;
+          if(r && r.rang && r.rang.length){
+            erfuellt = r.rang.length;
+            podest = _chronPodestHtml(r.rang.map(pid => {
+              let w = ''; try { w = r.evFuer ? r.evFuer(pid) : ''; } catch(e){}
+              return {pid, wert:_chronKurz(w)};
+            }));
+          }
+        } catch(e){}
+        // Die Bedingung nur, wenn sie nicht schon oben steht [§C33 `_ndNeu`].
+        const cond = (def && def.cond && _ndNeu(def.cond)) ? def.cond : '';
+        return (def ? _chronFaktenHtml(def) : '')
+          + (cond ? `<div class="tnote">${esc(cond)}</div>` : '')
+          + (podest ? `<div class="nd-section">Dieser Monat</div>${podest}` : '')
+          + (erfuellt > 1 ? `<div class="tnote">${erfuellt} erfüllen die Bedingung in diesem Monat.</div>` : '')
+          + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
+      }
       case 'chronik_monat': {
         const ids = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
         // Neben dem Namen steht die Wertung, die er in diesem Monat haelt —
@@ -24469,6 +24673,47 @@ const _stNachPleite = p => p.partien.filter((s, i) => i > 0 && !p.partien[i-1].w
 
 // Die beiden Haelften eines Monats, geteilt an der Mitte der eigenen
 // Spieltage. „Die Steigerung" vergleicht sie miteinander.
+// Die Streuung einer Reihe von Zahlen. „Der Gleichmut" fragt nicht nach der
+// Hoehe der Tordifferenz, sondern danach, wie weit sie um ihr eigenes Mittel
+// schwankt — dafuer reicht kein Mittelwert.
+const _stStreu = a => {
+  const m = _stMittel(a);
+  return Math.sqrt(_stMittel(a.map(x => (x - m) * (x - m))));
+};
+// Die Siegquote einer Teilmenge von Partien. Stand achtmal als
+// `a.filter(s=>s.win).length/a.length` in der Datei.
+const _stQuote = a => a.length ? a.filter(s => s.win).length / a.length : 0;
+// Wochen mit genug Partien fuer eine Wahrscheinlichkeitsrechnung. `_stWochen`
+// nimmt fuenf; unter sechs ist eine ganze Woche kaum unwahrscheinlich zu
+// nennen, weil schon vier Siege in Folge eine Woche fuellen.
+const _stWochGross = p => Object.values(p.wochGrp).filter(a => a.length >= 6);
+// Die ersten drei Partien eines Spieltags gegen alles danach. Der Vergleich
+// laeuft innerhalb desselben Tages, damit nicht zwei verschiedene Wochen
+// gegeneinander stehen.
+function _stTagBlock(p){
+  const frueh = [], spaet = [];
+  Object.values(p.tagGrp).forEach(a => {
+    a.forEach((s, i) => (i < 3 ? frueh : spaet).push(s));
+  });
+  return {frueh, spaet};
+}
+// Die Partie direkt nach ZWEI Pleiten am Stueck. Nach einer fragt schon
+// „Die Antwort"; zwei sind die Stelle, an der ein Tag kippt.
+const _stNachZwei = p => p.partien.filter((s, i) =>
+  i >= 2 && !p.partien[i-1].win && !p.partien[i-2].win);
+// Die letzte Partie jeder Kalenderwoche, in der ueberhaupt gespielt wurde.
+const _stWochLetzte = p => Object.values(p.wochGrp)
+  .filter(a => a.length >= 3).map(a => a[a.length - 1]);
+// Partien als klarer Favorit und als Aussenseiter. Die Grenzen sind
+// dieselben wie im Rest des Katalogs.
+const _stRollen = p => ({
+  fav: p.partien.filter(s => s.exp > 0.55),
+  aus: p.partien.filter(s => s.exp < 0.45)
+});
+// Partien, die mit genau einem Tor Unterschied endeten: der letzte Ball hat
+// entschieden. `_stEng` nimmt zwei — das ist eine andere Frage.
+const _stEinTor = p => p.partien.filter(s => Math.abs(s.gf - s.ga) === 1);
+
 function _stHaelften(p){
   const tage = Object.keys(p.tagGrp).sort();
   if(tage.length < 4) return null;
@@ -24532,6 +24777,7 @@ const DISZIPLINEN = [
 
   {id:'spotless', name:'Der makellose Tag', short:'Makellos', ic:'trophyDay', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Makellose',
       art:'koennen',
       klasse:'legendaer', aus:3.38,
       wie:'Der Anteil der eigenen Spieltage, an denen keine Partie verloren ging. Ein Tag zählt ab drei Partien, damit ein Kurzbesuch nicht reicht.',
@@ -24737,6 +24983,7 @@ const DISZIPLINEN = [
   {id:'evenkeel', name:'Die Punktlandung', short:'Landung', ic:'scaleBalance', tone:'gold',
     art:'ereignis', zufall:'fund',
     monat:{
+      beiname:'Der Ausbalancierte',
       art:'konstanz',
       klasse:'selten', aus:2.97,
       wie:'Erzielte und kassierte Tore über den ganzen Monat. Gemessen logarithmisch, weil die Frage „wie nah an null" ist: zwischen zwei und zwanzig Toren Unterschied liegt mehr als zwischen zwanzig und vierzig.',
@@ -24785,6 +25032,7 @@ const DISZIPLINEN = [
 
   {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'dropTriple', tone:'red', art:'schatten',
     monat:{
+      beiname:'Der Gestrandete',
       art:'schatten',
       art:'schatten',
       klasse:'legendaer', aus:2.39,
@@ -24834,6 +25082,7 @@ const DISZIPLINEN = [
 
   {id:'tagesregent', name:'Der Tagesregent', short:'Regent', ic:'crownPlus', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Tagesherrscher',
       art:'koennen',
       klasse:'legendaer', aus:2.6,
       wie:'Player of the Day ist, wer an einem Spieltag die beste Bilanz hat. Gezählt wird der Anteil an den eigenen Spieltagen.',
@@ -24846,6 +25095,7 @@ const DISZIPLINEN = [
 
   {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'temple', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Unantastbare',
       art:'koennen',
       klasse:'legendaer', aus:2.64,
       wie:'Gemessen wird der schlechteste Platz, den die Liga-Tabelle am Ende eines Spieltags zeigte. Gezählt wird jeder Spieltag des Monats, auch einer ohne eigene Partie: wer aussetzt, kann überholt werden.',
@@ -24858,6 +25108,7 @@ const DISZIPLINEN = [
 
   {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'shieldCheck', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Furchtlose',
       art:'koennen',
       klasse:'legendaer', aus:2.77,
       wie:'Nicht der Lieblingsgegner zählt, sondern der unangenehmste. Gegen wen läuft es am schlechtesten, und wie schlecht ist das noch.',
@@ -24871,6 +25122,7 @@ const DISZIPLINEN = [
 
   {id:'wochenkrone', name:'Die Wochenkrone', short:'Wochenkron', ic:'crownFlame', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Dauerregent',
       art:'koennen',
       // Die haerteste Chronik des Katalogs. Gemessen liegt die Schwelle
       // sechs Standardabweichungen ueber dem Feld — der beste Wert der
@@ -24889,6 +25141,7 @@ const DISZIPLINEN = [
 
   {id:'traumquote', name:'Der Traummonat', short:'Traummonat', ic:'crown', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Überlegene',
       art:'koennen',
       klasse:'legendaer', aus:2.5,
       wie:'Die blanke Siegquote. Sie steht hier als das eine Ziel, das keine Erklärung braucht.',
@@ -24901,6 +25154,7 @@ const DISZIPLINEN = [
 
   {id:'nachzuegler', name:'Der Nachzügler', short:'Nachzügler', ic:'trendUp', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Aufholer',
       art:'koennen',
       klasse:'selten', aus:2.07,
       wie:'Nicht die Monatshälften, sondern die Ränder. Dort zeigt sich eine Wende am deutlichsten.',
@@ -24913,6 +25167,7 @@ const DISZIPLINEN = [
 
   {id:'schattenmann', name:'Der Schattenmann', short:'Zuspieler', ic:'users', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Wegbereiter',
       art:'koennen',
       klasse:'legendaer', aus:1.95,
       wie:'Für jeden Partner wird die gemeinsame Quote mit dessen Quote ohne diesen Spieler verglichen.',
@@ -24930,6 +25185,7 @@ const DISZIPLINEN = [
 
   {id:'zunull', name:'Die weiße Weste', short:'Weste', ic:'snowflake', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Saubermann',
       art:'koennen',
       klasse:'besonders', aus:1.89,
       wie:'Ein Sieg zu null oder zu eins ist die seltenste Art zu gewinnen.',
@@ -24942,6 +25198,7 @@ const DISZIPLINEN = [
 
   {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'duo', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Verlässliche',
       art:'koennen',
       klasse:'besonders', aus:1.89,
       wie:'Nicht der beste Partner zählt, sondern der schlechteste. Es geht darum, mit wem auch immer zu bestehen.',
@@ -24957,6 +25214,7 @@ const DISZIPLINEN = [
 
   {id:'bollwerk', name:'Das Bollwerk', short:'Bollwerk', ic:'dominator', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Unüberwindliche',
       art:'koennen',
       klasse:'selten', aus:1.87,
       wie:'Die Gegentore je Partie gegen den Schnitt aller, die in diesem Monat gespielt haben.',
@@ -24969,6 +25227,7 @@ const DISZIPLINEN = [
 
   {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Entscheider',
       art:'koennen',
       klasse:'selten', aus:1.81,
       wie:'Offen heißt: die Rechnung gab beiden Teams zwischen 45 und 55 Prozent. Verglichen wird die Quote darin mit der eigenen Gesamtquote.',
@@ -24982,6 +25241,7 @@ const DISZIPLINEN = [
 
   {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'godRay', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Ausreißer',
       art:'koennen',
       klasse:'legendaer', aus:1.81,
       wie:'Die Elo-Erwartung auf einen Tag zusammengezogen. Gemessen wird der Zehnerlogarithmus, weil ein Tag mit einem Prozent Wahrscheinlichkeit zehnmal unwahrscheinlicher ist als einer mit zehn.',
@@ -24996,6 +25256,7 @@ const DISZIPLINEN = [
 
   {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rocket', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Ausdauernde',
       art:'koennen',
       klasse:'selten', aus:1.79,
       wie:'Die jeweils letzte Partie jedes eigenen Spieltags. Wer sie gewinnt, geht im Plus nach Hause.',
@@ -25008,6 +25269,7 @@ const DISZIPLINEN = [
 
   {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'overtake', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Verwandelte',
       art:'koennen',
       klasse:'selten', aus:1.74,
       wie:'Zwei aufeinanderfolgende eigene Spieltage nebeneinander. Gesucht ist der größte Sprung nach oben.',
@@ -25024,6 +25286,7 @@ const DISZIPLINEN = [
 
   {id:'breitenwirkung', name:'Gegen jeden bestanden', short:'Gegen alle', ic:'target', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Standhafte',
       art:'koennen',
       klasse:'besonders', aus:1.73,
       wie:'Regelmäßig heißt mindestens drei Duelle im Monat. Gemessen wird der Anteil, nicht die Anzahl, sonst gewinnt wer am meisten spielt.',
@@ -25038,6 +25301,7 @@ const DISZIPLINEN = [
 
   {id:'kaltstart', name:'Der Kaltstart', short:'Kaltstart', ic:'sunrise', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Frühstarter',
       art:'koennen',
       klasse:'selten', aus:1.73,
       wie:'Die jeweils erste Partie jedes eigenen Spieltags. Ohne Aufwärmen.',
@@ -25050,6 +25314,7 @@ const DISZIPLINEN = [
 
   {id:'aufholjagd', name:'Die Antwort', short:'Antwort', ic:'rematch', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Trotzige',
       art:'koennen',
       klasse:'besonders', aus:1.71,
       wie:'Nur die Partien, die auf eine Pleite folgen. Gemessen wird der Anteil, nicht die längste Serie, sonst gewinnt wer am meisten spielt.',
@@ -25062,6 +25327,7 @@ const DISZIPLINEN = [
 
   {id:'favschreck', name:'Der Favoritenschreck', short:'Schreck', ic:'giantSlayer', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Favoritenschreck',
       art:'koennen',
       klasse:'selten', aus:1.7,
       wie:'Klarer Favorit heißt: das gegnerische Team hatte vorher mindestens 65 Prozent Siegchance.',
@@ -25074,6 +25340,7 @@ const DISZIPLINEN = [
 
   {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'chartUp', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Entfesselte',
       art:'koennen',
       klasse:'legendaer', aus:1.67,
       wie:'Jeder Fünferblock des Monats wird gegen die eigene Monatsquote gestellt. Gesucht ist der beste.',
@@ -25086,6 +25353,7 @@ const DISZIPLINEN = [
 
   {id:'unmoeglich', name:'Der Unmögliche Monat', short:'Unmöglich', ic:'diamond', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Unmögliche',
       art:'koennen',
       klasse:'legendaer', aus:1.57,
       wie:'Die Rechnung gab vor jeder Partie eine Siegchance. Daraus folgt, wie wahrscheinlich der ganze Monat so oder besser ausgeht.',
@@ -25098,6 +25366,7 @@ const DISZIPLINEN = [
 
   {id:'schwachstelle', name:'Ohne Schwachstelle', short:'Lückenlos', ic:'kingClass', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Lückenlose',
       art:'koennen',
       klasse:'legendaer', aus:1.57,
       wie:'Fünf Teilquoten desselben Monats, und gewertet wird die schwächste davon. Der Katalog belohnt sonst überall einen Ausschlag; hier zählt, dass es nirgends einen Einbruch gibt.',
@@ -25112,6 +25381,7 @@ const DISZIPLINEN = [
 
   {id:'deutlich', name:'Der Deutliche', short:'Deutlich', ic:'plusMinus', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Deutliche',
       art:'koennen',
       klasse:'selten', aus:1.54,
       wie:'Die eigene Tordifferenz je Partie. Sie sagt mehr als die Siegquote, weil auch die Höhe zählt.',
@@ -25124,6 +25394,7 @@ const DISZIPLINEN = [
 
   {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'climb', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Steigende',
       art:'koennen',
       klasse:'selten', aus:1.53,
       wie:'Die Spieltage des Monats werden in der Mitte geteilt und die beiden Quoten desselben Spielers verglichen.',
@@ -25136,6 +25407,7 @@ const DISZIPLINEN = [
 
   {id:'schwachewoche', name:'Ohne schwache Woche', short:'Durchweg', ic:'weekly', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Beständige',
       art:'konstanz',
       klasse:'selten', aus:2.68,
       wie:'Der Monat wird in Kalenderwochen geteilt, und gewertet wird die schwächste gegen den eigenen Monatsschnitt. Nicht das Niveau zählt, sondern dass es nie einbrach. Gemessen logarithmisch, weil die Frage „wie nah an null" ist.',
@@ -25150,6 +25422,7 @@ const DISZIPLINEN = [
 
   {id:'punktgenau2', name:'Der Erwartungstreue', short:'Erwartung', ic:'stopwatch', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Erwartungstreue',
       art:'konstanz',
       klasse:'selten', aus:2.46,
       wie:'Der Abstand zwischen der eigenen Quote und dem, was die Rechnung vorher auswies. Gemessen wird logarithmisch, weil die Frage „wie nah an null" ist: zwischen einem halben und drei Prozentpunkten liegt mehr als zwischen drei und achtzehn.',
@@ -25162,6 +25435,7 @@ const DISZIPLINEN = [
 
   {id:'schwaechstertag', name:'Der schwächste Tag', short:'Jeder Tag', ic:'calendar', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Grundsolide',
       art:'konstanz',
       klasse:'legendaer', aus:2.4,
       wie:'Nicht der beste Tag zählt, sondern der schlechteste. Ein Ausrutscher genügt, um die Chronik zu verlieren.',
@@ -25175,6 +25449,7 @@ const DISZIPLINEN = [
 
   {id:'metronom', name:'Das Metronom', short:'Metronom', ic:'clock', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Taktgeber',
       art:'konstanz',
       klasse:'selten', aus:2.25,
       wie:'Für jeden Spieltag steht eine Tagesquote. Gemessen wird die Spanne dazwischen.',
@@ -25188,6 +25463,7 @@ const DISZIPLINEN = [
 
   {id:'beidseitig', name:'Der Beidfüßige', short:'Beidfüßig', ic:'sort', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Beidfüßige',
       art:'konstanz',
       klasse:'selten', aus:2.01,
       wie:'Die Quote im Sturm und die in der Abwehr, beide gegen die eigene Gesamtquote. Gemessen logarithmisch: nah an null ist die Aussage, und ein halber Prozentpunkt ist etwas anderes als fünf.',
@@ -25204,6 +25480,7 @@ const DISZIPLINEN = [
 
   {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'thumbsUp', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Gefestigte',
       art:'konstanz',
       klasse:'besonders', aus:1.64,
       wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen.',
@@ -25214,8 +25491,138 @@ const DISZIPLINEN = [
         1,
         p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
 
+  // ── Zweite Runde: neun Chroniken mehr [§C39] ─────────────────────
+  // Alle an den echten Partien kalibriert. Was hier nicht steht, hat eine
+  // der beiden Regeln gerissen: die Schwelle liess sich nicht 1,5 σ
+  // hinausschieben, oder der Wert hing an der Spielzahl. „Die Sammlung"
+  // (wie viele verschiedene Ergebnisse) korrelierte mit −0,91 zur
+  // Spielzahl — wer zwoelf Partien spielt, hat zwoelf verschiedene
+  // Ergebnisse —, „Der Tag gegen die Rechnung" mit +0,56.
+  {id:'wochwunder', name:'Die Woche gegen die Rechnung', short:'Wunder', ic:'underdog', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Wundertäter',
+      art:'koennen',
+      klasse:'legendaer', aus:2.79,
+      wie:'Gerechnet wird die Wahrscheinlichkeit, in dieser Woche so viele Siege oder mehr zu holen. Partie für Partie aus der Siegchance, die vor dem Anpfiff stand.',
+      cond:'Eine Kalenderwoche, die die Elo-Rechnung mit höchstens 0,5 % erwartet hat, ab 6 Partien in dieser Woche',
+      ...(_stWertung(
+        p=>_stWochGross(p).length>=1,
+        p=>-Math.log10(Math.max(1e-6, Math.min(..._stWochGross(p)
+             .map(a=>_stPBinom(a.map(s=>s.exp), a.filter(s=>s.win).length))))),
+        -Math.log10(0.005),
+        (p,v)=>`Eine Woche, die mit ${(Math.pow(10,-v)*100).toFixed(1)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
+
+  {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'weight', tone:'blue', art:'leistung',
+    monat:{
+      beiname:'Der Gleichmütige',
+      art:'konstanz',
+      klasse:'legendaer', aus:3.20,
+      wie:'Nicht wie hoch gewonnen wird, sondern wie gleichmäßig. Wer jede Partie mit zwei Toren Unterschied beendet, steht vor dem, der 10:0 und 0:10 abwechselt.',
+      cond:'Die Tordifferenz jeder Partie bleibt im Schnitt höchstens 3,0 Tore vom eigenen Mittel entfernt',
+      ...(_stWertung(
+        p=>p.games>=TITLE_MIN_GAMES,
+        p=>-_stStreu(p.partien.map(s=>s.gf-s.ga)),
+        -3.0,
+        (p,v)=>`${(-v).toFixed(1)} Tore Streuung um ${(p.gd/p.games>=0?'+':'')}${(p.gd/p.games).toFixed(1)} im Schnitt`))}},
+
+  {id:'zweiteluft', name:'Die zweite Luft', short:'Luft', ic:'flameDouble', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Spätzünder',
+      art:'koennen',
+      klasse:'legendaer', aus:2.11,
+      wie:'Der Vergleich läuft innerhalb der eigenen Spieltage: dieselben Gegner, dieselbe Woche, nur später am Tag.',
+      cond:'Ab der vierten Partie eines Spieltags mindestens 40 Prozentpunkte stärker als in den ersten drei, ab 5 Partien in jedem Block',
+      ...(_stWertung(
+        p=>_stTagBlock(p).frueh.length>=ST_TEIL && _stTagBlock(p).spaet.length>=ST_TEIL,
+        p=>{const b=_stTagBlock(p); return _stQuote(b.spaet)-_stQuote(b.frueh);},
+        0.40,
+        (p)=>{const b=_stTagBlock(p);
+          return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`;}))}},
+
+  {id:'auferstehung', name:'Die Auferstehung', short:'Rückkehr', ic:'trophyCheck', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Unbeugsame',
+      art:'koennen',
+      klasse:'legendaer', aus:2.14,
+      wie:'Nach einer Pleite fragt „Die Antwort". Zwei am Stück sind die Stelle, an der ein Tag kippt.',
+      cond:'Jede Partie nach zwei Pleiten am Stück gewonnen, ab 5 solchen Gelegenheiten',
+      ...(_stWertung(
+        p=>_stNachZwei(p).length>=ST_TEIL,
+        p=>_stQuote(_stNachZwei(p)),
+        1,
+        (p)=>{const a=_stNachZwei(p);
+          return `${a.filter(s=>s.win).length} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
+
+  {id:'nulldiaet', name:'Die Nulldiät', short:'Nulldiät', ic:'egg', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Zugeknöpfte',
+      art:'koennen',
+      klasse:'selten', aus:2.31,
+      wie:'Gezählt wird der Anteil, nicht die Anzahl. Ein Spiel geht auf zehn, drei Gegentore sind eine geschlossene Partie.',
+      cond:'Mindestens 20 % der Partien mit höchstens drei Gegentoren',
+      ...(_stWertung(
+        p=>p.games>=TITLE_MIN_GAMES,
+        p=>p.partien.filter(s=>s.ga<=3).length/p.games,
+        0.20,
+        (p,v)=>`${p.partien.filter(s=>s.ga<=3).length} von ${p.games} Partien mit höchstens 3 Gegentoren · ${pct(v)} %`))}},
+
+  {id:'serienbrecher', name:'Der Serienbrecher', short:'Brecher', ic:'flameBreak', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Serienbrecher',
+      art:'koennen',
+      klasse:'legendaer', aus:1.60,
+      wie:'Die Serie des Gegners wird für jede Partie neu nachgezählt, mit dem Stand vor dem Anpfiff.',
+      cond:'Mindestens 70 % gegen Gegner, die zum Zeitpunkt der Partie drei Siege am Stück tragen, ab 5 solchen Partien',
+      ...(_stWertung(
+        p=>p.brechG>=ST_TEIL,
+        p=>p.brechW/p.brechG,
+        0.70,
+        (p,v)=>`${p.brechW} von ${p.brechG} gegen eine laufende Serie · ${pct(v)} %`))}},
+
+  {id:'wochenschluss', name:'Der Wochenschluss', short:'Schluss', ic:'medal', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Vollender',
+      art:'koennen',
+      klasse:'selten', aus:1.83,
+      wie:'Der letzte Ball einer Woche ist der, der stehen bleibt, bis wieder gespielt wird.',
+      cond:'Jede letzte Partie einer Kalenderwoche gewonnen, ab 4 Wochen mit je 3 Partien',
+      ...(_stWertung(
+        p=>_stWochLetzte(p).length>=4,
+        p=>_stQuote(_stWochLetzte(p)),
+        1,
+        (p)=>{const a=_stWochLetzte(p);
+          return `${a.filter(s=>s.win).length} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
+
+  {id:'rollenfest', name:'Favorit wie Außenseiter', short:'Rollen', ic:'swords', tone:'blue', art:'leistung',
+    monat:{
+      beiname:'Der Unbeeindruckte',
+      art:'konstanz',
+      klasse:'selten', aus:1.68,
+      wie:'Favorit ist über 55 % Siegchance, Außenseiter unter 45 %. Gemessen wird der Abstand zwischen beiden Quoten, nicht wie hoch sie liegen.',
+      cond:'Als klarer Favorit und als Außenseiter höchstens 5 Prozentpunkte auseinander, ab 5 Partien in jeder Lage',
+      ...(_stWertung(
+        p=>_stRollen(p).fav.length>=ST_TEIL && _stRollen(p).aus.length>=ST_TEIL,
+        p=>{const r=_stRollen(p); return -Math.abs(_stQuote(r.fav)-_stQuote(r.aus));},
+        -0.05,
+        (p)=>{const r=_stRollen(p);
+          return `${pct(_stQuote(r.fav))} % als Favorit, ${pct(_stQuote(r.aus))} % als Außenseiter`;}))}},
+
+  {id:'aufstieg', name:'Der Aufstieg', short:'Aufstieg', ic:'medalTrio', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Aufsteiger',
+      art:'koennen',
+      klasse:'besonders', aus:1.61,
+      wie:'Verglichen wird der Tabellenplatz am ersten eigenen Spieltag mit dem am letzten Spieltag des Monats. Die Tabelle ist die des Monats, sie startet für alle gleich.',
+      cond:'Im Monat mindestens 8 Plätze in der Liga-Tabelle gewonnen',
+      ...(_stWertung(
+        p=>p.platzErst != null && p.platzLetzt != null,
+        p=>p.platzErst-p.platzLetzt,
+        8,
+        (p,v)=>`von Platz ${p.platzErst} auf Platz ${p.platzLetzt} · ${v} Plätze`))}},
+
   {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'brokenHeart', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Zitterkönig',
       art:'fuegung',
       klasse:'legendaer', aus:3.84,
       wie:'Knapp heißt höchstens zwei Tore Vorsprung. Gezählt wird der Anteil an den eigenen Siegen, nicht an allen Partien.',
@@ -25228,6 +25635,7 @@ const DISZIPLINEN = [
 
   {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Kitzel', ic:'cone', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Dauerzitterer',
       art:'fuegung',
       klasse:'besonders', aus:3.62,
       wie:'Eng heißt höchstens zwei Tore Unterschied. Verglichen wird der eigene Anteil mit dem der ganzen Liga.',
@@ -25240,6 +25648,7 @@ const DISZIPLINEN = [
 
   {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Befreite',
       art:'fuegung',
       klasse:'legendaer', aus:2.78,
       wie:'Gegen manche läuft es über Monate nicht. Gezählt wird die längste Pleitenserie gegen einen Gegner, die in diesem Monat gebrochen wurde.',
@@ -25252,6 +25661,7 @@ const DISZIPLINEN = [
 
   {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'pinch', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Spezialist',
       art:'fuegung',
       klasse:'selten', aus:2.69,
       wie:'Dasselbe andersherum. Groß heißt einseitig, nicht gut.',
@@ -25266,6 +25676,7 @@ const DISZIPLINEN = [
 
   {id:'torhagel', name:'Der Torhagel', short:'Torhagel', ic:'crashDay', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Spektakuläre',
       art:'fuegung',
       klasse:'besonders', aus:2.54,
       wie:'Der Torschnitt der eigenen Partien gegen den aller Partien desselben Monats.',
@@ -25278,6 +25689,7 @@ const DISZIPLINEN = [
 
   {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'hundred', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Gewohnheitstäter',
       art:'fuegung',
       klasse:'selten', aus:2.41,
       wie:'Das häufigste Ergebnis der eigenen Partien und der Anteil daran.',
@@ -25291,6 +25703,7 @@ const DISZIPLINEN = [
 
   {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechsel', ic:'weatherMix', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Wechselhafte',
       art:'fuegung',
       klasse:'selten', aus:1.96,
       wie:'Das Gegenstück zum Metronom. Gemessen wird die Streuung der Tagesquoten um den eigenen Monatsschnitt: groß heißt, kein Tag sah aus wie der andere.',
@@ -25305,6 +25718,7 @@ const DISZIPLINEN = [
 
   {id:'kontrast', name:'Der Kontrast', short:'Kontrast', ic:'chartBar', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Kontrastreiche',
       art:'fuegung',
       klasse:'legendaer', aus:1.51,
       wie:'Die Spanne zwischen der Quote neben dem stärksten und der neben dem schwächsten Partner.',
@@ -25317,8 +25731,36 @@ const DISZIPLINEN = [
         0.8,
         p=>`${pct(p._ko[0].q)} % neben ${pname(p._ko[0].k)}, ${pct(p._ko[p._ko.length-1].q)} % neben ${pname(p._ko[p._ko.length-1].k)}`))}},
 
+  {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'iceCube', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Kaltblütige',
+      art:'fuegung',
+      klasse:'legendaer', aus:1.61,
+      wie:'Ein Tor Unterschied heißt: der letzte Ball hat entschieden.',
+      cond:'Mindestens 80 % der Partien gewonnen, die mit einem Tor Unterschied endeten, ab 5 solchen Partien',
+      ...(_stWertung(
+        p=>_stEinTor(p).length>=ST_TEIL,
+        p=>_stQuote(_stEinTor(p)),
+        0.80,
+        (p,v)=>{const a=_stEinTor(p);
+          return `${a.filter(s=>s.win).length} von ${a.length} Partien um den letzten Ball · ${pct(v)} %`;}))}},
+
+  {id:'randlage', name:'Immer am Rand', short:'Am Rand', ic:'search', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Grenzgänger',
+      art:'fuegung',
+      klasse:'selten', aus:1.95,
+      wie:'Keine Leistung, eine Fügung: wem die engen Partien zufallen, entscheidet niemand selbst.',
+      cond:'Mindestens 25 % der eigenen Partien endeten mit genau einem Tor Unterschied',
+      ...(_stWertung(
+        p=>p.games>=TITLE_MIN_GAMES,
+        p=>_stEinTor(p).length/p.games,
+        0.25,
+        (p,v)=>`${_stEinTor(p).length} von ${p.games} Partien mit einem Tor Unterschied · ${pct(v)} %`))}},
+
   {id:'angstgegner', name:'Der Angstgegner', short:'Angst', ic:'devilMask', tone:'red', art:'schatten',
     monat:{
+      beiname:'Der Geplagte',
       art:'schatten',
       klasse:'besonders', aus:2.05,
       wie:'Der Gegner, gegen den im Monat am wenigsten zu holen war. Acht Duelle, damit es kein Ausrutscher ist.',
@@ -25333,6 +25775,7 @@ const DISZIPLINEN = [
 
   {id:'untersoll', name:'Das Untersoll', short:'Untersoll', ic:'chartDown', tone:'red', art:'schatten',
     monat:{
+      beiname:'Der Gehemmte',
       art:'schatten',
       klasse:'besonders', aus:1.81,
       wie:'Dieselbe Rechnung wie beim Übersoll, nur andersherum.',
@@ -25360,7 +25803,7 @@ const SEASON_TITLES = DISZIPLINEN.filter(d => d.monat)
                || (b.monat.aus || 0) - (a.monat.aus || 0))
   .map(d => ({
     id:d.id, name:d.name, short:d.short, ic:d.ic, tone:d.tone, art:d.art,
-    kunst:d.monat.art, klasse:d.monat.klasse, aus:d.monat.aus,
+    kunst:d.monat.art, klasse:d.monat.klasse, aus:d.monat.aus, beiname:d.monat.beiname,
     cond:d.monat.cond, wie:d.monat.wie || '', pick:d.monat.pick
   }));
 const SEASON_TITLE_BY_ID = {};
@@ -25480,12 +25923,18 @@ function _stPickTop(C, taken, score, ev){
 // jetzt auch vom Detail-Blatt einer Disziplin — bis hierher rechnete jeder
 // dieser Aufrufe alles noch einmal. Gemerkt wird am selben Schlüssel wie
 // überall: Zahl der Partien plus Cache-Stand.
-function _seasonTitleCtx(sid){
-  const ck = sid + '_' + matches.length + '_' + _cache.version;
+// `bisMs` schneidet den Monat an einem Zeitpunkt ab. Der Feed braucht das,
+// um den Halterstand VOR dem letzten Spieltag mit dem von heute zu
+// vergleichen — genau wie die Rekordmeldungen es mit `allChronicles(bisMs)`
+// tun [§C33]. Ohne den Schnitt gibt es keinen „Stand von gestern", und eine
+// Chronik, die im laufenden Monat den Halter wechselt, waere keine Nachricht.
+function _seasonTitleCtx(sid, bisMs){
+  const ck = sid + '_' + matches.length + '_' + _cache.version
+           + (bisMs ? '_' + bisMs : '');
   if(!_cache._stCtx) _cache._stCtx = {};
   const hit = _cache._stCtx[ck];
   if(hit) return hit;
-  const res = _seasonTitleCtxRechnen(sid);
+  const res = _seasonTitleCtxRechnen(sid, bisMs);
   // Nur die letzten Monate behalten — sonst wächst der Topf mit jeder
   // Saison, die jemand im Wähler durchklickt.
   if(Object.keys(_cache._stCtx).length > 8) _cache._stCtx = {};
@@ -25558,7 +26007,13 @@ function _thronDerLiga(P, ms){
     const rang = Object.keys(stand).sort((a, b) => stand[b] - stand[a]);
     rang.forEach((id, i) => {
       const p = P[id];
-      if(p && (p.thronRang == null || i + 1 > p.thronRang)) p.thronRang = i + 1;
+      if(!p) return;
+      if(p.thronRang == null || i + 1 > p.thronRang) p.thronRang = i + 1;
+      // „Der Aufstieg" vergleicht den Platz am ersten eigenen Tagesende mit
+      // dem am letzten des Monats. Vor der ersten Partie steht niemand in der
+      // Monatstabelle, also ist der erste Eintrag genau der Startplatz.
+      if(p.platzErst == null) p.platzErst = i + 1;
+      p.platzLetzt = i + 1;
     });
   };
   ms.slice().sort((a, b) => mts(a) - mts(b)).forEach(m => {
@@ -25602,10 +26057,11 @@ function _rohGruppen(pid, p, wochenSieger){
   });
 }
 
-function _seasonTitleCtxRechnen(sid){
+function _seasonTitleCtxRechnen(sid, bisMs){
   const cur = currentSeason().id;
   const live = (sid === cur);
-  const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b));
+  const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b))
+    .filter(m => !bisMs || mts(m) <= bisMs);
   const gSim = getGlobalSim();
   // Elo-Quelle: abgeschlossene Saison → archivierter End-Stand aus dem Sim,
   // laufende Saison → aktueller Stand. Beides derselbe Sim wie die Rangliste.
@@ -25672,6 +26128,8 @@ function _seasonTitleCtxRechnen(sid){
     potw:0, potwG:0,             // Player-of-the-Week-Titel / gewertete Wochen
     bannLauf:0,                  // laengste im Monat gebrochene Pleitenserie
     thronRang:null,              // schlechtester Tabellenplatz an einem Tagesende
+    platzErst:null, platzLetzt:null, // Tabellenplatz am ersten und letzten Tagesende
+    brechG:0, brechW:0,          // Partien gegen eine laufende Serie von 3 Siegen
     // ── Die Rohsicht eines Spielers auf seinen Monat ──────────────────
     // Jede Partie einmal, aus SEINER Perspektive, in der Reihenfolge, in
     // der sie gespielt wurde. Die Chroniken fragen nach dem schwaechsten
@@ -25723,6 +26181,12 @@ function _seasonTitleCtxRechnen(sid){
     // Uhrzeit einmal pro Match, nicht pro Spieler.
     const hour = new Date(m.created_at).getHours();
     const mateOf = id => id===m.a1 ? m.a2 : id===m.a2 ? m.a1 : id===m.b1 ? m.b2 : m.b1;
+    // Die Serie jedes Beteiligten VOR dem Anpfiff. `run` wird innerhalb der
+    // Spieler-Schleife nachgezogen und steht damit fuer die A-Seite schon auf
+    // dem neuen Stand, wenn die B-Seite dran ist — hier ist er noch alt.
+    // „Der Serienbrecher" fragt nach genau diesem Stand.
+    const serieVor = {};
+    [m.a1, m.a2, m.b1, m.b2].forEach(id => { if(id) serieVor[id] = run[id] || 0; });
     [m.a1, m.a2, m.b1, m.b2].forEach(id => {
       if(!id) return;
       const p = ensure(id);
@@ -25738,6 +26202,12 @@ function _seasonTitleCtxRechnen(sid){
       if(w) p.wins++; else p.losses++;
       if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; }
       else             { p.defG++; p.defConceded += ga; if(w) p.defW++; }
+      // Trug einer der Gegner beim Anpfiff drei Siege am Stueck, ist das eine
+      // Gelegenheit, eine Serie zu brechen — gezaehlt wird der Anteil, nicht
+      // die Anzahl: wer viel spielt, trifft oefter auf einen heissen Gegner.
+      const gegSerie = (onA ? [m.b1, m.b2] : [m.a1, m.a2])
+        .reduce((mx, g) => Math.max(mx, g ? (serieVor[g] || 0) : 0), 0);
+      if(gegSerie >= 3){ p.brechG++; if(w) p.brechW++; }
       if(w && gf===10 && ga===9)  p.nail++;
       if(!w && gf===9 && ga===10) p.bitter++;
       if(w && gf===10 && ga===0)  p.perfect++;
@@ -26211,6 +26681,28 @@ function allSeasonTitles(){
 }
 
 // Titel eines Spielers in einer Saison (oder null).
+// Wer haelt die Monatschroniken zu einem Zeitpunkt? Nur die Halter, ohne
+// Meister und ohne Leerliste: der Feed vergleicht damit den Stand vor dem
+// letzten Spieltag mit dem von heute und meldet, was gewechselt hat.
+// `seasonTitles` taugt dafuer nicht — es ist auf HEUTE gemerkt und friert
+// abgeschlossene Monate ein.
+function seasonTitleHalter(sid, bisMs){
+  const out = {};
+  let C = null;
+  try { C = _seasonTitleCtx(sid, bisMs); } catch(e){ return out; }
+  if(!C) return out;
+  SEASON_TITLES.forEach(t => {
+    let r = null;
+    try { r = t.pick(C, new Set()); } catch(e){ r = null; }
+    if(r && r.halter && r.halter.length){
+      let ev = '';
+      try { ev = r.evVon(r.halter[0]) || ''; } catch(e){ ev = ''; }
+      out[t.id] = {pids: r.halter.slice().sort(), ev};
+    }
+  });
+  return out;
+}
+
 function seasonTitleOf(pid, sid){
   const t = seasonTitles(sid);
   return t.awarded.find(a => a.pid === pid) || null;
@@ -26910,15 +27402,30 @@ function chronicleRang(cid){
 // Der Titel, der im Profil unter dem Namen steht: laufender Saisontitel vor
 // letztem abgeschlossenem. Ehrentitel gibt es bewusst nicht mehr — sie waren
 // nur eine zweite Anzeige derselben Aussage.
+// Der BEINAME einer Chronik: er beschreibt den Spieler, nicht das Ereignis.
+// Im Profilkopf steht eine Pille unter dem Namen, und dort las sich „Der
+// Endspurt" wie eine Überschrift und nicht wie eine Beschreibung — „Der
+// Ausdauernde" schon. Der Katalogname bleibt überall sonst: in der Matrix,
+// auf der Plakette, im Blatt und in der Nachricht geht es um die Wertung,
+// im Profilkopf um den Menschen.
+// Ein eingefrorener Monat kann eine Chronik tragen, die es im heutigen
+// Katalog nicht mehr gibt [§13.3a]; dann bleibt der gespeicherte Name.
+function chronBeiname(t){
+  const d = t && t.titleId && SEASON_TITLE_BY_ID[t.titleId];
+  return (d && d.beiname) || (t && t.name) || '';
+}
+
 function playerTitleBadge(pid){
   const rows = seasonTitleHistory(pid);
   const cur = rows.find(r => r.live && r.title);
-  if(cur) return {kind:'season', name:cur.title.name, ic:cur.title.ic, tone:cur.title.tone,
+  if(cur) return {kind:'season', name:chronBeiname(cur.title), titel:cur.title.name,
+                  ic:cur.title.ic, tone:cur.title.tone,
                   sub:cur.label + ' · läuft', live:true, sid:cur.sid, ev:cur.title.ev};
   for(let i = rows.length - 1; i >= 0; i--){
     if(!rows[i].live && rows[i].title){
       const r = rows[i];
-      return {kind:'season', name:r.title.name, ic:r.title.ic, tone:r.title.tone,
+      return {kind:'season', name:chronBeiname(r.title), titel:r.title.name,
+              ic:r.title.ic, tone:r.title.tone,
               sub:r.label, live:false, sid:r.sid, ev:r.title.ev};
     }
   }

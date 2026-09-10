@@ -187,6 +187,47 @@ const _stNachPleite = p => p.partien.filter((s, i) => i > 0 && !p.partien[i-1].w
 
 // Die beiden Haelften eines Monats, geteilt an der Mitte der eigenen
 // Spieltage. „Die Steigerung" vergleicht sie miteinander.
+// Die Streuung einer Reihe von Zahlen. „Der Gleichmut" fragt nicht nach der
+// Hoehe der Tordifferenz, sondern danach, wie weit sie um ihr eigenes Mittel
+// schwankt — dafuer reicht kein Mittelwert.
+const _stStreu = a => {
+  const m = _stMittel(a);
+  return Math.sqrt(_stMittel(a.map(x => (x - m) * (x - m))));
+};
+// Die Siegquote einer Teilmenge von Partien. Stand achtmal als
+// `a.filter(s=>s.win).length/a.length` in der Datei.
+const _stQuote = a => a.length ? a.filter(s => s.win).length / a.length : 0;
+// Wochen mit genug Partien fuer eine Wahrscheinlichkeitsrechnung. `_stWochen`
+// nimmt fuenf; unter sechs ist eine ganze Woche kaum unwahrscheinlich zu
+// nennen, weil schon vier Siege in Folge eine Woche fuellen.
+const _stWochGross = p => Object.values(p.wochGrp).filter(a => a.length >= 6);
+// Die ersten drei Partien eines Spieltags gegen alles danach. Der Vergleich
+// laeuft innerhalb desselben Tages, damit nicht zwei verschiedene Wochen
+// gegeneinander stehen.
+function _stTagBlock(p){
+  const frueh = [], spaet = [];
+  Object.values(p.tagGrp).forEach(a => {
+    a.forEach((s, i) => (i < 3 ? frueh : spaet).push(s));
+  });
+  return {frueh, spaet};
+}
+// Die Partie direkt nach ZWEI Pleiten am Stueck. Nach einer fragt schon
+// „Die Antwort"; zwei sind die Stelle, an der ein Tag kippt.
+const _stNachZwei = p => p.partien.filter((s, i) =>
+  i >= 2 && !p.partien[i-1].win && !p.partien[i-2].win);
+// Die letzte Partie jeder Kalenderwoche, in der ueberhaupt gespielt wurde.
+const _stWochLetzte = p => Object.values(p.wochGrp)
+  .filter(a => a.length >= 3).map(a => a[a.length - 1]);
+// Partien als klarer Favorit und als Aussenseiter. Die Grenzen sind
+// dieselben wie im Rest des Katalogs.
+const _stRollen = p => ({
+  fav: p.partien.filter(s => s.exp > 0.55),
+  aus: p.partien.filter(s => s.exp < 0.45)
+});
+// Partien, die mit genau einem Tor Unterschied endeten: der letzte Ball hat
+// entschieden. `_stEng` nimmt zwei — das ist eine andere Frage.
+const _stEinTor = p => p.partien.filter(s => Math.abs(s.gf - s.ga) === 1);
+
 function _stHaelften(p){
   const tage = Object.keys(p.tagGrp).sort();
   if(tage.length < 4) return null;
@@ -250,6 +291,7 @@ const DISZIPLINEN = [
 
   {id:'spotless', name:'Der makellose Tag', short:'Makellos', ic:'trophyDay', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Makellose',
       art:'koennen',
       klasse:'legendaer', aus:3.38,
       wie:'Der Anteil der eigenen Spieltage, an denen keine Partie verloren ging. Ein Tag zählt ab drei Partien, damit ein Kurzbesuch nicht reicht.',
@@ -455,6 +497,7 @@ const DISZIPLINEN = [
   {id:'evenkeel', name:'Die Punktlandung', short:'Landung', ic:'scaleBalance', tone:'gold',
     art:'ereignis', zufall:'fund',
     monat:{
+      beiname:'Der Ausbalancierte',
       art:'konstanz',
       klasse:'selten', aus:2.97,
       wie:'Erzielte und kassierte Tore über den ganzen Monat. Gemessen logarithmisch, weil die Frage „wie nah an null" ist: zwischen zwei und zwanzig Toren Unterschied liegt mehr als zwischen zwanzig und vierzig.',
@@ -503,6 +546,7 @@ const DISZIPLINEN = [
 
   {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'dropTriple', tone:'red', art:'schatten',
     monat:{
+      beiname:'Der Gestrandete',
       art:'schatten',
       art:'schatten',
       klasse:'legendaer', aus:2.39,
@@ -552,6 +596,7 @@ const DISZIPLINEN = [
 
   {id:'tagesregent', name:'Der Tagesregent', short:'Regent', ic:'crownPlus', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Tagesherrscher',
       art:'koennen',
       klasse:'legendaer', aus:2.6,
       wie:'Player of the Day ist, wer an einem Spieltag die beste Bilanz hat. Gezählt wird der Anteil an den eigenen Spieltagen.',
@@ -564,6 +609,7 @@ const DISZIPLINEN = [
 
   {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'temple', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Unantastbare',
       art:'koennen',
       klasse:'legendaer', aus:2.64,
       wie:'Gemessen wird der schlechteste Platz, den die Liga-Tabelle am Ende eines Spieltags zeigte. Gezählt wird jeder Spieltag des Monats, auch einer ohne eigene Partie: wer aussetzt, kann überholt werden.',
@@ -576,6 +622,7 @@ const DISZIPLINEN = [
 
   {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'shieldCheck', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Furchtlose',
       art:'koennen',
       klasse:'legendaer', aus:2.77,
       wie:'Nicht der Lieblingsgegner zählt, sondern der unangenehmste. Gegen wen läuft es am schlechtesten, und wie schlecht ist das noch.',
@@ -589,6 +636,7 @@ const DISZIPLINEN = [
 
   {id:'wochenkrone', name:'Die Wochenkrone', short:'Wochenkron', ic:'crownFlame', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Dauerregent',
       art:'koennen',
       // Die haerteste Chronik des Katalogs. Gemessen liegt die Schwelle
       // sechs Standardabweichungen ueber dem Feld — der beste Wert der
@@ -607,6 +655,7 @@ const DISZIPLINEN = [
 
   {id:'traumquote', name:'Der Traummonat', short:'Traummonat', ic:'crown', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Überlegene',
       art:'koennen',
       klasse:'legendaer', aus:2.5,
       wie:'Die blanke Siegquote. Sie steht hier als das eine Ziel, das keine Erklärung braucht.',
@@ -619,6 +668,7 @@ const DISZIPLINEN = [
 
   {id:'nachzuegler', name:'Der Nachzügler', short:'Nachzügler', ic:'trendUp', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Aufholer',
       art:'koennen',
       klasse:'selten', aus:2.07,
       wie:'Nicht die Monatshälften, sondern die Ränder. Dort zeigt sich eine Wende am deutlichsten.',
@@ -631,6 +681,7 @@ const DISZIPLINEN = [
 
   {id:'schattenmann', name:'Der Schattenmann', short:'Zuspieler', ic:'users', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Wegbereiter',
       art:'koennen',
       klasse:'legendaer', aus:1.95,
       wie:'Für jeden Partner wird die gemeinsame Quote mit dessen Quote ohne diesen Spieler verglichen.',
@@ -648,6 +699,7 @@ const DISZIPLINEN = [
 
   {id:'zunull', name:'Die weiße Weste', short:'Weste', ic:'snowflake', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Saubermann',
       art:'koennen',
       klasse:'besonders', aus:1.89,
       wie:'Ein Sieg zu null oder zu eins ist die seltenste Art zu gewinnen.',
@@ -660,6 +712,7 @@ const DISZIPLINEN = [
 
   {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'duo', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Verlässliche',
       art:'koennen',
       klasse:'besonders', aus:1.89,
       wie:'Nicht der beste Partner zählt, sondern der schlechteste. Es geht darum, mit wem auch immer zu bestehen.',
@@ -675,6 +728,7 @@ const DISZIPLINEN = [
 
   {id:'bollwerk', name:'Das Bollwerk', short:'Bollwerk', ic:'dominator', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Unüberwindliche',
       art:'koennen',
       klasse:'selten', aus:1.87,
       wie:'Die Gegentore je Partie gegen den Schnitt aller, die in diesem Monat gespielt haben.',
@@ -687,6 +741,7 @@ const DISZIPLINEN = [
 
   {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Entscheider',
       art:'koennen',
       klasse:'selten', aus:1.81,
       wie:'Offen heißt: die Rechnung gab beiden Teams zwischen 45 und 55 Prozent. Verglichen wird die Quote darin mit der eigenen Gesamtquote.',
@@ -700,6 +755,7 @@ const DISZIPLINEN = [
 
   {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'godRay', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Ausreißer',
       art:'koennen',
       klasse:'legendaer', aus:1.81,
       wie:'Die Elo-Erwartung auf einen Tag zusammengezogen. Gemessen wird der Zehnerlogarithmus, weil ein Tag mit einem Prozent Wahrscheinlichkeit zehnmal unwahrscheinlicher ist als einer mit zehn.',
@@ -714,6 +770,7 @@ const DISZIPLINEN = [
 
   {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rocket', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Ausdauernde',
       art:'koennen',
       klasse:'selten', aus:1.79,
       wie:'Die jeweils letzte Partie jedes eigenen Spieltags. Wer sie gewinnt, geht im Plus nach Hause.',
@@ -726,6 +783,7 @@ const DISZIPLINEN = [
 
   {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'overtake', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Verwandelte',
       art:'koennen',
       klasse:'selten', aus:1.74,
       wie:'Zwei aufeinanderfolgende eigene Spieltage nebeneinander. Gesucht ist der größte Sprung nach oben.',
@@ -742,6 +800,7 @@ const DISZIPLINEN = [
 
   {id:'breitenwirkung', name:'Gegen jeden bestanden', short:'Gegen alle', ic:'target', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Standhafte',
       art:'koennen',
       klasse:'besonders', aus:1.73,
       wie:'Regelmäßig heißt mindestens drei Duelle im Monat. Gemessen wird der Anteil, nicht die Anzahl, sonst gewinnt wer am meisten spielt.',
@@ -756,6 +815,7 @@ const DISZIPLINEN = [
 
   {id:'kaltstart', name:'Der Kaltstart', short:'Kaltstart', ic:'sunrise', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Frühstarter',
       art:'koennen',
       klasse:'selten', aus:1.73,
       wie:'Die jeweils erste Partie jedes eigenen Spieltags. Ohne Aufwärmen.',
@@ -768,6 +828,7 @@ const DISZIPLINEN = [
 
   {id:'aufholjagd', name:'Die Antwort', short:'Antwort', ic:'rematch', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Trotzige',
       art:'koennen',
       klasse:'besonders', aus:1.71,
       wie:'Nur die Partien, die auf eine Pleite folgen. Gemessen wird der Anteil, nicht die längste Serie, sonst gewinnt wer am meisten spielt.',
@@ -780,6 +841,7 @@ const DISZIPLINEN = [
 
   {id:'favschreck', name:'Der Favoritenschreck', short:'Schreck', ic:'giantSlayer', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Favoritenschreck',
       art:'koennen',
       klasse:'selten', aus:1.7,
       wie:'Klarer Favorit heißt: das gegnerische Team hatte vorher mindestens 65 Prozent Siegchance.',
@@ -792,6 +854,7 @@ const DISZIPLINEN = [
 
   {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'chartUp', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Entfesselte',
       art:'koennen',
       klasse:'legendaer', aus:1.67,
       wie:'Jeder Fünferblock des Monats wird gegen die eigene Monatsquote gestellt. Gesucht ist der beste.',
@@ -804,6 +867,7 @@ const DISZIPLINEN = [
 
   {id:'unmoeglich', name:'Der Unmögliche Monat', short:'Unmöglich', ic:'diamond', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Unmögliche',
       art:'koennen',
       klasse:'legendaer', aus:1.57,
       wie:'Die Rechnung gab vor jeder Partie eine Siegchance. Daraus folgt, wie wahrscheinlich der ganze Monat so oder besser ausgeht.',
@@ -816,6 +880,7 @@ const DISZIPLINEN = [
 
   {id:'schwachstelle', name:'Ohne Schwachstelle', short:'Lückenlos', ic:'kingClass', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Lückenlose',
       art:'koennen',
       klasse:'legendaer', aus:1.57,
       wie:'Fünf Teilquoten desselben Monats, und gewertet wird die schwächste davon. Der Katalog belohnt sonst überall einen Ausschlag; hier zählt, dass es nirgends einen Einbruch gibt.',
@@ -830,6 +895,7 @@ const DISZIPLINEN = [
 
   {id:'deutlich', name:'Der Deutliche', short:'Deutlich', ic:'plusMinus', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Deutliche',
       art:'koennen',
       klasse:'selten', aus:1.54,
       wie:'Die eigene Tordifferenz je Partie. Sie sagt mehr als die Siegquote, weil auch die Höhe zählt.',
@@ -842,6 +908,7 @@ const DISZIPLINEN = [
 
   {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'climb', tone:'gold', art:'leistung',
     monat:{
+      beiname:'Der Steigende',
       art:'koennen',
       klasse:'selten', aus:1.53,
       wie:'Die Spieltage des Monats werden in der Mitte geteilt und die beiden Quoten desselben Spielers verglichen.',
@@ -854,6 +921,7 @@ const DISZIPLINEN = [
 
   {id:'schwachewoche', name:'Ohne schwache Woche', short:'Durchweg', ic:'weekly', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Beständige',
       art:'konstanz',
       klasse:'selten', aus:2.68,
       wie:'Der Monat wird in Kalenderwochen geteilt, und gewertet wird die schwächste gegen den eigenen Monatsschnitt. Nicht das Niveau zählt, sondern dass es nie einbrach. Gemessen logarithmisch, weil die Frage „wie nah an null" ist.',
@@ -868,6 +936,7 @@ const DISZIPLINEN = [
 
   {id:'punktgenau2', name:'Der Erwartungstreue', short:'Erwartung', ic:'stopwatch', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Erwartungstreue',
       art:'konstanz',
       klasse:'selten', aus:2.46,
       wie:'Der Abstand zwischen der eigenen Quote und dem, was die Rechnung vorher auswies. Gemessen wird logarithmisch, weil die Frage „wie nah an null" ist: zwischen einem halben und drei Prozentpunkten liegt mehr als zwischen drei und achtzehn.',
@@ -880,6 +949,7 @@ const DISZIPLINEN = [
 
   {id:'schwaechstertag', name:'Der schwächste Tag', short:'Jeder Tag', ic:'calendar', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Grundsolide',
       art:'konstanz',
       klasse:'legendaer', aus:2.4,
       wie:'Nicht der beste Tag zählt, sondern der schlechteste. Ein Ausrutscher genügt, um die Chronik zu verlieren.',
@@ -893,6 +963,7 @@ const DISZIPLINEN = [
 
   {id:'metronom', name:'Das Metronom', short:'Metronom', ic:'clock', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Taktgeber',
       art:'konstanz',
       klasse:'selten', aus:2.25,
       wie:'Für jeden Spieltag steht eine Tagesquote. Gemessen wird die Spanne dazwischen.',
@@ -906,6 +977,7 @@ const DISZIPLINEN = [
 
   {id:'beidseitig', name:'Der Beidfüßige', short:'Beidfüßig', ic:'sort', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Beidfüßige',
       art:'konstanz',
       klasse:'selten', aus:2.01,
       wie:'Die Quote im Sturm und die in der Abwehr, beide gegen die eigene Gesamtquote. Gemessen logarithmisch: nah an null ist die Aussage, und ein halber Prozentpunkt ist etwas anderes als fünf.',
@@ -922,6 +994,7 @@ const DISZIPLINEN = [
 
   {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'thumbsUp', tone:'blue', art:'leistung',
     monat:{
+      beiname:'Der Gefestigte',
       art:'konstanz',
       klasse:'besonders', aus:1.64,
       wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen.',
@@ -932,8 +1005,138 @@ const DISZIPLINEN = [
         1,
         p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
 
+  // ── Zweite Runde: neun Chroniken mehr [§C39] ─────────────────────
+  // Alle an den echten Partien kalibriert. Was hier nicht steht, hat eine
+  // der beiden Regeln gerissen: die Schwelle liess sich nicht 1,5 σ
+  // hinausschieben, oder der Wert hing an der Spielzahl. „Die Sammlung"
+  // (wie viele verschiedene Ergebnisse) korrelierte mit −0,91 zur
+  // Spielzahl — wer zwoelf Partien spielt, hat zwoelf verschiedene
+  // Ergebnisse —, „Der Tag gegen die Rechnung" mit +0,56.
+  {id:'wochwunder', name:'Die Woche gegen die Rechnung', short:'Wunder', ic:'underdog', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Wundertäter',
+      art:'koennen',
+      klasse:'legendaer', aus:2.79,
+      wie:'Gerechnet wird die Wahrscheinlichkeit, in dieser Woche so viele Siege oder mehr zu holen. Partie für Partie aus der Siegchance, die vor dem Anpfiff stand.',
+      cond:'Eine Kalenderwoche, die die Elo-Rechnung mit höchstens 0,5 % erwartet hat, ab 6 Partien in dieser Woche',
+      ...(_stWertung(
+        p=>_stWochGross(p).length>=1,
+        p=>-Math.log10(Math.max(1e-6, Math.min(..._stWochGross(p)
+             .map(a=>_stPBinom(a.map(s=>s.exp), a.filter(s=>s.win).length))))),
+        -Math.log10(0.005),
+        (p,v)=>`Eine Woche, die mit ${(Math.pow(10,-v)*100).toFixed(1)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
+
+  {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'weight', tone:'blue', art:'leistung',
+    monat:{
+      beiname:'Der Gleichmütige',
+      art:'konstanz',
+      klasse:'legendaer', aus:3.20,
+      wie:'Nicht wie hoch gewonnen wird, sondern wie gleichmäßig. Wer jede Partie mit zwei Toren Unterschied beendet, steht vor dem, der 10:0 und 0:10 abwechselt.',
+      cond:'Die Tordifferenz jeder Partie bleibt im Schnitt höchstens 3,0 Tore vom eigenen Mittel entfernt',
+      ...(_stWertung(
+        p=>p.games>=TITLE_MIN_GAMES,
+        p=>-_stStreu(p.partien.map(s=>s.gf-s.ga)),
+        -3.0,
+        (p,v)=>`${(-v).toFixed(1)} Tore Streuung um ${(p.gd/p.games>=0?'+':'')}${(p.gd/p.games).toFixed(1)} im Schnitt`))}},
+
+  {id:'zweiteluft', name:'Die zweite Luft', short:'Luft', ic:'flameDouble', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Spätzünder',
+      art:'koennen',
+      klasse:'legendaer', aus:2.11,
+      wie:'Der Vergleich läuft innerhalb der eigenen Spieltage: dieselben Gegner, dieselbe Woche, nur später am Tag.',
+      cond:'Ab der vierten Partie eines Spieltags mindestens 40 Prozentpunkte stärker als in den ersten drei, ab 5 Partien in jedem Block',
+      ...(_stWertung(
+        p=>_stTagBlock(p).frueh.length>=ST_TEIL && _stTagBlock(p).spaet.length>=ST_TEIL,
+        p=>{const b=_stTagBlock(p); return _stQuote(b.spaet)-_stQuote(b.frueh);},
+        0.40,
+        (p)=>{const b=_stTagBlock(p);
+          return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`;}))}},
+
+  {id:'auferstehung', name:'Die Auferstehung', short:'Rückkehr', ic:'trophyCheck', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Unbeugsame',
+      art:'koennen',
+      klasse:'legendaer', aus:2.14,
+      wie:'Nach einer Pleite fragt „Die Antwort". Zwei am Stück sind die Stelle, an der ein Tag kippt.',
+      cond:'Jede Partie nach zwei Pleiten am Stück gewonnen, ab 5 solchen Gelegenheiten',
+      ...(_stWertung(
+        p=>_stNachZwei(p).length>=ST_TEIL,
+        p=>_stQuote(_stNachZwei(p)),
+        1,
+        (p)=>{const a=_stNachZwei(p);
+          return `${a.filter(s=>s.win).length} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
+
+  {id:'nulldiaet', name:'Die Nulldiät', short:'Nulldiät', ic:'egg', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Zugeknöpfte',
+      art:'koennen',
+      klasse:'selten', aus:2.31,
+      wie:'Gezählt wird der Anteil, nicht die Anzahl. Ein Spiel geht auf zehn, drei Gegentore sind eine geschlossene Partie.',
+      cond:'Mindestens 20 % der Partien mit höchstens drei Gegentoren',
+      ...(_stWertung(
+        p=>p.games>=TITLE_MIN_GAMES,
+        p=>p.partien.filter(s=>s.ga<=3).length/p.games,
+        0.20,
+        (p,v)=>`${p.partien.filter(s=>s.ga<=3).length} von ${p.games} Partien mit höchstens 3 Gegentoren · ${pct(v)} %`))}},
+
+  {id:'serienbrecher', name:'Der Serienbrecher', short:'Brecher', ic:'flameBreak', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Serienbrecher',
+      art:'koennen',
+      klasse:'legendaer', aus:1.60,
+      wie:'Die Serie des Gegners wird für jede Partie neu nachgezählt, mit dem Stand vor dem Anpfiff.',
+      cond:'Mindestens 70 % gegen Gegner, die zum Zeitpunkt der Partie drei Siege am Stück tragen, ab 5 solchen Partien',
+      ...(_stWertung(
+        p=>p.brechG>=ST_TEIL,
+        p=>p.brechW/p.brechG,
+        0.70,
+        (p,v)=>`${p.brechW} von ${p.brechG} gegen eine laufende Serie · ${pct(v)} %`))}},
+
+  {id:'wochenschluss', name:'Der Wochenschluss', short:'Schluss', ic:'medal', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Vollender',
+      art:'koennen',
+      klasse:'selten', aus:1.83,
+      wie:'Der letzte Ball einer Woche ist der, der stehen bleibt, bis wieder gespielt wird.',
+      cond:'Jede letzte Partie einer Kalenderwoche gewonnen, ab 4 Wochen mit je 3 Partien',
+      ...(_stWertung(
+        p=>_stWochLetzte(p).length>=4,
+        p=>_stQuote(_stWochLetzte(p)),
+        1,
+        (p)=>{const a=_stWochLetzte(p);
+          return `${a.filter(s=>s.win).length} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
+
+  {id:'rollenfest', name:'Favorit wie Außenseiter', short:'Rollen', ic:'swords', tone:'blue', art:'leistung',
+    monat:{
+      beiname:'Der Unbeeindruckte',
+      art:'konstanz',
+      klasse:'selten', aus:1.68,
+      wie:'Favorit ist über 55 % Siegchance, Außenseiter unter 45 %. Gemessen wird der Abstand zwischen beiden Quoten, nicht wie hoch sie liegen.',
+      cond:'Als klarer Favorit und als Außenseiter höchstens 5 Prozentpunkte auseinander, ab 5 Partien in jeder Lage',
+      ...(_stWertung(
+        p=>_stRollen(p).fav.length>=ST_TEIL && _stRollen(p).aus.length>=ST_TEIL,
+        p=>{const r=_stRollen(p); return -Math.abs(_stQuote(r.fav)-_stQuote(r.aus));},
+        -0.05,
+        (p)=>{const r=_stRollen(p);
+          return `${pct(_stQuote(r.fav))} % als Favorit, ${pct(_stQuote(r.aus))} % als Außenseiter`;}))}},
+
+  {id:'aufstieg', name:'Der Aufstieg', short:'Aufstieg', ic:'medalTrio', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Aufsteiger',
+      art:'koennen',
+      klasse:'besonders', aus:1.61,
+      wie:'Verglichen wird der Tabellenplatz am ersten eigenen Spieltag mit dem am letzten Spieltag des Monats. Die Tabelle ist die des Monats, sie startet für alle gleich.',
+      cond:'Im Monat mindestens 8 Plätze in der Liga-Tabelle gewonnen',
+      ...(_stWertung(
+        p=>p.platzErst != null && p.platzLetzt != null,
+        p=>p.platzErst-p.platzLetzt,
+        8,
+        (p,v)=>`von Platz ${p.platzErst} auf Platz ${p.platzLetzt} · ${v} Plätze`))}},
+
   {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'brokenHeart', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Zitterkönig',
       art:'fuegung',
       klasse:'legendaer', aus:3.84,
       wie:'Knapp heißt höchstens zwei Tore Vorsprung. Gezählt wird der Anteil an den eigenen Siegen, nicht an allen Partien.',
@@ -946,6 +1149,7 @@ const DISZIPLINEN = [
 
   {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Kitzel', ic:'cone', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Dauerzitterer',
       art:'fuegung',
       klasse:'besonders', aus:3.62,
       wie:'Eng heißt höchstens zwei Tore Unterschied. Verglichen wird der eigene Anteil mit dem der ganzen Liga.',
@@ -958,6 +1162,7 @@ const DISZIPLINEN = [
 
   {id:'ausbruch', name:'Der Ausbruch', short:'Ausbruch', ic:'lock', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Befreite',
       art:'fuegung',
       klasse:'legendaer', aus:2.78,
       wie:'Gegen manche läuft es über Monate nicht. Gezählt wird die längste Pleitenserie gegen einen Gegner, die in diesem Monat gebrochen wurde.',
@@ -970,6 +1175,7 @@ const DISZIPLINEN = [
 
   {id:'spezialisiert', name:'Der Spezialist', short:'Spezialist', ic:'pinch', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Spezialist',
       art:'fuegung',
       klasse:'selten', aus:2.69,
       wie:'Dasselbe andersherum. Groß heißt einseitig, nicht gut.',
@@ -984,6 +1190,7 @@ const DISZIPLINEN = [
 
   {id:'torhagel', name:'Der Torhagel', short:'Torhagel', ic:'crashDay', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Spektakuläre',
       art:'fuegung',
       klasse:'besonders', aus:2.54,
       wie:'Der Torschnitt der eigenen Partien gegen den aller Partien desselben Monats.',
@@ -996,6 +1203,7 @@ const DISZIPLINEN = [
 
   {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'hundred', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Gewohnheitstäter',
       art:'fuegung',
       klasse:'selten', aus:2.41,
       wie:'Das häufigste Ergebnis der eigenen Partien und der Anteil daran.',
@@ -1009,6 +1217,7 @@ const DISZIPLINEN = [
 
   {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechsel', ic:'weatherMix', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Wechselhafte',
       art:'fuegung',
       klasse:'selten', aus:1.96,
       wie:'Das Gegenstück zum Metronom. Gemessen wird die Streuung der Tagesquoten um den eigenen Monatsschnitt: groß heißt, kein Tag sah aus wie der andere.',
@@ -1023,6 +1232,7 @@ const DISZIPLINEN = [
 
   {id:'kontrast', name:'Der Kontrast', short:'Kontrast', ic:'chartBar', tone:'purple', art:'ereignis',
     monat:{
+      beiname:'Der Kontrastreiche',
       art:'fuegung',
       klasse:'legendaer', aus:1.51,
       wie:'Die Spanne zwischen der Quote neben dem stärksten und der neben dem schwächsten Partner.',
@@ -1035,8 +1245,36 @@ const DISZIPLINEN = [
         0.8,
         p=>`${pct(p._ko[0].q)} % neben ${pname(p._ko[0].k)}, ${pct(p._ko[p._ko.length-1].q)} % neben ${pname(p._ko[p._ko.length-1].k)}`))}},
 
+  {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'iceCube', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Kaltblütige',
+      art:'fuegung',
+      klasse:'legendaer', aus:1.61,
+      wie:'Ein Tor Unterschied heißt: der letzte Ball hat entschieden.',
+      cond:'Mindestens 80 % der Partien gewonnen, die mit einem Tor Unterschied endeten, ab 5 solchen Partien',
+      ...(_stWertung(
+        p=>_stEinTor(p).length>=ST_TEIL,
+        p=>_stQuote(_stEinTor(p)),
+        0.80,
+        (p,v)=>{const a=_stEinTor(p);
+          return `${a.filter(s=>s.win).length} von ${a.length} Partien um den letzten Ball · ${pct(v)} %`;}))}},
+
+  {id:'randlage', name:'Immer am Rand', short:'Am Rand', ic:'search', tone:'purple', art:'ereignis',
+    monat:{
+      beiname:'Der Grenzgänger',
+      art:'fuegung',
+      klasse:'selten', aus:1.95,
+      wie:'Keine Leistung, eine Fügung: wem die engen Partien zufallen, entscheidet niemand selbst.',
+      cond:'Mindestens 25 % der eigenen Partien endeten mit genau einem Tor Unterschied',
+      ...(_stWertung(
+        p=>p.games>=TITLE_MIN_GAMES,
+        p=>_stEinTor(p).length/p.games,
+        0.25,
+        (p,v)=>`${_stEinTor(p).length} von ${p.games} Partien mit einem Tor Unterschied · ${pct(v)} %`))}},
+
   {id:'angstgegner', name:'Der Angstgegner', short:'Angst', ic:'devilMask', tone:'red', art:'schatten',
     monat:{
+      beiname:'Der Geplagte',
       art:'schatten',
       klasse:'besonders', aus:2.05,
       wie:'Der Gegner, gegen den im Monat am wenigsten zu holen war. Acht Duelle, damit es kein Ausrutscher ist.',
@@ -1051,6 +1289,7 @@ const DISZIPLINEN = [
 
   {id:'untersoll', name:'Das Untersoll', short:'Untersoll', ic:'chartDown', tone:'red', art:'schatten',
     monat:{
+      beiname:'Der Gehemmte',
       art:'schatten',
       klasse:'besonders', aus:1.81,
       wie:'Dieselbe Rechnung wie beim Übersoll, nur andersherum.',
@@ -1078,7 +1317,7 @@ const SEASON_TITLES = DISZIPLINEN.filter(d => d.monat)
                || (b.monat.aus || 0) - (a.monat.aus || 0))
   .map(d => ({
     id:d.id, name:d.name, short:d.short, ic:d.ic, tone:d.tone, art:d.art,
-    kunst:d.monat.art, klasse:d.monat.klasse, aus:d.monat.aus,
+    kunst:d.monat.art, klasse:d.monat.klasse, aus:d.monat.aus, beiname:d.monat.beiname,
     cond:d.monat.cond, wie:d.monat.wie || '', pick:d.monat.pick
   }));
 const SEASON_TITLE_BY_ID = {};

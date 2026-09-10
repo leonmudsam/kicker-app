@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **669**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **680**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,11 +219,11 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik | 937 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen | 974 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 176 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck | 204 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat | 215 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix — **im echten Browser gemessen** | 88 |
+| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt — **im echten Browser gemessen** | 92 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -664,6 +664,22 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Spieltagen**: an einem Tag ohne Partie ist nichts passiert, was ihn von einem
   anderen unterscheidet, und dort standen sonst ein Fun Fact oder eine
   Zufallsstatistik groß im Bild, die gestern genauso dagestanden hätten.
+  Und es gibt sie **erst um 23:59**, wenn keine Partie mehr dazukommen kann —
+  dieselbe Uhrzeit wie beim Spieler des Tages, und aus demselben Grund.
+  Vorher wurde sie zwanzig Minuten nach dem ersten Spiel vergeben: der Rekord,
+  der gerade wechselte, war die einzige Karte des Tages und damit automatisch
+  die stärkste, während der Spieltag noch lief und der Spieler des Tages noch
+  gar nicht feststand.
+  **Der Kopf einer Sammelkarte steht nicht zweimal da.** Das Sammelband ließ
+  aus, was den Titel der KARTE trug — bei einer Tafel-Sammelkarte ist das der
+  gebündelte Titel („Henry, Martin und zwei weitere bewegen die Ewige Tafel")
+  und nicht der des Kopfs („Henry übernimmt ‚Der Gigantentöter'"). Damit stand
+  der Kopf als erste Zeile des Bandes noch einmal, sein Text darüber, und von
+  der vierten Meldung blieb „und 1 weitere". Ausgelassen werden jetzt beide
+  Titel (`kopfTitel`). Und auf der Karte steht nur der **erste Satz** des
+  Kopfs (`_ersterSatz`): der zweite erzählt beim Rekord vom Vorgänger, ein
+  Detail zu einer von vier Meldungen, das als Karte des Tages groß im Bild
+  stand, während die anderen drei nur eine Zeile bekamen.
 
   **Der Tagesplan.** `07:00` gab es nicht mehr: der Spieler des Tages steht um
   **23:59 an seinem eigenen Spieltag**, wenn keine Partie mehr dazukommen kann
@@ -682,7 +698,29 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Die Ewige Tafel meldet sich.** Der ganze Awards-Reiter kam im Feed nicht
   vor: wer einen Liga-Rekord übernahm, eine Monatschronik holte oder eine
   Insignium-Stufe erreichte, erfuhr es nur, wenn er selbst nachsah. Die
-  Kategorie `tafel` sammelt das. Quelle der Rekordmeldungen ist ein
+  Kategorie `tafel` sammelt das.
+  **Auch der laufende Monat** (`chronik_geholt`, `prio 80`). Die Monatskarte
+  entsteht erst am 1. für den VORmonat; gemessen trug der August dreizehn
+  Chronik-Einträge und dazu keine einzige Karte. Quelle ist derselbe
+  Zeitschnitt wie bei den Rekorden: `seasonTitleHalter(sid)` gegen
+  `seasonTitleHalter(sid, bisMs)` vor dem letzten Spieltag. Gemeldet wird nur
+  der **Wechsel**, in vier Fällen mit vier Verben — `holt` (vorher niemand),
+  `übernimmt` (der Halter wechselt), `hält jetzt allein` (das Feld ist enger
+  geworden) und `zieht gleich` (jemand kommt dazu). „Julian holt ‚Der
+  Nachzügler'. Vorher hielten sie Julian, Martin und Maxi" stand da, als es
+  nur einen Fall gab: er war schon Mithalter, und aus drei Haltern wurde
+  einer. Die Schlagzeile nennt beim Dazukommen die **Neuen**, sonst alle
+  Halter. `prio 80` liegt über der Insignium-Stufe und unter dem übernommenen
+  Liga-Rekord: damit überlebt die Karte den Tagesdeckel, ohne die Ewige Tafel
+  zu überstimmen. Höchstens **zwei je Lauf** (`NEWS_LIMITS.chronikGeholt`),
+  die wertvollsten zuerst — ein starker Spieltag verschiebt mehrere Chroniken
+  gleichzeitig, und der Rest steht am Monatsende ohnehin in der Monatskarte.
+  Eine **legendäre** Chronik bleibt eine eigene Karte (`_sammelEinzeln`), aus
+  demselben Grund wie eine legendäre Auszeichnung. Der große Wert der Karte
+  ist ihr **Prestige**, nicht die erste Zahl im Beleg; der Text nennt es
+  deshalb nicht noch einmal. Das Blatt zeigt die Zahlenreihe aus Klasse, Art,
+  Ausschlag und Prestige [§C39], die Bedingung, das Podest des Monats und
+  einen Knopf in die Tafel. Schattenseiten meldet der Feed auch hier nicht. Quelle der Rekordmeldungen ist ein
   Zeitschnitt — `allChronicles(bisMs)` vor dem letzten Spieltag gegen heute;
   er kostet einmal ~18 ms und liegt danach im Cache.
   Drei Sorten, drei Aussagen: **erstmals vergeben** (den Rekord hatte vorher
@@ -782,7 +820,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   geht.
 - **§C39 Die Monatschronik fragt nicht, wer der Beste ist.** Der alte
   Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
-  gewinnt fast jede. Er ist vollständig ersetzt: einundvierzig Chroniken, die
+  gewinnt fast jede. Er ist vollständig ersetzt: dreiundfünfzig Chroniken, die
   nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
   dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
   anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
@@ -831,7 +869,12 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   festgeschrieben**, genau wie `BADGE_RARITY`.
   Zwei Regeln räumen den Katalog, und beide sind gemessen: eine Chronik muss
   ihre Schwelle **mindestens 1,5 σ** hinausschieben können, sonst liegt ihr
-  Bester kaum weiter draußen als der Durchschnitt; und sie muss eine
+  Bester kaum weiter draußen als der Durchschnitt; und ihr Wert darf **nicht
+  an der Spielzahl hängen** — höchstens 0,35 Korrelation. Die zweite nimmt am
+  meisten weg: „wie viele verschiedene Ergebnisse" liegt bei −0,91, weil wer
+  zwölf Partien spielt zwangsläufig zwölf verschiedene Ergebnisse hat, und
+  „der unwahrscheinlichste Spieltag" bei +0,56, weil acht Partien an einem Tag
+  weiter ausschlagen können als vier. Sie muss außerdem eine
   **Leistung** messen — Breite und Anwesenheit zählen nicht, „mit wie vielen
   anderen jemand gespielt hat" ist ein Kalender. Reine **Zählungen von
   Gelegenheiten** fallen ebenfalls weg: wer mehr spielt, bekommt mehr Chancen
@@ -858,6 +901,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   ziehen jede Rate zur Mitte —, und die Tabelle hat er trotzdem nie aus der
   Hand gegeben. Zwei Monate erfüllen sie (Leon im August, Martin im Juni),
   und sie ist trotzdem legendär: die Klasse zählt keine Halter.
+
+  **Im Profilkopf steht der Spielertyp, nicht die Wertung** (`monat.beiname`,
+  `chronBeiname`). Die Pille unter dem Namen trug den Katalognamen, und
+  „Der Endspurt" liest sich dort wie eine Überschrift statt wie eine
+  Beschreibung — „Der Ausdauernde" schon. Überall sonst bleibt der
+  Katalogname: in der Matrix, auf der Plakette, im Blatt und in der Nachricht
+  geht es um die Wertung, im Profilkopf um den Menschen. Ein eingefrorener
+  Monat kann eine Chronik tragen, die es nicht mehr gibt; dann bleibt der
+  gespeicherte Name.
 
   **Die Klasse ist zu sehen, nicht nur zu berechnen.** Von den vier Angaben,
   die den Wert einer Chronik bestimmen, stand keine einzige in der App: wer
@@ -1001,6 +1053,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   jeder Zacke wird die Glorie um vier Strahlen dichter. Länge und Breite
   der Strahlen sind gedeckelt — sonst spränge der Stern aus seiner
   Zeichenfläche.
+  Auch die kleine Leiter im Blatt (`_newsLeiter`, `.nf-lt-p`) zeigt die
+  **echten** Zeichen. Sie zeigte fünf CSS-Kreise mit
+  `repeating-conic-gradient` — fünf Rosetten in fünf Farben, wo Reif,
+  Schildring, Volutenkranz, Lorbeerreif und Ordensstern stehen müssten, und
+  damit einen Platzhalter, der mit dem Zeichen eines Spielers nichts zu tun
+  hatte. `insigniumStufeSvg` trägt seine Verläufe selbst und funktioniert
+  deshalb auch dort. Ein Feld ist **40 px** breit: bei 28 blieb vom
+  Schildring ein Ring, und die sechzehn des CSS-Punktes waren für einen Punkt
+  gedacht. `tests/blatt` misst beides.
   Die Laufbahn zeigt die Leiter als Vitrine (`.lb-karus`/`.lb-k`): eine
   Stufe groß in der Mitte, die übrigen schiebt man heran — **oder tippt sie
   an**. Wischen allein hat die letzte Stufe nie erreicht: der Blatt-Zug
@@ -1294,6 +1355,7 @@ Raster — je zwei Einträge sind eine Zeile.
 | dort `short` | ein ganzes Wort, das in 54 px passt | „Umschwung“ ist kürzer als „Nachzügler“ und breiter, also zählt die gerenderte Breite: `tests/blatt` misst sie am Markup, `tests/disziplinen` verbietet die Abkürzung mit Punkt |
 | dort `ic` | ein Icon, das keine andere Disziplin trägt | in einer Zelle von 62 Pixeln ist die Zeichnung das Erste, was man sieht — zwei gleiche sind dort nicht zu unterscheiden. `tests/disziplinen` misst es |
 | dort `monat.wie` | ein Satz, was die Zahl im Beleg bedeutet | nur nötig, wenn die Größe nicht selbsterklärend ist. Er steht im Detail-Blatt unter der Bedingung; ohne ihn liest sich „+15 Prozentpunkte" wie Elo oder wie Prestige |
+| dort `monat.beiname` | der Beiname fürs Spielerprofil: **Der/Die/Das + Spielertyp** | im Profilkopf stünde der Katalogname, und „Der Endspurt“ beschreibt kein Spielertyp — „Der Ausdauernde“ schon. `tests/disziplinen` verlangt ihn für jede Chronik, höchstens 20 Zeichen, eindeutig, und prüft ihn gegen dieselbe Sprachregel wie Beleg und Bedingung |
 | dort `monat.art`, `monat.klasse`, `monat.aus` | die drei festen Angaben einer Chronik [§C39] | ohne `art` gibt es kein Prestige, ohne `klasse` keinen Seltenheitsbonus und kein Gewicht in der Zelle, ohne `aus` ist die Chronik null Punkte wert. `aus` muss mindestens 1,5 σ betragen, sonst liegt der Beste kaum weiter draußen als der Schnitt — `tests/disziplinen` misst es |
 | dort `monat` | `mind`, `wert`, `ab` und `ev` über `_stWertung` | ohne die vier gibt es keine Vergabe. `mind` sagt, wer gewertet wird, `wert` die Größe (größer ist besser, bei einer Schattenseite steht ein Minus davor), `ab` die Schwelle. Getrennt aufgeschrieben, weil sonst niemand sagen kann, wer knapp daneben liegt: wer die Schwelle reißt, bekam einen leeren Wert, und leere Werte haben keine Reihenfolge. `ab` wird an den echten Partien gemessen, nicht geschätzt: höchstens ein Halter je gewerteten Monat [§C32] |
 | `33-chronik-engine.js` `_seasonTitleCtx` | das Feld, das `monat:` liest | die Monatstafel bleibt leer |
@@ -1385,7 +1447,26 @@ Immer im **selben Commit** wie die Änderung, die sie auslöst:
 | Regel für Agenten ändert sich | §9 |
 | Auszeichnung, Disziplin oder Prestige-Konstante ändert sich | §10 |
 | Monatschronik kommt dazu oder ändert Art, Klasse oder Ausschlag | §6 §C39, §10.2 |
+| Ein Katalogfeld kommt dazu (`beiname`, `zufall`, `leiter`, …) | §10.1/§10.2 als eigene Zeile, **und** eine Zusicherung in `tests/disziplinen`, die es für jeden Eintrag verlangt |
 | Eine Anweisung hier hat sich als falsch erwiesen | die Stelle selbst |
+
+### Was zu einer Änderung immer dazugehört
+
+Eine Änderung ist erst fertig, wenn sie an **allen vier** Stellen steht.
+Fehlt eine, wird die Änderung beim nächsten Mal falsch fortgesetzt — und das
+ist jedes Mal passiert, an dem in dieser Datei ein „vorher war es so" steht.
+
+1. **Im Code**, als Kommentar, der den Fehler benennt, den er verhindert.
+   Nicht was die Zeile tut, sondern warum sie so aussieht (§7).
+2. **In dieser Datei**, an der Stelle, die die Regel trägt: das
+   Gestaltungsgesetz in §6, die Pflichtliste in §10, die Zahl in §2 oder §5.
+   Neue Felder eines Katalogeintrags brauchen eine **eigene Zeile** in
+   §10.1 oder §10.2 — sonst weiß niemand, dass sie zu füllen sind.
+3. **In einer Zusicherung**, die die Regel prüfbar macht, und zwar so, dass
+   sie einmal rot war (§5). Eine Regel ohne Test ist eine Bitte.
+4. **Im Commit**, mit dem, was vorher falsch war (§7).
+
+Was das im Einzelnen auslöst, steht in der Tabelle oben.
 
 ### Wie sie geändert wird
 

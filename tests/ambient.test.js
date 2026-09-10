@@ -916,6 +916,62 @@ ok(_sub.selten > 0 && _sub.versteckt.length === 0,
 ok(_sub.ohnePids === 0, 'jede Zeile weiss, von wem sie handelt',
    _sub.ohnePids + ' ohne');
 
+// ── Die Monatschronik im laufenden Monat ────────────────────────────
+//    Der ganze laufende Monat kam im Feed nicht vor: die Monatskarte
+//    entsteht erst am 1. fuer den VORmonat, und gemessen trug der August
+//    dreizehn Eintraege und keine einzige Karte. Wer „Auf dem Thron" holte,
+//    erfuhr es nur, wenn er selbst in den Chronik-Tab sah.
+const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const chr = roh.filter(s => (s.dataRef||{}).type === 'chronik_geholt');
+  const sid = currentSeason().id;
+  // Der Zeitschnitt muss wirklich schneiden: der Stand vor dem letzten
+  // Spieltag darf nicht derselbe sein wie der von heute, sonst gibt es nie
+  // eine Meldung.
+  const letzte = matches.length ? mts(matches[matches.length-1]) : 0;
+  const t0 = new Date(letzte); t0.setHours(0,0,0,0);
+  const jetzt = seasonTitleHalter(sid);
+  const vorher = seasonTitleHalter(sid, t0.getTime() - 1);
+  const schatten = chr.filter(s => {
+    const t = SEASON_TITLE_BY_ID[(s.dataRef||{}).titleId];
+    return t && t.kunst === 'schatten';
+  }).length;
+  return {
+    n: chr.length,
+    prio: chr.map(s => s.prio),
+    ohneRef: chr.filter(s => !(s.dataRef||{}).titleId || !(s.dataRef||{}).punkte).length,
+    ohnePids: chr.filter(s => !((s.dataRef||{}).playerIds||[]).length).length,
+    schatten,
+    // Blatt: jede Karte muss eine Mitte haben, sonst oeffnet sie ins Leere.
+    leer: chr.filter(s => !String(_newsDetailBody(s) || '').trim()).length,
+    // Der Wert auf der Karte ist das Prestige, nicht die erste Zahl im Satz.
+    wert: chr.map(s => { const w = _newsTafelWert(s); return w ? w.l : '—'; }),
+    stand: {jetzt: Object.keys(jetzt).length, vorher: Object.keys(vorher).length},
+    // Zwei Halterstaende zum selben Zeitpunkt muessen gleich sein: sonst
+    // haengt der Schnitt an etwas anderem als der Zeit.
+    stabil: JSON.stringify(seasonTitleHalter(sid)) === JSON.stringify(jetzt)
+  };
+})())`));
+ok(_chrg.stand.jetzt > 0, 'der Halterstand des laufenden Monats ist zu lesen',
+   _chrg.stand.jetzt + ' Chroniken');
+ok(_chrg.stabil, 'derselbe Zeitpunkt ergibt denselben Halterstand');
+ok(_chrg.stand.vorher !== _chrg.stand.jetzt || _chrg.n > 0,
+   'der Zeitschnitt schneidet wirklich',
+   'vorher ' + _chrg.stand.vorher + ', heute ' + _chrg.stand.jetzt);
+ok(_chrg.n > 0, 'eine Chronik im laufenden Monat wird gemeldet', _chrg.n + ' Karten');
+ok(_chrg.n <= 2, 'hoechstens zwei Chronik-Karten je Lauf', _chrg.n + ' Karten');
+ok(_chrg.prio.every(p => p === 80),
+   'die Chronik-Karte liegt zwischen Liga-Rekord und Insignium-Stufe',
+   _chrg.prio.join(','));
+ok(_chrg.ohneRef === 0, 'jede Chronik-Karte kennt ihre Wertung und ihr Prestige',
+   _chrg.ohneRef + ' ohne');
+ok(_chrg.ohnePids === 0, 'jede Chronik-Karte weiss, von wem sie handelt',
+   _chrg.ohnePids + ' ohne');
+ok(_chrg.schatten === 0, 'Schattenseiten meldet der Feed nicht', _chrg.schatten + ' gemeldet');
+ok(_chrg.leer === 0, 'jede Chronik-Karte oeffnet ein Blatt mit Inhalt', _chrg.leer + ' leer');
+ok(_chrg.wert.every(l => l === 'Prestige'),
+   'der grosse Wert der Chronik-Karte ist ihr Prestige', _chrg.wert.join(','));
+
 // Und das Gebuendelte steht auf der KARTE, nicht erst im Blatt.
 const _band = JSON.parse(K.eval(`JSON.stringify((function(){
   const roh = _buildStories();
@@ -927,8 +983,16 @@ const _band = JSON.parse(K.eval(`JSON.stringify((function(){
     const h = _newsCardHtmlM2(x, false, false);
     const n = (h.split('nf-sam-z').length - 1);
     zeilen += n;
-    // Was nicht die Schlagzeile selbst ist, muss als Zeile auf der Karte stehen.
-    const rest = (x.dataRef.teile||[]).filter(t => t.titel !== x.title).length;
+    // Was nicht die Schlagzeile selbst ist, muss als Zeile auf der Karte
+    // stehen. „Selbst" sind zwei Titel: der der Karte und der des Kopfs.
+    // Bei einer Tafel-Sammelkarte sind sie verschieden („Henry, Martin und
+    // zwei weitere bewegen die Ewige Tafel" gegen „Henry uebernimmt ‚Der
+    // Gigantentoeter'"), und geprueft wurde nur der erste — damit stand der
+    // Kopf als erste Zeile des Bandes noch einmal da, sein Text darueber,
+    // und von der vierten Meldung blieb „und 1 weitere".
+    const _selbst = [x.title, x.dataRef.kopfTitel].filter(Boolean);
+    const rest = (x.dataRef.teile||[])
+      .filter(t => _selbst.indexOf(t.titel) < 0).length;
     if(Math.min(rest, 3) !== n) ohneBand++;
   });
   return {n: sammel.length, ohneBand, zeilen};

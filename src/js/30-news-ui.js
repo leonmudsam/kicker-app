@@ -379,7 +379,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
   // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, s.title) : '';
+    ? _newsSammelBand(d.teile, [s.title, d.kopfTitel]) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -624,8 +624,16 @@ function _newsSerienBand(laenge, verloren){
 // darunter waere die Wiederholung, die §C33 gerade verhindert.
 function _newsSammelBand(teile, kopfTitel){
   const alle = Array.isArray(teile) ? teile : [];
-  const kt = String(kopfTitel || '').trim();
-  const rest = alle.filter(t => String(t.titel || '').trim() !== kt);
+  // Ausgelassen wird, was die Karte oben schon IST — und das sind zwei
+  // Titel: der der Karte und der des Kopfs. Bei einer Tafel-Sammelkarte
+  // sind sie verschieden („Henry, Martin und zwei weitere bewegen die
+  // Ewige Tafel" gegen „Henry uebernimmt ‚Der Gigantentoeter'"), und
+  // verglichen wurde nur der erste. Damit stand der Kopf als erste Zeile
+  // des Bandes noch einmal da, sein Text darueber, und von der vierten
+  // Meldung blieb „und 1 weitere".
+  const kt = (Array.isArray(kopfTitel) ? kopfTitel : [kopfTitel])
+    .map(x => String(x || '').trim()).filter(Boolean);
+  const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
   if(!rest.length) return '';
   return `<div class="nf-sam">${rest.slice(0, 3).map(t =>
     `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
@@ -652,6 +660,11 @@ function _newsSpielZahlen(s){
 // vom Satz darüber.
 function _newsTafelWert(s){
   const d = s.dataRef || {};
+  // Bei einer Chronik ist das Prestige die Aussage: der Beleg steht im Satz,
+  // die Klasse dahinter, und was sie WERT ist, sagt sonst nichts auf der
+  // Karte. Die erste Zahl des Belegs waere „4 von 5" gewesen — richtig, aber
+  // ohne Bezug.
+  if(d.type === 'chronik_geholt') return {v: '+' + (d.punkte || 0), l:'Prestige'};
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
   const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
@@ -748,8 +761,23 @@ function _newsLeiter(pid){
     const P = prestigeOf(pid);
     if(!P) return '';
     const stufe = P.stufe || 0;
-    const punkte = INSIGNIEN.map((ins, i) =>
-      `<span class="nf-lt-p st-${ins.key}${i <= stufe ? ' hat' : ''}${i === stufe ? ' jetzt' : ''}"></span>`).join('');
+    // Die ECHTEN fünf Zeichen, nicht fünf gefärbte Punkte. Vorher stand hier
+    // ein CSS-Kreis je Stufe (`repeating-conic-gradient`), und der hatte mit
+    // dem Zeichen, das ein Spieler trägt, nichts zu tun: fünf Rosetten in
+    // fünf Farben, wo Reif, Schildring, Volutenkranz, Lorbeerreif und
+    // Ordensstern stehen müssten. `insigniumStufeSvg` trägt seine Verläufe
+    // selbst [§C30] und funktioniert deshalb auch im Blatt.
+    // Der Grad ist der eigene nur an der eigenen Stufe; die übrigen stehen
+    // im ersten Grad, sonst behauptete die Leiter einen Ausbau, den es an
+    // dieser Stufe nie gab.
+    const rangLabel = (getPlayerRank(pid) || {}).label;
+    const punkte = INSIGNIEN.map((ins, i) => {
+      let z = '';
+      try { z = insigniumStufeSvg(ins.key, rangLabel,
+                  i === stufe ? (P.zacken || 0) : 0,
+                  i === stufe ? (P.grad || 0) : 0) || ''; } catch(e){ z = ''; }
+      return `<span class="nf-lt-p${i <= stufe ? ' hat' : ''}${i === stufe ? ' jetzt' : ''}">${z}</span>`;
+    }).join('');
     const rest = P.naechste ? `${P.punkte} / ${P.naechste.min}` : `${P.punkte}`;
     return `<div class="nf-leiter">${punkte}<span class="nf-lt-t">${esc(rest)}</span></div>`;
   } catch(e){ return ''; }
@@ -852,6 +880,16 @@ function _newsTagBilanz(dayKey){
 function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || items.length < 2) return null;
   if(!_newsTagBilanz(dayKey)) return null;   // an diesem Tag wurde nicht gespielt
+  // Erst wenn keine Partie mehr dazukommen kann. Vorher wurde die Karte des
+  // Tages zwanzig Minuten nach dem ersten Spiel vergeben: der Rekord, der
+  // gerade wechselte, war die einzige Karte des Tages und damit automatisch
+  // die staerkste — waehrend der Spieltag noch lief und der Spieler des
+  // Tages noch gar nicht feststand. 23:59 ist derselbe Zeitpunkt, an dem
+  // auch der Spieler des Tages erscheint, und die spaeteste Partie der Liga
+  // hat um 18 Uhr angefangen [§C33].
+  const schluss = new Date(dayKey + 'T00:00:00');
+  schluss.setHours(23, 59, 0, 0);
+  if(Date.now() < schluss.getTime()) return null;
   const OHNE = new Set(['ambient', 'dry_spell', 'season_endgame', 'quiet_week', 'season_start']);
   const kandidaten = items.filter(x => !OHNE.has((x.dataRef || {}).type));
   if(!kandidaten.length) return null;

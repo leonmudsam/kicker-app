@@ -78,6 +78,10 @@ const NEWS_LIMITS = {
   // Ein Tag trägt sechs Karten. Gemessen trug ein Spieltag neun, und die
   // schwächsten drei waren ein Elo-Ausschlag, eine Auszeichnung und ein Fun
   // Fact — Zeilen, die niemand vermisst. Breaking zählt nicht mit [§C33].
+  // Ein starker Spieltag verschiebt mehrere Monatschroniken gleichzeitig.
+  // Gemeldet werden die zwei wertvollsten; der Rest steht am Monatsende in
+  // der Monatskarte, die es ohnehin gibt.
+  chronikGeholt: 2,
   proTag: 6,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
