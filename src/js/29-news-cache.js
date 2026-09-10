@@ -581,8 +581,13 @@ function _consolidateStories(list){
       // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
       // Liste, die das Blatt darunter noch einmal führte — und bei vier
       // Einträgen war die Karte höher als jede andere im Feed.
+      // Auf einer Sammelkarte steht nur der ERSTE Satz des Kopfs. Der zweite
+      // erzaehlt beim Rekord vom Vorgaenger („Vorher gehoerte der Rekord
+      // Jannik") — ein Detail zu einer von vier Meldungen, und als Karte des
+      // Tages stand es gross im Bild, waehrend die anderen drei nur als
+      // Zeile darunter vorkamen. Der Platz gehoert dem Sammelband.
       desc: istTafel
-        ? kopf.desc + (rest.length
+        ? _ersterSatz(kopf.desc) + (rest.length
             ? ` Und ${_zahlwortDe(rest.length)} ${rest.length === 1
                 ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
             : '')
@@ -592,6 +597,10 @@ function _consolidateStories(list){
       dataRef: {type:'sammel', quelle: istTafel ? 'tafel' : 'spiel',
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
+                // Der Titel des Kopfs, damit das Sammelband ihn auslassen
+                // kann: die Karte IST der Kopf, und er stand darunter noch
+                // einmal als erste Zeile [§C33].
+                kopfTitel: kopf.title || '',
                 // Die Beteiligten je Zeile: die Buendelung haengt an ihnen
                 // [§C33], und im Blatt fuehrt die Zeile damit zu dem, von dem
                 // sie handelt.

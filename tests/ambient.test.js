@@ -927,8 +927,16 @@ const _band = JSON.parse(K.eval(`JSON.stringify((function(){
     const h = _newsCardHtmlM2(x, false, false);
     const n = (h.split('nf-sam-z').length - 1);
     zeilen += n;
-    // Was nicht die Schlagzeile selbst ist, muss als Zeile auf der Karte stehen.
-    const rest = (x.dataRef.teile||[]).filter(t => t.titel !== x.title).length;
+    // Was nicht die Schlagzeile selbst ist, muss als Zeile auf der Karte
+    // stehen. „Selbst" sind zwei Titel: der der Karte und der des Kopfs.
+    // Bei einer Tafel-Sammelkarte sind sie verschieden („Henry, Martin und
+    // zwei weitere bewegen die Ewige Tafel" gegen „Henry uebernimmt ‚Der
+    // Gigantentoeter'"), und geprueft wurde nur der erste — damit stand der
+    // Kopf als erste Zeile des Bandes noch einmal da, sein Text darueber,
+    // und von der vierten Meldung blieb „und 1 weitere".
+    const _selbst = [x.title, x.dataRef.kopfTitel].filter(Boolean);
+    const rest = (x.dataRef.teile||[])
+      .filter(t => _selbst.indexOf(t.titel) < 0).length;
     if(Math.min(rest, 3) !== n) ohneBand++;
   });
   return {n: sammel.length, ohneBand, zeilen};

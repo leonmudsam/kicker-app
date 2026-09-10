@@ -1071,6 +1071,43 @@ const ok = (c, msg, det) => {
      'je seltener die Chronik, desto staerker leuchtet ihre Zelle',
      'legendaer ' + matrix.leg + ' > selten ' + matrix.sel + ' > besonders ' + matrix.bes);
 
+  // ── Die Leiter im Blatt traegt die echten Zeichen ──────────────────
+  //    Sie zeigte fuenf CSS-Kreise (`repeating-conic-gradient`) — fuenf
+  //    Rosetten in fuenf Farben, wo Reif, Schildring, Volutenkranz,
+  //    Lorbeerreif und Ordensstern stehen muessten. Ein Platzhalter, der mit
+  //    dem Zeichen, das ein Spieler traegt, nichts zu tun hatte.
+  console.log('\n═══ DIE LEITER IM BLATT ═══');
+  const leiter = await page.evaluate(() => {
+    const pids = window.__k.eval('players.filter(p=>!p.hidden).map(p=>p.id)');
+    const box = document.createElement('div');
+    box.style.width = '430px';
+    document.body.appendChild(box);
+    let mit = 0, ohne = 0, kleinste = 999, stufen = 0;
+    pids.forEach(pid => {
+      const h = window.__k.eval('_newsLeiter(' + JSON.stringify(pid) + ')');
+      if(!h) return;
+      box.innerHTML = h;
+      const felder = box.querySelectorAll('.nf-lt-p');
+      if(!felder.length) return;
+      stufen = felder.length;
+      felder.forEach(f => {
+        if(f.querySelector('svg.ins')) mit++; else ohne++;
+        const r = f.getBoundingClientRect();
+        if(r.width < kleinste) kleinste = r.width;
+      });
+    });
+    box.remove();
+    return {mit, ohne, kleinste, stufen};
+  });
+  ok(leiter.mit > 0, 'die Leiter zeichnet ueberhaupt etwas', leiter.mit + ' Felder');
+  ok(leiter.ohne === 0, 'jedes Feld der Leiter traegt sein echtes Zeichen',
+     leiter.ohne + ' Felder ohne Zeichen');
+  ok(leiter.stufen === 5, 'die Leiter zeigt alle fuenf Stufen', leiter.stufen + ' Felder');
+  // Unter 40 px bleibt vom Schildring ein Ring. Bei 28 px war er von der
+  // blanken Stufe nicht zu unterscheiden, gemessen an der Zeichnung.
+  ok(leiter.kleinste >= 40, 'ein Feld der Leiter ist mindestens 40 px breit',
+     leiter.kleinste + ' px');
+
   console.log('\n' + '═'.repeat(60));
   console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
   await browser.close();

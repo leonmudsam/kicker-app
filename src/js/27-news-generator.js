@@ -162,6 +162,16 @@ function _namenListe(namen){
 
 // Zahlwörter bis vier, darüber die Ziffer. Vier ist die Grenze, weil keine
 // Bündelung im Feed mehr als vier Zeilen trägt [§C33].
+// Der erste Satz eines Textes. Auf einer Sammelkarte gehoert nur er dem
+// Kopf; alles danach ist ein Detail zu einer von vier Meldungen.
+// Abkuerzungen mit Punkt gibt es in diesen Texten nicht, ein Datum wie
+// „29.07." aber schon — deshalb wird nur an einem Punkt getrennt, auf den
+// ein Leerzeichen und ein Grossbuchstabe folgt.
+function _ersterSatz(txt){
+  const s = String(txt || '').trim();
+  const m = s.match(/^([\s\S]*?[.!?])\s+[A-ZÄÖÜ]/);
+  return m ? m[1] : s;
+}
 function _zahlwortDe(n){ return ['', 'ein', 'zwei', 'drei', 'vier'][n] || String(n); }
 
 // Dieselbe Aufzählung, aber für eine Schlagzeile gedeckelt. Über einer Karte,

@@ -710,16 +710,20 @@
     text-transform:uppercase;max-width:80px;line-height:1.3}
 
   /* Sorte 3 Insignium: die Leiter zeigt den Weg. */
-  .nf-leiter{display:flex;align-items:center;gap:7px;padding:10px 13px;
+  .nf-leiter{display:flex;align-items:center;gap:4px;padding:10px 13px;
     border-top:1px solid var(--line)}
-  .nf-lt-p{width:16px;height:16px;border-radius:50%;flex:0 0 auto;opacity:.28;
-    background:linear-gradient(148deg,#9aa39c,#59635e)}
-  .nf-lt-p.st-schild{background:repeating-conic-gradient(#c3ccc5 0 5deg,#59635e 5deg 11deg)}
-  .nf-lt-p.st-volute{background:conic-gradient(#f7cf4a,#7d6420,#f7cf4a,#7d6420,#f7cf4a)}
-  .nf-lt-p.st-lorbeer{background:repeating-conic-gradient(#f7cf4a 0 8deg,#6d5a1c 8deg 17deg)}
-  .nf-lt-p.st-stern{background:conic-gradient(#fff6d0,#f7cf4a,#fff6d0,#f7cf4a,#fff6d0)}
+  /* Die Leiter zeigt die echten Zeichen [§C30]. Sechzehn Pixel waren fuer
+     einen gefaerbten Punkt gedacht; bei achtundzwanzig blieb vom Schildring
+     ein Ring. Vierzig ist das Maximum, bei dem fuenf Stufen und die Zahl
+     daneben in eine 430-px-Karte passen, und die Untergrenze, ab der Reif,
+     Schildring und Volutenkranz zu unterscheiden sind.
+     Die noch nicht erreichten stehen nicht auf .3 sondern auf .45: bei .3
+     war eine Kontur auf dunklem Grund von nichts zu unterscheiden. */
+  .nf-lt-p{width:40px;height:40px;flex:0 0 auto;opacity:.45;
+    display:grid;place-items:center;border-radius:50%}
+  .nf-lt-p .ins{width:100%;height:100%;display:block}
   .nf-lt-p.hat{opacity:1}
-  .nf-lt-p.jetzt{outline:1.5px solid var(--gold);outline-offset:2px;opacity:1}
+  .nf-lt-p.jetzt{outline:1.5px solid var(--gold);outline-offset:1px;opacity:1}
   .nf-lt-t{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
 
   /* Sorte 4 Held: Wappen gross, drei Zahlen im Fuss. */

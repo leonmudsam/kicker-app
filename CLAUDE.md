@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **677**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **678**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -223,7 +223,7 @@ globalem Zustand ist.
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 176 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck | 204 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix — **im echten Browser gemessen** | 88 |
+| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt — **im echten Browser gemessen** | 92 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -664,6 +664,22 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Spieltagen**: an einem Tag ohne Partie ist nichts passiert, was ihn von einem
   anderen unterscheidet, und dort standen sonst ein Fun Fact oder eine
   Zufallsstatistik groß im Bild, die gestern genauso dagestanden hätten.
+  Und es gibt sie **erst um 23:59**, wenn keine Partie mehr dazukommen kann —
+  dieselbe Uhrzeit wie beim Spieler des Tages, und aus demselben Grund.
+  Vorher wurde sie zwanzig Minuten nach dem ersten Spiel vergeben: der Rekord,
+  der gerade wechselte, war die einzige Karte des Tages und damit automatisch
+  die stärkste, während der Spieltag noch lief und der Spieler des Tages noch
+  gar nicht feststand.
+  **Der Kopf einer Sammelkarte steht nicht zweimal da.** Das Sammelband ließ
+  aus, was den Titel der KARTE trug — bei einer Tafel-Sammelkarte ist das der
+  gebündelte Titel („Henry, Martin und zwei weitere bewegen die Ewige Tafel")
+  und nicht der des Kopfs („Henry übernimmt ‚Der Gigantentöter'"). Damit stand
+  der Kopf als erste Zeile des Bandes noch einmal, sein Text darüber, und von
+  der vierten Meldung blieb „und 1 weitere". Ausgelassen werden jetzt beide
+  Titel (`kopfTitel`). Und auf der Karte steht nur der **erste Satz** des
+  Kopfs (`_ersterSatz`): der zweite erzählt beim Rekord vom Vorgänger, ein
+  Detail zu einer von vier Meldungen, das als Karte des Tages groß im Bild
+  stand, während die anderen drei nur eine Zeile bekamen.
 
   **Der Tagesplan.** `07:00` gab es nicht mehr: der Spieler des Tages steht um
   **23:59 an seinem eigenen Spieltag**, wenn keine Partie mehr dazukommen kann
@@ -1006,6 +1022,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   jeder Zacke wird die Glorie um vier Strahlen dichter. Länge und Breite
   der Strahlen sind gedeckelt — sonst spränge der Stern aus seiner
   Zeichenfläche.
+  Auch die kleine Leiter im Blatt (`_newsLeiter`, `.nf-lt-p`) zeigt die
+  **echten** Zeichen. Sie zeigte fünf CSS-Kreise mit
+  `repeating-conic-gradient` — fünf Rosetten in fünf Farben, wo Reif,
+  Schildring, Volutenkranz, Lorbeerreif und Ordensstern stehen müssten, und
+  damit einen Platzhalter, der mit dem Zeichen eines Spielers nichts zu tun
+  hatte. `insigniumStufeSvg` trägt seine Verläufe selbst und funktioniert
+  deshalb auch dort. Ein Feld ist **40 px** breit: bei 28 blieb vom
+  Schildring ein Ring, und die sechzehn des CSS-Punktes waren für einen Punkt
+  gedacht. `tests/blatt` misst beides.
   Die Laufbahn zeigt die Leiter als Vitrine (`.lb-karus`/`.lb-k`): eine
   Stufe groß in der Mitte, die übrigen schiebt man heran — **oder tippt sie
   an**. Wischen allein hat die letzte Stufe nie erreicht: der Blatt-Zug
