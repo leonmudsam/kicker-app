@@ -377,9 +377,13 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     // Die Typen sammel und woche sind ausgenommen: jede Sammelkarte gehoert zu einer
     // anderen Partie oder einem anderen Tag, und die Wochenkarte gibt es je
     // Woche genau einmal. Sie zu deckeln hiesse, eine Buendelung zu bestrafen.
+    // potd und chronik_monat stehen dabei: was es je Tag oder Monat genau
+    // einmal gibt, ist keine Wiederholung, sondern die Schlagzeile eines
+    // eigenen Tages.
     haeufung: Object.keys(zaehl).filter(t => zaehl[t] > 2 &&
       ['ambient','group','lead_change','elo_record','streak_record',
-       'season_recap','season_endgame','sammel','woche'].indexOf(t) < 0)
+       'season_recap','season_endgame','sammel','woche',
+       'potd','chronik_monat'].indexOf(t) < 0)
       .map(t => t + '×' + zaehl[t]),
     // Doppelte Schlagzeilen: zweimal dieselbe Zeile ist eine Zeile zu viel.
     doppelt: (function(){
@@ -683,6 +687,52 @@ ok(!_chronAlt.keine && _chronAlt.alteDrin === false,
 ok(!_chronAlt.keine && _chronAlt.neueDrin === true,
    'und die Chronik-Karte, die noch gilt, bleibt',
    String(_chronAlt.neueDrin));
+
+// Der Deckel je Sorte behaelt die zwei juengsten. Was es je Tag genau einmal
+// gibt, faellt nie darunter: der Feed reicht vierzehn Tage zurueck, darin
+// liegen sechs bis sieben Spieltage, und gemessen standen zwei ihrer Sieger
+// im Feed. „Leo ist Spieler des Tages" und „Alex ist Spieler des Tages" sind
+// keine Wiederholung voneinander, sie gehoeren zwei verschiedenen Tagen.
+const _tagesSieger = JSON.parse(K.eval(`JSON.stringify((function(){
+  const t = Date.now();
+  const namen = ['Aa','Bb','Cc','Dd','Ee'];
+  const karten = namen.map((n, i) => ({
+    id:'potd_pruef_'+i, cat:'highlight', ic:'dayKing',
+    title:n+' ist Spieler des Tages',
+    desc:'5 von 7 Spielen gewonnen, das sind 71 %.',
+    when:new Date(t - i*86400000), prio:STORY_PRIO.potd,
+    dataRef:{type:'potd', dayKey:'pruef'+i, playerId:'x'+i, wins:5, games:7}}));
+  const aus = _consolidateStories(karten);
+  return {gebaut: karten.length,
+          imFeed: aus.filter(s => (s.dataRef||{}).type === 'potd').length};
+})())`));
+ok(_tagesSieger.imFeed === _tagesSieger.gebaut,
+   'jeder Spieltag behaelt seinen Sieger, auch der fuenfte im Fenster',
+   _tagesSieger.imFeed + ' von ' + _tagesSieger.gebaut);
+
+// Und derselbe Spieler darf zwei Spieltage gewinnen. Die Schlagzeile ist
+// dann wortgleich, der Text nicht: gemessen gewann Martin den 02.09. mit
+// 3 von 3 und den 08.09. mit 5 von 7. Die aeltere Karte fiel weg, weil
+// beide „Martin ist Spieler des Tages" heissen.
+const _zweiTage = JSON.parse(K.eval(`JSON.stringify((function(){
+  const t = Date.now();
+  const mach = (i, wins, spiele) => ({id:'potd_gleich_'+i, cat:'highlight',
+    ic:'dayKing', title:'Martin ist Spieler des Tages',
+    desc: wins+' von '+spiele+' Spielen gewonnen. Tag '+i+'.',
+    when:new Date(t - i*86400000), prio:STORY_PRIO.potd,
+    dataRef:{type:'potd', dayKey:'g'+i, playerId:'m', wins:wins, games:spiele}});
+  const aus = _consolidateStories([mach(0,5,7), mach(6,3,3)]);
+  const gleich = _consolidateStories([mach(0,5,7), Object.assign(mach(6,5,7),
+    {id:'potd_gleich_x', desc:'5 von 7 Spielen gewonnen. Tag 0.'})]);
+  return {verschieden: aus.filter(s => (s.dataRef||{}).type==='potd').length,
+          wortgleich: gleich.filter(s => (s.dataRef||{}).type==='potd').length};
+})())`));
+ok(_zweiTage.verschieden === 2,
+   'derselbe Spieler darf zwei Spieltage gewinnen',
+   _zweiTage.verschieden + ' von 2');
+ok(_zweiTage.wortgleich === 1,
+   'zwei in Schlagzeile UND Text gleiche Karten bleiben eine',
+   _zweiTage.wortgleich + ' statt 1');
 ok(_plan.chrZeit.every(t => t === '0:0'), 'die Chronik erscheint um 00:00',
    _plan.chrZeit.join(', ') || 'keine');
 ok(_plan.chrErster, 'am ersten Tag des Folgemonats');

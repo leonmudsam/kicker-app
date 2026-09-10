@@ -221,7 +221,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen, die Abstufung der Wiederholung, der Wiederholungs-Katalog | 981 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge, der Tag gehört sich selbst, der Rang aus dem Generator, der überholte Halter | 247 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge, der Tag gehört sich selbst, der Rang aus dem Generator, der überholte Halter, jeder Spieltag behält seinen Sieger, zwei Tage desselben Siegers | 250 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt, die Karte fuer den gemeinsamen Erfolg, die Zahlenreihe der Chronik — **im echten Browser gemessen** | 99 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -493,7 +493,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Rot für die Richtung (`misfortune`), Metall für den Rest.
   Drei Regeln gegen Rauschen: **kein Story-Typ steht mehr als zweimal im
   Feed** (`_consolidateStories`, ausgenommen die seltenen Ereignisse, die
-  Sammel- und die Wochenkarte), **keine zwei Karten tragen dieselbe
+  Sammelkarte — und alles, was es je Tag, Woche oder Monat genau EINMAL
+  gibt (`TAG_PFLICHT`). Das kann sich nicht wiederholen: seit der Feed
+  vierzehn Tage zurückreicht, liegen sechs bis sieben Spieltage darin, und
+  von ihren Siegern standen gemessen zwei im Feed — vier Spieltage
+  verloren genau die Karte, die ihre Schlagzeile ist. „Leo ist Spieler des
+  Tages" und „Alex ist Spieler des Tages" sind keine Wiederholung
+  voneinander, sie gehören zwei verschiedenen Tagen. Bei sieben Tagen
+  Fenster fiel es nicht auf, da passten zwei Sieger hinein), **keine zwei
+  Karten tragen dieselbe
   Schlagzeile** oder **denselben Text** („Eine große Rivalität, die Liga
   liebt's" stand wortgleich unter zwei Karten und nannte keine einzige Zahl).
   **`prio` steht auf EINER Skala** (`STORY_PRIO`, §11.0a). Der Tagesdeckel und
@@ -726,7 +734,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   genau einmal gibt, fällt nie darunter, und die ambienten Karten hängen ohnehin
   an ihrem Slot.
 
-  **Zwei Karten mit derselben Schlagzeile sind eine zu viel.** Der Feed
+  **Zwei Karten mit derselben Schlagzeile sind eine zu viel** — außer bei
+  dem, was es je Tag, Woche oder Monat genau einmal gibt (`TAG_PFLICHT`).
+  Derselbe Spieler gewinnt zwei Spieltage, und die Schlagzeile lautet
+  beide Male gleich: gemessen holte Martin den 02.09. mit 3 von 3 und den
+  08.09. mit 5 von 7, und die ältere Karte fiel weg. Sie stehen unter zwei
+  verschiedenen Tagesköpfen, und jede nennt im Text ihr eigenes Datum. Eine
+  echte Doublette fängt weiterhin der volle Vergleich aus Schlagzeile UND
+  Text ab. Sonst gilt: der Feed
   entfernt Doubletten nach Text UND nach Titel: zwei Rekordkarten
   unterschieden sich im Beleg und trugen wortgleich dieselbe Zeile, und nach
   zwei Partien stand sie zweimal untereinander. Wer den Rekord hält, wird

@@ -218,6 +218,17 @@ function _consolidateStories(list){
   const pm = (typeof pmap === 'function') ? pmap() : {};
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
   const fmtNames = arr => arr.length <= 1 ? (arr[0] || '') : arr.slice(0, -1).join(', ') + ' & ' + arr[arr.length - 1];
+  // ── Was es genau EINMAL gibt ──────────────────────────────────────
+  // Der Spieler des Tages, die Wochenkarte, die Monatschronik und der
+  // Saison-Rückblick entstehen je Tag, Woche oder Monat genau einmal. Sie
+  // können sich damit nicht wiederholen, und alle drei Regeln gegen
+  // Wiederholung lassen sie deshalb in Ruhe: der Deckel je Sorte, der
+  // Vergleich der Schlagzeilen und der Tagesdeckel [§C33]. Der Feed reicht
+  // vierzehn Tage zurück; darin liegen sechs bis sieben Spieltage, und von
+  // ihren Siegern standen gemessen zwei im Feed — vier Spieltage verloren
+  // genau die Karte, die ihre Schlagzeile ist. Solange das Fenster sieben
+  // Tage breit war, fiel das nicht auf: da passten zwei Sieger hinein.
+  const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap']);
 
   // v9.6: Veraltete „loss_streak"-Stories rausfiltern, BEVOR gruppiert/suppress-
   // iert wird. Eine Story bleibt nur, wenn die AKTUELLE Niederlagenserie des
@@ -479,7 +490,14 @@ function _consolidateStories(list){
       const ck = (s.title || '') + '\u0000' + (s.desc || '');
       if(seenContent.has(ck)) continue;   // inhaltsgleiche Doublette → überspringen
       const tk = String(s.title || '').trim();
-      if(tk && seenTitel.has(tk)) continue;
+      // Was es je Tag, Woche oder Monat genau einmal gibt, darf dieselbe
+      // Schlagzeile zweimal tragen: sie steht unter zwei verschiedenen
+      // Tagesköpfen und nennt im Text ihr eigenes Datum. Gemessen gewann
+      // Martin den 02.09. mit 3 von 3 und den 08.09. mit 5 von 7 — zwei
+      // Spieltage, zwei Ergebnisse, und die ältere Karte fiel weg, weil
+      // beide „Martin ist Spieler des Tages" heißen. Eine echte Doublette
+      // fängt der volle Vergleich aus Schlagzeile UND Text weiter ab.
+      if(tk && !TAG_PFLICHT.has(d.type) && seenTitel.has(tk)) continue;
       const ak = _sperreMs ? _aussage(s) : null;
       if(ak){
         const vorherMs = _zuletzt.get(ak);
@@ -959,12 +977,12 @@ function _consolidateStories(list){
   // derselben Woche zu unterschlagen wäre genau der Fehler, den die Regel
   // verhindern soll. Und `ambient`/`group` sind ohnehin je Slot einzeln.
   const OHNE_DECKEL = new Set(['lead_change','elo_record','streak_record',
-                               'season_recap','season_endgame','ambient','group','sammel','woche']);
+                               'season_endgame','ambient','group','sammel']);
   const NF_DECKEL = 2;
   const gezaehlt = {};
   const behalten = gesammelt.filter(s => {
     const t = (s && s.dataRef && s.dataRef.type) || '';
-    if(!t || OHNE_DECKEL.has(t)) return true;
+    if(!t || OHNE_DECKEL.has(t) || TAG_PFLICHT.has(t)) return true;
     gezaehlt[t] = (gezaehlt[t] || 0) + 1;
     return gezaehlt[t] <= NF_DECKEL;
   });
@@ -1026,8 +1044,8 @@ function _consolidateStories(list){
   // Deckel: der Spieler des Tages IST die Schlagzeile seines Spieltags, und
   // ein Tag ohne seinen Sieger hat keine Zusammenfassung mehr. Gemessen fiel
   // er an einem Tag mit neun Karten als siebtstärkste heraus, während zwei
-  // Auszeichnungen und eine laufende Serie darüber standen.
-  const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap']);
+  // Auszeichnungen und eine laufende Serie darüber standen. Dieselbe Menge
+  // ist schon vom Deckel je Sorte ausgenommen — sie steht deshalb weiter oben.
   const _proTagKey = s => { const d = new Date(s.when);
     return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
   const _tagRang = {};
