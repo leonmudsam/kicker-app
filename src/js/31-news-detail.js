@@ -265,14 +265,25 @@ function _newsMedaillon(ic, rarity, name, bedingung, badgeId){
 // punktgleich teilen, füllten genau diese drei die Liste, und unter der
 // Überschrift „Wer sonst noch vorne steht" standen dieselben drei Namen mit
 // derselben Zahl, die der Kopf zwei Zeilen darüber schon nennt [§C33].
-function _newsVerfolger(rekordId, halter){
+// Wer DAHINTER liegt — und niemand davor. Die Karte traegt den Wert, der
+// bei ihrer Entstehung galt (er steckt in ihrer ID); die Liste rechnet
+// HEUTE. Zwischen beidem koennen Partien liegen, und dann stand unter
+// „Martin uebernimmt ‚Der Zerstoerer' · 24 %" ein Verfolger mit 25 % —
+// eine Karte, die sich selbst widerspricht. Wer den Wert der Karte
+// inzwischen ueberholt hat, steht nicht dahinter, sondern davor: die Liste
+// laesst ihn weg und sagt stattdessen, wem der Rekord jetzt gehoert.
+function _newsVerfolger(rekordId, halter, wert){
   if(!rekordId) return '';
   try {
     const rang = chronicleRang(rekordId);
     if(!Array.isArray(rang) || rang.length < 2) return '';
     const pm = pmap();
     const oben = (Array.isArray(halter) ? halter : []);
-    const zeilen = rang.filter(r => oben.indexOf(r.pid || r.id) < 0)
+    const grenze = (wert == null || !isFinite(wert)) ? null : wert + 1e-9;
+    const davor = grenze == null ? [] : rang.filter(r =>
+      oben.indexOf(r.pid || r.id) < 0 && r.wert > grenze);
+    const zeilen = rang.filter(r => oben.indexOf(r.pid || r.id) < 0
+                                 && (grenze == null || r.wert <= grenze))
       .slice(0, 3).map((r, i) => {
       const pid = r.pid || r.id;
       if(!pm[pid]) return '';
@@ -283,8 +294,15 @@ function _newsVerfolger(rekordId, halter){
         <b>${esc(_chronKurz(r.ev))}</b>
       </div>`;
     }).filter(Boolean).join('');
-    return zeilen ? `<div class="nd-section">Wer dahinter liegt</div>
-      <div class="nd-vf">${zeilen}</div>` : '';
+    // Steht jemand darueber, ist der Rekord weitergewandert. Das gehoert
+    // auf die Karte, nicht verschwiegen: sonst zeigt das Blatt eine
+    // Bestmarke, die es nicht mehr gibt.
+    const jetzt = davor.length ? `<div class="nd-stat-row">
+        <div class="nd-stat-label">Hält ihn jetzt</div>
+        <div class="nd-stat-val">${esc(davor.map(r => (pm[r.pid || r.id] || {}).name)
+          .filter(Boolean).join(', '))}</div></div>` : '';
+    return (zeilen || jetzt) ? `<div class="nd-section">Wer dahinter liegt</div>
+      ${jetzt}<div class="nd-vf">${zeilen}</div>` : '';
   } catch(e){ return ''; }
 }
 
@@ -425,7 +443,7 @@ function _newsDetailMitte(s){
           ${vor.length ? `<div class="nd-stat-row" data-pid="${esc(vor[0])}" style="cursor:pointer">
             <div class="nd-stat-label">Vorher gehalten von</div>
             <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
-          ${_newsVerfolger(d.rekordId, d.playerIds)}
+          ${_newsVerfolger(d.rekordId, d.playerIds, d.wert)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen

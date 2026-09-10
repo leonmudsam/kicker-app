@@ -677,6 +677,15 @@
   .nf-gr{display:grid;grid-template-columns:1fr;gap:12px;padding:11px 13px 12px;align-items:start}
   .nf-gr.mit-l{grid-template-columns:auto minmax(0,1fr)}
   .nf-gr-l{display:flex;align-items:center;gap:6px;padding-top:1px}
+  /* Das Zeichen auf der Erfolgs-Karte [§C30]. „Vier Spieler tragen jetzt den
+     Schildring" zeigte den Schildring kein einziges Mal — daneben stand ein
+     Pokal aus dem Icon-Katalog. Die Spalte stellt es ueber die Chips: die
+     Karte handelt vom Zeichen, die Gesichter sagen, wer es traegt. 48 px ist
+     die Untergrenze fuer ein Insignium, darunter bleibt vom Schmuck nichts
+     uebrig [§6]. */
+  .nf-gr-l:has(.nf-erf-z){flex-direction:column;align-items:center;gap:3px}
+  .nf-erf-z{display:block;width:52px;height:52px}
+  .nf-erf-z svg{width:100%;height:100%;display:block}
   .nf-gr-r{min-width:0}
   /* Der Text darf ausschreiben. Bei drei Zeilen brach jede dritte Karte
      mitten im Satz ab, gemessen an den echten Stories. */

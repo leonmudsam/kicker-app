@@ -2313,6 +2313,15 @@
   .nf-gr{display:grid;grid-template-columns:1fr;gap:12px;padding:11px 13px 12px;align-items:start}
   .nf-gr.mit-l{grid-template-columns:auto minmax(0,1fr)}
   .nf-gr-l{display:flex;align-items:center;gap:6px;padding-top:1px}
+  /* Das Zeichen auf der Erfolgs-Karte [§C30]. „Vier Spieler tragen jetzt den
+     Schildring" zeigte den Schildring kein einziges Mal — daneben stand ein
+     Pokal aus dem Icon-Katalog. Die Spalte stellt es ueber die Chips: die
+     Karte handelt vom Zeichen, die Gesichter sagen, wer es traegt. 48 px ist
+     die Untergrenze fuer ein Insignium, darunter bleibt vom Schmuck nichts
+     uebrig [§6]. */
+  .nf-gr-l:has(.nf-erf-z){flex-direction:column;align-items:center;gap:3px}
+  .nf-erf-z{display:block;width:52px;height:52px}
+  .nf-erf-z svg{width:100%;height:100%;display:block}
   .nf-gr-r{min-width:0}
   /* Der Text darf ausschreiben. Bei drei Zeilen brach jede dritte Karte
      mitten im Satz ab, gemessen an den echten Stories. */
@@ -4223,6 +4232,7 @@
      Gold liest sich wie eine Auszeichnung — genau das war der Fall, seit
      die Regel darüber alles auf Gold gezwungen hat. Rot ist hier keine
      zweite Meinung, sondern dieselbe Aussage mit umgekehrtem Vorzeichen. */
+  .pp-root .pp-title-pill.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .chron-one.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .tmark.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .pp-bmini.legendary{color:var(--gold);border-color:rgba(247,207,74,.45)}
@@ -4711,7 +4721,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.e07f4194';
+const BUILD_VERSION='2026.09.10.b02992cb';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22395,6 +22405,9 @@ function _consolidateStories(list){
       dataRef: {type:'sammel', quelle: art,
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
+                // Die Stufe reist mit: ohne sie kann die Karte das Zeichen
+                // nicht zeigen, um das sie geht [§C30].
+                stufe: (kopf.dataRef||{}).stufe,
                 // Der Titel des Kopfs, damit das Sammelband ihn auslassen
                 // kann: die Karte IST der Kopf, und er stand darunter noch
                 // einmal als erste Zeile [§C33].
@@ -23117,14 +23130,22 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Eine Sammelkarte behaelt Rubrik und Motiv ihres staerksten Ereignisses —
   // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
   // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
-  // Die beiden zusammenfuehrenden Karten tragen eine eigene Schlagzeile und
-  // lassen deshalb keine Zeile aus: der Kopf ist einer der Erfolge, und wer
-  // ihn verschweigt, versteckt genau das, was die Karte zeigen soll. Sie
-  // zeigen auch ALLE Zeilen, nicht drei und „und 2 weitere" — dort IST die
-  // Vollstaendigkeit die Aussage [§C33].
-  const _achse = d.quelle === 'spieler' || d.quelle === 'erfolg';
+  // Ausgelassen wird genau EINS: die Zeile, die die Karte oben schon IST —
+  // also ihr eigener Titel. Ausgelassen wurde zusaetzlich der Titel des
+  // KOPFS, und bei einer Tafel-Karte sind das zwei verschiedene Saetze:
+  // ueber „Henry, Johannes und zwei weitere bewegen die Ewige Tafel" stand
+  // „6 % aller 158 Partien gegen die Wahrscheinlichkeit gewonnen" als Text
+  // und darunter drei Zeilen — Henry kam auf seiner eigenen Karte nicht ein
+  // einziges Mal namentlich vor, und die Zahl im Text gehoerte niemandem.
+  // Der Text ist der BELEG des staerksten Ereignisses, nicht seine
+  // Schlagzeile; beides nebeneinander ist keine Wiederholung, sondern erst
+  // die vollstaendige Aussage.
+  //
+  // Und gezeigt werden ALLE Zeilen: eine Sammelkarte traegt hoechstens vier
+  // (SAMMEL_MAX), „und 1 weitere" versteckte also genau eine Meldung, um
+  // eine Zeile zu sparen. Buendeln darf nichts verstecken [§C33].
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, _achse ? [] : [s.title, d.kopfTitel], _achse) : '';
+    ? _newsSammelBand(d.teile, [s.title], true) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -23166,7 +23187,13 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   } else if(sorte === 'erfolg'){
     // Hier ist der Erfolg das Subjekt, also stehen die Gesichter als Chips
     // nebeneinander [§C33] — keins von ihnen ist wichtiger als das andere.
-    gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
+    // Und wo der Erfolg ein ZEICHEN ist, steht das Zeichen dabei. „Vier
+    // Spieler tragen jetzt den Schildring" zeigte den Schildring kein
+    // einziges Mal: daneben stand ein Pokal aus dem Icon-Katalog, und die
+    // Karte handelte von einer Zeichnung, die sie nicht zeigt. Die App hat
+    // das Bauteil [§C27] — `insigniumStufeSvg` traegt seine Verlaeufe selbst
+    // und funktioniert deshalb auch hier [§C30].
+    gesicht = `<div class="nf-gr-l">${_newsErfolgZeichen(s)}${_newsGesichtHtml(s)}</div>`;
     fuss = _newsZahlband([
       {v: (Array.isArray(d.teile) ? d.teile.length : 0) || null, l:'Spieler zugleich', f:'g'}
     ]);
@@ -23443,8 +23470,24 @@ function _newsTafelWert(s){
   if(d.type === 'chronik_geholt') return {v: '+' + (d.punkte || 0), l:'Prestige'};
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
+  // „Bestwert" war geraten. Die Zahl kommt aus einem Regex ueber den
+  // Fliesstext, und bei „Der Wandler" stand damit „0 %" unter der
+  // Aufschrift BESTWERT — der Wert ist dort ein UNTERSCHIED zwischen zwei
+  // Positionen, und je kleiner er ist, desto besser. Ein Bestwert von null
+  // liest sich wie ein Fehler.
+  //
+  // Wie die Zahl heisst, weiss der Katalog: die Kammer sagt, was ein
+  // Eintrag ueberhaupt ist [§C35]. Ein Liga-Rekord ist ein Bestwert, eine
+  // Fuegung nicht, und eine Schattenseite schon gar nicht.
   const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
-  return m ? {v: m[1], l:'Bestwert'} : null;
+  if(!m) return null;
+  let label = 'Bestwert';
+  try {
+    const def = d.rekordId && CHRONICLE_BY_ID[d.rekordId];
+    const k = def && CHRON_KINDS[def.kind];
+    if(k) label = k.label;
+  } catch(e){}
+  return {v: m[1], l: label};
 }
 
 // Der Rang eines Spielers als kurze Angabe fürs Zahlenband.
@@ -23554,6 +23597,21 @@ function _newsWertBlock(wert, label, farbe){
 
 // Die Insignium-Leiter: fünf Punkte, die erreichten hell, der neue umrandet.
 // Damit sieht man auf einen Blick, wo jemand steht und wie weit es noch ist.
+// Das Zeichen, um das eine Erfolgs-Karte geht. Nur dort, wo der Erfolg
+// ueberhaupt eines HAT: eine Insignium-Stufe hat eins, ein Jubilaeum nicht.
+function _newsErfolgZeichen(s){
+  const d = (s && s.dataRef) || {};
+  if(d.kopfTyp !== 'insignium_stufe') return '';
+  const stufe = INSIGNIEN[d.stufe | 0];
+  if(!stufe) return '';
+  const pid = (Array.isArray(d.playerIds) ? d.playerIds[0] : null);
+  let z = '';
+  try {
+    z = insigniumStufeSvg(stufe.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
+  } catch(e){ z = ''; }
+  return z ? `<span class="nf-erf-z">${z}</span>` : '';
+}
+
 function _newsLeiter(pid){
   try {
     const P = prestigeOf(pid);
@@ -24085,14 +24143,25 @@ function _newsMedaillon(ic, rarity, name, bedingung, badgeId){
 // punktgleich teilen, füllten genau diese drei die Liste, und unter der
 // Überschrift „Wer sonst noch vorne steht" standen dieselben drei Namen mit
 // derselben Zahl, die der Kopf zwei Zeilen darüber schon nennt [§C33].
-function _newsVerfolger(rekordId, halter){
+// Wer DAHINTER liegt — und niemand davor. Die Karte traegt den Wert, der
+// bei ihrer Entstehung galt (er steckt in ihrer ID); die Liste rechnet
+// HEUTE. Zwischen beidem koennen Partien liegen, und dann stand unter
+// „Martin uebernimmt ‚Der Zerstoerer' · 24 %" ein Verfolger mit 25 % —
+// eine Karte, die sich selbst widerspricht. Wer den Wert der Karte
+// inzwischen ueberholt hat, steht nicht dahinter, sondern davor: die Liste
+// laesst ihn weg und sagt stattdessen, wem der Rekord jetzt gehoert.
+function _newsVerfolger(rekordId, halter, wert){
   if(!rekordId) return '';
   try {
     const rang = chronicleRang(rekordId);
     if(!Array.isArray(rang) || rang.length < 2) return '';
     const pm = pmap();
     const oben = (Array.isArray(halter) ? halter : []);
-    const zeilen = rang.filter(r => oben.indexOf(r.pid || r.id) < 0)
+    const grenze = (wert == null || !isFinite(wert)) ? null : wert + 1e-9;
+    const davor = grenze == null ? [] : rang.filter(r =>
+      oben.indexOf(r.pid || r.id) < 0 && r.wert > grenze);
+    const zeilen = rang.filter(r => oben.indexOf(r.pid || r.id) < 0
+                                 && (grenze == null || r.wert <= grenze))
       .slice(0, 3).map((r, i) => {
       const pid = r.pid || r.id;
       if(!pm[pid]) return '';
@@ -24103,8 +24172,15 @@ function _newsVerfolger(rekordId, halter){
         <b>${esc(_chronKurz(r.ev))}</b>
       </div>`;
     }).filter(Boolean).join('');
-    return zeilen ? `<div class="nd-section">Wer dahinter liegt</div>
-      <div class="nd-vf">${zeilen}</div>` : '';
+    // Steht jemand darueber, ist der Rekord weitergewandert. Das gehoert
+    // auf die Karte, nicht verschwiegen: sonst zeigt das Blatt eine
+    // Bestmarke, die es nicht mehr gibt.
+    const jetzt = davor.length ? `<div class="nd-stat-row">
+        <div class="nd-stat-label">Hält ihn jetzt</div>
+        <div class="nd-stat-val">${esc(davor.map(r => (pm[r.pid || r.id] || {}).name)
+          .filter(Boolean).join(', '))}</div></div>` : '';
+    return (zeilen || jetzt) ? `<div class="nd-section">Wer dahinter liegt</div>
+      ${jetzt}<div class="nd-vf">${zeilen}</div>` : '';
   } catch(e){ return ''; }
 }
 
@@ -24245,7 +24321,7 @@ function _newsDetailMitte(s){
           ${vor.length ? `<div class="nd-stat-row" data-pid="${esc(vor[0])}" style="cursor:pointer">
             <div class="nd-stat-label">Vorher gehalten von</div>
             <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
-          ${_newsVerfolger(d.rekordId, d.playerIds)}
+          ${_newsVerfolger(d.rekordId, d.playerIds, d.wert)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen
@@ -27910,13 +27986,18 @@ function chronBeiname(t){
 function playerTitleBadge(pid){
   const rows = seasonTitleHistory(pid);
   const cur = rows.find(r => r.live && r.title);
+  // `titleId` gehoert dazu: ohne sie kann der Aufrufer nicht nachsehen, ob
+  // die Chronik eine Schattenseite ist, und „Der Gestrandete" stand golden
+  // zwischen den Titeln [§C25].
   if(cur) return {kind:'season', name:chronBeiname(cur.title), titel:cur.title.name,
+                  titleId:cur.title.titleId,
                   ic:cur.title.ic, tone:cur.title.tone,
                   sub:cur.label + ' · läuft', live:true, sid:cur.sid, ev:cur.title.ev};
   for(let i = rows.length - 1; i >= 0; i--){
     if(!rows[i].live && rows[i].title){
       const r = rows[i];
       return {kind:'season', name:chronBeiname(r.title), titel:r.title.name,
+              titleId:r.title.titleId,
               ic:r.title.ic, tone:r.title.tone,
               sub:r.label, live:false, sid:r.sid, ev:r.title.ev};
     }
@@ -28344,8 +28425,14 @@ function _titlePillHtml(pid){
   const b = playerTitleBadge(pid);
   if(!b) return '';
   const t = titleTone(b.tone);
+  // Was negativ ist, traegt Rot [§C25]. „Der Gestrandete" kommt aus der
+  // Durststrecke und stand golden unter dem Namen wie ein Titel — dieselbe
+  // Ausnahme gilt fuer die Zelle der Matrix und die Plakette seit jeher,
+  // nur die Pille im Profilkopf war nie davon erfasst.
+  const m = b.titleId ? _chronikMonat(b.titleId) : null;
+  const schatten = !!(m && m.art === 'schatten');
   return `<div class="pp-title-row">
-    <span class="pp-title-pill${b.live ? ' live' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
+    <span class="pp-title-pill${b.live ? ' live' : ''}${schatten ? ' schatten' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span>
     <span class="pp-title-sub num">${esc(b.sub)}</span>
   </div>`;

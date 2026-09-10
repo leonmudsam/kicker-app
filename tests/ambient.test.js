@@ -996,23 +996,19 @@ const _band = JSON.parse(K.eval(`JSON.stringify((function(){
     const h = _newsCardHtmlM2(x, false, false);
     const n = (h.split('nf-sam-z').length - 1);
     zeilen += n;
-    // Was nicht die Schlagzeile selbst ist, muss als Zeile auf der Karte
-    // stehen. „Selbst" sind zwei Titel: der der Karte und der des Kopfs.
-    // Bei einer Tafel-Sammelkarte sind sie verschieden („Henry, Martin und
-    // zwei weitere bewegen die Ewige Tafel" gegen „Henry uebernimmt ‚Der
-    // Gigantentoeter'"), und geprueft wurde nur der erste — damit stand der
-    // Kopf als erste Zeile des Bandes noch einmal da, sein Text darueber,
-    // und von der vierten Meldung blieb „und 1 weitere".
-    // Die beiden zusammenfuehrenden Karten tragen eine EIGENE Schlagzeile
-    // („Tobi holt zwei Liga-Rekorde") und lassen deshalb keine Zeile aus,
-    // auch nicht die des Kopfs — und sie zeigen ALLE, nicht drei und „und
-    // 2 weitere": dort ist die Vollstaendigkeit die Aussage [§C33].
-    const achse = x.dataRef.quelle === 'spieler' || x.dataRef.quelle === 'erfolg';
-    if(achse){ if((x.dataRef.teile||[]).length !== n) ohneBand++; return; }
-    const _selbst = [x.title, x.dataRef.kopfTitel].filter(Boolean);
+    // Was nicht die Schlagzeile der Karte SELBST ist, steht als Zeile auf
+    // der Karte — jede, ohne Deckel. Ausgelassen wurde zusaetzlich der
+    // Titel des KOPFS, und bei einer Tafel-Karte sind das zwei
+    // verschiedene Saetze: ueber „Henry, Johannes und zwei weitere bewegen
+    // die Ewige Tafel" stand Henrys Beleg als Text, und Henry selbst kam
+    // auf seiner eigenen Karte namentlich nicht vor. Der Text ist der
+    // BELEG des staerksten Ereignisses, nicht seine Schlagzeile.
+    // Und eine Karte traegt hoechstens vier Zeilen (SAMMEL_MAX) — „und 1
+    // weitere" versteckte damit genau eine Meldung, um eine Zeile zu
+    // sparen. Buendeln darf nichts verstecken [§C33].
     const rest = (x.dataRef.teile||[])
-      .filter(t => _selbst.indexOf(t.titel) < 0).length;
-    if(Math.min(rest, 3) !== n) ohneBand++;
+      .filter(t => t.titel !== x.title).length;
+    if(rest !== n) ohneBand++;
   });
   return {n: sammel.length, ohneBand, zeilen};
 })())`));

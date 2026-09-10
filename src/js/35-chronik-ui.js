@@ -377,8 +377,14 @@ function _titlePillHtml(pid){
   const b = playerTitleBadge(pid);
   if(!b) return '';
   const t = titleTone(b.tone);
+  // Was negativ ist, traegt Rot [§C25]. „Der Gestrandete" kommt aus der
+  // Durststrecke und stand golden unter dem Namen wie ein Titel — dieselbe
+  // Ausnahme gilt fuer die Zelle der Matrix und die Plakette seit jeher,
+  // nur die Pille im Profilkopf war nie davon erfasst.
+  const m = b.titleId ? _chronikMonat(b.titleId) : null;
+  const schatten = !!(m && m.art === 'schatten');
   return `<div class="pp-title-row">
-    <span class="pp-title-pill${b.live ? ' live' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
+    <span class="pp-title-pill${b.live ? ' live' : ''}${schatten ? ' schatten' : ''}" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="i">${svgI(b.ic)}</span>${esc(b.name)}</span>
     <span class="pp-title-sub num">${esc(b.sub)}</span>
   </div>`;

@@ -831,6 +831,9 @@ function _consolidateStories(list){
       dataRef: {type:'sammel', quelle: art,
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
+                // Die Stufe reist mit: ohne sie kann die Karte das Zeichen
+                // nicht zeigen, um das sie geht [§C30].
+                stufe: (kopf.dataRef||{}).stufe,
                 // Der Titel des Kopfs, damit das Sammelband ihn auslassen
                 // kann: die Karte IST der Kopf, und er stand darunter noch
                 // einmal als erste Zeile [§C33].

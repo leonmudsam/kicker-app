@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **686**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **687**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -261,6 +261,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Im Rekorde-Reiter heißt das: Können und Bestmarke tragen Gold, die Fügung
   Metall [§C35] — sie zeichnet niemanden aus —, die Schattenseite Rot. Als
   alle fünfunddreißig Karten golden waren, sagte Gold dort nichts mehr.
+  Das gilt auch für die **Beinamen-Pille im Profilkopf**: „Der Gestrandete"
+  kommt aus der Durststrecke und stand golden unter dem Namen wie ein
+  Titel. Die Ausnahme gab es für die Zelle der Matrix und die Plakette seit
+  jeher, nur die Pille war nie davon erfasst.
   **Was negativ ist, trägt Rot und zählt nicht als Rekord** (`neg`, gesetzt
   von `art:'schatten'` oder `negativ:true` im Katalog). „Die bitterste
   Pleite" stand im Profil golden zwischen den Titeln und machte aus sechs
@@ -765,6 +769,23 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Tag, nachdem die letzte Partie gelaufen war. Welche Partien zu einem
   Kalendertag gehören, sagt `_newsTagMs` — in Ortszeit, weil der Feed nach
   Ortszeit gruppiert und `matchesByDay` nach UTC schlüsselt.
+  **Die Sammelkarte lässt genau eine Zeile aus: ihre eigene Schlagzeile.**
+  Ausgelassen wurde zusätzlich der Titel des KOPFS, und bei einer
+  Tafel-Karte sind das zwei verschiedene Sätze: über „Henry, Johannes und
+  zwei weitere bewegen die Ewige Tafel" stand „6 % aller 158 Partien gegen
+  die Wahrscheinlichkeit gewonnen" als Text und darunter drei Zeilen —
+  Henry kam auf seiner eigenen Karte namentlich nicht vor, und die Zahl im
+  Text gehörte niemandem. Der Text ist der BELEG des stärksten Ereignisses,
+  nicht seine Schlagzeile; beides nebeneinander ist erst die vollständige
+  Aussage. Gezeigt werden **alle** Zeilen: eine Karte trägt höchstens vier
+  (`SAMMEL_MAX`), „und 1 weitere" versteckte also genau eine Meldung, um
+  eine Zeile zu sparen.
+  **Wo der Erfolg ein Zeichen ist, steht das Zeichen dabei**
+  (`_newsErfolgZeichen`). „Vier Spieler tragen jetzt den Schildring" zeigte
+  den Schildring kein einziges Mal — daneben stand ein Pokal aus dem
+  Icon-Katalog. Die App hat das Bauteil [§C27]; `insigniumStufeSvg` trägt
+  seine Verläufe selbst und funktioniert deshalb auch dort [§C30].
+
   **Der Kopf einer Sammelkarte steht nicht zweimal da.** Das Sammelband ließ
   aus, was den Titel der KARTE trug — bei einer Tafel-Sammelkarte ist das der
   gebündelte Titel („Henry, Martin und zwei weitere bewegen die Ewige Tafel")
@@ -826,7 +847,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   und Leo" — dieselben drei, nur anders sortiert. Der Generator bildet diese
   ID nicht mehr, also kann `_newsTexteAuffrischen` sie auch nicht umschreiben;
   die persistierte Karte bliebe sonst für immer stehen.
-  Im Rekord-Blatt steht unter den **Verfolgern**, wer DAHINTER liegt. Teilen
+  **Der große Wert heißt, was er ist.** Er kam aus einem Regex über den
+  Fließtext und trug immer die Aufschrift „Bestwert"; bei „Der Wandler"
+  stand damit „0 %" unter BESTWERT, obwohl die Zahl dort ein Unterschied
+  zwischen zwei Positionen ist und je kleiner desto besser. Wie die Zahl
+  heißt, sagt die Kammer des Katalogs [§C35] — ein Liga-Rekord ist ein
+  Bestwert, eine Fügung nicht.
+  Im Rekord-Blatt steht unter den **Verfolgern**, wer DAHINTER liegt.
+  **Und niemand davor.** Die Karte trägt den Wert, der bei ihrer Entstehung
+  galt — er steckt in ihrer ID —, die Liste rechnet heute. Zwischen beidem
+  können Partien liegen, und dann stand unter „Martin übernimmt ‚Der
+  Zerstörer' · 24 %" ein Verfolger mit 25 %: eine Karte, die sich selbst
+  widerspricht. Wer den Wert inzwischen überholt hat, steht nicht dahinter;
+  das Blatt nennt ihn als heutigen Halter. Teilen
   sich drei den Rekord punktgleich, füllten genau diese drei die Liste, und
   unter „wer sonst noch vorne steht" standen dieselben Namen mit derselben
   Zahl, die der Kopf zwei Zeilen darüber schon nennt. Das

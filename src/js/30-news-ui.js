@@ -378,14 +378,22 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Eine Sammelkarte behaelt Rubrik und Motiv ihres staerksten Ereignisses —
   // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
   // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
-  // Die beiden zusammenfuehrenden Karten tragen eine eigene Schlagzeile und
-  // lassen deshalb keine Zeile aus: der Kopf ist einer der Erfolge, und wer
-  // ihn verschweigt, versteckt genau das, was die Karte zeigen soll. Sie
-  // zeigen auch ALLE Zeilen, nicht drei und „und 2 weitere" — dort IST die
-  // Vollstaendigkeit die Aussage [§C33].
-  const _achse = d.quelle === 'spieler' || d.quelle === 'erfolg';
+  // Ausgelassen wird genau EINS: die Zeile, die die Karte oben schon IST —
+  // also ihr eigener Titel. Ausgelassen wurde zusaetzlich der Titel des
+  // KOPFS, und bei einer Tafel-Karte sind das zwei verschiedene Saetze:
+  // ueber „Henry, Johannes und zwei weitere bewegen die Ewige Tafel" stand
+  // „6 % aller 158 Partien gegen die Wahrscheinlichkeit gewonnen" als Text
+  // und darunter drei Zeilen — Henry kam auf seiner eigenen Karte nicht ein
+  // einziges Mal namentlich vor, und die Zahl im Text gehoerte niemandem.
+  // Der Text ist der BELEG des staerksten Ereignisses, nicht seine
+  // Schlagzeile; beides nebeneinander ist keine Wiederholung, sondern erst
+  // die vollstaendige Aussage.
+  //
+  // Und gezeigt werden ALLE Zeilen: eine Sammelkarte traegt hoechstens vier
+  // (SAMMEL_MAX), „und 1 weitere" versteckte also genau eine Meldung, um
+  // eine Zeile zu sparen. Buendeln darf nichts verstecken [§C33].
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, _achse ? [] : [s.title, d.kopfTitel], _achse) : '';
+    ? _newsSammelBand(d.teile, [s.title], true) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -427,7 +435,13 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   } else if(sorte === 'erfolg'){
     // Hier ist der Erfolg das Subjekt, also stehen die Gesichter als Chips
     // nebeneinander [§C33] — keins von ihnen ist wichtiger als das andere.
-    gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
+    // Und wo der Erfolg ein ZEICHEN ist, steht das Zeichen dabei. „Vier
+    // Spieler tragen jetzt den Schildring" zeigte den Schildring kein
+    // einziges Mal: daneben stand ein Pokal aus dem Icon-Katalog, und die
+    // Karte handelte von einer Zeichnung, die sie nicht zeigt. Die App hat
+    // das Bauteil [§C27] — `insigniumStufeSvg` traegt seine Verlaeufe selbst
+    // und funktioniert deshalb auch hier [§C30].
+    gesicht = `<div class="nf-gr-l">${_newsErfolgZeichen(s)}${_newsGesichtHtml(s)}</div>`;
     fuss = _newsZahlband([
       {v: (Array.isArray(d.teile) ? d.teile.length : 0) || null, l:'Spieler zugleich', f:'g'}
     ]);
@@ -704,8 +718,24 @@ function _newsTafelWert(s){
   if(d.type === 'chronik_geholt') return {v: '+' + (d.punkte || 0), l:'Prestige'};
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
+  // „Bestwert" war geraten. Die Zahl kommt aus einem Regex ueber den
+  // Fliesstext, und bei „Der Wandler" stand damit „0 %" unter der
+  // Aufschrift BESTWERT — der Wert ist dort ein UNTERSCHIED zwischen zwei
+  // Positionen, und je kleiner er ist, desto besser. Ein Bestwert von null
+  // liest sich wie ein Fehler.
+  //
+  // Wie die Zahl heisst, weiss der Katalog: die Kammer sagt, was ein
+  // Eintrag ueberhaupt ist [§C35]. Ein Liga-Rekord ist ein Bestwert, eine
+  // Fuegung nicht, und eine Schattenseite schon gar nicht.
   const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
-  return m ? {v: m[1], l:'Bestwert'} : null;
+  if(!m) return null;
+  let label = 'Bestwert';
+  try {
+    const def = d.rekordId && CHRONICLE_BY_ID[d.rekordId];
+    const k = def && CHRON_KINDS[def.kind];
+    if(k) label = k.label;
+  } catch(e){}
+  return {v: m[1], l: label};
 }
 
 // Der Rang eines Spielers als kurze Angabe fürs Zahlenband.
@@ -815,6 +845,21 @@ function _newsWertBlock(wert, label, farbe){
 
 // Die Insignium-Leiter: fünf Punkte, die erreichten hell, der neue umrandet.
 // Damit sieht man auf einen Blick, wo jemand steht und wie weit es noch ist.
+// Das Zeichen, um das eine Erfolgs-Karte geht. Nur dort, wo der Erfolg
+// ueberhaupt eines HAT: eine Insignium-Stufe hat eins, ein Jubilaeum nicht.
+function _newsErfolgZeichen(s){
+  const d = (s && s.dataRef) || {};
+  if(d.kopfTyp !== 'insignium_stufe') return '';
+  const stufe = INSIGNIEN[d.stufe | 0];
+  if(!stufe) return '';
+  const pid = (Array.isArray(d.playerIds) ? d.playerIds[0] : null);
+  let z = '';
+  try {
+    z = insigniumStufeSvg(stufe.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
+  } catch(e){ z = ''; }
+  return z ? `<span class="nf-erf-z">${z}</span>` : '';
+}
+
 function _newsLeiter(pid){
   try {
     const P = prestigeOf(pid);

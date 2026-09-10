@@ -74,6 +74,7 @@
      Gold liest sich wie eine Auszeichnung — genau das war der Fall, seit
      die Regel darüber alles auf Gold gezwungen hat. Rot ist hier keine
      zweite Meinung, sondern dieselbe Aussage mit umgekehrtem Vorzeichen. */
+  .pp-root .pp-title-pill.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .chron-one.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .tmark.schatten{--tt:#f0566a!important;--ttr:240,86,106!important}
   .pp-root .pp-bmini.legendary{color:var(--gold);border-color:rgba(247,207,74,.45)}
