@@ -2294,7 +2294,8 @@
   .nf-rub svg{width:11px;height:11px;flex-shrink:0;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .nf-s-tafel .nf-rub i,.nf-s-ins .nf-rub i,.nf-s-held .nf-rub i,
-  .nf-s-woche .nf-rub i,.nf-s-badge .nf-rub i{background:rgba(247,207,74,.13);
+  .nf-s-woche .nf-rub i,.nf-s-badge .nf-rub i,
+  .nf-s-spieler .nf-rub i,.nf-s-erfolg .nf-rub i{background:rgba(247,207,74,.13);
     box-shadow:inset 0 0 0 1px rgba(247,207,74,.22)}
   .nf-s-spiel .nf-rub i,.nf-s-serie .nf-rub i,.nf-s-duell .nf-rub i{
     background:rgba(190,242,100,.1);box-shadow:inset 0 0 0 1px rgba(190,242,100,.18)}
@@ -2306,7 +2307,8 @@
   /* Die Rubrikfarbe folgt dem Farbgesetz: Gold traegt, was Titel und Rekord
      ist, Metall alles Uebrige [§C25]. */
   .nf-s-tafel .nf-rub,.nf-s-ins .nf-rub,.nf-s-held .nf-rub,
-  .nf-s-woche .nf-rub,.nf-s-badge .nf-rub{color:var(--gold)}
+  .nf-s-woche .nf-rub,.nf-s-badge .nf-rub,
+  .nf-s-spieler .nf-rub,.nf-s-erfolg .nf-rub{color:var(--gold)}
   .nf-s-spiel .nf-rub{color:var(--acid2)}
   .nf-gr{display:grid;grid-template-columns:1fr;gap:12px;padding:11px 13px 12px;align-items:start}
   .nf-gr.mit-l{grid-template-columns:auto minmax(0,1fr)}
@@ -2432,6 +2434,13 @@
      [§C25] — aber die Sorte ist damit auch aus dem Augenwinkel zu ahnen. */
   .nf-s-duell,.nf-s-serie,.nf-s-spiel{--tint:rgba(190,242,100,.055)}
   .nf-s-ins,.nf-s-badge,.nf-s-woche{--tint:rgba(247,207,74,.075)}
+  /* Sorte 11 und 12: die beiden zusammenfuehrenden Karten. Sie wiegen so
+     schwer wie die Meldungen, die sie buendeln — mehrere davon —, also
+     tragen sie Gold und die starke Kante [§C25]. Der Schein steht etwas
+     kraeftiger als bei einer einzelnen Tafel-Karte: sie fasst mehreres
+     zusammen und soll im Feed als das Ereignis des Moments zu erkennen
+     sein, ohne die Breite von Breaking zu brauchen. */
+  .nf-s-spieler,.nf-s-erfolg{--tint:rgba(247,207,74,.12)}
   .nf-card.nf-neg{--tint:rgba(240,86,106,.07)}
   .nf-card.read{--tint:rgba(255,255,255,.02)}
 
@@ -2444,7 +2453,8 @@
      jede Sorte eine eigene Regel braucht. */
   .nf-card{--kante:2px;--rahmen:rgba(255,255,255,.055)}
   /* Gold wiegt am schwersten: Titel und heute gehaltene Rekorde. */
-  .nf-s-tafel,.nf-s-ins,.nf-s-badge,.nf-s-woche,.nf-s-held{
+  .nf-s-tafel,.nf-s-ins,.nf-s-badge,.nf-s-woche,.nf-s-held,
+  .nf-s-spieler,.nf-s-erfolg{
     --kante:3px;--rahmen:rgba(247,207,74,.26)}
   /* Der Spieltag ist die zweite Ebene: es ist passiert, aber es bleibt nicht. */
   .nf-s-spiel,.nf-s-duell,.nf-s-serie{--kante:3px;--rahmen:rgba(190,242,100,.2)}
@@ -2498,7 +2508,8 @@
   .nf-motiv::before{content:"";position:absolute;inset:-14%;border-radius:50%;
     background:radial-gradient(circle,currentColor,transparent 68%);opacity:.16}
   .nf-s-tafel .nf-motiv,.nf-s-ins .nf-motiv,.nf-s-held .nf-motiv,
-  .nf-s-woche .nf-motiv,.nf-s-badge .nf-motiv{color:var(--gold);opacity:.08}
+  .nf-s-woche .nf-motiv,.nf-s-badge .nf-motiv,
+  .nf-s-spieler .nf-motiv,.nf-s-erfolg .nf-motiv{color:var(--gold);opacity:.08}
   .nf-s-spiel .nf-motiv{color:var(--acid2);opacity:.07}
   .nf-card.read .nf-motiv{opacity:.028}
   /* Alles Uebrige liegt darueber, sonst schneidet das Motiv in die Schrift. */
@@ -4700,7 +4711,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.45c59376';
+const BUILD_VERSION='2026.09.10.83a702e8';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21857,6 +21868,125 @@ function _consolidateStories(list){
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
+  // ── Was ein Spieler holen kann ─────────────────────────────────────
+  // Die Bündelung nach Moment und Subjekt kannte den INHALT nicht: sie legte
+  // zusammen, was denselben Zeitstempel und einen gemeinsamen Namen trug, und
+  // borgte sich Rubrik und Schlagzeile der stärksten Zeile. An der Ewigen
+  // Tafel gruppierte sie sogar den ganzen TAG ohne jedes Subjekt — gemessen
+  // standen dort vier Rekordwechsel dreier Spieler in einer Karte, und die
+  // drei, die im selben Moment dieselbe Insignium-Stufe erreichten, fielen
+  // über die vier Zeilen hinaus und standen einzeln daneben.
+  //
+  // Zwei Fragen kommen deshalb VOR der alten Bündelung: Hat EIN Spieler
+  // mehreres auf einmal geholt? Haben MEHRERE dasselbe geholt? Beides ist
+  // eine eigene Nachricht mit eigener Kartenform, und beides trägt jede
+  // beteiligte Meldung — gebündelt, aber vollständig [§C33].
+  //
+  // `art` ist die Sorte des Erfolgs (drei Rekordmeldungen sind eine Sorte),
+  // die Wendung dahinter baut die Schlagzeile. Sie steht je Sorte mit ihrem
+  // eigenen VERB da: „holt einen Liga-Rekord und feiert ein Jubiläum" liest
+  // sich richtig, „holt einen Liga-Rekord und ein Jubiläum" nicht.
+  // `rekord_gesteigert` fehlt hier: Ausbauen ist die schwächste der drei
+  // Rekordmeldungen und ohnehin gedeckelt [§C33] — es trägt keinen Moment.
+  const ERFOLG_ART = {
+    rekord_erstmals:  'rekord',   rekord_geholt:    'rekord',
+    chronik_geholt:   'chronik',  chronik_erstling: 'erstling',
+    insignium_stufe:  'ins',      badge_unlocked:   'badge',
+    milestone_wins:   'marke',    milestone_goals:  'marke',
+    milestone_elo:    'marke',    jubilee:          'jubilaeum'
+  };
+  // Verb und Gegenstand stehen getrennt, weil zwei Sorten mit demselben Verb
+  // es nur EINMAL nennen: „holt einen Liga-Rekord und eine Auszeichnung" ist
+  // die Zeile, „holt einen Liga-Rekord und holt eine Auszeichnung" war sie.
+  const ERFOLG_WORT = {
+    rekord:    {verb:'holt',     ein:'einen Liga-Rekord',           viele:n => `${n} Liga-Rekorde`},
+    chronik:   {verb:'holt',     ein:'eine Monatschronik',          viele:n => `${n} Monatschroniken`},
+    badge:     {verb:'holt',     ein:'eine Auszeichnung',           viele:n => `${n} Auszeichnungen`},
+    ins:       {verb:'erreicht', ein:'die nächste Insignium-Stufe', viele:n => `${n} Insignium-Stufen`},
+    marke:     {verb:'erreicht', ein:'einen Meilenstein',           viele:n => `${n} Meilensteine`},
+    jubilaeum: {verb:'feiert',   ein:'ein Jubiläum',                viele:n => `${n} Jubiläen`},
+    erstling:  {verb:'steht',    ein:'zum ersten Mal in der Chronik',
+                viele:n => `${n} Mal neu in der Chronik`}
+  };
+  // ── Mehrere Spieler, derselbe Erfolg ───────────────────────────────
+  // Nur die Typen, die überhaupt kollidieren können: einer je Spieler, und
+  // die Sache ist dieselbe. Liga-Rekord und Monatschronik fehlen hier, weil
+  // sie ihre Mithalter schon in EINER Karte tragen („Maxi, Leo und Julian
+  // übernehmen") — eine zweite Bündelung darüber wäre ein zweites Bauteil
+  // für dieselbe Aussage [§C27]. Die Auszeichnung fehlt aus demselben Grund:
+  // dieselbe Auszeichnung in derselben Partie fasst `badgeGroups` zusammen.
+  //
+  // Die Schlagzeile nennt ALLE Beteiligten und die Sache; der Satz sagt, wie
+  // viele es zugleich sind. Ihn vom Kopf zu borgen wäre falsch: „385 Prestige
+  // zusammen" gehört einem der drei, und die Karte handelt von allen.
+  const SAMMEL_ERFOLG = {
+    insignium_stufe: {
+      sache: d => 'ins|' + d.stufe,
+      titel: (nm, d) => `${nm} tragen jetzt den ${d.stufeName || 'Reif'}`,
+      satz:  (n, d) => `${n} Spieler erreichen Stufe ${(d.stufe | 0) + 1} von `
+                     + `${(typeof INSIGNIEN !== 'undefined' ? INSIGNIEN.length : 5)} im selben Moment.`,
+      zeile: (nm, d) => `${nm}: ${d.punkte} Prestige`
+    },
+    chronik_erstling: {
+      sache: d => 'erst|' + (d.sid || ''),
+      titel: nm => `${nm} stehen zum ersten Mal in der Chronik`,
+      satz:  n => `${n} Namen kommen im selben Monat neu auf die Tafel.`,
+      zeile: (nm, d) => `${nm}: „${d.titel || ''}"`
+    },
+    jubilee: {
+      sache: d => 'jub|' + (d.total || ''),
+      titel: (nm, d) => `${nm} feiern das ${d.total}. Spiel`,
+      satz:  (n, d) => `${n} Spieler stehen nach derselben Partie bei ${d.total} Partien.`,
+      zeile: nm => nm
+    },
+    milestone_wins: {
+      sache: d => 'mw|' + (d.milestone || ''),
+      titel: (nm, d) => `${nm} feiern den ${parseInt(d.milestone, 10)}. Sieg`,
+      satz:  (n, d) => `${n} Spieler erreichen ${parseInt(d.milestone, 10)} Siege im selben Moment.`,
+      zeile: nm => nm
+    },
+    milestone_goals: {
+      sache: d => 'mg|' + (d.milestone || ''),
+      titel: (nm, d) => `${nm} feiern das ${parseInt(d.milestone, 10)}. Tor`,
+      satz:  (n, d) => `${n} Spieler erreichen ${parseInt(d.milestone, 10)} Tore im selben Moment.`,
+      zeile: nm => nm
+    },
+    milestone_elo: {
+      sache: d => 'me|' + (d.mark || d.milestone || ''),
+      titel: (nm, d) => `${nm} knacken ${d.mark || parseInt(d.milestone, 10)} Elo`,
+      satz:  (n, d) => `${n} Spieler überschreiten dieselbe Elo-Marke im selben Moment.`,
+      zeile: nm => nm
+    }
+  };
+  // Die Schlagzeile der Spieler-Karte. Sie nennt jede Sorte mit ihrer Zahl,
+  // in der Reihenfolge der Wertigkeit — „Maxi holt zwei Monatschroniken",
+  // „Jonas holt einen Liga-Rekord und erreicht die nächste Insignium-Stufe".
+  // Vorher borgte die Karte die Schlagzeile ihrer stärksten Zeile, und damit
+  // stand über einer Karte mit zwei Chroniken der Name der einen.
+  const _spielerTitel = (name, teile) => {
+    const zahl = {}, folge = [];
+    teile.forEach(t => {
+      const a = ERFOLG_ART[(t.dataRef || {}).type];
+      if(!a) return;
+      if(zahl[a] == null){ zahl[a] = 0; folge.push(a); }
+      zahl[a]++;
+    });
+    // Die Gegenstände stehen in EINER Aufzählung, und das Verb nur da, wo es
+    // wechselt: „holt einen Liga-Rekord, eine Auszeichnung und feiert ein
+    // Jubiläum". Je Verb eine eigene Aufzählung ergab zwei „und" in einer
+    // Zeile („holt einen Liga-Rekord und eine Auszeichnung und feiert ein
+    // Jubiläum"). Die Reihenfolge ist die Wertigkeit: `teile` steht nach
+    // `prio` sortiert.
+    const stuecke = []; let zuletzt = '';
+    folge.forEach(a => {
+      const w = ERFOLG_WORT[a];
+      if(!w) return;
+      const gegenstand = zahl[a] === 1 ? w.ein : w.viele(_zahlwortDe(zahl[a]));
+      stuecke.push(w.verb === zuletzt ? gegenstand : w.verb + ' ' + gegenstand);
+      zuletzt = w.verb;
+    });
+    return name + ' ' + _namenListe(stuecke);
+  };
   // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels' aus"
   // stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit demselben
   // Wert und nur einer anderen Spielzahl im Fliesstext. Die Buendelung soll
@@ -21865,7 +21995,12 @@ function _consolidateStories(list){
     const tk = String(st.title || '').trim();
     if(tk && g.titel.has(tk)) return;
     if(tk) g.titel.add(tk);
-    if(g.teile.length < SAMMEL_MAX) g.teile.push(st);
+    // Vier Zeilen sind die Grenze — aber nur dort, wo die Karte einen MOMENT
+    // zusammenfasst und darüber ein Tagesrückblick wäre. Die Karte über einen
+    // Spieler und die über einen Erfolg tragen jede Zeile: dort IST die
+    // Vollständigkeit die Aussage, und eine fünfte Chronik zu verschweigen
+    // hieße, die Karte gegen ihren eigenen Zweck zu bauen.
+    if(g.teile.length < (g.max || SAMMEL_MAX)) g.teile.push(st);
   };
   // ── Wer einzeln bleibt ─────────────────────────────────────────────
   // Zwei Sorten gehen nie in ein Buendel: Breaking, weil ein erstmals
@@ -21897,13 +22032,62 @@ function _consolidateStories(list){
   // nie, die Verschmelzung kostet also nichts.
   const spielMinuten = new Map();
   const _pidsVon = st => { try { return _newsPids(st) || []; } catch(e){ return []; } };
+  // ── Zuerst der Erfolg, dann der Spieler, dann der Rest ─────────────
+  // Die Reihenfolge ist nicht beliebig. Ein Erfolg, den mehrere zugleich
+  // erreichen, ist EINE Nachricht der Liga und darf nicht zerrissen werden:
+  // liefe die Spieler-Achse zuerst, stünde „der Schildring" auf zwei Karten
+  // — auf der gemeinsamen der beiden anderen und auf der persönlichen des
+  // einen, der im selben Moment noch einen Rekord geholt hat. Genau diese
+  // Doppelung verhindert §C33. Sein Rekord fällt dann in die alte Bündelung,
+  // und dort gehören Rekorde ohnehin hin.
+  //
+  // Beide Achsen fassen nur, was ALLEIN dasteht (genau ein Beteiligter). Eine
+  // Duo-Serie oder ein Duell gehört keinem Einzelnen und wäre auf einer Karte
+  // über einen Spieler eine Behauptung über zwei.
+  const einzel = [];
   result.forEach((st, idx) => {
     const d = (st && st.dataRef) || {};
     if(_sammelEinzeln(st, d)) return;
+    const pids = _pidsVon(st);
+    if(pids.length === 1 && ERFOLG_ART[d.type]) einzel.push({st, idx, d, pids});
+  });
+  const _achse = new Map();          // st.id → Gruppenschlüssel
+  const _achseBauen = (praefix, schluessel, art) => {
+    const topf = new Map();
+    einzel.forEach(k => {
+      if(_achse.has(k.st.id)) return;
+      const sl = schluessel(k);
+      if(sl == null) return;
+      const key = praefix + '|' + _minKey(k.st.when) + '|' + sl;
+      let l = topf.get(key);
+      if(!l){ l = []; topf.set(key, l); }
+      l.push(k);
+    });
+    topf.forEach((l, key) => {
+      if(l.length < 2) return;
+      const g = {key, art, teile:[], titel:new Set(), max: Infinity,
+                 erster: l.reduce((mn, k) => Math.min(mn, k.idx), l[0].idx),
+                 pid: l[0].pids[0]};
+      sammelGruppen.set(key, g);
+      l.slice().sort((a, b) => a.idx - b.idx).forEach(k => {
+        _achse.set(k.st.id, key);
+        _sammelZeile(g, k.st);
+      });
+    });
+  };
+  _achseBauen('erfolg', k => {
+    const cfg = SAMMEL_ERFOLG[k.d.type];
+    return cfg ? cfg.sache(k.d) : null;
+  }, 'erfolg');
+  _achseBauen('spieler', k => k.pids[0], 'spieler');
+  result.forEach((st, idx) => {
+    const d = (st && st.dataRef) || {};
+    if(_sammelEinzeln(st, d)) return;
+    if(_achse.has(st.id)) return;    // steht schon auf einer der neuen Karten
     if(SAMMEL_TAFEL.has(d.type)){
       const key = 'tafel|' + _tagKey(st.when);
       let g = sammelGruppen.get(key);
-      if(!g){ g = {key, teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
+      if(!g){ g = {key, art:'tafel', teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
       _sammelZeile(g, st);
       return;
     }
@@ -21932,7 +22116,7 @@ function _consolidateStories(list){
     gruppen.forEach((gr, i) => {
       if(gr.eintraege.length < 2) return;
       const key = 'spiel|' + mk + '|' + i;
-      const g = {key, teile:[], titel:new Set(), erster: gr.erster};
+      const g = {key, art:'spiel', teile:[], titel:new Set(), erster: gr.erster};
       sammelGruppen.set(key, g);
       gr.eintraege.sort((a, b) => a.idx - b.idx).forEach(e => _sammelZeile(g, e.st));
     });
@@ -21951,15 +22135,57 @@ function _consolidateStories(list){
     const teile = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
     const kopf = teile[0];
     const rest = teile.slice(1);
-    const istTafel = g.key.indexOf('tafel|') === 0;
+    const art = g.art || (g.key.indexOf('tafel|') === 0 ? 'tafel' : 'spiel');
+    const istTafel = art === 'tafel';
     const pids = [];
     teile.forEach(t => {
       let ids = [];
       try { ids = (typeof _newsPids === 'function') ? _newsPids(t) : []; } catch(e){}
       ids.forEach(id => { if(pids.indexOf(id) < 0) pids.push(id); });
     });
+    // ── Die Schlagzeile der beiden neuen Karten ──────────────────────
+    // Sie borgen sie NICHT vom Kopf: über einer Karte mit zwei Chroniken
+    // stand sonst der Name der einen, und über einer, auf der drei Spieler
+    // dieselbe Stufe erreichen, der Name des ersten.
+    // ── Die Zeile im Sammelband ──────────────────────────────────────
+    // Auf der Spieler-Karte faellt der Name vorne weg: er steht schon in der
+    // Schlagzeile, und dreimal „Tobi" untereinander ist zweimal zu viel
+    // [§C33]. Auf der Erfolgs-Karte bleibt er stehen und bekommt den Wert
+    // dazu, der die Traeger unterscheidet — dreimal „traegt den Schildring"
+    // unter „Sina, Mira und Jonas tragen jetzt den Schildring" waere die
+    // Schlagzeile in drei Wiederholungen. Wo nur der Name unterscheidet
+    // (Jubilaeum, Meilenstein), steht er allein: die Liste IST dann die
+    // Aufzaehlung, und ab dem vierten Namen ist sie die einzige Stelle, an
+    // der alle vorkommen.
+    const _achseZeile = t => {
+      const ti = String(t.title || '').trim();
+      if(art !== 'spieler' && art !== 'erfolg') return ti;
+      const nm = nameOf(_pidsVon(t)[0]);
+      if(art === 'spieler'){
+        const ohne = ti.replace(new RegExp('^'
+          + String(nm).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*:?\\s*'), '');
+        return ohne || ti;
+      }
+      const cfg = SAMMEL_ERFOLG[(t.dataRef || {}).type];
+      return (cfg && cfg.zeile) ? cfg.zeile(nm, t.dataRef || {}) : ti;
+    };
+    let neuTitel = '', neuText = '';
+    if(art === 'spieler'){
+      neuTitel = _spielerTitel(nameOf(g.pid), teile);
+      // Der Satz gehört dem stärksten Erfolg, wie bei jeder Sammelkarte, und
+      // zählt dahinter, was noch dazukommt. Was genau, steht Zeile für Zeile
+      // im Sammelband auf der Karte selbst [§C33].
+      neuText = _ersterSatz(kopf.desc) + (rest.length === 1
+        ? ' Dazu kommt im selben Moment noch ein Erfolg.'
+        : ` Dazu kommen im selben Moment noch ${_zahlwortDe(rest.length)} weitere Erfolge.`);
+    } else if(art === 'erfolg'){
+      const cfg = SAMMEL_ERFOLG[(kopf.dataRef || {}).type] || {};
+      const namen = pids.map(nameOf);
+      neuTitel = cfg.titel ? cfg.titel(_namenKurz(namen), kopf.dataRef || {}) : kopf.title;
+      neuText = cfg.satz ? cfg.satz(teile.length, kopf.dataRef || {}) : _ersterSatz(kopf.desc);
+    }
     gesammelt.push({
-      id: 'sammel_' + g.key.replace('|', '_'),
+      id: 'sammel_' + g.key.replace(/\|/g, '_'),
       cat: istTafel ? 'tafel' : kopf.cat,
       ic: kopf.ic,
       // Der Titel muss den Tag benennen, an dem es passiert ist. „Zwei Wechsel
@@ -21970,12 +22196,12 @@ function _consolidateStories(list){
       // Und die Ueberschrift nennt ALLE: sie zeigte zwei von drei Namen, und
       // der dritte kam nur in der Liste darunter vor, obwohl die Karte
       // genauso von ihm handelt [§C33].
-      title: istTafel
+      title: neuTitel ? neuTitel : (istTafel
         ? (pids.length
             ? `${_namenKurz(pids.map(nameOf))} `
               + `${pids.length > 1 ? 'bewegen' : 'bewegt'} die Ewige Tafel`
             : `${_zahlwortDe(teile.length)} Wechsel an der Ewigen Tafel`)
-        : kopf.title,
+        : kopf.title),
       // Die Karte fasst zusammen, das Blatt zeigt alles. Als der Text die
       // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
       // Liste, die das Blatt darunter noch einmal führte — und bei vier
@@ -21985,15 +22211,15 @@ function _consolidateStories(list){
       // Jannik") — ein Detail zu einer von vier Meldungen, und als Karte des
       // Tages stand es gross im Bild, waehrend die anderen drei nur als
       // Zeile darunter vorkamen. Der Platz gehoert dem Sammelband.
-      desc: istTafel
+      desc: neuText ? neuText : (istTafel
         ? _ersterSatz(kopf.desc) + (rest.length
             ? ` Und ${_zahlwortDe(rest.length)} ${rest.length === 1
                 ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
             : '')
-        : kopf.desc,
+        : kopf.desc),
       when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
       prio: (kopf.prio || 0) + 1,
-      dataRef: {type:'sammel', quelle: istTafel ? 'tafel' : 'spiel',
+      dataRef: {type:'sammel', quelle: art,
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
                 // Der Titel des Kopfs, damit das Sammelband ihn auslassen
@@ -22003,7 +22229,7 @@ function _consolidateStories(list){
                 // Die Beteiligten je Zeile: die Buendelung haengt an ihnen
                 // [§C33], und im Blatt fuehrt die Zeile damit zu dem, von dem
                 // sie handelt.
-                teile: teile.map(t => ({ic: t.ic, titel: t.title, text: t.desc,
+                teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t), text: t.desc,
                                         typ: (t.dataRef||{}).type || '',
                                         pids: _pidsVon(t).slice(0, 2)}))}
     });
@@ -22718,8 +22944,14 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Eine Sammelkarte behaelt Rubrik und Motiv ihres staerksten Ereignisses —
   // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
   // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
+  // Die beiden zusammenfuehrenden Karten tragen eine eigene Schlagzeile und
+  // lassen deshalb keine Zeile aus: der Kopf ist einer der Erfolge, und wer
+  // ihn verschweigt, versteckt genau das, was die Karte zeigen soll. Sie
+  // zeigen auch ALLE Zeilen, nicht drei und „und 2 weitere" — dort IST die
+  // Vollstaendigkeit die Aussage [§C33].
+  const _achse = d.quelle === 'spieler' || d.quelle === 'erfolg';
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, [s.title, d.kopfTitel]) : '';
+    ? _newsSammelBand(d.teile, _achse ? [] : [s.title, d.kopfTitel], _achse) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -22747,6 +22979,23 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
        l:'Siege zu Niederlagen'},
       {v: _newsRangKurz(pid), l:'in der Liga'}
+    ]);
+  } else if(sorte === 'spieler'){
+    // Ein Gesicht, gross: die Karte handelt von genau einem Spieler. Dazu
+    // die Zahl der Erfolge und sein Platz in der Liga — die Zahl steht nicht
+    // im Satz, der gehoert dem staerksten Erfolg.
+    const pid = (Array.isArray(d.playerIds) ? d.playerIds[0] : null) || d.pid;
+    gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
+    fuss = _newsZahlband([
+      {v: (Array.isArray(d.teile) ? d.teile.length : 0) || null, l:'Erfolge im selben Moment', f:'g'},
+      {v: _newsRangKurz(pid), l:'in der Liga'}
+    ]);
+  } else if(sorte === 'erfolg'){
+    // Hier ist der Erfolg das Subjekt, also stehen die Gesichter als Chips
+    // nebeneinander [§C33] — keins von ihnen ist wichtiger als das andere.
+    gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
+    fuss = _newsZahlband([
+      {v: (Array.isArray(d.teile) ? d.teile.length : 0) || null, l:'Spieler zugleich', f:'g'}
     ]);
   } else if(sorte === 'woche'){
     // Alle sechs Wertungen, nicht drei und eine Zeile „und 3 weitere". Die
@@ -22853,6 +23102,11 @@ function _newsRubrik(sorte, s){
                         ? 'DIE DURSTSTRECKE' : 'DIE SERIE';
     case 'badge':  return 'AUSZEICHNUNG';
     case 'marke':  return 'BESTMARKE';
+    // Was diese beiden Karten sind, sagt die Rubrik: einmal ein Spieler, der
+    // in einem Moment mehreres holt, einmal ein Erfolg, den mehrere zugleich
+    // erreichen.
+    case 'spieler':return 'ALLES AUF EINMAL';
+    case 'erfolg': return 'GEMEINSAM GEHOLT';
     default:       return 'LIGA IN ZAHLEN';
   }
 }
@@ -22874,6 +23128,11 @@ function _newsSorteIcon(sorte, s){
                         ? 'trendDown' : 'flame';
     case 'badge':  return 'medal';
     case 'marke':  return 'chartUp';
+    // Drei Pokale fuer den, der mehreres auf einmal holt; zwei Gestalten fuer
+    // den Erfolg, den mehrere teilen. Keine der beiden Zeichnungen steht
+    // schon an einer anderen Rubrik [§C27].
+    case 'spieler':return 'tripleCup';
+    case 'erfolg': return 'users';
     default:       return 'chartBar';
   }
 }
@@ -22962,7 +23221,7 @@ function _newsSerienBand(laenge, verloren){
 // Gezeigt werden nur die Zeilen, die der Kopf NICHT schon ist: bei einer
 // Spiel-Sammelkarte gehoert ihm die Schlagzeile, und sie ein zweites Mal
 // darunter waere die Wiederholung, die §C33 gerade verhindert.
-function _newsSammelBand(teile, kopfTitel){
+function _newsSammelBand(teile, kopfTitel, vollstaendig){
   const alle = Array.isArray(teile) ? teile : [];
   // Ausgelassen wird, was die Karte oben schon IST — und das sind zwei
   // Titel: der der Karte und der des Kopfs. Bei einer Tafel-Sammelkarte
@@ -22975,10 +23234,14 @@ function _newsSammelBand(teile, kopfTitel){
     .map(x => String(x || '').trim()).filter(Boolean);
   const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
   if(!rest.length) return '';
-  return `<div class="nf-sam">${rest.slice(0, 3).map(t =>
+  // Drei Zeilen und dahinter die Zahl — ausser auf den beiden Karten, die
+  // eine Sache vollstaendig zeigen sollen: dort waere „und 2 weitere" genau
+  // das Verstecken, gegen das die Buendelung gebaut ist.
+  const grenze = vollstaendig ? rest.length : 3;
+  return `<div class="nf-sam">${rest.slice(0, grenze).map(t =>
     `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
     + `<span>${_newsBetont(t.titel || '')}</span></div>`).join('')}`
-    + (rest.length > 3 ? `<div class="nf-sam-m">und ${rest.length - 3} weitere</div>` : '')
+    + (rest.length > grenze ? `<div class="nf-sam-m">und ${rest.length - grenze} weitere</div>` : '')
     + `</div>`;
 }
 
@@ -23055,7 +23318,15 @@ function _newsSorte(s){
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
-  if(t === 'sammel') return d.quelle === 'tafel' ? 'tafel' : 'spiel';
+  if(t === 'sammel'){
+    // Zwei eigene Formen fuer die beiden zusammenfuehrenden Karten. Sie sahen
+    // als Tafel- oder Spieltagskarte aus wie die Meldung, von der sie eine
+    // von mehreren buendeln — und die eine handelt von EINEM Spieler, die
+    // andere von EINEM Erfolg. Das ist vor dem ersten Satz zu sehen [§C27].
+    if(d.quelle === 'spieler') return 'spieler';
+    if(d.quelle === 'erfolg')  return 'erfolg';
+    return d.quelle === 'tafel' ? 'tafel' : 'spiel';
+  }
   if((s && s.cat) === 'tafel' || t.indexOf('rekord_') === 0 || t.indexOf('chronik_') === 0) return 'tafel';
   // Rivalitaet, Serie und Duo sind drei verschiedene Aussagen und sahen als
   // eine Sorte gleich aus: an einem Spieltag standen drei Karten „ZU ZWEIT"
@@ -23522,8 +23793,13 @@ function _ndBeziehung(s, anzahl){
   if(t === 'potd' || t === 'potw') return 'punktgleich an der Spitze';
   // Die Sammelkarte buendelt einen MOMENT, nicht zwingend eine Partie: die
   // Gruppe entsteht ueber die Minute [§C33].
-  if(t === 'sammel') return ((s.dataRef || {}).quelle === 'tafel')
-    ? 'an der Ewigen Tafel' : 'im selben Moment';
+  if(t === 'sammel'){
+    const q = (s.dataRef || {}).quelle;
+    // Auf der Karte ueber einen Erfolg haben die Beteiligten genau eines
+    // miteinander zu tun: sie haben dasselbe geholt.
+    if(q === 'erfolg') return 'mit demselben Erfolg';
+    return q === 'tafel' ? 'an der Ewigen Tafel' : 'im selben Moment';
+  }
   if(((s && s.dataRef) || {}).matchId) return 'in derselben Partie';
   return 'gemeinsam auf dieser Karte';
 }
@@ -23975,7 +24251,15 @@ function _newsDetailMitte(s){
               ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
-        return `<div class="nd-section">${d.quelle === 'tafel' ? 'An der Ewigen Tafel' : 'In dieser Partie'}</div>
+        // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand
+        // auch ueber der Karte, auf der drei Spieler dieselbe Stufe
+        // erreichen — und die entsteht am Ende eines Spieltags, nicht in
+        // einer Partie.
+        const kopfzeile = d.quelle === 'tafel' ? 'An der Ewigen Tafel'
+          : d.quelle === 'spieler' ? 'Alles in diesem Moment'
+          : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
+          : 'In dieser Partie';
+        return `<div class="nd-section">${kopfzeile}</div>
           ${mv}<div class="nw-liste">${zeilen}</div>`;
       }
       // Die Stufe IST die Story — und das Blatt war leer.

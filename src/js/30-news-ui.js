@@ -378,8 +378,14 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Eine Sammelkarte behaelt Rubrik und Motiv ihres staerksten Ereignisses —
   // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
   // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
+  // Die beiden zusammenfuehrenden Karten tragen eine eigene Schlagzeile und
+  // lassen deshalb keine Zeile aus: der Kopf ist einer der Erfolge, und wer
+  // ihn verschweigt, versteckt genau das, was die Karte zeigen soll. Sie
+  // zeigen auch ALLE Zeilen, nicht drei und „und 2 weitere" — dort IST die
+  // Vollstaendigkeit die Aussage [§C33].
+  const _achse = d.quelle === 'spieler' || d.quelle === 'erfolg';
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, [s.title, d.kopfTitel]) : '';
+    ? _newsSammelBand(d.teile, _achse ? [] : [s.title, d.kopfTitel], _achse) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -407,6 +413,23 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
        l:'Siege zu Niederlagen'},
       {v: _newsRangKurz(pid), l:'in der Liga'}
+    ]);
+  } else if(sorte === 'spieler'){
+    // Ein Gesicht, gross: die Karte handelt von genau einem Spieler. Dazu
+    // die Zahl der Erfolge und sein Platz in der Liga — die Zahl steht nicht
+    // im Satz, der gehoert dem staerksten Erfolg.
+    const pid = (Array.isArray(d.playerIds) ? d.playerIds[0] : null) || d.pid;
+    gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
+    fuss = _newsZahlband([
+      {v: (Array.isArray(d.teile) ? d.teile.length : 0) || null, l:'Erfolge im selben Moment', f:'g'},
+      {v: _newsRangKurz(pid), l:'in der Liga'}
+    ]);
+  } else if(sorte === 'erfolg'){
+    // Hier ist der Erfolg das Subjekt, also stehen die Gesichter als Chips
+    // nebeneinander [§C33] — keins von ihnen ist wichtiger als das andere.
+    gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
+    fuss = _newsZahlband([
+      {v: (Array.isArray(d.teile) ? d.teile.length : 0) || null, l:'Spieler zugleich', f:'g'}
     ]);
   } else if(sorte === 'woche'){
     // Alle sechs Wertungen, nicht drei und eine Zeile „und 3 weitere". Die
@@ -513,6 +536,11 @@ function _newsRubrik(sorte, s){
                         ? 'DIE DURSTSTRECKE' : 'DIE SERIE';
     case 'badge':  return 'AUSZEICHNUNG';
     case 'marke':  return 'BESTMARKE';
+    // Was diese beiden Karten sind, sagt die Rubrik: einmal ein Spieler, der
+    // in einem Moment mehreres holt, einmal ein Erfolg, den mehrere zugleich
+    // erreichen.
+    case 'spieler':return 'ALLES AUF EINMAL';
+    case 'erfolg': return 'GEMEINSAM GEHOLT';
     default:       return 'LIGA IN ZAHLEN';
   }
 }
@@ -534,6 +562,11 @@ function _newsSorteIcon(sorte, s){
                         ? 'trendDown' : 'flame';
     case 'badge':  return 'medal';
     case 'marke':  return 'chartUp';
+    // Drei Pokale fuer den, der mehreres auf einmal holt; zwei Gestalten fuer
+    // den Erfolg, den mehrere teilen. Keine der beiden Zeichnungen steht
+    // schon an einer anderen Rubrik [§C27].
+    case 'spieler':return 'tripleCup';
+    case 'erfolg': return 'users';
     default:       return 'chartBar';
   }
 }
@@ -622,7 +655,7 @@ function _newsSerienBand(laenge, verloren){
 // Gezeigt werden nur die Zeilen, die der Kopf NICHT schon ist: bei einer
 // Spiel-Sammelkarte gehoert ihm die Schlagzeile, und sie ein zweites Mal
 // darunter waere die Wiederholung, die §C33 gerade verhindert.
-function _newsSammelBand(teile, kopfTitel){
+function _newsSammelBand(teile, kopfTitel, vollstaendig){
   const alle = Array.isArray(teile) ? teile : [];
   // Ausgelassen wird, was die Karte oben schon IST — und das sind zwei
   // Titel: der der Karte und der des Kopfs. Bei einer Tafel-Sammelkarte
@@ -635,10 +668,14 @@ function _newsSammelBand(teile, kopfTitel){
     .map(x => String(x || '').trim()).filter(Boolean);
   const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
   if(!rest.length) return '';
-  return `<div class="nf-sam">${rest.slice(0, 3).map(t =>
+  // Drei Zeilen und dahinter die Zahl — ausser auf den beiden Karten, die
+  // eine Sache vollstaendig zeigen sollen: dort waere „und 2 weitere" genau
+  // das Verstecken, gegen das die Buendelung gebaut ist.
+  const grenze = vollstaendig ? rest.length : 3;
+  return `<div class="nf-sam">${rest.slice(0, grenze).map(t =>
     `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
     + `<span>${_newsBetont(t.titel || '')}</span></div>`).join('')}`
-    + (rest.length > 3 ? `<div class="nf-sam-m">und ${rest.length - 3} weitere</div>` : '')
+    + (rest.length > grenze ? `<div class="nf-sam-m">und ${rest.length - grenze} weitere</div>` : '')
     + `</div>`;
 }
 
@@ -715,7 +752,15 @@ function _newsSorte(s){
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
-  if(t === 'sammel') return d.quelle === 'tafel' ? 'tafel' : 'spiel';
+  if(t === 'sammel'){
+    // Zwei eigene Formen fuer die beiden zusammenfuehrenden Karten. Sie sahen
+    // als Tafel- oder Spieltagskarte aus wie die Meldung, von der sie eine
+    // von mehreren buendeln — und die eine handelt von EINEM Spieler, die
+    // andere von EINEM Erfolg. Das ist vor dem ersten Satz zu sehen [§C27].
+    if(d.quelle === 'spieler') return 'spieler';
+    if(d.quelle === 'erfolg')  return 'erfolg';
+    return d.quelle === 'tafel' ? 'tafel' : 'spiel';
+  }
   if((s && s.cat) === 'tafel' || t.indexOf('rekord_') === 0 || t.indexOf('chronik_') === 0) return 'tafel';
   // Rivalitaet, Serie und Duo sind drei verschiedene Aussagen und sahen als
   // eine Sorte gleich aus: an einem Spieltag standen drei Karten „ZU ZWEIT"

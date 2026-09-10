@@ -990,6 +990,12 @@ const _band = JSON.parse(K.eval(`JSON.stringify((function(){
     // Gigantentoeter'"), und geprueft wurde nur der erste — damit stand der
     // Kopf als erste Zeile des Bandes noch einmal da, sein Text darueber,
     // und von der vierten Meldung blieb „und 1 weitere".
+    // Die beiden zusammenfuehrenden Karten tragen eine EIGENE Schlagzeile
+    // („Tobi holt zwei Liga-Rekorde") und lassen deshalb keine Zeile aus,
+    // auch nicht die des Kopfs — und sie zeigen ALLE, nicht drei und „und
+    // 2 weitere": dort ist die Vollstaendigkeit die Aussage [§C33].
+    const achse = x.dataRef.quelle === 'spieler' || x.dataRef.quelle === 'erfolg';
+    if(achse){ if((x.dataRef.teile||[]).length !== n) ohneBand++; return; }
     const _selbst = [x.title, x.dataRef.kopfTitel].filter(Boolean);
     const rest = (x.dataRef.teile||[])
       .filter(t => _selbst.indexOf(t.titel) < 0).length;
@@ -1000,6 +1006,115 @@ const _band = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_band.zeilen > 0, 'die Sammelkarte traegt ihr Band', _band.zeilen + ' Zeilen');
 ok(_band.ohneBand === 0, 'jede gebuendelte Meldung steht auf der Karte, nicht nur im Blatt',
    _band.ohneBand + ' Karten ohne');
+
+// ── Wer mehreres auf einmal holt, und was mehrere zugleich holen ────
+// Die Buendelung kannte nur Moment und Subjekt und borgte sich Rubrik und
+// Schlagzeile der staerksten Zeile. An der Ewigen Tafel gruppierte sie sogar
+// den ganzen TAG ohne jedes Subjekt: gemessen standen vier Rekordwechsel
+// dreier Spieler in einer Karte, und die drei, die im selben Moment dieselbe
+// Insignium-Stufe erreichten, fielen ueber die vier Zeilen hinaus und
+// standen einzeln daneben. Zwei Achsen kommen deshalb davor.
+const _achsen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const ids = players.map(p => p.id);
+  const W = matches[matches.length-1].created_at;
+  const st = (id, typ, extra, prio, ti, tx) => ({id, cat:'tafel', ic:'award',
+    title:ti, desc:tx, when:W, prio:prio,
+    dataRef:Object.assign({type:typ}, extra)});
+  const lauf = liste => { _cache._consolFrom = null;
+    return _consolidateStories(liste.slice()).filter(x => (x.dataRef||{}).type === 'sammel'); };
+  const zeig = arr => arr.map(x => { const h = String(_newsCardHtmlM2(x, false, false));
+    return {q:x.dataRef.quelle, ti:x.title, tx:x.desc,
+      n:(x.dataRef.teile||[]).length, sorte:_newsSorte(x),
+      rub:_newsRubrik(_newsSorte(x), x), pids:(x.dataRef.playerIds||[]).length,
+      band:(h.split('nf-sam-z').length - 1),
+      // Der Fuss der Spieler-Karte: die Zahl der Erfolge steht dort und
+      // nicht im Satz — der gehoert dem staerksten von ihnen.
+      fuss:(h.match(/<b class="g">(\\d+)<\\/b><span>Erfolge im selben Moment/) || [])[1] || '',
+      zeilen:(x.dataRef.teile||[]).map(t => t.titel)}; });
+  // Die Schlagzeile beginnt mit dem Namen, wie im Generator — daran haengt
+  // die Zeile im Sammelband der Spieler-Karte.
+  const nm = pid => (pmap()[pid] || {}).name || '?';
+  const rek = (id, rid, pid, prio) => st(id, 'rekord_geholt',
+    {rekordId:rid, playerIds:[pid], vorher:[]}, prio || 84,
+    nm(pid) + ' übernimmt „' + rid + '"', '11 Siege in Folge. Vorher waren es 10.');
+  const ins = (id, pid) => st(id, 'insignium_stufe',
+    {pid, stufe:1, stufeName:'Schildring', punkte:300 + id.charCodeAt(1), oben:false}, 76,
+    nm(pid) + ' traegt den Schildring',
+    '385 Prestige zusammen. Bis zum Volutenkranz fehlen 335.');
+  return {
+    // (a) ein Spieler, zwei Rekorde
+    a: zeig(lauf([rek('r1','unstoppable',ids[0]), rek('r2','eloday',ids[0])])),
+    // (b) drei Sorten in einem Moment: das Verb steht nur, wo es wechselt
+    b: zeig(lauf([rek('r3','unstoppable',ids[0]),
+      st('bg','badge_unlocked',{badgeId:'wall_badge',playerId:ids[0],rarity:'common'},8,
+         nm(ids[0]) + ': Mauer','Sieg mit maximal 2 Gegentoren.'),
+      st('jb','jubilee',{pid:ids[0],total:100},6,nm(ids[0]) + ' feiert 100. Spiel',
+         '100 Partien stehen jetzt in der Bilanz.')])),
+    // (c) drei Spieler, dieselbe Stufe
+    c: zeig(lauf([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2])])),
+    // (d) Der Erfolg gewinnt: wer die Stufe teilt UND einen Rekord holt,
+    //     steht mit der Stufe auf der gemeinsamen Karte. Sonst stuende der
+    //     Schildring auf zwei Karten [§C33].
+    d: zeig(lauf([ins('i1',ids[0]), ins('i2',ids[1]), ins('i3',ids[2]),
+                  rek('r9','switcher',ids[2])])),
+    // (e) einer allein bleibt eine eigene Karte
+    e: zeig(lauf([rek('r1','unstoppable',ids[0])])),
+    n0: (players[0]||{}).name, n1: (players[1]||{}).name, n2: (players[2]||{}).name,
+    // (f) und an den echten Partien: zwei Traeger im selben Moment
+    echt: (function(){ _cache._consolFrom = null;
+      return _consolidateStories(_buildStories())
+        .filter(x => (x.dataRef||{}).quelle === 'erfolg')
+        .map(x => ({ti:x.title, n:(x.dataRef.teile||[]).length})); })()
+  };
+})())`));
+ok(_achsen.a.length === 1 && _achsen.a[0].q === 'spieler',
+   'zwei Erfolge eines Spielers im selben Moment werden EINE Karte',
+   _achsen.a.length + ' Karten');
+ok(_achsen.a[0] && _achsen.a[0].ti === _achsen.n0 + ' holt zwei Liga-Rekorde',
+   'die Schlagzeile nennt den Spieler und zaehlt die Erfolge',
+   (_achsen.a[0]||{}).ti);
+ok(_achsen.a[0] && _achsen.a[0].n === 2 && _achsen.a[0].band === 2,
+   'und jeder der beiden steht als Zeile auf der Karte',
+   (_achsen.a[0]||{}).band + ' von ' + (_achsen.a[0]||{}).n);
+ok(_achsen.b[0] && _achsen.b[0].ti
+   === _achsen.n0 + ' holt einen Liga-Rekord, eine Auszeichnung und feiert ein Jubiläum',
+   'das Verb steht nur da, wo es wechselt', (_achsen.b[0]||{}).ti);
+ok(_achsen.b[0] && _achsen.b[0].band === 3,
+   'auch die dritte Zeile steht auf der Karte, nicht als „und 1 weitere"',
+   (_achsen.b[0]||{}).band + ' Zeilen');
+ok(_achsen.c.length === 1 && _achsen.c[0].q === 'erfolg',
+   'dieselbe Stufe fuer drei Spieler wird EINE Karte', _achsen.c.length + ' Karten');
+ok(_achsen.c[0] && _achsen.c[0].ti
+   === _achsen.n0 + ', ' + _achsen.n1 + ' und ' + _achsen.n2 + ' tragen jetzt den Schildring',
+   'die Schlagzeile nennt alle drei und die Sache', (_achsen.c[0]||{}).ti);
+ok(_achsen.c[0] && /^3 Spieler erreichen Stufe 2 von 5/.test(_achsen.c[0].tx),
+   'ihr Satz gehoert der Gruppe, nicht einem der drei', (_achsen.c[0]||{}).tx);
+ok(_achsen.d.length === 1 && _achsen.d[0].q === 'erfolg' && _achsen.d[0].n === 3,
+   'der gemeinsame Erfolg geht der eigenen Karte vor',
+   _achsen.d.map(x => x.q + ':' + x.n).join(', '));
+ok(_achsen.e.length === 0, 'ein einzelner Erfolg bleibt eine eigene Karte',
+   _achsen.e.length + ' Sammelkarten');
+ok(_achsen.a[0] && _achsen.a[0].sorte === 'spieler' && _achsen.c[0].sorte === 'erfolg'
+   && _achsen.a[0].rub !== _achsen.c[0].rub,
+   'beide tragen eine eigene Form und eine eigene Rubrik',
+   (_achsen.a[0]||{}).rub + ' / ' + (_achsen.c[0]||{}).rub);
+ok(_achsen.a[0] && _achsen.a[0].pids === 1 && _achsen.c[0].pids === 3,
+   'die Spieler-Karte zeigt ein Gesicht, die Erfolgs-Karte alle',
+   (_achsen.a[0]||{}).pids + ' / ' + (_achsen.c[0]||{}).pids);
+ok(_achsen.a[0] && _achsen.a[0].fuss === '2',
+   'die Zahl der Erfolge steht im Fuss der Spieler-Karte, nicht im Satz',
+   '„' + (_achsen.a[0]||{}).fuss + '"');
+// Und die Zeilen wiederholen nicht, was oben steht [§C33].
+ok(_achsen.a[0] && _achsen.a[0].zeilen.every(z => z.indexOf(_achsen.n0) !== 0),
+   'auf der Spieler-Karte faellt der Name vor jeder Zeile weg',
+   (_achsen.a[0]||{}).zeilen.join(' | '));
+ok(_achsen.c[0] && _achsen.c[0].zeilen.join(' ').indexOf('Prestige') > 0
+   && new Set(_achsen.c[0].zeilen).size === 3,
+   'auf der Erfolgs-Karte traegt jede Zeile den Wert, der die Traeger unterscheidet',
+   (_achsen.c[0]||{}).zeilen.join(' | '));
+ok(_achsen.echt.length === 1 && _achsen.echt[0].n === 2,
+   'und an den echten Partien: zwei Traeger des Schildrings in einer Karte',
+   _achsen.echt.map(x => x.ti).join(' | ') || 'keine');
 
 // ── Nur die wichtigsten ────────────────────────────────────────────
 // Gemessen trug ein Spieltag neun Karten und der Feed zweiundzwanzig, davon

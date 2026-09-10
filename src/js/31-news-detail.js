@@ -160,8 +160,13 @@ function _ndBeziehung(s, anzahl){
   if(t === 'potd' || t === 'potw') return 'punktgleich an der Spitze';
   // Die Sammelkarte buendelt einen MOMENT, nicht zwingend eine Partie: die
   // Gruppe entsteht ueber die Minute [§C33].
-  if(t === 'sammel') return ((s.dataRef || {}).quelle === 'tafel')
-    ? 'an der Ewigen Tafel' : 'im selben Moment';
+  if(t === 'sammel'){
+    const q = (s.dataRef || {}).quelle;
+    // Auf der Karte ueber einen Erfolg haben die Beteiligten genau eines
+    // miteinander zu tun: sie haben dasselbe geholt.
+    if(q === 'erfolg') return 'mit demselben Erfolg';
+    return q === 'tafel' ? 'an der Ewigen Tafel' : 'im selben Moment';
+  }
   if(((s && s.dataRef) || {}).matchId) return 'in derselben Partie';
   return 'gemeinsam auf dieser Karte';
 }
@@ -613,7 +618,15 @@ function _newsDetailMitte(s){
               ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
-        return `<div class="nd-section">${d.quelle === 'tafel' ? 'An der Ewigen Tafel' : 'In dieser Partie'}</div>
+        // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand
+        // auch ueber der Karte, auf der drei Spieler dieselbe Stufe
+        // erreichen — und die entsteht am Ende eines Spieltags, nicht in
+        // einer Partie.
+        const kopfzeile = d.quelle === 'tafel' ? 'An der Ewigen Tafel'
+          : d.quelle === 'spieler' ? 'Alles in diesem Moment'
+          : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
+          : 'In dieser Partie';
+        return `<div class="nd-section">${kopfzeile}</div>
           ${mv}<div class="nw-liste">${zeilen}</div>`;
       }
       // Die Stufe IST die Story — und das Blatt war leer.

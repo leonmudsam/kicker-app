@@ -702,13 +702,43 @@ const ok = (c, msg, det) => {
 
   const zeichen = await page.evaluate(() => {
     const icon = window.__k.eval('_newsSorteIcon');
-    const sorten = ['spiel','tafel','ins','held','woche','duell','serie','badge','marke','fakt'];
+    const sorten = ['spiel','tafel','ins','held','woche','duell','serie','badge','marke',
+                    'fakt','spieler','erfolg'];
     const namen = sorten.map(so => icon(so, {dataRef:{type:'x'}}));
     const doppelt = namen.filter((n, i) => namen.indexOf(n) !== i);
     return {namen, doppelt};
   });
   ok(zeichen.doppelt.length === 0,
      'keine zwei Rubriken tragen dasselbe Zeichen', zeichen.doppelt.join(', '));
+
+  // Die Karte, auf der mehrere denselben Erfolg holen, steht im echten Feed:
+  // an den Fixtures erreichen Jannik und Stefan im selben Moment denselben
+  // Schildring, und das waren zwei Karten mit derselben Aussage. Gemessen
+  // wird am gerenderten Markup, weil hier die FORM die Aussage traegt.
+  const achse = await page.evaluate(() => {
+    const sheet = document.getElementById('sheet');
+    const karte = [...sheet.querySelectorAll('.nf-card')]
+      .find(c => c.classList.contains('nf-s-erfolg'));
+    if(!karte) return {fehlt:true};
+    const rub = karte.querySelector('.nf-rub b');
+    const gold = rub ? getComputedStyle(rub).color : '';
+    return {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
+      // Der Erfolg ist das Subjekt, also stehen die Gesichter als Chips
+      // nebeneinander — keins ist wichtiger als das andere [§C33].
+      chips: karte.querySelectorAll('.nf-face-paar .av').length,
+      zeilen: karte.querySelectorAll('.nf-sam-z').length,
+      rest: karte.querySelectorAll('.nf-sam-m').length,
+      gold: /^rgb\(2[0-9]{2}, *2[0-9]{2}, *[0-9]{1,3}\)/.test(gold)};
+  });
+  ok(!achse.fehlt, 'die Karte fuer den gemeinsamen Erfolg steht im Feed',
+     JSON.stringify(achse));
+  ok(achse.rubrik === 'GEMEINSAM GEHOLT', 'sie traegt ihre eigene Rubrik', achse.rubrik);
+  ok(achse.chips >= 2, 'und die Gesichter aller Beteiligten', achse.chips + ' Chips');
+  ok(achse.zeilen >= 2 && achse.rest === 0,
+     'jeder Beteiligte steht als Zeile auf der Karte, keiner als „und 1 weitere"',
+     achse.zeilen + ' Zeilen, ' + achse.rest + ' verschwiegen');
+  ok(achse.gold, 'sie wiegt so schwer wie die Meldungen, die sie buendelt [§C25]',
+     String(achse.gold));
 
   console.log('\n═══ ROT BLEIBT DER RICHTUNG ═══');
   const richtung = await page.evaluate(() => {

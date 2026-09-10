@@ -221,9 +221,9 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen | 974 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat | 221 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung | 237 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt — **im echten Browser gemessen** | 92 |
+| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt, die Karte fuer den gemeinsamen Erfolg — **im echten Browser gemessen** | 97 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -295,9 +295,9 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   untereinander waren ein Farbverlauf ohne Aussage. Das Band ist **leiser als
   die Schlagzeile** — es sagt, woher die Nachricht kommt, und überlässt ihr
   den Platz.
-  Die **zehn Kartenformen** (`.nf-s-spiel`, `-tafel`, `-ins`, `-held`, `-woche`,
-  `-duell`, `-serie`, `-badge`, `-marke`, `-fakt`, vergeben von
-  `_newsSorte`) sagen vor dem ersten Satz, worum es geht: das **Ergebnisband**
+  Die **zwölf Kartenformen** (`.nf-s-spiel`, `-tafel`, `-ins`, `-held`, `-woche`,
+  `-duell`, `-serie`, `-badge`, `-marke`, `-fakt`, `-spieler`, `-erfolg`,
+  vergeben von `_newsSorte`) sagen vor dem ersten Satz, worum es geht: das **Ergebnisband**
   (`_newsErgebnisBand`) beim Spieltag, der **große Wert** (`_newsWertBlock`)
   bei einem Rekord, die **Leiter** (`_newsLeiter`) beim Insignium, der
   **Bilanzbalken** (`_newsBilanzBalken`) beim Duell, der **Serienlauf**
@@ -541,6 +541,62 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   mit „und", drei als Aufzählung, ab dem vierten zählt die Zeile den Rest —
   sechs Namen sprengen jede Überschrift. Dieselbe Aufzählung gilt im Blattkopf
   und im Sammelband.
+
+  **Zwei Fragen kommen vor der Bündelung nach Moment und Subjekt:** Hat EIN
+  Spieler mehreres auf einmal geholt? Haben MEHRERE dasselbe geholt? Beides
+  ist eine eigene Nachricht mit eigener Kartenform. Vorher borgte sich das
+  Bündel Rubrik und Schlagzeile seiner stärksten Zeile, und an der Ewigen
+  Tafel gruppierte es sogar den ganzen TAG ohne jedes Subjekt: gemessen
+  standen vier Rekordwechsel dreier Spieler in einer Karte, während die drei,
+  die im selben Moment dieselbe Insignium-Stufe erreichten, über die vier
+  Zeilen hinausfielen und einzeln daneben standen.
+  Die **Spieler-Karte** (`quelle:'spieler'`, `.nf-s-spieler`, Rubrik „ALLES
+  AUF EINMAL") nennt in der Schlagzeile jede
+  Sorte mit ihrer Zahl — „Maxi holt zwei Monatschroniken", „Jonas holt einen
+  Liga-Rekord und erreicht die nächste Insignium-Stufe". Verb und Gegenstand
+  stehen dafür getrennt (`ERFOLG_WORT`), und das Verb wird nur genannt, wo es
+  wechselt: „holt einen Liga-Rekord, eine Auszeichnung und feiert ein
+  Jubiläum" — je Verb eine eigene Aufzählung ergab zwei „und" in einer Zeile.
+  Sie zeigt ein Wappen groß und im Fuß die Zahl der Erfolge; der Satz gehört
+  dem stärksten von ihnen.
+  Die **Erfolgs-Karte** (`quelle:'erfolg'`, `.nf-s-erfolg`, Rubrik „GEMEINSAM
+  GEHOLT") stellt den Erfolg voran und die Gesichter als Chips daneben — keins
+  ist wichtiger als das andere. Ihre Schlagzeile und ihr Satz kommen aus
+  `SAMMEL_ERFOLG`, je Typ eine Wendung: „Sina, Mira und Jonas tragen jetzt den
+  Schildring" mit „3 Spieler erreichen Stufe 2 von 5 im selben Moment". Den
+  Satz vom Kopf zu borgen wäre falsch — „385 Prestige zusammen" gehört einem
+  der drei, und die Karte handelt von allen.
+  **Der Erfolg geht dem Spieler vor.** Wer die Insignium-Stufe mit zwei
+  anderen teilt und im selben Moment noch einen Rekord holt, steht mit der
+  Stufe auf der gemeinsamen Karte; der Rekord fällt in die Bündelung nach
+  Moment und Subjekt, und dort gehören Rekorde ohnehin hin. Liefe die
+  Spieler-Achse zuerst, stünde „der Schildring" auf zwei Karten, und das ist
+  genau die Doppelung, die diese Regeln verhindern.
+  **Beide Achsen fassen nur, was allein dasteht** (genau ein Beteiligter):
+  eine Duo-Serie gehört keinem Einzelnen und wäre auf einer Karte über einen
+  Spieler eine Behauptung über zwei. Und `rekord_gesteigert` zählt nicht mit —
+  Ausbauen ist die schwächste der drei Rekordmeldungen und ohnehin gedeckelt,
+  es trägt keinen Moment. Für den Liga-Rekord und die Monatschronik gibt es
+  die Erfolgs-Achse gar nicht: sie tragen ihre Mithalter schon in EINER Karte
+  („Maxi, Leo und Julian übernehmen"), und die Auszeichnung fasst
+  `badgeGroups` je Partie zusammen — ein zweites Bauteil für dieselbe Aussage
+  wäre eins zu viel [§C27].
+  **Die Zeilen wiederholen nicht, was oben steht.** Auf der Spieler-Karte
+  fällt der Name vor jeder Zeile weg — er steht in der Schlagzeile, und
+  dreimal „Tobi" untereinander ist zweimal zu viel; es bleibt „übernimmt ‚Der
+  Unaufhaltsame'". Auf der Erfolgs-Karte bleibt er stehen und bekommt den
+  Wert dazu, der die Träger unterscheidet („Sina: 385 Prestige"): dreimal
+  „trägt den Schildring" unter „Sina, Mira und Jonas tragen jetzt den
+  Schildring" wäre die Schlagzeile in drei Wiederholungen. Wo nur der Name
+  unterscheidet (Jubiläum, Meilenstein), steht er allein — die Liste IST dann
+  die Aufzählung, und ab dem vierten Namen ist sie die einzige Stelle, an der
+  alle vorkommen.
+
+  **Vier Zeilen sind die Grenze nur dort, wo die Karte einen Moment
+  zusammenfasst.** Die Karte über einen Spieler und die über einen Erfolg
+  tragen JEDE Zeile und zählen keinen Rest weg: dort ist die Vollständigkeit
+  die Aussage, und eine fünfte Chronik zu verschweigen hieße, die Karte gegen
+  ihren eigenen Zweck zu bauen.
 
   **Bündeln darf nichts verstecken.** Die Sammelkarte trägt Rubrik, Motiv und
   Schlagzeile ihrer stärksten Story — und darunter das **Sammelband**
