@@ -174,12 +174,14 @@ const INSIGNIUM_AUSBAU = {
 const ORDENSSTERN_START = 8;
 const ORDENSSTERN_SCHRITT = 400;
 
-// Die `art` eines Monatseintrags. Eingefrorene Monate können IDs tragen,
-// die es im heutigen Katalog nicht mehr gibt — die galten damals und
-// zählen als Ereignis weiter, statt rückwirkend zu verschwinden.
-function _prestigeArtVon(titleId){
+// Die drei festen Angaben einer Monatschronik [§C39]. Eingefrorene Monate
+// können IDs tragen, die es im heutigen Katalog nicht mehr gibt; dann ist
+// hier nichts zu holen, und der Eintrag zählt null statt rückwirkend eine
+// Art zu erfinden, die er nie hatte. EIN Nachschlagen für alle, die danach
+// fragen — Wert, Grund und Anzeige müssen dasselbe lesen.
+function _chronikMonat(titleId){
   const d = DISZIPLINEN.find(x => x.id === titleId);
-  return d ? d.art : 'ereignis';
+  return (d && d.monat) || null;
 }
 
 // ─── §C39 Was eine Monatschronik wert ist ────────────────────────────
@@ -210,8 +212,7 @@ const PRESTIGE_CHRONIK = {koennen:30, konstanz:24, fuegung:15, schatten:0};
 const PRESTIGE_SELTEN  = {legendaer:15, selten:8, besonders:0};
 
 function chronikPunkte(titleId){
-  const d = DISZIPLINEN.find(x => x.id === titleId);
-  const m = d && d.monat;
+  const m = _chronikMonat(titleId);
   if(!m) return 0;
   const grund = PRESTIGE_CHRONIK[m.art];
   if(!grund) return 0;                       // Schattenseiten geben nichts
@@ -308,10 +309,16 @@ function prestigeTabelle(){
     // Monatschroniken: der Wert haengt an der Abweichung [§C39].
     const mo = [];
     r.monat.slice().sort((a,b) => a.sid < b.sid ? -1 : a.sid > b.sid ? 1 : 0).forEach(m => {
-      const art = _prestigeArtVon(m.id);
       const voll = chronikPunkte(m.id);
       if(voll <= 0) return;
-      mo.push({q:'monat', id:m.id, name:m.name, label:m.label, p:voll, art});
+      // Die Art der CHRONIK, nicht die der Disziplin: seit §C39 traegt
+      // `monat.art` den Wert (Koennen, Konstanz, Fuegung), waehrend `art` der
+      // Disziplin nur noch die Katalogreihenfolge bestimmt. In der Laufbahn
+      // stand deshalb „Leistung" neben einer Chronik, deren Punkte aus
+      // „Konstanz" kamen — die Zeile erklaerte den Wert daneben nicht.
+      const km = _chronikMonat(m.id) || {};
+      mo.push({q:'monat', id:m.id, name:m.name, label:m.label, p:voll,
+               kunst:km.art || '', klasse:km.klasse || ''});
     });
     const pm = summe(mo);
 
@@ -1633,7 +1640,11 @@ function showLaufbahn(pid){
     if(q.q === 'rekord') teile.push(q.halter <= 1 ? 'allein gehalten' : `zu ${q.halter}. geteilt`);
     else if(q.q === 'auszeichnung') teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
     else if(q.label) teile.push(q.label);
-    if(q.art) teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
+    if(q.q === 'monat'){
+      if(CHRONIK_KLASSE_NAME[q.klasse]) teile.push(CHRONIK_KLASSE_NAME[q.klasse]);
+      if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
+    }
+    else if(q.art) teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
     if(q.q === 'auszeichnung' && q.mal > 1) teile.push(`${q.mal}× geholt`);
     if(q.rang > 1) teile.push(`${q.rang}. Eintrag · ${zahl(q.voll)} ÷ ${zahl(Math.sqrt(q.rang))}`);
     return teile.join(' · ');

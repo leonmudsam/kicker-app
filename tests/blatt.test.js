@@ -1021,6 +1021,56 @@ const ok = (c, msg, det) => {
      'jedes Serien-Blatt zeigt den Lauf',
      schmuckBlatt.mitLauf + ' von ' + schmuckBlatt.serien);
 
+  // ── Die Chronik-Matrix: kein Kuerzel wird abgeschnitten ─────────────
+  //    Die Zelle ist 60 px breit und laesst dem Kuerzel 54. Drei Kuerzel
+  //    liefen darueber und standen als „Ohne Lüc…" in der Tafel, zwei weitere
+  //    waren im Katalog schon mitten im Wort abgeschnitten („Nervenkitz").
+  //    Gezaehlt wird nicht in Zeichen — „Umschwung" ist kuerzer als
+  //    „Nachzügler" und breiter —, sondern die gerenderte Breite des Textes
+  //    gegen die des Kastens. scrollWidth taugt dafuer nicht: er rundet auf
+  //    ganze Pixel, und „Augenhöhe" ragte um ein Viertel Pixel heraus.
+  console.log('\n═══ DIE CHRONIK-MATRIX ═══');
+  const matrix = await page.evaluate(() => {
+    const box = document.createElement('div');
+    box.style.width = '430px';
+    document.body.appendChild(box);
+    box.innerHTML = window.__k.eval('ligaChronikMatrixHtml()');
+    const zu = [];
+    box.querySelectorAll('.lc-cell .n').forEach(e => {
+      const r = document.createRange(); r.selectNodeContents(e);
+      const tw = r.getBoundingClientRect().width;
+      const cw = e.getBoundingClientRect().width;
+      if(tw > cw + 0.01) zu.push(e.textContent.trim() + ' (' + tw.toFixed(1) + '>' + cw.toFixed(1) + ')');
+    });
+    // Das Gewicht der Klasse: dieselbe Farbe in drei Staerken [§C39].
+    const grund = k => {
+      const el = box.querySelector('.lc-cell[data-kl="' + k + '"]');
+      if(!el) return null;
+      const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g);
+      return m ? +(m[3] === undefined ? 1 : m[3]) : null;
+    };
+    const zellen = box.querySelectorAll('.lc-cell').length;
+    const ohneKlasse = [...box.querySelectorAll('.lc-cell')].filter(e => !e.dataset.kl).length;
+    const r = {zu, zellen, ohneKlasse,
+               leg:grund('legendaer'), sel:grund('selten'), bes:grund('besonders')};
+    box.remove();
+    return r;
+  });
+  ok(matrix.zellen > 0, 'die Matrix zeigt Zellen', matrix.zellen + ' Zellen');
+  ok(matrix.zu.length === 0, 'kein Kuerzel wird in der Matrix abgeschnitten',
+     matrix.zu.join(' | '));
+  ok(matrix.ohneKlasse === 0, 'jede Zelle traegt die Klasse ihrer Chronik',
+     matrix.ohneKlasse + ' ohne');
+  // Alle drei Stufen, nicht nur die Enden: mit nur „legendaer > besonders"
+  // blieb die Zusicherung gruen, als die legendaere Regel ganz fehlte — die
+  // besondere allein reichte fuer den Vergleich.
+  ok(matrix.leg !== null && matrix.sel !== null && matrix.bes !== null,
+     'alle drei Klassen stehen in der Matrix',
+     'legendaer ' + matrix.leg + ' selten ' + matrix.sel + ' besonders ' + matrix.bes);
+  ok(matrix.leg > matrix.sel && matrix.sel > matrix.bes,
+     'je seltener die Chronik, desto staerker leuchtet ihre Zelle',
+     'legendaer ' + matrix.leg + ' > selten ' + matrix.sel + ' > besonders ' + matrix.bes);
+
   console.log('\n' + '═'.repeat(60));
   console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
   await browser.close();

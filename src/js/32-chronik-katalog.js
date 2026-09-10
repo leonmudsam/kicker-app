@@ -92,6 +92,15 @@ const TITLE_TONES = {
   purple: {c:'var(--purple)', rgb:'167,139,250'},
   red:    {c:'var(--red)',    rgb:'240,86,106'},
 };
+// Wie Klasse und Art einer Monatschronik heißen, wenn sie jemand liest.
+// Sie stehen an einer Stelle, weil sie in vier Ansichten auftauchen: auf der
+// Plakette, im Chronik-Blatt, in der Laufbahn und in der Nachricht. Vorher
+// stand in der Laufbahn „Leistung" — die Art der DISZIPLIN, nicht die der
+// Chronik, und den Wert trägt seit §C39 die der Chronik.
+const CHRONIK_KLASSE_NAME = {legendaer:'legendär', selten:'selten', besonders:'besonders'};
+const CHRONIK_ART_NAME = {koennen:'Können', konstanz:'Konstanz',
+                          fuegung:'Fügung', schatten:'Schattenseite'};
+
 function titleTone(tone){ return TITLE_TONES[tone] || TITLE_TONES.acid; }
 
 // Mindest-Spiele, damit ein Spieler in einer Saison überhaupt gewertet wird.
@@ -443,7 +452,7 @@ const DISZIPLINEN = [
              ? (p.nail + p.bitter) / p.games : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien liefen auf einen Ball hinaus · ${p.nail + p.bitter} enge Partien`}},
 
-  {id:'evenkeel', name:'Die Punktlandung', short:'Punktland.', ic:'scaleBalance', tone:'gold',
+  {id:'evenkeel', name:'Die Punktlandung', short:'Landung', ic:'scaleBalance', tone:'gold',
     art:'ereignis', zufall:'fund',
     monat:{
       art:'konstanz',
@@ -552,6 +561,18 @@ const DISZIPLINEN = [
         p=>p.potd/p.days,
         0.6,
         (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${pct(v)} %`))}},
+
+  {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'temple', tone:'gold', art:'leistung',
+    monat:{
+      art:'koennen',
+      klasse:'selten', aus:2.64,
+      wie:'Gemessen wird der schlechteste Platz, den die Liga-Tabelle am Ende eines Spieltags zeigte. Gezählt wird jeder Spieltag des Monats, auch einer ohne eigene Partie: wer aussetzt, kann überholt werden.',
+      cond:'An keinem Spieltag des Monats aus den ersten zwei Plätzen der Liga gefallen',
+      ...(_stWertung(
+        p=>p.thronRang != null,
+        p=>-p.thronRang,
+        -2,
+        (p)=>`Nie schlechter als Platz ${p.thronRang} · ${p.tagN} eigene Spieltage`))}},
 
   {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'shieldCheck', tone:'gold', art:'leistung',
     monat:{
@@ -664,7 +685,7 @@ const DISZIPLINEN = [
         1.5,
         (p,v,c)=>`${(p.ga/p.games).toFixed(1)} Gegentore je Partie · Liga ${_stMittel(Object.values(c.P).map(x=>x.ga/x.games)).toFixed(1)}`))}},
 
-  {id:'gleichauf', name:'Auf Augenhöhe', short:'Augenhöhe', ic:'weightSmall', tone:'gold', art:'leistung',
+  {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
     monat:{
       art:'koennen',
       klasse:'selten', aus:1.81,
@@ -703,7 +724,7 @@ const DISZIPLINEN = [
         0.75,
         p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${l.filter(s=>s.win).length} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
 
-  {id:'umschwung', name:'Der Umschwung', short:'Umschwung', ic:'overtake', tone:'gold', art:'leistung',
+  {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'overtake', tone:'gold', art:'leistung',
     monat:{
       art:'koennen',
       klasse:'selten', aus:1.74,
@@ -793,7 +814,7 @@ const DISZIPLINEN = [
         0.98,
         (p,v)=>`${p.wins} von ${p.games} Siegen · erwartet waren ${pct(1-v)} %`))}},
 
-  {id:'schwachstelle', name:'Ohne Schwachstelle', short:'Ohne Lücke', ic:'kingClass', tone:'gold', art:'leistung',
+  {id:'schwachstelle', name:'Ohne Schwachstelle', short:'Lückenlos', ic:'kingClass', tone:'gold', art:'leistung',
     monat:{
       art:'koennen',
       klasse:'legendaer', aus:1.57,
@@ -831,7 +852,7 @@ const DISZIPLINEN = [
         0.25,
         p=>{const h=_stHaelften(p);return `${pct(h.q2)} % in der zweiten Hälfte, ${pct(h.q1)} % in der ersten`;}))}},
 
-  {id:'schwachewoche', name:'Ohne schwache Woche', short:'Jede Woche', ic:'weekly', tone:'blue', art:'leistung',
+  {id:'schwachewoche', name:'Ohne schwache Woche', short:'Durchweg', ic:'weekly', tone:'blue', art:'leistung',
     monat:{
       art:'konstanz',
       klasse:'selten', aus:2.68,
@@ -923,7 +944,7 @@ const DISZIPLINEN = [
         1,
         p=>`${p.partien.filter(s=>s.win&&s.gf-s.ga<=2).length} von ${p.wins} Siegen waren knapp`))}},
 
-  {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Nervenkitz', ic:'cone', tone:'purple', art:'ereignis',
+  {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Kitzel', ic:'cone', tone:'purple', art:'ereignis',
     monat:{
       art:'fuegung',
       klasse:'besonders', aus:3.62,
@@ -973,7 +994,7 @@ const DISZIPLINEN = [
         1,
         (p,v,c)=>`${((p.gf+p.ga)/p.games).toFixed(1)} Tore je Partie · Liga ${c.L.torSchnitt.toFixed(1)}`))}},
 
-  {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Lieblingsz', ic:'hundred', tone:'purple', art:'ereignis',
+  {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'hundred', tone:'purple', art:'ereignis',
     monat:{
       art:'fuegung',
       klasse:'selten', aus:2.41,
@@ -986,7 +1007,7 @@ const DISZIPLINEN = [
         0.25,
         (p,v)=>`${p._lz.n}× ${p._lz.k} · ${pct(v)} % aller Partien`))}},
 
-  {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechselh.', ic:'weatherMix', tone:'purple', art:'ereignis',
+  {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechsel', ic:'weatherMix', tone:'purple', art:'ereignis',
     monat:{
       art:'fuegung',
       klasse:'selten', aus:1.96,
@@ -1014,7 +1035,7 @@ const DISZIPLINEN = [
         0.8,
         p=>`${pct(p._ko[0].q)} % neben ${pname(p._ko[0].k)}, ${pct(p._ko[p._ko.length-1].q)} % neben ${pname(p._ko[p._ko.length-1].k)}`))}},
 
-  {id:'angstgegner', name:'Der Angstgegner', short:'Angstgegn.', ic:'devilMask', tone:'red', art:'schatten',
+  {id:'angstgegner', name:'Der Angstgegner', short:'Angst', ic:'devilMask', tone:'red', art:'schatten',
     monat:{
       art:'schatten',
       klasse:'besonders', aus:2.05,

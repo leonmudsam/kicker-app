@@ -537,8 +537,14 @@ JSON.parse(K.eval("JSON.stringify(SEASON_TITLES.map(t=>t.id))")).forEach(tid => 
   .forEach(id => ok(K.eval(`!!SEASON_TITLE_BY_ID['${id}']`), 'Monatschronik ' + id + ' im Katalog'));
 ['catalyst','damage_control']
   .forEach(id => ok(K.eval(`!!CHRONICLE_BY_ID['${id}']`), 'neuer Liga-Rekord ' + id + ' im Katalog'));
-ok(K.eval("SEASON_TITLES.every(t=>t.short && t.short.length<=10)"),
-   'alle Kurznamen passen in eine Chronik-Zelle');
+// Ob ein Kuerzel in die Zelle passt, misst `tests/blatt` am gerenderten
+// Markup — in Zeichen gezaehlt ist „Umschwung" kuerzer als „Nachzügler" und
+// trotzdem breiter. Hier bleibt die Form: ein Kuerzel ist ein ganzes Wort.
+// Fuenf endeten auf einem Punkt („Punktland.", „Angstgegn."), und eine
+// Abkuerzung mitten im Wort liest sich in der Tafel wie ein Fehler.
+ok(K.eval("SEASON_TITLES.filter(t=>/\\.$/.test(t.short)).map(t=>t.short).join(', ')") === '',
+   'kein Kurzname endet auf einem Punkt',
+   K.eval("SEASON_TITLES.filter(t=>/\\.$/.test(t.short)).map(t=>t.short).join(', ')"));
 ok(K.eval("new Set(SEASON_TITLES.map(t=>t.id)).size") === K.eval("SEASON_TITLES.length"),
    'keine doppelten Saison-IDs');
 ok(K.eval("new Set(CHRONICLES.map(c=>c.id)).size") === K.eval("CHRONICLES.length"),

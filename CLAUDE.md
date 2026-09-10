@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **664**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **669**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,11 +219,11 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog | 932 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen | 935 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 176 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck | 204 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
+| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix — **im echten Browser gemessen** | 88 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -825,11 +825,49 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Gelegenheiten** fallen ebenfalls weg: wer mehr spielt, bekommt mehr Chancen
   auf ein 10:0 oder eine lange Serie. Die Anteilsformen derselben Fragen
   bleiben.
-  Zwei Schwellen sind **vorgegeben und werden nicht kalibriert**: „Der
+  Drei Schwellen sind **vorgegeben und werden nicht kalibriert**: „Der
   Tagesregent" verlangt Player of the Day an 60 % der eigenen Spieltage, „Die
-  Wochenkrone" Player of the Week in JEDER eigenen Woche. Player of the Week
+  Wochenkrone" Player of the Week in JEDER eigenen Woche, „Auf dem Thron" den
+  zweiten Platz der Liga an jedem Spieltag des Monats. Player of the Week
   kommt dabei aus `_periodWinnerMap`, damit Chronik und Auszeichnung nicht
-  auseinanderlaufen [§C27].
+  auseinanderlaufen [§C27]; die Tabelle kommt aus der Elo-Bahn von
+  `getGlobalSim` (`_thronDerLiga`), aus demselben Grund — selbst aus den
+  Deltas aufsummiert nennt eine zweite Rechnung irgendwann einen anderen
+  Ersten als der Liga-Tab, weil die Simulation die Elo an jeder Monatsgrenze
+  zurückdreht.
+  **„Auf dem Thron" zählt jeden Spieltag des Monats, auch einen ohne eigene
+  Partie.** Die Tabelle fragt nicht, wer dabei war, und wer aussetzt, kann
+  überholt werden — damit hängt die Wertung nicht an der Zahl der eigenen
+  Auftritte. Vor der ersten eigenen Partie des Monats steht niemand in der
+  Monatstabelle; solche Tage zählen nicht mit, sonst trüge jeder, der später
+  einsteigt, von vornherein den schlechtesten Platz. Sie ist die Chronik für
+  den, der nie ausschlägt und trotzdem jeden Monat oben steht: gemessen ist
+  Leons August in keiner einzigen Rate der Liga die Nummer eins — 90 Partien
+  ziehen jede Rate zur Mitte —, und die Tabelle hat er trotzdem nie aus der
+  Hand gegeben.
+
+  **Die Klasse ist zu sehen, nicht nur zu berechnen.** Von den vier Angaben,
+  die den Wert einer Chronik bestimmen, stand keine einzige in der App: wer
+  ein Chronik-Blatt öffnete, sah die Bedingung und sonst nichts. Jetzt trägt
+  die Zelle der Matrix und die des Profilstreifens die Klasse als **Gewicht**
+  (`data-kl`, dieselbe Farbe in drei Stärken — keine neue Farbe, das
+  Farbgesetz kennt vier Rollen [§C25]), die Plakette nennt sie in Worten
+  (`CHRONIK_KLASSE_NAME`, Metall — sie zeichnet niemanden aus), und das
+  Chronik-Blatt zeigt Klasse, Art, Ausschlag und Prestige als Zahlenreihe —
+  `rcpZahlenHtml`, das Bauteil der Rückblicke [§C27]. In der Laufbahn stand
+  neben einem Monatseintrag „Leistung", die Art der DISZIPLIN; den Wert trägt
+  `monat.art`, also steht dort jetzt „Konstanz" oder „Können".
+  **Die Zeilen der Matrix ordnet das Prestige**, dann die Zahl der Einträge,
+  dann der Name. Nach der Zahl allein stand ein Monat mit drei billigen
+  Einträgen über einem mit einer legendären Chronik — und seit die Chroniken
+  nach ihrem Ausschlag verschieden viel wert sind, ist die Zahl gar keine
+  Ordnung mehr.
+  **Ein Kürzel ist ein ganzes Wort und passt in die Zelle.** Fünf endeten auf
+  einem Punkt („Punktland.", „Angstgegn."), drei liefen über die 54 px der
+  Zelle. Gezählt wird dafür nicht in Zeichen — „Umschwung" ist kürzer als
+  „Nachzügler" und breiter —, sondern die gerenderte Breite in `tests/blatt`;
+  `scrollWidth` taugt nicht, er rundet auf ganze Pixel, und „Augenhöhe" ragte
+  um ein Viertel Pixel heraus.
   **Die Rohsicht liegt in der Engine.** `_seasonTitleCtx` legt je Spieler
   `partien` an (jede Partie aus seiner Sicht, in Spielreihenfolge) und daraus
   `tagGrp`, `wochGrp`, `partnerGrp`, `gegnerGrp`. Die Chroniken fragen nach
@@ -1238,8 +1276,8 @@ Raster — je zwei Einträge sind eine Zeile.
 | Stelle | was | wenn es fehlt |
 |---|---|---|
 | `32-chronik-katalog.js` `DISZIPLINEN[]` | Eintrag **im richtigen Block**: Leistung, dann Ereignis, dann Schatten | ein Spieler zeigt nur EINEN Monatseintrag, und die Katalogreihenfolge entscheidet welchen [§C32] — falsch einsortiert verdrängt eine Schattenseite seinen Titel |
-| dort `art` | `leistung`, `ereignis` oder `schatten` — `pensum` gibt es nur bei Auszeichnungen | steuert den Prestige-Wert; ohne gültige Angabe fällt der Eintrag auf `ereignis` und wiegt die Hälfte. `tests/disziplinen` misst es |
-| dort `short` | höchstens zehn Zeichen | die Chronik-Zelle bricht; `tests/disziplinen` misst es |
+| dort `art` | `leistung`, `ereignis` oder `schatten` — `pensum` gibt es nur bei Auszeichnungen | steuert bei einem Liga-Rekord den Prestige-Wert und bei jedem Eintrag die Katalogreihenfolge; ohne gültige Angabe fällt der Eintrag auf `ereignis` und wiegt die Hälfte. Den Wert einer Monatschronik trägt dagegen `monat.art` [§C39]. `tests/disziplinen` misst es |
+| dort `short` | ein ganzes Wort, das in 54 px passt | „Umschwung“ ist kürzer als „Nachzügler“ und breiter, also zählt die gerenderte Breite: `tests/blatt` misst sie am Markup, `tests/disziplinen` verbietet die Abkürzung mit Punkt |
 | dort `ic` | ein Icon, das keine andere Disziplin trägt | in einer Zelle von 62 Pixeln ist die Zeichnung das Erste, was man sieht — zwei gleiche sind dort nicht zu unterscheiden. `tests/disziplinen` misst es |
 | dort `monat.wie` | ein Satz, was die Zahl im Beleg bedeutet | nur nötig, wenn die Größe nicht selbsterklärend ist. Er steht im Detail-Blatt unter der Bedingung; ohne ihn liest sich „+15 Prozentpunkte" wie Elo oder wie Prestige |
 | dort `monat.art`, `monat.klasse`, `monat.aus` | die drei festen Angaben einer Chronik [§C39] | ohne `art` gibt es kein Prestige, ohne `klasse` keine Schwellen-Regel, ohne `aus` ist die Chronik null Punkte wert |

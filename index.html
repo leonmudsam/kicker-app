@@ -3659,6 +3659,30 @@
   .lc-cell .n{font-size:8.5px;font-weight:700;line-height:1.35;color:var(--tt);
     max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+  /* Das Gewicht der Klasse [§C39]. Keine neue Farbe — das Farbgesetz kennt
+     vier Rollen [§C25] —, sondern dieselbe Farbe in drei Stärken: eine
+     legendäre Chronik leuchtet, eine besondere ist ein Hauch. Vorher trugen
+     alle Zellen dieselbe Füllung, und dass zwischen „Der Wechselhafte" und
+     „Die Wochenkrone" hundert Prestige-Punkte liegen, sah man nirgends.
+     Auch die schwächste bleibt deutlich sichtbar: eine fast leere Zelle
+     liest sich als Fehler. */
+  .lc-cell[data-kl="legendaer"]{background:rgba(var(--ttr),.19);
+    box-shadow:inset 0 0 0 1px rgba(var(--ttr),.34)}
+  .lc-cell[data-kl="besonders"]{background:rgba(var(--ttr),.08)}
+  .chron-cell[data-kl="legendaer"]{border-color:rgba(var(--ttr),.7);
+    background:linear-gradient(180deg,rgba(var(--ttr),.16),var(--surface))}
+  .chron-cell[data-kl="besonders"]{border-color:rgba(var(--ttr),.3);
+    background:linear-gradient(180deg,rgba(var(--ttr),.05),var(--surface))}
+  .tplate[data-kl="legendaer"]{border-left-width:4px}
+  .tplate[data-kl="besonders"]{border-left-width:2px}
+  /* Die Klasse in Worten, neben dem Namen. Metall, weil sie niemanden
+     auszeichnet — sie sagt nur, wie selten die Bedingung zutrifft. */
+  .tplate-kl{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.13em;color:var(--muted);
+    margin-left:7px;vertical-align:1px;white-space:nowrap}
+  /* Die Zahlenreihe im Chronik-Blatt steht direkt unter der Bedingung. */
+  .chron-hero + .rcp-z{margin:-2px 0 12px}
+
   /* Einstieg in die Liga-Chronik (Awards-Tab) */
   .chron-entry{display:flex;align-items:center;gap:12px;background:var(--surface);
     border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;
@@ -4658,7 +4682,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.09.96971814';
+const BUILD_VERSION='2026.09.10.5a9b3caa';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -24350,6 +24374,15 @@ const TITLE_TONES = {
   purple: {c:'var(--purple)', rgb:'167,139,250'},
   red:    {c:'var(--red)',    rgb:'240,86,106'},
 };
+// Wie Klasse und Art einer Monatschronik heißen, wenn sie jemand liest.
+// Sie stehen an einer Stelle, weil sie in vier Ansichten auftauchen: auf der
+// Plakette, im Chronik-Blatt, in der Laufbahn und in der Nachricht. Vorher
+// stand in der Laufbahn „Leistung" — die Art der DISZIPLIN, nicht die der
+// Chronik, und den Wert trägt seit §C39 die der Chronik.
+const CHRONIK_KLASSE_NAME = {legendaer:'legendär', selten:'selten', besonders:'besonders'};
+const CHRONIK_ART_NAME = {koennen:'Können', konstanz:'Konstanz',
+                          fuegung:'Fügung', schatten:'Schattenseite'};
+
 function titleTone(tone){ return TITLE_TONES[tone] || TITLE_TONES.acid; }
 
 // Mindest-Spiele, damit ein Spieler in einer Saison überhaupt gewertet wird.
@@ -24701,7 +24734,7 @@ const DISZIPLINEN = [
              ? (p.nail + p.bitter) / p.games : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien liefen auf einen Ball hinaus · ${p.nail + p.bitter} enge Partien`}},
 
-  {id:'evenkeel', name:'Die Punktlandung', short:'Punktland.', ic:'scaleBalance', tone:'gold',
+  {id:'evenkeel', name:'Die Punktlandung', short:'Landung', ic:'scaleBalance', tone:'gold',
     art:'ereignis', zufall:'fund',
     monat:{
       art:'konstanz',
@@ -24810,6 +24843,18 @@ const DISZIPLINEN = [
         p=>p.potd/p.days,
         0.6,
         (p,v)=>`Player of the Day an ${p.potd} der ${p.days} Spieltage · ${pct(v)} %`))}},
+
+  {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'temple', tone:'gold', art:'leistung',
+    monat:{
+      art:'koennen',
+      klasse:'selten', aus:2.64,
+      wie:'Gemessen wird der schlechteste Platz, den die Liga-Tabelle am Ende eines Spieltags zeigte. Gezählt wird jeder Spieltag des Monats, auch einer ohne eigene Partie: wer aussetzt, kann überholt werden.',
+      cond:'An keinem Spieltag des Monats aus den ersten zwei Plätzen der Liga gefallen',
+      ...(_stWertung(
+        p=>p.thronRang != null,
+        p=>-p.thronRang,
+        -2,
+        (p)=>`Nie schlechter als Platz ${p.thronRang} · ${p.tagN} eigene Spieltage`))}},
 
   {id:'angstfrei', name:'Ohne Angstgegner', short:'Angstfrei', ic:'shieldCheck', tone:'gold', art:'leistung',
     monat:{
@@ -24922,7 +24967,7 @@ const DISZIPLINEN = [
         1.5,
         (p,v,c)=>`${(p.ga/p.games).toFixed(1)} Gegentore je Partie · Liga ${_stMittel(Object.values(c.P).map(x=>x.ga/x.games)).toFixed(1)}`))}},
 
-  {id:'gleichauf', name:'Auf Augenhöhe', short:'Augenhöhe', ic:'weightSmall', tone:'gold', art:'leistung',
+  {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
     monat:{
       art:'koennen',
       klasse:'selten', aus:1.81,
@@ -24961,7 +25006,7 @@ const DISZIPLINEN = [
         0.75,
         p=>{const l=Object.values(p.tagGrp).map(a=>a[a.length-1]);return `${l.filter(s=>s.win).length} von ${l.length} Tagesabschlüssen gewonnen`;}))}},
 
-  {id:'umschwung', name:'Der Umschwung', short:'Umschwung', ic:'overtake', tone:'gold', art:'leistung',
+  {id:'umschwung', name:'Der Umschwung', short:'Wende', ic:'overtake', tone:'gold', art:'leistung',
     monat:{
       art:'koennen',
       klasse:'selten', aus:1.74,
@@ -25051,7 +25096,7 @@ const DISZIPLINEN = [
         0.98,
         (p,v)=>`${p.wins} von ${p.games} Siegen · erwartet waren ${pct(1-v)} %`))}},
 
-  {id:'schwachstelle', name:'Ohne Schwachstelle', short:'Ohne Lücke', ic:'kingClass', tone:'gold', art:'leistung',
+  {id:'schwachstelle', name:'Ohne Schwachstelle', short:'Lückenlos', ic:'kingClass', tone:'gold', art:'leistung',
     monat:{
       art:'koennen',
       klasse:'legendaer', aus:1.57,
@@ -25089,7 +25134,7 @@ const DISZIPLINEN = [
         0.25,
         p=>{const h=_stHaelften(p);return `${pct(h.q2)} % in der zweiten Hälfte, ${pct(h.q1)} % in der ersten`;}))}},
 
-  {id:'schwachewoche', name:'Ohne schwache Woche', short:'Jede Woche', ic:'weekly', tone:'blue', art:'leistung',
+  {id:'schwachewoche', name:'Ohne schwache Woche', short:'Durchweg', ic:'weekly', tone:'blue', art:'leistung',
     monat:{
       art:'konstanz',
       klasse:'selten', aus:2.68,
@@ -25181,7 +25226,7 @@ const DISZIPLINEN = [
         1,
         p=>`${p.partien.filter(s=>s.win&&s.gf-s.ga<=2).length} von ${p.wins} Siegen waren knapp`))}},
 
-  {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Nervenkitz', ic:'cone', tone:'purple', art:'ereignis',
+  {id:'nervenkitzel', name:'Der Nervenkitzel', short:'Kitzel', ic:'cone', tone:'purple', art:'ereignis',
     monat:{
       art:'fuegung',
       klasse:'besonders', aus:3.62,
@@ -25231,7 +25276,7 @@ const DISZIPLINEN = [
         1,
         (p,v,c)=>`${((p.gf+p.ga)/p.games).toFixed(1)} Tore je Partie · Liga ${c.L.torSchnitt.toFixed(1)}`))}},
 
-  {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Lieblingsz', ic:'hundred', tone:'purple', art:'ereignis',
+  {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'hundred', tone:'purple', art:'ereignis',
     monat:{
       art:'fuegung',
       klasse:'selten', aus:2.41,
@@ -25244,7 +25289,7 @@ const DISZIPLINEN = [
         0.25,
         (p,v)=>`${p._lz.n}× ${p._lz.k} · ${pct(v)} % aller Partien`))}},
 
-  {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechselh.', ic:'weatherMix', tone:'purple', art:'ereignis',
+  {id:'wechselhaft', name:'Der Wechselhafte', short:'Wechsel', ic:'weatherMix', tone:'purple', art:'ereignis',
     monat:{
       art:'fuegung',
       klasse:'selten', aus:1.96,
@@ -25272,7 +25317,7 @@ const DISZIPLINEN = [
         0.8,
         p=>`${pct(p._ko[0].q)} % neben ${pname(p._ko[0].k)}, ${pct(p._ko[p._ko.length-1].q)} % neben ${pname(p._ko[p._ko.length-1].k)}`))}},
 
-  {id:'angstgegner', name:'Der Angstgegner', short:'Angstgegn.', ic:'devilMask', tone:'red', art:'schatten',
+  {id:'angstgegner', name:'Der Angstgegner', short:'Angst', ic:'devilMask', tone:'red', art:'schatten',
     monat:{
       art:'schatten',
       klasse:'besonders', aus:2.05,
@@ -25488,6 +25533,43 @@ function _bannLaufDerLiga(P, ms){
   });
 }
 
+// Der schlechteste Platz, den die Liga-Tabelle am Ende eines Spieltags zeigte.
+// Gezaehlt wird JEDER Spieltag des Monats, auch einer ohne eigene Partie: die
+// Tabelle fragt nicht, wer dabei war, und wer aussetzt, kann ueberholt werden.
+// Damit haengt die Wertung nicht an der Zahl der eigenen Auftritte.
+//
+// Quelle ist die Elo-Bahn aus `getGlobalSim` [§C27]. Selbst aus den Deltas
+// aufsummiert waere es eine zweite Rechnung ueber dieselbe Tabelle — und die
+// nennt irgendwann einen anderen Ersten als der Liga-Tab, weil die Simulation
+// die Elo an jeder Monatsgrenze zurueckdreht.
+//
+// Vor der ersten eigenen Partie des Monats steht niemand in der Monatstabelle;
+// solche Tage zaehlen deshalb nicht mit. Sonst haette jeder, der spaeter im
+// Monat einsteigt, von vornherein den schlechtesten Platz.
+function _thronDerLiga(P, ms){
+  if(!ms.length) return;
+  const hist = {};
+  const sim = (typeof getGlobalSim === 'function') ? getGlobalSim() : null;
+  ((sim && sim.history) || []).forEach(h => { hist[h.matchId] = h; });
+  const stand = {};
+  let tag = null;
+  const auswerten = () => {
+    if(!tag) return;
+    const rang = Object.keys(stand).sort((a, b) => stand[b] - stand[a]);
+    rang.forEach((id, i) => {
+      const p = P[id];
+      if(p && (p.thronRang == null || i + 1 > p.thronRang)) p.thronRang = i + 1;
+    });
+  };
+  ms.slice().sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    const d = String(m.created_at).slice(0, 10);
+    if(d !== tag){ auswerten(); tag = d; }
+    const h = hist[m.id];
+    if(h && h.eloAfter) Object.keys(h.eloAfter).forEach(id => { stand[id] = h.eloAfter[id]; });
+  });
+  auswerten();
+}
+
 // Aus der Rohsicht die Gruppen, nach denen die Chroniken fragen: Spieltage,
 // Kalenderwochen, Partner, Gegner. Einmal gebaut, von jeder Wertung gelesen.
 // Der Montag ist der Wochenanfang, damit „Woche" heisst, was im Kalender
@@ -25589,6 +25671,7 @@ function _seasonTitleCtxRechnen(sid){
     eloHigh:null, runHigh:null, runLow:null, maxDD:0, ddLow:null,
     potw:0, potwG:0,             // Player-of-the-Week-Titel / gewertete Wochen
     bannLauf:0,                  // laengste im Monat gebrochene Pleitenserie
+    thronRang:null,              // schlechtester Tabellenplatz an einem Tagesende
     // ── Die Rohsicht eines Spielers auf seinen Monat ──────────────────
     // Jede Partie einmal, aus SEINER Perspektive, in der Reihenfolge, in
     // der sie gespielt wurde. Die Chroniken fragen nach dem schwaechsten
@@ -25818,6 +25901,7 @@ function _seasonTitleCtxRechnen(sid){
     _rohGruppen(id, p, wochenSieger);
   });
   _bannLaufDerLiga(P, ms);
+  _thronDerLiga(P, ms);
 
   // Spieltage mit vollem Programm (4+ Partien) und die makellosen darunter.
   // Ein Tag mit zwei Spielen kann kein „makelloser Tag" sein — sonst hätte ihn
@@ -26893,16 +26977,45 @@ function _titlePlateHtml(a, opts){
   const av = p ? avHtml(p) : '';
   const zeig = a.titleId && !o.keinDetail;
   const cls = 'tplate' + (o.hero ? ' hero' : '') + (zeig || a.pid ? ' clickable' : '');
+  // Die Klasse sagt, wie schwer der Eintrag zu holen war [§C39], und steht
+  // deshalb auf der Plakette. Sie kommt aus dem Katalog von HEUTE und fehlt
+  // still, wenn ein eingefrorener Monat eine Chronik zeigt, die es nicht mehr
+  // gibt — eine Plakette ohne Klasse ist besser als eine mit falscher.
+  const kl = _chronKlasse(a.titleId);
   return `<div class="${cls}" style="--tt:${t.c};--ttr:${t.rgb}"${
+    kl ? ` data-kl="${esc(kl)}"` : ''}${
     zeig ? ` data-tdisz="${esc(a.titleId)}" data-tsid="${esc(o.sid || '')}"`
          : (a.pid ? ` data-tplayer="${esc(a.pid)}"` : '')}>
     <div class="tplate-ic">${svgI(a.ic)}</div>
     <div class="tplate-b">
-      <div class="tplate-t">${esc(a.name)}</div>
+      <div class="tplate-t">${esc(a.name)}${
+        kl ? `<span class="tplate-kl">${esc(CHRONIK_KLASSE_NAME[kl])}</span>` : ''}</div>
       <div class="tplate-w">${av}<span>${esc(p ? p.name : '?')}</span></div>
       ${a.ev ? `<div class="tplate-e num">${esc(a.ev)}</div>` : ''}
     </div>
   </div>`;
+}
+
+// Die Klasse einer Monatschronik, oder leer. Ein eingefrorener Monat kann
+// eine Chronik zeigen, die der Katalog nicht mehr kennt [§13.3a].
+function _chronKlasse(tid){
+  const d = tid && SEASON_TITLE_BY_ID[tid];
+  return (d && CHRONIK_KLASSE_NAME[d.klasse]) ? d.klasse : '';
+}
+
+// Klasse, Art, Ausschlag und Prestige einer Monatschronik als Zahlenreihe —
+// dasselbe Bauteil wie in den Rückblicken [§C27]. Vorher stand von den vier
+// Angaben, die den Wert einer Chronik bestimmen, keine einzige in der App:
+// wer ein Chronik-Blatt öffnete, sah die Bedingung und sonst nichts.
+function _chronFaktenHtml(def){
+  if(!def || !CHRONIK_KLASSE_NAME[def.klasse]) return '';
+  const p = chronikPunkte(def.id);
+  return rcpZahlenHtml([
+    {v:CHRONIK_KLASSE_NAME[def.klasse], l:'Klasse'},
+    {v:CHRONIK_ART_NAME[def.kunst] || '—', l:'Art'},
+    {v:String(def.aus || 0).replace('.', ',') + ' \u03c3', l:'Ausschlag'},
+    p > 0 ? {v:'+' + p, l:'Prestige', ton:'gold'} : {v:'0', l:'Prestige'},
+  ]);
 }
 
 // Die Saison-Tafel als Sheet. Öffnet aus der Chronik, der Liga-Chronik und
@@ -27071,8 +27184,10 @@ function _chronStripHtml(pid){
     const t = r.title;
     const tone = titleTone(t.tone);
     const mon = String(r.label).split(' ')[0].slice(0,3);
+    const kl = _chronKlasse(t.titleId);
     return `<div class="chron-cell${r.live ? ' live' : ''}"
-      style="--tt:${tone.c};--ttr:${tone.rgb}" data-season-table="${esc(r.sid)}">
+      style="--tt:${tone.c};--ttr:${tone.rgb}"${kl ? ` data-kl="${esc(kl)}"` : ''}
+      data-season-table="${esc(r.sid)}">
       <div class="m">${esc(mon)}</div>
       <div class="i">${svgI(t.ic)}</div>
       <div class="n">${esc(t.short || t.name)}</div>
@@ -27153,6 +27268,7 @@ function showDisziplin(tid, sid){
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
     </div>
+    ${_chronFaktenHtml(def)}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Dieser Monat</h4></div>
@@ -27369,15 +27485,26 @@ function ligaChronikMatrixHtml(){
   const cols = all.slice(0, 8).reverse();  // älteste links, wie eine Zeitleiste
   if(!cols.length) return '';
   // Zeilen: alle Spieler, die in einer der Spalten-Saisons gewertet wurden.
-  // Sortiert nach Titel-Anzahl, dann Name — wer viel geholt hat, steht oben.
-  const seen = {};
+  // Sortiert nach dem PRESTIGE der gehaltenen Chroniken, dann nach ihrer Zahl,
+  // dann nach Name. Nach der Zahl allein stand ein Monat mit drei billigen
+  // Einträgen über einem mit einer legendären Chronik, und seit die Chroniken
+  // nach ihrem Ausschlag verschieden viel wert sind [§C39], ist die Zahl gar
+  // keine Ordnung mehr: „Der Wechselhafte" wiegt 75, „Die Wochenkrone" 175.
+  // Gezählt wird nur, was in den sichtbaren Spalten steht — die Tabelle soll
+  // die Ordnung erklären, die man sieht.
+  const seen = {}, wert = {};
   cols.forEach(T => {
-    T.awarded.forEach(a => { seen[a.pid] = (seen[a.pid] || 0) + 1; });
-    T.empty.forEach(pid => { if(seen[pid] === undefined) seen[pid] = 0; });
+    T.awarded.forEach(a => {
+      seen[a.pid] = (seen[a.pid] || 0) + 1;
+      wert[a.pid] = (wert[a.pid] || 0) + chronikPunkte(a.titleId);
+    });
+    T.empty.forEach(pid => { if(seen[pid] === undefined){ seen[pid] = 0; wert[pid] = 0; } });
   });
   const rows = Object.keys(seen)
     .filter(pid => pmap()[pid])
-    .sort((a,b) => seen[b] - seen[a] || pname(a).localeCompare(pname(b)));
+    .sort((a,b) => (wert[b] || 0) - (wert[a] || 0)
+                || seen[b] - seen[a]
+                || pname(a).localeCompare(pname(b)));
   return `
     <div class="lchron-wrap">
       <table class="lchron">
@@ -27391,7 +27518,9 @@ function ligaChronikMatrixHtml(){
               const a = T.awarded.find(x => x.pid === pid);
               if(!a) return `<td><span class="lc-dash">—</span></td>`;
               const t = titleTone(a.tone);
-              return `<td><span class="lc-cell${T.live?' live':''}" style="--tt:${t.c};--ttr:${t.rgb}"
+              const kl = _chronKlasse(a.titleId);
+              return `<td><span class="lc-cell${T.live?' live':''}" style="--tt:${t.c};--ttr:${t.rgb}"${
+                kl ? ` data-kl="${esc(kl)}"` : ''}
                 data-season-table="${esc(T.sid)}">
                 <span class="i">${svgI(a.ic)}</span>
                 <span class="n">${esc(a.short || a.name)}</span></span></td>`;
@@ -27816,12 +27945,14 @@ const INSIGNIUM_AUSBAU = {
 const ORDENSSTERN_START = 8;
 const ORDENSSTERN_SCHRITT = 400;
 
-// Die `art` eines Monatseintrags. Eingefrorene Monate können IDs tragen,
-// die es im heutigen Katalog nicht mehr gibt — die galten damals und
-// zählen als Ereignis weiter, statt rückwirkend zu verschwinden.
-function _prestigeArtVon(titleId){
+// Die drei festen Angaben einer Monatschronik [§C39]. Eingefrorene Monate
+// können IDs tragen, die es im heutigen Katalog nicht mehr gibt; dann ist
+// hier nichts zu holen, und der Eintrag zählt null statt rückwirkend eine
+// Art zu erfinden, die er nie hatte. EIN Nachschlagen für alle, die danach
+// fragen — Wert, Grund und Anzeige müssen dasselbe lesen.
+function _chronikMonat(titleId){
   const d = DISZIPLINEN.find(x => x.id === titleId);
-  return d ? d.art : 'ereignis';
+  return (d && d.monat) || null;
 }
 
 // ─── §C39 Was eine Monatschronik wert ist ────────────────────────────
@@ -27852,8 +27983,7 @@ const PRESTIGE_CHRONIK = {koennen:30, konstanz:24, fuegung:15, schatten:0};
 const PRESTIGE_SELTEN  = {legendaer:15, selten:8, besonders:0};
 
 function chronikPunkte(titleId){
-  const d = DISZIPLINEN.find(x => x.id === titleId);
-  const m = d && d.monat;
+  const m = _chronikMonat(titleId);
   if(!m) return 0;
   const grund = PRESTIGE_CHRONIK[m.art];
   if(!grund) return 0;                       // Schattenseiten geben nichts
@@ -27950,10 +28080,16 @@ function prestigeTabelle(){
     // Monatschroniken: der Wert haengt an der Abweichung [§C39].
     const mo = [];
     r.monat.slice().sort((a,b) => a.sid < b.sid ? -1 : a.sid > b.sid ? 1 : 0).forEach(m => {
-      const art = _prestigeArtVon(m.id);
       const voll = chronikPunkte(m.id);
       if(voll <= 0) return;
-      mo.push({q:'monat', id:m.id, name:m.name, label:m.label, p:voll, art});
+      // Die Art der CHRONIK, nicht die der Disziplin: seit §C39 traegt
+      // `monat.art` den Wert (Koennen, Konstanz, Fuegung), waehrend `art` der
+      // Disziplin nur noch die Katalogreihenfolge bestimmt. In der Laufbahn
+      // stand deshalb „Leistung" neben einer Chronik, deren Punkte aus
+      // „Konstanz" kamen — die Zeile erklaerte den Wert daneben nicht.
+      const km = _chronikMonat(m.id) || {};
+      mo.push({q:'monat', id:m.id, name:m.name, label:m.label, p:voll,
+               kunst:km.art || '', klasse:km.klasse || ''});
     });
     const pm = summe(mo);
 
@@ -29275,7 +29411,11 @@ function showLaufbahn(pid){
     if(q.q === 'rekord') teile.push(q.halter <= 1 ? 'allein gehalten' : `zu ${q.halter}. geteilt`);
     else if(q.q === 'auszeichnung') teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
     else if(q.label) teile.push(q.label);
-    if(q.art) teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
+    if(q.q === 'monat'){
+      if(CHRONIK_KLASSE_NAME[q.klasse]) teile.push(CHRONIK_KLASSE_NAME[q.klasse]);
+      if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
+    }
+    else if(q.art) teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
     if(q.q === 'auszeichnung' && q.mal > 1) teile.push(`${q.mal}× geholt`);
     if(q.rang > 1) teile.push(`${q.rang}. Eintrag · ${zahl(q.voll)} ÷ ${zahl(Math.sqrt(q.rang))}`);
     return teile.join(' · ');

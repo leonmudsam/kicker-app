@@ -59,6 +59,43 @@ function _bannLaufDerLiga(P, ms){
   });
 }
 
+// Der schlechteste Platz, den die Liga-Tabelle am Ende eines Spieltags zeigte.
+// Gezaehlt wird JEDER Spieltag des Monats, auch einer ohne eigene Partie: die
+// Tabelle fragt nicht, wer dabei war, und wer aussetzt, kann ueberholt werden.
+// Damit haengt die Wertung nicht an der Zahl der eigenen Auftritte.
+//
+// Quelle ist die Elo-Bahn aus `getGlobalSim` [§C27]. Selbst aus den Deltas
+// aufsummiert waere es eine zweite Rechnung ueber dieselbe Tabelle — und die
+// nennt irgendwann einen anderen Ersten als der Liga-Tab, weil die Simulation
+// die Elo an jeder Monatsgrenze zurueckdreht.
+//
+// Vor der ersten eigenen Partie des Monats steht niemand in der Monatstabelle;
+// solche Tage zaehlen deshalb nicht mit. Sonst haette jeder, der spaeter im
+// Monat einsteigt, von vornherein den schlechtesten Platz.
+function _thronDerLiga(P, ms){
+  if(!ms.length) return;
+  const hist = {};
+  const sim = (typeof getGlobalSim === 'function') ? getGlobalSim() : null;
+  ((sim && sim.history) || []).forEach(h => { hist[h.matchId] = h; });
+  const stand = {};
+  let tag = null;
+  const auswerten = () => {
+    if(!tag) return;
+    const rang = Object.keys(stand).sort((a, b) => stand[b] - stand[a]);
+    rang.forEach((id, i) => {
+      const p = P[id];
+      if(p && (p.thronRang == null || i + 1 > p.thronRang)) p.thronRang = i + 1;
+    });
+  };
+  ms.slice().sort((a, b) => mts(a) - mts(b)).forEach(m => {
+    const d = String(m.created_at).slice(0, 10);
+    if(d !== tag){ auswerten(); tag = d; }
+    const h = hist[m.id];
+    if(h && h.eloAfter) Object.keys(h.eloAfter).forEach(id => { stand[id] = h.eloAfter[id]; });
+  });
+  auswerten();
+}
+
 // Aus der Rohsicht die Gruppen, nach denen die Chroniken fragen: Spieltage,
 // Kalenderwochen, Partner, Gegner. Einmal gebaut, von jeder Wertung gelesen.
 // Der Montag ist der Wochenanfang, damit „Woche" heisst, was im Kalender
@@ -160,6 +197,7 @@ function _seasonTitleCtxRechnen(sid){
     eloHigh:null, runHigh:null, runLow:null, maxDD:0, ddLow:null,
     potw:0, potwG:0,             // Player-of-the-Week-Titel / gewertete Wochen
     bannLauf:0,                  // laengste im Monat gebrochene Pleitenserie
+    thronRang:null,              // schlechtester Tabellenplatz an einem Tagesende
     // ── Die Rohsicht eines Spielers auf seinen Monat ──────────────────
     // Jede Partie einmal, aus SEINER Perspektive, in der Reihenfolge, in
     // der sie gespielt wurde. Die Chroniken fragen nach dem schwaechsten
@@ -389,6 +427,7 @@ function _seasonTitleCtxRechnen(sid){
     _rohGruppen(id, p, wochenSieger);
   });
   _bannLaufDerLiga(P, ms);
+  _thronDerLiga(P, ms);
 
   // Spieltage mit vollem Programm (4+ Partien) und die makellosen darunter.
   // Ein Tag mit zwei Spielen kann kein „makelloser Tag" sein — sonst hätte ihn
