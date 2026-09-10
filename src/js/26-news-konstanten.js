@@ -87,7 +87,7 @@ const NEWS_LIMITS = {
   // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
   // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
   // faengt die Stunde auf: keine der 466 Partien hat nach 18:31 angefangen,
-  // und der Fun Fact dieses Slots faellt an einem Spieltag ohnehin weg.
+  // und der Fun Fact dieses Slots fällt an einem Spieltag ohnehin weg.
   tagKartePartien: 8,
   tagKarteStunde: 19,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
@@ -100,6 +100,138 @@ const NEWS_LIMITS = {
   sperreTage: 3,
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
+
+// ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
+// Die Form-Karte maß das NIVEAU: neun von zehn gewonnen. Gemessen über die
+// ganze Ligageschichte traf sie damit vier Spieler, und einer davon zehn der
+// siebzehn Male — wer die Quote gewinnt, gewinnt sie eben immer wieder. Für
+// alle anderen war die Karte unerreichbar, und eine Nachricht, die nur die
+// besten Vier je nennen kann, ist eine Bestenliste [§C38].
+//
+// Gemessen wird deshalb der ABSTAND ZUM EIGENEN Schnitt — dieselbe Frage,
+// mit der die Monatschronik die Mitte des Feldes erreicht [§C38]. Dieselbe
+// Schwelle trifft damit sieben Spieler statt vier, darunter die untere
+// Hälfte der Siegquote.
+//
+// Das Fenster sind zehn Partien — dasselbe, das `_newsRecentForm` und der
+// Formstreifen im Profil zeigen [§C27]. Der Vergleichswert ist die Laufbahn
+// DAVOR: nähme man die ganze Laufbahn einschließlich der zehn, verglichen
+// sich die Partien mit sich selbst und der Abstand schrumpfte, je weniger
+// jemand gespielt hat.
+//
+// 25 Prozentpunkte sind an den echten Partien geeicht, nicht geschätzt:
+// gemessen fällt die Karte 0,46 mal je Spieltag. Bei 20 wären es 0,63 und
+// bei 30 nur noch 0,25 — dann steht sie an drei von vier Spieltagen nicht.
+const FORM_FENSTER = 10;
+const FORM_BASIS_MIN = 8;    // so viele Partien braucht der Vergleichswert
+const FORM_VORSPRUNG = 0.25; // Anteilspunkte über dem eigenen Schnitt
+
+// ─── §11.0a — Die eine Rangfolge ─────────────────────────────────────
+// `prio` sagt, wie stark eine Karte ist. Der Tagesdeckel behält danach die
+// stärksten sechs [§C33], und die Sammelkarte wählt danach ihren Kopf —
+// beides sind VERGLEICHE, und ein Vergleich braucht EINE Skala.
+//
+// Es waren zwei. Die Spieltags-Karten standen seit jeher auf 1 bis 10, und
+// als die Ewige Tafel dazukam, bekam sie 70 bis 95 — jede für sich richtig
+// einsortiert, nur nie gegeneinander. Damit gewann jede Tafel-Karte gegen
+// jede Spieltags-Karte, bevor der Deckel überhaupt hinsah. Gemessen über
+// 56 Spieltage: die Ewige Tafel bekam 66 % aller Tagesplätze, und von den
+// Karten, die der Generator zum Spieltag selbst bildete, fielen 70 % der
+// laufenden Siegesserien, 83 % der Pleitenserien, 83 % der Serienbrecher
+// und 67 % der Top-Form-Karten weg — während jede einzelne Insignium-Stufe
+// (183 Stück), jeder Rekordwechsel (88) und jede Monatschronik (98) durchkam.
+// Wer die App nach einem Spieltag öffnete, las von allem außer vom Spieltag.
+//
+// Die Zahlen stehen deshalb hier an EINER Stelle und nicht mehr als Literal
+// im Generator. Verteilt über 1900 Zeilen ist die zweite Skala genau der
+// Fehler, den niemand sieht.
+//
+// Drei Bänder, und die Grenze dazwischen ist eine Frage:
+//
+//   90+   BREAKING — das gab es so noch nie [§C33]. Zählt ohnehin nicht
+//         gegen den Tagesdeckel, steht aber auch oben.
+//   38-89 DER SPIELTAG — das haben DIESE Partien hergegeben. Gestern hätte
+//         es die Karte nicht gegeben: eine Serie, die heute weitergewachsen
+//         ist, ein Meilenstein, der heute gerissen wurde, ein Rekord, der
+//         heute den Halter gewechselt hat.
+//   10-37 DER HINTERGRUND — gilt heute und galt gestern schon: ein Zähler,
+//         der schon lange steht, ein Countdown, eine Bilanz über Monate.
+//
+// Die Grenze ist bewusst diese Frage und nicht „positiv oder negativ": eine
+// laufende Pleitenserie ist genauso ein Ergebnis dieses Spieltags wie eine
+// Siegesserie, und als Hintergrund einsortiert fiel sie an JEDEM ihrer zwölf
+// Tage aus dem Feed. Dass die Siegesserie trotzdem darüber steht, ist die
+// Rangfolge innerhalb des Bandes, nicht ein eigenes Band.
+//
+//
+// Abstufungen INNERHALB eines Typs (eine 12er-Serie wiegt schwerer als eine
+// 5er) bleiben ein Zuschlag auf den Grundwert. Der Zuschlag darf sein Band
+// verlassen, wo der Typ das auch darf: eine legendäre Auszeichnung und die
+// beiden obersten Insignium-Stufen sind Breaking [§C33].
+const STORY_PRIO = {
+  // ── Breaking ──
+  rekord_erstmals:   96,   // ein Liga-Rekord wird zum ersten Mal vergeben
+  elo_record:        95,
+  streak_record:     94,
+  lead_change:       93,
+  season_recap:      92,   // der Meister steht fest
+  // badge_unlocked und insignium_stufe erreichen das Band über ihren
+  // Zuschlag, weil nur ein Teil ihrer Fälle Breaking ist.
+
+  // ── Der Spieltag ──
+  // Die Reihenfolge darin: erst, was die ganze Liga betrifft, dann die
+  // Seltenheit. Gemessen an den echten Partien fällt eine Insignium-Stufe
+  // 3,3 mal je Spieltag und eine Auszeichnung 2,8 mal, ein Serienbrecher
+  // 0,3 mal und ein Sprung über den eigenen Schnitt 0,4 mal — die seltene
+  // Karte steht deshalb über der häufigen. Drei Plätze sind davon
+  // ausgenommen und stehen fest: der Sieger des Spieltags oben, und an der
+  // Ewigen Tafel der übernommene Liga-Rekord über der Monatschronik über
+  // der Insignium-Stufe [§C33].
+  // Die beiden zusammenführenden Karten sind eine eigene Nachricht und keine
+  // Zusammenfassung [§C33] — sie erben deshalb nicht den Rang ihres Kopfs.
+  // „Zwei Spieler erreichen dieselbe Stufe im selben Moment" wiegt mehr als
+  // eine einzelne Stufe, und mit dem geerbten Rang fiel die Karte an ihrem
+  // eigenen Spieltag unter den Deckel.
+  sammel_erfolg:     66,
+  sammel_spieler:    66,
+  potd:              88,   // der Sieger des Spieltags IST seine Schlagzeile
+  chronik_monat:     86,
+  woche:             84,
+  chronik_erstling:  80,   // zum ersten Mal überhaupt in der Chronik
+  rekord_geholt:     76,
+  giant_slayer:      74,
+  top_clash:         72,
+  streak_killer:     70,
+  win_streak:        68,
+  loss_streak:       66,
+  top_form:          64,   // weiter vorn als sonst [§11.0b]
+  chronik_geholt:    62,
+  team_streak:       60,
+  insignium_stufe:   58,
+  badge_unlocked:    54,
+  team_loss_streak:  52,
+  milestone_wins:    48,
+  milestone_elo:     48,
+  milestone_goals:   46,
+  jubilee:           44,
+  rivalry_milestone: 42,
+  rekord_gesteigert: 40,   // ausbauen ist die schwächste der drei Meldungen
+  elo_swing:         38,
+
+  // ── Der Hintergrund ──
+  rivalry:           30,   // ein Zähler, der seit fünfzig Duellen steht
+  season_endgame:    22,   // ein Countdown, kein Ereignis
+  season_start:      20,
+  dry_spell:         16,
+  quiet_week:        14,
+  // Der Fun Fact fällt an einem lauten Tag ohnehin weg [§C33]; steht er,
+  // dann weil sonst nichts da ist.
+  ambient:            8,
+};
+// Der Zuschlag eines ambienten Templates liegt bei 2 bis 7 und ist nur
+// INNERHALB des Fun-Fact-Topfs eine Rangfolge — er darf das Band nicht
+// verlassen, sonst stünde ein Fun Fact über einer Pleitenserie.
+const AMBIENT_PRIO_SPANNE = 7;
 
 // Ambiente Fun-Fact-Stories (v8.5, v9.5) — Fun Facts / persönliche Nuggets,
 // damit der Feed auch ohne neue Matches lebt.

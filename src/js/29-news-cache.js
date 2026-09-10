@@ -295,7 +295,7 @@ function _consolidateStories(list){
   // einzeln den Feed zu fluten. frag() liefert den Pro-Spieler-Schnipsel.
   const GROUPABLE = {
     loss_streak:     { label:'Pechvögel',           ic:'dropDouble', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Niederlagen nacheinander: ${f}.` },
-    top_form:        { label:'Spieler in Top-Form', ic:'flame',      frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.wins}/10)`, desc:f=>`Überragende letzte 10 Spiele: ${f}.` },
+    top_form:        { label:'über dem eigenen Schnitt', ic:'flame',  frag:s=>`${nameOf(s.dataRef.pid)} (+${s.dataRef.vorsprung ?? 0} Punkte)`, desc:f=>`Weiter vorn als sonst: ${f}.` },
     win_streak:      { label:'ungeschlagene Spieler', ic:'flame',    frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Siege in Folge: ${f}.` },
     jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Spiele-Meilensteine: ${f}.` },
     milestone_wins:  { label:'Sieg-Meilensteine',   ic:'medalTrio',  frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
@@ -813,7 +813,21 @@ function _consolidateStories(list){
             : '')
         : kopf.desc),
       when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
-      prio: (kopf.prio || 0) + 1,
+      // Die Sammelkarte trägt, was sie zusammenfasst: den stärksten Teil und
+      // einen Schritt je weiterem. Mit `+1` wog eine Karte, die drei
+      // Insignium-Stufen bündelt, kaum mehr als eine einzelne davon — und
+      // fiel damit unter den Tagesdeckel, obwohl sie drei Meldungen trägt.
+      // Eine einzelne Karte zu deckeln kostet eine Meldung, diese zu deckeln
+      // kostet alle: bündeln darf nichts verstecken [§C33].
+      //
+      // Die Karte über EINEN Spieler und die über EINEN Erfolg erben ihren
+      // Rang gar nicht erst: sie fassen nicht einen Moment zusammen, sie
+      // sind eine eigene Nachricht mit eigener Kartenform [§C33]. Geerbt vom
+      // Kopf stand „Jannik und Stefan tragen jetzt den Schildring" auf dem
+      // Rang einer einzelnen Insignium-Stufe und fiel an ihrem eigenen
+      // Spieltag heraus — der einzigen Karte, auf der die beiden standen.
+      prio: Math.max((kopf.prio || 0) + 2 * Math.max(1, teile.length - 1),
+                     STORY_PRIO['sammel_' + art] || 0),
       dataRef: {type:'sammel', quelle: art,
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',

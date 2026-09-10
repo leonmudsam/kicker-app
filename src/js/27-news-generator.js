@@ -333,7 +333,7 @@ function _buildStories(){
             ? `Die Top 2 trennen nur ${gap} Elo. Das wird knapp.`
             : `Saison-Endspurt: ${nameOf(rankList[0].pid)} führt mit ${gap} Elo Vorsprung.`,
           when: now,
-          prio: gap <= 15 ? 10 : (gap <= 50 ? 9 : 7),
+          prio: STORY_PRIO.season_endgame + (gap <= 15 ? 4 : gap <= 50 ? 2 : 0),
           dataRef: {type:'season_endgame', sid, leader:rankList[0], second:rankList[1], daysLeft, gap}
         });
       }
@@ -353,7 +353,7 @@ function _buildStories(){
         title: ageDays === 0 ? 'Die neue Saison läuft' : `Saison läuft seit ${ageDays} ${ageDays===1?'Tag':'Tagen'}`,
         desc: `Die Saison ${currentSeason().label} beginnt. Alle Spieler starten wieder bei ${cfg.start_elo} Elo.`,
         when: sStart,
-        prio: ageDays === 0 ? 8 : 5,
+        prio: STORY_PRIO.season_start + (ageDays === 0 ? 3 : 0),
         dataRef: {type:'season_start', sid: currentSeason().id}
       });
     }
@@ -390,7 +390,7 @@ function _buildStories(){
             title: `Neuer Spitzenreiter: ${nameOf(cur[0].pid)}`,
             desc: `${nameOf(cur[0].pid)} steht nach dem letzten Spiel an der Spitze. ${nameOf(prevTop)} war vorher dort.`,
             when: new Date(lastSeasonMatch.created_at),
-            prio: 10,
+            prio: STORY_PRIO.lead_change,
             dataRef: {type:'lead_change', newLeader: cur[0].pid, prevLeader: prevTop, matchId: lastSeasonMatch.id}
           });
         }
@@ -428,7 +428,7 @@ function _buildStories(){
         title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen alles`,
         desc: `${t.cur} gemeinsame Spiele, ${t.cur} Siege. Die Serie läuft noch.`,
         when: t.lastT,
-        prio: t.cur >= 7 ? 9 : 8,
+        prio: STORY_PRIO.team_streak + (t.cur >= 7 ? 4 : 0),
         dataRef: {type:'team_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
       });
     });
@@ -470,38 +470,55 @@ function _buildStories(){
             + `${new Date(t.firstT || t.lastT).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
             + `geht jedes gemeinsame Spiel verloren. ${t.cur} am Stück.`,
         when: t.lastT,
-        prio: t.cur >= 7 ? 7 : 6,
+        prio: STORY_PRIO.team_loss_streak + (t.cur >= 7 ? 4 : 0),
         dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
       });
     });
   } catch(e){}
 
-  // ── 4. Top-Form (≥8/10 letzte Spiele) ──
-  // Iteriert über aktive Spieler, schaut letzte 10 Matches → Win-Rate.
-  // O(N_players × min(10, matches_per_player)) — sehr günstig.
+  // ── 4. Über dem eigenen Schnitt (letzte 10 gegen die Laufbahn davor) ──
+  // Gemessen wird der ABSTAND, nicht das Niveau [§11.0b]. „Neun von zehn"
+  // konnte nur holen, wer ohnehin die beste Quote der Liga hat; gemessen
+  // nannte die Karte über die ganze Ligageschichte vier Spieler, einen davon
+  // zehnmal. Wer von 42 auf 70 Prozent springt, hat mehr getan als wer von
+  // 63 auf 70 kommt — und davon erfuhr der Feed nichts.
   try {
     const candidates = [];
     activePlayers().forEach(p => {
-      // byPlayer ist asc-sortiert (=ältestes first). Letzte 10 = slice(-10), für Recency desc reversen.
+      // byPlayer ist asc-sortiert (=ältestes first). Letzte 10 = slice(-10).
       const arr = byPlayer[p.id] || [];
-      if(arr.length < 10) return;
-      const last10 = arr.slice(-10);
-      const wins = last10.filter(m => won(p.id, m)).length;
-      if(wins >= 9){ // v8.8: 8→9 — nur noch echte Top-Form (9-10/10) ist News
-        candidates.push({pid: p.id, wins, when: new Date(last10[last10.length-1].created_at)});
+      if(arr.length < FORM_FENSTER + FORM_BASIS_MIN) return;
+      const fenster = arr.slice(-FORM_FENSTER);
+      const davor   = arr.slice(0, -FORM_FENSTER);
+      const wins = fenster.filter(m => won(p.id, m)).length;
+      const qJetzt = wins / FORM_FENSTER;
+      const qBasis = davor.filter(m => won(p.id, m)).length / davor.length;
+      const vorsprung = qJetzt - qBasis;
+      if(vorsprung >= FORM_VORSPRUNG){
+        candidates.push({pid: p.id, wins, qJetzt, qBasis, vorsprung,
+                         when: new Date(fenster[fenster.length - 1].created_at)});
       }
     });
-    candidates.sort((a,b) => b.wins - a.wins || b.when - a.when);
+    // Der größte Sprung zuerst, nicht die höchste Quote: die Karte handelt
+    // vom Abstand.
+    candidates.sort((a,b) => b.vorsprung - a.vorsprung || b.when - a.when);
     candidates.slice(0, NEWS_LIMITS.topForm).forEach(c => {
       stories.push({
         id: 'top_form_'+c.pid+'_'+c.when.toISOString().slice(0,10),
         cat: 'highlight',
         ic: 'flame',
-        title: `${nameOf(c.pid)} in Top-Form`,
-        desc: `${c.wins} von 10 Partien gewonnen. Keiner hat in diesem Zeitraum eine bessere Bilanz.`,
+        // Kein Possessivpronomen über einen Spieler [§6]: „über dem eigenen
+        // Schnitt", nicht „über seinem Schnitt".
+        title: `${nameOf(c.pid)} spielt über dem eigenen Schnitt`,
+        desc: `${Math.round(c.qJetzt * 100)} % aus den letzten ${FORM_FENSTER} Partien. `
+            + `Über die Laufbahn davor sind es ${Math.round(c.qBasis * 100)} %.`,
         when: c.when,
-        prio: c.wins === 10 ? 8 : (c.wins === 9 ? 7 : 6),
-        dataRef: {type:'top_form', pid: c.pid, wins: c.wins}
+        // `wins` bleibt die Zahl der Siege im Fenster: daran erkennt der
+        // Stale-Filter, ob die Form noch steht [§11.2].
+        prio: STORY_PRIO.top_form + (c.vorsprung >= 0.4 ? 4 : 2),
+        dataRef: {type:'top_form', pid: c.pid, wins: c.wins,
+                  qJetzt: Math.round(c.qJetzt * 100), qBasis: Math.round(c.qBasis * 100),
+                  vorsprung: Math.round(c.vorsprung * 100)}
       });
     });
   } catch(e){}
@@ -533,7 +550,7 @@ function _buildStories(){
         title: `${nameOf(c.pid)} findet gerade kein Mittel`,
         desc: `${c.streak} Niederlagen am Stück. So lange hat ${nameOf(c.pid)} nicht mehr gewonnen.`,
         when: c.when,
-        prio: c.streak >= 8 ? 6 : 4,
+        prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak}
       });
     });
@@ -622,7 +639,10 @@ function _buildStories(){
       // geholt. Sie stand auf 5 und damit unter der Duo-Pleitenserie — mit der
       // alten Begründung, dass Team-News „auch mal oben stehen" sollten, was
       // seit dem chronologischen Feed niemand mehr entscheidet.
-      const rarPrio = {legendary:10, rare:8, common:4, negative:4}[rar] || 4;
+      // Nur die legendäre Auszeichnung ist Breaking [§C33]; die seltene
+      // steht über der gewöhnlichen, verlässt ihr Band aber nicht.
+      const rarPrio = STORY_PRIO.badge_unlocked
+                    + ({legendary:36, rare:8, common:0, negative:0}[rar] || 0);
       // v9.7: Angstgegner-News benennt den Gegner (aus fire()-Meta durchgereicht).
       const _nemOpp = (ev.badge.id === 'nemesis' && ev.meta && ev.meta.oppId) ? ev.meta.oppId : null;
       // v9.17: Die Langzeit-Auszeichnungen bekommen einen eigenen Text mit dem
@@ -702,7 +722,7 @@ function _buildStories(){
             : `${nameOf(va > vb ? r.a : r.b)} führt ${Math.max(va, vb)}:${Math.min(va, vb)}. Öfter ist sich in der Liga kein Paar begegnet.`;
         })(),
         when: r.when,
-        prio: r.n >= 200 ? 7 : r.n >= 100 ? 5 : 3,
+        prio: STORY_PRIO.rivalry + (r.n >= 200 ? 4 : r.n >= 100 ? 2 : 0),
         dataRef: {type:'rivalry', a: r.a, b: r.b, n: r.n}
       });
     });
@@ -735,7 +755,7 @@ function _buildStories(){
         title: `${nameOf(c.pid)} feiert ${c.total}. Spiel`,
         desc: `${c.total} Partien stehen jetzt in der Bilanz von ${nameOf(c.pid)}.`,
         when: c.when,
-        prio: c.total >= 1000 ? 9 : c.total >= 250 ? 6 : 4,
+        prio: STORY_PRIO.jubilee + (c.total >= 1000 ? 6 : c.total >= 250 ? 3 : 0),
         dataRef: {type:'jubilee', pid: c.pid, total: c.total, matchId: c.matchId}
       });
     });
@@ -763,7 +783,7 @@ function _buildStories(){
         title: 'Ruhige Woche',
         desc: `Nur ${lastWeek} Spiele in den letzten 7 Tagen. Normal wären ${Math.round(avg)}.`,
         when: now,
-        prio: 2,
+        prio: STORY_PRIO.quiet_week,
         dataRef: {type:'quiet_week', lastWeek, avg: Math.round(avg)}
       });
     }
@@ -822,7 +842,7 @@ function _buildStories(){
             title: `${nameOf(topElo[0].id)} ist Saison-Champion`,
             desc: `Die Saison ${lastArchived.id} ist abgeschlossen. ${nameOf(topElo[0].id)} mit ${topElo[0].elo} Elo an der Spitze.${_extra}`,
             when: sStart,
-            prio: 9,
+            prio: STORY_PRIO.season_recap,
             dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id, championElo: topElo[0].elo, topElo, tafel: _tafel}
           });
         }
@@ -851,7 +871,7 @@ function _buildStories(){
           title: `${nameOf(p.id)}: Sieg Nummer ${mark}`,
           desc: `${nameOf(p.id)} feiert den ${mark}. Sieg.`,
           when: new Date(last.created_at),
-          prio: mark >= 500 ? 9 : mark >= 250 ? 7 : 5,
+          prio: STORY_PRIO.milestone_wins + (mark >= 500 ? 6 : mark >= 250 ? 3 : 0),
           dataRef: {type:'milestone_wins', pid: p.id, milestone: mark+'. Sieg', matchId: last.id}
         });
       }
@@ -922,7 +942,7 @@ function _buildStories(){
         // 23:58, damit der Sieger des Tages (23:59) im Feed darueber steht.
         when: (function(){ const d = new Date(_startOfToday); d.setDate(d.getDate() - 1);
           d.setHours(23, 58, 0, 0); return d; })(),
-        prio: 5,
+        prio: STORY_PRIO.elo_swing,
         dataRef: {type:'elo_swing', pid: worstPid, delta}
       });
     }
@@ -1035,7 +1055,7 @@ function _buildStories(){
           title: `${nameOf(best.p1)} schlägt ${nameOf(best.p2)} im Spitzenspiel`,
           desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Der Abstand nach vorn wird größer.`,
           when: new Date(best.t),
-          prio: 9,
+          prio: STORY_PRIO.top_clash,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2,
                     playerIds:[best.p1, best.p2]}
         });
@@ -1060,7 +1080,7 @@ function _buildStories(){
           cat: 'highlight', ic: 'peak',
           title: `Neuer Elo-Rekord: ${nameOf(pid)}`,
           desc: `${nameOf(pid)} schraubt die Bestmarke auf ${rec.eloRec.val} Elo. So hoch stand in der Liga noch nie jemand.`,
-          when: new Date(rec.eloRec.when), prio: 10,
+          when: new Date(rec.eloRec.when), prio: STORY_PRIO.elo_record,
           dataRef: {type:'elo_record', pid, elo: rec.eloRec.val, matchId: rec.eloRec.matchId}
         });
       }
@@ -1075,7 +1095,7 @@ function _buildStories(){
           cat: 'highlight', ic: 'crownFlame',
           title: `Serien-Rekord: ${nameOf(pid)}`,
           desc: `${rec.streakRec.val} Siege am Stück. Die längste Siegesserie, die die Liga je gesehen hat.`,
-          when: new Date(rec.streakRec.when), prio: 10,
+          when: new Date(rec.streakRec.when), prio: STORY_PRIO.streak_record,
           dataRef: {type:'streak_record', pid, streak: rec.streakRec.val, matchId: rec.streakRec.matchId}
         });
       }
@@ -1110,7 +1130,7 @@ function _buildStories(){
           cat: 'highlight', ic: 'giantSlayer',
           title: `Giant Slayer: ${wNames}`,
           desc: `Nur ${pct}% Siegchance. Und trotzdem gewonnen: ${wNames} zwingen ${lNames} in einer echten Sensation in die Knie.`,
-          when: new Date(gs.m.created_at), prio: 10,
+          when: new Date(gs.m.created_at), prio: STORY_PRIO.giant_slayer,
           dataRef: {type:'giant_slayer', matchId: gs.m.id, winners: gs.winners, losers: gs.losers, chance: gs.chance}
         });
       }
@@ -1172,7 +1192,7 @@ function _buildStories(){
         title: `${breakerNames} brechen ${nameOf(kill.victimPid)}s ${kill.streak}er-Serie`,
         desc: `${nameOf(kill.victimPid)} hatte ${kill.streak} Spiele in Folge gewonnen. Jetzt ist Schluss.`,
         when: new Date(kill.t),
-        prio: kill.streak >= 10 ? 9 : 7,
+        prio: STORY_PRIO.streak_killer + (kill.streak >= 10 ? 4 : 0),
         dataRef: {type:'streak_killer', matchId: m.id, streak: kill.streak, victimPid: kill.victimPid, breakerIds}
       });
     });
@@ -1261,7 +1281,7 @@ function _buildStories(){
           : `Nach ${g.n} Duellen steht es ${Math.max(g.wa, g.wb)}:${Math.min(g.wa, g.wb)} `
             + `für ${nameOf(g.wa > g.wb ? a : b)}.`,
         when: new Date(g.ts),
-        prio: g.n >= 200 ? 9 : g.n >= 100 ? 8 : 6,
+        prio: STORY_PRIO.rivalry_milestone + (g.n >= 200 ? 4 : g.n >= 100 ? 2 : 0),
         dataRef: {type:'rivalry_milestone', a, b, n: g.n, matchId: g.mid}
       });
     });
@@ -1291,7 +1311,7 @@ function _buildStories(){
           title: `${nameOf(p.id)}: ${mark}. Tor`,
           desc: `${goals} Tore stehen jetzt in der Karriere-Bilanz von ${nameOf(p.id)}.`,
           when: new Date(last.created_at),
-          prio: mark >= 1000 ? 8 : 6,
+          prio: STORY_PRIO.milestone_goals + (mark >= 1000 ? 4 : 0),
           dataRef: {type:'milestone_goals', pid: p.id, milestone: mark+'. Tor', matchId: last.id}
         });
       }
@@ -1315,7 +1335,7 @@ function _buildStories(){
         title: `${nameOf(e.pid)} knackt ${e.mark} Elo`,
         desc: `${e.mark} Elo zum ersten Mal überschritten. Das ist der höchste Stand der Laufbahn.`,
         when: new Date(e.when),
-        prio: e.mark >= (cfg.start_elo ?? 1000) + 500 ? 8 : 6,
+        prio: STORY_PRIO.milestone_elo + (e.mark >= (cfg.start_elo ?? 1000) + 500 ? 4 : 0),
         dataRef: {type:'milestone_elo', pid: e.pid, milestone: e.mark+' Elo', mark: e.mark, matchId: e.matchId}
       });
     });
@@ -1356,7 +1376,7 @@ function _buildStories(){
           ? `${c.streak} Siege in Folge. Aktuell die längste laufende Serie der Liga.`
           : `${c.streak} Siege in Folge. Nur noch ${gap} ${gap === 1 ? 'Sieg' : 'Siege'} bis zur längsten laufenden Serie.`,
         when: c.when,
-        prio: c.streak >= 10 ? 9 : c.streak >= 7 ? 7 : 6,
+        prio: STORY_PRIO.win_streak + (c.streak >= 10 ? 6 : c.streak >= 7 ? 3 : 0),
         dataRef: {type:'win_streak', pid: c.pid, streak: c.streak}
       });
     });
@@ -1391,7 +1411,7 @@ function _buildStories(){
             ? `So lange stand der Kicker noch nie still.`
             : `Die längste Pause der Liga waren ${maxGapDays} Tage.`,
           when: now,
-          prio: 3,
+          prio: STORY_PRIO.dry_spell,
           dataRef: {type:'dry_spell', daysSince: sinceLastDays, lastMatchId: matches[matches.length-1].id, maxGapDays}
         });
       }
@@ -1455,7 +1475,7 @@ function _buildStories(){
               // Quote bleibt als Kontext, damit die Zahl einordbar ist.
               desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, das sind ${Math.round(main.wr*100)} %. Am ${dLabel} hat niemand mehr geholt.`,
               when: rep,
-              prio: 7,
+              prio: STORY_PRIO.potd,
               dataRef: {type:'potd', dayKey: data.dayKey, playerId: main.id, playerIds: res.winners.map(w => w.id),
                         wins: main.wins, games: main.wins + main.losses, wr: main.wr}
             });
@@ -1532,7 +1552,7 @@ function _buildStories(){
         desc: `${_wSpiele.length} Spiele an ${_wTage} ${_wTage === 1 ? 'Tag' : 'Tagen'}. `
             + _wHeld.satz,
         when: _wSchluss,
-        prio: 9,
+        prio: STORY_PRIO.woche,
         dataRef: {type:'woche', woche:_lastWeekKey, spiele:_wSpiele.length, tage:_wTage,
                   playerIds: _wHeld.pids.slice(0, 2),
                   teile: _wochenTeile.map(t => ({art:t.art, ic:t.ic, label:t.label, pids:t.pids,
@@ -1620,7 +1640,9 @@ function _buildStories(){
           ic: def.ic,
           title, desc,
           when: _letzteMs,
-          prio: art === 'erstmals' ? 92 : art === 'geholt' ? 84 : 70,
+          prio: art === 'erstmals' ? STORY_PRIO.rekord_erstmals
+              : art === 'geholt'   ? STORY_PRIO.rekord_geholt
+                                   : STORY_PRIO.rekord_gesteigert,
           dataRef: {type:'rekord_' + art, rekordId:def.id, kammer:def.kind,
                     zufall:def.zufall || '', playerIds:n.pids.slice(0, 3),
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
@@ -1661,7 +1683,7 @@ function _buildStories(){
                 + spitze.map(pid => `${nameOf(pid)} mit ${proSpieler[pid]}`).join(', ')
                 + '.',
             when: wann,
-            prio: 88,
+            prio: STORY_PRIO.chronik_monat,
             dataRef: {type:'chronik_monat', sid:_vorSid, playerIds:spitze,
                       eintraege:T.awarded.length, traeger:rang.length}
           });
@@ -1688,7 +1710,7 @@ function _buildStories(){
               desc: `„${x.name}" im ${seasonLabel(_vorSid)} ist der erste Monatseintrag überhaupt.`
                   + (x.ev ? ` ${_evSatz(x.ev)}.` : ''),
               when: wann + 60000,
-              prio: 90,
+              prio: STORY_PRIO.chronik_erstling,
               dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name}
             });
           });
@@ -1782,7 +1804,7 @@ function _buildStories(){
           // Ueber der Insignium-Stufe, unter dem uebernommenen Liga-Rekord:
           // sie ueberlebt damit den Tagesdeckel, ohne die Ewige Tafel zu
           // ueberstimmen [§C33].
-          prio: 80,
+          prio: STORY_PRIO.chronik_geholt,
           dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
                     playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
@@ -1828,7 +1850,7 @@ function _buildStories(){
             + `${P.teile.rekord} aus Rekorden.`
             + (P.naechste ? ` Bis zum ${P.naechste.name} fehlen ${P.fehlt}.` : ''),
         when: matches.length ? mts(matches[matches.length-1]) : now.getTime(),
-        prio: oben ? 95 : 76,
+        prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
         dataRef: {type:'insignium_stufe', pid:p.id, stufe:P.stufe,
                   stufeName:INSIGNIEN[P.stufe].name, punkte:P.punkte, oben}
       });

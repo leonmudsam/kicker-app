@@ -4711,7 +4711,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.83a702e8';
+const BUILD_VERSION='2026.09.10.e07f4194';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18130,7 +18130,7 @@ const NEWS_LIMITS = {
   // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
   // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
   // faengt die Stunde auf: keine der 466 Partien hat nach 18:31 angefangen,
-  // und der Fun Fact dieses Slots faellt an einem Spieltag ohnehin weg.
+  // und der Fun Fact dieses Slots fällt an einem Spieltag ohnehin weg.
   tagKartePartien: 8,
   tagKarteStunde: 19,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
@@ -18143,6 +18143,138 @@ const NEWS_LIMITS = {
   sperreTage: 3,
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
+
+// ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
+// Die Form-Karte maß das NIVEAU: neun von zehn gewonnen. Gemessen über die
+// ganze Ligageschichte traf sie damit vier Spieler, und einer davon zehn der
+// siebzehn Male — wer die Quote gewinnt, gewinnt sie eben immer wieder. Für
+// alle anderen war die Karte unerreichbar, und eine Nachricht, die nur die
+// besten Vier je nennen kann, ist eine Bestenliste [§C38].
+//
+// Gemessen wird deshalb der ABSTAND ZUM EIGENEN Schnitt — dieselbe Frage,
+// mit der die Monatschronik die Mitte des Feldes erreicht [§C38]. Dieselbe
+// Schwelle trifft damit sieben Spieler statt vier, darunter die untere
+// Hälfte der Siegquote.
+//
+// Das Fenster sind zehn Partien — dasselbe, das `_newsRecentForm` und der
+// Formstreifen im Profil zeigen [§C27]. Der Vergleichswert ist die Laufbahn
+// DAVOR: nähme man die ganze Laufbahn einschließlich der zehn, verglichen
+// sich die Partien mit sich selbst und der Abstand schrumpfte, je weniger
+// jemand gespielt hat.
+//
+// 25 Prozentpunkte sind an den echten Partien geeicht, nicht geschätzt:
+// gemessen fällt die Karte 0,46 mal je Spieltag. Bei 20 wären es 0,63 und
+// bei 30 nur noch 0,25 — dann steht sie an drei von vier Spieltagen nicht.
+const FORM_FENSTER = 10;
+const FORM_BASIS_MIN = 8;    // so viele Partien braucht der Vergleichswert
+const FORM_VORSPRUNG = 0.25; // Anteilspunkte über dem eigenen Schnitt
+
+// ─── §11.0a — Die eine Rangfolge ─────────────────────────────────────
+// `prio` sagt, wie stark eine Karte ist. Der Tagesdeckel behält danach die
+// stärksten sechs [§C33], und die Sammelkarte wählt danach ihren Kopf —
+// beides sind VERGLEICHE, und ein Vergleich braucht EINE Skala.
+//
+// Es waren zwei. Die Spieltags-Karten standen seit jeher auf 1 bis 10, und
+// als die Ewige Tafel dazukam, bekam sie 70 bis 95 — jede für sich richtig
+// einsortiert, nur nie gegeneinander. Damit gewann jede Tafel-Karte gegen
+// jede Spieltags-Karte, bevor der Deckel überhaupt hinsah. Gemessen über
+// 56 Spieltage: die Ewige Tafel bekam 66 % aller Tagesplätze, und von den
+// Karten, die der Generator zum Spieltag selbst bildete, fielen 70 % der
+// laufenden Siegesserien, 83 % der Pleitenserien, 83 % der Serienbrecher
+// und 67 % der Top-Form-Karten weg — während jede einzelne Insignium-Stufe
+// (183 Stück), jeder Rekordwechsel (88) und jede Monatschronik (98) durchkam.
+// Wer die App nach einem Spieltag öffnete, las von allem außer vom Spieltag.
+//
+// Die Zahlen stehen deshalb hier an EINER Stelle und nicht mehr als Literal
+// im Generator. Verteilt über 1900 Zeilen ist die zweite Skala genau der
+// Fehler, den niemand sieht.
+//
+// Drei Bänder, und die Grenze dazwischen ist eine Frage:
+//
+//   90+   BREAKING — das gab es so noch nie [§C33]. Zählt ohnehin nicht
+//         gegen den Tagesdeckel, steht aber auch oben.
+//   38-89 DER SPIELTAG — das haben DIESE Partien hergegeben. Gestern hätte
+//         es die Karte nicht gegeben: eine Serie, die heute weitergewachsen
+//         ist, ein Meilenstein, der heute gerissen wurde, ein Rekord, der
+//         heute den Halter gewechselt hat.
+//   10-37 DER HINTERGRUND — gilt heute und galt gestern schon: ein Zähler,
+//         der schon lange steht, ein Countdown, eine Bilanz über Monate.
+//
+// Die Grenze ist bewusst diese Frage und nicht „positiv oder negativ": eine
+// laufende Pleitenserie ist genauso ein Ergebnis dieses Spieltags wie eine
+// Siegesserie, und als Hintergrund einsortiert fiel sie an JEDEM ihrer zwölf
+// Tage aus dem Feed. Dass die Siegesserie trotzdem darüber steht, ist die
+// Rangfolge innerhalb des Bandes, nicht ein eigenes Band.
+//
+//
+// Abstufungen INNERHALB eines Typs (eine 12er-Serie wiegt schwerer als eine
+// 5er) bleiben ein Zuschlag auf den Grundwert. Der Zuschlag darf sein Band
+// verlassen, wo der Typ das auch darf: eine legendäre Auszeichnung und die
+// beiden obersten Insignium-Stufen sind Breaking [§C33].
+const STORY_PRIO = {
+  // ── Breaking ──
+  rekord_erstmals:   96,   // ein Liga-Rekord wird zum ersten Mal vergeben
+  elo_record:        95,
+  streak_record:     94,
+  lead_change:       93,
+  season_recap:      92,   // der Meister steht fest
+  // badge_unlocked und insignium_stufe erreichen das Band über ihren
+  // Zuschlag, weil nur ein Teil ihrer Fälle Breaking ist.
+
+  // ── Der Spieltag ──
+  // Die Reihenfolge darin: erst, was die ganze Liga betrifft, dann die
+  // Seltenheit. Gemessen an den echten Partien fällt eine Insignium-Stufe
+  // 3,3 mal je Spieltag und eine Auszeichnung 2,8 mal, ein Serienbrecher
+  // 0,3 mal und ein Sprung über den eigenen Schnitt 0,4 mal — die seltene
+  // Karte steht deshalb über der häufigen. Drei Plätze sind davon
+  // ausgenommen und stehen fest: der Sieger des Spieltags oben, und an der
+  // Ewigen Tafel der übernommene Liga-Rekord über der Monatschronik über
+  // der Insignium-Stufe [§C33].
+  // Die beiden zusammenführenden Karten sind eine eigene Nachricht und keine
+  // Zusammenfassung [§C33] — sie erben deshalb nicht den Rang ihres Kopfs.
+  // „Zwei Spieler erreichen dieselbe Stufe im selben Moment" wiegt mehr als
+  // eine einzelne Stufe, und mit dem geerbten Rang fiel die Karte an ihrem
+  // eigenen Spieltag unter den Deckel.
+  sammel_erfolg:     66,
+  sammel_spieler:    66,
+  potd:              88,   // der Sieger des Spieltags IST seine Schlagzeile
+  chronik_monat:     86,
+  woche:             84,
+  chronik_erstling:  80,   // zum ersten Mal überhaupt in der Chronik
+  rekord_geholt:     76,
+  giant_slayer:      74,
+  top_clash:         72,
+  streak_killer:     70,
+  win_streak:        68,
+  loss_streak:       66,
+  top_form:          64,   // weiter vorn als sonst [§11.0b]
+  chronik_geholt:    62,
+  team_streak:       60,
+  insignium_stufe:   58,
+  badge_unlocked:    54,
+  team_loss_streak:  52,
+  milestone_wins:    48,
+  milestone_elo:     48,
+  milestone_goals:   46,
+  jubilee:           44,
+  rivalry_milestone: 42,
+  rekord_gesteigert: 40,   // ausbauen ist die schwächste der drei Meldungen
+  elo_swing:         38,
+
+  // ── Der Hintergrund ──
+  rivalry:           30,   // ein Zähler, der seit fünfzig Duellen steht
+  season_endgame:    22,   // ein Countdown, kein Ereignis
+  season_start:      20,
+  dry_spell:         16,
+  quiet_week:        14,
+  // Der Fun Fact fällt an einem lauten Tag ohnehin weg [§C33]; steht er,
+  // dann weil sonst nichts da ist.
+  ambient:            8,
+};
+// Der Zuschlag eines ambienten Templates liegt bei 2 bis 7 und ist nur
+// INNERHALB des Fun-Fact-Topfs eine Rangfolge — er darf das Band nicht
+// verlassen, sonst stünde ein Fun Fact über einer Pleitenserie.
+const AMBIENT_PRIO_SPANNE = 7;
 
 // Ambiente Fun-Fact-Stories (v8.5, v9.5) — Fun Facts / persönliche Nuggets,
 // damit der Feed auch ohne neue Matches lebt.
@@ -18584,7 +18716,7 @@ function _buildStories(){
             ? `Die Top 2 trennen nur ${gap} Elo. Das wird knapp.`
             : `Saison-Endspurt: ${nameOf(rankList[0].pid)} führt mit ${gap} Elo Vorsprung.`,
           when: now,
-          prio: gap <= 15 ? 10 : (gap <= 50 ? 9 : 7),
+          prio: STORY_PRIO.season_endgame + (gap <= 15 ? 4 : gap <= 50 ? 2 : 0),
           dataRef: {type:'season_endgame', sid, leader:rankList[0], second:rankList[1], daysLeft, gap}
         });
       }
@@ -18604,7 +18736,7 @@ function _buildStories(){
         title: ageDays === 0 ? 'Die neue Saison läuft' : `Saison läuft seit ${ageDays} ${ageDays===1?'Tag':'Tagen'}`,
         desc: `Die Saison ${currentSeason().label} beginnt. Alle Spieler starten wieder bei ${cfg.start_elo} Elo.`,
         when: sStart,
-        prio: ageDays === 0 ? 8 : 5,
+        prio: STORY_PRIO.season_start + (ageDays === 0 ? 3 : 0),
         dataRef: {type:'season_start', sid: currentSeason().id}
       });
     }
@@ -18641,7 +18773,7 @@ function _buildStories(){
             title: `Neuer Spitzenreiter: ${nameOf(cur[0].pid)}`,
             desc: `${nameOf(cur[0].pid)} steht nach dem letzten Spiel an der Spitze. ${nameOf(prevTop)} war vorher dort.`,
             when: new Date(lastSeasonMatch.created_at),
-            prio: 10,
+            prio: STORY_PRIO.lead_change,
             dataRef: {type:'lead_change', newLeader: cur[0].pid, prevLeader: prevTop, matchId: lastSeasonMatch.id}
           });
         }
@@ -18679,7 +18811,7 @@ function _buildStories(){
         title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen alles`,
         desc: `${t.cur} gemeinsame Spiele, ${t.cur} Siege. Die Serie läuft noch.`,
         when: t.lastT,
-        prio: t.cur >= 7 ? 9 : 8,
+        prio: STORY_PRIO.team_streak + (t.cur >= 7 ? 4 : 0),
         dataRef: {type:'team_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
       });
     });
@@ -18721,38 +18853,55 @@ function _buildStories(){
             + `${new Date(t.firstT || t.lastT).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
             + `geht jedes gemeinsame Spiel verloren. ${t.cur} am Stück.`,
         when: t.lastT,
-        prio: t.cur >= 7 ? 7 : 6,
+        prio: STORY_PRIO.team_loss_streak + (t.cur >= 7 ? 4 : 0),
         dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
       });
     });
   } catch(e){}
 
-  // ── 4. Top-Form (≥8/10 letzte Spiele) ──
-  // Iteriert über aktive Spieler, schaut letzte 10 Matches → Win-Rate.
-  // O(N_players × min(10, matches_per_player)) — sehr günstig.
+  // ── 4. Über dem eigenen Schnitt (letzte 10 gegen die Laufbahn davor) ──
+  // Gemessen wird der ABSTAND, nicht das Niveau [§11.0b]. „Neun von zehn"
+  // konnte nur holen, wer ohnehin die beste Quote der Liga hat; gemessen
+  // nannte die Karte über die ganze Ligageschichte vier Spieler, einen davon
+  // zehnmal. Wer von 42 auf 70 Prozent springt, hat mehr getan als wer von
+  // 63 auf 70 kommt — und davon erfuhr der Feed nichts.
   try {
     const candidates = [];
     activePlayers().forEach(p => {
-      // byPlayer ist asc-sortiert (=ältestes first). Letzte 10 = slice(-10), für Recency desc reversen.
+      // byPlayer ist asc-sortiert (=ältestes first). Letzte 10 = slice(-10).
       const arr = byPlayer[p.id] || [];
-      if(arr.length < 10) return;
-      const last10 = arr.slice(-10);
-      const wins = last10.filter(m => won(p.id, m)).length;
-      if(wins >= 9){ // v8.8: 8→9 — nur noch echte Top-Form (9-10/10) ist News
-        candidates.push({pid: p.id, wins, when: new Date(last10[last10.length-1].created_at)});
+      if(arr.length < FORM_FENSTER + FORM_BASIS_MIN) return;
+      const fenster = arr.slice(-FORM_FENSTER);
+      const davor   = arr.slice(0, -FORM_FENSTER);
+      const wins = fenster.filter(m => won(p.id, m)).length;
+      const qJetzt = wins / FORM_FENSTER;
+      const qBasis = davor.filter(m => won(p.id, m)).length / davor.length;
+      const vorsprung = qJetzt - qBasis;
+      if(vorsprung >= FORM_VORSPRUNG){
+        candidates.push({pid: p.id, wins, qJetzt, qBasis, vorsprung,
+                         when: new Date(fenster[fenster.length - 1].created_at)});
       }
     });
-    candidates.sort((a,b) => b.wins - a.wins || b.when - a.when);
+    // Der größte Sprung zuerst, nicht die höchste Quote: die Karte handelt
+    // vom Abstand.
+    candidates.sort((a,b) => b.vorsprung - a.vorsprung || b.when - a.when);
     candidates.slice(0, NEWS_LIMITS.topForm).forEach(c => {
       stories.push({
         id: 'top_form_'+c.pid+'_'+c.when.toISOString().slice(0,10),
         cat: 'highlight',
         ic: 'flame',
-        title: `${nameOf(c.pid)} in Top-Form`,
-        desc: `${c.wins} von 10 Partien gewonnen. Keiner hat in diesem Zeitraum eine bessere Bilanz.`,
+        // Kein Possessivpronomen über einen Spieler [§6]: „über dem eigenen
+        // Schnitt", nicht „über seinem Schnitt".
+        title: `${nameOf(c.pid)} spielt über dem eigenen Schnitt`,
+        desc: `${Math.round(c.qJetzt * 100)} % aus den letzten ${FORM_FENSTER} Partien. `
+            + `Über die Laufbahn davor sind es ${Math.round(c.qBasis * 100)} %.`,
         when: c.when,
-        prio: c.wins === 10 ? 8 : (c.wins === 9 ? 7 : 6),
-        dataRef: {type:'top_form', pid: c.pid, wins: c.wins}
+        // `wins` bleibt die Zahl der Siege im Fenster: daran erkennt der
+        // Stale-Filter, ob die Form noch steht [§11.2].
+        prio: STORY_PRIO.top_form + (c.vorsprung >= 0.4 ? 4 : 2),
+        dataRef: {type:'top_form', pid: c.pid, wins: c.wins,
+                  qJetzt: Math.round(c.qJetzt * 100), qBasis: Math.round(c.qBasis * 100),
+                  vorsprung: Math.round(c.vorsprung * 100)}
       });
     });
   } catch(e){}
@@ -18784,7 +18933,7 @@ function _buildStories(){
         title: `${nameOf(c.pid)} findet gerade kein Mittel`,
         desc: `${c.streak} Niederlagen am Stück. So lange hat ${nameOf(c.pid)} nicht mehr gewonnen.`,
         when: c.when,
-        prio: c.streak >= 8 ? 6 : 4,
+        prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak}
       });
     });
@@ -18873,7 +19022,10 @@ function _buildStories(){
       // geholt. Sie stand auf 5 und damit unter der Duo-Pleitenserie — mit der
       // alten Begründung, dass Team-News „auch mal oben stehen" sollten, was
       // seit dem chronologischen Feed niemand mehr entscheidet.
-      const rarPrio = {legendary:10, rare:8, common:4, negative:4}[rar] || 4;
+      // Nur die legendäre Auszeichnung ist Breaking [§C33]; die seltene
+      // steht über der gewöhnlichen, verlässt ihr Band aber nicht.
+      const rarPrio = STORY_PRIO.badge_unlocked
+                    + ({legendary:36, rare:8, common:0, negative:0}[rar] || 0);
       // v9.7: Angstgegner-News benennt den Gegner (aus fire()-Meta durchgereicht).
       const _nemOpp = (ev.badge.id === 'nemesis' && ev.meta && ev.meta.oppId) ? ev.meta.oppId : null;
       // v9.17: Die Langzeit-Auszeichnungen bekommen einen eigenen Text mit dem
@@ -18953,7 +19105,7 @@ function _buildStories(){
             : `${nameOf(va > vb ? r.a : r.b)} führt ${Math.max(va, vb)}:${Math.min(va, vb)}. Öfter ist sich in der Liga kein Paar begegnet.`;
         })(),
         when: r.when,
-        prio: r.n >= 200 ? 7 : r.n >= 100 ? 5 : 3,
+        prio: STORY_PRIO.rivalry + (r.n >= 200 ? 4 : r.n >= 100 ? 2 : 0),
         dataRef: {type:'rivalry', a: r.a, b: r.b, n: r.n}
       });
     });
@@ -18986,7 +19138,7 @@ function _buildStories(){
         title: `${nameOf(c.pid)} feiert ${c.total}. Spiel`,
         desc: `${c.total} Partien stehen jetzt in der Bilanz von ${nameOf(c.pid)}.`,
         when: c.when,
-        prio: c.total >= 1000 ? 9 : c.total >= 250 ? 6 : 4,
+        prio: STORY_PRIO.jubilee + (c.total >= 1000 ? 6 : c.total >= 250 ? 3 : 0),
         dataRef: {type:'jubilee', pid: c.pid, total: c.total, matchId: c.matchId}
       });
     });
@@ -19014,7 +19166,7 @@ function _buildStories(){
         title: 'Ruhige Woche',
         desc: `Nur ${lastWeek} Spiele in den letzten 7 Tagen. Normal wären ${Math.round(avg)}.`,
         when: now,
-        prio: 2,
+        prio: STORY_PRIO.quiet_week,
         dataRef: {type:'quiet_week', lastWeek, avg: Math.round(avg)}
       });
     }
@@ -19073,7 +19225,7 @@ function _buildStories(){
             title: `${nameOf(topElo[0].id)} ist Saison-Champion`,
             desc: `Die Saison ${lastArchived.id} ist abgeschlossen. ${nameOf(topElo[0].id)} mit ${topElo[0].elo} Elo an der Spitze.${_extra}`,
             when: sStart,
-            prio: 9,
+            prio: STORY_PRIO.season_recap,
             dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id, championElo: topElo[0].elo, topElo, tafel: _tafel}
           });
         }
@@ -19102,7 +19254,7 @@ function _buildStories(){
           title: `${nameOf(p.id)}: Sieg Nummer ${mark}`,
           desc: `${nameOf(p.id)} feiert den ${mark}. Sieg.`,
           when: new Date(last.created_at),
-          prio: mark >= 500 ? 9 : mark >= 250 ? 7 : 5,
+          prio: STORY_PRIO.milestone_wins + (mark >= 500 ? 6 : mark >= 250 ? 3 : 0),
           dataRef: {type:'milestone_wins', pid: p.id, milestone: mark+'. Sieg', matchId: last.id}
         });
       }
@@ -19173,7 +19325,7 @@ function _buildStories(){
         // 23:58, damit der Sieger des Tages (23:59) im Feed darueber steht.
         when: (function(){ const d = new Date(_startOfToday); d.setDate(d.getDate() - 1);
           d.setHours(23, 58, 0, 0); return d; })(),
-        prio: 5,
+        prio: STORY_PRIO.elo_swing,
         dataRef: {type:'elo_swing', pid: worstPid, delta}
       });
     }
@@ -19286,7 +19438,7 @@ function _buildStories(){
           title: `${nameOf(best.p1)} schlägt ${nameOf(best.p2)} im Spitzenspiel`,
           desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Der Abstand nach vorn wird größer.`,
           when: new Date(best.t),
-          prio: 9,
+          prio: STORY_PRIO.top_clash,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2,
                     playerIds:[best.p1, best.p2]}
         });
@@ -19311,7 +19463,7 @@ function _buildStories(){
           cat: 'highlight', ic: 'peak',
           title: `Neuer Elo-Rekord: ${nameOf(pid)}`,
           desc: `${nameOf(pid)} schraubt die Bestmarke auf ${rec.eloRec.val} Elo. So hoch stand in der Liga noch nie jemand.`,
-          when: new Date(rec.eloRec.when), prio: 10,
+          when: new Date(rec.eloRec.when), prio: STORY_PRIO.elo_record,
           dataRef: {type:'elo_record', pid, elo: rec.eloRec.val, matchId: rec.eloRec.matchId}
         });
       }
@@ -19326,7 +19478,7 @@ function _buildStories(){
           cat: 'highlight', ic: 'crownFlame',
           title: `Serien-Rekord: ${nameOf(pid)}`,
           desc: `${rec.streakRec.val} Siege am Stück. Die längste Siegesserie, die die Liga je gesehen hat.`,
-          when: new Date(rec.streakRec.when), prio: 10,
+          when: new Date(rec.streakRec.when), prio: STORY_PRIO.streak_record,
           dataRef: {type:'streak_record', pid, streak: rec.streakRec.val, matchId: rec.streakRec.matchId}
         });
       }
@@ -19361,7 +19513,7 @@ function _buildStories(){
           cat: 'highlight', ic: 'giantSlayer',
           title: `Giant Slayer: ${wNames}`,
           desc: `Nur ${pct}% Siegchance. Und trotzdem gewonnen: ${wNames} zwingen ${lNames} in einer echten Sensation in die Knie.`,
-          when: new Date(gs.m.created_at), prio: 10,
+          when: new Date(gs.m.created_at), prio: STORY_PRIO.giant_slayer,
           dataRef: {type:'giant_slayer', matchId: gs.m.id, winners: gs.winners, losers: gs.losers, chance: gs.chance}
         });
       }
@@ -19423,7 +19575,7 @@ function _buildStories(){
         title: `${breakerNames} brechen ${nameOf(kill.victimPid)}s ${kill.streak}er-Serie`,
         desc: `${nameOf(kill.victimPid)} hatte ${kill.streak} Spiele in Folge gewonnen. Jetzt ist Schluss.`,
         when: new Date(kill.t),
-        prio: kill.streak >= 10 ? 9 : 7,
+        prio: STORY_PRIO.streak_killer + (kill.streak >= 10 ? 4 : 0),
         dataRef: {type:'streak_killer', matchId: m.id, streak: kill.streak, victimPid: kill.victimPid, breakerIds}
       });
     });
@@ -19512,7 +19664,7 @@ function _buildStories(){
           : `Nach ${g.n} Duellen steht es ${Math.max(g.wa, g.wb)}:${Math.min(g.wa, g.wb)} `
             + `für ${nameOf(g.wa > g.wb ? a : b)}.`,
         when: new Date(g.ts),
-        prio: g.n >= 200 ? 9 : g.n >= 100 ? 8 : 6,
+        prio: STORY_PRIO.rivalry_milestone + (g.n >= 200 ? 4 : g.n >= 100 ? 2 : 0),
         dataRef: {type:'rivalry_milestone', a, b, n: g.n, matchId: g.mid}
       });
     });
@@ -19542,7 +19694,7 @@ function _buildStories(){
           title: `${nameOf(p.id)}: ${mark}. Tor`,
           desc: `${goals} Tore stehen jetzt in der Karriere-Bilanz von ${nameOf(p.id)}.`,
           when: new Date(last.created_at),
-          prio: mark >= 1000 ? 8 : 6,
+          prio: STORY_PRIO.milestone_goals + (mark >= 1000 ? 4 : 0),
           dataRef: {type:'milestone_goals', pid: p.id, milestone: mark+'. Tor', matchId: last.id}
         });
       }
@@ -19566,7 +19718,7 @@ function _buildStories(){
         title: `${nameOf(e.pid)} knackt ${e.mark} Elo`,
         desc: `${e.mark} Elo zum ersten Mal überschritten. Das ist der höchste Stand der Laufbahn.`,
         when: new Date(e.when),
-        prio: e.mark >= (cfg.start_elo ?? 1000) + 500 ? 8 : 6,
+        prio: STORY_PRIO.milestone_elo + (e.mark >= (cfg.start_elo ?? 1000) + 500 ? 4 : 0),
         dataRef: {type:'milestone_elo', pid: e.pid, milestone: e.mark+' Elo', mark: e.mark, matchId: e.matchId}
       });
     });
@@ -19607,7 +19759,7 @@ function _buildStories(){
           ? `${c.streak} Siege in Folge. Aktuell die längste laufende Serie der Liga.`
           : `${c.streak} Siege in Folge. Nur noch ${gap} ${gap === 1 ? 'Sieg' : 'Siege'} bis zur längsten laufenden Serie.`,
         when: c.when,
-        prio: c.streak >= 10 ? 9 : c.streak >= 7 ? 7 : 6,
+        prio: STORY_PRIO.win_streak + (c.streak >= 10 ? 6 : c.streak >= 7 ? 3 : 0),
         dataRef: {type:'win_streak', pid: c.pid, streak: c.streak}
       });
     });
@@ -19642,7 +19794,7 @@ function _buildStories(){
             ? `So lange stand der Kicker noch nie still.`
             : `Die längste Pause der Liga waren ${maxGapDays} Tage.`,
           when: now,
-          prio: 3,
+          prio: STORY_PRIO.dry_spell,
           dataRef: {type:'dry_spell', daysSince: sinceLastDays, lastMatchId: matches[matches.length-1].id, maxGapDays}
         });
       }
@@ -19706,7 +19858,7 @@ function _buildStories(){
               // Quote bleibt als Kontext, damit die Zahl einordbar ist.
               desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, das sind ${Math.round(main.wr*100)} %. Am ${dLabel} hat niemand mehr geholt.`,
               when: rep,
-              prio: 7,
+              prio: STORY_PRIO.potd,
               dataRef: {type:'potd', dayKey: data.dayKey, playerId: main.id, playerIds: res.winners.map(w => w.id),
                         wins: main.wins, games: main.wins + main.losses, wr: main.wr}
             });
@@ -19783,7 +19935,7 @@ function _buildStories(){
         desc: `${_wSpiele.length} Spiele an ${_wTage} ${_wTage === 1 ? 'Tag' : 'Tagen'}. `
             + _wHeld.satz,
         when: _wSchluss,
-        prio: 9,
+        prio: STORY_PRIO.woche,
         dataRef: {type:'woche', woche:_lastWeekKey, spiele:_wSpiele.length, tage:_wTage,
                   playerIds: _wHeld.pids.slice(0, 2),
                   teile: _wochenTeile.map(t => ({art:t.art, ic:t.ic, label:t.label, pids:t.pids,
@@ -19871,7 +20023,9 @@ function _buildStories(){
           ic: def.ic,
           title, desc,
           when: _letzteMs,
-          prio: art === 'erstmals' ? 92 : art === 'geholt' ? 84 : 70,
+          prio: art === 'erstmals' ? STORY_PRIO.rekord_erstmals
+              : art === 'geholt'   ? STORY_PRIO.rekord_geholt
+                                   : STORY_PRIO.rekord_gesteigert,
           dataRef: {type:'rekord_' + art, rekordId:def.id, kammer:def.kind,
                     zufall:def.zufall || '', playerIds:n.pids.slice(0, 3),
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
@@ -19912,7 +20066,7 @@ function _buildStories(){
                 + spitze.map(pid => `${nameOf(pid)} mit ${proSpieler[pid]}`).join(', ')
                 + '.',
             when: wann,
-            prio: 88,
+            prio: STORY_PRIO.chronik_monat,
             dataRef: {type:'chronik_monat', sid:_vorSid, playerIds:spitze,
                       eintraege:T.awarded.length, traeger:rang.length}
           });
@@ -19939,7 +20093,7 @@ function _buildStories(){
               desc: `„${x.name}" im ${seasonLabel(_vorSid)} ist der erste Monatseintrag überhaupt.`
                   + (x.ev ? ` ${_evSatz(x.ev)}.` : ''),
               when: wann + 60000,
-              prio: 90,
+              prio: STORY_PRIO.chronik_erstling,
               dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name}
             });
           });
@@ -20033,7 +20187,7 @@ function _buildStories(){
           // Ueber der Insignium-Stufe, unter dem uebernommenen Liga-Rekord:
           // sie ueberlebt damit den Tagesdeckel, ohne die Ewige Tafel zu
           // ueberstimmen [§C33].
-          prio: 80,
+          prio: STORY_PRIO.chronik_geholt,
           dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
                     playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
@@ -20079,7 +20233,7 @@ function _buildStories(){
             + `${P.teile.rekord} aus Rekorden.`
             + (P.naechste ? ` Bis zum ${P.naechste.name} fehlen ${P.fehlt}.` : ''),
         when: matches.length ? mts(matches[matches.length-1]) : now.getTime(),
-        prio: oben ? 95 : 76,
+        prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
         dataRef: {type:'insignium_stufe', pid:p.id, stufe:P.stufe,
                   stufeName:INSIGNIEN[P.stufe].name, punkte:P.punkte, oben}
       });
@@ -20420,7 +20574,12 @@ function _buildAmbientStories(now, pm, nameOf){
       when:  slot.when,
       // Niedrige Prio + KEIN limitierender dataRef.pid (nur ambientPid/-Pids),
       // damit ambiente Stories nicht vom Per-Player-Limit geschluckt werden.
-      prio:  chosen.prio || 4,
+      // Der Rang eines Templates (2 bis 7) ordnet nur den Fun-Fact-Topf
+      // untereinander. Als blanke Zahl stand er auf derselben Skala wie eine
+      // Pleitenserie und damit im falschen Band [§11.0a]; er wird deshalb
+      // auf das Fun-Fact-Band abgebildet.
+      prio:  STORY_PRIO.ambient
+             + Math.max(0, Math.min(AMBIENT_PRIO_SPANNE, (chosen.prio || 4))),
       // v9.17: vv/vl = optionale Kennzahl für den Mini-Chip rechts auf der Karte
       // (_newsVisual). Fun Facts standen bisher als reiner Text im Feed, während
       // jede andere Story ihre Zahl groß anzeigt — die Kennzahl macht sie auf
@@ -21700,7 +21859,7 @@ function _consolidateStories(list){
   // einzeln den Feed zu fluten. frag() liefert den Pro-Spieler-Schnipsel.
   const GROUPABLE = {
     loss_streak:     { label:'Pechvögel',           ic:'dropDouble', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Niederlagen nacheinander: ${f}.` },
-    top_form:        { label:'Spieler in Top-Form', ic:'flame',      frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.wins}/10)`, desc:f=>`Überragende letzte 10 Spiele: ${f}.` },
+    top_form:        { label:'über dem eigenen Schnitt', ic:'flame',  frag:s=>`${nameOf(s.dataRef.pid)} (+${s.dataRef.vorsprung ?? 0} Punkte)`, desc:f=>`Weiter vorn als sonst: ${f}.` },
     win_streak:      { label:'ungeschlagene Spieler', ic:'flame',    frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Siege in Folge: ${f}.` },
     jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Spiele-Meilensteine: ${f}.` },
     milestone_wins:  { label:'Sieg-Meilensteine',   ic:'medalTrio',  frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
@@ -22218,7 +22377,21 @@ function _consolidateStories(list){
             : '')
         : kopf.desc),
       when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
-      prio: (kopf.prio || 0) + 1,
+      // Die Sammelkarte trägt, was sie zusammenfasst: den stärksten Teil und
+      // einen Schritt je weiterem. Mit `+1` wog eine Karte, die drei
+      // Insignium-Stufen bündelt, kaum mehr als eine einzelne davon — und
+      // fiel damit unter den Tagesdeckel, obwohl sie drei Meldungen trägt.
+      // Eine einzelne Karte zu deckeln kostet eine Meldung, diese zu deckeln
+      // kostet alle: bündeln darf nichts verstecken [§C33].
+      //
+      // Die Karte über EINEN Spieler und die über EINEN Erfolg erben ihren
+      // Rang gar nicht erst: sie fassen nicht einen Moment zusammen, sie
+      // sind eine eigene Nachricht mit eigener Kartenform [§C33]. Geerbt vom
+      // Kopf stand „Jannik und Stefan tragen jetzt den Schildring" auf dem
+      // Rang einer einzelnen Insignium-Stufe und fiel an ihrem eigenen
+      // Spieltag heraus — der einzigen Karte, auf der die beiden standen.
+      prio: Math.max((kopf.prio || 0) + 2 * Math.max(1, teile.length - 1),
+                     STORY_PRIO['sammel_' + art] || 0),
       dataRef: {type:'sammel', quelle: art,
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
@@ -22978,17 +23151,17 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
        l:'Siege zu Niederlagen'},
-      {v: _newsRangKurz(pid), l:'in der Liga'}
+      {v: _newsRangKurz(pid), l:'in der Gesamtliga'}
     ]);
   } else if(sorte === 'spieler'){
     // Ein Gesicht, gross: die Karte handelt von genau einem Spieler. Dazu
-    // die Zahl der Erfolge und sein Platz in der Liga — die Zahl steht nicht
-    // im Satz, der gehoert dem staerksten Erfolg.
+    // die Zahl der Erfolge und sein Platz in der Gesamtliga — die Zahl steht
+    // nicht im Satz, der gehoert dem staerksten Erfolg.
     const pid = (Array.isArray(d.playerIds) ? d.playerIds[0] : null) || d.pid;
     gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
     fuss = _newsZahlband([
       {v: (Array.isArray(d.teile) ? d.teile.length : 0) || null, l:'Erfolge im selben Moment', f:'g'},
-      {v: _newsRangKurz(pid), l:'in der Liga'}
+      {v: _newsRangKurz(pid), l:'in der Gesamtliga'}
     ]);
   } else if(sorte === 'erfolg'){
     // Hier ist der Erfolg das Subjekt, also stehen die Gesichter als Chips
@@ -23275,14 +23448,28 @@ function _newsTafelWert(s){
 }
 
 // Der Rang eines Spielers als kurze Angabe fürs Zahlenband.
-function _newsRangKurz(pid){
+// Der Platz in der GESAMT-Rangliste — dieselbe Quelle wie der Zeitraum
+// „Gesamt" im Liga-Tab (`careerElo` aus getGlobalSim), also dieselbe Zahl,
+// die dort über dem Namen steht [§C27]. Das ist NICHT der Platz in der
+// laufenden Saison: wer über die ganze Ligageschichte Siebter ist, kann
+// diesen Monat Zweiter sein, und „Rang 7 in der Liga" behauptete auf einer
+// Karte über einen guten Spieltag genau das Gegenteil von dem, was gerade
+// passiert war.
+//
+// EINE Stelle rechnet das. Die Zeile im Blatt rechnete es ein zweites Mal
+// nach, und zwei Rechnungen über dieselbe Frage laufen irgendwann
+// auseinander [§C27].
+function _newsGesamtrang(pid){
   try {
     const career = (getGlobalSim() || {}).careerElo || {};
     const ids = Object.keys(career).filter(id => pmap()[id] && !pmap()[id].hidden);
     ids.sort((a, b) => (career[b] ?? 0) - (career[a] ?? 0));
-    const r = ids.indexOf(pid) + 1;
-    return r > 0 ? 'Rang ' + r : null;
-  } catch(e){ return null; }
+    return ids.indexOf(pid) + 1;
+  } catch(e){ return 0; }
+}
+function _newsRangKurz(pid){
+  const r = _newsGesamtrang(pid);
+  return r > 0 ? 'Rang ' + r : null;
 }
 
 // Wie selten die Auszeichnung ist, in Worten. Vier Klassen, nicht drei: die
@@ -23748,16 +23935,17 @@ function closeNewsDetail(){
 // ohne sie zu benennen.
 function _newsRangZeile(pid){
   try {
-    const career = (getGlobalSim() || {}).careerElo || {};
-    const ids = Object.keys(career).filter(id => pmap()[id] && !pmap()[id].hidden);
-    ids.sort((a, b) => (career[b] ?? 0) - (career[a] ?? 0));
-    const rang = ids.indexOf(pid) + 1;
+    // Dieselbe Rechnung stand hier ein zweites Mal [§C27].
+    const rang = _newsGesamtrang(pid);
     const P = (typeof prestigeOf === 'function') ? prestigeOf(pid) : null;
     const teile = [];
     // „Rang 6" stand hier als Text UND daneben als Rangabzeichen — dieselbe
     // Aussage zweimal. Das Abzeichen ist das Bauteil [§C27], die Zeile nennt,
     // was es nicht sagt.
-    if(rang > 0) teile.push('Platz ' + rang + ' der Liga');
+    // „der Liga" las sich wie die Tabelle der laufenden Saison; gemeint ist
+    // der Zeitraum „Gesamt" des Liga-Tabs, und die beiden Plaetze koennen
+    // weit auseinanderliegen.
+    if(rang > 0) teile.push('Platz ' + rang + ' der Gesamtliga');
     if(!_ndZeichenUnten){
       if(P && P.insignie) teile.push(P.insignie.name);
       if(P && P.punkte != null) teile.push(P.punkte + ' Prestige');

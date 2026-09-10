@@ -215,7 +215,12 @@ function _buildAmbientStories(now, pm, nameOf){
       when:  slot.when,
       // Niedrige Prio + KEIN limitierender dataRef.pid (nur ambientPid/-Pids),
       // damit ambiente Stories nicht vom Per-Player-Limit geschluckt werden.
-      prio:  chosen.prio || 4,
+      // Der Rang eines Templates (2 bis 7) ordnet nur den Fun-Fact-Topf
+      // untereinander. Als blanke Zahl stand er auf derselben Skala wie eine
+      // Pleitenserie und damit im falschen Band [§11.0a]; er wird deshalb
+      // auf das Fun-Fact-Band abgebildet.
+      prio:  STORY_PRIO.ambient
+             + Math.max(0, Math.min(AMBIENT_PRIO_SPANNE, (chosen.prio || 4))),
       // v9.17: vv/vl = optionale Kennzahl für den Mini-Chip rechts auf der Karte
       // (_newsVisual). Fun Facts standen bisher als reiner Text im Feed, während
       // jede andere Story ihre Zahl groß anzeigt — die Kennzahl macht sie auf

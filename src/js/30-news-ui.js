@@ -412,17 +412,17 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
        l:'Siege zu Niederlagen'},
-      {v: _newsRangKurz(pid), l:'in der Liga'}
+      {v: _newsRangKurz(pid), l:'in der Gesamtliga'}
     ]);
   } else if(sorte === 'spieler'){
     // Ein Gesicht, gross: die Karte handelt von genau einem Spieler. Dazu
-    // die Zahl der Erfolge und sein Platz in der Liga — die Zahl steht nicht
-    // im Satz, der gehoert dem staerksten Erfolg.
+    // die Zahl der Erfolge und sein Platz in der Gesamtliga — die Zahl steht
+    // nicht im Satz, der gehoert dem staerksten Erfolg.
     const pid = (Array.isArray(d.playerIds) ? d.playerIds[0] : null) || d.pid;
     gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
     fuss = _newsZahlband([
       {v: (Array.isArray(d.teile) ? d.teile.length : 0) || null, l:'Erfolge im selben Moment', f:'g'},
-      {v: _newsRangKurz(pid), l:'in der Liga'}
+      {v: _newsRangKurz(pid), l:'in der Gesamtliga'}
     ]);
   } else if(sorte === 'erfolg'){
     // Hier ist der Erfolg das Subjekt, also stehen die Gesichter als Chips
@@ -709,14 +709,28 @@ function _newsTafelWert(s){
 }
 
 // Der Rang eines Spielers als kurze Angabe fürs Zahlenband.
-function _newsRangKurz(pid){
+// Der Platz in der GESAMT-Rangliste — dieselbe Quelle wie der Zeitraum
+// „Gesamt" im Liga-Tab (`careerElo` aus getGlobalSim), also dieselbe Zahl,
+// die dort über dem Namen steht [§C27]. Das ist NICHT der Platz in der
+// laufenden Saison: wer über die ganze Ligageschichte Siebter ist, kann
+// diesen Monat Zweiter sein, und „Rang 7 in der Liga" behauptete auf einer
+// Karte über einen guten Spieltag genau das Gegenteil von dem, was gerade
+// passiert war.
+//
+// EINE Stelle rechnet das. Die Zeile im Blatt rechnete es ein zweites Mal
+// nach, und zwei Rechnungen über dieselbe Frage laufen irgendwann
+// auseinander [§C27].
+function _newsGesamtrang(pid){
   try {
     const career = (getGlobalSim() || {}).careerElo || {};
     const ids = Object.keys(career).filter(id => pmap()[id] && !pmap()[id].hidden);
     ids.sort((a, b) => (career[b] ?? 0) - (career[a] ?? 0));
-    const r = ids.indexOf(pid) + 1;
-    return r > 0 ? 'Rang ' + r : null;
-  } catch(e){ return null; }
+    return ids.indexOf(pid) + 1;
+  } catch(e){ return 0; }
+}
+function _newsRangKurz(pid){
+  const r = _newsGesamtrang(pid);
+  return r > 0 ? 'Rang ' + r : null;
 }
 
 // Wie selten die Auszeichnung ist, in Worten. Vier Klassen, nicht drei: die

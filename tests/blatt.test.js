@@ -805,14 +805,30 @@ const ok = (c, msg, det) => {
   console.log('\n═══ DER RAND SAGT, WAS WIEGT ═══');
   const raender = await page.evaluate(() => {
     const sheet = document.getElementById('sheet');
-    const mess = klasse => {
-      const c = sheet.querySelector('.' + klasse);
+    // Gemessen wird eine Regel des Stylesheets, nicht die Nachrichtenlage.
+    // Der Fun Fact stand nur zufaellig im Feed: an einem vollen Spieltag
+    // faellt er weg [§C33], und dann verglich die Zusicherung Gold gegen
+    // nichts. Die fehlende Sorte wird deshalb einmal gerendert, gemessen und
+    // wieder entfernt — die Sorte, nicht der Tag, traegt die Aussage.
+    const hilf = document.createElement('div');
+    sheet.appendChild(hilf);
+    const leihen = sorte => {
+      const s = {id:'mess_' + sorte, cat:'fun', ic:'thriller', title:'Messkarte',
+                 desc:'Eine Zahl.', when: Date.now(), prio:1, dataRef:{type:'ambient'}};
+      hilf.innerHTML = window.__k.eval('_newsCardHtmlM2')(s, true, false);
+      return hilf.querySelector('.nf-card');
+    };
+    const mess = (klasse, sorte) => {
+      const c = sheet.querySelector('.' + klasse) || (sorte ? leihen(sorte) : null);
       if(!c) return null;
       const cs = getComputedStyle(c);
       return {kante: parseFloat(cs.borderLeftWidth), farbe: cs.borderTopColor};
     };
-    return {gold: mess('nf-s-tafel') || mess('nf-s-badge'), fakt: mess('nf-s-fakt'),
-            spiel: mess('nf-s-spiel'), neg: mess('nf-neg')};
+    const raus = {gold: mess('nf-s-tafel') || mess('nf-s-badge'),
+                  fakt: mess('nf-s-fakt', 'fakt'),
+                  spiel: mess('nf-s-spiel'), neg: mess('nf-neg')};
+    hilf.remove();
+    return raus;
   });
   ok(raender.gold && raender.fakt && raender.gold.kante > raender.fakt.kante,
      'die goldene Karte traegt die staerkere Kante als der Fun Fact',

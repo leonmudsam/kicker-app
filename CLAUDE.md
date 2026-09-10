@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **680**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **686**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -221,7 +221,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen | 974 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung | 237 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge | 238 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt, die Karte fuer den gemeinsamen Erfolg — **im echten Browser gemessen** | 97 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -412,6 +412,13 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Reif** (`_insReif`), den **Kopf** auf zwölf Uhr und die **Raute** am
   Fuß (`_insFuss`) — daran bleibt die Familie erkennbar, auch wenn der
   Schmuck dazwischen vollständig wechselt [§C30].
+  **Der Platz im Feed ist der der GESAMTLIGA** (`_newsGesamtrang`). Die Zahl
+  kommt aus `careerElo` und ist damit der Rang unter dem Zeitraum „Gesamt"
+  des Liga-Tabs, nicht der der laufenden Saison — beide können weit
+  auseinanderliegen. Als „Rang 7 in der Liga" auf einer Karte über einen
+  guten Spieltag stand, behauptete sie das Gegenteil dessen, was gerade
+  passiert war: derselbe Spieler war in diesem Monat Zweiter. Gerechnet wird
+  es an EINER Stelle; die Zeile im Blatt rechnete es ein zweites Mal nach.
   Der Saisonwähler (`.saisonwahl`, `saisonWaehlerHtml`) ist bewusst **keins**
   von beiden: er wählt weder Ansicht noch Filter, sondern den Zeitpunkt, von
   dem alles darunter handelt. Als `.ui-tabs` stand er zwischen zwei echten
@@ -461,6 +468,30 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Sammel- und die Wochenkarte), **keine zwei Karten tragen dieselbe
   Schlagzeile** oder **denselben Text** („Eine große Rivalität, die Liga
   liebt's" stand wortgleich unter zwei Karten und nannte keine einzige Zahl).
+  **`prio` steht auf EINER Skala** (`STORY_PRIO`, §11.0a). Der Tagesdeckel und
+  der Kopf einer Sammelkarte sind Vergleiche, und ein Vergleich braucht eine
+  Skala. Es waren zwei: die Spieltags-Karten standen auf 1 bis 10, die Karten
+  der Ewigen Tafel auf 70 bis 95 — jede für sich richtig einsortiert, nie
+  gegeneinander. Damit gewann jede Tafel-Karte, bevor der Deckel hinsah.
+  Gemessen über 56 Spieltage bekam die Ewige Tafel 66 % aller Tagesplätze,
+  und von dem, was der Generator zum Spieltag selbst bildete, fielen 70 % der
+  laufenden Siegesserien, 83 % der Pleitenserien und 83 % der Serienbrecher
+  weg, während jede der 183 Insignium-Stufen und jeder der 88 Rekordwechsel
+  durchkam. Wer die App nach einem Spieltag öffnete, las von allem außer vom
+  Spieltag. Drei Bänder ordnen jetzt alles: **Breaking** (90+), **der
+  Spieltag** (38–89, was DIESE Partien hergegeben haben) und **der
+  Hintergrund** (10–37, was gestern schon galt). Innerhalb eines Bandes
+  entscheidet die gemessene Seltenheit; fest bleiben nur der Sieger des
+  Spieltags oben und an der Tafel die Ordnung Liga-Rekord über Monatschronik
+  über Insignium-Stufe. Die Zahlen stehen an EINER Stelle: verteilt über 1900
+  Zeilen ist die zweite Skala genau der Fehler, den niemand sieht.
+  Eine **Sammelkarte trägt, was sie zusammenfasst** — den stärksten Teil und
+  einen Schritt je weiterem. Mit `+1` wog eine Karte über drei Insignium-
+  Stufen kaum mehr als eine einzelne davon; eine einzelne Karte zu deckeln
+  kostet eine Meldung, diese zu deckeln kostet alle. Die Karte über EINEN
+  Spieler und die über EINEN Erfolg erben gar nicht: sie fassen keinen Moment
+  zusammen, sie sind eine eigene Nachricht und haben einen eigenen Rang.
+
   **Die Reihenfolge ist die Zeit.** `_consolidateStories` sortiert nicht mehr
   um. Zwei Durchgänge taten das früher: einer tauschte gleichartige Nachbarn,
   einer schob Karten nach hinten, deren Gesichter schon viermal dastanden.
@@ -817,6 +848,17 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Insignium-Stufen [§C30]. Gefallen ist `season_endgame`: „Noch fünf Tage"
   ist ein Countdown, kein Ereignis — und stand zeitweise als einzige
   Breaking-Karte im Feed.
+  **Die Form-Karte misst den Abstand zum eigenen Schnitt, nicht das Niveau**
+  (`FORM_FENSTER`, `FORM_BASIS_MIN`, `FORM_VORSPRUNG`, §11.0b). „Neun von
+  zehn gewonnen" konnte nur holen, wer ohnehin die beste Quote hat: gemessen
+  nannte die Karte über die ganze Ligageschichte vier Spieler, einen davon
+  zehn der siebzehn Male. Verglichen werden jetzt die letzten zehn Partien
+  mit der Laufbahn DAVOR — dieselbe Frage, mit der die Monatschronik die
+  Mitte des Feldes erreicht [§C38] —, und dieselbe Schwelle trifft damit
+  sieben Spieler statt vier, darunter die untere Hälfte der Siegquote. Die
+  25 Prozentpunkte sind an den echten Partien geeicht: die Karte fällt 0,46
+  mal je Spieltag, bei 20 wären es 0,63 und bei 30 nur noch 0,25.
+
   **Eine Karte über einen Spieler soll ihn belohnen.** „Henry gewinnt 39 %
   seiner Spiele" stand als Nachricht da und sagte ihrem Helden, dass er
   unterdurchschnittlich ist. Gesucht wird stattdessen die Kennzahl, in der

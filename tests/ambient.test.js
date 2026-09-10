@@ -715,7 +715,11 @@ const _ts = JSON.parse(K.eval(`JSON.stringify((function(){
   if(!echt) return {keine:true};
   const ueberholt = Object.assign({}, echt, {id: echt.id + '_alt',
     dataRef: Object.assign({}, echt.dataRef, {streak: (echt.dataRef.streak || 5) + 5})});
-  _cache._stories = [ueberholt].concat(frisch);
+  // NUR die beiden Karten: gemessen wird der Stale-Filter, nicht der
+  // Tagesdeckel. Mit dem ganzen Lauf entschied die Rangfolge des Tages mit,
+  // und eine Karte, die als siebtstaerkste faellt, sagt nichts darueber,
+  // ob die Serie noch laeuft.
+  _cache._stories = [ueberholt, echt];
   _cache._consolFrom = null; _cache._frischVon = null;
   const sicht = getStoriesCache();
   // Gezaehlt wird die AUSSAGE, nicht die Karte: die laufende Serie kann als
@@ -960,8 +964,17 @@ ok(_chrg.stand.vorher !== _chrg.stand.jetzt || _chrg.n > 0,
    'vorher ' + _chrg.stand.vorher + ', heute ' + _chrg.stand.jetzt);
 ok(_chrg.n > 0, 'eine Chronik im laufenden Monat wird gemeldet', _chrg.n + ' Karten');
 ok(_chrg.n <= 2, 'hoechstens zwei Chronik-Karten je Lauf', _chrg.n + ' Karten');
-ok(_chrg.prio.every(p => p === 80),
+// Gemessen wird die ORDNUNG, nicht die Zahl. Als hier `p === 80` stand,
+// haette die Zusicherung eine verschobene Skala fuer einen Fehler gehalten
+// und eine vertauschte Reihenfolge durchgelassen — genau andersherum als
+// gemeint [§C33].
+const _chronOrd = JSON.parse(K.eval('JSON.stringify({rek:STORY_PRIO.rekord_geholt,'
+  + ' chr:STORY_PRIO.chronik_geholt, ins:STORY_PRIO.insignium_stufe})'));
+ok(_chronOrd.rek > _chronOrd.chr && _chronOrd.chr > _chronOrd.ins,
    'die Chronik-Karte liegt zwischen Liga-Rekord und Insignium-Stufe',
+   _chronOrd.rek + ' > ' + _chronOrd.chr + ' > ' + _chronOrd.ins);
+ok(_chrg.prio.every(p => p === _chronOrd.chr),
+   'und jede gemeldete Chronik traegt genau diesen Rang',
    _chrg.prio.join(','));
 ok(_chrg.ohneRef === 0, 'jede Chronik-Karte kennt ihre Wertung und ihr Prestige',
    _chrg.ohneRef + ' ohne');

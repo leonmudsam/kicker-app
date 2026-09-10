@@ -115,16 +115,17 @@ function closeNewsDetail(){
 // ohne sie zu benennen.
 function _newsRangZeile(pid){
   try {
-    const career = (getGlobalSim() || {}).careerElo || {};
-    const ids = Object.keys(career).filter(id => pmap()[id] && !pmap()[id].hidden);
-    ids.sort((a, b) => (career[b] ?? 0) - (career[a] ?? 0));
-    const rang = ids.indexOf(pid) + 1;
+    // Dieselbe Rechnung stand hier ein zweites Mal [§C27].
+    const rang = _newsGesamtrang(pid);
     const P = (typeof prestigeOf === 'function') ? prestigeOf(pid) : null;
     const teile = [];
     // „Rang 6" stand hier als Text UND daneben als Rangabzeichen — dieselbe
     // Aussage zweimal. Das Abzeichen ist das Bauteil [§C27], die Zeile nennt,
     // was es nicht sagt.
-    if(rang > 0) teile.push('Platz ' + rang + ' der Liga');
+    // „der Liga" las sich wie die Tabelle der laufenden Saison; gemeint ist
+    // der Zeitraum „Gesamt" des Liga-Tabs, und die beiden Plaetze koennen
+    // weit auseinanderliegen.
+    if(rang > 0) teile.push('Platz ' + rang + ' der Gesamtliga');
     if(!_ndZeichenUnten){
       if(P && P.insignie) teile.push(P.insignie.name);
       if(P && P.punkte != null) teile.push(P.punkte + ' Prestige');
