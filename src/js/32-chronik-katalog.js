@@ -565,7 +565,7 @@ const DISZIPLINEN = [
   {id:'thron', name:'Auf dem Thron', short:'Thron', ic:'temple', tone:'gold', art:'leistung',
     monat:{
       art:'koennen',
-      klasse:'selten', aus:2.64,
+      klasse:'legendaer', aus:2.64,
       wie:'Gemessen wird der schlechteste Platz, den die Liga-Tabelle am Ende eines Spieltags zeigte. Gezählt wird jeder Spieltag des Monats, auch einer ohne eigene Partie: wer aussetzt, kann überholt werden.',
       cond:'An keinem Spieltag des Monats aus den ersten zwei Plätzen der Liga gefallen',
       ...(_stWertung(

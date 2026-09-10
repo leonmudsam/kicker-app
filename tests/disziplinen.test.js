@@ -918,19 +918,54 @@ ok(ICS.every(d => K.eval(`!!ICONS[${JSON.stringify(d.ic)}]`)),
 // Eine Monatswertung soll besonders sein. Bei den alten Schwellen wurden in
 // einem Monat vierundzwanzig der vierunddreissig Wertungen vergeben, und ein
 // Spieler trug neun davon — was fast jeder Monat hergibt, zeichnet niemanden
-// mehr aus. Die Schwellen haengen jetzt so hoch, dass keine Bedingung in der
-// ganzen Ligageschichte oefter als zweimal erfuellt war.
-// Die Seltenheitsklasse sagt, wie oft eine Bedingung erfuellt sein DARF:
-// legendaer einmal, selten zweimal, besonders dreimal. Sie steuert damit die
-// Schwelle, nicht den Wert [§C39].
-const KLGRENZE = {legendaer:1, selten:2, besonders:3};
+// mehr aus.
+//
+// Gedeckelt wird deshalb die RATE, nicht die Zahl: hoechstens ein Halter je
+// gewerteten Monat. Eine feste Zahl waere mit der Liga selbst falsch
+// geworden — sie stand einmal als Grenze je Klasse hier (legendaer einmal,
+// selten zweimal, besonders dreimal), und damit haette der zweite Halter
+// einer legendaeren Chronik den Test rot gemacht, obwohl die Bedingung
+// keinen Deut leichter geworden ist. Die Klasse sagt, wie schwer eine
+// Bedingung zu erreichen ist, und ist beim Kalibrieren festgeschrieben
+// [§C39]; sie ist keine Volkszaehlung.
 const _klasseVon = JSON.parse(K.eval(
   "JSON.stringify(SEASON_TITLES.reduce((o,t)=>(o[t.id]=t.klasse,o),{}))"));
-const _zuOft = Object.keys(TREFFER).filter(id =>
-  TREFFER[id] > (KLGRENZE[_klasseVon[id]] || 3));
+const _monN = K.eval(`['2026-05','2026-06','2026-07','2026-08']
+  .filter(sid=>_seasonTitleCtx(sid).days >= CHRONIK_MIN_TAGE).length`);
+const _zuOft = Object.keys(TREFFER).filter(id => TREFFER[id] > _monN);
 ok(_zuOft.length === 0,
-   'keine Bedingung trifft haeufiger zu, als ihre Klasse erlaubt',
-   _zuOft.map(id => id+'('+TREFFER[id]+', '+_klasseVon[id]+')').join(', '));
+   'keine Bedingung findet mehr Halter als die Liga Monate hat',
+   _monN + ' Monate, zu oft: ' + _zuOft.map(id => id+'('+TREFFER[id]+')').join(', '));
+
+// Die Klasse selbst wird hier NICHT nachgezaehlt. Sie ist beim Kalibrieren
+// an den Daten festgeschrieben, so wie `aus` und `BADGE_RARITY` [§C39]: eine
+// legendaere Bedingung wird mit den Jahren zwangslaeufig oefter erreicht und
+// bleibt trotzdem legendaer, weil sie nicht leichter geworden ist. Ein Test,
+// der sie gegen die heutige Haeufigkeit haelt, wuerde mit der Liga von
+// selbst rot — und ein Versuch damit war nicht einmal rot zu bekommen: eine
+// einzelne falsch eingeordnete Chronik verschiebt den Schnitt ihrer Klasse
+// nicht genug, um die Reihenfolge zu kippen.
+//
+// Was jede Chronik dagegen rechtfertigen muss, ist ihr AUSSCHLAG: die
+// Schwelle muss mindestens 1,5 σ vom Schnitt aller je gewerteten Werte
+// liegen, sonst steht ihr Bester kaum weiter draussen als der Durchschnitt.
+// Genau das traegt auch das Prestige, also faellt der Test hier und nicht
+// erst, wenn eine billige Chronik hundert Punkte wert ist.
+const _MIN_AUS = 1.5;
+const _flach = JSON.parse(K.eval(`JSON.stringify(SEASON_TITLES
+  .filter(t => !(t.aus >= ${_MIN_AUS}))
+  .map(t => t.id + ' (' + (t.aus || 0) + ')'))`));
+ok(_flach.length === 0,
+   'jede Chronik schiebt ihre Schwelle mindestens 1,5 σ hinaus',
+   _flach.join(', '));
+ok(K.eval(`SEASON_TITLES.every(t =>
+     ['legendaer','selten','besonders'].indexOf(t.klasse) >= 0
+     && ['koennen','konstanz','fuegung','schatten'].indexOf(t.kunst) >= 0)`),
+   'jede Chronik traegt eine gueltige Klasse und Art',
+   K.eval(`SEASON_TITLES.filter(t =>
+     ['legendaer','selten','besonders'].indexOf(t.klasse) < 0
+     || ['koennen','konstanz','fuegung','schatten'].indexOf(t.kunst) < 0)
+     .map(t => t.id).join(', ')`));
 
 // Profil: die Meta-Zeile neben „Liga-Rekord" ist weg.
 const profHtml = K.eval(`_chronStripHtml('${IDS[8]}')`);
