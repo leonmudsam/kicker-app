@@ -4749,7 +4749,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.78920286';
+const BUILD_VERSION='2026.09.10.74baa385';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18220,6 +18220,20 @@ const NEWS_LIMITS = {
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
 
+// ─── §11.0c — Wie oft dieselbe Auszeichnung Nachricht ist ────────────
+// Die Karte entstand jedes Mal neu, wenn jemand ein Badge wieder holte.
+// Gemessen über die ganze Ligageschichte stand „Martin: Mauer" damit
+// vierzehnmal im Feed, wortgleich — der Text ist die Bedingung aus dem
+// Katalog und ändert sich nie. Insgesamt gingen 93 der 866 je gebildeten
+// Karten auf wiederholte Auszeichnungen zurück, mehr als auf jede andere
+// Quelle.
+//
+// Gemeldet wird deshalb das ERSTE Mal und danach nur noch runde Marken —
+// dieselbe Logik, nach der auch das Prestige eine beliebig oft holbare
+// Auszeichnung genau einmal zählt [§C34]. Der dreißigste Zittersieg zeigt
+// nichts Neues; der fünfundzwanzigste ist eine Zahl, über die man redet.
+const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
+
 // ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
 // Die Form-Karte maß das NIVEAU: neun von zehn gewonnen. Gemessen über die
 // ganze Ligageschichte traf sie damit vier Spieler, und einer davon zehn der
@@ -19037,6 +19051,28 @@ function _buildStories(){
       const k = ev.playerId+'|'+ev.badge.id;
       if(!dedupe[k] || dedupe[k].when < ev.when) dedupe[k] = ev;
     });
+    // Das WIEVIELTE Mal ist das? Gezählt über die ganze Laufbahn, nicht nur
+    // über das Fenster von sieben Tagen — sonst wäre jede Auszeichnung
+    // immer die erste [§11.0c]. Die Zeitpunkte stehen sortiert da, also ist
+    // der Rang die Position des eigenen Zeitpunkts darin.
+    const _bZeiten = {};
+    for(const mid in bMap){
+      const arr = bMap[mid];
+      if(!arr || !arr.length) continue;
+      const mo = matches.find(m => m.id === mid);
+      if(!mo) continue;
+      const t = mts(mo);
+      arr.forEach(e => {
+        const k = e.playerId+'|'+e.badge.id;
+        (_bZeiten[k] = _bZeiten[k] || []).push(t);
+      });
+    }
+    for(const k in _bZeiten) _bZeiten[k].sort((a,b) => a - b);
+    const _bRang = ev => {
+      const l = _bZeiten[ev.playerId+'|'+ev.badge.id] || [];
+      const i = l.indexOf(ev.when.getTime());
+      return i < 0 ? l.length : i + 1;
+    };
     // v9.5: Whitelist-Filter ZUERST, dann limitieren. Vorher wurde erst auf die
     // 6 jüngsten Events geschnitten und danach gefiltert — häufige Common-Badges
     // konnten so news-würdige (rare/negative) Badges aus dem Budget verdrängen.
@@ -19049,6 +19085,10 @@ function _buildStories(){
     const whitelisted = Object.values(dedupe)
       .filter(ev => {
         if(!pm[ev.playerId]) return false;
+        // Eine WÜRDE ist je Saison neu zu holen und jedes Mal Nachricht;
+        // alles andere nur beim ersten Mal und an runden Marken [§11.0c].
+        const wuerde = (typeof BADGE_WUERDE !== 'undefined') && BADGE_WUERDE.has(ev.badge.id);
+        if(!wuerde && NEWS_BADGE_MARKEN.indexOf(_bRang(ev)) < 0) return false;
         const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
         return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
       });
@@ -19511,8 +19551,12 @@ function _buildStories(){
           id: 'top_clash_'+m.id,
           cat: 'highlight',
           ic: 'kingClass',
+          // Der Satz nannte keine Zahl und stand damit gemessen zehnmal
+          // wortgleich im Feed [§C33]. Das Ergebnis unterscheidet die
+          // Partien, und es steht ohnehin auf der Karte.
           title: `${nameOf(best.p1)} schlägt ${nameOf(best.p2)} im Spitzenspiel`,
-          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Der Abstand nach vorn wird größer.`,
+          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. `
+              + `${m.score_a}:${m.score_b}, der Abstand nach vorn wird größer.`,
           when: new Date(best.t),
           prio: STORY_PRIO.top_clash,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2,
@@ -21875,6 +21919,16 @@ function _consolidateStories(list){
     if(d.type === 'win_streak' && d.pid) return (_liveWin[d.pid] || 0) >= (d.streak || 0);
     if(d.type === 'top_form' && d.pid) return (_liveForm[d.pid] || 0) >= (d.wins || 0);
     if(d.type === 'dry_spell' && d.lastMatchId) return d.lastMatchId === _lastMatchId;
+    // Ein Elo-Rekord, den es nicht mehr gibt, ist keine Nachricht mehr,
+    // sondern eine falsche. Gemessen standen neun Karten „Neuer Elo-Rekord:
+    // Martin" nebeneinander — mit 128, 183, 214 Elo, und acht davon
+    // behaupteten eine Bestmarke, die längst überboten war. Dieselbe Regel
+    // wie bei der überholten Serie: es bleibt die, die noch gilt.
+    if(d.type === 'elo_record' && d.elo != null){
+      let jetzt = null;
+      try { jetzt = (_allTimeRecords().eloRec || {}).val; } catch(e){}
+      return jetzt == null || d.elo >= jetzt;
+    }
     // Dieselbe Regel für Duos: die Karte bleibt nur, solange die Serie des
     // Paares die genannte Länge noch erreicht.
     if(d.type === 'team_streak'){ const k = _paarKey(d);

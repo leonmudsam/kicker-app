@@ -578,6 +578,28 @@ function _buildStories(){
       const k = ev.playerId+'|'+ev.badge.id;
       if(!dedupe[k] || dedupe[k].when < ev.when) dedupe[k] = ev;
     });
+    // Das WIEVIELTE Mal ist das? Gezählt über die ganze Laufbahn, nicht nur
+    // über das Fenster von sieben Tagen — sonst wäre jede Auszeichnung
+    // immer die erste [§11.0c]. Die Zeitpunkte stehen sortiert da, also ist
+    // der Rang die Position des eigenen Zeitpunkts darin.
+    const _bZeiten = {};
+    for(const mid in bMap){
+      const arr = bMap[mid];
+      if(!arr || !arr.length) continue;
+      const mo = matches.find(m => m.id === mid);
+      if(!mo) continue;
+      const t = mts(mo);
+      arr.forEach(e => {
+        const k = e.playerId+'|'+e.badge.id;
+        (_bZeiten[k] = _bZeiten[k] || []).push(t);
+      });
+    }
+    for(const k in _bZeiten) _bZeiten[k].sort((a,b) => a - b);
+    const _bRang = ev => {
+      const l = _bZeiten[ev.playerId+'|'+ev.badge.id] || [];
+      const i = l.indexOf(ev.when.getTime());
+      return i < 0 ? l.length : i + 1;
+    };
     // v9.5: Whitelist-Filter ZUERST, dann limitieren. Vorher wurde erst auf die
     // 6 jüngsten Events geschnitten und danach gefiltert — häufige Common-Badges
     // konnten so news-würdige (rare/negative) Badges aus dem Budget verdrängen.
@@ -590,6 +612,10 @@ function _buildStories(){
     const whitelisted = Object.values(dedupe)
       .filter(ev => {
         if(!pm[ev.playerId]) return false;
+        // Eine WÜRDE ist je Saison neu zu holen und jedes Mal Nachricht;
+        // alles andere nur beim ersten Mal und an runden Marken [§11.0c].
+        const wuerde = (typeof BADGE_WUERDE !== 'undefined') && BADGE_WUERDE.has(ev.badge.id);
+        if(!wuerde && NEWS_BADGE_MARKEN.indexOf(_bRang(ev)) < 0) return false;
         const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
         return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
       });
@@ -1052,8 +1078,12 @@ function _buildStories(){
           id: 'top_clash_'+m.id,
           cat: 'highlight',
           ic: 'kingClass',
+          // Der Satz nannte keine Zahl und stand damit gemessen zehnmal
+          // wortgleich im Feed [§C33]. Das Ergebnis unterscheidet die
+          // Partien, und es steht ohnehin auf der Karte.
           title: `${nameOf(best.p1)} schlägt ${nameOf(best.p2)} im Spitzenspiel`,
-          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Der Abstand nach vorn wird größer.`,
+          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. `
+              + `${m.score_a}:${m.score_b}, der Abstand nach vorn wird größer.`,
           when: new Date(best.t),
           prio: STORY_PRIO.top_clash,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2,

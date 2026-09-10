@@ -902,11 +902,32 @@ const _sub = JSON.parse(K.eval(`JSON.stringify((function(){
     });
   });
   // Seltene und legendaere Auszeichnungen stehen nie als Zeile.
+  //
+  // Der Fall wird GEBAUT und nicht dem Tag abgelauscht: eine wiederholbare
+  // Auszeichnung ist nur beim ersten Mal und an runden Marken Nachricht
+  // [§11.0c], und ob an einem beliebigen Stichtag gerade eine seltene
+  // faellig ist, hat mit der Buendelungsregel nichts zu tun. Gemessen wird,
+  // dass eine seltene Auszeichnung neben zwei Meldungen desselben Moments
+  // eine eigene Karte bleibt [§C33].
+  const _pid = Object.keys(pmap())[0];
+  const _mom = new Date(2026, 7, 26, 17, 5, 0).getTime();
+  const _mk = (id, typ, ref, titel, text) => ({id, cat:'badge', ic:'medal',
+    title:titel, desc:text, when:_mom, prio:60,
+    dataRef:Object.assign({type:typ}, ref)});
+  const _rarLauf = [
+    _mk('bx1','badge_unlocked', {playerId:_pid, badgeId:'wall_badge',
+      badgeName:'Mauer', rarity:'rare', matchId:'mx'}, 'Test: Mauer', 'Eine Zahl: 2.'),
+    _mk('bx2','jubilee', {pid:_pid, total:250}, 'Test: 250. Spiel', 'Eine Zahl: 250.'),
+    _mk('bx3','milestone_wins', {pid:_pid, milestone:'100'}, 'Test: 100. Sieg', 'Eine Zahl: 100.')
+  ];
+  _cache._consolFrom = null;
+  const _rarRaus = _consolidateStories(_rarLauf.slice());
+  const _rarZeilen = [];
+  _rarRaus.forEach(x => ((x.dataRef||{}).teile||[]).forEach(z => _rarZeilen.push(z.titel)));
+  const selten = _rarLauf.filter(s => (s.dataRef||{}).rarity === 'rare');
+  const versteckt = selten.filter(s => _rarZeilen.indexOf(s.title) >= 0).map(s => s.title);
   const zeilenTitel = [];
   sammel.forEach(x => (x.dataRef.teile||[]).forEach(z => zeilenTitel.push(z.titel)));
-  const selten = roh.filter(s => { const d = s.dataRef || {};
-    return d.type === 'badge_unlocked' && (d.rarity === 'rare' || d.rarity === 'legendary'); });
-  const versteckt = selten.filter(s => zeilenTitel.indexOf(s.title) >= 0).map(s => s.title);
   return {sammel: sammel.length, fremd, selten: selten.length, versteckt,
           ohnePids: sammel.reduce((n, x) => n + (x.dataRef.teile||[])
             .filter(z => !(z.pids||[]).length).length, 0)};

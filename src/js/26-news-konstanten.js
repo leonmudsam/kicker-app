@@ -101,6 +101,20 @@ const NEWS_LIMITS = {
   total: 50,        // harte Obergrenze des Feeds (nach Prio-Filter)
 };
 
+// ─── §11.0c — Wie oft dieselbe Auszeichnung Nachricht ist ────────────
+// Die Karte entstand jedes Mal neu, wenn jemand ein Badge wieder holte.
+// Gemessen über die ganze Ligageschichte stand „Martin: Mauer" damit
+// vierzehnmal im Feed, wortgleich — der Text ist die Bedingung aus dem
+// Katalog und ändert sich nie. Insgesamt gingen 93 der 866 je gebildeten
+// Karten auf wiederholte Auszeichnungen zurück, mehr als auf jede andere
+// Quelle.
+//
+// Gemeldet wird deshalb das ERSTE Mal und danach nur noch runde Marken —
+// dieselbe Logik, nach der auch das Prestige eine beliebig oft holbare
+// Auszeichnung genau einmal zählt [§C34]. Der dreißigste Zittersieg zeigt
+// nichts Neues; der fünfundzwanzigste ist eine Zahl, über die man redet.
+const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
+
 // ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
 // Die Form-Karte maß das NIVEAU: neun von zehn gewonnen. Gemessen über die
 // ganze Ligageschichte traf sie damit vier Spieler, und einer davon zehn der

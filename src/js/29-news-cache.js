@@ -235,6 +235,16 @@ function _consolidateStories(list){
     if(d.type === 'win_streak' && d.pid) return (_liveWin[d.pid] || 0) >= (d.streak || 0);
     if(d.type === 'top_form' && d.pid) return (_liveForm[d.pid] || 0) >= (d.wins || 0);
     if(d.type === 'dry_spell' && d.lastMatchId) return d.lastMatchId === _lastMatchId;
+    // Ein Elo-Rekord, den es nicht mehr gibt, ist keine Nachricht mehr,
+    // sondern eine falsche. Gemessen standen neun Karten „Neuer Elo-Rekord:
+    // Martin" nebeneinander — mit 128, 183, 214 Elo, und acht davon
+    // behaupteten eine Bestmarke, die längst überboten war. Dieselbe Regel
+    // wie bei der überholten Serie: es bleibt die, die noch gilt.
+    if(d.type === 'elo_record' && d.elo != null){
+      let jetzt = null;
+      try { jetzt = (_allTimeRecords().eloRec || {}).val; } catch(e){}
+      return jetzt == null || d.elo >= jetzt;
+    }
     // Dieselbe Regel für Duos: die Karte bleibt nur, solange die Serie des
     // Paares die genannte Länge noch erreicht.
     if(d.type === 'team_streak'){ const k = _paarKey(d);

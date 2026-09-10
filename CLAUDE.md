@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **689**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **690**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -666,6 +666,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   hängt die Bündelung, und im Blatt führt die Zeile damit zu dem, von dem sie
   handelt.
 
+  **Dieselbe Auszeichnung ist einmal Nachricht, dann an runden Marken**
+  (`NEWS_BADGE_MARKEN`: 1, 5, 10, 25, 50, 100). Die Karte entstand jedes Mal
+  neu, wenn jemand ein Badge wieder holte: gemessen stand „Martin: Mauer"
+  vierzehnmal im Feed, wortgleich — der Text ist die Bedingung aus dem
+  Katalog und ändert sich nie. 93 der 866 je gebildeten Karten gingen darauf
+  zurück, mehr als auf jede andere Quelle; nach der Regel sind es elf.
+  Dieselbe Logik zählt das Prestige: eine beliebig oft holbare Auszeichnung
+  genau einmal [§C34]. Eine **Würde** ist ausgenommen — sie ist je Saison neu
+  zu holen und jedes Mal eine Nachricht.
+  **Ein überholter Elo-Rekord verschwindet.** Neun Karten „Neuer Elo-Rekord:
+  Martin" standen nebeneinander, mit 128, 183 und 214 Elo — acht davon
+  behaupteten eine Bestmarke, die längst überboten war. Dieselbe Regel wie
+  bei der überholten Serie: es bleibt die, die noch gilt.
   **Was wichtig ist, bleibt eine eigene Karte** (`_sammelEinzeln`): Breaking,
   weil ein erstmals vergebener Liga-Rekord nicht als vierte Zeile enden soll,
   und jede **seltene oder legendäre Auszeichnung**. „Nerven aus Stahl" (drei
