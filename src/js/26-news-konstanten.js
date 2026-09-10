@@ -83,6 +83,13 @@ const NEWS_LIMITS = {
   // der Monatskarte, die es ohnehin gibt.
   chronikGeholt: 2,
   proTag: 6,
+  // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
+  // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
+  // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
+  // faengt die Stunde auf: keine der 466 Partien hat nach 18:31 angefangen,
+  // und der Fun Fact dieses Slots faellt an einem Spieltag ohnehin weg.
+  tagKartePartien: 8,
+  tagKarteStunde: 19,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
   // Neue, jedes Mal mit einem Prozentpunkt mehr: die ID ist damit eine andere,
