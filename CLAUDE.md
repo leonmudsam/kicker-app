@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **693**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **694**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -221,7 +221,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen, die Abstufung der Wiederholung, der Wiederholungs-Katalog | 981 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge, der Tag gehört sich selbst | 240 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge, der Tag gehört sich selbst, der Rang aus dem Generator | 242 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt, die Karte fuer den gemeinsamen Erfolg, die Zahlenreihe der Chronik — **im echten Browser gemessen** | 99 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -787,6 +787,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Zeitpunkt bleiben, was die Datenbank sagt, sonst spränge eine Karte im Feed;
   alles andere ist eine Ableitung aus den Daten und darf sich verbessern —
   genau so arbeiten `_isBreaking` und `_displayCat` seit jeher.
+
+  **Der Rang gehört dazu** (`_newsPrio`). `prio` stand als Zahl mit in der
+  Zeile, und als die Skala auf EIN Band umgestellt wurde, blieb jede längst
+  gespeicherte Karte auf ihrer alten stehen: gemessen trugen 113 der 153
+  Zeilen im Vierzehn-Tage-Fenster noch einen Wert von höchstens zehn, und von
+  den fünfundzwanzig, die der Generator heute noch bildet, wichen
+  vierundzwanzig ab — „Die Woche gehört Martin" stand mit 9 neben einer
+  frischen Sammelkarte mit 80. Damit waren die zwei Skalen wieder da, diesmal
+  zwischen Datenbank und Generator, und der Tagesdeckel entschied zwischen
+  ihnen. Überlebt haben die alten Karten nur dort, wo eine Ausnahme sie trug:
+  Breaking und die Pflichtkarten zählen nicht gegen den Deckel. Gerechnet
+  wird deshalb immer neu — die Zahl des Generators, sonst das Band des Typs
+  aus `STORY_PRIO`.
 
   **Breaking ist das Seltenste, also darf es das Lauteste sein.** Sieben
   Anlässe sind erlaubt, das sind wenige Karten pro Saison. Vorher unterschied

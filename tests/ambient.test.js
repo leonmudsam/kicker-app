@@ -589,6 +589,32 @@ ok(_potdQuelle.waehrend !== '2026-08-26',
 ok(_potdQuelle.danach === '2026-08-26',
    'um 23:59 gehoert der Tag sich selbst',
    String(_potdQuelle.danach));
+
+// Der Rang kommt aus dem Generator, nicht aus der Zeile. Eine gespeicherte
+// Karte trug ihre `prio` mit sich; als die Skala auf EIN Band umgestellt
+// wurde, blieben die alten Zeilen auf ihrer alten Zahl stehen und der
+// Tagesdeckel verglich zwei Skalen. Gemessen wird an einer Karte, die der
+// Generator noch bildet (dann gilt seine Zahl), und an einer, die er nicht
+// mehr bildet (dann gilt das Band ihres Typs).
+const _prioFrisch = JSON.parse(K.eval(`JSON.stringify((function(){
+  const frisch = _buildStories();
+  const kennt = frisch.find(s => s && s.prio > 40 && (s.dataRef||{}).type
+                                 && !STORY_LAEUFT_AB.has(s.dataRef.type));
+  if(!kennt) return {keine:true};
+  const ausDb  = Object.assign({}, kennt, {prio: 6});
+  const veraltet = {id:'diese_id_bildet_niemand_mehr', cat:'highlight',
+                    title:'Alt', desc:'Alt', when: kennt.when, prio: 4,
+                    dataRef:{type:'top_clash'}};
+  const aus = _newsTexteAuffrischen([ausDb, veraltet]);
+  return {bekannt: aus[0].prio, sollBekannt: kennt.prio,
+          veraltet: aus[1].prio, sollVeraltet: STORY_PRIO.top_clash};
+})())`));
+ok(!_prioFrisch.keine && _prioFrisch.bekannt === _prioFrisch.sollBekannt,
+   'eine gespeicherte Karte bekommt den Rang des Generators',
+   _prioFrisch.bekannt + ' statt ' + _prioFrisch.sollBekannt);
+ok(!_prioFrisch.keine && _prioFrisch.veraltet === _prioFrisch.sollVeraltet,
+   'und eine, die er nicht mehr bildet, das Band ihres Typs',
+   _prioFrisch.veraltet + ' statt ' + _prioFrisch.sollVeraltet);
 ok(_plan.chrZeit.every(t => t === '0:0'), 'die Chronik erscheint um 00:00',
    _plan.chrZeit.join(', ') || 'keine');
 ok(_plan.chrErster, 'am ersten Tag des Folgemonats');

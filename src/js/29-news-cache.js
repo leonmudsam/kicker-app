@@ -52,6 +52,29 @@ const STORY_LAEUFT_AB = new Set(['season_endgame']);
 // `_consolidateStories` — der genau dafür gebaut ist — schlug nie an:
 // gemessen null Treffer in fünf Aufrufen. `getStoriesCache` läuft nach jedem
 // `loadAll` und bei jedem Zeichnen des Feeds.
+// ── Der Rang kommt aus dem Generator, nicht aus der Datenbank ────────
+// `prio` ist eine Ableitung aus den Daten wie `_isBreaking` und `_displayCat`
+// [§C33] — sie stand aber als Zahl mit in der Zeile. Als die Skala auf EIN
+// Band umgestellt wurde (§11.0a), blieb jede längst gespeicherte Karte auf
+// ihrer alten Zahl stehen: gemessen trugen 113 der 153 Zeilen im
+// Vierzehn-Tage-Fenster noch einen Wert von höchstens zehn, und von den
+// fünfundzwanzig, die der Generator heute noch bildet, wichen
+// vierundzwanzig ab. „Die Woche gehört Martin" stand mit 9 neben einer
+// frischen Sammelkarte mit 80, „Martin schlägt Leo im Spitzenspiel" mit 9.
+// Damit war die zweite Skala wieder da, die §11.0a gerade abgeschafft hatte
+// — diesmal zwischen Datenbank und Generator, und der Tagesdeckel
+// entschied zwischen beiden. Überlebt haben die alten Karten nur, wo eine
+// Ausnahme sie trug: Breaking und die Pflichtkarten zählen nicht gegen den
+// Deckel.
+// Gerechnet wird deshalb immer neu: die Zahl des Generators, wenn er
+// dieselbe ID noch bildet, sonst das Band des Typs. Die gespeicherte Zahl
+// ist damit ein Hinweis und keine Entscheidung mehr.
+function _newsPrio(s, frisch){
+  if(frisch && typeof frisch.prio === 'number') return frisch.prio;
+  const band = STORY_PRIO[(s && s.dataRef || {}).type];
+  return (typeof band === 'number') ? band : ((s && s.prio) | 0);
+}
+
 function _newsTexteAuffrischen(list){
   if(!Array.isArray(list) || !list.length) return list || [];
   let frisch = null;
@@ -64,14 +87,18 @@ function _newsTexteAuffrischen(list){
   const aus = [];
   list.forEach(s => {
     const n = s && s.id ? nach.get(s.id) : null;
+    const p = _newsPrio(s, n);
     if(!n){
       if(s && STORY_LAEUFT_AB.has((s.dataRef || {}).type)){ geaendert = true; return; }
-      aus.push(s); return;
+      if(p === s.prio){ aus.push(s); return; }
+      geaendert = true;
+      aus.push(Object.assign({}, s, {prio: p}));
+      return;
     }
-    if(n.title === s.title && n.desc === s.desc){ aus.push(s); return; }
+    if(n.title === s.title && n.desc === s.desc && p === s.prio){ aus.push(s); return; }
     geaendert = true;
     aus.push(Object.assign({}, s, {title: n.title, desc: n.desc, ic: n.ic || s.ic,
-                                   dataRef: n.dataRef || s.dataRef}));
+                                   prio: p, dataRef: n.dataRef || s.dataRef}));
   });
   // Hat sich nichts geändert, gewinnt die alte Referenz — dann greift der
   // Memo eine Ebene weiter oben.
