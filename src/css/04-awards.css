@@ -120,6 +120,14 @@
   .aw-vitrine.purple{--awc:var(--purple);--awc-rgb:167,139,250}
   .aw-vitrine.red   {--awc:var(--red);   --awc-rgb:240,86,106}
   .aw-vitrine.silber{--awc:var(--silber);--awc-rgb:194,201,208}
+  /* Drei Rollen statt sechs Katalogtoene [§C25]: Gold fuer das Koennen,
+     Blau fuer das, was zu zweit geholt wurde, Rot fuer die Kehrseite. Die
+     Toene stehen AN DER KACHEL und nicht nur am Behaelter — im Profil-Sheet
+     gibt es keinen gefaerbten Behaelter, und dort fiel die Farbe damit ganz
+     aus. */
+  .aw-trophy.ton-pos {--awc:var(--gold); --awc-rgb:247,207,74}
+  .aw-trophy.ton-team{--awc:var(--blue); --awc-rgb:86,180,232}
+  .aw-trophy.ton-neg {--awc:var(--red);  --awc-rgb:240,86,106}
   /* ── Die Kachel [§C8] ────────────────────────────────────────────
      Reihenfolge auf der Kachel: was es ist, wer es hat, wie viel.
      Vorher stand der Träger als 18px-Chip ganz unten und das Symbol war

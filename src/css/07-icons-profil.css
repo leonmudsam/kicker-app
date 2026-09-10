@@ -1292,7 +1292,21 @@
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .pp-posprof .pph .pct{color:var(--ink);font-weight:700}
   .pp-posprof .pp-slider{position:relative;height:6px;background:var(--surface3);border-radius:3px}
-  .pp-posprof .pp-fill{height:100%;background:linear-gradient(90deg,var(--acid2),var(--acid));border-radius:3px}
+  /* Der Strahl gehoert der Seite, die ueberwiegt, und laeuft von dort nach
+     innen. Er lief immer von links und war so lang wie der Sturmanteil —
+     bei 29 zu 71 zeigte er damit die kleinere Haelfte. Die Farbe ist die
+     der Seite, wie schon in der Kopfzeile darueber [§C27]. */
+  .pp-posprof .pp-fill{height:100%;border-radius:3px;
+    background:linear-gradient(90deg,rgba(255,120,73,.35),var(--orange))}
+  .pp-posprof.def-seite .pp-slider{display:flex;justify-content:flex-end}
+  .pp-posprof.def-seite .pp-fill{
+    background:linear-gradient(270deg,rgba(86,180,232,.35),var(--blue))}
+  /* Die staerkere Rolle traegt ihre Farbe, die schwaechere steht zurueck.
+     Beide gleich laut gezeichnet sagten nicht, worin jemand besser ist. */
+  .pp-rd.schwach{opacity:.62}
+  .pp-rd.schwach .pp-rd-wr{color:var(--ink2)}
+  .pp-rd.stark .pp-rd-ring{box-shadow:0 0 0 1px rgba(255,255,255,.06),
+    0 4px 16px -6px currentColor}
   .pp-posprof .pp-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);
     width:14px;height:14px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);
     box-shadow:0 2px 8px rgba(0,0,0,.5)}

@@ -223,7 +223,7 @@ globalem Zustand ist.
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge | 238 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt, die Karte fuer den gemeinsamen Erfolg — **im echten Browser gemessen** | 97 |
+| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt, die Karte fuer den gemeinsamen Erfolg, die Zahlenreihe der Chronik — **im echten Browser gemessen** | 99 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -402,6 +402,30 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   gar keinen Fall: wer eine Rekord-Karte öffnete, sah den Satz, den er auf der
   Karte schon gelesen hatte. Wer ein zweites Bauteil für dieselbe Aussage baut,
   hat einen Fehler gemacht.
+  **Die Award-Kachel ist EIN Bauteil** (`.aw-trophy` mit `.aw-t-kopf`,
+  `.aw-t-held`, `.aw-t-val`, `.aw-t-name`). Das Awards-Sheet im Profil baute
+  noch die alte Fassung (`aw-trophy-cup`, `-lbl`, `-val`, `-plaque`) —
+  Klassennamen, zu denen es seit dem Umbau der Vitrine keine Regel mehr
+  gibt. Übrig blieb der Kasten und darin unformatierter Text: das Sheet
+  hatte nicht seine Farbe verloren, sondern sein Bauteil.
+  Der Farbstich kommt aus **drei** Rollen und nicht aus sechs Katalogtönen
+  [§C25]: `ton-pos` Gold für das Können, `ton-team` Blau für das, was zu
+  zweit geholt wurde, `ton-neg` Rot für die Kehrseite. Die Töne stehen an
+  der KACHEL, nicht am Behälter — im Profil-Sheet gibt es keinen gefärbten
+  Behälter, und dort fiel die Farbe damit ganz aus.
+  **Der Strahl im Positions-Profil gehört der Seite, die überwiegt.** Er
+  lief immer von links und war so lang wie der Sturmanteil; bei 29 zu 71
+  zeigte er damit die kleinere Hälfte und las sich wie ein
+  Fortschrittsbalken, der fast leer ist. Der Knopf bleibt an der Grenze
+  zwischen beiden — die ist die Aussage.
+  **Die stärkere Rolle trägt ihre Farbe, die schwächere steht zurück**
+  (`.pp-rd.stark` / `.schwach`). Beide gleich laut gezeichnet sagten nicht,
+  worin jemand besser ist, und genau das beantwortet diese Karte. Bei
+  Gleichstand bleiben beide stark: dann gibt es keine bessere.
+  **Ein langer Wert in der Zahlenreihe wird kleiner, nicht breiter.**
+  „Schattenseite" maß gerendert 104 px in einer 88-px-Zelle und lief in die
+  daneben, in der der Ausschlag steht. Zwei Stufen (`.lang`, `.sehrlang`)
+  reichen; `tests/blatt` misst jede Chronik des Katalogs nach.
   **Die Kachel misst am Reif, nicht am Gesicht** — der Avatar ist 46 % von
   `--rav`. Wer ein 40-px-Gesicht ersetzt, braucht 87 px Kachel, nicht 40.
   Unter 48 px bleibt vom Zeichen nichts übrig; 52 px sind das Maß der

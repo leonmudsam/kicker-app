@@ -82,10 +82,19 @@ function rcpHeldHtml(o){
 // Die Zahlenleiste. `ton` färbt einen Wert — und zwar nur dann, wenn die
 // Farbe eine Richtung meint (Elo-Zuwachs grün, Verlust rot) oder einen
 // Titel (gold). Alles andere bleibt Metall [§C25].
+// Die Zellen sind gleich breit, die Werte nicht: „Schattenseite" ist
+// dreizehn Zeichen in 18-px-Archivo und lief ueber seine Zelle hinaus in
+// die daneben. Ein Wort laesst sich nicht umbrechen, also wird es kleiner —
+// in zwei Stufen, damit „legendaer" und „2,39 σ" gross bleiben. Gezaehlt
+// wird die Zeichenzahl und nicht die gerenderte Breite: hier steht kein
+// Fliesstext, sondern eine Handvoll fester Woerter aus dem Katalog.
 function rcpZahlenHtml(zellen){
-  return `<div class="rcp-z">${zellen.filter(Boolean).map(z =>
-    `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''} num">${
-      esc(String(z.v))}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`).join('')}</div>`;
+  const lang = t => t.length > 11 ? ' sehrlang' : t.length > 8 ? ' lang' : '';
+  return `<div class="rcp-z">${zellen.filter(Boolean).map(z => {
+    const t = String(z.v);
+    return `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''}${
+      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`;
+  }).join('')}</div>`;
 }
 
 // Eine Abschnittsüberschrift. `n` ist die Zahl rechts — nur setzen, wenn sie

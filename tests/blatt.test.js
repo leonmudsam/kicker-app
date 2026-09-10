@@ -1075,6 +1075,38 @@ const ok = (c, msg, det) => {
   //    „Nachzügler" und breiter —, sondern die gerenderte Breite des Textes
   //    gegen die des Kastens. scrollWidth taugt dafuer nicht: er rundet auf
   //    ganze Pixel, und „Augenhöhe" ragte um ein Viertel Pixel heraus.
+  // ── Die Zahlenreihe im Chronik-Blatt laeuft nicht ueber ─────────────
+  //    Vier gleich breite Zellen, und in einer steht „Schattenseite": als
+  //    18-px-Archivo lief das Wort ueber seine Zelle hinaus in die daneben,
+  //    in der der Ausschlag steht. Gemessen wird die gerenderte Breite des
+  //    Textes gegen die des Kastens — in Zeichen gezaehlt sagte es nichts:
+  //    „legendär" ist neun Zeichen und passt, „Konstanz" acht und passt
+  //    knapper.
+  console.log('\n═══ DIE ZAHLENREIHE DER CHRONIK ═══');
+  const zahlen = await page.evaluate(() => {
+    const box = document.createElement('div');
+    box.style.width = '430px';
+    document.body.appendChild(box);
+    const K = window.__k.eval.bind(window.__k);
+    // Jede Chronik des Katalogs, nicht nur die, die heute jemand haelt.
+    const ids = K('SEASON_TITLES.map(t => t.id)');
+    box.innerHTML = ids.map(id =>
+      K('_chronFaktenHtml(SEASON_TITLE_BY_ID[' + JSON.stringify(id) + '])')).join('');
+    const zu = [];
+    box.querySelectorAll('.rcp-z-v').forEach(e => {
+      const r = document.createRange(); r.selectNodeContents(e);
+      const tw = r.getBoundingClientRect().width;
+      const cw = e.getBoundingClientRect().width;
+      if(tw > cw + 0.01) zu.push(e.textContent.trim() + ' (' + tw.toFixed(1) + '>' + cw.toFixed(1) + ')');
+    });
+    const n = box.querySelectorAll('.rcp-z-v').length;
+    box.remove();
+    return {zu, n};
+  });
+  ok(zahlen.n > 0, 'die Zahlenreihe der Chronik wird gebaut', zahlen.n + ' Zellen');
+  ok(zahlen.zu.length === 0, 'kein Wert laeuft ueber seine Zelle',
+     zahlen.zu.slice(0, 3).join(', ') || 'keiner');
+
   console.log('\n═══ DIE CHRONIK-MATRIX ═══');
   const matrix = await page.evaluate(() => {
     const box = document.createElement('div');

@@ -813,6 +813,14 @@
   .aw-vitrine.purple{--awc:var(--purple);--awc-rgb:167,139,250}
   .aw-vitrine.red   {--awc:var(--red);   --awc-rgb:240,86,106}
   .aw-vitrine.silber{--awc:var(--silber);--awc-rgb:194,201,208}
+  /* Drei Rollen statt sechs Katalogtoene [§C25]: Gold fuer das Koennen,
+     Blau fuer das, was zu zweit geholt wurde, Rot fuer die Kehrseite. Die
+     Toene stehen AN DER KACHEL und nicht nur am Behaelter — im Profil-Sheet
+     gibt es keinen gefaerbten Behaelter, und dort fiel die Farbe damit ganz
+     aus. */
+  .aw-trophy.ton-pos {--awc:var(--gold); --awc-rgb:247,207,74}
+  .aw-trophy.ton-team{--awc:var(--blue); --awc-rgb:86,180,232}
+  .aw-trophy.ton-neg {--awc:var(--red);  --awc-rgb:240,86,106}
   /* ── Die Kachel [§C8] ────────────────────────────────────────────
      Reihenfolge auf der Kachel: was es ist, wer es hat, wie viel.
      Vorher stand der Träger als 18px-Chip ganz unten und das Symbol war
@@ -2928,7 +2936,21 @@
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .pp-posprof .pph .pct{color:var(--ink);font-weight:700}
   .pp-posprof .pp-slider{position:relative;height:6px;background:var(--surface3);border-radius:3px}
-  .pp-posprof .pp-fill{height:100%;background:linear-gradient(90deg,var(--acid2),var(--acid));border-radius:3px}
+  /* Der Strahl gehoert der Seite, die ueberwiegt, und laeuft von dort nach
+     innen. Er lief immer von links und war so lang wie der Sturmanteil —
+     bei 29 zu 71 zeigte er damit die kleinere Haelfte. Die Farbe ist die
+     der Seite, wie schon in der Kopfzeile darueber [§C27]. */
+  .pp-posprof .pp-fill{height:100%;border-radius:3px;
+    background:linear-gradient(90deg,rgba(255,120,73,.35),var(--orange))}
+  .pp-posprof.def-seite .pp-slider{display:flex;justify-content:flex-end}
+  .pp-posprof.def-seite .pp-fill{
+    background:linear-gradient(270deg,rgba(86,180,232,.35),var(--blue))}
+  /* Die staerkere Rolle traegt ihre Farbe, die schwaechere steht zurueck.
+     Beide gleich laut gezeichnet sagten nicht, worin jemand besser ist. */
+  .pp-rd.schwach{opacity:.62}
+  .pp-rd.schwach .pp-rd-wr{color:var(--ink2)}
+  .pp-rd.stark .pp-rd-ring{box-shadow:0 0 0 1px rgba(255,255,255,.06),
+    0 4px 16px -6px currentColor}
   .pp-posprof .pp-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);
     width:14px;height:14px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);
     box-shadow:0 2px 8px rgba(0,0,0,.5)}
@@ -3185,6 +3207,12 @@
     color:var(--ink);letter-spacing:-.02em}
   .rcp-held .rcp-z-v{font-size:19px}
   .rcp-z-v.gold{color:var(--gold)} .rcp-z-v.gruen{color:var(--acid)} .rcp-z-v.rot{color:var(--red)}
+  /* Ein langes Wort laeuft sonst in die Nachbarzelle: „Schattenseite" stand
+     als 18-px-Archivo ueber die Zellgrenze hinaus, und daneben stand der
+     Ausschlag. Zwei Stufen reichen — mehr waere unlesbar klein. */
+  .rcp-z-v.lang{font-size:14px;letter-spacing:-.03em}
+  .rcp-z-v.sehrlang{font-size:11.5px;letter-spacing:-.03em;line-height:1.15}
+  .rcp-z-s{overflow:hidden}
   .rcp-z-l{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:5px}
 
@@ -4721,7 +4749,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.eda43c5e';
+const BUILD_VERSION='2026.09.10.78920286';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6083,10 +6111,19 @@ function rcpHeldHtml(o){
 // Die Zahlenleiste. `ton` färbt einen Wert — und zwar nur dann, wenn die
 // Farbe eine Richtung meint (Elo-Zuwachs grün, Verlust rot) oder einen
 // Titel (gold). Alles andere bleibt Metall [§C25].
+// Die Zellen sind gleich breit, die Werte nicht: „Schattenseite" ist
+// dreizehn Zeichen in 18-px-Archivo und lief ueber seine Zelle hinaus in
+// die daneben. Ein Wort laesst sich nicht umbrechen, also wird es kleiner —
+// in zwei Stufen, damit „legendaer" und „2,39 σ" gross bleiben. Gezaehlt
+// wird die Zeichenzahl und nicht die gerenderte Breite: hier steht kein
+// Fliesstext, sondern eine Handvoll fester Woerter aus dem Katalog.
 function rcpZahlenHtml(zellen){
-  return `<div class="rcp-z">${zellen.filter(Boolean).map(z =>
-    `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''} num">${
-      esc(String(z.v))}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`).join('')}</div>`;
+  const lang = t => t.length > 11 ? ' sehrlang' : t.length > 8 ? ' lang' : '';
+  return `<div class="rcp-z">${zellen.filter(Boolean).map(z => {
+    const t = String(z.v);
+    return `<div class="rcp-z-s"><div class="rcp-z-v${z.ton ? ' ' + z.ton : ''}${
+      lang(t)} num">${esc(t)}</div><div class="rcp-z-l">${esc(z.l)}</div></div>`;
+  }).join('')}</div>`;
 }
 
 // Eine Abschnittsüberschrift. `n` ist die Zahl rechts — nur setzen, wenn sie
@@ -15467,6 +15504,13 @@ const rankProgHtml = rInfo ? `
             <div class="pp-roles-empty">Keine Spiele</div>
           </div>`;
         }
+        // Die staerkere Rolle traegt ihre Farbe, die schwaechere steht
+        // zurueck. Beide gleich laut gezeichnet sagten sie nicht, worin
+        // jemand besser ist — und genau das ist die Frage, die diese
+        // Karte beantwortet. Bei Gleichstand bleiben beide stark: dann
+        // gibt es keine bessere.
+        const _stark = (atkWr == null || defWr == null || atkWr === defWr)
+          ? 'beide' : (atkWr > defWr ? 'atk' : 'def');
         const donut = (cls, lbl, icon, wr, w, g, valLbl, valNum, color) => {
           if(g === 0) return `
             <div class="pp-rd ${cls}">
@@ -15476,9 +15520,11 @@ const rankProgHtml = rInfo ? `
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
               <div class="pp-rd-empty">noch keine Spiele</div>
             </div>`;
+          const matt = (_stark !== 'beide' && _stark !== cls);
           return `
-            <div class="pp-rd ${cls}">
-              <div class="pp-rd-ring" style="background:conic-gradient(${color} ${wr}%, var(--surface3) 0)">
+            <div class="pp-rd ${cls}${matt ? ' schwach' : ' stark'}">
+              <div class="pp-rd-ring" style="background:conic-gradient(${
+                matt ? 'var(--line2)' : color} ${wr}%, var(--surface3) 0)">
                 <div class="pp-rd-inner"><div class="pp-rd-wr">${wr}<small>%</small></div></div>
               </div>
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
@@ -15711,8 +15757,13 @@ const rankProgHtml = rInfo ? `
           <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
           <span class="rt">Abwehr${svgI('shield')}</span>
         </div>
+        <!-- Der Strahl gehoert der Seite, die ueberwiegt: bei 29 % Sturm
+             und 71 % Abwehr lief er trotzdem von links und war 29 % lang —
+             er zeigte die kleinere Haelfte und las sich wie ein
+             Fortschrittsbalken, der fast leer ist. Der Knopf bleibt an der
+             Grenze zwischen beiden, denn die ist die Aussage. -->
         <div class="pp-slider">
-          <div class="pp-fill" style="width:${atkPct}%"></div>
+          <div class="pp-fill" style="width:${Math.max(atkPct, defPct)}%"></div>
           <span class="pp-thumb" style="left:${atkPct}%"></span>
         </div>
         <div class="ppf">Eingestuft als <span class="lab" style="display:inline-flex;align-items:center;gap:4px">${posIcon}${posLabel}</span></div>
@@ -16016,11 +16067,26 @@ function showPlayerAwards(playerId, awards){
     } else {
       plaqueContent = `<span class="aw-trophy-plaque-name" style="color:var(--muted);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase">Top-1</span>`;
     }
-    return `<div class="aw-trophy ${m.cls}" data-paward2="${esc(a.key)}">
-      <div class="aw-trophy-cup">${ic(a.key)}</div>
-      <div class="aw-trophy-lbl">${esc(m.title)}</div>
-      <div class="aw-trophy-val">${valDisplay}</div>
-      <div class="aw-trophy-plaque">${plaqueContent}</div>
+    // Dieselbe Kachel wie im Awards-Reiter [§C27]. Sie baute hier noch die
+    // ALTE: `aw-trophy-cup`, `-lbl`, `-val`, `-plaque` — Klassennamen, zu
+    // denen es seit dem Umbau der Vitrine keine Regel mehr gibt. Uebrig
+    // blieb der Kasten und darin unformatierter Text; das Sheet hatte seine
+    // Farbe nicht verloren, es hatte sein Bauteil verloren.
+    //
+    // Der Farbstich kommt aus DREI Rollen und nicht aus sechs Katalogtoenen
+    // [§C25]: Gold fuer das Koennen, Blau fuer das, was zu zweit geholt
+    // wurde, Rot fuer die Kehrseite. Sechs Toene nebeneinander waren ein
+    // Farbverlauf ohne Aussage — derselbe Fehler wie die elf
+    // Kategoriefarben im Feed.
+    const ton = m.cls === 'red' ? 'ton-neg'
+              : (a.partner || a.partnerLabel) ? 'ton-team' : 'ton-pos';
+    const kopf = `<div class="aw-t-kopf"><span class="aw-t-ic">${ic(a.key)}</span>`
+      + `<span class="aw-t-lbl">${esc(m.title)}</span></div>`;
+    return `<div class="aw-trophy ${ton}" data-paward2="${esc(a.key)}">
+      ${kopf}
+      <div class="aw-t-held">${avHtml(p, '', {ins:true, px:60})}</div>
+      <div class="aw-t-val">${valDisplay}</div>
+      <div class="aw-t-name">${plaqueContent}</div>
     </div>`;
   };
 

@@ -664,6 +664,13 @@ const rankProgHtml = rInfo ? `
             <div class="pp-roles-empty">Keine Spiele</div>
           </div>`;
         }
+        // Die staerkere Rolle traegt ihre Farbe, die schwaechere steht
+        // zurueck. Beide gleich laut gezeichnet sagten sie nicht, worin
+        // jemand besser ist — und genau das ist die Frage, die diese
+        // Karte beantwortet. Bei Gleichstand bleiben beide stark: dann
+        // gibt es keine bessere.
+        const _stark = (atkWr == null || defWr == null || atkWr === defWr)
+          ? 'beide' : (atkWr > defWr ? 'atk' : 'def');
         const donut = (cls, lbl, icon, wr, w, g, valLbl, valNum, color) => {
           if(g === 0) return `
             <div class="pp-rd ${cls}">
@@ -673,9 +680,11 @@ const rankProgHtml = rInfo ? `
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
               <div class="pp-rd-empty">noch keine Spiele</div>
             </div>`;
+          const matt = (_stark !== 'beide' && _stark !== cls);
           return `
-            <div class="pp-rd ${cls}">
-              <div class="pp-rd-ring" style="background:conic-gradient(${color} ${wr}%, var(--surface3) 0)">
+            <div class="pp-rd ${cls}${matt ? ' schwach' : ' stark'}">
+              <div class="pp-rd-ring" style="background:conic-gradient(${
+                matt ? 'var(--line2)' : color} ${wr}%, var(--surface3) 0)">
                 <div class="pp-rd-inner"><div class="pp-rd-wr">${wr}<small>%</small></div></div>
               </div>
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
@@ -908,8 +917,13 @@ const rankProgHtml = rInfo ? `
           <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
           <span class="rt">Abwehr${svgI('shield')}</span>
         </div>
+        <!-- Der Strahl gehoert der Seite, die ueberwiegt: bei 29 % Sturm
+             und 71 % Abwehr lief er trotzdem von links und war 29 % lang —
+             er zeigte die kleinere Haelfte und las sich wie ein
+             Fortschrittsbalken, der fast leer ist. Der Knopf bleibt an der
+             Grenze zwischen beiden, denn die ist die Aussage. -->
         <div class="pp-slider">
-          <div class="pp-fill" style="width:${atkPct}%"></div>
+          <div class="pp-fill" style="width:${Math.max(atkPct, defPct)}%"></div>
           <span class="pp-thumb" style="left:${atkPct}%"></span>
         </div>
         <div class="ppf">Eingestuft als <span class="lab" style="display:inline-flex;align-items:center;gap:4px">${posIcon}${posLabel}</span></div>
@@ -1213,11 +1227,26 @@ function showPlayerAwards(playerId, awards){
     } else {
       plaqueContent = `<span class="aw-trophy-plaque-name" style="color:var(--muted);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase">Top-1</span>`;
     }
-    return `<div class="aw-trophy ${m.cls}" data-paward2="${esc(a.key)}">
-      <div class="aw-trophy-cup">${ic(a.key)}</div>
-      <div class="aw-trophy-lbl">${esc(m.title)}</div>
-      <div class="aw-trophy-val">${valDisplay}</div>
-      <div class="aw-trophy-plaque">${plaqueContent}</div>
+    // Dieselbe Kachel wie im Awards-Reiter [§C27]. Sie baute hier noch die
+    // ALTE: `aw-trophy-cup`, `-lbl`, `-val`, `-plaque` — Klassennamen, zu
+    // denen es seit dem Umbau der Vitrine keine Regel mehr gibt. Uebrig
+    // blieb der Kasten und darin unformatierter Text; das Sheet hatte seine
+    // Farbe nicht verloren, es hatte sein Bauteil verloren.
+    //
+    // Der Farbstich kommt aus DREI Rollen und nicht aus sechs Katalogtoenen
+    // [§C25]: Gold fuer das Koennen, Blau fuer das, was zu zweit geholt
+    // wurde, Rot fuer die Kehrseite. Sechs Toene nebeneinander waren ein
+    // Farbverlauf ohne Aussage — derselbe Fehler wie die elf
+    // Kategoriefarben im Feed.
+    const ton = m.cls === 'red' ? 'ton-neg'
+              : (a.partner || a.partnerLabel) ? 'ton-team' : 'ton-pos';
+    const kopf = `<div class="aw-t-kopf"><span class="aw-t-ic">${ic(a.key)}</span>`
+      + `<span class="aw-t-lbl">${esc(m.title)}</span></div>`;
+    return `<div class="aw-trophy ${ton}" data-paward2="${esc(a.key)}">
+      ${kopf}
+      <div class="aw-t-held">${avHtml(p, '', {ins:true, px:60})}</div>
+      <div class="aw-t-val">${valDisplay}</div>
+      <div class="aw-t-name">${plaqueContent}</div>
     </div>`;
   };
 
