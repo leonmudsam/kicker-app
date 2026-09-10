@@ -84,7 +84,13 @@ function _thronDerLiga(P, ms){
     const rang = Object.keys(stand).sort((a, b) => stand[b] - stand[a]);
     rang.forEach((id, i) => {
       const p = P[id];
-      if(p && (p.thronRang == null || i + 1 > p.thronRang)) p.thronRang = i + 1;
+      if(!p) return;
+      if(p.thronRang == null || i + 1 > p.thronRang) p.thronRang = i + 1;
+      // „Der Aufstieg" vergleicht den Platz am ersten eigenen Tagesende mit
+      // dem am letzten des Monats. Vor der ersten Partie steht niemand in der
+      // Monatstabelle, also ist der erste Eintrag genau der Startplatz.
+      if(p.platzErst == null) p.platzErst = i + 1;
+      p.platzLetzt = i + 1;
     });
   };
   ms.slice().sort((a, b) => mts(a) - mts(b)).forEach(m => {
@@ -198,6 +204,8 @@ function _seasonTitleCtxRechnen(sid){
     potw:0, potwG:0,             // Player-of-the-Week-Titel / gewertete Wochen
     bannLauf:0,                  // laengste im Monat gebrochene Pleitenserie
     thronRang:null,              // schlechtester Tabellenplatz an einem Tagesende
+    platzErst:null, platzLetzt:null, // Tabellenplatz am ersten und letzten Tagesende
+    brechG:0, brechW:0,          // Partien gegen eine laufende Serie von 3 Siegen
     // ── Die Rohsicht eines Spielers auf seinen Monat ──────────────────
     // Jede Partie einmal, aus SEINER Perspektive, in der Reihenfolge, in
     // der sie gespielt wurde. Die Chroniken fragen nach dem schwaechsten
@@ -249,6 +257,12 @@ function _seasonTitleCtxRechnen(sid){
     // Uhrzeit einmal pro Match, nicht pro Spieler.
     const hour = new Date(m.created_at).getHours();
     const mateOf = id => id===m.a1 ? m.a2 : id===m.a2 ? m.a1 : id===m.b1 ? m.b2 : m.b1;
+    // Die Serie jedes Beteiligten VOR dem Anpfiff. `run` wird innerhalb der
+    // Spieler-Schleife nachgezogen und steht damit fuer die A-Seite schon auf
+    // dem neuen Stand, wenn die B-Seite dran ist — hier ist er noch alt.
+    // „Der Serienbrecher" fragt nach genau diesem Stand.
+    const serieVor = {};
+    [m.a1, m.a2, m.b1, m.b2].forEach(id => { if(id) serieVor[id] = run[id] || 0; });
     [m.a1, m.a2, m.b1, m.b2].forEach(id => {
       if(!id) return;
       const p = ensure(id);
@@ -264,6 +278,12 @@ function _seasonTitleCtxRechnen(sid){
       if(w) p.wins++; else p.losses++;
       if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; }
       else             { p.defG++; p.defConceded += ga; if(w) p.defW++; }
+      // Trug einer der Gegner beim Anpfiff drei Siege am Stueck, ist das eine
+      // Gelegenheit, eine Serie zu brechen — gezaehlt wird der Anteil, nicht
+      // die Anzahl: wer viel spielt, trifft oefter auf einen heissen Gegner.
+      const gegSerie = (onA ? [m.b1, m.b2] : [m.a1, m.a2])
+        .reduce((mx, g) => Math.max(mx, g ? (serieVor[g] || 0) : 0), 0);
+      if(gegSerie >= 3){ p.brechG++; if(w) p.brechW++; }
       if(w && gf===10 && ga===9)  p.nail++;
       if(!w && gf===9 && ga===10) p.bitter++;
       if(w && gf===10 && ga===0)  p.perfect++;

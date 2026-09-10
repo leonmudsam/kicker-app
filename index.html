@@ -4682,7 +4682,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.25005bc8';
+const BUILD_VERSION='2026.09.10.1fa7b111';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19903,14 +19903,27 @@ function _buildStories(){
   // Lauf wäre zu teuer. Das Gedächtnis ist stattdessen der Feed selbst: die
   // Story-ID trägt Spieler und Stufe, und persistierte Stories werden nie
   // doppelt eingefügt. Gemeldet wird nur, wer die Schwelle GERADE erst
-  // überschritten hat (weniger als ein Viertel darüber) — sonst stünden
-  // beim ersten Lauf alle zwölf Stufen auf einmal im Feed.
+  // überschritten hat — sonst stünden beim ersten Lauf alle zwölf Stufen
+  // auf einmal im Feed.
+  //
+  // „Gerade erst" war ein Viertel ÜBER der Schwelle, und das war zweimal
+  // falsch. Erstens hing das Fenster an der Höhe der Schwelle statt an der
+  // Strecke bis zur nächsten: am Schildring waren es 60 Punkte, am
+  // Volutenkranz 180. Zweitens ist eine einzige legendäre Chronik 140 Punkte
+  // wert [§C39] — ein Fenster, das schmaler ist als der kleinste Schritt,
+  // wird übersprungen. Gemessen meldete der Feed danach KEINE Stufe mehr,
+  // weil der volle Katalog jeden Spieler weit über sein Fenster hob.
+  // Jetzt: das erste Viertel der Strecke zur nächsten Stufe, mindestens aber
+  // so breit wie der größte Einzelgewinn.
+  const INS_SPRUNG = 150;
   try {
     (players || []).filter(p => p && !p.hidden).forEach(p => {
       const P = prestigeOf(p.id);
       if(!P || P.stufe < 1) return;
       const schwelle = INSIGNIEN[P.stufe].min;
-      if(P.punkte >= schwelle * 1.25) return;
+      const naechste = INSIGNIEN[P.stufe + 1];
+      const spanne = naechste ? (naechste.min - schwelle) : schwelle;
+      if(P.punkte >= schwelle + Math.max(spanne * 0.25, INS_SPRUNG)) return;
       const oben = P.stufe >= 3;   // Lorbeerreif und Ordensstern
       stories.push({
         id: 'ins_' + p.id + '_' + INSIGNIEN[P.stufe].key,
@@ -24469,6 +24482,47 @@ const _stNachPleite = p => p.partien.filter((s, i) => i > 0 && !p.partien[i-1].w
 
 // Die beiden Haelften eines Monats, geteilt an der Mitte der eigenen
 // Spieltage. „Die Steigerung" vergleicht sie miteinander.
+// Die Streuung einer Reihe von Zahlen. „Der Gleichmut" fragt nicht nach der
+// Hoehe der Tordifferenz, sondern danach, wie weit sie um ihr eigenes Mittel
+// schwankt — dafuer reicht kein Mittelwert.
+const _stStreu = a => {
+  const m = _stMittel(a);
+  return Math.sqrt(_stMittel(a.map(x => (x - m) * (x - m))));
+};
+// Die Siegquote einer Teilmenge von Partien. Stand achtmal als
+// `a.filter(s=>s.win).length/a.length` in der Datei.
+const _stQuote = a => a.length ? a.filter(s => s.win).length / a.length : 0;
+// Wochen mit genug Partien fuer eine Wahrscheinlichkeitsrechnung. `_stWochen`
+// nimmt fuenf; unter sechs ist eine ganze Woche kaum unwahrscheinlich zu
+// nennen, weil schon vier Siege in Folge eine Woche fuellen.
+const _stWochGross = p => Object.values(p.wochGrp).filter(a => a.length >= 6);
+// Die ersten drei Partien eines Spieltags gegen alles danach. Der Vergleich
+// laeuft innerhalb desselben Tages, damit nicht zwei verschiedene Wochen
+// gegeneinander stehen.
+function _stTagBlock(p){
+  const frueh = [], spaet = [];
+  Object.values(p.tagGrp).forEach(a => {
+    a.forEach((s, i) => (i < 3 ? frueh : spaet).push(s));
+  });
+  return {frueh, spaet};
+}
+// Die Partie direkt nach ZWEI Pleiten am Stueck. Nach einer fragt schon
+// „Die Antwort"; zwei sind die Stelle, an der ein Tag kippt.
+const _stNachZwei = p => p.partien.filter((s, i) =>
+  i >= 2 && !p.partien[i-1].win && !p.partien[i-2].win);
+// Die letzte Partie jeder Kalenderwoche, in der ueberhaupt gespielt wurde.
+const _stWochLetzte = p => Object.values(p.wochGrp)
+  .filter(a => a.length >= 3).map(a => a[a.length - 1]);
+// Partien als klarer Favorit und als Aussenseiter. Die Grenzen sind
+// dieselben wie im Rest des Katalogs.
+const _stRollen = p => ({
+  fav: p.partien.filter(s => s.exp > 0.55),
+  aus: p.partien.filter(s => s.exp < 0.45)
+});
+// Partien, die mit genau einem Tor Unterschied endeten: der letzte Ball hat
+// entschieden. `_stEng` nimmt zwei — das ist eine andere Frage.
+const _stEinTor = p => p.partien.filter(s => Math.abs(s.gf - s.ga) === 1);
+
 function _stHaelften(p){
   const tage = Object.keys(p.tagGrp).sort();
   if(tage.length < 4) return null;
@@ -25214,6 +25268,126 @@ const DISZIPLINEN = [
         1,
         p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
 
+  // ── Zweite Runde: neun Chroniken mehr [§C39] ─────────────────────
+  // Alle an den echten Partien kalibriert. Was hier nicht steht, hat eine
+  // der beiden Regeln gerissen: die Schwelle liess sich nicht 1,5 σ
+  // hinausschieben, oder der Wert hing an der Spielzahl. „Die Sammlung"
+  // (wie viele verschiedene Ergebnisse) korrelierte mit −0,91 zur
+  // Spielzahl — wer zwoelf Partien spielt, hat zwoelf verschiedene
+  // Ergebnisse —, „Der Tag gegen die Rechnung" mit +0,56.
+  {id:'wochwunder', name:'Die Woche gegen die Rechnung', short:'Wunder', ic:'underdog', tone:'gold', art:'leistung',
+    monat:{
+      art:'koennen',
+      klasse:'legendaer', aus:2.79,
+      wie:'Gerechnet wird die Wahrscheinlichkeit, in dieser Woche so viele Siege oder mehr zu holen. Partie für Partie aus der Siegchance, die vor dem Anpfiff stand.',
+      cond:'Eine Kalenderwoche, die die Elo-Rechnung mit höchstens 0,5 % erwartet hat, ab 6 Partien in dieser Woche',
+      ...(_stWertung(
+        p=>_stWochGross(p).length>=1,
+        p=>-Math.log10(Math.max(1e-6, Math.min(..._stWochGross(p)
+             .map(a=>_stPBinom(a.map(s=>s.exp), a.filter(s=>s.win).length))))),
+        -Math.log10(0.005),
+        (p,v)=>`Eine Woche, die mit ${(Math.pow(10,-v)*100).toFixed(1)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
+
+  {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'weight', tone:'blue', art:'leistung',
+    monat:{
+      art:'konstanz',
+      klasse:'legendaer', aus:3.20,
+      wie:'Nicht wie hoch gewonnen wird, sondern wie gleichmäßig. Wer jede Partie mit zwei Toren Unterschied beendet, steht vor dem, der 10:0 und 0:10 abwechselt.',
+      cond:'Die Tordifferenz jeder Partie bleibt im Schnitt höchstens 3,0 Tore vom eigenen Mittel entfernt',
+      ...(_stWertung(
+        p=>p.games>=TITLE_MIN_GAMES,
+        p=>-_stStreu(p.partien.map(s=>s.gf-s.ga)),
+        -3.0,
+        (p,v)=>`${(-v).toFixed(1)} Tore Streuung um ${(p.gd/p.games>=0?'+':'')}${(p.gd/p.games).toFixed(1)} im Schnitt`))}},
+
+  {id:'zweiteluft', name:'Die zweite Luft', short:'Luft', ic:'flameDouble', tone:'gold', art:'leistung',
+    monat:{
+      art:'koennen',
+      klasse:'legendaer', aus:2.11,
+      wie:'Der Vergleich läuft innerhalb der eigenen Spieltage: dieselben Gegner, dieselbe Woche, nur später am Tag.',
+      cond:'Ab der vierten Partie eines Spieltags mindestens 40 Prozentpunkte stärker als in den ersten drei, ab 5 Partien in jedem Block',
+      ...(_stWertung(
+        p=>_stTagBlock(p).frueh.length>=ST_TEIL && _stTagBlock(p).spaet.length>=ST_TEIL,
+        p=>{const b=_stTagBlock(p); return _stQuote(b.spaet)-_stQuote(b.frueh);},
+        0.40,
+        (p)=>{const b=_stTagBlock(p);
+          return `${pct(_stQuote(b.spaet))} % ab der vierten Partie, ${pct(_stQuote(b.frueh))} % davor`;}))}},
+
+  {id:'auferstehung', name:'Die Auferstehung', short:'Rückkehr', ic:'trophyCheck', tone:'gold', art:'leistung',
+    monat:{
+      art:'koennen',
+      klasse:'legendaer', aus:2.14,
+      wie:'Nach einer Pleite fragt „Die Antwort". Zwei am Stück sind die Stelle, an der ein Tag kippt.',
+      cond:'Jede Partie nach zwei Pleiten am Stück gewonnen, ab 5 solchen Gelegenheiten',
+      ...(_stWertung(
+        p=>_stNachZwei(p).length>=ST_TEIL,
+        p=>_stQuote(_stNachZwei(p)),
+        1,
+        (p)=>{const a=_stNachZwei(p);
+          return `${a.filter(s=>s.win).length} von ${a.length} Partien nach zwei Pleiten am Stück`;}))}},
+
+  {id:'nulldiaet', name:'Die Nulldiät', short:'Nulldiät', ic:'egg', tone:'gold', art:'leistung',
+    monat:{
+      art:'koennen',
+      klasse:'selten', aus:2.31,
+      wie:'Gezählt wird der Anteil, nicht die Anzahl. Ein Spiel geht auf zehn, drei Gegentore sind eine geschlossene Partie.',
+      cond:'Mindestens 20 % der Partien mit höchstens drei Gegentoren',
+      ...(_stWertung(
+        p=>p.games>=TITLE_MIN_GAMES,
+        p=>p.partien.filter(s=>s.ga<=3).length/p.games,
+        0.20,
+        (p,v)=>`${p.partien.filter(s=>s.ga<=3).length} von ${p.games} Partien mit höchstens 3 Gegentoren · ${pct(v)} %`))}},
+
+  {id:'serienbrecher', name:'Der Serienbrecher', short:'Brecher', ic:'flameBreak', tone:'gold', art:'leistung',
+    monat:{
+      art:'koennen',
+      klasse:'legendaer', aus:1.60,
+      wie:'Die Serie des Gegners wird für jede Partie neu nachgezählt, mit dem Stand vor dem Anpfiff.',
+      cond:'Mindestens 70 % gegen Gegner, die zum Zeitpunkt der Partie drei Siege am Stück tragen, ab 5 solchen Partien',
+      ...(_stWertung(
+        p=>p.brechG>=ST_TEIL,
+        p=>p.brechW/p.brechG,
+        0.70,
+        (p,v)=>`${p.brechW} von ${p.brechG} gegen eine laufende Serie · ${pct(v)} %`))}},
+
+  {id:'wochenschluss', name:'Der Wochenschluss', short:'Schluss', ic:'medal', tone:'gold', art:'leistung',
+    monat:{
+      art:'koennen',
+      klasse:'selten', aus:1.83,
+      wie:'Der letzte Ball einer Woche ist der, der stehen bleibt, bis wieder gespielt wird.',
+      cond:'Jede letzte Partie einer Kalenderwoche gewonnen, ab 4 Wochen mit je 3 Partien',
+      ...(_stWertung(
+        p=>_stWochLetzte(p).length>=4,
+        p=>_stQuote(_stWochLetzte(p)),
+        1,
+        (p)=>{const a=_stWochLetzte(p);
+          return `${a.filter(s=>s.win).length} von ${a.length} Wochenabschlüssen gewonnen`;}))}},
+
+  {id:'rollenfest', name:'Favorit wie Außenseiter', short:'Rollen', ic:'swords', tone:'blue', art:'leistung',
+    monat:{
+      art:'konstanz',
+      klasse:'selten', aus:1.68,
+      wie:'Favorit ist über 55 % Siegchance, Außenseiter unter 45 %. Gemessen wird der Abstand zwischen beiden Quoten, nicht wie hoch sie liegen.',
+      cond:'Als klarer Favorit und als Außenseiter höchstens 5 Prozentpunkte auseinander, ab 5 Partien in jeder Lage',
+      ...(_stWertung(
+        p=>_stRollen(p).fav.length>=ST_TEIL && _stRollen(p).aus.length>=ST_TEIL,
+        p=>{const r=_stRollen(p); return -Math.abs(_stQuote(r.fav)-_stQuote(r.aus));},
+        -0.05,
+        (p)=>{const r=_stRollen(p);
+          return `${pct(_stQuote(r.fav))} % als Favorit, ${pct(_stQuote(r.aus))} % als Außenseiter`;}))}},
+
+  {id:'aufstieg', name:'Der Aufstieg', short:'Aufstieg', ic:'medalTrio', tone:'gold', art:'leistung',
+    monat:{
+      art:'koennen',
+      klasse:'besonders', aus:1.61,
+      wie:'Verglichen wird der Tabellenplatz am ersten eigenen Spieltag mit dem am letzten Spieltag des Monats. Die Tabelle ist die des Monats, sie startet für alle gleich.',
+      cond:'Im Monat mindestens 8 Plätze in der Liga-Tabelle gewonnen',
+      ...(_stWertung(
+        p=>p.platzErst != null && p.platzLetzt != null,
+        p=>p.platzErst-p.platzLetzt,
+        8,
+        (p,v)=>`von Platz ${p.platzErst} auf Platz ${p.platzLetzt} · ${v} Plätze`))}},
+
   {id:'zitterkoenig', name:'Der Zitterkönig', short:'Zittersieg', ic:'brokenHeart', tone:'purple', art:'ereignis',
     monat:{
       art:'fuegung',
@@ -25316,6 +25490,31 @@ const DISZIPLINEN = [
       p._ko=q;return q[0].q-q[q.length-1].q;},
         0.8,
         p=>`${pct(p._ko[0].q)} % neben ${pname(p._ko[0].k)}, ${pct(p._ko[p._ko.length-1].q)} % neben ${pname(p._ko[p._ko.length-1].k)}`))}},
+
+  {id:'kaltblut', name:'Das Kaltblut', short:'Kaltblut', ic:'iceCube', tone:'purple', art:'ereignis',
+    monat:{
+      art:'fuegung',
+      klasse:'legendaer', aus:1.61,
+      wie:'Ein Tor Unterschied heißt: der letzte Ball hat entschieden.',
+      cond:'Mindestens 80 % der Partien gewonnen, die mit einem Tor Unterschied endeten, ab 5 solchen Partien',
+      ...(_stWertung(
+        p=>_stEinTor(p).length>=ST_TEIL,
+        p=>_stQuote(_stEinTor(p)),
+        0.80,
+        (p,v)=>{const a=_stEinTor(p);
+          return `${a.filter(s=>s.win).length} von ${a.length} Partien um den letzten Ball · ${pct(v)} %`;}))}},
+
+  {id:'randlage', name:'Immer am Rand', short:'Am Rand', ic:'search', tone:'purple', art:'ereignis',
+    monat:{
+      art:'fuegung',
+      klasse:'selten', aus:1.95,
+      wie:'Keine Leistung, eine Fügung: wem die engen Partien zufallen, entscheidet niemand selbst.',
+      cond:'Mindestens 25 % der eigenen Partien endeten mit genau einem Tor Unterschied',
+      ...(_stWertung(
+        p=>p.games>=TITLE_MIN_GAMES,
+        p=>_stEinTor(p).length/p.games,
+        0.25,
+        (p,v)=>`${_stEinTor(p).length} von ${p.games} Partien mit einem Tor Unterschied · ${pct(v)} %`))}},
 
   {id:'angstgegner', name:'Der Angstgegner', short:'Angst', ic:'devilMask', tone:'red', art:'schatten',
     monat:{
@@ -25558,7 +25757,13 @@ function _thronDerLiga(P, ms){
     const rang = Object.keys(stand).sort((a, b) => stand[b] - stand[a]);
     rang.forEach((id, i) => {
       const p = P[id];
-      if(p && (p.thronRang == null || i + 1 > p.thronRang)) p.thronRang = i + 1;
+      if(!p) return;
+      if(p.thronRang == null || i + 1 > p.thronRang) p.thronRang = i + 1;
+      // „Der Aufstieg" vergleicht den Platz am ersten eigenen Tagesende mit
+      // dem am letzten des Monats. Vor der ersten Partie steht niemand in der
+      // Monatstabelle, also ist der erste Eintrag genau der Startplatz.
+      if(p.platzErst == null) p.platzErst = i + 1;
+      p.platzLetzt = i + 1;
     });
   };
   ms.slice().sort((a, b) => mts(a) - mts(b)).forEach(m => {
@@ -25672,6 +25877,8 @@ function _seasonTitleCtxRechnen(sid){
     potw:0, potwG:0,             // Player-of-the-Week-Titel / gewertete Wochen
     bannLauf:0,                  // laengste im Monat gebrochene Pleitenserie
     thronRang:null,              // schlechtester Tabellenplatz an einem Tagesende
+    platzErst:null, platzLetzt:null, // Tabellenplatz am ersten und letzten Tagesende
+    brechG:0, brechW:0,          // Partien gegen eine laufende Serie von 3 Siegen
     // ── Die Rohsicht eines Spielers auf seinen Monat ──────────────────
     // Jede Partie einmal, aus SEINER Perspektive, in der Reihenfolge, in
     // der sie gespielt wurde. Die Chroniken fragen nach dem schwaechsten
@@ -25723,6 +25930,12 @@ function _seasonTitleCtxRechnen(sid){
     // Uhrzeit einmal pro Match, nicht pro Spieler.
     const hour = new Date(m.created_at).getHours();
     const mateOf = id => id===m.a1 ? m.a2 : id===m.a2 ? m.a1 : id===m.b1 ? m.b2 : m.b1;
+    // Die Serie jedes Beteiligten VOR dem Anpfiff. `run` wird innerhalb der
+    // Spieler-Schleife nachgezogen und steht damit fuer die A-Seite schon auf
+    // dem neuen Stand, wenn die B-Seite dran ist — hier ist er noch alt.
+    // „Der Serienbrecher" fragt nach genau diesem Stand.
+    const serieVor = {};
+    [m.a1, m.a2, m.b1, m.b2].forEach(id => { if(id) serieVor[id] = run[id] || 0; });
     [m.a1, m.a2, m.b1, m.b2].forEach(id => {
       if(!id) return;
       const p = ensure(id);
@@ -25738,6 +25951,12 @@ function _seasonTitleCtxRechnen(sid){
       if(w) p.wins++; else p.losses++;
       if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; }
       else             { p.defG++; p.defConceded += ga; if(w) p.defW++; }
+      // Trug einer der Gegner beim Anpfiff drei Siege am Stueck, ist das eine
+      // Gelegenheit, eine Serie zu brechen — gezaehlt wird der Anteil, nicht
+      // die Anzahl: wer viel spielt, trifft oefter auf einen heissen Gegner.
+      const gegSerie = (onA ? [m.b1, m.b2] : [m.a1, m.a2])
+        .reduce((mx, g) => Math.max(mx, g ? (serieVor[g] || 0) : 0), 0);
+      if(gegSerie >= 3){ p.brechG++; if(w) p.brechW++; }
       if(w && gf===10 && ga===9)  p.nail++;
       if(!w && gf===9 && ga===10) p.bitter++;
       if(w && gf===10 && ga===0)  p.perfect++;

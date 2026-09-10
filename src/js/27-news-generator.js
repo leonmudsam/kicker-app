@@ -1692,14 +1692,27 @@ function _buildStories(){
   // Lauf wäre zu teuer. Das Gedächtnis ist stattdessen der Feed selbst: die
   // Story-ID trägt Spieler und Stufe, und persistierte Stories werden nie
   // doppelt eingefügt. Gemeldet wird nur, wer die Schwelle GERADE erst
-  // überschritten hat (weniger als ein Viertel darüber) — sonst stünden
-  // beim ersten Lauf alle zwölf Stufen auf einmal im Feed.
+  // überschritten hat — sonst stünden beim ersten Lauf alle zwölf Stufen
+  // auf einmal im Feed.
+  //
+  // „Gerade erst" war ein Viertel ÜBER der Schwelle, und das war zweimal
+  // falsch. Erstens hing das Fenster an der Höhe der Schwelle statt an der
+  // Strecke bis zur nächsten: am Schildring waren es 60 Punkte, am
+  // Volutenkranz 180. Zweitens ist eine einzige legendäre Chronik 140 Punkte
+  // wert [§C39] — ein Fenster, das schmaler ist als der kleinste Schritt,
+  // wird übersprungen. Gemessen meldete der Feed danach KEINE Stufe mehr,
+  // weil der volle Katalog jeden Spieler weit über sein Fenster hob.
+  // Jetzt: das erste Viertel der Strecke zur nächsten Stufe, mindestens aber
+  // so breit wie der größte Einzelgewinn.
+  const INS_SPRUNG = 150;
   try {
     (players || []).filter(p => p && !p.hidden).forEach(p => {
       const P = prestigeOf(p.id);
       if(!P || P.stufe < 1) return;
       const schwelle = INSIGNIEN[P.stufe].min;
-      if(P.punkte >= schwelle * 1.25) return;
+      const naechste = INSIGNIEN[P.stufe + 1];
+      const spanne = naechste ? (naechste.min - schwelle) : schwelle;
+      if(P.punkte >= schwelle + Math.max(spanne * 0.25, INS_SPRUNG)) return;
       const oben = P.stufe >= 3;   // Lorbeerreif und Ordensstern
       stories.push({
         id: 'ins_' + p.id + '_' + INSIGNIEN[P.stufe].key,

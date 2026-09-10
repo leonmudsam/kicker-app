@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **669**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **677**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,7 +219,7 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik | 937 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik | 970 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 176 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck | 204 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
@@ -782,7 +782,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   geht.
 - **§C39 Die Monatschronik fragt nicht, wer der Beste ist.** Der alte
   Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
-  gewinnt fast jede. Er ist vollständig ersetzt: einundvierzig Chroniken, die
+  gewinnt fast jede. Er ist vollständig ersetzt: dreiundfünfzig Chroniken, die
   nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
   dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
   anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
@@ -831,7 +831,12 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   festgeschrieben**, genau wie `BADGE_RARITY`.
   Zwei Regeln räumen den Katalog, und beide sind gemessen: eine Chronik muss
   ihre Schwelle **mindestens 1,5 σ** hinausschieben können, sonst liegt ihr
-  Bester kaum weiter draußen als der Durchschnitt; und sie muss eine
+  Bester kaum weiter draußen als der Durchschnitt; und ihr Wert darf **nicht
+  an der Spielzahl hängen** — höchstens 0,35 Korrelation. Die zweite nimmt am
+  meisten weg: „wie viele verschiedene Ergebnisse" liegt bei −0,91, weil wer
+  zwölf Partien spielt zwangsläufig zwölf verschiedene Ergebnisse hat, und
+  „der unwahrscheinlichste Spieltag" bei +0,56, weil acht Partien an einem Tag
+  weiter ausschlagen können als vier. Sie muss außerdem eine
   **Leistung** messen — Breite und Anwesenheit zählen nicht, „mit wie vielen
   anderen jemand gespielt hat" ist ein Kalender. Reine **Zählungen von
   Gelegenheiten** fallen ebenfalls weg: wer mehr spielt, bekommt mehr Chancen
