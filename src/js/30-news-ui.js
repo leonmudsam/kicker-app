@@ -686,9 +686,13 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
   // eine Sache vollstaendig zeigen sollen: dort waere „und 2 weitere" genau
   // das Verstecken, gegen das die Buendelung gebaut ist.
   const grenze = vollstaendig ? rest.length : 3;
+  // Die Marke sagt in zwei Worten, welche Zeile in der Monatstafel landet
+  // [§C32] — Metall, sie zeichnet niemanden aus [§C25].
   return `<div class="nf-sam">${rest.slice(0, grenze).map(t =>
     `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
-    + `<span>${_newsBetont(t.titel || '')}</span></div>`).join('')}`
+    + `<span>${_newsBetont(t.titel || '')}</span>`
+    + (t.marke ? `<b class="nf-sam-k">${esc(t.marke)}</b>` : '')
+    + `</div>`).join('')}`
     + (rest.length > grenze ? `<div class="nf-sam-m">und ${rest.length - grenze} weitere</div>` : '')
     + `</div>`;
 }

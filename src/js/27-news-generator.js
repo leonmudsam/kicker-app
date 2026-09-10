@@ -190,6 +190,28 @@ function _namenKurz(namen, max){
 // Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist für eine Liste
 // gebaut: der Mittelpunkt trennt dort zwei Spalten. Im Fließtext einer
 // Nachricht steht er mitten im Satz und liest sich wie ein Tippfehler.
+// ─── Welche Chronik steht wirklich in der Tafel ────────────────
+// Ein Spieler zeigt je Monat nur EINEN Chronik-Eintrag [§C32]:
+// `seasonTitleOf` liefert den ersten in Katalogreihenfolge, und die ist die
+// Wertigkeit. Wer im selben Monat mehrere holt, sah auf der Karte nicht,
+// welcher davon in der Tafel landet — „Martin holt zwei Monatschroniken"
+// zählte beide auf und ließ offen, welche ihn im Profil beschreibt.
+// Beantwortet wird die Frage nur für einen ALLEIN stehenden Halter: bei
+// mehreren wäre „steht in der Chronik" eine Behauptung über alle [§C33].
+// Und nur, wenn es überhaupt etwas zu unterscheiden gibt — bei einer
+// einzigen Chronik im Monat ist die Antwort offensichtlich.
+function _chronikZeigtSich(pids, sid, titleId){
+  if(!Array.isArray(pids) || pids.length !== 1) return null;
+  try {
+    const alle = (seasonTitles(sid).awarded || []).filter(a => a.pid === pids[0]);
+    if(alle.length < 2) return null;
+    const gezeigt = seasonTitleOf(pids[0], sid);
+    if(!gezeigt) return null;
+    return {zeigt: gezeigt.titleId === titleId, welche: gezeigt.name,
+            andere: alle.filter(a => a.titleId !== gezeigt.titleId).map(a => a.name)};
+  } catch(e){ return null; }
+}
+
 function _evSatz(ev){
   return String(ev || '').replace(/\s*·\s*/g, ', ').trim();
 }
@@ -1810,12 +1832,20 @@ function _buildStories(){
             // Karte nennt ohnehin lieber Namen als Zahlen [§C33].
             ? ` Vorher ${_namenKurz(alt.filter(id => n.pids.indexOf(id) < 0).map(nameOf))} auch.`
             : '';
-        _meldungen.push({t, n, a, punkte, art,
+        // Wer im selben Monat mehrere Chroniken hält, erfährt hier, welche
+        // davon ihn in der Tafel vertritt — und welche sie dafür überbietet.
+        const _zeigt = _chronikZeigtSich(n.pids, _sid, t.id);
+        const _zeigtSatz = !_zeigt ? ''
+          : _zeigt.zeigt
+            ? ` Steht jetzt in der Chronik${_zeigt.andere.length === 1
+                ? `, vor „${_zeigt.andere[0]}"` : ''}.`
+            : ` In der Chronik steht weiter „${_zeigt.welche}".`;
+        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt,
           title: titel,
           // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
           // dieselbe Zahl untereinander sagt nichts Neues [§C33].
           desc: (n.ev ? _evSatz(n.ev) + '. ' : '')
-              + `${artikel} Chronik.` + nachsatz,
+              + `${artikel} Chronik.` + nachsatz + _zeigtSatz,
           klasse: t.klasse});
       });
       // Die wertvollsten zuerst, dann greift der Deckel.
@@ -1838,7 +1868,10 @@ function _buildStories(){
           dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
                     playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
-                    chronArt:m.t.kunst, aus:m.t.aus, punkte:m.punkte}
+                    chronArt:m.t.kunst, aus:m.t.aus, punkte:m.punkte,
+                    // Steht diese Chronik in der Monatstafel? null heisst:
+                    // die Frage stellt sich nicht [§C32].
+                    zeigt: m.zeigt ? m.zeigt.zeigt : null}
         });
       });
     }

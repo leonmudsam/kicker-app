@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **694**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **695**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -221,7 +221,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen, die Abstufung der Wiederholung, der Wiederholungs-Katalog | 981 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge, der Tag gehört sich selbst, der Rang aus dem Generator, der überholte Halter, jeder Spieltag behält seinen Sieger, zwei Tage desselben Siegers | 250 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge, der Tag gehört sich selbst, der Rang aus dem Generator, der überholte Halter, jeder Spieltag behält seinen Sieger, zwei Tage desselben Siegers, welche Chronik gilt | 256 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt, die Karte fuer den gemeinsamen Erfolg, die Zahlenreihe der Chronik — **im echten Browser gemessen** | 99 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -1182,6 +1182,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   zeigt, ist eine reine **Anzeige**-Regel: `seasonTitleOf` liefert den ersten
   in Katalogreihenfolge, und die Katalogreihenfolge ist die Wertigkeit. Die
   volle Tafel (`showSeasonTable`) zeigt alles.
+  **Und der Feed sagt, welcher es ist** (`_chronikZeigtSich`). „Martin holt
+  zwei Monatschroniken" zählte beide auf und ließ offen, welche davon ihn
+  im Profil beschreibt — die Frage, die ihr Halter als erste hat. Die Karte
+  nennt es im Satz („Steht jetzt in der Chronik, vor ‚Die Nulldiät'" oder
+  „In der Chronik steht weiter ‚Der makellose Tag'"), und in einer
+  Sammelkarte trägt die betreffende Zeile eine Marke aus zwei Worten
+  (`.nf-sam-k`, Metall — sie zeichnet niemanden aus [§C25]). Sie steht
+  NEBEN dem Text und nicht darin: der Text kürzt sich mit
+  Auslassungspunkten, und eine Marke im abgeschnittenen Teil wäre gar
+  nicht da. Beantwortet wird die Frage nur für einen Halter, der allein
+  steht, und nur, wenn er in dem Monat überhaupt mehrere hält: bei zwei
+  Haltern wäre es eine Behauptung über beide, bei einer einzigen Chronik
+  ist die Antwort offensichtlich.
   Vorher galt „ein Eintrag je Spieler" schon bei der Vergabe: wer den
   Bestwert hielt und schon etwas trug, gab ihn an den Nächstbesten ab. Damit
   stand „Der Unaufhaltsame" bei zwölf Siegen in Folge, während einer mit

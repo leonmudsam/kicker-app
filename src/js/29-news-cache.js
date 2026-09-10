@@ -963,6 +963,12 @@ function _consolidateStories(list){
                 // sie handelt.
                 teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t), text: t.desc,
                                         typ: (t.dataRef||{}).type || '',
+                                        // Ein Spieler zeigt je Monat nur EINE
+                                        // Chronik [§C32]. In einer Tafel mit
+                                        // vier Zeilen war nicht zu sehen,
+                                        // welche davon das ist.
+                                        marke: (t.dataRef||{}).zeigt === true
+                                               ? 'in der Chronik' : '',
                                         pids: _pidsVon(t).slice(0, 2)}))}
     });
   });

@@ -733,6 +733,50 @@ ok(_zweiTage.verschieden === 2,
 ok(_zweiTage.wortgleich === 1,
    'zwei in Schlagzeile UND Text gleiche Karten bleiben eine',
    _zweiTage.wortgleich + ' statt 1');
+
+// Ein Spieler zeigt je Monat nur EINE Chronik. Holt er mehrere, sagt die
+// Karte welche — sonst zaehlt sie zwei auf und laesst offen, welche ihn im
+// Profil beschreibt.
+const _zeigtSich = JSON.parse(K.eval(`JSON.stringify((function(){
+  const sid = currentSeason().id;
+  const T = seasonTitles(sid).awarded || [];
+  const proPid = {};
+  T.forEach(a => (proPid[a.pid] = proPid[a.pid] || []).push(a));
+  const mehrere = Object.keys(proPid).filter(p => proPid[p].length > 1);
+  if(!mehrere.length) return {keine:true};
+  const pid = mehrere[0];
+  const gezeigt = seasonTitleOf(pid, sid);
+  const andere = proPid[pid].find(a => a.titleId !== gezeigt.titleId);
+  const einer = Object.keys(proPid).find(p => proPid[p].length === 1);
+  return {faelle: mehrere.length,
+    aufGezeigte: (_chronikZeigtSich([pid], sid, gezeigt.titleId)||{}).zeigt,
+    aufAndere:   (_chronikZeigtSich([pid], sid, andere.titleId)||{}).zeigt,
+    beiEinem:    einer ? _chronikZeigtSich([einer], sid, proPid[einer][0].titleId) : 'keiner',
+    beiZweien:   _chronikZeigtSich([pid, 'x'], sid, gezeigt.titleId),
+    // Und die Marke muss im Band wirklich stehen.
+    band: _newsSammelBand([
+      {ic:'award', titel:'holt A', marke:'in der Chronik'},
+      {ic:'award', titel:'holt B', marke:''}], [], true)};
+})())`));
+ok(!_zeigtSich.keine && _zeigtSich.faelle > 0,
+   'es gibt Spieler mit mehreren Chroniken im Monat',
+   String(_zeigtSich.faelle));
+ok(_zeigtSich.aufGezeigte === true,
+   'die Chronik, die in der Tafel steht, ist als solche erkannt',
+   String(_zeigtSich.aufGezeigte));
+ok(_zeigtSich.aufAndere === false,
+   'und die zweite desselben Monats ist es nicht',
+   String(_zeigtSich.aufAndere));
+ok(_zeigtSich.beiEinem === null || _zeigtSich.beiEinem === 'keiner',
+   'bei nur einer Chronik gibt es nichts zu unterscheiden',
+   JSON.stringify(_zeigtSich.beiEinem));
+ok(_zeigtSich.beiZweien === null,
+   'und bei zwei Haltern wird nichts behauptet',
+   JSON.stringify(_zeigtSich.beiZweien));
+ok(_zeigtSich.band.indexOf('nf-sam-k') >= 0
+   && _zeigtSich.band.indexOf('in der Chronik') >= 0,
+   'das Sammelband zeigt die Marke',
+   _zeigtSich.band.slice(0, 90));
 ok(_plan.chrZeit.every(t => t === '0:0'), 'die Chronik erscheint um 00:00',
    _plan.chrZeit.join(', ') || 'keine');
 ok(_plan.chrErster, 'am ersten Tag des Folgemonats');

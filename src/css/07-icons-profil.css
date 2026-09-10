@@ -774,6 +774,15 @@
   .nf-sam-z:last-child{border-bottom:0}
   .nf-sam-z span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .nf-sam-z b{color:var(--ink);font-weight:700}
+  /* Welche der Zeilen in der Monatstafel landet, sagt eine Marke in zwei
+     Worten [§C32]. Metall und kleiner als die Zeile: sie ordnet ein, sie
+     zeichnet niemanden aus [§C25]. Sie steht NEBEN dem Text und nicht
+     darin — der Text kürzt sich bei Bedarf mit Auslassungspunkten, und
+     eine Marke im abgeschnittenen Teil wäre gar nicht da. */
+  .nf-sam-z b.nf-sam-k{flex:0 0 auto;margin-left:auto;padding:1px 6px;
+    border-radius:5px;background:var(--surface2);border:1px solid var(--line);
+    color:var(--muted);font-size:9px;font-weight:600;letter-spacing:.04em;
+    text-transform:uppercase;white-space:nowrap}
   .nf-sam-i{width:20px;height:20px;flex:0 0 auto;border-radius:6px;
     display:grid;place-items:center;background:var(--surface2);
     border:1px solid var(--line);color:var(--muted)}
