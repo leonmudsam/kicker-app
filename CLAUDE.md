@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **692**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **693**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,7 +219,7 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen, die Abstufung der Wiederholung | 977 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen, die Abstufung der Wiederholung, der Wiederholungs-Katalog | 981 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge | 238 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
@@ -1308,8 +1308,22 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Saison, Vize, Dominator, Award-Sammler, Aufsteiger) zählt jedes Mal neu,
   alles andere genau einmal. Der dreißigste Zittersieg zeigt nichts Neues.
 
-  **Jede Wiederholung derselben Sache wiegt ein Zehntel weniger als die
-  vorige** (`PRESTIGE_WIEDERHOLUNG`, `_wiederholungsWert`): 52, 47, 42, 38 …
+  **Was sich wiederholen darf, sagt `BADGE_WIEDERHOLUNG`** — und mit welchem
+  Faktor. Drei Abstufungen, und sie richten sich danach, wie oft die
+  Auszeichnung überhaupt zu holen ist: **0,9** für eine Würde (höchstens
+  einmal je Saison), **0,7** für eine Leistung, die man sich nimmt (die
+  Wochenkrone, ein 10:0, ein ganzer Tag ohne Niederlage, eine lange Serie),
+  **0,55** für den Alltag des Guten (der Spieltag, der Außenseitersieg, der
+  klare Sieg, die Fünferserie). Gemessen an den echten Partien wird „Player
+  of the Week" höchstens viermal gehalten, „Player of the Day" siebzehnmal
+  und „Klares Ding" zweiunddreißigmal — dieselbe Abstufung für alle drei
+  hieße entweder, dass die Wochenkrone nichts wert ist, oder dass ein klarer
+  Sieg zum dreißigsten Mal noch zählt. Bei 0,55 trägt das zehnte Mal ein
+  halbes Prozent des ersten, bei 0,7 vier Prozent. Was gar keinen Faktor
+  trägt, zählt genau einmal.
+
+  **Jede Wiederholung derselben Sache wiegt weniger als die vorige**
+  (`_wiederholungsWert`): bei einer Würde 52, 47, 42, 38 …
   Gemessen gegen sich selbst, nicht gegen andere — der dritte Meistertitel
   ist keinen Deut leichter als der erste, aber er zeigt weniger Neues. Vorher
   wuchs linear davon, wer eine Würde Saison für Saison verteidigt: zehn
@@ -1550,6 +1564,7 @@ Alles in `17-badges.js`, außer wo anders genannt.
 | `RARITY_META.<klasse>.total` | um eins nach | der Zähler im Badge-Blatt („38 von 50") lügt |
 | `BADGE_ART` | `leistung`, `pensum` oder `schatten` | es gilt `ereignis` — die Vorgabe, und für die meisten richtig |
 | `BADGE_WUERDE` | **nur**, wenn höchstens einmal je Saison zu holen **und** am Können gemessen | nichts; wer aber eine beliebig oft holbare Auszeichnung einträgt, macht das Prestige wieder zur Anwesenheitsliste [§C34] |
+| `BADGE_WIEDERHOLUNG` | ein Faktor, **nur** wenn die Auszeichnung mehrfach zählen soll: `0.7` für eine Leistung, die man sich nimmt, `0.55` für den Alltag des Guten | ohne Eintrag zählt sie genau einmal — richtig für alles, was nichts Neues zeigt. Wer einen Faktor einträgt, verschiebt Prestige und damit die Insignium-Leiter [§10.3] |
 | `getBadgeEarnedCache` | `fire('id')` | das Badge erscheint nur im Profil: kein Toast, kein Chip im Match-Review |
 | `src/js/02-icons.js` | das Icon aus `ic` | die Kachel bleibt leer |
 

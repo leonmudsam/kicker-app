@@ -1353,8 +1353,14 @@ const _wd = JSON.parse(K.eval(`JSON.stringify((function(){
         const deckel = q.einzeln / (1 - PRESTIGE_WIEDERHOLUNG);
         if(q.voll > deckel + 1e-6) ueberDeckel.push(q.name + ' ' + Math.round(q.voll));
       }
-      // Ein Eintrag, den jemand zwanzigmal geholt hat und der nicht als
-      // Würde geführt wird, darf keinen Cent mehr bringen als beim ersten Mal.
+      // Ein Eintrag, den jemand zwanzigmal geholt hat und der WEDER eine
+      // Würde ist NOCH im Wiederholungs-Katalog steht, darf keinen Cent mehr
+      // bringen als beim ersten Mal [§C34].
+      else if(q.wiederholbar){
+        if(q.voll >= q.einzeln * q.mal - 1e-6) linear.push(q.name + ' ' + q.mal + '×');
+        const deckel = q.einzeln / (1 - q.rate);
+        if(q.voll > deckel + 1e-6) ueberDeckel.push(q.name + ' ' + Math.round(q.voll));
+      }
       else if(q.voll > q.einzeln) grind.push(q.name + ' ' + q.mal + '×');
     });
   });
@@ -1365,8 +1371,29 @@ ok(_wd.mehrfach > 0 && _wd.ohne === 0,
    'jede wiederholte Würde zählt mehr als eine einzelne',
    _wd.mehrfach + ' wiederholte Würden, ' + _wd.ohne + ' ohne Zuschlag');
 ok(_wd.grind.length === 0,
-   'eine beliebig oft holbare Auszeichnung zählt genau einmal',
+   'eine Auszeichnung ohne Wiederholungsfaktor zählt genau einmal',
    _wd.grind.slice(0,3).join(', ') || 'keine');
+// Der Katalog kennt jede Auszeichnung, der er einen Faktor gibt — sonst
+// steht dort ein Tippfehler und die Wiederholung bleibt still aus.
+const _wf = JSON.parse(K.eval(`JSON.stringify((function(){
+  const kennt = id => BADGES.some(b => b.id === id);
+  const raten = Object.keys(BADGE_WIEDERHOLUNG).map(k => BADGE_WIEDERHOLUNG[k]);
+  return {unbekannt: Object.keys(BADGE_WIEDERHOLUNG).filter(id => !kennt(id)),
+          doppelt: Object.keys(BADGE_WIEDERHOLUNG).filter(id => BADGE_WUERDE.has(id)),
+          min: Math.min.apply(null, raten), max: Math.max.apply(null, raten),
+          n: raten.length, wuerde: PRESTIGE_WIEDERHOLUNG};
+})())`));
+ok(_wf.unbekannt.length === 0, 'jede Auszeichnung mit Faktor gibt es auch',
+   _wf.unbekannt.join(', ') || 'alle bekannt');
+ok(_wf.doppelt.length === 0, 'keine Auszeichnung trägt zwei Faktoren',
+   _wf.doppelt.join(', ') || 'keine doppelt');
+// Eine Würde verblasst am langsamsten: sie ist höchstens einmal je Saison
+// zu holen, der Alltag mehrmals je Woche. Andersherum wäre der Spieltag
+// mehr wert als der Meistertitel.
+ok(_wf.max < _wf.wuerde, 'keine wiederholbare Auszeichnung verblasst langsamer als eine Würde',
+   _wf.max + ' gegen ' + _wf.wuerde);
+ok(_wf.min > 0 && _wf.min < 0.7, 'der Alltag verblasst deutlich schneller',
+   'kleinster Faktor ' + _wf.min);
 // Und jede weitere Verleihung traegt weniger bei als die vorige. Ohne das
 // wuchs, wer eine Wuerde Saison fuer Saison verteidigt, linear davon —
 // gegen sich selbst gemessen zeigt die fuenfte Meisterschaft weniger Neues

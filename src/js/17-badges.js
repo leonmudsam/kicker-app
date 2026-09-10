@@ -331,6 +331,48 @@ const BADGE_WUERDE = new Set([
   'award_collector', 'mr_perfect',
 ]);
 
+// ─── Was sich wiederholen darf, und wie schnell es verblasst ─────────
+// Eine Auszeichnung, die nicht hier steht, zählt fürs Prestige genau
+// EINMAL: der dreißigste Zittersieg zeigt nichts Neues [§C34]. Wer hier
+// steht, zählt jedes Mal — aber jedes Mal weniger, mit dem Faktor daneben
+// [§C34 `_wiederholungsWert`].
+//
+// Der Faktor sagt, wie schnell die Wiederholung verblasst, und er richtet
+// sich danach, wie oft die Auszeichnung überhaupt zu holen ist. Gemessen an
+// den echten Partien: „Player of the Week" höchstens einmal je Woche und
+// am häufigsten vier Mal gehalten, „Player of the Day" siebzehn Mal,
+// „Klares Ding" zweiunddreißig Mal. Dieselbe Abstufung für alle drei hieße
+// entweder, dass die Wochenkrone nichts wert ist, oder dass ein klarer Sieg
+// zum dreißigsten Mal noch zählt.
+//
+//   0.9  eine WÜRDE — höchstens einmal je Saison, am Können gemessen.
+//        Der dritte Meistertitel ist keinen Deut leichter als der erste.
+//   0.7  eine LEISTUNG, die man sich nimmt: eine Wochenkrone, ein 10:0,
+//        ein ganzer Tag ohne Niederlage, eine lange Serie. Das zehnte Mal
+//        trägt noch vier Prozent des ersten.
+//   0.55 der ALLTAG des Guten: der Spieltag, der Außenseitersieg, der
+//        klare Sieg, die Fünferserie. Das zehnte Mal trägt ein halbes
+//        Prozent — die Reihe läuft gegen das 2,2-fache des ersten Mals und
+//        kann es nie überschreiten.
+//
+// ⚑ Wer eine Auszeichnung hier einträgt, verschiebt Prestige und damit die
+//   Insignium-Leiter [§10.3]. `tests/disziplinen` misst es nach.
+const BADGE_WIEDERHOLUNG = {
+  // Leistung — selten genug, dass sie lange trägt
+  potw:          0.7,   // Player of the Week
+  perfect_win:   0.7,   // Absoluter Sieger (10:0)
+  unbeatable:    0.7,   // Unschlagbar (ein ganzer Tag ohne Niederlage)
+  streak10:      0.7,
+  streak15:      0.7,
+  streak20:      0.7,
+  // Alltag — oft zu holen, also schnell verblassend
+  potd:          0.55,  // Player of the Day, siebzehnmal gehalten
+  upset_king:    0.55,
+  streak5:       0.55,
+  clear_win:     0.55,  // Klares Ding, zweiunddreißigmal gehalten
+  wall_badge:    0.55,  // Mauer, achtzehnmal gehalten
+};
+
 const RARITY_META = {
   legendary: {label:'Legendary', color:'var(--gold)',   total:10},
   rare:      {label:'Rare',      color:'var(--purple)', total:14},

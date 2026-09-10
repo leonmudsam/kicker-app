@@ -4749,7 +4749,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.35090865';
+const BUILD_VERSION='2026.09.10.e8983c63';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -13353,6 +13353,48 @@ const BADGE_WUERDE = new Set([
   'climber_100', 'dominator_400', 'dynasty_600',
   'award_collector', 'mr_perfect',
 ]);
+
+// ─── Was sich wiederholen darf, und wie schnell es verblasst ─────────
+// Eine Auszeichnung, die nicht hier steht, zählt fürs Prestige genau
+// EINMAL: der dreißigste Zittersieg zeigt nichts Neues [§C34]. Wer hier
+// steht, zählt jedes Mal — aber jedes Mal weniger, mit dem Faktor daneben
+// [§C34 `_wiederholungsWert`].
+//
+// Der Faktor sagt, wie schnell die Wiederholung verblasst, und er richtet
+// sich danach, wie oft die Auszeichnung überhaupt zu holen ist. Gemessen an
+// den echten Partien: „Player of the Week" höchstens einmal je Woche und
+// am häufigsten vier Mal gehalten, „Player of the Day" siebzehn Mal,
+// „Klares Ding" zweiunddreißig Mal. Dieselbe Abstufung für alle drei hieße
+// entweder, dass die Wochenkrone nichts wert ist, oder dass ein klarer Sieg
+// zum dreißigsten Mal noch zählt.
+//
+//   0.9  eine WÜRDE — höchstens einmal je Saison, am Können gemessen.
+//        Der dritte Meistertitel ist keinen Deut leichter als der erste.
+//   0.7  eine LEISTUNG, die man sich nimmt: eine Wochenkrone, ein 10:0,
+//        ein ganzer Tag ohne Niederlage, eine lange Serie. Das zehnte Mal
+//        trägt noch vier Prozent des ersten.
+//   0.55 der ALLTAG des Guten: der Spieltag, der Außenseitersieg, der
+//        klare Sieg, die Fünferserie. Das zehnte Mal trägt ein halbes
+//        Prozent — die Reihe läuft gegen das 2,2-fache des ersten Mals und
+//        kann es nie überschreiten.
+//
+// ⚑ Wer eine Auszeichnung hier einträgt, verschiebt Prestige und damit die
+//   Insignium-Leiter [§10.3]. `tests/disziplinen` misst es nach.
+const BADGE_WIEDERHOLUNG = {
+  // Leistung — selten genug, dass sie lange trägt
+  potw:          0.7,   // Player of the Week
+  perfect_win:   0.7,   // Absoluter Sieger (10:0)
+  unbeatable:    0.7,   // Unschlagbar (ein ganzer Tag ohne Niederlage)
+  streak10:      0.7,
+  streak15:      0.7,
+  streak20:      0.7,
+  // Alltag — oft zu holen, also schnell verblassend
+  potd:          0.55,  // Player of the Day, siebzehnmal gehalten
+  upset_king:    0.55,
+  streak5:       0.55,
+  clear_win:     0.55,  // Klares Ding, zweiunddreißigmal gehalten
+  wall_badge:    0.55,  // Mauer, achtzehnmal gehalten
+};
 
 const RARITY_META = {
   legendary: {label:'Legendary', color:'var(--gold)',   total:10},
@@ -29122,8 +29164,8 @@ const PRESTIGE_REKORD = 36;
 // über verschiedene Erfolge hinweg war der Fehler, den §C34 abgestellt hat,
 // und der bestrafte genau den, der viel erreicht.
 const PRESTIGE_WIEDERHOLUNG = 0.9;
-function _wiederholungsWert(n){
-  const r = PRESTIGE_WIEDERHOLUNG;
+function _wiederholungsWert(n, rate){
+  const r = (rate == null) ? PRESTIGE_WIEDERHOLUNG : rate;
   const k = Math.max(0, n | 0);
   return (1 - Math.pow(r, k)) / (1 - r);
 }
@@ -29340,10 +29382,14 @@ function prestigeTabelle(){
       // beim Mal davor. Vorher war die fünfte Meisterschaft genauso viel
       // wert wie die erste, und ein Spieler, der eine Würde Saison für
       // Saison verteidigt, wuchs linear davon.
+      // Was sich wiederholen darf, sagt der Katalog — und mit welchem
+      // Faktor [§7.2]. Eine Würde verblasst am langsamsten, der Alltag am
+      // schnellsten; was hier gar nicht steht, zählt genau einmal.
       const wuerde = BADGE_WUERDE.has(b.id);
-      const w = einzeln * (wuerde ? _wiederholungsWert(b.n) : 1);
+      const rate = wuerde ? PRESTIGE_WIEDERHOLUNG : BADGE_WIEDERHOLUNG[b.id];
+      const w = einzeln * (rate ? _wiederholungsWert(b.n, rate) : 1);
       az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl, art,
-               mal:b.n, wuerde, einzeln});
+               mal:b.n, wuerde, wiederholbar: !!rate, rate: rate || 0, einzeln});
     });
     const pb = summe(az);
 

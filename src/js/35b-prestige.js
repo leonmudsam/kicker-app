@@ -112,8 +112,8 @@ const PRESTIGE_REKORD = 36;
 // über verschiedene Erfolge hinweg war der Fehler, den §C34 abgestellt hat,
 // und der bestrafte genau den, der viel erreicht.
 const PRESTIGE_WIEDERHOLUNG = 0.9;
-function _wiederholungsWert(n){
-  const r = PRESTIGE_WIEDERHOLUNG;
+function _wiederholungsWert(n, rate){
+  const r = (rate == null) ? PRESTIGE_WIEDERHOLUNG : rate;
   const k = Math.max(0, n | 0);
   return (1 - Math.pow(r, k)) / (1 - r);
 }
@@ -330,10 +330,14 @@ function prestigeTabelle(){
       // beim Mal davor. Vorher war die fünfte Meisterschaft genauso viel
       // wert wie die erste, und ein Spieler, der eine Würde Saison für
       // Saison verteidigt, wuchs linear davon.
+      // Was sich wiederholen darf, sagt der Katalog — und mit welchem
+      // Faktor [§7.2]. Eine Würde verblasst am langsamsten, der Alltag am
+      // schnellsten; was hier gar nicht steht, zählt genau einmal.
       const wuerde = BADGE_WUERDE.has(b.id);
-      const w = einzeln * (wuerde ? _wiederholungsWert(b.n) : 1);
+      const rate = wuerde ? PRESTIGE_WIEDERHOLUNG : BADGE_WIEDERHOLUNG[b.id];
+      const w = einzeln * (rate ? _wiederholungsWert(b.n, rate) : 1);
       az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl, art,
-               mal:b.n, wuerde, einzeln});
+               mal:b.n, wuerde, wiederholbar: !!rate, rate: rate || 0, einzeln});
     });
     const pb = summe(az);
 
