@@ -3684,6 +3684,20 @@
   .tplate-kl{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     text-transform:uppercase;letter-spacing:.13em;color:var(--muted);
     margin-left:7px;vertical-align:1px;white-space:nowrap}
+  /* Der Beiname im Kopf des Blatts. Er bricht auf eine EIGENE Zeile
+     innerhalb des Kopfs (`flex-basis:100%`): als Pille rechts neben der
+     Bedingung blieb auf dem Telefon fuer beide je die halbe Breite, und
+     die Bedingung ist der laengere Satz. Metall, kein Gold — der Beiname
+     zeichnet niemanden aus [§C25]. */
+  .chron-hero{flex-wrap:wrap}
+  .chron-kose{flex:0 0 100%;display:flex;align-items:baseline;gap:8px;
+    margin-top:2px;padding-top:9px;border-top:1px solid rgba(var(--ttr),.16)}
+  .chron-kose i{font-family:'Sometype Mono',monospace;font-size:8.5px;
+    font-weight:700;font-style:normal;text-transform:uppercase;
+    letter-spacing:.13em;color:var(--muted);white-space:nowrap}
+  .chron-kose b{font-size:12.5px;font-weight:700;color:var(--ink);
+    margin-left:auto;text-align:right}
+
   /* Die Zahlenreihe im Chronik-Blatt steht direkt unter der Bedingung. */
   .chron-hero + .rcp-z{margin:-2px 0 12px}
 
@@ -4686,7 +4700,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.7181b2bf';
+const BUILD_VERSION='2026.09.10.45c59376';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18101,6 +18115,13 @@ const NEWS_LIMITS = {
   // der Monatskarte, die es ohnehin gibt.
   chronikGeholt: 2,
   proTag: 6,
+  // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
+  // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
+  // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
+  // faengt die Stunde auf: keine der 466 Partien hat nach 18:31 angefangen,
+  // und der Fun Fact dieses Slots faellt an einem Spieltag ohnehin weg.
+  tagKartePartien: 8,
+  tagKarteStunde: 19,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
   // Neue, jedes Mal mit einem Prozentpunkt mehr: die ID ist damit eine andere,
@@ -23171,23 +23192,17 @@ function _breakingHeroText(s){
 // stand damit zweimal untereinander, im Kopf und als erste Karte darunter.
 // Er nennt jetzt die Bilanz des Tages: wie viel gespielt wurde und von wem.
 // Das steht sonst nirgends im Feed und wiederholt keine Karte.
-function _newsTagBilanz(dayKey){
+// Die Partien eines Kalendertags. Bewusst nicht `matchesByDay`: das
+// schluesselt nach `toISOString()` und damit nach UTC, der Feed gruppiert
+// aber nach Ortszeit (`_newsDayKey`) — an einer Tagesgrenze fielen beide
+// auseinander und die Karte des Tages haenge am falschen Tag.
+function _newsTagMs(dayKey){
   try {
-    const tag = [];
-    (matches || []).forEach(m => {
-      const d = new Date(m.created_at);
-      const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')
-              + '-' + String(d.getDate()).padStart(2,'0');
-      if(k === dayKey) tag.push(m);
-    });
-    if(!tag.length) return '';
-    const koepfe = new Set();
-    tag.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => { if(id) koepfe.add(id); }));
-    return tag.length + (tag.length === 1 ? ' Partie' : ' Partien')
-         + ' · ' + koepfe.size + ' Spieler';
-  } catch(e){ return ''; }
+    const out = [];
+    (matches || []).forEach(m => { if(_newsDayKey(m.created_at) === dayKey) out.push(m); });
+    return out;
+  } catch(e){ return []; }
 }
-
 // Welche Karte ist die Karte des Tages? Breaking zuerst, dann die höchste
 // Priorität. Sie wird darunter groß gezeigt, statt im Kopf noch einmal
 // aufgeschrieben zu werden.
@@ -23198,17 +23213,22 @@ function _newsTagBilanz(dayKey){
 // nichts zu tun haben und gestern genauso dagestanden hätten.
 function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || items.length < 2) return null;
-  if(!_newsTagBilanz(dayKey)) return null;   // an diesem Tag wurde nicht gespielt
-  // Erst wenn keine Partie mehr dazukommen kann. Vorher wurde die Karte des
-  // Tages zwanzig Minuten nach dem ersten Spiel vergeben: der Rekord, der
-  // gerade wechselte, war die einzige Karte des Tages und damit automatisch
-  // die staerkste — waehrend der Spieltag noch lief und der Spieler des
-  // Tages noch gar nicht feststand. 23:59 ist derselbe Zeitpunkt, an dem
-  // auch der Spieler des Tages erscheint, und die spaeteste Partie der Liga
-  // hat um 18 Uhr angefangen [§C33].
-  const schluss = new Date(dayKey + 'T00:00:00');
-  schluss.setHours(23, 59, 0, 0);
-  if(Date.now() < schluss.getTime()) return null;
+  const tagMs = _newsTagMs(dayKey);
+  if(!tagMs.length) return null;   // an diesem Tag wurde nicht gespielt
+  // Sie steht, sobald der Spieltag entschieden ist — nicht erst um 23:59.
+  // Zwei Bedingungen, eine reicht: die Zahl der Partien (`tagKartePartien`,
+  // gemessen der Median der Liga) oder die Stunde (`tagKarteStunde`), die die
+  // kurzen Tage auffaengt. Vorher wurde die Karte zwanzig Minuten nach dem
+  // ersten Spiel vergeben: der Rekord, der gerade wechselte, war die einzige
+  // Karte des Tages und damit automatisch die staerkste, waehrend der
+  // Spieltag noch lief und der Spieler des Tages noch gar nicht feststand.
+  // Danach stand sie erst um 23:59 und damit einen halben Tag, nachdem die
+  // letzte Partie gelaufen war [§C33].
+  if(tagMs.length < NEWS_LIMITS.tagKartePartien){
+    const frei = new Date(dayKey + 'T00:00:00');
+    frei.setHours(NEWS_LIMITS.tagKarteStunde, 0, 0, 0);
+    if(Date.now() < frei.getTime()) return null;
+  }
   const OHNE = new Set(['ambient', 'dry_spell', 'season_endgame', 'quiet_week', 'season_start']);
   const kandidaten = items.filter(x => !OHNE.has((x.dataRef || {}).type));
   if(!kandidaten.length) return null;
@@ -27774,6 +27794,15 @@ function showDisziplin(tid, sid){
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
+      ${/* Der Beiname stand nur im Profilkopf [§C39], und im Blatt der
+            Wertung war nicht zu sehen, wie ihr Halter dort heisst: „Der
+            Nervenkitzel" macht seinen Traeger zum „Dauerzitterer", und
+            beide Namen standen nirgends nebeneinander. Er sitzt IM Kopf
+            des Blatts, weil er zur Wertung gehoert und nicht zu ihren
+            Zahlen — die Zahlenreihe darunter traegt die vier Angaben,
+            die ihren Wert bestimmen [§C39]. */
+        def.beiname ? `<span class="chron-kose"><i>Beiname im Profil</i>`
+        + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
     ${_chronFaktenHtml(def)}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}

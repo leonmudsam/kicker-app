@@ -769,6 +769,23 @@ ok(K.eval(`(function(){
      tid + ': unbesetzte Plaetze bleiben als Luecke stehen', r[0] + '+' + r[1]);
   ok(r[2] === 1, tid + ': die Bedingung steht im Blatt');
 });
+// Der Beiname stand nur im Profilkopf. Wer ein Chronik-Blatt oeffnete, sah
+// die Bedingung, die Zahlen und das Podest — aber nicht, wie ihr Halter im
+// Profil heisst. Gemessen wird der Wortlaut aus dem Katalog, nicht nur das
+// Vorhandensein der Klasse: ein leeres Feld ist so gut wie keins.
+const _kose = JSON.parse(K.eval(`JSON.stringify((function(){
+  const fehlt = [];
+  SEASON_TITLES.forEach(t => {
+    let out=''; const echt=openSheet; openSheet=(h)=>{out=h;};
+    try { showDisziplin(t.id, '2026-08'); } catch(e){ out=''; } finally { openSheet=echt; }
+    if(out.indexOf('chron-kose') < 0 || out.indexOf(t.beiname) < 0) fehlt.push(t.id);
+  });
+  return {fehlt, n: SEASON_TITLES.length};
+})())`));
+ok(_kose.fehlt.length === 0,
+   'jedes Chronik-Blatt nennt den Beinamen seines Halters',
+   _kose.fehlt.join(', ') || _kose.n + ' Blaetter');
+K.eval('closeSheet(true)');
 // Die Erklaerung sagt, was die Zahl daneben bedeutet — „+15 Punkte" las sich
 // wie Elo. Wo eine Groesse nicht selbsterklaerend ist, steht sie im Blatt.
 ok(K.eval(`(function(){

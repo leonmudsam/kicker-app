@@ -499,8 +499,8 @@ const ok = (c, msg, det) => {
       // Gefragt wird die App, nicht das Markup: die Bilanz des Tages stand
       // frueher als Zeile im Kopf und diente hier als Ersatzsignal — sie ist
       // raus, der Tagesschluessel steht dafuer am Kopf.
-      const hatBilanz = kopf && window.__k.eval('_newsTagBilanz')(kopf.dataset.tag);
-      if(!hatBilanz && feed.querySelector('.nf-card.nf-gross')) tagOhneSpiel++;
+      const gespielt = kopf && window.__k.eval('_newsTagMs')(kopf.dataset.tag).length;
+      if(!gespielt && feed.querySelector('.nf-card.nf-gross')) tagOhneSpiel++;
     });
     gruppen.forEach(feed => {
       const gr = [...feed.querySelectorAll('.nf-card.nf-gross')];

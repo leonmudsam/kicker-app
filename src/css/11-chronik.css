@@ -187,6 +187,20 @@
   .tplate-kl{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     text-transform:uppercase;letter-spacing:.13em;color:var(--muted);
     margin-left:7px;vertical-align:1px;white-space:nowrap}
+  /* Der Beiname im Kopf des Blatts. Er bricht auf eine EIGENE Zeile
+     innerhalb des Kopfs (`flex-basis:100%`): als Pille rechts neben der
+     Bedingung blieb auf dem Telefon fuer beide je die halbe Breite, und
+     die Bedingung ist der laengere Satz. Metall, kein Gold — der Beiname
+     zeichnet niemanden aus [§C25]. */
+  .chron-hero{flex-wrap:wrap}
+  .chron-kose{flex:0 0 100%;display:flex;align-items:baseline;gap:8px;
+    margin-top:2px;padding-top:9px;border-top:1px solid rgba(var(--ttr),.16)}
+  .chron-kose i{font-family:'Sometype Mono',monospace;font-size:8.5px;
+    font-weight:700;font-style:normal;text-transform:uppercase;
+    letter-spacing:.13em;color:var(--muted);white-space:nowrap}
+  .chron-kose b{font-size:12.5px;font-weight:700;color:var(--ink);
+    margin-left:auto;text-align:right}
+
   /* Die Zahlenreihe im Chronik-Blatt steht direkt unter der Bedingung. */
   .chron-hero + .rcp-z{margin:-2px 0 12px}
 

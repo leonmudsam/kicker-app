@@ -220,8 +220,8 @@ globalem Zustand ist.
 | Suite | prüft | Checks |
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen | 974 |
-| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 176 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat | 215 |
+| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
+| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat | 221 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt — **im echten Browser gemessen** | 92 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -664,12 +664,20 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Spieltagen**: an einem Tag ohne Partie ist nichts passiert, was ihn von einem
   anderen unterscheidet, und dort standen sonst ein Fun Fact oder eine
   Zufallsstatistik groß im Bild, die gestern genauso dagestanden hätten.
-  Und es gibt sie **erst um 23:59**, wenn keine Partie mehr dazukommen kann —
-  dieselbe Uhrzeit wie beim Spieler des Tages, und aus demselben Grund.
+  Und sie steht, **sobald der Spieltag entschieden ist**: zwei Bedingungen,
+  eine reicht. Entweder trägt der Tag `NEWS_LIMITS.tagKartePartien` Partien —
+  acht, gemessen der Median der Liga über 56 Spieltage und erreicht an 64 %
+  von ihnen — oder es ist `tagKarteStunde` geworden, 19 Uhr. Keine der 466
+  Partien hat nach 18:31 angefangen, und der Fun Fact dieses Slots fällt an
+  einem Spieltag ohnehin weg: die Stunde kostet also nichts und fängt die
+  kurzen Tage auf, die die Zahl nie erreichen.
   Vorher wurde sie zwanzig Minuten nach dem ersten Spiel vergeben: der Rekord,
   der gerade wechselte, war die einzige Karte des Tages und damit automatisch
   die stärkste, während der Spieltag noch lief und der Spieler des Tages noch
-  gar nicht feststand.
+  gar nicht feststand. Danach stand sie erst um 23:59 und damit einen halben
+  Tag, nachdem die letzte Partie gelaufen war. Welche Partien zu einem
+  Kalendertag gehören, sagt `_newsTagMs` — in Ortszeit, weil der Feed nach
+  Ortszeit gruppiert und `matchesByDay` nach UTC schlüsselt.
   **Der Kopf einer Sammelkarte steht nicht zweimal da.** Das Sammelband ließ
   aus, was den Titel der KARTE trug — bei einer Tafel-Sammelkarte ist das der
   gebündelte Titel („Henry, Martin und zwei weitere bewegen die Ewige Tafel")
@@ -910,6 +918,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   geht es um die Wertung, im Profilkopf um den Menschen. Ein eingefrorener
   Monat kann eine Chronik tragen, die es nicht mehr gibt; dann bleibt der
   gespeicherte Name.
+  **Das Blatt der Wertung nennt ihn trotzdem** (`.chron-kose`): dort steht,
+  wie ihr Halter im Profil heißt. Sonst war der Beiname nirgends neben seiner
+  Wertung zu sehen — „Der Nervenkitzel" macht seinen Träger zum
+  „Dauerzitterer", und wer das Blatt öffnete, erfuhr davon nichts. Er sitzt
+  im Kopf des Blatts auf einer eigenen Zeile, nicht in der Zahlenreihe
+  darunter: die trägt die vier Angaben, die den Wert der Chronik bestimmen,
+  und ein Name ist keine davon. Metall, kein Gold — er zeichnet niemanden
+  aus [§C25].
 
   **Die Klasse ist zu sehen, nicht nur zu berechnen.** Von den vier Angaben,
   die den Wert einer Chronik bestimmen, stand keine einzige in der App: wer

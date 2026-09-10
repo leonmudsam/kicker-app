@@ -1311,6 +1311,45 @@ const _meta = JSON.parse(K.eval(`JSON.stringify((function(){
 })())`));
 ok(_meta.length === 0, 'kein Blatt erklaert die Regeln des Feeds', _meta.join(', ') || 'keins');
 
+// ── Die Karte des Tages steht, sobald der Spieltag entschieden ist ──
+// Sie kam einmal zwanzig Minuten nach dem ersten Spiel: der Rekord, der
+// gerade wechselte, war die einzige Karte des Tages und damit automatisch die
+// staerkste. Danach stand sie erst um 23:59 und damit einen halben Tag,
+// nachdem die letzte Partie gelaufen war. Jetzt zwei Bedingungen, eine
+// reicht: acht Partien oder 19 Uhr. Gemessen wird beides einzeln, also mit
+// einem Tag, der die Zahl erreicht, und einem, der sie nicht erreicht.
+const _tk = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = {};
+  matches.forEach(m => { const k = _newsDayKey(m.created_at); tage[k] = (tage[k]||0)+1; });
+  const voll = Object.keys(tage).find(k => tage[k] >= NEWS_LIMITS.tagKartePartien);
+  const kurz = Object.keys(tage).find(k => tage[k] > 0 && tage[k] < NEWS_LIMITS.tagKartePartien);
+  const items = [{id:'a', prio:5, dataRef:{type:'rekord_geholt'}},
+                 {id:'b', prio:9, dataRef:{type:'chronik_geholt'}}];
+  const um = (tag, std, min) => {
+    const d = new Date(tag + 'T00:00:00'); d.setHours(std, min||0, 0, 0);
+    const echt = Date.now; Date.now = () => d.getTime();
+    let r = null; try { r = _newsTagKarte(items, tag); } finally { Date.now = echt; }
+    return r;
+  };
+  return {vollN: tage[voll], kurzN: tage[kurz],
+    vollFrueh: um(voll, 8), kurzFrueh: um(kurz, 12), kurzSpaet: um(kurz, 19),
+    kurzKnapp: um(kurz, 18, 59), leer: um('2020-01-01', 23),
+    stunde: NEWS_LIMITS.tagKarteStunde, partien: NEWS_LIMITS.tagKartePartien};
+})())`));
+ok(_tk.partien >= 6 && _tk.partien <= 10 && _tk.stunde === 19,
+   'die Schwelle liegt bei acht Partien und 19 Uhr',
+   _tk.partien + ' Partien, ' + _tk.stunde + ' Uhr');
+ok(_tk.vollFrueh === 'b', 'ein Tag mit acht Partien traegt seine Karte sofort',
+   _tk.vollN + ' Partien -> ' + _tk.vollFrueh);
+ok(_tk.kurzFrueh === null, 'ein kurzer Spieltag wartet bis 19 Uhr',
+   _tk.kurzN + ' Partien um 12 Uhr -> ' + _tk.kurzFrueh);
+ok(_tk.kurzKnapp === null, 'eine Minute vor 19 Uhr steht sie noch nicht',
+   String(_tk.kurzKnapp));
+ok(_tk.kurzSpaet === 'b', 'um 19 Uhr steht sie auch ohne acht Partien',
+   String(_tk.kurzSpaet));
+ok(_tk.leer === null, 'ein Tag ohne Partie bekommt keine Karte des Tages',
+   String(_tk.leer));
+
 // ── Die Wochenkarte zeigt alle sechs Wertungen ──────────────────────
 // Sie zeigte drei und darunter „und 3 weitere Wertungen": die Ueberraschung,
 // der Krimi und das Team der Woche kamen auf der Karte gar nicht vor, obwohl

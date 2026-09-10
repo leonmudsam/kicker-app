@@ -852,23 +852,17 @@ function _breakingHeroText(s){
 // stand damit zweimal untereinander, im Kopf und als erste Karte darunter.
 // Er nennt jetzt die Bilanz des Tages: wie viel gespielt wurde und von wem.
 // Das steht sonst nirgends im Feed und wiederholt keine Karte.
-function _newsTagBilanz(dayKey){
+// Die Partien eines Kalendertags. Bewusst nicht `matchesByDay`: das
+// schluesselt nach `toISOString()` und damit nach UTC, der Feed gruppiert
+// aber nach Ortszeit (`_newsDayKey`) — an einer Tagesgrenze fielen beide
+// auseinander und die Karte des Tages haenge am falschen Tag.
+function _newsTagMs(dayKey){
   try {
-    const tag = [];
-    (matches || []).forEach(m => {
-      const d = new Date(m.created_at);
-      const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0')
-              + '-' + String(d.getDate()).padStart(2,'0');
-      if(k === dayKey) tag.push(m);
-    });
-    if(!tag.length) return '';
-    const koepfe = new Set();
-    tag.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => { if(id) koepfe.add(id); }));
-    return tag.length + (tag.length === 1 ? ' Partie' : ' Partien')
-         + ' · ' + koepfe.size + ' Spieler';
-  } catch(e){ return ''; }
+    const out = [];
+    (matches || []).forEach(m => { if(_newsDayKey(m.created_at) === dayKey) out.push(m); });
+    return out;
+  } catch(e){ return []; }
 }
-
 // Welche Karte ist die Karte des Tages? Breaking zuerst, dann die höchste
 // Priorität. Sie wird darunter groß gezeigt, statt im Kopf noch einmal
 // aufgeschrieben zu werden.
@@ -879,17 +873,22 @@ function _newsTagBilanz(dayKey){
 // nichts zu tun haben und gestern genauso dagestanden hätten.
 function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || items.length < 2) return null;
-  if(!_newsTagBilanz(dayKey)) return null;   // an diesem Tag wurde nicht gespielt
-  // Erst wenn keine Partie mehr dazukommen kann. Vorher wurde die Karte des
-  // Tages zwanzig Minuten nach dem ersten Spiel vergeben: der Rekord, der
-  // gerade wechselte, war die einzige Karte des Tages und damit automatisch
-  // die staerkste — waehrend der Spieltag noch lief und der Spieler des
-  // Tages noch gar nicht feststand. 23:59 ist derselbe Zeitpunkt, an dem
-  // auch der Spieler des Tages erscheint, und die spaeteste Partie der Liga
-  // hat um 18 Uhr angefangen [§C33].
-  const schluss = new Date(dayKey + 'T00:00:00');
-  schluss.setHours(23, 59, 0, 0);
-  if(Date.now() < schluss.getTime()) return null;
+  const tagMs = _newsTagMs(dayKey);
+  if(!tagMs.length) return null;   // an diesem Tag wurde nicht gespielt
+  // Sie steht, sobald der Spieltag entschieden ist — nicht erst um 23:59.
+  // Zwei Bedingungen, eine reicht: die Zahl der Partien (`tagKartePartien`,
+  // gemessen der Median der Liga) oder die Stunde (`tagKarteStunde`), die die
+  // kurzen Tage auffaengt. Vorher wurde die Karte zwanzig Minuten nach dem
+  // ersten Spiel vergeben: der Rekord, der gerade wechselte, war die einzige
+  // Karte des Tages und damit automatisch die staerkste, waehrend der
+  // Spieltag noch lief und der Spieler des Tages noch gar nicht feststand.
+  // Danach stand sie erst um 23:59 und damit einen halben Tag, nachdem die
+  // letzte Partie gelaufen war [§C33].
+  if(tagMs.length < NEWS_LIMITS.tagKartePartien){
+    const frei = new Date(dayKey + 'T00:00:00');
+    frei.setHours(NEWS_LIMITS.tagKarteStunde, 0, 0, 0);
+    if(Date.now() < frei.getTime()) return null;
+  }
   const OHNE = new Set(['ambient', 'dry_spell', 'season_endgame', 'quiet_week', 'season_start']);
   const kandidaten = items.filter(x => !OHNE.has((x.dataRef || {}).type));
   if(!kandidaten.length) return null;
