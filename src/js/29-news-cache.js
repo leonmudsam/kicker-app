@@ -463,6 +463,125 @@ function _consolidateStories(list){
   const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
+  // ── Was ein Spieler holen kann ─────────────────────────────────────
+  // Die Bündelung nach Moment und Subjekt kannte den INHALT nicht: sie legte
+  // zusammen, was denselben Zeitstempel und einen gemeinsamen Namen trug, und
+  // borgte sich Rubrik und Schlagzeile der stärksten Zeile. An der Ewigen
+  // Tafel gruppierte sie sogar den ganzen TAG ohne jedes Subjekt — gemessen
+  // standen dort vier Rekordwechsel dreier Spieler in einer Karte, und die
+  // drei, die im selben Moment dieselbe Insignium-Stufe erreichten, fielen
+  // über die vier Zeilen hinaus und standen einzeln daneben.
+  //
+  // Zwei Fragen kommen deshalb VOR der alten Bündelung: Hat EIN Spieler
+  // mehreres auf einmal geholt? Haben MEHRERE dasselbe geholt? Beides ist
+  // eine eigene Nachricht mit eigener Kartenform, und beides trägt jede
+  // beteiligte Meldung — gebündelt, aber vollständig [§C33].
+  //
+  // `art` ist die Sorte des Erfolgs (drei Rekordmeldungen sind eine Sorte),
+  // die Wendung dahinter baut die Schlagzeile. Sie steht je Sorte mit ihrem
+  // eigenen VERB da: „holt einen Liga-Rekord und feiert ein Jubiläum" liest
+  // sich richtig, „holt einen Liga-Rekord und ein Jubiläum" nicht.
+  // `rekord_gesteigert` fehlt hier: Ausbauen ist die schwächste der drei
+  // Rekordmeldungen und ohnehin gedeckelt [§C33] — es trägt keinen Moment.
+  const ERFOLG_ART = {
+    rekord_erstmals:  'rekord',   rekord_geholt:    'rekord',
+    chronik_geholt:   'chronik',  chronik_erstling: 'erstling',
+    insignium_stufe:  'ins',      badge_unlocked:   'badge',
+    milestone_wins:   'marke',    milestone_goals:  'marke',
+    milestone_elo:    'marke',    jubilee:          'jubilaeum'
+  };
+  // Verb und Gegenstand stehen getrennt, weil zwei Sorten mit demselben Verb
+  // es nur EINMAL nennen: „holt einen Liga-Rekord und eine Auszeichnung" ist
+  // die Zeile, „holt einen Liga-Rekord und holt eine Auszeichnung" war sie.
+  const ERFOLG_WORT = {
+    rekord:    {verb:'holt',     ein:'einen Liga-Rekord',           viele:n => `${n} Liga-Rekorde`},
+    chronik:   {verb:'holt',     ein:'eine Monatschronik',          viele:n => `${n} Monatschroniken`},
+    badge:     {verb:'holt',     ein:'eine Auszeichnung',           viele:n => `${n} Auszeichnungen`},
+    ins:       {verb:'erreicht', ein:'die nächste Insignium-Stufe', viele:n => `${n} Insignium-Stufen`},
+    marke:     {verb:'erreicht', ein:'einen Meilenstein',           viele:n => `${n} Meilensteine`},
+    jubilaeum: {verb:'feiert',   ein:'ein Jubiläum',                viele:n => `${n} Jubiläen`},
+    erstling:  {verb:'steht',    ein:'zum ersten Mal in der Chronik',
+                viele:n => `${n} Mal neu in der Chronik`}
+  };
+  // ── Mehrere Spieler, derselbe Erfolg ───────────────────────────────
+  // Nur die Typen, die überhaupt kollidieren können: einer je Spieler, und
+  // die Sache ist dieselbe. Liga-Rekord und Monatschronik fehlen hier, weil
+  // sie ihre Mithalter schon in EINER Karte tragen („Maxi, Leo und Julian
+  // übernehmen") — eine zweite Bündelung darüber wäre ein zweites Bauteil
+  // für dieselbe Aussage [§C27]. Die Auszeichnung fehlt aus demselben Grund:
+  // dieselbe Auszeichnung in derselben Partie fasst `badgeGroups` zusammen.
+  //
+  // Die Schlagzeile nennt ALLE Beteiligten und die Sache; der Satz sagt, wie
+  // viele es zugleich sind. Ihn vom Kopf zu borgen wäre falsch: „385 Prestige
+  // zusammen" gehört einem der drei, und die Karte handelt von allen.
+  const SAMMEL_ERFOLG = {
+    insignium_stufe: {
+      sache: d => 'ins|' + d.stufe,
+      titel: (nm, d) => `${nm} tragen jetzt den ${d.stufeName || 'Reif'}`,
+      satz:  (n, d) => `${n} Spieler erreichen Stufe ${(d.stufe | 0) + 1} von `
+                     + `${(typeof INSIGNIEN !== 'undefined' ? INSIGNIEN.length : 5)} im selben Moment.`,
+      zeile: (nm, d) => `${nm}: ${d.punkte} Prestige`
+    },
+    chronik_erstling: {
+      sache: d => 'erst|' + (d.sid || ''),
+      titel: nm => `${nm} stehen zum ersten Mal in der Chronik`,
+      satz:  n => `${n} Namen kommen im selben Monat neu auf die Tafel.`,
+      zeile: (nm, d) => `${nm}: „${d.titel || ''}"`
+    },
+    jubilee: {
+      sache: d => 'jub|' + (d.total || ''),
+      titel: (nm, d) => `${nm} feiern das ${d.total}. Spiel`,
+      satz:  (n, d) => `${n} Spieler stehen nach derselben Partie bei ${d.total} Partien.`,
+      zeile: nm => nm
+    },
+    milestone_wins: {
+      sache: d => 'mw|' + (d.milestone || ''),
+      titel: (nm, d) => `${nm} feiern den ${parseInt(d.milestone, 10)}. Sieg`,
+      satz:  (n, d) => `${n} Spieler erreichen ${parseInt(d.milestone, 10)} Siege im selben Moment.`,
+      zeile: nm => nm
+    },
+    milestone_goals: {
+      sache: d => 'mg|' + (d.milestone || ''),
+      titel: (nm, d) => `${nm} feiern das ${parseInt(d.milestone, 10)}. Tor`,
+      satz:  (n, d) => `${n} Spieler erreichen ${parseInt(d.milestone, 10)} Tore im selben Moment.`,
+      zeile: nm => nm
+    },
+    milestone_elo: {
+      sache: d => 'me|' + (d.mark || d.milestone || ''),
+      titel: (nm, d) => `${nm} knacken ${d.mark || parseInt(d.milestone, 10)} Elo`,
+      satz:  (n, d) => `${n} Spieler überschreiten dieselbe Elo-Marke im selben Moment.`,
+      zeile: nm => nm
+    }
+  };
+  // Die Schlagzeile der Spieler-Karte. Sie nennt jede Sorte mit ihrer Zahl,
+  // in der Reihenfolge der Wertigkeit — „Maxi holt zwei Monatschroniken",
+  // „Jonas holt einen Liga-Rekord und erreicht die nächste Insignium-Stufe".
+  // Vorher borgte die Karte die Schlagzeile ihrer stärksten Zeile, und damit
+  // stand über einer Karte mit zwei Chroniken der Name der einen.
+  const _spielerTitel = (name, teile) => {
+    const zahl = {}, folge = [];
+    teile.forEach(t => {
+      const a = ERFOLG_ART[(t.dataRef || {}).type];
+      if(!a) return;
+      if(zahl[a] == null){ zahl[a] = 0; folge.push(a); }
+      zahl[a]++;
+    });
+    // Die Gegenstände stehen in EINER Aufzählung, und das Verb nur da, wo es
+    // wechselt: „holt einen Liga-Rekord, eine Auszeichnung und feiert ein
+    // Jubiläum". Je Verb eine eigene Aufzählung ergab zwei „und" in einer
+    // Zeile („holt einen Liga-Rekord und eine Auszeichnung und feiert ein
+    // Jubiläum"). Die Reihenfolge ist die Wertigkeit: `teile` steht nach
+    // `prio` sortiert.
+    const stuecke = []; let zuletzt = '';
+    folge.forEach(a => {
+      const w = ERFOLG_WORT[a];
+      if(!w) return;
+      const gegenstand = zahl[a] === 1 ? w.ein : w.viele(_zahlwortDe(zahl[a]));
+      stuecke.push(w.verb === zuletzt ? gegenstand : w.verb + ' ' + gegenstand);
+      zuletzt = w.verb;
+    });
+    return name + ' ' + _namenListe(stuecke);
+  };
   // Keine zwei Zeilen mit derselben Schlagzeile. „Martin baut ‚Der Fels' aus"
   // stand VIERMAL untereinander in einer Sammelkarte, jedes Mal mit demselben
   // Wert und nur einer anderen Spielzahl im Fliesstext. Die Buendelung soll
@@ -471,7 +590,12 @@ function _consolidateStories(list){
     const tk = String(st.title || '').trim();
     if(tk && g.titel.has(tk)) return;
     if(tk) g.titel.add(tk);
-    if(g.teile.length < SAMMEL_MAX) g.teile.push(st);
+    // Vier Zeilen sind die Grenze — aber nur dort, wo die Karte einen MOMENT
+    // zusammenfasst und darüber ein Tagesrückblick wäre. Die Karte über einen
+    // Spieler und die über einen Erfolg tragen jede Zeile: dort IST die
+    // Vollständigkeit die Aussage, und eine fünfte Chronik zu verschweigen
+    // hieße, die Karte gegen ihren eigenen Zweck zu bauen.
+    if(g.teile.length < (g.max || SAMMEL_MAX)) g.teile.push(st);
   };
   // ── Wer einzeln bleibt ─────────────────────────────────────────────
   // Zwei Sorten gehen nie in ein Buendel: Breaking, weil ein erstmals
@@ -503,13 +627,62 @@ function _consolidateStories(list){
   // nie, die Verschmelzung kostet also nichts.
   const spielMinuten = new Map();
   const _pidsVon = st => { try { return _newsPids(st) || []; } catch(e){ return []; } };
+  // ── Zuerst der Erfolg, dann der Spieler, dann der Rest ─────────────
+  // Die Reihenfolge ist nicht beliebig. Ein Erfolg, den mehrere zugleich
+  // erreichen, ist EINE Nachricht der Liga und darf nicht zerrissen werden:
+  // liefe die Spieler-Achse zuerst, stünde „der Schildring" auf zwei Karten
+  // — auf der gemeinsamen der beiden anderen und auf der persönlichen des
+  // einen, der im selben Moment noch einen Rekord geholt hat. Genau diese
+  // Doppelung verhindert §C33. Sein Rekord fällt dann in die alte Bündelung,
+  // und dort gehören Rekorde ohnehin hin.
+  //
+  // Beide Achsen fassen nur, was ALLEIN dasteht (genau ein Beteiligter). Eine
+  // Duo-Serie oder ein Duell gehört keinem Einzelnen und wäre auf einer Karte
+  // über einen Spieler eine Behauptung über zwei.
+  const einzel = [];
   result.forEach((st, idx) => {
     const d = (st && st.dataRef) || {};
     if(_sammelEinzeln(st, d)) return;
+    const pids = _pidsVon(st);
+    if(pids.length === 1 && ERFOLG_ART[d.type]) einzel.push({st, idx, d, pids});
+  });
+  const _achse = new Map();          // st.id → Gruppenschlüssel
+  const _achseBauen = (praefix, schluessel, art) => {
+    const topf = new Map();
+    einzel.forEach(k => {
+      if(_achse.has(k.st.id)) return;
+      const sl = schluessel(k);
+      if(sl == null) return;
+      const key = praefix + '|' + _minKey(k.st.when) + '|' + sl;
+      let l = topf.get(key);
+      if(!l){ l = []; topf.set(key, l); }
+      l.push(k);
+    });
+    topf.forEach((l, key) => {
+      if(l.length < 2) return;
+      const g = {key, art, teile:[], titel:new Set(), max: Infinity,
+                 erster: l.reduce((mn, k) => Math.min(mn, k.idx), l[0].idx),
+                 pid: l[0].pids[0]};
+      sammelGruppen.set(key, g);
+      l.slice().sort((a, b) => a.idx - b.idx).forEach(k => {
+        _achse.set(k.st.id, key);
+        _sammelZeile(g, k.st);
+      });
+    });
+  };
+  _achseBauen('erfolg', k => {
+    const cfg = SAMMEL_ERFOLG[k.d.type];
+    return cfg ? cfg.sache(k.d) : null;
+  }, 'erfolg');
+  _achseBauen('spieler', k => k.pids[0], 'spieler');
+  result.forEach((st, idx) => {
+    const d = (st && st.dataRef) || {};
+    if(_sammelEinzeln(st, d)) return;
+    if(_achse.has(st.id)) return;    // steht schon auf einer der neuen Karten
     if(SAMMEL_TAFEL.has(d.type)){
       const key = 'tafel|' + _tagKey(st.when);
       let g = sammelGruppen.get(key);
-      if(!g){ g = {key, teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
+      if(!g){ g = {key, art:'tafel', teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
       _sammelZeile(g, st);
       return;
     }
@@ -538,7 +711,7 @@ function _consolidateStories(list){
     gruppen.forEach((gr, i) => {
       if(gr.eintraege.length < 2) return;
       const key = 'spiel|' + mk + '|' + i;
-      const g = {key, teile:[], titel:new Set(), erster: gr.erster};
+      const g = {key, art:'spiel', teile:[], titel:new Set(), erster: gr.erster};
       sammelGruppen.set(key, g);
       gr.eintraege.sort((a, b) => a.idx - b.idx).forEach(e => _sammelZeile(g, e.st));
     });
@@ -557,15 +730,57 @@ function _consolidateStories(list){
     const teile = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
     const kopf = teile[0];
     const rest = teile.slice(1);
-    const istTafel = g.key.indexOf('tafel|') === 0;
+    const art = g.art || (g.key.indexOf('tafel|') === 0 ? 'tafel' : 'spiel');
+    const istTafel = art === 'tafel';
     const pids = [];
     teile.forEach(t => {
       let ids = [];
       try { ids = (typeof _newsPids === 'function') ? _newsPids(t) : []; } catch(e){}
       ids.forEach(id => { if(pids.indexOf(id) < 0) pids.push(id); });
     });
+    // ── Die Schlagzeile der beiden neuen Karten ──────────────────────
+    // Sie borgen sie NICHT vom Kopf: über einer Karte mit zwei Chroniken
+    // stand sonst der Name der einen, und über einer, auf der drei Spieler
+    // dieselbe Stufe erreichen, der Name des ersten.
+    // ── Die Zeile im Sammelband ──────────────────────────────────────
+    // Auf der Spieler-Karte faellt der Name vorne weg: er steht schon in der
+    // Schlagzeile, und dreimal „Tobi" untereinander ist zweimal zu viel
+    // [§C33]. Auf der Erfolgs-Karte bleibt er stehen und bekommt den Wert
+    // dazu, der die Traeger unterscheidet — dreimal „traegt den Schildring"
+    // unter „Sina, Mira und Jonas tragen jetzt den Schildring" waere die
+    // Schlagzeile in drei Wiederholungen. Wo nur der Name unterscheidet
+    // (Jubilaeum, Meilenstein), steht er allein: die Liste IST dann die
+    // Aufzaehlung, und ab dem vierten Namen ist sie die einzige Stelle, an
+    // der alle vorkommen.
+    const _achseZeile = t => {
+      const ti = String(t.title || '').trim();
+      if(art !== 'spieler' && art !== 'erfolg') return ti;
+      const nm = nameOf(_pidsVon(t)[0]);
+      if(art === 'spieler'){
+        const ohne = ti.replace(new RegExp('^'
+          + String(nm).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*:?\\s*'), '');
+        return ohne || ti;
+      }
+      const cfg = SAMMEL_ERFOLG[(t.dataRef || {}).type];
+      return (cfg && cfg.zeile) ? cfg.zeile(nm, t.dataRef || {}) : ti;
+    };
+    let neuTitel = '', neuText = '';
+    if(art === 'spieler'){
+      neuTitel = _spielerTitel(nameOf(g.pid), teile);
+      // Der Satz gehört dem stärksten Erfolg, wie bei jeder Sammelkarte, und
+      // zählt dahinter, was noch dazukommt. Was genau, steht Zeile für Zeile
+      // im Sammelband auf der Karte selbst [§C33].
+      neuText = _ersterSatz(kopf.desc) + (rest.length === 1
+        ? ' Dazu kommt im selben Moment noch ein Erfolg.'
+        : ` Dazu kommen im selben Moment noch ${_zahlwortDe(rest.length)} weitere Erfolge.`);
+    } else if(art === 'erfolg'){
+      const cfg = SAMMEL_ERFOLG[(kopf.dataRef || {}).type] || {};
+      const namen = pids.map(nameOf);
+      neuTitel = cfg.titel ? cfg.titel(_namenKurz(namen), kopf.dataRef || {}) : kopf.title;
+      neuText = cfg.satz ? cfg.satz(teile.length, kopf.dataRef || {}) : _ersterSatz(kopf.desc);
+    }
     gesammelt.push({
-      id: 'sammel_' + g.key.replace('|', '_'),
+      id: 'sammel_' + g.key.replace(/\|/g, '_'),
       cat: istTafel ? 'tafel' : kopf.cat,
       ic: kopf.ic,
       // Der Titel muss den Tag benennen, an dem es passiert ist. „Zwei Wechsel
@@ -576,12 +791,12 @@ function _consolidateStories(list){
       // Und die Ueberschrift nennt ALLE: sie zeigte zwei von drei Namen, und
       // der dritte kam nur in der Liste darunter vor, obwohl die Karte
       // genauso von ihm handelt [§C33].
-      title: istTafel
+      title: neuTitel ? neuTitel : (istTafel
         ? (pids.length
             ? `${_namenKurz(pids.map(nameOf))} `
               + `${pids.length > 1 ? 'bewegen' : 'bewegt'} die Ewige Tafel`
             : `${_zahlwortDe(teile.length)} Wechsel an der Ewigen Tafel`)
-        : kopf.title,
+        : kopf.title),
       // Die Karte fasst zusammen, das Blatt zeigt alles. Als der Text die
       // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
       // Liste, die das Blatt darunter noch einmal führte — und bei vier
@@ -591,15 +806,15 @@ function _consolidateStories(list){
       // Jannik") — ein Detail zu einer von vier Meldungen, und als Karte des
       // Tages stand es gross im Bild, waehrend die anderen drei nur als
       // Zeile darunter vorkamen. Der Platz gehoert dem Sammelband.
-      desc: istTafel
+      desc: neuText ? neuText : (istTafel
         ? _ersterSatz(kopf.desc) + (rest.length
             ? ` Und ${_zahlwortDe(rest.length)} ${rest.length === 1
                 ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
             : '')
-        : kopf.desc,
+        : kopf.desc),
       when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
       prio: (kopf.prio || 0) + 1,
-      dataRef: {type:'sammel', quelle: istTafel ? 'tafel' : 'spiel',
+      dataRef: {type:'sammel', quelle: art,
                 matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
                 kopfTyp: (kopf.dataRef||{}).type || '',
                 // Der Titel des Kopfs, damit das Sammelband ihn auslassen
@@ -609,7 +824,7 @@ function _consolidateStories(list){
                 // Die Beteiligten je Zeile: die Buendelung haengt an ihnen
                 // [§C33], und im Blatt fuehrt die Zeile damit zu dem, von dem
                 // sie handelt.
-                teile: teile.map(t => ({ic: t.ic, titel: t.title, text: t.desc,
+                teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t), text: t.desc,
                                         typ: (t.dataRef||{}).type || '',
                                         pids: _pidsVon(t).slice(0, 2)}))}
     });

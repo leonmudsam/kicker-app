@@ -658,7 +658,8 @@
   .nf-rub svg{width:11px;height:11px;flex-shrink:0;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .nf-s-tafel .nf-rub i,.nf-s-ins .nf-rub i,.nf-s-held .nf-rub i,
-  .nf-s-woche .nf-rub i,.nf-s-badge .nf-rub i{background:rgba(247,207,74,.13);
+  .nf-s-woche .nf-rub i,.nf-s-badge .nf-rub i,
+  .nf-s-spieler .nf-rub i,.nf-s-erfolg .nf-rub i{background:rgba(247,207,74,.13);
     box-shadow:inset 0 0 0 1px rgba(247,207,74,.22)}
   .nf-s-spiel .nf-rub i,.nf-s-serie .nf-rub i,.nf-s-duell .nf-rub i{
     background:rgba(190,242,100,.1);box-shadow:inset 0 0 0 1px rgba(190,242,100,.18)}
@@ -670,7 +671,8 @@
   /* Die Rubrikfarbe folgt dem Farbgesetz: Gold traegt, was Titel und Rekord
      ist, Metall alles Uebrige [§C25]. */
   .nf-s-tafel .nf-rub,.nf-s-ins .nf-rub,.nf-s-held .nf-rub,
-  .nf-s-woche .nf-rub,.nf-s-badge .nf-rub{color:var(--gold)}
+  .nf-s-woche .nf-rub,.nf-s-badge .nf-rub,
+  .nf-s-spieler .nf-rub,.nf-s-erfolg .nf-rub{color:var(--gold)}
   .nf-s-spiel .nf-rub{color:var(--acid2)}
   .nf-gr{display:grid;grid-template-columns:1fr;gap:12px;padding:11px 13px 12px;align-items:start}
   .nf-gr.mit-l{grid-template-columns:auto minmax(0,1fr)}
@@ -796,6 +798,13 @@
      [§C25] — aber die Sorte ist damit auch aus dem Augenwinkel zu ahnen. */
   .nf-s-duell,.nf-s-serie,.nf-s-spiel{--tint:rgba(190,242,100,.055)}
   .nf-s-ins,.nf-s-badge,.nf-s-woche{--tint:rgba(247,207,74,.075)}
+  /* Sorte 11 und 12: die beiden zusammenfuehrenden Karten. Sie wiegen so
+     schwer wie die Meldungen, die sie buendeln — mehrere davon —, also
+     tragen sie Gold und die starke Kante [§C25]. Der Schein steht etwas
+     kraeftiger als bei einer einzelnen Tafel-Karte: sie fasst mehreres
+     zusammen und soll im Feed als das Ereignis des Moments zu erkennen
+     sein, ohne die Breite von Breaking zu brauchen. */
+  .nf-s-spieler,.nf-s-erfolg{--tint:rgba(247,207,74,.12)}
   .nf-card.nf-neg{--tint:rgba(240,86,106,.07)}
   .nf-card.read{--tint:rgba(255,255,255,.02)}
 
@@ -808,7 +817,8 @@
      jede Sorte eine eigene Regel braucht. */
   .nf-card{--kante:2px;--rahmen:rgba(255,255,255,.055)}
   /* Gold wiegt am schwersten: Titel und heute gehaltene Rekorde. */
-  .nf-s-tafel,.nf-s-ins,.nf-s-badge,.nf-s-woche,.nf-s-held{
+  .nf-s-tafel,.nf-s-ins,.nf-s-badge,.nf-s-woche,.nf-s-held,
+  .nf-s-spieler,.nf-s-erfolg{
     --kante:3px;--rahmen:rgba(247,207,74,.26)}
   /* Der Spieltag ist die zweite Ebene: es ist passiert, aber es bleibt nicht. */
   .nf-s-spiel,.nf-s-duell,.nf-s-serie{--kante:3px;--rahmen:rgba(190,242,100,.2)}
@@ -862,7 +872,8 @@
   .nf-motiv::before{content:"";position:absolute;inset:-14%;border-radius:50%;
     background:radial-gradient(circle,currentColor,transparent 68%);opacity:.16}
   .nf-s-tafel .nf-motiv,.nf-s-ins .nf-motiv,.nf-s-held .nf-motiv,
-  .nf-s-woche .nf-motiv,.nf-s-badge .nf-motiv{color:var(--gold);opacity:.08}
+  .nf-s-woche .nf-motiv,.nf-s-badge .nf-motiv,
+  .nf-s-spieler .nf-motiv,.nf-s-erfolg .nf-motiv{color:var(--gold);opacity:.08}
   .nf-s-spiel .nf-motiv{color:var(--acid2);opacity:.07}
   .nf-card.read .nf-motiv{opacity:.028}
   /* Alles Uebrige liegt darueber, sonst schneidet das Motiv in die Schrift. */
