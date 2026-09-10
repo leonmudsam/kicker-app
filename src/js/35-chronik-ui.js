@@ -9,16 +9,45 @@ function _titlePlateHtml(a, opts){
   const av = p ? avHtml(p) : '';
   const zeig = a.titleId && !o.keinDetail;
   const cls = 'tplate' + (o.hero ? ' hero' : '') + (zeig || a.pid ? ' clickable' : '');
+  // Die Klasse sagt, wie schwer der Eintrag zu holen war [§C39], und steht
+  // deshalb auf der Plakette. Sie kommt aus dem Katalog von HEUTE und fehlt
+  // still, wenn ein eingefrorener Monat eine Chronik zeigt, die es nicht mehr
+  // gibt — eine Plakette ohne Klasse ist besser als eine mit falscher.
+  const kl = _chronKlasse(a.titleId);
   return `<div class="${cls}" style="--tt:${t.c};--ttr:${t.rgb}"${
+    kl ? ` data-kl="${esc(kl)}"` : ''}${
     zeig ? ` data-tdisz="${esc(a.titleId)}" data-tsid="${esc(o.sid || '')}"`
          : (a.pid ? ` data-tplayer="${esc(a.pid)}"` : '')}>
     <div class="tplate-ic">${svgI(a.ic)}</div>
     <div class="tplate-b">
-      <div class="tplate-t">${esc(a.name)}</div>
+      <div class="tplate-t">${esc(a.name)}${
+        kl ? `<span class="tplate-kl">${esc(CHRONIK_KLASSE_NAME[kl])}</span>` : ''}</div>
       <div class="tplate-w">${av}<span>${esc(p ? p.name : '?')}</span></div>
       ${a.ev ? `<div class="tplate-e num">${esc(a.ev)}</div>` : ''}
     </div>
   </div>`;
+}
+
+// Die Klasse einer Monatschronik, oder leer. Ein eingefrorener Monat kann
+// eine Chronik zeigen, die der Katalog nicht mehr kennt [§13.3a].
+function _chronKlasse(tid){
+  const d = tid && SEASON_TITLE_BY_ID[tid];
+  return (d && CHRONIK_KLASSE_NAME[d.klasse]) ? d.klasse : '';
+}
+
+// Klasse, Art, Ausschlag und Prestige einer Monatschronik als Zahlenreihe —
+// dasselbe Bauteil wie in den Rückblicken [§C27]. Vorher stand von den vier
+// Angaben, die den Wert einer Chronik bestimmen, keine einzige in der App:
+// wer ein Chronik-Blatt öffnete, sah die Bedingung und sonst nichts.
+function _chronFaktenHtml(def){
+  if(!def || !CHRONIK_KLASSE_NAME[def.klasse]) return '';
+  const p = chronikPunkte(def.id);
+  return rcpZahlenHtml([
+    {v:CHRONIK_KLASSE_NAME[def.klasse], l:'Klasse'},
+    {v:CHRONIK_ART_NAME[def.kunst] || '—', l:'Art'},
+    {v:String(def.aus || 0).replace('.', ',') + ' \u03c3', l:'Ausschlag'},
+    p > 0 ? {v:'+' + p, l:'Prestige', ton:'gold'} : {v:'0', l:'Prestige'},
+  ]);
 }
 
 // Die Saison-Tafel als Sheet. Öffnet aus der Chronik, der Liga-Chronik und
@@ -187,8 +216,10 @@ function _chronStripHtml(pid){
     const t = r.title;
     const tone = titleTone(t.tone);
     const mon = String(r.label).split(' ')[0].slice(0,3);
+    const kl = _chronKlasse(t.titleId);
     return `<div class="chron-cell${r.live ? ' live' : ''}"
-      style="--tt:${tone.c};--ttr:${tone.rgb}" data-season-table="${esc(r.sid)}">
+      style="--tt:${tone.c};--ttr:${tone.rgb}"${kl ? ` data-kl="${esc(kl)}"` : ''}
+      data-season-table="${esc(r.sid)}">
       <div class="m">${esc(mon)}</div>
       <div class="i">${svgI(t.ic)}</div>
       <div class="n">${esc(t.short || t.name)}</div>
@@ -269,6 +300,7 @@ function showDisziplin(tid, sid){
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
     </div>
+    ${_chronFaktenHtml(def)}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Dieser Monat</h4></div>
@@ -485,15 +517,26 @@ function ligaChronikMatrixHtml(){
   const cols = all.slice(0, 8).reverse();  // älteste links, wie eine Zeitleiste
   if(!cols.length) return '';
   // Zeilen: alle Spieler, die in einer der Spalten-Saisons gewertet wurden.
-  // Sortiert nach Titel-Anzahl, dann Name — wer viel geholt hat, steht oben.
-  const seen = {};
+  // Sortiert nach dem PRESTIGE der gehaltenen Chroniken, dann nach ihrer Zahl,
+  // dann nach Name. Nach der Zahl allein stand ein Monat mit drei billigen
+  // Einträgen über einem mit einer legendären Chronik, und seit die Chroniken
+  // nach ihrem Ausschlag verschieden viel wert sind [§C39], ist die Zahl gar
+  // keine Ordnung mehr: „Der Wechselhafte" wiegt 75, „Die Wochenkrone" 175.
+  // Gezählt wird nur, was in den sichtbaren Spalten steht — die Tabelle soll
+  // die Ordnung erklären, die man sieht.
+  const seen = {}, wert = {};
   cols.forEach(T => {
-    T.awarded.forEach(a => { seen[a.pid] = (seen[a.pid] || 0) + 1; });
-    T.empty.forEach(pid => { if(seen[pid] === undefined) seen[pid] = 0; });
+    T.awarded.forEach(a => {
+      seen[a.pid] = (seen[a.pid] || 0) + 1;
+      wert[a.pid] = (wert[a.pid] || 0) + chronikPunkte(a.titleId);
+    });
+    T.empty.forEach(pid => { if(seen[pid] === undefined){ seen[pid] = 0; wert[pid] = 0; } });
   });
   const rows = Object.keys(seen)
     .filter(pid => pmap()[pid])
-    .sort((a,b) => seen[b] - seen[a] || pname(a).localeCompare(pname(b)));
+    .sort((a,b) => (wert[b] || 0) - (wert[a] || 0)
+                || seen[b] - seen[a]
+                || pname(a).localeCompare(pname(b)));
   return `
     <div class="lchron-wrap">
       <table class="lchron">
@@ -507,7 +550,9 @@ function ligaChronikMatrixHtml(){
               const a = T.awarded.find(x => x.pid === pid);
               if(!a) return `<td><span class="lc-dash">—</span></td>`;
               const t = titleTone(a.tone);
-              return `<td><span class="lc-cell${T.live?' live':''}" style="--tt:${t.c};--ttr:${t.rgb}"
+              const kl = _chronKlasse(a.titleId);
+              return `<td><span class="lc-cell${T.live?' live':''}" style="--tt:${t.c};--ttr:${t.rgb}"${
+                kl ? ` data-kl="${esc(kl)}"` : ''}
                 data-season-table="${esc(T.sid)}">
                 <span class="i">${svgI(a.ic)}</span>
                 <span class="n">${esc(a.short || a.name)}</span></span></td>`;

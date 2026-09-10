@@ -166,6 +166,30 @@
   .lc-cell .n{font-size:8.5px;font-weight:700;line-height:1.35;color:var(--tt);
     max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+  /* Das Gewicht der Klasse [§C39]. Keine neue Farbe — das Farbgesetz kennt
+     vier Rollen [§C25] —, sondern dieselbe Farbe in drei Stärken: eine
+     legendäre Chronik leuchtet, eine besondere ist ein Hauch. Vorher trugen
+     alle Zellen dieselbe Füllung, und dass zwischen „Der Wechselhafte" und
+     „Die Wochenkrone" hundert Prestige-Punkte liegen, sah man nirgends.
+     Auch die schwächste bleibt deutlich sichtbar: eine fast leere Zelle
+     liest sich als Fehler. */
+  .lc-cell[data-kl="legendaer"]{background:rgba(var(--ttr),.19);
+    box-shadow:inset 0 0 0 1px rgba(var(--ttr),.34)}
+  .lc-cell[data-kl="besonders"]{background:rgba(var(--ttr),.08)}
+  .chron-cell[data-kl="legendaer"]{border-color:rgba(var(--ttr),.7);
+    background:linear-gradient(180deg,rgba(var(--ttr),.16),var(--surface))}
+  .chron-cell[data-kl="besonders"]{border-color:rgba(var(--ttr),.3);
+    background:linear-gradient(180deg,rgba(var(--ttr),.05),var(--surface))}
+  .tplate[data-kl="legendaer"]{border-left-width:4px}
+  .tplate[data-kl="besonders"]{border-left-width:2px}
+  /* Die Klasse in Worten, neben dem Namen. Metall, weil sie niemanden
+     auszeichnet — sie sagt nur, wie selten die Bedingung zutrifft. */
+  .tplate-kl{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.13em;color:var(--muted);
+    margin-left:7px;vertical-align:1px;white-space:nowrap}
+  /* Die Zahlenreihe im Chronik-Blatt steht direkt unter der Bedingung. */
+  .chron-hero + .rcp-z{margin:-2px 0 12px}
+
   /* Einstieg in die Liga-Chronik (Awards-Tab) */
   .chron-entry{display:flex;align-items:center;gap:12px;background:var(--surface);
     border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;
