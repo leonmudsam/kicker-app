@@ -4721,7 +4721,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.b02992cb';
+const BUILD_VERSION='2026.09.10.eda43c5e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -28957,6 +28957,33 @@ const PRESTIGE_MONAT = 60;
 // Auszeichnung — es gibt ihn nur einmal in der Liga.
 const PRESTIGE_REKORD = 36;
 
+// ─── Wiederholung zählt weniger, aber nie nichts ────────────────────
+// Wer dieselbe Sache zum dritten Mal holt, hat weniger Neues gezeigt als
+// beim ersten Mal — gegen sich selbst gemessen, nicht gegen andere. Jede
+// weitere Verleihung derselben Sache ist deshalb ein Zehntel weniger wert
+// als die vorige: 52, 47, 42, 38 … Die Summe einer geometrischen Reihe mit
+// diesem Faktor läuft gegen das Zehnfache des ersten Mals und kann es nie
+// überschreiten — die zwanzigste Verleihung trägt noch 13 % bei, die
+// hundertste praktisch nichts. Damit kann eine wiederholbare Auszeichnung
+// das Prestige nicht mehr allein tragen, ohne dass sie dafür entwertet
+// werden müsste.
+//
+// Zehn Prozent sind bewusst wenig: der dritte Meistertitel ist keinen Deut
+// leichter als der erste, und wer ihn holt, soll ihn auch spüren. Gemessen
+// an den echten Partien kostet die Regel heute 25 Punkte beim Ersten der
+// Liga — sie ordnet die Zukunft, nicht die Gegenwart.
+//
+// Sie gilt NUR für dieselbe Sache. Eine Meisterschaft und ein Team der
+// Saison sind zwei verschiedene Dinge und zählen beide voll: das Stapeln
+// über verschiedene Erfolge hinweg war der Fehler, den §C34 abgestellt hat,
+// und der bestrafte genau den, der viel erreicht.
+const PRESTIGE_WIEDERHOLUNG = 0.9;
+function _wiederholungsWert(n){
+  const r = PRESTIGE_WIEDERHOLUNG;
+  const k = Math.max(0, n | 0);
+  return (1 - Math.pow(r, k)) / (1 - r);
+}
+
 // Wie nah ein Rekord sein muss, um noch als Ziel zu gelten: höchstens die
 // Hälfte des Bestwerts entfernt. Darüber ist der Hinweis entmutigend
 // statt hilfreich.
@@ -29165,8 +29192,12 @@ function prestigeTabelle(){
       // einmal. Wer denselben Zittersieg zum dreißigsten Mal holt, hat nichts
       // Neues gezeigt — wer zum dritten Mal Meister wird, schon, und der
       // dritte Titel ist keinen Deut leichter als der erste.
+      // Eine Würde zählt jedes Mal neu, aber jedes Mal etwas weniger als
+      // beim Mal davor. Vorher war die fünfte Meisterschaft genauso viel
+      // wert wie die erste, und ein Spieler, der eine Würde Saison für
+      // Saison verteidigt, wuchs linear davon.
       const wuerde = BADGE_WUERDE.has(b.id);
-      const w = einzeln * (wuerde ? b.n : 1);
+      const w = einzeln * (wuerde ? _wiederholungsWert(b.n) : 1);
       az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl, art,
                mal:b.n, wuerde, einzeln});
     });
@@ -29174,16 +29205,23 @@ function prestigeTabelle(){
 
     // Monatschroniken: der Wert haengt an der Abweichung [§C39].
     const mo = [];
+    // Dieselbe Chronik in mehreren Monaten ist dieselbe Sache: der zweite
+    // „Makellose" zeigt weniger Neues als der erste. Sortiert nach Saison,
+    // damit der FRÜHESTE Monat den vollen Wert trägt — sonst hinge es an
+    // der Reihenfolge, in der die Tabelle gerade gebaut wird.
+    const _malMonat = {};
     r.monat.slice().sort((a,b) => a.sid < b.sid ? -1 : a.sid > b.sid ? 1 : 0).forEach(m => {
       const voll = chronikPunkte(m.id);
       if(voll <= 0) return;
+      const mal = (_malMonat[m.id] = (_malMonat[m.id] || 0) + 1);
       // Die Art der CHRONIK, nicht die der Disziplin: seit §C39 traegt
       // `monat.art` den Wert (Koennen, Konstanz, Fuegung), waehrend `art` der
       // Disziplin nur noch die Katalogreihenfolge bestimmt. In der Laufbahn
       // stand deshalb „Leistung" neben einer Chronik, deren Punkte aus
       // „Konstanz" kamen — die Zeile erklaerte den Wert daneben nicht.
       const km = _chronikMonat(m.id) || {};
-      mo.push({q:'monat', id:m.id, name:m.name, label:m.label, p:voll,
+      mo.push({q:'monat', id:m.id, name:m.name, label:m.label,
+               p: voll * Math.pow(PRESTIGE_WIEDERHOLUNG, mal - 1), mal,
                kunst:km.art || '', klasse:km.klasse || ''});
     });
     const pm = summe(mo);

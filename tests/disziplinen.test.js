@@ -1339,17 +1339,27 @@ ok(_pvR.length > 0, 'ein abgegebener Rekord kostet Prestige',
 //    für den zweihundertsten Zittersieg zu viel.
 const _wd = JSON.parse(K.eval(`JSON.stringify((function(){
   const T = prestigeTabelle();
-  let mehrfach = 0, ohne = 0, grind = [];
+  let mehrfach = 0, ohne = 0, grind = [], linear = [], ueberDeckel = [];
   T.rang.forEach(pid => {
     T.byPid[pid].quellen.filter(q => q.q === 'auszeichnung').forEach(q => {
       if(q.mal < 2) return;
-      if(q.wuerde){ mehrfach++; if(q.voll <= q.einzeln) ohne++; }
+      if(q.wuerde){
+        mehrfach++;
+        if(q.voll <= q.einzeln) ohne++;
+        // Wiederholung zaehlt weniger, aber nie nichts: die n-te
+        // Verleihung traegt weniger bei als die erste, und die ganze
+        // Reihe bleibt unter dem Zehnfachen einer einzelnen.
+        if(q.voll >= q.einzeln * q.mal - 1e-6) linear.push(q.name + ' ' + q.mal + '×');
+        const deckel = q.einzeln / (1 - PRESTIGE_WIEDERHOLUNG);
+        if(q.voll > deckel + 1e-6) ueberDeckel.push(q.name + ' ' + Math.round(q.voll));
+      }
       // Ein Eintrag, den jemand zwanzigmal geholt hat und der nicht als
       // Würde geführt wird, darf keinen Cent mehr bringen als beim ersten Mal.
       else if(q.voll > q.einzeln) grind.push(q.name + ' ' + q.mal + '×');
     });
   });
-  return {mehrfach, ohne, grind};
+  return {mehrfach, ohne, grind, linear, ueberDeckel,
+          probe:[1,2,3,5,10].map(n => +( _wiederholungsWert(n) ).toFixed(3))};
 })())`));
 ok(_wd.mehrfach > 0 && _wd.ohne === 0,
    'jede wiederholte Würde zählt mehr als eine einzelne',
@@ -1357,6 +1367,18 @@ ok(_wd.mehrfach > 0 && _wd.ohne === 0,
 ok(_wd.grind.length === 0,
    'eine beliebig oft holbare Auszeichnung zählt genau einmal',
    _wd.grind.slice(0,3).join(', ') || 'keine');
+// Und jede weitere Verleihung traegt weniger bei als die vorige. Ohne das
+// wuchs, wer eine Wuerde Saison fuer Saison verteidigt, linear davon —
+// gegen sich selbst gemessen zeigt die fuenfte Meisterschaft weniger Neues
+// als die erste.
+ok(_wd.linear.length === 0, 'eine wiederholte Würde wächst nicht linear',
+   _wd.linear.slice(0,3).join(', ') || 'keine');
+ok(_wd.ueberDeckel.length === 0,
+   'und die ganze Reihe bleibt unter dem Zehnfachen einer einzelnen',
+   _wd.ueberDeckel.slice(0,3).join(', ') || 'keine');
+ok(_wd.probe[0] === 1 && _wd.probe[1] === 1.9 && _wd.probe[2] === 2.71,
+   'die Abstufung ist ein Zehntel je Wiederholung',
+   _wd.probe.join(' / '));
 
 // 5. Der Meister der Liga bekommt für seinen Titel auch etwas. Er hatte bis
 //    hierher keine Auszeichnung — der Vize hatte eine.

@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **687**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **689**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,7 +219,7 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen | 974 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen, die Abstufung der Wiederholung | 977 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge | 238 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
@@ -1259,9 +1259,26 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   hielt. Beides bestraft genau den, der viel erreicht.
   Wiederholung zählt nur, wo sie etwas heißt: eine **Würde** (`BADGE_WUERDE`
   — höchstens einmal je Saison und am Können gemessen: Meister, Team der
-  Saison, Vize, Dominator, Award-Sammler) zählt jedes Mal neu und jedes Mal
-  voll, alles andere genau einmal. Der dreißigste Zittersieg zeigt nichts
-  Neues; der dritte Meistertitel ist keinen Deut leichter als der erste.
+  Saison, Vize, Dominator, Award-Sammler, Aufsteiger) zählt jedes Mal neu,
+  alles andere genau einmal. Der dreißigste Zittersieg zeigt nichts Neues.
+
+  **Jede Wiederholung derselben Sache wiegt ein Zehntel weniger als die
+  vorige** (`PRESTIGE_WIEDERHOLUNG`, `_wiederholungsWert`): 52, 47, 42, 38 …
+  Gemessen gegen sich selbst, nicht gegen andere — der dritte Meistertitel
+  ist keinen Deut leichter als der erste, aber er zeigt weniger Neues. Vorher
+  wuchs linear davon, wer eine Würde Saison für Saison verteidigt: zehn
+  Meisterschaften waren 520 Punkte und damit allein mehr als die Schwelle zum
+  Volutenkranz. Die Summe der Reihe läuft gegen das **Zehnfache** einer
+  einzelnen und kann es nie überschreiten; die zwanzigste Verleihung trägt
+  noch 13 % bei. Dieselbe Regel gilt für dieselbe Monatschronik in mehreren
+  Monaten, und der **früheste** Monat trägt den vollen Wert.
+  Zehn Prozent sind bewusst wenig: gemessen an den echten Partien kostet die
+  Regel heute 24 Punkte beim Ersten der Liga, und keine einzige
+  Insignium-Stufe wechselt dadurch den Träger. Sie ordnet die Zukunft, nicht
+  die Gegenwart — deshalb bleiben die Schwellen in `INSIGNIEN`, wo sie sind.
+  Sie gilt NUR für dieselbe Sache: eine Meisterschaft und ein Team der Saison
+  sind zwei verschiedene Dinge und zählen beide voll. Über verschiedene
+  Erfolge zu stapeln war der Fehler, den dieser Abschnitt abgestellt hat.
   Weil nichts mehr gestapelt wird, tragen `PRESTIGE_KLASSE`,
   `PRESTIGE_MONAT` und `PRESTIGE_REKORD` die ganze Balance allein. Sie sind
   gegeneinander kalibriert; `tests/disziplinen` spielt die Liga dafür Monat
