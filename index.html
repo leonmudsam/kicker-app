@@ -4749,7 +4749,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.a0319318';
+const BUILD_VERSION='2026.09.10.e278aeb3';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21997,6 +21997,41 @@ function _consolidateStories(list){
   const { loss: _liveLoss, win: _liveWin, form: _liveForm } = _liveStreakForm();
   const { win: _tsWin, loss: _tsLoss } = _liveTeamStreak();
   const _paarKey = d => (d.a && d.b) ? [d.a, d.b].sort().join('|') : null;
+  // Wer haelt einen Liga-Rekord HEUTE? Einmal je Lauf und nur, wenn eine
+  // Rekord-Karte im Stapel liegt — `allChronicles` kostet den ersten Aufruf
+  // rund 18 ms und liegt danach im Cache.
+  let _rekJetzt = null;
+  const _rekHalter = id => {
+    if(_rekJetzt === null){ try { _rekJetzt = allChronicles().byId || {}; } catch(e){ _rekJetzt = {}; } }
+    const r = _rekJetzt[id];
+    return (r && Array.isArray(r.pids)) ? r.pids : null;
+  };
+  // Je Rekord die juengste Karte suchen. Alles davor, dessen Halter heute
+  // keiner mehr ist, steht im Widerspruch zu ihr und faellt weg.
+  const _rekUeberholt = new Set();
+  {
+    const proRekord = new Map();
+    list.forEach(s => {
+      const d = (s && s.dataRef) || {};
+      if(!d.rekordId) return;
+      if(d.type !== 'rekord_geholt' && d.type !== 'rekord_erstmals'
+         && d.type !== 'rekord_gesteigert') return;
+      const arr = proRekord.get(d.rekordId) || [];
+      arr.push(s); proRekord.set(d.rekordId, arr);
+    });
+    proRekord.forEach((arr, rid) => {
+      if(arr.length < 2) return;
+      const jetzt = _rekHalter(rid);
+      if(!jetzt) return;
+      const hat = new Set(jetzt);
+      const neuste = arr.reduce((a, b) => new Date(b.when) > new Date(a.when) ? b : a);
+      arr.forEach(s => {
+        if(s === neuste) return;
+        const genannt = (s.dataRef || {}).playerIds || [];
+        if(genannt.length && !genannt.every(p => hat.has(p))) _rekUeberholt.add(s.id);
+      });
+    });
+  }
   // Der Fun Fact ist die Füllung eines stillen Tages, nicht die Zugabe zu einem
   // lauten. „Leon führt das Prestige an" gilt seit Wochen und stand neben dem
   // Spieltag, an dem gerade etwas passierte. Der Abend-Slot schweigt an
@@ -22044,8 +22079,20 @@ function _consolidateStories(list){
     if(d.type === 'rekord_geholt'){
       const a = (d.playerIds || []).slice().sort().join(',');
       const b = (d.vorher || []).slice().sort().join(',');
-      return !b || a !== b;
+      if(b && a === b) return false;
     }
+    // Eine Rekord-Karte, die von einer juengeren ueberholt wurde UND deren
+    // Halter keiner mehr ist, widerspricht der Karte neben sich. Gemessen am
+    // 10.09.: „Der Zerstoerer" wechselte zweimal an einem Tag, und „Martin
+    // uebernimmt ‚Der Zerstoerer'" stand im Feed zwei Karten ueber „Jannik
+    // baut ‚Der Zerstoerer' aus". Beim „Gigantentoeter" war es das enger
+    // gewordene Feld: „Henry und Jannik uebernehmen" stand acht Minuten vor
+    // „Henry uebernimmt". Dieselbe Regel wie beim ueberholten Elo-Rekord:
+    // es bleibt die, die noch gilt.
+    // Nur BEIDES zusammen zaehlt. Eine Uebernahme, der nichts widerspricht,
+    // bleibt eine Nachricht, auch wenn der Rekord Wochen spaeter weiterwandert
+    // — sie erzaehlt von ihrem Tag, nicht von heute [§C33].
+    if(d.rekordId && _rekUeberholt.has(s.id)) return false;
     return true;
   });
 

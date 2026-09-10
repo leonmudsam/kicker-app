@@ -615,6 +615,45 @@ ok(!_prioFrisch.keine && _prioFrisch.bekannt === _prioFrisch.sollBekannt,
 ok(!_prioFrisch.keine && _prioFrisch.veraltet === _prioFrisch.sollVeraltet,
    'und eine, die er nicht mehr bildet, das Band ihres Typs',
    _prioFrisch.veraltet + ' statt ' + _prioFrisch.sollVeraltet);
+
+// Zwei Karten ueber denselben Rekord, und die aeltere nennt einen Halter,
+// der keiner mehr ist: sie widerspricht der juengeren, die direkt daneben
+// steht. Gemessen am 10.09. stand „Martin uebernimmt ‚Der Zerstoerer'"
+// zwei Karten ueber „Jannik baut ‚Der Zerstoerer' aus". Nur BEIDES
+// zusammen zaehlt: eine Uebernahme, der nichts widerspricht, bleibt eine
+// Nachricht ueber ihren eigenen Tag.
+const _rekAlt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const A = allChronicles().byId;
+  const rid = Object.keys(A).find(k => A[k] && (A[k].pids||[]).length);
+  if(!rid) return {keine:true};
+  const halter = A[rid].pids;
+  const fremd = (players||[]).find(p => p && !halter.includes(p.id));
+  if(!fremd) return {keine:true};
+  const t = Date.now();
+  const mach = (id, typ, pids, ms, titel) => ({id, cat:'tafel', ic:'award',
+    title:titel, desc:'Beleg mit 7 Zahlen.', when:new Date(ms), prio:70,
+    dataRef:{type:typ, rekordId:rid, playerIds:pids, vorher:[]}});
+  const alt  = mach('rek_pruef_alt',  'rekord_geholt',      [fremd.id], t-3600000, 'Alt uebernimmt');
+  const neuK = mach('rek_pruef_neu',  'rekord_gesteigert', halter.slice(0,1), t, 'Neu baut aus');
+  // Zwei Tafel-Karten desselben Tages werden gebuendelt: gesucht wird die
+  // Aussage, egal ob sie als Karte oder als Zeile darin steht.
+  const drin = (liste, titel) => liste.some(x => x.title === titel
+    || (((x.dataRef||{}).teile)||[]).some(t => t && t.titel === titel));
+  const zusammen = _consolidateStories([neuK, alt]);
+  const allein   = _consolidateStories([Object.assign({}, alt)]);
+  return {mitJuengerer: drin(zusammen, 'Alt uebernimmt'),
+          juengereBleibt: drin(zusammen, 'Neu baut aus'),
+          alleine: drin(allein, 'Alt uebernimmt')};
+})())`));
+ok(!_rekAlt.keine && _rekAlt.mitJuengerer === false,
+   'ein ueberholter Rekord-Halter steht nicht neben dem heutigen',
+   String(_rekAlt.mitJuengerer));
+ok(!_rekAlt.keine && _rekAlt.juengereBleibt === true,
+   'die Karte, die noch gilt, bleibt',
+   String(_rekAlt.juengereBleibt));
+ok(!_rekAlt.keine && _rekAlt.alleine === true,
+   'und eine Uebernahme, der nichts widerspricht, bleibt auch',
+   String(_rekAlt.alleine));
 ok(_plan.chrZeit.every(t => t === '0:0'), 'die Chronik erscheint um 00:00',
    _plan.chrZeit.join(', ') || 'keine');
 ok(_plan.chrErster, 'am ersten Tag des Folgemonats');
