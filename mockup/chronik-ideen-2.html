@@ -1,0 +1,466 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chronik-Ideen, zweite Runde</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=Sometype+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c0b;--surface:#141a16;--surface2:#1a221c;--line:#28332b;--line2:#34423a;
+--ink:#eef3ef;--ink2:#b9c4bd;--muted:#717f76;--faint:#4a554e;
+--acid:#BEF264;--orange:#ff7849;--blue:#56b4e8;--red:#f0566a;--gold:#f7cf4a;--purple:#a78bfa;--silber:#C2C9D0;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 'Space Grotesk',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 20px 80px}
+h1{font-family:'Archivo Black',system-ui,sans-serif;font-size:clamp(26px,5vw,42px);line-height:1.05;margin:0 0 12px;letter-spacing:-.02em}
+.lead{color:var(--ink2);max-width:74ch;margin:0 0 10px}
+.lead b{color:var(--ink)}
+.hint{color:var(--muted);font-size:13px;max-width:76ch;margin:0 0 24px}
+.zahlen{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:0 0 38px}
+.z{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.z .v{font-family:'Sometype Mono',ui-monospace,monospace;font-size:22px;font-weight:600;color:var(--acid)}
+.z .k{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.07em;margin-top:3px}
+h2.top{font-family:'Archivo Black',sans-serif;font-size:22px;margin:44px 0 6px;letter-spacing:-.01em}
+h2.top:first-of-type{margin-top:0}
+.sub{color:var(--ink2);font-size:13.5px;max-width:82ch;margin:0 0 18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.karte{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--af,var(--line2));border-radius:14px;padding:14px 15px 12px;display:flex;flex-direction:column}
+.karte.raus{opacity:.55;border-left-style:dashed}
+.kl{font:600 10px 'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.09em;color:var(--af,var(--muted))}
+.karte h4{font-family:'Archivo Black',sans-serif;font-size:15.5px;margin:2px 0 8px;letter-spacing:-.01em}
+.cond{margin:0 0 8px;font-size:13px;font-weight:500}
+.wie{margin:0 0 9px;font-size:12.5px;color:var(--muted);line-height:1.5}
+.nb{margin:0 0 9px;font-size:11.5px;color:var(--blue);line-height:1.45}
+.warn{margin:0 0 9px;font-size:11.5px;color:var(--orange)}
+.mess{margin-top:auto;border-top:1px solid var(--line);padding-top:8px;display:flex;flex-direction:column;gap:5px}
+.m{display:grid;grid-template-columns:62px 1fr;gap:2px 8px;font-size:12px;align-items:baseline}
+.m .mo{font:400 11px 'Sometype Mono',monospace;color:var(--muted)}
+.m .wer b{color:var(--ink)} .m .wer i{font-style:normal;color:var(--muted);font-size:11px}
+.m.nie .wer{color:var(--faint);font-size:11px}
+.a-koennen{--af:var(--gold)} .a-konstanz{--af:var(--blue)} .a-fuegung{--af:var(--silber)}
+table{border-collapse:collapse;width:100%;margin:6px 0 34px;font-size:13px}
+th,td{text-align:left;padding:7px 10px 7px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em}
+td.num,th.num{font-family:'Sometype Mono',monospace;text-align:right;padding-right:14px;white-space:nowrap}
+tr.neu td{background:rgba(190,242,100,.06)}
+tr.neu td:first-child{box-shadow:inset 2px 0 0 var(--acid)}
+.pill{display:inline-block;font:600 10px 'Sometype Mono',monospace;text-transform:uppercase;
+letter-spacing:.08em;border:1px solid var(--line2);border-radius:999px;padding:1px 7px;color:var(--muted);margin-left:6px}
+.pill.gold{color:var(--gold);border-color:rgba(247,207,74,.4)}
+.pill.acid{color:var(--acid);border-color:rgba(190,242,100,.4)}
+/* Kartenmuster fuer den Story-Teil */
+.feed{max-width:430px;background:#0d100e;border:1px solid var(--line);border-radius:18px;padding:14px;margin:0 0 14px}
+.tagkopf{display:flex;align-items:baseline;gap:8px;padding:6px 2px 8px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.tagkopf b{font-family:'Archivo Black',sans-serif;font-size:13px}
+.tagkopf span{color:var(--muted);font:400 11px 'Sometype Mono',monospace}
+.tagkopf i{margin-left:auto;font-style:normal;color:var(--faint);font:400 11px 'Sometype Mono',monospace}
+.nf{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--kf,var(--line2));
+border-radius:14px;padding:10px 12px;margin-bottom:8px;position:relative;overflow:hidden}
+.nf .top{display:flex;align-items:center;gap:6px;font:600 9.5px 'Sometype Mono',monospace;
+text-transform:uppercase;letter-spacing:.1em;color:var(--kf,var(--muted));margin-bottom:5px}
+.nf .top .uhr{margin-left:auto;color:var(--faint)}
+.nf h5{font-family:'Archivo Black',sans-serif;font-size:14px;margin:0 0 4px;letter-spacing:-.01em}
+.nf p{margin:0;font-size:12.5px;color:var(--ink2);line-height:1.45}
+.nf .wertblock{display:flex;align-items:baseline;gap:8px;margin:8px 0 2px}
+.nf .wertblock b{font-family:'Sometype Mono',monospace;font-size:22px;color:var(--kf);font-weight:600}
+.nf .wertblock span{font-size:11.5px;color:var(--muted)}
+.nf .sam{margin-top:8px;border-top:1px solid var(--line);padding-top:7px;display:flex;flex-direction:column;gap:4px}
+.nf .sam div{font-size:11.5px;color:var(--ink2)}
+.nf.gold{--kf:var(--gold)} .nf.metall{--kf:var(--silber)} .nf.rot{--kf:var(--red)}
+.nf.blau{--kf:var(--blue)} .nf.gruen{--kf:var(--acid)}
+.zr{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:9px 0 2px}
+.zr div{background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:6px 4px;text-align:center}
+.zr b{display:block;font-family:'Sometype Mono',monospace;font-size:13px;color:var(--ink)}
+.zr span{display:block;font:600 8.5px 'Sometype Mono',monospace;text-transform:uppercase;
+letter-spacing:.09em;color:var(--muted);margin-top:2px}
+.zwei{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px;align-items:start}
+.merk{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:0 0 12px}
+.merk h4{font-family:'Archivo Black',sans-serif;font-size:14px;margin:0 0 7px}
+.merk p{margin:0 0 8px;font-size:13px;color:var(--ink2)}
+.merk p:last-child{margin-bottom:0}
+.merk code{font:500 12px 'Sometype Mono',monospace;color:var(--acid)}
+.luecke{border-left:3px solid var(--orange)}
+.luecke h4{color:var(--orange)}
+</style></head><body><div class="wrap">
+
+<h1>Chronik-Ideen, zweite Runde</h1>
+<p class="lead">Ergänzend zu den <b>42 Monatschroniken</b>, die im Katalog stehen. Gleiches Prinzip:
+Abweichung, Konstanz, Verhältnis zum Ligamittel, seltenes Einzelereignis. Gerechnet an den
+echten 466 Partien der Liga, über 32 Spieler-Monate.</p>
+<p class="hint">Zwei Regeln räumen auf, und beide sind gemessen, nicht geschätzt: eine Chronik muss ihre
+Schwelle mindestens 1,5 σ über den Schnitt aller Werte schieben können, und sie darf nicht an der
+Spielzahl hängen (Korrelation höchstens 0,35). Von 26 Ideen halten 11. Was fällt, steht unten mit Grund.</p>
+
+<div class="zahlen">
+  <div class="z"><div class="v">11</div><div class="k">Ideen halten</div></div>
+  <div class="z"><div class="v">15</div><div class="k">fallen durch</div></div>
+  <div class="z"><div class="v">6/4/1</div><div class="k">legendär / selten / besonders</div></div>
+  <div class="z"><div class="v">75–140</div><div class="k">Prestige je Eintrag</div></div>
+  <div class="z"><div class="v">8</div><div class="k">verschiedene Halter</div></div>
+</div>
+
+<h2 class="top">Die neuen Chroniken</h2>
+<p class="sub">Jede Karte nennt die Bedingung, die Schwelle mit ihrem Ausschlag, das Prestige daraus
+und die Monate, die sie erfüllen. Unter „knapp" stehen die, die als nächstes dran wären — genau die
+Fälle, die zeigen, ob eine Schwelle richtig hängt.</p>
+<div class="grid"><div class="karte a-koennen">
+    <div class="kl">Können · legendär</div>
+    <h4>Die Woche gegen die Rechnung</h4>
+    <p class="cond">Eine Kalenderwoche, die die Elo-Rechnung mit höchstens 0,5 % erwartet hat, ab 6 Partien in dieser Woche</p>
+    <p class="wie">Gerechnet wird die Wahrscheinlichkeit, in dieser Woche so viele Siege oder mehr zu holen — Partie für Partie aus der Siegchance, die vor dem Anpfiff stand.</p>
+    
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>0,5 % erwartet</b>
+        <i>2,79 σ über dem Schnitt · 140 Prestige</i></span></div>
+      <div class="m"><span class="mo">August</span>
+        <span class="wer"><b>Martin</b> <i>0,4 % erwartet</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Julian Juni · 0,5 % erwartet &nbsp;·&nbsp; Leo Juli · 3,6 % erwartet &nbsp;·&nbsp; Julian Juli · 4,3 % erwartet</span></div>
+    </div>
+  </div><div class="karte a-konstanz">
+    <div class="kl">Konstanz · legendär</div>
+    <h4>Der Gleichmut</h4>
+    <p class="cond">Die Tordifferenz jeder Partie bleibt im Schnitt höchstens 3,0 Tore vom eigenen Mittel entfernt, ab 8 Partien</p>
+    <p class="wie">Nicht wie hoch gewonnen wird, sondern wie gleichmäßig. Wer jede Partie mit zwei Toren Unterschied beendet, steht hier vor dem, der 10:0 und 0:10 abwechselt.</p>
+    
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>3,0 Tore Streuung</b>
+        <i>3,20 σ über dem Schnitt · 130 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juni</span>
+        <span class="wer"><b>Johannes</b> <i>2,8 Tore Streuung</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Jane Juni · 3,8 Tore Streuung &nbsp;·&nbsp; Stefan Juni · 3,8 Tore Streuung &nbsp;·&nbsp; Julian Juli · 3,9 Tore Streuung</span></div>
+    </div>
+  </div><div class="karte a-koennen">
+    <div class="kl">Können · legendär</div>
+    <h4>Die zweite Luft</h4>
+    <p class="cond">Ab der vierten Partie eines Spieltags mindestens 40 Prozentpunkte stärker als in den ersten drei, ab 5 Partien in jedem Block</p>
+    <p class="wie">Der Vergleich läuft innerhalb der eigenen Spieltage: dieselben Gegner, dieselbe Woche, nur später am Tag.</p>
+    
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>+40 %-Punkte</b>
+        <i>2,11 σ über dem Schnitt · 120 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juli</span>
+        <span class="wer"><b>Jane</b> <i>+42 %-Punkte</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Johannes Juli · +30 %-Punkte &nbsp;·&nbsp; Jannik Juni · +25 %-Punkte &nbsp;·&nbsp; Julian August · +24 %-Punkte</span></div>
+    </div>
+  </div><div class="karte a-koennen">
+    <div class="kl">Können · legendär</div>
+    <h4>Die Auferstehung</h4>
+    <p class="cond">Jede Partie nach zwei Pleiten am Stück gewonnen, ab 5 solchen Gelegenheiten</p>
+    <p class="wie">Nach einer Pleite fragt „Die Antwort&quot;. Zwei am Stück sind die Stelle, an der ein Tag kippt.</p>
+    
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>100 %</b>
+        <i>2,14 σ über dem Schnitt · 120 Prestige</i></span></div>
+      <div class="m"><span class="mo">August</span>
+        <span class="wer"><b>Julian</b> <i>100 %</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Leon Juli · 89 % &nbsp;·&nbsp; Jannik Juli · 83 % &nbsp;·&nbsp; Jane Juli · 80 %</span></div>
+    </div>
+  </div><div class="karte a-koennen">
+    <div class="kl">Können · selten</div>
+    <h4>Die Nulldiät</h4>
+    <p class="cond">Mindestens 20 % der Partien mit höchstens drei Gegentoren</p>
+    <p class="wie">Gezählt wird der Anteil, nicht die Anzahl. Ein Spiel geht auf zehn, drei Gegentore sind eine geschlossene Partie.</p>
+    <p class="nb">„Das Bollwerk&quot; misst denselben Bereich als Schnitt gegen das Ligamittel. Hier steht der Anteil der Partien, dort die Zahl je Partie — verwandt, aber nicht dasselbe.</p>
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>20 % der Partien</b>
+        <i>2,31 σ über dem Schnitt · 115 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juni</span>
+        <span class="wer"><b>Julian</b> <i>21 % der Partien</i></span></div><div class="m"><span class="mo">Juni</span>
+        <span class="wer"><b>Jannik</b> <i>22 % der Partien</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Martin Juni · 17 % der Partien &nbsp;·&nbsp; Martin Juli · 16 % der Partien &nbsp;·&nbsp; Martin August · 14 % der Partien</span></div>
+    </div>
+  </div><div class="karte a-koennen">
+    <div class="kl">Können · legendär</div>
+    <h4>Der Serienbrecher</h4>
+    <p class="cond">Mindestens 70 % gegen Gegner, die zum Zeitpunkt der Partie drei Siege am Stück tragen, ab 5 solchen Partien</p>
+    <p class="wie">Die Serie des Gegners wird für jede Partie neu nachgezählt, mit dem Stand VOR dem Anpfiff.</p>
+    
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>70 %</b>
+        <i>1,60 σ über dem Schnitt · 105 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juni</span>
+        <span class="wer"><b>Julian</b> <i>88 %</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Martin Juni · 69 % &nbsp;·&nbsp; Martin August · 62 % &nbsp;·&nbsp; Julian August · 60 %</span></div>
+    </div>
+  </div><div class="karte a-koennen">
+    <div class="kl">Können · selten</div>
+    <h4>Der Wochenschluss</h4>
+    <p class="cond">Jede letzte Partie einer Kalenderwoche gewonnen, ab 4 Wochen mit je 3 Partien</p>
+    <p class="wie">Der letzte Ball einer Woche ist der, der stehen bleibt, bis wieder gespielt wird.</p>
+    
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>100 %</b>
+        <i>1,83 σ über dem Schnitt · 105 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juni</span>
+        <span class="wer"><b>Martin</b> <i>100 %</i></span></div><div class="m"><span class="mo">August</span>
+        <span class="wer"><b>Leo</b> <i>100 %</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Martin Juli · 75 % &nbsp;·&nbsp; Leon August · 75 % &nbsp;·&nbsp; Henry Juni · 60 %</span></div>
+    </div>
+  </div><div class="karte a-konstanz">
+    <div class="kl">Konstanz · selten</div>
+    <h4>Favorit wie Außenseiter</h4>
+    <p class="cond">Als klarer Favorit und als Außenseiter höchstens 5 Prozentpunkte auseinander, ab 5 Partien in jeder Lage</p>
+    <p class="wie">Favorit ist über 55 % Siegchance, Außenseiter unter 45 %. Gemessen wird der Abstand zwischen beiden Quoten, nicht ihre Höhe.</p>
+    
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>5 %-Punkte Unterschied</b>
+        <i>1,68 σ über dem Schnitt · 90 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juli</span>
+        <span class="wer"><b>Jane</b> <i>3 %-Punkte Unterschied</i></span></div><div class="m"><span class="mo">Juli</span>
+        <span class="wer"><b>Julian</b> <i>0 %-Punkte Unterschied</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Julian August · 7 %-Punkte Unterschied &nbsp;·&nbsp; Henry Juli · 9 %-Punkte Unterschied &nbsp;·&nbsp; Jannik Juni · 12 %-Punkte Unterschied</span></div>
+    </div>
+  </div><div class="karte a-koennen">
+    <div class="kl">Können · besonders</div>
+    <h4>Der Aufstieg</h4>
+    <p class="cond">Im Monat mindestens 8 Plätze in der Liga-Tabelle gewonnen, ab 5 Spieltagen</p>
+    <p class="wie">Verglichen wird der Tabellenplatz am ersten eigenen Spieltag mit dem am letzten. Die Tabelle ist die des Monats, sie startet für alle gleich.</p>
+    
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>+8 Plätze</b>
+        <i>1,61 σ über dem Schnitt · 90 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juli</span>
+        <span class="wer"><b>Leon</b> <i>+11 Plätze</i></span></div><div class="m"><span class="mo">Juli</span>
+        <span class="wer"><b>Martin</b> <i>+9 Plätze</i></span></div><div class="m"><span class="mo">August</span>
+        <span class="wer"><b>Martin</b> <i>+8 Plätze</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Julian Juli · +6 Plätze &nbsp;·&nbsp; Julian August · +6 Plätze &nbsp;·&nbsp; Leo Juni · +5 Plätze</span></div>
+    </div>
+  </div><div class="karte a-fuegung">
+    <div class="kl">Fügung · legendär</div>
+    <h4>Das Kaltblut</h4>
+    <p class="cond">Mindestens 80 % der Partien gewonnen, die mit einem Tor Unterschied endeten, ab 5 solchen Partien</p>
+    <p class="wie">Ein Tor Unterschied heißt: der letzte Ball hat entschieden.</p>
+    
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>80 %</b>
+        <i>1,61 σ über dem Schnitt · 80 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juni</span>
+        <span class="wer"><b>Martin</b> <i>82 %</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Maxi August · 79 % &nbsp;·&nbsp; Leo Juli · 69 % &nbsp;·&nbsp; Julian Juni · 67 %</span></div>
+    </div>
+  </div><div class="karte a-fuegung">
+    <div class="kl">Fügung · selten</div>
+    <h4>Immer am Rand</h4>
+    <p class="cond">Mindestens 25 % der eigenen Partien endeten mit genau einem Tor Unterschied</p>
+    <p class="wie">Keine Leistung, eine Fügung: wem die engen Partien zufallen, entscheidet er nicht selbst.</p>
+    <p class="nb">„Der Nervenkitzel&quot; zählt Partien bis zwei Tore Unterschied und vergleicht mit dem Ligamittel. Hier ist es genau ein Tor und der reine Anteil.</p>
+    
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>25 % der Partien</b>
+        <i>1,95 σ über dem Schnitt · 75 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juli</span>
+        <span class="wer"><b>Jane</b> <i>29 % der Partien</i></span></div><div class="m"><span class="mo">August</span>
+        <span class="wer"><b>Henry</b> <i>27 % der Partien</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Johannes August · 21 % der Partien &nbsp;·&nbsp; Jannik August · 21 % der Partien &nbsp;·&nbsp; Leo Juli · 19 % der Partien</span></div>
+    </div>
+  </div></div>
+
+<h2 class="top">Ein Doppel, das wegfällt</h2>
+<p class="sub">Dieselbe Frage mit derselben Antwort sammelt sich beim selben Halter. Deshalb steht
+diese Idee hier und nicht oben.</p>
+<div class="grid"><div class="karte a-fuegung raus">
+    <div class="kl">Fügung · legendär</div>
+    <h4>Das Torfest</h4>
+    <p class="cond">In den eigenen Partien fallen mindestens 1,0 Tore mehr als im Ligaschnitt des Monats</p>
+    
+    
+    <p class="warn">Das ist Wort für Wort die Frage von „Der Torhagel&quot;, der schon im Katalog steht. Fällt weg.</p>
+    <div class="mess">
+      <div class="m"><span class="mo">Schwelle</span><span class="wer"><b>+1,0 Tore je Partie</b>
+        <i>2,54 σ über dem Schnitt · 95 Prestige</i></span></div>
+      <div class="m"><span class="mo">Juni</span>
+        <span class="wer"><b>Johannes</b> <i>+1,4 Tore je Partie</i></span></div>
+      <div class="m nie"><span class="mo">knapp</span><span class="wer">Jane Juni · +0,7 Tore je Partie &nbsp;·&nbsp; Jane Juli · +0,5 Tore je Partie &nbsp;·&nbsp; Henry August · +0,5 Tore je Partie</span></div>
+    </div>
+  </div></div>
+
+<h2 class="top">Die Belastungsprobe</h2>
+<p class="sub">Vierzehn Ideen fallen durch, und jede nennt ihren Grund. Drei Muster wiederholen sich:
+der Beste liegt kaum weiter draußen als der Durchschnitt; die Größe hängt an der Spielzahl; oder es
+gibt keine runde Schwelle, die weit genug draußen liegt und trotzdem jemanden trifft.</p>
+<table><thead><tr><th>Idee</th><th>Frage</th><th>Grund, warum sie fällt</th></tr></thead><tbody>
+<tr><td><b>Ohne Rücksetzer</b></td><td style="color:var(--muted)">Wie viel vom höchsten Elo-Stand des Monats wurde nie wieder hergegeben</td>
+  <td style="color:var(--orange)">Ausschlag reicht nur bis 0.74 σ; runde Schwelle erreicht nur 0.73 σ</td></tr><tr><td><b>Der Tag gegen die Rechnung</b></td><td style="color:var(--muted)">Wie unwahrscheinlich war der beste eigene Spieltag</td>
+  <td style="color:var(--orange)">haengt an der Spielzahl (0.56)</td></tr><tr><td><b>Ohne Kettenreaktion</b></td><td style="color:var(--muted)">Wie kurz blieb der längste Pleitenlauf, gemessen an allen Pleiten</td>
+  <td style="color:var(--orange)">Ausschlag reicht nur bis 1.07 σ; haengt an der Spielzahl (0.75); runde Schwelle erreicht nur 0.86 σ</td></tr><tr><td><b>Gegen die obere Hälfte</b></td><td style="color:var(--muted)">Die Quote gegen die stärkere Hälfte des Monats</td>
+  <td style="color:var(--orange)">haengt an der Spielzahl (0.36)</td></tr><tr><td><b>Die Sammlung</b></td><td style="color:var(--muted)">Wie viele verschiedene Ergebnisse in den eigenen Partien</td>
+  <td style="color:var(--orange)">haengt an der Spielzahl (-0.91)</td></tr><tr><td><b>Der Doppelstart</b></td><td style="color:var(--muted)">Wie oft die ersten zwei Partien eines Spieltags gewonnen</td>
+  <td style="color:var(--orange)">haengt an der Spielzahl (0.47)</td></tr><tr><td><b>Der Träger</b></td><td style="color:var(--muted)">Die Quote neben Partnern, die im Monat schwächer stehen</td>
+  <td style="color:var(--orange)">runde Schwelle erreicht nur 1.39 σ</td></tr><tr><td><b>Gegen den Tabellenführer</b></td><td style="color:var(--muted)">Die Quote gegen den, der an diesem Tag die Liga anführte</td>
+  <td style="color:var(--orange)">haengt an der Spielzahl (0.38)</td></tr><tr><td><b>Der Ertrag</b></td><td style="color:var(--muted)">Der Elo-Gewinn je Partie über den Monat</td>
+  <td style="color:var(--orange)">Ausschlag reicht nur bis 1.35 σ; keine runde Schwelle mit hoechstens 3 Haltern</td></tr><tr><td><b>Ohne Ausrutscher</b></td><td style="color:var(--muted)">Der Anteil der Partien, die die Elo-Rechnung als klar gewonnen sah und die auch gewonnen wurden</td>
+  <td style="color:var(--orange)">Ausschlag reicht nur bis 1.47 σ; runde Schwelle erreicht nur 1.47 σ</td></tr><tr><td><b>Gegen jeden mindestens einmal</b></td><td style="color:var(--muted)">Der Anteil der Gegner, gegen die mindestens ein Sieg gelang</td>
+  <td style="color:var(--orange)">Ausschlag reicht nur bis 0.35 σ; keine runde Schwelle mit hoechstens 3 Haltern</td></tr><tr><td><b>Der Anschluss</b></td><td style="color:var(--muted)">Der Abstand zur eigenen Erwartung, wenn nur die engen Partien zählen</td>
+  <td style="color:var(--orange)">Ausschlag reicht nur bis 1.30 σ; keine runde Schwelle mit hoechstens 3 Haltern</td></tr><tr><td><b>Die Wende im Tag</b></td><td style="color:var(--muted)">Die Quote in der zweiten Hälfte jedes Spieltags gegen die erste</td>
+  <td style="color:var(--orange)">haengt an der Spielzahl (-0.35)</td></tr><tr><td><b>Gegen alle gleich stark</b></td><td style="color:var(--muted)">Wie wenig die eigene Quote zwischen den Gegnern streut</td>
+  <td style="color:var(--orange)">runde Schwelle erreicht nur 1.44 σ</td></tr>
+</tbody></table>
+<div class="merk">
+  <h4>Warum die Spielzahl-Prüfung so viel wegnimmt</h4>
+  <p>„Die Sammlung" (wie viele verschiedene Ergebnisse) korreliert mit <code>−0,91</code> zur Spielzahl:
+  wer zwölf Partien spielt, hat fast zwangsläufig zwölf verschiedene Ergebnisse, wer neunzig spielt,
+  wiederholt sich. Umgekehrt „Der Tag gegen die Rechnung" mit <code>+0,56</code>: wer an einem Tag acht
+  Partien spielt, kann einen unwahrscheinlicheren Tag hinlegen als einer mit vier.</p>
+  <p>„Ohne Kettenreaktion" (der längste Pleitenlauf, gemessen an allen Pleiten) liegt bei
+  <code>+0,75</code> — der Nenner wächst mit der Spielzahl, der Zähler nicht. Genau der Fehler, den
+  §C37 beschreibt, nur in die andere Richtung.</p>
+</div>
+
+<h2 class="top">Wie eine Chronik zur Story wird</h2>
+<p class="sub">Der Feed baut aus den Daten 29 Rohkarten und zeigt 17 davon. Was
+davon durchkommt, entscheidet nicht der Zufall, sondern <code>prio</code> — und die Ewige Tafel
+liegt dort in einem eigenen Band weit über allem anderen.</p>
+
+<div class="zwei">
+<div>
+<table><thead><tr><th class="num">prio</th><th>Anlass</th><th>Rubrik</th></tr></thead><tbody>
+<tr><td class="num">95</td>
+  <td>Insignium, oberste zwei Stufen<span class="pill gold">Breaking</span></td>
+  <td style="color:var(--muted)">Ewige Tafel</td></tr><tr><td class="num">92</td>
+  <td>Liga-Rekord erstmals vergeben<span class="pill gold">Breaking</span></td>
+  <td style="color:var(--muted)">Ewige Tafel</td></tr><tr><td class="num">90</td>
+  <td>Erster Monatseintrag überhaupt</td>
+  <td style="color:var(--muted)">Ewige Tafel</td></tr><tr><td class="num">88</td>
+  <td>Die Chronik eines Monats steht<span class="pill">nie gedeckelt</span></td>
+  <td style="color:var(--muted)">Ewige Tafel</td></tr><tr><td class="num">84</td>
+  <td>Liga-Rekord übernommen</td>
+  <td style="color:var(--muted)">Ewige Tafel</td></tr><tr class="neu"><td class="num">80</td>
+  <td>Eine Monatschronik wechselt den Halter<span class="pill acid">Vorschlag</span></td>
+  <td style="color:var(--muted)">Vorschlag</td></tr><tr><td class="num">76</td>
+  <td>Insignium, untere Stufen</td>
+  <td style="color:var(--muted)">Ewige Tafel</td></tr><tr><td class="num">70</td>
+  <td>Liga-Rekord ausgebaut</td>
+  <td style="color:var(--muted)">Ewige Tafel</td></tr><tr><td class="num">10</td>
+  <td>Spitzenspiel, Elo-Rekord, Meister<span class="pill gold">Breaking</span></td>
+  <td style="color:var(--muted)">Spieltag</td></tr><tr><td class="num">9</td>
+  <td>Serie ab 7, Wochenrückblick</td>
+  <td style="color:var(--muted)">Spieltag</td></tr><tr><td class="num">8</td>
+  <td>Auszeichnung, Duell-Meilenstein</td>
+  <td style="color:var(--muted)">Spieltag</td></tr><tr><td class="num">7</td>
+  <td>Spieler des Tages, Serienbrecher<span class="pill">nie gedeckelt</span></td>
+  <td style="color:var(--muted)">Spieltag</td></tr><tr><td class="num">6</td>
+  <td>Pleitenserie</td>
+  <td style="color:var(--muted)">Spieltag</td></tr><tr><td class="num">5</td>
+  <td>Elo-Ausschlag, Fun Fact</td>
+  <td style="color:var(--muted)">ambient</td></tr><tr><td class="num">2</td>
+  <td>Jubiläum</td>
+  <td style="color:var(--muted)">Spieltag</td></tr>
+</tbody></table>
+</div>
+<div>
+<div class="merk">
+  <h4>Was <code>prio</code> entscheidet und was nicht</h4>
+  <p>Die Reihenfolge im Feed ist die <b>Zeit</b>, nicht die Priorität. <code>prio</code> entscheidet nur
+  zwei Dinge: wer ein Bündel anführt, und wer den Tagesdeckel überlebt.</p>
+  <p><b>Ein Tag trägt sechs Karten</b> (<code>proTag: 6</code>). Gemessen trug der
+  26. August genau sechs. Karten der Ewigen Tafel
+  liegen bei 70 bis 95 und sind damit nie die, die wegfallen — der stärkste Spieltags-Anlass kommt auf 10.</p>
+  <p><b>Die Monatschronik fällt nie unter den Deckel</b> (<code>TAG_PFLICHT</code>): sie gibt es je Monat
+  genau einmal.</p>
+  <p><b>Dieselbe Aussage kommt drei Tage lang nur einmal</b> (<code>sperreTage: 3</code>).
+  Gesperrt wird die Aussage selbst — Art, Beteiligte und Sache —, nicht der Wortlaut.</p>
+</div>
+<div class="merk">
+  <h4>Was im selben Moment passiert, kommt in eine Karte</h4>
+  <p>Tafel-Ereignisse desselben Tages mit einem gemeinsamen Spieler bündeln sich zur Sammelkarte,
+  höchstens vier Zeilen. Gemessen im heutigen Feed:</p>
+  <p style="color:var(--ink)">„Johannes, Jannik und Leo bewegen die Ewige Tafel" <span style="color:var(--muted)">mit 3 Zeilen</span></p><p style="color:var(--ink)">„Martin schlägt Leon im Spitzenspiel" <span style="color:var(--muted)">mit 2 Zeilen</span></p>
+</div>
+</div>
+</div>
+
+<h2 class="top">Die Lücke</h2>
+<div class="merk luecke">
+  <h4>Im laufenden Monat sagt der Feed über Chroniken gar nichts</h4>
+  <p>Gemessen: der August trägt <b>13 Chronik-Einträge</b>, und im Feed steht dazu <b>keine einzige
+  Karte</b>. Die Monatskarte entsteht erst am 1. um 00:00 für den <i>Vormonat</i> — heute ist das
+  „Die Chronik für Juli steht". Wer im August „Auf dem Thron" holt, erfährt es nur, wenn er selbst
+  in den Chronik-Tab sieht.</p>
+  <p>Es gibt drei Chronik-Anlässe im Generator: die Monatskarte, den ersten Monatseintrag
+  überhaupt und die Insignium-Stufe. Der Wechsel eines einzelnen Eintrags <i>während</i> des Monats
+  fehlt — und genau das ist seit dem neuen Katalog die Nachricht, weil eine Chronik jetzt Klasse,
+  Art, Ausschlag und einen eigenen Prestige-Wert hat.</p>
+</div>
+
+<h2 class="top">Der Vorschlag: die Chronik als Karte</h2>
+<p class="sub">Eine Karte, wenn eine Monatschronik im laufenden Monat den Halter wechselt.
+<code>prio 80</code> — über der Insignium-Stufe, unter dem übernommenen Liga-Rekord, damit sie den
+Tagesdeckel überlebt, ohne die Ewige Tafel zu überstimmen. Rubrik, Motiv und Rand wie jede
+Tafel-Karte; die Klasse trägt das Gewicht, so wie in der Matrix.</p>
+
+<div class="zwei">
+<div>
+<div class="feed">
+  <div class="tagkopf"><b>Montag</b><span>25. August</span><i>6 Karten</i></div>
+  <div class="nf gold">
+    <div class="top"><span>◈ Ewige Tafel</span><span class="uhr">18:42</span></div>
+    <h5>Leon holt „Auf dem Thron"</h5>
+    <p>An keinem der 16 Spieltage aus den ersten zwei Plätzen gefallen. <b>Legendär</b>, und in der
+    ganzen Ligageschichte gilt das für zwei Monate.</p>
+    <div class="wertblock"><b>Platz 2</b><span>schlechtester Stand im Monat</span></div>
+    <div class="zr">
+      <div><b>legendär</b><span>Klasse</span></div>
+      <div><b>Können</b><span>Art</span></div>
+      <div><b>2,64 σ</b><span>Ausschlag</span></div>
+      <div><b>+135</b><span>Prestige</span></div>
+    </div>
+  </div>
+  <div class="nf metall">
+    <div class="top"><span>◈ Ewige Tafel</span><span class="uhr">18:42</span></div>
+    <h5>Martin und Julian bewegen die Ewige Tafel</h5>
+    <p>Martin baut „Der Maßstab" aus. Dazu zwei weitere Meldungen.</p>
+    <div class="sam">
+      <div>◈ Julian übernimmt „Der Platzhirsch"</div>
+      <div>◈ Julian holt „Die Nulldiät" im August</div>
+    </div>
+  </div>
+  <div class="nf gruen">
+    <div class="top"><span>✦ Spieltag</span><span class="uhr">18:42</span></div>
+    <h5>Leon gewinnt den Spieltag</h5>
+    <p>5 von 6 Partien, <b>+21 Elo</b>.</p>
+  </div>
+</div>
+<p class="hint">Die Chronik-Karte steht an ihrer Uhrzeit, nicht oben — die Reihenfolge bleibt die Zeit.
+Sie bündelt sich mit anderen Tafel-Ereignissen desselben Tages, sobald ein Spieler geteilt wird;
+eine <b>legendäre</b> Chronik bleibt dagegen eine eigene Karte, aus demselben Grund, aus dem eine
+seltene Auszeichnung nie als vierte Zeile endet.</p>
+</div>
+<div>
+<div class="merk">
+  <h4>Das Blatt darunter</h4>
+  <p>Kopf wie jedes Blatt: Wappen, Name, Rang, Prestige. Dann die Zahlenreihe mit Klasse, Art,
+  Ausschlag und Prestige — dasselbe Bauteil, das das Chronik-Blatt im Awards-Tab jetzt schon trägt.
+  Darunter das Podest des Monats aus <code>_chronPodestHtml</code> und ein Knopf in die Monatstafel.</p>
+  <p>Kein zweites Bauteil für dieselbe Aussage: Podest, Zahlenreihe und Medaillon gibt es alle
+  schon.</p>
+</div>
+<div class="merk">
+  <h4>Drei Regeln, damit es kein Spam wird</h4>
+  <p><b>Nur der Wechsel, nicht der Stand.</b> Gemeldet wird, wenn ein Eintrag den Halter wechselt oder
+  erstmals im Monat besetzt wird. Ein Halter, der seinen Wert verbessert, ist keine Nachricht — genau
+  wie „ausgebaut" beim Liga-Rekord die schwächste der drei Meldungen ist.</p>
+  <p><b>Die Sperre gilt.</b> Art, Beteiligte und Chronik bilden den Schlüssel; drei Tage lang kommt
+  dieselbe Aussage nur einmal. Eine Schwelle, die an mehreren Spieltagen hin und her kippt, erzeugt
+  damit eine Karte, nicht vier.</p>
+  <p><b>Höchstens zwei je Tag.</b> Ein starker Spieltag verschiebt mehrere Chroniken gleichzeitig;
+  die stärksten zwei bekommen eine Karte, der Rest steht im Sammelband und am Monatsende ohnehin
+  in der Monatskarte.</p>
+</div>
+<div class="merk">
+  <h4>Was sich am Bestand nicht ändert</h4>
+  <p>Die Monatskarte am 1., der erste Monatseintrag überhaupt und die Insignium-Stufe bleiben, wie
+  sie sind. Breaking bleibt bei seinen sieben Anlässen: eine Chronik ist wertvoll, aber sie ist kein
+  erstmals vergebener Liga-Rekord.</p>
+</div>
+</div>
+</div>
+
+</div></body></html>
