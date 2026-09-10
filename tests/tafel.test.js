@@ -752,7 +752,7 @@ ok(K.eval(`(function(){
   return h.indexOf('data-tdisz=')>=0 && h.indexOf('data-tplayer=')<0;
 })()`), 'die Chronik-Karte zeigt auf die Disziplin, nicht auf den Spieler');
 
-[['spezialist','2026-07'],['uebersoll','2026-08'],['daylord','2026-08']].forEach(([tid, msid]) => {
+[['spezialisiert','2026-07'],['punktgenau2','2026-08'],['spotless','2026-08']].forEach(([tid, msid]) => {
   const r = K.eval(`(function(){
     let out=''; const echt=openSheet; openSheet=(h)=>{out=h;};
     try { showDisziplin(${JSON.stringify(tid)}, ${JSON.stringify(msid)}); } finally { openSheet=echt; }
@@ -773,7 +773,7 @@ ok(K.eval(`(function(){
 // wie Elo. Wo eine Groesse nicht selbsterklaerend ist, steht sie im Blatt.
 ok(K.eval(`(function(){
   let out=''; const echt=openSheet; openSheet=(h)=>{out=h;};
-  try { showDisziplin('uebersoll','2026-08'); } finally { openSheet=echt; }
+  try { showDisziplin('punktgenau2','2026-08'); } finally { openSheet=echt; }
   return out.indexOf('Prozentpunkt')>=0;
 })()`), 'die Erklaerung nennt die Einheit der Zahl');
 ok(K.eval("SEASON_TITLES.filter(t=>/Prozentpunkte|%-Punkte/.test(t.cond)).every(t=>!!t.wie)"),

@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **646**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **664**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,8 +219,8 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes | 910 |
-| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 179 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog | 932 |
+| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 176 |
 | `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck | 204 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed — **im echten Browser gemessen** | 83 |
@@ -780,6 +780,63 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Anteil der Einträge an die besten Drei fiel von sechzig auf fünfundfünfzig
   Prozent. `tests/disziplinen` fällt, wenn eine davon wieder an die Spitze
   geht.
+- **§C39 Die Monatschronik fragt nicht, wer der Beste ist.** Der alte
+  Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
+  gewinnt fast jede. Er ist vollständig ersetzt: einundvierzig Chroniken, die
+  nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
+  dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
+  anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
+  Liga-Rekorde der Ewigen Tafel sind davon unberührt; drei Disziplinen tragen
+  beide Zeitachsen (`spotless`, `evenkeel`, `drought`), weil dieselbe Frage
+  auf zwei Zeitachsen in EINE Disziplin gehört [§13.1].
+  **Das Stichproben-Tor ist niedrig und für alle gleich:** acht Partien im
+  Monat, fünf in einer Teilmenge (`ST_TEIL`), drei Spieltage. Der alte
+  Katalog verlangte 15, 20 oder 25 Partien, und damit hing die Chronik an der
+  Spielzahl statt an der Leistung. Die Besonderheit steckt in der Schwelle,
+  nicht im Tor: wer zehn Partien spielt und acht klar gewinnt, steht in
+  derselben Wertung wie jemand mit sechzig.
+  Jede `monat`-Wertung trägt drei feste Angaben. **`art`** ist
+  `koennen`, `konstanz`, `fuegung` oder `schatten` und sagt, wofür die Chronik
+  steht. **`klasse`** ist `legendaer`, `selten` oder `besonders` und sagt, wie
+  oft ihre Bedingung in der Ligageschichte erfüllt sein darf — einmal,
+  zweimal, dreimal. **`aus`** ist der Ausschlag der Schwelle: wie weit sie vom
+  Schnitt aller liegt, die in dieser Disziplin je gewertet wurden, in
+  Standardabweichungen.
+  **Der Ausschlag trägt das Prestige**, nicht die Seltenheit:
+  `PRESTIGE_SOCKEL + PRESTIGE_CHRONIK[art] × aus + PRESTIGE_SELTEN[klasse]`,
+  gerundet auf fünf. Gemessen liegt der Median-Ausschlag bei 2,17 für
+  legendäre, 1,79 für seltene und 1,71 für besondere Chroniken — die Klasse
+  trennt also kaum und darf den Wert nicht tragen. „Der Kontrast" ist die
+  seltenste Sache im Katalog und trotzdem nur ein Umstand [§C35]. Den Sockel
+  bekommt jede Chronik außer einer Schattenseite: einen Monatseintrag zu
+  halten ist an sich etwas Besonderes.
+  Gerechnet wird mit dem Ausschlag der **Schwelle**, nicht dem des Halters.
+  Der Schwellen-Ausschlag ist eine feste Eigenschaft der Chronik; der eines
+  Werts gehörte einem einzelnen Halter und wanderte, sobald neue Monate die
+  Verteilung verschieben — dann sänke das Prestige aller bisherigen Halter,
+  und genau dieser Fehler steckte schon einmal in den Auszeichnungen [§C34].
+  Art, Klasse und Ausschlag werden **einmal an den Daten geprüft und dann
+  festgeschrieben**, genau wie `BADGE_RARITY`.
+  Zwei Regeln räumen den Katalog, und beide sind gemessen: eine Chronik muss
+  ihre Schwelle **mindestens 1,5 σ** hinausschieben können, sonst liegt ihr
+  Bester kaum weiter draußen als der Durchschnitt; und sie muss eine
+  **Leistung** messen — Breite und Anwesenheit zählen nicht, „mit wie vielen
+  anderen jemand gespielt hat" ist ein Kalender. Reine **Zählungen von
+  Gelegenheiten** fallen ebenfalls weg: wer mehr spielt, bekommt mehr Chancen
+  auf ein 10:0 oder eine lange Serie. Die Anteilsformen derselben Fragen
+  bleiben.
+  Zwei Schwellen sind **vorgegeben und werden nicht kalibriert**: „Der
+  Tagesregent" verlangt Player of the Day an 60 % der eigenen Spieltage, „Die
+  Wochenkrone" Player of the Week in JEDER eigenen Woche. Player of the Week
+  kommt dabei aus `_periodWinnerMap`, damit Chronik und Auszeichnung nicht
+  auseinanderlaufen [§C27].
+  **Die Rohsicht liegt in der Engine.** `_seasonTitleCtx` legt je Spieler
+  `partien` an (jede Partie aus seiner Sicht, in Spielreihenfolge) und daraus
+  `tagGrp`, `wochGrp`, `partnerGrp`, `gegnerGrp`. Die Chroniken fragen nach
+  dem schwächsten Spieltag, der schwächsten Woche, dem unangenehmsten Gegner;
+  solche Fragen lassen sich nicht in vierzig Zähler auflösen, ohne für jede
+  neue Frage einen neuen Zähler zu erfinden.
+
 - **§C32 Ein Chronik-Eintrag gehört dem, der ihn hält.** Jeder Monatseintrag
   geht an den, der den Bestwert in diesem Monat wirklich hält — oder an
   niemanden. Halten ihn mehrere punktgleich, tragen ihn alle. Genau wie bei
@@ -1185,6 +1242,7 @@ Raster — je zwei Einträge sind eine Zeile.
 | dort `short` | höchstens zehn Zeichen | die Chronik-Zelle bricht; `tests/disziplinen` misst es |
 | dort `ic` | ein Icon, das keine andere Disziplin trägt | in einer Zelle von 62 Pixeln ist die Zeichnung das Erste, was man sieht — zwei gleiche sind dort nicht zu unterscheiden. `tests/disziplinen` misst es |
 | dort `monat.wie` | ein Satz, was die Zahl im Beleg bedeutet | nur nötig, wenn die Größe nicht selbsterklärend ist. Er steht im Detail-Blatt unter der Bedingung; ohne ihn liest sich „+15 Prozentpunkte" wie Elo oder wie Prestige |
+| dort `monat.art`, `monat.klasse`, `monat.aus` | die drei festen Angaben einer Chronik [§C39] | ohne `art` gibt es kein Prestige, ohne `klasse` keine Schwellen-Regel, ohne `aus` ist die Chronik null Punkte wert |
 | dort `monat` | `mind`, `wert`, `ab` und `ev` über `_stWertung` | ohne die vier gibt es keine Vergabe. `mind` sagt, wer gewertet wird, `wert` die Größe (größer ist besser, bei einer Schattenseite steht ein Minus davor), `ab` die Schwelle. Getrennt aufgeschrieben, weil sonst niemand sagen kann, wer knapp daneben liegt: wer die Schwelle reißt, bekam einen leeren Wert, und leere Werte haben keine Reihenfolge. `ab` wird an den echten Partien gemessen, nicht geschätzt: höchstens zweimal in vier Monaten erfüllt [§C32] |
 | `33-chronik-engine.js` `_seasonTitleCtx` | das Feld, das `monat:` liest | die Monatstafel bleibt leer |
 | `34-chronik-rekorde.js` `_chronicleCtx` | **dasselbe Feld noch einmal** | der häufigste Fehler: die Monatstafel zeigt den Eintrag, der Liga-Rekord bleibt unbesetzt. Zwei getrennte Durchläufe über dieselbe Frage — sie müssen gleich zählen |
@@ -1274,6 +1332,7 @@ Immer im **selben Commit** wie die Änderung, die sie auslöst:
 | Gemeinsames Bauteil kommt dazu (`.rav`, `.podest`, …) | §6 §C27 |
 | Regel für Agenten ändert sich | §9 |
 | Auszeichnung, Disziplin oder Prestige-Konstante ändert sich | §10 |
+| Monatschronik kommt dazu oder ändert Art, Klasse oder Ausschlag | §6 §C39, §10.2 |
 | Eine Anweisung hier hat sich als falsch erwiesen | die Stelle selbst |
 
 ### Wie sie geändert wird

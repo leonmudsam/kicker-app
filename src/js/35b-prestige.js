@@ -182,6 +182,43 @@ function _prestigeArtVon(titleId){
   return d ? d.art : 'ereignis';
 }
 
+// ─── §C39 Was eine Monatschronik wert ist ────────────────────────────
+// Nicht mehr ein fester Grundwert je Art, sondern die ABWEICHUNG: wie weit
+// die Schwelle einer Chronik vom Schnitt aller liegt, die in dieser
+// Disziplin je gewertet wurden, in Standardabweichungen (`monat.aus`).
+// Je weiter draussen die Latte haengt, desto mehr ist es wert, sie zu
+// reissen. Vorher bekam jede Monatswertung pauschal 120 Punkte fuer eine
+// Leistung und 60 fuer ein Ereignis, ohne jede Abstufung dazwischen.
+//
+// Den SOCKEL bekommt jede Chronik ausser einer Schattenseite: einen
+// Monatseintrag zu halten ist an sich etwas Besonderes, und keine Chronik
+// soll sich wie ein Trostpreis anfuehlen.
+//
+// Der Zuschlag der Seltenheit ist klein mit Absicht. Selten heisst nicht
+// wertvoll: „Der Kontrast" ist die seltenste Sache im Katalog und trotzdem
+// nur ein Umstand [§C35]. Gemessen liegt der Median-Ausschlag der Schwellen
+// bei 2,17 fuer legendaere, 1,79 fuer seltene und 1,71 fuer besondere
+// Chroniken — die Klasse trennt also kaum und darf den Wert nicht tragen.
+//
+// Gerechnet wird mit dem Ausschlag der SCHWELLE, nicht dem des Halters. Der
+// Schwellen-Ausschlag ist eine feste Eigenschaft der Chronik; der eines
+// Werts gehoert einem einzelnen Halter und wanderte, sobald neue Monate die
+// Verteilung verschieben. Dann saenke das Prestige aller bisherigen Halter,
+// und genau dieser Fehler steckte schon einmal in den Auszeichnungen [§C34].
+const PRESTIGE_SOCKEL = 40;
+const PRESTIGE_CHRONIK = {koennen:30, konstanz:24, fuegung:15, schatten:0};
+const PRESTIGE_SELTEN  = {legendaer:15, selten:8, besonders:0};
+
+function chronikPunkte(titleId){
+  const d = DISZIPLINEN.find(x => x.id === titleId);
+  const m = d && d.monat;
+  if(!m) return 0;
+  const grund = PRESTIGE_CHRONIK[m.art];
+  if(!grund) return 0;                       // Schattenseiten geben nichts
+  return Math.round((PRESTIGE_SOCKEL + grund * (m.aus || 0)
+                     + (PRESTIGE_SELTEN[m.klasse] || 0)) / 5) * 5;
+}
+
 // EIN Durchlauf für die ganze Liga. Seltenheit lässt sich nicht für einen
 // Spieler allein bestimmen, also wird immer die ganze Tabelle gerechnet
 // und memoisiert — wie überall an matches.length + _cache.version gebunden.
@@ -268,11 +305,11 @@ function prestigeTabelle(){
     });
     const pb = summe(az);
 
-    // Monatswertungen: fester Grundwert nach Art, ebenfalls addiert.
+    // Monatschroniken: der Wert haengt an der Abweichung [§C39].
     const mo = [];
     r.monat.slice().sort((a,b) => a.sid < b.sid ? -1 : a.sid > b.sid ? 1 : 0).forEach(m => {
       const art = _prestigeArtVon(m.id);
-      const voll = PRESTIGE_MONAT * (PRESTIGE_ART[art] ?? 1);
+      const voll = chronikPunkte(m.id);
       if(voll <= 0) return;
       mo.push({q:'monat', id:m.id, name:m.name, label:m.label, p:voll, art});
     });
