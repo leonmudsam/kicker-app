@@ -678,9 +678,13 @@ function _freezeSeasonTitles(sid){
 // ─── §13.3 Vergabe ───────────────────────────────────────────────────
 // Liefert [{titleId, name, ic, tone, pid, ev}] in Katalog-Reihenfolge.
 // Memoisiert pro Saison — der Kontext-Pass läuft nur einmal je Cache-Stand.
-function seasonTitles(sid){
+// `bisMs` liefert den Stand von damals — gebraucht für den Vergleich, mit dem
+// der Feed eine frisch erreichte Insignium-Stufe erkennt [§C30]. Ein
+// abgeschlossener Monat ändert sich davon nicht: sein Ergebnis ist eingefroren,
+// und geschnitten wird nur um einen Spieltag zurück.
+function seasonTitles(sid, bisMs){
   if(!sid) sid = currentSeason().id;
-  const key = sid + '_' + matches.length + '_' + _cache.version;
+  const key = sid + '_' + matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
   if(!_cache._seasonTitles) _cache._seasonTitles = {};
   const hit = _cache._seasonTitles[key];
   if(hit) return hit;
@@ -700,7 +704,7 @@ function seasonTitles(sid){
     }
   }
 
-  const C = _seasonTitleCtx(sid);
+  const C = _seasonTitleCtx(sid, bisMs);
   const out = [];
   // Ein Monat mit zu wenigen Spieltagen bekommt gar keine Chronik: aus drei
   // Abenden lässt sich kein Monat ablesen [§C32].
@@ -786,16 +790,16 @@ function seasonTitleHalter(sid, bisMs){
   return out;
 }
 
-function seasonTitleOf(pid, sid){
-  const t = seasonTitles(sid);
+function seasonTitleOf(pid, sid, bisMs){
+  const t = seasonTitles(sid, bisMs);
   return t.awarded.find(a => a.pid === pid) || null;
 }
 
 // ─── §13.4 Saisontitel-Historie eines Spielers ───────────────────────
 // Chronik = ein Eintrag je Saison, in der der Spieler gespielt hat.
 // `title` ist null, wenn er leer ausging — die Lücke gehört dazu.
-function seasonTitleHistory(pid){
-  const key = pid + '_' + matches.length + '_' + _cache.version;
+function seasonTitleHistory(pid, bisMs){
+  const key = pid + '_' + matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
   if(!_cache._chronicle) _cache._chronicle = {};
   const hit = _cache._chronicle[key];
   if(hit) return hit;
@@ -807,9 +811,11 @@ function seasonTitleHistory(pid){
   ids.sort(); // chronologisch, unabhängig davon wie der Aufrufer sortiert hat
   const rows = [];
   ids.forEach(sid => {
-    const played = matchesInSeason(sid).some(m => m.a1===pid||m.a2===pid||m.b1===pid||m.b2===pid);
+    const played = matchesInSeason(sid).some(m => (!bisMs || mts(m) <= bisMs)
+      && (m.a1===pid||m.a2===pid||m.b1===pid||m.b2===pid));
     if(!played) return;
-    rows.push({sid, label:seasonLabel(sid), live:(sid===cur), title:seasonTitleOf(pid, sid)});
+    rows.push({sid, label:seasonLabel(sid), live:(sid===cur),
+               title:seasonTitleOf(pid, sid, bisMs)});
   });
   _cache._chronicle[key] = rows;
   return rows;

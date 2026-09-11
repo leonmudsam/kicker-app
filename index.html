@@ -4758,7 +4758,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.10.0f91825c';
+const BUILD_VERSION='2026.09.11.da6cc2e3';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -14248,11 +14248,16 @@ function getCachedBadges(id){
   return r;
 }
 
-// Berechnet alle freigeschalteten Badges für einen Spieler (mit Anzahl für multi-Badges)
-function computeBadges(id){
+// Berechnet alle freigeschalteten Badges für einen Spieler (mit Anzahl für multi-Badges).
+// `ms` schneidet die Partienliste ab: das Prestige braucht den Stand VOR dem
+// letzten Spieltag, um eine frisch erreichte Insignium-Stufe von einer lange
+// gehaltenen zu unterscheiden [§C30]. Jede zählende Funktion nimmt die Liste
+// ohnehin entgegen, es fehlte nur der Durchgriff.
+function computeBadges(id, ms){
+  const liste = ms || matches;
   const result=[];
   BADGES.forEach(b=>{
-    const c=b.count(id,matches);
+    const c=b.count(id,liste);
     if(c>0) result.push({id:b.id,em:b.em,ic:b.ic,name:b.name,desc:b.desc,count:c});
   });
   return result;
@@ -20433,31 +20438,44 @@ function _buildStories(){
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronget', e); }
 
   // ── Eine neue Stufe am Insignium ─────────────────────────────────────
-  // Es gibt keinen „Stand von gestern" fürs Prestige — ein zweiter voller
-  // Lauf wäre zu teuer. Das Gedächtnis ist stattdessen der Feed selbst: die
-  // Story-ID trägt Spieler und Stufe, und persistierte Stories werden nie
-  // doppelt eingefügt. Gemeldet wird nur, wer die Schwelle GERADE erst
-  // überschritten hat — sonst stünden beim ersten Lauf alle zwölf Stufen
-  // auf einmal im Feed.
+  // Gemeldet wird der WECHSEL, nicht der Abstand: der Stand von heute gegen
+  // den vor dem letzten Spieltag, genau wie bei den Liga-Rekorden weiter
+  // oben und aus demselben Grund [§C30].
   //
-  // „Gerade erst" war ein Viertel ÜBER der Schwelle, und das war zweimal
-  // falsch. Erstens hing das Fenster an der Höhe der Schwelle statt an der
-  // Strecke bis zur nächsten: am Schildring waren es 60 Punkte, am
-  // Volutenkranz 180. Zweitens ist eine einzige legendäre Chronik 140 Punkte
-  // wert [§C39] — ein Fenster, das schmaler ist als der kleinste Schritt,
-  // wird übersprungen. Gemessen meldete der Feed danach KEINE Stufe mehr,
-  // weil der volle Katalog jeden Spieler weit über sein Fenster hob.
-  // Jetzt: das erste Viertel der Strecke zur nächsten Stufe, mindestens aber
-  // so breit wie der größte Einzelgewinn.
-  const INS_SPRUNG = 150;
+  // Vorher galt jemand als frisch aufgestiegen, solange er noch nahe an
+  // seiner Schwelle stand — zuletzt das erste Viertel der Strecke zur
+  // nächsten Stufe, mindestens 150 Punkte. Ein Abstand kann diese Frage
+  // nicht beantworten. Gemessen über alle 52 Aufstiege der Ligageschichte
+  // hebt eine EINZELNE Partie jemanden im Median 52 und im äußersten Fall
+  // 138 Punkte über die Schwelle: ein Fenster, das alle 52 fängt, muss 150
+  // breit sein und steht danach im Schnitt sechzehn Partien lang offen.
+  // Damit entstand die Karte irgendwann in diesen sechzehn Partien und trug
+  // als Zeitpunkt die neueste Partie — alle sieben Karten in der Datenbank
+  // waren auf den 8. und 10. September datiert, für Stufen, die im Juni und
+  // Juli erreicht wurden. Julian trägt den Volutenkranz seit dem 23. Juli.
+  // Dazu schwankt das Prestige, weil ein Liga-Rekord den Halter wechseln
+  // kann: das Fenster öffnete sich immer wieder neu, und dieselbe Stufe
+  // galt in den Daten vierzehnmal als „gerade erreicht".
+  //
+  // Der Schnitt kostet einen zweiten Prestige-Lauf, gemessen 71 ms. Der
+  // Generator ist memoisiert und läuft einmal je neuer Partie, nicht je
+  // Bild.
   try {
+    // `_letzteMs` weiter oben liegt in einem eigenen Block; hier steht die
+    // Zahl noch einmal, statt eine Variable ueber den halben Generator zu
+    // ziehen, die nur zwei Stellen brauchen.
+    const _insLetzte = matches.length ? mts(matches[matches.length - 1]) : 0;
+    const _insTag0 = _insLetzte ? (function(){
+      const d = new Date(_insLetzte); d.setHours(0, 0, 0, 0); return d.getTime() - 1;
+    })() : 0;
     (players || []).filter(p => p && !p.hidden).forEach(p => {
       const P = prestigeOf(p.id);
       if(!P || P.stufe < 1) return;
-      const schwelle = INSIGNIEN[P.stufe].min;
-      const naechste = INSIGNIEN[P.stufe + 1];
-      const spanne = naechste ? (naechste.min - schwelle) : schwelle;
-      if(P.punkte >= schwelle + Math.max(spanne * 0.25, INS_SPRUNG)) return;
+      // Ohne Schnitt gibt es keinen Vergleich, also auch keine Meldung: eine
+      // Liga ohne Partien hat niemanden aufsteigen sehen.
+      if(!_insTag0) return;
+      const vorher = prestigeOf(p.id, _insTag0);
+      if(!vorher || vorher.stufe >= P.stufe) return;
       const oben = P.stufe >= 3;   // Lorbeerreif und Ordensstern
       stories.push({
         id: 'ins_' + p.id + '_' + INSIGNIEN[P.stufe].key,
@@ -27523,9 +27541,13 @@ function _freezeSeasonTitles(sid){
 // ─── §13.3 Vergabe ───────────────────────────────────────────────────
 // Liefert [{titleId, name, ic, tone, pid, ev}] in Katalog-Reihenfolge.
 // Memoisiert pro Saison — der Kontext-Pass läuft nur einmal je Cache-Stand.
-function seasonTitles(sid){
+// `bisMs` liefert den Stand von damals — gebraucht für den Vergleich, mit dem
+// der Feed eine frisch erreichte Insignium-Stufe erkennt [§C30]. Ein
+// abgeschlossener Monat ändert sich davon nicht: sein Ergebnis ist eingefroren,
+// und geschnitten wird nur um einen Spieltag zurück.
+function seasonTitles(sid, bisMs){
   if(!sid) sid = currentSeason().id;
-  const key = sid + '_' + matches.length + '_' + _cache.version;
+  const key = sid + '_' + matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
   if(!_cache._seasonTitles) _cache._seasonTitles = {};
   const hit = _cache._seasonTitles[key];
   if(hit) return hit;
@@ -27545,7 +27567,7 @@ function seasonTitles(sid){
     }
   }
 
-  const C = _seasonTitleCtx(sid);
+  const C = _seasonTitleCtx(sid, bisMs);
   const out = [];
   // Ein Monat mit zu wenigen Spieltagen bekommt gar keine Chronik: aus drei
   // Abenden lässt sich kein Monat ablesen [§C32].
@@ -27631,16 +27653,16 @@ function seasonTitleHalter(sid, bisMs){
   return out;
 }
 
-function seasonTitleOf(pid, sid){
-  const t = seasonTitles(sid);
+function seasonTitleOf(pid, sid, bisMs){
+  const t = seasonTitles(sid, bisMs);
   return t.awarded.find(a => a.pid === pid) || null;
 }
 
 // ─── §13.4 Saisontitel-Historie eines Spielers ───────────────────────
 // Chronik = ein Eintrag je Saison, in der der Spieler gespielt hat.
 // `title` ist null, wenn er leer ausging — die Lücke gehört dazu.
-function seasonTitleHistory(pid){
-  const key = pid + '_' + matches.length + '_' + _cache.version;
+function seasonTitleHistory(pid, bisMs){
+  const key = pid + '_' + matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
   if(!_cache._chronicle) _cache._chronicle = {};
   const hit = _cache._chronicle[key];
   if(hit) return hit;
@@ -27652,9 +27674,11 @@ function seasonTitleHistory(pid){
   ids.sort(); // chronologisch, unabhängig davon wie der Aufrufer sortiert hat
   const rows = [];
   ids.forEach(sid => {
-    const played = matchesInSeason(sid).some(m => m.a1===pid||m.a2===pid||m.b1===pid||m.b2===pid);
+    const played = matchesInSeason(sid).some(m => (!bisMs || mts(m) <= bisMs)
+      && (m.a1===pid||m.a2===pid||m.b1===pid||m.b2===pid));
     if(!played) return;
-    rows.push({sid, label:seasonLabel(sid), live:(sid===cur), title:seasonTitleOf(pid, sid)});
+    rows.push({sid, label:seasonLabel(sid), live:(sid===cur),
+               title:seasonTitleOf(pid, sid, bisMs)});
   });
   _cache._chronicle[key] = rows;
   return rows;
@@ -29476,9 +29500,22 @@ function chronikPunkte(titleId){
 // EIN Durchlauf für die ganze Liga. Seltenheit lässt sich nicht für einen
 // Spieler allein bestimmen, also wird immer die ganze Tabelle gerechnet
 // und memoisiert — wie überall an matches.length + _cache.version gebunden.
-function prestigeTabelle(){
+// `bisMs` rechnet den Stand von damals — dieselbe Bauart wie
+// `allChronicles(bisMs)` und aus demselben Grund [§C30]: nur der Vergleich
+// zweier Zeitpunkte sagt, ob jemand eine Stufe GERADE erreicht hat. Der
+// Schnitt bekommt einen eigenen Topf, damit er den heutigen nicht verdrängt.
+function prestigeTabelle(bisMs){
   const key = matches.length + '_' + _cache.version;
-  if(_cache._prestigeKey === key) return _cache._prestige;
+  if(!bisMs && _cache._prestigeKey === key) return _cache._prestige;
+  let bk = null;
+  if(bisMs){
+    if(!_cache._prestigeBis) _cache._prestigeBis = {};
+    bk = bisMs + '_' + key;
+    if(_cache._prestigeBis[bk]) return _cache._prestigeBis[bk];
+    // Mit der Version im Schlüssel wüchse der Topf sonst über jede Version mit.
+    if(Object.keys(_cache._prestigeBis).length > 8) _cache._prestigeBis = {};
+  }
+  const geschnitten = bisMs ? matches.filter(m => mts(m) <= bisMs) : null;
 
   const aktive = (players || []).filter(p => p && !p.hidden);
   const gesamt = aktive.length || 1;
@@ -29490,7 +29527,10 @@ function prestigeTabelle(){
   // Auszeichnungen — mit ihrer Anzahl. Eine Würde zählt jedes Mal neu,
   // alles andere einmal; welche das sind, sagt BADGE_WUERDE [§7.2].
   aktive.forEach(p => {
-    (getCachedBadges(p.id) || []).forEach(b => {
+    // Der Schnitt geht am Topf vorbei: der Topf hängt an matches.length,
+    // und geschnitten ist die Liste eine andere. Er läuft nur einmal je
+    // neuer Partie, weil die ganze Tabelle memoisiert ist.
+    ((geschnitten ? computeBadges(p.id, geschnitten) : getCachedBadges(p.id)) || []).forEach(b => {
       roh[p.id].badges.push({id:b.id, name:b.name, n:Math.max(1, b.count || 1)});
     });
   });
@@ -29501,14 +29541,14 @@ function prestigeTabelle(){
   // dasselbe über denselben Monat. Gezählt wird, was in der Matrix steht
   // [§C32] — sonst stünde im Profil eine Zahl, die nirgends nachzuzählen ist.
   aktive.forEach(p => {
-    (seasonTitleHistory(p.id) || []).forEach(r => {
+    (seasonTitleHistory(p.id, bisMs) || []).forEach(r => {
       if(r.title) roh[p.id].monat.push(
         {id:r.title.titleId, name:r.title.name, label:r.label, sid:r.sid});
     });
   });
 
-  // Allzeitwertungen — was jemand HEUTE hält.
-  const A = allChronicles();
+  // Allzeitwertungen — was jemand HEUTE hält, oder am Schnitt hielt.
+  const A = allChronicles(bisMs);
   const halterZahl = {};
   CHRONICLES.forEach(d => {
     const e = A.byId[d.id];
@@ -29615,14 +29655,15 @@ function prestigeTabelle(){
   });
 
   const res = {byPid:out, gesamt, rang:Object.values(out).sort((a,b) => b.punkte - a.punkte).map(x => x.pid)};
+  if(bk){ _cache._prestigeBis[bk] = res; return res; }
   _cache._prestigeKey = key;
   _cache._prestige = res;
   return res;
 }
 
-// Der Stand eines Spielers, fertig zum Anzeigen.
-function prestigeOf(pid){
-  const T = prestigeTabelle();
+// Der Stand eines Spielers, fertig zum Anzeigen — mit `bisMs` der von damals.
+function prestigeOf(pid, bisMs){
+  const T = prestigeTabelle(bisMs);
   const e = T.byPid[pid];
   if(!e) return {punkte:0, stufe:0, insignie:INSIGNIEN[0], naechste:INSIGNIEN[1],
                  fehlt:INSIGNIEN[1].min, zacken:0, grad:0, teile:{auszeichnung:0,monat:0,rekord:0},
