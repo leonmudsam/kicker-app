@@ -250,22 +250,9 @@ function chronikPunkte(titleId){
 // EIN Durchlauf für die ganze Liga. Seltenheit lässt sich nicht für einen
 // Spieler allein bestimmen, also wird immer die ganze Tabelle gerechnet
 // und memoisiert — wie überall an matches.length + _cache.version gebunden.
-// `bisMs` rechnet den Stand von damals — dieselbe Bauart wie
-// `allChronicles(bisMs)` und aus demselben Grund [§C30]: nur der Vergleich
-// zweier Zeitpunkte sagt, ob jemand eine Stufe GERADE erreicht hat. Der
-// Schnitt bekommt einen eigenen Topf, damit er den heutigen nicht verdrängt.
-function prestigeTabelle(bisMs){
+function prestigeTabelle(){
   const key = matches.length + '_' + _cache.version;
-  if(!bisMs && _cache._prestigeKey === key) return _cache._prestige;
-  let bk = null;
-  if(bisMs){
-    if(!_cache._prestigeBis) _cache._prestigeBis = {};
-    bk = bisMs + '_' + key;
-    if(_cache._prestigeBis[bk]) return _cache._prestigeBis[bk];
-    // Mit der Version im Schlüssel wüchse der Topf sonst über jede Version mit.
-    if(Object.keys(_cache._prestigeBis).length > 8) _cache._prestigeBis = {};
-  }
-  const geschnitten = bisMs ? matches.filter(m => mts(m) <= bisMs) : null;
+  if(_cache._prestigeKey === key) return _cache._prestige;
 
   const aktive = (players || []).filter(p => p && !p.hidden);
   const gesamt = aktive.length || 1;
@@ -277,10 +264,7 @@ function prestigeTabelle(bisMs){
   // Auszeichnungen — mit ihrer Anzahl. Eine Würde zählt jedes Mal neu,
   // alles andere einmal; welche das sind, sagt BADGE_WUERDE [§7.2].
   aktive.forEach(p => {
-    // Der Schnitt geht am Topf vorbei: der Topf hängt an matches.length,
-    // und geschnitten ist die Liste eine andere. Er läuft nur einmal je
-    // neuer Partie, weil die ganze Tabelle memoisiert ist.
-    ((geschnitten ? computeBadges(p.id, geschnitten) : getCachedBadges(p.id)) || []).forEach(b => {
+    (getCachedBadges(p.id) || []).forEach(b => {
       roh[p.id].badges.push({id:b.id, name:b.name, n:Math.max(1, b.count || 1)});
     });
   });
@@ -291,14 +275,14 @@ function prestigeTabelle(bisMs){
   // dasselbe über denselben Monat. Gezählt wird, was in der Matrix steht
   // [§C32] — sonst stünde im Profil eine Zahl, die nirgends nachzuzählen ist.
   aktive.forEach(p => {
-    (seasonTitleHistory(p.id, bisMs) || []).forEach(r => {
+    (seasonTitleHistory(p.id) || []).forEach(r => {
       if(r.title) roh[p.id].monat.push(
         {id:r.title.titleId, name:r.title.name, label:r.label, sid:r.sid});
     });
   });
 
-  // Allzeitwertungen — was jemand HEUTE hält, oder am Schnitt hielt.
-  const A = allChronicles(bisMs);
+  // Allzeitwertungen — was jemand HEUTE hält.
+  const A = allChronicles();
   const halterZahl = {};
   CHRONICLES.forEach(d => {
     const e = A.byId[d.id];
@@ -405,15 +389,14 @@ function prestigeTabelle(bisMs){
   });
 
   const res = {byPid:out, gesamt, rang:Object.values(out).sort((a,b) => b.punkte - a.punkte).map(x => x.pid)};
-  if(bk){ _cache._prestigeBis[bk] = res; return res; }
   _cache._prestigeKey = key;
   _cache._prestige = res;
   return res;
 }
 
-// Der Stand eines Spielers, fertig zum Anzeigen — mit `bisMs` der von damals.
-function prestigeOf(pid, bisMs){
-  const T = prestigeTabelle(bisMs);
+// Der Stand eines Spielers, fertig zum Anzeigen.
+function prestigeOf(pid){
+  const T = prestigeTabelle();
   const e = T.byPid[pid];
   if(!e) return {punkte:0, stufe:0, insignie:INSIGNIEN[0], naechste:INSIGNIEN[1],
                  fehlt:INSIGNIEN[1].min, zacken:0, grad:0, teile:{auszeichnung:0,monat:0,rekord:0},
