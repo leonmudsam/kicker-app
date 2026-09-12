@@ -1306,4 +1306,3 @@ function _startNewsAutoSync(){
     document.addEventListener('visibilitychange', () => { if(!document.hidden) _newsAutoSyncTick(); });
   }
 }
-
