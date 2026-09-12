@@ -1127,4 +1127,3 @@ function _renderNewsFeed(){
     };
   });
 }
-
