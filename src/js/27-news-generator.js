@@ -1878,46 +1878,48 @@ function _buildStories(){
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronget', e); }
 
   // ── Eine neue Stufe am Insignium ─────────────────────────────────────
-  // Es gibt keinen „Stand von gestern" fürs Prestige — ein zweiter voller
-  // Lauf wäre zu teuer. Das Gedächtnis ist stattdessen der Feed selbst: die
-  // Story-ID trägt Spieler und Stufe, und persistierte Stories werden nie
-  // doppelt eingefügt. Gemeldet wird nur, wer die Schwelle GERADE erst
-  // überschritten hat — sonst stünden beim ersten Lauf alle zwölf Stufen
-  // auf einmal im Feed.
-  //
-  // „Gerade erst" war ein Viertel ÜBER der Schwelle, und das war zweimal
-  // falsch. Erstens hing das Fenster an der Höhe der Schwelle statt an der
-  // Strecke bis zur nächsten: am Schildring waren es 60 Punkte, am
-  // Volutenkranz 180. Zweitens ist eine einzige legendäre Chronik 140 Punkte
-  // wert [§C39] — ein Fenster, das schmaler ist als der kleinste Schritt,
-  // wird übersprungen. Gemessen meldete der Feed danach KEINE Stufe mehr,
-  // weil der volle Katalog jeden Spieler weit über sein Fenster hob.
-  // Jetzt: das erste Viertel der Strecke zur nächsten Stufe, mindestens aber
-  // so breit wie der größte Einzelgewinn.
-  const INS_SPRUNG = 150;
+  // Eine Stufe ist ein Uebergang, kein Naehefenster. Verglichen wird der
+  // Stand vor dem letzten Spieltag mit heute. Dadurch verschwindet eine
+  // Meldung weder bei einem grossen Sprung noch nach einer spaeteren
+  // Neuberechnung. Die ID bleibt Spieler + Stufe; Persistenz und
+  // ON-CONFLICT machen den Lauf ueber Geraete hinweg idempotent.
   try {
-    (players || []).filter(p => p && !p.hidden).forEach(p => {
-      const P = prestigeOf(p.id);
-      if(!P || P.stufe < 1) return;
-      const schwelle = INSIGNIEN[P.stufe].min;
-      const naechste = INSIGNIEN[P.stufe + 1];
-      const spanne = naechste ? (naechste.min - schwelle) : schwelle;
-      if(P.punkte >= schwelle + Math.max(spanne * 0.25, INS_SPRUNG)) return;
-      const oben = P.stufe >= 3;   // Lorbeerreif und Ordensstern
-      stories.push({
-        id: 'ins_' + p.id + '_' + INSIGNIEN[P.stufe].key,
-        cat: 'tafel',
-        ic: 'award',
-        title: `${p.name} trägt den ${INSIGNIEN[P.stufe].name}`,
-        desc: `${P.punkte} Prestige zusammen: ${P.teile.auszeichnung} aus Auszeichnungen, ${P.teile.monat} aus Monatswertungen, `
-            + `${P.teile.rekord} aus Rekorden.`
-            + (P.naechste ? ` Bis zum ${P.naechste.name} fehlen ${P.fehlt}.` : ''),
-        when: matches.length ? mts(matches[matches.length-1]) : now.getTime(),
-        prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
-        dataRef: {type:'insignium_stufe', pid:p.id, stufe:P.stufe,
-                  stufeName:INSIGNIEN[P.stufe].name, punkte:P.punkte, oben}
+    const _insLetzte = matches.length ? mts(matches[matches.length-1]) : 0;
+    if(_insLetzte){
+      const _insTag0 = new Date(_insLetzte); _insTag0.setHours(0,0,0,0);
+      const _insVorMs = _insTag0.getTime() - 1;
+      const _insTagMatches = matches.filter(m => mts(m) > _insVorMs && mts(m) <= _insLetzte)
+        .slice().sort((a,b) => mts(a)-mts(b));
+      (players || []).filter(p => p && !p.hidden).forEach(p => {
+        const P = prestigeOf(p.id);
+        const vorher = prestigeOf(p.id, _insVorMs);
+        if(!P || !vorher || P.stufe <= vorher.stufe) return;
+        for(let stufe = vorher.stufe + 1; stufe <= P.stufe; stufe++){
+          let lo = 0, hi = _insTagMatches.length - 1, treffer = _insLetzte;
+          while(lo <= hi){
+            const mid = Math.floor((lo + hi) / 2);
+            const ts = mts(_insTagMatches[mid]);
+            if(prestigeOf(p.id, ts).stufe >= stufe){ treffer = ts; hi = mid - 1; }
+            else lo = mid + 1;
+          }
+          const stand = prestigeOf(p.id, treffer);
+          const oben = stufe >= 3;
+          stories.push({
+            id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key,
+            cat: 'tafel',
+            ic: 'award',
+            title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`,
+            desc: `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
+                + `${stand.teile.monat} aus Monatswertungen und ${stand.teile.rekord} aus Rekorden.`
+                + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
+            when: treffer,
+            prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
+            dataRef: {type:'insignium_stufe', pid:p.id, stufe,
+                      stufeName:INSIGNIEN[stufe].name, punkte:stand.punkte, oben}
+          });
+        }
       });
-    });
+    }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] insignium', e); }
 
   // ── Ambiente Tages-Stories (v8.5) ──

@@ -667,9 +667,10 @@ const rankProgHtml = rInfo ? `
         // Die staerkere Rolle traegt ihre Farbe, die schwaechere steht
         // zurueck. Beide gleich laut gezeichnet sagten sie nicht, worin
         // jemand besser ist — und genau das ist die Frage, die diese
-        // Karte beantwortet. Bei Gleichstand bleiben beide stark: dann
-        // gibt es keine bessere.
-        const _stark = (atkWr == null || defWr == null || atkWr === defWr)
+        // Karte beantwortet. Bis drei Prozentpunkte Unterschied gelten als
+        // praktisch gleichauf; eine Rundungsdifferenz soll keine Rolle matt
+        // zeichnen.
+        const _stark = (atkWr == null || defWr == null || Math.abs(atkWr - defWr) <= 3)
           ? 'beide' : (atkWr > defWr ? 'atk' : 'def');
         const donut = (cls, lbl, icon, wr, w, g, valLbl, valNum, color) => {
           if(g === 0) return `
@@ -682,7 +683,7 @@ const rankProgHtml = rInfo ? `
             </div>`;
           const matt = (_stark !== 'beide' && _stark !== cls);
           return `
-            <div class="pp-rd ${cls}${matt ? ' schwach' : ' stark'}">
+            <div class="pp-rd ${cls}${_stark === 'beide' ? ' neutral' : (matt ? ' schwach' : ' stark')}">
               <div class="pp-rd-ring" style="background:conic-gradient(${
                 matt ? 'var(--line2)' : color} ${wr}%, var(--surface3) 0)">
                 <div class="pp-rd-inner"><div class="pp-rd-wr">${wr}<small>%</small></div></div>
@@ -911,19 +912,17 @@ const rankProgHtml = rInfo ? `
         <div class="l">${svgI('target')}<h4>Positions-Profil</h4></div>
         <div class="m">${posLabel}</div>
       </div>
-      <div class="pp-posprof ${_posCls.tone==='def'?'def-seite':''}" style="--atk:${atkPct}%">
+      <div class="pp-posprof ${atkPct > defPct + 4 ? 'atk-seite' : defPct > atkPct + 4 ? 'def-seite' : 'neutral'}" style="--atk:${atkPct}%;--strahl:${Math.max(atkPct, defPct)}%">
         <div class="pph">
           <span class="lf">${svgI('bolt')}Sturm</span>
           <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
           <span class="rt">Abwehr${svgI('shield')}</span>
         </div>
-        <!-- Der Strahl gehoert der Seite, die ueberwiegt: bei 29 % Sturm
-             und 71 % Abwehr lief er trotzdem von links und war 29 % lang —
-             er zeigte die kleinere Haelfte und las sich wie ein
-             Fortschrittsbalken, der fast leer ist. Der Knopf bleibt an der
-             Grenze zwischen beiden, denn die ist die Aussage. -->
+        <!-- Der Strahl beginnt an der staerkeren Seite und laeuft zur
+             Positionsgrenze. Bei einem Flex-Profil sitzt er als eigener,
+             kurzer Lichtkern in der Mitte. -->
         <div class="pp-slider">
-          <div class="pp-fill" style="width:${Math.max(atkPct, defPct)}%"></div>
+          <div class="pp-fill"></div>
           <span class="pp-thumb" style="left:${atkPct}%"></span>
         </div>
         <div class="ppf">Eingestuft als <span class="lab" style="display:inline-flex;align-items:center;gap:4px">${posIcon}${posLabel}</span></div>

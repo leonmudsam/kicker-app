@@ -22,8 +22,8 @@
 //   - Eintrag in BADGE_RARITY (§7.2) — ohne ihn gilt still `common`, die
 //     billigste Klasse, und das Badge zählt fürs Prestige wie ein Zittersieg
 //   - RARITY_META.<rarity>.total nachziehen — sonst lügt der Zähler im Blatt
-//   - BADGE_ART, falls es keinen Ereignis-Charakter hat, und BADGE_WUERDE nur
-//     dann, wenn es höchstens einmal je Saison zu holen ist [§13.8]
+//   - BADGE_WUERDE nur dann, wenn jeder Saisonerfolg auch eine neue
+//     Nachricht auslösen soll [§11.0c]
 //   - ggf. fire('badge_id') in getBadgeEarnedCache (§7.4) — sonst kein
 //     Match-Trigger / kein Achievement-Toast / kein Chip im Match-Review
 const BADGES=[
@@ -61,12 +61,12 @@ const BADGES=[
   // überquert. Wer im Juni auf 420 steht, im Juli auf 380 fällt und im August
   // wieder auf 410 steigt, hat zwei Dominator-Saisons, nicht drei.
   {id:'climber_100',ic:'climb',name:'Aufsteiger',desc:'In einer Saison 100 Elo erreicht (je Saison zählbar)',
-    multi:true,count:(id,ms)=>countSeasonsAtElo(id,100)},
+    multi:true,count:(id,ms)=>countSeasonsAtElo(id,100,ms)},
   {id:'dominator_400',ic:'dominator',name:'Dominator',desc:'In einer Saison 400 Elo erreicht (je Saison zählbar)',
-    multi:true,count:(id,ms)=>countSeasonsAtElo(id,400)},
+    multi:true,count:(id,ms)=>countSeasonsAtElo(id,400,ms)},
   // Zeile 5 — Dynastie, Vize-Meister
   {id:'dynasty_600',ic:'temple',name:'Dynastie',desc:'In einer Saison 600 Elo erreicht (je Saison zählbar)',
-    multi:true,count:(id,ms)=>countSeasonsAtElo(id,600)},
+    multi:true,count:(id,ms)=>countSeasonsAtElo(id,600,ms)},
 
     // ══ MEHRFACH-BADGES — gruppiert nach Thema ══
 //Reihenfolge überarbeitet / Möglciherweise Abweichung von Namen in //
@@ -124,17 +124,17 @@ const BADGES=[
   // Wer eine Saison gewinnt, hat das Seltenste geholt, was diese Liga zu
   // vergeben hat — einmal je Monat, und nur an einen.
   {id:'champion',ic:'crown',name:'Meister der Saison',desc:'Saison auf Platz 1 beendet',
-    multi:true,count:(id,ms)=>countChampion(id)},
+    multi:true,count:(id,ms,bis)=>countChampion(id,bis)},
   {id:'vice_champion',ic:'medal2',name:'Vize-Meister',desc:'Saison auf Platz 2 beendet',
-    multi:true,count:(id,ms)=>countViceChampion(id)},
+    multi:true,count:(id,ms,bis)=>countViceChampion(id,bis)},
   // Zeile 15b — Team der Saison
   // Dasselbe für das beste Duo eines Monats. Es stand bisher nur im
   // Rückblick und im Duo-Profil und war für den Spieler selbst nichts wert.
   {id:'team_of_season',ic:'handshake',name:'Team der Saison',desc:'Bestes Duo einer Saison',
-    multi:true,count:(id,ms)=>countTeamOfSeason(id)},
+    multi:true,count:(id,ms,bis)=>countTeamOfSeason(id,bis)},
   // Zeile 16 — Award-Sammler
   {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison min. 5 Tagessieger und 2 Wochensieger',
-    multi:true,count:(id,ms)=>countAwardCollector(id)},
+    multi:true,count:(id,ms)=>countAwardCollector(id,ms)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
   {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
     multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
@@ -165,23 +165,23 @@ const BADGES=[
   // ── NEUE LEGENDARY-BADGES v7 ──
   // Untouchable: 3 Saisons in Folge unter den Top-3 abgeschlossen.
   {id:'untouchable',ic:'shieldStar',name:'Untouchable',desc:'3 Saisons in Folge unter den Top-3 abgeschlossen',
-    multi:true,count:(id,ms)=>countUntouchable(id)},
+    multi:true,count:(id,ms,bis)=>countUntouchable(id,bis)},
   // Mr. Perfect: 3× 10:0-Sieg in einer einzigen Saison.
   {id:'mr_perfect',ic:'tripleCup',name:'Mr. Perfect',desc:'3× 10:0-Sieg in einer Saison',
-    multi:true,count:(id,ms)=>countMrPerfect(id)},
+    multi:true,count:(id,ms)=>countMrPerfect(id,ms)},
   // Allwetter: an 5 verschiedenen Wochentagen Player-of-the-Day geworden.
   {id:'allwetter',ic:'weatherMix',name:'Allwetter',desc:'An 5 verschiedenen Wochentagen Player-of-the-Day geworden',
-    multi:true,count:(id,ms)=>countAllwetter(id)},
+    multi:true,count:(id,ms)=>countAllwetter(id,ms)},
   // Tag der Götter: 3 eigene Spieltage in Folge als POTD gewonnen.
   {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 Spieltagen in Folge Player-of-the-Day geworden (nur mitgespielte Tage)',
-    multi:true,count:(id,ms)=>countGodlyStreak(id)},
+    multi:true,count:(id,ms)=>countGodlyStreak(id,ms)},
   // ── NEUE NEGATIV-BADGES v8 ──
   // Bittere Pille: 9:10-Niederlage (Pendant zu nail_biter / 10:9-Sieg).
   {id:'bitter_loss',ic:'heartBroken',name:'Bittere Pille',desc:'9:10 Niederlage',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&goalsFor(id,m)===9&&goalsAgainst(id,m)===10).length},
   // Mr. Disaster: 3× 0:10-Niederlage in einer Saison (Pendant zu mr_perfect).
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
-    multi:true,count:(id,ms)=>countMrDisaster(id)},
+    multi:true,count:(id,ms)=>countMrDisaster(id,ms)},
   // Zusammenbruch: Tag mit Sieg gestartet, mit Niederlage beendet, min. 3 Matches (Pendant zu comeback_day).
   {id:'crash_day',ic:'crashDay',name:'Zusammenbruch',desc:'Tag mit Sieg gestartet und mit Niederlage beendet (min. 3 Matches an dem Tag)',
     multi:true,count:(id,ms)=>countCrashDays(id,ms)},
@@ -215,7 +215,8 @@ const BADGES=[
 // damit den goldenen Rahmen im Blatt — neben „20er Serie" und „Meister der
 // Saison". Sie hängen aber an nichts als der Spielzahl: wer lange genug
 // dabei ist, bekommt sie, ohne je besser geworden zu sein. Sie sind jetzt
-// selten, und `pensum` in BADGE_ART viertelt ihren Wert zusätzlich.
+// selten; ihr violetter Rang bestimmt transparent Startwert, Abnahme und
+// den spaeteren Mindestwert.
 // Sechs weitere Einträge standen davor in der falschen Klasse — „Player of
 // the Day" (9 Halter, 52 mal vergeben) galt als selten, „Klares Ding"
 // (10 Halter, 136 mal) ebenfalls.
@@ -285,42 +286,10 @@ const BADGE_RARITY = {
 };
 
 
-// Was eine Auszeichnung für das Prestige wert ist [§13.8]. Ohne Eintrag
-// gilt `ereignis` — das ist der Normalfall: etwas ist passiert.
-//   leistung — ein Können, das man wieder abrufen kann. Zählt doppelt.
-//   pensum   — hängt nur an der Spielzahl. Zählt ein Viertel.
-//   schatten — die Kehrseite. Zählt nicht, zieht aber auch nichts ab.
-const BADGE_ART = {
-  // Pensum — reine Wegmarken
-  first_match:'pensum', games25:'pensum', games150:'pensum', games250:'pensum',
-  wins200:'pensum', def50:'pensum', atk50:'pensum',
-
-  // Leistung — wiederholbares Können
-  allrounder:'leistung', climber_100:'leistung', dominator_400:'leistung',
-  dynasty_600:'leistung', nerves_of_steel:'leistung', streak10:'leistung',
-  streak15:'leistung', streak20:'leistung', untouchable:'leistung',
-  mr_perfect:'leistung', allwetter:'leistung', godly_streak:'leistung',
-  award_collector:'leistung', carry:'leistung', streak_breaker:'leistung',
-  potw:'leistung', potd:'leistung', unbeatable:'leistung', wall_badge:'leistung',
-  // Vier Nachzügler. Sie fielen bisher durch das Raster und galten über die
-  // Vorgabe als 'ereignis' — also halb so viel wert wie ein Können. Alle vier
-  // sind aber genau das: gegen Favoriten gewinnen, eine Reihe enger Spiele
-  // durchziehen, fünf am Stück gewinnen, eine ganze Saison auf Platz zwei
-  // stehen. Sie sind nichts, was einem einmal zustößt.
-  upset_king:'leistung', krimi:'leistung', streak5:'leistung',
-  vice_champion:'leistung', champion:'leistung', team_of_season:'leistung',
-
-  // Schatten
-  losing5:'schatten', perfect_loss:'schatten', black_day:'schatten',
-  krimi_loser:'schatten', bitter_loss:'schatten', mr_disaster:'schatten',
-  crash_day:'schatten', nemesis:'schatten',
-};
-
-// Die Würden [§13.8]: höchstens EINMAL JE SAISON zu holen, und am Können
-// gemessen. Nur sie zählen jedes Mal neu — der zweite Meistertitel bringt
-// wieder Prestige, der zweihundertste Zittersieg nicht. Wer eine
-// Auszeichnung hier einträgt, die sich beliebig oft holen lässt, macht das
-// Prestige wieder zu einer Anwesenheitsliste.
+// Die Würden markieren hier ausschließlich saisonweise News: jeder neue
+// Titel soll eine neue Karte auslösen, während andere Auszeichnungen nur an
+// festen Marken melden. Für Prestige zählt unabhängig davon jede positive
+// Auszeichnung nach ihrer Seltenheitsklasse und Anzahl [§13.8].
 //
 // `untouchable` (drei Saisons in Folge Top-3) steht bewusst nicht hier: sie
 // zählt Saisons, aber überlappend — die vierte Saison in Folge wäre eine
@@ -330,48 +299,6 @@ const BADGE_WUERDE = new Set([
   'climber_100', 'dominator_400', 'dynasty_600',
   'award_collector', 'mr_perfect',
 ]);
-
-// ─── Was sich wiederholen darf, und wie schnell es verblasst ─────────
-// Eine Auszeichnung, die nicht hier steht, zählt fürs Prestige genau
-// EINMAL: der dreißigste Zittersieg zeigt nichts Neues [§C34]. Wer hier
-// steht, zählt jedes Mal — aber jedes Mal weniger, mit dem Faktor daneben
-// [§C34 `_wiederholungsWert`].
-//
-// Der Faktor sagt, wie schnell die Wiederholung verblasst, und er richtet
-// sich danach, wie oft die Auszeichnung überhaupt zu holen ist. Gemessen an
-// den echten Partien: „Player of the Week" höchstens einmal je Woche und
-// am häufigsten vier Mal gehalten, „Player of the Day" siebzehn Mal,
-// „Klares Ding" zweiunddreißig Mal. Dieselbe Abstufung für alle drei hieße
-// entweder, dass die Wochenkrone nichts wert ist, oder dass ein klarer Sieg
-// zum dreißigsten Mal noch zählt.
-//
-//   0.9  eine WÜRDE — höchstens einmal je Saison, am Können gemessen.
-//        Der dritte Meistertitel ist keinen Deut leichter als der erste.
-//   0.7  eine LEISTUNG, die man sich nimmt: eine Wochenkrone, ein 10:0,
-//        ein ganzer Tag ohne Niederlage, eine lange Serie. Das zehnte Mal
-//        trägt noch vier Prozent des ersten.
-//   0.55 der ALLTAG des Guten: der Spieltag, der Außenseitersieg, der
-//        klare Sieg, die Fünferserie. Das zehnte Mal trägt ein halbes
-//        Prozent — die Reihe läuft gegen das 2,2-fache des ersten Mals und
-//        kann es nie überschreiten.
-//
-// ⚑ Wer eine Auszeichnung hier einträgt, verschiebt Prestige und damit die
-//   Insignium-Leiter [§10.3]. `tests/disziplinen` misst es nach.
-const BADGE_WIEDERHOLUNG = {
-  // Leistung — selten genug, dass sie lange trägt
-  potw:          0.7,   // Player of the Week
-  perfect_win:   0.7,   // Absoluter Sieger (10:0)
-  unbeatable:    0.7,   // Unschlagbar (ein ganzer Tag ohne Niederlage)
-  streak10:      0.7,
-  streak15:      0.7,
-  streak20:      0.7,
-  // Alltag — oft zu holen, also schnell verblassend
-  potd:          0.55,  // Player of the Day, siebzehnmal gehalten
-  upset_king:    0.55,
-  streak5:       0.55,
-  clear_win:     0.55,  // Klares Ding, zweiunddreißigmal gehalten
-  wall_badge:    0.55,  // Mauer, achtzehnmal gehalten
-};
 
 const RARITY_META = {
   legendary: {label:'Legendary', color:'var(--gold)',   total:10},
@@ -391,12 +318,17 @@ function rarityOf(badgeId){ return BADGE_RARITY[badgeId] || 'common'; }
 // und weil die Elo bei jedem Monatswechsel zurückgesetzt wird, ist der
 // Höchststand innerhalb einer Saison genau das, was „400 Elo in einer Saison
 // erreicht" meint. Memoisiert am selben Schlüssel wie der Sim.
-function seasonPeakElos(){
+const _seasonPeakSubsetMemo = new WeakMap();
+function seasonPeakElos(matchSubset){
+  const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
+  if(quelle !== matches && _seasonPeakSubsetMemo.has(quelle)) return _seasonPeakSubsetMemo.get(quelle);
   const key='speak_'+matches.length+'_'+_cache.version;
-  if(_cache._seasonPeakKey===key) return _cache._seasonPeak;
-  const hist=getHistoryByMatchId();
+  if(quelle === matches && _cache._seasonPeakKey===key) return _cache._seasonPeak;
+  const hist = quelle === matches
+    ? getHistoryByMatchId()
+    : new Map((simulateElo(quelle).history || []).map(h => [h.matchId, h]));
   const out={};
-  matches.forEach(m=>{
+  quelle.forEach(m=>{
     const h=hist.get(m.id);
     if(!h||!h.eloAfter) return;
     const sid=(seasonOf(m.created_at)||{}).id;
@@ -409,16 +341,17 @@ function seasonPeakElos(){
       if(s[id]===undefined||e>s[id]) s[id]=e;
     });
   });
-  _cache._seasonPeakKey=key; _cache._seasonPeak=out;
+  if(quelle === matches){ _cache._seasonPeakKey=key; _cache._seasonPeak=out; }
+  else _seasonPeakSubsetMemo.set(quelle, out);
   return out;
 }
 
 // In wie vielen Saisons hat der Spieler die Marke erreicht? Einmal pro Saison —
 // wer innerhalb einer Saison unter die Marke fällt und wieder darüber klettert,
 // zählt trotzdem nur einmal.
-function countSeasonsAtElo(id, mark){
+function countSeasonsAtElo(id, mark, matchSubset){
   try {
-    const sp=seasonPeakElos();
+    const sp=seasonPeakElos(matchSubset);
     let n=0;
     Object.keys(sp).forEach(sid=>{ if((sp[sid][id]??-Infinity)>=mark) n++; });
     return n;
@@ -428,12 +361,13 @@ function countSeasonsAtElo(id, mark){
 // Anzahl abgeschlossener Saisons, in denen der Spieler Meister wurde.
 // Quelle ist seasonChampion — dieselbe wie Krone, Titelband und Saison-Tafel,
 // damit die Auszeichnung dem Zeichen nie widerspricht.
-function countChampion(id){
+function countChampion(id, bisMs){
   try {
     const cur = currentSeason().id;
+    const stand = Number.isFinite(bisMs) ? bisMs : Infinity;
     let n = 0;
     (allPastSeasons() || []).forEach(sid => {
-      if(sid === cur) return;
+      if(sid === cur || seasonEnd(sid).getTime() > stand) return;
       if(seasonChampion(sid) === id) n++;
     });
     return n;
@@ -479,12 +413,13 @@ function _seasonTeamOfBerechnet(sid){
 }
 
 // In wie vielen abgeschlossenen Saisons war der Spieler Teil des besten Duos?
-function countTeamOfSeason(id){
+function countTeamOfSeason(id, bisMs){
   try {
     const cur = currentSeason().id;
+    const stand = Number.isFinite(bisMs) ? bisMs : Infinity;
     let n = 0;
     (allPastSeasons() || []).forEach(sid => {
-      if(sid === cur) return;
+      if(sid === cur || seasonEnd(sid).getTime() > stand) return;
       const t = seasonTeamOf(sid);
       if(t && (t[0] === id || t[1] === id)) n++;
     });
@@ -494,12 +429,13 @@ function countTeamOfSeason(id){
 
 // Anzahl abgeschlossener Saisons, in denen der Spieler auf Platz 2 endete.
 // Nutzt die archivierten seasons (top_elo enthält die Top-3 als JSON-Array).
-function countViceChampion(id){
+function countViceChampion(id, bisMs){
   if(!seasons||!seasons.length) return 0;
   const curId=currentSeason().id;
+  const stand=Number.isFinite(bisMs) ? bisMs : Infinity;
   let c=0;
   seasons.forEach(s=>{
-    if(s.id===curId) return; // laufende Saison zählt nicht
+    if(s.id===curId || seasonEnd(s.id).getTime() > stand) return; // laufende/zukünftige Saison zählt nicht
     let top=s.top_elo;
     if(typeof top==='string'){ try{ top=JSON.parse(top); }catch(e){ top=[]; } }
     if(Array.isArray(top) && top[1] && top[1].id===id) c++;
@@ -860,8 +796,13 @@ function countOvertake(id,ms){
 
 // ─── Award-Sammler: in einer Saison min. 5 POTD UND min. 2 POTW Auszeichnungen ───
 // Pro qualifizierter Saison vergeben (mehrfach über Karriere).
-function countAwardCollector(id){
-  const bySeason=getMatchesBySeason();
+function countAwardCollector(id, matchSubset){
+  const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
+  const bySeason = quelle === matches ? getMatchesBySeason() : {};
+  if(quelle !== matches) quelle.forEach(m => {
+      const sid=(seasonOf(m.created_at)||{}).id;
+      if(sid) (bySeason[sid] || (bySeason[sid]=[])).push(m);
+    });
   let count=0;
   Object.values(bySeason).forEach(seasonMs=>{
     const potd=countDayWins(id,seasonMs);
@@ -885,10 +826,11 @@ function countAwardCollector(id){
 // Counter steigt um 1 pro überlappungsfreier Drei-Saisons-Strecke (also bei
 // 6 Saisons in Folge in Top-3 → counter = 2). Implementation analog zu
 // countStreakOccurrences (separate Serien).
-function countUntouchable(id){
+function countUntouchable(id, bisMs){
   const rk = getSeasonRankingsCache();
   const curId = currentSeason().id;
-  const sids = Object.keys(rk).filter(s => s !== curId).sort();
+  const stand = Number.isFinite(bisMs) ? bisMs : Infinity;
+  const sids = Object.keys(rk).filter(s => s !== curId && seasonEnd(s).getTime() <= stand).sort();
   let cur = 0, count = 0;
   for(const sid of sids){
     if(rk[sid] && rk[sid].top3 && rk[sid].top3.has(id)){
@@ -905,11 +847,12 @@ function countUntouchable(id){
 // Counter = Anzahl Saisons, in denen der Spieler ≥3 Mal 10:0 gewonnen hat.
 // Auch die laufende Saison wird gezählt (zur Toast-Konsistenz mit dem
 // Match-Trigger weiter unten in getBadgeEarnedCache).
-function countMrPerfect(id){
+function countMrPerfect(id, matchSubset){
+  const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   // Gezaehlt werden die eigenen Kantersiege je Saison. Vorher lief der Zaehler
   // ueber JEDE Partie jeder Saison und verwarf 90 % davon in der ersten Zeile.
   const proSaison = Object.create(null);
-  matchesOfPlayer(id, matches).forEach(m => {
+  matchesOfPlayer(id, quelle).forEach(m => {
     if(!won(id,m)) return;
     if(goalsFor(id,m) !== 10 || goalsAgainst(id,m) !== 0) return;
     const sid = (seasonOf(m.created_at)||{}).id;
@@ -924,14 +867,15 @@ function countMrPerfect(id){
 // Allwetter: an mind. 5 verschiedenen Wochentagen je mind. 1× POTD geworden.
 // Karriere-Stat — sobald 5 erreicht, bleibt das Badge dauerhaft erreicht.
 // Counter ist deshalb max. 1 (entweder erreicht oder nicht).
-function countAllwetter(id){
+function countAllwetter(id, matchSubset){
+  const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   // „Player of the Day" gibt es genau einmal im Code: `_periodWinnerMap`
   // bestimmt den Sieger eines Tages, mit Tiebreak über das Elo-Delta. Hier
   // stand dieselbe Rechnung ein zweites Mal — und ohne den Tiebreak, also mit
   // einer anderen Antwort: gemessen sind 12 der 51 entschiedenen Tage
   // punktgleich, und dort trugen beide Spieler den Tag. Die Beschreibung sagt
   // „Player of the Day geworden"; dann muss es auch derselbe sein [§C27].
-  const sieger = _periodWinnerMap(matches, 'day');
+  const sieger = _periodWinnerMap(quelle, 'day');
   const heute = new Date().toISOString().slice(0, 10);
   const wochentage = new Set();
   for(const tag in sieger){
@@ -948,12 +892,13 @@ function countAllwetter(id){
 // "Eigene Spieltage" = Tage, an denen der Spieler beteiligt war. Tage, an
 // denen die Liga ohne ihn spielte, BRECHEN die Serie NICHT — sie werden
 // übersprungen. Karriere-aggregiert (separate Drei-Strecken zählen einzeln).
-function countGodlyStreak(id){
+function countGodlyStreak(id, matchSubset){
+  const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   // Dieselbe eine Quelle wie beim Allwetter [§C27]: wer den Tag gewonnen hat,
   // sagt `_periodWinnerMap`. Gebraucht wird hier zusätzlich, an welchen Tagen
   // der Spieler überhaupt gespielt hat — Tage ohne ihn brechen die Serie nicht.
-  const sieger = _periodWinnerMap(matches, 'day');
-  const proTag = matchesByDay(matches);
+  const sieger = _periodWinnerMap(quelle, 'day');
+  const proTag = matchesByDay(quelle);
   const heute = new Date().toISOString().slice(0, 10);
   const tage = Object.keys(proTag).filter(d => d !== heute).sort();
   let cur = 0, count = 0;
@@ -1125,8 +1070,13 @@ function countCloseLossStreaks(id,ms,n){
 // ─── Mr. Disaster: 3× 0:10-Niederlage in einer Saison ────────────────
 // Spiegel zu countMrPerfect (3× 10:0-Sieg). Pro Saison getrennt zählen;
 // sobald 3 erreicht → Saison qualifiziert, count++.
-function countMrDisaster(id){
-  const bySeason = getMatchesBySeason();
+function countMrDisaster(id, matchSubset){
+  const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
+  const bySeason = quelle === matches ? getMatchesBySeason() : {};
+  if(quelle !== matches) quelle.forEach(m => {
+      const sid=(seasonOf(m.created_at)||{}).id;
+      if(sid) (bySeason[sid] || (bySeason[sid]=[])).push(m);
+    });
   let count = 0;
   Object.values(bySeason).forEach(seasonMs => {
     let disasters = 0;
@@ -1205,10 +1155,11 @@ function getCachedBadges(id){
 }
 
 // Berechnet alle freigeschalteten Badges für einen Spieler (mit Anzahl für multi-Badges)
-function computeBadges(id){
+function computeBadges(id, matchSubset, bisMs){
+  const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
   const result=[];
   BADGES.forEach(b=>{
-    const c=b.count(id,matches);
+    const c=b.count(id,quelle,bisMs);
     if(c>0) result.push({id:b.id,em:b.em,ic:b.ic,name:b.name,desc:b.desc,count:c});
   });
   return result;

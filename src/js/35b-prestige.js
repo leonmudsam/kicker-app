@@ -18,7 +18,10 @@
 //     gewonnen. Acht von zwölf Spielern liefen rückwärts. Ein Fortschritt,
 //     der zurückläuft, während man spielt, ist keiner.
 //
-//     DREI QUELLEN, und jede hat ihr eigenes Gesetz:
+//     DREI QUELLEN, und jede hat ihr eigenes Gesetz. Es gibt bewusst keinen
+//     vierten, unsichtbaren Leistungsblock: Können wird hier nur dann zu
+//     Prestige, wenn daraus eine Auszeichnung, Monatschronik oder ein heute
+//     gehaltener Rekord geworden ist.
 //
 //     AUSZEICHNUNGEN [§7] — Wert aus der Seltenheitsklasse, die im Katalog
 //     steht und im Badge-Blatt angezeigt wird. Sie ist eine Aussage über
@@ -34,57 +37,47 @@
 //     ALLZEITWERTUNGEN — wie bisher: geteilt durch die Zahl der Halter,
 //     mit fallenden Erträgen. Sie dürfen wechseln, dafür sind sie da.
 //
-//     WIEDERHOLUNG. Eine Würde, die höchstens EINMAL JE SAISON zu holen
-//     ist und am Können hängt — Meister, Team der Saison, Vize, Dominator,
-//     der Award-Sammler — zählt jedes Mal neu, mit langsam fallendem
-//     Ertrag (n^-1/4: der fünfte Meistertitel bringt noch zwei Drittel des
-//     ersten). Genau das ist der lange, gerade Weg für den, der gut
-//     spielt: er kann jede Saison etwas holen, das ihn weiterbringt.
-//     Alles andere zählt einmal — sonst gewönne, wer am meisten spielt.
-//
-//     ART SCHLÄGT ALLES. Ein seltenes Pensum ist trotzdem Pensum.
-//     Leistung zählt doppelt, ein Ereignis einfach, eine Schattenseite gar
-//     nicht — sie steht im Profil, aber sie zieht nichts ab und bringt
-//     nichts ein. Wer schlecht spielt, verliert Elo; er soll nicht
-//     zusätzlich am Prestige bluten.
+//     WIEDERHOLUNG. JEDE positive Auszeichnung zählt bei jedem Erreichen,
+//     aber als nachvollziehbare gedämpfte Folge. Legendary beginnt bei
+//     50 und sinkt je Mal um 10 %, Rare beginnt bei 20 und sinkt um 15 %,
+//     Common beginnt bei 3 und sinkt um 20 %. Damit ergeben drei Dominator-
+//     Erfolge 50 + 45 + 40,5; drei Carry-Erfolge 3 + 2,4 + 1,92. Wachstum
+//     bleibt über kleine Mindestwerte immer positiv und ohne Obergrenze;
+//     häufige Alltags-Erfolge können eine Laufbahn aber nicht kurzfristig
+//     durch bloße Menge beherrschen.
 //
 //     DIE SCHWELLEN sind an den echten 466 Partien kalibriert [§13.9]:
-//     nach vier Monaten Liga trägt niemand den Ordensstern, und der Beste
-//     ist noch gut die Hälfte seines bisherigen Lebenswerks davon entfernt.
+//     nach vier Monaten Liga trägt niemand den Ordensstern; seine Schwelle
+//     liegt noch mehr als ein heutiges Spitzen-Lebenswerk entfernt.
 //     Danach hört es nicht auf: der Stern bekommt je ORDENSSTERN_SCHRITT
 //     weiterer Punkte eine Zacke mehr. Es gibt immer einen nächsten
 //     Schritt, ohne dass es eine sechste Stufe braucht.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 
-// Was eine Art wert ist. Es geht um die Leistung, nicht um die Anwesenheit:
-//   leistung — ein Können, das man wieder abrufen kann. Zählt doppelt.
-//   ereignis — etwas ist passiert. Der Normalfall, auch ohne Eintrag.
-//   pensum   — hängt nur an der Spielzahl. Zählt ein Viertel: wer oft da
-//              ist, sammelt das nebenbei ein, ohne dafür besser zu sein.
-//   schatten — die Kehrseite. Steht bewusst auf 0 und nicht auf minus.
-const PRESTIGE_ART = {leistung:2, ereignis:1, pensum:0.25, schatten:0};
+// Die Art bleibt für Chroniken und Rekorde relevant. Auszeichnungen folgen
+// allein ihrer sichtbaren Seltenheitsklasse: zwei Legendary-Erfolge mit
+// derselben Anzahl sind exakt gleich viel wert. So widerspricht die Rechnung
+// nie mehr dem goldenen, lila oder grünen Rang im Auszeichnungsblatt.
+const PRESTIGE_ART = {leistung:2, ereignis:1, schatten:0};
 
-// Wie die vier Arten in der Aufschlüsselung heißen. Ohne Eintrag gilt
+// Wie die drei Rekordarten in der Aufschlüsselung heißen. Ohne Eintrag gilt
 // `ereignis` — das ist der Normalfall.
 const PRESTIGE_ART_NAME = {leistung:'Leistung', ereignis:'Ereignis',
-                           pensum:'Pensum', schatten:'Schatten'};
+                           schatten:'Schatten'};
 
-// Was eine Auszeichnung wert ist — nach ihrer Seltenheitsklasse aus dem
-// Badge-Katalog [§7.2], nicht nach der Zahl ihrer heutigen Halter. Die
-// Klasse steht am Badge und wird dem Spieler angezeigt; sie ist damit die
-// einzige Aussage über Seltenheit, die er überhaupt zu sehen bekommt.
-// Gegengeprüft an den echten Daten: die zwölf legendären halten zwischen
-// null und sechs Spieler, die vierzehn gewöhnlichen zwischen sechs und
-// zwölf. Die Klassen stimmen, der Zensus war nur die falsche Achse.
-// Negative Auszeichnungen stehen auf 0 und nicht auf minus — dieselbe
-// Begründung wie bei `schatten`.
-const PRESTIGE_KLASSE = {legendary:26, rare:10, common:3, negative:0};
-
-// Grundwert einer Monatswertung, bevor die Art darauf wirkt. Ein
-// Monatseintrag ist einmal im Monat zu holen und ligaweit einmalig — er
-// liegt damit zwischen einer gewöhnlichen und einer legendären
-// Auszeichnung.
-const PRESTIGE_MONAT = 60;
+// Startwert, Restwert und Mindestwert der nächsten Verleihung. Die Klasse
+// bestimmt alle drei:
+// je wertvoller, desto höher der Start und desto langsamer die Abnahme.
+// Der Mindestwert verhindert eine mathematische Sackgasse: eine rein
+// geometrische Reihe nähert sich einer festen Obergrenze. Dann wären spätere
+// Zacken des Ordenssterns trotz weiterer Erfolge irgendwann unerreichbar.
+// Negative Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
+const PRESTIGE_AUSZEICHNUNG = {
+  legendary:{basis:50, faktor:0.90, minimum:5},
+  rare:     {basis:20, faktor:0.85, minimum:1},
+  common:   {basis:3,  faktor:0.80, minimum:0.1},
+  negative: {basis:0,  faktor:0,    minimum:0}
+};
 
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
 // Ein heute gehaltener Liga-Rekord wiegt deutlich schwerer als eine
@@ -94,29 +87,51 @@ const PRESTIGE_REKORD = 36;
 // ─── Wiederholung zählt weniger, aber nie nichts ────────────────────
 // Wer dieselbe Sache zum dritten Mal holt, hat weniger Neues gezeigt als
 // beim ersten Mal — gegen sich selbst gemessen, nicht gegen andere. Jede
-// weitere Verleihung derselben Sache ist deshalb ein Zehntel weniger wert
-// als die vorige: 52, 47, 42, 38 … Die Summe einer geometrischen Reihe mit
-// diesem Faktor läuft gegen das Zehnfache des ersten Mals und kann es nie
-// überschreiten — die zwanzigste Verleihung trägt noch 13 % bei, die
-// hundertste praktisch nichts. Damit kann eine wiederholbare Auszeichnung
-// das Prestige nicht mehr allein tragen, ohne dass sie dafür entwertet
-// werden müsste.
-//
-// Zehn Prozent sind bewusst wenig: der dritte Meistertitel ist keinen Deut
-// leichter als der erste, und wer ihn holt, soll ihn auch spüren. Gemessen
-// an den echten Partien kostet die Regel heute 25 Punkte beim Ersten der
-// Liga — sie ordnet die Zukunft, nicht die Gegenwart.
+// weitere Verleihung derselben Sache ist deshalb prozentual weniger wert.
+// Legendary sinkt um 10 %, Rare um 15 %, Common um 20 %. Ab dem kleinen
+// Mindestwert sinkt nur die Entwertung nicht weiter; die Summe wächst damit
+// ohne Obergrenze. So zählt auch der tausendste Carry noch, aber mit 0,1
+// Punkten so wenig, dass bloße Menge einen Meistertitel nicht kurzfristig
+// überholt.
 //
 // Sie gilt NUR für dieselbe Sache. Eine Meisterschaft und ein Team der
 // Saison sind zwei verschiedene Dinge und zählen beide voll: das Stapeln
 // über verschiedene Erfolge hinweg war der Fehler, den §C34 abgestellt hat,
 // und der bestrafte genau den, der viel erreicht.
-const PRESTIGE_WIEDERHOLUNG = 0.9;
-function _wiederholungsWert(n, rate){
-  const r = (rate == null) ? PRESTIGE_WIEDERHOLUNG : rate;
+function _wiederholungsWert(n, rate, mindestAnteil){
+  const r = Math.max(0, Math.min(0.999, Number(rate) || 0));
   const k = Math.max(0, n | 0);
-  return (1 - Math.pow(r, k)) / (1 - r);
+  if(!k) return 0;
+  const floor = Math.max(0, Math.min(1, Number(mindestAnteil) || 0));
+  let summe = 0, teil = 1, i = 0;
+  // Bis zum Mindestwert ist die Folge geometrisch. Danach lässt sich der
+  // beliebig lange Rest in einem Schritt addieren; auch 100.000 Erfolge
+  // kosten damit keine 100.000 Schleifendurchläufe.
+  while(i < k && teil > floor){ summe += teil; teil *= r; i++; }
+  return summe + (k - i) * floor;
 }
+
+function auszeichnungsPunkte(id, n){
+  const klasse = rarityOf(id);
+  const regel = PRESTIGE_AUSZEICHNUNG[klasse] || PRESTIGE_AUSZEICHNUNG.common;
+  const anteil = regel.basis > 0 ? regel.minimum / regel.basis : 0;
+  return regel.basis * _wiederholungsWert(n, regel.faktor, anteil);
+}
+
+function auszeichnungsTeilwert(id, n){
+  const klasse = rarityOf(id);
+  const regel = PRESTIGE_AUSZEICHNUNG[klasse] || PRESTIGE_AUSZEICHNUNG.common;
+  if(regel.basis <= 0 || n <= 0) return 0;
+  return Math.max(regel.minimum, regel.basis * Math.pow(regel.faktor, n - 1));
+}
+
+// Dieselbe Monatschronik zeigt beim zweiten Tragen weniger Neues, bleibt aber
+// wie jede erworbene Quelle dauerhaft und wächst bei jedem weiteren Monat.
+const PRESTIGE_CHRONIK_WIEDERHOLUNG = 0.9;
+// Auch eine erneut getragene Monatschronik bleibt ein echter Monatserfolg.
+// Fünf Punkte sind klein gegenüber ihrem Grundwert (meist 50–115), halten
+// aber die Laufbahn auch nach sehr vielen Jahren offen.
+const PRESTIGE_CHRONIK_MINDEST = 5;
 
 // Wie nah ein Rekord sein muss, um noch als Ziel zu gelten: höchstens die
 // Hälfte des Bestwerts entfernt. Darüber ist der Hinweis entmutigend
@@ -125,29 +140,20 @@ const PRESTIGE_REICHWEITE = 0.5;
 
 // Die fünf Stufen. `min` ist die Schwelle, ab der die Stufe getragen wird.
 //
-// EINE REGEL: jede Stufe kostet doppelt so viel wie die vorige. 160, 320,
-// 640, 1280 — daraus werden die Schwellen 160, 480, 1120, 2400.
-//
-// An den echten 466 Partien gemessen stehen damit vier Spieler auf dem Reif,
-// fünf auf dem Schildring, drei auf dem Volutenkranz und niemand darüber. Der
-// Beste der Liga hat nach vier Monaten gut ein Drittel des Weges zum
-// Ordensstern hinter sich; die obere Hälfte der Leiter liegt vor ihm, und das
-// soll sie auch. Wer oben ankommt, während die Liga noch jung ist, hat danach
-// nichts mehr vor sich.
-//
-// Die Zahlen sind größer als vorher, weil eine Auszeichnung nicht mehr an
-// Wert verliert, sobald ein Zweiter sie holt [§13.8]. Dieselben zwölf
-// Spieler, dieselben Partien — nur zählt jetzt, was sie geholt haben, und
-// nicht, wie viele es ihnen inzwischen gleichgetan haben.
+// Die Abstände steigen mit der neuen, ungekürzten Dreiquellen-Skala. An den
+// echten 466 Partien stehen Leon und Martin im Volutenkranz III, Julian folgt
+// im selben Kranz auf Grad II; zum Lorbeer bleibt ein klarer Abstand. Der
+// Ordensstern beginnt bei rund 4.000 und bleibt über die stetig wachsenden
+// Folgen anspruchsvoll, aber in einer langen Laufbahn realistisch.
 //
 // Die ERSTE Schwelle bleibt niedrig: sie sagt „du bist dabei", nicht „du bist
-// gut". Acht von zwölf erreichen sie.
+// gut". Zehn von zwölf erreichen sie.
 const INSIGNIEN = [
   {key:'reif',    name:'Reif',          min:0},
-  {key:'schild',  name:'Schildring',    min:240},
-  {key:'volute',  name:'Volutenkranz',  min:720},
-  {key:'lorbeer', name:'Lorbeerreif',   min:1680},
-  {key:'stern',   name:'Ordensstern',   min:3600},
+  {key:'schild',  name:'Schildring',    min:250},
+  {key:'volute',  name:'Volutenkranz',  min:800},
+  {key:'lorbeer', name:'Lorbeerreif',   min:2300},
+  {key:'stern',   name:'Ordensstern',   min:4000},
 ];
 // Innerhalb einer Stufe gibt es drei Grade. Ohne sie sind zwischen zwei
 // Schwellen hunderte Punkte, in denen sich am Zeichen nichts tut — und je
@@ -157,6 +163,12 @@ const INSIGNIEN = [
 // oder kurz vor der nächsten Stufe steht.
 const INSIGNIUM_GRADE = 3;
 const INSIGNIUM_GRAD_NAME = ['I', 'II', 'III'];
+// Die Grade liegen bewusst nicht bei exakten Dritteln. Der Einstieg in eine
+// Stufe soll schnell sichtbar werden, Grad III aber schon deutlich vor der
+// naechsten, viel anspruchsvolleren Form beginnen. In der aktuellen Liga
+// stehen Leon und Martin damit am Volutenkranz III, Julian dicht dahinter;
+// zum Lorbeerreif bleibt trotzdem ein klarer Abstand.
+const INSIGNIUM_GRAD_SCHWELLEN = [0, 0.16, 0.40];
 
 // ── Wie ein Grad seine Stufe ausbaut ────────────────────────────────
 //     Vorher änderte ein Grad nur die ANZAHL der Elemente: 40, 60, 80
@@ -199,7 +211,7 @@ const INSIGNIUM_AUSBAU = {
             {blatt:11, gr:1.29, beeren:1, endraute:1, kopfR:5.6, lilGr:1.34}],
 };
 const ORDENSSTERN_START = 8;
-const ORDENSSTERN_SCHRITT = 400;
+const ORDENSSTERN_SCHRITT = 600;
 
 // Die drei festen Angaben einer Monatschronik [§C39]. Eingefrorene Monate
 // können IDs tragen, die es im heutigen Katalog nicht mehr gibt; dann ist
@@ -250,21 +262,28 @@ function chronikPunkte(titleId){
 // EIN Durchlauf für die ganze Liga. Seltenheit lässt sich nicht für einen
 // Spieler allein bestimmen, also wird immer die ganze Tabelle gerechnet
 // und memoisiert — wie überall an matches.length + _cache.version gebunden.
-function prestigeTabelle(){
-  const key = matches.length + '_' + _cache.version;
-  if(_cache._prestigeKey === key) return _cache._prestige;
+function prestigeTabelle(bisMs){
+  const key = matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
+  if(!bisMs && _cache._prestigeKey === key) return _cache._prestige;
+  if(bisMs){
+    if(!_cache._prestigeBis) _cache._prestigeBis = {};
+    if(_cache._prestigeBis[key]) return _cache._prestigeBis[key];
+    if(Object.keys(_cache._prestigeBis).length > 20) _cache._prestigeBis = {};
+  }
 
   const aktive = (players || []).filter(p => p && !p.hidden);
   const gesamt = aktive.length || 1;
+  const quelleMatches = bisMs ? matches.filter(m => mts(m) <= bisMs) : matches;
 
   // 1. Rohdaten je Spieler einsammeln.
   const roh = {};
   aktive.forEach(p => { roh[p.id] = {badges:[], monat:[], rekord:[]}; });
 
-  // Auszeichnungen — mit ihrer Anzahl. Eine Würde zählt jedes Mal neu,
-  // alles andere einmal; welche das sind, sagt BADGE_WUERDE [§7.2].
+  // Auszeichnungen — mit ihrer Anzahl. Jede positive Auszeichnung zählt bei
+  // jedem Erreichen; Klasse und Anzahl reichen für die vollständige Rechnung.
   aktive.forEach(p => {
-    (getCachedBadges(p.id) || []).forEach(b => {
+    const badges = bisMs ? computeBadges(p.id, quelleMatches, bisMs) : getCachedBadges(p.id);
+    (badges || []).forEach(b => {
       roh[p.id].badges.push({id:b.id, name:b.name, n:Math.max(1, b.count || 1)});
     });
   });
@@ -275,14 +294,14 @@ function prestigeTabelle(){
   // dasselbe über denselben Monat. Gezählt wird, was in der Matrix steht
   // [§C32] — sonst stünde im Profil eine Zahl, die nirgends nachzuzählen ist.
   aktive.forEach(p => {
-    (seasonTitleHistory(p.id) || []).forEach(r => {
+    (seasonTitleHistory(p.id, bisMs) || []).forEach(r => {
       if(r.title) roh[p.id].monat.push(
         {id:r.title.titleId, name:r.title.name, label:r.label, sid:r.sid});
     });
   });
 
   // Allzeitwertungen — was jemand HEUTE hält.
-  const A = allChronicles();
+  const A = allChronicles(bisMs);
   const halterZahl = {};
   CHRONICLES.forEach(d => {
     const e = A.byId[d.id];
@@ -296,11 +315,7 @@ function prestigeTabelle(){
   aktive.forEach(p => {
     const r = roh[p.id];
 
-    // Ein Gesetz für alle drei Quellen: der Wert eines Eintrags fällt nicht,
-    // aber der n-te Eintrag trägt nur noch 1/√n zur Laufbahn bei. Ohne das
-    // erdrücken die Auszeichnungen alles — es gibt fünfzig von ihnen und vier
-    // Monate. Der Sammler stünde über dem Meister, und genau davon wollte
-    // dieses System weg. Die Rekorde rechnen schon immer so.
+    // Nur heute gehaltene Rekorde werden gestapelt: der n-te trägt 1/√n.
     const stapel = (liste) => {
       let summe = 0;
       liste.sort((a, b) => b.p - a.p).forEach((q, i) => {
@@ -311,35 +326,20 @@ function prestigeTabelle(){
       });
       return summe;
     };
-    // Erworbenes wird ADDIERT, nicht gestapelt. Was einmal geholt ist, behält
-    // seinen Wert, auch wenn zehn weitere dazukommen.
-    const summe = (liste) => liste.reduce((n, q) => { q.voll = q.p; return n + q.p; }, 0);
-
-    // Auszeichnungen: Klasse × Art, voller Wert, jede einzeln.
+    // Auszeichnungen: sichtbare Klasse × gedämpfte Wiederholungsfolge.
+    // Kein Quellenlimit verändert anschließend den Wert oder macht ihn von
+    // der Sortierreihenfolge anderer Auszeichnungen abhängig.
     const az = [];
     r.badges.forEach(b => {
       const kl = rarityOf(b.id);
-      const art = BADGE_ART[b.id] || 'ereignis';
-      const einzeln = (PRESTIGE_KLASSE[kl] ?? 5) * (PRESTIGE_ART[art] ?? 1);
-      if(einzeln <= 0) return;
-      // Eine Würde zählt jedes Mal neu und jedes Mal VOLL; alles andere
-      // einmal. Wer denselben Zittersieg zum dreißigsten Mal holt, hat nichts
-      // Neues gezeigt — wer zum dritten Mal Meister wird, schon, und der
-      // dritte Titel ist keinen Deut leichter als der erste.
-      // Eine Würde zählt jedes Mal neu, aber jedes Mal etwas weniger als
-      // beim Mal davor. Vorher war die fünfte Meisterschaft genauso viel
-      // wert wie die erste, und ein Spieler, der eine Würde Saison für
-      // Saison verteidigt, wuchs linear davon.
-      // Was sich wiederholen darf, sagt der Katalog — und mit welchem
-      // Faktor [§7.2]. Eine Würde verblasst am langsamsten, der Alltag am
-      // schnellsten; was hier gar nicht steht, zählt genau einmal.
-      const wuerde = BADGE_WUERDE.has(b.id);
-      const rate = wuerde ? PRESTIGE_WIEDERHOLUNG : BADGE_WIEDERHOLUNG[b.id];
-      const w = einzeln * (rate ? _wiederholungsWert(b.n, rate) : 1);
-      az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl, art,
-               mal:b.n, wuerde, wiederholbar: !!rate, rate: rate || 0, einzeln});
+      const regel = PRESTIGE_AUSZEICHNUNG[kl] || PRESTIGE_AUSZEICHNUNG.common;
+      const w = auszeichnungsPunkte(b.id, b.n);
+      if(w <= 0) return;
+      az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl,
+               mal:b.n, rate:regel.faktor, abnahme:1-regel.faktor,
+               basis:regel.basis, minimum:regel.minimum, voll:w});
     });
-    const pb = summe(az);
+    const pb = az.reduce((sum, q) => sum + q.p, 0);
 
     // Monatschroniken: der Wert haengt an der Abweichung [§C39].
     const mo = [];
@@ -358,21 +358,26 @@ function prestigeTabelle(){
       // stand deshalb „Leistung" neben einer Chronik, deren Punkte aus
       // „Konstanz" kamen — die Zeile erklaerte den Wert daneben nicht.
       const km = _chronikMonat(m.id) || {};
+      const rohFaktor = Math.pow(PRESTIGE_CHRONIK_WIEDERHOLUNG, mal - 1);
+      const beitrag = Math.max(PRESTIGE_CHRONIK_MINDEST, voll * rohFaktor);
+      const faktor = beitrag / voll;
       mo.push({q:'monat', id:m.id, name:m.name, label:m.label,
-               p: voll * Math.pow(PRESTIGE_WIEDERHOLUNG, mal - 1), mal,
+               p: beitrag, voll, grundwert:voll, faktor, mal,
+               minimum:PRESTIGE_CHRONIK_MINDEST,
+               amMinimum:beitrag === PRESTIGE_CHRONIK_MINDEST,
                kunst:km.art || '', klasse:km.klasse || ''});
     });
-    const pm = summe(mo);
+    const pm = mo.reduce((sum, q) => sum + q.p, 0);
 
     // Allzeitwertungen: ein geteilter Rekord zählt geteilt — und dann
     // dasselbe Gesetz wie überall.
     const re = [];
     r.rekord.forEach(x => {
-      const voll = PRESTIGE_REKORD * (PRESTIGE_ART[x.art] ?? 1)
-                 / Math.max(1, halterZahl[x.id] || 1);
+      const basis = PRESTIGE_REKORD * (PRESTIGE_ART[x.art] ?? 1);
+      const voll = basis / Math.max(1, halterZahl[x.id] || 1);
       if(voll <= 0) return;
       re.push({q:'rekord', id:x.id, name:x.name, p:voll, art:x.art,
-               halter:halterZahl[x.id] || 1});
+               basis, halter:halterZahl[x.id] || 1});
     });
     const pr = stapel(re);
 
@@ -389,31 +394,32 @@ function prestigeTabelle(){
   });
 
   const res = {byPid:out, gesamt, rang:Object.values(out).sort((a,b) => b.punkte - a.punkte).map(x => x.pid)};
-  _cache._prestigeKey = key;
-  _cache._prestige = res;
+  if(bisMs) _cache._prestigeBis[key] = res;
+  else { _cache._prestigeKey = key; _cache._prestige = res; }
   return res;
 }
 
 // Der Stand eines Spielers, fertig zum Anzeigen.
-function prestigeOf(pid){
-  const T = prestigeTabelle();
+function prestigeOf(pid, bisMs){
+  const T = prestigeTabelle(bisMs);
   const e = T.byPid[pid];
   if(!e) return {punkte:0, stufe:0, insignie:INSIGNIEN[0], naechste:INSIGNIEN[1],
-                 fehlt:INSIGNIEN[1].min, zacken:0, grad:0, teile:{auszeichnung:0,monat:0,rekord:0},
+                 fehlt:INSIGNIEN[1].min, zacken:0, grad:0,
+                 teile:{auszeichnung:0,monat:0,rekord:0},
                  zahlen:{auszeichnung:0,monat:0,rekord:0}, quellen:[], platz:0, von:T.gesamt};
   let i = 0;
   while(i + 1 < INSIGNIEN.length && e.punkte >= INSIGNIEN[i + 1].min) i++;
   const letzte = i === INSIGNIEN.length - 1;
-  // Der Grad ist das Drittel der Stufe, in dem jemand steht. Er wird nach
-  // UNTEN begrenzt: die letzte Stufe hat kein Ende, dort zählen die Zacken.
+  // Der Grad folgt den relativen Schwellen oben. Die letzte Stufe hat kein
+  // Ende; dort zaehlen statt Graden die Zacken.
   const spanne = letzte ? 0 : INSIGNIEN[i + 1].min - INSIGNIEN[i].min;
   return Object.assign({}, e, {
     stufe:i,
     insignie:INSIGNIEN[i],
     naechste: letzte ? null : INSIGNIEN[i + 1],
     fehlt: letzte ? 0 : INSIGNIEN[i + 1].min - e.punkte,
-    grad: letzte ? 0 : Math.max(0, Math.min(INSIGNIUM_GRADE - 1,
-      Math.floor((e.punkte - INSIGNIEN[i].min) / Math.max(1, spanne) * INSIGNIUM_GRADE))),
+    grad: letzte ? 0 : Math.max(0, INSIGNIUM_GRAD_SCHWELLEN.reduce((g, schwelle, gi) =>
+      ((e.punkte - INSIGNIEN[i].min) / Math.max(1, spanne)) >= schwelle ? gi : g, 0)),
     // Auf der letzten Stufe wächst der Stern weiter, statt stehenzubleiben.
     zacken: letzte ? ORDENSSTERN_START + Math.floor((e.punkte - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
     naechsteZacke: letzte
@@ -1547,8 +1553,9 @@ function prestigeSchritte(pid, n){
         out.push({
           art:'monat', id:r.id, name:r.name || (d && d.name), ic:d.ic, tone:d.tone,
           rel: 0.55,          // ein offener Monatseintrag ist immer „diesen Monat noch"
-          gewinn: Math.round(PRESTIGE_MONAT * (PRESTIGE_ART[d.art] ?? 1)
-                             / Math.sqrt(P.zahlen.monat + 1)),
+          gewinn: Math.round(Math.max(PRESTIGE_CHRONIK_MINDEST,
+            chronikPunkte(r.id) * Math.pow(PRESTIGE_CHRONIK_WIEDERHOLUNG,
+              P.quellen.filter(q => q.q === 'monat' && q.id === r.id).length))),
           cond: (d.monat && d.monat.cond) || '',
           stand: r.ev ? _chronKurz(r.ev) : '',
           halter: r.pid ? pname(r.pid) : '',
@@ -1672,6 +1679,18 @@ function showLaufbahn(pid){
     return (Number.isInteger(r) ? String(r) : r.toFixed(1)).replace('.', ',');
   };
 
+  // Kurze Zeilen: die Klassenregel steht einmal im Gruppenkopf. Bis drei
+  // Erfolge werden addiert, lange Folgen zeigen Start und letzten Teilwert.
+  const folge = q => {
+    const n = Math.max(1, q.mal || 1);
+    if(n <= 3){
+      const glieder = [];
+      for(let i = 1; i <= n; i++) glieder.push(zahl(auszeichnungsTeilwert(q.id, i)));
+      return glieder.join(' + ');
+    }
+    return `${zahl(q.basis)} → ${zahl(auszeichnungsTeilwert(q.id, n))} beim ${n}. Mal`;
+  };
+
   // Warum dieser Posten so viel wiegt. Vorher stand hier „2 von 12" — die
   // Zahl der heutigen Halter. Sie erklärte den Wert nicht, sie war der
   // Grund, warum er fiel. Jetzt steht da, was den Wert wirklich bestimmt:
@@ -1679,16 +1698,29 @@ function showLaufbahn(pid){
   // Abschlag nur dort, wo es ihn gibt.
   const grund = q => {
     const teile = [];
-    if(q.q === 'rekord') teile.push(q.halter <= 1 ? 'allein gehalten' : `zu ${q.halter}. geteilt`);
-    else if(q.q === 'auszeichnung') teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
+    if(q.q === 'rekord'){
+      teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
+      let rechnung = `Grundwert ${zahl(q.basis)}`;
+      if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;
+      if(q.rang > 1) rechnung += ` ÷ √${q.rang}`;
+      teile.push(rechnung);
+    }
+    else if(q.q === 'auszeichnung'){
+      teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
+      teile.push(`${q.mal}× erreicht`);
+      if(q.mal > 1) teile.push(folge(q));
+    }
     else if(q.label) teile.push(q.label);
     if(q.q === 'monat'){
       if(CHRONIK_KLASSE_NAME[q.klasse]) teile.push(CHRONIK_KLASSE_NAME[q.klasse]);
       if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
+      const basis = q.grundwert == null ? q.voll : q.grundwert;
+      let rechnung = `Chronikwert ${zahl(basis)}`;
+      if(q.mal > 1) rechnung += q.amMinimum
+        ? ` · Mindestwert ${zahl(q.minimum)} (${q.mal}. Mal)`
+        : ` × ${zahl(q.faktor)} (${q.mal}. Mal)`;
+      teile.push(rechnung);
     }
-    else if(q.art) teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
-    if(q.q === 'auszeichnung' && q.mal > 1) teile.push(`${q.mal}× geholt`);
-    if(q.rang > 1) teile.push(`${q.rang}. Eintrag · ${zahl(q.voll)} ÷ ${zahl(Math.sqrt(q.rang))}`);
     return teile.join(' · ');
   };
 
@@ -1706,11 +1738,17 @@ function showLaufbahn(pid){
     </div>`;
 
   const SICHTBAR = 4;
+  const regeln = `<div class="lb-regeln">
+    <span class="legendary"><b>Legendary</b><em>50 · −10 % · min. 5</em></span>
+    <span class="rare"><b>Rare</b><em>20 · −15 % · min. 1</em></span>
+    <span class="common"><b>Common</b><em>3 · −20 % · min. 0,1</em></span>
+  </div>`;
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];
     const rest = qs.slice(SICHTBAR).map((q, i) => zeile(q, w[SICHTBAR + i]));
     return `<div class="lb-grp">
       <div class="lb-grp-k"><span>${esc(g.kopf)}</span><span class="num">${zahl(summen[gi])}</span></div>
+      ${g.q === 'auszeichnung' ? regeln : ''}
       ${qs.length ? qs.slice(0, SICHTBAR).map((q, i) => zeile(q, w[i])).join('')
                   : `<div class="lb-q leer">${g.leer}</div>`}
       ${rest.length ? `<div class="chron-rest">${rest.join('')}</div>

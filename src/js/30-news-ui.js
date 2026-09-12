@@ -375,23 +375,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     ? `<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING`
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
-  // Eine Sammelkarte behaelt Rubrik und Motiv ihres staerksten Ereignisses —
-  // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
-  // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
-  // Ausgelassen wird genau EINS: die Zeile, die die Karte oben schon IST —
-  // also ihr eigener Titel. Ausgelassen wurde zusaetzlich der Titel des
-  // KOPFS, und bei einer Tafel-Karte sind das zwei verschiedene Saetze:
-  // ueber „Henry, Johannes und zwei weitere bewegen die Ewige Tafel" stand
-  // „6 % aller 158 Partien gegen die Wahrscheinlichkeit gewonnen" als Text
-  // und darunter drei Zeilen — Henry kam auf seiner eigenen Karte nicht ein
-  // einziges Mal namentlich vor, und die Zahl im Text gehoerte niemandem.
-  // Der Text ist der BELEG des staerksten Ereignisses, nicht seine
-  // Schlagzeile; beides nebeneinander ist keine Wiederholung, sondern erst
-  // die vollstaendige Aussage.
-  //
-  // Und gezeigt werden ALLE Zeilen: eine Sammelkarte traegt hoechstens vier
-  // (SAMMEL_MAX), „und 1 weitere" versteckte also genau eine Meldung, um
-  // eine Zeile zu sparen. Buendeln darf nichts verstecken [§C33].
+  // Eine Sammelkarte hat einen eigenen Gruppenkopf. Darunter stehen ALLE
+  // zwei bis vier Einzelereignisse im Band; keines wird zum heimlichen Kopf
+  // und keines hinter „weitere" versteckt [§C33].
   const sammelBand = (d.type === 'sammel')
     ? _newsSammelBand(d.teile, [s.title], true) : '';
 
@@ -666,18 +652,12 @@ function _newsSerienBand(laenge, verloren){
 // [§C33] — jede weitere Zeile steht deshalb mit ihrem Zeichen auf der Karte
 // selbst, kurz und in einer Reihe.
 //
-// Gezeigt werden nur die Zeilen, die der Kopf NICHT schon ist: bei einer
-// Spiel-Sammelkarte gehoert ihm die Schlagzeile, und sie ein zweites Mal
-// darunter waere die Wiederholung, die §C33 gerade verhindert.
+// Der Gruppentitel wird vorsichtshalber herausgefiltert; aktuelle Karten
+// bauen ihn eigens, sodass regulaer jede Einzelzeile im Band bleibt.
 function _newsSammelBand(teile, kopfTitel, vollstaendig){
   const alle = Array.isArray(teile) ? teile : [];
-  // Ausgelassen wird, was die Karte oben schon IST — und das sind zwei
-  // Titel: der der Karte und der des Kopfs. Bei einer Tafel-Sammelkarte
-  // sind sie verschieden („Henry, Martin und zwei weitere bewegen die
-  // Ewige Tafel" gegen „Henry uebernimmt ‚Der Gigantentoeter'"), und
-  // verglichen wurde nur der erste. Damit stand der Kopf als erste Zeile
-  // des Bandes noch einmal da, sein Text darueber, und von der vierten
-  // Meldung blieb „und 1 weitere".
+  // Alte persistierte Karten koennen noch einen Gruppentitel als Zeile
+  // enthalten; nur diese echte Doppelung faellt heraus.
   const kt = (Array.isArray(kopfTitel) ? kopfTitel : [kopfTitel])
     .map(x => String(x || '').trim()).filter(Boolean);
   const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
@@ -971,16 +951,47 @@ function _newsTagMs(dayKey){
     return out;
   } catch(e){ return []; }
 }
-// Welche Karte ist die Karte des Tages? Breaking zuerst, dann die höchste
-// Priorität. Sie wird darunter groß gezeigt, statt im Kopf noch einmal
-// aufgeschrieben zu werden.
+// Welche Karte ist die Karte des Tages? Nicht automatisch der Spieler des
+// Tages, sondern die Geschichte mit dem groessten Nachrichtenwert. Die
+// Generator-Prioritaet allein taugt dafuer nicht: POTD muss im normalen Feed
+// verlaesslich sichtbar sein und hat deshalb eine hohe Prioritaet, ist aber
+// nicht an jedem Spieltag die spannendste Geschichte. Seltenheit, Umbruch,
+// Ueberraschung und mehrere zusammenfallende Ereignisse wiegen hier staerker.
+function _newsTagSpannung(s){
+  const d = (s && s.dataRef) || {};
+  const t = d.type || '';
+  if(_isBreaking(s)) return 1200 + (s.prio || 0);
+  const basis = {
+    giant_slayer:980, top_clash:940, rekord_geholt:900,
+    rekord_erstmals:920, rekord_gesteigert:870, chronik_geholt:850,
+    insignium_stufe:840, badge_unlocked:800, lead_change:980,
+    elo_record:1000, streak_record:1000, team_streak:770,
+    win_streak:750, rivalry_milestone:730, rivalry:690,
+    potd:620, potw:640, woche:700
+  };
+  let wert = basis[t] || 560;
+  if(t === 'giant_slayer' && d.chance != null)
+    wert += Math.round((1 - Math.max(0, Math.min(1, d.chance))) * 100);
+  if(t === 'badge_unlocked') wert += d.rarity === 'legendary' ? 130 : d.rarity === 'rare' ? 55 : 0;
+  if(t === 'insignium_stufe') wert += Math.max(0, Number(d.stufe) || 0) * 25;
+  if(t === 'chronik_geholt') wert += Math.min(80, Math.max(0, Number(d.punkte) || 0) / 2);
+  if(t === 'sammel'){
+    const teile = Array.isArray(d.teile) ? d.teile : [];
+    const kopf = d.kopfTyp ? _newsTagSpannung({prio:s.prio, dataRef:{type:d.kopfTyp}}) : 620;
+    wert = kopf + Math.min(120, Math.max(0, teile.length - 1) * 35);
+  }
+  return wert + Math.min(25, Math.max(0, Number(s.prio) || 0) / 10);
+}
+
+// Die gewaehlte Geschichte wird darunter gross gezeigt, statt im Kopf noch
+// einmal aufgeschrieben zu werden.
 //
 // Es gibt sie **nur an Spieltagen**. An einem Tag ohne Partie ist nichts
 // passiert, was ein Tag von einem anderen unterscheidet: dort standen sonst
 // ein Fun Fact oder eine Zufallsstatistik groß im Bild, die mit diesem Tag
 // nichts zu tun haben und gestern genauso dagestanden hätten.
 function _newsTagKarte(items, dayKey){
-  if(!Array.isArray(items) || items.length < 2) return null;
+  if(!Array.isArray(items) || !items.length) return null;
   const tagMs = _newsTagMs(dayKey);
   if(!tagMs.length) return null;   // an diesem Tag wurde nicht gespielt
   // Sie steht, sobald der Spieltag entschieden ist — nicht erst um 23:59.
@@ -1000,10 +1011,10 @@ function _newsTagKarte(items, dayKey){
   const OHNE = new Set(['ambient', 'dry_spell', 'season_endgame', 'quiet_week', 'season_start']);
   const kandidaten = items.filter(x => !OHNE.has((x.dataRef || {}).type));
   if(!kandidaten.length) return null;
-  const beste = kandidaten.sort((a, b) => {
-    const ba = _isBreaking(a) ? 1 : 0, bb = _isBreaking(b) ? 1 : 0;
-    return (bb - ba) || ((b.prio || 0) - (a.prio || 0));
-  })[0];
+  const beste = kandidaten.slice().sort((a, b) =>
+    (_newsTagSpannung(b) - _newsTagSpannung(a))
+      || ((b.prio || 0) - (a.prio || 0))
+      || String(a.id || '').localeCompare(String(b.id || '')))[0];
   return beste ? beste.id : null;
 }
 function _renderNewsFeed(){
@@ -1016,6 +1027,10 @@ function _renderNewsFeed(){
   const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel';
   const _istSpieltag = s => {
     const d = s.dataRef || {};
+    // Die Filter sind redaktionelle Seiten, keine sich überschneidenden
+    // Suchbegriffe. Eine Tafelmeldung darf ihren Match-Zeitpunkt tragen,
+    // ohne deshalb zugleich im Spieltag-Chip zu erscheinen.
+    if(_istTafel(s)) return false;
     if(d.type === 'ambient') return false;
     return !!(d.matchId || d.type === 'potd' || d.type === 'woche' ||
               (d.type === 'sammel' && d.quelle === 'spiel'));
@@ -1056,7 +1071,10 @@ function _renderNewsFeed(){
     });
     listHtml = gruppen.map(g => {
       const neu = g.items.filter(st => !seen.has(st.id)).length;
-      const tagesKarte = _newsTagKarte(g.items, g.k);
+      // Die Wahl gehoert dem ganzen Tag, nicht dem aktiven Filter. Sonst
+      // koennte dieselbe Tafel je Reiter eine andere „Karte des Tages" haben.
+      const alleDesTages = stories.filter(st => _newsDayKey(st.when) === g.k);
+      const tagesKarte = _newsTagKarte(alleDesTages, g.k);
       // Der Kopf traegt Wochentag, Datum und die Zahl der Karten — sonst
       // nichts. Die Bilanz („3 Partien · 4 Spieler") und die Gesichter standen
       // darunter und wiederholten, was die Karten des Tages ohnehin zeigen:

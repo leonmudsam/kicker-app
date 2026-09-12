@@ -620,21 +620,14 @@ function _newsDetailMitte(s){
           <button class="btn ghost sm" data-recap="potw" style="margin-top:12px;width:100%">Wochen-Rückblick öffnen</button>`;
       }
       // ── Die Sammelkarte: was im selben Moment passiert ist ───────────
-      // Der Kopf gehoert dem groessten Ereignis. Was dazugehoert, steht
-      // darunter als Liste mit eigenem Beleg, nicht als zweite Schlagzeile.
+      // Der Kopf fasst zusammen. Darunter stehen alle Teile gleichrangig;
+      // keines davon wird zum heimlichen zweiten Kopf.
       case 'sammel': {
-        const alle = Array.isArray(d.teile) ? d.teile : [];
-        // Was oben steht, steht unten nicht noch einmal [§C33]. Bei einer
-        // Spiel-Sammelkarte gehören Schlagzeile und Text dem stärksten
-        // Ereignis — dessen Zeile stand darunter wortgleich ein zweites Mal
-        // und trug keine einzige neue Zahl. Bleibt dabei nichts übrig, wird
-        // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
-        const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
-        const teile = neu.length ? neu : alle;
-        const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}"${
+        const teile = Array.isArray(d.teile) ? d.teile : [];
+        const zeilen = teile.map(t => `<div class="nw-zeile"${
               (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
-              ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
+              ${t.text ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand

@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **695**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **700**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -219,11 +219,11 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter, Prestige, Katalog-Karten, Rekordlage je Monat, Positionsrekorde, die Fügungen, die Belege, die neutrale Sprache, der Wochenherr, der Sieger eines Spieltags, die Zähler der Auszeichnungen, die Sprache der Belege und Bedingungen, die Mitte des Feldes, der neue Monatskatalog, die Form der Kurznamen, der Ausschlag jeder Chronik, die Beinamen, die Abstufung der Wiederholung, der Wiederholungs-Katalog | 981 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen | 994 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rückblicke, Breaking, die Ewige Tafel im Feed, der Feed, der Tagesplan, die Sammelkarte, die Bündelung je Minute, die Auffrischung der Texte, die abgemeldeten Karten, der Countdown, die überholte Serie, der Memo, die Sprache, die Richtung der Rekordmeldung, die Meilensteine, der Tagesdeckel, die Namen in der Schlagzeile, die Sperrfrist, die Aufgabe auf der Karte, die Beziehung im Blattkopf, die Wochenkarte, der Deckel holt zurueck, die Chronik im laufenden Monat, die zwei Achsen der Zusammenfuehrung, die eine Rangfolge, der Tag gehört sich selbst, der Rang aus dem Generator, der überholte Halter, jeder Spieltag behält seinen Sieger, zwei Tage desselben Siegers, welche Chronik gilt | 256 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, Sammelkarten mit zwei bis vier gleichrangigen Ereignissen, lebendige verknüpfte Texte, Auffrischung und Abmeldung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat, Zusammenführungsachsen, den 14-Tage-Mix aus Tafel gegen Spieltag/Funfacts und die spannendste Karte des Tages ab acht Partien oder 19 Uhr | 272 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, die Laufbahn-Vitrine, die Verläufe der Wappen, der Takt im Hintergrund, der Rekorde-Reiter, die Tafel, die Story-Blätter, das Rubrikband, Motiv und Winkel, die Sorten, die Lücken, die Ränder, die Bewegung, Breaking, der Inhalt, der Kopf, die Doppelungen und der Schmuck im Blatt, die negativen Rekorde im Profil, der offene Feed, die Chronik-Matrix, die Leiter im Blatt, die Karte fuer den gemeinsamen Erfolg, die Zahlenreihe der Chronik — **im echten Browser gemessen** | 99 |
+| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px — **im echten Browser gemessen** | 109 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -416,12 +416,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Der Strahl im Positions-Profil gehört der Seite, die überwiegt.** Er
   lief immer von links und war so lang wie der Sturmanteil; bei 29 zu 71
   zeigte er damit die kleinere Hälfte und las sich wie ein
-  Fortschrittsbalken, der fast leer ist. Der Knopf bleibt an der Grenze
-  zwischen beiden — die ist die Aussage.
+  Fortschrittsbalken, der fast leer ist. Sturm beginnt links, Abwehr rechts,
+  ein Flex-Profil liegt als ruhiger Kern in der Mitte. Der Knopf bleibt an
+  der Grenze zwischen beiden — die ist die Aussage.
   **Die stärkere Rolle trägt ihre Farbe, die schwächere steht zurück**
   (`.pp-rd.stark` / `.schwach`). Beide gleich laut gezeichnet sagten nicht,
-  worin jemand besser ist, und genau das beantwortet diese Karte. Bei
-  Gleichstand bleiben beide stark: dann gibt es keine bessere.
+  worin jemand besser ist, und genau das beantwortet diese Karte. Bis drei
+  Prozentpunkte Abstand gelten beide als neutral. Die Nebenrolle bleibt mit
+  78 % Deckkraft lesbar, die starke Rolle bekommt nur einen kleinen Schein;
+  auch Abwehrdominanz behält die Rangfarbe statt auf Metallgrau zu fallen.
   **Ein langer Wert in der Zahlenreihe wird kleiner, nicht breiter.**
   „Schattenseite" maß gerendert 104 px in einer 88-px-Zelle und lief in die
   daneben, in der der Ausschlag steht. Zwei Stufen (`.lang`, `.sehrlang`)
@@ -505,7 +508,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Schlagzeile** oder **denselben Text** („Eine große Rivalität, die Liga
   liebt's" stand wortgleich unter zwei Karten und nannte keine einzige Zahl).
   **`prio` steht auf EINER Skala** (`STORY_PRIO`, §11.0a). Der Tagesdeckel und
-  der Kopf einer Sammelkarte sind Vergleiche, und ein Vergleich braucht eine
+  das Gewicht einer Sammelkarte sind Vergleiche, und ein Vergleich braucht eine
   Skala. Es waren zwei: die Spieltags-Karten standen auf 1 bis 10, die Karten
   der Ewigen Tafel auf 70 bis 95 — jede für sich richtig einsortiert, nie
   gegeneinander. Damit gewann jede Tafel-Karte, bevor der Deckel hinsah.
@@ -521,12 +524,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Spieltags oben und an der Tafel die Ordnung Liga-Rekord über Monatschronik
   über Insignium-Stufe. Die Zahlen stehen an EINER Stelle: verteilt über 1900
   Zeilen ist die zweite Skala genau der Fehler, den niemand sieht.
-  Eine **Sammelkarte trägt, was sie zusammenfasst** — den stärksten Teil und
-  einen Schritt je weiterem. Mit `+1` wog eine Karte über drei Insignium-
+  Eine **Sammelkarte trägt, was sie zusammenfasst** — das Gewicht ihres
+  stärksten Teils und einen Schritt je weiterem. Mit `+1` wog eine Karte über drei Insignium-
   Stufen kaum mehr als eine einzelne davon; eine einzelne Karte zu deckeln
   kostet eine Meldung, diese zu deckeln kostet alle. Die Karte über EINEN
   Spieler und die über EINEN Erfolg erben gar nicht: sie fassen keinen Moment
   zusammen, sie sind eine eigene Nachricht und haben einen eigenen Rang.
+  **Text und Titel fassen immer die Gruppe zusammen**; kein Einzelereignis
+  wird in den Kopf kopiert oder dadurch wichtiger gemacht.
 
   **Die Reihenfolge ist die Zeit.** `_consolidateStories` sortiert nicht mehr
   um. Zwei Durchgänge taten das früher: einer tauschte gleichartige Nachbarn,
@@ -542,8 +547,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Spieltag neun: zwei Sammelkarten, zwei Serien, zwei Auszeichnungen, den
   Spieler des Tages, den Elo-Ausschlag und einen Serienbrecher. Das ist keine
   Tafel mehr, das ist ein Protokoll. Der Tag behält seine stärksten, gemessen
-  an `prio` — der Reihenfolge, die der Generator ohnehin vergibt und nach der
-  auch die Sammelkarte ihren Kopf wählt [§C27]. **Breaking zählt nicht mit**:
+  an `prio` — der Reihenfolge, die der Generator ohnehin vergibt und aus der
+  auch das Gewicht der Sammelkarte kommt [§C27]. **Breaking zählt nicht mit**:
   es ist das Seltenste und darf nie an einem Deckel scheitern. Und was es je
   Tag, Woche oder Monat genau einmal gibt, fällt nie darunter (`TAG_PFLICHT`:
   Spieler des Tages, Wochenkarte, Monatschronik, Saison-Rückblick) — der
@@ -553,7 +558,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   danach keinen Sieger mehr. Gedeckelt wird,
   was wegfällt, nicht wo etwas steht — die Reihenfolge bleibt die Zeit.
   `prio` sortiert den Feed seit dem chronologischen Umbau nicht mehr; sie
-  entscheidet nur noch, wer ein Bündel anführt und wer den Deckel überlebt.
+  entscheidet nur noch über Gewicht und Tagesdeckel.
   Eine **seltene Auszeichnung** steht darin über einer laufenden Serie: die
   Serie läuft weiter, die Auszeichnung ist geholt. Sie stand auf 5 und damit
   unter der Duo-Pleitenserie, mit der Begründung, Team-News sollten „auch mal
@@ -583,8 +588,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   (dieselbe Minute, oder derselbe Tag an der Ewigen Tafel), **dasselbe
   Subjekt** (ein gemeinsamer Spieler), **dieselbe Art** (Spieltags-Ereignisse
   untereinander, Tafel-Ereignisse untereinander — ein Fun Fact gehört nie
-  dazu, der stand gestern genauso da) und **ein gemeinsamer Satz**, den die
-  stärkste Story liefert. Vier Zeilen sind die Grenze; darüber ist es ein
+  dazu, der stand gestern genauso da) und **eine gemeinsame Aussage**, die
+  aus allen Teilen gebaut wird. Vier Zeilen sind die Grenze; darüber ist es ein
   Tagesrückblick.
   Der Moment ist die **Minute**, nicht die Partie: nur EINE Story trägt eine
   `matchId`, alle anderen tragen bloß ihren Zeitstempel, und über die Partie
@@ -624,13 +629,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   stehen dafür getrennt (`ERFOLG_WORT`), und das Verb wird nur genannt, wo es
   wechselt: „holt einen Liga-Rekord, eine Auszeichnung und feiert ein
   Jubiläum" — je Verb eine eigene Aufzählung ergab zwei „und" in einer Zeile.
-  Sie zeigt ein Wappen groß und im Fuß die Zahl der Erfolge; der Satz gehört
-  dem stärksten von ihnen.
+  Sie zeigt ein Wappen groß und im Fuß die Zahl der Erfolge. Der Teaser
+  beschreibt den Nachhall für die Laufbahn, statt die Kartenstruktur mit
+  „Einzelheiten stehen darunter" zu erklären.
   Die **Erfolgs-Karte** (`quelle:'erfolg'`, `.nf-s-erfolg`, Rubrik „GEMEINSAM
   GEHOLT") stellt den Erfolg voran und die Gesichter als Chips daneben — keins
   ist wichtiger als das andere. Ihre Schlagzeile und ihr Satz kommen aus
   `SAMMEL_ERFOLG`, je Typ eine Wendung: „Sina, Mira und Jonas tragen jetzt den
-  Schildring" mit „3 Spieler erreichen Stufe 2 von 5 im selben Moment". Den
+  Schildring" mit „Ein gemeinsamer Sprung auf der Laufbahn: drei Zeichen
+  wechseln zugleich ihre Form". Den
   Satz vom Kopf zu borgen wäre falsch — „385 Prestige zusammen" gehört einem
   der drei, und die Karte handelt von allen.
   **Der Erfolg geht dem Spieler vor.** Wer die Insignium-Stufe mit zwei
@@ -665,14 +672,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   die Aussage, und eine fünfte Chronik zu verschweigen hieße, die Karte gegen
   ihren eigenen Zweck zu bauen.
 
-  **Bündeln darf nichts verstecken.** Die Sammelkarte trägt Rubrik, Motiv und
-  Schlagzeile ihrer stärksten Story — und darunter das **Sammelband**
-  (`_newsSammelBand`, `.nf-sam`): jede weitere Meldung mit ihrem Zeichen, kurz
-  und in einer Reihe, auf der KARTE und nicht erst im Blatt. Vorher stand dort
-  nur die Schlagzeile des Kopfs, und wer die Karte überflog, sah von der
-  zweiten Meldung nichts. Jede Zeile trägt ihre Beteiligten (`pids`) — daran
-  hängt die Bündelung, und im Blatt führt die Zeile damit zu dem, von dem sie
-  handelt.
+  **Bündeln darf nichts verstecken.** Die Sammelkarte trägt eine eigene
+  zusammenfassende Schlagzeile — und darunter das **Sammelband**
+  (`_newsSammelBand`, `.nf-sam`): jede Meldung mit ihrem Zeichen, kurz und in
+  einer Reihe, auf der KARTE und nicht erst im Blatt. Das Detailblatt zeigt
+  dieselben zwei bis vier Ereignisse vollständig und **gleichrangig**; keine
+  erste Zeile wird markiert oder in den Kopf gezogen. Jede Zeile trägt ihre
+  Beteiligten (`pids`) — daran hängt die Bündelung, und im Blatt führt die
+  Zeile damit zu dem, von dem sie handelt.
+  Verknüpfte Spielstories heißen „Ein Spiel, zwei Geschichten für …"; ihr
+  Teaser erzählt, wie der Schlusspfiff in mehreren Richtungen nachwirkt.
+  Technische Floskeln wie „Ereignisse in einem Moment", „alle Belege" oder
+  „alle Einzelheiten stehen darunter" sind verboten: Das Band selbst macht
+  die Vollständigkeit sichtbar.
 
   **Der Feed reicht vierzehn Tage zurück** (`NEWS_FENSTER_TAGE`), und der
   Schnitt liegt am DATUM. Er lag an der Zeilenzahl: die App las die 100
@@ -849,6 +861,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Partien hat nach 18:31 angefangen, und der Fun Fact dieses Slots fällt an
   einem Spieltag ohnehin weg: die Stunde kostet also nichts und fängt die
   kurzen Tage auf, die die Zahl nie erreichen.
+  Welche Story das Band trägt, entscheidet `_newsTagSpannung`: Breaking,
+  Rekordwechsel, große Überraschungen, Spitzenspiele und mehrteilige Ereignisse
+  stehen vor einer gewöhnlichen Tagesbilanz. `potd` bleibt eine Pflichtkarte
+  mit hoher Feed-Priorität, wird aber **nicht automatisch** Karte des Tages.
+  Die Auswahl ist deterministisch und verändert weder Story-ID noch Zeitpunkt.
+  Sie wird aus allen Karten des Tages berechnet, nicht neu aus dem aktiven
+  Filter; ist die Gewinnerstory dort ausgeblendet, bekommt keine Ersatzkarte
+  das Band.
+  Die Auswahl wird über den echten Vierzehn-Tage-Verlauf nachgemessen: An
+  jedem Spieltag muss sie den höchsten Spannungswert tragen, mindestens das
+  Niveau einer Tagesbilanz erreichen und darf nie ein Ambient-Fact sein.
+  Der Spieler des Tages gewinnt das Band dabei nur an Tagen, an denen keine
+  stärkere Geschichte entstanden ist.
   Vorher wurde sie zwanzig Minuten nach dem ersten Spiel vergeben: der Rekord,
   der gerade wechselte, war die einzige Karte des Tages und damit automatisch
   die stärkste, während der Spieltag noch lief und der Spieler des Tages noch
@@ -856,33 +881,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Tag, nachdem die letzte Partie gelaufen war. Welche Partien zu einem
   Kalendertag gehören, sagt `_newsTagMs` — in Ortszeit, weil der Feed nach
   Ortszeit gruppiert und `matchesByDay` nach UTC schlüsselt.
-  **Die Sammelkarte lässt genau eine Zeile aus: ihre eigene Schlagzeile.**
-  Ausgelassen wurde zusätzlich der Titel des KOPFS, und bei einer
-  Tafel-Karte sind das zwei verschiedene Sätze: über „Henry, Johannes und
-  zwei weitere bewegen die Ewige Tafel" stand „6 % aller 158 Partien gegen
-  die Wahrscheinlichkeit gewonnen" als Text und darunter drei Zeilen —
-  Henry kam auf seiner eigenen Karte namentlich nicht vor, und die Zahl im
-  Text gehörte niemandem. Der Text ist der BELEG des stärksten Ereignisses,
-  nicht seine Schlagzeile; beides nebeneinander ist erst die vollständige
-  Aussage. Gezeigt werden **alle** Zeilen: eine Karte trägt höchstens vier
-  (`SAMMEL_MAX`), „und 1 weitere" versteckte also genau eine Meldung, um
-  eine Zeile zu sparen.
+  **Die Sammelkarte zeigt jede gebündelte Zeile.** Ihr eigener Titel ist eine
+  Zusammenfassung und entspricht deshalb keinem Einzelereignis. Zwei bis vier
+  Teile stehen vollständig im Sammelband; „und 1 weitere" gibt es dort nicht.
   **Wo der Erfolg ein Zeichen ist, steht das Zeichen dabei**
   (`_newsErfolgZeichen`). „Vier Spieler tragen jetzt den Schildring" zeigte
   den Schildring kein einziges Mal — daneben stand ein Pokal aus dem
   Icon-Katalog. Die App hat das Bauteil [§C27]; `insigniumStufeSvg` trägt
   seine Verläufe selbst und funktioniert deshalb auch dort [§C30].
 
-  **Der Kopf einer Sammelkarte steht nicht zweimal da.** Das Sammelband ließ
-  aus, was den Titel der KARTE trug — bei einer Tafel-Sammelkarte ist das der
-  gebündelte Titel („Henry, Martin und zwei weitere bewegen die Ewige Tafel")
-  und nicht der des Kopfs („Henry übernimmt ‚Der Gigantentöter'"). Damit stand
-  der Kopf als erste Zeile des Bandes noch einmal, sein Text darüber, und von
-  der vierten Meldung blieb „und 1 weitere". Ausgelassen werden jetzt beide
-  Titel (`kopfTitel`). Und auf der Karte steht nur der **erste Satz** des
-  Kopfs (`_ersterSatz`): der zweite erzählt beim Rekord vom Vorgänger, ein
-  Detail zu einer von vier Meldungen, das als Karte des Tages groß im Bild
-  stand, während die anderen drei nur eine Zeile bekamen.
+  **Der Kopf einer Sammelkarte ist keine bevorzugte Detailzeile.** Titel und
+  Text verbinden Beteiligte und Anlass zu einer redaktionellen Geschichte;
+  das Sammelband belegt sie mit allen Einzelmeldungen. Im Blatt erhalten die
+  Teile dasselbe Markup und denselben visuellen Rang.
 
   **Der Tagesplan.** `07:00` gab es nicht mehr: der Spieler des Tages steht um
   **23:59 an seinem eigenen Spieltag**, wenn keine Partie mehr dazukommen kann
@@ -898,10 +909,33 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Wochengrenze liegt dafür in `_potwLastWeekRange`, damit Rückblick, POTW und
   Wochenkarte über dasselbe Fenster reden.
 
+  **Zwei Redaktionshälften.** Inhaltlich teilt sich das Vierzehn-Tage-Fenster
+  ungefähr zur Hälfte in **Ewige Tafel** und **Spieltag plus automatisch
+  erzeugte Fun Facts**. Gemessen werden Ereignisse, nicht bloß Karten: Eine
+  Sammelkarte mit drei vollständig sichtbaren Zeilen zählt drei Geschichten.
+  Der echte, Tag für Tag persistierte August-Verlauf steht bei 17 zu 24, also
+  41 % Tafel. Der Test erlaubt 40 bis 60 %, damit ein ungewöhnlich ruhiger
+  oder ereignisreicher Spieltag nicht künstlich mit belanglosen Karten
+  aufgefüllt wird. `Tafel` und `Spieltag` sind im Filter exklusiv: Eine
+  Tafelmeldung darf einen Match-Zeitpunkt tragen, zählt deshalb aber nicht
+  ein zweites Mal als Spieltagsmeldung.
+
+  Die Ambient-Auswahl rotiert nicht nur konkrete Templates, sondern auch ihre
+  **Rubrik** (`ambientRubrik`). Zwei aufeinanderfolgende Slots vermeiden nach
+  Möglichkeit dieselbe Erzählart; bei einem kleinen Pool wird die Sperre
+  stufenweise gelockert, damit der Slot trotzdem gefüllt werden kann.
+
   **Die Ewige Tafel meldet sich.** Der ganze Awards-Reiter kam im Feed nicht
   vor: wer einen Liga-Rekord übernahm, eine Monatschronik holte oder eine
   Insignium-Stufe erreichte, erfuhr es nur, wenn er selbst nachsah. Die
   Kategorie `tafel` sammelt das.
+  Eine **Insignium-Meldung ist ein echter Übergang**, kein Nähefenster: Der
+  Stand vor dem letzten Spieltag wird mit dem heutigen verglichen. Überspringt
+  jemand mehrere Stufen, entsteht für jede gekreuzte Schwelle genau eine
+  stabile ID aus Spieler und Stufe. Eine binäre Suche setzt `when` auf die
+  erste Partie, an der die Stufe wirklich erreicht war; historische Prestige-
+  und Saisonabfragen schneiden dafür Matches, Badges und Chroniken am selben
+  Zeitpunkt. Wiederholte Generatorläufe erzeugen keine Dublette.
   **Auch der laufende Monat** (`chronik_geholt`, `prio 80`). Die Monatskarte
   entsteht erst am 1. für den VORmonat; gemessen trug der August dreizehn
   Chronik-Einträge und dazu keine einzige Karte. Quelle ist derselbe
@@ -915,9 +949,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   einer. Die Schlagzeile nennt beim Dazukommen die **Neuen**, sonst alle
   Halter. `prio 80` liegt über der Insignium-Stufe und unter dem übernommenen
   Liga-Rekord: damit überlebt die Karte den Tagesdeckel, ohne die Ewige Tafel
-  zu überstimmen. Höchstens **zwei je Lauf** (`NEWS_LIMITS.chronikGeholt`),
-  die wertvollsten zuerst — ein starker Spieltag verschiebt mehrere Chroniken
-  gleichzeitig, und der Rest steht am Monatsende ohnehin in der Monatskarte.
+  zu überstimmen. Höchstens **vier je Lauf** (`NEWS_LIMITS.chronikGeholt`),
+  die wertvollsten zuerst — genau so viele, wie vollständig in eine
+  Sammelkarte passen. Zwei ließen die Tafel-Seite im nachgespielten
+  Vierzehn-Tage-Fenster trotz tatsächlicher Halterwechsel auf gut ein Drittel
+  sinken; mehr als vier würde die Karte wieder zum Protokoll machen.
   Eine **legendäre** Chronik bleibt eine eigene Karte (`_sammelEinzeln`), aus
   demselben Grund wie eine legendäre Auszeichnung. Der große Wert der Karte
   ist ihr **Prestige**, nicht die erste Zahl im Beleg; der Text nennt es
@@ -1236,8 +1272,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   JavaScript, und derselbe Spieler sah in drei Rückblicken dreimal anders
   aus. `tests/tafel` misst beides.
 - **§C30 Fünf Stufen, fünf Gegenstände.** Das Insignium hat fünf Stufen
-  (`INSIGNIEN`), jede kostet doppelt so viel wie die vorige — 240, 720,
-  1680, 3600 —, und jede ist ein eigener GEGENSTAND:
+  (`INSIGNIEN`) bei 0, 250, 800, 2300 und 4000 Prestige. Jede Spanne ist
+  teurer als die vorige; der Ordensstern liegt mehr als doppelt so hoch wie
+  die heutige Ligaspitze, bleibt durch die stetig wachsenden Erfolgsfolgen
+  aber erreichbar. Jede Stufe ist ein eigener GEGENSTAND:
   **Reif** (das blanke Band, ab Grad II mit runden Nieten und einem zweiten
   Ring nach innen) · **Schildring** (Kartuschen quer auf dem Band, durch
   erhabene Stege zu einer Kette verbunden) · **Volutenkranz** (gespiegelte
@@ -1246,8 +1284,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Ordensstern** (eine Glorie feiner Strahlen auf eigenem Kranzring, vier
   Bündel auf den Diagonalen, Steine, Perlenkranz, darüber die Krone).
   Zwischen zwei Schwellen liegen drei Grade (`INSIGNIUM_GRADE`, ausgebaut
-  in `INSIGNIUM_AUSBAU`); der Grad baut den Gegenstand aus, die Stufe
-  wechselt ihn.
+  in `INSIGNIUM_AUSBAU`). Ihre relativen Schwellen stehen in
+  `INSIGNIUM_GRAD_SCHWELLEN` (0, 16 und 40 %): Leon und Martin tragen in
+  den Referenzdaten Volutenkranz III, Julian folgt auf II, zum Lorbeer bleibt
+  ein klarer Abstand. Der Grad baut den Gegenstand aus, die Stufe wechselt ihn.
   Vorher waren drei der fünf Stufen dasselbe Bild in anderer Dichte: acht,
   zwölf, sechzehn Zacken auf einem Kreis. Damit lässt sich keine Leiter
   erzählen — und **kein Körper läuft mehr spitz aus**. Wo doch etwas
@@ -1341,62 +1381,36 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   der Vorschau der Kasten mit und nicht die Schwinge. Klein ist Absicht:
   die Vitrine sammelt man Punkt für Punkt, die Schwinge gewinnt man, und
   zwei gleich laute Leitern auf einer Seite sind keine mehr.
-- **§C34 Erworbenes wird addiert, Gehaltenes geteilt.** Das Prestige [§13.8]
-  hat drei Quellen und ein Gesetz darüber: wer nichts falsch macht, verliert
-  nichts — und wer mehr holt, bekommt mehr, nicht weniger.
-  Auszeichnungen zählen nach ihrer Seltenheitsklasse (`PRESTIGE_KLASSE`),
-  Monatswertungen nach ihrer Art (`PRESTIGE_MONAT`), beide **voll und
-  einzeln addiert**. Nur Liga-Rekorde werden geteilt: durch die Zahl ihrer
-  heutigen Halter und danach nach dem Gesetz der fallenden Erträge (der n-te
-  zählt 1/√n). Sie sind eine Behauptung über HEUTE und dürfen wechseln.
-  Zwei Fehler steckten vorher darin, beide gemessen. Erstens hing der Wert
-  einer Auszeichnung an der Zahl ihrer heutigen Halter, und die wächst,
-  während die Liga altert: Henry stand im Mai bei 197 Punkten aus
-  Auszeichnungen und im August bei 63 — er hatte in der Zwischenzeit welche
-  dazugewonnen. Zweitens galt das Stapelgesetz auch für Erworbenes, und dann
-  war die fünfte legendäre Auszeichnung ein Viertel der ersten wert: Martin
-  bekam für „Meister der Saison" 36,8 Punkte, weil er schon vier andere
-  hielt. Beides bestraft genau den, der viel erreicht.
-  Wiederholung zählt nur, wo sie etwas heißt: eine **Würde** (`BADGE_WUERDE`
-  — höchstens einmal je Saison und am Können gemessen: Meister, Team der
-  Saison, Vize, Dominator, Award-Sammler, Aufsteiger) zählt jedes Mal neu,
-  alles andere genau einmal. Der dreißigste Zittersieg zeigt nichts Neues.
-
-  **Was sich wiederholen darf, sagt `BADGE_WIEDERHOLUNG`** — und mit welchem
-  Faktor. Drei Abstufungen, und sie richten sich danach, wie oft die
-  Auszeichnung überhaupt zu holen ist: **0,9** für eine Würde (höchstens
-  einmal je Saison), **0,7** für eine Leistung, die man sich nimmt (die
-  Wochenkrone, ein 10:0, ein ganzer Tag ohne Niederlage, eine lange Serie),
-  **0,55** für den Alltag des Guten (der Spieltag, der Außenseitersieg, der
-  klare Sieg, die Fünferserie). Gemessen an den echten Partien wird „Player
-  of the Week" höchstens viermal gehalten, „Player of the Day" siebzehnmal
-  und „Klares Ding" zweiunddreißigmal — dieselbe Abstufung für alle drei
-  hieße entweder, dass die Wochenkrone nichts wert ist, oder dass ein klarer
-  Sieg zum dreißigsten Mal noch zählt. Bei 0,55 trägt das zehnte Mal ein
-  halbes Prozent des ersten, bei 0,7 vier Prozent. Was gar keinen Faktor
-  trägt, zählt genau einmal.
-
-  **Jede Wiederholung derselben Sache wiegt weniger als die vorige**
-  (`_wiederholungsWert`): bei einer Würde 52, 47, 42, 38 …
-  Gemessen gegen sich selbst, nicht gegen andere — der dritte Meistertitel
-  ist keinen Deut leichter als der erste, aber er zeigt weniger Neues. Vorher
-  wuchs linear davon, wer eine Würde Saison für Saison verteidigt: zehn
-  Meisterschaften waren 520 Punkte und damit allein mehr als die Schwelle zum
-  Volutenkranz. Die Summe der Reihe läuft gegen das **Zehnfache** einer
-  einzelnen und kann es nie überschreiten; die zwanzigste Verleihung trägt
-  noch 13 % bei. Dieselbe Regel gilt für dieselbe Monatschronik in mehreren
-  Monaten, und der **früheste** Monat trägt den vollen Wert.
-  Zehn Prozent sind bewusst wenig: gemessen an den echten Partien kostet die
-  Regel heute 24 Punkte beim Ersten der Liga, und keine einzige
-  Insignium-Stufe wechselt dadurch den Träger. Sie ordnet die Zukunft, nicht
-  die Gegenwart — deshalb bleiben die Schwellen in `INSIGNIEN`, wo sie sind.
-  Sie gilt NUR für dieselbe Sache: eine Meisterschaft und ein Team der Saison
-  sind zwei verschiedene Dinge und zählen beide voll. Über verschiedene
-  Erfolge zu stapeln war der Fehler, den dieser Abschnitt abgestellt hat.
-  Weil nichts mehr gestapelt wird, tragen `PRESTIGE_KLASSE`,
-  `PRESTIGE_MONAT` und `PRESTIGE_REKORD` die ganze Balance allein. Sie sind
-  gegeneinander kalibriert; `tests/disziplinen` spielt die Liga dafür Monat
-  für Monat nach.
+- **§C34 Drei belegbare Quellen, kein versteckter Leistungswert.** Prestige
+  [§13.8] kommt ausschließlich aus **Auszeichnungen, Monatschroniken und
+  aktuell gehaltenen Liga-Rekorden**. Siegquote, Elo-Hoch oder Spielzahl
+  erzeugen keinen vierten Punktetopf; Können zählt erst, wenn daraus einer
+  dieser sichtbaren Erfolge geworden ist. Monatswertungen nutzen ihren festen
+  Chronik-Wert (`chronikPunkte`). Liga-Rekorde werden durch die Zahl ihrer
+  heutigen Halter geteilt und danach gestapelt (der n-te zählt 1/√n). Nur
+  Rekorde dürfen deshalb beim Verlust des Bestwerts wieder sinken.
+  **Jede positive Auszeichnung zählt jedes Mal**, aber ihre sichtbare Klasse
+  bestimmt eine gedämpfte Folge (`PRESTIGE_AUSZEICHNUNG`): Legendary
+  beginnt bei **50** und verliert je weiterem Erreichen 10 %, Rare beginnt
+  bei **20** und verliert 15 %, Common beginnt bei **3** und verliert 20 %.
+  Drei Dominator- oder Meister-Titel ergeben damit 50 + 45 + 40,5 = 135,5;
+  drei Carry-Erfolge 3 + 2,4 + 1,92 = 7,32. Jeder weitere Erfolg erhöht das
+  Prestige. Damit die geometrische Abnahme nicht irgendwann eine harte
+  mathematische Obergrenze baut, bleibt danach ein kleiner **Mindestwert**:
+  Legendary 5, Rare 1, Common 0,1. Häufige Erfolge wachsen damit dauerhaft,
+  aber extrem langsam. Schanden geben null Punkte und ziehen auch nichts ab.
+  Es gibt kein nachträgliches Quellenlimit und keine Abhängigkeit von der
+  Reihenfolge anderer Auszeichnungen. Bei gleicher Klasse und Anzahl sind
+  Dominator und Meister der Saison exakt gleich viel wert. Eine wiederholte
+  Monatschronik behält ihre eigene Folge mit 10 % Abnahme; der früheste Monat
+  trägt den vollen Chronik-Wert, und jeder spätere mindestens 5 Punkte. Damit
+  bleibt auch nach sehr vielen Jahren jede weitere Ordensstern-Zacke
+  erreichbar.
+  Das Laufbahnblatt zeigt die drei Klassenregeln einmal als Legende. Die
+  einzelnen Zeilen nennen danach nur Klasse, Anzahl und eine kurze Rechnung;
+  lange Folgen zeigen Start- und letzten Teilwert. Chronikzeilen zeigen den
+  unveränderten Wert aus dem Info-Sheet und gegebenenfalls den Faktor der
+  Wiederholung. Rekordzeilen zeigen Grundwert, Halterteilung und √n-Stapelung.
   Die Seltenheitsklasse (`BADGE_RARITY`) sagt, wie schwer eine Auszeichnung
   zu HOLEN ist. Die Halterzahl ist die Gegenprobe, nicht die Definition: die
   zehn legendären halten null bis fünf der zwölf Spieler, die vierzehn
@@ -1599,8 +1613,9 @@ zurückgegeben.
 ## 10. Etwas hinzufügen — und was daran hängt
 
 Auszeichnungen, Monatswertungen und Liga-Rekorde sind nicht nur Listen. Sie
-sind die **drei Quellen des Prestiges** [§C34], und das Prestige ist die
-Insignium-Leiter. Wer einen Eintrag hinzufügt oder streicht, verschiebt
+bilden die **drei sichtbaren Quellen des Prestiges** [§C34], und das Prestige
+ist die Insignium-Leiter. Wer einen
+Eintrag hinzufügt oder streicht, verschiebt
 damit, wer welches Zeichen trägt — auch dann, wenn er die Prestige-Datei gar
 nicht geöffnet hat.
 
@@ -1616,9 +1631,7 @@ Alles in `17-badges.js`, außer wo anders genannt.
 | `BADGES[]` | Eintrag mit `id`, `ic`, `name`, `desc`, `count` | — |
 | `BADGE_RARITY` | die Klasse | `rarityOf` liefert still `common`, die billigste — das Badge ist als „Legendary" gedacht und zählt wie ein Zittersieg |
 | `RARITY_META.<klasse>.total` | um eins nach | der Zähler im Badge-Blatt („38 von 50") lügt |
-| `BADGE_ART` | `leistung`, `pensum` oder `schatten` | es gilt `ereignis` — die Vorgabe, und für die meisten richtig |
-| `BADGE_WUERDE` | **nur**, wenn höchstens einmal je Saison zu holen **und** am Können gemessen | nichts; wer aber eine beliebig oft holbare Auszeichnung einträgt, macht das Prestige wieder zur Anwesenheitsliste [§C34] |
-| `BADGE_WIEDERHOLUNG` | ein Faktor, **nur** wenn die Auszeichnung mehrfach zählen soll: `0.7` für eine Leistung, die man sich nimmt, `0.55` für den Alltag des Guten | ohne Eintrag zählt sie genau einmal — richtig für alles, was nichts Neues zeigt. Wer einen Faktor einträgt, verschiebt Prestige und damit die Insignium-Leiter [§10.3] |
+| `BADGE_WUERDE` | **nur**, wenn jeder neue saisonweise Erfolg eine neue News-Karte auslösen soll | ohne Eintrag meldet der Feed nur die festen Meilensteine; auf Prestige hat die Liste keinen Einfluss |
 | `getBadgeEarnedCache` | `fire('id')` | das Badge erscheint nur im Profil: kein Toast, kein Chip im Match-Review |
 | `src/js/02-icons.js` | das Icon aus `ic` | die Kachel bleibt leer |
 
@@ -1630,7 +1643,7 @@ Raster — je zwei Einträge sind eine Zeile.
 | Stelle | was | wenn es fehlt |
 |---|---|---|
 | `32-chronik-katalog.js` `DISZIPLINEN[]` | Eintrag **im richtigen Block**: Leistung, dann Ereignis, dann Schatten | ein Spieler zeigt nur EINEN Monatseintrag, und die Katalogreihenfolge entscheidet welchen [§C32] — falsch einsortiert verdrängt eine Schattenseite seinen Titel |
-| dort `art` | `leistung`, `ereignis` oder `schatten` — `pensum` gibt es nur bei Auszeichnungen | steuert bei einem Liga-Rekord den Prestige-Wert und bei jedem Eintrag die Katalogreihenfolge; ohne gültige Angabe fällt der Eintrag auf `ereignis` und wiegt die Hälfte. Den Wert einer Monatschronik trägt dagegen `monat.art` [§C39]. `tests/disziplinen` misst es |
+| dort `art` | `leistung`, `ereignis` oder `schatten` | steuert bei einem Liga-Rekord den Prestige-Wert und bei jedem Eintrag die Katalogreihenfolge; ohne gültige Angabe fällt der Eintrag auf `ereignis` und wiegt die Hälfte. Den Wert einer Monatschronik trägt dagegen `monat.art` [§C39]. `tests/disziplinen` misst es |
 | dort `short` | ein ganzes Wort, das in 54 px passt | „Umschwung“ ist kürzer als „Nachzügler“ und breiter, also zählt die gerenderte Breite: `tests/blatt` misst sie am Markup, `tests/disziplinen` verbietet die Abkürzung mit Punkt |
 | dort `ic` | ein Icon, das keine andere Disziplin trägt | in einer Zelle von 62 Pixeln ist die Zeichnung das Erste, was man sieht — zwei gleiche sind dort nicht zu unterscheiden. `tests/disziplinen` misst es |
 | dort `monat.wie` | ein Satz, was die Zahl im Beleg bedeutet | nur nötig, wenn die Größe nicht selbsterklärend ist. Er steht im Detail-Blatt unter der Bedingung; ohne ihn liest sich „+15 Prozentpunkte" wie Elo oder wie Prestige |
@@ -1652,7 +1665,9 @@ in `_seasonTitleCtx`, sonst nichts.
 
 **Misst ein Eintrag etwas, das eine Ansicht schon zeigt, rechnet er es nicht
 nach.** Der Positionswert steht an EINER Stelle (`posWert`, [§5.2]) und wird
-von der Positions-Rangliste und vom Liga-Rekord darauf benutzt. Zwei
+von der Positions-Rangliste und vom Liga-Rekord darauf benutzt. Das
+Sturm-/Abwehrprofil steht ebenso nur in `positionsProfilWert`; Profil und
+„Der Wandler" rufen dieselbe Funktion auf. Zwei
 Rechnungen über dieselbe Frage nennen irgendwann zwei verschiedene Beste, und
 dann steht in der Chronik ein anderer Name als über der Liste, auf der er ihn
 geholt hat. `tests/disziplinen` legt beide nebeneinander.
@@ -1669,29 +1684,38 @@ wird `ereignis`, und beide Bedingungen dort werden nachgemessen.
 Der Teil, den man vergisst. Ein neuer Eintrag ist neues Prestige für jeden,
 der ihn hält — und für sonst niemanden.
 
-1. **Die Seltenheitsklasse ist eine Messung, keine Absicht.** Sie behauptet,
-   wie viele der Spieler das Badge halten [§C34]. Erst zählen, dann
-   eintragen: ein „Legendary", das neun von zwölf tragen, ist die teuerste
-   Klasse für den häufigsten Eintrag.
-2. **`PRESTIGE_KLASSE`, `PRESTIGE_MONAT`, `PRESTIGE_REKORD` bleiben, solange
-   das Verhältnis der drei Quellen stimmt.** Sie sind gegeneinander
-   kalibriert; wer an einer dreht, dreht an allen dreien.
-3. **Die Schwellen in `INSIGNIEN` folgen der Verdopplungsregel** [§C30].
-   Kommen viele Einträge dazu, wandert die Spitze nach oben — dann steigen
-   die Schwellen, nicht die Erwartung.
+1. **Die Seltenheitsklasse bestimmt die vollständige Auszeichnungsregel.**
+   `PRESTIGE_AUSZEICHNUNG` gibt Startwert, Abnahme und kleinen Mindestwert für
+   Legendary, Rare und Common vor [§C34]. Ein Badge braucht keinen zweiten Prestige-Eintrag; eine
+   falsch gewählte Klasse verändert aber sowohl Optik als auch Punktfolge.
+2. **Jede positive Auszeichnung wächst bei jedem Erreichen.** Es gibt weder
+   Sonderlisten für Wiederholungen noch ein nachträgliches Quellenlimit.
+   `tests/disziplinen` prüft die Dominator-, Meister- und Carry-Folgen sowie
+   das Wachstum aller fünfzig Katalogeinträge.
+3. **Die Schwellen in `INSIGNIEN` werden an der echten Liga kalibriert**
+   [§C30]. Die Abstände steigen, aber nicht nach einer starren Verdopplung:
+   Leon und Martin sollen ungefähr Volutenkranz III tragen, Julian dicht
+   folgen, zum Lorbeer soll Luft bleiben und der erste Ordensstern bei rund
+   **4.000 Prestige** langfristig erreichbar sein.
 
 Nichts davon wird geschätzt. `tests/disziplinen` misst es an den echten
 Partien und fällt, wenn es kippt:
 
 | Zusicherung | fällt, wenn |
 |---|---|
-| kein Block stellt mehr als die Hälfte des Prestiges | eine Quelle die anderen erdrückt |
+| jede Prestigequelle gehört zu genau einem der drei sichtbaren Blöcke | wieder ein versteckter vierter Wert einfließt |
 | Auszeichnungen wiegen schwerer als Rekorde | der Reif zur Rekordanzeige wird |
 | mehr als die halbe Liga hält einen wertenden Rekord | die Einstiegshürden zu hoch sind |
 | mehr als die halbe Liga trägt mindestens den Schildring | die erste Sprosse zu hoch hängt |
 | der Beste trägt noch keinen Lorbeerreif | der Katalog die Spitze nach oben schiebt |
 | der Ordensstern ist von niemandem erreicht | dasselbe, eine Stufe höher |
-| jede Stufe kostet mindestens das Doppelte der vorigen | die Verdopplungsregel still aufgegeben wird |
+| jede Stufe kostet mehr als die vorige | die Leiter nach oben flacher wird |
+| Leon und Martin tragen Volutenkranz III, Julian folgt dahinter | Schwellen und Grade die heutige Liga falsch abbilden |
+| mindestens 300 Punkte Luft zum Lorbeer | die nächste Form praktisch schon erreicht ist |
+| das Langzeitmodell kann den Ordensstern erreichen | ein weicher Deckel zur harten Obergrenze wird |
+| jede positive Dauerquelle behält einen Mindestzuwachs | spätere Ordensstern-Zacken mathematisch unerreichbar werden |
+| auch die zwanzigste weitere Ordensstern-Zacke wird endlich überschritten | die Laufbahn nur scheinbar ohne Ende weiterläuft |
+| wenige sehr starke Partien schlagen viele durchschnittliche | Anwesenheit wieder als Können zählt |
 | Prestige aus Auszeichnungen und Monaten fällt nie | ein Wert wieder am heutigen Zensus hängt [§C34] |
 | jede Klasse zählt so viele Badges wie `RARITY_META` behauptet | ein Badge dazukommt oder wegfällt und der Zähler stehen bleibt |
 

@@ -638,38 +638,37 @@ function _consolidateStories(list){
     insignium_stufe: {
       sache: d => 'ins|' + d.stufe,
       titel: (nm, d) => `${nm} tragen jetzt den ${d.stufeName || 'Reif'}`,
-      satz:  (n, d) => `${n} Spieler erreichen Stufe ${(d.stufe | 0) + 1} von `
-                     + `${(typeof INSIGNIEN !== 'undefined' ? INSIGNIEN.length : 5)} im selben Moment.`,
+      satz:  n => `Ein gemeinsamer Sprung auf der Laufbahn: ${_zahlwortDe(n)} Zeichen wechseln zugleich ihre Form.`,
       zeile: (nm, d) => `${nm}: ${d.punkte} Prestige`
     },
     chronik_erstling: {
       sache: d => 'erst|' + (d.sid || ''),
       titel: nm => `${nm} stehen zum ersten Mal in der Chronik`,
-      satz:  n => `${n} Namen kommen im selben Monat neu auf die Tafel.`,
+      satz:  n => `Dieser Monat öffnet gleich ${_zahlwortDe(n)} Laufbahnen ein neues Kapitel.`,
       zeile: (nm, d) => `${nm}: „${d.titel || ''}"`
     },
     jubilee: {
       sache: d => 'jub|' + (d.total || ''),
       titel: (nm, d) => `${nm} feiern das ${d.total}. Spiel`,
-      satz:  (n, d) => `${n} Spieler stehen nach derselben Partie bei ${d.total} Partien.`,
+      satz:  (n, d) => `Derselbe Schlusspfiff macht für ${_zahlwortDe(n)} Laufbahnen die ${d.total} voll.`,
       zeile: nm => nm
     },
     milestone_wins: {
       sache: d => 'mw|' + (d.milestone || ''),
       titel: (nm, d) => `${nm} feiern den ${parseInt(d.milestone, 10)}. Sieg`,
-      satz:  (n, d) => `${n} Spieler erreichen ${parseInt(d.milestone, 10)} Siege im selben Moment.`,
+      satz:  n => `Ein Sieg mit mehrfachem Nachhall: ${_zahlwortDe(n)} Bilanzen springen gemeinsam über die Marke.`,
       zeile: nm => nm
     },
     milestone_goals: {
       sache: d => 'mg|' + (d.milestone || ''),
       titel: (nm, d) => `${nm} feiern das ${parseInt(d.milestone, 10)}. Tor`,
-      satz:  (n, d) => `${n} Spieler erreichen ${parseInt(d.milestone, 10)} Tore im selben Moment.`,
+      satz:  n => `Dieser Treffer hallt in ${_zahlwortDe(n)} Laufbahnen nach: Die Marke fällt gemeinsam.`,
       zeile: nm => nm
     },
     milestone_elo: {
       sache: d => 'me|' + (d.mark || d.milestone || ''),
       titel: (nm, d) => `${nm} knacken ${d.mark || parseInt(d.milestone, 10)} Elo`,
-      satz:  (n, d) => `${n} Spieler überschreiten dieselbe Elo-Marke im selben Moment.`,
+      satz:  n => `Ein gemeinsamer Satz nach oben: ${_zahlwortDe(n)} Laufbahnen durchbrechen die Marke.`,
       zeile: nm => nm
     }
   };
@@ -849,7 +848,6 @@ function _consolidateStories(list){
     gesetzt.add(g.key);
     const teile = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
     const kopf = teile[0];
-    const rest = teile.slice(1);
     const art = g.art || (g.key.indexOf('tafel|') === 0 ? 'tafel' : 'spiel');
     const istTafel = art === 'tafel';
     const pids = [];
@@ -887,17 +885,40 @@ function _consolidateStories(list){
     let neuTitel = '', neuText = '';
     if(art === 'spieler'){
       neuTitel = _spielerTitel(nameOf(g.pid), teile);
-      // Der Satz gehört dem stärksten Erfolg, wie bei jeder Sammelkarte, und
-      // zählt dahinter, was noch dazukommt. Was genau, steht Zeile für Zeile
-      // im Sammelband auf der Karte selbst [§C33].
-      neuText = _ersterSatz(kopf.desc) + (rest.length === 1
-        ? ' Dazu kommt im selben Moment noch ein Erfolg.'
-        : ` Dazu kommen im selben Moment noch ${_zahlwortDe(rest.length)} weitere Erfolge.`);
+      neuText = `Ein Moment mit Nachhall: Für ${nameOf(g.pid)} verändert sich die Laufbahn gleich an ${_zahlwortDe(teile.length)} Stellen.`;
     } else if(art === 'erfolg'){
       const cfg = SAMMEL_ERFOLG[(kopf.dataRef || {}).type] || {};
       const namen = pids.map(nameOf);
       neuTitel = cfg.titel ? cfg.titel(_namenKurz(namen), kopf.dataRef || {}) : kopf.title;
       neuText = cfg.satz ? cfg.satz(teile.length, kopf.dataRef || {}) : _ersterSatz(kopf.desc);
+    } else if(istTafel){
+      const bilder = [];
+      const nr = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('rekord_') === 0).length;
+      const nc = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('chronik_') === 0).length;
+      const ni = teile.filter(t => (t.dataRef || {}).type === 'insignium_stufe').length;
+      if(nr) bilder.push(nr === 1 ? 'eine Bestmarke' : `${nr} Bestmarken`);
+      if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${nc} Monatschroniken`);
+      if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${ni} neue Insignien`);
+      const mehrfach = nr + nc + ni > 1;
+      neuText = `${_namenListe(bilder.length ? bilder : ['Mehrere Laufbahnen'])} ${mehrfach ? 'geben' : 'gibt'} der Ewigen Tafel an diesem Tag ein neues Bild.`;
+    } else {
+      const namen = pids.map(nameOf);
+      const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
+      const motivName = {
+        top_clash:'Spitzenduell', giant_slayer:'Favoritensturz',
+        streak_killer:'Serienbruch', win_streak:'Siegesserie',
+        loss_streak:'Durststrecke', top_form:'Formlauf',
+        team_streak:'Teamserie', team_loss_streak:'gemeinsame Durststrecke',
+        badge_unlocked:'Auszeichnung', milestone_wins:'Siegmarke',
+        milestone_goals:'Tormarke', milestone_elo:'Elo-Sprung',
+        jubilee:'Jubiläum', rivalry_milestone:'Rivalitätsmarke'
+      };
+      const motive = [...new Set(teile.map(t => motivName[(t.dataRef || {}).type]).filter(Boolean))];
+      const wer = namen.length ? _namenKurz(namen, 3) : 'die Beteiligten';
+      neuTitel = `Ein Spiel, ${_zahlwortDe(teile.length)} Geschichten${beteiligte}`;
+      neuText = motive.length > 1
+        ? `${_namenListe(motive)} greifen für ${wer} nach dem Schlusspfiff ineinander. Aus einer Partie wachsen ${_zahlwortDe(teile.length)} Geschichten.`
+        : `Für ${wer} wirkt der Schlusspfiff doppelt nach. Aus einer Partie wachsen ${_zahlwortDe(teile.length)} Geschichten.`;
     }
     gesammelt.push({
       id: 'sammel_' + g.key.replace(/\|/g, '_'),
@@ -917,21 +938,9 @@ function _consolidateStories(list){
               + `${pids.length > 1 ? 'bewegen' : 'bewegt'} die Ewige Tafel`
             : `${_zahlwortDe(teile.length)} Wechsel an der Ewigen Tafel`)
         : kopf.title),
-      // Die Karte fasst zusammen, das Blatt zeigt alles. Als der Text die
-      // Schlagzeilen aller Zeilen aneinanderhängte, stand auf der Karte eine
-      // Liste, die das Blatt darunter noch einmal führte — und bei vier
-      // Einträgen war die Karte höher als jede andere im Feed.
-      // Auf einer Sammelkarte steht nur der ERSTE Satz des Kopfs. Der zweite
-      // erzaehlt beim Rekord vom Vorgaenger („Vorher gehoerte der Rekord
-      // Jannik") — ein Detail zu einer von vier Meldungen, und als Karte des
-      // Tages stand es gross im Bild, waehrend die anderen drei nur als
-      // Zeile darunter vorkamen. Der Platz gehoert dem Sammelband.
-      desc: neuText ? neuText : (istTafel
-        ? _ersterSatz(kopf.desc) + (rest.length
-            ? ` Und ${_zahlwortDe(rest.length)} ${rest.length === 1
-                ? 'weiterer Eintrag' : 'weitere Einträge'} an der Tafel.`
-            : '')
-        : kopf.desc),
+      // Die Karte spricht nur ueber das Ganze. Kein Einzelereignis wird im
+      // Kopf wiederholt oder durch eine Hervorhebung wichtiger gemacht.
+      desc: neuText,
       when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
       // Die Sammelkarte trägt, was sie zusammenfasst: den stärksten Teil und
       // einen Schritt je weiterem. Mit `+1` wog eine Karte, die drei
@@ -954,10 +963,6 @@ function _consolidateStories(list){
                 // Die Stufe reist mit: ohne sie kann die Karte das Zeichen
                 // nicht zeigen, um das sie geht [§C30].
                 stufe: (kopf.dataRef||{}).stufe,
-                // Der Titel des Kopfs, damit das Sammelband ihn auslassen
-                // kann: die Karte IST der Kopf, und er stand darunter noch
-                // einmal als erste Zeile [§C33].
-                kopfTitel: kopf.title || '',
                 // Die Beteiligten je Zeile: die Buendelung haengt an ihnen
                 // [§C33], und im Blatt fuehrt die Zeile damit zu dem, von dem
                 // sie handelt.

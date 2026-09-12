@@ -507,12 +507,13 @@ const ok = (c, msg, det) => {
       tagesKarten += gr.length;
       if(gr.length > 1) mehrfach++;
       if(gr.length !== 1) return;
-      // Traegt sie wirklich die hoechste Prioritaet ihres Tages?
+      // Traegt sie wirklich den hoechsten Nachrichtenwert ihres Tages?
       const ids = [...feed.querySelectorAll('.nf-card')].map(c => c.dataset.sid);
       const beste = window.__k.eval(`(function(){
         const ids = ${JSON.stringify(ids)};
         const s = getStoriesCache().filter(x => ids.indexOf(x.id) >= 0);
-        s.sort((a,b) => ((_isBreaking(b)?1:0)-(_isBreaking(a)?1:0)) || ((b.prio||0)-(a.prio||0)));
+        s.sort((a,b) => (_newsTagSpannung(b)-_newsTagSpannung(a))
+          || ((b.prio||0)-(a.prio||0)) || String(a.id||'').localeCompare(String(b.id||'')));
         return s.length ? s[0].id : '';
       })()`);
       if(beste && beste !== gr[0].dataset.sid) nichtBeste++;
@@ -543,7 +544,7 @@ const ok = (c, msg, det) => {
   ok(tafel.tagesKarten > 0 && tafel.mehrfach === 0,
      'hoechstens eine Karte des Tages je Tag',
      tafel.tagesKarten + ' Karten, ' + tafel.mehrfach + ' Tage mit mehreren');
-  ok(tafel.nichtBeste === 0, 'die Karte des Tages traegt die hoechste Prioritaet ihres Tages',
+  ok(tafel.nichtBeste === 0, 'die Karte des Tages traegt die spannendste Geschichte ihres Tages',
      tafel.nichtBeste + ' daneben');
   ok(tafel.tagOhneSpiel === 0, 'an einem Tag ohne Partie gibt es keine Karte des Tages',
      tafel.tagOhneSpiel + ' Tage');
@@ -711,24 +712,35 @@ const ok = (c, msg, det) => {
   ok(zeichen.doppelt.length === 0,
      'keine zwei Rubriken tragen dasselbe Zeichen', zeichen.doppelt.join(', '));
 
-  // Die Karte, auf der mehrere denselben Erfolg holen, steht im echten Feed:
-  // an den Fixtures erreichen Jannik und Stefan im selben Moment denselben
-  // Schildring, und das waren zwei Karten mit derselben Aussage. Gemessen
-  // wird am gerenderten Markup, weil hier die FORM die Aussage traegt.
+  // Mehrere Traeger desselben Erfolgs ergeben eine gemeinsame Karte. Das
+  // Markup wird aus vier synthetischen, ansonsten echten Story-Objekten
+  // gebaut, damit der Test nicht an einer zufaelligen heutigen Schwelle haengt.
   const achse = await page.evaluate(() => {
-    const sheet = document.getElementById('sheet');
-    const karte = [...sheet.querySelectorAll('.nf-card')]
-      .find(c => c.classList.contains('nf-s-erfolg'));
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const ids=players.slice(0,4).map(p=>p.id), when=matches[matches.length-1].created_at;
+      const teile=ids.map((pid,i)=>({id:'ui-ins-'+i,cat:'tafel',ic:'award',
+        title:pname(pid)+' traegt den Schildring',desc:(300+i)+' Prestige zusammen.',
+        when,prio:76,dataRef:{type:'insignium_stufe',pid,stufe:1,
+          stufeName:'Schildring',punkte:300+i,oben:false}}));
+      _cache._consolFrom=null;
+      const s=_consolidateStories(teile).find(x=>(x.dataRef||{}).quelle==='erfolg');
+      return s ? _newsCardHtmlM2(s,false,false) : '';
+    })()`);
+    const host = document.createElement('div'); host.innerHTML = markup;
+    document.body.appendChild(host);
+    const karte = host.querySelector('.nf-card.nf-s-erfolg');
     if(!karte) return {fehlt:true};
     const rub = karte.querySelector('.nf-rub b');
     const gold = rub ? getComputedStyle(rub).color : '';
-    return {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
+    const out = {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
       // Der Erfolg ist das Subjekt, also stehen die Gesichter als Chips
       // nebeneinander — keins ist wichtiger als das andere [§C33].
       chips: karte.querySelectorAll('.nf-face-paar .av').length,
       zeilen: karte.querySelectorAll('.nf-sam-z').length,
       rest: karte.querySelectorAll('.nf-sam-m').length,
       gold: /^rgb\(2[0-9]{2}, *2[0-9]{2}, *[0-9]{1,3}\)/.test(gold)};
+    host.remove(); return out;
   });
   ok(!achse.fehlt, 'die Karte fuer den gemeinsamen Erfolg steht im Feed',
      JSON.stringify(achse));
@@ -1148,6 +1160,113 @@ const ok = (c, msg, det) => {
   ok(matrix.leg > matrix.sel && matrix.sel > matrix.bes,
      'je seltener die Chronik, desto staerker leuchtet ihre Zelle',
      'legendaer ' + matrix.leg + ' > selten ' + matrix.sel + ' > besonders ' + matrix.bes);
+
+  console.log('\n═══ CHRONIK-PRESTIGE IST NACHVOLLZIEHBAR ═══');
+  const chronRechnung = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const daten = JSON.parse(K(`JSON.stringify((function(){
+      const T=prestigeTabelle();
+      for(const pid of T.rang){
+        const qs=(prestigeOf(pid).quellen||[]).filter(q=>q.q==='monat');
+        const q=qs.find(x=>x.mal>1)||qs[0];
+        if(q) return {pid,id:q.id,basis:q.grundwert,beitrag:q.p,mal:q.mal};
+      }
+      return null;
+    })())`));
+    if(!daten) return {fehlt:true,text:''};
+    K('showLaufbahn(' + JSON.stringify(daten.pid) + ')');
+    await new Promise(r => requestAnimationFrame(r));
+    const gruppen=[...document.querySelectorAll('#sheet .lb-grp')];
+    const grp=gruppen.find(e => /Monatswertungen/.test(e.textContent||''));
+    const regeln=[...document.querySelectorAll('#sheet .lb-regeln span')]
+      .map(e=>(e.textContent||'').replace(/\s+/g,' ').trim());
+    return Object.assign({},daten,{
+      text:grp ? grp.textContent.replace(/\s+/g,' ').trim() : '',
+      regeln,
+      sport:/Sportliche Leistung/.test((document.querySelector('#sheet')||{}).textContent||'')
+    });
+  });
+  ok(!chronRechnung.fehlt && /Chronikwert/.test(chronRechnung.text),
+     'das Laufbahnblatt nennt den unverkuerzten Chronik-Wert',
+     chronRechnung.text.slice(0,180));
+  ok(chronRechnung.mal === 1 || /\. Mal/.test(chronRechnung.text),
+     'eine Wiederholung zeigt knapp ihre Herunterrechnung',
+     chronRechnung.text.slice(0,220));
+  ok(chronRechnung.regeln.length === 3
+     && chronRechnung.regeln.every(x=>/\d+.*%.*min\./.test(x)),
+     'die Auszeichnungsregeln stehen einmal kompakt über der Liste',
+     chronRechnung.regeln.join(' · '));
+  ok(!chronRechnung.sport,
+     'das Laufbahnblatt enthält keinen separaten Block für sportliche Leistung');
+
+  console.log('\n═══ ROLLEN UND POSITIONSSTRAHL ═══');
+  await page.setViewportSize({width:360, height:820});
+  const rollen = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const ids = K('players.filter(p=>!p.hidden).map(p=>p.id)');
+    const out = [];
+    for(const pid of ids){
+      K('showPlayer(' + JSON.stringify(pid) + ')');
+      await new Promise(r => requestAnimationFrame(r));
+      const root = document.querySelector('#sheet .pp-root');
+      const cards = root ? [...root.querySelectorAll('.pp-rd')].filter(e => e.querySelector('.pp-rd-meta')) : [];
+      const wr = cards.map(e => +(e.querySelector('.pp-rd-wr')||{}).childNodes[0]?.textContent || 0);
+      const pos = root && root.querySelector('.pp-posprof');
+      const slider = pos && pos.querySelector('.pp-slider');
+      const fill = pos && pos.querySelector('.pp-fill');
+      const sb = slider && slider.getBoundingClientRect(), fb = fill && fill.getBoundingClientRect();
+      let ursprung = true;
+      if(pos && sb && fb){
+        if(pos.classList.contains('atk-seite')) ursprung = Math.abs(fb.left-sb.left) <= 1.5;
+        else if(pos.classList.contains('def-seite')) ursprung = Math.abs(fb.right-sb.right) <= 1.5;
+        else ursprung = Math.abs((fb.left+fb.right)/2-(sb.left+sb.right)/2) <= 1.5;
+      }
+      const rr = root && root.getBoundingClientRect();
+      const pruef = root ? [...root.querySelectorAll('.pp-pos-combined,.pp-posprof')] : [];
+      const spill = rr ? pruef.reduce((mx,e) => { const b=e.getBoundingClientRect();
+        return Math.max(mx, b.right-rr.right, rr.left-b.left); }, 0) : 999;
+      const def = cards.find(e=>e.classList.contains('def'));
+      const probe = document.createElement('i');
+      if(root){ probe.style.color='var(--ak)'; root.appendChild(probe); }
+      out.push({pid, wr, cls:cards.map(e=>e.className), seite:pos ?
+        (pos.classList.contains('atk-seite')?'atk':pos.classList.contains('def-seite')?'def':'neutral') : '',
+        ursprung, overflow:spill,
+        op:cards.map(e=>+getComputedStyle(e).opacity),
+        schatten:cards.map(e=>getComputedStyle(e.querySelector('.pp-rd-ring')).boxShadow),
+        textSchatten:cards.map(e=>getComputedStyle(e.querySelector('.pp-rd-wr')).textShadow),
+        defFarbe:def ? getComputedStyle(def.querySelector('.pp-rd-lbl')).color : '',
+        rangFarbe:root ? getComputedStyle(probe).color : ''});
+      probe.remove();
+    }
+    K('closeSheet && closeSheet()');
+    return out;
+  });
+  const beide = rollen.filter(r => r.wr.length === 2);
+  const rollenFalsch = beide.filter(r => {
+    const nah = Math.abs(r.wr[0]-r.wr[1]) <= 3;
+    if(nah) return !r.cls.every(c => / neutral/.test(c));
+    const hi = r.wr[0] > r.wr[1] ? 0 : 1, lo = 1-hi;
+    return !/ stark/.test(r.cls[hi]) || !/ schwach/.test(r.cls[lo])
+      || !(r.op[hi] > r.op[lo]) || r.schatten[hi] === 'none';
+  });
+  ok(beide.length > 0 && rollenFalsch.length === 0,
+     'starke, schwache und nahezu gleiche Rollen sind eindeutig gewichtet',
+     rollenFalsch.map(r=>r.pid).join(', ') || beide.length + ' Profile');
+  ok(beide.every(r => r.op.every((op,i) => !/ schwach/.test(r.cls[i]) || op >= .7)
+       && r.textSchatten.every((sh,i) => !/ stark/.test(r.cls[i]) || sh === 'none')),
+     'die Nebenrolle bleibt lesbar und die starke Rolle leuchtet nicht weiss aus');
+  ok(beide.every(r => !r.defFarbe || r.defFarbe === r.rangFarbe),
+     'auch Abwehrdominanz behaelt die Rangfarbe',
+     beide.filter(r=>r.defFarbe!==r.rangFarbe).map(r=>r.pid).join(', ') || beide.length + ' Profile');
+  ok(['atk','def','neutral'].every(s => rollen.some(r => r.seite === s)),
+     'der Positionsstrahl deckt Sturm, Abwehr und Flex ab',
+     [...new Set(rollen.map(r=>r.seite))].join(', '));
+  ok(rollen.every(r => r.ursprung),
+     'jeder Strahl startet an der inhaltlich richtigen Seite');
+  ok(rollen.every(r => r.overflow <= 1),
+     'das Profil bleibt bei 360 px ohne horizontalen Ueberlauf',
+     Math.max(...rollen.map(r=>r.overflow)).toFixed(1) + ' px');
+  await page.setViewportSize({width:430, height:932});
 
   // ── Die Leiter im Blatt traegt die echten Zeichen ──────────────────
   //    Sie zeigte fuenf CSS-Kreise (`repeating-conic-gradient`) — fuenf

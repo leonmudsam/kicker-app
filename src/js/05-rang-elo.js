@@ -182,14 +182,20 @@ function posWert(pos, g, w, goalsAvg, perfAvg){
   return (w/g + perfBonus + roleBonus) * expWeight;
 }
 
-// Sturm-Anteil 0..1, kombiniert Performance + Erfahrung.
-// Performance wird GEWICHTET nach Spielanzahl auf der Position (mehr Spiele = höheres Vertrauen).
-// Erfahrung (wie oft auf der Position) fließt als eigener Faktor ein.
-function atkStrengthFrom(id, matchSubset){
-  const p=posPerfFrom(id,matchSubset);
-  const total = p.aG + p.dG;
+// Ein gemeinsamer Positionswert fuer Profil, Chronik und alle Ableitungen.
+// Der Kontext der Chronik nennt die Felder atkG/defG und summiert die
+// Ueberperformance; `posPerfFrom` liefert aG/dG plus Mittelwerte. Beides wird
+// hier auf dieselbe Form gebracht, damit „Der Wandler" nicht mehr eine andere
+// Definition von Ausgeglichenheit benutzt als das Profil.
+function positionsProfilWert(p){
+  p = p || {};
+  const aG = Number(p.aG != null ? p.aG : p.atkG) || 0;
+  const dG = Number(p.dG != null ? p.dG : p.defG) || 0;
+  const aPerfAvg = Number(p.aPerfAvg != null ? p.aPerfAvg : (aG ? p.atkPerf / aG : 0)) || 0;
+  const dPerfAvg = Number(p.dPerfAvg != null ? p.dPerfAvg : (dG ? p.defPerf / dG : 0)) || 0;
+  const total = aG + dG;
   const minG = _posMinGames();
-  const aOk = p.aG>=minG, dOk = p.dG>=minG;
+  const aOk = aG>=minG, dOk = dG>=minG;
   if(!aOk && !dOk) return 0.5;
 
   // ── Faktor 1: Spielanzahl-gewichtete Performance ──
@@ -199,26 +205,30 @@ function atkStrengthFrom(id, matchSubset){
   let perfAtk;
   if(aOk && dOk){
     // Gewichteter Vergleich: perf*games normalisiert
-    const aScore = p.aPerfAvg * p.aG;  // Gesamt-Überperformance im Sturm
-    const dScore = p.dPerfAvg * p.dG;  // Gesamt-Überperformance in Abwehr
+    const aScore = aPerfAvg * aG;  // Gesamt-Überperformance im Sturm
+    const dScore = dPerfAvg * dG;  // Gesamt-Überperformance in Abwehr
     // Positiv = Sturm-Spieler, Negativ = Abwehr-Spieler
     // Normalisiert auf [-1,1] durch Division durch total
     const diff = (aScore - dScore) / total;
     perfAtk = 0.5 + diff * 0.5;
   } else if(aOk) {
-    perfAtk = 0.5 + p.aPerfAvg * 0.3;  // Nur Sturm-Daten: gedämpft
+    perfAtk = 0.5 + aPerfAvg * 0.3;  // Nur Sturm-Daten: gedämpft
   } else {
-    perfAtk = 0.5 - p.dPerfAvg * 0.3;  // Nur Abwehr-Daten: gedämpft
+    perfAtk = 0.5 - dPerfAvg * 0.3;  // Nur Abwehr-Daten: gedämpft
   }
 
   // ── Faktor 2: Erfahrung (wie oft auf der Position) ──
-  const expAtk = total>0 ? p.aG/total : 0.5;
+  const expAtk = total>0 ? aG/total : 0.5;
 
   // ── Kombination ──
   // exp_weight steuert den Mix. Bei 0.4: 60% gewichtete Performance, 40% Erfahrung.
   const ew = _expWeight();
   const combined = (1-ew)*perfAtk + ew*expAtk;
   return Math.max(0.1, Math.min(0.9, combined));
+}
+// Sturm-Anteil 0..1, kombiniert Performance + Erfahrung.
+function atkStrengthFrom(id, matchSubset){
+  return positionsProfilWert(posPerfFrom(id,matchSubset));
 }
 // Live-Stärke aus allen aktuellen Matches (für Anzeige & Vorschau)
 function atkStrength(id){ return atkStrengthFrom(id, matches); }
@@ -364,4 +374,3 @@ async function persistRecalc(matchList){
   // Saisons neu archivieren mit den frischen Werten
   await autoArchiveSeasons();
 }
-

@@ -241,6 +241,19 @@
   .lb-grp-k .num{font-family:'Archivo Black',sans-serif;font-size:13px;
     letter-spacing:0;text-transform:none;color:var(--ink2)}
 
+  /* Die drei Auszeichnungsregeln stehen einmal kompakt über der Liste.
+     Dadurch erklärt jede Zeile nur noch ihren konkreten Zähler. */
+  .lb-regeln{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
+    padding:7px 9px;background:var(--bg);border-top:1px solid var(--line)}
+  .lb-regeln span{min-width:0;padding:5px 6px;border:1px solid var(--line);
+    border-radius:7px;background:var(--surface);display:flex;flex-direction:column;gap:1px}
+  .lb-regeln b{font-size:8.5px;line-height:1.2;white-space:nowrap}
+  .lb-regeln em{font-family:'Sometype Mono',monospace;font-size:7.5px;
+    line-height:1.25;font-style:normal;color:var(--muted);white-space:nowrap}
+  .lb-regeln .legendary b{color:var(--gold)}
+  .lb-regeln .rare b{color:var(--purple)}
+  .lb-regeln .common b{color:var(--acid)}
+
   .lb-q{display:flex;align-items:baseline;gap:10px;padding:8px 13px;
     background:var(--surface);border-top:1px solid var(--line)}
   .lb-q[data-chron]{cursor:pointer}

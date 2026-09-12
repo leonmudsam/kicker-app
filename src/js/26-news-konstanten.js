@@ -81,7 +81,13 @@ const NEWS_LIMITS = {
   // Ein starker Spieltag verschiebt mehrere Monatschroniken gleichzeitig.
   // Gemeldet werden die zwei wertvollsten; der Rest steht am Monatsende in
   // der Monatskarte, die es ohnehin gibt.
-  chronikGeholt: 2,
+  // Vier Wechsel passen exakt in eine Sammelkarte. Zwei ließen in der
+  // Vierzehn-Tage-Messung die Tafel-Seite trotz zahlreicher tatsächlicher
+  // Chronikwechsel auf ein gutes Drittel des redaktionellen Inhalts fallen.
+  // Die vier wertvollsten halten Tafel und Spieltag/Fun Facts ungefähr im
+  // Gleichgewicht, ohne eine zweite Karte oder eine abgeschnittene Zeile zu
+  // erzeugen.
+  chronikGeholt: 4,
   proTag: 6,
   // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
   // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
@@ -129,9 +135,10 @@ const NEWS_DB_ZEILEN = 500;
 // Quelle.
 //
 // Gemeldet wird deshalb das ERSTE Mal und danach nur noch runde Marken —
-// dieselbe Logik, nach der auch das Prestige eine beliebig oft holbare
-// Auszeichnung genau einmal zählt [§C34]. Der dreißigste Zittersieg zeigt
-// nichts Neues; der fünfundzwanzigste ist eine Zahl, über die man redet.
+// Anders als das Prestige muss die Zeitung aber nicht jedes Erreichen
+// melden: Dort wächst der Wert gedämpft weiter [§C34], hier ist der
+// dreißigste Zittersieg keine neue Geschichte; der fünfundzwanzigste ist
+// eine Zahl, über die man redet.
 const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
 
 // ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
@@ -329,6 +336,10 @@ const AMBIENT_BACKFILL_DAYS = 3;
 // nicht erneut gewählt. Bei 2 Fun Facts / Tag sperrt das die letzten ~14 Typen
 // (der Pool hat 18) → genug Rotation, keine schnellen Wiederholungen.
 const AMBIENT_COOLDOWN_DAYS = 7;
+// Auch verschiedene Templates koennen dieselbe Erzaehlrichtung haben. Diese
+// Rubriken-Sperre mischt Fuehrung, Form, Duelle, Laufbahn und Geschichte, ohne
+// kleine Datenbestaende leer laufen zu lassen (der Notnagel lockert sie).
+const AMBIENT_RUBRIK_COOLDOWN_DAYS = 2;
 // v9.14: Spieler-Cooldown (Tage). Der Typ-Cooldown verhindert nur gleiche
 // TYPEN — bei einem dominanten Spieler zeigen aber viele VERSCHIEDENE
 // Superlative (Sturm-Chef, Elo-Leader, Torschützenkönig …) auf denselben Kopf,
