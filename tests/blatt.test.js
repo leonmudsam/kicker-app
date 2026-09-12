@@ -676,7 +676,7 @@ const ok = (c, msg, det) => {
   ok(schmuck.ohneAkzent === 0, 'jede Zahl im Kartentext steht fett',
      schmuck.ohneAkzent + ' ohne Akzent');
 
-  console.log('\n═══ ZEHN SORTEN, ZEHN FORMEN ═══');
+  console.log('\n═══ ZWÖLF SORTEN, RUHIGE FARBFAMILIEN ═══');
   const sorten = await page.evaluate(() => {
     const sorte = window.__k.eval('_newsSorte');
     const rubrik = window.__k.eval('_newsRubrik');
@@ -732,14 +732,14 @@ const ok = (c, msg, det) => {
     const karte = host.querySelector('.nf-card.nf-s-erfolg');
     if(!karte) return {fehlt:true};
     const rub = karte.querySelector('.nf-rub b');
-    const gold = rub ? getComputedStyle(rub).color : '';
+    const farbe = rub ? getComputedStyle(rub).color : '';
     const out = {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
       // Der Erfolg ist das Subjekt, also stehen die Gesichter als Chips
       // nebeneinander — keins ist wichtiger als das andere [§C33].
       chips: karte.querySelectorAll('.nf-face-paar .av').length,
       zeilen: karte.querySelectorAll('.nf-sam-z').length,
       rest: karte.querySelectorAll('.nf-sam-m').length,
-      gold: /^rgb\(2[0-9]{2}, *2[0-9]{2}, *[0-9]{1,3}\)/.test(gold)};
+      violett: farbe === 'rgb(167, 139, 250)'};
     host.remove(); return out;
   });
   ok(!achse.fehlt, 'die Karte fuer den gemeinsamen Erfolg steht im Feed',
@@ -749,8 +749,64 @@ const ok = (c, msg, det) => {
   ok(achse.zeilen >= 2 && achse.rest === 0,
      'jeder Beteiligte steht als Zeile auf der Karte, keiner als „und 1 weitere"',
      achse.zeilen + ' Zeilen, ' + achse.rest + ' verschwiegen');
-  ok(achse.gold, 'sie wiegt so schwer wie die Meldungen, die sie buendelt [§C25]',
-     String(achse.gold));
+  ok(achse.violett, 'der gemeinsame Laufbahnerfolg traegt Violett statt pauschal Gold',
+     String(achse.violett));
+
+  const palette = await page.evaluate(() => {
+    const host = document.createElement('div');
+    const sorten = ['spiel','tafel','ins','held','woche','duell','serie','badge','marke',
+                    'fakt','spieler','erfolg'];
+    host.innerHTML = sorten.map(s => `<div class="nf-card nf-s-${s}">
+      <div class="nf-top"><span class="nf-rub"><i></i><b>${s}</b></span></div>
+      <span class="nf-motiv"></span></div>`).join('')
+      + '<div class="nf-card nf-s-tafel nf-gross"><div class="nf-gross-band"></div></div>'
+      + '<div class="nf-card nf-s-held nf-gross"><div class="nf-gross-band"></div></div>'
+      + '<div class="nd nd-s-tafel"><div class="nd-ic"></div><span class="nf-motiv"></span></div>'
+      + '<div class="nd nd-s-serie nd-neg"><div class="nd-ic"></div></div>';
+    document.body.appendChild(host);
+    const farben = {};
+    sorten.forEach(s => {
+      const c = host.querySelector('.nf-s-' + s);
+      farben[s] = {
+        rubrik:getComputedStyle(c.querySelector('.nf-rub')).color,
+        motiv:getComputedStyle(c.querySelector('.nf-motiv')).color,
+        schimmer:getComputedStyle(c.querySelector('.nf-top')).backgroundImage
+      };
+    });
+    const gross = [...host.querySelectorAll('.nf-gross-band')]
+      .map(b => getComputedStyle(b, '::after').backgroundImage);
+    const detail = host.querySelector('.nd-s-tafel');
+    const negativ = host.querySelector('.nd-neg');
+    const out = {farben, gross,
+      detailIcon:getComputedStyle(detail.querySelector('.nd-ic')).color,
+      detailMotiv:getComputedStyle(detail.querySelector('.nf-motiv')).color,
+      detailLinie:getComputedStyle(detail, '::before').backgroundImage,
+      negativ:getComputedStyle(negativ.querySelector('.nd-ic')).color};
+    host.remove(); return out;
+  });
+  const farbe = s => palette.farben[s].rubrik;
+  const goldene = Object.keys(palette.farben).filter(s => farbe(s) === 'rgb(247, 207, 74)');
+  ok(goldene.length === 2 && goldene.includes('held') && goldene.includes('woche'),
+     'Gold bleibt allein Tages- und Wochensiegern', goldene.join(', ') || 'keine');
+  ok(farbe('tafel') === farbe('marke') && farbe('tafel') !== farbe('held'),
+     'Tafel und Bestmarke tragen kuehles Metall statt Gold',
+     farbe('tafel') + ' / ' + farbe('held'));
+  ok(farbe('ins') === farbe('badge') && farbe('badge') === farbe('spieler')
+     && farbe('spieler') === farbe('erfolg') && farbe('ins') !== farbe('held'),
+     'Laufbahn und Auszeichnungen bilden eine violette Familie', farbe('ins'));
+  ok(farbe('spiel') === farbe('serie') && farbe('duell') !== farbe('spiel')
+     && new Set(Object.values(palette.farben).map(x => x.rubrik)).size === 6,
+     'Spiel, Duell und Fakten bleiben in sechs ruhigen Farbfamilien lesbar',
+     new Set(Object.values(palette.farben).map(x => x.rubrik)).size + ' Familien');
+  ok(palette.gross[0] === palette.gross[1]
+     && palette.gross[0].includes('247, 207, 74'),
+     'die Karte des Tages traegt immer ihren goldenen Auswahlschimmer', palette.gross.join(' / '));
+  ok(palette.detailIcon === farbe('tafel') && palette.detailMotiv === farbe('tafel')
+     && palette.detailLinie.includes('194, 201, 208'),
+     'das Detailblatt setzt die Farbfamilie der Karte fort',
+     palette.detailIcon + ' / ' + palette.detailLinie);
+  ok(palette.negativ === 'rgb(240, 86, 106)',
+     'eine negative Serie bleibt auch im Detailblatt rot', palette.negativ);
 
   console.log('\n═══ ROT BLEIBT DER RICHTUNG ═══');
   const richtung = await page.evaluate(() => {
@@ -824,26 +880,25 @@ const ok = (c, msg, det) => {
     // wieder entfernt — die Sorte, nicht der Tag, traegt die Aussage.
     const hilf = document.createElement('div');
     sheet.appendChild(hilf);
-    const leihen = sorte => {
-      const s = {id:'mess_' + sorte, cat:'fun', ic:'thriller', title:'Messkarte',
-                 desc:'Eine Zahl.', when: Date.now(), prio:1, dataRef:{type:'ambient'}};
-      hilf.innerHTML = window.__k.eval('_newsCardHtmlM2')(s, true, false);
+    const leihen = (sorte, extra) => {
+      hilf.innerHTML = `<div class="nf-card nf-s-${sorte}${extra || ''}"></div>`;
       return hilf.querySelector('.nf-card');
     };
-    const mess = (klasse, sorte) => {
-      const c = sheet.querySelector('.' + klasse) || (sorte ? leihen(sorte) : null);
+    const mess = (klasse, sorte, extra) => {
+      const c = sheet.querySelector('.' + klasse) || (sorte ? leihen(sorte, extra) : null);
       if(!c) return null;
       const cs = getComputedStyle(c);
       return {kante: parseFloat(cs.borderLeftWidth), farbe: cs.borderTopColor};
     };
-    const raus = {gold: mess('nf-s-tafel') || mess('nf-s-badge'),
+    const raus = {gold: mess('nf-s-held', 'held'),
                   fakt: mess('nf-s-fakt', 'fakt'),
-                  spiel: mess('nf-s-spiel'), neg: mess('nf-neg')};
+                  spiel: mess('nf-s-spiel', 'spiel'),
+                  neg: mess('nf-neg', 'serie', ' nf-neg')};
     hilf.remove();
     return raus;
   });
   ok(raender.gold && raender.fakt && raender.gold.kante > raender.fakt.kante,
-     'die goldene Karte traegt die staerkere Kante als der Fun Fact',
+     'die Siegerkarte traegt die staerkere Kante als der Fun Fact',
      JSON.stringify(raender));
   ok(raender.gold && raender.spiel && raender.gold.farbe !== raender.spiel.farbe,
      'Gold und Spieltag tragen nicht denselben Rahmen',

@@ -35,7 +35,8 @@ function openNewsDetail(sid){
   // Karte seit dem Rubrikband nicht mehr gibt.
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
-  nd.className = 'nd nd-s-' + sorte + (brk ? ' nd-brk' : '');
+  const negativ = _newsIstNegativ(s);
+  nd.className = 'nd nd-s-' + sorte + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}

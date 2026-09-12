@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **700**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **701**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -223,7 +223,7 @@ globalem Zustand ist.
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
 | `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, Sammelkarten mit zwei bis vier gleichrangigen Ereignissen, lebendige verknüpfte Texte, Auffrischung und Abmeldung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat, Zusammenführungsachsen, den 14-Tage-Mix aus Tafel gegen Spieltag/Funfacts und die spannendste Karte des Tages ab acht Partien oder 19 Uhr | 272 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px — **im echten Browser gemessen** | 109 |
+| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px — **im echten Browser gemessen** | 116 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -253,11 +253,20 @@ geführt — sichtbar, aber nicht rot.
 Diese Regeln stehen als Kommentar im Code und werden dort mit ihrem Kürzel
 zitiert. Sie sind nicht Geschmack, sondern Absprache.
 
-- **§C25 Farbgesetz.** Vier Rollen, mehr nicht:
+- **§C25 Farbgesetz.** Status- und Wertfarben haben vier feste Rollen:
   1. Rangfarbe = „ich"
   2. Gold = Titel und heute gehaltene Rekorde
   3. Grün/Rot = ausschließlich Richtung
   4. Metall = alles Übrige
+  Der News-Feed setzt daneben eine **leise Navigationsschicht**, keine neue
+  Wertung: Gold bleibt Spieler des Tages und Woche, kühles Metall führt durch
+  Ewige Tafel und Bestmarken, Violett durch Insignien und Auszeichnungen,
+  Grün durch positive Spieltagsdynamik, Bronze durch das direkte Duell und
+  Rot durch Breaking oder eine negative Richtung. Fun Facts bleiben neutral.
+  Diese Farben sitzen nur an Kante, Rubrik, Zeichen und einem schwachen
+  Schimmer; alle Kartenflächen bleiben dunkel. Zwölf eigene Vollfarben wären
+  ein Regenbogen, eine einzige Goldfamilie machte dagegen jede zweite Karte
+  zum vermeintlichen Titel.
   Im Rekorde-Reiter heißt das: Können und Bestmarke tragen Gold, die Fügung
   Metall [§C35] — sie zeichnet niemanden aus —, die Schattenseite Rot. Als
   alle fünfunddreißig Karten golden waren, sagte Gold dort nichts mehr.
@@ -326,6 +335,12 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   links, solange sie ungelesen ist, `--tint` der Schein aus der Ecke in der
   Farbe ihrer Rubrik. Beide als Variable, weil die Sorte sonst den
   Ungelesen-Zustand überschrieben hätte — und das ist der wichtigere.
+  Die Sorte setzt dafür genau eine Familie über `--story` und `--story-rgb`:
+  Gold für Tages-/Wochensieger, Silber für Tafel/Bestmarke, Violett für
+  Laufbahn/Auszeichnungen, Grün für Spiel/Serie, Bronze für Duelle und Metall
+  für Fakten. Karten derselben Familie unterscheiden sich nur in der Stärke
+  ihres Schimmers. Das hält den Feed ruhig und verhindert zugleich, dass
+  Tafel, Insignium, Auszeichnung und Sammelkarte alle golden aussehen.
   **Die Bildzone macht die Karte nie höher als ihren Text.** Die beiden Wappen
   eines Duells standen übereinander in der linken Spalte und machten die Karte
   56 Pixel höher als ihr einzeiliger Satz; daneben war nichts. Sie stehen
@@ -348,13 +363,18 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Breaking bricht die Spalte**: die Karte steht breiter als jede andere und
   ist daran erkannt, bevor ein Wort gelesen ist; ihr Rahmen glimmt, weil ein
   stehender roter Rahmen beim Scrollen ein Farbton unter vielen war. Die
-  **Karte des Tages** bewegt sich leiser: ein Licht wandert einmal alle sieben
-  Sekunden durch ihr Band, der Stern atmet. Beides ruht bei
+  **Karte des Tages** bewegt sich leiser: Ein goldener Auswahlschimmer wandert
+  einmal alle sieben Sekunden durch ihr Band, der goldene Stern atmet. Ihre
+  eigentliche Familie bleibt gleichzeitig an Kante, Rubrik und Motiv sichtbar;
+  eine Tafelgeschichte wird durch die Auswahl also nicht vollständig golden.
+  Beides ruht bei
   `prefers-reduced-motion`, und `tests/blatt` misst das nach.
-  **Der Rand sagt, wie schwer eine Karte wiegt** (`--kante`, `--rahmen`): Gold
-  am stärksten, der Spieltag darunter, der Fun Fact am dünnsten, Rot für die
-  Richtung. „Wichtig" leuchtet und verbreitert nicht — als es die Kante auf
-  vier Pixel setzte, trug ein Fun Fact denselben Rand wie ein Liga-Rekord.
+  **Der Rand sagt, wie schwer eine Karte wiegt** (`--kante`, `--rahmen`): Nur
+  Tages- und Wochensieger tragen die starke Goldkante, alle anderen Sorten
+  eine ruhige Kante ihrer Familie. Der Fun Fact bleibt am leisesten, Rot
+  bleibt der Richtung. „Wichtig" leuchtet und verbreitert nicht — als es die
+  Kante auf vier Pixel setzte, trug ein Fun Fact denselben Rand wie ein
+  Liga-Rekord.
   Eine Karte, die von einer Pleitenserie oder einer Schande erzählt, trägt
   `.nf-neg` und damit Rot in Rubrik und Motiv [§C25] — die Durststrecke stand
   vorher im selben Grün wie die Siegesserie.
@@ -367,7 +387,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   zeigt, damit `_newsMatchVsBlock` sie nicht wiederholt.
   **Das Blatt setzt fort, was die Karte angefangen hat**: dieselbe Rubrik,
   dasselbe Motiv, dieselbe Zeichenkachel, dieselben fetten Akzente, dazu eine
-  Haarlinie in der Farbe der Sorte am Kopf. Sein Kopf trägt das
+  Haarlinie und einen schwachen Flächenschimmer in der Farbe der Sorte am
+  Kopf. Auch eine negative Serie bleibt nach dem Öffnen rot. Sein Kopf trägt das
   **Rangabzeichen** (`rankBadgeHtml`) — das Bauteil, das die App schon hat
   [§C27]; dort stand statt seiner die Zeile „Rang 6" als nackter Text. Vorher stand oben der
   Kategorienname aus der Datenbank, den es auf der Karte seit dem Rubrikband
@@ -491,9 +512,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   die Jahre gewachsenen `dataRef`-Feldern; `_newsGesichtHtml` zeichnet sie.
   Der Feed war die einzige Ansicht der App, in der ein Spieler nur ein Name
   war.
-  Und er trug elf Kategoriefarben. Jetzt gilt auch hier das Farbgesetz:
-  Gold für Titel und Rekorde (`breaking`, `highlight`, `badge`, `comeback`),
-  Rot für die Richtung (`misfortune`), Metall für den Rest.
+  Und er trug erst elf Kategoriefarben, danach fast nur noch Gold. Jetzt
+  entscheidet nicht die interne Datenkategorie, sondern die für den Leser
+  sichtbare Kartenform über die ruhige Farbfamilie [§C25]. Die Kategorie ist
+  nur noch ein Rückfallwert; Karte und Detailblatt leiten Kante, Rubrik,
+  Zeichen und Schimmer gemeinsam aus `--story` ab.
   Drei Regeln gegen Rauschen: **kein Story-Typ steht mehr als zweimal im
   Feed** (`_consolidateStories`, ausgenommen die seltenen Ereignisse, die
   Sammelkarte — und alles, was es je Tag, Woche oder Monat genau EINMAL

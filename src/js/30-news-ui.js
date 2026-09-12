@@ -357,6 +357,14 @@ function _newsUhrzeit(when){
   return new Date(when).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
 }
 
+// Rot ist eine Richtung, keine Rubrik [§C25]. Karte und Detailblatt nutzen
+// dieselbe Ableitung, damit eine Durststrecke beim Öffnen nicht wieder den
+// grünen Schimmer einer positiven Serie annimmt.
+function _newsIstNegativ(s){
+  const d = (s && s.dataRef) || {};
+  return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+}
+
 function _newsCardHtmlM2(s, isRead, istTagesKarte){
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
@@ -497,7 +505,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Rot ist die Richtung [§C25]: eine Karte, die von einer Pleitenserie oder
   // einer Schande erzaehlt, traegt es in Rubrik und Motiv. Die Durststrecke
   // stand vorher im selben Gruen wie die Siegesserie.
-  const negativ = /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+  const negativ = _newsIstNegativ(s);
   return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
@@ -767,11 +775,10 @@ function _newsBadgeHalterText(badgeId){
   } catch(e){ return ''; }
 }
 
-// Acht Sorten, acht Bauformen. Eine Karte soll man an der FORM erkennen,
+// Zwölf Sorten, zwölf Bauformen. Eine Karte soll man an der FORM erkennen,
 // bevor man den ersten Satz gelesen hat. Vorher unterschied die Sorten nur
-// eine Randfarbe, und zehn Karten untereinander sahen alle gleich aus.
-// Die Farben folgen dem Farbgesetz [§C25]: Gold trägt, was Titel und Rekord
-// ist, Rot bleibt der Richtung, Metall ist alles Übrige.
+// eine Randfarbe, und zehn Karten untereinander sahen alle gleich aus. Die
+// ruhigen Farbfamilien im CSS sind die zweite Orientierung, nicht die Form.
 function _newsSorte(s){
   const d = (s && s.dataRef) || {};
   const t = d.type || '';

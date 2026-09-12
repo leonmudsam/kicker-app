@@ -2063,29 +2063,20 @@
 
   /* ════════ NEWS-FEED v9 — „Matchday"-Layout (Variante M2) ════════
      Eigene .nf-* Klassen, damit Mini-Popup (.nv-*) unberührt bleibt.
-     Kategorie-Akzent via CSS-Var --cc (+ Tint --cct, Glow --ccg). */
-  /* Die Kategoriefarbe kommt jetzt aus derselben Palette wie der Rest der App
-     und bedeutet dasselbe: Rot ist Alarm, Gold gehört Titeln und Rekorden,
-     Metall dem Beiläufigen. Vorher standen hier drei eigene Hexwerte, die es
-     sonst nirgends gibt. [§C25] */
-  /* Vier Rollen, mehr nicht [§C25]. Vorher trug jede der elf Kategorien
-     ihre eigene Farbe — Lila für die Saison, Blau für Teams, Rot für
-     Rivalitäten. Zehn Karten untereinander ergaben einen Regenbogen, in
-     dem Gold nichts Besonderes mehr war und Rot nicht mehr „schlecht"
-     hieß, sondern „Rivalität".
-     Gold trägt jetzt, was ein Titel oder ein Rekord ist. Rot sagt die
-     Richtung. Alles andere ist Metall. */
-  .nfc-breaking  {--cc:var(--gold);  --cct:rgba(247,207,74,.16);--ccg:rgba(247,207,74,.5)}
-  .nfc-highlight {--cc:var(--gold);  --cct:rgba(247,207,74,.12);--ccg:rgba(247,207,74,.4)}
-  .nfc-badge     {--cc:var(--gold);  --cct:rgba(247,207,74,.12);--ccg:rgba(247,207,74,.4)}
-  .nfc-comeback  {--cc:var(--gold);  --cct:rgba(247,207,74,.12)}
-  .nfc-misfortune{--cc:var(--red);   --cct:rgba(240,86,106,.12)}
-  .nfc-rivalry   {--cc:var(--ink2);  --cct:rgba(185,196,189,.10)}
-  .nfc-season    {--cc:var(--ink2);  --cct:rgba(185,196,189,.10)}
-  .nfc-team      {--cc:var(--ink2);  --cct:rgba(185,196,189,.10)}
-  .nfc-fun       {--cc:var(--ink2);  --cct:rgba(185,196,189,.10)}
-  .nfc-personal  {--cc:var(--ink2);  --cct:rgba(185,196,189,.10)}
-  .nfc-history   {--cc:var(--silber);--cct:rgba(194,201,208,.10)}
+     Die Datenkategorie liefert nur noch einen Rückfall-Akzent; im Feed
+     entscheidet die sichtbare Kartenform über Farbe und Schimmer. So wird
+     eine Tafelgeschichte nicht golden, nur weil sie als Highlight gilt. */
+  .nfc-breaking  {--story:var(--red);   --story-rgb:240,86,106}
+  .nfc-highlight {--story:var(--gold);  --story-rgb:247,207,74}
+  .nfc-badge     {--story:var(--purple);--story-rgb:167,139,250}
+  .nfc-comeback  {--story:var(--acid2); --story-rgb:163,230,53}
+  .nfc-misfortune{--story:var(--red);   --story-rgb:240,86,106}
+  .nfc-rivalry   {--story:var(--bronze);--story-rgb:192,132,87}
+  .nfc-season    {--story:var(--silber);--story-rgb:194,201,208}
+  .nfc-team      {--story:var(--ink2);  --story-rgb:185,196,189}
+  .nfc-fun       {--story:var(--ink2);  --story-rgb:185,196,189}
+  .nfc-personal  {--story:var(--purple);--story-rgb:167,139,250}
+  .nfc-history   {--story:var(--silber);--story-rgb:194,201,208}
 
   /* ── Der Zeitungskopf ─────────────────────────────────────────────
      Vorher: Icon-Kachel, Titel in der Fließschrift, darunter eine Zeile
@@ -2164,7 +2155,7 @@
   .nf-card{position:relative;--tint:rgba(255,255,255,.028);--neu:transparent;
     background:linear-gradient(90deg,var(--neu),transparent 55%),
       radial-gradient(190px 120px at 4% 0%,var(--tint),transparent 72%),var(--surface);
-    border:1px solid var(--line);border-left:2px solid var(--cc,var(--line2));
+    border:1px solid var(--line);border-left:2px solid var(--story,var(--line2));
     border-radius:4px 14px 14px 4px;padding:12px;cursor:pointer;transition:.15s}
   .nf-card:active{transform:scale(.992)}
   /* Eine Lichtkante oben. Ohne sie sass die Karte flach auf dem Grund und
@@ -2230,7 +2221,9 @@
     border-bottom:1px solid var(--line2);font-family:'Sometype Mono',monospace;
     font-size:9px;font-weight:700;letter-spacing:.2em;color:var(--ink)}
   .nf-gross-band::after{content:"";position:absolute;inset:0;pointer-events:none;
-    background:linear-gradient(105deg,transparent 40%,rgba(247,207,74,.16) 50%,transparent 60%);
+    /* Die Auswahl selbst ist eine goldene Würdigung. Die eigentliche Sorte
+       bleibt trotzdem an Kante, Rubrik und Motiv ablesbar. */
+    background:linear-gradient(105deg,transparent 40%,rgba(247,207,74,.18) 50%,transparent 60%);
     transform:translateX(-100%);animation:nfSweep 7s ease-in-out infinite}
   .nf-gross-band svg{animation:nfAtem 4.5s ease-in-out infinite}
   @keyframes nfAtem{0%,100%{opacity:.55;transform:scale(1)}
@@ -2239,7 +2232,8 @@
     .nf-gross-band::after{animation:none;opacity:0}
     .nf-gross-band svg{animation:none;opacity:1}}
   .nf-gross-band svg{width:12px;height:12px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--ink2)}
+    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--gold);
+    filter:drop-shadow(0 0 5px rgba(247,207,74,.38))}
   .nf-gross .nf-h{font-size:19px;line-height:1.1;-webkit-line-clamp:5}
   .nf-gross .nf-d{font-size:12.5px;-webkit-line-clamp:6}
   .nf-gross .nf-erg-sc{font-size:26px}
@@ -2259,11 +2253,12 @@
      Rand wie ein Liga-Rekord, und der Rand sagte nichts mehr ueber das
      Gewicht der Karte. */
   .nf-card.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
-    -7px 0 20px -12px var(--ccg,transparent)}
+    -7px 0 20px -12px rgba(var(--story-rgb,185,196,189),.42)}
   .nf-card.read.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
   .nf-when{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
     font-size:9.5px;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
-  .nf-dot{width:8px;height:8px;border-radius:50%;background:var(--cc);box-shadow:0 0 6px var(--cc)}
+  .nf-dot{width:8px;height:8px;border-radius:50%;background:var(--story,var(--ink2));
+    box-shadow:0 0 6px rgba(var(--story-rgb,185,196,189),.55)}
   /* Das Gesicht links. Die News waren die einzige Ansicht der App, in der
      ein Spieler nur ein Name war [§C27]. */
   .nf-face{flex-shrink:0;display:flex;align-items:center}
@@ -2274,13 +2269,30 @@
   .nf-face-mehr{background:var(--surface3);color:var(--muted);
     font-family:'Sometype Mono',monospace;font-size:10px}
 
-  /* ── Acht Sorten, acht Bauformen ──────────────────────────────────
+  /* ── Zwölf Sorten, zwölf Bauformen ────────────────────────────────
      Eine Karte soll man an der FORM erkennen, bevor man den ersten Satz
-     gelesen hat. Vorher unterschied die Sorten nur eine Randfarbe, und zehn
-     Karten untereinander sahen alle gleich aus. Die Farben folgen dem
-     Farbgesetz [§C25]: Gold traegt, was Titel und Rekord ist, Rot bleibt der
-     Richtung, Metall ist alles Uebrige. */
+     gelesen hat. Farbe ist die zweite, leise Orientierung: Gold bleibt den
+     Tages- und Wochensiegern, kühles Metall gehört Tafel und Bestmarke,
+     Violett der Laufbahn, Grün der positiven Dynamik, Bronze dem direkten
+     Duell und Rot der negativen Richtung. Das sind Familien statt zwölf
+     Einzelfarben — genug Trennung, aber kein Regenbogen [§C25]. */
   .nf-card{padding:0;overflow:hidden;border-radius:4px 14px 14px 4px}
+  /* Dieselbe Variable steuert Kante, Rubrik, Zeichen und Schimmer auf Karte
+     UND Blatt. Damit kann kein Teil einer Story versehentlich wieder Gold
+     tragen, während der Rest schon seiner Familie folgt [§C27]. */
+  .nf-s-held,.nf-s-woche,.nd-s-held,.nd-s-woche{
+    --story:var(--gold);--story-rgb:247,207,74}
+  .nf-s-tafel,.nf-s-marke,.nd-s-tafel,.nd-s-marke{
+    --story:var(--silber);--story-rgb:194,201,208}
+  .nf-s-ins,.nf-s-badge,.nf-s-spieler,.nf-s-erfolg,
+  .nd-s-ins,.nd-s-badge,.nd-s-spieler,.nd-s-erfolg{
+    --story:var(--purple);--story-rgb:167,139,250}
+  .nf-s-spiel,.nf-s-serie,.nd-s-spiel,.nd-s-serie{
+    --story:var(--acid2);--story-rgb:163,230,53}
+  .nf-s-duell,.nd-s-duell{--story:var(--bronze);--story-rgb:192,132,87}
+  .nf-s-fakt,.nd-s-fakt{--story:var(--ink2);--story-rgb:185,196,189}
+  .nf-card.nf-neg,.nd.nd-neg,.nf-card.nf-brk,.nd.nd-brk{
+    --story:var(--red);--story-rgb:240,86,106}
   /* ── Das Rubrikband ───────────────────────────────────────────────
      Wie in einer Zeitung steht die Rubrik ueber dem Artikel, nicht als Pille
      darin. Vorher trug jede Karte einen gefaerbten Chip mit dem
@@ -2289,35 +2301,22 @@
      ist LEISE: es sagt, woher die Nachricht kommt, und ueberlaesst der
      Schlagzeile den Platz. */
   .nf-top{display:flex;align-items:center;gap:8px;padding:7px 13px;
-    border-bottom:1px solid var(--line);background:rgba(255,255,255,.015)}
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(96deg,rgba(var(--story-rgb,185,196,189),.055),
+      rgba(var(--story-rgb,185,196,189),.012) 48%,transparent 76%)}
   .nf-rub{display:inline-flex;align-items:center;gap:6px;min-width:0;
     font-family:'Sometype Mono',monospace;font-size:9px;font-weight:700;
-    letter-spacing:.17em;color:var(--muted);line-height:1}
+    letter-spacing:.17em;color:var(--story,var(--muted));line-height:1}
   /* Das Zeichen sitzt in einer eigenen Kachel, wie eine Rubrikmarke in einer
      Zeitung. Frei stehend war es ein Strich von elf Pixeln neben der Schrift
      und von ihr kaum zu unterscheiden. */
   .nf-rub i{width:20px;height:20px;border-radius:6px;flex:0 0 auto;display:grid;
-    place-items:center;background:rgba(255,255,255,.05);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+    place-items:center;background:rgba(var(--story-rgb,185,196,189),.09);
+    box-shadow:inset 0 0 0 1px rgba(var(--story-rgb,185,196,189),.17)}
   .nf-rub svg{width:11px;height:11px;flex-shrink:0;fill:none;stroke:currentColor;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .nf-s-tafel .nf-rub i,.nf-s-ins .nf-rub i,.nf-s-held .nf-rub i,
-  .nf-s-woche .nf-rub i,.nf-s-badge .nf-rub i,
-  .nf-s-spieler .nf-rub i,.nf-s-erfolg .nf-rub i{background:rgba(247,207,74,.13);
-    box-shadow:inset 0 0 0 1px rgba(247,207,74,.22)}
-  .nf-s-spiel .nf-rub i,.nf-s-serie .nf-rub i,.nf-s-duell .nf-rub i{
-    background:rgba(190,242,100,.1);box-shadow:inset 0 0 0 1px rgba(190,242,100,.18)}
-  .nf-card.nf-neg .nf-rub i{background:rgba(240,86,106,.12);
-    box-shadow:inset 0 0 0 1px rgba(240,86,106,.22)}
-  .nf-brk .nf-rub i{background:rgba(240,86,106,.18)}
   .nf-rub b{font-size:9px;font-weight:700;overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap;letter-spacing:.17em}
-  /* Die Rubrikfarbe folgt dem Farbgesetz: Gold traegt, was Titel und Rekord
-     ist, Metall alles Uebrige [§C25]. */
-  .nf-s-tafel .nf-rub,.nf-s-ins .nf-rub,.nf-s-held .nf-rub,
-  .nf-s-woche .nf-rub,.nf-s-badge .nf-rub,
-  .nf-s-spieler .nf-rub,.nf-s-erfolg .nf-rub{color:var(--gold)}
-  .nf-s-spiel .nf-rub{color:var(--acid2)}
   .nf-gr{display:grid;grid-template-columns:1fr;gap:12px;padding:11px 13px 12px;align-items:start}
   .nf-gr.mit-l{grid-template-columns:auto minmax(0,1fr)}
   .nf-gr-l{display:flex;align-items:center;gap:6px;padding-top:1px}
@@ -2352,7 +2351,6 @@
   .nf-erg-sc i{font-style:normal;color:var(--faint);font-size:15px}
 
   /* Sorte 2 Tafel: der Wert ist die Hauptsache, nicht der Satz darueber. */
-  .nf-s-tafel{--tint:rgba(247,207,74,.1)}
   .nf-wert{display:flex;flex-direction:column;align-items:flex-start;min-width:62px}
   .nf-wert b{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1;
     letter-spacing:-.03em;color:var(--ink)}
@@ -2382,7 +2380,6 @@
   .nf-lt-t{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
 
   /* Sorte 4 Held: Wappen gross, drei Zahlen im Fuss. */
-  .nf-s-held{--tint:rgba(247,207,74,.12)}
 
   /* Das Zahlenband im Fuss, bis zu drei Werte. */
   .nf-zb{display:flex;border-top:1px solid var(--line)}
@@ -2451,40 +2448,30 @@
     letter-spacing:-.03em;color:var(--ink)}
   .nf-duell-vs i{font-style:normal;font-family:'Sometype Mono',monospace;font-size:8.5px;
     letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-  /* Sorte 10 Serie: das Gesicht links, der Lauf im Fuss. */
-  .nf-s-serie .nf-rub{color:var(--acid2)}
-  .nf-s-serie .nf-motiv{color:var(--acid2);opacity:.1}
-
-  /* Jede Karte traegt einen Schein aus der Ecke, in der Farbe ihrer Rubrik.
-     Er ist so leise, dass zehn Karten untereinander kein Farbverlauf werden
-     [§C25] — aber die Sorte ist damit auch aus dem Augenwinkel zu ahnen. */
-  .nf-s-duell,.nf-s-serie,.nf-s-spiel{--tint:rgba(190,242,100,.055)}
-  .nf-s-ins,.nf-s-badge,.nf-s-woche{--tint:rgba(247,207,74,.075)}
-  /* Sorte 11 und 12: die beiden zusammenfuehrenden Karten. Sie wiegen so
-     schwer wie die Meldungen, die sie buendeln — mehrere davon —, also
-     tragen sie Gold und die starke Kante [§C25]. Der Schein steht etwas
-     kraeftiger als bei einer einzelnen Tafel-Karte: sie fasst mehreres
-     zusammen und soll im Feed als das Ereignis des Moments zu erkennen
-     sein, ohne die Breite von Breaking zu brauchen. */
-  .nf-s-spieler,.nf-s-erfolg{--tint:rgba(247,207,74,.12)}
+  /* Jede Kartenform bekommt ihren eigenen, niedrigen Schimmer. Die Helligkeit
+     variiert innerhalb der Familie; die Fläche bleibt bei allen dunkel. So
+     sind Tafel, Laufbahn und Spieltag beim Scrollen zu trennen, ohne dass
+     zwölf bunte Kartenflächen gegeneinander antreten. */
+  .nf-s-held{--tint:rgba(247,207,74,.09)}
+  .nf-s-woche{--tint:rgba(247,207,74,.06)}
+  .nf-s-tafel{--tint:rgba(194,201,208,.065)}
+  .nf-s-marke{--tint:rgba(194,201,208,.04)}
+  .nf-s-ins,.nf-s-badge{--tint:rgba(167,139,250,.055)}
+  .nf-s-spieler,.nf-s-erfolg{--tint:rgba(167,139,250,.075)}
+  .nf-s-spiel,.nf-s-serie{--tint:rgba(163,230,53,.05)}
+  .nf-s-duell{--tint:rgba(192,132,87,.055)}
   .nf-card.nf-neg{--tint:rgba(240,86,106,.07)}
   .nf-card.read{--tint:rgba(255,255,255,.02)}
 
-  /* ── Der Rand sagt, wie schwer eine Karte wiegt ────────────────────
-     Vier Gewichte, mehr nicht — genau die vier Rollen des Farbgesetzes
-     [§C25]. Die Kante links traegt die Farbe, der Rahmen die Staerke:
-     zehn gleich starke Rahmen untereinander sind eine Liste, keine
-     Rangfolge. Die Werte stehen als Variable, damit die Zustaende
-     (gelesen, wichtig, Breaking) sie ueberschreiben koennen, ohne dass
-     jede Sorte eine eigene Regel braucht. */
-  .nf-card{--kante:2px;--rahmen:rgba(255,255,255,.055)}
-  /* Gold wiegt am schwersten: Titel und heute gehaltene Rekorde. */
-  .nf-s-tafel,.nf-s-ins,.nf-s-badge,.nf-s-woche,.nf-s-held,
-  .nf-s-spieler,.nf-s-erfolg{
-    --kante:3px;--rahmen:rgba(247,207,74,.26)}
-  /* Der Spieltag ist die zweite Ebene: es ist passiert, aber es bleibt nicht. */
-  .nf-s-spiel,.nf-s-duell,.nf-s-serie{--kante:3px;--rahmen:rgba(190,242,100,.2)}
-  /* Rot bleibt der Richtung. */
+  /* Der Rand sagt das Gewicht, die Farbe sagt die Familie. Nur die beiden
+     echten Siegerkarten bekommen drei Pixel. Alle übrigen Geschichten
+     bleiben auf einer ruhigen Kante; Wichtigkeit kommt als Schein hinzu und
+     färbt nicht den kompletten Rahmen gold. */
+  .nf-card{--kante:2px;--rahmen:rgba(var(--story-rgb,185,196,189),.13)}
+  .nf-s-held,.nf-s-woche{--kante:3px;--rahmen:rgba(247,207,74,.25)}
+  .nf-s-tafel,.nf-s-ins,.nf-s-badge,.nf-s-spieler,.nf-s-erfolg{
+    --rahmen:rgba(var(--story-rgb),.18)}
+  .nf-s-spiel,.nf-s-duell,.nf-s-serie{--rahmen:rgba(var(--story-rgb),.16)}
   .nf-card.nf-neg{--rahmen:rgba(240,86,106,.24)}
   /* Der Fun Fact ist der leiseste Bau und traegt deshalb den duennsten Rand. */
   .nf-s-fakt{--kante:2px;--rahmen:rgba(255,255,255,.05)}
@@ -2492,11 +2479,6 @@
   /* Gelesen faellt alles auf das leiseste Mass zurueck: der Feed soll zeigen,
      was noch offen ist, nicht was schon abgehakt wurde. */
   .nf-card.read{--kante:2px;--rahmen:var(--line)}
-  /* Rot bleibt der Richtung [§C25]: die Durststrecke stand im selben Gruen
-     wie die Siegesserie. */
-  .nf-card.nf-neg .nf-rub{color:var(--red)}
-  .nf-card.nf-neg .nf-motiv{color:var(--red);opacity:.07}
-
   /* Sorte 7 Auszeichnung: das Zeichen der Auszeichnung mit ihrer Klasse. */
   .nf-bd{display:flex;align-items:center;gap:10px;padding:9px 13px;border-top:1px solid var(--line)}
   .nf-bd-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
@@ -2526,17 +2508,16 @@
      aus statt nach einem Wasserzeichen. */
   .nf-motiv{position:absolute;right:9px;top:50%;width:96px;height:96px;
     transform:translateY(-50%) rotate(-9deg);pointer-events:none;z-index:0;
-    opacity:.09;color:var(--ink)}
+    opacity:.08;color:var(--story,var(--ink2))}
   .nf-motiv svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.4;
     stroke-linecap:round;stroke-linejoin:round}
   /* Ein weicher Schein hinter dem Zeichen. Als reine Kontur bei sechs Prozent
      war das Motiv auf dem Telefon kaum von einem Kratzer zu unterscheiden. */
   .nf-motiv::before{content:"";position:absolute;inset:-14%;border-radius:50%;
     background:radial-gradient(circle,currentColor,transparent 68%);opacity:.16}
-  .nf-s-tafel .nf-motiv,.nf-s-ins .nf-motiv,.nf-s-held .nf-motiv,
-  .nf-s-woche .nf-motiv,.nf-s-badge .nf-motiv,
-  .nf-s-spieler .nf-motiv,.nf-s-erfolg .nf-motiv{color:var(--gold);opacity:.08}
-  .nf-s-spiel .nf-motiv{color:var(--acid2);opacity:.07}
+  .nf-s-held .nf-motiv{opacity:.1}
+  .nf-s-fakt .nf-motiv{opacity:.05}
+  .nf-card.nf-neg .nf-motiv{opacity:.07}
   .nf-card.read .nf-motiv{opacity:.028}
   /* Alles Uebrige liegt darueber, sonst schneidet das Motiv in die Schrift. */
   .nf-card > *:not(.nf-motiv){position:relative;z-index:1}
@@ -2770,21 +2751,20 @@
   .nd{overflow:hidden;overflow-y:auto}
   .nd > *:not(.nf-motiv){position:relative;z-index:1}
   .nd .nf-motiv{right:-30px;top:76px;transform:rotate(-9deg);width:170px;height:170px;
-    opacity:.05}
-  .nd-s-tafel .nf-motiv,.nd-s-ins .nf-motiv,.nd-s-held .nf-motiv,
-  .nd-s-woche .nf-motiv,.nd-s-badge .nf-motiv{color:var(--gold);opacity:.07}
+    color:var(--story,var(--ink2));opacity:.055}
+  .nd-s-held .nf-motiv{opacity:.075}
   .nd-desc b{color:var(--ink);font-weight:700}
   .nd-satz b{color:var(--ink);font-weight:700}
   .nd-when{display:flex;align-items:center;gap:6px}
   .nd-when svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2;
     stroke-linecap:round;stroke-linejoin:round;opacity:.6}
   /* Breaking bleibt auch im Blatt Breaking: derselbe Balken, derselbe Puls. */
-  .nd-brk{border-color:rgba(240,86,106,.5);
+  .nd.nd-brk{border-color:rgba(240,86,106,.5);
     background:radial-gradient(240px 150px at 6% 0%,rgba(240,86,106,.13),transparent 70%),var(--bg2)}
   .nd-brk .nf-brk-band{margin:-18px -20px 14px;border-radius:18px 18px 0 0}
   .nd-brk .nf-motiv{color:var(--red);opacity:.11}
   .nf-v-streak .fl{color:#ff7849}.nf-v-streak .fl:nth-child(2){color:#ff5a4d}.nf-v-streak .fl:nth-child(3){color:var(--red)}
-  .nf-v-streak .n{font-family:'Sometype Mono',monospace;font-weight:700;font-size:17px;margin-left:5px;color:var(--cc)}
+  .nf-v-streak .n{font-family:'Sometype Mono',monospace;font-weight:700;font-size:17px;margin-left:5px;color:var(--story,var(--ink2))}
   .nf-v-crown .rk{font-family:'Archivo Black',sans-serif;font-size:15px}
   /* Story-Detail-Popover (Layer auf z-index 140, ÜBER Mini-Popup 130) */
   .nd-bg{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.65);
@@ -2792,35 +2772,30 @@
     opacity:0;pointer-events:none;transition:.2s;
     display:flex;align-items:center;justify-content:center;padding:24px}
   .nd-bg.show{opacity:1;pointer-events:auto}
-  .nd{background:var(--bg2);border:1px solid var(--line);border-radius:18px;
+  .nd{background:radial-gradient(260px 180px at 96% 0%,
+      rgba(var(--story-rgb,185,196,189),.065),transparent 72%),var(--bg2);
+    border:1px solid rgba(var(--story-rgb,185,196,189),.16);border-radius:18px;
     padding:18px 20px 16px;max-width:380px;width:100%;max-height:80vh;overflow-y:auto;
     transform:scale(.92);transition:transform .22s cubic-bezier(.2,.8,.2,1);
     z-index:141;position:relative}
   .nd-bg.show .nd{transform:scale(1)}
   .nd-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
   .nd-ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;flex-shrink:0;
-    background:var(--surface);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+    color:var(--story,var(--ink2));background:rgba(var(--story-rgb,185,196,189),.09);
+    box-shadow:inset 0 0 0 1px rgba(var(--story-rgb,185,196,189),.2)}
   /* Dieselbe Familie wie die Rubrikkachel auf der Karte [§C27]: das Blatt
      setzt fort, was die Karte angefangen hat. */
-  .nd-s-tafel .nd-ic,.nd-s-ins .nd-ic,.nd-s-held .nd-ic,
-  .nd-s-woche .nd-ic,.nd-s-badge .nd-ic{background:rgba(247,207,74,.11);
-    box-shadow:inset 0 0 0 1px rgba(247,207,74,.24);color:var(--gold)}
-  .nd-s-spiel .nd-ic,.nd-s-serie .nd-ic,.nd-s-duell .nd-ic{background:rgba(190,242,100,.09);
-    box-shadow:inset 0 0 0 1px rgba(190,242,100,.2);color:var(--acid2)}
   .nd-brk .nd-ic{background:rgba(240,86,106,.14);box-shadow:inset 0 0 0 1px rgba(240,86,106,.3);
     color:var(--red)}
   /* Eine Haarlinie in der Farbe der Sorte am Kopf des Blatts. */
   .nd::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;z-index:2;
-    border-radius:18px 18px 0 0;background:var(--line2)}
-  .nd-s-tafel::before,.nd-s-ins::before,.nd-s-held::before,
-  .nd-s-woche::before,.nd-s-badge::before{background:linear-gradient(90deg,var(--gold),transparent 78%)}
-  .nd-s-spiel::before,.nd-s-serie::before,.nd-s-duell::before{
-    background:linear-gradient(90deg,var(--acid2),transparent 78%)}
+    border-radius:18px 18px 0 0;
+    background:linear-gradient(90deg,var(--story,var(--line2)),transparent 78%)}
   .nd-brk::before{background:linear-gradient(90deg,var(--red),transparent 70%)}
   .nd-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .nd-title-wrap{flex:1;min-width:0}
   .nd-cat{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;
-    font-family:'Sometype Mono',monospace;color:var(--muted);margin-bottom:3px}
+    font-family:'Sometype Mono',monospace;color:var(--story,var(--muted));margin-bottom:3px}
   .nd-title{font-family:'Archivo Black',sans-serif;font-size:17px;line-height:1.2;letter-spacing:-.01em}
   .nd-when{color:var(--muted);font-size:9.5px;font-family:'Sometype Mono',monospace;
     margin-top:5px;letter-spacing:.04em}
@@ -4780,7 +4755,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.12.926d8ef9';
+const BUILD_VERSION='2026.09.12.64312e7d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -23481,6 +23456,14 @@ function _newsUhrzeit(when){
   return new Date(when).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
 }
 
+// Rot ist eine Richtung, keine Rubrik [§C25]. Karte und Detailblatt nutzen
+// dieselbe Ableitung, damit eine Durststrecke beim Öffnen nicht wieder den
+// grünen Schimmer einer positiven Serie annimmt.
+function _newsIstNegativ(s){
+  const d = (s && s.dataRef) || {};
+  return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+}
+
 function _newsCardHtmlM2(s, isRead, istTagesKarte){
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
@@ -23621,7 +23604,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Rot ist die Richtung [§C25]: eine Karte, die von einer Pleitenserie oder
   // einer Schande erzaehlt, traegt es in Rubrik und Motiv. Die Durststrecke
   // stand vorher im selben Gruen wie die Siegesserie.
-  const negativ = /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+  const negativ = _newsIstNegativ(s);
   return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
@@ -23891,11 +23874,10 @@ function _newsBadgeHalterText(badgeId){
   } catch(e){ return ''; }
 }
 
-// Acht Sorten, acht Bauformen. Eine Karte soll man an der FORM erkennen,
+// Zwölf Sorten, zwölf Bauformen. Eine Karte soll man an der FORM erkennen,
 // bevor man den ersten Satz gelesen hat. Vorher unterschied die Sorten nur
-// eine Randfarbe, und zehn Karten untereinander sahen alle gleich aus.
-// Die Farben folgen dem Farbgesetz [§C25]: Gold trägt, was Titel und Rekord
-// ist, Rot bleibt der Richtung, Metall ist alles Übrige.
+// eine Randfarbe, und zehn Karten untereinander sahen alle gleich aus. Die
+// ruhigen Farbfamilien im CSS sind die zweite Orientierung, nicht die Form.
 function _newsSorte(s){
   const d = (s && s.dataRef) || {};
   const t = d.type || '';
@@ -24307,7 +24289,8 @@ function openNewsDetail(sid){
   // Karte seit dem Rubrikband nicht mehr gibt.
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
-  nd.className = 'nd nd-s-' + sorte + (brk ? ' nd-brk' : '');
+  const negativ = _newsIstNegativ(s);
+  nd.className = 'nd nd-s-' + sorte + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
