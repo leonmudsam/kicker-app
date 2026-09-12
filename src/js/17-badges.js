@@ -1204,16 +1204,11 @@ function getCachedBadges(id){
   return r;
 }
 
-// Berechnet alle freigeschalteten Badges für einen Spieler (mit Anzahl für multi-Badges).
-// `ms` schneidet die Partienliste ab: das Prestige braucht den Stand VOR dem
-// letzten Spieltag, um eine frisch erreichte Insignium-Stufe von einer lange
-// gehaltenen zu unterscheiden [§C30]. Jede zählende Funktion nimmt die Liste
-// ohnehin entgegen, es fehlte nur der Durchgriff.
-function computeBadges(id, ms){
-  const liste = ms || matches;
+// Berechnet alle freigeschalteten Badges für einen Spieler (mit Anzahl für multi-Badges)
+function computeBadges(id){
   const result=[];
   BADGES.forEach(b=>{
-    const c=b.count(id,liste);
+    const c=b.count(id,matches);
     if(c>0) result.push({id:b.id,em:b.em,ic:b.ic,name:b.name,desc:b.desc,count:c});
   });
   return result;

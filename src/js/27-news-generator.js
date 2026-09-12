@@ -1878,44 +1878,31 @@ function _buildStories(){
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronget', e); }
 
   // ── Eine neue Stufe am Insignium ─────────────────────────────────────
-  // Gemeldet wird der WECHSEL, nicht der Abstand: der Stand von heute gegen
-  // den vor dem letzten Spieltag, genau wie bei den Liga-Rekorden weiter
-  // oben und aus demselben Grund [§C30].
+  // Es gibt keinen „Stand von gestern" fürs Prestige — ein zweiter voller
+  // Lauf wäre zu teuer. Das Gedächtnis ist stattdessen der Feed selbst: die
+  // Story-ID trägt Spieler und Stufe, und persistierte Stories werden nie
+  // doppelt eingefügt. Gemeldet wird nur, wer die Schwelle GERADE erst
+  // überschritten hat — sonst stünden beim ersten Lauf alle zwölf Stufen
+  // auf einmal im Feed.
   //
-  // Vorher galt jemand als frisch aufgestiegen, solange er noch nahe an
-  // seiner Schwelle stand — zuletzt das erste Viertel der Strecke zur
-  // nächsten Stufe, mindestens 150 Punkte. Ein Abstand kann diese Frage
-  // nicht beantworten. Gemessen über alle 52 Aufstiege der Ligageschichte
-  // hebt eine EINZELNE Partie jemanden im Median 52 und im äußersten Fall
-  // 138 Punkte über die Schwelle: ein Fenster, das alle 52 fängt, muss 150
-  // breit sein und steht danach im Schnitt sechzehn Partien lang offen.
-  // Damit entstand die Karte irgendwann in diesen sechzehn Partien und trug
-  // als Zeitpunkt die neueste Partie — alle sieben Karten in der Datenbank
-  // waren auf den 8. und 10. September datiert, für Stufen, die im Juni und
-  // Juli erreicht wurden. Julian trägt den Volutenkranz seit dem 23. Juli.
-  // Dazu schwankt das Prestige, weil ein Liga-Rekord den Halter wechseln
-  // kann: das Fenster öffnete sich immer wieder neu, und dieselbe Stufe
-  // galt in den Daten vierzehnmal als „gerade erreicht".
-  //
-  // Der Schnitt kostet einen zweiten Prestige-Lauf, gemessen 71 ms. Der
-  // Generator ist memoisiert und läuft einmal je neuer Partie, nicht je
-  // Bild.
+  // „Gerade erst" war ein Viertel ÜBER der Schwelle, und das war zweimal
+  // falsch. Erstens hing das Fenster an der Höhe der Schwelle statt an der
+  // Strecke bis zur nächsten: am Schildring waren es 60 Punkte, am
+  // Volutenkranz 180. Zweitens ist eine einzige legendäre Chronik 140 Punkte
+  // wert [§C39] — ein Fenster, das schmaler ist als der kleinste Schritt,
+  // wird übersprungen. Gemessen meldete der Feed danach KEINE Stufe mehr,
+  // weil der volle Katalog jeden Spieler weit über sein Fenster hob.
+  // Jetzt: das erste Viertel der Strecke zur nächsten Stufe, mindestens aber
+  // so breit wie der größte Einzelgewinn.
+  const INS_SPRUNG = 150;
   try {
-    // `_letzteMs` weiter oben liegt in einem eigenen Block; hier steht die
-    // Zahl noch einmal, statt eine Variable ueber den halben Generator zu
-    // ziehen, die nur zwei Stellen brauchen.
-    const _insLetzte = matches.length ? mts(matches[matches.length - 1]) : 0;
-    const _insTag0 = _insLetzte ? (function(){
-      const d = new Date(_insLetzte); d.setHours(0, 0, 0, 0); return d.getTime() - 1;
-    })() : 0;
     (players || []).filter(p => p && !p.hidden).forEach(p => {
       const P = prestigeOf(p.id);
       if(!P || P.stufe < 1) return;
-      // Ohne Schnitt gibt es keinen Vergleich, also auch keine Meldung: eine
-      // Liga ohne Partien hat niemanden aufsteigen sehen.
-      if(!_insTag0) return;
-      const vorher = prestigeOf(p.id, _insTag0);
-      if(!vorher || vorher.stufe >= P.stufe) return;
+      const schwelle = INSIGNIEN[P.stufe].min;
+      const naechste = INSIGNIEN[P.stufe + 1];
+      const spanne = naechste ? (naechste.min - schwelle) : schwelle;
+      if(P.punkte >= schwelle + Math.max(spanne * 0.25, INS_SPRUNG)) return;
       const oben = P.stufe >= 3;   // Lorbeerreif und Ordensstern
       stories.push({
         id: 'ins_' + p.id + '_' + INSIGNIEN[P.stufe].key,
