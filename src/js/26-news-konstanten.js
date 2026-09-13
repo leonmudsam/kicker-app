@@ -51,6 +51,22 @@ const NEWS_CATEGORIES = {
 };
 
 // LocalStorage-Keys (versioniert für künftige Migrations)
+// Ambient-Stories sind weiterhin eine ruhige Kartenform, aber nicht mehr ein
+// einziger grauer Block. Ihre bereits persistierte `ambientRubrik` steuert
+// Rubrikname und Farbschnitt: vier vertraute Familien statt sieben neuer
+// Vollfarben. So unterscheiden sich Liga-Zahl, Form, Duell und Laufbahn schon
+// beim Ueberfliegen, ohne den Feed bunt oder eine Zahl faelschlich golden zu
+// machen [§C25]. `ton` ist zugleich der kontrollierte CSS-Klassensuffix.
+const NEWS_AMBIENT_STIL = {
+  liga:         {label:'LIGA IN ZAHLEN',    ton:'liga'},
+  persoenlich:  {label:'SPIELER IM FOKUS',  ton:'persoenlich'},
+  form:         {label:'DIE FORMKURVE',     ton:'form'},
+  duell:        {label:'DUELL IN ZAHLEN',   ton:'duell'},
+  laufbahn:     {label:'AUS DER LAUFBAHN',  ton:'laufbahn'},
+  chronik:      {label:'AUS DER CHRONIK',   ton:'chronik'},
+  auszeichnung: {label:'AUSZEICHNUNGEN',    ton:'auszeichnung'},
+};
+
 const NEWS_LS_SEEN  = 'eso_news_seen_v1';
 const NEWS_LS_TOAST = 'eso_news_toast_v1';  // v8.1: zeitstempel + count des letzten Toasts
 const NEWS_LS_MAX_SEEN = 600; // Ring-Buffer-Limit (deckt das ganze Fenster)

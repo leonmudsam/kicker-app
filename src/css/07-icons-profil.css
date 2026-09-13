@@ -562,13 +562,13 @@
   /* ── Die Karte des Tages ──────────────────────────────────────────
      Sie steht groß und traegt einen Streifen. Vorher stand ihre Schlagzeile
      im Tageskopf und gleich darunter noch einmal auf der Karte selbst. Der
-     Streifen ist Metall und nicht Gold: die Karte des Tages ist eine
-     Auswahl, keine Auszeichnung [§C25]. */
+     Grund des Streifens bleibt Metall; goldener Lauf, Rahmen und äußerer
+     Schein kennzeichnen die Auswahl, ohne ihre eigentliche Sorte zu ersetzen
+     [§C25]. */
   .nf-gross{border-color:var(--line2);padding-top:0}
   /* Die Karte des Tages traegt ein Band mit Stern. Sie ist die eine Karte,
      an der der Blick haengen bleiben soll; der Rest des Tages steht ruhig
-     darunter. Metall und nicht Gold: sie ist eine Auswahl, keine
-     Auszeichnung [§C25]. */
+     darunter. */
   /* Die Karte des Tages bewegt sich, aber leiser als Breaking: ein Licht
      wandert einmal alle sieben Sekunden durch das Band, und der Stern atmet.
      Vorher stand sie still da und war von einer Rubrikzeile nur durch ihren
@@ -597,11 +597,10 @@
   .nf-gross .nf-erg-sc{font-size:26px}
   .nf-gross .nf-wert b{font-size:34px}
   .nf-gross .nf-zb b{font-size:17px}
-  /* Die Karte des Tages traegt einen kraeftigeren Rahmen und einen Schein
-     nach innen. Sie ist die eine Karte, an der der Blick haengen bleiben
-     soll — der Rest des Tages steht ruhig darunter. */
-  .nf-gross{border-color:var(--line2);border-radius:14px;
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 12px 30px -18px #000}
+  /* Die Karte des Tages trägt Gold nicht nur im Band, sondern als echten
+     Schein HINTER der ganzen Karte: dieselbe Tiefe wie Breaking, nur ruhiger.
+     Sorte, Rubrik und Motiv behalten dabei ihre eigene Familie [§C25]. */
+  .nf-gross{border-radius:14px}
   .nf-card.read{opacity:.82}
   /* „Wichtig" verstärkt die Kante, es umrandet nicht die ganze Karte. Als
      Vollrahmen leuchtete die halbe Liste gold — und was die halbe Liste
@@ -614,6 +613,13 @@
     -7px 0 20px -12px rgba(var(--story-rgb,185,196,189),.42)}
   .nf-card.read.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
     -7px 0 18px -14px rgba(var(--story-rgb,185,196,189),.2)}
+  /* Nach `important`, damit der allgemeine Wichtigkeits-Schein die goldene
+     Tagesauswahl nicht wieder überschreibt. `--rahmen` greift auch dann,
+     wenn die gemeinsame Kartenregel weiter unten die Border setzt. */
+  .nf-card.nf-gross{--rahmen:rgba(247,207,74,.3);
+    box-shadow:inset 0 0 0 1px rgba(247,207,74,.055),
+      0 10px 30px -16px rgba(247,207,74,.62),
+      0 0 28px -19px rgba(247,207,74,.92)}
   .nf-when{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
     font-size:9.5px;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
   .nf-dot{width:8px;height:8px;border-radius:50%;background:var(--story,var(--ink2));
@@ -832,8 +838,9 @@
     --rahmen:rgba(var(--story-rgb),.18)}
   .nf-s-spiel,.nf-s-duell,.nf-s-serie{--rahmen:rgba(var(--story-rgb),.16)}
   .nf-card.nf-neg{--rahmen:rgba(240,86,106,.24)}
-  /* Der Fun Fact ist der leiseste Bau und traegt deshalb den duennsten Rand. */
-  .nf-s-fakt{--kante:2px;--rahmen:rgba(255,255,255,.05)}
+  /* Der Fun Fact bleibt der leiseste Bau. Sein dünnster Rand folgt nun aber
+     seiner Ambient-Rubrik, statt jede Karte wieder auf Grau zu ziehen. */
+  .nf-s-fakt{--kante:2px;--rahmen:rgba(var(--story-rgb),.14)}
   .nf-card{border-color:var(--rahmen);border-left-width:var(--kante)}
   /* Gelesen faellt alles auf das leiseste Mass zurueck: der Feed soll zeigen,
      was noch offen ist, nicht was schon abgehakt wurde. */
@@ -851,11 +858,27 @@
   .nf-bd-t i{font-style:normal;font-family:'Sometype Mono',monospace;font-size:9px;
     letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 
-  /* Sorte 8 Fun Fact: bewusst der leiseste Bau. Gestrichelter Rand, Metall
-     statt Gold. Er soll nicht aussehen wie ein Rekord. */
-  .nf-s-fakt{border-style:dashed;border-left-style:solid;--tint:transparent;
-    background:var(--bg2)}
-  .nf-s-fakt .nf-h{font-size:13.5px}
+  /* Sorte 8 Fun Fact: eine dunkle Zahlenkarte mit ruhigem Farbschnitt. Die
+     Kategorie sitzt nur an Kante, Rubrik, Zahl, Motiv und zwei schwachen
+     Lichtfeldern — keine Vollfarbe, kein Gold, kein Regenbogen. */
+  .nf-s-fakt{border-style:solid;
+    background:linear-gradient(90deg,var(--neu),transparent 55%),
+      radial-gradient(190px 115px at 2% 0%,rgba(var(--story-rgb),.075),transparent 72%),
+      radial-gradient(230px 135px at 100% 110%,rgba(var(--story-rgb),.035),transparent 74%),
+      var(--bg2);
+    box-shadow:inset 0 1px 0 rgba(var(--story-rgb),.055)}
+  .nf-s-fakt .nf-h{font-size:14px}
+  .nf-s-fakt .nf-wert.metall b{color:var(--story);
+    text-shadow:0 0 14px rgba(var(--story-rgb),.2)}
+  /* Vier vertraute Familien fuer sieben redaktionelle Rubriken. Verwandte
+     Inhalte duerfen gleich klingen; die Rubrik benennt den Unterschied. */
+  .nf-fakt-liga,.nd-fakt-liga,
+  .nf-fakt-chronik,.nd-fakt-chronik{--story:var(--blue);--story-rgb:86,180,232}
+  .nf-fakt-persoenlich,.nd-fakt-persoenlich,
+  .nf-fakt-laufbahn,.nd-fakt-laufbahn,
+  .nf-fakt-auszeichnung,.nd-fakt-auszeichnung{--story:var(--purple);--story-rgb:167,139,250}
+  .nf-fakt-form,.nd-fakt-form{--story:var(--acid2);--story-rgb:163,230,53}
+  .nf-fakt-duell,.nd-fakt-duell{--story:var(--bronze);--story-rgb:192,132,87}
 
   /* ── Motiv, Winkel und fette Akzente ──────────────────────────────
      Die Karte war ein dunkles Rechteck mit Text darin, und zehn davon
@@ -875,7 +898,7 @@
   .nf-motiv::before{content:"";position:absolute;inset:-14%;border-radius:50%;
     background:radial-gradient(circle,currentColor,transparent 68%);opacity:.16}
   .nf-s-held .nf-motiv{opacity:.1}
-  .nf-s-fakt .nf-motiv{opacity:.05}
+  .nf-s-fakt .nf-motiv{opacity:.075}
   .nf-card.nf-neg .nf-motiv{opacity:.07}
   .nf-card.read .nf-motiv{opacity:.055}
   /* Alles Uebrige liegt darueber, sonst schneidet das Motiv in die Schrift. */

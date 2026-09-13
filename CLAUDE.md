@@ -89,7 +89,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **711**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **712**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -259,10 +259,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   3. Grün/Rot = ausschließlich Richtung
   4. Metall = alles Übrige
   Der News-Feed setzt daneben eine **leise Navigationsschicht**, keine neue
-  Wertung: Gold bleibt Spieler des Tages und Woche, kühles Metall führt durch
-  Ewige Tafel und Bestmarken, Violett durch Insignien und Auszeichnungen,
+  Wertung: Rubrikgold bleibt Spieler des Tages und Woche vorbehalten; die
+  Karte des Tages trägt Gold nur als übergeordneten Auswahlschimmer. Kühles
+  Metall führt durch Ewige Tafel und Bestmarken, Violett durch Insignien und Auszeichnungen,
   Grün durch positive Spieltagsdynamik, Bronze durch das direkte Duell und
-  Rot durch Breaking oder eine negative Richtung. Fun Facts bleiben neutral.
+  Rot durch Breaking oder eine negative Richtung. Fun Facts bleiben die
+  leiseste Kartenform, tragen innerhalb davon aber einen kleinen Farbschnitt:
+  Blau für Liga/Chronik, Violett für Spieler/Laufbahn/Auszeichnungen, Grün
+  für Form und Bronze für Duelle.
   Diese Farben sitzen nur an Kante, Rubrik, Zeichen und einem schwachen
   Schimmer; alle Kartenflächen bleiben dunkel. Zwölf eigene Vollfarben wären
   ein Regenbogen, eine einzige Goldfamilie machte dagegen jede zweite Karte
@@ -337,8 +341,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Ungelesen-Zustand überschrieben hätte — und das ist der wichtigere.
   Die Sorte setzt dafür genau eine Familie über `--story` und `--story-rgb`:
   Gold für Tages-/Wochensieger, Silber für Tafel/Bestmarke, Violett für
-  Laufbahn/Auszeichnungen, Grün für Spiel/Serie, Bronze für Duelle und Metall
-  für Fakten. Karten derselben Familie unterscheiden sich nur in der Stärke
+  Laufbahn/Auszeichnungen, Grün für Spiel/Serie und Bronze für Duelle. Fakten
+  greifen dieselben Familien als besonders schwachen Farbschnitt auf; ihre
+  gespeicherte `ambientRubrik` setzt dazu Klasse und sprechenden Rubriknamen.
+  Karten derselben Familie unterscheiden sich nur in der Stärke
   ihres Schimmers. Das hält den Feed ruhig und verhindert zugleich, dass
   Tafel, Insignium, Auszeichnung und Sammelkarte alle golden aussehen.
   **Die Bildzone macht die Karte nie höher als ihren Text.** Die beiden Wappen
@@ -364,14 +370,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   ist daran erkannt, bevor ein Wort gelesen ist; ihr Rahmen glimmt, weil ein
   stehender roter Rahmen beim Scrollen ein Farbton unter vielen war. Die
   **Karte des Tages** bewegt sich leiser: Ein goldener Auswahlschimmer wandert
-  einmal alle sieben Sekunden durch ihr Band, der goldene Stern atmet. Ihre
+  einmal alle sieben Sekunden durch ihr Band, der goldene Stern atmet und ein
+  warmer Goldschein liegt wie bei Breaking hinter der gesamten Karte. Ihre
   eigentliche Familie bleibt gleichzeitig an Kante, Rubrik und Motiv sichtbar;
   eine Tafelgeschichte wird durch die Auswahl also nicht vollständig golden.
   Beides ruht bei
   `prefers-reduced-motion`, und `tests/blatt` misst das nach.
   **Der Rand sagt, wie schwer eine Karte wiegt** (`--kante`, `--rahmen`): Nur
-  Tages- und Wochensieger tragen die starke Goldkante, alle anderen Sorten
-  eine ruhige Kante ihrer Familie. Der Fun Fact bleibt am leisesten, Rot
+  Tages- und Wochensieger tragen die starke Goldkante; die Karte des Tages
+  bekommt unabhängig von ihrer Sorte einen feineren Goldrahmen samt äußerem
+  Schein. Alle anderen Sorten behalten eine ruhige Kante ihrer Familie. Der Fun Fact bleibt am leisesten, Rot
   bleibt der Richtung. „Wichtig" leuchtet und verbreitert nicht — als es die
   Kante auf vier Pixel setzte, trug ein Fun Fact denselben Rand wie ein
   Liga-Rekord.
