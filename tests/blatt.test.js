@@ -757,13 +757,20 @@ const ok = (c, msg, det) => {
     const host = document.createElement('div');
     const sorten = ['spiel','tafel','ins','held','woche','duell','serie','badge','marke',
                     'fakt','spieler','erfolg'];
+    const faktKeys = ['liga','persoenlich','form','duell','laufbahn','chronik','auszeichnung'];
+    const bau = window.__k.eval('_newsCardHtmlM2');
     host.innerHTML = sorten.map(s => `<div class="nf-card nf-s-${s}">
       <div class="nf-top"><span class="nf-rub"><i></i><b>${s}</b></span></div>
       <span class="nf-motiv"></span></div>`).join('')
       + '<div class="nf-card nf-s-tafel nf-gross"><div class="nf-gross-band"></div></div>'
       + '<div class="nf-card nf-s-held nf-gross"><div class="nf-gross-band"></div></div>'
       + '<div class="nd nd-s-tafel"><div class="nd-ic"></div><span class="nf-motiv"></span></div>'
-      + '<div class="nd nd-s-serie nd-neg"><div class="nd-ic"></div></div>';
+      + '<div class="nd nd-s-serie nd-neg"><div class="nd-ic"></div></div>'
+      + faktKeys.map(k => `<div data-fakttest="${k}">${bau({
+          id:'f_'+k, cat:'fun', ic:'chartBar', title:'Zahl der Liga',
+          desc:'Ein echter Wert aus der Liga.', when:'2026-08-27T10:00:00Z',
+          dataRef:{type:'ambient',ambientRubrik:k,vv:'12',vl:'Wert'}
+        }, false, false)}</div>`).join('');
     document.body.appendChild(host);
     const farben = {};
     sorten.forEach(s => {
@@ -776,9 +783,21 @@ const ok = (c, msg, det) => {
     });
     const gross = [...host.querySelectorAll('.nf-gross-band')]
       .map(b => getComputedStyle(b, '::after').backgroundImage);
+    const grossSchatten = [...host.querySelectorAll('.nf-gross')]
+      .map(c => getComputedStyle(c).boxShadow);
+    const fakten = {};
+    faktKeys.forEach(k => {
+      const c = host.querySelector(`[data-fakttest="${k}"] .nf-card`);
+      fakten[k] = {
+        rubrik:c.querySelector('.nf-rub b').textContent.trim(),
+        farbe:getComputedStyle(c.querySelector('.nf-rub')).color,
+        wert:getComputedStyle(c.querySelector('.nf-wert b')).color,
+        grund:getComputedStyle(c).backgroundImage
+      };
+    });
     const detail = host.querySelector('.nd-s-tafel');
     const negativ = host.querySelector('.nd-neg');
-    const out = {farben, gross,
+    const out = {farben, gross, grossSchatten, fakten,
       detailIcon:getComputedStyle(detail.querySelector('.nd-ic')).color,
       detailMotiv:getComputedStyle(detail.querySelector('.nf-motiv')).color,
       detailLinie:getComputedStyle(detail, '::before').backgroundImage,
@@ -796,12 +815,19 @@ const ok = (c, msg, det) => {
      && farbe('spieler') === farbe('erfolg') && farbe('ins') !== farbe('held'),
      'Laufbahn und Auszeichnungen bilden eine violette Familie', farbe('ins'));
   ok(farbe('spiel') === farbe('serie') && farbe('duell') !== farbe('spiel')
-     && new Set(Object.values(palette.farben).map(x => x.rubrik)).size === 6,
-     'Spiel, Duell und Fakten bleiben in sechs ruhigen Farbfamilien lesbar',
-     new Set(Object.values(palette.farben).map(x => x.rubrik)).size + ' Familien');
+     && new Set(Object.values(palette.farben).map(x => x.rubrik)).size === 6
+     && new Set(Object.values(palette.fakten).map(x => x.farbe)).size === 4
+     && Object.values(palette.fakten).every(x => x.farbe === x.wert && x.grund !== 'none')
+     && palette.fakten.liga.rubrik === 'LIGA IN ZAHLEN'
+     && palette.fakten.form.rubrik === 'DIE FORMKURVE'
+     && palette.fakten.duell.rubrik === 'DUELL IN ZAHLEN',
+     'Spiel, Duell und Fakten bleiben in ruhigen, lesbaren Farbfamilien',
+     new Set(Object.values(palette.fakten).map(x => x.farbe)).size + ' Fakten-Familien');
   ok(palette.gross[0] === palette.gross[1]
-     && palette.gross[0].includes('247, 207, 74'),
-     'die Karte des Tages traegt immer ihren goldenen Auswahlschimmer', palette.gross.join(' / '));
+     && palette.gross[0].includes('247, 207, 74')
+     && palette.grossSchatten.every(x => x.includes('247, 207, 74')),
+     'die Karte des Tages traegt Band und aeusseren Schein immer in Gold',
+     palette.grossSchatten.join(' / '));
   ok(palette.detailIcon === farbe('tafel') && palette.detailMotiv === farbe('tafel')
      && palette.detailLinie.includes('194, 201, 208'),
      'das Detailblatt setzt die Farbfamilie der Karte fort',

@@ -36,7 +36,10 @@ function openNewsDetail(sid){
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
   const negativ = _newsIstNegativ(s);
-  nd.className = 'nd nd-s-' + sorte + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
+  const faktStil = sorte === 'fakt' && (s.dataRef || {}).type === 'ambient'
+    ? (NEWS_AMBIENT_STIL[(s.dataRef || {}).ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
+  nd.className = 'nd nd-s-' + sorte + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
+    + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}

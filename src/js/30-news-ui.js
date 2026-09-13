@@ -377,6 +377,8 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
   const sorte = _newsSorte(s);
+  const faktStil = sorte === 'fakt' && d.type === 'ambient'
+    ? (NEWS_AMBIENT_STIL[d.ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
   const brk = _isBreaking(s);
   const imp = (_isImportant(s) && !isRead) ? ' important' : '';
   // Die Karte des Tages steht groß, mit einem Streifen darüber. Vorher stand
@@ -524,7 +526,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // einer Schande erzaehlt, traegt es in Rubrik und Motiv. Die Durststrecke
   // stand vorher im selben Gruen wie die Siegesserie.
   const negativ = _newsIstNegativ(s);
-  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
+  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
@@ -567,7 +569,9 @@ function _newsRubrik(sorte, s){
     // erreichen.
     case 'spieler':return 'ALLES AUF EINMAL';
     case 'erfolg': return 'GEMEINSAM GEHOLT';
-    default:       return 'LIGA IN ZAHLEN';
+    default:       return d.type === 'ambient'
+      ? (NEWS_AMBIENT_STIL[d.ambientRubrik] || NEWS_AMBIENT_STIL.liga).label
+      : 'LIGA IN ZAHLEN';
   }
 }
 
