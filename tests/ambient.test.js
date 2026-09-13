@@ -365,10 +365,10 @@ ok(_insHistorisch.zeiten.every(t => t === _insHistorisch.kreuz),
 ok(_insHistorisch.gleich && new Set(_insHistorisch.ids).size === _insHistorisch.ids.length,
    'erneute Generatorlaeufe bleiben idempotent', _insHistorisch.ids.join(', '));
 
-console.log('\n=== 9c. RUECKBLICKE SIND VOM FEED AUS ERREICHBAR ===');
-// `showPotwRecap` und `showPotdRecap` sind gebaut und oeffnen sich am
-// richtigen Tag von selbst — vom Feed aus fuehrte kein Weg dorthin. Wer die
-// Karte drei Tage spaeter liest, kam an die Auswertung nicht mehr heran.
+console.log('\n=== 9c. STORY-BLAETTER BLEIBEN BEI IHRER GESCHICHTE ===');
+// Story-Blätter zeigen ihren gesamten Beleg direkt. Zusätzliche Wege in
+// Rückblicke und Spielerprofile verdoppeln nur die Navigation und sind dort
+// bewusst entfernt. Gerade POTD darf dabei keine Partie abschneiden.
 const _rueck = JSON.parse(K.eval(`JSON.stringify((function(){
   const roh = _buildStories();
   const einer = t => roh.find(s => (s.dataRef||{}).type === t) || null;
@@ -379,10 +379,17 @@ const _rueck = JSON.parse(K.eval(`JSON.stringify((function(){
   const wo = einer('woche');
   const teile = wo ? ((wo.dataRef||{}).teile || []) : [];
   const tw = teile.find(t => t.art === 'team') || null;
+  const potd = einer('potd');
+  const pd = potd ? (potd.dataRef||{}) : {};
+  const pids = (Array.isArray(pd.playerIds) && pd.playerIds.length) ? pd.playerIds : [pd.playerId];
+  const potdBody = body(potd);
+  const alleBodies = roh.map(body).join('');
   return {
-    potw: body(einer('potw')).indexOf('data-recap="potw"') >= 0,
-    potd: body(einer('potd')).indexOf('data-recap="potd"') >= 0,
-    hatPotw: !!einer('potw'), hatPotd: !!einer('potd'),
+    keineProfile: alleBodies.indexOf('Profil von ') < 0,
+    keineRueckblicke: alleBodies.indexOf('data-recap=') < 0 && alleBodies.indexOf('Rückblick öffnen') < 0,
+    hatPotd: !!potd,
+    potdErwartet: potd ? _newsTagPartien(pd.dayKey, pids).length : 0,
+    potdGezeigt: (potdBody.match(/class="nd-match"/g)||[]).length,
     hatWoche: !!wo,
     wocheStunde: wo ? new Date(wo.when).getHours() : -1,
     wocheTag: wo ? new Date(wo.when).getDay() : -1,
@@ -391,12 +398,13 @@ const _rueck = JSON.parse(K.eval(`JSON.stringify((function(){
     wocheGesicht: wo ? _newsPids(wo).length : 0,
     teamWoche: !!tw,
     // Das Duo kommt aus derselben Rechnung wie der Teams-Tab.
-    teamWocheGesicht: tw ? (tw.pids||[]).length : 0,
-    wocheRueck: body(wo).indexOf('data-recap="potw"') >= 0
+    teamWocheGesicht: tw ? (tw.pids||[]).length : 0
   };
 })())`));
-ok(!_rueck.hatPotw || _rueck.potw, 'die Karte „Spieler der Woche" fuehrt zum Rueckblick');
-ok(!_rueck.hatPotd || _rueck.potd, 'die Karte „Spieler des Tages" fuehrt zum Rueckblick');
+ok(_rueck.keineProfile, 'kein Story-Blatt trägt einen Profil-Button');
+ok(_rueck.keineRueckblicke, 'kein Story-Blatt trägt einen Rückblick-Button');
+ok(!_rueck.hatPotd || _rueck.potdGezeigt === _rueck.potdErwartet,
+   'Spieler des Tages zeigt ausnahmslos alle Partien', _rueck.potdGezeigt + ' von ' + _rueck.potdErwartet);
 ok(_rueck.hatWoche, 'der Wochenrueckblick steht als eine Karte');
 ok(!_rueck.hatWoche || _rueck.wocheTag === 0, 'die Wochenkarte steht am Sonntag', _rueck.wocheTag);
 ok(!_rueck.hatWoche || _rueck.wocheStunde === 23, 'die Wochenkarte steht um 23:00', _rueck.wocheStunde);
@@ -406,7 +414,6 @@ ok(!_rueck.hatWoche || _rueck.wocheGesicht > 0, 'die Wochenkarte zeigt ein Gesic
 ok(_rueck.teamWoche, 'das Team der Woche ist eine ihrer Zeilen');
 ok(!_rueck.teamWoche || _rueck.teamWocheGesicht === 2, 'das Team der Woche zeigt beide Gesichter [§C33]',
    _rueck.teamWocheGesicht + '');
-ok(!_rueck.hatWoche || _rueck.wocheRueck, 'die Wochenkarte fuehrt in den Wochen-Rueckblick');
 
 console.log('\n=== 10. DER FEED [§C33] ===');
 // Der Feed war die einzige Ansicht der App, in der ein Spieler nur ein Name
@@ -433,9 +440,18 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     ohneGesicht: sichtbar.filter(s => _newsPids(s).length > 0 && !_newsGesichtHtml(s)).length,
     wappen: sichtbar.filter(s => _newsGesichtHtml(s).indexOf('class="ins"') >= 0).length,
     matchKarten: sichtbar.filter(s => (s.dataRef||{}).matchId).length,
-    matchOhneBand: sichtbar.filter(s => (s.dataRef||{}).matchId
-      && _newsCardHtmlM2(s, false, false).indexOf('class="nf-erg"') < 0)
-      .map(s => (s.dataRef||{}).type),
+    matchResult: sichtbar.filter(s => (s.dataRef||{}).type === 'match_result').length,
+    matchOhneBand: sichtbar.filter(s => {
+      const d=s.dataRef||{}; if(!d.matchId) return false;
+      const m=matches.find(x=>x.id===d.matchId);
+      const html=_newsCardHtmlM2(s, false, false);
+      const ids=m ? [m.a1,m.a2,m.b1,m.b2].filter(Boolean) : [];
+      const pm=pmap();
+      return !m || html.indexOf('class="nf-erg"') < 0
+        || (html.match(/class="nf-erg-team/g)||[]).length < 2
+        || (html.match(/class="rav zn/g)||[]).length < 4
+        || ids.some(id=>!pm[id] || html.indexOf(esc(pm[id].name))<0);
+    }).map(s => (s.dataRef||{}).type),
     // Keine Ausrufezeichen [CLAUDE.md §7].
     rufe: roh.filter(s => /!/.test(s.title||'') || /!/.test(s.desc||''))
              .map(s => s.title).slice(0, 5),
@@ -570,9 +586,9 @@ ok(_feed.gesichter.koepfe >= 8, 'der Feed zeigt viele verschiedene Gesichter',
    _feed.gesichter.koepfe + ' Köpfe');
 ok(_feed.kleinsteMoeglich === true,
    'auch ein Spieler mit wenigen Partien kann eine Story bekommen');
-ok(_feed.matchKarten >= 3,
-   'der Feed erzaehlt regelmaessig von konkreten Partien',
-   _feed.matchKarten + ' Karten mit Matchbezug');
+ok(_feed.matchKarten >= 3 && _feed.matchResult > 0,
+   'der Feed erzaehlt regelmaessig von konkreten und besonderen Partien',
+   _feed.matchKarten + ' Karten mit Matchbezug, ' + _feed.matchResult + ' Ergebnisgeschichte');
 ok(_feed.matchOhneBand.length === 0,
    'jede konkrete Partie zeigt Ergebnis und Beteiligte direkt auf der Karte',
    _feed.matchOhneBand.join(', ') || 'alle mit Ergebnisband');
@@ -1673,8 +1689,8 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
   }
   return aus;
 })())`));
-ok(_mix.quote >= .40 && _mix.quote <= .60,
-   'Tafel und Spieltag plus automatische Fun Facts teilen den Feed ungefaehr halb',
+ok(_mix.quote >= .35 && _mix.quote <= .55,
+   'mehr Spieltag bleibt mit Tafel und Fun Facts ausgewogen',
    `${_mix.tafel} zu ${_mix.spiel}+${_mix.fun} · ${Math.round(_mix.quote*100)} % Tafel; `
    + `${_mix.tafelKarten} zu ${_mix.spielKarten}+${_mix.fun} Karten · ${Math.round(_mix.kartenQuote*100)} %; `
    + JSON.stringify({tafel:_mix.tafelTypen,spiel:_mix.spielTypen}));

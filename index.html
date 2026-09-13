@@ -2300,6 +2300,16 @@
     --story:var(--acid2);--story-rgb:163,230,53}
   .nf-s-duell,.nd-s-duell{--story:var(--bronze);--story-rgb:192,132,87}
   .nf-s-fakt,.nd-s-fakt{--story:var(--ink2);--story-rgb:185,196,189}
+  /* Die Kammern der Ewigen Tafel bekommen verwandte, entsättigte Töne.
+     Farbe ordnet hier ein; sie soll weder mit Breaking noch mit der goldenen
+     Karte des Tages konkurrieren. */
+  .nf-tafel-rekord,.nd-tafel-rekord{--story:#69a9c4;--story-rgb:105,169,196}
+  .nf-tafel-marke,.nd-tafel-marke{--story:#a7b875;--story-rgb:167,184,117}
+  .nf-tafel-chronik,.nd-tafel-chronik{--story:#9a86bd;--story-rgb:154,134,189}
+  .nf-tafel-fuegung,.nd-tafel-fuegung{--story:#c39a6e;--story-rgb:195,154,110}
+  .nf-tafel-schatten,.nd-tafel-schatten{--story:#b88188;--story-rgb:184,129,136}
+  .nf-tafel-insignium,.nd-tafel-insignium{--story:#a48ac4;--story-rgb:164,138,196}
+  .nf-tafel-mix,.nd-tafel-mix{--story:#87a8b2;--story-rgb:135,168,178}
   .nf-card.nf-neg,.nd.nd-neg,.nf-card.nf-brk,.nd.nd-brk{
     --story:var(--red);--story-rgb:240,86,106}
   /* ── Das Rubrikband ───────────────────────────────────────────────
@@ -2350,10 +2360,17 @@
   /* Sorte 1 Spieltag: das Ergebnis oben, vier Wappen und der Endstand. */
   /* Das Ergebnisband steht UEBER dem Rubrikband und braucht deshalb keine
      eigene Unterkante: sonst stehen dort zwei Striche uebereinander. */
-  .nf-erg{display:flex;align-items:center;gap:10px;padding:12px 13px 11px;
+  .nf-erg{display:flex;align-items:center;gap:10px;padding:11px 13px 10px;
     background:linear-gradient(96deg,rgba(190,242,100,.07),transparent 72%)}
-  .nf-erg-s{display:flex;gap:5px;flex:1;min-width:0}
-  .nf-erg-s.re{justify-content:flex-end}
+  .nf-erg-s{display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+    flex:1;min-width:0;overflow:hidden}
+  .nf-erg-s.re{align-items:flex-end;text-align:right}
+  .nf-erg-avs{display:flex;align-items:center;min-height:48px}
+  .nf-erg-avs .rav+.rav{margin-left:-11px}
+  .nf-erg-team{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;font-family:'Sometype Mono',monospace;font-size:10.5px;
+    font-weight:650;line-height:1.2;color:var(--muted)}
+  .nf-erg-s.w .nf-erg-team{color:var(--ink)}
   .nf-erg-sc{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:19px;
     letter-spacing:-.03em;display:flex;align-items:baseline;gap:1px}
   .nf-erg-sc b.w{color:var(--ink)} .nf-erg-sc b.v{color:var(--faint)}
@@ -2364,6 +2381,7 @@
   .nf-wert b{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1;
     letter-spacing:-.03em;color:var(--ink)}
   .nf-wert.gold b{color:var(--gold)}
+  .nf-wert.ton b{color:var(--story,var(--ink2))}
   .nf-wert.metall b{color:var(--ink2);font-size:23px}
   .nf-wert.rot b{color:var(--red);font-size:23px}
   /* Neben dem Wappen steht der Wert enger als allein in der Bildzone. */
@@ -2437,6 +2455,20 @@
     display:grid;place-items:center;background:var(--surface2);
     border:1px solid var(--line);color:var(--muted)}
   .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+  /* Gemischte Tafel-Momente bleiben eine Karte, aber nicht eine graue Liste:
+     jede Zeile trägt den dezenten Farbton ihres Inhalts. */
+  .nf-s-tafel .nf-sam-z{--zeile-rgb:135,168,178;border-left:2px solid
+    rgba(var(--zeile-rgb),.24);padding-left:11px;
+    background:linear-gradient(90deg,rgba(var(--zeile-rgb),.045),transparent 58%)}
+  .nf-s-tafel .nf-sam-rekord{--zeile-rgb:105,169,196}
+  .nf-s-tafel .nf-sam-marke{--zeile-rgb:167,184,117}
+  .nf-s-tafel .nf-sam-chronik{--zeile-rgb:154,134,189}
+  .nf-s-tafel .nf-sam-fuegung{--zeile-rgb:195,154,110}
+  .nf-s-tafel .nf-sam-schatten{--zeile-rgb:184,129,136}
+  .nf-s-tafel .nf-sam-insignium{--zeile-rgb:164,138,196}
+  .nf-s-tafel .nf-sam-z .nf-sam-i{color:rgb(var(--zeile-rgb));
+    border-color:rgba(var(--zeile-rgb),.22);background:rgba(var(--zeile-rgb),.075);
+    box-shadow:0 0 12px -8px rgba(var(--zeile-rgb),.72)}
   .nf-sam-m{padding:6px 13px;font-size:10px;color:var(--faint);
     border-top:1px solid var(--line)}
 
@@ -2463,7 +2495,7 @@
      zwölf bunte Kartenflächen gegeneinander antreten. */
   .nf-s-held{--tint:rgba(247,207,74,.09)}
   .nf-s-woche{--tint:rgba(247,207,74,.06)}
-  .nf-s-tafel{--tint:rgba(194,201,208,.065)}
+  .nf-s-tafel{--tint:rgba(var(--story-rgb),.1)}
   .nf-s-marke{--tint:rgba(194,201,208,.04)}
   .nf-s-ins,.nf-s-badge{--tint:rgba(167,139,250,.055)}
   .nf-s-spieler,.nf-s-erfolg{--tint:rgba(167,139,250,.075)}
@@ -2478,13 +2510,14 @@
      färbt nicht den kompletten Rahmen gold. */
   .nf-card{--kante:2px;--rahmen:rgba(var(--story-rgb,185,196,189),.13)}
   .nf-s-held,.nf-s-woche{--kante:3px;--rahmen:rgba(247,207,74,.25)}
-  .nf-s-tafel,.nf-s-ins,.nf-s-badge,.nf-s-spieler,.nf-s-erfolg{
+  .nf-s-tafel{--rahmen:rgba(var(--story-rgb),.27)}
+  .nf-s-ins,.nf-s-badge,.nf-s-spieler,.nf-s-erfolg{
     --rahmen:rgba(var(--story-rgb),.18)}
   .nf-s-spiel,.nf-s-duell,.nf-s-serie{--rahmen:rgba(var(--story-rgb),.16)}
   .nf-card.nf-neg{--rahmen:rgba(240,86,106,.24)}
   /* Der Fun Fact bleibt der leiseste Bau. Sein dünnster Rand folgt nun aber
      seiner Ambient-Rubrik, statt jede Karte wieder auf Grau zu ziehen. */
-  .nf-s-fakt{--kante:2px;--rahmen:rgba(var(--story-rgb),.14)}
+  .nf-s-fakt{--kante:2px;--rahmen:rgba(var(--story-rgb),.1)}
   .nf-card{border-color:var(--rahmen);border-left-width:var(--kante)}
   /* Gelesen faellt alles auf das leiseste Mass zurueck: der Feed soll zeigen,
      was noch offen ist, nicht was schon abgehakt wurde. */
@@ -2507,22 +2540,25 @@
      Lichtfeldern — keine Vollfarbe, kein Gold, kein Regenbogen. */
   .nf-s-fakt{border-style:solid;
     background:linear-gradient(90deg,var(--neu),transparent 55%),
-      radial-gradient(190px 115px at 2% 0%,rgba(var(--story-rgb),.075),transparent 72%),
-      radial-gradient(230px 135px at 100% 110%,rgba(var(--story-rgb),.035),transparent 74%),
+      radial-gradient(190px 115px at 2% 0%,rgba(var(--story-rgb),.058),transparent 72%),
+      radial-gradient(230px 135px at 100% 110%,rgba(var(--story-rgb),.028),transparent 74%),
       var(--bg2);
-    box-shadow:inset 0 1px 0 rgba(var(--story-rgb),.055)}
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.035),
+      -5px 0 18px -16px rgba(var(--story-rgb),.48)}
+  .nf-s-fakt:not(.read){--neu:rgba(255,255,255,.018)}
   .nf-s-fakt .nf-h{font-size:14px}
   .nf-s-fakt .nf-wert.metall b{color:var(--story);
-    text-shadow:0 0 14px rgba(var(--story-rgb),.2)}
-  /* Vier vertraute Familien fuer sieben redaktionelle Rubriken. Verwandte
-     Inhalte duerfen gleich klingen; die Rubrik benennt den Unterschied. */
+    text-shadow:0 0 12px rgba(var(--story-rgb),.1)}
+  /* Vier nahe beieinanderliegende Metalltöne statt vier Signalfarben. Die
+     Rubrik bleibt erkennbar, der Fun-Fact-Block wirkt wieder wie eine ruhige
+     Nebenstrecke des Feeds. */
   .nf-fakt-liga,.nd-fakt-liga,
-  .nf-fakt-chronik,.nd-fakt-chronik{--story:var(--blue);--story-rgb:86,180,232}
+  .nf-fakt-chronik,.nd-fakt-chronik{--story:#8fa1a6;--story-rgb:143,161,166}
   .nf-fakt-persoenlich,.nd-fakt-persoenlich,
   .nf-fakt-laufbahn,.nd-fakt-laufbahn,
-  .nf-fakt-auszeichnung,.nd-fakt-auszeichnung{--story:var(--purple);--story-rgb:167,139,250}
-  .nf-fakt-form,.nd-fakt-form{--story:var(--acid2);--story-rgb:163,230,53}
-  .nf-fakt-duell,.nd-fakt-duell{--story:var(--bronze);--story-rgb:192,132,87}
+  .nf-fakt-auszeichnung,.nd-fakt-auszeichnung{--story:#9b96a3;--story-rgb:155,150,163}
+  .nf-fakt-form,.nd-fakt-form{--story:#94a08e;--story-rgb:148,160,142}
+  .nf-fakt-duell,.nd-fakt-duell{--story:#a19990;--story-rgb:161,153,144}
 
   /* ── Motiv, Winkel und fette Akzente ──────────────────────────────
      Die Karte war ein dunkles Rechteck mit Text darin, und zehn davon
@@ -2542,7 +2578,14 @@
   .nf-motiv::before{content:"";position:absolute;inset:-14%;border-radius:50%;
     background:radial-gradient(circle,currentColor,transparent 68%);opacity:.16}
   .nf-s-held .nf-motiv{opacity:.1}
-  .nf-s-fakt .nf-motiv{opacity:.075}
+  .nf-s-fakt .nf-motiv{opacity:.05}
+  /* Kleine Bewegung nur auf der Tafel-Rubrikkachel: genug Leben beim
+     Scrollen, ohne dass die ganze Karte pulsiert. */
+  .nf-s-tafel:not(.read) .nf-rub i{animation:nfTafelAtmen 5.4s ease-in-out infinite}
+  @keyframes nfTafelAtmen{
+    0%,100%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.17),0 0 0 rgba(var(--story-rgb),0)}
+    50%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.3),0 0 10px -3px rgba(var(--story-rgb),.34)}}
+  @media(prefers-reduced-motion:reduce){.nf-s-tafel .nf-rub i{animation:none}}
   .nf-card.nf-neg .nf-motiv{opacity:.07}
   .nf-card.read .nf-motiv{opacity:.055}
   /* Alles Uebrige liegt darueber, sonst schneidet das Motiv in die Schrift. */
@@ -2667,9 +2710,6 @@
     letter-spacing:-.03em;display:flex;align-items:baseline;gap:1px}
   .nd-erg-sc b.w{color:var(--ink)} .nd-erg-sc b.v{color:var(--faint)}
   .nd-erg-sc i{font-style:normal;color:var(--faint);font-size:16px}
-  /* Der Fuss: der Weg weiter. */
-  .nd-fuss{margin-top:14px;display:flex;flex-direction:column;gap:8px}
-  .nd-fuss .btn{width:100%}
   .nd-held-nm{font-family:'Archivo Black',sans-serif;font-size:17px;letter-spacing:-.02em;line-height:1.1}
   .nd-held-un{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
     font-size:10.5px;color:var(--muted);margin-top:6px}
@@ -4809,7 +4849,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.13.530e07ed';
+const BUILD_VERSION='2026.09.13.5a38333a';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18307,6 +18347,11 @@ const NEWS_LIMITS = {
   // was genau dort passiert ist. Das ist kein zusaetzliches Kartenbudget;
   // bei einem vollen Tag ersetzen sie schwächere, abstrakte Meldungen.
   matchProTagMin: 1,
+  // Ergebnis-Stories entstehen aus mehreren klaren Matchmustern (Krimi,
+  // Kantersieg, Zu-null und echter Außenseiter-Sieg). Zwei Kandidaten pro
+  // Spieltag reichen, um konkrete Partien regelmäßig sichtbar zu machen,
+  // ohne aus dem Feed einen Ergebnisdienst zu bauen.
+  matchResultProTag: 2,
   // Redaktionelles Mindestgewicht im 14-Tage-Fenster. Gezählt werden die
   // sichtbaren Zeilen eines Bundles, nicht nur sein äußerer Kartenrahmen.
   // 40–60 % ist die belastbare Auslegung von „ungefähr halb"; Pflichtkarten,
@@ -18468,6 +18513,7 @@ const STORY_PRIO = {
   win_streak:        68,
   loss_streak:       66,
   top_form:          64,   // weiter vorn als sonst [§11.0b]
+  match_result:      63,   // ein außergewöhnliches, exakt belegtes Ergebnis
   chronik_geholt:    62,
   team_streak:       60,
   insignium_stufe:   58,
@@ -19472,33 +19518,40 @@ function _buildStories(){
           ? JSON.parse(lastArchived.top_elo || '[]')
           : (lastArchived.top_elo || []);
         if(topElo.length && topElo[0] && topElo[0].id && pm[topElo[0].id]){
-          // v9.18: Die Saison-Tafel (§13) reist in DIESER Story mit — bewusst
-          // KEINE eigene Breaking-Meldung pro Titel und keine extra Karte für
-          // Ehrentitel. Ein Saisonabschluss = eine Breaking News, sonst wäre
-          // der 1. des Monats zugespammt. Details stehen im Sheet.
-          let _tafel = null;
-          try {
-            const T = seasonTitles(lastArchived.id);
-            if(T && T.awarded.length){
-              _tafel = {
-                n: T.awarded.length,
-                empty: T.empty.length,
-                list: T.awarded.map(a => ({t:a.titleId, n:a.name, ic:a.ic, tone:a.tone, pid:a.pid, ev:a.ev}))
-              };
-            }
-          } catch(e){}
-          const _extra = _tafel
-            ? ` ${_tafel.n} Chronik-Einträge vergeben${_tafel.empty ? `, ${_tafel.empty} Spieler gehen leer aus` : ''}.`
-            : '';
+          // Der Monatsrückblick erzählt NICHT noch einmal die Chronik, die
+          // direkt daneben als eigene Tafel-Karte steht. Er bekommt seine
+          // Fakten aus den Partien dieses Monats: Umfang, Tore, enge Spiele
+          // und die beiden auffälligen Ergebnisse. Alles bleibt damit eine
+          // Ableitung derselben Matchdaten wie Rangliste und Verlauf.
+          const _sm = matchesInSeason(lastArchived.id);
+          let _tore = 0, _eng = 0, _klar = null, _torreich = null;
+          _sm.forEach(m => {
+            const a = Number(m.score_a) || 0, b = Number(m.score_b) || 0;
+            const diff = Math.abs(a - b), gesamt = a + b;
+            _tore += gesamt;
+            if(diff <= 2) _eng++;
+            if(!_klar || diff > _klar.wert) _klar = {wert:diff, matchId:m.id, score:a+':'+b};
+            if(!_torreich || gesamt > _torreich.wert) _torreich = {wert:gesamt, matchId:m.id, score:a+':'+b};
+          });
+          const _fakten = {
+            spiele:_sm.length,
+            tore:_tore,
+            engeSpiele:_eng,
+            toreJeSpiel:_sm.length ? Math.round(_tore / _sm.length * 10) / 10 : 0,
+            klarstes:_klar,
+            torreichstes:_torreich
+          };
           stories.push({
             id: 'season_recap_'+lastArchived.id,
             cat: 'season',
             ic: 'crown',
             title: `${nameOf(topElo[0].id)} ist Saison-Champion`,
-            desc: `Die Saison ${lastArchived.id} ist abgeschlossen. ${nameOf(topElo[0].id)} mit ${topElo[0].elo} Elo an der Spitze.${_extra}`,
+            desc: `${_fakten.spiele} Partien, ${_fakten.tore} Tore und ${_fakten.engeSpiele} enge Spiele prägten ${seasonLabel(lastArchived.id)}. `
+                + `${nameOf(topElo[0].id)} schließt den Monat mit ${topElo[0].elo} Elo an der Spitze ab.`,
             when: sStart,
             prio: STORY_PRIO.season_recap,
-            dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id, championElo: topElo[0].elo, topElo, tafel: _tafel}
+            dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id,
+                      championElo: topElo[0].elo, topElo, fakten:_fakten}
           });
         }
       }
@@ -19805,6 +19858,88 @@ function _buildStories(){
       });
     }
   } catch(e){}
+
+  // ── 16d. Das Ergebnis selbst ist die Geschichte ─────────────────────
+  // Nicht jeder Spieltag liefert einen Rekord oder eine neue Auszeichnung.
+  // Außergewöhnliche Partien sollen trotzdem im Blatt stehen: mit Endstand,
+  // beiden Teams und genau dem Merkmal, das diese Begegnung besonders macht.
+  // Pro Partie gewinnt nur das stärkste Muster, pro Tag höchstens zwei. So
+  // entstehen mehr echte Spieltagsgeschichten, aber kein Ergebnisprotokoll.
+  try {
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
+    const jeTag = new Map();
+    const badgeJeMatch = new Map();
+    stories.forEach(s => {
+      const d = (s && s.dataRef) || {};
+      if(d.type !== 'badge_unlocked' || !d.matchId || !d.badgeId) return;
+      const set = badgeJeMatch.get(d.matchId) || new Set();
+      set.add(d.badgeId); badgeJeMatch.set(d.matchId, set);
+    });
+    for(let i = matches.length - 1; i >= 0; i--){
+      const m = matches[i], ts = mts(m);
+      if(ts > now.getTime()) continue;
+      if(ts < seit) break;
+      const a = Number(m.score_a) || 0, b = Number(m.score_b) || 0;
+      const hoch = Math.max(a, b), tief = Math.min(a, b);
+      const diff = hoch - tief;
+      const winners = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).filter(Boolean);
+      const losers = (m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2]).filter(Boolean);
+      if(!winners.length || winners.some(id => !pm[id] || pm[id].hidden)) continue;
+      const h = histMap.get(m.id);
+      const expA = h && h.expA != null ? h.expA : (m.exp_a == null ? 0.5 : m.exp_a);
+      const chance = m.winner === 'A' ? expA : 1 - expA;
+      let art = '', rang = 0, title = '', desc = '', ic = 'ball';
+      const wn = _namenListe(winners.map(nameOf));
+      const ln = _namenListe(losers.map(nameOf));
+      if(hoch === 10 && tief === 0){
+        art = 'zu_null'; rang = 69; ic = 'hundred';
+        title = `${wn} gewinnen ohne Gegentor`;
+        desc = `Ein makelloses 10:0 gegen ${ln}. Auf der anderen Seite fällt kein einziger Treffer.`;
+      } else if(chance >= 0.20 && chance < 0.35){
+        art = 'upset'; rang = 67; ic = 'giantSlayer';
+        title = `${wn} stürzen die Favoriten`;
+        desc = `Nur ${Math.max(1, Math.round(chance * 100))} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;
+      } else if(diff === 1 && tief >= 8){
+        art = 'krimi'; rang = 65; ic = 'thriller';
+        title = `${wn} retten ein ${a}:${b} ins Ziel`;
+        desc = `Nur 1 Tor trennt beide Teams. ${ln} bleiben bis zum letzten Ball im Spiel.`;
+      } else if(diff >= 7){
+        art = 'kanter'; rang = 61; ic = 'thumbsUp';
+        title = `${wn} setzen ein klares Zeichen`;
+        desc = `${a}:${b} gegen ${ln}. Mit ${diff} Toren Abstand ist das eine klare Angelegenheit.`;
+      } else if(diff === 2 && tief >= 8){
+        art = 'eng'; rang = 59; ic = 'thriller';
+        title = `${wn} entscheiden ein enges Spiel`;
+        desc = `${ln} halten die Partie bis in die Schlussphase offen. Am Ende steht ein ${a}:${b}.`;
+      }
+      if(!art) continue;
+      // Eine Auszeichnung aus genau diesem Match darf denselben Fakt nicht
+      // noch einmal als Ergebnis-Story erzählen. In allen anderen Fällen ist
+      // die Partie selbst die einzige Nachricht über dieses Resultat.
+      const bm = badgeJeMatch.get(m.id) || new Set();
+      const abgedeckt = art === 'zu_null' ? bm.has('perfect_win')
+        : art === 'upset' ? bm.has('upset_king')
+        : (art === 'krimi' || art === 'eng') ? (bm.has('krimi') || bm.has('nerves_of_steel'))
+        : false;
+      if(abgedeckt) continue;
+      const d = new Date(ts);
+      const tag = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const list = jeTag.get(tag) || [];
+      list.push({m, ts, art, rang, title, desc, ic, winners, losers, chance, diff});
+      jeTag.set(tag, list);
+    }
+    jeTag.forEach(list => list
+      .sort((x, y) => y.rang - x.rang || y.ts - x.ts)
+      .slice(0, NEWS_LIMITS.matchResultProTag || 2)
+      .forEach(x => stories.push({
+        id: `match_result_${x.art}_${x.m.id}`,
+        cat: 'highlight', ic:x.ic, title:x.title, desc:x.desc,
+        when:new Date(x.ts), prio:STORY_PRIO.match_result + (x.rang - 59),
+        dataRef:{type:'match_result', resultKind:x.art, matchId:x.m.id,
+                 playerIds:x.winners, winners:x.winners, losers:x.losers,
+                 chance:x.art === 'upset' ? x.chance : undefined, margin:x.diff}
+      })));
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] match result', e); }
 
   // ── 17. Serienkiller (Match beendete ≥4er Sieges-Streak des Gegners) ──
   // Nutzt getStreakSnapshots — pro Match {pid: streak_VOR_match}. v9.7: Schwelle
@@ -22530,7 +22665,7 @@ function _consolidateStories(list){
   const SAMMEL_SPIEL = new Set(['badge_unlocked','streak_killer','giant_slayer','group',
     'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee',
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
-    'rivalry','rivalry_milestone']);
+    'rivalry','rivalry_milestone','match_result']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling','chronik_geholt']);
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
@@ -22896,6 +23031,7 @@ function _consolidateStories(list){
       const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
       const motivName = {
         top_clash:'Spitzenduell', giant_slayer:'Favoritensturz',
+        match_result:'besonderes Ergebnis',
         streak_killer:'Serienbruch', win_streak:'Siegesserie',
         loss_streak:'Durststrecke', top_form:'Formlauf',
         team_streak:'Teamserie', team_loss_streak:'gemeinsame Durststrecke',
@@ -22959,6 +23095,7 @@ function _consolidateStories(list){
                 // sie handelt.
                 teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t), text: t.desc,
                                         typ: (t.dataRef||{}).type || '',
+                                        kammer: (t.dataRef||{}).kammer || '',
                                          // Ein Spieler zeigt je Monat nur EINE
                                          // Chronik [§C32]. Auch in einer großen
                                          // Tafel muss sichtbar bleiben, welche
@@ -23804,11 +23941,38 @@ function _newsIstNegativ(s){
   return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
 }
 
+// Die Ewige Tafel hat mehrere Kammern. Ein einziger silberner Ton machte
+// Rekorde, Monatschroniken und Fügungen beim Scrollen ununterscheidbar. Die
+// Familie wird ausschließlich aus den bereits gespeicherten Fachdaten
+// abgeleitet; alte Stories und zusammengeführte Karten profitieren damit
+// ohne Migration. Bei einem Bundle aus mehreren Familien bleibt ein ruhiger
+// Mischton, statt eine einzelne Zeile optisch zum Sieger zu erklären.
+function _newsTafelTon(s){
+  const d = (s && s.dataRef) || {};
+  const familie = x => {
+    const typ = String((x && (x.type || x.typ)) || '');
+    if(typ === 'insignium_stufe') return 'insignium';
+    if(typ.indexOf('chronik_') === 0) return 'chronik';
+    if(typ.indexOf('rekord_') === 0){
+      const kammer = (x && x.kammer) || d.kammer || '';
+      if(kammer === 'mark') return 'marke';
+      if(kammer === 'fuegung') return 'fuegung';
+      if(kammer === 'shame') return 'schatten';
+      return 'rekord';
+    }
+    return '';
+  };
+  const teile = d.type === 'sammel' && Array.isArray(d.teile) ? d.teile : [d];
+  const arten = [...new Set(teile.map(familie).filter(Boolean))];
+  return arten.length === 1 ? arten[0] : (arten.length > 1 ? 'mix' : 'rekord');
+}
+
 function _newsCardHtmlM2(s, isRead, istTagesKarte){
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
   const sorte = _newsSorte(s);
+  const tafelTon = sorte === 'tafel' ? _newsTafelTon(s) : '';
   const faktStil = sorte === 'fakt' && d.type === 'ambient'
     ? (NEWS_AMBIENT_STIL[d.ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
   const brk = _isBreaking(s);
@@ -23848,7 +24012,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     // bisher zwar, wie viele Spuren zusammenlaufen, ließ aber alle genannten
     // Spieler bildlich verschwinden. Die kompakte Chipgruppe bleibt neben
     // dem Wert und macht keinen einzelnen Halter zum Hauptdarsteller.
-    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'gold') : ''}${_newsGesichtHtml(s)}</div>`;
+    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'ton') : ''}${_newsGesichtHtml(s)}</div>`;
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
@@ -23958,7 +24122,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // einer Schande erzaehlt, traegt es in Rubrik und Motiv. Die Durststrecke
   // stand vorher im selben Gruen wie die Siegesserie.
   const negativ = _newsIstNegativ(s);
-  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
+  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
@@ -24128,13 +24292,29 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
   // eine Sache vollstaendig zeigen sollen: dort waere „und 2 weitere" genau
   // das Verstecken, gegen das die Buendelung gebaut ist.
   const grenze = vollstaendig ? rest.length : 3;
+  // In einer gemischten Tafel-Karte bekommt jede Spur den Ton ihrer Kammer.
+  // Der Kartenkopf bleibt eine gemeinsame Geschichte, die Zeilen verraten
+  // aber sofort, ob darunter Rekord, Bestmarke, Chronik, Fügung, Schatten
+  // oder ein neues Insignium zusammengekommen sind.
+  const tafelTon = t => {
+    const typ = String((t && (t.typ || t.type)) || '');
+    if(typ === 'insignium_stufe') return 'insignium';
+    if(typ.indexOf('chronik_') === 0) return 'chronik';
+    if(typ.indexOf('rekord_') !== 0) return '';
+    if(t.kammer === 'mark') return 'marke';
+    if(t.kammer === 'fuegung') return 'fuegung';
+    if(t.kammer === 'shame') return 'schatten';
+    return 'rekord';
+  };
   // Die Marke sagt in zwei Worten, welche Zeile in der Monatstafel landet
   // [§C32] — Metall, sie zeichnet niemanden aus [§C25].
-  return `<div class="nf-sam">${rest.slice(0, grenze).map(t =>
-    `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
+  return `<div class="nf-sam">${rest.slice(0, grenze).map(t => {
+    const ton = tafelTon(t);
+    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
     + `<span>${_newsBetont(t.titel || '')}</span>`
     + (t.marke ? `<b class="nf-sam-k">${esc(t.marke)}</b>` : '')
-    + `</div>`).join('')}`
+    + `</div>`;
+  }).join('')}`
     + (rest.length > grenze ? `<div class="nf-sam-m">und ${rest.length - grenze} weitere</div>` : '')
     + `</div>`;
 }
@@ -24324,14 +24504,18 @@ function _newsErgebnisBand(matchId){
   const m = (matches || []).find(x => x.id === matchId);
   if(!m) return '';
   const pm = pmap();
-  const wappen = ids => ids.filter(id => pm[id])
-    .map(id => avHtml(pm[id], '', {ins:true, px:30, feuer:0})).join('');
+  const team = ids => {
+    const echt = ids.filter(id => pm[id]);
+    return `<span class="nf-erg-avs">${echt
+      .map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</span>`
+      + `<span class="nf-erg-team">${esc(echt.map(id => pm[id].name).join(' & '))}</span>`;
+  };
   const aWin = m.winner === 'A';
   return `<div class="nf-erg">
-    <div class="nf-erg-s">${wappen([m.a1, m.a2])}</div>
+    <div class="nf-erg-s${aWin?' w':''}">${team([m.a1, m.a2])}</div>
     <div class="nf-erg-sc"><b class="${aWin?'w':'v'}">${m.score_a}</b>`
     + `<i>:</i><b class="${aWin?'v':'w'}">${m.score_b}</b></div>
-    <div class="nf-erg-s re">${wappen([m.b1, m.b2])}</div>
+    <div class="nf-erg-s re${aWin?'':' w'}">${team([m.b1, m.b2])}</div>
   </div>`;
 }
 
@@ -24482,6 +24666,7 @@ function _newsTagSpannung(s){
     rekord_erstmals:920, rekord_gesteigert:870, chronik_geholt:850,
     insignium_stufe:840, badge_unlocked:800, lead_change:980,
     elo_record:1000, streak_record:1000, team_streak:770,
+    match_result:760,
     win_streak:750, rivalry_milestone:730, rivalry:690,
     potd:620, potw:640, woche:700
   };
@@ -24700,9 +24885,11 @@ function openNewsDetail(sid){
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
   const negativ = _newsIstNegativ(s);
+  const tafelTon = sorte === 'tafel' ? _newsTafelTon(s) : '';
   const faktStil = sorte === 'fakt' && (s.dataRef || {}).type === 'ambient'
     ? (NEWS_AMBIENT_STIL[(s.dataRef || {}).ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
-  nd.className = 'nd nd-s-' + sorte + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
+  nd.className = 'nd nd-s-' + sorte + (tafelTon ? ' nd-tafel-' + tafelTon : '')
+    + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
     + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
@@ -24751,12 +24938,6 @@ function openNewsDetail(sid){
       const sid = el.dataset.seasonTable;
       closeNewsDetail();
       sheetNav(() => { try { showSeasonTable(sid); } catch(e){} });
-    };
-  });
-  nd.querySelectorAll('[data-recap]').forEach(el => {
-    el.onclick = (e) => { e.stopPropagation();
-      const t = el.dataset.recap;
-      sheetNav(() => (t === 'potd' ? showPotdRecap({force:true}) : showPotwRecap({force:true})));
     };
   });
   nd.querySelectorAll('[data-chron]').forEach(el => {
@@ -24888,21 +25069,6 @@ function _newsBlattErgebnis(matchId){
     </div></div>`;
 }
 
-// Der Fuss: der Weg weiter. Zum Profil, zur Partie — die typ-eigenen Knoepfe
-// (Rueckblick, Rekord) stehen in der Mitte und bleiben dort.
-function _newsBlattFuss(s){
-  const d = s.dataRef || {};
-  const pm = pmap();
-  let ids = [];
-  try { ids = (_newsPids(s) || []).filter(id => pm[id]); } catch(e){}
-  const knoepfe = [];
-  if(ids.length === 1){
-    knoepfe.push(`<button class="btn ghost sm" data-pid="${esc(ids[0])}">Profil von ${esc(pm[ids[0]].name)}</button>`);
-  }
-  if(!knoepfe.length) return '';
-  return `<div class="nd-fuss">${knoepfe.join('')}</div>`;
-}
-
 // ── Das Medaillon ────────────────────────────────────────────────────
 // Eine Auszeichnung ist das Einzige im Feed, das man sich VERDIENT — und sie
 // stand als graue Zeile „Seltenheit: Negative" im Blatt. Jetzt trägt sie
@@ -24979,12 +25145,13 @@ function _newsVerfolger(rekordId, halter, wert){
 function _newsTagPartien(dayKey, pid){
   if(!dayKey) return [];
   try {
+    const ids = new Set((Array.isArray(pid) ? pid : [pid]).filter(Boolean));
     return matches.filter(m => {
       const t = new Date(m.created_at);
       const k = t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0')
               + '-' + String(t.getDate()).padStart(2,'0');
       if(k !== dayKey) return false;
-      return !pid || [m.a1, m.a2, m.b1, m.b2].indexOf(pid) >= 0;
+      return !ids.size || [m.a1, m.a2, m.b1, m.b2].some(id => ids.has(id));
     });
   } catch(e){ return []; }
 }
@@ -25052,7 +25219,8 @@ let _ndKopfMatch = null;
 // nicht noch einmal als Text.
 let _ndZeichenUnten = false;
 
-// Kopf, Mitte, Fuss. Die Mitte ist typ-eigen, Kopf und Fuss sind es nie.
+// Kopf und typ-eigene Mitte. Das Blatt endet danach direkt beim eindeutigen
+// Schließen-Knopf; Profil- und Rückblick-Sprünge verdoppelten die Navigation.
 function _newsDetailBody(s){
   const d = s.dataRef || {};
   // Die Mitte wird ZUERST gebaut. Nur so weiss der Kopf, ob das Zeichen schon
@@ -25067,7 +25235,7 @@ function _newsDetailBody(s){
   _ndZeichenUnten = mitte.indexOf('nd-ins') >= 0;
   const kopf = _newsBlattKopf(s);
   _ndZeichenUnten = false;
-  return kopf + mitte + _newsBlattFuss(s);
+  return kopf + mitte;
 }
 
 function _newsDetailMitte(s){
@@ -25220,6 +25388,18 @@ function _newsDetailMitte(s){
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">Die Sensation</div>${pct}` + (matchHtml ? matchHtml : '');
       }
+      case 'match_result': {
+        const fakten = {
+          zu_null: ['Ohne Gegentor', 'Kein Treffer für die Gegenseite'],
+          upset:   ['Vor dem Spiel', d.chance != null ? `${Math.max(1, Math.round(d.chance * 100))} % Siegchance` : 'Außenseiter'],
+          krimi:   ['Entscheidung', '1 Tor Unterschied'],
+          kanter:  ['Entscheidung', `${d.margin || 0} Tore Unterschied`],
+          eng:     ['Entscheidung', `${d.margin || 2} Tore Unterschied`]
+        }[d.resultKind] || ['Ergebnis', 'Besondere Partie'];
+        return `<div class="nd-section">Was dieses Spiel besonders macht</div>
+          <div class="nd-stat-row"><div class="nd-stat-label">${esc(fakten[0])}</div>
+            <div class="nd-stat-val acid">${esc(fakten[1])}</div></div>`;
+      }
       case 'group': {
         // v8.8: zusammengefasste Karte ("N Pechvögel: …") — alle Beteiligten
         // tappbar, mit ihrem jeweiligen Wert (frag).
@@ -25257,21 +25437,16 @@ function _newsDetailMitte(s){
               `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
                 <div class="nd-stat-label">${esc(nameOf(pid))}</div><div class="nd-stat-val">›</div></div>`).join('')
           : '';
-        // Der volle Rueckblick ist gebaut (`showPotwRecap`/`showPotdRecap`) und
-        // oeffnet sich am richtigen Tag von selbst — vom Feed aus war er
-        // bisher nicht erreichbar. Wer die Karte drei Tage spaeter liest,
-        // kam an die Auswertung nicht mehr heran.
-        const knopf = `<button class="btn ghost sm" data-recap="${d.type}"
-            style="margin-top:12px;width:100%">Rückblick öffnen</button>`;
         // Die Partien des Tages. „Kein anderer holte mehr Siege" ist eine
-        // Behauptung, und das Blatt zeigte sie nicht — jetzt steht darunter,
-        // welche Spiele es waren.
-        const tag = _newsTagPartien(d.dayKey, pids[0]);
+        // Behauptung, und das Blatt zeigte sie nicht. Die Liste darf nicht
+        // nach vier Zeilen abbrechen: an vollen Spieltagen gingen dadurch
+        // genau die Partien verloren, auf denen die Tageswertung beruht.
+        const tag = _newsTagPartien(d.dayKey, pids);
         const spiele = tag.length
-          ? `<div class="nd-section">Die Partien an diesem Tag</div>`
-            + tag.slice(0, 4).map(m => _newsMatchVsBlock(m.id)).join('')
+          ? `<div class="nd-section">${pids.length > 1 ? 'Die Partien der Tagessieger' : 'Die Partien an diesem Tag'}</div>`
+            + tag.map(m => _newsMatchVsBlock(m.id)).join('')
           : '';
-        return satz + gitter + weitere + spiele + knopf;
+        return satz + gitter + weitere + spiele;
       }
       // ── Die Woche: sechs Wertungen in einem Blatt ────────────────────
       // Der Wochenrueckblick stand vorher als sechs Karten ueber den Montag
@@ -25300,8 +25475,7 @@ function _newsDetailMitte(s){
             </div>`;
         }).join('');
         return `<div class="nd-section">Die Woche</div>${kopf}
-          <div class="nw-liste">${zeilen}</div>
-          <button class="btn ghost sm" data-recap="potw" style="margin-top:12px;width:100%">Wochen-Rückblick öffnen</button>`;
+          <div class="nw-liste">${zeilen}</div>`;
       }
       // ── Die Sammelkarte: was im selben Moment passiert ist ───────────
       // Der Kopf fasst zusammen. Darunter stehen alle Teile gleichrangig;
@@ -25538,27 +25712,33 @@ function _newsDetailMitte(s){
           <div class="nd-stat-row"><div class="nd-stat-label">4-Wochen-Schnitt</div><div class="nd-stat-val">${d.avg} Spiele</div></div>`;
       }
       case 'season_recap': {
-        // Top-3 Aufstellung statt nur Champion
+        // Der Monatsrückblick und die Monatschronik sind zwei verschiedene
+        // Geschichten: hier stehen Saisonspitze und Spielgeschehen, dort die
+        // vergebenen Chronik-Einträge. So folgt auf die Breaking-Karte nicht
+        // noch einmal dieselbe Liste in einer Tafel-Karte.
         const top = (d.topElo || []).slice(0,3);
         const rows = top.map((p, i) => p && p.id && pm[p.id] ? `
           <div class="nd-stat-row" data-pid="${esc(p.id)}" style="cursor:pointer">
             <div class="nd-stat-label">${i+1}. ${esc(nameOf(p.id))}</div>
             <div class="nd-stat-val ${i===0?'gold':i===1?'':''}">${p.elo} Elo</div></div>` : '').join('');
-        // v9.18: Die komplette Saison-Tafel (§13) hängt an dieser einen Karte.
-        // Ältere persistierte Rows haben kein `tafel` → Abschnitt entfällt.
-        const tf = d.tafel;
-        const tafelHtml = (tf && Array.isArray(tf.list) && tf.list.length)
-          ? `<div class="nd-section">Die Chronik der Saison</div>
-             <div class="tplates">${tf.list.map(x => _titlePlateHtml(
-                 {name:x.n, ic:x.ic, tone:x.tone, pid:x.pid, ev:x.ev})).join('')}</div>
-             ${tf.empty ? `<div class="nd-stat-row"><div class="nd-stat-label">Ohne Eintrag</div>
-               <div class="nd-stat-val">${tf.empty} Spieler</div></div>` : ''}
-             <button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Chronik öffnen</button>`
-          : '';
+        const f = d.fakten || {};
+        const zahlen = (f.spiele != null || f.tore != null) ? `
+          <div class="nd-section">Der Monat in Zahlen</div>
+          <div class="nd-gitter">
+            ${f.spiele != null ? `<div><b>${esc(String(f.spiele))}</b><span>Partien</span></div>` : ''}
+            ${f.tore != null ? `<div><b>${esc(String(f.tore))}</b><span>Tore</span></div>` : ''}
+            ${f.engeSpiele != null ? `<div><b>${esc(String(f.engeSpiele))}</b><span>Spiele mit höchstens 2 Toren Abstand</span></div>` : ''}
+            ${f.toreJeSpiel != null ? `<div><b>${esc(String(f.toreJeSpiel).replace('.', ','))}</b><span>Tore pro Partie</span></div>` : ''}
+          </div>` : '';
+        const klar = f.klarstes && f.klarstes.matchId
+          ? `<div class="nd-section">Klarstes Ergebnis</div>${_newsMatchVsBlock(f.klarstes.matchId)}` : '';
+        const torreich = f.torreichstes && f.torreichstes.matchId
+          && (!f.klarstes || f.torreichstes.matchId !== f.klarstes.matchId)
+          ? `<div class="nd-section">Torreichstes Spiel</div>${_newsMatchVsBlock(f.torreichstes.matchId)}` : '';
         return `<div class="nd-section">Saison-Top-3</div>
           ${rows}
           <div class="nd-stat-row"><div class="nd-stat-label">Saison</div><div class="nd-stat-val">${esc(d.sid)}</div></div>
-          ${tafelHtml}`;
+          ${zahlen}${klar}${torreich}`;
       }
       case 'season_start': {
         return `<div class="nd-section">Aktuelle Saison</div>

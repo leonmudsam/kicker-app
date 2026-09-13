@@ -599,7 +599,7 @@ function _consolidateStories(list){
   const SAMMEL_SPIEL = new Set(['badge_unlocked','streak_killer','giant_slayer','group',
     'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee',
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
-    'rivalry','rivalry_milestone']);
+    'rivalry','rivalry_milestone','match_result']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling','chronik_geholt']);
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
@@ -965,6 +965,7 @@ function _consolidateStories(list){
       const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
       const motivName = {
         top_clash:'Spitzenduell', giant_slayer:'Favoritensturz',
+        match_result:'besonderes Ergebnis',
         streak_killer:'Serienbruch', win_streak:'Siegesserie',
         loss_streak:'Durststrecke', top_form:'Formlauf',
         team_streak:'Teamserie', team_loss_streak:'gemeinsame Durststrecke',
@@ -1028,6 +1029,7 @@ function _consolidateStories(list){
                 // sie handelt.
                 teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t), text: t.desc,
                                         typ: (t.dataRef||{}).type || '',
+                                        kammer: (t.dataRef||{}).kammer || '',
                                          // Ein Spieler zeigt je Monat nur EINE
                                          // Chronik [§C32]. Auch in einer großen
                                          // Tafel muss sichtbar bleiben, welche

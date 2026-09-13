@@ -372,11 +372,38 @@ function _newsIstNegativ(s){
   return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
 }
 
+// Die Ewige Tafel hat mehrere Kammern. Ein einziger silberner Ton machte
+// Rekorde, Monatschroniken und Fügungen beim Scrollen ununterscheidbar. Die
+// Familie wird ausschließlich aus den bereits gespeicherten Fachdaten
+// abgeleitet; alte Stories und zusammengeführte Karten profitieren damit
+// ohne Migration. Bei einem Bundle aus mehreren Familien bleibt ein ruhiger
+// Mischton, statt eine einzelne Zeile optisch zum Sieger zu erklären.
+function _newsTafelTon(s){
+  const d = (s && s.dataRef) || {};
+  const familie = x => {
+    const typ = String((x && (x.type || x.typ)) || '');
+    if(typ === 'insignium_stufe') return 'insignium';
+    if(typ.indexOf('chronik_') === 0) return 'chronik';
+    if(typ.indexOf('rekord_') === 0){
+      const kammer = (x && x.kammer) || d.kammer || '';
+      if(kammer === 'mark') return 'marke';
+      if(kammer === 'fuegung') return 'fuegung';
+      if(kammer === 'shame') return 'schatten';
+      return 'rekord';
+    }
+    return '';
+  };
+  const teile = d.type === 'sammel' && Array.isArray(d.teile) ? d.teile : [d];
+  const arten = [...new Set(teile.map(familie).filter(Boolean))];
+  return arten.length === 1 ? arten[0] : (arten.length > 1 ? 'mix' : 'rekord');
+}
+
 function _newsCardHtmlM2(s, isRead, istTagesKarte){
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
   const sorte = _newsSorte(s);
+  const tafelTon = sorte === 'tafel' ? _newsTafelTon(s) : '';
   const faktStil = sorte === 'fakt' && d.type === 'ambient'
     ? (NEWS_AMBIENT_STIL[d.ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
   const brk = _isBreaking(s);
@@ -416,7 +443,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     // bisher zwar, wie viele Spuren zusammenlaufen, ließ aber alle genannten
     // Spieler bildlich verschwinden. Die kompakte Chipgruppe bleibt neben
     // dem Wert und macht keinen einzelnen Halter zum Hauptdarsteller.
-    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'gold') : ''}${_newsGesichtHtml(s)}</div>`;
+    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'ton') : ''}${_newsGesichtHtml(s)}</div>`;
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
@@ -526,7 +553,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // einer Schande erzaehlt, traegt es in Rubrik und Motiv. Die Durststrecke
   // stand vorher im selben Gruen wie die Siegesserie.
   const negativ = _newsIstNegativ(s);
-  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
+  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
@@ -696,13 +723,29 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
   // eine Sache vollstaendig zeigen sollen: dort waere „und 2 weitere" genau
   // das Verstecken, gegen das die Buendelung gebaut ist.
   const grenze = vollstaendig ? rest.length : 3;
+  // In einer gemischten Tafel-Karte bekommt jede Spur den Ton ihrer Kammer.
+  // Der Kartenkopf bleibt eine gemeinsame Geschichte, die Zeilen verraten
+  // aber sofort, ob darunter Rekord, Bestmarke, Chronik, Fügung, Schatten
+  // oder ein neues Insignium zusammengekommen sind.
+  const tafelTon = t => {
+    const typ = String((t && (t.typ || t.type)) || '');
+    if(typ === 'insignium_stufe') return 'insignium';
+    if(typ.indexOf('chronik_') === 0) return 'chronik';
+    if(typ.indexOf('rekord_') !== 0) return '';
+    if(t.kammer === 'mark') return 'marke';
+    if(t.kammer === 'fuegung') return 'fuegung';
+    if(t.kammer === 'shame') return 'schatten';
+    return 'rekord';
+  };
   // Die Marke sagt in zwei Worten, welche Zeile in der Monatstafel landet
   // [§C32] — Metall, sie zeichnet niemanden aus [§C25].
-  return `<div class="nf-sam">${rest.slice(0, grenze).map(t =>
-    `<div class="nf-sam-z"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
+  return `<div class="nf-sam">${rest.slice(0, grenze).map(t => {
+    const ton = tafelTon(t);
+    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
     + `<span>${_newsBetont(t.titel || '')}</span>`
     + (t.marke ? `<b class="nf-sam-k">${esc(t.marke)}</b>` : '')
-    + `</div>`).join('')}`
+    + `</div>`;
+  }).join('')}`
     + (rest.length > grenze ? `<div class="nf-sam-m">und ${rest.length - grenze} weitere</div>` : '')
     + `</div>`;
 }
@@ -892,14 +935,18 @@ function _newsErgebnisBand(matchId){
   const m = (matches || []).find(x => x.id === matchId);
   if(!m) return '';
   const pm = pmap();
-  const wappen = ids => ids.filter(id => pm[id])
-    .map(id => avHtml(pm[id], '', {ins:true, px:30, feuer:0})).join('');
+  const team = ids => {
+    const echt = ids.filter(id => pm[id]);
+    return `<span class="nf-erg-avs">${echt
+      .map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</span>`
+      + `<span class="nf-erg-team">${esc(echt.map(id => pm[id].name).join(' & '))}</span>`;
+  };
   const aWin = m.winner === 'A';
   return `<div class="nf-erg">
-    <div class="nf-erg-s">${wappen([m.a1, m.a2])}</div>
+    <div class="nf-erg-s${aWin?' w':''}">${team([m.a1, m.a2])}</div>
     <div class="nf-erg-sc"><b class="${aWin?'w':'v'}">${m.score_a}</b>`
     + `<i>:</i><b class="${aWin?'v':'w'}">${m.score_b}</b></div>
-    <div class="nf-erg-s re">${wappen([m.b1, m.b2])}</div>
+    <div class="nf-erg-s re${aWin?'':' w'}">${team([m.b1, m.b2])}</div>
   </div>`;
 }
 
@@ -1050,6 +1097,7 @@ function _newsTagSpannung(s){
     rekord_erstmals:920, rekord_gesteigert:870, chronik_geholt:850,
     insignium_stufe:840, badge_unlocked:800, lead_change:980,
     elo_record:1000, streak_record:1000, team_streak:770,
+    match_result:760,
     win_streak:750, rivalry_milestone:730, rivalry:690,
     potd:620, potw:640, woche:700
   };

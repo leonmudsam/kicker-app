@@ -36,9 +36,11 @@ function openNewsDetail(sid){
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
   const negativ = _newsIstNegativ(s);
+  const tafelTon = sorte === 'tafel' ? _newsTafelTon(s) : '';
   const faktStil = sorte === 'fakt' && (s.dataRef || {}).type === 'ambient'
     ? (NEWS_AMBIENT_STIL[(s.dataRef || {}).ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
-  nd.className = 'nd nd-s-' + sorte + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
+  nd.className = 'nd nd-s-' + sorte + (tafelTon ? ' nd-tafel-' + tafelTon : '')
+    + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
     + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
@@ -87,12 +89,6 @@ function openNewsDetail(sid){
       const sid = el.dataset.seasonTable;
       closeNewsDetail();
       sheetNav(() => { try { showSeasonTable(sid); } catch(e){} });
-    };
-  });
-  nd.querySelectorAll('[data-recap]').forEach(el => {
-    el.onclick = (e) => { e.stopPropagation();
-      const t = el.dataset.recap;
-      sheetNav(() => (t === 'potd' ? showPotdRecap({force:true}) : showPotwRecap({force:true})));
     };
   });
   nd.querySelectorAll('[data-chron]').forEach(el => {
@@ -224,21 +220,6 @@ function _newsBlattErgebnis(matchId){
     </div></div>`;
 }
 
-// Der Fuss: der Weg weiter. Zum Profil, zur Partie — die typ-eigenen Knoepfe
-// (Rueckblick, Rekord) stehen in der Mitte und bleiben dort.
-function _newsBlattFuss(s){
-  const d = s.dataRef || {};
-  const pm = pmap();
-  let ids = [];
-  try { ids = (_newsPids(s) || []).filter(id => pm[id]); } catch(e){}
-  const knoepfe = [];
-  if(ids.length === 1){
-    knoepfe.push(`<button class="btn ghost sm" data-pid="${esc(ids[0])}">Profil von ${esc(pm[ids[0]].name)}</button>`);
-  }
-  if(!knoepfe.length) return '';
-  return `<div class="nd-fuss">${knoepfe.join('')}</div>`;
-}
-
 // ── Das Medaillon ────────────────────────────────────────────────────
 // Eine Auszeichnung ist das Einzige im Feed, das man sich VERDIENT — und sie
 // stand als graue Zeile „Seltenheit: Negative" im Blatt. Jetzt trägt sie
@@ -315,12 +296,13 @@ function _newsVerfolger(rekordId, halter, wert){
 function _newsTagPartien(dayKey, pid){
   if(!dayKey) return [];
   try {
+    const ids = new Set((Array.isArray(pid) ? pid : [pid]).filter(Boolean));
     return matches.filter(m => {
       const t = new Date(m.created_at);
       const k = t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0')
               + '-' + String(t.getDate()).padStart(2,'0');
       if(k !== dayKey) return false;
-      return !pid || [m.a1, m.a2, m.b1, m.b2].indexOf(pid) >= 0;
+      return !ids.size || [m.a1, m.a2, m.b1, m.b2].some(id => ids.has(id));
     });
   } catch(e){ return []; }
 }
@@ -388,7 +370,8 @@ let _ndKopfMatch = null;
 // nicht noch einmal als Text.
 let _ndZeichenUnten = false;
 
-// Kopf, Mitte, Fuss. Die Mitte ist typ-eigen, Kopf und Fuss sind es nie.
+// Kopf und typ-eigene Mitte. Das Blatt endet danach direkt beim eindeutigen
+// Schließen-Knopf; Profil- und Rückblick-Sprünge verdoppelten die Navigation.
 function _newsDetailBody(s){
   const d = s.dataRef || {};
   // Die Mitte wird ZUERST gebaut. Nur so weiss der Kopf, ob das Zeichen schon
@@ -403,7 +386,7 @@ function _newsDetailBody(s){
   _ndZeichenUnten = mitte.indexOf('nd-ins') >= 0;
   const kopf = _newsBlattKopf(s);
   _ndZeichenUnten = false;
-  return kopf + mitte + _newsBlattFuss(s);
+  return kopf + mitte;
 }
 
 function _newsDetailMitte(s){
@@ -556,6 +539,18 @@ function _newsDetailMitte(s){
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">Die Sensation</div>${pct}` + (matchHtml ? matchHtml : '');
       }
+      case 'match_result': {
+        const fakten = {
+          zu_null: ['Ohne Gegentor', 'Kein Treffer für die Gegenseite'],
+          upset:   ['Vor dem Spiel', d.chance != null ? `${Math.max(1, Math.round(d.chance * 100))} % Siegchance` : 'Außenseiter'],
+          krimi:   ['Entscheidung', '1 Tor Unterschied'],
+          kanter:  ['Entscheidung', `${d.margin || 0} Tore Unterschied`],
+          eng:     ['Entscheidung', `${d.margin || 2} Tore Unterschied`]
+        }[d.resultKind] || ['Ergebnis', 'Besondere Partie'];
+        return `<div class="nd-section">Was dieses Spiel besonders macht</div>
+          <div class="nd-stat-row"><div class="nd-stat-label">${esc(fakten[0])}</div>
+            <div class="nd-stat-val acid">${esc(fakten[1])}</div></div>`;
+      }
       case 'group': {
         // v8.8: zusammengefasste Karte ("N Pechvögel: …") — alle Beteiligten
         // tappbar, mit ihrem jeweiligen Wert (frag).
@@ -593,21 +588,16 @@ function _newsDetailMitte(s){
               `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
                 <div class="nd-stat-label">${esc(nameOf(pid))}</div><div class="nd-stat-val">›</div></div>`).join('')
           : '';
-        // Der volle Rueckblick ist gebaut (`showPotwRecap`/`showPotdRecap`) und
-        // oeffnet sich am richtigen Tag von selbst — vom Feed aus war er
-        // bisher nicht erreichbar. Wer die Karte drei Tage spaeter liest,
-        // kam an die Auswertung nicht mehr heran.
-        const knopf = `<button class="btn ghost sm" data-recap="${d.type}"
-            style="margin-top:12px;width:100%">Rückblick öffnen</button>`;
         // Die Partien des Tages. „Kein anderer holte mehr Siege" ist eine
-        // Behauptung, und das Blatt zeigte sie nicht — jetzt steht darunter,
-        // welche Spiele es waren.
-        const tag = _newsTagPartien(d.dayKey, pids[0]);
+        // Behauptung, und das Blatt zeigte sie nicht. Die Liste darf nicht
+        // nach vier Zeilen abbrechen: an vollen Spieltagen gingen dadurch
+        // genau die Partien verloren, auf denen die Tageswertung beruht.
+        const tag = _newsTagPartien(d.dayKey, pids);
         const spiele = tag.length
-          ? `<div class="nd-section">Die Partien an diesem Tag</div>`
-            + tag.slice(0, 4).map(m => _newsMatchVsBlock(m.id)).join('')
+          ? `<div class="nd-section">${pids.length > 1 ? 'Die Partien der Tagessieger' : 'Die Partien an diesem Tag'}</div>`
+            + tag.map(m => _newsMatchVsBlock(m.id)).join('')
           : '';
-        return satz + gitter + weitere + spiele + knopf;
+        return satz + gitter + weitere + spiele;
       }
       // ── Die Woche: sechs Wertungen in einem Blatt ────────────────────
       // Der Wochenrueckblick stand vorher als sechs Karten ueber den Montag
@@ -636,8 +626,7 @@ function _newsDetailMitte(s){
             </div>`;
         }).join('');
         return `<div class="nd-section">Die Woche</div>${kopf}
-          <div class="nw-liste">${zeilen}</div>
-          <button class="btn ghost sm" data-recap="potw" style="margin-top:12px;width:100%">Wochen-Rückblick öffnen</button>`;
+          <div class="nw-liste">${zeilen}</div>`;
       }
       // ── Die Sammelkarte: was im selben Moment passiert ist ───────────
       // Der Kopf fasst zusammen. Darunter stehen alle Teile gleichrangig;
@@ -874,27 +863,33 @@ function _newsDetailMitte(s){
           <div class="nd-stat-row"><div class="nd-stat-label">4-Wochen-Schnitt</div><div class="nd-stat-val">${d.avg} Spiele</div></div>`;
       }
       case 'season_recap': {
-        // Top-3 Aufstellung statt nur Champion
+        // Der Monatsrückblick und die Monatschronik sind zwei verschiedene
+        // Geschichten: hier stehen Saisonspitze und Spielgeschehen, dort die
+        // vergebenen Chronik-Einträge. So folgt auf die Breaking-Karte nicht
+        // noch einmal dieselbe Liste in einer Tafel-Karte.
         const top = (d.topElo || []).slice(0,3);
         const rows = top.map((p, i) => p && p.id && pm[p.id] ? `
           <div class="nd-stat-row" data-pid="${esc(p.id)}" style="cursor:pointer">
             <div class="nd-stat-label">${i+1}. ${esc(nameOf(p.id))}</div>
             <div class="nd-stat-val ${i===0?'gold':i===1?'':''}">${p.elo} Elo</div></div>` : '').join('');
-        // v9.18: Die komplette Saison-Tafel (§13) hängt an dieser einen Karte.
-        // Ältere persistierte Rows haben kein `tafel` → Abschnitt entfällt.
-        const tf = d.tafel;
-        const tafelHtml = (tf && Array.isArray(tf.list) && tf.list.length)
-          ? `<div class="nd-section">Die Chronik der Saison</div>
-             <div class="tplates">${tf.list.map(x => _titlePlateHtml(
-                 {name:x.n, ic:x.ic, tone:x.tone, pid:x.pid, ev:x.ev})).join('')}</div>
-             ${tf.empty ? `<div class="nd-stat-row"><div class="nd-stat-label">Ohne Eintrag</div>
-               <div class="nd-stat-val">${tf.empty} Spieler</div></div>` : ''}
-             <button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Chronik öffnen</button>`
-          : '';
+        const f = d.fakten || {};
+        const zahlen = (f.spiele != null || f.tore != null) ? `
+          <div class="nd-section">Der Monat in Zahlen</div>
+          <div class="nd-gitter">
+            ${f.spiele != null ? `<div><b>${esc(String(f.spiele))}</b><span>Partien</span></div>` : ''}
+            ${f.tore != null ? `<div><b>${esc(String(f.tore))}</b><span>Tore</span></div>` : ''}
+            ${f.engeSpiele != null ? `<div><b>${esc(String(f.engeSpiele))}</b><span>Spiele mit höchstens 2 Toren Abstand</span></div>` : ''}
+            ${f.toreJeSpiel != null ? `<div><b>${esc(String(f.toreJeSpiel).replace('.', ','))}</b><span>Tore pro Partie</span></div>` : ''}
+          </div>` : '';
+        const klar = f.klarstes && f.klarstes.matchId
+          ? `<div class="nd-section">Klarstes Ergebnis</div>${_newsMatchVsBlock(f.klarstes.matchId)}` : '';
+        const torreich = f.torreichstes && f.torreichstes.matchId
+          && (!f.klarstes || f.torreichstes.matchId !== f.klarstes.matchId)
+          ? `<div class="nd-section">Torreichstes Spiel</div>${_newsMatchVsBlock(f.torreichstes.matchId)}` : '';
         return `<div class="nd-section">Saison-Top-3</div>
           ${rows}
           <div class="nd-stat-row"><div class="nd-stat-label">Saison</div><div class="nd-stat-val">${esc(d.sid)}</div></div>
-          ${tafelHtml}`;
+          ${zahlen}${klar}${torreich}`;
       }
       case 'season_start': {
         return `<div class="nd-section">Aktuelle Saison</div>
