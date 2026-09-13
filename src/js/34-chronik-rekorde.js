@@ -684,13 +684,18 @@ function chronBeiname(t){
 function playerTitleBadge(pid){
   const rows = seasonTitleHistory(pid);
   const cur = rows.find(r => r.live && r.title);
+  // `titleId` gehoert dazu: ohne sie kann der Aufrufer nicht nachsehen, ob
+  // die Chronik eine Schattenseite ist, und „Der Gestrandete" stand golden
+  // zwischen den Titeln [§C25].
   if(cur) return {kind:'season', name:chronBeiname(cur.title), titel:cur.title.name,
+                  titleId:cur.title.titleId,
                   ic:cur.title.ic, tone:cur.title.tone,
                   sub:cur.label + ' · läuft', live:true, sid:cur.sid, ev:cur.title.ev};
   for(let i = rows.length - 1; i >= 0; i--){
     if(!rows[i].live && rows[i].title){
       const r = rows[i];
       return {kind:'season', name:chronBeiname(r.title), titel:r.title.name,
+              titleId:r.title.titleId,
               ic:r.title.ic, tone:r.title.tone,
               sub:r.label, live:false, sid:r.sid, ev:r.title.ev};
     }

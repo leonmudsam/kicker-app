@@ -435,10 +435,10 @@ const DISZIPLINEN = [
       cond:'Ausgeglichenste Verteilung auf beide Positionen, ab 60 Spielen',
       val:p => {
         if(p.games < 60) return null;
-        const s = p.defG/p.games;
-        return (s >= 0.43 && s <= 0.57) ? -Math.abs(s-0.5) : null;
+        const s = positionsProfilWert(p);
+        return (s >= 0.43 && s <= 0.57) ? 1 - Math.abs(s - 0.5) * 2 : null;
       },
-      ev:(p,v) => `${Math.round(Math.abs(v)*100)} %-Punkte Unterschied zwischen vorne und hinten · ${p.atkG} zu ${p.defG}`}},
+      ev:(p,v) => `${Math.round((1-v)*100)} %-Punkte Unterschied im Positionsprofil · ${Math.round(positionsProfilWert(p)*100)} % Sturm, ${Math.round((1-positionsProfilWert(p))*100)} % Abwehr`}},
 
   {id:'sundaychild', name:'Das Sonntagskind', short:'Glück', ic:'clover', tone:'acid', art:'ereignis', zufall:'quote',
     allzeit:{

@@ -664,6 +664,14 @@ const rankProgHtml = rInfo ? `
             <div class="pp-roles-empty">Keine Spiele</div>
           </div>`;
         }
+        // Die staerkere Rolle traegt ihre Farbe, die schwaechere steht
+        // zurueck. Beide gleich laut gezeichnet sagten sie nicht, worin
+        // jemand besser ist — und genau das ist die Frage, die diese
+        // Karte beantwortet. Bis drei Prozentpunkte Unterschied gelten als
+        // praktisch gleichauf; eine Rundungsdifferenz soll keine Rolle matt
+        // zeichnen.
+        const _stark = (atkWr == null || defWr == null || Math.abs(atkWr - defWr) <= 3)
+          ? 'beide' : (atkWr > defWr ? 'atk' : 'def');
         const donut = (cls, lbl, icon, wr, w, g, valLbl, valNum, color) => {
           if(g === 0) return `
             <div class="pp-rd ${cls}">
@@ -673,9 +681,11 @@ const rankProgHtml = rInfo ? `
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
               <div class="pp-rd-empty">noch keine Spiele</div>
             </div>`;
+          const matt = (_stark !== 'beide' && _stark !== cls);
           return `
-            <div class="pp-rd ${cls}">
-              <div class="pp-rd-ring" style="background:conic-gradient(${color} ${wr}%, var(--surface3) 0)">
+            <div class="pp-rd ${cls}${_stark === 'beide' ? ' neutral' : (matt ? ' schwach' : ' stark')}">
+              <div class="pp-rd-ring" style="background:conic-gradient(${
+                matt ? 'var(--line2)' : color} ${wr}%, var(--surface3) 0)">
                 <div class="pp-rd-inner"><div class="pp-rd-wr">${wr}<small>%</small></div></div>
               </div>
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
@@ -902,14 +912,17 @@ const rankProgHtml = rInfo ? `
         <div class="l">${svgI('target')}<h4>Positions-Profil</h4></div>
         <div class="m">${posLabel}</div>
       </div>
-      <div class="pp-posprof ${_posCls.tone==='def'?'def-seite':''}" style="--atk:${atkPct}%">
+      <div class="pp-posprof ${atkPct > defPct + 4 ? 'atk-seite' : defPct > atkPct + 4 ? 'def-seite' : 'neutral'}" style="--atk:${atkPct}%;--strahl:${Math.max(atkPct, defPct)}%">
         <div class="pph">
           <span class="lf">${svgI('bolt')}Sturm</span>
           <span><span class="pct">${atkPct}%</span> / <span class="pct">${defPct}%</span></span>
           <span class="rt">Abwehr${svgI('shield')}</span>
         </div>
+        <!-- Der Strahl beginnt an der staerkeren Seite und laeuft zur
+             Positionsgrenze. Bei einem Flex-Profil sitzt er als eigener,
+             kurzer Lichtkern in der Mitte. -->
         <div class="pp-slider">
-          <div class="pp-fill" style="width:${atkPct}%"></div>
+          <div class="pp-fill"></div>
           <span class="pp-thumb" style="left:${atkPct}%"></span>
         </div>
         <div class="ppf">Eingestuft als <span class="lab" style="display:inline-flex;align-items:center;gap:4px">${posIcon}${posLabel}</span></div>
@@ -1213,11 +1226,26 @@ function showPlayerAwards(playerId, awards){
     } else {
       plaqueContent = `<span class="aw-trophy-plaque-name" style="color:var(--muted);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase">Top-1</span>`;
     }
-    return `<div class="aw-trophy ${m.cls}" data-paward2="${esc(a.key)}">
-      <div class="aw-trophy-cup">${ic(a.key)}</div>
-      <div class="aw-trophy-lbl">${esc(m.title)}</div>
-      <div class="aw-trophy-val">${valDisplay}</div>
-      <div class="aw-trophy-plaque">${plaqueContent}</div>
+    // Dieselbe Kachel wie im Awards-Reiter [§C27]. Sie baute hier noch die
+    // ALTE: `aw-trophy-cup`, `-lbl`, `-val`, `-plaque` — Klassennamen, zu
+    // denen es seit dem Umbau der Vitrine keine Regel mehr gibt. Uebrig
+    // blieb der Kasten und darin unformatierter Text; das Sheet hatte seine
+    // Farbe nicht verloren, es hatte sein Bauteil verloren.
+    //
+    // Der Farbstich kommt aus DREI Rollen und nicht aus sechs Katalogtoenen
+    // [§C25]: Gold fuer das Koennen, Blau fuer das, was zu zweit geholt
+    // wurde, Rot fuer die Kehrseite. Sechs Toene nebeneinander waren ein
+    // Farbverlauf ohne Aussage — derselbe Fehler wie die elf
+    // Kategoriefarben im Feed.
+    const ton = m.cls === 'red' ? 'ton-neg'
+              : (a.partner || a.partnerLabel) ? 'ton-team' : 'ton-pos';
+    const kopf = `<div class="aw-t-kopf"><span class="aw-t-ic">${ic(a.key)}</span>`
+      + `<span class="aw-t-lbl">${esc(m.title)}</span></div>`;
+    return `<div class="aw-trophy ${ton}" data-paward2="${esc(a.key)}">
+      ${kopf}
+      <div class="aw-t-held">${avHtml(p, '', {ins:true, px:60})}</div>
+      <div class="aw-t-val">${valDisplay}</div>
+      <div class="aw-t-name">${plaqueContent}</div>
     </div>`;
   };
 
@@ -1258,21 +1286,18 @@ function showPlayerBadges(playerId){
     'allwetter']);
 
   // ─── Aggregation pro Tier ───
-  // Pro Rarity: BADGES-Array in Reihenfolge durchgehen, in Buckets sortieren.
-  // Innerhalb des Buckets: ZUERST einmalig erreichbare ("Freigeschaltet"-Style),
-  // DANACH mehrfach erreichbare (×N-Counter) — sortiert nur die ANZEIGE, keine
-  // neue Kategorie. Stabil: relative Reihenfolge im BADGES-Array bleibt erhalten.
+  // Pro Rarity: BADGES-Array in Buckets sortieren. Die goldene Vitrine folgt
+  // der expliziten sportlichen Reihenfolge aus §7; danach bleibt die
+  // Katalogreihenfolge stabil. Einmalige Badges springen nicht mehr vor
+  // wichtigere Saison- und Serienleistungen (Allwetter stand dadurch ganz
+  // vorne, obwohl es nur einmal freigeschaltet werden kann).
   const buckets = {legendary:[], rare:[], common:[], negative:[]};
   BADGES.forEach(b => {
     const r = rarityOf(b.id);
     if(buckets[r]) buckets[r].push(b);
   });
   Object.keys(buckets).forEach(r => {
-    buckets[r].sort((a,b) => {
-      const aOnce = ONCE_ONLY.has(a.id) ? 0 : 1;
-      const bOnce = ONCE_ONLY.has(b.id) ? 0 : 1;
-      return aOnce - bOnce; // stabile Sort: nur Once-vs-Multi neu ordnen
-    });
+    buckets[r].sort((a,b) => badgeProfilRang(a.id) - badgeProfilRang(b.id));
   });
   const have = (r) => buckets[r].filter(b => earnedIds.has(b.id)).length;
   const haveTotal = have('legendary')+have('rare')+have('common')+have('negative');

@@ -35,7 +35,11 @@ function openNewsDetail(sid){
   // Karte seit dem Rubrikband nicht mehr gibt.
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
-  nd.className = 'nd nd-s-' + sorte + (brk ? ' nd-brk' : '');
+  const negativ = _newsIstNegativ(s);
+  const faktStil = sorte === 'fakt' && (s.dataRef || {}).type === 'ambient'
+    ? (NEWS_AMBIENT_STIL[(s.dataRef || {}).ambientRubrik] || NEWS_AMBIENT_STIL.liga) : null;
+  nd.className = 'nd nd-s-' + sorte + (faktStil ? ' nd-fakt-' + faktStil.ton : '')
+    + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
@@ -115,16 +119,17 @@ function closeNewsDetail(){
 // ohne sie zu benennen.
 function _newsRangZeile(pid){
   try {
-    const career = (getGlobalSim() || {}).careerElo || {};
-    const ids = Object.keys(career).filter(id => pmap()[id] && !pmap()[id].hidden);
-    ids.sort((a, b) => (career[b] ?? 0) - (career[a] ?? 0));
-    const rang = ids.indexOf(pid) + 1;
+    // Dieselbe Rechnung stand hier ein zweites Mal [§C27].
+    const rang = _newsGesamtrang(pid);
     const P = (typeof prestigeOf === 'function') ? prestigeOf(pid) : null;
     const teile = [];
     // „Rang 6" stand hier als Text UND daneben als Rangabzeichen — dieselbe
     // Aussage zweimal. Das Abzeichen ist das Bauteil [§C27], die Zeile nennt,
     // was es nicht sagt.
-    if(rang > 0) teile.push('Platz ' + rang + ' der Liga');
+    // „der Liga" las sich wie die Tabelle der laufenden Saison; gemeint ist
+    // der Zeitraum „Gesamt" des Liga-Tabs, und die beiden Plaetze koennen
+    // weit auseinanderliegen.
+    if(rang > 0) teile.push('Platz ' + rang + ' der Gesamtliga');
     if(!_ndZeichenUnten){
       if(P && P.insignie) teile.push(P.insignie.name);
       if(P && P.punkte != null) teile.push(P.punkte + ' Prestige');
@@ -264,14 +269,25 @@ function _newsMedaillon(ic, rarity, name, bedingung, badgeId){
 // punktgleich teilen, füllten genau diese drei die Liste, und unter der
 // Überschrift „Wer sonst noch vorne steht" standen dieselben drei Namen mit
 // derselben Zahl, die der Kopf zwei Zeilen darüber schon nennt [§C33].
-function _newsVerfolger(rekordId, halter){
+// Wer DAHINTER liegt — und niemand davor. Die Karte traegt den Wert, der
+// bei ihrer Entstehung galt (er steckt in ihrer ID); die Liste rechnet
+// HEUTE. Zwischen beidem koennen Partien liegen, und dann stand unter
+// „Martin uebernimmt ‚Der Zerstoerer' · 24 %" ein Verfolger mit 25 % —
+// eine Karte, die sich selbst widerspricht. Wer den Wert der Karte
+// inzwischen ueberholt hat, steht nicht dahinter, sondern davor: die Liste
+// laesst ihn weg und sagt stattdessen, wem der Rekord jetzt gehoert.
+function _newsVerfolger(rekordId, halter, wert){
   if(!rekordId) return '';
   try {
     const rang = chronicleRang(rekordId);
     if(!Array.isArray(rang) || rang.length < 2) return '';
     const pm = pmap();
     const oben = (Array.isArray(halter) ? halter : []);
-    const zeilen = rang.filter(r => oben.indexOf(r.pid || r.id) < 0)
+    const grenze = (wert == null || !isFinite(wert)) ? null : wert + 1e-9;
+    const davor = grenze == null ? [] : rang.filter(r =>
+      oben.indexOf(r.pid || r.id) < 0 && r.wert > grenze);
+    const zeilen = rang.filter(r => oben.indexOf(r.pid || r.id) < 0
+                                 && (grenze == null || r.wert <= grenze))
       .slice(0, 3).map((r, i) => {
       const pid = r.pid || r.id;
       if(!pm[pid]) return '';
@@ -282,8 +298,15 @@ function _newsVerfolger(rekordId, halter){
         <b>${esc(_chronKurz(r.ev))}</b>
       </div>`;
     }).filter(Boolean).join('');
-    return zeilen ? `<div class="nd-section">Wer dahinter liegt</div>
-      <div class="nd-vf">${zeilen}</div>` : '';
+    // Steht jemand darueber, ist der Rekord weitergewandert. Das gehoert
+    // auf die Karte, nicht verschwiegen: sonst zeigt das Blatt eine
+    // Bestmarke, die es nicht mehr gibt.
+    const jetzt = davor.length ? `<div class="nd-stat-row">
+        <div class="nd-stat-label">Hält ihn jetzt</div>
+        <div class="nd-stat-val">${esc(davor.map(r => (pm[r.pid || r.id] || {}).name)
+          .filter(Boolean).join(', '))}</div></div>` : '';
+    return (zeilen || jetzt) ? `<div class="nd-section">Wer dahinter liegt</div>
+      ${jetzt}<div class="nd-vf">${zeilen}</div>` : '';
   } catch(e){ return ''; }
 }
 
@@ -424,7 +447,7 @@ function _newsDetailMitte(s){
           ${vor.length ? `<div class="nd-stat-row" data-pid="${esc(vor[0])}" style="cursor:pointer">
             <div class="nd-stat-label">Vorher gehalten von</div>
             <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
-          ${_newsVerfolger(d.rekordId, d.playerIds)}
+          ${_newsVerfolger(d.rekordId, d.playerIds, d.wert)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen
@@ -449,10 +472,26 @@ function _newsDetailMitte(s){
         } catch(e){}
         // Die Bedingung nur, wenn sie nicht schon oben steht [§C33 `_ndNeu`].
         const cond = (def && def.cond && _ndNeu(def.cond)) ? def.cond : '';
+        const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
+        const laufbahn = _newsChronikPrestige(d);
+        const beitrag = beitragIds.length ? `<div class="nd-section">Für die Laufbahn</div>`
+          + beitragIds.map(pid => {
+            const plus = Number(laufbahn.werte[pid]) || 0;
+            let titel = (d.titelJeSpieler || {})[pid] || '';
+            if(!titel){ try { const t = seasonTitleOf(pid, d.sid); titel = t ? t.name : ''; } catch(e){} }
+            const aussage = laufbahn.modus === 'zuwachs'
+              ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
+              : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell' : 'zählt aktuell nicht');
+            return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+              <div class="nd-stat-label">${esc(nameOf(pid))}${titel ? `<small>${esc(titel)}</small>` : ''}</div>
+              <div class="nd-stat-val ${plus > 0 ? 'acid' : ''}">${aussage} ›</div>
+            </div>`;
+          }).join('') : '';
         return (def ? _chronFaktenHtml(def) : '')
           + (cond ? `<div class="tnote">${esc(cond)}</div>` : '')
           + (podest ? `<div class="nd-section">Dieser Monat</div>${podest}` : '')
           + (erfuellt > 1 ? `<div class="tnote">${erfuellt} erfüllen die Bedingung in diesem Monat.</div>` : '')
+          + beitrag
           + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
       }
       case 'chronik_monat': {
@@ -601,21 +640,14 @@ function _newsDetailMitte(s){
           <button class="btn ghost sm" data-recap="potw" style="margin-top:12px;width:100%">Wochen-Rückblick öffnen</button>`;
       }
       // ── Die Sammelkarte: was im selben Moment passiert ist ───────────
-      // Der Kopf gehoert dem groessten Ereignis. Was dazugehoert, steht
-      // darunter als Liste mit eigenem Beleg, nicht als zweite Schlagzeile.
+      // Der Kopf fasst zusammen. Darunter stehen alle Teile gleichrangig;
+      // keines davon wird zum heimlichen zweiten Kopf.
       case 'sammel': {
-        const alle = Array.isArray(d.teile) ? d.teile : [];
-        // Was oben steht, steht unten nicht noch einmal [§C33]. Bei einer
-        // Spiel-Sammelkarte gehören Schlagzeile und Text dem stärksten
-        // Ereignis — dessen Zeile stand darunter wortgleich ein zweites Mal
-        // und trug keine einzige neue Zahl. Bleibt dabei nichts übrig, wird
-        // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
-        const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
-        const teile = neu.length ? neu : alle;
-        const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}"${
+        const teile = Array.isArray(d.teile) ? d.teile : [];
+        const zeilen = teile.map(t => `<div class="nw-zeile"${
               (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
-              ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
+              ${t.text ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand

@@ -649,17 +649,29 @@ function autoShowPotwRecap(){
   } catch(e){ console.error('POTW auto:',e); }
 }
 
-// Ermittelt den letzten Spieltag VOR heute, der einen POTD-Kandidaten hatte (min. 3 Siege).
-// Wird sowohl vom Auto-Recap als auch vom manuellen "Letzten Tag ansehen"-Button genutzt.
+// Ermittelt den letzten ABGESCHLOSSENEN Spieltag mit einem POTD-Kandidaten
+// (min. 3 Siege). Wird vom Auto-Recap, vom Knopf "Letzten Tag ansehen" und vom
+// News-Generator gelesen — EINE Rechnung für dieselbe Frage [§C27].
 // Kein eigener Cache nötig — Aufruf ist nur 1× pro Render, der Hot-Path ist Profil/Sheet.
 function _potdLastDayData(){
   if(!matches.length) return null;
   const now=new Date();
   const todayStart=new Date(now); todayStart.setHours(0,0,0,0);
+  // Der laufende Spieltag zählt erst, wenn er vorbei ist — und vorbei ist er um
+  // 23:59 [§C33]. Ausgeschlossen war früher JEDER Tag ab Mitternacht, damit der
+  // Recap nicht mitten im laufenden Spieltag aufspringt. Damit konnte aber auch
+  // die Karte "Spieler des Tages" an ihrem eigenen Spieltag nie entstehen: sie
+  // ist auf 23:59 desselben Tages datiert, und diese Quelle nannte um 23:59
+  // noch den Tag davor. Gemessen erschien der Sieger des 10.09. erst am 11.09.
+  // um 00:00 — wer nach dem Spielen die App öffnete, fand die Schlagzeile
+  // seines eigenen Spieltags nicht, und an ihrer Stelle stand der Sieger des
+  // vorletzten Spieltags.
+  const tagEnde=new Date(now); tagEnde.setHours(23,59,0,0);
+  const laeuftNoch=now.getTime()<tagEnde.getTime();
   const byDay={};
   for(const m of matches){
     const d=new Date(m.created_at);
-    if(d>=todayStart) continue;
+    if(laeuftNoch && d>=todayStart) continue;
     const dk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
     if(!byDay[dk]) byDay[dk]=[];
     byDay[dk].push(m);

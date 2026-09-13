@@ -126,6 +126,12 @@
     color:var(--ink);letter-spacing:-.02em}
   .rcp-held .rcp-z-v{font-size:19px}
   .rcp-z-v.gold{color:var(--gold)} .rcp-z-v.gruen{color:var(--acid)} .rcp-z-v.rot{color:var(--red)}
+  /* Ein langes Wort laeuft sonst in die Nachbarzelle: „Schattenseite" stand
+     als 18-px-Archivo ueber die Zellgrenze hinaus, und daneben stand der
+     Ausschlag. Zwei Stufen reichen — mehr waere unlesbar klein. */
+  .rcp-z-v.lang{font-size:14px;letter-spacing:-.03em}
+  .rcp-z-v.sehrlang{font-size:11.5px;letter-spacing:-.03em;line-height:1.15}
+  .rcp-z-s{overflow:hidden}
   .rcp-z-l{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
     color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:5px}
 

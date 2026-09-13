@@ -1097,10 +1097,7 @@ ok(K.eval(`(function(){
 })()`).indexOf('FALSCH') < 0, 'alle Rekorde stecken im Profil-HTML');
 
 // ══════════════════════════════════════════════════════════════════════
-console.log('\n═══ PRESTIGE: BREITE STATT REKORDJAGD ═══');
-// Drei Zusicherungen an das Insignium, alle an den echten 466 Partien
-// gemessen. Sie hingen bisher an nichts — und genau deshalb konnte der
-// Katalog wachsen, ohne dass jemand merkte, was er mit dem Reif macht.
+console.log('\n═══ PRESTIGE: DREI SICHTBARE QUELLEN ═══');
 const _prG = JSON.parse(K.eval(`JSON.stringify((function(){
   const T = prestigeTabelle();
   let a=0, m=0, r=0;
@@ -1111,7 +1108,25 @@ const _prG = JSON.parse(K.eval(`JSON.stringify((function(){
     stufen[P.insignie.key]=(stufen[P.insignie.key]||0)+1;
     if(e.zahlen.rekord>0) mitRekord.push(pid);
   });
-  return {a, m, r, stufen, spieler:T.rang.length, mitRekord:mitRekord.length,
+  const vergleich=T.rang.map(pid=>{
+    const ms=matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(pid));
+    const siege=ms.filter(m=>(m.winner==='A')===(m.a1===pid||m.a2===pid)).length;
+    const e=T.byPid[pid];
+    const aq=e.quellen.filter(q=>q.q==='auszeichnung');
+    return {pid,name:(pmap()[pid]||{}).name||pid,spiele:ms.length,siege,
+      siegrate:ms.length?Math.round(siege/ms.length*100):0,
+      prestige:e.punkte,auszeichnungen:e.teile.auszeichnung,
+      monate:e.teile.monat,rekorde:e.teile.rekord,
+      ausMix:Object.fromEntries(['legendary','rare','common'].map(k=>[k,{
+        arten:aq.filter(q=>q.klasse===k).length,
+        mal:aq.filter(q=>q.klasse===k).reduce((n,q)=>n+q.mal,0),
+        punkte:Math.round(aq.filter(q=>q.klasse===k).reduce((n,q)=>n+q.p,0))}])),
+      ausTop:aq
+        .sort((a,b)=>b.p-a.p).slice(0,8).map(q=>q.id+':'+q.mal+'x='+Math.round(q.p))};
+  });
+  return {a, m, r, stufen, spieler:T.rang.length, mitRekord:mitRekord.length,vergleich,
+          falscheQuellen:[...new Set(Object.values(T.byPid).flatMap(e=>(e.quellen||[]).map(q=>q.q)))]
+            .filter(q=>!['auszeichnung','monat','rekord'].includes(q)),
           hoechste:T.byPid[T.rang[0]].punkte,
           sternAb:INSIGNIEN[INSIGNIEN.length-1].min};
 })())`));
@@ -1119,19 +1134,32 @@ const _prSum = _prG.a + _prG.m + _prG.r;
 console.log(`  Auszeichnungen ${Math.round(_prG.a/_prSum*100)} % · Monat ${Math.round(_prG.m/_prSum*100)} % · Rekorde ${Math.round(_prG.r/_prSum*100)} %`);
 console.log(`  Stufen: ${Object.entries(_prG.stufen).map(([k,v])=>k+' '+v).join(' · ')}`);
 console.log(`  Spieler mit mindestens einem Rekord: ${_prG.mitRekord} von ${_prG.spieler}`);
+console.log('  Vergleich: ' + _prG.vergleich.map(x=>
+  `${x.name} ${x.siegrate}%/${x.spiele} Sp. = ${x.prestige} (${x.auszeichnungen} A)`
+).join(' · '));
+console.log('  Julian/Maxi: ' + _prG.vergleich.filter(x=>x.name==='Julian'||x.name==='Maxi')
+  .map(x=>x.name+' '+x.ausTop.join(', ')).join(' · '));
+console.log('  Award-Mix: ' + _prG.vergleich.filter(x=>['Leon','Martin','Julian','Maxi'].includes(x.name))
+  .map(x=>x.name+' '+Object.entries(x.ausMix).map(([k,v])=>k[0]+':'+v.arten+'/'+v.mal+'='+v.punkte).join(' ')).join(' · '));
 
-// 1. Rekorde dürfen das Insignium nicht allein tragen. Wer Rekorde hält,
-//    hält meist auch viele Auszeichnungen — wenn die Rekorde trotzdem den
-//    größten Block stellen, ist der Reif eine Rekordanzeige geworden.
+ok(_prG.falscheQuellen.length === 0,
+   'Prestige kommt nur aus Auszeichnungen, Monatschroniken und Rekorden',
+   _prG.falscheQuellen.join(', ') || 'genau drei Quellen');
 ok(_prG.r < _prG.a,
    'Auszeichnungen wiegen schwerer als Rekorde',
    `Auszeichnungen ${_prG.a}, Rekorde ${_prG.r}`);
-// 2. Kein Block dominiert. Bei drei Quellen wäre ein Drittel gleichmäßig;
-//    45 % lassen Spielraum, ohne dass eine Quelle die anderen erdrückt.
-ok(Math.max(_prG.a, _prG.m, _prG.r) / _prSum <= 0.50,
-   'kein Block stellt mehr als die Hälfte des Prestiges der Liga',
-   `größter Block ${Math.round(Math.max(_prG.a,_prG.m,_prG.r)/_prSum*100)} %`);
-// 3. Rekorde müssen erreichbar sein. Vor dem Senken der Mindest-Spielzahlen
+const _prV = Object.fromEntries(_prG.vergleich.map(x=>[x.name,x]));
+ok(_prV.Julian.spiele < _prV.Maxi.spiele / 2
+   && _prV.Julian.siegrate > _prV.Maxi.siegrate
+   && _prV.Julian.auszeichnungen > _prV.Maxi.auszeichnungen,
+   'starke Auszeichnungen schlagen selbst das doppelte Spielpensum',
+   `Julian ${_prV.Julian.auszeichnungen}/${_prV.Julian.spiele} · Maxi ${_prV.Maxi.auszeichnungen}/${_prV.Maxi.spiele}`);
+const _prSpitze = ['Leon','Martin','Julian'].map(n=>_prV[n]);
+ok(Math.max(..._prSpitze.map(x=>x.prestige))/Math.min(..._prSpitze.map(x=>x.prestige))
+     < Math.max(..._prSpitze.map(x=>x.spiele))/Math.min(..._prSpitze.map(x=>x.spiele)),
+   'bei ähnlich starker Spitze wächst Prestige deutlich langsamer als das Pensum',
+   `Prestige ${_prSpitze.map(x=>x.prestige).join('/')} · Spiele ${_prSpitze.map(x=>x.spiele).join('/')}`);
+// Rekorde müssen erreichbar sein. Vor dem Senken der Mindest-Spielzahlen
 //    hielten 5 von 12 Spielern einen wertenden Rekord — die anderen sieben
 //    spielten zu wenig, um überhaupt in die Wertung zu kommen („ab 100
 //    Spielen", „ab 60 Siegen"). Eine Bestenliste, an der die halbe Liga gar
@@ -1143,11 +1171,149 @@ ok(Math.max(_prG.a, _prG.m, _prG.r) / _prSum <= 0.50,
 ok(_prG.mitRekord > _prG.spieler / 2,
    'mehr als die halbe Liga hält einen wertenden Rekord',
    `${_prG.mitRekord} von ${_prG.spieler}`);
-// 4. Der Ordensstern bleibt außer Reichweite, solange ihn niemand erspielt
+// Der Ordensstern bleibt außer Reichweite, solange ihn niemand erspielt
 //    hat. Er darf nicht dadurch fallen, dass der Katalog wächst.
 ok(_prG.hoechste < _prG.sternAb,
    'der Ordensstern ist noch von niemandem erreicht',
    `bester Stand ${_prG.hoechste}, Schwelle ${_prG.sternAb}`);
+
+// Das Auszeichnungsmodell ist eine sichtbare Regel statt eines nachträglichen
+// Kein Quellenlimit: Die Klasse bestimmt Startwert, prozentuale Abnahme und
+// den kleinen Dauerwert, der die Laufbahn mathematisch offen hält.
+const _prModell = JSON.parse(K.eval(`JSON.stringify((function(){
+  const dom=[1,2,3].map(n=>auszeichnungsPunkte('dominator_400',n));
+  const meister=[1,2,3].map(n=>auszeichnungsPunkte('champion',n));
+  const team=[1,2,3].map(n=>auszeichnungsPunkte('team_of_season',n));
+  const potw=[1,2,3].map(n=>auszeichnungsPunkte('potw',n));
+  const potd=[1,2,3].map(n=>auszeichnungsPunkte('potd',n));
+  const carry=[1,2,3,24].map(n=>auszeichnungsPunkte('carry',n));
+  const klassen=Object.fromEntries(Object.entries(PRESTIGE_AUSZEICHNUNG)
+    .map(([k,v])=>[k,{basis:v.basis,abnahme:v.abnahme}]));
+  const positiv=BADGES.filter(b=>rarityOf(b.id)!=='negative').map(b=>({
+    id:b.id, a:auszeichnungsPunkte(b.id,99), b:auszeichnungsPunkte(b.id,100),
+    teile:[1,2,3,4].map(n=>auszeichnungsTeilwert(b.id,n))
+  }));
+  return {dom,meister,team,potw,potd,carry,klassen,paare:positiv,
+    steht:positiv.filter(x=>!(x.b>x.a)),
+    negativ:BADGES.filter(b=>rarityOf(b.id)==='negative')
+      .filter(b=>auszeichnungsPunkte(b.id,10)!==0).map(b=>b.id)};
+})())`));
+ok(_prModell.dom[0] === 50 && _prModell.dom[1] === 100
+   && Math.abs(_prModell.dom[2] - 145) < 1e-9,
+   'Dominator wächst paarweise mit 50 + 50 + 45', _prModell.dom.join(' / '));
+ok(_prModell.meister[0] === 75 && _prModell.meister[1] === 150
+   && _prModell.meister[2] > _prModell.dom[2]
+   && _prModell.dom[2] > _prModell.team[2],
+   'Meister, Dominator und Team der Saison bleiben in dieser Reihenfolge',
+   [_prModell.meister[2],_prModell.dom[2],_prModell.team[2]].join(' > '));
+ok(_prModell.potw[0] === 30 && _prModell.potw.every((v,i)=>v>_prModell.potd[i]),
+   'Player of the Week ist bei jeder gleichen Anzahl mehr wert als Player of the Day',
+   _prModell.potw.join(' / ') + ' > ' + _prModell.potd.join(' / '));
+ok(_prModell.potd[0] === 10,
+   'Player of the Day startet bei zehn Prestige', _prModell.potd.join(' / '));
+ok(_prModell.carry[0] === 3 && _prModell.carry[1] === 6
+   && Math.abs(_prModell.carry[2]-8.25)<1e-9,
+   'Carry wächst paarweise mit 3 + 3 + 2,25', _prModell.carry.slice(0,3).join(' / '));
+ok(_prModell.klassen.legendary.basis > _prModell.klassen.rare.basis
+   && _prModell.klassen.rare.basis > _prModell.klassen.common.basis
+   && _prModell.klassen.legendary.abnahme < _prModell.klassen.rare.abnahme
+   && _prModell.klassen.rare.abnahme < _prModell.klassen.common.abnahme,
+   'wertvollere Klassen starten höher und nehmen langsamer ab',
+   JSON.stringify(_prModell.klassen));
+ok(_prModell.paare.every(x => x.teile[0] === x.teile[1]
+     && x.teile[2] === x.teile[3] && x.teile[2] < x.teile[1]),
+   'jede positive Auszeichnung verliert ihren Prozentsatz erst nach zwei Erfolgen',
+   _prModell.paare.filter(x => !(x.teile[0] === x.teile[1]
+     && x.teile[2] === x.teile[3] && x.teile[2] < x.teile[1])).map(x=>x.id).join(', ') || 'alle');
+ok(_prModell.steht.length === 0,
+   'jede positive Auszeichnung wächst auch nach vielen Wiederholungen weiter',
+   _prModell.steht.map(x=>x.id).join(', ') || 'alle');
+ok(_prModell.negativ.length === 0,
+   'Schanden sind weder Prestige-Belohnung noch zusätzliche Strafe',
+   _prModell.negativ.join(', ') || 'alle bei null');
+
+const _prTausch = JSON.parse(K.eval(`JSON.stringify({
+  sieger:rarityOf('perfect_win'), allwetter:rarityOf('allwetter'),
+  siegerP:auszeichnungsPunkte('perfect_win',1),
+  allwetterP:auszeichnungsPunkte('allwetter',1),
+  profil:BADGES.slice().sort((a,b)=>badgeProfilRang(a.id)-badgeProfilRang(b.id))
+    .slice(0,10).map(b=>b.id)
+})`));
+ok(_prTausch.sieger === 'legendary' && _prTausch.allwetter === 'rare'
+   && _prTausch.siegerP > _prTausch.allwetterP,
+   'Absoluter Sieger ist Legendary und wertvoller als Allwetter',
+   JSON.stringify(_prTausch));
+ok(_prTausch.profil.join(',') === [
+  'dynasty_600','dominator_400','streak20','streak15','champion','team_of_season',
+  'untouchable','award_collector','perfect_win','mr_perfect'].join(','),
+   'die ersten fünf Auszeichnungszeilen folgen der gewünschten Reihenfolge',
+   _prTausch.profil.join(', '));
+
+// Das Chronik-Blatt zeigt den Grundwert (zum Beispiel +115), die Laufbahn
+// darf daneben nicht kommentarlos nur den gekappten Rest zeigen. Die Daten
+// tragen deshalb Basis, Wiederholung, Rohwert und tatsaechlichen Beitrag.
+const _prChron = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch=[], alle=[];
+  Object.values(prestigeTabelle().byPid).forEach(e => (e.quellen||[])
+    .filter(q=>q.q==='monat').forEach(q=>{
+      alle.push(q);
+      if(q.grundwert!==chronikPunkte(q.id) || q.p==null) falsch.push(q.id);
+    }));
+  return {n:alle.length,falsch,
+    abweichend:alle.filter(q=>Math.abs(q.p-q.grundwert/Math.sqrt(q.staffel))>1e-8).length,
+    staffeln:alle.map(q=>({rang:q.rang,staffel:q.staffel}))};
+})())`));
+ok(_prChron.n > 0 && _prChron.falsch.length === 0,
+   'jede Monatsquelle traegt den echten Chronik-Wert und ihre Rechnung',
+   _prChron.falsch.join(', ') || _prChron.n + ' Quellen');
+ok(_prChron.abweichend === 0 && _prChron.staffeln.every(q =>
+     q.staffel === Math.floor(q.rang / 3) + 1),
+   'Chroniken wechseln alle drei Einträge in die nächste Wurzelstaffel',
+   _prChron.staffeln.slice(0,8).map(q=>q.rang+'→√'+q.staffel).join(' · '));
+
+const _prRekord = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch=[];
+  Object.values(prestigeTabelle().byPid).forEach(e => (e.quellen||[])
+    .filter(q=>q.q==='rekord').forEach(q=>{
+      const soll=q.basis/q.halter/Math.sqrt(Math.floor(q.rang/3)+1);
+      if(Math.abs(q.p-soll)>1e-8) falsch.push(q.id);
+    }));
+  return falsch;
+})())`));
+ok(_prRekord.length === 0,
+   'Rekorde wechseln alle drei Einträge in die nächste Wurzelstaffel',
+   _prRekord.join(', ') || 'alle Rekorde nachrechenbar');
+
+const _prSortierung = JSON.parse(K.eval(`JSON.stringify((function(){
+  const monat=[{id:'juli',p:90},{id:'august',p:75},{id:'september',p:135}];
+  const rekord=[{id:'juli',p:90},{id:'august',p:75},{id:'september',p:135}];
+  _wurzelStapel(monat,3); _wurzelStapel(rekord,3);
+  return {monat,rekord};
+})())`));
+ok(_prSortierung.monat.map(x=>x.id).join(',') === 'september,juli,august'
+   && _prSortierung.monat[0].p === 135 && _prSortierung.monat[1].p === 90
+   && Math.abs(_prSortierung.monat[2].p - 75/Math.sqrt(2)) < 1e-9,
+   'wertvolle spätere Chroniken rücken vor und erhalten weniger Dämpfung',
+   _prSortierung.monat.map(x=>x.id+':'+x.p).join(' · '));
+ok(_prSortierung.rekord.map(x=>x.id).join(',') === 'september,juli,august'
+   && _prSortierung.rekord[0].p === 135 && _prSortierung.rekord[1].p === 90
+   && Math.abs(_prSortierung.rekord[2].p - 75/Math.sqrt(2)) < 1e-9,
+   'auch Rekorde werden vor der Wurzelstaffel nach ihrem Wert sortiert',
+   _prSortierung.rekord.map(x=>x.id+':'+x.p).join(' · '));
+
+const _prHistorisch = JSON.parse(K.eval(`JSON.stringify((function(){
+  const sid=allPastSeasons().slice().sort()[0], bis=seasonEnd(sid).getTime();
+  const ms=matches.filter(m=>mts(m)<=bis);
+  const zaehle=(id,quelle,zeit)=>computeBadges(id,quelle,zeit)
+    .filter(b=>b.id==='champion'||b.id==='vice_champion'||b.id==='team_of_season')
+    .reduce((n,b)=>n+(b.count||0),0);
+  const damals=players.reduce((n,p)=>n+zaehle(p.id,ms,bis),0);
+  const heute=players.reduce((n,p)=>n+zaehle(p.id,matches,null),0);
+  return {sid,damals,heute};
+})())`));
+ok(_prHistorisch.damals === 4 && _prHistorisch.heute > _prHistorisch.damals,
+   'historisches Prestige enthaelt keine spaeteren Saisonwuerden',
+   `${_prHistorisch.sid}: ${_prHistorisch.damals}, heute ${_prHistorisch.heute}`);
 
 
 // ══════════════════════════════════════════════════════════════════════
@@ -1168,6 +1334,8 @@ const _lb = JSON.parse(K.eval(`JSON.stringify((function(){
     min: INSIGNIEN.map(x=>x.min),
     namen: INSIGNIEN.map(x=>x.name),
     stufen, grade,
+    werte: T.rang.map(pid=>({name:pname(pid), punkte:T.byPid[pid].punkte,
+      stufe:prestigeOf(pid).stufe, grad:prestigeOf(pid).grad})),
     spieler: T.rang.length,
     hoechste: T.byPid[T.rang[0]].punkte,
     erstStufe: T.rang.filter(pid=>prestigeOf(pid).stufe >= 1).length,
@@ -1182,16 +1350,69 @@ const _lb = JSON.parse(K.eval(`JSON.stringify((function(){
 console.log('  Schwellen: ' + _lb.min.join(' · '));
 console.log('  Getragen:  ' + _lb.namen.map((n,i)=>n+' '+_lb.stufen[i]).join(' · '));
 console.log('  Bester Stand: ' + _lb.hoechste);
+console.log('  Spitze: ' + _lb.werte.slice(0,3).map(x=>x.name+' '+x.punkte+' / '+x.stufe+'.'+x.grad).join(' · '));
 
-// 1. Jede Stufe kostet mindestens doppelt so viel wie die vorige. Das ist die
-//    Regel, aus der die Schwellen kommen — steht sie nicht im Test, wird sie
-//    beim nächsten Nachjustieren still aufgegeben.
+ok(_lb.min.join(',') === '0,500,1200,2800,4500',
+   'die fünf Insignien beginnen an den festgelegten Schwellen',
+   'Schwelle ' + _lb.min[4]);
+
+// Jede Stufe wird teurer als die vorherige. Entscheidend ist eine steigende,
+// aber nicht starr verdoppelte Hürde bis zum Ordensstern bei 4500.
 const _spannen = _lb.min.slice(1).map((v,i)=>v - _lb.min[i]);
 let _steil = true;
-for(let i=1;i<_spannen.length;i++) if(_spannen[i] < _spannen[i-1]*2) _steil = false;
+for(let i=1;i<_spannen.length;i++) if(_spannen[i] <= _spannen[i-1]) _steil = false;
 ok(_steil,
-   'jede Stufe kostet mindestens das Doppelte der vorigen',
+   'jede Stufe kostet mehr als die vorige',
    'Spannen ' + _spannen.join(' · '));
+
+const _lbN = Object.fromEntries(_lb.werte.map(x=>[x.name,x]));
+ok(_lbN.Leon && _lbN.Martin && _lbN.Leon.stufe === 2 && _lbN.Leon.grad === 2
+   && _lbN.Martin.stufe === 2 && _lbN.Martin.grad === 2,
+   'Leon und Martin tragen den Volutenkranz in Ebene III',
+   ['Leon','Martin'].map(n=>n+' '+JSON.stringify(_lbN[n])).join(' · '));
+ok(_lbN.Julian && _lbN.Julian.stufe === 2 && _lbN.Julian.grad >= 1
+   && _lbN.Julian.punkte < Math.min(_lbN.Leon.punkte,_lbN.Martin.punkte),
+   'Julian folgt beiden im Volutenkranz dicht dahinter',
+   JSON.stringify(_lbN.Julian));
+ok(_lb.min[3] - _lb.hoechste >= 300,
+   'zwischen Ligaspitze und Lorbeerreif bleibt ein guter Abstand',
+   (_lb.min[3] - _lb.hoechste) + ' Punkte');
+
+const _sternMoeglich = K.eval(`BADGES.reduce((sum,b)=>
+  sum + auszeichnungsPunkte(b.id,10),0)`);
+ok(_sternMoeglich >= _lb.min[4] && _lb.min[4] - _lb.hoechste >= 1500,
+   'der Ordensstern ist sehr anspruchsvoll, aber rechnerisch erreichbar',
+   `Langzeitmodell ${Math.round(_sternMoeglich)}, Schwelle ${_lb.min[4]}`);
+
+// Eine rein geometrische Folge haette eine endliche Summe. Dann waeren zwar
+// die ersten fuenf Insignien erreichbar, spaetere Zacken des Ordenssterns
+// irgendwann aber nicht mehr. Die harmonisch abflachende Auszeichnungsfolge
+// macht die Laufbahn wirklich offen: jeder endliche Zielwert wird nach
+// endlich vielen weiteren Erfolgen ueberschritten.
+const _endlos = JSON.parse(K.eval(`JSON.stringify((function(){
+  const ziel=INSIGNIEN[4].min+20*ORDENSSTERN_SCHRITT;
+  let n=1;
+  const karriere=k=>BADGES.reduce((sum,b)=>sum+auszeichnungsPunkte(b.id,k),0);
+  while(n<1000 && karriere(n)<ziel) n++;
+  const klassen=Object.entries(PRESTIGE_AUSZEICHNUNG)
+    .filter(([k])=>k!=='negative').map(([k,r])=>({k,
+      delta:auszeichnungsPunkte(BADGES.find(b=>rarityOf(b.id)===k).id,10000)
+           -auszeichnungsPunkte(BADGES.find(b=>rarityOf(b.id)===k).id,9999)}));
+  const chroniken=Array.from({length:10000},()=>100);
+  const chronikDelta=_wurzelZuwachs(chroniken,100,3);
+  const rekorde=Array.from({length:10000},()=>48);
+  const rekordDelta=_wurzelZuwachs(rekorde,48,3);
+  return {ziel,n,wert:karriere(n),klassen,chronikDelta,rekordDelta};
+})())`));
+ok(_endlos.klassen.every(x=>x.delta>0)
+   && _endlos.chronikDelta>0 && _endlos.rekordDelta>0,
+   'jede positive Dauerquelle behaelt ohne festen Deckel echten Zuwachs',
+   _endlos.klassen.map(x=>x.k+' +'+x.delta.toFixed(4)).join(' · ')
+     + ' · Chronik +' + _endlos.chronikDelta.toFixed(4)
+     + ' · Rekord +' + _endlos.rekordDelta.toFixed(4));
+ok(_endlos.n < 1000 && _endlos.wert >= _endlos.ziel,
+   'auch spaetere Ordensstern-Zacken bleiben ohne Obergrenze erreichbar',
+   `20. weitere Zacke im skalierenden Katalogmodell bei Lauf ${_endlos.n}`);
 
 // 2. Der Beste der Liga hat die obere Hälfte der Leiter noch vor sich. Ohne
 //    diese Grenze wandert die Spitze nach oben, sobald der Katalog wächst —
@@ -1334,29 +1555,27 @@ ok(_pvM.length === 0, 'Prestige aus Monatswertungen fällt nie',
 ok(_pvR.length > 0, 'ein abgegebener Rekord kostet Prestige',
    _pvR.length + ' Spieler haben zwischenzeitlich Rekorde abgegeben');
 
-// 4. Eine Würde zählt jedes Mal neu, alles andere einmal. Ohne den
-//    Unterschied gäbe es für den zweiten Meistertitel nichts — und mit ihm
-//    für den zweihundertsten Zittersieg zu viel.
+// Jede Auszeichnung wächst, aber jede weitere Verleihung trägt weniger bei.
 const _wd = JSON.parse(K.eval(`JSON.stringify((function(){
   const T = prestigeTabelle();
-  let mehrfach = 0, ohne = 0, grind = [];
+  let mehrfach = 0, falsch = [], ohne = [];
   T.rang.forEach(pid => {
     T.byPid[pid].quellen.filter(q => q.q === 'auszeichnung').forEach(q => {
       if(q.mal < 2) return;
-      if(q.wuerde){ mehrfach++; if(q.voll <= q.einzeln) ohne++; }
-      // Ein Eintrag, den jemand zwanzigmal geholt hat und der nicht als
-      // Würde geführt wird, darf keinen Cent mehr bringen als beim ersten Mal.
-      else if(q.voll > q.einzeln) grind.push(q.name + ' ' + q.mal + '×');
+      mehrfach++;
+      const soll=auszeichnungsPunkte(q.id,q.mal);
+      if(Math.abs(q.voll-soll)>1e-8) falsch.push(q.name);
+      if(!(q.voll>auszeichnungsPunkte(q.id,q.mal-1))) ohne.push(q.name);
     });
   });
-  return {mehrfach, ohne, grind};
+  return {mehrfach, falsch, ohne};
 })())`));
-ok(_wd.mehrfach > 0 && _wd.ohne === 0,
-   'jede wiederholte Würde zählt mehr als eine einzelne',
-   _wd.mehrfach + ' wiederholte Würden, ' + _wd.ohne + ' ohne Zuschlag');
-ok(_wd.grind.length === 0,
-   'eine beliebig oft holbare Auszeichnung zählt genau einmal',
-   _wd.grind.slice(0,3).join(', ') || 'keine');
+ok(_wd.mehrfach > 0 && _wd.falsch.length === 0,
+   'jede wiederholte Auszeichnung folgt exakt ihrer Klassenfolge',
+   _wd.falsch.join(', ') || _wd.mehrfach + ' wiederholte Auszeichnungen');
+ok(_wd.ohne.length === 0,
+   'jede weitere positive Auszeichnung erhöht das Prestige',
+   _wd.ohne.join(', ') || 'kein Stillstand');
 
 // 5. Der Meister der Liga bekommt für seinen Titel auch etwas. Er hatte bis
 //    hierher keine Auszeichnung — der Vize hatte eine.
@@ -1538,13 +1757,9 @@ ok(_fremd.length === 0,
 
 // ══════════════════════════════════════════════════════════════════════
 console.log('\n═══ DIE KARTEN NEBEN DEN KATALOGEN [§10] ═══');
-// BADGE_RARITY, BADGE_ART, BADGE_WUERDE und RARITY_META stehen NEBEN dem
-// BADGES-Array und werden von Hand gepflegt. Jede von ihnen steuert
-// Prestige [§C34] — und keine von ihnen fällt auf, wenn sie stehen bleibt,
-// während der Katalog wächst: `rarityOf` liefert still `common`, `BADGE_ART`
-// still `ereignis`, und der Zähler im Badge-Blatt zählt einfach falsch
-// weiter. Genau das prüft dieser Block, damit ein hinzugefügtes oder
-// gestrichenes Badge hier auffällt und nicht erst im Blatt.
+// BADGE_RARITY, BADGE_WUERDE und RARITY_META stehen NEBEN dem BADGES-Array
+// und werden von Hand gepflegt. Die Klasse steuert das Prestige, die Würde
+// die wiederkehrende News und RARITY_META den Zähler im Blatt.
 const _kat = JSON.parse(K.eval(`JSON.stringify((function(){
   const ist = {};
   BADGES.forEach(b => { const k = BADGE_RARITY[b.id]; if(k) ist[k] = (ist[k]||0) + 1; });
@@ -1555,7 +1770,6 @@ const _kat = JSON.parse(K.eval(`JSON.stringify((function(){
     ohneKlasse: BADGES.filter(b => !BADGE_RARITY[b.id]).map(b => b.id),
     verwaist: [].concat(
       Object.keys(BADGE_RARITY).filter(id => !kennt(id)).map(id => 'BADGE_RARITY:' + id),
-      Object.keys(BADGE_ART).filter(id => !kennt(id)).map(id => 'BADGE_ART:' + id),
       [...BADGE_WUERDE].filter(id => !kennt(id)).map(id => 'BADGE_WUERDE:' + id)),
     disz: DISZIPLINEN.length
   };
@@ -1820,6 +2034,29 @@ ok(_potdEin.gleich > 0, 'es gibt punktgleiche Spieltage — sonst prueft der Ver
 ok(_potdEin.abweichung.length === 0,
    'Allwetter und Tag der Goetter zaehlen denselben Sieger wie das POTD-Badge',
    _potdEin.abweichung.join(' · ') || 'alle gleich');
+
+// ── Der Wandler liest exakt dasselbe Positionsprofil wie das Profil ──
+const _wandler = JSON.parse(K.eval(`JSON.stringify((function(){
+  const d = CHRONICLES.find(x => x.id === 'switcher');
+  const C = _chronicleCtx();
+  const kandidaten = Object.keys(C.P).filter(id => C.P[id].games >= 60)
+    .map(id => ({id, profil:positionsProfilWert(C.P[id]), wert:d.val(C.P[id], C)}))
+    .filter(x => x.wert != null);
+  const best = Math.max.apply(null, kandidaten.map(x => x.wert));
+  const soll = kandidaten.filter(x => Math.abs(x.wert-best) <= 1e-9).map(x=>x.id).sort();
+  const ist = ((allChronicles().byId.switcher || {}).pids || []).slice().sort();
+  const probe = {games:80,atkG:40,defG:40,atkPerf:8,defPerf:-4};
+  const profil = positionsProfilWert(probe), wert = d.val(probe, C);
+  return {soll,ist,profil,wert,
+    passt:Math.abs(wert - (1-Math.abs(profil-.5)*2)) < 1e-9,
+    beleg:d.ev(probe, wert)};
+})())`));
+ok(_wandler.passt, 'Wandler und Profil benutzen dieselbe Positionsformel',
+   _wandler.profil.toFixed(3) + ' → ' + _wandler.wert.toFixed(3));
+ok(_wandler.soll.join(',') === _wandler.ist.join(','),
+   'der ausgeglichenste Profilwert haelt den Wandler', _wandler.ist.map(nm).join(', '));
+ok(/% Sturm, \d+ % Abwehr/.test(_wandler.beleg),
+   'der Wandler-Beleg zeigt die gemeinsame Profilzahl', _wandler.beleg);
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

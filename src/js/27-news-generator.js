@@ -160,8 +160,8 @@ function _namenListe(namen){
   return a.slice(0, -1).join(', ') + ' und ' + a[a.length - 1];
 }
 
-// Zahlwörter bis vier, darüber die Ziffer. Vier ist die Grenze, weil keine
-// Bündelung im Feed mehr als vier Zeilen trägt [§C33].
+// Zahlwörter bis vier, darüber die Ziffer. Große Tafel-Momente dürfen mehr
+// Zeilen tragen; ab fünf ist die Ziffer im kurzen Fließtext besser lesbar.
 // Der erste Satz eines Textes. Auf einer Sammelkarte gehoert nur er dem
 // Kopf; alles danach ist ein Detail zu einer von vier Meldungen.
 // Abkuerzungen mit Punkt gibt es in diesen Texten nicht, ein Datum wie
@@ -190,6 +190,28 @@ function _namenKurz(namen, max){
 // Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist für eine Liste
 // gebaut: der Mittelpunkt trennt dort zwei Spalten. Im Fließtext einer
 // Nachricht steht er mitten im Satz und liest sich wie ein Tippfehler.
+// ─── Welche Chronik steht wirklich in der Tafel ────────────────
+// Ein Spieler zeigt je Monat nur EINEN Chronik-Eintrag [§C32]:
+// `seasonTitleOf` liefert den ersten in Katalogreihenfolge, und die ist die
+// Wertigkeit. Wer im selben Monat mehrere holt, sah auf der Karte nicht,
+// welcher davon in der Tafel landet — „Martin holt zwei Monatschroniken"
+// zählte beide auf und ließ offen, welche ihn im Profil beschreibt.
+// Beantwortet wird die Frage nur für einen ALLEIN stehenden Halter: bei
+// mehreren wäre „steht in der Chronik" eine Behauptung über alle [§C33].
+// Und nur, wenn es überhaupt etwas zu unterscheiden gibt — bei einer
+// einzigen Chronik im Monat ist die Antwort offensichtlich.
+function _chronikZeigtSich(pids, sid, titleId){
+  if(!Array.isArray(pids) || pids.length !== 1) return null;
+  try {
+    const alle = (seasonTitles(sid).awarded || []).filter(a => a.pid === pids[0]);
+    if(alle.length < 2) return null;
+    const gezeigt = seasonTitleOf(pids[0], sid);
+    if(!gezeigt) return null;
+    return {zeigt: gezeigt.titleId === titleId, welche: gezeigt.name,
+            andere: alle.filter(a => a.titleId !== gezeigt.titleId).map(a => a.name)};
+  } catch(e){ return null; }
+}
+
 function _evSatz(ev){
   return String(ev || '').replace(/\s*·\s*/g, ', ').trim();
 }
@@ -333,7 +355,7 @@ function _buildStories(){
             ? `Die Top 2 trennen nur ${gap} Elo. Das wird knapp.`
             : `Saison-Endspurt: ${nameOf(rankList[0].pid)} führt mit ${gap} Elo Vorsprung.`,
           when: now,
-          prio: gap <= 15 ? 10 : (gap <= 50 ? 9 : 7),
+          prio: STORY_PRIO.season_endgame + (gap <= 15 ? 4 : gap <= 50 ? 2 : 0),
           dataRef: {type:'season_endgame', sid, leader:rankList[0], second:rankList[1], daysLeft, gap}
         });
       }
@@ -353,7 +375,7 @@ function _buildStories(){
         title: ageDays === 0 ? 'Die neue Saison läuft' : `Saison läuft seit ${ageDays} ${ageDays===1?'Tag':'Tagen'}`,
         desc: `Die Saison ${currentSeason().label} beginnt. Alle Spieler starten wieder bei ${cfg.start_elo} Elo.`,
         when: sStart,
-        prio: ageDays === 0 ? 8 : 5,
+        prio: STORY_PRIO.season_start + (ageDays === 0 ? 3 : 0),
         dataRef: {type:'season_start', sid: currentSeason().id}
       });
     }
@@ -390,7 +412,7 @@ function _buildStories(){
             title: `Neuer Spitzenreiter: ${nameOf(cur[0].pid)}`,
             desc: `${nameOf(cur[0].pid)} steht nach dem letzten Spiel an der Spitze. ${nameOf(prevTop)} war vorher dort.`,
             when: new Date(lastSeasonMatch.created_at),
-            prio: 10,
+            prio: STORY_PRIO.lead_change,
             dataRef: {type:'lead_change', newLeader: cur[0].pid, prevLeader: prevTop, matchId: lastSeasonMatch.id}
           });
         }
@@ -428,7 +450,7 @@ function _buildStories(){
         title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen alles`,
         desc: `${t.cur} gemeinsame Spiele, ${t.cur} Siege. Die Serie läuft noch.`,
         when: t.lastT,
-        prio: t.cur >= 7 ? 9 : 8,
+        prio: STORY_PRIO.team_streak + (t.cur >= 7 ? 4 : 0),
         dataRef: {type:'team_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
       });
     });
@@ -470,38 +492,55 @@ function _buildStories(){
             + `${new Date(t.firstT || t.lastT).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
             + `geht jedes gemeinsame Spiel verloren. ${t.cur} am Stück.`,
         when: t.lastT,
-        prio: t.cur >= 7 ? 7 : 6,
+        prio: STORY_PRIO.team_loss_streak + (t.cur >= 7 ? 4 : 0),
         dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
       });
     });
   } catch(e){}
 
-  // ── 4. Top-Form (≥8/10 letzte Spiele) ──
-  // Iteriert über aktive Spieler, schaut letzte 10 Matches → Win-Rate.
-  // O(N_players × min(10, matches_per_player)) — sehr günstig.
+  // ── 4. Über dem eigenen Schnitt (letzte 10 gegen die Laufbahn davor) ──
+  // Gemessen wird der ABSTAND, nicht das Niveau [§11.0b]. „Neun von zehn"
+  // konnte nur holen, wer ohnehin die beste Quote der Liga hat; gemessen
+  // nannte die Karte über die ganze Ligageschichte vier Spieler, einen davon
+  // zehnmal. Wer von 42 auf 70 Prozent springt, hat mehr getan als wer von
+  // 63 auf 70 kommt — und davon erfuhr der Feed nichts.
   try {
     const candidates = [];
     activePlayers().forEach(p => {
-      // byPlayer ist asc-sortiert (=ältestes first). Letzte 10 = slice(-10), für Recency desc reversen.
+      // byPlayer ist asc-sortiert (=ältestes first). Letzte 10 = slice(-10).
       const arr = byPlayer[p.id] || [];
-      if(arr.length < 10) return;
-      const last10 = arr.slice(-10);
-      const wins = last10.filter(m => won(p.id, m)).length;
-      if(wins >= 9){ // v8.8: 8→9 — nur noch echte Top-Form (9-10/10) ist News
-        candidates.push({pid: p.id, wins, when: new Date(last10[last10.length-1].created_at)});
+      if(arr.length < FORM_FENSTER + FORM_BASIS_MIN) return;
+      const fenster = arr.slice(-FORM_FENSTER);
+      const davor   = arr.slice(0, -FORM_FENSTER);
+      const wins = fenster.filter(m => won(p.id, m)).length;
+      const qJetzt = wins / FORM_FENSTER;
+      const qBasis = davor.filter(m => won(p.id, m)).length / davor.length;
+      const vorsprung = qJetzt - qBasis;
+      if(vorsprung >= FORM_VORSPRUNG){
+        candidates.push({pid: p.id, wins, qJetzt, qBasis, vorsprung,
+                         when: new Date(fenster[fenster.length - 1].created_at)});
       }
     });
-    candidates.sort((a,b) => b.wins - a.wins || b.when - a.when);
+    // Der größte Sprung zuerst, nicht die höchste Quote: die Karte handelt
+    // vom Abstand.
+    candidates.sort((a,b) => b.vorsprung - a.vorsprung || b.when - a.when);
     candidates.slice(0, NEWS_LIMITS.topForm).forEach(c => {
       stories.push({
         id: 'top_form_'+c.pid+'_'+c.when.toISOString().slice(0,10),
         cat: 'highlight',
         ic: 'flame',
-        title: `${nameOf(c.pid)} in Top-Form`,
-        desc: `${c.wins} von 10 Partien gewonnen. Keiner hat in diesem Zeitraum eine bessere Bilanz.`,
+        // Kein Possessivpronomen über einen Spieler [§6]: „über dem eigenen
+        // Schnitt", nicht „über seinem Schnitt".
+        title: `${nameOf(c.pid)} spielt über dem eigenen Schnitt`,
+        desc: `${Math.round(c.qJetzt * 100)} % aus den letzten ${FORM_FENSTER} Partien. `
+            + `Über die Laufbahn davor sind es ${Math.round(c.qBasis * 100)} %.`,
         when: c.when,
-        prio: c.wins === 10 ? 8 : (c.wins === 9 ? 7 : 6),
-        dataRef: {type:'top_form', pid: c.pid, wins: c.wins}
+        // `wins` bleibt die Zahl der Siege im Fenster: daran erkennt der
+        // Stale-Filter, ob die Form noch steht [§11.2].
+        prio: STORY_PRIO.top_form + (c.vorsprung >= 0.4 ? 4 : 2),
+        dataRef: {type:'top_form', pid: c.pid, wins: c.wins,
+                  qJetzt: Math.round(c.qJetzt * 100), qBasis: Math.round(c.qBasis * 100),
+                  vorsprung: Math.round(c.vorsprung * 100)}
       });
     });
   } catch(e){}
@@ -533,7 +572,7 @@ function _buildStories(){
         title: `${nameOf(c.pid)} findet gerade kein Mittel`,
         desc: `${c.streak} Niederlagen am Stück. So lange hat ${nameOf(c.pid)} nicht mehr gewonnen.`,
         when: c.when,
-        prio: c.streak >= 8 ? 6 : 4,
+        prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak}
       });
     });
@@ -561,6 +600,28 @@ function _buildStories(){
       const k = ev.playerId+'|'+ev.badge.id;
       if(!dedupe[k] || dedupe[k].when < ev.when) dedupe[k] = ev;
     });
+    // Das WIEVIELTE Mal ist das? Gezählt über die ganze Laufbahn, nicht nur
+    // über das Fenster von sieben Tagen — sonst wäre jede Auszeichnung
+    // immer die erste [§11.0c]. Die Zeitpunkte stehen sortiert da, also ist
+    // der Rang die Position des eigenen Zeitpunkts darin.
+    const _bZeiten = {};
+    for(const mid in bMap){
+      const arr = bMap[mid];
+      if(!arr || !arr.length) continue;
+      const mo = matches.find(m => m.id === mid);
+      if(!mo) continue;
+      const t = mts(mo);
+      arr.forEach(e => {
+        const k = e.playerId+'|'+e.badge.id;
+        (_bZeiten[k] = _bZeiten[k] || []).push(t);
+      });
+    }
+    for(const k in _bZeiten) _bZeiten[k].sort((a,b) => a - b);
+    const _bRang = ev => {
+      const l = _bZeiten[ev.playerId+'|'+ev.badge.id] || [];
+      const i = l.indexOf(ev.when.getTime());
+      return i < 0 ? l.length : i + 1;
+    };
     // v9.5: Whitelist-Filter ZUERST, dann limitieren. Vorher wurde erst auf die
     // 6 jüngsten Events geschnitten und danach gefiltert — häufige Common-Badges
     // konnten so news-würdige (rare/negative) Badges aus dem Budget verdrängen.
@@ -573,6 +634,10 @@ function _buildStories(){
     const whitelisted = Object.values(dedupe)
       .filter(ev => {
         if(!pm[ev.playerId]) return false;
+        // Eine WÜRDE ist je Saison neu zu holen und jedes Mal Nachricht;
+        // alles andere nur beim ersten Mal und an runden Marken [§11.0c].
+        const wuerde = (typeof BADGE_WUERDE !== 'undefined') && BADGE_WUERDE.has(ev.badge.id);
+        if(!wuerde && NEWS_BADGE_MARKEN.indexOf(_bRang(ev)) < 0) return false;
         const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
         return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
       });
@@ -622,7 +687,10 @@ function _buildStories(){
       // geholt. Sie stand auf 5 und damit unter der Duo-Pleitenserie — mit der
       // alten Begründung, dass Team-News „auch mal oben stehen" sollten, was
       // seit dem chronologischen Feed niemand mehr entscheidet.
-      const rarPrio = {legendary:10, rare:8, common:4, negative:4}[rar] || 4;
+      // Nur die legendäre Auszeichnung ist Breaking [§C33]; die seltene
+      // steht über der gewöhnlichen, verlässt ihr Band aber nicht.
+      const rarPrio = STORY_PRIO.badge_unlocked
+                    + ({legendary:36, rare:8, common:0, negative:0}[rar] || 0);
       // v9.7: Angstgegner-News benennt den Gegner (aus fire()-Meta durchgereicht).
       const _nemOpp = (ev.badge.id === 'nemesis' && ev.meta && ev.meta.oppId) ? ev.meta.oppId : null;
       // v9.17: Die Langzeit-Auszeichnungen bekommen einen eigenen Text mit dem
@@ -702,7 +770,7 @@ function _buildStories(){
             : `${nameOf(va > vb ? r.a : r.b)} führt ${Math.max(va, vb)}:${Math.min(va, vb)}. Öfter ist sich in der Liga kein Paar begegnet.`;
         })(),
         when: r.when,
-        prio: r.n >= 200 ? 7 : r.n >= 100 ? 5 : 3,
+        prio: STORY_PRIO.rivalry + (r.n >= 200 ? 4 : r.n >= 100 ? 2 : 0),
         dataRef: {type:'rivalry', a: r.a, b: r.b, n: r.n}
       });
     });
@@ -735,7 +803,7 @@ function _buildStories(){
         title: `${nameOf(c.pid)} feiert ${c.total}. Spiel`,
         desc: `${c.total} Partien stehen jetzt in der Bilanz von ${nameOf(c.pid)}.`,
         when: c.when,
-        prio: c.total >= 1000 ? 9 : c.total >= 250 ? 6 : 4,
+        prio: STORY_PRIO.jubilee + (c.total >= 1000 ? 6 : c.total >= 250 ? 3 : 0),
         dataRef: {type:'jubilee', pid: c.pid, total: c.total, matchId: c.matchId}
       });
     });
@@ -763,7 +831,7 @@ function _buildStories(){
         title: 'Ruhige Woche',
         desc: `Nur ${lastWeek} Spiele in den letzten 7 Tagen. Normal wären ${Math.round(avg)}.`,
         when: now,
-        prio: 2,
+        prio: STORY_PRIO.quiet_week,
         dataRef: {type:'quiet_week', lastWeek, avg: Math.round(avg)}
       });
     }
@@ -822,7 +890,7 @@ function _buildStories(){
             title: `${nameOf(topElo[0].id)} ist Saison-Champion`,
             desc: `Die Saison ${lastArchived.id} ist abgeschlossen. ${nameOf(topElo[0].id)} mit ${topElo[0].elo} Elo an der Spitze.${_extra}`,
             when: sStart,
-            prio: 9,
+            prio: STORY_PRIO.season_recap,
             dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id, championElo: topElo[0].elo, topElo, tafel: _tafel}
           });
         }
@@ -851,7 +919,7 @@ function _buildStories(){
           title: `${nameOf(p.id)}: Sieg Nummer ${mark}`,
           desc: `${nameOf(p.id)} feiert den ${mark}. Sieg.`,
           when: new Date(last.created_at),
-          prio: mark >= 500 ? 9 : mark >= 250 ? 7 : 5,
+          prio: STORY_PRIO.milestone_wins + (mark >= 500 ? 6 : mark >= 250 ? 3 : 0),
           dataRef: {type:'milestone_wins', pid: p.id, milestone: mark+'. Sieg', matchId: last.id}
         });
       }
@@ -922,7 +990,7 @@ function _buildStories(){
         // 23:58, damit der Sieger des Tages (23:59) im Feed darueber steht.
         when: (function(){ const d = new Date(_startOfToday); d.setDate(d.getDate() - 1);
           d.setHours(23, 58, 0, 0); return d; })(),
-        prio: 5,
+        prio: STORY_PRIO.elo_swing,
         dataRef: {type:'elo_swing', pid: worstPid, delta}
       });
     }
@@ -1032,10 +1100,14 @@ function _buildStories(){
           id: 'top_clash_'+m.id,
           cat: 'highlight',
           ic: 'kingClass',
+          // Der Satz nannte keine Zahl und stand damit gemessen zehnmal
+          // wortgleich im Feed [§C33]. Das Ergebnis unterscheidet die
+          // Partien, und es steht ohnehin auf der Karte.
           title: `${nameOf(best.p1)} schlägt ${nameOf(best.p2)} im Spitzenspiel`,
-          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Der Abstand nach vorn wird größer.`,
+          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. `
+              + `${m.score_a}:${m.score_b}, der Abstand nach vorn wird größer.`,
           when: new Date(best.t),
-          prio: 9,
+          prio: STORY_PRIO.top_clash,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2,
                     playerIds:[best.p1, best.p2]}
         });
@@ -1060,7 +1132,7 @@ function _buildStories(){
           cat: 'highlight', ic: 'peak',
           title: `Neuer Elo-Rekord: ${nameOf(pid)}`,
           desc: `${nameOf(pid)} schraubt die Bestmarke auf ${rec.eloRec.val} Elo. So hoch stand in der Liga noch nie jemand.`,
-          when: new Date(rec.eloRec.when), prio: 10,
+          when: new Date(rec.eloRec.when), prio: STORY_PRIO.elo_record,
           dataRef: {type:'elo_record', pid, elo: rec.eloRec.val, matchId: rec.eloRec.matchId}
         });
       }
@@ -1075,17 +1147,20 @@ function _buildStories(){
           cat: 'highlight', ic: 'crownFlame',
           title: `Serien-Rekord: ${nameOf(pid)}`,
           desc: `${rec.streakRec.val} Siege am Stück. Die längste Siegesserie, die die Liga je gesehen hat.`,
-          when: new Date(rec.streakRec.when), prio: 10,
+          when: new Date(rec.streakRec.when), prio: STORY_PRIO.streak_record,
           dataRef: {type:'streak_record', pid, streak: rec.streakRec.val, matchId: rec.streakRec.matchId}
         });
       }
     }
 
-    // Giant Slayer: ein Team gewinnt mit unter 20% Siegchance (letzte 7 Tage,
-    // das extremste Match). Suppress-Regel gegen Upset-Doppel siehe Consolidation.
+    // Giant Slayer: jedes wirklich starke Upset (<20 %) ist ein Match-Ereignis
+    // und bleibt deshalb auch sichtbar, wenn am Folgetag schon wieder gespielt
+    // wurde. Früher entstand nur das EINE extremste Match der letzten sieben
+    // Tage; dadurch verschwanden alle übrigen Sensationen aus der Geschichte.
+    // Höchstens eine je Spieltag und vier im Fenster halten sie besonders.
     {
-      const wk = 7 * 86400000;
-      let gs = null;
+      const wk = 14 * 86400000;
+      const kandidaten = [];
       for(let i = matches.length - 1; i >= 0; i--){
         const m = matches[i];
         const t = mts(m);
@@ -1096,12 +1171,19 @@ function _buildStories(){
         if(winnerChance < 0.20){
           const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
           const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
-          if(winners.every(p => pm[p] && !pm[p].hidden) && (!gs || winnerChance < gs.chance)){
-            gs = { m, chance: winnerChance, winners, losers };
-          }
+          if(winners.every(p => pm[p] && !pm[p].hidden))
+            kandidaten.push({ m, chance: winnerChance, winners, losers, t });
         }
       }
-      if(gs){
+      const jeTag = new Map();
+      kandidaten.forEach(gs => {
+        const d = new Date(gs.t);
+        const tag = d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
+        const alt = jeTag.get(tag);
+        if(!alt || gs.chance < alt.chance) jeTag.set(tag, gs);
+      });
+      [...jeTag.values()].sort((a, b) => b.t - a.t)
+        .slice(0, NEWS_LIMITS.giantSlayer).forEach(gs => {
         const wNames = gs.winners.map(nameOf).join(' & ');
         const lNames = gs.losers.map(nameOf).join(' & ');
         const pct = Math.max(1, Math.round(gs.chance * 100));
@@ -1110,10 +1192,10 @@ function _buildStories(){
           cat: 'highlight', ic: 'giantSlayer',
           title: `Giant Slayer: ${wNames}`,
           desc: `Nur ${pct}% Siegchance. Und trotzdem gewonnen: ${wNames} zwingen ${lNames} in einer echten Sensation in die Knie.`,
-          when: new Date(gs.m.created_at), prio: 10,
+          when: new Date(gs.m.created_at), prio: STORY_PRIO.giant_slayer,
           dataRef: {type:'giant_slayer', matchId: gs.m.id, winners: gs.winners, losers: gs.losers, chance: gs.chance}
         });
-      }
+      });
     }
   } catch(e){}
 
@@ -1172,7 +1254,7 @@ function _buildStories(){
         title: `${breakerNames} brechen ${nameOf(kill.victimPid)}s ${kill.streak}er-Serie`,
         desc: `${nameOf(kill.victimPid)} hatte ${kill.streak} Spiele in Folge gewonnen. Jetzt ist Schluss.`,
         when: new Date(kill.t),
-        prio: kill.streak >= 10 ? 9 : 7,
+        prio: STORY_PRIO.streak_killer + (kill.streak >= 10 ? 4 : 0),
         dataRef: {type:'streak_killer', matchId: m.id, streak: kill.streak, victimPid: kill.victimPid, breakerIds}
       });
     });
@@ -1261,7 +1343,7 @@ function _buildStories(){
           : `Nach ${g.n} Duellen steht es ${Math.max(g.wa, g.wb)}:${Math.min(g.wa, g.wb)} `
             + `für ${nameOf(g.wa > g.wb ? a : b)}.`,
         when: new Date(g.ts),
-        prio: g.n >= 200 ? 9 : g.n >= 100 ? 8 : 6,
+        prio: STORY_PRIO.rivalry_milestone + (g.n >= 200 ? 4 : g.n >= 100 ? 2 : 0),
         dataRef: {type:'rivalry_milestone', a, b, n: g.n, matchId: g.mid}
       });
     });
@@ -1291,7 +1373,7 @@ function _buildStories(){
           title: `${nameOf(p.id)}: ${mark}. Tor`,
           desc: `${goals} Tore stehen jetzt in der Karriere-Bilanz von ${nameOf(p.id)}.`,
           when: new Date(last.created_at),
-          prio: mark >= 1000 ? 8 : 6,
+          prio: STORY_PRIO.milestone_goals + (mark >= 1000 ? 4 : 0),
           dataRef: {type:'milestone_goals', pid: p.id, milestone: mark+'. Tor', matchId: last.id}
         });
       }
@@ -1315,51 +1397,47 @@ function _buildStories(){
         title: `${nameOf(e.pid)} knackt ${e.mark} Elo`,
         desc: `${e.mark} Elo zum ersten Mal überschritten. Das ist der höchste Stand der Laufbahn.`,
         when: new Date(e.when),
-        prio: e.mark >= (cfg.start_elo ?? 1000) + 500 ? 8 : 6,
+        prio: STORY_PRIO.milestone_elo + (e.mark >= (cfg.start_elo ?? 1000) + 500 ? 4 : 0),
         dataRef: {type:'milestone_elo', pid: e.pid, milestone: e.mark+' Elo', mark: e.mark, matchId: e.matchId}
       });
     });
   } catch(e){}
 
-  // ── 21. Aktive Sieges-Streak (≥5 in Folge, läuft noch) ──
-  // Pendant zu loss_streak. Spieler dessen jüngstes Match Sieg war und
-  // davor noch ≥4 weitere Siege.
+  // ── 21. Marken einer Sieges-Streak (≥5 in Folge) ──────────────────
+  // Eine Serie ist ein Ereignis des Matches, das die Marke vollmacht — kein
+  // flüchtiger Live-Zustand. Die alte Fassung betrachtete nur das jüngste
+  // Match eines Spielers. Nach der nächsten Niederlage verschwand damit auch
+  // seine 5er-Serie rückwirkend, obwohl sie tatsächlich stattgefunden hatte.
+  // Der chronologische Walk bildet stabile, idempotente Karten im Fenster.
   try {
-    const candidates = [];
-    activePlayers().forEach(p => {
-      const arr = byPlayer[p.id] || [];
-      if(!arr.length) return;
-      let streak = 0;
-      for(let i = arr.length - 1; i >= 0; i--){
-        if(!won(p.id, arr[i])) break;
-        streak++;
-        if(streak > 20) break;
-      }
-      if(streak >= 5){
-        candidates.push({pid: p.id, streak, when: new Date(arr[arr.length-1].created_at)});
-      }
-    });
-    candidates.sort((a,b) => b.streak - a.streak);
-    // v9.17 FORMULIERUNG: Bis zu 3 Spieler bekamen denselben Satz „aktuell
-    // heißeste Form der Liga" — das kann nur auf den Führenden zutreffen. Der
-    // Superlativ hängt jetzt an der tatsächlichen Bestmarke, alle anderen
-    // bekommen den Abstand dazu.
-    const _topStreak = candidates[0].streak;
-    candidates.slice(0, 3).forEach(c => {
-      const gap = _topStreak - c.streak;
-      stories.push({
-        id: 'win_streak_'+c.pid+'_'+c.when.toISOString().slice(0,10),
-        cat: 'highlight',
-        ic: 'flame',
-        title: `${nameOf(c.pid)} ungeschlagen`,
-        desc: gap === 0
-          ? `${c.streak} Siege in Folge. Aktuell die längste laufende Serie der Liga.`
-          : `${c.streak} Siege in Folge. Nur noch ${gap} ${gap === 1 ? 'Sieg' : 'Siege'} bis zur längsten laufenden Serie.`,
-        when: c.when,
-        prio: c.streak >= 10 ? 9 : c.streak >= 7 ? 7 : 6,
-        dataRef: {type:'win_streak', pid: c.pid, streak: c.streak}
+    const seit = now.getTime() - 14 * _dayMs;
+    const lauf = {}, kandidaten = [];
+    const marken = new Set([5, 7, 10, 15, 20]);
+    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+      if(mts(m) > now.getTime()) return;
+      const aGewinnt = m.winner === 'A';
+      [[m.a1,aGewinnt],[m.a2,aGewinnt],[m.b1,!aGewinnt],[m.b2,!aGewinnt]].forEach(([pid, sieg]) => {
+        if(!pid) return;
+        lauf[pid] = sieg ? (lauf[pid] || 0) + 1 : 0;
+        const n = lauf[pid];
+        const istMarke = marken.has(n) || (n > 20 && n % 5 === 0);
+        if(istMarke && mts(m) >= seit && pm[pid] && !pm[pid].hidden)
+          kandidaten.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id});
       });
     });
+    kandidaten.sort((a,b) => b.when - a.when || b.streak - a.streak)
+      .slice(0, NEWS_LIMITS.winStreak).forEach(c => {
+      stories.push({
+        id: 'win_streak_'+c.pid+'_'+c.matchId+'_'+c.streak,
+        cat: 'highlight',
+        ic: 'flame',
+        title: `${nameOf(c.pid)} zündet die ${c.streak}er-Serie`,
+        desc: `${c.streak} Siege, kein Stolpern: Mit diesem Schlusspfiff wächst der Lauf zur echten Serie.`,
+        when: c.when,
+        prio: STORY_PRIO.win_streak + (c.streak >= 10 ? 6 : c.streak >= 7 ? 3 : 0),
+        dataRef: {type:'win_streak', pid: c.pid, streak: c.streak, matchId:c.matchId}
+      });
+      });
   } catch(e){}
 
   // ── 22. Längste Pause (kein Spielbetrieb in den letzten X Tagen) ──
@@ -1391,7 +1469,7 @@ function _buildStories(){
             ? `So lange stand der Kicker noch nie still.`
             : `Die längste Pause der Liga waren ${maxGapDays} Tage.`,
           when: now,
-          prio: 3,
+          prio: STORY_PRIO.dry_spell,
           dataRef: {type:'dry_spell', daysSince: sinceLastDays, lastMatchId: matches[matches.length-1].id, maxGapDays}
         });
       }
@@ -1455,7 +1533,7 @@ function _buildStories(){
               // Quote bleibt als Kontext, damit die Zahl einordbar ist.
               desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, das sind ${Math.round(main.wr*100)} %. Am ${dLabel} hat niemand mehr geholt.`,
               when: rep,
-              prio: 7,
+              prio: STORY_PRIO.potd,
               dataRef: {type:'potd', dayKey: data.dayKey, playerId: main.id, playerIds: res.winners.map(w => w.id),
                         wins: main.wins, games: main.wins + main.losses, wr: main.wr}
             });
@@ -1532,7 +1610,7 @@ function _buildStories(){
         desc: `${_wSpiele.length} Spiele an ${_wTage} ${_wTage === 1 ? 'Tag' : 'Tagen'}. `
             + _wHeld.satz,
         when: _wSchluss,
-        prio: 9,
+        prio: STORY_PRIO.woche,
         dataRef: {type:'woche', woche:_lastWeekKey, spiele:_wSpiele.length, tage:_wTage,
                   playerIds: _wHeld.pids.slice(0, 2),
                   teile: _wochenTeile.map(t => ({art:t.art, ic:t.ic, label:t.label, pids:t.pids,
@@ -1553,12 +1631,12 @@ function _buildStories(){
   // danach in `_chronCtxBis`; der Generator selbst ist ohnehin memoisiert.
   try {
     const _letzteMs = matches.length ? mts(matches[matches.length-1]) : 0;
+    const _letzteMatchId = matches.length ? matches[matches.length-1].id : null;
     if(_letzteMs){
       const _tag0 = new Date(_letzteMs); _tag0.setHours(0, 0, 0, 0);
       const _jetzt = allChronicles().byId;
       const _vorher = allChronicles(_tag0.getTime() - 1).byId;
       const _kammer = k => (CHRON_KINDS[k] && CHRON_KINDS[k].label) || 'Liga-Rekord';
-      let _rekAusbau = 0;
       CHRONICLES.forEach(def => {
         const n = _jetzt[def.id];
         if(!n) return;
@@ -1605,7 +1683,6 @@ function _buildStories(){
           // Meldung gibt es nur, wenn der Wert besser geworden ist [§C33].
           desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
         }
-        if(art === 'gesteigert' && ++_rekAusbau > NEWS_LIMITS.rekordAusbau) return;
         stories.push({
           // Die ID traegt den ANGEZEIGTEN Wert, nicht den rohen. Mit
           // `Math.round(val * 1e4)` bekam jede Partie eine eigene ID: nach zwei
@@ -1620,8 +1697,10 @@ function _buildStories(){
           ic: def.ic,
           title, desc,
           when: _letzteMs,
-          prio: art === 'erstmals' ? 92 : art === 'geholt' ? 84 : 70,
-          dataRef: {type:'rekord_' + art, rekordId:def.id, kammer:def.kind,
+          prio: art === 'erstmals' ? STORY_PRIO.rekord_erstmals
+              : art === 'geholt'   ? STORY_PRIO.rekord_geholt
+                                   : STORY_PRIO.rekord_gesteigert,
+          dataRef: {type:'rekord_' + art, rekordId:def.id, matchId:_letzteMatchId, kammer:def.kind,
                     zufall:def.zufall || '', playerIds:n.pids.slice(0, 3),
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
                     kammerLabel:_kammer(def.kind)}
@@ -1661,7 +1740,7 @@ function _buildStories(){
                 + spitze.map(pid => `${nameOf(pid)} mit ${proSpieler[pid]}`).join(', ')
                 + '.',
             when: wann,
-            prio: 88,
+            prio: STORY_PRIO.chronik_monat,
             dataRef: {type:'chronik_monat', sid:_vorSid, playerIds:spitze,
                       eintraege:T.awarded.length, traeger:rang.length}
           });
@@ -1688,7 +1767,7 @@ function _buildStories(){
               desc: `„${x.name}" im ${seasonLabel(_vorSid)} ist der erste Monatseintrag überhaupt.`
                   + (x.ev ? ` ${_evSatz(x.ev)}.` : ''),
               when: wann + 60000,
-              prio: 90,
+              prio: STORY_PRIO.chronik_erstling,
               dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name}
             });
           });
@@ -1710,11 +1789,30 @@ function _buildStories(){
   // Meldungen ist.
   try {
     const _letzteMs2 = matches.length ? mts(matches[matches.length - 1]) : 0;
+    const _letzteMatchId2 = matches.length ? matches[matches.length - 1].id : null;
     const _sid = currentSeason().id;
     if(_letzteMs2 && typeof seasonTitleHalter === 'function'){
       const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
       const _jetztH = seasonTitleHalter(_sid);
       const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
+      // Eine Chronik-Karte darf nicht den Katalogwert als neuen Prestige-
+      // Gewinn ausgeben. Pro Monat zaehlt nur der eine Eintrag, der in der
+      // Tafel steht; ein besserer Eintrag kann den gerade geholten also
+      // vollstaendig verdraengen. Der echte Zuwachs ist die Differenz der
+      // beiden zentral berechneten Monats-Summen vor und nach dem Spieltag.
+      // Beide Tabellen sind zeitgeschnitten und gecacht: keine zweite Formel
+      // im News-System und kein zusaetzlicher Lauf je Meldung.
+      let _prestigeVor = {}, _prestigeJetzt = {};
+      try {
+        _prestigeVor = (prestigeTabelle(_t0.getTime() - 1) || {}).byPid || {};
+        _prestigeJetzt = (prestigeTabelle(_letzteMs2) || {}).byPid || {};
+      } catch(e){}
+      const _monatPlus = pid => Math.max(0,
+        (((_prestigeJetzt[pid] || {}).teile || {}).monat || 0)
+        - (((_prestigeVor[pid] || {}).teile || {}).monat || 0));
+      const _monatTitel = pid => {
+        try { return seasonTitleOf(pid, _sid, _letzteMs2); } catch(e){ return null; }
+      };
       const _meldungen = [];
       SEASON_TITLES.forEach(t => {
         const n = _jetztH[t.id];
@@ -1758,17 +1856,54 @@ function _buildStories(){
             // Karte nennt ohnehin lieber Namen als Zahlen [§C33].
             ? ` Vorher ${_namenKurz(alt.filter(id => n.pids.indexOf(id) < 0).map(nameOf))} auch.`
             : '';
-        _meldungen.push({t, n, a, punkte, art,
+        // Wer im selben Monat mehrere Chroniken hält, erfährt hier, welche
+        // davon ihn in der Tafel vertritt — und welche sie dafür überbietet.
+        const _zeigt = _chronikZeigtSich(n.pids, _sid, t.id);
+        const _zeigtSatz = !_zeigt ? ''
+          : _zeigt.zeigt
+            ? ` Steht jetzt in der Chronik${_zeigt.andere.length === 1
+                ? `, vor „${_zeigt.andere[0]}“` : ''}.`
+            : ` In der Chronik steht weiter „${_zeigt.welche}“.`;
+        // Nur neue Halter koennen hier Prestige hinzugewinnen. Wer bereits
+        // Mithalter war und nun allein steht, hat eine staerkere Geschichte,
+        // aber keinen zweiten Laufbahn-Eintrag erhalten.
+        const prestigeDelta = {}, titelJeSpieler = {};
+        n.pids.forEach(pid => {
+          const sichtbar = _monatTitel(pid);
+          titelJeSpieler[pid] = sichtbar ? sichtbar.name : '';
+          prestigeDelta[pid] = neuLeute.indexOf(pid) >= 0 && sichtbar
+            && sichtbar.titleId === t.id ? _monatPlus(pid) : 0;
+        });
+        const mitPlus = Object.keys(prestigeDelta).filter(pid => prestigeDelta[pid] > 0);
+        const ohnePlus = neuLeute.filter(pid => !(prestigeDelta[pid] > 0));
+        let prestigeSatz = '';
+        if(mitPlus.length){
+          const teile = mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`);
+          prestigeSatz = ` Für die Laufbahn zählt der Wechsel wirklich: ${_namenListe(teile)} Prestige.`;
+        } else if(ohnePlus.length){
+          const istSelbst = ohnePlus.some(pid => titelJeSpieler[pid] === t.name);
+          const staerker = [...new Set(ohnePlus.map(pid => titelJeSpieler[pid]).filter(Boolean))];
+          prestigeSatz = istSelbst
+            ? ` „${t.name}“ steht in der Monatschronik, am gerundeten Prestige-Stand ändert sich diesmal nichts.`
+            : staerker.length
+            ? ` Für die Laufbahn bleibt ${_namenListe(staerker.map(x => `„${x}“`))} stärker; es kommt kein Prestige hinzu.`
+            : ' Für die Laufbahn kommt durch diesen Wechsel kein Prestige hinzu.';
+        } else {
+          prestigeSatz = ' Die Halterlage ändert sich, der Prestige-Stand nicht.';
+        }
+        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt,
+          prestigeDelta, titelJeSpieler,
           title: titel,
           // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
           // dieselbe Zahl untereinander sagt nichts Neues [§C33].
           desc: (n.ev ? _evSatz(n.ev) + '. ' : '')
-              + `${artikel} Chronik.` + nachsatz,
+              + `${artikel} Chronik.` + nachsatz + _zeigtSatz + prestigeSatz,
           klasse: t.klasse});
       });
-      // Die wertvollsten zuerst, dann greift der Deckel.
+      // Wertvollste zuerst: Die Reihenfolge bestimmt den Kopf des späteren
+      // Bundles, nicht mehr, ob eine fachliche Änderung überhaupt vorkommt.
       _meldungen.sort((x, y) => y.punkte - x.punkte);
-      _meldungen.slice(0, NEWS_LIMITS.chronikGeholt).forEach(m => {
+      _meldungen.forEach(m => {
         stories.push({
           // Die ID traegt Chronik, Monat und die sortierten Halter. Damit ist
           // sie stabil, solange derselbe sie haelt, und eine Uebernahme
@@ -1782,57 +1917,70 @@ function _buildStories(){
           // Ueber der Insignium-Stufe, unter dem uebernommenen Liga-Rekord:
           // sie ueberlebt damit den Tagesdeckel, ohne die Ewige Tafel zu
           // ueberstimmen [§C33].
-          prio: 80,
-          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
-                    playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
+          prio: STORY_PRIO.chronik_geholt,
+          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_letzteMatchId2,
+                    playerIds:m.n.pids.slice(), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
-                    chronArt:m.t.kunst, aus:m.t.aus, punkte:m.punkte}
+                    chronArt:m.t.kunst, aus:m.t.aus,
+                    // `punkte` ist der tatsaechliche neue Beitrag, nicht der
+                    // ungedaempfte Katalogwert. Der bleibt als Grundwert fuer
+                    // das Detail nachvollziehbar.
+                    punkte:Object.values(m.prestigeDelta).reduce((s, x) => s + x, 0),
+                    grundwert:m.punkte, prestigeDelta:m.prestigeDelta,
+                    titelJeSpieler:m.titelJeSpieler,
+                    // Steht diese Chronik in der Monatstafel? null heisst:
+                    // die Frage stellt sich nicht [§C32].
+                    zeigt: m.zeigt ? m.zeigt.zeigt : null}
         });
       });
     }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] chronget', e); }
 
   // ── Eine neue Stufe am Insignium ─────────────────────────────────────
-  // Es gibt keinen „Stand von gestern" fürs Prestige — ein zweiter voller
-  // Lauf wäre zu teuer. Das Gedächtnis ist stattdessen der Feed selbst: die
-  // Story-ID trägt Spieler und Stufe, und persistierte Stories werden nie
-  // doppelt eingefügt. Gemeldet wird nur, wer die Schwelle GERADE erst
-  // überschritten hat — sonst stünden beim ersten Lauf alle zwölf Stufen
-  // auf einmal im Feed.
-  //
-  // „Gerade erst" war ein Viertel ÜBER der Schwelle, und das war zweimal
-  // falsch. Erstens hing das Fenster an der Höhe der Schwelle statt an der
-  // Strecke bis zur nächsten: am Schildring waren es 60 Punkte, am
-  // Volutenkranz 180. Zweitens ist eine einzige legendäre Chronik 140 Punkte
-  // wert [§C39] — ein Fenster, das schmaler ist als der kleinste Schritt,
-  // wird übersprungen. Gemessen meldete der Feed danach KEINE Stufe mehr,
-  // weil der volle Katalog jeden Spieler weit über sein Fenster hob.
-  // Jetzt: das erste Viertel der Strecke zur nächsten Stufe, mindestens aber
-  // so breit wie der größte Einzelgewinn.
-  const INS_SPRUNG = 150;
+  // Eine Stufe ist ein Uebergang, kein Naehefenster. Verglichen wird der
+  // Stand vor dem letzten Spieltag mit heute. Dadurch verschwindet eine
+  // Meldung weder bei einem grossen Sprung noch nach einer spaeteren
+  // Neuberechnung. Die ID bleibt Spieler + Stufe; Persistenz und
+  // ON-CONFLICT machen den Lauf ueber Geraete hinweg idempotent.
   try {
-    (players || []).filter(p => p && !p.hidden).forEach(p => {
-      const P = prestigeOf(p.id);
-      if(!P || P.stufe < 1) return;
-      const schwelle = INSIGNIEN[P.stufe].min;
-      const naechste = INSIGNIEN[P.stufe + 1];
-      const spanne = naechste ? (naechste.min - schwelle) : schwelle;
-      if(P.punkte >= schwelle + Math.max(spanne * 0.25, INS_SPRUNG)) return;
-      const oben = P.stufe >= 3;   // Lorbeerreif und Ordensstern
-      stories.push({
-        id: 'ins_' + p.id + '_' + INSIGNIEN[P.stufe].key,
-        cat: 'tafel',
-        ic: 'award',
-        title: `${p.name} trägt den ${INSIGNIEN[P.stufe].name}`,
-        desc: `${P.punkte} Prestige zusammen: ${P.teile.auszeichnung} aus Auszeichnungen, ${P.teile.monat} aus Monatswertungen, `
-            + `${P.teile.rekord} aus Rekorden.`
-            + (P.naechste ? ` Bis zum ${P.naechste.name} fehlen ${P.fehlt}.` : ''),
-        when: matches.length ? mts(matches[matches.length-1]) : now.getTime(),
-        prio: oben ? 95 : 76,
-        dataRef: {type:'insignium_stufe', pid:p.id, stufe:P.stufe,
-                  stufeName:INSIGNIEN[P.stufe].name, punkte:P.punkte, oben}
+    const _insLetzte = matches.length ? mts(matches[matches.length-1]) : 0;
+    if(_insLetzte){
+      const _insTag0 = new Date(_insLetzte); _insTag0.setHours(0,0,0,0);
+      const _insVorMs = _insTag0.getTime() - 1;
+      const _insTagMatches = matches.filter(m => mts(m) > _insVorMs && mts(m) <= _insLetzte)
+        .slice().sort((a,b) => mts(a)-mts(b));
+      (players || []).filter(p => p && !p.hidden).forEach(p => {
+        const P = prestigeOf(p.id);
+        const vorher = prestigeOf(p.id, _insVorMs);
+        if(!P || !vorher || P.stufe <= vorher.stufe) return;
+        for(let stufe = vorher.stufe + 1; stufe <= P.stufe; stufe++){
+          let lo = 0, hi = _insTagMatches.length - 1, treffer = _insLetzte;
+          while(lo <= hi){
+            const mid = Math.floor((lo + hi) / 2);
+            const ts = mts(_insTagMatches[mid]);
+            if(prestigeOf(p.id, ts).stufe >= stufe){ treffer = ts; hi = mid - 1; }
+            else lo = mid + 1;
+          }
+          const stand = prestigeOf(p.id, treffer);
+          const ausloeser = _insTagMatches.find(m => mts(m) === treffer);
+          const oben = stufe >= 3;
+          stories.push({
+            id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key,
+            cat: 'tafel',
+            ic: 'award',
+            title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`,
+            desc: `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
+                + `${stand.teile.monat} aus Monatswertungen und ${stand.teile.rekord} aus Rekorden.`
+                + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
+            when: treffer,
+            prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
+            dataRef: {type:'insignium_stufe', pid:p.id,
+                      matchId:ausloeser ? ausloeser.id : null, stufe,
+                      stufeName:INSIGNIEN[stufe].name, punkte:stand.punkte, oben}
+          });
+        }
       });
-    });
+    }
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] insignium', e); }
 
   // ── Ambiente Tages-Stories (v8.5) ──
