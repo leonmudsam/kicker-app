@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Neue Liga-Rekorde – Auswahl und Mockup</title>
+  <style>
+    :root{
+      --bg:#090c0a;--surface:#101612;--surface-2:#151d18;--surface-3:#1a241d;
+      --line:#29352d;--line-soft:#202a23;--text:#f1f5f1;--soft:#b7c1ba;
+      --muted:#718078;--faint:#4b5951;--acid:#bef264;--gold:#f7cf4a;
+      --blue:#73b7da;--violet:#ad94e8;--orange:#e99161;--red:#ef6d78;
+      --display:Impact,"Arial Black",system-ui,sans-serif;
+      --sans:Inter,"Segoe UI",system-ui,sans-serif;
+      --mono:"Cascadia Mono","SFMono-Regular",Consolas,monospace;
+    }
+    *{box-sizing:border-box}
+    html{background:var(--bg);color-scheme:dark}
+    body{margin:0;background:
+      radial-gradient(circle at 50% -12%,rgba(190,242,100,.075),transparent 31rem),
+      var(--bg);color:var(--text);font:14px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+    button{font:inherit}
+    .page{width:min(1120px,100%);margin:0 auto;padding:28px 18px 80px}
+    .eyebrow{margin:0 0 8px;color:var(--acid);font:700 11px/1.2 var(--mono);letter-spacing:.15em;text-transform:uppercase}
+    h1,h2,h3,p{margin-top:0}
+    h1{max-width:850px;margin-bottom:12px;font:900 clamp(30px,5vw,54px)/.98 var(--display);letter-spacing:.01em}
+    .intro{max-width:780px;margin-bottom:22px;color:var(--soft);font-size:16px}
+    .basis{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;margin-bottom:22px;background:rgba(115,183,218,.06);border:1px solid rgba(115,183,218,.2);border-radius:12px;color:var(--soft)}
+    .basis b{color:var(--blue)}
+    .basis .dot{flex:0 0 auto;width:7px;height:7px;margin-top:7px;background:var(--blue);border-radius:50%;box-shadow:0 0 12px rgba(115,183,218,.65)}
+    .numbers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:28px}
+    .number{padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:13px}
+    .number strong{display:block;font:800 25px/1 var(--mono);color:var(--text)}
+    .number span{display:block;margin-top:5px;color:var(--muted);font:700 10px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+    .number.recommend strong{color:var(--acid)}
+    .tabs{display:flex;gap:6px;padding:4px;margin:0 0 24px;background:var(--surface);border:1px solid var(--line);border-radius:13px;overflow:auto}
+    .tab{min-height:39px;padding:8px 14px;color:var(--muted);background:transparent;border:0;border-radius:9px;font-weight:800;white-space:nowrap;cursor:pointer}
+    .tab[aria-selected="true"]{background:var(--surface-3);color:var(--text);box-shadow:inset 0 -2px var(--acid)}
+    .panel[hidden]{display:none}
+    .section-head{display:flex;justify-content:space-between;gap:18px;align-items:end;margin:0 0 14px}
+    .section-head h2{margin-bottom:4px;font:900 23px/1.1 var(--display);letter-spacing:.02em}
+    .section-head p{max-width:720px;margin:0;color:var(--muted)}
+    .filters{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px}
+    .filter{padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--muted);font-size:12px;font-weight:800;cursor:pointer}
+    .filter[aria-pressed="true"]{color:var(--text);background:var(--surface-3);border-color:#425347}
+    .record-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+    .record{--tone:var(--gold);position:relative;display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:13px;align-items:center;width:100%;min-height:145px;padding:14px;text-align:left;color:var(--text);background:
+      radial-gradient(circle at 0 50%,color-mix(in srgb,var(--tone) 8%,transparent),transparent 42%),
+      var(--surface);border:1px solid var(--line);border-left:3px solid color-mix(in srgb,var(--tone) 70%,var(--line));border-radius:14px;cursor:pointer;overflow:hidden}
+    .record:hover{border-color:color-mix(in srgb,var(--tone) 45%,var(--line));background:
+      radial-gradient(circle at 0 50%,color-mix(in srgb,var(--tone) 13%,transparent),transparent 45%),var(--surface-2)}
+    .record:focus-visible{outline:2px solid var(--acid);outline-offset:2px}
+    .record.mark{--tone:var(--blue)}.record.fate{--tone:var(--violet)}
+    .record.open{border-style:dashed;border-left-style:solid}
+    .record[hidden]{display:none}
+    .symbol{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;color:var(--tone);background:color-mix(in srgb,var(--tone) 8%,var(--surface-2));border:1px solid color-mix(in srgb,var(--tone) 25%,var(--line));font:700 24px/1 var(--mono)}
+    .record-copy{min-width:0}
+    .record-type{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:5px;color:var(--tone);font:700 9px/1.3 var(--mono);letter-spacing:.12em;text-transform:uppercase}
+    .record-type .status{padding:2px 6px;border:1px solid color-mix(in srgb,var(--tone) 30%,var(--line));border-radius:999px;color:var(--soft);letter-spacing:.06em}
+    .record h3{margin:0 0 4px;font:900 17px/1.15 var(--display);letter-spacing:.02em}
+    .record .condition{margin:0;color:var(--soft);font-size:13px;line-height:1.45}
+    .proof{min-width:112px;padding-left:12px;border-left:1px solid var(--line);text-align:right}
+    .proof strong{display:block;color:var(--tone);font:800 19px/1 var(--mono)}
+    .proof span{display:block;max-width:122px;margin-top:5px;color:var(--muted);font:600 10px/1.35 var(--mono)}
+    .chevron{position:absolute;right:8px;bottom:7px;color:var(--faint);font-size:18px}
+    .recommendation{display:grid;grid-template-columns:1.15fr .85fr;gap:12px;margin-top:24px}
+    .note{padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px}
+    .note h3{margin-bottom:8px;font:900 15px/1.2 var(--display);letter-spacing:.03em}
+    .note p{margin-bottom:9px;color:var(--soft)}
+    .note p:last-child{margin-bottom:0}
+    .note strong{color:var(--text)}
+    .note.good{border-left:3px solid var(--acid)}
+    .note.warn{border-left:3px solid var(--orange)}
+    .inventory{margin-top:14px;background:transparent;border-top:1px solid var(--line)}
+    .inventory summary{padding:13px 0;color:var(--soft);font-weight:800;cursor:pointer}
+    .inventory-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding-bottom:6px}
+    .inventory-group{padding:12px;background:var(--surface);border:1px solid var(--line-soft);border-radius:12px}
+    .inventory-group b{display:block;margin-bottom:7px;color:var(--gold);font:700 10px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.1em}
+    .inventory-group:nth-child(2) b{color:var(--blue)}.inventory-group:nth-child(3) b{color:var(--violet)}.inventory-group:nth-child(4) b{color:var(--red)}
+    .inventory-group p{margin:0;color:var(--muted);font-size:12px;line-height:1.55}
+    .decision-list{display:grid;gap:9px}
+    .decision{display:grid;grid-template-columns:34px minmax(140px,.55fr) minmax(0,1.45fr);gap:12px;align-items:start;padding:13px 14px;background:var(--surface);border:1px solid var(--line);border-radius:13px}
+    .decision .no{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:rgba(239,109,120,.1);color:var(--red);font-weight:900}
+    .decision h3{margin:2px 0 0;font-size:14px}
+    .decision p{margin:0;color:var(--muted);font-size:13px}
+    .decision p b{color:var(--soft)}
+    .flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:stretch;margin:18px 0 24px}
+    .flow-step{position:relative;padding:13px 12px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+    .flow-step:not(:last-child)::after{content:'›';position:absolute;right:-8px;top:50%;z-index:2;translate:0 -50%;color:var(--acid);font-size:20px}
+    .flow-step b{display:block;margin-bottom:4px;color:var(--acid);font:700 10px/1.2 var(--mono);letter-spacing:.07em;text-transform:uppercase}
+    .flow-step span{color:var(--soft);font-size:12px}
+    .schema-table{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line)}
+    .schema-table th,.schema-table td{padding:11px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    .schema-table th{color:var(--muted);font:700 10px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+    .schema-table td{color:var(--soft);font-size:13px}.schema-table td:first-child{color:var(--text);font-weight:800}.schema-table tr:last-child td{border-bottom:0}
+    code{font:600 12px/1.4 var(--mono);color:var(--acid)}
+    .checklist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+    .check{padding:11px 12px;background:var(--surface);border:1px solid var(--line);border-radius:11px;color:var(--soft);font-size:13px}
+    .check::before{content:'✓';margin-right:8px;color:var(--acid);font-weight:900}
+    dialog{width:min(620px,calc(100% - 28px));max-height:calc(100vh - 28px);padding:0;color:var(--text);background:var(--surface);border:1px solid #3b4a40;border-radius:18px;box-shadow:0 24px 80px #000;overflow:auto}
+    dialog::backdrop{background:rgba(0,0,0,.72);backdrop-filter:blur(6px)}
+    .dialog-head{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;gap:10px;align-items:start;padding:18px 18px 13px;background:rgba(16,22,18,.96);border-bottom:1px solid var(--line)}
+    .dialog-head .mini{color:var(--dialog-tone,var(--gold));font:700 10px/1.3 var(--mono);letter-spacing:.11em;text-transform:uppercase}
+    .dialog-head h2{margin:3px 0 0;font:900 23px/1.1 var(--display)}
+    .close{width:38px;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--soft);font-size:21px;cursor:pointer}
+    .dialog-body{padding:17px 18px 20px}
+    .dialog-lead{color:var(--text);font-size:16px;font-weight:700}
+    .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:15px 0}
+    .detail{padding:11px 12px;background:var(--surface-2);border:1px solid var(--line);border-radius:11px}
+    .detail b{display:block;margin-bottom:4px;color:var(--muted);font:700 9px/1.2 var(--mono);letter-spacing:.09em;text-transform:uppercase}
+    .detail span{color:var(--soft);font-size:13px}
+    .dialog-body h3{margin:18px 0 6px;color:var(--dialog-tone,var(--gold));font:800 11px/1.2 var(--mono);letter-spacing:.1em;text-transform:uppercase}
+    .dialog-body p{margin-bottom:8px;color:var(--soft)}
+    .story{padding:12px 13px;background:linear-gradient(120deg,color-mix(in srgb,var(--dialog-tone,var(--gold)) 8%,transparent),transparent 55%),var(--surface-2);border-left:3px solid var(--dialog-tone,var(--gold));border-radius:0 10px 10px 0;color:var(--text)!important}
+    .footer-note{margin-top:26px;color:var(--faint);font:600 10px/1.5 var(--mono);text-align:center}
+    @media(max-width:780px){
+      .numbers{grid-template-columns:repeat(2,minmax(0,1fr))}.record-grid{grid-template-columns:1fr}.recommendation{grid-template-columns:1fr}.inventory-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.flow{grid-template-columns:1fr}.flow-step:not(:last-child)::after{content:'⌄';right:12px;top:auto;bottom:-12px}.decision{grid-template-columns:30px 1fr}.decision p{grid-column:2}.section-head{display:block}
+    }
+    @media(max-width:480px){
+      .page{padding:22px 10px 60px}.record{grid-template-columns:47px minmax(0,1fr);gap:10px}.symbol{width:43px;height:43px;font-size:20px}.proof{grid-column:2;display:flex;gap:8px;align-items:baseline;padding:8px 0 0;border-left:0;border-top:1px solid var(--line);text-align:left}.proof strong{font-size:16px}.proof span{max-width:none;margin:0}.inventory-grid,.checklist,.detail-grid{grid-template-columns:1fr}.schema-wrap{overflow:auto}.schema-table{min-width:620px}}
+  </style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <p class="eyebrow">Awards · Liga-Rekorde · Konzept</p>
+    <h1>Aus Monatschroniken werden echte Liga-Rekorde</h1>
+    <p class="intro">„Der Pendler“ und „Der unmögliche Tag“ bleiben. Alle anderen Ideen der ersten Runde sind ersetzt. Die neue Auswahl misst ungewöhnliche Abweichungen, besondere Monatsbilder und offene Serien – keine Karriere-Summen und kein Pensum.</p>
+    <div class="basis"><span class="dot"></span><span><b>Messbasis:</b> die feste Testbasis mit 466 echten Partien bis 27.08.2026. Die Live-Liga im Screenshot hat inzwischen 524 Partien; Namen und Werte dienen deshalb als belastbarer Vergleich, nicht als behaupteter Live-Stand.</span></div>
+    <div class="numbers" aria-label="Zusammenfassung">
+      <div class="number"><strong>53</strong><span>Monatschroniken geprüft</span></div>
+      <div class="number recommend"><strong>8</strong><span>wieder brechbare Bestwerte</span></div>
+      <div class="number"><strong>7</strong><span>Formeln aus dem Katalog</span></div>
+      <div class="number"><strong>6</strong><span>verschiedene Spitzenreiter</span></div>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Mockup-Bereiche">
+    <button class="tab" role="tab" aria-selected="true" aria-controls="selection" id="tab-selection">Auswahl</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="rejected" id="tab-rejected">Nicht aufnehmen</button>
+    <button class="tab" role="tab" aria-selected="false" aria-controls="integration" id="tab-integration">Integration</button>
+  </nav>
+
+  <section class="panel" id="selection" role="tabpanel" aria-labelledby="tab-selection">
+    <div class="section-head">
+      <div><h2>Die neue Auswahl</h2><p>Jeder Eintrag bleibt offen für einen besseren Wert. Eine Karte zeigt Formel, Abgrenzung, Teststand und ein passendes Story-Beispiel.</p></div>
+    </div>
+    <div class="filters" aria-label="Rekorde filtern">
+      <button class="filter" data-filter="all" aria-pressed="true">Alle 8</button>
+      <button class="filter" data-filter="chronicle" aria-pressed="false">Aus Chroniken 7</button>
+      <button class="filter" data-filter="deviation" aria-pressed="false">Abweichungen 5</button>
+      <button class="filter" data-filter="sequence" aria-pressed="false">Serien 3</button>
+      <button class="filter" data-filter="new" aria-pressed="false">Ganz neu 1</button>
+    </div>
+
+    <div class="record-grid" id="record-grid">
+      <button class="record fate" data-tags="new sequence" data-record="commuter">
+        <span class="symbol">⇄</span><span class="record-copy"><span class="record-type">Fügung <span class="status">neue Formel</span></span><h3>Der Pendler</h3><span class="condition">Längste Folge, in der sich Sturm und Abwehr in jeder Partie abwechseln.</span></span><span class="proof"><strong>10</strong><span>Leo &amp; Maxi</span></span><span class="chevron">›</span>
+      </button>
+      <button class="record skill" data-tags="chronicle deviation" data-record="impossible">
+        <span class="symbol">%</span><span class="record-copy"><span class="record-type">Können <span class="status">Ausreißer → Allzeit</span></span><h3>Der unmögliche Tag</h3><span class="condition">Unwahrscheinlichster erfolgreicher Spieltag mit mindestens vier Partien.</span></span><span class="proof"><strong>3,0 %</strong><span>Julian · 7:1 am 08.06.</span></span><span class="chevron">›</span>
+      </button>
+      <button class="record skill" data-tags="chronicle deviation" data-record="secondwind">
+        <span class="symbol">Ⅱ</span><span class="record-copy"><span class="record-type">Können <span class="status">Chronik → Allzeit</span></span><h3>Die zweite Luft</h3><span class="condition">Größter Monats-Sprung von den ersten drei Partien eines Tages zu den späteren.</span></span><span class="proof"><strong>+42</strong><span>Jane · Juli · 33 auf 75 %</span></span><span class="chevron">›</span>
+      </button>
+      <button class="record skill" data-tags="chronicle deviation" data-record="equanimity">
+        <span class="symbol">≈</span><span class="record-copy"><span class="record-type">Konstanz <span class="status">Chronik → Allzeit</span></span><h3>Der Gleichmut</h3><span class="condition">Kleinste Streuung der Tordifferenz in einem gewerteten Monat.</span></span><span class="proof"><strong>2,8</strong><span>Johannes · Juni</span></span><span class="chevron">›</span>
+      </button>
+      <button class="record mark" data-tags="chronicle deviation" data-record="goalrush">
+        <span class="symbol">+</span><span class="record-copy"><span class="record-type">Fügung <span class="status">Chronik → Allzeit</span></span><h3>Der Torhagel</h3><span class="condition">Größter Abstand der eigenen Gesamt-Tore zum Monatsdurchschnitt der Liga.</span></span><span class="proof"><strong>+1,4</strong><span>Johannes · 17,4 statt 16,0</span></span><span class="chevron">›</span>
+      </button>
+      <button class="record mark" data-tags="chronicle deviation" data-record="specialist">
+        <span class="symbol">↕</span><span class="record-copy"><span class="record-type">Fügung <span class="status">Chronik → Allzeit</span></span><h3>Der Spezialist</h3><span class="condition">Größter Abstand zwischen Sturm- und Abwehrquote in einem Monat.</span></span><span class="proof"><strong>50 P</strong><span>Jane · 17 % / 67 %</span></span><span class="chevron">›</span>
+      </button>
+      <button class="record skill" data-tags="chronicle sequence" data-record="weekfinish">
+        <span class="symbol">✓</span><span class="record-copy"><span class="record-type">Können <span class="status">Chronik → Allzeit</span></span><h3>Der Wochenschluss</h3><span class="condition">Längste Folge gewonnener Wochenabschlüsse, bei mindestens drei Partien je Woche.</span></span><span class="proof"><strong>7</strong><span>Leo · KW 29 bis 35</span></span><span class="chevron">›</span>
+      </button>
+      <button class="record mark" data-tags="chronicle sequence" data-record="escape">
+        <span class="symbol">↯</span><span class="record-copy"><span class="record-type">Fügung <span class="status">Chronik → Allzeit</span></span><h3>Der Ausbruch</h3><span class="condition">Längste persönliche Pleitenserie gegen denselben Gegner, die mit einem Sieg endete.</span></span><span class="proof"><strong>17</strong><span>Stefan gegen Julian</span></span><span class="chevron">›</span>
+      </button>
+    </div>
+
+    <div class="recommendation">
+      <article class="note good"><h3>Warum diese Auswahl fairer ist</h3><p>Fünf Rekorde vergleichen immer nur <strong>einen qualifizierten Spieler-Monat</strong>. Wer 50 Partien spielt, bekommt dadurch keinen größeren Wert als jemand mit 12 – nur weitere unabhängige Versuche in späteren Monaten.</p><p>Die drei Serien zählen keine Karriere-Summe. Sie können jederzeit reißen und anschließend von jedem Spieler länger neu aufgebaut werden.</p></article>
+      <article class="note warn"><h3>Eine feste Regel gegen Pensum</h3><p>Monatswerte werden erst ab ihrer natürlichen Mindestmenge zugelassen. Danach bleibt die Spielzahl aus dem Rekordwert heraus. <strong>Keine Addition über Monate, keine Punkte je Auftreten und kein Bonus für mehr Partien.</strong></p></article>
+    </div>
+
+    <details class="inventory">
+      <summary>Welche Monatschronik hinter welchem Rekord steckt</summary>
+      <div class="inventory-grid">
+        <div class="inventory-group"><b>Tag &amp; Monatsverlauf</b><p><strong>Der Ausreißer</strong> liefert die Rechnung für den unmöglichen Tag. <strong>Die zweite Luft</strong> vergleicht frühe und späte Partien desselben Spieltags.</p></div>
+        <div class="inventory-group"><b>Abweichende Bilder</b><p><strong>Der Gleichmut</strong> misst Streuung statt Siegquote. <strong>Der Torhagel</strong> misst den Abstand zum jeweiligen Ligaschnitt.</p></div>
+        <div class="inventory-group"><b>Rollen &amp; Folgen</b><p><strong>Der Spezialist</strong> vergleicht beide Positionen. <strong>Der Wochenschluss</strong> macht aus jedem Wochenabschluss genau einen Versuch.</p></div>
+        <div class="inventory-group"><b>Brüche &amp; Wechsel</b><p><strong>Der Ausbruch</strong> beendet den eigenen Bann gegen einen Gegner. Nur <strong>der Pendler</strong> braucht eine vollständig neue Formel.</p></div>
+      </div>
+    </details>
+  </section>
+
+  <section class="panel" id="rejected" role="tabpanel" aria-labelledby="tab-rejected" hidden>
+    <div class="section-head"><div><h2>Aus der ersten Auswahl entfernt</h2><p>Diese sechs Ideen sind nicht mehr Teil des Vorschlags. Sie bilden keinen dauerhaft offenen, vom Pensum unabhängigen Liga-Rekord.</p></div></div>
+    <div class="decision-list">
+      <article class="decision"><span class="no">×</span><h3>Der Serienbrecher</h3><p><b>Zu nah an Bestehendem.</b> Es gibt bereits die gleichnamige Monatschronik und die Auszeichnung für gebrochene Serien. „Der Ausbruch“ erzählt mit dem persönlichen Bann eine deutlich andere Geschichte.</p></article>
+      <article class="decision"><span class="no">×</span><h3>Der Senkrechtstarter</h3><p><b>Nach dem 50. Sieg unveränderlich.</b> Ein Spieler kann seinen eigenen Wert danach nie wieder verbessern. Das ist ein historischer Meilenstein, aber kein lebender Rekord.</p></article>
+      <article class="decision"><span class="no">×</span><h3>Der Gipfelstürmer</h3><p><b>Zu eng am Elo-System.</b> Höchster Gipfel, großer Sprung und Sturzflug decken Elo bereits ab. Außerdem profitieren lange Laufbahnen von mehr Tief-Hoch-Gelegenheiten.</p></article>
+      <article class="decision"><span class="no">×</span><h3>Das Kaleidoskop</h3><p><b>Versteckter Vielspielerwert.</b> Verschiedene Ergebnisse pro Tag steigen stark mit der Zahl der gespielten Partien. In der vorhandenen Chronik-Analyse fiel genau diese Idee bereits wegen ihrer Spielzahl-Korrelation durch.</p></article>
+      <article class="decision"><span class="no">×</span><h3>Die Waage</h3><p><b>Ein zufälliger Gleichstand statt wachsender Bestwert.</b> Wer nach Partie 100 nicht exakt ausgeglichen steht, kann lange keine Marke setzen; höhere Spielzahlen erzeugen zugleich mehr mögliche Trefferpunkte.</p></article>
+      <article class="decision"><span class="no">×</span><h3>Die große Runde</h3><p><b>Durch die Ligagröße gedeckelt.</b> Sobald alle möglichen Mitspieler erreicht sind, ist der Rekord voll und kann erst nach einem Kaderwechsel wieder wachsen.</p></article>
+    </div>
+  </section>
+
+  <section class="panel" id="integration" role="tabpanel" aria-labelledby="tab-integration" hidden>
+    <div class="section-head"><div><h2>Dieselbe Formel auf zwei Zeitachsen</h2><p>Sieben Vorschläge ergänzen eine vorhandene Disziplin nur um <code>allzeit</code>. Monatschronik und Liga-Rekord müssen dabei dieselbe ausgelagerte Messfunktion verwenden – damit niemals zwei leicht abweichende Rechnungen entstehen.</p></div></div>
+    <div class="flow" aria-label="Automatischer Datenweg">
+      <div class="flow-step"><b>1 · Eine Formel</b><span>Die Messung der Monatschronik wird als gemeinsamer Helfer wiederverwendet.</span></div>
+      <div class="flow-step"><b>2 · Historischer Pass</b><span><code>_chronicleCtx</code> merkt je Spieler den besten qualifizierten Monat oder die längste Folge.</span></div>
+      <div class="flow-step"><b>3 · Vergabe</b><span><code>CHRONICLES</code> und <code>allChronicles</code> finden automatisch alle Halter.</span></div>
+      <div class="flow-step"><b>4 · Anzeige</b><span>Rekorde-Reiter und Spielerprofil lesen denselben Katalog, ohne Extra-Liste.</span></div>
+      <div class="flow-step"><b>5 · Folgen</b><span>Rekordwechsel erzeugen Stories und fließen wertsortiert in das Insignium ein.</span></div>
+    </div>
+    <div class="schema-wrap">
+      <table class="schema-table">
+        <thead><tr><th>Idee</th><th>Neues Kontextfeld</th><th>Katalogtyp</th><th>Fortschritt</th></tr></thead>
+        <tbody>
+          <tr><td>Pendler</td><td><code>positionAlternation</code></td><td>Neue Disziplin · Rohwert</td><td>Jede weitere abwechselnde Position verlängert den offenen Bestwert.</td></tr>
+          <tr><td>Unmöglicher Tag</td><td><code>bestDayTailChance</code></td><td><code>ausreisser2.allzeit</code></td><td>Eine noch kleinere Eintrittswahrscheinlichkeit bricht den Rekord.</td></tr>
+          <tr><td>Zweite Luft</td><td><code>bestSeasonLateLift</code></td><td><code>zweiteluft.allzeit</code></td><td>Größerer Abstand zwischen früher und später Monatsleistung.</td></tr>
+          <tr><td>Gleichmut</td><td><code>bestSeasonGoalDiffSpread</code></td><td><code>gleichmut.allzeit</code></td><td>Eine kleinere Streuung setzt die neue Bestmarke.</td></tr>
+          <tr><td>Torhagel</td><td><code>bestSeasonGoalSurplus</code></td><td><code>torhagel.allzeit</code></td><td>Der Abstand zum zeitgleichen Ligaschnitt kann weiter wachsen.</td></tr>
+          <tr><td>Spezialist</td><td><code>bestSeasonPositionGap</code></td><td><code>spezialisiert.allzeit</code></td><td>Der größte Monatsabstand zwischen beiden Positionen zählt.</td></tr>
+          <tr><td>Wochenschluss</td><td><code>weekFinishRun</code></td><td><code>wochenschluss.allzeit</code></td><td>Jede weitere gewonnene Schluss-Partie verlängert die Serie.</td></tr>
+          <tr><td>Ausbruch</td><td><code>brokenPersonalBan</code></td><td><code>ausbruch.allzeit</code></td><td>Eine längere beendete Pleitenfolge übernimmt die Marke.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="checklist">
+      <div class="check">Ein neuer Rekord erscheint automatisch im Rekorde-Reiter.</div>
+      <div class="check">Alle Mithalter werden bei exaktem Gleichstand geführt.</div>
+      <div class="check">Das Profil sortiert neue Rekorde über denselben Katalog.</div>
+      <div class="check">Prestige übernimmt Art und Wert ohne separate ID-Liste.</div>
+      <div class="check">Saisonvergleiche erkennen „neu“, „geholt“ und „gesteigert“.</div>
+      <div class="check">Stories erhalten Wert, Halter, Zeitpunkt und verständlichen Beleg.</div>
+      <div class="check">Cache-Schlüssel bleiben an Matchzahl und Cache-Version gebunden.</div>
+      <div class="check">Weitere Rekorde brauchen später keine Änderungen an den Ansichten.</div>
+    </div>
+  </section>
+
+  <p class="footer-note">Konzept-Mockup · keine Änderung am produktiven Rekordkatalog</p>
+</main>
+
+<dialog id="record-dialog" aria-labelledby="dialog-title">
+  <div class="dialog-head"><div><div class="mini" id="dialog-type"></div><h2 id="dialog-title"></h2></div><button class="close" type="button" aria-label="Schließen">×</button></div>
+  <div class="dialog-body">
+    <p class="dialog-lead" id="dialog-condition"></p>
+    <div class="detail-grid"><div class="detail"><b>Stand Testbasis</b><span id="dialog-proof"></span></div><div class="detail"><b>Daten</b><span id="dialog-data"></span></div></div>
+    <h3>Warum dieser Rekord eigenständig ist</h3><p id="dialog-why"></p>
+    <h3>Einfache Erklärung im Rekordblatt</h3><p id="dialog-explain"></p>
+    <h3>Beispiel für eine Rekord-Story</h3><p class="story" id="dialog-story"></p>
+  </div>
+</dialog>
+
+<script>
+  const details = {
+    commuter:{type:'Fügung · neue Formel',tone:'#ad94e8',title:'Der Pendler',condition:'Längste Folge, in der sich Sturm und Abwehr in jeder Partie abwechseln.',proof:'Leo und Maxi teilen 10 Partien. Martin und Stefan folgen mit 9.',data:'Chronologische Positionsfolge jedes Spielers.',why:'Der Wandler betrachtet nur die Verteilung über die ganze Laufbahn. Der Pendler misst eine offene Reihenfolge: Sie kann bei jedem Positionsprofil entstehen und mit jeder weiteren Partie wachsen.',explain:'Eine Folge läuft weiter, solange auf Sturm immer Abwehr folgt und umgekehrt. Zwei gleiche Positionen hintereinander beenden sie.',story:'Maxi wechselt zehn Partien lang nach jedem Spiel die Position. So lange pendelte zuvor niemand zwischen Sturm und Abwehr.'},
+    impossible:{type:'Können · Der Ausreißer wird Allzeit',tone:'#f7cf4a',title:'Der unmögliche Tag',condition:'Unwahrscheinlichster erfolgreicher Spieltag mit mindestens vier Partien und mindestens drei Siegen.',proof:'Julian: 7:1 am 08.06. Die Chance auf mindestens sieben Siege lag bei 2,99 %. Leo folgt mit 3,03 %.',data:'Die vorhandene Poisson-Binomial-Rechnung aus „Der Ausreißer“.',why:'Der schwerste Tag misst nur die Auslosung, der Sonntagsschuss nur eine Partie. Hier zählt die gesamte Tagesleistung gegen alle vorherigen Siegchancen. Eine noch kleinere Wahrscheinlichkeit kann den Rekord jederzeit brechen.',explain:'Aus den Siegchancen aller Partien wird berechnet, wie wahrscheinlich mindestens diese Zahl an Siegen war. Der unwahrscheinlichste erfolgreiche Tag hält den Rekord.',story:'Julian gewinnt 7 von 8 Partien. Vor dem ersten Ball lag die Chance auf einen mindestens so starken Tag bei nur 3,0 %.'},
+    secondwind:{type:'Können · Monatschronik wird Allzeit',tone:'#f7cf4a',title:'Die zweite Luft',condition:'Größter Monats-Sprung von den ersten drei Partien eines Spieltags zu den späteren Partien.',proof:'Jane im Juli: 33 % in den ersten drei Partien, 75 % danach. Abstand: 42 Prozentpunkte.',data:'Vorhandene Monatsgruppen aus „Die zweite Luft“, mindestens fünf frühe und fünf späte Partien.',why:'Der Umschwung vergleicht zwei Tage. Dieser Wert fragt, ob jemand innerhalb seiner Spieltage aufdreht. Gewertet wird nur der größte historische Monatsabstand, nicht die Zahl solcher Monate.',explain:'In jedem Monat werden die ersten drei Partien aller eigenen Spieltage mit den späteren Partien verglichen. Der größte Sprung nach oben hält den Rekord.',story:'Jane findet im Juli die zweite Luft: Nach den ersten drei Partien ihrer Spieltage steigt ihre Quote von 33 auf 75 % – 42 Punkte Unterschied.'},
+    equanimity:{type:'Konstanz · Monatschronik wird Allzeit',tone:'#f7cf4a',title:'Der Gleichmut',condition:'Kleinste Streuung der Tordifferenz in einem gewerteten Monat.',proof:'Johannes im Juni: 2,8 Tore Streuung um eine mittlere Tordifferenz von −1,2.',data:'Vorhandene Standardabweichung der Tordifferenzen aus „Der Gleichmut“, ab acht Partien.',why:'Weder Siege noch Tore werden addiert. Der Rekord beschreibt, wie ähnlich die Spiele eines Monats aussahen. Auch ein Spieler aus dem Mittelfeld kann das ruhigste Monatsbild der Liga setzen.',explain:'Für jede Partie wird die Tordifferenz betrachtet. Je näher diese Werte über einen Monat beieinanderliegen, desto kleiner ist die Streuung und desto besser der Rekord.',story:'Johannes spielt den ruhigsten Monat der Ligageschichte. Seine Tordifferenzen streuen nur um 2,8 Tore.'},
+    goalrush:{type:'Fügung · Monatschronik wird Allzeit',tone:'#73b7da',title:'Der Torhagel',condition:'Größter Abstand der Gesamt-Tore in den eigenen Partien zum zeitgleichen Monatsdurchschnitt der Liga.',proof:'Johannes im Juni: 17,4 Tore je Partie, die Liga lag bei 16,0. Abstand: +1,4.',data:'Vorhandener relativer Torschnitt aus „Der Torhagel“, ab acht Partien.',why:'Der Torjäger zählt eigene Tore im Sturm, das Scheunentor Gegentore in der Abwehr. Der Torhagel bewertet das gesamte Spielbild relativ zum selben Monat und sagt nicht, ob der Spieler gewann.',explain:'Eigene und gegnerische Tore werden zusammengezählt. Entscheidend ist, wie weit der persönliche Schnitt über dem Ligaschnitt desselben Monats liegt.',story:'Wenn Johannes im Juni am Tisch steht, fallen 17,4 Tore pro Partie – 1,4 mehr als im Rest der Liga. Neuer Torhagel-Rekord.'},
+    specialist:{type:'Fügung · Monatschronik wird Allzeit',tone:'#73b7da',title:'Der Spezialist',condition:'Größter Abstand zwischen Sturm- und Abwehrquote in einem gewerteten Monat.',proof:'Jane im Juli: 17 % im Sturm, 67 % in der Abwehr. Abstand: 50 Prozentpunkte.',data:'Vorhandener Positionsvergleich aus „Der Spezialist“, mindestens fünf Partien je Position.',why:'Der komplette Stürmer und Verteidiger suchen die Besten ihrer Position, der Wandler die Einsatzverteilung. Der Spezialist misst nur den ungewöhnlichsten Leistungsabstand zwischen den Rollen.',explain:'Sturm- und Abwehrquote werden innerhalb desselben Monats verglichen. Der größere Abstand bestimmt den Rekord – unabhängig davon, welche Position stärker war.',story:'Jane zeigt im Juli zwei Gesichter: 17 % im Sturm, 67 % in der Abwehr. Noch nie lagen die Rollen in einem Monat 50 Punkte auseinander.'},
+    weekfinish:{type:'Können · Monatschronik wird Allzeit',tone:'#f7cf4a',title:'Der Wochenschluss',condition:'Längste Folge gewonnener Wochenabschlüsse, bei mindestens drei eigenen Partien je Woche.',proof:'Leo gewann den letzten Ball in sieben gewerteten Wochen nacheinander, von KW 29 bis KW 35.',data:'Vorhandene Wochen-Gruppen aus „Der Wochenschluss“; pro Woche zählt genau eine Schluss-Partie.',why:'Zusätzliche Partien innerhalb einer Woche erhöhen den Wert nicht. Jede Woche liefert genau einen Versuch, und eine verlorene Schluss-Partie beendet die Folge. Dadurch bleibt der Rekord offen und unabhängig vom Tagespensum.',explain:'Eine Woche zählt ab drei eigenen Partien. Gewonnen werden muss die chronologisch letzte davon. Gesucht ist die längste ununterbrochene Folge solcher Wochen.',story:'Leo macht sieben Wochen nacheinander den letzten Punkt. Der Wochenschluss steht jetzt bei sieben.'},
+    escape:{type:'Fügung · Monatschronik wird Allzeit',tone:'#73b7da',title:'Der Ausbruch',condition:'Längste persönliche Pleitenserie gegen denselben Gegner, die mit einem Sieg beendet wurde.',proof:'Stefan beendete am 03.08. eine Folge von 17 Niederlagen gegen Julian. Leo folgt mit 14.',data:'Vorhandene Gegner-Folgen aus „Der Ausbruch“, jeweils mit Stand vor dem Spiel.',why:'Der Serienbrecher beendet den aktuellen Lauf eines Gegners. Der Ausbruch beendet den eigenen, über viele direkte Begegnungen gewachsenen Bann. Der Rekord kann deshalb auch an einen schwächeren Spieler gehen.',explain:'Für jeden Gegner wird die laufende Zahl eigener Niederlagen gemerkt. Erst ein späterer Sieg schließt die Folge ab und macht ihren Wert rekordfähig.',story:'Nach 17 Niederlagen gegen Julian gelingt Stefan der Ausbruch. Einen längeren persönlichen Bann hat in der Liga noch niemand beendet.'}
+  };
+
+  const tabs = [...document.querySelectorAll('.tab')];
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    tabs.forEach(t => t.setAttribute('aria-selected', String(t === tab)));
+    document.querySelectorAll('.panel').forEach(panel => panel.hidden = panel.id !== tab.getAttribute('aria-controls'));
+  }));
+
+  const filters = [...document.querySelectorAll('.filter')];
+  filters.forEach(filter => filter.addEventListener('click', () => {
+    filters.forEach(f => f.setAttribute('aria-pressed', String(f === filter)));
+    const wanted = filter.dataset.filter;
+    document.querySelectorAll('.record').forEach(record => {
+      record.hidden = wanted !== 'all' && !record.dataset.tags.split(' ').includes(wanted);
+    });
+  }));
+
+  const dialog = document.getElementById('record-dialog');
+  document.querySelectorAll('[data-record]').forEach(card => card.addEventListener('click', () => {
+    const d = details[card.dataset.record];
+    dialog.style.setProperty('--dialog-tone', d.tone);
+    document.getElementById('dialog-type').textContent = d.type;
+    document.getElementById('dialog-title').textContent = d.title;
+    document.getElementById('dialog-condition').textContent = d.condition;
+    document.getElementById('dialog-proof').textContent = d.proof;
+    document.getElementById('dialog-data').textContent = d.data;
+    document.getElementById('dialog-why').textContent = d.why;
+    document.getElementById('dialog-explain').textContent = d.explain;
+    document.getElementById('dialog-story').textContent = d.story;
+    dialog.showModal();
+  }));
+  dialog.querySelector('.close').addEventListener('click', () => dialog.close());
+  dialog.addEventListener('click', event => {
+    const box = dialog.getBoundingClientRect();
+    if(event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) dialog.close();
+  });
+</script>
+</body>
+</html>
