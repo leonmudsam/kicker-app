@@ -1166,6 +1166,8 @@
     padding:9px 12px;background:var(--surface);border:1px solid var(--line);
     border-radius:10px;margin-bottom:6px}
   .nd-stat-label{font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace}
+  .nd-stat-label small{display:block;margin-top:2px;font-size:8.5px;line-height:1.3;
+    color:var(--muted)}
   .nd-stat-val{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--ink)}
   .nd-stat-val.acid{color:var(--acid)}
   .nd-stat-val.red{color:var(--red)}

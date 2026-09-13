@@ -1108,7 +1108,23 @@ const _prG = JSON.parse(K.eval(`JSON.stringify((function(){
     stufen[P.insignie.key]=(stufen[P.insignie.key]||0)+1;
     if(e.zahlen.rekord>0) mitRekord.push(pid);
   });
-  return {a, m, r, stufen, spieler:T.rang.length, mitRekord:mitRekord.length,
+  const vergleich=T.rang.map(pid=>{
+    const ms=matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(pid));
+    const siege=ms.filter(m=>(m.winner==='A')===(m.a1===pid||m.a2===pid)).length;
+    const e=T.byPid[pid];
+    const aq=e.quellen.filter(q=>q.q==='auszeichnung');
+    return {pid,name:(pmap()[pid]||{}).name||pid,spiele:ms.length,siege,
+      siegrate:ms.length?Math.round(siege/ms.length*100):0,
+      prestige:e.punkte,auszeichnungen:e.teile.auszeichnung,
+      monate:e.teile.monat,rekorde:e.teile.rekord,
+      ausMix:Object.fromEntries(['legendary','rare','common'].map(k=>[k,{
+        arten:aq.filter(q=>q.klasse===k).length,
+        mal:aq.filter(q=>q.klasse===k).reduce((n,q)=>n+q.mal,0),
+        punkte:Math.round(aq.filter(q=>q.klasse===k).reduce((n,q)=>n+q.p,0))}])),
+      ausTop:aq
+        .sort((a,b)=>b.p-a.p).slice(0,8).map(q=>q.id+':'+q.mal+'x='+Math.round(q.p))};
+  });
+  return {a, m, r, stufen, spieler:T.rang.length, mitRekord:mitRekord.length,vergleich,
           falscheQuellen:[...new Set(Object.values(T.byPid).flatMap(e=>(e.quellen||[]).map(q=>q.q)))]
             .filter(q=>!['auszeichnung','monat','rekord'].includes(q)),
           hoechste:T.byPid[T.rang[0]].punkte,
@@ -1118,6 +1134,13 @@ const _prSum = _prG.a + _prG.m + _prG.r;
 console.log(`  Auszeichnungen ${Math.round(_prG.a/_prSum*100)} % · Monat ${Math.round(_prG.m/_prSum*100)} % · Rekorde ${Math.round(_prG.r/_prSum*100)} %`);
 console.log(`  Stufen: ${Object.entries(_prG.stufen).map(([k,v])=>k+' '+v).join(' · ')}`);
 console.log(`  Spieler mit mindestens einem Rekord: ${_prG.mitRekord} von ${_prG.spieler}`);
+console.log('  Vergleich: ' + _prG.vergleich.map(x=>
+  `${x.name} ${x.siegrate}%/${x.spiele} Sp. = ${x.prestige} (${x.auszeichnungen} A)`
+).join(' · '));
+console.log('  Julian/Maxi: ' + _prG.vergleich.filter(x=>x.name==='Julian'||x.name==='Maxi')
+  .map(x=>x.name+' '+x.ausTop.join(', ')).join(' · '));
+console.log('  Award-Mix: ' + _prG.vergleich.filter(x=>['Leon','Martin','Julian','Maxi'].includes(x.name))
+  .map(x=>x.name+' '+Object.entries(x.ausMix).map(([k,v])=>k[0]+':'+v.arten+'/'+v.mal+'='+v.punkte).join(' ')).join(' · '));
 
 ok(_prG.falscheQuellen.length === 0,
    'Prestige kommt nur aus Auszeichnungen, Monatschroniken und Rekorden',
@@ -1125,6 +1148,17 @@ ok(_prG.falscheQuellen.length === 0,
 ok(_prG.r < _prG.a,
    'Auszeichnungen wiegen schwerer als Rekorde',
    `Auszeichnungen ${_prG.a}, Rekorde ${_prG.r}`);
+const _prV = Object.fromEntries(_prG.vergleich.map(x=>[x.name,x]));
+ok(_prV.Julian.spiele < _prV.Maxi.spiele / 2
+   && _prV.Julian.siegrate > _prV.Maxi.siegrate
+   && _prV.Julian.auszeichnungen > _prV.Maxi.auszeichnungen,
+   'starke Auszeichnungen schlagen selbst das doppelte Spielpensum',
+   `Julian ${_prV.Julian.auszeichnungen}/${_prV.Julian.spiele} · Maxi ${_prV.Maxi.auszeichnungen}/${_prV.Maxi.spiele}`);
+const _prSpitze = ['Leon','Martin','Julian'].map(n=>_prV[n]);
+ok(Math.max(..._prSpitze.map(x=>x.prestige))/Math.min(..._prSpitze.map(x=>x.prestige))
+     < Math.max(..._prSpitze.map(x=>x.spiele))/Math.min(..._prSpitze.map(x=>x.spiele)),
+   'bei ähnlich starker Spitze wächst Prestige deutlich langsamer als das Pensum',
+   `Prestige ${_prSpitze.map(x=>x.prestige).join('/')} · Spiele ${_prSpitze.map(x=>x.spiele).join('/')}`);
 // Rekorde müssen erreichbar sein. Vor dem Senken der Mindest-Spielzahlen
 //    hielten 5 von 12 Spielern einen wertenden Rekord — die anderen sieben
 //    spielten zu wenig, um überhaupt in die Wertung zu kommen („ab 100
@@ -1156,32 +1190,41 @@ const _prModell = JSON.parse(K.eval(`JSON.stringify((function(){
   const klassen=Object.fromEntries(Object.entries(PRESTIGE_AUSZEICHNUNG)
     .map(([k,v])=>[k,{basis:v.basis,abnahme:v.abnahme}]));
   const positiv=BADGES.filter(b=>rarityOf(b.id)!=='negative').map(b=>({
-    id:b.id, a:auszeichnungsPunkte(b.id,99), b:auszeichnungsPunkte(b.id,100)
+    id:b.id, a:auszeichnungsPunkte(b.id,99), b:auszeichnungsPunkte(b.id,100),
+    teile:[1,2,3,4].map(n=>auszeichnungsTeilwert(b.id,n))
   }));
-  return {dom,meister,team,potw,potd,carry,klassen,steht:positiv.filter(x=>!(x.b>x.a)),
+  return {dom,meister,team,potw,potd,carry,klassen,paare:positiv,
+    steht:positiv.filter(x=>!(x.b>x.a)),
     negativ:BADGES.filter(b=>rarityOf(b.id)==='negative')
       .filter(b=>auszeichnungsPunkte(b.id,10)!==0).map(b=>b.id)};
 })())`));
-ok(_prModell.dom[0] === 50 && _prModell.dom[1] === 95
-   && Math.abs(_prModell.dom[2] - 135.9090909090909) < 1e-9,
-   'Dominator wächst mit 50 + 45 + rund 41', _prModell.dom.join(' / '));
-ok(_prModell.meister[0] === 55 && Math.abs(_prModell.meister[1]-107.25)<1e-9
+ok(_prModell.dom[0] === 50 && _prModell.dom[1] === 100
+   && Math.abs(_prModell.dom[2] - 145) < 1e-9,
+   'Dominator wächst paarweise mit 50 + 50 + 45', _prModell.dom.join(' / '));
+ok(_prModell.meister[0] === 75 && _prModell.meister[1] === 150
    && _prModell.meister[2] > _prModell.dom[2]
    && _prModell.dom[2] > _prModell.team[2],
    'Meister, Dominator und Team der Saison bleiben in dieser Reihenfolge',
    [_prModell.meister[2],_prModell.dom[2],_prModell.team[2]].join(' > '));
-ok(_prModell.potw.every((v,i)=>v>_prModell.potd[i]),
+ok(_prModell.potw[0] === 30 && _prModell.potw.every((v,i)=>v>_prModell.potd[i]),
    'Player of the Week ist bei jeder gleichen Anzahl mehr wert als Player of the Day',
    _prModell.potw.join(' / ') + ' > ' + _prModell.potd.join(' / '));
-ok(_prModell.carry[0] === 3 && Math.abs(_prModell.carry[1]-5.4)<1e-9
-   && Math.abs(_prModell.carry[2]-7.4)<1e-9,
-   'Carry wächst mit 3 + 2,4 + 2', _prModell.carry.slice(0,3).join(' / '));
+ok(_prModell.potd[0] === 10,
+   'Player of the Day startet bei zehn Prestige', _prModell.potd.join(' / '));
+ok(_prModell.carry[0] === 3 && _prModell.carry[1] === 6
+   && Math.abs(_prModell.carry[2]-8.25)<1e-9,
+   'Carry wächst paarweise mit 3 + 3 + 2,25', _prModell.carry.slice(0,3).join(' / '));
 ok(_prModell.klassen.legendary.basis > _prModell.klassen.rare.basis
    && _prModell.klassen.rare.basis > _prModell.klassen.common.basis
    && _prModell.klassen.legendary.abnahme < _prModell.klassen.rare.abnahme
    && _prModell.klassen.rare.abnahme < _prModell.klassen.common.abnahme,
    'wertvollere Klassen starten höher und nehmen langsamer ab',
    JSON.stringify(_prModell.klassen));
+ok(_prModell.paare.every(x => x.teile[0] === x.teile[1]
+     && x.teile[2] === x.teile[3] && x.teile[2] < x.teile[1]),
+   'jede positive Auszeichnung verliert ihren Prozentsatz erst nach zwei Erfolgen',
+   _prModell.paare.filter(x => !(x.teile[0] === x.teile[1]
+     && x.teile[2] === x.teile[3] && x.teile[2] < x.teile[1])).map(x=>x.id).join(', ') || 'alle');
 ok(_prModell.steht.length === 0,
    'jede positive Auszeichnung wächst auch nach vielen Wiederholungen weiter',
    _prModell.steht.map(x=>x.id).join(', ') || 'alle');
@@ -1232,14 +1275,31 @@ const _prRekord = JSON.parse(K.eval(`JSON.stringify((function(){
   const falsch=[];
   Object.values(prestigeTabelle().byPid).forEach(e => (e.quellen||[])
     .filter(q=>q.q==='rekord').forEach(q=>{
-      const soll=q.basis/q.halter/Math.sqrt(Math.floor(q.rang/2)+1);
+      const soll=q.basis/q.halter/Math.sqrt(Math.floor(q.rang/3)+1);
       if(Math.abs(q.p-soll)>1e-8) falsch.push(q.id);
     }));
   return falsch;
 })())`));
 ok(_prRekord.length === 0,
-   'Rekorde wechseln alle zwei Einträge in die nächste Wurzelstaffel',
+   'Rekorde wechseln alle drei Einträge in die nächste Wurzelstaffel',
    _prRekord.join(', ') || 'alle Rekorde nachrechenbar');
+
+const _prSortierung = JSON.parse(K.eval(`JSON.stringify((function(){
+  const monat=[{id:'juli',p:90},{id:'august',p:75},{id:'september',p:135}];
+  const rekord=[{id:'juli',p:90},{id:'august',p:75},{id:'september',p:135}];
+  _wurzelStapel(monat,3); _wurzelStapel(rekord,3);
+  return {monat,rekord};
+})())`));
+ok(_prSortierung.monat.map(x=>x.id).join(',') === 'september,juli,august'
+   && _prSortierung.monat[0].p === 135 && _prSortierung.monat[1].p === 90
+   && Math.abs(_prSortierung.monat[2].p - 75/Math.sqrt(2)) < 1e-9,
+   'wertvolle spätere Chroniken rücken vor und erhalten weniger Dämpfung',
+   _prSortierung.monat.map(x=>x.id+':'+x.p).join(' · '));
+ok(_prSortierung.rekord.map(x=>x.id).join(',') === 'september,juli,august'
+   && _prSortierung.rekord[0].p === 135 && _prSortierung.rekord[1].p === 90
+   && Math.abs(_prSortierung.rekord[2].p - 75/Math.sqrt(2)) < 1e-9,
+   'auch Rekorde werden vor der Wurzelstaffel nach ihrem Wert sortiert',
+   _prSortierung.rekord.map(x=>x.id+':'+x.p).join(' · '));
 
 const _prHistorisch = JSON.parse(K.eval(`JSON.stringify((function(){
   const sid=allPastSeasons().slice().sort()[0], bis=seasonEnd(sid).getTime();
@@ -1292,12 +1352,12 @@ console.log('  Getragen:  ' + _lb.namen.map((n,i)=>n+' '+_lb.stufen[i]).join(' �
 console.log('  Bester Stand: ' + _lb.hoechste);
 console.log('  Spitze: ' + _lb.werte.slice(0,3).map(x=>x.name+' '+x.punkte+' / '+x.stufe+'.'+x.grad).join(' · '));
 
-ok(_lb.min[4] === 4000,
-   'der erste Ordensstern beginnt bei 4000 Prestige',
+ok(_lb.min.join(',') === '0,500,1200,2800,4500',
+   'die fünf Insignien beginnen an den festgelegten Schwellen',
    'Schwelle ' + _lb.min[4]);
 
 // Jede Stufe wird teurer als die vorherige. Entscheidend ist eine steigende,
-// aber nicht starr verdoppelte Hürde bis zum Ordensstern bei 4000.
+// aber nicht starr verdoppelte Hürde bis zum Ordensstern bei 4500.
 const _spannen = _lb.min.slice(1).map((v,i)=>v - _lb.min[i]);
 let _steil = true;
 for(let i=1;i<_spannen.length;i++) if(_spannen[i] <= _spannen[i-1]) _steil = false;
@@ -1320,7 +1380,7 @@ ok(_lb.min[3] - _lb.hoechste >= 300,
 
 const _sternMoeglich = K.eval(`BADGES.reduce((sum,b)=>
   sum + auszeichnungsPunkte(b.id,10),0)`);
-ok(_sternMoeglich >= _lb.min[4] && _lb.min[4] > _lb.hoechste * 2,
+ok(_sternMoeglich >= _lb.min[4] && _lb.min[4] - _lb.hoechste >= 1500,
    'der Ordensstern ist sehr anspruchsvoll, aber rechnerisch erreichbar',
    `Langzeitmodell ${Math.round(_sternMoeglich)}, Schwelle ${_lb.min[4]}`);
 
@@ -1341,7 +1401,7 @@ const _endlos = JSON.parse(K.eval(`JSON.stringify((function(){
   const chroniken=Array.from({length:10000},()=>100);
   const chronikDelta=_wurzelZuwachs(chroniken,100,3);
   const rekorde=Array.from({length:10000},()=>48);
-  const rekordDelta=_wurzelZuwachs(rekorde,48,2);
+  const rekordDelta=_wurzelZuwachs(rekorde,48,3);
   return {ziel,n,wert:karriere(n),klassen,chronikDelta,rekordDelta};
 })())`));
 ok(_endlos.klassen.every(x=>x.delta>0)

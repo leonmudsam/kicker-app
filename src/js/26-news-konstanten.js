@@ -81,6 +81,11 @@ const NEWS_LIMITS = {
   // dieselbe Partie bzw. Minute ergibt später eine einzige vollständige
   // Tafel-Karte. So sinkt die Kartenzahl, nicht der fachliche Inhalt.
   proTag: 5,
+  // Neben POTD und Tafel braucht ein echter Spieltag mindestens eine Karte,
+  // die an einer konkreten Partie haengen: Ergebnis, Beteiligte und das,
+  // was genau dort passiert ist. Das ist kein zusaetzliches Kartenbudget;
+  // bei einem vollen Tag ersetzen sie schwächere, abstrakte Meldungen.
+  matchProTagMin: 1,
   // Redaktionelles Mindestgewicht im 14-Tage-Fenster. Gezählt werden die
   // sichtbaren Zeilen eines Bundles, nicht nur sein äußerer Kartenrahmen.
   // 40–60 % ist die belastbare Auslegung von „ungefähr halb"; Pflichtkarten,

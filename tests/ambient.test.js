@@ -290,6 +290,11 @@ const _tafel = JSON.parse(K.eval(`JSON.stringify((function(){
   const roh = _buildStories();
   const typ = t => roh.filter(s => (s.dataRef||{}).type === t);
   const rek = roh.filter(s => ((s.dataRef||{}).type || '').indexOf('rekord_') === 0);
+  const letzte = matches.length ? mts(matches[matches.length-1]) : 0;
+  const tag0 = new Date(letzte); tag0.setHours(0,0,0,0);
+  const vor = tag0.getTime() - 1;
+  const insErwartet = players.filter(p => p && !p.hidden).reduce((n,p) =>
+    n + Math.max(0, prestigeOf(p.id).stufe - prestigeOf(p.id, vor).stufe), 0);
   return {
     rekorde: rek.length,
     ausbau: typ('rekord_gesteigert').length,
@@ -301,7 +306,7 @@ const _tafel = JSON.parse(K.eval(`JSON.stringify((function(){
     kammer: rek.every(s => (s.dataRef||{}).kammer !== 'shame'),
     kat: rek.every(s => s.cat === 'tafel'),
     gesichter: rek.every(s => _newsPids(s).length > 0),
-    insignium: typ('insignium_stufe').length,
+    insignium: typ('insignium_stufe').length, insErwartet,
     insGesicht: typ('insignium_stufe').every(s => _newsPids(s).length > 0),
     chronik: typ('chronik_monat').length + typ('chronik_erstling').length,
     // Jede neue Karte nennt eine Zahl und bleibt ohne Platzhalter.
@@ -319,7 +324,9 @@ ok(_tafel.ausbauStumm === 0, 'nur sichtbar verbesserte Rekorde werden als „aus
 ok(_tafel.kammer, 'Schattenseiten meldet der Feed nicht');
 ok(_tafel.kat, 'Rekorde stehen in der Kammer „Ewige Tafel"');
 ok(_tafel.gesichter, 'jede Rekordkarte zeigt ihren Halter [§C33]');
-ok(_tafel.insignium === 0, 'ohne echten Uebergang entsteht keine Insignium-Meldung', _tafel.insignium + '');
+ok(_tafel.insignium === _tafel.insErwartet,
+   'genau jeder echte Insignium-Uebergang wird gemeldet',
+   _tafel.insignium + ' von ' + _tafel.insErwartet);
 ok(_tafel.insGesicht, 'die Insignium-Karte zeigt den Traeger');
 ok(_tafel.chronik > 0, 'die Monatschronik wird gemeldet', _tafel.chronik + '');
 ok(_tafel.sauber, 'jede Tafel-Karte nennt eine Zahl und traegt keinen Platzhalter');
@@ -425,6 +432,10 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     mitSpieler: sichtbar.filter(s => _newsPids(s).length > 0).length,
     ohneGesicht: sichtbar.filter(s => _newsPids(s).length > 0 && !_newsGesichtHtml(s)).length,
     wappen: sichtbar.filter(s => _newsGesichtHtml(s).indexOf('class="ins"') >= 0).length,
+    matchKarten: sichtbar.filter(s => (s.dataRef||{}).matchId).length,
+    matchOhneBand: sichtbar.filter(s => (s.dataRef||{}).matchId
+      && _newsCardHtmlM2(s, false, false).indexOf('class="nf-erg"') < 0)
+      .map(s => (s.dataRef||{}).type),
     // Keine Ausrufezeichen [CLAUDE.md §7].
     rufe: roh.filter(s => /!/.test(s.title||'') || /!/.test(s.desc||''))
              .map(s => s.title).slice(0, 5),
@@ -559,6 +570,12 @@ ok(_feed.gesichter.koepfe >= 8, 'der Feed zeigt viele verschiedene Gesichter',
    _feed.gesichter.koepfe + ' Köpfe');
 ok(_feed.kleinsteMoeglich === true,
    'auch ein Spieler mit wenigen Partien kann eine Story bekommen');
+ok(_feed.matchKarten >= 3,
+   'der Feed erzaehlt regelmaessig von konkreten Partien',
+   _feed.matchKarten + ' Karten mit Matchbezug');
+ok(_feed.matchOhneBand.length === 0,
+   'jede konkrete Partie zeigt Ergebnis und Beteiligte direkt auf der Karte',
+   _feed.matchOhneBand.join(', ') || 'alle mit Ergebnisband');
 console.log('  ' + _feed.roh + ' erzeugt, ' + _feed.sichtbar + ' im Feed · '
   + _feed.mitSpieler + ' mit Spieler, davon ' + _feed.wappen + ' mit Wappen');
 
@@ -1271,10 +1288,52 @@ const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
     return t && t.kunst !== 'schatten' && n
       && (!a || a.pids.join(',') !== n.pids.join(','));
   }).length;
+  const vorPrestige = prestigeTabelle(t0.getTime() - 1).byPid;
+  const jetztPrestige = prestigeTabelle(letzte).byPid;
+  const gemeldet = {};
+  chr.forEach(s => Object.entries((s.dataRef||{}).prestigeDelta || {}).forEach(([pid, x]) => {
+    gemeldet[pid] = (gemeldet[pid] || 0) + (Number(x) || 0);
+  }));
+  const deltaFalsch = Object.keys(gemeldet).filter(pid => gemeldet[pid] !== Math.max(0,
+    ((((jetztPrestige[pid]||{}).teile||{}).monat)||0)
+    - ((((vorPrestige[pid]||{}).teile||{}).monat)||0)));
+  // Persistierte Karten aus älteren Builds besitzen noch kein Delta. Karte
+  // und Blatt müssen dann denselben aktuell gezählten Laufbahnbeitrag lesen.
+  let altKonsistent = true;
+  if(chr.length){
+    const alt = Object.assign({}, chr[0], {dataRef:Object.assign({}, chr[0].dataRef)});
+    delete alt.dataRef.prestigeDelta;
+    const laufbahn = _newsChronikPrestige(alt.dataRef);
+    const summe = Object.values(laufbahn.werte).reduce((n,x)=>n+(Number(x)||0),0);
+    const karte = _newsTafelWert(alt);
+    const kartenwert = Number(String((karte||{}).v||0).replace(',','.')) || 0;
+    const blatt = String(_newsDetailBody(alt)||'');
+    altKonsistent = laufbahn.modus === 'bestand'
+      && Math.abs(kartenwert - Math.round(summe*10)/10) < 1e-9
+      && Object.values(laufbahn.werte).every(x => Number(x)>0
+        ? blatt.includes(String(x).replace('.',',')+' Prestige · zählt aktuell')
+        : blatt.includes('zählt aktuell nicht'));
+  }
   return {
     n: chr.length, aenderungen,
     prio: chr.map(s => s.prio),
-    ohneRef: chr.filter(s => !(s.dataRef||{}).titleId || !(s.dataRef||{}).punkte).length,
+    ohneRef: chr.filter(s => !(s.dataRef||{}).titleId
+      || !Object.prototype.hasOwnProperty.call((s.dataRef||{}), 'prestigeDelta')).length,
+    deltaFalsch, altKonsistent,
+    falscheSumme:chr.filter(s => {
+      const d=s.dataRef||{};
+      return (Number(d.punkte)||0) !== Object.values(d.prestigeDelta||{})
+        .reduce((n,x)=>n+(Number(x)||0),0);
+    }).length,
+    nullAlsPlus:chr.filter(s => {
+      const d=s.dataRef||{}, plus=Object.values(d.prestigeDelta||{}).some(x=>Number(x)>0);
+      const w=_newsTafelWert(s);
+      return !plus && (!w || w.v!=='0' || w.l!=='zusätzlich');
+    }).length,
+    gekuerzt:chr.filter(s => {
+      const d=s.dataRef||{}, h=jetzt[d.titleId];
+      return h && (d.playerIds||[]).length !== (h.pids||[]).length;
+    }).length,
     ohnePids: chr.filter(s => !((s.dataRef||{}).playerIds||[]).length).length,
     schatten,
     // Blatt: jede Karte muss eine Mitte haben, sonst oeffnet sie ins Leere.
@@ -1297,6 +1356,14 @@ ok(_chrg.n > 0, 'eine Chronik im laufenden Monat wird gemeldet', _chrg.n + ' Kar
 ok(_chrg.n === _chrg.aenderungen,
    'Chronik-Wechsel werden vor dem Buendeln nicht abgeschnitten',
    _chrg.n + ' von ' + _chrg.aenderungen);
+ok(_chrg.deltaFalsch.length === 0 && _chrg.falscheSumme === 0,
+   'Chronik-Stories zeigen exakt den echten neuen Monatsbeitrag',
+   _chrg.deltaFalsch.join(', ') || _chrg.falscheSumme + ' falsche Summen');
+ok(_chrg.nullAlsPlus === 0,
+   'eine verdraengte Chronik behauptet kein zusaetzliches Prestige',
+   _chrg.nullAlsPlus + ' falsche Karten');
+ok(_chrg.altKonsistent,
+   'auch alte Chronik-Stories zeigen in Karte und Blatt denselben aktuellen Beitrag');
 // Gemessen wird die ORDNUNG, nicht die Zahl. Als hier `p === 80` stand,
 // haette die Zusicherung eine verschobene Skala fuer einen Fehler gehalten
 // und eine vertauschte Reihenfolge durchgelassen — genau andersherum als
@@ -1313,10 +1380,13 @@ ok(_chrg.ohneRef === 0, 'jede Chronik-Karte kennt ihre Wertung und ihr Prestige'
    _chrg.ohneRef + ' ohne');
 ok(_chrg.ohnePids === 0, 'jede Chronik-Karte weiss, von wem sie handelt',
    _chrg.ohnePids + ' ohne');
+ok(_chrg.gekuerzt === 0, 'eine geteilte Chronik behaelt alle Halter',
+   _chrg.gekuerzt + ' gekuerzte Karten');
 ok(_chrg.schatten === 0, 'Schattenseiten meldet der Feed nicht', _chrg.schatten + ' gemeldet');
 ok(_chrg.leer === 0, 'jede Chronik-Karte oeffnet ein Blatt mit Inhalt', _chrg.leer + ' leer');
-ok(_chrg.wert.every(l => l === 'Prestige'),
-   'der grosse Wert der Chronik-Karte ist ihr Prestige', _chrg.wert.join(','));
+ok(_chrg.wert.every(l => ['Prestige','zusätzlich','je Spieler','zusammen'].includes(l)),
+   'der grosse Wert der Chronik-Karte nennt nur den echten Prestige-Beitrag',
+   _chrg.wert.join(','));
 
 // Und das Gebuendelte steht auf der KARTE, nicht erst im Blatt.
 const _band = JSON.parse(K.eval(`JSON.stringify((function(){

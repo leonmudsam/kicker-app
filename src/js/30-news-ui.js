@@ -503,6 +503,13 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     if(d.vv != null && d.vv !== '') gesicht = `<div class="nf-gr-l">${_newsWertBlock(d.vv, d.vl, 'metall')}</div>`;
     else gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
   }
+  // Jede Geschichte, die durch eine konkrete Partie ausgeloest wurde,
+  // zeigt diese Partie. Das gilt auch fuer Auszeichnungen, Serien und
+  // Tafelwechsel: Der Typ bestimmt weiter Farbe und Aufbau, aber Ergebnis,
+  // Teams und Ausloeser verschwinden nicht mehr hinter der Rubrik.
+  if(d.matchId && (sorte === 'duell' || !kopf)){
+    kopf = _newsErgebnisBand(d.matchId) || kopf;
+  }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
   // haetten sie ein zweites Mal daneben gestellt.
   if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'){
@@ -710,6 +717,35 @@ function _newsSpielZahlen(s){
   return out;
 }
 
+// Eine einzige Quelle für den Chronik-Beitrag in Karte und Detailblatt.
+// Neue Karten speichern den tatsächlichen Zuwachs beim Wechsel. Bei alten
+// Daten lesen wir stattdessen den heute gezählten Beitrag aus der zentralen
+// Prestige-Tabelle; ein alter Katalogwert wird nie als neues Plus ausgegeben.
+function _newsChronikPrestige(d){
+  const ids = [...new Set([
+    ...(Array.isArray(d.playerIds) ? d.playerIds : []),
+    ...Object.keys((d.prestigeDelta && typeof d.prestigeDelta === 'object')
+      ? d.prestigeDelta : {})
+  ])];
+  const runde = x => Math.round((Number(x) || 0) * 10) / 10;
+  if(d.prestigeDelta && typeof d.prestigeDelta === 'object'){
+    return {modus:'zuwachs', werte:Object.fromEntries(ids.map(pid =>
+      [pid, runde(d.prestigeDelta[pid])]))};
+  }
+  const werte = {};
+  ids.forEach(pid => {
+    werte[pid] = 0;
+    try {
+      const titel = seasonTitleOf(pid, d.sid);
+      if(!titel || titel.titleId !== d.titleId) return;
+      const q = (prestigeOf(pid).quellen || []).find(x => x.q === 'monat'
+        && x.id === d.titleId && (!x.sid || x.sid === d.sid));
+      if(q && q.p > 0) werte[pid] = runde(q.p);
+    } catch(e){}
+  });
+  return {modus:'bestand', werte};
+}
+
 // Der große Wert einer Tafel-Karte. Ein Rekord lebt von seiner Zahl, nicht
 // vom Satz darüber.
 function _newsTafelWert(s){
@@ -718,7 +754,33 @@ function _newsTafelWert(s){
   // die Klasse dahinter, und was sie WERT ist, sagt sonst nichts auf der
   // Karte. Die erste Zahl des Belegs waere „4 von 5" gewesen — richtig, aber
   // ohne Bezug.
-  if(d.type === 'chronik_geholt') return {v: '+' + (d.punkte || 0), l:'Prestige'};
+  if(d.type === 'chronik_geholt'){
+    // Neue Karten tragen die echte Differenz der Monats-Summe je Spieler.
+    // Alte persistierte Karten fallen auf `zeigt` zurueck: Eine Chronik, die
+    // gar nicht in der Monatstafel steht, darf auch dort kein +X behaupten.
+    const beitrag = _newsChronikPrestige(d);
+    if(beitrag.modus === 'zuwachs'){
+      const plus = Object.values(beitrag.werte).filter(x => x > 0);
+      if(!plus.length) return {v:'0', l:'zusätzlich'};
+      const gleich = plus.every(x => x === plus[0]);
+      if(plus.length > 1 && gleich) return {v:'+' + plus[0], l:'je Spieler'};
+      if(plus.length > 1) return {v:'+' + plus.reduce((a, x) => a + x, 0), l:'zusammen'};
+      return {v:'+' + plus[0], l:'Prestige'};
+    }
+    // Persistierte Karten aus älteren Builds kennen noch keine Differenz.
+    // Statt ihren damaligen Katalogwert weiter als neues Plus auszugeben,
+    // wird ihr HEUTIGER Laufbahnbeitrag aus derselben Prestigequelle gelesen.
+    // Hat inzwischen eine bessere Chronik desselben Monats übernommen, ist
+    // dieser Beitrag null.
+    const aktuell = Object.values(beitrag.werte).filter(x => x > 0);
+    if((d.playerIds || []).length){
+      if(!aktuell.length) return {v:'0', l:'zusätzlich'};
+      const wert = Math.round(aktuell.reduce((a, x) => a + x, 0) * 10) / 10;
+      return {v:String(wert).replace('.', ','), l:'zählt aktuell'};
+    }
+    if(d.zeigt === false) return {v:'0', l:'zusätzlich'};
+    return {v:'+' + (d.punkte || 0), l:'Prestige'};
+  }
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
   // „Bestwert" war geraten. Die Zahl kommt aus einem Regex ueber den

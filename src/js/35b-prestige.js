@@ -38,10 +38,11 @@
 //     mit fallenden Erträgen. Sie dürfen wechseln, dafür sind sie da.
 //
 //     WIEDERHOLUNG. JEDE positive Auszeichnung zählt bei jedem Erreichen,
-//     aber als nachvollziehbare, harmonisch gedämpfte Folge. Die zweite
-//     Verleihung liegt je nach Wertigkeit 5, 10, 12, 15 oder 20 Prozent
-//     unter der ersten; danach wird die Kurve immer flacher. Drei Dominator-
-//     Erfolge ergeben so 50 + 45 + rund 41, drei Carry-Erfolge 3 + 2,4 + 2.
+//     aber als nachvollziehbare, harmonisch gedämpfte Folge. Je zwei
+//     Verleihungen teilen eine Stufe: Nummer eins und zwei zählen voll,
+//     Nummer drei und vier liegen je nach Wertigkeit 5, 10, 12, 15, 18 oder
+//     25 Prozent darunter. Drei Dominator-Erfolge ergeben so 50 + 50 + 45,
+//     drei Carry-Erfolge 3 + 3 + 2,25.
 //     Anders als eine geometrische Reihe bleibt jeder weitere Erfolg positiv
 //     und die Summe hat keine Obergrenze. Häufige Alltags-Erfolge können eine
 //     Laufbahn aber nicht kurzfristig durch bloße Menge beherrschen.
@@ -66,30 +67,32 @@ const PRESTIGE_ART = {leistung:2, ereignis:1, schatten:0};
 const PRESTIGE_ART_NAME = {leistung:'Leistung', ereignis:'Ereignis',
                            schatten:'Schatten'};
 
-// Startwert und Abnahme der nächsten Verleihung. Die Klasse setzt den
+// Startwert und Abnahme der nächsten Zweiergruppe. Die Klasse setzt den
 // Standard: je wertvoller, desto höher der Start und desto langsamer die
-// Abnahme. Fünf fachlich begründete Spitzenleistungen überschreiben diesen
+// Abnahme. Sechs fachlich begründete Leistungen überschreiben diesen
 // Standard sichtbar. Die harmonische Folge darunter flacht ab, bleibt aber
 // bei jedem endlichen Rang positiv und besitzt keine feste Obergrenze.
 // Negative Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
 const PRESTIGE_AUSZEICHNUNG = {
   legendary:{basis:40, abnahme:0.10},
-  rare:     {basis:20, abnahme:0.15},
-  common:   {basis:3,  abnahme:0.20},
+  rare:     {basis:20, abnahme:0.18},
+  common:   {basis:3,  abnahme:0.25},
   negative: {basis:0,  abnahme:1}
 };
-// Nur diese fünf Abweichungen sind fachliche Rangfolgen, keine versteckten
+// Nur diese sechs Abweichungen sind fachliche Rangfolgen, keine versteckten
 // Multiplikatoren. Sie stehen deshalb auch lesbar in der Aufschlüsselung.
 // Meister wächst mit der sanftesten Kurve. Dominator und Team der Saison
-// teilen die 10-%-Kurve, damit Dominator auch bei gleicher Anzahl davor
+// teilen die 10-%-Kurve, damit Dominator bei jeder gleichen Anzahl davor
 // bleibt. POTD fällt schneller, weil es stark von der Zahl der eigenen
-// Spieltage abhängt; POTW bleibt wertvoller.
+// Spieltage abhängt; POTW bleibt wertvoller. Der makellose 10:0-Sieg bleibt
+// Legendary, verliert bei Wiederholungen aber etwas schneller an Neuigkeitswert.
 const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
-  champion:       {basis:55, abnahme:0.05, hinweis:'Saisonspitze: Meister'},
+  champion:       {basis:75, abnahme:0.05, hinweis:'Saisonspitze: Meister'},
   dominator_400:  {basis:50, abnahme:0.10, hinweis:'Saisonspitze: Dominator'},
   team_of_season: {basis:45, abnahme:0.10, hinweis:'Saisonspitze: Team der Saison'},
-  potw:           {basis:24, abnahme:0.12, hinweis:'Wochensieg'},
-  potd:           {basis:15, abnahme:0.20, hinweis:'Tagessieg'},
+  potw:           {basis:30, abnahme:0.12, hinweis:'Wochensieg'},
+  potd:           {basis:10, abnahme:0.25, hinweis:'Tagessieg'},
+  perfect_win:    {basis:40, abnahme:0.15, hinweis:'Makelloser 10:0-Sieg'},
 };
 
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
@@ -98,13 +101,11 @@ const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
 const PRESTIGE_REKORD = 48;
 
 // ─── Wiederholung zählt weniger, aber nie nichts ────────────────────
-// Wer dieselbe Sache zum dritten Mal holt, hat weniger Neues gezeigt als
-// beim ersten Mal — gegen sich selbst gemessen, nicht gegen andere. Jede
-// weitere Verleihung derselben Sache ist deshalb weniger wert. Die zweite
-// sinkt exakt um den sichtbaren Prozentsatz; danach wird die Kurve harmonisch
-// flacher. So bleibt jeder weitere Erfolg positiv und die Summe wächst ohne
-// Obergrenze, während bloße Menge einen Meistertitel nicht kurzfristig
-// überholt.
+// Die ersten beiden Erfolge belegen denselben Schritt und zählen deshalb
+// beide voll. Erst der dritte und vierte liegen eine Kurvenstufe tiefer, der
+// fünfte und sechste noch eine. Danach wird die Kurve harmonisch flacher. So
+// bleibt jeder weitere Erfolg positiv und die Summe wächst ohne Obergrenze,
+// während bloße Menge einen Meistertitel nicht kurzfristig überholt.
 //
 // Sie gilt NUR für dieselbe Sache. Eine Meisterschaft und ein Team der
 // Saison sind zwei verschiedene Dinge und zählen beide voll: das Stapeln
@@ -126,7 +127,7 @@ function _wiederholungsWert(n, abnahme){
   const a = Math.max(0, Math.min(0.999, Number(abnahme) || 0));
   const c = a / Math.max(0.001, 1 - a);
   let summe = 0;
-  for(let i = 0; i < k; i++) summe += 1 / (1 + c * i);
+  for(let i = 0; i < k; i++) summe += 1 / (1 + c * Math.floor(i / 2));
   return summe;
 }
 
@@ -139,7 +140,7 @@ function auszeichnungsTeilwert(id, n){
   const regel = _auszeichnungsRegel(id);
   if(regel.basis <= 0 || n <= 0) return 0;
   const a = _auszeichnungsAbnahme(id);
-  return regel.basis / (1 + (a / Math.max(0.001, 1 - a)) * (n - 1));
+  return regel.basis / (1 + (a / Math.max(0.001, 1 - a)) * Math.floor((n - 1) / 2));
 }
 
 // Dieselbe Monatschronik zeigt beim zweiten Tragen weniger Neues, bleibt aber
@@ -173,20 +174,19 @@ const PRESTIGE_REICHWEITE = 0.5;
 
 // Die fünf Stufen. `min` ist die Schwelle, ab der die Stufe getragen wird.
 //
-// Die Abstände steigen mit der neuen, ungekürzten Dreiquellen-Skala. An den
-// echten 466 Partien stehen Leon und Martin im Volutenkranz III, Julian folgt
-// im selben Kranz auf Grad II; zum Lorbeer bleibt ein klarer Abstand. Der
-// Ordensstern beginnt bei rund 4.000 und bleibt über die stetig wachsenden
+// Die Abstände steigen mit der neuen, ungekürzten Dreiquellen-Skala. Leon
+// steht im aktuellen Bestand ungefähr im Volutenkranz III; zum Lorbeer bleibt
+// ein klarer Abstand. Der Ordensstern beginnt bei 4.500 und bleibt über die stetig wachsenden
 // Folgen anspruchsvoll, aber in einer langen Laufbahn realistisch.
 //
-// Die ERSTE Schwelle bleibt niedrig: sie sagt „du bist dabei", nicht „du bist
-// gut". Zehn von zwölf erreichen sie.
+// Der Reif beginnt sofort. Der Schildring markiert ab 500 den ersten großen
+// Laufbahnschritt.
 const INSIGNIEN = [
   {key:'reif',    name:'Reif',          min:0},
-  {key:'schild',  name:'Schildring',    min:250},
-  {key:'volute',  name:'Volutenkranz',  min:800},
-  {key:'lorbeer', name:'Lorbeerreif',   min:2300},
-  {key:'stern',   name:'Ordensstern',   min:4000},
+  {key:'schild',  name:'Schildring',    min:500},
+  {key:'volute',  name:'Volutenkranz',  min:1200},
+  {key:'lorbeer', name:'Lorbeerreif',   min:2800},
+  {key:'stern',   name:'Ordensstern',   min:4500},
 ];
 // Innerhalb einer Stufe gibt es drei Grade. Ohne sie sind zwischen zwei
 // Schwellen hunderte Punkte, in denen sich am Zeichen nichts tut — und je
@@ -199,7 +199,7 @@ const INSIGNIUM_GRAD_NAME = ['I', 'II', 'III'];
 // Die Grade liegen bewusst nicht bei exakten Dritteln. Der Einstieg in eine
 // Stufe soll schnell sichtbar werden, Grad III aber schon deutlich vor der
 // naechsten, viel anspruchsvolleren Form beginnen. In der aktuellen Liga
-// stehen Leon und Martin damit am Volutenkranz III, Julian dicht dahinter;
+// steht Leon damit am Volutenkranz III, weitere starke Laufbahnen folgen;
 // zum Lorbeerreif bleibt trotzdem ein klarer Abstand.
 const INSIGNIUM_GRAD_SCHWELLEN = [0, 0.16, 0.40];
 
@@ -348,8 +348,8 @@ function prestigeTabelle(bisMs){
   aktive.forEach(p => {
     const r = roh[p.id];
 
-    // Nur heute gehaltene Rekorde werden gestapelt: Rang 1 zählt voll,
-    // Rang 2–3 mit √2, Rang 4–5 mit √3 usw.
+    // Nur heute gehaltene Rekorde werden gestapelt: Rang 1–2 zählen voll,
+    // Rang 3–5 mit √2, Rang 6–8 mit √3 usw.
     // Auszeichnungen: sichtbare Klasse × gedämpfte Wiederholungsfolge.
     // Kein Quellenlimit verändert anschließend den Wert oder macht ihn von
     // der Sortierreihenfolge anderer Auszeichnungen abhängig.
@@ -367,10 +367,10 @@ function prestigeTabelle(bisMs){
 
     // Monatschroniken: der Wert haengt an der Abweichung [§C39].
     const mo = [];
-    // Dieselbe Chronik in mehreren Monaten ist dieselbe Sache: der zweite
-    // „Makellose" zeigt weniger Neues als der erste. Sortiert nach Saison,
-    // damit der FRÜHESTE Monat den vollen Wert trägt — sonst hinge es an
-    // der Reihenfolge, in der die Tabelle gerade gebaut wird.
+    // Hohe Chronikwerte stehen vor kleinen und bekommen damit die geringste
+    // Wurzeldämpfung. So kann eine später erreichte, außergewöhnliche Chronik
+    // eine Laufbahn noch sichtbar prägen; die Reihenfolge des Katalogs oder
+    // der Monate beeinflusst die Punkte nicht.
     r.monat.forEach(m => {
       const voll = chronikPunkte(m.id);
       if(voll <= 0) return;
@@ -381,7 +381,7 @@ function prestigeTabelle(bisMs){
       // „Konstanz" kamen — die Zeile erklaerte den Wert daneben nicht.
       const km = _chronikMonat(m.id) || {};
       mo.push({q:'monat', id:m.id, name:m.name, label:m.label,
-               p:voll, voll, grundwert:voll,
+               sid:m.sid, p:voll, voll, grundwert:voll,
                kunst:km.art || '', klasse:km.klasse || ''});
     });
     const pm = _wurzelStapel(mo, 3);
@@ -396,7 +396,7 @@ function prestigeTabelle(bisMs){
       re.push({q:'rekord', id:x.id, name:x.name, p:voll, art:x.art,
                basis, halter:halterZahl[x.id] || 1});
     });
-    const pr = _wurzelStapel(re, 2);
+    const pr = _wurzelStapel(re, 3);
 
     const quellen = az.concat(mo, re);
 
@@ -1538,7 +1538,7 @@ function prestigeSchritte(pid, n){
         const voll = PRESTIGE_REKORD * (PRESTIGE_ART[def.art] ?? 1)
           / Math.max(1, (halte ? halte.pids.length + 1 : 1));
         const gewinn = _wurzelZuwachs(
-          P.quellen.filter(q => q.q === 'rekord').map(q => q.voll), voll, 2);
+          P.quellen.filter(q => q.q === 'rekord').map(q => q.voll), voll, 3);
         out.push({
           art:'rekord', id:def.id, name:def.name, ic:def.ic, tone:def.tone, rel,
           gewinn:Math.round(gewinn),
@@ -1590,6 +1590,52 @@ function prestigeSchritte(pid, n){
   return out.filter(x => x.gewinn > 0 && (x.art !== 'rekord' || x.rel <= PRESTIGE_REICHWEITE))
     .sort((a, b) => a.rel - b.rel || b.gewinn - a.gewinn)
     .slice(0, n);
+}
+
+// Die drei Klassen bleiben als schneller Vergleich nebeneinander. Die
+// vollstaendige Rechnung lebt aber in einem eigenen Blatt: Im Laufbahnbuch
+// muss man die einzelnen Posten lesen koennen, ohne zuerst drei eng gesetzte
+// Regelkarten zu entziffern.
+function _prestigeRegelKarten(){
+  const karte = (klasse, titel, regel) => `<span class="${klasse}">
+      <b>${titel}</b><strong>${regel.basis} P Start</strong>
+      <em>1. und 2. Mal je ${regel.basis} P.<br>
+      3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
+  return `<div class="lb-regeln">
+    ${karte('legendary', 'Legendary', PRESTIGE_AUSZEICHNUNG.legendary)}
+    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare)}
+    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common)}
+  </div>`;
+}
+
+function showPrestigeRegeln(pid){
+  const p = (pmap() || {})[pid];
+  _sheetSetReopen(() => showPrestigeRegeln(pid));
+  const speziell = [
+    ['Meister der Saison', 'champion'],
+    ['Dominator', 'dominator_400'],
+    ['Team der Saison', 'team_of_season'],
+    ['Player of the Week', 'potw'],
+    ['Player of the Day', 'potd'],
+    ['Absoluter Sieger', 'perfect_win']
+  ];
+  const zeilen = speziell.map(([name, id]) => {
+    const r = _auszeichnungsRegel(id);
+    return `<div class="lb-regel-z">
+      <span><b>${esc(name)}</b><em>${esc(r.hinweis || '')}</em></span>
+      <strong>${r.basis} P <i>Start</i></strong>
+      <small>3. + 4. Mal −${Math.round(r.abnahme * 100)} %</small>
+    </div>`;
+  }).join('');
+  openSheet(`<div class="pp-root lb-regelblatt">
+    <h3>Wert der Auszeichnungen</h3>
+    <div class="sheet-sub num">${esc((p && p.name) || '')} · dieselbe Auszeichnung wächst immer weiter</div>
+    <p class="lb-regel-intro">Jede Auszeichnung beginnt mit ihrem Startwert. Die ersten beiden Erfolge zählen voll, danach sinkt ihr Wert in Zweiergruppen. Je seltener und bedeutender die Leistung, desto langsamer fällt ihre Kurve.</p>
+    ${_prestigeRegelKarten()}
+    <div class="pp-sec-title"><div class="l"><h4>Besondere Wertung</h4></div></div>
+    <div class="lb-regel-liste">${zeilen}</div>
+    <div class="tnote lb-regel-note">Beispiel: Dominator bringt beim ersten und zweiten Mal je 50 Punkte. Das dritte und vierte Mal zählen je 45, danach wird die Kurve paarweise sanfter. Die Summe wächst ohne festes Limit.</div>
+  </div>`);
 }
 
 // Das Sheet. Aufgerufen vom Avatar im Profilkopf.
@@ -1697,19 +1743,6 @@ function showLaufbahn(pid){
     return (Number.isInteger(r) ? String(r) : r.toFixed(1)).replace('.', ',');
   };
 
-  // Kurze Zeilen: die Klassenregel steht einmal im Gruppenkopf. Bis drei
-  // Erfolge werden addiert, lange Folgen zeigen Start und letzten Teilwert.
-  const folge = q => {
-    const n = Math.max(1, q.mal || 1);
-    if(n <= 3){
-      const glieder = [];
-      for(let i = 1; i <= n; i++) glieder.push(zahl(auszeichnungsTeilwert(q.id, i)));
-      return glieder.join(' + ');
-    }
-    return `${zahl(q.basis)} + ${zahl(auszeichnungsTeilwert(q.id, 2))} + … + `
-      + `${zahl(auszeichnungsTeilwert(q.id, n))} (${n}. Mal)`;
-  };
-
   // Warum dieser Posten so viel wiegt. Vorher stand hier „2 von 12" — die
   // Zahl der heutigen Halter. Sie erklärte den Wert nicht, sie war der
   // Grund, warum er fiel. Jetzt steht da, was den Wert wirklich bestimmt:
@@ -1727,9 +1760,10 @@ function showLaufbahn(pid){
     else if(q.q === 'auszeichnung'){
       teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
       if(q.hinweis) teile.push(q.hinweis);
-      teile.push(`${zahl(q.basis)} P Start · ${Math.round(q.abnahme * 100)}-%-Kurve`);
       teile.push(`${q.mal}× erreicht`);
-      if(q.mal > 1) teile.push(folge(q));
+      teile.push(q.mal > 1
+        ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
+        : `${zahl(q.basis)} P Startwert`);
     }
     else if(q.label) teile.push(q.label);
     if(q.q === 'monat'){
@@ -1757,11 +1791,10 @@ function showLaufbahn(pid){
     </div>`;
 
   const SICHTBAR = 4;
-  const regeln = `<div class="lb-regeln">
-    <span class="legendary"><b>Legendary</b><strong>40 P Standard · −10 %</strong><em>Meister 55 P · −5 %<br>Dominator 50 P · −10 %<br>Team der Saison 45 P · −10 %. Danach flacher, nie 0.</em></span>
-    <span class="rare"><b>Rare</b><strong>20 P Standard · −15 %</strong><em>Wochensieger 24 P · −12 %<br>Tagessieger 15 P · −20 %. Danach flacher, nie 0.</em></span>
-    <span class="common"><b>Common</b><strong>3 P beim 1. Mal</strong><em>Das 2. Mal −20 %. Danach flacher, nie 0.</em></span>
-  </div>`;
+  const regeln = `<button class="lb-regel-auf" type="button" data-prestige-regeln>
+    <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven sauber erklärt</em></span>
+    ${svgI('chevron')}
+  </button>`;
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];
     const rest = qs.slice(SICHTBAR).map((q, i) => zeile(q, w[SICHTBAR + i]));
@@ -1824,6 +1857,9 @@ function showLaufbahn(pid){
    </div>
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+  document.querySelectorAll('#sheet [data-prestige-regeln]').forEach(el => {
+    el.onclick = () => sheetNav(() => showPrestigeRegeln(pid));
+  });
 
   // ── Die Vitrine bedienen ───────────────────────────────────────────
   //     Welche Karte in der Mitte liegt, kann CSS nicht wissen: eine

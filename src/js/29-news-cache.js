@@ -283,9 +283,8 @@ function _consolidateStories(list){
     if(_chrJetzt === null){
       _chrJetzt = {};
       try {
-        (seasonTitles(currentSeason().id).awarded || []).forEach(a => {
-          (_chrJetzt[a.titleId] || (_chrJetzt[a.titleId] = [])).push(a.pid);
-        });
+        const h = seasonTitleHalter(currentSeason().id) || {};
+        Object.keys(h).forEach(id => { _chrJetzt[id] = (h[id].pids || []).slice(); });
       } catch(e){}
     }
     return _chrJetzt[tid] || null;
@@ -1127,12 +1126,35 @@ function _consolidateStories(list){
     const k = _proTagKey(s);
     (_tagRang[k] = _tagRang[k] || []).push(s);
   });
+  const _istMatchGeschichte = s => {
+    const d = (s && s.dataRef) || {};
+    return !!d.matchId && s.cat !== 'tafel' && d.quelle !== 'tafel'
+      && d.type !== 'potd' && d.type !== 'potw';
+  };
   const _behalten = new Set();
   Object.keys(_tagRang).forEach(k => {
-    _tagRang[k].slice()
-      .sort((a, b) => (b.prio || 0) - (a.prio || 0))
-      .slice(0, NEWS_LIMITS.proTag)
-      .forEach(s => _behalten.add(s.id));
+    const rang = _tagRang[k].slice()
+      .sort((a, b) => (b.prio || 0) - (a.prio || 0));
+    const auswahl = rang.slice(0, NEWS_LIMITS.proTag);
+    const soll = rang.filter(_istMatchGeschichte)
+      .slice(0, NEWS_LIMITS.matchProTagMin || 0);
+    soll.forEach(s => {
+      if(auswahl.indexOf(s) >= 0) return;
+      // Pflicht, Breaking und bereits reservierte Match-Geschichten bleiben.
+      // Ersetzt wird die schwächste abstrakte Zusatzkarte desselben Tages.
+      let raus = -1;
+      for(let i = auswahl.length - 1; i >= 0; i--){
+        const x = auswahl[i], typ = (x.dataRef || {}).type;
+        let breaking = false;
+        try { breaking = (typeof _isBreaking === 'function') && _isBreaking(x); } catch(e){}
+        if(!breaking && !TAG_PFLICHT.has(typ) && !_istMatchGeschichte(x)){
+          raus = i; break;
+        }
+      }
+      if(raus >= 0) auswahl[raus] = s;
+      else if(auswahl.length < NEWS_LIMITS.proTag) auswahl.push(s);
+    });
+    auswahl.forEach(s => _behalten.add(s.id));
   });
   const fertig = entzerrt.filter(s => {
     if(_behalten.has(s.id)) return true;
@@ -1183,16 +1205,20 @@ function _consolidateStories(list){
       if(!alt || spannung > alt.spannung) tage.set(k, {s, spannung});
     });
     tage.forEach(x => muss.add(x.s));
-
     let spielGewicht = [...muss]
       .filter(s => !_istTafel(s) && (s.dataRef || {}).type !== 'ambient')
       .reduce((n, s) => n + _gewicht(s), 0);
     const extras = fertig.filter(s => !muss.has(s) && !_istTafel(s)
       && (s.dataRef || {}).type !== 'ambient')
       .sort((a, b) => {
+        // Innerhalb des Restbudgets zuerst die Geschichte, deren konkrete
+        // Partie wir zeigen koennen. Das erhoeht nicht die Kartenzahl und
+        // verschiebt keine Tafelquote; es ersetzt nur abstraktere Kandidaten.
+        const ma = _istMatchGeschichte(a) ? 1 : 0;
+        const mb = _istMatchGeschichte(b) ? 1 : 0;
         const sa = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(a) : (a.prio || 0);
         const sb = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(b) : (b.prio || 0);
-        return sb - sa || (b.prio || 0) - (a.prio || 0);
+        return mb - ma || sb - sa || (b.prio || 0) - (a.prio || 0);
       });
     // Zuerst verschiedene Motive, erst danach die zweite Karte derselben
     // Sorte. So besteht das Restbudget nicht aus vier Auszeichnungen,

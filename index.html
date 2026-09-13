@@ -2810,6 +2810,8 @@
     padding:9px 12px;background:var(--surface);border:1px solid var(--line);
     border-radius:10px;margin-bottom:6px}
   .nd-stat-label{font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace}
+  .nd-stat-label small{display:block;margin-top:2px;font-size:8.5px;line-height:1.3;
+    color:var(--muted)}
   .nd-stat-val{font-family:'Archivo Black',sans-serif;font-size:13px;color:var(--ink)}
   .nd-stat-val.acid{color:var(--acid)}
   .nd-stat-val.red{color:var(--red)}
@@ -4108,19 +4110,44 @@
   .lb-grp-k .num{font-family:'Archivo Black',sans-serif;font-size:13px;
     letter-spacing:0;text-transform:none;color:var(--ink2)}
 
-  /* Die drei Auszeichnungsregeln stehen einmal kompakt über der Liste.
-     Dadurch erklärt jede Zeile nur noch ihren konkreten Zähler. */
+  /* Die Rechnung öffnet sich aus dem Buch in ein eigenes Blatt. Im Buch
+     bleibt nur ein ruhiger, gut treffbarer Verweis; im Blatt stehen die drei
+     Klassen weiterhin nebeneinander, jetzt aber mit genug vertikalem Raum. */
+  .lb-regel-auf{width:100%;border:0;border-top:1px solid var(--line);
+    border-radius:0;padding:11px 13px;background:var(--bg);color:var(--ink);
+    display:flex;align-items:center;justify-content:space-between;text-align:left}
+  .lb-regel-auf span{display:flex;flex-direction:column;gap:2px}
+  .lb-regel-auf b{font-size:11.5px;letter-spacing:.02em}
+  .lb-regel-auf em{font-style:normal;font-size:10px;color:var(--muted)}
+  .lb-regel-auf>svg{width:16px;height:16px;color:var(--muted)}
+  .lb-regel-auf:active{background:var(--surface2)}
+  .lb-regel-intro{margin:18px 1px 12px;color:var(--ink2);font-size:12px;
+    line-height:1.55}
   .lb-regeln{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;
-    padding:10px;background:var(--bg);border-top:1px solid var(--line)}
-  .lb-regeln span{min-width:0;min-height:116px;padding:10px 8px;border:1px solid var(--line);
+    padding:0;background:transparent}
+  .lb-regeln span{min-width:0;min-height:148px;padding:12px 9px;border:1px solid var(--line);
     border-radius:8px;background:var(--surface);display:flex;flex-direction:column;gap:4px}
-  .lb-regeln b{font-size:10px;line-height:1.2;white-space:nowrap}
-  .lb-regeln strong{font-size:9px;line-height:1.25;color:var(--ink);font-weight:700}
-  .lb-regeln em{font-family:'Sometype Mono',monospace;font-size:8.5px;
-    line-height:1.48;font-style:normal;color:var(--muted);white-space:normal}
+  .lb-regeln b{font-size:10.5px;line-height:1.2;white-space:nowrap}
+  .lb-regeln strong{font-size:10.5px;line-height:1.35;color:var(--ink);font-weight:700}
+  .lb-regeln em{font-family:'Sometype Mono',monospace;font-size:9.5px;
+    line-height:1.52;font-style:normal;color:var(--muted);white-space:normal}
   .lb-regeln .legendary b{color:var(--gold)}
   .lb-regeln .rare b{color:var(--purple)}
   .lb-regeln .common b{color:var(--acid)}
+  .lb-regelblatt .pp-sec-title{margin-top:18px}
+  .lb-regel-liste{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
+  .lb-regel-z{display:grid;grid-template-columns:minmax(0,1fr) auto;
+    gap:3px 12px;padding:11px 12px;background:var(--surface)}
+  .lb-regel-z+.lb-regel-z{border-top:1px solid var(--line)}
+  .lb-regel-z>span{grid-row:1/3;display:flex;flex-direction:column;gap:2px;min-width:0}
+  .lb-regel-z b{font-size:12px;color:var(--ink)}
+  .lb-regel-z em{font-size:9.5px;line-height:1.35;font-style:normal;color:var(--muted)}
+  .lb-regel-z strong{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink2)}
+  .lb-regel-z strong i{font-family:'Sometype Mono',monospace;font-size:8px;
+    text-transform:uppercase;font-style:normal;color:var(--muted)}
+  .lb-regel-z small{font-family:'Sometype Mono',monospace;font-size:9px;
+    text-align:right;color:var(--muted)}
+  .lb-regel-note{margin-top:10px;line-height:1.5}
 
   .lb-q{display:flex;align-items:baseline;gap:10px;padding:8px 13px;
     background:var(--surface);border-top:1px solid var(--line)}
@@ -4759,7 +4786,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.13.f8584713';
+const BUILD_VERSION='2026.09.13.dad71fad';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18236,6 +18263,11 @@ const NEWS_LIMITS = {
   // dieselbe Partie bzw. Minute ergibt später eine einzige vollständige
   // Tafel-Karte. So sinkt die Kartenzahl, nicht der fachliche Inhalt.
   proTag: 5,
+  // Neben POTD und Tafel braucht ein echter Spieltag mindestens eine Karte,
+  // die an einer konkreten Partie haengen: Ergebnis, Beteiligte und das,
+  // was genau dort passiert ist. Das ist kein zusaetzliches Kartenbudget;
+  // bei einem vollen Tag ersetzen sie schwächere, abstrakte Meldungen.
+  matchProTagMin: 1,
   // Redaktionelles Mindestgewicht im 14-Tage-Fenster. Gezählt werden die
   // sichtbaren Zeilen eines Bundles, nicht nur sein äußerer Kartenrahmen.
   // 40–60 % ist die belastbare Auslegung von „ungefähr halb"; Pflichtkarten,
@@ -20331,6 +20363,24 @@ function _buildStories(){
       const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
       const _jetztH = seasonTitleHalter(_sid);
       const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
+      // Eine Chronik-Karte darf nicht den Katalogwert als neuen Prestige-
+      // Gewinn ausgeben. Pro Monat zaehlt nur der eine Eintrag, der in der
+      // Tafel steht; ein besserer Eintrag kann den gerade geholten also
+      // vollstaendig verdraengen. Der echte Zuwachs ist die Differenz der
+      // beiden zentral berechneten Monats-Summen vor und nach dem Spieltag.
+      // Beide Tabellen sind zeitgeschnitten und gecacht: keine zweite Formel
+      // im News-System und kein zusaetzlicher Lauf je Meldung.
+      let _prestigeVor = {}, _prestigeJetzt = {};
+      try {
+        _prestigeVor = (prestigeTabelle(_t0.getTime() - 1) || {}).byPid || {};
+        _prestigeJetzt = (prestigeTabelle(_letzteMs2) || {}).byPid || {};
+      } catch(e){}
+      const _monatPlus = pid => Math.max(0,
+        (((_prestigeJetzt[pid] || {}).teile || {}).monat || 0)
+        - (((_prestigeVor[pid] || {}).teile || {}).monat || 0));
+      const _monatTitel = pid => {
+        try { return seasonTitleOf(pid, _sid, _letzteMs2); } catch(e){ return null; }
+      };
       const _meldungen = [];
       SEASON_TITLES.forEach(t => {
         const n = _jetztH[t.id];
@@ -20380,14 +20430,42 @@ function _buildStories(){
         const _zeigtSatz = !_zeigt ? ''
           : _zeigt.zeigt
             ? ` Steht jetzt in der Chronik${_zeigt.andere.length === 1
-                ? `, vor „${_zeigt.andere[0]}"` : ''}.`
-            : ` In der Chronik steht weiter „${_zeigt.welche}".`;
+                ? `, vor „${_zeigt.andere[0]}“` : ''}.`
+            : ` In der Chronik steht weiter „${_zeigt.welche}“.`;
+        // Nur neue Halter koennen hier Prestige hinzugewinnen. Wer bereits
+        // Mithalter war und nun allein steht, hat eine staerkere Geschichte,
+        // aber keinen zweiten Laufbahn-Eintrag erhalten.
+        const prestigeDelta = {}, titelJeSpieler = {};
+        n.pids.forEach(pid => {
+          const sichtbar = _monatTitel(pid);
+          titelJeSpieler[pid] = sichtbar ? sichtbar.name : '';
+          prestigeDelta[pid] = neuLeute.indexOf(pid) >= 0 && sichtbar
+            && sichtbar.titleId === t.id ? _monatPlus(pid) : 0;
+        });
+        const mitPlus = Object.keys(prestigeDelta).filter(pid => prestigeDelta[pid] > 0);
+        const ohnePlus = neuLeute.filter(pid => !(prestigeDelta[pid] > 0));
+        let prestigeSatz = '';
+        if(mitPlus.length){
+          const teile = mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`);
+          prestigeSatz = ` Für die Laufbahn zählt der Wechsel wirklich: ${_namenListe(teile)} Prestige.`;
+        } else if(ohnePlus.length){
+          const istSelbst = ohnePlus.some(pid => titelJeSpieler[pid] === t.name);
+          const staerker = [...new Set(ohnePlus.map(pid => titelJeSpieler[pid]).filter(Boolean))];
+          prestigeSatz = istSelbst
+            ? ` „${t.name}“ steht in der Monatschronik, am gerundeten Prestige-Stand ändert sich diesmal nichts.`
+            : staerker.length
+            ? ` Für die Laufbahn bleibt ${_namenListe(staerker.map(x => `„${x}“`))} stärker; es kommt kein Prestige hinzu.`
+            : ' Für die Laufbahn kommt durch diesen Wechsel kein Prestige hinzu.';
+        } else {
+          prestigeSatz = ' Die Halterlage ändert sich, der Prestige-Stand nicht.';
+        }
         _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt,
+          prestigeDelta, titelJeSpieler,
           title: titel,
           // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
           // dieselbe Zahl untereinander sagt nichts Neues [§C33].
           desc: (n.ev ? _evSatz(n.ev) + '. ' : '')
-              + `${artikel} Chronik.` + nachsatz + _zeigtSatz,
+              + `${artikel} Chronik.` + nachsatz + _zeigtSatz + prestigeSatz,
           klasse: t.klasse});
       });
       // Wertvollste zuerst: Die Reihenfolge bestimmt den Kopf des späteren
@@ -20409,9 +20487,15 @@ function _buildStories(){
           // ueberstimmen [§C33].
           prio: STORY_PRIO.chronik_geholt,
           dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_letzteMatchId2,
-                    playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
+                    playerIds:m.n.pids.slice(), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
-                    chronArt:m.t.kunst, aus:m.t.aus, punkte:m.punkte,
+                    chronArt:m.t.kunst, aus:m.t.aus,
+                    // `punkte` ist der tatsaechliche neue Beitrag, nicht der
+                    // ungedaempfte Katalogwert. Der bleibt als Grundwert fuer
+                    // das Detail nachvollziehbar.
+                    punkte:Object.values(m.prestigeDelta).reduce((s, x) => s + x, 0),
+                    grundwert:m.punkte, prestigeDelta:m.prestigeDelta,
+                    titelJeSpieler:m.titelJeSpieler,
                     // Steht diese Chronik in der Monatstafel? null heisst:
                     // die Frage stellt sich nicht [§C32].
                     zeigt: m.zeigt ? m.zeigt.zeigt : null}
@@ -22091,9 +22175,8 @@ function _consolidateStories(list){
     if(_chrJetzt === null){
       _chrJetzt = {};
       try {
-        (seasonTitles(currentSeason().id).awarded || []).forEach(a => {
-          (_chrJetzt[a.titleId] || (_chrJetzt[a.titleId] = [])).push(a.pid);
-        });
+        const h = seasonTitleHalter(currentSeason().id) || {};
+        Object.keys(h).forEach(id => { _chrJetzt[id] = (h[id].pids || []).slice(); });
       } catch(e){}
     }
     return _chrJetzt[tid] || null;
@@ -22935,12 +23018,35 @@ function _consolidateStories(list){
     const k = _proTagKey(s);
     (_tagRang[k] = _tagRang[k] || []).push(s);
   });
+  const _istMatchGeschichte = s => {
+    const d = (s && s.dataRef) || {};
+    return !!d.matchId && s.cat !== 'tafel' && d.quelle !== 'tafel'
+      && d.type !== 'potd' && d.type !== 'potw';
+  };
   const _behalten = new Set();
   Object.keys(_tagRang).forEach(k => {
-    _tagRang[k].slice()
-      .sort((a, b) => (b.prio || 0) - (a.prio || 0))
-      .slice(0, NEWS_LIMITS.proTag)
-      .forEach(s => _behalten.add(s.id));
+    const rang = _tagRang[k].slice()
+      .sort((a, b) => (b.prio || 0) - (a.prio || 0));
+    const auswahl = rang.slice(0, NEWS_LIMITS.proTag);
+    const soll = rang.filter(_istMatchGeschichte)
+      .slice(0, NEWS_LIMITS.matchProTagMin || 0);
+    soll.forEach(s => {
+      if(auswahl.indexOf(s) >= 0) return;
+      // Pflicht, Breaking und bereits reservierte Match-Geschichten bleiben.
+      // Ersetzt wird die schwächste abstrakte Zusatzkarte desselben Tages.
+      let raus = -1;
+      for(let i = auswahl.length - 1; i >= 0; i--){
+        const x = auswahl[i], typ = (x.dataRef || {}).type;
+        let breaking = false;
+        try { breaking = (typeof _isBreaking === 'function') && _isBreaking(x); } catch(e){}
+        if(!breaking && !TAG_PFLICHT.has(typ) && !_istMatchGeschichte(x)){
+          raus = i; break;
+        }
+      }
+      if(raus >= 0) auswahl[raus] = s;
+      else if(auswahl.length < NEWS_LIMITS.proTag) auswahl.push(s);
+    });
+    auswahl.forEach(s => _behalten.add(s.id));
   });
   const fertig = entzerrt.filter(s => {
     if(_behalten.has(s.id)) return true;
@@ -22991,16 +23097,20 @@ function _consolidateStories(list){
       if(!alt || spannung > alt.spannung) tage.set(k, {s, spannung});
     });
     tage.forEach(x => muss.add(x.s));
-
     let spielGewicht = [...muss]
       .filter(s => !_istTafel(s) && (s.dataRef || {}).type !== 'ambient')
       .reduce((n, s) => n + _gewicht(s), 0);
     const extras = fertig.filter(s => !muss.has(s) && !_istTafel(s)
       && (s.dataRef || {}).type !== 'ambient')
       .sort((a, b) => {
+        // Innerhalb des Restbudgets zuerst die Geschichte, deren konkrete
+        // Partie wir zeigen koennen. Das erhoeht nicht die Kartenzahl und
+        // verschiebt keine Tafelquote; es ersetzt nur abstraktere Kandidaten.
+        const ma = _istMatchGeschichte(a) ? 1 : 0;
+        const mb = _istMatchGeschichte(b) ? 1 : 0;
         const sa = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(a) : (a.prio || 0);
         const sb = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(b) : (b.prio || 0);
-        return sb - sa || (b.prio || 0) - (a.prio || 0);
+        return mb - ma || sb - sa || (b.prio || 0) - (a.prio || 0);
       });
     // Zuerst verschiedene Motive, erst danach die zweite Karte derselben
     // Sorte. So besteht das Restbudget nicht aus vier Auszeichnungen,
@@ -23786,6 +23896,13 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     if(d.vv != null && d.vv !== '') gesicht = `<div class="nf-gr-l">${_newsWertBlock(d.vv, d.vl, 'metall')}</div>`;
     else gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
   }
+  // Jede Geschichte, die durch eine konkrete Partie ausgeloest wurde,
+  // zeigt diese Partie. Das gilt auch fuer Auszeichnungen, Serien und
+  // Tafelwechsel: Der Typ bestimmt weiter Farbe und Aufbau, aber Ergebnis,
+  // Teams und Ausloeser verschwinden nicht mehr hinter der Rubrik.
+  if(d.matchId && (sorte === 'duell' || !kopf)){
+    kopf = _newsErgebnisBand(d.matchId) || kopf;
+  }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
   // haetten sie ein zweites Mal daneben gestellt.
   if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'){
@@ -23993,6 +24110,35 @@ function _newsSpielZahlen(s){
   return out;
 }
 
+// Eine einzige Quelle für den Chronik-Beitrag in Karte und Detailblatt.
+// Neue Karten speichern den tatsächlichen Zuwachs beim Wechsel. Bei alten
+// Daten lesen wir stattdessen den heute gezählten Beitrag aus der zentralen
+// Prestige-Tabelle; ein alter Katalogwert wird nie als neues Plus ausgegeben.
+function _newsChronikPrestige(d){
+  const ids = [...new Set([
+    ...(Array.isArray(d.playerIds) ? d.playerIds : []),
+    ...Object.keys((d.prestigeDelta && typeof d.prestigeDelta === 'object')
+      ? d.prestigeDelta : {})
+  ])];
+  const runde = x => Math.round((Number(x) || 0) * 10) / 10;
+  if(d.prestigeDelta && typeof d.prestigeDelta === 'object'){
+    return {modus:'zuwachs', werte:Object.fromEntries(ids.map(pid =>
+      [pid, runde(d.prestigeDelta[pid])]))};
+  }
+  const werte = {};
+  ids.forEach(pid => {
+    werte[pid] = 0;
+    try {
+      const titel = seasonTitleOf(pid, d.sid);
+      if(!titel || titel.titleId !== d.titleId) return;
+      const q = (prestigeOf(pid).quellen || []).find(x => x.q === 'monat'
+        && x.id === d.titleId && (!x.sid || x.sid === d.sid));
+      if(q && q.p > 0) werte[pid] = runde(q.p);
+    } catch(e){}
+  });
+  return {modus:'bestand', werte};
+}
+
 // Der große Wert einer Tafel-Karte. Ein Rekord lebt von seiner Zahl, nicht
 // vom Satz darüber.
 function _newsTafelWert(s){
@@ -24001,7 +24147,33 @@ function _newsTafelWert(s){
   // die Klasse dahinter, und was sie WERT ist, sagt sonst nichts auf der
   // Karte. Die erste Zahl des Belegs waere „4 von 5" gewesen — richtig, aber
   // ohne Bezug.
-  if(d.type === 'chronik_geholt') return {v: '+' + (d.punkte || 0), l:'Prestige'};
+  if(d.type === 'chronik_geholt'){
+    // Neue Karten tragen die echte Differenz der Monats-Summe je Spieler.
+    // Alte persistierte Karten fallen auf `zeigt` zurueck: Eine Chronik, die
+    // gar nicht in der Monatstafel steht, darf auch dort kein +X behaupten.
+    const beitrag = _newsChronikPrestige(d);
+    if(beitrag.modus === 'zuwachs'){
+      const plus = Object.values(beitrag.werte).filter(x => x > 0);
+      if(!plus.length) return {v:'0', l:'zusätzlich'};
+      const gleich = plus.every(x => x === plus[0]);
+      if(plus.length > 1 && gleich) return {v:'+' + plus[0], l:'je Spieler'};
+      if(plus.length > 1) return {v:'+' + plus.reduce((a, x) => a + x, 0), l:'zusammen'};
+      return {v:'+' + plus[0], l:'Prestige'};
+    }
+    // Persistierte Karten aus älteren Builds kennen noch keine Differenz.
+    // Statt ihren damaligen Katalogwert weiter als neues Plus auszugeben,
+    // wird ihr HEUTIGER Laufbahnbeitrag aus derselben Prestigequelle gelesen.
+    // Hat inzwischen eine bessere Chronik desselben Monats übernommen, ist
+    // dieser Beitrag null.
+    const aktuell = Object.values(beitrag.werte).filter(x => x > 0);
+    if((d.playerIds || []).length){
+      if(!aktuell.length) return {v:'0', l:'zusätzlich'};
+      const wert = Math.round(aktuell.reduce((a, x) => a + x, 0) * 10) / 10;
+      return {v:String(wert).replace('.', ','), l:'zählt aktuell'};
+    }
+    if(d.zeigt === false) return {v:'0', l:'zusätzlich'};
+    return {v:'+' + (d.punkte || 0), l:'Prestige'};
+  }
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
   // „Bestwert" war geraten. Die Zahl kommt aus einem Regex ueber den
@@ -24918,10 +25090,26 @@ function _newsDetailMitte(s){
         } catch(e){}
         // Die Bedingung nur, wenn sie nicht schon oben steht [§C33 `_ndNeu`].
         const cond = (def && def.cond && _ndNeu(def.cond)) ? def.cond : '';
+        const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
+        const laufbahn = _newsChronikPrestige(d);
+        const beitrag = beitragIds.length ? `<div class="nd-section">Für die Laufbahn</div>`
+          + beitragIds.map(pid => {
+            const plus = Number(laufbahn.werte[pid]) || 0;
+            let titel = (d.titelJeSpieler || {})[pid] || '';
+            if(!titel){ try { const t = seasonTitleOf(pid, d.sid); titel = t ? t.name : ''; } catch(e){} }
+            const aussage = laufbahn.modus === 'zuwachs'
+              ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
+              : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell' : 'zählt aktuell nicht');
+            return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+              <div class="nd-stat-label">${esc(nameOf(pid))}${titel ? `<small>${esc(titel)}</small>` : ''}</div>
+              <div class="nd-stat-val ${plus > 0 ? 'acid' : ''}">${aussage} ›</div>
+            </div>`;
+          }).join('') : '';
         return (def ? _chronFaktenHtml(def) : '')
           + (cond ? `<div class="tnote">${esc(cond)}</div>` : '')
           + (podest ? `<div class="nd-section">Dieser Monat</div>${podest}` : '')
           + (erfuellt > 1 ? `<div class="tnote">${erfuellt} erfüllen die Bedingung in diesem Monat.</div>` : '')
+          + beitrag
           + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
       }
       case 'chronik_monat': {
@@ -29474,10 +29662,11 @@ function _avRingChipHtml(pid){
 //     mit fallenden Erträgen. Sie dürfen wechseln, dafür sind sie da.
 //
 //     WIEDERHOLUNG. JEDE positive Auszeichnung zählt bei jedem Erreichen,
-//     aber als nachvollziehbare, harmonisch gedämpfte Folge. Die zweite
-//     Verleihung liegt je nach Wertigkeit 5, 10, 12, 15 oder 20 Prozent
-//     unter der ersten; danach wird die Kurve immer flacher. Drei Dominator-
-//     Erfolge ergeben so 50 + 45 + rund 41, drei Carry-Erfolge 3 + 2,4 + 2.
+//     aber als nachvollziehbare, harmonisch gedämpfte Folge. Je zwei
+//     Verleihungen teilen eine Stufe: Nummer eins und zwei zählen voll,
+//     Nummer drei und vier liegen je nach Wertigkeit 5, 10, 12, 15, 18 oder
+//     25 Prozent darunter. Drei Dominator-Erfolge ergeben so 50 + 50 + 45,
+//     drei Carry-Erfolge 3 + 3 + 2,25.
 //     Anders als eine geometrische Reihe bleibt jeder weitere Erfolg positiv
 //     und die Summe hat keine Obergrenze. Häufige Alltags-Erfolge können eine
 //     Laufbahn aber nicht kurzfristig durch bloße Menge beherrschen.
@@ -29502,30 +29691,32 @@ const PRESTIGE_ART = {leistung:2, ereignis:1, schatten:0};
 const PRESTIGE_ART_NAME = {leistung:'Leistung', ereignis:'Ereignis',
                            schatten:'Schatten'};
 
-// Startwert und Abnahme der nächsten Verleihung. Die Klasse setzt den
+// Startwert und Abnahme der nächsten Zweiergruppe. Die Klasse setzt den
 // Standard: je wertvoller, desto höher der Start und desto langsamer die
-// Abnahme. Fünf fachlich begründete Spitzenleistungen überschreiben diesen
+// Abnahme. Sechs fachlich begründete Leistungen überschreiben diesen
 // Standard sichtbar. Die harmonische Folge darunter flacht ab, bleibt aber
 // bei jedem endlichen Rang positiv und besitzt keine feste Obergrenze.
 // Negative Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
 const PRESTIGE_AUSZEICHNUNG = {
   legendary:{basis:40, abnahme:0.10},
-  rare:     {basis:20, abnahme:0.15},
-  common:   {basis:3,  abnahme:0.20},
+  rare:     {basis:20, abnahme:0.18},
+  common:   {basis:3,  abnahme:0.25},
   negative: {basis:0,  abnahme:1}
 };
-// Nur diese fünf Abweichungen sind fachliche Rangfolgen, keine versteckten
+// Nur diese sechs Abweichungen sind fachliche Rangfolgen, keine versteckten
 // Multiplikatoren. Sie stehen deshalb auch lesbar in der Aufschlüsselung.
 // Meister wächst mit der sanftesten Kurve. Dominator und Team der Saison
-// teilen die 10-%-Kurve, damit Dominator auch bei gleicher Anzahl davor
+// teilen die 10-%-Kurve, damit Dominator bei jeder gleichen Anzahl davor
 // bleibt. POTD fällt schneller, weil es stark von der Zahl der eigenen
-// Spieltage abhängt; POTW bleibt wertvoller.
+// Spieltage abhängt; POTW bleibt wertvoller. Der makellose 10:0-Sieg bleibt
+// Legendary, verliert bei Wiederholungen aber etwas schneller an Neuigkeitswert.
 const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
-  champion:       {basis:55, abnahme:0.05, hinweis:'Saisonspitze: Meister'},
+  champion:       {basis:75, abnahme:0.05, hinweis:'Saisonspitze: Meister'},
   dominator_400:  {basis:50, abnahme:0.10, hinweis:'Saisonspitze: Dominator'},
   team_of_season: {basis:45, abnahme:0.10, hinweis:'Saisonspitze: Team der Saison'},
-  potw:           {basis:24, abnahme:0.12, hinweis:'Wochensieg'},
-  potd:           {basis:15, abnahme:0.20, hinweis:'Tagessieg'},
+  potw:           {basis:30, abnahme:0.12, hinweis:'Wochensieg'},
+  potd:           {basis:10, abnahme:0.25, hinweis:'Tagessieg'},
+  perfect_win:    {basis:40, abnahme:0.15, hinweis:'Makelloser 10:0-Sieg'},
 };
 
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
@@ -29534,13 +29725,11 @@ const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
 const PRESTIGE_REKORD = 48;
 
 // ─── Wiederholung zählt weniger, aber nie nichts ────────────────────
-// Wer dieselbe Sache zum dritten Mal holt, hat weniger Neues gezeigt als
-// beim ersten Mal — gegen sich selbst gemessen, nicht gegen andere. Jede
-// weitere Verleihung derselben Sache ist deshalb weniger wert. Die zweite
-// sinkt exakt um den sichtbaren Prozentsatz; danach wird die Kurve harmonisch
-// flacher. So bleibt jeder weitere Erfolg positiv und die Summe wächst ohne
-// Obergrenze, während bloße Menge einen Meistertitel nicht kurzfristig
-// überholt.
+// Die ersten beiden Erfolge belegen denselben Schritt und zählen deshalb
+// beide voll. Erst der dritte und vierte liegen eine Kurvenstufe tiefer, der
+// fünfte und sechste noch eine. Danach wird die Kurve harmonisch flacher. So
+// bleibt jeder weitere Erfolg positiv und die Summe wächst ohne Obergrenze,
+// während bloße Menge einen Meistertitel nicht kurzfristig überholt.
 //
 // Sie gilt NUR für dieselbe Sache. Eine Meisterschaft und ein Team der
 // Saison sind zwei verschiedene Dinge und zählen beide voll: das Stapeln
@@ -29562,7 +29751,7 @@ function _wiederholungsWert(n, abnahme){
   const a = Math.max(0, Math.min(0.999, Number(abnahme) || 0));
   const c = a / Math.max(0.001, 1 - a);
   let summe = 0;
-  for(let i = 0; i < k; i++) summe += 1 / (1 + c * i);
+  for(let i = 0; i < k; i++) summe += 1 / (1 + c * Math.floor(i / 2));
   return summe;
 }
 
@@ -29575,7 +29764,7 @@ function auszeichnungsTeilwert(id, n){
   const regel = _auszeichnungsRegel(id);
   if(regel.basis <= 0 || n <= 0) return 0;
   const a = _auszeichnungsAbnahme(id);
-  return regel.basis / (1 + (a / Math.max(0.001, 1 - a)) * (n - 1));
+  return regel.basis / (1 + (a / Math.max(0.001, 1 - a)) * Math.floor((n - 1) / 2));
 }
 
 // Dieselbe Monatschronik zeigt beim zweiten Tragen weniger Neues, bleibt aber
@@ -29609,20 +29798,19 @@ const PRESTIGE_REICHWEITE = 0.5;
 
 // Die fünf Stufen. `min` ist die Schwelle, ab der die Stufe getragen wird.
 //
-// Die Abstände steigen mit der neuen, ungekürzten Dreiquellen-Skala. An den
-// echten 466 Partien stehen Leon und Martin im Volutenkranz III, Julian folgt
-// im selben Kranz auf Grad II; zum Lorbeer bleibt ein klarer Abstand. Der
-// Ordensstern beginnt bei rund 4.000 und bleibt über die stetig wachsenden
+// Die Abstände steigen mit der neuen, ungekürzten Dreiquellen-Skala. Leon
+// steht im aktuellen Bestand ungefähr im Volutenkranz III; zum Lorbeer bleibt
+// ein klarer Abstand. Der Ordensstern beginnt bei 4.500 und bleibt über die stetig wachsenden
 // Folgen anspruchsvoll, aber in einer langen Laufbahn realistisch.
 //
-// Die ERSTE Schwelle bleibt niedrig: sie sagt „du bist dabei", nicht „du bist
-// gut". Zehn von zwölf erreichen sie.
+// Der Reif beginnt sofort. Der Schildring markiert ab 500 den ersten großen
+// Laufbahnschritt.
 const INSIGNIEN = [
   {key:'reif',    name:'Reif',          min:0},
-  {key:'schild',  name:'Schildring',    min:250},
-  {key:'volute',  name:'Volutenkranz',  min:800},
-  {key:'lorbeer', name:'Lorbeerreif',   min:2300},
-  {key:'stern',   name:'Ordensstern',   min:4000},
+  {key:'schild',  name:'Schildring',    min:500},
+  {key:'volute',  name:'Volutenkranz',  min:1200},
+  {key:'lorbeer', name:'Lorbeerreif',   min:2800},
+  {key:'stern',   name:'Ordensstern',   min:4500},
 ];
 // Innerhalb einer Stufe gibt es drei Grade. Ohne sie sind zwischen zwei
 // Schwellen hunderte Punkte, in denen sich am Zeichen nichts tut — und je
@@ -29635,7 +29823,7 @@ const INSIGNIUM_GRAD_NAME = ['I', 'II', 'III'];
 // Die Grade liegen bewusst nicht bei exakten Dritteln. Der Einstieg in eine
 // Stufe soll schnell sichtbar werden, Grad III aber schon deutlich vor der
 // naechsten, viel anspruchsvolleren Form beginnen. In der aktuellen Liga
-// stehen Leon und Martin damit am Volutenkranz III, Julian dicht dahinter;
+// steht Leon damit am Volutenkranz III, weitere starke Laufbahnen folgen;
 // zum Lorbeerreif bleibt trotzdem ein klarer Abstand.
 const INSIGNIUM_GRAD_SCHWELLEN = [0, 0.16, 0.40];
 
@@ -29784,8 +29972,8 @@ function prestigeTabelle(bisMs){
   aktive.forEach(p => {
     const r = roh[p.id];
 
-    // Nur heute gehaltene Rekorde werden gestapelt: Rang 1 zählt voll,
-    // Rang 2–3 mit √2, Rang 4–5 mit √3 usw.
+    // Nur heute gehaltene Rekorde werden gestapelt: Rang 1–2 zählen voll,
+    // Rang 3–5 mit √2, Rang 6–8 mit √3 usw.
     // Auszeichnungen: sichtbare Klasse × gedämpfte Wiederholungsfolge.
     // Kein Quellenlimit verändert anschließend den Wert oder macht ihn von
     // der Sortierreihenfolge anderer Auszeichnungen abhängig.
@@ -29803,10 +29991,10 @@ function prestigeTabelle(bisMs){
 
     // Monatschroniken: der Wert haengt an der Abweichung [§C39].
     const mo = [];
-    // Dieselbe Chronik in mehreren Monaten ist dieselbe Sache: der zweite
-    // „Makellose" zeigt weniger Neues als der erste. Sortiert nach Saison,
-    // damit der FRÜHESTE Monat den vollen Wert trägt — sonst hinge es an
-    // der Reihenfolge, in der die Tabelle gerade gebaut wird.
+    // Hohe Chronikwerte stehen vor kleinen und bekommen damit die geringste
+    // Wurzeldämpfung. So kann eine später erreichte, außergewöhnliche Chronik
+    // eine Laufbahn noch sichtbar prägen; die Reihenfolge des Katalogs oder
+    // der Monate beeinflusst die Punkte nicht.
     r.monat.forEach(m => {
       const voll = chronikPunkte(m.id);
       if(voll <= 0) return;
@@ -29817,7 +30005,7 @@ function prestigeTabelle(bisMs){
       // „Konstanz" kamen — die Zeile erklaerte den Wert daneben nicht.
       const km = _chronikMonat(m.id) || {};
       mo.push({q:'monat', id:m.id, name:m.name, label:m.label,
-               p:voll, voll, grundwert:voll,
+               sid:m.sid, p:voll, voll, grundwert:voll,
                kunst:km.art || '', klasse:km.klasse || ''});
     });
     const pm = _wurzelStapel(mo, 3);
@@ -29832,7 +30020,7 @@ function prestigeTabelle(bisMs){
       re.push({q:'rekord', id:x.id, name:x.name, p:voll, art:x.art,
                basis, halter:halterZahl[x.id] || 1});
     });
-    const pr = _wurzelStapel(re, 2);
+    const pr = _wurzelStapel(re, 3);
 
     const quellen = az.concat(mo, re);
 
@@ -30974,7 +31162,7 @@ function prestigeSchritte(pid, n){
         const voll = PRESTIGE_REKORD * (PRESTIGE_ART[def.art] ?? 1)
           / Math.max(1, (halte ? halte.pids.length + 1 : 1));
         const gewinn = _wurzelZuwachs(
-          P.quellen.filter(q => q.q === 'rekord').map(q => q.voll), voll, 2);
+          P.quellen.filter(q => q.q === 'rekord').map(q => q.voll), voll, 3);
         out.push({
           art:'rekord', id:def.id, name:def.name, ic:def.ic, tone:def.tone, rel,
           gewinn:Math.round(gewinn),
@@ -31026,6 +31214,52 @@ function prestigeSchritte(pid, n){
   return out.filter(x => x.gewinn > 0 && (x.art !== 'rekord' || x.rel <= PRESTIGE_REICHWEITE))
     .sort((a, b) => a.rel - b.rel || b.gewinn - a.gewinn)
     .slice(0, n);
+}
+
+// Die drei Klassen bleiben als schneller Vergleich nebeneinander. Die
+// vollstaendige Rechnung lebt aber in einem eigenen Blatt: Im Laufbahnbuch
+// muss man die einzelnen Posten lesen koennen, ohne zuerst drei eng gesetzte
+// Regelkarten zu entziffern.
+function _prestigeRegelKarten(){
+  const karte = (klasse, titel, regel) => `<span class="${klasse}">
+      <b>${titel}</b><strong>${regel.basis} P Start</strong>
+      <em>1. und 2. Mal je ${regel.basis} P.<br>
+      3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
+  return `<div class="lb-regeln">
+    ${karte('legendary', 'Legendary', PRESTIGE_AUSZEICHNUNG.legendary)}
+    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare)}
+    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common)}
+  </div>`;
+}
+
+function showPrestigeRegeln(pid){
+  const p = (pmap() || {})[pid];
+  _sheetSetReopen(() => showPrestigeRegeln(pid));
+  const speziell = [
+    ['Meister der Saison', 'champion'],
+    ['Dominator', 'dominator_400'],
+    ['Team der Saison', 'team_of_season'],
+    ['Player of the Week', 'potw'],
+    ['Player of the Day', 'potd'],
+    ['Absoluter Sieger', 'perfect_win']
+  ];
+  const zeilen = speziell.map(([name, id]) => {
+    const r = _auszeichnungsRegel(id);
+    return `<div class="lb-regel-z">
+      <span><b>${esc(name)}</b><em>${esc(r.hinweis || '')}</em></span>
+      <strong>${r.basis} P <i>Start</i></strong>
+      <small>3. + 4. Mal −${Math.round(r.abnahme * 100)} %</small>
+    </div>`;
+  }).join('');
+  openSheet(`<div class="pp-root lb-regelblatt">
+    <h3>Wert der Auszeichnungen</h3>
+    <div class="sheet-sub num">${esc((p && p.name) || '')} · dieselbe Auszeichnung wächst immer weiter</div>
+    <p class="lb-regel-intro">Jede Auszeichnung beginnt mit ihrem Startwert. Die ersten beiden Erfolge zählen voll, danach sinkt ihr Wert in Zweiergruppen. Je seltener und bedeutender die Leistung, desto langsamer fällt ihre Kurve.</p>
+    ${_prestigeRegelKarten()}
+    <div class="pp-sec-title"><div class="l"><h4>Besondere Wertung</h4></div></div>
+    <div class="lb-regel-liste">${zeilen}</div>
+    <div class="tnote lb-regel-note">Beispiel: Dominator bringt beim ersten und zweiten Mal je 50 Punkte. Das dritte und vierte Mal zählen je 45, danach wird die Kurve paarweise sanfter. Die Summe wächst ohne festes Limit.</div>
+  </div>`);
 }
 
 // Das Sheet. Aufgerufen vom Avatar im Profilkopf.
@@ -31133,19 +31367,6 @@ function showLaufbahn(pid){
     return (Number.isInteger(r) ? String(r) : r.toFixed(1)).replace('.', ',');
   };
 
-  // Kurze Zeilen: die Klassenregel steht einmal im Gruppenkopf. Bis drei
-  // Erfolge werden addiert, lange Folgen zeigen Start und letzten Teilwert.
-  const folge = q => {
-    const n = Math.max(1, q.mal || 1);
-    if(n <= 3){
-      const glieder = [];
-      for(let i = 1; i <= n; i++) glieder.push(zahl(auszeichnungsTeilwert(q.id, i)));
-      return glieder.join(' + ');
-    }
-    return `${zahl(q.basis)} + ${zahl(auszeichnungsTeilwert(q.id, 2))} + … + `
-      + `${zahl(auszeichnungsTeilwert(q.id, n))} (${n}. Mal)`;
-  };
-
   // Warum dieser Posten so viel wiegt. Vorher stand hier „2 von 12" — die
   // Zahl der heutigen Halter. Sie erklärte den Wert nicht, sie war der
   // Grund, warum er fiel. Jetzt steht da, was den Wert wirklich bestimmt:
@@ -31163,9 +31384,10 @@ function showLaufbahn(pid){
     else if(q.q === 'auszeichnung'){
       teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
       if(q.hinweis) teile.push(q.hinweis);
-      teile.push(`${zahl(q.basis)} P Start · ${Math.round(q.abnahme * 100)}-%-Kurve`);
       teile.push(`${q.mal}× erreicht`);
-      if(q.mal > 1) teile.push(folge(q));
+      teile.push(q.mal > 1
+        ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
+        : `${zahl(q.basis)} P Startwert`);
     }
     else if(q.label) teile.push(q.label);
     if(q.q === 'monat'){
@@ -31193,11 +31415,10 @@ function showLaufbahn(pid){
     </div>`;
 
   const SICHTBAR = 4;
-  const regeln = `<div class="lb-regeln">
-    <span class="legendary"><b>Legendary</b><strong>40 P Standard · −10 %</strong><em>Meister 55 P · −5 %<br>Dominator 50 P · −10 %<br>Team der Saison 45 P · −10 %. Danach flacher, nie 0.</em></span>
-    <span class="rare"><b>Rare</b><strong>20 P Standard · −15 %</strong><em>Wochensieger 24 P · −12 %<br>Tagessieger 15 P · −20 %. Danach flacher, nie 0.</em></span>
-    <span class="common"><b>Common</b><strong>3 P beim 1. Mal</strong><em>Das 2. Mal −20 %. Danach flacher, nie 0.</em></span>
-  </div>`;
+  const regeln = `<button class="lb-regel-auf" type="button" data-prestige-regeln>
+    <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven sauber erklärt</em></span>
+    ${svgI('chevron')}
+  </button>`;
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];
     const rest = qs.slice(SICHTBAR).map((q, i) => zeile(q, w[SICHTBAR + i]));
@@ -31260,6 +31481,9 @@ function showLaufbahn(pid){
    </div>
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+  document.querySelectorAll('#sheet [data-prestige-regeln]').forEach(el => {
+    el.onclick = () => sheetNav(() => showPrestigeRegeln(pid));
+  });
 
   // ── Die Vitrine bedienen ───────────────────────────────────────────
   //     Welche Karte in der Mitte liegt, kann CSS nicht wissen: eine

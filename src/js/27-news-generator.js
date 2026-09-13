@@ -1795,6 +1795,24 @@ function _buildStories(){
       const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
       const _jetztH = seasonTitleHalter(_sid);
       const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
+      // Eine Chronik-Karte darf nicht den Katalogwert als neuen Prestige-
+      // Gewinn ausgeben. Pro Monat zaehlt nur der eine Eintrag, der in der
+      // Tafel steht; ein besserer Eintrag kann den gerade geholten also
+      // vollstaendig verdraengen. Der echte Zuwachs ist die Differenz der
+      // beiden zentral berechneten Monats-Summen vor und nach dem Spieltag.
+      // Beide Tabellen sind zeitgeschnitten und gecacht: keine zweite Formel
+      // im News-System und kein zusaetzlicher Lauf je Meldung.
+      let _prestigeVor = {}, _prestigeJetzt = {};
+      try {
+        _prestigeVor = (prestigeTabelle(_t0.getTime() - 1) || {}).byPid || {};
+        _prestigeJetzt = (prestigeTabelle(_letzteMs2) || {}).byPid || {};
+      } catch(e){}
+      const _monatPlus = pid => Math.max(0,
+        (((_prestigeJetzt[pid] || {}).teile || {}).monat || 0)
+        - (((_prestigeVor[pid] || {}).teile || {}).monat || 0));
+      const _monatTitel = pid => {
+        try { return seasonTitleOf(pid, _sid, _letzteMs2); } catch(e){ return null; }
+      };
       const _meldungen = [];
       SEASON_TITLES.forEach(t => {
         const n = _jetztH[t.id];
@@ -1844,14 +1862,42 @@ function _buildStories(){
         const _zeigtSatz = !_zeigt ? ''
           : _zeigt.zeigt
             ? ` Steht jetzt in der Chronik${_zeigt.andere.length === 1
-                ? `, vor „${_zeigt.andere[0]}"` : ''}.`
-            : ` In der Chronik steht weiter „${_zeigt.welche}".`;
+                ? `, vor „${_zeigt.andere[0]}“` : ''}.`
+            : ` In der Chronik steht weiter „${_zeigt.welche}“.`;
+        // Nur neue Halter koennen hier Prestige hinzugewinnen. Wer bereits
+        // Mithalter war und nun allein steht, hat eine staerkere Geschichte,
+        // aber keinen zweiten Laufbahn-Eintrag erhalten.
+        const prestigeDelta = {}, titelJeSpieler = {};
+        n.pids.forEach(pid => {
+          const sichtbar = _monatTitel(pid);
+          titelJeSpieler[pid] = sichtbar ? sichtbar.name : '';
+          prestigeDelta[pid] = neuLeute.indexOf(pid) >= 0 && sichtbar
+            && sichtbar.titleId === t.id ? _monatPlus(pid) : 0;
+        });
+        const mitPlus = Object.keys(prestigeDelta).filter(pid => prestigeDelta[pid] > 0);
+        const ohnePlus = neuLeute.filter(pid => !(prestigeDelta[pid] > 0));
+        let prestigeSatz = '';
+        if(mitPlus.length){
+          const teile = mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`);
+          prestigeSatz = ` Für die Laufbahn zählt der Wechsel wirklich: ${_namenListe(teile)} Prestige.`;
+        } else if(ohnePlus.length){
+          const istSelbst = ohnePlus.some(pid => titelJeSpieler[pid] === t.name);
+          const staerker = [...new Set(ohnePlus.map(pid => titelJeSpieler[pid]).filter(Boolean))];
+          prestigeSatz = istSelbst
+            ? ` „${t.name}“ steht in der Monatschronik, am gerundeten Prestige-Stand ändert sich diesmal nichts.`
+            : staerker.length
+            ? ` Für die Laufbahn bleibt ${_namenListe(staerker.map(x => `„${x}“`))} stärker; es kommt kein Prestige hinzu.`
+            : ' Für die Laufbahn kommt durch diesen Wechsel kein Prestige hinzu.';
+        } else {
+          prestigeSatz = ' Die Halterlage ändert sich, der Prestige-Stand nicht.';
+        }
         _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt,
+          prestigeDelta, titelJeSpieler,
           title: titel,
           // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
           // dieselbe Zahl untereinander sagt nichts Neues [§C33].
           desc: (n.ev ? _evSatz(n.ev) + '. ' : '')
-              + `${artikel} Chronik.` + nachsatz + _zeigtSatz,
+              + `${artikel} Chronik.` + nachsatz + _zeigtSatz + prestigeSatz,
           klasse: t.klasse});
       });
       // Wertvollste zuerst: Die Reihenfolge bestimmt den Kopf des späteren
@@ -1873,9 +1919,15 @@ function _buildStories(){
           // ueberstimmen [§C33].
           prio: STORY_PRIO.chronik_geholt,
           dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_letzteMatchId2,
-                    playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
+                    playerIds:m.n.pids.slice(), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
-                    chronArt:m.t.kunst, aus:m.t.aus, punkte:m.punkte,
+                    chronArt:m.t.kunst, aus:m.t.aus,
+                    // `punkte` ist der tatsaechliche neue Beitrag, nicht der
+                    // ungedaempfte Katalogwert. Der bleibt als Grundwert fuer
+                    // das Detail nachvollziehbar.
+                    punkte:Object.values(m.prestigeDelta).reduce((s, x) => s + x, 0),
+                    grundwert:m.punkte, prestigeDelta:m.prestigeDelta,
+                    titelJeSpieler:m.titelJeSpieler,
                     // Steht diese Chronik in der Monatstafel? null heisst:
                     // die Frage stellt sich nicht [§C32].
                     zeigt: m.zeigt ? m.zeigt.zeigt : null}

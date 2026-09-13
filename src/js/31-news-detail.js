@@ -469,10 +469,26 @@ function _newsDetailMitte(s){
         } catch(e){}
         // Die Bedingung nur, wenn sie nicht schon oben steht [§C33 `_ndNeu`].
         const cond = (def && def.cond && _ndNeu(def.cond)) ? def.cond : '';
+        const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
+        const laufbahn = _newsChronikPrestige(d);
+        const beitrag = beitragIds.length ? `<div class="nd-section">Für die Laufbahn</div>`
+          + beitragIds.map(pid => {
+            const plus = Number(laufbahn.werte[pid]) || 0;
+            let titel = (d.titelJeSpieler || {})[pid] || '';
+            if(!titel){ try { const t = seasonTitleOf(pid, d.sid); titel = t ? t.name : ''; } catch(e){} }
+            const aussage = laufbahn.modus === 'zuwachs'
+              ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
+              : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell' : 'zählt aktuell nicht');
+            return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+              <div class="nd-stat-label">${esc(nameOf(pid))}${titel ? `<small>${esc(titel)}</small>` : ''}</div>
+              <div class="nd-stat-val ${plus > 0 ? 'acid' : ''}">${aussage} ›</div>
+            </div>`;
+          }).join('') : '';
         return (def ? _chronFaktenHtml(def) : '')
           + (cond ? `<div class="tnote">${esc(cond)}</div>` : '')
           + (podest ? `<div class="nd-section">Dieser Monat</div>${podest}` : '')
           + (erfuellt > 1 ? `<div class="tnote">${erfuellt} erfüllen die Bedingung in diesem Monat.</div>` : '')
+          + beitrag
           + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
       }
       case 'chronik_monat': {

@@ -1234,12 +1234,19 @@ const ok = (c, msg, det) => {
     await new Promise(r => requestAnimationFrame(r));
     const gruppen=[...document.querySelectorAll('#sheet .lb-grp')];
     const grp=gruppen.find(e => /Monatswertungen/.test(e.textContent||''));
+    const regelKnopf=document.querySelector('#sheet [data-prestige-regeln]');
+    const regelHinweis=regelKnopf ? (regelKnopf.textContent||'').replace(/\s+/g,' ').trim() : '';
+    const sport=/Sportliche Leistung/.test((document.querySelector('#sheet')||{}).textContent||'');
+    if(regelKnopf){ regelKnopf.click(); await new Promise(r=>setTimeout(r,560)); }
     const regeln=[...document.querySelectorAll('#sheet .lb-regeln span')]
       .map(e=>(e.textContent||'').replace(/\s+/g,' ').trim());
+    const regelHoehen=[...document.querySelectorAll('#sheet .lb-regeln span')]
+      .map(e=>Math.round(e.getBoundingClientRect().height));
     return Object.assign({},daten,{
       text:grp ? grp.textContent.replace(/\s+/g,' ').trim() : '',
-      regeln,
-      sport:/Sportliche Leistung/.test((document.querySelector('#sheet')||{}).textContent||'')
+      regeln, regelHinweis, regelHoehen,
+      regelTitel:(document.querySelector('#sheet h3')||{}).textContent||'',
+      sport
     });
   });
   ok(!chronRechnung.fehlt && /Chronikwert/.test(chronRechnung.text),
@@ -1251,8 +1258,16 @@ const ok = (c, msg, det) => {
   ok(chronRechnung.regeln.length === 3
      && chronRechnung.regeln.every(x=>/\d+.*%/.test(x) && /nie 0/.test(x))
      && chronRechnung.regeln.every(x=>!/min\./.test(x)),
-     'die Auszeichnungsregeln stehen einmal kompakt über der Liste',
+     'das Regel-Popup zeigt Legendary, Rare und Common nebeneinander',
      chronRechnung.regeln.join(' · '));
+  ok(/Wie die Punkte entstehen/.test(chronRechnung.regelHinweis)
+     && /Wert der Auszeichnungen/.test(chronRechnung.regelTitel),
+     'die cleaner gehaltene Aufschlüsselung öffnet ihre Erklärung im Popup',
+     chronRechnung.regelHinweis + ' → ' + chronRechnung.regelTitel);
+  ok(chronRechnung.regelHoehen.length === 3
+     && chronRechnung.regelHoehen.every(h=>h >= 140),
+     'die drei Regelkarten haben genug vertikalen Leseraum',
+     chronRechnung.regelHoehen.join(' / ') + ' px');
   ok(!chronRechnung.sport,
      'das Laufbahnblatt enthält keinen separaten Block für sportliche Leistung');
 
