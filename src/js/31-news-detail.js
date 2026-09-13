@@ -35,7 +35,8 @@ function openNewsDetail(sid){
   // Karte seit dem Rubrikband nicht mehr gibt.
   const sorte = _newsSorte(s);
   const brk = _isBreaking(s);
-  nd.className = 'nd nd-s-' + sorte + (brk ? ' nd-brk' : '');
+  const negativ = _newsIstNegativ(s);
+  nd.className = 'nd nd-s-' + sorte + (negativ ? ' nd-neg' : '') + (brk ? ' nd-brk' : '');
   nd.innerHTML = `
     ${_newsMotiv(sorte, s)}
     ${brk ? '<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING</div>' : ''}
@@ -468,10 +469,26 @@ function _newsDetailMitte(s){
         } catch(e){}
         // Die Bedingung nur, wenn sie nicht schon oben steht [§C33 `_ndNeu`].
         const cond = (def && def.cond && _ndNeu(def.cond)) ? def.cond : '';
+        const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
+        const laufbahn = _newsChronikPrestige(d);
+        const beitrag = beitragIds.length ? `<div class="nd-section">Für die Laufbahn</div>`
+          + beitragIds.map(pid => {
+            const plus = Number(laufbahn.werte[pid]) || 0;
+            let titel = (d.titelJeSpieler || {})[pid] || '';
+            if(!titel){ try { const t = seasonTitleOf(pid, d.sid); titel = t ? t.name : ''; } catch(e){} }
+            const aussage = laufbahn.modus === 'zuwachs'
+              ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
+              : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell' : 'zählt aktuell nicht');
+            return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+              <div class="nd-stat-label">${esc(nameOf(pid))}${titel ? `<small>${esc(titel)}</small>` : ''}</div>
+              <div class="nd-stat-val ${plus > 0 ? 'acid' : ''}">${aussage} ›</div>
+            </div>`;
+          }).join('') : '';
         return (def ? _chronFaktenHtml(def) : '')
           + (cond ? `<div class="tnote">${esc(cond)}</div>` : '')
           + (podest ? `<div class="nd-section">Dieser Monat</div>${podest}` : '')
           + (erfuellt > 1 ? `<div class="tnote">${erfuellt} erfüllen die Bedingung in diesem Monat.</div>` : '')
+          + beitrag
           + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
       }
       case 'chronik_monat': {
@@ -620,21 +637,14 @@ function _newsDetailMitte(s){
           <button class="btn ghost sm" data-recap="potw" style="margin-top:12px;width:100%">Wochen-Rückblick öffnen</button>`;
       }
       // ── Die Sammelkarte: was im selben Moment passiert ist ───────────
-      // Der Kopf gehoert dem groessten Ereignis. Was dazugehoert, steht
-      // darunter als Liste mit eigenem Beleg, nicht als zweite Schlagzeile.
+      // Der Kopf fasst zusammen. Darunter stehen alle Teile gleichrangig;
+      // keines davon wird zum heimlichen zweiten Kopf.
       case 'sammel': {
-        const alle = Array.isArray(d.teile) ? d.teile : [];
-        // Was oben steht, steht unten nicht noch einmal [§C33]. Bei einer
-        // Spiel-Sammelkarte gehören Schlagzeile und Text dem stärksten
-        // Ereignis — dessen Zeile stand darunter wortgleich ein zweites Mal
-        // und trug keine einzige neue Zahl. Bleibt dabei nichts übrig, wird
-        // die Liste vollständig gezeigt: ein leeres Blatt ist schlimmer.
-        const neu = alle.filter(t => _ndNeu(t.titel || '') || _ndNeu(t.text || ''));
-        const teile = neu.length ? neu : alle;
-        const zeilen = teile.map((t, i) => `<div class="nw-zeile${i === 0 ? ' nw-zeile-kopf-teil' : ''}"${
+        const teile = Array.isArray(d.teile) ? d.teile : [];
+        const zeilen = teile.map(t => `<div class="nw-zeile"${
               (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
-              ${_ndNeu(t.text || '') ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
+              ${t.text ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand

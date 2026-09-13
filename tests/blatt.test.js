@@ -507,12 +507,13 @@ const ok = (c, msg, det) => {
       tagesKarten += gr.length;
       if(gr.length > 1) mehrfach++;
       if(gr.length !== 1) return;
-      // Traegt sie wirklich die hoechste Prioritaet ihres Tages?
+      // Traegt sie wirklich den hoechsten Nachrichtenwert ihres Tages?
       const ids = [...feed.querySelectorAll('.nf-card')].map(c => c.dataset.sid);
       const beste = window.__k.eval(`(function(){
         const ids = ${JSON.stringify(ids)};
         const s = getStoriesCache().filter(x => ids.indexOf(x.id) >= 0);
-        s.sort((a,b) => ((_isBreaking(b)?1:0)-(_isBreaking(a)?1:0)) || ((b.prio||0)-(a.prio||0)));
+        s.sort((a,b) => (_newsTagSpannung(b)-_newsTagSpannung(a))
+          || ((b.prio||0)-(a.prio||0)) || String(a.id||'').localeCompare(String(b.id||'')));
         return s.length ? s[0].id : '';
       })()`);
       if(beste && beste !== gr[0].dataset.sid) nichtBeste++;
@@ -543,7 +544,7 @@ const ok = (c, msg, det) => {
   ok(tafel.tagesKarten > 0 && tafel.mehrfach === 0,
      'hoechstens eine Karte des Tages je Tag',
      tafel.tagesKarten + ' Karten, ' + tafel.mehrfach + ' Tage mit mehreren');
-  ok(tafel.nichtBeste === 0, 'die Karte des Tages traegt die hoechste Prioritaet ihres Tages',
+  ok(tafel.nichtBeste === 0, 'die Karte des Tages traegt die spannendste Geschichte ihres Tages',
      tafel.nichtBeste + ' daneben');
   ok(tafel.tagOhneSpiel === 0, 'an einem Tag ohne Partie gibt es keine Karte des Tages',
      tafel.tagOhneSpiel + ' Tage');
@@ -675,7 +676,7 @@ const ok = (c, msg, det) => {
   ok(schmuck.ohneAkzent === 0, 'jede Zahl im Kartentext steht fett',
      schmuck.ohneAkzent + ' ohne Akzent');
 
-  console.log('\n═══ ZEHN SORTEN, ZEHN FORMEN ═══');
+  console.log('\n═══ ZWÖLF SORTEN, RUHIGE FARBFAMILIEN ═══');
   const sorten = await page.evaluate(() => {
     const sorte = window.__k.eval('_newsSorte');
     const rubrik = window.__k.eval('_newsRubrik');
@@ -711,34 +712,102 @@ const ok = (c, msg, det) => {
   ok(zeichen.doppelt.length === 0,
      'keine zwei Rubriken tragen dasselbe Zeichen', zeichen.doppelt.join(', '));
 
-  // Die Karte, auf der mehrere denselben Erfolg holen, steht im echten Feed:
-  // an den Fixtures erreichen Jannik und Stefan im selben Moment denselben
-  // Schildring, und das waren zwei Karten mit derselben Aussage. Gemessen
-  // wird am gerenderten Markup, weil hier die FORM die Aussage traegt.
+  // Mehrere Tafel-Aenderungen desselben Zeitpunkts ergeben eine gemeinsame
+  // Karte. Das
+  // Markup wird aus vier synthetischen, ansonsten echten Story-Objekten
+  // gebaut, damit der Test nicht an einer zufaelligen heutigen Schwelle haengt.
   const achse = await page.evaluate(() => {
-    const sheet = document.getElementById('sheet');
-    const karte = [...sheet.querySelectorAll('.nf-card')]
-      .find(c => c.classList.contains('nf-s-erfolg'));
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const ids=players.slice(0,4).map(p=>p.id), when=matches[matches.length-1].created_at;
+      const teile=ids.map((pid,i)=>({id:'ui-ins-'+i,cat:'tafel',ic:'award',
+        title:pname(pid)+' traegt den Schildring',desc:(300+i)+' Prestige zusammen.',
+        when,prio:76,dataRef:{type:'insignium_stufe',pid,stufe:1,
+          stufeName:'Schildring',punkte:300+i,oben:false}}));
+      _cache._consolFrom=null;
+      const s=_consolidateStories(teile).find(x=>(x.dataRef||{}).quelle==='tafel');
+      return s ? _newsCardHtmlM2(s,false,false) : '';
+    })()`);
+    const host = document.createElement('div'); host.innerHTML = markup;
+    document.body.appendChild(host);
+    const karte = host.querySelector('.nf-card.nf-s-tafel');
     if(!karte) return {fehlt:true};
     const rub = karte.querySelector('.nf-rub b');
-    const gold = rub ? getComputedStyle(rub).color : '';
-    return {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
+    const farbe = rub ? getComputedStyle(rub).color : '';
+    const out = {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
       // Der Erfolg ist das Subjekt, also stehen die Gesichter als Chips
       // nebeneinander — keins ist wichtiger als das andere [§C33].
       chips: karte.querySelectorAll('.nf-face-paar .av').length,
       zeilen: karte.querySelectorAll('.nf-sam-z').length,
       rest: karte.querySelectorAll('.nf-sam-m').length,
-      gold: /^rgb\(2[0-9]{2}, *2[0-9]{2}, *[0-9]{1,3}\)/.test(gold)};
+      tafelMetall: farbe !== 'rgb(247, 207, 74)' && farbe !== 'rgb(167, 139, 250)'};
+    host.remove(); return out;
   });
   ok(!achse.fehlt, 'die Karte fuer den gemeinsamen Erfolg steht im Feed',
      JSON.stringify(achse));
-  ok(achse.rubrik === 'GEMEINSAM GEHOLT', 'sie traegt ihre eigene Rubrik', achse.rubrik);
+  ok(achse.rubrik === 'EWIGE TAFEL', 'sie traegt die gemeinsame Tafel-Rubrik', achse.rubrik);
   ok(achse.chips >= 2, 'und die Gesichter aller Beteiligten', achse.chips + ' Chips');
   ok(achse.zeilen >= 2 && achse.rest === 0,
      'jeder Beteiligte steht als Zeile auf der Karte, keiner als „und 1 weitere"',
      achse.zeilen + ' Zeilen, ' + achse.rest + ' verschwiegen');
-  ok(achse.gold, 'sie wiegt so schwer wie die Meldungen, die sie buendelt [§C25]',
-     String(achse.gold));
+  ok(achse.tafelMetall, 'der gemeinsame Tafel-Moment traegt kuehles Metall statt Gold',
+     String(achse.tafelMetall));
+
+  const palette = await page.evaluate(() => {
+    const host = document.createElement('div');
+    const sorten = ['spiel','tafel','ins','held','woche','duell','serie','badge','marke',
+                    'fakt','spieler','erfolg'];
+    host.innerHTML = sorten.map(s => `<div class="nf-card nf-s-${s}">
+      <div class="nf-top"><span class="nf-rub"><i></i><b>${s}</b></span></div>
+      <span class="nf-motiv"></span></div>`).join('')
+      + '<div class="nf-card nf-s-tafel nf-gross"><div class="nf-gross-band"></div></div>'
+      + '<div class="nf-card nf-s-held nf-gross"><div class="nf-gross-band"></div></div>'
+      + '<div class="nd nd-s-tafel"><div class="nd-ic"></div><span class="nf-motiv"></span></div>'
+      + '<div class="nd nd-s-serie nd-neg"><div class="nd-ic"></div></div>';
+    document.body.appendChild(host);
+    const farben = {};
+    sorten.forEach(s => {
+      const c = host.querySelector('.nf-s-' + s);
+      farben[s] = {
+        rubrik:getComputedStyle(c.querySelector('.nf-rub')).color,
+        motiv:getComputedStyle(c.querySelector('.nf-motiv')).color,
+        schimmer:getComputedStyle(c.querySelector('.nf-top')).backgroundImage
+      };
+    });
+    const gross = [...host.querySelectorAll('.nf-gross-band')]
+      .map(b => getComputedStyle(b, '::after').backgroundImage);
+    const detail = host.querySelector('.nd-s-tafel');
+    const negativ = host.querySelector('.nd-neg');
+    const out = {farben, gross,
+      detailIcon:getComputedStyle(detail.querySelector('.nd-ic')).color,
+      detailMotiv:getComputedStyle(detail.querySelector('.nf-motiv')).color,
+      detailLinie:getComputedStyle(detail, '::before').backgroundImage,
+      negativ:getComputedStyle(negativ.querySelector('.nd-ic')).color};
+    host.remove(); return out;
+  });
+  const farbe = s => palette.farben[s].rubrik;
+  const goldene = Object.keys(palette.farben).filter(s => farbe(s) === 'rgb(247, 207, 74)');
+  ok(goldene.length === 2 && goldene.includes('held') && goldene.includes('woche'),
+     'Gold bleibt allein Tages- und Wochensiegern', goldene.join(', ') || 'keine');
+  ok(farbe('tafel') === farbe('marke') && farbe('tafel') !== farbe('held'),
+     'Tafel und Bestmarke tragen kuehles Metall statt Gold',
+     farbe('tafel') + ' / ' + farbe('held'));
+  ok(farbe('ins') === farbe('badge') && farbe('badge') === farbe('spieler')
+     && farbe('spieler') === farbe('erfolg') && farbe('ins') !== farbe('held'),
+     'Laufbahn und Auszeichnungen bilden eine violette Familie', farbe('ins'));
+  ok(farbe('spiel') === farbe('serie') && farbe('duell') !== farbe('spiel')
+     && new Set(Object.values(palette.farben).map(x => x.rubrik)).size === 6,
+     'Spiel, Duell und Fakten bleiben in sechs ruhigen Farbfamilien lesbar',
+     new Set(Object.values(palette.farben).map(x => x.rubrik)).size + ' Familien');
+  ok(palette.gross[0] === palette.gross[1]
+     && palette.gross[0].includes('247, 207, 74'),
+     'die Karte des Tages traegt immer ihren goldenen Auswahlschimmer', palette.gross.join(' / '));
+  ok(palette.detailIcon === farbe('tafel') && palette.detailMotiv === farbe('tafel')
+     && palette.detailLinie.includes('194, 201, 208'),
+     'das Detailblatt setzt die Farbfamilie der Karte fort',
+     palette.detailIcon + ' / ' + palette.detailLinie);
+  ok(palette.negativ === 'rgb(240, 86, 106)',
+     'eine negative Serie bleibt auch im Detailblatt rot', palette.negativ);
 
   console.log('\n═══ ROT BLEIBT DER RICHTUNG ═══');
   const richtung = await page.evaluate(() => {
@@ -812,26 +881,25 @@ const ok = (c, msg, det) => {
     // wieder entfernt — die Sorte, nicht der Tag, traegt die Aussage.
     const hilf = document.createElement('div');
     sheet.appendChild(hilf);
-    const leihen = sorte => {
-      const s = {id:'mess_' + sorte, cat:'fun', ic:'thriller', title:'Messkarte',
-                 desc:'Eine Zahl.', when: Date.now(), prio:1, dataRef:{type:'ambient'}};
-      hilf.innerHTML = window.__k.eval('_newsCardHtmlM2')(s, true, false);
+    const leihen = (sorte, extra) => {
+      hilf.innerHTML = `<div class="nf-card nf-s-${sorte}${extra || ''}"></div>`;
       return hilf.querySelector('.nf-card');
     };
-    const mess = (klasse, sorte) => {
-      const c = sheet.querySelector('.' + klasse) || (sorte ? leihen(sorte) : null);
+    const mess = (klasse, sorte, extra) => {
+      const c = sheet.querySelector('.' + klasse) || (sorte ? leihen(sorte, extra) : null);
       if(!c) return null;
       const cs = getComputedStyle(c);
       return {kante: parseFloat(cs.borderLeftWidth), farbe: cs.borderTopColor};
     };
-    const raus = {gold: mess('nf-s-tafel') || mess('nf-s-badge'),
+    const raus = {gold: mess('nf-s-held', 'held'),
                   fakt: mess('nf-s-fakt', 'fakt'),
-                  spiel: mess('nf-s-spiel'), neg: mess('nf-neg')};
+                  spiel: mess('nf-s-spiel', 'spiel'),
+                  neg: mess('nf-neg', 'serie', ' nf-neg')};
     hilf.remove();
     return raus;
   });
   ok(raender.gold && raender.fakt && raender.gold.kante > raender.fakt.kante,
-     'die goldene Karte traegt die staerkere Kante als der Fun Fact',
+     'die Siegerkarte traegt die staerkere Kante als der Fun Fact',
      JSON.stringify(raender));
   ok(raender.gold && raender.spiel && raender.gold.farbe !== raender.spiel.farbe,
      'Gold und Spieltag tragen nicht denselben Rahmen',
@@ -1148,6 +1216,129 @@ const ok = (c, msg, det) => {
   ok(matrix.leg > matrix.sel && matrix.sel > matrix.bes,
      'je seltener die Chronik, desto staerker leuchtet ihre Zelle',
      'legendaer ' + matrix.leg + ' > selten ' + matrix.sel + ' > besonders ' + matrix.bes);
+
+  console.log('\n═══ CHRONIK-PRESTIGE IST NACHVOLLZIEHBAR ═══');
+  const chronRechnung = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const daten = JSON.parse(K(`JSON.stringify((function(){
+      const T=prestigeTabelle();
+      for(const pid of T.rang){
+        const qs=(prestigeOf(pid).quellen||[]).filter(q=>q.q==='monat');
+        const q=qs.find(x=>x.staffel>1)||qs[0];
+        if(q) return {pid,id:q.id,basis:q.grundwert,beitrag:q.p,rang:q.rang,staffel:q.staffel};
+      }
+      return null;
+    })())`));
+    if(!daten) return {fehlt:true,text:''};
+    K('showLaufbahn(' + JSON.stringify(daten.pid) + ')');
+    await new Promise(r => requestAnimationFrame(r));
+    const gruppen=[...document.querySelectorAll('#sheet .lb-grp')];
+    const grp=gruppen.find(e => /Monatswertungen/.test(e.textContent||''));
+    const regelKnopf=document.querySelector('#sheet [data-prestige-regeln]');
+    const regelHinweis=regelKnopf ? (regelKnopf.textContent||'').replace(/\s+/g,' ').trim() : '';
+    const sport=/Sportliche Leistung/.test((document.querySelector('#sheet')||{}).textContent||'');
+    if(regelKnopf){ regelKnopf.click(); await new Promise(r=>setTimeout(r,560)); }
+    const regeln=[...document.querySelectorAll('#sheet .lb-regeln span')]
+      .map(e=>(e.textContent||'').replace(/\s+/g,' ').trim());
+    const regelHoehen=[...document.querySelectorAll('#sheet .lb-regeln span')]
+      .map(e=>Math.round(e.getBoundingClientRect().height));
+    return Object.assign({},daten,{
+      text:grp ? grp.textContent.replace(/\s+/g,' ').trim() : '',
+      regeln, regelHinweis, regelHoehen,
+      regelTitel:(document.querySelector('#sheet h3')||{}).textContent||'',
+      sport
+    });
+  });
+  ok(!chronRechnung.fehlt && /Chronikwert/.test(chronRechnung.text),
+     'das Laufbahnblatt nennt den unverkuerzten Chronik-Wert',
+     chronRechnung.text.slice(0,180));
+  ok(chronRechnung.rang === 1 || new RegExp(chronRechnung.rang + '\\. Chronik.*√' + chronRechnung.staffel).test(chronRechnung.text),
+     'eine Wiederholung zeigt knapp ihre Herunterrechnung',
+     chronRechnung.text.slice(0,220));
+  ok(chronRechnung.regeln.length === 3
+     && chronRechnung.regeln.every(x=>/\d+.*%/.test(x) && /nie 0/.test(x))
+     && chronRechnung.regeln.every(x=>!/min\./.test(x)),
+     'das Regel-Popup zeigt Legendary, Rare und Common nebeneinander',
+     chronRechnung.regeln.join(' · '));
+  ok(/Wie die Punkte entstehen/.test(chronRechnung.regelHinweis)
+     && /Wert der Auszeichnungen/.test(chronRechnung.regelTitel),
+     'die cleaner gehaltene Aufschlüsselung öffnet ihre Erklärung im Popup',
+     chronRechnung.regelHinweis + ' → ' + chronRechnung.regelTitel);
+  ok(chronRechnung.regelHoehen.length === 3
+     && chronRechnung.regelHoehen.every(h=>h >= 140),
+     'die drei Regelkarten haben genug vertikalen Leseraum',
+     chronRechnung.regelHoehen.join(' / ') + ' px');
+  ok(!chronRechnung.sport,
+     'das Laufbahnblatt enthält keinen separaten Block für sportliche Leistung');
+
+  console.log('\n═══ ROLLEN UND POSITIONSSTRAHL ═══');
+  await page.setViewportSize({width:360, height:820});
+  const rollen = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const ids = K('players.filter(p=>!p.hidden).map(p=>p.id)');
+    const out = [];
+    for(const pid of ids){
+      K('showPlayer(' + JSON.stringify(pid) + ')');
+      await new Promise(r => requestAnimationFrame(r));
+      const root = document.querySelector('#sheet .pp-root');
+      const cards = root ? [...root.querySelectorAll('.pp-rd')].filter(e => e.querySelector('.pp-rd-meta')) : [];
+      const wr = cards.map(e => +(e.querySelector('.pp-rd-wr')||{}).childNodes[0]?.textContent || 0);
+      const pos = root && root.querySelector('.pp-posprof');
+      const slider = pos && pos.querySelector('.pp-slider');
+      const fill = pos && pos.querySelector('.pp-fill');
+      const sb = slider && slider.getBoundingClientRect(), fb = fill && fill.getBoundingClientRect();
+      let ursprung = true;
+      if(pos && sb && fb){
+        if(pos.classList.contains('atk-seite')) ursprung = Math.abs(fb.left-sb.left) <= 1.5;
+        else if(pos.classList.contains('def-seite')) ursprung = Math.abs(fb.right-sb.right) <= 1.5;
+        else ursprung = Math.abs((fb.left+fb.right)/2-(sb.left+sb.right)/2) <= 1.5;
+      }
+      const rr = root && root.getBoundingClientRect();
+      const pruef = root ? [...root.querySelectorAll('.pp-pos-combined,.pp-posprof')] : [];
+      const spill = rr ? pruef.reduce((mx,e) => { const b=e.getBoundingClientRect();
+        return Math.max(mx, b.right-rr.right, rr.left-b.left); }, 0) : 999;
+      const def = cards.find(e=>e.classList.contains('def'));
+      const probe = document.createElement('i');
+      if(root){ probe.style.color='var(--ak)'; root.appendChild(probe); }
+      out.push({pid, wr, cls:cards.map(e=>e.className), seite:pos ?
+        (pos.classList.contains('atk-seite')?'atk':pos.classList.contains('def-seite')?'def':'neutral') : '',
+        ursprung, overflow:spill,
+        op:cards.map(e=>+getComputedStyle(e).opacity),
+        schatten:cards.map(e=>getComputedStyle(e.querySelector('.pp-rd-ring')).boxShadow),
+        textSchatten:cards.map(e=>getComputedStyle(e.querySelector('.pp-rd-wr')).textShadow),
+        defFarbe:def ? getComputedStyle(def.querySelector('.pp-rd-lbl')).color : '',
+        rangFarbe:root ? getComputedStyle(probe).color : ''});
+      probe.remove();
+    }
+    K('closeSheet && closeSheet()');
+    return out;
+  });
+  const beide = rollen.filter(r => r.wr.length === 2);
+  const rollenFalsch = beide.filter(r => {
+    const nah = Math.abs(r.wr[0]-r.wr[1]) <= 3;
+    if(nah) return !r.cls.every(c => / neutral/.test(c));
+    const hi = r.wr[0] > r.wr[1] ? 0 : 1, lo = 1-hi;
+    return !/ stark/.test(r.cls[hi]) || !/ schwach/.test(r.cls[lo])
+      || !(r.op[hi] > r.op[lo]) || r.schatten[hi] === 'none';
+  });
+  ok(beide.length > 0 && rollenFalsch.length === 0,
+     'starke, schwache und nahezu gleiche Rollen sind eindeutig gewichtet',
+     rollenFalsch.map(r=>r.pid).join(', ') || beide.length + ' Profile');
+  ok(beide.every(r => r.op.every((op,i) => !/ schwach/.test(r.cls[i]) || op >= .7)
+       && r.textSchatten.every((sh,i) => !/ stark/.test(r.cls[i]) || sh === 'none')),
+     'die Nebenrolle bleibt lesbar und die starke Rolle leuchtet nicht weiss aus');
+  ok(beide.every(r => !r.defFarbe || r.defFarbe === r.rangFarbe),
+     'auch Abwehrdominanz behaelt die Rangfarbe',
+     beide.filter(r=>r.defFarbe!==r.rangFarbe).map(r=>r.pid).join(', ') || beide.length + ' Profile');
+  ok(['atk','def','neutral'].every(s => rollen.some(r => r.seite === s)),
+     'der Positionsstrahl deckt Sturm, Abwehr und Flex ab',
+     [...new Set(rollen.map(r=>r.seite))].join(', '));
+  ok(rollen.every(r => r.ursprung),
+     'jeder Strahl startet an der inhaltlich richtigen Seite');
+  ok(rollen.every(r => r.overflow <= 1),
+     'das Profil bleibt bei 360 px ohne horizontalen Ueberlauf',
+     Math.max(...rollen.map(r=>r.overflow)).toFixed(1) + ' px');
+  await page.setViewportSize({width:430, height:932});
 
   // ── Die Leiter im Blatt traegt die echten Zeichen ──────────────────
   //    Sie zeigte fuenf CSS-Kreise (`repeating-conic-gradient`) — fuenf

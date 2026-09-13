@@ -282,6 +282,10 @@ function openNewsFeed(){
 // bestehende UND neue persistierte Rows, ohne Regenerierung).
 function _isBreaking(s){
   const d = (s && s.dataRef) || {};
+  // Eine Tafel-Sammelkarte behält die höchste Dringlichkeit ihrer Teile.
+  // Sonst würde ein erstmals vergebener Liga-Rekord beim vorgeschriebenen
+  // Bündeln plötzlich seinen Breaking-Charakter verlieren.
+  if(d.type === 'sammel') return d.breaking === true;
   // Breaking heißt: das passiert vielleicht einmal im Monat. Erlaubt sind
   // ausschließlich extrem seltene Auszeichnungen und echte EREIGNISSE —
   // etwas, das vorher noch nie da war oder die Spitze der Liga verschiebt.
@@ -327,7 +331,10 @@ function _newsPids(s){
   };
   ['playerId','ambientPid','pid','championId','a','b','playerIds','ambientPids',
    'breakerIds','victimPid'].forEach(k => { if(d[k] != null) dazu(d[k]); });
-  return raus.slice(0, 3);
+  // Nicht hier kürzen: Große Tafel-Bundles brauchen die vollständige Zahl,
+  // damit „+3" auch wirklich drei weitere Beteiligte meint. Die Darstellung
+  // selbst zeigt weiterhin höchstens zwei Wappen und fasst den Rest zusammen.
+  return raus;
 }
 
 // Das Gesicht links auf der Karte. Vorher stand dort nichts: die News waren
@@ -357,6 +364,14 @@ function _newsUhrzeit(when){
   return new Date(when).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
 }
 
+// Rot ist eine Richtung, keine Rubrik [§C25]. Karte und Detailblatt nutzen
+// dieselbe Ableitung, damit eine Durststrecke beim Öffnen nicht wieder den
+// grünen Schimmer einer positiven Serie annimmt.
+function _newsIstNegativ(s){
+  const d = (s && s.dataRef) || {};
+  return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+}
+
 function _newsCardHtmlM2(s, isRead, istTagesKarte){
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
@@ -375,23 +390,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     ? `<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING`
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
-  // Eine Sammelkarte behaelt Rubrik und Motiv ihres staerksten Ereignisses —
-  // sie erzaehlt ja davon. Was sie sonst noch buendelt, steht als Band
-  // darunter, damit es auf der KARTE steht und nicht erst im Blatt.
-  // Ausgelassen wird genau EINS: die Zeile, die die Karte oben schon IST —
-  // also ihr eigener Titel. Ausgelassen wurde zusaetzlich der Titel des
-  // KOPFS, und bei einer Tafel-Karte sind das zwei verschiedene Saetze:
-  // ueber „Henry, Johannes und zwei weitere bewegen die Ewige Tafel" stand
-  // „6 % aller 158 Partien gegen die Wahrscheinlichkeit gewonnen" als Text
-  // und darunter drei Zeilen — Henry kam auf seiner eigenen Karte nicht ein
-  // einziges Mal namentlich vor, und die Zahl im Text gehoerte niemandem.
-  // Der Text ist der BELEG des staerksten Ereignisses, nicht seine
-  // Schlagzeile; beides nebeneinander ist keine Wiederholung, sondern erst
-  // die vollstaendige Aussage.
-  //
-  // Und gezeigt werden ALLE Zeilen: eine Sammelkarte traegt hoechstens vier
-  // (SAMMEL_MAX), „und 1 weitere" versteckte also genau eine Meldung, um
-  // eine Zeile zu sparen. Buendeln darf nichts verstecken [§C33].
+  // Eine Sammelkarte hat einen eigenen Gruppenkopf. Darunter stehen ALLE
+  // verbundenen Einzelereignisse im Band; keines wird zum heimlichen Kopf
+  // und keines hinter „weitere" versteckt [§C33].
   const sammelBand = (d.type === 'sammel')
     ? _newsSammelBand(d.teile, [s.title], true) : '';
 
@@ -409,7 +410,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     fuss = _newsZahlband(_newsSpielZahlen(s));
   } else if(sorte === 'tafel'){
     const w = _newsTafelWert(s);
-    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'gold') : _newsGesichtHtml(s)}</div>`;
+    // Ein Tafel-Bundle zeigt Wert UND Beteiligte. Der große Zähler erklärte
+    // bisher zwar, wie viele Spuren zusammenlaufen, ließ aber alle genannten
+    // Spieler bildlich verschwinden. Die kompakte Chipgruppe bleibt neben
+    // dem Wert und macht keinen einzelnen Halter zum Hauptdarsteller.
+    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'gold') : ''}${_newsGesichtHtml(s)}</div>`;
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
@@ -498,6 +503,13 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     if(d.vv != null && d.vv !== '') gesicht = `<div class="nf-gr-l">${_newsWertBlock(d.vv, d.vl, 'metall')}</div>`;
     else gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
   }
+  // Jede Geschichte, die durch eine konkrete Partie ausgeloest wurde,
+  // zeigt diese Partie. Das gilt auch fuer Auszeichnungen, Serien und
+  // Tafelwechsel: Der Typ bestimmt weiter Farbe und Aufbau, aber Ergebnis,
+  // Teams und Ausloeser verschwinden nicht mehr hinter der Rubrik.
+  if(d.matchId && (sorte === 'duell' || !kopf)){
+    kopf = _newsErgebnisBand(d.matchId) || kopf;
+  }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
   // haetten sie ein zweites Mal daneben gestellt.
   if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'){
@@ -511,7 +523,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Rot ist die Richtung [§C25]: eine Karte, die von einer Pleitenserie oder
   // einer Schande erzaehlt, traegt es in Rubrik und Motiv. Die Durststrecke
   // stand vorher im selben Gruen wie die Siegesserie.
-  const negativ = /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+  const negativ = _newsIstNegativ(s);
   return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
@@ -666,18 +678,12 @@ function _newsSerienBand(laenge, verloren){
 // [§C33] — jede weitere Zeile steht deshalb mit ihrem Zeichen auf der Karte
 // selbst, kurz und in einer Reihe.
 //
-// Gezeigt werden nur die Zeilen, die der Kopf NICHT schon ist: bei einer
-// Spiel-Sammelkarte gehoert ihm die Schlagzeile, und sie ein zweites Mal
-// darunter waere die Wiederholung, die §C33 gerade verhindert.
+// Der Gruppentitel wird vorsichtshalber herausgefiltert; aktuelle Karten
+// bauen ihn eigens, sodass regulaer jede Einzelzeile im Band bleibt.
 function _newsSammelBand(teile, kopfTitel, vollstaendig){
   const alle = Array.isArray(teile) ? teile : [];
-  // Ausgelassen wird, was die Karte oben schon IST — und das sind zwei
-  // Titel: der der Karte und der des Kopfs. Bei einer Tafel-Sammelkarte
-  // sind sie verschieden („Henry, Martin und zwei weitere bewegen die
-  // Ewige Tafel" gegen „Henry uebernimmt ‚Der Gigantentoeter'"), und
-  // verglichen wurde nur der erste. Damit stand der Kopf als erste Zeile
-  // des Bandes noch einmal da, sein Text darueber, und von der vierten
-  // Meldung blieb „und 1 weitere".
+  // Alte persistierte Karten koennen noch einen Gruppentitel als Zeile
+  // enthalten; nur diese echte Doppelung faellt heraus.
   const kt = (Array.isArray(kopfTitel) ? kopfTitel : [kopfTitel])
     .map(x => String(x || '').trim()).filter(Boolean);
   const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
@@ -711,6 +717,35 @@ function _newsSpielZahlen(s){
   return out;
 }
 
+// Eine einzige Quelle für den Chronik-Beitrag in Karte und Detailblatt.
+// Neue Karten speichern den tatsächlichen Zuwachs beim Wechsel. Bei alten
+// Daten lesen wir stattdessen den heute gezählten Beitrag aus der zentralen
+// Prestige-Tabelle; ein alter Katalogwert wird nie als neues Plus ausgegeben.
+function _newsChronikPrestige(d){
+  const ids = [...new Set([
+    ...(Array.isArray(d.playerIds) ? d.playerIds : []),
+    ...Object.keys((d.prestigeDelta && typeof d.prestigeDelta === 'object')
+      ? d.prestigeDelta : {})
+  ])];
+  const runde = x => Math.round((Number(x) || 0) * 10) / 10;
+  if(d.prestigeDelta && typeof d.prestigeDelta === 'object'){
+    return {modus:'zuwachs', werte:Object.fromEntries(ids.map(pid =>
+      [pid, runde(d.prestigeDelta[pid])]))};
+  }
+  const werte = {};
+  ids.forEach(pid => {
+    werte[pid] = 0;
+    try {
+      const titel = seasonTitleOf(pid, d.sid);
+      if(!titel || titel.titleId !== d.titleId) return;
+      const q = (prestigeOf(pid).quellen || []).find(x => x.q === 'monat'
+        && x.id === d.titleId && (!x.sid || x.sid === d.sid));
+      if(q && q.p > 0) werte[pid] = runde(q.p);
+    } catch(e){}
+  });
+  return {modus:'bestand', werte};
+}
+
 // Der große Wert einer Tafel-Karte. Ein Rekord lebt von seiner Zahl, nicht
 // vom Satz darüber.
 function _newsTafelWert(s){
@@ -719,7 +754,33 @@ function _newsTafelWert(s){
   // die Klasse dahinter, und was sie WERT ist, sagt sonst nichts auf der
   // Karte. Die erste Zahl des Belegs waere „4 von 5" gewesen — richtig, aber
   // ohne Bezug.
-  if(d.type === 'chronik_geholt') return {v: '+' + (d.punkte || 0), l:'Prestige'};
+  if(d.type === 'chronik_geholt'){
+    // Neue Karten tragen die echte Differenz der Monats-Summe je Spieler.
+    // Alte persistierte Karten fallen auf `zeigt` zurueck: Eine Chronik, die
+    // gar nicht in der Monatstafel steht, darf auch dort kein +X behaupten.
+    const beitrag = _newsChronikPrestige(d);
+    if(beitrag.modus === 'zuwachs'){
+      const plus = Object.values(beitrag.werte).filter(x => x > 0);
+      if(!plus.length) return {v:'0', l:'zusätzlich'};
+      const gleich = plus.every(x => x === plus[0]);
+      if(plus.length > 1 && gleich) return {v:'+' + plus[0], l:'je Spieler'};
+      if(plus.length > 1) return {v:'+' + plus.reduce((a, x) => a + x, 0), l:'zusammen'};
+      return {v:'+' + plus[0], l:'Prestige'};
+    }
+    // Persistierte Karten aus älteren Builds kennen noch keine Differenz.
+    // Statt ihren damaligen Katalogwert weiter als neues Plus auszugeben,
+    // wird ihr HEUTIGER Laufbahnbeitrag aus derselben Prestigequelle gelesen.
+    // Hat inzwischen eine bessere Chronik desselben Monats übernommen, ist
+    // dieser Beitrag null.
+    const aktuell = Object.values(beitrag.werte).filter(x => x > 0);
+    if((d.playerIds || []).length){
+      if(!aktuell.length) return {v:'0', l:'zusätzlich'};
+      const wert = Math.round(aktuell.reduce((a, x) => a + x, 0) * 10) / 10;
+      return {v:String(wert).replace('.', ','), l:'zählt aktuell'};
+    }
+    if(d.zeigt === false) return {v:'0', l:'zusätzlich'};
+    return {v:'+' + (d.punkte || 0), l:'Prestige'};
+  }
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
   // „Bestwert" war geraten. Die Zahl kommt aus einem Regex ueber den
@@ -787,11 +848,10 @@ function _newsBadgeHalterText(badgeId){
   } catch(e){ return ''; }
 }
 
-// Acht Sorten, acht Bauformen. Eine Karte soll man an der FORM erkennen,
+// Zwölf Sorten, zwölf Bauformen. Eine Karte soll man an der FORM erkennen,
 // bevor man den ersten Satz gelesen hat. Vorher unterschied die Sorten nur
-// eine Randfarbe, und zehn Karten untereinander sahen alle gleich aus.
-// Die Farben folgen dem Farbgesetz [§C25]: Gold trägt, was Titel und Rekord
-// ist, Rot bleibt der Richtung, Metall ist alles Übrige.
+// eine Randfarbe, und zehn Karten untereinander sahen alle gleich aus. Die
+// ruhigen Farbfamilien im CSS sind die zweite Orientierung, nicht die Form.
 function _newsSorte(s){
   const d = (s && s.dataRef) || {};
   const t = d.type || '';
@@ -971,16 +1031,47 @@ function _newsTagMs(dayKey){
     return out;
   } catch(e){ return []; }
 }
-// Welche Karte ist die Karte des Tages? Breaking zuerst, dann die höchste
-// Priorität. Sie wird darunter groß gezeigt, statt im Kopf noch einmal
-// aufgeschrieben zu werden.
+// Welche Karte ist die Karte des Tages? Nicht automatisch der Spieler des
+// Tages, sondern die Geschichte mit dem groessten Nachrichtenwert. Die
+// Generator-Prioritaet allein taugt dafuer nicht: POTD muss im normalen Feed
+// verlaesslich sichtbar sein und hat deshalb eine hohe Prioritaet, ist aber
+// nicht an jedem Spieltag die spannendste Geschichte. Seltenheit, Umbruch,
+// Ueberraschung und mehrere zusammenfallende Ereignisse wiegen hier staerker.
+function _newsTagSpannung(s){
+  const d = (s && s.dataRef) || {};
+  const t = d.type || '';
+  if(_isBreaking(s)) return 1200 + (s.prio || 0);
+  const basis = {
+    giant_slayer:980, top_clash:940, rekord_geholt:900,
+    rekord_erstmals:920, rekord_gesteigert:870, chronik_geholt:850,
+    insignium_stufe:840, badge_unlocked:800, lead_change:980,
+    elo_record:1000, streak_record:1000, team_streak:770,
+    win_streak:750, rivalry_milestone:730, rivalry:690,
+    potd:620, potw:640, woche:700
+  };
+  let wert = basis[t] || 560;
+  if(t === 'giant_slayer' && d.chance != null)
+    wert += Math.round((1 - Math.max(0, Math.min(1, d.chance))) * 100);
+  if(t === 'badge_unlocked') wert += d.rarity === 'legendary' ? 130 : d.rarity === 'rare' ? 55 : 0;
+  if(t === 'insignium_stufe') wert += Math.max(0, Number(d.stufe) || 0) * 25;
+  if(t === 'chronik_geholt') wert += Math.min(80, Math.max(0, Number(d.punkte) || 0) / 2);
+  if(t === 'sammel'){
+    const teile = Array.isArray(d.teile) ? d.teile : [];
+    const kopf = d.kopfTyp ? _newsTagSpannung({prio:s.prio, dataRef:{type:d.kopfTyp}}) : 620;
+    wert = kopf + Math.min(120, Math.max(0, teile.length - 1) * 35);
+  }
+  return wert + Math.min(25, Math.max(0, Number(s.prio) || 0) / 10);
+}
+
+// Die gewaehlte Geschichte wird darunter gross gezeigt, statt im Kopf noch
+// einmal aufgeschrieben zu werden.
 //
 // Es gibt sie **nur an Spieltagen**. An einem Tag ohne Partie ist nichts
 // passiert, was ein Tag von einem anderen unterscheidet: dort standen sonst
 // ein Fun Fact oder eine Zufallsstatistik groß im Bild, die mit diesem Tag
 // nichts zu tun haben und gestern genauso dagestanden hätten.
 function _newsTagKarte(items, dayKey){
-  if(!Array.isArray(items) || items.length < 2) return null;
+  if(!Array.isArray(items) || !items.length) return null;
   const tagMs = _newsTagMs(dayKey);
   if(!tagMs.length) return null;   // an diesem Tag wurde nicht gespielt
   // Sie steht, sobald der Spieltag entschieden ist — nicht erst um 23:59.
@@ -1000,10 +1091,10 @@ function _newsTagKarte(items, dayKey){
   const OHNE = new Set(['ambient', 'dry_spell', 'season_endgame', 'quiet_week', 'season_start']);
   const kandidaten = items.filter(x => !OHNE.has((x.dataRef || {}).type));
   if(!kandidaten.length) return null;
-  const beste = kandidaten.sort((a, b) => {
-    const ba = _isBreaking(a) ? 1 : 0, bb = _isBreaking(b) ? 1 : 0;
-    return (bb - ba) || ((b.prio || 0) - (a.prio || 0));
-  })[0];
+  const beste = kandidaten.slice().sort((a, b) =>
+    (_newsTagSpannung(b) - _newsTagSpannung(a))
+      || ((b.prio || 0) - (a.prio || 0))
+      || String(a.id || '').localeCompare(String(b.id || '')))[0];
   return beste ? beste.id : null;
 }
 function _renderNewsFeed(){
@@ -1016,6 +1107,10 @@ function _renderNewsFeed(){
   const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel';
   const _istSpieltag = s => {
     const d = s.dataRef || {};
+    // Die Filter sind redaktionelle Seiten, keine sich überschneidenden
+    // Suchbegriffe. Eine Tafelmeldung darf ihren Match-Zeitpunkt tragen,
+    // ohne deshalb zugleich im Spieltag-Chip zu erscheinen.
+    if(_istTafel(s)) return false;
     if(d.type === 'ambient') return false;
     return !!(d.matchId || d.type === 'potd' || d.type === 'woche' ||
               (d.type === 'sammel' && d.quelle === 'spiel'));
@@ -1056,7 +1151,10 @@ function _renderNewsFeed(){
     });
     listHtml = gruppen.map(g => {
       const neu = g.items.filter(st => !seen.has(st.id)).length;
-      const tagesKarte = _newsTagKarte(g.items, g.k);
+      // Die Wahl gehoert dem ganzen Tag, nicht dem aktiven Filter. Sonst
+      // koennte dieselbe Tafel je Reiter eine andere „Karte des Tages" haben.
+      const alleDesTages = stories.filter(st => _newsDayKey(st.when) === g.k);
+      const tagesKarte = _newsTagKarte(alleDesTages, g.k);
       // Der Kopf traegt Wochentag, Datum und die Zahl der Karten — sonst
       // nichts. Die Bilanz („3 Partien · 4 Spieler") und die Gesichter standen
       // darunter und wiederholten, was die Karten des Tages ohnehin zeigen:

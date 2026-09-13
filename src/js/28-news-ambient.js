@@ -89,6 +89,15 @@ function _buildAmbientStories(now, pm, nameOf){
   const cooldownDaysOf = {};
   for(const t of templates) cooldownDaysOf[t.key] = t.cooldown || AMBIENT_COOLDOWN_DAYS;
   const pidsOf = dr => !dr ? [] : (Array.isArray(dr.ambientPids) ? dr.ambientPids : (dr.ambientPid ? [dr.ambientPid] : []));
+  const rubrikVon = key => {
+    if(/^award_/.test(key)) return 'auszeichnung';
+    if(/^rivalry_/.test(key)) return 'duell';
+    if(/^personal_/.test(key)) return 'persoenlich';
+    if(/^(insignium_|titelband_)/.test(key)) return 'laufbahn';
+    if(/^(chronicle_|season_|history_)/.test(key)) return 'chronik';
+    if(/^(form_|fun_streak|fun_comeback)/.test(key)) return 'form';
+    return 'liga';
+  };
 
   // Eine gemeinsame Historie aus dem, was schon in der DB liegt. Nachgetragene
   // Slots hängen sich hier an, damit ein Nachtrag von vorgestern den Cooldown
@@ -98,8 +107,10 @@ function _buildAmbientStories(now, pm, nameOf){
   for(const s of known){
     const md = /^ambient_(\d{4}-\d{2}-\d{2})_/.exec(s.id);
     if(!md) continue;
-    history.push({day: md[1], ts: new Date(md[1] + 'T00:00:00').getTime(),
-                  sub: (s.dataRef && s.dataRef.sub) || null, pids: pidsOf(s.dataRef)});
+    const sub = (s.dataRef && s.dataRef.sub) || null;
+    history.push({day: md[1], ts: new Date(md[1] + 'T00:00:00').getTime(), sub,
+                  rubrik:(s.dataRef && s.dataRef.ambientRubrik) || rubrikVon(sub || ''),
+                  pids: pidsOf(s.dataRef)});
   }
 
   for(const slot of dueSlots){
@@ -114,6 +125,8 @@ function _buildAmbientStories(now, pm, nameOf){
     // Innerhalb desselben Tages darf ein Typ nicht zweimal kommen, damit 10:00
     // und 19:00 nie denselben Fun Fact zeigen.
     const usedToday = new Set();
+    const usedRubriken = new Set();
+    const recentRubriken = new Set();
     // v9.10 + v9.14: Same-Player-Sperre, heute (usedPids) und über die letzten
     // AMBIENT_PLAYER_COOLDOWN_DAYS (recentPids). Viele Templates sind „Wer führt
     // bei Stat X?"-Superlative und zeigen bei einem dominanten Spieler alle auf
@@ -125,11 +138,13 @@ function _buildAmbientStories(now, pm, nameOf){
     for(const h of history){
       if(h.day === slot.dateKey){
         if(h.sub) usedToday.add(h.sub);
+        if(h.rubrik) usedRubriken.add(h.rubrik);
         for(const pid of h.pids) usedPids.add(pid);
       }
       const age = refMs - h.ts;
       if(age < 0) continue;   // liegt nach diesem Slot — zählt hier nicht
       if(h.sub && age <= (cooldownDaysOf[h.sub] || AMBIENT_COOLDOWN_DAYS) * _dayMs) cooldownKeys.add(h.sub);
+      if(h.rubrik && age <= AMBIENT_RUBRIK_COOLDOWN_DAYS * _dayMs) recentRubriken.add(h.rubrik);
       if(age <= AMBIENT_PLAYER_COOLDOWN_DAYS * _dayMs){ for(const pid of h.pids) recentPids.add(pid); }
       if(h.sub && age <= AMBIENT_PAAR_COOLDOWN_DAYS * _dayMs){
         for(const pid of h.pids) recentPaare.add(h.sub + '|' + pid);
@@ -180,6 +195,7 @@ function _buildAmbientStories(now, pm, nameOf){
         const t = templates[idx];
         if(usedToday.has(t.key)) continue;
         if(pass === 0 && cooldownKeys.has(t.key)) continue;
+        if(pass < 2 && (usedRubriken.has(rubrikVon(t.key)) || recentRubriken.has(rubrikVon(t.key)))) continue;
         if(pass < 2){
           const r = _ambientRolleVon(t.key);
           if(r && r !== rolle) continue;
@@ -204,7 +220,8 @@ function _buildAmbientStories(now, pm, nameOf){
     // Sofort in die Historie eintragen: der nächste fällige Slot — auch der von
     // morgen im selben Nachschub-Lauf — sieht diesen Eintrag und meidet Typ und
     // Kopf genauso, wie er es getan hätte, wenn die Story damals entstanden wäre.
-    history.push({day: slot.dateKey, ts: refMs, sub: chosenKey, pids: pidsOf(chosen.dataRef)});
+    history.push({day: slot.dateKey, ts: refMs, sub: chosenKey,
+                  rubrik:rubrikVon(chosenKey), pids: pidsOf(chosen.dataRef)});
 
     out.push({
       id:    slotId,
@@ -225,7 +242,7 @@ function _buildAmbientStories(now, pm, nameOf){
       // (_newsVisual). Fun Facts standen bisher als reiner Text im Feed, während
       // jede andere Story ihre Zahl groß anzeigt — die Kennzahl macht sie auf
       // einen Blick lesbar. Wandert in dataRef, damit sie mitpersistiert wird.
-      dataRef: Object.assign({type:'ambient', sub: chosenKey},
+      dataRef: Object.assign({type:'ambient', sub: chosenKey, ambientRubrik:rubrikVon(chosenKey)},
                              chosen.dataRef || {},
                              chosen.vv != null ? {vv: String(chosen.vv), vl: chosen.vl || ''} : {})
     });

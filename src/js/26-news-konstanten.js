@@ -61,6 +61,8 @@ const NEWS_LIMITS = {
   // v9.4: bewusst kleiner → weniger News-Flut direkt nach Matches.
   topForm: 2,       // max Spieler "in Top-Form" gleichzeitig
   lossStreak: 2,
+  winStreak: 8,     // jüngste echte Serienmarken im 14-Tage-Fenster
+  giantSlayer: 4,   // starke Upsets: höchstens einer je Spieltag
   jubilee: 3,
   badgeUnlocked: 6, // letzte N freigeschalteten Badges
   // Zwei Rivalitätskarten mit derselben Schlagzeile und einer anderen Zahl
@@ -71,18 +73,24 @@ const NEWS_LIMITS = {
   // viele Paare eine Schwelle; gemeldet werden die jüngsten. Gemessen wurden
   // sechzehn gebildet und persistiert, von denen zwei im Feed standen.
   rivalryMarke: 4,
-  // „X baut seinen Rekord aus" ist die schwächste der drei Rekordmeldungen —
-  // gewechselt hat nichts. Zwei davon reichen; „geholt" und „erstmals
-  // vergeben" sind ungedeckelt, weil sie selten sind und wirklich etwas sagen.
-  rekordAusbau: 2,
-  // Ein Tag trägt sechs Karten. Gemessen trug ein Spieltag neun, und die
-  // schwächsten drei waren ein Elo-Ausschlag, eine Auszeichnung und ein Fun
-  // Fact — Zeilen, die niemand vermisst. Breaking zählt nicht mit [§C33].
-  // Ein starker Spieltag verschiebt mehrere Monatschroniken gleichzeitig.
-  // Gemeldet werden die zwei wertvollsten; der Rest steht am Monatsende in
-  // der Monatskarte, die es ohnehin gibt.
-  chronikGeholt: 2,
-  proTag: 6,
+  // Ein Tag trägt fünf Karten. Gemessen trug ein Spieltag neun, und die
+  // schwächsten vier waren Wiederholungen bereits erzählter Entwicklungen.
+  // Breaking zählt nicht mit [§C33].
+  // Ein starker Spieltag kann viele Rekorde und Monatschroniken zugleich
+  // verschieben. Sie werden vor der Bündelung nicht mehr abgeschnitten:
+  // dieselbe Partie bzw. Minute ergibt später eine einzige vollständige
+  // Tafel-Karte. So sinkt die Kartenzahl, nicht der fachliche Inhalt.
+  proTag: 5,
+  // Neben POTD und Tafel braucht ein echter Spieltag mindestens eine Karte,
+  // die an einer konkreten Partie haengen: Ergebnis, Beteiligte und das,
+  // was genau dort passiert ist. Das ist kein zusaetzliches Kartenbudget;
+  // bei einem vollen Tag ersetzen sie schwächere, abstrakte Meldungen.
+  matchProTagMin: 1,
+  // Redaktionelles Mindestgewicht im 14-Tage-Fenster. Gezählt werden die
+  // sichtbaren Zeilen eines Bundles, nicht nur sein äußerer Kartenrahmen.
+  // 40–60 % ist die belastbare Auslegung von „ungefähr halb"; Pflichtkarten,
+  // Breaking und die stärkste Karte jedes Spieltags bleiben unangetastet.
+  tafelAnteilMin: 0.40,
   // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
   // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
   // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
@@ -99,9 +107,9 @@ const NEWS_LIMITS = {
   // höchstens einmal je Spielwoche wiederkommt.
   sperreTage: 3,
   // Die Obergrenze des Feeds. Sie war die eigentliche Fensterbreite: bei
-  // sechs Karten je Tag reichten 50 Karten gerade acht Tage weit, und der
-  // Feed hoerte mitten in der Woche davor auf. Vierzehn Tage mal sechs sind
-  // vierundachtzig; der Rest ist Luft fuer Breaking und die Pflichtkarten,
+  // fünf Karten je Tag reichten 50 Karten gerade zehn Tage weit, und der
+  // Feed hoerte mitten in der Woche davor auf. Vierzehn Tage mal fünf sind
+  // siebzig; der Rest ist Luft fuer Breaking und die Pflichtkarten,
   // die nicht gegen den Tagesdeckel zaehlen [§C33].
   total: 120,
 };
@@ -129,9 +137,10 @@ const NEWS_DB_ZEILEN = 500;
 // Quelle.
 //
 // Gemeldet wird deshalb das ERSTE Mal und danach nur noch runde Marken —
-// dieselbe Logik, nach der auch das Prestige eine beliebig oft holbare
-// Auszeichnung genau einmal zählt [§C34]. Der dreißigste Zittersieg zeigt
-// nichts Neues; der fünfundzwanzigste ist eine Zahl, über die man redet.
+// Anders als das Prestige muss die Zeitung aber nicht jedes Erreichen
+// melden: Dort wächst der Wert gedämpft weiter [§C34], hier ist der
+// dreißigste Zittersieg keine neue Geschichte; der fünfundzwanzigste ist
+// eine Zahl, über die man redet.
 const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
 
 // ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
@@ -329,6 +338,10 @@ const AMBIENT_BACKFILL_DAYS = 3;
 // nicht erneut gewählt. Bei 2 Fun Facts / Tag sperrt das die letzten ~14 Typen
 // (der Pool hat 18) → genug Rotation, keine schnellen Wiederholungen.
 const AMBIENT_COOLDOWN_DAYS = 7;
+// Auch verschiedene Templates koennen dieselbe Erzaehlrichtung haben. Diese
+// Rubriken-Sperre mischt Fuehrung, Form, Duelle, Laufbahn und Geschichte, ohne
+// kleine Datenbestaende leer laufen zu lassen (der Notnagel lockert sie).
+const AMBIENT_RUBRIK_COOLDOWN_DAYS = 2;
 // v9.14: Spieler-Cooldown (Tage). Der Typ-Cooldown verhindert nur gleiche
 // TYPEN — bei einem dominanten Spieler zeigen aber viele VERSCHIEDENE
 // Superlative (Sturm-Chef, Elo-Leader, Torschützenkönig …) auf denselben Kopf,

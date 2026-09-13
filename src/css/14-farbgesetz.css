@@ -100,8 +100,10 @@
   .pp-root .chron-one.next{--tt:#8f9a93!important;--ttr:143,154,147!important}
   .pp-root .pp-bmini.common{color:#9AA2AA;border-color:rgba(154,162,170,.28)}
   .pp-root .pp-bcard-bar .seg.common{background:#7D858D;opacity:.9}
-  .pp-root .pp-rd.def{--blue:#8F9A93}
-  .pp-root .pp-posprof{--blue:#8F9A93}
+  /* Auch Abwehrdominanz ist eine Staerke und behaelt deshalb die Rangfarbe.
+     Metallgrau gehoert nur der schwacheren Rolle, nicht der Positionsart. */
+  .pp-root .pp-rd.def{--blue:var(--ak)}
+  .pp-root .pp-posprof{--blue:var(--ak)}
 
   /* ── 3 · Grün und Rot bleiben, wo sie Richtung bedeuten ───────────
      Sie brauchen keine Regel: `--acid` und `--red` behalten hier ihre
@@ -150,6 +152,11 @@
   /* Positions-Profil: der Balken ist die eigene Einstufung. */
   .pp-root .pp-posprof .pp-fill{
     background:linear-gradient(90deg,rgba(var(--ak-rgb),.55),var(--ak))}
+  .pp-root .pp-posprof.def-seite .pp-fill{
+    background:linear-gradient(270deg,rgba(var(--ak-rgb),.55),var(--ak))}
+  .pp-root .pp-posprof.neutral .pp-fill{
+    background:linear-gradient(90deg,transparent,rgba(var(--ak-rgb),.82),transparent);
+    box-shadow:0 0 12px rgba(var(--ak-rgb),.4)}
   .pp-root .pp-posprof .pp-thumb{background:var(--ak);
     box-shadow:0 2px 8px rgba(0,0,0,.5),0 0 0 1px rgba(var(--ak-rgb),.4)}
   .pp-root .pp-posprof .pph .lf{color:var(--ak)}
