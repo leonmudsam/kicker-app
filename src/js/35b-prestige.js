@@ -38,13 +38,13 @@
 //     mit fallenden Erträgen. Sie dürfen wechseln, dafür sind sie da.
 //
 //     WIEDERHOLUNG. JEDE positive Auszeichnung zählt bei jedem Erreichen,
-//     aber als nachvollziehbare gedämpfte Folge. Legendary beginnt bei
-//     50 und sinkt je Mal um 10 %, Rare beginnt bei 20 und sinkt um 15 %,
-//     Common beginnt bei 3 und sinkt um 20 %. Damit ergeben drei Dominator-
-//     Erfolge 50 + 45 + 40,5; drei Carry-Erfolge 3 + 2,4 + 1,92. Wachstum
-//     bleibt über kleine Mindestwerte immer positiv und ohne Obergrenze;
-//     häufige Alltags-Erfolge können eine Laufbahn aber nicht kurzfristig
-//     durch bloße Menge beherrschen.
+//     aber als nachvollziehbare, harmonisch gedämpfte Folge. Die zweite
+//     Verleihung liegt je nach Wertigkeit 5, 10, 12, 15 oder 20 Prozent
+//     unter der ersten; danach wird die Kurve immer flacher. Drei Dominator-
+//     Erfolge ergeben so 50 + 45 + rund 41, drei Carry-Erfolge 3 + 2,4 + 2.
+//     Anders als eine geometrische Reihe bleibt jeder weitere Erfolg positiv
+//     und die Summe hat keine Obergrenze. Häufige Alltags-Erfolge können eine
+//     Laufbahn aber nicht kurzfristig durch bloße Menge beherrschen.
 //
 //     DIE SCHWELLEN sind an den echten 466 Partien kalibriert [§13.9]:
 //     nach vier Monaten Liga trägt niemand den Ordensstern; seine Schwelle
@@ -54,10 +54,11 @@
 //     Schritt, ohne dass es eine sechste Stufe braucht.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 
-// Die Art bleibt für Chroniken und Rekorde relevant. Auszeichnungen folgen
-// allein ihrer sichtbaren Seltenheitsklasse: zwei Legendary-Erfolge mit
-// derselben Anzahl sind exakt gleich viel wert. So widerspricht die Rechnung
-// nie mehr dem goldenen, lila oder grünen Rang im Auszeichnungsblatt.
+// Die Art bleibt für Chroniken und Rekorde relevant. Bei Auszeichnungen gibt
+// die sichtbare Seltenheitsklasse den Rahmen vor. Innerhalb dieses Rahmens
+// dürfen wenige fachlich begründete Spitzenleistungen höher liegen: Eine
+// Meisterschaft ist mehr wert als Dominator, Dominator mehr als Team der
+// Saison; ein Wochensieg mehr als der deutlich mengenabhängigere Tagessieg.
 const PRESTIGE_ART = {leistung:2, ereignis:1, schatten:0};
 
 // Wie die drei Rekordarten in der Aufschlüsselung heißen. Ohne Eintrag gilt
@@ -65,73 +66,105 @@ const PRESTIGE_ART = {leistung:2, ereignis:1, schatten:0};
 const PRESTIGE_ART_NAME = {leistung:'Leistung', ereignis:'Ereignis',
                            schatten:'Schatten'};
 
-// Startwert, Restwert und Mindestwert der nächsten Verleihung. Die Klasse
-// bestimmt alle drei:
-// je wertvoller, desto höher der Start und desto langsamer die Abnahme.
-// Der Mindestwert verhindert eine mathematische Sackgasse: eine rein
-// geometrische Reihe nähert sich einer festen Obergrenze. Dann wären spätere
-// Zacken des Ordenssterns trotz weiterer Erfolge irgendwann unerreichbar.
+// Startwert und Abnahme der nächsten Verleihung. Die Klasse setzt den
+// Standard: je wertvoller, desto höher der Start und desto langsamer die
+// Abnahme. Fünf fachlich begründete Spitzenleistungen überschreiben diesen
+// Standard sichtbar. Die harmonische Folge darunter flacht ab, bleibt aber
+// bei jedem endlichen Rang positiv und besitzt keine feste Obergrenze.
 // Negative Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
 const PRESTIGE_AUSZEICHNUNG = {
-  legendary:{basis:50, faktor:0.90, minimum:5},
-  rare:     {basis:20, faktor:0.85, minimum:1},
-  common:   {basis:3,  faktor:0.80, minimum:0.1},
-  negative: {basis:0,  faktor:0,    minimum:0}
+  legendary:{basis:40, abnahme:0.10},
+  rare:     {basis:20, abnahme:0.15},
+  common:   {basis:3,  abnahme:0.20},
+  negative: {basis:0,  abnahme:1}
+};
+// Nur diese fünf Abweichungen sind fachliche Rangfolgen, keine versteckten
+// Multiplikatoren. Sie stehen deshalb auch lesbar in der Aufschlüsselung.
+// Meister wächst mit der sanftesten Kurve. Dominator und Team der Saison
+// teilen die 10-%-Kurve, damit Dominator auch bei gleicher Anzahl davor
+// bleibt. POTD fällt schneller, weil es stark von der Zahl der eigenen
+// Spieltage abhängt; POTW bleibt wertvoller.
+const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
+  champion:       {basis:55, abnahme:0.05, hinweis:'Saisonspitze: Meister'},
+  dominator_400:  {basis:50, abnahme:0.10, hinweis:'Saisonspitze: Dominator'},
+  team_of_season: {basis:45, abnahme:0.10, hinweis:'Saisonspitze: Team der Saison'},
+  potw:           {basis:24, abnahme:0.12, hinweis:'Wochensieg'},
+  potd:           {basis:15, abnahme:0.20, hinweis:'Tagessieg'},
 };
 
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
 // Ein heute gehaltener Liga-Rekord wiegt deutlich schwerer als eine
 // Auszeichnung — es gibt ihn nur einmal in der Liga.
-const PRESTIGE_REKORD = 36;
+const PRESTIGE_REKORD = 48;
 
 // ─── Wiederholung zählt weniger, aber nie nichts ────────────────────
 // Wer dieselbe Sache zum dritten Mal holt, hat weniger Neues gezeigt als
 // beim ersten Mal — gegen sich selbst gemessen, nicht gegen andere. Jede
-// weitere Verleihung derselben Sache ist deshalb prozentual weniger wert.
-// Legendary sinkt um 10 %, Rare um 15 %, Common um 20 %. Ab dem kleinen
-// Mindestwert sinkt nur die Entwertung nicht weiter; die Summe wächst damit
-// ohne Obergrenze. So zählt auch der tausendste Carry noch, aber mit 0,1
-// Punkten so wenig, dass bloße Menge einen Meistertitel nicht kurzfristig
+// weitere Verleihung derselben Sache ist deshalb weniger wert. Die zweite
+// sinkt exakt um den sichtbaren Prozentsatz; danach wird die Kurve harmonisch
+// flacher. So bleibt jeder weitere Erfolg positiv und die Summe wächst ohne
+// Obergrenze, während bloße Menge einen Meistertitel nicht kurzfristig
 // überholt.
 //
 // Sie gilt NUR für dieselbe Sache. Eine Meisterschaft und ein Team der
 // Saison sind zwei verschiedene Dinge und zählen beide voll: das Stapeln
 // über verschiedene Erfolge hinweg war der Fehler, den §C34 abgestellt hat,
 // und der bestrafte genau den, der viel erreicht.
-function _wiederholungsWert(n, rate, mindestAnteil){
-  const r = Math.max(0, Math.min(0.999, Number(rate) || 0));
+function _auszeichnungsRegel(id){
+  const klasse = rarityOf(id);
+  const grund = PRESTIGE_AUSZEICHNUNG[klasse] || PRESTIGE_AUSZEICHNUNG.common;
+  return Object.assign({klasse}, grund, PRESTIGE_AUSZEICHNUNG_SPEZIAL[id] || {});
+}
+
+function _auszeichnungsAbnahme(id){
+  return _auszeichnungsRegel(id).abnahme;
+}
+
+function _wiederholungsWert(n, abnahme){
   const k = Math.max(0, n | 0);
   if(!k) return 0;
-  const floor = Math.max(0, Math.min(1, Number(mindestAnteil) || 0));
-  let summe = 0, teil = 1, i = 0;
-  // Bis zum Mindestwert ist die Folge geometrisch. Danach lässt sich der
-  // beliebig lange Rest in einem Schritt addieren; auch 100.000 Erfolge
-  // kosten damit keine 100.000 Schleifendurchläufe.
-  while(i < k && teil > floor){ summe += teil; teil *= r; i++; }
-  return summe + (k - i) * floor;
+  const a = Math.max(0, Math.min(0.999, Number(abnahme) || 0));
+  const c = a / Math.max(0.001, 1 - a);
+  let summe = 0;
+  for(let i = 0; i < k; i++) summe += 1 / (1 + c * i);
+  return summe;
 }
 
 function auszeichnungsPunkte(id, n){
-  const klasse = rarityOf(id);
-  const regel = PRESTIGE_AUSZEICHNUNG[klasse] || PRESTIGE_AUSZEICHNUNG.common;
-  const anteil = regel.basis > 0 ? regel.minimum / regel.basis : 0;
-  return regel.basis * _wiederholungsWert(n, regel.faktor, anteil);
+  const regel = _auszeichnungsRegel(id);
+  return regel.basis * _wiederholungsWert(n, _auszeichnungsAbnahme(id));
 }
 
 function auszeichnungsTeilwert(id, n){
-  const klasse = rarityOf(id);
-  const regel = PRESTIGE_AUSZEICHNUNG[klasse] || PRESTIGE_AUSZEICHNUNG.common;
+  const regel = _auszeichnungsRegel(id);
   if(regel.basis <= 0 || n <= 0) return 0;
-  return Math.max(regel.minimum, regel.basis * Math.pow(regel.faktor, n - 1));
+  const a = _auszeichnungsAbnahme(id);
+  return regel.basis / (1 + (a / Math.max(0.001, 1 - a)) * (n - 1));
 }
 
 // Dieselbe Monatschronik zeigt beim zweiten Tragen weniger Neues, bleibt aber
 // wie jede erworbene Quelle dauerhaft und wächst bei jedem weiteren Monat.
-const PRESTIGE_CHRONIK_WIEDERHOLUNG = 0.9;
-// Auch eine erneut getragene Monatschronik bleibt ein echter Monatserfolg.
-// Fünf Punkte sind klein gegenüber ihrem Grundwert (meist 50–115), halten
-// aber die Laufbahn auch nach sehr vielen Jahren offen.
-const PRESTIGE_CHRONIK_MINDEST = 5;
+function _wurzelStaffel(rang, breite){
+  return Math.floor(Math.max(1, rang | 0) / Math.max(1, breite | 0)) + 1;
+}
+
+function _wurzelStapel(liste, breite){
+  let summe = 0;
+  liste.sort((a, b) => b.p - a.p).forEach((q, i) => {
+    q.voll = q.p;
+    q.rang = i + 1;
+    q.staffel = _wurzelStaffel(q.rang, breite);
+    q.p = q.voll / Math.sqrt(q.staffel);
+    summe += q.p;
+  });
+  return summe;
+}
+
+function _wurzelZuwachs(werte, neuerWert, breite){
+  const summe = a => a.slice().sort((x, y) => y - x)
+    .reduce((n, x, i) => n + x / Math.sqrt(_wurzelStaffel(i + 1, breite)), 0);
+  return Math.max(0, summe((werte || []).concat([neuerWert])) - summe(werte || []));
+}
 
 // Wie nah ein Rekord sein muss, um noch als Ziel zu gelten: höchstens die
 // Hälfte des Bestwerts entfernt. Darüber ist der Hinweis entmutigend
@@ -315,29 +348,20 @@ function prestigeTabelle(bisMs){
   aktive.forEach(p => {
     const r = roh[p.id];
 
-    // Nur heute gehaltene Rekorde werden gestapelt: der n-te trägt 1/√n.
-    const stapel = (liste) => {
-      let summe = 0;
-      liste.sort((a, b) => b.p - a.p).forEach((q, i) => {
-        q.voll = q.p;
-        q.rang = i + 1;
-        q.p = q.voll / Math.sqrt(i + 1);
-        summe += q.p;
-      });
-      return summe;
-    };
+    // Nur heute gehaltene Rekorde werden gestapelt: Rang 1 zählt voll,
+    // Rang 2–3 mit √2, Rang 4–5 mit √3 usw.
     // Auszeichnungen: sichtbare Klasse × gedämpfte Wiederholungsfolge.
     // Kein Quellenlimit verändert anschließend den Wert oder macht ihn von
     // der Sortierreihenfolge anderer Auszeichnungen abhängig.
     const az = [];
     r.badges.forEach(b => {
       const kl = rarityOf(b.id);
-      const regel = PRESTIGE_AUSZEICHNUNG[kl] || PRESTIGE_AUSZEICHNUNG.common;
+      const regel = _auszeichnungsRegel(b.id);
       const w = auszeichnungsPunkte(b.id, b.n);
       if(w <= 0) return;
       az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl,
-               mal:b.n, rate:regel.faktor, abnahme:1-regel.faktor,
-               basis:regel.basis, minimum:regel.minimum, voll:w});
+               mal:b.n, abnahme:_auszeichnungsAbnahme(b.id),
+               hinweis:regel.hinweis || '', basis:regel.basis, voll:w});
     });
     const pb = az.reduce((sum, q) => sum + q.p, 0);
 
@@ -347,27 +371,20 @@ function prestigeTabelle(bisMs){
     // „Makellose" zeigt weniger Neues als der erste. Sortiert nach Saison,
     // damit der FRÜHESTE Monat den vollen Wert trägt — sonst hinge es an
     // der Reihenfolge, in der die Tabelle gerade gebaut wird.
-    const _malMonat = {};
-    r.monat.slice().sort((a,b) => a.sid < b.sid ? -1 : a.sid > b.sid ? 1 : 0).forEach(m => {
+    r.monat.forEach(m => {
       const voll = chronikPunkte(m.id);
       if(voll <= 0) return;
-      const mal = (_malMonat[m.id] = (_malMonat[m.id] || 0) + 1);
       // Die Art der CHRONIK, nicht die der Disziplin: seit §C39 traegt
       // `monat.art` den Wert (Koennen, Konstanz, Fuegung), waehrend `art` der
       // Disziplin nur noch die Katalogreihenfolge bestimmt. In der Laufbahn
       // stand deshalb „Leistung" neben einer Chronik, deren Punkte aus
       // „Konstanz" kamen — die Zeile erklaerte den Wert daneben nicht.
       const km = _chronikMonat(m.id) || {};
-      const rohFaktor = Math.pow(PRESTIGE_CHRONIK_WIEDERHOLUNG, mal - 1);
-      const beitrag = Math.max(PRESTIGE_CHRONIK_MINDEST, voll * rohFaktor);
-      const faktor = beitrag / voll;
       mo.push({q:'monat', id:m.id, name:m.name, label:m.label,
-               p: beitrag, voll, grundwert:voll, faktor, mal,
-               minimum:PRESTIGE_CHRONIK_MINDEST,
-               amMinimum:beitrag === PRESTIGE_CHRONIK_MINDEST,
+               p:voll, voll, grundwert:voll,
                kunst:km.art || '', klasse:km.klasse || ''});
     });
-    const pm = mo.reduce((sum, q) => sum + q.p, 0);
+    const pm = _wurzelStapel(mo, 3);
 
     // Allzeitwertungen: ein geteilter Rekord zählt geteilt — und dann
     // dasselbe Gesetz wie überall.
@@ -379,7 +396,7 @@ function prestigeTabelle(bisMs){
       re.push({q:'rekord', id:x.id, name:x.name, p:voll, art:x.art,
                basis, halter:halterZahl[x.id] || 1});
     });
-    const pr = stapel(re);
+    const pr = _wurzelStapel(re, 2);
 
     const quellen = az.concat(mo, re);
 
@@ -1518,9 +1535,10 @@ function prestigeSchritte(pid, n){
         }
         if(mein == null || !isFinite(mein) || ziel == null || mein >= ziel) return;
         const rel = (ziel - mein) / Math.max(1e-9, Math.abs(ziel));
-        const gewinn = PRESTIGE_REKORD * (PRESTIGE_ART[def.art] ?? 1)
-          / Math.max(1, (halte ? halte.pids.length + 1 : 1))
-          / Math.sqrt(P.zahlen.rekord + 1);
+        const voll = PRESTIGE_REKORD * (PRESTIGE_ART[def.art] ?? 1)
+          / Math.max(1, (halte ? halte.pids.length + 1 : 1));
+        const gewinn = _wurzelZuwachs(
+          P.quellen.filter(q => q.q === 'rekord').map(q => q.voll), voll, 2);
         out.push({
           art:'rekord', id:def.id, name:def.name, ic:def.ic, tone:def.tone, rel,
           gewinn:Math.round(gewinn),
@@ -1553,9 +1571,9 @@ function prestigeSchritte(pid, n){
         out.push({
           art:'monat', id:r.id, name:r.name || (d && d.name), ic:d.ic, tone:d.tone,
           rel: 0.55,          // ein offener Monatseintrag ist immer „diesen Monat noch"
-          gewinn: Math.round(Math.max(PRESTIGE_CHRONIK_MINDEST,
-            chronikPunkte(r.id) * Math.pow(PRESTIGE_CHRONIK_WIEDERHOLUNG,
-              P.quellen.filter(q => q.q === 'monat' && q.id === r.id).length))),
+          gewinn: Math.round(_wurzelZuwachs(
+            P.quellen.filter(q => q.q === 'monat').map(q => q.voll),
+            chronikPunkte(r.id), 3)),
           cond: (d.monat && d.monat.cond) || '',
           stand: r.ev ? _chronKurz(r.ev) : '',
           halter: r.pid ? pname(r.pid) : '',
@@ -1688,7 +1706,8 @@ function showLaufbahn(pid){
       for(let i = 1; i <= n; i++) glieder.push(zahl(auszeichnungsTeilwert(q.id, i)));
       return glieder.join(' + ');
     }
-    return `${zahl(q.basis)} → ${zahl(auszeichnungsTeilwert(q.id, n))} beim ${n}. Mal`;
+    return `${zahl(q.basis)} + ${zahl(auszeichnungsTeilwert(q.id, 2))} + … + `
+      + `${zahl(auszeichnungsTeilwert(q.id, n))} (${n}. Mal)`;
   };
 
   // Warum dieser Posten so viel wiegt. Vorher stand hier „2 von 12" — die
@@ -1702,11 +1721,13 @@ function showLaufbahn(pid){
       teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
       let rechnung = `Grundwert ${zahl(q.basis)}`;
       if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;
-      if(q.rang > 1) rechnung += ` ÷ √${q.rang}`;
+      if(q.staffel > 1) rechnung += ` · ${q.rang}. Rekord ÷ √${q.staffel}`;
       teile.push(rechnung);
     }
     else if(q.q === 'auszeichnung'){
       teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
+      if(q.hinweis) teile.push(q.hinweis);
+      teile.push(`${zahl(q.basis)} P Start · ${Math.round(q.abnahme * 100)}-%-Kurve`);
       teile.push(`${q.mal}× erreicht`);
       if(q.mal > 1) teile.push(folge(q));
     }
@@ -1716,9 +1737,7 @@ function showLaufbahn(pid){
       if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
       const basis = q.grundwert == null ? q.voll : q.grundwert;
       let rechnung = `Chronikwert ${zahl(basis)}`;
-      if(q.mal > 1) rechnung += q.amMinimum
-        ? ` · Mindestwert ${zahl(q.minimum)} (${q.mal}. Mal)`
-        : ` × ${zahl(q.faktor)} (${q.mal}. Mal)`;
+      if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
       teile.push(rechnung);
     }
     return teile.join(' · ');
@@ -1739,9 +1758,9 @@ function showLaufbahn(pid){
 
   const SICHTBAR = 4;
   const regeln = `<div class="lb-regeln">
-    <span class="legendary"><b>Legendary</b><em>50 · −10 % · min. 5</em></span>
-    <span class="rare"><b>Rare</b><em>20 · −15 % · min. 1</em></span>
-    <span class="common"><b>Common</b><em>3 · −20 % · min. 0,1</em></span>
+    <span class="legendary"><b>Legendary</b><strong>40 P Standard · −10 %</strong><em>Meister 55 P · −5 %<br>Dominator 50 P · −10 %<br>Team der Saison 45 P · −10 %. Danach flacher, nie 0.</em></span>
+    <span class="rare"><b>Rare</b><strong>20 P Standard · −15 %</strong><em>Wochensieger 24 P · −12 %<br>Tagessieger 15 P · −20 %. Danach flacher, nie 0.</em></span>
+    <span class="common"><b>Common</b><strong>3 P beim 1. Mal</strong><em>Das 2. Mal −20 %. Danach flacher, nie 0.</em></span>
   </div>`;
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];

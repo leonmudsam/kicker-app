@@ -712,7 +712,8 @@ const ok = (c, msg, det) => {
   ok(zeichen.doppelt.length === 0,
      'keine zwei Rubriken tragen dasselbe Zeichen', zeichen.doppelt.join(', '));
 
-  // Mehrere Traeger desselben Erfolgs ergeben eine gemeinsame Karte. Das
+  // Mehrere Tafel-Aenderungen desselben Zeitpunkts ergeben eine gemeinsame
+  // Karte. Das
   // Markup wird aus vier synthetischen, ansonsten echten Story-Objekten
   // gebaut, damit der Test nicht an einer zufaelligen heutigen Schwelle haengt.
   const achse = await page.evaluate(() => {
@@ -724,12 +725,12 @@ const ok = (c, msg, det) => {
         when,prio:76,dataRef:{type:'insignium_stufe',pid,stufe:1,
           stufeName:'Schildring',punkte:300+i,oben:false}}));
       _cache._consolFrom=null;
-      const s=_consolidateStories(teile).find(x=>(x.dataRef||{}).quelle==='erfolg');
+      const s=_consolidateStories(teile).find(x=>(x.dataRef||{}).quelle==='tafel');
       return s ? _newsCardHtmlM2(s,false,false) : '';
     })()`);
     const host = document.createElement('div'); host.innerHTML = markup;
     document.body.appendChild(host);
-    const karte = host.querySelector('.nf-card.nf-s-erfolg');
+    const karte = host.querySelector('.nf-card.nf-s-tafel');
     if(!karte) return {fehlt:true};
     const rub = karte.querySelector('.nf-rub b');
     const farbe = rub ? getComputedStyle(rub).color : '';
@@ -739,18 +740,18 @@ const ok = (c, msg, det) => {
       chips: karte.querySelectorAll('.nf-face-paar .av').length,
       zeilen: karte.querySelectorAll('.nf-sam-z').length,
       rest: karte.querySelectorAll('.nf-sam-m').length,
-      violett: farbe === 'rgb(167, 139, 250)'};
+      tafelMetall: farbe !== 'rgb(247, 207, 74)' && farbe !== 'rgb(167, 139, 250)'};
     host.remove(); return out;
   });
   ok(!achse.fehlt, 'die Karte fuer den gemeinsamen Erfolg steht im Feed',
      JSON.stringify(achse));
-  ok(achse.rubrik === 'GEMEINSAM GEHOLT', 'sie traegt ihre eigene Rubrik', achse.rubrik);
+  ok(achse.rubrik === 'EWIGE TAFEL', 'sie traegt die gemeinsame Tafel-Rubrik', achse.rubrik);
   ok(achse.chips >= 2, 'und die Gesichter aller Beteiligten', achse.chips + ' Chips');
   ok(achse.zeilen >= 2 && achse.rest === 0,
      'jeder Beteiligte steht als Zeile auf der Karte, keiner als „und 1 weitere"',
      achse.zeilen + ' Zeilen, ' + achse.rest + ' verschwiegen');
-  ok(achse.violett, 'der gemeinsame Laufbahnerfolg traegt Violett statt pauschal Gold',
-     String(achse.violett));
+  ok(achse.tafelMetall, 'der gemeinsame Tafel-Moment traegt kuehles Metall statt Gold',
+     String(achse.tafelMetall));
 
   const palette = await page.evaluate(() => {
     const host = document.createElement('div');
@@ -1223,8 +1224,8 @@ const ok = (c, msg, det) => {
       const T=prestigeTabelle();
       for(const pid of T.rang){
         const qs=(prestigeOf(pid).quellen||[]).filter(q=>q.q==='monat');
-        const q=qs.find(x=>x.mal>1)||qs[0];
-        if(q) return {pid,id:q.id,basis:q.grundwert,beitrag:q.p,mal:q.mal};
+        const q=qs.find(x=>x.staffel>1)||qs[0];
+        if(q) return {pid,id:q.id,basis:q.grundwert,beitrag:q.p,rang:q.rang,staffel:q.staffel};
       }
       return null;
     })())`));
@@ -1244,11 +1245,12 @@ const ok = (c, msg, det) => {
   ok(!chronRechnung.fehlt && /Chronikwert/.test(chronRechnung.text),
      'das Laufbahnblatt nennt den unverkuerzten Chronik-Wert',
      chronRechnung.text.slice(0,180));
-  ok(chronRechnung.mal === 1 || /\. Mal/.test(chronRechnung.text),
+  ok(chronRechnung.rang === 1 || new RegExp(chronRechnung.rang + '\\. Chronik.*√' + chronRechnung.staffel).test(chronRechnung.text),
      'eine Wiederholung zeigt knapp ihre Herunterrechnung',
      chronRechnung.text.slice(0,220));
   ok(chronRechnung.regeln.length === 3
-     && chronRechnung.regeln.every(x=>/\d+.*%.*min\./.test(x)),
+     && chronRechnung.regeln.every(x=>/\d+.*%/.test(x) && /nie 0/.test(x))
+     && chronRechnung.regeln.every(x=>!/min\./.test(x)),
      'die Auszeichnungsregeln stehen einmal kompakt über der Liste',
      chronRechnung.regeln.join(' · '));
   ok(!chronRechnung.sport,

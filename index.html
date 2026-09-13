@@ -2154,7 +2154,9 @@
      Ungelesen-Zustand ueberschrieben haette — und das ist der wichtigere. */
   .nf-card{position:relative;--tint:rgba(255,255,255,.028);--neu:transparent;
     background:linear-gradient(90deg,var(--neu),transparent 55%),
-      radial-gradient(190px 120px at 4% 0%,var(--tint),transparent 72%),var(--surface);
+      radial-gradient(190px 120px at 4% 0%,var(--tint),transparent 72%),
+      radial-gradient(240px 120px at 98% -12%,rgba(var(--story-rgb,185,196,189),.035),transparent 72%),
+      var(--surface);
     border:1px solid var(--line);border-left:2px solid var(--story,var(--line2));
     border-radius:4px 14px 14px 4px;padding:12px;cursor:pointer;transition:.15s}
   .nf-card:active{transform:scale(.992)}
@@ -2199,7 +2201,7 @@
   .nf-brk .nf-top{display:none}
   .nf-brk-sub{padding:9px 13px 12px;font-size:11.5px;line-height:1.45;color:var(--ink2);
     border-top:1px solid var(--line)}
-  .nf-brk.read{opacity:.55}
+  .nf-brk.read{opacity:.82}
 
   /* ── Die Karte des Tages ──────────────────────────────────────────
      Sie steht groß und traegt einen Streifen. Vorher stand ihre Schlagzeile
@@ -2244,7 +2246,7 @@
      soll — der Rest des Tages steht ruhig darunter. */
   .nf-gross{border-color:var(--line2);border-radius:14px;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 12px 30px -18px #000}
-  .nf-card.read{opacity:.55;border-left-color:var(--line2)}
+  .nf-card.read{opacity:.82}
   /* „Wichtig" verstärkt die Kante, es umrandet nicht die ganze Karte. Als
      Vollrahmen leuchtete die halbe Liste gold — und was die halbe Liste
      trägt, hebt nichts mehr hervor. */
@@ -2254,7 +2256,8 @@
      Gewicht der Karte. */
   .nf-card.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
     -7px 0 20px -12px rgba(var(--story-rgb,185,196,189),.42)}
-  .nf-card.read.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
+  .nf-card.read.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
+    -7px 0 18px -14px rgba(var(--story-rgb,185,196,189),.2)}
   .nf-when{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
     font-size:9.5px;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
   .nf-dot{width:8px;height:8px;border-radius:50%;background:var(--story,var(--ink2));
@@ -2302,8 +2305,8 @@
      Schlagzeile den Platz. */
   .nf-top{display:flex;align-items:center;gap:8px;padding:7px 13px;
     border-bottom:1px solid var(--line);
-    background:linear-gradient(96deg,rgba(var(--story-rgb,185,196,189),.055),
-      rgba(var(--story-rgb,185,196,189),.012) 48%,transparent 76%)}
+    background:linear-gradient(96deg,rgba(var(--story-rgb,185,196,189),.075),
+      rgba(var(--story-rgb,185,196,189),.018) 52%,transparent 80%)}
   .nf-rub{display:inline-flex;align-items:center;gap:6px;min-width:0;
     font-family:'Sometype Mono',monospace;font-size:9px;font-weight:700;
     letter-spacing:.17em;color:var(--story,var(--muted));line-height:1}
@@ -2461,7 +2464,7 @@
   .nf-s-spiel,.nf-s-serie{--tint:rgba(163,230,53,.05)}
   .nf-s-duell{--tint:rgba(192,132,87,.055)}
   .nf-card.nf-neg{--tint:rgba(240,86,106,.07)}
-  .nf-card.read{--tint:rgba(255,255,255,.02)}
+  .nf-card.read{--tint:rgba(var(--story-rgb,185,196,189),.035)}
 
   /* Der Rand sagt das Gewicht, die Farbe sagt die Familie. Nur die beiden
      echten Siegerkarten bekommen drei Pixel. Alle übrigen Geschichten
@@ -2478,7 +2481,7 @@
   .nf-card{border-color:var(--rahmen);border-left-width:var(--kante)}
   /* Gelesen faellt alles auf das leiseste Mass zurueck: der Feed soll zeigen,
      was noch offen ist, nicht was schon abgehakt wurde. */
-  .nf-card.read{--kante:2px;--rahmen:var(--line)}
+  .nf-card.read{--kante:2px;--rahmen:rgba(var(--story-rgb,185,196,189),.1)}
   /* Sorte 7 Auszeichnung: das Zeichen der Auszeichnung mit ihrer Klasse. */
   .nf-bd{display:flex;align-items:center;gap:10px;padding:9px 13px;border-top:1px solid var(--line)}
   .nf-bd-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
@@ -2518,7 +2521,7 @@
   .nf-s-held .nf-motiv{opacity:.1}
   .nf-s-fakt .nf-motiv{opacity:.05}
   .nf-card.nf-neg .nf-motiv{opacity:.07}
-  .nf-card.read .nf-motiv{opacity:.028}
+  .nf-card.read .nf-motiv{opacity:.055}
   /* Alles Uebrige liegt darueber, sonst schneidet das Motiv in die Schrift. */
   .nf-card > *:not(.nf-motiv){position:relative;z-index:1}
   .nf-chev{align-self:center;flex:0 0 auto;color:var(--faint);display:flex;
@@ -4107,13 +4110,14 @@
 
   /* Die drei Auszeichnungsregeln stehen einmal kompakt über der Liste.
      Dadurch erklärt jede Zeile nur noch ihren konkreten Zähler. */
-  .lb-regeln{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
-    padding:7px 9px;background:var(--bg);border-top:1px solid var(--line)}
-  .lb-regeln span{min-width:0;padding:5px 6px;border:1px solid var(--line);
-    border-radius:7px;background:var(--surface);display:flex;flex-direction:column;gap:1px}
-  .lb-regeln b{font-size:8.5px;line-height:1.2;white-space:nowrap}
-  .lb-regeln em{font-family:'Sometype Mono',monospace;font-size:7.5px;
-    line-height:1.25;font-style:normal;color:var(--muted);white-space:nowrap}
+  .lb-regeln{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;
+    padding:10px;background:var(--bg);border-top:1px solid var(--line)}
+  .lb-regeln span{min-width:0;min-height:116px;padding:10px 8px;border:1px solid var(--line);
+    border-radius:8px;background:var(--surface);display:flex;flex-direction:column;gap:4px}
+  .lb-regeln b{font-size:10px;line-height:1.2;white-space:nowrap}
+  .lb-regeln strong{font-size:9px;line-height:1.25;color:var(--ink);font-weight:700}
+  .lb-regeln em{font-family:'Sometype Mono',monospace;font-size:8.5px;
+    line-height:1.48;font-style:normal;color:var(--muted);white-space:normal}
   .lb-regeln .legendary b{color:var(--gold)}
   .lb-regeln .rare b{color:var(--purple)}
   .lb-regeln .common b{color:var(--acid)}
@@ -4126,7 +4130,7 @@
   .lb-q .n{flex:1;min-width:0;font-size:12.5px;color:var(--ink);
     display:flex;flex-direction:column;gap:2px}
   .lb-q .n em{font-style:normal;color:var(--muted);font-size:10.5px;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    line-height:1.4;white-space:normal;overflow:visible}
   .lb-q .p{flex:0 0 auto;font-size:13px;font-weight:700;color:var(--ink2)}
 
   .lb-buch .chron-more{border:0;border-top:1px solid var(--line);border-radius:0;
@@ -4755,7 +4759,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.12.64312e7d';
+const BUILD_VERSION='2026.09.13.f8584713';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -13255,7 +13259,7 @@ const BADGES=[
 // Wert, und weil die Halterzahl mit der Liga wächst, lief der Fortschritt
 // rückwärts [§C34]. Die Halterzahl ist trotzdem die Gegenprobe: über die
 // 466 echten Partien halten die zehn legendären null bis fünf der zwölf
-// Spieler, die zwölf seltenen null bis sechs, die zwanzig gewöhnlichen
+// Spieler, die vierzehn seltenen null bis neun, die achtzehn gewöhnlichen
 // sechs bis zwölf. Legendär und selten überlappen oben, weil eine Würde
 // je Saison neu zu holen ist: „Team der Saison" haben in vier Monaten fünf
 // Spieler getragen und ist trotzdem das Schwerste, was die Liga vergibt.
@@ -13265,8 +13269,7 @@ const BADGES=[
 // damit den goldenen Rahmen im Blatt — neben „20er Serie" und „Meister der
 // Saison". Sie hängen aber an nichts als der Spielzahl: wer lange genug
 // dabei ist, bekommt sie, ohne je besser geworden zu sein. Sie sind jetzt
-// selten; ihr violetter Rang bestimmt transparent Startwert, Abnahme und
-// den spaeteren Mindestwert.
+// selten; ihr violetter Rang bestimmt transparent Startwert und Abnahme.
 // Sechs weitere Einträge standen davor in der falschen Klasse — „Player of
 // the Day" (9 Halter, 52 mal vergeben) galt als selten, „Klares Ding"
 // (10 Halter, 136 mal) ebenfalls.
@@ -13288,7 +13291,7 @@ const BADGE_RARITY = {
   streak20:        'legendary', // 20er Serie
   untouchable:     'legendary', // Untouchable — 3 Saisons in Folge Top-3
   mr_perfect:      'legendary', // Mr. Perfect — 3x 10:0 in einer Saison
-  allwetter:       'legendary', // Allwetter — POTD an 5 verschiedenen Wochentagen
+  perfect_win:     'legendary', // Absoluter Sieger — ein makelloses 10:0
   // -- RARE (14) -- 0 bis 9 Halter --
   potd:            'rare',      // Player of the Day — belohnt Vielspieler,
                                 //   ist aber besonderer als jedes Common
@@ -13304,7 +13307,7 @@ const BADGE_RARITY = {
   unbeatable:      'rare',      // Unschlagbar
   nerves_of_steel: 'rare',      // Nerven aus Stahl
   potw:            'rare',      // Player of the Week
-  perfect_win:     'rare',      // Absoluter Sieger — 6 Halter, 16 mal vergeben
+  allwetter:       'rare',      // Allwetter — einmalige POTD-Wochentagsbreite
   // -- COMMON (18) -- 6 bis 12 Halter --
   first_match:     'common',    // Debütant
   games25:         'common',    // Stammgast
@@ -13357,6 +13360,23 @@ const RARITY_META = {
   negative:  {label:'Schande',   color:'var(--red)',    total:8},
 };
 const RARITY_ORDER = ['legendary','rare','common','negative'];
+
+// Die ersten fünf Reihen des Spielerprofils sind die goldene Vitrine. Ihre
+// Reihenfolge folgt der sportlichen Wertigkeit, nicht dem Zeitpunkt, zu dem
+// eine Definition einmal in BADGES ergänzt wurde. Danach bleibt die
+// Katalogreihenfolge stabil. Ein eigener Anzeige-Schlüssel verhindert, dass
+// die Berechnung oder bestehende Badge-IDs dafür umgebaut werden müssen.
+const BADGE_PROFIL_ORDER = [
+  'dynasty_600', 'dominator_400',
+  'streak20', 'streak15',
+  'champion', 'team_of_season',
+  'untouchable', 'award_collector',
+  'perfect_win', 'mr_perfect',
+];
+const _BADGE_PROFIL_RANG = new Map(BADGE_PROFIL_ORDER.map((id, i) => [id, i]));
+function badgeProfilRang(id){
+  return _BADGE_PROFIL_RANG.has(id) ? _BADGE_PROFIL_RANG.get(id) : BADGE_PROFIL_ORDER.length + BADGES.findIndex(b => b.id === id);
+}
 
 // Liefert die Rarity eines Badges (Default: common falls jemand neu hinzukommt
 // und vergisst BADGE_RARITY zu erweitern — verhindert undefined-Bugs).
@@ -16146,21 +16166,18 @@ function showPlayerBadges(playerId){
     'allwetter']);
 
   // ─── Aggregation pro Tier ───
-  // Pro Rarity: BADGES-Array in Reihenfolge durchgehen, in Buckets sortieren.
-  // Innerhalb des Buckets: ZUERST einmalig erreichbare ("Freigeschaltet"-Style),
-  // DANACH mehrfach erreichbare (×N-Counter) — sortiert nur die ANZEIGE, keine
-  // neue Kategorie. Stabil: relative Reihenfolge im BADGES-Array bleibt erhalten.
+  // Pro Rarity: BADGES-Array in Buckets sortieren. Die goldene Vitrine folgt
+  // der expliziten sportlichen Reihenfolge aus §7; danach bleibt die
+  // Katalogreihenfolge stabil. Einmalige Badges springen nicht mehr vor
+  // wichtigere Saison- und Serienleistungen (Allwetter stand dadurch ganz
+  // vorne, obwohl es nur einmal freigeschaltet werden kann).
   const buckets = {legendary:[], rare:[], common:[], negative:[]};
   BADGES.forEach(b => {
     const r = rarityOf(b.id);
     if(buckets[r]) buckets[r].push(b);
   });
   Object.keys(buckets).forEach(r => {
-    buckets[r].sort((a,b) => {
-      const aOnce = ONCE_ONLY.has(a.id) ? 0 : 1;
-      const bOnce = ONCE_ONLY.has(b.id) ? 0 : 1;
-      return aOnce - bOnce; // stabile Sort: nur Once-vs-Multi neu ordnen
-    });
+    buckets[r].sort((a,b) => badgeProfilRang(a.id) - badgeProfilRang(b.id));
   });
   const have = (r) => buckets[r].filter(b => earnedIds.has(b.id)).length;
   const haveTotal = have('legendary')+have('rare')+have('common')+have('negative');
@@ -18199,6 +18216,8 @@ const NEWS_LIMITS = {
   // v9.4: bewusst kleiner → weniger News-Flut direkt nach Matches.
   topForm: 2,       // max Spieler "in Top-Form" gleichzeitig
   lossStreak: 2,
+  winStreak: 8,     // jüngste echte Serienmarken im 14-Tage-Fenster
+  giantSlayer: 4,   // starke Upsets: höchstens einer je Spieltag
   jubilee: 3,
   badgeUnlocked: 6, // letzte N freigeschalteten Badges
   // Zwei Rivalitätskarten mit derselben Schlagzeile und einer anderen Zahl
@@ -18209,24 +18228,19 @@ const NEWS_LIMITS = {
   // viele Paare eine Schwelle; gemeldet werden die jüngsten. Gemessen wurden
   // sechzehn gebildet und persistiert, von denen zwei im Feed standen.
   rivalryMarke: 4,
-  // „X baut seinen Rekord aus" ist die schwächste der drei Rekordmeldungen —
-  // gewechselt hat nichts. Zwei davon reichen; „geholt" und „erstmals
-  // vergeben" sind ungedeckelt, weil sie selten sind und wirklich etwas sagen.
-  rekordAusbau: 2,
-  // Ein Tag trägt sechs Karten. Gemessen trug ein Spieltag neun, und die
-  // schwächsten drei waren ein Elo-Ausschlag, eine Auszeichnung und ein Fun
-  // Fact — Zeilen, die niemand vermisst. Breaking zählt nicht mit [§C33].
-  // Ein starker Spieltag verschiebt mehrere Monatschroniken gleichzeitig.
-  // Gemeldet werden die zwei wertvollsten; der Rest steht am Monatsende in
-  // der Monatskarte, die es ohnehin gibt.
-  // Vier Wechsel passen exakt in eine Sammelkarte. Zwei ließen in der
-  // Vierzehn-Tage-Messung die Tafel-Seite trotz zahlreicher tatsächlicher
-  // Chronikwechsel auf ein gutes Drittel des redaktionellen Inhalts fallen.
-  // Die vier wertvollsten halten Tafel und Spieltag/Fun Facts ungefähr im
-  // Gleichgewicht, ohne eine zweite Karte oder eine abgeschnittene Zeile zu
-  // erzeugen.
-  chronikGeholt: 4,
-  proTag: 6,
+  // Ein Tag trägt fünf Karten. Gemessen trug ein Spieltag neun, und die
+  // schwächsten vier waren Wiederholungen bereits erzählter Entwicklungen.
+  // Breaking zählt nicht mit [§C33].
+  // Ein starker Spieltag kann viele Rekorde und Monatschroniken zugleich
+  // verschieben. Sie werden vor der Bündelung nicht mehr abgeschnitten:
+  // dieselbe Partie bzw. Minute ergibt später eine einzige vollständige
+  // Tafel-Karte. So sinkt die Kartenzahl, nicht der fachliche Inhalt.
+  proTag: 5,
+  // Redaktionelles Mindestgewicht im 14-Tage-Fenster. Gezählt werden die
+  // sichtbaren Zeilen eines Bundles, nicht nur sein äußerer Kartenrahmen.
+  // 40–60 % ist die belastbare Auslegung von „ungefähr halb"; Pflichtkarten,
+  // Breaking und die stärkste Karte jedes Spieltags bleiben unangetastet.
+  tafelAnteilMin: 0.40,
   // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
   // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
   // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
@@ -18243,9 +18257,9 @@ const NEWS_LIMITS = {
   // höchstens einmal je Spielwoche wiederkommt.
   sperreTage: 3,
   // Die Obergrenze des Feeds. Sie war die eigentliche Fensterbreite: bei
-  // sechs Karten je Tag reichten 50 Karten gerade acht Tage weit, und der
-  // Feed hoerte mitten in der Woche davor auf. Vierzehn Tage mal sechs sind
-  // vierundachtzig; der Rest ist Luft fuer Breaking und die Pflichtkarten,
+  // fünf Karten je Tag reichten 50 Karten gerade zehn Tage weit, und der
+  // Feed hoerte mitten in der Woche davor auf. Vierzehn Tage mal fünf sind
+  // siebzig; der Rest ist Luft fuer Breaking und die Pflichtkarten,
   // die nicht gegen den Tagesdeckel zaehlen [§C33].
   total: 120,
 };
@@ -18682,8 +18696,8 @@ function _namenListe(namen){
   return a.slice(0, -1).join(', ') + ' und ' + a[a.length - 1];
 }
 
-// Zahlwörter bis vier, darüber die Ziffer. Vier ist die Grenze, weil keine
-// Bündelung im Feed mehr als vier Zeilen trägt [§C33].
+// Zahlwörter bis vier, darüber die Ziffer. Große Tafel-Momente dürfen mehr
+// Zeilen tragen; ab fünf ist die Ziffer im kurzen Fließtext besser lesbar.
 // Der erste Satz eines Textes. Auf einer Sammelkarte gehoert nur er dem
 // Kopf; alles danach ist ein Detail zu einer von vier Meldungen.
 // Abkuerzungen mit Punkt gibt es in diesen Texten nicht, ein Datum wie
@@ -19675,11 +19689,14 @@ function _buildStories(){
       }
     }
 
-    // Giant Slayer: ein Team gewinnt mit unter 20% Siegchance (letzte 7 Tage,
-    // das extremste Match). Suppress-Regel gegen Upset-Doppel siehe Consolidation.
+    // Giant Slayer: jedes wirklich starke Upset (<20 %) ist ein Match-Ereignis
+    // und bleibt deshalb auch sichtbar, wenn am Folgetag schon wieder gespielt
+    // wurde. Früher entstand nur das EINE extremste Match der letzten sieben
+    // Tage; dadurch verschwanden alle übrigen Sensationen aus der Geschichte.
+    // Höchstens eine je Spieltag und vier im Fenster halten sie besonders.
     {
-      const wk = 7 * 86400000;
-      let gs = null;
+      const wk = 14 * 86400000;
+      const kandidaten = [];
       for(let i = matches.length - 1; i >= 0; i--){
         const m = matches[i];
         const t = mts(m);
@@ -19690,12 +19707,19 @@ function _buildStories(){
         if(winnerChance < 0.20){
           const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
           const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
-          if(winners.every(p => pm[p] && !pm[p].hidden) && (!gs || winnerChance < gs.chance)){
-            gs = { m, chance: winnerChance, winners, losers };
-          }
+          if(winners.every(p => pm[p] && !pm[p].hidden))
+            kandidaten.push({ m, chance: winnerChance, winners, losers, t });
         }
       }
-      if(gs){
+      const jeTag = new Map();
+      kandidaten.forEach(gs => {
+        const d = new Date(gs.t);
+        const tag = d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
+        const alt = jeTag.get(tag);
+        if(!alt || gs.chance < alt.chance) jeTag.set(tag, gs);
+      });
+      [...jeTag.values()].sort((a, b) => b.t - a.t)
+        .slice(0, NEWS_LIMITS.giantSlayer).forEach(gs => {
         const wNames = gs.winners.map(nameOf).join(' & ');
         const lNames = gs.losers.map(nameOf).join(' & ');
         const pct = Math.max(1, Math.round(gs.chance * 100));
@@ -19707,7 +19731,7 @@ function _buildStories(){
           when: new Date(gs.m.created_at), prio: STORY_PRIO.giant_slayer,
           dataRef: {type:'giant_slayer', matchId: gs.m.id, winners: gs.winners, losers: gs.losers, chance: gs.chance}
         });
-      }
+      });
     }
   } catch(e){}
 
@@ -19915,45 +19939,41 @@ function _buildStories(){
     });
   } catch(e){}
 
-  // ── 21. Aktive Sieges-Streak (≥5 in Folge, läuft noch) ──
-  // Pendant zu loss_streak. Spieler dessen jüngstes Match Sieg war und
-  // davor noch ≥4 weitere Siege.
+  // ── 21. Marken einer Sieges-Streak (≥5 in Folge) ──────────────────
+  // Eine Serie ist ein Ereignis des Matches, das die Marke vollmacht — kein
+  // flüchtiger Live-Zustand. Die alte Fassung betrachtete nur das jüngste
+  // Match eines Spielers. Nach der nächsten Niederlage verschwand damit auch
+  // seine 5er-Serie rückwirkend, obwohl sie tatsächlich stattgefunden hatte.
+  // Der chronologische Walk bildet stabile, idempotente Karten im Fenster.
   try {
-    const candidates = [];
-    activePlayers().forEach(p => {
-      const arr = byPlayer[p.id] || [];
-      if(!arr.length) return;
-      let streak = 0;
-      for(let i = arr.length - 1; i >= 0; i--){
-        if(!won(p.id, arr[i])) break;
-        streak++;
-        if(streak > 20) break;
-      }
-      if(streak >= 5){
-        candidates.push({pid: p.id, streak, when: new Date(arr[arr.length-1].created_at)});
-      }
-    });
-    candidates.sort((a,b) => b.streak - a.streak);
-    // v9.17 FORMULIERUNG: Bis zu 3 Spieler bekamen denselben Satz „aktuell
-    // heißeste Form der Liga" — das kann nur auf den Führenden zutreffen. Der
-    // Superlativ hängt jetzt an der tatsächlichen Bestmarke, alle anderen
-    // bekommen den Abstand dazu.
-    const _topStreak = candidates[0].streak;
-    candidates.slice(0, 3).forEach(c => {
-      const gap = _topStreak - c.streak;
-      stories.push({
-        id: 'win_streak_'+c.pid+'_'+c.when.toISOString().slice(0,10),
-        cat: 'highlight',
-        ic: 'flame',
-        title: `${nameOf(c.pid)} ungeschlagen`,
-        desc: gap === 0
-          ? `${c.streak} Siege in Folge. Aktuell die längste laufende Serie der Liga.`
-          : `${c.streak} Siege in Folge. Nur noch ${gap} ${gap === 1 ? 'Sieg' : 'Siege'} bis zur längsten laufenden Serie.`,
-        when: c.when,
-        prio: STORY_PRIO.win_streak + (c.streak >= 10 ? 6 : c.streak >= 7 ? 3 : 0),
-        dataRef: {type:'win_streak', pid: c.pid, streak: c.streak}
+    const seit = now.getTime() - 14 * _dayMs;
+    const lauf = {}, kandidaten = [];
+    const marken = new Set([5, 7, 10, 15, 20]);
+    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+      if(mts(m) > now.getTime()) return;
+      const aGewinnt = m.winner === 'A';
+      [[m.a1,aGewinnt],[m.a2,aGewinnt],[m.b1,!aGewinnt],[m.b2,!aGewinnt]].forEach(([pid, sieg]) => {
+        if(!pid) return;
+        lauf[pid] = sieg ? (lauf[pid] || 0) + 1 : 0;
+        const n = lauf[pid];
+        const istMarke = marken.has(n) || (n > 20 && n % 5 === 0);
+        if(istMarke && mts(m) >= seit && pm[pid] && !pm[pid].hidden)
+          kandidaten.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id});
       });
     });
+    kandidaten.sort((a,b) => b.when - a.when || b.streak - a.streak)
+      .slice(0, NEWS_LIMITS.winStreak).forEach(c => {
+      stories.push({
+        id: 'win_streak_'+c.pid+'_'+c.matchId+'_'+c.streak,
+        cat: 'highlight',
+        ic: 'flame',
+        title: `${nameOf(c.pid)} zündet die ${c.streak}er-Serie`,
+        desc: `${c.streak} Siege, kein Stolpern: Mit diesem Schlusspfiff wächst der Lauf zur echten Serie.`,
+        when: c.when,
+        prio: STORY_PRIO.win_streak + (c.streak >= 10 ? 6 : c.streak >= 7 ? 3 : 0),
+        dataRef: {type:'win_streak', pid: c.pid, streak: c.streak, matchId:c.matchId}
+      });
+      });
   } catch(e){}
 
   // ── 22. Längste Pause (kein Spielbetrieb in den letzten X Tagen) ──
@@ -20147,12 +20167,12 @@ function _buildStories(){
   // danach in `_chronCtxBis`; der Generator selbst ist ohnehin memoisiert.
   try {
     const _letzteMs = matches.length ? mts(matches[matches.length-1]) : 0;
+    const _letzteMatchId = matches.length ? matches[matches.length-1].id : null;
     if(_letzteMs){
       const _tag0 = new Date(_letzteMs); _tag0.setHours(0, 0, 0, 0);
       const _jetzt = allChronicles().byId;
       const _vorher = allChronicles(_tag0.getTime() - 1).byId;
       const _kammer = k => (CHRON_KINDS[k] && CHRON_KINDS[k].label) || 'Liga-Rekord';
-      let _rekAusbau = 0;
       CHRONICLES.forEach(def => {
         const n = _jetzt[def.id];
         if(!n) return;
@@ -20199,7 +20219,6 @@ function _buildStories(){
           // Meldung gibt es nur, wenn der Wert besser geworden ist [§C33].
           desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
         }
-        if(art === 'gesteigert' && ++_rekAusbau > NEWS_LIMITS.rekordAusbau) return;
         stories.push({
           // Die ID traegt den ANGEZEIGTEN Wert, nicht den rohen. Mit
           // `Math.round(val * 1e4)` bekam jede Partie eine eigene ID: nach zwei
@@ -20217,7 +20236,7 @@ function _buildStories(){
           prio: art === 'erstmals' ? STORY_PRIO.rekord_erstmals
               : art === 'geholt'   ? STORY_PRIO.rekord_geholt
                                    : STORY_PRIO.rekord_gesteigert,
-          dataRef: {type:'rekord_' + art, rekordId:def.id, kammer:def.kind,
+          dataRef: {type:'rekord_' + art, rekordId:def.id, matchId:_letzteMatchId, kammer:def.kind,
                     zufall:def.zufall || '', playerIds:n.pids.slice(0, 3),
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
                     kammerLabel:_kammer(def.kind)}
@@ -20306,6 +20325,7 @@ function _buildStories(){
   // Meldungen ist.
   try {
     const _letzteMs2 = matches.length ? mts(matches[matches.length - 1]) : 0;
+    const _letzteMatchId2 = matches.length ? matches[matches.length - 1].id : null;
     const _sid = currentSeason().id;
     if(_letzteMs2 && typeof seasonTitleHalter === 'function'){
       const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
@@ -20370,9 +20390,10 @@ function _buildStories(){
               + `${artikel} Chronik.` + nachsatz + _zeigtSatz,
           klasse: t.klasse});
       });
-      // Die wertvollsten zuerst, dann greift der Deckel.
+      // Wertvollste zuerst: Die Reihenfolge bestimmt den Kopf des späteren
+      // Bundles, nicht mehr, ob eine fachliche Änderung überhaupt vorkommt.
       _meldungen.sort((x, y) => y.punkte - x.punkte);
-      _meldungen.slice(0, NEWS_LIMITS.chronikGeholt).forEach(m => {
+      _meldungen.forEach(m => {
         stories.push({
           // Die ID traegt Chronik, Monat und die sortierten Halter. Damit ist
           // sie stabil, solange derselbe sie haelt, und eine Uebernahme
@@ -20387,7 +20408,7 @@ function _buildStories(){
           // sie ueberlebt damit den Tagesdeckel, ohne die Ewige Tafel zu
           // ueberstimmen [§C33].
           prio: STORY_PRIO.chronik_geholt,
-          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid,
+          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_letzteMatchId2,
                     playerIds:m.n.pids.slice(0, 4), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
                     chronArt:m.t.kunst, aus:m.t.aus, punkte:m.punkte,
@@ -20425,6 +20446,7 @@ function _buildStories(){
             else lo = mid + 1;
           }
           const stand = prestigeOf(p.id, treffer);
+          const ausloeser = _insTagMatches.find(m => mts(m) === treffer);
           const oben = stufe >= 3;
           stories.push({
             id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key,
@@ -20436,7 +20458,8 @@ function _buildStories(){
                 + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
             when: treffer,
             prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
-            dataRef: {type:'insignium_stufe', pid:p.id, stufe,
+            dataRef: {type:'insignium_stufe', pid:p.id,
+                      matchId:ausloeser ? ausloeser.id : null, stufe,
                       stufeName:INSIGNIEN[stufe].name, punkte:stand.punkte, oben}
           });
         }
@@ -21861,7 +21884,7 @@ function _newsPrio(s, frisch){
 }
 
 function _newsTexteAuffrischen(list){
-  if(!Array.isArray(list) || !list.length) return list || [];
+  list = Array.isArray(list) ? list : [];
   let frisch = null;
   try { frisch = _buildStories(); } catch(e){ return list; }
   if(!Array.isArray(frisch) || !frisch.length) return list;
@@ -21870,7 +21893,9 @@ function _newsTexteAuffrischen(list){
   frisch.forEach(s => { if(s && s.id) nach.set(s.id, s); });
   let geaendert = false;
   const aus = [];
+  const vorhanden = new Set();
   list.forEach(s => {
+    if(s && s.id) vorhanden.add(s.id);
     const n = s && s.id ? nach.get(s.id) : null;
     const p = _newsPrio(s, n);
     if(!n){
@@ -21880,11 +21905,26 @@ function _newsTexteAuffrischen(list){
       aus.push(Object.assign({}, s, {prio: p}));
       return;
     }
-    if(n.title === s.title && n.desc === s.desc && p === s.prio){ aus.push(s); return; }
+    const refGleich = JSON.stringify(n.dataRef || {}) === JSON.stringify(s.dataRef || {});
+    if(n.title === s.title && n.desc === s.desc && p === s.prio
+       && (n.ic || s.ic) === s.ic && (n.cat || s.cat) === s.cat && refGleich){ aus.push(s); return; }
     geaendert = true;
     aus.push(Object.assign({}, s, {title: n.title, desc: n.desc, ic: n.ic || s.ic,
-                                   prio: p, dataRef: n.dataRef || s.dataRef}));
+                                   cat:n.cat || s.cat, prio: p,
+                                   dataRef: n.dataRef || s.dataRef}));
   });
+  // Der Datenbankbestand hält Historie und Zeitstempel stabil. Frisch
+  // ableitbare, dort aber noch fehlende Ereignisse werden sofort ergänzt:
+  // ein alter oder verzögerter DB-Stand darf neue Serien, Serienbrüche,
+  // Upsets oder Auszeichnungen nicht bis zum nächsten Sync verschlucken.
+  // Die deterministische ID verhindert Doppelungen; beim nächsten Upsert
+  // wird dieselbe Story regulär persistiert.
+  const ab = Date.now() - NEWS_FENSTER_TAGE * 86400000;
+  frisch.forEach(s => {
+    if(!s || !s.id || vorhanden.has(s.id) || new Date(s.when).getTime() < ab) return;
+    vorhanden.add(s.id); aus.push(s); geaendert = true;
+  });
+  if(geaendert) aus.sort((a, b) => new Date(b.when) - new Date(a.when));
   // Hat sich nichts geändert, gewinnt die alte Referenz — dann greift der
   // Memo eine Ebene weiter oben.
   const ergebnis = geaendert ? aus : list;
@@ -22021,11 +22061,9 @@ function _consolidateStories(list){
   // gebrochen (live=0) oder eine neue, kürzere Serie begonnen, ist die alte Story
   // stale → raus. Sonst zeigt „N Pechvögel" Spieler, die längst nicht mehr in
   // Serie verlieren (z.B. jemand mit 1-0-Bilanz als angeblicher 6er-Pechvogel).
-  // v9.9: dieselbe Logik für „ungeschlagen"/win_streak. Eine persistierte
-  // Sieges-Serien-Story bleibt nur, wenn die AKTUELLE Serie des Spielers die
-  // genannte Länge noch erreicht. Hat er verloren (live=0) oder eine neue,
-  // kürzere Serie begonnen, ist die alte Story stale → raus. Verhindert
-  // „Leo ungeschlagen (5)", obwohl Leo längst wieder verloren hat.
+  // Eine Sieges-Serien-MARKE ist dagegen ein historisches Match-Ereignis.
+  // Sie bleibt nach dem späteren Serienbruch wahr und wird nicht gegen den
+  // heutigen Live-Streak gefiltert.
   // v9.17: dieselbe Stale-Logik für „X Tage ohne Spiel". Die Story wird pro Pause
   // EINMAL persistiert (ID = letztes Match vor der Pause) und blieb danach für
   // immer im Feed stehen — auch wenn längst wieder gespielt wurde. Zwei alte
@@ -22108,7 +22146,6 @@ function _consolidateStories(list){
     if(_storyAbgemeldet(s && s.id)) return false;
     if(d.type === 'ambient') return !_tageMitNachricht.has(_fdKey(s.when));
     if(d.type === 'loss_streak' && d.pid) return (_liveLoss[d.pid] || 0) >= (d.streak || 0);
-    if(d.type === 'win_streak' && d.pid) return (_liveWin[d.pid] || 0) >= (d.streak || 0);
     if(d.type === 'top_form' && d.pid) return (_liveForm[d.pid] || 0) >= (d.wins || 0);
     if(d.type === 'dry_spell' && d.lastMatchId) return d.lastMatchId === _lastMatchId;
     // Ein Elo-Rekord, den es nicht mehr gibt, ist keine Nachricht mehr,
@@ -22159,7 +22196,7 @@ function _consolidateStories(list){
     // v9.9: streak5 ergänzt — die „ungeschlagen"-Story startet bei ≥5, deckt
     // also das 5er-Serie-Badge inhaltlich ab (sonst dieselbe Aussage doppelt:
     // „2 ungeschlagene Spieler: Leon (5)" + Badge „Leon: 5er Serie").
-    win_streak:      { badges:['streak5','streak10','streak15','streak20'], by:'pid' },
+    win_streak:      { badges:['streak5','streak10','streak15','streak20'], by:'matchId' },
     // v9.5: die „Losing Streak"-Badge (losing5) beschreibt exakt dasselbe
     // Ereignis wie die individuelle Niederlagenserie-Story (5 Pleiten in Folge)
     // → Badge entfällt, die reichere „Pechvögel"-Story bleibt.
@@ -22178,7 +22215,7 @@ function _consolidateStories(list){
     const d = s.dataRef || {};
     if(d.type === 'rivalry_milestone' && d.a && d.b) rivalryMsPairs.add([d.a, d.b].sort().join('|'));
     if(d.type === 'giant_slayer' && d.matchId) giantSlayerMatches.add(d.matchId);
-    if(d.type === 'win_streak' && d.pid) winStreakPids.add(d.pid);
+    if(d.type === 'win_streak' && d.pid) winStreakPids.add(d.pid + '|' + _fdKey(s.when));
     const rule = HL_COVERS[d.type];
     if(!rule) continue;
     const keyVal = rule.by === 'matchId' ? d.matchId : d.pid;
@@ -22194,7 +22231,7 @@ function _consolidateStories(list){
   const GROUPABLE = {
     loss_streak:     { label:'Pechvögel',           ic:'dropDouble', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Niederlagen nacheinander: ${f}.` },
     top_form:        { label:'über dem eigenen Schnitt', ic:'flame',  frag:s=>`${nameOf(s.dataRef.pid)} (+${s.dataRef.vorsprung ?? 0} Punkte)`, desc:f=>`Weiter vorn als sonst: ${f}.` },
-    win_streak:      { label:'ungeschlagene Spieler', ic:'flame',    frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Siege in Folge: ${f}.` },
+    win_streak:      { label:'Serien im Gleichschritt', ic:'flame', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Kein Stolpern bis zur Marke: ${f}.` },
     jubilee:         { label:'Jubiläen',            ic:'calendar',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.total}.)`, desc:f=>`Spiele-Meilensteine: ${f}.` },
     milestone_wins:  { label:'Sieg-Meilensteine',   ic:'medalTrio',  frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
     milestone_goals: { label:'Tor-Meilensteine',    ic:'thriller',   frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.milestone})`, desc:f=>`Erreicht: ${f}.` },
@@ -22257,7 +22294,7 @@ function _consolidateStories(list){
     // v9.5: Top-Form-Story entfällt für Spieler, die ohnehin schon eine
     // (konkretere) „Siege in Folge"-Story haben — sonst steht dieselbe heiße
     // Phase doppelt im Feed.
-    if(d.type === 'top_form' && d.pid && winStreakPids.has(d.pid)) continue;
+    if(d.type === 'top_form' && d.pid && winStreakPids.has(d.pid + '|' + _fdKey(s.when))) continue;
     if(d.type === 'badge_unlocked' && d.badgeId){
       if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
@@ -22266,8 +22303,14 @@ function _consolidateStories(list){
       if(!g){ g = { rep: s, pids: [], seen: new Set() }; badgeGroups.set(gk, g); slots.push({ b: gk }); }
       if(!g.seen.has(d.playerId)){ g.seen.add(d.playerId); g.pids.push(d.playerId); }
     } else if(GROUPABLE[d.type] && d.pid){
-      let g = typeGroups.get(d.type);
-      if(!g){ g = { rep: s, members: [], seen: new Set() }; typeGroups.set(d.type, g); slots.push({ t: d.type }); }
+      // Ereignisse verschiedener Tage sind verschiedene Geschichten. Die
+      // alte globale Gruppe machte aus allen Serienmarken des 14-Tage-Fensters
+      // eine einzige Karte und ließ historische 5er-Serien so verschwinden.
+      // Trägt die Story eine Partie, gruppieren nur Auslöser dieser Partie;
+      // Live-Zustände ohne Matchbezug bleiben je Tag zusammen.
+      const gk = d.type + '|' + (d.matchId || _fdKey(s.when));
+      let g = typeGroups.get(gk);
+      if(!g){ g = { type:d.type, rep: s, members: [], seen: new Set() }; typeGroups.set(gk, g); slots.push({ t: gk }); }
       // v9.4: pro Spieler nur EINMAL (list ist newest-first → jüngster Stand
       // bleibt). Verhindert Duplikate wie „Maxi, Maxi, Alex … Alex".
       if(!g.seen.has(d.pid)){ g.seen.add(d.pid); g.members.push(s); }
@@ -22315,7 +22358,7 @@ function _consolidateStories(list){
     if(slot.t){
       const g = typeGroups.get(slot.t);
       if(g.members.length <= 1){ result.push(g.rep); continue; } // Einzel: Original unverändert
-      const cfg = GROUPABLE[slot.t], rep = g.rep;
+      const cfg = GROUPABLE[g.type], rep = g.rep;
       const members = g.members.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
       const pids = members.map(m => (m.dataRef||{}).pid).filter(Boolean);
       const names = pids.map(nameOf);
@@ -22323,13 +22366,15 @@ function _consolidateStories(list){
       const when = members.reduce((mx, m) => (m.when > mx ? m.when : mx), members[0].when);
       const prio = members.reduce((mx, m) => ((m.prio||0) > mx ? (m.prio||0) : mx), 0);
       result.push({
-        id: 'grp_' + slot.t + '_' + pids.slice().sort().join('-'),
+        id: 'grp_' + slot.t.replace(/[^a-zA-Z0-9_-]/g, '_') + '_' + pids.slice().sort().join('-'),
         cat: rep.cat,
         ic: cfg.ic || rep.ic,
         title: `${members.length} ${cfg.label}: ${fmtNames(names)}`,
         desc: cfg.desc(frags.join(', ')),
         when, prio,
-        dataRef: { type:'group', sub: slot.t, playerIds: pids, frags }
+        dataRef: { type:'group', sub: g.type,
+                   matchId:(rep.dataRef||{}).matchId || null,
+                   playerIds: pids, frags }
       });
       continue;
     }
@@ -22340,15 +22385,16 @@ function _consolidateStories(list){
   // Fremde nebeneinander, und zwei Spieler bekamen im selben Spiel dieselbe
   // Auszeichnung auf zwei Karten. Zusammengelegt wird nur, wenn alle drei
   // Bedingungen zutreffen:
-  //   1. derselbe Moment — dieselbe Partie, oder derselbe Tag an der Tafel,
+  //   1. derselbe Moment — dieselbe Partie oder dieselbe Minute,
   //   2. dieselbe Art — Spieltags-Ereignisse untereinander, Tafel-Ereignisse
   //      untereinander; ein Fun Fact gehört nie dazu, der stand gestern
   //      genauso da,
-  //   3. ein gemeinsamer Satz — den liefert die stärkste Story, die anderen
-  //      werden zu Zeilen darunter.
-  // Vier Zeilen sind die Grenze: darüber ist es kein Ereignis mehr, sondern
-  // ein Tagesrückblick. Breaking bleibt immer einzeln — ein erstmals
-  // vergebener Liga-Rekord soll nicht als vierte Zeile enden.
+  //   3. ein gemeinsamer Satz — er wird aus allen Teilen formuliert; keine
+  //      Einzelmeldung wird zum Kopf des gesamten Bundles.
+  // Eine verbundene Kette bleibt vollständig. Die Karte darf länger werden,
+  // aber kein fünftes Ereignis fällt wieder als scheinbar unabhängige Karte
+  // daneben. Breaking bleibt bei Spieltagsmeldungen einzeln; an der Ewigen
+  // Tafel reist seine Dringlichkeit mit dem vollständigen Bundle.
   // Gebuendelt wird nach der MINUTE, nicht nach der Partie-ID. Die Regel hiess
   // „dieselbe Partie", und genau ein Story-Typ trug ueberhaupt eine
   // `matchId`: `badge_unlocked`. Alles andere, was im selben Moment entsteht
@@ -22359,13 +22405,12 @@ function _consolidateStories(list){
   //
   // Genau eine Minute der ganzen Ligageschichte traegt zwei Partien; dort
   // bedeutet die Minute dasselbe wie der Moment.
-  const SAMMEL_SPIEL = new Set(['badge_unlocked','streak_killer','giant_slayer',
+  const SAMMEL_SPIEL = new Set(['badge_unlocked','streak_killer','giant_slayer','group',
     'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee',
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling','chronik_geholt']);
-  const SAMMEL_MAX = 4;
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   // ── Was ein Spieler holen kann ─────────────────────────────────────
@@ -22386,8 +22431,9 @@ function _consolidateStories(list){
   // die Wendung dahinter baut die Schlagzeile. Sie steht je Sorte mit ihrem
   // eigenen VERB da: „holt einen Liga-Rekord und feiert ein Jubiläum" liest
   // sich richtig, „holt einen Liga-Rekord und ein Jubiläum" nicht.
-  // `rekord_gesteigert` fehlt hier: Ausbauen ist die schwächste der drei
-  // Rekordmeldungen und ohnehin gedeckelt [§C33] — es trägt keinen Moment.
+  // `rekord_gesteigert` fehlt nur auf der persönlichen Erfolgsachse: Ein
+  // Ausbau gehört weiterhin vollständig in den Tafel-Moment, ist aber kein
+  // eigener, mehrfach „geholter" Laufbahnerfolg.
   const ERFOLG_ART = {
     rekord_erstmals:  'rekord',   rekord_geholt:    'rekord',
     chronik_geholt:   'chronik',  chronik_erstling: 'erstling',
@@ -22494,12 +22540,9 @@ function _consolidateStories(list){
     const tk = String(st.title || '').trim();
     if(tk && g.titel.has(tk)) return;
     if(tk) g.titel.add(tk);
-    // Vier Zeilen sind die Grenze — aber nur dort, wo die Karte einen MOMENT
-    // zusammenfasst und darüber ein Tagesrückblick wäre. Die Karte über einen
-    // Spieler und die über einen Erfolg tragen jede Zeile: dort IST die
-    // Vollständigkeit die Aussage, und eine fünfte Chronik zu verschweigen
-    // hieße, die Karte gegen ihren eigenen Zweck zu bauen.
-    if(g.teile.length < (g.max || SAMMEL_MAX)) g.teile.push(st);
+    // Vollständigkeit ist die Aussage des Bundles. Eine fünfte Spur zu
+    // verschweigen hieße, dieselbe Partie wieder auf zwei Karten zu zerlegen.
+    if(g.teile.length < (g.max || Infinity)) g.teile.push(st);
   };
   // ── Wer einzeln bleibt ─────────────────────────────────────────────
   // Zwei Sorten gehen nie in ein Buendel: Breaking, weil ein erstmals
@@ -22531,6 +22574,50 @@ function _consolidateStories(list){
   // nie, die Verschmelzung kostet also nichts.
   const spielMinuten = new Map();
   const _pidsVon = st => { try { return _newsPids(st) || []; } catch(e){ return []; } };
+  // Die Ewige Tafel wird zuerst als eigener Ereignisstrom gebündelt. Alle
+  // Änderungen mit derselben Partie ODER derselben Minute gehören in eine
+  // Karte, auch wenn darunter ein erstmals vergebener Rekord oder eine
+  // legendäre Chronik liegt. Diese Ausnahmen blieben bisher einzeln stehen
+  // und erzeugten genau die Tafel-Kaskaden neben der Sammelkarte.
+  //
+  // Zwei Schlüssel können eine Kette bilden (A teilt die Partie mit B, B die
+  // Minute mit C). Union-Find macht daraus zuverlässig ein Ereignis, ohne
+  // den ganzen Tag künstlich zusammenzukleben. Alte DB-Zeilen ohne matchId
+  // werden weiterhin über ihren fachlichen Zeitpunkt korrekt erfasst.
+  const _tafelAchse = new Set();
+  const _tafelKandidaten = result.map((st, idx) => ({st, idx, d:(st && st.dataRef) || {}}))
+    .filter(x => SAMMEL_TAFEL.has(x.d.type));
+  if(_tafelKandidaten.length > 1){
+    const eltern = _tafelKandidaten.map((_, i) => i);
+    const finde = i => { while(eltern[i] !== i){ eltern[i] = eltern[eltern[i]]; i = eltern[i]; } return i; };
+    const vereinige = (a, b) => { a = finde(a); b = finde(b); if(a !== b) eltern[b] = a; };
+    const jeMinute = new Map(), jeMatch = new Map();
+    _tafelKandidaten.forEach((x, i) => {
+      const mk = _minKey(x.st.when);
+      if(jeMinute.has(mk)) vereinige(i, jeMinute.get(mk)); else jeMinute.set(mk, i);
+      if(x.d.matchId){
+        if(jeMatch.has(x.d.matchId)) vereinige(i, jeMatch.get(x.d.matchId));
+        else jeMatch.set(x.d.matchId, i);
+      }
+    });
+    const komponenten = new Map();
+    _tafelKandidaten.forEach((x, i) => {
+      const k = finde(i), l = komponenten.get(k) || [];
+      l.push(x); komponenten.set(k, l);
+    });
+    komponenten.forEach(l => {
+      if(l.length < 2) return;
+      const ident = l.map(x => String(x.st.id || '')).sort()[0];
+      const key = 'tafel|moment|' + ident;
+      const g = {key, art:'tafel', teile:[], titel:new Set(), max:Infinity,
+                 erster:l.reduce((n, x) => Math.min(n, x.idx), l[0].idx)};
+      sammelGruppen.set(key, g);
+      l.slice().sort((a, b) => a.idx - b.idx).forEach(x => {
+        _tafelAchse.add(x.st.id);
+        _sammelZeile(g, x.st);
+      });
+    });
+  }
   // ── Zuerst der Erfolg, dann der Spieler, dann der Rest ─────────────
   // Die Reihenfolge ist nicht beliebig. Ein Erfolg, den mehrere zugleich
   // erreichen, ist EINE Nachricht der Liga und darf nicht zerrissen werden:
@@ -22546,6 +22633,7 @@ function _consolidateStories(list){
   const einzel = [];
   result.forEach((st, idx) => {
     const d = (st && st.dataRef) || {};
+    if(_tafelAchse.has(st.id)) return;
     if(_sammelEinzeln(st, d)) return;
     const pids = _pidsVon(st);
     if(pids.length === 1 && ERFOLG_ART[d.type]) einzel.push({st, idx, d, pids});
@@ -22581,15 +22669,9 @@ function _consolidateStories(list){
   _achseBauen('spieler', k => k.pids[0], 'spieler');
   result.forEach((st, idx) => {
     const d = (st && st.dataRef) || {};
+    if(_tafelAchse.has(st.id)) return;
     if(_sammelEinzeln(st, d)) return;
     if(_achse.has(st.id)) return;    // steht schon auf einer der neuen Karten
-    if(SAMMEL_TAFEL.has(d.type)){
-      const key = 'tafel|' + _tagKey(st.when);
-      let g = sammelGruppen.get(key);
-      if(!g){ g = {key, art:'tafel', teile:[], titel:new Set(), erster: idx}; sammelGruppen.set(key, g); }
-      _sammelZeile(g, st);
-      return;
-    }
     if(!SAMMEL_SPIEL.has(d.type)) return;
     const mk = _minKey(st.when);
     let liste = spielMinuten.get(mk);
@@ -22615,7 +22697,7 @@ function _consolidateStories(list){
     gruppen.forEach((gr, i) => {
       if(gr.eintraege.length < 2) return;
       const key = 'spiel|' + mk + '|' + i;
-      const g = {key, art:'spiel', teile:[], titel:new Set(), erster: gr.erster};
+      const g = {key, art:'spiel', teile:[], titel:new Set(), max:Infinity, erster: gr.erster};
       sammelGruppen.set(key, g);
       gr.eintraege.sort((a, b) => a.idx - b.idx).forEach(e => _sammelZeile(g, e.st));
     });
@@ -22684,8 +22766,9 @@ function _consolidateStories(list){
       if(nr) bilder.push(nr === 1 ? 'eine Bestmarke' : `${nr} Bestmarken`);
       if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${nc} Monatschroniken`);
       if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${ni} neue Insignien`);
-      const mehrfach = nr + nc + ni > 1;
-      neuText = `${_namenListe(bilder.length ? bilder : ['Mehrere Laufbahnen'])} ${mehrfach ? 'geben' : 'gibt'} der Ewigen Tafel an diesem Tag ein neues Bild.`;
+      const bild = _namenListe(bilder.length ? bilder : ['mehrere Laufbahnen']);
+      neuText = `Ein Moment, ${_zahlwortDe(teile.length)} Spuren: `
+        + `${bild.charAt(0).toUpperCase() + bild.slice(1)} ordnen die Ewige Tafel neu.`;
     } else {
       const namen = pids.map(nameOf);
       const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
@@ -22743,8 +22826,9 @@ function _consolidateStories(list){
       prio: Math.max((kopf.prio || 0) + 2 * Math.max(1, teile.length - 1),
                      STORY_PRIO['sammel_' + art] || 0),
       dataRef: {type:'sammel', quelle: art,
-                matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids.slice(0, 4),
+                matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids,
                 kopfTyp: (kopf.dataRef||{}).type || '',
+                breaking: teile.some(t => { try { return _isBreaking(t); } catch(e){ return false; } }),
                 // Die Stufe reist mit: ohne sie kann die Karte das Zeichen
                 // nicht zeigen, um das sie geht [§C30].
                 stufe: (kopf.dataRef||{}).stufe,
@@ -22753,21 +22837,22 @@ function _consolidateStories(list){
                 // sie handelt.
                 teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t), text: t.desc,
                                         typ: (t.dataRef||{}).type || '',
-                                        // Ein Spieler zeigt je Monat nur EINE
-                                        // Chronik [§C32]. In einer Tafel mit
-                                        // vier Zeilen war nicht zu sehen,
-                                        // welche davon das ist.
+                                         // Ein Spieler zeigt je Monat nur EINE
+                                         // Chronik [§C32]. Auch in einer großen
+                                         // Tafel muss sichtbar bleiben, welche
+                                         // davon das ist.
                                         marke: (t.dataRef||{}).zeigt === true
                                                ? 'in der Chronik' : '',
-                                        pids: _pidsVon(t).slice(0, 2)}))}
+                                         pids: _pidsVon(t)}))}
     });
   });
 
   // ── Die dritte Kachel derselben Sorte erzählt nichts mehr ──────────
-  // Drei „X & Y kommen als Team nicht in Tritt" untereinander sind keine
+  // Drei „X & Y kommen als Team nicht in Tritt" am selben Tag sind keine
   // drei Nachrichten, sondern eine Nachricht und zwei Wiederholungen. Der
-  // Feed behält je Sorte die zwei jüngsten; was darunter liegt, hat die
-  // Liga schon zweimal gelesen.
+  // Deckel gilt deshalb pro Tag, nicht mehr für das gesamte 14-Tage-Fenster:
+  // sonst verschwanden ältere 5er-Serien, Serienbrüche und Upsets allein,
+  // weil derselbe Typ Tage später noch einmal vorkam.
   //
   // Ausgenommen sind die seltenen Ereignisse: einen zweiten Elo-Rekord in
   // derselben Woche zu unterschlagen wäre genau der Fehler, den die Regel
@@ -22779,8 +22864,9 @@ function _consolidateStories(list){
   const behalten = gesammelt.filter(s => {
     const t = (s && s.dataRef && s.dataRef.type) || '';
     if(!t || OHNE_DECKEL.has(t) || TAG_PFLICHT.has(t)) return true;
-    gezaehlt[t] = (gezaehlt[t] || 0) + 1;
-    return gezaehlt[t] <= NF_DECKEL;
+    const k = t + '|' + _tagKey(s.when);
+    gezaehlt[k] = (gezaehlt[k] || 0) + 1;
+    return gezaehlt[k] <= NF_DECKEL;
   });
   // ── Der Deckel darf niemanden ganz verschwinden lassen ─────────────
   // Im Feed hat jeder ein Gesicht, und jeder gewertete Spieler kommt vor
@@ -22810,7 +22896,7 @@ function _consolidateStories(list){
   // Position Chronologie, und die Tafel ist nach Tagen gegliedert: eine Karte,
   // die dabei den Tag wechselt, steht unter dem falschen Kopf. Gemessen ergab
   // das acht Tagesköpfe für sieben Tage.
-  // Die Auflockerung leisten jetzt der Tageskopf und die sechs Kartenformen,
+  // Die Auflockerung leisten jetzt der Tageskopf und die Kartenformen,
   // gegen die Häufung wirken der Deckel je Sorte und die Sammelkarte. Der Feed
   // steht dafür wieder streng von neu nach alt.
   const tagVon = s => { const d = new Date(s.when);
@@ -22861,9 +22947,107 @@ function _consolidateStories(list){
     if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
     try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
   });
+
+  // ── Zwei redaktionelle Hälften ────────────────────────────────────
+  // Eine zusammengeführte Tafel-Karte kann zwölf fachliche Änderungen
+  // tragen, während zwölf Spieltagskarten weiterhin zwölf Rahmen wären.
+  // Die Mischung wird deshalb am sichtbaren INHALT gemessen: ein Bundle
+  // zählt mit seinen Zeilen. Zielkorridor sind 40–60 % Ewige Tafel gegenüber
+  // Spieltag plus automatisch erzeugten Fun Facts.
+  //
+  // Gekürzt werden nur zusätzliche Spieltagskarten. Unantastbar bleiben die
+  // Ewige Tafel selbst, Fun Facts, Pflichtkarten, Breaking und die spannendste
+  // Karte jedes echten Spieltags — damit die Karte des Tages weiterhin aus
+  // dem vollständigen starken Feld stammt. Ohne nennenswerte Tafel-Aktivität
+  // greift keine Quote; ein ruhiges Tafel-Fenster darf den Feed nicht leeren.
+  const _gewicht = s => (s && s.dataRef && s.dataRef.type === 'sammel')
+    ? Math.max(1, ((s.dataRef || {}).teile || []).length) : 1;
+  const _istTafel = s => !!s && (s.cat === 'tafel' || (s.dataRef || {}).quelle === 'tafel');
+  let ausbalanciert = fertig;
+  const tafelGewicht = fertig.filter(_istTafel).reduce((n, s) => n + _gewicht(s), 0);
+  if(tafelGewicht >= 4){
+    const minAnteil = NEWS_LIMITS.tafelAnteilMin || 0.40;
+    const funGewicht = fertig.filter(s => (s.dataRef || {}).type === 'ambient')
+      .reduce((n, s) => n + _gewicht(s), 0);
+    // T / (T + Spiel + Fun) >= min  →  Spiel <= T*(1-min)/min - Fun
+    const spielBudget = Math.max(0,
+      Math.floor(tafelGewicht * (1 - minAnteil) / minAnteil - funGewicht));
+    const muss = new Set();
+    fertig.forEach(s => {
+      const typ = (s.dataRef || {}).type;
+      let breaking = false;
+      try { breaking = (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){}
+      if(_istTafel(s) || typ === 'ambient' || typ === 'season_endgame'
+         || TAG_PFLICHT.has(typ) || breaking) muss.add(s);
+    });
+    // Die spannendste wuerdige Story jedes Spieltags bleibt Kandidat fuer das
+    // goldene Band, selbst wenn sie keine Pflichtkarte ist.
+    const tage = new Map();
+    fertig.filter(s => !_istTafel(s) && (s.dataRef || {}).type !== 'ambient').forEach(s => {
+      const k = _tagKey(s.when);
+      if(!_newsTagMs(k).length) return;
+      const alt = tage.get(k);
+      const spannung = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(s) : (s.prio || 0);
+      if(!alt || spannung > alt.spannung) tage.set(k, {s, spannung});
+    });
+    tage.forEach(x => muss.add(x.s));
+
+    let spielGewicht = [...muss]
+      .filter(s => !_istTafel(s) && (s.dataRef || {}).type !== 'ambient')
+      .reduce((n, s) => n + _gewicht(s), 0);
+    const extras = fertig.filter(s => !muss.has(s) && !_istTafel(s)
+      && (s.dataRef || {}).type !== 'ambient')
+      .sort((a, b) => {
+        const sa = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(a) : (a.prio || 0);
+        const sb = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(b) : (b.prio || 0);
+        return sb - sa || (b.prio || 0) - (a.prio || 0);
+      });
+    // Zuerst verschiedene Motive, erst danach die zweite Karte derselben
+    // Sorte. So besteht das Restbudget nicht aus vier Auszeichnungen,
+    // während Serienbruch, Upset und Formlauf komplett verschwinden.
+    const motive = s => {
+      const d = (s && s.dataRef) || {};
+      return d.type === 'sammel'
+        ? [...new Set((d.teile || []).map(t => t.typ).filter(Boolean))]
+        : [d.type || ''];
+    };
+    const vertreten = new Set();
+    [...muss].forEach(s => motive(s).forEach(t => vertreten.add(t)));
+    const nehmen = (nurNeu) => extras.forEach(s => {
+      if(muss.has(s)) return;
+      const neu = motive(s).some(t => t && !vertreten.has(t));
+      if(nurNeu !== neu) return;
+      const w = _gewicht(s);
+      if(spielGewicht + w > spielBudget) return;
+      muss.add(s); spielGewicht += w;
+      motive(s).forEach(t => vertreten.add(t));
+    });
+    nehmen(true);
+    nehmen(false);
+
+    // Der redaktionelle Korridor darf kein Gesicht vollständig aus dem Feed
+    // schneiden. Falls eine Person nur in einer schwächeren Zusatzkarte
+    // vorkommt, kommt die günstigste davon zurück; Vielfalt geht hier vor
+    // einer mathematisch exakt getroffenen Prozentzahl.
+    const sollGesichter = new Set();
+    fertig.forEach(s => gesicht(s).forEach(p => sollGesichter.add(p)));
+    const hatGesichter = new Set();
+    [...muss].forEach(s => gesicht(s).forEach(p => hatGesichter.add(p)));
+    while([...sollGesichter].some(p => !hatGesichter.has(p))){
+      const fehlt = new Set([...sollGesichter].filter(p => !hatGesichter.has(p)));
+      const kandidaten = extras.filter(s => !muss.has(s))
+        .map(s => ({s, neu:gesicht(s).filter(p => fehlt.has(p)).length, w:_gewicht(s)}))
+        .filter(x => x.neu > 0)
+        .sort((a, b) => (b.neu / b.w) - (a.neu / a.w) || b.neu - a.neu || a.w - b.w);
+      if(!kandidaten.length) break;
+      muss.add(kandidaten[0].s);
+      gesicht(kandidaten[0].s).forEach(p => hatGesichter.add(p));
+    }
+    ausbalanciert = fertig.filter(s => muss.has(s));
+  }
   _cache._consolFrom = list;
-  _cache._consolList = fertig;
-  return fertig;
+  _cache._consolList = ausbalanciert;
+  return ausbalanciert;
 }
 
 // Wird in loadAll() aufgerufen. Generator → DB-Upsert → DB-Read → Cache.
@@ -23381,6 +23565,10 @@ function openNewsFeed(){
 // bestehende UND neue persistierte Rows, ohne Regenerierung).
 function _isBreaking(s){
   const d = (s && s.dataRef) || {};
+  // Eine Tafel-Sammelkarte behält die höchste Dringlichkeit ihrer Teile.
+  // Sonst würde ein erstmals vergebener Liga-Rekord beim vorgeschriebenen
+  // Bündeln plötzlich seinen Breaking-Charakter verlieren.
+  if(d.type === 'sammel') return d.breaking === true;
   // Breaking heißt: das passiert vielleicht einmal im Monat. Erlaubt sind
   // ausschließlich extrem seltene Auszeichnungen und echte EREIGNISSE —
   // etwas, das vorher noch nie da war oder die Spitze der Liga verschiebt.
@@ -23426,7 +23614,10 @@ function _newsPids(s){
   };
   ['playerId','ambientPid','pid','championId','a','b','playerIds','ambientPids',
    'breakerIds','victimPid'].forEach(k => { if(d[k] != null) dazu(d[k]); });
-  return raus.slice(0, 3);
+  // Nicht hier kürzen: Große Tafel-Bundles brauchen die vollständige Zahl,
+  // damit „+3" auch wirklich drei weitere Beteiligte meint. Die Darstellung
+  // selbst zeigt weiterhin höchstens zwei Wappen und fasst den Rest zusammen.
+  return raus;
 }
 
 // Das Gesicht links auf der Karte. Vorher stand dort nichts: die News waren
@@ -23483,7 +23674,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
   // Eine Sammelkarte hat einen eigenen Gruppenkopf. Darunter stehen ALLE
-  // zwei bis vier Einzelereignisse im Band; keines wird zum heimlichen Kopf
+  // verbundenen Einzelereignisse im Band; keines wird zum heimlichen Kopf
   // und keines hinter „weitere" versteckt [§C33].
   const sammelBand = (d.type === 'sammel')
     ? _newsSammelBand(d.teile, [s.title], true) : '';
@@ -23502,7 +23693,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     fuss = _newsZahlband(_newsSpielZahlen(s));
   } else if(sorte === 'tafel'){
     const w = _newsTafelWert(s);
-    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'gold') : _newsGesichtHtml(s)}</div>`;
+    // Ein Tafel-Bundle zeigt Wert UND Beteiligte. Der große Zähler erklärte
+    // bisher zwar, wie viele Spuren zusammenlaufen, ließ aber alle genannten
+    // Spieler bildlich verschwinden. Die kompakte Chipgruppe bleibt neben
+    // dem Wert und macht keinen einzelnen Halter zum Hauptdarsteller.
+    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'gold') : ''}${_newsGesichtHtml(s)}</div>`;
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
@@ -29279,13 +29474,13 @@ function _avRingChipHtml(pid){
 //     mit fallenden Erträgen. Sie dürfen wechseln, dafür sind sie da.
 //
 //     WIEDERHOLUNG. JEDE positive Auszeichnung zählt bei jedem Erreichen,
-//     aber als nachvollziehbare gedämpfte Folge. Legendary beginnt bei
-//     50 und sinkt je Mal um 10 %, Rare beginnt bei 20 und sinkt um 15 %,
-//     Common beginnt bei 3 und sinkt um 20 %. Damit ergeben drei Dominator-
-//     Erfolge 50 + 45 + 40,5; drei Carry-Erfolge 3 + 2,4 + 1,92. Wachstum
-//     bleibt über kleine Mindestwerte immer positiv und ohne Obergrenze;
-//     häufige Alltags-Erfolge können eine Laufbahn aber nicht kurzfristig
-//     durch bloße Menge beherrschen.
+//     aber als nachvollziehbare, harmonisch gedämpfte Folge. Die zweite
+//     Verleihung liegt je nach Wertigkeit 5, 10, 12, 15 oder 20 Prozent
+//     unter der ersten; danach wird die Kurve immer flacher. Drei Dominator-
+//     Erfolge ergeben so 50 + 45 + rund 41, drei Carry-Erfolge 3 + 2,4 + 2.
+//     Anders als eine geometrische Reihe bleibt jeder weitere Erfolg positiv
+//     und die Summe hat keine Obergrenze. Häufige Alltags-Erfolge können eine
+//     Laufbahn aber nicht kurzfristig durch bloße Menge beherrschen.
 //
 //     DIE SCHWELLEN sind an den echten 466 Partien kalibriert [§13.9]:
 //     nach vier Monaten Liga trägt niemand den Ordensstern; seine Schwelle
@@ -29295,10 +29490,11 @@ function _avRingChipHtml(pid){
 //     Schritt, ohne dass es eine sechste Stufe braucht.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 
-// Die Art bleibt für Chroniken und Rekorde relevant. Auszeichnungen folgen
-// allein ihrer sichtbaren Seltenheitsklasse: zwei Legendary-Erfolge mit
-// derselben Anzahl sind exakt gleich viel wert. So widerspricht die Rechnung
-// nie mehr dem goldenen, lila oder grünen Rang im Auszeichnungsblatt.
+// Die Art bleibt für Chroniken und Rekorde relevant. Bei Auszeichnungen gibt
+// die sichtbare Seltenheitsklasse den Rahmen vor. Innerhalb dieses Rahmens
+// dürfen wenige fachlich begründete Spitzenleistungen höher liegen: Eine
+// Meisterschaft ist mehr wert als Dominator, Dominator mehr als Team der
+// Saison; ein Wochensieg mehr als der deutlich mengenabhängigere Tagessieg.
 const PRESTIGE_ART = {leistung:2, ereignis:1, schatten:0};
 
 // Wie die drei Rekordarten in der Aufschlüsselung heißen. Ohne Eintrag gilt
@@ -29306,73 +29502,105 @@ const PRESTIGE_ART = {leistung:2, ereignis:1, schatten:0};
 const PRESTIGE_ART_NAME = {leistung:'Leistung', ereignis:'Ereignis',
                            schatten:'Schatten'};
 
-// Startwert, Restwert und Mindestwert der nächsten Verleihung. Die Klasse
-// bestimmt alle drei:
-// je wertvoller, desto höher der Start und desto langsamer die Abnahme.
-// Der Mindestwert verhindert eine mathematische Sackgasse: eine rein
-// geometrische Reihe nähert sich einer festen Obergrenze. Dann wären spätere
-// Zacken des Ordenssterns trotz weiterer Erfolge irgendwann unerreichbar.
+// Startwert und Abnahme der nächsten Verleihung. Die Klasse setzt den
+// Standard: je wertvoller, desto höher der Start und desto langsamer die
+// Abnahme. Fünf fachlich begründete Spitzenleistungen überschreiben diesen
+// Standard sichtbar. Die harmonische Folge darunter flacht ab, bleibt aber
+// bei jedem endlichen Rang positiv und besitzt keine feste Obergrenze.
 // Negative Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
 const PRESTIGE_AUSZEICHNUNG = {
-  legendary:{basis:50, faktor:0.90, minimum:5},
-  rare:     {basis:20, faktor:0.85, minimum:1},
-  common:   {basis:3,  faktor:0.80, minimum:0.1},
-  negative: {basis:0,  faktor:0,    minimum:0}
+  legendary:{basis:40, abnahme:0.10},
+  rare:     {basis:20, abnahme:0.15},
+  common:   {basis:3,  abnahme:0.20},
+  negative: {basis:0,  abnahme:1}
+};
+// Nur diese fünf Abweichungen sind fachliche Rangfolgen, keine versteckten
+// Multiplikatoren. Sie stehen deshalb auch lesbar in der Aufschlüsselung.
+// Meister wächst mit der sanftesten Kurve. Dominator und Team der Saison
+// teilen die 10-%-Kurve, damit Dominator auch bei gleicher Anzahl davor
+// bleibt. POTD fällt schneller, weil es stark von der Zahl der eigenen
+// Spieltage abhängt; POTW bleibt wertvoller.
+const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
+  champion:       {basis:55, abnahme:0.05, hinweis:'Saisonspitze: Meister'},
+  dominator_400:  {basis:50, abnahme:0.10, hinweis:'Saisonspitze: Dominator'},
+  team_of_season: {basis:45, abnahme:0.10, hinweis:'Saisonspitze: Team der Saison'},
+  potw:           {basis:24, abnahme:0.12, hinweis:'Wochensieg'},
+  potd:           {basis:15, abnahme:0.20, hinweis:'Tagessieg'},
 };
 
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
 // Ein heute gehaltener Liga-Rekord wiegt deutlich schwerer als eine
 // Auszeichnung — es gibt ihn nur einmal in der Liga.
-const PRESTIGE_REKORD = 36;
+const PRESTIGE_REKORD = 48;
 
 // ─── Wiederholung zählt weniger, aber nie nichts ────────────────────
 // Wer dieselbe Sache zum dritten Mal holt, hat weniger Neues gezeigt als
 // beim ersten Mal — gegen sich selbst gemessen, nicht gegen andere. Jede
-// weitere Verleihung derselben Sache ist deshalb prozentual weniger wert.
-// Legendary sinkt um 10 %, Rare um 15 %, Common um 20 %. Ab dem kleinen
-// Mindestwert sinkt nur die Entwertung nicht weiter; die Summe wächst damit
-// ohne Obergrenze. So zählt auch der tausendste Carry noch, aber mit 0,1
-// Punkten so wenig, dass bloße Menge einen Meistertitel nicht kurzfristig
+// weitere Verleihung derselben Sache ist deshalb weniger wert. Die zweite
+// sinkt exakt um den sichtbaren Prozentsatz; danach wird die Kurve harmonisch
+// flacher. So bleibt jeder weitere Erfolg positiv und die Summe wächst ohne
+// Obergrenze, während bloße Menge einen Meistertitel nicht kurzfristig
 // überholt.
 //
 // Sie gilt NUR für dieselbe Sache. Eine Meisterschaft und ein Team der
 // Saison sind zwei verschiedene Dinge und zählen beide voll: das Stapeln
 // über verschiedene Erfolge hinweg war der Fehler, den §C34 abgestellt hat,
 // und der bestrafte genau den, der viel erreicht.
-function _wiederholungsWert(n, rate, mindestAnteil){
-  const r = Math.max(0, Math.min(0.999, Number(rate) || 0));
+function _auszeichnungsRegel(id){
+  const klasse = rarityOf(id);
+  const grund = PRESTIGE_AUSZEICHNUNG[klasse] || PRESTIGE_AUSZEICHNUNG.common;
+  return Object.assign({klasse}, grund, PRESTIGE_AUSZEICHNUNG_SPEZIAL[id] || {});
+}
+
+function _auszeichnungsAbnahme(id){
+  return _auszeichnungsRegel(id).abnahme;
+}
+
+function _wiederholungsWert(n, abnahme){
   const k = Math.max(0, n | 0);
   if(!k) return 0;
-  const floor = Math.max(0, Math.min(1, Number(mindestAnteil) || 0));
-  let summe = 0, teil = 1, i = 0;
-  // Bis zum Mindestwert ist die Folge geometrisch. Danach lässt sich der
-  // beliebig lange Rest in einem Schritt addieren; auch 100.000 Erfolge
-  // kosten damit keine 100.000 Schleifendurchläufe.
-  while(i < k && teil > floor){ summe += teil; teil *= r; i++; }
-  return summe + (k - i) * floor;
+  const a = Math.max(0, Math.min(0.999, Number(abnahme) || 0));
+  const c = a / Math.max(0.001, 1 - a);
+  let summe = 0;
+  for(let i = 0; i < k; i++) summe += 1 / (1 + c * i);
+  return summe;
 }
 
 function auszeichnungsPunkte(id, n){
-  const klasse = rarityOf(id);
-  const regel = PRESTIGE_AUSZEICHNUNG[klasse] || PRESTIGE_AUSZEICHNUNG.common;
-  const anteil = regel.basis > 0 ? regel.minimum / regel.basis : 0;
-  return regel.basis * _wiederholungsWert(n, regel.faktor, anteil);
+  const regel = _auszeichnungsRegel(id);
+  return regel.basis * _wiederholungsWert(n, _auszeichnungsAbnahme(id));
 }
 
 function auszeichnungsTeilwert(id, n){
-  const klasse = rarityOf(id);
-  const regel = PRESTIGE_AUSZEICHNUNG[klasse] || PRESTIGE_AUSZEICHNUNG.common;
+  const regel = _auszeichnungsRegel(id);
   if(regel.basis <= 0 || n <= 0) return 0;
-  return Math.max(regel.minimum, regel.basis * Math.pow(regel.faktor, n - 1));
+  const a = _auszeichnungsAbnahme(id);
+  return regel.basis / (1 + (a / Math.max(0.001, 1 - a)) * (n - 1));
 }
 
 // Dieselbe Monatschronik zeigt beim zweiten Tragen weniger Neues, bleibt aber
 // wie jede erworbene Quelle dauerhaft und wächst bei jedem weiteren Monat.
-const PRESTIGE_CHRONIK_WIEDERHOLUNG = 0.9;
-// Auch eine erneut getragene Monatschronik bleibt ein echter Monatserfolg.
-// Fünf Punkte sind klein gegenüber ihrem Grundwert (meist 50–115), halten
-// aber die Laufbahn auch nach sehr vielen Jahren offen.
-const PRESTIGE_CHRONIK_MINDEST = 5;
+function _wurzelStaffel(rang, breite){
+  return Math.floor(Math.max(1, rang | 0) / Math.max(1, breite | 0)) + 1;
+}
+
+function _wurzelStapel(liste, breite){
+  let summe = 0;
+  liste.sort((a, b) => b.p - a.p).forEach((q, i) => {
+    q.voll = q.p;
+    q.rang = i + 1;
+    q.staffel = _wurzelStaffel(q.rang, breite);
+    q.p = q.voll / Math.sqrt(q.staffel);
+    summe += q.p;
+  });
+  return summe;
+}
+
+function _wurzelZuwachs(werte, neuerWert, breite){
+  const summe = a => a.slice().sort((x, y) => y - x)
+    .reduce((n, x, i) => n + x / Math.sqrt(_wurzelStaffel(i + 1, breite)), 0);
+  return Math.max(0, summe((werte || []).concat([neuerWert])) - summe(werte || []));
+}
 
 // Wie nah ein Rekord sein muss, um noch als Ziel zu gelten: höchstens die
 // Hälfte des Bestwerts entfernt. Darüber ist der Hinweis entmutigend
@@ -29556,29 +29784,20 @@ function prestigeTabelle(bisMs){
   aktive.forEach(p => {
     const r = roh[p.id];
 
-    // Nur heute gehaltene Rekorde werden gestapelt: der n-te trägt 1/√n.
-    const stapel = (liste) => {
-      let summe = 0;
-      liste.sort((a, b) => b.p - a.p).forEach((q, i) => {
-        q.voll = q.p;
-        q.rang = i + 1;
-        q.p = q.voll / Math.sqrt(i + 1);
-        summe += q.p;
-      });
-      return summe;
-    };
+    // Nur heute gehaltene Rekorde werden gestapelt: Rang 1 zählt voll,
+    // Rang 2–3 mit √2, Rang 4–5 mit √3 usw.
     // Auszeichnungen: sichtbare Klasse × gedämpfte Wiederholungsfolge.
     // Kein Quellenlimit verändert anschließend den Wert oder macht ihn von
     // der Sortierreihenfolge anderer Auszeichnungen abhängig.
     const az = [];
     r.badges.forEach(b => {
       const kl = rarityOf(b.id);
-      const regel = PRESTIGE_AUSZEICHNUNG[kl] || PRESTIGE_AUSZEICHNUNG.common;
+      const regel = _auszeichnungsRegel(b.id);
       const w = auszeichnungsPunkte(b.id, b.n);
       if(w <= 0) return;
       az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl,
-               mal:b.n, rate:regel.faktor, abnahme:1-regel.faktor,
-               basis:regel.basis, minimum:regel.minimum, voll:w});
+               mal:b.n, abnahme:_auszeichnungsAbnahme(b.id),
+               hinweis:regel.hinweis || '', basis:regel.basis, voll:w});
     });
     const pb = az.reduce((sum, q) => sum + q.p, 0);
 
@@ -29588,27 +29807,20 @@ function prestigeTabelle(bisMs){
     // „Makellose" zeigt weniger Neues als der erste. Sortiert nach Saison,
     // damit der FRÜHESTE Monat den vollen Wert trägt — sonst hinge es an
     // der Reihenfolge, in der die Tabelle gerade gebaut wird.
-    const _malMonat = {};
-    r.monat.slice().sort((a,b) => a.sid < b.sid ? -1 : a.sid > b.sid ? 1 : 0).forEach(m => {
+    r.monat.forEach(m => {
       const voll = chronikPunkte(m.id);
       if(voll <= 0) return;
-      const mal = (_malMonat[m.id] = (_malMonat[m.id] || 0) + 1);
       // Die Art der CHRONIK, nicht die der Disziplin: seit §C39 traegt
       // `monat.art` den Wert (Koennen, Konstanz, Fuegung), waehrend `art` der
       // Disziplin nur noch die Katalogreihenfolge bestimmt. In der Laufbahn
       // stand deshalb „Leistung" neben einer Chronik, deren Punkte aus
       // „Konstanz" kamen — die Zeile erklaerte den Wert daneben nicht.
       const km = _chronikMonat(m.id) || {};
-      const rohFaktor = Math.pow(PRESTIGE_CHRONIK_WIEDERHOLUNG, mal - 1);
-      const beitrag = Math.max(PRESTIGE_CHRONIK_MINDEST, voll * rohFaktor);
-      const faktor = beitrag / voll;
       mo.push({q:'monat', id:m.id, name:m.name, label:m.label,
-               p: beitrag, voll, grundwert:voll, faktor, mal,
-               minimum:PRESTIGE_CHRONIK_MINDEST,
-               amMinimum:beitrag === PRESTIGE_CHRONIK_MINDEST,
+               p:voll, voll, grundwert:voll,
                kunst:km.art || '', klasse:km.klasse || ''});
     });
-    const pm = mo.reduce((sum, q) => sum + q.p, 0);
+    const pm = _wurzelStapel(mo, 3);
 
     // Allzeitwertungen: ein geteilter Rekord zählt geteilt — und dann
     // dasselbe Gesetz wie überall.
@@ -29620,7 +29832,7 @@ function prestigeTabelle(bisMs){
       re.push({q:'rekord', id:x.id, name:x.name, p:voll, art:x.art,
                basis, halter:halterZahl[x.id] || 1});
     });
-    const pr = stapel(re);
+    const pr = _wurzelStapel(re, 2);
 
     const quellen = az.concat(mo, re);
 
@@ -30759,9 +30971,10 @@ function prestigeSchritte(pid, n){
         }
         if(mein == null || !isFinite(mein) || ziel == null || mein >= ziel) return;
         const rel = (ziel - mein) / Math.max(1e-9, Math.abs(ziel));
-        const gewinn = PRESTIGE_REKORD * (PRESTIGE_ART[def.art] ?? 1)
-          / Math.max(1, (halte ? halte.pids.length + 1 : 1))
-          / Math.sqrt(P.zahlen.rekord + 1);
+        const voll = PRESTIGE_REKORD * (PRESTIGE_ART[def.art] ?? 1)
+          / Math.max(1, (halte ? halte.pids.length + 1 : 1));
+        const gewinn = _wurzelZuwachs(
+          P.quellen.filter(q => q.q === 'rekord').map(q => q.voll), voll, 2);
         out.push({
           art:'rekord', id:def.id, name:def.name, ic:def.ic, tone:def.tone, rel,
           gewinn:Math.round(gewinn),
@@ -30794,9 +31007,9 @@ function prestigeSchritte(pid, n){
         out.push({
           art:'monat', id:r.id, name:r.name || (d && d.name), ic:d.ic, tone:d.tone,
           rel: 0.55,          // ein offener Monatseintrag ist immer „diesen Monat noch"
-          gewinn: Math.round(Math.max(PRESTIGE_CHRONIK_MINDEST,
-            chronikPunkte(r.id) * Math.pow(PRESTIGE_CHRONIK_WIEDERHOLUNG,
-              P.quellen.filter(q => q.q === 'monat' && q.id === r.id).length))),
+          gewinn: Math.round(_wurzelZuwachs(
+            P.quellen.filter(q => q.q === 'monat').map(q => q.voll),
+            chronikPunkte(r.id), 3)),
           cond: (d.monat && d.monat.cond) || '',
           stand: r.ev ? _chronKurz(r.ev) : '',
           halter: r.pid ? pname(r.pid) : '',
@@ -30929,7 +31142,8 @@ function showLaufbahn(pid){
       for(let i = 1; i <= n; i++) glieder.push(zahl(auszeichnungsTeilwert(q.id, i)));
       return glieder.join(' + ');
     }
-    return `${zahl(q.basis)} → ${zahl(auszeichnungsTeilwert(q.id, n))} beim ${n}. Mal`;
+    return `${zahl(q.basis)} + ${zahl(auszeichnungsTeilwert(q.id, 2))} + … + `
+      + `${zahl(auszeichnungsTeilwert(q.id, n))} (${n}. Mal)`;
   };
 
   // Warum dieser Posten so viel wiegt. Vorher stand hier „2 von 12" — die
@@ -30943,11 +31157,13 @@ function showLaufbahn(pid){
       teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
       let rechnung = `Grundwert ${zahl(q.basis)}`;
       if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;
-      if(q.rang > 1) rechnung += ` ÷ √${q.rang}`;
+      if(q.staffel > 1) rechnung += ` · ${q.rang}. Rekord ÷ √${q.staffel}`;
       teile.push(rechnung);
     }
     else if(q.q === 'auszeichnung'){
       teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
+      if(q.hinweis) teile.push(q.hinweis);
+      teile.push(`${zahl(q.basis)} P Start · ${Math.round(q.abnahme * 100)}-%-Kurve`);
       teile.push(`${q.mal}× erreicht`);
       if(q.mal > 1) teile.push(folge(q));
     }
@@ -30957,9 +31173,7 @@ function showLaufbahn(pid){
       if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
       const basis = q.grundwert == null ? q.voll : q.grundwert;
       let rechnung = `Chronikwert ${zahl(basis)}`;
-      if(q.mal > 1) rechnung += q.amMinimum
-        ? ` · Mindestwert ${zahl(q.minimum)} (${q.mal}. Mal)`
-        : ` × ${zahl(q.faktor)} (${q.mal}. Mal)`;
+      if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
       teile.push(rechnung);
     }
     return teile.join(' · ');
@@ -30980,9 +31194,9 @@ function showLaufbahn(pid){
 
   const SICHTBAR = 4;
   const regeln = `<div class="lb-regeln">
-    <span class="legendary"><b>Legendary</b><em>50 · −10 % · min. 5</em></span>
-    <span class="rare"><b>Rare</b><em>20 · −15 % · min. 1</em></span>
-    <span class="common"><b>Common</b><em>3 · −20 % · min. 0,1</em></span>
+    <span class="legendary"><b>Legendary</b><strong>40 P Standard · −10 %</strong><em>Meister 55 P · −5 %<br>Dominator 50 P · −10 %<br>Team der Saison 45 P · −10 %. Danach flacher, nie 0.</em></span>
+    <span class="rare"><b>Rare</b><strong>20 P Standard · −15 %</strong><em>Wochensieger 24 P · −12 %<br>Tagessieger 15 P · −20 %. Danach flacher, nie 0.</em></span>
+    <span class="common"><b>Common</b><strong>3 P beim 1. Mal</strong><em>Das 2. Mal −20 %. Danach flacher, nie 0.</em></span>
   </div>`;
   const block = (g, gi) => {
     const qs = posten[gi], w = werte[gi];

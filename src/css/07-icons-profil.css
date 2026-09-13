@@ -510,7 +510,9 @@
      Ungelesen-Zustand ueberschrieben haette — und das ist der wichtigere. */
   .nf-card{position:relative;--tint:rgba(255,255,255,.028);--neu:transparent;
     background:linear-gradient(90deg,var(--neu),transparent 55%),
-      radial-gradient(190px 120px at 4% 0%,var(--tint),transparent 72%),var(--surface);
+      radial-gradient(190px 120px at 4% 0%,var(--tint),transparent 72%),
+      radial-gradient(240px 120px at 98% -12%,rgba(var(--story-rgb,185,196,189),.035),transparent 72%),
+      var(--surface);
     border:1px solid var(--line);border-left:2px solid var(--story,var(--line2));
     border-radius:4px 14px 14px 4px;padding:12px;cursor:pointer;transition:.15s}
   .nf-card:active{transform:scale(.992)}
@@ -555,7 +557,7 @@
   .nf-brk .nf-top{display:none}
   .nf-brk-sub{padding:9px 13px 12px;font-size:11.5px;line-height:1.45;color:var(--ink2);
     border-top:1px solid var(--line)}
-  .nf-brk.read{opacity:.55}
+  .nf-brk.read{opacity:.82}
 
   /* ── Die Karte des Tages ──────────────────────────────────────────
      Sie steht groß und traegt einen Streifen. Vorher stand ihre Schlagzeile
@@ -600,7 +602,7 @@
      soll — der Rest des Tages steht ruhig darunter. */
   .nf-gross{border-color:var(--line2);border-radius:14px;
     box-shadow:inset 0 0 0 1px rgba(255,255,255,.03),0 12px 30px -18px #000}
-  .nf-card.read{opacity:.55;border-left-color:var(--line2)}
+  .nf-card.read{opacity:.82}
   /* „Wichtig" verstärkt die Kante, es umrandet nicht die ganze Karte. Als
      Vollrahmen leuchtete die halbe Liste gold — und was die halbe Liste
      trägt, hebt nichts mehr hervor. */
@@ -610,7 +612,8 @@
      Gewicht der Karte. */
   .nf-card.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
     -7px 0 20px -12px rgba(var(--story-rgb,185,196,189),.42)}
-  .nf-card.read.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
+  .nf-card.read.important{box-shadow:inset 0 1px 0 rgba(255,255,255,.045),
+    -7px 0 18px -14px rgba(var(--story-rgb,185,196,189),.2)}
   .nf-when{margin-left:auto;display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
     font-size:9.5px;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
   .nf-dot{width:8px;height:8px;border-radius:50%;background:var(--story,var(--ink2));
@@ -658,8 +661,8 @@
      Schlagzeile den Platz. */
   .nf-top{display:flex;align-items:center;gap:8px;padding:7px 13px;
     border-bottom:1px solid var(--line);
-    background:linear-gradient(96deg,rgba(var(--story-rgb,185,196,189),.055),
-      rgba(var(--story-rgb,185,196,189),.012) 48%,transparent 76%)}
+    background:linear-gradient(96deg,rgba(var(--story-rgb,185,196,189),.075),
+      rgba(var(--story-rgb,185,196,189),.018) 52%,transparent 80%)}
   .nf-rub{display:inline-flex;align-items:center;gap:6px;min-width:0;
     font-family:'Sometype Mono',monospace;font-size:9px;font-weight:700;
     letter-spacing:.17em;color:var(--story,var(--muted));line-height:1}
@@ -817,7 +820,7 @@
   .nf-s-spiel,.nf-s-serie{--tint:rgba(163,230,53,.05)}
   .nf-s-duell{--tint:rgba(192,132,87,.055)}
   .nf-card.nf-neg{--tint:rgba(240,86,106,.07)}
-  .nf-card.read{--tint:rgba(255,255,255,.02)}
+  .nf-card.read{--tint:rgba(var(--story-rgb,185,196,189),.035)}
 
   /* Der Rand sagt das Gewicht, die Farbe sagt die Familie. Nur die beiden
      echten Siegerkarten bekommen drei Pixel. Alle übrigen Geschichten
@@ -834,7 +837,7 @@
   .nf-card{border-color:var(--rahmen);border-left-width:var(--kante)}
   /* Gelesen faellt alles auf das leiseste Mass zurueck: der Feed soll zeigen,
      was noch offen ist, nicht was schon abgehakt wurde. */
-  .nf-card.read{--kante:2px;--rahmen:var(--line)}
+  .nf-card.read{--kante:2px;--rahmen:rgba(var(--story-rgb,185,196,189),.1)}
   /* Sorte 7 Auszeichnung: das Zeichen der Auszeichnung mit ihrer Klasse. */
   .nf-bd{display:flex;align-items:center;gap:10px;padding:9px 13px;border-top:1px solid var(--line)}
   .nf-bd-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
@@ -874,7 +877,7 @@
   .nf-s-held .nf-motiv{opacity:.1}
   .nf-s-fakt .nf-motiv{opacity:.05}
   .nf-card.nf-neg .nf-motiv{opacity:.07}
-  .nf-card.read .nf-motiv{opacity:.028}
+  .nf-card.read .nf-motiv{opacity:.055}
   /* Alles Uebrige liegt darueber, sonst schneidet das Motiv in die Schrift. */
   .nf-card > *:not(.nf-motiv){position:relative;z-index:1}
   .nf-chev{align-self:center;flex:0 0 auto;color:var(--faint);display:flex;

@@ -282,6 +282,10 @@ function openNewsFeed(){
 // bestehende UND neue persistierte Rows, ohne Regenerierung).
 function _isBreaking(s){
   const d = (s && s.dataRef) || {};
+  // Eine Tafel-Sammelkarte behält die höchste Dringlichkeit ihrer Teile.
+  // Sonst würde ein erstmals vergebener Liga-Rekord beim vorgeschriebenen
+  // Bündeln plötzlich seinen Breaking-Charakter verlieren.
+  if(d.type === 'sammel') return d.breaking === true;
   // Breaking heißt: das passiert vielleicht einmal im Monat. Erlaubt sind
   // ausschließlich extrem seltene Auszeichnungen und echte EREIGNISSE —
   // etwas, das vorher noch nie da war oder die Spitze der Liga verschiebt.
@@ -327,7 +331,10 @@ function _newsPids(s){
   };
   ['playerId','ambientPid','pid','championId','a','b','playerIds','ambientPids',
    'breakerIds','victimPid'].forEach(k => { if(d[k] != null) dazu(d[k]); });
-  return raus.slice(0, 3);
+  // Nicht hier kürzen: Große Tafel-Bundles brauchen die vollständige Zahl,
+  // damit „+3" auch wirklich drei weitere Beteiligte meint. Die Darstellung
+  // selbst zeigt weiterhin höchstens zwei Wappen und fasst den Rest zusammen.
+  return raus;
 }
 
 // Das Gesicht links auf der Karte. Vorher stand dort nichts: die News waren
@@ -384,7 +391,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
   // Eine Sammelkarte hat einen eigenen Gruppenkopf. Darunter stehen ALLE
-  // zwei bis vier Einzelereignisse im Band; keines wird zum heimlichen Kopf
+  // verbundenen Einzelereignisse im Band; keines wird zum heimlichen Kopf
   // und keines hinter „weitere" versteckt [§C33].
   const sammelBand = (d.type === 'sammel')
     ? _newsSammelBand(d.teile, [s.title], true) : '';
@@ -403,7 +410,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     fuss = _newsZahlband(_newsSpielZahlen(s));
   } else if(sorte === 'tafel'){
     const w = _newsTafelWert(s);
-    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'gold') : _newsGesichtHtml(s)}</div>`;
+    // Ein Tafel-Bundle zeigt Wert UND Beteiligte. Der große Zähler erklärte
+    // bisher zwar, wie viele Spuren zusammenlaufen, ließ aber alle genannten
+    // Spieler bildlich verschwinden. Die kompakte Chipgruppe bleibt neben
+    // dem Wert und macht keinen einzelnen Halter zum Hauptdarsteller.
+    gesicht = `<div class="nf-gr-l">${w ? _newsWertBlock(w.v, w.l, 'gold') : ''}${_newsGesichtHtml(s)}</div>`;
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);

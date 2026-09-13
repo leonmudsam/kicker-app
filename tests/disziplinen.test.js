@@ -1149,31 +1149,37 @@ ok(_prG.hoechste < _prG.sternAb,
 const _prModell = JSON.parse(K.eval(`JSON.stringify((function(){
   const dom=[1,2,3].map(n=>auszeichnungsPunkte('dominator_400',n));
   const meister=[1,2,3].map(n=>auszeichnungsPunkte('champion',n));
+  const team=[1,2,3].map(n=>auszeichnungsPunkte('team_of_season',n));
+  const potw=[1,2,3].map(n=>auszeichnungsPunkte('potw',n));
+  const potd=[1,2,3].map(n=>auszeichnungsPunkte('potd',n));
   const carry=[1,2,3,24].map(n=>auszeichnungsPunkte('carry',n));
   const klassen=Object.fromEntries(Object.entries(PRESTIGE_AUSZEICHNUNG)
-    .map(([k,v])=>[k,{basis:v.basis,faktor:v.faktor,minimum:v.minimum}]));
+    .map(([k,v])=>[k,{basis:v.basis,abnahme:v.abnahme}]));
   const positiv=BADGES.filter(b=>rarityOf(b.id)!=='negative').map(b=>({
     id:b.id, a:auszeichnungsPunkte(b.id,99), b:auszeichnungsPunkte(b.id,100)
   }));
-  return {dom,meister,carry,klassen,steht:positiv.filter(x=>!(x.b>x.a)),
+  return {dom,meister,team,potw,potd,carry,klassen,steht:positiv.filter(x=>!(x.b>x.a)),
     negativ:BADGES.filter(b=>rarityOf(b.id)==='negative')
       .filter(b=>auszeichnungsPunkte(b.id,10)!==0).map(b=>b.id)};
 })())`));
 ok(_prModell.dom[0] === 50 && _prModell.dom[1] === 95
-   && Math.abs(_prModell.dom[2] - 135.5) < 1e-9,
-   'Dominator wächst mit 50 + 45 + 40,5', _prModell.dom.join(' / '));
-ok(_prModell.meister.join('/') === _prModell.dom.join('/'),
-   'Meister der Saison ist bei gleicher Anzahl so viel wert wie Dominator',
-   _prModell.meister.join(' / '));
+   && Math.abs(_prModell.dom[2] - 135.9090909090909) < 1e-9,
+   'Dominator wächst mit 50 + 45 + rund 41', _prModell.dom.join(' / '));
+ok(_prModell.meister[0] === 55 && Math.abs(_prModell.meister[1]-107.25)<1e-9
+   && _prModell.meister[2] > _prModell.dom[2]
+   && _prModell.dom[2] > _prModell.team[2],
+   'Meister, Dominator und Team der Saison bleiben in dieser Reihenfolge',
+   [_prModell.meister[2],_prModell.dom[2],_prModell.team[2]].join(' > '));
+ok(_prModell.potw.every((v,i)=>v>_prModell.potd[i]),
+   'Player of the Week ist bei jeder gleichen Anzahl mehr wert als Player of the Day',
+   _prModell.potw.join(' / ') + ' > ' + _prModell.potd.join(' / '));
 ok(_prModell.carry[0] === 3 && Math.abs(_prModell.carry[1]-5.4)<1e-9
-   && Math.abs(_prModell.carry[2]-7.32)<1e-9,
-   'Carry wächst mit 3 + 2,4 + 1,92', _prModell.carry.slice(0,3).join(' / '));
+   && Math.abs(_prModell.carry[2]-7.4)<1e-9,
+   'Carry wächst mit 3 + 2,4 + 2', _prModell.carry.slice(0,3).join(' / '));
 ok(_prModell.klassen.legendary.basis > _prModell.klassen.rare.basis
    && _prModell.klassen.rare.basis > _prModell.klassen.common.basis
-   && _prModell.klassen.legendary.faktor > _prModell.klassen.rare.faktor
-   && _prModell.klassen.rare.faktor > _prModell.klassen.common.faktor
-   && _prModell.klassen.legendary.minimum > _prModell.klassen.rare.minimum
-   && _prModell.klassen.rare.minimum > _prModell.klassen.common.minimum,
+   && _prModell.klassen.legendary.abnahme < _prModell.klassen.rare.abnahme
+   && _prModell.klassen.rare.abnahme < _prModell.klassen.common.abnahme,
    'wertvollere Klassen starten höher und nehmen langsamer ab',
    JSON.stringify(_prModell.klassen));
 ok(_prModell.steht.length === 0,
@@ -1182,6 +1188,23 @@ ok(_prModell.steht.length === 0,
 ok(_prModell.negativ.length === 0,
    'Schanden sind weder Prestige-Belohnung noch zusätzliche Strafe',
    _prModell.negativ.join(', ') || 'alle bei null');
+
+const _prTausch = JSON.parse(K.eval(`JSON.stringify({
+  sieger:rarityOf('perfect_win'), allwetter:rarityOf('allwetter'),
+  siegerP:auszeichnungsPunkte('perfect_win',1),
+  allwetterP:auszeichnungsPunkte('allwetter',1),
+  profil:BADGES.slice().sort((a,b)=>badgeProfilRang(a.id)-badgeProfilRang(b.id))
+    .slice(0,10).map(b=>b.id)
+})`));
+ok(_prTausch.sieger === 'legendary' && _prTausch.allwetter === 'rare'
+   && _prTausch.siegerP > _prTausch.allwetterP,
+   'Absoluter Sieger ist Legendary und wertvoller als Allwetter',
+   JSON.stringify(_prTausch));
+ok(_prTausch.profil.join(',') === [
+  'dynasty_600','dominator_400','streak20','streak15','champion','team_of_season',
+  'untouchable','award_collector','perfect_win','mr_perfect'].join(','),
+   'die ersten fünf Auszeichnungszeilen folgen der gewünschten Reihenfolge',
+   _prTausch.profil.join(', '));
 
 // Das Chronik-Blatt zeigt den Grundwert (zum Beispiel +115), die Laufbahn
 // darf daneben nicht kommentarlos nur den gekappten Rest zeigen. Die Daten
@@ -1194,28 +1217,28 @@ const _prChron = JSON.parse(K.eval(`JSON.stringify((function(){
       if(q.grundwert!==chronikPunkte(q.id) || q.p==null) falsch.push(q.id);
     }));
   return {n:alle.length,falsch,
-    abweichend:alle.filter(q=>Math.abs(q.p-q.grundwert*q.faktor)>1e-8).length,
-    wiederholt:alle.filter(q=>q.mal>1 && q.faktor<1).length,
-    zweitesMal:Math.pow(PRESTIGE_CHRONIK_WIEDERHOLUNG,1)};
+    abweichend:alle.filter(q=>Math.abs(q.p-q.grundwert/Math.sqrt(q.staffel))>1e-8).length,
+    staffeln:alle.map(q=>({rang:q.rang,staffel:q.staffel}))};
 })())`));
 ok(_prChron.n > 0 && _prChron.falsch.length === 0,
    'jede Monatsquelle traegt den echten Chronik-Wert und ihre Rechnung',
    _prChron.falsch.join(', ') || _prChron.n + ' Quellen');
-ok(_prChron.abweichend === 0 && _prChron.zweitesMal === 0.9,
-   'eine wiederholte Chronik wird exakt um zehn Prozent je Mal gedämpft',
-   `zweites Mal ×${_prChron.zweitesMal}, ${_prChron.wiederholt} echte Wiederholungen`);
+ok(_prChron.abweichend === 0 && _prChron.staffeln.every(q =>
+     q.staffel === Math.floor(q.rang / 3) + 1),
+   'Chroniken wechseln alle drei Einträge in die nächste Wurzelstaffel',
+   _prChron.staffeln.slice(0,8).map(q=>q.rang+'→√'+q.staffel).join(' · '));
 
 const _prRekord = JSON.parse(K.eval(`JSON.stringify((function(){
   const falsch=[];
   Object.values(prestigeTabelle().byPid).forEach(e => (e.quellen||[])
     .filter(q=>q.q==='rekord').forEach(q=>{
-      const soll=q.basis/q.halter/Math.sqrt(q.rang);
+      const soll=q.basis/q.halter/Math.sqrt(Math.floor(q.rang/2)+1);
       if(Math.abs(q.p-soll)>1e-8) falsch.push(q.id);
     }));
   return falsch;
 })())`));
 ok(_prRekord.length === 0,
-   'jeder Rekord zeigt Grundwert, Halterteilung und Rangdämpfung exakt',
+   'Rekorde wechseln alle zwei Einträge in die nächste Wurzelstaffel',
    _prRekord.join(', ') || 'alle Rekorde nachrechenbar');
 
 const _prHistorisch = JSON.parse(K.eval(`JSON.stringify((function(){
@@ -1295,38 +1318,41 @@ ok(_lb.min[3] - _lb.hoechste >= 300,
    'zwischen Ligaspitze und Lorbeerreif bleibt ein guter Abstand',
    (_lb.min[3] - _lb.hoechste) + ' Punkte');
 
-const _sternMoeglich = K.eval(`BADGES.reduce((sum,b)=>{
-  const r=PRESTIGE_AUSZEICHNUNG[rarityOf(b.id)];
-  return sum + (r && r.basis ? r.basis/(1-r.faktor) : 0);
-},0)`);
+const _sternMoeglich = K.eval(`BADGES.reduce((sum,b)=>
+  sum + auszeichnungsPunkte(b.id,10),0)`);
 ok(_sternMoeglich >= _lb.min[4] && _lb.min[4] > _lb.hoechste * 2,
    'der Ordensstern ist sehr anspruchsvoll, aber rechnerisch erreichbar',
    `Langzeitmodell ${Math.round(_sternMoeglich)}, Schwelle ${_lb.min[4]}`);
 
 // Eine rein geometrische Folge haette eine endliche Summe. Dann waeren zwar
 // die ersten fuenf Insignien erreichbar, spaetere Zacken des Ordenssterns
-// irgendwann aber nicht mehr. Der Mindestwert jeder positiven Klasse und
-// jeder wiederholten Chronik macht die Laufbahn wirklich offen: jeder
-// endliche Zielwert wird nach endlich vielen weiteren Erfolgen ueberschritten.
+// irgendwann aber nicht mehr. Die harmonisch abflachende Auszeichnungsfolge
+// macht die Laufbahn wirklich offen: jeder endliche Zielwert wird nach
+// endlich vielen weiteren Erfolgen ueberschritten.
 const _endlos = JSON.parse(K.eval(`JSON.stringify((function(){
   const ziel=INSIGNIEN[4].min+20*ORDENSSTERN_SCHRITT;
   let n=1;
-  while(n<10000 && auszeichnungsPunkte('champion',n)<ziel) n++;
+  const karriere=k=>BADGES.reduce((sum,b)=>sum+auszeichnungsPunkte(b.id,k),0);
+  while(n<1000 && karriere(n)<ziel) n++;
   const klassen=Object.entries(PRESTIGE_AUSZEICHNUNG)
-    .filter(([k])=>k!=='negative').map(([k,r])=>({k,minimum:r.minimum,
+    .filter(([k])=>k!=='negative').map(([k,r])=>({k,
       delta:auszeichnungsPunkte(BADGES.find(b=>rarityOf(b.id)===k).id,10000)
            -auszeichnungsPunkte(BADGES.find(b=>rarityOf(b.id)===k).id,9999)}));
-  return {ziel,n,wert:auszeichnungsPunkte('champion',n),klassen,
-    chronikMinimum:PRESTIGE_CHRONIK_MINDEST};
+  const chroniken=Array.from({length:10000},()=>100);
+  const chronikDelta=_wurzelZuwachs(chroniken,100,3);
+  const rekorde=Array.from({length:10000},()=>48);
+  const rekordDelta=_wurzelZuwachs(rekorde,48,2);
+  return {ziel,n,wert:karriere(n),klassen,chronikDelta,rekordDelta};
 })())`));
-ok(_endlos.klassen.every(x=>x.minimum>0 && Math.abs(x.delta-x.minimum)<1e-6)
-   && _endlos.chronikMinimum>0,
-   'jede positive Dauerquelle behaelt einen kleinen echten Zuwachs',
-   _endlos.klassen.map(x=>x.k+' +'+x.delta).join(' · ')
-     + ' · Chronik +' + _endlos.chronikMinimum);
-ok(_endlos.n < 10000 && _endlos.wert >= _endlos.ziel,
+ok(_endlos.klassen.every(x=>x.delta>0)
+   && _endlos.chronikDelta>0 && _endlos.rekordDelta>0,
+   'jede positive Dauerquelle behaelt ohne festen Deckel echten Zuwachs',
+   _endlos.klassen.map(x=>x.k+' +'+x.delta.toFixed(4)).join(' · ')
+     + ' · Chronik +' + _endlos.chronikDelta.toFixed(4)
+     + ' · Rekord +' + _endlos.rekordDelta.toFixed(4));
+ok(_endlos.n < 1000 && _endlos.wert >= _endlos.ziel,
    'auch spaetere Ordensstern-Zacken bleiben ohne Obergrenze erreichbar',
-   `20. weitere Zacke bei spaetestens ${_endlos.n} wiederholten Legendary-Erfolgen`);
+   `20. weitere Zacke im skalierenden Katalogmodell bei Lauf ${_endlos.n}`);
 
 // 2. Der Beste der Liga hat die obere Hälfte der Leiter noch vor sich. Ohne
 //    diese Grenze wandert die Spitze nach oben, sobald der Katalog wächst —

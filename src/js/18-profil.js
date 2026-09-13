@@ -1286,21 +1286,18 @@ function showPlayerBadges(playerId){
     'allwetter']);
 
   // ─── Aggregation pro Tier ───
-  // Pro Rarity: BADGES-Array in Reihenfolge durchgehen, in Buckets sortieren.
-  // Innerhalb des Buckets: ZUERST einmalig erreichbare ("Freigeschaltet"-Style),
-  // DANACH mehrfach erreichbare (×N-Counter) — sortiert nur die ANZEIGE, keine
-  // neue Kategorie. Stabil: relative Reihenfolge im BADGES-Array bleibt erhalten.
+  // Pro Rarity: BADGES-Array in Buckets sortieren. Die goldene Vitrine folgt
+  // der expliziten sportlichen Reihenfolge aus §7; danach bleibt die
+  // Katalogreihenfolge stabil. Einmalige Badges springen nicht mehr vor
+  // wichtigere Saison- und Serienleistungen (Allwetter stand dadurch ganz
+  // vorne, obwohl es nur einmal freigeschaltet werden kann).
   const buckets = {legendary:[], rare:[], common:[], negative:[]};
   BADGES.forEach(b => {
     const r = rarityOf(b.id);
     if(buckets[r]) buckets[r].push(b);
   });
   Object.keys(buckets).forEach(r => {
-    buckets[r].sort((a,b) => {
-      const aOnce = ONCE_ONLY.has(a.id) ? 0 : 1;
-      const bOnce = ONCE_ONLY.has(b.id) ? 0 : 1;
-      return aOnce - bOnce; // stabile Sort: nur Once-vs-Multi neu ordnen
-    });
+    buckets[r].sort((a,b) => badgeProfilRang(a.id) - badgeProfilRang(b.id));
   });
   const have = (r) => buckets[r].filter(b => earnedIds.has(b.id)).length;
   const haveTotal = have('legendary')+have('rare')+have('common')+have('negative');

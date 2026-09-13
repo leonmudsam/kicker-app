@@ -205,7 +205,7 @@ const BADGES=[
 // Wert, und weil die Halterzahl mit der Liga wächst, lief der Fortschritt
 // rückwärts [§C34]. Die Halterzahl ist trotzdem die Gegenprobe: über die
 // 466 echten Partien halten die zehn legendären null bis fünf der zwölf
-// Spieler, die zwölf seltenen null bis sechs, die zwanzig gewöhnlichen
+// Spieler, die vierzehn seltenen null bis neun, die achtzehn gewöhnlichen
 // sechs bis zwölf. Legendär und selten überlappen oben, weil eine Würde
 // je Saison neu zu holen ist: „Team der Saison" haben in vier Monaten fünf
 // Spieler getragen und ist trotzdem das Schwerste, was die Liga vergibt.
@@ -215,8 +215,7 @@ const BADGES=[
 // damit den goldenen Rahmen im Blatt — neben „20er Serie" und „Meister der
 // Saison". Sie hängen aber an nichts als der Spielzahl: wer lange genug
 // dabei ist, bekommt sie, ohne je besser geworden zu sein. Sie sind jetzt
-// selten; ihr violetter Rang bestimmt transparent Startwert, Abnahme und
-// den spaeteren Mindestwert.
+// selten; ihr violetter Rang bestimmt transparent Startwert und Abnahme.
 // Sechs weitere Einträge standen davor in der falschen Klasse — „Player of
 // the Day" (9 Halter, 52 mal vergeben) galt als selten, „Klares Ding"
 // (10 Halter, 136 mal) ebenfalls.
@@ -238,7 +237,7 @@ const BADGE_RARITY = {
   streak20:        'legendary', // 20er Serie
   untouchable:     'legendary', // Untouchable — 3 Saisons in Folge Top-3
   mr_perfect:      'legendary', // Mr. Perfect — 3x 10:0 in einer Saison
-  allwetter:       'legendary', // Allwetter — POTD an 5 verschiedenen Wochentagen
+  perfect_win:     'legendary', // Absoluter Sieger — ein makelloses 10:0
   // -- RARE (14) -- 0 bis 9 Halter --
   potd:            'rare',      // Player of the Day — belohnt Vielspieler,
                                 //   ist aber besonderer als jedes Common
@@ -254,7 +253,7 @@ const BADGE_RARITY = {
   unbeatable:      'rare',      // Unschlagbar
   nerves_of_steel: 'rare',      // Nerven aus Stahl
   potw:            'rare',      // Player of the Week
-  perfect_win:     'rare',      // Absoluter Sieger — 6 Halter, 16 mal vergeben
+  allwetter:       'rare',      // Allwetter — einmalige POTD-Wochentagsbreite
   // -- COMMON (18) -- 6 bis 12 Halter --
   first_match:     'common',    // Debütant
   games25:         'common',    // Stammgast
@@ -307,6 +306,23 @@ const RARITY_META = {
   negative:  {label:'Schande',   color:'var(--red)',    total:8},
 };
 const RARITY_ORDER = ['legendary','rare','common','negative'];
+
+// Die ersten fünf Reihen des Spielerprofils sind die goldene Vitrine. Ihre
+// Reihenfolge folgt der sportlichen Wertigkeit, nicht dem Zeitpunkt, zu dem
+// eine Definition einmal in BADGES ergänzt wurde. Danach bleibt die
+// Katalogreihenfolge stabil. Ein eigener Anzeige-Schlüssel verhindert, dass
+// die Berechnung oder bestehende Badge-IDs dafür umgebaut werden müssen.
+const BADGE_PROFIL_ORDER = [
+  'dynasty_600', 'dominator_400',
+  'streak20', 'streak15',
+  'champion', 'team_of_season',
+  'untouchable', 'award_collector',
+  'perfect_win', 'mr_perfect',
+];
+const _BADGE_PROFIL_RANG = new Map(BADGE_PROFIL_ORDER.map((id, i) => [id, i]));
+function badgeProfilRang(id){
+  return _BADGE_PROFIL_RANG.has(id) ? _BADGE_PROFIL_RANG.get(id) : BADGE_PROFIL_ORDER.length + BADGES.findIndex(b => b.id === id);
+}
 
 // Liefert die Rarity eines Badges (Default: common falls jemand neu hinzukommt
 // und vergisst BADGE_RARITY zu erweitern — verhindert undefined-Bugs).
