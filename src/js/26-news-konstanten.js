@@ -102,6 +102,11 @@ const NEWS_LIMITS = {
   // was genau dort passiert ist. Das ist kein zusaetzliches Kartenbudget;
   // bei einem vollen Tag ersetzen sie schwächere, abstrakte Meldungen.
   matchProTagMin: 1,
+  // Ergebnis-Stories entstehen aus mehreren klaren Matchmustern (Krimi,
+  // Kantersieg, Zu-null und echter Außenseiter-Sieg). Zwei Kandidaten pro
+  // Spieltag reichen, um konkrete Partien regelmäßig sichtbar zu machen,
+  // ohne aus dem Feed einen Ergebnisdienst zu bauen.
+  matchResultProTag: 2,
   // Redaktionelles Mindestgewicht im 14-Tage-Fenster. Gezählt werden die
   // sichtbaren Zeilen eines Bundles, nicht nur sein äußerer Kartenrahmen.
   // 40–60 % ist die belastbare Auslegung von „ungefähr halb"; Pflichtkarten,
@@ -263,6 +268,7 @@ const STORY_PRIO = {
   win_streak:        68,
   loss_streak:       66,
   top_form:          64,   // weiter vorn als sonst [§11.0b]
+  match_result:      63,   // ein außergewöhnliches, exakt belegtes Ergebnis
   chronik_geholt:    62,
   team_streak:       60,
   insignium_stufe:   58,

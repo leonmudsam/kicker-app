@@ -739,6 +739,7 @@ const ok = (c, msg, det) => {
       // nebeneinander — keins ist wichtiger als das andere [§C33].
       chips: karte.querySelectorAll('.nf-face-paar .av').length,
       zeilen: karte.querySelectorAll('.nf-sam-z').length,
+      zeilenGetoent: karte.querySelectorAll('.nf-sam-z.nf-sam-insignium').length,
       rest: karte.querySelectorAll('.nf-sam-m').length,
       tafelMetall: farbe !== 'rgb(247, 207, 74)' && farbe !== 'rgb(167, 139, 250)'};
     host.remove(); return out;
@@ -747,9 +748,9 @@ const ok = (c, msg, det) => {
      JSON.stringify(achse));
   ok(achse.rubrik === 'EWIGE TAFEL', 'sie traegt die gemeinsame Tafel-Rubrik', achse.rubrik);
   ok(achse.chips >= 2, 'und die Gesichter aller Beteiligten', achse.chips + ' Chips');
-  ok(achse.zeilen >= 2 && achse.rest === 0,
-     'jeder Beteiligte steht als Zeile auf der Karte, keiner als „und 1 weitere"',
-     achse.zeilen + ' Zeilen, ' + achse.rest + ' verschwiegen');
+  ok(achse.zeilen >= 2 && achse.zeilenGetoent === achse.zeilen && achse.rest === 0,
+     'jede Tafel-Zeile bleibt sichtbar und trägt den Ton ihres Inhalts',
+     achse.zeilen + ' Zeilen, ' + achse.zeilenGetoent + ' getönt, ' + achse.rest + ' verschwiegen');
   ok(achse.tafelMetall, 'der gemeinsame Tafel-Moment traegt kuehles Metall statt Gold',
      String(achse.tafelMetall));
 
@@ -758,6 +759,7 @@ const ok = (c, msg, det) => {
     const sorten = ['spiel','tafel','ins','held','woche','duell','serie','badge','marke',
                     'fakt','spieler','erfolg'];
     const faktKeys = ['liga','persoenlich','form','duell','laufbahn','chronik','auszeichnung'];
+    const tafelKeys = ['rekord','marke','chronik','fuegung','schatten','insignium'];
     const bau = window.__k.eval('_newsCardHtmlM2');
     host.innerHTML = sorten.map(s => `<div class="nf-card nf-s-${s}">
       <div class="nf-top"><span class="nf-rub"><i></i><b>${s}</b></span></div>
@@ -766,6 +768,8 @@ const ok = (c, msg, det) => {
       + '<div class="nf-card nf-s-held nf-gross"><div class="nf-gross-band"></div></div>'
       + '<div class="nd nd-s-tafel"><div class="nd-ic"></div><span class="nf-motiv"></span></div>'
       + '<div class="nd nd-s-serie nd-neg"><div class="nd-ic"></div></div>'
+      + tafelKeys.map(k => `<div data-tafeltest="${k}" class="nf-card nf-s-tafel nf-tafel-${k}">
+          <div class="nf-top"><span class="nf-rub"><b>${k}</b></span></div></div>`).join('')
       + faktKeys.map(k => `<div data-fakttest="${k}">${bau({
           id:'f_'+k, cat:'fun', ic:'chartBar', title:'Zahl der Liga',
           desc:'Ein echter Wert aus der Liga.', when:'2026-08-27T10:00:00Z',
@@ -795,9 +799,14 @@ const ok = (c, msg, det) => {
         grund:getComputedStyle(c).backgroundImage
       };
     });
+    const tafelToene = {};
+    tafelKeys.forEach(k => {
+      const c = host.querySelector(`[data-tafeltest="${k}"] .nf-rub`);
+      tafelToene[k] = getComputedStyle(c).color;
+    });
     const detail = host.querySelector('.nd-s-tafel');
     const negativ = host.querySelector('.nd-neg');
-    const out = {farben, gross, grossSchatten, fakten,
+    const out = {farben, gross, grossSchatten, fakten, tafelToene,
       detailIcon:getComputedStyle(detail.querySelector('.nd-ic')).color,
       detailMotiv:getComputedStyle(detail.querySelector('.nf-motiv')).color,
       detailLinie:getComputedStyle(detail, '::before').backgroundImage,
@@ -805,18 +814,24 @@ const ok = (c, msg, det) => {
     host.remove(); return out;
   });
   const farbe = s => palette.farben[s].rubrik;
+  const kanalSpanne = c => {
+    const n = (c.match(/\d+/g)||[]).slice(0,3).map(Number);
+    return n.length === 3 ? Math.max(...n) - Math.min(...n) : 999;
+  };
   const goldene = Object.keys(palette.farben).filter(s => farbe(s) === 'rgb(247, 207, 74)');
   ok(goldene.length === 2 && goldene.includes('held') && goldene.includes('woche'),
      'Gold bleibt allein Tages- und Wochensiegern', goldene.join(', ') || 'keine');
-  ok(farbe('tafel') === farbe('marke') && farbe('tafel') !== farbe('held'),
-     'Tafel und Bestmarke tragen kuehles Metall statt Gold',
-     farbe('tafel') + ' / ' + farbe('held'));
+  ok(new Set(Object.values(palette.tafelToene)).size === 6
+     && Object.values(palette.tafelToene).every(c => c !== farbe('held')),
+     'jede Tafel-Kategorie traegt einen eigenen ruhigen Ton statt Gold',
+     Object.values(palette.tafelToene).join(' / '));
   ok(farbe('ins') === farbe('badge') && farbe('badge') === farbe('spieler')
      && farbe('spieler') === farbe('erfolg') && farbe('ins') !== farbe('held'),
      'Laufbahn und Auszeichnungen bilden eine violette Familie', farbe('ins'));
   ok(farbe('spiel') === farbe('serie') && farbe('duell') !== farbe('spiel')
      && new Set(Object.values(palette.farben).map(x => x.rubrik)).size === 6
      && new Set(Object.values(palette.fakten).map(x => x.farbe)).size === 4
+     && Object.values(palette.fakten).every(x => kanalSpanne(x.farbe) <= 30)
      && Object.values(palette.fakten).every(x => x.farbe === x.wert && x.grund !== 'none')
      && palette.fakten.liga.rubrik === 'LIGA IN ZAHLEN'
      && palette.fakten.form.rubrik === 'DIE FORMKURVE'

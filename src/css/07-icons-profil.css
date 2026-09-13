@@ -656,6 +656,16 @@
     --story:var(--acid2);--story-rgb:163,230,53}
   .nf-s-duell,.nd-s-duell{--story:var(--bronze);--story-rgb:192,132,87}
   .nf-s-fakt,.nd-s-fakt{--story:var(--ink2);--story-rgb:185,196,189}
+  /* Die Kammern der Ewigen Tafel bekommen verwandte, entsättigte Töne.
+     Farbe ordnet hier ein; sie soll weder mit Breaking noch mit der goldenen
+     Karte des Tages konkurrieren. */
+  .nf-tafel-rekord,.nd-tafel-rekord{--story:#69a9c4;--story-rgb:105,169,196}
+  .nf-tafel-marke,.nd-tafel-marke{--story:#a7b875;--story-rgb:167,184,117}
+  .nf-tafel-chronik,.nd-tafel-chronik{--story:#9a86bd;--story-rgb:154,134,189}
+  .nf-tafel-fuegung,.nd-tafel-fuegung{--story:#c39a6e;--story-rgb:195,154,110}
+  .nf-tafel-schatten,.nd-tafel-schatten{--story:#b88188;--story-rgb:184,129,136}
+  .nf-tafel-insignium,.nd-tafel-insignium{--story:#a48ac4;--story-rgb:164,138,196}
+  .nf-tafel-mix,.nd-tafel-mix{--story:#87a8b2;--story-rgb:135,168,178}
   .nf-card.nf-neg,.nd.nd-neg,.nf-card.nf-brk,.nd.nd-brk{
     --story:var(--red);--story-rgb:240,86,106}
   /* ── Das Rubrikband ───────────────────────────────────────────────
@@ -706,10 +716,17 @@
   /* Sorte 1 Spieltag: das Ergebnis oben, vier Wappen und der Endstand. */
   /* Das Ergebnisband steht UEBER dem Rubrikband und braucht deshalb keine
      eigene Unterkante: sonst stehen dort zwei Striche uebereinander. */
-  .nf-erg{display:flex;align-items:center;gap:10px;padding:12px 13px 11px;
+  .nf-erg{display:flex;align-items:center;gap:10px;padding:11px 13px 10px;
     background:linear-gradient(96deg,rgba(190,242,100,.07),transparent 72%)}
-  .nf-erg-s{display:flex;gap:5px;flex:1;min-width:0}
-  .nf-erg-s.re{justify-content:flex-end}
+  .nf-erg-s{display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+    flex:1;min-width:0;overflow:hidden}
+  .nf-erg-s.re{align-items:flex-end;text-align:right}
+  .nf-erg-avs{display:flex;align-items:center;min-height:48px}
+  .nf-erg-avs .rav+.rav{margin-left:-11px}
+  .nf-erg-team{display:block;width:100%;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;font-family:'Sometype Mono',monospace;font-size:10.5px;
+    font-weight:650;line-height:1.2;color:var(--muted)}
+  .nf-erg-s.w .nf-erg-team{color:var(--ink)}
   .nf-erg-sc{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:19px;
     letter-spacing:-.03em;display:flex;align-items:baseline;gap:1px}
   .nf-erg-sc b.w{color:var(--ink)} .nf-erg-sc b.v{color:var(--faint)}
@@ -720,6 +737,7 @@
   .nf-wert b{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1;
     letter-spacing:-.03em;color:var(--ink)}
   .nf-wert.gold b{color:var(--gold)}
+  .nf-wert.ton b{color:var(--story,var(--ink2))}
   .nf-wert.metall b{color:var(--ink2);font-size:23px}
   .nf-wert.rot b{color:var(--red);font-size:23px}
   /* Neben dem Wappen steht der Wert enger als allein in der Bildzone. */
@@ -793,6 +811,20 @@
     display:grid;place-items:center;background:var(--surface2);
     border:1px solid var(--line);color:var(--muted)}
   .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+  /* Gemischte Tafel-Momente bleiben eine Karte, aber nicht eine graue Liste:
+     jede Zeile trägt den dezenten Farbton ihres Inhalts. */
+  .nf-s-tafel .nf-sam-z{--zeile-rgb:135,168,178;border-left:2px solid
+    rgba(var(--zeile-rgb),.24);padding-left:11px;
+    background:linear-gradient(90deg,rgba(var(--zeile-rgb),.045),transparent 58%)}
+  .nf-s-tafel .nf-sam-rekord{--zeile-rgb:105,169,196}
+  .nf-s-tafel .nf-sam-marke{--zeile-rgb:167,184,117}
+  .nf-s-tafel .nf-sam-chronik{--zeile-rgb:154,134,189}
+  .nf-s-tafel .nf-sam-fuegung{--zeile-rgb:195,154,110}
+  .nf-s-tafel .nf-sam-schatten{--zeile-rgb:184,129,136}
+  .nf-s-tafel .nf-sam-insignium{--zeile-rgb:164,138,196}
+  .nf-s-tafel .nf-sam-z .nf-sam-i{color:rgb(var(--zeile-rgb));
+    border-color:rgba(var(--zeile-rgb),.22);background:rgba(var(--zeile-rgb),.075);
+    box-shadow:0 0 12px -8px rgba(var(--zeile-rgb),.72)}
   .nf-sam-m{padding:6px 13px;font-size:10px;color:var(--faint);
     border-top:1px solid var(--line)}
 
@@ -819,7 +851,7 @@
      zwölf bunte Kartenflächen gegeneinander antreten. */
   .nf-s-held{--tint:rgba(247,207,74,.09)}
   .nf-s-woche{--tint:rgba(247,207,74,.06)}
-  .nf-s-tafel{--tint:rgba(194,201,208,.065)}
+  .nf-s-tafel{--tint:rgba(var(--story-rgb),.1)}
   .nf-s-marke{--tint:rgba(194,201,208,.04)}
   .nf-s-ins,.nf-s-badge{--tint:rgba(167,139,250,.055)}
   .nf-s-spieler,.nf-s-erfolg{--tint:rgba(167,139,250,.075)}
@@ -834,13 +866,14 @@
      färbt nicht den kompletten Rahmen gold. */
   .nf-card{--kante:2px;--rahmen:rgba(var(--story-rgb,185,196,189),.13)}
   .nf-s-held,.nf-s-woche{--kante:3px;--rahmen:rgba(247,207,74,.25)}
-  .nf-s-tafel,.nf-s-ins,.nf-s-badge,.nf-s-spieler,.nf-s-erfolg{
+  .nf-s-tafel{--rahmen:rgba(var(--story-rgb),.27)}
+  .nf-s-ins,.nf-s-badge,.nf-s-spieler,.nf-s-erfolg{
     --rahmen:rgba(var(--story-rgb),.18)}
   .nf-s-spiel,.nf-s-duell,.nf-s-serie{--rahmen:rgba(var(--story-rgb),.16)}
   .nf-card.nf-neg{--rahmen:rgba(240,86,106,.24)}
   /* Der Fun Fact bleibt der leiseste Bau. Sein dünnster Rand folgt nun aber
      seiner Ambient-Rubrik, statt jede Karte wieder auf Grau zu ziehen. */
-  .nf-s-fakt{--kante:2px;--rahmen:rgba(var(--story-rgb),.14)}
+  .nf-s-fakt{--kante:2px;--rahmen:rgba(var(--story-rgb),.1)}
   .nf-card{border-color:var(--rahmen);border-left-width:var(--kante)}
   /* Gelesen faellt alles auf das leiseste Mass zurueck: der Feed soll zeigen,
      was noch offen ist, nicht was schon abgehakt wurde. */
@@ -863,22 +896,25 @@
      Lichtfeldern — keine Vollfarbe, kein Gold, kein Regenbogen. */
   .nf-s-fakt{border-style:solid;
     background:linear-gradient(90deg,var(--neu),transparent 55%),
-      radial-gradient(190px 115px at 2% 0%,rgba(var(--story-rgb),.075),transparent 72%),
-      radial-gradient(230px 135px at 100% 110%,rgba(var(--story-rgb),.035),transparent 74%),
+      radial-gradient(190px 115px at 2% 0%,rgba(var(--story-rgb),.058),transparent 72%),
+      radial-gradient(230px 135px at 100% 110%,rgba(var(--story-rgb),.028),transparent 74%),
       var(--bg2);
-    box-shadow:inset 0 1px 0 rgba(var(--story-rgb),.055)}
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.035),
+      -5px 0 18px -16px rgba(var(--story-rgb),.48)}
+  .nf-s-fakt:not(.read){--neu:rgba(255,255,255,.018)}
   .nf-s-fakt .nf-h{font-size:14px}
   .nf-s-fakt .nf-wert.metall b{color:var(--story);
-    text-shadow:0 0 14px rgba(var(--story-rgb),.2)}
-  /* Vier vertraute Familien fuer sieben redaktionelle Rubriken. Verwandte
-     Inhalte duerfen gleich klingen; die Rubrik benennt den Unterschied. */
+    text-shadow:0 0 12px rgba(var(--story-rgb),.1)}
+  /* Vier nahe beieinanderliegende Metalltöne statt vier Signalfarben. Die
+     Rubrik bleibt erkennbar, der Fun-Fact-Block wirkt wieder wie eine ruhige
+     Nebenstrecke des Feeds. */
   .nf-fakt-liga,.nd-fakt-liga,
-  .nf-fakt-chronik,.nd-fakt-chronik{--story:var(--blue);--story-rgb:86,180,232}
+  .nf-fakt-chronik,.nd-fakt-chronik{--story:#8fa1a6;--story-rgb:143,161,166}
   .nf-fakt-persoenlich,.nd-fakt-persoenlich,
   .nf-fakt-laufbahn,.nd-fakt-laufbahn,
-  .nf-fakt-auszeichnung,.nd-fakt-auszeichnung{--story:var(--purple);--story-rgb:167,139,250}
-  .nf-fakt-form,.nd-fakt-form{--story:var(--acid2);--story-rgb:163,230,53}
-  .nf-fakt-duell,.nd-fakt-duell{--story:var(--bronze);--story-rgb:192,132,87}
+  .nf-fakt-auszeichnung,.nd-fakt-auszeichnung{--story:#9b96a3;--story-rgb:155,150,163}
+  .nf-fakt-form,.nd-fakt-form{--story:#94a08e;--story-rgb:148,160,142}
+  .nf-fakt-duell,.nd-fakt-duell{--story:#a19990;--story-rgb:161,153,144}
 
   /* ── Motiv, Winkel und fette Akzente ──────────────────────────────
      Die Karte war ein dunkles Rechteck mit Text darin, und zehn davon
@@ -898,7 +934,14 @@
   .nf-motiv::before{content:"";position:absolute;inset:-14%;border-radius:50%;
     background:radial-gradient(circle,currentColor,transparent 68%);opacity:.16}
   .nf-s-held .nf-motiv{opacity:.1}
-  .nf-s-fakt .nf-motiv{opacity:.075}
+  .nf-s-fakt .nf-motiv{opacity:.05}
+  /* Kleine Bewegung nur auf der Tafel-Rubrikkachel: genug Leben beim
+     Scrollen, ohne dass die ganze Karte pulsiert. */
+  .nf-s-tafel:not(.read) .nf-rub i{animation:nfTafelAtmen 5.4s ease-in-out infinite}
+  @keyframes nfTafelAtmen{
+    0%,100%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.17),0 0 0 rgba(var(--story-rgb),0)}
+    50%{box-shadow:inset 0 0 0 1px rgba(var(--story-rgb),.3),0 0 10px -3px rgba(var(--story-rgb),.34)}}
+  @media(prefers-reduced-motion:reduce){.nf-s-tafel .nf-rub i{animation:none}}
   .nf-card.nf-neg .nf-motiv{opacity:.07}
   .nf-card.read .nf-motiv{opacity:.055}
   /* Alles Uebrige liegt darueber, sonst schneidet das Motiv in die Schrift. */
@@ -1023,9 +1066,6 @@
     letter-spacing:-.03em;display:flex;align-items:baseline;gap:1px}
   .nd-erg-sc b.w{color:var(--ink)} .nd-erg-sc b.v{color:var(--faint)}
   .nd-erg-sc i{font-style:normal;color:var(--faint);font-size:16px}
-  /* Der Fuss: der Weg weiter. */
-  .nd-fuss{margin-top:14px;display:flex;flex-direction:column;gap:8px}
-  .nd-fuss .btn{width:100%}
   .nd-held-nm{font-family:'Archivo Black',sans-serif;font-size:17px;letter-spacing:-.02em;line-height:1.1}
   .nd-held-un{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
     font-size:10.5px;color:var(--muted);margin-top:6px}

@@ -865,33 +865,40 @@ function _buildStories(){
           ? JSON.parse(lastArchived.top_elo || '[]')
           : (lastArchived.top_elo || []);
         if(topElo.length && topElo[0] && topElo[0].id && pm[topElo[0].id]){
-          // v9.18: Die Saison-Tafel (§13) reist in DIESER Story mit — bewusst
-          // KEINE eigene Breaking-Meldung pro Titel und keine extra Karte für
-          // Ehrentitel. Ein Saisonabschluss = eine Breaking News, sonst wäre
-          // der 1. des Monats zugespammt. Details stehen im Sheet.
-          let _tafel = null;
-          try {
-            const T = seasonTitles(lastArchived.id);
-            if(T && T.awarded.length){
-              _tafel = {
-                n: T.awarded.length,
-                empty: T.empty.length,
-                list: T.awarded.map(a => ({t:a.titleId, n:a.name, ic:a.ic, tone:a.tone, pid:a.pid, ev:a.ev}))
-              };
-            }
-          } catch(e){}
-          const _extra = _tafel
-            ? ` ${_tafel.n} Chronik-Einträge vergeben${_tafel.empty ? `, ${_tafel.empty} Spieler gehen leer aus` : ''}.`
-            : '';
+          // Der Monatsrückblick erzählt NICHT noch einmal die Chronik, die
+          // direkt daneben als eigene Tafel-Karte steht. Er bekommt seine
+          // Fakten aus den Partien dieses Monats: Umfang, Tore, enge Spiele
+          // und die beiden auffälligen Ergebnisse. Alles bleibt damit eine
+          // Ableitung derselben Matchdaten wie Rangliste und Verlauf.
+          const _sm = matchesInSeason(lastArchived.id);
+          let _tore = 0, _eng = 0, _klar = null, _torreich = null;
+          _sm.forEach(m => {
+            const a = Number(m.score_a) || 0, b = Number(m.score_b) || 0;
+            const diff = Math.abs(a - b), gesamt = a + b;
+            _tore += gesamt;
+            if(diff <= 2) _eng++;
+            if(!_klar || diff > _klar.wert) _klar = {wert:diff, matchId:m.id, score:a+':'+b};
+            if(!_torreich || gesamt > _torreich.wert) _torreich = {wert:gesamt, matchId:m.id, score:a+':'+b};
+          });
+          const _fakten = {
+            spiele:_sm.length,
+            tore:_tore,
+            engeSpiele:_eng,
+            toreJeSpiel:_sm.length ? Math.round(_tore / _sm.length * 10) / 10 : 0,
+            klarstes:_klar,
+            torreichstes:_torreich
+          };
           stories.push({
             id: 'season_recap_'+lastArchived.id,
             cat: 'season',
             ic: 'crown',
             title: `${nameOf(topElo[0].id)} ist Saison-Champion`,
-            desc: `Die Saison ${lastArchived.id} ist abgeschlossen. ${nameOf(topElo[0].id)} mit ${topElo[0].elo} Elo an der Spitze.${_extra}`,
+            desc: `${_fakten.spiele} Partien, ${_fakten.tore} Tore und ${_fakten.engeSpiele} enge Spiele prägten ${seasonLabel(lastArchived.id)}. `
+                + `${nameOf(topElo[0].id)} schließt den Monat mit ${topElo[0].elo} Elo an der Spitze ab.`,
             when: sStart,
             prio: STORY_PRIO.season_recap,
-            dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id, championElo: topElo[0].elo, topElo, tafel: _tafel}
+            dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id,
+                      championElo: topElo[0].elo, topElo, fakten:_fakten}
           });
         }
       }
@@ -1198,6 +1205,88 @@ function _buildStories(){
       });
     }
   } catch(e){}
+
+  // ── 16d. Das Ergebnis selbst ist die Geschichte ─────────────────────
+  // Nicht jeder Spieltag liefert einen Rekord oder eine neue Auszeichnung.
+  // Außergewöhnliche Partien sollen trotzdem im Blatt stehen: mit Endstand,
+  // beiden Teams und genau dem Merkmal, das diese Begegnung besonders macht.
+  // Pro Partie gewinnt nur das stärkste Muster, pro Tag höchstens zwei. So
+  // entstehen mehr echte Spieltagsgeschichten, aber kein Ergebnisprotokoll.
+  try {
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
+    const jeTag = new Map();
+    const badgeJeMatch = new Map();
+    stories.forEach(s => {
+      const d = (s && s.dataRef) || {};
+      if(d.type !== 'badge_unlocked' || !d.matchId || !d.badgeId) return;
+      const set = badgeJeMatch.get(d.matchId) || new Set();
+      set.add(d.badgeId); badgeJeMatch.set(d.matchId, set);
+    });
+    for(let i = matches.length - 1; i >= 0; i--){
+      const m = matches[i], ts = mts(m);
+      if(ts > now.getTime()) continue;
+      if(ts < seit) break;
+      const a = Number(m.score_a) || 0, b = Number(m.score_b) || 0;
+      const hoch = Math.max(a, b), tief = Math.min(a, b);
+      const diff = hoch - tief;
+      const winners = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).filter(Boolean);
+      const losers = (m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2]).filter(Boolean);
+      if(!winners.length || winners.some(id => !pm[id] || pm[id].hidden)) continue;
+      const h = histMap.get(m.id);
+      const expA = h && h.expA != null ? h.expA : (m.exp_a == null ? 0.5 : m.exp_a);
+      const chance = m.winner === 'A' ? expA : 1 - expA;
+      let art = '', rang = 0, title = '', desc = '', ic = 'ball';
+      const wn = _namenListe(winners.map(nameOf));
+      const ln = _namenListe(losers.map(nameOf));
+      if(hoch === 10 && tief === 0){
+        art = 'zu_null'; rang = 69; ic = 'hundred';
+        title = `${wn} gewinnen ohne Gegentor`;
+        desc = `Ein makelloses 10:0 gegen ${ln}. Auf der anderen Seite fällt kein einziger Treffer.`;
+      } else if(chance >= 0.20 && chance < 0.35){
+        art = 'upset'; rang = 67; ic = 'giantSlayer';
+        title = `${wn} stürzen die Favoriten`;
+        desc = `Nur ${Math.max(1, Math.round(chance * 100))} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;
+      } else if(diff === 1 && tief >= 8){
+        art = 'krimi'; rang = 65; ic = 'thriller';
+        title = `${wn} retten ein ${a}:${b} ins Ziel`;
+        desc = `Nur 1 Tor trennt beide Teams. ${ln} bleiben bis zum letzten Ball im Spiel.`;
+      } else if(diff >= 7){
+        art = 'kanter'; rang = 61; ic = 'thumbsUp';
+        title = `${wn} setzen ein klares Zeichen`;
+        desc = `${a}:${b} gegen ${ln}. Mit ${diff} Toren Abstand ist das eine klare Angelegenheit.`;
+      } else if(diff === 2 && tief >= 8){
+        art = 'eng'; rang = 59; ic = 'thriller';
+        title = `${wn} entscheiden ein enges Spiel`;
+        desc = `${ln} halten die Partie bis in die Schlussphase offen. Am Ende steht ein ${a}:${b}.`;
+      }
+      if(!art) continue;
+      // Eine Auszeichnung aus genau diesem Match darf denselben Fakt nicht
+      // noch einmal als Ergebnis-Story erzählen. In allen anderen Fällen ist
+      // die Partie selbst die einzige Nachricht über dieses Resultat.
+      const bm = badgeJeMatch.get(m.id) || new Set();
+      const abgedeckt = art === 'zu_null' ? bm.has('perfect_win')
+        : art === 'upset' ? bm.has('upset_king')
+        : (art === 'krimi' || art === 'eng') ? (bm.has('krimi') || bm.has('nerves_of_steel'))
+        : false;
+      if(abgedeckt) continue;
+      const d = new Date(ts);
+      const tag = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const list = jeTag.get(tag) || [];
+      list.push({m, ts, art, rang, title, desc, ic, winners, losers, chance, diff});
+      jeTag.set(tag, list);
+    }
+    jeTag.forEach(list => list
+      .sort((x, y) => y.rang - x.rang || y.ts - x.ts)
+      .slice(0, NEWS_LIMITS.matchResultProTag || 2)
+      .forEach(x => stories.push({
+        id: `match_result_${x.art}_${x.m.id}`,
+        cat: 'highlight', ic:x.ic, title:x.title, desc:x.desc,
+        when:new Date(x.ts), prio:STORY_PRIO.match_result + (x.rang - 59),
+        dataRef:{type:'match_result', resultKind:x.art, matchId:x.m.id,
+                 playerIds:x.winners, winners:x.winners, losers:x.losers,
+                 chance:x.art === 'upset' ? x.chance : undefined, margin:x.diff}
+      })));
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] match result', e); }
 
   // ── 17. Serienkiller (Match beendete ≥4er Sieges-Streak des Gegners) ──
   // Nutzt getStreakSnapshots — pro Match {pid: streak_VOR_match}. v9.7: Schwelle

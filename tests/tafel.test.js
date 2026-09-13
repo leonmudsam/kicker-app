@@ -441,12 +441,14 @@ K.eval(`globalThis.__ALT_SHEET = openSheet; globalThis.__ALT_REOPEN = _sheetSetR
 }
 K.eval(`openSheet = globalThis.__ALT_SHEET; _sheetSetReopen = globalThis.__ALT_REOPEN;
   _bindChronikClicks = globalThis.__ALT_BIND;`);
-// News-Detail des Saison-Abschlusses inkl. Tafel
+// Der Monatsrückblick erzählt Spielgeschehen und Rangspitze. Die Chronik hat
+// ihre eigene Karte und darf hier nicht ein zweites Mal stehen.
 try {
   const body = K.eval(`(()=>{const s=_consolidateStories(_buildStories()).find(x=>(x.dataRef||{}).type==='season_recap');
     return s ? _newsDetailBody(s) : 'KEINE';})()`);
-  ok(body === 'KEINE' || (body.includes('tplate') && body.includes('Titel der Saison')),
-     'Saison-Abschluss-Detail enthält die Tafel', body === 'KEINE' ? 'keine Recap-Story im Feed (ok außerhalb der ersten Monatstage)' : 'Tafel fehlt');
+  ok(body === 'KEINE' || (!body.includes('tplate') && body.includes('Der Monat in Zahlen')),
+     'Saison-Abschluss und Chronik erzählen verschiedene Inhalte',
+     body === 'KEINE' ? 'keine Recap-Story im Feed (ok außerhalb der ersten Monatstage)' : 'Spielgeschehen fehlt oder Chronik doppelt');
 } catch(e){ ok(false, 'Saison-Abschluss-Detail', e.message); }
 
 console.log('\n═══ 7c. DER LIGA-TAB ZEIGT EINE GEWÄHLTE SAISON ═══');
