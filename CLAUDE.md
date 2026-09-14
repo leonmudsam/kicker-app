@@ -62,7 +62,11 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Vorlage für einen Umbau — kein Teil der App.
                       Dort liegt auch die Story-Simulation: hundert erfundene
                       Partien, gerechnet und erzählt mit dem Code der App
-                      (README-story-simulation.md)
+                      (README-story-simulation.md), und die Tafel der
+                      Story-Logik: welche Daten, in welcher Reihenfolge, nach
+                      welchem Prinzip und wie oft eine Karte entsteht,
+                      gemessen an den echten Partien
+                      (README-story-logik.md)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
