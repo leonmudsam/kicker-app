@@ -221,7 +221,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen | 1003 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand | 301 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte | 307 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px — **im echten Browser gemessen** | 118 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -875,6 +875,27 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   `_consolidateStories` — der genau dafür gebaut ist — schlug nie an:
   gemessen null Treffer in fünf Aufrufen, bei einem Aufruf nach jedem
   `loadAll` und bei jedem Zeichnen des Feeds. `tests/ambient` misst das alles.
+
+  **Das Ergebnis im Text gehört dem Sieger.** Es stand in der Reihenfolge der
+  Eingabe, und damit stand „Maxi und Leo retten ein 9:10 ins Ziel" im Feed —
+  die Sieger genannt und dahinter der Stand des Verlierers. Dasselbe im
+  Spitzenspiel: unter „Leon schlägt Julian" stand „9:10". Eine Karte, die zwei
+  verschiedene Sieger behauptet, ist keine Nachricht.
+  **Kein Etikett mit Doppelpunkt am Satzanfang, kein Satzfragment, keine
+  englische Aufschrift.** „Saison-Endspurt: Leon führt mit 91 Elo Vorsprung"
+  ist eine Rubrik und ein Satz in einem, und die Rubrik steht schon über der
+  Karte [§C27]. „Seit dem 16.07. geht jedes gemeinsame Spiel verloren. 3 am
+  Stück." endet auf einem Fragment ohne Verb. Und „Giant Slayer" und „Losing
+  Streak" waren die einzigen englischen Aufschriften der Liga — „Player of the
+  Week" und „Player of the Day" bleiben, das sind die Namen der beiden
+  Wertungen. `tests/ambient` prüft das über jeden vierten Spieltag der
+  Ligageschichte: ein einziger Generatorlauf trifft von jedem Typ höchstens
+  einen Fall, und dann prüft die Zusicherung genau den, der zufällig gerade
+  ansteht.
+  **Und der Text wiederholt nicht seine Schlagzeile.** „Leo: Sieg Nummer 100"
+  trug darunter „Leo feiert den 100. Sieg", „Leo knackt 300 Elo" trug „300 Elo
+  zum ersten Mal überschritten". Jeder Text nennt eine Zahl, die die
+  Schlagzeile noch nicht hat.
 
   **So spricht die Liga.** Leicht und unkompliziert, aber mit den Zahlen dran.
   Kein Gedankenstrich — er trennte Sätze, die als zwei Sätze klarer sind. Die

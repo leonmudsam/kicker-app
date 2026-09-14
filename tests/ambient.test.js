@@ -2416,5 +2416,86 @@ ok(_stand.altGilt,
    'eine Karte, die spaeter mit altem Zeitpunkt auftaucht, gilt als gelesen');
 ok(!_stand.frischGilt, 'eine Karte nach dem Lesestand gilt als neu');
 
+// ── Jeder Text sagt, was passiert ist ───────────────────────────────
+//    Gemessen an allen Typen, die der Generator ueber vierzig Tage bildet.
+console.log('\n═══ JEDER TEXT SAGT, WAS PASSIERT IST ═══');
+const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
+  // Ueber mehrere Spieltage, nicht nur ueber heute: ein einziger Lauf trifft
+  // von jedem Typ hoechstens einen Fall, und dann prueft die Zusicherung
+  // genau den, der zufaellig gerade ansteht. Genommen wird jeder vierte
+  // Spieltag der ganzen Ligageschichte — die letzten zwoelf allein trugen
+  // zum Beispiel keinen Krimi, den das zweite Team gewonnen hat, und genau
+  // dort stand die Reihenfolge der Tore falsch.
+  const alleMatches = matches.slice();
+  const alleTage = [...new Set(alleMatches.map(m => _newsDayKey(mts(m))))].sort();
+  const tage = alleTage.filter((_, i) => i % 4 === 0 || i >= alleTage.length - 3);
+  const roh = [];
+  const gesehen = new Set();
+  tage.forEach(k => {
+    const grenze = Math.max(...alleMatches.filter(m => _newsDayKey(mts(m)) === k).map(mts));
+    matches = alleMatches.filter(m => mts(m) <= grenze);
+    invalidateCache();
+    let l = [];
+    try { l = _buildStories(); } catch(e){}
+    l.forEach(x => { if(!gesehen.has(x.id)){ gesehen.add(x.id); roh.push(x); } });
+  });
+  matches = alleMatches;
+  invalidateCache();
+  // Das Ergebnis im Text gehoert dem Sieger. Unter „Leon schlaegt Julian im
+  // Spitzenspiel" stand „9:10" — dieselbe Karte behauptete zwei Sieger.
+  const ergebnisFalsch = [];
+  roh.forEach(s => {
+    const d = s.dataRef || {};
+    const mid = d.matchId;
+    if(!mid) return;
+    if(['top_clash','giant_slayer','match_result'].indexOf(d.type) < 0) return;
+    const m = matches.find(x => x.id === mid);
+    if(!m) return;
+    const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+    const gefunden = String(s.title || '').match(/(\\d{1,2})\\s?:\\s?(\\d{1,2})/)
+      || String(s.desc || '').match(/(\\d{1,2})\\s?:\\s?(\\d{1,2})/);
+    if(!gefunden) return;
+    if(Number(gefunden[1]) !== hoch || Number(gefunden[2]) !== tief)
+      ergebnisFalsch.push(s.title + ' → ' + gefunden[0]);
+  });
+  // Der Text wiederholt die Schlagzeile nicht wortgleich.
+  const echo = roh.filter(s => {
+    const t = String(s.title || '').trim(), d = String(s.desc || '').trim();
+    return t && d && (d === t || d.indexOf(t + '.') === 0);
+  }).map(s => s.title);
+  // Kein Etikett mit Doppelpunkt am Satzanfang („Saison-Endspurt: …").
+  const etikett = roh.filter(s => /^[A-ZÄÖÜ][^.!?:]{2,24}:\\s/.test(String(s.desc || '')))
+    .map(s => s.title + ' → ' + String(s.desc).slice(0, 40));
+  // Und kein englischer Kartentitel.
+  // Gesucht sind durchgehend englische Aufschriften. „Player of the Week"
+  // und „Player of the Day" sind die Namen, unter denen die Liga ihre
+  // Wochen- und Tageswertung seit jeher fuehrt, und „Upset" gehoert zum
+  // eigenen Wortschatz — beides bleibt.
+  const englisch = roh.filter(s => /\\b(Giant Slayer|Losing Streak|Win Streak|Loser|Winner|New Record)\\b/
+    .test(String(s.title || ''))).map(s => s.title);
+  // Ein Satzfragment ohne Verb, allein hinter einem Punkt: „3 am Stueck."
+  // Ein Satzfragment: der letzte Satz beginnt mit einer Zahl und traegt
+  // hoechstens drei Woerter. „3 am Stueck." ist kein Satz.
+  const fragment = roh.filter(s => {
+    const teile = String(s.desc || '').split(/(?<=\\.)\\s+/).filter(Boolean);
+    if(teile.length < 2) return false;
+    const letzt = teile[teile.length - 1].replace(/\\.$/, '').trim();
+    return /^\\d/.test(letzt) && letzt.split(/\\s+/).length <= 3;
+  }).map(s => s.desc);
+  return {n: roh.length, ergebnisFalsch, echo, etikett, englisch, fragment};
+})())`));
+ok(_worte.n > 0, 'der Generator bildet Texte', _worte.n + ' Karten');
+ok(_worte.ergebnisFalsch.length === 0,
+   'das Ergebnis im Text gehoert dem Sieger',
+   _worte.ergebnisFalsch.slice(0, 2).join(' | ') || 'alle');
+ok(_worte.echo.length === 0, 'kein Text wiederholt nur seine Schlagzeile',
+   _worte.echo.slice(0, 2).join(' | ') || 'keiner');
+ok(_worte.etikett.length === 0, 'kein Etikett mit Doppelpunkt am Satzanfang',
+   _worte.etikett.slice(0, 2).join(' | ') || 'keins');
+ok(_worte.englisch.length === 0, 'keine englische Schlagzeile',
+   _worte.englisch.slice(0, 2).join(' | ') || 'keine');
+ok(_worte.fragment.length === 0, 'kein Satzfragment als letzter Satz',
+   _worte.fragment.slice(0, 2).join(' | ') || 'keins');
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);
