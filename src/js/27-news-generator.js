@@ -1723,6 +1723,21 @@ function _buildStories(){
     const _letzteMatchId = matches.length ? matches[matches.length-1].id : null;
     if(_letzteMs){
       const _tag0 = new Date(_letzteMs); _tag0.setHours(0, 0, 0, 0);
+      // ── Wer nicht gespielt hat, hat nichts getan ────────────────────
+      // Ein Halterwechsel entsteht auch, weil ANDERE gespielt haben. „Der
+      // makellose Tag" misst einen Anteil: wer den Bestwert haelt, verliert
+      // ihn mit dem naechsten schwachen Tag, und der Naechstbeste uebernimmt,
+      // ohne selbst angetreten zu sein. Gemessen trugen 23 von 280
+      // Tafel-Karten einen Namen, der an diesem Tag keine Partie hatte —
+      // „Martin uebernimmt ‚Der komplette Verteidiger'" stand ueber einem
+      // Spieltag ohne Martin. Dieselbe Regel wie beim Ausbauen [§C33]: die
+      // anderen sind nur nicht vorbeigezogen, und daraus wird keine
+      // Schlagzeile ueber jemanden, der zugesehen hat.
+      const _amTag = new Set();
+      matches.forEach(m => {
+        if(mts(m) < _tag0.getTime()) return;
+        [m.a1, m.a2, m.b1, m.b2].forEach(p => { if(p) _amTag.add(p); });
+      });
       const _jetzt = allChronicles().byId;
       const _vorher = allChronicles(_tag0.getTime() - 1).byId;
       const _kammer = k => (CHRON_KINDS[k] && CHRON_KINDS[k].label) || 'Liga-Rekord';
@@ -1736,6 +1751,7 @@ function _buildStories(){
         const a = _vorher[def.id];
         const art = _rekordArt(a, n);
         if(!art) return;
+        if(!n.pids.some(p => _amTag.has(p))) return;
         const neuN = n.pids.map(nameOf);
         const namen = _namenListe(neuN);
         // Drei Halter „uebernimmt" nicht, sie uebernehmen.
@@ -1780,8 +1796,21 @@ function _buildStories(){
           // Spielen. Gemeldet wird, was man SIEHT — also ist auch die Identitaet
           // der Karte das, was man sieht. Die Halter stehen sortiert darin,
           // sonst ergaebe dieselbe Gruppe in anderer Reihenfolge eine zweite ID.
+          // ── Der Spieltag gehoert in die ID ──────────────────────
+          // Ohne ihn beschreibt dieselbe ID zwei verschiedene Ereignisse.
+          // Ein Halterfeld wird enger und wieder weiter: geht der Rekord
+          // weg und kommt mit demselben Wert an dieselben Leute zurueck,
+          // bildet der Generator genau diese ID erneut. Die Datenbank hat
+          // sie schon, also bleibt der alte Zeitstempel — aber
+          // `_newsTexteAuffrischen` uebernimmt den neuen `dataRef`, und
+          // damit zeigt eine Karte vom 24. auf die Partie vom 26.
+          // Gemessen wanderte so der ganze Tafel-Moment des 24.08. in die
+          // Sammelkarte des 26.08., und der 24. hatte keine Tafel-Karte
+          // mehr. Eine Wiederkehr ist ein neues Ereignis und bekommt eine
+          // eigene Karte [§C33].
           id: `rek_${def.id}_${art}_${n.pids.slice().sort().join('-')}`
-            + `_${String(wertNeu).replace(/[^0-9a-zA-Z]/g, '')}`,
+            + `_${String(wertNeu).replace(/[^0-9a-zA-Z]/g, '')}`
+            + `_${_newsDayKey(_letzteMs)}`,
           cat: 'tafel',
           ic: def.ic,
           title, desc,
@@ -1882,6 +1911,15 @@ function _buildStories(){
     const _sid = currentSeason().id;
     if(_letzteMs2 && typeof seasonTitleHalter === 'function'){
       const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
+      // Dieselbe Regel wie bei den Rekorden: eine Chronik wechselt auch den
+      // Halter, weil ein anderer gespielt und seinen Anteil verschlechtert
+      // hat. „Martin holt ‚Der Tagesabschluss'" stand ueber einem Spieltag,
+      // an dem Martin nicht angetreten war [§C33].
+      const _amTag2 = new Set();
+      matches.forEach(m => {
+        if(mts(m) < _t0.getTime()) return;
+        [m.a1, m.a2, m.b1, m.b2].forEach(p => { if(p) _amTag2.add(p); });
+      });
       const _jetztH = seasonTitleHalter(_sid);
       const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
       // Eine Chronik-Karte darf nicht den Katalogwert als neuen Prestige-
@@ -1929,6 +1967,7 @@ function _buildStories(){
         // Die Schlagzeile nennt die, um die es geht [§C33]: beim Dazukommen
         // sind das die Neuen, sonst alle Halter.
         const wer = art === 'dazu' ? neuLeute : n.pids;
+        if(!wer.some(p => _amTag2.has(p))) return;
         const namen = _namenKurz(wer.map(nameOf));
         const mz = wer.length > 1;
         const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}"`
@@ -1980,7 +2019,7 @@ function _buildStories(){
         } else {
           prestigeSatz = ' Die Halterlage ändert sich, der Prestige-Stand nicht.';
         }
-        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt,
+        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer,
           prestigeDelta, titelJeSpieler,
           title: titel,
           // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
@@ -1997,7 +2036,11 @@ function _buildStories(){
           // Die ID traegt Chronik, Monat und die sortierten Halter. Damit ist
           // sie stabil, solange derselbe sie haelt, und eine Uebernahme
           // bekommt eine eigene.
-          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}`,
+          // Mit dem Spieltag: dieselbe Chronik kann in derselben Woche
+          // weggehen und zurueckkommen, und dann sind das zwei Ereignisse
+          // [§C33]. „Johannes holt ‚Der Beidfuessige'" trug sonst den
+          // Zeitstempel des 24. und die Partie des 26.
+          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}_${_newsDayKey(_letzteMs2)}`,
           cat: 'tafel',
           ic: m.t.ic,
           title: m.title,
@@ -2008,7 +2051,14 @@ function _buildStories(){
           // ueberstimmen [§C33].
           prio: STORY_PRIO.chronik_geholt,
           dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_letzteMatchId2,
-                    playerIds:m.n.pids.slice(), vorher:(m.a && m.a.pids) || [],
+                    // Die Beteiligten sind die, um die es geht — nicht jeder
+                    // Mithalter. „Martin zieht bei ‚Der Nachzuegler' gleich"
+                    // trug Martin UND Julian, und in der Tafel-Sammelkarte
+                    // stand daraufhin „Julian und Martin bewegen die Ewige
+                    // Tafel" ueber zwei Zeilen, die beide von Martin
+                    // erzaehlen. Wer schon Halter war, hat an diesem Tag
+                    // nichts getan [§C33].
+                    playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
                     chronArt:m.t.kunst, aus:m.t.aus,
                     // `punkte` ist der tatsaechliche neue Beitrag, nicht der
@@ -2029,7 +2079,7 @@ function _buildStories(){
   // Eine Stufe ist ein Uebergang, kein Naehefenster. Verglichen wird der
   // Stand vor dem letzten Spieltag mit heute. Dadurch verschwindet eine
   // Meldung weder bei einem grossen Sprung noch nach einer spaeteren
-  // Neuberechnung. Die ID bleibt Spieler + Stufe; Persistenz und
+  // Neuberechnung. Die ID traegt Spieler, Stufe und Spieltag; Persistenz und
   // ON-CONFLICT machen den Lauf ueber Geraete hinweg idempotent.
   try {
     const _insLetzte = matches.length ? mts(matches[matches.length-1]) : 0;
@@ -2054,7 +2104,12 @@ function _buildStories(){
           const ausloeser = _insTagMatches.find(m => mts(m) === treffer);
           const oben = stufe >= 3;
           stories.push({
-            id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key,
+            // Auch hier der Spieltag: das Prestige aus Liga-Rekorden wird
+            // geteilt [§C34], eine Stufe kann also wieder fallen und erneut
+            // erreicht werden. Dieselbe ID fuer zwei Momente laesst die
+            // aeltere Karte auf die neuere Partie zeigen [§C33].
+            id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key
+                + '_' + _newsDayKey(_insLetzte),
             cat: 'tafel',
             ic: 'award',
             title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`,

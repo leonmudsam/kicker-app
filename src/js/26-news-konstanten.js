@@ -68,6 +68,17 @@ const NEWS_AMBIENT_STIL = {
 };
 
 const NEWS_LS_SEEN  = 'eso_news_seen_v1';
+// ── Der Lesestand ───────────────────────────────────────────────────
+// Der Zeitpunkt der neuesten Karte, die beim letzten „Alles gelesen" im
+// Feed stand. Ohne ihn zaehlte die App als neu, was sie noch nicht in der
+// Liste der gelesenen IDs findet — und das ist nicht dasselbe: eine Karte
+// faellt unter einen Deckel, eine Schlagzeile verdraengt eine gleichlautende,
+// eine Sperrfrist laeuft ab. Gemessen ueber fuenfundvierzig Tage trugen 81
+// von 267 neu auftauchenden Karten (30 %) einen Zeitpunkt, der laenger
+// zurueckliegt als alles, was der Leser schon gesehen hat: „Martin und Alex
+// brechen Julians 7er-Serie" vom 09.07. kam am 14.07. und am 20.07. erneut
+// als neu hoch. Neu ist, was SEIT dem letzten Blick dazugekommen ist.
+const NEWS_LS_STAND = 'eso_news_stand_v1';
 const NEWS_LS_TOAST = 'eso_news_toast_v1';  // v8.1: zeitstempel + count des letzten Toasts
 const NEWS_LS_MAX_SEEN = 600; // Ring-Buffer-Limit (deckt das ganze Fenster)
 const NEWS_TOAST_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h zwischen identischen Toast-Counts
@@ -107,11 +118,13 @@ const NEWS_LIMITS = {
   // Spieltag reichen, um konkrete Partien regelmäßig sichtbar zu machen,
   // ohne aus dem Feed einen Ergebnisdienst zu bauen.
   matchResultProTag: 2,
-  // Redaktionelles Mindestgewicht im 14-Tage-Fenster. Gezählt werden die
-  // sichtbaren Zeilen eines Bundles, nicht nur sein äußerer Kartenrahmen.
-  // 40–60 % ist die belastbare Auslegung von „ungefähr halb"; Pflichtkarten,
-  // Breaking und die stärkste Karte jedes Spieltags bleiben unangetastet.
-  tafelAnteilMin: 0.40,
+  // So viele Plätze eines Tages gehören der Ewigen Tafel, wenn sie sich an
+  // diesem Tag bewegt hat. Die Mischung war vorher eine Quote über das ganze
+  // Fenster, und erfüllt wurde sie, indem Spieltagskarten wegfielen: gemessen
+  // schnitt das den Feed von 42 auf 23 Karten und leerte zwei von sieben
+  // Spieltagen vollständig, ohne der Tafel eine einzige Karte hinzuzufügen.
+  // Reserviert statt quotiert, und je Tag statt je Fenster [§C33].
+  tafelProTagMin: 1,
   // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
   // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
   // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
