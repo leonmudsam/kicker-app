@@ -4861,7 +4861,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.15.7fa6d8ec';
+const BUILD_VERSION='2026.09.15.b56d9dbd';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22806,6 +22806,15 @@ function _consolidateStories(list){
     const d = (st && st.dataRef) || {};
     const typ = d.type || '';
     if(!typ || _OHNE_SPERRE.has(typ)) return null;
+    // ── Breaking scheitert an keiner Sperre ──────────────────────────
+    // Der Schluessel sortiert die Beteiligten, damit dieselben zwei Halter
+    // in anderer Reihenfolge nicht als Wechsel gelten. Bei einem gerichteten
+    // Ereignis dreht das die Aussage um: „Maxi verdraengt Martin" und
+    // „Martin verdraengt Maxi" tragen dieselben zwei Namen. Gemessen wechselte
+    // die Spitze am 14.09. zweimal und am 15.09. erneut, und von den drei
+    // Breaking-Karten blieb genau eine stehen — die Sperrfrist hielt die
+    // anderen fuer Wiederholungen derselben Aussage.
+    try { if(typeof _isBreaking === 'function' && _isBreaking(st)) return null; } catch(e){}
     let ids = [];
     try { ids = (typeof _newsPids === 'function' ? _newsPids(st) : []) || []; } catch(e){}
     const sache = d.rekordId || d.badgeId || d.disziplinId || d.titleId || d.titel || '';
@@ -23497,13 +23506,36 @@ function _consolidateStories(list){
     const t = d.type || '';
     return t === 'sammel' ? 'sammel/' + (d.quelle || 'spiel') : t;
   };
-  const gezaehlt = {};
+  // ── Der Deckel behaelt die STAERKSTEN, nicht die juengsten ─────────
+  // Gezaehlt wurde in Feed-Reihenfolge, und die ist die Zeit: von vier
+  // Ergebnis-Karten eines Tages blieben die zwei jungen stehen. Gemessen trug
+  // der 15.09. ein 10:0 um 11:39 und ein 10:5 um 12:32 — „Maxi und Henry
+  // gewinnen ohne Gegentor" (73) fiel weg, „setzen ein klares Zeichen" (65)
+  // blieb. Der Tagesdeckel entscheidet nach `prio` [§C33], und der Deckel je
+  // Sorte ist dieselbe Frage eine Ebene tiefer. Die Reihenfolge bleibt die
+  // Zeit: ausgewaehlt wird, WAS wegfaellt, nicht wo etwas steht.
+  const _deckelBleibt = new Map();
+  {
+    const proKey = new Map();
+    gesammelt.forEach(s => {
+      const t = (s && s.dataRef && s.dataRef.type) || '';
+      if(!t || OHNE_DECKEL.has(t) || TAG_PFLICHT.has(t)) return;
+      const k = _deckelSorte(s) + '|' + _tagKey(s.when);
+      const l = proKey.get(k) || [];
+      l.push(s); proKey.set(k, l);
+    });
+    proKey.forEach((l, k) => {
+      _deckelBleibt.set(k, new Set(l.slice()
+        .sort((a, b) => (b.prio || 0) - (a.prio || 0)
+                     || new Date(b.when) - new Date(a.when))
+        .slice(0, NF_DECKEL).map(s => s.id)));
+    });
+  }
   const behalten = gesammelt.filter(s => {
     const t = (s && s.dataRef && s.dataRef.type) || '';
     if(!t || OHNE_DECKEL.has(t) || TAG_PFLICHT.has(t)) return true;
-    const k = _deckelSorte(s) + '|' + _tagKey(s.when);
-    gezaehlt[k] = (gezaehlt[k] || 0) + 1;
-    return gezaehlt[k] <= NF_DECKEL;
+    const bleibt = _deckelBleibt.get(_deckelSorte(s) + '|' + _tagKey(s.when));
+    return !bleibt || bleibt.has(s.id);
   });
   // ── Der Deckel darf niemanden ganz verschwinden lassen ─────────────
   // Im Feed hat jeder ein Gesicht, und jeder gewertete Spieler kommt vor
@@ -23629,8 +23661,19 @@ function _consolidateStories(list){
   const _istTafelKarte = s => !!s && (s.cat === 'tafel' || (s.dataRef || {}).quelle === 'tafel');
   const _istMatchGeschichte = s => {
     const d = (s && s.dataRef) || {};
-    return !!d.matchId && !_istTafelKarte(s)
-      && d.type !== 'potd' && d.type !== 'potw';
+    if(!d.matchId || _istTafelKarte(s)) return false;
+    if(d.type === 'potd' || d.type === 'potw') return false;
+    // ── Reserviert wird fuer eine Karte, die den Platz braucht ──────
+    // Breaking und die Pflichtkarten zaehlen gar nicht gegen den Deckel
+    // [§C33] — eine Reservierung fuer sie ist verschenkt. Gemessen trug der
+    // 15.09. ein 10:0: „Maxi und Henry gewinnen ohne Gegentor" (73) fiel
+    // heraus, weil „Neuer Spitzenreiter: Maxi" (Breaking, 93) eine Partie
+    // nennt und damit den reservierten Platz besetzte — die Karte, die den
+    // Spieltag am konkretesten erzaehlt, verschwand fuer eine, die ohnehin
+    // im Feed stand.
+    if(TAG_PFLICHT.has(d.type)) return false;
+    try { if(typeof _isBreaking === 'function' && _isBreaking(s)) return false; } catch(e){}
+    return true;
   };
   // ── Die Mischung gehört dem Tag ────────────────────────────────────
   // Sie war eine Quote über das ganze Fenster: mindestens 40 % Ewige Tafel,
