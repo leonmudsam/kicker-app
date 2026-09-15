@@ -833,8 +833,12 @@
   .nf-s-tafel .nf-sam-z .nf-sam-i{color:rgb(var(--zeile-rgb));
     border-color:rgba(var(--zeile-rgb),.22);background:rgba(var(--zeile-rgb),.075);
     box-shadow:0 0 12px -8px rgba(var(--zeile-rgb),.72)}
-  .nf-sam-m{padding:6px 13px;font-size:10px;color:var(--faint);
-    border-top:1px solid var(--line)}
+  /* Die Zahl der uebrigen Zeilen ist der Weg ins Blatt, also muss man sie
+     lesen koennen. Mit 6 px Luft und `--faint` endete sie gerendert 1 px
+     ueber der Kartenkante, und die Ecke von 14 px schnitt sie an: „und 13
+     weitere" sah aus wie ein Darstellungsfehler. */
+  .nf-sam-m{padding:8px 13px 12px;font-size:10.5px;color:var(--muted);
+    border-top:1px solid var(--line);letter-spacing:.02em}
 
   /* Sorte 6 Duo: zwei Wappen nebeneinander, kein Rang [§C27]. */
   .nf-duo{gap:0}

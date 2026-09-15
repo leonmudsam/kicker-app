@@ -132,6 +132,15 @@ const NEWS_LIMITS = {
   // Ergebnis. Zwei in einer Karte kosten einen Platz statt zwei; drei waeren
   // wieder ein Ergebnisdienst [§C33].
   ergebnisProKarte: 2,
+  // Wie viele Zeilen eine Sammelkarte im Band zeigt. „Bündeln darf nichts
+  // verstecken" war fuer zwei bis vier Teile geschrieben; gemessen trug ein
+  // Tafel-Moment neunzehn — fuenf Bestmarken, dreizehn Monatschroniken und
+  // ein Insignium —, und die Karte bedeckte den ganzen Bildschirm. Damit
+  // versteckt gerade die vollstaendige Liste alles andere. Die staerksten
+  // sechs stehen auf der Karte (`teile` ist nach `prio` sortiert, also
+  // Bestmarke vor Monatschronik vor Insignium), die Zahl dahinter fuehrt
+  // ins Blatt, und dort steht weiterhin jede Zeile [§C33].
+  sammelZeilen: 6,
   // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
   // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
   // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage

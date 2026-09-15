@@ -582,6 +582,17 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // einer Schande erzaehlt, traegt es in Rubrik und Motiv. Die Durststrecke
   // stand vorher im selben Gruen wie die Siegesserie.
   const negativ = _newsIstNegativ(s);
+  // ── Was oben steht, steht unten nicht noch einmal ──────────────────
+  // `_breakingHeroText` hat nur fuer sieben Typen einen eigenen Satz und
+  // faellt sonst auf `s.desc` zurueck. Gemessen stand der Teaser damit auf
+  // jeder anderen Breaking-Karte zweimal untereinander — auf der
+  // gebuendelten „Neue Tabellenspitze und Auszeichnung in einer Partie" und
+  // auf jeder legendaeren Auszeichnung [§C33].
+  let brkSub = '';
+  if(brk){
+    const h = _breakingHeroText(s);
+    if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
+  }
   return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
@@ -598,7 +609,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     </div>
     ${sammelBand}
     ${fuss}
-    ${brk ? `<div class="nf-brk-sub">${esc(_breakingHeroText(s))}</div>` : ''}
+    ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
   </div>`;
 }
 
@@ -748,10 +759,14 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     .map(x => String(x || '').trim()).filter(Boolean);
   const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
   if(!rest.length) return '';
-  // Drei Zeilen und dahinter die Zahl — ausser auf den beiden Karten, die
-  // eine Sache vollstaendig zeigen sollen: dort waere „und 2 weitere" genau
-  // das Verstecken, gegen das die Buendelung gebaut ist.
-  const grenze = vollstaendig ? rest.length : 3;
+  // Drei Zeilen und dahinter die Zahl. Eine Sammelkarte zeigt mehr, aber
+  // nicht alles: gemessen trug ein Tafel-Moment neunzehn Zeilen, und die
+  // Karte bedeckte damit den ganzen Bildschirm — die vollstaendige Liste
+  // versteckte alles andere. Gezeigt werden die staerksten
+  // `NEWS_LIMITS.sammelZeilen`; `rest` steht nach `prio` sortiert, also
+  // Bestmarke vor Monatschronik vor Insignium. Das Blatt zeigt jede Zeile.
+  const grenze = vollstaendig
+    ? Math.min(rest.length, NEWS_LIMITS.sammelZeilen || rest.length) : 3;
   // In einer gemischten Tafel-Karte bekommt jede Spur den Ton ihrer Kammer.
   // Der Kartenkopf bleibt eine gemeinsame Geschichte, die Zeilen verraten
   // aber sofort, ob darunter Rekord, Bestmarke, Chronik, Fügung, Schatten

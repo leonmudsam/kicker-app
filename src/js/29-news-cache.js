@@ -418,6 +418,22 @@ function _consolidateStories(list){
   // v9.5: Spieler mit laufender „Siege in Folge"-Story → deren Top-Form-Story
   // (≥8/10) beschreibt dieselbe heiße Phase und entfällt (kein Doppel).
   const winStreakPids = new Set();
+  // ── Eine Serie je Spieler und Tag, die laengste ────────────────────
+  // Der Generator bildet nur noch die hoechste Marke je Spieler und Tag,
+  // aber persistierte Zeilen aus aelteren Laeufen tragen die kuerzeren
+  // weiter. Gemessen stand „Johannes zuendet die 7er-Serie" neben „2 Serien
+  // im Gleichschritt: Jane & Johannes" und darunter noch „Jane zuendet die
+  // 5er-Serie": dieselbe laufende Serie in drei Zeilen. Die Gruppe entsteht
+  // aus den Mitgliedern, also raeumt eine Grenze VOR der Gruppierung beides
+  // zugleich auf [§C33].
+  const _serieMax = new Map();
+  for(const s of src){
+    const d = s.dataRef || {};
+    if(d.type !== 'win_streak' || !d.pid) continue;
+    const k = d.pid + '|' + _fdKey(s.when);
+    const n = Number(d.streak) || 0;
+    if(!(_serieMax.get(k) >= n)) _serieMax.set(k, n);
+  }
   for(const s of src){
     const d = s.dataRef || {};
     if(d.type === 'rivalry_milestone' && d.a && d.b) rivalryMsPairs.add([d.a, d.b].sort().join('|'));
@@ -510,6 +526,11 @@ function _consolidateStories(list){
     // (konkretere) „Siege in Folge"-Story haben — sonst steht dieselbe heiße
     // Phase doppelt im Feed.
     if(d.type === 'top_form' && d.pid && winStreakPids.has(d.pid + '|' + _fdKey(s.when))) continue;
+    // Nur die laengste Marke des Tages: die kuerzere ist in ihr enthalten,
+    // und die Gruppe „Serien im Gleichschritt" entsteht aus genau diesen
+    // Mitgliedern — eine Grenze hier raeumt Einzelkarte und Gruppe zugleich.
+    if(d.type === 'win_streak' && d.pid
+       && (Number(d.streak) || 0) < (_serieMax.get(d.pid + '|' + _fdKey(s.when)) || 0)) continue;
     if(d.type === 'badge_unlocked' && d.badgeId){
       if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
@@ -629,6 +650,20 @@ function _consolidateStories(list){
     'rivalry','rivalry_milestone','match_result']);
   const SAMMEL_TAFEL = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling','chronik_geholt']);
+  // ── Breaking aus derselben Partie reist zusammen ───────────────────
+  // Breaking blieb immer eine eigene Karte, und das war fuer EINE Meldung
+  // richtig: „Nerven aus Stahl" steht nicht als Kleingedrucktes unter der
+  // Duo-Serie zweier anderer. Zwei Breaking-Meldungen aus DERSELBEN Partie
+  // sind aber nicht zwei Nachrichten. Gemessen stand „Neuer Spitzenreiter:
+  // Maxi" mit dem Ergebnisband 10:0 im Feed, und „Maxi und Henry: Absoluter
+  // Sieger" — die legendaere Auszeichnung fuer genau dieses 10:0 — als
+  // zweite Karte daneben: dasselbe Spiel, dasselbe Wappen, derselbe Stand,
+  // zweimal gelesen. Zusammengelegt wird nur ueber die PARTIE, nicht ueber
+  // die Minute: eine gemeinsame Minute ohne gemeinsames Spiel sagt nichts
+  // [§C33].
+  const SAMMEL_BREAKING = new Set(['badge_unlocked','lead_change','elo_record',
+                                   'streak_record','giant_slayer','top_clash',
+                                   'match_result','streak_killer']);
   const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
   const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   // ── Was ein Spieler holen kann ─────────────────────────────────────
@@ -885,9 +920,38 @@ function _consolidateStories(list){
     return cfg ? cfg.sache(k.d) : null;
   }, 'erfolg');
   _achseBauen('spieler', k => k.pids[0], 'spieler');
+  // Zwei oder mehr Breaking-Meldungen einer Partie werden eine Karte. Sie
+  // laeuft vor der Minuten-Buendelung, weil `_sammelEinzeln` genau diese
+  // Meldungen dort heraushaelt — und nach den beiden Erfolgs-Achsen, damit
+  // ein gemeinsam geholter Erfolg seine eigene Karte behaelt [§C33].
+  const _brkPartie = new Map();
+  result.forEach((st, idx) => {
+    const d = (st && st.dataRef) || {};
+    if(_tafelAchse.has(st.id) || _achse.has(st.id)) return;
+    if(!d.matchId || !SAMMEL_BREAKING.has(d.type)) return;
+    let brk = false;
+    try { brk = (typeof _isBreaking === 'function') && _isBreaking(st); } catch(e){}
+    if(!brk) return;
+    let l = _brkPartie.get(d.matchId);
+    if(!l){ l = []; _brkPartie.set(d.matchId, l); }
+    l.push({st, idx});
+  });
+  const _brkAchse = new Set();
+  _brkPartie.forEach((l, mid) => {
+    if(l.length < 2) return;
+    const key = 'spiel|breaking|' + mid;
+    const g = {key, art:'spiel', teile:[], titel:new Set(), max:Infinity,
+               erster: l.reduce((mn, k) => Math.min(mn, k.idx), l[0].idx)};
+    sammelGruppen.set(key, g);
+    l.slice().sort((a, b) => a.idx - b.idx).forEach(k => {
+      _brkAchse.add(k.st.id);
+      _sammelZeile(g, k.st);
+    });
+  });
   result.forEach((st, idx) => {
     const d = (st && st.dataRef) || {};
     if(_tafelAchse.has(st.id)) return;
+    if(_brkAchse.has(st.id)) return;
     if(_sammelEinzeln(st, d)) return;
     if(_achse.has(st.id)) return;    // steht schon auf einer der neuen Karten
     if(!SAMMEL_SPIEL.has(d.type)) return;
@@ -1000,14 +1064,38 @@ function _consolidateStories(list){
         team_streak:'Teamserie', team_loss_streak:'gemeinsame Durststrecke',
         badge_unlocked:'Auszeichnung', milestone_wins:'Siegmarke',
         milestone_goals:'Tormarke', milestone_elo:'Elo-Sprung',
-        jubilee:'Jubiläum', rivalry_milestone:'Rivalitätsmarke'
+        jubilee:'Jubiläum', rivalry_milestone:'Rivalitätsmarke',
+        // Die drei seltenen Wechsel tragen ihren eigenen Namen. Ohne sie
+        // hiess eine Breaking-Karte „Ein Spiel, zwei Geschichten" und
+        // verschwieg genau das, was sie besonders macht.
+        lead_change:'neue Tabellenspitze', elo_record:'Elo-Rekord',
+        streak_record:'Rekordserie'
       };
       const motive = [...new Set(teile.map(t => motivName[(t.dataRef || {}).type]).filter(Boolean))];
       const wer = namen.length ? _namenKurz(namen, 3) : 'die Beteiligten';
+      let brkBundle = false;
+      try {
+        brkBundle = (typeof _isBreaking === 'function')
+          && teile.filter(t => _isBreaking(t)).length > 1;
+      } catch(e){}
+      // ── Eine Breaking-Karte sagt, was daran Breaking ist ───────────
+      // „Ein Spiel, zwei Geschichten für Maxi und Henry" gilt fuer jeden
+      // Spieltag und nennt nicht, dass hier eine legendaere Auszeichnung
+      // und die Tabellenspitze zusammenfallen. Die Schlagzeile nennt
+      // deshalb die Anlaesse; welche Partie es war, steht im Band darueber.
+      if(brkBundle && motive.length > 1){
+        const bild = _namenListe(motive);
+        neuTitel = `${bild.charAt(0).toUpperCase() + bild.slice(1)} in einer Partie`
+          + (namen.length ? ` für ${_namenKurz(namen, 3)}` : '');
+        const zw = _zahlwortDe(teile.length);
+        neuText = `${zw.charAt(0).toUpperCase() + zw.slice(1)} Meldungen aus `
+          + `demselben Spiel, und jede davon kommt nur wenige Male je Saison.`;
+      } else {
       neuTitel = `Ein Spiel, ${_zahlwortDe(teile.length)} Geschichten${beteiligte}`;
       neuText = motive.length > 1
         ? `${_namenListe(motive)} greifen für ${wer} nach dem Schlusspfiff ineinander. Aus einer Partie wachsen ${_zahlwortDe(teile.length)} Geschichten.`
         : `Für ${wer} wirkt der Schlusspfiff doppelt nach. Aus einer Partie wachsen ${_zahlwortDe(teile.length)} Geschichten.`;
+      }
     }
     gesammelt.push({
       id: 'sammel_' + g.key.replace(/\|/g, '_'),
