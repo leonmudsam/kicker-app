@@ -2543,6 +2543,86 @@ ok(_serieEinmal.titel.every(t => !/5er-Serie/.test(String(t)))
    && _serieEinmal.titel.length === 1,
    'und die kuerzere Marke verschwindet mit ihr, auch aus der Gruppe',
    _serieEinmal.titel.join(' | '));
+// ── Die drei Befunde aus dem Nachlauf der echten Liga ──────────────
+//    Der Generator laeuft bei jedem Laden, und was er bildet, wird
+//    persistiert: die Datenbank traegt die VEREINIGUNG aller Zwischenstaende
+//    eines Tages. Nachgespielt an den echten 538 Partien des 14. und 15.09.
+//    fielen dabei drei Karten heraus, die stehen muessten.
+const _nachlauf = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const tag = tage[tage.length - 1], vortag = tage[tage.length - 2];
+  const p = _newsTagMs(tag);
+  const basis = mts(p[0]);
+  // (1) Breaking scheitert an keiner Sperre. Die Spitze wechselte zweimal
+  //     hin und her: der Schluessel der Sperrfrist sortiert die Beteiligten,
+  //     und damit tragen „A verdraengt B" und „B verdraengt A" dieselbe
+  //     Aussage. Von drei Breaking-Karten blieb eine stehen.
+  const wechsel = [
+    {id:'lc-1', cat:'liga', ic:'crown', when:new Date(mts(_newsTagMs(vortag)[0])),
+     prio:93, title:'Neuer Spitzenreiter: ' + players[1].name,
+     desc:players[1].name + ' steht nach 1 Spiel an der Spitze.',
+     dataRef:{type:'lead_change', newLeader:players[1].id, prevLeader:players[0].id,
+              matchId:_newsTagMs(vortag)[0].id}},
+    {id:'lc-2', cat:'liga', ic:'crown', when:new Date(basis), prio:93,
+     title:'Neuer Spitzenreiter: ' + players[0].name,
+     desc:players[0].name + ' steht nach 2 Spielen an der Spitze.',
+     dataRef:{type:'lead_change', newLeader:players[0].id, prevLeader:players[1].id,
+              matchId:p[0].id}}
+  ];
+  _cache._consolFrom = null;
+  const beide = _consolidateStories(wechsel);
+  // (2) Die Reservierung fuer eine Match-Geschichte gehoert einer Karte, die
+  //     sie braucht. Breaking zaehlt nicht gegen den Deckel — nahm den
+  //     Platz aber ein, und das Ergebnis des Tages fiel heraus.
+  const l2 = [{id:'rv-brk', cat:'liga', ic:'crown', when:new Date(basis), prio:93,
+    title:'Neuer Spitzenreiter', desc:'Die Spitze wechselt nach 1 Spiel.',
+    dataRef:{type:'lead_change', newLeader:players[0].id, prevLeader:players[1].id,
+             matchId:p[0].id}}];
+  ['milestone_wins','milestone_goals','milestone_elo','jubilee','rivalry_milestone']
+    .forEach((typ, i) => l2.push({id:'rv-s' + i, cat:'personal', ic:'medal',
+      when:new Date(basis + i * 60000), prio:85 - i, title:'Starke Marke ' + i,
+      desc:'Ein Satz mit ' + i + ' Zahlen.',
+      dataRef:{type:typ, pid:players[i % 4].id, playerIds:[players[i % 4].id]}}));
+  l2.push({id:'rv-erg', cat:'highlight', ic:'thriller',
+    when:new Date(basis + 600000), prio:63, title:'Ein Ergebnis',
+    desc:'Ein Satz mit 1 Zahl.',
+    dataRef:{type:'match_result', resultKind:'krimi', matchId:p[1].id,
+             playerIds:[players[0].id]}});
+  _cache._consolFrom = null;
+  const mitErg = _consolidateStories(l2);
+  // (3) Der Deckel je Sorte behaelt die STAERKSTEN. Gezaehlt wurde in
+  //     Feed-Reihenfolge, und die ist die Zeit: von vier Karten einer Sorte
+  //     blieben die zwei jungen stehen, und die staerkste von 11:39 fiel weg.
+  //     Genommen wird eine Sorte mit eigener Sache je Karte, damit nicht die
+  //     Sperrfrist misst (sie fasst Karten ohne Sache zusammen), und
+  //     dieselben zwei Gesichter auf allen vier, damit nicht die Regel
+  //     „der Deckel darf niemanden verschwinden lassen" sie zurueckholt.
+  const l3 = [];
+  [[73, 0], [69, 1], [65, 2], [64, 3]].forEach(([pr, i]) => l3.push({
+    id:'dk-' + pr, cat:'team', ic:'medal',
+    when:new Date(basis + i * 3600000), prio:pr,
+    title:'Auszeichnung mit ' + pr, desc:'Ein Satz mit ' + i + ' Zahlen.',
+    dataRef:{type:'badge_unlocked', badgeId:'b' + i, rarity:'common',
+             matchId:p[i % p.length].id,
+             playerIds:[players[0].id, players[1].id]}}));
+  _cache._consolFrom = null;
+  const gedeckelt = _consolidateStories(l3)
+    .filter(x => (x.dataRef || {}).type === 'badge_unlocked')
+    .map(x => x.prio).sort((a, b) => b - a);
+  return {wechsel: beide.filter(x => (x.dataRef||{}).type === 'lead_change').length,
+          ergDrin: mitErg.some(x => x.id === 'rv-erg'),
+          ergKarten: mitErg.length,
+          gedeckelt};
+})())`));
+ok(_nachlauf.wechsel === 2,
+   'zwei Breaking-Karten ueber denselben Wechsel in beide Richtungen bleiben beide',
+   _nachlauf.wechsel + ' von 2');
+ok(_nachlauf.ergDrin === true,
+   'der reservierte Platz geht an eine Karte, die ihn braucht, nicht an Breaking',
+   _nachlauf.ergDrin + ' bei ' + _nachlauf.ergKarten + ' Karten');
+ok(_nachlauf.gedeckelt.length === 2 && _nachlauf.gedeckelt[0] === 73,
+   'und der Deckel je Sorte behaelt die staerksten, nicht die juengsten',
+   _nachlauf.gedeckelt.join(', '));
 ok(_tagmix.beides.length > 0,
    'es gibt Tage mit Nachrichten aus beiden Haelften', _tagmix.beides.join(', '));
 ok(_tagmix.ohneSpieltag.length === 0,

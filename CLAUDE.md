@@ -232,7 +232,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen | 1003 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages und der gemeinsame Breaking-Moment einer Partie | 329 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie und die drei Befunde aus dem Nachlauf der echten Liga | 332 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte und der gemeinsame Breaking-Moment — **im echten Browser gemessen** | 130 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -585,6 +585,20 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   `NEBENROLLEN_LIMIT`); gemessen steht danach kein Spieler auf mehr als einem
   Drittel der Karten, und jeder gewertete Spieler kommt vor.
 
+  **Der Deckel je Sorte behält die stärksten, nicht die jüngsten.** Gezählt
+  wurde in Feed-Reihenfolge, und die ist die Zeit. Gemessen an den echten
+  Partien trug der 15.09. vier Ergebnis-Karten, darunter ein 10:0 um 11:39 und
+  ein 10:5 um 12:32: „Maxi und Henry gewinnen ohne Gegentor" (73) fiel weg,
+  „setzen ein klares Zeichen" (65) blieb. Der Tagesdeckel entscheidet nach
+  `prio`, und der Deckel je Sorte ist dieselbe Frage eine Ebene tiefer. Die
+  Reihenfolge bleibt die Zeit: ausgewählt wird, WAS wegfällt, nicht wo etwas
+  steht.
+  **Der reservierte Platz gehört einer Karte, die ihn braucht.** Breaking und
+  die Pflichtkarten zählen gar nicht gegen den Deckel — eine Reservierung für
+  sie ist verschenkt. Gemessen besetzte „Neuer Spitzenreiter: Maxi" (Breaking,
+  93) den Platz von `matchProTagMin`, weil auch eine Breaking-Karte eine Partie
+  nennt, und die Karte, die den Spieltag am konkretesten erzählt, verschwand
+  für eine, die ohnehin im Feed stand.
   **Ein Tag trägt fünf Karten** (`NEWS_LIMITS.proTag`). Gemessen trug ein
   Spieltag neun: zwei Sammelkarten, zwei Serien, zwei Auszeichnungen, den
   Spieler des Tages, den Elo-Ausschlag und einen Serienbrecher. Das ist keine
@@ -881,6 +895,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   doch noch erscheint, steht damit unter einem Tag, den der Leser gelesen hat,
   und behauptet das nicht mehr.
 
+  **Breaking scheitert an keiner Sperre.** Der Schlüssel der Sperrfrist
+  sortiert die Beteiligten, damit dieselben zwei Halter in anderer Reihenfolge
+  nicht als Wechsel gelten. Bei einem **gerichteten** Ereignis dreht das die
+  Aussage um: „Maxi verdrängt Martin" und „Martin verdrängt Maxi" tragen
+  dieselben zwei Namen. Gemessen wechselte die Tabellenspitze am 14.09.
+  zweimal und am 15.09. erneut, und von den drei Breaking-Karten blieb genau
+  eine stehen — die Sperrfrist hielt die anderen für Wiederholungen derselben
+  Aussage. Breaking ist das Seltenste; es darf an keinem Deckel und an keiner
+  Sperre scheitern.
   **Dieselbe Aussage kommt drei Tage lang nur einmal** (`NEWS_LIMITS.sperreTage`).
   Zwei gleiche Schlagzeilen fängt der Feed schon ab. Eine Aussage, deren ZAHL
   sich mitbewegt, entkommt ihm: „Martin baut ‚Der Maßstab' aus" heißt nach dem
