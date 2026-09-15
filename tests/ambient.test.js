@@ -2434,6 +2434,115 @@ ok(_bandEinig.gleich === _bandEinig.erste,
 ok(_bandEinig.verschieden === null,
    'und einer aus zwei Partien zeigt keins, statt sich eine auszusuchen',
    String(_bandEinig.verschieden));
+// ── Breaking aus derselben Partie reist zusammen ───────────────────
+//    Gemessen stand „Neuer Spitzenreiter: Maxi" mit dem Ergebnisband 10:0 im
+//    Feed, und „Maxi und Henry: Absoluter Sieger" — die legendaere
+//    Auszeichnung fuer genau dieses 10:0 — als zweite Karte daneben:
+//    dasselbe Spiel, dasselbe Wappen, derselbe Stand, zweimal gelesen.
+//    Zusammengelegt wird nur ueber die PARTIE: eine gemeinsame Minute ohne
+//    gemeinsames Spiel sagt nichts.
+const _brk = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const p = _newsTagMs(tage[tage.length - 1]).slice(0, 2);
+  const bau = (zweiteMatchId) => {
+    const l = [
+      {id:'brk-a', cat:'team', ic:'medal', when:new Date(mts(p[0])),
+       prio:90, title:'Eine legendäre Auszeichnung', desc:'Ein 10:0 im Katalog.',
+       dataRef:{type:'badge_unlocked', badgeId:'perfect_win', rarity:'legendary',
+                matchId:p[0].id, playerIds:[players[0].id, players[1].id]}},
+      {id:'brk-b', cat:'liga', ic:'crown', when:new Date(mts(p[0])),
+       prio:93, title:'Neuer Spitzenreiter', desc:'Die Spitze wechselt nach 1 Spiel.',
+       dataRef:{type:'lead_change', newLeader:players[0].id,
+                prevLeader:players[2].id, matchId:zweiteMatchId}}
+    ];
+    _cache._consolFrom = null;
+    const out = _consolidateStories(l);
+    const sam = out.filter(x => (x.dataRef||{}).type === 'sammel');
+    let brk = false;
+    try { brk = sam.length ? _isBreaking(sam[0]) : false; } catch(e){}
+    return {karten: out.length, sammel: sam.length,
+            titel: sam.length ? sam[0].title : '',
+            text: sam.length ? sam[0].desc : '',
+            band: sam.length ? (sam[0].dataRef.matchId || null) : null,
+            breaking: brk,
+            sorte: sam.length ? _newsSorte(sam[0]) : ''};
+  };
+  return {gleich: bau(p[0].id), fremd: bau(p[1].id), mid: p[0].id};
+})())`));
+ok(_brk.gleich.sammel === 1 && _brk.gleich.karten === 1,
+   'zwei Breaking-Meldungen einer Partie werden EINE Karte',
+   _brk.gleich.karten + ' Karten');
+ok(_brk.gleich.breaking === true,
+   'und sie bleibt Breaking, statt die seltenste Meldung zu entschaerfen',
+   String(_brk.gleich.breaking));
+ok(_brk.gleich.band === _brk.mid && _brk.gleich.sorte === 'spiel',
+   'sie zeigt das Ergebnis der Partie, aus der beides kommt',
+   _brk.gleich.sorte + ' / ' + String(_brk.gleich.band));
+ok(/Tabellenspitze/.test(_brk.gleich.titel) && /Auszeichnung/.test(_brk.gleich.titel),
+   'ihre Schlagzeile nennt beide Anlaesse statt „zwei Geschichten"',
+   _brk.gleich.titel);
+ok(/\d/.test(_brk.gleich.text) || /[Zz]wei|[Dd]rei|[Vv]ier/.test(_brk.gleich.text),
+   'und ihr Text sagt, wie viele Meldungen zusammenkommen',
+   _brk.gleich.text);
+ok(_brk.fremd.sammel === 0 && _brk.fremd.karten === 2,
+   'zwei Breaking-Meldungen aus verschiedenen Partien bleiben zwei Karten',
+   _brk.fremd.karten + ' Karten');
+// ── Eine Serie je Spieler und Tag, auch im Feed ────────────────────
+//    Der Generator bildet nur noch die hoechste Marke, aber persistierte
+//    Zeilen aus aelteren Laeufen tragen die kuerzeren weiter. Gemessen stand
+//    „Johannes zuendet die 7er-Serie" neben „2 Serien im Gleichschritt: Jane
+//    & Johannes" und darunter „Jane zuendet die 5er-Serie": dieselbe laufende
+//    Serie in drei Zeilen. Die Gruppe entsteht aus den Mitgliedern, also muss
+//    die Grenze VOR der Gruppierung greifen.
+const _serieEinmal = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const p = _newsTagMs(tage[tage.length - 1]);
+  const A = players[0].id, B = players[1].id;
+  // A reisst die 5er-Marke in der ersten und die 7er in der dritten Partie,
+  // B die 5er ebenfalls in der dritten: die Gruppe entsteht aus Partie drei.
+  const l = [
+    {id:'ws-1', cat:'highlight', ic:'flame', when:new Date(mts(p[0])), prio:68,
+     title:players[0].name + ' zündet die 5er-Serie',
+     desc:'Fünf Siege in Folge. 1 Zahl.',
+     dataRef:{type:'win_streak', pid:A, streak:5, matchId:p[0].id}},
+    {id:'ws-2', cat:'highlight', ic:'flame', when:new Date(mts(p[2])), prio:71,
+     title:players[0].name + ' zündet die 7er-Serie',
+     desc:'Sieben Siege in Folge. 2 Zahlen.',
+     dataRef:{type:'win_streak', pid:A, streak:7, matchId:p[2].id}},
+    {id:'ws-3', cat:'highlight', ic:'flame', when:new Date(mts(p[2])), prio:68,
+     title:players[1].name + ' zündet die 5er-Serie',
+     desc:'Fünf Siege in Folge. 3 Zahlen.',
+     dataRef:{type:'win_streak', pid:B, streak:5, matchId:p[2].id}}
+  ];
+  _cache._consolFrom = null;
+  const out = _consolidateStories(l);
+  // Wie oft steht A auf einer Serien-Meldung — als Karte oder als Zeile?
+  let aMal = 0;
+  out.forEach(s => {
+    const d = s.dataRef || {};
+    const zeilen = d.type === 'sammel' ? (d.teile || [])
+      : [{typ:d.type, pids:(d.playerIds || []).concat(d.pid ? [d.pid] : [])}];
+    zeilen.forEach(t => {
+      if(t.typ !== 'win_streak' && t.typ !== 'group') return;
+      const ids = (t.pids || []).length ? t.pids : [];
+      if(ids.indexOf(A) >= 0) aMal++;
+    });
+  });
+  const titel = [];
+  out.forEach(s => {
+    const d = s.dataRef || {};
+    if(d.type === 'sammel') (d.teile || []).forEach(t => titel.push(t.titel));
+    else titel.push(s.title);
+  });
+  return {karten: out.length, aMal, titel};
+})())`));
+ok(_serieEinmal.aMal === 1,
+   'ein Spieler steht an einem Tag auf genau einer Serien-Meldung',
+   _serieEinmal.aMal + ' Meldungen: ' + _serieEinmal.titel.join(' | '));
+ok(_serieEinmal.titel.every(t => !/5er-Serie/.test(String(t)))
+   && _serieEinmal.titel.length === 1,
+   'und die kuerzere Marke verschwindet mit ihr, auch aus der Gruppe',
+   _serieEinmal.titel.join(' | '));
 ok(_tagmix.beides.length > 0,
    'es gibt Tage mit Nachrichten aus beiden Haelften', _tagmix.beides.join(', '));
 ok(_tagmix.ohneSpieltag.length === 0,

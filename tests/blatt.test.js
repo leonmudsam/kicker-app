@@ -818,6 +818,120 @@ const ok = (c, msg, det) => {
   ok(ergKarte.chips >= 2, 'die Sieger stehen als Gesichter dabei',
      ergKarte.chips + ' Chips');
 
+  // ── Eine Sammelkarte bedeckt nicht den ganzen Bildschirm ─────────
+  //    „Bündeln darf nichts verstecken" war fuer zwei bis vier Teile
+  //    geschrieben. Gemessen trug ein Tafel-Moment neunzehn Zeilen — fuenf
+  //    Bestmarken, dreizehn Monatschroniken und ein Insignium —, und die
+  //    Karte war dreimal so hoch wie das Telefon: damit versteckte gerade
+  //    die vollstaendige Liste alles andere. Auf der Karte stehen die
+  //    staerksten, im Blatt jede Zeile.
+  const flut = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const daten = K(`(function(){
+      const when = matches[matches.length-1].created_at;
+      const mk = (i) => ({id:'flut-'+i, cat:'tafel', ic:'trophyStar', when,
+        prio: i < 5 ? 76 : i < 18 ? 62 : 40,
+        title:(i < 5 ? 'Ein Rekord ' : i < 18 ? 'Eine Chronik ' : 'Ein Ausbau ') + i,
+        desc:'Ein Satz mit ' + i + ' Zahlen.',
+        dataRef:{type: i < 5 ? 'rekord_geholt' : i < 18 ? 'chronik_geholt' : 'rekord_gesteigert',
+                 rekordId:'r'+i, titleId:'t'+i, playerIds:[players[i % 4].id]}});
+      const l = []; for(let i = 0; i < 19; i++) l.push(mk(i));
+      _cache._consolFrom = null;
+      const s = _consolidateStories(l).find(x => (x.dataRef||{}).quelle === 'tafel');
+      return s ? JSON.stringify({karte:_newsCardHtmlM2(s, false, false),
+                                 blatt:_newsDetailMitte(s) || '',
+                                 teile:(s.dataRef.teile||[]).length}) : '';
+    })()`);
+    if(!daten) return {fehlt:true};
+    const d = JSON.parse(daten);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = d.karte;
+    document.body.appendChild(host);
+    const karte = host.querySelector('.nf-card');
+    const zeilen = karte ? karte.querySelectorAll('.nf-sam-z').length : 0;
+    const rest = karte ? karte.querySelector('.nf-sam-m') : null;
+    const hoehe = karte ? karte.getBoundingClientRect().height : 0;
+    // Gemessen wird die SCHRIFT, nicht der Kasten: mit 6 px Innenabstand
+    // endete „und 13 weitere" einen Pixel ueber der Kartenkante, und die
+    // Ecke von 14 px schnitt sie an.
+    let luft = 0;
+    if(rest && rest.firstChild){
+      const r = document.createRange();
+      r.selectNodeContents(rest);
+      luft = Math.round(karte.getBoundingClientRect().bottom - r.getBoundingClientRect().bottom);
+    }
+    host.innerHTML = '<div class="nd">' + d.blatt + '</div>';
+    const imBlatt = host.querySelectorAll('.nw-zeile').length;
+    const out = {fehlt:false, teile:d.teile, zeilen, hoehe: Math.round(hoehe),
+                 rest: rest ? rest.textContent.trim() : '', luft, imBlatt};
+    host.remove(); return out;
+  });
+  ok(!flut.fehlt && flut.teile === 19,
+     'ein Tafel-Moment kann neunzehn Spuren tragen', JSON.stringify(flut));
+  ok(flut.zeilen === 6 && /13/.test(flut.rest),
+     'die Karte zeigt die staerksten sechs und zaehlt den Rest',
+     flut.zeilen + ' Zeilen, „' + flut.rest + '"');
+  ok(flut.hoehe < 640,
+     'und bleibt damit kuerzer als ein Telefonbildschirm',
+     flut.hoehe + ' px');
+  // Die Ecke der Karte misst 14 px und `overflow:hidden` schneidet: was
+  // darunter liegt, wird von der Rundung angeschnitten. Gemessen blieben
+  // 10 px, und „und 13 weitere" sah aus wie ein Darstellungsfehler.
+  ok(flut.luft >= 14,
+     'und die Zahl der uebrigen Zeilen steht frei von der gerundeten Ecke',
+     flut.luft + ' px Luft bei 14 px Radius');
+  ok(flut.imBlatt === 19,
+     'das Blatt zeigt trotzdem jede einzelne Zeile',
+     flut.imBlatt + ' von ' + flut.teile);
+
+  // ── Was oben steht, steht unten nicht noch einmal ────────────────
+  //    `_breakingHeroText` hat nur fuer sieben Typen einen eigenen Satz und
+  //    fiel sonst auf `s.desc` zurueck: gemessen stand der Teaser auf der
+  //    gebuendelten Breaking-Karte zweimal untereinander.
+  const brkKarte = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const p = matches[matches.length-1];
+      const l = [
+        {id:'bk-1', cat:'team', ic:'medal', when:new Date(mts(p)), prio:90,
+         title:pname(p.a1)+' und '+pname(p.a2)+': Absoluter Sieger',
+         desc:'Ein Spiel 10:0 gewonnen.',
+         dataRef:{type:'badge_unlocked', badgeId:'perfect_win', rarity:'legendary',
+                  badgeName:'Absoluter Sieger', matchId:p.id,
+                  playerIds:[p.a1, p.a2]}},
+        {id:'bk-2', cat:'liga', ic:'crown', when:new Date(mts(p)), prio:93,
+         title:'Neuer Spitzenreiter: '+pname(p.a1),
+         desc:pname(p.a1)+' steht nach 1 Spiel an der Spitze.',
+         dataRef:{type:'lead_change', newLeader:p.a1, prevLeader:p.b1,
+                  matchId:p.id}}
+      ];
+      _cache._consolFrom = null;
+      const s = _consolidateStories(l).find(x => (x.dataRef||{}).type === 'sammel');
+      return s ? _newsCardHtmlM2(s, false, false) : '';
+    })()`);
+    if(!markup) return {fehlt:true};
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = markup;
+    document.body.appendChild(host);
+    const karte = host.querySelector('.nf-card');
+    const d = karte ? karte.querySelector('.nf-d') : null;
+    const sub = karte ? karte.querySelector('.nf-brk-sub') : null;
+    const out = {fehlt:false,
+      brk: !!(karte && karte.classList.contains('nf-brk')),
+      band: karte ? karte.querySelectorAll('.nf-erg').length : 0,
+      zeilen: karte ? karte.querySelectorAll('.nf-sam-z').length : 0,
+      doppelt: !!(sub && d && sub.textContent.trim() === d.textContent.trim())};
+    host.remove(); return out;
+  });
+  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 2,
+     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen',
+     JSON.stringify(brkKarte));
+  ok(brkKarte.doppelt === false,
+     'und seinen Teaser nur einmal, nicht als Nachsatz ein zweites Mal',
+     String(brkKarte.doppelt));
+
   const palette = await page.evaluate(() => {
     const host = document.createElement('div');
     const sorten = ['spiel','tafel','ins','held','woche','duell','serie','badge','marke',
