@@ -289,24 +289,40 @@ function _consolidateStories(list){
     }
     return _chrJetzt[tid] || null;
   };
-  // Je Rekord und je Chronik die juengste Karte suchen. Alles davor, dessen
-  // Halter heute keiner mehr ist, steht im Widerspruch zu ihr und faellt weg.
+  // Je Rekord und je Chronik die juengste Karte DESSELBEN TAGES suchen. Alles
+  // davor, dessen Halter heute keiner mehr ist, steht im Widerspruch zu ihr
+  // und faellt weg.
+  //
+  // Der Vergleich lief einmal ueber das ganze Fenster, und damit loeschte
+  // jeder Weiterwechsel die Meldung von vorgestern: „Leo uebernimmt ‚Der
+  // Nervenkitzler'" verschwand, weil der Rekord eine Woche spaeter noch
+  // zweimal weiterwanderte, und der 19.08. hatte danach keine einzige Karte
+  // mehr. Gemessen fielen so zwei von sieben Spieltagen im Fenster ganz aus.
+  // Eine Uebernahme erzaehlt von IHREM Tag, nicht von heute [§C33] — und
+  // beide Faelle, die die Regel ueberhaupt gebraucht haben, lagen an einem
+  // Tag: „Der Zerstoerer" wechselte zweimal am 10.09., und beim
+  // „Gigantentoeter" stand „Henry und Jannik uebernehmen" acht Minuten vor
+  // „Henry uebernimmt". Innerhalb eines Tages widersprechen sich zwei Karten,
+  // ueber Tage hinweg erzaehlen sie eine Geschichte.
   const _rekUeberholt = new Set();
   {
     const SORTEN = {rekord_geholt:'rekordId', rekord_erstmals:'rekordId',
                     rekord_gesteigert:'rekordId', chronik_geholt:'titleId'};
+    const _uTag = w => { const d = new Date(w);
+      return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
     const proSache = new Map();
     list.forEach(s => {
       const d = (s && s.dataRef) || {};
       const feld = SORTEN[d.type];
       if(!feld || !d[feld]) return;
-      const k = feld + ':' + d[feld];
+      const k = feld + ':' + d[feld] + '@' + _uTag(s.when);
       const arr = proSache.get(k) || [];
       arr.push(s); proSache.set(k, arr);
     });
     proSache.forEach((arr, k) => {
       if(arr.length < 2) return;
-      const [feld, id] = [k.slice(0, k.indexOf(':')), k.slice(k.indexOf(':') + 1)];
+      const ohneTag = k.slice(0, k.lastIndexOf('@'));
+      const [feld, id] = [ohneTag.slice(0, ohneTag.indexOf(':')), ohneTag.slice(ohneTag.indexOf(':') + 1)];
       const jetzt = feld === 'rekordId' ? _rekHalter(id) : _chrHalter(id);
       if(!jetzt) return;
       const hat = new Set(jetzt);
@@ -477,6 +493,14 @@ function _consolidateStories(list){
     return typ + '|' + ids.slice().sort().join(',') + '|' + sache;
   };
   const _zuletzt = new Map();
+  // Was der Vergleich der Schlagzeilen wegwirft. Ein Tag, an dem gespielt
+  // wurde und der danach keine einzige Karte mehr traegt, holt daraus seine
+  // staerkste zurueck: dieselbe Schlagzeile unter zwei verschiedenen
+  // Tagesköpfen ist erlaubt — jede nennt im Text ihr eigenes Datum, und die
+  // Ausnahme gilt fuer die Pflichtkarten schon lange [§C33]. Ein leerer
+  // Spieltag ist nicht erlaubt: gemessen stand der 13.08. mit einer einzigen
+  // Karte im Feed und der 19.08. mit keiner, obwohl an beiden gespielt wurde.
+  const verworfen = [];
   for(const s of src){
     const d = s.dataRef || {};
     // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
@@ -507,7 +531,7 @@ function _consolidateStories(list){
       if(!g.seen.has(d.pid)){ g.seen.add(d.pid); g.members.push(s); }
     } else {
       const ck = (s.title || '') + '\u0000' + (s.desc || '');
-      if(seenContent.has(ck)) continue;   // inhaltsgleiche Doublette → überspringen
+      if(seenContent.has(ck)){ verworfen.push(s); continue; }   // inhaltsgleiche Doublette
       const tk = String(s.title || '').trim();
       // Was es je Tag, Woche oder Monat genau einmal gibt, darf dieselbe
       // Schlagzeile zweimal tragen: sie steht unter zwei verschiedenen
@@ -516,11 +540,14 @@ function _consolidateStories(list){
       // Spieltage, zwei Ergebnisse, und die ältere Karte fiel weg, weil
       // beide „Martin ist Spieler des Tages" heißen. Eine echte Doublette
       // fängt der volle Vergleich aus Schlagzeile UND Text weiter ab.
-      if(tk && !TAG_PFLICHT.has(d.type) && seenTitel.has(tk)) continue;
+      if(tk && !TAG_PFLICHT.has(d.type) && seenTitel.has(tk)){ verworfen.push(s); continue; }
       const ak = _sperreMs ? _aussage(s) : null;
       if(ak){
         const vorherMs = _zuletzt.get(ak);
         const msJetzt = new Date(s.when).getTime();
+        // Die Sperrfrist gehoert NICHT in die Rueckholung: sie sagt gerade,
+        // dass diese Aussage gestern schon erzaehlt wurde, und ein Tag ohne
+        // neue Aussage ist ein Tag ohne Nachricht.
         if(vorherMs != null && Math.abs(vorherMs - msJetzt) < _sperreMs) continue;
         _zuletzt.set(ak, msJetzt);
       }
@@ -954,9 +981,11 @@ function _consolidateStories(list){
       const nr = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('rekord_') === 0).length;
       const nc = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('chronik_') === 0).length;
       const ni = teile.filter(t => (t.dataRef || {}).type === 'insignium_stufe').length;
-      if(nr) bilder.push(nr === 1 ? 'eine Bestmarke' : `${nr} Bestmarken`);
-      if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${nc} Monatschroniken`);
-      if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${ni} neue Insignien`);
+      // Zahlwort, nicht Ziffer: „Eine Bestmarke, 2 Monatschroniken und ein
+      // neues Insignium" mischte beides in einem Satz.
+      if(nr) bilder.push(nr === 1 ? 'eine Bestmarke' : `${_zahlwortDe(nr)} Bestmarken`);
+      if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${_zahlwortDe(nc)} Monatschroniken`);
+      if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${_zahlwortDe(ni)} neue Insignien`);
       const bild = _namenListe(bilder.length ? bilder : ['mehrere Laufbahnen']);
       neuText = `Ein Moment, ${_zahlwortDe(teile.length)} Spuren: `
         + `${bild.charAt(0).toUpperCase() + bild.slice(1)} ordnen die Ewige Tafel neu.`;
@@ -1051,13 +1080,25 @@ function _consolidateStories(list){
   // derselben Woche zu unterschlagen wäre genau der Fehler, den die Regel
   // verhindern soll. Und `ambient`/`group` sind ohnehin je Slot einzeln.
   const OHNE_DECKEL = new Set(['lead_change','elo_record','streak_record',
-                               'season_endgame','ambient','group','sammel']);
+                               'season_endgame','ambient','group']);
   const NF_DECKEL = 2;
+  // Eine Sammelkarte zaehlt nach ihrer ACHSE mit, nicht als „sammel". Sie war
+  // ganz ausgenommen, und gemessen standen am 26.08. vier Karten „Ein Spiel,
+  // N Geschichten fuer …" untereinander — vier Partien desselben Tages, aber
+  // fuer den, der scrollt, viermal dieselbe Schlagzeile. Die Achse ist die
+  // Sorte: ein Spiel-Bundle, ein Tafel-Bundle, eine Karte ueber einen Spieler
+  // und eine ueber einen Erfolg sind vier verschiedene Nachrichten und duerfen
+  // nebeneinander stehen.
+  const _deckelSorte = s => {
+    const d = (s && s.dataRef) || {};
+    const t = d.type || '';
+    return t === 'sammel' ? 'sammel/' + (d.quelle || 'spiel') : t;
+  };
   const gezaehlt = {};
   const behalten = gesammelt.filter(s => {
     const t = (s && s.dataRef && s.dataRef.type) || '';
     if(!t || OHNE_DECKEL.has(t) || TAG_PFLICHT.has(t)) return true;
-    const k = t + '|' + _tagKey(s.when);
+    const k = _deckelSorte(s) + '|' + _tagKey(s.when);
     gezaehlt[k] = (gezaehlt[k] || 0) + 1;
     return gezaehlt[k] <= NF_DECKEL;
   });
@@ -1128,28 +1169,47 @@ function _consolidateStories(list){
     const k = _proTagKey(s);
     (_tagRang[k] = _tagRang[k] || []).push(s);
   });
+  const _istTafelKarte = s => !!s && (s.cat === 'tafel' || (s.dataRef || {}).quelle === 'tafel');
   const _istMatchGeschichte = s => {
     const d = (s && s.dataRef) || {};
-    return !!d.matchId && s.cat !== 'tafel' && d.quelle !== 'tafel'
+    return !!d.matchId && !_istTafelKarte(s)
       && d.type !== 'potd' && d.type !== 'potw';
   };
+  // ── Die Mischung gehört dem Tag ────────────────────────────────────
+  // Sie war eine Quote über das ganze Fenster: mindestens 40 % Ewige Tafel,
+  // gerechnet über vierzehn Tage und erfüllt, indem SPIELTAGSKARTEN wegfielen.
+  // Gemessen schnitt das den Feed von 42 auf 23 Karten und leerte zwei von
+  // sieben Spieltagen vollständig — der 24.08. hatte vierzehn Meldungen und
+  // im Feed keine einzige Karte. Eine Quote, die man erfüllt, indem man die
+  // andere Hälfte löscht, hebt die Tafel auch nicht: sie blieb bei vier
+  // Karten, nur stand daneben nichts mehr.
+  //
+  // Der Tag ist die Einheit, weil er auch die Gliederung der Tafel ist: unter
+  // jedem Tageskopf stehen `proTag` Plätze, und zwei davon sind reserviert —
+  // einer für die Ewige Tafel, einer für eine Geschichte, deren Partie die
+  // Karte zeigen kann. Gibt es das an diesem Tag nicht, bleibt der Platz beim
+  // Nächststarken. Damit hängt die Auswahl eines Tages nur noch an diesem Tag:
+  // ein neuer Spieltag verschiebt nicht mehr, was vorgestern zu sehen war.
   const _behalten = new Set();
   Object.keys(_tagRang).forEach(k => {
     const rang = _tagRang[k].slice()
       .sort((a, b) => (b.prio || 0) - (a.prio || 0));
     const auswahl = rang.slice(0, NEWS_LIMITS.proTag);
-    const soll = rang.filter(_istMatchGeschichte)
-      .slice(0, NEWS_LIMITS.matchProTagMin || 0);
+    const soll = [];
+    rang.filter(_istTafelKarte).slice(0, NEWS_LIMITS.tafelProTagMin || 0)
+      .forEach(x => soll.push(x));
+    rang.filter(_istMatchGeschichte).slice(0, NEWS_LIMITS.matchProTagMin || 0)
+      .forEach(x => soll.push(x));
     soll.forEach(s => {
       if(auswahl.indexOf(s) >= 0) return;
-      // Pflicht, Breaking und bereits reservierte Match-Geschichten bleiben.
-      // Ersetzt wird die schwächste abstrakte Zusatzkarte desselben Tages.
+      // Pflicht, Breaking und die andere Reservierung bleiben. Ersetzt wird
+      // die schwächste Karte desselben Tages, die keinen Platz hält.
       let raus = -1;
       for(let i = auswahl.length - 1; i >= 0; i--){
         const x = auswahl[i], typ = (x.dataRef || {}).type;
         let breaking = false;
         try { breaking = (typeof _isBreaking === 'function') && _isBreaking(x); } catch(e){}
-        if(!breaking && !TAG_PFLICHT.has(typ) && !_istMatchGeschichte(x)){
+        if(!breaking && !TAG_PFLICHT.has(typ) && soll.indexOf(x) < 0){
           raus = i; break;
         }
       }
@@ -1164,106 +1224,32 @@ function _consolidateStories(list){
     try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
   });
 
-  // ── Zwei redaktionelle Hälften ────────────────────────────────────
-  // Eine zusammengeführte Tafel-Karte kann zwölf fachliche Änderungen
-  // tragen, während zwölf Spieltagskarten weiterhin zwölf Rahmen wären.
-  // Die Mischung wird deshalb am sichtbaren INHALT gemessen: ein Bundle
-  // zählt mit seinen Zeilen. Zielkorridor sind 40–60 % Ewige Tafel gegenüber
-  // Spieltag plus automatisch erzeugten Fun Facts.
-  //
-  // Gekürzt werden nur zusätzliche Spieltagskarten. Unantastbar bleiben die
-  // Ewige Tafel selbst, Fun Facts, Pflichtkarten, Breaking und die spannendste
-  // Karte jedes echten Spieltags — damit die Karte des Tages weiterhin aus
-  // dem vollständigen starken Feld stammt. Ohne nennenswerte Tafel-Aktivität
-  // greift keine Quote; ein ruhiges Tafel-Fenster darf den Feed nicht leeren.
-  const _gewicht = s => (s && s.dataRef && s.dataRef.type === 'sammel')
-    ? Math.max(1, ((s.dataRef || {}).teile || []).length) : 1;
-  const _istTafel = s => !!s && (s.cat === 'tafel' || (s.dataRef || {}).quelle === 'tafel');
+  // Kein Spieltag ohne Karte. Der Deckel je Sorte, der Vergleich der
+  // Schlagzeilen und die Sperrfrist raeumen vor dieser Stelle auf, und
+  // gemessen blieb dabei am 13.08. genau eine Karte uebrig und am 19.08.
+  // gar keine. Ein Tag, an dem gespielt wurde, hat eine Nachricht: bleibt
+  // keine uebrig, kommt die staerkste seiner Kandidaten zurueck. Eine
+  // Doublette ist das nicht — was hier zurueckkommt, steht sonst nirgends.
   let ausbalanciert = fertig;
-  const tafelGewicht = fertig.filter(_istTafel).reduce((n, s) => n + _gewicht(s), 0);
-  if(tafelGewicht >= 4){
-    const minAnteil = NEWS_LIMITS.tafelAnteilMin || 0.40;
-    const funGewicht = fertig.filter(s => (s.dataRef || {}).type === 'ambient')
-      .reduce((n, s) => n + _gewicht(s), 0);
-    // T / (T + Spiel + Fun) >= min  →  Spiel <= T*(1-min)/min - Fun
-    const spielBudget = Math.max(0,
-      Math.floor(tafelGewicht * (1 - minAnteil) / minAnteil - funGewicht));
-    const muss = new Set();
-    fertig.forEach(s => {
-      const typ = (s.dataRef || {}).type;
-      let breaking = false;
-      try { breaking = (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){}
-      if(_istTafel(s) || typ === 'ambient' || typ === 'season_endgame'
-         || TAG_PFLICHT.has(typ) || breaking) muss.add(s);
-    });
-    // Die spannendste wuerdige Story jedes Spieltags bleibt Kandidat fuer das
-    // goldene Band, selbst wenn sie keine Pflichtkarte ist.
-    const tage = new Map();
-    fertig.filter(s => !_istTafel(s) && (s.dataRef || {}).type !== 'ambient').forEach(s => {
+  {
+    const hatKarte = new Set(fertig.map(s => _tagKey(s.when)));
+    const zurueck = new Map();
+    entzerrt.concat(verworfen).forEach(s => {
       const k = _tagKey(s.when);
-      if(!_newsTagMs(k).length) return;
-      const alt = tage.get(k);
-      const spannung = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(s) : (s.prio || 0);
-      if(!alt || spannung > alt.spannung) tage.set(k, {s, spannung});
+      if(hatKarte.has(k)) return;
+      // Nach dem Schluessel des Feeds fragen, nicht nach dem hiesigen:
+      // `_tagKey` zaehlt den Monat ab null und ohne fuehrende Null, und
+      // `_newsTagMs` vergleicht mit `_newsDayKey`. Mit dem falschen Schluessel
+      // fand die Abfrage nie eine Partie und die Regel griff nie.
+      if(!_newsTagMs(_newsDayKey(s.when)).length) return;
+      const alt = zurueck.get(k);
+      if(!alt || (s.prio || 0) > (alt.prio || 0)) zurueck.set(k, s);
     });
-    tage.forEach(x => muss.add(x.s));
-    let spielGewicht = [...muss]
-      .filter(s => !_istTafel(s) && (s.dataRef || {}).type !== 'ambient')
-      .reduce((n, s) => n + _gewicht(s), 0);
-    const extras = fertig.filter(s => !muss.has(s) && !_istTafel(s)
-      && (s.dataRef || {}).type !== 'ambient')
-      .sort((a, b) => {
-        // Innerhalb des Restbudgets zuerst die Geschichte, deren konkrete
-        // Partie wir zeigen koennen. Das erhoeht nicht die Kartenzahl und
-        // verschiebt keine Tafelquote; es ersetzt nur abstraktere Kandidaten.
-        const ma = _istMatchGeschichte(a) ? 1 : 0;
-        const mb = _istMatchGeschichte(b) ? 1 : 0;
-        const sa = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(a) : (a.prio || 0);
-        const sb = (typeof _newsTagSpannung === 'function') ? _newsTagSpannung(b) : (b.prio || 0);
-        return mb - ma || sb - sa || (b.prio || 0) - (a.prio || 0);
-      });
-    // Zuerst verschiedene Motive, erst danach die zweite Karte derselben
-    // Sorte. So besteht das Restbudget nicht aus vier Auszeichnungen,
-    // während Serienbruch, Upset und Formlauf komplett verschwinden.
-    const motive = s => {
-      const d = (s && s.dataRef) || {};
-      return d.type === 'sammel'
-        ? [...new Set((d.teile || []).map(t => t.typ).filter(Boolean))]
-        : [d.type || ''];
-    };
-    const vertreten = new Set();
-    [...muss].forEach(s => motive(s).forEach(t => vertreten.add(t)));
-    const nehmen = (nurNeu) => extras.forEach(s => {
-      if(muss.has(s)) return;
-      const neu = motive(s).some(t => t && !vertreten.has(t));
-      if(nurNeu !== neu) return;
-      const w = _gewicht(s);
-      if(spielGewicht + w > spielBudget) return;
-      muss.add(s); spielGewicht += w;
-      motive(s).forEach(t => vertreten.add(t));
-    });
-    nehmen(true);
-    nehmen(false);
-
-    // Der redaktionelle Korridor darf kein Gesicht vollständig aus dem Feed
-    // schneiden. Falls eine Person nur in einer schwächeren Zusatzkarte
-    // vorkommt, kommt die günstigste davon zurück; Vielfalt geht hier vor
-    // einer mathematisch exakt getroffenen Prozentzahl.
-    const sollGesichter = new Set();
-    fertig.forEach(s => gesicht(s).forEach(p => sollGesichter.add(p)));
-    const hatGesichter = new Set();
-    [...muss].forEach(s => gesicht(s).forEach(p => hatGesichter.add(p)));
-    while([...sollGesichter].some(p => !hatGesichter.has(p))){
-      const fehlt = new Set([...sollGesichter].filter(p => !hatGesichter.has(p)));
-      const kandidaten = extras.filter(s => !muss.has(s))
-        .map(s => ({s, neu:gesicht(s).filter(p => fehlt.has(p)).length, w:_gewicht(s)}))
-        .filter(x => x.neu > 0)
-        .sort((a, b) => (b.neu / b.w) - (a.neu / a.w) || b.neu - a.neu || a.w - b.w);
-      if(!kandidaten.length) break;
-      muss.add(kandidaten[0].s);
-      gesicht(kandidaten[0].s).forEach(p => hatGesichter.add(p));
+    if(zurueck.size){
+      const dazu = [...zurueck.values()].filter(s => fertig.indexOf(s) < 0);
+      ausbalanciert = fertig.concat(dazu)
+        .sort((a, b) => new Date(b.when) - new Date(a.when));
     }
-    ausbalanciert = fertig.filter(s => muss.has(s));
   }
   _cache._consolFrom = list;
   _cache._consolList = ausbalanciert;

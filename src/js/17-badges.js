@@ -90,7 +90,10 @@ const BADGES=[
   // Zeile 9 — Wiederholungstäter, Losing Streak
   {id:'repeat_score',ic:'duplicate',name:'Wiederholungstäter',desc:'3 Siege in Folge mit identischem Endstand',
     multi:true,count:(id,ms)=>countRepeatScoreStreaks(id,ms)},
-  {id:'losing5',ic:'trendCrash',name:'Losing Streak',desc:'5 Niederlagen in Folge',
+  // „Losing Streak" war der einzige durchgehend englische Name im Katalog,
+  // und er steht als Schlagzeile im Feed („Anton: Losing Streak"). Die
+  // Oberflaeche spricht Deutsch [§7].
+  {id:'losing5',ic:'trendCrash',name:'Die Talfahrt',desc:'5 Niederlagen in Folge',
     multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
   // Zeile 10 — Absoluter Verlierer, Absoluter Sieger
   {id:'perfect_loss',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',

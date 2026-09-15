@@ -24,14 +24,38 @@ function _newsMarkSeen(ids){
   list.forEach(id => seen.add(id));
   _newsSaveSeen(seen);
 }
+// Der Lesestand: der Zeitpunkt der neuesten Karte, die beim letzten
+// „Alles gelesen" im Feed stand [§11.3].
+function _newsLesestand(){
+  try { return Number(localStorage.getItem(NEWS_LS_STAND)) || 0; } catch(e){ return 0; }
+}
+// Eine Karte gilt als gelesen, wenn ihre ID in der Liste steht ODER ihr
+// Zeitpunkt vor dem Lesestand liegt. Beides ist noetig: die Liste kennt nur,
+// was auf dem Bildschirm stand, und der Feed zeigt nicht jeden Tag dieselbe
+// Auswahl — ein Deckel, eine gleichlautende Schlagzeile oder eine ablaufende
+// Sperrfrist schieben eine Karte spaeter doch noch herein. Sie stand dann
+// unter einem Tag, den der Leser schon gelesen hat, und war trotzdem als neu
+// markiert.
+function _newsGelesen(s, seen, stand){
+  if(!s) return true;
+  if(seen && seen.has(s.id)) return true;
+  return !!stand && new Date(s.when).getTime() <= stand;
+}
 function _newsMarkAllSeen(){
   const stories = getStoriesCache();
   _newsMarkSeen(stories.map(s => s.id));
+  // Der Lesestand wandert auf die neueste Karte des Feeds. Alles, was
+  // danach kommt, ist neu; alles davor ist gelesen, auch wenn es erst
+  // spaeter im Feed erscheint.
+  const neuste = stories.reduce((mx, s) =>
+    Math.max(mx, new Date(s.when).getTime() || 0), 0);
+  if(neuste) try { localStorage.setItem(NEWS_LS_STAND, String(neuste)); } catch(e){}
 }
 function newsUnreadCount(){
   const stories = getStoriesCache();
   const seen = _newsLoadSeen();
-  return stories.filter(s => !seen.has(s.id)).length;
+  const stand = _newsLesestand();
+  return stories.filter(s => !_newsGelesen(s, seen, stand)).length;
 }
 
 // ─── §11.4 — Header-Badge-Refresh ────────────────────────────────────
@@ -805,10 +829,18 @@ function _newsTafelWert(s){
     // Neue Karten tragen die echte Differenz der Monats-Summe je Spieler.
     // Alte persistierte Karten fallen auf `zeigt` zurueck: Eine Chronik, die
     // gar nicht in der Monatstafel steht, darf auch dort kein +X behaupten.
+    // ── Eine Null ist kein grosser Wert ─────────────────────────────
+    // Auf der Karte stand „0 ZUSAETZLICH", und daneben ein Satz, der den
+    // Grund nur andeutete. Eine Null im groessten Schriftgrad der Karte
+    // liest sich wie ein Fehler: sie behauptet, der Erfolg sei nichts wert,
+    // obwohl er eine legendaere Chronik sein kann. Er zaehlt nur nicht
+    // ZUSAETZLICH, weil je Monat ein Eintrag in der Tafel steht [§C32] und
+    // ein staerkerer den Platz haelt. Dann faellt der Wert weg, und den
+    // Grund nennt der Satz mit Namen.
     const beitrag = _newsChronikPrestige(d);
     if(beitrag.modus === 'zuwachs'){
       const plus = Object.values(beitrag.werte).filter(x => x > 0);
-      if(!plus.length) return {v:'0', l:'zusätzlich'};
+      if(!plus.length) return null;
       const gleich = plus.every(x => x === plus[0]);
       if(plus.length > 1 && gleich) return {v:'+' + plus[0], l:'je Spieler'};
       if(plus.length > 1) return {v:'+' + plus.reduce((a, x) => a + x, 0), l:'zusammen'};
@@ -821,12 +853,12 @@ function _newsTafelWert(s){
     // dieser Beitrag null.
     const aktuell = Object.values(beitrag.werte).filter(x => x > 0);
     if((d.playerIds || []).length){
-      if(!aktuell.length) return {v:'0', l:'zusätzlich'};
+      if(!aktuell.length) return null;
       const wert = Math.round(aktuell.reduce((a, x) => a + x, 0) * 10) / 10;
       return {v:String(wert).replace('.', ','), l:'zählt aktuell'};
     }
-    if(d.zeigt === false) return {v:'0', l:'zusätzlich'};
-    return {v:'+' + (d.punkte || 0), l:'Prestige'};
+    if(d.zeigt === false) return null;
+    return (d.punkte | 0) > 0 ? {v:'+' + d.punkte, l:'Prestige'} : null;
   }
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
   if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
@@ -1153,6 +1185,8 @@ function _renderNewsFeed(){
   _sheetSetReopen(()=>_renderNewsFeed());
   const stories = getStoriesCache();
   const seen = _newsLoadSeen();
+  const stand = _newsLesestand();
+  const gelesen = s => _newsGelesen(s, seen, stand);
   // Vier Chips, nicht elf. Elf Rubriken sind eine Sortierhilfe für den, der
   // sie gebaut hat, nicht für den, der liest. Jeder Chip trägt seine Anzahl,
   // damit man vorher sieht, ob sich das Tippen lohnt.
@@ -1202,7 +1236,7 @@ function _renderNewsFeed(){
       else gruppen.push({k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
     });
     listHtml = gruppen.map(g => {
-      const neu = g.items.filter(st => !seen.has(st.id)).length;
+      const neu = g.items.filter(st => !gelesen(st)).length;
       // Die Wahl gehoert dem ganzen Tag, nicht dem aktiven Filter. Sonst
       // koennte dieselbe Tafel je Reiter eine andere „Karte des Tages" haben.
       const alleDesTages = stories.filter(st => _newsDayKey(st.when) === g.k);
@@ -1221,7 +1255,7 @@ function _renderNewsFeed(){
         + `<span class="nf-tag-n${neu?' neu':''}">${neu ? neu + ' NEU' : g.items.length + (g.items.length===1?' KARTE':' KARTEN')}</span></div>`
         + `</div>
         <div class="nf-feed">${g.items.map(st =>
-            _newsCardHtmlM2(st, seen.has(st.id), st.id === tagesKarte)).join('')}</div>`;
+            _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte)).join('')}</div>`;
     }).join('');
   }
 
@@ -1229,7 +1263,7 @@ function _renderNewsFeed(){
     {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   // Der Gelesen-Knopf steht dort, wo auch die Zahl steht, die ihn erklärt.
   // Ohne offene Stories fällt beides weg.
-  const offen = stories.filter(x => !seen.has(x.id)).length;
+  const offen = stories.filter(x => !gelesen(x)).length;
   const gelesenKnopf = offen
     ? `<button class="nf-gelesen" id="nvMarkAllBtn" type="button">ALLES GELESEN <b>${offen}</b></button>`
     : '';

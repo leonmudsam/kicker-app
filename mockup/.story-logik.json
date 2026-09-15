@@ -1,0 +1,888 @@
+{
+ "gebaut": "2026-09-14 23:52",
+ "partien": 466,
+ "spieler": 12,
+ "erster": "2026-05-22",
+ "letzter": "2026-08-26",
+ "konstanten": {
+  "limits": {
+   "topForm": 2,
+   "lossStreak": 2,
+   "winStreak": 8,
+   "giantSlayer": 4,
+   "jubilee": 3,
+   "badgeUnlocked": 6,
+   "rivalry": 1,
+   "rivalryMarke": 4,
+   "proTag": 5,
+   "matchProTagMin": 1,
+   "matchResultProTag": 2,
+   "tafelProTagMin": 1,
+   "tagKartePartien": 8,
+   "tagKarteStunde": 19,
+   "sperreTage": 3,
+   "total": 120
+  },
+  "prio": {
+   "rekord_erstmals": 96,
+   "elo_record": 95,
+   "streak_record": 94,
+   "lead_change": 93,
+   "season_recap": 92,
+   "sammel_erfolg": 66,
+   "sammel_spieler": 66,
+   "potd": 88,
+   "chronik_monat": 86,
+   "woche": 84,
+   "chronik_erstling": 80,
+   "rekord_geholt": 76,
+   "giant_slayer": 74,
+   "top_clash": 72,
+   "streak_killer": 70,
+   "win_streak": 68,
+   "loss_streak": 66,
+   "top_form": 64,
+   "match_result": 63,
+   "chronik_geholt": 62,
+   "team_streak": 60,
+   "insignium_stufe": 58,
+   "badge_unlocked": 54,
+   "team_loss_streak": 52,
+   "milestone_wins": 48,
+   "milestone_elo": 48,
+   "milestone_goals": 46,
+   "jubilee": 44,
+   "rivalry_milestone": 42,
+   "rekord_gesteigert": 40,
+   "elo_swing": 38,
+   "rivalry": 30,
+   "season_endgame": 22,
+   "season_start": 20,
+   "dry_spell": 16,
+   "quiet_week": 14,
+   "ambient": 8
+  },
+  "fenster": 14,
+  "slots": [
+   10,
+   19
+  ],
+  "abendAb": 19,
+  "badgeMarken": [
+   1,
+   5,
+   10,
+   25,
+   50,
+   100
+  ],
+  "form": {
+   "fenster": 10,
+   "basis": 8,
+   "vorsprung": 0.25
+  },
+  "abgemeldet": [
+   "upset_match_",
+   "thriller_",
+   "biggest_blowout_",
+   "potw_",
+   "team_woche_",
+   "anniversary_",
+   "elo_swing_week_"
+  ],
+  "laeuftAb": [
+   "season_endgame"
+  ]
+ },
+ "gebildet": {
+  "match_result": 122,
+  "badge_unlocked": 73,
+  "ambient": 146,
+  "potd": 38,
+  "elo_swing": 39,
+  "season_endgame": 4,
+  "dry_spell": 10,
+  "lead_change": 3,
+  "chronik_geholt": 194,
+  "streak_killer": 18,
+  "top_clash": 25,
+  "woche": 13,
+  "elo_record": 15,
+  "jubilee": 7,
+  "team_loss_streak": 34,
+  "win_streak": 23,
+  "season_recap": 3,
+  "season_start": 3,
+  "rekord_erstmals": 32,
+  "rekord_gesteigert": 100,
+  "insignium_stufe": 6,
+  "streak_record": 3,
+  "rekord_geholt": 83,
+  "milestone_elo": 8,
+  "top_form": 24,
+  "loss_streak": 12,
+  "rivalry_milestone": 16,
+  "rivalry": 1,
+  "milestone_goals": 1,
+  "team_streak": 17,
+  "chronik_erstling": 10,
+  "chronik_monat": 2,
+  "giant_slayer": 1,
+  "milestone_wins": 1
+ },
+ "sichtbar": {
+  "match_result": 83,
+  "badge_unlocked": 32,
+  "ambient": 55,
+  "potd": 38,
+  "elo_swing": 24,
+  "season_endgame": 2,
+  "dry_spell": 10,
+  "lead_change": 3,
+  "streak_killer": 11,
+  "top_clash": 14,
+  "woche": 13,
+  "elo_record": 15,
+  "win_streak": 13,
+  "season_recap": 3,
+  "team_loss_streak": 11,
+  "streak_record": 3,
+  "chronik_geholt": 1,
+  "rivalry": 1,
+  "loss_streak": 5,
+  "top_form": 9,
+  "milestone_elo": 1,
+  "chronik_monat": 2,
+  "insignium_stufe": 1,
+  "team_streak": 5,
+  "giant_slayer": 1,
+  "chronik_erstling": 1,
+  "season_start": 1,
+  "rivalry_milestone": 3,
+  "jubilee": 1,
+  "rekord_gesteigert": 1,
+  "milestone_wins": 1
+ },
+ "gebuendelt": {
+  "match_result": 25,
+  "chronik_geholt": 193,
+  "rekord_erstmals": 32,
+  "rekord_gesteigert": 99,
+  "rekord_geholt": 83,
+  "top_form": 11,
+  "team_loss_streak": 11,
+  "top_clash": 11,
+  "badge_unlocked": 8,
+  "jubilee": 2,
+  "loss_streak": 5,
+  "streak_killer": 7,
+  "team_streak": 4,
+  "milestone_elo": 1,
+  "win_streak": 7,
+  "chronik_erstling": 8,
+  "rivalry_milestone": 5,
+  "insignium_stufe": 1
+ },
+ "sammelKarten": {
+  "spiel": {
+   "karten": 52,
+   "zeilen": 114,
+   "groesste": 5
+  },
+  "tafel": {
+   "karten": 62,
+   "zeilen": 470,
+   "groesste": 18
+  },
+  "spieler": {
+   "karten": 3,
+   "zeilen": 6,
+   "groesste": 2
+  }
+ },
+ "verteilung": {
+  "spieltage": 56,
+  "tage": 98,
+  "spieltagMedian": 5,
+  "spieltagMax": 5,
+  "stillMedian": 2,
+  "stillMax": 4,
+  "leereSpieltage": 0
+ },
+ "fensterTage": [
+  {
+   "tag": "2026-08-13",
+   "karten": 1,
+   "tafel": 0,
+   "spiel": 1,
+   "fun": 0,
+   "spieltag": true,
+   "typen": [
+    "potd"
+   ],
+   "zeilen": [
+    {
+     "typ": "potd",
+     "quelle": "",
+     "titel": "Maxi ist Spieler des Tages",
+     "text": "4 von 5 Spielen gewonnen, das sind 80 %. Mehr Siege hat am 13.08. niemand geholt.",
+     "prio": 88,
+     "uhr": "23:59",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-14",
+   "karten": 3,
+   "tafel": 0,
+   "spiel": 4,
+   "fun": 0,
+   "spieltag": true,
+   "typen": [
+    "potd",
+    "jubilee",
+    "sammel"
+   ],
+   "zeilen": [
+    {
+     "typ": "potd",
+     "quelle": "",
+     "titel": "Leo ist Spieler des Tages",
+     "text": "3 von 5 Spielen gewonnen, das sind 60 %. Mehr Siege hat am 14.08. niemand geholt.",
+     "prio": 88,
+     "uhr": "23:59",
+     "teile": []
+    },
+    {
+     "typ": "jubilee",
+     "quelle": "",
+     "titel": "Johannes feiert das 50. Spiel",
+     "text": "Aus 50 Partien sind 18 Siege geworden, das sind 36 %.",
+     "prio": 44,
+     "uhr": "11:52",
+     "teile": []
+    },
+    {
+     "typ": "sammel",
+     "quelle": "spiel",
+     "titel": "Ein Spiel, zwei Geschichten für Leo und Jane",
+     "text": "besonderes Ergebnis und Auszeichnung greifen für Leo und Jane nach dem Schlusspfiff ineinander. Aus einer Partie wachsen zwei Geschichten.",
+     "prio": 73,
+     "uhr": "11:18",
+     "teile": [
+      "Leo und Jane stürzen die Favoriten",
+      "Jane: Upset-König"
+     ]
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-15",
+   "karten": 2,
+   "tafel": 0,
+   "spiel": 0,
+   "fun": 2,
+   "spieltag": false,
+   "typen": [
+    "ambient",
+    "ambient"
+   ],
+   "zeilen": [
+    {
+     "typ": "ambient",
+     "quelle": "",
+     "titel": "Halbzeit im August 2026",
+     "text": "61 Partien an 9 Spieltagen. Martin führt mit 330 Elo aus 39 Spielen. 15 von 53 Monatswertungen sind vergeben, 38 noch offen, 5 Spieler tragen noch keine. Die zweite Monatshälfte entscheidet.",
+     "prio": 8,
+     "uhr": "19:00",
+     "teile": []
+    },
+    {
+     "typ": "ambient",
+     "quelle": "",
+     "titel": "Jannik zittert sich durch",
+     "text": "20 % aller Spiele der letzten 14 Tage endeten mit einem Tor Unterschied. 2 davon gewonnen.",
+     "prio": 8,
+     "uhr": "10:00",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-16",
+   "karten": 1,
+   "tafel": 0,
+   "spiel": 1,
+   "fun": 0,
+   "spieltag": false,
+   "typen": [
+    "woche"
+   ],
+   "zeilen": [
+    {
+     "typ": "woche",
+     "quelle": "",
+     "titel": "Die Woche gehört Martin",
+     "text": "26 Spiele an 5 Tagen. Martin gewinnt 17 von 19 Spielen und hat damit die beste Quote.",
+     "prio": 84,
+     "uhr": "23:00",
+     "teile": [
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-17",
+   "karten": 3,
+   "tafel": 1,
+   "spiel": 2,
+   "fun": 0,
+   "spieltag": true,
+   "typen": [
+    "match_result",
+    "badge_unlocked",
+    "rekord_gesteigert"
+   ],
+   "zeilen": [
+    {
+     "typ": "match_result",
+     "quelle": "",
+     "titel": "Leon und Johannes setzen ein klares Zeichen",
+     "text": "10:2 gegen Maxi und Leo. Mit 8 Toren Abstand ist das eine klare Angelegenheit.",
+     "prio": 65,
+     "uhr": "12:27",
+     "teile": []
+    },
+    {
+     "typ": "badge_unlocked",
+     "quelle": "",
+     "titel": "Johannes: Mauer",
+     "text": "Sieg mit max. 2 Gegentoren als Verteidiger.",
+     "prio": 54,
+     "uhr": "12:27",
+     "teile": []
+    },
+    {
+     "typ": "rekord_gesteigert",
+     "quelle": "",
+     "titel": "Leon baut „Der komplette Stürmer\" aus",
+     "text": "88 Sturmwert, 145:71 in 216 Sturmspielen. Vorher waren es 87.",
+     "prio": 40,
+     "uhr": "12:27",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-18",
+   "karten": 5,
+   "tafel": 3,
+   "spiel": 4,
+   "fun": 0,
+   "spieltag": true,
+   "typen": [
+    "potd",
+    "sammel",
+    "match_result",
+    "match_result",
+    "badge_unlocked"
+   ],
+   "zeilen": [
+    {
+     "typ": "potd",
+     "quelle": "",
+     "titel": "Jane ist Spieler des Tages",
+     "text": "4 von 5 Spielen gewonnen, das sind 80 %. Mehr Siege hat am 18.08. niemand geholt.",
+     "prio": 88,
+     "uhr": "23:59",
+     "teile": []
+    },
+    {
+     "typ": "sammel",
+     "quelle": "tafel",
+     "titel": "Jane, Julian und Leon bewegen die Ewige Tafel",
+     "text": "Ein Moment, drei Spuren: Eine Bestmarke und 2 Monatschroniken ordnen die Ewige Tafel neu.",
+     "prio": 80,
+     "uhr": "14:05",
+     "teile": [
+      "Jane übernimmt „Der komplette Verteidiger\"",
+      "Julian holt „Die Auferstehung\"",
+      "Leon holt „Der Wechselhafte\""
+     ]
+    },
+    {
+     "typ": "match_result",
+     "quelle": "",
+     "titel": "Jannik und Jane setzen ein klares Zeichen",
+     "text": "10:2 gegen Julian und Leon. Mit 8 Toren Abstand ist das eine klare Angelegenheit.",
+     "prio": 65,
+     "uhr": "13:45",
+     "teile": []
+    },
+    {
+     "typ": "match_result",
+     "quelle": "",
+     "titel": "Julian und Jannik retten ein 10:9 ins Ziel",
+     "text": "Nur 1 Tor trennt beide Teams. Leo und Jane bleiben bis zum letzten Ball im Spiel.",
+     "prio": 69,
+     "uhr": "11:56",
+     "teile": []
+    },
+    {
+     "typ": "badge_unlocked",
+     "quelle": "",
+     "titel": "Julian: Angstgegner",
+     "text": "5 Pleiten in Folge gegen Jane.",
+     "prio": 54,
+     "uhr": "11:39",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-19",
+   "karten": 2,
+   "tafel": 2,
+   "spiel": 1,
+   "fun": 0,
+   "spieltag": true,
+   "typen": [
+    "sammel",
+    "win_streak"
+   ],
+   "zeilen": [
+    {
+     "typ": "sammel",
+     "quelle": "tafel",
+     "titel": "Leo und Leon bewegen die Ewige Tafel",
+     "text": "Ein Moment, zwei Spuren: Eine Bestmarke und eine Monatschronik ordnen die Ewige Tafel neu.",
+     "prio": 78,
+     "uhr": "11:16",
+     "teile": [
+      "Leo übernimmt „Der Nervenkitzler\"",
+      "Leon holt „Der Endspurt\""
+     ]
+    },
+    {
+     "typ": "win_streak",
+     "quelle": "",
+     "titel": "Jane zündet die 5er-Serie",
+     "text": "5 Siege in Folge. In der Laufbahn stehen damit 55 Siege aus 97 Partien.",
+     "prio": 68,
+     "uhr": "11:04",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-20",
+   "karten": 5,
+   "tafel": 2,
+   "spiel": 4,
+   "fun": 0,
+   "spieltag": true,
+   "typen": [
+    "potd",
+    "sammel",
+    "milestone_wins",
+    "match_result",
+    "match_result"
+   ],
+   "zeilen": [
+    {
+     "typ": "potd",
+     "quelle": "",
+     "titel": "Julian ist Spieler des Tages",
+     "text": "5 von 7 Spielen gewonnen, das sind 71 %. Mehr Siege hat am 20.08. niemand geholt.",
+     "prio": 88,
+     "uhr": "23:59",
+     "teile": []
+    },
+    {
+     "typ": "sammel",
+     "quelle": "tafel",
+     "titel": "Julian bewegt die Ewige Tafel",
+     "text": "Ein Moment, zwei Spuren: Eine Bestmarke und eine Monatschronik ordnen die Ewige Tafel neu.",
+     "prio": 78,
+     "uhr": "14:06",
+     "teile": [
+      "Julian übernimmt „Der komplette Stürmer\"",
+      "Julian holt „Der Nachzügler\""
+     ]
+    },
+    {
+     "typ": "milestone_wins",
+     "quelle": "",
+     "titel": "Leo: Sieg Nummer 100",
+     "text": "100 Siege aus 231 Partien, das sind 43 %.",
+     "prio": 48,
+     "uhr": "14:06",
+     "teile": []
+    },
+    {
+     "typ": "match_result",
+     "quelle": "",
+     "titel": "Maxi und Julian setzen ein klares Zeichen",
+     "text": "10:2 gegen Leo und Johannes. Mit 8 Toren Abstand ist das eine klare Angelegenheit.",
+     "prio": 65,
+     "uhr": "13:48",
+     "teile": []
+    },
+    {
+     "typ": "match_result",
+     "quelle": "",
+     "titel": "Julian und Leon retten ein 10:9 ins Ziel",
+     "text": "Nur 1 Tor trennt beide Teams. Maxi und Johannes bleiben bis zum letzten Ball im Spiel.",
+     "prio": 69,
+     "uhr": "13:31",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-21",
+   "karten": 2,
+   "tafel": 0,
+   "spiel": 0,
+   "fun": 2,
+   "spieltag": false,
+   "typen": [
+    "ambient",
+    "ambient"
+   ],
+   "zeilen": [
+    {
+     "typ": "ambient",
+     "quelle": "",
+     "titel": "Martin hält „Der Maßstab\"",
+     "text": "72 % aus 39 Spielen. Sonst hält diesen Bestwert niemand.",
+     "prio": 8,
+     "uhr": "19:00",
+     "teile": []
+    },
+    {
+     "typ": "ambient",
+     "quelle": "",
+     "titel": "Leon gibt Vollgas",
+     "text": "Aktivster Spieler der letzten 14 Tage: 41 Partien in zwei Wochen.",
+     "prio": 8,
+     "uhr": "10:00",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-22",
+   "karten": 2,
+   "tafel": 0,
+   "spiel": 0,
+   "fun": 2,
+   "spieltag": false,
+   "typen": [
+    "ambient",
+    "ambient"
+   ],
+   "zeilen": [
+    {
+     "typ": "ambient",
+     "quelle": "",
+     "titel": "Kopf-an-Kopf: Johannes & Maxi",
+     "text": "26 direkte Duelle, absolut ausgeglichen. Es steht 13:13.",
+     "prio": 8,
+     "uhr": "19:00",
+     "teile": []
+    },
+    {
+     "typ": "ambient",
+     "quelle": "",
+     "titel": "Julian gewinnt einfach",
+     "text": "Beste Siegquote der Liga (ab 5 Spielen): 65% aus 162 Partien.",
+     "prio": 8,
+     "uhr": "10:00",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-23",
+   "karten": 1,
+   "tafel": 0,
+   "spiel": 1,
+   "fun": 0,
+   "spieltag": false,
+   "typen": [
+    "woche"
+   ],
+   "zeilen": [
+    {
+     "typ": "woche",
+     "quelle": "",
+     "titel": "Die Woche gehört Jane",
+     "text": "20 Spiele an 4 Tagen. Jane gewinnt 6 von 8 Spielen und hat damit die beste Quote.",
+     "prio": 84,
+     "uhr": "23:00",
+     "teile": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+     ]
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-24",
+   "karten": 5,
+   "tafel": 2,
+   "spiel": 4,
+   "fun": 0,
+   "spieltag": true,
+   "typen": [
+    "team_streak",
+    "sammel",
+    "win_streak",
+    "top_form",
+    "rivalry_milestone"
+   ],
+   "zeilen": [
+    {
+     "typ": "team_streak",
+     "quelle": "",
+     "titel": "Leon und Martin gewinnen zusammen alles",
+     "text": "10 gemeinsame Spiele, 10 Siege. Die Serie läuft noch.",
+     "prio": 60,
+     "uhr": "14:34",
+     "teile": []
+    },
+    {
+     "typ": "sammel",
+     "quelle": "tafel",
+     "titel": "Martin bewegt die Ewige Tafel",
+     "text": "Ein Moment, zwei Spuren: 2 Monatschroniken ordnen die Ewige Tafel neu.",
+     "prio": 64,
+     "uhr": "14:34",
+     "teile": [
+      "Martin zieht bei „Der Nachzügler\" gleich",
+      "Martin holt „Der Endspurt\""
+     ]
+    },
+    {
+     "typ": "win_streak",
+     "quelle": "",
+     "titel": "Martin zündet die 5er-Serie",
+     "text": "5 Siege in Folge. In der Laufbahn stehen damit 132 Siege aus 208 Partien.",
+     "prio": 68,
+     "uhr": "14:26",
+     "teile": []
+    },
+    {
+     "typ": "top_form",
+     "quelle": "",
+     "titel": "Maxi spielt über dem eigenen Schnitt",
+     "text": "70 % aus den letzten 10 Partien. Über die Laufbahn davor sind es 42 %.",
+     "prio": 64,
+     "uhr": "14:26",
+     "teile": []
+    },
+    {
+     "typ": "rivalry_milestone",
+     "quelle": "",
+     "titel": "100. Duell: Leo vs Leon",
+     "text": "Nach 100 Duellen steht es 64:36 für Leo.",
+     "prio": 44,
+     "uhr": "13:51",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-25",
+   "karten": 5,
+   "tafel": 8,
+   "spiel": 5,
+   "fun": 0,
+   "spieltag": true,
+   "typen": [
+    "potd",
+    "sammel",
+    "win_streak",
+    "sammel",
+    "match_result"
+   ],
+   "zeilen": [
+    {
+     "typ": "potd",
+     "quelle": "",
+     "titel": "Julian ist Spieler des Tages",
+     "text": "6 von 9 Spielen gewonnen, das sind 67 %. Mehr Siege hat am 25.08. niemand geholt.",
+     "prio": 88,
+     "uhr": "23:59",
+     "teile": []
+    },
+    {
+     "typ": "sammel",
+     "quelle": "tafel",
+     "titel": "Leon, Julian und Maxi bewegen die Ewige Tafel",
+     "text": "Ein Moment, 8 Spuren: 4 Bestmarken und 4 Monatschroniken ordnen die Ewige Tafel neu.",
+     "prio": 90,
+     "uhr": "14:19",
+     "teile": [
+      "Leon übernimmt „Der Torjäger\"",
+      "Leon übernimmt „Das Sonntagskind\"",
+      "Julian holt „Die Punktlandung\"",
+      "Maxi zieht bei „Der Nachzügler\" gleich",
+      "Maxi holt „Der Erwartungstreue\"",
+      "Julian holt „Der Ausgleicher\"",
+      "Julian baut „Der Platzhirsch\" aus",
+      "Leon baut „Der Katalysator\" aus"
+     ]
+    },
+    {
+     "typ": "win_streak",
+     "quelle": "",
+     "titel": "Maxi zündet die 5er-Serie",
+     "text": "5 Siege in Folge. In der Laufbahn stehen damit 149 Siege aus 341 Partien.",
+     "prio": 68,
+     "uhr": "14:19",
+     "teile": []
+    },
+    {
+     "typ": "sammel",
+     "quelle": "spiel",
+     "titel": "Ein Spiel, zwei Geschichten für Maxi, Julian und Leon",
+     "text": "Serienbruch und besonderes Ergebnis greifen für Maxi, Julian und Leon nach dem Schlusspfiff ineinander. Aus einer Partie wachsen zwei Geschichten.",
+     "prio": 72,
+     "uhr": "14:08",
+     "teile": [
+      "Maxi und Julian brechen Leons 7er-Serie",
+      "Maxi und Julian retten ein 10:9 ins Ziel"
+     ]
+    },
+    {
+     "typ": "match_result",
+     "quelle": "",
+     "titel": "Leon und Johannes retten ein 10:9 ins Ziel",
+     "text": "Nur 1 Tor trennt beide Teams. Julian und Leo bleiben bis zum letzten Ball im Spiel.",
+     "prio": 69,
+     "uhr": "13:58",
+     "teile": []
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-26",
+   "karten": 5,
+   "tafel": 4,
+   "spiel": 6,
+   "fun": 0,
+   "spieltag": true,
+   "typen": [
+    "potd",
+    "sammel",
+    "sammel",
+    "team_streak",
+    "sammel"
+   ],
+   "zeilen": [
+    {
+     "typ": "potd",
+     "quelle": "",
+     "titel": "Maxi ist Spieler des Tages",
+     "text": "4 von 7 Spielen gewonnen, das sind 57 %. Mehr Siege hat am 26.08. niemand geholt.",
+     "prio": 88,
+     "uhr": "23:59",
+     "teile": []
+    },
+    {
+     "typ": "sammel",
+     "quelle": "tafel",
+     "titel": "Johannes und Leo bewegen die Ewige Tafel",
+     "text": "Ein Moment, vier Spuren: Eine Bestmarke, 2 Monatschroniken und ein neues Insignium ordnen die Ewige Tafel neu.",
+     "prio": 82,
+     "uhr": "14:32",
+     "teile": [
+      "Johannes übernimmt „Der Nervenkitzler\"",
+      "Leo holt „Der Wochenschluss\"",
+      "Johannes holt „Der Beidfüßige\"",
+      "Johannes trägt den Schildring"
+     ]
+    },
+    {
+     "typ": "sammel",
+     "quelle": "spiel",
+     "titel": "Ein Spiel, zwei Geschichten für Maxi und Leon",
+     "text": "Für Maxi und Leon wirkt der Schlusspfiff doppelt nach. Aus einer Partie wachsen zwei Geschichten.",
+     "prio": 68,
+     "uhr": "14:32",
+     "teile": [
+      "Maxi spielt über dem eigenen Schnitt",
+      "Leon gegen Maxi: 188 Duelle"
+     ]
+    },
+    {
+     "typ": "team_streak",
+     "quelle": "",
+     "titel": "Leon und Maxi gewinnen zusammen alles",
+     "text": "7 gemeinsame Spiele, 7 Siege. Die Serie läuft noch.",
+     "prio": 64,
+     "uhr": "14:20",
+     "teile": []
+    },
+    {
+     "typ": "sammel",
+     "quelle": "spiel",
+     "titel": "Ein Spiel, zwei Geschichten für Leon, Maxi und Martin",
+     "text": "Serienbruch und besonderes Ergebnis greifen für Leon, Maxi und Martin nach dem Schlusspfiff ineinander. Aus einer Partie wachsen zwei Geschichten.",
+     "prio": 72,
+     "uhr": "11:10",
+     "teile": [
+      "Leon und Maxi brechen Martins 8er-Serie",
+      "Leon und Maxi retten ein 10:9 ins Ziel"
+     ]
+    }
+   ]
+  },
+  {
+   "tag": "2026-08-27",
+   "karten": 2,
+   "tafel": 0,
+   "spiel": 0,
+   "fun": 2,
+   "spieltag": false,
+   "typen": [
+    "ambient",
+    "ambient"
+   ],
+   "zeilen": [
+    {
+     "typ": "ambient",
+     "quelle": "",
+     "titel": "Klarste Klatsche der Liga",
+     "text": "Höchster Sieg aller Zeiten: 10:0 am 01.06.",
+     "prio": 11,
+     "uhr": "19:00",
+     "teile": []
+    },
+    {
+     "typ": "ambient",
+     "quelle": "",
+     "titel": "Wettrüsten in Gold",
+     "text": "Leon & Martin halten je 5 goldene Auszeichnungen. Niemand hat mehr.",
+     "prio": 14,
+     "uhr": "10:00",
+     "teile": []
+    }
+   ]
+  }
+ ],
+ "dbGesamt": 1087,
+ "feedLetzter": 44
+}

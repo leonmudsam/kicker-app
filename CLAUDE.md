@@ -62,7 +62,14 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Vorlage für einen Umbau — kein Teil der App.
                       Dort liegt auch die Story-Simulation: hundert erfundene
                       Partien, gerechnet und erzählt mit dem Code der App
-                      (README-story-simulation.md)
+                      (README-story-simulation.md), und die Tafel der
+                      Story-Logik: welche Daten, in welcher Reihenfolge, nach
+                      welchem Prinzip und wie oft eine Karte entsteht,
+                      gemessen an den echten Partien
+                      (README-story-logik.md), und der Vorschlag für neue
+                      Liga-Rekorde, die nicht der Spitze gehören — achtzehn
+                      Kandidaten gegen fünf gemessene Tore
+                      (README-rekord-vorschlag.md)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
@@ -89,7 +96,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **712**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **715**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -221,7 +228,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen | 1003 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, den 14-Tage-Mix aus Tafel gegen Spieltag/Funfacts und die spannendste Karte des Tages ab acht Partien oder 19 Uhr | 280 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte | 307 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px — **im echten Browser gemessen** | 118 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -303,7 +310,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Er ist eine **Marke auf dem Zeitstrahl, keine Karte**: mit Rahmen und Füllung
   sah er aus wie eine ungeöffnete Story und stand mit den Karten darunter auf
   einer Ebene. Sein `data-tag` trägt den Tagesschlüssel, damit sich prüfen
-  lässt, ob an diesem Tag gespielt wurde — `_newsTagBilanz` beantwortet das,
+  lässt, ob an diesem Tag gespielt wurde — `_newsTagMs` beantwortet das,
   seit die Bilanz aus dem Markup verschwunden ist.
   Über jeder Karte steht das **Rubrikband** (`.nf-top`, `_newsRubrik`,
   `_newsSorteIcon`): Zeichen und Rubrik links, Uhrzeit rechts, wie in einer
@@ -590,11 +597,35 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   was wegfällt, nicht wo etwas steht — die Reihenfolge bleibt die Zeit.
   `prio` sortiert den Feed seit dem chronologischen Umbau nicht mehr; sie
   entscheidet nur noch über Gewicht und Tagesdeckel.
-  Innerhalb dieses unveränderten Budgets reserviert
-  `NEWS_LIMITS.matchProTagMin` mindestens eine **konkrete Partie**, sofern der
-  Tag eine berichtenswerte enthält. Im anschließenden Redaktionsbudget stehen
-  Resultat-Geschichten vor abstrakteren Kandidaten gleicher Ebene. Das erzeugt
-  keine sechste Karte und verschiebt die Tafelquote nicht.
+  **Die Mischung gehört dem Tag, nicht dem Fenster.** Zwei der fünf Plätze
+  sind reserviert: `NEWS_LIMITS.tafelProTagMin` für die **Ewige Tafel**, wenn
+  sie sich an diesem Tag bewegt hat, und `NEWS_LIMITS.matchProTagMin` für eine
+  Geschichte, deren **konkrete Partie** die Karte zeigen kann. Gibt es das an
+  diesem Tag nicht, bleibt der Platz beim Nächststarken; eine sechste Karte
+  entsteht daraus nie. Vorher war es eine Quote über die ganzen vierzehn Tage —
+  mindestens 40 % Tafel, gemessen am Inhalt der Karten —, und erfüllt wurde sie,
+  indem SPIELTAGSKARTEN wegfielen: gemessen schnitt das den Feed von 42 auf 23
+  Karten und leerte zwei von sieben Spieltagen vollständig. Der 24.08. trug
+  vierzehn Meldungen und im Feed keine einzige Karte. Der Tafel half das nicht,
+  sie blieb bei vier Karten — nur stand daneben nichts mehr. Je Tag reserviert
+  hängt die Auswahl eines Tages außerdem nur noch an diesem Tag: ein neuer
+  Spieltag verschiebt nicht mehr, was vorgestern zu sehen war.
+  **Und kein Spieltag bleibt ohne Karte.** Der Vergleich der Schlagzeilen wirft
+  weg, was schon einmal dasteht; „Harter Tag für Johannes" stand an vier Tagen
+  des Fensters und blieb einmal stehen. Der 13.08. hatte danach nur noch den
+  Spieler des Tages, der 19.08. gar nichts. Bleibt für einen Tag, an dem
+  gespielt wurde, keine Karte übrig, kommt die stärkste der verworfenen zurück:
+  dieselbe Schlagzeile unter zwei verschiedenen Tagesköpfen ist erlaubt — jede
+  nennt im Text ihr eigenes Datum, und für die Pflichtkarten gilt die Ausnahme
+  längst. Die **Sperrfrist** gehört nicht dazu: sie sagt gerade, dass diese
+  Aussage gestern schon erzählt wurde.
+  **Von einer Sammel-Achse stehen höchstens zwei Karten an einem Tag.** Die
+  Sammelkarte war vom Deckel je Sorte ganz ausgenommen, und gemessen standen am
+  26.08. vier Karten „Ein Spiel, N Geschichten für …" untereinander — vier
+  verschiedene Partien, für den, der scrollt, viermal dieselbe Schlagzeile. Sie
+  zählt jetzt nach ihrer Achse mit (`sammel/spiel`, `sammel/tafel`,
+  `sammel/spieler`, `sammel/erfolg`): vier verschiedene Nachrichten dürfen
+  nebeneinander stehen, vier gleiche nicht.
   Eine **seltene Auszeichnung** steht darin über einer laufenden Serie: die
   Serie läuft weiter, die Auszeichnung ist geholt. Sie stand auf 5 und damit
   unter der Duo-Pleitenserie, mit der Begründung, Team-News sollten „auch mal
@@ -772,6 +803,22 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   darunter wortgleich ein zweites Mal. Bleibt dabei nichts übrig, wird die
   ganze Liste gezeigt — ein leeres Blatt ist schlimmer als eine Wiederholung.
 
+  **Neu ist, was seit dem letzten Blick dazugekommen ist** (`NEWS_LS_STAND`,
+  `_newsGelesen`). Gezählt wurde, was nicht in der Liste der gelesenen IDs
+  steht — und das ist nicht dasselbe. Die Liste kennt nur, was auf dem
+  Bildschirm stand, und der Feed zeigt nicht jeden Tag dieselbe Auswahl: eine
+  Karte fällt unter einen Deckel, eine gleichlautende Schlagzeile verdrängt
+  sie, eine Sperrfrist läuft ab. Gemessen über fünfundvierzig Tage trugen 81
+  von 267 neu auftauchenden Karten (30 %) einen Zeitpunkt, der länger
+  zurückliegt als alles, was der Leser schon gesehen hat: „Martin und Alex
+  brechen Julians 7er-Serie" vom 09.07. kam am 14.07. und am 20.07. erneut als
+  neu hoch, und über einem Tag ohne eine einzige neue Karte stand „1 NEU".
+  „Alles gelesen" setzt deshalb einen **Lesestand** — den Zeitpunkt der
+  neuesten Karte, die dabei im Feed stand. Gelesen ist, was in der Liste steht
+  ODER älter ist als der Lesestand. Eine Karte, die später mit altem Zeitpunkt
+  doch noch erscheint, steht damit unter einem Tag, den der Leser gelesen hat,
+  und behauptet das nicht mehr.
+
   **Dieselbe Aussage kommt drei Tage lang nur einmal** (`NEWS_LIMITS.sperreTage`).
   Zwei gleiche Schlagzeilen fängt der Feed schon ab. Eine Aussage, deren ZAHL
   sich mitbewegt, entkommt ihm: „Martin baut ‚Der Maßstab' aus" heißt nach dem
@@ -835,6 +882,27 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   `_consolidateStories` — der genau dafür gebaut ist — schlug nie an:
   gemessen null Treffer in fünf Aufrufen, bei einem Aufruf nach jedem
   `loadAll` und bei jedem Zeichnen des Feeds. `tests/ambient` misst das alles.
+
+  **Das Ergebnis im Text gehört dem Sieger.** Es stand in der Reihenfolge der
+  Eingabe, und damit stand „Maxi und Leo retten ein 9:10 ins Ziel" im Feed —
+  die Sieger genannt und dahinter der Stand des Verlierers. Dasselbe im
+  Spitzenspiel: unter „Leon schlägt Julian" stand „9:10". Eine Karte, die zwei
+  verschiedene Sieger behauptet, ist keine Nachricht.
+  **Kein Etikett mit Doppelpunkt am Satzanfang, kein Satzfragment, keine
+  englische Aufschrift.** „Saison-Endspurt: Leon führt mit 91 Elo Vorsprung"
+  ist eine Rubrik und ein Satz in einem, und die Rubrik steht schon über der
+  Karte [§C27]. „Seit dem 16.07. geht jedes gemeinsame Spiel verloren. 3 am
+  Stück." endet auf einem Fragment ohne Verb. Und „Giant Slayer" und „Losing
+  Streak" waren die einzigen englischen Aufschriften der Liga — „Player of the
+  Week" und „Player of the Day" bleiben, das sind die Namen der beiden
+  Wertungen. `tests/ambient` prüft das über jeden vierten Spieltag der
+  Ligageschichte: ein einziger Generatorlauf trifft von jedem Typ höchstens
+  einen Fall, und dann prüft die Zusicherung genau den, der zufällig gerade
+  ansteht.
+  **Und der Text wiederholt nicht seine Schlagzeile.** „Leo: Sieg Nummer 100"
+  trug darunter „Leo feiert den 100. Sieg", „Leo knackt 300 Elo" trug „300 Elo
+  zum ersten Mal überschritten". Jeder Text nennt eine Zahl, die die
+  Schlagzeile noch nicht hat.
 
   **So spricht die Liga.** Leicht und unkompliziert, aber mit den Zahlen dran.
   Kein Gedankenstrich — er trennte Sätze, die als zwei Sätze klarer sind. Die
@@ -973,6 +1041,42 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Möglichkeit dieselbe Erzählart; bei einem kleinen Pool wird die Sperre
   stufenweise gelockert, damit der Slot trotzdem gefüllt werden kann.
 
+  **Wer nicht gespielt hat, hat nichts getan.** Ein Liga-Rekord und eine
+  Monatschronik wechseln auch den Halter, weil ANDERE gespielt haben: „Der
+  makellose Tag" misst einen Anteil, und wer den Bestwert hält, verliert ihn mit
+  dem nächsten schwachen Tag — der Nächstbeste übernimmt, ohne angetreten zu
+  sein. Gemessen trugen 23 von 280 Tafel-Karten einen Namen, der an diesem Tag
+  keine Partie hatte; „Martin holt ‚Der Tagesabschluss'" stand über einem
+  Spieltag ohne Martin. Die Karte kommt deshalb nur, wenn mindestens einer der
+  Genannten an diesem Tag gespielt hat. Dieselbe Begründung wie beim Ausbauen:
+  die anderen sind nur nicht vorbeigezogen.
+  **Und sie nennt die, um die es geht, nicht jeden Mithalter.** „Martin zieht
+  bei ‚Der Nachzügler' gleich" trug Martin UND Julian in `playerIds`, und die
+  Tafel-Sammelkarte darüber hieß „Julian und Martin bewegen die Ewige Tafel" —
+  über zwei Zeilen, die beide von Martin erzählen. Beim Dazukommen sind die
+  Genannten die Neuen, sonst alle Halter.
+  **Die ID einer Tafel-Meldung trägt ihren Spieltag.** Ohne ihn beschreibt
+  dieselbe ID zwei verschiedene Ereignisse: ein Halterfeld wird enger und wieder
+  weiter, und geht eine Chronik weg und kommt an dieselben Leute zurück, bildet
+  der Generator genau diese ID erneut. Die Datenbank hat sie schon, also bleibt
+  der alte Zeitstempel — aber `_newsTexteAuffrischen` übernimmt den neuen
+  `dataRef`, und damit zeigt eine Karte vom 24. auf die Partie vom 26. Gemessen
+  wanderte so der ganze Tafel-Moment des 24.08. in die Sammelkarte des 26.08.,
+  und der 24. hatte keine Tafel-Karte mehr. Eine Wiederkehr ist ein neues
+  Ereignis und bekommt eine eigene Karte.
+  **Eine überholte Meldung fällt nur am eigenen Tag.** Zwei Karten über
+  denselben Rekord widersprechen sich, wenn sie am selben Tag stehen: „Der
+  Zerstörer" wechselte zweimal am 10.09., und beim „Gigantentöter" stand „Henry
+  und Jannik übernehmen" acht Minuten vor „Henry übernimmt". Über Tage hinweg
+  erzählen sie dagegen eine Geschichte, und der Vergleich lief einmal über das
+  ganze Fenster: jeder Weiterwechsel löschte die Meldung von vorgestern, und
+  gemessen fielen so zwei von sieben Spieltagen ganz aus.
+  **Eine Null ist kein großer Wert.** Auf der Chronik-Karte stand „0
+  ZUSÄTZLICH" im größten Schriftgrad, und das liest sich wie ein Fehler: der
+  Erfolg kann eine legendäre Chronik sein, er zählt nur nicht zusätzlich, weil
+  je Monat ein Eintrag in der Tafel steht [§C32] und ein stärkerer den Platz
+  hält. Dann fällt der große Wert weg, und den Grund nennt der Satz mit Namen —
+  „Für die Laufbahn bleibt ‚Der Wundertäter' stärker".
   **Die Ewige Tafel meldet sich.** Der ganze Awards-Reiter kam im Feed nicht
   vor: wer einen Liga-Rekord übernahm, eine Monatschronik holte oder eine
   Insignium-Stufe erreichte, erfuhr es nur, wenn er selbst nachsah. Die

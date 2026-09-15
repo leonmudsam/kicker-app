@@ -353,7 +353,8 @@ function _buildStories(){
           title: `Noch ${daysLeft} ${daysLeft===1?'Tag':'Tage'}`,
           desc: gap <= 50
             ? `Die Top 2 trennen nur ${gap} Elo. Das wird knapp.`
-            : `Saison-Endspurt: ${nameOf(rankList[0].pid)} führt mit ${gap} Elo Vorsprung.`,
+            : `${nameOf(rankList[0].pid)} führt mit ${gap} Elo Vorsprung. `
+              + `So endet der Monat, wenn nichts mehr dazwischenkommt.`,
           when: now,
           prio: STORY_PRIO.season_endgame + (gap <= 15 ? 4 : gap <= 50 ? 2 : 0),
           dataRef: {type:'season_endgame', sid, leader:rankList[0], second:rankList[1], daysLeft, gap}
@@ -373,7 +374,14 @@ function _buildStories(){
         cat: 'season',
         ic: 'rocket',
         title: ageDays === 0 ? 'Die neue Saison läuft' : `Saison läuft seit ${ageDays} ${ageDays===1?'Tag':'Tagen'}`,
-        desc: `Die Saison ${currentSeason().label} beginnt. Alle Spieler starten wieder bei ${cfg.start_elo} Elo.`,
+        // Der Satz folgt der Schlagzeile. Er hiess „Die Saison beginnt" auch
+        // noch unter „Saison laeuft seit 2 Tagen" — dieselbe Karte sagte
+        // einmal, es gehe los, und einmal, es sei schon zwei Tage her.
+        desc: ageDays === 0
+          ? `${currentSeason().label} beginnt. Alle Spieler starten wieder bei ${cfg.start_elo} Elo.`
+          : `Gestartet ist jeder bei ${cfg.start_elo} Elo. Seit `
+            + `${ageDays === 1 ? 'einem Tag' : _zahlwortDe(ageDays) + ' Tagen'} `
+            + `zählt in ${currentSeason().label} wieder jede Partie.`,
         when: sStart,
         prio: STORY_PRIO.season_start + (ageDays === 0 ? 3 : 0),
         dataRef: {type:'season_start', sid: currentSeason().id}
@@ -490,7 +498,7 @@ function _buildStories(){
         // steht, seit wann und wie oft.
         desc: `Seit dem `
             + `${new Date(t.firstT || t.lastT).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
-            + `geht jedes gemeinsame Spiel verloren. ${t.cur} am Stück.`,
+            + `gehen ${_zahlwortDe(t.cur)} gemeinsame Spiele in Folge verloren.`,
         when: t.lastT,
         prio: STORY_PRIO.team_loss_streak + (t.cur >= 7 ? 4 : 0),
         dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
@@ -767,7 +775,8 @@ function _buildStories(){
         desc: (() => { const va = r.aw, vb = r.n - r.aw;
           return va === vb
             ? `${nameOf(r.a)} und ${nameOf(r.b)} stehen nach ${r.n} Duellen exakt bei ${va}:${vb}.`
-            : `${nameOf(va > vb ? r.a : r.b)} führt ${Math.max(va, vb)}:${Math.min(va, vb)}. Öfter ist sich in der Liga kein Paar begegnet.`;
+            : `${nameOf(va > vb ? r.a : r.b)} führt ${Math.max(va, vb)}:${Math.min(va, vb)}. `
+              + `Kein anderes Paar der Liga hat öfter gegeneinander gespielt.`;
         })(),
         when: r.when,
         prio: STORY_PRIO.rivalry + (r.n >= 200 ? 4 : r.n >= 100 ? 2 : 0),
@@ -800,8 +809,16 @@ function _buildStories(){
         id: 'jubilee_'+c.pid+'_'+c.total,
         cat: 'history',
         ic: 'calendar',
-        title: `${nameOf(c.pid)} feiert ${c.total}. Spiel`,
-        desc: `${c.total} Partien stehen jetzt in der Bilanz von ${nameOf(c.pid)}.`,
+        // „feiert 250. Spiel" ohne Artikel, und darunter dieselbe Zahl noch
+        // einmal. Der Satz nennt jetzt, was in diesen Partien zusammengekommen
+        // ist [§C33].
+        title: `${nameOf(c.pid)} feiert das ${c.total}. Spiel`,
+        desc: (function(){
+          const alle = matchesOfPlayer(c.pid, matches) || [];
+          const siege = alle.filter(m => won(c.pid, m)).length;
+          return `Aus ${c.total} Partien sind ${siege} Siege geworden, `
+               + `das sind ${Math.round(100 * siege / Math.max(1, c.total))} %.`;
+        })(),
         when: c.when,
         prio: STORY_PRIO.jubilee + (c.total >= 1000 ? 6 : c.total >= 250 ? 3 : 0),
         dataRef: {type:'jubilee', pid: c.pid, total: c.total, matchId: c.matchId}
@@ -924,7 +941,15 @@ function _buildStories(){
           cat: 'personal',
           ic: 'trophy',
           title: `${nameOf(p.id)}: Sieg Nummer ${mark}`,
-          desc: `${nameOf(p.id)} feiert den ${mark}. Sieg.`,
+          // Der Satz hiess „X feiert den 100. Sieg" und stand damit wortgleich
+          // ueber sich selbst. Jeder Text nennt eine Zahl, die die Schlagzeile
+          // noch nicht hat [§C33]: hier die Quote, aus der die Marke kommt.
+          desc: (function(){
+            const ges = (matchesOfPlayer(p.id, matches) || []).length;
+            return ges
+              ? `${mark} Siege aus ${ges} Partien, das sind ${Math.round(100 * mark / ges)} %.`
+              : `${mark} Siege stehen jetzt in der Bilanz.`;
+          })(),
           when: new Date(last.created_at),
           prio: STORY_PRIO.milestone_wins + (mark >= 500 ? 6 : mark >= 250 ? 3 : 0),
           dataRef: {type:'milestone_wins', pid: p.id, milestone: mark+'. Sieg', matchId: last.id}
@@ -990,7 +1015,10 @@ function _buildStories(){
         cat: 'misfortune',
         ic: 'dropDouble',
         title: `Harter Tag für ${nameOf(worstPid)}`,
-        desc: `${Math.abs(delta)} Elo weg an einem Tag. Mehr hat an diesem Tag niemand verloren.`,
+        // „Elo weg an einem Tag. Mehr hat an diesem Tag …" nannte den Tag
+        // zweimal in zwei Saetzen.
+        desc: `${Math.abs(delta)} Elo verloren, und mehr hat an diesem Spieltag `
+            + `niemand abgegeben.`,
         // Die Karte gehoert auf den Tag, von dem sie handelt. Um 00:00 des
         // Folgetages stand sie unter einem Tageskopf, an dem gar nicht
         // gespielt wurde — derselbe Fehler, den der Spieler des Tages hatte.
@@ -1111,8 +1139,17 @@ function _buildStories(){
           // wortgleich im Feed [§C33]. Das Ergebnis unterscheidet die
           // Partien, und es steht ohnehin auf der Karte.
           title: `${nameOf(best.p1)} schlägt ${nameOf(best.p2)} im Spitzenspiel`,
-          desc: `Platz 1 gegen Platz 2, und Platz 1 gewinnt. `
-              + `${m.score_a}:${m.score_b}, der Abstand nach vorn wird größer.`,
+          // Das Ergebnis aus der Sicht des Siegers. Es stand in der
+          // Reihenfolge der Tabelle („score_a:score_b"), und unter
+          // „Leon schlägt Julian im Spitzenspiel" stand damit „9:10" —
+          // dieselbe Karte behauptete zwei verschiedene Sieger.
+          desc: (() => {
+            const gewonnenA = m.winner === 'A';
+            const hoch = gewonnenA ? m.score_a : m.score_b;
+            const tief = gewonnenA ? m.score_b : m.score_a;
+            return `Platz 1 gegen Platz 2, und Platz 1 gewinnt. Es steht `
+              + `${hoch}:${tief}, der Abstand nach vorn wird größer.`;
+          })(),
           when: new Date(best.t),
           prio: STORY_PRIO.top_clash,
           dataRef: {type:'top_clash', matchId: m.id, winners: best.winners, losers: best.losers, p1: best.p1, p2: best.p2,
@@ -1191,14 +1228,24 @@ function _buildStories(){
       });
       [...jeTag.values()].sort((a, b) => b.t - a.t)
         .slice(0, NEWS_LIMITS.giantSlayer).forEach(gs => {
-        const wNames = gs.winners.map(nameOf).join(' & ');
-        const lNames = gs.losers.map(nameOf).join(' & ');
+        // „und", nicht „&": jede andere Karte der Liga schreibt zwei Namen
+        // aus, und das Zeichen stand hier als einziges im Fliesstext.
+        const wNames = _namenListe(gs.winners.map(nameOf));
+        const lNames = _namenListe(gs.losers.map(nameOf));
         const pct = Math.max(1, Math.round(gs.chance * 100));
+        const tore = gs.m.winner === 'A'
+          ? gs.m.score_a + ':' + gs.m.score_b : gs.m.score_b + ':' + gs.m.score_a;
         stories.push({
           id: 'giant_slayer_'+gs.m.id,
           cat: 'highlight', ic: 'giantSlayer',
-          title: `Giant Slayer: ${wNames}`,
-          desc: `Nur ${pct}% Siegchance. Und trotzdem gewonnen: ${wNames} zwingen ${lNames} in einer echten Sensation in die Knie.`,
+          // Deutsch und ohne Werbesprache. „Giant Slayer: Maxi & Henry" war
+          // der einzige englische Kartentitel der Liga, und „in einer echten
+          // Sensation in die Knie" sagte dasselbe wie die Zahl davor, nur
+          // lauter [§C33]. Die Schlagzeile nennt jetzt beide Seiten, der Satz
+          // die Siegchance und das Ergebnis.
+          title: `${wNames} stürzen ${lNames}`,
+          desc: `Nur ${pct} % Siegchance vor dem Anstoß, und am Ende steht ein `
+              + `${tore}. Gerechnet war mit einem klaren Sieg für ${lNames}.`,
           when: new Date(gs.m.created_at), prio: STORY_PRIO.giant_slayer,
           dataRef: {type:'giant_slayer', matchId: gs.m.id, winners: gs.winners, losers: gs.losers, chance: gs.chance}
         });
@@ -1248,16 +1295,19 @@ function _buildStories(){
         desc = `Nur ${Math.max(1, Math.round(chance * 100))} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;
       } else if(diff === 1 && tief >= 8){
         art = 'krimi'; rang = 65; ic = 'thriller';
-        title = `${wn} retten ein ${a}:${b} ins Ziel`;
+        // Das Ergebnis aus der Sicht des Siegers. Es stand in der Reihenfolge
+        // der Eingabe, und „Maxi und Leo retten ein 9:10 ins Ziel" nannte die
+        // Sieger und dahinter den Stand des Verlierers [§C33].
+        title = `${wn} retten ein ${hoch}:${tief} ins Ziel`;
         desc = `Nur 1 Tor trennt beide Teams. ${ln} bleiben bis zum letzten Ball im Spiel.`;
       } else if(diff >= 7){
         art = 'kanter'; rang = 61; ic = 'thumbsUp';
         title = `${wn} setzen ein klares Zeichen`;
-        desc = `${a}:${b} gegen ${ln}. Mit ${diff} Toren Abstand ist das eine klare Angelegenheit.`;
+        desc = `${hoch}:${tief} gegen ${ln}. Mit ${diff} Toren Abstand ist das eine klare Angelegenheit.`;
       } else if(diff === 2 && tief >= 8){
         art = 'eng'; rang = 59; ic = 'thriller';
         title = `${wn} entscheiden ein enges Spiel`;
-        desc = `${ln} halten die Partie bis in die Schlussphase offen. Am Ende steht ein ${a}:${b}.`;
+        desc = `${ln} halten die Partie bis in die Schlussphase offen. Am Ende steht ein ${hoch}:${tief}.`;
       }
       if(!art) continue;
       // Eine Auszeichnung aus genau diesem Match darf denselben Fakt nicht
@@ -1484,7 +1534,10 @@ function _buildStories(){
         cat: 'personal',
         ic: 'peak',
         title: `${nameOf(e.pid)} knackt ${e.mark} Elo`,
-        desc: `${e.mark} Elo zum ersten Mal überschritten. Das ist der höchste Stand der Laufbahn.`,
+        // „X knackt 300 Elo" und darunter „300 Elo zum ersten Mal
+        // ueberschritten" ist dieselbe Zeile zweimal.
+        desc: `Zum ersten Mal über dieser Marke, und damit auf dem höchsten `
+            + `Stand der ganzen Laufbahn.`,
         when: new Date(e.when),
         prio: STORY_PRIO.milestone_elo + (e.mark >= (cfg.start_elo ?? 1000) + 500 ? 4 : 0),
         dataRef: {type:'milestone_elo', pid: e.pid, milestone: e.mark+' Elo', mark: e.mark, matchId: e.matchId}
@@ -1521,7 +1574,15 @@ function _buildStories(){
         cat: 'highlight',
         ic: 'flame',
         title: `${nameOf(c.pid)} zündet die ${c.streak}er-Serie`,
-        desc: `${c.streak} Siege, kein Stolpern: Mit diesem Schlusspfiff wächst der Lauf zur echten Serie.`,
+        // „kein Stolpern: Mit diesem Schlusspfiff waechst der Lauf zur echten
+        // Serie" nannte keine Zahl, die die Schlagzeile nicht schon hat, und
+        // stand gemessen fuenfzigmal wortgleich im Feed [§C33].
+        desc: (function(){
+          const alle = matchesOfPlayer(c.pid, matches) || [];
+          const siege = alle.filter(m => won(c.pid, m)).length;
+          return `${_zahlwortDe(c.streak)} Siege in Folge. In der Laufbahn `
+               + `stehen damit ${siege} Siege aus ${alle.length} Partien.`;
+        })(),
         when: c.when,
         prio: STORY_PRIO.win_streak + (c.streak >= 10 ? 6 : c.streak >= 7 ? 3 : 0),
         dataRef: {type:'win_streak', pid: c.pid, streak: c.streak, matchId:c.matchId}
@@ -1620,7 +1681,11 @@ function _buildStories(){
               // v9.17: Die Siegquote steht NICHT mehr vorn — der Titel wird über
               // die absoluten Tagessiege vergeben (siehe _newsPeriodWinner). Die
               // Quote bleibt als Kontext, damit die Zahl einordbar ist.
-              desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, das sind ${Math.round(main.wr*100)} %. Am ${dLabel} hat niemand mehr geholt.`,
+              // „Am 16.07. hat niemand mehr geholt" — geholt WAS? Der Satz
+              // nennt jetzt, worum es geht: mehr Siege.
+              desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, `
+                  + `das sind ${Math.round(main.wr*100)} %. Mehr Siege hat am `
+                  + `${dLabel} niemand geholt.`,
               when: rep,
               prio: STORY_PRIO.potd,
               dataRef: {type:'potd', dayKey: data.dayKey, playerId: main.id, playerIds: res.winners.map(w => w.id),
@@ -1723,6 +1788,21 @@ function _buildStories(){
     const _letzteMatchId = matches.length ? matches[matches.length-1].id : null;
     if(_letzteMs){
       const _tag0 = new Date(_letzteMs); _tag0.setHours(0, 0, 0, 0);
+      // ── Wer nicht gespielt hat, hat nichts getan ────────────────────
+      // Ein Halterwechsel entsteht auch, weil ANDERE gespielt haben. „Der
+      // makellose Tag" misst einen Anteil: wer den Bestwert haelt, verliert
+      // ihn mit dem naechsten schwachen Tag, und der Naechstbeste uebernimmt,
+      // ohne selbst angetreten zu sein. Gemessen trugen 23 von 280
+      // Tafel-Karten einen Namen, der an diesem Tag keine Partie hatte —
+      // „Martin uebernimmt ‚Der komplette Verteidiger'" stand ueber einem
+      // Spieltag ohne Martin. Dieselbe Regel wie beim Ausbauen [§C33]: die
+      // anderen sind nur nicht vorbeigezogen, und daraus wird keine
+      // Schlagzeile ueber jemanden, der zugesehen hat.
+      const _amTag = new Set();
+      matches.forEach(m => {
+        if(mts(m) < _tag0.getTime()) return;
+        [m.a1, m.a2, m.b1, m.b2].forEach(p => { if(p) _amTag.add(p); });
+      });
       const _jetzt = allChronicles().byId;
       const _vorher = allChronicles(_tag0.getTime() - 1).byId;
       const _kammer = k => (CHRON_KINDS[k] && CHRON_KINDS[k].label) || 'Liga-Rekord';
@@ -1736,6 +1816,7 @@ function _buildStories(){
         const a = _vorher[def.id];
         const art = _rekordArt(a, n);
         if(!art) return;
+        if(!n.pids.some(p => _amTag.has(p))) return;
         const neuN = n.pids.map(nameOf);
         const namen = _namenListe(neuN);
         // Drei Halter „uebernimmt" nicht, sie uebernehmen.
@@ -1780,8 +1861,21 @@ function _buildStories(){
           // Spielen. Gemeldet wird, was man SIEHT — also ist auch die Identitaet
           // der Karte das, was man sieht. Die Halter stehen sortiert darin,
           // sonst ergaebe dieselbe Gruppe in anderer Reihenfolge eine zweite ID.
+          // ── Der Spieltag gehoert in die ID ──────────────────────
+          // Ohne ihn beschreibt dieselbe ID zwei verschiedene Ereignisse.
+          // Ein Halterfeld wird enger und wieder weiter: geht der Rekord
+          // weg und kommt mit demselben Wert an dieselben Leute zurueck,
+          // bildet der Generator genau diese ID erneut. Die Datenbank hat
+          // sie schon, also bleibt der alte Zeitstempel — aber
+          // `_newsTexteAuffrischen` uebernimmt den neuen `dataRef`, und
+          // damit zeigt eine Karte vom 24. auf die Partie vom 26.
+          // Gemessen wanderte so der ganze Tafel-Moment des 24.08. in die
+          // Sammelkarte des 26.08., und der 24. hatte keine Tafel-Karte
+          // mehr. Eine Wiederkehr ist ein neues Ereignis und bekommt eine
+          // eigene Karte [§C33].
           id: `rek_${def.id}_${art}_${n.pids.slice().sort().join('-')}`
-            + `_${String(wertNeu).replace(/[^0-9a-zA-Z]/g, '')}`,
+            + `_${String(wertNeu).replace(/[^0-9a-zA-Z]/g, '')}`
+            + `_${_newsDayKey(_letzteMs)}`,
           cat: 'tafel',
           ic: def.ic,
           title, desc,
@@ -1825,8 +1919,11 @@ function _buildStories(){
             cat: 'tafel',
             ic: 'scroll',
             title: `Die Chronik für ${seasonLabel(_vorSid)} steht`,
-            desc: `${T.awarded.length} Einträge gehen an ${rang.length} Spieler. Vorn steht `
-                + spitze.map(pid => `${nameOf(pid)} mit ${proSpieler[pid]}`).join(', ')
+            // „Vorn steht Julian mit 7, Martin mit 4, Jannik mit 4" — ein
+            // Singular ueber einer Aufzaehlung, und die gleiche Zahl zweimal.
+            desc: `${T.awarded.length} Einträge gehen an ${rang.length} Spieler. `
+                + (spitze.length > 1 ? 'Vorn stehen ' : 'Vorn steht ')
+                + _namenListe(spitze.map(pid => `${nameOf(pid)} mit ${proSpieler[pid]}`))
                 + '.',
             when: wann,
             prio: STORY_PRIO.chronik_monat,
@@ -1882,6 +1979,15 @@ function _buildStories(){
     const _sid = currentSeason().id;
     if(_letzteMs2 && typeof seasonTitleHalter === 'function'){
       const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
+      // Dieselbe Regel wie bei den Rekorden: eine Chronik wechselt auch den
+      // Halter, weil ein anderer gespielt und seinen Anteil verschlechtert
+      // hat. „Martin holt ‚Der Tagesabschluss'" stand ueber einem Spieltag,
+      // an dem Martin nicht angetreten war [§C33].
+      const _amTag2 = new Set();
+      matches.forEach(m => {
+        if(mts(m) < _t0.getTime()) return;
+        [m.a1, m.a2, m.b1, m.b2].forEach(p => { if(p) _amTag2.add(p); });
+      });
       const _jetztH = seasonTitleHalter(_sid);
       const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
       // Eine Chronik-Karte darf nicht den Katalogwert als neuen Prestige-
@@ -1929,6 +2035,7 @@ function _buildStories(){
         // Die Schlagzeile nennt die, um die es geht [§C33]: beim Dazukommen
         // sind das die Neuen, sonst alle Halter.
         const wer = art === 'dazu' ? neuLeute : n.pids;
+        if(!wer.some(p => _amTag2.has(p))) return;
         const namen = _namenKurz(wer.map(nameOf));
         const mz = wer.length > 1;
         const titel = art === 'erstmals'  ? `${namen} ${mz ? 'holen' : 'holt'} „${t.name}"`
@@ -1948,11 +2055,15 @@ function _buildStories(){
         // Wer im selben Monat mehrere Chroniken hält, erfährt hier, welche
         // davon ihn in der Tafel vertritt — und welche sie dafür überbietet.
         const _zeigt = _chronikZeigtSich(n.pids, _sid, t.id);
+        // Sagt der Prestige-Satz unten schon, welcher Eintrag den Platz
+        // haelt, faellt dieser weg: „In der Chronik steht weiter ‚Der
+        // Umschwung'. Fuer die Laufbahn bleibt ‚Der Umschwung' staerker" ist
+        // dieselbe Aussage in zwei Saetzen [§C33].
         const _zeigtSatz = !_zeigt ? ''
           : _zeigt.zeigt
             ? ` Steht jetzt in der Chronik${_zeigt.andere.length === 1
                 ? `, vor „${_zeigt.andere[0]}“` : ''}.`
-            : ` In der Chronik steht weiter „${_zeigt.welche}“.`;
+            : '';
         // Nur neue Halter koennen hier Prestige hinzugewinnen. Wer bereits
         // Mithalter war und nun allein steht, hat eine staerkere Geschichte,
         // aber keinen zweiten Laufbahn-Eintrag erhalten.
@@ -1975,12 +2086,14 @@ function _buildStories(){
           prestigeSatz = istSelbst
             ? ` „${t.name}“ steht in der Monatschronik, am gerundeten Prestige-Stand ändert sich diesmal nichts.`
             : staerker.length
-            ? ` Für die Laufbahn bleibt ${_namenListe(staerker.map(x => `„${x}“`))} stärker; es kommt kein Prestige hinzu.`
+            // Kein Semikolon mitten im Satz: die Karte spricht in Saetzen.
+            ? ` In der Chronik bleibt ${_namenListe(staerker.map(x => `„${x}“`))} stärker,`
+              + ` also kommt für die Laufbahn kein Prestige hinzu.`
             : ' Für die Laufbahn kommt durch diesen Wechsel kein Prestige hinzu.';
         } else {
           prestigeSatz = ' Die Halterlage ändert sich, der Prestige-Stand nicht.';
         }
-        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt,
+        _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer,
           prestigeDelta, titelJeSpieler,
           title: titel,
           // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
@@ -1997,7 +2110,11 @@ function _buildStories(){
           // Die ID traegt Chronik, Monat und die sortierten Halter. Damit ist
           // sie stabil, solange derselbe sie haelt, und eine Uebernahme
           // bekommt eine eigene.
-          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}`,
+          // Mit dem Spieltag: dieselbe Chronik kann in derselben Woche
+          // weggehen und zurueckkommen, und dann sind das zwei Ereignisse
+          // [§C33]. „Johannes holt ‚Der Beidfuessige'" trug sonst den
+          // Zeitstempel des 24. und die Partie des 26.
+          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}_${_newsDayKey(_letzteMs2)}`,
           cat: 'tafel',
           ic: m.t.ic,
           title: m.title,
@@ -2008,7 +2125,14 @@ function _buildStories(){
           // ueberstimmen [§C33].
           prio: STORY_PRIO.chronik_geholt,
           dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_letzteMatchId2,
-                    playerIds:m.n.pids.slice(), vorher:(m.a && m.a.pids) || [],
+                    // Die Beteiligten sind die, um die es geht — nicht jeder
+                    // Mithalter. „Martin zieht bei ‚Der Nachzuegler' gleich"
+                    // trug Martin UND Julian, und in der Tafel-Sammelkarte
+                    // stand daraufhin „Julian und Martin bewegen die Ewige
+                    // Tafel" ueber zwei Zeilen, die beide von Martin
+                    // erzaehlen. Wer schon Halter war, hat an diesem Tag
+                    // nichts getan [§C33].
+                    playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
                     chronArt:m.t.kunst, aus:m.t.aus,
                     // `punkte` ist der tatsaechliche neue Beitrag, nicht der
@@ -2029,7 +2153,7 @@ function _buildStories(){
   // Eine Stufe ist ein Uebergang, kein Naehefenster. Verglichen wird der
   // Stand vor dem letzten Spieltag mit heute. Dadurch verschwindet eine
   // Meldung weder bei einem grossen Sprung noch nach einer spaeteren
-  // Neuberechnung. Die ID bleibt Spieler + Stufe; Persistenz und
+  // Neuberechnung. Die ID traegt Spieler, Stufe und Spieltag; Persistenz und
   // ON-CONFLICT machen den Lauf ueber Geraete hinweg idempotent.
   try {
     const _insLetzte = matches.length ? mts(matches[matches.length-1]) : 0;
@@ -2054,7 +2178,12 @@ function _buildStories(){
           const ausloeser = _insTagMatches.find(m => mts(m) === treffer);
           const oben = stufe >= 3;
           stories.push({
-            id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key,
+            // Auch hier der Spieltag: das Prestige aus Liga-Rekorden wird
+            // geteilt [§C34], eine Stufe kann also wieder fallen und erneut
+            // erreicht werden. Dieselbe ID fuer zwei Momente laesst die
+            // aeltere Karte auf die neuere Partie zeigen [§C33].
+            id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key
+                + '_' + _newsDayKey(_insLetzte),
             cat: 'tafel',
             ic: 'award',
             title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`,

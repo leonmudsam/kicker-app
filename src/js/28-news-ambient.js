@@ -1134,8 +1134,20 @@ function _ambientTemplatePool(now, pm, nameOf){
     const oben = INSIGNIEN[hoechste];
     const leer = INSIGNIEN.length - 1 - hoechste;
     return { cat:'history', ic:'medalTrio', prio:4,
-      title:`Die Liga trägt ${zahl.filter(v => v > 0).length} verschiedene Insignien`,
-      desc: INSIGNIEN.map((s, i) => `${s.name}: ${zahl[i]}`).join(', ')
+      // „Die Liga traegt 1 verschiedene Insignien" war ein Zahlwort im
+      // Plural, und der Satz darunter war eine Liste aus Etiketten samt
+      // Nullen: „Reif: 12, Schildring: 0, Volutenkranz: 0". Genannt wird
+      // jetzt nur, was auch jemand traegt, und im Satz stehen Traeger statt
+      // Doppelpunkte [§C33].
+      title: (function(){
+        const k = zahl.filter(v => v > 0).length;
+        return k === 1 ? `Die ganze Liga trägt dieselbe Stufe`
+                       : `Die Liga trägt ${_zahlwortDe(k)} verschiedene Insignien`;
+      })(),
+      desc: INSIGNIEN.map((s, i) => ({s, v:zahl[i]})).filter(x => x.v > 0)
+          .map(x => `${x.v === 1 ? 'einer' : x.v} trägt den ${x.s.name}`)
+          .reduce((txt, teil, i, arr) => txt + (i === 0 ? '' : i === arr.length - 1 ? ' und ' : ', ') + teil, '')
+          .replace(/^./, c => c.toUpperCase())
         + `. Höchste getragene Stufe ist der ${oben.name}`
         + (leer > 0 ? `, darüber ${leer === 1 ? 'liegt noch eine Stufe' : 'liegen noch ' + leer + ' Stufen'}, die niemand erreicht hat.` : '.'),
       vv:String(n), vl:'gewertet',

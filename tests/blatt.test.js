@@ -894,9 +894,14 @@ const ok = (c, msg, det) => {
     });
     // Das Duell traegt seine Wappen im Band ueber dem Text — nicht noch
     // einmal daneben.
+    // Ein Duell traegt ein Band ueber dem Text — entweder die Bilanz beider
+    // Wappen, oder, wenn eine konkrete Partie die Marke gerissen hat, das
+    // Ergebnis dieser Partie. Beide uebereinander waeren zwei Baender fuer
+    // dieselbe Aussage: „50. Duell" steht schon in der Schlagzeile [§C33].
     const duelle = [...sheet.querySelectorAll('.nf-s-duell')];
     const duellDoppelt = duelle.filter(c => c.querySelector('.nf-gr-l')).length;
-    const duellBand = duelle.filter(c => c.querySelector('.nf-duell-band')).length;
+    const duellBand = duelle.filter(c =>
+      c.querySelector('.nf-duell-band') || c.querySelector('.nf-erg')).length;
     // Das Serienband sagt, was seine Punkte zaehlen.
     const baender = [...sheet.querySelectorAll('.nf-ser')];
     const ohneLabel = baender.filter(b => !b.querySelector('span')).length;
@@ -905,7 +910,7 @@ const ok = (c, msg, det) => {
   });
   ok(luecken.zuHoch === 0, 'die Bildzone macht die Karte nicht hoeher als ihr Text',
      luecken.zuHoch + ' zu hoch' + (luecken.aerger ? ' (' + luecken.aerger + ')' : ''));
-  ok(luecken.duelle === 0 || luecken.duellBand === luecken.duelle,
+  ok(luecken.duelle > 0 && luecken.duellBand === luecken.duelle,
      'das Duell traegt sein Band', luecken.duellBand + ' von ' + luecken.duelle);
   ok(luecken.duellDoppelt === 0, 'das Duell zeigt seine Wappen nur einmal',
      luecken.duellDoppelt + ' doppelt');
