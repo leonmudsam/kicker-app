@@ -1047,7 +1047,19 @@ function _consolidateStories(list){
       prio: Math.max((kopf.prio || 0) + 2 * Math.max(1, teile.length - 1),
                      STORY_PRIO['sammel_' + art] || 0),
       dataRef: {type:'sammel', quelle: art,
-                matchId: (kopf.dataRef||{}).matchId || null, playerIds: pids,
+                // ── Eine Partie oder keine ──────────────────────────
+                // Die Karte borgte die matchId ihres Kopfes. Ein
+                // Tafel-Moment entsteht aber ueber die MINUTE und umfasst
+                // damit mehrere Partien: ueber „Leo und Stefan bewegen die
+                // Ewige Tafel" stand das Ergebnis einer Partie, an der nur
+                // einer der beiden beteiligt war. Ein Band gibt es deshalb
+                // nur, wenn alle Teile dieselbe Partie nennen — dann ist
+                // es wirklich eine Partie, ein Moment [§C33].
+                matchId: (function(){
+                  const ids = teile.map(t => (t.dataRef || {}).matchId || '');
+                  const erste = ids[0];
+                  return (erste && ids.every(x => x === erste)) ? erste : null;
+                })(), playerIds: pids,
                 kopfTyp: (kopf.dataRef||{}).type || '',
                 breaking: teile.some(t => { try { return _isBreaking(t); } catch(e){ return false; } }),
                 // Die Stufe reist mit: ohne sie kann die Karte das Zeichen
@@ -1137,6 +1149,60 @@ function _consolidateStories(list){
     return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
   const entzerrt = entdoppelt;
 
+  // ── Zwei verdrängte Ergebnisse tragen eine Karte ───────────────────
+  // Der Feed lebt nicht nur von Laufbahnen. Gemessen fielen am 07.09. der
+  // Probeliga „Ben und Jonas gewinnen ohne Gegentor" (73) und „Kai und Ella
+  // stürzen die Favoriten" (71) unter den Tagesdeckel, weil Tafel, Spieler
+  // des Tages und zwei Sammelkarten darüber standen: von neun Partien stand
+  // am Ende kein Ergebnis im Feed. Zwei verdrängte Ergebnisse werden deshalb
+  // zu EINER Karte — sie kostet einen Platz statt zwei, nennt beide Stände
+  // im Sammelband und zeigt im Blatt beide Ergebnisbänder [§C33].
+  //
+  // Kein Ersatz für die einzelne Ergebnis-Karte: die stärkste steht weiter
+  // allein, mit ihrem eigenen Band. Zusammengelegt wird nur, was sonst gar
+  // nicht vorkäme.
+  const _ergebnisSammel = (weg, tagKey) => {
+    const teile = weg.slice(0, NEWS_LIMITS.ergebnisProKarte || 2);
+    if(teile.length < 2) return null;
+    const mOf = id => (matches || []).find(x => x.id === id);
+    const stand = m => m ? `${Math.max(m.score_a, m.score_b)}:${Math.min(m.score_a, m.score_b)}` : '';
+    const zeilen = [], staende = [], pids = [];
+    teile.forEach(t => {
+      const d = t.dataRef || {};
+      const m = mOf(d.matchId);
+      if(m) staende.push(stand(m));
+      // Die Sieger nennen: die Karte erzählt von Ergebnissen, und ein
+      // Ergebnis gehört dem, der es geholt hat [§C33].
+      const sieger = m ? (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]) : [];
+      sieger.forEach(id => { if(id && pids.indexOf(id) < 0) pids.push(id); });
+      zeilen.push({ic:t.ic, titel:t.title, text:t.desc, typ:d.type || '',
+                   wert:stand(m), matchId:d.matchId || '', pids:sieger.filter(Boolean)});
+    });
+    if(!staende.length) return null;
+    // Zweimal dieselbe Zahl liest sich als Tippfehler: „ein 10:9 und ein
+    // 10:9" wird „zwei 10:9".
+    const bild = (staende.length === 2 && staende[0] === staende[1])
+      ? `zwei ${staende[0]}`
+      : _namenListe(staende.map(x => `ein ${x}`));
+    const tags = _newsTagMs(tagKey).length;
+    const namen = pids.map(nameOf).filter(Boolean);
+    return {
+      // Stabil aus den Partien: derselbe Tag ergibt dieselbe Karte, und der
+      // Lesestand erkennt sie wieder [§C33].
+      id: 'ergsam_' + teile.map(t => (t.dataRef || {}).matchId || '').sort().join('-'),
+      cat: 'highlight',
+      // Dasselbe Zeichen wie die Rubrik „AM SPIELTAG" [§C27].
+      ic: 'ball',
+      title: `${_namenKurz(namen, 3)} sorgen für die Ergebnisse des Tages`,
+      desc: `${bild.charAt(0).toUpperCase() + bild.slice(1)} an einem Tag. `
+          + `Zwei von ${tags} Partien, die für sich sprechen.`,
+      when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
+      prio: Math.max((teile[0].prio || 0) + 2, STORY_PRIO.sammel_ergebnis || 0),
+      dataRef: {type:'sammel', quelle:'ergebnis', matchId:null, playerIds:pids,
+                kopfTyp:(teile[0].dataRef || {}).type || '', teile:zeilen}
+    };
+  };
+
   // ── Jeder soll vorkommen können ────────────────────────────────────
   // Hier rutschte bis zuletzt jede Karte nach hinten, deren Gesichter schon
   // vier Mal im Feed standen. Das verschob die Reihenfolge innerhalb eines
@@ -1191,6 +1257,11 @@ function _consolidateStories(list){
   // Nächststarken. Damit hängt die Auswahl eines Tages nur noch an diesem Tag:
   // ein neuer Spieltag verschiebt nicht mehr, was vorgestern zu sehen war.
   const _behalten = new Set();
+  const _ergKarten = [];
+  // Welche Sorten ein Ergebnis SIND: eine Partie, ein Stand, ein Sieger.
+  // Ein Serienbruch oder eine Auszeichnung hat eine Partie, erzaehlt aber
+  // von etwas anderem — die gehoeren nicht in eine Ergebnis-Karte.
+  const ERG_SORTEN = new Set(['match_result', 'top_clash', 'giant_slayer']);
   Object.keys(_tagRang).forEach(k => {
     const rang = _tagRang[k].slice()
       .sort((a, b) => (b.prio || 0) - (a.prio || 0));
@@ -1216,13 +1287,36 @@ function _consolidateStories(list){
       if(raus >= 0) auswahl[raus] = s;
       else if(auswahl.length < NEWS_LIMITS.proTag) auswahl.push(s);
     });
+    // Erst jetzt, weil die Reservierungen die Auswahl noch verschieben:
+    // verdraengt ist, was danach nicht drinsteht.
+    const wegErg = rang.filter(x => auswahl.indexOf(x) < 0
+      && ERG_SORTEN.has((x.dataRef || {}).type) && (x.dataRef || {}).matchId);
+    const ergKarte = wegErg.length >= 2 ? _ergebnisSammel(wegErg, _newsDayKey(wegErg[0].when)) : null;
+    if(ergKarte){
+      // Sie kostet einen Platz, nicht zwei — und nimmt ihn der schwaechsten
+      // Karte, die keinen haelt. Dieselbe Regel wie bei den Reservierungen.
+      let raus = -1;
+      for(let i = auswahl.length - 1; i >= 0; i--){
+        const x = auswahl[i], typ = (x.dataRef || {}).type;
+        let breaking = false;
+        try { breaking = (typeof _isBreaking === 'function') && _isBreaking(x); } catch(e){}
+        if(!breaking && !TAG_PFLICHT.has(typ) && soll.indexOf(x) < 0){ raus = i; break; }
+      }
+      if(raus >= 0){ auswahl[raus] = ergKarte; _ergKarten.push(ergKarte); }
+      else if(auswahl.length < NEWS_LIMITS.proTag){ auswahl.push(ergKarte); _ergKarten.push(ergKarte); }
+    }
     auswahl.forEach(s => _behalten.add(s.id));
   });
-  const fertig = entzerrt.filter(s => {
+  const fertig0 = entzerrt.filter(s => {
     if(_behalten.has(s.id)) return true;
     if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
     try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
   });
+  // Die Reihenfolge bleibt die Zeit [§C33]: die neue Karte traegt den
+  // Zeitpunkt ihrer spaeteren Partie und steht damit an der richtigen Stelle.
+  const fertig = _ergKarten.length
+    ? fertig0.concat(_ergKarten).sort((a, b) => new Date(b.when) - new Date(a.when))
+    : fertig0;
 
   // Kein Spieltag ohne Karte. Der Deckel je Sorte, der Vergleich der
   // Schlagzeilen und die Sperrfrist raeumen vor dieser Stelle auf, und

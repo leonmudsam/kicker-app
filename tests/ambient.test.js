@@ -2331,6 +2331,109 @@ const _vierBuendel = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_vierBuendel.buendel === 2,
    'und aus vier gebuendelten Partien eines Tages werden zwei Karten',
    _vierBuendel.buendel + ' Buendel von ' + _vierBuendel.karten + ' Karten');
+// ── Zwei verdraengte Ergebnisse tragen eine Karte ──────────────────
+//    Gemessen fielen am 07.09. der Probeliga „Ben und Jonas gewinnen ohne
+//    Gegentor" (73) und „Kai und Ella stuerzen die Favoriten" (71) unter den
+//    Tagesdeckel, weil Tafel, Spieler des Tages und zwei Sammelkarten
+//    darueber standen: von neun Partien stand am Ende kein einziges Ergebnis
+//    im Feed. Gebaut wird genau dieser Tag — fuenf starke Karten ohne Partie
+//    und drei Ergebnisse, von denen die Reservierung eins hereinholt.
+const _ergSam = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const tag = tage[tage.length - 1];
+  const partien = _newsTagMs(tag).slice(0, 3);
+  const basis = mts(partien[0]);
+  const l = [];
+  // Fuenf starke Karten ohne Partie: sie belegen den Tag, ohne der
+  // Reservierung fuer eine Match-Geschichte in die Quere zu kommen.
+  const starke = ['milestone_wins','milestone_goals','milestone_elo',
+                  'jubilee','rivalry_milestone'];
+  starke.forEach((typ, i) => l.push({
+    id:'sk-' + i, cat:'personal', ic:'medal', when:new Date(basis + i * 60000),
+    prio: 85 - i, title:'Starke Marke ' + i, desc:'Ein Satz mit ' + i + ' Zahlen.',
+    dataRef:{type:typ, pid:players[i % 4].id, playerIds:[players[i % 4].id]}
+  }));
+  // Ein Favoritensturz und zwei Ergebnisse, jedes mit einer echten Partie.
+  // Der Sturz ist die staerkste Match-Geschichte und nimmt damit den
+  // reservierten Platz [§C33] — genau die Lage des 07.09.: die Reservierung
+  // war erfuellt, und beide Ergebnisse fielen weg. Die Spieler stehen auch
+  // auf den starken Karten, damit nicht die Regel „der Deckel darf niemanden
+  // ganz verschwinden lassen" die Auswahl macht.
+  l.push({id:'gs-0', cat:'highlight', ic:'swords',
+    when:new Date(mts(partien[0]) + 3600000), prio: 74,
+    title:'Ein Favoritensturz', desc:'Ein Satz mit 1 Zahl.',
+    dataRef:{type:'giant_slayer', matchId:partien[0].id,
+             playerIds:[players[0].id]}});
+  partien.slice(1).forEach((m, i) => l.push({
+    id:'er-' + i, cat:'highlight', ic:'thriller',
+    when:new Date(mts(m) + 3600000 + (i + 1) * 60000), prio: 63 - i,
+    title:'Ein Ergebnis ' + i, desc:'Ein Satz mit ' + i + ' Zahlen.',
+    dataRef:{type:'match_result', resultKind:'krimi', matchId:m.id,
+             playerIds:[players[i % 4].id]}
+  }));
+  _cache._consolFrom = null;
+  const out = _consolidateStories(l);
+  const sam = out.filter(s => (s.dataRef||{}).quelle === 'ergebnis');
+  const amTag = out.filter(s => _newsDayKey(s.when) === tag);
+  const zeilen = sam.length ? (sam[0].dataRef.teile || []) : [];
+  return {sammel: sam.length, karten: amTag.length,
+          zeilen: zeilen.length, mitWert: zeilen.filter(z => !!z.wert).length,
+          mitPartie: zeilen.filter(z => !!z.matchId).length,
+          titel: sam.length ? sam[0].title : '',
+          text: sam.length ? sam[0].desc : '',
+          einzeln: out.filter(s => (s.dataRef||{}).type === 'match_result').length,
+          sturz: out.filter(s => (s.dataRef||{}).type === 'giant_slayer').length};
+})())`));
+ok(_ergSam.sammel === 1,
+   'zwei verdraengte Ergebnisse werden zu einer Karte',
+   _ergSam.sammel + ' Sammelkarte, ' + _ergSam.einzeln + ' einzeln');
+ok(_ergSam.einzeln === 0 && _ergSam.sturz === 1,
+   'und die staerkste Match-Geschichte des Tages steht mit ihrem eigenen Band',
+   _ergSam.einzeln + ' Ergebnis einzeln, ' + _ergSam.sturz + ' Favoritensturz');
+ok(_ergSam.karten <= 5,
+   'die Karte kostet einen Tagesplatz, nicht zwei',
+   _ergSam.karten + ' Karten am Tag');
+ok(_ergSam.zeilen === 2 && _ergSam.mitWert === 2,
+   'sie nennt beide Staende im Sammelband',
+   _ergSam.zeilen + ' Zeilen, ' + _ergSam.mitWert + ' mit Stand');
+ok(_ergSam.mitPartie === 2,
+   'und jede Zeile traegt ihre Partie fuer das Ergebnisband im Blatt',
+   _ergSam.mitPartie + ' von ' + _ergSam.zeilen);
+ok(/\d/.test(_ergSam.text) && _ergSam.titel.indexOf(':') < 0,
+   'ihr Text nennt eine Zahl und ihre Schlagzeile kein Etikett',
+   _ergSam.titel + ' — ' + _ergSam.text);
+// ── Eine Partie oder keine ─────────────────────────────────────────
+//    Die Sammelkarte borgte die matchId ihres Kopfes. Ein Tafel-Moment
+//    entsteht aber ueber die MINUTE und umfasst damit mehrere Partien: ueber
+//    „Leo und Stefan bewegen die Ewige Tafel" stand das Ergebnis einer
+//    Partie, an der nur einer der beiden beteiligt war.
+const _bandEinig = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const partien = _newsTagMs(tage[tage.length - 1]).slice(0, 2);
+  const bau = (mids) => {
+    const wann = new Date(mts(partien[0]));
+    const l = mids.map((mid, i) => ({
+      id:'bd-' + i + '-' + mids.join('_'), cat:'tafel', ic:'trophyStar',
+      when: wann, prio: 76 - i, title:'Ein Wechsel ' + i,
+      desc:'Ein Rekord wandert um ' + (i + 1) + ' Platz.',
+      dataRef:{type:'rekord_geholt', rekordId:'r' + i, matchId:mid,
+               playerIds:[players[i].id]}
+    }));
+    _cache._consolFrom = null;
+    const out = _consolidateStories(l);
+    const sam = out.filter(s => (s.dataRef||{}).quelle === 'tafel');
+    return sam.length ? (sam[0].dataRef.matchId || null) : 'kein Buendel';
+  };
+  return {gleich: bau([partien[0].id, partien[0].id]),
+          verschieden: bau([partien[0].id, partien[1].id]),
+          erste: partien[0].id};
+})())`));
+ok(_bandEinig.gleich === _bandEinig.erste,
+   'ein Tafel-Moment aus EINER Partie zeigt ihr Ergebnisband',
+   String(_bandEinig.gleich));
+ok(_bandEinig.verschieden === null,
+   'und einer aus zwei Partien zeigt keins, statt sich eine auszusuchen',
+   String(_bandEinig.verschieden));
 ok(_tagmix.beides.length > 0,
    'es gibt Tage mit Nachrichten aus beiden Haelften', _tagmix.beides.join(', '));
 ok(_tagmix.ohneSpieltag.length === 0,
@@ -2372,6 +2475,7 @@ ok(_tid.ohneTag.length === 0, 'jede Tafel-Meldung traegt ihren Spieltag in der I
 ok(_tid.fremdePartie.length === 0,
    'und zeigt auf eine Partie ihres eigenen Tages',
    _tid.fremdePartie.slice(0, 2).join(' | ') || 'alle');
+
 
 // ── Neu ist, was seit dem letzten Blick dazugekommen ist ────────────
 //    Gezaehlt wurde, was nicht in der Liste der gelesenen IDs steht — und
@@ -2458,6 +2562,39 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
     if(Number(gefunden[1]) !== hoch || Number(gefunden[2]) !== tief)
       ergebnisFalsch.push(s.title + ' → ' + gefunden[0]);
   });
+  // ── Die Partie muss zu den Namen passen ──────────────────────────
+  //    Tafel-Karten trugen die letzte Partie der DATENBANK, egal von wem sie
+  //    erzaehlen. Gemessen zeigten 34 von 169 Karten der Probeliga ein
+  //    Ergebnisband mit vier Wappen, unter denen kein genannter Spieler
+  //    stand: ueber „Leo und Stefan bewegen die Ewige Tafel" stand
+  //    „Jane/Johannes 10:8 Maxi/Henry". Ein einziger Generatorlauf traegt
+  //    dafuer zu wenig — der Sweep ueber jeden vierten Spieltag trifft die
+  //    Faelle, in denen die Halter an diesem Tag zuletzt nicht antraten.
+  const mitMatch = roh.filter(s => (s.dataRef || {}).matchId);
+  const fremdeNamen = mitMatch.filter(s => {
+    const m = matches.find(x => x.id === (s.dataRef || {}).matchId);
+    if(!m) return false;
+    let ids = [];
+    try { ids = _newsPids(s) || []; } catch(e){}
+    if(!ids.length) return false;
+    const vier = [m.a1, m.a2, m.b1, m.b2];
+    return !ids.some(p => vier.indexOf(p) >= 0);
+  }).map(s => ((s.dataRef || {}).type || '') + ': ' + s.title);
+  // ── Eine Serie je Spieler und Tag, die laengste ───────────────────
+  //    An einem Spieltag mit acht Partien fallen die 5er- UND die 7er-Marke
+  //    desselben Spielers, und „Jonas zuendet die 5er-Serie" stand neben
+  //    „Jonas zuendet die 7er-Serie": eine Nachricht und eine Wiederholung.
+  //    Gemessen brachte die Probeliga danach keine einzige Serienkarte in
+  //    den Feed — sie deckelten sich gegenseitig weg.
+  const serienDoppelt = [];
+  {
+    const jeTag = new Map();
+    roh.filter(x => (x.dataRef || {}).type === 'win_streak').forEach(x => {
+      const k = (x.dataRef.pid || '') + '|' + _newsDayKey(x.when);
+      jeTag.set(k, (jeTag.get(k) || 0) + 1);
+    });
+    jeTag.forEach((n, k) => { if(n > 1) serienDoppelt.push(k + ': ' + n); });
+  }
   // Der Text wiederholt die Schlagzeile nicht wortgleich.
   const echo = roh.filter(s => {
     const t = String(s.title || '').trim(), d = String(s.desc || '').trim();
@@ -2482,9 +2619,64 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
     const letzt = teile[teile.length - 1].replace(/\\.$/, '').trim();
     return /^\\d/.test(letzt) && letzt.split(/\\s+/).length <= 3;
   }).map(s => s.desc);
-  return {n: roh.length, ergebnisFalsch, echo, etikett, englisch, fragment};
+  return {n: roh.length, ergebnisFalsch, echo, etikett, englisch, fragment,
+          mitMatch: mitMatch.length, fremdeNamen, serienDoppelt,
+          serien: roh.filter(x => (x.dataRef || {}).type === 'win_streak').length};
 })())`));
 ok(_worte.n > 0, 'der Generator bildet Texte', _worte.n + ' Karten');
+ok(_worte.mitMatch > 0, 'Karten mit einer konkreten Partie werden gebildet',
+   _worte.mitMatch + ' von ' + _worte.n);
+ok(_worte.fremdeNamen.length === 0,
+   'und jede zeigt eine Partie, in der ein genannter Spieler mitgespielt hat',
+   _worte.fremdeNamen.slice(0, 3).join(' | ') || 'alle');
+ok(_worte.serien > 0, 'Serienmarken werden gebildet', _worte.serien + ' Karten');
+ok(_worte.serienDoppelt.length === 0,
+   'und ein Spieler zuendet an einem Tag nur seine laengste Serie',
+   _worte.serienDoppelt.slice(0, 3).join(' | ') || 'keine doppelt');
+// Gebaut, nicht gehofft: die echten Partien tragen keinen Tag, an dem ein
+// Spieler die 5er- UND die 7er-Marke reisst, und eine Zusicherung, die den
+// Fall nie sieht, prueft nichts [§5]. Gebaut wird der haeufigste Verlauf: vier
+// Siege am Tag davor, drei am Zieltag — dann fallen dort beide Marken.
+// Der Held ist Jane: bei einem Vielspieler faengt schon der Nebenrollen-
+// Deckel des Generators die zweite Karte ab, und dann messen wir ihn und
+// nicht die Regel.
+const _serieTag = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const basis = mts(alle[alle.length - 1]);
+  const held = (players.find(p => p.name === 'Jane') || players[0]).id;
+  const rest = players.filter(p => p.id !== held).slice(0, 3).map(p => p.id);
+  const dazu = [];
+  const vor = basis - 20 * 3600000;
+  // Tag davor: erst eine Niederlage, damit der Lauf bei null beginnt,
+  // dann vier Siege. Zieltag: drei Siege, also die Marken 5 und 7.
+  const bau = (praefix, ab, n, ersteVerloren) => {
+    for(let i = 0; i < n; i++) dazu.push({
+      id: praefix + i, a1:held, a2:rest[0], b1:rest[1], b2:rest[2],
+      a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def',
+      score_a: (ersteVerloren && i === 0) ? 7 : 10,
+      score_b: (ersteVerloren && i === 0) ? 10 : 7,
+      winner: (ersteVerloren && i === 0) ? 'B' : 'A', exp_a: 0.5,
+      created_at: new Date(ab + i * 300000).toISOString(), deltas:{}
+    });
+  };
+  bau('sv', vor, 5, true);
+  bau('sn', basis + 300000, 3, false);
+  matches = alle.concat(dazu);
+  invalidateCache();
+  let l = [];
+  try { l = _buildStories(); } catch(e){}
+  const mein = l.filter(x => (x.dataRef || {}).type === 'win_streak'
+    && x.dataRef.pid === held && _newsDayKey(x.when) === _newsDayKey(basis));
+  matches = alle;
+  invalidateCache();
+  return {n: mein.length, marken: mein.map(x => x.dataRef.streak)};
+})())`));
+ok(_serieTag.n === 1,
+   'und zwei Marken an einem Tag ergeben eine Karte, nicht zwei',
+   _serieTag.n + ' Karten (' + _serieTag.marken.join(', ') + ')');
+ok(_serieTag.marken[0] === 7,
+   'und zwar die laengste Marke des Tages',
+   String(_serieTag.marken[0]));
 ok(_worte.ergebnisFalsch.length === 0,
    'das Ergebnis im Text gehoert dem Sieger',
    _worte.ergebnisFalsch.slice(0, 2).join(' | ') || 'alle');

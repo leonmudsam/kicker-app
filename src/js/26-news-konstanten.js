@@ -125,6 +125,13 @@ const NEWS_LIMITS = {
   // Spieltagen vollständig, ohne der Tafel eine einzige Karte hinzuzufügen.
   // Reserviert statt quotiert, und je Tag statt je Fenster [§C33].
   tafelProTagMin: 1,
+  // Wie viele verdraengte Ergebnisse eine gemeinsame Karte traegt. Gemessen
+  // fielen am 07.09. der Probeliga zwei Ergebnis-Karten unter den Deckel
+  // (prio 73 und 71), weil Tafel, Spieler des Tages und zwei Sammelkarten
+  // darueber standen — der Leser erfuhr von neun Partien kein einziges
+  // Ergebnis. Zwei in einer Karte kosten einen Platz statt zwei; drei waeren
+  // wieder ein Ergebnisdienst [§C33].
+  ergebnisProKarte: 2,
   // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
   // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
   // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
@@ -270,6 +277,10 @@ const STORY_PRIO = {
   // eigenen Spieltag unter den Deckel.
   sammel_erfolg:     66,
   sammel_spieler:    66,
+  // Die Ergebnis-Sammelkarte traegt zwei Partien, also mehr als eine
+  // einzelne Ergebnis-Karte (63) und weniger als der Formlauf (64) — sie
+  // ist der Ersatz fuer zwei verdraengte, nicht eine neue Wertung.
+  sammel_ergebnis:   64,
   potd:              88,   // der Sieger des Spieltags IST seine Schlagzeile
   chronik_monat:     86,
   woche:             84,
