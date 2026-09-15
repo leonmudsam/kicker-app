@@ -69,7 +69,11 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       (README-story-logik.md), und der Vorschlag für neue
                       Liga-Rekorde, die nicht der Spitze gehören — achtzehn
                       Kandidaten gegen fünf gemessene Tore
-                      (README-rekord-vorschlag.md)
+                      (README-rekord-vorschlag.md), und die Probeliga: eine
+                      erfundene Liga aus 571 Partien mit einem gebauten
+                      Schaufenster, die Tag für Tag nachgespielt zeigt, welche
+                      Karte entsteht, welche verloren geht und warum
+                      (README-probe-liga.md)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
@@ -228,9 +232,9 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen | 1003 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte | 307 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse und die längste Serie eines Tages | 321 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px — **im echten Browser gemessen** | 118 |
+| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse — **im echten Browser gemessen** | 123 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -663,9 +667,39 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Ein `matchId` bleibt sichtbar.** Auszeichnungs-, Serien-, Rivalitäts- und
   Tafel-Karten aus einer konkreten Partie zeigen über ihrer Geschichte immer
   dasselbe Ergebnisband mit beiden Teams, allen vier Wappen und dem Endstand.
-  Damit erzählen auch „Mauer“, „Absoluter Sieger“, Serienbruch, Upset und ein
-  gebündelter Tafel-Moment zuerst, in welchem Spiel sie entstanden sind;
-  Rubrik, Schimmer und eigener Kartenaufbau bleiben trotzdem erhalten.
+  Damit erzählen auch „Mauer“, „Absoluter Sieger“, Serienbruch und Upset
+  zuerst, in welchem Spiel sie entstanden sind; Rubrik, Schimmer und eigener
+  Kartenaufbau bleiben trotzdem erhalten.
+  **Und die Partie passt zu den Namen.** Eine Tafel-Karte trug die letzte
+  Partie der DATENBANK, egal von wem sie erzählt: über „Leo und Stefan bewegen
+  die Ewige Tafel" stand „Jane/Johannes 10:8 Maxi/Henry", ein Spiel, an dem
+  keiner der beiden beteiligt war. Gemessen taten das 34 von 169 Karten. Jede
+  Karte zeigt deshalb die **letzte eigene Partie eines genannten Spielers** an
+  ihrem Tag — sie ist die, nach der der Wechsel galt, und sie ist immer eine,
+  in der er mitgespielt hat. Die auslösende Partie zu suchen kostete gemessen
+  ~200 ms auf einen Generator von 340 ms und nennt dasselbe Spiel. Eine
+  **Sammelkarte** zeigt ein Band nur, wenn **alle** ihre Teile dieselbe Partie
+  nennen: ein Tafel-Moment entsteht über die Minute und umfasst damit mehrere
+  Partien, und sich eine davon auszusuchen ist genau der Fehler von vorher.
+  **Zwei verdrängte Ergebnisse tragen eine Karte** (`quelle:'ergebnis'`,
+  `NEWS_LIMITS.ergebnisProKarte`). Der Feed lebt nicht nur von Laufbahnen.
+  Gemessen fielen an einem Spieltag „Ben und Jonas gewinnen ohne Gegentor" (73)
+  und „Kai und Ella stürzen die Favoriten" (71) unter den Tagesdeckel, weil
+  Tafel, Spieler des Tages und zwei Sammelkarten darüber standen: von neun
+  Partien stand am Ende kein Ergebnis im Feed. Die gemeinsame Karte nennt beide
+  Stände im Sammelband und zeigt im Blatt beide Ergebnisbänder; sie kostet
+  **einen** Tagesplatz statt zwei und nimmt ihn der schwächsten Karte, die
+  keinen hält. Die stärkste Match-Geschichte bleibt daneben allein stehen — sie
+  hat ihren reservierten Platz [§C33] und ihr eigenes Band. Zusammengelegt wird
+  nur, was sonst gar nicht vorkäme, und höchstens zwei: drei wären wieder ein
+  Ergebnisdienst.
+  **Eine Serie je Spieler und Tag, die längste.** An einem Spieltag mit acht
+  Partien fallen die 5er- UND die 7er-Marke desselben Spielers, und „Jonas
+  zündet die 5er-Serie" stand neben „Jonas zündet die 7er-Serie": eine
+  Nachricht und eine Wiederholung, denn die längere enthält die kürzere. Sie
+  verbrauchten dabei beide Plätze, die der Deckel je Sorte hergibt — gemessen
+  brachte ein Probelauf über vierzehn Tage danach keine einzige Serienkarte in
+  den Feed.
   **Für Spieltagskarten reicht die Minute allein nicht.** „Johannes und Anton verlieren zusammen
   alles" trug „Maxi: Nerven aus Stahl" als zweite Zeile — drei fremde Spieler
   in einer Karte, die nur ihr Zeitstempel verband. Innerhalb einer Minute

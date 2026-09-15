@@ -1567,7 +1567,20 @@ function _buildStories(){
           kandidaten.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id});
       });
     });
-    kandidaten.sort((a,b) => b.when - a.when || b.streak - a.streak)
+    // ── Eine Serie je Spieler und Tag, die laengste ─────────────────
+    // An einem Spieltag mit acht Partien fallen die 5er- UND die 7er-Marke
+    // desselben Spielers. „Jonas zuendet die 5er-Serie" und „Jonas zuendet
+    // die 7er-Serie" untereinander sind eine Nachricht und eine
+    // Wiederholung: die laengere enthaelt die kuerzere. Gemessen erzeugte
+    // die Probeliga sieben Serienkarten und brachte keine einzige in den
+    // Feed — sie deckelten sich gegenseitig weg [§C33].
+    const _jeTag = new Map();
+    kandidaten.forEach(c => {
+      const k = c.pid + '|' + _newsDayKey(c.when);
+      const alt = _jeTag.get(k);
+      if(!alt || c.streak > alt.streak) _jeTag.set(k, c);
+    });
+    [..._jeTag.values()].sort((a,b) => b.when - a.when || b.streak - a.streak)
       .slice(0, NEWS_LIMITS.winStreak).forEach(c => {
       stories.push({
         id: 'win_streak_'+c.pid+'_'+c.matchId+'_'+c.streak,
@@ -1785,7 +1798,6 @@ function _buildStories(){
   // danach in `_chronCtxBis`; der Generator selbst ist ohnehin memoisiert.
   try {
     const _letzteMs = matches.length ? mts(matches[matches.length-1]) : 0;
-    const _letzteMatchId = matches.length ? matches[matches.length-1].id : null;
     if(_letzteMs){
       const _tag0 = new Date(_letzteMs); _tag0.setHours(0, 0, 0, 0);
       // ── Wer nicht gespielt hat, hat nichts getan ────────────────────
@@ -1798,11 +1810,30 @@ function _buildStories(){
       // Spieltag ohne Martin. Dieselbe Regel wie beim Ausbauen [§C33]: die
       // anderen sind nur nicht vorbeigezogen, und daraus wird keine
       // Schlagzeile ueber jemanden, der zugesehen hat.
-      const _amTag = new Set();
+      // ── Die Partie muss zu den Namen passen ─────────────────────────
+      // Die Karte trug die letzte Partie der DATENBANK, egal von wem sie
+      // erzaehlt. Gemessen zeigten 34 von 169 Karten ein Ergebnisband mit
+      // vier Wappen, unter denen kein genannter Spieler stand: ueber
+      // „Leo und Stefan bewegen die Ewige Tafel" stand „Jane/Johannes
+      // 10:8 Maxi/Henry". Gemerkt wird deshalb je Spieler seine LETZTE
+      // eigene Partie dieses Tages; sie ist die, nach der der Wechsel
+      // galt, und sie ist immer eine, in der er mitgespielt hat. Eine
+      // Suche nach der ausloesenden Partie kostete gemessen ~200 ms auf
+      // einen Generator von 340 ms — die Antwort waere dieselbe.
+      const _amTag = new Map();
       matches.forEach(m => {
         if(mts(m) < _tag0.getTime()) return;
-        [m.a1, m.a2, m.b1, m.b2].forEach(p => { if(p) _amTag.add(p); });
+        [m.a1, m.a2, m.b1, m.b2].forEach(p => { if(p) _amTag.set(p, m); });
       });
+      // Von mehreren Haltern die spaeteste: sie entscheidet den Moment.
+      const _partieVon = pids => {
+        let best = null;
+        (pids || []).forEach(p => {
+          const m = _amTag.get(p);
+          if(m && (!best || mts(m) > mts(best))) best = m;
+        });
+        return best ? best.id : null;
+      };
       const _jetzt = allChronicles().byId;
       const _vorher = allChronicles(_tag0.getTime() - 1).byId;
       const _kammer = k => (CHRON_KINDS[k] && CHRON_KINDS[k].label) || 'Liga-Rekord';
@@ -1817,6 +1848,7 @@ function _buildStories(){
         const art = _rekordArt(a, n);
         if(!art) return;
         if(!n.pids.some(p => _amTag.has(p))) return;
+        const _mid = _partieVon(n.pids);
         const neuN = n.pids.map(nameOf);
         const namen = _namenListe(neuN);
         // Drei Halter „uebernimmt" nicht, sie uebernehmen.
@@ -1883,7 +1915,7 @@ function _buildStories(){
           prio: art === 'erstmals' ? STORY_PRIO.rekord_erstmals
               : art === 'geholt'   ? STORY_PRIO.rekord_geholt
                                    : STORY_PRIO.rekord_gesteigert,
-          dataRef: {type:'rekord_' + art, rekordId:def.id, matchId:_letzteMatchId, kammer:def.kind,
+          dataRef: {type:'rekord_' + art, rekordId:def.id, matchId:_mid, kammer:def.kind,
                     zufall:def.zufall || '', playerIds:n.pids.slice(0, 3),
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
                     kammerLabel:_kammer(def.kind)}
@@ -1975,7 +2007,6 @@ function _buildStories(){
   // Meldungen ist.
   try {
     const _letzteMs2 = matches.length ? mts(matches[matches.length - 1]) : 0;
-    const _letzteMatchId2 = matches.length ? matches[matches.length - 1].id : null;
     const _sid = currentSeason().id;
     if(_letzteMs2 && typeof seasonTitleHalter === 'function'){
       const _t0 = new Date(_letzteMs2); _t0.setHours(0, 0, 0, 0);
@@ -1983,11 +2014,22 @@ function _buildStories(){
       // Halter, weil ein anderer gespielt und seinen Anteil verschlechtert
       // hat. „Martin holt ‚Der Tagesabschluss'" stand ueber einem Spieltag,
       // an dem Martin nicht angetreten war [§C33].
-      const _amTag2 = new Set();
+      // Dieselbe Zuordnung wie bei den Rekorden: die Karte zeigt die letzte
+      // eigene Partie eines genannten Spielers, nicht die letzte der
+      // Datenbank [§C33].
+      const _amTag2 = new Map();
       matches.forEach(m => {
         if(mts(m) < _t0.getTime()) return;
-        [m.a1, m.a2, m.b1, m.b2].forEach(p => { if(p) _amTag2.add(p); });
+        [m.a1, m.a2, m.b1, m.b2].forEach(p => { if(p) _amTag2.set(p, m); });
       });
+      const _partieVon2 = pids => {
+        let best = null;
+        (pids || []).forEach(p => {
+          const m = _amTag2.get(p);
+          if(m && (!best || mts(m) > mts(best))) best = m;
+        });
+        return best ? best.id : null;
+      };
       const _jetztH = seasonTitleHalter(_sid);
       const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
       // Eine Chronik-Karte darf nicht den Katalogwert als neuen Prestige-
@@ -2124,7 +2166,7 @@ function _buildStories(){
           // sie ueberlebt damit den Tagesdeckel, ohne die Ewige Tafel zu
           // ueberstimmen [§C33].
           prio: STORY_PRIO.chronik_geholt,
-          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_letzteMatchId2,
+          dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_partieVon2(m.wer),
                     // Die Beteiligten sind die, um die es geht — nicht jeder
                     // Mithalter. „Martin zieht bei ‚Der Nachzuegler' gleich"
                     // trug Martin UND Julian, und in der Tafel-Sammelkarte
@@ -2175,7 +2217,13 @@ function _buildStories(){
             else lo = mid + 1;
           }
           const stand = prestigeOf(p.id, treffer);
-          const ausloeser = _insTagMatches.find(m => mts(m) === treffer);
+          // Die Partie, an der die Stufe stand — aber nur, wenn er darin
+          // auch mitgespielt hat. Prestige aus Rekorden wird unter den
+          // Haltern geteilt [§C34]: eine Schwelle kann fallen, weil ANDERE
+          // gespielt haben, und dann stand unter seinem Namen ein
+          // Ergebnisband mit vier fremden Wappen [§C33].
+          const ausloeser = _insTagMatches.find(m => mts(m) === treffer
+            && (m.a1 === p.id || m.a2 === p.id || m.b1 === p.id || m.b2 === p.id));
           const oben = stufe >= 3;
           stories.push({
             // Auch hier der Spieltag: das Prestige aus Liga-Rekorden wird

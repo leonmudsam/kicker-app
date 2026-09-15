@@ -754,6 +754,70 @@ const ok = (c, msg, det) => {
   ok(achse.tafelMetall, 'der gemeinsame Tafel-Moment traegt kuehles Metall statt Gold',
      String(achse.tafelMetall));
 
+  // ── Zwei verdraengte Ergebnisse tragen eine Karte ────────────────
+  //    Sie hat ZWEI Partien und deshalb kein Ergebnisband: acht Wappen
+  //    uebereinander machten sie hoeher als ihren Text [§C27]. Die Staende
+  //    stehen stattdessen rechts in den Zeilen — gemessen, weil ein Stand
+  //    neben einer langen Schlagzeile sonst aus der Zeile laeuft.
+  const ergKarte = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const tage=[...new Set(matches.map(m=>_newsDayKey(mts(m))))].sort();
+      const p=_newsTagMs(tage[tage.length-1]).slice(0,3);
+      const l=[{id:'bg-0',cat:'highlight',ic:'swords',when:new Date(mts(p[0])+3600000),
+        prio:74,title:'Ein Favoritensturz',desc:'Ein Satz mit 1 Zahl.',
+        dataRef:{type:'giant_slayer',matchId:p[0].id,playerIds:[players[0].id]}}];
+      ['milestone_wins','milestone_goals','milestone_elo','jubilee','rivalry_milestone']
+        .forEach((typ,i)=>l.push({id:'bs-'+i,cat:'personal',ic:'medal',
+          when:new Date(mts(p[0])+i*60000),prio:85-i,title:'Starke Marke '+i,
+          desc:'Ein Satz mit '+i+' Zahlen.',
+          dataRef:{type:typ,pid:players[i%4].id,playerIds:[players[i%4].id]}}));
+      p.slice(1).forEach((m,i)=>l.push({id:'be-'+i,cat:'highlight',ic:'thriller',
+        when:new Date(mts(m)+3600000+(i+1)*60000),prio:63-i,
+        title:'Eine sehr lange Schlagzeile ueber ein enges Ergebnis '+i,
+        desc:'Ein Satz mit '+i+' Zahlen.',
+        dataRef:{type:'match_result',resultKind:'krimi',matchId:m.id,
+                 playerIds:[players[i%4].id]}}));
+      _cache._consolFrom=null;
+      const s=_consolidateStories(l).find(x=>(x.dataRef||{}).quelle==='ergebnis');
+      return s ? _newsCardHtmlM2(s,false,false) : '';
+    })()`);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = markup;
+    document.body.appendChild(host);
+    const karte = host.querySelector('.nf-card');
+    if(!karte){ host.remove(); return {fehlt:true}; }
+    const rub = karte.querySelector('.nf-rub b');
+    const zeilen = [...karte.querySelectorAll('.nf-sam-z')];
+    const stand = zeilen.map(z => {
+      const w = z.querySelector('b.nf-sam-w');
+      if(!w) return null;
+      const zr = z.getBoundingClientRect(), wr = w.getBoundingClientRect();
+      return {text:w.textContent.trim(), drin: wr.right <= zr.right + 0.5 && wr.width > 0};
+    });
+    const out = {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
+      zeilen: zeilen.length, staende: stand.filter(x => x && x.drin).length,
+      text: stand.map(x => x && x.text).join('/'),
+      // Kein Ergebnisband: die Karte zeigt zwei Partien, also keine.
+      baender: karte.querySelectorAll('.nf-erg').length,
+      chips: karte.querySelectorAll('.nf-face .av').length,
+      rest: karte.querySelectorAll('.nf-sam-m').length};
+    host.remove(); return out;
+  });
+  ok(!ergKarte.fehlt, 'die Karte der zwei verdraengten Ergebnisse steht im Feed',
+     JSON.stringify(ergKarte));
+  ok(ergKarte.rubrik === 'AM SPIELTAG', 'sie traegt die Rubrik des Spieltags',
+     ergKarte.rubrik);
+  ok(ergKarte.zeilen === 2 && ergKarte.staende === 2 && ergKarte.rest === 0,
+     'beide Staende stehen vollstaendig in der Zeile, keiner laeuft heraus',
+     ergKarte.zeilen + ' Zeilen, ' + ergKarte.staende + ' Staende (' + ergKarte.text + ')');
+  ok(ergKarte.baender === 0,
+     'und sie sucht sich aus zwei Partien keine als Ergebnisband aus',
+     ergKarte.baender + ' Baender');
+  ok(ergKarte.chips >= 2, 'die Sieger stehen als Gesichter dabei',
+     ergKarte.chips + ' Chips');
+
   const palette = await page.evaluate(() => {
     const host = document.createElement('div');
     const sorten = ['spiel','tafel','ins','held','woche','duell','serie','badge','marke',

@@ -461,6 +461,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   if(sorte === 'spiel'){
     kopf = _newsErgebnisBand(d.matchId);
     fuss = _newsZahlband(_newsSpielZahlen(s));
+    // Die Ergebnis-Sammelkarte hat ZWEI Partien und deshalb keine, die sie
+    // als Band zeigen könnte: acht Wappen übereinander machten sie höher als
+    // ihr Text [§C27]. Die Stände stehen im Sammelband, die Sieger als Chips
+    // — im Feed hat jeder ein Gesicht [§C33].
+    if(!kopf) gesicht = _newsGesichtHtml(s);
   } else if(sorte === 'tafel'){
     const w = _newsTafelWert(s);
     // Ein Tafel-Bundle zeigt Wert UND Beteiligte. Der große Zähler erklärte
@@ -768,6 +773,10 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
     + `<span>${_newsBetont(t.titel || '')}</span>`
     + (t.marke ? `<b class="nf-sam-k">${esc(t.marke)}</b>` : '')
+    // Auf der Ergebnis-Karte ist der Stand die Aussage. „Ben und Jonas
+    // gewinnen ohne Gegentor" ohne die 10:0 daneben ist die halbe Nachricht,
+    // und in den Satz gehört sie nicht: die Zeile kürzt sich [§C32].
+    + (t.wert ? `<b class="nf-sam-w">${esc(t.wert)}</b>` : '')
     + `</div>`;
   }).join('')}`
     + (rest.length > grenze ? `<div class="nf-sam-m">und ${rest.length - grenze} weitere</div>` : '')

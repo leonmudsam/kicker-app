@@ -166,6 +166,8 @@ function _ndBeziehung(s, anzahl){
     // Auf der Karte ueber einen Erfolg haben die Beteiligten genau eines
     // miteinander zu tun: sie haben dasselbe geholt.
     if(q === 'erfolg') return 'mit demselben Erfolg';
+    // Zwei Ergebnisse desselben Tages verbindet der Tag, nicht die Partie.
+    if(q === 'ergebnis') return 'an diesem Spieltag';
     return q === 'tafel' ? 'an der Ewigen Tafel' : 'im selben Moment';
   }
   if(((s && s.dataRef) || {}).matchId) return 'in derselben Partie';
@@ -633,10 +635,18 @@ function _newsDetailMitte(s){
       // keines davon wird zum heimlichen zweiten Kopf.
       case 'sammel': {
         const teile = Array.isArray(d.teile) ? d.teile : [];
+        // Die Ergebnis-Karte handelt von zwei Partien, und eine Partie sieht
+        // man am Ergebnis. Auf der Karte ist dafuer kein Platz [§C27], im
+        // Blatt schon: jede Zeile bekommt ihr eigenes Band. Ohne das stand
+        // dort zweimal ein Satz ueber ein Spiel, dessen Stand nur im
+        // Sammelband der Karte zu sehen war.
+        const jeZeileBand = d.quelle === 'ergebnis';
         const zeilen = teile.map(t => `<div class="nw-zeile"${
               (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
-              <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span></div>
-              ${t.text ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
+              <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span>${
+                t.wert ? `<span class="nw-wert">${esc(t.wert)}</span>` : ''}</div>
+              ${jeZeileBand && t.matchId ? _newsMatchVsBlock(t.matchId) : ''}
+              ${_ndNeu(t.text) ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`).join('');
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand
@@ -646,6 +656,7 @@ function _newsDetailMitte(s){
         const kopfzeile = d.quelle === 'tafel' ? 'An der Ewigen Tafel'
           : d.quelle === 'spieler' ? 'Alles in diesem Moment'
           : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
+          : d.quelle === 'ergebnis' ? 'Diese beiden Partien'
           : 'In dieser Partie';
         return `<div class="nd-section">${kopfzeile}</div>
           ${mv}<div class="nw-liste">${zeilen}</div>`;
