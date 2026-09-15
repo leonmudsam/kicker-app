@@ -1,0 +1,1201 @@
+{
+ "gebaut": "2026-08-27 12:00",
+ "laufbahn": {
+  "je": [
+   {
+    "name": "Leon",
+    "punkte": 2208,
+    "stufe": 2,
+    "stufeName": "Volutenkranz",
+    "fehlt": 592,
+    "ziel": "Lorbeerreif",
+    "rekord": 383
+   },
+   {
+    "name": "Martin",
+    "punkte": 1924,
+    "stufe": 2,
+    "stufeName": "Volutenkranz",
+    "fehlt": 876,
+    "ziel": "Lorbeerreif",
+    "rekord": 423
+   },
+   {
+    "name": "Julian",
+    "punkte": 1631,
+    "stufe": 2,
+    "stufeName": "Volutenkranz",
+    "fehlt": 1169,
+    "ziel": "Lorbeerreif",
+    "rekord": 368
+   },
+   {
+    "name": "Maxi",
+    "punkte": 983,
+    "stufe": 1,
+    "stufeName": "Schildring",
+    "fehlt": 217,
+    "ziel": "Volutenkranz",
+    "rekord": 59
+   },
+   {
+    "name": "Jane",
+    "punkte": 786,
+    "stufe": 1,
+    "stufeName": "Schildring",
+    "fehlt": 414,
+    "ziel": "Volutenkranz",
+    "rekord": 144
+   },
+   {
+    "name": "Leo",
+    "punkte": 742,
+    "stufe": 1,
+    "stufeName": "Schildring",
+    "fehlt": 458,
+    "ziel": "Volutenkranz",
+    "rekord": 16
+   },
+   {
+    "name": "Henry",
+    "punkte": 716,
+    "stufe": 1,
+    "stufeName": "Schildring",
+    "fehlt": 484,
+    "ziel": "Volutenkranz",
+    "rekord": 178
+   },
+   {
+    "name": "Johannes",
+    "punkte": 538,
+    "stufe": 1,
+    "stufeName": "Schildring",
+    "fehlt": 662,
+    "ziel": "Volutenkranz",
+    "rekord": 96
+   },
+   {
+    "name": "Jannik",
+    "punkte": 496,
+    "stufe": 0,
+    "stufeName": "Reif",
+    "fehlt": 4,
+    "ziel": "Schildring",
+    "rekord": 96
+   },
+   {
+    "name": "Stefan",
+    "punkte": 433,
+    "stufe": 0,
+    "stufeName": "Reif",
+    "fehlt": 67,
+    "ziel": "Schildring",
+    "rekord": 144
+   },
+   {
+    "name": "Alex",
+    "punkte": 247,
+    "stufe": 0,
+    "stufeName": "Reif",
+    "fehlt": 253,
+    "ziel": "Schildring",
+    "rekord": 0
+   },
+   {
+    "name": "Anton",
+    "punkte": 12,
+    "stufe": 0,
+    "stufeName": "Reif",
+    "fehlt": 488,
+    "ziel": "Schildring",
+    "rekord": 0
+   }
+  ],
+  "monat": 2408,
+  "rekord": 1907,
+  "rekorde": 36,
+  "wertRekord": 48,
+  "artGewicht": {
+   "leistung": 2,
+   "ereignis": 1,
+   "schatten": 0
+  },
+  "insignien": [
+   {
+    "name": "Reif",
+    "min": 0
+   },
+   {
+    "name": "Schildring",
+    "min": 500
+   },
+   {
+    "name": "Volutenkranz",
+    "min": 1200
+   },
+   {
+    "name": "Lorbeerreif",
+    "min": 2800
+   },
+   {
+    "name": "Ordensstern",
+    "min": 4500
+   }
+  ]
+ },
+ "partien": 466,
+ "spieler": 11,
+ "spielzahlen": [
+  {
+   "name": "Leon",
+   "spiele": 355,
+   "quote": 62,
+   "rang": 3
+  },
+  {
+   "name": "Maxi",
+   "spiele": 348,
+   "quote": 44,
+   "rang": 6
+  },
+  {
+   "name": "Leo",
+   "spiele": 246,
+   "quote": 41,
+   "rang": 7
+  },
+  {
+   "name": "Martin",
+   "spiele": 211,
+   "quote": 64,
+   "rang": 2
+  },
+  {
+   "name": "Julian",
+   "spiele": 171,
+   "quote": 65,
+   "rang": 1
+  },
+  {
+   "name": "Henry",
+   "spiele": 152,
+   "quote": 39,
+   "rang": 8
+  },
+  {
+   "name": "Jane",
+   "spiele": 97,
+   "quote": 57,
+   "rang": 4
+  },
+  {
+   "name": "Stefan",
+   "spiele": 81,
+   "quote": 27,
+   "rang": 10
+  },
+  {
+   "name": "Jannik",
+   "spiele": 78,
+   "quote": 49,
+   "rang": 5
+  },
+  {
+   "name": "Johannes",
+   "spiele": 77,
+   "quote": 32,
+   "rang": 9
+  },
+  {
+   "name": "Alex",
+   "spiele": 39,
+   "quote": 26,
+   "rang": 11
+  }
+ ],
+ "kandidaten": [
+  {
+   "id": "gleichauf",
+   "name": "Auf Augenhöhe",
+   "quelle": "Auf Augenhöhe",
+   "art": "leistung",
+   "zufall": "",
+   "frage": "Wie viel besser läuft es in den Partien, die die Rechnung offen sah?",
+   "mindText": "ab 25 offenen Partien",
+   "imRennen": 7,
+   "ligaGewertet": 11,
+   "halter": "Henry",
+   "halterSpiele": 152,
+   "halterRang": 8,
+   "beleg": "52 % in 46 offenen Partien, sonst 39 %",
+   "ausschlag": 1.970987700987567,
+   "korrSpiele": 0.025955212760802027,
+   "korrQuote": -0.909866110507765,
+   "rangfolge": [
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": 0.1335812356979405,
+     "ev": "52 % in 46 offenen Partien, sonst 39 %",
+     "spiele": 152
+    },
+    {
+     "name": "Leo",
+     "rang": 7,
+     "wert": 0.04589216944801028,
+     "ev": "46 % in 76 offenen Partien, sonst 41 %",
+     "spiele": 246
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.016866566716641662,
+     "ev": "46 % in 92 offenen Partien, sonst 44 %",
+     "spiele": 348
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": -0.04189004997728296,
+     "ev": "58 % in 93 offenen Partien, sonst 62 %",
+     "spiele": 355
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -0.0670103092783505,
+     "ev": "50 % in 32 offenen Partien, sonst 57 %",
+     "spiele": 97
+    }
+   ]
+  },
+  {
+   "id": "steigerung",
+   "name": "Die Steigerung",
+   "quelle": "Die Steigerung",
+   "art": "ereignis",
+   "zufall": "quote",
+   "frage": "Wie weit liegt das letzte Drittel der Laufbahn über dem ersten?",
+   "mindText": "ab 60 Partien",
+   "imRennen": 10,
+   "ligaGewertet": 11,
+   "halter": "Stefan",
+   "halterSpiele": 81,
+   "halterRang": 10,
+   "beleg": "37 % im letzten Drittel, 26 % im ersten",
+   "ausschlag": 1.5668674245612835,
+   "korrSpiele": -0.0005432329637870225,
+   "korrQuote": -0.3054887337948273,
+   "rangfolge": [
+    {
+     "name": "Stefan",
+     "rang": 10,
+     "wert": 0.1111111111111111,
+     "ev": "37 % im letzten Drittel, 26 % im ersten",
+     "spiele": 81
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.08620689655172414,
+     "ev": "48 % im letzten Drittel, 40 % im ersten",
+     "spiele": 348
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.03125,
+     "ev": "56 % im letzten Drittel, 53 % im ersten",
+     "spiele": 97
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.02857142857142847,
+     "ev": "67 % im letzten Drittel, 64 % im ersten",
+     "spiele": 211
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 0,
+     "ev": "50 % im letzten Drittel, 50 % im ersten",
+     "spiele": 78
+    }
+   ]
+  },
+  {
+   "id": "punktgenau2",
+   "name": "Der Erwartungstreue",
+   "quelle": "Der Erwartungstreue",
+   "art": "konstanz",
+   "zufall": "",
+   "frage": "Wessen Laufbahn trifft die Elo-Erwartung am genauesten?",
+   "mindText": "ab 60 Partien",
+   "imRennen": 10,
+   "ligaGewertet": 11,
+   "halter": "Jannik",
+   "halterSpiele": 78,
+   "halterRang": 5,
+   "beleg": "49 % gespielt, 48 % erwartet",
+   "ausschlag": 1.6394882761452507,
+   "korrSpiele": 0.3606575151107342,
+   "korrQuote": 0.2783891567321282,
+   "rangfolge": [
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": -0.008230769230769264,
+     "ev": "49 % gespielt, 48 % erwartet",
+     "spiele": 78
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": -0.0317988505747126,
+     "ev": "44 % gespielt, 47 % erwartet",
+     "spiele": 348
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": -0.05040131578947382,
+     "ev": "39 % gespielt, 44 % erwartet",
+     "spiele": 152
+    },
+    {
+     "name": "Leo",
+     "rang": 7,
+     "wert": -0.0554268292682929,
+     "ev": "41 % gespielt, 47 % erwartet",
+     "spiele": 246
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": -0.05554084507042245,
+     "ev": "62 % gespielt, 57 % erwartet",
+     "spiele": 355
+    }
+   ]
+  },
+  {
+   "id": "metronom",
+   "name": "Das Metronom",
+   "quelle": "Das Metronom",
+   "art": "ereignis",
+   "zufall": "quote",
+   "frage": "Wie weit liegen bester und schwächster Monat auseinander?",
+   "mindText": "ab 3 Monaten mit je 8 Partien",
+   "imRennen": 10,
+   "ligaGewertet": 11,
+   "halter": "Jane",
+   "halterSpiele": 97,
+   "halterRang": 4,
+   "beleg": "54 % im schwächsten, 58 % im besten von 3 Monaten",
+   "ausschlag": 1.6610157579106508,
+   "korrSpiele": 0.33939039741253596,
+   "korrQuote": 0.5266595078784903,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -0.03525641025641024,
+     "ev": "54 % im schwächsten, 58 % im besten von 3 Monaten",
+     "spiele": 97
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": -0.10897435897435892,
+     "ev": "58 % im schwächsten, 69 % im besten von 4 Monaten",
+     "spiele": 355
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": -0.11870015272357032,
+     "ev": "39 % im schwächsten, 51 % im besten von 4 Monaten",
+     "spiele": 348
+    },
+    {
+     "name": "Stefan",
+     "rang": 10,
+     "wert": -0.14912280701754385,
+     "ev": "18 % im schwächsten, 33 % im besten von 3 Monaten",
+     "spiele": 81
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": -0.15689655172413786,
+     "ev": "55 % im schwächsten, 71 % im besten von 3 Monaten",
+     "spiele": 171
+    }
+   ]
+  },
+  {
+   "id": "beidseitig",
+   "name": "Der Beidfüßige",
+   "quelle": "Der Beidfüßige",
+   "art": "konstanz",
+   "zufall": "",
+   "frage": "Spielt jemand vorne genauso stark wie hinten?",
+   "mindText": "ab 25 Partien je Position",
+   "imRennen": 9,
+   "ligaGewertet": 11,
+   "halter": "Maxi",
+   "halterSpiele": 348,
+   "halterRang": 6,
+   "beleg": "43 % vorne, 45 % hinten, 44 % insgesamt",
+   "ausschlag": 1.0599067265402577,
+   "korrSpiele": 0.3104695953916036,
+   "korrQuote": -0.06756794094441475,
+   "rangfolge": [
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": -0.011049052938319592,
+     "ev": "43 % vorne, 45 % hinten, 44 % insgesamt",
+     "spiele": 348
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": -0.03766849264479599,
+     "ev": "60 % vorne, 66 % hinten, 64 % insgesamt",
+     "spiele": 211
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": -0.03913630229419701,
+     "ev": "53 % vorne, 45 % hinten, 49 % insgesamt",
+     "spiele": 78
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": -0.0491228070175439,
+     "ev": "67 % vorne, 60 % hinten, 65 % insgesamt",
+     "spiele": 171
+    },
+    {
+     "name": "Johannes",
+     "rang": 9,
+     "wert": -0.06753246753246755,
+     "ev": "26 % vorne, 38 % hinten, 32 % insgesamt",
+     "spiele": 77
+    }
+   ]
+  },
+  {
+   "id": "rollenfest",
+   "name": "Favorit wie Außenseiter",
+   "quelle": "Favorit wie Außenseiter",
+   "art": "konstanz",
+   "zufall": "",
+   "frage": "Spielt jemand als Favorit genauso wie als Außenseiter?",
+   "mindText": "ab 20 Partien in jeder Lage",
+   "imRennen": 8,
+   "ligaGewertet": 11,
+   "halter": "Julian",
+   "halterSpiele": 171,
+   "halterRang": 1,
+   "beleg": "74 % als Favorit, 50 % als Außenseiter",
+   "ausschlag": 1.4564574764056408,
+   "korrSpiele": -0.7509446951947216,
+   "korrQuote": 0.14211839144318442,
+   "rangfolge": [
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": -0.2415730337078652,
+     "ev": "74 % als Favorit, 50 % als Außenseiter",
+     "spiele": 171
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": -0.25750111957008515,
+     "ev": "52 % als Favorit, 26 % als Außenseiter",
+     "spiele": 152
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -0.2713472485768501,
+     "ev": "74 % als Favorit, 47 % als Außenseiter",
+     "spiele": 97
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": -0.29870129870129875,
+     "ev": "73 % als Favorit, 43 % als Außenseiter",
+     "spiele": 78
+    },
+    {
+     "name": "Leo",
+     "rang": 7,
+     "wert": -0.31899641577060933,
+     "ev": "60 % als Favorit, 28 % als Außenseiter",
+     "spiele": 246
+    }
+   ]
+  },
+  {
+   "id": "gleichmut",
+   "name": "Der Gleichmut",
+   "quelle": "Der Gleichmut",
+   "art": "ereignis",
+   "zufall": "quote",
+   "frage": "Wie gleichmäßig fallen die Ergebnisse aus?",
+   "mindText": "ab 60 Partien",
+   "imRennen": 10,
+   "ligaGewertet": 11,
+   "halter": "Jane",
+   "halterSpiele": 97,
+   "halterRang": 4,
+   "beleg": "4.0 Tore Streuung um +0.9 im Schnitt",
+   "ausschlag": 1.782501396211898,
+   "korrSpiele": -0.0026885669613236417,
+   "korrQuote": 0.08926713892742115,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -3.9559160726236673,
+     "ev": "4.0 Tore Streuung um +0.9 im Schnitt",
+     "spiele": 97
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": -4.163446987210767,
+     "ev": "4.2 Tore Streuung um +1.1 im Schnitt",
+     "spiele": 355
+    },
+    {
+     "name": "Johannes",
+     "rang": 9,
+     "wert": -4.168446800260028,
+     "ev": "4.2 Tore Streuung um -1.1 im Schnitt",
+     "spiele": 77
+    },
+    {
+     "name": "Stefan",
+     "rang": 10,
+     "wert": -4.24684180243679,
+     "ev": "4.2 Tore Streuung um -2.7 im Schnitt",
+     "spiele": 81
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": -4.309231296667847,
+     "ev": "4.3 Tore Streuung um +1.2 im Schnitt",
+     "spiele": 171
+    }
+   ]
+  },
+  {
+   "id": "wechselhaft",
+   "name": "Der Wechselhafte",
+   "quelle": "Der Wechselhafte",
+   "art": "ereignis",
+   "zufall": "quote",
+   "frage": "Wessen Spieltage sehen am wenigsten wie der andere aus?",
+   "mindText": "ab 12 Spieltagen mit je 3 Partien",
+   "imRennen": 10,
+   "ligaGewertet": 11,
+   "halter": "Henry",
+   "halterSpiele": 152,
+   "halterRang": 8,
+   "beleg": "0 % am schwächsten, 100 % am stärksten von 26 Spieltagen",
+   "ausschlag": 1.58572769914746,
+   "korrSpiele": 0.03643215969224958,
+   "korrQuote": -0.5758808338301015,
+   "rangfolge": [
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": 0.23219880544543534,
+     "ev": "0 % am schwächsten, 100 % am stärksten von 26 Spieltagen",
+     "spiele": 152
+    },
+    {
+     "name": "Johannes",
+     "rang": 9,
+     "wert": 0.22661905814429237,
+     "ev": "0 % am schwächsten, 75 % am stärksten von 14 Spieltagen",
+     "spiele": 77
+    },
+    {
+     "name": "Leo",
+     "rang": 7,
+     "wert": 0.21870942798155302,
+     "ev": "13 % am schwächsten, 100 % am stärksten von 40 Spieltagen",
+     "spiele": 246
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.19015790464654028,
+     "ev": "25 % am schwächsten, 100 % am stärksten von 36 Spieltagen",
+     "spiele": 211
+    },
+    {
+     "name": "Stefan",
+     "rang": 10,
+     "wert": 0.19005359075020914,
+     "ev": "0 % am schwächsten, 60 % am stärksten von 16 Spieltagen",
+     "spiele": 81
+    }
+   ]
+  },
+  {
+   "id": "kontrast",
+   "name": "Der Kontrast",
+   "quelle": "Der Kontrast",
+   "art": "ereignis",
+   "zufall": "quote",
+   "frage": "Wie weit liegen bester und schwächster Partner auseinander?",
+   "mindText": "ab 4 Partnern mit je 15 Partien",
+   "imRennen": 4,
+   "ligaGewertet": 11,
+   "halter": "Maxi",
+   "halterSpiele": 348,
+   "halterRang": 6,
+   "beleg": "65 % neben Martin, 10 % neben Stefan",
+   "ausschlag": 1.1298450406840737,
+   "korrSpiele": 0.6489487487544489,
+   "korrQuote": -0.8178842305523204,
+   "rangfolge": [
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.5511627906976745,
+     "ev": "65 % neben Martin, 10 % neben Stefan",
+     "spiele": 348
+    },
+    {
+     "name": "Leo",
+     "rang": 7,
+     "wert": 0.5316275764036958,
+     "ev": "63 % neben Leon, 10 % neben Henry",
+     "spiele": 246
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.5137254901960784,
+     "ev": "87 % neben Martin, 35 % neben Stefan",
+     "spiele": 355
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.4666666666666667,
+     "ev": "87 % neben Leon, 40 % neben Stefan",
+     "spiele": 211
+    }
+   ]
+  },
+  {
+   "id": "angstfrei",
+   "name": "Ohne Angstgegner",
+   "quelle": "Ohne Angstgegner",
+   "art": "leistung",
+   "zufall": "",
+   "frage": "Wie gut läuft es gegen den unangenehmsten Gegner?",
+   "mindText": "ab 6 Gegnern mit je 15 Duellen",
+   "imRennen": 7,
+   "ligaGewertet": 11,
+   "halter": "Julian",
+   "halterSpiele": 171,
+   "halterRang": 1,
+   "beleg": "7 regelmäßige Gegner, gegen keinen unter 55 %",
+   "ausschlag": 1.4895798044981745,
+   "korrSpiele": 0.41329586671986934,
+   "korrQuote": 0.9820854319963316,
+   "rangfolge": [
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 0.5465116279069767,
+     "ev": "7 regelmäßige Gegner, gegen keinen unter 55 %",
+     "spiele": 171
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.45348837209302323,
+     "ev": "9 regelmäßige Gegner, gegen keinen unter 45 %",
+     "spiele": 355
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.4222222222222222,
+     "ev": "9 regelmäßige Gegner, gegen keinen unter 42 %",
+     "spiele": 211
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.265625,
+     "ev": "10 regelmäßige Gegner, gegen keinen unter 27 %",
+     "spiele": 348
+    },
+    {
+     "name": "Leo",
+     "rang": 7,
+     "wert": 0.23529411764705882,
+     "ev": "10 regelmäßige Gegner, gegen keinen unter 24 %",
+     "spiele": 246
+    }
+   ]
+  },
+  {
+   "id": "breitenwirkung",
+   "name": "Gegen jeden bestanden",
+   "quelle": "Gegen jeden bestanden",
+   "art": "leistung",
+   "zufall": "",
+   "frage": "Gegen wie viele regelmäßige Gegner steht jemand im Plus?",
+   "mindText": "ab 6 Gegnern mit je 15 Duellen",
+   "imRennen": 7,
+   "ligaGewertet": 11,
+   "halter": "Julian",
+   "halterSpiele": 171,
+   "halterRang": 1,
+   "beleg": "gegen 7 von 7 regelmäßigen Gegnern im Plus",
+   "ausschlag": 1.5079851477098372,
+   "korrSpiele": 0.3440709020710462,
+   "korrQuote": 0.9823917034478445,
+   "rangfolge": [
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 1,
+     "ev": "gegen 7 von 7 regelmäßigen Gegnern im Plus",
+     "spiele": 171
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.7777777777777778,
+     "ev": "gegen 7 von 9 regelmäßigen Gegnern im Plus",
+     "spiele": 355
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.7777777777777778,
+     "ev": "gegen 7 von 9 regelmäßigen Gegnern im Plus",
+     "spiele": 211
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.4,
+     "ev": "gegen 4 von 10 regelmäßigen Gegnern im Plus",
+     "spiele": 348
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": 0.3333333333333333,
+     "ev": "gegen 2 von 6 regelmäßigen Gegnern im Plus",
+     "spiele": 152
+    }
+   ]
+  },
+  {
+   "id": "zweiteluft",
+   "name": "Die zweite Luft",
+   "quelle": "Die zweite Luft",
+   "art": "leistung",
+   "zufall": "",
+   "frage": "Wie viel stärker läuft es ab der vierten Partie eines Spieltags?",
+   "mindText": "ab 25 Partien in jedem Block",
+   "imRennen": 9,
+   "ligaGewertet": 11,
+   "halter": "Jane",
+   "halterSpiele": 97,
+   "halterRang": 4,
+   "beleg": "62 % ab der vierten Partie, 52 % davor",
+   "ausschlag": 1.6952514818169562,
+   "korrSpiele": -0.4255231591519948,
+   "korrQuote": 0.2182747508422373,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.10299145299145296,
+     "ev": "62 % ab der vierten Partie, 52 % davor",
+     "spiele": 97
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 0.05128205128205121,
+     "ev": "51 % ab der vierten Partie, 46 % davor",
+     "spiele": 78
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.04783783783783785,
+     "ev": "46 % ab der vierten Partie, 41 % davor",
+     "spiele": 348
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 0.04347826086956519,
+     "ev": "67 % ab der vierten Partie, 62 % davor",
+     "spiele": 171
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": 0.02777777777777779,
+     "ev": "40 % ab der vierten Partie, 38 % davor",
+     "spiele": 152
+    }
+   ]
+  },
+  {
+   "id": "kopfhoch",
+   "name": "Der Tagesabschluss",
+   "quelle": "Der Tagesabschluss",
+   "art": "konstanz",
+   "zufall": "",
+   "frage": "Wie viele eigene Spieltage enden nicht negativ?",
+   "mindText": "ab 12 Spieltagen mit je 3 Partien",
+   "imRennen": 10,
+   "ligaGewertet": 11,
+   "halter": "Julian",
+   "halterSpiele": 171,
+   "halterRang": 1,
+   "beleg": "21 von 23 Spieltagen nicht negativ",
+   "ausschlag": 1.474948713874339,
+   "korrSpiele": 0.2950891814312115,
+   "korrQuote": 0.9891260179561966,
+   "rangfolge": [
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 0.9130434782608695,
+     "ev": "21 von 23 Spieltagen nicht negativ",
+     "spiele": 171
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.8055555555555556,
+     "ev": "29 von 36 Spieltagen nicht negativ",
+     "spiele": 211
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.803921568627451,
+     "ev": "41 von 51 Spieltagen nicht negativ",
+     "spiele": 355
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.75,
+     "ev": "12 von 16 Spieltagen nicht negativ",
+     "spiele": 97
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 0.5833333333333334,
+     "ev": "7 von 12 Spieltagen nicht negativ",
+     "spiele": 78
+    }
+   ]
+  },
+  {
+   "id": "gleichauf2",
+   "name": "Auf Augenhöhe (2. Fassung)",
+   "quelle": "Auf Augenhöhe",
+   "art": "ereignis",
+   "zufall": "quote",
+   "frage": "Wie weit liegt die Quote in offenen Partien über der Rechnung, die sie offen sah?",
+   "mindText": "ab 25 offenen Partien",
+   "imRennen": 7,
+   "ligaGewertet": 11,
+   "halter": "Leon",
+   "halterSpiele": 355,
+   "halterRang": 3,
+   "beleg": "58 % in 93 offenen Partien, erwartet waren 50 %",
+   "ausschlag": 1.1469247900251383,
+   "korrSpiele": -0.14141563079877895,
+   "korrQuote": 0.7822120191222628,
+   "rangfolge": [
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.078236559139785,
+     "ev": "58 % in 93 offenen Partien, erwartet waren 50 %",
+     "spiele": 355
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 0.07333999999999996,
+     "ev": "58 % in 50 offenen Partien, erwartet waren 51 %",
+     "spiele": 171
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.06085483870967745,
+     "ev": "56 % in 62 offenen Partien, erwartet waren 50 %",
+     "spiele": 211
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": 0.0287391304347826,
+     "ev": "52 % in 46 offenen Partien, erwartet waren 49 %",
+     "spiele": 152
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.009718749999999943,
+     "ev": "50 % in 32 offenen Partien, erwartet waren 49 %",
+     "spiele": 97
+    }
+   ]
+  },
+  {
+   "id": "punktgenau2b",
+   "name": "Der Erwartungstreue (2. Fassung)",
+   "quelle": "Der Erwartungstreue",
+   "art": "ereignis",
+   "zufall": "quote",
+   "frage": "Wessen Laufbahn trifft die Erwartung am genauesten, gemessen in Standardfehlern?",
+   "mindText": "ab 60 Partien",
+   "imRennen": 10,
+   "ligaGewertet": 11,
+   "halter": "Jannik",
+   "halterSpiele": 78,
+   "halterRang": 5,
+   "beleg": "49 % gespielt, 48 % erwartet, aus 78 Partien",
+   "ausschlag": 2.1650719160092637,
+   "korrSpiele": -0.13334176610231488,
+   "korrQuote": -0.10905973006096008,
+   "rangfolge": [
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": -0.07269218559208335,
+     "ev": "49 % gespielt, 48 % erwartet, aus 78 Partien",
+     "spiele": 78
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": -0.5931998655257511,
+     "ev": "44 % gespielt, 47 % erwartet, aus 348 Partien",
+     "spiele": 348
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": -0.6213891536413876,
+     "ev": "39 % gespielt, 44 % erwartet, aus 152 Partien",
+     "spiele": 152
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -0.7072901386320782,
+     "ev": "57 % gespielt, 50 % erwartet, aus 97 Partien",
+     "spiele": 97
+    },
+    {
+     "name": "Johannes",
+     "rang": 9,
+     "wert": -0.8437641081071604,
+     "ev": "32 % gespielt, 42 % erwartet, aus 77 Partien",
+     "spiele": 77
+    }
+   ]
+  },
+  {
+   "id": "zweiteluft2",
+   "name": "Die zweite Luft (2. Fassung)",
+   "quelle": "Die zweite Luft",
+   "art": "ereignis",
+   "zufall": "quote",
+   "frage": "Wie viel besser als die Rechnung läuft es ab der vierten Partie eines Tages?",
+   "mindText": "ab 25 Partien in jedem Block",
+   "imRennen": 9,
+   "ligaGewertet": 11,
+   "halter": "Jane",
+   "halterSpiele": 97,
+   "halterRang": 4,
+   "beleg": "+11 Punkte über der Rechnung ab der vierten Partie, +4 davor",
+   "ausschlag": 1.1528901700846639,
+   "korrSpiele": -0.43156587443838607,
+   "korrQuote": 0.13146164003157393,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.07550042735042717,
+     "ev": "+11 Punkte über der Rechnung ab der vierten Partie, +4 davor",
+     "spiele": 97
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 0.07123076923076915,
+     "ev": "+4 Punkte über der Rechnung ab der vierten Partie, -3 davor",
+     "spiele": 78
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.05394905405405398,
+     "ev": "-1 Punkte über der Rechnung ab der vierten Partie, -6 davor",
+     "spiele": 348
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.04083784271284252,
+     "ev": "+11 Punkte über der Rechnung ab der vierten Partie, +7 davor",
+     "spiele": 211
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": 0.0269402777777778,
+     "ev": "-4 Punkte über der Rechnung ab der vierten Partie, -6 davor",
+     "spiele": 152
+    }
+   ]
+  },
+  {
+   "id": "rollenfest2",
+   "name": "Favorit wie Außenseiter (2. Fassung)",
+   "quelle": "Favorit wie Außenseiter",
+   "art": "konstanz",
+   "zufall": "",
+   "frage": "Liegt jemand als Favorit genauso weit über der Rechnung wie als Außenseiter?",
+   "mindText": "ab 20 Partien in jeder Lage",
+   "imRennen": 8,
+   "ligaGewertet": 11,
+   "halter": "Jane",
+   "halterSpiele": 97,
+   "halterRang": 4,
+   "beleg": "+10 Punkte als Favorit, +10 als Außenseiter",
+   "ausschlag": 1.3868611771630062,
+   "korrSpiele": -0.9358606415189211,
+   "korrQuote": 0.12162702337950487,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -0.0008681214421253913,
+     "ev": "+10 Punkte als Favorit, +10 als Außenseiter",
+     "spiele": 97
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": -0.017881818181818054,
+     "ev": "+8 Punkte als Favorit, +6 als Außenseiter",
+     "spiele": 78
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": -0.02503493058665468,
+     "ev": "-10 Punkte als Favorit, -8 als Außenseiter",
+     "spiele": 152
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": -0.025245435393258298,
+     "ev": "+9 Punkte als Favorit, +12 als Außenseiter",
+     "spiele": 171
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": -0.03380306603773581,
+     "ev": "+11 Punkte als Favorit, +7 als Außenseiter",
+     "spiele": 211
+    }
+   ]
+  },
+  {
+   "id": "schwaechstertag",
+   "name": "Der schwächste Tag",
+   "quelle": "Der schwächste Tag",
+   "art": "konstanz",
+   "zufall": "",
+   "frage": "Wie gut ist der schlechteste Spieltag einer Laufbahn noch?",
+   "mindText": "ab 12 Spieltagen mit je 3 Partien",
+   "imRennen": 10,
+   "ligaGewertet": 11,
+   "halter": "Jane",
+   "halterSpiele": 97,
+   "halterRang": 4,
+   "beleg": "schwächster von 16 Spieltagen: 38 %",
+   "ausschlag": 1.6631388820824102,
+   "korrSpiele": 0.09585421353131111,
+   "korrQuote": 0.8783948521000766,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.375,
+     "ev": "schwächster von 16 Spieltagen: 38 %",
+     "spiele": 97
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 0.3333333333333333,
+     "ev": "schwächster von 23 Spieltagen: 33 %",
+     "spiele": 171
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.25,
+     "ev": "schwächster von 36 Spieltagen: 25 %",
+     "spiele": 211
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 0.2,
+     "ev": "schwächster von 12 Spieltagen: 20 %",
+     "spiele": 78
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.2,
+     "ev": "schwächster von 51 Spieltagen: 20 %",
+     "spiele": 355
+    }
+   ]
+  }
+ ]
+}

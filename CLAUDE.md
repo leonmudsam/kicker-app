@@ -66,7 +66,10 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Story-Logik: welche Daten, in welcher Reihenfolge, nach
                       welchem Prinzip und wie oft eine Karte entsteht,
                       gemessen an den echten Partien
-                      (README-story-logik.md)
+                      (README-story-logik.md), und der Vorschlag für neue
+                      Liga-Rekorde, die nicht der Spitze gehören — achtzehn
+                      Kandidaten gegen fünf gemessene Tore
+                      (README-rekord-vorschlag.md)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
