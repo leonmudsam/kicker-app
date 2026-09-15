@@ -365,13 +365,13 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Wenigste Gegentore pro Spiel in der Abwehr, ab 50 Abwehrspielen',
       val:p => (p.defG >= 50) ? -(p.defConceded/p.defG) : null,
-      ev:(p,v) => `${(-v).toFixed(1)} Gegentore je Abwehrspiel im Schnitt · ${p.defG} Spiele`}},
+      ev:(p,v) => `${komma(-v)} Gegentore je Abwehrspiel im Schnitt · ${p.defG} Spiele`}},
 
   {id:'sniper', name:'Der Torjäger', short:'Torjäger', ic:'ball', tone:'orange', art:'leistung',
     allzeit:{
       cond:'Meiste eigene Tore pro Spiel im Sturm, ab 50 Sturmspielen',
       val:p => (p.atkG >= 50) ? p.atkGoals/p.atkG : null,
-      ev:(p,v) => `${v.toFixed(1)} Tore je Sturmspiel im Schnitt · ${p.atkG} Spiele`}},
+      ev:(p,v) => `${komma(v)} Tore je Sturmspiel im Schnitt · ${p.atkG} Spiele`}},
 
   {id:'comeback_king', name:'Der Stehaufmann', short:'Comeback', ic:'comeback', tone:'acid', art:'leistung',
     allzeit:{
@@ -579,13 +579,16 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Größter Elo-Absturz von einer Saison zur nächsten, mindestens −150',
       val:p => (p.fall && p.fall.d <= -150) ? -p.fall.d : null,
-      ev:p => `${Math.round(p.fall.d)} Elo von ${p.fall.from} auf ${p.fall.to}`}},
+      // Der Bindestrich der Tastatur ist kein Minus: die Bedingung zwei
+      // Zeilen darueber schreibt „mindestens −150", der Beleg schrieb
+      // „-308". Dieselbe Zahl in zwei Zeichen, in einem Eintrag.
+      ev:p => `−${Math.abs(Math.round(p.fall.d))} Elo von ${p.fall.from} auf ${p.fall.to}`}},
 
   {id:'sieve', name:'Das Scheunentor', short:'Sieb', ic:'hole', tone:'red', art:'schatten',
     allzeit:{
       cond:'Meiste Gegentore pro Spiel in der Abwehr, ab 30 Abwehrspielen',
       val:p => (p.defG >= 30 && p.defConceded/p.defG >= 6.0) ? p.defConceded/p.defG : null,
-      ev:(p,v) => `${v.toFixed(1)} Gegentore je Abwehrspiel im Schnitt · ${p.defG} Spiele`}},
+      ev:(p,v) => `${komma(v)} Gegentore je Abwehrspiel im Schnitt · ${p.defG} Spiele`}},
 
   // ═══ MONATSCHRONIKEN ══════════════════════════════════════════════
   // Keine davon fragt „wer ist der Beste". Sie fragen nach der Abweichung
@@ -737,7 +740,7 @@ const DISZIPLINEN = [
         p=>p.games>=8,
         (p,c)=>_stMittel(Object.values(c.P).map(x=>x.ga/x.games))-p.ga/p.games,
         1.5,
-        (p,v,c)=>`${(p.ga/p.games).toFixed(1)} Gegentore je Partie · Liga ${_stMittel(Object.values(c.P).map(x=>x.ga/x.games)).toFixed(1)}`))}},
+        (p,v,c)=>`${komma(p.ga/p.games)} Gegentore je Partie · Liga ${komma(_stMittel(Object.values(c.P).map(x=>x.ga/x.games)))}`))}},
 
   {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
     monat:{
@@ -904,7 +907,7 @@ const DISZIPLINEN = [
         p=>p.games>=8,
         p=>(p.gf-p.ga)/p.games,
         2,
-        (p,v)=>`${v>0?'+':''}${v.toFixed(1)} Tore je Partie · ${p.gf}:${p.ga}`))}},
+        (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie · ${p.gf}:${p.ga}`))}},
 
   {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'climb', tone:'gold', art:'leistung',
     monat:{
@@ -1024,7 +1027,7 @@ const DISZIPLINEN = [
         p=>-Math.log10(Math.max(1e-6, Math.min(..._stWochGross(p)
              .map(a=>_stPBinom(a.map(s=>s.exp), a.filter(s=>s.win).length))))),
         -Math.log10(0.005),
-        (p,v)=>`Eine Woche, die mit ${(Math.pow(10,-v)*100).toFixed(1)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
+        (p,v)=>`Eine Woche, die mit ${komma(Math.pow(10,-v)*100)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
 
   {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'weight', tone:'blue', art:'leistung',
     monat:{
@@ -1037,7 +1040,7 @@ const DISZIPLINEN = [
         p=>p.games>=TITLE_MIN_GAMES,
         p=>-_stStreu(p.partien.map(s=>s.gf-s.ga)),
         -3.0,
-        (p,v)=>`${(-v).toFixed(1)} Tore Streuung um ${(p.gd/p.games>=0?'+':'')}${(p.gd/p.games).toFixed(1)} im Schnitt`))}},
+        (p,v)=>`${komma(-v)} Tore Streuung um ${p.gd/p.games<0?'−':'+'}${komma(Math.abs(p.gd/p.games))} im Schnitt`))}},
 
   {id:'zweiteluft', name:'Die zweite Luft', short:'Luft', ic:'flameDouble', tone:'gold', art:'leistung',
     monat:{
@@ -1199,7 +1202,7 @@ const DISZIPLINEN = [
         p=>p.games>=8,
         (p,c)=>(p.gf+p.ga)/p.games-c.L.torSchnitt,
         1,
-        (p,v,c)=>`${((p.gf+p.ga)/p.games).toFixed(1)} Tore je Partie · Liga ${c.L.torSchnitt.toFixed(1)}`))}},
+        (p,v,c)=>`${komma((p.gf+p.ga)/p.games)} Tore je Partie · Liga ${komma(c.L.torSchnitt)}`))}},
 
   {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'hundred', tone:'purple', art:'ereignis',
     monat:{

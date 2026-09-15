@@ -356,7 +356,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!bk) return null;
     return { cat:'fun', ic:'thriller', prio:3,
       title:`${g} Tore in ${matches.length} Partien`,
-      desc:`Im Schnitt fallen ${(g/matches.length).toFixed(1)} Tore pro Spiel. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
+      desc:`Im Schnitt fallen ${komma(g/matches.length)} Tore pro Spiel. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
       vv: g, vl:'Tore' };
   }});
 
@@ -409,8 +409,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(avg <= 0) return null;
     return { cat:'personal', ic:'thriller', prio:3,
       title:`${nameOf(pid)} trifft am laufenden Band`,
-      desc:`Ø ${avg.toFixed(1)} Tore pro Spiel. Bestwert der Liga.`,
-      vv: avg.toFixed(1), vl:'Ø Tore',
+      desc:`Ø ${komma(avg)} Tore pro Spiel. Bestwert der Liga.`,
+      vv: komma(avg), vl:'Ø Tore',
       dataRef:{ ambientPid: pid } };
   }});
 
@@ -449,7 +449,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     }
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
-      title:`Kopf-an-Kopf: ${nameOf(best.pa)} & ${nameOf(best.pb)}`,
+      title:`Kopf-an-Kopf: ${nameOf(best.pa)} und ${nameOf(best.pb)}`,
       // Zwischen den beiden Zahlen stand ein Halbgeviertstrich, und der ist in
       // einem Satz ein Gedankenstrich und kein Bilanzstrich. Die Bilanz steht
       // jetzt als Doppelpunkt-Paar da, wie ueberall sonst in der App.
@@ -618,7 +618,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       {n:'der Siegquote',    v:p2 => stats[p2].games ? stats[p2].wins/stats[p2].games : 0,
                              fmt:v => `${Math.round(v*100)} % Siegquote`},
       {n:'Toren je Partie',  v:p2 => stats[p2].games ? stats[p2].gf/stats[p2].games : 0,
-                             fmt:v => `${v.toFixed(1)} Tore je Partie`},
+                             fmt:v => `${komma(v)} Tore je Partie`},
     ];
     let bestes = null;
     felder.forEach(f => {
@@ -634,7 +634,8 @@ function _ambientTemplatePool(now, pm, nameOf){
         : `${nameOf(pid)} ist Nummer ${bestes.platz} bei ${bestes.f.n}`,
       desc:`${bestes.f.fmt(bestes.wert)}. Platz ${bestes.platz} von ${bestes.von}. `
          + `Das ist die Kennzahl, in der ${nameOf(pid)} am weitesten vorne steht.`,
-      vv: bestes.platz, vl:'Platz',
+      // „1 Platz" las sich wie eine Anzahl. Ein Rang heisst „Platz 1".
+      vv: 'Platz ' + bestes.platz, vl:'von ' + (bestes.von || ''),
       dataRef:{ ambientPid: pid } };
   }});
 
@@ -678,7 +679,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const t = feld[Math.floor(rng()*feld.length)] || feld[0];
     const rank = ranked.findIndex(x => x.ids[0] === t.ids[0] && x.ids[1] === t.ids[1]) + 1;
     const isRecord = t.best === topBest;
-    const nm = `${nameOf(t.ids[0])} & ${nameOf(t.ids[1])}`;
+    const nm = `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])}`;
     return { cat:'team', ic:'unstoppable', prio:isRecord ? 5 : 4,
       title: isRecord ? `Rekord-Duo: ${nm}` : `Eingespielt: ${nm}`,
       desc: isRecord
@@ -723,8 +724,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const wrAtk = Math.round(a.aW / a.aG * 100);
     return { cat:'personal', ic:'bolt', prio:5,
       title:`${nameOf(best.pid)} ist der Sturm-Chef`,
-      desc:`Bester Stürmer der letzten 14 Tage: Ø ${best.v.toFixed(1)} Tore und ${wrAtk}% Siege im Sturm.`,
-      vv: best.v.toFixed(1), vl:'Ø Tore',
+      desc:`Bester Stürmer der letzten 14 Tage: Ø ${komma(best.v)} Tore und ${wrAtk}% Siege im Sturm.`,
+      vv: komma(best.v), vl:'Ø Tore',
       dataRef:{ ambientPid: best.pid } };
   }});
 
@@ -739,8 +740,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'shieldCheck', prio:5,
       title:`${nameOf(best.pid)} macht die Bude dicht`,
-      desc:`Hinten kommt kaum etwas durch: ${(a.dGa/a.dG).toFixed(1)} Gegentore im Schnitt aus ${a.dG} Spielen in der Abwehr, gerechnet über die letzten 14 Tage.`,
-      vv: (a.dGa/a.dG).toFixed(1), vl:'Ø Gegentore',
+      desc:`Hinten kommt kaum etwas durch: ${komma(a.dGa/a.dG)} Gegentore im Schnitt aus ${a.dG} Spielen in der Abwehr, gerechnet über die letzten 14 Tage.`,
+      vv: komma(a.dGa/a.dG), vl:'Ø Gegentore',
       dataRef:{ ambientPid: best.pid } };
   }});
 
@@ -769,7 +770,13 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'nerves', prio:4,
       title:`${nameOf(best.pid)} zittert sich durch`,
-      desc:`${Math.round(best.v*100)} % aller Spiele der letzten 14 Tage endeten mit einem Tor Unterschied. ${a.c1w} davon gewonnen.`,
+      // „12 % ALLER Spiele der letzten 14 Tage" stand da, gerechnet war
+      // aber der Anteil an den Partien DIESES Spielers — die Zahl gehoerte
+      // dem Helden, der Satz der Liga. Und die Stichprobe gehoert zur
+      // Aussage: „x von y", nicht nur der Anteil [§C37].
+      desc:`${a.c1w} von ${a.g} Partien der letzten 14 Tage gewann `
+        + `${nameOf(best.pid)} mit einem Tor Unterschied, das sind `
+        + `${Math.round(best.v*100)} %.`,
       vv: a.c1w, vl:'Zittersiege',
       dataRef:{ ambientPid: best.pid } };
   }});
@@ -808,8 +815,11 @@ function _ambientTemplatePool(now, pm, nameOf){
   // ausgerufen werden („Bestwert, X folgt mit 3" bei 3:3 liest sich falsch).
   // Liefert alle Spieler mit dem Höchstwert.
   const _awardLeaders = rank => rank.filter(x => x.v === rank[0].v);
-  const _namesOf = arr => arr.length <= 1 ? nameOf(arr[0].pid)
-    : arr.slice(0, -1).map(x => nameOf(x.pid)).join(', ') + ' & ' + nameOf(arr[arr.length-1].pid);
+  // Die Aufzaehlung hat die App schon (`_namenListe`, §C27). Hier stand eine
+  // zweite mit „&" dazwischen, und das Zeichen gehoert in eine Tabellenzelle,
+  // nicht in einen Satz: „Leon & Martin liegen gleichauf" war die einzige
+  // Stelle im Feed, die zwei Namen nicht ausschrieb [§C33].
+  const _namesOf = arr => _namenListe(arr.map(x => nameOf(x.pid)));
 
   // ── Award: meiste „Spieler des Tages"-Titel ──
   T.push({ key:'award_potd_leader', weight:2, make: () => {
@@ -894,6 +904,11 @@ function _ambientTemplatePool(now, pm, nameOf){
       for(const ev of (bMap[mid] || [])){
         if(rarityOf(ev.badge.id) !== 'legendary') continue;
         if(!pm[ev.playerId] || pm[ev.playerId].hidden) continue;
+        // ── Ein Fun Fact weiss nichts von einer spaeteren Partie ──
+        // `now` ist die Uhrzeit des Slots, `matches` aber die ganze Liste.
+        // Die Karte von 10 Uhr sah damit eine Auszeichnung aus einer Partie
+        // um 11:39 und rechnete „vor -1 Tagen".
+        if(t > now.getTime()) continue;
         if(!latest || t > latest.t) latest = { t, pid: ev.playerId, badge: ev.badge, mid };
       }
     }
@@ -902,6 +917,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'badge', ic: latest.badge.ic || 'trophyStar', prio:5,
       title:`${nameOf(latest.pid)} holte zuletzt Gold`,
       desc:`Die Auszeichnung „${latest.badge.name}" ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + days + ' Tagen'}. ${latest.badge.desc}.`,
+      // Ohne Wert blieb der grosse Block der Karte leer [§6].
+      vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : days),
+      vl:days > 1 ? 'Tage her' : 'geholt',
       dataRef:{ ambientPid: latest.pid } };
   }});
 
@@ -963,7 +981,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!cands.length) return null;
     const c = cands[Math.floor(rng()*cands.length)];
     return { cat:'team', ic:'duo', prio:4,
-      title:`Beste Freunde: ${nameOf(c.pid)} & ${nameOf(c.mate)}`,
+      title:`Beste Freunde: ${nameOf(c.pid)} und ${nameOf(c.mate)}`,
       desc:`Zusammen ${c.w} von ${c.g} Spielen gewonnen. ${Math.round(c.wr*100)}% als Duo.`,
       vv: Math.round(c.wr*100) + '%', vl:'als Duo',
       dataRef:{ ambientPids:[c.pid, c.mate], pairKind:'team' } };
@@ -981,6 +999,11 @@ function _ambientTemplatePool(now, pm, nameOf){
       return { cat:'personal', ic:'refresh', prio:3,
         title:`${nameOf(pid)} ist beidfüßig`,
         desc:`Im Sturm ${Math.round(atkWr*100)}%, in der Abwehr ${Math.round(defWr*100)}%. Dem ist die Position egal.`,
+        // Ohne Wert blieb der grosse Block der Karte leer. Die Aussage ist
+        // die Quote, die in BEIDEN Rollen gilt — nicht der Abstand, der
+        // hier gerade null sein soll.
+        vv: Math.round((st.atkW + st.defW) / (st.atkG + st.defG) * 100) + '%',
+        vl:'in beiden Rollen',
         dataRef:{ ambientPid: pid } };
     }
     const strong = atkWr > defWr;
@@ -1014,8 +1037,13 @@ function _ambientTemplatePool(now, pm, nameOf){
     const held = T2.awarded.length, open = SEASON_TITLES.length - held;
     return { cat:'season', ic:a.ic, prio:5,
       title:`${nameOf(a.pid)} führt bei „${a.name}"`,
-      desc:`${_evSatz(a.ev)}. Das ist der Stand von heute. ${held} von ${SEASON_TITLES.length} Chronik-Einträgen sind vergeben, ${open} sind noch offen.`,
-      vv:held+'/'+SEASON_TITLES.length, vl:'Einträge',
+      // „Das ist der Stand von heute" sagte nichts: jede Karte im Feed
+      // traegt ihr Datum. Und der grosse Wert zaehlte die Eintraege des
+      // Katalogs, waehrend die Schlagzeile von EINER Fuehrung erzaehlte —
+      // zwei Aussagen auf einer Karte, und die Zahl gehoerte der falschen.
+      desc:`${_evSatz(a.ev)}. ${held} von ${SEASON_TITLES.length} `
+        + `Chronik-Einträgen sind vergeben, ${open} sind noch offen.`,
+      vv:_chronKurz(a.ev), vl:'in Führung',
       dataRef:{ ambientPid:a.pid, seasonTable:T2.sid } };
   }});
 
@@ -1034,7 +1062,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const d = recs[day % recs.length];
     const h = by[d.id];
     return { cat:'fun', ic:d.ic, prio:4,
-      title:`${h.shared ? _chronHolderNames(h) + ' halten' : nameOf(h.pid) + ' hält'} „${d.name}"`,
+      title:`${h.shared ? _chronHalterSatz(h) + ' halten' : nameOf(h.pid) + ' hält'} „${d.name}"`,
       // Die Bedingung stand hier im Klartext und machte aus zwei Zeilen
       // fünf. Sie gehört ins Detail, nicht auf die Karte — die Karte sagt,
       // WAS jemand hält, das Detail sagt, wofür.
@@ -1110,13 +1138,33 @@ function _ambientTemplatePool(now, pm, nameOf){
     // „Holt er ihn" stand ausserdem einmal direkt hinter dem Namen des
     // HALTERS und zeigte damit auf den Falschen.
     const _bed = s.cond || '';
+    // ── Die Karte nennt den eigenen Stand ───────────────────────────
+    // Sie sagte die Schwelle und den Bestwert des Halters, aber nicht, wo
+    // der Spieler selbst steht: „Martin & Julian haelt den Bestwert mit
+    // 84 %" ist ohne die eigenen 71 % keine Auskunft darueber, wie weit es
+    // noch ist. Mehrere Halter bekommen dazu ihr Verb — und „&" gehoert in
+    // eine Tabellenzelle, nicht in einen Satz [§C33].
+    const _mehr = (s.halterN || 0) > 1;
+    const _halter = String(s.halter || '');
+    const _stand = _halter && s.stand
+      ? `${_halter} ${_mehr ? 'halten' : 'hält'} den Bestwert mit ${s.stand}`
+      : String(s.txt || '');
+    // „Kein anderer ist gerade so nah dran" behauptete einen Vergleich, den
+    // die Karte nie angestellt hat: der Spieler wird unter allen gezogen,
+    // die ueberhaupt einen offenen Schritt haben, nicht als der naechste.
     return { cat:'personal', ic:s.ic, prio:5,
       title:`${nameOf(pid)} kann „${s.name}" holen`,
       desc: (_bed ? `Dafür zählt: ${_bed}. ` : '')
-        + `${s.txt}. `
-        + `Gelingt es ${nameOf(pid)}, bringt das ${s.gewinn} Prestige. `
-        + `Kein anderer ist gerade so nah dran.`,
-      vv:'+' + s.gewinn, vl:'Prestige',
+        + (_stand ? _stand + '. ' : '')
+        + (s.mein ? `${nameOf(pid)} steht bei ${s.mein}. ` : '')
+        + `Gelingt es, bringt das ${s.gewinn} Prestige.`,
+      // Der grosse Wert war die Aussicht auf Prestige — eine Zahl, die
+      // niemand geholt hat, im Goldrahmen einer gehaltenen Bestmarke
+      // [§C25]. Er zeigt jetzt den eigenen Stand: das ist die Zahl, mit
+      // der man etwas anfangen kann. Fehlt er, steht der zu schlagende
+      // Wert dort — auch das ist eine Tatsache und keine Aussicht.
+      vv: s.mein || s.stand || ('+' + s.gewinn),
+      vl: s.mein ? 'aktuell' : (s.stand ? 'zu schlagen' : 'Prestige'),
       dataRef:{ ambientPid:pid, prestige:true } };
   }});
 
@@ -1145,7 +1193,9 @@ function _ambientTemplatePool(now, pm, nameOf){
                        : `Die Liga trägt ${_zahlwortDe(k)} verschiedene Insignien`;
       })(),
       desc: INSIGNIEN.map((s, i) => ({s, v:zahl[i]})).filter(x => x.v > 0)
-          .map(x => `${x.v === 1 ? 'einer' : x.v} trägt den ${x.s.name}`)
+          // „7 traegt den Schildring" — die Zahl stand im Plural, das Verb
+          // im Singular.
+          .map(x => `${x.v === 1 ? 'einer trägt' : x.v + ' tragen'} den ${x.s.name}`)
           .reduce((txt, teil, i, arr) => txt + (i === 0 ? '' : i === arr.length - 1 ? ' und ' : ', ') + teil, '')
           .replace(/^./, c => c.toUpperCase())
         + `. Höchste getragene Stufe ist der ${oben.name}`

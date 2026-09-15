@@ -4861,7 +4861,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.15.b56d9dbd';
+const BUILD_VERSION='2026.09.15.0bd683c3';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -14819,7 +14819,7 @@ const FINGER_ACHSEN = [
    zeig: v => Math.round(v * 100) + '%'},
   {id:'tore',   name:'Tore',
    roh: d => d.st.games ? d.st.gd / d.st.games : 0,
-   zeig: v => (v < 0 ? '−' : '+') + Math.abs(v).toFixed(1).replace('.', ',')},
+   zeig: v => (v < 0 ? '−' : '+') + komma(Math.abs(v))},
   {id:'pensum', name:'Pensum',
    roh: d => d.st.games,
    zeig: v => String(Math.round(v))},
@@ -18210,6 +18210,14 @@ function dateStr(ts){
   }
   return v;
 }
+// ── Eine Dezimalzahl trägt hier ein Komma ───────────────────────────
+// Die Oberfläche schreibt „6,9 Gegentore", die Fun Facts schrieben „6.9" —
+// acht Stellen mit `toFixed(1)` und ein Punkt mitten im deutschen Satz.
+// Eine Stelle für alle, damit es nicht wieder auseinanderläuft [§C27].
+function komma(v, n){
+  const z = Number(v);
+  return (isFinite(z) ? z : 0).toFixed(n == null ? 1 : n).replace('.', ',');
+}
 function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen
@@ -19119,7 +19127,18 @@ function _buildStories(){
             cat: 'highlight',
             ic: 'kingClass',
             title: `Neuer Spitzenreiter: ${nameOf(cur[0].pid)}`,
-            desc: `${nameOf(cur[0].pid)} steht nach dem letzten Spiel an der Spitze. ${nameOf(prevTop)} war vorher dort.`,
+            // ── Jeder Text nennt eine Zahl [§C33] ──────────────────────
+            // „X steht nach dem letzten Spiel an der Spitze. Y war vorher
+            // dort." nannte keine und war damit an jedem Wechsel derselbe
+            // Satz. Die Spitze wechselte am 14.09. zweimal und am 15.09.
+            // erneut; zwei der drei Karten trugen Wort fuer Wort denselben
+            // Text, und der Doublettenfilter warf die aeltere weg — der Tag,
+            // an dem er sie uebernahm, hatte danach keine Breaking-Karte.
+            // Der Vorsprung gehoert ohnehin auf die Karte: er sagt, wie
+            // knapp es oben zugeht.
+            desc: `${nameOf(cur[0].pid)} steht mit ${cur[0].elo} Elo an der Spitze`
+                + (cur[1] ? `, ${cur[0].elo - cur[1].elo} vor ${nameOf(cur[1].pid)}` : '')
+                + `. Vorher war ${nameOf(prevTop)} dort.`,
             when: new Date(lastSeasonMatch.created_at),
             prio: STORY_PRIO.lead_change,
             dataRef: {type:'lead_change', newLeader: cur[0].pid, prevLeader: prevTop, matchId: lastSeasonMatch.id}
@@ -20384,7 +20403,9 @@ function _buildStories(){
           if(now.getTime() >= rep.getTime()){
             const main = res.main;
             const names = res.winners.map(w => nameOf(w.id));
-            const titleNames = names.length > 1 ? names.slice(0, -1).join(', ') + ' & ' + names[names.length-1] : names[0];
+            // Auch hier die Aufzaehlung der App [§C27]: „Leon & Martin holen
+            // den Tag" war die letzte Schlagzeile mit „&" im Feed.
+            const titleNames = _namenKurz(names);
             const p = data.dayKey.split('-');
             const dLabel = p[2] + '.' + p[1] + '.';
             stories.push({
@@ -21425,7 +21446,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!bk) return null;
     return { cat:'fun', ic:'thriller', prio:3,
       title:`${g} Tore in ${matches.length} Partien`,
-      desc:`Im Schnitt fallen ${(g/matches.length).toFixed(1)} Tore pro Spiel. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
+      desc:`Im Schnitt fallen ${komma(g/matches.length)} Tore pro Spiel. Am häufigsten endet eine Partie ${bk}, das war ${bn} Mal so.`,
       vv: g, vl:'Tore' };
   }});
 
@@ -21478,8 +21499,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(avg <= 0) return null;
     return { cat:'personal', ic:'thriller', prio:3,
       title:`${nameOf(pid)} trifft am laufenden Band`,
-      desc:`Ø ${avg.toFixed(1)} Tore pro Spiel. Bestwert der Liga.`,
-      vv: avg.toFixed(1), vl:'Ø Tore',
+      desc:`Ø ${komma(avg)} Tore pro Spiel. Bestwert der Liga.`,
+      vv: komma(avg), vl:'Ø Tore',
       dataRef:{ ambientPid: pid } };
   }});
 
@@ -21518,7 +21539,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     }
     if(!best) return null;
     return { cat:'rivalry', ic:'crossedSwords', prio:4,
-      title:`Kopf-an-Kopf: ${nameOf(best.pa)} & ${nameOf(best.pb)}`,
+      title:`Kopf-an-Kopf: ${nameOf(best.pa)} und ${nameOf(best.pb)}`,
       // Zwischen den beiden Zahlen stand ein Halbgeviertstrich, und der ist in
       // einem Satz ein Gedankenstrich und kein Bilanzstrich. Die Bilanz steht
       // jetzt als Doppelpunkt-Paar da, wie ueberall sonst in der App.
@@ -21687,7 +21708,7 @@ function _ambientTemplatePool(now, pm, nameOf){
       {n:'der Siegquote',    v:p2 => stats[p2].games ? stats[p2].wins/stats[p2].games : 0,
                              fmt:v => `${Math.round(v*100)} % Siegquote`},
       {n:'Toren je Partie',  v:p2 => stats[p2].games ? stats[p2].gf/stats[p2].games : 0,
-                             fmt:v => `${v.toFixed(1)} Tore je Partie`},
+                             fmt:v => `${komma(v)} Tore je Partie`},
     ];
     let bestes = null;
     felder.forEach(f => {
@@ -21703,7 +21724,8 @@ function _ambientTemplatePool(now, pm, nameOf){
         : `${nameOf(pid)} ist Nummer ${bestes.platz} bei ${bestes.f.n}`,
       desc:`${bestes.f.fmt(bestes.wert)}. Platz ${bestes.platz} von ${bestes.von}. `
          + `Das ist die Kennzahl, in der ${nameOf(pid)} am weitesten vorne steht.`,
-      vv: bestes.platz, vl:'Platz',
+      // „1 Platz" las sich wie eine Anzahl. Ein Rang heisst „Platz 1".
+      vv: 'Platz ' + bestes.platz, vl:'von ' + (bestes.von || ''),
       dataRef:{ ambientPid: pid } };
   }});
 
@@ -21747,7 +21769,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const t = feld[Math.floor(rng()*feld.length)] || feld[0];
     const rank = ranked.findIndex(x => x.ids[0] === t.ids[0] && x.ids[1] === t.ids[1]) + 1;
     const isRecord = t.best === topBest;
-    const nm = `${nameOf(t.ids[0])} & ${nameOf(t.ids[1])}`;
+    const nm = `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])}`;
     return { cat:'team', ic:'unstoppable', prio:isRecord ? 5 : 4,
       title: isRecord ? `Rekord-Duo: ${nm}` : `Eingespielt: ${nm}`,
       desc: isRecord
@@ -21792,8 +21814,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const wrAtk = Math.round(a.aW / a.aG * 100);
     return { cat:'personal', ic:'bolt', prio:5,
       title:`${nameOf(best.pid)} ist der Sturm-Chef`,
-      desc:`Bester Stürmer der letzten 14 Tage: Ø ${best.v.toFixed(1)} Tore und ${wrAtk}% Siege im Sturm.`,
-      vv: best.v.toFixed(1), vl:'Ø Tore',
+      desc:`Bester Stürmer der letzten 14 Tage: Ø ${komma(best.v)} Tore und ${wrAtk}% Siege im Sturm.`,
+      vv: komma(best.v), vl:'Ø Tore',
       dataRef:{ ambientPid: best.pid } };
   }});
 
@@ -21808,8 +21830,8 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'shieldCheck', prio:5,
       title:`${nameOf(best.pid)} macht die Bude dicht`,
-      desc:`Hinten kommt kaum etwas durch: ${(a.dGa/a.dG).toFixed(1)} Gegentore im Schnitt aus ${a.dG} Spielen in der Abwehr, gerechnet über die letzten 14 Tage.`,
-      vv: (a.dGa/a.dG).toFixed(1), vl:'Ø Gegentore',
+      desc:`Hinten kommt kaum etwas durch: ${komma(a.dGa/a.dG)} Gegentore im Schnitt aus ${a.dG} Spielen in der Abwehr, gerechnet über die letzten 14 Tage.`,
+      vv: komma(a.dGa/a.dG), vl:'Ø Gegentore',
       dataRef:{ ambientPid: best.pid } };
   }});
 
@@ -21838,7 +21860,13 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'nerves', prio:4,
       title:`${nameOf(best.pid)} zittert sich durch`,
-      desc:`${Math.round(best.v*100)} % aller Spiele der letzten 14 Tage endeten mit einem Tor Unterschied. ${a.c1w} davon gewonnen.`,
+      // „12 % ALLER Spiele der letzten 14 Tage" stand da, gerechnet war
+      // aber der Anteil an den Partien DIESES Spielers — die Zahl gehoerte
+      // dem Helden, der Satz der Liga. Und die Stichprobe gehoert zur
+      // Aussage: „x von y", nicht nur der Anteil [§C37].
+      desc:`${a.c1w} von ${a.g} Partien der letzten 14 Tage gewann `
+        + `${nameOf(best.pid)} mit einem Tor Unterschied, das sind `
+        + `${Math.round(best.v*100)} %.`,
       vv: a.c1w, vl:'Zittersiege',
       dataRef:{ ambientPid: best.pid } };
   }});
@@ -21877,8 +21905,11 @@ function _ambientTemplatePool(now, pm, nameOf){
   // ausgerufen werden („Bestwert, X folgt mit 3" bei 3:3 liest sich falsch).
   // Liefert alle Spieler mit dem Höchstwert.
   const _awardLeaders = rank => rank.filter(x => x.v === rank[0].v);
-  const _namesOf = arr => arr.length <= 1 ? nameOf(arr[0].pid)
-    : arr.slice(0, -1).map(x => nameOf(x.pid)).join(', ') + ' & ' + nameOf(arr[arr.length-1].pid);
+  // Die Aufzaehlung hat die App schon (`_namenListe`, §C27). Hier stand eine
+  // zweite mit „&" dazwischen, und das Zeichen gehoert in eine Tabellenzelle,
+  // nicht in einen Satz: „Leon & Martin liegen gleichauf" war die einzige
+  // Stelle im Feed, die zwei Namen nicht ausschrieb [§C33].
+  const _namesOf = arr => _namenListe(arr.map(x => nameOf(x.pid)));
 
   // ── Award: meiste „Spieler des Tages"-Titel ──
   T.push({ key:'award_potd_leader', weight:2, make: () => {
@@ -21963,6 +21994,11 @@ function _ambientTemplatePool(now, pm, nameOf){
       for(const ev of (bMap[mid] || [])){
         if(rarityOf(ev.badge.id) !== 'legendary') continue;
         if(!pm[ev.playerId] || pm[ev.playerId].hidden) continue;
+        // ── Ein Fun Fact weiss nichts von einer spaeteren Partie ──
+        // `now` ist die Uhrzeit des Slots, `matches` aber die ganze Liste.
+        // Die Karte von 10 Uhr sah damit eine Auszeichnung aus einer Partie
+        // um 11:39 und rechnete „vor -1 Tagen".
+        if(t > now.getTime()) continue;
         if(!latest || t > latest.t) latest = { t, pid: ev.playerId, badge: ev.badge, mid };
       }
     }
@@ -21971,6 +22007,9 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'badge', ic: latest.badge.ic || 'trophyStar', prio:5,
       title:`${nameOf(latest.pid)} holte zuletzt Gold`,
       desc:`Die Auszeichnung „${latest.badge.name}" ${days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + days + ' Tagen'}. ${latest.badge.desc}.`,
+      // Ohne Wert blieb der grosse Block der Karte leer [§6].
+      vv:String(days === 0 ? 'heute' : days === 1 ? 'gestern' : days),
+      vl:days > 1 ? 'Tage her' : 'geholt',
       dataRef:{ ambientPid: latest.pid } };
   }});
 
@@ -22032,7 +22071,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(!cands.length) return null;
     const c = cands[Math.floor(rng()*cands.length)];
     return { cat:'team', ic:'duo', prio:4,
-      title:`Beste Freunde: ${nameOf(c.pid)} & ${nameOf(c.mate)}`,
+      title:`Beste Freunde: ${nameOf(c.pid)} und ${nameOf(c.mate)}`,
       desc:`Zusammen ${c.w} von ${c.g} Spielen gewonnen. ${Math.round(c.wr*100)}% als Duo.`,
       vv: Math.round(c.wr*100) + '%', vl:'als Duo',
       dataRef:{ ambientPids:[c.pid, c.mate], pairKind:'team' } };
@@ -22050,6 +22089,11 @@ function _ambientTemplatePool(now, pm, nameOf){
       return { cat:'personal', ic:'refresh', prio:3,
         title:`${nameOf(pid)} ist beidfüßig`,
         desc:`Im Sturm ${Math.round(atkWr*100)}%, in der Abwehr ${Math.round(defWr*100)}%. Dem ist die Position egal.`,
+        // Ohne Wert blieb der grosse Block der Karte leer. Die Aussage ist
+        // die Quote, die in BEIDEN Rollen gilt — nicht der Abstand, der
+        // hier gerade null sein soll.
+        vv: Math.round((st.atkW + st.defW) / (st.atkG + st.defG) * 100) + '%',
+        vl:'in beiden Rollen',
         dataRef:{ ambientPid: pid } };
     }
     const strong = atkWr > defWr;
@@ -22083,8 +22127,13 @@ function _ambientTemplatePool(now, pm, nameOf){
     const held = T2.awarded.length, open = SEASON_TITLES.length - held;
     return { cat:'season', ic:a.ic, prio:5,
       title:`${nameOf(a.pid)} führt bei „${a.name}"`,
-      desc:`${_evSatz(a.ev)}. Das ist der Stand von heute. ${held} von ${SEASON_TITLES.length} Chronik-Einträgen sind vergeben, ${open} sind noch offen.`,
-      vv:held+'/'+SEASON_TITLES.length, vl:'Einträge',
+      // „Das ist der Stand von heute" sagte nichts: jede Karte im Feed
+      // traegt ihr Datum. Und der grosse Wert zaehlte die Eintraege des
+      // Katalogs, waehrend die Schlagzeile von EINER Fuehrung erzaehlte —
+      // zwei Aussagen auf einer Karte, und die Zahl gehoerte der falschen.
+      desc:`${_evSatz(a.ev)}. ${held} von ${SEASON_TITLES.length} `
+        + `Chronik-Einträgen sind vergeben, ${open} sind noch offen.`,
+      vv:_chronKurz(a.ev), vl:'in Führung',
       dataRef:{ ambientPid:a.pid, seasonTable:T2.sid } };
   }});
 
@@ -22103,7 +22152,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const d = recs[day % recs.length];
     const h = by[d.id];
     return { cat:'fun', ic:d.ic, prio:4,
-      title:`${h.shared ? _chronHolderNames(h) + ' halten' : nameOf(h.pid) + ' hält'} „${d.name}"`,
+      title:`${h.shared ? _chronHalterSatz(h) + ' halten' : nameOf(h.pid) + ' hält'} „${d.name}"`,
       // Die Bedingung stand hier im Klartext und machte aus zwei Zeilen
       // fünf. Sie gehört ins Detail, nicht auf die Karte — die Karte sagt,
       // WAS jemand hält, das Detail sagt, wofür.
@@ -22179,13 +22228,33 @@ function _ambientTemplatePool(now, pm, nameOf){
     // „Holt er ihn" stand ausserdem einmal direkt hinter dem Namen des
     // HALTERS und zeigte damit auf den Falschen.
     const _bed = s.cond || '';
+    // ── Die Karte nennt den eigenen Stand ───────────────────────────
+    // Sie sagte die Schwelle und den Bestwert des Halters, aber nicht, wo
+    // der Spieler selbst steht: „Martin & Julian haelt den Bestwert mit
+    // 84 %" ist ohne die eigenen 71 % keine Auskunft darueber, wie weit es
+    // noch ist. Mehrere Halter bekommen dazu ihr Verb — und „&" gehoert in
+    // eine Tabellenzelle, nicht in einen Satz [§C33].
+    const _mehr = (s.halterN || 0) > 1;
+    const _halter = String(s.halter || '');
+    const _stand = _halter && s.stand
+      ? `${_halter} ${_mehr ? 'halten' : 'hält'} den Bestwert mit ${s.stand}`
+      : String(s.txt || '');
+    // „Kein anderer ist gerade so nah dran" behauptete einen Vergleich, den
+    // die Karte nie angestellt hat: der Spieler wird unter allen gezogen,
+    // die ueberhaupt einen offenen Schritt haben, nicht als der naechste.
     return { cat:'personal', ic:s.ic, prio:5,
       title:`${nameOf(pid)} kann „${s.name}" holen`,
       desc: (_bed ? `Dafür zählt: ${_bed}. ` : '')
-        + `${s.txt}. `
-        + `Gelingt es ${nameOf(pid)}, bringt das ${s.gewinn} Prestige. `
-        + `Kein anderer ist gerade so nah dran.`,
-      vv:'+' + s.gewinn, vl:'Prestige',
+        + (_stand ? _stand + '. ' : '')
+        + (s.mein ? `${nameOf(pid)} steht bei ${s.mein}. ` : '')
+        + `Gelingt es, bringt das ${s.gewinn} Prestige.`,
+      // Der grosse Wert war die Aussicht auf Prestige — eine Zahl, die
+      // niemand geholt hat, im Goldrahmen einer gehaltenen Bestmarke
+      // [§C25]. Er zeigt jetzt den eigenen Stand: das ist die Zahl, mit
+      // der man etwas anfangen kann. Fehlt er, steht der zu schlagende
+      // Wert dort — auch das ist eine Tatsache und keine Aussicht.
+      vv: s.mein || s.stand || ('+' + s.gewinn),
+      vl: s.mein ? 'aktuell' : (s.stand ? 'zu schlagen' : 'Prestige'),
       dataRef:{ ambientPid:pid, prestige:true } };
   }});
 
@@ -22214,7 +22283,9 @@ function _ambientTemplatePool(now, pm, nameOf){
                        : `Die Liga trägt ${_zahlwortDe(k)} verschiedene Insignien`;
       })(),
       desc: INSIGNIEN.map((s, i) => ({s, v:zahl[i]})).filter(x => x.v > 0)
-          .map(x => `${x.v === 1 ? 'einer' : x.v} trägt den ${x.s.name}`)
+          // „7 traegt den Schildring" — die Zahl stand im Plural, das Verb
+          // im Singular.
+          .map(x => `${x.v === 1 ? 'einer trägt' : x.v + ' tragen'} den ${x.s.name}`)
           .reduce((txt, teil, i, arr) => txt + (i === 0 ? '' : i === arr.length - 1 ? ' und ' : ', ') + teil, '')
           .replace(/^./, c => c.toUpperCase())
         + `. Höchste getragene Stufe ist der ${oben.name}`
@@ -22447,21 +22518,31 @@ function _byPlayerMatches(){
 // Nötig, weil persistierte „ungeschlagen/Pechvogel/Top-Form"-Stories bis
 // expires_at im Feed bleiben und sonst Spieler zeigen, deren Serie/Form längst
 // gebrochen ist. Caps (Win 20, Loss 12) exakt wie die jeweiligen Generatoren.
-// Rückgabe: { loss:{pid:n}, win:{pid:n}, form:{pid:siege_der_letzten_10} }.
+// Rückgabe: { loss:{pid:n}, win:{pid:n}, form:{pid:siege_der_letzten_10},
+//             vor:{pid:anteilspunkte_ueber_dem_eigenen_schnitt} }.
 function _liveStreakForm(){
   const key = matches.length + '_' + _cache.version;
   if(_cache._liveSFKey === key) return _cache._liveSF;
   const byP = _byPlayerMatches();
-  const loss = {}, win = {}, form = {};
+  const loss = {}, win = {}, form = {}, vor = {};
   for(const pid in byP){
     const arr = byP[pid];
     let w = 0; for(let i = arr.length - 1; i >= 0; i--){ if(!won(pid, arr[i])) break; w++; if(w > 20) break; }
     let l = 0; for(let i = arr.length - 1; i >= 0; i--){ if(won(pid, arr[i])) break; l++; if(l > 12) break; }
     win[pid] = w; loss[pid] = l;
-    form[pid] = arr.length < 10 ? 0 : arr.slice(-10).filter(m => won(pid, m)).length;
+    form[pid] = arr.length < FORM_FENSTER ? 0
+      : arr.slice(-FORM_FENSTER).filter(m => won(pid, m)).length;
+    // ── Der Vorsprung, nicht das Niveau ──────────────────────────────
+    // Dieselbe Rechnung wie im Generator [§11.0b], weil der Stale-Filter
+    // dieselbe Frage stellen muss: die Karte sagt „über dem eigenen
+    // Schnitt", also ist sie veraltet, wenn der ABSTAND weg ist.
+    if(arr.length < FORM_FENSTER + FORM_BASIS_MIN){ vor[pid] = null; continue; }
+    const davor = arr.slice(0, -FORM_FENSTER);
+    vor[pid] = form[pid] / FORM_FENSTER
+      - davor.filter(m => won(pid, m)).length / davor.length;
   }
   _cache._liveSFKey = key;
-  _cache._liveSF = { loss, win, form };
+  _cache._liveSF = { loss, win, form, vor };
   return _cache._liveSF;
 }
 
@@ -22566,7 +22647,7 @@ function _consolidateStories(list){
   // dann nicht nur Spam, sondern schlicht falsch. Sie bleibt jetzt nur, solange
   // ihr Referenz-Match noch das jüngste der Liga ist.
   const _lastMatchId = matches.length ? matches[matches.length-1].id : null;
-  const { loss: _liveLoss, win: _liveWin, form: _liveForm } = _liveStreakForm();
+  const { loss: _liveLoss, win: _liveWin, form: _liveForm, vor: _liveVor } = _liveStreakForm();
   const { win: _tsWin, loss: _tsLoss } = _liveTeamStreak();
   const _paarKey = d => (d.a && d.b) ? [d.a, d.b].sort().join('|') : null;
   // Wer haelt einen Liga-Rekord HEUTE? Einmal je Lauf und nur, wenn eine
@@ -22656,7 +22737,17 @@ function _consolidateStories(list){
     if(_storyAbgemeldet(s && s.id)) return false;
     if(d.type === 'ambient') return !_tageMitNachricht.has(_fdKey(s.when));
     if(d.type === 'loss_streak' && d.pid) return (_liveLoss[d.pid] || 0) >= (d.streak || 0);
-    if(d.type === 'top_form' && d.pid) return (_liveForm[d.pid] || 0) >= (d.wins || 0);
+    // ── Der Formlauf veraltet am Abstand, nicht an der Siegzahl ──────
+    // Verglichen wurde die Zahl der Siege im Fenster mit der von damals,
+    // und das Fenster der letzten zehn Partien verschiebt sich schon im
+    // Lauf desselben Spieltags: die Karte entsteht nach der vierten
+    // Partie mit 8 von 10, nach der siebten stehen dort 7 — und die eigene
+    // Karte von heute Mittag fiel damit als veraltet weg. Gemessen an der
+    // echten Liga wurden acht Formkarten gebildet und keine einzige
+    // gezeigt. Gefragt wird deshalb, was die Karte behauptet: steht der
+    // Vorsprung auf den eigenen Schnitt noch [§C33]?
+    if(d.type === 'top_form' && d.pid)
+      return _liveVor[d.pid] != null && _liveVor[d.pid] >= FORM_VORSPRUNG;
     if(d.type === 'dry_spell' && d.lastMatchId) return d.lastMatchId === _lastMatchId;
     // Ein Elo-Rekord, den es nicht mehr gibt, ist keine Nachricht mehr,
     // sondern eine falsche. Gemessen standen neun Karten „Neuer Elo-Rekord:
@@ -22863,8 +22954,13 @@ function _consolidateStories(list){
       // bleibt). Verhindert Duplikate wie „Maxi, Maxi, Alex … Alex".
       if(!g.seen.has(d.pid)){ g.seen.add(d.pid); g.members.push(s); }
     } else {
+      // Breaking scheitert an keiner Sperre [§C33] — auch nicht am
+      // Doublettenfilter. Zwei Wechsel der Tabellenspitze sind zwei
+      // Ereignisse, selbst wenn der Text derselbe waere.
+      let _brkFrei = false;
+      try { _brkFrei = typeof _isBreaking === 'function' && _isBreaking(s); } catch(e){}
       const ck = (s.title || '') + '\u0000' + (s.desc || '');
-      if(seenContent.has(ck)){ verworfen.push(s); continue; }   // inhaltsgleiche Doublette
+      if(!_brkFrei && seenContent.has(ck)){ verworfen.push(s); continue; }
       const tk = String(s.title || '').trim();
       // Was es je Tag, Woche oder Monat genau einmal gibt, darf dieselbe
       // Schlagzeile zweimal tragen: sie steht unter zwei verschiedenen
@@ -22873,7 +22969,11 @@ function _consolidateStories(list){
       // Spieltage, zwei Ergebnisse, und die ältere Karte fiel weg, weil
       // beide „Martin ist Spieler des Tages" heißen. Eine echte Doublette
       // fängt der volle Vergleich aus Schlagzeile UND Text weiter ab.
-      if(tk && !TAG_PFLICHT.has(d.type) && seenTitel.has(tk)){ verworfen.push(s); continue; }
+      // Dasselbe gilt fuer die gleiche Schlagzeile: die Tabellenspitze
+      // wechselte am 14.09. zu Martin und am 15.09. zurueck zu Maxi, und
+      // beide Karten heissen „Neuer Spitzenreiter: Maxi". Zwei Wechsel sind
+      // zwei Ereignisse, und sie stehen unter zwei Tageskoepfen.
+      if(tk && !_brkFrei && !TAG_PFLICHT.has(d.type) && seenTitel.has(tk)){ verworfen.push(s); continue; }
       const ak = _sperreMs ? _aussage(s) : null;
       if(ak){
         const vorherMs = _zuletzt.get(ak);
@@ -26915,13 +27015,13 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Wenigste Gegentore pro Spiel in der Abwehr, ab 50 Abwehrspielen',
       val:p => (p.defG >= 50) ? -(p.defConceded/p.defG) : null,
-      ev:(p,v) => `${(-v).toFixed(1)} Gegentore je Abwehrspiel im Schnitt · ${p.defG} Spiele`}},
+      ev:(p,v) => `${komma(-v)} Gegentore je Abwehrspiel im Schnitt · ${p.defG} Spiele`}},
 
   {id:'sniper', name:'Der Torjäger', short:'Torjäger', ic:'ball', tone:'orange', art:'leistung',
     allzeit:{
       cond:'Meiste eigene Tore pro Spiel im Sturm, ab 50 Sturmspielen',
       val:p => (p.atkG >= 50) ? p.atkGoals/p.atkG : null,
-      ev:(p,v) => `${v.toFixed(1)} Tore je Sturmspiel im Schnitt · ${p.atkG} Spiele`}},
+      ev:(p,v) => `${komma(v)} Tore je Sturmspiel im Schnitt · ${p.atkG} Spiele`}},
 
   {id:'comeback_king', name:'Der Stehaufmann', short:'Comeback', ic:'comeback', tone:'acid', art:'leistung',
     allzeit:{
@@ -27129,13 +27229,16 @@ const DISZIPLINEN = [
     allzeit:{
       cond:'Größter Elo-Absturz von einer Saison zur nächsten, mindestens −150',
       val:p => (p.fall && p.fall.d <= -150) ? -p.fall.d : null,
-      ev:p => `${Math.round(p.fall.d)} Elo von ${p.fall.from} auf ${p.fall.to}`}},
+      // Der Bindestrich der Tastatur ist kein Minus: die Bedingung zwei
+      // Zeilen darueber schreibt „mindestens −150", der Beleg schrieb
+      // „-308". Dieselbe Zahl in zwei Zeichen, in einem Eintrag.
+      ev:p => `−${Math.abs(Math.round(p.fall.d))} Elo von ${p.fall.from} auf ${p.fall.to}`}},
 
   {id:'sieve', name:'Das Scheunentor', short:'Sieb', ic:'hole', tone:'red', art:'schatten',
     allzeit:{
       cond:'Meiste Gegentore pro Spiel in der Abwehr, ab 30 Abwehrspielen',
       val:p => (p.defG >= 30 && p.defConceded/p.defG >= 6.0) ? p.defConceded/p.defG : null,
-      ev:(p,v) => `${v.toFixed(1)} Gegentore je Abwehrspiel im Schnitt · ${p.defG} Spiele`}},
+      ev:(p,v) => `${komma(v)} Gegentore je Abwehrspiel im Schnitt · ${p.defG} Spiele`}},
 
   // ═══ MONATSCHRONIKEN ══════════════════════════════════════════════
   // Keine davon fragt „wer ist der Beste". Sie fragen nach der Abweichung
@@ -27287,7 +27390,7 @@ const DISZIPLINEN = [
         p=>p.games>=8,
         (p,c)=>_stMittel(Object.values(c.P).map(x=>x.ga/x.games))-p.ga/p.games,
         1.5,
-        (p,v,c)=>`${(p.ga/p.games).toFixed(1)} Gegentore je Partie · Liga ${_stMittel(Object.values(c.P).map(x=>x.ga/x.games)).toFixed(1)}`))}},
+        (p,v,c)=>`${komma(p.ga/p.games)} Gegentore je Partie · Liga ${komma(_stMittel(Object.values(c.P).map(x=>x.ga/x.games)))}`))}},
 
   {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
     monat:{
@@ -27454,7 +27557,7 @@ const DISZIPLINEN = [
         p=>p.games>=8,
         p=>(p.gf-p.ga)/p.games,
         2,
-        (p,v)=>`${v>0?'+':''}${v.toFixed(1)} Tore je Partie · ${p.gf}:${p.ga}`))}},
+        (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie · ${p.gf}:${p.ga}`))}},
 
   {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'climb', tone:'gold', art:'leistung',
     monat:{
@@ -27574,7 +27677,7 @@ const DISZIPLINEN = [
         p=>-Math.log10(Math.max(1e-6, Math.min(..._stWochGross(p)
              .map(a=>_stPBinom(a.map(s=>s.exp), a.filter(s=>s.win).length))))),
         -Math.log10(0.005),
-        (p,v)=>`Eine Woche, die mit ${(Math.pow(10,-v)*100).toFixed(1)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
+        (p,v)=>`Eine Woche, die mit ${komma(Math.pow(10,-v)*100)} % erwartet war · ${_stWochGross(p).length} Wochen gewertet`))}},
 
   {id:'gleichmut', name:'Der Gleichmut', short:'Gleichmut', ic:'weight', tone:'blue', art:'leistung',
     monat:{
@@ -27587,7 +27690,7 @@ const DISZIPLINEN = [
         p=>p.games>=TITLE_MIN_GAMES,
         p=>-_stStreu(p.partien.map(s=>s.gf-s.ga)),
         -3.0,
-        (p,v)=>`${(-v).toFixed(1)} Tore Streuung um ${(p.gd/p.games>=0?'+':'')}${(p.gd/p.games).toFixed(1)} im Schnitt`))}},
+        (p,v)=>`${komma(-v)} Tore Streuung um ${p.gd/p.games<0?'−':'+'}${komma(Math.abs(p.gd/p.games))} im Schnitt`))}},
 
   {id:'zweiteluft', name:'Die zweite Luft', short:'Luft', ic:'flameDouble', tone:'gold', art:'leistung',
     monat:{
@@ -27749,7 +27852,7 @@ const DISZIPLINEN = [
         p=>p.games>=8,
         (p,c)=>(p.gf+p.ga)/p.games-c.L.torSchnitt,
         1,
-        (p,v,c)=>`${((p.gf+p.ga)/p.games).toFixed(1)} Tore je Partie · Liga ${c.L.torSchnitt.toFixed(1)}`))}},
+        (p,v,c)=>`${komma((p.gf+p.ga)/p.games)} Tore je Partie · Liga ${komma(c.L.torSchnitt)}`))}},
 
   {id:'lieblingszahl', name:'Die Lieblingszahl', short:'Die Zahl', ic:'hundred', tone:'purple', art:'ereignis',
     monat:{
@@ -29361,6 +29464,17 @@ function _chronHolderNames(entry){
   if(!entry) return '';
   const names = (entry.pids || [entry.pid]).map(id => { const p = pmap()[id]; return p ? p.name : '?'; });
   return names.length > 1 ? names.slice(0, -1).join(', ') + ' & ' + names[names.length - 1] : names[0];
+}
+
+// Dieselben Namen, aber fuer einen Satz. Die Form mit „&" gehoert in die
+// Zelle des Rekorde-Reiters, wo sie schmal bleiben muss; im Fliesstext stand
+// damit „Martin & Julian haelt den Bestwert mit 84 %" — das Zeichen als
+// einziges im Satz, und dazu das Verb im Singular. Die Aufzaehlung fuer
+// Saetze hat die App schon [§C27], hier fehlte nur der Weg dorthin.
+function _chronHalterSatz(entry){
+  if(!entry) return '';
+  const names = (entry.pids || [entry.pid]).map(id => { const p = pmap()[id]; return p ? p.name : '?'; });
+  return _namenListe(names);
 }
 
 // Was fehlt einem Spieler ohne Rekord bis zum nächstgelegenen? Nur zählbare
@@ -31889,7 +32003,15 @@ function prestigeSchritte(pid, n){
     const C = _chronicleCtx(), A = allChronicles(), p = C.P[pid];
     if(p){
       CHRONICLES.forEach(def => {
-        if(def.art === 'schatten') return;
+        // ── Ein Ziel, das niemand haben will, ist kein Ziel ──────────
+        // Gefiltert wurde nur die Schattenseite, nicht die negative
+        // Fuegung. Damit stand „Alex kann ‚Die bitterste Pleite' holen"
+        // im Feed — die hoechste Siegchance, mit der je jemand verlor,
+        // als Aufgabe. `nextRecordFor` kennt die Regel seit jeher und
+        // nennt in seinem Kommentar genau diesen Fall [§C25].
+        // Der Katalog schreibt `negativ`, ein Rekord traegt es abgeleitet
+        // als `neg` — hier laeuft die Liste der Rekorde, nicht der Katalog.
+        if(def.art === 'schatten' || def.neg) return;
         const halte = A.byId[def.id];
         if(halte && halte.pids.includes(pid)) return;
         let mein = null, ziel = null;
@@ -31916,11 +32038,23 @@ function prestigeSchritte(pid, n){
           // Satz, der als zwei Saetze klarer ist [§C33].
           cond: def.cond || '',
           stand: halte ? _chronKurz(halte.ev) : '',
-          halter: halte ? _chronHolderNames(halte) : '',
+          halter: halte ? _chronHalterSatz(halte) : '',
+          halterN: halte ? (halte.pids || []).length : 0,
+          // ── Der eigene Stand ist die Zahl, mit der man etwas anfangen
+          // kann ──────────────────────────────────────────────────────
+          // Die Karte nannte die Schwelle und den Bestwert des Halters —
+          // aber nicht, wo der Spieler selbst steht. „Martin haelt 84 %"
+          // sagt ohne die eigenen 71 % nichts darueber, wie weit es noch
+          // ist. Formatiert wird er wie der Bestwert, durch denselben
+          // Beleg des Katalogs: zwei Zahlen in zwei Einheiten waeren
+          // nicht vergleichbar.
+          mein: (function(){
+            try { return def.ev ? _chronKurz(def.ev(p, mein)) : ''; } catch(e){ return ''; }
+          })(),
           txt: def.unit
             ? `Noch ${Math.max(1, Math.ceil(ziel - mein))} ${def.unit}`
-              + (halte ? `. ${_chronHolderNames(halte)} hält ${Math.round(ziel)}` : '')
-            : (halte ? `${_chronHolderNames(halte)} hält den Bestwert mit ${_chronKurz(halte.ev)}`
+              + (halte ? `. ${_chronHalterSatz(halte)} ${halte.pids.length > 1 ? 'halten' : 'hält'} ${Math.round(ziel)}` : '')
+            : (halte ? `${_chronHalterSatz(halte)} ${halte.pids.length > 1 ? 'halten' : 'hält'} den Bestwert mit ${_chronKurz(halte.ev)}`
                      : def.cond)
         });
       });
@@ -31934,7 +32068,7 @@ function prestigeSchritte(pid, n){
       seasonTitleRace(currentSeason().id).forEach(r => {
         if(!r || r.pid === pid) return;
         const d = DISZIPLINEN.find(x => x.id === r.id);
-        if(!d || d.art === 'schatten') return;
+        if(!d || d.art === 'schatten' || d.negativ) return;
         out.push({
           art:'monat', id:r.id, name:r.name || (d && d.name), ic:d.ic, tone:d.tone,
           rel: 0.55,          // ein offener Monatseintrag ist immer „diesen Monat noch"
