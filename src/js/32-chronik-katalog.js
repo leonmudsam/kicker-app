@@ -401,6 +401,98 @@ const DISZIPLINEN = [
       val:p => (p.games >= 80 && p.lossStreak > 0) ? -p.lossStreak : null,
       ev:(p,v) => `${-v} Niederlagen am Stück, mehr waren es nie · ${p.games} Partien`}},
 
+  // ── DIE OFFENE KAMMER [§C35] ──────────────────────────────────────
+  // Fuenf Rekorde, deren Bedingung mit FUENFZIG Partien in der Laufbahn
+  // erfuellbar ist. Gemessen an den echten Partien waren 13 der 21
+  // bestehenden Rekorde mit lesbarer Mindestzahl fuer einen solchen Spieler
+  // unerreichbar: „ab 50 Sturmspielen", „ab 60 Gelegenheiten", „ab 80
+  // Spielen" gehoeren dem Vielspieler, weil sie ausser ihm niemand halten
+  // KANN. Die Schwellen stehen auf einem 5er-Raster — eine Bedingung ist
+  // eine Absprache und keine Kalibrierung, und „ab 22 Siegen" liest sich wie
+  // ein Versehen.
+  {id:'strongphase', name:'Die starke Phase', short:'Hochform', ic:'formPeak', tone:'orange', art:'leistung',
+    allzeit:{
+      // Ein GLEITENDES Fenster. „In den ersten 25 Partien" stand hier zuerst
+      // und ist gefallen: der Abschnitt ist fertig, sobald jemand 25 Partien
+      // hat, und ein Rekord darauf koennte den Halter nie mehr wechseln.
+      wie:'Gezählt wird der Anteil an den letzten 30 Partien, nicht an der ganzen Laufbahn. Das Fenster wandert mit jeder Partie weiter.',
+      fenster:true,
+      offen:true,
+      cond:'Höchster Anteil klarer Siege (5+ Tore Vorsprung) in den letzten 30 Partien, ab 30 Partien',
+      val:p => p.l30N ? p.l30Klar / p.l30N : null,
+      ev:(p,v) => `${Math.round(v*100)} % mit 5 Toren Vorsprung oder mehr · ${p.l30Klar} von ${p.l30N}`}},
+
+  {id:'densephase', name:'Die dichte Phase', short:'Dichte', ic:'gateShut', tone:'blue', art:'leistung',
+    allzeit:{
+      wie:'Dasselbe Fenster wie bei der starken Phase, nur von hinten gesehen: die Gegentore je Partie der letzten 30.',
+      fenster:true,
+      offen:true,
+      cond:'Wenigste Gegentore pro Partie in den letzten 30 Partien, ab 30 Partien',
+      val:p => p.l30N ? -(p.l30Ga / p.l30N) : null,
+      ev:(p,v) => `${komma(-v)} Gegentore je Partie · die letzten ${p.l30N}`}},
+
+  {id:'striker_u', name:'Der Angreifer', short:'Angreifer', ic:'strikeBoot', tone:'orange', art:'leistung',
+    allzeit:{
+      wie:'Gezählt werden nur die Partien, in denen die Elo-Rechnung das eigene Team unter 45 % Siegchance sah.',
+      offen:true,
+      cond:'Meiste eigene Tore pro Partie als Außenseiter, ab 15 solchen Partien',
+      val:p => p.unterN >= 15 ? p.unterGf / p.unterN : null,
+      ev:(p,v) => `${komma(v)} eigene Tore je Partie · ${p.unterN} Partien als Außenseiter`}},
+
+  {id:'sovereign', name:'Der Souverän', short:'Souverän', ic:'crownWide', tone:'gold', art:'leistung',
+    allzeit:{
+      wie:'Favorit heißt: die Elo-Rechnung sah das eigene Team über 55 % Siegchance. Gezählt wird, wie oft daraus ein klarer Sieg wurde.',
+      offen:true,
+      cond:'Höchster Anteil klarer Siege als Favorit, ab 15 solchen Partien',
+      val:p => p.favN >= 15 ? p.favKlar / p.favN : null,
+      ev:(p,v) => `${Math.round(v*100)} % mit 5 Toren Vorsprung oder mehr · ${p.favKlar} von ${p.favN}`}},
+
+  {id:'upswing', name:'Der Aufschwung', short:'Auftrieb', ic:'stepsUp', tone:'acid', art:'leistung',
+    allzeit:{
+      // Gegen den ANFANG der Laufbahn verglichen belohnte dieselbe Frage,
+      // wer schlecht angefangen hat: je tiefer der erste Abschnitt, desto
+      // leichter der Sprung. Zwei gleich lange Fenster, die beide
+      // mitwandern, fragen stattdessen nach der Form von jetzt.
+      wie:'Verglichen werden zwei gleich lange Fenster, die beide mitwandern: die letzten 25 Partien gegen die 25 davor.',
+      // Die Schwelle ist die NULL und keine Kalibrierung: „Aufschwung" heisst,
+      // dass es nach oben ging. Mit zehn Prozentpunkten standen zwei der elf
+      // Spieler im Rennen, und damit war die Bedingung selbst die Huerde.
+      // Hat sich niemand gesteigert, bleibt der Rekord unbesetzt — das ist
+      // die richtige Antwort und nicht der Trostpreis fuer den, der am
+      // wenigsten nachgelassen hat.
+      fenster:true,
+      offen:true,
+      cond:'Größte Steigerung der Siegquote von den 25 Partien davor zu den letzten 25, ab 50 Partien',
+      val:p => (p.aufDelta != null && p.aufDelta > 0) ? p.aufDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte · ${Math.round(p.aufNeu*100)} % in den letzten 25, ${Math.round(p.aufAlt*100)} % in den 25 davor`}},
+
+  // ── DIE ANSPRUCHSVOLLE KAMMER [§C35] ──────────────────────────────
+  // Hier darf ein Rekord verlangen, dass jemand die Frage ueber eine lange
+  // Strecke beantwortet hat. Alle anderen Bedingungen gelten unveraendert:
+  // der Wert bleibt ein ANTEIL oder ein Schnitt und keine Ansammlung, sonst
+  // waere es wieder ein Rekord fuer den, der am meisten spielt.
+  {id:'defchief', name:'Der Abwehrchef', short:'Kommando', ic:'shieldRank', tone:'blue', art:'leistung',
+    allzeit:{
+      // `defPerf` ist der Teil des Abwehrwerts, der Mate- und Gegnerstaerke
+      // beruecksichtigt [§5.2]. Er wird hier NICHT nachgerechnet: „Der
+      // komplette Verteidiger" nimmt dieselbe Zahl in `posWert` auf, und zwei
+      // Rechnungen ueber dieselbe Frage nennen irgendwann zwei verschiedene
+      // Beste.
+      wie:'Die Rechnung ist der Elo-Erwartungswert je Partie. Gezählt wird der Abstand der Siegquote in der Abwehr zu dieser Erwartung, in Prozentpunkten.',
+      cond:'Größter Abstand über die Erwartung in der Abwehr, ab 40 Abwehrspielen',
+      val:p => p.defG >= 40 ? p.defPerf / p.defG : null,
+      // Das Vorzeichen kommt aus dem WERT, nicht als festes Plus davor: unter
+      // der Rechnung stand sonst „+-3 Punkte", und das Podest liest die erste
+      // Zahl des Belegs — sie war damit gar keine.
+      ev:(p,v) => `${v < 0 ? '−' : '+'}${Math.abs(Math.round(v*100))} Punkte über der Rechnung · ${Math.round(p.defW/p.defG*100)} % statt ${Math.round((p.defW/p.defG-v)*100)} % in ${p.defG} Abwehrspielen`}},
+
+  {id:'homefield', name:'Der Hausherr', short:'Hausherr', ic:'homeGround', tone:'gold', art:'leistung',
+    allzeit:{
+      wie:'Der Rest der Liga sind alle Gegner außer den drei Besten der Siegquote. Gezählt wird der Anteil an allen Toren dieser Partien.',
+      cond:'Größter Anteil aller Tore gegen den Rest der Liga, ab 40 solchen Partien',
+      val:p => p.restN >= 40 ? (p.restGf + p.restGa ? p.restGf / (p.restGf + p.restGa) : null) : null,
+      ev:(p,v) => `${Math.round(v*100)} % aller Tore · ${p.restGf}:${p.restGa} in ${p.restN} Partien`}},
+
   {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flame', tone:'orange', art:'ereignis',
     allzeit:{
       cond:'Längste Siegesserie der Liga-Geschichte',
@@ -543,6 +635,43 @@ const DISZIPLINEN = [
       val:p => (p.flukeExp != null && p.flukeExp <= 0.30) ? 1 - p.flukeExp : null,
       ev:(p,v) => `${Math.round((1-v)*100)} % Siegchance, und trotzdem gewonnen`,
       zeit:p => p.flukeLabel || ''}},
+
+  // ── Gleichmaessigkeit: drei Fuegungen, kein Koennen [§C35] ────────
+  // Wer die geringste Streuung hat, ist nicht der Beste — er ist der, bei dem
+  // jede Partie gleich aussieht. Das zeichnet niemanden aus, es kann jemandem
+  // gehoeren, und deshalb stehen die drei als `ereignis` in der Kammer der
+  // Fuegungen und wiegen fuers Prestige halb so viel wie ein Beleg fuer eine
+  // Faehigkeit [§C34]. `konstanz` gibt es dafuer nicht: das ist eine Art der
+  // MONATSCHRONIK [§C39], und ein ungueltiger Wert faellt hier still auf
+  // `ereignis` zurueck.
+  // Sturm und Abwehr sind ein PAAR, so wie „Der komplette Stürmer" und „Der
+  // komplette Verteidiger". Eine dritte Fassung derselben Frage auf einer
+  // dritten Teilmenge waere die Haeufung, die §C35 verbietet — „gegen den
+  // Rest der Liga" ist der Gegnerkreis und keine Rolle, und gemessen halten
+  // die drei drei verschiedene Spieler.
+  {id:'handwriting', name:'Die Handschrift', short:'Schrift', ic:'penLine', tone:'purple',
+    art:'ereignis', zufall:'quote',
+    allzeit:{
+      wie:'Gemessen wird die Streuung der Tordifferenz um den eigenen Schnitt. Klein heißt: jede Partie im Sturm ging ungefähr gleich aus. Über das Niveau sagt die Zahl nichts.',
+      cond:'Geringste Streuung der Tordifferenz im Sturm, ab 40 Sturmspielen',
+      val:p => (p.atkG >= 40 && p.atkSd != null) ? -p.atkSd : null,
+      ev:(p,v) => `${komma(-v)} Tore Streuung um ${p.atkMit < 0 ? '−' : '+'}${komma(Math.abs(p.atkMit))} im Schnitt · ${p.atkG} Sturmspiele`}},
+
+  {id:'bedrock', name:'Das Fundament', short:'Statik', ic:'baseLine', tone:'blue',
+    art:'ereignis', zufall:'quote',
+    allzeit:{
+      wie:'Das Gegenstück zur Handschrift, eine Position weiter hinten: dieselbe Streuung, gemessen in der Abwehr.',
+      cond:'Geringste Streuung der Tordifferenz in der Abwehr, ab 40 Abwehrspielen',
+      val:p => (p.defG >= 40 && p.defSd != null) ? -p.defSd : null,
+      ev:(p,v) => `${komma(-v)} Tore Streuung um ${p.defMit < 0 ? '−' : '+'}${komma(Math.abs(p.defMit))} im Schnitt · ${p.defG} Abwehrspiele`}},
+
+  {id:'unruffled', name:'Der Unaufgeregte', short:'Ruhe', ic:'flatWave', tone:'acid',
+    art:'ereignis', zufall:'quote',
+    allzeit:{
+      wie:'Der Rest der Liga sind alle Gegner außer den drei Besten der Siegquote. Gemessen wird dort dieselbe Streuung wie bei Handschrift und Fundament.',
+      cond:'Geringste Streuung der Tordifferenz gegen den Rest der Liga, ab 40 solchen Partien',
+      val:p => (p.restN >= 40 && p.restSd != null) ? -p.restSd : null,
+      ev:(p,v) => `${komma(-v)} Tore Streuung um ${p.restMit < 0 ? '−' : '+'}${komma(Math.abs(p.restMit))} im Schnitt · ${p.restN} Partien`}},
 
   {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'dropTriple', tone:'red', art:'schatten',
     monat:{

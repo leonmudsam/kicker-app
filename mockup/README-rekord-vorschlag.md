@@ -1,6 +1,21 @@
 # Liga-Rekorde in zwei Kammern
 
-Ein Vorschlag, nicht eine Änderung: nichts davon ist eingebaut.
+**Eingebaut.** Zehn dieser Rekorde stehen in der App. Diese Seite bleibt als
+Herleitung: sie zeigt, welche Kombinationen gerechnet wurden, welche Tore sie
+bestehen mussten und woher die Schwellen kommen. Die Regeln selbst stehen in
+CLAUDE.md §C35; der Katalog trägt sie in `allzeit.offen` und
+`allzeit.fenster`.
+
+Gegenüber dem Vorschlag sind drei Rekorde nicht eingebaut worden — „Der
+Schlussmann", „Der Pflichterfüller" und „Der Mitspieler" —, und einer ist
+dazugekommen, den die Suche hier nicht benannt hatte: **„Das Fundament"**,
+das Gegenstück zur „Handschrift" für die Abwehr. Sturm und Abwehr sind ein
+PAAR wie „Der komplette Stürmer" und „Der komplette Verteidiger", und
+gemessen gehören sie zwei verschiedenen Spielern. Damit sind es im Katalog:
+
+| offen (ab 30 bis 50 Partien) | Anspruch (ab 40 in der Teilmenge) |
+|---|---|
+| Die starke Phase · Die dichte Phase · Der Angreifer · Der Souverän · Der Aufschwung | Der Abwehrchef · Der Hausherr · Die Handschrift · Das Fundament · Der Unaufgeregte |
 
 ```
 node mockup/rekord-vorschlag-lauf.js     # rechnet 278 Kombinationen → .rekord-vorschlag.json

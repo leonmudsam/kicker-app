@@ -198,6 +198,13 @@ ${styles}
 <div class="rv">
   <div class="lead">Vorschlag · gemessen an ${D.partien} echten Partien · Stand ${esc(D.gebaut)}</div>
   <h1>Zwei Kammern: offen und Anspruch</h1>
+  <p><b>Eingebaut.</b> Zehn dieser Rekorde stehen in der App. Diese Seite bleibt als
+     Herleitung: sie zeigt, welche Kombinationen gerechnet wurden, welche Tore sie bestehen
+     mussten und woher die Schwellen kommen. Nicht eingebaut wurden „Der Schlussmann",
+     „Der Pflichterfüller" und „Der Mitspieler"; dazugekommen ist <b>„Das Fundament"</b>,
+     das Gegenstück zur „Handschrift" für die Abwehr — Sturm und Abwehr sind ein Paar wie
+     „Der komplette Stürmer" und „Der komplette Verteidiger", und gemessen gehören sie
+     zwei verschiedenen Spielern.</p>
   <p>Ein Rekord soll zeigen, wer am meisten kann — und eine hohe Schwelle ist dafür
      legitim: wer sie hält, hat sie über eine lange Strecke gehalten. Er soll aber nicht
      <b>nur</b> das zeigen. Gebraucht werden <b>auch</b> Rekorde, die jemand mit fünfzig

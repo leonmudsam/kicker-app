@@ -1860,6 +1860,10 @@ function _buildStories(){
         const a = _vorher[def.id];
         const art = _rekordArt(a, n);
         if(!art) return;
+        // Ein gleitendes Fenster wird nicht „ausgebaut" [§C33]: sein Wert
+        // steigt auch, weil hinten ein altes Ergebnis herausfaellt. Nur der
+        // Halterwechsel ist bei ihm eine Nachricht.
+        if(art === 'gesteigert' && def.fenster) return;
         if(!n.pids.some(p => _amTag.has(p))) return;
         const _mid = _partieVon(n.pids);
         const neuN = n.pids.map(nameOf);

@@ -321,6 +321,46 @@ const _tafel = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_tafel.rekorde > 0, 'ein Halterwechsel wird gemeldet', _tafel.rekorde + ' Rekord-Karten');
 ok(_tafel.ausbauStumm === 0, 'nur sichtbar verbesserte Rekorde werden als „ausgebaut" gemeldet',
    _tafel.ausbauStumm + ' ohne sichtbare Aenderung');
+
+// ── Ein gleitendes Fenster wird nicht „ausgebaut" [§C33] ──────────────
+// Der Wert einer Laufbahn steigt, weil jemand besser gespielt hat; der Wert
+// eines Fensters steigt auch dann, wenn am hinteren Ende ein schwaches
+// Ergebnis herausfaellt. Dieselbe Begruendung wie beim Verschlechtern: wer
+// nichts getan hat, hat nichts getan.
+// Gemessen wird ueber jeden vierten Spieltag der Ligageschichte und nicht am
+// festen Zeitpunkt: dort faellt zufaellig gerade keine Ausbau-Karte, und die
+// Zusicherung war damit gruen, auch als die Regel ganz fehlte.
+const _fenAus = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const tage = [...new Set(alle.map(m => mdayKey(m)))].sort();
+  const ausbau = [], fenster = [];
+  tage.filter((t, i) => i % 4 === 0).forEach(tag => {
+    matches = alle.filter(m => mdayKey(m) <= tag);
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let roh = []; try { roh = _buildStories() || []; } catch(e){ return; }
+    roh.forEach(s => {
+      const d = s.dataRef || {};
+      if(d.type !== 'rekord_gesteigert') return;
+      ausbau.push(d.rekordId);
+      if((CHRONICLE_BY_ID[d.rekordId] || {}).fenster) fenster.push(s.title);
+    });
+  });
+  matches = alle; invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  return {ausbau:ausbau.length, arten:[...new Set(ausbau)].length,
+          fenster:[...new Set(fenster)],
+          katalog:CHRONICLES.filter(c => c.fenster).map(c => c.id)};
+})())`));
+console.log('  Ausbau-Karten im Durchlauf: ' + _fenAus.ausbau + ' aus ' + _fenAus.arten + ' Rekorden'
+  + ' · Fenster im Katalog: ' + _fenAus.katalog.join(', '));
+ok(_fenAus.katalog.length >= 3, 'die gleitenden Fenster stehen im Katalog',
+   _fenAus.katalog.join(', ') || 'keins');
+// Ohne diese Probe waere die naechste vakuant: sie prueft eine Teilmenge.
+ok(_fenAus.ausbau >= 10, 'der Durchlauf trifft ueberhaupt Ausbau-Karten',
+   _fenAus.ausbau + ' Karten');
+ok(_fenAus.fenster.length === 0, 'kein gleitendes Fenster meldet ein Ausbauen',
+   _fenAus.fenster.slice(0, 3).join(' | ') || _fenAus.ausbau + ' Ausbau-Karten, keine davon');
 ok(_tafel.kammer, 'Schattenseiten meldet der Feed nicht');
 ok(_tafel.kat, 'Rekorde stehen in der Kammer „Ewige Tafel"');
 ok(_tafel.gesichter, 'jede Rekordkarte zeigt ihren Halter [§C33]');
