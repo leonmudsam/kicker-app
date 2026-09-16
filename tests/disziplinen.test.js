@@ -1705,6 +1705,88 @@ ok(_gl.ohne.length === 0, 'jeder gewertete Spieler traegt mindestens einen Liga-
 
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ JEDER REKORD ERKLAERT SICH ═══');
+// Die Karte im Rekorde-Reiter zeigt den Namen und die BEDINGUNG, das Blatt
+// darunter die ERKLAERUNG. Beide waren lueckenhaft: nur 15 der 46 Rekorde
+// hatten ueberhaupt eine Erklaerung, und mehrere Bedingungen nannten nicht
+// alle Schwellen, die ihre Rechnung erzwingt.
+//
+// „Die ruhige Hand" verlangte „mindestens 9 Prozentpunkte" und schwieg ueber
+// die 14 engen Partien und die 20 % der Laufbahn, die ebenso verlangt sind:
+// wer die Karte las, wusste nicht, warum er nicht im Rennen steht. „Der
+// Gigantentoeter" nannte keinen Nenner, obwohl er gegen ALLE Partien zaehlt
+// und nicht gegen die als Aussenseiter. „Die Mauer" heisst so, misst aber
+// nur, wie oft jemand hinten stand — ohne Erklaerung liest sich der Name als
+// Abwehrstaerke.
+//
+// Geprueft wird deshalb maschinell: jede Zahl, die die Wertfunktion als
+// Schwelle erzwingt, muss im Text stehen. Ein Anteil unter eins wird dafuer
+// als Prozentwert gelesen, so wie ihn die Bedingung schreibt.
+const _erk = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.map(c => ({
+  id:c.id, name:c.name, cond:c.cond || '', wie:c.wie || '',
+  unit:c.unit || '', min:c.min || 0,
+  // Der Quelltext der Rechnung. Aus ihm kommen die Schwellen: eine Zahl, die
+  // dort ueber ein Tor entscheidet, gehoert in die Bedingung.
+  src:String(c.raw || c.val || '')
+})))`));
+
+const _ohneWie = _erk.filter(c => c.wie.trim().length < 40).map(c => c.name);
+ok(_ohneWie.length === 0, 'jeder Rekord traegt eine Erklaerung',
+   _ohneWie.join(', ') || _erk.length + ' von ' + _erk.length);
+const _ohneCond = _erk.filter(c => c.cond.trim().length < 20).map(c => c.name);
+ok(_ohneCond.length === 0, 'jeder Rekord traegt eine Bedingung',
+   _ohneCond.join(', ') || _erk.length + ' von ' + _erk.length);
+
+// Keine Umschreibung, die nichts erklaert. Die Liste ist kurz und nennt nur
+// Floskeln, die in einem Erklaertext nie stehen muessen.
+const _FLOSKEL = ['gewissermaßen', 'sozusagen', 'im Grunde', 'quasi',
+                  'eigentlich', 'letztlich', 'bekanntlich', 'natürlich',
+                  'selbstverständlich', 'mehr oder weniger'];
+const _floskel = [];
+_erk.forEach(c => _FLOSKEL.forEach(f => {
+  if((c.cond + ' ' + c.wie).toLowerCase().indexOf(f.toLowerCase()) >= 0)
+    _floskel.push(c.name + ': ' + f);
+}));
+ok(_floskel.length === 0, 'keine Floskel in Bedingung oder Erklaerung',
+   _floskel.join(', ') || 'keine');
+
+// Die eigentliche Probe: jede Schwelle der Rechnung steht im Text.
+// Gelesen werden nur Zahlen, die in einem Vergleich stehen (>=, <=, <, >)
+// oder als `min` am Eintrag haengen — eine 2 aus `slice(0, 2)` ist keine
+// Schwelle, ein `>= 0.22` schon.
+const _fehlt = [];
+_erk.forEach(c => {
+  const txt = (c.cond + ' ' + c.wie).replace(/\u00a0/g, ' ');
+  // Eine kleine Zahl steht im deutschen Satz ausgeschrieben: „mindestens
+  // dreimal" ist dieselbe Schwelle wie „mindestens 3". Ohne diese Liste
+  // verlangte die Probe eine Ziffer und damit schlechteres Deutsch.
+  const WORT = {2:'zwei', 3:'drei', 4:'vier', 5:'fünf', 6:'sechs', 7:'sieben',
+                8:'acht', 9:'neun', 10:'zehn', 11:'elf', 12:'zwölf'};
+  const hat = (n) => {
+    // Als ganze Zahl oder als Prozentwert, mit Komma oder Punkt.
+    const kandidaten = [String(n), String(n).replace('.', ',')];
+    if(WORT[n]) kandidaten.push(WORT[n]);
+    if(n > 0 && n < 1){
+      kandidaten.push(String(Math.round(n * 1000) / 10).replace('.', ','));
+      kandidaten.push(String(Math.round(n * 100)));
+    }
+    return kandidaten.some(k => /^[0-9]/.test(k)
+      ? new RegExp('(^|[^0-9.,])' + k.replace(/[.]/g, '\\.') + '([^0-9]|$)').test(txt)
+      : txt.toLowerCase().indexOf(k) >= 0);
+  };
+  const zahlen = new Set();
+  const re = /(?:>=|<=|>|<)\s*([0-9]+(?:\.[0-9]+)?)/g;
+  let m; while((m = re.exec(c.src))) zahlen.add(parseFloat(m[1]));
+  if(c.min) zahlen.add(c.min);
+  [...zahlen].forEach(n => {
+    // 0 und 1 sind keine Schwellen, sondern Vorzeichen- und Leerproben.
+    if(n === 0 || n === 1) return;
+    if(!hat(n)) _fehlt.push(c.name + ': ' + n);
+  });
+});
+ok(_fehlt.length === 0, 'jede Schwelle der Rechnung steht auch im Text',
+   _fehlt.slice(0, 6).join(' · ') || _erk.length + ' Rekorde geprueft');
+
 console.log('\n═══ DIE OFFENE KAMMER: EIN REKORD FUER JEDEN ═══');
 // Die Zusicherung, die dem Katalog am laengsten gefehlt hat. Gemessen waren
 // 13 der 21 bestehenden Rekorde mit lesbarer Mindestzahl fuer einen Spieler
