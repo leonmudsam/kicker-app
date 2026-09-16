@@ -90,8 +90,11 @@ IDS.forEach(id => {
 // Der Erste der Liga nach Siegquote. „Der Unbequeme" fragt nach den Duellen
 // gegen ihn: EIN Gegner, dieselbe Zahl fuer alle, und wer ihn schlaegt, hat
 // das unabhaengig von der eigenen Spielzahl getan.
-const LIGA_ERSTER = IDS.filter(id => P[id].games >= 30)
-  .sort((a, b) => P[b].q - P[a].q)[0];
+// Die drei staerksten nach Siegquote. „Der Gipfelstuermer" fragt nach den
+// Duellen gegen sie: derselbe Gegnerkreis fuer alle, und wer ihn schlaegt,
+// hat das unabhaengig von der eigenen Spielzahl getan.
+const LIGA_TOP3 = IDS.filter(id => P[id].games >= 30)
+  .sort((a, b) => P[b].q - P[a].q).slice(0, 3);
 
 const quote = a => a.length ? a.filter(s => s.win).length / a.length : 0;
 const streu = a => { if(a.length < 2) return 0;
@@ -103,469 +106,138 @@ const pct = v => Math.round(v * 100);
 const komma = (v, n) => (Number(v) || 0).toFixed(n == null ? 1 : n).replace('.', ',');
 const pp = v => (v >= 0 ? '+' : '') + Math.round(v * 100);
 
-// ── Die Kandidaten ──────────────────────────────────────────────────
 // `quelle` nennt die Monatschronik, deren Frage sie auf die Laufbahn hebt —
 // derselbe Name, dasselbe Zeichen, nur die andere Zeitachse [§13.1]. `art`
 // entscheidet das Prestige [§C34], `zufall` die Kammer [§C35]. Alle
 // Kandidaten, deren Wert nicht mit der Siegquote laeuft, messen kein Koennen
 // und stehen deshalb als Fuegung da: sie sollen jemandem gehoeren koennen,
 // nicht jemanden auszeichnen.
-// `sorte` sagt, WIE gemessen wird, und entscheidet damit, welche Tore fuer
-// einen Kandidaten ueberhaupt gelten [§C35]: eine **Quote** mittelt ueber
-// eine Laufbahn und muss erreichbar sein und weit ausschlagen; ein **Fund**
-// ist ein einzelnes Zusammentreffen und darf selten sein und sogar
-// unbesetzt bleiben — sonst waere es keiner. Die Quotentore auf einen Fund
-// anzuwenden hiesse, das Seltene abzuschaffen.
-const K = [
-  {id:'gleichauf', name:'Auf Augenhöhe', quelle:'Auf Augenhöhe', art:'leistung', zufall:'', sorte:'quote',
-   frage:'Wie viel besser läuft es in den Partien, die die Rechnung offen sah?',
-   min:p => p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55).length >= 25,
-   wert:p => { const d = p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55);
-     return quote(d) - p.q; },
-   ev:p => { const d = p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55);
-     return `${pct(quote(d))} % in ${d.length} offenen Partien, sonst ${pct(p.q)} %`; },
-   mindText:'ab 25 offenen Partien'},
-
-  {id:'steigerung', name:'Die Steigerung', quelle:'Die Steigerung', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit liegt das letzte Drittel der Laufbahn über dem ersten?',
-   min:p => p.games >= 60,
-   wert:p => { const n = Math.floor(p.games / 3);
-     return quote(p.partien.slice(-n)) - quote(p.partien.slice(0, n)); },
-   ev:p => { const n = Math.floor(p.games / 3);
-     return `${pct(quote(p.partien.slice(-n)))} % im letzten Drittel, `
-          + `${pct(quote(p.partien.slice(0, n)))} % im ersten`; },
-   mindText:'ab 60 Partien'},
-
-  {id:'punktgenau2', name:'Der Erwartungstreue', quelle:'Der Erwartungstreue', art:'konstanz', zufall:'', sorte:'quote',
-   frage:'Wessen Laufbahn trifft die Elo-Erwartung am genauesten?',
-   min:p => p.games >= 60,
-   wert:p => -Math.abs(p.q - p.expQ),
-   ev:p => `${pct(p.q)} % gespielt, ${pct(p.expQ)} % erwartet`,
-   mindText:'ab 60 Partien'},
-
-  {id:'metronom', name:'Das Metronom', quelle:'Das Metronom', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit liegen bester und schwächster Monat auseinander?',
-   min:p => Object.values(p.monatGrp).filter(a => a.length >= 8).length >= 3,
-   wert:p => { const q = Object.values(p.monatGrp).filter(a => a.length >= 8).map(quote);
-     return -(Math.max(...q) - Math.min(...q)); },
-   ev:p => { const q = Object.values(p.monatGrp).filter(a => a.length >= 8).map(quote);
-     return `${pct(Math.min(...q))} % im schwächsten, ${pct(Math.max(...q))} % im besten von `
-          + `${q.length} Monaten`; },
-   mindText:'ab 3 Monaten mit je 8 Partien'},
-
-  {id:'beidseitig', name:'Der Beidfüßige', quelle:'Der Beidfüßige', art:'konstanz', zufall:'', sorte:'quote',
-   frage:'Spielt jemand vorne genauso stark wie hinten?',
-   min:p => p.partien.filter(s => s.pos === 'atk').length >= 25
-         && p.partien.filter(s => s.pos === 'def').length >= 25,
-   wert:p => { const a = p.partien.filter(s => s.pos === 'atk');
-     const d = p.partien.filter(s => s.pos === 'def');
-     return -Math.max(Math.abs(quote(a) - p.q), Math.abs(quote(d) - p.q)); },
-   ev:p => { const a = p.partien.filter(s => s.pos === 'atk');
-     const d = p.partien.filter(s => s.pos === 'def');
-     return `${pct(quote(a))} % vorne, ${pct(quote(d))} % hinten, ${pct(p.q)} % insgesamt`; },
-   mindText:'ab 25 Partien je Position'},
-
-  {id:'rollenfest', name:'Favorit wie Außenseiter', quelle:'Favorit wie Außenseiter', art:'konstanz', zufall:'', sorte:'quote',
-   frage:'Spielt jemand als Favorit genauso wie als Außenseiter?',
-   min:p => p.partien.filter(s => s.exp > 0.55).length >= 20
-         && p.partien.filter(s => s.exp < 0.45).length >= 20,
-   wert:p => -Math.abs(quote(p.partien.filter(s => s.exp > 0.55))
-                     - quote(p.partien.filter(s => s.exp < 0.45))),
-   ev:p => `${pct(quote(p.partien.filter(s => s.exp > 0.55)))} % als Favorit, `
-         + `${pct(quote(p.partien.filter(s => s.exp < 0.45)))} % als Außenseiter`,
-   mindText:'ab 20 Partien in jeder Lage'},
-
-  {id:'gleichmut', name:'Der Gleichmut', quelle:'Der Gleichmut', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie gleichmäßig fallen die Ergebnisse aus?',
-   min:p => p.games >= 60,
-   wert:p => -streu(p.partien.map(s => s.gf - s.ga)),
-   ev:p => `${komma(streu(p.partien.map(s => s.gf - s.ga)))} Tore Streuung um `
-         + `${p.gd / p.games < 0 ? '−' : '+'}${komma(Math.abs(p.gd / p.games))} im Schnitt`,
-   mindText:'ab 60 Partien'},
-
-  {id:'wechselhaft', name:'Der Wechselhafte', quelle:'Der Wechselhafte', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wessen Spieltage sehen am wenigsten wie der andere aus?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 3).length >= 12,
-   wert:p => { const q = Object.values(p.tagGrp).filter(a => a.length >= 3).map(quote);
-     return Math.sqrt(q.reduce((x, y) => x + (y - p.q) * (y - p.q), 0) / q.length); },
-   ev:p => { const q = Object.values(p.tagGrp).filter(a => a.length >= 3).map(quote);
-     return `${pct(Math.min(...q))} % am schwächsten, ${pct(Math.max(...q))} % am stärksten `
-          + `von ${q.length} Spieltagen`; },
-   mindText:'ab 12 Spieltagen mit je 3 Partien'},
-
-  {id:'kontrast', name:'Der Kontrast', quelle:'Der Kontrast', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit liegen bester und schwächster Partner auseinander?',
-   min:p => Object.values(p.partnerGrp).filter(a => a.length >= 15).length >= 4,
-   wert:p => { const q = Object.keys(p.partnerGrp).filter(k => p.partnerGrp[k].length >= 15)
-       .map(k => ({k, q:quote(p.partnerGrp[k])})).sort((a, b) => b.q - a.q);
-     return q[0].q - q[q.length - 1].q; },
-   ev:p => { const q = Object.keys(p.partnerGrp).filter(k => p.partnerGrp[k].length >= 15)
-       .map(k => ({k, q:quote(p.partnerGrp[k])})).sort((a, b) => b.q - a.q);
-     return `${pct(q[0].q)} % neben ${name(q[0].k)}, ${pct(q[q.length - 1].q)} % neben `
-          + `${name(q[q.length - 1].k)}`; },
-   mindText:'ab 4 Partnern mit je 15 Partien'},
-
-  {id:'angstfrei', name:'Ohne Angstgegner', quelle:'Ohne Angstgegner', art:'leistung', zufall:'', sorte:'quote',
-   frage:'Wie gut läuft es gegen den unangenehmsten Gegner?',
-   min:p => Object.values(p.gegnerGrp).filter(a => a.length >= 15).length >= 6,
-   wert:p => Math.min(...Object.values(p.gegnerGrp).filter(a => a.length >= 15).map(quote)),
-   ev:p => { const gg = Object.values(p.gegnerGrp).filter(a => a.length >= 15);
-     return `${gg.length} regelmäßige Gegner, gegen keinen unter `
-          + `${pct(Math.min(...gg.map(quote)))} %`; },
-   mindText:'ab 6 Gegnern mit je 15 Duellen'},
-
-  {id:'breitenwirkung', name:'Gegen jeden bestanden', quelle:'Gegen jeden bestanden', art:'leistung', zufall:'', sorte:'quote',
-   frage:'Gegen wie viele regelmäßige Gegner steht jemand im Plus?',
-   min:p => Object.values(p.gegnerGrp).filter(a => a.length >= 15).length >= 6,
-   wert:p => { const r = Object.values(p.gegnerGrp).filter(a => a.length >= 15);
-     return r.filter(a => a.filter(s => s.win).length * 2 > a.length).length / r.length; },
-   ev:p => { const r = Object.values(p.gegnerGrp).filter(a => a.length >= 15);
-     return `gegen ${r.filter(a => a.filter(s => s.win).length * 2 > a.length).length} von `
-          + `${r.length} regelmäßigen Gegnern im Plus`; },
-   mindText:'ab 6 Gegnern mit je 15 Duellen'},
-
-  {id:'zweiteluft', name:'Die zweite Luft', quelle:'Die zweite Luft', art:'leistung', zufall:'', sorte:'quote',
-   frage:'Wie viel stärker läuft es ab der vierten Partie eines Spieltags?',
-   min:p => { const b = block(p); return b.spaet.length >= 25 && b.frueh.length >= 25; },
-   wert:p => { const b = block(p); return quote(b.spaet) - quote(b.frueh); },
-   ev:p => { const b = block(p);
-     return `${pct(quote(b.spaet))} % ab der vierten Partie, ${pct(quote(b.frueh))} % davor`; },
-   mindText:'ab 25 Partien in jedem Block'},
-
-  {id:'kopfhoch', name:'Der Tagesabschluss', quelle:'Der Tagesabschluss', art:'konstanz', zufall:'', sorte:'quote',
-   frage:'Wie viele eigene Spieltage enden nicht negativ?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 3).length >= 12,
-   wert:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 3);
-     return t.filter(a => a.filter(s => s.win).length * 2 >= a.length).length / t.length; },
-   ev:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 3);
-     return `${t.filter(a => a.filter(s => s.win).length * 2 >= a.length).length} von `
-          + `${t.length} Spieltagen nicht negativ`; },
-   mindText:'ab 12 Spieltagen mit je 3 Partien'},
-
-  // ── Vier Kandidaten in der zweiten Fassung ───────────────────────
-  // Die erste Fassung vergleicht mit der EIGENEN Quote. Das ist rechnerisch
-  // eine Umkehrung der Rangliste: wer hoch steht, hat einen hohen Abzug, wer
-  // tief steht, einen niedrigen. Verglichen wird deshalb mit der ERWARTUNG
-  // derselben Partien — dann hebt sich das Niveau heraus, und uebrig bleibt,
-  // was jemand aus der Lage gemacht hat.
-  {id:'gleichauf2', name:'Auf Augenhöhe (2. Fassung)', quelle:'Auf Augenhöhe', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit liegt die Quote in offenen Partien über der Rechnung, die sie offen sah?',
-   min:p => p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55).length >= 25,
-   wert:p => { const d = p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55);
-     return quote(d) - d.reduce((n, s) => n + s.exp, 0) / d.length; },
-   ev:p => { const d = p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55);
-     return `${pct(quote(d))} % in ${d.length} offenen Partien, erwartet waren `
-          + `${pct(d.reduce((n, s) => n + s.exp, 0) / d.length)} %`; },
-   mindText:'ab 25 offenen Partien'},
-
-  {id:'punktgenau2b', name:'Der Erwartungstreue (2. Fassung)', quelle:'Der Erwartungstreue', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wessen Laufbahn trifft die Erwartung am genauesten, gemessen in Standardfehlern?',
-   min:p => p.games >= 60,
-   // Der Abstand in Standardfehlern statt in Prozentpunkten: bei mehr Partien
-   // wird derselbe Prozentpunkt zu einer groesseren Abweichung, und damit
-   // haengt der Wert nicht mehr an der Spielzahl.
-   wert:p => -Math.abs(p.q - p.expQ) * Math.sqrt(p.games),
-   ev:p => `${pct(p.q)} % gespielt, ${pct(p.expQ)} % erwartet, aus ${p.games} Partien`,
-   mindText:'ab 60 Partien'},
-
-  {id:'zweiteluft2', name:'Die zweite Luft (2. Fassung)', quelle:'Die zweite Luft', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie viel besser als die Rechnung läuft es ab der vierten Partie eines Tages?',
-   min:p => { const b = block(p); return b.spaet.length >= 25 && b.frueh.length >= 25; },
-   wert:p => { const b = block(p);
-     const ab = a => quote(a) - a.reduce((n, s) => n + s.exp, 0) / a.length;
-     return ab(b.spaet) - ab(b.frueh); },
-   ev:p => { const b = block(p);
-     const ab = a => quote(a) - a.reduce((n, s) => n + s.exp, 0) / a.length;
-     return `${pp(ab(b.spaet))} Punkte über der Rechnung ab der vierten Partie, `
-          + `${pp(ab(b.frueh))} davor`; },
-   mindText:'ab 25 Partien in jedem Block'},
-
-  {id:'rollenfest2', name:'Favorit wie Außenseiter (2. Fassung)', quelle:'Favorit wie Außenseiter', art:'konstanz', zufall:'', sorte:'quote',
-   frage:'Liegt jemand als Favorit genauso weit über der Rechnung wie als Außenseiter?',
-   min:p => p.partien.filter(s => s.exp > 0.55).length >= 20
-         && p.partien.filter(s => s.exp < 0.45).length >= 20,
-   wert:p => { const ab = a => quote(a) - a.reduce((n, s) => n + s.exp, 0) / a.length;
-     return -Math.abs(ab(p.partien.filter(s => s.exp > 0.55))
-                    - ab(p.partien.filter(s => s.exp < 0.45))); },
-   ev:p => { const ab = a => quote(a) - a.reduce((n, s) => n + s.exp, 0) / a.length;
-     return `${pp(ab(p.partien.filter(s => s.exp > 0.55)))} Punkte als Favorit, `
-          + `${pp(ab(p.partien.filter(s => s.exp < 0.45)))} als Außenseiter`; },
-   mindText:'ab 20 Partien in jeder Lage'},
-
-  {id:'schwaechstertag', name:'Der schwächste Tag', quelle:'Der schwächste Tag', art:'konstanz', zufall:'', sorte:'quote',
-   frage:'Wie gut ist der schlechteste Spieltag einer Laufbahn noch?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 3).length >= 12,
-   wert:p => Math.min(...Object.values(p.tagGrp).filter(a => a.length >= 3).map(quote)),
-   ev:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 3);
-     return `schwächster von ${t.length} Spieltagen: ${pct(Math.min(...t.map(quote)))} %`; },
-   mindText:'ab 12 Spieltagen mit je 3 Partien'},
-
-  // ═══ ZWEITE RUNDE: achtzehn weitere ═══════════════════════════════
-  // Die erste Runde hob die Fragen der Monatschroniken auf die Laufbahn.
-  // Fuenf bestanden, und alle fuenf messen eine Abweichung ueber viele
-  // Partien. Was dem Katalog danach noch fehlt, sind zwei andere Sorten:
-  //
-  //   Die FUeGUNG DER AUSLOSUNG — wer welches Los zieht, welchen Partner,
-  //   welchen Gegner, welchen Wochentag. Das waehlt niemand, also kann es
-  //   jedem zufallen, und es hat mit Koennen nichts zu tun.
-  //
-  //   Der MOMENT IM TAG — die erste Partie, die letzte, der Tag nach einem
-  //   Fehlstart, die Rueckkehr nach einer Pause. Jeder Spieltag bringt
-  //   davon je einen, unabhaengig davon, wie viele Partien jemand spielt.
-  //
-  // Dazu vier FUNDE: einzelne Zusammentreffen, die selten sein duerfen. Sie
-  // sind die einzige Sorte, die ein Gelegenheitsspieler an einem einzigen
-  // Nachmittag holen kann — und genau deshalb gehoert sie dazu.
-
-  // ── Die Fuegung der Auslosung ────────────────────────────────────
-  {id:'ausgelost', name:'Der Ausgeloste', quelle:'Auf Augenhöhe', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wem fällt das ausgeglichenste Los zu?',
-   min:p => p.games >= 60,
-   wert:p => p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55).length / p.games,
-   ev:p => { const d = p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55);
-     return `${pct(d.length / p.games)} % der Partien auf Augenhöhe, ${d.length} von ${p.games}`; },
-   mindText:'ab 60 Partien'},
-
-  {id:'herausgefordert', name:'Der Herausgeforderte', quelle:'Der schwerste Tag', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wer ging über die ganze Laufbahn am häufigsten als Außenseiter ins Spiel?',
-   min:p => p.games >= 60,
-   wert:p => -p.expQ,
-   ev:p => `${pct(p.expQ)} % mittlere Siegchance über ${p.games} Partien`,
-   mindText:'ab 60 Partien'},
-
-  {id:'wandergeselle', name:'Der Wandergeselle', quelle:'Der Kontrast', art:'konstanz', zufall:'', sorte:'quote',
-   frage:'Bei wem ist es am gleichgültigsten, wer daneben steht?',
-   min:p => Object.values(p.partnerGrp).filter(a => a.length >= 12).length >= 4,
-   wert:p => -streu(Object.values(p.partnerGrp).filter(a => a.length >= 12).map(quote)),
-   ev:p => { const q = Object.values(p.partnerGrp).filter(a => a.length >= 12).map(quote);
-     return `${pp(streu(q))} Punkte Streuung über ${q.length} regelmäßige Partner`; },
-   mindText:'ab 4 Partnern mit je 12 Partien'},
-
-  {id:'wochentagsfest', name:'Der Wochentagsfeste', quelle:'Das Metronom', art:'konstanz', zufall:'', sorte:'quote',
-   frage:'Bei wem spielt es keine Rolle, welcher Wochentag es ist?',
-   min:p => Object.values(p.wtagGrp).filter(a => a.length >= 12).length >= 3,
-   wert:p => -streu(Object.values(p.wtagGrp).filter(a => a.length >= 12).map(quote)),
-   ev:p => { const q = Object.values(p.wtagGrp).filter(a => a.length >= 12).map(quote);
-     return `${pp(streu(q))} Punkte Streuung über ${q.length} Wochentage`; },
-   mindText:'ab 3 Wochentagen mit je 12 Partien'},
-
-  {id:'unbequem', name:'Der Unbequeme', quelle:'Ohne Angstgegner', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit über der Rechnung läuft es gegen den Ersten der Liga?',
-   min:p => (p.gegnerGrp[LIGA_ERSTER] || []).length >= 15 && p.id !== LIGA_ERSTER,
-   wert:p => abw(p.gegnerGrp[LIGA_ERSTER]),
-   ev:p => { const d = p.gegnerGrp[LIGA_ERSTER];
-     return `${pp(abw(d))} Punkte über der Rechnung in ${d.length} Duellen gegen `
-          + `${name(LIGA_ERSTER)}`; },
-   mindText:'ab 15 Duellen gegen den Ersten'},
-
-  {id:'selbstlaeufer', name:'Der Selbstläufer', quelle:'Der Kontrast', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit über der Rechnung läuft es neben dem schwächsten regelmäßigen Partner?',
-   min:p => schwachPartner(p) != null,
-   wert:p => abw(p.partnerGrp[schwachPartner(p)]),
-   ev:p => { const k = schwachPartner(p); const d = p.partnerGrp[k];
-     return `${pp(abw(d))} Punkte über der Rechnung in ${d.length} Partien neben `
-          + `${name(k)}`; },
-   mindText:'ab 12 Partien neben dem schwächsten regelmäßigen Partner'},
-
-  // ── Der Moment im Tag ────────────────────────────────────────────
-  {id:'fehlstart', name:'Der Fehlstarter', quelle:'Der Tagesabschluss', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie oft wird ein Spieltag nach einer Auftaktniederlage noch positiv?',
-   min:p => tageMit(p, a => !a[0].win, 3).length >= 8,
-   wert:p => { const t = tageMit(p, a => !a[0].win, 3);
-     return t.filter(a => a.filter(s => s.win).length * 2 > a.length).length / t.length; },
-   ev:p => { const t = tageMit(p, a => !a[0].win, 3);
-     return `${t.filter(a => a.filter(s => s.win).length * 2 > a.length).length} von `
-          + `${t.length} Spieltagen nach einer Auftaktniederlage noch gewonnen`; },
-   mindText:'ab 8 Spieltagen mit Auftaktniederlage'},
-
-  {id:'anspieler', name:'Der Anspieler', quelle:'Die zweite Luft', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit über der Rechnung liegt die erste Partie eines Spieltags?',
-   min:p => tagesPartie(p, 'erste').length >= 20,
-   wert:p => abw(tagesPartie(p, 'erste')),
-   ev:p => { const d = tagesPartie(p, 'erste');
-     return `${pp(abw(d))} Punkte über der Rechnung in ${d.length} Auftaktpartien, `
-          + `${pct(quote(d))} % gewonnen`; },
-   mindText:'ab 20 Auftaktpartien'},
-
-  {id:'schlussmann', name:'Der Schlussmann', quelle:'Die zweite Luft', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit über der Rechnung liegt die letzte Partie eines Spieltags?',
-   min:p => tagesPartie(p, 'letzte').length >= 20,
-   wert:p => abw(tagesPartie(p, 'letzte')),
-   ev:p => { const d = tagesPartie(p, 'letzte');
-     return `${pp(abw(d))} Punkte über der Rechnung in ${d.length} Schlusspartien, `
-          + `${pct(quote(d))} % gewonnen`; },
-   mindText:'ab 20 Schlusspartien'},
-
-  {id:'standhaft', name:'Der Standhafte', quelle:'Der Tagesabschluss', art:'konstanz', zufall:'', sorte:'quote',
-   frage:'An wie vielen eigenen Spieltagen bleibt jemand nicht ohne Sieg?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 3).length >= 12,
-   wert:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 3);
-     return t.filter(a => a.some(s => s.win)).length / t.length; },
-   ev:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 3);
-     return `${t.filter(a => a.some(s => s.win)).length} von ${t.length} Spieltagen `
-          + `mit mindestens einem Sieg`; },
-   mindText:'ab 12 Spieltagen mit je 3 Partien'},
-
-  {id:'aufwaermen', name:'Die Aufwärmphase', quelle:'Die Steigerung', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'An wie vielen Spieltagen läuft die zweite Hälfte besser als die erste?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 4).length >= 10,
-   wert:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 4);
-     return t.filter(a => { const h = haelften(a);
-       return quote(h[1]) > quote(h[0]); }).length / t.length; },
-   ev:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 4);
-     const n = t.filter(a => { const h = haelften(a); return quote(h[1]) > quote(h[0]); }).length;
-     return `${n} von ${t.length} Spieltagen in der zweiten Hälfte stärker`; },
-   mindText:'ab 10 Spieltagen mit je 4 Partien'},
-
-  {id:'langstreckler', name:'Der Langstreckler', quelle:'Die zweite Luft', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit über der Rechnung liegen die langen Spieltage?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 6).length >= 4,
-   wert:p => abw([].concat(...Object.values(p.tagGrp).filter(a => a.length >= 6))),
-   ev:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 6);
-     const d = [].concat(...t);
-     return `${pp(abw(d))} Punkte über der Rechnung an ${t.length} Tagen mit `
-          + `6 oder mehr Partien`; },
-   mindText:'ab 4 Spieltagen mit je 6 Partien'},
-
-  {id:'rueckkehrer', name:'Der Rückkehrer', quelle:'Auf Augenhöhe', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'Wie weit über der Rechnung liegt die erste Partie nach einer Pause?',
-   min:p => pause(p).length >= 8,
-   wert:p => abw(pause(p)),
-   ev:p => { const d = pause(p);
-     return `${pp(abw(d))} Punkte über der Rechnung in ${d.length} Partien nach `
-          + `mindestens ${PAUSE_TAGE} Tagen ohne eigenes Spiel`; },
-   mindText:'ab 8 Rückkehrpartien'},
-
-  {id:'buchhalter', name:'Der Buchhalter', quelle:'Die Punktlandung', art:'ereignis', zufall:'quote', sorte:'quote',
-   frage:'An wie vielen Spieltagen geht das eigene Torkonto genau auf?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 3).length >= 12,
-   wert:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 3);
-     return t.filter(a => a.reduce((n, s) => n + s.gf - s.ga, 0) === 0).length / t.length; },
-   ev:p => { const t = Object.values(p.tagGrp).filter(a => a.length >= 3);
-     return `${t.filter(a => a.reduce((n, s) => n + s.gf - s.ga, 0) === 0).length} von `
-          + `${t.length} Spieltagen mit einem Torkonto von genau null`; },
-   mindText:'ab 12 Spieltagen mit je 3 Partien'},
-
-  // ── Vier Funde ───────────────────────────────────────────────────
-  // Ein Fund darf selten sein und sogar unbesetzt bleiben [§C35]; die
-  // Quotentore gelten fuer ihn nicht. Gemessen wird stattdessen, wie viele
-  // ihn ueberhaupt schon einmal getroffen haben — bleibt mehr als die
-  // Haelfte leer, ist die Sache zu selten, um ein Eintrag zu sein.
-  // Dafuer braucht jeder Fund seine eigene Untergrenze (`abFund`): ein Lauf
-  // von EINER Partie ist keine Serie, und ein einziges Spiel ohne Gegentor
-  // ist noch kein Tag ohne Gegentor. Ohne diese Grenze traegt jeder
-  // Spieler einen Wert, und der Deckel geht ins Leere.
-  {id:'weisseweste', abFund:2, name:'Die weiße Weste', quelle:'Der makellose Tag', art:'ereignis', zufall:'fund', sorte:'fund',
-   frage:'Wie viele Partien ohne ein einziges Gegentor an einem Spieltag?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 3).length >= 8,
-   wert:p => Math.max(0, ...Object.values(p.tagGrp).map(a => a.filter(s => s.ga === 0).length)),
-   ev:p => { const n = Math.max(0, ...Object.values(p.tagGrp).map(a => a.filter(s => s.ga === 0).length));
-     return `${n} Partien ohne Gegentor am stärksten solchen Spieltag`; },
-   mindText:'ab 8 Spieltagen mit je 3 Partien'},
-
-  {id:'rundumschlag', abFund:3, name:'Der Rundumschlag', quelle:'Gegen jeden bestanden', art:'ereignis', zufall:'fund', sorte:'fund',
-   frage:'Gegen wie viele verschiedene Gegner an einem Tag gewonnen, ohne gegen einen zu verlieren?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 3).length >= 8,
-   wert:p => Math.max(0, ...Object.values(p.tagGrp).map(a => {
-     const auf = {};
-     a.forEach(s => s.geg.forEach(g => { if(g) (auf[g] = auf[g] || []).push(s.win); }));
-     const rein = Object.keys(auf).filter(g => auf[g].every(Boolean));
-     return Object.keys(auf).some(g => !auf[g].every(Boolean)) ? 0 : rein.length;
-   })),
-   ev:p => { const n = Math.max(0, ...Object.values(p.tagGrp).map(a => {
-       const auf = {};
-       a.forEach(s => s.geg.forEach(g => { if(g) (auf[g] = auf[g] || []).push(s.win); }));
-       return Object.keys(auf).some(g => !auf[g].every(Boolean)) ? 0 : Object.keys(auf).length; }));
-     return `${n} Gegner an einem Tag geschlagen, ohne gegen einen zu verlieren`; },
-   mindText:'ab 8 Spieltagen mit je 3 Partien'},
-
-  {id:'zahlendreher', abFund:1, name:'Der Zahlendreher', quelle:'Der Wiedergänger', art:'ereignis', zufall:'fund', sorte:'fund',
-   frage:'Wie oft kommen an einem Tag ein Ergebnis und sein Spiegelbild beide vor?',
-   min:p => Object.values(p.tagGrp).filter(a => a.length >= 3).length >= 8,
-   wert:p => Object.values(p.tagGrp).filter(a => {
-     const st = new Set(a.map(s => s.gf + ':' + s.ga));
-     return a.some(s => s.gf !== s.ga && st.has(s.ga + ':' + s.gf));
-   }).length,
-   ev:p => { const n = Object.values(p.tagGrp).filter(a => {
-       const st = new Set(a.map(s => s.gf + ':' + s.ga));
-       return a.some(s => s.gf !== s.ga && st.has(s.ga + ':' + s.gf)); }).length;
-     return `${n} Spieltage mit einem Ergebnis und seinem Spiegelbild`; },
-   mindText:'ab 8 Spieltagen mit je 3 Partien'},
-
-  {id:'serientaeter', abFund:2, name:'Der Serientäter', quelle:'Der Wiedergänger', art:'ereignis', zufall:'fund', sorte:'fund',
-   frage:'Wie viele eigene Partien nacheinander endeten mit demselben Stand?',
-   min:p => p.games >= 40,
-   wert:p => { let best = 1, lauf = 1;
-     for(let i = 1; i < p.partien.length; i++){
-       const a = p.partien[i], b = p.partien[i - 1];
-       lauf = (a.gf === b.gf && a.ga === b.ga) ? lauf + 1 : 1;
-       if(lauf > best) best = lauf;
-     }
-     return best; },
-   ev:p => { let best = 1, lauf = 1, stand = '';
-     for(let i = 1; i < p.partien.length; i++){
-       const a = p.partien[i], b = p.partien[i - 1];
-       lauf = (a.gf === b.gf && a.ga === b.ga) ? lauf + 1 : 1;
-       if(lauf > best){ best = lauf; stand = a.gf + ':' + a.ga; }
-     }
-     return `${best} Partien nacheinander${stand ? ' mit ' + stand : ''}`; },
-   mindText:'ab 40 Partien'}
+// ── Die Suche ───────────────────────────────────────────────────────
+// Statt einzelne Kandidaten zu erfinden, wird JEDE Kennzahl ueber JEDE
+// Teilmenge gerechnet und durch dieselben Tore geschickt. Das ist der
+// Unterschied zwischen einem Vorschlag und einer Suche: Die erste Runde hat
+// achtzehn Fragen geraten und fuenf behalten; hier entstehen alle
+// Kombinationen, und die Tore entscheiden.
+//
+// Jede Teilmenge nennt ihre Mindestzahl UND die Zahl der Partien, die eine
+// Laufbahn dafuer braucht. Das ist das erste Tor: ein Rekord, der sechzig
+// Partien fordert, gehoert dem Vielspieler, weil ihn ausser ihm niemand
+// halten KANN. Gerechnet wird mit dem Bestand eines Spielers, der fuenfzig
+// Partien hat — etwa zwanzig Siege, je fuenfundzwanzig Sturm- und
+// Abwehrspiele, zwoelf bis vierzehn Spieltage, acht bis zwoelf Duelle gegen
+// jeden anderen.
+const TEIL = [
+  {id:'alle',    n:'über die ganze Laufbahn', f:p => p.partien,                                  min:25, braucht:25},
+  {id:'unter',   n:'als Außenseiter',         f:p => p.partien.filter(s => s.exp < 0.45),        min:15, braucht:30},
+  {id:'favorit', n:'als Favorit',             f:p => p.partien.filter(s => s.exp > 0.55),        min:15, braucht:30},
+  {id:'offen',   n:'auf Augenhöhe',           f:p => p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55), min:12, braucht:35},
+  {id:'sturm',   n:'im Sturm',                f:p => p.partien.filter(s => s.pos === 'atk'),     min:12, braucht:25},
+  {id:'abwehr',  n:'in der Abwehr',           f:p => p.partien.filter(s => s.pos === 'def'),     min:12, braucht:25},
+  {id:'nachP',   n:'nach einer Niederlage',   f:p => nach(p, false),                             min:15, braucht:30},
+  {id:'nachS',   n:'nach einem Sieg',         f:p => nach(p, true),                              min:12, braucht:30},
+  {id:'eng',     n:'in engen Partien',        f:p => p.partien.filter(s => Math.abs(s.gf - s.ga) <= 1), min:10, braucht:40},
+  {id:'klar',    n:'in klaren Partien',       f:p => p.partien.filter(s => Math.abs(s.gf - s.ga) >= 5), min:10, braucht:30},
+  {id:'top',     n:'gegen die besten drei',   f:p => p.partien.filter(s => s.geg.some(g => LIGA_TOP3.includes(g))), min:15, braucht:30},
+  {id:'rest',    n:'gegen den Rest der Liga', f:p => p.partien.filter(s => !s.geg.some(g => LIGA_TOP3.includes(g))), min:15, braucht:30},
+  {id:'auftakt', n:'in der ersten Partie eines Spieltags', f:p => tagPos(p, 'erste'),            min:10, braucht:30},
+  {id:'schluss', n:'in der letzten Partie eines Spieltags', f:p => tagPos(p, 'letzte'),          min:10, braucht:30},
+  {id:'langtag', n:'an langen Spieltagen',    f:p => [].concat(...Object.values(p.tagGrp).filter(a => a.length >= 5)), min:15, braucht:30},
+  {id:'erste25', n:'in den ersten 25 Partien', f:p => p.partien.slice(0, 25),                    min:25, braucht:25},
+  {id:'letzte25',n:'in den letzten 25 Partien', f:p => p.partien.slice(-25),                     min:25, braucht:25}
 ];
 
-// ── Werkzeug der zweiten Runde ──────────────────────────────────────
-// Der Abstand zur Rechnung, nicht zur eigenen Quote: gegen die EIGENE Quote
-// gerechnet dreht eine Abweichung die Rangliste um — das ist das Ergebnis
-// der ersten Runde, und jeder neue Kandidat folgt ihm.
-function abw(a){
-  if(!a || !a.length) return 0;
-  return quote(a) - a.reduce((n, s) => n + s.exp, 0) / a.length;
-}
-// Die Partien eines Spieltags in Spielreihenfolge. `tagGrp` gruppiert, aber
-// die Reihenfolge innerhalb einer Gruppe ist die des Einlesens.
-function tagSort(a){ return a.slice().sort((x, y) => x.ts - y.ts); }
-function tageMit(p, pruef, mind){
-  return Object.values(p.tagGrp).filter(a => a.length >= (mind || 1))
-    .map(tagSort).filter(pruef);
-}
-function tagesPartie(p, welche){
-  return Object.values(p.tagGrp).filter(a => a.length >= 2).map(a => {
-    const t = tagSort(a); return welche === 'erste' ? t[0] : t[t.length - 1]; });
-}
-function haelften(a){
-  const t = tagSort(a), m = Math.floor(t.length / 2);
-  return [t.slice(0, m), t.slice(-m)];
-}
-// Die erste Partie nach einer Pause ohne eigenes Spiel. Wer zurueckkommt,
-// hat dieselbe Lage wie jeder andere — das waehlt niemand.
-// Die DREI Tage sind gemessen, nicht geraten: bei sieben Tagen hatten
-// gemessen vier von zwoelf Spielern gar keine Rueckkehr und der Median lag
-// bei einer einzigen, also stand die Frage fuer die halbe Liga nie offen.
-// Bei drei Tagen sind es zehn von zwoelf mit acht und mehr — und drei Tage
-// sind fuer eine Liga, die mehrmals in der Woche spielt, eine Pause.
-const PAUSE_TAGE = 3;
-function pause(p){
-  const t = p.partien.slice().sort((a, b) => a.ts - b.ts);
-  const out = [];
-  for(let i = 1; i < t.length; i++)
-    if(t[i].ts - t[i - 1].ts >= PAUSE_TAGE * 864e5) out.push(t[i]);
+const MASS = [
+  {id:'quote',  n:'Die Siegquote',              f:d => quote(d),
+   ev:d => `${pct(quote(d))} % gewonnen`},
+  {id:'abw',    n:'Der Abstand zur Rechnung',   f:d => abw(d),
+   ev:d => `${pp(abw(d))} Punkte über der Rechnung, ${pct(quote(d))} % statt ${pct(erw(d))} %`},
+  {id:'diff',   n:'Die Tordifferenz je Partie', f:d => summe(d, s => s.gf - s.ga) / d.length,
+   ev:d => `${komma(summe(d, s => s.gf - s.ga) / d.length, 2)} Tore Differenz je Partie`},
+  {id:'tore',   n:'Die eigenen Tore je Partie', f:d => summe(d, s => s.gf) / d.length,
+   ev:d => `${komma(summe(d, s => s.gf) / d.length)} eigene Tore je Partie`},
+  {id:'gegen',  n:'Die Gegentore je Partie',    f:d => -summe(d, s => s.ga) / d.length,
+   ev:d => `${komma(summe(d, s => s.ga) / d.length)} Gegentore je Partie`},
+  {id:'ruhe',   n:'Die Gleichmäßigkeit der Ergebnisse', f:d => -streu(d.map(s => s.gf - s.ga)),
+   ev:d => `${komma(streu(d.map(s => s.gf - s.ga)))} Tore Streuung um `
+         + `${summe(d, s => s.gf - s.ga) < 0 ? '−' : '+'}`
+         + `${komma(Math.abs(summe(d, s => s.gf - s.ga) / d.length))} im Schnitt`},
+  {id:'klarS',  n:'Der Anteil klarer Siege',    f:d => d.filter(s => s.win && s.gf - s.ga >= 5).length / d.length,
+   ev:d => `${pct(d.filter(s => s.win && s.gf - s.ga >= 5).length / d.length)} % mit `
+         + `5 Toren Vorsprung oder mehr, ${d.filter(s => s.win && s.gf - s.ga >= 5).length} von ${d.length}`},
+  {id:'engS',   n:'Der Anteil knapper Siege',   f:d => d.filter(s => s.win && s.gf - s.ga === 1).length / d.length,
+   ev:d => `${pct(d.filter(s => s.win && s.gf - s.ga === 1).length / d.length)} % mit einem Tor `
+         + `Vorsprung, ${d.filter(s => s.win && s.gf - s.ga === 1).length} von ${d.length}`},
+  {id:'anteil', n:'Der Torenteil',              f:d => { const g = summe(d, s => s.gf), a = summe(d, s => s.ga);
+     return (g + a) ? g / (g + a) : 0; },
+   ev:d => `${pct(summe(d, s => s.gf) / (summe(d, s => s.gf) + summe(d, s => s.ga)))} % aller Tore, `
+         + `${summe(d, s => s.gf)}:${summe(d, s => s.ga)}`}
+];
+
+// ── Die Namenstafel ─────────────────────────────────────────────────
+// Nur eine Kombination mit Namen kommt auf die Seite. Die uebrigen werden
+// gerechnet und gezaehlt, aber nicht aufgeschrieben: eine Liste aus
+// „Die Gegentore je Partie nach einem Sieg" ist eine Tabelle, kein Katalog.
+// Ausgewaehlt ist, was keinen bestehenden Eintrag doppelt und was sich von
+// den anderen Ausgewaehlten in Kennzahl UND Teilmenge unterscheidet.
+const NAMEN = {
+  // `konstanz` gibt es fuer einen Liga-Rekord nicht: §10.2 kennt nur
+  // `leistung`, `ereignis` und `schatten`, und ein ungueltiger Wert faellt
+  // still auf `ereignis`. Gleichmaessigkeit ist ausserdem kein Beleg fuer
+  // Koennen — sie gehoert in die Kammer der Fuegungen [§C35], und dort
+  // wiegt sie halb so viel. Das Tor „der Halter bleibt nicht unter seiner
+  // Erwartung" sorgt dafuer, dass sie trotzdem keine Schattenseite ist.
+  'ruhe|abwehr':   {name:'Der Unaufgeregte', art:'ereignis', zufall:'quote',
+    frage:'Wer hält in der Abwehr die Ergebnisse am engsten zusammen?'},
+  'ruhe|unter':    {name:'Der Gelassene', art:'ereignis', zufall:'quote',
+    frage:'Wessen Ergebnisse schwanken als Außenseiter am wenigsten?'},
+  'ruhe|auftakt':  {name:'Der Kaltstarter', art:'ereignis', zufall:'quote',
+    frage:'Wer legt in der ersten Partie eines Spieltags immer dasselbe Ergebnis hin?'},
+  'ruhe|sturm':    {name:'Der Kaltschnäuzige', art:'ereignis', zufall:'quote',
+    frage:'Wessen Ergebnisse schwanken im Sturm am wenigsten?'},
+  'engS|offen':    {name:'Der Nadelstecher', art:'leistung', zufall:'',
+    frage:'Wer entscheidet die offenen Partien am häufigsten mit einem Tor?'},
+  'engS|erste25':  {name:'Der Zitterauftakt', art:'ereignis', zufall:'quote',
+    frage:'Wer hat seine ersten 25 Partien am häufigsten mit einem Tor gewonnen?'},
+  'engS|langtag':  {name:'Der Zäheste', art:'leistung', zufall:'',
+    frage:'Wer holt an langen Spieltagen die meisten knappen Siege?'},
+  'engS|unter':    {name:'Der Stichler', art:'leistung', zufall:'',
+    frage:'Wer gewinnt als Außenseiter am häufigsten mit genau einem Tor?'},
+  'abw|schluss':   {name:'Der Schlussmann', art:'leistung', zufall:'',
+    frage:'Wie weit über der Rechnung liegt die letzte Partie eines Spieltags?'},
+  'abw|abwehr':    {name:'Der Abwehrchef', art:'leistung', zufall:'',
+    frage:'Wie weit über der Rechnung liegt die Leistung in der Abwehr?'},
+  'klarS|offen':   {name:'Der Überraschende', art:'leistung', zufall:'',
+    frage:'Wer macht aus einer offenen Partie am häufigsten einen klaren Sieg?'},
+  'klarS|letzte25':{name:'Die starke Phase', art:'leistung', zufall:'',
+    frage:'Wer holt in den letzten 25 Partien die meisten klaren Siege?'},
+  'gegen|letzte25':{name:'Die dichte Phase', art:'leistung', zufall:'',
+    frage:'Wer lässt in den letzten 25 Partien am wenigsten zu?'},
+  'gegen|favorit': {name:'Der Pflichterfüller', art:'leistung', zufall:'',
+    frage:'Wer lässt als Favorit am wenigsten zu?'},
+  'klarS|favorit': {name:'Der Erwartbare', art:'leistung', zufall:'',
+    frage:'Wer macht die Favoritenrolle am häufigsten deutlich?'},
+  'tore|abwehr':   {name:'Der Mitspieler', art:'leistung', zufall:'',
+    frage:'Wer trifft aus der Abwehr heraus am häufigsten selbst?'}
+};
+
+// ── Werkzeug ────────────────────────────────────────────────────────
+const summe = (a, f) => a.reduce((n, s) => n + f(s), 0);
+const erw = a => a.length ? summe(a, s => s.exp) / a.length : 0;
+// Der Abstand zur RECHNUNG, nicht zur eigenen Quote: gegen die eigene
+// gerechnet dreht eine Abweichung die Rangliste um.
+const abw = a => a.length ? quote(a) - erw(a) : 0;
+function nach(p, win){
+  const t = p.partien.slice().sort((a, b) => a.ts - b.ts), out = [];
+  for(let i = 1; i < t.length; i++) if(t[i - 1].win === win) out.push(t[i]);
   return out;
 }
-// Der regelmaessige Partner mit der schwaechsten eigenen Laufbahnquote.
-function schwachPartner(p){
-  const k = Object.keys(p.partnerGrp).filter(x => p.partnerGrp[x].length >= 12);
-  if(k.length < 2) return null;
-  return k.sort((a, b) => P[a].q - P[b].q)[0];
+function tagPos(p, w){
+  return Object.values(p.tagGrp).filter(a => a.length >= 2).map(a => {
+    const t = a.slice().sort((x, y) => x.ts - y.ts);
+    return w === 'erste' ? t[0] : t[t.length - 1]; });
 }
 
-function block(p){
-  const frueh = [], spaet = [];
-  Object.values(p.tagGrp).forEach(a => {
-    a.slice().sort((x, y) => x.ts - y.ts).forEach((s, i) => (i < 3 ? frueh : spaet).push(s));
-  });
-  return {frueh, spaet};
-}
-
-// ── Die vier Tore ───────────────────────────────────────────────────
+// ── Die Tore ────────────────────────────────────────────────────────
 const korr = (a, b) => {
   const n = a.length; if(n < 3) return 0;
   const ma = a.reduce((x, y) => x + y, 0) / n, mb = b.reduce((x, y) => x + y, 0) / n;
@@ -574,58 +246,172 @@ const korr = (a, b) => {
     sab += (a[i] - ma) * (b[i] - mb); }
   return (sa && sb) ? sab / Math.sqrt(sa * sb) : 0;
 };
-const qRang = (() => {
-  const l = IDS.filter(id => P[id].games >= 30).sort((a, b) => P[b].q - P[a].q);
-  const o = {}; l.forEach((id, i) => { o[id] = i + 1; });
-  return {rang:o, n:l.length};
-})();
+// ── Haengt der Wert an der Spielzahl, wenn man das Koennen herausrechnet? ──
+// Die rohe Korrelation zur Partienzahl taeuscht in dieser Liga: die
+// schwaechsten Spieler spielen auch am wenigsten (Alex 39 Partien und 26 %,
+// Anton 9 und 22 %), waehrend Jane mit 97 Partien auf Rang vier steht.
+// Gemessen liegt die Korrelation zwischen Partienzahl und Siegquote bei
+// +0,49. Damit laeuft JEDER Koennen-Rekord mit der Spielzahl mit, ohne von
+// ihr zu haengen — und ein Tor auf die rohe Zahl wirft genau die Rekorde
+// weg, die der Katalog braucht.
+// Gefragt ist die Teilkorrelation: was bleibt von der Abhaengigkeit uebrig,
+// wenn die Siegquote schon erklaert ist? Das ist die Frage, die §C39 mit
+// „haengt nicht an der Spielzahl" meint.
+function teilKorr(v, sp, q){
+  const rvs = korr(v, sp), rvq = korr(v, q), rsq = korr(sp, q);
+  const n = (1 - rvq * rvq) * (1 - rsq * rsq);
+  return n <= 0 ? 0 : (rvs - rvq * rsq) / Math.sqrt(n);
+}
+const GEW = IDS.filter(id => P[id].games >= 30);
+const QRANG = (() => { const l = GEW.slice().sort((a, b) => P[b].q - P[a].q);
+  const o = {}; l.forEach((id, i) => { o[id] = i + 1; }); return {rang:o, n:l.length}; })();
+const TOP3_LIGA = GEW.slice().sort((a, b) => P[b].q - P[a].q).slice(0, 3);
 
-const ergebnis = K.map(k => {
-  const drin = IDS.filter(id => P[id].games >= 30 && k.min(P[id]));
-  const werte = drin.map(id => ({id, v:k.wert(P[id]), ev:k.ev(P[id]), spiele:P[id].games}));
-  werte.sort((a, b) => b.v - a.v);
+// Jede Kombination aus Kennzahl und Teilmenge, durch dieselben Tore.
+const alleKomb = [];
+TEIL.forEach(t => MASS.forEach(m => {
+  const drin = GEW.filter(id => t.f(P[id]).length >= t.min);
+  const werte = drin.map(id => ({id, v:m.f(t.f(P[id])), spiele:P[id].games,
+      ev:m.ev(t.f(P[id])),
+      // Der Abstand zur Erwartung in GENAU der Teilmenge, die der Rekord
+      // misst. „Der Gelassene" gehoerte Alex mit 3,1 Toren Streuung um
+      // −4,2 im Schnitt: gleichmaessig, weil er gleichmaessig verliert.
+      // Ein Rekord, dessen Halter in der gemessenen Menge unter seiner
+      // eigenen Erwartung bleibt, ist keine Leistung, sondern eine
+      // Schattenseite im Positiven.
+      // Gemessen wird gegen die ERWARTUNG und nicht gegen null: in der
+      // Teilmenge „als Aussenseiter" ist die Tordifferenz bei jedem
+      // negativ, und ein Tor darauf haette die ganze Teilmenge gestrichen —
+      // samt dem Rekord fuer den, der als Aussenseiter trotzdem gewinnt.
+      diff:abw(t.f(P[id]))}))
+    .filter(x => isFinite(x.v)).sort((a, b) => b.v - a.v);
+  if(werte.length < 3) return;
   const vs = werte.map(x => x.v);
-  const mittel = vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : 0;
+  const mittel = vs.reduce((a, b) => a + b, 0) / vs.length;
   const sd = streu(vs);
-  const halter = werte[0] || null;
-  // ── Kommt die Mitte ueberhaupt vor? ──────────────────────────────
-  // Das bisherige Tor fragte nur nach dem HALTER. Ein Rekord, dessen
-  // Bestmarke einem Spieler aus der Mitte gehoert, dahinter aber nur die
-  // Spitze stehen laesst, ist beim naechsten Halterwechsel wieder ein
-  // Rekord der Spitze — die Zahl von heute sagt nichts darueber, wem er
-  // morgen gehoert. Gemessen wird deshalb das Podest: mindestens einer der
-  // besten drei muss aus der UNTEREN Haelfte der Siegquote kommen.
-  const untenAb = Math.ceil(qRang.n / 2);
-  const dreiUnten = werte.slice(0, 3).filter(x => qRang.rang[x.id] > untenAb).length;
-  // Und wie viele haben einen Fund ueberhaupt schon einmal getroffen? Fuer
-  // eine Quote ist das die Zahl im Rennen, fuer einen Fund die eigentliche
-  // Frage [§C35].
-  const belegt = werte.filter(x => x.v >= (k.abFund || 1)).length;
-  // Wie viele halten die Bestmarke punktgleich? Halten sie mehrere, tragen
-  // sie alle [§C32] — und der Grundwert teilt sich durch ihre Zahl [§C34].
-  // Bei „Der Serientaeter" sind es gemessen fuenf, und das ist der Grund,
-  // warum sein Ausschlag so klein ist: die Spitze ist ein Plateau.
-  const gleich = halter ? werte.filter(x => x.v === halter.v).length : 0;
-  return {
-    id:k.id, name:k.name, quelle:k.quelle, art:k.art, zufall:k.zufall,
-    sorte:k.sorte || 'quote', dreiUnten, belegt, untenAb, abFund:k.abFund || 0, gleich,
-    frage:k.frage, mindText:k.mindText,
-    imRennen:drin.length, ligaGewertet:qRang.n,
-    halter:halter ? name(halter.id) : '—',
-    halterSpiele:halter ? halter.spiele : 0,
-    halterRang:halter ? qRang.rang[halter.id] : 0,
-    beleg:halter ? halter.ev : '',
-    ausschlag: sd ? (halter.v - mittel) / sd : 0,
-    // Haengt der Wert an der Spielzahl? Gerechnet ueber alle, die im Rennen
-    // stehen — genau die Frage, die §C39 mit 0,35 deckelt.
-    korrSpiele: korr(werte.map(x => x.v), werte.map(x => x.spiele)),
-    // Und haengt er an der Siegquote? Ein Rekord, der die Rangliste
-    // wiederholt, gehoert nicht in den Katalog [§C35].
-    korrQuote: korr(werte.map(x => x.v), werte.map(x => P[x.id].q)),
-    rangfolge: werte.slice(0, 5).map(x => ({name:name(x.id), rang:qRang.rang[x.id],
+  if(!sd) return;
+  const halter = werte[0];
+  const top3 = werte.slice(0, 3).map(x => x.id);
+  const rein = teilKorr(vs, werte.map(x => x.spiele), werte.map(x => P[x.id].q));
+  const nm = NAMEN[m.id + '|' + t.id] || null;
+  alleKomb.push({
+    key:m.id + '|' + t.id, name:nm ? nm.name : (m.n + ' ' + t.n),
+    benannt:!!nm, frage:nm ? nm.frage : (m.n + ' ' + t.n + '?'),
+    art:nm ? nm.art : 'leistung', zufall:nm ? nm.zufall : '',
+    mass:m.n, teil:t.n, mindText:mindSatz(t),
+    braucht:t.braucht,
+    halter:name(halter.id), halterRang:QRANG.rang[halter.id],
+    halterSpiele:halter.spiele, beleg:halter.ev, halterDiff:halter.diff,
+    imRennen:werte.length, ligaGewertet:QRANG.n,
+    ausschlag:(halter.v - mittel) / sd,
+    korrSpiele:korr(vs, werte.map(x => x.spiele)),
+    korrRein:rein,
+    korrQuote:korr(vs, werte.map(x => P[x.id].q)),
+    // Stehen auf dem Podest dieselben drei wie in der Rangliste? Eine
+    // Korrelationsschwelle taugt dafuer nicht: ein Koennen-Rekord
+    // korreliert mit der Siegquote, weil er Koennen MISST, und Rekorde
+    // sind auch dazu da, zu zeigen, wer am meisten kann. Gefragt ist,
+    // ob er das Feld umordnet oder die Rangliste wiederholt.
+    kopie:top3.every(id => TOP3_LIGA.includes(id)),
+    top3:top3.map(name), top3Liga:TOP3_LIGA.map(name),
+    gleich:werte.filter(x => x.v === halter.v).length,
+    // Wer im Rennen steht, hat wie viele Partien? Steht dort niemand mit
+    // unter hundert, ist die Bedingung selbst eine Spielzahl-Huerde.
+    kleinsteSpielzahl:Math.min(...werte.map(x => x.spiele)),
+    rangfolge:werte.slice(0, 5).map(x => ({name:name(x.id), rang:QRANG.rang[x.id],
       wert:x.v, ev:x.ev, spiele:x.spiele}))
-  };
+  });
+}));
+// ── Eine zweite Familie: die Differenz zweier Fenster ──────────────
+// „Die Steigerung" verglich das letzte Drittel der Laufbahn mit dem ERSTEN.
+// Das belohnt, wer schlecht angefangen hat: je tiefer der erste Abschnitt,
+// desto leichter der Rekord. Zwei gleich lange Fenster, die beide
+// mitwandern, fragen stattdessen nach der Form von jetzt — und der Rekord
+// kann jedes halbe Jahr den Halter wechseln.
+const DIFF = [
+  {id:'auf25', name:'Der Aufschwung', art:'ereignis', zufall:'quote', braucht:50,
+   frage:'Wie viel besser laufen die letzten 25 Partien als die 25 davor?',
+   mindText:'ab 50 Partien',
+   min:p => p.games >= 50,
+   a:p => p.partien.slice(-25), b:p => p.partien.slice(-50, -25),
+   mass:{id:'quote', n:'Die Siegquote', f:d => quote(d)},
+   ev:p => `${pp(quote(p.partien.slice(-25)) - quote(p.partien.slice(-50, -25)))} Punkte: `
+         + `${pct(quote(p.partien.slice(-25)))} % in den letzten 25, `
+         + `${pct(quote(p.partien.slice(-50, -25)))} % in den 25 davor`},
+
+  {id:'rollen', name:'Der Rollenlose', art:'konstanz', zufall:'', braucht:25,
+   frage:'Bei wem ist es am gleichgültigsten, ob er vorne oder hinten steht?',
+   mindText:'ab 12 Partien je Position',
+   min:p => p.partien.filter(x => x.pos === 'atk').length >= 12
+         && p.partien.filter(x => x.pos === 'def').length >= 12,
+   a:p => p.partien.filter(x => x.pos === 'atk'), b:p => p.partien.filter(x => x.pos === 'def'),
+   mass:{id:'abw', n:'Der Abstand zur Rechnung', f:d => abw(d)}, negBetrag:true,
+   ev:p => `${pp(abw(p.partien.filter(x => x.pos === 'atk')))} Punkte über der Rechnung `
+         + `vorne, ${pp(abw(p.partien.filter(x => x.pos === 'def')))} hinten`},
+
+  {id:'lage', name:'Der Unbeeindruckte', art:'konstanz', zufall:'', braucht:30,
+   frage:'Bei wem ist es am gleichgültigsten, ob er Favorit oder Außenseiter ist?',
+   mindText:'ab 15 Partien in jeder Lage',
+   min:p => p.partien.filter(x => x.exp > 0.55).length >= 15
+         && p.partien.filter(x => x.exp < 0.45).length >= 15,
+   a:p => p.partien.filter(x => x.exp > 0.55), b:p => p.partien.filter(x => x.exp < 0.45),
+   mass:{id:'abw', n:'Der Abstand zur Rechnung', f:d => abw(d)}, negBetrag:true,
+   ev:p => `${pp(abw(p.partien.filter(x => x.exp > 0.55)))} Punkte über der Rechnung als `
+         + `Favorit, ${pp(abw(p.partien.filter(x => x.exp < 0.45)))} als Außenseiter`}
+];
+DIFF.forEach(d => {
+  const drin = GEW.filter(id => d.min(P[id]));
+  const werte = drin.map(id => {
+    const roh = d.mass.f(d.a(P[id])) - d.mass.f(d.b(P[id]));
+    const men = d.a(P[id]).concat(d.b(P[id]));
+    return {id, v:d.negBetrag ? -Math.abs(roh) : roh, spiele:P[id].games, ev:d.ev(P[id]),
+      diff:abw(men)};
+  }).filter(x => isFinite(x.v)).sort((a, b) => b.v - a.v);
+  if(werte.length < 3) return;
+  const vs = werte.map(x => x.v);
+  const mittel = vs.reduce((a, b) => a + b, 0) / vs.length, sd = streu(vs);
+  if(!sd) return;
+  const h = werte[0], top3 = werte.slice(0, 3).map(x => x.id);
+  alleKomb.push({
+    key:'diff|' + d.id, name:d.name, benannt:true, frage:d.frage,
+    art:d.art, zufall:d.zufall, mass:d.mass.n, teil:'zwei Fenster im Vergleich',
+    mindText:d.mindText, braucht:d.braucht,
+    halter:name(h.id), halterRang:QRANG.rang[h.id], halterSpiele:h.spiele, beleg:h.ev,
+    halterDiff:h.diff,
+    imRennen:werte.length, ligaGewertet:QRANG.n,
+    ausschlag:(h.v - mittel) / sd,
+    korrSpiele:korr(vs, werte.map(x => x.spiele)),
+    korrRein:teilKorr(vs, werte.map(x => x.spiele), werte.map(x => P[x.id].q)),
+    korrQuote:korr(vs, werte.map(x => P[x.id].q)),
+    kopie:top3.every(id => TOP3_LIGA.includes(id)),
+    top3:top3.map(name), top3Liga:TOP3_LIGA.map(name),
+    gleich:werte.filter(x => x.v === h.v).length,
+    kleinsteSpielzahl:Math.min(...werte.map(x => x.spiele)),
+    rangfolge:werte.slice(0, 5).map(x => ({name:name(x.id), rang:QRANG.rang[x.id],
+      wert:x.v, ev:x.ev, spiele:x.spiele}))
+  });
 });
+
+function mindSatz(t){
+  return t.id === 'alle' ? 'ab 25 Partien'
+    : t.id === 'erste25' || t.id === 'letzte25' ? 'ab 25 Partien'
+    : `ab ${t.min} Partien ${t.n}`;
+}
+
+const TORE_PRUEF = e => [
+  e.braucht <= 50,
+  e.kleinsteSpielzahl <= 100,
+  e.korrRein <= 0.35,
+  e.korrRein >= -0.70,
+  !e.kopie,
+  e.ausschlag >= 1.5,
+  e.imRennen * 2 >= e.ligaGewertet,
+  e.gleich * 3 <= e.imRennen,
+  e.halterDiff >= 0
+];
+alleKomb.forEach(e => { e.durch = TORE_PRUEF(e).every(Boolean); });
+const ergebnis = alleKomb.filter(e => e.durch && e.benannt)
+  .sort((a, b) => b.ausschlag - a.ausschlag);
 
 // ── Was es fuer die Laufbahn bedeutet ───────────────────────────────
 // Der Prestige-Stand kommt aus der App, nicht aus einer zweiten Rechnung:
@@ -692,6 +478,43 @@ const laufbahn = (() => {
     invalidateCache(); 'bereit'`);
   return JSON.parse(KK.eval(`JSON.stringify((function(){
     const T = prestigeTabelle();
+    // ── Wie knapp stehen die Verfolger? ──────────────────────────────
+    // Ein Rekord, dessen Zweiter ein Prozent dahinter liegt, ist der
+    // spannendste im Katalog — und der einzige, von dem man weiss, dass er
+    // erreichbar ist. Gerechnet wird der relative Abstand, weil die
+    // Einheiten von Prozenten bis Elo-Punkten reichen.
+    const A = allChronicles();
+    const spiele = {}; players.forEach(p => { spiele[p.id] =
+      matches.filter(m => m.a1===p.id||m.a2===p.id||m.b1===p.id||m.b2===p.id).length; });
+    const knapp = CHRONICLES.map(c => {
+      const r = (typeof chronicleRang === 'function') ? chronicleRang(c.id) : [];
+      if(!r || r.length < 2) return null;
+      const a = r[0].wert, b = r[1].wert;
+      if(a == null || b == null || !isFinite(a) || !isFinite(b)) return null;
+      const rel = a === 0 ? 0 : Math.abs((a - b) / Math.abs(a));
+      const e = A.byId[c.id];
+      return { id:c.id, name:c.name, kind:c.kind, neg:!!c.neg, cond:c.cond || '',
+        halter:e ? e.pids.map(x => pmap()[x].name) : [],
+        halterSpiele:e ? e.pids.map(x => spiele[x]) : [],
+        zweiter:(pmap()[r[1].pid]||{}).name, zweiterSpiele:spiele[r[1].pid],
+        belegA:r[0].ev, belegB:r[1].ev, abstand:rel,
+        geteilt:e ? e.pids.length : 0 };
+    }).filter(Boolean).sort((x, y) => x.abstand - y.abstand);
+    // ── Und welche Bedingung sperrt einen 50-Spieler aus? ────────────
+    // Aus der Bedingung gelesen, nicht geraten: jede Mindestzahl steht im
+    // Klartext im Katalog. Umgerechnet auf den Bestand eines Spielers mit
+    // fuenfzig Partien und vierzig Prozent Siegquote.
+    const HAT = {Spielen:50, Partien:50, Siegen:20, Niederlagen:30,
+      Sturmspielen:25, Abwehrspielen:25, Gelegenheiten:35, Spieltagen:13,
+      Wochen:10};
+    const huerde = CHRONICLES.map(c => {
+      const m = /ab (\\d+)\\s+([A-Za-zÄÖÜäöüß]+)/.exec(c.cond || '');
+      if(!m) return null;
+      const n = +m[1], einheit = m[2];
+      const hat = HAT[einheit];
+      if(hat == null) return null;
+      return { name:c.name, cond:c.cond, n, einheit, hat, zu:n > hat };
+    }).filter(Boolean);
     const je = players.map(p => { const Q = prestigeOf(p.id);
       return {name:p.name, punkte:Math.round(Q.punkte), stufe:Q.stufe,
         stufeName:(INSIGNIEN[Q.stufe]||{}).name,
@@ -709,27 +532,71 @@ const laufbahn = (() => {
     const herkunft = {};
     DISZIPLINEN.forEach(d => { herkunft[d.name] =
       (d.monat ? 'chronik' : '') + (d.allzeit ? (d.monat ? '+rekord' : 'rekord') : ''); });
-    return {je, monat:Math.round(monat), rekord:Math.round(rekord),
+    return {knapp, huerde, je, monat:Math.round(monat), rekord:Math.round(rekord),
       rekorde:CHRONICLES.length, wertRekord:PRESTIGE_REKORD,
       artGewicht:PRESTIGE_ART, herkunft,
       insignien:INSIGNIEN.map(x=>({name:x.name, min:x.min}))};
   })())`));
 })();
 
+// ── Nur die drei Arten, die es gibt ─────────────────────────────────
+// §10.2 kennt `leistung`, `ereignis` und `schatten`. Ein anderer Wert faellt
+// still auf `ereignis` und wiegt die Haelfte — und niemand sieht es. Zwei
+// Vorschlaege standen hier als `konstanz`, was nur fuer eine Monatschronik
+// gueltig ist [§C39].
+(() => {
+  const gueltig = new Set(Object.keys(laufbahn.artGewicht));
+  const falsch = ergebnis.filter(e => !gueltig.has(e.art)).map(e => e.name + ' (' + e.art + ')');
+  if(falsch.length){
+    console.error('Ungueltige art: ' + falsch.join(', ')
+      + ' — gueltig sind ' + [...gueltig].join(', '));
+    process.exit(1);
+  }
+})();
+
+// ── Kein Name zweimal ───────────────────────────────────────────────
+// „Der Ausdauernde" und „Der Deutliche" waren schon vergeben: der erste als
+// Beiname von „Der Endspurt", der zweite als eigene Monatschronik. Ein
+// Katalog mit zwei Eintraegen desselben Namens ist im Profil nicht mehr
+// auseinanderzuhalten. Gelesen wird aus dem Katalog der App, nicht geraten.
+(() => {
+  const kat = fs.readFileSync(ROOT + '/src/js/32-chronik-katalog.js', 'utf8');
+  const belegt = new Set();
+  [...kat.matchAll(/name:'([^']+)'/g)].forEach(m => belegt.add(m[1]));
+  [...kat.matchAll(/beiname:'([^']+)'/g)].forEach(m => belegt.add(m[1]));
+  const doppelt = ergebnis.filter(e => belegt.has(e.name)).map(e => e.name);
+  const eigen = {};
+  ergebnis.forEach(e => { eigen[e.name] = (eigen[e.name] || 0) + 1; });
+  const intern = Object.keys(eigen).filter(k => eigen[k] > 1);
+  if(doppelt.length || intern.length){
+    console.error('Name schon vergeben: ' + doppelt.concat(intern).join(', '));
+    process.exit(1);
+  }
+})();
+
 const aus = {
   gebaut:new Date().toISOString().slice(0, 16).replace('T', ' '),
   laufbahn,
-  partien:MS.length, spieler:qRang.n,
-  spielzahlen:IDS.filter(id => P[id].games >= 30)
-    .sort((a, b) => P[b].games - P[a].games)
-    .map(id => ({name:name(id), spiele:P[id].games, quote:pct(P[id].q), rang:qRang.rang[id]})),
+  partien:MS.length, spieler:QRANG.n,
+  // Der Grund, warum die rohe Korrelation nicht taugt, als Zahl.
+  korrSpielzahlQuote: korr(GEW.map(id => P[id].games), GEW.map(id => P[id].q)),
+  kombinationen:alleKomb.length,
+  bestanden:alleKomb.filter(e => e.durch).length,
+  benannt:ergebnis.length,
+  top3Liga:TOP3_LIGA.map(name),
+  spielzahlen:GEW.sort((a, b) => P[b].games - P[a].games)
+    .map(id => ({name:name(id), spiele:P[id].games, quote:pct(P[id].q),
+      erwartet:pct(P[id].expQ), rang:QRANG.rang[id],
+      tage:Object.keys(P[id].tagGrp).length})),
   kandidaten:ergebnis
 };
 fs.writeFileSync(__dirname + '/.rekord-vorschlag.json', JSON.stringify(aus, null, 1));
-console.log('Kandidaten: ' + ergebnis.length + ' · gewertete Spieler: ' + qRang.n);
-ergebnis.forEach(e => console.log('  %s  Halter %s (Rang %d/%d)  Rennen %d  aus %s  rSpiele %s  rQuote %s  unten %d',
-  e.name.padEnd(26), e.halter.padEnd(9), e.halterRang, e.ligaGewertet, e.imRennen,
-  e.ausschlag.toFixed(2), e.korrSpiele.toFixed(2), e.korrQuote.toFixed(2), e.dreiUnten));
+console.log('Gewertete Spieler: ' + QRANG.n + ' · Rangliste: ' + TOP3_LIGA.map(name).join(', '));
+console.log('  ' + alleKomb.length + ' Kombinationen, ' + aus.bestanden
+  + ' bestehen alle Tore, ' + ergebnis.length + ' davon benannt');
+ergebnis.forEach(e => console.log('  %s  %s (R%d, %d Partien)  aus %s  rein %s  rQ %s  braucht %d',
+  e.name.padEnd(22), e.halter.padEnd(9), e.halterRang, e.halterSpiele,
+  e.ausschlag.toFixed(2), e.korrRein.toFixed(2), e.korrQuote.toFixed(2), e.braucht));
 
 // Der Bericht steht. Die Zeitgeber der App laufen weiter und rufen `loadAll`
 // gegen eine Attrappe von Supabase; deren Fehler landet in einem Handler, der

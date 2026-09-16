@@ -68,7 +68,7 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       gemessen an den echten Partien
                       (README-story-logik.md), und der Vorschlag für neue
                       Liga-Rekorde, die jeder holen kann —
-                      sechsunddreißig Kandidaten gegen acht gemessene Tore
+                      154 gesuchte Kombinationen gegen neun gemessene Tore
                       (README-rekord-vorschlag.md), und die Probeliga: eine
                       erfundene Liga aus 571 Partien mit einem gebauten
                       Schaufenster, die Tag für Tag nachgespielt zeigt, welche

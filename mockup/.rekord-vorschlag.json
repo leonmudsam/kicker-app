@@ -1,6 +1,817 @@
 {
  "gebaut": "2026-08-27 12:00",
  "laufbahn": {
+  "knapp": [
+   {
+    "id": "unstoppable",
+    "name": "Der Unaufhaltsame",
+    "kind": "mark",
+    "neg": false,
+    "cond": "Längste Siegesserie der Liga-Geschichte",
+    "halter": [
+     "Martin",
+     "Julian"
+    ],
+    "halterSpiele": [
+     211,
+     171
+    ],
+    "zweiter": "Julian",
+    "zweiterSpiele": 171,
+    "belegA": "13 Siege in Folge",
+    "belegB": "13 Siege in Folge",
+    "abstand": 0,
+    "geteilt": 2
+   },
+   {
+    "id": "bitterloss",
+    "name": "Die bitterste Pleite",
+    "kind": "fuegung",
+    "neg": true,
+    "cond": "Höchste Siegchance, die trotzdem verloren ging, mindestens 65 %",
+    "halter": [
+     "Martin",
+     "Julian"
+    ],
+    "halterSpiele": [
+     211,
+     171
+    ],
+    "zweiter": "Julian",
+    "zweiterSpiele": 171,
+    "belegA": "83 % Siegchance, und trotzdem verloren",
+    "belegB": "83 % Siegchance, und trotzdem verloren",
+    "abstand": 0,
+    "geteilt": 2
+   },
+   {
+    "id": "mirrorday",
+    "name": "Der Wiedergänger",
+    "kind": "fuegung",
+    "neg": false,
+    "cond": "Dasselbe Ergebnis an einem Tag, mindestens dreimal",
+    "halter": [
+     "Maxi",
+     "Julian",
+     "Leo"
+    ],
+    "halterSpiele": [
+     348,
+     171,
+     246
+    ],
+    "zweiter": "Julian",
+    "zweiterSpiele": 171,
+    "belegA": "4× 7:10 an einem einzigen Tag",
+    "belegB": "4× 10:8 an einem einzigen Tag",
+    "abstand": 0,
+    "geteilt": 3
+   },
+   {
+    "id": "rollercoaster",
+    "name": "Die Achterbahn",
+    "kind": "fuegung",
+    "neg": false,
+    "cond": "Ein 10:0 gewonnen und ein 0:10 kassiert, beides am selben Tag",
+    "halter": [
+     "Maxi",
+     "Henry"
+    ],
+    "halterSpiele": [
+     348,
+     152
+    ],
+    "zweiter": "Henry",
+    "zweiterSpiele": 152,
+    "belegA": "1 Tag mit einem 10:0 UND einem 0:10",
+    "belegB": "1 Tag mit einem 10:0 UND einem 0:10",
+    "abstand": 0,
+    "geteilt": 2
+   },
+   {
+    "id": "fluke",
+    "name": "Der Sonntagsschuss",
+    "kind": "fuegung",
+    "neg": false,
+    "cond": "Der unwahrscheinlichste Sieg, den je jemand geholt hat, bei höchstens 30 % Siegchance",
+    "halter": [
+     "Maxi",
+     "Henry"
+    ],
+    "halterSpiele": [
+     348,
+     152
+    ],
+    "zweiter": "Henry",
+    "zweiterSpiele": 152,
+    "belegA": "17 % Siegchance, und trotzdem gewonnen",
+    "belegB": "17 % Siegchance, und trotzdem gewonnen",
+    "abstand": 0,
+    "geteilt": 2
+   },
+   {
+    "id": "atk_ace",
+    "name": "Der komplette Stürmer",
+    "kind": "record",
+    "neg": false,
+    "cond": "Höchster Sturmwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Tore, ab 50 Sturmspielen",
+    "halter": [
+     "Julian"
+    ],
+    "halterSpiele": [
+     171
+    ],
+    "zweiter": "Leon",
+    "zweiterSpiele": 355,
+    "belegA": "88 Sturmwert · 81:40 in 121 Sturmspielen",
+    "belegB": "87 Sturmwert · 161:80 in 241 Sturmspielen",
+    "abstand": 0.003413951629879687,
+    "geteilt": 1
+   },
+   {
+    "id": "sundaychild",
+    "name": "Das Sonntagskind",
+    "kind": "fuegung",
+    "neg": false,
+    "cond": "Höchster Anteil gewonnener Ein-Tor-Spiele der Laufbahn, ab 12 solchen Partien",
+    "halter": [
+     "Leon"
+    ],
+    "halterSpiele": [
+     355
+    ],
+    "zweiter": "Martin",
+    "zweiterSpiele": 211,
+    "belegA": "55 % der Spiele um den letzten Ball gewonnen · 27 von 49",
+    "belegB": "55 % der Spiele um den letzten Ball gewonnen · 17 von 31",
+    "abstand": 0.0047789725209079845,
+    "geteilt": 1
+   },
+   {
+    "id": "sniper",
+    "name": "Der Torjäger",
+    "kind": "record",
+    "neg": false,
+    "cond": "Meiste eigene Tore pro Spiel im Sturm, ab 50 Sturmspielen",
+    "halter": [
+     "Leon"
+    ],
+    "halterSpiele": [
+     355
+    ],
+    "zweiter": "Julian",
+    "zweiterSpiele": 171,
+    "belegA": "8,9 Tore je Sturmspiel im Schnitt · 241 Spiele",
+    "belegB": "8,8 Tore je Sturmspiel im Schnitt · 121 Spiele",
+    "abstand": 0.005995407772769827,
+    "geteilt": 1
+   },
+   {
+    "id": "destroyer",
+    "name": "Der Zerstörer",
+    "kind": "record",
+    "neg": false,
+    "cond": "Höchster Anteil Kantersiege, ab 22 Siegen und mindestens 22 %",
+    "halter": [
+     "Martin"
+    ],
+    "halterSpiele": [
+     211
+    ],
+    "zweiter": "Jannik",
+    "zweiterSpiele": 78,
+    "belegA": "24 % aller 134 Siege waren Kantersiege · 32 Kantersiege",
+    "belegB": "24 % aller 38 Siege waren Kantersiege · 9 Kantersiege",
+    "abstand": 0.008223684210526352,
+    "geteilt": 1
+   },
+   {
+    "id": "hardnight",
+    "name": "Der schwerste Tag",
+    "kind": "fuegung",
+    "neg": false,
+    "cond": "Niedrigste mittlere Siegchance über einen ganzen Spieltag, ab 4 Partien an diesem Tag",
+    "halter": [
+     "Stefan"
+    ],
+    "halterSpiele": [
+     81
+    ],
+    "zweiter": "Maxi",
+    "zweiterSpiele": 348,
+    "belegA": "27 % mittlere Siegchance über den ganzen Tag",
+    "belegB": "28 % mittlere Siegchance über den ganzen Tag",
+    "abstand": 0.017273098937040054,
+    "geteilt": 1
+   },
+   {
+    "id": "best_record",
+    "name": "Der Maßstab",
+    "kind": "record",
+    "neg": false,
+    "cond": "Höchste Siegquote, die je jemand in einem Monat gespielt hat, ab 15 Spielen",
+    "halter": [
+     "Martin"
+    ],
+    "halterSpiele": [
+     211
+    ],
+    "zweiter": "Julian",
+    "zweiterSpiele": 171,
+    "belegA": "72 % aus 50 Spielen",
+    "belegB": "71 % aus 58 Spielen",
+    "abstand": 0.018199233716475104,
+    "geteilt": 1
+   },
+   {
+    "id": "def_ace",
+    "name": "Der komplette Verteidiger",
+    "kind": "record",
+    "neg": false,
+    "cond": "Höchster Abwehrwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Gegentore, ab 50 Abwehrspielen",
+    "halter": [
+     "Jane"
+    ],
+    "halterSpiele": [
+     97
+    ],
+    "zweiter": "Martin",
+    "zweiterSpiele": 211,
+    "belegA": "76 Abwehrwert · 47:24 in 71 Abwehrspielen",
+    "belegB": "74 Abwehrwert · 88:46 in 134 Abwehrspielen",
+    "abstand": 0.020167130171917343,
+    "geteilt": 1
+   },
+   {
+    "id": "switcher",
+    "name": "Der Wandler",
+    "kind": "mark",
+    "neg": false,
+    "cond": "Ausgeglichenste Verteilung auf beide Positionen, ab 60 Spielen",
+    "halter": [
+     "Jannik"
+    ],
+    "halterSpiele": [
+     78
+    ],
+    "zweiter": "Johannes",
+    "zweiterSpiele": 77,
+    "belegA": "1 %-Punkte Unterschied im Positionsprofil · 51 % Sturm, 49 % Abwehr",
+    "belegB": "7 %-Punkte Unterschied im Positionsprofil · 47 % Sturm, 53 % Abwehr",
+    "abstand": 0.058316618554145806,
+    "geteilt": 1
+   },
+   {
+    "id": "rock",
+    "name": "Der Fels",
+    "kind": "record",
+    "neg": false,
+    "cond": "Wenigste Gegentore pro Spiel in der Abwehr, ab 50 Abwehrspielen",
+    "halter": [
+     "Martin"
+    ],
+    "halterSpiele": [
+     211
+    ],
+    "zweiter": "Jane",
+    "zweiterSpiele": 97,
+    "belegA": "6,9 Gegentore je Abwehrspiel im Schnitt · 134 Spiele",
+    "belegB": "7,5 Gegentore je Abwehrspiel im Schnitt · 71 Spiele",
+    "abstand": 0.07441642335214291,
+    "geteilt": 1
+   },
+   {
+    "id": "sieve",
+    "name": "Das Scheunentor",
+    "kind": "shame",
+    "neg": true,
+    "cond": "Meiste Gegentore pro Spiel in der Abwehr, ab 30 Abwehrspielen",
+    "halter": [
+     "Alex"
+    ],
+    "halterSpiele": [
+     39
+    ],
+    "zweiter": "Johannes",
+    "zweiterSpiele": 77,
+    "belegA": "9,1 Gegentore je Abwehrspiel im Schnitt · 30 Spiele",
+    "belegB": "8,4 Gegentore je Abwehrspiel im Schnitt · 42 Spiele",
+    "abstand": 0.07716371220020847,
+    "geteilt": 1
+   },
+   {
+    "id": "drought",
+    "name": "Die Durststrecke",
+    "kind": "shame",
+    "neg": true,
+    "cond": "Längste Niederlagenserie der Liga-Geschichte",
+    "halter": [
+     "Stefan"
+    ],
+    "halterSpiele": [
+     81
+    ],
+    "zweiter": "Leo",
+    "zweiterSpiele": 246,
+    "belegA": "11 Niederlagen am Stück",
+    "belegB": "10 Niederlagen am Stück",
+    "abstand": 0.09090909090909091,
+    "geteilt": 1
+   },
+   {
+    "id": "thriller",
+    "name": "Der Nervenkitzler",
+    "kind": "record",
+    "neg": false,
+    "cond": "Höchster Anteil 10:9-Siege an allen eigenen Siegen, ab 25 Siegen",
+    "halter": [
+     "Johannes"
+    ],
+    "halterSpiele": [
+     77
+    ],
+    "zweiter": "Jane",
+    "zweiterSpiele": 97,
+    "belegA": "20 % aller 25 Siege endeten 10:9 · 5 Zittersiege",
+    "belegB": "18 % aller 55 Siege endeten 10:9 · 10 Zittersiege",
+    "abstand": 0.09090909090909094,
+    "geteilt": 1
+   },
+   {
+    "id": "catalyst",
+    "name": "Der Katalysator",
+    "kind": "record",
+    "neg": false,
+    "cond": "Die Partner gewinnen an dieser Seite am deutlichsten häufiger als ohne, mindestens 3 Partner mit je 25 gemeinsamen Spielen",
+    "halter": [
+     "Leon"
+    ],
+    "halterSpiele": [
+     355
+    ],
+    "zweiter": "Martin",
+    "zweiterSpiele": 211,
+    "belegA": "+23 %-Punkte gewinnen die 6 Partner an dieser Seite häufiger",
+    "belegB": "+20 %-Punkte gewinnen die 4 Partner an dieser Seite häufiger",
+    "abstand": 0.1213738341746947,
+    "geteilt": 1
+   },
+   {
+    "id": "giant_slayer",
+    "name": "Der Gigantentöter",
+    "kind": "record",
+    "neg": false,
+    "cond": "Höchster Anteil Siege mit unter 35 % Siegchance, ab 60 Spielen",
+    "halter": [
+     "Henry"
+    ],
+    "halterSpiele": [
+     152
+    ],
+    "zweiter": "Jane",
+    "zweiterSpiele": 97,
+    "belegA": "6 % aller 152 Partien gegen die Wahrscheinlichkeit gewonnen · 9 Siege",
+    "belegB": "5 % aller 97 Partien gegen die Wahrscheinlichkeit gewonnen · 5 Siege",
+    "abstand": 0.12943871706758303,
+    "geteilt": 1
+   },
+   {
+    "id": "peak",
+    "name": "Der höchste Gipfel",
+    "kind": "mark",
+    "neg": false,
+    "cond": "Höchster Elo-Stand, den je ein Spieler erreicht hat",
+    "halter": [
+     "Leon"
+    ],
+    "halterSpiele": [
+     355
+    ],
+    "zweiter": "Martin",
+    "zweiterSpiele": 211,
+    "belegA": "532 Elo, nie stand jemand höher",
+    "belegB": "463 Elo, nie stand jemand höher",
+    "abstand": 0.12969924812030076,
+    "geteilt": 1
+   },
+   {
+    "id": "weeklord",
+    "name": "Der Wochenherr",
+    "kind": "record",
+    "neg": false,
+    "cond": "Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen und mindestens 25 %",
+    "halter": [
+     "Julian"
+    ],
+    "halterSpiele": [
+     171
+    ],
+    "zweiter": "Leon",
+    "zweiterSpiele": 355,
+    "belegA": "31 % aller 13 Wochen gewonnen · 4× Player of the Week",
+    "belegB": "27 % aller 15 Wochen gewonnen · 4× Player of the Week",
+    "abstand": 0.1333333333333334,
+    "geteilt": 1
+   },
+   {
+    "id": "needleeye",
+    "name": "Das Nadelöhr",
+    "kind": "fuegung",
+    "neg": false,
+    "cond": "Höchster Anteil Ein-Tor-Partien an der eigenen Laufbahn, ab 60 Partien",
+    "halter": [
+     "Jane"
+    ],
+    "halterSpiele": [
+     97
+    ],
+    "zweiter": "Johannes",
+    "zweiterSpiele": 77,
+    "belegA": "20 % aller 97 Partien liefen auf einen Ball hinaus · 19 enge Partien",
+    "belegB": "17 % aller 77 Partien liefen auf einen Ball hinaus · 13 enge Partien",
+    "abstand": 0.13807245386192754,
+    "geteilt": 1
+   },
+   {
+    "id": "hardluck",
+    "name": "Der Pechvogel",
+    "kind": "shame",
+    "neg": true,
+    "cond": "Höchster Anteil 9:10-Niederlagen an allen eigenen Niederlagen, ab 25 Niederlagen",
+    "halter": [
+     "Jane"
+    ],
+    "halterSpiele": [
+     97
+    ],
+    "zweiter": "Julian",
+    "zweiterSpiele": 171,
+    "belegA": "21 % aller 42 Niederlagen endeten 9:10 · 9 davon",
+    "belegB": "18 % aller 60 Niederlagen endeten 9:10 · 11 davon",
+    "abstand": 0.14444444444444446,
+    "geteilt": 1
+   },
+   {
+    "id": "spotless",
+    "name": "Der makellose Tag",
+    "kind": "record",
+    "neg": false,
+    "cond": "Höchster Anteil voller Spieltage (4+ Partien) ohne eine einzige Niederlage, ab 8 solchen Tagen",
+    "halter": [
+     "Leon"
+    ],
+    "halterSpiele": [
+     355
+    ],
+    "zweiter": "Leo",
+    "zweiterSpiele": 246,
+    "belegA": "6 % aller 48 vollen Spieltage ohne eine einzige Niederlage · 3 Tage",
+    "belegB": "5 % aller 39 vollen Spieltage ohne eine einzige Niederlage · 2 Tage",
+    "abstand": 0.17948717948717952,
+    "geteilt": 1
+   },
+   {
+    "id": "freefall",
+    "name": "Der Sturzflug",
+    "kind": "shame",
+    "neg": true,
+    "cond": "Größter Elo-Absturz von einer Saison zur nächsten, mindestens −150",
+    "halter": [
+     "Leo"
+    ],
+    "halterSpiele": [
+     246
+    ],
+    "zweiter": "Johannes",
+    "zweiterSpiele": 77,
+    "belegA": "−308 Elo von Juli 2026 auf August 2026",
+    "belegB": "−245 Elo von Juli 2026 auf August 2026",
+    "abstand": 0.20454545454545456,
+    "geteilt": 1
+   },
+   {
+    "id": "seesaw",
+    "name": "Das Wechselbad",
+    "kind": "fuegung",
+    "neg": false,
+    "cond": "Längste Serie aus abwechselnd Sieg und Niederlage der Liga-Geschichte",
+    "halter": [
+     "Jannik"
+    ],
+    "halterSpiele": [
+     78
+    ],
+    "zweiter": "Martin",
+    "zweiterSpiele": 211,
+    "belegA": "14 Partien lang immer abwechselnd",
+    "belegB": "11 Partien lang immer abwechselnd",
+    "abstand": 0.21428571428571427,
+    "geteilt": 1
+   },
+   {
+    "id": "damage_control",
+    "name": "Der Schadensbegrenzer",
+    "kind": "record",
+    "neg": false,
+    "cond": "Niedrigster Anteil deutlicher Niederlagen (7+ Tore Rückstand), ab 25 Niederlagen",
+    "halter": [
+     "Martin"
+    ],
+    "halterSpiele": [
+     211
+    ],
+    "zweiter": "Jane",
+    "zweiterSpiele": 97,
+    "belegA": "8 % aller 77 Niederlagen gingen deutlich verloren · 6 davon",
+    "belegB": "10 % aller 42 Niederlagen gingen deutlich verloren · 4 davon",
+    "abstand": 0.22222222222222218,
+    "geteilt": 1
+   },
+   {
+    "id": "eloday",
+    "name": "Der große Sprung",
+    "kind": "mark",
+    "neg": false,
+    "cond": "Größter Elo-Gewinn an einem einzigen Tag",
+    "halter": [
+     "Leon"
+    ],
+    "halterSpiele": [
+     355
+    ],
+    "zweiter": "Julian",
+    "zweiterSpiele": 171,
+    "belegA": "+190 Elo an einem Tag",
+    "belegB": "+136 Elo an einem Tag",
+    "abstand": 0.28421052631578947,
+    "geteilt": 1
+   },
+   {
+    "id": "unbowed",
+    "name": "Der Unerschütterliche",
+    "kind": "record",
+    "neg": false,
+    "cond": "Kürzeste Niederlagenserie, die je jemand über eine ganze Laufbahn zugelassen hat, ab 80 Spielen",
+    "halter": [
+     "Julian"
+    ],
+    "halterSpiele": [
+     171
+    ],
+    "zweiter": "Martin",
+    "zweiterSpiele": 211,
+    "belegA": "3 Niederlagen am Stück, mehr waren es nie · 171 Partien",
+    "belegB": "4 Niederlagen am Stück, mehr waren es nie · 211 Partien",
+    "abstand": 0.3333333333333333,
+    "geteilt": 1
+   },
+   {
+    "id": "evenkeel",
+    "name": "Die Punktlandung",
+    "kind": "fuegung",
+    "neg": false,
+    "cond": "Größter Spieltag, an dem das eigene Torkonto exakt aufgeht, ab 4 Partien",
+    "halter": [
+     "Leon"
+    ],
+    "halterSpiele": [
+     355
+    ],
+    "zweiter": "Julian",
+    "zweiterSpiele": 171,
+    "belegA": "11 Partien, Torkonto 87:87",
+    "belegB": "7 Partien, Torkonto 59:59",
+    "abstand": 0.36363636363636365,
+    "geteilt": 1
+   },
+   {
+    "id": "daylord",
+    "name": "Der Platzhirsch",
+    "kind": "record",
+    "neg": false,
+    "cond": "Höchster Anteil eigener Spieltage als Player of the Day, ab 12 Spieltagen und mindestens 25 %",
+    "halter": [
+     "Julian"
+    ],
+    "halterSpiele": [
+     171
+    ],
+    "zweiter": "Leon",
+    "zweiterSpiele": 355,
+    "belegA": "52 % aller 23 Spieltage beherrscht · 12× Player of the Day",
+    "belegB": "31 % aller 54 Spieltage beherrscht · 17× Player of the Day",
+    "abstand": 0.3966049382716049,
+    "geteilt": 1
+   },
+   {
+    "id": "clutch",
+    "name": "Die ruhige Hand",
+    "kind": "record",
+    "neg": false,
+    "cond": "Stärkster Sprung nach oben in engen Spielen, mindestens 9 Prozentpunkte",
+    "halter": [
+     "Stefan"
+    ],
+    "halterSpiele": [
+     81
+    ],
+    "zweiter": "Alex",
+    "zweiterSpiele": 39,
+    "belegA": "+25 %-Punkte in engen Spielen · 52 statt 27 %",
+    "belegB": "+12 %-Punkte in engen Spielen · 38 statt 26 %",
+    "abstand": 0.5258955100693298,
+    "geteilt": 1
+   },
+   {
+    "id": "abyss",
+    "name": "Das Fass ohne Boden",
+    "kind": "shame",
+    "neg": true,
+    "cond": "Höchster Anteil 0:10-Niederlagen an allen eigenen Niederlagen, ab 25 Niederlagen",
+    "halter": [
+     "Stefan"
+    ],
+    "halterSpiele": [
+     81
+    ],
+    "zweiter": "Alex",
+    "zweiterSpiele": 39,
+    "belegA": "8 % aller 59 Niederlagen endeten 0:10 · 5 Debakel",
+    "belegB": "3 % aller 29 Niederlagen endeten 0:10 · 1 Debakel",
+    "abstand": 0.593103448275862,
+    "geteilt": 1
+   }
+  ],
+  "huerde": [
+   {
+    "name": "Der Maßstab",
+    "cond": "Höchste Siegquote, die je jemand in einem Monat gespielt hat, ab 15 Spielen",
+    "n": 15,
+    "einheit": "Spielen",
+    "hat": 50,
+    "zu": false
+   },
+   {
+    "name": "Der Platzhirsch",
+    "cond": "Höchster Anteil eigener Spieltage als Player of the Day, ab 12 Spieltagen und mindestens 25 %",
+    "n": 12,
+    "einheit": "Spieltagen",
+    "hat": 13,
+    "zu": false
+   },
+   {
+    "name": "Der Wochenherr",
+    "cond": "Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen und mindestens 25 %",
+    "n": 10,
+    "einheit": "Wochen",
+    "hat": 10,
+    "zu": false
+   },
+   {
+    "name": "Der Gigantentöter",
+    "cond": "Höchster Anteil Siege mit unter 35 % Siegchance, ab 60 Spielen",
+    "n": 60,
+    "einheit": "Spielen",
+    "hat": 50,
+    "zu": true
+   },
+   {
+    "name": "Der Zerstörer",
+    "cond": "Höchster Anteil Kantersiege, ab 22 Siegen und mindestens 22 %",
+    "n": 22,
+    "einheit": "Siegen",
+    "hat": 20,
+    "zu": true
+   },
+   {
+    "name": "Der komplette Stürmer",
+    "cond": "Höchster Sturmwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Tore, ab 50 Sturmspielen",
+    "n": 50,
+    "einheit": "Sturmspielen",
+    "hat": 25,
+    "zu": true
+   },
+   {
+    "name": "Der komplette Verteidiger",
+    "cond": "Höchster Abwehrwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Gegentore, ab 50 Abwehrspielen",
+    "n": 50,
+    "einheit": "Abwehrspielen",
+    "hat": 25,
+    "zu": true
+   },
+   {
+    "name": "Der Fels",
+    "cond": "Wenigste Gegentore pro Spiel in der Abwehr, ab 50 Abwehrspielen",
+    "n": 50,
+    "einheit": "Abwehrspielen",
+    "hat": 25,
+    "zu": true
+   },
+   {
+    "name": "Der Torjäger",
+    "cond": "Meiste eigene Tore pro Spiel im Sturm, ab 50 Sturmspielen",
+    "n": 50,
+    "einheit": "Sturmspielen",
+    "hat": 25,
+    "zu": true
+   },
+   {
+    "name": "Der Stehaufmann",
+    "cond": "Stärkster Sprung nach oben direkt nach einer Niederlage, ab 60 Gelegenheiten und mindestens 6 Prozentpunkte",
+    "n": 60,
+    "einheit": "Gelegenheiten",
+    "hat": 35,
+    "zu": true
+   },
+   {
+    "name": "Der Nervenkitzler",
+    "cond": "Höchster Anteil 10:9-Siege an allen eigenen Siegen, ab 25 Siegen",
+    "n": 25,
+    "einheit": "Siegen",
+    "hat": 20,
+    "zu": true
+   },
+   {
+    "name": "Der Schadensbegrenzer",
+    "cond": "Niedrigster Anteil deutlicher Niederlagen (7+ Tore Rückstand), ab 25 Niederlagen",
+    "n": 25,
+    "einheit": "Niederlagen",
+    "hat": 30,
+    "zu": false
+   },
+   {
+    "name": "Der Unerschütterliche",
+    "cond": "Kürzeste Niederlagenserie, die je jemand über eine ganze Laufbahn zugelassen hat, ab 80 Spielen",
+    "n": 80,
+    "einheit": "Spielen",
+    "hat": 50,
+    "zu": true
+   },
+   {
+    "name": "Die Mauer",
+    "cond": "Höchster Abwehr-Anteil, ab 60 Spielen und mindestens 80 %",
+    "n": 60,
+    "einheit": "Spielen",
+    "hat": 50,
+    "zu": true
+   },
+   {
+    "name": "Der Wandler",
+    "cond": "Ausgeglichenste Verteilung auf beide Positionen, ab 60 Spielen",
+    "n": 60,
+    "einheit": "Spielen",
+    "hat": 50,
+    "zu": true
+   },
+   {
+    "name": "Der schwerste Tag",
+    "cond": "Niedrigste mittlere Siegchance über einen ganzen Spieltag, ab 4 Partien an diesem Tag",
+    "n": 4,
+    "einheit": "Partien",
+    "hat": 50,
+    "zu": false
+   },
+   {
+    "name": "Das Nadelöhr",
+    "cond": "Höchster Anteil Ein-Tor-Partien an der eigenen Laufbahn, ab 60 Partien",
+    "n": 60,
+    "einheit": "Partien",
+    "hat": 50,
+    "zu": true
+   },
+   {
+    "name": "Die Punktlandung",
+    "cond": "Größter Spieltag, an dem das eigene Torkonto exakt aufgeht, ab 4 Partien",
+    "n": 4,
+    "einheit": "Partien",
+    "hat": 50,
+    "zu": false
+   },
+   {
+    "name": "Das Fass ohne Boden",
+    "cond": "Höchster Anteil 0:10-Niederlagen an allen eigenen Niederlagen, ab 25 Niederlagen",
+    "n": 25,
+    "einheit": "Niederlagen",
+    "hat": 30,
+    "zu": false
+   },
+   {
+    "name": "Der Pechvogel",
+    "cond": "Höchster Anteil 9:10-Niederlagen an allen eigenen Niederlagen, ab 25 Niederlagen",
+    "n": 25,
+    "einheit": "Niederlagen",
+    "hat": 30,
+    "zu": false
+   },
+   {
+    "name": "Das Scheunentor",
+    "cond": "Meiste Gegentore pro Spiel in der Abwehr, ab 30 Abwehrspielen",
+    "n": 30,
+    "einheit": "Abwehrspielen",
+    "hat": 25,
+    "zu": true
+   }
+  ],
   "je": [
    {
     "name": "Leon",
@@ -233,2263 +1044,1141 @@
  },
  "partien": 466,
  "spieler": 11,
+ "korrSpielzahlQuote": 0.48737604428931897,
+ "kombinationen": 154,
+ "bestanden": 48,
+ "benannt": 14,
+ "top3Liga": [
+  "Julian",
+  "Martin",
+  "Leon"
+ ],
  "spielzahlen": [
   {
    "name": "Leon",
    "spiele": 355,
    "quote": 62,
-   "rang": 3
+   "erwartet": 57,
+   "rang": 3,
+   "tage": 54
   },
   {
    "name": "Maxi",
    "spiele": 348,
    "quote": 44,
-   "rang": 6
+   "erwartet": 47,
+   "rang": 6,
+   "tage": 50
   },
   {
    "name": "Leo",
    "spiele": 246,
    "quote": 41,
-   "rang": 7
+   "erwartet": 47,
+   "rang": 7,
+   "tage": 46
   },
   {
    "name": "Martin",
    "spiele": 211,
    "quote": 64,
-   "rang": 2
+   "erwartet": 55,
+   "rang": 2,
+   "tage": 38
   },
   {
    "name": "Julian",
    "spiele": 171,
    "quote": 65,
-   "rang": 1
+   "erwartet": 56,
+   "rang": 1,
+   "tage": 23
   },
   {
    "name": "Henry",
    "spiele": 152,
    "quote": 39,
-   "rang": 8
+   "erwartet": 44,
+   "rang": 8,
+   "tage": 27
   },
   {
    "name": "Jane",
    "spiele": 97,
    "quote": 57,
-   "rang": 4
+   "erwartet": 50,
+   "rang": 4,
+   "tage": 18
   },
   {
    "name": "Stefan",
    "spiele": 81,
    "quote": 27,
-   "rang": 10
+   "erwartet": 42,
+   "rang": 10,
+   "tage": 19
   },
   {
    "name": "Jannik",
    "spiele": 78,
    "quote": 49,
-   "rang": 5
+   "erwartet": 48,
+   "rang": 5,
+   "tage": 14
   },
   {
    "name": "Johannes",
    "spiele": 77,
    "quote": 32,
-   "rang": 9
+   "erwartet": 42,
+   "rang": 9,
+   "tage": 22
   },
   {
    "name": "Alex",
    "spiele": 39,
    "quote": 26,
-   "rang": 11
+   "erwartet": 47,
+   "rang": 11,
+   "tage": 11
   }
  ],
  "kandidaten": [
   {
-   "id": "gleichauf",
-   "name": "Auf Augenhöhe",
-   "quelle": "Auf Augenhöhe",
-   "art": "leistung",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 2,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie viel besser läuft es in den Partien, die die Rechnung offen sah?",
-   "mindText": "ab 25 offenen Partien",
-   "imRennen": 7,
-   "ligaGewertet": 11,
-   "halter": "Henry",
-   "halterSpiele": 152,
-   "halterRang": 8,
-   "beleg": "52 % in 46 offenen Partien, sonst 39 %",
-   "ausschlag": 1.970987700987567,
-   "korrSpiele": 0.025955212760802027,
-   "korrQuote": -0.909866110507765,
-   "rangfolge": [
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0.1335812356979405,
-     "ev": "52 % in 46 offenen Partien, sonst 39 %",
-     "spiele": 152
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 0.04589216944801028,
-     "ev": "46 % in 76 offenen Partien, sonst 41 %",
-     "spiele": 246
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.016866566716641662,
-     "ev": "46 % in 92 offenen Partien, sonst 44 %",
-     "spiele": 348
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": -0.04189004997728296,
-     "ev": "58 % in 93 offenen Partien, sonst 62 %",
-     "spiele": 355
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -0.0670103092783505,
-     "ev": "50 % in 32 offenen Partien, sonst 57 %",
-     "spiele": 97
-    }
-   ]
-  },
-  {
-   "id": "steigerung",
-   "name": "Die Steigerung",
-   "quelle": "Die Steigerung",
+   "key": "engS|erste25",
+   "name": "Der Zitterauftakt",
+   "benannt": true,
+   "frage": "Wer hat seine ersten 25 Partien am häufigsten mit einem Tor gewonnen?",
    "art": "ereignis",
    "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie weit liegt das letzte Drittel der Laufbahn über dem ersten?",
-   "mindText": "ab 60 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Stefan",
-   "halterSpiele": 81,
-   "halterRang": 10,
-   "beleg": "37 % im letzten Drittel, 26 % im ersten",
-   "ausschlag": 1.5668674245612835,
-   "korrSpiele": -0.0005432329637870225,
-   "korrQuote": -0.3054887337948273,
-   "rangfolge": [
-    {
-     "name": "Stefan",
-     "rang": 10,
-     "wert": 0.1111111111111111,
-     "ev": "37 % im letzten Drittel, 26 % im ersten",
-     "spiele": 81
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.08620689655172414,
-     "ev": "48 % im letzten Drittel, 40 % im ersten",
-     "spiele": 348
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.03125,
-     "ev": "56 % im letzten Drittel, 53 % im ersten",
-     "spiele": 97
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.02857142857142847,
-     "ev": "67 % im letzten Drittel, 64 % im ersten",
-     "spiele": 211
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0,
-     "ev": "50 % im letzten Drittel, 50 % im ersten",
-     "spiele": 78
-    }
-   ]
-  },
-  {
-   "id": "punktgenau2",
-   "name": "Der Erwartungstreue",
-   "quelle": "Der Erwartungstreue",
-   "art": "konstanz",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wessen Laufbahn trifft die Elo-Erwartung am genauesten?",
-   "mindText": "ab 60 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Jannik",
-   "halterSpiele": 78,
-   "halterRang": 5,
-   "beleg": "49 % gespielt, 48 % erwartet",
-   "ausschlag": 1.6394882761452507,
-   "korrSpiele": 0.3606575151107342,
-   "korrQuote": 0.2783891567321282,
-   "rangfolge": [
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": -0.008230769230769264,
-     "ev": "49 % gespielt, 48 % erwartet",
-     "spiele": 78
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.0317988505747126,
-     "ev": "44 % gespielt, 47 % erwartet",
-     "spiele": 348
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": -0.05040131578947382,
-     "ev": "39 % gespielt, 44 % erwartet",
-     "spiele": 152
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": -0.0554268292682929,
-     "ev": "41 % gespielt, 47 % erwartet",
-     "spiele": 246
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": -0.05554084507042245,
-     "ev": "62 % gespielt, 57 % erwartet",
-     "spiele": 355
-    }
-   ]
-  },
-  {
-   "id": "metronom",
-   "name": "Das Metronom",
-   "quelle": "Das Metronom",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie weit liegen bester und schwächster Monat auseinander?",
-   "mindText": "ab 3 Monaten mit je 8 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Jane",
-   "halterSpiele": 97,
-   "halterRang": 4,
-   "beleg": "54 % im schwächsten, 58 % im besten von 3 Monaten",
-   "ausschlag": 1.6610157579106508,
-   "korrSpiele": 0.33939039741253596,
-   "korrQuote": 0.5266595078784903,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -0.03525641025641024,
-     "ev": "54 % im schwächsten, 58 % im besten von 3 Monaten",
-     "spiele": 97
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": -0.10897435897435892,
-     "ev": "58 % im schwächsten, 69 % im besten von 4 Monaten",
-     "spiele": 355
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.11870015272357032,
-     "ev": "39 % im schwächsten, 51 % im besten von 4 Monaten",
-     "spiele": 348
-    },
-    {
-     "name": "Stefan",
-     "rang": 10,
-     "wert": -0.14912280701754385,
-     "ev": "18 % im schwächsten, 33 % im besten von 3 Monaten",
-     "spiele": 81
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": -0.15689655172413786,
-     "ev": "55 % im schwächsten, 71 % im besten von 3 Monaten",
-     "spiele": 171
-    }
-   ]
-  },
-  {
-   "id": "beidseitig",
-   "name": "Der Beidfüßige",
-   "quelle": "Der Beidfüßige",
-   "art": "konstanz",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Spielt jemand vorne genauso stark wie hinten?",
-   "mindText": "ab 25 Partien je Position",
-   "imRennen": 9,
-   "ligaGewertet": 11,
-   "halter": "Maxi",
-   "halterSpiele": 348,
-   "halterRang": 6,
-   "beleg": "43 % vorne, 45 % hinten, 44 % insgesamt",
-   "ausschlag": 1.0599067265402577,
-   "korrSpiele": 0.3104695953916036,
-   "korrQuote": -0.06756794094441475,
-   "rangfolge": [
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.011049052938319592,
-     "ev": "43 % vorne, 45 % hinten, 44 % insgesamt",
-     "spiele": 348
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": -0.03766849264479599,
-     "ev": "60 % vorne, 66 % hinten, 64 % insgesamt",
-     "spiele": 211
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": -0.03913630229419701,
-     "ev": "53 % vorne, 45 % hinten, 49 % insgesamt",
-     "spiele": 78
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": -0.0491228070175439,
-     "ev": "67 % vorne, 60 % hinten, 65 % insgesamt",
-     "spiele": 171
-    },
-    {
-     "name": "Johannes",
-     "rang": 9,
-     "wert": -0.06753246753246755,
-     "ev": "26 % vorne, 38 % hinten, 32 % insgesamt",
-     "spiele": 77
-    }
-   ]
-  },
-  {
-   "id": "rollenfest",
-   "name": "Favorit wie Außenseiter",
-   "quelle": "Favorit wie Außenseiter",
-   "art": "konstanz",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Spielt jemand als Favorit genauso wie als Außenseiter?",
-   "mindText": "ab 20 Partien in jeder Lage",
-   "imRennen": 8,
-   "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "74 % als Favorit, 50 % als Außenseiter",
-   "ausschlag": 1.4564574764056408,
-   "korrSpiele": -0.7509446951947216,
-   "korrQuote": 0.14211839144318442,
-   "rangfolge": [
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": -0.2415730337078652,
-     "ev": "74 % als Favorit, 50 % als Außenseiter",
-     "spiele": 171
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": -0.25750111957008515,
-     "ev": "52 % als Favorit, 26 % als Außenseiter",
-     "spiele": 152
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -0.2713472485768501,
-     "ev": "74 % als Favorit, 47 % als Außenseiter",
-     "spiele": 97
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": -0.29870129870129875,
-     "ev": "73 % als Favorit, 43 % als Außenseiter",
-     "spiele": 78
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": -0.31899641577060933,
-     "ev": "60 % als Favorit, 28 % als Außenseiter",
-     "spiele": 246
-    }
-   ]
-  },
-  {
-   "id": "gleichmut",
-   "name": "Der Gleichmut",
-   "quelle": "Der Gleichmut",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie gleichmäßig fallen die Ergebnisse aus?",
-   "mindText": "ab 60 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Jane",
-   "halterSpiele": 97,
-   "halterRang": 4,
-   "beleg": "4,0 Tore Streuung um +0,9 im Schnitt",
-   "ausschlag": 1.782501396211898,
-   "korrSpiele": -0.0026885669613236417,
-   "korrQuote": 0.08926713892742115,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -3.9559160726236673,
-     "ev": "4,0 Tore Streuung um +0,9 im Schnitt",
-     "spiele": 97
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": -4.163446987210767,
-     "ev": "4,2 Tore Streuung um +1,1 im Schnitt",
-     "spiele": 355
-    },
-    {
-     "name": "Johannes",
-     "rang": 9,
-     "wert": -4.168446800260028,
-     "ev": "4,2 Tore Streuung um −1,1 im Schnitt",
-     "spiele": 77
-    },
-    {
-     "name": "Stefan",
-     "rang": 10,
-     "wert": -4.24684180243679,
-     "ev": "4,2 Tore Streuung um −2,7 im Schnitt",
-     "spiele": 81
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": -4.309231296667847,
-     "ev": "4,3 Tore Streuung um +1,2 im Schnitt",
-     "spiele": 171
-    }
-   ]
-  },
-  {
-   "id": "wechselhaft",
-   "name": "Der Wechselhafte",
-   "quelle": "Der Wechselhafte",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 3,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wessen Spieltage sehen am wenigsten wie der andere aus?",
-   "mindText": "ab 12 Spieltagen mit je 3 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Henry",
-   "halterSpiele": 152,
-   "halterRang": 8,
-   "beleg": "0 % am schwächsten, 100 % am stärksten von 26 Spieltagen",
-   "ausschlag": 1.58572769914746,
-   "korrSpiele": 0.03643215969224958,
-   "korrQuote": -0.5758808338301015,
-   "rangfolge": [
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0.23219880544543534,
-     "ev": "0 % am schwächsten, 100 % am stärksten von 26 Spieltagen",
-     "spiele": 152
-    },
-    {
-     "name": "Johannes",
-     "rang": 9,
-     "wert": 0.22661905814429237,
-     "ev": "0 % am schwächsten, 75 % am stärksten von 14 Spieltagen",
-     "spiele": 77
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 0.21870942798155302,
-     "ev": "13 % am schwächsten, 100 % am stärksten von 40 Spieltagen",
-     "spiele": 246
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.19015790464654028,
-     "ev": "25 % am schwächsten, 100 % am stärksten von 36 Spieltagen",
-     "spiele": 211
-    },
-    {
-     "name": "Stefan",
-     "rang": 10,
-     "wert": 0.19005359075020914,
-     "ev": "0 % am schwächsten, 60 % am stärksten von 16 Spieltagen",
-     "spiele": 81
-    }
-   ]
-  },
-  {
-   "id": "kontrast",
-   "name": "Der Kontrast",
-   "quelle": "Der Kontrast",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie weit liegen bester und schwächster Partner auseinander?",
-   "mindText": "ab 4 Partnern mit je 15 Partien",
-   "imRennen": 4,
-   "ligaGewertet": 11,
-   "halter": "Maxi",
-   "halterSpiele": 348,
-   "halterRang": 6,
-   "beleg": "65 % neben Martin, 10 % neben Stefan",
-   "ausschlag": 1.1298450406840737,
-   "korrSpiele": 0.6489487487544489,
-   "korrQuote": -0.8178842305523204,
-   "rangfolge": [
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.5511627906976745,
-     "ev": "65 % neben Martin, 10 % neben Stefan",
-     "spiele": 348
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 0.5316275764036958,
-     "ev": "63 % neben Leon, 10 % neben Henry",
-     "spiele": 246
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.5137254901960784,
-     "ev": "87 % neben Martin, 35 % neben Stefan",
-     "spiele": 355
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.4666666666666667,
-     "ev": "87 % neben Leon, 40 % neben Stefan",
-     "spiele": 211
-    }
-   ]
-  },
-  {
-   "id": "angstfrei",
-   "name": "Ohne Angstgegner",
-   "quelle": "Ohne Angstgegner",
-   "art": "leistung",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie gut läuft es gegen den unangenehmsten Gegner?",
-   "mindText": "ab 6 Gegnern mit je 15 Duellen",
-   "imRennen": 7,
-   "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "7 regelmäßige Gegner, gegen keinen unter 55 %",
-   "ausschlag": 1.4895798044981745,
-   "korrSpiele": 0.41329586671986934,
-   "korrQuote": 0.9820854319963316,
-   "rangfolge": [
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.5465116279069767,
-     "ev": "7 regelmäßige Gegner, gegen keinen unter 55 %",
-     "spiele": 171
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.45348837209302323,
-     "ev": "9 regelmäßige Gegner, gegen keinen unter 45 %",
-     "spiele": 355
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.4222222222222222,
-     "ev": "9 regelmäßige Gegner, gegen keinen unter 42 %",
-     "spiele": 211
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.265625,
-     "ev": "10 regelmäßige Gegner, gegen keinen unter 27 %",
-     "spiele": 348
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 0.23529411764705882,
-     "ev": "10 regelmäßige Gegner, gegen keinen unter 24 %",
-     "spiele": 246
-    }
-   ]
-  },
-  {
-   "id": "breitenwirkung",
-   "name": "Gegen jeden bestanden",
-   "quelle": "Gegen jeden bestanden",
-   "art": "leistung",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 1,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Gegen wie viele regelmäßige Gegner steht jemand im Plus?",
-   "mindText": "ab 6 Gegnern mit je 15 Duellen",
-   "imRennen": 7,
-   "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "gegen 7 von 7 regelmäßigen Gegnern im Plus",
-   "ausschlag": 1.5079851477098372,
-   "korrSpiele": 0.3440709020710462,
-   "korrQuote": 0.9823917034478445,
-   "rangfolge": [
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 1,
-     "ev": "gegen 7 von 7 regelmäßigen Gegnern im Plus",
-     "spiele": 171
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.7777777777777778,
-     "ev": "gegen 7 von 9 regelmäßigen Gegnern im Plus",
-     "spiele": 355
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.7777777777777778,
-     "ev": "gegen 7 von 9 regelmäßigen Gegnern im Plus",
-     "spiele": 211
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.4,
-     "ev": "gegen 4 von 10 regelmäßigen Gegnern im Plus",
-     "spiele": 348
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0.3333333333333333,
-     "ev": "gegen 2 von 6 regelmäßigen Gegnern im Plus",
-     "spiele": 152
-    }
-   ]
-  },
-  {
-   "id": "zweiteluft",
-   "name": "Die zweite Luft",
-   "quelle": "Die zweite Luft",
-   "art": "leistung",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie viel stärker läuft es ab der vierten Partie eines Spieltags?",
-   "mindText": "ab 25 Partien in jedem Block",
-   "imRennen": 9,
-   "ligaGewertet": 11,
-   "halter": "Jane",
-   "halterSpiele": 97,
-   "halterRang": 4,
-   "beleg": "62 % ab der vierten Partie, 52 % davor",
-   "ausschlag": 1.6952514818169562,
-   "korrSpiele": -0.4255231591519948,
-   "korrQuote": 0.2182747508422373,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.10299145299145296,
-     "ev": "62 % ab der vierten Partie, 52 % davor",
-     "spiele": 97
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.05128205128205121,
-     "ev": "51 % ab der vierten Partie, 46 % davor",
-     "spiele": 78
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.04783783783783785,
-     "ev": "46 % ab der vierten Partie, 41 % davor",
-     "spiele": 348
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.04347826086956519,
-     "ev": "67 % ab der vierten Partie, 62 % davor",
-     "spiele": 171
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0.02777777777777779,
-     "ev": "40 % ab der vierten Partie, 38 % davor",
-     "spiele": 152
-    }
-   ]
-  },
-  {
-   "id": "kopfhoch",
-   "name": "Der Tagesabschluss",
-   "quelle": "Der Tagesabschluss",
-   "art": "konstanz",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie viele eigene Spieltage enden nicht negativ?",
-   "mindText": "ab 12 Spieltagen mit je 3 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "21 von 23 Spieltagen nicht negativ",
-   "ausschlag": 1.474948713874339,
-   "korrSpiele": 0.2950891814312115,
-   "korrQuote": 0.9891260179561966,
-   "rangfolge": [
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.9130434782608695,
-     "ev": "21 von 23 Spieltagen nicht negativ",
-     "spiele": 171
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.8055555555555556,
-     "ev": "29 von 36 Spieltagen nicht negativ",
-     "spiele": 211
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.803921568627451,
-     "ev": "41 von 51 Spieltagen nicht negativ",
-     "spiele": 355
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.75,
-     "ev": "12 von 16 Spieltagen nicht negativ",
-     "spiele": 97
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.5833333333333334,
-     "ev": "7 von 12 Spieltagen nicht negativ",
-     "spiele": 78
-    }
-   ]
-  },
-  {
-   "id": "gleichauf2",
-   "name": "Auf Augenhöhe (2. Fassung)",
-   "quelle": "Auf Augenhöhe",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie weit liegt die Quote in offenen Partien über der Rechnung, die sie offen sah?",
-   "mindText": "ab 25 offenen Partien",
-   "imRennen": 7,
-   "ligaGewertet": 11,
-   "halter": "Leon",
-   "halterSpiele": 355,
-   "halterRang": 3,
-   "beleg": "58 % in 93 offenen Partien, erwartet waren 50 %",
-   "ausschlag": 1.1469247900251383,
-   "korrSpiele": -0.14141563079877895,
-   "korrQuote": 0.7822120191222628,
-   "rangfolge": [
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.078236559139785,
-     "ev": "58 % in 93 offenen Partien, erwartet waren 50 %",
-     "spiele": 355
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.07333999999999996,
-     "ev": "58 % in 50 offenen Partien, erwartet waren 51 %",
-     "spiele": 171
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.06085483870967745,
-     "ev": "56 % in 62 offenen Partien, erwartet waren 50 %",
-     "spiele": 211
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0.0287391304347826,
-     "ev": "52 % in 46 offenen Partien, erwartet waren 49 %",
-     "spiele": 152
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.009718749999999943,
-     "ev": "50 % in 32 offenen Partien, erwartet waren 49 %",
-     "spiele": 97
-    }
-   ]
-  },
-  {
-   "id": "punktgenau2b",
-   "name": "Der Erwartungstreue (2. Fassung)",
-   "quelle": "Der Erwartungstreue",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wessen Laufbahn trifft die Erwartung am genauesten, gemessen in Standardfehlern?",
-   "mindText": "ab 60 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Jannik",
-   "halterSpiele": 78,
-   "halterRang": 5,
-   "beleg": "49 % gespielt, 48 % erwartet, aus 78 Partien",
-   "ausschlag": 2.1650719160092637,
-   "korrSpiele": -0.13334176610231488,
-   "korrQuote": -0.10905973006096008,
-   "rangfolge": [
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": -0.07269218559208335,
-     "ev": "49 % gespielt, 48 % erwartet, aus 78 Partien",
-     "spiele": 78
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.5931998655257511,
-     "ev": "44 % gespielt, 47 % erwartet, aus 348 Partien",
-     "spiele": 348
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": -0.6213891536413876,
-     "ev": "39 % gespielt, 44 % erwartet, aus 152 Partien",
-     "spiele": 152
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -0.7072901386320782,
-     "ev": "57 % gespielt, 50 % erwartet, aus 97 Partien",
-     "spiele": 97
-    },
-    {
-     "name": "Johannes",
-     "rang": 9,
-     "wert": -0.8437641081071604,
-     "ev": "32 % gespielt, 42 % erwartet, aus 77 Partien",
-     "spiele": 77
-    }
-   ]
-  },
-  {
-   "id": "zweiteluft2",
-   "name": "Die zweite Luft (2. Fassung)",
-   "quelle": "Die zweite Luft",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie viel besser als die Rechnung läuft es ab der vierten Partie eines Tages?",
-   "mindText": "ab 25 Partien in jedem Block",
-   "imRennen": 9,
-   "ligaGewertet": 11,
-   "halter": "Jane",
-   "halterSpiele": 97,
-   "halterRang": 4,
-   "beleg": "+11 Punkte über der Rechnung ab der vierten Partie, +4 davor",
-   "ausschlag": 1.1528901700846639,
-   "korrSpiele": -0.43156587443838607,
-   "korrQuote": 0.13146164003157393,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.07550042735042717,
-     "ev": "+11 Punkte über der Rechnung ab der vierten Partie, +4 davor",
-     "spiele": 97
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.07123076923076915,
-     "ev": "+4 Punkte über der Rechnung ab der vierten Partie, -3 davor",
-     "spiele": 78
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.05394905405405398,
-     "ev": "-1 Punkte über der Rechnung ab der vierten Partie, -6 davor",
-     "spiele": 348
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.04083784271284252,
-     "ev": "+11 Punkte über der Rechnung ab der vierten Partie, +7 davor",
-     "spiele": 211
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0.0269402777777778,
-     "ev": "-4 Punkte über der Rechnung ab der vierten Partie, -6 davor",
-     "spiele": 152
-    }
-   ]
-  },
-  {
-   "id": "rollenfest2",
-   "name": "Favorit wie Außenseiter (2. Fassung)",
-   "quelle": "Favorit wie Außenseiter",
-   "art": "konstanz",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Liegt jemand als Favorit genauso weit über der Rechnung wie als Außenseiter?",
-   "mindText": "ab 20 Partien in jeder Lage",
-   "imRennen": 8,
-   "ligaGewertet": 11,
-   "halter": "Jane",
-   "halterSpiele": 97,
-   "halterRang": 4,
-   "beleg": "+10 Punkte als Favorit, +10 als Außenseiter",
-   "ausschlag": 1.3868611771630062,
-   "korrSpiele": -0.9358606415189211,
-   "korrQuote": 0.12162702337950487,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -0.0008681214421253913,
-     "ev": "+10 Punkte als Favorit, +10 als Außenseiter",
-     "spiele": 97
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": -0.017881818181818054,
-     "ev": "+8 Punkte als Favorit, +6 als Außenseiter",
-     "spiele": 78
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": -0.02503493058665468,
-     "ev": "-10 Punkte als Favorit, -8 als Außenseiter",
-     "spiele": 152
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": -0.025245435393258298,
-     "ev": "+9 Punkte als Favorit, +12 als Außenseiter",
-     "spiele": 171
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": -0.03380306603773581,
-     "ev": "+11 Punkte als Favorit, +7 als Außenseiter",
-     "spiele": 211
-    }
-   ]
-  },
-  {
-   "id": "schwaechstertag",
-   "name": "Der schwächste Tag",
-   "quelle": "Der schwächste Tag",
-   "art": "konstanz",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie gut ist der schlechteste Spieltag einer Laufbahn noch?",
-   "mindText": "ab 12 Spieltagen mit je 3 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Jane",
-   "halterSpiele": 97,
-   "halterRang": 4,
-   "beleg": "schwächster von 16 Spieltagen: 38 %",
-   "ausschlag": 1.6631388820824102,
-   "korrSpiele": 0.09585421353131111,
-   "korrQuote": 0.8783948521000766,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.375,
-     "ev": "schwächster von 16 Spieltagen: 38 %",
-     "spiele": 97
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.3333333333333333,
-     "ev": "schwächster von 23 Spieltagen: 33 %",
-     "spiele": 171
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.25,
-     "ev": "schwächster von 36 Spieltagen: 25 %",
-     "spiele": 211
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.2,
-     "ev": "schwächster von 12 Spieltagen: 20 %",
-     "spiele": 78
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.2,
-     "ev": "schwächster von 51 Spieltagen: 20 %",
-     "spiele": 355
-    }
-   ]
-  },
-  {
-   "id": "ausgelost",
-   "name": "Der Ausgeloste",
-   "quelle": "Auf Augenhöhe",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 2,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wem fällt das ausgeglichenste Los zu?",
-   "mindText": "ab 60 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Jane",
-   "halterSpiele": 97,
-   "halterRang": 4,
-   "beleg": "33 % der Partien auf Augenhöhe, 32 von 97",
-   "ausschlag": 1.9748846776889935,
-   "korrSpiele": -0.19834080589670375,
-   "korrQuote": 0.2811409774602551,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.32989690721649484,
-     "ev": "33 % der Partien auf Augenhöhe, 32 von 97",
-     "spiele": 97
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 0.3089430894308943,
-     "ev": "31 % der Partien auf Augenhöhe, 76 von 246",
-     "spiele": 246
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0.3026315789473684,
-     "ev": "30 % der Partien auf Augenhöhe, 46 von 152",
-     "spiele": 152
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.2938388625592417,
-     "ev": "29 % der Partien auf Augenhöhe, 62 von 211",
-     "spiele": 211
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.29239766081871343,
-     "ev": "29 % der Partien auf Augenhöhe, 50 von 171",
-     "spiele": 171
-    }
-   ]
-  },
-  {
-   "id": "herausgefordert",
-   "name": "Der Herausgeforderte",
-   "quelle": "Der schwerste Tag",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 3,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wer ging über die ganze Laufbahn am häufigsten als Außenseiter ins Spiel?",
-   "mindText": "ab 60 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Johannes",
-   "halterSpiele": 77,
-   "halterRang": 9,
-   "beleg": "42 % mittlere Siegchance über 77 Partien",
-   "ausschlag": 1.2799395390061554,
-   "korrSpiele": -0.49834324826272397,
-   "korrQuote": -0.9629162811239408,
-   "rangfolge": [
-    {
-     "name": "Johannes",
-     "rang": 9,
-     "wert": -0.42083116883116894,
-     "ev": "42 % mittlere Siegchance über 77 Partien",
-     "spiele": 77
-    },
-    {
-     "name": "Stefan",
-     "rang": 10,
-     "wert": -0.4228271604938273,
-     "ev": "42 % mittlere Siegchance über 81 Partien",
-     "spiele": 81
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": -0.4385592105263159,
-     "ev": "44 % mittlere Siegchance über 152 Partien",
-     "spiele": 152
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": -0.4700609756097563,
-     "ev": "47 % mittlere Siegchance über 246 Partien",
-     "spiele": 246
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.4714540229885057,
-     "ev": "47 % mittlere Siegchance über 348 Partien",
-     "spiele": 348
-    }
-   ]
-  },
-  {
-   "id": "wandergeselle",
-   "name": "Der Wandergeselle",
-   "quelle": "Der Kontrast",
-   "art": "konstanz",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Bei wem ist es am gleichgültigsten, wer daneben steht?",
-   "mindText": "ab 4 Partnern mit je 12 Partien",
-   "imRennen": 6,
-   "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "+9 Punkte Streuung über 5 regelmäßige Partner",
-   "ausschlag": 1.7493001704314077,
-   "korrSpiele": -0.241793767269791,
-   "korrQuote": 0.8910539625933591,
-   "rangfolge": [
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": -0.0870698667476149,
-     "ev": "+9 Punkte Streuung über 5 regelmäßige Partner",
-     "spiele": 171
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": -0.13936570123079162,
-     "ev": "+14 Punkte Streuung über 7 regelmäßige Partner",
-     "spiele": 211
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": -0.1542908198392147,
-     "ev": "+15 Punkte Streuung über 10 regelmäßige Partner",
-     "spiele": 355
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": -0.18527041045963172,
-     "ev": "+19 Punkte Streuung über 6 regelmäßige Partner",
-     "spiele": 246
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.21034595806032647,
-     "ev": "+21 Punkte Streuung über 9 regelmäßige Partner",
-     "spiele": 348
-    }
-   ]
-  },
-  {
-   "id": "wochentagsfest",
-   "name": "Der Wochentagsfeste",
-   "quelle": "Das Metronom",
-   "art": "konstanz",
-   "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Bei wem spielt es keine Rolle, welcher Wochentag es ist?",
-   "mindText": "ab 3 Wochentagen mit je 12 Partien",
-   "imRennen": 8,
-   "ligaGewertet": 11,
-   "halter": "Jane",
-   "halterSpiele": 97,
-   "halterRang": 4,
-   "beleg": "+1 Punkte Streuung über 3 Wochentage",
-   "ausschlag": 1.7203045989252257,
-   "korrSpiele": -0.05213714341398845,
-   "korrQuote": 0.40199950156462555,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -0.009421718061382464,
-     "ev": "+1 Punkte Streuung über 3 Wochentage",
-     "spiele": 97
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.018813509016536643,
-     "ev": "+2 Punkte Streuung über 5 Wochentage",
-     "spiele": 348
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": -0.02697263910919852,
-     "ev": "+3 Punkte Streuung über 3 Wochentage",
-     "spiele": 171
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": -0.03995495835079338,
-     "ev": "+4 Punkte Streuung über 4 Wochentage",
-     "spiele": 211
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": -0.04446036256706274,
-     "ev": "+4 Punkte Streuung über 5 Wochentage",
-     "spiele": 152
-    }
-   ]
-  },
-  {
-   "id": "unbequem",
-   "name": "Der Unbequeme",
-   "quelle": "Ohne Angstgegner",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie weit über der Rechnung läuft es gegen den Ersten der Liga?",
-   "mindText": "ab 15 Duellen gegen den Ersten",
-   "imRennen": 7,
-   "ligaGewertet": 11,
-   "halter": "Henry",
-   "halterSpiele": 152,
-   "halterRang": 8,
-   "beleg": "+3 Punkte über der Rechnung in 29 Duellen gegen Julian",
-   "ausschlag": 1.2858652601228353,
-   "korrSpiele": 0.4752671850931366,
-   "korrQuote": 0.6960568670916562,
-   "rangfolge": [
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0.02865517241379323,
-     "ev": "+3 Punkte über der Rechnung in 29 Duellen gegen Julian",
-     "spiele": 152
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": -0.030088888888888887,
-     "ev": "-3 Punkte über der Rechnung in 45 Duellen gegen Julian",
-     "spiele": 211
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": -0.036232558139534965,
-     "ev": "-4 Punkte über der Rechnung in 86 Duellen gegen Julian",
-     "spiele": 355
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": -0.1115192307692307,
-     "ev": "-11 Punkte über der Rechnung in 52 Duellen gegen Julian",
-     "spiele": 246
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.15446874999999982,
-     "ev": "-15 Punkte über der Rechnung in 64 Duellen gegen Julian",
-     "spiele": 348
-    }
-   ]
-  },
-  {
-   "id": "selbstlaeufer",
-   "name": "Der Selbstläufer",
-   "quelle": "Der Kontrast",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie weit über der Rechnung läuft es neben dem schwächsten regelmäßigen Partner?",
-   "mindText": "ab 12 Partien neben dem schwächsten regelmäßigen Partner",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "+13 Punkte über der Rechnung in 13 Partien neben Henry",
-   "ausschlag": 1.846817897287904,
-   "korrSpiele": -0.1621463528560939,
-   "korrQuote": 0.8210760092496505,
-   "rangfolge": [
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.13323076923076926,
-     "ev": "+13 Punkte über der Rechnung in 13 Partien neben Henry",
-     "spiele": 171
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -0.002333333333333354,
-     "ev": "0 Punkte über der Rechnung in 24 Partien neben Leo",
-     "spiele": 97
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": -0.012124999999999997,
-     "ev": "-1 Punkte über der Rechnung in 16 Partien neben Maxi",
-     "spiele": 78
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": -0.028600000000000014,
-     "ev": "-3 Punkte über der Rechnung in 20 Partien neben Stefan",
-     "spiele": 211
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": -0.13669230769230772,
-     "ev": "-14 Punkte über der Rechnung in 13 Partien neben Alex",
-     "spiele": 355
-    }
-   ]
-  },
-  {
-   "id": "fehlstart",
-   "name": "Der Fehlstarter",
-   "quelle": "Der Tagesabschluss",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie oft wird ein Spieltag nach einer Auftaktniederlage noch positiv?",
-   "mindText": "ab 8 Spieltagen mit Auftaktniederlage",
-   "imRennen": 8,
-   "ligaGewertet": 11,
+   "mass": "Der Anteil knapper Siege",
+   "teil": "in den ersten 25 Partien",
+   "mindText": "ab 25 Partien",
+   "braucht": 25,
    "halter": "Martin",
-   "halterSpiele": 211,
    "halterRang": 2,
-   "beleg": "6 von 11 Spieltagen nach einer Auftaktniederlage noch gewonnen",
-   "ausschlag": 1.8370992678600764,
-   "korrSpiele": 0.50954582267207,
-   "korrQuote": 0.8892483620933317,
+   "halterSpiele": 211,
+   "beleg": "20 % mit einem Tor Vorsprung, 5 von 25",
+   "halterDiff": 0.1704,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 2.5166114784235827,
+   "korrSpiele": 0.06068486142071557,
+   "korrRein": -0.1891868854217594,
+   "korrQuote": 0.43045458461464997,
+   "kopie": false,
+   "top3": [
+    "Martin",
+    "Jane",
+    "Alex"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
    "rangfolge": [
     {
      "name": "Martin",
      "rang": 2,
-     "wert": 0.5454545454545454,
-     "ev": "6 von 11 Spieltagen nach einer Auftaktniederlage noch gewonnen",
+     "wert": 0.2,
+     "ev": "20 % mit einem Tor Vorsprung, 5 von 25",
      "spiele": 211
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.12,
+     "ev": "12 % mit einem Tor Vorsprung, 3 von 25",
+     "spiele": 97
+    },
+    {
+     "name": "Alex",
+     "rang": 11,
+     "wert": 0.08,
+     "ev": "8 % mit einem Tor Vorsprung, 2 von 25",
+     "spiele": 39
     },
     {
      "name": "Leon",
      "rang": 3,
-     "wert": 0.4782608695652174,
-     "ev": "11 von 23 Spieltagen nach einer Auftaktniederlage noch gewonnen",
+     "wert": 0.08,
+     "ev": "8 % mit einem Tor Vorsprung, 2 von 25",
      "spiele": 355
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": 0.04,
+     "ev": "4 % mit einem Tor Vorsprung, 1 von 25",
+     "spiele": 152
+    }
+   ],
+   "durch": true
+  },
+  {
+   "key": "engS|offen",
+   "name": "Der Nadelstecher",
+   "benannt": true,
+   "frage": "Wer entscheidet die offenen Partien am häufigsten mit einem Tor?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Der Anteil knapper Siege",
+   "teil": "auf Augenhöhe",
+   "mindText": "ab 12 Partien auf Augenhöhe",
+   "braucht": 35,
+   "halter": "Jane",
+   "halterRang": 4,
+   "halterSpiele": 97,
+   "beleg": "19 % mit einem Tor Vorsprung, 6 von 32",
+   "halterDiff": 0.009718749999999943,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 2.4455540222837224,
+   "korrSpiele": 0.12269564368002776,
+   "korrRein": -0.04554585053877805,
+   "korrQuote": 0.3288108466787525,
+   "kopie": false,
+   "top3": [
+    "Jane",
+    "Maxi",
+    "Johannes"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.1875,
+     "ev": "19 % mit einem Tor Vorsprung, 6 von 32",
+     "spiele": 97
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.09782608695652174,
+     "ev": "10 % mit einem Tor Vorsprung, 9 von 92",
+     "spiele": 348
     },
     {
      "name": "Johannes",
      "rang": 9,
-     "wert": 0.16666666666666666,
-     "ev": "2 von 12 Spieltagen nach einer Auftaktniederlage noch gewonnen",
+     "wert": 0.09523809523809523,
+     "ev": "10 % mit einem Tor Vorsprung, 2 von 21",
      "spiele": 77
     },
     {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.16666666666666666,
-     "ev": "4 von 24 Spieltagen nach einer Auftaktniederlage noch gewonnen",
-     "spiele": 348
+     "name": "Leo",
+     "rang": 7,
+     "wert": 0.09210526315789473,
+     "ev": "9 % mit einem Tor Vorsprung, 7 von 76",
+     "spiele": 246
     },
     {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.1111111111111111,
-     "ev": "1 von 9 Spieltagen nach einer Auftaktniederlage noch gewonnen",
-     "spiele": 78
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.08602150537634409,
+     "ev": "9 % mit einem Tor Vorsprung, 8 von 93",
+     "spiele": 355
     }
-   ]
+   ],
+   "durch": true
   },
   {
-   "id": "anspieler",
-   "name": "Der Anspieler",
-   "quelle": "Die zweite Luft",
+   "key": "ruhe|abwehr",
+   "name": "Der Unaufgeregte",
+   "benannt": true,
+   "frage": "Wer hält in der Abwehr die Ergebnisse am engsten zusammen?",
    "art": "ereignis",
    "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie weit über der Rechnung liegt die erste Partie eines Spieltags?",
-   "mindText": "ab 20 Auftaktpartien",
-   "imRennen": 7,
+   "mass": "Die Gleichmäßigkeit der Ergebnisse",
+   "teil": "in der Abwehr",
+   "mindText": "ab 12 Partien in der Abwehr",
+   "braucht": 25,
+   "halter": "Jane",
+   "halterRang": 4,
+   "halterSpiele": 97,
+   "beleg": "3,7 Tore Streuung um +1,7 im Schnitt",
+   "halterDiff": 0.18064788732394366,
+   "imRennen": 11,
    "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "+16 Punkte über der Rechnung in 23 Auftaktpartien, 70 % gewonnen",
-   "ausschlag": 1.3198934111973037,
-   "korrSpiele": 0.33782941276873685,
-   "korrQuote": 0.909313685639783,
+   "ausschlag": 2.393396102040813,
+   "korrSpiele": -0.14152846272866806,
+   "korrRein": -0.2869196164675888,
+   "korrQuote": 0.21197972468628762,
+   "kopie": false,
+   "top3": [
+    "Jane",
+    "Stefan",
+    "Alex"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
    "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -3.6615384358922634,
+     "ev": "3,7 Tore Streuung um +1,7 im Schnitt",
+     "spiele": 97
+    },
+    {
+     "name": "Stefan",
+     "rang": 10,
+     "wert": -4.121608220220313,
+     "ev": "4,1 Tore Streuung um −1,9 im Schnitt",
+     "spiele": 81
+    },
+    {
+     "name": "Alex",
+     "rang": 11,
+     "wert": -4.1467524106890625,
+     "ev": "4,1 Tore Streuung um −2,3 im Schnitt",
+     "spiele": 39
+    },
     {
      "name": "Julian",
      "rang": 1,
-     "wert": 0.15765217391304354,
-     "ev": "+16 Punkte über der Rechnung in 23 Auftaktpartien, 70 % gewonnen",
+     "wert": -4.246834114961403,
+     "ev": "4,2 Tore Streuung um +0,4 im Schnitt",
      "spiele": 171
     },
     {
+     "name": "Leon",
+     "rang": 3,
+     "wert": -4.248802630381411,
+     "ev": "4,2 Tore Streuung um +0,4 im Schnitt",
+     "spiele": 355
+    }
+   ],
+   "durch": true
+  },
+  {
+   "key": "klarS|letzte25",
+   "name": "Die starke Phase",
+   "benannt": true,
+   "frage": "Wer holt in den letzten 25 Partien die meisten klaren Siege?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Der Anteil klarer Siege",
+   "teil": "in den letzten 25 Partien",
+   "mindText": "ab 25 Partien",
+   "braucht": 25,
+   "halter": "Martin",
+   "halterRang": 2,
+   "halterSpiele": 211,
+   "beleg": "44 % mit 5 Toren Vorsprung oder mehr, 11 von 25",
+   "halterDiff": 0.1835199999999999,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 2.352140950242657,
+   "korrSpiele": 0.38990199221298505,
+   "korrRein": 0.11666402498531138,
+   "korrQuote": 0.6392719549493755,
+   "kopie": false,
+   "top3": [
+    "Martin",
+    "Leon",
+    "Jane"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
+   "rangfolge": [
+    {
      "name": "Martin",
      "rang": 2,
-     "wert": 0.15744736842105267,
-     "ev": "+16 Punkte über der Rechnung in 38 Auftaktpartien, 71 % gewonnen",
+     "wert": 0.44,
+     "ev": "44 % mit 5 Toren Vorsprung oder mehr, 11 von 25",
      "spiele": 211
     },
     {
      "name": "Leon",
      "rang": 3,
-     "wert": 0.02892592592592591,
-     "ev": "+3 Punkte über der Rechnung in 54 Auftaktpartien, 57 % gewonnen",
+     "wert": 0.28,
+     "ev": "28 % mit 5 Toren Vorsprung oder mehr, 7 von 25",
      "spiele": 355
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.24,
+     "ev": "24 % mit 5 Toren Vorsprung oder mehr, 6 von 25",
+     "spiele": 97
     },
     {
      "name": "Maxi",
      "rang": 6,
-     "wert": 0.011860000000000093,
-     "ev": "+1 Punkte über der Rechnung in 50 Auftaktpartien, 50 % gewonnen",
+     "wert": 0.2,
+     "ev": "20 % mit 5 Toren Vorsprung oder mehr, 5 von 25",
      "spiele": 348
     },
     {
-     "name": "Leo",
-     "rang": 7,
-     "wert": -0.03893181818181829,
-     "ev": "-4 Punkte über der Rechnung in 44 Auftaktpartien, 43 % gewonnen",
-     "spiele": 246
+     "name": "Henry",
+     "rang": 8,
+     "wert": 0.16,
+     "ev": "16 % mit 5 Toren Vorsprung oder mehr, 4 von 25",
+     "spiele": 152
     }
-   ]
+   ],
+   "durch": true
   },
   {
-   "id": "schlussmann",
+   "key": "abw|schluss",
    "name": "Der Schlussmann",
-   "quelle": "Die zweite Luft",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 1,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
+   "benannt": true,
    "frage": "Wie weit über der Rechnung liegt die letzte Partie eines Spieltags?",
-   "mindText": "ab 20 Schlusspartien",
-   "imRennen": 7,
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Der Abstand zur Rechnung",
+   "teil": "in der letzten Partie eines Spieltags",
+   "mindText": "ab 10 Partien in der letzten Partie eines Spieltags",
+   "braucht": 30,
+   "halter": "Jane",
+   "halterRang": 4,
+   "halterSpiele": 97,
+   "beleg": "+19 Punkte über der Rechnung, 67 % statt 48 %",
+   "halterDiff": 0.18677777777777776,
+   "imRennen": 11,
    "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "+5 Punkte über der Rechnung in 23 Schlusspartien, 61 % gewonnen",
-   "ausschlag": 1.4357857396514568,
-   "korrSpiele": 0.30262916010468077,
-   "korrQuote": 0.8368085208878866,
+   "ausschlag": 2.2216619132294184,
+   "korrSpiele": 0.15888952365007297,
+   "korrRein": -0.3998045668121376,
+   "korrQuote": 0.776957432913241,
+   "kopie": false,
+   "top3": [
+    "Jane",
+    "Julian",
+    "Martin"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
    "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.18677777777777776,
+     "ev": "+19 Punkte über der Rechnung, 67 % statt 48 %",
+     "spiele": 97
+    },
     {
      "name": "Julian",
      "rang": 1,
      "wert": 0.045173913043478175,
-     "ev": "+5 Punkte über der Rechnung in 23 Schlusspartien, 61 % gewonnen",
+     "ev": "+5 Punkte über der Rechnung, 61 % statt 56 %",
      "spiele": 171
     },
     {
      "name": "Martin",
      "rang": 2,
      "wert": 0.02718421052631592,
-     "ev": "+3 Punkte über der Rechnung in 38 Schlusspartien, 61 % gewonnen",
+     "ev": "+3 Punkte über der Rechnung, 61 % statt 58 %",
      "spiele": 211
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 0.009615384615384637,
+     "ev": "+1 Punkte über der Rechnung, 46 % statt 45 %",
+     "spiele": 78
     },
     {
      "name": "Leo",
      "rang": 7,
      "wert": -0.02354545454545448,
-     "ev": "-2 Punkte über der Rechnung in 44 Schlusspartien, 43 % gewonnen",
+     "ev": "-2 Punkte über der Rechnung, 43 % statt 46 %",
      "spiele": 246
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.041779999999999984,
-     "ev": "-4 Punkte über der Rechnung in 50 Schlusspartien, 42 % gewonnen",
-     "spiele": 348
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": -0.042888888888888754,
-     "ev": "-4 Punkte über der Rechnung in 54 Schlusspartien, 56 % gewonnen",
-     "spiele": 355
     }
-   ]
+   ],
+   "durch": true
   },
   {
-   "id": "standhaft",
-   "name": "Der Standhafte",
-   "quelle": "Der Tagesabschluss",
-   "art": "konstanz",
+   "key": "engS|langtag",
+   "name": "Der Zäheste",
+   "benannt": true,
+   "frage": "Wer holt an langen Spieltagen die meisten knappen Siege?",
+   "art": "leistung",
    "zufall": "",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 7,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 7,
-   "frage": "An wie vielen eigenen Spieltagen bleibt jemand nicht ohne Sieg?",
-   "mindText": "ab 12 Spieltagen mit je 3 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
+   "mass": "Der Anteil knapper Siege",
+   "teil": "an langen Spieltagen",
+   "mindText": "ab 15 Partien an langen Spieltagen",
+   "braucht": 30,
    "halter": "Jane",
-   "halterSpiele": 97,
    "halterRang": 4,
-   "beleg": "16 von 16 Spieltagen mit mindestens einem Sieg",
-   "ausschlag": 0.6174739990804948,
-   "korrSpiele": 0.535835698638394,
-   "korrQuote": 0.8019136624550016,
+   "halterSpiele": 97,
+   "beleg": "12 % mit einem Tor Vorsprung, 9 von 78",
+   "halterDiff": 0.08996153846153843,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 2.214675100725256,
+   "korrSpiele": 0.22401077731626773,
+   "korrRein": -0.1492549300927298,
+   "korrQuote": 0.6604214900086769,
+   "kopie": false,
+   "top3": [
+    "Jane",
+    "Jannik",
+    "Julian"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
    "rangfolge": [
     {
      "name": "Jane",
      "rang": 4,
-     "wert": 1,
-     "ev": "16 von 16 Spieltagen mit mindestens einem Sieg",
+     "wert": 0.11538461538461539,
+     "ev": "12 % mit einem Tor Vorsprung, 9 von 78",
      "spiele": 97
     },
     {
      "name": "Jannik",
      "rang": 5,
-     "wert": 1,
-     "ev": "12 von 12 Spieltagen mit mindestens einem Sieg",
+     "wert": 0.07462686567164178,
+     "ev": "7 % mit einem Tor Vorsprung, 5 von 67",
      "spiele": 78
     },
     {
      "name": "Julian",
      "rang": 1,
-     "wert": 1,
-     "ev": "23 von 23 Spieltagen mit mindestens einem Sieg",
+     "wert": 0.07317073170731707,
+     "ev": "7 % mit einem Tor Vorsprung, 12 von 164",
+     "spiele": 171
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.07051282051282051,
+     "ev": "7 % mit einem Tor Vorsprung, 22 von 312",
+     "spiele": 355
+    },
+    {
+     "name": "Leo",
+     "rang": 7,
+     "wert": 0.06878306878306878,
+     "ev": "7 % mit einem Tor Vorsprung, 13 von 189",
+     "spiele": 246
+    }
+   ],
+   "durch": true
+  },
+  {
+   "key": "abw|abwehr",
+   "name": "Der Abwehrchef",
+   "benannt": true,
+   "frage": "Wie weit über der Rechnung liegt die Leistung in der Abwehr?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Der Abstand zur Rechnung",
+   "teil": "in der Abwehr",
+   "mindText": "ab 12 Partien in der Abwehr",
+   "braucht": 25,
+   "halter": "Jane",
+   "halterRang": 4,
+   "halterSpiele": 97,
+   "beleg": "+18 Punkte über der Rechnung, 66 % statt 48 %",
+   "halterDiff": 0.18064788732394366,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 2.1904127909995545,
+   "korrSpiele": 0.09425622581100301,
+   "korrRein": -0.3016392104810833,
+   "korrQuote": 0.6181850243762058,
+   "kopie": false,
+   "top3": [
+    "Jane",
+    "Martin",
+    "Julian"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.18064788732394366,
+     "ev": "+18 Punkte über der Rechnung, 66 % statt 48 %",
+     "spiele": 97
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.09917164179104487,
+     "ev": "+10 Punkte über der Rechnung, 66 % statt 56 %",
+     "spiele": 211
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 0.010059999999999958,
+     "ev": "+1 Punkte über der Rechnung, 60 % statt 59 %",
      "spiele": 171
     },
     {
      "name": "Leo",
      "rang": 7,
-     "wert": 1,
-     "ev": "40 von 40 Spieltagen mit mindestens einem Sieg",
+     "wert": 0.00039416058394164954,
+     "ev": "+0 Punkte über der Rechnung, 49 % statt 49 %",
      "spiele": 246
     },
     {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 1,
-     "ev": "51 von 51 Spieltagen mit mindestens einem Sieg",
-     "spiele": 355
+     "name": "Henry",
+     "rang": 8,
+     "wert": -0.026028985507246416,
+     "ev": "-3 Punkte über der Rechnung, 41 % statt 43 %",
+     "spiele": 152
     }
-   ]
+   ],
+   "durch": true
   },
   {
-   "id": "aufwaermen",
-   "name": "Die Aufwärmphase",
-   "quelle": "Die Steigerung",
+   "key": "ruhe|auftakt",
+   "name": "Der Kaltstarter",
+   "benannt": true,
+   "frage": "Wer legt in der ersten Partie eines Spieltags immer dasselbe Ergebnis hin?",
    "art": "ereignis",
    "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "An wie vielen Spieltagen läuft die zweite Hälfte besser als die erste?",
-   "mindText": "ab 10 Spieltagen mit je 4 Partien",
-   "imRennen": 9,
+   "mass": "Die Gleichmäßigkeit der Ergebnisse",
+   "teil": "in der ersten Partie eines Spieltags",
+   "mindText": "ab 10 Partien in der ersten Partie eines Spieltags",
+   "braucht": 30,
+   "halter": "Jane",
+   "halterRang": 4,
+   "halterSpiele": 97,
+   "beleg": "3,3 Tore Streuung um +1,3 im Schnitt",
+   "halterDiff": 0.17399999999999993,
+   "imRennen": 11,
    "ligaGewertet": 11,
-   "halter": "Jannik",
-   "halterSpiele": 78,
-   "halterRang": 5,
-   "beleg": "7 von 12 Spieltagen in der zweiten Hälfte stärker",
-   "ausschlag": 2.053261293346594,
-   "korrSpiele": -0.3584207711274646,
-   "korrQuote": 0.16886666052377022,
+   "ausschlag": 2.18793798067401,
+   "korrSpiele": -0.3025775481276529,
+   "korrRein": -0.34590245901756295,
+   "korrQuote": -0.0011047086672519256,
+   "kopie": false,
+   "top3": [
+    "Jane",
+    "Johannes",
+    "Henry"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
    "rangfolge": [
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.5833333333333334,
-     "ev": "7 von 12 Spieltagen in der zweiten Hälfte stärker",
-     "spiele": 78
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.45454545454545453,
-     "ev": "10 von 22 Spieltagen in der zweiten Hälfte stärker",
-     "spiele": 171
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.4222222222222222,
-     "ev": "19 von 45 Spieltagen in der zweiten Hälfte stärker",
-     "spiele": 348
-    },
     {
      "name": "Jane",
      "rang": 4,
-     "wert": 0.4,
-     "ev": "6 von 15 Spieltagen in der zweiten Hälfte stärker",
+     "wert": -3.3333333333333335,
+     "ev": "3,3 Tore Streuung um +1,3 im Schnitt",
      "spiele": 97
+    },
+    {
+     "name": "Johannes",
+     "rang": 9,
+     "wert": -3.7039179613569746,
+     "ev": "3,7 Tore Streuung um −1,1 im Schnitt",
+     "spiele": 77
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": -3.9063101847215433,
+     "ev": "3,9 Tore Streuung um −1,7 im Schnitt",
+     "spiele": 152
     },
     {
      "name": "Stefan",
      "rang": 10,
-     "wert": 0.38461538461538464,
-     "ev": "5 von 13 Spieltagen in der zweiten Hälfte stärker",
+     "wert": -4.038778081927965,
+     "ev": "4,0 Tore Streuung um −2,3 im Schnitt",
      "spiele": 81
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": -4.27686231325459,
+     "ev": "4,3 Tore Streuung um +1,4 im Schnitt",
+     "spiele": 211
     }
-   ]
+   ],
+   "durch": true
   },
   {
-   "id": "langstreckler",
-   "name": "Der Langstreckler",
-   "quelle": "Die zweite Luft",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie weit über der Rechnung liegen die langen Spieltage?",
-   "mindText": "ab 4 Spieltagen mit je 6 Partien",
-   "imRennen": 9,
-   "ligaGewertet": 11,
+   "key": "gegen|letzte25",
+   "name": "Die dichte Phase",
+   "benannt": true,
+   "frage": "Wer lässt in den letzten 25 Partien am wenigsten zu?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Die Gegentore je Partie",
+   "teil": "in den letzten 25 Partien",
+   "mindText": "ab 25 Partien",
+   "braucht": 25,
    "halter": "Martin",
-   "halterSpiele": 211,
    "halterRang": 2,
-   "beleg": "+9 Punkte über der Rechnung an 18 Tagen mit 6 oder mehr Partien",
-   "ausschlag": 1.2221513657261447,
-   "korrSpiele": 0.11656487214130938,
-   "korrQuote": 0.9624352231173786,
-   "rangfolge": [
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.08729007633587771,
-     "ev": "+9 Punkte über der Rechnung an 18 Tagen mit 6 oder mehr Partien",
-     "spiele": 211
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.08169811320754738,
-     "ev": "+8 Punkte über der Rechnung an 20 Tagen mit 6 oder mehr Partien",
-     "spiele": 171
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.047491289198606346,
-     "ev": "+5 Punkte über der Rechnung an 36 Tagen mit 6 oder mehr Partien",
-     "spiele": 355
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.04624137931034489,
-     "ev": "+5 Punkte über der Rechnung an 8 Tagen mit 6 oder mehr Partien",
-     "spiele": 97
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.026250000000000107,
-     "ev": "+3 Punkte über der Rechnung an 7 Tagen mit 6 oder mehr Partien",
-     "spiele": 78
-    }
-   ]
-  },
-  {
-   "id": "rueckkehrer",
-   "name": "Der Rückkehrer",
-   "quelle": "Auf Augenhöhe",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "Wie weit über der Rechnung liegt die erste Partie nach einer Pause?",
-   "mindText": "ab 8 Rückkehrpartien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Leon",
-   "halterSpiele": 355,
-   "halterRang": 3,
-   "beleg": "+18 Punkte über der Rechnung in 11 Partien nach mindestens 3 Tagen ohne eigenes Spiel",
-   "ausschlag": 1.3913372131273285,
-   "korrSpiele": 0.5323285470817835,
-   "korrQuote": 0.7449129835905584,
-   "rangfolge": [
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.17700000000000005,
-     "ev": "+18 Punkte über der Rechnung in 11 Partien nach mindestens 3 Tagen ohne eigenes Spiel",
-     "spiele": 355
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.1668888888888888,
-     "ev": "+17 Punkte über der Rechnung in 9 Partien nach mindestens 3 Tagen ohne eigenes Spiel",
-     "spiele": 97
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.04991666666666672,
-     "ev": "+5 Punkte über der Rechnung in 12 Partien nach mindestens 3 Tagen ohne eigenes Spiel",
-     "spiele": 171
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 0.021909090909090878,
-     "ev": "+2 Punkte über der Rechnung in 11 Partien nach mindestens 3 Tagen ohne eigenes Spiel",
-     "spiele": 246
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": -0.0018333333333332424,
-     "ev": "0 Punkte über der Rechnung in 12 Partien nach mindestens 3 Tagen ohne eigenes Spiel",
-     "spiele": 348
-    }
-   ]
-  },
-  {
-   "id": "buchhalter",
-   "name": "Der Buchhalter",
-   "quelle": "Die Punktlandung",
-   "art": "ereignis",
-   "zufall": "quote",
-   "sorte": "quote",
-   "dreiUnten": 0,
-   "belegt": 0,
-   "untenAb": 6,
-   "abFund": 0,
-   "gleich": 1,
-   "frage": "An wie vielen Spieltagen geht das eigene Torkonto genau auf?",
-   "mindText": "ab 12 Spieltagen mit je 3 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "1 von 23 Spieltagen mit einem Torkonto von genau null",
-   "ausschlag": 1.6320413669094649,
-   "korrSpiele": 0.6885369375029846,
-   "korrQuote": 0.4646832082800154,
-   "rangfolge": [
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.043478260869565216,
-     "ev": "1 von 23 Spieltagen mit einem Torkonto von genau null",
-     "spiele": 171
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.041666666666666664,
-     "ev": "2 von 48 Spieltagen mit einem Torkonto von genau null",
-     "spiele": 348
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.0392156862745098,
-     "ev": "2 von 51 Spieltagen mit einem Torkonto von genau null",
-     "spiele": 355
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0,
-     "ev": "0 von 26 Spieltagen mit einem Torkonto von genau null",
-     "spiele": 152
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0,
-     "ev": "0 von 16 Spieltagen mit einem Torkonto von genau null",
-     "spiele": 97
-    }
-   ]
-  },
-  {
-   "id": "weisseweste",
-   "name": "Die weiße Weste",
-   "quelle": "Der makellose Tag",
-   "art": "ereignis",
-   "zufall": "fund",
-   "sorte": "fund",
-   "dreiUnten": 1,
-   "belegt": 1,
-   "untenAb": 6,
-   "abFund": 2,
-   "gleich": 1,
-   "frage": "Wie viele Partien ohne ein einziges Gegentor an einem Spieltag?",
-   "mindText": "ab 8 Spieltagen mit je 3 Partien",
-   "imRennen": 11,
-   "ligaGewertet": 11,
-   "halter": "Martin",
    "halterSpiele": 211,
-   "halterRang": 2,
-   "beleg": "2 Partien ohne Gegentor am stärksten solchen Spieltag",
-   "ausschlag": 2.121320343559643,
-   "korrSpiele": 0.46555927988737156,
-   "korrQuote": 0.6576256343038547,
+   "beleg": "6,6 Gegentore je Partie",
+   "halterDiff": 0.1835199999999999,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 2.106028646428767,
+   "korrSpiele": 0.4627645521974681,
+   "korrRein": 0.13695942578330195,
+   "korrQuote": 0.8033904074841218,
+   "kopie": false,
+   "top3": [
+    "Martin",
+    "Leon",
+    "Jane"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
    "rangfolge": [
     {
      "name": "Martin",
      "rang": 2,
-     "wert": 2,
-     "ev": "2 Partien ohne Gegentor am stärksten solchen Spieltag",
+     "wert": -6.56,
+     "ev": "6,6 Gegentore je Partie",
      "spiele": 211
     },
     {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 1,
-     "ev": "1 Partien ohne Gegentor am stärksten solchen Spieltag",
-     "spiele": 152
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 1,
-     "ev": "1 Partien ohne Gegentor am stärksten solchen Spieltag",
-     "spiele": 78
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 1,
-     "ev": "1 Partien ohne Gegentor am stärksten solchen Spieltag",
-     "spiele": 171
-    },
-    {
      "name": "Leon",
      "rang": 3,
-     "wert": 1,
-     "ev": "1 Partien ohne Gegentor am stärksten solchen Spieltag",
+     "wert": -7.6,
+     "ev": "7,6 Gegentore je Partie",
      "spiele": 355
-    }
-   ]
-  },
-  {
-   "id": "rundumschlag",
-   "name": "Der Rundumschlag",
-   "quelle": "Gegen jeden bestanden",
-   "art": "ereignis",
-   "zufall": "fund",
-   "sorte": "fund",
-   "dreiUnten": 2,
-   "belegt": 8,
-   "untenAb": 6,
-   "abFund": 3,
-   "gleich": 1,
-   "frage": "Gegen wie viele verschiedene Gegner an einem Tag gewonnen, ohne gegen einen zu verlieren?",
-   "mindText": "ab 8 Spieltagen mit je 3 Partien",
-   "imRennen": 11,
-   "ligaGewertet": 11,
-   "halter": "Julian",
-   "halterSpiele": 171,
-   "halterRang": 1,
-   "beleg": "6 Gegner an einem Tag geschlagen, ohne gegen einen zu verlieren",
-   "ausschlag": 1.5657364440559267,
-   "korrSpiele": 0.39107189482026355,
-   "korrQuote": 0.27792341068276494,
-   "rangfolge": [
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 6,
-     "ev": "6 Gegner an einem Tag geschlagen, ohne gegen einen zu verlieren",
-     "spiele": 171
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 5,
-     "ev": "5 Gegner an einem Tag geschlagen, ohne gegen einen zu verlieren",
-     "spiele": 246
-    },
-    {
-     "name": "Alex",
-     "rang": 11,
-     "wert": 4,
-     "ev": "4 Gegner an einem Tag geschlagen, ohne gegen einen zu verlieren",
-     "spiele": 39
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 4,
-     "ev": "4 Gegner an einem Tag geschlagen, ohne gegen einen zu verlieren",
-     "spiele": 152
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 4,
-     "ev": "4 Gegner an einem Tag geschlagen, ohne gegen einen zu verlieren",
-     "spiele": 355
-    }
-   ]
-  },
-  {
-   "id": "zahlendreher",
-   "name": "Der Zahlendreher",
-   "quelle": "Der Wiedergänger",
-   "art": "ereignis",
-   "zufall": "fund",
-   "sorte": "fund",
-   "dreiUnten": 1,
-   "belegt": 11,
-   "untenAb": 6,
-   "abFund": 1,
-   "gleich": 1,
-   "frage": "Wie oft kommen an einem Tag ein Ergebnis und sein Spiegelbild beide vor?",
-   "mindText": "ab 8 Spieltagen mit je 3 Partien",
-   "imRennen": 11,
-   "ligaGewertet": 11,
-   "halter": "Leon",
-   "halterSpiele": 355,
-   "halterRang": 3,
-   "beleg": "36 Spieltage mit einem Ergebnis und seinem Spiegelbild",
-   "ausschlag": 1.8473951925387588,
-   "korrSpiele": 0.9939758842304555,
-   "korrQuote": 0.4472021670340033,
-   "rangfolge": [
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 36,
-     "ev": "36 Spieltage mit einem Ergebnis und seinem Spiegelbild",
-     "spiele": 355
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 35,
-     "ev": "35 Spieltage mit einem Ergebnis und seinem Spiegelbild",
-     "spiele": 348
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 24,
-     "ev": "24 Spieltage mit einem Ergebnis und seinem Spiegelbild",
-     "spiele": 246
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 19,
-     "ev": "19 Spieltage mit einem Ergebnis und seinem Spiegelbild",
-     "spiele": 211
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 13,
-     "ev": "13 Spieltage mit einem Ergebnis und seinem Spiegelbild",
-     "spiele": 152
-    }
-   ]
-  },
-  {
-   "id": "serientaeter",
-   "name": "Der Serientäter",
-   "quelle": "Der Wiedergänger",
-   "art": "ereignis",
-   "zufall": "fund",
-   "sorte": "fund",
-   "dreiUnten": 1,
-   "belegt": 10,
-   "untenAb": 6,
-   "abFund": 2,
-   "gleich": 7,
-   "frage": "Wie viele eigene Partien nacheinander endeten mit demselben Stand?",
-   "mindText": "ab 40 Partien",
-   "imRennen": 10,
-   "ligaGewertet": 11,
-   "halter": "Henry",
-   "halterSpiele": 152,
-   "halterRang": 8,
-   "beleg": "3 Partien nacheinander mit 10:8",
-   "ausschlag": 0.6546536707079766,
-   "korrSpiele": -0.1339299650261345,
-   "korrQuote": -0.17696354858760666,
-   "rangfolge": [
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 3,
-     "ev": "3 Partien nacheinander mit 10:8",
-     "spiele": 152
     },
     {
      "name": "Jane",
      "rang": 4,
-     "wert": 3,
-     "ev": "3 Partien nacheinander mit 8:10",
+     "wert": -7.72,
+     "ev": "7,7 Gegentore je Partie",
      "spiele": 97
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": -7.8,
+     "ev": "7,8 Gegentore je Partie",
+     "spiele": 348
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": -8.12,
+     "ev": "8,1 Gegentore je Partie",
+     "spiele": 171
+    }
+   ],
+   "durch": true
+  },
+  {
+   "key": "engS|unter",
+   "name": "Der Stichler",
+   "benannt": true,
+   "frage": "Wer gewinnt als Außenseiter am häufigsten mit genau einem Tor?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Der Anteil knapper Siege",
+   "teil": "als Außenseiter",
+   "mindText": "ab 15 Partien als Außenseiter",
+   "braucht": 30,
+   "halter": "Julian",
+   "halterRang": 1,
+   "halterSpiele": 171,
+   "beleg": "13 % mit einem Tor Vorsprung, 4 von 32",
+   "halterDiff": 0.11659375000000005,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 1.920418660472166,
+   "korrSpiele": 0.03804613399362565,
+   "korrRein": -0.2708685097132052,
+   "korrQuote": 0.49870236340319174,
+   "kopie": false,
+   "top3": [
+    "Julian",
+    "Jannik",
+    "Johannes"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
+   "rangfolge": [
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 0.125,
+     "ev": "13 % mit einem Tor Vorsprung, 4 von 32",
+     "spiele": 171
     },
     {
      "name": "Jannik",
      "rang": 5,
-     "wert": 3,
-     "ev": "3 Partien nacheinander mit 5:10",
+     "wert": 0.11428571428571428,
+     "ev": "11 % mit einem Tor Vorsprung, 4 von 35",
      "spiele": 78
     },
     {
      "name": "Johannes",
      "rang": 9,
-     "wert": 3,
-     "ev": "3 Partien nacheinander mit 8:10",
+     "wert": 0.075,
+     "ev": "8 % mit einem Tor Vorsprung, 3 von 40",
      "spiele": 77
     },
     {
      "name": "Leo",
      "rang": 7,
-     "wert": 3,
-     "ev": "3 Partien nacheinander mit 7:10",
+     "wert": 0.06481481481481481,
+     "ev": "6 % mit einem Tor Vorsprung, 7 von 108",
      "spiele": 246
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.05660377358490566,
+     "ev": "6 % mit einem Tor Vorsprung, 3 von 53",
+     "spiele": 211
     }
-   ]
+   ],
+   "durch": true
+  },
+  {
+   "key": "diff|auf25",
+   "name": "Der Aufschwung",
+   "benannt": true,
+   "frage": "Wie viel besser laufen die letzten 25 Partien als die 25 davor?",
+   "art": "ereignis",
+   "zufall": "quote",
+   "mass": "Die Siegquote",
+   "teil": "zwei Fenster im Vergleich",
+   "mindText": "ab 50 Partien",
+   "braucht": 50,
+   "halter": "Martin",
+   "halterRang": 2,
+   "halterSpiele": 211,
+   "beleg": "+24 Punkte: 84 % in den letzten 25, 60 % in den 25 davor",
+   "halterDiff": 0.16157999999999972,
+   "imRennen": 10,
+   "ligaGewertet": 11,
+   "ausschlag": 1.816125013904012,
+   "korrSpiele": 0.28463690606517195,
+   "korrRein": 0.16698348711543906,
+   "korrQuote": 0.37709394861083023,
+   "kopie": false,
+   "top3": [
+    "Martin",
+    "Maxi",
+    "Stefan"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 77,
+   "rangfolge": [
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.24,
+     "ev": "+24 Punkte: 84 % in den letzten 25, 60 % in den 25 davor",
+     "spiele": 211
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.12,
+     "ev": "+12 Punkte: 64 % in den letzten 25, 52 % in den 25 davor",
+     "spiele": 348
+    },
+    {
+     "name": "Stefan",
+     "rang": 10,
+     "wert": 0.08000000000000002,
+     "ev": "+8 Punkte: 32 % in den letzten 25, 24 % in den 25 davor",
+     "spiele": 81
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 0,
+     "ev": "+0 Punkte: 48 % in den letzten 25, 48 % in den 25 davor",
+     "spiele": 78
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -0.039999999999999925,
+     "ev": "-4 Punkte: 56 % in den letzten 25, 60 % in den 25 davor",
+     "spiele": 97
+    }
+   ],
+   "durch": true
+  },
+  {
+   "key": "tore|abwehr",
+   "name": "Der Mitspieler",
+   "benannt": true,
+   "frage": "Wer trifft aus der Abwehr heraus am häufigsten selbst?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Die eigenen Tore je Partie",
+   "teil": "in der Abwehr",
+   "mindText": "ab 12 Partien in der Abwehr",
+   "braucht": 25,
+   "halter": "Jane",
+   "halterRang": 4,
+   "halterSpiele": 97,
+   "beleg": "9,1 eigene Tore je Partie",
+   "halterDiff": 0.18064788732394366,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 1.8103247886837457,
+   "korrSpiele": 0.3933667370421891,
+   "korrRein": -0.0856752679690543,
+   "korrQuote": 0.8800144766027672,
+   "kopie": false,
+   "top3": [
+    "Jane",
+    "Martin",
+    "Leon"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 9.126760563380282,
+     "ev": "9,1 eigene Tore je Partie",
+     "spiele": 97
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 8.932835820895523,
+     "ev": "8,9 eigene Tore je Partie",
+     "spiele": 211
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 8.350877192982455,
+     "ev": "8,4 eigene Tore je Partie",
+     "spiele": 355
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 8.26,
+     "ev": "8,3 eigene Tore je Partie",
+     "spiele": 171
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 7.894366197183099,
+     "ev": "7,9 eigene Tore je Partie",
+     "spiele": 348
+    }
+   ],
+   "durch": true
+  },
+  {
+   "key": "gegen|favorit",
+   "name": "Der Pflichterfüller",
+   "benannt": true,
+   "frage": "Wer lässt als Favorit am wenigsten zu?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Die Gegentore je Partie",
+   "teil": "als Favorit",
+   "mindText": "ab 15 Partien als Favorit",
+   "braucht": 30,
+   "halter": "Jannik",
+   "halterRang": 5,
+   "halterSpiele": 78,
+   "beleg": "6,2 Gegentore je Partie",
+   "halterDiff": 0.08068181818181819,
+   "imRennen": 9,
+   "ligaGewertet": 11,
+   "ausschlag": 1.5587870455017863,
+   "korrSpiele": -0.01716583162078973,
+   "korrRein": -0.27206532704056413,
+   "korrQuote": 0.6986821171375363,
+   "kopie": false,
+   "top3": [
+    "Jannik",
+    "Martin",
+    "Jane"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 77,
+   "rangfolge": [
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": -6.2272727272727275,
+     "ev": "6,2 Gegentore je Partie",
+     "spiele": 78
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": -6.3125,
+     "ev": "6,3 Gegentore je Partie",
+     "spiele": 211
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -6.967741935483871,
+     "ev": "7,0 Gegentore je Partie",
+     "spiele": 97
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": -6.977528089887641,
+     "ev": "7,0 Gegentore je Partie",
+     "spiele": 171
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": -7.0152284263959395,
+     "ev": "7,0 Gegentore je Partie",
+     "spiele": 355
+    }
+   ],
+   "durch": true
+  },
+  {
+   "key": "klarS|favorit",
+   "name": "Der Erwartbare",
+   "benannt": true,
+   "frage": "Wer macht die Favoritenrolle am häufigsten deutlich?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Der Anteil klarer Siege",
+   "teil": "als Favorit",
+   "mindText": "ab 15 Partien als Favorit",
+   "braucht": 30,
+   "halter": "Jannik",
+   "halterRang": 5,
+   "halterSpiele": 78,
+   "beleg": "41 % mit 5 Toren Vorsprung oder mehr, 9 von 22",
+   "halterDiff": 0.08068181818181819,
+   "imRennen": 9,
+   "ligaGewertet": 11,
+   "ausschlag": 1.5120973667975837,
+   "korrSpiele": -0.1664329811015275,
+   "korrRein": -0.3075326877993758,
+   "korrQuote": 0.42263616988286595,
+   "kopie": false,
+   "top3": [
+    "Jannik",
+    "Martin",
+    "Jane"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 77,
+   "rangfolge": [
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 0.4090909090909091,
+     "ev": "41 % mit 5 Toren Vorsprung oder mehr, 9 von 22",
+     "spiele": 78
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.3958333333333333,
+     "ev": "40 % mit 5 Toren Vorsprung oder mehr, 38 von 96",
+     "spiele": 211
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.3548387096774194,
+     "ev": "35 % mit 5 Toren Vorsprung oder mehr, 11 von 31",
+     "spiele": 97
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.3069306930693069,
+     "ev": "31 % mit 5 Toren Vorsprung oder mehr, 31 von 101",
+     "spiele": 348
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.30456852791878175,
+     "ev": "30 % mit 5 Toren Vorsprung oder mehr, 60 von 197",
+     "spiele": 355
+    }
+   ],
+   "durch": true
   }
  ]
 }
