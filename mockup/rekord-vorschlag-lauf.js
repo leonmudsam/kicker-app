@@ -127,23 +127,28 @@ const pp = v => (v >= 0 ? '+' : '') + Math.round(v * 100);
 // Abwehrspiele, zwoelf bis vierzehn Spieltage, acht bis zwoelf Duelle gegen
 // jeden anderen.
 const TEIL = [
-  {id:'alle',    n:'über die ganze Laufbahn', f:p => p.partien,                                  min:25, braucht:25},
-  {id:'unter',   n:'als Außenseiter',         f:p => p.partien.filter(s => s.exp < 0.45),        min:15, braucht:30},
-  {id:'favorit', n:'als Favorit',             f:p => p.partien.filter(s => s.exp > 0.55),        min:15, braucht:30},
-  {id:'offen',   n:'auf Augenhöhe',           f:p => p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55), min:12, braucht:35},
-  {id:'sturm',   n:'im Sturm',                f:p => p.partien.filter(s => s.pos === 'atk'),     min:12, braucht:25},
-  {id:'abwehr',  n:'in der Abwehr',           f:p => p.partien.filter(s => s.pos === 'def'),     min:12, braucht:25},
-  {id:'nachP',   n:'nach einer Niederlage',   f:p => nach(p, false),                             min:15, braucht:30},
-  {id:'nachS',   n:'nach einem Sieg',         f:p => nach(p, true),                              min:12, braucht:30},
-  {id:'eng',     n:'in engen Partien',        f:p => p.partien.filter(s => Math.abs(s.gf - s.ga) <= 1), min:10, braucht:40},
-  {id:'klar',    n:'in klaren Partien',       f:p => p.partien.filter(s => Math.abs(s.gf - s.ga) >= 5), min:10, braucht:30},
-  {id:'top',     n:'gegen die besten drei',   f:p => p.partien.filter(s => s.geg.some(g => LIGA_TOP3.includes(g))), min:15, braucht:30},
-  {id:'rest',    n:'gegen den Rest der Liga', f:p => p.partien.filter(s => !s.geg.some(g => LIGA_TOP3.includes(g))), min:15, braucht:30},
-  {id:'auftakt', n:'in der ersten Partie eines Spieltags', f:p => tagPos(p, 'erste'),            min:10, braucht:30},
-  {id:'schluss', n:'in der letzten Partie eines Spieltags', f:p => tagPos(p, 'letzte'),          min:10, braucht:30},
-  {id:'langtag', n:'an langen Spieltagen',    f:p => [].concat(...Object.values(p.tagGrp).filter(a => a.length >= 5)), min:15, braucht:30},
-  {id:'erste25', n:'in den ersten 25 Partien', f:p => p.partien.slice(0, 25),                    min:25, braucht:25},
-  {id:'letzte25',n:'in den letzten 25 Partien', f:p => p.partien.slice(-25),                     min:25, braucht:25}
+  {id:'alle',    n:'über die ganze Laufbahn', f:p => p.partien,                                  min:25, braucht:25, minHoch:70, brauchtHoch:70},
+  {id:'unter',   n:'als Außenseiter',         f:p => p.partien.filter(s => s.exp < 0.45),        min:15, braucht:30, minHoch:40, brauchtHoch:80},
+  {id:'favorit', n:'als Favorit',             f:p => p.partien.filter(s => s.exp > 0.55),        min:15, braucht:30, minHoch:40, brauchtHoch:80},
+  {id:'offen',   n:'auf Augenhöhe',           f:p => p.partien.filter(s => s.exp >= 0.45 && s.exp <= 0.55), min:10, braucht:35, minHoch:30, brauchtHoch:85},
+  {id:'sturm',   n:'im Sturm',                f:p => p.partien.filter(s => s.pos === 'atk'),     min:10, braucht:25, minHoch:40, brauchtHoch:80},
+  {id:'abwehr',  n:'in der Abwehr',           f:p => p.partien.filter(s => s.pos === 'def'),     min:10, braucht:25, minHoch:40, brauchtHoch:80},
+  {id:'nachP',   n:'nach einer Niederlage',   f:p => nach(p, false),                             min:15, braucht:30, minHoch:40, brauchtHoch:80},
+  {id:'nachS',   n:'nach einem Sieg',         f:p => nach(p, true),                              min:10, braucht:30, minHoch:35, brauchtHoch:80},
+  {id:'eng',     n:'in engen Partien',        f:p => p.partien.filter(s => Math.abs(s.gf - s.ga) <= 1), min:10, braucht:40, minHoch:25, brauchtHoch:100},
+  {id:'klar',    n:'in klaren Partien',       f:p => p.partien.filter(s => Math.abs(s.gf - s.ga) >= 5), min:10, braucht:30, minHoch:30, brauchtHoch:90},
+  {id:'top',     n:'gegen die besten drei',   f:p => p.partien.filter(s => s.geg.some(g => LIGA_TOP3.includes(g))), min:15, braucht:30, minHoch:40, brauchtHoch:80},
+  {id:'rest',    n:'gegen den Rest der Liga', f:p => p.partien.filter(s => !s.geg.some(g => LIGA_TOP3.includes(g))), min:15, braucht:30, minHoch:40, brauchtHoch:80},
+  {id:'auftakt', n:'in der ersten Partie eines Spieltags', f:p => tagPos(p, 'erste'),            min:10, braucht:30, minHoch:25, brauchtHoch:75},
+  {id:'schluss', n:'in der letzten Partie eines Spieltags', f:p => tagPos(p, 'letzte'),          min:10, braucht:30, minHoch:25, brauchtHoch:75},
+  {id:'langtag', n:'an langen Spieltagen',    f:p => [].concat(...Object.values(p.tagGrp).filter(a => a.length >= 5)), min:15, braucht:30, minHoch:40, brauchtHoch:80},
+  // ── Eine Teilmenge muss mitwandern ───────────────────────────────
+  // „In den ersten 25 Partien" stand hier und ist gefallen: der Abschnitt
+  // ist nach 25 Partien fertig und aendert sich nie wieder. Ein Rekord
+  // darauf kann den Halter nicht mehr wechseln — er waere ab dem Tag seiner
+  // Vergabe ein Eintrag im Museum. Dasselbe gilt fuer jede Teilmenge, die am
+  // ANFANG einer Laufbahn verankert ist.
+  {id:'letzte30',n:'in den letzten 30 Partien', f:p => p.partien.slice(-30),                     min:30, braucht:30}
 ];
 
 const MASS = [
@@ -180,47 +185,78 @@ const MASS = [
 // Ausgewaehlt ist, was keinen bestehenden Eintrag doppelt und was sich von
 // den anderen Ausgewaehlten in Kennzahl UND Teilmenge unterscheidet.
 const NAMEN = {
+  // ── OFFEN: die Bedingung ist mit 50 Partien erfuellbar ───────────
+  'klarS|letzte30|offen': {name:'Die starke Phase', art:'leistung', zufall:'',
+    frage:'Wer holt in den letzten 30 Partien die meisten klaren Siege?'},
+  'gegen|letzte30|offen': {name:'Die dichte Phase', art:'leistung', zufall:'',
+    frage:'Wer lässt in den letzten 30 Partien am wenigsten zu?'},
+  'diff|auf25': {name:'Der Aufschwung', art:'leistung', zufall:'',
+    frage:'Wer hat sich von den 25 Partien davor zu den letzten 25 am meisten gesteigert?'},
+  'quote|schluss|offen': {name:'Der Schlussmann', art:'leistung', zufall:'',
+    frage:'Wer gewinnt die letzte Partie eines Spieltags am häufigsten?'},
+  'tore|unter|offen': {name:'Der Angreifer', art:'leistung', zufall:'',
+    frage:'Wer trifft als Außenseiter am häufigsten selbst?'},
+  'gegen|favorit|offen': {name:'Der Pflichterfüller', art:'leistung', zufall:'',
+    frage:'Wer lässt als Favorit am wenigsten zu?'},
+  'klarS|favorit|offen': {name:'Der Souverän', art:'leistung', zufall:'',
+    frage:'Wer gewinnt als Favorit am häufigsten klar?'},
+
+  // ── ANSPRUCH: eine hoehere Schwelle ist erlaubt ──────────────────
+  // Hier darf ein Rekord verlangen, dass jemand die Frage ueber eine lange
+  // Strecke beantwortet hat. Alle anderen Tore gelten unveraendert.
+  'abw|abwehr|anspruch': {name:'Der Abwehrchef', art:'leistung', zufall:'',
+    frage:'Wie weit über der Rechnung liegt die Leistung in der Abwehr?'},
+  'tore|abwehr|anspruch': {name:'Der Mitspieler', art:'leistung', zufall:'',
+    frage:'Wer trifft über achtzig Partien aus der Abwehr heraus am häufigsten selbst?'},
+  'anteil|rest|anspruch': {name:'Der Hausherr', art:'leistung', zufall:'',
+    frage:'Wer holt gegen den Rest der Liga den größten Anteil aller Tore?'},
   // `konstanz` gibt es fuer einen Liga-Rekord nicht: §10.2 kennt nur
   // `leistung`, `ereignis` und `schatten`, und ein ungueltiger Wert faellt
   // still auf `ereignis`. Gleichmaessigkeit ist ausserdem kein Beleg fuer
-  // Koennen — sie gehoert in die Kammer der Fuegungen [§C35], und dort
-  // wiegt sie halb so viel. Das Tor „der Halter bleibt nicht unter seiner
-  // Erwartung" sorgt dafuer, dass sie trotzdem keine Schattenseite ist.
-  'ruhe|abwehr':   {name:'Der Unaufgeregte', art:'ereignis', zufall:'quote',
-    frage:'Wer hält in der Abwehr die Ergebnisse am engsten zusammen?'},
-  'ruhe|unter':    {name:'Der Gelassene', art:'ereignis', zufall:'quote',
-    frage:'Wessen Ergebnisse schwanken als Außenseiter am wenigsten?'},
-  'ruhe|auftakt':  {name:'Der Kaltstarter', art:'ereignis', zufall:'quote',
-    frage:'Wer legt in der ersten Partie eines Spieltags immer dasselbe Ergebnis hin?'},
-  'ruhe|sturm':    {name:'Der Kaltschnäuzige', art:'ereignis', zufall:'quote',
-    frage:'Wessen Ergebnisse schwanken im Sturm am wenigsten?'},
-  'engS|offen':    {name:'Der Nadelstecher', art:'leistung', zufall:'',
-    frage:'Wer entscheidet die offenen Partien am häufigsten mit einem Tor?'},
-  'engS|erste25':  {name:'Der Zitterauftakt', art:'ereignis', zufall:'quote',
-    frage:'Wer hat seine ersten 25 Partien am häufigsten mit einem Tor gewonnen?'},
-  'engS|langtag':  {name:'Der Zäheste', art:'leistung', zufall:'',
-    frage:'Wer holt an langen Spieltagen die meisten knappen Siege?'},
-  'engS|unter':    {name:'Der Stichler', art:'leistung', zufall:'',
-    frage:'Wer gewinnt als Außenseiter am häufigsten mit genau einem Tor?'},
-  'abw|schluss':   {name:'Der Schlussmann', art:'leistung', zufall:'',
-    frage:'Wie weit über der Rechnung liegt die letzte Partie eines Spieltags?'},
-  'abw|abwehr':    {name:'Der Abwehrchef', art:'leistung', zufall:'',
-    frage:'Wie weit über der Rechnung liegt die Leistung in der Abwehr?'},
-  'klarS|offen':   {name:'Der Überraschende', art:'leistung', zufall:'',
-    frage:'Wer macht aus einer offenen Partie am häufigsten einen klaren Sieg?'},
-  'klarS|letzte25':{name:'Die starke Phase', art:'leistung', zufall:'',
-    frage:'Wer holt in den letzten 25 Partien die meisten klaren Siege?'},
-  'gegen|letzte25':{name:'Die dichte Phase', art:'leistung', zufall:'',
-    frage:'Wer lässt in den letzten 25 Partien am wenigsten zu?'},
-  'gegen|favorit': {name:'Der Pflichterfüller', art:'leistung', zufall:'',
-    frage:'Wer lässt als Favorit am wenigsten zu?'},
-  'klarS|favorit': {name:'Der Erwartbare', art:'leistung', zufall:'',
-    frage:'Wer macht die Favoritenrolle am häufigsten deutlich?'},
-  'tore|abwehr':   {name:'Der Mitspieler', art:'leistung', zufall:'',
-    frage:'Wer trifft aus der Abwehr heraus am häufigsten selbst?'}
+  // Koennen — sie gehoert in die Kammer der Fuegungen [§C35].
+  'ruhe|sturm|anspruch': {name:'Die Handschrift', art:'ereignis', zufall:'quote',
+    frage:'Wessen Ergebnisse im Sturm schwanken über achtzig Partien am wenigsten?'},
+  'ruhe|rest|anspruch': {name:'Der Unaufgeregte', art:'ereignis', zufall:'quote',
+    frage:'Wessen Ergebnisse gegen den Rest der Liga schwanken am wenigsten?'},
+
+  // ── Gestrichen, mit Grund ────────────────────────────────────────
+  // DREI Rekorde auf „knappe Siege" (auf Augenhoehe, an langen Spieltagen,
+  // als Aussenseiter) sind ganz gefallen, und nicht nur wegen der Haeufung:
+  // „Das Sonntagskind" misst im Katalog schon den Anteil gewonnener
+  // Ein-Tor-Spiele und „Der Nervenkitzler" den Anteil der 10:9-Siege. Eine
+  // vierte Fassung derselben Frage sammelt sich beim selben Halter — genau
+  // das verbietet §C35. Von den sieben Rekorden, die Jane hielt, waren drei
+  // davon.
+  // VIER Rekorde auf „Gleichmaessigkeit" (in der Abwehr, im Tagesauftakt,
+  // gegen den Rest, als Favorit) sind zwei geworden. Drei Teilmengen
+  // derselben Kennzahl sind dieselbe Aussage in drei Ausschnitten.
+  // Und DREI Rekorde in der Abwehr sind zwei: der Abstand zur Rechnung und
+  // die eigenen Tore. Die Gleichmaessigkeit dort ist im Sturm-Rekord
+  // aufgegangen.
+  // „Die Wiedergutmachung" (klare Siege nach einer Pleite), „Der Trotzkopf"
+  // (Siegquote als Aussenseiter) und „Der Wortgetreue" (Gleichmaessigkeit
+  // als Favorit) sind gefallen, damit kein Spieler mehr als ein Drittel der
+  // Tafel haelt: mit ihnen stand Martin bei sieben von dreizehn, und eine
+  // Tafel, die zur Haelfte einem gehoert, ist seine Bestenliste.
 };
 
+
+
 // ── Werkzeug ────────────────────────────────────────────────────────
+// ── Jede Schwelle steht auf einem 5er-Raster ───────────────────────
+// Eine Bedingung ist eine Absprache und keine Messung: „ab 22 Siegen" sieht
+// aus wie das Ergebnis einer Rechnung, und das ist sie auch — sie stammt aus
+// einer Kalibrierung. Gelesen wird sie aber als Regel, und eine Regel mit
+// einer krummen Zahl liest sich wie ein Versehen. Gerundet wird auf das
+// naechste Vielfache von fuenf; was darunter liegt, auf zweieinhalb, damit
+// aus einer kleinen Schwelle nicht null wird.
+// Die MESSWERTE bleiben unberuehrt: ein Beleg nennt den Wert, nach dem
+// sortiert wird [§10.2], und zwei auf dasselbe Vielfache gerundete Werte
+// haetten keine Reihenfolge mehr.
+function raster(v){
+  const n = Math.round(v / 5) * 5;
+  return n === 0 ? Math.round(v * 2) / 2 * (Math.abs(v) >= 1.25 ? 2 : 1) || 2.5 : n;
+}
 const summe = (a, f) => a.reduce((n, s) => n + f(s), 0);
 const erw = a => a.length ? summe(a, s => s.exp) / a.length : 0;
 // Der Abstand zur RECHNUNG, nicht zur eigenen Quote: gegen die eigene
@@ -267,10 +303,39 @@ const QRANG = (() => { const l = GEW.slice().sort((a, b) => P[b].q - P[a].q);
   const o = {}; l.forEach((id, i) => { o[id] = i + 1; }); return {rang:o, n:l.length}; })();
 const TOP3_LIGA = GEW.slice().sort((a, b) => P[b].q - P[a].q).slice(0, 3);
 
-// Jede Kombination aus Kennzahl und Teilmenge, durch dieselben Tore.
+// ── Zwei Kammern ────────────────────────────────────────────────────
+// Nicht jeder Rekord muss mit fuenfzig Partien erreichbar sein. Ein Rekord
+// ist auch dazu da, Koennen zu belohnen, und eine hoehere Schwelle ist dafuer
+// legitim: wer sie haelt, hat sie ueber eine lange Strecke gehalten.
+//
+// Die Schwelle ist deshalb keine Bedingung, sondern eine **Kammer**:
+//   OFFEN    — die Bedingung ist mit 50 Partien erfuellbar. Der Rekord fuer
+//              jeden, und gemessen gehoert er meistens dem, der wenig spielt
+//              und gut ist.
+//   ANSPRUCH — eine hoehere Schwelle ist erlaubt. Dafuer muss der Rekord
+//              etwas messen, das die Rangliste nicht schon sagt, und sein
+//              Wert darf trotzdem keine Ansammlung sein: eine Rate, keine
+//              Anzahl. Sonst haelt ihn wieder, wer am meisten spielt.
+//
+// Was in BEIDEN Kammern gilt: der Wert haengt nicht an der Spielzahl (mit
+// herausgerechnetem Koennen), das Podest ist nicht das der Rangliste, die
+// Bestmarke schlaegt weit aus und ist nicht geschenkt, und ihr Halter bleibt
+// in der gemessenen Menge nicht unter seiner eigenen Erwartung.
+// Was sich unterscheidet: in der offenen Kammer muss jemand mit unter
+// hundert Partien im Rennen stehen und die halbe Liga die Bedingung
+// erfuellen; in der anspruchsvollen genuegt ein Drittel — sonst waere die
+// Kammer durch ihre eigene Definition leer.
+const KAMMERN = [
+  {id:'offen',    name:'offen',    min:t => t.min,     braucht:t => t.braucht},
+  {id:'anspruch', name:'Anspruch', min:t => t.minHoch, braucht:t => t.brauchtHoch}
+];
+
+// Jede Kombination aus Kennzahl, Teilmenge und Kammer.
 const alleKomb = [];
-TEIL.forEach(t => MASS.forEach(m => {
-  const drin = GEW.filter(id => t.f(P[id]).length >= t.min);
+KAMMERN.forEach(kam => TEIL.forEach(t => MASS.forEach(m => {
+  const schwelle = kam.min(t);
+  if(schwelle == null) return;
+  const drin = GEW.filter(id => t.f(P[id]).length >= schwelle);
   const werte = drin.map(id => ({id, v:m.f(t.f(P[id])), spiele:P[id].games,
       ev:m.ev(t.f(P[id])),
       // Der Abstand zur Erwartung in GENAU der Teilmenge, die der Rekord
@@ -293,13 +358,14 @@ TEIL.forEach(t => MASS.forEach(m => {
   const halter = werte[0];
   const top3 = werte.slice(0, 3).map(x => x.id);
   const rein = teilKorr(vs, werte.map(x => x.spiele), werte.map(x => P[x.id].q));
-  const nm = NAMEN[m.id + '|' + t.id] || null;
+  const nm = NAMEN[m.id + '|' + t.id + '|' + kam.id] || null;
   alleKomb.push({
-    key:m.id + '|' + t.id, name:nm ? nm.name : (m.n + ' ' + t.n),
+    kammer:kam.id, kammerName:kam.name,
+    key:m.id + '|' + t.id + '|' + kam.id, name:nm ? nm.name : (m.n + ' ' + t.n),
     benannt:!!nm, frage:nm ? nm.frage : (m.n + ' ' + t.n + '?'),
     art:nm ? nm.art : 'leistung', zufall:nm ? nm.zufall : '',
-    mass:m.n, teil:t.n, mindText:mindSatz(t),
-    braucht:t.braucht,
+    mass:m.n, teil:t.n, mindText:mindSatz(t, schwelle),
+    braucht:kam.braucht(t), schwelle,
     halter:name(halter.id), halterRang:QRANG.rang[halter.id],
     halterSpiele:halter.spiele, beleg:halter.ev, halterDiff:halter.diff,
     imRennen:werte.length, ligaGewertet:QRANG.n,
@@ -321,7 +387,7 @@ TEIL.forEach(t => MASS.forEach(m => {
     rangfolge:werte.slice(0, 5).map(x => ({name:name(x.id), rang:QRANG.rang[x.id],
       wert:x.v, ev:x.ev, spiele:x.spiele}))
   });
-}));
+})));
 // ── Eine zweite Familie: die Differenz zweier Fenster ──────────────
 // „Die Steigerung" verglich das letzte Drittel der Laufbahn mit dem ERSTEN.
 // Das belohnt, wer schlecht angefangen hat: je tiefer der erste Abschnitt,
@@ -329,8 +395,7 @@ TEIL.forEach(t => MASS.forEach(m => {
 // mitwandern, fragen stattdessen nach der Form von jetzt — und der Rekord
 // kann jedes halbe Jahr den Halter wechseln.
 const DIFF = [
-  {id:'auf25', name:'Der Aufschwung', art:'ereignis', zufall:'quote', braucht:50,
-   frage:'Wie viel besser laufen die letzten 25 Partien als die 25 davor?',
+  {id:'auf25', braucht:50,
    mindText:'ab 50 Partien',
    min:p => p.games >= 50,
    a:p => p.partien.slice(-25), b:p => p.partien.slice(-50, -25),
@@ -339,18 +404,16 @@ const DIFF = [
          + `${pct(quote(p.partien.slice(-25)))} % in den letzten 25, `
          + `${pct(quote(p.partien.slice(-50, -25)))} % in den 25 davor`},
 
-  {id:'rollen', name:'Der Rollenlose', art:'konstanz', zufall:'', braucht:25,
-   frage:'Bei wem ist es am gleichgültigsten, ob er vorne oder hinten steht?',
-   mindText:'ab 12 Partien je Position',
-   min:p => p.partien.filter(x => x.pos === 'atk').length >= 12
-         && p.partien.filter(x => x.pos === 'def').length >= 12,
+  {id:'rollen', braucht:25,
+   mindText:'ab 10 Partien je Position',
+   min:p => p.partien.filter(x => x.pos === 'atk').length >= 10
+         && p.partien.filter(x => x.pos === 'def').length >= 10,
    a:p => p.partien.filter(x => x.pos === 'atk'), b:p => p.partien.filter(x => x.pos === 'def'),
    mass:{id:'abw', n:'Der Abstand zur Rechnung', f:d => abw(d)}, negBetrag:true,
    ev:p => `${pp(abw(p.partien.filter(x => x.pos === 'atk')))} Punkte über der Rechnung `
          + `vorne, ${pp(abw(p.partien.filter(x => x.pos === 'def')))} hinten`},
 
-  {id:'lage', name:'Der Unbeeindruckte', art:'konstanz', zufall:'', braucht:30,
-   frage:'Bei wem ist es am gleichgültigsten, ob er Favorit oder Außenseiter ist?',
+  {id:'lage', braucht:30,
    mindText:'ab 15 Partien in jeder Lage',
    min:p => p.partien.filter(x => x.exp > 0.55).length >= 15
          && p.partien.filter(x => x.exp < 0.45).length >= 15,
@@ -372,10 +435,18 @@ DIFF.forEach(d => {
   const mittel = vs.reduce((a, b) => a + b, 0) / vs.length, sd = streu(vs);
   if(!sd) return;
   const h = werte[0], top3 = werte.slice(0, 3).map(x => x.id);
+  // Name, Art und Frage stehen auch hier in NAMEN und nicht am Eintrag.
+  // Beides zu fuehren hiess, dass „Der Aufschwung" in NAMEN als `leistung`
+  // stand und auf der Seite als FUEGUNG — die Familie gewann still, und
+  // niemand sah die zweite Angabe [§C27].
+  const nm = NAMEN['diff|' + d.id];
   alleKomb.push({
-    key:'diff|' + d.id, name:d.name, benannt:true, frage:d.frage,
-    art:d.art, zufall:d.zufall, mass:d.mass.n, teil:'zwei Fenster im Vergleich',
-    mindText:d.mindText, braucht:d.braucht,
+    kammer:'offen', kammerName:'offen',
+    key:'diff|' + d.id, name:nm ? nm.name : d.id, benannt:!!nm,
+    frage:nm ? nm.frage : '',
+    art:nm ? nm.art : 'leistung', zufall:nm ? nm.zufall : '',
+    mass:d.mass.n, teil:'zwei Fenster im Vergleich',
+    mindText:d.mindText, braucht:d.braucht, schwelle:d.braucht,
     halter:name(h.id), halterRang:QRANG.rang[h.id], halterSpiele:h.spiele, beleg:h.ev,
     halterDiff:h.diff,
     imRennen:werte.length, ligaGewertet:QRANG.n,
@@ -392,20 +463,29 @@ DIFF.forEach(d => {
   });
 });
 
-function mindSatz(t){
-  return t.id === 'alle' ? 'ab 25 Partien'
-    : t.id === 'erste25' || t.id === 'letzte25' ? 'ab 25 Partien'
-    : `ab ${t.min} Partien ${t.n}`;
+function mindSatz(t, schwelle){
+  return (t.id === 'alle' || t.id === 'erste25' || t.id === 'letzte30')
+    ? `ab ${schwelle} Partien`
+    : `ab ${schwelle} Partien ${t.n}`;
 }
 
 const TORE_PRUEF = e => [
-  e.braucht <= 50,
-  e.kleinsteSpielzahl <= 100,
+  // Die Kammer wird nicht geprueft, sie wird zugeteilt: `braucht` entscheidet,
+  // in welche der Eintrag gehoert.
+  e.kammer === 'offen' ? e.braucht <= 50 : e.braucht > 50,
+  // In der offenen Kammer muss jemand mit unter hundert Partien im Rennen
+  // stehen — sonst ist die Bedingung selbst die Huerde, auch wenn die Zahl
+  // klein aussieht. In der anspruchsvollen ist gerade das der Punkt.
+  e.kammer === 'offen' ? e.kleinsteSpielzahl <= 100 : true,
   e.korrRein <= 0.35,
   e.korrRein >= -0.70,
   !e.kopie,
   e.ausschlag >= 1.5,
-  e.imRennen * 2 >= e.ligaGewertet,
+  // Die halbe Liga in der offenen Kammer, ein Drittel in der anspruchsvollen:
+  // eine hohe Schwelle schliesst per Definition Leute aus, und ein Tor auf
+  // die Haelfte haette die Kammer leer gelassen.
+  e.kammer === 'offen' ? e.imRennen * 2 >= e.ligaGewertet
+                       : e.imRennen * 3 >= e.ligaGewertet,
   e.gleich * 3 <= e.imRennen,
   e.halterDiff >= 0
 ];
@@ -507,6 +587,21 @@ const laufbahn = (() => {
     const HAT = {Spielen:50, Partien:50, Siegen:20, Niederlagen:30,
       Sturmspielen:25, Abwehrspielen:25, Gelegenheiten:35, Spieltagen:13,
       Wochen:10};
+    // ── Welche Schwelle des Katalogs steht krumm? ───────────────────
+    // Dieselbe Regel wie fuer den Vorschlag: eine Bedingung ist eine
+    // Absprache, und eine Regel mit einer krummen Zahl liest sich wie ein
+    // Versehen. Gelesen aus dem Klartext der Bedingung.
+    const krumm = [];
+    CHRONICLES.forEach(c => {
+      const zahlen = [...(c.cond || '').matchAll(
+        /(−?\\d+(?:[.,]\\d+)?)\\s*(%|Siegen|Spielen|Partien|Niederlagen|Sturmspielen|Abwehrspielen|Gelegenheiten|Spieltagen|Wochen|solchen)/g)];
+      zahlen.forEach(z => {
+        const v = parseFloat(String(z[1]).replace('−', '-').replace(',', '.'));
+        const r = Math.round(v / 5) * 5;
+        if(v !== r) krumm.push({name:c.name, roh:z[0],
+          soll:(r === 0 ? Math.round(v * 2) / 2 : r) + ' ' + z[2]});
+      });
+    });
     const huerde = CHRONICLES.map(c => {
       const m = /ab (\\d+)\\s+([A-Za-zÄÖÜäöüß]+)/.exec(c.cond || '');
       if(!m) return null;
@@ -532,11 +627,103 @@ const laufbahn = (() => {
     const herkunft = {};
     DISZIPLINEN.forEach(d => { herkunft[d.name] =
       (d.monat ? 'chronik' : '') + (d.allzeit ? (d.monat ? '+rekord' : 'rekord') : ''); });
-    return {knapp, huerde, je, monat:Math.round(monat), rekord:Math.round(rekord),
+    return {knapp, huerde, krumm, je, monat:Math.round(monat), rekord:Math.round(rekord),
       rekorde:CHRONICLES.length, wertRekord:PRESTIGE_REKORD,
       artGewicht:PRESTIGE_ART, herkunft,
       insignien:INSIGNIEN.map(x=>({name:x.name, min:x.min}))};
   })())`));
+})();
+
+// ── Hoechstens zwei je Kennzahl und je Teilmenge ────────────────────
+// Vier Rekorde auf „Gleichmaessigkeit" und drei auf „knappe Siege" sind
+// dieselbe Aussage in verschiedenen Ausschnitten, und sie sammeln sich beim
+// selben Halter: von den sieben gehoerten sieben Jane. Eine Kennzahl darf
+// deshalb hoechstens zweimal vorkommen und eine Teilmenge auch — sonst ist
+// der Katalog eine Tabelle ueber eine Frage und kein Katalog.
+(() => {
+  const jeMass = {}, jeTeil = {};
+  ergebnis.forEach(e => {
+    const [m, t] = e.key.split('|');
+    jeMass[m] = (jeMass[m] || 0) + 1;
+    jeTeil[t] = (jeTeil[t] || 0) + 1;
+  });
+  const zuViel = Object.keys(jeMass).filter(k => jeMass[k] > 2).map(k => 'Kennzahl ' + k + ': ' + jeMass[k])
+    .concat(Object.keys(jeTeil).filter(k => jeTeil[k] > 2).map(k => 'Teilmenge ' + k + ': ' + jeTeil[k]));
+  if(zuViel.length){
+    console.error('Mehr als zwei Rekorde auf derselben Frage: ' + zuViel.join(', '));
+    process.exit(1);
+  }
+})();
+
+// ── Kein Halter traegt mehr als ein Drittel der Tafel ───────────────
+// Die Haeufung auf einer Frage war nur die halbe Ursache. Nachdem sieben
+// Rekorde auf „knappe Siege" und „Gleichmaessigkeit" gefallen waren, hielt
+// Martin sieben der dreizehn uebrigen: dieselbe Tafel, ein anderer Name
+// darauf. Gemessen wird deshalb der Halter selbst — wer mehr als ein Drittel
+// traegt, macht aus dem Katalog seine Bestenliste. Der Anteil ist streng,
+// weil die Suche ueberhaupt nur fuenf verschiedene Halter hergibt.
+(() => {
+  const je = {};
+  ergebnis.forEach(e => { je[e.halter] = (je[e.halter] || 0) + 1; });
+  const zuViel = Object.keys(je).filter(k => je[k] * 3 > ergebnis.length)
+    .map(k => k + ': ' + je[k] + ' von ' + ergebnis.length);
+  if(zuViel.length){
+    console.error('Ein Halter traegt mehr als ein Drittel der Tafel: ' + zuViel.join(', '));
+    process.exit(1);
+  }
+})();
+
+// ── Kein toter Name in der Tafel ────────────────────────────────────
+// Ein Eintrag in NAMEN, den keine Kombination trifft, ist ein Name fuer
+// einen Rekord, den es nicht gibt — und beim naechsten Lesen sucht jemand
+// danach. „Der Zitterlauf" stand hier, nachdem seine Kombination ein Tor
+// gerissen hatte.
+(() => {
+  const getroffen = new Set(alleKomb.filter(e => e.benannt && e.durch).map(e => e.key));
+  const tot = Object.keys(NAMEN).filter(k => !getroffen.has(k));
+  if(tot.length){
+    console.error('Name ohne Rekord: ' + tot.map(k => NAMEN[k].name + ' (' + k + ')').join(', '));
+    process.exit(1);
+  }
+})();
+
+// ── Jede Teilmenge wandert mit ──────────────────────────────────────
+// Eine Teilmenge, die am ANFANG einer Laufbahn verankert ist, aendert sich
+// nach ihrer Fuellung nie wieder: „in den ersten 25 Partien" ist fertig,
+// sobald jemand 25 Partien hat, und ein Rekord darauf kann den Halter nicht
+// mehr wechseln. Gepruefet wird es an den Daten und nicht am Namen: liefert
+// die Teilmenge fuer jeden Spieler dasselbe wie vor zwanzig Partien, ist sie
+// eingefroren.
+(() => {
+  const eingefroren = [];
+  TEIL.forEach(t => {
+    const jetzt = GEW.map(id => t.f(P[id]).map(x => x.ts).join(','));
+    const frueher = GEW.map(id => {
+      const kopie = {...P[id], partien:P[id].partien.slice(0, -20)};
+      kopie.tagGrp = {};
+      kopie.partien.forEach(x => (kopie.tagGrp[x.tag] = kopie.tagGrp[x.tag] || []).push(x));
+      return t.f(kopie).map(x => x.ts).join(',');
+    });
+    if(jetzt.every((v, i) => v === frueher[i] && v !== '')) eingefroren.push(t.id);
+  });
+  if(eingefroren.length){
+    console.error('Teilmenge ist eingefroren, der Rekord koennte den Halter nie wechseln: '
+      + eingefroren.join(', '));
+    process.exit(1);
+  }
+})();
+
+// ── Jede Schwelle auf dem 5er-Raster ────────────────────────────────
+// Sonst wandert eine krumme Zahl unbemerkt in eine Bedingung: fuenf
+// Teilmengen standen auf zwoelf, und „ab 12 Partien in der Abwehr" liest
+// sich wie eine Kalibrierung, die jemand vergessen hat zu runden.
+(() => {
+  const krumm = ergebnis.filter(e => e.schwelle % 5 !== 0 || e.braucht % 5 !== 0)
+    .map(e => e.name + ' (' + e.schwelle + '/' + e.braucht + ')');
+  if(krumm.length){
+    console.error('Schwelle nicht auf dem 5er-Raster: ' + krumm.join(', '));
+    process.exit(1);
+  }
 })();
 
 // ── Nur die drei Arten, die es gibt ─────────────────────────────────
@@ -592,6 +779,12 @@ const aus = {
 };
 fs.writeFileSync(__dirname + '/.rekord-vorschlag.json', JSON.stringify(aus, null, 1));
 console.log('Gewertete Spieler: ' + QRANG.n + ' · Rangliste: ' + TOP3_LIGA.map(name).join(', '));
+if(process.env.ALLE){
+  alleKomb.filter(e => e.durch).sort((a, b) => b.ausschlag - a.ausschlag).forEach(e =>
+    console.log('  ' + e.kammer.padEnd(9) + e.ausschlag.toFixed(2).padStart(5) + ' σ  '
+      + e.halter.padEnd(9) + '(R' + e.halterRang + ', ' + String(e.halterSpiele).padStart(3)
+      + ')  ' + e.key.padEnd(24) + e.mass + ' ' + e.teil));
+}
 console.log('  ' + alleKomb.length + ' Kombinationen, ' + aus.bestanden
   + ' bestehen alle Tore, ' + ergebnis.length + ' davon benannt');
 ergebnis.forEach(e => console.log('  %s  %s (R%d, %d Partien)  aus %s  rein %s  rQ %s  braucht %d',

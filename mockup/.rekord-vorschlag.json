@@ -812,6 +812,43 @@
     "zu": true
    }
   ],
+  "krumm": [
+   {
+    "name": "Der Platzhirsch",
+    "roh": "12 Spieltagen",
+    "soll": "10 Spieltagen"
+   },
+   {
+    "name": "Der makellose Tag",
+    "roh": "8 solchen",
+    "soll": "10 solchen"
+   },
+   {
+    "name": "Der Zerstörer",
+    "roh": "22 Siegen",
+    "soll": "20 Siegen"
+   },
+   {
+    "name": "Der Zerstörer",
+    "roh": "22 %",
+    "soll": "20 %"
+   },
+   {
+    "name": "Das Sonntagskind",
+    "roh": "12 solchen",
+    "soll": "10 solchen"
+   },
+   {
+    "name": "Der schwerste Tag",
+    "roh": "4 Partien",
+    "soll": "5 Partien"
+   },
+   {
+    "name": "Die Punktlandung",
+    "roh": "4 Partien",
+    "soll": "5 Partien"
+   }
+  ],
   "je": [
    {
     "name": "Leon",
@@ -1045,9 +1082,9 @@
  "partien": 466,
  "spieler": 11,
  "korrSpielzahlQuote": 0.48737604428931897,
- "kombinationen": 154,
- "bestanden": 48,
- "benannt": 14,
+ "kombinationen": 278,
+ "bestanden": 87,
+ "benannt": 12,
  "top3Liga": [
   "Julian",
   "Martin",
@@ -1145,249 +1182,30 @@
  ],
  "kandidaten": [
   {
-   "key": "engS|erste25",
-   "name": "Der Zitterauftakt",
-   "benannt": true,
-   "frage": "Wer hat seine ersten 25 Partien am häufigsten mit einem Tor gewonnen?",
-   "art": "ereignis",
-   "zufall": "quote",
-   "mass": "Der Anteil knapper Siege",
-   "teil": "in den ersten 25 Partien",
-   "mindText": "ab 25 Partien",
-   "braucht": 25,
-   "halter": "Martin",
-   "halterRang": 2,
-   "halterSpiele": 211,
-   "beleg": "20 % mit einem Tor Vorsprung, 5 von 25",
-   "halterDiff": 0.1704,
-   "imRennen": 11,
-   "ligaGewertet": 11,
-   "ausschlag": 2.5166114784235827,
-   "korrSpiele": 0.06068486142071557,
-   "korrRein": -0.1891868854217594,
-   "korrQuote": 0.43045458461464997,
-   "kopie": false,
-   "top3": [
-    "Martin",
-    "Jane",
-    "Alex"
-   ],
-   "top3Liga": [
-    "Julian",
-    "Martin",
-    "Leon"
-   ],
-   "gleich": 1,
-   "kleinsteSpielzahl": 39,
-   "rangfolge": [
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.2,
-     "ev": "20 % mit einem Tor Vorsprung, 5 von 25",
-     "spiele": 211
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.12,
-     "ev": "12 % mit einem Tor Vorsprung, 3 von 25",
-     "spiele": 97
-    },
-    {
-     "name": "Alex",
-     "rang": 11,
-     "wert": 0.08,
-     "ev": "8 % mit einem Tor Vorsprung, 2 von 25",
-     "spiele": 39
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.08,
-     "ev": "8 % mit einem Tor Vorsprung, 2 von 25",
-     "spiele": 355
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": 0.04,
-     "ev": "4 % mit einem Tor Vorsprung, 1 von 25",
-     "spiele": 152
-    }
-   ],
-   "durch": true
-  },
-  {
-   "key": "engS|offen",
-   "name": "Der Nadelstecher",
-   "benannt": true,
-   "frage": "Wer entscheidet die offenen Partien am häufigsten mit einem Tor?",
-   "art": "leistung",
-   "zufall": "",
-   "mass": "Der Anteil knapper Siege",
-   "teil": "auf Augenhöhe",
-   "mindText": "ab 12 Partien auf Augenhöhe",
-   "braucht": 35,
-   "halter": "Jane",
-   "halterRang": 4,
-   "halterSpiele": 97,
-   "beleg": "19 % mit einem Tor Vorsprung, 6 von 32",
-   "halterDiff": 0.009718749999999943,
-   "imRennen": 11,
-   "ligaGewertet": 11,
-   "ausschlag": 2.4455540222837224,
-   "korrSpiele": 0.12269564368002776,
-   "korrRein": -0.04554585053877805,
-   "korrQuote": 0.3288108466787525,
-   "kopie": false,
-   "top3": [
-    "Jane",
-    "Maxi",
-    "Johannes"
-   ],
-   "top3Liga": [
-    "Julian",
-    "Martin",
-    "Leon"
-   ],
-   "gleich": 1,
-   "kleinsteSpielzahl": 39,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.1875,
-     "ev": "19 % mit einem Tor Vorsprung, 6 von 32",
-     "spiele": 97
-    },
-    {
-     "name": "Maxi",
-     "rang": 6,
-     "wert": 0.09782608695652174,
-     "ev": "10 % mit einem Tor Vorsprung, 9 von 92",
-     "spiele": 348
-    },
-    {
-     "name": "Johannes",
-     "rang": 9,
-     "wert": 0.09523809523809523,
-     "ev": "10 % mit einem Tor Vorsprung, 2 von 21",
-     "spiele": 77
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 0.09210526315789473,
-     "ev": "9 % mit einem Tor Vorsprung, 7 von 76",
-     "spiele": 246
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.08602150537634409,
-     "ev": "9 % mit einem Tor Vorsprung, 8 von 93",
-     "spiele": 355
-    }
-   ],
-   "durch": true
-  },
-  {
-   "key": "ruhe|abwehr",
-   "name": "Der Unaufgeregte",
-   "benannt": true,
-   "frage": "Wer hält in der Abwehr die Ergebnisse am engsten zusammen?",
-   "art": "ereignis",
-   "zufall": "quote",
-   "mass": "Die Gleichmäßigkeit der Ergebnisse",
-   "teil": "in der Abwehr",
-   "mindText": "ab 12 Partien in der Abwehr",
-   "braucht": 25,
-   "halter": "Jane",
-   "halterRang": 4,
-   "halterSpiele": 97,
-   "beleg": "3,7 Tore Streuung um +1,7 im Schnitt",
-   "halterDiff": 0.18064788732394366,
-   "imRennen": 11,
-   "ligaGewertet": 11,
-   "ausschlag": 2.393396102040813,
-   "korrSpiele": -0.14152846272866806,
-   "korrRein": -0.2869196164675888,
-   "korrQuote": 0.21197972468628762,
-   "kopie": false,
-   "top3": [
-    "Jane",
-    "Stefan",
-    "Alex"
-   ],
-   "top3Liga": [
-    "Julian",
-    "Martin",
-    "Leon"
-   ],
-   "gleich": 1,
-   "kleinsteSpielzahl": 39,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -3.6615384358922634,
-     "ev": "3,7 Tore Streuung um +1,7 im Schnitt",
-     "spiele": 97
-    },
-    {
-     "name": "Stefan",
-     "rang": 10,
-     "wert": -4.121608220220313,
-     "ev": "4,1 Tore Streuung um −1,9 im Schnitt",
-     "spiele": 81
-    },
-    {
-     "name": "Alex",
-     "rang": 11,
-     "wert": -4.1467524106890625,
-     "ev": "4,1 Tore Streuung um −2,3 im Schnitt",
-     "spiele": 39
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": -4.246834114961403,
-     "ev": "4,2 Tore Streuung um +0,4 im Schnitt",
-     "spiele": 171
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": -4.248802630381411,
-     "ev": "4,2 Tore Streuung um +0,4 im Schnitt",
-     "spiele": 355
-    }
-   ],
-   "durch": true
-  },
-  {
-   "key": "klarS|letzte25",
+   "kammer": "offen",
+   "kammerName": "offen",
+   "key": "klarS|letzte30|offen",
    "name": "Die starke Phase",
    "benannt": true,
-   "frage": "Wer holt in den letzten 25 Partien die meisten klaren Siege?",
+   "frage": "Wer holt in den letzten 30 Partien die meisten klaren Siege?",
    "art": "leistung",
    "zufall": "",
    "mass": "Der Anteil klarer Siege",
-   "teil": "in den letzten 25 Partien",
-   "mindText": "ab 25 Partien",
-   "braucht": 25,
+   "teil": "in den letzten 30 Partien",
+   "mindText": "ab 30 Partien",
+   "braucht": 30,
+   "schwelle": 30,
    "halter": "Martin",
    "halterRang": 2,
    "halterSpiele": 211,
-   "beleg": "44 % mit 5 Toren Vorsprung oder mehr, 11 von 25",
-   "halterDiff": 0.1835199999999999,
+   "beleg": "47 % mit 5 Toren Vorsprung oder mehr, 14 von 30",
+   "halterDiff": 0.20500000000000007,
    "imRennen": 11,
    "ligaGewertet": 11,
-   "ausschlag": 2.352140950242657,
-   "korrSpiele": 0.38990199221298505,
-   "korrRein": 0.11666402498531138,
-   "korrQuote": 0.6392719549493755,
+   "ausschlag": 2.525303552947358,
+   "korrSpiele": 0.37569633395327123,
+   "korrRein": 0.11297892972075961,
+   "korrQuote": 0.6105462379315305,
    "kopie": false,
    "top3": [
     "Martin",
@@ -1405,191 +1223,45 @@
     {
      "name": "Martin",
      "rang": 2,
-     "wert": 0.44,
-     "ev": "44 % mit 5 Toren Vorsprung oder mehr, 11 von 25",
+     "wert": 0.4666666666666667,
+     "ev": "47 % mit 5 Toren Vorsprung oder mehr, 14 von 30",
      "spiele": 211
     },
     {
      "name": "Leon",
      "rang": 3,
-     "wert": 0.28,
-     "ev": "28 % mit 5 Toren Vorsprung oder mehr, 7 von 25",
+     "wert": 0.26666666666666666,
+     "ev": "27 % mit 5 Toren Vorsprung oder mehr, 8 von 30",
      "spiele": 355
     },
     {
      "name": "Jane",
      "rang": 4,
-     "wert": 0.24,
-     "ev": "24 % mit 5 Toren Vorsprung oder mehr, 6 von 25",
+     "wert": 0.23333333333333334,
+     "ev": "23 % mit 5 Toren Vorsprung oder mehr, 7 von 30",
      "spiele": 97
     },
     {
      "name": "Maxi",
      "rang": 6,
      "wert": 0.2,
-     "ev": "20 % mit 5 Toren Vorsprung oder mehr, 5 von 25",
+     "ev": "20 % mit 5 Toren Vorsprung oder mehr, 6 von 30",
      "spiele": 348
     },
     {
      "name": "Henry",
      "rang": 8,
-     "wert": 0.16,
-     "ev": "16 % mit 5 Toren Vorsprung oder mehr, 4 von 25",
+     "wert": 0.16666666666666666,
+     "ev": "17 % mit 5 Toren Vorsprung oder mehr, 5 von 30",
      "spiele": 152
     }
    ],
    "durch": true
   },
   {
-   "key": "abw|schluss",
-   "name": "Der Schlussmann",
-   "benannt": true,
-   "frage": "Wie weit über der Rechnung liegt die letzte Partie eines Spieltags?",
-   "art": "leistung",
-   "zufall": "",
-   "mass": "Der Abstand zur Rechnung",
-   "teil": "in der letzten Partie eines Spieltags",
-   "mindText": "ab 10 Partien in der letzten Partie eines Spieltags",
-   "braucht": 30,
-   "halter": "Jane",
-   "halterRang": 4,
-   "halterSpiele": 97,
-   "beleg": "+19 Punkte über der Rechnung, 67 % statt 48 %",
-   "halterDiff": 0.18677777777777776,
-   "imRennen": 11,
-   "ligaGewertet": 11,
-   "ausschlag": 2.2216619132294184,
-   "korrSpiele": 0.15888952365007297,
-   "korrRein": -0.3998045668121376,
-   "korrQuote": 0.776957432913241,
-   "kopie": false,
-   "top3": [
-    "Jane",
-    "Julian",
-    "Martin"
-   ],
-   "top3Liga": [
-    "Julian",
-    "Martin",
-    "Leon"
-   ],
-   "gleich": 1,
-   "kleinsteSpielzahl": 39,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.18677777777777776,
-     "ev": "+19 Punkte über der Rechnung, 67 % statt 48 %",
-     "spiele": 97
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.045173913043478175,
-     "ev": "+5 Punkte über der Rechnung, 61 % statt 56 %",
-     "spiele": 171
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": 0.02718421052631592,
-     "ev": "+3 Punkte über der Rechnung, 61 % statt 58 %",
-     "spiele": 211
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.009615384615384637,
-     "ev": "+1 Punkte über der Rechnung, 46 % statt 45 %",
-     "spiele": 78
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": -0.02354545454545448,
-     "ev": "-2 Punkte über der Rechnung, 43 % statt 46 %",
-     "spiele": 246
-    }
-   ],
-   "durch": true
-  },
-  {
-   "key": "engS|langtag",
-   "name": "Der Zäheste",
-   "benannt": true,
-   "frage": "Wer holt an langen Spieltagen die meisten knappen Siege?",
-   "art": "leistung",
-   "zufall": "",
-   "mass": "Der Anteil knapper Siege",
-   "teil": "an langen Spieltagen",
-   "mindText": "ab 15 Partien an langen Spieltagen",
-   "braucht": 30,
-   "halter": "Jane",
-   "halterRang": 4,
-   "halterSpiele": 97,
-   "beleg": "12 % mit einem Tor Vorsprung, 9 von 78",
-   "halterDiff": 0.08996153846153843,
-   "imRennen": 11,
-   "ligaGewertet": 11,
-   "ausschlag": 2.214675100725256,
-   "korrSpiele": 0.22401077731626773,
-   "korrRein": -0.1492549300927298,
-   "korrQuote": 0.6604214900086769,
-   "kopie": false,
-   "top3": [
-    "Jane",
-    "Jannik",
-    "Julian"
-   ],
-   "top3Liga": [
-    "Julian",
-    "Martin",
-    "Leon"
-   ],
-   "gleich": 1,
-   "kleinsteSpielzahl": 39,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": 0.11538461538461539,
-     "ev": "12 % mit einem Tor Vorsprung, 9 von 78",
-     "spiele": 97
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.07462686567164178,
-     "ev": "7 % mit einem Tor Vorsprung, 5 von 67",
-     "spiele": 78
-    },
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.07317073170731707,
-     "ev": "7 % mit einem Tor Vorsprung, 12 von 164",
-     "spiele": 171
-    },
-    {
-     "name": "Leon",
-     "rang": 3,
-     "wert": 0.07051282051282051,
-     "ev": "7 % mit einem Tor Vorsprung, 22 von 312",
-     "spiele": 355
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 0.06878306878306878,
-     "ev": "7 % mit einem Tor Vorsprung, 13 von 189",
-     "spiele": 246
-    }
-   ],
-   "durch": true
-  },
-  {
-   "key": "abw|abwehr",
+   "kammer": "anspruch",
+   "kammerName": "Anspruch",
+   "key": "abw|abwehr|anspruch",
    "name": "Der Abwehrchef",
    "benannt": true,
    "frage": "Wie weit über der Rechnung liegt die Leistung in der Abwehr?",
@@ -1597,19 +1269,20 @@
    "zufall": "",
    "mass": "Der Abstand zur Rechnung",
    "teil": "in der Abwehr",
-   "mindText": "ab 12 Partien in der Abwehr",
-   "braucht": 25,
+   "mindText": "ab 40 Partien in der Abwehr",
+   "braucht": 80,
+   "schwelle": 40,
    "halter": "Jane",
    "halterRang": 4,
    "halterSpiele": 97,
    "beleg": "+18 Punkte über der Rechnung, 66 % statt 48 %",
    "halterDiff": 0.18064788732394366,
-   "imRennen": 11,
+   "imRennen": 9,
    "ligaGewertet": 11,
-   "ausschlag": 2.1904127909995545,
-   "korrSpiele": 0.09425622581100301,
-   "korrRein": -0.3016392104810833,
-   "korrQuote": 0.6181850243762058,
+   "ausschlag": 2.266654220313595,
+   "korrSpiele": -0.30593047758736375,
+   "korrRein": -0.46250468085648494,
+   "korrQuote": 0.4152426098568711,
    "kopie": false,
    "top3": [
     "Jane",
@@ -1622,7 +1295,7 @@
     "Leon"
    ],
    "gleich": 1,
-   "kleinsteSpielzahl": 39,
+   "kleinsteSpielzahl": 77,
    "rangfolge": [
     {
      "name": "Jane",
@@ -1663,106 +1336,35 @@
    "durch": true
   },
   {
-   "key": "ruhe|auftakt",
-   "name": "Der Kaltstarter",
-   "benannt": true,
-   "frage": "Wer legt in der ersten Partie eines Spieltags immer dasselbe Ergebnis hin?",
-   "art": "ereignis",
-   "zufall": "quote",
-   "mass": "Die Gleichmäßigkeit der Ergebnisse",
-   "teil": "in der ersten Partie eines Spieltags",
-   "mindText": "ab 10 Partien in der ersten Partie eines Spieltags",
-   "braucht": 30,
-   "halter": "Jane",
-   "halterRang": 4,
-   "halterSpiele": 97,
-   "beleg": "3,3 Tore Streuung um +1,3 im Schnitt",
-   "halterDiff": 0.17399999999999993,
-   "imRennen": 11,
-   "ligaGewertet": 11,
-   "ausschlag": 2.18793798067401,
-   "korrSpiele": -0.3025775481276529,
-   "korrRein": -0.34590245901756295,
-   "korrQuote": -0.0011047086672519256,
-   "kopie": false,
-   "top3": [
-    "Jane",
-    "Johannes",
-    "Henry"
-   ],
-   "top3Liga": [
-    "Julian",
-    "Martin",
-    "Leon"
-   ],
-   "gleich": 1,
-   "kleinsteSpielzahl": 39,
-   "rangfolge": [
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -3.3333333333333335,
-     "ev": "3,3 Tore Streuung um +1,3 im Schnitt",
-     "spiele": 97
-    },
-    {
-     "name": "Johannes",
-     "rang": 9,
-     "wert": -3.7039179613569746,
-     "ev": "3,7 Tore Streuung um −1,1 im Schnitt",
-     "spiele": 77
-    },
-    {
-     "name": "Henry",
-     "rang": 8,
-     "wert": -3.9063101847215433,
-     "ev": "3,9 Tore Streuung um −1,7 im Schnitt",
-     "spiele": 152
-    },
-    {
-     "name": "Stefan",
-     "rang": 10,
-     "wert": -4.038778081927965,
-     "ev": "4,0 Tore Streuung um −2,3 im Schnitt",
-     "spiele": 81
-    },
-    {
-     "name": "Martin",
-     "rang": 2,
-     "wert": -4.27686231325459,
-     "ev": "4,3 Tore Streuung um +1,4 im Schnitt",
-     "spiele": 211
-    }
-   ],
-   "durch": true
-  },
-  {
-   "key": "gegen|letzte25",
+   "kammer": "offen",
+   "kammerName": "offen",
+   "key": "gegen|letzte30|offen",
    "name": "Die dichte Phase",
    "benannt": true,
-   "frage": "Wer lässt in den letzten 25 Partien am wenigsten zu?",
+   "frage": "Wer lässt in den letzten 30 Partien am wenigsten zu?",
    "art": "leistung",
    "zufall": "",
    "mass": "Die Gegentore je Partie",
-   "teil": "in den letzten 25 Partien",
-   "mindText": "ab 25 Partien",
-   "braucht": 25,
+   "teil": "in den letzten 30 Partien",
+   "mindText": "ab 30 Partien",
+   "braucht": 30,
+   "schwelle": 30,
    "halter": "Martin",
    "halterRang": 2,
    "halterSpiele": 211,
-   "beleg": "6,6 Gegentore je Partie",
-   "halterDiff": 0.1835199999999999,
+   "beleg": "6,4 Gegentore je Partie",
+   "halterDiff": 0.20500000000000007,
    "imRennen": 11,
    "ligaGewertet": 11,
-   "ausschlag": 2.106028646428767,
-   "korrSpiele": 0.4627645521974681,
-   "korrRein": 0.13695942578330195,
-   "korrQuote": 0.8033904074841218,
+   "ausschlag": 2.2617426447402407,
+   "korrSpiele": 0.44367410645072936,
+   "korrRein": 0.10189558905918553,
+   "korrQuote": 0.8010545037382713,
    "kopie": false,
    "top3": [
     "Martin",
-    "Leon",
-    "Jane"
+    "Jane",
+    "Leon"
    ],
    "top3Liga": [
     "Julian",
@@ -1775,35 +1377,35 @@
     {
      "name": "Martin",
      "rang": 2,
-     "wert": -6.56,
-     "ev": "6,6 Gegentore je Partie",
+     "wert": -6.366666666666666,
+     "ev": "6,4 Gegentore je Partie",
      "spiele": 211
+    },
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": -7.566666666666666,
+     "ev": "7,6 Gegentore je Partie",
+     "spiele": 97
     },
     {
      "name": "Leon",
      "rang": 3,
-     "wert": -7.6,
-     "ev": "7,6 Gegentore je Partie",
-     "spiele": 355
-    },
-    {
-     "name": "Jane",
-     "rang": 4,
-     "wert": -7.72,
+     "wert": -7.666666666666667,
      "ev": "7,7 Gegentore je Partie",
-     "spiele": 97
+     "spiele": 355
     },
     {
      "name": "Maxi",
      "rang": 6,
-     "wert": -7.8,
-     "ev": "7,8 Gegentore je Partie",
+     "wert": -7.733333333333333,
+     "ev": "7,7 Gegentore je Partie",
      "spiele": 348
     },
     {
      "name": "Julian",
      "rang": 1,
-     "wert": -8.12,
+     "wert": -8.133333333333333,
      "ev": "8,1 Gegentore je Partie",
      "spiele": 171
     }
@@ -1811,32 +1413,35 @@
    "durch": true
   },
   {
-   "key": "engS|unter",
-   "name": "Der Stichler",
+   "kammer": "anspruch",
+   "kammerName": "Anspruch",
+   "key": "anteil|rest|anspruch",
+   "name": "Der Hausherr",
    "benannt": true,
-   "frage": "Wer gewinnt als Außenseiter am häufigsten mit genau einem Tor?",
+   "frage": "Wer holt gegen den Rest der Liga den größten Anteil aller Tore?",
    "art": "leistung",
    "zufall": "",
-   "mass": "Der Anteil knapper Siege",
-   "teil": "als Außenseiter",
-   "mindText": "ab 15 Partien als Außenseiter",
-   "braucht": 30,
-   "halter": "Julian",
-   "halterRang": 1,
-   "halterSpiele": 171,
-   "beleg": "13 % mit einem Tor Vorsprung, 4 von 32",
-   "halterDiff": 0.11659375000000005,
-   "imRennen": 11,
+   "mass": "Der Torenteil",
+   "teil": "gegen den Rest der Liga",
+   "mindText": "ab 40 Partien gegen den Rest der Liga",
+   "braucht": 80,
+   "schwelle": 40,
+   "halter": "Martin",
+   "halterRang": 2,
+   "halterSpiele": 211,
+   "beleg": "62 % aller Tore, 736:442",
+   "halterDiff": 0.19630769230769218,
+   "imRennen": 6,
    "ligaGewertet": 11,
-   "ausschlag": 1.920418660472166,
-   "korrSpiele": 0.03804613399362565,
-   "korrRein": -0.2708685097132052,
-   "korrQuote": 0.49870236340319174,
+   "ausschlag": 1.97086909852018,
+   "korrSpiele": -0.03314708279186011,
+   "korrRein": -0.06646454882637547,
+   "korrQuote": 0.6209892515405602,
    "kopie": false,
    "top3": [
-    "Julian",
-    "Jannik",
-    "Johannes"
+    "Martin",
+    "Maxi",
+    "Julian"
    ],
    "top3Liga": [
     "Julian",
@@ -1844,57 +1449,60 @@
     "Leon"
    ],
    "gleich": 1,
-   "kleinsteSpielzahl": 39,
+   "kleinsteSpielzahl": 152,
    "rangfolge": [
-    {
-     "name": "Julian",
-     "rang": 1,
-     "wert": 0.125,
-     "ev": "13 % mit einem Tor Vorsprung, 4 von 32",
-     "spiele": 171
-    },
-    {
-     "name": "Jannik",
-     "rang": 5,
-     "wert": 0.11428571428571428,
-     "ev": "11 % mit einem Tor Vorsprung, 4 von 35",
-     "spiele": 78
-    },
-    {
-     "name": "Johannes",
-     "rang": 9,
-     "wert": 0.075,
-     "ev": "8 % mit einem Tor Vorsprung, 3 von 40",
-     "spiele": 77
-    },
-    {
-     "name": "Leo",
-     "rang": 7,
-     "wert": 0.06481481481481481,
-     "ev": "6 % mit einem Tor Vorsprung, 7 von 108",
-     "spiele": 246
-    },
     {
      "name": "Martin",
      "rang": 2,
-     "wert": 0.05660377358490566,
-     "ev": "6 % mit einem Tor Vorsprung, 3 von 53",
+     "wert": 0.6247877758913413,
+     "ev": "62 % aller Tore, 736:442",
      "spiele": 211
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": 0.5828220858895705,
+     "ev": "58 % aller Tore, 570:408",
+     "spiele": 348
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 0.5801324503311258,
+     "ev": "58 % aller Tore, 438:317",
+     "spiele": 171
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.571917808219178,
+     "ev": "57 % aller Tore, 1670:1250",
+     "spiele": 355
+    },
+    {
+     "name": "Henry",
+     "rang": 8,
+     "wert": 0.5609756097560976,
+     "ev": "56 % aller Tore, 391:306",
+     "spiele": 152
     }
    ],
    "durch": true
   },
   {
+   "kammer": "offen",
+   "kammerName": "offen",
    "key": "diff|auf25",
    "name": "Der Aufschwung",
    "benannt": true,
-   "frage": "Wie viel besser laufen die letzten 25 Partien als die 25 davor?",
-   "art": "ereignis",
-   "zufall": "quote",
+   "frage": "Wer hat sich von den 25 Partien davor zu den letzten 25 am meisten gesteigert?",
+   "art": "leistung",
+   "zufall": "",
    "mass": "Die Siegquote",
    "teil": "zwei Fenster im Vergleich",
    "mindText": "ab 50 Partien",
    "braucht": 50,
+   "schwelle": 50,
    "halter": "Martin",
    "halterRang": 2,
    "halterSpiele": 211,
@@ -1959,27 +1567,30 @@
    "durch": true
   },
   {
-   "key": "tore|abwehr",
+   "kammer": "anspruch",
+   "kammerName": "Anspruch",
+   "key": "tore|abwehr|anspruch",
    "name": "Der Mitspieler",
    "benannt": true,
-   "frage": "Wer trifft aus der Abwehr heraus am häufigsten selbst?",
+   "frage": "Wer trifft über achtzig Partien aus der Abwehr heraus am häufigsten selbst?",
    "art": "leistung",
    "zufall": "",
    "mass": "Die eigenen Tore je Partie",
    "teil": "in der Abwehr",
-   "mindText": "ab 12 Partien in der Abwehr",
-   "braucht": 25,
+   "mindText": "ab 40 Partien in der Abwehr",
+   "braucht": 80,
+   "schwelle": 40,
    "halter": "Jane",
    "halterRang": 4,
    "halterSpiele": 97,
    "beleg": "9,1 eigene Tore je Partie",
    "halterDiff": 0.18064788732394366,
-   "imRennen": 11,
+   "imRennen": 9,
    "ligaGewertet": 11,
-   "ausschlag": 1.8103247886837457,
-   "korrSpiele": 0.3933667370421891,
-   "korrRein": -0.0856752679690543,
-   "korrQuote": 0.8800144766027672,
+   "ausschlag": 1.7571547469392228,
+   "korrSpiele": 0.1253468672175837,
+   "korrRein": -0.12400482383446391,
+   "korrQuote": 0.8026517856484638,
    "kopie": false,
    "top3": [
     "Jane",
@@ -1992,7 +1603,7 @@
     "Leon"
    ],
    "gleich": 1,
-   "kleinsteSpielzahl": 39,
+   "kleinsteSpielzahl": 77,
    "rangfolge": [
     {
      "name": "Jane",
@@ -2033,7 +1644,163 @@
    "durch": true
   },
   {
-   "key": "gegen|favorit",
+   "kammer": "anspruch",
+   "kammerName": "Anspruch",
+   "key": "ruhe|sturm|anspruch",
+   "name": "Die Handschrift",
+   "benannt": true,
+   "frage": "Wessen Ergebnisse im Sturm schwanken über achtzig Partien am wenigsten?",
+   "art": "ereignis",
+   "zufall": "quote",
+   "mass": "Die Gleichmäßigkeit der Ergebnisse",
+   "teil": "im Sturm",
+   "mindText": "ab 40 Partien im Sturm",
+   "braucht": 80,
+   "schwelle": 40,
+   "halter": "Leon",
+   "halterRang": 3,
+   "halterSpiele": 355,
+   "beleg": "4,1 Tore Streuung um +1,5 im Schnitt",
+   "halterDiff": 0.11343153526970962,
+   "imRennen": 6,
+   "ligaGewertet": 11,
+   "ausschlag": 1.5766359212551375,
+   "korrSpiele": 0.10984986835732287,
+   "korrRein": 0.1493430440572784,
+   "korrQuote": -0.08020920859315148,
+   "kopie": false,
+   "top3": [
+    "Leon",
+    "Stefan",
+    "Leo"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 81,
+   "rangfolge": [
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": -4.068993154440896,
+     "ev": "4,1 Tore Streuung um +1,5 im Schnitt",
+     "spiele": 355
+    },
+    {
+     "name": "Stefan",
+     "rang": 10,
+     "wert": -4.24990922197895,
+     "ev": "4,2 Tore Streuung um −3,1 im Schnitt",
+     "spiele": 81
+    },
+    {
+     "name": "Leo",
+     "rang": 7,
+     "wert": -4.258679626235012,
+     "ev": "4,3 Tore Streuung um −1,6 im Schnitt",
+     "spiele": 246
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": -4.291286005170351,
+     "ev": "4,3 Tore Streuung um +1,5 im Schnitt",
+     "spiele": 171
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": -4.44367829012845,
+     "ev": "4,4 Tore Streuung um −0,7 im Schnitt",
+     "spiele": 348
+    }
+   ],
+   "durch": true
+  },
+  {
+   "kammer": "offen",
+   "kammerName": "offen",
+   "key": "quote|schluss|offen",
+   "name": "Der Schlussmann",
+   "benannt": true,
+   "frage": "Wer gewinnt die letzte Partie eines Spieltags am häufigsten?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Die Siegquote",
+   "teil": "in der letzten Partie eines Spieltags",
+   "mindText": "ab 10 Partien in der letzten Partie eines Spieltags",
+   "braucht": 30,
+   "schwelle": 10,
+   "halter": "Jane",
+   "halterRang": 4,
+   "halterSpiele": 97,
+   "beleg": "67 % gewonnen",
+   "halterDiff": 0.18677777777777776,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 1.5706434987080367,
+   "korrSpiele": 0.3520187531343202,
+   "korrRein": -0.3705448981581144,
+   "korrQuote": 0.943071576009112,
+   "kopie": false,
+   "top3": [
+    "Jane",
+    "Julian",
+    "Martin"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 0.6666666666666666,
+     "ev": "67 % gewonnen",
+     "spiele": 97
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 0.6086956521739131,
+     "ev": "61 % gewonnen",
+     "spiele": 171
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 0.6052631578947368,
+     "ev": "61 % gewonnen",
+     "spiele": 211
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 0.5555555555555556,
+     "ev": "56 % gewonnen",
+     "spiele": 355
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 0.46153846153846156,
+     "ev": "46 % gewonnen",
+     "spiele": 78
+    }
+   ],
+   "durch": true
+  },
+  {
+   "kammer": "offen",
+   "kammerName": "offen",
+   "key": "gegen|favorit|offen",
    "name": "Der Pflichterfüller",
    "benannt": true,
    "frage": "Wer lässt als Favorit am wenigsten zu?",
@@ -2043,6 +1810,7 @@
    "teil": "als Favorit",
    "mindText": "ab 15 Partien als Favorit",
    "braucht": 30,
+   "schwelle": 15,
    "halter": "Jannik",
    "halterRang": 5,
    "halterSpiele": 78,
@@ -2107,16 +1875,173 @@
    "durch": true
   },
   {
-   "key": "klarS|favorit",
-   "name": "Der Erwartbare",
+   "kammer": "anspruch",
+   "kammerName": "Anspruch",
+   "key": "ruhe|rest|anspruch",
+   "name": "Der Unaufgeregte",
    "benannt": true,
-   "frage": "Wer macht die Favoritenrolle am häufigsten deutlich?",
+   "frage": "Wessen Ergebnisse gegen den Rest der Liga schwanken am wenigsten?",
+   "art": "ereignis",
+   "zufall": "quote",
+   "mass": "Die Gleichmäßigkeit der Ergebnisse",
+   "teil": "gegen den Rest der Liga",
+   "mindText": "ab 40 Partien gegen den Rest der Liga",
+   "braucht": 80,
+   "schwelle": 40,
+   "halter": "Julian",
+   "halterRang": 1,
+   "halterSpiele": 171,
+   "beleg": "3,7 Tore Streuung um +2,6 im Schnitt",
+   "halterDiff": 0.19778723404255305,
+   "imRennen": 6,
+   "ligaGewertet": 11,
+   "ausschlag": 1.547863587388802,
+   "korrSpiele": 0.2745303247564382,
+   "korrRein": 0.3360528297858363,
+   "korrQuote": 0.652088697202817,
+   "kopie": false,
+   "top3": [
+    "Julian",
+    "Leon",
+    "Leo"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 152,
+   "rangfolge": [
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": -3.7116531893372815,
+     "ev": "3,7 Tore Streuung um +2,6 im Schnitt",
+     "spiele": 171
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": -3.8374530894182306,
+     "ev": "3,8 Tore Streuung um +2,3 im Schnitt",
+     "spiele": 355
+    },
+    {
+     "name": "Leo",
+     "rang": 7,
+     "wert": -4.021107972369077,
+     "ev": "4,0 Tore Streuung um +1,6 im Schnitt",
+     "spiele": 246
+    },
+    {
+     "name": "Maxi",
+     "rang": 6,
+     "wert": -4.03754492119094,
+     "ev": "4,0 Tore Streuung um +2,6 im Schnitt",
+     "spiele": 348
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": -4.132184735746371,
+     "ev": "4,1 Tore Streuung um +3,8 im Schnitt",
+     "spiele": 211
+    }
+   ],
+   "durch": true
+  },
+  {
+   "kammer": "offen",
+   "kammerName": "offen",
+   "key": "tore|unter|offen",
+   "name": "Der Angreifer",
+   "benannt": true,
+   "frage": "Wer trifft als Außenseiter am häufigsten selbst?",
+   "art": "leistung",
+   "zufall": "",
+   "mass": "Die eigenen Tore je Partie",
+   "teil": "als Außenseiter",
+   "mindText": "ab 15 Partien als Außenseiter",
+   "braucht": 30,
+   "schwelle": 15,
+   "halter": "Jane",
+   "halterRang": 4,
+   "halterSpiele": 97,
+   "beleg": "8,5 eigene Tore je Partie",
+   "halterDiff": 0.10197058823529409,
+   "imRennen": 11,
+   "ligaGewertet": 11,
+   "ausschlag": 1.541028910056656,
+   "korrSpiele": 0.3255874260238399,
+   "korrRein": -0.4382286495998243,
+   "korrQuote": 0.9387020471292163,
+   "kopie": false,
+   "top3": [
+    "Jane",
+    "Martin",
+    "Julian"
+   ],
+   "top3Liga": [
+    "Julian",
+    "Martin",
+    "Leon"
+   ],
+   "gleich": 1,
+   "kleinsteSpielzahl": 39,
+   "rangfolge": [
+    {
+     "name": "Jane",
+     "rang": 4,
+     "wert": 8.470588235294118,
+     "ev": "8,5 eigene Tore je Partie",
+     "spiele": 97
+    },
+    {
+     "name": "Martin",
+     "rang": 2,
+     "wert": 8.075471698113208,
+     "ev": "8,1 eigene Tore je Partie",
+     "spiele": 211
+    },
+    {
+     "name": "Julian",
+     "rang": 1,
+     "wert": 8.0625,
+     "ev": "8,1 eigene Tore je Partie",
+     "spiele": 171
+    },
+    {
+     "name": "Leon",
+     "rang": 3,
+     "wert": 7.723076923076923,
+     "ev": "7,7 eigene Tore je Partie",
+     "spiele": 355
+    },
+    {
+     "name": "Jannik",
+     "rang": 5,
+     "wert": 7.4,
+     "ev": "7,4 eigene Tore je Partie",
+     "spiele": 78
+    }
+   ],
+   "durch": true
+  },
+  {
+   "kammer": "offen",
+   "kammerName": "offen",
+   "key": "klarS|favorit|offen",
+   "name": "Der Souverän",
+   "benannt": true,
+   "frage": "Wer gewinnt als Favorit am häufigsten klar?",
    "art": "leistung",
    "zufall": "",
    "mass": "Der Anteil klarer Siege",
    "teil": "als Favorit",
    "mindText": "ab 15 Partien als Favorit",
    "braucht": 30,
+   "schwelle": 15,
    "halter": "Jannik",
    "halterRang": 5,
    "halterSpiele": 78,

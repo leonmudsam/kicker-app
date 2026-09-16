@@ -67,8 +67,9 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       welchem Prinzip und wie oft eine Karte entsteht,
                       gemessen an den echten Partien
                       (README-story-logik.md), und der Vorschlag für neue
-                      Liga-Rekorde, die jeder holen kann —
-                      154 gesuchte Kombinationen gegen neun gemessene Tore
+                      Liga-Rekorde in zwei Kammern, offen und Anspruch —
+                      278 gesuchte Kombinationen gegen neun gemessene Tore
+                      und sieben Wächter, die den Lauf abbrechen
                       (README-rekord-vorschlag.md), und die Probeliga: eine
                       erfundene Liga aus 571 Partien mit einem gebauten
                       Schaufenster, die Tag für Tag nachgespielt zeigt, welche
