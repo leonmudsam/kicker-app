@@ -204,6 +204,35 @@ const ICONS = {
   // Der Winkel sagt „hier geht es weiter". Ohne ihn sah eine Feed-Karte wie
   // ein Aushang aus, und die Haelfte wurde nie angetippt.
   chevron:       `<path d="M9 5l7 7-7 7"/>`,
+  // ── LIGA-REKORDE DER ZWEI KAMMERN [§C35] ──
+  // Acht Zeichen, die es sonst nirgends gibt. Ein Rekord zeigt in der Zelle
+  // zuerst seine Zeichnung, und zwei gleiche sind dort nicht zu
+  // unterscheiden — deshalb nimmt kein neuer Eintrag ein vorhandenes Zeichen.
+  // Hochform: drei Balken, die steigen, mit einer Welle darüber — der
+  // laufende Abschnitt, nicht die ganze Laufbahn.
+  formPeak:      `<path d="M4 20v-5M9 20v-8M14 20v-11M19 20v-6"/><path d="M4 11l5-4 5-3 5 4"/>`,
+  // Dichtes Tor: ein geschlossenes Gitter im Rahmen — nichts geht durch.
+  gateShut:      `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M12 5v14M17 5v14M3 12h18"/>`,
+  // Abwehrchef: Schild mit Rangwinkeln darin — die Ansage in der Abwehr.
+  shieldRank:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><path d="M9 10l3-2 3 2M9 14l3-2 3 2"/>`,
+  // Hausherr: ein Dach über der eigenen Hälfte — das eigene Revier.
+  homeGround:    `<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>`,
+  // Auftrieb: eine Treppe mit Pfeil — zwei Abschnitte, der zweite höher.
+  stepsUp:       `<path d="M3 20h5v-5h5v-5h5V5"/><path d="M16 8l3-3 3 3"/>`,
+  // Angreifer: ein Schuh am Ball — die eigenen Tore, nicht das Ergebnis.
+  strikeBoot:    `<path d="M4 8h7l3 4h4a2 2 0 012 2v3H6a2 2 0 01-2-2z"/><path d="M4 20h16"/><circle cx="8" cy="5" r="2"/>`,
+  // Handschrift: ein Federstrich, der in einer Schlaufe ausläuft — dieselbe
+  // Linie in jeder Partie.
+  penLine:       `<path d="M3 17c4-9 7-13 9-13s1 4-1 8-4 6-2 6 4-3 6-6"/><path d="M3 21h18"/>`,
+  // Fundament: zwei Lagen auf einer Grundlinie — das Gegenstück zur
+  // Handschrift, und es liegt unten.
+  baseLine:      `<path d="M3 21h18"/><rect x="5" y="13" width="14" height="5" rx="1"/><rect x="8" y="7" width="8" height="5" rx="1"/>`,
+  // Souverän: eine breite Krone auf einer Grundlinie — der Favorit, der auch
+  // klar gewinnt. Kein Häkchen: das trägt schon `trophyCheck`.
+  crownWide:     `<path d="M2 9l3.5 4L12 6l6.5 7L22 9v8H2z"/><path d="M5 20h14"/>`,
+  // Unaufgeregt: eine Linie, die kaum ausschlägt, zwischen zwei Marken —
+  // Gleichmäßigkeit als Bild, nicht als Zahl.
+  flatWave:      `<path d="M3 12h3l2-2 2 4 2-3 2 2 2-2h3"/><path d="M3 6v12M21 6v12"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};

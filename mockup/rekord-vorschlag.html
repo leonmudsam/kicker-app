@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Neue Liga-Rekorde für die Mitte des Feldes</title>
+<title>Liga-Rekorde, die jeder holen kann</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sometype+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -2408,6 +2408,14 @@
     border-radius:5px;background:var(--surface2);border:1px solid var(--line);
     color:var(--muted);font-size:9px;font-weight:600;letter-spacing:.04em;
     text-transform:uppercase;white-space:nowrap}
+  /* Der Stand einer Partie. Auf der Ergebnis-Karte ist er die Aussage und
+     steht deshalb rechts in eigener Spalte, in Ziffernbreite — nicht im
+     Satz, der sich kürzt. Metall wie die Marke: er zeichnet niemanden aus
+     [§C25], die Richtung steht im Text. */
+  .nf-sam-z b.nf-sam-w{flex:0 0 auto;margin-left:auto;padding:1px 6px;
+    border-radius:5px;background:var(--surface2);border:1px solid var(--line);
+    color:var(--ink);font-size:11px;font-weight:800;letter-spacing:.02em;
+    font-variant-numeric:tabular-nums;white-space:nowrap}
   .nf-sam-i{width:20px;height:20px;flex:0 0 auto;border-radius:6px;
     display:grid;place-items:center;background:var(--surface2);
     border:1px solid var(--line);color:var(--muted)}
@@ -2426,8 +2434,12 @@
   .nf-s-tafel .nf-sam-z .nf-sam-i{color:rgb(var(--zeile-rgb));
     border-color:rgba(var(--zeile-rgb),.22);background:rgba(var(--zeile-rgb),.075);
     box-shadow:0 0 12px -8px rgba(var(--zeile-rgb),.72)}
-  .nf-sam-m{padding:6px 13px;font-size:10px;color:var(--faint);
-    border-top:1px solid var(--line)}
+  /* Die Zahl der uebrigen Zeilen ist der Weg ins Blatt, also muss man sie
+     lesen koennen. Mit 6 px Luft und `--faint` endete sie gerendert 1 px
+     ueber der Kartenkante, und die Ecke von 14 px schnitt sie an: „und 13
+     weitere" sah aus wie ein Darstellungsfehler. */
+  .nf-sam-m{padding:8px 13px 12px;font-size:10.5px;color:var(--muted);
+    border-top:1px solid var(--line);letter-spacing:.02em}
 
   /* Sorte 6 Duo: zwei Wappen nebeneinander, kein Rang [§C27]. */
   .nf-duo{gap:0}
@@ -4622,7 +4634,6 @@
   .rv{max-width:1180px;margin:0 auto;padding:24px 16px}
   .rv h1{font-family:'Archivo Black',sans-serif;font-size:29px;line-height:1.08;margin:0 0 8px}
   .rv h2{font-family:'Archivo Black',sans-serif;font-size:16px;margin:40px 0 8px}
-  .rv h3{font-family:'Archivo Black',sans-serif;font-size:12.5px;margin:22px 0 7px;color:var(--ink2)}
   .rv p{color:var(--ink2);font-size:12.5px;line-height:1.7;max-width:82ch;margin:0 0 10px}
   .lead{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.15em;margin:0 0 16px}
   code{font-size:10.5px;color:var(--purple);background:transparent}
@@ -4638,21 +4649,14 @@
     vertical-align:bottom}
   table.st td{padding:8px 7px;border-bottom:1px solid var(--line);vertical-align:top}
   table.st td b{display:block;color:var(--ink);font-weight:700;font-size:12px}
-  table.st td > code{display:block;margin-top:1px}
-  table.st tr.nein{opacity:.6}
   table.st tr.ja td{background:rgba(163,230,53,.045)}
-  .frage{display:block;color:var(--muted);font-size:10.5px;margin-top:4px;line-height:1.45;max-width:38ch}
+  .frage{display:block;color:var(--muted);font-size:10.5px;margin-top:4px;line-height:1.45;max-width:42ch}
+  .klein{display:block;color:var(--faint);font-size:9.5px;margin-top:2px}
   .mono{font-variant-numeric:tabular-nums;color:var(--ink2);white-space:nowrap}
   .nz{text-align:right}
-  .null{color:var(--faint)}
-  .gold{color:var(--gold)}
+  .gut{color:var(--acid)}
+  .schlecht{color:var(--red)}
   .bed{color:var(--muted);font-size:11px;line-height:1.55}
-  .tor{font-variant-numeric:tabular-nums;font-size:10.5px;text-align:right;white-space:nowrap}
-  .tor.gut{color:var(--acid)}
-  .tor.schlecht{color:var(--red)}
-  .urteil{white-space:nowrap}
-  .ok{color:var(--acid);font-size:10.5px}
-  .weg{color:var(--red);font-size:10.5px}
   .regeln{display:grid;gap:9px;margin-top:10px}
   .regel{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);
     border-radius:11px;padding:11px 13px}
@@ -4661,6 +4665,7 @@
   .regel em{color:var(--acid);font-style:normal}
   .sb{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--acid);
     border-radius:13px;padding:12px 14px;margin-bottom:9px}
+  .sb.anspruch{border-left-color:var(--gold)}
   .sb-k{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
   .sb-k b{font-family:'Archivo Black',sans-serif;font-size:14px}
   .sb-kam{color:var(--purple);font-size:9.5px;text-transform:uppercase;letter-spacing:.1em}
@@ -4682,465 +4687,735 @@
 </style></head><body>
 <div class="rv">
   <div class="lead">Vorschlag · gemessen an 466 echten Partien · Stand 2026-08-27 12:00</div>
-  <h1>Rekorde, die nicht der Spitze gehören</h1>
-  <p>Gesucht sind Liga-Rekorde, die <b>nicht den Vielspieler</b> und <b>nicht den Besten</b>
-     belohnen: erreichbar für die Mitte des Feldes, besonders, auf einer <b>Abweichung</b>
-     gebaut und aus den Fragen der Monatschroniken abgeleitet, ohne einen bestehenden
-     Eintrag zu doppeln. Achtzehn Kandidaten wurden an den echten Partien gerechnet.
-     <b>Fünf</b> überstehen alle fünf Tore.</p>
-  <p>Das Ergebnis ist selbst die wichtigste Aussage: die meisten
-     Abweichungsfragen hängen entweder doch an der Spielzahl oder sie wiederholen die
-     Rangliste. Welche das sind und warum, steht unten mit Zahl und Grund.</p>
+  <h1>Zwei Kammern: offen und Anspruch</h1>
+  <p><b>Eingebaut.</b> Zehn dieser Rekorde stehen in der App. Diese Seite bleibt als
+     Herleitung: sie zeigt, welche Kombinationen gerechnet wurden, welche Tore sie bestehen
+     mussten und woher die Schwellen kommen. Nicht eingebaut wurden „Der Schlussmann",
+     „Der Pflichterfüller" und „Der Mitspieler"; dazugekommen ist <b>„Das Fundament"</b>,
+     das Gegenstück zur „Handschrift" für die Abwehr — Sturm und Abwehr sind ein Paar wie
+     „Der komplette Stürmer" und „Der komplette Verteidiger", und gemessen gehören sie
+     zwei verschiedenen Spielern.</p>
+  <p>Ein Rekord soll zeigen, wer am meisten kann — und eine hohe Schwelle ist dafür
+     legitim: wer sie hält, hat sie über eine lange Strecke gehalten. Er soll aber nicht
+     <b>nur</b> das zeigen. Gebraucht werden <b>auch</b> Rekorde, die jemand mit fünfzig
+     Partien erreichen kann.</p>
+  <p>Die Schwelle ist deshalb keine Bedingung, sondern eine <b>Kammer</b>:</p>
+  <div class="regeln">
+    <div class="regel"><b>Offen</b><span><em>die Bedingung ist mit 50 Partien erfüllbar</em>
+      — der Rekord für jeden. Gemessen gehört er meistens dem, der wenig spielt und gut
+      ist: vier der
+      sieben gehören heute einem Spieler mit unter hundert Partien.</span></div>
+    <div class="regel"><b>Anspruch</b><span><em>eine höhere Schwelle ist erlaubt</em> —
+      hier darf ein Rekord verlangen, dass jemand die Frage über eine lange Strecke
+      beantwortet hat. Dafür gelten alle anderen Tore unverändert: der Wert bleibt eine
+      Rate und keine Ansammlung, das Podest ist nicht das der Rangliste, und der Halter
+      bleibt nicht unter seiner eigenen Erwartung. Sonst wäre es wieder ein Rekord für
+      den, der am meisten spielt.</span></div>
+  </div>
+  <p>Gerechnet wurde nicht geraten: <b>278</b> Kombinationen aus
+     neun Kennzahlen, siebzehn Teilmengen und beiden Kammern, jede an den echten
+     Partien gemessen und durch dieselben Tore geschickt. <b>87</b> bestehen
+     sie, <b>zwölf</b> davon haben einen Namen bekommen —
+     sieben offen, fünf mit Anspruch. Ausgewählt danach,
+     dass sie keinen bestehenden Eintrag doppeln und jede Frage nur in EINER Kammer
+     steht. Die übrigen sind gezählt und nicht aufgeschrieben: eine Liste aus „Die
+     Gegentore je Partie nach einem Sieg" ist eine Tabelle, kein Katalog.</p>
+  <p><b>Jede Schwelle steht auf einem 5er-Raster.</b> Eine Bedingung ist eine Absprache
+     und keine Messung: „ab 22 Siegen" sieht aus wie das Ergebnis einer Kalibrierung, und
+     das ist es auch — gelesen wird es aber als Regel, und eine Regel mit einer krummen
+     Zahl liest sich wie ein Versehen. Die <b>Messwerte</b> bleiben davon unberührt: ein
+     Beleg nennt den Wert, nach dem sortiert wird [§10.2], und zwei auf dasselbe Vielfache
+     gerundete Werte hätten keine Reihenfolge mehr. Im heutigen Katalog stehen
+     <b>7</b> Schwellen krumm: 12 Spieltagen → 10 Spieltagen · 8 solchen → 10 solchen · 22 Siegen → 20 Siegen · 22 % → 20 % · 12 solchen → 10 solchen · 4 Partien → 5 Partien · 4 Partien → 5 Partien.</p>
+  <p><b>Und jede Teilmenge wandert mit.</b> „In den ersten 25 Partien" stand hier und ist
+     gefallen: der Abschnitt ist fertig, sobald jemand 25 Partien hat, und ändert sich nie
+     wieder — ein Rekord darauf wäre ab dem Tag seiner Vergabe ein Eintrag im Museum. An
+     seine Stelle ist ein <b>gleitendes Fenster über die letzten 30 Partien</b> getreten.
+     Geprüft wird das an den Daten und nicht am Namen: liefert eine Teilmenge für jeden
+     Spieler dasselbe wie zwanzig Partien früher, bricht der Lauf ab.</p>
+  <p><b>Und keine Tafel gehört einem.</b> Sieben der ursprünglich achtzehn Rekorde
+     fragten nach knappen Siegen oder nach Gleichmäßigkeit, und alle sieben hielt Jane:
+     dieselbe Frage in sieben Ausschnitten sammelt sich beim selben Halter [§C35]. Eine
+     Kennzahl und eine Teilmenge dürfen deshalb höchstens <b>zweimal</b> vorkommen. Das
+     allein reichte nicht — danach hielt Martin sieben von dreizehn, dieselbe Tafel mit
+     einem anderen Namen darauf. Gedeckelt wird deshalb der <b>Halter selbst</b>: mehr als
+     ein Drittel trägt niemand. Heute steht es bei Martin 4 · Jane 4 · Jannik 2 · Leon 1 · Julian 1 von 12.
+     Die drei ganz gestrichenen Fragen („knappe Siege") doppeln außerdem „Das
+     Sonntagskind" und „Der Nervenkitzler" aus dem heutigen Katalog.</p>
 
   <div class="karten">
-    <div class="kz"><b>18</b><span>Kandidaten gerechnet</span></div>
-    <div class="kz gold"><b>5</b><span>bestehen alle fünf Tore</span></div>
-    <div class="kz"><b>13</b><span>fallen aus, mit Grund</span></div>
-    <div class="kz"><b>36</b><span>Rekorde heute im Katalog</span></div>
-    <div class="kz"><b>5</b><span>neue Halter außerhalb der besten drei</span></div>
-    <div class="kz"><b>48</b><span>Prestige je neuem Rekord</span></div>
+    <div class="kz"><b>278</b><span>Kombinationen gerechnet</span></div>
+    <div class="kz"><b>87</b><span>bestehen alle Tore ihrer Kammer</span></div>
+    <div class="kz gold"><b>7</b><span>benannt in der offenen Kammer</span></div>
+    <div class="kz gold"><b>5</b><span>benannt in der anspruchsvollen</span></div>
+    <div class="kz"><b>6</b><span>gehören einem Spieler mit unter 100 Partien</span></div>
+    <div class="kz"><b>8</b><span>von 21 bestehenden Rekorden sind heute offen</span></div>
   </div>
 
-  <h2>Der eigentliche Vorschlag: eine Rohsicht für beide Zeitachsen</h2>
-  <p>Die Monatschroniken fragen längst nach Abweichungen — nach dem schwächsten Spieltag,
-     dem unangenehmsten Gegner, der Spanne zwischen bestem und schwächstem Monat. Sie
-     können das, weil <code>_seasonTitleCtx</code> je Spieler eine <b>Rohsicht</b> anlegt:
-     jede Partie aus seiner Sicht, gruppiert nach Spieltag, Woche, Partner und Gegner.
-     <code>_chronicleCtx</code>, die dieselben Fragen über die ganze Laufbahn stellen
-     müsste, hat diese Rohsicht nicht — sie führt vierzig Zähler, und jede neue Frage
-     bräuchte einen neuen.</p>
-  <p>Deshalb steht am Anfang keine Liste von Rekorden, sondern <b>ein Umbau</b>:
-     <code>_chronicleCtx</code> legt dieselbe Rohsicht an und ruft dasselbe
-     <code>_rohGruppen</code>. Danach ist ein neuer Liga-Rekord kein neuer Zähler mehr,
-     sondern <b>ein <code>allzeit:</code>-Block an einer Disziplin, die es schon gibt</b> —
-     derselbe Name, dasselbe Zeichen, derselbe Ton, nur die andere Zeitachse und eine
-     eigene Schwelle. Genau so tragen <code>spotless</code>, <code>evenkeel</code> und
-     <code>drought</code> heute beide Achsen [§13.1]. Das ist die Antwort auf
-     „skalierbar": jede der fünfzig Monatschroniken, deren Frage die Tore besteht, wird
-     mit drei Zeilen zum Rekord, und die beiden Achsen können nicht auseinanderdriften,
-     weil sie dieselbe Frage lesen.</p>
-
-  <h2>Die fünf Tore</h2>
+  <h2>Die neun Tore</h2>
+  <p>Vier stehen so in der Arbeitsanweisung [§C35, §C39]. Die anderen fünf sind hier
+     entstanden, und drei davon sind selbst das Ergebnis der Messung.</p>
   <div class="regeln">
-    <div class="regel"><b>hängt nicht an der Spielzahl</b>
-      <span><em>|r| ≤ 0,35</em> — Der Wert darf nicht mit der Zahl der Partien laufen, sonst hält den Rekord, wer am meisten spielt [§C39].</span></div><div class="regel"><b>wiederholt nicht die Rangliste</b>
-      <span><em>|r| ≤ 0,70</em> — Ein Wert, der fast perfekt mit der Siegquote läuft, ist die Rangliste unter anderem Namen. Vier der achtzehn Kandidaten scheitern allein daran.</span></div><div class="regel"><b>die halbe Liga steht im Rennen</b>
-      <span><em>≥ die Hälfte</em> — Mindestens die halbe Liga muss die Mindestzahl erfüllen, sonst ist die Bedingung selbst die Hürde [§C35].</span></div><div class="regel"><b>die Bestmarke schlägt weit aus</b>
-      <span><em>≥ 1,5 σ</em> — Der Beste muss mindestens 1,5 Standardabweichungen weiter draußen liegen als der Durchschnitt, sonst hält ihn fast jeder fast [§C39].</span></div><div class="regel"><b>nicht nur für die Spitze</b>
-      <span><em>Halter nicht in den besten drei</em> — Der heutige Halter darf nicht aus den besten drei kommen — das ist die Frage, um die es hier überhaupt geht.</span></div>
+    <div class="regel"><b>die Kammer entscheidet die Schwelle</b>
+      <span><em>≤ 50 oder &gt; 50 Partien</em> — Das ist kein Tor, das man reißen kann, sondern eine Zuteilung. Eine Bedingung, die mit fünfzig Partien erfüllbar ist, gehört in die OFFENE Kammer; eine höhere in die ANSPRUCHSVOLLE. Gerechnet wird mit dem Bestand eines Spielers, der fünfzig Partien hat: etwa zwanzig Siege, je fünfundzwanzig Sturm- und Abwehrspiele, dreizehn Spieltage, acht bis zwölf Duelle gegen jeden anderen.</span></div><div class="regel"><b>der Wenigspieler steht im Rennen</b>
+      <span><em>nur offen: jemand mit unter 100 Partien</em> — Die Gegenprobe zur Rechnung darüber, an den echten Daten — aber nur in der offenen Kammer. Erfüllt die Bedingung dort niemand mit unter hundert Partien, ist sie selbst die Hürde, und es hilft nichts, dass die Zahl auf dem Papier klein aussieht. In der anspruchsvollen Kammer ist gerade das der Punkt.</span></div><div class="regel"><b>hängt nicht an der Spielzahl</b>
+      <span><em>Teilkorrelation ≤ 0,35</em> — Und zwar mit herausgerechnetem Können. Die rohe Korrelation täuscht in dieser Liga: die schwächsten Spieler spielen auch am wenigsten, gemessen r = 0,49 zwischen Partienzahl und Siegquote. Damit läuft JEDER Können-Rekord mit der Spielzahl mit, ohne von ihr zu hängen — ein Tor auf die rohe Zahl wirft genau die Rekorde weg, die der Katalog braucht.</span></div><div class="regel"><b>und auch nicht umgekehrt</b>
+      <span><em>Teilkorrelation ≥ −0,70</em> — Ein Rekord, der bei gleichem Können den mit den WENIGSTEN Partien bevorzugt, ist ein Spielzahl-Rekord mit umgekehrtem Vorzeichen. Er wäre so willkürlich wie der andere.</span></div><div class="regel"><b>wiederholt nicht die Rangliste</b>
+      <span><em>nicht dasselbe Podest</em> — Gemessen am Podest, nicht an einer Korrelation. Ein Können-Rekord läuft mit der Siegquote, weil er Können MISST, und Rekorde sind auch dazu da, zu zeigen, wer am meisten kann. Die Frage ist deshalb nicht, ob die Zahlen zusammenhängen, sondern ob dieselben drei vorne stehen wie im Liga-Tab (Julian, Martin, Leon). Dann sagt der Rekord nichts Neues.</span></div><div class="regel"><b>die Bestmarke schlägt weit aus</b>
+      <span><em>≥ 1,5 σ</em> — Der Beste muss mindestens 1,5 Standardabweichungen weiter draußen liegen als der Durchschnitt, sonst hält ihn fast jeder fast [§C39].</span></div><div class="regel"><b>es ist ein Rennen</b>
+      <span><em>offen: die Hälfte · Anspruch: ein Drittel</em> — Sonst ist die Bedingung selbst die Hürde [§C35]. Eine hohe Schwelle schließt per Definition Leute aus, deshalb genügt in der anspruchsvollen Kammer ein Drittel — ein Tor auf die Hälfte hätte sie leer gelassen.</span></div><div class="regel"><b>die Bestmarke ist nicht geschenkt</b>
+      <span><em>höchstens ein Drittel hält sie</em> — Eine Bestmarke, die jeder geschenkt bekommt, ist keine mehr [§C35]. Und wo sieben von zehn punktgleich vorne liegen, teilt sich der Grundwert durch sieben [§C34].</span></div><div class="regel"><b>der Halter bleibt nicht unter seiner Erwartung</b>
+      <span><em>Abstand zur Rechnung ≥ 0</em> — „Der Gelassene&quot; gehörte Alex mit 3,1 Toren Streuung um −4,2 im Schnitt: gleichmäßig, weil er gleichmäßig verliert. Ein Rekord, dessen Halter in der gemessenen Menge unter seiner eigenen Erwartung bleibt, ist keine Leistung, sondern eine Schattenseite im Positiven. Gemessen gegen die Erwartung und nicht gegen null — in der Teilmenge „als Außenseiter&quot; ist die Tordifferenz bei jedem negativ, und ein Tor darauf hätte die ganze Teilmenge gestrichen, samt dem Rekord für den, der dort trotzdem gewinnt.</span></div>
   </div>
 
-  <h2>Alle achtzehn Kandidaten, gemessen</h2>
-  <table class="st">
-    <thead><tr><th>Kandidat</th><th>Bedingung</th>
-      <th class="nz">hängt nicht an</th><th class="nz">wiederholt nicht die</th><th class="nz">die halbe Liga</th><th class="nz">die Bestmarke schlägt</th><th class="nz">nicht nur für</th>
-      <th>Urteil</th></tr></thead>
-    <tbody><tr class="nein">
-    <td><b>Auf Augenhöhe</b><code>gleichauf</code>
-      <span class="frage">Wie viel besser läuft es in den Partien, die die Rechnung offen sah?</span></td>
-    <td class="bed">ab 25 offenen Partien</td>
-    <td class="tor gut">r = 0,03</td><td class="tor schlecht">r = -0,91</td><td class="tor gut">7 von 11</td><td class="tor gut">1,97 σ</td><td class="tor gut">Rang 8 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="ja">
-    <td><b>Die Steigerung</b><code>steigerung</code>
-      <span class="frage">Wie weit liegt das letzte Drittel der Laufbahn über dem ersten?</span></td>
-    <td class="bed">ab 60 Partien</td>
-    <td class="tor gut">r = 0,00</td><td class="tor gut">r = -0,31</td><td class="tor gut">10 von 11</td><td class="tor gut">1,57 σ</td><td class="tor gut">Rang 10 von 11</td>
-    <td class="urteil"><span class="ok">aufnehmen</span></td>
-  </tr><tr class="nein">
-    <td><b>Der Erwartungstreue</b><code>punktgenau2</code>
-      <span class="frage">Wessen Laufbahn trifft die Elo-Erwartung am genauesten?</span></td>
-    <td class="bed">ab 60 Partien</td>
-    <td class="tor schlecht">r = 0,36</td><td class="tor gut">r = 0,28</td><td class="tor gut">10 von 11</td><td class="tor gut">1,64 σ</td><td class="tor gut">Rang 5 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="ja">
-    <td><b>Das Metronom</b><code>metronom</code>
-      <span class="frage">Wie weit liegen bester und schwächster Monat auseinander?</span></td>
-    <td class="bed">ab 3 Monaten mit je 8 Partien</td>
-    <td class="tor gut">r = 0,34</td><td class="tor gut">r = 0,53</td><td class="tor gut">10 von 11</td><td class="tor gut">1,66 σ</td><td class="tor gut">Rang 4 von 11</td>
-    <td class="urteil"><span class="ok">aufnehmen</span></td>
-  </tr><tr class="nein">
-    <td><b>Der Beidfüßige</b><code>beidseitig</code>
-      <span class="frage">Spielt jemand vorne genauso stark wie hinten?</span></td>
-    <td class="bed">ab 25 Partien je Position</td>
-    <td class="tor gut">r = 0,31</td><td class="tor gut">r = -0,07</td><td class="tor gut">9 von 11</td><td class="tor schlecht">1,06 σ</td><td class="tor gut">Rang 6 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="nein">
-    <td><b>Favorit wie Außenseiter</b><code>rollenfest</code>
-      <span class="frage">Spielt jemand als Favorit genauso wie als Außenseiter?</span></td>
-    <td class="bed">ab 20 Partien in jeder Lage</td>
-    <td class="tor schlecht">r = -0,75</td><td class="tor gut">r = 0,14</td><td class="tor gut">8 von 11</td><td class="tor schlecht">1,46 σ</td><td class="tor schlecht">Rang 1 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="ja">
-    <td><b>Der Gleichmut</b><code>gleichmut</code>
-      <span class="frage">Wie gleichmäßig fallen die Ergebnisse aus?</span></td>
-    <td class="bed">ab 60 Partien</td>
-    <td class="tor gut">r = 0,00</td><td class="tor gut">r = 0,09</td><td class="tor gut">10 von 11</td><td class="tor gut">1,78 σ</td><td class="tor gut">Rang 4 von 11</td>
-    <td class="urteil"><span class="ok">aufnehmen</span></td>
-  </tr><tr class="ja">
-    <td><b>Der Wechselhafte</b><code>wechselhaft</code>
-      <span class="frage">Wessen Spieltage sehen am wenigsten wie der andere aus?</span></td>
-    <td class="bed">ab 12 Spieltagen mit je 3 Partien</td>
-    <td class="tor gut">r = 0,04</td><td class="tor gut">r = -0,58</td><td class="tor gut">10 von 11</td><td class="tor gut">1,59 σ</td><td class="tor gut">Rang 8 von 11</td>
-    <td class="urteil"><span class="ok">aufnehmen</span></td>
-  </tr><tr class="nein">
-    <td><b>Der Kontrast</b><code>kontrast</code>
-      <span class="frage">Wie weit liegen bester und schwächster Partner auseinander?</span></td>
-    <td class="bed">ab 4 Partnern mit je 15 Partien</td>
-    <td class="tor schlecht">r = 0,65</td><td class="tor schlecht">r = -0,82</td><td class="tor schlecht">4 von 11</td><td class="tor schlecht">1,13 σ</td><td class="tor gut">Rang 6 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="nein">
-    <td><b>Ohne Angstgegner</b><code>angstfrei</code>
-      <span class="frage">Wie gut läuft es gegen den unangenehmsten Gegner?</span></td>
-    <td class="bed">ab 6 Gegnern mit je 15 Duellen</td>
-    <td class="tor schlecht">r = 0,41</td><td class="tor schlecht">r = 0,98</td><td class="tor gut">7 von 11</td><td class="tor schlecht">1,49 σ</td><td class="tor schlecht">Rang 1 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="nein">
-    <td><b>Gegen jeden bestanden</b><code>breitenwirkung</code>
-      <span class="frage">Gegen wie viele regelmäßige Gegner steht jemand im Plus?</span></td>
-    <td class="bed">ab 6 Gegnern mit je 15 Duellen</td>
-    <td class="tor gut">r = 0,34</td><td class="tor schlecht">r = 0,98</td><td class="tor gut">7 von 11</td><td class="tor gut">1,51 σ</td><td class="tor schlecht">Rang 1 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="nein">
-    <td><b>Die zweite Luft</b><code>zweiteluft</code>
-      <span class="frage">Wie viel stärker läuft es ab der vierten Partie eines Spieltags?</span></td>
-    <td class="bed">ab 25 Partien in jedem Block</td>
-    <td class="tor schlecht">r = -0,43</td><td class="tor gut">r = 0,22</td><td class="tor gut">9 von 11</td><td class="tor gut">1,70 σ</td><td class="tor gut">Rang 4 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="nein">
-    <td><b>Der Tagesabschluss</b><code>kopfhoch</code>
-      <span class="frage">Wie viele eigene Spieltage enden nicht negativ?</span></td>
-    <td class="bed">ab 12 Spieltagen mit je 3 Partien</td>
-    <td class="tor gut">r = 0,30</td><td class="tor schlecht">r = 0,99</td><td class="tor gut">10 von 11</td><td class="tor schlecht">1,47 σ</td><td class="tor schlecht">Rang 1 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="nein">
-    <td><b>Auf Augenhöhe (2. Fassung)</b><code>gleichauf2</code>
-      <span class="frage">Wie weit liegt die Quote in offenen Partien über der Rechnung, die sie offen sah?</span></td>
-    <td class="bed">ab 25 offenen Partien</td>
-    <td class="tor gut">r = -0,14</td><td class="tor schlecht">r = 0,78</td><td class="tor gut">7 von 11</td><td class="tor schlecht">1,15 σ</td><td class="tor schlecht">Rang 3 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="ja">
-    <td><b>Der Erwartungstreue (2. Fassung)</b><code>punktgenau2b</code>
-      <span class="frage">Wessen Laufbahn trifft die Erwartung am genauesten, gemessen in Standardfehlern?</span></td>
-    <td class="bed">ab 60 Partien</td>
-    <td class="tor gut">r = -0,13</td><td class="tor gut">r = -0,11</td><td class="tor gut">10 von 11</td><td class="tor gut">2,17 σ</td><td class="tor gut">Rang 5 von 11</td>
-    <td class="urteil"><span class="ok">aufnehmen</span></td>
-  </tr><tr class="nein">
-    <td><b>Die zweite Luft (2. Fassung)</b><code>zweiteluft2</code>
-      <span class="frage">Wie viel besser als die Rechnung läuft es ab der vierten Partie eines Tages?</span></td>
-    <td class="bed">ab 25 Partien in jedem Block</td>
-    <td class="tor schlecht">r = -0,43</td><td class="tor gut">r = 0,13</td><td class="tor gut">9 von 11</td><td class="tor schlecht">1,15 σ</td><td class="tor gut">Rang 4 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="nein">
-    <td><b>Favorit wie Außenseiter (2. Fassung)</b><code>rollenfest2</code>
-      <span class="frage">Liegt jemand als Favorit genauso weit über der Rechnung wie als Außenseiter?</span></td>
-    <td class="bed">ab 20 Partien in jeder Lage</td>
-    <td class="tor schlecht">r = -0,94</td><td class="tor gut">r = 0,12</td><td class="tor gut">8 von 11</td><td class="tor schlecht">1,39 σ</td><td class="tor gut">Rang 4 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="nein">
-    <td><b>Der schwächste Tag</b><code>schwaechstertag</code>
-      <span class="frage">Wie gut ist der schlechteste Spieltag einer Laufbahn noch?</span></td>
-    <td class="bed">ab 12 Spieltagen mit je 3 Partien</td>
-    <td class="tor gut">r = 0,10</td><td class="tor schlecht">r = 0,88</td><td class="tor gut">10 von 11</td><td class="tor gut">1,66 σ</td><td class="tor gut">Rang 4 von 11</td>
-    <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr></tbody>
-  </table>
-
-  <h2>Die fünf, die bleiben</h2>
-  <div class="sb">
-  <div class="sb-k"><b>Die Steigerung</b>
-    <span class="sb-kam">Kammer Fügungen</span></div>
-  <div class="sb-frage">Wie weit liegt das letzte Drittel der Laufbahn über dem ersten?</div>
+  <h2>Die offene Kammer: sieben Rekorde ab
+    30 bis
+    50 Partien</h2>
+  <p>Nach Ausschlag geordnet. Jeder Steckbrief nennt, was gemessen wird, wie viele Partien
+     die Bedingung braucht, wer ihn heute hält und mit wie vielen Partien — und die besten
+     fünf mit ihrer eigenen Zahl.</p>
+  <div class="sb offen">
+  <div class="sb-k"><b>Die starke Phase</b>
+    <span class="sb-kam">Können ·
+      offen ab 30 Partien</span></div>
+  <div class="sb-frage">Wer holt in den letzten 30 Partien die meisten klaren Siege?</div>
   <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Die Steigerung" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
-    <tr><td>Bedingung</td><td>ab 60 Partien</td></tr>
-    <tr><td>Halter heute</td><td><b>Stefan</b> — Rang 10 von
-      11 in der Siegquote, 81 Partien</td></tr>
-    <tr><td>Beleg</td><td>37 % im letzten Drittel, 26 % im ersten</td></tr>
-    <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
+    <tr><td>Gemessen</td><td>Der Anteil klarer Siege in den letzten 30 Partien</td></tr>
+    <tr><td>Bedingung</td><td>ab 30 Partien — eine Laufbahn braucht dafür
+      <b>30 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Martin</b> mit
+      <b>211 Partien</b>, Rang 2 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>47 % mit 5 Toren Vorsprung oder mehr, 14 von 30</td></tr>
+    <tr><td>Podest</td><td>Martin, Leon, Jane — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>2,53 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = 0,11 mit herausgerechnetem Können
+      — praktisch unabhängig · roh r = 0,38</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,61 — misst erkennbar Können, ordnet das Feld aber um</td></tr>
+  </table>
+  <div class="sb-rang"><span><i>1.</i> Martin <u>211 Partien</u><em>47 % mit 5 Toren Vorsprung oder mehr, 14 von 30</em></span><span><i>2.</i> Leon <u>355 Partien</u><em>27 % mit 5 Toren Vorsprung oder mehr, 8 von 30</em></span><span><i>3.</i> Jane <u>97 Partien</u><em>23 % mit 5 Toren Vorsprung oder mehr, 7 von 30</em></span><span><i>4.</i> Maxi <u>348 Partien</u><em>20 % mit 5 Toren Vorsprung oder mehr, 6 von 30</em></span><span><i>5.</i> Henry <u>152 Partien</u><em>17 % mit 5 Toren Vorsprung oder mehr, 5 von 30</em></span></div>
+</div><div class="sb offen">
+  <div class="sb-k"><b>Die dichte Phase</b>
+    <span class="sb-kam">Können ·
+      offen ab 30 Partien</span></div>
+  <div class="sb-frage">Wer lässt in den letzten 30 Partien am wenigsten zu?</div>
+  <table class="sb-t">
+    <tr><td>Gemessen</td><td>Die Gegentore je Partie in den letzten 30 Partien</td></tr>
+    <tr><td>Bedingung</td><td>ab 30 Partien — eine Laufbahn braucht dafür
+      <b>30 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Martin</b> mit
+      <b>211 Partien</b>, Rang 2 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>6,4 Gegentore je Partie</td></tr>
+    <tr><td>Podest</td><td>Martin, Jane, Leon — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>2,26 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = 0,10 mit herausgerechnetem Können
+      — praktisch unabhängig · roh r = 0,44</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,80 — misst erkennbar Können, ordnet das Feld aber um</td></tr>
+  </table>
+  <div class="sb-rang"><span><i>1.</i> Martin <u>211 Partien</u><em>6,4 Gegentore je Partie</em></span><span><i>2.</i> Jane <u>97 Partien</u><em>7,6 Gegentore je Partie</em></span><span><i>3.</i> Leon <u>355 Partien</u><em>7,7 Gegentore je Partie</em></span><span><i>4.</i> Maxi <u>348 Partien</u><em>7,7 Gegentore je Partie</em></span><span><i>5.</i> Julian <u>171 Partien</u><em>8,1 Gegentore je Partie</em></span></div>
+</div><div class="sb offen">
+  <div class="sb-k"><b>Der Aufschwung</b>
+    <span class="sb-kam">Können ·
+      offen ab 50 Partien</span></div>
+  <div class="sb-frage">Wer hat sich von den 25 Partien davor zu den letzten 25 am meisten gesteigert?</div>
+  <table class="sb-t">
+    <tr><td>Gemessen</td><td>Die Siegquote zwei Fenster im Vergleich</td></tr>
+    <tr><td>Bedingung</td><td>ab 50 Partien — eine Laufbahn braucht dafür
+      <b>50 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Martin</b> mit
+      <b>211 Partien</b>, Rang 2 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>+24 Punkte: 84 % in den letzten 25, 60 % in den 25 davor</td></tr>
+    <tr><td>Podest</td><td>Martin, Maxi, Stefan — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>1,82 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = 0,17 mit herausgerechnetem Können
+      — unter der Grenze von 0,35 · roh r = 0,28</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,38 — mit der Rangliste hat der Wert wenig zu tun</td></tr>
+  </table>
+  <div class="sb-rang"><span><i>1.</i> Martin <u>211 Partien</u><em>+24 Punkte: 84 % in den letzten 25, 60 % in den 25 davor</em></span><span><i>2.</i> Maxi <u>348 Partien</u><em>+12 Punkte: 64 % in den letzten 25, 52 % in den 25 davor</em></span><span><i>3.</i> Stefan <u>81 Partien</u><em>+8 Punkte: 32 % in den letzten 25, 24 % in den 25 davor</em></span><span><i>4.</i> Jannik <u>78 Partien</u><em>+0 Punkte: 48 % in den letzten 25, 48 % in den 25 davor</em></span><span><i>5.</i> Jane <u>97 Partien</u><em>-4 Punkte: 56 % in den letzten 25, 60 % in den 25 davor</em></span></div>
+</div><div class="sb offen">
+  <div class="sb-k"><b>Der Schlussmann</b>
+    <span class="sb-kam">Können ·
+      offen ab 30 Partien</span></div>
+  <div class="sb-frage">Wer gewinnt die letzte Partie eines Spieltags am häufigsten?</div>
+  <table class="sb-t">
+    <tr><td>Gemessen</td><td>Die Siegquote in der letzten Partie eines Spieltags</td></tr>
+    <tr><td>Bedingung</td><td>ab 10 Partien in der letzten Partie eines Spieltags — eine Laufbahn braucht dafür
+      <b>30 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Jane</b> mit
+      <b>97 Partien</b>, Rang 4 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>67 % gewonnen</td></tr>
+    <tr><td>Podest</td><td>Jane, Julian, Martin — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
     <tr><td>Ausschlag</td><td>1,57 σ über dem Mittel der Gewerteten</td></tr>
-    <tr><td>Spielzahl</td><td>r = 0,00 — praktisch unabhängig</td></tr>
-    <tr><td>Siegquote</td><td>r = -0,31 — keine Wiederholung der Rangliste</td></tr>
+    <tr><td>Spielzahl</td><td>r = -0,37 mit herausgerechnetem Können
+      — unter der Grenze von 0,35 · roh r = 0,35</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,94 — misst erkennbar Können, ordnet das Feld aber um</td></tr>
   </table>
-  <div class="sb-rang"><span><i>1.</i> Stefan <u>Rang 10</u><em>37 % im letzten Drittel, 26 % im ersten</em></span><span><i>2.</i> Maxi <u>Rang 6</u><em>48 % im letzten Drittel, 40 % im ersten</em></span><span><i>3.</i> Jane <u>Rang 4</u><em>56 % im letzten Drittel, 53 % im ersten</em></span><span><i>4.</i> Martin <u>Rang 2</u><em>67 % im letzten Drittel, 64 % im ersten</em></span><span><i>5.</i> Jannik <u>Rang 5</u><em>50 % im letzten Drittel, 50 % im ersten</em></span></div>
-</div><div class="sb">
-  <div class="sb-k"><b>Das Metronom</b>
-    <span class="sb-kam">Kammer Fügungen</span></div>
-  <div class="sb-frage">Wie weit liegen bester und schwächster Monat auseinander?</div>
+  <div class="sb-rang"><span><i>1.</i> Jane <u>97 Partien</u><em>67 % gewonnen</em></span><span><i>2.</i> Julian <u>171 Partien</u><em>61 % gewonnen</em></span><span><i>3.</i> Martin <u>211 Partien</u><em>61 % gewonnen</em></span><span><i>4.</i> Leon <u>355 Partien</u><em>56 % gewonnen</em></span><span><i>5.</i> Jannik <u>78 Partien</u><em>46 % gewonnen</em></span></div>
+</div><div class="sb offen">
+  <div class="sb-k"><b>Der Pflichterfüller</b>
+    <span class="sb-kam">Können ·
+      offen ab 30 Partien</span></div>
+  <div class="sb-frage">Wer lässt als Favorit am wenigsten zu?</div>
   <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Das Metronom" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
-    <tr><td>Bedingung</td><td>ab 3 Monaten mit je 8 Partien</td></tr>
-    <tr><td>Halter heute</td><td><b>Jane</b> — Rang 4 von
-      11 in der Siegquote, 97 Partien</td></tr>
-    <tr><td>Beleg</td><td>54 % im schwächsten, 58 % im besten von 3 Monaten</td></tr>
-    <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
-    <tr><td>Ausschlag</td><td>1,66 σ über dem Mittel der Gewerteten</td></tr>
-    <tr><td>Spielzahl</td><td>r = 0,34 — schwach, unter der Grenze von 0,35</td></tr>
-    <tr><td>Siegquote</td><td>r = 0,53 — erkennbar, aber weit von einer Kopie entfernt</td></tr>
+    <tr><td>Gemessen</td><td>Die Gegentore je Partie als Favorit</td></tr>
+    <tr><td>Bedingung</td><td>ab 15 Partien als Favorit — eine Laufbahn braucht dafür
+      <b>30 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Jannik</b> mit
+      <b>78 Partien</b>, Rang 5 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>6,2 Gegentore je Partie</td></tr>
+    <tr><td>Podest</td><td>Jannik, Martin, Jane — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>1,56 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = -0,27 mit herausgerechnetem Können
+      — unter der Grenze von 0,35 · roh r = -0,02</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,70 — misst erkennbar Können, ordnet das Feld aber um</td></tr>
   </table>
-  <div class="sb-rang"><span><i>1.</i> Jane <u>Rang 4</u><em>54 % im schwächsten, 58 % im besten von 3 Monaten</em></span><span><i>2.</i> Leon <u>Rang 3</u><em>58 % im schwächsten, 69 % im besten von 4 Monaten</em></span><span><i>3.</i> Maxi <u>Rang 6</u><em>39 % im schwächsten, 51 % im besten von 4 Monaten</em></span><span><i>4.</i> Stefan <u>Rang 10</u><em>18 % im schwächsten, 33 % im besten von 3 Monaten</em></span><span><i>5.</i> Julian <u>Rang 1</u><em>55 % im schwächsten, 71 % im besten von 3 Monaten</em></span></div>
-</div><div class="sb">
-  <div class="sb-k"><b>Der Gleichmut</b>
-    <span class="sb-kam">Kammer Fügungen</span></div>
-  <div class="sb-frage">Wie gleichmäßig fallen die Ergebnisse aus?</div>
+  <div class="sb-rang"><span><i>1.</i> Jannik <u>78 Partien</u><em>6,2 Gegentore je Partie</em></span><span><i>2.</i> Martin <u>211 Partien</u><em>6,3 Gegentore je Partie</em></span><span><i>3.</i> Jane <u>97 Partien</u><em>7,0 Gegentore je Partie</em></span><span><i>4.</i> Julian <u>171 Partien</u><em>7,0 Gegentore je Partie</em></span><span><i>5.</i> Leon <u>355 Partien</u><em>7,0 Gegentore je Partie</em></span></div>
+</div><div class="sb offen">
+  <div class="sb-k"><b>Der Angreifer</b>
+    <span class="sb-kam">Können ·
+      offen ab 30 Partien</span></div>
+  <div class="sb-frage">Wer trifft als Außenseiter am häufigsten selbst?</div>
   <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Der Gleichmut" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
-    <tr><td>Bedingung</td><td>ab 60 Partien</td></tr>
-    <tr><td>Halter heute</td><td><b>Jane</b> — Rang 4 von
-      11 in der Siegquote, 97 Partien</td></tr>
-    <tr><td>Beleg</td><td>4.0 Tore Streuung um +0.9 im Schnitt</td></tr>
-    <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
-    <tr><td>Ausschlag</td><td>1,78 σ über dem Mittel der Gewerteten</td></tr>
-    <tr><td>Spielzahl</td><td>r = 0,00 — praktisch unabhängig</td></tr>
-    <tr><td>Siegquote</td><td>r = 0,09 — keine Wiederholung der Rangliste</td></tr>
+    <tr><td>Gemessen</td><td>Die eigenen Tore je Partie als Außenseiter</td></tr>
+    <tr><td>Bedingung</td><td>ab 15 Partien als Außenseiter — eine Laufbahn braucht dafür
+      <b>30 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Jane</b> mit
+      <b>97 Partien</b>, Rang 4 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>8,5 eigene Tore je Partie</td></tr>
+    <tr><td>Podest</td><td>Jane, Martin, Julian — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>1,54 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = -0,44 mit herausgerechnetem Können
+      — unter der Grenze von 0,35 · roh r = 0,33</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,94 — misst erkennbar Können, ordnet das Feld aber um</td></tr>
   </table>
-  <div class="sb-rang"><span><i>1.</i> Jane <u>Rang 4</u><em>4.0 Tore Streuung um +0.9 im Schnitt</em></span><span><i>2.</i> Leon <u>Rang 3</u><em>4.2 Tore Streuung um +1.1 im Schnitt</em></span><span><i>3.</i> Johannes <u>Rang 9</u><em>4.2 Tore Streuung um -1.1 im Schnitt</em></span><span><i>4.</i> Stefan <u>Rang 10</u><em>4.2 Tore Streuung um -2.7 im Schnitt</em></span><span><i>5.</i> Julian <u>Rang 1</u><em>4.3 Tore Streuung um +1.2 im Schnitt</em></span></div>
-</div><div class="sb">
-  <div class="sb-k"><b>Der Wechselhafte</b>
-    <span class="sb-kam">Kammer Fügungen</span></div>
-  <div class="sb-frage">Wessen Spieltage sehen am wenigsten wie der andere aus?</div>
+  <div class="sb-rang"><span><i>1.</i> Jane <u>97 Partien</u><em>8,5 eigene Tore je Partie</em></span><span><i>2.</i> Martin <u>211 Partien</u><em>8,1 eigene Tore je Partie</em></span><span><i>3.</i> Julian <u>171 Partien</u><em>8,1 eigene Tore je Partie</em></span><span><i>4.</i> Leon <u>355 Partien</u><em>7,7 eigene Tore je Partie</em></span><span><i>5.</i> Jannik <u>78 Partien</u><em>7,4 eigene Tore je Partie</em></span></div>
+</div><div class="sb offen">
+  <div class="sb-k"><b>Der Souverän</b>
+    <span class="sb-kam">Können ·
+      offen ab 30 Partien</span></div>
+  <div class="sb-frage">Wer gewinnt als Favorit am häufigsten klar?</div>
   <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Der Wechselhafte" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
-    <tr><td>Bedingung</td><td>ab 12 Spieltagen mit je 3 Partien</td></tr>
-    <tr><td>Halter heute</td><td><b>Henry</b> — Rang 8 von
-      11 in der Siegquote, 152 Partien</td></tr>
-    <tr><td>Beleg</td><td>0 % am schwächsten, 100 % am stärksten von 26 Spieltagen</td></tr>
-    <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
-    <tr><td>Ausschlag</td><td>1,59 σ über dem Mittel der Gewerteten</td></tr>
-    <tr><td>Spielzahl</td><td>r = 0,04 — praktisch unabhängig</td></tr>
-    <tr><td>Siegquote</td><td>r = -0,58 — erkennbar, aber weit von einer Kopie entfernt</td></tr>
+    <tr><td>Gemessen</td><td>Der Anteil klarer Siege als Favorit</td></tr>
+    <tr><td>Bedingung</td><td>ab 15 Partien als Favorit — eine Laufbahn braucht dafür
+      <b>30 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Jannik</b> mit
+      <b>78 Partien</b>, Rang 5 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>41 % mit 5 Toren Vorsprung oder mehr, 9 von 22</td></tr>
+    <tr><td>Podest</td><td>Jannik, Martin, Jane — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>1,51 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = -0,31 mit herausgerechnetem Können
+      — unter der Grenze von 0,35 · roh r = -0,17</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,42 — mit der Rangliste hat der Wert wenig zu tun</td></tr>
   </table>
-  <div class="sb-rang"><span><i>1.</i> Henry <u>Rang 8</u><em>0 % am schwächsten, 100 % am stärksten von 26 Spieltagen</em></span><span><i>2.</i> Johannes <u>Rang 9</u><em>0 % am schwächsten, 75 % am stärksten von 14 Spieltagen</em></span><span><i>3.</i> Leo <u>Rang 7</u><em>13 % am schwächsten, 100 % am stärksten von 40 Spieltagen</em></span><span><i>4.</i> Martin <u>Rang 2</u><em>25 % am schwächsten, 100 % am stärksten von 36 Spieltagen</em></span><span><i>5.</i> Stefan <u>Rang 10</u><em>0 % am schwächsten, 60 % am stärksten von 16 Spieltagen</em></span></div>
-</div><div class="sb">
-  <div class="sb-k"><b>Der Erwartungstreue (2. Fassung)</b>
-    <span class="sb-kam">Kammer Fügungen</span></div>
-  <div class="sb-frage">Wessen Laufbahn trifft die Erwartung am genauesten, gemessen in Standardfehlern?</div>
-  <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Der Erwartungstreue" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
-    <tr><td>Bedingung</td><td>ab 60 Partien</td></tr>
-    <tr><td>Halter heute</td><td><b>Jannik</b> — Rang 5 von
-      11 in der Siegquote, 78 Partien</td></tr>
-    <tr><td>Beleg</td><td>49 % gespielt, 48 % erwartet, aus 78 Partien</td></tr>
-    <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
-    <tr><td>Ausschlag</td><td>2,17 σ über dem Mittel der Gewerteten</td></tr>
-    <tr><td>Spielzahl</td><td>r = -0,13 — praktisch unabhängig</td></tr>
-    <tr><td>Siegquote</td><td>r = -0,11 — keine Wiederholung der Rangliste</td></tr>
-  </table>
-  <div class="sb-rang"><span><i>1.</i> Jannik <u>Rang 5</u><em>49 % gespielt, 48 % erwartet, aus 78 Partien</em></span><span><i>2.</i> Maxi <u>Rang 6</u><em>44 % gespielt, 47 % erwartet, aus 348 Partien</em></span><span><i>3.</i> Henry <u>Rang 8</u><em>39 % gespielt, 44 % erwartet, aus 152 Partien</em></span><span><i>4.</i> Jane <u>Rang 4</u><em>57 % gespielt, 50 % erwartet, aus 97 Partien</em></span><span><i>5.</i> Johannes <u>Rang 9</u><em>32 % gespielt, 42 % erwartet, aus 77 Partien</em></span></div>
+  <div class="sb-rang"><span><i>1.</i> Jannik <u>78 Partien</u><em>41 % mit 5 Toren Vorsprung oder mehr, 9 von 22</em></span><span><i>2.</i> Martin <u>211 Partien</u><em>40 % mit 5 Toren Vorsprung oder mehr, 38 von 96</em></span><span><i>3.</i> Jane <u>97 Partien</u><em>35 % mit 5 Toren Vorsprung oder mehr, 11 von 31</em></span><span><i>4.</i> Maxi <u>348 Partien</u><em>31 % mit 5 Toren Vorsprung oder mehr, 31 von 101</em></span><span><i>5.</i> Leon <u>355 Partien</u><em>30 % mit 5 Toren Vorsprung oder mehr, 60 von 197</em></span></div>
 </div>
 
-  <h2>Warum die anderen dreizehn ausfallen</h2>
-  <table class="st">
-    <thead><tr><th>Kandidat</th><th>Grund</th></tr></thead>
-    <tbody><tr><td><b>Auf Augenhöhe</b></td>
-      <td class="bed">Der Vergleich mit der EIGENEN Quote dreht die Rangliste um: wer hoch steht, hat einen hohen Abzug. Der Rekord ginge damit systematisch an das untere Ende — genauso einseitig wie an die Spitze.</td></tr><tr><td><b>Der Erwartungstreue</b></td>
-      <td class="bed">Je mehr Partien, desto näher liegt die Quote an der Erwartung — der Wert hängt damit doch an der Spielzahl. Die zweite Fassung rechnet in Standardfehlern und löst genau das.</td></tr><tr><td><b>Der Beidfüßige</b></td>
-      <td class="bed">Der Beste liegt kaum weiter draußen als der Durchschnitt: ein Rekord, den fast jeder fast hält, ist keine Bestmarke.</td></tr><tr><td><b>Favorit wie Außenseiter</b></td>
-      <td class="bed">Der Abstand zwischen zwei Quoten schrumpft mit der Spielzahl, weil beide Quoten ruhiger werden. Beide Fassungen scheitern daran.</td></tr><tr><td><b>Der Kontrast</b></td>
-      <td class="bed">Vier Partner mit je fünfzehn gemeinsamen Partien ist selbst eine Spielzahl-Hürde: nur vier von elf stehen überhaupt im Rennen.</td></tr><tr><td><b>Ohne Angstgegner</b></td>
-      <td class="bed">Die schwächste Quote gegen einen regelmäßigen Gegner läuft fast perfekt mit der Siegquote. Der Rekord wäre die Rangliste unter anderem Namen.</td></tr><tr><td><b>Gegen jeden bestanden</b></td>
-      <td class="bed">Dieselbe Ursache: wer gut ist, steht gegen jeden im Plus.</td></tr><tr><td><b>Die zweite Luft</b></td>
-      <td class="bed">Der Abstand zwischen früh und spät schrumpft mit der Spielzahl, und der Ausschlag reicht auch in der zweiten Fassung nicht.</td></tr><tr><td><b>Der Tagesabschluss</b></td>
-      <td class="bed">Wie viele eigene Spieltage nicht negativ enden, ist die Siegquote in anderer Verpackung: r = 0,99.</td></tr><tr><td><b>Auf Augenhöhe (2. Fassung)</b></td>
-      <td class="bed">Mit der Erwartung statt der eigenen Quote verglichen kippt es ins Gegenteil: dann misst die Frage wieder das Können, und der Ausschlag reicht nicht.</td></tr><tr><td><b>Die zweite Luft (2. Fassung)</b></td>
-      <td class="bed">Mit der Erwartung verglichen verschwindet die Verzerrung nicht: derselbe Ausschlag von 1,15 σ, dieselbe Abhängigkeit von der Spielzahl.</td></tr><tr><td><b>Favorit wie Außenseiter (2. Fassung)</b></td>
-      <td class="bed">Dieselbe Ursache wie in der ersten Fassung, nur stärker: r = −0,94 zur Spielzahl.</td></tr><tr><td><b>Der schwächste Tag</b></td>
-      <td class="bed">Der beste schlechteste Tag gehört fast immer dem besten Spieler: r = 0,88.</td></tr></tbody>
+  <h2>Die anspruchsvolle Kammer: fünf Rekorde ab
+    80 Partien</h2>
+  <p>Dieselben Tore, nur die Schwelle ist höher. Was hier steht, hat jemand über
+     mindestens 80 Partien gehalten — und trotzdem
+     sagt keiner von ihnen dasselbe wie die Rangliste, und keiner hängt am Umfang.
+     Und zwei der fünf gehören
+     heute trotz der hohen Schwelle einem Spieler mit unter hundert Partien.</p>
+  <div class="sb anspruch">
+  <div class="sb-k"><b>Der Abwehrchef</b>
+    <span class="sb-kam">Können ·
+      Anspruch ab 80 Partien</span></div>
+  <div class="sb-frage">Wie weit über der Rechnung liegt die Leistung in der Abwehr?</div>
+  <table class="sb-t">
+    <tr><td>Gemessen</td><td>Der Abstand zur Rechnung in der Abwehr</td></tr>
+    <tr><td>Bedingung</td><td>ab 40 Partien in der Abwehr — eine Laufbahn braucht dafür
+      <b>80 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Jane</b> mit
+      <b>97 Partien</b>, Rang 4 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>+18 Punkte über der Rechnung, 66 % statt 48 %</td></tr>
+    <tr><td>Podest</td><td>Jane, Martin, Julian — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>2,27 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = -0,46 mit herausgerechnetem Können
+      — unter der Grenze von 0,35 · roh r = -0,31</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,42 — mit der Rangliste hat der Wert wenig zu tun</td></tr>
   </table>
-  <p>Zwei Ergebnisse sind dabei mehr als eine Absage. <b>Erstens:</b> eine Abweichung
-     darf nicht gegen die <b>eigene</b> Quote gerechnet werden. „Auf Augenhöhe" tut das
-     und dreht damit die Rangliste um — r = -0,91
-     zur Siegquote heißt: der Rekord ginge systematisch an das untere Ende, genauso
-     einseitig wie an die Spitze. <b>Zweitens:</b> die Abhängigkeit von der Spielzahl
-     lässt sich wegrechnen, wenn man den Abstand in <b>Standardfehlern</b> misst statt in
-     Prozentpunkten. „Der Erwartungstreue" fällt in der ersten Fassung mit
-     r = 0,36 durch
-     und besteht in der zweiten mit r = -0,13
-     — bei gleichzeitig größerem Ausschlag. Dieselbe Rechnung passt auf jede künftige
-     Frage nach „wie nah an null".</p>
+  <div class="sb-rang"><span><i>1.</i> Jane <u>97 Partien</u><em>+18 Punkte über der Rechnung, 66 % statt 48 %</em></span><span><i>2.</i> Martin <u>211 Partien</u><em>+10 Punkte über der Rechnung, 66 % statt 56 %</em></span><span><i>3.</i> Julian <u>171 Partien</u><em>+1 Punkte über der Rechnung, 60 % statt 59 %</em></span><span><i>4.</i> Leo <u>246 Partien</u><em>+0 Punkte über der Rechnung, 49 % statt 49 %</em></span><span><i>5.</i> Henry <u>152 Partien</u><em>-3 Punkte über der Rechnung, 41 % statt 43 %</em></span></div>
+</div><div class="sb anspruch">
+  <div class="sb-k"><b>Der Hausherr</b>
+    <span class="sb-kam">Können ·
+      Anspruch ab 80 Partien</span></div>
+  <div class="sb-frage">Wer holt gegen den Rest der Liga den größten Anteil aller Tore?</div>
+  <table class="sb-t">
+    <tr><td>Gemessen</td><td>Der Torenteil gegen den Rest der Liga</td></tr>
+    <tr><td>Bedingung</td><td>ab 40 Partien gegen den Rest der Liga — eine Laufbahn braucht dafür
+      <b>80 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Martin</b> mit
+      <b>211 Partien</b>, Rang 2 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>62 % aller Tore, 736:442</td></tr>
+    <tr><td>Podest</td><td>Martin, Maxi, Julian — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>1,97 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = -0,07 mit herausgerechnetem Können
+      — praktisch unabhängig · roh r = -0,03</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,62 — misst erkennbar Können, ordnet das Feld aber um</td></tr>
+  </table>
+  <div class="sb-rang"><span><i>1.</i> Martin <u>211 Partien</u><em>62 % aller Tore, 736:442</em></span><span><i>2.</i> Maxi <u>348 Partien</u><em>58 % aller Tore, 570:408</em></span><span><i>3.</i> Julian <u>171 Partien</u><em>58 % aller Tore, 438:317</em></span><span><i>4.</i> Leon <u>355 Partien</u><em>57 % aller Tore, 1670:1250</em></span><span><i>5.</i> Henry <u>152 Partien</u><em>56 % aller Tore, 391:306</em></span></div>
+</div><div class="sb anspruch">
+  <div class="sb-k"><b>Der Mitspieler</b>
+    <span class="sb-kam">Können ·
+      Anspruch ab 80 Partien</span></div>
+  <div class="sb-frage">Wer trifft über achtzig Partien aus der Abwehr heraus am häufigsten selbst?</div>
+  <table class="sb-t">
+    <tr><td>Gemessen</td><td>Die eigenen Tore je Partie in der Abwehr</td></tr>
+    <tr><td>Bedingung</td><td>ab 40 Partien in der Abwehr — eine Laufbahn braucht dafür
+      <b>80 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Jane</b> mit
+      <b>97 Partien</b>, Rang 4 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>9,1 eigene Tore je Partie</td></tr>
+    <tr><td>Podest</td><td>Jane, Martin, Leon — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>1,76 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = -0,12 mit herausgerechnetem Können
+      — praktisch unabhängig · roh r = 0,13</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,80 — misst erkennbar Können, ordnet das Feld aber um</td></tr>
+  </table>
+  <div class="sb-rang"><span><i>1.</i> Jane <u>97 Partien</u><em>9,1 eigene Tore je Partie</em></span><span><i>2.</i> Martin <u>211 Partien</u><em>8,9 eigene Tore je Partie</em></span><span><i>3.</i> Leon <u>355 Partien</u><em>8,4 eigene Tore je Partie</em></span><span><i>4.</i> Julian <u>171 Partien</u><em>8,3 eigene Tore je Partie</em></span><span><i>5.</i> Maxi <u>348 Partien</u><em>7,9 eigene Tore je Partie</em></span></div>
+</div><div class="sb anspruch">
+  <div class="sb-k"><b>Die Handschrift</b>
+    <span class="sb-kam">Fügung ·
+      Anspruch ab 80 Partien</span></div>
+  <div class="sb-frage">Wessen Ergebnisse im Sturm schwanken über achtzig Partien am wenigsten?</div>
+  <table class="sb-t">
+    <tr><td>Gemessen</td><td>Die Gleichmäßigkeit der Ergebnisse im Sturm</td></tr>
+    <tr><td>Bedingung</td><td>ab 40 Partien im Sturm — eine Laufbahn braucht dafür
+      <b>80 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Leon</b> mit
+      <b>355 Partien</b>, Rang 3 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>4,1 Tore Streuung um +1,5 im Schnitt</td></tr>
+    <tr><td>Podest</td><td>Leon, Stefan, Leo — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>1,58 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = 0,15 mit herausgerechnetem Können
+      — praktisch unabhängig · roh r = 0,11</td></tr>
+    <tr><td>Siegquote</td><td>r = -0,08 — mit der Rangliste hat der Wert wenig zu tun</td></tr>
+  </table>
+  <div class="sb-rang"><span><i>1.</i> Leon <u>355 Partien</u><em>4,1 Tore Streuung um +1,5 im Schnitt</em></span><span><i>2.</i> Stefan <u>81 Partien</u><em>4,2 Tore Streuung um −3,1 im Schnitt</em></span><span><i>3.</i> Leo <u>246 Partien</u><em>4,3 Tore Streuung um −1,6 im Schnitt</em></span><span><i>4.</i> Julian <u>171 Partien</u><em>4,3 Tore Streuung um +1,5 im Schnitt</em></span><span><i>5.</i> Maxi <u>348 Partien</u><em>4,4 Tore Streuung um −0,7 im Schnitt</em></span></div>
+</div><div class="sb anspruch">
+  <div class="sb-k"><b>Der Unaufgeregte</b>
+    <span class="sb-kam">Fügung ·
+      Anspruch ab 80 Partien</span></div>
+  <div class="sb-frage">Wessen Ergebnisse gegen den Rest der Liga schwanken am wenigsten?</div>
+  <table class="sb-t">
+    <tr><td>Gemessen</td><td>Die Gleichmäßigkeit der Ergebnisse gegen den Rest der Liga</td></tr>
+    <tr><td>Bedingung</td><td>ab 40 Partien gegen den Rest der Liga — eine Laufbahn braucht dafür
+      <b>80 Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>Julian</b> mit
+      <b>171 Partien</b>, Rang 1 von 11
+      in der Siegquote</td></tr>
+    <tr><td>Beleg</td><td>3,7 Tore Streuung um +2,6 im Schnitt</td></tr>
+    <tr><td>Podest</td><td>Julian, Leon, Leo — die Rangliste sagt
+      Julian, Martin, Leon</td></tr>
+    <tr><td>Ausschlag</td><td>1,55 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Spielzahl</td><td>r = 0,34 mit herausgerechnetem Können
+      — unter der Grenze von 0,35 · roh r = 0,27</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,65 — misst erkennbar Können, ordnet das Feld aber um</td></tr>
+  </table>
+  <div class="sb-rang"><span><i>1.</i> Julian <u>171 Partien</u><em>3,7 Tore Streuung um +2,6 im Schnitt</em></span><span><i>2.</i> Leon <u>355 Partien</u><em>3,8 Tore Streuung um +2,3 im Schnitt</em></span><span><i>3.</i> Leo <u>246 Partien</u><em>4,0 Tore Streuung um +1,6 im Schnitt</em></span><span><i>4.</i> Maxi <u>348 Partien</u><em>4,0 Tore Streuung um +2,6 im Schnitt</em></span><span><i>5.</i> Martin <u>211 Partien</u><em>4,1 Tore Streuung um +3,8 im Schnitt</em></span></div>
+</div>
+
+  <h2>Wer wenig spielt und trotzdem gut ist</h2>
+  <p>Die Liga hat zwei solche Profile. <b>Jane</b> steht mit 97 Partien auf Rang
+     4 der Siegquote und liegt
+     7 Punkte über der
+     eigenen Erwartung — das ist der drittbeste Wert der Liga. <b>Jannik</b> steht mit
+     78 Partien über Maxi
+     (348) und Leo
+     (246).</p>
+  <p>Gemessen gehen <b>6 der zwölf</b> neuen Rekorde an einen
+     Spieler mit unter hundert Partien: Jane, Jannik. Das ist kein Zufall und kein Ausgleich, sondern die Folge des ersten Tors: wo die
+     Bedingung bei 30 Partien liegt, entscheidet die Leistung und nicht der
+     Umfang. Die Liga zum Vergleich — hervorgehoben, wer unter hundert Partien hat:</p>
+  <table class="st" style="max-width:660px">
+    <thead><tr><th>Spieler</th><th class="nz">Partien</th><th class="nz">Spieltage</th>
+      <th class="nz">Siegquote</th><th class="nz">erwartet</th><th class="nz">Abstand</th>
+      <th class="nz">Rang</th></tr></thead>
+    <tbody><tr class="">
+  <td><b>Leon</b></td><td class="mono nz">355</td>
+  <td class="mono nz">54</td><td class="mono nz">62 %</td>
+  <td class="mono nz">57 %</td>
+  <td class="mono nz gut">+5</td>
+  <td class="mono nz">3</td></tr><tr class="">
+  <td><b>Maxi</b></td><td class="mono nz">348</td>
+  <td class="mono nz">50</td><td class="mono nz">44 %</td>
+  <td class="mono nz">47 %</td>
+  <td class="mono nz schlecht">−3</td>
+  <td class="mono nz">6</td></tr><tr class="">
+  <td><b>Leo</b></td><td class="mono nz">246</td>
+  <td class="mono nz">46</td><td class="mono nz">41 %</td>
+  <td class="mono nz">47 %</td>
+  <td class="mono nz schlecht">−6</td>
+  <td class="mono nz">7</td></tr><tr class="">
+  <td><b>Martin</b></td><td class="mono nz">211</td>
+  <td class="mono nz">38</td><td class="mono nz">64 %</td>
+  <td class="mono nz">55 %</td>
+  <td class="mono nz gut">+9</td>
+  <td class="mono nz">2</td></tr><tr class="">
+  <td><b>Julian</b></td><td class="mono nz">171</td>
+  <td class="mono nz">23</td><td class="mono nz">65 %</td>
+  <td class="mono nz">56 %</td>
+  <td class="mono nz gut">+9</td>
+  <td class="mono nz">1</td></tr><tr class="">
+  <td><b>Henry</b></td><td class="mono nz">152</td>
+  <td class="mono nz">27</td><td class="mono nz">39 %</td>
+  <td class="mono nz">44 %</td>
+  <td class="mono nz schlecht">−5</td>
+  <td class="mono nz">8</td></tr><tr class="ja">
+  <td><b>Jane</b></td><td class="mono nz">97</td>
+  <td class="mono nz">18</td><td class="mono nz">57 %</td>
+  <td class="mono nz">50 %</td>
+  <td class="mono nz gut">+7</td>
+  <td class="mono nz">4</td></tr><tr class="ja">
+  <td><b>Stefan</b></td><td class="mono nz">81</td>
+  <td class="mono nz">19</td><td class="mono nz">27 %</td>
+  <td class="mono nz">42 %</td>
+  <td class="mono nz schlecht">−15</td>
+  <td class="mono nz">10</td></tr><tr class="ja">
+  <td><b>Jannik</b></td><td class="mono nz">78</td>
+  <td class="mono nz">14</td><td class="mono nz">49 %</td>
+  <td class="mono nz">48 %</td>
+  <td class="mono nz gut">+1</td>
+  <td class="mono nz">5</td></tr><tr class="ja">
+  <td><b>Johannes</b></td><td class="mono nz">77</td>
+  <td class="mono nz">22</td><td class="mono nz">32 %</td>
+  <td class="mono nz">42 %</td>
+  <td class="mono nz schlecht">−10</td>
+  <td class="mono nz">9</td></tr><tr class="ja">
+  <td><b>Alex</b></td><td class="mono nz">39</td>
+  <td class="mono nz">11</td><td class="mono nz">26 %</td>
+  <td class="mono nz">47 %</td>
+  <td class="mono nz schlecht">−21</td>
+  <td class="mono nz">11</td></tr></tbody>
+  </table>
+
+  <h2>Wie der heutige Katalog auf die beiden Kammern fällt</h2>
+  <p>Aus dem Katalog gelesen, nicht geraten: jede Mindestzahl steht im Klartext in der
+     Bedingung. Umgerechnet auf den Bestand eines Spielers mit fünfzig Partien und vierzig
+     Prozent Siegquote — etwa zwanzig Siege, je fünfundzwanzig Sturm- und Abwehrspiele,
+     fünfunddreißig Gelegenheiten nach einer Niederlage.</p>
+  <p><b>13 von 21</b> Rekorden mit
+     lesbarer Mindestzahl gehören damit in die anspruchsvolle Kammer, nur
+     <b>8</b> sind offen. Das ist
+     nicht falsch — es ist einseitig: der Katalog hat die anspruchsvolle Kammer und keine
+     offene. Bei sechs der 13 ist es dabei nicht die
+     Frage, die aussperrt, sondern nur die Zahl dahinter: „Der Fels" fragt nach den
+     Gegentoren in der Abwehr, und dieselbe Frage bei zehn Abwehrspielen bestünde jedes
+     Tor dieser Seite — sie stünde dann in der offenen Kammer, und die anspruchsvolle
+     Fassung könnte daneben bleiben.</p>
+  <table class="st">
+    <thead><tr><th>Rekord</th><th class="nz">verlangt</th><th class="nz">ein 50-Spieler hat</th>
+      <th>Bedingung</th></tr></thead>
+    <tbody><tr>
+  <td><b>Der Gigantentöter</b></td>
+  <td class="mono nz">60 Spielen</td>
+  <td class="mono nz">50</td>
+  <td class="bed">Höchster Anteil Siege mit unter 35 % Siegchance, ab 60 Spielen</td></tr><tr>
+  <td><b>Der Zerstörer</b></td>
+  <td class="mono nz">22 Siegen</td>
+  <td class="mono nz">20</td>
+  <td class="bed">Höchster Anteil Kantersiege, ab 22 Siegen und mindestens 22 %</td></tr><tr>
+  <td><b>Der komplette Stürmer</b></td>
+  <td class="mono nz">50 Sturmspielen</td>
+  <td class="mono nz">25</td>
+  <td class="bed">Höchster Sturmwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Tore, ab 50 Sturmspielen</td></tr><tr>
+  <td><b>Der komplette Verteidiger</b></td>
+  <td class="mono nz">50 Abwehrspielen</td>
+  <td class="mono nz">25</td>
+  <td class="bed">Höchster Abwehrwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Gegentore, ab 50 Abwehrspielen</td></tr><tr>
+  <td><b>Der Fels</b></td>
+  <td class="mono nz">50 Abwehrspielen</td>
+  <td class="mono nz">25</td>
+  <td class="bed">Wenigste Gegentore pro Spiel in der Abwehr, ab 50 Abwehrspielen</td></tr><tr>
+  <td><b>Der Torjäger</b></td>
+  <td class="mono nz">50 Sturmspielen</td>
+  <td class="mono nz">25</td>
+  <td class="bed">Meiste eigene Tore pro Spiel im Sturm, ab 50 Sturmspielen</td></tr><tr>
+  <td><b>Der Stehaufmann</b></td>
+  <td class="mono nz">60 Gelegenheiten</td>
+  <td class="mono nz">35</td>
+  <td class="bed">Stärkster Sprung nach oben direkt nach einer Niederlage, ab 60 Gelegenheiten und mindestens 6 Prozentpunkte</td></tr><tr>
+  <td><b>Der Nervenkitzler</b></td>
+  <td class="mono nz">25 Siegen</td>
+  <td class="mono nz">20</td>
+  <td class="bed">Höchster Anteil 10:9-Siege an allen eigenen Siegen, ab 25 Siegen</td></tr><tr>
+  <td><b>Der Unerschütterliche</b></td>
+  <td class="mono nz">80 Spielen</td>
+  <td class="mono nz">50</td>
+  <td class="bed">Kürzeste Niederlagenserie, die je jemand über eine ganze Laufbahn zugelassen hat, ab 80 Spielen</td></tr><tr>
+  <td><b>Die Mauer</b></td>
+  <td class="mono nz">60 Spielen</td>
+  <td class="mono nz">50</td>
+  <td class="bed">Höchster Abwehr-Anteil, ab 60 Spielen und mindestens 80 %</td></tr><tr>
+  <td><b>Der Wandler</b></td>
+  <td class="mono nz">60 Spielen</td>
+  <td class="mono nz">50</td>
+  <td class="bed">Ausgeglichenste Verteilung auf beide Positionen, ab 60 Spielen</td></tr><tr>
+  <td><b>Das Nadelöhr</b></td>
+  <td class="mono nz">60 Partien</td>
+  <td class="mono nz">50</td>
+  <td class="bed">Höchster Anteil Ein-Tor-Partien an der eigenen Laufbahn, ab 60 Partien</td></tr><tr>
+  <td><b>Das Scheunentor</b></td>
+  <td class="mono nz">30 Abwehrspielen</td>
+  <td class="mono nz">25</td>
+  <td class="bed">Meiste Gegentore pro Spiel in der Abwehr, ab 30 Abwehrspielen</td></tr></tbody>
+  </table>
+
+  <h2>Bestehende Rekorde, die knapp nicht gefallen sind</h2>
+  <p>Der relative Abstand zwischen Halter und Zweitem, weil die Einheiten von Prozenten bis
+     Elo-Punkten reichen. Fünf Rekorde sind heute <b>geteilt</b> — dort ist der Abstand null
+     und der nächste Halter steht schon oben mit drauf. Darunter stehen die, bei denen ein
+     einzelner Nachmittag reicht: <b>Der komplette Stürmer</b>
+     trennt 0,3 Prozent. Besonders
+     bemerkenswert ist „Der Zerstörer": dort steht <b>Jannik mit
+     78 Partien</b>
+     0,8 Prozent hinter Martin mit 211 — und die Bedingung „ab 22 Siegen" ist genau die,
+     die ihn bei fünfzig Partien ausgesperrt hätte.</p>
+  <table class="st">
+    <thead><tr><th>Rekord</th><th class="nz">Abstand</th><th>Halter</th><th>Zweiter</th>
+      <th>Beleg des Zweiten</th></tr></thead>
+    <tbody><tr class="ja">
+  <td><b>Der Unaufhaltsame</b><span class="frage">Längste Siegesserie der Liga-Geschichte</span></td>
+  <td class="mono nz">geteilt</td>
+  <td class="bed">Martin, Julian
+    <span class="klein">211 / 171 Partien</span></td>
+  <td class="bed">Julian
+    <span class="klein">171 Partien</span></td>
+  <td class="bed">13 Siege in Folge</td></tr><tr class="ja">
+  <td><b>Die bitterste Pleite</b><span class="frage">Höchste Siegchance, die trotzdem verloren ging, mindestens 65 %</span></td>
+  <td class="mono nz">geteilt</td>
+  <td class="bed">Martin, Julian
+    <span class="klein">211 / 171 Partien</span></td>
+  <td class="bed">Julian
+    <span class="klein">171 Partien</span></td>
+  <td class="bed">83 % Siegchance, und trotzdem verloren</td></tr><tr class="ja">
+  <td><b>Der Wiedergänger</b><span class="frage">Dasselbe Ergebnis an einem Tag, mindestens dreimal</span></td>
+  <td class="mono nz">geteilt</td>
+  <td class="bed">Maxi, Julian, Leo
+    <span class="klein">348 / 171 / 246 Partien</span></td>
+  <td class="bed">Julian
+    <span class="klein">171 Partien</span></td>
+  <td class="bed">4× 10:8 an einem einzigen Tag</td></tr><tr class="ja">
+  <td><b>Die Achterbahn</b><span class="frage">Ein 10:0 gewonnen und ein 0:10 kassiert, beides am selben Tag</span></td>
+  <td class="mono nz">geteilt</td>
+  <td class="bed">Maxi, Henry
+    <span class="klein">348 / 152 Partien</span></td>
+  <td class="bed">Henry
+    <span class="klein">152 Partien</span></td>
+  <td class="bed">1 Tag mit einem 10:0 UND einem 0:10</td></tr><tr class="ja">
+  <td><b>Der Sonntagsschuss</b><span class="frage">Der unwahrscheinlichste Sieg, den je jemand geholt hat, bei höchstens 30 % Siegchance</span></td>
+  <td class="mono nz">geteilt</td>
+  <td class="bed">Maxi, Henry
+    <span class="klein">348 / 152 Partien</span></td>
+  <td class="bed">Henry
+    <span class="klein">152 Partien</span></td>
+  <td class="bed">17 % Siegchance, und trotzdem gewonnen</td></tr><tr class="ja">
+  <td><b>Der komplette Stürmer</b><span class="frage">Höchster Sturmwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Tore, ab 50 Sturmspielen</span></td>
+  <td class="mono nz">0,3 %</td>
+  <td class="bed">Julian
+    <span class="klein">171 Partien</span></td>
+  <td class="bed">Leon
+    <span class="klein">355 Partien</span></td>
+  <td class="bed">87 Sturmwert · 161:80 in 241 Sturmspielen</td></tr><tr class="ja">
+  <td><b>Das Sonntagskind</b><span class="frage">Höchster Anteil gewonnener Ein-Tor-Spiele der Laufbahn, ab 12 solchen Partien</span></td>
+  <td class="mono nz">0,5 %</td>
+  <td class="bed">Leon
+    <span class="klein">355 Partien</span></td>
+  <td class="bed">Martin
+    <span class="klein">211 Partien</span></td>
+  <td class="bed">55 % der Spiele um den letzten Ball gewonnen · 17 von 31</td></tr><tr class="ja">
+  <td><b>Der Torjäger</b><span class="frage">Meiste eigene Tore pro Spiel im Sturm, ab 50 Sturmspielen</span></td>
+  <td class="mono nz">0,6 %</td>
+  <td class="bed">Leon
+    <span class="klein">355 Partien</span></td>
+  <td class="bed">Julian
+    <span class="klein">171 Partien</span></td>
+  <td class="bed">8,8 Tore je Sturmspiel im Schnitt · 121 Spiele</td></tr><tr class="ja">
+  <td><b>Der Zerstörer</b><span class="frage">Höchster Anteil Kantersiege, ab 22 Siegen und mindestens 22 %</span></td>
+  <td class="mono nz">0,8 %</td>
+  <td class="bed">Martin
+    <span class="klein">211 Partien</span></td>
+  <td class="bed">Jannik
+    <span class="klein">78 Partien</span></td>
+  <td class="bed">24 % aller 38 Siege waren Kantersiege · 9 Kantersiege</td></tr><tr class="ja">
+  <td><b>Der schwerste Tag</b><span class="frage">Niedrigste mittlere Siegchance über einen ganzen Spieltag, ab 4 Partien an diesem Tag</span></td>
+  <td class="mono nz">1,7 %</td>
+  <td class="bed">Stefan
+    <span class="klein">81 Partien</span></td>
+  <td class="bed">Maxi
+    <span class="klein">348 Partien</span></td>
+  <td class="bed">28 % mittlere Siegchance über den ganzen Tag</td></tr><tr class="ja">
+  <td><b>Der Maßstab</b><span class="frage">Höchste Siegquote, die je jemand in einem Monat gespielt hat, ab 15 Spielen</span></td>
+  <td class="mono nz">1,8 %</td>
+  <td class="bed">Martin
+    <span class="klein">211 Partien</span></td>
+  <td class="bed">Julian
+    <span class="klein">171 Partien</span></td>
+  <td class="bed">71 % aus 58 Spielen</td></tr><tr class="">
+  <td><b>Der komplette Verteidiger</b><span class="frage">Höchster Abwehrwert der Positions-Rangliste aus Siegquote, Leistung gegen die Erwartung und Ø Gegentore, ab 50 Abwehrspielen</span></td>
+  <td class="mono nz">2,0 %</td>
+  <td class="bed">Jane
+    <span class="klein">97 Partien</span></td>
+  <td class="bed">Martin
+    <span class="klein">211 Partien</span></td>
+  <td class="bed">74 Abwehrwert · 88:46 in 134 Abwehrspielen</td></tr></tbody>
+  </table>
 
   <h2>Was es für die Laufbahn bedeutet</h2>
   <p>Ein Liga-Rekord ist eine der drei Quellen des Prestiges [§C34]. Der Grundwert ist
      <code>PRESTIGE_REKORD</code> × <code>PRESTIGE_ART[art]</code>, geteilt durch die Zahl
-     der heutigen Halter und nach dem Gesetz der fallenden Erträge. Alle fünf neuen
-     Einträge sind <b>Fügungen</b> (<code>zufall:'quote'</code>, <code>art:'ereignis'</code>):
-     sie messen keine Fähigkeit, also wiegen sie halb so viel wie ein Beleg für
-     Können — 48 statt 96 Punkte. Das ist kein Kompromiss, sondern
-     genau die Absicht von §C35: <em>sie sollen jemandem gehören können, nicht jemanden
-     auszeichnen.</em></p>
+     der heutigen Halter: <b>96</b> Punkte für einen Beleg für Können,
+     <b>48</b> für eine Fügung. Von den zwölf Vorschlägen sind
+     zwei Fügungen und
+     zehn Belege für Können — und das ist die Absicht:
+     Rekorde sind auch dazu da, zu zeigen, wer am meisten kann. Nur soll das nicht heißen,
+     wer am meisten gespielt hat.</p>
+  <p>Gerechnet ist die Spalte <b>gestapelt</b> und nicht addiert: Platz 1–2 zählen voll,
+     3–5 durch √2, 6–8 durch √3 [§C34]. Sie bleibt eine <b>Obergrenze</b>, weil die
+     Rekorde, die jemand schon hält, die vollen Plätze zuerst besetzen.</p>
+  <p><b>Und eine Zahl, die dazugehört:</b> die Tafel verteilt sich auf
+     fünf Halter — Martin 4 · Jane 4 · Jannik 2 · Leon 1 · Julian 1. Keiner trägt mehr als ein
+     Drittel, und das ist eine gesetzte Grenze und kein Zufall: gebaut waren erst achtzehn
+     Rekorde, von denen Jane sieben hielt, dann dreizehn, von denen Martin sieben hielt.
+     Wer die Grenze anhebt, bekommt mehr Rekorde und weniger Halter. Martin und Jane stehen dabei
+     nicht zufällig oben: beide liegen deutlich über der eigenen Erwartung, und bei einer
+     Bedingung von 30 Partien entscheidet genau das.</p>
   <table class="st">
     <thead><tr><th>Spieler</th><th class="nz">Prestige</th><th>Stufe</th>
-      <th class="nz">davon Rekorde</th><th class="nz">neu</th><th>bis zur nächsten Stufe</th></tr></thead>
-    <tbody><tr class="">
-    <td><b>Leon</b></td>
-    <td class="mono nz">2208</td>
-    <td class="mono">Volutenkranz</td>
-    <td class="mono nz">383</td>
-    <td class="mono nz null">—</td>
-    <td class="bed">592 bis zum Lorbeerreif</td>
-  </tr><tr class="">
-    <td><b>Martin</b></td>
-    <td class="mono nz">1924</td>
-    <td class="mono">Volutenkranz</td>
-    <td class="mono nz">423</td>
-    <td class="mono nz null">—</td>
-    <td class="bed">876 bis zum Lorbeerreif</td>
-  </tr><tr class="">
-    <td><b>Julian</b></td>
-    <td class="mono nz">1631</td>
-    <td class="mono">Volutenkranz</td>
-    <td class="mono nz">368</td>
-    <td class="mono nz null">—</td>
-    <td class="bed">1169 bis zum Lorbeerreif</td>
-  </tr><tr class="">
-    <td><b>Maxi</b></td>
-    <td class="mono nz">983</td>
-    <td class="mono">Schildring</td>
-    <td class="mono nz">59</td>
-    <td class="mono nz null">—</td>
-    <td class="bed">217 bis zum Volutenkranz</td>
-  </tr><tr class="ja">
-    <td><b>Jane</b></td>
-    <td class="mono nz">786</td>
-    <td class="mono">Schildring</td>
-    <td class="mono nz">144</td>
-    <td class="mono nz gold">+96</td>
-    <td class="bed">414 bis zum Volutenkranz, danach 318</td>
-  </tr><tr class="">
-    <td><b>Leo</b></td>
-    <td class="mono nz">742</td>
-    <td class="mono">Schildring</td>
-    <td class="mono nz">16</td>
-    <td class="mono nz null">—</td>
-    <td class="bed">458 bis zum Volutenkranz</td>
-  </tr><tr class="ja">
-    <td><b>Henry</b></td>
-    <td class="mono nz">716</td>
-    <td class="mono">Schildring</td>
-    <td class="mono nz">178</td>
-    <td class="mono nz gold">+48</td>
-    <td class="bed">484 bis zum Volutenkranz, danach 436</td>
-  </tr><tr class="">
-    <td><b>Johannes</b></td>
-    <td class="mono nz">538</td>
-    <td class="mono">Schildring</td>
-    <td class="mono nz">96</td>
-    <td class="mono nz null">—</td>
-    <td class="bed">662 bis zum Volutenkranz</td>
-  </tr><tr class="ja">
-    <td><b>Jannik</b></td>
-    <td class="mono nz">496</td>
-    <td class="mono">Reif</td>
-    <td class="mono nz">96</td>
-    <td class="mono nz gold">+48</td>
-    <td class="bed"><b class="ok">erreicht den Schildring</b></td>
-  </tr><tr class="ja">
-    <td><b>Stefan</b></td>
-    <td class="mono nz">433</td>
-    <td class="mono">Reif</td>
-    <td class="mono nz">144</td>
-    <td class="mono nz gold">+48</td>
-    <td class="bed">67 bis zum Schildring, danach 19</td>
-  </tr><tr class="">
-    <td><b>Alex</b></td>
-    <td class="mono nz">247</td>
-    <td class="mono">Reif</td>
-    <td class="mono nz">0</td>
-    <td class="mono nz null">—</td>
-    <td class="bed">253 bis zum Schildring</td>
-  </tr><tr class="">
-    <td><b>Anton</b></td>
-    <td class="mono nz">12</td>
-    <td class="mono">Reif</td>
-    <td class="mono nz">0</td>
-    <td class="mono nz null">—</td>
-    <td class="bed">488 bis zum Schildring</td>
-  </tr></tbody>
+      <th class="nz">davon Rekorde</th><th class="nz">neu</th>
+      <th>bis zur nächsten Stufe</th></tr></thead>
+    <tbody><tr class="ja">
+        <td><b>Leon</b></td>
+        <td class="mono nz">2208</td>
+        <td class="mono">Volutenkranz</td>
+        <td class="mono nz">383</td>
+        <td class="mono nz gut">+48</td>
+        <td class="bed">592 bis zum Lorbeerreif, danach 544</td>
+      </tr><tr class="ja">
+        <td><b>Martin</b></td>
+        <td class="mono nz">1924</td>
+        <td class="mono">Volutenkranz</td>
+        <td class="mono nz">423</td>
+        <td class="mono nz gut">+356</td>
+        <td class="bed">876 bis zum Lorbeerreif, danach 520</td>
+      </tr><tr class="ja">
+        <td><b>Julian</b></td>
+        <td class="mono nz">1631</td>
+        <td class="mono">Volutenkranz</td>
+        <td class="mono nz">368</td>
+        <td class="mono nz gut">+48</td>
+        <td class="bed">1169 bis zum Lorbeerreif, danach 1121</td>
+      </tr><tr class="">
+        <td><b>Maxi</b></td>
+        <td class="mono nz">983</td>
+        <td class="mono">Schildring</td>
+        <td class="mono nz">59</td>
+        <td class="mono nz ">—</td>
+        <td class="bed">217 bis zum Volutenkranz</td>
+      </tr><tr class="ja">
+        <td><b>Jane</b></td>
+        <td class="mono nz">786</td>
+        <td class="mono">Schildring</td>
+        <td class="mono nz">144</td>
+        <td class="mono nz gut">+356</td>
+        <td class="bed">414 bis zum Volutenkranz, danach 58</td>
+      </tr><tr class="">
+        <td><b>Leo</b></td>
+        <td class="mono nz">742</td>
+        <td class="mono">Schildring</td>
+        <td class="mono nz">16</td>
+        <td class="mono nz ">—</td>
+        <td class="bed">458 bis zum Volutenkranz</td>
+      </tr><tr class="">
+        <td><b>Henry</b></td>
+        <td class="mono nz">716</td>
+        <td class="mono">Schildring</td>
+        <td class="mono nz">178</td>
+        <td class="mono nz ">—</td>
+        <td class="bed">484 bis zum Volutenkranz</td>
+      </tr><tr class="">
+        <td><b>Johannes</b></td>
+        <td class="mono nz">538</td>
+        <td class="mono">Schildring</td>
+        <td class="mono nz">96</td>
+        <td class="mono nz ">—</td>
+        <td class="bed">662 bis zum Volutenkranz</td>
+      </tr><tr class="ja">
+        <td><b>Jannik</b></td>
+        <td class="mono nz">496</td>
+        <td class="mono">Reif</td>
+        <td class="mono nz">96</td>
+        <td class="mono nz gut">+192</td>
+        <td class="bed"><b class="gut">erreicht den Schildring</b></td>
+      </tr><tr class="">
+        <td><b>Stefan</b></td>
+        <td class="mono nz">433</td>
+        <td class="mono">Reif</td>
+        <td class="mono nz">144</td>
+        <td class="mono nz ">—</td>
+        <td class="bed">67 bis zum Schildring</td>
+      </tr><tr class="">
+        <td><b>Alex</b></td>
+        <td class="mono nz">247</td>
+        <td class="mono">Reif</td>
+        <td class="mono nz">0</td>
+        <td class="mono nz ">—</td>
+        <td class="bed">253 bis zum Schildring</td>
+      </tr><tr class="">
+        <td><b>Anton</b></td>
+        <td class="mono nz">12</td>
+        <td class="mono">Reif</td>
+        <td class="mono nz">0</td>
+        <td class="mono nz ">—</td>
+        <td class="bed">488 bis zum Schildring</td>
+      </tr></tbody>
   </table>
-  <p>Gemessen geht <b>keiner</b> der fünf Rekorde an die besten drei der Liga. Die Halter
-     stehen auf Rang 4, 4, 5, 8, 10 von
-     11 der Siegquote. Der Katalog verschiebt damit
-     240 Punkte Prestige ausschließlich in die untere Hälfte — und
-     einer davon entscheidet eine Stufe: die Zahlen oben sagen, wer danach den nächsten
-     Reif trägt.</p>
-  <p>Für das Gleichgewicht der drei Quellen heißt das: die Rekorde stehen heute bei
-     1907 Punkten gegen 2408 aus den Monatswertungen. Fünf Fügungen legen
-     rund 240 dazu, also gut 13 %
-     — die Reihenfolge der Quellen bleibt, und keine Stufe der Insignium-Leiter wird
-     dadurch billig. <code>tests/disziplinen</code> rechnet das nach und fällt, wenn es
-     kippt [§10.3]: die Zusicherungen sind der Prüfstein, nicht diese Seite.</p>
-
-  <h2>Wie sie im Story-System auftauchen</h2>
-  <div class="regeln">
-    <div class="regel"><b>Ohne eine Zeile Code</b><span>Der Generator läuft über
-      <code>CHRONICLES</code>, nicht über eine eigene Liste. Ein neuer Eintrag meldet sich
-      damit automatisch als <code>rekord_erstmals</code> (Breaking, weil es den Rekord noch
-      nie gab), <code>rekord_geholt</code> oder <code>rekord_gesteigert</code>.</span></div>
-    <div class="regel"><b>Im Moment der Ewigen Tafel</b><span>Die Tafel-Achse bündelt alle
-      Änderungen derselben Minute oder Partie zu einer Karte. Fünf neue Rekorde erzeugen
-      deshalb keine fünf neuen Karten, sondern fünf Zeilen in der Karte, die es ohnehin
-      gibt. Gemessen trägt eine Tafel-Sammelkarte heute im Schnitt acht Zeilen.</span></div>
-    <div class="regel"><b>Nur, wer gespielt hat</b><span>Eine Fügung wechselt den Halter
-      auch, weil ein anderer gespielt und seinen Anteil verschlechtert hat. Die Karte
-      kommt nur, wenn mindestens einer der Genannten an diesem Tag angetreten ist — genau
-      dafür gibt es die Regel schon.</span></div>
-    <div class="regel"><b>Und nicht als Schattenseite</b><span>Keiner der fünf ist negativ.
-      „Der Wechselhafte" klingt danach, ist aber eine Fügung: wem die schwankenden Tage
-      zufallen, entscheidet niemand selbst. Rot bleibt der Richtung [§C25].</span></div>
-  </div>
 
   <h2>Was beim Einbauen dazugehört</h2>
-  <p>Jeder Eintrag braucht dieselben Felder wie jeder andere [§10.2]: <code>allzeit.cond</code>
-     (die Bedingung im Klartext), <code>allzeit.wie</code> (was die Zahl bedeutet),
-     <code>allzeit.val</code> und <code>allzeit.raw</code>, <code>allzeit.min</code>,
-     <code>allzeit.ev</code> (beginnt mit dem Wert, nach dem sortiert wird),
-     <code>zufall:'quote'</code> für die Kammer und ein Eintrag in
-     <code>_chronicleCtx</code>. Dazu drei Zusicherungen in <code>tests/disziplinen</code>,
-     die diese Seite prüfbar machen: die Korrelation zur Spielzahl unter 0,35, die zur
-     Siegquote unter 0,70, und der Ausschlag über 1,5 σ. Ohne die drei ist dieser Vorschlag
-     eine Bitte.</p>
-
-  <h2>Die Liga, an der gemessen wurde</h2>
-  <table class="st" style="max-width:520px">
-    <thead><tr><th>Spieler</th><th class="nz">Partien</th><th class="nz">Siegquote</th>
-      <th class="nz">Rang</th></tr></thead>
-    <tbody><tr><td><b>Leon</b></td>
-  <td class="mono nz">355</td><td class="mono nz">62 %</td>
-  <td class="mono nz">3</td></tr><tr><td><b>Maxi</b></td>
-  <td class="mono nz">348</td><td class="mono nz">44 %</td>
-  <td class="mono nz">6</td></tr><tr><td><b>Leo</b></td>
-  <td class="mono nz">246</td><td class="mono nz">41 %</td>
-  <td class="mono nz">7</td></tr><tr><td><b>Martin</b></td>
-  <td class="mono nz">211</td><td class="mono nz">64 %</td>
-  <td class="mono nz">2</td></tr><tr><td><b>Julian</b></td>
-  <td class="mono nz">171</td><td class="mono nz">65 %</td>
-  <td class="mono nz">1</td></tr><tr><td><b>Henry</b></td>
-  <td class="mono nz">152</td><td class="mono nz">39 %</td>
-  <td class="mono nz">8</td></tr><tr><td><b>Jane</b></td>
-  <td class="mono nz">97</td><td class="mono nz">57 %</td>
-  <td class="mono nz">4</td></tr><tr><td><b>Stefan</b></td>
-  <td class="mono nz">81</td><td class="mono nz">27 %</td>
-  <td class="mono nz">10</td></tr><tr><td><b>Jannik</b></td>
-  <td class="mono nz">78</td><td class="mono nz">49 %</td>
-  <td class="mono nz">5</td></tr><tr><td><b>Johannes</b></td>
-  <td class="mono nz">77</td><td class="mono nz">32 %</td>
-  <td class="mono nz">9</td></tr><tr><td><b>Alex</b></td>
-  <td class="mono nz">39</td><td class="mono nz">26 %</td>
-  <td class="mono nz">11</td></tr></tbody>
-  </table>
+  <p>Jeder Eintrag braucht dieselben Felder wie jeder andere [§10.2]:
+     <code>allzeit.cond</code>, <code>allzeit.wie</code>, <code>allzeit.val</code>,
+     <code>allzeit.min</code>, <code>allzeit.ev</code> (beginnt mit dem Wert, nach dem
+     sortiert wird) und einen Eintrag in <code>_chronicleCtx</code>. Dazu drei
+     Zusicherungen in <code>tests/disziplinen</code>, die diese Seite prüfbar machen: die
+     Teilkorrelation zur Spielzahl unter 0,35, der Ausschlag über 1,5 σ und — die
+     wichtigste, die es heute noch nicht gibt — <b>die Bedingung ist mit fünfzig Partien
+     erfüllbar</b>. Ohne die dritte wandert der Katalog mit jedem neuen Eintrag ein Stück
+     weiter zum Vielspieler, und niemand sieht es.</p>
+  <p>Der Umbau davor bleibt derselbe: <code>_chronicleCtx</code> bekommt die
+     <b>Rohsicht</b>, die <code>_seasonTitleCtx</code> für den Monat schon hat — jede
+     Partie aus der Sicht eines Spielers, gruppiert nach Spieltag, Woche, Partner und
+     Gegner. Danach ist jeder dieser zwölf Rekorde ein
+     <code>allzeit:</code>-Block an einer Disziplin und keine neue Rechnung.</p>
 
   <div class="fuss">
     Erzeugt mit <code>node mockup/rekord-vorschlag-lauf.js &amp;&amp; node mockup/rekord-vorschlag-seite.js</code>.
-    Die Rohsicht wird im Lauf nachgebaut — genau die, die <code>_seasonTitleCtx</code> für
-    den Monat schon hat; Prestige, Stufen und Schwellen kommen aus
-    <code>dist/index.html</code>. Kein Teil des Bauablaufs: <code>tools/check.mjs</code> und
-    <code>tests/run.mjs</code> sehen diesen Ordner nicht. Nichts davon ist eingebaut —
-    diese Seite ist der Vorschlag, nicht die Änderung.
+    Die Rohsicht wird im Lauf nachgebaut; Prestige, Stufen, Schwellen, die Rekordlage und
+    jede Mindestzahl kommen aus <code>dist/index.html</code>, damit die Zahlen zur App
+    gehören und nicht zu einer zweiten Rechnung. Kein Teil des Bauablaufs:
+    <code>tools/check.mjs</code> und <code>tests/run.mjs</code> sehen diesen Ordner nicht.
+    Nichts davon ist eingebaut — diese Seite ist der Vorschlag, nicht die Änderung.
   </div>
 </div>
 </body></html>

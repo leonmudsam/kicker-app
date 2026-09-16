@@ -1,6 +1,7 @@
-// Baut aus dem Lauf die Seite `rekord-vorschlag.html`: achtzehn Kandidaten
-// fuer neue Liga-Rekorde, jeder an den echten Partien gemessen und gegen die
-// fuenf Tore gestellt, die der Katalog verlangt. Fuenf ueberleben.
+// Baut aus dem Lauf die Seite `rekord-vorschlag.html`. Gezeigt werden NUR
+// die Rekorde, die jedes Tor bestehen — die Kombinationen, die ausfallen,
+// werden gezaehlt und nicht aufgeschrieben: eine Liste aus „Die Gegentore je
+// Partie nach einem Sieg" ist eine Tabelle, kein Katalog.
 'use strict';
 const fs = require('fs');
 const D = JSON.parse(fs.readFileSync(__dirname + '/.rekord-vorschlag.json', 'utf8'));
@@ -11,115 +12,130 @@ const fonts = (kopf.match(/<link[^>]+fonts[^>]*>/gi) || []).join('\n');
 const esc = s => String(s == null ? '' : s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const z2 = v => (Math.round(v * 100) / 100).toFixed(2).replace('.', ',');
+const pz = v => (Math.round(v * 1000) / 10).toFixed(1).replace('.', ',');
 const L = D.laufbahn;
+// Eine kleine Zahl steht im Fliesstext als Wort.
+const WORT = ['keine','eine','zwei','drei','vier','fünf','sechs','sieben','acht','neun','zehn',
+  'elf','zwölf','dreizehn','vierzehn','fünfzehn','sechzehn','siebzehn','achtzehn','neunzehn',
+  'zwanzig','einundzwanzig'];
+const wort = n => WORT[n] || String(n);
 
-// ── Die fuenf Tore ──────────────────────────────────────────────────
-// Vier stehen so in der Arbeitsanweisung [§C35, §C39]; das fuenfte kommt aus
-// derselben Absicht und stand dort noch nicht: ein Rekord, dessen Wert fast
-// perfekt mit der Siegquote laeuft, wiederholt die Rangliste und ist kein
-// eigener Eintrag. Gemessen wird das als Korrelation zur Siegquote.
+// ── Die acht Tore ───────────────────────────────────────────────────
 const TORE = [
-  {k:'spiele', name:'hängt nicht an der Spielzahl', regel:'|r| ≤ 0,35',
-   pruef:e => Math.abs(e.korrSpiele) <= 0.35, wert:e => 'r = ' + z2(e.korrSpiele)},
-  {k:'quote', name:'wiederholt nicht die Rangliste', regel:'|r| ≤ 0,70',
-   pruef:e => Math.abs(e.korrQuote) <= 0.70, wert:e => 'r = ' + z2(e.korrQuote)},
-  {k:'rennen', name:'die halbe Liga steht im Rennen', regel:'≥ die Hälfte',
-   pruef:e => e.imRennen * 2 >= e.ligaGewertet, wert:e => e.imRennen + ' von ' + e.ligaGewertet},
+  {k:'braucht', name:'die Kammer entscheidet die Schwelle', regel:'≤ 50 oder > 50 Partien',
+   pruef:e => e.kammer === 'offen' ? e.braucht <= 50 : e.braucht > 50,
+   wert:e => e.braucht + ' Partien',
+   warum:'Das ist kein Tor, das man reißen kann, sondern eine Zuteilung. Eine Bedingung, die mit fünfzig Partien erfüllbar ist, gehört in die OFFENE Kammer; eine höhere in die ANSPRUCHSVOLLE. Gerechnet wird mit dem Bestand eines Spielers, der fünfzig Partien hat: etwa zwanzig Siege, je fünfundzwanzig Sturm- und Abwehrspiele, dreizehn Spieltage, acht bis zwölf Duelle gegen jeden anderen.'},
+  {k:'klein', name:'der Wenigspieler steht im Rennen', regel:'nur offen: jemand mit unter 100 Partien',
+   pruef:e => e.kammer !== 'offen' || e.kleinsteSpielzahl <= 100,
+   wert:e => e.kammer === 'offen' ? 'ab ' + e.kleinsteSpielzahl + ' Partien' : 'gilt nicht',
+   warum:'Die Gegenprobe zur Rechnung darüber, an den echten Daten — aber nur in der offenen Kammer. Erfüllt die Bedingung dort niemand mit unter hundert Partien, ist sie selbst die Hürde, und es hilft nichts, dass die Zahl auf dem Papier klein aussieht. In der anspruchsvollen Kammer ist gerade das der Punkt.'},
+  {k:'rein', name:'hängt nicht an der Spielzahl', regel:'Teilkorrelation ≤ 0,35',
+   pruef:e => e.korrRein <= 0.35, wert:e => 'r = ' + z2(e.korrRein),
+   warum:'Und zwar mit herausgerechnetem Können. Die rohe Korrelation täuscht in dieser Liga: die schwächsten Spieler spielen auch am wenigsten, gemessen r = ' + z2(D.korrSpielzahlQuote) + ' zwischen Partienzahl und Siegquote. Damit läuft JEDER Können-Rekord mit der Spielzahl mit, ohne von ihr zu hängen — ein Tor auf die rohe Zahl wirft genau die Rekorde weg, die der Katalog braucht.'},
+  {k:'invers', name:'und auch nicht umgekehrt', regel:'Teilkorrelation ≥ −0,70',
+   pruef:e => e.korrRein >= -0.70, wert:e => 'r = ' + z2(e.korrRein),
+   warum:'Ein Rekord, der bei gleichem Können den mit den WENIGSTEN Partien bevorzugt, ist ein Spielzahl-Rekord mit umgekehrtem Vorzeichen. Er wäre so willkürlich wie der andere.'},
+  {k:'kopie', name:'wiederholt nicht die Rangliste', regel:'nicht dasselbe Podest',
+   pruef:e => !e.kopie, wert:e => e.kopie ? 'dieselben drei' : e.top3.join(', '),
+   warum:'Gemessen am Podest, nicht an einer Korrelation. Ein Können-Rekord läuft mit der Siegquote, weil er Können MISST, und Rekorde sind auch dazu da, zu zeigen, wer am meisten kann. Die Frage ist deshalb nicht, ob die Zahlen zusammenhängen, sondern ob dieselben drei vorne stehen wie im Liga-Tab (' + D.top3Liga.join(', ') + '). Dann sagt der Rekord nichts Neues.'},
   {k:'aus', name:'die Bestmarke schlägt weit aus', regel:'≥ 1,5 σ',
-   pruef:e => e.ausschlag >= 1.5, wert:e => z2(e.ausschlag) + ' σ'},
-  {k:'mitte', name:'nicht nur für die Spitze', regel:'Halter nicht in den besten drei',
-   pruef:e => e.halterRang > 3, wert:e => 'Rang ' + e.halterRang + ' von ' + e.ligaGewertet}
+   pruef:e => e.ausschlag >= 1.5, wert:e => z2(e.ausschlag) + ' σ',
+   warum:'Der Beste muss mindestens 1,5 Standardabweichungen weiter draußen liegen als der Durchschnitt, sonst hält ihn fast jeder fast [§C39].'},
+  {k:'rennen', name:'es ist ein Rennen', regel:'offen: die Hälfte · Anspruch: ein Drittel',
+   pruef:e => e.kammer === 'offen' ? e.imRennen * 2 >= e.ligaGewertet
+                                   : e.imRennen * 3 >= e.ligaGewertet,
+   wert:e => e.imRennen + ' von ' + e.ligaGewertet,
+   warum:'Sonst ist die Bedingung selbst die Hürde [§C35]. Eine hohe Schwelle schließt per Definition Leute aus, deshalb genügt in der anspruchsvollen Kammer ein Drittel — ein Tor auf die Hälfte hätte sie leer gelassen.'},
+  {k:'geteilt', name:'die Bestmarke ist nicht geschenkt', regel:'höchstens ein Drittel hält sie',
+   pruef:e => e.gleich * 3 <= e.imRennen,
+   wert:e => e.gleich === 1 ? 'einer allein' : e.gleich + ' von ' + e.imRennen,
+   warum:'Eine Bestmarke, die jeder geschenkt bekommt, ist keine mehr [§C35]. Und wo sieben von zehn punktgleich vorne liegen, teilt sich der Grundwert durch sieben [§C34].'},
+  {k:'halter', name:'der Halter bleibt nicht unter seiner Erwartung', regel:'Abstand zur Rechnung ≥ 0',
+   pruef:e => e.halterDiff >= 0, wert:e => (e.halterDiff >= 0 ? '+' : '−')
+     + Math.abs(Math.round(e.halterDiff * 100)) + ' Punkte',
+   warum:'„Der Gelassene" gehörte Alex mit 3,1 Toren Streuung um −4,2 im Schnitt: gleichmäßig, weil er gleichmäßig verliert. Ein Rekord, dessen Halter in der gemessenen Menge unter seiner eigenen Erwartung bleibt, ist keine Leistung, sondern eine Schattenseite im Positiven. Gemessen gegen die Erwartung und nicht gegen null — in der Teilmenge „als Außenseiter" ist die Tordifferenz bei jedem negativ, und ein Tor darauf hätte die ganze Teilmenge gestrichen, samt dem Rekord für den, der dort trotzdem gewinnt.'}
 ];
-const bestanden = e => TORE.filter(t => t.pruef(e)).length;
-const durch = e => bestanden(e) === TORE.length;
 
-// Warum ein Kandidat gescheitert ist — in einem Satz, aus der Messung.
-const GRUND = {
-  gleichauf:'Der Vergleich mit der EIGENEN Quote dreht die Rangliste um: wer hoch steht, hat einen hohen Abzug. Der Rekord ginge damit systematisch an das untere Ende — genauso einseitig wie an die Spitze.',
-  'gleichauf2':'Mit der Erwartung statt der eigenen Quote verglichen kippt es ins Gegenteil: dann misst die Frage wieder das Können, und der Ausschlag reicht nicht.',
-  punktgenau2:'Je mehr Partien, desto näher liegt die Quote an der Erwartung — der Wert hängt damit doch an der Spielzahl. Die zweite Fassung rechnet in Standardfehlern und löst genau das.',
-  beidseitig:'Der Beste liegt kaum weiter draußen als der Durchschnitt: ein Rekord, den fast jeder fast hält, ist keine Bestmarke.',
-  rollenfest:'Der Abstand zwischen zwei Quoten schrumpft mit der Spielzahl, weil beide Quoten ruhiger werden. Beide Fassungen scheitern daran.',
-  'rollenfest2':'Dieselbe Ursache wie in der ersten Fassung, nur stärker: r = −0,94 zur Spielzahl.',
-  kontrast:'Vier Partner mit je fünfzehn gemeinsamen Partien ist selbst eine Spielzahl-Hürde: nur vier von elf stehen überhaupt im Rennen.',
-  angstfrei:'Die schwächste Quote gegen einen regelmäßigen Gegner läuft fast perfekt mit der Siegquote. Der Rekord wäre die Rangliste unter anderem Namen.',
-  breitenwirkung:'Dieselbe Ursache: wer gut ist, steht gegen jeden im Plus.',
-  zweiteluft:'Der Abstand zwischen früh und spät schrumpft mit der Spielzahl, und der Ausschlag reicht auch in der zweiten Fassung nicht.',
-  'zweiteluft2':'Mit der Erwartung verglichen verschwindet die Verzerrung nicht: derselbe Ausschlag von 1,15 σ, dieselbe Abhängigkeit von der Spielzahl.',
-  kopfhoch:'Wie viele eigene Spieltage nicht negativ enden, ist die Siegquote in anderer Verpackung: r = 0,99.',
-  schwaechstertag:'Der beste schlechteste Tag gehört fast immer dem besten Spieler: r = 0,88.'
-};
-
-const zeile = e => {
-  const ok = durch(e);
-  return `<tr class="${ok ? 'ja' : 'nein'}">
-    <td><b>${esc(e.name)}</b><code>${esc(e.id)}</code>
-      <span class="frage">${esc(e.frage)}</span></td>
-    <td class="bed">${esc(e.mindText)}</td>
-    ${TORE.map(t => `<td class="tor ${t.pruef(e) ? 'gut' : 'schlecht'}">${esc(t.wert(e))}</td>`).join('')}
-    <td class="urteil">${ok
-      ? '<span class="ok">aufnehmen</span>'
-      : '<span class="weg">fällt aus</span>'}</td>
-  </tr>`;
-};
-
-const nehmen = D.kandidaten.filter(durch);
-const raus = D.kandidaten.filter(e => !durch(e));
-
-// Was die fuenf fuer die Laufbahn bedeuten. Der Grundwert eines Rekords ist
-// PRESTIGE_REKORD × PRESTIGE_ART[art], geteilt durch die Zahl der Halter.
-const wertJe = D.laufbahn.wertRekord * (D.laufbahn.artGewicht.ereignis || 1);
-const proSpieler = {};
-nehmen.forEach(e => { proSpieler[e.halter] = (proSpieler[e.halter] || 0) + 1; });
-const laufbahnTabelle = L.je.map(p => {
-  const n = proSpieler[p.name] || 0;
-  // Wiederholung derselben Sache zaehlt gedaempft [§C34]; verschiedene
-  // Rekorde zaehlen jeder voll. Fuenf verschiedene Rekorde also voll.
-  const plus = n * wertJe;
-  const neuFehlt = p.fehlt == null ? null : p.fehlt - plus;
-  return `<tr class="${n ? 'ja' : ''}">
-    <td><b>${esc(p.name)}</b></td>
-    <td class="mono nz">${p.punkte}</td>
-    <td class="mono">${esc(p.stufeName)}</td>
-    <td class="mono nz">${p.rekord}</td>
-    <td class="mono nz ${n ? 'gold' : 'null'}">${n ? '+' + plus : '—'}</td>
-    <td class="bed">${p.fehlt == null ? 'oben angekommen'
-      : neuFehlt <= 0
-        ? '<b class="ok">erreicht den ' + esc(p.ziel) + '</b>'
-        : p.fehlt + ' bis zum ' + esc(p.ziel) + (n ? ', danach ' + neuFehlt : '')}</td>
-  </tr>`;
-}).join('');
-
-const spielzahl = D.spielzahlen.map(p => `<tr><td><b>${esc(p.name)}</b></td>
-  <td class="mono nz">${p.spiele}</td><td class="mono nz">${p.quote} %</td>
-  <td class="mono nz">${p.rang}</td></tr>`).join('');
-
-const steckbrief = nehmen.map(e => `<div class="sb">
+const N = D.kandidaten;
+const OFFEN = N.filter(e => e.kammer === 'offen');
+const ANSPR = N.filter(e => e.kammer === 'anspruch');
+const halterZahl = {};
+N.forEach(e => { halterZahl[e.halter] = (halterZahl[e.halter] || 0) + 1; });
+const wenig = N.filter(e => e.halterSpiele < 100);
+const steckVon = liste => liste.map(e => `<div class="sb ${e.kammer}">
   <div class="sb-k"><b>${esc(e.name)}</b>
-    <span class="sb-kam">${e.zufall ? 'Kammer Fügungen' : 'Kammer ' + (e.art === 'konstanz' ? 'Bestmarken' : 'Können')}</span></div>
+    <span class="sb-kam">${e.zufall ? 'Fügung' : 'Können'} ·
+      ${e.kammer === 'offen' ? 'offen ab ' + e.braucht + ' Partien'
+        : 'Anspruch ab ' + e.braucht + ' Partien'}</span></div>
   <div class="sb-frage">${esc(e.frage)}</div>
   <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „${esc(e.quelle)}" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
-    <tr><td>Bedingung</td><td>${esc(e.mindText)}</td></tr>
-    <tr><td>Halter heute</td><td><b>${esc(e.halter)}</b> — Rang ${e.halterRang} von
-      ${e.ligaGewertet} in der Siegquote, ${e.halterSpiele} Partien</td></tr>
+    <tr><td>Gemessen</td><td>${esc(e.mass)} ${esc(e.teil)}</td></tr>
+    <tr><td>Bedingung</td><td>${esc(e.mindText)} — eine Laufbahn braucht dafür
+      <b>${e.braucht} Partien</b></td></tr>
+    <tr><td>Halter heute</td><td><b>${esc(e.halter)}</b> mit
+      <b>${e.halterSpiele} Partien</b>, Rang ${e.halterRang} von ${e.ligaGewertet}
+      in der Siegquote</td></tr>
     <tr><td>Beleg</td><td>${esc(e.beleg)}</td></tr>
-    <tr><td>Im Rennen</td><td>${e.imRennen} von ${e.ligaGewertet} Spielern</td></tr>
+    <tr><td>Podest</td><td>${esc(e.top3.join(', '))} — die Rangliste sagt
+      ${esc(e.top3Liga.join(', '))}</td></tr>
     <tr><td>Ausschlag</td><td>${z2(e.ausschlag)} σ über dem Mittel der Gewerteten</td></tr>
-    <tr><td>Spielzahl</td><td>r = ${z2(e.korrSpiele)} — ${Math.abs(e.korrSpiele) < 0.15
-      ? 'praktisch unabhängig' : 'schwach, unter der Grenze von 0,35'}</td></tr>
-    <tr><td>Siegquote</td><td>r = ${z2(e.korrQuote)} — ${Math.abs(e.korrQuote) < 0.35
-      ? 'keine Wiederholung der Rangliste' : 'erkennbar, aber weit von einer Kopie entfernt'}</td></tr>
+    <tr><td>Spielzahl</td><td>r = ${z2(e.korrRein)} mit herausgerechnetem Können
+      ${Math.abs(e.korrRein) < 0.15 ? '— praktisch unabhängig'
+        : '— unter der Grenze von 0,35'} · roh r = ${z2(e.korrSpiele)}</td></tr>
+    <tr><td>Siegquote</td><td>r = ${z2(e.korrQuote)} — ${e.korrQuote > 0.6
+      ? 'misst erkennbar Können, ordnet das Feld aber um'
+      : e.korrQuote < -0.2 ? 'läuft der Rangliste sogar entgegen'
+      : 'mit der Rangliste hat der Wert wenig zu tun'}</td></tr>
   </table>
   <div class="sb-rang">${e.rangfolge.map((x, i) =>
-    `<span><i>${i + 1}.</i> ${esc(x.name)} <u>Rang ${x.rang}</u><em>${esc(x.ev)}</em></span>`).join('')}</div>
+    `<span><i>${i + 1}.</i> ${esc(x.name)} <u>${x.spiele} Partien</u><em>${esc(x.ev)}</em></span>`
+    ).join('')}</div>
 </div>`).join('');
+
+const spielzahl = D.spielzahlen.map(p => `<tr class="${p.spiele < 100 ? 'ja' : ''}">
+  <td><b>${esc(p.name)}</b></td><td class="mono nz">${p.spiele}</td>
+  <td class="mono nz">${p.tage}</td><td class="mono nz">${p.quote} %</td>
+  <td class="mono nz">${p.erwartet} %</td>
+  <td class="mono nz ${p.quote - p.erwartet >= 0 ? 'gut' : 'schlecht'}">${
+    (p.quote - p.erwartet >= 0 ? '+' : '−') + Math.abs(p.quote - p.erwartet)}</td>
+  <td class="mono nz">${p.rang}</td></tr>`).join('');
+
+const knappT = L.knapp.slice(0, 12).map(k => `<tr class="${k.abstand <= 0.02 ? 'ja' : ''}">
+  <td><b>${esc(k.name)}</b><span class="frage">${esc(k.cond)}</span></td>
+  <td class="mono nz">${k.abstand === 0 ? 'geteilt' : pz(k.abstand) + ' %'}</td>
+  <td class="bed">${esc(k.halter.join(', '))}
+    <span class="klein">${k.halterSpiele.join(' / ')} Partien</span></td>
+  <td class="bed">${esc(k.zweiter)}
+    <span class="klein">${k.zweiterSpiele} Partien</span></td>
+  <td class="bed">${esc(k.belegB)}</td></tr>`).join('');
+
+const huerdeT = L.huerde.filter(h => h.zu).map(h => `<tr>
+  <td><b>${esc(h.name)}</b></td>
+  <td class="mono nz">${h.n} ${esc(h.einheit)}</td>
+  <td class="mono nz">${h.hat}</td>
+  <td class="bed">${esc(h.cond)}</td></tr>`).join('');
+
+const wertJe = L.wertRekord * (L.artGewicht.ereignis || 1);
+const wertKoennen = L.wertRekord * (L.artGewicht.leistung || 1);
+const wertVon = e => L.wertRekord * (L.artGewicht[e.art] != null ? L.artGewicht[e.art] : 1);
+// ── Gestapelt, nicht addiert ────────────────────────────────────────
+// §C34: Liga-Rekorde werden nach Wert sortiert und dann gestaffelt —
+// Platz 1–2 voll, 3–5 durch √2, 6–8 durch √3, danach alle drei eine
+// Wurzelstufe weiter. Sieben Rekorde mal achtundvierzig zu rechnen waere
+// um die Haelfte zu hoch, und gerade bei einem Halter mit sieben neuen
+// Eintraegen ist das der Unterschied zwischen einer Stufe und keiner.
+// Es bleibt eine OBERGRENZE: die Rekorde, die jemand schon haelt, besetzen
+// die vollen Plaetze zuerst.
+function stapel(werte){
+  const w = werte.slice().sort((a, b) => b - a);
+  return Math.round(w.reduce((n, v, i) => n + v / Math.sqrt(Math.floor(i / 3) + 1), 0));
+}
 
 const seite = `<!doctype html>
 <html lang="de"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Neue Liga-Rekorde für die Mitte des Feldes</title>
+<title>Liga-Rekorde, die jeder holen kann</title>
 ${fonts}
 ${styles}
 <style>
@@ -128,7 +144,6 @@ ${styles}
   .rv{max-width:1180px;margin:0 auto;padding:24px 16px}
   .rv h1{font-family:'Archivo Black',sans-serif;font-size:29px;line-height:1.08;margin:0 0 8px}
   .rv h2{font-family:'Archivo Black',sans-serif;font-size:16px;margin:40px 0 8px}
-  .rv h3{font-family:'Archivo Black',sans-serif;font-size:12.5px;margin:22px 0 7px;color:var(--ink2)}
   .rv p{color:var(--ink2);font-size:12.5px;line-height:1.7;max-width:82ch;margin:0 0 10px}
   .lead{color:var(--muted);font-size:10.5px;text-transform:uppercase;letter-spacing:.15em;margin:0 0 16px}
   code{font-size:10.5px;color:var(--purple);background:transparent}
@@ -144,21 +159,14 @@ ${styles}
     vertical-align:bottom}
   table.st td{padding:8px 7px;border-bottom:1px solid var(--line);vertical-align:top}
   table.st td b{display:block;color:var(--ink);font-weight:700;font-size:12px}
-  table.st td > code{display:block;margin-top:1px}
-  table.st tr.nein{opacity:.6}
   table.st tr.ja td{background:rgba(163,230,53,.045)}
-  .frage{display:block;color:var(--muted);font-size:10.5px;margin-top:4px;line-height:1.45;max-width:38ch}
+  .frage{display:block;color:var(--muted);font-size:10.5px;margin-top:4px;line-height:1.45;max-width:42ch}
+  .klein{display:block;color:var(--faint);font-size:9.5px;margin-top:2px}
   .mono{font-variant-numeric:tabular-nums;color:var(--ink2);white-space:nowrap}
   .nz{text-align:right}
-  .null{color:var(--faint)}
-  .gold{color:var(--gold)}
+  .gut{color:var(--acid)}
+  .schlecht{color:var(--red)}
   .bed{color:var(--muted);font-size:11px;line-height:1.55}
-  .tor{font-variant-numeric:tabular-nums;font-size:10.5px;text-align:right;white-space:nowrap}
-  .tor.gut{color:var(--acid)}
-  .tor.schlecht{color:var(--red)}
-  .urteil{white-space:nowrap}
-  .ok{color:var(--acid);font-size:10.5px}
-  .weg{color:var(--red);font-size:10.5px}
   .regeln{display:grid;gap:9px;margin-top:10px}
   .regel{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--gold);
     border-radius:11px;padding:11px 13px}
@@ -167,6 +175,7 @@ ${styles}
   .regel em{color:var(--acid);font-style:normal}
   .sb{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--acid);
     border-radius:13px;padding:12px 14px;margin-bottom:9px}
+  .sb.anspruch{border-left-color:var(--gold)}
   .sb-k{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
   .sb-k b{font-family:'Archivo Black',sans-serif;font-size:14px}
   .sb-kam{color:var(--purple);font-size:9.5px;text-transform:uppercase;letter-spacing:.1em}
@@ -188,160 +197,227 @@ ${styles}
 </style></head><body>
 <div class="rv">
   <div class="lead">Vorschlag · gemessen an ${D.partien} echten Partien · Stand ${esc(D.gebaut)}</div>
-  <h1>Rekorde, die nicht der Spitze gehören</h1>
-  <p>Gesucht sind Liga-Rekorde, die <b>nicht den Vielspieler</b> und <b>nicht den Besten</b>
-     belohnen: erreichbar für die Mitte des Feldes, besonders, auf einer <b>Abweichung</b>
-     gebaut und aus den Fragen der Monatschroniken abgeleitet, ohne einen bestehenden
-     Eintrag zu doppeln. Achtzehn Kandidaten wurden an den echten Partien gerechnet.
-     <b>Fünf</b> überstehen alle fünf Tore.</p>
-  <p>Das Ergebnis ist selbst die wichtigste Aussage: die meisten
-     Abweichungsfragen hängen entweder doch an der Spielzahl oder sie wiederholen die
-     Rangliste. Welche das sind und warum, steht unten mit Zahl und Grund.</p>
+  <h1>Zwei Kammern: offen und Anspruch</h1>
+  <p><b>Eingebaut.</b> Zehn dieser Rekorde stehen in der App. Diese Seite bleibt als
+     Herleitung: sie zeigt, welche Kombinationen gerechnet wurden, welche Tore sie bestehen
+     mussten und woher die Schwellen kommen. Nicht eingebaut wurden „Der Schlussmann",
+     „Der Pflichterfüller" und „Der Mitspieler"; dazugekommen ist <b>„Das Fundament"</b>,
+     das Gegenstück zur „Handschrift" für die Abwehr — Sturm und Abwehr sind ein Paar wie
+     „Der komplette Stürmer" und „Der komplette Verteidiger", und gemessen gehören sie
+     zwei verschiedenen Spielern.</p>
+  <p>Ein Rekord soll zeigen, wer am meisten kann — und eine hohe Schwelle ist dafür
+     legitim: wer sie hält, hat sie über eine lange Strecke gehalten. Er soll aber nicht
+     <b>nur</b> das zeigen. Gebraucht werden <b>auch</b> Rekorde, die jemand mit fünfzig
+     Partien erreichen kann.</p>
+  <p>Die Schwelle ist deshalb keine Bedingung, sondern eine <b>Kammer</b>:</p>
+  <div class="regeln">
+    <div class="regel"><b>Offen</b><span><em>die Bedingung ist mit 50 Partien erfüllbar</em>
+      — der Rekord für jeden. Gemessen gehört er meistens dem, der wenig spielt und gut
+      ist: ${wort(OFFEN.filter(e => e.halterSpiele < 100).length)} der
+      ${wort(OFFEN.length)} gehören heute einem Spieler mit unter hundert Partien.</span></div>
+    <div class="regel"><b>Anspruch</b><span><em>eine höhere Schwelle ist erlaubt</em> —
+      hier darf ein Rekord verlangen, dass jemand die Frage über eine lange Strecke
+      beantwortet hat. Dafür gelten alle anderen Tore unverändert: der Wert bleibt eine
+      Rate und keine Ansammlung, das Podest ist nicht das der Rangliste, und der Halter
+      bleibt nicht unter seiner eigenen Erwartung. Sonst wäre es wieder ein Rekord für
+      den, der am meisten spielt.</span></div>
+  </div>
+  <p>Gerechnet wurde nicht geraten: <b>${D.kombinationen}</b> Kombinationen aus
+     ${WORT[9]} Kennzahlen, ${wort(17)} Teilmengen und beiden Kammern, jede an den echten
+     Partien gemessen und durch dieselben Tore geschickt. <b>${D.bestanden}</b> bestehen
+     sie, <b>${wort(N.length)}</b> davon haben einen Namen bekommen —
+     ${wort(OFFEN.length)} offen, ${wort(ANSPR.length)} mit Anspruch. Ausgewählt danach,
+     dass sie keinen bestehenden Eintrag doppeln und jede Frage nur in EINER Kammer
+     steht. Die übrigen sind gezählt und nicht aufgeschrieben: eine Liste aus „Die
+     Gegentore je Partie nach einem Sieg" ist eine Tabelle, kein Katalog.</p>
+  <p><b>Jede Schwelle steht auf einem 5er-Raster.</b> Eine Bedingung ist eine Absprache
+     und keine Messung: „ab 22 Siegen" sieht aus wie das Ergebnis einer Kalibrierung, und
+     das ist es auch — gelesen wird es aber als Regel, und eine Regel mit einer krummen
+     Zahl liest sich wie ein Versehen. Die <b>Messwerte</b> bleiben davon unberührt: ein
+     Beleg nennt den Wert, nach dem sortiert wird [§10.2], und zwei auf dasselbe Vielfache
+     gerundete Werte hätten keine Reihenfolge mehr. Im heutigen Katalog stehen
+     <b>${L.krumm.length}</b> Schwellen krumm: ${esc(L.krumm.map(k => k.roh + ' → ' + k.soll)
+       .join(' · '))}.</p>
+  <p><b>Und jede Teilmenge wandert mit.</b> „In den ersten 25 Partien" stand hier und ist
+     gefallen: der Abschnitt ist fertig, sobald jemand 25 Partien hat, und ändert sich nie
+     wieder — ein Rekord darauf wäre ab dem Tag seiner Vergabe ein Eintrag im Museum. An
+     seine Stelle ist ein <b>gleitendes Fenster über die letzten 30 Partien</b> getreten.
+     Geprüft wird das an den Daten und nicht am Namen: liefert eine Teilmenge für jeden
+     Spieler dasselbe wie zwanzig Partien früher, bricht der Lauf ab.</p>
+  <p><b>Und keine Tafel gehört einem.</b> Sieben der ursprünglich achtzehn Rekorde
+     fragten nach knappen Siegen oder nach Gleichmäßigkeit, und alle sieben hielt Jane:
+     dieselbe Frage in sieben Ausschnitten sammelt sich beim selben Halter [§C35]. Eine
+     Kennzahl und eine Teilmenge dürfen deshalb höchstens <b>zweimal</b> vorkommen. Das
+     allein reichte nicht — danach hielt Martin sieben von dreizehn, dieselbe Tafel mit
+     einem anderen Namen darauf. Gedeckelt wird deshalb der <b>Halter selbst</b>: mehr als
+     ein Drittel trägt niemand. Heute steht es bei ${
+       Object.entries(halterZahl).sort((a, b) => b[1] - a[1])
+         .map(([h, n]) => esc(h) + ' ' + n).join(' · ')} von ${N.length}.
+     Die drei ganz gestrichenen Fragen („knappe Siege") doppeln außerdem „Das
+     Sonntagskind" und „Der Nervenkitzler" aus dem heutigen Katalog.</p>
 
   <div class="karten">
-    <div class="kz"><b>${D.kandidaten.length}</b><span>Kandidaten gerechnet</span></div>
-    <div class="kz gold"><b>${nehmen.length}</b><span>bestehen alle fünf Tore</span></div>
-    <div class="kz"><b>${raus.length}</b><span>fallen aus, mit Grund</span></div>
-    <div class="kz"><b>${L.rekorde}</b><span>Rekorde heute im Katalog</span></div>
-    <div class="kz"><b>${nehmen.filter(e => e.halterRang > 3).length}</b><span>neue Halter außerhalb der besten drei</span></div>
-    <div class="kz"><b>${wertJe}</b><span>Prestige je neuem Rekord</span></div>
+    <div class="kz"><b>${D.kombinationen}</b><span>Kombinationen gerechnet</span></div>
+    <div class="kz"><b>${D.bestanden}</b><span>bestehen alle Tore ihrer Kammer</span></div>
+    <div class="kz gold"><b>${OFFEN.length}</b><span>benannt in der offenen Kammer</span></div>
+    <div class="kz gold"><b>${ANSPR.length}</b><span>benannt in der anspruchsvollen</span></div>
+    <div class="kz"><b>${wenig.length}</b><span>gehören einem Spieler mit unter 100 Partien</span></div>
+    <div class="kz"><b>${L.huerde.length - L.huerde.filter(h => h.zu).length}</b><span>von ${L.huerde.length} bestehenden Rekorden sind heute offen</span></div>
   </div>
 
-  <h2>Der eigentliche Vorschlag: eine Rohsicht für beide Zeitachsen</h2>
-  <p>Die Monatschroniken fragen längst nach Abweichungen — nach dem schwächsten Spieltag,
-     dem unangenehmsten Gegner, der Spanne zwischen bestem und schwächstem Monat. Sie
-     können das, weil <code>_seasonTitleCtx</code> je Spieler eine <b>Rohsicht</b> anlegt:
-     jede Partie aus seiner Sicht, gruppiert nach Spieltag, Woche, Partner und Gegner.
-     <code>_chronicleCtx</code>, die dieselben Fragen über die ganze Laufbahn stellen
-     müsste, hat diese Rohsicht nicht — sie führt vierzig Zähler, und jede neue Frage
-     bräuchte einen neuen.</p>
-  <p>Deshalb steht am Anfang keine Liste von Rekorden, sondern <b>ein Umbau</b>:
-     <code>_chronicleCtx</code> legt dieselbe Rohsicht an und ruft dasselbe
-     <code>_rohGruppen</code>. Danach ist ein neuer Liga-Rekord kein neuer Zähler mehr,
-     sondern <b>ein <code>allzeit:</code>-Block an einer Disziplin, die es schon gibt</b> —
-     derselbe Name, dasselbe Zeichen, derselbe Ton, nur die andere Zeitachse und eine
-     eigene Schwelle. Genau so tragen <code>spotless</code>, <code>evenkeel</code> und
-     <code>drought</code> heute beide Achsen [§13.1]. Das ist die Antwort auf
-     „skalierbar": jede der fünfzig Monatschroniken, deren Frage die Tore besteht, wird
-     mit drei Zeilen zum Rekord, und die beiden Achsen können nicht auseinanderdriften,
-     weil sie dieselbe Frage lesen.</p>
-
-  <h2>Die fünf Tore</h2>
+  <h2>Die ${wort(TORE.length)} Tore</h2>
+  <p>Vier stehen so in der Arbeitsanweisung [§C35, §C39]. Die anderen fünf sind hier
+     entstanden, und drei davon sind selbst das Ergebnis der Messung.</p>
   <div class="regeln">
     ${TORE.map(t => `<div class="regel"><b>${esc(t.name)}</b>
-      <span><em>${esc(t.regel)}</em> — ${esc({
-        spiele:'Der Wert darf nicht mit der Zahl der Partien laufen, sonst hält den Rekord, wer am meisten spielt [§C39].',
-        quote:'Ein Wert, der fast perfekt mit der Siegquote läuft, ist die Rangliste unter anderem Namen. Vier der achtzehn Kandidaten scheitern allein daran.',
-        rennen:'Mindestens die halbe Liga muss die Mindestzahl erfüllen, sonst ist die Bedingung selbst die Hürde [§C35].',
-        aus:'Der Beste muss mindestens 1,5 Standardabweichungen weiter draußen liegen als der Durchschnitt, sonst hält ihn fast jeder fast [§C39].',
-        mitte:'Der heutige Halter darf nicht aus den besten drei kommen — das ist die Frage, um die es hier überhaupt geht.'
-      }[t.k])}</span></div>`).join('')}
+      <span><em>${esc(t.regel)}</em> — ${esc(t.warum)}</span></div>`).join('')}
   </div>
 
-  <h2>Alle achtzehn Kandidaten, gemessen</h2>
-  <table class="st">
-    <thead><tr><th>Kandidat</th><th>Bedingung</th>
-      ${TORE.map(t => `<th class="nz">${esc(t.name.split(' ').slice(0, 3).join(' '))}</th>`).join('')}
-      <th>Urteil</th></tr></thead>
-    <tbody>${D.kandidaten.map(zeile).join('')}</tbody>
-  </table>
+  <h2>Die offene Kammer: ${wort(OFFEN.length)} Rekorde ab
+    ${Math.min(...OFFEN.map(e => e.braucht))} bis
+    ${Math.max(...OFFEN.map(e => e.braucht))} Partien</h2>
+  <p>Nach Ausschlag geordnet. Jeder Steckbrief nennt, was gemessen wird, wie viele Partien
+     die Bedingung braucht, wer ihn heute hält und mit wie vielen Partien — und die besten
+     fünf mit ihrer eigenen Zahl.</p>
+  ${steckVon(OFFEN)}
 
-  <h2>Die fünf, die bleiben</h2>
-  ${steckbrief}
+  <h2>Die anspruchsvolle Kammer: ${wort(ANSPR.length)} Rekorde ab
+    ${Math.min(...ANSPR.map(e => e.braucht))} Partien</h2>
+  <p>Dieselben Tore, nur die Schwelle ist höher. Was hier steht, hat jemand über
+     mindestens ${Math.min(...ANSPR.map(e => e.braucht))} Partien gehalten — und trotzdem
+     sagt keiner von ihnen dasselbe wie die Rangliste, und keiner hängt am Umfang.
+     Und ${wort(ANSPR.filter(e => e.halterSpiele < 100).length)} der ${wort(ANSPR.length)} gehören
+     heute trotz der hohen Schwelle einem Spieler mit unter hundert Partien.</p>
+  ${steckVon(ANSPR)}
 
-  <h2>Warum die anderen dreizehn ausfallen</h2>
-  <table class="st">
-    <thead><tr><th>Kandidat</th><th>Grund</th></tr></thead>
-    <tbody>${raus.map(e => `<tr><td><b>${esc(e.name)}</b></td>
-      <td class="bed">${esc(GRUND[e.id] || 'Ein Tor gerissen, siehe Tabelle oben.')}</td></tr>`).join('')}</tbody>
-  </table>
-  <p>Zwei Ergebnisse sind dabei mehr als eine Absage. <b>Erstens:</b> eine Abweichung
-     darf nicht gegen die <b>eigene</b> Quote gerechnet werden. „Auf Augenhöhe" tut das
-     und dreht damit die Rangliste um — r = ${z2((D.kandidaten.find(e => e.id === 'gleichauf') || {}).korrQuote || 0)}
-     zur Siegquote heißt: der Rekord ginge systematisch an das untere Ende, genauso
-     einseitig wie an die Spitze. <b>Zweitens:</b> die Abhängigkeit von der Spielzahl
-     lässt sich wegrechnen, wenn man den Abstand in <b>Standardfehlern</b> misst statt in
-     Prozentpunkten. „Der Erwartungstreue" fällt in der ersten Fassung mit
-     r = ${z2((D.kandidaten.find(e => e.id === 'punktgenau2') || {}).korrSpiele || 0)} durch
-     und besteht in der zweiten mit r = ${z2((D.kandidaten.find(e => e.id === 'punktgenau2b') || {}).korrSpiele || 0)}
-     — bei gleichzeitig größerem Ausschlag. Dieselbe Rechnung passt auf jede künftige
-     Frage nach „wie nah an null".</p>
-
-  <h2>Was es für die Laufbahn bedeutet</h2>
-  <p>Ein Liga-Rekord ist eine der drei Quellen des Prestiges [§C34]. Der Grundwert ist
-     <code>PRESTIGE_REKORD</code> × <code>PRESTIGE_ART[art]</code>, geteilt durch die Zahl
-     der heutigen Halter und nach dem Gesetz der fallenden Erträge. Alle fünf neuen
-     Einträge sind <b>Fügungen</b> (<code>zufall:'quote'</code>, <code>art:'ereignis'</code>):
-     sie messen keine Fähigkeit, also wiegen sie halb so viel wie ein Beleg für
-     Können — ${wertJe} statt ${wertJe * 2} Punkte. Das ist kein Kompromiss, sondern
-     genau die Absicht von §C35: <em>sie sollen jemandem gehören können, nicht jemanden
-     auszeichnen.</em></p>
-  <table class="st">
-    <thead><tr><th>Spieler</th><th class="nz">Prestige</th><th>Stufe</th>
-      <th class="nz">davon Rekorde</th><th class="nz">neu</th><th>bis zur nächsten Stufe</th></tr></thead>
-    <tbody>${laufbahnTabelle}</tbody>
-  </table>
-  <p>Gemessen geht <b>keiner</b> der fünf Rekorde an die besten drei der Liga. Die Halter
-     stehen auf Rang ${nehmen.map(e => e.halterRang).sort((a, b) => a - b).join(', ')} von
-     ${nehmen[0] ? nehmen[0].ligaGewertet : 11} der Siegquote. Der Katalog verschiebt damit
-     ${nehmen.length * wertJe} Punkte Prestige ausschließlich in die untere Hälfte — und
-     einer davon entscheidet eine Stufe: die Zahlen oben sagen, wer danach den nächsten
-     Reif trägt.</p>
-  <p>Für das Gleichgewicht der drei Quellen heißt das: die Rekorde stehen heute bei
-     ${L.rekord} Punkten gegen ${L.monat} aus den Monatswertungen. Fünf Fügungen legen
-     rund ${nehmen.length * wertJe} dazu, also gut ${Math.round(100 * nehmen.length * wertJe / L.rekord)} %
-     — die Reihenfolge der Quellen bleibt, und keine Stufe der Insignium-Leiter wird
-     dadurch billig. <code>tests/disziplinen</code> rechnet das nach und fällt, wenn es
-     kippt [§10.3]: die Zusicherungen sind der Prüfstein, nicht diese Seite.</p>
-
-  <h2>Wie sie im Story-System auftauchen</h2>
-  <div class="regeln">
-    <div class="regel"><b>Ohne eine Zeile Code</b><span>Der Generator läuft über
-      <code>CHRONICLES</code>, nicht über eine eigene Liste. Ein neuer Eintrag meldet sich
-      damit automatisch als <code>rekord_erstmals</code> (Breaking, weil es den Rekord noch
-      nie gab), <code>rekord_geholt</code> oder <code>rekord_gesteigert</code>.</span></div>
-    <div class="regel"><b>Im Moment der Ewigen Tafel</b><span>Die Tafel-Achse bündelt alle
-      Änderungen derselben Minute oder Partie zu einer Karte. Fünf neue Rekorde erzeugen
-      deshalb keine fünf neuen Karten, sondern fünf Zeilen in der Karte, die es ohnehin
-      gibt. Gemessen trägt eine Tafel-Sammelkarte heute im Schnitt acht Zeilen.</span></div>
-    <div class="regel"><b>Nur, wer gespielt hat</b><span>Eine Fügung wechselt den Halter
-      auch, weil ein anderer gespielt und seinen Anteil verschlechtert hat. Die Karte
-      kommt nur, wenn mindestens einer der Genannten an diesem Tag angetreten ist — genau
-      dafür gibt es die Regel schon.</span></div>
-    <div class="regel"><b>Und nicht als Schattenseite</b><span>Keiner der fünf ist negativ.
-      „Der Wechselhafte" klingt danach, ist aber eine Fügung: wem die schwankenden Tage
-      zufallen, entscheidet niemand selbst. Rot bleibt der Richtung [§C25].</span></div>
-  </div>
-
-  <h2>Was beim Einbauen dazugehört</h2>
-  <p>Jeder Eintrag braucht dieselben Felder wie jeder andere [§10.2]: <code>allzeit.cond</code>
-     (die Bedingung im Klartext), <code>allzeit.wie</code> (was die Zahl bedeutet),
-     <code>allzeit.val</code> und <code>allzeit.raw</code>, <code>allzeit.min</code>,
-     <code>allzeit.ev</code> (beginnt mit dem Wert, nach dem sortiert wird),
-     <code>zufall:'quote'</code> für die Kammer und ein Eintrag in
-     <code>_chronicleCtx</code>. Dazu drei Zusicherungen in <code>tests/disziplinen</code>,
-     die diese Seite prüfbar machen: die Korrelation zur Spielzahl unter 0,35, die zur
-     Siegquote unter 0,70, und der Ausschlag über 1,5 σ. Ohne die drei ist dieser Vorschlag
-     eine Bitte.</p>
-
-  <h2>Die Liga, an der gemessen wurde</h2>
-  <table class="st" style="max-width:520px">
-    <thead><tr><th>Spieler</th><th class="nz">Partien</th><th class="nz">Siegquote</th>
+  <h2>Wer wenig spielt und trotzdem gut ist</h2>
+  <p>Die Liga hat zwei solche Profile. <b>Jane</b> steht mit ${
+     (D.spielzahlen.find(p => p.name === 'Jane') || {}).spiele} Partien auf Rang
+     ${(D.spielzahlen.find(p => p.name === 'Jane') || {}).rang} der Siegquote und liegt
+     ${Math.abs((D.spielzahlen.find(p => p.name === 'Jane') || {}).quote
+       - (D.spielzahlen.find(p => p.name === 'Jane') || {}).erwartet)} Punkte über der
+     eigenen Erwartung — das ist der drittbeste Wert der Liga. <b>Jannik</b> steht mit
+     ${(D.spielzahlen.find(p => p.name === 'Jannik') || {}).spiele} Partien über Maxi
+     (${(D.spielzahlen.find(p => p.name === 'Maxi') || {}).spiele}) und Leo
+     (${(D.spielzahlen.find(p => p.name === 'Leo') || {}).spiele}).</p>
+  <p>Gemessen gehen <b>${wenig.length} der ${wort(N.length)}</b> neuen Rekorde an einen
+     Spieler mit unter hundert Partien: ${esc([...new Set(wenig.map(e => e.halter))].join(', ')
+     )}. Das ist kein Zufall und kein Ausgleich, sondern die Folge des ersten Tors: wo die
+     Bedingung bei ${Math.min(...N.map(e => e.braucht))} Partien liegt, entscheidet die Leistung und nicht der
+     Umfang. Die Liga zum Vergleich — hervorgehoben, wer unter hundert Partien hat:</p>
+  <table class="st" style="max-width:660px">
+    <thead><tr><th>Spieler</th><th class="nz">Partien</th><th class="nz">Spieltage</th>
+      <th class="nz">Siegquote</th><th class="nz">erwartet</th><th class="nz">Abstand</th>
       <th class="nz">Rang</th></tr></thead>
     <tbody>${spielzahl}</tbody>
   </table>
 
+  <h2>Wie der heutige Katalog auf die beiden Kammern fällt</h2>
+  <p>Aus dem Katalog gelesen, nicht geraten: jede Mindestzahl steht im Klartext in der
+     Bedingung. Umgerechnet auf den Bestand eines Spielers mit fünfzig Partien und vierzig
+     Prozent Siegquote — etwa zwanzig Siege, je fünfundzwanzig Sturm- und Abwehrspiele,
+     fünfunddreißig Gelegenheiten nach einer Niederlage.</p>
+  <p><b>${L.huerde.filter(h => h.zu).length} von ${L.huerde.length}</b> Rekorden mit
+     lesbarer Mindestzahl gehören damit in die anspruchsvolle Kammer, nur
+     <b>${L.huerde.length - L.huerde.filter(h => h.zu).length}</b> sind offen. Das ist
+     nicht falsch — es ist einseitig: der Katalog hat die anspruchsvolle Kammer und keine
+     offene. Bei sechs der ${L.huerde.filter(h => h.zu).length} ist es dabei nicht die
+     Frage, die aussperrt, sondern nur die Zahl dahinter: „Der Fels" fragt nach den
+     Gegentoren in der Abwehr, und dieselbe Frage bei zehn Abwehrspielen bestünde jedes
+     Tor dieser Seite — sie stünde dann in der offenen Kammer, und die anspruchsvolle
+     Fassung könnte daneben bleiben.</p>
+  <table class="st">
+    <thead><tr><th>Rekord</th><th class="nz">verlangt</th><th class="nz">ein 50-Spieler hat</th>
+      <th>Bedingung</th></tr></thead>
+    <tbody>${huerdeT}</tbody>
+  </table>
+
+  <h2>Bestehende Rekorde, die knapp nicht gefallen sind</h2>
+  <p>Der relative Abstand zwischen Halter und Zweitem, weil die Einheiten von Prozenten bis
+     Elo-Punkten reichen. Fünf Rekorde sind heute <b>geteilt</b> — dort ist der Abstand null
+     und der nächste Halter steht schon oben mit drauf. Darunter stehen die, bei denen ein
+     einzelner Nachmittag reicht: <b>${esc((L.knapp.find(k => k.abstand > 0) || {}).name)}</b>
+     trennt ${pz((L.knapp.find(k => k.abstand > 0) || {}).abstand)} Prozent. Besonders
+     bemerkenswert ist „Der Zerstörer": dort steht <b>Jannik mit
+     ${(L.knapp.find(k => k.name === 'Der Zerstörer') || {}).zweiterSpiele} Partien</b>
+     0,8 Prozent hinter Martin mit 211 — und die Bedingung „ab 22 Siegen" ist genau die,
+     die ihn bei fünfzig Partien ausgesperrt hätte.</p>
+  <table class="st">
+    <thead><tr><th>Rekord</th><th class="nz">Abstand</th><th>Halter</th><th>Zweiter</th>
+      <th>Beleg des Zweiten</th></tr></thead>
+    <tbody>${knappT}</tbody>
+  </table>
+
+  <h2>Was es für die Laufbahn bedeutet</h2>
+  <p>Ein Liga-Rekord ist eine der drei Quellen des Prestiges [§C34]. Der Grundwert ist
+     <code>PRESTIGE_REKORD</code> × <code>PRESTIGE_ART[art]</code>, geteilt durch die Zahl
+     der heutigen Halter: <b>${wertKoennen}</b> Punkte für einen Beleg für Können,
+     <b>${wertJe}</b> für eine Fügung. Von den ${wort(N.length)} Vorschlägen sind
+     ${wort(N.filter(e => e.zufall).length)} Fügungen und
+     ${wort(N.filter(e => !e.zufall).length)} Belege für Können — und das ist die Absicht:
+     Rekorde sind auch dazu da, zu zeigen, wer am meisten kann. Nur soll das nicht heißen,
+     wer am meisten gespielt hat.</p>
+  <p>Gerechnet ist die Spalte <b>gestapelt</b> und nicht addiert: Platz 1–2 zählen voll,
+     3–5 durch √2, 6–8 durch √3 [§C34]. Sie bleibt eine <b>Obergrenze</b>, weil die
+     Rekorde, die jemand schon hält, die vollen Plätze zuerst besetzen.</p>
+  <p><b>Und eine Zahl, die dazugehört:</b> die Tafel verteilt sich auf
+     ${wort(Object.keys(halterZahl).length)} Halter — ${
+       Object.entries(halterZahl).sort((a, b) => b[1] - a[1])
+         .map(([h, n]) => esc(h) + ' ' + n).join(' · ')}. Keiner trägt mehr als ein
+     Drittel, und das ist eine gesetzte Grenze und kein Zufall: gebaut waren erst achtzehn
+     Rekorde, von denen Jane sieben hielt, dann dreizehn, von denen Martin sieben hielt.
+     Wer die Grenze anhebt, bekommt mehr Rekorde und weniger Halter. ${esc(
+       Object.entries(halterZahl).sort((a, b) => b[1] - a[1])[0][0])} und Jane stehen dabei
+     nicht zufällig oben: beide liegen deutlich über der eigenen Erwartung, und bei einer
+     Bedingung von ${Math.min(...N.map(e => e.braucht))} Partien entscheidet genau das.</p>
+  <table class="st">
+    <thead><tr><th>Spieler</th><th class="nz">Prestige</th><th>Stufe</th>
+      <th class="nz">davon Rekorde</th><th class="nz">neu</th>
+      <th>bis zur nächsten Stufe</th></tr></thead>
+    <tbody>${L.je.map(p => {
+      const mein = N.filter(e => e.halter === p.name);
+      const n = mein.length;
+      const plus = stapel(mein.map(wertVon));
+      const neuFehlt = p.fehlt == null ? null : p.fehlt - plus;
+      return `<tr class="${n ? 'ja' : ''}">
+        <td><b>${esc(p.name)}</b></td>
+        <td class="mono nz">${p.punkte}</td>
+        <td class="mono">${esc(p.stufeName)}</td>
+        <td class="mono nz">${p.rekord}</td>
+        <td class="mono nz ${n ? 'gut' : ''}">${n ? '+' + plus : '—'}</td>
+        <td class="bed">${p.fehlt == null ? 'oben angekommen'
+          : neuFehlt <= 0 ? '<b class="gut">erreicht den ' + esc(p.ziel) + '</b>'
+          : p.fehlt + ' bis zum ' + esc(p.ziel) + (n ? ', danach ' + neuFehlt : '')}</td>
+      </tr>`; }).join('')}</tbody>
+  </table>
+
+  <h2>Was beim Einbauen dazugehört</h2>
+  <p>Jeder Eintrag braucht dieselben Felder wie jeder andere [§10.2]:
+     <code>allzeit.cond</code>, <code>allzeit.wie</code>, <code>allzeit.val</code>,
+     <code>allzeit.min</code>, <code>allzeit.ev</code> (beginnt mit dem Wert, nach dem
+     sortiert wird) und einen Eintrag in <code>_chronicleCtx</code>. Dazu drei
+     Zusicherungen in <code>tests/disziplinen</code>, die diese Seite prüfbar machen: die
+     Teilkorrelation zur Spielzahl unter 0,35, der Ausschlag über 1,5 σ und — die
+     wichtigste, die es heute noch nicht gibt — <b>die Bedingung ist mit fünfzig Partien
+     erfüllbar</b>. Ohne die dritte wandert der Katalog mit jedem neuen Eintrag ein Stück
+     weiter zum Vielspieler, und niemand sieht es.</p>
+  <p>Der Umbau davor bleibt derselbe: <code>_chronicleCtx</code> bekommt die
+     <b>Rohsicht</b>, die <code>_seasonTitleCtx</code> für den Monat schon hat — jede
+     Partie aus der Sicht eines Spielers, gruppiert nach Spieltag, Woche, Partner und
+     Gegner. Danach ist jeder dieser ${wort(N.length)} Rekorde ein
+     <code>allzeit:</code>-Block an einer Disziplin und keine neue Rechnung.</p>
+
   <div class="fuss">
     Erzeugt mit <code>node mockup/rekord-vorschlag-lauf.js &amp;&amp; node mockup/rekord-vorschlag-seite.js</code>.
-    Die Rohsicht wird im Lauf nachgebaut — genau die, die <code>_seasonTitleCtx</code> für
-    den Monat schon hat; Prestige, Stufen und Schwellen kommen aus
-    <code>dist/index.html</code>. Kein Teil des Bauablaufs: <code>tools/check.mjs</code> und
-    <code>tests/run.mjs</code> sehen diesen Ordner nicht. Nichts davon ist eingebaut —
-    diese Seite ist der Vorschlag, nicht die Änderung.
+    Die Rohsicht wird im Lauf nachgebaut; Prestige, Stufen, Schwellen, die Rekordlage und
+    jede Mindestzahl kommen aus <code>dist/index.html</code>, damit die Zahlen zur App
+    gehören und nicht zu einer zweiten Rechnung. Kein Teil des Bauablaufs:
+    <code>tools/check.mjs</code> und <code>tests/run.mjs</code> sehen diesen Ordner nicht.
+    Nichts davon ist eingebaut — diese Seite ist der Vorschlag, nicht die Änderung.
   </div>
 </div>
 </body></html>`;
 
 fs.writeFileSync(__dirname + '/rekord-vorschlag.html', seite);
-console.log('geschrieben:', seite.length, 'Zeichen · aufnehmen:',
-  nehmen.map(e => e.name).join(', '));
+console.log('geschrieben: ' + seite.length + ' Zeichen · ' + N.length + ' Rekorde · '
+  + wenig.length + ' davon bei unter 100 Partien');

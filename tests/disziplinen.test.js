@@ -1705,6 +1705,186 @@ ok(_gl.ohne.length === 0, 'jeder gewertete Spieler traegt mindestens einen Liga-
 
 
 // ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ JEDER REKORD ERKLAERT SICH ═══');
+// Die Karte im Rekorde-Reiter zeigt den Namen und die BEDINGUNG, das Blatt
+// darunter die ERKLAERUNG. Beide waren lueckenhaft: nur 15 der 46 Rekorde
+// hatten ueberhaupt eine Erklaerung, und mehrere Bedingungen nannten nicht
+// alle Schwellen, die ihre Rechnung erzwingt.
+//
+// „Die ruhige Hand" verlangte „mindestens 9 Prozentpunkte" und schwieg ueber
+// die 14 engen Partien und die 20 % der Laufbahn, die ebenso verlangt sind:
+// wer die Karte las, wusste nicht, warum er nicht im Rennen steht. „Der
+// Gigantentoeter" nannte keinen Nenner, obwohl er gegen ALLE Partien zaehlt
+// und nicht gegen die als Aussenseiter. „Die Mauer" heisst so, misst aber
+// nur, wie oft jemand hinten stand — ohne Erklaerung liest sich der Name als
+// Abwehrstaerke.
+//
+// Geprueft wird deshalb maschinell: jede Zahl, die die Wertfunktion als
+// Schwelle erzwingt, muss im Text stehen. Ein Anteil unter eins wird dafuer
+// als Prozentwert gelesen, so wie ihn die Bedingung schreibt.
+const _erk = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.map(c => ({
+  id:c.id, name:c.name, cond:c.cond || '', wie:c.wie || '',
+  unit:c.unit || '', min:c.min || 0,
+  // Der Quelltext der Rechnung. Aus ihm kommen die Schwellen: eine Zahl, die
+  // dort ueber ein Tor entscheidet, gehoert in die Bedingung.
+  src:String(c.raw || c.val || '')
+})))`));
+
+const _ohneWie = _erk.filter(c => c.wie.trim().length < 40).map(c => c.name);
+ok(_ohneWie.length === 0, 'jeder Rekord traegt eine Erklaerung',
+   _ohneWie.join(', ') || _erk.length + ' von ' + _erk.length);
+const _ohneCond = _erk.filter(c => c.cond.trim().length < 20).map(c => c.name);
+ok(_ohneCond.length === 0, 'jeder Rekord traegt eine Bedingung',
+   _ohneCond.join(', ') || _erk.length + ' von ' + _erk.length);
+
+// Keine Umschreibung, die nichts erklaert. Die Liste ist kurz und nennt nur
+// Floskeln, die in einem Erklaertext nie stehen muessen.
+const _FLOSKEL = ['gewissermaßen', 'sozusagen', 'im Grunde', 'quasi',
+                  'eigentlich', 'letztlich', 'bekanntlich', 'natürlich',
+                  'selbstverständlich', 'mehr oder weniger'];
+const _floskel = [];
+_erk.forEach(c => _FLOSKEL.forEach(f => {
+  if((c.cond + ' ' + c.wie).toLowerCase().indexOf(f.toLowerCase()) >= 0)
+    _floskel.push(c.name + ': ' + f);
+}));
+ok(_floskel.length === 0, 'keine Floskel in Bedingung oder Erklaerung',
+   _floskel.join(', ') || 'keine');
+
+// Die eigentliche Probe: jede Schwelle der Rechnung steht im Text.
+// Gelesen werden nur Zahlen, die in einem Vergleich stehen (>=, <=, <, >)
+// oder als `min` am Eintrag haengen — eine 2 aus `slice(0, 2)` ist keine
+// Schwelle, ein `>= 0.22` schon.
+const _fehlt = [];
+_erk.forEach(c => {
+  const txt = (c.cond + ' ' + c.wie).replace(/\u00a0/g, ' ');
+  // Eine kleine Zahl steht im deutschen Satz ausgeschrieben: „mindestens
+  // dreimal" ist dieselbe Schwelle wie „mindestens 3". Ohne diese Liste
+  // verlangte die Probe eine Ziffer und damit schlechteres Deutsch.
+  const WORT = {2:'zwei', 3:'drei', 4:'vier', 5:'fünf', 6:'sechs', 7:'sieben',
+                8:'acht', 9:'neun', 10:'zehn', 11:'elf', 12:'zwölf'};
+  const hat = (n) => {
+    // Als ganze Zahl oder als Prozentwert, mit Komma oder Punkt.
+    const kandidaten = [String(n), String(n).replace('.', ',')];
+    if(WORT[n]) kandidaten.push(WORT[n]);
+    if(n > 0 && n < 1){
+      kandidaten.push(String(Math.round(n * 1000) / 10).replace('.', ','));
+      kandidaten.push(String(Math.round(n * 100)));
+    }
+    return kandidaten.some(k => /^[0-9]/.test(k)
+      ? new RegExp('(^|[^0-9.,])' + k.replace(/[.]/g, '\\.') + '([^0-9]|$)').test(txt)
+      : txt.toLowerCase().indexOf(k) >= 0);
+  };
+  const zahlen = new Set();
+  const re = /(?:>=|<=|>|<)\s*([0-9]+(?:\.[0-9]+)?)/g;
+  let m; while((m = re.exec(c.src))) zahlen.add(parseFloat(m[1]));
+  if(c.min) zahlen.add(c.min);
+  [...zahlen].forEach(n => {
+    // 0 und 1 sind keine Schwellen, sondern Vorzeichen- und Leerproben.
+    if(n === 0 || n === 1) return;
+    if(!hat(n)) _fehlt.push(c.name + ': ' + n);
+  });
+});
+ok(_fehlt.length === 0, 'jede Schwelle der Rechnung steht auch im Text',
+   _fehlt.slice(0, 6).join(' · ') || _erk.length + ' Rekorde geprueft');
+
+console.log('\n═══ DIE OFFENE KAMMER: EIN REKORD FUER JEDEN ═══');
+// Die Zusicherung, die dem Katalog am laengsten gefehlt hat. Gemessen waren
+// 13 der 21 bestehenden Rekorde mit lesbarer Mindestzahl fuer einen Spieler
+// mit fuenfzig Partien unerreichbar: „ab 50 Sturmspielen", „ab 60
+// Gelegenheiten", „ab 80 Spielen" gehoeren dem Vielspieler, weil sie ausser
+// ihm niemand halten KANN. Ohne diese Probe wandert der Katalog mit jedem
+// neuen Eintrag ein Stueck weiter dorthin, und niemand sieht es.
+//
+// `offen` am Katalogeintrag ist dafuer keine Beschriftung, sondern eine
+// Behauptung, die hier nachgezaehlt wird: im Rennen muss jemand mit unter
+// hundert Partien stehen, und vergeben muss der Rekord auch sein.
+const _ok = JSON.parse(K.eval(`JSON.stringify((function(){
+  const A = allChronicles(), C = _chronicleCtx();
+  const ids = Object.keys(C.P);
+  const q = {}; ids.forEach(id => q[id] = C.P[id].wins / C.P[id].games);
+  const rang = ids.slice().sort((a,b) => q[b] - q[a]);
+  const lauf = c => ids.filter(pid => {
+    const v = c.val(C.P[pid], C); return v != null && isFinite(v); });
+  return {
+    feld: ids.length,
+    offen: CHRONICLES.filter(c => c.offen).map(c => {
+      const e = A.byId[c.id] || {pids:[]}, im = lauf(c);
+      return {id:c.id, name:c.name, halter:e.pids || [],
+              plaetze:(e.pids || []).map(p => rang.indexOf(p) + 1),
+              rennen:im.length,
+              kleinste:im.length ? Math.min.apply(null, im.map(p => C.P[p].games)) : 0};
+    }),
+    // Ein gleitendes Fenster muss mitwandern: waere es am ANFANG der Laufbahn
+    // verankert, koennte der Rekord den Halter nie mehr wechseln.
+    fenster: CHRONICLES.filter(c => c.fenster).map(c => c.id),
+    // Die Haltungen aller Rekorde, je Spieler. Nicht nur der Fuegungen: die
+    // sieben neuen Koennen-Rekorde zaehlen dort nicht mit, und genau bei
+    // ihnen sammelt sich das Koennen.
+    haltungen: (function(){
+      const je = {};
+      CHRONICLES.forEach(c => ((A.byId[c.id] || {pids:[]}).pids || [])
+        .forEach(p => je[p] = (je[p] || 0) + 1));
+      return je;
+    })(),
+    // Die Rohsicht darf nicht im Cache liegen. Sie ist 4×N Partien-Objekte,
+    // und der Zeitschnitt haelt bis zu 24 Kontexte gleichzeitig.
+    schwer: Object.keys(C.P).filter(pid => Object.keys(C.P[pid])
+      .some(k => Array.isArray(C.P[pid][k]) && C.P[pid][k].length > 30))
+  };
+})())`));
+_ok.offen.forEach(o => console.log('  ' + o.name.padEnd(20)
+  + (o.halter.map(nm).join(', ') || '— unbesetzt').padEnd(18)
+  + 'Platz ' + (o.plaetze.join('/') || '—') + ' von ' + _ok.feld
+  + '  ·  ' + o.rennen + ' im Rennen, kleinste Laufbahn ' + o.kleinste + ' Partien'));
+
+ok(_ok.offen.length >= 5, 'die offene Kammer hat mindestens fuenf Rekorde',
+   _ok.offen.length + ' Rekorde');
+const _okLeer = _ok.offen.filter(o => !o.halter.length).map(o => o.name);
+ok(_okLeer.length === 0, 'jeder Rekord der offenen Kammer ist vergeben',
+   _okLeer.join(', ') || _ok.offen.length + ' von ' + _ok.offen.length);
+// Das eigentliche Tor: die Bedingung darf nicht selbst die Huerde sein. Ein
+// Rekord, in dessen Rennen nur Vielspieler stehen, ist keiner fuer jeden —
+// auch wenn die Zahl in der Bedingung klein aussieht.
+const _okHoch = _ok.offen.filter(o => o.kleinste > 100)
+  .map(o => o.name + ' (kleinste ' + o.kleinste + ')');
+ok(_okHoch.length === 0, 'in jedem offenen Rennen steht ein Spieler mit unter hundert Partien',
+   _okHoch.join(', ') || _ok.offen.map(o => o.kleinste).join('/') + ' Partien');
+// Und mindestens einer gehoert nicht den drei Besten. Sonst haetten wir fuenf
+// Eintraege dazugebaut und nichts veraendert.
+const _okUnten = _ok.offen.filter(o => o.plaetze.some(r => r > 3));
+ok(_okUnten.length > 0, 'mindestens ein offener Rekord gehoert nicht den drei Besten',
+   _okUnten.map(o => o.name + ' (' + o.plaetze.join('/') + ')').join(', ') || 'keiner');
+
+// Drei Fenster-Rekorde, und sie sind als solche markiert. Ohne die Marke
+// meldet der Feed „X baut den Rekord aus", sobald am hinteren Ende des
+// Fensters ein schwaches Ergebnis herausfaellt — und dann hat der Halter
+// nichts getan [§C33].
+ok(_ok.fenster.length >= 3, 'die gleitenden Fenster sind im Katalog markiert',
+   _ok.fenster.join(', ') || 'keins');
+
+// Kein Halter traegt mehr als ein Viertel aller Haltungen. Vorher hielten
+// die drei Besten neun, neun und sechs Eintraege; nach dem Umbau sind es
+// elf, acht und acht von einundfuenfzig.
+const _hSum = Object.values(_ok.haltungen).reduce((a, b) => a + b, 0);
+const _hMax = Object.keys(_ok.haltungen)
+  .filter(p => _ok.haltungen[p] * 4 > _hSum)
+  .map(p => nm(p) + ' ' + _ok.haltungen[p] + ' von ' + _hSum);
+console.log('  Haltungen: ' + Object.keys(_ok.haltungen)
+  .sort((a, b) => _ok.haltungen[b] - _ok.haltungen[a])
+  .map(p => nm(p) + ' ' + _ok.haltungen[p]).join(' · '));
+ok(_hMax.length === 0, 'kein Halter traegt mehr als ein Viertel aller Rekorde',
+   _hMax.join(', ') || 'Maximum ' + Math.max.apply(null, Object.values(_ok.haltungen))
+   + ' von ' + _hSum);
+
+// Die Rohsicht bleibt aus dem Cache. Sie wird fuer die zehn Rekorde der zwei
+// Kammern gebaut, ausgewertet und verworfen: am gecachten Spielerobjekt
+// haengen nur Skalare. Sonst truege jeder der 24 Zeitschnitte 4×N
+// Partien-Objekte mit sich.
+ok(_ok.schwer.length === 0, 'der Chronik-Cache traegt keine Partienlisten',
+   _ok.schwer.map(nm).join(', ') || 'nur Skalare');
+
+
+// ══════════════════════════════════════════════════════════════════════
 console.log('\n═══ DER BELEG BEGINNT MIT DEM WERT, NACH DEM SORTIERT WIRD ═══');
 // Das Podest und die Verfolgerliste zeigen die ERSTE Zahl des Belegs. Der
 // begann bisher fast immer mit der Anzahl, sortiert wird aber nach einem

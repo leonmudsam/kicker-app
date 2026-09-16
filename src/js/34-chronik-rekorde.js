@@ -74,6 +74,21 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   // wuerde sich das Prestige verschieben [§C34].
   neg: d.art === 'schatten' || d.negativ === true,
   cond:d.allzeit.cond, wie:d.allzeit.wie || '', val:d.allzeit.val, raw:d.allzeit.raw,
+  // Ein GLEITENDES Fenster meldet kein „ausgebaut". Der Wert einer Laufbahn
+  // steigt, weil jemand besser gespielt hat; der Wert eines Fensters steigt
+  // auch dann, wenn am hinteren Ende ein schwaches Ergebnis herausfaellt.
+  // Dieselbe Begruendung wie beim Verschlechtern [§C33]: wer nichts getan
+  // hat, hat nichts getan. Gemessen ergaben die drei Fenster-Rekorde 26 der
+  // 135 Karten ihrer Familie, und keine davon nannte eine Leistung.
+  fenster:!!d.allzeit.fenster,
+  // Die OFFENE Kammer [§C35]: die Bedingung ist mit fuenfzig Partien in der
+  // Laufbahn erfuellbar. Gemessen waren 13 der 21 bestehenden Rekorde mit
+  // lesbarer Mindestzahl fuer einen solchen Spieler unerreichbar — „ab 50
+  // Sturmspielen", „ab 60 Gelegenheiten", „ab 80 Spielen" gehoeren dem
+  // Vielspieler, weil sie ausser ihm niemand halten KANN. Die Marke ist
+  // keine Beschriftung: `tests/disziplinen` zaehlt nach, dass in jedem
+  // offenen Rennen jemand mit unter hundert Partien steht.
+  offen:!!d.allzeit.offen,
   unit:d.allzeit.unit, min:d.allzeit.min, ev:d.allzeit.ev,
   // Wann er erreicht wurde — nur dort, wo es einen Zeitpunkt GIBT. Ein
   // Karriereschnitt („Ø 6,9 Gegentore in 134 Abwehrspielen") hat keinen;
@@ -150,6 +165,9 @@ function _chronicleCtx(bisMs){
   const mates = {};
   const allDays = new Set();
   const allSeasons = new Set();
+  // Die Rohsicht: je Spieler jede Partie aus seiner Sicht, in Spielreihenfolge
+  // [§C39]. Sie liegt NEBEN `P`, nicht darin — `P` wird gecacht, sie nicht.
+  const roh = {};
   const dLabel = (k) => { const [y,m,d] = k.split('-'); return d + '.' + m + '.'; };
   const ensure = (id) => P[id] || (P[id] = {
     id, games:0, wins:0, losses:0, gf:0, ga:0, gd:0,
@@ -181,6 +199,21 @@ function _chronicleCtx(bisMs){
     wiederTag:0, wiederErg:'', wiederLabel:'',  // dasselbe Ergebnis an einem Abend
     beidesTag:0, beidesLabel:'',     // 10:0 und 0:10 am selben Abend
     dusche:0, duscheLabel:'',        // auf ein 10:0 folgte unmittelbar ein 0:10
+    // ── Die zwei Kammern [§C35]: zehn Rekorde auf einem gleitenden
+    //    Fenster, auf einer Rolle und auf dem Gegnerkreis. Sie brauchen die
+    //    REIHENFOLGE der Partien und damit die Rohsicht, die
+    //    `_seasonTitleCtx` fuer den Monat schon hat. Gebaut wird sie unten
+    //    in `roh` und nach der Auswertung verworfen: am gecachten `P` haengen
+    //    nur diese Skalare, sonst truege jeder der 24 Zeitschnitte 4×N
+    //    Partien-Objekte mit sich.
+    l30N:0, l30Klar:0, l30Ga:0,          // die letzten 30 Partien
+    aufDelta:null, aufNeu:0, aufAlt:0,   // letzte 25 gegen die 25 davor
+    unterN:0, unterGf:0,                 // als Aussenseiter
+    favN:0, favKlar:0,                   // als Favorit
+    restN:0, restGf:0, restGa:0,         // gegen den Rest der Liga
+    restSd:null, restMit:0,
+    atkSd:null, atkMit:0,                // Gleichmaessigkeit im Sturm
+    defSd:null, defMit:0,                // und in der Abwehr
   });
 
   ms.forEach(m => {
@@ -206,6 +239,8 @@ function _chronicleCtx(bisMs){
       p.games++; p.gf += gf; p.ga += ga; p.gd += diff;
       if(w) p.wins++; else p.losses++;
       const exp = myExp(id, m);
+      (roh[id] || (roh[id] = [])).push({w, gf, ga, pos, exp,
+        geg: onA ? [m.b1, m.b2] : [m.a1, m.a2]});
       if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; p.atkPerf += (w?1:0) - exp; }
       else             { p.defG++; p.defConceded += ga; if(w) p.defW++; p.defPerf += (w?1:0) - exp; }
       const kanter = (w && gf===10 && ga===0);
@@ -316,6 +351,66 @@ function _chronicleCtx(bisMs){
   // Rekorde vergeben werden — sonst hält ein Gast den Liga-Rekord.
   Object.keys(P).forEach(id => {
     if(!pm[id] || pm[id].hidden || P[id].games < CHRON_MIN_GAMES){ delete P[id]; return; }
+  });
+
+  // ── Die zwei Kammern [§C35]: ein Durchlauf ueber die Rohsicht ──────
+  // Zehn Rekorde fragen nach einem gleitenden Fenster, nach einer Rolle oder
+  // nach dem Gegnerkreis. Sie stehen hier und nicht als zehn Zaehler im
+  // Match-Durchlauf oben: „die letzten 30 Partien" und „die 25 davor" haengen
+  // an der Reihenfolge, und die kennt erst die fertige Liste.
+  //
+  // `LIGA_TOP3` ist der Gegnerkreis von „Der Hausherr" und „Der
+  // Unaufgeregte": die drei Besten nach Siegquote. Sortiert wird mit
+  // Tiebreak, sonst entscheidet bei Gleichstand die Aufzaehlungsreihenfolge
+  // des Objekts, und derselbe Datenstand ergaebe zwei verschiedene Kreise.
+  const _top3 = Object.keys(P)
+    .sort((a, b) => (P[b].wins / P[b].games) - (P[a].wins / P[a].games)
+                 || P[b].games - P[a].games || (a < b ? -1 : 1))
+    .slice(0, 3);
+  C.top3 = _top3;
+  const _sd = (a) => {
+    if(a.length < 2) return 0;
+    const m = a.reduce((x, y) => x + y, 0) / a.length;
+    return Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / a.length);
+  };
+  const _mit = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+  Object.keys(P).forEach(id => {
+    const p = P[id], r = roh[id] || [];
+    // Das gleitende Fenster. Es MUSS mitwandern: „in den ersten 25 Partien"
+    // waere nach 25 Partien fertig und koennte den Halter nie mehr wechseln.
+    if(r.length >= 30){
+      const l30 = r.slice(-30);
+      p.l30N = 30;
+      p.l30Klar = l30.filter(x => x.w && x.gf - x.ga >= 5).length;
+      p.l30Ga = l30.reduce((n, x) => n + x.ga, 0);
+    }
+    // Zwei gleich lange Fenster, die beide mitwandern. Gegen den ANFANG der
+    // Laufbahn verglichen belohnte derselbe Rekord, wer schlecht angefangen
+    // hat: je tiefer der erste Abschnitt, desto leichter der Sprung.
+    if(r.length >= 50){
+      const neu = r.slice(-25), alt = r.slice(-50, -25);
+      p.aufNeu = neu.filter(x => x.w).length / 25;
+      p.aufAlt = alt.filter(x => x.w).length / 25;
+      p.aufDelta = p.aufNeu - p.aufAlt;
+    }
+    const unter = [], fav = [], rest = [], atk = [], def = [];
+    r.forEach(x => {
+      if(x.exp < 0.45) unter.push(x);
+      if(x.exp > 0.55) fav.push(x);
+      if(!x.geg.some(g => _top3.includes(g))) rest.push(x);
+      (x.pos === 'atk' ? atk : def).push(x);
+    });
+    p.unterN = unter.length;
+    p.unterGf = unter.reduce((n, x) => n + x.gf, 0);
+    p.favN = fav.length;
+    p.favKlar = fav.filter(x => x.w && x.gf - x.ga >= 5).length;
+    p.restN = rest.length;
+    p.restGf = rest.reduce((n, x) => n + x.gf, 0);
+    p.restGa = rest.reduce((n, x) => n + x.ga, 0);
+    const dz = (a) => a.map(x => x.gf - x.ga);
+    if(rest.length >= 2){ p.restSd = _sd(dz(rest)); p.restMit = _mit(dz(rest)); }
+    if(atk.length  >= 2){ p.atkSd  = _sd(dz(atk));  p.atkMit  = _mit(dz(atk));  }
+    if(def.length  >= 2){ p.defSd  = _sd(dz(def));  p.defMit  = _mit(dz(def));  }
   });
 
   // Im Zeitschnitt wird ueber die Scheibe gezaehlt, sonst ueber `matches`
