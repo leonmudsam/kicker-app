@@ -1522,7 +1522,15 @@ function prestigeSchritte(pid, n){
     const C = _chronicleCtx(), A = allChronicles(), p = C.P[pid];
     if(p){
       CHRONICLES.forEach(def => {
-        if(def.art === 'schatten') return;
+        // ── Ein Ziel, das niemand haben will, ist kein Ziel ──────────
+        // Gefiltert wurde nur die Schattenseite, nicht die negative
+        // Fuegung. Damit stand „Alex kann ‚Die bitterste Pleite' holen"
+        // im Feed — die hoechste Siegchance, mit der je jemand verlor,
+        // als Aufgabe. `nextRecordFor` kennt die Regel seit jeher und
+        // nennt in seinem Kommentar genau diesen Fall [§C25].
+        // Der Katalog schreibt `negativ`, ein Rekord traegt es abgeleitet
+        // als `neg` — hier laeuft die Liste der Rekorde, nicht der Katalog.
+        if(def.art === 'schatten' || def.neg) return;
         const halte = A.byId[def.id];
         if(halte && halte.pids.includes(pid)) return;
         let mein = null, ziel = null;
@@ -1549,11 +1557,23 @@ function prestigeSchritte(pid, n){
           // Satz, der als zwei Saetze klarer ist [§C33].
           cond: def.cond || '',
           stand: halte ? _chronKurz(halte.ev) : '',
-          halter: halte ? _chronHolderNames(halte) : '',
+          halter: halte ? _chronHalterSatz(halte) : '',
+          halterN: halte ? (halte.pids || []).length : 0,
+          // ── Der eigene Stand ist die Zahl, mit der man etwas anfangen
+          // kann ──────────────────────────────────────────────────────
+          // Die Karte nannte die Schwelle und den Bestwert des Halters —
+          // aber nicht, wo der Spieler selbst steht. „Martin haelt 84 %"
+          // sagt ohne die eigenen 71 % nichts darueber, wie weit es noch
+          // ist. Formatiert wird er wie der Bestwert, durch denselben
+          // Beleg des Katalogs: zwei Zahlen in zwei Einheiten waeren
+          // nicht vergleichbar.
+          mein: (function(){
+            try { return def.ev ? _chronKurz(def.ev(p, mein)) : ''; } catch(e){ return ''; }
+          })(),
           txt: def.unit
             ? `Noch ${Math.max(1, Math.ceil(ziel - mein))} ${def.unit}`
-              + (halte ? `. ${_chronHolderNames(halte)} hält ${Math.round(ziel)}` : '')
-            : (halte ? `${_chronHolderNames(halte)} hält den Bestwert mit ${_chronKurz(halte.ev)}`
+              + (halte ? `. ${_chronHalterSatz(halte)} ${halte.pids.length > 1 ? 'halten' : 'hält'} ${Math.round(ziel)}` : '')
+            : (halte ? `${_chronHalterSatz(halte)} ${halte.pids.length > 1 ? 'halten' : 'hält'} den Bestwert mit ${_chronKurz(halte.ev)}`
                      : def.cond)
         });
       });
@@ -1567,7 +1587,7 @@ function prestigeSchritte(pid, n){
       seasonTitleRace(currentSeason().id).forEach(r => {
         if(!r || r.pid === pid) return;
         const d = DISZIPLINEN.find(x => x.id === r.id);
-        if(!d || d.art === 'schatten') return;
+        if(!d || d.art === 'schatten' || d.negativ) return;
         out.push({
           art:'monat', id:r.id, name:r.name || (d && d.name), ic:d.ic, tone:d.tone,
           rel: 0.55,          // ein offener Monatseintrag ist immer „diesen Monat noch"

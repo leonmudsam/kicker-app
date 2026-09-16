@@ -100,7 +100,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **715**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **717**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -232,7 +232,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen | 1003 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie und die drei Befunde aus dem Nachlauf der echten Liga | 332 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag und die drei Befunde aus dem Nachlauf der echten Liga | 357 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte und der gemeinsame Breaking-Moment — **im echten Browser gemessen** | 130 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -490,6 +490,17 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   guten Spieltag stand, behauptete sie das Gegenteil dessen, was gerade
   passiert war: derselbe Spieler war in diesem Monat Zweiter. Gerechnet wird
   es an EINER Stelle; die Zeile im Blatt rechnete es ein zweites Mal nach.
+  **Eine Zahl und ein Name haben je eine Form.** Eine Dezimalzahl trägt ein
+  Komma (`komma`) — acht Belege des Katalogs und acht Fun Facts schrieben
+  „6.9 Gegentore" mit englischem Punkt mitten im deutschen Satz, und ein
+  Absturz stand als „-308 Elo" unter einer Bedingung, die „mindestens −150"
+  schreibt. Eine Aufzählung von Namen hat zwei Formen, und beide sind nötig:
+  `_chronHolderNames` mit „&" für die schmale Zelle des Rekorde-Reiters,
+  `_chronHalterSatz` und `_namenListe` mit „und" für jeden Satz. Im Fließtext
+  stand „Martin & Julian hält den Bestwert mit 84 %" — das Zeichen als
+  einziges im Satz, und das Verb im Singular über zwei Leute. Der Feed hatte
+  daneben eine dritte, eigene Aufzählung (`_namesOf`), und der Spieler des
+  Tages eine vierte.
   Der Saisonwähler (`.saisonwahl`, `saisonWaehlerHtml`) ist bewusst **keins**
   von beiden: er wählt weder Ansicht noch Filter, sondern den Zeitpunkt, von
   dem alles darunter handelt. Als `.ui-tabs` stand er zwischen zwei echten
@@ -895,6 +906,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   doch noch erscheint, steht damit unter einem Tag, den der Leser gelesen hat,
   und behauptet das nicht mehr.
 
+  **Breaking scheitert auch nicht am Doublettenfilter.** Die Tabellenspitze
+  wechselte am 14.09. zweimal und am 15.09. erneut; zwei der drei Karten
+  hießen „Neuer Spitzenreiter: Maxi" und trugen Wort für Wort denselben Text,
+  also warf der Vergleich nach Schlagzeile UND Text die ältere weg — der Tag,
+  an dem er die Spitze übernahm, hatte danach keine Breaking-Karte mehr. Zwei
+  Wechsel sind zwei Ereignisse, und sie stehen unter zwei Tagesköpfen.
+  Der Text war dabei die eigentliche Ursache: „X steht nach dem letzten Spiel
+  an der Spitze. Y war vorher dort" nennt keine Zahl und ist damit an jedem
+  Wechsel derselbe Satz. Er nennt jetzt den Elo-Stand und den Vorsprung — das
+  sagt zugleich, wie knapp es oben zugeht.
   **Breaking scheitert an keiner Sperre.** Der Schlüssel der Sperrfrist
   sortiert die Beteiligten, damit dieselben zwei Halter in anderer Reihenfolge
   nicht als Wechsel gelten. Bei einem **gerichteten** Ereignis dreht das die
@@ -1255,6 +1276,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Insignium-Stufen [§C30]. Gefallen ist `season_endgame`: „Noch fünf Tage"
   ist ein Countdown, kein Ereignis — und stand zeitweise als einzige
   Breaking-Karte im Feed.
+  **Und sie veraltet am Abstand, nicht an der Siegzahl.** Der Stale-Filter
+  verglich die Siege im Fenster mit der Zahl von damals, und das Fenster der
+  letzten zehn Partien verschiebt sich schon im Lauf desselben Spieltags: die
+  Karte entsteht nach der vierten Partie mit 8 von 10, nach der siebten
+  stehen dort 7, und die eigene Karte von heute Mittag fiel als veraltet weg.
+  Gemessen am echten Vierzehn-Tage-Verlauf wurden acht Formkarten gebildet
+  und keine einzige gezeigt. Gefragt wird deshalb, was die Karte behauptet:
+  steht der Vorsprung auf den eigenen Schnitt noch (`_liveStreakForm().vor`)?
   **Die Form-Karte misst den Abstand zum eigenen Schnitt, nicht das Niveau**
   (`FORM_FENSTER`, `FORM_BASIS_MIN`, `FORM_VORSPRUNG`, §11.0b). „Neun von
   zehn gewonnen" konnte nur holen, wer ohnehin die beste Quote hat: gemessen
@@ -1276,7 +1305,34 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Eine Karte sagt, was zu tun ist.** „Jane liegt ‚Das Sonntagskind' am
   nächsten" nannte weder, worum es geht, noch was dafür verlangt ist: darunter
   stand allein „Leon hält den Bestwert". Wer ein Ziel zeigt, nennt die
-  Bedingung aus dem Katalog, den Stand des Halters und den Gewinn.
+  Bedingung aus dem Katalog, den Stand des Halters, **den eigenen Stand** und
+  den Gewinn. Ohne den eigenen sagt die Karte nicht, wie weit es noch ist; er
+  wird durch denselben Beleg des Katalogs formatiert wie der Bestwert, weil
+  zwei Zahlen in zwei Einheiten nicht vergleichbar sind. Und der große Wert
+  ist der eigene Stand, nicht die Aussicht auf Prestige: eine Zahl, die
+  niemand geholt hat, stand im Goldrahmen einer gehaltenen Bestmarke [§C25].
+  Gefallen ist „Kein anderer ist gerade so nah dran" — die Karte stellt
+  diesen Vergleich nie an, sie zieht unter allen, die überhaupt einen offenen
+  Schritt haben.
+  **Und ein Ziel, das niemand haben will, ist kein Ziel.** „Alex kann ‚Die
+  bitterste Pleite' holen" stand im Feed: die höchste Siegchance, mit der je
+  jemand verlor, als Aufgabe. Gefiltert war nur die Schattenseite, nicht die
+  negative Fügung — `nextRecordFor` kennt die Regel seit jeher [§C25]. Der
+  Katalog schreibt sie als `negativ`, die abgeleitete Rekordliste als `neg`;
+  am falschen Feld geprüft ist die Zusicherung immer grün.
+
+  **Jede Ambient-Vorlage wird im Rundlauf gemessen, nicht einzeln.** Sie
+  stehen an vierzig Stellen und gingen deshalb einzeln kaputt: „vor -1 Tagen"
+  (der Fun Fact von 10 Uhr entsteht vor der ersten Partie, sah aber die ganze
+  Liste), „7 trägt den Schildring", ein leerer Wertblock, „1 Platz" als Anzahl
+  statt als Rang, ein Anteil, der dem Spieler gehörte und der Liga
+  zugeschrieben war, und ein großer Wert, der den Katalog zählte, während die
+  Schlagzeile von einer Führung erzählte. `tests/ambient` läuft jede Vorlage
+  an mehreren Uhrzeiten und mit mehreren Würfeln ab — darunter der Vormittag
+  jedes Spieltags der letzten Wochen, weil der Blick in die Zukunft nur dort
+  zu treffen ist — und prüft fünf Dinge: einen gefüllten großen Wert, das
+  Komma in jeder Dezimalzahl [§C27], keine negative Anzahl, kein „&" im Satz
+  und das Verb im Plural nach einer Mehrzahl.
 
   **Was zwei Leute miteinander zu tun haben, sagt der Story-Typ** und nicht die
   Kartenform (`_ndBeziehung`). Unter zwei Wappen stand „als Duo", sobald eine

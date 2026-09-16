@@ -144,21 +144,31 @@ function _byPlayerMatches(){
 // Nötig, weil persistierte „ungeschlagen/Pechvogel/Top-Form"-Stories bis
 // expires_at im Feed bleiben und sonst Spieler zeigen, deren Serie/Form längst
 // gebrochen ist. Caps (Win 20, Loss 12) exakt wie die jeweiligen Generatoren.
-// Rückgabe: { loss:{pid:n}, win:{pid:n}, form:{pid:siege_der_letzten_10} }.
+// Rückgabe: { loss:{pid:n}, win:{pid:n}, form:{pid:siege_der_letzten_10},
+//             vor:{pid:anteilspunkte_ueber_dem_eigenen_schnitt} }.
 function _liveStreakForm(){
   const key = matches.length + '_' + _cache.version;
   if(_cache._liveSFKey === key) return _cache._liveSF;
   const byP = _byPlayerMatches();
-  const loss = {}, win = {}, form = {};
+  const loss = {}, win = {}, form = {}, vor = {};
   for(const pid in byP){
     const arr = byP[pid];
     let w = 0; for(let i = arr.length - 1; i >= 0; i--){ if(!won(pid, arr[i])) break; w++; if(w > 20) break; }
     let l = 0; for(let i = arr.length - 1; i >= 0; i--){ if(won(pid, arr[i])) break; l++; if(l > 12) break; }
     win[pid] = w; loss[pid] = l;
-    form[pid] = arr.length < 10 ? 0 : arr.slice(-10).filter(m => won(pid, m)).length;
+    form[pid] = arr.length < FORM_FENSTER ? 0
+      : arr.slice(-FORM_FENSTER).filter(m => won(pid, m)).length;
+    // ── Der Vorsprung, nicht das Niveau ──────────────────────────────
+    // Dieselbe Rechnung wie im Generator [§11.0b], weil der Stale-Filter
+    // dieselbe Frage stellen muss: die Karte sagt „über dem eigenen
+    // Schnitt", also ist sie veraltet, wenn der ABSTAND weg ist.
+    if(arr.length < FORM_FENSTER + FORM_BASIS_MIN){ vor[pid] = null; continue; }
+    const davor = arr.slice(0, -FORM_FENSTER);
+    vor[pid] = form[pid] / FORM_FENSTER
+      - davor.filter(m => won(pid, m)).length / davor.length;
   }
   _cache._liveSFKey = key;
-  _cache._liveSF = { loss, win, form };
+  _cache._liveSF = { loss, win, form, vor };
   return _cache._liveSF;
 }
 
@@ -263,7 +273,7 @@ function _consolidateStories(list){
   // dann nicht nur Spam, sondern schlicht falsch. Sie bleibt jetzt nur, solange
   // ihr Referenz-Match noch das jüngste der Liga ist.
   const _lastMatchId = matches.length ? matches[matches.length-1].id : null;
-  const { loss: _liveLoss, win: _liveWin, form: _liveForm } = _liveStreakForm();
+  const { loss: _liveLoss, win: _liveWin, form: _liveForm, vor: _liveVor } = _liveStreakForm();
   const { win: _tsWin, loss: _tsLoss } = _liveTeamStreak();
   const _paarKey = d => (d.a && d.b) ? [d.a, d.b].sort().join('|') : null;
   // Wer haelt einen Liga-Rekord HEUTE? Einmal je Lauf und nur, wenn eine
@@ -353,7 +363,17 @@ function _consolidateStories(list){
     if(_storyAbgemeldet(s && s.id)) return false;
     if(d.type === 'ambient') return !_tageMitNachricht.has(_fdKey(s.when));
     if(d.type === 'loss_streak' && d.pid) return (_liveLoss[d.pid] || 0) >= (d.streak || 0);
-    if(d.type === 'top_form' && d.pid) return (_liveForm[d.pid] || 0) >= (d.wins || 0);
+    // ── Der Formlauf veraltet am Abstand, nicht an der Siegzahl ──────
+    // Verglichen wurde die Zahl der Siege im Fenster mit der von damals,
+    // und das Fenster der letzten zehn Partien verschiebt sich schon im
+    // Lauf desselben Spieltags: die Karte entsteht nach der vierten
+    // Partie mit 8 von 10, nach der siebten stehen dort 7 — und die eigene
+    // Karte von heute Mittag fiel damit als veraltet weg. Gemessen an der
+    // echten Liga wurden acht Formkarten gebildet und keine einzige
+    // gezeigt. Gefragt wird deshalb, was die Karte behauptet: steht der
+    // Vorsprung auf den eigenen Schnitt noch [§C33]?
+    if(d.type === 'top_form' && d.pid)
+      return _liveVor[d.pid] != null && _liveVor[d.pid] >= FORM_VORSPRUNG;
     if(d.type === 'dry_spell' && d.lastMatchId) return d.lastMatchId === _lastMatchId;
     // Ein Elo-Rekord, den es nicht mehr gibt, ist keine Nachricht mehr,
     // sondern eine falsche. Gemessen standen neun Karten „Neuer Elo-Rekord:
@@ -560,8 +580,13 @@ function _consolidateStories(list){
       // bleibt). Verhindert Duplikate wie „Maxi, Maxi, Alex … Alex".
       if(!g.seen.has(d.pid)){ g.seen.add(d.pid); g.members.push(s); }
     } else {
+      // Breaking scheitert an keiner Sperre [§C33] — auch nicht am
+      // Doublettenfilter. Zwei Wechsel der Tabellenspitze sind zwei
+      // Ereignisse, selbst wenn der Text derselbe waere.
+      let _brkFrei = false;
+      try { _brkFrei = typeof _isBreaking === 'function' && _isBreaking(s); } catch(e){}
       const ck = (s.title || '') + '\u0000' + (s.desc || '');
-      if(seenContent.has(ck)){ verworfen.push(s); continue; }   // inhaltsgleiche Doublette
+      if(!_brkFrei && seenContent.has(ck)){ verworfen.push(s); continue; }
       const tk = String(s.title || '').trim();
       // Was es je Tag, Woche oder Monat genau einmal gibt, darf dieselbe
       // Schlagzeile zweimal tragen: sie steht unter zwei verschiedenen
@@ -570,7 +595,11 @@ function _consolidateStories(list){
       // Spieltage, zwei Ergebnisse, und die ältere Karte fiel weg, weil
       // beide „Martin ist Spieler des Tages" heißen. Eine echte Doublette
       // fängt der volle Vergleich aus Schlagzeile UND Text weiter ab.
-      if(tk && !TAG_PFLICHT.has(d.type) && seenTitel.has(tk)){ verworfen.push(s); continue; }
+      // Dasselbe gilt fuer die gleiche Schlagzeile: die Tabellenspitze
+      // wechselte am 14.09. zu Martin und am 15.09. zurueck zu Maxi, und
+      // beide Karten heissen „Neuer Spitzenreiter: Maxi". Zwei Wechsel sind
+      // zwei Ereignisse, und sie stehen unter zwei Tageskoepfen.
+      if(tk && !_brkFrei && !TAG_PFLICHT.has(d.type) && seenTitel.has(tk)){ verworfen.push(s); continue; }
       const ak = _sperreMs ? _aussage(s) : null;
       if(ak){
         const vorherMs = _zuletzt.get(ak);

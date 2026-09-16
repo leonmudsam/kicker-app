@@ -14,6 +14,14 @@ function dateStr(ts){
   }
   return v;
 }
+// ── Eine Dezimalzahl trägt hier ein Komma ───────────────────────────
+// Die Oberfläche schreibt „6,9 Gegentore", die Fun Facts schrieben „6.9" —
+// acht Stellen mit `toFixed(1)` und ein Punkt mitten im deutschen Satz.
+// Eine Stelle für alle, damit es nicht wieder auseinanderläuft [§C27].
+function komma(v, n){
+  const z = Number(v);
+  return (isFinite(z) ? z : 0).toFixed(n == null ? 1 : n).replace('.', ',');
+}
 function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen

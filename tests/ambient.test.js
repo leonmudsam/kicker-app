@@ -1921,8 +1921,40 @@ const _ziel = JSON.parse(K.eval(`JSON.stringify((function(){
   const k = v.make(() => 0.42);
   if(!k) return {leer:true};
   const bedingungen = [];
-  players.forEach(p => prestigeSchritte(p.id, 1).forEach(s => { if(s.cond) bedingungen.push(s.cond); }));
-  return {t:k.title, d:k.desc, passt:bedingungen.some(c => k.desc.indexOf(c) >= 0)};
+  // Jeder offene Schritt jedes Spielers, damit die Regeln nicht am
+  // einen Fall haengen, den die Karte gerade zufaellig zieht.
+  const alle = [];
+  players.forEach(p => prestigeSchritte(p.id, 99).forEach(s => {
+    alle.push(s);
+    if(s.cond) bedingungen.push(s.cond);
+  }));
+  // Der Katalog schreibt negativ, die abgeleitete Rekordliste neg. Die
+  // Zusicherung fragt beide Felder ab, sonst prueft sie am falschen Namen
+  // vorbei und ist immer gruen.
+  const neg = alle.filter(s => {
+    const d = (s.art === 'monat' ? DISZIPLINEN : CHRONICLES).find(x => x.id === s.id);
+    return d && (d.art === 'schatten' || d.negativ === true || d.neg === true);
+  }).map(s => s.art + '/' + s.id);
+  // Der eigene Stand: ohne ihn sagt die Karte nicht, wie weit es noch ist.
+  const ohneStand = alle.filter(s => s.art === 'rekord' && s.stand && !s.mein).length;
+  // Und ein Verb je Halterzahl.
+  const karten = [];
+  players.forEach(p => {
+    const st = prestigeSchritte(p.id, 1);
+    if(!st.length) return;
+    const kk = v.make(() => (players.indexOf(p) + 0.5) / players.length);
+    if(kk) karten.push(kk.desc || '');
+  });
+  // Gemessen wird an ALLEN Schritten, nicht an der einen Karte, die der
+  // Wuerfel gerade zieht: ein Rekord mit mehreren Haltern kommt in den
+  // zwoelf gezogenen Karten nicht zwangslaeufig vor.
+  const viele = alle.filter(x => (x.halterN || 0) > 1);
+  return {t:k.title, d:k.desc, passt:bedingungen.some(c => k.desc.indexOf(c) >= 0),
+          neg, ohneStand, n:alle.length,
+          vieleN:viele.length,
+          amp:alle.filter(x => /&/.test(String(x.halter) + String(x.txt))).length,
+          verb:viele.filter(x => / hält /.test(String(x.txt))).map(x => x.txt),
+          steht:karten.filter(t => / steht bei /.test(t)).length, k:karten.length};
 })())`));
 ok(!_ziel.fehlt && !_ziel.leer, 'die Karte zum naechsten Rekord entsteht', JSON.stringify(_ziel));
 ok(!/am nächsten/.test(_ziel.t || ''), 'ihre Schlagzeile sagt nicht nur, wer am naechsten liegt',
@@ -1930,6 +1962,96 @@ ok(!/am nächsten/.test(_ziel.t || ''), 'ihre Schlagzeile sagt nicht nur, wer am
 ok(_ziel.passt,
    'und ihr Text nennt die Bedingung aus dem Katalog', (_ziel.d || '').slice(0, 90));
 ok(/Prestige/.test(_ziel.d || ''), 'samt dem, was der Rekord einbringt', (_ziel.d || '').slice(0, 90));
+
+// ── Ein Ziel, das niemand haben will, ist kein Ziel ─────────────────
+// „Alex kann ‚Die bitterste Pleite' holen" stand im Feed: die hoechste
+// Siegchance, mit der je jemand verlor, als Aufgabe. Gefiltert war nur die
+// Schattenseite, nicht die negative Fuegung — `nextRecordFor` kennt die
+// Regel seit jeher [§C25].
+ok(_ziel.neg.length === 0, 'kein negativer Eintrag wird als Ziel vorgeschlagen',
+   _ziel.neg.join(', ') || 'keiner');
+// ── Und die Karte nennt den eigenen Stand ───────────────────────────
+// Sie sagte die Schwelle und den Bestwert des Halters. „Martin haelt den
+// Bestwert mit 84 %" ist ohne die eigenen 71 % keine Auskunft darueber, wie
+// weit es noch ist.
+ok(_ziel.n > 0, 'es gibt offene Schritte zu messen', String(_ziel.n));
+ok(_ziel.ohneStand === 0, 'jeder offene Rekord kennt den eigenen Stand',
+   String(_ziel.ohneStand));
+ok(_ziel.k > 0 && _ziel.steht > 0, 'und die Karte schreibt ihn hin',
+   _ziel.steht + ' von ' + _ziel.k);
+// ── „&" gehoert in eine Zelle, nicht in einen Satz ──────────────────
+// `_chronHolderNames` ist die Form fuer die schmale Zelle des
+// Rekorde-Reiters. Im Fliesstext stand damit „Martin & Julian haelt den
+// Bestwert mit 84 %": das Zeichen als einziges im Satz, und das Verb im
+// Singular ueber zwei Leute [§C33].
+ok(_ziel.vieleN > 0, 'es gibt Rekorde mit mehreren Haltern', String(_ziel.vieleN));
+ok(_ziel.amp === 0, 'kein Kaufmanns-Und in einem Prestige-Satz', String(_ziel.amp));
+ok(_ziel.verb.length === 0, 'zwei Halter halten, nicht haelt',
+   _ziel.verb[0] || 'keiner');
+
+// ── Jede Ambient-Karte traegt einen Wert, mit dem man etwas anfangen
+// kann ──────────────────────────────────────────────────────────────
+// Sie stehen an vierzig Stellen und wurden nie zusammen gemessen, also
+// ging jede einzeln kaputt: „vor -1 Tagen" (der Fun Fact von 10 Uhr sah
+// eine Auszeichnung aus der Partie um 11:39), „7 traegt den Schildring",
+// „Im Schnitt fallen 6.9 Tore" mit englischem Punkt, „1 Platz" als Anzahl
+// statt als Rang und ein leerer Wertblock. Der Deckel ist deshalb ein
+// Rundlauf ueber ALLE Vorlagen: eine neue Karte ist gerade die, an die
+// niemand denkt.
+const _amb = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap();
+  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const raus = { ohneWert:[], punkt:[], minus:[], amp:[], verb:[] };
+  // Mehrere Zeitpunkte und mehrere Wuerfel, damit jede Vorlage auch die
+  // Zweige trifft, die von der Uhrzeit oder vom gezogenen Spieler haengen.
+  // Dazu der Vormittag jedes Spieltags der letzten Wochen: der Fun Fact von
+  // 10 Uhr entsteht VOR der ersten Partie, sah aber die ganze Liste und
+  // rechnete damit „vor -1 Tagen". Nur mit dem heutigen Zeitpunkt ist
+  // dieser Zweig nie zu treffen.
+  const morgen = [...new Set(matches.map(m => String(m.created_at).slice(0, 10)))]
+    .sort().slice(-25).map(d => new Date(d + 'T08:00:00'));
+  [new Date(), new Date(Date.now() - 36e5 * 9)].concat(morgen).forEach(t0 => {
+    const T = _ambientTemplatePool(t0, pm, nameOf);
+    T.forEach(v => {
+      for(let i = 0; i < 12; i++){
+        let k = null;
+        try { k = v.make(() => (i + 0.5) / 12); } catch(e){ continue; }
+        if(!k) continue;
+        const txt = String(k.title || '') + ' | ' + String(k.desc || '');
+        // Der grosse Block der Karte darf nicht leer bleiben.
+        if(k.vv === undefined || k.vv === null || String(k.vv) === '')
+          raus.ohneWert.push(v.key);
+        // Eine Dezimalzahl traegt hier ein Komma [§C27].
+        if(/\\d\\.\\d/.test(txt.replace(/\\d{1,2}\\.\\d{1,2}\\./g, '')))
+          raus.punkt.push(v.key + ': ' + txt.slice(0, 60));
+        // Keine negative Anzahl: „vor -1 Tagen", „-2 Siege".
+        if(/(^|[^\\d.,])-\\s?\\d/.test(txt)) raus.minus.push(v.key + ': ' + txt.slice(0, 60));
+        // „&" gehoert in eine Tabellenzelle, nicht in einen Satz.
+        if(/&/.test(txt)) raus.amp.push(v.key);
+        // Eine Zahl ueber eins bekommt das Verb im Plural.
+        if(/\\b([2-9]|\\d\\d+) (trägt|hält|liegt|steht|gewinnt|verliert|holt|ist)\\b/.test(txt))
+          raus.verb.push(v.key + ': ' + txt.slice(0, 60));
+      }
+    });
+  });
+  const T0 = _ambientTemplatePool(new Date(), pm, nameOf);
+  const einzig = {}; T0.forEach(v => { einzig[v.key] = (einzig[v.key] || 0) + 1; });
+  return { n:T0.length, raus,
+           doppelt:Object.keys(einzig).filter(k => einzig[k] > 1) };
+})())`));
+ok(_amb.n >= 30, 'der Rundlauf sieht alle Vorlagen', String(_amb.n));
+ok(_amb.doppelt.length === 0, 'jede Vorlage hat ihren eigenen Schluessel',
+   _amb.doppelt.join(', ') || 'keine');
+ok(_amb.raus.ohneWert.length === 0, 'keine Ambient-Karte ohne grossen Wert',
+   [...new Set(_amb.raus.ohneWert)].join(', ') || 'keine');
+ok(_amb.raus.punkt.length === 0, 'jede Dezimalzahl traegt ein Komma',
+   _amb.raus.punkt[0] || 'keine');
+ok(_amb.raus.minus.length === 0, 'keine negative Anzahl in einer Karte',
+   _amb.raus.minus[0] || 'keine');
+ok(_amb.raus.amp.length === 0, 'kein Kaufmanns-Und in einer Ambient-Karte',
+   [...new Set(_amb.raus.amp)].join(', ') || 'keins');
+ok(_amb.raus.verb.length === 0, 'eine Mehrzahl bekommt ihr Verb im Plural',
+   _amb.raus.verb[0] || 'keine');
 
 // ── Kein Listentrenner im Fliesstext ────────────────────────────────
 // Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist fuer eine Zelle
@@ -2866,6 +2988,172 @@ ok(_serieTag.n === 1,
 ok(_serieTag.marken[0] === 7,
    'und zwar die laengste Marke des Tages',
    String(_serieTag.marken[0]));
+// ── Der Formlauf veraltet am Abstand, nicht an der Siegzahl ─────────
+// Verglichen wurde die Zahl der Siege im Fenster mit der von damals — und
+// das Fenster der letzten zehn Partien verschiebt sich schon im Lauf
+// desselben Spieltags. Die Karte entsteht nach der vierten Partie mit 8 von
+// 10, nach der siebten stehen dort 7, und die eigene Karte von heute Mittag
+// fiel als veraltet weg. Gemessen am echten Vierzehn-Tage-Verlauf wurden
+// acht Formkarten gebildet und keine einzige gezeigt.
+const _form = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const basis = mts(alle[alle.length - 1]);
+  const held = (players.find(p => p.name === 'Jane') || players[0]).id;
+  const rest = players.filter(p => p.id !== held).slice(0, 3).map(p => p.id);
+  const bau = (praefix, ab, n, gewinnt) => {
+    const out = [];
+    for(let i = 0; i < n; i++) out.push({
+      id: praefix + i, a1:held, a2:rest[0], b1:rest[1], b2:rest[2],
+      a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def',
+      score_a: gewinnt ? 10 : 6, score_b: gewinnt ? 6 : 10,
+      winner: gewinnt ? 'A' : 'B', exp_a: 0.5,
+      created_at: new Date(ab + i * 300000).toISOString(), deltas:{}
+    });
+    return out;
+  };
+  // Zehn Siege am Vormittag: das Fenster ist voll, die Form steht klar ueber
+  // dem eigenen Schnitt. Mehr waeren kontraproduktiv — jeder Sieg jenseits
+  // des Fensters hebt den eigenen Schnitt und damit den Vergleichswert.
+  const hoch = bau('fh', basis + 300000, 10, true);
+  // Danach eine Niederlage am selben Tag: das Fenster verschiebt sich, der
+  // Vorsprung bleibt.
+  const tief = bau('ft', basis + 11 * 300000, 1, false);
+  const stand = l => l.filter(x => (x.dataRef || {}).type === 'top_form'
+    && x.dataRef.pid === held);
+
+  matches = alle.concat(hoch);
+  invalidateCache();
+  const frueh = stand(_buildStories())[0] || null;
+
+  matches = alle.concat(hoch, tief);
+  invalidateCache();
+  const spaet = stand(_buildStories())[0] || null;
+  // Die Karte vom Vormittag, gegen den Stand von jetzt gehalten: genau der
+  // Fall, den die Datenbank liefert.
+  const durch = frueh ? _consolidateStories([frueh]).length : -1;
+  const sf = _liveStreakForm();
+  const erg = { frueh: frueh ? frueh.dataRef.wins : null,
+                jetzt: sf.form[held], vor: sf.vor[held], durch,
+                schwelle: FORM_VORSPRUNG };
+  matches = alle;
+  invalidateCache();
+  return erg;
+})())`));
+ok(_form.frueh != null, 'die Formkarte entsteht', String(_form.frueh));
+ok(_form.jetzt < _form.frueh,
+   'und das Fenster verschiebt sich noch am selben Tag',
+   _form.jetzt + ' statt ' + _form.frueh);
+ok(_form.vor >= _form.schwelle,
+   'der Vorsprung auf den eigenen Schnitt steht trotzdem noch',
+   String(Math.round(_form.vor * 100)) + ' Punkte');
+ok(_form.durch === 1, 'also bleibt die Karte im Feed', String(_form.durch));
+
+// ── Breaking scheitert auch nicht an der gleichen Schlagzeile ────────
+// Die Tabellenspitze wechselte am 14.09. zu Martin und am 15.09. zurueck zu
+// Maxi. Beide Karten heissen „Neuer Spitzenreiter: Maxi", also fiel die vom
+// 14. weg: der Tag, an dem er sie uebernahm, hatte danach keine
+// Breaking-Karte mehr. Zwei Wechsel sind zwei Ereignisse [§C33].
+const _brkTitel = JSON.parse(K.eval(`JSON.stringify((function(){
+  const t0 = mts(matches[matches.length - 1]);
+  const bau = (n, tag) => ({
+    id:'lead_change_' + n, cat:'highlight', ic:'crown',
+    title:'Neuer Spitzenreiter: Maxi',
+    desc:'Die Spitze wechselt, Nummer ' + n + '.',
+    when:new Date(t0 - tag * 864e5).toISOString(), prio:93,
+    dataRef:{type:'lead_change', pid:players[10].id, playerIds:[players[10].id]}
+  });
+  // Je Tag noch eine zweite Karte: bleibt fuer einen Spieltag sonst nichts
+  // uebrig, holt die Rueckholung die verworfene zurueck [§C33], und die
+  // Gegenprobe waere damit immer gruen.
+  // Der Fueller braucht je Tag eine eigene Aussage: zwei Ergebniskarten ohne
+  // Sache teilen einen Sperrschluessel, und dann faellt der Fueller des
+  // aelteren Tages weg — der Tag ist wieder leer, und die Rueckholung greift.
+  const fuell = tag => ({
+    id:'badge_unlocked_f' + tag, cat:'badge', ic:'trophy',
+    title:'Eine Auszeichnung am Tag ' + tag, desc:'Zum ' + (tag + 1) + '. Mal geholt.',
+    when:new Date(t0 - tag * 864e5).toISOString(), prio:54,
+    dataRef:{type:'badge_unlocked', pid:players[tag].id, playerIds:[players[tag].id],
+             badgeId:'f' + tag}
+  });
+  const zwei = _consolidateStories([bau(2, 0), fuell(0), bau(1, 1), fuell(1)])
+    .filter(x => (x.dataRef || {}).type === 'lead_change');
+  // Gegenprobe: dieselbe Schlagzeile ohne Breaking bleibt eine Karte.
+  const ohne = _consolidateStories([2, 1].map(n => {
+    const s = bau(n, n === 2 ? 0 : 1);
+    s.id = 'elo_swing_' + n; s.prio = 38;
+    s.dataRef = {type:'elo_swing', pid:players[10].id, playerIds:[players[10].id]};
+    return s;
+  }).concat([fuell(0), fuell(1)])).filter(x => (x.dataRef || {}).type === 'elo_swing');
+  return {brk:zwei.length, normal:ohne.length,
+          istBrk:zwei.length ? !!_isBreaking(zwei[0]) : false};
+})())`));
+ok(_brkTitel.istBrk, 'der Spitzenwechsel ist Breaking', String(_brkTitel.istBrk));
+ok(_brkTitel.brk === 2, 'zwei Wechsel mit derselben Schlagzeile bleiben zwei Karten',
+   String(_brkTitel.brk));
+ok(_brkTitel.normal === 1, 'ohne Breaking bleibt die gleiche Schlagzeile einmal stehen',
+   String(_brkTitel.normal));
+
+// ── Und der Wechsel nennt eine Zahl ─────────────────────────────────
+// „X steht nach dem letzten Spiel an der Spitze. Y war vorher dort." nannte
+// keine und war damit an jedem Wechsel derselbe Satz. Am 14.09. wechselte
+// die Spitze zweimal und am 15.09. erneut; zwei der drei Karten trugen Wort
+// fuer Wort denselben Text, und der Doublettenfilter warf die aeltere weg.
+// Gebaut, nicht gehofft: in den echten 466 Partien wechselt die Spitze an
+// keinem der 56 Spieltage — der Erste steht von Anfang an oben. Gebaut wird
+// der Wechsel deshalb: der Zweite schlaegt den Ersten so lange, bis er vorn
+// ist.
+const _fw = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const basis = mts(alle[alle.length - 1]);
+  const sim = getGlobalSim();
+  const rang = Object.keys(sim.elo || {})
+    .filter(pid => pmap()[pid] && !pmap()[pid].hidden)
+    .map(pid => ({pid, elo:sim.elo[pid]}))
+    .sort((a, b) => b.elo - a.elo);
+  const erster = rang[0].pid, zweiter = rang[1].pid;
+  const rest = rang.slice(2, 4).map(x => x.pid);
+  // Die Elo kommt aus den persistierten Deltas der Partie, nicht aus einer
+  // Rechnung ueber das Ergebnis: ohne sie bewegt sich die Tabelle nicht, und
+  // das Szenario waere immer gruen.
+  const d = {};
+  d[zweiter] = 12; d[rest[0]] = 12; d[erster] = -12; d[rest[1]] = -12;
+  const partie = i => ({
+    id:'fw' + i, a1:zweiter, a2:rest[0], b1:erster, b2:rest[1],
+    a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def',
+    score_a:10, score_b:2, winner:'A', exp_a:0.5,
+    created_at:new Date(basis + (i + 1) * 300000).toISOString(),
+    deltas:Object.assign({}, d)
+  });
+  // Die Karte entsteht nur, wenn die LETZTE Partie den Wechsel ausgeloest
+  // hat: sie vergleicht den Stand von jetzt mit dem Rang vor diesem Spiel.
+  // Angehaengt wird deshalb eine Partie nach der anderen, bis es kippt —
+  // vierzig auf einmal lassen den Wechsel in der Mitte passieren, und am
+  // Ende steht der neue Erste schon vor dem letzten Spiel oben.
+  let fw = [], l = [];
+  const dazu = [];
+  for(let i = 0; i < 60; i++){
+    dazu.push(partie(i));
+    matches = alle.concat(dazu);
+    invalidateCache();
+    try { l = _buildStories(); } catch(e){ l = []; }
+    fw = l.filter(x => (x.dataRef || {}).type === 'lead_change');
+    if(fw.length) break;
+  }
+  const erg = { n:fw.length, texte:fw.map(x => x.desc),
+    ohneZahl: fw.filter(x => !/\\d/.test(String(x.desc))).map(x => x.desc),
+    floskel:  fw.filter(x => /nach dem letzten Spiel/.test(String(x.desc))).length,
+    neuer:    fw.length ? (fw[0].dataRef.newLeader === zweiter) : false };
+  matches = alle;
+  invalidateCache();
+  return erg;
+})())`));
+ok(_fw.n > 0, 'ein Fuehrungswechsel wird gebildet', String(_fw.n));
+ok(_fw.neuer, 'und nennt den neuen Ersten', String(_fw.neuer));
+ok(_fw.ohneZahl.length === 0, 'die Karte nennt den Elo-Stand der Spitze',
+   _fw.ohneZahl[0] || (_fw.texte[0] || '').slice(0, 90));
+ok(_fw.floskel === 0, 'statt „nach dem letzten Spiel" ohne jede Zahl',
+   String(_fw.floskel));
+
 ok(_worte.ergebnisFalsch.length === 0,
    'das Ergebnis im Text gehoert dem Sieger',
    _worte.ergebnisFalsch.slice(0, 2).join(' | ') || 'alle');

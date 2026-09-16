@@ -418,7 +418,18 @@ function _buildStories(){
             cat: 'highlight',
             ic: 'kingClass',
             title: `Neuer Spitzenreiter: ${nameOf(cur[0].pid)}`,
-            desc: `${nameOf(cur[0].pid)} steht nach dem letzten Spiel an der Spitze. ${nameOf(prevTop)} war vorher dort.`,
+            // ── Jeder Text nennt eine Zahl [§C33] ──────────────────────
+            // „X steht nach dem letzten Spiel an der Spitze. Y war vorher
+            // dort." nannte keine und war damit an jedem Wechsel derselbe
+            // Satz. Die Spitze wechselte am 14.09. zweimal und am 15.09.
+            // erneut; zwei der drei Karten trugen Wort fuer Wort denselben
+            // Text, und der Doublettenfilter warf die aeltere weg — der Tag,
+            // an dem er sie uebernahm, hatte danach keine Breaking-Karte.
+            // Der Vorsprung gehoert ohnehin auf die Karte: er sagt, wie
+            // knapp es oben zugeht.
+            desc: `${nameOf(cur[0].pid)} steht mit ${cur[0].elo} Elo an der Spitze`
+                + (cur[1] ? `, ${cur[0].elo - cur[1].elo} vor ${nameOf(cur[1].pid)}` : '')
+                + `. Vorher war ${nameOf(prevTop)} dort.`,
             when: new Date(lastSeasonMatch.created_at),
             prio: STORY_PRIO.lead_change,
             dataRef: {type:'lead_change', newLeader: cur[0].pid, prevLeader: prevTop, matchId: lastSeasonMatch.id}
@@ -1683,7 +1694,9 @@ function _buildStories(){
           if(now.getTime() >= rep.getTime()){
             const main = res.main;
             const names = res.winners.map(w => nameOf(w.id));
-            const titleNames = names.length > 1 ? names.slice(0, -1).join(', ') + ' & ' + names[names.length-1] : names[0];
+            // Auch hier die Aufzaehlung der App [§C27]: „Leon & Martin holen
+            // den Tag" war die letzte Schlagzeile mit „&" im Feed.
+            const titleNames = _namenKurz(names);
             const p = data.dayKey.split('-');
             const dLabel = p[2] + '.' + p[1] + '.';
             stories.push({
