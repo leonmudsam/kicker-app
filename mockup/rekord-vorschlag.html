@@ -2408,6 +2408,14 @@
     border-radius:5px;background:var(--surface2);border:1px solid var(--line);
     color:var(--muted);font-size:9px;font-weight:600;letter-spacing:.04em;
     text-transform:uppercase;white-space:nowrap}
+  /* Der Stand einer Partie. Auf der Ergebnis-Karte ist er die Aussage und
+     steht deshalb rechts in eigener Spalte, in Ziffernbreite — nicht im
+     Satz, der sich kürzt. Metall wie die Marke: er zeichnet niemanden aus
+     [§C25], die Richtung steht im Text. */
+  .nf-sam-z b.nf-sam-w{flex:0 0 auto;margin-left:auto;padding:1px 6px;
+    border-radius:5px;background:var(--surface2);border:1px solid var(--line);
+    color:var(--ink);font-size:11px;font-weight:800;letter-spacing:.02em;
+    font-variant-numeric:tabular-nums;white-space:nowrap}
   .nf-sam-i{width:20px;height:20px;flex:0 0 auto;border-radius:6px;
     display:grid;place-items:center;background:var(--surface2);
     border:1px solid var(--line);color:var(--muted)}
@@ -2426,8 +2434,12 @@
   .nf-s-tafel .nf-sam-z .nf-sam-i{color:rgb(var(--zeile-rgb));
     border-color:rgba(var(--zeile-rgb),.22);background:rgba(var(--zeile-rgb),.075);
     box-shadow:0 0 12px -8px rgba(var(--zeile-rgb),.72)}
-  .nf-sam-m{padding:6px 13px;font-size:10px;color:var(--faint);
-    border-top:1px solid var(--line)}
+  /* Die Zahl der uebrigen Zeilen ist der Weg ins Blatt, also muss man sie
+     lesen koennen. Mit 6 px Luft und `--faint` endete sie gerendert 1 px
+     ueber der Kartenkante, und die Ecke von 14 px schnitt sie an: „und 13
+     weitere" sah aus wie ein Darstellungsfehler. */
+  .nf-sam-m{padding:8px 13px 12px;font-size:10.5px;color:var(--muted);
+    border-top:1px solid var(--line);letter-spacing:.02em}
 
   /* Sorte 6 Duo: zwei Wappen nebeneinander, kein Rang [§C27]. */
   .nf-duo{gap:0}
@@ -4650,6 +4662,7 @@
   .tor{font-variant-numeric:tabular-nums;font-size:10.5px;text-align:right;white-space:nowrap}
   .tor.gut{color:var(--acid)}
   .tor.schlecht{color:var(--red)}
+  .tor.leer{color:var(--faint)}
   .urteil{white-space:nowrap}
   .ok{color:var(--acid);font-size:10.5px}
   .weg{color:var(--red);font-size:10.5px}
@@ -4682,22 +4695,29 @@
 </style></head><body>
 <div class="rv">
   <div class="lead">Vorschlag · gemessen an 466 echten Partien · Stand 2026-08-27 12:00</div>
-  <h1>Rekorde, die nicht der Spitze gehören</h1>
+  <h1>Rekorde, die jeder holen kann</h1>
   <p>Gesucht sind Liga-Rekorde, die <b>nicht den Vielspieler</b> und <b>nicht den Besten</b>
-     belohnen: erreichbar für die Mitte des Feldes, besonders, auf einer <b>Abweichung</b>
-     gebaut und aus den Fragen der Monatschroniken abgeleitet, ohne einen bestehenden
-     Eintrag zu doppeln. Achtzehn Kandidaten wurden an den echten Partien gerechnet.
-     <b>Fünf</b> überstehen alle fünf Tore.</p>
-  <p>Das Ergebnis ist selbst die wichtigste Aussage: die meisten
-     Abweichungsfragen hängen entweder doch an der Spielzahl oder sie wiederholen die
-     Rangliste. Welche das sind und warum, steht unten mit Zahl und Grund.</p>
+     belohnen: erreichbar für die ganze Liga, besonders, auf einer <b>Abweichung</b> oder
+     einer <b>Fügung</b> gebaut und ohne einen der 36 bestehenden Einträge zu
+     doppeln. 36 Kandidaten wurden an den echten Partien gerechnet.
+     <b>fünf</b> überstehen jedes Tor, das für sie gilt.</p>
+  <p>Zwei Runden. Die <b>erste</b> hebt die Fragen der Monatschroniken auf die Laufbahn:
+     dieselbe Frage, andere Zeitachse [§13.1]. Die <b>zweite</b> fragt nach dem, was
+     niemand wählt — welches Los die Auslosung zuteilt, wer daneben steht, welcher
+     Wochentag es ist, welcher Moment im Spieltag es ist — und nach vier <b>Funden</b>,
+     einzelnen Zusammentreffen, die ein Gelegenheitsspieler an einem einzigen Nachmittag
+     treffen kann.</p>
+  <p>Das Ergebnis ist selbst die wichtigste Aussage: die meisten dieser Fragen hängen
+     entweder doch an der Spielzahl oder sie wiederholen die Rangliste. Welche das sind
+     und warum, steht unten mit Zahl und Grund — 31 Absagen, jede mit ihrer
+     eigenen Messung.</p>
 
   <div class="karten">
-    <div class="kz"><b>18</b><span>Kandidaten gerechnet</span></div>
-    <div class="kz gold"><b>5</b><span>bestehen alle fünf Tore</span></div>
-    <div class="kz"><b>13</b><span>fallen aus, mit Grund</span></div>
+    <div class="kz"><b>36</b><span>Kandidaten gerechnet</span></div>
+    <div class="kz gold"><b>5</b><span>bestehen jedes Tor</span></div>
+    <div class="kz"><b>31</b><span>fallen aus, mit Grund</span></div>
     <div class="kz"><b>36</b><span>Rekorde heute im Katalog</span></div>
-    <div class="kz"><b>5</b><span>neue Halter außerhalb der besten drei</span></div>
+    <div class="kz"><b>4</b><span>davon Funde, mit eigenem Tor</span></div>
     <div class="kz"><b>48</b><span>Prestige je neuem Rekord</span></div>
   </div>
 
@@ -4720,128 +4740,256 @@
      mit drei Zeilen zum Rekord, und die beiden Achsen können nicht auseinanderdriften,
      weil sie dieselbe Frage lesen.</p>
 
-  <h2>Die fünf Tore</h2>
+  <h2>Die acht Tore</h2>
+  <p>Vier stehen so in der Arbeitsanweisung [§C35, §C39]. Drei sind hier entstanden, und
+     eines davon ist selbst ein Ergebnis: „die Mitte kommt vor" nimmt eine Sache aus der
+     ersten Runde wieder zurück, die dort bestanden hatte.</p>
   <div class="regeln">
     <div class="regel"><b>hängt nicht an der Spielzahl</b>
-      <span><em>|r| ≤ 0,35</em> — Der Wert darf nicht mit der Zahl der Partien laufen, sonst hält den Rekord, wer am meisten spielt [§C39].</span></div><div class="regel"><b>wiederholt nicht die Rangliste</b>
-      <span><em>|r| ≤ 0,70</em> — Ein Wert, der fast perfekt mit der Siegquote läuft, ist die Rangliste unter anderem Namen. Vier der achtzehn Kandidaten scheitern allein daran.</span></div><div class="regel"><b>die halbe Liga steht im Rennen</b>
-      <span><em>≥ die Hälfte</em> — Mindestens die halbe Liga muss die Mindestzahl erfüllen, sonst ist die Bedingung selbst die Hürde [§C35].</span></div><div class="regel"><b>die Bestmarke schlägt weit aus</b>
-      <span><em>≥ 1,5 σ</em> — Der Beste muss mindestens 1,5 Standardabweichungen weiter draußen liegen als der Durchschnitt, sonst hält ihn fast jeder fast [§C39].</span></div><div class="regel"><b>nicht nur für die Spitze</b>
-      <span><em>Halter nicht in den besten drei</em> — Der heutige Halter darf nicht aus den besten drei kommen — das ist die Frage, um die es hier überhaupt geht.</span></div>
+      <span><em>|r| ≤ 0,35</em> — Der Wert darf nicht mit der Zahl der Partien laufen, sonst hält den Rekord, wer am meisten spielt [§C39]. Das ist das Tor, an dem die meisten Funde scheitern: ein Zusammentreffen braucht Gelegenheiten, und Gelegenheiten sind Partien.</span></div><div class="regel"><b>wiederholt nicht die Rangliste</b>
+      <span><em>|r| ≤ 0,70</em> — Ein Wert, der fast perfekt mit der Siegquote läuft, ist die Rangliste unter anderem Namen. Vierzehn der Kandidaten scheitern daran, und das ist der häufigste Grund von allen.</span></div><div class="regel"><b>die halbe Liga steht im Rennen</b>
+      <span><em>≥ die Hälfte</em> · nur für Quoten — Mindestens die halbe Liga muss die Mindestzahl erfüllen, sonst ist die Bedingung selbst die Hürde [§C35].</span></div><div class="regel"><b>die Bestmarke schlägt weit aus</b>
+      <span><em>≥ 1,5 σ</em> · nur für Quoten — Der Beste muss mindestens 1,5 Standardabweichungen weiter draußen liegen als der Durchschnitt, sonst hält ihn fast jeder fast [§C39].</span></div><div class="regel"><b>der Fund ist erreichbar</b>
+      <span><em>mehr als die Hälfte hat ihn</em> · nur für Funde — Für einen Fund gelten die Quotentore nicht — eine Quotenschwelle darauf anzuwenden hieße, das Seltene abzuschaffen [§C35]. An ihre Stelle tritt die Frage, ob er überhaupt erreichbar ist: höchstens die Hälfte darf leer stehen. Jeder Fund braucht dafür seine Untergrenze, sonst trägt jeder Spieler einen Wert und der Deckel geht ins Leere.</span></div><div class="regel"><b>nicht nur für die Spitze</b>
+      <span><em>Halter nicht in den besten drei</em> — Der heutige Halter darf nicht aus den besten drei kommen — das ist die Frage, um die es hier überhaupt geht.</span></div><div class="regel"><b>die Mitte kommt vor</b>
+      <span><em>einer der besten drei aus der unteren Hälfte</em> — Und dahinter darf nicht wieder nur die Spitze stehen. Das alte Tor fragte allein nach dem Halter von HEUTE; steht auf den Plätzen zwei und drei niemand aus der unteren Hälfte, ist der Rekord beim nächsten Wechsel wieder einer der Spitze. Gemessen am Podest fällt damit „Das Metronom&quot; aus der ersten Runde heraus — eine Sache, die fünf Tore bestanden hatte.</span></div><div class="regel"><b>die Bestmarke ist nicht geschenkt</b>
+      <span><em>höchstens ein Drittel hält sie</em> — Und sie darf nicht bei so vielen gleichzeitig liegen, dass sie niemanden mehr auszeichnet: „eine Bestmarke, die jeder geschenkt bekommt, ist keine mehr&quot; [§C35]. Gemessen fällt daran „Der Serientäter&quot; — sieben von zehn Spielern haben drei Partien nacheinander mit demselben Stand, also wäre der Rekord ein Plateau und sein Grundwert durch sieben geteilt [§C34]. Dasselbe beim „Standhaften&quot;. Genau dieser Fall war der Grund, warum der Ausschlag dort so klein ausfällt, und das Tor macht die Ursache sichtbar statt nur die Folge.</span></div>
   </div>
 
-  <h2>Alle achtzehn Kandidaten, gemessen</h2>
+  <h2>Erste Runde: die Fragen der Monatschroniken, auf die Laufbahn gehoben</h2>
   <table class="st">
     <thead><tr><th>Kandidat</th><th>Bedingung</th>
-      <th class="nz">hängt nicht an</th><th class="nz">wiederholt nicht die</th><th class="nz">die halbe Liga</th><th class="nz">die Bestmarke schlägt</th><th class="nz">nicht nur für</th>
+      <th class="nz">hängt nicht an</th><th class="nz">wiederholt nicht die</th><th class="nz">die halbe Liga</th><th class="nz">die Bestmarke schlägt</th><th class="nz">der Fund ist</th><th class="nz">nicht nur für</th><th class="nz">die Mitte kommt</th><th class="nz">die Bestmarke ist</th>
       <th>Urteil</th></tr></thead>
     <tbody><tr class="nein">
     <td><b>Auf Augenhöhe</b><code>gleichauf</code>
       <span class="frage">Wie viel besser läuft es in den Partien, die die Rechnung offen sah?</span></td>
     <td class="bed">ab 25 offenen Partien</td>
-    <td class="tor gut">r = 0,03</td><td class="tor schlecht">r = -0,91</td><td class="tor gut">7 von 11</td><td class="tor gut">1,97 σ</td><td class="tor gut">Rang 8 von 11</td>
+    <td class="tor gut">r = 0,03</td><td class="tor schlecht">r = -0,91</td><td class="tor gut">7 von 11</td><td class="tor gut">1,97 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 8 von 11</td><td class="tor gut">2 von 3</td><td class="tor gut">1 von 7</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="ja">
     <td><b>Die Steigerung</b><code>steigerung</code>
       <span class="frage">Wie weit liegt das letzte Drittel der Laufbahn über dem ersten?</span></td>
     <td class="bed">ab 60 Partien</td>
-    <td class="tor gut">r = 0,00</td><td class="tor gut">r = -0,31</td><td class="tor gut">10 von 11</td><td class="tor gut">1,57 σ</td><td class="tor gut">Rang 10 von 11</td>
+    <td class="tor gut">r = 0,00</td><td class="tor gut">r = -0,31</td><td class="tor gut">10 von 11</td><td class="tor gut">1,57 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 10 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 10</td>
     <td class="urteil"><span class="ok">aufnehmen</span></td>
   </tr><tr class="nein">
     <td><b>Der Erwartungstreue</b><code>punktgenau2</code>
       <span class="frage">Wessen Laufbahn trifft die Elo-Erwartung am genauesten?</span></td>
     <td class="bed">ab 60 Partien</td>
-    <td class="tor schlecht">r = 0,36</td><td class="tor gut">r = 0,28</td><td class="tor gut">10 von 11</td><td class="tor gut">1,64 σ</td><td class="tor gut">Rang 5 von 11</td>
+    <td class="tor schlecht">r = 0,36</td><td class="tor gut">r = 0,28</td><td class="tor gut">10 von 11</td><td class="tor gut">1,64 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 5 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 10</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
-  </tr><tr class="ja">
+  </tr><tr class="nein">
     <td><b>Das Metronom</b><code>metronom</code>
       <span class="frage">Wie weit liegen bester und schwächster Monat auseinander?</span></td>
     <td class="bed">ab 3 Monaten mit je 8 Partien</td>
-    <td class="tor gut">r = 0,34</td><td class="tor gut">r = 0,53</td><td class="tor gut">10 von 11</td><td class="tor gut">1,66 σ</td><td class="tor gut">Rang 4 von 11</td>
-    <td class="urteil"><span class="ok">aufnehmen</span></td>
+    <td class="tor gut">r = 0,34</td><td class="tor gut">r = 0,53</td><td class="tor gut">10 von 11</td><td class="tor gut">1,66 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 4 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 10</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="nein">
     <td><b>Der Beidfüßige</b><code>beidseitig</code>
       <span class="frage">Spielt jemand vorne genauso stark wie hinten?</span></td>
     <td class="bed">ab 25 Partien je Position</td>
-    <td class="tor gut">r = 0,31</td><td class="tor gut">r = -0,07</td><td class="tor gut">9 von 11</td><td class="tor schlecht">1,06 σ</td><td class="tor gut">Rang 6 von 11</td>
+    <td class="tor gut">r = 0,31</td><td class="tor gut">r = -0,07</td><td class="tor gut">9 von 11</td><td class="tor schlecht">1,06 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 6 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 9</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="nein">
     <td><b>Favorit wie Außenseiter</b><code>rollenfest</code>
       <span class="frage">Spielt jemand als Favorit genauso wie als Außenseiter?</span></td>
     <td class="bed">ab 20 Partien in jeder Lage</td>
-    <td class="tor schlecht">r = -0,75</td><td class="tor gut">r = 0,14</td><td class="tor gut">8 von 11</td><td class="tor schlecht">1,46 σ</td><td class="tor schlecht">Rang 1 von 11</td>
+    <td class="tor schlecht">r = -0,75</td><td class="tor gut">r = 0,14</td><td class="tor gut">8 von 11</td><td class="tor schlecht">1,46 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 8</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="ja">
     <td><b>Der Gleichmut</b><code>gleichmut</code>
       <span class="frage">Wie gleichmäßig fallen die Ergebnisse aus?</span></td>
     <td class="bed">ab 60 Partien</td>
-    <td class="tor gut">r = 0,00</td><td class="tor gut">r = 0,09</td><td class="tor gut">10 von 11</td><td class="tor gut">1,78 σ</td><td class="tor gut">Rang 4 von 11</td>
+    <td class="tor gut">r = 0,00</td><td class="tor gut">r = 0,09</td><td class="tor gut">10 von 11</td><td class="tor gut">1,78 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 4 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 10</td>
     <td class="urteil"><span class="ok">aufnehmen</span></td>
   </tr><tr class="ja">
     <td><b>Der Wechselhafte</b><code>wechselhaft</code>
       <span class="frage">Wessen Spieltage sehen am wenigsten wie der andere aus?</span></td>
     <td class="bed">ab 12 Spieltagen mit je 3 Partien</td>
-    <td class="tor gut">r = 0,04</td><td class="tor gut">r = -0,58</td><td class="tor gut">10 von 11</td><td class="tor gut">1,59 σ</td><td class="tor gut">Rang 8 von 11</td>
+    <td class="tor gut">r = 0,04</td><td class="tor gut">r = -0,58</td><td class="tor gut">10 von 11</td><td class="tor gut">1,59 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 8 von 11</td><td class="tor gut">3 von 3</td><td class="tor gut">1 von 10</td>
     <td class="urteil"><span class="ok">aufnehmen</span></td>
   </tr><tr class="nein">
     <td><b>Der Kontrast</b><code>kontrast</code>
       <span class="frage">Wie weit liegen bester und schwächster Partner auseinander?</span></td>
     <td class="bed">ab 4 Partnern mit je 15 Partien</td>
-    <td class="tor schlecht">r = 0,65</td><td class="tor schlecht">r = -0,82</td><td class="tor schlecht">4 von 11</td><td class="tor schlecht">1,13 σ</td><td class="tor gut">Rang 6 von 11</td>
+    <td class="tor schlecht">r = 0,65</td><td class="tor schlecht">r = -0,82</td><td class="tor schlecht">4 von 11</td><td class="tor schlecht">1,13 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 6 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 4</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="nein">
     <td><b>Ohne Angstgegner</b><code>angstfrei</code>
       <span class="frage">Wie gut läuft es gegen den unangenehmsten Gegner?</span></td>
     <td class="bed">ab 6 Gegnern mit je 15 Duellen</td>
-    <td class="tor schlecht">r = 0,41</td><td class="tor schlecht">r = 0,98</td><td class="tor gut">7 von 11</td><td class="tor schlecht">1,49 σ</td><td class="tor schlecht">Rang 1 von 11</td>
+    <td class="tor schlecht">r = 0,41</td><td class="tor schlecht">r = 0,98</td><td class="tor gut">7 von 11</td><td class="tor schlecht">1,49 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 7</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="nein">
     <td><b>Gegen jeden bestanden</b><code>breitenwirkung</code>
       <span class="frage">Gegen wie viele regelmäßige Gegner steht jemand im Plus?</span></td>
     <td class="bed">ab 6 Gegnern mit je 15 Duellen</td>
-    <td class="tor gut">r = 0,34</td><td class="tor schlecht">r = 0,98</td><td class="tor gut">7 von 11</td><td class="tor gut">1,51 σ</td><td class="tor schlecht">Rang 1 von 11</td>
+    <td class="tor gut">r = 0,34</td><td class="tor schlecht">r = 0,98</td><td class="tor gut">7 von 11</td><td class="tor gut">1,51 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 7</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="nein">
     <td><b>Die zweite Luft</b><code>zweiteluft</code>
       <span class="frage">Wie viel stärker läuft es ab der vierten Partie eines Spieltags?</span></td>
     <td class="bed">ab 25 Partien in jedem Block</td>
-    <td class="tor schlecht">r = -0,43</td><td class="tor gut">r = 0,22</td><td class="tor gut">9 von 11</td><td class="tor gut">1,70 σ</td><td class="tor gut">Rang 4 von 11</td>
+    <td class="tor schlecht">r = -0,43</td><td class="tor gut">r = 0,22</td><td class="tor gut">9 von 11</td><td class="tor gut">1,70 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 4 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 9</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="nein">
     <td><b>Der Tagesabschluss</b><code>kopfhoch</code>
       <span class="frage">Wie viele eigene Spieltage enden nicht negativ?</span></td>
     <td class="bed">ab 12 Spieltagen mit je 3 Partien</td>
-    <td class="tor gut">r = 0,30</td><td class="tor schlecht">r = 0,99</td><td class="tor gut">10 von 11</td><td class="tor schlecht">1,47 σ</td><td class="tor schlecht">Rang 1 von 11</td>
+    <td class="tor gut">r = 0,30</td><td class="tor schlecht">r = 0,99</td><td class="tor gut">10 von 11</td><td class="tor schlecht">1,47 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 10</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="nein">
     <td><b>Auf Augenhöhe (2. Fassung)</b><code>gleichauf2</code>
       <span class="frage">Wie weit liegt die Quote in offenen Partien über der Rechnung, die sie offen sah?</span></td>
     <td class="bed">ab 25 offenen Partien</td>
-    <td class="tor gut">r = -0,14</td><td class="tor schlecht">r = 0,78</td><td class="tor gut">7 von 11</td><td class="tor schlecht">1,15 σ</td><td class="tor schlecht">Rang 3 von 11</td>
+    <td class="tor gut">r = -0,14</td><td class="tor schlecht">r = 0,78</td><td class="tor gut">7 von 11</td><td class="tor schlecht">1,15 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 3 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 7</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="ja">
     <td><b>Der Erwartungstreue (2. Fassung)</b><code>punktgenau2b</code>
       <span class="frage">Wessen Laufbahn trifft die Erwartung am genauesten, gemessen in Standardfehlern?</span></td>
     <td class="bed">ab 60 Partien</td>
-    <td class="tor gut">r = -0,13</td><td class="tor gut">r = -0,11</td><td class="tor gut">10 von 11</td><td class="tor gut">2,17 σ</td><td class="tor gut">Rang 5 von 11</td>
+    <td class="tor gut">r = -0,13</td><td class="tor gut">r = -0,11</td><td class="tor gut">10 von 11</td><td class="tor gut">2,17 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 5 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 10</td>
     <td class="urteil"><span class="ok">aufnehmen</span></td>
   </tr><tr class="nein">
     <td><b>Die zweite Luft (2. Fassung)</b><code>zweiteluft2</code>
       <span class="frage">Wie viel besser als die Rechnung läuft es ab der vierten Partie eines Tages?</span></td>
     <td class="bed">ab 25 Partien in jedem Block</td>
-    <td class="tor schlecht">r = -0,43</td><td class="tor gut">r = 0,13</td><td class="tor gut">9 von 11</td><td class="tor schlecht">1,15 σ</td><td class="tor gut">Rang 4 von 11</td>
+    <td class="tor schlecht">r = -0,43</td><td class="tor gut">r = 0,13</td><td class="tor gut">9 von 11</td><td class="tor schlecht">1,15 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 4 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 9</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="nein">
     <td><b>Favorit wie Außenseiter (2. Fassung)</b><code>rollenfest2</code>
       <span class="frage">Liegt jemand als Favorit genauso weit über der Rechnung wie als Außenseiter?</span></td>
     <td class="bed">ab 20 Partien in jeder Lage</td>
-    <td class="tor schlecht">r = -0,94</td><td class="tor gut">r = 0,12</td><td class="tor gut">8 von 11</td><td class="tor schlecht">1,39 σ</td><td class="tor gut">Rang 4 von 11</td>
+    <td class="tor schlecht">r = -0,94</td><td class="tor gut">r = 0,12</td><td class="tor gut">8 von 11</td><td class="tor schlecht">1,39 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 4 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 8</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr><tr class="nein">
     <td><b>Der schwächste Tag</b><code>schwaechstertag</code>
       <span class="frage">Wie gut ist der schlechteste Spieltag einer Laufbahn noch?</span></td>
     <td class="bed">ab 12 Spieltagen mit je 3 Partien</td>
-    <td class="tor gut">r = 0,10</td><td class="tor schlecht">r = 0,88</td><td class="tor gut">10 von 11</td><td class="tor gut">1,66 σ</td><td class="tor gut">Rang 4 von 11</td>
+    <td class="tor gut">r = 0,10</td><td class="tor schlecht">r = 0,88</td><td class="tor gut">10 von 11</td><td class="tor gut">1,66 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 4 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 10</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr></tbody>
+  </table>
+
+  <h2>Zweite Runde: die Auslosung, der Moment im Tag und vier Funde</h2>
+  <p>Die erste Runde fragt überall nach einer Abweichung über viele Partien. Was dem
+     Katalog danach fehlt, sind zwei andere Sorten. Die <b>Fügung der Auslosung</b>: wer
+     welches Los zieht, welchen Partner, welchen Gegner, welchen Wochentag — das wählt
+     niemand, also kann es jedem zufallen. Und der <b>Moment im Tag</b>: die erste Partie,
+     die letzte, der Tag nach einem Fehlstart, die Rückkehr nach einer Pause. Jeder
+     Spieltag bringt davon je einen, unabhängig davon, wie viele Partien jemand spielt.</p>
+  <table class="st">
+    <thead><tr><th>Kandidat</th><th>Bedingung</th>
+      <th class="nz">hängt nicht an</th><th class="nz">wiederholt nicht die</th><th class="nz">die halbe Liga</th><th class="nz">die Bestmarke schlägt</th><th class="nz">der Fund ist</th><th class="nz">nicht nur für</th><th class="nz">die Mitte kommt</th><th class="nz">die Bestmarke ist</th>
+      <th>Urteil</th></tr></thead>
+    <tbody><tr class="ja">
+    <td><b>Der Ausgeloste</b><code>ausgelost</code>
+      <span class="frage">Wem fällt das ausgeglichenste Los zu?</span></td>
+    <td class="bed">ab 60 Partien</td>
+    <td class="tor gut">r = -0,20</td><td class="tor gut">r = 0,28</td><td class="tor gut">10 von 11</td><td class="tor gut">1,97 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 4 von 11</td><td class="tor gut">2 von 3</td><td class="tor gut">1 von 10</td>
+    <td class="urteil"><span class="ok">aufnehmen</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Herausgeforderte</b><code>herausgefordert</code>
+      <span class="frage">Wer ging über die ganze Laufbahn am häufigsten als Außenseiter ins Spiel?</span></td>
+    <td class="bed">ab 60 Partien</td>
+    <td class="tor schlecht">r = -0,50</td><td class="tor schlecht">r = -0,96</td><td class="tor gut">10 von 11</td><td class="tor schlecht">1,28 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 9 von 11</td><td class="tor gut">3 von 3</td><td class="tor gut">1 von 10</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Wandergeselle</b><code>wandergeselle</code>
+      <span class="frage">Bei wem ist es am gleichgültigsten, wer daneben steht?</span></td>
+    <td class="bed">ab 4 Partnern mit je 12 Partien</td>
+    <td class="tor gut">r = -0,24</td><td class="tor schlecht">r = 0,89</td><td class="tor gut">6 von 11</td><td class="tor gut">1,75 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 6</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Wochentagsfeste</b><code>wochentagsfest</code>
+      <span class="frage">Bei wem spielt es keine Rolle, welcher Wochentag es ist?</span></td>
+    <td class="bed">ab 3 Wochentagen mit je 12 Partien</td>
+    <td class="tor gut">r = -0,05</td><td class="tor gut">r = 0,40</td><td class="tor gut">8 von 11</td><td class="tor gut">1,72 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 4 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 8</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Unbequeme</b><code>unbequem</code>
+      <span class="frage">Wie weit über der Rechnung läuft es gegen den Ersten der Liga?</span></td>
+    <td class="bed">ab 15 Duellen gegen den Ersten</td>
+    <td class="tor schlecht">r = 0,48</td><td class="tor gut">r = 0,70</td><td class="tor gut">7 von 11</td><td class="tor schlecht">1,29 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 8 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 7</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Selbstläufer</b><code>selbstlaeufer</code>
+      <span class="frage">Wie weit über der Rechnung läuft es neben dem schwächsten regelmäßigen Partner?</span></td>
+    <td class="bed">ab 12 Partien neben dem schwächsten regelmäßigen Partner</td>
+    <td class="tor gut">r = -0,16</td><td class="tor schlecht">r = 0,82</td><td class="tor gut">10 von 11</td><td class="tor gut">1,85 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 10</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Fehlstarter</b><code>fehlstart</code>
+      <span class="frage">Wie oft wird ein Spieltag nach einer Auftaktniederlage noch positiv?</span></td>
+    <td class="bed">ab 8 Spieltagen mit Auftaktniederlage</td>
+    <td class="tor schlecht">r = 0,51</td><td class="tor schlecht">r = 0,89</td><td class="tor gut">8 von 11</td><td class="tor gut">1,84 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 2 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 8</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Anspieler</b><code>anspieler</code>
+      <span class="frage">Wie weit über der Rechnung liegt die erste Partie eines Spieltags?</span></td>
+    <td class="bed">ab 20 Auftaktpartien</td>
+    <td class="tor gut">r = 0,34</td><td class="tor schlecht">r = 0,91</td><td class="tor gut">7 von 11</td><td class="tor schlecht">1,32 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 7</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Schlussmann</b><code>schlussmann</code>
+      <span class="frage">Wie weit über der Rechnung liegt die letzte Partie eines Spieltags?</span></td>
+    <td class="bed">ab 20 Schlusspartien</td>
+    <td class="tor gut">r = 0,30</td><td class="tor schlecht">r = 0,84</td><td class="tor gut">7 von 11</td><td class="tor schlecht">1,44 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 7</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Standhafte</b><code>standhaft</code>
+      <span class="frage">An wie vielen eigenen Spieltagen bleibt jemand nicht ohne Sieg?</span></td>
+    <td class="bed">ab 12 Spieltagen mit je 3 Partien</td>
+    <td class="tor schlecht">r = 0,54</td><td class="tor schlecht">r = 0,80</td><td class="tor gut">10 von 11</td><td class="tor schlecht">0,62 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 4 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor schlecht">7 von 10</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Die Aufwärmphase</b><code>aufwaermen</code>
+      <span class="frage">An wie vielen Spieltagen läuft die zweite Hälfte besser als die erste?</span></td>
+    <td class="bed">ab 10 Spieltagen mit je 4 Partien</td>
+    <td class="tor schlecht">r = -0,36</td><td class="tor gut">r = 0,17</td><td class="tor gut">9 von 11</td><td class="tor gut">2,05 σ</td><td class="tor leer">—</td><td class="tor gut">Rang 5 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 9</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Langstreckler</b><code>langstreckler</code>
+      <span class="frage">Wie weit über der Rechnung liegen die langen Spieltage?</span></td>
+    <td class="bed">ab 4 Spieltagen mit je 6 Partien</td>
+    <td class="tor gut">r = 0,12</td><td class="tor schlecht">r = 0,96</td><td class="tor gut">9 von 11</td><td class="tor schlecht">1,22 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 2 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 9</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Rückkehrer</b><code>rueckkehrer</code>
+      <span class="frage">Wie weit über der Rechnung liegt die erste Partie nach einer Pause?</span></td>
+    <td class="bed">ab 8 Rückkehrpartien</td>
+    <td class="tor schlecht">r = 0,53</td><td class="tor schlecht">r = 0,74</td><td class="tor gut">10 von 11</td><td class="tor schlecht">1,39 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 3 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 10</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Buchhalter</b><code>buchhalter</code>
+      <span class="frage">An wie vielen Spieltagen geht das eigene Torkonto genau auf?</span></td>
+    <td class="bed">ab 12 Spieltagen mit je 3 Partien</td>
+    <td class="tor schlecht">r = 0,69</td><td class="tor gut">r = 0,46</td><td class="tor gut">10 von 11</td><td class="tor gut">1,63 σ</td><td class="tor leer">—</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor schlecht">0 von 3</td><td class="tor gut">1 von 10</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Die weiße Weste</b><code>weisseweste</code>
+      <span class="frage">Wie viele Partien ohne ein einziges Gegentor an einem Spieltag?</span></td>
+    <td class="bed">ab 8 Spieltagen mit je 3 Partien</td>
+    <td class="tor schlecht">r = 0,47</td><td class="tor gut">r = 0,66</td><td class="tor leer">—</td><td class="tor leer">—</td><td class="tor schlecht">1 von 11</td><td class="tor schlecht">Rang 2 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 11</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Rundumschlag</b><code>rundumschlag</code>
+      <span class="frage">Gegen wie viele verschiedene Gegner an einem Tag gewonnen, ohne gegen einen zu verlieren?</span></td>
+    <td class="bed">ab 8 Spieltagen mit je 3 Partien</td>
+    <td class="tor schlecht">r = 0,39</td><td class="tor gut">r = 0,28</td><td class="tor leer">—</td><td class="tor leer">—</td><td class="tor gut">8 von 11</td><td class="tor schlecht">Rang 1 von 11</td><td class="tor gut">2 von 3</td><td class="tor gut">1 von 11</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Zahlendreher</b><code>zahlendreher</code>
+      <span class="frage">Wie oft kommen an einem Tag ein Ergebnis und sein Spiegelbild beide vor?</span></td>
+    <td class="bed">ab 8 Spieltagen mit je 3 Partien</td>
+    <td class="tor schlecht">r = 0,99</td><td class="tor gut">r = 0,45</td><td class="tor leer">—</td><td class="tor leer">—</td><td class="tor gut">11 von 11</td><td class="tor schlecht">Rang 3 von 11</td><td class="tor gut">1 von 3</td><td class="tor gut">1 von 11</td>
+    <td class="urteil"><span class="weg">fällt aus</span></td>
+  </tr><tr class="nein">
+    <td><b>Der Serientäter</b><code>serientaeter</code>
+      <span class="frage">Wie viele eigene Partien nacheinander endeten mit demselben Stand?</span></td>
+    <td class="bed">ab 40 Partien</td>
+    <td class="tor gut">r = -0,13</td><td class="tor gut">r = -0,18</td><td class="tor leer">—</td><td class="tor leer">—</td><td class="tor gut">10 von 10</td><td class="tor gut">Rang 8 von 11</td><td class="tor gut">1 von 3</td><td class="tor schlecht">7 von 10</td>
     <td class="urteil"><span class="weg">fällt aus</span></td>
   </tr></tbody>
   </table>
@@ -4852,65 +5000,57 @@
     <span class="sb-kam">Kammer Fügungen</span></div>
   <div class="sb-frage">Wie weit liegt das letzte Drittel der Laufbahn über dem ersten?</div>
   <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Die Steigerung" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
+    <tr><td>Quelle</td><td>Monatschronik „Die Steigerung" — derselbe
+      Name, dasselbe Zeichen, nur die andere Zeitachse [§13.1]</td></tr>
     <tr><td>Bedingung</td><td>ab 60 Partien</td></tr>
     <tr><td>Halter heute</td><td><b>Stefan</b> — Rang 10 von
       11 in der Siegquote, 81 Partien</td></tr>
     <tr><td>Beleg</td><td>37 % im letzten Drittel, 26 % im ersten</td></tr>
     <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
     <tr><td>Ausschlag</td><td>1,57 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Die Mitte</td><td>1 der besten drei kommt
+      aus der unteren Hälfte der Siegquote (ab Rang 7)</td></tr>
+    <tr><td>Halter</td><td>einer allein von 10 im Rennen</td></tr>
     <tr><td>Spielzahl</td><td>r = 0,00 — praktisch unabhängig</td></tr>
     <tr><td>Siegquote</td><td>r = -0,31 — keine Wiederholung der Rangliste</td></tr>
   </table>
   <div class="sb-rang"><span><i>1.</i> Stefan <u>Rang 10</u><em>37 % im letzten Drittel, 26 % im ersten</em></span><span><i>2.</i> Maxi <u>Rang 6</u><em>48 % im letzten Drittel, 40 % im ersten</em></span><span><i>3.</i> Jane <u>Rang 4</u><em>56 % im letzten Drittel, 53 % im ersten</em></span><span><i>4.</i> Martin <u>Rang 2</u><em>67 % im letzten Drittel, 64 % im ersten</em></span><span><i>5.</i> Jannik <u>Rang 5</u><em>50 % im letzten Drittel, 50 % im ersten</em></span></div>
 </div><div class="sb">
-  <div class="sb-k"><b>Das Metronom</b>
-    <span class="sb-kam">Kammer Fügungen</span></div>
-  <div class="sb-frage">Wie weit liegen bester und schwächster Monat auseinander?</div>
-  <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Das Metronom" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
-    <tr><td>Bedingung</td><td>ab 3 Monaten mit je 8 Partien</td></tr>
-    <tr><td>Halter heute</td><td><b>Jane</b> — Rang 4 von
-      11 in der Siegquote, 97 Partien</td></tr>
-    <tr><td>Beleg</td><td>54 % im schwächsten, 58 % im besten von 3 Monaten</td></tr>
-    <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
-    <tr><td>Ausschlag</td><td>1,66 σ über dem Mittel der Gewerteten</td></tr>
-    <tr><td>Spielzahl</td><td>r = 0,34 — schwach, unter der Grenze von 0,35</td></tr>
-    <tr><td>Siegquote</td><td>r = 0,53 — erkennbar, aber weit von einer Kopie entfernt</td></tr>
-  </table>
-  <div class="sb-rang"><span><i>1.</i> Jane <u>Rang 4</u><em>54 % im schwächsten, 58 % im besten von 3 Monaten</em></span><span><i>2.</i> Leon <u>Rang 3</u><em>58 % im schwächsten, 69 % im besten von 4 Monaten</em></span><span><i>3.</i> Maxi <u>Rang 6</u><em>39 % im schwächsten, 51 % im besten von 4 Monaten</em></span><span><i>4.</i> Stefan <u>Rang 10</u><em>18 % im schwächsten, 33 % im besten von 3 Monaten</em></span><span><i>5.</i> Julian <u>Rang 1</u><em>55 % im schwächsten, 71 % im besten von 3 Monaten</em></span></div>
-</div><div class="sb">
   <div class="sb-k"><b>Der Gleichmut</b>
     <span class="sb-kam">Kammer Fügungen</span></div>
   <div class="sb-frage">Wie gleichmäßig fallen die Ergebnisse aus?</div>
   <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Der Gleichmut" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
+    <tr><td>Quelle</td><td>Monatschronik „Der Gleichmut" — derselbe
+      Name, dasselbe Zeichen, nur die andere Zeitachse [§13.1]</td></tr>
     <tr><td>Bedingung</td><td>ab 60 Partien</td></tr>
     <tr><td>Halter heute</td><td><b>Jane</b> — Rang 4 von
       11 in der Siegquote, 97 Partien</td></tr>
-    <tr><td>Beleg</td><td>4.0 Tore Streuung um +0.9 im Schnitt</td></tr>
+    <tr><td>Beleg</td><td>4,0 Tore Streuung um +0,9 im Schnitt</td></tr>
     <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
     <tr><td>Ausschlag</td><td>1,78 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Die Mitte</td><td>1 der besten drei kommt
+      aus der unteren Hälfte der Siegquote (ab Rang 7)</td></tr>
+    <tr><td>Halter</td><td>einer allein von 10 im Rennen</td></tr>
     <tr><td>Spielzahl</td><td>r = 0,00 — praktisch unabhängig</td></tr>
     <tr><td>Siegquote</td><td>r = 0,09 — keine Wiederholung der Rangliste</td></tr>
   </table>
-  <div class="sb-rang"><span><i>1.</i> Jane <u>Rang 4</u><em>4.0 Tore Streuung um +0.9 im Schnitt</em></span><span><i>2.</i> Leon <u>Rang 3</u><em>4.2 Tore Streuung um +1.1 im Schnitt</em></span><span><i>3.</i> Johannes <u>Rang 9</u><em>4.2 Tore Streuung um -1.1 im Schnitt</em></span><span><i>4.</i> Stefan <u>Rang 10</u><em>4.2 Tore Streuung um -2.7 im Schnitt</em></span><span><i>5.</i> Julian <u>Rang 1</u><em>4.3 Tore Streuung um +1.2 im Schnitt</em></span></div>
+  <div class="sb-rang"><span><i>1.</i> Jane <u>Rang 4</u><em>4,0 Tore Streuung um +0,9 im Schnitt</em></span><span><i>2.</i> Leon <u>Rang 3</u><em>4,2 Tore Streuung um +1,1 im Schnitt</em></span><span><i>3.</i> Johannes <u>Rang 9</u><em>4,2 Tore Streuung um −1,1 im Schnitt</em></span><span><i>4.</i> Stefan <u>Rang 10</u><em>4,2 Tore Streuung um −2,7 im Schnitt</em></span><span><i>5.</i> Julian <u>Rang 1</u><em>4,3 Tore Streuung um +1,2 im Schnitt</em></span></div>
 </div><div class="sb">
   <div class="sb-k"><b>Der Wechselhafte</b>
     <span class="sb-kam">Kammer Fügungen</span></div>
   <div class="sb-frage">Wessen Spieltage sehen am wenigsten wie der andere aus?</div>
   <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Der Wechselhafte" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
+    <tr><td>Quelle</td><td>Monatschronik „Der Wechselhafte" — derselbe
+      Name, dasselbe Zeichen, nur die andere Zeitachse [§13.1]</td></tr>
     <tr><td>Bedingung</td><td>ab 12 Spieltagen mit je 3 Partien</td></tr>
     <tr><td>Halter heute</td><td><b>Henry</b> — Rang 8 von
       11 in der Siegquote, 152 Partien</td></tr>
     <tr><td>Beleg</td><td>0 % am schwächsten, 100 % am stärksten von 26 Spieltagen</td></tr>
     <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
     <tr><td>Ausschlag</td><td>1,59 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Die Mitte</td><td>3 der besten drei kommen
+      aus der unteren Hälfte der Siegquote (ab Rang 7)</td></tr>
+    <tr><td>Halter</td><td>einer allein von 10 im Rennen</td></tr>
     <tr><td>Spielzahl</td><td>r = 0,04 — praktisch unabhängig</td></tr>
     <tr><td>Siegquote</td><td>r = -0,58 — erkennbar, aber weit von einer Kopie entfernt</td></tr>
   </table>
@@ -4920,26 +5060,50 @@
     <span class="sb-kam">Kammer Fügungen</span></div>
   <div class="sb-frage">Wessen Laufbahn trifft die Erwartung am genauesten, gemessen in Standardfehlern?</div>
   <table class="sb-t">
-    <tr><td>Quelle</td><td>Monatschronik „Der Erwartungstreue" — derselbe Name, dasselbe Zeichen,
-      nur die andere Zeitachse [§13.1]</td></tr>
+    <tr><td>Quelle</td><td>Monatschronik „Der Erwartungstreue" — derselbe
+      Name, dasselbe Zeichen, nur die andere Zeitachse [§13.1]</td></tr>
     <tr><td>Bedingung</td><td>ab 60 Partien</td></tr>
     <tr><td>Halter heute</td><td><b>Jannik</b> — Rang 5 von
       11 in der Siegquote, 78 Partien</td></tr>
     <tr><td>Beleg</td><td>49 % gespielt, 48 % erwartet, aus 78 Partien</td></tr>
     <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
     <tr><td>Ausschlag</td><td>2,17 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Die Mitte</td><td>1 der besten drei kommt
+      aus der unteren Hälfte der Siegquote (ab Rang 7)</td></tr>
+    <tr><td>Halter</td><td>einer allein von 10 im Rennen</td></tr>
     <tr><td>Spielzahl</td><td>r = -0,13 — praktisch unabhängig</td></tr>
     <tr><td>Siegquote</td><td>r = -0,11 — keine Wiederholung der Rangliste</td></tr>
   </table>
   <div class="sb-rang"><span><i>1.</i> Jannik <u>Rang 5</u><em>49 % gespielt, 48 % erwartet, aus 78 Partien</em></span><span><i>2.</i> Maxi <u>Rang 6</u><em>44 % gespielt, 47 % erwartet, aus 348 Partien</em></span><span><i>3.</i> Henry <u>Rang 8</u><em>39 % gespielt, 44 % erwartet, aus 152 Partien</em></span><span><i>4.</i> Jane <u>Rang 4</u><em>57 % gespielt, 50 % erwartet, aus 97 Partien</em></span><span><i>5.</i> Johannes <u>Rang 9</u><em>32 % gespielt, 42 % erwartet, aus 77 Partien</em></span></div>
+</div><div class="sb">
+  <div class="sb-k"><b>Der Ausgeloste</b>
+    <span class="sb-kam">Kammer Fügungen</span></div>
+  <div class="sb-frage">Wem fällt das ausgeglichenste Los zu?</div>
+  <table class="sb-t">
+    <tr><td>Quelle</td><td>Monatschronik „Auf Augenhöhe" — derselbe
+      Name, dasselbe Zeichen, nur die andere Zeitachse [§13.1]</td></tr>
+    <tr><td>Bedingung</td><td>ab 60 Partien</td></tr>
+    <tr><td>Halter heute</td><td><b>Jane</b> — Rang 4 von
+      11 in der Siegquote, 97 Partien</td></tr>
+    <tr><td>Beleg</td><td>33 % der Partien auf Augenhöhe, 32 von 97</td></tr>
+    <tr><td>Im Rennen</td><td>10 von 11 Spielern</td></tr>
+    <tr><td>Ausschlag</td><td>1,97 σ über dem Mittel der Gewerteten</td></tr>
+    <tr><td>Die Mitte</td><td>2 der besten drei kommen
+      aus der unteren Hälfte der Siegquote (ab Rang 7)</td></tr>
+    <tr><td>Halter</td><td>einer allein von 10 im Rennen</td></tr>
+    <tr><td>Spielzahl</td><td>r = -0,20 — schwach, unter der Grenze von 0,35</td></tr>
+    <tr><td>Siegquote</td><td>r = 0,28 — keine Wiederholung der Rangliste</td></tr>
+  </table>
+  <div class="sb-rang"><span><i>1.</i> Jane <u>Rang 4</u><em>33 % der Partien auf Augenhöhe, 32 von 97</em></span><span><i>2.</i> Leo <u>Rang 7</u><em>31 % der Partien auf Augenhöhe, 76 von 246</em></span><span><i>3.</i> Henry <u>Rang 8</u><em>30 % der Partien auf Augenhöhe, 46 von 152</em></span><span><i>4.</i> Martin <u>Rang 2</u><em>29 % der Partien auf Augenhöhe, 62 von 211</em></span><span><i>5.</i> Julian <u>Rang 1</u><em>29 % der Partien auf Augenhöhe, 50 von 171</em></span></div>
 </div>
 
-  <h2>Warum die anderen dreizehn ausfallen</h2>
+  <h2>Warum die anderen einunddreißig ausfallen</h2>
   <table class="st">
     <thead><tr><th>Kandidat</th><th>Grund</th></tr></thead>
     <tbody><tr><td><b>Auf Augenhöhe</b></td>
       <td class="bed">Der Vergleich mit der EIGENEN Quote dreht die Rangliste um: wer hoch steht, hat einen hohen Abzug. Der Rekord ginge damit systematisch an das untere Ende — genauso einseitig wie an die Spitze.</td></tr><tr><td><b>Der Erwartungstreue</b></td>
-      <td class="bed">Je mehr Partien, desto näher liegt die Quote an der Erwartung — der Wert hängt damit doch an der Spielzahl. Die zweite Fassung rechnet in Standardfehlern und löst genau das.</td></tr><tr><td><b>Der Beidfüßige</b></td>
+      <td class="bed">Je mehr Partien, desto näher liegt die Quote an der Erwartung — der Wert hängt damit doch an der Spielzahl. Die zweite Fassung rechnet in Standardfehlern und löst genau das.</td></tr><tr><td><b>Das Metronom</b></td>
+      <td class="bed">Die Bestmarke gehört der Mitte, dahinter aber steht nur die Spitze: keiner der besten drei kommt aus der unteren Hälfte. Beim nächsten Halterwechsel wäre es ein Rekord der Spitze — genau das fängt das neue sechste Tor ab.</td></tr><tr><td><b>Der Beidfüßige</b></td>
       <td class="bed">Der Beste liegt kaum weiter draußen als der Durchschnitt: ein Rekord, den fast jeder fast hält, ist keine Bestmarke.</td></tr><tr><td><b>Favorit wie Außenseiter</b></td>
       <td class="bed">Der Abstand zwischen zwei Quoten schrumpft mit der Spielzahl, weil beide Quoten ruhiger werden. Beide Fassungen scheitern daran.</td></tr><tr><td><b>Der Kontrast</b></td>
       <td class="bed">Vier Partner mit je fünfzehn gemeinsamen Partien ist selbst eine Spielzahl-Hürde: nur vier von elf stehen überhaupt im Rennen.</td></tr><tr><td><b>Ohne Angstgegner</b></td>
@@ -4950,9 +5114,26 @@
       <td class="bed">Mit der Erwartung statt der eigenen Quote verglichen kippt es ins Gegenteil: dann misst die Frage wieder das Können, und der Ausschlag reicht nicht.</td></tr><tr><td><b>Die zweite Luft (2. Fassung)</b></td>
       <td class="bed">Mit der Erwartung verglichen verschwindet die Verzerrung nicht: derselbe Ausschlag von 1,15 σ, dieselbe Abhängigkeit von der Spielzahl.</td></tr><tr><td><b>Favorit wie Außenseiter (2. Fassung)</b></td>
       <td class="bed">Dieselbe Ursache wie in der ersten Fassung, nur stärker: r = −0,94 zur Spielzahl.</td></tr><tr><td><b>Der schwächste Tag</b></td>
-      <td class="bed">Der beste schlechteste Tag gehört fast immer dem besten Spieler: r = 0,88.</td></tr></tbody>
+      <td class="bed">Der beste schlechteste Tag gehört fast immer dem besten Spieler: r = 0,88.</td></tr><tr><td><b>Der Herausgeforderte</b></td>
+      <td class="bed">Wer immer Außenseiter war, ist die Rangliste auf den Kopf gestellt: r = −0,96 zur Siegquote. Die mittlere Siegchance einer Laufbahn IST das Urteil der Liga über ihren Spieler, nur aus der Sicht der anderen.</td></tr><tr><td><b>Der Wandergeselle</b></td>
+      <td class="bed">Wem es gleichgültig ist, wer daneben steht, ist der, der ohnehin gewinnt: r = 0,89. Nur sechs stehen im Rennen, und unter den besten drei ist niemand aus der unteren Hälfte.</td></tr><tr><td><b>Der Wochentagsfeste</b></td>
+      <td class="bed">Besteht sechs von sieben Toren und reißt das letzte: die Bestmarke gehört Rang 4, aber dahinter stehen nur Spieler aus der oberen Hälfte. Derselbe Befund wie beim Metronom, und aus demselben Grund abgelehnt.</td></tr><tr><td><b>Der Unbequeme</b></td>
+      <td class="bed">Der Abstand zur Rechnung in einem einzigen Duell-Paar schwankt zu stark: 1,29 σ reichen nicht, und mit r = 0,48 hängt er an der Zahl der Duelle. Eine Frage an EINEN Gegner braucht mehr Partien, als die Liga hergibt.</td></tr><tr><td><b>Der Selbstläufer</b></td>
+      <td class="bed">Neben dem schwächsten Partner über der Rechnung zu liegen, kann nur, wer selbst stark ist: r = 0,82. Es ist „Der Katalysator&quot; unter anderem Namen, und den gibt es schon.</td></tr><tr><td><b>Der Fehlstarter</b></td>
+      <td class="bed">Einen Fehlstart aufzuholen ist Können, nicht Fügung: r = 0,89 zur Siegquote. Dazu hängt die Zahl der Gelegenheiten an der Spielzahl (r = 0,51) — wer mehr spielt, verliert häufiger eine Auftaktpartie.</td></tr><tr><td><b>Der Anspieler</b></td>
+      <td class="bed">Die erste Partie eines Tages ist keine eigene Frage: wer gut ist, gewinnt sie auch. r = 0,91, und der Ausschlag reicht ohnehin nicht.</td></tr><tr><td><b>Der Schlussmann</b></td>
+      <td class="bed">Dasselbe am anderen Ende des Tages: r = 0,84. Die Rechnung kennt die Uhrzeit nicht, also bleibt vom Abstand nur das Können übrig.</td></tr><tr><td><b>Der Standhafte</b></td>
+      <td class="bed">Nicht ohne Sieg zu bleiben schafft fast jeder an fast jedem Tag: 0,62 σ heißt, der Beste liegt kaum weiter draußen als der Durchschnitt, und sieben von zehn halten die Bestmarke punktgleich. Eine Bestmarke, die jeder fast hält, ist keine.</td></tr><tr><td><b>Die Aufwärmphase</b></td>
+      <td class="bed">Knapp gerissen, und zwar am ersten Tor: r = −0,36 zur Spielzahl bei einer Grenze von 0,35. Wer viele Partien am Tag spielt, hat längere Hälften und damit ruhigere Quoten. Dazu fehlt die Mitte auf dem Podest.</td></tr><tr><td><b>Der Langstreckler</b></td>
+      <td class="bed">Die langen Tage sind die, an denen die Vielspieler antreten, und über der Rechnung liegen dort die Besten: r = 0,96. Der Zusatz „ab 6 Partien&quot; macht daraus keine eigene Frage.</td></tr><tr><td><b>Der Rückkehrer</b></td>
+      <td class="bed">Fünf von sieben Toren gerissen. Die Rückkehr nach einer Pause ist keine eigene Lage: die Rechnung stimmt auch dort, und was übrig bleibt, ist wieder das Können (r = 0,74). Die Zahl der Pausen hängt zudem an der Spielzahl.</td></tr><tr><td><b>Der Buchhalter</b></td>
+      <td class="bed">Ein aufgehendes Torkonto ist eine Fügung — aber die Zahl der Gelegenheiten ist die Spielzahl: r = 0,69. Dazu steht kein Spieler aus der unteren Hälfte auf dem Podest.</td></tr><tr><td><b>Die weiße Weste</b></td>
+      <td class="bed">Der Fund ist zu selten: genau EIN Spieler von elf hat je zwei Partien ohne Gegentor an einem Tag geschafft. §C35 erlaubt, dass die Hälfte leer steht, nicht zehn von elf.</td></tr><tr><td><b>Der Rundumschlag</b></td>
+      <td class="bed">Der Fund ist erreichbar (acht von elf haben ihn), aber er gehört dem Ersten der Liga und hängt an der Spielzahl: wer an einem Tag sechs verschiedene Gegner schlägt, muss erst einmal sechs Partien spielen.</td></tr><tr><td><b>Der Zahlendreher</b></td>
+      <td class="bed">r = 0,99 zur Spielzahl — das ist die reinste Anwesenheitsliste des ganzen Vorschlags. Wer 348 Partien spielt, erlebt zwangsläufig mehr Tage mit einem Ergebnis und seinem Spiegelbild als jemand mit 90.</td></tr><tr><td><b>Der Serientäter</b></td>
+      <td class="bed">Besteht sechs Tore und reißt das siebte: der Fund ist erreichbar, unabhängig von der Spielzahl und keine Wiederholung der Rangliste — aber sieben von zehn haben drei Partien nacheinander mit demselben Stand. Die Spitze ist ein Plateau, und ein Rekord, den sieben gleichzeitig tragen, zeichnet niemanden aus; sein Grundwert teilt sich durch sieben [§C34, §C35]. Eine höhere Grenze löst das nicht: bei vier Partien nacheinander steht die Liste leer.</td></tr></tbody>
   </table>
-  <p>Zwei Ergebnisse sind dabei mehr als eine Absage. <b>Erstens:</b> eine Abweichung
+  <p>Vier Ergebnisse sind dabei mehr als eine Absage. <b>Erstens:</b> eine Abweichung
      darf nicht gegen die <b>eigene</b> Quote gerechnet werden. „Auf Augenhöhe" tut das
      und dreht damit die Rangliste um — r = -0,91
      zur Siegquote heißt: der Rekord ginge systematisch an das untere Ende, genauso
@@ -4963,16 +5144,41 @@
      und besteht in der zweiten mit r = -0,13
      — bei gleichzeitig größerem Ausschlag. Dieselbe Rechnung passt auf jede künftige
      Frage nach „wie nah an null".</p>
+  <p><b>Drittens:</b> ein <b>Moment im Tag</b> ist keine eigene Frage. „Der Anspieler",
+     „Der Schlussmann", „Der Fehlstarter", „Der Rückkehrer" und „Der Langstreckler" messen
+     alle den Abstand zur Rechnung in einem ausgewählten Moment — und die Rechnung kennt
+     die Uhrzeit nicht. Was übrig bleibt, ist wieder das Können: r =
+     0,91 bis
+     0,96 zur
+     Siegquote. Der Moment schneidet die Partien nur anders auf, er stellt keine neue
+     Frage. <b>Viertens:</b> ein <b>Fund</b> zerfällt an genau zwei Stellen. Entweder er
+     ist zu selten — „Die weiße Weste" hat gemessen EIN Spieler von elf je geschafft —
+     oder er ist eine Anwesenheitsliste: „Der Zahlendreher" steht bei
+     r = 0,99
+     zur Spielzahl, weil jeder Spieltag eine neue Gelegenheit ist. Und wer diese beiden
+     Klippen umschifft, landet auf der dritten: „Der Serientäter" ist für
+     10 von
+     10 erreichbar und
+     unabhängig von Spielzahl und Rangliste — aber
+     7 halten die
+     Bestmarke punktgleich. Ein Rekord, den sieben von zehn gleichzeitig tragen, ist
+     keiner mehr, und sein Grundwert teilt sich durch sieben [§C34]. Damit fällt von den
+     vier Funden jeder, und keiner aus demselben Grund. Das ist die ehrlichste Absage
+     dieser Seite: die Idee ist richtig, die vier Ausführungen sind es nicht.</p>
 
   <h2>Was es für die Laufbahn bedeutet</h2>
   <p>Ein Liga-Rekord ist eine der drei Quellen des Prestiges [§C34]. Der Grundwert ist
      <code>PRESTIGE_REKORD</code> × <code>PRESTIGE_ART[art]</code>, geteilt durch die Zahl
-     der heutigen Halter und nach dem Gesetz der fallenden Erträge. Alle fünf neuen
-     Einträge sind <b>Fügungen</b> (<code>zufall:'quote'</code>, <code>art:'ereignis'</code>):
-     sie messen keine Fähigkeit, also wiegen sie halb so viel wie ein Beleg für
-     Können — 48 statt 96 Punkte. Das ist kein Kompromiss, sondern
-     genau die Absicht von §C35: <em>sie sollen jemandem gehören können, nicht jemanden
-     auszeichnen.</em></p>
+     der heutigen Halter und nach dem Gesetz der fallenden Erträge.
+     5 der 5 neuen Einträge sind
+     <b>Fügungen</b> (<code>art:'ereignis'</code> mit <code>zufall</code>): sie messen
+     keine Fähigkeit, also wiegen sie halb so viel wie ein Beleg für Können —
+     48 statt 96 Punkte. Das ist kein Kompromiss, sondern genau die
+     Absicht von §C35: <em>sie sollen jemandem gehören können, nicht jemanden
+     auszeichnen.</em> Ein <b>Fund</b> ist nicht dabei, und das ist das Ergebnis der
+     zweiten Runde: von den vier gerechneten fällt jeder, und jeder aus einem anderen
+     Grund. Die Lücke zwischen „zu selten" und „nur eine Anwesenheitsliste" ist schmaler,
+     als sie aussieht.</p>
   <table class="st">
     <thead><tr><th>Spieler</th><th class="nz">Prestige</th><th>Stufe</th>
       <th class="nz">davon Rekorde</th><th class="nz">neu</th><th>bis zur nächsten Stufe</th></tr></thead>
@@ -5062,14 +5268,17 @@
     <td class="bed">488 bis zum Schildring</td>
   </tr></tbody>
   </table>
-  <p>Gemessen geht <b>keiner</b> der fünf Rekorde an die besten drei der Liga. Die Halter
-     stehen auf Rang 4, 4, 5, 8, 10 von
-     11 der Siegquote. Der Katalog verschiebt damit
-     240 Punkte Prestige ausschließlich in die untere Hälfte — und
-     einer davon entscheidet eine Stufe: die Zahlen oben sagen, wer danach den nächsten
-     Reif trägt.</p>
+  <p>Gemessen geht <b>keiner</b> der 5 Rekorde an die besten drei der Liga.
+     Die Halter stehen auf Rang
+     4, 4, 5, 8, 10 von
+     11 der Siegquote, und auf jedem Podest steht
+     mindestens einer aus der unteren Hälfte — das ist das siebte Tor, und es ist der
+     Unterschied zwischen „gehört heute der Mitte" und „kann der Mitte gehören". Der
+     Katalog verschiebt damit 240 Punkte Prestige in die untere
+     Hälfte, und einer davon entscheidet eine Stufe: die Zahlen oben sagen, wer danach
+     den nächsten Reif trägt.</p>
   <p>Für das Gleichgewicht der drei Quellen heißt das: die Rekorde stehen heute bei
-     1907 Punkten gegen 2408 aus den Monatswertungen. Fünf Fügungen legen
+     1907 Punkten gegen 2408 aus den Monatswertungen. 5 neue Einträge legen
      rund 240 dazu, also gut 13 %
      — die Reihenfolge der Quellen bleibt, und keine Stufe der Insignium-Leiter wird
      dadurch billig. <code>tests/disziplinen</code> rechnet das nach und fällt, wenn es
@@ -5089,7 +5298,7 @@
       auch, weil ein anderer gespielt und seinen Anteil verschlechtert hat. Die Karte
       kommt nur, wenn mindestens einer der Genannten an diesem Tag angetreten ist — genau
       dafür gibt es die Regel schon.</span></div>
-    <div class="regel"><b>Und nicht als Schattenseite</b><span>Keiner der fünf ist negativ.
+    <div class="regel"><b>Und nicht als Schattenseite</b><span>Keiner davon ist negativ.
       „Der Wechselhafte" klingt danach, ist aber eine Fügung: wem die schwankenden Tage
       zufallen, entscheidet niemand selbst. Rot bleibt der Richtung [§C25].</span></div>
   </div>
@@ -5099,11 +5308,14 @@
      (die Bedingung im Klartext), <code>allzeit.wie</code> (was die Zahl bedeutet),
      <code>allzeit.val</code> und <code>allzeit.raw</code>, <code>allzeit.min</code>,
      <code>allzeit.ev</code> (beginnt mit dem Wert, nach dem sortiert wird),
-     <code>zufall:'quote'</code> für die Kammer und ein Eintrag in
-     <code>_chronicleCtx</code>. Dazu drei Zusicherungen in <code>tests/disziplinen</code>,
-     die diese Seite prüfbar machen: die Korrelation zur Spielzahl unter 0,35, die zur
-     Siegquote unter 0,70, und der Ausschlag über 1,5 σ. Ohne die drei ist dieser Vorschlag
-     eine Bitte.</p>
+     <code>zufall</code> für die Kammer und ein Eintrag in <code>_chronicleCtx</code>.
+     Ein Fund braucht außerdem seine Untergrenze, unter der er als nicht getroffen gilt.
+     Dazu vier Zusicherungen in <code>tests/disziplinen</code>, die diese Seite prüfbar
+     machen: die Korrelation zur Spielzahl unter 0,35, die zur Siegquote unter 0,70, der
+     Ausschlag über 1,5 σ und mindestens einer der besten drei aus der unteren Hälfte der
+     Siegquote. Die letzte gibt es heute noch nicht, und sie ist die wichtigste: sie ist
+     der Unterschied zwischen einem Rekord, der der Mitte gehört, und einem, den die
+     Mitte holen kann. Ohne die vier ist dieser Vorschlag eine Bitte.</p>
 
   <h2>Die Liga, an der gemessen wurde</h2>
   <table class="st" style="max-width:520px">
