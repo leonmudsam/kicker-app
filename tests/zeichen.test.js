@@ -130,11 +130,11 @@ const ok = (c, msg, det) => {
     const b = window._reifBox(voll);
     return {a, echt: echt && {left:echt.left, top:echt.top, width:echt.width}, b,
             verweis: !!document.querySelector('#rA use'),
-            symbole: document.querySelectorAll('#insDefs symbol').length};
+            symbole: document.querySelectorAll('#insDefs defs > g[id]').length};
   });
   ok(reifProbe.verweis, 'das Wappen in der Liste ist ein Verweis',
      JSON.stringify(reifProbe).slice(0, 160));
-  ok(reifProbe.symbole >= 1, 'die Zeichnung steht als Symbol im Topf',
+  ok(reifProbe.symbole >= 1, 'die Zeichnung steht als Gruppe im Topf',
      String(reifProbe.symbole));
   ok(reifProbe.echt && reifProbe.b
      && Math.abs(reifProbe.b.left - reifProbe.echt.left) < 1.5
@@ -142,6 +142,52 @@ const ok = (c, msg, det) => {
      && Math.abs(reifProbe.b.width - reifProbe.echt.width) < 1.5,
      'der gerechnete Reif trifft den gezeichneten',
      JSON.stringify({gerechnet: reifProbe.b, gezeichnet: reifProbe.echt}));
+
+  // ── Der Verweis zeichnet dort, wo das volle Markup zeichnet ─────────
+  //    Die BOX des `<svg class="ins">` ist in beiden Fassungen dieselbe, die
+  //    Zeichnung darin war es nicht: als `<symbol>` eröffnete der Verweis ein
+  //    ZWEITES Koordinatensystem — das äussere `<svg>` trägt
+  //    `viewBox="-22 -22 144 144"`, das `<use>` setzte darin einen Viewport
+  //    bei (0,0), und der ganze Reif sass 22 von 144 Einheiten weiter unten
+  //    rechts. Auf einer 52-px-Kachel sind das 8 px: das Gesicht stand oben
+  //    links, der Reif unten rechts, und zwar auf JEDER Seite der App.
+  //    Gemessen wird deshalb die Lage des INHALTS, nicht die der Hülle.
+  const lage = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const av = '<span class="av">AB</span>';
+    document.body.innerHTML = '<div id="app"><main><div class="rlist">'
+      + '<div class="rrow"><span class="rav zn" id="lA" style="--rav:52px">'
+      +   K('insigniumRef("zn-test", {band:false})') + av + '</span></div>'
+      + '<div class="rrow"><span class="rav zn" id="lB" style="--rav:52px">'
+      +   K('insigniumSvg("zn-test", {band:false})') + av + '</span></div>'
+      + '</div></main></div>';
+    window._topfRetten();
+    const box = (sel) => {
+      const el = document.querySelector(sel + ' > svg.ins');
+      if(!el) return null;
+      let b = null;
+      el.querySelectorAll('circle,path,ellipse,rect,use').forEach(n => {
+        let x; try { x = n.getBoundingClientRect(); } catch(e){ return; }
+        if(!x || !x.width) return;
+        b = b ? {l:Math.min(b.l, x.left), t:Math.min(b.t, x.top),
+                 r:Math.max(b.r, x.right), u:Math.max(b.u, x.bottom)}
+              : {l:x.left, t:x.top, r:x.right, u:x.bottom};
+      });
+      const s = el.getBoundingClientRect();
+      return b ? {l:+(b.l - s.left).toFixed(1), t:+(b.t - s.top).toFixed(1),
+                  w:+(b.r - b.l).toFixed(1), h:+(b.u - b.t).toFixed(1)} : null;
+    };
+    return {verweis: box('#lA'), voll: box('#lB'),
+            use: !!document.querySelector('#lA use')};
+  });
+  ok(lage.use, 'die Probe zeichnet wirklich einen Verweis');
+  ok(lage.verweis && lage.voll
+     && Math.abs(lage.verweis.l - lage.voll.l) < 0.6
+     && Math.abs(lage.verweis.t - lage.voll.t) < 0.6
+     && Math.abs(lage.verweis.w - lage.voll.w) < 0.6
+     && Math.abs(lage.verweis.h - lage.voll.h) < 0.6,
+     'der Verweis zeichnet an derselben Stelle wie das volle Markup',
+     JSON.stringify(lage));
 
   const K = async src => page.evaluate(s => window.__k.eval(s), src);
 

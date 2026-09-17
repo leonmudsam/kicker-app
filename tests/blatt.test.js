@@ -319,7 +319,7 @@ const ok = (c, msg, det) => {
               // Verläufe absichtlich selbst und sind kein Verweis [§C30].
               rav: document.querySelectorAll('.rav > svg.ins').length,
               ravUse: document.querySelectorAll('.rav > svg.ins > use').length,
-              symbole: document.querySelectorAll('#insDefs symbol').length,
+              symbole: document.querySelectorAll('#insDefs defs > g[id]').length,
               offen: [...offen].slice(0, 5), verwaist: [...verwaist].slice(0, 5)};
     }, t));
   }
@@ -353,7 +353,7 @@ const ok = (c, msg, det) => {
               // Verläufe absichtlich selbst und sind kein Verweis [§C30].
               rav: document.querySelectorAll('.rav > svg.ins').length,
               ravUse: document.querySelectorAll('.rav > svg.ins > use').length,
-              symbole: document.querySelectorAll('#insDefs symbol').length,
+              symbole: document.querySelectorAll('#insDefs defs > g[id]').length,
               offen: [...offen].slice(0, 5), verwaist: [...verwaist].slice(0, 5)};
     }, ruf));
   }
