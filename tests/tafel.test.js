@@ -1024,6 +1024,24 @@ const _tagSchreib = (function(){
 ok(_tagSchreib === 1, 'der Kalendertag wird an genau einer Stelle gebildet',
    _tagSchreib + ' Stellen');
 
+// ─── Kein Gestaltungswert ohne Leser ────────────────────────────────
+// Der Bau haengt sechzehn Stylesheets aneinander, und eine Variable, die
+// niemand mehr liest, faellt danach niemandem auf: `--r-lg` stand als
+// dritter Radius neben `--r` und `--r-sm` in den Tokens und wurde nirgends
+// abgefragt. Dieselbe Regel wie bei den toten Klassen, eine Ebene tiefer.
+const _totVar = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const def = new Set(), gelesen = new Set();
+  (quelle.match(/--[a-zA-Z0-9-]+\s*:/g) || [])
+    .forEach(x => def.add(x.replace(/\s*:$/, '')));
+  (quelle.match(/var\(\s*--[a-zA-Z0-9-]+/g) || [])
+    .forEach(x => gelesen.add(x.replace(/var\(\s*/, '')));
+  return {n: def.size, tot: [...def].filter(d => !gelesen.has(d))};
+})();
+ok(_totVar.n > 40, 'die Tokens werden gefunden', _totVar.n + ' Variablen');
+ok(_totVar.tot.length === 0, 'jede CSS-Variable wird auch gelesen',
+   _totVar.tot.join(', ') || 'alle ' + _totVar.n);
+
 // ─── Und die Elo-Rechnung zieht ihre Grenzen an einer Stelle ─────────
 // Die Erwartungsformel stand zweimal in der Auslieferung: `expected` und ein
 // wortgleiches `localExp` in der Elo-Engine. Die drei Chancen-Linien standen
@@ -1042,6 +1060,30 @@ ok(_eloEinmal.formel === 1, 'die Erwartungsformel steht genau einmal da',
    _eloEinmal.formel + ' Stellen');
 ok(_eloEinmal.roh === 0, 'die Chancen-Linien stehen als Begriff, nicht als Zahl',
    _eloEinmal.roh + ' blanke Zahlen');
+
+// ─── Zwei Rechnungen ueber die laengste Serie zaehlen gleich ─────────
+// `longestStreaks` traegt die Bestenliste des Awards-Tabs, `longestPlayerStreak`
+// den Wert einer Auszeichnung — zwei Durchlaeufe ueber dieselbe Frage. Sie
+// zusammenzulegen kostet mehr, als es bringt: die Liste rechnet alle Spieler
+// auf einmal, das Badge fragt je Spieler, und das waere in der Badge-Schleife
+// quadratisch. Also bleiben beide, und der Test haelt sie aneinander [§C27].
+const _serien = JSON.parse(K.eval(`JSON.stringify((function(){
+  const liste = {};
+  longestStreaks(matches).forEach(x => { liste[x.id] = x.v; });
+  const ab = [];
+  let gemessen = 0;
+  players.forEach(p => {
+    const a = liste[p.id] || 0;
+    const b = longestPlayerStreak(p.id, matches);
+    // Die Liste schneidet bei zwei ab, das Badge nicht.
+    if(b >= 2){ gemessen++; if(a !== b) ab.push(pname(p.id) + ': ' + a + ' gegen ' + b); }
+  });
+  return {gemessen, ab};
+})())`));
+ok(_serien.gemessen >= 10, 'genug Spieler haben eine Serie zum Vergleichen',
+   _serien.gemessen + ' Spieler');
+ok(_serien.ab.length === 0, 'Awards und Auszeichnung zaehlen dieselbe laengste Serie',
+   _serien.ab.join(' · ') || 'alle gleich');
 
 // Der Bau haengt sechzehn Stylesheets aneinander, und eine Regel fuer eine
 // Ansicht, die es nicht mehr gibt, faellt danach niemandem mehr auf: die
