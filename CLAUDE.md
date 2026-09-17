@@ -75,7 +75,11 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       erfundene Liga aus 571 Partien mit einem gebauten
                       Schaufenster, die Tag für Tag nachgespielt zeigt, welche
                       Karte entsteht, welche verloren geht und warum
-                      (README-probe-liga.md)
+                      (README-probe-liga.md), und der Vorschlag für neue
+                      Schandrekorde und Schandchroniken: dreizehn Kandidaten
+                      gegen sechs Tore, darunter das, das nur für die Schande
+                      gilt — sie darf sich nicht beim Schwächsten sammeln
+                      (schande-lauf.js baut schande.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen

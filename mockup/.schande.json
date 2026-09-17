@@ -1,0 +1,1062 @@
+{
+ "NAMES": [
+  "Alex",
+  "Anton",
+  "Henry",
+  "Jane",
+  "Jannik",
+  "Johannes",
+  "Julian",
+  "Leo",
+  "Leon",
+  "Martin",
+  "Maxi",
+  "Stefan"
+ ],
+ "IDS": [
+  "00000000-0000-4000-8000-000000000000",
+  "00000000-0000-4000-8000-000000000001",
+  "00000000-0000-4000-8000-000000000002",
+  "00000000-0000-4000-8000-000000000003",
+  "00000000-0000-4000-8000-000000000004",
+  "00000000-0000-4000-8000-000000000005",
+  "00000000-0000-4000-8000-000000000006",
+  "00000000-0000-4000-8000-000000000007",
+  "00000000-0000-4000-8000-000000000008",
+  "00000000-0000-4000-8000-000000000009",
+  "00000000-0000-4000-8000-000000000010",
+  "00000000-0000-4000-8000-000000000011"
+ ],
+ "ERG": [
+  {
+   "k": {
+    "id": "sieve",
+    "achse": "monat",
+    "neu": "monat",
+    "gruppe": "A",
+    "name": "Das Scheunentor",
+    "short": "Sieb",
+    "beiname": "Der Durchlässige",
+    "cond": "Meiste Gegentore je Abwehrspiel im Monat, ab 8 Abwehrspielen",
+    "wie": "Gezählt werden die Tore, die das eigene Team kassiert hat, während dieser Spieler hinten stand, geteilt durch die Zahl dieser Partien."
+   },
+   "mon": {
+    "monate": 3,
+    "gewertet": 29,
+    "ab": 9.176470588235293,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 9.833333333333334,
+      "ev": "9,8 Gegentore je Abwehrspiel · 12 Spiele",
+      "monat": "2026-06"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000000",
+      "v": 9.3,
+      "ev": "9,3 Gegentore je Abwehrspiel · 10 Spiele",
+      "monat": "2026-06"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "v": 9.176470588235293,
+      "ev": "9,2 Gegentore je Abwehrspiel · 17 Spiele",
+      "monat": "2026-07"
+     }
+    ],
+    "rate": 1,
+    "aus": 1.3700799133201567,
+    "korr": -0.13739584554330325
+   }
+  },
+  {
+   "k": {
+    "id": "abyss",
+    "achse": "monat",
+    "neu": "monat",
+    "gruppe": "A",
+    "name": "Das Fass ohne Boden",
+    "short": "Debakel",
+    "beiname": "Der Eingebrochene",
+    "cond": "Höchster Anteil 0:10-Niederlagen an den Pleiten des Monats, ab 6 Pleiten",
+    "wie": "Ein 0:10 ist die höchstmögliche Niederlage. Der Nenner sind die eigenen Pleiten des Monats und nicht alle Partien: gefragt ist, WIE jemand verliert."
+   },
+   "mon": {
+    "monate": 3,
+    "gewertet": 32,
+    "ab": 0.06451612903225806,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.06451612903225806,
+      "ev": "6 % aller 31 Pleiten endeten 0:10 · 2 Debakel",
+      "monat": "2026-06"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.15,
+      "ev": "15 % aller 20 Pleiten endeten 0:10 · 3 Debakel",
+      "monat": "2026-07"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": 0.07142857142857142,
+      "ev": "7 % aller 14 Pleiten endeten 0:10 · 1 Debakel",
+      "monat": "2026-07"
+     }
+    ],
+    "rate": 1,
+    "aus": 1.4944243180569818,
+    "korr": -0.09017592864194816
+   }
+  },
+  {
+   "k": {
+    "id": "hardluck",
+    "achse": "monat",
+    "neu": "monat",
+    "gruppe": "A",
+    "name": "Der Pechvogel",
+    "short": "Pechvogel",
+    "beiname": "Der Unglückliche",
+    "cond": "Höchster Anteil 9:10-Niederlagen an den Pleiten des Monats, ab 6 Pleiten",
+    "wie": "Ein 9:10 ist die knappste mögliche Niederlage. Der Nenner sind die eigenen Pleiten und nicht die engen Partien: gefragt ist, wie jemand verliert, nicht wie eng es zuging."
+   },
+   "mon": {
+    "monate": 3,
+    "gewertet": 32,
+    "ab": 0.35714285714285715,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "v": 0.36363636363636365,
+      "ev": "36 % aller 11 Pleiten endeten 9:10 · 4 davon",
+      "monat": "2026-07"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "v": 0.42857142857142855,
+      "ev": "43 % aller 7 Pleiten endeten 9:10 · 3 davon",
+      "monat": "2026-08"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "v": 0.35714285714285715,
+      "ev": "36 % aller 14 Pleiten endeten 9:10 · 5 davon",
+      "monat": "2026-08"
+     }
+    ],
+    "rate": 1,
+    "aus": 2.2009306417482697,
+    "korr": -0.08622868577065987
+   }
+  },
+  {
+   "k": {
+    "id": "angstgegner",
+    "achse": "allzeit",
+    "neu": "allzeit",
+    "gruppe": "A",
+    "name": "Der Angstgegner",
+    "short": "Angst",
+    "cond": "Niedrigste Siegquote gegen EINEN Gegner, ab 20 Duellen gegen ihn",
+    "wie": "Gesucht wird der Gegner, gegen den am wenigsten zu holen war. Der Nenner sind die Duelle gegen genau diesen Gegner; zwanzig davon, damit es keine Serie ist."
+   },
+   "lauf": {
+    "rennen": 10,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": 0.9130434782608696,
+      "ev": "91 % verloren gegen Leon · 2 von 23"
+     }
+    ],
+    "alle": [
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": 0.9130434782608696,
+      "ev": "91 % verloren gegen Leon · 2 von 23"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.8709677419354839,
+      "ev": "87 % verloren gegen Leon · 4 von 31"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "v": 0.8125,
+      "ev": "81 % verloren gegen Martin · 6 von 32"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "v": 0.7647058823529411,
+      "ev": "76 % verloren gegen Martin · 12 von 51"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "v": 0.734375,
+      "ev": "73 % verloren gegen Julian · 17 von 64"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "v": 0.65625,
+      "ev": "66 % verloren gegen Leon · 11 von 32"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "v": 0.5777777777777777,
+      "ev": "58 % verloren gegen Julian · 19 von 45"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "v": 0.55,
+      "ev": "55 % verloren gegen Martin · 9 von 20"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "v": 0.5465116279069768,
+      "ev": "55 % verloren gegen Julian · 39 von 86"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "v": 0.4534883720930233,
+      "ev": "45 % verloren gegen Leon · 47 von 86"
+     }
+    ],
+    "korr": -0.29146624290832507,
+    "aus": 1.8840502566703339
+   }
+  },
+  {
+   "k": {
+    "id": "untersoll",
+    "achse": "allzeit",
+    "neu": "allzeit",
+    "gruppe": "A",
+    "name": "Das Untersoll",
+    "short": "Untersoll",
+    "cond": "Größter Abstand der Siegquote unter die eigene Elo-Erwartung, ab 40 Partien",
+    "wie": "Die Elo-Rechnung gibt jeder Partie eine Siegchance. Über die Laufbahn gemittelt ergibt das die erwartete Quote; gewertet wird, wie weit die tatsächliche darunter liegt, in Prozentpunkten."
+   },
+   "lauf": {
+    "rennen": 10,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.15122222222222237,
+      "ev": "−15 Punkte unter der Rechnung · 27 % statt 42 % in 81 Partien"
+     }
+    ],
+    "alle": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.15122222222222237,
+      "ev": "−15 Punkte unter der Rechnung · 27 % statt 42 % in 81 Partien"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": 0.09615584415584427,
+      "ev": "−10 Punkte unter der Rechnung · 32 % statt 42 % in 77 Partien"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "v": 0.0554268292682929,
+      "ev": "−6 Punkte unter der Rechnung · 41 % statt 47 % in 246 Partien"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "v": 0.05040131578947382,
+      "ev": "−5 Punkte unter der Rechnung · 39 % statt 44 % in 152 Partien"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "v": 0.0317988505747126,
+      "ev": "−3 Punkte unter der Rechnung · 44 % statt 47 % in 348 Partien"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "v": -0.008230769230769264,
+      "ev": "+1 Punkte unter der Rechnung · 49 % statt 48 % in 78 Partien"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "v": -0.05554084507042245,
+      "ev": "+6 Punkte unter der Rechnung · 62 % statt 57 % in 355 Partien"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "v": -0.07181443298969065,
+      "ev": "+7 Punkte unter der Rechnung · 57 % statt 50 % in 97 Partien"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "v": -0.08446445497630317,
+      "ev": "+8 Punkte unter der Rechnung · 64 % statt 55 % in 211 Partien"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "v": -0.09080701754385978,
+      "ev": "+9 Punkte unter der Rechnung · 65 % statt 56 % in 171 Partien"
+     }
+    ],
+    "korr": -0.2775340403579283,
+    "aus": 2.4304587620155176
+   }
+  },
+  {
+   "k": {
+    "id": "misfire",
+    "achse": "beide",
+    "neu": "beide",
+    "gruppe": "B",
+    "name": "Die Ladehemmung",
+    "short": "Torarm",
+    "beiname": "Der Harmlose",
+    "cond": "Größter Rückstand der eigenen Tore im Sturm auf das eigene Mittel, ab 30 Sturmspielen (Monat: 8)",
+    "wie": "Verglichen werden die Tore des eigenen Teams je Sturmspiel mit denen je Partie über alles. Gefragt ist nicht, wer wenig Tore sieht, sondern wer vorne WENIGER beiträgt als hinten — die reine Zahl gehört sonst dem, der selten gewinnt.",
+    "mind": {
+     "allzeit": 30,
+     "monat": 8
+    }
+   },
+   "lauf": {
+    "rennen": 8,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.3518518518518521,
+      "ev": "0,4 Tore weniger im Sturm · 6,1 statt 6,5 in 54 Sturmspielen"
+     }
+    ],
+    "alle": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.3518518518518521,
+      "ev": "0,4 Tore weniger im Sturm · 6,1 statt 6,5 in 54 Sturmspielen"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "v": 0.3407921235175655,
+      "ev": "0,3 Tore weniger im Sturm · 7,2 statt 7,6 in 109 Sturmspielen"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "v": 0.32024373730534883,
+      "ev": "0,3 Tore weniger im Sturm · 8,4 statt 8,7 in 77 Sturmspielen"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "v": 0.07574489454301947,
+      "ev": "0,1 Tore weniger im Sturm · 7,7 statt 7,8 in 206 Sturmspielen"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "v": -0.16321105794789936,
+      "ev": "−0,2 Tore weniger im Sturm · 8,8 statt 8,7 in 121 Sturmspielen"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "v": -0.16714394249313358,
+      "ev": "−0,2 Tore weniger im Sturm · 8,9 statt 8,7 in 241 Sturmspielen"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "v": -0.23414304993252344,
+      "ev": "−0,2 Tore weniger im Sturm · 8,1 statt 7,9 in 38 Sturmspielen"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": -0.27532467532467564,
+      "ev": "−0,3 Tore weniger im Sturm · 7,9 statt 7,6 in 35 Sturmspielen"
+     }
+    ],
+    "korr": 0.13936084935286033,
+    "aus": 1.5181542971390805
+   },
+   "mon": {
+    "monate": 3,
+    "gewertet": 25,
+    "ab": 0.8701923076923084,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "v": 0.8701923076923084,
+      "ev": "0,9 Tore weniger im Sturm · 7,9 statt 8,8 in 16 Sturmspielen",
+      "monat": "2026-06"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "v": 1.1838624338624344,
+      "ev": "1,2 Tore weniger im Sturm · 6,9 statt 8,0 in 27 Sturmspielen",
+      "monat": "2026-07"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "v": 1.381818181818181,
+      "ev": "1,4 Tore weniger im Sturm · 7,8 statt 9,2 in 11 Sturmspielen",
+      "monat": "2026-08"
+     }
+    ],
+    "rate": 1,
+    "aus": 1.427462270233123,
+    "korr": 0.006212061658824091
+   }
+  },
+  {
+   "k": {
+    "id": "blankday",
+    "achse": "beide",
+    "neu": "beide",
+    "gruppe": "B",
+    "name": "Der Fehltag",
+    "short": "Fehltag",
+    "beiname": "Der Sieglose",
+    "cond": "Höchster Anteil eigener Spieltage ohne einen Sieg, ab 10 Spieltagen mit je 3 Partien (Monat: 3)",
+    "wie": "Gezählt werden die eigenen Spieltage mit mindestens drei Partien, an denen kein einziger Sieg heraussprang. Der Nenner sind genau diese Spieltage, nicht die Partien — mit zwei Partien ist ein sieglose Tag ein Wurf, mit drei eine Aussage.",
+    "mind": {
+     "allzeit": 10,
+     "monat": 3
+    }
+   },
+   "lauf": {
+    "rennen": 10,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.25,
+      "ev": "25 % der Spieltage ohne Sieg · 4 von 16"
+     }
+    ],
+    "alle": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.25,
+      "ev": "25 % der Spieltage ohne Sieg · 4 von 16"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": 0.21428571428571427,
+      "ev": "21 % der Spieltage ohne Sieg · 3 von 14"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "v": 0.11538461538461539,
+      "ev": "12 % der Spieltage ohne Sieg · 3 von 26"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "v": 0,
+      "ev": "0 % der Spieltage ohne Sieg · 0 von 16"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "v": 0,
+      "ev": "0 % der Spieltage ohne Sieg · 0 von 12"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "v": 0,
+      "ev": "0 % der Spieltage ohne Sieg · 0 von 23"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "v": 0,
+      "ev": "0 % der Spieltage ohne Sieg · 0 von 40"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "v": 0,
+      "ev": "0 % der Spieltage ohne Sieg · 0 von 51"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "v": 0,
+      "ev": "0 % der Spieltage ohne Sieg · 0 von 36"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "v": 0,
+      "ev": "0 % der Spieltage ohne Sieg · 0 von 48"
+     }
+    ],
+    "korr": -0.535835698638394,
+    "aus": 2.9477144513259255
+   },
+   "mon": {
+    "monate": 3,
+    "gewertet": 29,
+    "ab": 0.25,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.375,
+      "ev": "38 % der Spieltage ohne Sieg · 3 von 8",
+      "monat": "2026-06"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000000",
+      "v": 0.25,
+      "ev": "25 % der Spieltage ohne Sieg · 1 von 4",
+      "monat": "2026-06"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000000",
+      "v": 0.3333333333333333,
+      "ev": "33 % der Spieltage ohne Sieg · 1 von 3",
+      "monat": "2026-07"
+     }
+    ],
+    "rate": 1,
+    "aus": 1.6883814663588745,
+    "korr": -0.4356994358600158
+   }
+  },
+  {
+   "k": {
+    "id": "noanswer",
+    "achse": "beide",
+    "neu": "beide",
+    "gruppe": "B",
+    "name": "Die stumme Antwort",
+    "short": "Stumm",
+    "beiname": "Der Geknickte",
+    "cond": "Größter Einbruch der Siegquote direkt nach einer eigenen Pleite, ab 25 Gelegenheiten (Monat: 6)",
+    "wie": "Der Nenner sind die Partien, die direkt auf eine eigene Niederlage folgen — die Gelegenheiten zu antworten. Verglichen wird die Quote dort mit der eigenen Quote über alles, in Prozentpunkten: die reine Quote gehört sonst dem, der ohnehin selten gewinnt. Das Gegenstück zum Stehaufmann.",
+    "mind": {
+     "allzeit": 25,
+     "monat": 6
+    }
+   },
+   "lauf": {
+    "rennen": 11,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": 0.030557677616501133,
+      "ev": "−3 Punkte nach einer Pleite · 29 % statt 32 % in 51 Gelegenheiten"
+     }
+    ],
+    "alle": [
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": 0.030557677616501133,
+      "ev": "−3 Punkte nach einer Pleite · 29 % statt 32 % in 51 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "v": 0.018592677345537767,
+      "ev": "−2 Punkte nach einer Pleite · 37 % statt 39 % in 92 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "v": 0.011856368563685604,
+      "ev": "−1 Punkte nach einer Pleite · 40 % statt 41 % in 144 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000000",
+      "v": 0.0064102564102563875,
+      "ev": "−1 Punkte nach einer Pleite · 25 % statt 26 % in 28 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "v": -0.011793146941349697,
+      "ev": "+1 Punkte nach einer Pleite · 63 % statt 62 % in 134 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "v": -0.013953075008887317,
+      "ev": "+1 Punkte nach einer Pleite · 45 % statt 44 % in 194 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": -0.01653065494873407,
+      "ev": "+2 Punkte nach einer Pleite · 29 % statt 27 % in 59 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "v": -0.01754385964912275,
+      "ev": "+2 Punkte nach einer Pleite · 67 % statt 65 % in 60 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "v": -0.01835554438018605,
+      "ev": "+2 Punkte nach einer Pleite · 59 % statt 57 % in 41 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "v": -0.08861312047892245,
+      "ev": "+9 Punkte nach einer Pleite · 72 % statt 64 % in 76 Gelegenheiten"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "v": -0.12820512820512825,
+      "ev": "+13 Punkte nach einer Pleite · 62 % statt 49 % in 39 Gelegenheiten"
+     }
+    ],
+    "korr": 0.055107985796251854,
+    "aus": 1.2796919468828867
+   },
+   "mon": {
+    "monate": 3,
+    "gewertet": 32,
+    "ab": 0.06339869281045751,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": 0.08285714285714285,
+      "ev": "−8 Punkte nach einer Pleite · 36 % statt 44 % in 14 Gelegenheiten",
+      "monat": "2026-07"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000000",
+      "v": 0.06666666666666668,
+      "ev": "−7 Punkte nach einer Pleite · 13 % statt 20 % in 15 Gelegenheiten",
+      "monat": "2026-07"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "v": 0.06339869281045751,
+      "ev": "−6 Punkte nach einer Pleite · 56 % statt 62 % in 34 Gelegenheiten",
+      "monat": "2026-08"
+     }
+    ],
+    "rate": 1,
+    "aus": 1.18979292769802,
+    "korr": 0.03468654890925727
+   }
+  },
+  {
+   "k": {
+    "id": "favflop",
+    "achse": "allzeit",
+    "neu": "allzeit",
+    "gruppe": "C",
+    "name": "Der Wackelkandidat",
+    "short": "Wackel",
+    "cond": "Höchster Anteil Niederlagen als Favorit, ab 20 Partien als Favorit",
+    "wie": "Favorit ist, wem die Elo-Rechnung vor der Partie über 60 Prozent Siegchance gab. Der Nenner sind genau diese Partien. Das Gegenstück zum Souverän."
+   },
+   "lauf": {
+    "rennen": 5,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "v": 0.34285714285714286,
+      "ev": "34 % als Favorit verloren · 12 von 35"
+     }
+    ],
+    "alle": [
+     {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "v": 0.34285714285714286,
+      "ev": "34 % als Favorit verloren · 12 von 35"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "v": 0.2727272727272727,
+      "ev": "27 % als Favorit verloren · 36 von 132"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "v": 0.2622950819672131,
+      "ev": "26 % als Favorit verloren · 16 von 61"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "v": 0.2549019607843137,
+      "ev": "25 % als Favorit verloren · 13 von 51"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "v": 0.14925373134328357,
+      "ev": "15 % als Favorit verloren · 10 von 67"
+     }
+    ],
+    "korr": 0.27328630363586576,
+    "aus": 2.1703097399257323
+   }
+  },
+  {
+   "k": {
+    "id": "ballast",
+    "achse": "allzeit",
+    "neu": "allzeit",
+    "gruppe": "C",
+    "name": "Der Klotz am Bein",
+    "short": "Klotz",
+    "cond": "Größter Abstand der Mitspieler zu ihrer eigenen Quote, ab 3 Partnern mit je 10 gemeinsamen Spielen",
+    "wie": "Für jeden Partner wird die Quote an dieser Seite mit seiner Quote ohne diesen Partner verglichen. Gewertet wird der Mittelwert über alle Partner, in Prozentpunkten."
+   },
+   "lauf": {
+    "rennen": 9,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.30106840520616895,
+      "ev": "−30 Punkte für die Mitspieler · 3 Partner"
+     }
+    ],
+    "alle": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.30106840520616895,
+      "ev": "−30 Punkte für die Mitspieler · 3 Partner"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000007",
+      "v": 0.1625967647580255,
+      "ev": "−16 Punkte für die Mitspieler · 6 Partner"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "v": 0.10507445130289637,
+      "ev": "−11 Punkte für die Mitspieler · 9 Partner"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "v": 0.09948191158819779,
+      "ev": "−10 Punkte für die Mitspieler · 5 Partner"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "v": -0.013467529878243937,
+      "ev": "+1 Punkte für die Mitspieler · 3 Partner"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "v": -0.0950614828875036,
+      "ev": "+10 Punkte für die Mitspieler · 3 Partner"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000006",
+      "v": -0.16953590467785784,
+      "ev": "+17 Punkte für die Mitspieler · 5 Partner"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000009",
+      "v": -0.19691736492810127,
+      "ev": "+20 Punkte für die Mitspieler · 7 Partner"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000008",
+      "v": -0.22348827978853608,
+      "ev": "+22 Punkte für die Mitspieler · 10 Partner"
+     }
+    ],
+    "korr": -0.2469973902310688,
+    "aus": 2.4191707156202598
+   }
+  },
+  {
+   "k": {
+    "id": "relapse",
+    "achse": "monat",
+    "neu": "monat",
+    "gruppe": "D",
+    "name": "Der Rückfall",
+    "short": "Rückfall",
+    "beiname": "Der Nachlassende",
+    "cond": "Zweite Hälfte der eigenen Spieltage mindestens 30 Prozentpunkte unter der ersten, ab 4 Spieltagen",
+    "wie": "Die eigenen Spieltage des Monats werden halbiert und die Siegquote beider Hälften verglichen, in Prozentpunkten. Das Gegenstück zur Steigerung."
+   },
+   "mon": {
+    "monate": 3,
+    "gewertet": 29,
+    "ab": 0.14863102998696215,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000000",
+      "v": 0.3492063492063492,
+      "ev": "−35 Punkte zum Schluss · 57 % in den ersten 7, 22 % in den letzten 9 Partien",
+      "monat": "2026-06"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000000",
+      "v": 0.375,
+      "ev": "−37 Punkte zum Schluss · 50 % in den ersten 4, 13 % in den letzten 16 Partien",
+      "monat": "2026-07"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "v": 0.14863102998696215,
+      "ev": "−15 Punkte zum Schluss · 54 % in den ersten 52, 39 % in den letzten 59 Partien",
+      "monat": "2026-07"
+     }
+    ],
+    "rate": 1,
+    "aus": 0.9902203843078113,
+    "korr": -0.09275696736342405
+   }
+  },
+  {
+   "k": {
+    "id": "dutyfail",
+    "achse": "monat",
+    "neu": "monat",
+    "gruppe": "D",
+    "name": "Die verschenkte Pflicht",
+    "short": "Pflicht",
+    "beiname": "Der Fehlbare",
+    "cond": "Als Favorit mindestens 30 Prozentpunkte unter der Erwartung, ab 6 Partien als Favorit",
+    "wie": "Favorit ist, wem die Rechnung über 60 Prozent Siegchance gab. Verglichen wird die tatsächliche Quote in genau diesen Partien mit der dort erwarteten, in Prozentpunkten."
+   },
+   "mon": {
+    "monate": 3,
+    "gewertet": 19,
+    "ab": 0.13611111111111107,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000000",
+      "v": 0.3541666666666667,
+      "ev": "−35 Punkte unter der Pflicht · 33 % statt 69 % in 6 Partien als Favorit",
+      "monat": "2026-06"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "v": 0.13611111111111107,
+      "ev": "−14 Punkte unter der Pflicht · 56 % statt 69 % in 9 Partien als Favorit",
+      "monat": "2026-06"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "v": 0.3066666666666667,
+      "ev": "−31 Punkte unter der Pflicht · 33 % statt 64 % in 6 Partien als Favorit",
+      "monat": "2026-08"
+     }
+    ],
+    "rate": 1,
+    "aus": 0.8941400277489772,
+    "korr": -0.4258976072744187
+   }
+  },
+  {
+   "k": {
+    "id": "weakweek",
+    "achse": "monat",
+    "neu": "monat",
+    "gruppe": "D",
+    "name": "Die Fehlwoche",
+    "short": "Fehlwoche",
+    "beiname": "Der Wackelige",
+    "cond": "Schwächste eigene Woche mindestens 35 Prozentpunkte unter dem eigenen Monat, ab 2 Wochen mit je 3 Partien",
+    "wie": "Gesucht wird die eigene Woche mit der schlechtesten Quote und der Abstand zur eigenen Quote des ganzen Monats, in Prozentpunkten. Das Gegenstück zu „Ohne schwache Woche\"."
+   },
+   "mon": {
+    "monate": 3,
+    "gewertet": 29,
+    "ab": 0.22943722943722944,
+    "halter": [
+     {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "v": 0.3333333333333333,
+      "ev": "−33 Punkte in der schwächsten Woche · 0 % statt 33 % im Monat",
+      "monat": "2026-07"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "v": 0.22943722943722944,
+      "ev": "−23 Punkte in der schwächsten Woche · 29 % statt 52 % im Monat",
+      "monat": "2026-07"
+     },
+     {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "v": 0.2857142857142857,
+      "ev": "−29 Punkte in der schwächsten Woche · 29 % statt 57 % im Monat",
+      "monat": "2026-08"
+     }
+    ],
+    "rate": 1,
+    "aus": 1.2077156200713133,
+    "korr": -0.2852633096169454
+   }
+  }
+ ],
+ "BEST_ERG": [
+  {
+   "id": "drought",
+   "name": "Die Durststrecke",
+   "halter": [
+    {
+     "id": "00000000-0000-4000-8000-000000000011",
+     "v": 11,
+     "ev": "11 Niederlagen am Stück"
+    }
+   ],
+   "rennen": 5
+  },
+  {
+   "id": "abyss_a",
+   "name": "Das Fass ohne Boden",
+   "halter": [
+    {
+     "id": "00000000-0000-4000-8000-000000000011",
+     "v": 0.0847457627118644,
+     "ev": "8 % aller 59 Pleiten endeten 0:10"
+    }
+   ],
+   "rennen": 2
+  },
+  {
+   "id": "hardluck_a",
+   "name": "Der Pechvogel",
+   "halter": [
+    {
+     "id": "00000000-0000-4000-8000-000000000003",
+     "v": 0.21428571428571427,
+     "ev": "21 % aller 42 Pleiten endeten 9:10"
+    }
+   ],
+   "rennen": 10
+  },
+  {
+   "id": "sieve_a",
+   "name": "Das Scheunentor",
+   "halter": [
+    {
+     "id": "00000000-0000-4000-8000-000000000000",
+     "v": 9.133333333333333,
+     "ev": "9,1 Gegentore je Abwehrspiel"
+    }
+   ],
+   "rennen": 10
+  }
+ ],
+ "konzentration": [
+  {
+   "id": "00000000-0000-4000-8000-000000000011",
+   "name": "Stefan",
+   "n": 6,
+   "anteil": 0.5454545454545454,
+   "platz": 10,
+   "was": [
+    "Die Durststrecke",
+    "Das Fass ohne Boden",
+    "Das Untersoll",
+    "Die Ladehemmung",
+    "Der Fehltag",
+    "Der Klotz am Bein"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000005",
+   "name": "Johannes",
+   "n": 2,
+   "anteil": 0.18181818181818182,
+   "platz": 9,
+   "was": [
+    "Der Angstgegner",
+    "Die stumme Antwort"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000003",
+   "name": "Jane",
+   "n": 1,
+   "anteil": 0.09090909090909091,
+   "platz": 4,
+   "was": [
+    "Der Pechvogel"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000000",
+   "name": "Alex",
+   "n": 1,
+   "anteil": 0.09090909090909091,
+   "platz": 11,
+   "was": [
+    "Das Scheunentor"
+   ]
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000007",
+   "name": "Leo",
+   "n": 1,
+   "anteil": 0.09090909090909091,
+   "platz": 7,
+   "was": [
+    "Der Wackelkandidat"
+   ]
+  }
+ ],
+ "gesamtHaltungen": 11,
+ "MON_GEWERTET": [
+  "2026-06",
+  "2026-07",
+  "2026-08"
+ ],
+ "MON_TAGE": {
+  "2026-05": 3,
+  "2026-06": 18,
+  "2026-07": 19,
+  "2026-08": 16
+ },
+ "RANG": [
+  {
+   "id": "00000000-0000-4000-8000-000000000006",
+   "name": "Julian",
+   "q": 0.6491228070175439,
+   "games": 171
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000009",
+   "name": "Martin",
+   "q": 0.6350710900473934,
+   "games": 211
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000008",
+   "name": "Leon",
+   "q": 0.6225352112676056,
+   "games": 355
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000003",
+   "name": "Jane",
+   "q": 0.5670103092783505,
+   "games": 97
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000004",
+   "name": "Jannik",
+   "q": 0.48717948717948717,
+   "games": 78
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000010",
+   "name": "Maxi",
+   "q": 0.4396551724137931,
+   "games": 348
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000007",
+   "name": "Leo",
+   "q": 0.4146341463414634,
+   "games": 246
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000002",
+   "name": "Henry",
+   "q": 0.3881578947368421,
+   "games": 152
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000005",
+   "name": "Johannes",
+   "q": 0.3246753246753247,
+   "games": 77
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000011",
+   "name": "Stefan",
+   "q": 0.2716049382716049,
+   "games": 81
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000000",
+   "name": "Alex",
+   "q": 0.2564102564102564,
+   "games": 39
+  }
+ ]
+}
