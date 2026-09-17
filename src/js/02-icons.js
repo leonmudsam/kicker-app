@@ -233,6 +233,20 @@ const ICONS = {
   // Unaufgeregt: eine Linie, die kaum ausschlägt, zwischen zwei Marken —
   // Gleichmäßigkeit als Bild, nicht als Zahl.
   flatWave:      `<path d="M3 12h3l2-2 2 4 2-3 2 2 2-2h3"/><path d="M3 6v12M21 6v12"/>`,
+  // ── Die vier neuen Schanden [§C35] ──────────────────────────────
+  // Ladehemmung: ein Ball vor dem Tor und ein Strich davor — er kommt
+  // nicht durch. Nicht `strikeBoot` gespiegelt: zwei Rubriken tragen nie
+  // dieselbe Zeichnung [§C27].
+  misfireBall:   `<circle cx="9" cy="14" r="4"/><path d="M16 5v14"/><path d="M4 21h16"/><path d="M13 9l6 6M19 9l-6 6"/>`,
+  // Stumme Antwort: eine Sprechblase, durchgestrichen — es kommt nichts
+  // zurück.
+  mutedReply:    `<path d="M4 5h16v10H12l-5 4v-4H4z"/><path d="M8 3l12 14"/>`,
+  // Wackelkandidat: eine Stufe, die unter dem Fuß nachgibt — der Favorit,
+  // der einbricht.
+  wobbleStep:    `<path d="M3 8h7v5h7v5h4"/><path d="M6 18l3 3M10 18l3 3"/>`,
+  // Klotz am Bein: ein Gewicht an einer Kette — was die Mitspieler
+  // mitziehen.
+  dragWeight:    `<path d="M12 3v6"/><path d="M9 9h6l2 12H7z"/><path d="M10 6h4"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};

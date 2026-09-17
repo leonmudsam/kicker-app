@@ -188,15 +188,18 @@ Rechnung an der Identität eines Arrays hängt statt an einer Version
 — `matches` wird immer **ersetzt**, nie an Ort und Stelle verändert, und ein
 frisches Array verwirft den Memo von selbst.
 
-**Die Rohsicht landet nicht im Cache.** Zehn Liga-Rekorde [§C35] fragen nach
-einem gleitenden Fenster, nach einer Rolle oder nach dem Gegnerkreis und
-brauchen dafür die Partien je Spieler in Spielreihenfolge — dieselbe
-Rohsicht, die `_seasonTitleCtx` für den Monat schon hat. `_chronicleCtx` baut
-sie in einer eigenen Struktur NEBEN `P`, rechnet die zehn Werte daraus aus
-und lässt sie fallen; am gecachten Spielerobjekt hängen nur Skalare. Am
-Objekt selbst wären es 4×N Partien-Objekte, und der Zeitschnitt hält bis zu
-24 Kontexte gleichzeitig. Gemessen kostet das Bauen 2 ms von 35 ms, warm
-weiterhin null. `tests/disziplinen` sieht nach, dass kein Spielerobjekt im
+**Die Rohsicht landet nicht im Cache.** Vierzehn Liga-Rekorde [§C35] fragen
+nach einem gleitenden Fenster, nach einer Rolle, nach dem Gegnerkreis oder
+nach dem Partnerkreis und brauchen dafür die Partien je Spieler in
+Spielreihenfolge — dieselbe Rohsicht, die `_seasonTitleCtx` für den Monat
+schon hat. `_chronicleCtx` baut sie in einer eigenen Struktur NEBEN `P`,
+rechnet die Werte daraus aus und lässt sie fallen; am gecachten
+Spielerobjekt hängen nur Skalare. Am Objekt selbst wären es 4×N
+Partien-Objekte, und der Zeitschnitt hält bis zu 24 Kontexte gleichzeitig.
+Jede Partie trägt dort `mate` neben `geg`: „Der Klotz am Bein" vergleicht
+jeden Mitspieler mit sich selbst OHNE diesen Partner, und ohne den Partner
+ist das nicht zu beantworten. Die vier Kennzahlen der Schandtafel fallen im
+selben Durchlauf ab — gemessen 8,6 auf 10,3 ms kalt, warm weiterhin null. `tests/disziplinen` sieht nach, dass kein Spielerobjekt im
 Cache eine Liste trägt.
 
 > **Pflegepflicht.** Kommt ein Topf dazu, steht seine Schlüsselregel hier.
@@ -247,9 +250,9 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, und die Bedingung samt Erklärung jedes Rekords | 1104 |
-| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet und der Halter hinter jeder ausgerufenen Bestmarke | 363 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords und die Schandtafel samt ihrer Verteilung | 1191 |
+| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 180 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke und die Schandtafel, die im Feed nicht vorkommt | 365 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens und das Wappen als Verweis auf sein Symbol — **im echten Browser gemessen** | 138 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -1430,13 +1433,13 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   geht.
 - **§C39 Die Monatschronik fragt nicht, wer der Beste ist.** Der alte
   Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
-  gewinnt fast jede. Er ist vollständig ersetzt: dreiundfünfzig Chroniken, die
+  gewinnt fast jede. Er ist vollständig ersetzt: siebenundfünfzig Chroniken, die
   nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
   dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
   anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
-  Liga-Rekorde der Ewigen Tafel sind davon unberührt; drei Disziplinen tragen
-  beide Zeitachsen (`spotless`, `evenkeel`, `drought`), weil dieselbe Frage
-  auf zwei Zeitachsen in EINE Disziplin gehört [§13.1].
+  Liga-Rekorde der Ewigen Tafel sind davon unberührt; neun Disziplinen tragen
+  beide Zeitachsen, weil dieselbe Frage auf zwei Zeitachsen in EINE Disziplin
+  gehört [§13.1] — sie sind in §C35 genannt.
   **Das Stichproben-Tor ist niedrig und für alle gleich:** acht Partien im
   Monat, fünf in einer Teilmenge (`ST_TEIL`), drei Spieltage. Der alte
   Katalog verlangte 15, 20 oder 25 Partien, und damit hing die Chronik an der
@@ -1827,8 +1830,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   gewinnt jede Quote und jede Serie — am Ende liegen alle Liga-Einträge bei
   denselben drei Spielern. Zweiundzwanzig von sechsunddreißig Rekorden
   fragten direkt nach Können, und drei Spieler hielten vierundzwanzig der
-  achtunddreißig Haltungen. Heute sind es sechsundvierzig Rekorde und
-  einundfünfzig Haltungen, siebenundzwanzig davon bei den drei Besten.
+  achtunddreißig Haltungen. Heute sind es zweiundfünfzig Rekorde und
+  siebenundfünfzig Haltungen, siebenundzwanzig davon bei den drei Besten.
   **Die Schwelle ist keine Bedingung, sondern eine Kammer.** Ein Rekord
   DARF eine hohe Mindestzahl verlangen: wer sie hält, hat die Frage über eine
   lange Strecke beantwortet, und Rekorde sind auch dazu da, Können zu
@@ -1909,6 +1912,35 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   „32 seiner 134 Siege waren Kantersiege" las sich als Bestenliste der
   Anzahl, und das Podest zeigte genau diese 32 über der 10 des Spielers, der
   den höheren Anteil hält.
+  **Die Schandtafel ist keine Rangliste von hinten.** Elf Rekorde tragen
+  `art:'schatten'` und sieben Monatschroniken `monat.art:'schatten'` — die
+  Kehrseite gehört dazu, sie zählt aber nichts: `PRESTIGE_ART.schatten` ist
+  null, `PRESTIGE_CHRONIK.schatten` auch, `neg` hält sie aus der Zahl im
+  Profil und in der Rangliste heraus, `nextRecordFor` schlägt sie niemandem
+  vor, und der Feed meldet sie gar nicht. Eine negative FÜGUNG ist davon
+  ausgenommen und behält ihren Wert [§C25].
+  Das eigentliche Problem ist ein anderes: wer schlechter spielt, verliert
+  JEDE Quote. Eine Schande, die das Niveau misst, gehört damit immer demselben
+  Spieler. Gemessen hielt der Zehnte der Siegquote fünf der dreizehn
+  Haltungen, sobald die Kandidaten das reine Niveau fragten. Drei der neuen
+  Einträge fragen deshalb nach dem **Abstand zum Eigenen** [§C38] statt nach
+  dem Niveau, und genau dadurch haben sie ihr Tor bestanden: „Die
+  Ladehemmung" ging von r = −0,35 auf +0,14, „Die stumme Antwort" von −0,40
+  auf +0,06. Ein gleichmäßiger Streu wäre gelogen — eine Schande MISST, dass
+  jemand schlecht war —, also ist nur der Extremfall gedeckelt: kein Halter
+  über zwei Fünftel der Schandtafel, und mindestens sechs Namen tragen mit.
+  **Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin** [§13.1]. Neun
+  Disziplinen tragen jetzt beide: `spotless`, `evenkeel`, `drought`, `abyss`,
+  `hardluck`, `sieve`, `angstgegner`, `untersoll` und `misfire`. Zwei Namen
+  und zwei Icons für denselben Gedanken wären eins zu viel [§C27].
+  Was auf der Monatsachse **nicht** trägt, bleibt weg: „Die stumme Antwort"
+  schiebt ihre Schwelle dort gemessen höchstens 1,39 σ hinaus und wäre damit
+  eine Chronik, deren Bester kaum weiter draußen liegt als der Schnitt
+  [§C39]. Fünf Gelegenheiten zu antworten sind ein Wurf, fünfundzwanzig ein
+  Muster — sie trägt deshalb nur die Laufbahn.
+  `tests/disziplinen` misst das alles: die Verteilung, die beiden Achsen und
+  dass keine Schattenseite Prestige gibt; `tests/ambient` prüft den Feed
+  gegen den ganzen Katalog, damit ein neuer Eintrag nicht still durchrutscht.
 - **§C37 Ein Anteil misst gegen die Menge, um die es geht.** „Pechvogel"
   zählte knappe Niederlagen gegen ALLE Partien und kürte damit den, der viele
   enge Spiele hatte, statt den, der sie verliert: wer zwanzig Partien spielt,
