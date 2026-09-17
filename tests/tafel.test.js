@@ -1024,6 +1024,25 @@ const _tagSchreib = (function(){
 ok(_tagSchreib === 1, 'der Kalendertag wird an genau einer Stelle gebildet',
    _tagSchreib + ' Stellen');
 
+// ─── Und die Elo-Rechnung zieht ihre Grenzen an einer Stelle ─────────
+// Die Erwartungsformel stand zweimal in der Auslieferung: `expected` und ein
+// wortgleiches `localExp` in der Elo-Engine. Die drei Chancen-Linien standen
+// als blanke Zahl an acht Stellen, und die 0,35 in der Auszeichnung „Upset
+// King" wie in BEIDEN Chronik-Durchlaeufen — drei Stellen, die dasselbe
+// Ereignis zaehlen [§10.2]. Eine zweite Rechnung ueber dieselbe Frage nennt
+// irgendwann einen anderen Besten.
+const _eloEinmal = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const formel = (quelle.match(/1\s*\/\s*\(\s*1\s*\+\s*Math\.pow\(\s*10\s*,/g) || []).length;
+  // Eine blanke Chancen-Zahl im Vergleich mit einer Erwartung.
+  const roh = (quelle.match(/\b(?:exp|myExp|chance|winSp|winnerChance)\s*[<>]=?\s*0\.(?:35|45|55)\b/g) || []).length;
+  return {formel, roh};
+})();
+ok(_eloEinmal.formel === 1, 'die Erwartungsformel steht genau einmal da',
+   _eloEinmal.formel + ' Stellen');
+ok(_eloEinmal.roh === 0, 'die Chancen-Linien stehen als Begriff, nicht als Zahl',
+   _eloEinmal.roh + ' blanke Zahlen');
+
 // Der Bau haengt sechzehn Stylesheets aneinander, und eine Regel fuer eine
 // Ansicht, die es nicht mehr gibt, faellt danach niemandem mehr auf: die
 // Hall of Fame, die alten Award-Karten, das Champion-Banner und die

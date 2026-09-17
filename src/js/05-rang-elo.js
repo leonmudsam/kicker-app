@@ -113,6 +113,27 @@ function metrikLeisteHtml(per){
 // Bestehende DB-Felder bleiben gleich. Neu: dynamischer K + Margin-of-Victory,
 // rein clientseitig berechnet (kein Schema-Umbau nötig).
 function expected(a,b){ return 1/(1+Math.pow(10,(b-a)/400)); }
+
+// ─── Wo die Elo-Rechnung ihre Grenzen zieht ──────────────────────────
+// Drei Linien, und jede stand als blanke Zahl an mehreren Stellen: Favorit ab
+// 55 Prozent Siegchance, auf Augenhoehe von 45 bis 55, Aussenseiter-Sieg
+// unter 35. Die 0,35 stand in der Auszeichnung „Upset King" und in BEIDEN
+// Chronik-Durchlaeufen — drei Stellen, die dasselbe Ereignis zaehlen und
+// deshalb gleich zaehlen muessen [§10.2]. Die Formel selbst stand zweimal da:
+// `expected` hier und ein wortgleiches `localExp` in der Elo-Engine.
+const CHANCE_FAVORIT = 0.55;
+const CHANCE_OFFEN = 0.45;
+const CHANCE_UPSET = 0.35;
+// Und darunter die Sensation. Die Linie trennt zwei Kartensorten des Feeds,
+// die sich sonst doppeln wuerden: unter 20 Prozent erzaehlt der Favoritensturz
+// („Der Gigantentoeter"), von 20 bis 35 die Ergebniskarte. Beide Zahlen
+// standen blank da, und damit war ihre Zusammengehoerigkeit nicht zu sehen.
+const CHANCE_SENSATION = 0.20;
+// Ob die Linie selbst noch dazugehoert, ist je Wertung kalibriert: „Der
+// Favoritenschreck" verlangt „mindestens 65 Prozent fuer die Gegenseite" und
+// zaehlt deshalb `<= CHANCE_UPSET`, der Aussenseiter-Sieg zaehlt `<`. Die
+// Grenze ist dieselbe, die Randbedingung nicht — und sie wird nicht
+// stillschweigend vereinheitlicht, weil die Schwellen daran geeicht sind.
 function posFactor(ps,sw){ return 1+sw*(0.5-ps)*2; }
 function riskWeights(hi,lo,rs){ const gap=Math.min(Math.abs(hi-lo)/400,1); const s=rs*gap; return {strong:1-s,weak:1+s}; }
 

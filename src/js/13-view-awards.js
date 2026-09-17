@@ -56,7 +56,7 @@ function _awardRankingsUncached(period, sid){
     single:[], team:[], upsets:[], biggest:[],
     clutch:{}, iceWins:{}, snapMap:null,
     // ── NEUE AWARDS v3 ──
-    underdogWins:{},  // playerId → Anzahl Underdog-Siege (myExp < 0.35 & gewonnen)
+    underdogWins:{},  // playerId → Anzahl Underdog-Siege (unter CHANCE_UPSET & gewonnen)
     // ── NEUE NEGATIV-AWARDS v6 ──
     favLosses:{},     // playerId → Anzahl Niederlagen in Favoriten-Rolle (myExp ≥ 0.65 & verloren)
     favMatches:{},    // playerId → Anzahl Spiele in Favoriten-Rolle (myExp ≥ 0.65)
@@ -143,7 +143,7 @@ function _awardRankingsUncached(period, sid){
         // Underdog-Held: Partien als Aussenseiter (Siegchance unter 35 %) und
         // die davon gewonnenen. Der Nenner fehlte, und ohne ihn war der Award
         // eine Anwesenheitsliste.
-        if(myExp < 0.35){
+        if(myExp < CHANCE_UPSET){
           if(!agg.underdogMatches[id]) agg.underdogMatches[id]=0;
           agg.underdogMatches[id]++;
           if(won){

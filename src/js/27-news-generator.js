@@ -1246,7 +1246,7 @@ function _buildStories(){
         if(t < nowTs - wk) break;
         const expA = (m.exp_a == null) ? 0.5 : m.exp_a;
         const winnerChance = m.winner === 'A' ? expA : (1 - expA);
-        if(winnerChance < 0.20){
+        if(winnerChance < CHANCE_SENSATION){
           const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
           const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
           if(winners.every(p => pm[p] && !pm[p].hidden))
@@ -1322,7 +1322,7 @@ function _buildStories(){
         art = 'zu_null'; rang = 69; ic = 'hundred';
         title = `${wn} gewinnen ohne Gegentor`;
         desc = `Ein makelloses 10:0 gegen ${ln}. Auf der anderen Seite fällt kein einziger Treffer.`;
-      } else if(chance >= 0.20 && chance < 0.35){
+      } else if(chance >= CHANCE_SENSATION && chance < CHANCE_UPSET){
         art = 'upset'; rang = 67; ic = 'giantSlayer';
         title = `${wn} stürzen die Favoriten`;
         desc = `Nur ${Math.max(1, Math.round(chance * 100))} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;

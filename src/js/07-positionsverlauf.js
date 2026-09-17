@@ -518,7 +518,7 @@ function showPotwRecap(opts){
     for(const m of ms){
       const sp=m.exp_a==null?0.5:m.exp_a;
       const winSp=m.winner==='A'?sp:(1-sp);
-      if(winSp<0.45 && (!topUpset || winSp<topUpset.sp)) topUpset={m,sp:winSp};
+      if(winSp<CHANCE_OFFEN && (!topUpset || winSp<topUpset.sp)) topUpset={m,sp:winSp};
     }
     const upsetNames=topUpset?
       (topUpset.m.winner==='A'?[pname(topUpset.m.a1),pname(topUpset.m.a2)]:[pname(topUpset.m.b1),pname(topUpset.m.b2)])
@@ -823,7 +823,7 @@ function showPotdRecap(opts){
     for(const m of dayMatches){
       const sp = m.exp_a == null ? 0.5 : m.exp_a;
       const chance = m.winner === 'A' ? sp : (1 - sp);
-      if(chance < 0.45 && (!tagUpset || chance < tagUpset.chance)) tagUpset = {m, chance};
+      if(chance < CHANCE_OFFEN && (!tagUpset || chance < tagUpset.chance)) tagUpset = {m, chance};
     }
     const upsetSieger = tagUpset
       ? (tagUpset.m.winner === 'A' ? [tagUpset.m.a1, tagUpset.m.a2] : [tagUpset.m.b1, tagUpset.m.b2])

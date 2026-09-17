@@ -264,7 +264,7 @@ function _chronicleCtx(bisMs){
       if(Math.abs(diff) <= 2){ p.close++; if(w) p.closeW++; }
       if(w && diff >= 7) p.blowW++;
       if(!w && diff <= -7) p.blowL++;
-      if(w && exp < 0.35) p.upsets++;
+      if(w && exp < CHANCE_UPSET) p.upsets++;
       // ── Fügungen [§C35] ───────────────────────────────────────────
       // Die bitterste Niederlage: die höchste Siegchance, die trotzdem
       // verloren ging. Eine einzige Partie, kein Durchschnitt — deshalb
@@ -409,8 +409,8 @@ function _chronicleCtx(bisMs){
     }
     const unter = [], fav = [], rest = [], atk = [], def = [];
     r.forEach(x => {
-      if(x.exp < 0.45) unter.push(x);
-      if(x.exp > 0.55) fav.push(x);
+      if(x.exp < CHANCE_OFFEN) unter.push(x);
+      if(_stFavorit(x)) fav.push(x);
       if(!x.geg.some(g => _top3.includes(g))) rest.push(x);
       (x.pos === 'atk' ? atk : def).push(x);
     });

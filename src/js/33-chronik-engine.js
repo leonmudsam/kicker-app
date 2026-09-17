@@ -299,14 +299,14 @@ function _seasonTitleCtxRechnen(sid, bisMs){
       if(w && gf===10 && ga===0)  p.perfect++;
       if(!w && gf===0 && ga===10) p.debacle++;
       const exp = myExp(id, m);
-      if(w && exp < 0.35) p.upsets++;
+      if(w && exp < CHANCE_UPSET) p.upsets++;
       // Außenseiter-Partien: alles, wo die Rechnung gegen ihn stand. Nicht nur
       // die krassen Fälle (das ist `upsets`), sondern jede Partie, in die er
       // als der Schwächere ging.
       if(exp < 0.50){ p.favG++; p.favExp += exp; if(w) p.favW++; }
       p.expSum += exp;
       if(exp >= 0.60){ p.favoritG++; if(w) p.favoritW++; }
-      if(exp >= 0.45 && exp <= 0.55){ p.gleichG++; if(w) p.gleichW++; }
+      if(_stAugenhoehe({exp})){ p.gleichG++; if(w) p.gleichW++; }
       if(mitteTag){ if(day < mitteTag){ p.h1G++; if(w) p.h1W++; }
                     else { p.h2G++; if(w) p.h2W++; } }
       if(w && gf - ga >= 7) p.blowouts++;

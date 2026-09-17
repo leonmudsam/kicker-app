@@ -4877,7 +4877,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.17.b4a12a59';
+const BUILD_VERSION='2026.09.17.ed27a1e9';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6008,6 +6008,27 @@ function metrikLeisteHtml(per){
 // Bestehende DB-Felder bleiben gleich. Neu: dynamischer K + Margin-of-Victory,
 // rein clientseitig berechnet (kein Schema-Umbau nötig).
 function expected(a,b){ return 1/(1+Math.pow(10,(b-a)/400)); }
+
+// ─── Wo die Elo-Rechnung ihre Grenzen zieht ──────────────────────────
+// Drei Linien, und jede stand als blanke Zahl an mehreren Stellen: Favorit ab
+// 55 Prozent Siegchance, auf Augenhoehe von 45 bis 55, Aussenseiter-Sieg
+// unter 35. Die 0,35 stand in der Auszeichnung „Upset King" und in BEIDEN
+// Chronik-Durchlaeufen — drei Stellen, die dasselbe Ereignis zaehlen und
+// deshalb gleich zaehlen muessen [§10.2]. Die Formel selbst stand zweimal da:
+// `expected` hier und ein wortgleiches `localExp` in der Elo-Engine.
+const CHANCE_FAVORIT = 0.55;
+const CHANCE_OFFEN = 0.45;
+const CHANCE_UPSET = 0.35;
+// Und darunter die Sensation. Die Linie trennt zwei Kartensorten des Feeds,
+// die sich sonst doppeln wuerden: unter 20 Prozent erzaehlt der Favoritensturz
+// („Der Gigantentoeter"), von 20 bis 35 die Ergebniskarte. Beide Zahlen
+// standen blank da, und damit war ihre Zusammengehoerigkeit nicht zu sehen.
+const CHANCE_SENSATION = 0.20;
+// Ob die Linie selbst noch dazugehoert, ist je Wertung kalibriert: „Der
+// Favoritenschreck" verlangt „mindestens 65 Prozent fuer die Gegenseite" und
+// zaehlt deshalb `<= CHANCE_UPSET`, der Aussenseiter-Sieg zaehlt `<`. Die
+// Grenze ist dieselbe, die Randbedingung nicht — und sie wird nicht
+// stillschweigend vereinheitlicht, weil die Schwellen daran geeicht sind.
 function posFactor(ps,sw){ return 1+sw*(0.5-ps)*2; }
 function riskWeights(hi,lo,rs){ const gap=Math.min(Math.abs(hi-lo)/400,1); const s=rs*gap; return {strong:1-s,weak:1+s}; }
 
@@ -7523,7 +7544,7 @@ function showPotwRecap(opts){
     for(const m of ms){
       const sp=m.exp_a==null?0.5:m.exp_a;
       const winSp=m.winner==='A'?sp:(1-sp);
-      if(winSp<0.45 && (!topUpset || winSp<topUpset.sp)) topUpset={m,sp:winSp};
+      if(winSp<CHANCE_OFFEN && (!topUpset || winSp<topUpset.sp)) topUpset={m,sp:winSp};
     }
     const upsetNames=topUpset?
       (topUpset.m.winner==='A'?[pname(topUpset.m.a1),pname(topUpset.m.a2)]:[pname(topUpset.m.b1),pname(topUpset.m.b2)])
@@ -7828,7 +7849,7 @@ function showPotdRecap(opts){
     for(const m of dayMatches){
       const sp = m.exp_a == null ? 0.5 : m.exp_a;
       const chance = m.winner === 'A' ? sp : (1 - sp);
-      if(chance < 0.45 && (!tagUpset || chance < tagUpset.chance)) tagUpset = {m, chance};
+      if(chance < CHANCE_OFFEN && (!tagUpset || chance < tagUpset.chance)) tagUpset = {m, chance};
     }
     const upsetSieger = tagUpset
       ? (tagUpset.m.winner === 'A' ? [tagUpset.m.a1, tagUpset.m.a2] : [tagUpset.m.b1, tagUpset.m.b2])
@@ -9350,7 +9371,6 @@ function simulateEloWithSliders(matchSubset, opts={}){
   };
 
   const ordered=[...matchSubset].sort((a,b)=>mts(a)-mts(b));
-  const localExp=(a,b)=>1/(1+Math.pow(10,(b-a)/400));
   const localDynK=(id)=>{const g=playedSeason[id]||0,e=elo[id];
     if(g<5)return cfg.k_factor*(cfg.new_player_mult ?? 1.5);
     if(g<15)return cfg.k_factor*(cfg.new_player_mid_mult ?? 1.2);
@@ -9390,7 +9410,7 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const teamA=[{id:m.a1,pos:m.a1_pos},{id:m.a2,pos:m.a2_pos}];
     const teamB=[{id:m.b1,pos:m.b1_pos},{id:m.b2,pos:m.b2_pos}];
     const aAvg=(elo[m.a1]+elo[m.a2])/2,bAvg=(elo[m.b1]+elo[m.b2])/2;
-    const expA=localExp(aAvg,bAvg);
+    const expA=expected(aAvg,bAvg);
     const rawMov=movMult(m.score_a,m.score_b);
     const res={}, breakdowns={};
 
@@ -10436,7 +10456,7 @@ function _awardRankingsUncached(period, sid){
     single:[], team:[], upsets:[], biggest:[],
     clutch:{}, iceWins:{}, snapMap:null,
     // ── NEUE AWARDS v3 ──
-    underdogWins:{},  // playerId → Anzahl Underdog-Siege (myExp < 0.35 & gewonnen)
+    underdogWins:{},  // playerId → Anzahl Underdog-Siege (unter CHANCE_UPSET & gewonnen)
     // ── NEUE NEGATIV-AWARDS v6 ──
     favLosses:{},     // playerId → Anzahl Niederlagen in Favoriten-Rolle (myExp ≥ 0.65 & verloren)
     favMatches:{},    // playerId → Anzahl Spiele in Favoriten-Rolle (myExp ≥ 0.65)
@@ -10523,7 +10543,7 @@ function _awardRankingsUncached(period, sid){
         // Underdog-Held: Partien als Aussenseiter (Siegchance unter 35 %) und
         // die davon gewonnenen. Der Nenner fehlte, und ohne ihn war der Award
         // eine Anwesenheitsliste.
-        if(myExp < 0.35){
+        if(myExp < CHANCE_UPSET){
           if(!agg.underdogMatches[id]) agg.underdogMatches[id]=0;
           agg.underdogMatches[id]++;
           if(won){
@@ -14660,7 +14680,7 @@ function getBadgeEarnedCache(){
       if(w  && gf===10 && ga===9)                   fire('nail_biter');
       if(!w && gf===9  && ga===10)                  fire('bitter_loss');
       if(w  && pos==='def' && ga<=2)                fire('wall_badge');
-      if(w  && myExp<0.35)                          fire('upset_king');
+      if(w  && myExp<CHANCE_UPSET)                          fire('upset_king');
 
       // ── Mr. Perfect: 3× 10:0-Sieg in DERSELBEN Saison ──
       // Saison-IDs per seasonOf() bestimmen (sid-Format YYYY-MM). Counter pro
@@ -20111,7 +20131,7 @@ function _buildStories(){
         if(t < nowTs - wk) break;
         const expA = (m.exp_a == null) ? 0.5 : m.exp_a;
         const winnerChance = m.winner === 'A' ? expA : (1 - expA);
-        if(winnerChance < 0.20){
+        if(winnerChance < CHANCE_SENSATION){
           const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
           const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
           if(winners.every(p => pm[p] && !pm[p].hidden))
@@ -20187,7 +20207,7 @@ function _buildStories(){
         art = 'zu_null'; rang = 69; ic = 'hundred';
         title = `${wn} gewinnen ohne Gegentor`;
         desc = `Ein makelloses 10:0 gegen ${ln}. Auf der anderen Seite fällt kein einziger Treffer.`;
-      } else if(chance >= 0.20 && chance < 0.35){
+      } else if(chance >= CHANCE_SENSATION && chance < CHANCE_UPSET){
         art = 'upset'; rang = 67; ic = 'giantSlayer';
         title = `${wn} stürzen die Favoriten`;
         desc = `Nur ${Math.max(1, Math.round(chance * 100))} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;
@@ -27151,6 +27171,14 @@ const _stMittel = a => a.reduce((x, y) => x + y, 0) / a.length;
 // Eng heisst hoechstens zwei Tore Unterschied, in beide Richtungen.
 const _stEng = s => Math.abs(s.gf - s.ga) <= 2;
 
+// Favorit und Augenhoehe aus der Sicht einer einzelnen Partie. Die Grenzen
+// stehen bei der Elo-Rechnung, die sie zieht [§5.2]; hier standen sie als
+// blanke Zahl an fuenf Stellen, zwei davon in den zwei getrennten
+// Durchlaeufen ueber dieselbe Frage — und die muessen gleich zaehlen, sonst
+// zeigt die Monatstafel einen anderen Halter als der Liga-Rekord [§10.2].
+const _stFavorit = s => s.exp > CHANCE_FAVORIT;
+const _stAugenhoehe = s => s.exp >= CHANCE_OFFEN && s.exp <= CHANCE_FAVORIT;
+
 // Poisson-Binomial: die Wahrscheinlichkeit, aus Partien mit ungleichen
 // Siegchancen mindestens k zu gewinnen. Damit laesst sich sagen, wie
 // wahrscheinlich ein ganzer Monat so oder besser ausgeht — die Grundlage
@@ -27212,8 +27240,8 @@ const _stWochLetzte = p => Object.values(p.wochGrp)
 // Partien als klarer Favorit und als Aussenseiter. Die Grenzen sind
 // dieselben wie im Rest des Katalogs.
 const _stRollen = p => ({
-  fav: p.partien.filter(s => s.exp > 0.55),
-  aus: p.partien.filter(s => s.exp < 0.45)
+  fav: p.partien.filter(_stFavorit),
+  aus: p.partien.filter(s => s.exp < CHANCE_OFFEN)
 });
 // Partien, die mit genau einem Tor Unterschied endeten: der letzte Ball hat
 // entschieden. `_stEng` nimmt zwei — das ist eine andere Frage.
@@ -28036,10 +28064,10 @@ const DISZIPLINEN = [
       wie:'Offen heißt: die Rechnung gab beiden Teams zwischen 45 und 55 Prozent. Verglichen wird die Quote darin mit der eigenen Gesamtquote.',
       cond:'In offenen Partien mindestens 20 Prozentpunkte stärker als sonst, ab 5 offenen Partien',
       ...(_stWertung(
-        p=>p.partien.filter(s=>s.exp>=0.45&&s.exp<=0.55).length>=ST_TEIL,
-        p=>{const d=p.partien.filter(s=>s.exp>=0.45&&s.exp<=0.55);return d.filter(s=>s.win).length/d.length-p.q;},
+        p=>p.partien.filter(_stAugenhoehe).length>=ST_TEIL,
+        p=>{const d=p.partien.filter(_stAugenhoehe);return d.filter(s=>s.win).length/d.length-p.q;},
         0.2,
-        p=>{const d=p.partien.filter(s=>s.exp>=0.45&&s.exp<=0.55);
+        p=>{const d=p.partien.filter(_stAugenhoehe);
       return `${d.filter(s=>s.win).length} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
   {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'godRay', tone:'gold', art:'leistung',
@@ -28136,10 +28164,10 @@ const DISZIPLINEN = [
       wie:'Klarer Favorit heißt: das gegnerische Team hatte vorher mindestens 65 Prozent Siegchance.',
       cond:'Mindestens 40 % gegen klare Favoriten, ab 5 solchen Partien',
       ...(_stWertung(
-        p=>p.partien.filter(s=>s.exp<=0.35).length>=ST_TEIL,
-        p=>{const d=p.partien.filter(s=>s.exp<=0.35);return d.filter(s=>s.win).length/d.length;},
+        p=>p.partien.filter(s=>s.exp<=CHANCE_UPSET).length>=ST_TEIL,
+        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return d.filter(s=>s.win).length/d.length;},
         0.4,
-        p=>{const d=p.partien.filter(s=>s.exp<=0.35);return `${d.filter(s=>s.win).length} von ${d.length} gegen klare Favoriten`;}))}},
+        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return `${d.filter(s=>s.win).length} von ${d.length} gegen klare Favoriten`;}))}},
 
   {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'chartUp', tone:'gold', art:'leistung',
     monat:{
@@ -28991,14 +29019,14 @@ function _seasonTitleCtxRechnen(sid, bisMs){
       if(w && gf===10 && ga===0)  p.perfect++;
       if(!w && gf===0 && ga===10) p.debacle++;
       const exp = myExp(id, m);
-      if(w && exp < 0.35) p.upsets++;
+      if(w && exp < CHANCE_UPSET) p.upsets++;
       // Außenseiter-Partien: alles, wo die Rechnung gegen ihn stand. Nicht nur
       // die krassen Fälle (das ist `upsets`), sondern jede Partie, in die er
       // als der Schwächere ging.
       if(exp < 0.50){ p.favG++; p.favExp += exp; if(w) p.favW++; }
       p.expSum += exp;
       if(exp >= 0.60){ p.favoritG++; if(w) p.favoritW++; }
-      if(exp >= 0.45 && exp <= 0.55){ p.gleichG++; if(w) p.gleichW++; }
+      if(_stAugenhoehe({exp})){ p.gleichG++; if(w) p.gleichW++; }
       if(mitteTag){ if(day < mitteTag){ p.h1G++; if(w) p.h1W++; }
                     else { p.h2G++; if(w) p.h2W++; } }
       if(w && gf - ga >= 7) p.blowouts++;
@@ -29798,7 +29826,7 @@ function _chronicleCtx(bisMs){
       if(Math.abs(diff) <= 2){ p.close++; if(w) p.closeW++; }
       if(w && diff >= 7) p.blowW++;
       if(!w && diff <= -7) p.blowL++;
-      if(w && exp < 0.35) p.upsets++;
+      if(w && exp < CHANCE_UPSET) p.upsets++;
       // ── Fügungen [§C35] ───────────────────────────────────────────
       // Die bitterste Niederlage: die höchste Siegchance, die trotzdem
       // verloren ging. Eine einzige Partie, kein Durchschnitt — deshalb
@@ -29943,8 +29971,8 @@ function _chronicleCtx(bisMs){
     }
     const unter = [], fav = [], rest = [], atk = [], def = [];
     r.forEach(x => {
-      if(x.exp < 0.45) unter.push(x);
-      if(x.exp > 0.55) fav.push(x);
+      if(x.exp < CHANCE_OFFEN) unter.push(x);
+      if(_stFavorit(x)) fav.push(x);
       if(!x.geg.some(g => _top3.includes(g))) rest.push(x);
       (x.pos === 'atk' ? atk : def).push(x);
     });
