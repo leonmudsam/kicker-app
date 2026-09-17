@@ -106,7 +106,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **722**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **723**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -252,7 +252,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords und die Schandtafel samt ihrer Verteilung | 1191 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 180 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke und die Schandtafel, die im Feed nicht vorkommt | 365 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, und die Zeile einer Sammelkarte, die kein Absatz wird | 374 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens und das Wappen als Verweis auf sein Symbol — **im echten Browser gemessen** | 138 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -836,6 +836,17 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   gibt es keinen Chronik- oder Rekordausbau-Cap mehr: Die Karte wird kleiner in
   der Zahl der Rahmen, nicht ärmer an fachlichem Inhalt.
 
+  **Die Zeile einer Sammelkarte ist kürzer als die Karte** (`zeileText`). Im
+  Blatt eines Tafel-Moments stand jede Zeile mit dem vollen Kartentext:
+  gemessen bis zu 183 Zeichen und vier Sätze, neunmal untereinander. Fünf der
+  neun erklärten dabei, warum sich NICHTS ändert, und das ist die Bauanleitung
+  des Feeds, nicht die Nachricht. Die Zeile nennt den Wert, die Klasse und den
+  Zuwachs, wo es einen gibt; der Liga-Rekord lässt seine Bedingung weg (sie
+  nennt jede Schwelle [§C35] und war allein 175 Zeichen lang), das Insignium
+  die Aufteilung seines Prestiges. Der ganze Text bleibt an der einzelnen
+  Karte. Höchstens drei Sätze und 130 Zeichen, gemessen über jeden vierten
+  Spieltag der Ligageschichte.
+
   **Bündeln darf nichts verstecken.** Die Sammelkarte trägt eine eigene
   zusammenfassende Schlagzeile — und darunter das **Sammelband**
   (`_newsSammelBand`, `.nf-sam`): jede Meldung mit ihrem Zeichen, kurz und in
@@ -1262,8 +1273,20 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   einen Knopf in die Tafel. Schattenseiten meldet der Feed auch hier nicht. Quelle der Rekordmeldungen ist ein
   Zeitschnitt — `allChronicles(bisMs)` vor dem letzten Spieltag gegen heute;
   er kostet einmal ~18 ms und liegt danach im Cache.
-  Drei Sorten, drei Aussagen: **erstmals vergeben** (den Rekord hatte vorher
-  niemand), **übernommen** (der Halter wechselt) und **ausgebaut**.
+  **Vier Fälle, vier Aussagen** (`_halterFall`): **erstmals vergeben** (den
+  Rekord hatte vorher niemand), **übernommen** (der Halter wechselt), **jetzt
+  allein** (das Feld ist enger geworden) und **gleichgezogen** (jemand kommt
+  dazu) — dazu **ausgebaut**, wenn sich nur der Wert bewegt. Es war eine
+  Aussage für alles außer dem Ausbauen, und gemessen widersprachen sich vier
+  Karten der Ligageschichte: „Leon übernimmt ‚Der Aufschwung'. Vorher hielt
+  Leon, Jannik und Stefan den Rekord mit +8 %" — Leon übernahm von sich
+  selbst, und aus drei Namen wurde ein „hielt". Und „Martin und Leo übernehmen
+  ‚Das Sonntagskind'. Vorher hielt Leo den Rekord mit 70 %" verkaufte Leos
+  Rückschritt auf 67 % als Übergabe, obwohl Leo den Rekord weiter hält. Der
+  Fall wird für Rekord und Monatschronik an EINER Stelle entschieden [§C27],
+  **genannt wird beim Dazukommen der Neue**, und als Vorgänger steht nur, wer
+  wirklich **weg** ist: aus {A,B} kann {A,C} werden, und dann war A sein
+  eigener Vorgänger.
   Der Halter wird dafür **sortiert** verglichen, und eine Übernahme, deren
   Vorgänger die heutigen Halter sind, verschwindet aus dem Feed: „Maxi, Leo
   und Julian übernehmen" stand über „Vorher gehörte der Rekord Maxi, Julian
@@ -1581,7 +1604,13 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   nicht da. Beantwortet wird die Frage nur für einen Halter, der allein
   steht, und nur, wenn er in dem Monat überhaupt mehrere hält: bei zwei
   Haltern wäre es eine Behauptung über beide, bei einer einzigen Chronik
-  ist die Antwort offensichtlich.
+  ist die Antwort offensichtlich. **Dieselbe Regel gilt für den stärkeren
+  Eintrag**: „In der Chronik bleibt ‚X' stärker, also kommt für die Laufbahn
+  kein Prestige hinzu" gehört EINEM Spieler. Bei zwei neuen Haltern sammelte
+  der Satz beide Einträge ein und behauptete sie für beide, und wer eine
+  Sammelkarte mit neun Zeilen las, fand darin drei verschiedene „stärker".
+  Steht der Eintrag selbst in der Tafel, fällt der Name ganz weg: „Steht jetzt
+  in der Chronik" sagt es eine Zeile darüber schon.
   Vorher galt „ein Eintrag je Spieler" schon bei der Vergabe: wer den
   Bestwert hielt und schon etwas trug, gab ihn an den Nächstbesten ab. Damit
   stand „Der Unaufhaltsame" bei zwölf Siegen in Folge, während einer mit
@@ -1590,7 +1619,18 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Markierung `strict` nicht mehr: sie galt für vier von siebenundzwanzig
   Einträgen, und was für vier richtig ist, ist für alle richtig.
   Ein Monat unter `CHRONIK_MIN_TAGE` Spieltagen bekommt **gar keine**
-  Chronik: aus drei Abenden lässt sich kein Monat ablesen.
+  Chronik: aus drei Abenden lässt sich kein Monat ablesen. **Der Feed zieht
+  dieselbe Grenze**, und zwar aus derselben Quelle: `seasonTitleHalter` zog
+  sie nicht und meldete deshalb Chroniken, die es nicht gab — gemessen acht
+  Halter am 04.08., zehn am 06.08. und dreizehn am 07.08., während die
+  Monatstafel null Einträge zeigte. „Leon holt ‚Auf Augenhöhe'" stand im Feed,
+  im Chronik-Tab stand nichts, und `seasonTitleOf` fand folgerichtig keinen
+  Eintrag — die Karte schrieb „kein Prestige hinzu" unter eine Chronik, die
+  sie selbst gerade verkündete. Die Funktion antwortet dafür mit `null` statt
+  `{}`: ein ungewerteter Monat und ein gewerteter ohne Halter sind zwei
+  verschiedene Antworten. **Und das Aufgehen der Tafel ist kein Wechsel** —
+  wer am 2. August fünf von fünf gewonnen hat, hat das nicht am 10. getan;
+  gemeldet wird erst, was sich von der ersten gewerteten Lage an ändert.
   **Eine Monatswertung findet höchstens einen Halter je gewerteten Monat.**
   Die Schwellen (`ab` in `_stWertung`) sind an den echten Partien geeicht,
   nicht geschätzt. Vorher lagen sie so tief, dass ein Monat vierundzwanzig der

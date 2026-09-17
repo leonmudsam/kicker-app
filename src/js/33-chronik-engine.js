@@ -769,11 +769,25 @@ function allSeasonTitles(){
 // letzten Spieltag mit dem von heute und meldet, was gewechselt hat.
 // `seasonTitles` taugt dafuer nicht — es ist auf HEUTE gemerkt und friert
 // abgeschlossene Monate ein.
+//
+// Ein Monat unter CHRONIK_MIN_TAGE Spieltagen bekommt GAR KEINE Chronik
+// [§C32] — dieselbe Grenze, die `seasonTitles` zieht. Sie fehlte hier, und
+// damit meldete der Feed Chroniken, die es nicht gab: gemessen nannte diese
+// Funktion am 04.08. acht, am 06.08. zehn und am 07.08. dreizehn Halter,
+// waehrend die Monatstafel null Eintraege zeigte. „Leon holt ‚Auf
+// Augenhoehe'" stand im Feed, im Chronik-Tab stand nichts, und `seasonTitleOf`
+// fand folgerichtig keinen Eintrag — die Karte schrieb deshalb „kein Prestige
+// hinzu" unter eine Chronik, die sie selbst gerade verkuendet hatte.
+//
+// `null` statt `{}`: ein ungewerteter Monat und ein gewerteter ohne Halter
+// sind zwei verschiedene Antworten. Der Feed braucht den Unterschied, sonst
+// liest er das Aufgehen der Tafel als vierzehn Neuvergaben.
 function seasonTitleHalter(sid, bisMs){
   const out = {};
   let C = null;
   try { C = _seasonTitleCtx(sid, bisMs); } catch(e){ return out; }
   if(!C) return out;
+  if(!Object.keys(C.P).length || C.days < CHRONIK_MIN_TAGE) return null;
   SEASON_TITLES.forEach(t => {
     let r = null;
     try { r = t.pick(C, new Set()); } catch(e){ r = null; }

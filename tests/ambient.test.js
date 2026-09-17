@@ -1439,6 +1439,94 @@ const _chrg = JSON.parse(K.eval(`JSON.stringify((function(){
     stabil: JSON.stringify(seasonTitleHalter(sid)) === JSON.stringify(jetzt)
   };
 })())`));
+// ── Eine gemeldete Chronik steht auch in der Tafel ──────────────────
+//    `seasonTitles` zieht die Grenze CHRONIK_MIN_TAGE [§C32],
+//    `seasonTitleHalter` zog sie nicht — und damit meldete der Feed
+//    Chroniken, die es nicht gab: gemessen nannte die Funktion am 04.08.
+//    acht, am 06.08. zehn und am 07.08. dreizehn Halter, waehrend die
+//    Monatstafel null Eintraege zeigte. „Leon holt ‚Auf Augenhoehe'" stand
+//    im Feed, im Chronik-Tab stand nichts.
+const _gate = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = {};
+  matches.forEach(m => {
+    const d = new Date(mts(m));
+    const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    (tage[k] = tage[k] || new Set()).add(d.toISOString().slice(0,10));
+  });
+  const schnitte = [];
+  Object.keys(tage).forEach(sid => {
+    const liste = [...tage[sid]].sort();
+    // Je Monat ein Schnitt hinter jedem der ersten acht Spieltage: die
+    // Grenze liegt bei fuenf, also muss sie dabei sein.
+    liste.slice(0, 8).forEach(tag => {
+      const bis = new Date(tag + 'T23:59:59').getTime();
+      schnitte.push({sid, tag, bis});
+    });
+  });
+  const falscheGrenze = [], ohneEintrag = [];
+  schnitte.forEach(x => {
+    let H = null, T = null;
+    try { H = seasonTitleHalter(x.sid, x.bis); T = seasonTitles(x.sid, x.bis); } catch(e){ return; }
+    if(!T) return;
+    const gesperrt = T.days < CHRONIK_MIN_TAGE;
+    if(gesperrt !== (H === null)) falscheGrenze.push(x.sid + '/' + x.tag
+      + ' Tage=' + T.days + ' halter=' + (H === null ? 'null' : Object.keys(H).length));
+    if(H) Object.keys(H).forEach(id => {
+      if(!T.awarded.some(a => a.titleId === id)) ohneEintrag.push(x.sid + '/' + x.tag + '/' + id);
+    });
+  });
+  return {n:schnitte.length, falscheGrenze:falscheGrenze.slice(0,4),
+          ohneEintrag:ohneEintrag.slice(0,4), nOhne:ohneEintrag.length};
+})())`));
+ok(_gate.n > 20, 'die Grenze wird an vielen Zeitschnitten geprueft', _gate.n + ' Schnitte');
+ok(_gate.falscheGrenze.length === 0,
+   'Halterstand und Monatstafel ziehen dieselbe Grenze',
+   _gate.falscheGrenze.join(' | '));
+ok(_gate.nOhne === 0, 'keine gemeldete Chronik fehlt in der Monatstafel',
+   _gate.ohneEintrag.join(' | ') || _gate.nOhne + ' ohne Eintrag');
+
+// ── Die Zeile einer Sammelkarte ist kuerzer als die Karte ───────────
+//    Im Blatt eines Tafel-Moments stand jede Zeile mit dem vollen
+//    Kartentext: gemessen bis zu 183 Zeichen und vier Saetze, neunmal
+//    untereinander. Fuenf der neun erklaerten dabei, warum sich NICHTS
+//    aendert — die Bauanleitung des Feeds, nicht die Nachricht [§C33].
+const _zeil = JSON.parse(K.eval(`JSON.stringify((function(){
+  // Ueber jeden vierten Spieltag, nicht nur ueber heute: die Zeilen, die die
+  // Prestige-Mechanik erklaerten, gehoeren zu einer VERDRAENGTEN Chronik, und
+  // an einem einzelnen Tag steht davon keine im Buendel. Gemessen trug der
+  // 10.08. drei davon („In der Chronik bleibt ‚Der makellose Tag' staerker").
+  const alleMatches = matches.slice();
+  const alleTage = [...new Set(alleMatches.map(m => _newsDayKey(mts(m))))].sort();
+  const zeilen = [];
+  alleTage.filter((_, i) => i % 4 === 0 || i >= alleTage.length - 3).forEach(k => {
+    const grenze = Math.max(...alleMatches.filter(m => _newsDayKey(mts(m)) === k).map(mts));
+    matches = alleMatches.filter(m => mts(m) <= grenze);
+    invalidateCache();
+    let st = [];
+    try { st = _consolidateStories(_buildStories()); } catch(e){}
+    st.filter(s => (s.dataRef||{}).type === 'sammel' && s.dataRef.quelle === 'tafel')
+      .forEach(s => (s.dataRef.teile || []).forEach(t => zeilen.push(t)));
+  });
+  matches = alleMatches;
+  invalidateCache();
+  // Gemessen wird in SAETZEN und in Zeichen: ein langer Beleg mit zwei
+  // Anteilen und seinem Nenner traegt allein 113 Zeichen und ist trotzdem ein
+  // Satz, drei kurze Saetze passen in 100. Der volle Kartentext hatte vier
+  // Saetze und bis zu 183 Zeichen — das ist ein Absatz.
+  const saetze = x => String(x||'').split(/(?<=\\.)\\s+/).filter(Boolean).length;
+  const lang = zeilen.filter(t => saetze(t.text) > 3 || String(t.text||'').length > 130);
+  const mechanik = zeilen.filter(t => /staerker|stärker|kein Prestige|Prestige-Stand/.test(String(t.text||'')));
+  return {n:zeilen.length, max:Math.max(0, ...zeilen.map(t => String(t.text||'').length)),
+          lang:lang.map(t => t.titel + ' (' + saetze(t.text) + ' Saetze, '
+            + String(t.text).length + ' Zeichen)').slice(0,3),
+          mechanik:mechanik.map(t => t.titel).slice(0,3), nM:mechanik.length};
+})())`));
+ok(_zeil.n > 40, 'die Tafel-Sammelkarten tragen viele Zeilen', _zeil.n + ' Zeilen');
+ok(_zeil.lang.length === 0, 'keine Zeile einer Sammelkarte wird zum Absatz',
+   _zeil.lang.join(' | ') || 'laengste ' + _zeil.max + ' Zeichen');
+ok(_zeil.nM === 0, 'keine Zeile erklaert die Prestige-Mechanik',
+   _zeil.mechanik.join(' | ') || _zeil.nM + ' Zeilen');
+
 ok(_chrg.stand.jetzt > 0, 'der Halterstand des laufenden Monats ist zu lesen',
    _chrg.stand.jetzt + ' Chroniken');
 ok(_chrg.stabil, 'derselbe Zeitpunkt ergibt denselben Halterstand');
@@ -3038,8 +3126,50 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
     const letzt = teile[teile.length - 1].replace(/\\.$/, '').trim();
     return /^\\d/.test(letzt) && letzt.split(/\\s+/).length <= 3;
   }).map(s => s.desc);
+  // ── Niemand ist sein eigener Vorgaenger ──────────────────────────
+  //    Der Rekord kannte nur „uebernimmt", auch wenn das Halterfeld bloss
+  //    enger oder weiter geworden ist. Gemessen widersprachen sich vier
+  //    Karten der Ligageschichte: „Leon uebernimmt ‚Der Aufschwung'. Vorher
+  //    hielt Leon, Jannik und Stefan den Rekord" — Leon uebernahm von sich
+  //    selbst, und aus drei Namen wurde ein „hielt". Und „Martin und Leo
+  //    uebernehmen ‚Das Sonntagskind'. Vorher hielt Leo den Rekord mit 70 %"
+  //    verkaufte Leos Rueckschritt auf 67 % als Uebergabe, obwohl Leo den
+  //    Rekord weiter haelt [§C27]. Ein einziger Generatorlauf trifft keinen
+  //    dieser Faelle — sie liegen auf fuenf verschiedenen Spieltagen.
+  const selbstVorgaenger = [], falschesVerb = [];
+  roh.forEach(s => {
+    const d = s.dataRef || {};
+    const typ = String(d.type || '');
+    if(typ.indexOf('rekord_') !== 0 && typ !== 'chronik_geholt') return;
+    const txt = String(s.desc || '');
+    const i = txt.indexOf('Vorher');
+    if(i < 0) return;
+    const satz = txt.slice(i);
+    (d.playerIds || []).forEach(pid => {
+      const nm = pname(pid);
+      if(nm && satz.indexOf(nm) >= 0) selbstVorgaenger.push(s.title + ' || ' + satz);
+    });
+    // Und das Verb zaehlt die Genannten: ein Name „hielt", mehrere „hielten".
+    // Erst den ganzen Satz nehmen, dann die bekannten Enden abstreifen: mit
+    // einer traegen Gruppe und einem optionalen Schwanz matchte das Muster
+    // genau einen Buchstaben („Vorher hielten L").
+    const v = /Vorher (hielt|hielten)(?: sie)? ([^.]+)\\./.exec(satz);
+    if(v){
+      const wen = v[2].replace(/ den Rekord mit .*$/, '').replace(/ auch$/, '');
+      if((wen.indexOf(' und ') >= 0) !== (v[1] === 'hielten'))
+        falschesVerb.push(s.title + ' || Vorher ' + v[1] + ' ' + wen);
+    }
+  });
+  const mitVorgaenger = roh.filter(s => {
+    const typ = String((s.dataRef || {}).type || '');
+    return (typ.indexOf('rekord_') === 0 || typ === 'chronik_geholt')
+      && String(s.desc || '').indexOf('Vorher') >= 0;
+  }).length;
   return {n: roh.length, ergebnisFalsch, echo, etikett, englisch, fragment,
           mitMatch: mitMatch.length, fremdeNamen, serienDoppelt,
+          mitVorgaenger, selbstVorgaenger:selbstVorgaenger.slice(0, 4),
+          nSelbst:selbstVorgaenger.length,
+          falschesVerb:falschesVerb.slice(0, 4), nVerb:falschesVerb.length,
           serien: roh.filter(x => (x.dataRef || {}).type === 'win_streak').length};
 })())`));
 ok(_worte.n > 0, 'der Generator bildet Texte', _worte.n + ' Karten');
@@ -3048,6 +3178,12 @@ ok(_worte.mitMatch > 0, 'Karten mit einer konkreten Partie werden gebildet',
 ok(_worte.fremdeNamen.length === 0,
    'und jede zeigt eine Partie, in der ein genannter Spieler mitgespielt hat',
    _worte.fremdeNamen.slice(0, 3).join(' | ') || 'alle');
+ok(_worte.mitVorgaenger > 10, 'es gibt viele Tafel-Karten mit einem Vorgaenger',
+   _worte.mitVorgaenger + ' von ' + _worte.n);
+ok(_worte.nSelbst === 0, 'niemand steht als sein eigener Vorgaenger im Satz',
+   _worte.selbstVorgaenger.join(' | ') || _worte.nSelbst + ' Treffer');
+ok(_worte.nVerb === 0, 'das Verb im Vorgaenger-Satz zaehlt die Genannten',
+   _worte.falschesVerb.join(' | ') || _worte.nVerb + ' falsch');
 ok(_worte.serien > 0, 'Serienmarken werden gebildet', _worte.serien + ' Karten');
 ok(_worte.serienDoppelt.length === 0,
    'und ein Spieler zuendet an einem Tag nur seine laengste Serie',

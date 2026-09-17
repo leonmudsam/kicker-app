@@ -1194,7 +1194,13 @@ function _consolidateStories(list){
                 // Die Beteiligten je Zeile: die Buendelung haengt an ihnen
                 // [§C33], und im Blatt fuehrt die Zeile damit zu dem, von dem
                 // sie handelt.
-                teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t), text: t.desc,
+                // Eine Zeile darf kuerzer sein als die Karte, von der sie
+                // kommt: `zeileText` ist die kurze Fassung, die der
+                // Generator dafuer mitgibt. Ohne sie stand im Blatt eines
+                // Tafel-Moments neunmal der volle Kartentext untereinander,
+                // bis zu 183 Zeichen je Zeile [§C33].
+                teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t),
+                                        text: (t.dataRef || {}).zeileText || t.desc,
                                         typ: (t.dataRef||{}).type || '',
                                         kammer: (t.dataRef||{}).kammer || '',
                                          // Ein Spieler zeigt je Monat nur EINE
