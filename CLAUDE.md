@@ -250,7 +250,7 @@ globalem Zustand ist.
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, und die Bedingung samt Erklärung jedes Rekords | 1104 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
 | `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet und der Halter hinter jeder ausgerufenen Bestmarke | 363 |
-| `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif — **im echten Browser gemessen** | 78 |
+| `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens und das Wappen als Verweis auf sein Symbol — **im echten Browser gemessen** | 138 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
@@ -1685,8 +1685,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   hinter dem `backdrop-filter` des Vorhangs in jedem Bild neu gerechnet, und
   genau das ruckelte; im Schließen läuft kein JavaScript, gemessen nicht eine
   einzige Longtask. Das Listen-Bauteil `.rav` [§C27] verweist deshalb mit
-  `<use>` auf ein `<symbol>` im selben Topf, in dem die Verläufe schon stehen —
-  72 Kilobyte und 1612 Knoten. Der Schlüssel ist das MARKUP selbst: gleiches
+  `<use>` auf eine **Gruppe in `<defs>`** im selben Topf, in dem die Verläufe
+  schon stehen — 72 Kilobyte und 1612 Knoten. Eine Gruppe, kein `<symbol>`:
+  ein `<symbol>` eröffnet beim Verweis ein ZWEITES Koordinatensystem. Das
+  äußere `<svg>` trägt `viewBox="-22 -22 144 144"`, das `<use>` setzte darin
+  einen Viewport bei (0,0), und die Zeichnung rutschte um 22 von 144 Einheiten
+  nach unten rechts — auf einer 52-px-Kachel 8 px, das Gesicht oben links und
+  der Reif unten rechts, auf jeder Seite der App. Die Box des `<svg>` ist in
+  beiden Fassungen dieselbe, also fängt nur eine Messung am INHALT das:
+  `tests/zeichen` legt Verweis und volles Markup nebeneinander und vergleicht,
+  wo gezeichnet wird. Der Schlüssel ist das MARKUP selbst: gleiches
   Markup heißt gleiches Symbol, also hängt der Topf an der Zahl verschiedener
   Zeichnungen und nicht an der Zeit [§3]. Ohne Topf bleibt es beim vollen
   Markup, wie bei den Verläufen. Der Inhalt liegt damit im Symbol und ist aus

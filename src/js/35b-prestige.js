@@ -1459,8 +1459,8 @@ function insigniumSvg(pid, opt){
 // Ohne Topf (Teststand ohne Browser) bleibt es beim vollen Markup, genau
 // wie bei den Verläufen: ein `<use>` auf ein Symbol, das es nicht gibt,
 // zeichnet nichts.
-const _insSymIds = new Map();        // Markup → Symbol-id
-const _insSymDrin = new Set();       // welche Symbole im Topf stehen
+const _insSymIds = new Map();        // Markup → id der Zeichnung
+const _insSymDrin = new Set();       // welche Zeichnungen im Topf stehen
 let _insSymTopf = null;
 function insigniumRef(pid, opt){
   const markup = insigniumSvg(pid, opt);
@@ -1471,14 +1471,21 @@ function insigniumRef(pid, opt){
   if(!sid){ sid = 'insy' + _insSymIds.size; _insSymIds.set(markup, sid); }
   const vb = (/viewBox="([^"]+)"/.exec(markup) || [])[1] || INS_BOX;
   if(!_insSymDrin.has(sid)){
-    // Der Inhalt bleibt Zeichen für Zeichen derselbe, nur die Hülle wechselt.
+    // Eine GRUPPE in `<defs>`, kein `<symbol>`. Ein `<symbol>` eröffnet beim
+    // Verweis ein ZWEITES Koordinatensystem: das äussere `<svg>` trägt
+    // `viewBox="-22 -22 144 144"`, das `<use>` setzte darin einen Viewport bei
+    // (0,0), und die ganze Zeichnung rutschte um 22 von 144 Einheiten nach
+    // unten rechts — auf jeder Seite der App sass der Reif 15 % neben seinem
+    // Gesicht. Eine Gruppe erbt das Koordinatensystem des Verweises und
+    // zeichnet damit genau dort, wo das volle Markup zeichnete. `<defs>`
+    // hält sie zugleich vom Rendern fern, wie die Verläufe daneben.
     const inner = markup.replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
     topf.insertAdjacentHTML('beforeend',
-      `<symbol id="${sid}" viewBox="${vb}">${inner}</symbol>`);
+      `<defs><g id="${sid}">${inner}</g></defs>`);
     _insSymDrin.add(sid);
   }
-  // Die Klasse bleibt am äusseren <svg>: jede CSS-Regel der App greift dort
-  // und keine reicht in das Zeichen hinein — ein `<use>` ändert daran nichts.
+  // Die Klasse und die viewBox bleiben am äusseren <svg>: jede CSS-Regel der
+  // App greift dort und keine reicht in das Zeichen hinein.
   return `<svg viewBox="${vb}" class="ins" aria-hidden="true"><use href="#${sid}"/></svg>`;
 }
 
