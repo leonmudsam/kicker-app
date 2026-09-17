@@ -177,6 +177,7 @@ function _chronicleCtx(bisMs){
     // beruecksichtigt — ohne sie waere „der komplette Stuermer" nur eine
     // Siegquote mit Torzugabe.
     atkPerf:0, defPerf:0,
+    expSum:0,                        // Summe der Siegchancen — das eigene Soll
     winStreak:0, winSpan:'', lossStreak:0, lossSpan:'',
     debacle:0, nail:0, bitter:0, close:0, closeW:0,
     blowW:0, blowL:0, upsets:0, days:0, maxDay:0, maxDayLabel:'',
@@ -214,6 +215,13 @@ function _chronicleCtx(bisMs){
     restSd:null, restMit:0,
     atkSd:null, atkMit:0,                // Gleichmaessigkeit im Sturm
     defSd:null, defMit:0,                // und in der Abwehr
+    // ── Die Schandtafel [§C35]: vier Kennzahlen, die eine Kehrseite messen.
+    //    Sie fallen im selben Durchlauf ueber die Rohsicht ab wie die
+    //    Fenster darueber und bleiben Skalare — am gecachten Spieler haengt
+    //    keine Liste, sonst truege jeder der 24 Zeitschnitte sie mit [§3].
+    favL:0,                              // Pleiten als Favorit
+    angstQ:null, angstGeg:'', angstN:0, angstW:0,   // der unangenehmste Gegner
+    klotzD:null, klotzN:0,               // was die Mitspieler an dieser Seite kostet
   });
 
   ms.forEach(m => {
@@ -239,7 +247,12 @@ function _chronicleCtx(bisMs){
       p.games++; p.gf += gf; p.ga += ga; p.gd += diff;
       if(w) p.wins++; else p.losses++;
       const exp = myExp(id, m);
+      p.expSum += exp;                  // Soll der Laufbahn [§C39-Rechnung]
       (roh[id] || (roh[id] = [])).push({w, gf, ga, pos, exp,
+        // `mate` gehoert zur Rohsicht wie `geg`: „Der Klotz am Bein" fragt,
+        // wie die Mitspieler AN DIESER SEITE stehen, und das ist ohne den
+        // Partner nicht zu beantworten.
+        mate: onA ? (id === m.a1 ? m.a2 : m.a1) : (id === m.b1 ? m.b2 : m.b1),
         geg: onA ? [m.b1, m.b2] : [m.a1, m.a2]});
       if(pos === 'atk'){ p.atkG++; p.atkGoals += gf; if(w) p.atkW++; p.atkPerf += (w?1:0) - exp; }
       else             { p.defG++; p.defConceded += ga; if(w) p.defW++; p.defPerf += (w?1:0) - exp; }
@@ -404,6 +417,40 @@ function _chronicleCtx(bisMs){
     p.unterGf = unter.reduce((n, x) => n + x.gf, 0);
     p.favN = fav.length;
     p.favKlar = fav.filter(x => x.w && x.gf - x.ga >= 5).length;
+    p.favL = fav.filter(x => !x.w).length;
+    // Der unangenehmste Gegner: dieselbe Frage wie „Der Angstgegner" im
+    // Monat, nur ueber die Laufbahn [§13.1]. Gezaehlt wird gegen die Duelle
+    // gegen GENAU diesen Gegner und nicht gegen alle Partien [§C37].
+    const geg = {};
+    r.forEach(x => x.geg.forEach(g => { if(g) (geg[g] = geg[g] || []).push(x); }));
+    Object.keys(geg).forEach(g => {
+      const d = geg[g];
+      if(d.length < 20) return;
+      const q = d.filter(x => x.w).length / d.length;
+      if(p.angstQ === null || q < p.angstQ){
+        p.angstQ = q; p.angstGeg = g; p.angstN = d.length;
+        p.angstW = d.filter(x => x.w).length;
+      }
+    });
+    // Was die Mitspieler an dieser Seite kostet. Verglichen wird jeder
+    // Partner mit SICH SELBST ohne diesen Partner — gegen das Ligamittel
+    // gerechnet gehoerte der Rekord dem, der mit den Schwachen spielt.
+    // `roh` liegt hier fuer alle Spieler vollstaendig vor; die Rechnung
+    // laeuft ueber die Partner und nicht ueber die Partien, das sind je
+    // Spieler ein Dutzend Durchlaeufe.
+    const mates = {};
+    r.forEach(x => { if(x.mate) (mates[x.mate] = mates[x.mate] || []).push(x); });
+    const nutz = Object.keys(mates).filter(m => mates[m].length >= 10 && roh[m]);
+    if(nutz.length >= 3){
+      let summe = 0;
+      nutz.forEach(m => {
+        const mit = mates[m].filter(x => x.w).length / mates[m].length;
+        const ohne = roh[m].filter(x => x.mate !== id);
+        summe += mit - (ohne.length ? ohne.filter(x => x.w).length / ohne.length : mit);
+      });
+      p.klotzN = nutz.length;
+      p.klotzD = summe / nutz.length;
+    }
     p.restN = rest.length;
     p.restGf = rest.reduce((n, x) => n + x.gf, 0);
     p.restGa = rest.reduce((n, x) => n + x.ga, 0);

@@ -212,8 +212,14 @@ SIDS.forEach(sid => {
       case 'giant_slayer': expect = p.ups; break;
       case 'marathon':     expect = p.maxDay; break;
       case 'omnipresent':  expect = p.days.size; break;
-      case 'abyss':        expect = p.debacle; break;
-      case 'hardluck':     expect = p.bitter; break;
+      // Diese beiden tragen seit dem Umbau eine MONATSACHSE, und die
+      // sortiert nach dem Anteil an den eigenen Pleiten, nicht nach der
+      // Anzahl [§C35]. Der Beleg beginnt deshalb mit dem Anteil, und die
+      // Gegenrechnung rechnet denselben Anteil nach: Zaehler UND Nenner
+      // kommen dafuer aus den Rohpartien, ein Fehler in §13 fliegt also
+      // weiter auf.
+      case 'abyss':        expect = p.l ? Math.round(p.debacle / p.l * 100) : 0; break;
+      case 'hardluck':     expect = p.l ? Math.round(p.bitter / p.l * 100) : 0; break;
       case 'wall':         expect = p.defG; break;
     }
     if(expect !== null){

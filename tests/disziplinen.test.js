@@ -1876,6 +1876,80 @@ ok(_hMax.length === 0, 'kein Halter traegt mehr als ein Viertel aller Rekorde',
    _hMax.join(', ') || 'Maximum ' + Math.max.apply(null, Object.values(_ok.haltungen))
    + ' von ' + _hSum);
 
+// ─── Die Schandtafel ────────────────────────────────────────────────
+// Eine Schande ist nicht einfach ein Rekord mit umgedrehtem Vorzeichen. Wer
+// schlechter spielt, verliert JEDE Quote, also gehoert eine Schande, die das
+// Niveau misst, immer demselben Spieler — und dann ist die Tafel keine
+// Tafel, sondern eine Rangliste von hinten. Gemessen an den echten Partien
+// hielt der Zehnte der Siegquote fuenf der dreizehn Haltungen; drei der
+// neuen Einträge fragen deshalb nach dem ABSTAND ZUM EIGENEN [§C38] statt
+// nach dem Niveau, und genau dadurch haben sie ihr Tor bestanden: „Die
+// Ladehemmung" ging von r = −0,35 auf +0,14, „Die stumme Antwort" von −0,40
+// auf +0,06.
+// Ein gleichmaessiger Streu waere gelogen — eine Schande MISST, dass jemand
+// schlecht war. Gedeckelt wird deshalb nur der Extremfall: nicht alles in
+// einem Namen, und mehr als eine Handvoll Leute tragen mit.
+const _sch = JSON.parse(K.eval(`JSON.stringify((function(){
+  const A = allChronicles();
+  const halt = {}, frei = [];
+  const neg = CHRONICLES.filter(c => c.neg);
+  // Fuers Prestige zaehlt die ART, nicht die Farbe. Eine negative FUEGUNG
+  // behaelt art:'ereignis' und damit ihren Wert — das steht ausdruecklich
+  // so in §C25, „sonst verschoebe sich das Prestige": „Die bitterste Pleite"
+  // ist rot, zaehlt nicht als Rekord und traegt trotzdem Punkte wie jede
+  // andere Fuegung. Null geben nur die Schattenseiten.
+  const schatten = CHRONICLES.filter(c => c.art === 'schatten');
+  neg.forEach(c => {
+    const h = A.byId[c.id];
+    if(!h){ frei.push(c.id); return; }
+    (h.holders || [{pid:h.pid}]).forEach(x => { halt[x.pid] = (halt[x.pid] || 0) + 1; });
+  });
+  // Und keine Schande darf Prestige geben. Gemessen wird die QUELLE in der
+  // Laufbahn und nicht der Zielvorschlag daneben: prestigeTabelle sammelt
+  // JEDEN gehaltenen Rekord ein, und erst PRESTIGE_ART macht aus einer
+  // Schattenseite eine Null. Am Zielvorschlag geprueft war die Zusicherung
+  // gruen, auch als der Filter der Punkte ganz entfernt war.
+  // (Kein Backtick in diesem Kommentar: er steht in einem Template-Literal.)
+  const pr = prestigeTabelle();
+  const ausSchande = [];
+  let posten = 0;
+  Object.keys(pr.byPid).forEach(pid => {
+    (pr.byPid[pid].quellen || []).forEach(q => {
+      if(q.q !== 'rekord') return;
+      posten++;
+      if(schatten.some(c => c.id === q.id) && (q.p || 0) !== 0)
+        ausSchande.push(String(pid).slice(-2) + '/' + q.id + ':' + q.p);
+    });
+  });
+  return {n:neg.length, halt, frei, ausSchande, posten};
+})())`));
+const _schSum = Object.values(_sch.halt).reduce((a, b) => a + b, 0);
+const _schMax = Object.keys(_sch.halt).sort((a, b) => _sch.halt[b] - _sch.halt[a])[0];
+console.log('  Schandtafel: ' + _sch.n + ' Eintraege, ' + _schSum + ' Haltungen · '
+  + Object.keys(_sch.halt).sort((a, b) => _sch.halt[b] - _sch.halt[a])
+    .map(p => nm(p) + ' ' + _sch.halt[p]).join(' · '));
+ok(_sch.n >= 12, 'die Schandtafel traegt mindestens zwölf Eintraege', String(_sch.n));
+ok(_schSum > 0 && _sch.halt[_schMax] * 5 <= _schSum * 2,
+   'keine Schande sammelt sich bei einem einzigen Spieler',
+   _schMax ? nm(_schMax) + ' haelt ' + _sch.halt[_schMax] + ' von ' + _schSum : 'leer');
+ok(Object.keys(_sch.halt).length >= 6,
+   'die Schandtafel verteilt sich auf mehr als eine Handvoll Namen',
+   Object.keys(_sch.halt).length + ' Namen');
+ok(_sch.posten > 0, 'die gehaltenen Rekorde stehen als Prestige-Quelle da',
+   _sch.posten + ' Posten');
+ok(_sch.ausSchande.length === 0, 'keine Schattenseite gibt Prestige',
+   _sch.ausSchande.slice(0, 4).join(', ') || 'keine');
+
+// Sechs Schand-Disziplinen tragen beide Zeitachsen [§13.1]: dieselbe Frage
+// auf Monat UND Laufbahn gehoert in EINE Disziplin, sonst stehen zwei Namen
+// und zwei Icons fuer denselben Gedanken.
+['sieve','abyss','hardluck','angstgegner','untersoll','misfire'].forEach(id =>
+  ok(K.eval(`!!SEASON_TITLE_BY_ID['${id}'] && !!CHRONICLE_BY_ID['${id}']`),
+     'Schande ' + id + ' traegt beide Zeitachsen'));
+['noanswer','favflop','ballast'].forEach(id =>
+  ok(K.eval(`!!CHRONICLE_BY_ID['${id}'] && !SEASON_TITLE_BY_ID['${id}']`),
+     'Schandrekord ' + id + ' traegt nur die Laufbahn'));
+
 // Die Rohsicht bleibt aus dem Cache. Sie wird fuer die zehn Rekorde der zwei
 // Kammern gebaut, ausgewertet und verworfen: am gecachten Spielerobjekt
 // haengen nur Skalare. Sonst truege jeder der 24 Zeitschnitte 4×N

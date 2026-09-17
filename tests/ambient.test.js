@@ -2093,6 +2093,29 @@ ok(_amb.raus.amp.length === 0, 'kein Kaufmanns-Und in einer Ambient-Karte',
 ok(_amb.raus.verb.length === 0, 'eine Mehrzahl bekommt ihr Verb im Plural',
    _amb.raus.verb[0] || 'keine');
 
+// ── Der Feed meldet keine Schande ───────────────────────────────────
+// Die Liga liest ihn gemeinsam [§C33]. Eine Schattenseite steht im
+// Rekorde-Reiter und im Profil, aber niemand bekommt eine Nachricht darueber,
+// dass er am meisten kassiert. Seit die Schandtafel dreizehn Eintraege traegt,
+// ist das nicht mehr an einer Handvoll IDs zu erkennen: geprueft wird gegen
+// den KATALOG, damit ein neuer Eintrag nicht still durchrutscht.
+const _keineSchande = JSON.parse(K.eval(`JSON.stringify((function(){
+  const ids = CHRONICLES.filter(c => c.neg).map(c => c.id)
+    .concat(SEASON_TITLES.filter(t => t.kunst === 'schatten').map(t => t.id));
+  const st = _buildStories() || [];
+  const treffer = [];
+  st.forEach(s => {
+    const j = JSON.stringify(s);
+    ids.forEach(id => { if(j.indexOf('"' + id + '"') >= 0) treffer.push(s.type + '/' + id); });
+  });
+  return {stories:st.length, ids:ids.length, treffer:[...new Set(treffer)]};
+})())`));
+ok(_keineSchande.stories > 0 && _keineSchande.ids >= 12,
+   'der Durchlauf sieht Stories und kennt die ganze Schandtafel',
+   _keineSchande.stories + ' Stories, ' + _keineSchande.ids + ' Schande-IDs');
+ok(_keineSchande.treffer.length === 0, 'keine Schande steht im Feed',
+   _keineSchande.treffer.slice(0, 4).join(', ') || 'keine');
+
 // ── Wer eine Bestmarke ausruft, nennt ihren Halter ──────────────────
 // „Leon beherrscht die Wochen · 6x Spieler der Woche. Bestwert der Liga"
 // stand im Feed, und derselbe Bestwert gehoerte im Rekorde-Reiter Julian:
