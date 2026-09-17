@@ -106,7 +106,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **723**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **726**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -176,13 +176,36 @@ Topf nach — Stichproben genügen dafür nicht, weil ein neuer Topf gerade der
 ist, an den niemand denkt.
 
 Ein Topf mit einem Schlüssel, der die Version enthält, **wächst über die
-Versionen**: er braucht eine Obergrenze, ab der er geleert wird. Sieben
+Versionen**: er braucht eine Obergrenze, ab der er geräumt wird. Sieben
 hatten keine — darunter der der Auszeichnungen, der zu jeder Version zwölf
 Listen mit je dreißig Einträgen anlegt und jede vorige behält. Der Deckel
-wird nur bei einem Fehlgriff geprüft: vor dem Lesen geleert, verlöre er
-gerade den Treffer, für den er da ist. `tests/tafel` zählt die Töpfe und
-die Deckel — Stichproben genügen dafür nicht, weil ein neuer Topf gerade
-der ist, an den niemand denkt. Wo eine
+wird nur bei einem Fehlgriff geprüft: vor dem Lesen geräumt, verlöre er
+gerade den Treffer, für den er da ist. Geräumt wird der **älteste Eintrag**
+(`_topfDeckel`), nicht der ganze Topf. Beim vollständigen Leeren ist das Memo
+oberhalb des Deckels nämlich nicht beschnitten, es ist **aus**: gemessen an
+`_seasonTitleCtx` mit Deckel 8 kostete ein zweiter Blick auf sechs und acht
+Zeitschnitte null Rechnungen, auf zwölf und zwanzig jeweils alle noch einmal.
+Und ein Deckel steht nie weit über der Arbeitsmenge — der News-Generator
+allein fragt sieben verschiedene Schnitte des Monatskontexts ab, der Deckel
+stand bei acht. `tests/tafel` zählt die Töpfe und
+die Deckel und misst, dass ein Eintrag zu viel einen Eintrag kostet —
+Stichproben genügen dafür nicht, weil ein neuer Topf gerade
+der ist, an den niemand denkt.
+
+**Ein Zeitschnitt, der nichts abschneidet, ist kein Zeitschnitt**
+(`_schnitt`, `_schnittSaison`). Der Feed vergleicht „vor dem letzten
+Spieltag" mit „heute" und schrieb „heute" als den Zeitstempel der letzten
+Partie. Für jede geschnittene Rechnung ist das aber ein eigener Schlüssel:
+gemessen rechnete ein Generatorlauf `prestigeTabelle` zweimal, einmal
+ungeschnitten für 17 ms und einmal als Schnitt für 59 ms, und Juni und Juli
+kamen in sechs Schnittfassungen vor, obwohl beide Monate längst zu sind.
+Schlimmer als die Zeit ist die Abweichung: `seasonTitles` liest einen
+abgeschlossenen Monat nur OHNE Schnitt aus dem eingefrorenen Datensatz und
+rechnet ihn mit Schnitt frisch nach [§10.2] — derselbe Monat kann damit unter
+zwei Namen erscheinen, je nachdem ob ein Schnitt mitgegeben wurde. Ein
+Schnitt hinter der letzten Partie fällt deshalb weg, und ein Schnitt hinter
+dem Monatsende fällt für DIESEN Monat weg. Gemessen sank der News-Generator
+dadurch von 241 auf 162 ms kalt (Median aus elf Läufen). Wo eine
 Rechnung an der Identität eines Arrays hängt statt an einer Version
 (`_winnerCountsOf`, `matchesOfPlayer`, `matchesByDay`), reicht eine `WeakMap`
 — `matches` wird immer **ersetzt**, nie an Ort und Stelle verändert, und ein
@@ -251,7 +274,7 @@ globalem Zustand ist.
 | Suite | prüft | Checks |
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords und die Schandtafel samt ihrer Verteilung | 1191 |
-| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 180 |
+| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert | 186 |
 | `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, und die Zeile einer Sammelkarte, die kein Absatz wird | 374 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens und das Wappen als Verweis auf sein Symbol — **im echten Browser gemessen** | 138 |
@@ -520,6 +543,17 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   guten Spieltag stand, behauptete sie das Gegenteil dessen, was gerade
   passiert war: derselbe Spieler war in diesem Monat Zweiter. Gerechnet wird
   es an EINER Stelle; die Zeile im Blatt rechnete es ein zweites Mal nach.
+  **Ein Kalendertag hat eine Schreibweise** (`tagKey`). „Welcher Tag ist
+  das?" stand zwölfmal ausgeschrieben im Code, und in zwei Schreibweisen:
+  mit führender Null („2026-08-06") und ohne („2026-7-6"). Einmal hat sich
+  das gekreuzt — ein Deckel-Schlüssel wurde mit der kurzen Fassung gebaut
+  und mit der langen abgefragt, fand nie eine Partie, und die Regel „kein
+  Spieltag bleibt ohne Karte" griff nie; der Ausweg war damals ein zweiter
+  Aufruf daneben statt einer Schreibweise. Ortszeit, nicht UTC: der Feed
+  gruppiert nach Kalendertagen, wie sie auf der Uhr des Lesers stehen —
+  `matchesByDay` schlüsselt bewusst nach UTC und ist deshalb etwas anderes.
+  `tests/tafel` zählt die Stellen im gebauten Stand nach, weil sich jede
+  neue sonst wieder selbst eine aussucht.
   **Eine Zahl und ein Name haben je eine Form.** Eine Dezimalzahl trägt ein
   Komma (`komma`) — acht Belege des Katalogs und acht Fun Facts schrieben
   „6.9 Gegentore" mit englischem Punkt mitten im deutschen Satz, und ein

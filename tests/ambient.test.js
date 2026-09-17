@@ -467,7 +467,7 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
   const zaehl = {}, proTag = {};
   sichtbar.forEach(s => { const t=(s.dataRef&&s.dataRef.type)||'-';
     zaehl[t]=(zaehl[t]||0)+1;
-    const k=t+'|'+_newsDayKey(s.when); proTag[k]=(proTag[k]||0)+1; });
+    const k=t+'|'+tagKey(s.when); proTag[k]=(proTag[k]||0)+1; });
   return {
     roh: roh.length, sichtbar: sichtbar.length,
     // Gemessen wird die Verteilung ueber die EREIGNISSE, nicht ueber die
@@ -1496,10 +1496,10 @@ const _zeil = JSON.parse(K.eval(`JSON.stringify((function(){
   // an einem einzelnen Tag steht davon keine im Buendel. Gemessen trug der
   // 10.08. drei davon („In der Chronik bleibt ‚Der makellose Tag' staerker").
   const alleMatches = matches.slice();
-  const alleTage = [...new Set(alleMatches.map(m => _newsDayKey(mts(m))))].sort();
+  const alleTage = [...new Set(alleMatches.map(m => tagKey(mts(m))))].sort();
   const zeilen = [];
   alleTage.filter((_, i) => i % 4 === 0 || i >= alleTage.length - 3).forEach(k => {
-    const grenze = Math.max(...alleMatches.filter(m => _newsDayKey(mts(m)) === k).map(mts));
+    const grenze = Math.max(...alleMatches.filter(m => tagKey(mts(m)) === k).map(mts));
     matches = alleMatches.filter(m => mts(m) <= grenze);
     invalidateCache();
     let st = [];
@@ -1859,10 +1859,10 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
     const zaehlTypen = liste => liste.reduce((o,s)=>{ const d=s.dataRef||{};
       const k=d.type==='sammel' ? 'sammel:'+d.quelle : d.type;
       o[k]=(o[k]||0)+gewicht(s); return o; },{});
-    const tage=[...new Set(sicht.map(s=>_newsDayKey(s.when)))].filter(k=>_newsTagMs(k).length);
+    const tage=[...new Set(sicht.map(s=>tagKey(s.when)))].filter(k=>_newsTagMs(k).length);
     const ohne=new Set(['ambient','dry_spell','season_endgame','quiet_week','season_start']);
     const karten=tage.map(k=>{
-      const items=sicht.filter(s=>_newsDayKey(s.when)===k);
+      const items=sicht.filter(s=>tagKey(s.when)===k);
       const id=_newsTagKarte(items,k), karte=items.find(s=>s.id===id);
       const kandidaten=items.filter(s=>!ohne.has((s.dataRef||{}).type));
       const max=Math.max.apply(null,kandidaten.map(_newsTagSpannung));
@@ -2338,7 +2338,7 @@ ok(_meta.length === 0, 'kein Blatt erklaert die Regeln des Feeds', _meta.join(',
 // einem Tag, der die Zahl erreicht, und einem, der sie nicht erreicht.
 const _tk = JSON.parse(K.eval(`JSON.stringify((function(){
   const tage = {};
-  matches.forEach(m => { const k = _newsDayKey(m.created_at); tage[k] = (tage[k]||0)+1; });
+  matches.forEach(m => { const k = tagKey(m.created_at); tage[k] = (tage[k]||0)+1; });
   const voll = Object.keys(tage).find(k => tage[k] >= NEWS_LIMITS.tagKartePartien);
   const kurz = Object.keys(tage).find(k => tage[k] > 0 && tage[k] < NEWS_LIMITS.tagKartePartien);
   // POTD hat absichtlich die hoehere Feed-Prioritaet: die Tageskarte soll
@@ -2510,7 +2510,7 @@ const _tagmix = JSON.parse(K.eval(`JSON.stringify((function(){
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null; _cache._frischVon = null;
   const feed = getStoriesCache();
-  const tk = w => _newsDayKey(w);
+  const tk = w => tagKey(w);
   const istTafel = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel';
   const gew = s => (s.dataRef||{}).type === 'sammel'
     ? Math.max(1, ((s.dataRef||{}).teile||[]).length) : 1;
@@ -2568,7 +2568,7 @@ ok(_tagmix.leer.length === 0, 'kein Spieltag im Feed bleibt ohne Karte',
 // wird am selben Weg geprueft: ein schwacher Tafel-Wechsel unter sechs
 // starken Spieltagskarten faellt sonst unter den Deckel.
 const _tagbau = JSON.parse(K.eval(`JSON.stringify((function(){
-  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
   const a = tage[tage.length - 1], b = tage[tage.length - 2];
   const msVon = k => mts(_newsTagMs(k)[0]);
   // elo_swing ist der gemessene Fall: „Harter Tag fuer Johannes" stand an
@@ -2598,7 +2598,7 @@ const _tagbau = JSON.parse(K.eval(`JSON.stringify((function(){
     dataRef:{type:'rekord_gesteigert', rekordId:'x', playerIds:[players[6].id]}});
   _cache._consolFrom = null;
   const mitTafel = _consolidateStories(stark);
-  return {tageImFeed: [...new Set(doppelt.map(s => _newsDayKey(s.when)))].length,
+  return {tageImFeed: [...new Set(doppelt.map(s => tagKey(s.when)))].length,
           tafelDrin: mitTafel.some(s => s.cat === 'tafel'),
           karten: mitTafel.length};
 })())`));
@@ -2621,7 +2621,7 @@ ok(_tagmix.achseZuViel.length === 0,
 // Geschichten fuer …" untereinander — vier verschiedene Partien, aber fuer
 // den, der scrollt, viermal dieselbe Schlagzeile.
 const _vierBuendel = JSON.parse(K.eval(`JSON.stringify((function(){
-  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
   const basis = mts(_newsTagMs(tage[tage.length - 1])[0]);
   const l = [];
   for(let i = 0; i < 4; i++){
@@ -2657,7 +2657,7 @@ ok(_vierBuendel.buendel === 2,
 //    im Feed. Gebaut wird genau dieser Tag — fuenf starke Karten ohne Partie
 //    und drei Ergebnisse, von denen die Reservierung eins hereinholt.
 const _ergSam = JSON.parse(K.eval(`JSON.stringify((function(){
-  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
   const tag = tage[tage.length - 1];
   const partien = _newsTagMs(tag).slice(0, 3);
   const basis = mts(partien[0]);
@@ -2692,7 +2692,7 @@ const _ergSam = JSON.parse(K.eval(`JSON.stringify((function(){
   _cache._consolFrom = null;
   const out = _consolidateStories(l);
   const sam = out.filter(s => (s.dataRef||{}).quelle === 'ergebnis');
-  const amTag = out.filter(s => _newsDayKey(s.when) === tag);
+  const amTag = out.filter(s => tagKey(s.when) === tag);
   const zeilen = sam.length ? (sam[0].dataRef.teile || []) : [];
   return {sammel: sam.length, karten: amTag.length,
           zeilen: zeilen.length, mitWert: zeilen.filter(z => !!z.wert).length,
@@ -2726,7 +2726,7 @@ ok(/\d/.test(_ergSam.text) && _ergSam.titel.indexOf(':') < 0,
 //    „Leo und Stefan bewegen die Ewige Tafel" stand das Ergebnis einer
 //    Partie, an der nur einer der beiden beteiligt war.
 const _bandEinig = JSON.parse(K.eval(`JSON.stringify((function(){
-  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
   const partien = _newsTagMs(tage[tage.length - 1]).slice(0, 2);
   const bau = (mids) => {
     const wann = new Date(mts(partien[0]));
@@ -2760,7 +2760,7 @@ ok(_bandEinig.verschieden === null,
 //    Zusammengelegt wird nur ueber die PARTIE: eine gemeinsame Minute ohne
 //    gemeinsames Spiel sagt nichts.
 const _brk = JSON.parse(K.eval(`JSON.stringify((function(){
-  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
   const p = _newsTagMs(tage[tage.length - 1]).slice(0, 2);
   const bau = (zweiteMatchId) => {
     const l = [
@@ -2813,7 +2813,7 @@ ok(_brk.fremd.sammel === 0 && _brk.fremd.karten === 2,
 //    Serie in drei Zeilen. Die Gruppe entsteht aus den Mitgliedern, also muss
 //    die Grenze VOR der Gruppierung greifen.
 const _serieEinmal = JSON.parse(K.eval(`JSON.stringify((function(){
-  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
   const p = _newsTagMs(tage[tage.length - 1]);
   const A = players[0].id, B = players[1].id;
   // A reisst die 5er-Marke in der ersten und die 7er in der dritten Partie,
@@ -2867,7 +2867,7 @@ ok(_serieEinmal.titel.every(t => !/5er-Serie/.test(String(t)))
 //    eines Tages. Nachgespielt an den echten 538 Partien des 14. und 15.09.
 //    fielen dabei drei Karten heraus, die stehen muessten.
 const _nachlauf = JSON.parse(K.eval(`JSON.stringify((function(){
-  const tage = [...new Set(matches.map(m => _newsDayKey(mts(m))))].sort();
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
   const tag = tage[tage.length - 1], vortag = tage[tage.length - 2];
   const p = _newsTagMs(tag);
   const basis = mts(p[0]);
@@ -2966,13 +2966,13 @@ const _tid = JSON.parse(K.eval(`JSON.stringify((function(){
   const tafel = roh.filter(s => /^(rekord_|chronik_geholt|insignium_stufe)$|^rekord_/
     .test((s.dataRef||{}).type||'') || ['chronik_geholt','insignium_stufe']
     .indexOf((s.dataRef||{}).type) >= 0);
-  const ohneTag = tafel.filter(s => String(s.id).indexOf(_newsDayKey(s.when)) < 0);
+  const ohneTag = tafel.filter(s => String(s.id).indexOf(tagKey(s.when)) < 0);
   // Und die Partie, auf die eine Tafel-Karte zeigt, liegt an ihrem eigenen Tag.
   const fremdePartie = tafel.filter(s => {
     const mid = (s.dataRef||{}).matchId;
     if(!mid) return false;
     const m = matches.find(x => x.id === mid);
-    return !m || _newsDayKey(mts(m)) !== _newsDayKey(s.when);
+    return !m || tagKey(mts(m)) !== tagKey(s.when);
   }).map(s => s.title);
   return {n: tafel.length, ohneTag: ohneTag.map(s => s.id), fremdePartie};
 })())`));
@@ -3038,12 +3038,12 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
   // zum Beispiel keinen Krimi, den das zweite Team gewonnen hat, und genau
   // dort stand die Reihenfolge der Tore falsch.
   const alleMatches = matches.slice();
-  const alleTage = [...new Set(alleMatches.map(m => _newsDayKey(mts(m))))].sort();
+  const alleTage = [...new Set(alleMatches.map(m => tagKey(mts(m))))].sort();
   const tage = alleTage.filter((_, i) => i % 4 === 0 || i >= alleTage.length - 3);
   const roh = [];
   const gesehen = new Set();
   tage.forEach(k => {
-    const grenze = Math.max(...alleMatches.filter(m => _newsDayKey(mts(m)) === k).map(mts));
+    const grenze = Math.max(...alleMatches.filter(m => tagKey(mts(m)) === k).map(mts));
     matches = alleMatches.filter(m => mts(m) <= grenze);
     invalidateCache();
     let l = [];
@@ -3097,7 +3097,7 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
   {
     const jeTag = new Map();
     roh.filter(x => (x.dataRef || {}).type === 'win_streak').forEach(x => {
-      const k = (x.dataRef.pid || '') + '|' + _newsDayKey(x.when);
+      const k = (x.dataRef.pid || '') + '|' + tagKey(x.when);
       jeTag.set(k, (jeTag.get(k) || 0) + 1);
     });
     jeTag.forEach((n, k) => { if(n > 1) serienDoppelt.push(k + ': ' + n); });
@@ -3221,7 +3221,7 @@ const _serieTag = JSON.parse(K.eval(`JSON.stringify((function(){
   let l = [];
   try { l = _buildStories(); } catch(e){}
   const mein = l.filter(x => (x.dataRef || {}).type === 'win_streak'
-    && x.dataRef.pid === held && _newsDayKey(x.when) === _newsDayKey(basis));
+    && x.dataRef.pid === held && tagKey(x.when) === tagKey(basis));
   matches = alle;
   invalidateCache();
   return {n: mein.length, marken: mein.map(x => x.dataRef.streak)};

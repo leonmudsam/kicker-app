@@ -12,6 +12,7 @@
 // tun [§C33]. Ohne den Schnitt gibt es keinen „Stand von gestern", und eine
 // Chronik, die im laufenden Monat den Halter wechselt, waere keine Nachricht.
 function _seasonTitleCtx(sid, bisMs){
+  bisMs = _schnittSaison(sid, bisMs);
   const ck = sid + '_' + matches.length + '_' + _cache.version
            + (bisMs ? '_' + bisMs : '');
   if(!_cache._stCtx) _cache._stCtx = {};
@@ -19,8 +20,10 @@ function _seasonTitleCtx(sid, bisMs){
   if(hit) return hit;
   const res = _seasonTitleCtxRechnen(sid, bisMs);
   // Nur die letzten Monate behalten — sonst wächst der Topf mit jeder
-  // Saison, die jemand im Wähler durchklickt.
-  if(Object.keys(_cache._stCtx).length > 8) _cache._stCtx = {};
+  // Saison, die jemand im Wähler durchklickt. Sechzehn, nicht acht: der
+  // News-Generator allein fragt sieben verschiedene Schnitte ab, und ein
+  // Deckel knapp über der Arbeitsmenge kippt mit dem nächsten Monat.
+  _topfDeckel(_cache._stCtx, 16);
   _cache._stCtx[ck] = res;
   return res;
 }
@@ -680,11 +683,12 @@ function _freezeSeasonTitles(sid){
 // Memoisiert pro Saison — der Kontext-Pass läuft nur einmal je Cache-Stand.
 function seasonTitles(sid, bisMs){
   if(!sid) sid = currentSeason().id;
+  bisMs = _schnittSaison(sid, bisMs);
   const key = sid + '_' + matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
   if(!_cache._seasonTitles) _cache._seasonTitles = {};
   const hit = _cache._seasonTitles[key];
   if(hit) return hit;
-  if(Object.keys(_cache._seasonTitles).length > 60) _cache._seasonTitles = {};
+  _topfDeckel(_cache._seasonTitles, 60);
 
   // Eingefrorene Saison → gelesen statt gerechnet. Die laufende Saison ist
   // ausgenommen: sie ändert sich bis zum Monatsende bei jedem Match.
@@ -783,6 +787,7 @@ function allSeasonTitles(){
 // sind zwei verschiedene Antworten. Der Feed braucht den Unterschied, sonst
 // liest er das Aufgehen der Tafel als vierzehn Neuvergaben.
 function seasonTitleHalter(sid, bisMs){
+  bisMs = _schnittSaison(sid, bisMs);
   const out = {};
   let C = null;
   try { C = _seasonTitleCtx(sid, bisMs); } catch(e){ return out; }
@@ -809,11 +814,12 @@ function seasonTitleOf(pid, sid, bisMs){
 // Chronik = ein Eintrag je Saison, in der der Spieler gespielt hat.
 // `title` ist null, wenn er leer ausging — die Lücke gehört dazu.
 function seasonTitleHistory(pid, bisMs){
+  bisMs = _schnitt(bisMs);
   const key = pid + '_' + matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
   if(!_cache._chronicle) _cache._chronicle = {};
   const hit = _cache._chronicle[key];
   if(hit) return hit;
-  if(Object.keys(_cache._chronicle).length > 80) _cache._chronicle = {};
+  _topfDeckel(_cache._chronicle, 80);
 
   const cur = currentSeason().id;
   const quelle = bisMs ? matches.filter(m => mts(m) <= bisMs) : matches;

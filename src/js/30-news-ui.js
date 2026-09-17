@@ -260,10 +260,9 @@ function _newsWhenLabel(when){
   // Datumskeys in LOKALER Zeit bilden (nicht via toISOString → UTC): sonst zeigt
   // eine Story mit when=heute 00:00 Lokalzeit in Zonen mit positivem UTC-Offset
   // fälschlich „Gestern", obwohl die Uhrzeit lokal (toLocaleTimeString) heute ist.
-  const _lkey = x => x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
-  const todayKey = _lkey(now);
-  const yest = _lkey(new Date(now.getTime() - 86400000));
-  const dKey = _lkey(d);
+  const todayKey = tagKey(now);
+  const yest = tagKey(now.getTime() - 86400000);
+  const dKey = tagKey(d);
   const hhmm = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
   if(dKey === todayKey) return 'Heute, '+hhmm;
   if(dKey === yest) return 'Gestern, '+hhmm;
@@ -278,9 +277,8 @@ function _newsWhenLabel(when){
 // behalten ihr Wort, weil man an ihnen kein Datum nachschlagen will.
 function _newsDayLabel(when){
   const d = new Date(when), now = new Date();
-  const k = x => x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
-  if(k(d) === k(now)) return 'HEUTE';
-  if(k(d) === k(new Date(now.getTime() - 86400000))) return 'GESTERN';
+  if(tagKey(d) === tagKey(now)) return 'HEUTE';
+  if(tagKey(d) === tagKey(now.getTime() - 86400000)) return 'GESTERN';
   return d.toLocaleDateString('de-DE',{weekday:'long'}).toUpperCase();
 }
 // Das Datum unter dem Wochentag. Bei „Heute" und „Gestern" steht es trotzdem
@@ -288,10 +286,6 @@ function _newsDayLabel(when){
 function _newsDayDate(when){
   const d = new Date(when);
   return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
-}
-function _newsDayKey(when){
-  const d = new Date(when);
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
 // ─── §11.6 — Voller Feed (im Sheet) mit Filter-Pills ─────────────────
@@ -1129,12 +1123,12 @@ function _breakingHeroText(s){
 // Das steht sonst nirgends im Feed und wiederholt keine Karte.
 // Die Partien eines Kalendertags. Bewusst nicht `matchesByDay`: das
 // schluesselt nach `toISOString()` und damit nach UTC, der Feed gruppiert
-// aber nach Ortszeit (`_newsDayKey`) — an einer Tagesgrenze fielen beide
+// aber nach Ortszeit (`tagKey`) — an einer Tagesgrenze fielen beide
 // auseinander und die Karte des Tages haenge am falschen Tag.
 function _newsTagMs(dayKey){
   try {
     const out = [];
-    (matches || []).forEach(m => { if(_newsDayKey(m.created_at) === dayKey) out.push(m); });
+    (matches || []).forEach(m => { if(tagKey(m.created_at) === dayKey) out.push(m); });
     return out;
   } catch(e){ return []; }
 }
@@ -1254,7 +1248,7 @@ function _renderNewsFeed(){
   } else {
     const gruppen = [];
     cards.forEach(st => {
-      const k = _newsDayKey(st.when);
+      const k = tagKey(st.when);
       const g = gruppen[gruppen.length-1];
       if(g && g.k === k) g.items.push(st);
       else gruppen.push({k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
@@ -1263,7 +1257,7 @@ function _renderNewsFeed(){
       const neu = g.items.filter(st => !gelesen(st)).length;
       // Die Wahl gehoert dem ganzen Tag, nicht dem aktiven Filter. Sonst
       // koennte dieselbe Tafel je Reiter eine andere „Karte des Tages" haben.
-      const alleDesTages = stories.filter(st => _newsDayKey(st.when) === g.k);
+      const alleDesTages = stories.filter(st => tagKey(st.when) === g.k);
       const tagesKarte = _newsTagKarte(alleDesTages, g.k);
       // Der Kopf traegt Wochentag, Datum und die Zahl der Karten — sonst
       // nichts. Die Bilanz („3 Partien · 4 Spieler") und die Gesichter standen

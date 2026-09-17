@@ -672,7 +672,7 @@ function _potdLastDayData(){
   for(const m of matches){
     const d=new Date(m.created_at);
     if(laeuftNoch && d>=todayStart) continue;
-    const dk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const dk=tagKey(d);
     if(!byDay[dk]) byDay[dk]=[];
     byDay[dk].push(m);
   }

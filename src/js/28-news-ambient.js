@@ -59,14 +59,11 @@ function _buildAmbientStories(now, pm, nameOf){
   // als eine Zahl, die seit Wochen gilt.
   const _spieltage = new Set();
   (matches || []).forEach(m => {
-    const d = new Date(m.created_at);
-    _spieltage.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
-                 + '-' + String(d.getDate()).padStart(2, '0'));
+    _spieltage.add(tagKey(m.created_at));
   });
   for(let back = AMBIENT_BACKFILL_DAYS; back >= 0; back--){
     const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
-    const dk = day.getFullYear() + '-' + String(day.getMonth() + 1).padStart(2, '0')
-             + '-' + String(day.getDate()).padStart(2, '0');
+    const dk = tagKey(day);
     for(const slotHour of slotHours){
       const when = new Date(day.getFullYear(), day.getMonth(), day.getDate(), slotHour, 0, 0, 0);
       if(when.getTime() > now.getTime()) continue;   // Slot ist noch nicht fällig
@@ -560,8 +557,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(matches.length < 8) return null;
     const byDay = {};
     for(const m of matches){
-      const d = new Date(m.created_at);
-      const dk = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const dk = tagKey(m.created_at);
       byDay[dk] = (byDay[dk] || 0) + 1;
     }
     let bk = null, bn = 0;

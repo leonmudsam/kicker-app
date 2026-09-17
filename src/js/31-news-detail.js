@@ -300,10 +300,7 @@ function _newsTagPartien(dayKey, pid){
   try {
     const ids = new Set((Array.isArray(pid) ? pid : [pid]).filter(Boolean));
     return matches.filter(m => {
-      const t = new Date(m.created_at);
-      const k = t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0')
-              + '-' + String(t.getDate()).padStart(2,'0');
-      if(k !== dayKey) return false;
+      if(tagKey(m.created_at) !== dayKey) return false;
       return !ids.size || [m.a1, m.a2, m.b1, m.b2].some(id => ids.has(id));
     });
   } catch(e){ return []; }

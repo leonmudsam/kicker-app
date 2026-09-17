@@ -407,7 +407,7 @@ function seasonTeamOf(sid){
   if(!_cache._seasonTeam) _cache._seasonTeam = {};
   if(key in _cache._seasonTeam) return _cache._seasonTeam[key];
   const wert = _seasonTeamOfBerechnet(sid);
-  if(Object.keys(_cache._seasonTeam).length > 60) _cache._seasonTeam = {};
+  _topfDeckel(_cache._seasonTeam, 60);
   _cache._seasonTeam[key] = wert;
   return wert;
 }
@@ -1167,7 +1167,7 @@ function getCachedBadges(id){
   if(!_cache._badges) _cache._badges={};
   if(_cache._badges[key]) return _cache._badges[key];
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
-  if(Object.keys(_cache._badges).length > 60) _cache._badges={};
+  _topfDeckel(_cache._badges, 60);
   const r=computeBadges(id);
   _cache._badges[key]=r;
   return r;

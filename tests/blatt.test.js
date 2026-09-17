@@ -567,7 +567,7 @@ const ok = (c, msg, det) => {
     // Wie viele verschiedene Kalendertage tragen die Karten wirklich?
     const tage = window.__k.eval(`(function(){
       const s = getStoriesCache();
-      return new Set(s.map(x => _newsDayKey(x.when))).size;
+      return new Set(s.map(x => tagKey(x.when))).size;
     })()`);
     const chips = (sheet ? [...sheet.querySelectorAll('.nf-chip-f')] : []).map(e => ({
       text: e.textContent.trim(), zahl: e.querySelector('i') ? +e.querySelector('i').textContent : null
@@ -876,7 +876,7 @@ const ok = (c, msg, det) => {
   const ergKarte = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const markup = K(`(function(){
-      const tage=[...new Set(matches.map(m=>_newsDayKey(mts(m))))].sort();
+      const tage=[...new Set(matches.map(m=>tagKey(mts(m))))].sort();
       const p=_newsTagMs(tage[tage.length-1]).slice(0,3);
       const l=[{id:'bg-0',cat:'highlight',ic:'swords',when:new Date(mts(p[0])+3600000),
         prio:74,title:'Ein Favoritensturz',desc:'Ein Satz mit 1 Zahl.',

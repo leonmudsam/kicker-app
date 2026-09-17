@@ -318,8 +318,7 @@ function _consolidateStories(list){
   {
     const SORTEN = {rekord_geholt:'rekordId', rekord_erstmals:'rekordId',
                     rekord_gesteigert:'rekordId', chronik_geholt:'titleId'};
-    const _uTag = w => { const d = new Date(w);
-      return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+    const _uTag = w => tagKey(w);
     const proSache = new Map();
     list.forEach(s => {
       const d = (s && s.dataRef) || {};
@@ -350,18 +349,16 @@ function _consolidateStories(list){
   // Spieltagen seit jeher; der Vormittags-Slot konnte es nicht wissen, weil er
   // vor der ersten Partie entsteht. Entschieden wird deshalb hier: hat der Tag
   // eine echte Nachricht, fällt sein Fun Fact weg.
-  const _fdKey = w => { const d = new Date(w);
-    return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
   const _tageMitNachricht = new Set();
   // Der Countdown zählt nicht als Nachricht: „Noch fünf Tage" steht an jedem
   // Tag der Saison und würde damit jeden Fun Fact verdrängen.
   list.forEach(s => { const d = (s && s.dataRef) || {};
     if(d.type !== 'ambient' && d.type !== 'season_endgame' && !_storyAbgemeldet(s && s.id))
-      _tageMitNachricht.add(_fdKey(s.when)); });
+      _tageMitNachricht.add(tagKey(s.when)); });
   const src = list.filter(s => {
     const d = (s && s.dataRef) || {};
     if(_storyAbgemeldet(s && s.id)) return false;
-    if(d.type === 'ambient') return !_tageMitNachricht.has(_fdKey(s.when));
+    if(d.type === 'ambient') return !_tageMitNachricht.has(tagKey(s.when));
     if(d.type === 'loss_streak' && d.pid) return (_liveLoss[d.pid] || 0) >= (d.streak || 0);
     // ── Der Formlauf veraltet am Abstand, nicht an der Siegzahl ──────
     // Verglichen wurde die Zahl der Siege im Fenster mit der von damals,
@@ -450,7 +447,7 @@ function _consolidateStories(list){
   for(const s of src){
     const d = s.dataRef || {};
     if(d.type !== 'win_streak' || !d.pid) continue;
-    const k = d.pid + '|' + _fdKey(s.when);
+    const k = d.pid + '|' + tagKey(s.when);
     const n = Number(d.streak) || 0;
     if(!(_serieMax.get(k) >= n)) _serieMax.set(k, n);
   }
@@ -458,7 +455,7 @@ function _consolidateStories(list){
     const d = s.dataRef || {};
     if(d.type === 'rivalry_milestone' && d.a && d.b) rivalryMsPairs.add([d.a, d.b].sort().join('|'));
     if(d.type === 'giant_slayer' && d.matchId) giantSlayerMatches.add(d.matchId);
-    if(d.type === 'win_streak' && d.pid) winStreakPids.add(d.pid + '|' + _fdKey(s.when));
+    if(d.type === 'win_streak' && d.pid) winStreakPids.add(d.pid + '|' + tagKey(s.when));
     const rule = HL_COVERS[d.type];
     if(!rule) continue;
     const keyVal = rule.by === 'matchId' ? d.matchId : d.pid;
@@ -554,12 +551,12 @@ function _consolidateStories(list){
     // v9.5: Top-Form-Story entfällt für Spieler, die ohnehin schon eine
     // (konkretere) „Siege in Folge"-Story haben — sonst steht dieselbe heiße
     // Phase doppelt im Feed.
-    if(d.type === 'top_form' && d.pid && winStreakPids.has(d.pid + '|' + _fdKey(s.when))) continue;
+    if(d.type === 'top_form' && d.pid && winStreakPids.has(d.pid + '|' + tagKey(s.when))) continue;
     // Nur die laengste Marke des Tages: die kuerzere ist in ihr enthalten,
     // und die Gruppe „Serien im Gleichschritt" entsteht aus genau diesen
     // Mitgliedern — eine Grenze hier raeumt Einzelkarte und Gruppe zugleich.
     if(d.type === 'win_streak' && d.pid
-       && (Number(d.streak) || 0) < (_serieMax.get(d.pid + '|' + _fdKey(s.when)) || 0)) continue;
+       && (Number(d.streak) || 0) < (_serieMax.get(d.pid + '|' + tagKey(s.when)) || 0)) continue;
     if(d.type === 'badge_unlocked' && d.badgeId){
       if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
@@ -573,7 +570,7 @@ function _consolidateStories(list){
       // eine einzige Karte und ließ historische 5er-Serien so verschwinden.
       // Trägt die Story eine Partie, gruppieren nur Auslöser dieser Partie;
       // Live-Zustände ohne Matchbezug bleiben je Tag zusammen.
-      const gk = d.type + '|' + (d.matchId || _fdKey(s.when));
+      const gk = d.type + '|' + (d.matchId || tagKey(s.when));
       let g = typeGroups.get(gk);
       if(!g){ g = { type:d.type, rep: s, members: [], seen: new Set() }; typeGroups.set(gk, g); slots.push({ t: gk }); }
       // v9.4: pro Spieler nur EINMAL (list ist newest-first → jüngster Stand
@@ -702,8 +699,7 @@ function _consolidateStories(list){
   const SAMMEL_BREAKING = new Set(['badge_unlocked','lead_change','elo_record',
                                    'streak_record','giant_slayer','top_clash',
                                    'match_result','streak_killer']);
-  const _tagKey = w => { const d = new Date(w); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
-  const _minKey = w => { const d = new Date(w); return _tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
+  const _minKey = w => { const d = new Date(w); return tagKey(w)+'-'+d.getHours()+'-'+d.getMinutes(); };
   // ── Was ein Spieler holen kann ─────────────────────────────────────
   // Die Bündelung nach Moment und Subjekt kannte den INHALT nicht: sie legte
   // zusammen, was denselben Zeitstempel und einen gemeinsamen Namen trug, und
@@ -1252,7 +1248,7 @@ function _consolidateStories(list){
     gesammelt.forEach(s => {
       const t = (s && s.dataRef && s.dataRef.type) || '';
       if(!t || OHNE_DECKEL.has(t) || TAG_PFLICHT.has(t)) return;
-      const k = _deckelSorte(s) + '|' + _tagKey(s.when);
+      const k = _deckelSorte(s) + '|' + tagKey(s.when);
       const l = proKey.get(k) || [];
       l.push(s); proKey.set(k, l);
     });
@@ -1266,7 +1262,7 @@ function _consolidateStories(list){
   const behalten = gesammelt.filter(s => {
     const t = (s && s.dataRef && s.dataRef.type) || '';
     if(!t || OHNE_DECKEL.has(t) || TAG_PFLICHT.has(t)) return true;
-    const bleibt = _deckelBleibt.get(_deckelSorte(s) + '|' + _tagKey(s.when));
+    const bleibt = _deckelBleibt.get(_deckelSorte(s) + '|' + tagKey(s.when));
     return !bleibt || bleibt.has(s.id);
   });
   // ── Der Deckel darf niemanden ganz verschwinden lassen ─────────────
@@ -1300,8 +1296,6 @@ function _consolidateStories(list){
   // Die Auflockerung leisten jetzt der Tageskopf und die Kartenformen,
   // gegen die Häufung wirken der Deckel je Sorte und die Sammelkarte. Der Feed
   // steht dafür wieder streng von neu nach alt.
-  const tagVon = s => { const d = new Date(s.when);
-    return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
   const entzerrt = entdoppelt;
 
   // ── Zwei verdrängte Ergebnisse tragen eine Karte ───────────────────
@@ -1383,8 +1377,7 @@ function _consolidateStories(list){
   // er an einem Tag mit neun Karten als siebtstärkste heraus, während zwei
   // Auszeichnungen und eine laufende Serie darüber standen. Dieselbe Menge
   // ist schon vom Deckel je Sorte ausgenommen — sie steht deshalb weiter oben.
-  const _proTagKey = s => { const d = new Date(s.when);
-    return d.getFullYear() + '-' + d.getMonth() + '-' + d.getDate(); };
+  const _proTagKey = s => tagKey(s.when);
   const _tagRang = {};
   entzerrt.forEach(s => {
     const k = _proTagKey(s);
@@ -1457,7 +1450,7 @@ function _consolidateStories(list){
     // verdraengt ist, was danach nicht drinsteht.
     const wegErg = rang.filter(x => auswahl.indexOf(x) < 0
       && ERG_SORTEN.has((x.dataRef || {}).type) && (x.dataRef || {}).matchId);
-    const ergKarte = wegErg.length >= 2 ? _ergebnisSammel(wegErg, _newsDayKey(wegErg[0].when)) : null;
+    const ergKarte = wegErg.length >= 2 ? _ergebnisSammel(wegErg, tagKey(wegErg[0].when)) : null;
     if(ergKarte){
       // Sie kostet einen Platz, nicht zwei — und nimmt ihn der schwaechsten
       // Karte, die keinen haelt. Dieselbe Regel wie bei den Reservierungen.
@@ -1492,16 +1485,12 @@ function _consolidateStories(list){
   // Doublette ist das nicht — was hier zurueckkommt, steht sonst nirgends.
   let ausbalanciert = fertig;
   {
-    const hatKarte = new Set(fertig.map(s => _tagKey(s.when)));
+    const hatKarte = new Set(fertig.map(s => tagKey(s.when)));
     const zurueck = new Map();
     entzerrt.concat(verworfen).forEach(s => {
-      const k = _tagKey(s.when);
+      const k = tagKey(s.when);
       if(hatKarte.has(k)) return;
-      // Nach dem Schluessel des Feeds fragen, nicht nach dem hiesigen:
-      // `_tagKey` zaehlt den Monat ab null und ohne fuehrende Null, und
-      // `_newsTagMs` vergleicht mit `_newsDayKey`. Mit dem falschen Schluessel
-      // fand die Abfrage nie eine Partie und die Regel griff nie.
-      if(!_newsTagMs(_newsDayKey(s.when)).length) return;
+      if(!_newsTagMs(k).length) return;
       const alt = zurueck.get(k);
       if(!alt || (s.prio || 0) > (alt.prio || 0)) zurueck.set(k, s);
     });

@@ -908,12 +908,121 @@ const _deckel = (function(){
   const re = /_cache\.(_[A-Za-z0-9_]+)\s*\[\s*key\s*\]\s*=(?!=)/g;
   let m;
   while((m = re.exec(quelle))) toepfe.add(m[1]);
-  const re2 = /Object\.keys\(_cache\.(_[A-Za-z0-9_]+)\)\.length\s*>/g;
+  const re2 = /_topfDeckel\(\s*_cache\.(_[A-Za-z0-9_]+)\s*,/g;
   while((m = re2.exec(quelle))) mit.add(m[1]);
   return [...toepfe].filter(t => !mit.has(t));
 })();
 ok(_deckel.length === 0, 'jeder Topf mit Schluesseln hat einen Deckel',
    _deckel.join(' · ') || 'alle');
+
+// ─── Ein voller Topf verliert den aeltesten, nicht alle ──────────────
+// Jeder Topf leerte sich beim Ueberlauf VOLLSTAENDIG, und oberhalb des
+// Deckels ist das Memo damit nicht beschnitten, es ist AUS. Gemessen an
+// `_seasonTitleCtx`: bei sechs und acht Zeitschnitten kostete ein zweiter
+// Blick null Rechnungen, bei zwoelf und zwanzig jeweils ALLE noch einmal.
+// Ein Deckel steht nie weit ueber der Arbeitsmenge — der News-Generator
+// allein fragt sieben verschiedene Schnitte ab.
+const _raeumen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const f = _seasonTitleCtxRechnen;
+  let n = 0;
+  _seasonTitleCtxRechnen = function(){ n++; return f.apply(this, arguments); };
+  const sid = currentSeason().id;
+  const basis = mts(matches[0]);
+  const lauf = k => {
+    invalidateCache(); n = 0;
+    const s = []; for(let i = 1; i <= k; i++) s.push(basis + i * 1000);
+    s.forEach(b => _seasonTitleCtx(sid, b));
+    const erst = n;
+    s.forEach(b => _seasonTitleCtx(sid, b));
+    return {k, erst, nochmal: n - erst};
+  };
+  // Und der entscheidende Fall: der Topf ist voll, EIN Eintrag kommt dazu.
+  // Vollstaendiges Leeren kostet dabei alle sechzehn, aelteste-zuerst genau
+  // einen — und danach ist der zweite Blick auf die jungen wieder gratis.
+  // Der Deckel wird VOR dem Einfuegen geprueft, also loest erst der Eintrag
+  // nach dem Ueberschreiten das Raeumen aus.
+  const DECKEL = 16;
+  invalidateCache(); n = 0;
+  const s = []; for(let i = 1; i <= DECKEL + 2; i++) s.push(basis + i * 1000);
+  s.slice(0, DECKEL + 1).forEach(b => _seasonTitleCtx(sid, b));  // einer drueber
+  _seasonTitleCtx(sid, s[DECKEL + 1]);                           // loest das Raeumen aus
+  n = 0;
+  s.slice(2, DECKEL + 2).forEach(b => _seasonTitleCtx(sid, b));  // die jungen
+  const nachUeberlauf = n;
+  const r = [lauf(6), {k:DECKEL, nachUeberlauf}];
+  _seasonTitleCtxRechnen = f;
+  invalidateCache();
+  return r;
+})())`));
+ok(_raeumen[0].erst === 6 && _raeumen[0].nochmal === 0,
+   'unter dem Deckel kostet der zweite Blick nichts',
+   _raeumen[0].erst + ' + ' + _raeumen[0].nochmal + ' Rechnungen');
+ok(_raeumen[1].nachUeberlauf === 0,
+   'ein Eintrag zu viel kostet einen Eintrag, nicht den ganzen Topf',
+   _raeumen[1].nachUeberlauf + ' von ' + _raeumen[1].k + ' noch einmal');
+
+// ─── Ein Schnitt, der nichts abschneidet, ist kein Schnitt ───────────
+// Der Feed vergleicht „vor dem letzten Spieltag" mit „heute" und schrieb
+// „heute" als den Zeitstempel der letzten Partie. Fuer jede geschnittene
+// Rechnung ist das aber ein eigener Schluessel: gemessen rechnete ein
+// Generatorlauf `prestigeTabelle` zweimal, einmal ungeschnitten fuer 17 ms
+// und einmal als Schnitt fuer 59 ms. Und der Schnitt verhaelt sich anders —
+// `seasonTitles` liest einen abgeschlossenen Monat nur OHNE Schnitt aus dem
+// eingefrorenen Datensatz [§10.2]. Gemessen sank der Generator dadurch von
+// 253 auf 149 ms kalt.
+//
+// Geprueft wird die IDENTITAET, nicht die Gleichheit: nur dieselbe Referenz
+// beweist, dass beide Fragen denselben Topf treffen.
+const _schnitte = JSON.parse(K.eval(`JSON.stringify((function(){
+  const letzte = mts(matches[matches.length - 1]);
+  const sid = currentSeason().id;
+  const alt = allPastSeasons()[0];
+  const nachMonat = seasonEnd(alt).getTime() + 1;
+  const gleich = [];
+  const pruef = (name, a, b) => { if(a !== b) gleich.push(name); };
+  pruef('prestigeTabelle', prestigeTabelle(letzte), prestigeTabelle());
+  pruef('prestigeTabelle(spaeter)', prestigeTabelle(letzte + 86400000), prestigeTabelle());
+  pruef('allChronicles', allChronicles(letzte), allChronicles());
+  pruef('_chronicleCtx', _chronicleCtx(letzte), _chronicleCtx());
+  pruef('seasonTitles', seasonTitles(sid, letzte), seasonTitles(sid));
+  pruef('_seasonTitleCtx', _seasonTitleCtx(sid, letzte), _seasonTitleCtx(sid));
+  pruef('seasonTitleHistory', seasonTitleHistory(players[0].id, letzte),
+        seasonTitleHistory(players[0].id));
+  // Und je Monat: ein Schnitt hinter dem Monatsende schneidet von DIESEM
+  // Monat nichts ab, auch wenn danach noch gespielt wurde.
+  pruef('_seasonTitleCtx (Monatsende)', _seasonTitleCtx(alt, nachMonat), _seasonTitleCtx(alt));
+  pruef('seasonTitles (Monatsende)', seasonTitles(alt, nachMonat), seasonTitles(alt));
+  // Ein Schnitt MITTEN in der Historie muss dagegen schneiden, sonst haette
+  // die Zusicherung nur das Memo geprueft.
+  const mitte = mts(matches[Math.floor(matches.length / 2)]);
+  const schneidet = _chronicleCtx(mitte) !== _chronicleCtx()
+    && prestigeTabelle(mitte) !== prestigeTabelle();
+  return {gleich, schneidet, alt, monate: allPastSeasons().length};
+})())`));
+ok(_schnitte.monate > 0, 'es gibt einen abgeschlossenen Monat zum Vergleichen',
+   _schnitte.alt);
+ok(_schnitte.schneidet, 'ein Schnitt mitten in der Historie schneidet wirklich');
+ok(_schnitte.gleich.length === 0,
+   'ein Schnitt hinter der letzten Partie trifft denselben Topf',
+   _schnitte.gleich.join(' · ') || 'alle neun');
+
+// ─── Ein Kalendertag hat eine Schreibweise ───────────────────────────
+// „Welcher Tag ist das?" stand neunmal ausgeschrieben in der Auslieferung,
+// und in zwei Schreibweisen: mit fuehrender Null („2026-08-06") und ohne
+// („2026-7-6"). Einmal hat sich das schon gekreuzt — ein Deckel-Schluessel
+// wurde mit der kurzen Fassung gebaut und mit der langen abgefragt, fand nie
+// eine Partie, und die Regel „kein Spieltag bleibt ohne Karte" griff nie.
+// Der Ausweg war damals ein zweiter Aufruf daneben statt einer Schreibweise
+// [§C27]. Gezaehlt wird im GEBAUTEN Stand, weil sich jede neue Stelle sonst
+// wieder selbst eine aussucht.
+const _tagSchreib = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  // Beide Formen, mit und ohne Auffuellen, mit und ohne Leerzeichen.
+  const re = /getMonth\(\)\s*\+\s*1\s*\)\s*\.padStart\(\s*2[^)]*\)\s*\+\s*['"]-['"]|['"]-['"]\s*\+\s*[A-Za-z_$][\w$]*\.getMonth\(\)\s*\+\s*['"]-['"]/g;
+  return (quelle.match(re) || []).length;
+})();
+ok(_tagSchreib === 1, 'der Kalendertag wird an genau einer Stelle gebildet',
+   _tagSchreib + ' Stellen');
 
 // Der Bau haengt sechzehn Stylesheets aneinander, und eine Regel fuer eine
 // Ansicht, die es nicht mehr gibt, faellt danach niemandem mehr auf: die

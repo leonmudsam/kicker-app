@@ -1255,8 +1255,7 @@ function _buildStories(){
       }
       const jeTag = new Map();
       kandidaten.forEach(gs => {
-        const d = new Date(gs.t);
-        const tag = d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
+        const tag = tagKey(gs.t);
         const alt = jeTag.get(tag);
         if(!alt || gs.chance < alt.chance) jeTag.set(tag, gs);
       });
@@ -1353,8 +1352,7 @@ function _buildStories(){
         : (art === 'krimi' || art === 'eng') ? (bm.has('krimi') || bm.has('nerves_of_steel'))
         : false;
       if(abgedeckt) continue;
-      const d = new Date(ts);
-      const tag = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const tag = tagKey(ts);
       const list = jeTag.get(tag) || [];
       list.push({m, ts, art, rang, title, desc, ic, winners, losers, chance, diff});
       jeTag.set(tag, list);
@@ -1610,7 +1608,7 @@ function _buildStories(){
     // Feed — sie deckelten sich gegenseitig weg [§C33].
     const _jeTag = new Map();
     kandidaten.forEach(c => {
-      const k = c.pid + '|' + _newsDayKey(c.when);
+      const k = c.pid + '|' + tagKey(c.when);
       const alt = _jeTag.get(k);
       if(!alt || c.streak > alt.streak) _jeTag.set(k, c);
     });
@@ -1989,7 +1987,7 @@ function _buildStories(){
           // eigene Karte [§C33].
           id: `rek_${def.id}_${art}_${n.pids.slice().sort().join('-')}`
             + `_${String(wertNeu).replace(/[^0-9a-zA-Z]/g, '')}`
-            + `_${_newsDayKey(_letzteMs)}`,
+            + `_${tagKey(_letzteMs)}`,
           cat: 'tafel',
           ic: def.ic,
           title, desc,
@@ -2279,7 +2277,7 @@ function _buildStories(){
           // weggehen und zurueckkommen, und dann sind das zwei Ereignisse
           // [§C33]. „Johannes holt ‚Der Beidfuessige'" trug sonst den
           // Zeitstempel des 24. und die Partie des 26.
-          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}_${_newsDayKey(_letzteMs2)}`,
+          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}_${tagKey(_letzteMs2)}`,
           cat: 'tafel',
           ic: m.t.ic,
           title: m.title,
@@ -2355,7 +2353,7 @@ function _buildStories(){
             // erreicht werden. Dieselbe ID fuer zwei Momente laesst die
             // aeltere Karte auf die neuere Partie zeigen [§C33].
             id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key
-                + '_' + _newsDayKey(_insLetzte),
+                + '_' + tagKey(_insLetzte),
             cat: 'tafel',
             ic: 'award',
             title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`,
