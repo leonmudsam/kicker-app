@@ -102,7 +102,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **717**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **718**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -245,9 +245,9 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, und die Bedingung samt Erklärung jedes Rekords | 1104 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet | 360 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet und der Halter hinter jeder ausgerufenen Bestmarke | 363 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte und der gemeinsame Breaking-Moment — **im echten Browser gemessen** | 130 |
+| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment und der Inhaltstausch am Ende des Zuschiebens — **im echten Browser gemessen** | 135 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -318,6 +318,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   die Segmentwähler sind `.ui-switch` (äußere Ebene, gerahmt) und `.ui-tabs`
   (innere Ebene, rahmenlos), das Rangabzeichen ist `.rangab`
   (`rankBadgeHtml`).
+  **Eine Animation endet, wenn sie endet** (`_afterTransition`). Beim
+  Zurückgehen aus einem Blatt schiebt sich das Kind nach unten, der Inhalt wird
+  getauscht, das Eltern-Blatt kommt hoch. Der Tausch hing an `setTimeout(200)`,
+  und ein Timer ist nicht das Ende einer Transition: er läuft ab dem Aufruf,
+  die Transition erst ab dem nächsten Style-Flush. Der Umbau des Eltern-Blatts
+  fiel damit in die letzten Bilder des Zuschiebens und riss sie ab — gemessen
+  kostet der Feed dabei über 100 ms Hauptthread, 94 % seines Markups sind die
+  SVG der Wappen. `_afterTransition` horcht auf `transitionend` des eigenen
+  Elements und hält einen Timer als Rückfall, denn eine Transition, die nie
+  startet, endet auch nie. `tests/blatt` misst den Abstand zwischen beidem.
   Im Feed gliedert der **Tageskopf** (`.nf-tag`) die Tafel: Wochentag
   ausgeschrieben, Datum daneben, die Zahl der Karten rechts — und sonst
   nichts. Er trug zuerst die Schlagzeile der wichtigsten Karte, und
@@ -1333,6 +1343,20 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   negative Fügung — `nextRecordFor` kennt die Regel seit jeher [§C25]. Der
   Katalog schreibt sie als `negativ`, die abgeleitete Rekordliste als `neg`;
   am falschen Feld geprüft ist die Zusicherung immer grün.
+
+  **Wer eine Bestmarke ausruft, nennt ihren Halter** (`chronicleRang`).
+  „Leon beherrscht die Wochen · 6× Spieler der Woche. Bestwert der Liga" stand
+  im Feed, und derselbe Bestwert gehörte im Rekorde-Reiter Julian: Leon hat 4
+  von 15 eigenen Wochen gewonnen, Julian 4 von 13. Die Karte zählte die Titel,
+  „Der Wochenherr" misst den Anteil — und die Anzahl gehört dem, der öfter
+  dabei war [§C35]. Dasselbe beim Spieler des Tages (Leon 17 von 54 Spieltagen,
+  Julian 12 von 23) und bei den Toren je Partie, wo drei Spieler still
+  gleichauf bei 8,7 lagen, während „Der Torjäger" Leon mit 8,9 je Sturmspiel
+  gehört. Drei Karten rechnen deshalb nicht mehr selbst, sondern lesen die
+  Reihenfolge des Rekords [§C27]; halten mehrere den Bestwert punktgleich,
+  stehen alle da. Die Zählung lebt daneben als eigene Karte weiter, ohne den
+  Satz „Bestwert der Liga" — eine Sammlung ist keine Bestmarke.
+  `tests/ambient` prüft den genannten Spieler, nicht den Wortlaut.
 
   **Jede Ambient-Vorlage wird im Rundlauf gemessen, nicht einzeln.** Sie
   stehen an vierzig Stellen und gingen deshalb einzeln kaputt: „vor -1 Tagen"

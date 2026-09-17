@@ -2093,6 +2093,51 @@ ok(_amb.raus.amp.length === 0, 'kein Kaufmanns-Und in einer Ambient-Karte',
 ok(_amb.raus.verb.length === 0, 'eine Mehrzahl bekommt ihr Verb im Plural',
    _amb.raus.verb[0] || 'keine');
 
+// ── Wer eine Bestmarke ausruft, nennt ihren Halter ──────────────────
+// „Leon beherrscht die Wochen · 6x Spieler der Woche. Bestwert der Liga"
+// stand im Feed, und derselbe Bestwert gehoerte im Rekorde-Reiter Julian:
+// Leon hat 4 von 15 eigenen Wochen gewonnen, Julian 4 von 13. Die Karte
+// zaehlte die Titel, der Rekord misst den Anteil — und die Anzahl gehoert
+// dem, der oefter dabei war [§C35]. Gerechnet wird deshalb an EINER Stelle
+// [§C27]: `chronicleRang` ist die Reihenfolge, die auch das Rekord-Blatt
+// zeigt. Geprueft wird der genannte Spieler, nicht der Wortlaut: die Karte
+// darf nur Halter benennen.
+const _bmk = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap();
+  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const paare = { personal_scorer:'sniper', award_potd_leader:'daylord',
+                  award_potw_leader:'weeklord' };
+  const T = _ambientTemplatePool(new Date(), pm, nameOf);
+  const out = [];
+  Object.keys(paare).forEach(key => {
+    const v = T.find(x => x.key === key);
+    if(!v){ out.push({ key, fehlt:true }); return; }
+    const r = chronicleRang(paare[key]) || [];
+    const halter = r.filter(x => x.wert === (r[0] || {}).wert).map(x => x.pid);
+    for(let i = 0; i < 12; i++){
+      let k = null;
+      try { k = v.make(() => (i + 0.5) / 12); } catch(e){ continue; }
+      if(!k) continue;
+      const d = k.dataRef || {};
+      const pids = d.ambientPids || (d.ambientPid ? [d.ambientPid] : []);
+      out.push({ key, rek:paare[key], n:pids.length,
+        fremd: pids.filter(x => halter.indexOf(x) < 0).map(nameOf),
+        halter: halter.map(nameOf) });
+    }
+  });
+  return out;
+})())`));
+ok(_bmk.length >= 3 && !_bmk.some(x => x.fehlt),
+   'die drei Bestmarken-Karten stehen im Pool',
+   _bmk.filter(x => x.fehlt).map(x => x.key).join(', ') || String(_bmk.length));
+ok(_bmk.every(x => x.fehlt || x.n > 0),
+   'jede Bestmarken-Karte nennt ueberhaupt einen Spieler',
+   (_bmk.find(x => !x.fehlt && !x.n) || {}).key || 'alle');
+const _bmkFremd = _bmk.filter(x => x.fremd && x.fremd.length);
+ok(_bmkFremd.length === 0, 'jede Bestmarken-Karte nennt nur Halter des Rekords',
+   _bmkFremd.length ? _bmkFremd[0].key + ': ' + _bmkFremd[0].fremd.join(', ')
+     + ' statt ' + _bmkFremd[0].halter.join(', ') : 'keine Abweichung');
+
 // ── Kein Listentrenner im Fliesstext ────────────────────────────────
 // Ein Beleg wie „20 % aller 25 Siege endeten 10:9 · 5" ist fuer eine Zelle
 // gebaut: der Mittelpunkt trennt dort zwei Spalten. Mitten in einem Satz

@@ -24,6 +24,29 @@ function _pushCurrentSheet(){
 // normalen Öffnen/Schließen (kein hartes Aufpoppen). swapFn ersetzt den Inhalt
 // (ruft intern openSheet + ggf. Scroll-Restore).
 let _sheetAnimating = false;
+// Einmal auf das ENDE einer Transition warten, mit Timer als Rückfall.
+// Ein reiner `setTimeout(200)` ist nicht dasselbe wie „die Animation ist
+// fertig": der Timer läuft ab dem Aufruf, die CSS-Transition erst ab dem
+// nächsten Style-Flush. Der Rückstand ist klein, aber er reicht — der
+// Inhaltstausch fiel damit zuverlässig in die letzten Bilder des
+// Zuschiebens und fror sie ein. Gemessen kostet der Umbau des Feeds 86 ms
+// Hauptthread; mitten in einer laufenden Transition sind das rund fünf
+// verlorene Bilder, und genau das sieht man als Hänger.
+// Der Timer bleibt als Rückfall: `transitionend` kommt nicht, wenn die
+// Transition gar nicht startet (gleicher Wert, `prefers-reduced-motion`,
+// Element im Hintergrund-Tab), und dann dürfte das Sheet nie mehr zurück.
+function _afterTransition(el, prop, ms, fn){
+  let fertig = false;
+  const los = (e) => {
+    if(e && e.target !== el) return;              // Kinder animieren mit
+    if(e && e.propertyName && e.propertyName !== prop) return;
+    if(fertig) return; fertig = true;
+    el.removeEventListener('transitionend', los);
+    fn();
+  };
+  el.addEventListener('transitionend', los);
+  setTimeout(los, ms + 60);
+}
 function _animateSheetSwap(swapFn){
   const sheet = document.getElementById('sheet');
   const bg = document.getElementById('sheetBg');
@@ -35,17 +58,23 @@ function _animateSheetSwap(swapFn){
   // 1) aktuelles Sheet nach unten (schließen)
   sheet.style.transition = 'transform .2s cubic-bezier(.4,0,1,1)';
   sheet.style.transform = 'translateY(100%)';
-  setTimeout(() => {
-    // 2) Inhalt tauschen, unsichtbar unten halten
+  _afterTransition(sheet, 'transform', 200, () => {
+    // 2) Der geparkte Zustand wird ZUERST gezeichnet, dann getauscht. Ohne
+    //    das eigene Bild liegt der Block des Umbaus noch im Bild, in dem das
+    //    Sheet unten ankommt, und der Sprung nach unten ruckelt am Ende.
     sheet.style.transition = 'none';
-    try { swapFn(); } catch(e){}
-    sheet.style.transform = 'translateY(100%)';
-    void sheet.offsetWidth; // Reflow, damit die Aufwärts-Transition greift
-    // 3) hochschieben (öffnen)
-    sheet.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)';
-    sheet.style.transform = 'translateY(0)';
-    setTimeout(() => { sheet.style.transition=''; sheet.style.transform=''; _sheetAnimating=false; }, 300);
-  }, 200);
+    requestAnimationFrame(() => {
+      try { swapFn(); } catch(e){}
+      sheet.style.transform = 'translateY(100%)';
+      void sheet.offsetWidth; // Reflow, damit die Aufwärts-Transition greift
+      // 3) hochschieben (öffnen)
+      sheet.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)';
+      sheet.style.transform = 'translateY(0)';
+      _afterTransition(sheet, 'transform', 300, () => {
+        sheet.style.transition=''; sheet.style.transform=''; _sheetAnimating=false;
+      });
+    });
+  });
 }
 // Vorwärts-Navigation: aktuelles Sheet stapeln, dann Kind sauber „öffnen".
 // Ersetzt das frühere Schließen-und-neu-öffnen-Muster bei Navigationen.
@@ -271,20 +300,22 @@ function bindSheetSwipe(){
       sheet.style.transform='translateY(100%)';
       bg.style.transition='opacity .28s';
       bg.style.opacity='0';
-      setTimeout(()=>{
+      // Am Ende der Transition, nicht auf Zuruf eines Timers: `closeSheet`
+      // räumt auf und kann dabei einen Umbau auslösen [§C27].
+      _afterTransition(sheet,'transform',280,()=>{
         closeSheet();
         sheet.style.transition='';
         bg.style.transition='';
-      },280);
+      });
     } else {
       sheet.style.transition='transform .32s cubic-bezier(.2,.8,.2,1)';
       sheet.style.transform='translateY(0)';
       bg.style.transition='opacity .32s';
       bg.style.opacity='1';
-      setTimeout(()=>{
+      _afterTransition(sheet,'transform',320,()=>{
         sheet.style.transition='';
         bg.style.transition='';
-      },320);
+      });
     }
   }
 

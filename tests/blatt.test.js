@@ -127,6 +127,76 @@ const ok = (c, msg, det) => {
     bindSheetSwipe();
     'bereit'`);
 
+  // ── DER INHALTSTAUSCH HÄNGT AM ENDE DES ZUSCHIEBENS ─────────────────
+  //    Beim Zurückgehen schiebt sich das Kind-Blatt nach unten, der Inhalt
+  //    wird getauscht, das Eltern-Blatt kommt hoch. Der Tausch baut das
+  //    Eltern-Blatt neu, und der Feed kostet dabei gemessen über 100 ms
+  //    Hauptthread — 94 % seines Markups sind die SVG der Wappen.
+  //    Geplant war er per `setTimeout(200)`, und ein Timer ist nicht das Ende
+  //    einer Transition: er läuft ab dem Aufruf, die Transition erst ab dem
+  //    nächsten Style-Flush. Der Block fiel damit in die letzten Bilder des
+  //    Zuschiebens und riss sie ab.
+  //    Gemessen wird der ABSTAND zwischen dem `transitionend` des Zuschiebens
+  //    und dem Tausch. Die Position des Blatts taugt dafür nicht — sie steht
+  //    in beiden Fassungen auf 100 %, weil der Umbau vor dem nächsten Bild
+  //    fertig wird. Und bei den echten 200 ms liegen Timer und Transitionsende
+  //    so dicht beieinander, dass der Vergleich zufällig ausfällt: die Dauer
+  //    wird deshalb für die Messung heruntergesetzt, damit ein Timer
+  //    überhaupt von einem Ende zu unterscheiden ist.
+  //    Das Kind-Blatt muss dafür erst stehen: wird es im selben Durchlauf
+  //    geöffnet und geschlossen, wechselt sein Transform nie und es gibt
+  //    überhaupt keine Transition, die enden könnte.
+  console.log('\n═══ DER TAUSCH HÄNGT AM ENDE DES ZUSCHIEBENS ═══');
+  const stapel = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const st = document.createElement('style');
+    st.id = 'messDauer';
+    st.textContent = '#sheet{transition-duration:20ms !important}';
+    document.head.appendChild(st);
+    K('openSheet("<h3>Eltern</h3><div id=\'elternMark\'>da</div>")');
+    window.__swapT = null;
+    K('_sheetSetReopen(function(){ window.__swapT = performance.now() - window.__t0;'
+      + ' openSheet("<h3>Eltern</h3><div id=\'elternMark\'>da</div>"); })');
+    K('_pushCurrentSheet(); openSheet("<h3>Kind</h3>")');
+    return K('_sheetStack.length');
+  });
+  await page.waitForTimeout(500);
+  const swap = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const sheet = document.getElementById('sheet');
+    // Der eigene Horcher wird VOR dem Schließen gesetzt und läuft damit vor
+    // dem des Blatts: das erste Ende ist gemessen, bevor getauscht wird.
+    window.__enden = [];
+    const horch = (e) => {
+      if(e.target === sheet && e.propertyName === 'transform')
+        window.__enden.push(performance.now() - window.__t0);
+    };
+    sheet.addEventListener('transitionend', horch);
+    return new Promise(res => {
+      window.__t0 = performance.now();
+      K('closeSheet()');
+      setTimeout(() => {
+        sheet.removeEventListener('transitionend', horch);
+        const s = document.getElementById('messDauer');
+        if(s) s.remove();
+        res({tausch: window.__swapT, enden: window.__enden,
+             elternDa: !!document.getElementById('elternMark')});
+      }, 1200);
+    });
+  });
+  ok(stapel === 1, 'ein Eltern-Blatt liegt auf dem Stapel', String(stapel));
+  ok(swap.elternDa, 'nach dem Zurückgehen steht das Eltern-Blatt wieder da');
+  ok(swap.tausch != null, 'der Tausch wurde gemessen', String(swap.tausch));
+  ok(swap.enden.length >= 1, 'das Zuschieben läuft als Transition zu Ende',
+     JSON.stringify(swap.enden));
+  // Am Ende gemessen: 5 ms Abstand. Mit dem Timer waren es 180 ms, und in
+  // dieser Zeit stand das Blatt unten und wartete.
+  const zuEnde = swap.enden[0];
+  const abstand = swap.tausch != null && zuEnde != null ? swap.tausch - zuEnde : null;
+  ok(abstand != null && abstand >= -5 && abstand <= 100,
+     'der Tausch hängt am Ende des Zuschiebens, nicht an einem Timer',
+     abstand == null ? 'nicht gemessen' : Math.round(abstand) + ' ms Abstand');
+
   console.log('\n═══ 1. EINE GESTE GEHÖRT EINEM ═══');
   // Gewischt wird mit echten Touch-Ereignissen. Gemessen werden die beiden
   // Dinge, die der Blatt-Zug tut: preventDefault rufen (damit steht das
