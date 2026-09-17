@@ -1443,6 +1443,45 @@ function insigniumSvg(pid, opt){
   return s;
 }
 
+// ─── Dasselbe Wappen, einmal gezeichnet [§C30] ───────────────────────
+// Der News-Feed trug gemessen 76 Wappen à 48 px: 648 der 713 Kilobyte
+// seines Markups und 3069 seiner 4605 DOM-Knoten — bei zwölf Spielern und
+// damit einem Dutzend verschiedener Zeichnungen. Diese Schicht wird beim
+// Schliessen verschoben und hinter dem `backdrop-filter` des Vorhangs in
+// jedem Bild neu geblurrt, und genau das ruckelte: kein JavaScript, eine
+// Longtask gab es im Schliessen nie, nur Fläche.
+// Die Verläufe stehen schon einmal im Dokument und werden verwiesen; das
+// hier ist dasselbe Muster eine Ebene höher — die ganze Zeichnung als
+// `<symbol>` im selben Topf, das Wappen nur noch ein `<use>` darauf.
+// Der Schlüssel ist das MARKUP selbst: gleiches Markup heisst gleiches
+// Symbol. Damit hängt der Topf an der Zahl verschiedener Zeichnungen und
+// nicht an der Zeit — er wächst nicht über die Versionen [§3].
+// Ohne Topf (Teststand ohne Browser) bleibt es beim vollen Markup, genau
+// wie bei den Verläufen: ein `<use>` auf ein Symbol, das es nicht gibt,
+// zeichnet nichts.
+const _insSymIds = new Map();        // Markup → Symbol-id
+const _insSymDrin = new Set();       // welche Symbole im Topf stehen
+let _insSymTopf = null;
+function insigniumRef(pid, opt){
+  const markup = insigniumSvg(pid, opt);
+  const topf = _insTopfHolen();
+  if(!topf) return markup;
+  if(topf !== _insSymTopf){ _insSymTopf = topf; _insSymDrin.clear(); }
+  let sid = _insSymIds.get(markup);
+  if(!sid){ sid = 'insy' + _insSymIds.size; _insSymIds.set(markup, sid); }
+  const vb = (/viewBox="([^"]+)"/.exec(markup) || [])[1] || INS_BOX;
+  if(!_insSymDrin.has(sid)){
+    // Der Inhalt bleibt Zeichen für Zeichen derselbe, nur die Hülle wechselt.
+    const inner = markup.replace(/^<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
+    topf.insertAdjacentHTML('beforeend',
+      `<symbol id="${sid}" viewBox="${vb}">${inner}</symbol>`);
+    _insSymDrin.add(sid);
+  }
+  // Die Klasse bleibt am äusseren <svg>: jede CSS-Regel der App greift dort
+  // und keine reicht in das Zeichen hinein — ein `<use>` ändert daran nichts.
+  return `<svg viewBox="${vb}" class="ins" aria-hidden="true"><use href="#${sid}"/></svg>`;
+}
+
 // Ein Insignium OHNE Spieler: nur die Form EINER Stufe, ohne Schwinge und
 // ohne Sterne. Die Laufbahn-Vitrine stellt die fünf Stufen nebeneinander,
 // und dort geht es um die Stufe selbst — nicht darum, wer sie gerade

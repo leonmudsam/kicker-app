@@ -102,7 +102,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **718**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **722**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -246,8 +246,8 @@ globalem Zustand ist.
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, und die Bedingung samt Erklärung jedes Rekords | 1104 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards | 177 |
 | `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet und der Halter hinter jeder ausgerufenen Bestmarke | 363 |
-| `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf — **im echten Browser gemessen** | 75 |
-| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment und der Inhaltstausch am Ende des Zuschiebens — **im echten Browser gemessen** | 135 |
+| `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif — **im echten Browser gemessen** | 78 |
+| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens und das Wappen als Verweis auf sein Symbol — **im echten Browser gemessen** | 138 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -1673,6 +1673,29 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   das tut `tests/zeichen`, wenn es die Leiter nachmisst.
   Dieselbe Zeichnung entsteht nur einmal: gleicher Rang, gleiche Stufe,
   gleiche Titelzahl heißt gleiches Wappen, und das Ergebnis wird gemerkt.
+  **Und sie steht auch nur einmal im Dokument** (`insigniumRef`). Gemerkt war
+  bisher die Zeichenkette, ausgeliefert wurde sie trotzdem in jeder Kopie: der
+  News-Feed trug gemessen 76 Wappen à 48 px und damit 648 seiner 713 Kilobyte
+  Markup und 3069 seiner 4605 DOM-Knoten — bei zwölf Spielern und einem Dutzend
+  verschiedener Zeichnungen. Diese Fläche wird beim Schließen verschoben und
+  hinter dem `backdrop-filter` des Vorhangs in jedem Bild neu gerechnet, und
+  genau das ruckelte; im Schließen läuft kein JavaScript, gemessen nicht eine
+  einzige Longtask. Das Listen-Bauteil `.rav` [§C27] verweist deshalb mit
+  `<use>` auf ein `<symbol>` im selben Topf, in dem die Verläufe schon stehen —
+  72 Kilobyte und 1612 Knoten. Der Schlüssel ist das MARKUP selbst: gleiches
+  Markup heißt gleiches Symbol, also hängt der Topf an der Zahl verschiedener
+  Zeichnungen und nicht an der Zeit [§3]. Ohne Topf bleibt es beim vollen
+  Markup, wie bei den Verläufen. Der Inhalt liegt damit im Symbol und ist aus
+  der Instanz nicht mehr zu erreichen: `tests/zeichen` rechnet den Reif aus der
+  gerenderten Box und der viewBox und prüft die Rechnung einmal gegen das
+  gezeichnete Original. `tests/blatt` sieht nach, dass kein Verweis auf ein
+  fehlendes Symbol zeigt und dass viele Wappen wenige Zeichnungen teilen.
+  **Das Blatt wird verschoben, nicht neu gezeichnet** (`will-change:transform`
+  auf `.sheet`): ohne den Hinweis liegt sein Inhalt in der Schicht der Seite
+  und wird in jedem Bild der Bewegung mitgemalt. Und ein Vorhang mit
+  `backdrop-filter` nennt die eine Eigenschaft, die sich ändert: `transition:.2s`
+  ist `transition:all` und stellte auch den Blur zur Animation, der in jedem
+  Bild alles hinter sich neu rechnet.
 
   Gemessen, nicht behauptet: `tests/zeichen` rastert alle fünfzehn
   Zeichnungen und zählt den **Schmuck** — die Bildpunkte, die ein Zeichen

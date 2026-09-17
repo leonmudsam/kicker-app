@@ -75,6 +75,74 @@ const ok = (c, msg, det) => {
   await page.addScriptTag({content: code});
   ok(errors.length === 0, 'Skript lädt ohne Fehler', errors[0]);
 
+  // ── Der Reif wird gerechnet, nicht gesucht ──────────────────────────
+  // Das Wappen steht in einer Liste vielfach und ist deshalb ein `<use>`
+  // auf ein Symbol im Topf [§C30]: 648 der 713 Kilobyte des News-Feeds
+  // waren 76 Kopien derselben Zeichnung. Der Inhalt liegt damit im Symbol,
+  // und `querySelectorAll` erreicht ihn aus der Instanz nicht mehr — der
+  // Reif (`circle r=40`), an dem hier jede Geometrie hängt, war so nicht
+  // mehr zu finden. Er ist aber vollständig bestimmt: die Instanz trägt ihre
+  // echte Box und ihre viewBox, und `xMidYMid meet` sagt, wie das eine ins
+  // andere fällt. Gemessen bleibt damit die GERENDERTE Lage.
+  await page.evaluate(() => {
+    window._reifBox = (wrap) => {
+      const svg = wrap.querySelector('svg.ins');
+      if(!svg) return null;
+      const b = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
+      if(!vb || !vb.width || !b.width) return null;
+      const s = Math.min(b.width / vb.width, b.height / vb.height);
+      const ox = b.left + (b.width - vb.width * s) / 2 - vb.x * s;
+      const oy = b.top + (b.height - vb.height * s) / 2 - vb.y * s;
+      const R = 40, C = 50;                       // INS_R, Mitte der Zeichnung
+      return {left: ox + (C - R) * s, top: oy + (C - R) * s,
+              right: ox + (C + R) * s, bottom: oy + (C + R) * s,
+              width: 2 * R * s, height: 2 * R * s};
+    };
+    // Der Topf mit Verläufen und Symbolen steht in der App AUSSERHALB von
+    // `#app` und des Blatts und wird von keinem `render()` mitgenommen
+    // [§C30]. Diese Suite baut ihre Seiten dagegen mit `body.innerHTML =`
+    // und riss ihn damit heraus: das Wappen blieb als Verweis auf ein
+    // Symbol zurück, das es nicht mehr gab, und zeichnete nichts.
+    window.__topf = document.getElementById('insDefs');
+    window._topfRetten = () => {
+      const t = window.__topf;
+      if(!t) return;
+      document.querySelectorAll('#insDefs').forEach(x => { if(x !== t) x.remove(); });
+      if(!t.isConnected) document.body.appendChild(t);
+    };
+  });
+  // Die Gegenprobe zum Helfer: dasselbe Wappen einmal als Verweis und einmal
+  // mit vollem Markup. Der gerechnete Reif muss den gezeichneten treffen.
+  const reifProbe = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const av = '<span class="av">AB</span>';
+    document.body.innerHTML = '<div id="app"><main style="padding:14px 15px">'
+      + '<div class="rlist"><div class="rrow" id="rA">'
+      + K('insAvWrap("zn-test", ' + JSON.stringify(av) + ', {px:52, feuer:0, titel:0})')
+      + '</div><div class="rrow" id="rB"><span class="rav zn" style="--rav:52px">'
+      + K('insigniumSvg("zn-test", {band:false})') + av + '</span></div></div></main></div>';
+    window._topfRetten();
+    const a = window._reifBox(document.getElementById('rA'));
+    const voll = document.getElementById('rB');
+    let echt = null;
+    for(const c of voll.querySelectorAll('svg.ins circle'))
+      if(Math.abs(+c.getAttribute('r') - 40) < .01){ echt = c.getBoundingClientRect(); break; }
+    const b = window._reifBox(voll);
+    return {a, echt: echt && {left:echt.left, top:echt.top, width:echt.width}, b,
+            verweis: !!document.querySelector('#rA use'),
+            symbole: document.querySelectorAll('#insDefs symbol').length};
+  });
+  ok(reifProbe.verweis, 'das Wappen in der Liste ist ein Verweis',
+     JSON.stringify(reifProbe).slice(0, 160));
+  ok(reifProbe.symbole >= 1, 'die Zeichnung steht als Symbol im Topf',
+     String(reifProbe.symbole));
+  ok(reifProbe.echt && reifProbe.b
+     && Math.abs(reifProbe.b.left - reifProbe.echt.left) < 1.5
+     && Math.abs(reifProbe.b.top - reifProbe.echt.top) < 1.5
+     && Math.abs(reifProbe.b.width - reifProbe.echt.width) < 1.5,
+     'der gerechnete Reif trifft den gezeichneten',
+     JSON.stringify({gerechnet: reifProbe.b, gezeichnet: reifProbe.echt}));
+
   const K = async src => page.evaluate(s => window.__k.eval(s), src);
 
   console.log('\n═══ 1. DIE DREI STUFEN ═══');
@@ -116,6 +184,7 @@ const ok = (c, msg, det) => {
         + '<div class="rmid"><div class="rname">Stufe ' + st + '</div></div>'
         + '<div class="rval"><div class="big num">100</div></div></div>').join('')
       + '</div></main></div>';
+    window._topfRetten();
   });
   await page.waitForTimeout(120);
 
@@ -123,10 +192,7 @@ const ok = (c, msg, det) => {
     const out = [];
     document.querySelectorAll('.rav').forEach((zn, i) => {
       const zeile = zn.closest('.rrow').getBoundingClientRect();
-      let ring = null;
-      for(const c of zn.querySelectorAll('svg.ins circle')){
-        if(Math.abs(+c.getAttribute('r') - 40) < .01){ ring = c.getBoundingClientRect(); break; }
-      }
+      const ring = window._reifBox(zn);
       let bb = null;
       zn.querySelectorAll('.zn-fx path').forEach(p => {
         const r = p.getBoundingClientRect();
@@ -304,13 +370,11 @@ const ok = (c, msg, det) => {
       +   G[1] + mit
       +   '<div class="pp-av-ring"><div class="av" style="width:108px;height:108px">AB</div></div>'
       + '</div></main></div>';
+    window._topfRetten();
     const messen = (wrapSel) => {
       const wrap = document.querySelector(wrapSel);
       if(!wrap) return null;
-      let ring = null;
-      for(const c of wrap.querySelectorAll('svg.ins circle')){
-        if(Math.abs(+c.getAttribute('r') - 40) < .01){ ring = c.getBoundingClientRect(); break; }
-      }
+      const ring = window._reifBox(wrap);
       let bb = null;
       wrap.querySelectorAll('.zn-fx path').forEach(p => {
         const r = p.getBoundingClientRect();
@@ -444,6 +508,7 @@ const ok = (c, msg, det) => {
       + '</div></div>'
       + '<div class="rval"><div class="big num">100</div></div></div></div>'
       + '</main></div>';
+    window._topfRetten();
   });
   await page.waitForTimeout(120);
 
@@ -806,6 +871,7 @@ const ok = (c, msg, det) => {
         + '<div class="pp-av-ring"><div class="av" style="width:108px;height:108px">AB</div></div>'
         + '</div><h1 class="pp-name">Stufe ' + st + '</h1></header></div>').join('')
       + '</main></div>';
+    window._topfRetten();
   });
   await page.waitForTimeout(800);
 
@@ -819,9 +885,7 @@ const ok = (c, msg, det) => {
         if(r.width === 0) return;
         bb = bb ? {t:Math.min(bb.t, r.top)} : {t:r.top};
       });
-      let ring = null;
-      for(const c of wrap.querySelectorAll('svg.ins circle'))
-        if(Math.abs(+c.getAttribute('r') - 40) < .01){ ring = c.getBoundingClientRect(); break; }
+      const ring = window._reifBox(wrap);
       out.push({stufe:i + 1,
         // > 0 heißt: zwischen Flammenspitze und Kartenkante bleibt Luft.
         luft: +(bb.t - kopf.top).toFixed(1),

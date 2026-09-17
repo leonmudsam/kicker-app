@@ -301,10 +301,26 @@ const ok = (c, msg, det) => {
           if(m && !document.getElementById(m[1])) offen.add(m[1]);
         });
       });
+      // Seit das Wappen in einer Liste ein `<use>` auf ein Symbol im selben
+      // Topf ist [§C30], gilt dieselbe Frage fuer die Symbole: ein Verweis
+      // auf eines, das es nicht gibt, wirft keinen Fehler und zeichnet
+      // nichts — die Kachel bleibt leer. Gemessen wird deshalb beides.
+      const verwaist = new Set();
+      document.querySelectorAll('use').forEach(u => {
+        const h = u.getAttribute('href') || u.getAttribute('xlink:href') || '';
+        const m = h.match(/^#(.+)$/);
+        if(m && !document.getElementById(m[1])) verwaist.add(m[1]);
+      });
       const t = document.getElementById('insDefs');
       return {tab, topf: !!t && !t.closest('#app') && !t.closest('.sheet'),
               wappen: document.querySelectorAll('svg.ins').length,
-              offen: [...offen].slice(0, 5)};
+              // Gemessen wird das Bauteil der Liste (`.rav`, §C27), nicht
+              // jede Zeichnung: die elf Stufen der Laufbahn tragen ihre
+              // Verläufe absichtlich selbst und sind kein Verweis [§C30].
+              rav: document.querySelectorAll('.rav > svg.ins').length,
+              ravUse: document.querySelectorAll('.rav > svg.ins > use').length,
+              symbole: document.querySelectorAll('#insDefs symbol').length,
+              offen: [...offen].slice(0, 5), verwaist: [...verwaist].slice(0, 5)};
     }, t));
   }
   for(const ruf of ['showPlayer(players[8].id)', 'showLaufbahn(players[8].id)']){
@@ -319,10 +335,26 @@ const ok = (c, msg, det) => {
           if(m && !document.getElementById(m[1])) offen.add(m[1]);
         });
       });
+      // Seit das Wappen in einer Liste ein `<use>` auf ein Symbol im selben
+      // Topf ist [§C30], gilt dieselbe Frage fuer die Symbole: ein Verweis
+      // auf eines, das es nicht gibt, wirft keinen Fehler und zeichnet
+      // nichts — die Kachel bleibt leer. Gemessen wird deshalb beides.
+      const verwaist = new Set();
+      document.querySelectorAll('use').forEach(u => {
+        const h = u.getAttribute('href') || u.getAttribute('xlink:href') || '';
+        const m = h.match(/^#(.+)$/);
+        if(m && !document.getElementById(m[1])) verwaist.add(m[1]);
+      });
       const t = document.getElementById('insDefs');
       return {tab: src.split('(')[0], topf: !!t && !t.closest('#app') && !t.closest('.sheet'),
               wappen: document.querySelectorAll('svg.ins').length,
-              offen: [...offen].slice(0, 5)};
+              // Gemessen wird das Bauteil der Liste (`.rav`, §C27), nicht
+              // jede Zeichnung: die elf Stufen der Laufbahn tragen ihre
+              // Verläufe absichtlich selbst und sind kein Verweis [§C30].
+              rav: document.querySelectorAll('.rav > svg.ins').length,
+              ravUse: document.querySelectorAll('.rav > svg.ins > use').length,
+              symbole: document.querySelectorAll('#insDefs symbol').length,
+              offen: [...offen].slice(0, 5), verwaist: [...verwaist].slice(0, 5)};
     }, ruf));
   }
   console.log('  Wappen je Ansicht: '
@@ -340,6 +372,18 @@ const ok = (c, msg, det) => {
   const kaputt = verweise.filter(v => v.offen.length);
   ok(kaputt.length === 0, 'kein Verweis zeigt auf einen Verlauf, den es nicht gibt',
      kaputt.map(v => v.tab + ': ' + v.offen.join(', ')).join(' | '));
+  const leer = verweise.filter(v => v.verwaist.length);
+  ok(leer.length === 0, 'kein Verweis zeigt auf ein Symbol, das es nicht gibt',
+     leer.map(v => v.tab + ': ' + v.verwaist.join(', ')).join(' | '));
+  // Und die Wappen einer Ansicht sind wirklich Verweise: sonst stehen in der
+  // Liste wieder 76 Kopien derselben Zeichnung.
+  const kopien = verweise.filter(v => v.rav > 0 && v.ravUse < v.rav);
+  ok(kopien.length === 0, 'jedes Wappen des Listen-Bauteils ist ein Verweis',
+     kopien.map(v => v.tab + ': ' + v.ravUse + ' von ' + v.rav).join(' | '));
+  const viele = verweise.filter(v => v.rav >= 10);
+  ok(viele.length > 0 && viele.every(v => v.symbole >= 1 && v.symbole < v.rav),
+     'viele Wappen teilen wenige Zeichnungen',
+     verweise.map(v => v.tab + ':' + v.symbole + '/' + v.rav).join(' '));
 
   console.log('\n═══ 4. IM HINTERGRUND WIRD NICHT GELADEN ═══');
   // Der Takt ruft nicht mehr blind. Geprüft wird an der Stelle, an der es

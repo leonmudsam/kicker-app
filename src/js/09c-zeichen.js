@@ -300,7 +300,9 @@ function insAvWrap(pid, innerHtml, opts){
   const band = !!(opts && opts.band);
   const t = opts.titel !== undefined ? opts.titel : znTitel(pid);
   const f = opts.feuer !== undefined ? opts.feuer : znFeuer(pid);
-  const ins = insigniumSvg(pid, band
+  // Ein Verweis statt der ganzen Zeichnung: in einer Liste steht dasselbe
+  // Wappen vielfach, und die Zeichnung ist dieselbe [§C30].
+  const ins = insigniumRef(pid, band
     ? {band:true, pos:opts.pos, titel:opts.titel} : {band:false});
   const cls = 'rav zn' + (band ? ' rav-band' : '') + (f ? ' zn-l'+f : '')
             + (opts.klasse ? ' '+opts.klasse : '');
