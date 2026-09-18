@@ -84,10 +84,12 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Niveau: zehn Kandidaten gegen sieben Tore, jede Schwelle
                       auf einem 5er-Schritt, vier tragen — und daneben Rekorde
                       auf einem gleitenden Fenster, die die laufende Form
-                      messen: sieben Kandidaten gegen sieben eigene Tore,
-                      gemessen als Halterwechsel über die ganze nachgespielte
-                      Liga, gepaart gegen dieselbe Rechnung ohne Fenster,
-                      vier tragen (README-abweichung.md)
+                      messen: vierzehn Kandidaten in zwei Kammern gegen acht
+                      eigene Tore, gemessen als Halterwechsel über die ganze
+                      nachgespielte Liga, gepaart gegen dieselbe Rechnung ohne
+                      Fenster, und das achte Tor auf die Siegquote — ein
+                      Fenster allein ist noch keine neue Frage, sechs tragen
+                      (README-abweichung.md)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen

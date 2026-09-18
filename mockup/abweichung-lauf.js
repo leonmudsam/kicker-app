@@ -452,7 +452,9 @@ function wechselLauf(k){
       const win = (onA && m.winner === 'A') || (!onA && m.winner === 'B');
       p.partien.push({win, gf:onA ? m.score_a : m.score_b,
         ga:onA ? m.score_b : m.score_a, pos:posAlle[i],
-        exp:onA ? m.exp_a : 1 - m.exp_a, ts:m.ts});
+        exp:onA ? m.exp_a : 1 - m.exp_a, ts:m.ts,
+        mate:onA ? (i === 0 ? m.a2 : m.a1) : (i === 2 ? m.b2 : m.b1),
+        geg:onA ? [m.b1, m.b2] : [m.a1, m.a2]});
       p.games++; if(win) p.wins++; p.q = p.wins / p.games;
     });
     const werte = [];
@@ -475,6 +477,162 @@ function wechselLauf(k){
           groesster: stand ? Math.max(0, ...ids.map(id => wer[id])) / stand : 0,
           wer};
 }
+
+// ── Die zweite Kammer: was NICHT an der Siegquote haengt ────────────
+// Gemessen lagen die ersten sieben Fenster-Rekorde zwischen |0,62| und
+// |0,85| Korrelation mit der Siegquote. Das ist fuer eine FORM-Frage
+// richtig — „wer steht gerade am besten im Futter" soll das Niveau von
+// jetzt messen —, aber damit war das Fenster nur eine dritte Verpackung
+// derselben Rangliste: wer mehr gewinnt, schiesst mehr Tore je Partie und
+// stapelt laengere Serien.
+//
+// Diese sieben fragen etwas anderes. Zwei Wege dorthin, und beide sind
+// KONSTRUKTIV unabhaengig und nicht nur hoffentlich:
+//
+//   Der REST gegen die Erwartung. Die Elo-Rechnung weiss schon, wie gut
+//   jemand ist; was darueber hinausgeht, kann sie per Definition nicht
+//   aus dem Koennen erklaeren. „Der Erwartungstreue" fragt im Katalog
+//   nach dem Abstand NAHE NULL, hier geht es um den Ausschlag.
+//
+//   Die AUSLOSUNG. Wen jemand als Gegner und als Partner bekommt,
+//   entscheidet er nicht selbst — das ist eine Fuegung [§C35] und haengt
+//   mit der eigenen Quote gar nicht zusammen. Der Katalog fragt bei
+//   „Der Klotz am Bein" und „Der Wegbereiter" nach der WIRKUNG eines
+//   Partners; nach seiner Staerke fragt nichts.
+//
+// Die Bezugsquote ist die der ganzen Liga und bleibt im Nachlauf fest.
+// Mitwandernd waere ein Teil der gemessenen Bewegung die des Massstabs
+// und nicht die des Fensters — und gemessen werden soll das Fenster.
+const LIGA_Q = {};
+IDS.forEach(id => { LIGA_Q[id] = LAUF[id].games ? LAUF[id].q : 0.5; });
+const fremdQ = ids => { const gute = (ids || []).filter(x => LIGA_Q[x] != null);
+  return gute.length ? gute.reduce((a, x) => a + LIGA_Q[x], 0) / gute.length : null; };
+// Die erwartete Zahl der Wechsel zwischen Sieg und Pleite bei w Siegen aus
+// n Partien, wenn die Reihenfolge zufaellig ist: 2·w·(n−w)/n. Der Quotient
+// aus gemessenen und erwarteten Wechseln ist damit von der Siegquote
+// befreit — bei 50 % sind viele Wechsel moeglich, bei 90 % kaum welche, und
+// ohne diese Teilung misst die Wertung wieder nur die Quote.
+const blockQuote = a => {
+  const n = a.length, w = a.filter(s => s.win).length;
+  if(!w || w === n) return null;                 // ohne beides gibt es keinen Wechsel
+  let wechsel = 0;
+  for(let i = 1; i < n; i++) if(a[i].win !== a[i-1].win) wechsel++;
+  return wechsel / (2 * w * (n - w) / n);
+};
+
+// Der Abstand der Mitspielerstaerke im Fenster zum eigenen Mittel. Zwei
+// Wertungen fragen ihn in beide Richtungen; zwei Rechnungen dafuer waeren
+// eine zu viel [§C27].
+function _mateAbstand(p, f){
+  const q = a => { const w = a.map(s => s.mate ? LIGA_Q[s.mate] : null)
+    .filter(x => x != null);
+    return w.length ? w.reduce((x, y) => x + y, 0) / w.length : null; };
+  const drin = q(f), eigen = q(p.partien);
+  return (drin == null || eigen == null) ? null : {d:drin - eigen, drin, eigen};
+}
+
+const FK2 = [
+  {id:'ueberform', kammer:'ganzes', eigenbezug:true, art:'leistung', ton:'gold', stufe:'zahl', n:25,
+   name:'Die Überform', short:'Überform',
+   frage:'Wer holt gerade mehr, als die Rechnung ihm zutraut?',
+   cond:'Größter Überschuss über die Elo-Erwartung in den letzten 25 Partien, gemessen am eigenen Mittel, ab 50 Partien',
+   wie:'Vor jeder Partie weist die Elo-Rechnung eine Siegchance aus. Der Überschuss ist die Zahl der Siege minus der Summe dieser Chancen, je Partie gerechnet und verglichen mit demselben Überschuss über die ganze Laufbahn. Der blanke Überschuss taugt nicht: gemessen lag er bei r = 0,88 mit der eigenen Siegquote, weil die Elo-Rechnung dieser Liga die Starken dauerhaft unterschätzt — sie holen über Jahre mehr, als ihnen zusteht. Am Eigenen gemessen fragt die Wertung, ob es GERADE mehr ist als sonst.',
+   wert:p => { const f = fensterSicht(p, 25); if(!f || p.games < 50) return null;
+     const rest = a => (a.filter(s => s.win).length
+       - a.reduce((x, s) => x + s.exp, 0)) / a.length;
+     const drin = rest(f), eigen = rest(p.partien);
+     p._f = {drin, eigen, erw:f.reduce((a, s) => a + s.exp, 0),
+             ist:f.filter(s => s.win).length};
+     return drin - eigen; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? 0 : null,
+   ev:p => pp(p._f.drin - p._f.eigen) + ' Punkte über dem eigenen Schnitt · '
+     + p._f.ist + ' Siege statt ' + komma(p._f.erw) + ' erwarteten'},
+
+  {id:'pruefstein', kammer:'ganzes', eigenbezug:true, art:'ereignis', ton:'blue', stufe:'pp', n:25,
+   name:'Der Prüfstein', short:'Prüfstein', zufall:'quote',
+   frage:'Wer hat gerade das schwerste Programm?',
+   cond:'Größter Abstand der Gegnerstärke in den letzten 25 Partien zum eigenen Mittel, ab 50 Partien',
+   wie:'Für jede Partie wird die Siegquote der beiden Gegner über die ganze Ligageschichte genommen. Verglichen wird das Mittel der letzten 25 Partien mit dem eigenen Mittel über die ganze Laufbahn. Gegen das Ligamittel gerechnet gehörte der Rekord immer dem Schwächsten: wer selbst der Beste ist, kann nie gegen sich selbst spielen, und sein Gegnerfeld ist damit zwangsläufig das schwächste der Liga — gemessen lag diese Fassung bei r = −0,55 mit der eigenen Siegquote. Gegen das Eigene gerechnet fällt der Effekt weg [§C38].',
+   wert:p => { const f = fensterSicht(p, 25); if(!f || p.games < 50) return null;
+     const drin = f.map(s => fremdQ(s.geg)).filter(x => x != null);
+     const alle = p.partien.map(s => fremdQ(s.geg)).filter(x => x != null);
+     if(!drin.length || !alle.length) return null;
+     const a = drin.reduce((x, y) => x + y, 0) / drin.length;
+     const b = alle.reduce((x, y) => x + y, 0) / alle.length;
+     p._f = {drin:a, eigen:b}; return a - b; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? 0 : null,
+   ev:p => pp(p._f.drin - p._f.eigen) + ' Punkte stärkere Gegner als sonst · '
+     + pct(p._f.drin) + ' statt ' + pct(p._f.eigen) + ' %'},
+
+  {id:'rueckenwind', kammer:'ganzes', eigenbezug:true, art:'ereignis', ton:'acid', stufe:'pp', n:25,
+   name:'Der Rückenwind', short:'Rückenwind', zufall:'quote',
+   frage:'Wer wird gerade an die stärksten Mitspieler gelost?',
+   cond:'Größter Abstand der Mitspielerstärke in den letzten 25 Partien zum eigenen Mittel, ab 50 Partien',
+   wie:'Für jede Partie wird die Siegquote des Mitspielers über die ganze Ligageschichte genommen. Verglichen wird das Mittel der letzten 25 Partien mit dem eigenen Mittel über die ganze Laufbahn. Gefragt ist nicht, was ein Partner bewirkt — das misst „Der Wegbereiter" —, sondern wen die Auslosung gerade zuteilt. Gegen das Ligamittel gerechnet hing es an der eigenen Quote, weil niemand mit sich selbst spielt: gemessen r = −0,66.',
+   wert:p => { const f = fensterSicht(p, 25); if(!f || p.games < 50) return null;
+     const d = _mateAbstand(p, f); if(!d) return null; p._f = d; return d.d; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? 0 : null,
+   ev:p => pp(p._f.d) + ' Punkte stärkere Mitspieler als sonst · '
+     + pct(p._f.drin) + ' statt ' + pct(p._f.eigen) + ' %'},
+
+  {id:'einzelkaempfer', kammer:'ganzes', eigenbezug:true, art:'ereignis', ton:'blue', stufe:'pp', n:25,
+   name:'Der Einzelkämpfer', short:'Alleingang', zufall:'quote',
+   frage:'Wer muss es gerade am häufigsten allein tragen?',
+   cond:'Größter Rückstand der Mitspielerstärke in den letzten 25 Partien auf das eigene Mittel, ab 50 Partien',
+   wie:'Das andere Ende des Rückenwinds mit derselben Rechnung. Keine Schattenseite: an wen jemand gelost wird, ist keine Kehrseite einer Leistung, sondern eine Fügung — und wer mit den Schwächeren antritt, hat nichts falsch gemacht.',
+   wert:p => { const f = fensterSicht(p, 25); if(!f || p.games < 50) return null;
+     const d = _mateAbstand(p, f); if(!d) return null; p._f = d; return -d.d; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? 0 : null,
+   ev:p => pp(-p._f.d) + ' Punkte schwächere Mitspieler als sonst · '
+     + pct(p._f.drin) + ' statt ' + pct(p._f.eigen) + ' %'},
+
+  {id:'unruhe', kammer:'ganzes', art:'ereignis', ton:'orange', stufe:'pp', n:25,
+   name:'Der Unruheherd', short:'Unruhe', zufall:'quote',
+   frage:'Um wen herum geht es gerade am wenigsten nach Plan?',
+   cond:'Größter mittlerer Abstand zwischen Ergebnis und Elo-Erwartung in den letzten 25 Partien, ab 25 Partien',
+   wie:'Für jede Partie wird der Abstand zwischen Ausgang und vorher ausgewiesener Siegchance genommen, ohne Vorzeichen, und über die letzten 25 gemittelt. Beide Richtungen zählen gleich: der Sieg als Außenseiter genauso wie die Pleite als Favorit. Gemessen wird damit nicht, ob jemand gut war, sondern wie oft die Rechnung bei ihm nicht aufging — mit r = −0,13 der unabhängigste Kandidat des ganzen Laufs.',
+   // Hier steht bewusst KEIN Bezug aufs eigene Mittel. Er ist die Korrektur,
+   // die Ruecken- und Gegenwind gerettet hat, und er hilft nur dort, wo die
+   // Verzerrung strukturell ist: gemessen ging die Siegquoten-Korrelation
+   // dieser Wertung dadurch von −0,13 auf −0,42 und die der Spielzahl von
+   // −0,47 auf −0,62. Eine Korrektur, die nichts zu korrigieren hat, fuegt
+   // nur Rauschen hinzu.
+   wert:p => { const f = fensterSicht(p, 25); if(!f) return null;
+     p._f = {d:schnitt(f, s => Math.abs((s.win ? 1 : 0) - s.exp))}; return p._f.d; },
+   ganz:p => p.games >= CHRON_MIN_GAMES
+     ? schnitt(p.partien, s => Math.abs((s.win ? 1 : 0) - s.exp)) : null,
+   ev:p => pct(p._f.d) + ' Prozentpunkte neben der Rechnung · im Schnitt der letzten 25'},
+
+  {id:'block', kammer:'ganzes', art:'ereignis', ton:'purple', stufe:'pp', n:25,
+   name:'Der Blockspieler', short:'Blöcke', zufall:'quote',
+   frage:'Bei wem kommt gerade alles im Block, Siege wie Pleiten?',
+   cond:'Wenigste Wechsel zwischen Sieg und Pleite im Verhältnis zur erwarteten Zahl, in den letzten 25 Partien, ab 25 Partien',
+   wie:'Gezählt werden die Stellen, an denen auf einen Sieg eine Pleite folgt oder umgekehrt. Verglichen wird das mit der Zahl, die bei zufälliger Reihenfolge zu erwarten wäre, und die hängt an der Siegquote: bei halb und halb sind viele Wechsel möglich, bei neun von zehn kaum welche. Geteilt sollte die Wertung davon frei sein und ist es gemessen nicht: die Teilung wird bei hoher Quote klein, und der Quotient schlägt dadurch aus.',
+   wert:p => { const f = fensterSicht(p, 25); if(!f) return null;
+     const q = blockQuote(f); if(q == null) return null;
+     p._f = {q}; return -q; },
+   ganz:p => { if(p.games < CHRON_MIN_GAMES) return null;
+     const q = blockQuote(p.partien); return q == null ? null : -q; },
+   ev:p => komma(p._f.q, 2) + ' Wechsel je erwartetem Wechsel · die letzten 25'},
+
+  {id:'unterform', kammer:'ganzes', eigenbezug:true, art:'schatten', ton:'red', stufe:'zahl', n:25,
+   name:'Die Unterform', short:'Unterform',
+   frage:'Wer bleibt gerade am weitesten hinter der Rechnung zurück?',
+   cond:'Größter Rückstand auf die Elo-Erwartung in den letzten 25 Partien, gemessen am eigenen Mittel, ab 50 Partien',
+   wie:'Das andere Ende der Überform mit derselben Rechnung. Auch hier ist das eigene Mittel der Bezug und nicht die Null: blank gerechnet traf die Schattenseite immer denselben, weil die Elo-Rechnung dieser Liga die Schwächeren dauerhaft überschätzt.',
+   wert:p => { const f = fensterSicht(p, 25); if(!f || p.games < 50) return null;
+     const rest = a => (a.filter(s => s.win).length
+       - a.reduce((x, s) => x + s.exp, 0)) / a.length;
+     const drin = rest(f), eigen = rest(p.partien);
+     p._f = {drin, eigen, erw:f.reduce((a, s) => a + s.exp, 0),
+             ist:f.filter(s => s.win).length};
+     return eigen - drin; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? 0 : null,
+   ev:p => pp(p._f.eigen - p._f.drin) + ' Punkte unter dem eigenen Schnitt · '
+     + p._f.ist + ' Siege statt ' + komma(p._f.erw) + ' erwarteten'},
+];
+FK.forEach(k => { if(!k.kammer) k.kammer = 'form'; });
+FK2.forEach(k => FK.push(k));
 
 // ── Die Tore ────────────────────────────────────────────────────────
 const korr = (xs, ys) => {
@@ -628,25 +786,51 @@ function fensterMessen(k){
           korr: korr(werte.map(x => LAUF[x.id].games), werte.map(x => x.v))};
 }
 
-const FERG = FK.map(k => {
+const _MESS = FK.map(k => {
   const jetzt = fensterMessen(k);
   const w = wechselLauf(k);
   // Derselbe Lauf mit derselben Frage, nur ohne Fenster. Alles, was zwischen
   // beiden Zahlen liegt, ist das Fenster und sonst nichts.
-  const g = wechselLauf({wert:k.ganz});
-  const ganzKorr = (() => {
+  //
+  // Fuer eine Wertung mit EIGENBEZUG gibt es diese Fassung nicht: „das
+  // Fenster gegen das eigene Mittel" ist ohne Fenster identisch null, alle
+  // elf Spieler stehen gleichauf, und der Nachlauf meldet elf Halter mit
+  // 100 % Besitz. Gegen diese Zahl besteht jeder das Wander-Tor, ohne dass
+  // sie etwas bedeutet — das ist ein Scheinbestehen und kein Beleg. Solche
+  // Wertungen werden deshalb ABSOLUT gemessen: sie muessen oefter wandern
+  // als jeder Laufbahn-Rekord, den dieser Lauf ueberhaupt gemessen hat.
+  const g = k.eigenbezug ? null : wechselLauf({wert:k.ganz});
+  const ganzKorr = k.eigenbezug ? null : (() => {
     const werte = [];
     IDS.forEach(id => { const v = k.ganz(LAUF[id]); if(v != null) werte.push({id, v}); });
     return werte.length < 3 ? 0
       : korr(werte.map(x => LAUF[x.id].games), werte.map(x => x.v));
   })();
+  // Die Frage, die alle sieben Tore nicht gestellt haben: haengt der Wert an
+  // der SIEGQUOTE? Wer mehr gewinnt, schiesst mehr Tore je Partie und stapelt
+  // laengere Serien — dann ist ein Fenster nur eine dritte Verpackung
+  // derselben Rangliste. Fuer eine Form-Frage ist das richtig, fuer alles
+  // andere ist es der Fehler.
+  const qKorr = jetzt.alle.length < 3 ? 0
+    : korr(jetzt.alle.map(x => LAUF[x.id].q), jetzt.alle.map(x => x.v));
+  return {k, jetzt, w, g, ganzKorr, qKorr};
+});
+
+// Die Messlatte fuer die absolute Fassung: der unruhigste Laufbahn-Rekord,
+// den dieser Lauf gesehen hat. Sie steht nicht als geschaetzte Zahl da,
+// sondern faellt aus den Paaren ab, die es wirklich gibt.
+const LAUF_MAX = Math.max(..._MESS.filter(e => e.g).map(e => e.g.proTag));
+
+const FERG = _MESS.map(e => {
+  const {k, jetzt, w, g, ganzKorr, qKorr} = e;
   // Ein Halter mit unter hundert Partien im Rennen: sonst ist das Fenster nur
   // eine andere Verpackung des Vielspieler-Rekords [§C35].
   const kleine = jetzt.alle.filter(x => LAUF[x.id].games < 100).length;
   const tore = {
     // DAS Tor dieses Vorschlags. Ein Eintrag, der so traege ist wie seine
     // Fassung ohne Fenster, braucht das Fenster nicht.
-    wandert: g.proTag > 0 && w.proTag >= g.proTag * 1.5,
+    wandert: g ? (g.proTag > 0 && w.proTag >= g.proTag * 1.5)
+               : w.proTag > LAUF_MAX,
     // Und er darf nicht einem gehoeren. Ein Fenster, das in der ganzen
     // Ligageschichte drei Halter hatte, ist keine laufende Form.
     verteilt: w.verschieden >= 5,
@@ -666,14 +850,23 @@ const FERG = FK.map(k => {
     // −0,27 gegen −0,05 durch, obwohl beide Zahlen weit unter allem liegen,
     // was die App je beanstandet hat. Wo die Neigung ohnehin klein ist,
     // sagt ihr Anstieg nichts.
-    vielspieler: Math.abs(jetzt.korr || 0) <= Math.max(0.35, Math.abs(ganzKorr) + 0.1),
+    vielspieler: Math.abs(jetzt.korr || 0)
+      <= Math.max(0.35, Math.abs(ganzKorr || 0) + (ganzKorr == null ? 0 : 0.1)),
     offen: kleine > 0,
     vergeben: jetzt.halter.length > 0,
     klassen: jetzt.alle.length > 0
       && Object.keys(w.wer).some(id => platz(id) > Math.ceil(RANG.length / 3)),
+    // Das Tor, das in den ersten sieben fehlte. Es gilt nur fuer die zweite
+    // Kammer: eine FORM-Frage soll das Niveau von jetzt messen und darf mit
+    // der Siegquote zusammenhaengen. Ein Eintrag, der etwas anderes
+    // behauptet, muss es beweisen — und die Grenze ist dieselbe 0,35, die
+    // die App schon fuer die Spielzahl zieht [§C39]. Ein eigener, weicherer
+    // Wert waere genau die Nachsicht, die den Katalog zur dritten Fassung
+    // derselben Rangliste gemacht hat.
+    unabhaengig: k.kammer === 'form' || Math.abs(qKorr) <= 0.35,
   };
   tore.alle = Object.values(tore).every(Boolean);
-  return {k, jetzt, w, g, ganzKorr, kleine, tore};
+  return {k, jetzt, w, g, ganzKorr, qKorr, kleine, tore};
 });
 
 // ── Der Bericht auf der Konsole ─────────────────────────────────────
@@ -733,12 +926,17 @@ FERG.forEach(e => {
     .map(x => (e.tore[x] ? '+' : '!') + x).join(' ');
   console.log((e.tore.alle ? 'OK  ' : 'ROT ') + e.k.name.padEnd(18)
     + 'n=' + String(e.k.n).padStart(2)
-    + '  Wechsel ' + komma(e.w.proTag, 2) + ' % der Partien, ohne Fenster '
-    + komma(e.g.proTag, 2) + ' %  (' + komma(e.g.proTag ? e.w.proTag / e.g.proTag : 0, 1) + '-fach)');
-  console.log('      Halter ' + e.w.verschieden + ' (ohne Fenster ' + e.g.verschieden
-    + ')   laengster Besitz ' + pct(e.w.groesster) + ' % (ohne Fenster '
-    + pct(e.g.groesster) + ' %)   r(Spielzahl) ' + komma(e.jetzt.korr, 2)
-    + ' (ohne Fenster ' + komma(e.ganzKorr, 2) + ')');
+    + '  Wechsel ' + komma(e.w.proTag, 2) + ' % der Partien, '
+    + (e.g ? 'ohne Fenster ' + komma(e.g.proTag, 2) + ' %  ('
+             + komma(e.g.proTag ? e.w.proTag / e.g.proTag : 0, 1) + '-fach)'
+           : 'Messlatte ' + komma(LAUF_MAX, 2) + ' % (Eigenbezug, keine Fassung ohne Fenster)'));
+  console.log('      Halter ' + e.w.verschieden
+    + (e.g ? ' (ohne Fenster ' + e.g.verschieden + ')' : '')
+    + '   laengster Besitz ' + pct(e.w.groesster) + ' %'
+    + (e.g ? ' (ohne Fenster ' + pct(e.g.groesster) + ' %)' : '')
+    + '   r(Spielzahl) ' + komma(e.jetzt.korr, 2)
+    + (e.g ? ' (ohne Fenster ' + komma(e.ganzKorr, 2) + ')' : '')
+    + '   r(Siegquote) ' + komma(e.qKorr, 2));
   console.log('      ' + t);
   console.log('      heute: ' + (e.jetzt.halter.map(h => name(h.id)).join(' & ') || 'frei')
     + '  [' + (e.jetzt.halter[0] ? KLASSE(e.jetzt.halter[0].id) : '—') + ']'
@@ -815,7 +1013,7 @@ const kandKarte = e => {
 // die hat er nicht —, sondern das Paar: dieselbe Frage mit und ohne Fenster.
 const fensterKarte = e => {
   const k = e.k, J = e.jetzt, w = e.w, g = e.g;
-  const mal = g.proTag ? w.proTag / g.proTag : 0;
+  const mal = (g && g.proTag) ? w.proTag / g.proTag : 0;
   const zeile = (lbl, a, b, gut) => `<tr><td>${esc(lbl)}</td>
     <td class="${gut ? 'gut' : ''}"><b>${esc(a)}</b></td><td class="ohne">${esc(b)}</td></tr>`;
   return `<div class="kand ${e.tore.alle ? 'ok' : 'rot'}">
@@ -838,19 +1036,30 @@ const fensterKarte = e => {
           '<span>' + (i + 1) + '. ' + esc(name(x.id)) + ' <i>' + esc(KLASSE(x.id))
           + '</i></span>').join('')}</div>
       </div>
-      <div class="ax"><div class="axk">Mit Fenster gegen ohne · ${MS.length} Partien nachgespielt</div>
+      <div class="ax"><div class="axk">${g ? 'Mit Fenster gegen ohne' : 'Gemessen'} ·
+          ${MS.length} Partien nachgespielt</div>
         <table class="paar">
-          <tr><th></th><th>mit Fenster</th><th>ohne</th></tr>
-          ${zeile('Halterwechsel je 100 Partien', komma(w.proTag, 1), komma(g.proTag, 1),
-                  e.tore.wandert)}
-          ${zeile('verschiedene Halter', w.verschieden, g.verschieden, e.tore.verteilt)}
-          ${zeile('längster Besitz', pct(w.groesster) + ' %', pct(g.groesster) + ' %',
-                  e.tore.keinDauerhalter)}
-          ${zeile('r mit der Spielzahl', komma(J.korr, 2), komma(e.ganzKorr, 2),
-                  e.tore.vielspieler)}
+          <tr><th></th><th>mit Fenster</th><th>${g ? 'ohne' : ''}</th></tr>
+          ${zeile('Halterwechsel je 100 Partien', komma(w.proTag, 1),
+                  g ? komma(g.proTag, 1) : '—', e.tore.wandert)}
+          ${zeile('verschiedene Halter', w.verschieden, g ? g.verschieden : '—',
+                  e.tore.verteilt)}
+          ${zeile('längster Besitz', pct(w.groesster) + ' %',
+                  g ? pct(g.groesster) + ' %' : '—', e.tore.keinDauerhalter)}
+          ${zeile('r mit der Spielzahl', komma(J.korr, 2),
+                  g ? komma(e.ganzKorr, 2) : '—', e.tore.vielspieler)}
+          ${zeile('r mit der SIEGQUOTE', komma(e.qKorr, 2), '', e.tore.unabhaengig)}
         </table>
+        ${g ? '' : `<div class="hinw">Mit Eigenbezug gibt es keine Fassung ohne Fenster:
+          sie wäre identisch null, alle elf Spieler stünden gleichauf, und gegen diese
+          Zahl besteht jeder das Wander-Tor. Gemessen wird deshalb absolut —
+          <b>${komma(LAUF_MAX, 1)} %</b>, der unruhigste Laufbahn-Rekord dieses Laufs.</div>`}
         <div class="tore">
-          ${TOR(e.tore.wandert, 'wandert ' + komma(mal, 1) + '-mal so oft')}
+          ${TOR(e.tore.wandert, g ? 'wandert ' + komma(mal, 1) + '-mal so oft'
+                                  : 'wandert über der Messlatte von ' + komma(LAUF_MAX, 1) + ' %')}
+          ${TOR(e.tore.unabhaengig, k.kammer === 'form'
+            ? 'Form-Kammer: darf an der Siegquote hängen'
+            : 'r mit der Siegquote = ' + komma(e.qKorr, 2))}
           ${TOR(e.tore.verteilt, w.verschieden + ' Halter in der Ligageschichte')}
           ${TOR(e.tore.keinDauerhalter, 'längster Besitz ' + pct(w.groesster) + ' %')}
           ${TOR(e.tore.vielspieler, 'r = ' + komma(J.korr, 2))}
@@ -916,6 +1125,8 @@ const SEITE_HTML = `<!doctype html><meta charset="utf-8">
  .paar td b{color:#e2e6e3}
  .paar td.gut b{color:#7fc99a}
  .paar td.ohne{color:#6f7873}
+ .hinw{font-size:11px;color:#858e89;background:#12100c;border-left:2px solid #4a4230;
+   padding:6px 9px;border-radius:4px;margin:6px 0 2px}
 </style>
 <h1>Chroniken und Rekorde aus der Abweichung — und Rekorde auf einem Fenster</h1>
 <p>Gerechnet an den echten ${MS.length} Partien der Liga, ${IDS.length} Spieler,
@@ -1022,14 +1233,19 @@ ${ERG.filter(e => e.k.art === 'schatten').map(kandKarte).join('')}
  die Siegquote der Laufbahn wechselt an ${komma(_FL.g.proTag, 1)} % der Partien, die
  Tore je Partie an ${komma(_FT.g.proTag, 1)} % — derselbe Grenzwert hätte die eine Frage geschenkt und die andere unmöglich gemacht.</p>
 <table>
- <tr><td>1</td><td><b>Er wandert</b></td><td>mindestens 1,5-mal so oft wie ohne Fenster</td></tr>
+ <tr><td>1</td><td><b>Er wandert</b></td><td>mindestens 1,5-mal so oft wie ohne Fenster — mit Eigenbezug absolut, über ${komma(LAUF_MAX, 1)} %</td></tr>
  <tr><td>2</td><td>Er gehört nicht wenigen</td><td>≥ 5 verschiedene Halter über die Ligageschichte</td></tr>
  <tr><td>3</td><td>Kein Dauerhalter</td><td>längster Besitz ≤ 50 % der Zeit [§C35]</td></tr>
  <tr><td>4</td><td>Er verstärkt die Spielzahl-Neigung nicht</td><td>|r| ≤ 0,35 oder höchstens 0,1 über der Fassung ohne Fenster</td></tr>
  <tr><td>5</td><td>Er ist offen</td><td>jemand mit unter 100 Partien steht im Rennen [§C35]</td></tr>
  <tr><td>6</td><td>Er ist vergeben</td><td>—</td></tr>
  <tr><td>7</td><td>Er erreicht jede Klasse</td><td>ein Halter jenseits des ersten Drittels</td></tr>
+ <tr><td>8</td><td><b>Er hängt nicht an der Siegquote</b></td><td>|r| ≤ 0,35 — nur für die zweite Kammer, die Form-Kammer ist ausgenommen</td></tr>
 </table>
+<p>Tor 8 fehlte in der ersten Fassung ganz, und das war der Fehler: alle sieben
+ Kandidaten von damals lagen zwischen |0,62| und |0,85| mit der Siegquote. Wer mehr
+ gewinnt, schießt mehr Tore je Partie und stapelt längere Serien — ohne dieses Tor ist
+ ein Fenster nur eine dritte Verpackung derselben Rangliste.</p>
 <p>Tor 4 steht bewusst doppelt. Roh gemessen liegt die Siegquote der letzten 20 bei
  r = ${komma(_FL.jetzt.korr, 2)} mit der Spielzahl — das sieht nach einem
  Vielspieler-Rekord aus und ist keiner: dieselbe Frage <b>ohne</b> Fenster liegt bei
@@ -1040,15 +1256,33 @@ ${ERG.filter(e => e.k.art === 'schatten').map(kandKarte).join('')}
  ${komma(_FP.jetzt.korr, 2)} gegen ${komma(_FP.ganzKorr, 2)} durch, obwohl beide Zahlen weit unter allem liegen, was die App je beanstandet
  hat.</p>
 
-<div class="grp">Fenster — positiv</div>
-${FERG.filter(e => e.k.art !== 'schatten').map(fensterKarte).join('')}
+<h3 style="font-size:14px;margin:22px 0 4px">Erste Kammer: die Form</h3>
+<p>Diese vier messen das <b>Niveau von jetzt</b> — und hängen deshalb an der Siegquote,
+ gemessen zwischen ${komma(Math.min(...FERG.filter(e => e.k.kammer === 'form')
+   .map(e => Math.abs(e.qKorr))), 2)} und ${komma(Math.max(...FERG
+   .filter(e => e.k.kammer === 'form').map(e => Math.abs(e.qKorr))), 2)}. Für eine
+ Form-Frage ist das richtig: „wer steht gerade am besten im Futter“ SOLL das Niveau
+ messen. Es heißt aber auch, dass ein Fenster allein noch keine neue Frage ist — wer
+ mehr gewinnt, schießt mehr Tore je Partie und stapelt längere Serien. Das Tor auf die
+ Siegquote ist für diese Kammer deshalb ausdrücklich ausgesetzt, und die Kammer bleibt
+ klein.</p>
+${FERG.filter(e => e.k.kammer === 'form').map(fensterKarte).join('')}
 
-<div class="grp">Fenster — negativ</div>
-<p>Auch hier gilt: eine Schattenseite darf sich nicht beim Schwächsten sammeln [§C35].
- Das Fenster hilft dabei — gemessen hielt den <b>Pleitenzug</b> niemand länger als
- ${pct(_FP.w.groesster)} % der Zeit, während die längste Pleitenserie der ganzen
- Laufbahn einem Spieler ${pct(_FP.g.groesster)} % der Zeit gehörte.</p>
-${FERG.filter(e => e.k.art === 'schatten').map(fensterKarte).join('')}
+<h3 style="font-size:14px;margin:22px 0 4px">Zweite Kammer: das große Ganze</h3>
+<p>Diese sieben fragen etwas anderes, und sie müssen es beweisen: <b>|r| ≤ 0,35</b> mit
+ der Siegquote, dieselbe Linie, die die App für die Spielzahl zieht [§C39]. Zwei Wege
+ dorthin, und beide sind konstruktiv unabhängig und nicht nur hoffentlich:</p>
+<table>
+ <tr><td><b>Der Rest gegen die Erwartung</b></td><td>Die Elo-Rechnung weiß schon, wie
+  gut jemand ist; was darüber hinausgeht, kann sie per Definition nicht aus dem Können
+  erklären. Der Katalog fragt bei „Der Erwartungstreue“ nach dem Abstand NAHE NULL,
+  hier geht es um den Ausschlag.</td></tr>
+ <tr><td><b>Die Auslosung</b></td><td>Wen jemand als Gegner und als Partner bekommt,
+  entscheidet er nicht selbst: eine Fügung [§C35], die mit der eigenen Quote nichts zu
+  tun hat. Der Katalog fragt bei „Der Klotz am Bein“ und „Der Wegbereiter“ nach der
+  WIRKUNG eines Partners; nach seiner Stärke fragt nichts.</td></tr>
+</table>
+${FERG.filter(e => e.k.kammer === 'ganzes').map(fensterKarte).join('')}
 
 <h2>Was die Messung sagt</h2>
 <table>
@@ -1068,21 +1302,49 @@ ${FERG.filter(e => e.k.art === 'schatten').map(fensterKarte).join('')}
   Die übrigen sechs scheitern nachvollziehbar, und das ist das Ergebnis des Laufs:
   ${ERG.filter(e => !e.tore.alle).map(e => esc(e.k.name) + ' ('
     + Object.keys(e.tore).filter(t => t !== 'alle' && !e.tore[t]).join(', ') + ')').join('; ')}.</td></tr>
- <tr><td><b>Ein Fenster wechselt den Halter drei- bis viermal so oft.</b></td>
-  <td>Gemessen über alle ${MS.length} Partien, gepaart gegen dieselbe Rechnung ohne
-  Fenster: ${FERG.filter(e => e.tore.wandert).map(e => esc(e.k.name) + ' '
-    + komma(e.w.proTag / e.g.proTag, 1) + '-fach').join(', ')}. Und der Besitz verteilt
-  sich: die Siegquote der Laufbahn gehörte einem ${pct(_FL.g.groesster)} % der Zeit, der
-  Lauf über 20 Partien keinem länger als ${pct(_FL.w.groesster)} %.</td></tr>
- <tr><td><b>Nicht jede Frage verträgt ein Fenster.</b></td>
-  <td>${FERG.filter(e => !e.tore.alle).map(e => esc(e.k.name) + ' ('
-    + Object.keys(e.tore).filter(t => t !== 'alle' && !e.tore[t]).join(', ')
-    + ')').join('; ')}. „Die Trefferwelle“ wandert nur
-  ${komma(_FT.w.proTag / _FT.g.proTag, 1)}-fach, weil die Tore je Partie schon über die
-  ganze Laufbahn dicht beieinander liegen — da ist nichts, was ein Fenster noch
-  auflockern könnte. „Der Vorsprung“ wandert zwar, aber in der ganzen Ligageschichte
-  hatte er nur ${FERG.find(e => e.k.id === 'vorsprung').w.verschieden} verschiedene
-  Halter: die Tordifferenz sammelt sich oben.</td></tr>
+ <tr><td><b>Ein Fenster wechselt den Halter drei- bis siebenmal so oft.</b></td>
+  <td>Gemessen über alle ${MS.length} Partien: ${FERG.filter(e => e.tore.alle && e.g)
+    .map(e => esc(e.k.name) + ' ' + komma(e.w.proTag / e.g.proTag, 1) + '-fach')
+    .join(', ')}. Und der Besitz verteilt sich: die Siegquote der Laufbahn gehörte einem
+  ${pct(_FL.g.groesster)} % der Zeit, der Lauf über 20 Partien keinem länger als
+  ${pct(_FL.w.groesster)} %.</td></tr>
+ <tr><td><b>Ein Fenster allein ist noch keine neue Frage.</b></td>
+  <td>Die ersten sieben Fenster-Rekorde lagen zwischen
+  ${komma(Math.min(...FERG.filter(e => e.k.kammer === 'form').map(e => Math.abs(e.qKorr))), 2)}
+  und
+  ${komma(Math.max(...FERG.filter(e => e.k.kammer === 'form').map(e => Math.abs(e.qKorr))), 2)}
+  Korrelation mit der <b>Siegquote</b> — wer mehr gewinnt, schießt mehr Tore je Partie
+  und stapelt längere Serien. Für eine Form-Frage ist das richtig; für alles andere ist
+  es der Fehler, und in den ersten sieben Toren kam die Frage gar nicht vor.</td></tr>
+ <tr><td><b>Gegen das Ligamittel gerechnet gehört eine Auslosungs-Frage dem Schwächsten.</b></td>
+  <td>Wer selbst der Beste ist, kann nie gegen sich selbst spielen: sein Gegnerfeld ist
+  zwangsläufig das schwächste der Liga, sein Partnerfeld ebenso. Roh gemessen lag „Der
+  Prüfstein“ deshalb bei −0,55 mit der eigenen Siegquote und „Der Rückenwind“ bei −0,66.
+  Gegen das <b>Eigene</b> gerechnet [§C38] fällt der Effekt weg: −0,24 und −0,09.</td></tr>
+ <tr><td><b>Die Elo-Rechnung unterschätzt die Starken dauerhaft.</b></td>
+  <td>„Die Überform“ fragt, wer mehr Siege holt, als die Rechnung ihm zutraut — das
+  sollte vom Können unabhängig sein, weil die Rechnung die Stärke beider Teams schon
+  kennt. Gemessen lag sie roh bei <b>0,88</b>: die Starken holen über die ganze Laufbahn
+  mehr, als ihnen zusteht. Am eigenen Mittel gemessen sinkt sie auf
+  ${komma(Math.abs(FERG.find(e => e.k.id === 'ueberform').qKorr), 2)} und bleibt damit
+  über der Linie. Das ist ein Befund über die Elo-Kalibrierung dieser Liga, nicht über
+  den Kandidaten.</td></tr>
+ <tr><td><b>Eine Korrektur, die nichts zu korrigieren hat, schadet.</b></td>
+  <td>Derselbe Eigenbezug, der Rücken- und Gegenwind gerettet hat, verschlechterte „Der
+  Unruheherd“ von −0,13 auf −0,42 und „Der Blockspieler“ von 0,55 auf 0,61. Er hilft nur,
+  wo die Verzerrung strukturell ist; sonst fügt er Rauschen hinzu. Beide stehen deshalb
+  wieder in ihrer rohen Fassung.</td></tr>
+ <tr><td><b>Mit Eigenbezug gibt es keinen Vergleichslauf.</b></td>
+  <td>„Das Fenster gegen das eigene Mittel“ ist ohne Fenster identisch null: alle elf
+  Spieler stehen gleichauf, und der Nachlauf meldet elf Halter mit 100 % Besitz. Gegen
+  diese Zahl besteht jeder das Wander-Tor, ohne dass sie etwas bedeutet. Diese fünf
+  werden deshalb absolut gemessen — über ${komma(LAUF_MAX, 1)} %, dem unruhigsten
+  Laufbahn-Rekord dieses Laufs.</td></tr>
+ <tr><td><b>Sechs von vierzehn Fenster-Rekorden tragen.</b></td>
+  <td>${FERG.filter(e => e.tore.alle).map(e => esc(e.k.name)).join(', ')}. Die übrigen
+  scheitern nachvollziehbar: ${FERG.filter(e => !e.tore.alle).map(e => esc(e.k.name)
+    + ' (' + Object.keys(e.tore).filter(t => t !== 'alle' && !e.tore[t]).join(', ')
+    + ')').join('; ')}.</td></tr>
  <tr><td><b>Zwei Vorschläge gibt es schon.</b></td>
   <td>${ERG.filter(e => e.k.gibtEs).map(e => esc(e.k.name) + ' = „' + esc(e.k.gibtEs.name)
     + '“ (' + esc(e.k.gibtEs.hat) + ')').join('; ')}. Bei der Steigerung fehlt nur die
