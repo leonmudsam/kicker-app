@@ -10,9 +10,9 @@ Steigerungsform" ist „Die Steigerung" ohne ihre Laufbahn-Achse, „Der
 Ladehemmer" ist „Die Ladehemmung". Neu sind also **zwei**. Die Gruppe ist für
 jede Könnensklasse erreichbar, weil sie nicht das Niveau misst.
 
-**Die laufende Form** auf einem gleitenden Fenster — sieben Kandidaten, vier
-positiv und drei negativ. Vier tragen. Sie wechselt drei- bis viermal so oft
-den Halter wie dieselbe Frage ohne Fenster, und genau dafür ist sie da.
+**Die laufende Form** auf einem gleitenden Fenster — vierzehn Kandidaten in
+zwei Kammern. Sechs tragen. Sie wechseln drei- bis siebenmal so oft den Halter
+wie dieselbe Frage ohne Fenster, und genau dafür sind sie da.
 
 Jede Gruppe hat ihre eigenen Tore, weil sie verschiedene Dinge behauptet. Das
 Scheitern der übrigen ist das Ergebnis des Laufs, nicht sein Makel.
@@ -169,32 +169,115 @@ für alle gleich groß, also kann es den Vielspieler gar nicht bevorzugen. Die
 „Der Pleitenzug" mit r = −0,27 gegen −0,05 durch, obwohl beide Zahlen weit
 unter allem liegen, was die App je beanstandet hat.
 
-### Was trägt
+### Ein Fenster allein ist noch keine neue Frage
 
-| Eintrag | Fenster | wandert | Halter | längster Besitz | heute |
-|---|--:|--:|--:|--:|---|
-| **Der Lauf** · höchste Siegquote | 20 | 3,2-fach | 6 | 39 % (ohne: 80 %) | Martin, 80 % |
-| **Der Siegzug** · längste Siegesserie im Fenster | 30 | 4,0-fach | 6 | 44 % (ohne: 86 %) | Martin, 13 am Stück |
-| **Die Talfahrt** · niedrigste Siegquote | 20 | 3,1-fach | 7 | 42 % | Johannes, 15 % |
-| **Der Pleitenzug** · längste Pleitenserie im Fenster | 30 | 2,5-fach | 6 | 46 % (ohne: 67 %) | Johannes & Leo, 10 am Stück |
+Das achte Tor fehlte in der ersten Fassung, und es war das entscheidende: alle
+sieben Kandidaten von damals lagen zwischen **|0,62| und |0,85|** Korrelation
+mit der **Siegquote**. Wer mehr gewinnt, schießt mehr Tore je Partie und
+stapelt längere Serien — ohne dieses Tor ist ein Fenster nur eine dritte
+Verpackung derselben Rangliste.
+
+Daraus wurden zwei Kammern:
+
+### Erste Kammer: die Form
+
+Vier Einträge, die das **Niveau von jetzt** messen und deshalb an der
+Siegquote hängen dürfen. Für „wer steht gerade am besten im Futter" ist das
+richtig. Das achte Tor ist für diese Kammer ausdrücklich ausgesetzt, und die
+Kammer bleibt klein.
+
+| Eintrag | Fenster | wandert | Halter | längster Besitz | r(Siegquote) | heute |
+|---|--:|--:|--:|--:|--:|---|
+| **Der Lauf** · höchste Siegquote | 20 | 3,2-fach | 6 | 39 % (ohne: 80 %) | 0,85 | Martin, 80 % |
+| **Der Siegzug** · längste Siegesserie im Fenster | 30 | 4,0-fach | 6 | 44 % (ohne: 86 %) | 0,71 | Martin, 13 am Stück |
+| **Die Talfahrt** · niedrigste Siegquote | 20 | 3,1-fach | 7 | 42 % | −0,85 | Johannes, 15 % |
+| **Der Pleitenzug** · längste Pleitenserie im Fenster | 30 | 2,5-fach | 6 | 46 % (ohne: 67 %) | −0,62 | Johannes & Leo, 10 am Stück |
 
 Die Schattenseiten sind dabei der interessantere Fall: eine Schande darf sich
 nicht beim Schwächsten sammeln [§C35]. Das Fenster leistet genau das — die
 längste Pleitenserie der **ganzen Laufbahn** gehörte einem Spieler 67 % der
 Zeit, im Fenster hält sie niemand länger als 46 %.
 
-### Was nicht trägt, und warum
+Drei weitere Form-Kandidaten scheitern:
 
 | Eintrag | gescheitert an |
 |---|---|
-| **Die Trefferwelle** | wandert nur 1,3-fach, und r steigt von 0,45 auf 0,69 |
-| **Der Vorsprung** | nur 4 verschiedene Halter in der ganzen Ligageschichte, r steigt von 0,45 auf 0,57 |
-| **Die Flaute** | ein Halter über 54 % der Zeit, r steigt von 0,45 auf 0,69 |
+| **Die Trefferwelle** | wandert nur 1,3-fach, und r(Spielzahl) steigt von 0,45 auf 0,69 |
+| **Der Vorsprung** | nur 4 verschiedene Halter in der ganzen Ligageschichte |
+| **Die Flaute** | ein Halter über 54 % der Zeit |
 
-Zwei Muster: die **Tore je Partie** liegen über die ganze Laufbahn schon dicht
-beieinander — da ist nichts, was ein Fenster noch auflockern könnte, und die
-Enge verstärkt stattdessen die Spielzahl-Neigung. Und die **Tordifferenz**
-sammelt sich oben: sie wandert zwar, aber immer zwischen denselben vier.
+Die **Tore je Partie** liegen über die ganze Laufbahn schon dicht beieinander
+— da ist nichts, was ein Fenster noch auflockern könnte. Und die
+**Tordifferenz** sammelt sich oben: sie wandert zwar, aber immer zwischen
+denselben vier.
+
+### Zweite Kammer: das große Ganze
+
+Sieben Einträge, die etwas anderes fragen — und es beweisen müssen:
+**|r| ≤ 0,35** mit der Siegquote, dieselbe Linie, die die App für die
+Spielzahl zieht [§C39]. Zwei Wege dorthin, und beide sind **konstruktiv**
+unabhängig und nicht nur hoffentlich:
+
+- **Der Rest gegen die Erwartung.** Die Elo-Rechnung weiß schon, wie gut
+  jemand ist; was darüber hinausgeht, kann sie per Definition nicht aus dem
+  Können erklären. Der Katalog fragt bei „Der Erwartungstreue" nach dem
+  Abstand NAHE NULL, hier geht es um den Ausschlag.
+- **Die Auslosung.** Wen jemand als Gegner und als Partner bekommt,
+  entscheidet er nicht selbst. Der Katalog fragt bei „Der Klotz am Bein" und
+  „Der Wegbereiter" nach der WIRKUNG eines Partners; nach seiner Stärke fragt
+  nichts.
+
+| Eintrag | wandert | Halter | längster Besitz | r(Siegquote) | heute |
+|---|--:|--:|--:|--:|---|
+| **Der Rückenwind** · stärkere Mitspieler als sonst | 6,7-fach | 9 | 41 % | **−0,09** | +4 Punkte, 55 statt 51 % |
+| **Der Einzelkämpfer** · schwächere Mitspieler als sonst | 7,0-fach | 9 | 24 % | **+0,09** | +3 Punkte, 47 statt 50 % |
+
+Fünf scheitern:
+
+| Eintrag | r(Siegquote) | gescheitert an |
+|---|--:|---|
+| **Der Prüfstein** · stärkere Gegner als sonst | −0,24 | r(Spielzahl) −0,58 |
+| **Der Unruheherd** · am weitesten neben der Elo-Rechnung | **−0,13** | r(Spielzahl) −0,47 |
+| **Die Überform** · mehr Siege als die Rechnung zutraut | 0,45 | Tor 8 |
+| **Die Unterform** · weniger Siege als die Rechnung zutraut | −0,45 | Tor 8 |
+| **Der Blockspieler** · alles kommt im Block | 0,55 | Tor 8 |
+
+**Der Unruheherd ist mit −0,13 der unabhängigste Kandidat des ganzen Laufs** —
+zehn verschiedene Halter, keiner länger als 28 % der Zeit, 4,4-fache
+Wanderung. Er scheitert allein daran, dass eine lange Laufbahn jeden Ausschlag
+glättet und der Wert damit an der Spielzahl hängt. Von allen fünfzehn
+Kandidaten ist er der, den eine Nachrechnung an mehr Monaten am ehesten retten
+würde.
+
+### Vier Befunde aus der zweiten Kammer
+
+**Gegen das Ligamittel gerechnet gehört eine Auslosungs-Frage dem Schwächsten.**
+Wer selbst der Beste ist, kann nie gegen sich selbst spielen: sein Gegnerfeld
+ist zwangsläufig das schwächste der Liga, sein Partnerfeld ebenso. Roh gemessen
+lag „Der Prüfstein" bei −0,55 mit der eigenen Siegquote und „Der Rückenwind"
+bei −0,66. Gegen das **Eigene** gerechnet [§C38] fällt der Effekt weg: −0,24
+und −0,09.
+
+**Die Elo-Rechnung unterschätzt die Starken dauerhaft.** „Die Überform" fragt,
+wer mehr Siege holt, als die Rechnung ihm zutraut — das sollte vom Können
+unabhängig sein, weil die Rechnung die Stärke beider Teams schon kennt.
+Gemessen lag sie roh bei **0,88**: die Starken holen über die ganze Laufbahn
+mehr, als ihnen zusteht. Am eigenen Mittel gemessen sinkt sie auf 0,45 und
+bleibt über der Linie. Das ist ein Befund über die Elo-Kalibrierung dieser
+Liga, nicht über den Kandidaten.
+
+**Eine Korrektur, die nichts zu korrigieren hat, schadet.** Derselbe
+Eigenbezug, der Rücken- und Gegenwind gerettet hat, verschlechterte „Der
+Unruheherd" von −0,13 auf −0,42 und „Der Blockspieler" von 0,55 auf 0,61. Er
+hilft nur, wo die Verzerrung strukturell ist; sonst fügt er Rauschen hinzu.
+Beide stehen deshalb wieder in ihrer rohen Fassung.
+
+**Mit Eigenbezug gibt es keinen Vergleichslauf.** „Das Fenster gegen das
+eigene Mittel" ist ohne Fenster identisch null: alle elf Spieler stehen
+gleichauf, und der Nachlauf meldet elf Halter mit 100 % Besitz. Gegen diese
+Zahl besteht jeder das Wander-Tor, ohne dass sie etwas bedeutet — ein
+Scheinbestehen. Diese fünf werden deshalb absolut gemessen: über 10,0 %, dem
+unruhigsten Laufbahn-Rekord dieses Laufs.
 
 ## Drei Befunde für den Katalog
 
