@@ -96,7 +96,7 @@ function teamDetail(p1,p2){
   if(!_cache._teamDetail) _cache._teamDetail={};
   if(_cache._teamDetail[key]) return _cache._teamDetail[key];
   // Mit der Version im Schlüssel wächst der Topf sonst über jede Version mit.
-  if(Object.keys(_cache._teamDetail).length > 80) _cache._teamDetail={};
+  _topfDeckel(_cache._teamDetail, 80);
 
   let wins=0,losses=0,gf=0,ga=0,eloDelta=0;
   const oppStats={}; // einzelner Gegnerspieler → {g,w}
@@ -411,7 +411,7 @@ function h2hDetail(idA, idB){
   if(_cache._h2hDetail[key]) return _cache._h2hDetail[key];
   // Ein Topf, der nur wächst, ist ein Leck: bei jedem Versionswechsel kämen
   // alle Paare noch einmal dazu.
-  if(Object.keys(_cache._h2hDetail).length > 80) _cache._h2hDetail = {};
+  _topfDeckel(_cache._h2hDetail, 80);
 
   const asTeam = {g:0, w:0, gf:0, ga:0, eloDelta:0};
   const asOppForA = {g:0, w:0, gf:0, ga:0, eloDelta:0};

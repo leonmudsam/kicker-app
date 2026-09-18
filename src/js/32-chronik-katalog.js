@@ -160,6 +160,14 @@ const _stMittel = a => a.reduce((x, y) => x + y, 0) / a.length;
 // Eng heisst hoechstens zwei Tore Unterschied, in beide Richtungen.
 const _stEng = s => Math.abs(s.gf - s.ga) <= 2;
 
+// Favorit und Augenhoehe aus der Sicht einer einzelnen Partie. Die Grenzen
+// stehen bei der Elo-Rechnung, die sie zieht [§5.2]; hier standen sie als
+// blanke Zahl an fuenf Stellen, zwei davon in den zwei getrennten
+// Durchlaeufen ueber dieselbe Frage — und die muessen gleich zaehlen, sonst
+// zeigt die Monatstafel einen anderen Halter als der Liga-Rekord [§10.2].
+const _stFavorit = s => s.exp > CHANCE_FAVORIT;
+const _stAugenhoehe = s => s.exp >= CHANCE_OFFEN && s.exp <= CHANCE_FAVORIT;
+
 // Poisson-Binomial: die Wahrscheinlichkeit, aus Partien mit ungleichen
 // Siegchancen mindestens k zu gewinnen. Damit laesst sich sagen, wie
 // wahrscheinlich ein ganzer Monat so oder besser ausgeht — die Grundlage
@@ -221,8 +229,8 @@ const _stWochLetzte = p => Object.values(p.wochGrp)
 // Partien als klarer Favorit und als Aussenseiter. Die Grenzen sind
 // dieselben wie im Rest des Katalogs.
 const _stRollen = p => ({
-  fav: p.partien.filter(s => s.exp > 0.55),
-  aus: p.partien.filter(s => s.exp < 0.45)
+  fav: p.partien.filter(_stFavorit),
+  aus: p.partien.filter(s => s.exp < CHANCE_OFFEN)
 });
 // Partien, die mit genau einem Tor Unterschied endeten: der letzte Ball hat
 // entschieden. `_stEng` nimmt zwei — das ist eine andere Frage.
@@ -1045,10 +1053,10 @@ const DISZIPLINEN = [
       wie:'Offen heißt: die Rechnung gab beiden Teams zwischen 45 und 55 Prozent. Verglichen wird die Quote darin mit der eigenen Gesamtquote.',
       cond:'In offenen Partien mindestens 20 Prozentpunkte stärker als sonst, ab 5 offenen Partien',
       ...(_stWertung(
-        p=>p.partien.filter(s=>s.exp>=0.45&&s.exp<=0.55).length>=ST_TEIL,
-        p=>{const d=p.partien.filter(s=>s.exp>=0.45&&s.exp<=0.55);return d.filter(s=>s.win).length/d.length-p.q;},
+        p=>p.partien.filter(_stAugenhoehe).length>=ST_TEIL,
+        p=>{const d=p.partien.filter(_stAugenhoehe);return d.filter(s=>s.win).length/d.length-p.q;},
         0.2,
-        p=>{const d=p.partien.filter(s=>s.exp>=0.45&&s.exp<=0.55);
+        p=>{const d=p.partien.filter(_stAugenhoehe);
       return `${d.filter(s=>s.win).length} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
   {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'godRay', tone:'gold', art:'leistung',
@@ -1145,10 +1153,10 @@ const DISZIPLINEN = [
       wie:'Klarer Favorit heißt: das gegnerische Team hatte vorher mindestens 65 Prozent Siegchance.',
       cond:'Mindestens 40 % gegen klare Favoriten, ab 5 solchen Partien',
       ...(_stWertung(
-        p=>p.partien.filter(s=>s.exp<=0.35).length>=ST_TEIL,
-        p=>{const d=p.partien.filter(s=>s.exp<=0.35);return d.filter(s=>s.win).length/d.length;},
+        p=>p.partien.filter(s=>s.exp<=CHANCE_UPSET).length>=ST_TEIL,
+        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return d.filter(s=>s.win).length/d.length;},
         0.4,
-        p=>{const d=p.partien.filter(s=>s.exp<=0.35);return `${d.filter(s=>s.win).length} von ${d.length} gegen klare Favoriten`;}))}},
+        p=>{const d=p.partien.filter(s=>s.exp<=CHANCE_UPSET);return `${d.filter(s=>s.win).length} von ${d.length} gegen klare Favoriten`;}))}},
 
   {id:'formgipfel', name:'Der Formgipfel', short:'Formgipfel', ic:'chartUp', tone:'gold', art:'leistung',
     monat:{

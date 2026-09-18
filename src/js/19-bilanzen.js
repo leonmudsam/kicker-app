@@ -71,7 +71,7 @@ function playerSeasonAwards(id){
   if(!_cache._playerSeasonAwards) _cache._playerSeasonAwards={};
   if(_cache._playerSeasonAwards[key]) return _cache._playerSeasonAwards[key];
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
-  if(Object.keys(_cache._playerSeasonAwards).length > 60) _cache._playerSeasonAwards={};
+  _topfDeckel(_cache._playerSeasonAwards, 60);
 
   const result=seasons.filter(s=>s.player_id===id||s.team_p1===id||s.team_p2===id);
   _cache._playerSeasonAwards[key]=result;

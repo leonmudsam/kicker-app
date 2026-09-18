@@ -562,8 +562,10 @@ function _potwLastWeekRange(){
   const end=new Date(monday); end.setDate(end.getDate()+7); end.setMilliseconds(-1);
   return {start:monday, end};
 }
+// Der Montag benennt die Woche. Die Schreibweise des Tages steht an EINER
+// Stelle [§C27]; hier stand sie ausgeschrieben ein zweites Mal.
 function _potwKeyOf(monday){
-  return monday.getFullYear()+'-'+String(monday.getMonth()+1).padStart(2,'0')+'-'+String(monday.getDate()).padStart(2,'0');
+  return tagKey(monday);
 }
 function _potwMatchesInRange(start,end){
   return matches.filter(m=>{const d=new Date(m.created_at); return d>=start && d<=end;});

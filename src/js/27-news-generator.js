@@ -139,6 +139,24 @@ function _eloMilestones(){
 // entscheidet sich die Richtung. Dass die Zahl SICHTBAR anders sein muss,
 // bleibt: ein Anteil rückt an fast jedem Spieltag um ein Tausendstel weiter,
 // und das ergab neun Karten an einem Morgen, auf denen dieselbe Zahl stand.
+// ── Was ist mit einem Halterfeld passiert? ───────────────────────────
+// Vier Faelle, und sie gelten fuer den Liga-Rekord wie fuer die Monatschronik
+// [§C27]: beide Felder werden im Lauf eines Tages enger und weiter. Der Rekord
+// kannte nur „uebernommen", und damit stand „Leon uebernimmt ‚Der Aufschwung'.
+// Vorher hielt Leon, Jannik und Stefan den Rekord mit +8 %" im Feed — Leon
+// uebernahm von sich selbst, und aus drei Namen wurde ein „hielt". Beim
+// Dazukommen war es noch schiefer: „Martin und Leo uebernehmen ‚Das
+// Sonntagskind'. Vorher hielt Leo den Rekord mit 70 %" — Leo haelt ihn
+// weiterhin, sein Wert ist nur auf 67 % gefallen und Martin gleichgezogen.
+// Gemessen taten das vier Karten der Ligageschichte.
+function _halterFall(alt, neu){
+  const a = (alt || []).filter(Boolean), n = (neu || []).filter(Boolean);
+  if(!a.length) return 'erstmals';
+  const neuLeute = n.filter(id => a.indexOf(id) < 0);
+  if(!neuLeute.length) return 'allein';        // das Feld ist enger geworden
+  return a.every(id => n.indexOf(id) >= 0) ? 'dazu' : 'uebernommen';
+}
+
 function _rekordArt(alt, neu){
   if(!neu) return '';
   if(!alt) return 'erstmals';
@@ -200,12 +218,17 @@ function _namenKurz(namen, max){
 // mehreren wäre „steht in der Chronik" eine Behauptung über alle [§C33].
 // Und nur, wenn es überhaupt etwas zu unterscheiden gibt — bei einer
 // einzigen Chronik im Monat ist die Antwort offensichtlich.
-function _chronikZeigtSich(pids, sid, titleId){
+// Derselbe Zeitschnitt wie beim Prestige-Satz: die Funktion las den Stand von
+// HEUTE, der Satz darunter den vom letzten Spieltag. Zwei Rechnungen ueber
+// dieselbe Frage nennen irgendwann zwei verschiedene Eintraege, und dann stand
+// „Steht jetzt in der Chronik" neben „In der Chronik bleibt ‚X' staerker" —
+// beides ueber denselben Spieler, denselben Monat, auf einer Karte.
+function _chronikZeigtSich(pids, sid, titleId, bisMs){
   if(!Array.isArray(pids) || pids.length !== 1) return null;
   try {
-    const alle = (seasonTitles(sid).awarded || []).filter(a => a.pid === pids[0]);
+    const alle = (seasonTitles(sid, bisMs).awarded || []).filter(a => a.pid === pids[0]);
     if(alle.length < 2) return null;
-    const gezeigt = seasonTitleOf(pids[0], sid);
+    const gezeigt = seasonTitleOf(pids[0], sid, bisMs);
     if(!gezeigt) return null;
     return {zeigt: gezeigt.titleId === titleId, welche: gezeigt.name,
             andere: alle.filter(a => a.titleId !== gezeigt.titleId).map(a => a.name)};
@@ -1223,7 +1246,7 @@ function _buildStories(){
         if(t < nowTs - wk) break;
         const expA = (m.exp_a == null) ? 0.5 : m.exp_a;
         const winnerChance = m.winner === 'A' ? expA : (1 - expA);
-        if(winnerChance < 0.20){
+        if(winnerChance < CHANCE_SENSATION){
           const winners = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
           const losers  = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
           if(winners.every(p => pm[p] && !pm[p].hidden))
@@ -1232,8 +1255,7 @@ function _buildStories(){
       }
       const jeTag = new Map();
       kandidaten.forEach(gs => {
-        const d = new Date(gs.t);
-        const tag = d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
+        const tag = tagKey(gs.t);
         const alt = jeTag.get(tag);
         if(!alt || gs.chance < alt.chance) jeTag.set(tag, gs);
       });
@@ -1300,7 +1322,7 @@ function _buildStories(){
         art = 'zu_null'; rang = 69; ic = 'hundred';
         title = `${wn} gewinnen ohne Gegentor`;
         desc = `Ein makelloses 10:0 gegen ${ln}. Auf der anderen Seite fällt kein einziger Treffer.`;
-      } else if(chance >= 0.20 && chance < 0.35){
+      } else if(chance >= CHANCE_SENSATION && chance < CHANCE_UPSET){
         art = 'upset'; rang = 67; ic = 'giantSlayer';
         title = `${wn} stürzen die Favoriten`;
         desc = `Nur ${Math.max(1, Math.round(chance * 100))} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;
@@ -1330,8 +1352,7 @@ function _buildStories(){
         : (art === 'krimi' || art === 'eng') ? (bm.has('krimi') || bm.has('nerves_of_steel'))
         : false;
       if(abgedeckt) continue;
-      const d = new Date(ts);
-      const tag = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      const tag = tagKey(ts);
       const list = jeTag.get(tag) || [];
       list.push({m, ts, art, rang, title, desc, ic, winners, losers, chance, diff});
       jeTag.set(tag, list);
@@ -1587,7 +1608,7 @@ function _buildStories(){
     // Feed — sie deckelten sich gegenseitig weg [§C33].
     const _jeTag = new Map();
     kandidaten.forEach(c => {
-      const k = c.pid + '|' + _newsDayKey(c.when);
+      const k = c.pid + '|' + tagKey(c.when);
       const alt = _jeTag.get(k);
       if(!alt || c.streak > alt.streak) _jeTag.set(k, c);
     });
@@ -1864,9 +1885,21 @@ function _buildStories(){
         // steigt auch, weil hinten ein altes Ergebnis herausfaellt. Nur der
         // Halterwechsel ist bei ihm eine Nachricht.
         if(art === 'gesteigert' && def.fenster) return;
-        if(!n.pids.some(p => _amTag.has(p))) return;
-        const _mid = _partieVon(n.pids);
-        const neuN = n.pids.map(nameOf);
+        // Derselbe Fall wie bei der Chronik, dieselbe Funktion [§C27]. Vorher
+        // hiess jeder Halterwechsel „uebernimmt", auch wenn das Feld nur
+        // enger oder weiter geworden ist.
+        const altPids = ((a && a.pids) || []);
+        const fall = art === 'geholt' ? _halterFall(altPids, n.pids) : art;
+        // Genannt werden beim Dazukommen die NEUEN [§C33]: „Martin und Julian
+        // ziehen bei ‚Der Unaufhaltsame' gleich. Geteilt mit Julian" nannte
+        // Julian zweimal, einmal als Neuling und einmal als den, mit dem
+        // geteilt wird. Und wer schon Halter war, hat an diesem Tag nichts
+        // getan — er darf deshalb auch nicht den Spieltags-Nachweis tragen.
+        const wer = fall === 'dazu'
+          ? n.pids.filter(id => altPids.indexOf(id) < 0) : n.pids;
+        if(!wer.some(p => _amTag.has(p))) return;
+        const _mid = _partieVon(wer);
+        const neuN = wer.map(nameOf);
         const namen = _namenListe(neuN);
         // Drei Halter „uebernimmt" nicht, sie uebernehmen.
         const verb = neuN.length > 1 ? 'übernehmen' : 'übernimmt';
@@ -1876,25 +1909,55 @@ function _buildStories(){
         // Jane stand bei 18 % seiner 55 Siege endeten 10:9 · 10") sind kein
         // Satz mehr. Der Beleg steht dahinter, die Bedingung erklärt ihn.
         const wertNeu = _chronKurz(n.ev), wertAlt = a ? _chronKurz(a.ev) : '';
+        const altNamen = _namenListe(altPids.map(nameOf));
         let title, desc;
         // Der Beleg steht hier im Fliesstext, nicht in einer Listenzelle:
         // der Mittelpunkt darin trennte sonst mitten im Satz zwei Spalten,
         // die es gar nicht gibt.
         const belegSatz = _evSatz(n.ev);
+        // Die Zeile einer Sammelkarte traegt die Bedingung nicht: gemessen
+        // ueber die Ligageschichte waren die „Erstmals vergeben"-Zeilen 168
+        // bis 175 Zeichen lang, weil `cond` jede Schwelle nennt [§C35]. In
+        // einem Buendel von neun Zeilen ist das ein Absatz. Die Bedingung
+        // steht auf der einzelnen Karte und im Blatt.
+        let zeileText = '';
         if(art === 'erstmals'){
           title = `Erstmals vergeben: ${def.name}`;
           // Kein Pronomen ueber einen Spieler: die Liga kennt kein Geschlecht,
           // und der Satz steht unter jedem Wappen [§C33].
-          desc = `${belegSatz}. Diesen Rekord hat vorher niemand gehalten. `
-            + `Verlangt ist: ${def.cond}.`;
-        } else if(art === 'geholt'){
-          const altN = _namenListe((a.pids || []).map(nameOf)) || 'der bisherige Halter';
+          zeileText = `${belegSatz}. Diesen Rekord hat vorher niemand gehalten.`;
+          desc = `${zeileText} Verlangt ist: ${def.cond}.`;
+        } else if(fall === 'dazu'){
+          // Wer dazukommt, nimmt niemandem etwas weg: der alte Halter haelt
+          // den Rekord weiter, sein Wert ist nur eingeholt worden. Die
+          // Vorgaenger-Zahl gehoert deshalb nicht in den Satz — sie stand als
+          // „Vorher hielt Leo den Rekord mit 70 %" unter einem neuen Bestwert
+          // von 67 % und behauptete damit einen Rueckschritt als Uebernahme.
+          title = `${namen} ${neuN.length > 1 ? 'ziehen' : 'zieht'} bei „${def.name}" gleich`;
+          desc = `${belegSatz}. Geteilt mit ${_namenListe(
+            altPids.filter(id => n.pids.indexOf(id) >= 0).map(nameOf))}.`;
+        } else if(fall === 'allein'){
+          // Nicht „uebernimmt": die Uebrigen sind nur abgefallen. Genannt
+          // werden die, die weg sind — der neue Halter stand vorher selbst
+          // mit drin, und „Vorher hielt Leon … den Rekord" nannte ihn damit
+          // als seinen eigenen Vorgaenger.
+          title = `${namen} ${neuN.length > 1 ? 'halten' : 'hält'} „${def.name}" jetzt allein`;
+          desc = `${belegSatz}. Vorher ${_namenListe(
+            altPids.filter(id => n.pids.indexOf(id) < 0).map(nameOf))} auch.`;
+        } else if(fall === 'uebernommen'){
+          // Genannt wird, wer WEG ist. Aus {A,B} kann {A,C} werden — dann
+          // stand „A und C uebernehmen. Vorher hielten A und B" da, und A war
+          // sein eigener Vorgaenger. Bleibt niemand uebrig, ist es der ganze
+          // alte Stand.
+          const weg = altPids.filter(id => n.pids.indexOf(id) < 0);
+          const altN = _namenListe(weg.map(nameOf)) || altNamen || 'der bisherige Halter';
+          const hielten = weg.length > 1 ? 'hielten' : 'hielt';
           title = `${namen} ${verb} „${def.name}"`;
           // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
           desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu
-            ? `Vorher hielt ${altN} den Rekord mit ${wertAlt}.`
+            ? `Vorher ${hielten} ${altN} den Rekord mit ${wertAlt}.`
             : `Vorher gehörte der Rekord ${altN}.`);
         } else {
           title = `${namen} ${baut} „${def.name}" aus`;
@@ -1924,7 +1987,7 @@ function _buildStories(){
           // eigene Karte [§C33].
           id: `rek_${def.id}_${art}_${n.pids.slice().sort().join('-')}`
             + `_${String(wertNeu).replace(/[^0-9a-zA-Z]/g, '')}`
-            + `_${_newsDayKey(_letzteMs)}`,
+            + `_${tagKey(_letzteMs)}`,
           cat: 'tafel',
           ic: def.ic,
           title, desc,
@@ -1933,7 +1996,7 @@ function _buildStories(){
               : art === 'geholt'   ? STORY_PRIO.rekord_geholt
                                    : STORY_PRIO.rekord_gesteigert,
           dataRef: {type:'rekord_' + art, rekordId:def.id, matchId:_mid, kammer:def.kind,
-                    zufall:def.zufall || '', playerIds:n.pids.slice(0, 3),
+                    zufall:def.zufall || '', playerIds:wer.slice(0, 3), zeileText,
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
                     kammerLabel:_kammer(def.kind)}
         });
@@ -2047,8 +2110,20 @@ function _buildStories(){
         });
         return best ? best.id : null;
       };
-      const _jetztH = seasonTitleHalter(_sid);
-      const _vorherH = seasonTitleHalter(_sid, _t0.getTime() - 1);
+      // ── Das Aufgehen der Tafel ist kein Wechsel ─────────────────────
+      // Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik
+      // [§C32], und `seasonTitleHalter` sagt das mit `null`. Am fuenften
+      // Spieltag geht die Tafel auf, und ohne diese Sperre stuende jeder
+      // Eintrag als „holt" im Feed: gemessen vierzehn Neuvergaben an einem
+      // Nachmittag, fuer Werte, die ueber fuenf Spieltage entstanden sind.
+      // Wer am 2. August 5 von 5 gewonnen hat, hat das nicht am 10. getan.
+      // Gemeldet wird deshalb erst, was sich von der ersten gewerteten Lage
+      // an aendert.
+      const _jetztRoh = seasonTitleHalter(_sid);
+      const _vorherRoh = seasonTitleHalter(_sid, _t0.getTime() - 1);
+      const _gewertet = !!(_jetztRoh && _vorherRoh);
+      const _jetztH = _gewertet ? _jetztRoh : {};
+      const _vorherH = _gewertet ? _vorherRoh : {};
       // Eine Chronik-Karte darf nicht den Katalogwert als neuen Prestige-
       // Gewinn ausgeben. Pro Monat zaehlt nur der eine Eintrag, der in der
       // Tafel steht; ein besserer Eintrag kann den gerade geholten also
@@ -2088,9 +2163,7 @@ function _buildStories(){
         const alt = (a && a.pids) || [];
         const drin = id => alt.indexOf(id) >= 0;
         const neuLeute = n.pids.filter(id => !drin(id));
-        const art = !alt.length ? 'erstmals'
-                  : !neuLeute.length ? 'allein'          // das Feld ist enger geworden
-                  : (alt.every(id => n.pids.indexOf(id) >= 0) ? 'dazu' : 'uebernommen');
+        const art = _halterFall(alt, n.pids);
         // Die Schlagzeile nennt die, um die es geht [§C33]: beim Dazukommen
         // sind das die Neuen, sonst alle Halter.
         const wer = art === 'dazu' ? neuLeute : n.pids;
@@ -2101,8 +2174,13 @@ function _buildStories(){
                     : art === 'allein'    ? `${namen} ${mz ? 'halten' : 'hält'} „${t.name}" jetzt allein`
                     : art === 'dazu'      ? `${namen} ${mz ? 'ziehen' : 'zieht'} bei „${t.name}" gleich`
                     : `${namen} ${mz ? 'übernehmen' : 'übernimmt'} „${t.name}"`;
+        // Genannt wird, wer WEG ist — dieselbe Regel wie beim Rekord: aus
+        // {A,B} kann {A,C} werden, und dann stand A als sein eigener
+        // Vorgaenger im Satz.
+        const altWeg = alt.filter(id => n.pids.indexOf(id) < 0);
         const nachsatz = art === 'uebernommen'
-            ? ` Vorher ${alt.length > 1 ? 'hielten' : 'hielt'} sie ${_namenKurz(alt.map(nameOf))}.`
+            ? ` Vorher ${altWeg.length > 1 ? 'hielten' : 'hielt'} sie `
+              + `${_namenKurz((altWeg.length ? altWeg : alt).map(nameOf))}.`
           : art === 'dazu'
             ? ` Geteilt mit ${_namenKurz(alt.map(nameOf))}.`
           : art === 'allein'
@@ -2113,7 +2191,7 @@ function _buildStories(){
             : '';
         // Wer im selben Monat mehrere Chroniken hält, erfährt hier, welche
         // davon ihn in der Tafel vertritt — und welche sie dafür überbietet.
-        const _zeigt = _chronikZeigtSich(n.pids, _sid, t.id);
+        const _zeigt = _chronikZeigtSich(n.pids, _sid, t.id, _letzteMs2);
         // Sagt der Prestige-Satz unten schon, welcher Eintrag den Platz
         // haelt, faellt dieser weg: „In der Chronik steht weiter ‚Der
         // Umschwung'. Fuer die Laufbahn bleibt ‚Der Umschwung' staerker" ist
@@ -2143,17 +2221,43 @@ function _buildStories(){
           const istSelbst = ohnePlus.some(pid => titelJeSpieler[pid] === t.name);
           const staerker = [...new Set(ohnePlus.map(pid => titelJeSpieler[pid]).filter(Boolean))];
           prestigeSatz = istSelbst
-            ? ` „${t.name}“ steht in der Monatschronik, am gerundeten Prestige-Stand ändert sich diesmal nichts.`
-            : staerker.length
+            // Ohne den Namen: `_zeigtSatz` sagt eine Zeile darueber schon
+            // „Steht jetzt in der Chronik", und mit dem Namen stand da
+            // „Steht jetzt in der Chronik. ‚Der Endspurt' steht in der
+            // Monatschronik, am gerundeten Prestige-Stand aendert sich
+            // diesmal nichts" — dieselbe Aussage zweimal, der Name aus der
+            // eigenen Schlagzeile dazu ein drittes Mal [§C33 `_ndNeu`].
+            ? ' Am gerundeten Prestige-Stand ändert sich damit nichts.'
+            // Der staerkere Eintrag gehoert EINEM Spieler, also wird er nur
+            // genannt, wenn es auch um einen geht. Bei zwei neuen Haltern
+            // sammelte der Satz beide Eintraege ein und behauptete sie fuer
+            // beide: „In der Chronik bleibt ‚Der Endspurt' und ‚Die zweite
+            // Luft' staerker" — dieselbe Regel, die `_chronikZeigtSich` fuer
+            // die Frage „welche steht in der Tafel" schon zieht [§C32].
+            : (staerker.length === 1 && ohnePlus.length === 1)
             // Kein Semikolon mitten im Satz: die Karte spricht in Saetzen.
-            ? ` In der Chronik bleibt ${_namenListe(staerker.map(x => `„${x}“`))} stärker,`
+            ? ` In der Chronik bleibt „${staerker[0]}“ stärker,`
               + ` also kommt für die Laufbahn kein Prestige hinzu.`
             : ' Für die Laufbahn kommt durch diesen Wechsel kein Prestige hinzu.';
         } else {
           prestigeSatz = ' Die Halterlage ändert sich, der Prestige-Stand nicht.';
         }
+        // ── Die Zeile einer Sammelkarte ist kuerzer als die Karte ─────
+        // Im Blatt eines Tafel-Moments steht jede Zeile mit dem ganzen Text
+        // der Karte. Gemessen trug eine Zeile bis zu 183 Zeichen und vier
+        // Saetze, und neun davon standen untereinander: Beleg, Klasse,
+        // Vorbesitz, „steht jetzt in der Chronik" — was die Zeile als Marke
+        // ohnehin traegt [§C32] — und dazu die Prestige-Mechanik. Fuenf der
+        // neun erklaerten dabei, warum sich NICHTS aendert, und das ist die
+        // Bauanleitung des Feeds, nicht die Nachricht [§C33].
+        // Die Zeile nennt deshalb den Wert, die Klasse und den Zuwachs, wo es
+        // einen gibt. Der ganze Text bleibt an der einzelnen Karte.
+        const zeileText = (n.ev ? _evSatz(n.ev) + '. ' : '') + `${artikel} Chronik.`
+          + (mitPlus.length
+             ? ` ${_namenListe(mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`))}`
+               + ' Prestige für die Laufbahn.' : '');
         _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer,
-          prestigeDelta, titelJeSpieler,
+          prestigeDelta, titelJeSpieler, zeileText,
           title: titel,
           // Ohne die Punkte: die Karte zeigt sie als grossen Wert, und zweimal
           // dieselbe Zahl untereinander sagt nichts Neues [§C33].
@@ -2173,7 +2277,7 @@ function _buildStories(){
           // weggehen und zurueckkommen, und dann sind das zwei Ereignisse
           // [§C33]. „Johannes holt ‚Der Beidfuessige'" trug sonst den
           // Zeitstempel des 24. und die Partie des 26.
-          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}_${_newsDayKey(_letzteMs2)}`,
+          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}_${tagKey(_letzteMs2)}`,
           cat: 'tafel',
           ic: m.t.ic,
           title: m.title,
@@ -2193,6 +2297,7 @@ function _buildStories(){
                     // nichts getan [§C33].
                     playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
+                    zeileText:m.zeileText,
                     chronArt:m.t.kunst, aus:m.t.aus,
                     // `punkte` ist der tatsaechliche neue Beitrag, nicht der
                     // ungedaempfte Katalogwert. Der bleibt als Grundwert fuer
@@ -2248,7 +2353,7 @@ function _buildStories(){
             // erreicht werden. Dieselbe ID fuer zwei Momente laesst die
             // aeltere Karte auf die neuere Partie zeigen [§C33].
             id: 'ins_' + p.id + '_' + INSIGNIEN[stufe].key
-                + '_' + _newsDayKey(_insLetzte),
+                + '_' + tagKey(_insLetzte),
             cat: 'tafel',
             ic: 'award',
             title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`,
@@ -2259,6 +2364,15 @@ function _buildStories(){
             prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
             dataRef: {type:'insignium_stufe', pid:p.id,
                       matchId:ausloeser ? ausloeser.id : null, stufe,
+                      // In einer Sammelkarte steht die Herkunft des Prestiges
+                      // nicht: drei Quellen mit drei Zahlen und dazu der
+                      // Abstand zur naechsten Stufe waren gemessen 124 Zeichen
+                      // in einer Zeile, neben acht anderen. Der Stand und der
+                      // Weg weiter bleiben, die Aufteilung gehoert der
+                      // einzelnen Karte [§C33].
+                      zeileText: `${stand.punkte} Prestige zusammen.`
+                        + (stand.naechste
+                           ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
                       stufeName:INSIGNIEN[stufe].name, punkte:stand.punkte, oben}
           });
         }

@@ -296,12 +296,13 @@ function chronikPunkte(titleId){
 // Spieler allein bestimmen, also wird immer die ganze Tabelle gerechnet
 // und memoisiert — wie überall an matches.length + _cache.version gebunden.
 function prestigeTabelle(bisMs){
+  bisMs = _schnitt(bisMs);
   const key = matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
   if(!bisMs && _cache._prestigeKey === key) return _cache._prestige;
   if(bisMs){
     if(!_cache._prestigeBis) _cache._prestigeBis = {};
     if(_cache._prestigeBis[key]) return _cache._prestigeBis[key];
-    if(Object.keys(_cache._prestigeBis).length > 20) _cache._prestigeBis = {};
+    _topfDeckel(_cache._prestigeBis, 20);
   }
 
   const aktive = (players || []).filter(p => p && !p.hidden);
@@ -466,7 +467,7 @@ function meisterTitel(pid){
   if(!_cache._meister) _cache._meister = {};
   if(_cache._meister[key] != null) return _cache._meister[key];
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
-  if(Object.keys(_cache._meister).length > 60) _cache._meister = {};
+  _topfDeckel(_cache._meister, 60);
   const cur = currentSeason().id;
   let n = 0;
   (allPastSeasons() || []).forEach(sid => {

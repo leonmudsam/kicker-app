@@ -135,13 +135,14 @@ CHRONICLES.forEach((c, i) => {
 // `peak` und die Saison-Endstände kämen sonst weiter aus der Zukunft.
 // Ohne Argument bleibt alles wie bisher, inklusive des einen heißen Caches.
 function _chronicleCtx(bisMs){
+  bisMs = _schnitt(bisMs);
   const key = matches.length + '_' + _cache.version;
   if(!bisMs && _cache._chronCtxKey === key) return _cache._chronCtx;
   if(bisMs){
     if(!_cache._chronCtxBis) _cache._chronCtxBis = {};
     const bk = bisMs + '_' + key;
     if(_cache._chronCtxBis[bk]) return _cache._chronCtxBis[bk];
-    if(Object.keys(_cache._chronCtxBis).length > 24) _cache._chronCtxBis = {};
+    _topfDeckel(_cache._chronCtxBis, 24);
   }
 
   const ms = (bisMs ? matches.filter(m => mts(m) <= bisMs) : matches.slice())
@@ -263,7 +264,7 @@ function _chronicleCtx(bisMs){
       if(Math.abs(diff) <= 2){ p.close++; if(w) p.closeW++; }
       if(w && diff >= 7) p.blowW++;
       if(!w && diff <= -7) p.blowL++;
-      if(w && exp < 0.35) p.upsets++;
+      if(w && exp < CHANCE_UPSET) p.upsets++;
       // ── Fügungen [§C35] ───────────────────────────────────────────
       // Die bitterste Niederlage: die höchste Siegchance, die trotzdem
       // verloren ging. Eine einzige Partie, kein Durchschnitt — deshalb
@@ -408,8 +409,8 @@ function _chronicleCtx(bisMs){
     }
     const unter = [], fav = [], rest = [], atk = [], def = [];
     r.forEach(x => {
-      if(x.exp < 0.45) unter.push(x);
-      if(x.exp > 0.55) fav.push(x);
+      if(x.exp < CHANCE_OFFEN) unter.push(x);
+      if(_stFavorit(x)) fav.push(x);
       if(!x.geg.some(g => _top3.includes(g))) rest.push(x);
       (x.pos === 'atk' ? atk : def).push(x);
     });
@@ -581,13 +582,14 @@ function _chronicleCtx(bisMs){
 // Liga-Liste zeigt jeden Rekord mit seinem echten Halter.
 // `bisMs` reicht den Zeitschnitt an den Kontext durch — siehe dort.
 function allChronicles(bisMs){
+  bisMs = _schnitt(bisMs);
   const key = matches.length + '_' + _cache.version;
   if(!bisMs && _cache._chronAllKey === key) return _cache._chronAll;
   if(bisMs){
     if(!_cache._chronAllBis) _cache._chronAllBis = {};
     const bk = bisMs + '_' + key;
     if(_cache._chronAllBis[bk]) return _cache._chronAllBis[bk];
-    if(Object.keys(_cache._chronAllBis).length > 24) _cache._chronAllBis = {};
+    _topfDeckel(_cache._chronAllBis, 24);
   }
   const C = _chronicleCtx(bisMs);
   const byPid = {}, byId = {};
@@ -653,7 +655,7 @@ function saisonRekorde(sid){
   const key = 'srek_' + sid + '_' + matches.length + '_' + _cache.version;
   if(!_cache._srek) _cache._srek = {};
   if(_cache._srek[key]) return _cache._srek[key];
-  if(Object.keys(_cache._srek).length > 24) _cache._srek = {};
+  _topfDeckel(_cache._srek, 24);
 
   const out = [];
   try {
@@ -813,7 +815,7 @@ function chronicleRang(cid){
     || C.P[b.pid].wins - C.P[a.pid].wins
     || C.P[b.pid].gd - C.P[a.pid].gd
     || (a.pid < b.pid ? -1 : 1));
-  if(Object.keys(_cache._chronRang).length > 12) _cache._chronRang = {};
+  _topfDeckel(_cache._chronRang, 12);
   _cache._chronRang[key] = reihe;
   return reihe;
 }

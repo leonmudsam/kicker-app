@@ -407,7 +407,7 @@ function seasonTeamOf(sid){
   if(!_cache._seasonTeam) _cache._seasonTeam = {};
   if(key in _cache._seasonTeam) return _cache._seasonTeam[key];
   const wert = _seasonTeamOfBerechnet(sid);
-  if(Object.keys(_cache._seasonTeam).length > 60) _cache._seasonTeam = {};
+  _topfDeckel(_cache._seasonTeam, 60);
   _cache._seasonTeam[key] = wert;
   return wert;
 }
@@ -1167,7 +1167,7 @@ function getCachedBadges(id){
   if(!_cache._badges) _cache._badges={};
   if(_cache._badges[key]) return _cache._badges[key];
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
-  if(Object.keys(_cache._badges).length > 60) _cache._badges={};
+  _topfDeckel(_cache._badges, 60);
   const r=computeBadges(id);
   _cache._badges[key]=r;
   return r;
@@ -1348,7 +1348,7 @@ function getBadgeEarnedCache(){
       if(w  && gf===10 && ga===9)                   fire('nail_biter');
       if(!w && gf===9  && ga===10)                  fire('bitter_loss');
       if(w  && pos==='def' && ga<=2)                fire('wall_badge');
-      if(w  && myExp<0.35)                          fire('upset_king');
+      if(w  && myExp<CHANCE_UPSET)                          fire('upset_king');
 
       // ── Mr. Perfect: 3× 10:0-Sieg in DERSELBEN Saison ──
       // Saison-IDs per seasonOf() bestimmen (sid-Format YYYY-MM). Counter pro

@@ -238,7 +238,6 @@ function simulateEloWithSliders(matchSubset, opts={}){
   };
 
   const ordered=[...matchSubset].sort((a,b)=>mts(a)-mts(b));
-  const localExp=(a,b)=>1/(1+Math.pow(10,(b-a)/400));
   const localDynK=(id)=>{const g=playedSeason[id]||0,e=elo[id];
     if(g<5)return cfg.k_factor*(cfg.new_player_mult ?? 1.5);
     if(g<15)return cfg.k_factor*(cfg.new_player_mid_mult ?? 1.2);
@@ -278,7 +277,7 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const teamA=[{id:m.a1,pos:m.a1_pos},{id:m.a2,pos:m.a2_pos}];
     const teamB=[{id:m.b1,pos:m.b1_pos},{id:m.b2,pos:m.b2_pos}];
     const aAvg=(elo[m.a1]+elo[m.a2])/2,bAvg=(elo[m.b1]+elo[m.b2])/2;
-    const expA=localExp(aAvg,bAvg);
+    const expA=expected(aAvg,bAvg);
     const rawMov=movMult(m.score_a,m.score_b);
     const res={}, breakdowns={};
 
