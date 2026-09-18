@@ -181,7 +181,7 @@ function schluss(p, mindTage){
 const K = [
   // ══ Positiv: die Abweichung nach oben ═════════════════════════════
   {id:'hochform', achse:'beide', art:'koennen', ton:'gold', stufe:'pp',
-   name:'Der Höhenflug', short:'Höhenflug', beiname:'Der Entfesselte',
+   name:'Der Höhenflug', short:'Höhenflug', beiname:'Der Aufgeblühte',
    mind:{allzeit:20, monat:5},
    frage:'Wie weit liegt die laufende Form über der eigenen Laufbahn?',
    cond:'Ein Block aus 10 Partien mindestens 35 Prozentpunkte über der eigenen Quote außerhalb dieses Blocks, ab 20 Partien',
@@ -195,6 +195,12 @@ const K = [
 
   {id:'steigerung', achse:'beide', art:'konstanz', ton:'gold', stufe:'pp',
    name:'Die Steigerungsform', short:'Steigerung', beiname:'Der Gereifte',
+   // Gemessen gegen den Katalog: dieselbe Frage steht dort als „Die
+   // Steigerung" — aber nur als Monatschronik. Ein Vorschlag daraus ist
+   // deshalb kein neuer Eintrag, sondern die zweite Zeitachse eines
+   // bestehenden [§13.1]. Zwei Namen fuer denselben Gedanken waeren einer
+   // zu viel [§C27].
+   gibtEs:{id:'steigerung', name:'Die Steigerung', hat:'monat', fehlt:'allzeit'},
    mind:{allzeit:20, monat:5},
    frage:'Wer wird im Verlauf besser als er angefangen hat?',
    cond:'Zweite Hälfte der eigenen Spieltage mindestens 20 Prozentpunkte über der ersten, ab 10 eigenen Spieltagen (Monat: 5)',
@@ -206,7 +212,7 @@ const K = [
      + ' % in der zweiten Hälfte statt ' + pct(p._st.erst) + ' % in der ersten'},
 
   {id:'ueberflieger', achse:'beide', art:'koennen', ton:'gold', stufe:'pp',
-   name:'Der Trotzkopf', short:'Trotz', beiname:'Der Unbeugsame',
+   name:'Der Trotzkopf', short:'Trotz', beiname:'Der Widerspenstige',
    mind:{allzeit:25, monat:5},
    frage:'Wer holt gegen Stärkere mehr als gegen alle?',
    cond:'Mindestens 15 Prozentpunkte bessere Quote gegen Stärkere als über alles, ab 25 Partien als Außenseiter (Monat: 5)',
@@ -217,7 +223,7 @@ const K = [
      + ' % in ' + p._uf.n + ' Partien statt ' + pct(p._uf.eigen) + ' % sonst'},
 
   {id:'schlusspfiff', achse:'beide', art:'konstanz', ton:'gold', stufe:'pp',
-   name:'Der letzte Ball', short:'Schluss', beiname:'Der Standhafte',
+   name:'Der letzte Ball', short:'Schluss', beiname:'Der Nervenstarke',
    mind:{allzeit:20, monat:5},
    frage:'Wer gewinnt die letzte Partie eines Abends öfter als die davor?',
    cond:'Mindestens 25 Prozentpunkte bessere Quote in der letzten Partie eines Spieltags, ab 10 eigenen Spieltagen mit je 3 Partien (Monat: 3)',
@@ -297,6 +303,10 @@ const K = [
 
   {id:'ladehemmung2', achse:'beide', art:'schatten', ton:'red', stufe:'tor',
    name:'Der Ladehemmer', short:'Ladehemm', beiname:'Der Zögerliche',
+   // Den gibt es vollstaendig: „Die Ladehemmung" traegt beide Achsen und
+   // rechnet dasselbe. Der Kandidat bleibt in der Liste, weil der Lauf
+   // zeigen soll, dass er das findet — gebaut wird er nicht.
+   gibtEs:{id:'misfire', name:'Die Ladehemmung', hat:'allzeit und monat', fehlt:null},
    mind:{allzeit:25, monat:8},
    frage:'Wer trifft im Sturm deutlich weniger als sonst?',
    cond:'Mindestens 1,5 Tore je Partie weniger im Sturm als über alles, ab 25 Sturmspielen (Monat: 8)',
@@ -311,6 +321,160 @@ const K = [
      + komma(p._lh.imSturm) + ' statt ' + komma(p._lh.ueberall) + ' in '
      + p._lh.n + ' Sturmspielen'},
 ];
+
+// ── Die kurzzeitige Form [§C35] ─────────────────────────────────────
+// Ein Rekord ueber die ganze Laufbahn wechselt kaum den Halter: er mittelt
+// ueber hunderte Partien, und eine einzelne bewegt ihn um ein Tausendstel.
+// Ein Rekord auf einem GLEITENDEN FENSTER mittelt ueber zwanzig oder dreissig
+// und kann damit an einem einzigen Spieltag den Besitzer wechseln — das ist
+// der Grund, warum es ihn gibt. Drei gibt es schon („Die starke Phase", „Die
+// dichte Phase", „Der Aufschwung"), und keiner der sieben hier fragt dasselbe.
+//
+// Zwei Dinge trennen ein Fenster von einem gesuchten Maximum: die Groesse ist
+// FEST (wer 30 Partien hat, hat genau ein Fenster, und wer 350 hat, auch), und
+// die Lage ist fest (das Ende ist heute). Ein Maximum INNERHALB des Fensters
+// ist davon unberuehrt — „die laengste Siegesserie in den letzten 30" zieht
+// bei jedem aus derselben Zahl von Partien.
+//
+// Ein Fenster meldet kein „ausgebaut" [§C35]: der Wert steigt auch, weil am
+// hinteren Ende ein schwaches Ergebnis herausfaellt. Gemeldet wird nur der
+// Halterwechsel — und genau der ist hier die Nachricht.
+const fensterSicht = (p, n) => p.games >= n ? p.partien.slice(-n) : null;
+const schnitt = (a, f) => a.reduce((x, s) => x + f(s), 0) / a.length;
+// Die laengste Serie INNERHALB einer Partienfolge. `wie` ist `win` fuer die
+// Siegesserie und `!win` fuer die Pleitenserie.
+const serieIn = (a, wie) => { let b = 0, l = 0;
+  a.forEach(s => { if(wie(s)){ l++; if(l > b) b = l; } else l = 0; }); return b; };
+
+const FK = [
+  // ══ Positiv ══════════════════════════════════════════════════════
+  {id:'lauf', art:'leistung', ton:'gold', stufe:'pp', n:20,
+   name:'Der Lauf', short:'Lauf',
+   frage:'Wer steht gerade am besten im Futter?',
+   cond:'Höchste Siegquote in den letzten 20 Partien, ab 20 Partien',
+   wie:'Der Nenner sind die letzten 20 eigenen Partien und nicht die Laufbahn; das Fenster wandert mit jeder Partie weiter. Gefragt ist das Niveau von JETZT — auf einer ganzen Laufbahn gehörte diese Frage dem Besten der Liga, in zwanzig Partien kann sie jedem gehören.',
+   wert:p => { const f = fensterSicht(p, 20); if(!f) return null;
+     p._f = {q:quote(f), n:20}; return quote(f); },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? p.q : null,
+   ev:p => pct(p._f.q) + ' % in den letzten 20 Partien · '
+     + Math.round(p._f.q * 20) + ' Siege'},
+
+  {id:'trefferwelle', art:'leistung', ton:'orange', stufe:'tor', n:20,
+   name:'Die Trefferwelle', short:'Welle',
+   frage:'Wessen Team trifft gerade am häufigsten?',
+   cond:'Meiste eigene Tore je Partie in den letzten 20 Partien, ab 20 Partien',
+   wie:'Gezählt werden die Tore des eigenen Teams in den letzten 20 eigenen Partien, geteilt durch 20. Anders als beim Torjäger zählt die Position nicht mit: gefragt ist die Phase, nicht die Rolle.',
+   wert:p => { const f = fensterSicht(p, 20); if(!f) return null;
+     p._f = {tore:schnitt(f, s => s.gf)}; return p._f.tore; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? schnitt(p.partien, s => s.gf) : null,
+   ev:p => komma(p._f.tore) + ' eigene Tore je Partie · die letzten 20'},
+
+  {id:'siegzug', art:'ereignis', ton:'gold', stufe:'zahl', n:30,
+   name:'Der Siegzug', short:'Siegzug',
+   frage:'Wer hat im laufenden Fenster die längste Siegesserie gestapelt?',
+   cond:'Längste Siegesserie innerhalb der letzten 30 Partien, ab 30 Partien',
+   wie:'Gesucht wird die längste Folge von Siegen ohne Niederlage dazwischen, aber nur innerhalb der letzten 30 eigenen Partien. Anders als beim Unaufhaltsamen zählt nicht die Laufbahn: die Serie von vor zwei Jahren fällt mit dem Fenster heraus. Das Fenster ist für alle 30 Partien groß, also hat auch niemand mehr Gelegenheiten als ein anderer.',
+   wert:p => { const f = fensterSicht(p, 30); if(!f) return null;
+     p._f = {s:serieIn(f, s => s.win)}; return p._f.s; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? serieIn(p.partien, s => s.win) : null,
+   ev:p => p._f.s + ' Siege am Stück · in den letzten 30 Partien'},
+
+  {id:'vorsprung', art:'leistung', ton:'acid', stufe:'tor', n:25,
+   name:'Der Vorsprung', short:'Vorsprung',
+   frage:'Wer gewinnt gerade nicht nur, sondern deutlich?',
+   cond:'Höchste Tordifferenz je Partie in den letzten 25 Partien, ab 25 Partien',
+   wie:'Eigene Tore minus Gegentore, gemittelt über die letzten 25 eigenen Partien. Die Tordifferenz sagt mehr als die Siegquote: wer knapp gewinnt und deutlich verliert, steht hier nicht vorne, obwohl die Quote stimmt.',
+   wert:p => { const f = fensterSicht(p, 25); if(!f) return null;
+     p._f = {d:schnitt(f, s => s.gf - s.ga)}; return p._f.d; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? schnitt(p.partien, s => s.gf - s.ga) : null,
+   ev:p => komma(p._f.d) + ' Tore Differenz je Partie · die letzten 25'},
+
+  // ══ Negativ ══════════════════════════════════════════════════════
+  {id:'talfahrt', art:'schatten', ton:'red', stufe:'pp', n:20,
+   name:'Die Talfahrt', short:'Talfahrt',
+   frage:'Wer steckt gerade am tiefsten drin?',
+   cond:'Niedrigste Siegquote in den letzten 20 Partien, ab 20 Partien',
+   wie:'Dieselbe Rechnung wie beim Lauf, nur am anderen Ende. Der Unterschied zur Durststrecke ist das Fenster: eine Pleitenserie muss ohne Unterbrechung laufen, eine Talfahrt darf zwischendurch einen Sieg haben und bleibt trotzdem eine.',
+   wert:p => { const f = fensterSicht(p, 20); if(!f) return null;
+     p._f = {q:quote(f)}; return -quote(f); },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? -p.q : null,
+   ev:p => pct(p._f.q) + ' % in den letzten 20 Partien · '
+     + Math.round((1 - p._f.q) * 20) + ' Niederlagen'},
+
+  {id:'flaute', art:'schatten', ton:'red', stufe:'tor', n:20,
+   name:'Die Flaute', short:'Flaute',
+   frage:'Wessen Team trifft gerade am seltensten?',
+   cond:'Wenigste eigene Tore je Partie in den letzten 20 Partien, ab 20 Partien',
+   wie:'Das Gegenstück zur Trefferwelle mit derselben Rechnung. Gewertet werden die Tore des eigenen Teams, nicht die eigenen: wer im Tor der Abwehr steht, trägt sie genauso.',
+   wert:p => { const f = fensterSicht(p, 20); if(!f) return null;
+     p._f = {tore:schnitt(f, s => s.gf)}; return -p._f.tore; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? -schnitt(p.partien, s => s.gf) : null,
+   ev:p => komma(p._f.tore) + ' eigene Tore je Partie · die letzten 20'},
+
+  {id:'pleitenzug', art:'schatten', ton:'red', stufe:'zahl', n:30,
+   name:'Der Pleitenzug', short:'Pleitenzug',
+   frage:'Wer hat im laufenden Fenster die längste Pleitenserie stehen?',
+   cond:'Längste Niederlagenserie innerhalb der letzten 30 Partien, ab 30 Partien',
+   wie:'Das Gegenstück zum Siegzug. Anders als die Durststrecke, die die ganze Laufbahn absucht, fällt die Serie von damals mit dem Fenster heraus — was zählt, ist die Strecke, die heute noch im Fenster steht.',
+   wert:p => { const f = fensterSicht(p, 30); if(!f) return null;
+     p._f = {s:serieIn(f, s => !s.win)}; return p._f.s; },
+   ganz:p => p.games >= CHRON_MIN_GAMES ? serieIn(p.partien, s => !s.win) : null,
+   ev:p => p._f.s + ' Niederlagen am Stück · in den letzten 30 Partien'},
+];
+
+// Das Vergleichsmass steht an jedem Kandidaten selbst: `ganz` ist DIESELBE
+// Rechnung ohne Fenster. Zwei fremde Laufbahn-Rekorde als Massstab waren der
+// erste Entwurf und taugten nicht — gemessen wechselte die Siegquote der
+// Laufbahn an 4,2 % der Partien den Halter und die Tore je Partie an 8,9 %,
+// also haette derselbe Grenzwert die eine Frage geschenkt und die andere
+// unmoeglich gemacht. Gepaart ist die Aussage sauber: es ist die Frage des
+// Kandidaten, einmal mit und einmal ohne Fenster, und der Unterschied ist
+// allein das Fenster.
+const CHRON_MIN_GAMES = 30;          // wie in der App
+
+// ── Der Halterwechsel, Partie fuer Partie nachgespielt ──────────────
+// Die Behauptung des Vorschlags ist, dass ein Fenster den Halter oefter
+// wechselt. Behauptet ist sie nichts wert, also wird die Liga von vorne
+// nachgespielt: nach JEDER Partie wird gefragt, wer den Eintrag haelt.
+// Gezaehlt werden die Wechsel und die verschiedenen Halter.
+function wechselLauf(k){
+  const P = {};
+  IDS.forEach(id => { P[id] = {id, partien:[], games:0, wins:0, q:0}; });
+  let halter = null, wechsel = 0, stand = 0;
+  const wer = {};
+  const saetze = new Set();
+  MS.forEach(m => {
+    const vier = [m.a1, m.a2, m.b1, m.b2];
+    const posAlle = [m.a1_pos, m.a2_pos, m.b1_pos, m.b2_pos];
+    vier.forEach((id, i) => {
+      if(!id || !P[id]) return;
+      const onA = i < 2, p = P[id];
+      const win = (onA && m.winner === 'A') || (!onA && m.winner === 'B');
+      p.partien.push({win, gf:onA ? m.score_a : m.score_b,
+        ga:onA ? m.score_b : m.score_a, pos:posAlle[i],
+        exp:onA ? m.exp_a : 1 - m.exp_a, ts:m.ts});
+      p.games++; if(win) p.wins++; p.q = p.wins / p.games;
+    });
+    const werte = [];
+    IDS.forEach(id => { const v = k.wert(P[id]); if(v != null) werte.push({id, v}); });
+    if(!werte.length) return;
+    const best = Math.max(...werte.map(x => x.v));
+    const h = werte.filter(x => Math.abs(x.v - best) < 1e-9)
+      .map(x => x.id).sort().join('+');
+    if(halter !== null && h !== halter) wechsel++;
+    halter = h;
+    saetze.add(h);
+    h.split('+').forEach(id => { wer[id] = (wer[id] || 0) + 1; });
+    stand++;
+  });
+  const ids = Object.keys(wer);
+  const proTag = stand ? wechsel / stand * 100 : 0;
+  return {wechsel, stand, proTag, verschieden: ids.length, saetze: saetze.size,
+          // Der laengste Besitz in Prozent der Zeit, in der der Eintrag
+          // vergeben war: 100 heisst „einer haelt ihn seit jeher".
+          groesster: stand ? Math.max(0, ...ids.map(id => wer[id])) / stand : 0,
+          wer};
+}
 
 // ── Die Tore ────────────────────────────────────────────────────────
 const korr = (xs, ys) => {
@@ -446,6 +610,72 @@ const ERG = K.map(k => {
           prestige: klasse ? punkte(k.art, aus, klasse) : 0, tore};
 });
 
+// ── Der Fenster-Rekord: heutige Lage und die Tore ───────────────────
+// Ein Fenster-Rekord ist ein LIGA-REKORD und keine Chronik: der Monat ist
+// selbst schon ein Fenster, und dieselbe Frage auf beiden waere sie zweimal
+// [§13.1]. Er hat deshalb keine Schwelle zu kalibrieren — er gehoert dem
+// Hoechsten — und keinen Ausschlag; sein Prestige kommt aus `art` und der
+// Zahl der Halter [§C34]. Gemessen wird dafuer etwas anderes: ob er wirklich
+// wandert.
+function fensterMessen(k){
+  const werte = [];
+  IDS.forEach(id => { const p = LAUF[id]; const v = k.wert(p);
+    if(v != null) werte.push({id, v, ev:k.ev(p, v)}); });
+  werte.sort((a, b) => b.v - a.v);
+  if(!werte.length) return {rennen:0, halter:[], alle:[]};
+  const halter = werte.filter(x => Math.abs(x.v - werte[0].v) < 1e-9);
+  return {rennen:werte.length, halter, alle:werte,
+          korr: korr(werte.map(x => LAUF[x.id].games), werte.map(x => x.v))};
+}
+
+const FERG = FK.map(k => {
+  const jetzt = fensterMessen(k);
+  const w = wechselLauf(k);
+  // Derselbe Lauf mit derselben Frage, nur ohne Fenster. Alles, was zwischen
+  // beiden Zahlen liegt, ist das Fenster und sonst nichts.
+  const g = wechselLauf({wert:k.ganz});
+  const ganzKorr = (() => {
+    const werte = [];
+    IDS.forEach(id => { const v = k.ganz(LAUF[id]); if(v != null) werte.push({id, v}); });
+    return werte.length < 3 ? 0
+      : korr(werte.map(x => LAUF[x.id].games), werte.map(x => x.v));
+  })();
+  // Ein Halter mit unter hundert Partien im Rennen: sonst ist das Fenster nur
+  // eine andere Verpackung des Vielspieler-Rekords [§C35].
+  const kleine = jetzt.alle.filter(x => LAUF[x.id].games < 100).length;
+  const tore = {
+    // DAS Tor dieses Vorschlags. Ein Eintrag, der so traege ist wie seine
+    // Fassung ohne Fenster, braucht das Fenster nicht.
+    wandert: g.proTag > 0 && w.proTag >= g.proTag * 1.5,
+    // Und er darf nicht einem gehoeren. Ein Fenster, das in der ganzen
+    // Ligageschichte drei Halter hatte, ist keine laufende Form.
+    verteilt: w.verschieden >= 5,
+    // Kein Halter ueber die Haelfte der Zeit — der Deckel aus §C35, nur auf
+    // der Zeitachse statt auf der Tafel.
+    keinDauerhalter: w.groesster <= 0.5,
+    // Gegen die Spielzahl wird GEPAART geprueft. Roh gemessen liegt die
+    // Siegquote der letzten 20 bei r = 0,59 — das sieht nach einem
+    // Vielspieler-Rekord aus und ist keiner: dieselbe Frage ohne Fenster
+    // liegt genauso hoch. In dieser Liga spielen die Starken mehr, und das
+    // faerbt auf jede Kennzahl ab. Das Fenster ist fuer alle gleich gross,
+    // also kann es den Vielspieler gar nicht bevorzugen; gefragt ist
+    // deshalb nur, ob es die Neigung VERSTAERKT.
+    //
+    // Die 0,35 daneben sind die Linie, die die App selbst zieht [§C39], und
+    // sie muss dabei sein: allein gepaart fiel „Der Pleitenzug" mit r =
+    // −0,27 gegen −0,05 durch, obwohl beide Zahlen weit unter allem liegen,
+    // was die App je beanstandet hat. Wo die Neigung ohnehin klein ist,
+    // sagt ihr Anstieg nichts.
+    vielspieler: Math.abs(jetzt.korr || 0) <= Math.max(0.35, Math.abs(ganzKorr) + 0.1),
+    offen: kleine > 0,
+    vergeben: jetzt.halter.length > 0,
+    klassen: jetzt.alle.length > 0
+      && Object.keys(w.wer).some(id => platz(id) > Math.ceil(RANG.length / 3)),
+  };
+  tore.alle = Object.values(tore).every(Boolean);
+  return {k, jetzt, w, g, ganzKorr, kleine, tore};
+});
+
 // ── Der Bericht auf der Konsole ─────────────────────────────────────
 console.log('Kandidaten: ' + K.length + '  ('
   + K.filter(k => k.art !== 'schatten').length + ' positiv, '
@@ -494,10 +724,35 @@ fs.writeFileSync(ROOT + '/mockup/.abweichung.json', JSON.stringify({
   }))
 }, null, 1));
 
+console.log('');
+console.log('── Kurzzeitige Form: ' + FK.length + ' Fenster-Rekorde ──');
+console.log('Gemessen wird gepaart: derselbe Rekord mit Fenster gegen denselben ohne.');
+console.log('');
+FERG.forEach(e => {
+  const t = Object.keys(e.tore).filter(x => x !== 'alle')
+    .map(x => (e.tore[x] ? '+' : '!') + x).join(' ');
+  console.log((e.tore.alle ? 'OK  ' : 'ROT ') + e.k.name.padEnd(18)
+    + 'n=' + String(e.k.n).padStart(2)
+    + '  Wechsel ' + komma(e.w.proTag, 2) + ' % der Partien, ohne Fenster '
+    + komma(e.g.proTag, 2) + ' %  (' + komma(e.g.proTag ? e.w.proTag / e.g.proTag : 0, 1) + '-fach)');
+  console.log('      Halter ' + e.w.verschieden + ' (ohne Fenster ' + e.g.verschieden
+    + ')   laengster Besitz ' + pct(e.w.groesster) + ' % (ohne Fenster '
+    + pct(e.g.groesster) + ' %)   r(Spielzahl) ' + komma(e.jetzt.korr, 2)
+    + ' (ohne Fenster ' + komma(e.ganzKorr, 2) + ')');
+  console.log('      ' + t);
+  console.log('      heute: ' + (e.jetzt.halter.map(h => name(h.id)).join(' & ') || 'frei')
+    + '  [' + (e.jetzt.halter[0] ? KLASSE(e.jetzt.halter[0].id) : '—') + ']'
+    + '   im Rennen ' + e.jetzt.rennen + ', davon unter 100 Partien: ' + e.kleine);
+  console.log('      ' + (e.jetzt.halter[0] ? e.jetzt.halter[0].ev : ''));
+});
+
 // ── Die Seite ───────────────────────────────────────────────────────
 // Bewusst schmucklos: sie zeigt, WELCHE Einträge es werden könnten, wo ihre
 // Schwelle liegt und was die Messung von ihnen hält — nicht, wie sie in der
 // App aussähen.
+const _FL = FERG.find(e => e.k.id === 'lauf');
+const _FT = FERG.find(e => e.k.id === 'trefferwelle');
+const _FP = FERG.find(e => e.k.id === 'pleitenzug');
 const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
 const TOR = (ok, txt) => `<span class="t ${ok ? 'j' : 'n'}">${esc(txt)}</span>`;
 const KL = {legendaer:'legendär', selten:'selten', besonders:'besonders'};
@@ -512,6 +767,8 @@ const kandKarte = e => {
       <span class="sh">${esc(k.short)}</span>
       ${k.beiname ? '<span class="bn">Beiname: ' + esc(k.beiname) + '</span>' : ''}
       <span class="art ${k.art}">${esc(ART[k.art])}</span>
+      ${k.gibtEs ? '<span class="da">gibt es schon: ' + esc(k.gibtEs.name)
+        + ' (' + esc(k.gibtEs.hat) + ')</span>' : ''}
       <span class="ur">${e.tore.alle ? 'trägt' : 'trägt nicht'}</span></div>
     <div class="frage">${esc(k.frage)}</div>
     <div class="cond">${esc(k.cond)}</div>
@@ -554,8 +811,58 @@ const kandKarte = e => {
     </div></div>`;
 };
 
+// Die Karte eines Fenster-Rekords. Sie zeigt nicht Schwelle und Ausschlag —
+// die hat er nicht —, sondern das Paar: dieselbe Frage mit und ohne Fenster.
+const fensterKarte = e => {
+  const k = e.k, J = e.jetzt, w = e.w, g = e.g;
+  const mal = g.proTag ? w.proTag / g.proTag : 0;
+  const zeile = (lbl, a, b, gut) => `<tr><td>${esc(lbl)}</td>
+    <td class="${gut ? 'gut' : ''}"><b>${esc(a)}</b></td><td class="ohne">${esc(b)}</td></tr>`;
+  return `<div class="kand ${e.tore.alle ? 'ok' : 'rot'}">
+    <div class="kopf"><b>${esc(k.name)}</b>
+      <span class="sh">${esc(k.short)}</span>
+      <span class="art ${k.art === 'schatten' ? 'schatten' : 'koennen'}">${
+        k.art === 'schatten' ? 'Schattenseite'
+        : k.art === 'ereignis' ? 'Bestmarke' : 'Können'}</span>
+      <span class="sh">Fenster ${k.n} Partien</span>
+      <span class="ur">${e.tore.alle ? 'trägt' : 'trägt nicht'}</span></div>
+    <div class="frage">${esc(k.frage)}</div>
+    <div class="cond">${esc(k.cond)}</div>
+    <div class="wie">${esc(k.wie)}</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Heute</div>
+        <div class="halt">${esc(J.halter.map(h => name(h.id)).join(' & ') || '— frei —')}${
+          J.halter[0] ? ' <span class="kk">' + esc(KLASSE(J.halter[0].id)) + '</span>' : ''}</div>
+        <div class="ev">${esc(J.halter[0] ? J.halter[0].ev : '')}</div>
+        <div class="liste">${J.alle.slice(0, 5).map((x, i) =>
+          '<span>' + (i + 1) + '. ' + esc(name(x.id)) + ' <i>' + esc(KLASSE(x.id))
+          + '</i></span>').join('')}</div>
+      </div>
+      <div class="ax"><div class="axk">Mit Fenster gegen ohne · ${MS.length} Partien nachgespielt</div>
+        <table class="paar">
+          <tr><th></th><th>mit Fenster</th><th>ohne</th></tr>
+          ${zeile('Halterwechsel je 100 Partien', komma(w.proTag, 1), komma(g.proTag, 1),
+                  e.tore.wandert)}
+          ${zeile('verschiedene Halter', w.verschieden, g.verschieden, e.tore.verteilt)}
+          ${zeile('längster Besitz', pct(w.groesster) + ' %', pct(g.groesster) + ' %',
+                  e.tore.keinDauerhalter)}
+          ${zeile('r mit der Spielzahl', komma(J.korr, 2), komma(e.ganzKorr, 2),
+                  e.tore.vielspieler)}
+        </table>
+        <div class="tore">
+          ${TOR(e.tore.wandert, 'wandert ' + komma(mal, 1) + '-mal so oft')}
+          ${TOR(e.tore.verteilt, w.verschieden + ' Halter in der Ligageschichte')}
+          ${TOR(e.tore.keinDauerhalter, 'längster Besitz ' + pct(w.groesster) + ' %')}
+          ${TOR(e.tore.vielspieler, 'r = ' + komma(J.korr, 2))}
+          ${TOR(e.tore.offen, e.kleine + ' im Rennen mit unter 100 Partien')}
+          ${TOR(e.tore.klassen, 'erreicht jede Klasse')}
+        </div>
+      </div>
+    </div></div>`;
+};
+
 const SEITE_HTML = `<!doctype html><meta charset="utf-8">
-<title>Chroniken und Rekorde aus der Abweichung — Vorschlag</title>
+<title>Abweichung und laufende Form — Vorschlag</title>
 <style>
  body{background:#0c0e0d;color:#d7dbd8;font:14px/1.5 system-ui,sans-serif;margin:0;padding:22px;
    max-width:1080px}
@@ -602,12 +909,23 @@ const SEITE_HTML = `<!doctype html><meta charset="utf-8">
  .t.j{background:#14231a;color:#7fc99a} .t.n{background:#25151a;color:#f0566a}
  .liste{margin-top:6px;font-size:11px;color:#6f7873;display:flex;gap:9px;flex-wrap:wrap}
  .liste i{color:#535c57;font-style:normal}
+ .da{font-size:11px;padding:1px 6px;border-radius:4px;background:#22201a;color:#c8a24a}
+ .paar{font-size:12px;margin:4px 0 2px;width:100%}
+ .paar th{font-size:10px;color:#6f7873;font-weight:600;padding:0 10px 2px 0}
+ .paar td{padding:1px 10px 1px 0;color:#9aa39e}
+ .paar td b{color:#e2e6e3}
+ .paar td.gut b{color:#7fc99a}
+ .paar td.ohne{color:#6f7873}
 </style>
-<h1>Chroniken und Rekorde, die aus der Abweichung leben</h1>
+<h1>Chroniken und Rekorde aus der Abweichung — und Rekorde auf einem Fenster</h1>
 <p>Gerechnet an den echten ${MS.length} Partien der Liga, ${IDS.length} Spieler,
  ${MONATE.length} Monate (davon ${MON_GEWERTET.length} mit mindestens
  ${CHRONIK_MIN_TAGE} Spieltagen und damit gewertet).
  <code>node mockup/abweichung-lauf.js</code></p>
+<p>Zwei Gruppen, zwei Fragen. Die erste misst die <b>Abweichung von einer eigenen
+ Bezugsgröße</b> und ist deshalb für jede Könnensklasse erreichbar. Die zweite misst
+ die <b>laufende Form</b> auf einem gleitenden Fenster und wechselt deshalb oft den
+ Halter. Jede Gruppe hat ihre eigenen Tore, weil sie verschiedene Dinge behaupten.</p>
 
 <h2>Warum Abweichung und nicht Niveau</h2>
 <p>Wer eine Quote gewinnt, gewinnt fast jede. Ein Eintrag, der das NIVEAU misst,
@@ -652,7 +970,7 @@ const SEITE_HTML = `<!doctype html><meta charset="utf-8">
  um höchstens vier Prozentpunkte. Auf jeder Karte unten stehen beide Zahlen.</p>
 </div>
 
-<h2>Die sieben Tore</h2>
+<h2>Die sieben Tore der Abweichung</h2>
 <table>
  <tr><td>1</td><td>Der Chronik-Wert hängt nicht an der Spielzahl</td><td>|r| ≤ 0,35 [§C39]</td></tr>
  <tr><td>2</td><td>Der Rekord neigt nicht zum Vielspieler</td><td>|r| ≤ 0,5 über 11 Punkte</td></tr>
@@ -676,6 +994,62 @@ ${ERG.filter(e => e.k.art !== 'schatten').map(kandKarte).join('')}
  leistet die Abweichung — wer gleichmäßig schwach spielt, steht hier nicht.</p>
 ${ERG.filter(e => e.k.art === 'schatten').map(kandKarte).join('')}
 
+<h2>Rekorde auf einem gleitenden Fenster</h2>
+<p>Ein Rekord über die ganze Laufbahn wechselt kaum den Halter: er mittelt über
+ hunderte Partien, und eine einzelne bewegt ihn um ein Tausendstel. Gemessen wechselte
+ die Siegquote der Laufbahn an <b>${komma(_FL.g.proTag, 1)} %</b> der ${MS.length}
+ Partien den Besitzer, und <b>einer</b> hielt sie ${pct(_FL.g.groesster)} % der Zeit. Ein Rekord auf einem gleitenden Fenster mittelt
+ über zwanzig oder dreißig und kann an einem einzigen Spieltag den Besitzer wechseln.
+ Das ist der Grund, warum es ihn gibt.</p>
+<p>Drei gibt es schon — „Die starke Phase“ und „Die dichte Phase“ über die letzten 30,
+ „Der Aufschwung“ über zwei Fenster von 25 [§C35]. Keiner der sieben hier fragt
+ dasselbe.</p>
+
+<h3 style="font-size:14px;margin:18px 0 4px">Was ein Fenster von einem gesuchten Maximum trennt</h3>
+<p>Der erste Entwurf oben suchte das <b>beste</b> aller Zehnerfenster einer Laufbahn und
+ fiel an der Spielzahl: wer 350 Partien hat, hat 341 Ziehungen, wer 20 hat, hat elf.
+ Ein gleitendes Fenster hat dieses Problem nicht — seine <b>Größe</b> ist fest und seine
+ <b>Lage</b> auch: das Ende ist heute. Ein Maximum INNERHALB des Fensters ist davon
+ unberührt: „die längste Siegesserie in den letzten 30“ zieht bei jedem aus derselben
+ Zahl von Partien.</p>
+
+<h3 style="font-size:14px;margin:18px 0 4px">Gemessen wird gepaart</h3>
+<p>„Wechselt öfter den Halter“ ist behauptet nichts wert, also wird die Liga von vorne
+ nachgespielt: nach <b>jeder</b> der ${MS.length} Partien wird gefragt, wer den Eintrag
+ hält. Und zwar zweimal — einmal mit Fenster und einmal mit derselben Rechnung ohne.
+ Alles, was zwischen beiden Zahlen liegt, ist das Fenster und sonst nichts.
+ Zwei fremde Laufbahn-Rekorde als Maßstab waren der erste Versuch und taugten nicht:
+ die Siegquote der Laufbahn wechselt an ${komma(_FL.g.proTag, 1)} % der Partien, die
+ Tore je Partie an ${komma(_FT.g.proTag, 1)} % — derselbe Grenzwert hätte die eine Frage geschenkt und die andere unmöglich gemacht.</p>
+<table>
+ <tr><td>1</td><td><b>Er wandert</b></td><td>mindestens 1,5-mal so oft wie ohne Fenster</td></tr>
+ <tr><td>2</td><td>Er gehört nicht wenigen</td><td>≥ 5 verschiedene Halter über die Ligageschichte</td></tr>
+ <tr><td>3</td><td>Kein Dauerhalter</td><td>längster Besitz ≤ 50 % der Zeit [§C35]</td></tr>
+ <tr><td>4</td><td>Er verstärkt die Spielzahl-Neigung nicht</td><td>|r| ≤ 0,35 oder höchstens 0,1 über der Fassung ohne Fenster</td></tr>
+ <tr><td>5</td><td>Er ist offen</td><td>jemand mit unter 100 Partien steht im Rennen [§C35]</td></tr>
+ <tr><td>6</td><td>Er ist vergeben</td><td>—</td></tr>
+ <tr><td>7</td><td>Er erreicht jede Klasse</td><td>ein Halter jenseits des ersten Drittels</td></tr>
+</table>
+<p>Tor 4 steht bewusst doppelt. Roh gemessen liegt die Siegquote der letzten 20 bei
+ r = ${komma(_FL.jetzt.korr, 2)} mit der Spielzahl — das sieht nach einem
+ Vielspieler-Rekord aus und ist keiner: dieselbe Frage <b>ohne</b> Fenster liegt bei
+ ${komma(_FL.ganzKorr, 2)}. In dieser Liga spielen die
+ Starken mehr, und das färbt auf jede Kennzahl ab. Das Fenster ist für alle gleich groß,
+ also kann es den Vielspieler gar nicht bevorzugen. Die 0,35 daneben sind die Linie,
+ die die App selbst zieht [§C39]: ohne sie fiel „Der Pleitenzug“ mit r =
+ ${komma(_FP.jetzt.korr, 2)} gegen ${komma(_FP.ganzKorr, 2)} durch, obwohl beide Zahlen weit unter allem liegen, was die App je beanstandet
+ hat.</p>
+
+<div class="grp">Fenster — positiv</div>
+${FERG.filter(e => e.k.art !== 'schatten').map(fensterKarte).join('')}
+
+<div class="grp">Fenster — negativ</div>
+<p>Auch hier gilt: eine Schattenseite darf sich nicht beim Schwächsten sammeln [§C35].
+ Das Fenster hilft dabei — gemessen hielt den <b>Pleitenzug</b> niemand länger als
+ ${pct(_FP.w.groesster)} % der Zeit, während die längste Pleitenserie der ganzen
+ Laufbahn einem Spieler ${pct(_FP.g.groesster)} % der Zeit gehörte.</p>
+${FERG.filter(e => e.k.art === 'schatten').map(fensterKarte).join('')}
+
 <h2>Was die Messung sagt</h2>
 <table>
  <tr><th>Befund</th><th>woran</th></tr>
@@ -694,6 +1068,27 @@ ${ERG.filter(e => e.k.art === 'schatten').map(kandKarte).join('')}
   Die übrigen sechs scheitern nachvollziehbar, und das ist das Ergebnis des Laufs:
   ${ERG.filter(e => !e.tore.alle).map(e => esc(e.k.name) + ' ('
     + Object.keys(e.tore).filter(t => t !== 'alle' && !e.tore[t]).join(', ') + ')').join('; ')}.</td></tr>
+ <tr><td><b>Ein Fenster wechselt den Halter drei- bis viermal so oft.</b></td>
+  <td>Gemessen über alle ${MS.length} Partien, gepaart gegen dieselbe Rechnung ohne
+  Fenster: ${FERG.filter(e => e.tore.wandert).map(e => esc(e.k.name) + ' '
+    + komma(e.w.proTag / e.g.proTag, 1) + '-fach').join(', ')}. Und der Besitz verteilt
+  sich: die Siegquote der Laufbahn gehörte einem ${pct(_FL.g.groesster)} % der Zeit, der
+  Lauf über 20 Partien keinem länger als ${pct(_FL.w.groesster)} %.</td></tr>
+ <tr><td><b>Nicht jede Frage verträgt ein Fenster.</b></td>
+  <td>${FERG.filter(e => !e.tore.alle).map(e => esc(e.k.name) + ' ('
+    + Object.keys(e.tore).filter(t => t !== 'alle' && !e.tore[t]).join(', ')
+    + ')').join('; ')}. „Die Trefferwelle“ wandert nur
+  ${komma(_FT.w.proTag / _FT.g.proTag, 1)}-fach, weil die Tore je Partie schon über die
+  ganze Laufbahn dicht beieinander liegen — da ist nichts, was ein Fenster noch
+  auflockern könnte. „Der Vorsprung“ wandert zwar, aber in der ganzen Ligageschichte
+  hatte er nur ${FERG.find(e => e.k.id === 'vorsprung').w.verschieden} verschiedene
+  Halter: die Tordifferenz sammelt sich oben.</td></tr>
+ <tr><td><b>Zwei Vorschläge gibt es schon.</b></td>
+  <td>${ERG.filter(e => e.k.gibtEs).map(e => esc(e.k.name) + ' = „' + esc(e.k.gibtEs.name)
+    + '“ (' + esc(e.k.gibtEs.hat) + ')').join('; ')}. Bei der Steigerung fehlt nur die
+  <b>Laufbahn-Achse</b> — dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin
+  [§13.1], also wäre das ein Feld an einem bestehenden Eintrag und kein neuer. Die
+  Ladehemmung trägt beide Achsen längst und rechnet dasselbe.</td></tr>
  <tr><td><b>Drei gewertete Monate sind für ein Urteil dünn.</b></td>
   <td>Der Ausschlag wird an ${MON_GEWERTET.length} Monaten gemessen. Für die vier
   tragenden reicht das als Hinweis, nicht als Kalibrierung — die Schwellen gehören

@@ -1,5 +1,5 @@
 <!doctype html><meta charset="utf-8">
-<title>Chroniken und Rekorde aus der Abweichung — Vorschlag</title>
+<title>Abweichung und laufende Form — Vorschlag</title>
 <style>
  body{background:#0c0e0d;color:#d7dbd8;font:14px/1.5 system-ui,sans-serif;margin:0;padding:22px;
    max-width:1080px}
@@ -46,12 +46,23 @@
  .t.j{background:#14231a;color:#7fc99a} .t.n{background:#25151a;color:#f0566a}
  .liste{margin-top:6px;font-size:11px;color:#6f7873;display:flex;gap:9px;flex-wrap:wrap}
  .liste i{color:#535c57;font-style:normal}
+ .da{font-size:11px;padding:1px 6px;border-radius:4px;background:#22201a;color:#c8a24a}
+ .paar{font-size:12px;margin:4px 0 2px;width:100%}
+ .paar th{font-size:10px;color:#6f7873;font-weight:600;padding:0 10px 2px 0}
+ .paar td{padding:1px 10px 1px 0;color:#9aa39e}
+ .paar td b{color:#e2e6e3}
+ .paar td.gut b{color:#7fc99a}
+ .paar td.ohne{color:#6f7873}
 </style>
-<h1>Chroniken und Rekorde, die aus der Abweichung leben</h1>
+<h1>Chroniken und Rekorde aus der Abweichung — und Rekorde auf einem Fenster</h1>
 <p>Gerechnet an den echten 466 Partien der Liga, 12 Spieler,
  4 Monate (davon 3 mit mindestens
  5 Spieltagen und damit gewertet).
  <code>node mockup/abweichung-lauf.js</code></p>
+<p>Zwei Gruppen, zwei Fragen. Die erste misst die <b>Abweichung von einer eigenen
+ Bezugsgröße</b> und ist deshalb für jede Könnensklasse erreichbar. Die zweite misst
+ die <b>laufende Form</b> auf einem gleitenden Fenster und wechselt deshalb oft den
+ Halter. Jede Gruppe hat ihre eigenen Tore, weil sie verschiedene Dinge behaupten.</p>
 
 <h2>Warum Abweichung und nicht Niveau</h2>
 <p>Wer eine Quote gewinnt, gewinnt fast jede. Ein Eintrag, der das NIVEAU misst,
@@ -106,7 +117,7 @@
  um höchstens vier Prozentpunkte. Auf jeder Karte unten stehen beide Zahlen.</p>
 </div>
 
-<h2>Die sieben Tore</h2>
+<h2>Die sieben Tore der Abweichung</h2>
 <table>
  <tr><td>1</td><td>Der Chronik-Wert hängt nicht an der Spielzahl</td><td>|r| ≤ 0,35 [§C39]</td></tr>
  <tr><td>2</td><td>Der Rekord neigt nicht zum Vielspieler</td><td>|r| ≤ 0,5 über 11 Punkte</td></tr>
@@ -125,8 +136,9 @@
 <div class="kand ok">
     <div class="kopf"><b>Der Höhenflug</b>
       <span class="sh">Höhenflug</span>
-      <span class="bn">Beiname: Der Entfesselte</span>
+      <span class="bn">Beiname: Der Aufgeblühte</span>
       <span class="art koennen">Können</span>
+      
       <span class="ur">trägt</span></div>
     <div class="frage">Wie weit liegt die laufende Form über der eigenen Laufbahn?</div>
     <div class="cond">Ein Block aus 10 Partien mindestens 35 Prozentpunkte über der eigenen Quote außerhalb dieses Blocks, ab 20 Partien</div>
@@ -166,6 +178,7 @@
       <span class="sh">Steigerung</span>
       <span class="bn">Beiname: Der Gereifte</span>
       <span class="art konstanz">Konstanz</span>
+      <span class="da">gibt es schon: Die Steigerung (monat)</span>
       <span class="ur">trägt</span></div>
     <div class="frage">Wer wird im Verlauf besser als er angefangen hat?</div>
     <div class="cond">Zweite Hälfte der eigenen Spieltage mindestens 20 Prozentpunkte über der ersten, ab 10 eigenen Spieltagen (Monat: 5)</div>
@@ -203,8 +216,9 @@
     </div></div><div class="kand rot">
     <div class="kopf"><b>Der Trotzkopf</b>
       <span class="sh">Trotz</span>
-      <span class="bn">Beiname: Der Unbeugsame</span>
+      <span class="bn">Beiname: Der Widerspenstige</span>
       <span class="art koennen">Können</span>
+      
       <span class="ur">trägt nicht</span></div>
     <div class="frage">Wer holt gegen Stärkere mehr als gegen alle?</div>
     <div class="cond">Mindestens 15 Prozentpunkte bessere Quote gegen Stärkere als über alles, ab 25 Partien als Außenseiter (Monat: 5)</div>
@@ -242,8 +256,9 @@
     </div></div><div class="kand ok">
     <div class="kopf"><b>Der letzte Ball</b>
       <span class="sh">Schluss</span>
-      <span class="bn">Beiname: Der Standhafte</span>
+      <span class="bn">Beiname: Der Nervenstarke</span>
       <span class="art konstanz">Konstanz</span>
+      
       <span class="ur">trägt</span></div>
     <div class="frage">Wer gewinnt die letzte Partie eines Abends öfter als die davor?</div>
     <div class="cond">Mindestens 25 Prozentpunkte bessere Quote in der letzten Partie eines Spieltags, ab 10 eigenen Spieltagen mit je 3 Partien (Monat: 3)</div>
@@ -283,6 +298,7 @@
       <span class="sh">Torlaune</span>
       <span class="bn">Beiname: Der Aufgedrehte</span>
       <span class="art koennen">Können</span>
+      
       <span class="ur">trägt nicht</span></div>
     <div class="frage">Wer trifft im Sturm deutlich mehr als sonst?</div>
     <div class="cond">Mindestens 1,5 Tore je Partie mehr im Sturm als über alles, ab 25 Sturmspielen (Monat: 8)</div>
@@ -328,6 +344,7 @@
       <span class="sh">Durchhänger</span>
       <span class="bn">Beiname: Der Abgerissene</span>
       <span class="art schatten">Schattenseite</span>
+      
       <span class="ur">trägt nicht</span></div>
     <div class="frage">Wie weit liegt die laufende Form unter der eigenen Laufbahn?</div>
     <div class="cond">Ein Block aus 10 Partien mindestens 35 Prozentpunkte unter der eigenen Quote außerhalb dieses Blocks, ab 20 Partien</div>
@@ -367,6 +384,7 @@
       <span class="sh">Nachlass</span>
       <span class="bn">Beiname: Der Ermüdete</span>
       <span class="art schatten">Schattenseite</span>
+      
       <span class="ur">trägt nicht</span></div>
     <div class="frage">Wer wird im Verlauf schlechter als er angefangen hat?</div>
     <div class="cond">Zweite Hälfte der eigenen Spieltage mindestens 20 Prozentpunkte unter der ersten, ab 10 eigenen Spieltagen (Monat: 5)</div>
@@ -406,6 +424,7 @@
       <span class="sh">Pflicht</span>
       <span class="bn">Beiname: Der Nachlässige</span>
       <span class="art schatten">Schattenseite</span>
+      
       <span class="ur">trägt nicht</span></div>
     <div class="frage">Wer holt als Favorit weniger als über alles?</div>
     <div class="cond">Mindestens 15 Prozentpunkte schlechtere Quote als Favorit als über alles, ab 25 Partien als Favorit (Monat: 5)</div>
@@ -440,6 +459,7 @@
       <span class="sh">Zittern</span>
       <span class="bn">Beiname: Der Nervöse</span>
       <span class="art schatten">Schattenseite</span>
+      
       <span class="ur">trägt nicht</span></div>
     <div class="frage">Wer verliert die letzte Partie eines Abends öfter als die davor?</div>
     <div class="cond">Mindestens 25 Prozentpunkte schlechtere Quote in der letzten Partie eines Spieltags, ab 10 eigenen Spieltagen mit je 3 Partien (Monat: 3)</div>
@@ -479,6 +499,7 @@
       <span class="sh">Ladehemm</span>
       <span class="bn">Beiname: Der Zögerliche</span>
       <span class="art schatten">Schattenseite</span>
+      <span class="da">gibt es schon: Die Ladehemmung (allzeit und monat)</span>
       <span class="ur">trägt</span></div>
     <div class="frage">Wer trifft im Sturm deutlich weniger als sonst?</div>
     <div class="cond">Mindestens 1,5 Tore je Partie weniger im Sturm als über alles, ab 25 Sturmspielen (Monat: 8)</div>
@@ -515,6 +536,314 @@
       </div>
     </div></div>
 
+<h2>Rekorde auf einem gleitenden Fenster</h2>
+<p>Ein Rekord über die ganze Laufbahn wechselt kaum den Halter: er mittelt über
+ hunderte Partien, und eine einzelne bewegt ihn um ein Tausendstel. Gemessen wechselte
+ die Siegquote der Laufbahn an <b>4,2 %</b> der 466
+ Partien den Besitzer, und <b>einer</b> hielt sie 80 % der Zeit. Ein Rekord auf einem gleitenden Fenster mittelt
+ über zwanzig oder dreißig und kann an einem einzigen Spieltag den Besitzer wechseln.
+ Das ist der Grund, warum es ihn gibt.</p>
+<p>Drei gibt es schon — „Die starke Phase“ und „Die dichte Phase“ über die letzten 30,
+ „Der Aufschwung“ über zwei Fenster von 25 [§C35]. Keiner der sieben hier fragt
+ dasselbe.</p>
+
+<h3 style="font-size:14px;margin:18px 0 4px">Was ein Fenster von einem gesuchten Maximum trennt</h3>
+<p>Der erste Entwurf oben suchte das <b>beste</b> aller Zehnerfenster einer Laufbahn und
+ fiel an der Spielzahl: wer 350 Partien hat, hat 341 Ziehungen, wer 20 hat, hat elf.
+ Ein gleitendes Fenster hat dieses Problem nicht — seine <b>Größe</b> ist fest und seine
+ <b>Lage</b> auch: das Ende ist heute. Ein Maximum INNERHALB des Fensters ist davon
+ unberührt: „die längste Siegesserie in den letzten 30“ zieht bei jedem aus derselben
+ Zahl von Partien.</p>
+
+<h3 style="font-size:14px;margin:18px 0 4px">Gemessen wird gepaart</h3>
+<p>„Wechselt öfter den Halter“ ist behauptet nichts wert, also wird die Liga von vorne
+ nachgespielt: nach <b>jeder</b> der 466 Partien wird gefragt, wer den Eintrag
+ hält. Und zwar zweimal — einmal mit Fenster und einmal mit derselben Rechnung ohne.
+ Alles, was zwischen beiden Zahlen liegt, ist das Fenster und sonst nichts.
+ Zwei fremde Laufbahn-Rekorde als Maßstab waren der erste Versuch und taugten nicht:
+ die Siegquote der Laufbahn wechselt an 4,2 % der Partien, die
+ Tore je Partie an 8,9 % — derselbe Grenzwert hätte die eine Frage geschenkt und die andere unmöglich gemacht.</p>
+<table>
+ <tr><td>1</td><td><b>Er wandert</b></td><td>mindestens 1,5-mal so oft wie ohne Fenster</td></tr>
+ <tr><td>2</td><td>Er gehört nicht wenigen</td><td>≥ 5 verschiedene Halter über die Ligageschichte</td></tr>
+ <tr><td>3</td><td>Kein Dauerhalter</td><td>längster Besitz ≤ 50 % der Zeit [§C35]</td></tr>
+ <tr><td>4</td><td>Er verstärkt die Spielzahl-Neigung nicht</td><td>|r| ≤ 0,35 oder höchstens 0,1 über der Fassung ohne Fenster</td></tr>
+ <tr><td>5</td><td>Er ist offen</td><td>jemand mit unter 100 Partien steht im Rennen [§C35]</td></tr>
+ <tr><td>6</td><td>Er ist vergeben</td><td>—</td></tr>
+ <tr><td>7</td><td>Er erreicht jede Klasse</td><td>ein Halter jenseits des ersten Drittels</td></tr>
+</table>
+<p>Tor 4 steht bewusst doppelt. Roh gemessen liegt die Siegquote der letzten 20 bei
+ r = 0,59 mit der Spielzahl — das sieht nach einem
+ Vielspieler-Rekord aus und ist keiner: dieselbe Frage <b>ohne</b> Fenster liegt bei
+ 0,49. In dieser Liga spielen die
+ Starken mehr, und das färbt auf jede Kennzahl ab. Das Fenster ist für alle gleich groß,
+ also kann es den Vielspieler gar nicht bevorzugen. Die 0,35 daneben sind die Linie,
+ die die App selbst zieht [§C39]: ohne sie fiel „Der Pleitenzug“ mit r =
+ −0,27 gegen −0,05 durch, obwohl beide Zahlen weit unter allem liegen, was die App je beanstandet
+ hat.</p>
+
+<div class="grp">Fenster — positiv</div>
+<div class="kand ok">
+    <div class="kopf"><b>Der Lauf</b>
+      <span class="sh">Lauf</span>
+      <span class="art koennen">Können</span>
+      <span class="sh">Fenster 20 Partien</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wer steht gerade am besten im Futter?</div>
+    <div class="cond">Höchste Siegquote in den letzten 20 Partien, ab 20 Partien</div>
+    <div class="wie">Der Nenner sind die letzten 20 eigenen Partien und nicht die Laufbahn; das Fenster wandert mit jeder Partie weiter. Gefragt ist das Niveau von JETZT — auf einer ganzen Laufbahn gehörte diese Frage dem Besten der Liga, in zwanzig Partien kann sie jedem gehören.</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Heute</div>
+        <div class="halt">Martin <span class="kk">oberes Drittel</span></div>
+        <div class="ev">80 % in den letzten 20 Partien · 16 Siege</div>
+        <div class="liste"><span>1. Martin <i>oberes Drittel</i></span><span>2. Julian <i>oberes Drittel</i></span><span>3. Leon <i>oberes Drittel</i></span><span>4. Maxi <i>mittleres Drittel</i></span><span>5. Jane <i>oberes Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Mit Fenster gegen ohne · 466 Partien nachgespielt</div>
+        <table class="paar">
+          <tr><th></th><th>mit Fenster</th><th>ohne</th></tr>
+          <tr><td>Halterwechsel je 100 Partien</td>
+    <td class="gut"><b>13,3</b></td><td class="ohne">4,2</td></tr>
+          <tr><td>verschiedene Halter</td>
+    <td class="gut"><b>6</b></td><td class="ohne">4</td></tr>
+          <tr><td>längster Besitz</td>
+    <td class="gut"><b>39 %</b></td><td class="ohne">80 %</td></tr>
+          <tr><td>r mit der Spielzahl</td>
+    <td class="gut"><b>0,59</b></td><td class="ohne">0,49</td></tr>
+        </table>
+        <div class="tore">
+          <span class="t j">wandert 3,2-mal so oft</span>
+          <span class="t j">6 Halter in der Ligageschichte</span>
+          <span class="t j">längster Besitz 39 %</span>
+          <span class="t j">r = 0,59</span>
+          <span class="t j">5 im Rennen mit unter 100 Partien</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Die Trefferwelle</b>
+      <span class="sh">Welle</span>
+      <span class="art koennen">Können</span>
+      <span class="sh">Fenster 20 Partien</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wessen Team trifft gerade am häufigsten?</div>
+    <div class="cond">Meiste eigene Tore je Partie in den letzten 20 Partien, ab 20 Partien</div>
+    <div class="wie">Gezählt werden die Tore des eigenen Teams in den letzten 20 eigenen Partien, geteilt durch 20. Anders als beim Torjäger zählt die Position nicht mit: gefragt ist die Phase, nicht die Rolle.</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Heute</div>
+        <div class="halt">Martin <span class="kk">oberes Drittel</span></div>
+        <div class="ev">9,8 eigene Tore je Partie · die letzten 20</div>
+        <div class="liste"><span>1. Martin <i>oberes Drittel</i></span><span>2. Leon <i>oberes Drittel</i></span><span>3. Maxi <i>mittleres Drittel</i></span><span>4. Jane <i>oberes Drittel</i></span><span>5. Julian <i>oberes Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Mit Fenster gegen ohne · 466 Partien nachgespielt</div>
+        <table class="paar">
+          <tr><th></th><th>mit Fenster</th><th>ohne</th></tr>
+          <tr><td>Halterwechsel je 100 Partien</td>
+    <td class=""><b>11,3</b></td><td class="ohne">8,9</td></tr>
+          <tr><td>verschiedene Halter</td>
+    <td class="gut"><b>8</b></td><td class="ohne">5</td></tr>
+          <tr><td>längster Besitz</td>
+    <td class="gut"><b>34 %</b></td><td class="ohne">48 %</td></tr>
+          <tr><td>r mit der Spielzahl</td>
+    <td class=""><b>0,69</b></td><td class="ohne">0,45</td></tr>
+        </table>
+        <div class="tore">
+          <span class="t n">wandert 1,3-mal so oft</span>
+          <span class="t j">8 Halter in der Ligageschichte</span>
+          <span class="t j">längster Besitz 34 %</span>
+          <span class="t n">r = 0,69</span>
+          <span class="t j">5 im Rennen mit unter 100 Partien</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Der Siegzug</b>
+      <span class="sh">Siegzug</span>
+      <span class="art koennen">Bestmarke</span>
+      <span class="sh">Fenster 30 Partien</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wer hat im laufenden Fenster die längste Siegesserie gestapelt?</div>
+    <div class="cond">Längste Siegesserie innerhalb der letzten 30 Partien, ab 30 Partien</div>
+    <div class="wie">Gesucht wird die längste Folge von Siegen ohne Niederlage dazwischen, aber nur innerhalb der letzten 30 eigenen Partien. Anders als beim Unaufhaltsamen zählt nicht die Laufbahn: die Serie von vor zwei Jahren fällt mit dem Fenster heraus. Das Fenster ist für alle 30 Partien groß, also hat auch niemand mehr Gelegenheiten als ein anderer.</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Heute</div>
+        <div class="halt">Martin <span class="kk">oberes Drittel</span></div>
+        <div class="ev">13 Siege am Stück · in den letzten 30 Partien</div>
+        <div class="liste"><span>1. Martin <i>oberes Drittel</i></span><span>2. Leon <i>oberes Drittel</i></span><span>3. Maxi <i>mittleres Drittel</i></span><span>4. Jane <i>oberes Drittel</i></span><span>5. Jannik <i>mittleres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Mit Fenster gegen ohne · 466 Partien nachgespielt</div>
+        <table class="paar">
+          <tr><th></th><th>mit Fenster</th><th>ohne</th></tr>
+          <tr><td>Halterwechsel je 100 Partien</td>
+    <td class="gut"><b>4,7</b></td><td class="ohne">1,2</td></tr>
+          <tr><td>verschiedene Halter</td>
+    <td class="gut"><b>6</b></td><td class="ohne">4</td></tr>
+          <tr><td>längster Besitz</td>
+    <td class="gut"><b>44 %</b></td><td class="ohne">86 %</td></tr>
+          <tr><td>r mit der Spielzahl</td>
+    <td class="gut"><b>0,44</b></td><td class="ohne">0,61</td></tr>
+        </table>
+        <div class="tore">
+          <span class="t j">wandert 4,0-mal so oft</span>
+          <span class="t j">6 Halter in der Ligageschichte</span>
+          <span class="t j">längster Besitz 44 %</span>
+          <span class="t j">r = 0,44</span>
+          <span class="t j">5 im Rennen mit unter 100 Partien</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Der Vorsprung</b>
+      <span class="sh">Vorsprung</span>
+      <span class="art koennen">Können</span>
+      <span class="sh">Fenster 25 Partien</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wer gewinnt gerade nicht nur, sondern deutlich?</div>
+    <div class="cond">Höchste Tordifferenz je Partie in den letzten 25 Partien, ab 25 Partien</div>
+    <div class="wie">Eigene Tore minus Gegentore, gemittelt über die letzten 25 eigenen Partien. Die Tordifferenz sagt mehr als die Siegquote: wer knapp gewinnt und deutlich verliert, steht hier nicht vorne, obwohl die Quote stimmt.</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Heute</div>
+        <div class="halt">Martin <span class="kk">oberes Drittel</span></div>
+        <div class="ev">3,2 Tore Differenz je Partie · die letzten 25</div>
+        <div class="liste"><span>1. Martin <i>oberes Drittel</i></span><span>2. Leon <i>oberes Drittel</i></span><span>3. Maxi <i>mittleres Drittel</i></span><span>4. Jane <i>oberes Drittel</i></span><span>5. Julian <i>oberes Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Mit Fenster gegen ohne · 466 Partien nachgespielt</div>
+        <table class="paar">
+          <tr><th></th><th>mit Fenster</th><th>ohne</th></tr>
+          <tr><td>Halterwechsel je 100 Partien</td>
+    <td class="gut"><b>11,8</b></td><td class="ohne">2,8</td></tr>
+          <tr><td>verschiedene Halter</td>
+    <td class=""><b>4</b></td><td class="ohne">4</td></tr>
+          <tr><td>längster Besitz</td>
+    <td class="gut"><b>44 %</b></td><td class="ohne">65 %</td></tr>
+          <tr><td>r mit der Spielzahl</td>
+    <td class=""><b>0,57</b></td><td class="ohne">0,45</td></tr>
+        </table>
+        <div class="tore">
+          <span class="t j">wandert 4,2-mal so oft</span>
+          <span class="t n">4 Halter in der Ligageschichte</span>
+          <span class="t j">längster Besitz 44 %</span>
+          <span class="t n">r = 0,57</span>
+          <span class="t j">5 im Rennen mit unter 100 Partien</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div>
+
+<div class="grp">Fenster — negativ</div>
+<p>Auch hier gilt: eine Schattenseite darf sich nicht beim Schwächsten sammeln [§C35].
+ Das Fenster hilft dabei — gemessen hielt den <b>Pleitenzug</b> niemand länger als
+ 46 % der Zeit, während die längste Pleitenserie der ganzen
+ Laufbahn einem Spieler 67 % der Zeit gehörte.</p>
+<div class="kand ok">
+    <div class="kopf"><b>Die Talfahrt</b>
+      <span class="sh">Talfahrt</span>
+      <span class="art schatten">Schattenseite</span>
+      <span class="sh">Fenster 20 Partien</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wer steckt gerade am tiefsten drin?</div>
+    <div class="cond">Niedrigste Siegquote in den letzten 20 Partien, ab 20 Partien</div>
+    <div class="wie">Dieselbe Rechnung wie beim Lauf, nur am anderen Ende. Der Unterschied zur Durststrecke ist das Fenster: eine Pleitenserie muss ohne Unterbrechung laufen, eine Talfahrt darf zwischendurch einen Sieg haben und bleibt trotzdem eine.</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Heute</div>
+        <div class="halt">Johannes <span class="kk">unteres Drittel</span></div>
+        <div class="ev">15 % in den letzten 20 Partien · 17 Niederlagen</div>
+        <div class="liste"><span>1. Johannes <i>unteres Drittel</i></span><span>2. Alex <i>unteres Drittel</i></span><span>3. Leo <i>mittleres Drittel</i></span><span>4. Henry <i>mittleres Drittel</i></span><span>5. Stefan <i>unteres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Mit Fenster gegen ohne · 466 Partien nachgespielt</div>
+        <table class="paar">
+          <tr><th></th><th>mit Fenster</th><th>ohne</th></tr>
+          <tr><td>Halterwechsel je 100 Partien</td>
+    <td class="gut"><b>13,1</b></td><td class="ohne">4,2</td></tr>
+          <tr><td>verschiedene Halter</td>
+    <td class="gut"><b>7</b></td><td class="ohne">5</td></tr>
+          <tr><td>längster Besitz</td>
+    <td class="gut"><b>42 %</b></td><td class="ohne">46 %</td></tr>
+          <tr><td>r mit der Spielzahl</td>
+    <td class="gut"><b>−0,59</b></td><td class="ohne">−0,49</td></tr>
+        </table>
+        <div class="tore">
+          <span class="t j">wandert 3,1-mal so oft</span>
+          <span class="t j">7 Halter in der Ligageschichte</span>
+          <span class="t j">längster Besitz 42 %</span>
+          <span class="t j">r = −0,59</span>
+          <span class="t j">5 im Rennen mit unter 100 Partien</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Die Flaute</b>
+      <span class="sh">Flaute</span>
+      <span class="art schatten">Schattenseite</span>
+      <span class="sh">Fenster 20 Partien</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wessen Team trifft gerade am seltensten?</div>
+    <div class="cond">Wenigste eigene Tore je Partie in den letzten 20 Partien, ab 20 Partien</div>
+    <div class="wie">Das Gegenstück zur Trefferwelle mit derselben Rechnung. Gewertet werden die Tore des eigenen Teams, nicht die eigenen: wer im Tor der Abwehr steht, trägt sie genauso.</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Heute</div>
+        <div class="halt">Alex &amp; Stefan <span class="kk">unteres Drittel</span></div>
+        <div class="ev">6,7 eigene Tore je Partie · die letzten 20</div>
+        <div class="liste"><span>1. Alex <i>unteres Drittel</i></span><span>2. Stefan <i>unteres Drittel</i></span><span>3. Johannes <i>unteres Drittel</i></span><span>4. Jannik <i>mittleres Drittel</i></span><span>5. Leo <i>mittleres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Mit Fenster gegen ohne · 466 Partien nachgespielt</div>
+        <table class="paar">
+          <tr><th></th><th>mit Fenster</th><th>ohne</th></tr>
+          <tr><td>Halterwechsel je 100 Partien</td>
+    <td class="gut"><b>9,0</b></td><td class="ohne">2,6</td></tr>
+          <tr><td>verschiedene Halter</td>
+    <td class="gut"><b>6</b></td><td class="ohne">4</td></tr>
+          <tr><td>längster Besitz</td>
+    <td class=""><b>54 %</b></td><td class="ohne">76 %</td></tr>
+          <tr><td>r mit der Spielzahl</td>
+    <td class=""><b>−0,69</b></td><td class="ohne">−0,45</td></tr>
+        </table>
+        <div class="tore">
+          <span class="t j">wandert 3,5-mal so oft</span>
+          <span class="t j">6 Halter in der Ligageschichte</span>
+          <span class="t n">längster Besitz 54 %</span>
+          <span class="t n">r = −0,69</span>
+          <span class="t j">5 im Rennen mit unter 100 Partien</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Der Pleitenzug</b>
+      <span class="sh">Pleitenzug</span>
+      <span class="art schatten">Schattenseite</span>
+      <span class="sh">Fenster 30 Partien</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wer hat im laufenden Fenster die längste Pleitenserie stehen?</div>
+    <div class="cond">Längste Niederlagenserie innerhalb der letzten 30 Partien, ab 30 Partien</div>
+    <div class="wie">Das Gegenstück zum Siegzug. Anders als die Durststrecke, die die ganze Laufbahn absucht, fällt die Serie von damals mit dem Fenster heraus — was zählt, ist die Strecke, die heute noch im Fenster steht.</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Heute</div>
+        <div class="halt">Johannes &amp; Leo <span class="kk">unteres Drittel</span></div>
+        <div class="ev">10 Niederlagen am Stück · in den letzten 30 Partien</div>
+        <div class="liste"><span>1. Johannes <i>unteres Drittel</i></span><span>2. Leo <i>mittleres Drittel</i></span><span>3. Alex <i>unteres Drittel</i></span><span>4. Henry <i>mittleres Drittel</i></span><span>5. Jannik <i>mittleres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Mit Fenster gegen ohne · 466 Partien nachgespielt</div>
+        <table class="paar">
+          <tr><th></th><th>mit Fenster</th><th>ohne</th></tr>
+          <tr><td>Halterwechsel je 100 Partien</td>
+    <td class="gut"><b>3,5</b></td><td class="ohne">1,4</td></tr>
+          <tr><td>verschiedene Halter</td>
+    <td class="gut"><b>6</b></td><td class="ohne">4</td></tr>
+          <tr><td>längster Besitz</td>
+    <td class="gut"><b>46 %</b></td><td class="ohne">67 %</td></tr>
+          <tr><td>r mit der Spielzahl</td>
+    <td class="gut"><b>−0,27</b></td><td class="ohne">−0,05</td></tr>
+        </table>
+        <div class="tore">
+          <span class="t j">wandert 2,5-mal so oft</span>
+          <span class="t j">6 Halter in der Ligageschichte</span>
+          <span class="t j">längster Besitz 46 %</span>
+          <span class="t j">r = −0,27</span>
+          <span class="t j">5 im Rennen mit unter 100 Partien</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div>
+
 <h2>Was die Messung sagt</h2>
 <table>
  <tr><th>Befund</th><th>woran</th></tr>
@@ -532,6 +861,23 @@
   <td>Der Höhenflug, Die Steigerungsform, Der letzte Ball, Der Ladehemmer.
   Die übrigen sechs scheitern nachvollziehbar, und das ist das Ergebnis des Laufs:
   Der Trotzkopf (vielspieler, aussage); Die Torlaune (ausschlag); Der Durchhänger (ausschlag); Der Nachlass (ausschlag); Die Pflichtaufgabe (ausschlag, aussage, vergeben, rate, klassen); Die Zitterhand (ausschlag).</td></tr>
+ <tr><td><b>Ein Fenster wechselt den Halter drei- bis viermal so oft.</b></td>
+  <td>Gemessen über alle 466 Partien, gepaart gegen dieselbe Rechnung ohne
+  Fenster: Der Lauf 3,2-fach, Der Siegzug 4,0-fach, Der Vorsprung 4,2-fach, Die Talfahrt 3,1-fach, Die Flaute 3,5-fach, Der Pleitenzug 2,5-fach. Und der Besitz verteilt
+  sich: die Siegquote der Laufbahn gehörte einem 80 % der Zeit, der
+  Lauf über 20 Partien keinem länger als 39 %.</td></tr>
+ <tr><td><b>Nicht jede Frage verträgt ein Fenster.</b></td>
+  <td>Die Trefferwelle (wandert, vielspieler); Der Vorsprung (verteilt, vielspieler); Die Flaute (keinDauerhalter, vielspieler). „Die Trefferwelle“ wandert nur
+  1,3-fach, weil die Tore je Partie schon über die
+  ganze Laufbahn dicht beieinander liegen — da ist nichts, was ein Fenster noch
+  auflockern könnte. „Der Vorsprung“ wandert zwar, aber in der ganzen Ligageschichte
+  hatte er nur 4 verschiedene
+  Halter: die Tordifferenz sammelt sich oben.</td></tr>
+ <tr><td><b>Zwei Vorschläge gibt es schon.</b></td>
+  <td>Die Steigerungsform = „Die Steigerung“ (monat); Der Ladehemmer = „Die Ladehemmung“ (allzeit und monat). Bei der Steigerung fehlt nur die
+  <b>Laufbahn-Achse</b> — dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin
+  [§13.1], also wäre das ein Feld an einem bestehenden Eintrag und kein neuer. Die
+  Ladehemmung trägt beide Achsen längst und rechnet dasselbe.</td></tr>
  <tr><td><b>Drei gewertete Monate sind für ein Urteil dünn.</b></td>
   <td>Der Ausschlag wird an 3 Monaten gemessen. Für die vier
   tragenden reicht das als Hinweis, nicht als Kalibrierung — die Schwellen gehören
