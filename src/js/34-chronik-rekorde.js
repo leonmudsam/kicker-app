@@ -67,6 +67,14 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   kind: d.zufall ? 'fuegung' : d.art === 'schatten' ? 'shame'
       : d.art === 'ereignis' ? 'mark' : 'record',
   zufall: d.zufall || '',
+  // `paar` nennt den Eintrag, der das ANDERE Ende desselben Werts wertet.
+  // Fuer eine Quoten-Fuegung verlangt `tests/disziplinen` sonst, dass
+  // mindestens die halbe Liga im Rennen steht — gegen eine zu hohe Schwelle.
+  // Ein Vorzeichen ist keine Schwelle: es teilt das Feld, und gemessen
+  // standen fuenf ueber und fuenf unter dem eigenen Mittel. Gepruefft wird
+  // deshalb das Paar, und `paar` muss hier stehen, weil `CHRONICLES` eine
+  // Projektion ist und ein Feld, das sie nicht nennt, gar nicht ankommt.
+  paar: d.paar || '',
   // Rot ist die Richtung [§C25]. Eine Schattenseite ist immer negativ, eine
   // Fuegung nur dann, wenn sie von einer Niederlage erzaehlt — „Die bitterste
   // Pleite" stand im Profil in Gold neben den Titeln und wurde als Rekord
@@ -210,6 +218,15 @@ function _chronicleCtx(bisMs){
     //    Partien-Objekte mit sich.
     l30N:0, l30Klar:0, l30Ga:0,          // die letzten 30 Partien
     aufDelta:null, aufNeu:0, aufAlt:0,   // letzte 25 gegen die 25 davor
+    // ── Der Abstand zum EIGENEN [§C38]. Wer eine Quote gewinnt, gewinnt
+    //    fast jede; ein Eintrag auf das Niveau gehoert damit immer denselben
+    //    drei Spielern. Diese vier fragen stattdessen, wie weit jemand von
+    //    seinem eigenen Schnitt abweicht — und sind damit fuer jede
+    //    Koennensklasse erreichbar.
+    hfDelta:null, hfNeu:0, hfAlt:0, hfVor:0,     // letzte 10 gegen alles davor
+    sbDelta:null, sbDrin:0, sbRaus:0, sbN:0,     // Schlussspiel eines Tages
+    stgDelta:null, stgQ1:0, stgQ2:0, stgTage:0,  // Haelften der eigenen Spieltage
+    rwDelta:null, rwDrin:0, rwEigen:0,           // Mitspielerstaerke im Fenster
     unterN:0, unterGf:0,                 // als Aussenseiter
     favN:0, favKlar:0,                   // als Favorit
     restN:0, restGf:0, restGa:0,         // gegen den Rest der Liga
@@ -250,6 +267,12 @@ function _chronicleCtx(bisMs){
       const exp = myExp(id, m);
       p.expSum += exp;                  // Soll der Laufbahn [§C39-Rechnung]
       (roh[id] || (roh[id] = [])).push({w, gf, ga, pos, exp,
+        // `day` gehoert dazu, seit „Der letzte Ball" die letzte Partie eines
+        // Spieltags gegen die uebrigen desselben Tages stellt und „Die
+        // Steigerung" die eigenen Spieltage halbiert. Beide Fragen haengen an
+        // der Reihenfolge INNERHALB eines Tages, und die kennt nur die
+        // fertige Liste.
+        day,
         // `mate` gehoert zur Rohsicht wie `geg`: „Der Klotz am Bein" fragt,
         // wie die Mitspieler AN DIESER SEITE stehen, und das ist ohne den
         // Partner nicht zu beantworten.
@@ -388,6 +411,11 @@ function _chronicleCtx(bisMs){
     return Math.sqrt(a.reduce((x, y) => x + (y - m) * (y - m), 0) / a.length);
   };
   const _mit = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+  // Die Siegquote jedes GEWERTETEN Spielers, einmal. „Der Rückenwind" und
+  // „Der Einzelkämpfer" messen damit die Staerke der Mitspieler; sie steht
+  // hier und nicht in der Schleife, weil sie fuer alle dieselbe ist.
+  const ligaQ = {};
+  Object.keys(P).forEach(id => { ligaQ[id] = P[id].wins / P[id].games; });
   Object.keys(P).forEach(id => {
     const p = P[id], r = roh[id] || [];
     // Das gleitende Fenster. Es MUSS mitwandern: „in den ersten 25 Partien"
@@ -406,6 +434,71 @@ function _chronicleCtx(bisMs){
       p.aufNeu = neu.filter(x => x.w).length / 25;
       p.aufAlt = alt.filter(x => x.w).length / 25;
       p.aufDelta = p.aufNeu - p.aufAlt;
+    }
+    // ── Der Abstand zum EIGENEN [§C38] ────────────────────────────
+    // Die letzten zehn Partien gegen ALLE davor. Nicht gegen die
+    // Gesamtquote: die enthaelt das Fenster selbst, und dann zaehlt es
+    // doppelt. Ein gesuchtes Maximum aus allen Zehnerbloecken taugt nicht —
+    // wer dreihundert Partien hat, hat 291 Ziehungen und wer zwanzig hat,
+    // hat elf, und das Maximum aus vielen Ziehungen ist groesser.
+    if(r.length >= 20){
+      const drin = r.slice(-10), raus = r.slice(0, r.length - 10);
+      p.hfNeu = drin.filter(x => x.w).length / drin.length;
+      p.hfAlt = raus.filter(x => x.w).length / raus.length;
+      p.hfVor = raus.length;
+      p.hfDelta = p.hfNeu - p.hfAlt;
+    }
+    // Die letzte Partie jedes eigenen Spieltags gegen alle anderen dieses
+    // Tages. Drei Partien je Tag, damit „die letzte" ueberhaupt eine Auswahl
+    // ist; verglichen wird INNERHALB des Tages, sonst stehen zwei
+    // verschiedene Wochen gegeneinander.
+    const _tage = {};
+    r.forEach(x => { (_tage[x.day] || (_tage[x.day] = [])).push(x); });
+    const _tagListe = Object.keys(_tage).sort();
+    {
+      const voll = _tagListe.filter(t => _tage[t].length >= 3);
+      if(voll.length){
+        const letzte = [], rest = [];
+        voll.forEach(t => { const a = _tage[t];
+          letzte.push(a[a.length - 1]); rest.push(...a.slice(0, -1)); });
+        if(rest.length){
+          p.sbN = letzte.length;
+          p.sbDrin = letzte.filter(x => x.w).length / letzte.length;
+          p.sbRaus = rest.filter(x => x.w).length / rest.length;
+          p.sbDelta = p.sbDrin - p.sbRaus;
+        }
+      }
+    }
+    // Die eigenen Spieltage in der Mitte geteilt. Gezaehlt werden die
+    // EIGENEN Tage und nicht die des Kalenders: sonst haengt die Wertung
+    // daran, wie oft jemand dabei war.
+    if(_tagListe.length >= 4){
+      const mitte = _tagListe[Math.floor(_tagListe.length / 2)];
+      const e1 = r.filter(x => x.day < mitte), e2 = r.filter(x => x.day >= mitte);
+      if(e1.length >= 4 && e2.length >= 4){
+        p.stgTage = _tagListe.length;
+        p.stgQ1 = e1.filter(x => x.w).length / e1.length;
+        p.stgQ2 = e2.filter(x => x.w).length / e2.length;
+        p.stgDelta = p.stgQ2 - p.stgQ1;
+      }
+    }
+    // Die Staerke der Mitspieler im Fenster gegen dieselbe Zahl ueber die
+    // ganze Laufbahn. Gegen das Ligamittel gerechnet gehoerte der Eintrag
+    // immer dem Besten: wer selbst der Beste ist, kann nie mit sich selbst
+    // spielen, und sein Partnerfeld ist zwangslaeufig das schwaechste der
+    // Liga. Gemessen lag diese Fassung bei r = −0,66 mit der eigenen
+    // Siegquote, gegen das Eigene gerechnet bei −0,09 [§C35].
+    //
+    // Ein Mitspieler ohne eigene Laufbahn zaehlt nicht mit: `ligaQ` kennt nur
+    // die gewerteten Spieler, und die Quote eines Gasts aus zwoelf Partien
+    // ist kein Massstab.
+    if(r.length >= 50){
+      const q = a => { const w = a.map(x => ligaQ[x.mate]).filter(x => x != null);
+        return w.length ? w.reduce((n, x) => n + x, 0) / w.length : null; };
+      const drin = q(r.slice(-25)), eigen = q(r);
+      if(drin != null && eigen != null){
+        p.rwDrin = drin; p.rwEigen = eigen; p.rwDelta = drin - eigen;
+      }
     }
     const unter = [], fav = [], rest = [], atk = [], def = [];
     r.forEach(x => {

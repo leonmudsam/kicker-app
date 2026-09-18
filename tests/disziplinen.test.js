@@ -1638,12 +1638,14 @@ const _gl = JSON.parse(K.eval(`JSON.stringify((function(){
     feld: ids.length,
     halter: F.map(c => {
       const e = A.byId[c.id];
-      return {id:c.id, name:c.name, art:c.art, zufall:c.zufall,
+      return {id:c.id, name:c.name, art:c.art, zufall:c.zufall, paar:c.paar || '',
               pids: e ? e.pids.map(p => nachQuote.indexOf(p) + 1) : [],
               namen: e ? e.pids.slice() : [],
               // Wie viele des Feldes erfuellen die Mindestbedingung ueberhaupt?
               rennen: ids.filter(pid => {
-                const v = c.val(C.P[pid], C); return v != null && isFinite(v); }).length};
+                const v = c.val(C.P[pid], C); return v != null && isFinite(v); }).length,
+              rennenIds: ids.filter(pid => {
+                const v = c.val(C.P[pid], C); return v != null && isFinite(v); })};
     }),
     // Traegt jeder gewertete Spieler mindestens einen Liga-Eintrag?
     ohne: ids.filter(pid => !CHRONICLES.some(c => (A.byId[c.id] || {pids:[]}).pids.includes(pid))),
@@ -1671,7 +1673,38 @@ ok(_glLeer.length === 0, 'jede Quoten-Fuegung ist vergeben',
 
 // 2. Im Rennen ist mindestens die halbe Liga. Sonst waere es nur eine weitere
 //    Huerde, und genau die wollte dieser Block loswerden.
-const _glEng = _q.filter(h => h.rennen < _gl.feld / 2).map(h => h.name + ' ' + h.rennen);
+//
+//    Ein PAAR wird zusammen gemessen. „Der Rückenwind" und „Der
+//    Einzelkämpfer" sind die zwei Enden eines Werts: das Vorzeichen teilt das
+//    Feld, und gemessen standen fuenf ueber und sechs unter dem eigenen
+//    Mittel. Ein Vorzeichen ist aber keine Schwelle — wer die Mindestzahl
+//    erfuellt, steht in einem der beiden Rennen, und genau das ist hier
+//    verlangt. Einzeln gemessen fiel jede Haelfte mit 5 von 11 durch, und die
+//    Regel haette einen Eintrag verboten, den sie gar nicht meint.
+const _paar = {};
+_gl.halter.forEach(h => { if(h.paar) _paar[h.id] = h.paar; });
+const _rennenFuer = h => h.paar
+  ? h.rennen + ((_gl.halter.find(x => x.id === h.paar) || {rennen:0}).rennen)
+  : h.rennen;
+const _glEng = _q.filter(h => _rennenFuer(h) < _gl.feld / 2)
+  .map(h => h.name + ' ' + _rennenFuer(h));
+
+// 2b. Und `paar` ist keine Beschriftung. Wer es setzt, behauptet zwei Dinge:
+//     der Partner zeigt zurueck, und die beiden Rennen schneiden sich nicht.
+//     Zwei Eintraege, in deren Rennen derselbe Spieler steht, sind keine
+//     ENDEN eines Werts, sondern zwei Wertungen — dann gilt die halbe Liga
+//     wieder fuer jede einzeln.
+const _paarFehler = [];
+_gl.halter.filter(h => h.paar).forEach(h => {
+  const g = _gl.halter.find(x => x.id === h.paar);
+  if(!g){ _paarFehler.push(h.name + ': Partner „' + h.paar + '" gibt es nicht'); return; }
+  if(g.paar !== h.id){ _paarFehler.push(h.name + ': „' + g.name + '" zeigt nicht zurueck'); return; }
+  const doppelt = h.rennenIds.filter(p => g.rennenIds.includes(p));
+  if(doppelt.length) _paarFehler.push(h.name + ' und ' + g.name + ': '
+    + doppelt.length + ' Spieler stehen in beiden Rennen');
+});
+ok(_paarFehler.length === 0, 'jedes Paar zeigt zurueck und teilt das Feld',
+   _paarFehler.join(' · ') || _gl.halter.filter(h => h.paar).length + ' gepaarte Eintraege');
 ok(_glEng.length === 0, 'bei jeder Quoten-Fuegung ist mindestens die halbe Liga im Rennen',
    _glEng.join(', ') || _q.map(h => h.rennen).join('/') + ' von ' + _gl.feld);
 

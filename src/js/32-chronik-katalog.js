@@ -246,6 +246,34 @@ function _stHaelften(p){
           q2: e2.filter(s => s.win).length / e2.length};
 }
 
+// Die letzten zehn Partien gegen ALLE davor. Nicht gegen die Gesamtquote:
+// die enthaelt das Fenster selbst, und dann zaehlt es doppelt. Ein GESUCHTES
+// Maximum aus allen Zehnerbloecken taugt dafuer nicht — wer dreihundert
+// Partien hat, hat 291 Ziehungen und wer zwanzig hat, hat elf, und das
+// Maximum aus vielen Ziehungen ist groesser [§C39]. Das letzte Fenster liegt
+// fest, also gibt es keinen Auswahlvorteil.
+function _stLetzteZehn(p){
+  if(p.games < 20) return null;
+  const drin = p.partien.slice(-10), raus = p.partien.slice(0, p.games - 10);
+  return {d: _stQuote(drin) - _stQuote(raus), drin: _stQuote(drin),
+          raus: _stQuote(raus), vor: raus.length};
+}
+
+// Die zeitlich letzte Partie jedes eigenen Spieltags gegen alle anderen
+// dieses Tages. Drei Partien je Tag, damit „die letzte" ueberhaupt eine
+// Auswahl ist. Der Vergleich laeuft INNERHALB des Tages, sonst stehen zwei
+// verschiedene Wochen gegeneinander.
+function _stSchlussBall(p, mindTage){
+  const tage = Object.keys(p.tagGrp).filter(t => p.tagGrp[t].length >= 3);
+  if(tage.length < mindTage) return null;
+  const letzte = [], rest = [];
+  tage.forEach(t => { const a = p.tagGrp[t];
+    letzte.push(a[a.length - 1]); rest.push(...a.slice(0, -1)); });
+  if(!rest.length) return null;
+  return {d: _stQuote(letzte) - _stQuote(rest), drin: _stQuote(letzte),
+          raus: _stQuote(rest), n: letzte.length};
+}
+
 // Fuenf Lagen desselben Monats. „Ohne Schwachstelle" wertet die schwaechste
 // davon: ein einziger Einbruch kostet die Chronik, und deshalb kann sie nur
 // holen, wer keinen hatte [§C39].
@@ -516,6 +544,89 @@ const DISZIPLINEN = [
       val:p => p.restN >= 40 ? (p.restGf + p.restGa ? p.restGf / (p.restGf + p.restGa) : null) : null,
       ev:(p,v) => `${Math.round(v*100)} % aller Tore · ${p.restGf}:${p.restGa} in ${p.restN} Partien`}},
 
+  // Zwei Disziplinen, die nicht das NIVEAU messen, sondern den Abstand zum
+  // EIGENEN [§C38]. Wer eine Quote gewinnt, gewinnt fast jede — ein Eintrag
+  // auf das Niveau gehoert damit immer denselben drei Spielern. Der Abstand
+  // zum Eigenen ist fuer jede Koennensklasse erreichbar: der Zehnte der
+  // Siegquote kann in zehn Partien genauso weit ueber seinem eigenen Schnitt
+  // liegen wie der Erste. Beide tragen beide Zeitachsen, weil dieselbe Frage
+  // auf zwei Achsen in EINE Disziplin gehoert [§13.1].
+  {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'climb', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Steigende',
+      art:'koennen',
+      klasse:'selten', aus:1.53,
+      wie:'Die Spieltage des Monats werden in der Mitte geteilt und die beiden Quoten desselben Spielers verglichen.',
+      cond:'In der zweiten Hälfte des Monats mindestens 25 Prozentpunkte stärker als in der ersten, ab 4 Partien je Hälfte',
+      ...(_stWertung(
+        p=>_stHaelften(p)!=null,
+        p=>{const h=_stHaelften(p);return h?h.q2-h.q1:null;},
+        0.25,
+        p=>{const h=_stHaelften(p);return `${pct(h.q2)} % in der zweiten Hälfte, ${pct(h.q1)} % in der ersten`;}))},
+    allzeit:{
+      // Dieselbe Frage auf der Laufbahn — und damit EINE Disziplin und nicht
+      // zwei [§13.1]. „Der Aufschwung" fragt nach zwei gleitenden 25er-
+      // Fenstern und damit nach der Form von jetzt; hier geht es um die
+      // ganze Laufbahn, und gemessen halten die beiden zwei verschiedene
+      // Spieler (Stefan mit +12, Martin mit +24 Punkten).
+      //
+      // `fenster`, obwohl nichts herausfaellt: die Mitte WANDERT. Mit jedem
+      // zweiten neuen Spieltag rutscht einer aus der zweiten Haelfte in die
+      // erste, und war er schwach, waechst der Abstand ohne eine einzige
+      // neue Partie des Halters [§C33].
+      fenster:true,
+      offen:true,
+      wie:'Die eigenen Spieltage werden in der Mitte geteilt und die beiden Siegquoten verglichen. Gezählt werden die eigenen Spieltage und nicht die des Kalenders: sonst hängt die Wertung daran, wie oft jemand dabei war. Wer sich nicht gesteigert hat, steht nicht im Rennen.',
+      cond:'Größte Steigerung der Siegquote von der ersten Hälfte der eigenen Spieltage zur zweiten, ab 10 eigenen Spieltagen',
+      val:p => (p.stgDelta != null && p.stgTage >= 10 && p.stgDelta > 0) ? p.stgDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} Punkte · ${pct(p.stgQ2)} % in der zweiten Hälfte, ${pct(p.stgQ1)} % in der ersten`}},
+
+
+  {id:'hochform', name:'Der Höhenflug', short:'Höhenflug', ic:'hochSpitze', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Aufgeblühte',
+      art:'koennen',
+      klasse:'besonders', aus:1.5,
+      wie:'Die letzten zehn Partien des Monats gegen alle davor in diesem Monat. Nicht gegen die Monatsquote: die enthält das Fenster selbst, und dann zählt es doppelt.',
+      cond:'In den letzten 10 Partien mindestens 30 Prozentpunkte über der eigenen Quote davor, ab 20 Partien im Monat',
+      ...(_stWertung(
+        p=>_stLetzteZehn(p)!=null,
+        p=>{const f=_stLetzteZehn(p);return f?f.d:null;},
+        0.30,
+        p=>{const f=_stLetzteZehn(p);return `${pct(f.drin)} % in den letzten 10, ${pct(f.raus)} % in den ${f.vor} davor`;}))},
+    allzeit:{
+      // Ein GLEITENDES Fenster: der Wert steigt auch dann, wenn am hinteren
+      // Ende eine schwache Partie herausfaellt, und dann hat der Halter
+      // nichts getan [§C33].
+      fenster:true,
+      offen:true,
+      wie:'Die letzten zehn Partien der Laufbahn werden gegen alle Partien DAVOR gestellt und nicht gegen die Gesamtquote, sonst zählt das Fenster doppelt. Das Fenster liegt fest am Ende: ein gesuchtes Maximum aus allen Zehnerblöcken hing an der Spielzahl, weil das Maximum aus dreihundert Ziehungen größer ist als das aus elf.',
+      cond:'Größter Abstand der letzten 10 Partien zur eigenen Quote davor, ab 20 Partien',
+      val:p => (p.hfDelta != null && p.hfDelta > 0) ? p.hfDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} Punkte · ${pct(p.hfNeu)} % in den letzten 10, sonst ${pct(p.hfAlt)} %`}},
+
+  {id:'schlussball', name:'Der letzte Ball', short:'Schluss', ic:'whistle', tone:'gold', art:'leistung',
+    monat:{
+      beiname:'Der Nervenstarke',
+      art:'konstanz',
+      klasse:'selten', aus:1.75,
+      wie:'Gewertet wird die zeitlich letzte Partie jedes eigenen Spieltags gegen alle anderen dieses Tages. Drei Partien je Tag, damit „die letzte" überhaupt eine Auswahl ist.',
+      cond:'In der letzten Partie eines Spieltags mindestens 35 Prozentpunkte stärker als in den übrigen, ab 3 Spieltagen mit je 3 Partien',
+      ...(_stWertung(
+        p=>_stSchlussBall(p,3)!=null,
+        p=>{const s=_stSchlussBall(p,3);return s?s.d:null;},
+        0.35,
+        p=>{const s=_stSchlussBall(p,3);return `${pct(s.drin)} % in ${s.n} Schlussspielen, ${pct(s.raus)} % davor`;}))},
+    allzeit:{
+      // KEIN Fenster: die Teilmenge ist eine feste Teilung jedes Spieltags,
+      // es faellt nichts hinten heraus. Gemeldet werden darf deshalb auch
+      // das Ausbauen.
+      offen:true,
+      wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die zeitlich letzte Partie gegen alle anderen dieses Tages gestellt. Der Vergleich läuft innerhalb desselben Tages, sonst stehen zwei verschiedene Wochen gegeneinander. Gemessen wird der Abstand zur eigenen Quote an diesen Tagen, nicht das Niveau.',
+      cond:'Größter Abstand der Siegquote im Schlussspiel zu den übrigen Partien desselben Tages, ab 10 Spieltagen mit je 3 Partien',
+      val:p => (p.sbDelta != null && p.sbN >= 10 && p.sbDelta > 0) ? p.sbDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} Punkte · ${pct(p.sbDrin)} % in ${p.sbN} Schlussspielen, sonst ${pct(p.sbRaus)} %`}},
+
   {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flame', tone:'orange', art:'ereignis',
     allzeit:{
       wie:'Gezählt werden Siege, die ohne Niederlage dazwischen aufeinanderfolgen, über Spieltage und Saisons hinweg. Eine Niederlage setzt die Zählung auf null.',
@@ -707,10 +818,56 @@ const DISZIPLINEN = [
       val:p => (p.restN >= 40 && p.restSd != null) ? -p.restSd : null,
       ev:(p,v) => `${komma(-v)} Tore Streuung um ${p.restMit < 0 ? '−' : '+'}${komma(Math.abs(p.restMit))} im Schnitt · ${p.restN} Partien`}},
 
+  // Zwei Fuegungen, die von der AUSLOSUNG leben: wen jemand als Mitspieler
+  // bekommt, entscheidet er nicht selbst. Der Katalog fragt bei „Der Klotz am
+  // Bein" und „Der Wegbereiter" nach der WIRKUNG eines Partners; nach seiner
+  // STAERKE fragt nichts.
+  //
+  // Gerechnet wird gegen das EIGENE Mittel und nicht gegen das der Liga. Wer
+  // selbst der Beste ist, kann nie mit sich selbst spielen: sein Partnerfeld
+  // ist zwangslaeufig das schwaechste der Liga, und gemessen lag diese
+  // Fassung bei r = −0,66 mit der eigenen Siegquote — damit waere die Fuegung
+  // eine zweite Rangliste des Koennens gewesen [§C38]. Gegen das Eigene
+  // gerechnet faellt der Effekt weg: gemessen −0,09.
+  //
+  // Beide lesen DASSELBE Feld, eines mit Plus und eines mit Minus. Zwei
+  // Rechnungen fuer dieselbe Frage waeren eine zu viel [§C27].
+  //
+  // `paar` sagt, dass die beiden die zwei ENDEN eines Werts sind. Fuer eine
+  // Quoten-Fuegung verlangt `tests/disziplinen` sonst, dass mindestens die
+  // halbe Liga im Rennen steht — gegen eine zu hohe Schwelle. Ein Vorzeichen
+  // ist aber keine Schwelle: es teilt das Feld, und gemessen standen fuenf
+  // ueber und sechs unter dem eigenen Mittel. Gepruefft wird deshalb das
+  // Paar: zusammen muessen die beiden Rennen die halbe Liga tragen, und wer
+  // die Mindestzahl erfuellt, steht in einem von beiden.
+  {id:'tailwind', name:'Der Rückenwind', short:'Rückenwind', ic:'windBack', tone:'acid',
+    art:'ereignis', zufall:'quote', paar:'solorun',
+    allzeit:{
+      // Ein gleitendes Fenster [§C35]: der Wert steigt auch, weil am hinteren
+      // Ende ein schwacher Partner herausfaellt.
+      fenster:true,
+      offen:true,
+      wie:'Für jede der letzten 25 Partien wird die Siegquote des Mitspielers über die ganze Ligageschichte genommen und gemittelt. Verglichen wird das mit demselben Mittel über die ganze Laufbahn. Gefragt ist nicht, was ein Partner bewirkt, sondern wen die Auslosung gerade zuteilt.',
+      cond:'Größter Abstand der Mitspielerstärke in den letzten 25 Partien zum eigenen Mittel, ab 50 Partien',
+      val:p => (p.rwDelta != null && p.rwDelta > 0) ? p.rwDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} Punkte stärkere Mitspieler als sonst · ${pct(p.rwDrin)} statt ${pct(p.rwEigen)} %`}},
+
+  {id:'solorun', name:'Der Einzelkämpfer', short:'Alleingang', ic:'soloPath', tone:'blue',
+    art:'ereignis', zufall:'quote', paar:'tailwind',
+    allzeit:{
+      // Keine Schattenseite: an wen jemand gelost wird, ist keine Kehrseite
+      // einer Leistung. Wer mit den Schwaecheren antritt, hat nichts falsch
+      // gemacht — deshalb behaelt der Eintrag seinen Wert [§C35].
+      fenster:true,
+      offen:true,
+      wie:'Das andere Ende des Rückenwinds mit derselben Rechnung: die Siegquote der Mitspieler in den letzten 25 Partien gegen dasselbe Mittel über die ganze Laufbahn. Über die eigene Leistung sagt die Zahl nichts.',
+      cond:'Größter Rückstand der Mitspielerstärke in den letzten 25 Partien auf das eigene Mittel, ab 50 Partien',
+      val:p => (p.rwDelta != null && p.rwDelta < 0) ? -p.rwDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} Punkte schwächere Mitspieler als sonst · ${pct(p.rwDrin)} statt ${pct(p.rwEigen)} %`}},
+
   {id:'drought', name:'Die Durststrecke', short:'Flaute', ic:'dropTriple', tone:'red', art:'schatten',
     monat:{
       beiname:'Der Gestrandete',
-      art:'schatten',
       art:'schatten',
       klasse:'legendaer', aus:2.39,
       wie:'Die längste Pleitenserie des Monats.',
@@ -1211,19 +1368,6 @@ const DISZIPLINEN = [
         p=>(p.gf-p.ga)/p.games,
         2,
         (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie · ${p.gf}:${p.ga}`))}},
-
-  {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'climb', tone:'gold', art:'leistung',
-    monat:{
-      beiname:'Der Steigende',
-      art:'koennen',
-      klasse:'selten', aus:1.53,
-      wie:'Die Spieltage des Monats werden in der Mitte geteilt und die beiden Quoten desselben Spielers verglichen.',
-      cond:'In der zweiten Hälfte des Monats mindestens 25 Prozentpunkte stärker als in der ersten, ab 4 Partien je Hälfte',
-      ...(_stWertung(
-        p=>_stHaelften(p)!=null,
-        p=>{const h=_stHaelften(p);return h?h.q2-h.q1:null;},
-        0.25,
-        p=>{const h=_stHaelften(p);return `${pct(h.q2)} % in der zweiten Hälfte, ${pct(h.q1)} % in der ersten`;}))}},
 
   {id:'schwachewoche', name:'Ohne schwache Woche', short:'Durchweg', ic:'weekly', tone:'blue', art:'leistung',
     monat:{
