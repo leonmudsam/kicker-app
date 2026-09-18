@@ -281,7 +281,7 @@ globalem Zustand ist.
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 192 |
 | `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, und den Fun Fact, der heute entsteht und morgen derselbe ist | 363 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
-| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens und das Wappen als Verweis auf sein Symbol — **im echten Browser gemessen** | 138 |
+| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest — **im echten Browser gemessen** | 139 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -340,7 +340,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   von `art:'schatten'` oder `negativ:true` im Katalog). „Die bitterste
   Pleite" stand im Profil golden zwischen den Titeln und machte aus sechs
   Rekorden sieben; sie steht dort jetzt rot, hinten und außerhalb der Zahl,
-  und `nextRecordFor` schlägt sie niemandem als Ziel vor. Die **Kammer**
+  und `nextRecordFor` schlägt sie niemandem als Ziel vor.
+  **Gezählt wird sie an keiner Stelle** (`rekordZaehlung`): die Besitzleiste
+  des Rekorde-Reiters zählte sie mit, Podest und Profil nicht, und damit
+  standen zwei Zahlen unter demselben Wort — Martins Säule sagte 13, seine
+  Podestkarte „10 Rek.". Die Regel steht deshalb in der Zählung und nicht
+  dreimal im Aufruf [§C27]; sichtbar bleibt die Schandtafel in ihrer Kammer.
+  `tests/blatt` hält Leiste und Podest je Spieler aneinander — eine Summe
+  stimmt auch dann, wenn zwei Spieler ihre Zahlen tauschen. Die **Kammer**
   bleibt davon unberührt — sie steht als `data-kammer` an der Karte, nicht
   als Farbklasse, weil eine Fügung rot sein kann und trotzdem eine Fügung
   bleibt — und `art` auch, sonst verschöbe sich das Prestige [§C34].
