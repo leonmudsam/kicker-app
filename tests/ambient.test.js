@@ -1533,7 +1533,14 @@ const _zeil = JSON.parse(K.eval(`JSON.stringify((function(){
   // Saetze und bis zu 183 Zeichen — das ist ein Absatz.
   const saetze = x => String(x||'').split(/(?<=\\.)\\s+/).filter(Boolean).length;
   const lang = zeilen.filter(t => saetze(t.text) > 3 || String(t.text||'').length > 130);
-  const mechanik = zeilen.filter(t => /staerker|stärker|kein Prestige|Prestige-Stand/.test(String(t.text||'')));
+  // Gemeint sind die drei Saetze, die die Prestige-Mechanik erklaeren: „In
+  // der Chronik bleibt ‚X' staerker, also kommt fuer die Laufbahn kein
+  // Prestige hinzu", „Fuer die Laufbahn kommt durch diesen Wechsel kein
+  // Prestige hinzu" und „Die Halterlage aendert sich, der Prestige-Stand
+  // nicht". Das blanke „staerker" traf daneben jeden Beleg, der das Wort
+  // enthaelt: „Der Rückenwind" nennt „+4 Punkte staerkere Mitspieler als
+  // sonst" und ist damit dreimal als Mechanik-Erklaerung gezaehlt worden.
+  const mechanik = zeilen.filter(t => /In der Chronik bleibt|kein Prestige|Prestige-Stand/.test(String(t.text||'')));
   return {n:zeilen.length, max:Math.max(0, ...zeilen.map(t => String(t.text||'').length)),
           lang:lang.map(t => t.titel + ' (' + saetze(t.text) + ' Saetze, '
             + String(t.text).length + ' Zeichen)').slice(0,3),

@@ -116,7 +116,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **731**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **733**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -221,17 +221,19 @@ Rechnung an der Identität eines Arrays hängt statt an einer Version
 — `matches` wird immer **ersetzt**, nie an Ort und Stelle verändert, und ein
 frisches Array verwirft den Memo von selbst.
 
-**Die Rohsicht landet nicht im Cache.** Vierzehn Liga-Rekorde [§C35] fragen
-nach einem gleitenden Fenster, nach einer Rolle, nach dem Gegnerkreis oder
-nach dem Partnerkreis und brauchen dafür die Partien je Spieler in
+**Die Rohsicht landet nicht im Cache.** Achtzehn Liga-Rekorde [§C35] fragen
+nach einem gleitenden Fenster, nach einer Rolle, nach dem Gegnerkreis, nach
+dem Partnerkreis oder nach den eigenen Spieltagen und brauchen dafür die Partien je Spieler in
 Spielreihenfolge — dieselbe Rohsicht, die `_seasonTitleCtx` für den Monat
 schon hat. `_chronicleCtx` baut sie in einer eigenen Struktur NEBEN `P`,
 rechnet die Werte daraus aus und lässt sie fallen; am gecachten
 Spielerobjekt hängen nur Skalare. Am Objekt selbst wären es 4×N
 Partien-Objekte, und der Zeitschnitt hält bis zu 24 Kontexte gleichzeitig.
-Jede Partie trägt dort `mate` neben `geg`: „Der Klotz am Bein" vergleicht
-jeden Mitspieler mit sich selbst OHNE diesen Partner, und ohne den Partner
-ist das nicht zu beantworten. Die vier Kennzahlen der Schandtafel fallen im
+Jede Partie trägt dort `mate`, `geg` und `day`: „Der Klotz am Bein"
+vergleicht jeden Mitspieler mit sich selbst OHNE diesen Partner, „Der
+Rückenwind" braucht die Stärke des Partners, und „Der letzte Ball" und „Die
+Steigerung" gruppieren nach Spieltagen — alle drei Fragen hängen an einer
+Reihenfolge, die nur die fertige Liste kennt. Die vier Kennzahlen der Schandtafel fallen im
 selben Durchlauf ab — gemessen 8,6 auf 10,3 ms kalt, warm weiterhin null. `tests/disziplinen` sieht nach, dass kein Spielerobjekt im
 Cache eine Liste trägt.
 
@@ -283,7 +285,7 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords und die Schandtafel samt ihrer Verteilung | 1191 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords und die Schandtafel samt ihrer Verteilung | 1243 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 192 |
 | `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, und den Fun Fact, der heute entsteht und morgen derselbe ist | 363 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
@@ -1553,11 +1555,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   geht.
 - **§C39 Die Monatschronik fragt nicht, wer der Beste ist.** Der alte
   Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
-  gewinnt fast jede. Er ist vollständig ersetzt: siebenundfünfzig Chroniken, die
+  gewinnt fast jede. Er ist vollständig ersetzt: neunundfünfzig Chroniken, die
   nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
   dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
   anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
-  Liga-Rekorde der Ewigen Tafel sind davon unberührt; neun Disziplinen tragen
+  Liga-Rekorde der Ewigen Tafel sind davon unberührt; zwölf Disziplinen tragen
   beide Zeitachsen, weil dieselbe Frage auf zwei Zeitachsen in EINE Disziplin
   gehört [§13.1] — sie sind in §C35 genannt.
   **Das Stichproben-Tor ist niedrig und für alle gleich:** acht Partien im
@@ -1967,15 +1969,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   gewinnt jede Quote und jede Serie — am Ende liegen alle Liga-Einträge bei
   denselben drei Spielern. Zweiundzwanzig von sechsunddreißig Rekorden
   fragten direkt nach Können, und drei Spieler hielten vierundzwanzig der
-  achtunddreißig Haltungen. Heute sind es zweiundfünfzig Rekorde und
-  siebenundfünfzig Haltungen, siebenundzwanzig davon bei den drei Besten.
+  achtunddreißig Haltungen. Heute sind es siebenundfünfzig Rekorde und
+  zweiundsechzig Haltungen, siebenundzwanzig davon bei den drei Besten. Die
+  letzten fünf Einträge haben daran nichts hinzugefügt: sie messen den
+  **Abstand zum Eigenen** statt das Niveau [§C38] und gingen gemessen an den
+  Zehnten, Sechsten und Vierten der Siegquote.
   **Die Schwelle ist keine Bedingung, sondern eine Kammer.** Ein Rekord
   DARF eine hohe Mindestzahl verlangen: wer sie hält, hat die Frage über eine
   lange Strecke beantwortet, und Rekorde sind auch dazu da, Können zu
-  belohnen. Er darf aber nicht nur das. Fünf Rekorde tragen deshalb `offen`
+  belohnen. Er darf aber nicht nur das. Zehn Rekorde tragen deshalb `offen`
   im Katalog: ihre Bedingung ist mit **fünfzig Partien** in der Laufbahn
   erfüllbar — „Die starke Phase", „Die dichte Phase", „Der Angreifer", „Der
-  Souverän", „Der Aufschwung". Gemessen waren 13 der 21 bestehenden Rekorde
+  Souverän", „Der Aufschwung", „Die Steigerung", „Der Höhenflug", „Der letzte
+  Ball", „Der Rückenwind", „Der Einzelkämpfer". Gemessen waren 13 der 21 bestehenden Rekorde
   mit lesbarer Mindestzahl für einen solchen Spieler unerreichbar: „ab 50
   Sturmspielen", „ab 60 Gelegenheiten", „ab 80 Spielen" gehören dem
   Vielspieler, weil sie außer ihm niemand halten KANN. `offen` ist dabei
@@ -1986,9 +1992,13 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Der Wert einer Laufbahn steigt, weil jemand besser gespielt hat; der Wert
   eines Fensters steigt auch dann, wenn am hinteren Ende ein schwaches
   Ergebnis herausfällt. Dieselbe Begründung wie beim Verschlechtern [§C33]:
-  wer nichts getan hat, hat nichts getan. Gemessen ergaben die drei
+  wer nichts getan hat, hat nichts getan. Gemessen ergaben die drei ersten
   Fenster-Rekorde 26 der 135 Karten ihrer Familie, und keine davon nannte
-  eine Leistung. Und die Teilmenge muss **mitwandern**: „in den ersten 25
+  eine Leistung; heute sind es sieben. Die Marke gilt auch, wo nichts
+  herausfällt, aber die **Mitte wandert**: „Die Steigerung" halbiert die
+  eigenen Spieltage, und mit jedem zweiten neuen Tag rutscht einer aus der
+  zweiten Hälfte in die erste — war er schwach, wächst der Abstand ohne eine
+  einzige neue Partie des Halters. Und die Teilmenge muss **mitwandern**: „in den ersten 25
   Partien" ist fertig, sobald jemand 25 Partien hat, und ein Rekord darauf
   könnte den Halter nie mehr wechseln.
   **Die Bedingung nennt jede Schwelle, die Erklärung sagt, wie gemessen wird.**
@@ -2028,6 +2038,21 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   bleiben — sonst wäre es keins; höchstens die Hälfte der Funde darf leer
   stehen. Eine Quotenschwelle darauf anzuwenden hieße, das Seltene
   abzuschaffen.
+  **Ein PAAR wird zusammen gemessen** (`paar` im Katalog). „Der Rückenwind"
+  und „Der Einzelkämpfer" sind die zwei Enden eines Werts: wen die Auslosung
+  gerade als Mitspieler zuteilt, über oder unter dem eigenen Mittel. Das
+  Vorzeichen teilt das Feld, und gemessen standen fünf über und fünf unter
+  ihm — einzeln gemessen fiel jede Hälfte an der Regel „mindestens die halbe
+  Liga im Rennen" durch, die gegen eine zu hohe SCHWELLE geschrieben ist. Ein
+  Vorzeichen ist keine Schwelle. `paar` ist dabei keine Beschriftung:
+  `tests/disziplinen` verlangt, dass der Partner zurückzeigt und dass sich
+  die beiden Rennen nicht schneiden — zwei Einträge, in deren Rennen derselbe
+  Spieler steht, sind keine Enden eines Werts, sondern zwei Wertungen.
+  Gerechnet wird gegen das **eigene** Mittel und nicht gegen das der Liga:
+  wer selbst der Beste ist, kann nie mit sich selbst spielen, sein
+  Partnerfeld ist zwangsläufig das schwächste, und gemessen lag diese Fassung
+  bei r = −0,66 mit der eigenen Siegquote [§C38]. Gegen das Eigene
+  gerechnet bei −0,09.
   Über beide hinweg gilt: mindestens eine gehört der unteren Hälfte der
   Siegquote, und die drei Besten halten höchstens die Hälfte der Kammer.
   Ohne das hätte man zehn Einträge dazugebaut und nichts verändert.
@@ -2066,10 +2091,17 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   auf +0,06. Ein gleichmäßiger Streu wäre gelogen — eine Schande MISST, dass
   jemand schlecht war —, also ist nur der Extremfall gedeckelt: kein Halter
   über zwei Fünftel der Schandtafel, und mindestens sechs Namen tragen mit.
-  **Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin** [§13.1]. Neun
-  Disziplinen tragen jetzt beide: `spotless`, `evenkeel`, `drought`, `abyss`,
-  `hardluck`, `sieve`, `angstgegner`, `untersoll` und `misfire`. Zwei Namen
+  **Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin** [§13.1]. Zwölf
+  Disziplinen tragen jetzt beide: `spotless`, `steigerung`, `hochform`,
+  `schlussball`, `evenkeel`, `drought`, `abyss`, `hardluck`, `sieve`,
+  `angstgegner`, `untersoll` und `misfire`. Zwei Namen
   und zwei Icons für denselben Gedanken wären eins zu viel [§C27].
+  „Die Steigerung" hatte nur die Monatsachse, und der Vorschlag daraus wäre
+  ein zweiter Eintrag mit demselben Gedanken gewesen; sie hat jetzt beide.
+  Verwechselt wird sie damit nicht mit „Der Aufschwung": der vergleicht zwei
+  gleitende 25er-Fenster und fragt nach der Form von jetzt, sie halbiert die
+  ganze Laufbahn — gemessen hält Stefan die eine mit +12 und Martin die
+  andere mit +24 Punkten.
   Was auf der Monatsachse **nicht** trägt, bleibt weg: „Die stumme Antwort"
   schiebt ihre Schwelle dort gemessen höchstens 1,39 σ hinaus und wäre damit
   eine Chronik, deren Bester kaum weiter draußen liegt als der Schnitt
@@ -2270,6 +2302,7 @@ damit wertvoller als das einmalige Wochentags-Sammelziel.
 | `34-chronik-rekorde.js` `_chronicleCtx` | **dasselbe Feld noch einmal** | der häufigste Fehler: die Monatstafel zeigt den Eintrag, der Liga-Rekord bleibt unbesetzt. Zwei getrennte Durchläufe über dieselbe Frage — sie müssen gleich zählen |
 | dort `negativ` | `true`, **nur** wenn die Fügung von einer Niederlage erzählt | sie steht im Profil golden zwischen den Titeln und wird als Rekord mitgezählt [§C25]. Eine `art:'schatten'`-Disziplin braucht das Feld nicht — sie ist ohnehin negativ |
 | dort `zufall` | `'quote'` oder `'fund'`, **nur** wenn der Eintrag kein Können misst | ohne ihn steht die Fügung in der Kammer „Bestmarken" neben dem höchsten Elo-Stand der Ligageschichte. Der Wert entscheidet, welche Zusicherung in `tests/disziplinen` für ihn gilt [§C35] |
+| dort `paar` | die **id** des Eintrags, der das andere Ende desselben Werts wertet, **nur** bei einer Quoten-Fügung mit Vorzeichen | ohne ihn verlangt `tests/disziplinen` für jede Hälfte einzeln, dass die halbe Liga im Rennen steht — die Regel ist gegen eine zu hohe SCHWELLE geschrieben, und ein Vorzeichen ist keine Schwelle: gemessen standen fünf über und fünf unter dem eigenen Mittel, und beide Hälften fielen durch. Die Marke ist keine Beschriftung: der Partner muss zurückzeigen, und die beiden Rennen dürfen sich nicht schneiden. `paar` muss außerdem in der Projektion `_chronRoh` stehen — `CHRONICLES` nennt nur, was sie kennt, und ein Feld, das sie nicht nennt, kommt im Test gar nicht an |
 | `allzeit.offen` | `true`, **nur** wenn die Bedingung mit fünfzig Partien in der Laufbahn erfüllbar ist [§C35] | ohne die Marke wächst der Katalog still zum Vielspieler: 13 der 21 bestehenden Rekorde mit lesbarer Mindestzahl sind für einen 50-Spieler unerreichbar. Die Marke ist keine Beschriftung — `tests/disziplinen` verlangt, dass im Rennen jemand mit unter hundert Partien steht, dass der Rekord vergeben ist und dass er nicht nur den drei Besten gehört |
 | `allzeit.fenster` | `true`, **nur** wenn der Wert auf einem gleitenden Fenster steht („die letzten 30 Partien", „zwei Fenster im Vergleich") | der Feed meldet „X baut den Rekord aus", sobald am hinteren Ende des Fensters ein schwaches Ergebnis herausfällt — und dann hat der Halter nichts getan [§C33]. Gemeldet wird bei ihm nur der Halterwechsel. `tests/ambient` misst es über jeden vierten Spieltag |
 | `allzeit.cond` | **jede** Schwelle, die die Wertfunktion erzwingt, nicht nur die auffälligste | sie steht auf der Karte im Rekorde-Reiter und ist das, was der Leser als Aufgabe versteht. „Die ruhige Hand" nannte nur die 9 Prozentpunkte und schwieg über die 14 engen Partien und die 20 % der Laufbahn — wer die Karte las, wusste nicht, warum er nicht im Rennen steht. `tests/disziplinen` liest die Schwellen aus dem Quelltext der Rechnung und verlangt jede im Text |
@@ -2371,7 +2404,7 @@ Immer im **selben Commit** wie die Änderung, die sie auslöst:
 | Regel für Agenten ändert sich | §9 |
 | Auszeichnung, Disziplin oder Prestige-Konstante ändert sich | §10 |
 | Monatschronik kommt dazu oder ändert Art, Klasse oder Ausschlag | §6 §C39, §10.2 |
-| Ein Katalogfeld kommt dazu (`beiname`, `zufall`, `offen`, `fenster`, …) | §10.1/§10.2 als eigene Zeile, **und** eine Zusicherung in `tests/disziplinen`, die es für jeden Eintrag verlangt |
+| Ein Katalogfeld kommt dazu (`beiname`, `zufall`, `offen`, `fenster`, `paar`, …) | §10.1/§10.2 als eigene Zeile, **und** eine Zusicherung in `tests/disziplinen`, die es für jeden Eintrag verlangt — **und** die Projektion `_chronRoh` in `34-chronik-rekorde.js`, sonst kommt das Feld nie an |
 | Ein Liga-Rekord kommt dazu oder fällt weg | §6 §C35 (Zahl der Rekorde und Haltungen), §10.2, §10.3 — und das Prestige verschiebt sich [§C34] |
 | Eine Anweisung hier hat sich als falsch erwiesen | die Stelle selbst |
 

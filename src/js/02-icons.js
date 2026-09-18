@@ -211,6 +211,20 @@ const ICONS = {
   // Hochform: drei Balken, die steigen, mit einer Welle darüber — der
   // laufende Abschnitt, nicht die ganze Laufbahn.
   formPeak:      `<path d="M4 20v-5M9 20v-8M14 20v-11M19 20v-6"/><path d="M4 11l5-4 5-3 5 4"/>`,
+  // Höhenflug: eine flache Linie, aus der am RECHTEN Ende eine Spitze
+  // ausbricht — der laufende Abschnitt gegen alles davor. Bewusst anders als
+  // `climb` (Treppe mit Pfeil) und `stepsUp` (Stufen): dort geht es stetig
+  // nach oben, hier bricht es an einer Stelle aus.
+  hochSpitze:    `<path d="M3 19h9"/><path d="M12 19l4-13 4 13"/><circle cx="16" cy="5" r="1.3"/>`,
+  // Der letzte Ball: eine Pfeife mit Schallbogen — der Schlusspfiff eines
+  // Spieltags. Die Partie, an die man sich erinnert.
+  whistle:       `<path d="M3 10h9l1-2h3a3 3 0 010 6h-3l-1 2H6a3 3 0 01-3-3z"/><circle cx="7" cy="13" r="1.4"/><path d="M17 5c2 1 3 2.5 3 4.5"/>`,
+  // Rückenwind: zwei Böen, die von hinten schieben, mit einer Spitze voran.
+  // Wen die Auslosung zuteilt, entscheidet niemand selbst [§C35].
+  windBack:      `<path d="M3 9h10a3 3 0 10-3-3"/><path d="M3 15h7a2.5 2.5 0 11-2.5 2.5"/><path d="M15 12h6l-3-3M18 15l3-3"/>`,
+  // Einzelkämpfer: eine Figur, neben der zwei leere Plätze gestrichelt
+  // stehen — die Seite, auf der niemand mitträgt.
+  soloPath:      `<circle cx="8" cy="7" r="3"/><path d="M3 20v-2a4 4 0 014-4h2a4 4 0 014 4v2"/><path d="M17 8v3M17 14v3" stroke-dasharray="2 2"/><circle cx="17" cy="20" r="1.2"/>`,
   // Dichtes Tor: ein geschlossenes Gitter im Rahmen — nichts geht durch.
   gateShut:      `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M12 5v14M17 5v14M3 12h18"/>`,
   // Abwehrchef: Schild mit Rangwinkeln darin — die Ansage in der Abwehr.
