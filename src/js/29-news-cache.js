@@ -1508,6 +1508,23 @@ function _consolidateStories(list){
 // Wird in loadAll() aufgerufen. Generator → DB-Upsert → DB-Read → Cache.
 // Vollständig in try/catch gewrappt — Failures degradieren auf Fallback.
 async function syncStoriesViaDb(){
+  // ── Erst den Bestand kennen, dann ziehen ──────────────────────────
+  // Der Generator lief zuerst, und der Upload danach: die Ziehung des
+  // Fun Facts geschah damit BLIND. `_buildAmbientStories` liest aus
+  // `_cache._stories`, welcher Slot schon existiert und welche Typen, Rubriken
+  // und Koepfe die Tage davor belegt haben — ohne Bestand greift keine dieser
+  // Sperren, und wer als Erster am Tag die App oeffnete, schrieb genau diese
+  // blinde Ziehung in die Datenbank. Gemessen zog derselbe Slot mit Bestand
+  // „Julian ist der Tageskoenig" und ohne „Leon gibt Vollgas".
+  //
+  // Der Vorlauf kostet einen SELECT und nur beim ersten Sync einer Sitzung:
+  // danach steht der Bestand schon im Speicher.
+  if(!Array.isArray(_cache._stories) || !_cache._stories.length){
+    try {
+      const vorher = await _loadStoriesFromDb();
+      if(Array.isArray(vorher)) _cache._stories = vorher;
+    } catch(e){}
+  }
   let generated = [];
   try { generated = _buildStories() || []; }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] generator failed', e); }

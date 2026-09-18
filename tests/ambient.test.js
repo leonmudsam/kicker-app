@@ -99,90 +99,105 @@ function build(iso, existing){
   })()`);
 }
 
-console.log('=== 1. NACHSCHUB FUELLT LUECKEN ===');
+console.log('=== 1. EIN SLOT ENTSTEHT HEUTE ODER GAR NICHT ===');
+//    Einmal wurden die letzten drei Tage nachgetragen, mit `when` auf der
+//    damaligen Slot-Zeit. Eine Karte, die JETZT entsteht und ein Datum von
+//    vorgestern traegt, steht unter einem Tageskopf, den der Leser schon
+//    gelesen hat, und der Lesestand zaehlt sie als gelesen [§C33] — sie wird
+//    nie gesehen. Und ihr Inhalt entstand aus den HEUTIGEN Zahlen fuer einen
+//    Tag, der vorbei ist.
 const NOW = '2026-08-27T20:30:00Z';   // nach beiden Slots des Tages (lokal)
+const NOW_MS = new Date(NOW).getTime();
+const HEUTE = (function(){ const d = new Date(NOW);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
 const fresh = build(NOW, []);
 console.log('  Slots aus leerem Bestand: ' + fresh.length);
 fresh.forEach(s => console.log('    ' + s.id + '  ' + s.when.slice(0,16) + '  ' + s.sub));
+const _spieltage = new Set(K.eval('matches.map(m=>tagKey(m.created_at))'));
 // Der 10-Uhr-Slot steht an jedem Tag, der 19-Uhr-Slot nur an Tagen ohne
 // Partie: keine der 466 Partien hat vor 10 Uhr angefangen, die letzte um
 // 18 Uhr. Am Abend eines Spieltags ist alles vom Tag interessanter als eine
 // Zahl, die seit Wochen gilt.
-const _spieltage = new Set(K.eval('matches.map(m=>{const d=new Date(m.created_at); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");})'));
-const _tageImFenster = [];
-for(let b = K.eval('AMBIENT_BACKFILL_DAYS'); b >= 0; b--){
-  const d = new Date(new Date(NOW).getTime() - b*86400000);
-  _tageImFenster.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));
-}
-const _erwartet = _tageImFenster.length + _tageImFenster.filter(d => !_spieltage.has(d)).length;
-ok(fresh.length === _erwartet,
-   'ein 10-Uhr-Slot je Tag, ein 19-Uhr-Slot nur an spielfreien Tagen', fresh.length + ' von ' + _erwartet);
-_tageImFenster.filter(d => _spieltage.has(d)).forEach(d =>
-  ok(!fresh.some(s => s.id === 'ambient_' + d + '_19'), 'am Spieltag ' + d + ' schweigt der Abend-Slot'));
+const _erwartet = 1 + (_spieltage.has(HEUTE) ? 0 : 1);
+ok(fresh.length === _erwartet, 'nur die Slots von heute, ein 19-Uhr-Slot nur spielfrei',
+   fresh.length + ' von ' + _erwartet);
+ok(fresh.every(s => s.id.indexOf('ambient_' + HEUTE + '_') === 0),
+   'kein Slot eines vergangenen Tages', fresh.map(s => s.id).join(', ') || 'keiner');
 ok(new Set(fresh.map(s=>s.id)).size === fresh.length, 'keine doppelten IDs');
 ok(fresh.every(s => /^ambient_\d{4}-\d{2}-\d{2}_(10|19)$/.test(s.id)), 'ID-Schema unveraendert');
 
-console.log('\n=== 2. WHEN LIEGT AUF DEM ECHTEN SLOT ===');
+console.log('\n=== 2. EINE NEUE KARTE IST DIE NEUESTE KARTE ===');
+//    `when` stand auf der Slot-Stunde, und damit rutschte ein um 22 Uhr
+//    nachgetragener 10-Uhr-Slot unter alles, was der Leser an diesem Tag schon
+//    gelesen hatte. Der Zeitstempel ist deshalb der Moment des Entstehens.
 fresh.forEach(s => {
-  const m = /^ambient_(\d{4}-\d{2}-\d{2})_(\d+)$/.exec(s.id);
-  const d = new Date(s.when);
-  ok(d.getHours() === +m[2], s.id + ': when trifft die Slot-Stunde', d.toISOString());
-  ok(d.getTime() <= new Date(NOW).getTime(), s.id + ': liegt nicht in der Zukunft');
+  const d = new Date(s.when).getTime();
+  ok(Math.abs(d - NOW_MS) < 5000, s.id + ': entsteht jetzt, nicht zur Slot-Stunde',
+     new Date(s.when).toISOString());
+  ok(d <= NOW_MS + 5000, s.id + ': liegt nicht in der Zukunft');
 });
-const sorted = fresh.map(s=>new Date(s.when).getTime());
-ok(sorted.every((t,i)=>i===0||t>=sorted[i-1]), 'chronologisch aufsteigend erzeugt');
 
 console.log('\n=== 3. IDEMPOTENZ ===');
 // Was schon persistiert ist, wird nicht noch einmal erzeugt.
-const asStored = fresh.map(s => ({id:s.id, when:s.when, dataRef:{type:'ambient', sub:s.sub,
-  ambientRubrik:s.rubrik, ambientPids:s.pids}}));
+const asStored = fresh.map(s => ({id:s.id, when:s.when, title:s.title,
+  desc:'Der gespeicherte Satz von damals.', prio:20, cat:'season', ic:'sparkle',
+  dataRef:{type:'ambient', sub:s.sub, ambientRubrik:s.rubrik, ambientPids:s.pids}}));
 const second = build(NOW, asStored);
 ok(second.length === 0, 'zweiter Lauf erzeugt nichts mehr', second.length + '');
-// Nur der Abend-Slot von vorgestern fehlt → genau der kommt nach.
-const gapId = fresh[fresh.length-3] ? fresh[fresh.length-3].id : null;
-const withGap = asStored.filter(s => s.id !== gapId);
-const filled = build(NOW, withGap);
-ok(filled.length === 1 && filled[0].id === gapId, 'einzelne Luecke wird gezielt gefuellt',
-   filled.map(s=>s.id).join(','));
-
-console.log('\n=== 4. DETERMINISMUS ===');
-// Derselbe Slot muss denselben Inhalt liefern, egal ob er am Tag selbst oder
-// drei Tage spaeter nachgetragen wird.
-// Der Vergleich muss bei GLEICHER Vorgeschichte laufen. Gegen einen leeren
-// Verlauf zu bauen ist etwas anderes: der Nachschub weicht absichtlich aus,
-// was zuletzt lief, und trifft dann eine andere — ebenso richtige — Wahl.
-// Die Zusage lautet: derselbe Slot, dieselbe Vorgeschichte, derselbe Inhalt.
-const _pruefId = (fresh.find(s => /_19$/.test(s.id)) || fresh[0]).id;
-const lateSlot = fresh.find(s => s.id === _pruefId);
-const ohneDiesen = asStored.filter(s => s.id !== _pruefId);
-const sameSlot = build(NOW, ohneDiesen).find(s => s.id === _pruefId);
-if(lateSlot && sameSlot){
-  ok(lateSlot.sub === sameSlot.sub && lateSlot.title === sameSlot.title,
-     'Nachtrag == Original (Typ und Text)', lateSlot.sub + ' / ' + sameSlot.sub);
-} else {
-  ok(false, 'Slot ' + _pruefId + ' in beiden Laeufen vorhanden');
+if(fresh.length > 1){
+  const gapId = fresh[fresh.length-1].id;
+  const filled = build(NOW, asStored.filter(s => s.id !== gapId));
+  ok(filled.length === 1 && filled[0].id === gapId, 'eine einzelne Luecke wird gezielt gefuellt',
+     filled.map(s=>s.id).join(','));
 }
-const again = build(NOW, []);
-ok(JSON.stringify(again) === JSON.stringify(fresh), 'zwei identische Laeufe, identisches Ergebnis');
+
+console.log('\n=== 4. WAS GEZOGEN WURDE, WIRD NICHT NEU GEZOGEN ===');
+//    Der eigentliche Befund: `_buildAmbientStories` liest die Rotation aus
+//    `_cache._stories`, und der steht beim Kaltstart leer — `loadAll` zeichnet,
+//    BEVOR `syncStoriesViaDb` gelaufen ist. Derselbe Slot zog damit zwei
+//    verschiedene Karten, und `_newsTexteAuffrischen` schrieb die kalte Fassung
+//    ueber die gespeicherte: wer gestern einen Fun Fact gelesen hatte, fand
+//    heute an derselben Stelle einen anderen.
+// Nachgestellt wird die echte Reihenfolge: `loadAll` zeichnet mit leerem
+// Bestand (der Generator zieht blind und merkt sich das Ergebnis), danach
+// landet der Sync. Der Memo-Schluessel muss den Bestand kennen, sonst bleibt
+// die blinde Ziehung die ganze Sitzung stehen und die Auffrischung schreibt
+// sie ueber die gespeicherte Karte.
+const _frost = JSON.parse(K.eval(`JSON.stringify((function(){
+  const bestand = ${JSON.stringify(asStored)}.map(s => Object.assign({}, s, {when:new Date(s.when)}));
+  // 1. Kaltstart: kein Bestand, der Generator zieht und merkt sich das.
+  _cache._stories = [];
+  delete _cache._buildStoriesKey; delete _cache._frischVon;
+  const kalt = _buildStories().filter(s => String(s.id).indexOf('ambient_') === 0);
+  // 2. Der Sync landet.
+  _cache._stories = bestand;
+  const aus = _newsTexteAuffrischen(bestand);
+  const ambi = aus.filter(s => String(s.id).indexOf('ambient_') === 0);
+  return {n:ambi.length, kalt:kalt.map(s => s.id + ': ' + s.title),
+          geaendert: ambi.filter(s => {
+            const alt = bestand.find(b => b.id === s.id);
+            return !alt || alt.title !== s.title || alt.desc !== s.desc
+              || JSON.stringify(alt.dataRef) !== JSON.stringify(s.dataRef);
+          }).map(s => s.id)};
+})())`));
+ok(_frost.kalt.length > 0, 'der Kaltstart zieht ueberhaupt einen Fun Fact',
+   _frost.kalt.join(' | '));
+ok(_frost.n === asStored.length, 'die gespeicherten Fun Facts stehen im Feed',
+   _frost.n + ' von ' + asStored.length);
+ok(_frost.geaendert.length === 0, 'die Auffrischung schreibt keinen Fun Fact um',
+   _frost.geaendert.join(', ') || 'keiner');
 
 console.log('\n=== 5. ROTATION BLEIBT ===');
+const again = build(NOW, []);
+ok(JSON.stringify(again.map(s=>s.sub)) === JSON.stringify(fresh.map(s=>s.sub)),
+   'zwei identische Laeufe, identische Ziehung');
 const subs = fresh.map(s=>s.sub);
-ok(new Set(subs).size === subs.length, 'kein Fun-Fact-Typ zweimal im Nachschub',
+ok(new Set(subs).size === subs.length, '10 und 19 Uhr zeigen verschiedene Typen',
    subs.join(', '));
-const perDay = {};
-fresh.forEach(s => { const d = s.id.slice(8,18); (perDay[d] = perDay[d] || []).push(s.sub); });
-Object.keys(perDay).forEach(d => ok(new Set(perDay[d]).size === perDay[d].length,
-  d + ': 10 und 19 Uhr zeigen verschiedene Typen'));
-const heads = {};
-fresh.forEach(s => s.pids.forEach(p => heads[p] = (heads[p]||0)+1));
-const worst = Object.keys(heads).sort((a,b)=>heads[b]-heads[a])[0];
-console.log('  Koepfe: ' + Object.keys(heads).map(p=>nm(p)+'×'+heads[p]).join(', '));
-ok(!worst || heads[worst] <= 2, 'kein Spieler dominiert den Nachschub',
-   worst ? nm(worst)+'×'+heads[worst] : '—');
 const rubriken = fresh.map(s => s.rubrik);
 ok(rubriken.every(Boolean), 'jede ambiente Karte speichert ihre Rubrik', rubriken.join(', '));
 ok(rubriken.every((r,i) => i === 0 || r !== rubriken[i-1]),
-   'aufeinanderfolgende Slots wechseln die Erzaehlrubrik', rubriken.join(' → '));
+   'aufeinanderfolgende Slots wechseln die Erzaehlrubrik', rubriken.join(' -> '));
 const _kleinerPool = JSON.parse(K.eval(`JSON.stringify((function(){
   const alt = _ambientTemplatePool;
   try {
@@ -194,19 +209,15 @@ const _kleinerPool = JSON.parse(K.eval(`JSON.stringify((function(){
     return {n:r.length, sauber:r.every(s => s && s.dataRef && s.dataRef.ambientRubrik)};
   } finally { _ambientTemplatePool = alt; }
 })())`));
-ok(_kleinerPool.n >= _tageImFenster.length && _kleinerPool.sauber,
+ok(_kleinerPool.n >= 1 && _kleinerPool.sauber,
    'ein kleiner Template-Pool bleibt funktionsfaehig', _kleinerPool.n + ' Karten');
 
 console.log('\n=== 6. ZUKUENFTIGE SLOTS BLEIBEN ZU ===');
 const morning = build('2026-08-27T11:30:00Z', []);   // nach 10:00, vor 19:00 lokal
 ok(!morning.some(s => s.id === 'ambient_2026-08-27_19'), 'der heutige 19-Uhr-Slot wartet noch');
 ok(morning.some(s => s.id === 'ambient_2026-08-27_10'), 'der heutige 10-Uhr-Slot ist da');
-// Am 26.08. wurde gespielt, also gibt es dort keinen Abend-Slot. Nachgetragen
-// wird der letzte spielfreie Abend im Fenster.
-const _freierAbend = _tageImFenster.filter(d => !_spieltage.has(d) && d < '2026-08-27').pop();
-if(_freierAbend) ok(morning.some(s => s.id === 'ambient_' + _freierAbend + '_19'),
-  'der Abend-Slot eines spielfreien Vortags wird nachgetragen', _freierAbend);
-else ok(!morning.some(s => /2026-08-2[456]_19$/.test(s.id)), 'kein Abend-Slot an Spieltagen');
+ok(!morning.some(s => s.id.indexOf('ambient_2026-08-27_') !== 0),
+   'und kein Slot von gestern kommt nach', morning.map(s=>s.id).join(', '));
 
 console.log('\n=== 6. BLICKRICHTUNG DER SLOTS ===');
 // 10:00 schaut nach vorn, 19:00 zurueck. Die Rolle ist ein Vorzug, kein
@@ -989,6 +1000,8 @@ console.log('\n=== 13. DER TEXT KOMMT AUS DEM GENERATOR ===');
 // nur an Karten, die es noch nicht gab. Der Feed zeigte weiter Saetze, die im
 // Quelltext seit dem Umbau nicht mehr stehen.
 const _auffr = JSON.parse(K.eval(`JSON.stringify((function(){
+  _cache._stories = [];
+  delete _cache._buildStoriesKey; delete _cache._frischVon;
   const frisch = _buildStories();
   if(!frisch.length) return {n:0};
   // Eine persistierte Zeile mit ALTEM Wortlaut nachstellen.
@@ -997,10 +1010,14 @@ const _auffr = JSON.parse(K.eval(`JSON.stringify((function(){
   _cache._stories = alt;
   _cache._consolFrom = null;
   const sicht = getStoriesCache();
+  // Ein Fun Fact ist ausgenommen: sobald sein Slot im Bestand steht, bildet
+  // der Generator ihn nicht mehr, und dann gibt es nichts aufzufrischen. Genau
+  // das haelt ihn stabil — siehe Abschnitt 4.
+  const ohneFakt = sicht.filter(x => String(x.id).indexOf('ambient_') !== 0);
   return {
-    n: sicht.length,
-    nochAlt: sicht.filter(x => x.title === 'ALTER TITEL').length,
-    mitStrich: sicht.filter(x => (x.desc||'').indexOf('—') >= 0).length,
+    n: ohneFakt.length, fakten: sicht.length - ohneFakt.length,
+    nochAlt: ohneFakt.filter(x => x.title === 'ALTER TITEL').length,
+    mitStrich: ohneFakt.filter(x => (x.desc||'').indexOf('—') >= 0).length,
     // Zeitpunkt und ID muessen bleiben, sonst springt eine Karte im Feed.
     // Ausgenommen ist, was die Konsolidierung SELBST baut: Sammelkarte,
     // Badge-Gruppe und Typ-Gruppe fassen mehrere Zeilen zusammen und bekommen
@@ -1011,6 +1028,7 @@ const _auffr = JSON.parse(K.eval(`JSON.stringify((function(){
   };
 })())`));
 ok(_auffr.n > 0, 'der Feed steht', _auffr.n + ' Karten');
+ok(_auffr.fakten > 0, 'und traegt auch Fun Facts', _auffr.fakten + ' Karten');
 ok(_auffr.nochAlt === 0, 'kein persistierter Titel ueberlebt den Generator',
    _auffr.nochAlt + ' von ' + _auffr.n);
 ok(_auffr.mitStrich === 0, 'und kein eingefrorener Gedankenstrich',
