@@ -1,0 +1,1067 @@
+{
+ "NAMES": [
+  "Alex",
+  "Anton",
+  "Henry",
+  "Jane",
+  "Jannik",
+  "Johannes",
+  "Julian",
+  "Leo",
+  "Leon",
+  "Martin",
+  "Maxi",
+  "Stefan"
+ ],
+ "IDS": [
+  "00000000-0000-4000-8000-000000000000",
+  "00000000-0000-4000-8000-000000000001",
+  "00000000-0000-4000-8000-000000000002",
+  "00000000-0000-4000-8000-000000000003",
+  "00000000-0000-4000-8000-000000000004",
+  "00000000-0000-4000-8000-000000000005",
+  "00000000-0000-4000-8000-000000000006",
+  "00000000-0000-4000-8000-000000000007",
+  "00000000-0000-4000-8000-000000000008",
+  "00000000-0000-4000-8000-000000000009",
+  "00000000-0000-4000-8000-000000000010",
+  "00000000-0000-4000-8000-000000000011"
+ ],
+ "MON_GEWERTET": [
+  "2026-06",
+  "2026-07",
+  "2026-08"
+ ],
+ "MONATE": [
+  "2026-05",
+  "2026-06",
+  "2026-07",
+  "2026-08"
+ ],
+ "RANG": [
+  {
+   "id": "00000000-0000-4000-8000-000000000006",
+   "name": "Julian",
+   "q": 0.6491228070175439,
+   "games": 171,
+   "klasse": "oberes Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000009",
+   "name": "Martin",
+   "q": 0.6350710900473934,
+   "games": 211,
+   "klasse": "oberes Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000008",
+   "name": "Leon",
+   "q": 0.6225352112676056,
+   "games": 355,
+   "klasse": "oberes Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000003",
+   "name": "Jane",
+   "q": 0.5670103092783505,
+   "games": 97,
+   "klasse": "oberes Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000004",
+   "name": "Jannik",
+   "q": 0.48717948717948717,
+   "games": 78,
+   "klasse": "mittleres Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000010",
+   "name": "Maxi",
+   "q": 0.4396551724137931,
+   "games": 348,
+   "klasse": "mittleres Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000007",
+   "name": "Leo",
+   "q": 0.4146341463414634,
+   "games": 246,
+   "klasse": "mittleres Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000002",
+   "name": "Henry",
+   "q": 0.3881578947368421,
+   "games": 152,
+   "klasse": "mittleres Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000005",
+   "name": "Johannes",
+   "q": 0.3246753246753247,
+   "games": 77,
+   "klasse": "unteres Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000011",
+   "name": "Stefan",
+   "q": 0.2716049382716049,
+   "games": 81,
+   "klasse": "unteres Drittel"
+  },
+  {
+   "id": "00000000-0000-4000-8000-000000000000",
+   "name": "Alex",
+   "q": 0.2564102564102564,
+   "games": 39,
+   "klasse": "unteres Drittel"
+  }
+ ],
+ "ERG": [
+  {
+   "id": "hochform",
+   "name": "Der Höhenflug",
+   "short": "Höhenflug",
+   "beiname": "Der Entfesselte",
+   "art": "koennen",
+   "ton": "gold",
+   "stufe": "pp",
+   "frage": "Wie weit liegt die laufende Form über der eigenen Laufbahn?",
+   "cond": "Ein Block aus 10 Partien mindestens 35 Prozentpunkte über der eigenen Quote außerhalb dieses Blocks, ab 20 Partien",
+   "wie": "Die letzten zehn Partien werden gegen die Quote in allen Partien DAVOR gestellt, nicht gegen die Gesamtquote — sonst zählt das Fenster doppelt. Das Fenster ist fest: ein gesuchtes Maximum aus allen Zehnerblöcken hing an der Spielzahl, weil das Maximum aus dreihundert Ziehungen größer ist als das aus elf.",
+   "mind": {
+    "allzeit": 20,
+    "monat": 5
+   },
+   "mindTage": null,
+   "aus": 1.5013061696760144,
+   "klasse": "besonders",
+   "prestige": 85,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": true,
+    "ausschlag": true,
+    "aussage": true,
+    "vergeben": true,
+    "rate": true,
+    "klassen": true,
+    "alle": true
+   },
+   "lauf": {
+    "rennen": 11,
+    "korr": 0.4175597801104351,
+    "aus": 2.3354271920064247,
+    "halter": [
+     {
+      "name": "Maxi",
+      "klasse": "mittleres Drittel",
+      "platz": 6,
+      "ev": "+27 Punkte über dem eigenen Schnitt · 70 % in den letzten 10 Partien statt 43 % in den 338 davor"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Maxi",
+      "v": 0.2680473372781065,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Martin",
+      "v": 0.17313432835820897,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Julian",
+      "v": 0.0540372670807453,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Jane",
+      "v": 0.0367816091954023,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Stefan",
+      "v": 0.03239436619718311,
+      "klasse": "unteres Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 27,
+    "monate": 3,
+    "roh": 0.2761904761904762,
+    "ab": 0.30000000000000004,
+    "gerundet": true,
+    "rate": 0.6666666666666666,
+    "korr": -0.18150268147417928,
+    "ausRoh": 1.3716463017480922,
+    "halter": [
+     {
+      "name": "Leo",
+      "monat": "2026-06",
+      "klasse": "mittleres Drittel",
+      "ev": "+32 Punkte über dem eigenen Schnitt · 70 % in den letzten 10 Partien statt 38 % in den 85 davor"
+     },
+     {
+      "name": "Johannes",
+      "monat": "2026-07",
+      "klasse": "unteres Drittel",
+      "ev": "+43 Punkte über dem eigenen Schnitt · 70 % in den letzten 10 Partien statt 27 % in den 15 davor"
+     }
+    ]
+   }
+  },
+  {
+   "id": "steigerung",
+   "name": "Die Steigerungsform",
+   "short": "Steigerung",
+   "beiname": "Der Gereifte",
+   "art": "konstanz",
+   "ton": "gold",
+   "stufe": "pp",
+   "frage": "Wer wird im Verlauf besser als er angefangen hat?",
+   "cond": "Zweite Hälfte der eigenen Spieltage mindestens 20 Prozentpunkte über der ersten, ab 10 eigenen Spieltagen (Monat: 5)",
+   "wie": "Die eigenen Spieltage werden in zwei Hälften geteilt und die Quoten verglichen. Gezählt werden die eigenen Spieltage, nicht die des Kalenders: sonst hängt die Wertung daran, wie oft jemand dabei war.",
+   "mind": {
+    "allzeit": 20,
+    "monat": 5
+   },
+   "mindTage": {
+    "allzeit": 10,
+    "monat": 5
+   },
+   "aus": 1.503714198601888,
+   "klasse": "besonders",
+   "prestige": 75,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": true,
+    "ausschlag": true,
+    "aussage": true,
+    "vergeben": true,
+    "rate": true,
+    "klassen": true,
+    "alle": true
+   },
+   "lauf": {
+    "rennen": 11,
+    "korr": 0.059646548104931425,
+    "aus": 2.5800596362440538,
+    "halter": [
+     {
+      "name": "Stefan",
+      "klasse": "unteres Drittel",
+      "platz": 10,
+      "ev": "+12 Punkte besser geworden · 33 % in der zweiten Hälfte statt 21 % in der ersten"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Stefan",
+      "v": 0.11904761904761904,
+      "klasse": "unteres Drittel"
+     },
+     {
+      "name": "Jannik",
+      "v": 0.048484848484848464,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Maxi",
+      "v": 0.035839073574922664,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Martin",
+      "v": 0.023568719523207493,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Leo",
+      "v": 0.011846405228758183,
+      "klasse": "mittleres Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 26,
+    "monate": 3,
+    "roh": 0.21736630247268546,
+    "ab": 0.25,
+    "gerundet": true,
+    "rate": 0.3333333333333333,
+    "korr": 0.12537644350339744,
+    "ausRoh": 1.3006071614081258,
+    "halter": [
+     {
+      "name": "Johannes",
+      "monat": "2026-07",
+      "klasse": "unteres Drittel",
+      "ev": "+28 Punkte besser geworden · 53 % in der zweiten Hälfte statt 25 % in der ersten"
+     }
+    ]
+   }
+  },
+  {
+   "id": "ueberflieger",
+   "name": "Der Trotzkopf",
+   "short": "Trotz",
+   "beiname": "Der Unbeugsame",
+   "art": "koennen",
+   "ton": "gold",
+   "stufe": "pp",
+   "frage": "Wer holt gegen Stärkere mehr als gegen alle?",
+   "cond": "Mindestens 15 Prozentpunkte bessere Quote gegen Stärkere als über alles, ab 25 Partien als Außenseiter (Monat: 5)",
+   "wie": "Stärker heißt: die Elo-Rechnung gab vor der Partie unter 45 Prozent Siegchance. Verglichen wird die Quote in genau diesen Partien mit der eigenen Gesamtquote — nicht mit der Liga, sonst gehört der Eintrag dem Besten.",
+   "mind": {
+    "allzeit": 25,
+    "monat": 5
+   },
+   "mindTage": null,
+   "aus": 1.57985671984963,
+   "klasse": "besonders",
+   "prestige": 85,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": false,
+    "ausschlag": true,
+    "aussage": false,
+    "vergeben": true,
+    "rate": true,
+    "klassen": true,
+    "alle": false
+   },
+   "lauf": {
+    "rennen": 10,
+    "korr": -0.7659790940307393,
+    "aus": 2.013046206622411,
+    "halter": [
+     {
+      "name": "Jannik",
+      "klasse": "mittleres Drittel",
+      "platz": 5,
+      "ev": "−6 Punkte besser als Außenseiter · 43 % in 35 Partien statt 49 % sonst"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Jannik",
+      "v": -0.05860805860805862,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Stefan",
+      "v": -0.08011557656947726,
+      "klasse": "unteres Drittel"
+     },
+     {
+      "name": "Jane",
+      "v": -0.09642207398423286,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Henry",
+      "v": -0.12841763499658237,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Leo",
+      "v": -0.1368563685636856,
+      "klasse": "mittleres Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 32,
+    "monate": 3,
+    "roh": 0.0111111111111111,
+    "ab": 0.05,
+    "gerundet": true,
+    "rate": 0.6666666666666666,
+    "korr": -0.2861016769864835,
+    "ausRoh": 1.2613408276017855,
+    "halter": [
+     {
+      "name": "Jane",
+      "monat": "2026-07",
+      "klasse": "oberes Drittel",
+      "ev": "+6 Punkte besser als Außenseiter · 60 % in 5 Partien statt 54 % sonst"
+     },
+     {
+      "name": "Julian",
+      "monat": "2026-08",
+      "klasse": "oberes Drittel",
+      "ev": "+7 Punkte besser als Außenseiter · 62 % in 13 Partien statt 55 % sonst"
+     }
+    ]
+   }
+  },
+  {
+   "id": "schlusspfiff",
+   "name": "Der letzte Ball",
+   "short": "Schluss",
+   "beiname": "Der Standhafte",
+   "art": "konstanz",
+   "ton": "gold",
+   "stufe": "pp",
+   "frage": "Wer gewinnt die letzte Partie eines Abends öfter als die davor?",
+   "cond": "Mindestens 25 Prozentpunkte bessere Quote in der letzten Partie eines Spieltags, ab 10 eigenen Spieltagen mit je 3 Partien (Monat: 3)",
+   "wie": "Gewertet wird die zeitlich letzte Partie jedes eigenen Spieltags gegen alle anderen dieses Tages. Drei Partien je Tag, damit „die letzte\" überhaupt eine Auswahl ist.",
+   "mind": {
+    "allzeit": 20,
+    "monat": 5
+   },
+   "mindTage": {
+    "allzeit": 10,
+    "monat": 3
+   },
+   "aus": 1.7467671259701114,
+   "klasse": "selten",
+   "prestige": 90,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": true,
+    "ausschlag": true,
+    "aussage": true,
+    "vergeben": true,
+    "rate": true,
+    "klassen": true,
+    "alle": true
+   },
+   "lauf": {
+    "rennen": 10,
+    "korr": -0.35715907942773817,
+    "aus": 5.472743186035886,
+    "halter": [
+     {
+      "name": "Jane",
+      "klasse": "oberes Drittel",
+      "platz": 4,
+      "ev": "+20 Punkte im Schlussspiel · 75 % in 16 Schlussspielen statt 55 % davor"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Jane",
+      "v": 0.20454545454545459,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Leo",
+      "v": 0.03163265306122448,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Jannik",
+      "v": 0.023809523809523836,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Maxi",
+      "v": -0.0050675675675675436,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Johannes",
+      "v": -0.012158054711246202,
+      "klasse": "unteres Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 29,
+    "monate": 3,
+    "roh": 0.3111111111111111,
+    "ab": 0.35000000000000003,
+    "gerundet": true,
+    "rate": 0.6666666666666666,
+    "korr": -0.09418818134794239,
+    "ausRoh": 1.5581299149210297,
+    "halter": [
+     {
+      "name": "Jannik",
+      "monat": "2026-06",
+      "klasse": "mittleres Drittel",
+      "ev": "+52 Punkte im Schlussspiel · 100 % in 4 Schlussspielen statt 48 % davor"
+     },
+     {
+      "name": "Jane",
+      "monat": "2026-07",
+      "klasse": "oberes Drittel",
+      "ev": "+55 Punkte im Schlussspiel · 100 % in 4 Schlussspielen statt 45 % davor"
+     }
+    ]
+   }
+  },
+  {
+   "id": "torlaune",
+   "name": "Die Torlaune",
+   "short": "Torlaune",
+   "beiname": "Der Aufgedrehte",
+   "art": "koennen",
+   "ton": "gold",
+   "stufe": "tor",
+   "frage": "Wer trifft im Sturm deutlich mehr als sonst?",
+   "cond": "Mindestens 1,5 Tore je Partie mehr im Sturm als über alles, ab 25 Sturmspielen (Monat: 8)",
+   "wie": "Verglichen werden die Tore des eigenen Teams je Sturmspiel mit denen je Partie über alles. Gefragt ist der Abstand, nicht die Zahl: die reine Zahl gehört dem, der ohnehin die meisten Tore sieht.",
+   "mind": {
+    "allzeit": 25,
+    "monat": 8
+   },
+   "mindTage": null,
+   "aus": 1.1157331533308206,
+   "klasse": "besonders",
+   "prestige": 75,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": true,
+    "ausschlag": false,
+    "aussage": true,
+    "vergeben": true,
+    "rate": true,
+    "klassen": true,
+    "alle": false
+   },
+   "lauf": {
+    "rennen": 9,
+    "korr": 0.16679944802043614,
+    "aus": 1.140532446684167,
+    "halter": [
+     {
+      "name": "Johannes",
+      "klasse": "unteres Drittel",
+      "platz": 9,
+      "ev": "0,3 Tore mehr im Sturm · 7,9 statt 7,6 in 35 Sturmspielen"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Johannes",
+      "v": 0.27532467532467564,
+      "klasse": "unteres Drittel"
+     },
+     {
+      "name": "Jannik",
+      "v": 0.23414304993252344,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Leon",
+      "v": 0.16714394249313358,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Julian",
+      "v": 0.16321105794789936,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Maxi",
+      "v": -0.07574489454301947,
+      "klasse": "mittleres Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 25,
+    "monate": 3,
+    "roh": 0.4928571428571429,
+    "ab": 0.5,
+    "gerundet": true,
+    "rate": 0.6666666666666666,
+    "korr": -0.00621206165882408,
+    "ausRoh": 1.1024753927267779,
+    "halter": [
+     {
+      "name": "Jannik",
+      "monat": "2026-07",
+      "klasse": "mittleres Drittel",
+      "ev": "1,1 Tore mehr im Sturm · 9,1 statt 8,1 in 16 Sturmspielen"
+     },
+     {
+      "name": "Julian",
+      "monat": "2026-08",
+      "klasse": "oberes Drittel",
+      "ev": "0,5 Tore mehr im Sturm · 8,6 statt 8,1 in 26 Sturmspielen"
+     }
+    ]
+   }
+  },
+  {
+   "id": "durchhaenger",
+   "name": "Der Durchhänger",
+   "short": "Durchhänger",
+   "beiname": "Der Abgerissene",
+   "art": "schatten",
+   "ton": "red",
+   "stufe": "pp",
+   "frage": "Wie weit liegt die laufende Form unter der eigenen Laufbahn?",
+   "cond": "Ein Block aus 10 Partien mindestens 35 Prozentpunkte unter der eigenen Quote außerhalb dieses Blocks, ab 20 Partien",
+   "wie": "Das Gegenstück zum Höhenflug, mit derselben Rechnung: die letzten zehn Partien gegen alle davor. Gemessen wird der Abstand nach unten, nicht das Niveau — ein schwacher Spieler mit gleichmäßiger Quote steht hier nicht.",
+   "mind": {
+    "allzeit": 20,
+    "monat": 5
+   },
+   "mindTage": null,
+   "aus": 1.4938367794589829,
+   "klasse": "besonders",
+   "prestige": 0,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": true,
+    "ausschlag": false,
+    "aussage": true,
+    "vergeben": true,
+    "rate": true,
+    "klassen": true,
+    "alle": false
+   },
+   "lauf": {
+    "rennen": 11,
+    "korr": -0.41755978011043515,
+    "aus": 2.100839426301687,
+    "halter": [
+     {
+      "name": "Leo",
+      "klasse": "mittleres Drittel",
+      "platz": 7,
+      "ev": "−33 Punkte unter dem eigenen Schnitt · 10 % in den letzten 10 Partien statt 43 % in den 236 davor"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Leo",
+      "v": 0.32796610169491525,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Jannik",
+      "v": 0.21470588235294114,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Alex",
+      "v": 0.2103448275862069,
+      "klasse": "unteres Drittel"
+     },
+     {
+      "name": "Johannes",
+      "v": 0.14328358208955222,
+      "klasse": "unteres Drittel"
+     },
+     {
+      "name": "Henry",
+      "v": 0.09436619718309858,
+      "klasse": "mittleres Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 27,
+    "monate": 3,
+    "roh": 0.25,
+    "ab": 0.25,
+    "gerundet": false,
+    "rate": 1,
+    "korr": 0.18150268147417928,
+    "ausRoh": 1.4938367794589829,
+    "halter": [
+     {
+      "name": "Julian",
+      "monat": "2026-06",
+      "klasse": "oberes Drittel",
+      "ev": "−25 Punkte unter dem eigenen Schnitt · 50 % in den letzten 10 Partien statt 75 % in den 48 davor"
+     },
+     {
+      "name": "Maxi",
+      "monat": "2026-06",
+      "klasse": "mittleres Drittel",
+      "ev": "−31 Punkte unter dem eigenen Schnitt · 10 % in den letzten 10 Partien statt 41 % in den 132 davor"
+     },
+     {
+      "name": "Leo",
+      "monat": "2026-08",
+      "klasse": "mittleres Drittel",
+      "ev": "−25 Punkte unter dem eigenen Schnitt · 10 % in den letzten 10 Partien statt 35 % in den 51 davor"
+     }
+    ]
+   }
+  },
+  {
+   "id": "nachlass",
+   "name": "Der Nachlass",
+   "short": "Nachlass",
+   "beiname": "Der Ermüdete",
+   "art": "schatten",
+   "ton": "red",
+   "stufe": "pp",
+   "frage": "Wer wird im Verlauf schlechter als er angefangen hat?",
+   "cond": "Zweite Hälfte der eigenen Spieltage mindestens 20 Prozentpunkte unter der ersten, ab 10 eigenen Spieltagen (Monat: 5)",
+   "wie": "Dieselbe Halbierung der eigenen Spieltage wie bei der Steigerungsform, nur in die andere Richtung. Wer von Anfang an schwach war, steht hier nicht — gefragt ist der Abfall.",
+   "mind": {
+    "allzeit": 20,
+    "monat": 5
+   },
+   "mindTage": {
+    "allzeit": 10,
+    "monat": 5
+   },
+   "aus": 0.9858233357061473,
+   "klasse": "besonders",
+   "prestige": 0,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": true,
+    "ausschlag": false,
+    "aussage": true,
+    "vergeben": true,
+    "rate": true,
+    "klassen": true,
+    "alle": false
+   },
+   "lauf": {
+    "rennen": 11,
+    "korr": -0.05964654810493142,
+    "aus": 2.4567730847353455,
+    "halter": [
+     {
+      "name": "Henry",
+      "klasse": "mittleres Drittel",
+      "platz": 8,
+      "ev": "−13 Punkte abgefallen · 32 % in der zweiten Hälfte statt 45 % in der ersten"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Henry",
+      "v": 0.13454545454545452,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Alex",
+      "v": 0.09510869565217392,
+      "klasse": "unteres Drittel"
+     },
+     {
+      "name": "Leon",
+      "v": 0.043243243243243246,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Johannes",
+      "v": 0.033333333333333326,
+      "klasse": "unteres Drittel"
+     },
+     {
+      "name": "Jane",
+      "v": 0.02136752136752129,
+      "klasse": "oberes Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 26,
+    "monate": 3,
+    "roh": 0.14863102998696215,
+    "ab": 0.15000000000000002,
+    "gerundet": true,
+    "rate": 0.6666666666666666,
+    "korr": -0.12537644350339744,
+    "ausRoh": 0.9773030801291475,
+    "halter": [
+     {
+      "name": "Alex",
+      "monat": "2026-06",
+      "klasse": "unteres Drittel",
+      "ev": "−35 Punkte abgefallen · 22 % in der zweiten Hälfte statt 57 % in der ersten"
+     },
+     {
+      "name": "Alex",
+      "monat": "2026-07",
+      "klasse": "unteres Drittel",
+      "ev": "−37 Punkte abgefallen · 13 % in der zweiten Hälfte statt 50 % in der ersten"
+     }
+    ]
+   }
+  },
+  {
+   "id": "pflichtaufgabe",
+   "name": "Die Pflichtaufgabe",
+   "short": "Pflicht",
+   "beiname": "Der Nachlässige",
+   "art": "schatten",
+   "ton": "red",
+   "stufe": "pp",
+   "frage": "Wer holt als Favorit weniger als über alles?",
+   "cond": "Mindestens 15 Prozentpunkte schlechtere Quote als Favorit als über alles, ab 25 Partien als Favorit (Monat: 5)",
+   "wie": "Favorit heißt: die Elo-Rechnung gab vor der Partie über 55 Prozent Siegchance, dieselbe Grenze wie bei „Der Souverän\". Verglichen wird die Quote in genau diesen Partien mit der eigenen Gesamtquote.",
+   "mind": {
+    "allzeit": 25,
+    "monat": 5
+   },
+   "mindTage": null,
+   "aus": null,
+   "klasse": null,
+   "prestige": 0,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": true,
+    "ausschlag": false,
+    "aussage": false,
+    "vergeben": false,
+    "rate": false,
+    "klassen": false,
+    "alle": false
+   },
+   "lauf": {
+    "rennen": 7,
+    "korr": -0.1622810259234387,
+    "aus": 1.65447285102772,
+    "halter": [
+     {
+      "name": "Julian",
+      "klasse": "oberes Drittel",
+      "platz": 1,
+      "ev": "+9 Punkte als Favorit · 74 % in 89 Partien statt 65 % sonst"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Julian",
+      "v": -0.09245022669032132,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Leon",
+      "v": -0.09827697147351122,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Henry",
+      "v": -0.12908348457350277,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Martin",
+      "v": -0.14617890995260663,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Jane",
+      "v": -0.17492517459261725,
+      "klasse": "oberes Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 25,
+    "monate": 3,
+    "roh": 0,
+    "ab": null,
+    "gerundet": false,
+    "rate": 0,
+    "korr": -0.09623295686573027,
+    "ausRoh": 1.4388706851139468,
+    "halter": []
+   }
+  },
+  {
+   "id": "zitterhand",
+   "name": "Die Zitterhand",
+   "short": "Zittern",
+   "beiname": "Der Nervöse",
+   "art": "schatten",
+   "ton": "red",
+   "stufe": "pp",
+   "frage": "Wer verliert die letzte Partie eines Abends öfter als die davor?",
+   "cond": "Mindestens 25 Prozentpunkte schlechtere Quote in der letzten Partie eines Spieltags, ab 10 eigenen Spieltagen mit je 3 Partien (Monat: 3)",
+   "wie": "Dieselbe Rechnung wie beim letzten Ball, nur in die andere Richtung: die zeitlich letzte Partie jedes eigenen Spieltags gegen alle anderen dieses Tages.",
+   "mind": {
+    "allzeit": 20,
+    "monat": 5
+   },
+   "mindTage": {
+    "allzeit": 10,
+    "monat": 3
+   },
+   "aus": 0.9211020017240423,
+   "klasse": "besonders",
+   "prestige": 0,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": true,
+    "ausschlag": false,
+    "aussage": true,
+    "vergeben": true,
+    "rate": true,
+    "klassen": true,
+    "alle": false
+   },
+   "lauf": {
+    "rennen": 10,
+    "korr": 0.35715907942773817,
+    "aus": 1.3680631577251108,
+    "halter": [
+     {
+      "name": "Leon",
+      "klasse": "oberes Drittel",
+      "platz": 3,
+      "ev": "−10 Punkte im Schlussspiel · 53 % in 51 Schlussspielen statt 63 % davor"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Leon",
+      "v": 0.10146071851559413,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Henry",
+      "v": 0.08746898263027292,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Julian",
+      "v": 0.04670975323149229,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Stefan",
+      "v": 0.033333333333333326,
+      "klasse": "unteres Drittel"
+     },
+     {
+      "name": "Martin",
+      "v": 0.02631578947368418,
+      "klasse": "oberes Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 29,
+    "monate": 3,
+    "roh": 0.2,
+    "ab": 0.2,
+    "gerundet": false,
+    "rate": 1,
+    "korr": 0.09418818134794239,
+    "ausRoh": 0.9211020017240423,
+    "halter": [
+     {
+      "name": "Julian",
+      "monat": "2026-06",
+      "klasse": "oberes Drittel",
+      "ev": "−24 Punkte im Schlussspiel · 50 % in 8 Schlussspielen statt 74 % davor"
+     },
+     {
+      "name": "Stefan",
+      "monat": "2026-07",
+      "klasse": "unteres Drittel",
+      "ev": "−20 Punkte im Schlussspiel · 20 % in 5 Schlussspielen statt 40 % davor"
+     },
+     {
+      "name": "Jannik",
+      "monat": "2026-08",
+      "klasse": "mittleres Drittel",
+      "ev": "−45 Punkte im Schlussspiel · 0 % in 3 Schlussspielen statt 45 % davor"
+     }
+    ]
+   }
+  },
+  {
+   "id": "ladehemmung2",
+   "name": "Der Ladehemmer",
+   "short": "Ladehemm",
+   "beiname": "Der Zögerliche",
+   "art": "schatten",
+   "ton": "red",
+   "stufe": "tor",
+   "frage": "Wer trifft im Sturm deutlich weniger als sonst?",
+   "cond": "Mindestens 1,5 Tore je Partie weniger im Sturm als über alles, ab 25 Sturmspielen (Monat: 8)",
+   "wie": "Das Gegenstück zur Torlaune mit derselben Rechnung. Gefragt ist nicht, wer wenig Tore sieht, sondern wer vorne weniger beiträgt als hinten.",
+   "mind": {
+    "allzeit": 25,
+    "monat": 8
+   },
+   "mindTage": null,
+   "aus": 1.6683965735181272,
+   "klasse": "besonders",
+   "prestige": 0,
+   "tore": {
+    "spielzahl": true,
+    "vielspieler": true,
+    "ausschlag": true,
+    "aussage": true,
+    "vergeben": true,
+    "rate": true,
+    "klassen": true,
+    "alle": true
+   },
+   "lauf": {
+    "rennen": 9,
+    "korr": -0.1667994480204362,
+    "aus": 4.413876152317541,
+    "halter": [
+     {
+      "name": "Jane",
+      "klasse": "oberes Drittel",
+      "platz": 4,
+      "ev": "1,2 Tore weniger im Sturm · 7,5 statt 8,7 in 26 Sturmspielen"
+     }
+    ],
+    "alle": [
+     {
+      "name": "Jane",
+      "v": 1.1625693893735125,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Stefan",
+      "v": 0.3518518518518521,
+      "klasse": "unteres Drittel"
+     },
+     {
+      "name": "Leo",
+      "v": 0.3407921235175655,
+      "klasse": "mittleres Drittel"
+     },
+     {
+      "name": "Martin",
+      "v": 0.32024373730534883,
+      "klasse": "oberes Drittel"
+     },
+     {
+      "name": "Maxi",
+      "v": 0.07574489454301947,
+      "klasse": "mittleres Drittel"
+     }
+    ]
+   },
+   "mon": {
+    "gewertet": 25,
+    "monate": 3,
+    "roh": 0.8701923076923084,
+    "ab": 1,
+    "gerundet": true,
+    "rate": 0.6666666666666666,
+    "korr": 0.00621206165882408,
+    "ausRoh": 1.4274622702331234,
+    "halter": [
+     {
+      "name": "Leo",
+      "monat": "2026-07",
+      "klasse": "mittleres Drittel",
+      "ev": "1,2 Tore weniger im Sturm · 6,9 statt 8,0 in 27 Sturmspielen"
+     },
+     {
+      "name": "Martin",
+      "monat": "2026-08",
+      "klasse": "oberes Drittel",
+      "ev": "1,4 Tore weniger im Sturm · 7,8 statt 9,2 in 11 Sturmspielen"
+     }
+    ]
+   }
+  }
+ ]
+}

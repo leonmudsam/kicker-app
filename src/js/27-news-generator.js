@@ -308,12 +308,18 @@ function _buildStories(){
   // v9.7: zwei Fun-Fact-Slots (10:00 & 19:00) sind täglich offen. Die Signatur
   // zählt, wie viele Slots heute schon fällig sind (0→1 um 10:00, 1→2 um 19:00)
   // und bricht den Memo-Key, sobald ein neuer Slot fällig wird — ohne neues Match.
-  // v9.18: Der Nachschub darf den Memo-Key nicht sprengen — sonst liefe der
-  // Generator bei jedem Aufruf neu. Die Signatur bleibt deshalb die Anzahl der
-  // heute fälligen Slots; nachgetragene Slots sind ohnehin einmalig: Nach dem
-  // ersten Sync stehen sie in der DB und `known` filtert sie beim nächsten Lauf
-  // wieder heraus.
-  const _ambientSlotSig = _isAmbientDay(now) ? AMBIENT_SLOTS.filter(h => now.getHours() >= h).length : 0;
+  // Dazu die Zahl der GESPEICHERTEN Fun Facts. `_buildAmbientStories` liest aus
+  // `_cache._stories`, welcher Slot schon existiert und welche Typen die Tage
+  // davor belegt haben — und der steht beim Kaltstart leer, weil `loadAll`
+  // zeichnet, bevor `syncStoriesViaDb` gelaufen ist. Ohne diese Signatur blieb
+  // das kalt gezogene Ergebnis die ganze Sitzung im Memo stehen, obwohl der
+  // Bestand inzwischen da war. Zweimal am Tag kommt ein Fun Fact dazu, also
+  // bricht sie den Schlüssel zweimal am Tag — nicht bei jedem Aufruf.
+  const _ambientBestand = (Array.isArray(_cache._stories) ? _cache._stories : [])
+    .reduce((n, s) => n + ((s && typeof s.id === 'string'
+                            && s.id.indexOf('ambient_') === 0) ? 1 : 0), 0);
+  const _ambientSlotSig = (_isAmbientDay(now)
+    ? AMBIENT_SLOTS.filter(h => now.getHours() >= h).length : 0) + 'v' + _ambientBestand;
   // Morgen-Slot (07:00): POTW/POTD-Stories dürfen erst AB 07:00 erscheinen (nicht
   // schon nachts um 00:xx). Die Signatur kippt 0→1 um 07:00 und bricht dann den
   // Memo-Key, damit die Story ohne neues Match / ohne Reload auftaucht — analog

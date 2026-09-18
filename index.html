@@ -4877,7 +4877,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.17.38ead7d3';
+const BUILD_VERSION='2026.09.18.aea344fd';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18826,13 +18826,6 @@ const AMBIENT_SLOT_ROLLE = {
 };
 function _ambientRolleVon(key){ return AMBIENT_SLOT_ROLLE[key] || null; }
 function _ambientRolleFuerSlot(stunde){ return stunde < 15 ? 'stand' : 'geschichte'; }
-// v9.18: Wie viele Tage zurück verpasste Slots nachgetragen werden. Ein Slot
-// entstand bisher nur, wenn jemand die App zwischen seiner Uhrzeit und
-// Mitternacht geöffnet hat — wer abends nicht reinschaut, verlor den 19-Uhr-Slot
-// endgültig. Drei Tage sind der Kompromiss: Löcher im Feed verschwinden, aber
-// die Fun Facts (die aus den HEUTIGEN Zahlen entstehen) bleiben nah genug am
-// Zeitpunkt, den sie behaupten.
-const AMBIENT_BACKFILL_DAYS = 3;
 // Cooldown-Fenster (Tage): so lange wird ein bereits gezeigter Fun-Fact-Typ
 // nicht erneut gewählt. Bei 2 Fun Facts / Tag sperrt das die letzten ~14 Typen
 // (der Pool hat 18) → genug Rotation, keine schnellen Wiederholungen.
@@ -19193,12 +19186,18 @@ function _buildStories(){
   // v9.7: zwei Fun-Fact-Slots (10:00 & 19:00) sind täglich offen. Die Signatur
   // zählt, wie viele Slots heute schon fällig sind (0→1 um 10:00, 1→2 um 19:00)
   // und bricht den Memo-Key, sobald ein neuer Slot fällig wird — ohne neues Match.
-  // v9.18: Der Nachschub darf den Memo-Key nicht sprengen — sonst liefe der
-  // Generator bei jedem Aufruf neu. Die Signatur bleibt deshalb die Anzahl der
-  // heute fälligen Slots; nachgetragene Slots sind ohnehin einmalig: Nach dem
-  // ersten Sync stehen sie in der DB und `known` filtert sie beim nächsten Lauf
-  // wieder heraus.
-  const _ambientSlotSig = _isAmbientDay(now) ? AMBIENT_SLOTS.filter(h => now.getHours() >= h).length : 0;
+  // Dazu die Zahl der GESPEICHERTEN Fun Facts. `_buildAmbientStories` liest aus
+  // `_cache._stories`, welcher Slot schon existiert und welche Typen die Tage
+  // davor belegt haben — und der steht beim Kaltstart leer, weil `loadAll`
+  // zeichnet, bevor `syncStoriesViaDb` gelaufen ist. Ohne diese Signatur blieb
+  // das kalt gezogene Ergebnis die ganze Sitzung im Memo stehen, obwohl der
+  // Bestand inzwischen da war. Zweimal am Tag kommt ein Fun Fact dazu, also
+  // bricht sie den Schlüssel zweimal am Tag — nicht bei jedem Aufruf.
+  const _ambientBestand = (Array.isArray(_cache._stories) ? _cache._stories : [])
+    .reduce((n, s) => n + ((s && typeof s.id === 'string'
+                            && s.id.indexOf('ambient_') === 0) ? 1 : 0), 0);
+  const _ambientSlotSig = (_isAmbientDay(now)
+    ? AMBIENT_SLOTS.filter(h => now.getHours() >= h).length : 0) + 'v' + _ambientBestand;
   // Morgen-Slot (07:00): POTW/POTD-Stories dürfen erst AB 07:00 erscheinen (nicht
   // schon nachts um 00:xx). Die Signatur kippt 0→1 um 07:00 und bricht dann den
   // Memo-Key, damit die Story ohne neues Match / ohne Reload auftaucht — analog
@@ -21409,30 +21408,27 @@ function _buildAmbientStories(now, pm, nameOf){
   const templates = _ambientTemplatePool(now, pm, nameOf);
   if(!templates.length) return out;
 
-  // v9.18 — NACHSCHUB FÜR VERPASSTE SLOTS
-  // Ein Slot entstand bisher nur, wenn jemand die App NACH seiner Uhrzeit und
-  // VOR Mitternacht geöffnet hat. Wer abends nicht reinschaut, verliert den
-  // 19-Uhr-Slot für immer: am nächsten Morgen läuft der Generator schon auf dem
-  // neuen Datum. In der Praxis fehlten dadurch rund die Hälfte der Abend-Slots.
+  // ── Ein Slot entsteht HEUTE oder gar nicht ───────────────────────────
+  // Ein Slot entsteht, wenn jemand die App nach seiner Uhrzeit öffnet. Wer
+  // abends nicht hineinsieht, verpasst den 19-Uhr-Slot — und einmal wurden
+  // deshalb die letzten drei Tage nachgetragen, mit `when` auf der damaligen
+  // Slot-Zeit. Beides war falsch:
+  //   • Eine Karte, die JETZT entsteht und ein Datum von vorgestern trägt,
+  //     steht unter einem Tageskopf, den der Leser längst gelesen hat, und der
+  //     Lesestand zählt sie damit als gelesen [§C33]. Sie wird nie gesehen.
+  //   • Ihr Inhalt entstand aus den HEUTIGEN Zahlen und aus der Rotation, wie
+  //     sie heute aussieht — eine Behauptung über einen Stand, den es an jenem
+  //     Tag nicht gab. Gemessen zog derselbe Slot damit zwei verschiedene
+  //     Karten, je nachdem wann gefragt wurde.
+  // Nachgetragen wird deshalb nur, was zu HEUTE gehört, und der Zeitstempel
+  // ist der Moment des Entstehens: eine neue Karte ist die neueste Karte.
+  // Ihre ID trägt weiter Datum und Slot-Stunde, also entsteht sie genau einmal,
+  // und beim Upload gewinnt der erste Insert den Zeitstempel für alle Geräte.
   //
-  // Deshalb werden jetzt auch die letzten AMBIENT_BACKFILL_DAYS Tage geprüft und
-  // fällige, aber fehlende Slots nachgetragen. Das ist gefahrlos, weil:
-  //   • die Story-ID weiterhin aus Datum + Slot-Stunde entsteht — der Nachtrag
-  //     bekommt exakt die ID, die er am Tag selbst bekommen hätte, und der
-  //     Upload läuft mit ignoreDuplicates. Wer damals doch drin war, gewinnt.
-  //   • der Seed derselbe ist (dateKey + '_' + slotHour) → identischer Inhalt,
-  //     egal welches Gerät den Nachtrag schreibt.
-  //   • `when` auf die echte Slot-Zeit gesetzt wird, die Karte also an ihrem
-  //     richtigen Platz im Feed landet und nicht oben aufschlägt.
-  // Das Fenster ist bewusst kurz: Die Fun Facts entstehen aus den HEUTIGEN
-  // Zahlen. Drei Tage Rückstand sind vernachlässigbar, drei Wochen wären eine
-  // Behauptung über einen Stand, den es damals nicht gab.
-  //
-  // Datum und Uhrzeit kommen ab hier aus DERSELBEN lokalen Zeit. Vorher stand im
+  // Datum und Uhrzeit kommen aus DERSELBEN lokalen Zeit. Vorher stand im
   // Schlüssel das UTC-Datum, in `when` aber die lokale Slot-Zeit — zwischen
   // Mitternacht und der UTC-Grenze trug eine Story deshalb ein Datum, das nicht
-  // zu ihrem Zeitstempel passte. Für die vorhandenen Zeilen ändert sich nichts:
-  // um 10 und 19 Uhr sind lokales und UTC-Datum in dieser Zeitzone gleich.
+  // zu ihrem Zeitstempel passte.
   const _dayMs = 86400000;
   const dueSlots = [];
   const slotHours = AMBIENT_SLOTS.slice().sort((a, b) => a - b);
@@ -21445,14 +21441,18 @@ function _buildAmbientStories(now, pm, nameOf){
   (matches || []).forEach(m => {
     _spieltage.add(tagKey(m.created_at));
   });
-  for(let back = AMBIENT_BACKFILL_DAYS; back >= 0; back--){
-    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
-    const dk = tagKey(day);
+  {
+    const dk = tagKey(now);
     for(const slotHour of slotHours){
-      const when = new Date(day.getFullYear(), day.getMonth(), day.getDate(), slotHour, 0, 0, 0);
-      if(when.getTime() > now.getTime()) continue;   // Slot ist noch nicht fällig
+      const faellig = new Date(now.getFullYear(), now.getMonth(), now.getDate(),
+                               slotHour, 0, 0, 0);
+      if(faellig.getTime() > now.getTime()) continue;   // Slot ist noch nicht fällig
       if(slotHour >= AMBIENT_ABEND_AB && _spieltage.has(dk)) continue;
-      dueSlots.push({dateKey: dk, slotHour, when});
+      // `when` ist JETZT, nicht die Slot-Stunde: die Karte entsteht in diesem
+      // Moment und ist damit die neueste. Mit der Slot-Stunde rutschte ein um
+      // 22 Uhr nachgetragener 10-Uhr-Slot unter alles, was der Leser an diesem
+      // Tag schon gelesen hat.
+      dueSlots.push({dateKey: dk, slotHour, when: new Date(now.getTime())});
     }
   }
   if(!dueSlots.length) return out;
@@ -21480,10 +21480,13 @@ function _buildAmbientStories(now, pm, nameOf){
     return 'liga';
   };
 
-  // Eine gemeinsame Historie aus dem, was schon in der DB liegt. Nachgetragene
-  // Slots hängen sich hier an, damit ein Nachtrag von vorgestern den Cooldown
-  // für gestern genauso setzt, wie er es damals getan hätte. Ohne das könnte
-  // ein Nachschub-Lauf drei Tage hintereinander denselben Fun Fact schreiben.
+  // Die Rotation der letzten Tage, aus dem was in der DB liegt. Steht der
+  // Bestand noch nicht bereit — `loadAll` zeichnet, bevor `syncStoriesViaDb`
+  // gelaufen ist —, zieht der Lauf ohne Sperren und damit eine andere Karte als
+  // der Lauf mit Bestand. Fuer den Slot von heute ist das die erste und einzige
+  // Ziehung; alles Aeltere steht schon in der DB. Damit der Bestand ueberhaupt
+  // gesehen wird, traegt der Memo-Schluessel des Generators die Zahl der
+  // gespeicherten Fun Facts, und `syncStoriesViaDb` laedt sie, bevor es zieht.
   const history = [];
   for(const s of known){
     const md = /^ambient_(\d{4}-\d{2}-\d{2})_/.exec(s.id);
@@ -21598,9 +21601,9 @@ function _buildAmbientStories(now, pm, nameOf){
     }
     if(chosenPflicht){ chosen = chosenPflicht; chosenKey = chosenPflichtKey; }
     if(!chosen) continue;
-    // Sofort in die Historie eintragen: der nächste fällige Slot — auch der von
-    // morgen im selben Nachschub-Lauf — sieht diesen Eintrag und meidet Typ und
-    // Kopf genauso, wie er es getan hätte, wenn die Story damals entstanden wäre.
+    // Sofort in die Historie eintragen: der zweite fällige Slot desselben Tages
+    // sieht diesen Eintrag und meidet Typ und Kopf — sonst zeigten 10 und 19 Uhr
+    // dieselbe Zahl.
     history.push({day: slot.dateKey, ts: refMs, sub: chosenKey,
                   rubrik:rubrikVon(chosenKey), pids: pidsOf(chosen.dataRef)});
 
@@ -24257,6 +24260,23 @@ function _consolidateStories(list){
 // Wird in loadAll() aufgerufen. Generator → DB-Upsert → DB-Read → Cache.
 // Vollständig in try/catch gewrappt — Failures degradieren auf Fallback.
 async function syncStoriesViaDb(){
+  // ── Erst den Bestand kennen, dann ziehen ──────────────────────────
+  // Der Generator lief zuerst, und der Upload danach: die Ziehung des
+  // Fun Facts geschah damit BLIND. `_buildAmbientStories` liest aus
+  // `_cache._stories`, welcher Slot schon existiert und welche Typen, Rubriken
+  // und Koepfe die Tage davor belegt haben — ohne Bestand greift keine dieser
+  // Sperren, und wer als Erster am Tag die App oeffnete, schrieb genau diese
+  // blinde Ziehung in die Datenbank. Gemessen zog derselbe Slot mit Bestand
+  // „Julian ist der Tageskoenig" und ohne „Leon gibt Vollgas".
+  //
+  // Der Vorlauf kostet einen SELECT und nur beim ersten Sync einer Sitzung:
+  // danach steht der Bestand schon im Speicher.
+  if(!Array.isArray(_cache._stories) || !_cache._stories.length){
+    try {
+      const vorher = await _loadStoriesFromDb();
+      if(Array.isArray(vorher)) _cache._stories = vorher;
+    } catch(e){}
+  }
   let generated = [];
   try { generated = _buildStories() || []; }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] generator failed', e); }

@@ -382,13 +382,6 @@ const AMBIENT_SLOT_ROLLE = {
 };
 function _ambientRolleVon(key){ return AMBIENT_SLOT_ROLLE[key] || null; }
 function _ambientRolleFuerSlot(stunde){ return stunde < 15 ? 'stand' : 'geschichte'; }
-// v9.18: Wie viele Tage zurück verpasste Slots nachgetragen werden. Ein Slot
-// entstand bisher nur, wenn jemand die App zwischen seiner Uhrzeit und
-// Mitternacht geöffnet hat — wer abends nicht reinschaut, verlor den 19-Uhr-Slot
-// endgültig. Drei Tage sind der Kompromiss: Löcher im Feed verschwinden, aber
-// die Fun Facts (die aus den HEUTIGEN Zahlen entstehen) bleiben nah genug am
-// Zeitpunkt, den sie behaupten.
-const AMBIENT_BACKFILL_DAYS = 3;
 // Cooldown-Fenster (Tage): so lange wird ein bereits gezeigter Fun-Fact-Typ
 // nicht erneut gewählt. Bei 2 Fun Facts / Tag sperrt das die letzten ~14 Typen
 // (der Pool hat 18) → genug Rotation, keine schnellen Wiederholungen.

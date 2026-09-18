@@ -25,30 +25,27 @@ function _buildAmbientStories(now, pm, nameOf){
   const templates = _ambientTemplatePool(now, pm, nameOf);
   if(!templates.length) return out;
 
-  // v9.18 — NACHSCHUB FÜR VERPASSTE SLOTS
-  // Ein Slot entstand bisher nur, wenn jemand die App NACH seiner Uhrzeit und
-  // VOR Mitternacht geöffnet hat. Wer abends nicht reinschaut, verliert den
-  // 19-Uhr-Slot für immer: am nächsten Morgen läuft der Generator schon auf dem
-  // neuen Datum. In der Praxis fehlten dadurch rund die Hälfte der Abend-Slots.
+  // ── Ein Slot entsteht HEUTE oder gar nicht ───────────────────────────
+  // Ein Slot entsteht, wenn jemand die App nach seiner Uhrzeit öffnet. Wer
+  // abends nicht hineinsieht, verpasst den 19-Uhr-Slot — und einmal wurden
+  // deshalb die letzten drei Tage nachgetragen, mit `when` auf der damaligen
+  // Slot-Zeit. Beides war falsch:
+  //   • Eine Karte, die JETZT entsteht und ein Datum von vorgestern trägt,
+  //     steht unter einem Tageskopf, den der Leser längst gelesen hat, und der
+  //     Lesestand zählt sie damit als gelesen [§C33]. Sie wird nie gesehen.
+  //   • Ihr Inhalt entstand aus den HEUTIGEN Zahlen und aus der Rotation, wie
+  //     sie heute aussieht — eine Behauptung über einen Stand, den es an jenem
+  //     Tag nicht gab. Gemessen zog derselbe Slot damit zwei verschiedene
+  //     Karten, je nachdem wann gefragt wurde.
+  // Nachgetragen wird deshalb nur, was zu HEUTE gehört, und der Zeitstempel
+  // ist der Moment des Entstehens: eine neue Karte ist die neueste Karte.
+  // Ihre ID trägt weiter Datum und Slot-Stunde, also entsteht sie genau einmal,
+  // und beim Upload gewinnt der erste Insert den Zeitstempel für alle Geräte.
   //
-  // Deshalb werden jetzt auch die letzten AMBIENT_BACKFILL_DAYS Tage geprüft und
-  // fällige, aber fehlende Slots nachgetragen. Das ist gefahrlos, weil:
-  //   • die Story-ID weiterhin aus Datum + Slot-Stunde entsteht — der Nachtrag
-  //     bekommt exakt die ID, die er am Tag selbst bekommen hätte, und der
-  //     Upload läuft mit ignoreDuplicates. Wer damals doch drin war, gewinnt.
-  //   • der Seed derselbe ist (dateKey + '_' + slotHour) → identischer Inhalt,
-  //     egal welches Gerät den Nachtrag schreibt.
-  //   • `when` auf die echte Slot-Zeit gesetzt wird, die Karte also an ihrem
-  //     richtigen Platz im Feed landet und nicht oben aufschlägt.
-  // Das Fenster ist bewusst kurz: Die Fun Facts entstehen aus den HEUTIGEN
-  // Zahlen. Drei Tage Rückstand sind vernachlässigbar, drei Wochen wären eine
-  // Behauptung über einen Stand, den es damals nicht gab.
-  //
-  // Datum und Uhrzeit kommen ab hier aus DERSELBEN lokalen Zeit. Vorher stand im
+  // Datum und Uhrzeit kommen aus DERSELBEN lokalen Zeit. Vorher stand im
   // Schlüssel das UTC-Datum, in `when` aber die lokale Slot-Zeit — zwischen
   // Mitternacht und der UTC-Grenze trug eine Story deshalb ein Datum, das nicht
-  // zu ihrem Zeitstempel passte. Für die vorhandenen Zeilen ändert sich nichts:
-  // um 10 und 19 Uhr sind lokales und UTC-Datum in dieser Zeitzone gleich.
+  // zu ihrem Zeitstempel passte.
   const _dayMs = 86400000;
   const dueSlots = [];
   const slotHours = AMBIENT_SLOTS.slice().sort((a, b) => a - b);
@@ -61,14 +58,18 @@ function _buildAmbientStories(now, pm, nameOf){
   (matches || []).forEach(m => {
     _spieltage.add(tagKey(m.created_at));
   });
-  for(let back = AMBIENT_BACKFILL_DAYS; back >= 0; back--){
-    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
-    const dk = tagKey(day);
+  {
+    const dk = tagKey(now);
     for(const slotHour of slotHours){
-      const when = new Date(day.getFullYear(), day.getMonth(), day.getDate(), slotHour, 0, 0, 0);
-      if(when.getTime() > now.getTime()) continue;   // Slot ist noch nicht fällig
+      const faellig = new Date(now.getFullYear(), now.getMonth(), now.getDate(),
+                               slotHour, 0, 0, 0);
+      if(faellig.getTime() > now.getTime()) continue;   // Slot ist noch nicht fällig
       if(slotHour >= AMBIENT_ABEND_AB && _spieltage.has(dk)) continue;
-      dueSlots.push({dateKey: dk, slotHour, when});
+      // `when` ist JETZT, nicht die Slot-Stunde: die Karte entsteht in diesem
+      // Moment und ist damit die neueste. Mit der Slot-Stunde rutschte ein um
+      // 22 Uhr nachgetragener 10-Uhr-Slot unter alles, was der Leser an diesem
+      // Tag schon gelesen hat.
+      dueSlots.push({dateKey: dk, slotHour, when: new Date(now.getTime())});
     }
   }
   if(!dueSlots.length) return out;
@@ -96,10 +97,13 @@ function _buildAmbientStories(now, pm, nameOf){
     return 'liga';
   };
 
-  // Eine gemeinsame Historie aus dem, was schon in der DB liegt. Nachgetragene
-  // Slots hängen sich hier an, damit ein Nachtrag von vorgestern den Cooldown
-  // für gestern genauso setzt, wie er es damals getan hätte. Ohne das könnte
-  // ein Nachschub-Lauf drei Tage hintereinander denselben Fun Fact schreiben.
+  // Die Rotation der letzten Tage, aus dem was in der DB liegt. Steht der
+  // Bestand noch nicht bereit — `loadAll` zeichnet, bevor `syncStoriesViaDb`
+  // gelaufen ist —, zieht der Lauf ohne Sperren und damit eine andere Karte als
+  // der Lauf mit Bestand. Fuer den Slot von heute ist das die erste und einzige
+  // Ziehung; alles Aeltere steht schon in der DB. Damit der Bestand ueberhaupt
+  // gesehen wird, traegt der Memo-Schluessel des Generators die Zahl der
+  // gespeicherten Fun Facts, und `syncStoriesViaDb` laedt sie, bevor es zieht.
   const history = [];
   for(const s of known){
     const md = /^ambient_(\d{4}-\d{2}-\d{2})_/.exec(s.id);
@@ -214,9 +218,9 @@ function _buildAmbientStories(now, pm, nameOf){
     }
     if(chosenPflicht){ chosen = chosenPflicht; chosenKey = chosenPflichtKey; }
     if(!chosen) continue;
-    // Sofort in die Historie eintragen: der nächste fällige Slot — auch der von
-    // morgen im selben Nachschub-Lauf — sieht diesen Eintrag und meidet Typ und
-    // Kopf genauso, wie er es getan hätte, wenn die Story damals entstanden wäre.
+    // Sofort in die Historie eintragen: der zweite fällige Slot desselben Tages
+    // sieht diesen Eintrag und meidet Typ und Kopf — sonst zeigten 10 und 19 Uhr
+    // dieselbe Zahl.
     history.push({day: slot.dateKey, ts: refMs, sub: chosenKey,
                   rubrik:rubrikVon(chosenKey), pids: pidsOf(chosen.dataRef)});
 
