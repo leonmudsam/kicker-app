@@ -447,12 +447,29 @@ const ok = (c, msg, det) => {
   ok(rek.kammern.length === 4, 'der Reiter zeigt vier Kammern', rek.kammern.join(' · '));
   ok(rek.karten === CHRONICLES_N, 'jeder Rekord des Katalogs hat eine Karte',
      rek.karten + ' von ' + CHRONICLES_N);
-  // Die Besitzleiste zählt dieselben Haltungen, die die Karten zeigen.
+  // Die Besitzleiste zählt dieselben Haltungen, die die Karten zeigen — und
+  // zwar die, die ein Rekord SIND: eine Schattenseite und eine negative
+  // Fuegung zaehlen nicht mit [§C25].
   const haltungen = await page.evaluate(() => window.__k.eval(
-    `Object.values(allChronicles().byId).reduce((n, e) => n + e.pids.length, 0)`));
+    `Object.values(allChronicles().byId)
+       .reduce((n, e) => n + (e.neg ? 0 : e.pids.length), 0)`));
   const summe = rek.saeulen.reduce((a, b) => a + b, 0);
   ok(summe === haltungen, 'die Besitzleiste zählt so viele Haltungen wie die Tafel',
      summe + ' vs ' + haltungen);
+  // Und sie sagt dieselbe Zahl wie das Podest der Ewigen Tafel und das
+  // Profil. Sie tat es nicht: Martins Saeule stand auf 13, seine
+  // Podestkarte auf „10 Rek.", und beides war unter demselben Wort zu
+  // lesen. Gemessen wird je Spieler, nicht als Summe — eine Summe stimmt
+  // auch dann, wenn zwei Spieler ihre Zahlen tauschen.
+  const einig = await page.evaluate(() => window.__k.eval(
+    `(function(){
+       return rekordZaehlung().map(z => ({
+         n: pname(z.pid), leiste: z.n,
+         podest: chroniclesOfPlayer(z.pid).filter(x => !x.neg).length
+       })).filter(r => r.leiste !== r.podest);
+     })()`));
+  ok(einig.length === 0, 'die Besitzleiste sagt je Spieler dieselbe Zahl wie das Podest',
+     einig.map(r => r.n + ': ' + r.leiste + ' vs ' + r.podest).join(' · '));
   // Ein Rekord, den niemand hält, steht gestrichelt da statt zu fehlen.
   const unbesetzt = await page.evaluate(() => window.__k.eval(
     `(function(){ const h = chronicleHolders();

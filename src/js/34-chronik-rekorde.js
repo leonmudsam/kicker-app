@@ -768,6 +768,14 @@ function chronicleHolders(){
 // Rekorde-Reiter. Sie stehen in `byId` laengst da, wurden aber nie gezaehlt;
 // gerechnet wird ueber knapp vierzig Eintraege, nicht ueber die Partien.
 // Gemerkt wird trotzdem: die Leiste steht bei JEDEM Zeichnen des Reiters.
+//
+// Gezaehlt wird, was ein Rekord IST: eine Schattenseite und eine negative
+// Fuegung zaehlen nicht mit [§C25]. Die Leiste zaehlte sie, das Podest der
+// Ewigen Tafel und das Profil nicht — auf derselben Seite standen damit zwei
+// Zahlen unter demselben Wort: Martins Saeule sagte 13, seine Podestkarte
+// „10 Rek.". Wer zwei Zaehlungen fuer dieselbe Frage baut, hat einen Fehler
+// gemacht [§C27], also steht die Regel hier und nicht dreimal im Aufruf.
+// Die Schandtafel bleibt in ihrer Kammer sichtbar — dort gehoert sie hin.
 function rekordZaehlung(){
   const key = matches.length + '_' + _cache.version;
   if(_cache._rekZKey === key) return _cache._rekZ;
@@ -775,6 +783,7 @@ function rekordZaehlung(){
   const zahl = {};
   Object.keys(A.byPid).forEach(pid => { zahl[pid] = 0; });
   Object.keys(A.byId).forEach(cid => {
+    if(A.byId[cid].neg) return;
     (A.byId[cid].pids || []).forEach(pid => { zahl[pid] = (zahl[pid] || 0) + 1; });
   });
   // Auch wer nichts haelt, gehoert in die Leiste: eine fehlende Saeule sagt
