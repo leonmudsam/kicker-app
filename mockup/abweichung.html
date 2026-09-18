@@ -1,0 +1,540 @@
+<!doctype html><meta charset="utf-8">
+<title>Chroniken und Rekorde aus der Abweichung — Vorschlag</title>
+<style>
+ body{background:#0c0e0d;color:#d7dbd8;font:14px/1.5 system-ui,sans-serif;margin:0;padding:22px;
+   max-width:1080px}
+ h1{font-size:21px;margin:0 0 4px} h2{font-size:16px;margin:30px 0 4px;color:#e8ecea}
+ p{margin:6px 0;color:#9fa8a3;max-width:72ch}
+ code{background:#181c1a;padding:1px 4px;border-radius:3px;font-size:12px}
+ table{border-collapse:collapse;margin:8px 0;font-size:13px}
+ td,th{padding:3px 12px 3px 0;text-align:left;vertical-align:top}
+ th{color:#7d8781;font-weight:600}
+ .warn{border-left:3px solid #c8a24a;background:#17150f;padding:10px 14px;margin:16px 0}
+ .warn b{color:#c8a24a}
+ .grp{color:#7d8781;margin:28px 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+ .kand{background:#131614;border:1px solid #232825;border-left-width:3px;
+   border-radius:8px;padding:12px 14px;margin:8px 0}
+ .kand.ok{border-left-color:#7fc99a} .kand.rot{border-left-color:#f0566a}
+ .kopf{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+ .kopf b{font-size:15px;color:#fff}
+ .sh,.bn,.art,.ur{font-size:11px;padding:1px 6px;border-radius:4px;background:#1d2220;color:#8b948f}
+ .art.koennen,.art.konstanz{background:#22201a;color:#c8a24a}
+ .art.schatten{background:#25151a;color:#f0566a}
+ .ur{margin-left:auto;background:#14231a;color:#7fc99a}
+ .kand.rot .ur{background:#25151a;color:#f0566a}
+ .frage{margin:7px 0 0;color:#fff;font-size:14px}
+ .cond{margin:3px 0 2px;color:#e2e6e3;font-size:13px}
+ .wie{color:#858e89;font-size:12px;max-width:82ch}
+ .schwelle{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:9px 0 2px}
+ .roh,.r5,.aus,.kls,.pkt,.n5{font-size:11px;padding:2px 7px;border-radius:4px}
+ .roh{background:#1a1d1b;color:#7d8781;text-decoration:line-through}
+ .pf{color:#6f7873;font-size:11px}
+ .r5{background:#101d16;color:#7fc99a;font-weight:600}
+ .aus{background:#16191c;color:#8fa8c4}
+ .kls{background:#1d2220;color:#8b948f}
+ .kls.legendaer{background:#22201a;color:#c8a24a}
+ .pkt{background:#1b1622;color:#b49ad6}
+ .n5{background:#1a1d1b;color:#6f7873}
+ .axe{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+ .ax{flex:1 1 320px;background:#0f1211;border:1px solid #1f2422;border-radius:6px;padding:8px 10px}
+ .axk{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6f7873}
+ .halt{font-size:15px;color:#fff;margin:2px 0}
+ .kk{font-size:10px;color:#7d8781;font-weight:400}
+ .ev{font-size:12px;color:#9aa39e;min-height:18px}
+ .tore{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+ .t{font-size:11px;padding:1px 6px;border-radius:4px}
+ .t.j{background:#14231a;color:#7fc99a} .t.n{background:#25151a;color:#f0566a}
+ .liste{margin-top:6px;font-size:11px;color:#6f7873;display:flex;gap:9px;flex-wrap:wrap}
+ .liste i{color:#535c57;font-style:normal}
+</style>
+<h1>Chroniken und Rekorde, die aus der Abweichung leben</h1>
+<p>Gerechnet an den echten 466 Partien der Liga, 12 Spieler,
+ 4 Monate (davon 3 mit mindestens
+ 5 Spieltagen und damit gewertet).
+ <code>node mockup/abweichung-lauf.js</code></p>
+
+<h2>Warum Abweichung und nicht Niveau</h2>
+<p>Wer eine Quote gewinnt, gewinnt fast jede. Ein Eintrag, der das NIVEAU misst,
+ gehört damit immer denselben drei Spielern — gemessen gingen einmal sechzig Prozent
+ aller Monatseinträge an die besten Drei der Siegquote [§C38]. Ein Eintrag, der die
+ Abweichung von einer <b>eigenen</b> Bezugsgröße misst, ist für jede Könnensklasse
+ erreichbar: der Zehnte der Siegquote kann in zehn Partien genauso weit über seinem
+ eigenen Schnitt liegen wie der Erste. Die Liga nach Siegquote, in Drittel geteilt:</p>
+<table><tr><td><b>Julian</b><br>
+  <span style="color:#7d8781">1. · 65 %<br>oberes Drittel</span></td><td><b>Martin</b><br>
+  <span style="color:#7d8781">2. · 64 %<br>oberes Drittel</span></td><td><b>Leon</b><br>
+  <span style="color:#7d8781">3. · 62 %<br>oberes Drittel</span></td><td><b>Jane</b><br>
+  <span style="color:#7d8781">4. · 57 %<br>oberes Drittel</span></td><td><b>Jannik</b><br>
+  <span style="color:#7d8781">5. · 49 %<br>mittleres Drittel</span></td><td><b>Maxi</b><br>
+  <span style="color:#7d8781">6. · 44 %<br>mittleres Drittel</span></td><td><b>Leo</b><br>
+  <span style="color:#7d8781">7. · 41 %<br>mittleres Drittel</span></td><td><b>Henry</b><br>
+  <span style="color:#7d8781">8. · 39 %<br>mittleres Drittel</span></td><td><b>Johannes</b><br>
+  <span style="color:#7d8781">9. · 32 %<br>unteres Drittel</span></td><td><b>Stefan</b><br>
+  <span style="color:#7d8781">10. · 27 %<br>unteres Drittel</span></td><td><b>Alex</b><br>
+  <span style="color:#7d8781">11. · 26 %<br>unteres Drittel</span></td></tr></table>
+
+<h2>Die Abweichung IST die Bedeutung</h2>
+<p>Das ist keine neue Rechnung, sondern die, die der Katalog schon hat: der Ausschlag
+ der Schwelle in Standardabweichungen (<code>aus</code>) geht direkt ins Prestige —
+ <code>PRESTIGE_SOCKEL + PRESTIGE_CHRONIK[art] × aus + PRESTIGE_SELTEN[klasse]</code>,
+ gerundet auf fünf [§C39]. Weiter draußen heißt also von selbst mehr wert, und die
+ Klasse folgt dem Ausschlag statt umgekehrt:</p>
+<table>
+ <tr><th>Ausschlag</th><th>Klasse</th><th>Können</th><th>Konstanz</th><th>Schattenseite</th></tr>
+ <tr><td>ab 2,1 σ</td><td>legendär</td><td>120 P</td>
+   <td>105 P</td><td>0 P</td></tr>
+ <tr><td>ab 1,7 σ</td><td>selten</td><td>100 P</td>
+   <td>90 P</td><td>0 P</td></tr>
+ <tr><td>ab 1,5 σ</td><td>besonders</td><td>85 P</td>
+   <td>75 P</td><td>0 P</td></tr>
+ <tr><td>unter 1,5 σ</td><td colspan="4" style="color:#f0566a">fällt aus dem Katalog:
+   der Beste liegt kaum weiter draußen als der Durchschnitt</td></tr>
+</table>
+<p>Eine Schattenseite gibt null Punkte und zählt nicht als Rekord [§C25]. Sie gehört
+ trotzdem dazu — nur ohne Wert.</p>
+
+<div class="warn">
+ <b>Die Zahlen werden nicht gewürfelt.</b>
+ <p style="color:#c9c0a4">Eine Schwelle von 13 % oder „ab 23 Partien“ liest sich wie
+ ein Rechenergebnis, weil sie eines ist. Jede Schwelle wird deshalb auf einen
+ <b>5er-Schritt</b> gelegt — 5 Prozentpunkte oder ein halbes Tor — und jede
+ Mindestzahl auf ein Vielfaches von fünf. Gerundet wird nach OBEN, solange die Tafel
+ dabei nicht leer wird: die höhere Schwelle schlägt weiter aus, und der Ausschlag ist
+ die Bedeutung. Gemessen hob das „Der letzte Ball“ von 31 auf 35 Prozentpunkte und
+ damit von 1,50 auf 1,75 σ — also von <i>besonders</i> auf <i>selten</i> und von 75 auf
+ 90 Punkte. Fünf der zehn Schwellen lagen schon auf dem Raster, die anderen fünf rückten
+ um höchstens vier Prozentpunkte. Auf jeder Karte unten stehen beide Zahlen.</p>
+</div>
+
+<h2>Die sieben Tore</h2>
+<table>
+ <tr><td>1</td><td>Der Chronik-Wert hängt nicht an der Spielzahl</td><td>|r| ≤ 0,35 [§C39]</td></tr>
+ <tr><td>2</td><td>Der Rekord neigt nicht zum Vielspieler</td><td>|r| ≤ 0,5 über 11 Punkte</td></tr>
+ <tr><td>3</td><td>Die Schwelle schlägt weit aus</td><td>≥ 1,5 σ</td></tr>
+ <tr><td>4</td><td><b>Die Bestmarke erfüllt die Aussage ihres Namens</b></td><td>Wert &gt; 0</td></tr>
+ <tr><td>5</td><td>Der Eintrag ist vergeben</td><td>auf beiden Achsen</td></tr>
+ <tr><td>6</td><td>Höchstens ein Halter je gewerteten Monat</td><td>Rate ≤ 1 [§C32]</td></tr>
+ <tr><td>7</td><td><b>Er erreicht jede Könnensklasse</b></td><td>ein Halter jenseits des ersten Drittels</td></tr>
+</table>
+<p>Tor 4 kam durch die Messung dazu: „Der Trotzkopf“ fragt, wer gegen Stärkere mehr
+ holt als über alles — und in dieser Liga holt <b>niemand</b> dort mehr. Die Bestmarke
+ lag bei −6 Prozentpunkten. Ein Rekord, dessen Bester die eigene Aussage nicht
+ erfüllt, ist kein Rekord, sondern eine Rangliste des kleinsten Übels.</p>
+
+<div class="grp">Positiv — die Abweichung nach oben</div>
+<div class="kand ok">
+    <div class="kopf"><b>Der Höhenflug</b>
+      <span class="sh">Höhenflug</span>
+      <span class="bn">Beiname: Der Entfesselte</span>
+      <span class="art koennen">Können</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie weit liegt die laufende Form über der eigenen Laufbahn?</div>
+    <div class="cond">Ein Block aus 10 Partien mindestens 35 Prozentpunkte über der eigenen Quote außerhalb dieses Blocks, ab 20 Partien</div>
+    <div class="wie">Die letzten zehn Partien werden gegen die Quote in allen Partien DAVOR gestellt, nicht gegen die Gesamtquote — sonst zählt das Fenster doppelt. Das Fenster ist fest: ein gesuchtes Maximum aus allen Zehnerblöcken hing an der Spielzahl, weil das Maximum aus dreihundert Ziehungen größer ist als das aus elf.</div>
+    <div class="schwelle">
+      <span class="roh">kalibriert 28 Prozentpunkte</span>
+           <span class="pf">→</span>
+           <span class="r5">5er-Schritt 30 Prozentpunkte</span>
+           
+      <span class="aus">Ausschlag 1,50 σ</span>
+        <span class="kls besonders">besonders</span>
+        <span class="pkt">85 Prestige</span>
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Maxi <span class="kk">mittleres Drittel</span></div>
+        <div class="ev">+27 Punkte über dem eigenen Schnitt · 70 % in den letzten 10 Partien statt 43 % in den 338 davor</div>
+        <div class="tore">
+          <span class="t j">die Bestmarke erfüllt die Aussage</span>
+          <span class="t j">Spielzahl r = 0,42</span>
+          <span class="t j">im Rennen 11 von 12</span>
+        </div>
+        <div class="liste"><span>1. Maxi <i>mittleres Drittel</i></span><span>2. Martin <i>oberes Drittel</i></span><span>3. Julian <i>oberes Drittel</i></span><span>4. Jane <i>oberes Drittel</i></span><span>5. Stefan <i>unteres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">Leo (2026-06), Johannes (2026-07)</div>
+        <div class="ev">+32 Punkte über dem eigenen Schnitt · 70 % in den letzten 10 Partien statt 38 % in den 85 davor</div>
+        <div class="tore">
+          <span class="t j">2 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = −0,18</span>
+          <span class="t j">Ausschlag 1,50 σ</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Die Steigerungsform</b>
+      <span class="sh">Steigerung</span>
+      <span class="bn">Beiname: Der Gereifte</span>
+      <span class="art konstanz">Konstanz</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wer wird im Verlauf besser als er angefangen hat?</div>
+    <div class="cond">Zweite Hälfte der eigenen Spieltage mindestens 20 Prozentpunkte über der ersten, ab 10 eigenen Spieltagen (Monat: 5)</div>
+    <div class="wie">Die eigenen Spieltage werden in zwei Hälften geteilt und die Quoten verglichen. Gezählt werden die eigenen Spieltage, nicht die des Kalenders: sonst hängt die Wertung daran, wie oft jemand dabei war.</div>
+    <div class="schwelle">
+      <span class="roh">kalibriert 22 Prozentpunkte</span>
+           <span class="pf">→</span>
+           <span class="r5">5er-Schritt 25 Prozentpunkte</span>
+           
+      <span class="aus">Ausschlag 1,50 σ</span>
+        <span class="kls besonders">besonders</span>
+        <span class="pkt">75 Prestige</span>
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Stefan <span class="kk">unteres Drittel</span></div>
+        <div class="ev">+12 Punkte besser geworden · 33 % in der zweiten Hälfte statt 21 % in der ersten</div>
+        <div class="tore">
+          <span class="t j">die Bestmarke erfüllt die Aussage</span>
+          <span class="t j">Spielzahl r = 0,06</span>
+          <span class="t j">im Rennen 11 von 12</span>
+        </div>
+        <div class="liste"><span>1. Stefan <i>unteres Drittel</i></span><span>2. Jannik <i>mittleres Drittel</i></span><span>3. Maxi <i>mittleres Drittel</i></span><span>4. Martin <i>oberes Drittel</i></span><span>5. Leo <i>mittleres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">Johannes (2026-07)</div>
+        <div class="ev">+28 Punkte besser geworden · 53 % in der zweiten Hälfte statt 25 % in der ersten</div>
+        <div class="tore">
+          <span class="t j">1 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = 0,13</span>
+          <span class="t j">Ausschlag 1,50 σ</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Der Trotzkopf</b>
+      <span class="sh">Trotz</span>
+      <span class="bn">Beiname: Der Unbeugsame</span>
+      <span class="art koennen">Können</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wer holt gegen Stärkere mehr als gegen alle?</div>
+    <div class="cond">Mindestens 15 Prozentpunkte bessere Quote gegen Stärkere als über alles, ab 25 Partien als Außenseiter (Monat: 5)</div>
+    <div class="wie">Stärker heißt: die Elo-Rechnung gab vor der Partie unter 45 Prozent Siegchance. Verglichen wird die Quote in genau diesen Partien mit der eigenen Gesamtquote — nicht mit der Liga, sonst gehört der Eintrag dem Besten.</div>
+    <div class="schwelle">
+      <span class="roh">kalibriert 1 Prozentpunkte</span>
+           <span class="pf">→</span>
+           <span class="r5">5er-Schritt 5 Prozentpunkte</span>
+           
+      <span class="aus">Ausschlag 1,58 σ</span>
+        <span class="kls besonders">besonders</span>
+        <span class="pkt">85 Prestige</span>
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Jannik <span class="kk">mittleres Drittel</span></div>
+        <div class="ev">−6 Punkte besser als Außenseiter · 43 % in 35 Partien statt 49 % sonst</div>
+        <div class="tore">
+          <span class="t n">der Beste erfüllt die Aussage nicht</span>
+          <span class="t n">Spielzahl r = −0,77</span>
+          <span class="t j">im Rennen 10 von 12</span>
+        </div>
+        <div class="liste"><span>1. Jannik <i>mittleres Drittel</i></span><span>2. Stefan <i>unteres Drittel</i></span><span>3. Jane <i>oberes Drittel</i></span><span>4. Henry <i>mittleres Drittel</i></span><span>5. Leo <i>mittleres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">Jane (2026-07), Julian (2026-08)</div>
+        <div class="ev">+6 Punkte besser als Außenseiter · 60 % in 5 Partien statt 54 % sonst</div>
+        <div class="tore">
+          <span class="t j">2 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = −0,29</span>
+          <span class="t j">Ausschlag 1,58 σ</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Der letzte Ball</b>
+      <span class="sh">Schluss</span>
+      <span class="bn">Beiname: Der Standhafte</span>
+      <span class="art konstanz">Konstanz</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wer gewinnt die letzte Partie eines Abends öfter als die davor?</div>
+    <div class="cond">Mindestens 25 Prozentpunkte bessere Quote in der letzten Partie eines Spieltags, ab 10 eigenen Spieltagen mit je 3 Partien (Monat: 3)</div>
+    <div class="wie">Gewertet wird die zeitlich letzte Partie jedes eigenen Spieltags gegen alle anderen dieses Tages. Drei Partien je Tag, damit „die letzte" überhaupt eine Auswahl ist.</div>
+    <div class="schwelle">
+      <span class="roh">kalibriert 31 Prozentpunkte</span>
+           <span class="pf">→</span>
+           <span class="r5">5er-Schritt 35 Prozentpunkte</span>
+           
+      <span class="aus">Ausschlag 1,75 σ</span>
+        <span class="kls selten">selten</span>
+        <span class="pkt">90 Prestige</span>
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Jane <span class="kk">oberes Drittel</span></div>
+        <div class="ev">+20 Punkte im Schlussspiel · 75 % in 16 Schlussspielen statt 55 % davor</div>
+        <div class="tore">
+          <span class="t j">die Bestmarke erfüllt die Aussage</span>
+          <span class="t j">Spielzahl r = −0,36</span>
+          <span class="t j">im Rennen 10 von 12</span>
+        </div>
+        <div class="liste"><span>1. Jane <i>oberes Drittel</i></span><span>2. Leo <i>mittleres Drittel</i></span><span>3. Jannik <i>mittleres Drittel</i></span><span>4. Maxi <i>mittleres Drittel</i></span><span>5. Johannes <i>unteres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">Jannik (2026-06), Jane (2026-07)</div>
+        <div class="ev">+52 Punkte im Schlussspiel · 100 % in 4 Schlussspielen statt 48 % davor</div>
+        <div class="tore">
+          <span class="t j">2 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = −0,09</span>
+          <span class="t j">Ausschlag 1,75 σ</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Die Torlaune</b>
+      <span class="sh">Torlaune</span>
+      <span class="bn">Beiname: Der Aufgedrehte</span>
+      <span class="art koennen">Können</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wer trifft im Sturm deutlich mehr als sonst?</div>
+    <div class="cond">Mindestens 1,5 Tore je Partie mehr im Sturm als über alles, ab 25 Sturmspielen (Monat: 8)</div>
+    <div class="wie">Verglichen werden die Tore des eigenen Teams je Sturmspiel mit denen je Partie über alles. Gefragt ist der Abstand, nicht die Zahl: die reine Zahl gehört dem, der ohnehin die meisten Tore sieht.</div>
+    <div class="schwelle">
+      <span class="roh">kalibriert 0,5 Tore</span>
+           <span class="pf">→</span>
+           <span class="r5">5er-Schritt 0,5 Tore</span>
+           
+      <span class="aus">Ausschlag 1,12 σ</span>
+        <span class="kls besonders">besonders</span>
+        <span class="pkt">75 Prestige</span>
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Johannes <span class="kk">unteres Drittel</span></div>
+        <div class="ev">0,3 Tore mehr im Sturm · 7,9 statt 7,6 in 35 Sturmspielen</div>
+        <div class="tore">
+          <span class="t j">die Bestmarke erfüllt die Aussage</span>
+          <span class="t j">Spielzahl r = 0,17</span>
+          <span class="t j">im Rennen 9 von 12</span>
+        </div>
+        <div class="liste"><span>1. Johannes <i>unteres Drittel</i></span><span>2. Jannik <i>mittleres Drittel</i></span><span>3. Leon <i>oberes Drittel</i></span><span>4. Julian <i>oberes Drittel</i></span><span>5. Maxi <i>mittleres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">Jannik (2026-07), Julian (2026-08)</div>
+        <div class="ev">1,1 Tore mehr im Sturm · 9,1 statt 8,1 in 16 Sturmspielen</div>
+        <div class="tore">
+          <span class="t j">2 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = −0,01</span>
+          <span class="t n">Ausschlag 1,12 σ</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div>
+
+<div class="grp">Negativ — die Abweichung nach unten</div>
+<p>Eine Schattenseite ist nicht ein Rekord mit umgedrehtem Vorzeichen: sie muss durch
+ dieselben Tore, und sie darf sich nicht beim Schwächsten sammeln [§C35]. Genau das
+ leistet die Abweichung — wer gleichmäßig schwach spielt, steht hier nicht.</p>
+<div class="kand rot">
+    <div class="kopf"><b>Der Durchhänger</b>
+      <span class="sh">Durchhänger</span>
+      <span class="bn">Beiname: Der Abgerissene</span>
+      <span class="art schatten">Schattenseite</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wie weit liegt die laufende Form unter der eigenen Laufbahn?</div>
+    <div class="cond">Ein Block aus 10 Partien mindestens 35 Prozentpunkte unter der eigenen Quote außerhalb dieses Blocks, ab 20 Partien</div>
+    <div class="wie">Das Gegenstück zum Höhenflug, mit derselben Rechnung: die letzten zehn Partien gegen alle davor. Gemessen wird der Abstand nach unten, nicht das Niveau — ein schwacher Spieler mit gleichmäßiger Quote steht hier nicht.</div>
+    <div class="schwelle">
+      <span class="roh">kalibriert 25 Prozentpunkte</span>
+           <span class="pf">→</span>
+           <span class="r5">5er-Schritt 25 Prozentpunkte</span>
+           <span class="n5">lag schon auf dem Raster</span>
+      <span class="aus">Ausschlag 1,49 σ</span>
+        <span class="kls besonders">besonders</span>
+        <span class="pkt">0 Prestige</span>
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Leo <span class="kk">mittleres Drittel</span></div>
+        <div class="ev">−33 Punkte unter dem eigenen Schnitt · 10 % in den letzten 10 Partien statt 43 % in den 236 davor</div>
+        <div class="tore">
+          <span class="t j">die Bestmarke erfüllt die Aussage</span>
+          <span class="t j">Spielzahl r = −0,42</span>
+          <span class="t j">im Rennen 11 von 12</span>
+        </div>
+        <div class="liste"><span>1. Leo <i>mittleres Drittel</i></span><span>2. Jannik <i>mittleres Drittel</i></span><span>3. Alex <i>unteres Drittel</i></span><span>4. Johannes <i>unteres Drittel</i></span><span>5. Henry <i>mittleres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">Julian (2026-06), Maxi (2026-06), Leo (2026-08)</div>
+        <div class="ev">−25 Punkte unter dem eigenen Schnitt · 50 % in den letzten 10 Partien statt 75 % in den 48 davor</div>
+        <div class="tore">
+          <span class="t j">3 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = 0,18</span>
+          <span class="t n">Ausschlag 1,49 σ</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Der Nachlass</b>
+      <span class="sh">Nachlass</span>
+      <span class="bn">Beiname: Der Ermüdete</span>
+      <span class="art schatten">Schattenseite</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wer wird im Verlauf schlechter als er angefangen hat?</div>
+    <div class="cond">Zweite Hälfte der eigenen Spieltage mindestens 20 Prozentpunkte unter der ersten, ab 10 eigenen Spieltagen (Monat: 5)</div>
+    <div class="wie">Dieselbe Halbierung der eigenen Spieltage wie bei der Steigerungsform, nur in die andere Richtung. Wer von Anfang an schwach war, steht hier nicht — gefragt ist der Abfall.</div>
+    <div class="schwelle">
+      <span class="roh">kalibriert 15 Prozentpunkte</span>
+           <span class="pf">→</span>
+           <span class="r5">5er-Schritt 15 Prozentpunkte</span>
+           
+      <span class="aus">Ausschlag 0,99 σ</span>
+        <span class="kls besonders">besonders</span>
+        <span class="pkt">0 Prestige</span>
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Henry <span class="kk">mittleres Drittel</span></div>
+        <div class="ev">−13 Punkte abgefallen · 32 % in der zweiten Hälfte statt 45 % in der ersten</div>
+        <div class="tore">
+          <span class="t j">die Bestmarke erfüllt die Aussage</span>
+          <span class="t j">Spielzahl r = −0,06</span>
+          <span class="t j">im Rennen 11 von 12</span>
+        </div>
+        <div class="liste"><span>1. Henry <i>mittleres Drittel</i></span><span>2. Alex <i>unteres Drittel</i></span><span>3. Leon <i>oberes Drittel</i></span><span>4. Johannes <i>unteres Drittel</i></span><span>5. Jane <i>oberes Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">Alex (2026-06), Alex (2026-07)</div>
+        <div class="ev">−35 Punkte abgefallen · 22 % in der zweiten Hälfte statt 57 % in der ersten</div>
+        <div class="tore">
+          <span class="t j">2 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = −0,13</span>
+          <span class="t n">Ausschlag 0,99 σ</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Die Pflichtaufgabe</b>
+      <span class="sh">Pflicht</span>
+      <span class="bn">Beiname: Der Nachlässige</span>
+      <span class="art schatten">Schattenseite</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wer holt als Favorit weniger als über alles?</div>
+    <div class="cond">Mindestens 15 Prozentpunkte schlechtere Quote als Favorit als über alles, ab 25 Partien als Favorit (Monat: 5)</div>
+    <div class="wie">Favorit heißt: die Elo-Rechnung gab vor der Partie über 55 Prozent Siegchance, dieselbe Grenze wie bei „Der Souverän". Verglichen wird die Quote in genau diesen Partien mit der eigenen Gesamtquote.</div>
+    <div class="schwelle">
+      <span class="n5">keine Schwelle: niemand erfüllt die Aussage</span>
+      
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Julian <span class="kk">oberes Drittel</span></div>
+        <div class="ev">+9 Punkte als Favorit · 74 % in 89 Partien statt 65 % sonst</div>
+        <div class="tore">
+          <span class="t n">der Beste erfüllt die Aussage nicht</span>
+          <span class="t j">Spielzahl r = −0,16</span>
+          <span class="t j">im Rennen 7 von 12</span>
+        </div>
+        <div class="liste"><span>1. Julian <i>oberes Drittel</i></span><span>2. Leon <i>oberes Drittel</i></span><span>3. Henry <i>mittleres Drittel</i></span><span>4. Martin <i>oberes Drittel</i></span><span>5. Jane <i>oberes Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">— frei —</div>
+        <div class="ev"></div>
+        <div class="tore">
+          <span class="t n">0 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = −0,10</span>
+          <span class="t n">Ausschlag —</span>
+          <span class="t n">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Die Zitterhand</b>
+      <span class="sh">Zittern</span>
+      <span class="bn">Beiname: Der Nervöse</span>
+      <span class="art schatten">Schattenseite</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wer verliert die letzte Partie eines Abends öfter als die davor?</div>
+    <div class="cond">Mindestens 25 Prozentpunkte schlechtere Quote in der letzten Partie eines Spieltags, ab 10 eigenen Spieltagen mit je 3 Partien (Monat: 3)</div>
+    <div class="wie">Dieselbe Rechnung wie beim letzten Ball, nur in die andere Richtung: die zeitlich letzte Partie jedes eigenen Spieltags gegen alle anderen dieses Tages.</div>
+    <div class="schwelle">
+      <span class="roh">kalibriert 20 Prozentpunkte</span>
+           <span class="pf">→</span>
+           <span class="r5">5er-Schritt 20 Prozentpunkte</span>
+           <span class="n5">lag schon auf dem Raster</span>
+      <span class="aus">Ausschlag 0,92 σ</span>
+        <span class="kls besonders">besonders</span>
+        <span class="pkt">0 Prestige</span>
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Leon <span class="kk">oberes Drittel</span></div>
+        <div class="ev">−10 Punkte im Schlussspiel · 53 % in 51 Schlussspielen statt 63 % davor</div>
+        <div class="tore">
+          <span class="t j">die Bestmarke erfüllt die Aussage</span>
+          <span class="t j">Spielzahl r = 0,36</span>
+          <span class="t j">im Rennen 10 von 12</span>
+        </div>
+        <div class="liste"><span>1. Leon <i>oberes Drittel</i></span><span>2. Henry <i>mittleres Drittel</i></span><span>3. Julian <i>oberes Drittel</i></span><span>4. Stefan <i>unteres Drittel</i></span><span>5. Martin <i>oberes Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">Julian (2026-06), Stefan (2026-07), Jannik (2026-08)</div>
+        <div class="ev">−24 Punkte im Schlussspiel · 50 % in 8 Schlussspielen statt 74 % davor</div>
+        <div class="tore">
+          <span class="t j">3 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = 0,09</span>
+          <span class="t n">Ausschlag 0,92 σ</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Der Ladehemmer</b>
+      <span class="sh">Ladehemm</span>
+      <span class="bn">Beiname: Der Zögerliche</span>
+      <span class="art schatten">Schattenseite</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wer trifft im Sturm deutlich weniger als sonst?</div>
+    <div class="cond">Mindestens 1,5 Tore je Partie weniger im Sturm als über alles, ab 25 Sturmspielen (Monat: 8)</div>
+    <div class="wie">Das Gegenstück zur Torlaune mit derselben Rechnung. Gefragt ist nicht, wer wenig Tore sieht, sondern wer vorne weniger beiträgt als hinten.</div>
+    <div class="schwelle">
+      <span class="roh">kalibriert 0,9 Tore</span>
+           <span class="pf">→</span>
+           <span class="r5">5er-Schritt 1,0 Tore</span>
+           
+      <span class="aus">Ausschlag 1,67 σ</span>
+        <span class="kls besonders">besonders</span>
+        <span class="pkt">0 Prestige</span>
+    </div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Liga-Rekord · Laufbahn</div>
+        <div class="halt">Jane <span class="kk">oberes Drittel</span></div>
+        <div class="ev">1,2 Tore weniger im Sturm · 7,5 statt 8,7 in 26 Sturmspielen</div>
+        <div class="tore">
+          <span class="t j">die Bestmarke erfüllt die Aussage</span>
+          <span class="t j">Spielzahl r = −0,17</span>
+          <span class="t j">im Rennen 9 von 12</span>
+        </div>
+        <div class="liste"><span>1. Jane <i>oberes Drittel</i></span><span>2. Stefan <i>unteres Drittel</i></span><span>3. Leo <i>mittleres Drittel</i></span><span>4. Martin <i>oberes Drittel</i></span><span>5. Maxi <i>mittleres Drittel</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Monatschronik · Monat</div>
+        <div class="halt">Leo (2026-07), Martin (2026-08)</div>
+        <div class="ev">1,2 Tore weniger im Sturm · 6,9 statt 8,0 in 27 Sturmspielen</div>
+        <div class="tore">
+          <span class="t j">2 Halter in 3 Monaten</span>
+          <span class="t j">Spielzahl r = 0,01</span>
+          <span class="t j">Ausschlag 1,67 σ</span>
+          <span class="t j">erreicht jede Klasse</span>
+        </div>
+      </div>
+    </div></div>
+
+<h2>Was die Messung sagt</h2>
+<table>
+ <tr><th>Befund</th><th>woran</th></tr>
+ <tr><td><b>Ein gesuchtes Maximum hängt an der Spielzahl.</b></td>
+  <td>Der erste Entwurf suchte das beste von allen Zehnerfenstern einer Laufbahn und
+  kam auf r = 0,42. Wer zwanzig Partien hat, hat elf Fenster; wer 350 hat, hat 341 —
+  und das Maximum aus vielen Ziehungen ist größer. Derselbe Fehler wie beim
+  „unwahrscheinlichsten Spieltag“ [§C39]. Mit dem <b>festen</b> letzten Fenster
+  fällt r auf 0,42.</td></tr>
+ <tr><td><b>Eine feste Teilung hat das Problem nicht.</b></td>
+  <td>Sturm gegen alles, Favorit gegen alles, erste Hälfte gegen zweite, letzte Partie
+  des Tages gegen die davor: es wird nichts ausgewählt, also gibt es keinen
+  Auswahlvorteil. Alle vier tragenden Kandidaten sind von dieser Art.</td></tr>
+ <tr><td><b>Vier von zehn tragen.</b></td>
+  <td>Der Höhenflug, Die Steigerungsform, Der letzte Ball, Der Ladehemmer.
+  Die übrigen sechs scheitern nachvollziehbar, und das ist das Ergebnis des Laufs:
+  Der Trotzkopf (vielspieler, aussage); Die Torlaune (ausschlag); Der Durchhänger (ausschlag); Der Nachlass (ausschlag); Die Pflichtaufgabe (ausschlag, aussage, vergeben, rate, klassen); Die Zitterhand (ausschlag).</td></tr>
+ <tr><td><b>Drei gewertete Monate sind für ein Urteil dünn.</b></td>
+  <td>Der Ausschlag wird an 3 Monaten gemessen. Für die vier
+  tragenden reicht das als Hinweis, nicht als Kalibrierung — die Schwellen gehören
+  vor dem Einbau an mehr Monaten nachgerechnet, so wie der Monatskatalog sie bekommen
+  hat.</td></tr>
+</table>

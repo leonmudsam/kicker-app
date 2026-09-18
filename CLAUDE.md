@@ -79,7 +79,11 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Schandrekorde und Schandchroniken: dreizehn Kandidaten
                       gegen sechs Tore, darunter das, das nur für die Schande
                       gilt — sie darf sich nicht beim Schwächsten sammeln
-                      (schande-lauf.js baut schande.html)
+                      (schande-lauf.js baut schande.html), und der Vorschlag
+                      für Einträge, die aus der ABWEICHUNG leben statt aus dem
+                      Niveau: zehn Kandidaten gegen sieben Tore, jede Schwelle
+                      auf einem 5er-Schritt, vier tragen
+                      (README-abweichung.md)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
