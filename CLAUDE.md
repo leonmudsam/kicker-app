@@ -89,7 +89,13 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       nachgespielte Liga, gepaart gegen dieselbe Rechnung ohne
                       Fenster, und das achte Tor auf die Siegquote — ein
                       Fenster allein ist noch keine neue Frage, sechs tragen
-                      (README-abweichung.md)
+                      (README-abweichung.md), und der Vorschlag für Rekorde,
+                      die eine ERRUNGENSCHAFT JE GELEGENHEIT messen wie „Der
+                      Platzhirsch" — fünfzehn Kandidaten in zwei Kammern gegen
+                      acht Tore, elf davon die fehlende Laufbahn-Achse einer
+                      Monatschronik [§13.1], dazu „Das Übersoll", das der Code
+                      in `untersoll.monat.wie` schon als Bezug nennt, ohne
+                      dass es es gibt (README-staerken.md)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
