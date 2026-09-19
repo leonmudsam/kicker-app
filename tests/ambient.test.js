@@ -2193,6 +2193,75 @@ const _amb = JSON.parse(K.eval(`JSON.stringify((function(){
            doppelt:Object.keys(einzig).filter(k => einzig[k] > 1) };
 })())`));
 ok(_amb.n >= 30, 'der Rundlauf sieht alle Vorlagen', String(_amb.n));
+
+// ── Der grosse Wert ist eine Zahl der Karte, keine Konstante ────────
+// „1" mit der Aufschrift „Rekordhalter" stand im Block des Chronik-
+// Rampenlichts: das gilt fuer jeden Rekord, sagt damit nichts, und die
+// Aufschrift beschrieb den TRAeGER statt die Zahl. Gemessen trug die
+// Vorlage 25 verschiedene Titel und immer denselben Wert.
+//
+// Geprueft wird das Muster und nicht der eine Fall: wechselt der Titel
+// einer Vorlage, muss der Wert mitwechseln. Ein Fun Fact ueber die ganze
+// Liga („7499 Tore in 466 Partien") behaelt beides und faellt nicht
+// darunter; von den sechsunddreissig Vorlagen traf es genau diese eine.
+const _konst = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap(); const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const s = {};
+  const morgen = [...new Set(matches.map(m => String(m.created_at).slice(0, 10)))]
+    .sort().slice(-25).map(d => new Date(d + 'T08:00:00'));
+  [new Date(), new Date(Date.now() - 36e5 * 9)].concat(morgen).forEach(t0 => {
+    _ambientTemplatePool(t0, pm, nameOf).forEach(v => {
+      for(let i = 0; i < 12; i++){
+        let k = null;
+        try { k = v.make(() => (i + 0.5) / 12); } catch(e){ continue; }
+        if(!k) continue;
+        const e = s[v.key] || (s[v.key] = {t:{}, w:{}});
+        e.t[String(k.title || '')] = 1; e.w[String(k.vv)] = 1;
+      }
+    });
+  });
+  return Object.keys(s).filter(k => Object.keys(s[k].t).length > 1
+                                 && Object.keys(s[k].w).length === 1)
+    .map(k => k + ' (' + Object.keys(s[k].t).length + ' Titel, Wert „'
+      + Object.keys(s[k].w)[0] + '")');
+})())`));
+ok(_konst.length === 0, 'kein grosser Wert bleibt konstant, waehrend der Titel wechselt',
+   _konst.join(' · ') || 'alle ' + _amb.n + ' Vorlagen');
+
+// Und der Feed meldet keine Schattenseite [§C35]. Das Rampenlicht rotierte
+// ueber ALLE vergebenen Rekorde, zwoelf davon negativ, und die Rotation
+// haengt am Kalendertag: an jedem fuenften Tag stand „Alex haelt ‚Das
+// Scheunentor'" als Fun Fact im Feed.
+const _schand = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pm = pmap();
+  const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
+  const neg = {};
+  CHRONICLES.forEach(d => { if(d.neg) neg[d.name] = 1; });
+  // Die Auswahl haengt am KALENDERTAG (\`day % recs.length\`), also trifft nur
+  // ein voller Umlauf jeden Eintrag des Topfes. Achtzig Tage reichen dafuer:
+  // der Topf ist kleiner. Gemessen wird die Karte selbst und nicht der Topf
+  // mit derselben Bedingung noch einmal — das waere ein Test, der nie rot
+  // werden kann.
+  const getroffen = {}, raus = {};
+  for(let t = 0; t < 80; t++){
+    const t0 = new Date(Date.now() - t * 86400000);
+    const v = _ambientTemplatePool(t0, pm, nameOf)
+      .find(x => x.key === 'chronicle_spotlight');
+    if(!v) return ['die Vorlage gibt es nicht mehr'];
+    let k = null;
+    try { k = v.make(() => 0.5); } catch(e){ continue; }
+    if(!k) continue;
+    Object.keys(neg).forEach(n => {
+      if(String(k.title || '').indexOf('„' + n + '"') >= 0) raus[n] = 1; });
+    const m = String(k.title || '').match(/„([^"]+)"/);
+    if(m) getroffen[m[1]] = 1;
+  }
+  const liste = Object.keys(raus);
+  return liste.length ? liste : (Object.keys(getroffen).length < 5
+    ? ['der Umlauf traf nur ' + Object.keys(getroffen).length + ' Eintraege'] : []);
+})())`));
+ok(_schand.length === 0, 'das Chronik-Rampenlicht zeigt keine Schattenseite',
+   _schand.join(', ') || 'achtzig Tage nachgespielt, kein negativer Eintrag');
 ok(_amb.doppelt.length === 0, 'jede Vorlage hat ihren eigenen Schluessel',
    _amb.doppelt.join(', ') || 'keine');
 ok(_amb.raus.ohneWert.length === 0, 'keine Ambient-Karte ohne grossen Wert',
