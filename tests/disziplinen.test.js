@@ -1909,6 +1909,42 @@ ok(_hMax.length === 0, 'kein Halter traegt mehr als ein Viertel aller Rekorde',
    _hMax.join(', ') || 'Maximum ' + Math.max.apply(null, Object.values(_ok.haltungen))
    + ' von ' + _hSum);
 
+// ─── Jeder Rekord ist vergeben, ausser einem Fund ───────────────────
+// Ein leeres Feld liest sich als Fehler [§6], und bei einem Rekord ist es
+// meistens auch einer: die Mindestzahl steht zu hoch, oder die Rechnung
+// liefert `null`, wo sie einen Wert liefern sollte. Gemessen wurde das
+// bisher nur fuer die offene Kammer — ein neuer Rekord ausserhalb davon
+// konnte unbesetzt bleiben, ohne dass es auffiel.
+//
+// Ausgenommen ist der FUND: „Die kalte Dusche" ist ein einzelnes
+// Zusammentreffen und darf selten sein, sonst waere es keins [§C35].
+const _unbesetzt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const A = allChronicles();
+  return CHRONICLES.filter(c => c.zufall !== 'fund'
+      && !((A.byId[c.id] || {}).pids || []).length)
+    .map(c => c.name + ' (' + c.kind + ')');
+})())`));
+ok(_unbesetzt.length === 0, 'jeder Rekord ausser einem Fund ist vergeben',
+   _unbesetzt.join(', ') || _erk.length + ' Rekorde geprueft');
+
+// ─── Die zwei Haelften einer Rolle gehoeren nicht demselben ─────────
+// „Der Dauerstuermer" zaehlt den Sturmanteil der letzten fuenfzig Partien.
+// Dieselbe Frage nach der ABWEHR ginge gemessen an denselben Halter wie
+// „Die Mauer", die den Abwehranteil ueber die ganze Laufbahn misst — und
+// dieselbe Frage mit derselben Antwort sammelt sich beim selben Halter
+// [§C35]. Geprueft wird deshalb, dass die Fenster-Fassung nicht doch bei
+// dem landet, der die Laufbahn-Fassung schon haelt.
+const _rollen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const A = allChronicles();
+  const h = id => (((A.byId[id] || {}).pids) || []).map(p => pname(p));
+  return {vorne:h('dauersturm'), hinten:h('wall')};
+})())`));
+ok(_rollen.vorne.length > 0 && _rollen.hinten.length > 0
+   && !_rollen.vorne.some(n => _rollen.hinten.includes(n)),
+   'der Stammplatz im Fenster gehoert nicht dem Halter der Mauer',
+   'vorne ' + (_rollen.vorne.join('/') || '—') + ', hinten '
+   + (_rollen.hinten.join('/') || '—'));
+
 // ─── Die Schandtafel ────────────────────────────────────────────────
 // Eine Schande ist nicht einfach ein Rekord mit umgedrehtem Vorzeichen. Wer
 // schlechter spielt, verliert JEDE Quote, also gehoert eine Schande, die das

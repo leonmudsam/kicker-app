@@ -347,12 +347,62 @@ const DISZIPLINEN = [
       val:p => (p.bigDays >= 8 && p.perfDays >= 1) ? p.perfDays/p.bigDays : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.bigDays} vollen Spieltage ohne eine einzige Niederlage · ${p.perfDays} Tage`}},
 
+  {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'thumbsUp', tone:'blue', art:'leistung',
+    // Dieselbe Frage wie im Monat, eine Zeitachse hoeher [§13.1]. „Der
+    // makellose Tag" daneben verlangt einen Tag OHNE jede Niederlage und
+    // zaehlt nur volle Spieltage ab drei Partien; ein Tag mit 2:1 ist dort
+    // keiner und hier schon. Der Anteil kennt die Spielzahl nicht: wer an
+    // zwanzig Tagen dabei war, wird an zwanzig gemessen [§C35].
+    allzeit:{
+      wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen. Der Nenner sind alle eigenen Spieltage, nicht die Partien und nicht der Kalender.',
+      cond:'Höchster Anteil eigener Spieltage mit ausgeglichener oder positiver Bilanz, ab 15 eigenen Spieltagen',
+      val:p => p.taN >= 15 ? p.taOk / p.taN : null,
+      ev:(p,v) => `${Math.round(v*100)} % der Spieltage nicht im Minus · ${p.taOk} von ${p.taN}`},
+    monat:{
+      beiname:'Der Gefestigte',
+      art:'konstanz',
+      klasse:'besonders', aus:1.64,
+      wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen.',
+      cond:'An mindestens 100 % der eigenen Spieltage eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
+      ...(_stWertung(
+        p=>p.tagN>=3,
+        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length/t.length;},
+        1,
+        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
+
   {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'handshake', tone:'gold', art:'leistung',
     allzeit:{
       wie:'Für jeden Partner werden zwei Siegquoten gerechnet: die aus den gemeinsamen Partien und die aus allen übrigen Partien dieses Partners. Die Differenzen werden nach der Zahl gemeinsamer Partien gewichtet gemittelt. Wer fast alles mitspielt, ist selbst der Vergleichswert und kommt damit nicht nach vorne.',
       cond:'Größter Vorteil für die eigenen Partner, ab 3 Partnern mit je 25 gemeinsamen Partien und mindestens 10 Prozentpunkten',
       val:p => (p.upliftMates >= 3 && p.uplift != null && p.uplift >= 0.10) ? p.uplift : null,
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte gewinnen die ${p.upliftMates} Partner an dieser Seite häufiger`}},
+
+  {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'duo', tone:'gold', art:'leistung',
+    // Die Laufbahn-Achse derselben Frage [§13.1]. „Der Katalysator" darueber
+    // misst, wie viel die Partner NEBEN diesem Spieler gewinnen, verglichen
+    // mit ohne; hier geht es um die eigene Quote, und der Vergleich laeuft
+    // zwischen den Partnern statt gegen deren Laufbahn. Kein zweiter Name im
+    // Beleg: das Podest zeigt den Halter, und ein fremder Name daneben liest
+    // sich wie dessen Rekord.
+    allzeit:{
+      wie:'Nicht der beste Partner zählt, sondern der schlechteste. Der Nenner ist je Partner die Zahl der gemeinsamen Partien, also hilft es nicht, mit einem starken Partner besonders oft gespielt zu haben.',
+      cond:'Höchste Siegquote neben dem schwächsten eigenen Partner, ab 3 Partnern mit je 15 gemeinsamen Partien',
+      val:p => (p.agQ != null && p.agN >= 3) ? p.agQ : null,
+      ev:(p,v) => `${Math.round(v*100)} % neben dem schwächsten Partner · ${p.agN} Partner ab 15 Partien`},
+    monat:{
+      beiname:'Der Verlässliche',
+      art:'koennen',
+      klasse:'besonders', aus:1.89,
+      wie:'Nicht der beste Partner zählt, sondern der schlechteste. Es geht darum, mit wem auch immer zu bestehen.',
+      cond:'Neben JEDEM Partner mindestens 60 %, ab 3 Partnern mit je 5 Partien',
+      ...(_stWertung(
+        p=>Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length>=3,
+        p=>Math.min(...Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL)
+      .map(a=>a.filter(s=>s.win).length/a.length)),
+        0.6,
+        (p,v)=>{const k=Object.keys(p.partnerGrp).filter(k=>p.partnerGrp[k].length>=ST_TEIL)
+      .map(k=>({k,q:p.partnerGrp[k].filter(s=>s.win).length/p.partnerGrp[k].length})).sort((a,b)=>a.q-b.q)[0];
+      return `selbst neben ${pname(k.k)} noch ${pct(k.q)} % · ${Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length} Partner`;}))}},
 
   {id:'clutch', name:'Die ruhige Hand', short:'Nerven', ic:'nerves', tone:'gold', art:'leistung',
     allzeit:{
@@ -364,6 +414,30 @@ const DISZIPLINEN = [
         return d >= 0.09 ? d : null;
       },
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte in engen Spielen · ${Math.round(p.closeW/p.close*100)} statt ${Math.round(p.wins/p.games*100)} %`}},
+
+  {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
+    // Die Laufbahn-Achse derselben Frage [§13.1]. „Die ruhige Hand" darueber
+    // nimmt die ENGEN Partien, also die nach dem Ergebnis knappen: offen ist
+    // eine Aussage ueber den Anpfiff, eng eine ueber den Abpfiff. Verglichen
+    // wird gegen die eigene Gesamtquote, also messen alle gegen ihr eigenes
+    // Niveau und nicht gegeneinander [§C38].
+    allzeit:{
+      wie:'Offen heißt: die Elo-Rechnung gab beiden Teams zwischen 45 und 55 Prozent Siegchance. Verglichen wird die Quote in diesen Partien mit der eigenen Gesamtquote, in Prozentpunkten.',
+      cond:'Größter Abstand der Siegquote in offenen Partien zur eigenen Gesamtquote, ab 20 offenen Partien',
+      val:p => (p.ahDelta != null && p.ahDelta > 0) ? p.ahDelta : null,
+      ev:(p,v) => `+${Math.round(v*100)} %-Punkte in offenen Partien · ${Math.round(p.ahQ*100)} % statt ${Math.round(p.wins/p.games*100)} % sonst`},
+    monat:{
+      beiname:'Der Entscheider',
+      art:'koennen',
+      klasse:'selten', aus:1.81,
+      wie:'Offen heißt: die Rechnung gab beiden Teams zwischen 45 und 55 Prozent. Verglichen wird die Quote darin mit der eigenen Gesamtquote.',
+      cond:'In offenen Partien mindestens 20 Prozentpunkte stärker als sonst, ab 5 offenen Partien',
+      ...(_stWertung(
+        p=>p.partien.filter(_stAugenhoehe).length>=ST_TEIL,
+        p=>{const d=p.partien.filter(_stAugenhoehe);return d.filter(s=>s.win).length/d.length-p.q;},
+        0.2,
+        p=>{const d=p.partien.filter(_stAugenhoehe);
+      return `${d.filter(s=>s.win).length} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
   {id:'giant_slayer', name:'Der Gigantentöter', short:'Underdog', ic:'tornado', tone:'acid', art:'leistung',
     allzeit:{
@@ -452,8 +526,34 @@ const DISZIPLINEN = [
       val:p => (p.games >= 80 && p.lossStreak > 0) ? -p.lossStreak : null,
       ev:(p,v) => `${-v} Niederlagen am Stück, mehr waren es nie · ${p.games} Partien`}},
 
+  {id:'metronom', name:'Das Metronom', short:'Metronom', ic:'clock', tone:'blue', art:'leistung',
+    // Die Laufbahn-Achse derselben Frage [§13.1] — aber nicht mit derselben
+    // Rechnung: ueber eine ganze Laufbahn liegt zwischen bestem und
+    // schwaechstem Tag fast immer die volle Spanne, und die Monatsfassung
+    // misst genau diese Spanne. Gemessen wird deshalb die Streuung um die
+    // eigene Quote. „Die Handschrift" daneben streut die Tordifferenz je
+    // Partie: vier knappe Niederlagen an einem Abend streuen dort gar nicht
+    // und hier maximal.
+    allzeit:{
+      wie:'Für jeden vollen eigenen Spieltag steht eine Tagesquote. Gemessen wird, wie weit ein durchschnittlicher Tag von der eigenen Quote abweicht, in Prozentpunkten.',
+      cond:'Geringste Streuung der eigenen Tagesquoten, ab 15 eigenen Spieltagen mit je 3 Partien',
+      val:p => (p.mtSd != null && p.mtN >= 15) ? -p.mtSd : null,
+      ev:(p,v) => `${Math.round(-v*100)} Punkte Streuung der Tagesquoten · ${p.mtN} volle Spieltage`},
+    monat:{
+      beiname:'Der Taktgeber',
+      art:'konstanz',
+      klasse:'selten', aus:2.25,
+      wie:'Für jeden Spieltag steht eine Tagesquote. Gemessen wird die Spanne dazwischen.',
+      cond:'Zwischen bestem und schwächstem Spieltag höchstens 15 Prozentpunkte, ab 3 Spieltagen mit je 3 Partien',
+      ...(_stWertung(
+        p=>Object.values(p.tagGrp).filter(a=>a.length>=3).length>=3,
+        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length);
+      return -(Math.max(...q)-Math.min(...q));},
+        -0.15,
+        (p,v)=>`${pct(-v)} %-Punkte zwischen bestem und schwächstem Tag`))}},
+
   // ── DIE OFFENE KAMMER [§C35] ──────────────────────────────────────
-  // Fuenf Rekorde, deren Bedingung mit FUENFZIG Partien in der Laufbahn
+  // Sieben Rekorde, deren Bedingung mit FUENFZIG Partien in der Laufbahn
   // erfuellbar ist. Gemessen an den echten Partien waren 13 der 21
   // bestehenden Rekorde mit lesbarer Mindestzahl fuer einen solchen Spieler
   // unerreichbar: „ab 50 Sturmspielen", „ab 60 Gelegenheiten", „ab 80
@@ -481,6 +581,29 @@ const DISZIPLINEN = [
       cond:'Wenigste Gegentore je Partie in den letzten 30 Partien, ab 30 Partien',
       val:p => p.l30N ? -(p.l30Ga / p.l30N) : null,
       ev:(p,v) => `${komma(-v)} Gegentore je Partie · die letzten ${p.l30N}`}},
+
+  // Zwei Fenster mehr, und beide auf denselben Durchlauf gerechnet wie „Die
+  // dichte Phase" darueber: ein Fenster kostet nichts, solange nicht zweimal
+  // ueber dieselben Partien gezaehlt wird. Der Torrausch nimmt fuenf Partien
+  // weniger, weil die eigenen Tore staerker schwanken als die Gegentore —
+  // eine Formphase im Sturm ist kuerzer als eine in der Abwehr.
+  {id:'torrausch', name:'Der Torrausch', short:'Torrausch', ic:'goalRush', tone:'orange', art:'leistung',
+    allzeit:{
+      wie:'Gezählt werden die Tore des eigenen Teams in den letzten 25 eigenen Partien, geteilt durch diese 25. Der Nenner sind alle diese Partien, auch die in der Abwehr: gefragt ist, was vorne fällt, während jemand auf dem Feld steht, und nicht die Trefferquote eines Stürmers.',
+      fenster:true,
+      offen:true,
+      cond:'Meiste eigene Tore je Partie in den letzten 25 Partien, ab 25 Partien',
+      val:p => p.l25N ? p.l25Gf / p.l25N : null,
+      ev:(p,v) => `${komma(v)} eigene Tore je Partie · die letzten ${p.l25N}`}},
+
+  {id:'torbilanz', name:'Die Torbilanz', short:'Torbilanz', ic:'goalScale', tone:'acid', art:'leistung',
+    allzeit:{
+      wie:'Die eigenen Tore der letzten 30 eigenen Partien, geteilt durch die Gegentore derselben 30. Der Nenner sind die kassierten Tore und nicht die Partien, damit die Zahl ein Verhältnis bleibt: 1,0 heißt ausgeglichen.',
+      fenster:true,
+      offen:true,
+      cond:'Bestes Verhältnis aus eigenen Toren und Gegentoren in den letzten 30 Partien, ab 30 Partien',
+      val:p => (p.l30N && p.l30Ga > 0) ? p.l30Gf / p.l30Ga : null,
+      ev:(p,v) => `${komma(v,2)} Tore je Gegentor · ${p.l30Gf}:${p.l30Ga} in den letzten ${p.l30N}`}},
 
   {id:'striker_u', name:'Der Angreifer', short:'Angreifer', ic:'strikeBoot', tone:'orange', art:'leistung',
     allzeit:{
@@ -551,6 +674,36 @@ const DISZIPLINEN = [
   // Siegquote kann in zehn Partien genauso weit ueber seinem eigenen Schnitt
   // liegen wie der Erste. Beide tragen beide Zeitachsen, weil dieselbe Frage
   // auf zwei Achsen in EINE Disziplin gehoert [§13.1].
+  // Die Vorderseite des „Untersolls" — dieselbe Rechnung, nur andersherum.
+  // Der Erklaertext der Schande nennt sie seit jeher als Bezug, und es gab
+  // sie nicht: die Kehrseite stand ohne ihre Vorderseite da, und wer sie
+  // suchte, fand nichts. Sie ist deshalb KEIN zweiter Eintrag auf dieselbe
+  // Frage: eine Schattenseite gibt kein Prestige [§C35], also gab es fuer
+  // das Uebertreffen der eigenen Erwartung ueberhaupt keinen Eintrag.
+  {id:'uebersoll', name:'Das Übersoll', short:'Übersoll', ic:'sollPlus', tone:'gold', art:'leistung',
+    allzeit:{
+      wie:'Die Elo-Rechnung gibt jeder Partie eine Siegchance. Über die Laufbahn gemittelt ergibt das die erwartete Quote; gewertet wird, wie weit die tatsächliche darüber liegt, in Prozentpunkten. Die Erwartung wächst mit jedem Sieg mit, also ist der Abstand kein Niveau.',
+      offen:true,
+      cond:'Größter Abstand der Siegquote über die eigene Elo-Erwartung, ab 40 Partien',
+      val:p => p.games >= 40 ? (p.wins / p.games) - (p.expSum / p.games) : null,
+      ev:(p,v) => `${Math.round(v*100)} Punkte über der Rechnung · ${pct(p.wins/p.games)} % statt ${pct(p.expSum/p.games)} % in ${p.games} Partien`},
+    monat:{
+      beiname:'Der Überbieter',
+      art:'koennen',
+      // An den echten Partien gemessen: die Schwelle von 15 Punkten liegt
+      // 1,57 σ ueber dem Schnitt aller je gewerteten Werte (36 Werte, Mittel
+      // −0,9 Punkte, σ 10,2). Einmal gemessen und dann festgeschrieben, wie
+      // bei jeder Chronik [§C39] — ein Ausschlag, der mit der Liga wandert,
+      // liesse das Prestige aller bisherigen Halter sinken.
+      klasse:'selten', aus:1.57,
+      wie:'Dieselbe Rechnung wie beim Untersoll, nur andersherum.',
+      cond:'Mindestens 15 Prozentpunkte über der eigenen Elo-Erwartung',
+      ...(_stWertung(
+        p=>p.games>=8,
+        p=>p.q-p.expQ,
+        0.15,
+        p=>`${pct(p.q)} % gespielt, ${pct(p.expQ)} % erwartet`))}},
+
   {id:'steigerung', name:'Die Steigerung', short:'Steigerung', ic:'climb', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Steigende',
@@ -670,6 +823,26 @@ const DISZIPLINEN = [
         return (s >= 0.43 && s <= 0.57) ? 1 - Math.abs(s - 0.5) * 2 : null;
       },
       ev:(p,v) => `${Math.round((1-v)*100)} %-Punkte Unterschied im Positionsprofil · ${Math.round(positionsProfilWert(p)*100)} % Sturm, ${Math.round((1-positionsProfilWert(p))*100)} % Abwehr`}},
+
+  // Wo jemand steht, entscheidet die Aufstellung und nicht das Koennen —
+  // deshalb eine Bestmarke und kein Koennens-Rekord, dieselbe Kammer wie
+  // „Die Mauer" und „Der Wandler" darueber [§C27].
+  //
+  // Gezaehlt wird der STURM und nicht die haeufigere der beiden Rollen: die
+  // Abwehr-Fassung ginge gemessen an Henry mit 98 % aus den letzten 50, und
+  // Henry haelt „Die Mauer" schon — dieselbe Frage mit derselben Antwort
+  // sammelt sich beim selben Halter [§C35]. Der Sturmanteil im Fenster
+  // gehoert dagegen dem Zehnten der Siegquote. Auf einem Fenster, damit die
+  // Marke den Halter wechseln kann: ueber eine ganze Laufbahn mittelt sich
+  // jede Rolle heraus.
+  {id:'dauersturm', name:'Der Dauerstürmer', short:'Vorne', ic:'roleFix', tone:'orange', art:'ereignis',
+    allzeit:{
+      wie:'Gezählt werden die Partien im Sturm unter den letzten 50 eigenen Partien, geteilt durch diese 50. Gemessen wird damit die Aufstellung und keine Torgefahr: wo jemand steht, entscheidet die Auslosung.',
+      fenster:true,
+      offen:true,
+      cond:'Höchster Anteil eigener Partien im Sturm in den letzten 50 Partien, ab 50 Partien',
+      val:p => p.r50N ? p.r50Atk / p.r50N : null,
+      ev:(p,v) => `${Math.round(v*100)} % im Sturm · ${p.r50Atk} von ${p.r50N} Partien`}},
 
   {id:'sundaychild', name:'Das Sonntagskind', short:'Glück', ic:'clover', tone:'acid', art:'ereignis', zufall:'quote',
     allzeit:{
@@ -1173,22 +1346,6 @@ const DISZIPLINEN = [
         0.1,
         p=>`${p.partien.filter(s=>s.win&&s.ga<=1).length} von ${p.wins} Siegen mit höchstens einem Gegentor`))}},
 
-  {id:'ausgleich', name:'Der Ausgleicher', short:'Ausgleich', ic:'duo', tone:'gold', art:'leistung',
-    monat:{
-      beiname:'Der Verlässliche',
-      art:'koennen',
-      klasse:'besonders', aus:1.89,
-      wie:'Nicht der beste Partner zählt, sondern der schlechteste. Es geht darum, mit wem auch immer zu bestehen.',
-      cond:'Neben JEDEM Partner mindestens 60 %, ab 3 Partnern mit je 5 Partien',
-      ...(_stWertung(
-        p=>Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length>=3,
-        p=>Math.min(...Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL)
-      .map(a=>a.filter(s=>s.win).length/a.length)),
-        0.6,
-        (p,v)=>{const k=Object.keys(p.partnerGrp).filter(k=>p.partnerGrp[k].length>=ST_TEIL)
-      .map(k=>({k,q:p.partnerGrp[k].filter(s=>s.win).length/p.partnerGrp[k].length})).sort((a,b)=>a.q-b.q)[0];
-      return `selbst neben ${pname(k.k)} noch ${pct(k.q)} % · ${Object.values(p.partnerGrp).filter(a=>a.length>=ST_TEIL).length} Partner`;}))}},
-
   {id:'bollwerk', name:'Das Bollwerk', short:'Bollwerk', ic:'dominator', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Unüberwindliche',
@@ -1201,20 +1358,6 @@ const DISZIPLINEN = [
         (p,c)=>_stMittel(Object.values(c.P).map(x=>x.ga/x.games))-p.ga/p.games,
         1.5,
         (p,v,c)=>`${komma(p.ga/p.games)} Gegentore je Partie · Liga ${komma(_stMittel(Object.values(c.P).map(x=>x.ga/x.games)))}`))}},
-
-  {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
-    monat:{
-      beiname:'Der Entscheider',
-      art:'koennen',
-      klasse:'selten', aus:1.81,
-      wie:'Offen heißt: die Rechnung gab beiden Teams zwischen 45 und 55 Prozent. Verglichen wird die Quote darin mit der eigenen Gesamtquote.',
-      cond:'In offenen Partien mindestens 20 Prozentpunkte stärker als sonst, ab 5 offenen Partien',
-      ...(_stWertung(
-        p=>p.partien.filter(_stAugenhoehe).length>=ST_TEIL,
-        p=>{const d=p.partien.filter(_stAugenhoehe);return d.filter(s=>s.win).length/d.length-p.q;},
-        0.2,
-        p=>{const d=p.partien.filter(_stAugenhoehe);
-      return `${d.filter(s=>s.win).length} von ${d.length} offenen Partien · sonst ${pct(p.q)} %`;}))}},
 
   {id:'ausreisser2', name:'Der Ausreißer', short:'Ausreißer', ic:'godRay', tone:'gold', art:'leistung',
     monat:{
@@ -1411,20 +1554,6 @@ const DISZIPLINEN = [
         (p,v)=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
       return `${t.length} Spieltage, keiner unter ${pct(v)} %`;}))}},
 
-  {id:'metronom', name:'Das Metronom', short:'Metronom', ic:'clock', tone:'blue', art:'leistung',
-    monat:{
-      beiname:'Der Taktgeber',
-      art:'konstanz',
-      klasse:'selten', aus:2.25,
-      wie:'Für jeden Spieltag steht eine Tagesquote. Gemessen wird die Spanne dazwischen.',
-      cond:'Zwischen bestem und schwächstem Spieltag höchstens 15 Prozentpunkte, ab 3 Spieltagen mit je 3 Partien',
-      ...(_stWertung(
-        p=>Object.values(p.tagGrp).filter(a=>a.length>=3).length>=3,
-        p=>{const q=Object.values(p.tagGrp).filter(a=>a.length>=3).map(a=>a.filter(s=>s.win).length/a.length);
-      return -(Math.max(...q)-Math.min(...q));},
-        -0.15,
-        (p,v)=>`${pct(-v)} %-Punkte zwischen bestem und schwächstem Tag`))}},
-
   {id:'beidseitig', name:'Der Beidfüßige', short:'Beidfüßig', ic:'sort', tone:'blue', art:'leistung',
     monat:{
       beiname:'Der Beidfüßige',
@@ -1441,19 +1570,6 @@ const DISZIPLINEN = [
         2,
         p=>{const a=p.partien.filter(s=>s.pos==='atk'),d=p.partien.filter(s=>s.pos==='def');
       return `${pct(a.filter(s=>s.win).length/a.length)} % vorne, ${pct(d.filter(s=>s.win).length/d.length)} % hinten`;}))}},
-
-  {id:'kopfhoch', name:'Der Tagesabschluss', short:'Tagesende', ic:'thumbsUp', tone:'blue', art:'leistung',
-    monat:{
-      beiname:'Der Gefestigte',
-      art:'konstanz',
-      klasse:'besonders', aus:1.64,
-      wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen.',
-      cond:'An mindestens 100 % der eigenen Spieltage eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
-      ...(_stWertung(
-        p=>p.tagN>=3,
-        p=>{const t=Object.values(p.tagGrp);return t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length/t.length;},
-        1,
-        p=>{const t=Object.values(p.tagGrp);return `${t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length} von ${t.length} Spieltagen nicht negativ`;}))}},
 
   // ── Zweite Runde: neun Chroniken mehr [§C39] ─────────────────────
   // Alle an den echten Partien kalibriert. Was hier nicht steht, hat eine

@@ -216,7 +216,9 @@ function _chronicleCtx(bisMs){
     //    in `roh` und nach der Auswertung verworfen: am gecachten `P` haengen
     //    nur diese Skalare, sonst truege jeder der 24 Zeitschnitte 4×N
     //    Partien-Objekte mit sich.
-    l30N:0, l30Klar:0, l30Ga:0,          // die letzten 30 Partien
+    l30N:0, l30Klar:0, l30Ga:0, l30Gf:0, // die letzten 30 Partien
+    l25N:0, l25Gf:0,                     // die letzten 25 Partien
+    r50N:0, r50Atk:0,                    // Sturmpartien unter den letzten 50
     aufDelta:null, aufNeu:0, aufAlt:0,   // letzte 25 gegen die 25 davor
     // ── Der Abstand zum EIGENEN [§C38]. Wer eine Quote gewinnt, gewinnt
     //    fast jede; ein Eintrag auf das Niveau gehoert damit immer denselben
@@ -227,6 +229,18 @@ function _chronicleCtx(bisMs){
     sbDelta:null, sbDrin:0, sbRaus:0, sbN:0,     // Schlussspiel eines Tages
     stgDelta:null, stgQ1:0, stgQ2:0, stgTage:0,  // Haelften der eigenen Spieltage
     rwDelta:null, rwDrin:0, rwEigen:0,           // Mitspielerstaerke im Fenster
+    // ── Der Anteil an den eigenen GELEGENHEITEN [§C35]. „Der Platzhirsch"
+    //    und „Der Wochenherr" waren die einzigen zwei Rekorde dieser
+    //    Bauart: sie zaehlen nicht, wie oft etwas gelang, sondern wie oft
+    //    von wie vielen Gelegenheiten. Ein solcher Anteil kennt die
+    //    Spielzahl nicht — wer an zwanzig Tagen dabei war, wird an zwanzig
+    //    gemessen —, und genau deshalb erreicht er den, der weniger spielt.
+    //    Alle vier fallen im Durchlauf ueber die Rohsicht ab, den es fuer
+    //    die Fenster ohnehin gibt, und bleiben Skalare [§3].
+    taN:0, taOk:0,                       // eigene Spieltage, davon nicht negativ
+    agQ:null, agN:0,                     // der schwaechste regelmaessige Partner
+    mtSd:null, mtN:0,                    // Streuung der eigenen Tagesquoten
+    ahN:0, ahQ:0, ahDelta:null,          // offene Partien gegen die eigene Quote
     unterN:0, unterGf:0,                 // als Aussenseiter
     favN:0, favKlar:0,                   // als Favorit
     restN:0, restGf:0, restGa:0,         // gegen den Rest der Liga
@@ -425,6 +439,28 @@ function _chronicleCtx(bisMs){
       p.l30N = 30;
       p.l30Klar = l30.filter(x => x.w && x.gf - x.ga >= 5).length;
       p.l30Ga = l30.reduce((n, x) => n + x.ga, 0);
+      // Die eigenen Tore desselben Fensters. „Die Torbilanz" stellt sie
+      // gegen die Gegentore daneben — zwei Rekorde auf EINEM Durchlauf,
+      // damit nicht zweimal ueber dieselben dreissig Partien gezaehlt wird.
+      p.l30Gf = l30.reduce((n, x) => n + x.gf, 0);
+    }
+    // Das 25er-Fenster: dieselbe Bauart, eine andere Frage. Die Tore je
+    // Partie schwanken staerker als die Gegentore, also ist das Fenster
+    // kuerzer — eine Formphase im Sturm ist kuerzer als eine in der Abwehr.
+    if(r.length >= 25){
+      const l25 = r.slice(-25);
+      p.l25N = 25;
+      p.l25Gf = l25.reduce((n, x) => n + x.gf, 0);
+    }
+    // Die Sturmpartien unter den letzten 50. Gezaehlt wird der Sturm und
+    // nicht die haeufigere der beiden Rollen: „Die Mauer" fragt schon nach
+    // dem Abwehranteil, und gemessen ginge die Fenster-Fassung davon an
+    // denselben Halter — dieselbe Frage mit derselben Antwort [§C35]. Der
+    // Sturmanteil im Fenster gehoert dagegen dem Zehnten der Siegquote.
+    if(r.length >= 50){
+      const l50 = r.slice(-50);
+      p.r50N = 50;
+      p.r50Atk = l50.filter(x => x.pos === 'atk').length;
     }
     // Zwei gleich lange Fenster, die beide mitwandern. Gegen den ANFANG der
     // Laufbahn verglichen belohnte derselbe Rekord, wer schlecht angefangen
@@ -469,6 +505,26 @@ function _chronicleCtx(bisMs){
         }
       }
     }
+    // Der Anteil der eigenen Spieltage, an denen die Bilanz nicht negativ
+    // war. Der Nenner sind die eigenen Spieltage und nicht die Partien:
+    // „Der Tagesabschluss" fragt, wie viele Tage nicht im Minus endeten,
+    // und ein Tag zaehlt dafuer genau einmal.
+    p.taN = _tagListe.length;
+    p.taOk = _tagListe.filter(t =>
+      _tage[t].filter(x => x.w).length * 2 >= _tage[t].length).length;
+    // Die Streuung der eigenen Tagesquoten. Ueber eine ganze Laufbahn liegt
+    // zwischen bestem und schwaechstem Tag fast immer die volle Spanne — die
+    // Monatsfassung von „Das Metronom" misst sie deshalb, die Laufbahn kann
+    // es nicht. Gemessen wird stattdessen, wie weit ein durchschnittlicher
+    // Tag von der eigenen Quote abweicht.
+    {
+      const voll = _tagListe.filter(t => _tage[t].length >= 3);
+      if(voll.length >= 2){
+        p.mtN = voll.length;
+        p.mtSd = _sd(voll.map(t =>
+          _tage[t].filter(x => x.w).length / _tage[t].length));
+      }
+    }
     // Die eigenen Spieltage in der Mitte geteilt. Gezaehlt werden die
     // EIGENEN Tage und nicht die des Kalenders: sonst haengt die Wertung
     // daran, wie oft jemand dabei war.
@@ -498,6 +554,20 @@ function _chronicleCtx(bisMs){
       const drin = q(r.slice(-25)), eigen = q(r);
       if(drin != null && eigen != null){
         p.rwDrin = drin; p.rwEigen = eigen; p.rwDelta = drin - eigen;
+      }
+    }
+    // Offene Partien: die Elo-Rechnung gab beiden Teams zwischen 45 und 55
+    // Prozent. Verglichen wird mit der EIGENEN Gesamtquote, also messen alle
+    // gegen ihr eigenes Niveau und nicht gegeneinander [§C38]. Die Grenzen
+    // kommen aus `_stAugenhoehe` — dieselbe Funktion, die die Monatsfassung
+    // von „Auf Augenhoehe" benutzt, sonst zaehlen die zwei Durchlaeufe ueber
+    // dieselbe Frage verschieden [§10.2].
+    {
+      const off = r.filter(_stAugenhoehe);
+      if(off.length >= 20){
+        p.ahN = off.length;
+        p.ahQ = off.filter(x => x.w).length / off.length;
+        p.ahDelta = p.ahQ - (p.wins / p.games);
       }
     }
     const unter = [], fav = [], rest = [], atk = [], def = [];
@@ -534,6 +604,17 @@ function _chronicleCtx(bisMs){
     // Spieler ein Dutzend Durchlaeufe.
     const mates = {};
     r.forEach(x => { if(x.mate) (mates[x.mate] = mates[x.mate] || []).push(x); });
+    // Der schwaechste regelmaessige Partner. Nicht der beste: „Der
+    // Ausgleicher" fragt, mit wem auch immer zu bestehen, und ein einziges
+    // schlechtes Paar kostet den Rekord. Fuenfzehn gemeinsame Partien, damit
+    // eine Bilanz ueberhaupt eine ist — dieselbe Karte, die „Der Klotz am
+    // Bein" darunter schon gebaut hat.
+    const _agM = Object.keys(mates).filter(m => mates[m].length >= 15);
+    if(_agM.length >= 3){
+      p.agN = _agM.length;
+      p.agQ = Math.min.apply(null, _agM.map(m =>
+        mates[m].filter(x => x.w).length / mates[m].length));
+    }
     const nutz = Object.keys(mates).filter(m => mates[m].length >= 10 && roh[m]);
     if(nutz.length >= 3){
       let summe = 0;

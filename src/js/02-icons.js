@@ -225,6 +225,22 @@ const ICONS = {
   // Einzelkämpfer: eine Figur, neben der zwei leere Plätze gestrichelt
   // stehen — die Seite, auf der niemand mitträgt.
   soloPath:      `<circle cx="8" cy="7" r="3"/><path d="M3 20v-2a4 4 0 014-4h2a4 4 0 014 4v2"/><path d="M17 8v3M17 14v3" stroke-dasharray="2 2"/><circle cx="17" cy="20" r="1.2"/>`,
+  // ── FUENF REKORDE MEHR: DER EIGENE SCHNITT UND DAS FENSTER ──
+  // Uebersoll: eine gestrichelte Erwartungslinie und eine Bahn, die darueber
+  // laeuft. Bewusst anders als `chartUp` (nur die Bahn) und `chartDown` (das
+  // Untersoll, dieselbe Frage andersherum) — hier ist die LINIE die Aussage.
+  sollPlus:      `<path d="M3 18h18" stroke-dasharray="3 3"/><path d="M4 15l4-4 4 2 4-7 4 3"/>`,
+  // Stammplatz: eine Figur auf einem festen Platz, mit Lehne. Anders als
+  // `soloPath` (Figur mit leeren Plaetzen daneben) und `refresh` (der
+  // Wandler, der die Rolle tauscht): hier bewegt sich nichts.
+  roleFix:       `<circle cx="12" cy="6" r="2.6"/><path d="M7 20v-5a3 3 0 013-3h4a3 3 0 013 3v5"/><path d="M4 20h16"/>`,
+  // Torrausch: ein Ball mit Fahrtlinien dahinter — Tore in Folge, nicht ein
+  // einzelner Treffer. `ball` ist der ruhende Ball, `strikeBoot` der Schuss.
+  goalRush:      `<circle cx="16" cy="12" r="5"/><path d="M2 8h7M1 12h6M2 16h7"/>`,
+  // Torbilanz: zwei Pfeile gegeneinander, verschieden lang — das Verhaeltnis
+  // aus eigenen Toren und Gegentoren. `scaleBalance` ist die Waage, die
+  // aufgeht; hier geht sie gerade NICHT auf.
+  goalScale:     `<path d="M3 5v14"/><path d="M6 9h14l-3-3M6 15h8l-3 3"/>`,
   // Dichtes Tor: ein geschlossenes Gitter im Rahmen — nichts geht durch.
   gateShut:      `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M12 5v14M17 5v14M3 12h18"/>`,
   // Abwehrchef: Schild mit Rangwinkeln darin — die Ansage in der Abwehr.

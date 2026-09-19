@@ -3356,28 +3356,44 @@ const _form = JSON.parse(K.eval(`JSON.stringify((function(){
   // Danach eine Niederlage am selben Tag: das Fenster verschiebt sich, der
   // Vorsprung bleibt.
   const tief = bau('ft', basis + 11 * 300000, 1, false);
-  const stand = l => l.filter(x => (x.dataRef || {}).type === 'top_form'
-    && x.dataRef.pid === held);
 
   matches = alle.concat(hoch);
   invalidateCache();
-  const frueh = stand(_buildStories())[0] || null;
+  const fh = _liveStreakForm();
+  // Die Karte vom Vormittag, gebaut wie im Generator: die Zahl der Siege im
+  // Fenster steht in dataRef, und genau daran hing der Stale-Filter einmal.
+  // (Kein Backtick in diesem Kommentar: er steht in einem Template-Literal.)
+  //
+  // Sie wird hier gestellt und nicht aus dem Generator gefischt: wer zehn
+  // Partien am Stueck gewinnt, uebernimmt an diesem Tag auch Rekorde, steht
+  // damit auf den Tafel-Karten des Tages und faellt mit der dritten eigenen
+  // Karte unter den Deckel fuer Nebenrollen [§C33]. Das ist richtig so — die
+  // Form steht dann schon als Siegesserie im Feed. Gefragt ist hier der
+  // Stale-Filter und nicht der Deckel, und die Datenbank liefert am Abend
+  // genau diese Zeile.
+  const frueh = {
+    id:'top_form_' + held + '_probe', cat:'highlight', ic:'flame',
+    title:'Formlauf', desc:'Zehn von zehn Partien gewonnen.',
+    when:new Date(basis + 11 * 300000).toISOString(),
+    prio:STORY_PRIO.top_form,
+    dataRef:{type:'top_form', pid:held, wins:fh.form[held]}
+  };
 
   matches = alle.concat(hoch, tief);
   invalidateCache();
-  const spaet = stand(_buildStories())[0] || null;
   // Die Karte vom Vormittag, gegen den Stand von jetzt gehalten: genau der
   // Fall, den die Datenbank liefert.
-  const durch = frueh ? _consolidateStories([frueh]).length : -1;
+  const durch = _consolidateStories([frueh]).length;
   const sf = _liveStreakForm();
-  const erg = { frueh: frueh ? frueh.dataRef.wins : null,
+  const erg = { frueh: frueh.dataRef.wins,
                 jetzt: sf.form[held], vor: sf.vor[held], durch,
                 schwelle: FORM_VORSPRUNG };
   matches = alle;
   invalidateCache();
   return erg;
 })())`));
-ok(_form.frueh != null, 'die Formkarte entsteht', String(_form.frueh));
+ok(_form.frueh === 10, 'der Formlauf steht am Vormittag bei zehn von zehn',
+   String(_form.frueh));
 ok(_form.jetzt < _form.frueh,
    'und das Fenster verschiebt sich noch am selben Tag',
    _form.jetzt + ' statt ' + _form.frueh);
