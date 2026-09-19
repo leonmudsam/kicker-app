@@ -1127,8 +1127,20 @@ function _ambientTemplatePool(now, pm, nameOf){
       // Katalogs, waehrend die Schlagzeile von EINER Fuehrung erzaehlte —
       // zwei Aussagen auf einer Karte, und die Zahl gehoerte der falschen.
       desc:`${_evSatz(a.ev)}. ${held} von ${SEASON_TITLES.length} `
-        + `Chronik-Einträgen sind vergeben, ${open} sind noch offen.`,
-      vv:_chronKurz(a.ev), vl:'in Führung',
+        + `Chronik-Einträgen stehen schon.`,
+      // Hier stand die erste Zahl des Belegs unter der Aufschrift „in
+      // Führung". Beides war falsch: „in Führung" beschreibt den Spieler und
+      // nicht die Zahl, und die erste Zahl eines MONATSBELEGS ist nicht der
+      // Sortierwert. „Der makellose Tag" misst einen Anteil und belegt ihn
+      // mit „1 von 4 Spieltagen ohne Niederlage" — im Block stand damit die
+      // 1, also die Anzahl. Nur beim Liga-Rekord garantiert §C35, dass der
+      // Beleg mit dem Sortierwert beginnt; die Monatswertung traegt ihren
+      // Zahlenwert gar nicht mit.
+      //
+      // Die Karte heisst „das Rennen um die laufende Tafel", also traegt der
+      // Block die Zahl des Rennens. Der Satz nennt dafuer nur noch die
+      // vergebenen — zweimal dieselbe Zahl waere eine zu viel [§C27].
+      vv:String(open), vl:'noch offen',
       dataRef:{ ambientPid:a.pid, seasonTable:T2.sid } };
   }});
 
@@ -1140,7 +1152,11 @@ function _ambientTemplatePool(now, pm, nameOf){
     if(typeof chronicleHolders !== 'function') return null;
     let by = null;
     try { by = chronicleHolders(); } catch(e){ return null; }
-    const recs = CHRONICLES.filter(d => by[d.id] && pm[by[d.id].pid]);
+    // Keine Schattenseite: der Feed meldet sie nicht [§C35]. Der Topf lief
+    // ueber ALLE 56 vergebenen Rekorde, zwoelf davon negativ, und die
+    // Rotation haengt am Kalendertag — an jedem fuenften Tag stand damit
+    // „Alex haelt ‚Das Scheunentor'" als Fun Fact im Feed.
+    const recs = CHRONICLES.filter(d => by[d.id] && pm[by[d.id].pid] && !d.neg);
     if(!recs.length) return null;
     // Deterministisch aus dem Tag gewählt: gleicher Tag → gleiche Karte.
     const day = Math.floor(now.getTime() / 86400000);
@@ -1156,7 +1172,19 @@ function _ambientTemplatePool(now, pm, nameOf){
       // an, wo ein Satz anfaengt, und der Beleg traegt keinen Listentrenner
       // mehr mitten im Fliesstext.
       desc:`${_evSatz(h.ev)}. ${h.shared ? 'Diesen Bestwert halten mehrere punktgleich.' : 'Sonst hält diesen Bestwert niemand.'}`,
-      vv:'1', vl:'Rekordhalter',
+      // Der grosse Wert war die Zeichenkette „1" mit der Aufschrift
+      // „Rekordhalter" — eine Konstante und eine Aussage ueber den TRAeGER
+      // statt ueber die Zahl. „1 Rekordhalter" gilt fuer jeden Rekord und
+      // sagt damit nichts; gemessen trug die Vorlage 25 verschiedene Titel
+      // und immer denselben Wert.
+      //
+      // Die Zahl ist der Wert der Bestmarke, und wie sie heisst, sagt die
+      // Kammer des Katalogs [§C33] — dieselbe Quelle, aus der `_newsWertBlock`
+      // die Aufschrift einer Rekordkarte nimmt [§C27]. Beim Rekord beginnt
+      // der Beleg garantiert mit dem Sortierwert [§C35], also trifft
+      // `_chronKurz` hier das Richtige.
+      vv:_chronKurz(h.ev),
+      vl:((CHRON_KINDS[d.kind] || {}).label || 'Bestwert'),
       dataRef:{ ambientPid:h.pid, chronicle:d.id } };
   }});
 
@@ -1285,7 +1313,8 @@ function _ambientTemplatePool(now, pm, nameOf){
           .replace(/^./, c => c.toUpperCase())
         + `. Höchste getragene Stufe ist der ${oben.name}`
         + (leer > 0 ? `, darüber ${leer === 1 ? 'liegt noch eine Stufe' : 'liegen noch ' + leer + ' Stufen'}, die niemand erreicht hat.` : '.'),
-      vv:String(n), vl:'gewertet',
+      // „12 gewertet" sagte nicht, WAS gewertet ist. Die Zahl zaehlt Spieler.
+      vv:String(n), vl:'Spieler',
       dataRef:{ ambientPids:[] } };
   }});
 
