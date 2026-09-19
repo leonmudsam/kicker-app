@@ -197,6 +197,25 @@ mindestens fünfzehn Duellen steht die Bilanz positiv, und gegen den
 unangenehmsten davon noch 55 %. Kein anderer Spieler der Liga schafft das; der
 Zweite steht bei 45 %. Das ist die Stärke, die die Tafel heute nicht nennt.
 
+## Was davon gebaut ist
+
+Fünf Einträge sind eingebaut: **Der Tagesabschluss**, **Der Ausgleicher**,
+**Auf Augenhöhe**, **Das Metronom** und **Das Übersoll** — die ersten vier als
+zweite Achse ihrer Monatschronik [§13.1], das Übersoll als neue Disziplin mit
+beiden Achsen. Dazu drei Fenster-Rekorde, die in diesem Lauf noch nicht
+standen: **Der Torrausch** (Tore je Partie in den letzten 25), **Die
+Torbilanz** (Tore je Gegentor in den letzten 30) und **Der Dauerstürmer**
+(Sturmanteil der letzten 50). Der Katalog steht damit bei 65 Rekorden und 70
+Haltungen, die Monatstafel bei 60 Chroniken.
+
+Die Abwehr-Fassung des Dauerstürmers ist dabei bewusst weggeblieben: sie ginge
+gemessen an Henry mit 98 %, und Henry hält „Die Mauer" schon — dieselbe Frage
+mit derselben Antwort sammelt sich beim selben Halter [§C35]. Der Sturmanteil
+gehört dagegen Stefan, dem Zehnten der Siegquote.
+
+Nicht gebaut sind die sieben übrigen Kandidaten dieses Laufs; die Seite bleibt
+als Herleitung stehen.
+
 ## Wenn implementiert wird
 
 Zwölf neue Rekorde auf einmal sind viel: jeder gehaltene Liga-Rekord trägt

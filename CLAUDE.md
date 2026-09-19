@@ -94,8 +94,10 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Platzhirsch" — fünfzehn Kandidaten in zwei Kammern gegen
                       acht Tore, elf davon die fehlende Laufbahn-Achse einer
                       Monatschronik [§13.1], dazu „Das Übersoll", das der Code
-                      in `untersoll.monat.wie` schon als Bezug nennt, ohne
-                      dass es es gibt (README-staerken.md)
+                      in `untersoll.monat.wie` schon als Bezug nannte, ohne
+                      dass es es gab. Fünf davon sind eingebaut und drei
+                      Fenster-Rekorde dazu, die Seite bleibt als Herleitung
+                      (README-staerken.md)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
@@ -227,9 +229,9 @@ Rechnung an der Identität eines Arrays hängt statt an einer Version
 — `matches` wird immer **ersetzt**, nie an Ort und Stelle verändert, und ein
 frisches Array verwirft den Memo von selbst.
 
-**Die Rohsicht landet nicht im Cache.** Achtzehn Liga-Rekorde [§C35] fragen
-nach einem gleitenden Fenster, nach einer Rolle, nach dem Gegnerkreis, nach
-dem Partnerkreis oder nach den eigenen Spieltagen und brauchen dafür die Partien je Spieler in
+**Die Rohsicht landet nicht im Cache.** Fünfundzwanzig Liga-Rekorde [§C35]
+fragen nach einem gleitenden Fenster, nach einer Rolle, nach dem Gegnerkreis,
+nach dem Partnerkreis oder nach den eigenen Spieltagen und brauchen dafür die Partien je Spieler in
 Spielreihenfolge — dieselbe Rohsicht, die `_seasonTitleCtx` für den Monat
 schon hat. `_chronicleCtx` baut sie in einer eigenen Struktur NEBEN `P`,
 rechnet die Werte daraus aus und lässt sie fallen; am gecachten
@@ -291,7 +293,7 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords und die Schandtafel samt ihrer Verteilung | 1243 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung | 1320 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 192 |
 | `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt | 365 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
@@ -1582,11 +1584,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   geht.
 - **§C39 Die Monatschronik fragt nicht, wer der Beste ist.** Der alte
   Monatskatalog maß fast überall das Können, und wer eine Quote gewinnt,
-  gewinnt fast jede. Er ist vollständig ersetzt: neunundfünfzig Chroniken, die
+  gewinnt fast jede. Er ist vollständig ersetzt: sechzig Chroniken, die
   nach der **Abweichung von der Erwartung** fragen, nach **Konstanz**, nach
   dem **Verhältnis zum Ligamittel** desselben Monats, zu einem **bestimmten
   anderen Spieler** oder nach einem **seltenen Einzelereignis**. Die
-  Liga-Rekorde der Ewigen Tafel sind davon unberührt; zwölf Disziplinen tragen
+  Liga-Rekorde der Ewigen Tafel sind davon unberührt; siebzehn Disziplinen tragen
   beide Zeitachsen, weil dieselbe Frage auf zwei Zeitachsen in EINE Disziplin
   gehört [§13.1] — sie sind in §C35 genannt.
   **Das Stichproben-Tor ist niedrig und für alle gleich:** acht Partien im
@@ -1996,19 +1998,41 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   gewinnt jede Quote und jede Serie — am Ende liegen alle Liga-Einträge bei
   denselben drei Spielern. Zweiundzwanzig von sechsunddreißig Rekorden
   fragten direkt nach Können, und drei Spieler hielten vierundzwanzig der
-  achtunddreißig Haltungen. Heute sind es siebenundfünfzig Rekorde und
-  zweiundsechzig Haltungen, siebenundzwanzig davon bei den drei Besten. Die
+  achtunddreißig Haltungen. Heute sind es fünfundsechzig Rekorde und
+  siebzig Haltungen, zweiunddreißig davon bei den drei Besten. Die
   letzten fünf Einträge haben daran nichts hinzugefügt: sie messen den
   **Abstand zum Eigenen** statt das Niveau [§C38] und gingen gemessen an den
   Zehnten, Sechsten und Vierten der Siegquote.
+  **Der Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht.** „Der
+  Platzhirsch" und „Der Wochenherr" waren lange die einzigen zwei Rekorde
+  dieser Bauart: sie zählen nicht, wie oft etwas gelang, sondern wie oft von
+  wie vielen Gelegenheiten. Wer an zwanzig Spieltagen dabei war, wird an
+  zwanzig gemessen — und genau deshalb erreicht ein solcher Anteil den, der
+  weniger spielt. Gemessen verlangten 17 der 57 Rekorde eine Mindestzahl von
+  vierzig Partien oder mehr, darunter die vier mit fünfzig Sturm- oder
+  Abwehrspielen; „Der Tagesabschluss", „Der Ausgleicher", „Auf Augenhöhe" und
+  „Das Metronom" fragen stattdessen nach den eigenen Spieltagen, dem eigenen
+  Partnerkreis und den eigenen offenen Partien. Die Herleitung samt Messung
+  steht in `mockup/README-staerken.md`.
+  **Ein neuer Rekord steht neben seinem nächsten Verwandten.** Die
+  Katalogreihenfolge IST die Reihenfolge im Rekorde-Reiter, und ein Eintrag
+  am Ende der Liste erklärt sich niemandem: „Der Tagesabschluss" steht neben
+  „Der makellose Tag", „Der Ausgleicher" neben „Der Katalysator", „Auf
+  Augenhöhe" neben „Die ruhige Hand", „Das Metronom" neben „Der
+  Unerschütterliche", „Der Torrausch" und „Die Torbilanz" neben „Die dichte
+  Phase" und „Der Dauerstürmer" neben „Die Mauer" und „Der Wandler". Wer eine
+  Monatschronik um ihre Laufbahn-Achse ergänzt, verschiebt ihren Eintrag
+  dorthin; die Monatstafel bleibt davon unberührt, weil `SEASON_TITLES` nach
+  Art, Chronik-Art und Ausschlag sortiert und nicht nach der Katalogfolge.
   **Die Schwelle ist keine Bedingung, sondern eine Kammer.** Ein Rekord
   DARF eine hohe Mindestzahl verlangen: wer sie hält, hat die Frage über eine
   lange Strecke beantwortet, und Rekorde sind auch dazu da, Können zu
-  belohnen. Er darf aber nicht nur das. Zehn Rekorde tragen deshalb `offen`
-  im Katalog: ihre Bedingung ist mit **fünfzig Partien** in der Laufbahn
-  erfüllbar — „Die starke Phase", „Die dichte Phase", „Der Angreifer", „Der
-  Souverän", „Der Aufschwung", „Die Steigerung", „Der Höhenflug", „Der letzte
-  Ball", „Der Rückenwind", „Der Einzelkämpfer". Gemessen waren 13 der 21 bestehenden Rekorde
+  belohnen. Er darf aber nicht nur das. Vierzehn Rekorde tragen deshalb
+  `offen` im Katalog: ihre Bedingung ist mit **fünfzig Partien** in der
+  Laufbahn erfüllbar — „Die starke Phase", „Die dichte Phase", „Der
+  Torrausch", „Die Torbilanz", „Der Angreifer", „Der
+  Souverän", „Der Aufschwung", „Das Übersoll", „Die Steigerung", „Der Höhenflug", „Der letzte
+  Ball", „Der Rückenwind", „Der Einzelkämpfer", „Der Dauerstürmer". Gemessen waren 13 der 21 bestehenden Rekorde
   mit lesbarer Mindestzahl für einen solchen Spieler unerreichbar: „ab 50
   Sturmspielen", „ab 60 Gelegenheiten", „ab 80 Spielen" gehören dem
   Vielspieler, weil sie außer ihm niemand halten KANN. `offen` ist dabei
@@ -2021,7 +2045,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Ergebnis herausfällt. Dieselbe Begründung wie beim Verschlechtern [§C33]:
   wer nichts getan hat, hat nichts getan. Gemessen ergaben die drei ersten
   Fenster-Rekorde 26 der 135 Karten ihrer Familie, und keine davon nannte
-  eine Leistung; heute sind es sieben. Die Marke gilt auch, wo nichts
+  eine Leistung; heute sind es zehn. Die Marke gilt auch, wo nichts
   herausfällt, aber die **Mitte wandert**: „Die Steigerung" halbiert die
   eigenen Spieltage, und mit jedem zweiten neuen Tag rutscht einer aus der
   zweiten Hälfte in die erste — war er schwach, wächst der Abstand ohne eine
@@ -2118,11 +2142,24 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   auf +0,06. Ein gleichmäßiger Streu wäre gelogen — eine Schande MISST, dass
   jemand schlecht war —, also ist nur der Extremfall gedeckelt: kein Halter
   über zwei Fünftel der Schandtafel, und mindestens sechs Namen tragen mit.
-  **Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin** [§13.1]. Zwölf
-  Disziplinen tragen jetzt beide: `spotless`, `steigerung`, `hochform`,
+  **Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin** [§13.1].
+  Siebzehn Disziplinen tragen jetzt beide: `spotless`, `kopfhoch`,
+  `ausgleich`, `gleichauf`, `metronom`, `uebersoll`, `steigerung`, `hochform`,
   `schlussball`, `evenkeel`, `drought`, `abyss`, `hardluck`, `sieve`,
   `angstgegner`, `untersoll` und `misfire`. Zwei Namen
   und zwei Icons für denselben Gedanken wären eins zu viel [§C27].
+  **Die Laufbahn-Achse darf eine andere Rechnung brauchen als der Monat.**
+  „Das Metronom" misst im Monat die Spanne zwischen bestem und schwächstem
+  Spieltag; über eine ganze Laufbahn liegt dort fast immer die volle Spanne,
+  und der Rekord wäre für jeden dasselbe. Die Laufbahn misst deshalb die
+  Streuung um die eigene Quote. Dieselbe FRAGE, eine tragfähige Rechnung —
+  die Erklärung im Blatt sagt, welche.
+  **Und wo die eine Hälfte schon jemandem gehört, bleibt die andere weg.**
+  „Der Dauerstürmer" zählt den Sturmanteil der letzten fünfzig Partien. Die
+  Abwehr-Fassung derselben Frage ginge gemessen an Henry mit 98 %, und Henry
+  hält „Die Mauer" schon: dieselbe Frage mit derselben Antwort sammelt sich
+  beim selben Halter. Der Sturmanteil gehört dagegen dem Zehnten der
+  Siegquote.
   „Die Steigerung" hatte nur die Monatsachse, und der Vorschlag daraus wäre
   ein zweiter Eintrag mit demselben Gedanken gewesen; sie hat jetzt beide.
   Verwechselt wird sie damit nicht mit „Der Aufschwung": der vergleicht zwei
