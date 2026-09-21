@@ -1711,6 +1711,50 @@ function showPrestigeRegeln(pid){
 }
 
 // Das Sheet. Aufgerufen vom Avatar im Profilkopf.
+// ─── Warum ein Posten so viel wiegt [§C34] ───────────────────────────
+// Der Satz stand als Closure im Laufbahnblatt, und das Blatt einer
+// Tafel-Karte hatte deshalb keine Rechnung: dort hätte „+100 Prestige"
+// gestanden, während die Laufbahn um 34 Punkte steigt — der Grundwert ist
+// nicht, was jemand bekommt. Er wird durch die Zahl der Halter geteilt,
+// landet auf einem Rang im Stapel und wird dort durch die Wurzel seiner
+// Staffel geteilt. Eine Quelle, zwei Blätter, ein Satz [§C27].
+// Vorher stand hier „2 von 12" — die Zahl der heutigen Halter. Sie erklärte
+// den Wert nicht, sie war der Grund, warum er fiel.
+function _prestigeQuellSatz(q){
+  // Eine Nachkommastelle, aber ohne die überflüssige Null: die Posten müssen
+  // sichtbar zur Summe passen, sonst ist es keine Aufschlüsselung.
+  const zahl = v => {
+    const r = Math.round((Number(v) || 0) * 10) / 10;
+    return (Number.isInteger(r) ? String(r) : r.toFixed(1)).replace('.', ',');
+  };
+  const teile = [];
+  if(q.q === 'rekord'){
+    teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
+    let rechnung = `Grundwert ${zahl(q.basis)}`;
+    if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;
+    if(q.staffel > 1) rechnung += ` · ${q.rang}. Rekord ÷ √${q.staffel}`;
+    teile.push(rechnung);
+  }
+  else if(q.q === 'auszeichnung'){
+    teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
+    if(q.hinweis) teile.push(q.hinweis);
+    teile.push(`${q.mal}× erreicht`);
+    teile.push(q.mal > 1
+      ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
+      : `${zahl(q.basis)} P Startwert`);
+  }
+  else if(q.label) teile.push(q.label);
+  if(q.q === 'monat'){
+    if(CHRONIK_KLASSE_NAME[q.klasse]) teile.push(CHRONIK_KLASSE_NAME[q.klasse]);
+    if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
+    const basis = q.grundwert == null ? q.voll : q.grundwert;
+    let rechnung = `Chronikwert ${zahl(basis)}`;
+    if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
+    teile.push(rechnung);
+  }
+  return teile.join(' · ');
+}
+
 function showLaufbahn(pid){
   const p = (pmap() || {})[pid];
   if(!p) return;
@@ -1815,40 +1859,6 @@ function showLaufbahn(pid){
     return (Number.isInteger(r) ? String(r) : r.toFixed(1)).replace('.', ',');
   };
 
-  // Warum dieser Posten so viel wiegt. Vorher stand hier „2 von 12" — die
-  // Zahl der heutigen Halter. Sie erklärte den Wert nicht, sie war der
-  // Grund, warum er fiel. Jetzt steht da, was den Wert wirklich bestimmt:
-  // die Klasse der Auszeichnung, der Monat des Eintrags, die Art — und der
-  // Abschlag nur dort, wo es ihn gibt.
-  const grund = q => {
-    const teile = [];
-    if(q.q === 'rekord'){
-      teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
-      let rechnung = `Grundwert ${zahl(q.basis)}`;
-      if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;
-      if(q.staffel > 1) rechnung += ` · ${q.rang}. Rekord ÷ √${q.staffel}`;
-      teile.push(rechnung);
-    }
-    else if(q.q === 'auszeichnung'){
-      teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
-      if(q.hinweis) teile.push(q.hinweis);
-      teile.push(`${q.mal}× erreicht`);
-      teile.push(q.mal > 1
-        ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
-        : `${zahl(q.basis)} P Startwert`);
-    }
-    else if(q.label) teile.push(q.label);
-    if(q.q === 'monat'){
-      if(CHRONIK_KLASSE_NAME[q.klasse]) teile.push(CHRONIK_KLASSE_NAME[q.klasse]);
-      if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
-      const basis = q.grundwert == null ? q.voll : q.grundwert;
-      let rechnung = `Chronikwert ${zahl(basis)}`;
-      if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
-      teile.push(rechnung);
-    }
-    return teile.join(' · ');
-  };
-
 
   // ── Der Fingerabdruck [§13.11] ─────────────────────────────────────
   //     Das Prestige sagt, WAS jemand zusammengetragen hat. Der Abdruck
@@ -1858,7 +1868,7 @@ function showLaufbahn(pid){
   const _faTon = rangTon(pid);
 
   const zeile = (q, w) => `<div class="lb-q"${q.q === 'rekord' ? ` data-chron="${esc(q.id)}"` : ''}>
-      <span class="n">${esc(q.name)}<em>${esc(grund(q))}</em></span>
+      <span class="n">${esc(q.name)}<em>${esc(_prestigeQuellSatz(q))}</em></span>
       <span class="p num">${zahl(w)}</span>
     </div>`;
 

@@ -2013,6 +2013,30 @@ function _buildStories(){
   // Was eine Aenderung wirklich gebracht hat, steht an EINER Stelle: der
   // Katalogwert ist der Grundwert, nicht der Zuwachs [§C34].
   const _tafelWirkung = pid => _prestigeWirkung(pid, _tafelVor, _tafelNach);
+  // Was ein Rekord der Laufbahn WIRKLICH bringt [§C34]. Gespeichert werden
+  // die beiden Stände und die Rechnung der Quelle, nie der Grundwert: ein
+  // zehnter Rekord gibt nicht 100 Prestige, er wird durch die Zahl seiner
+  // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
+  // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
+  // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.
+  const _rekordWirkung = (pids, rid) => {
+    const o = {};
+    (pids || []).slice(0, 3).forEach(pid => {
+      const w = _tafelWirkung(pid);
+      const q = w.quellen['rekord:' + rid] || null;
+      o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
+                anteilVor:w.rekordVor, anteilNach:w.rekordNach,
+                zahl:w.rekordZahl,
+                // Die Stufe gehoert dazu: im Blatt eines Tafel-Moments steht
+                // EIN zusammengefasster Bereich „Wirkung auf das Insignium",
+                // und der braucht die beiden Staende samt Stufe [§C34].
+                stufeVor:w.stufeVor, stufeNach:w.stufeNach,
+                basis:q ? q.grundwert : 0, halter:q ? q.halter : 0,
+                rang:q ? q.rang : 0, staffel:q ? q.staffel : 1,
+                wert:q ? q.wert : 0};
+    });
+    return o;
+  };
   try {
     if(_tafelTag){
       const _letzteMs = _tafelTag.letzte;
@@ -2199,6 +2223,11 @@ function _buildStories(){
                     causalKey:_storyGruppeKey(def.fenster ? 'form' : 'table', _tafelTag.tag),
                     zufall:def.zufall || '', playerIds:wer.slice(0, 3), zeileText,
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
+                    // Die Punktewirkung gehoert zur Karte, nicht in eine
+                    // zweite Rechnung im Blatt: sie gilt fuer DIESEN
+                    // Tagesabschluss, und morgen sagt dieselbe Rechnung eine
+                    // andere Zahl [§C34].
+                    laufbahn:_rekordWirkung(wer, def.id), art:def.art,
                     kammerLabel:_kammer(def.kind)}
         });
       });
@@ -2329,6 +2358,45 @@ function _buildStories(){
       const _gewertet = !!(_jetztRoh && _vorherRoh);
       const _jetztH = _gewertet ? _jetztRoh : {};
       const _vorherH = _gewertet ? _vorherRoh : {};
+      // ── Das Aufgehen der Tafel ist selbst eine Nachricht ────────────
+      // Gemeldet wird kein Wechsel, und damit stand am Tag, an dem der Monat
+      // zum ersten Mal gewertet wird, gar nichts im Feed — obwohl in diesem
+      // Moment die ganze Monatstafel entsteht und jeder Eintrag darin ab
+      // jetzt fuers Prestige zaehlt [§C34]. Die Karte ist bewusst neutral:
+      // sie behauptet nicht, dass diese Eintraege in der letzten Partie
+      // geholt wurden, sondern dass der Monat ab jetzt gewertet ist. Sie
+      // traegt deshalb auch keine Partie — ein Ergebnisband darueber hiesse
+      // genau das Gegenteil [§C33].
+      if(!_vorherRoh && _jetztRoh && Object.keys(_jetztRoh).length){
+        const _fEintraege = Object.keys(_jetztRoh).length;
+        const _fJe = {};
+        Object.keys(_jetztRoh).forEach(tid => (_jetztRoh[tid].pids || [])
+          .forEach(pid => { _fJe[pid] = (_fJe[pid] || 0) + 1; }));
+        const _fHalter = Object.keys(_fJe);
+        // Die drei mit den meisten Eintraegen stehen im BLATT, nicht auf der
+        // Karte: die Karte handelt von der ganzen Tafel und nennt in
+        // Schlagzeile und Satz keinen Namen, also braucht sie auch kein
+        // Gesicht [§C33]. Sie stehen deshalb in `traeger` und nicht in
+        // `playerIds` — mit Beteiligten zaehlt der Deckel je Spieler sie mit,
+        // und an einem vollen Spieltag faellt gerade die Karte weg, die es je
+        // Monat genau einmal gibt.
+        const _fTop = _fHalter.slice().sort((x, y) => _fJe[y] - _fJe[x]).slice(0, 3);
+        stories.push({
+          id: `chronik_frei_${_sid}`,
+          cat: 'tafel',
+          ic: 'chronicle',
+          title: `Die Monatstafel im ${seasonLabel(_sid)} ist offen`,
+          desc: `Ab dem ${CHRONIK_MIN_TAGE}. Spieltag wird der Monat gewertet. `
+              + `${_fEintraege} ${_fEintraege === 1 ? 'Eintrag steht' : 'Einträge stehen'} `
+              + `in der Chronik, gehalten von ${_fHalter.length === 1
+                  ? 'einem Spieler' : _fHalter.length + ' Spielern'}. `
+              + `Bis zum Monatsende kann jeder davon noch wechseln.`,
+          when: _letzteMs2,
+          prio: STORY_PRIO.chronik_frei,
+          dataRef: {type:'chronik_frei', sid:_sid, eintraege:_fEintraege,
+                    halter:_fHalter.length, traeger:_fTop}
+        });
+      }
       // Eine Chronik-Karte darf nicht den Katalogwert als neuen Prestige-
       // Gewinn ausgeben. Pro Monat zaehlt nur der eine Eintrag, der in der
       // Tafel steht; ein besserer Eintrag kann den gerade geholten also
