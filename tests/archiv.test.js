@@ -120,6 +120,33 @@ console.log('=== ARCHIVLAUF FRIERT DIE CHRONIK EIN ===');
   const j = JSON.parse(K.eval("JSON.stringify(seasonTitles('2026-07'))"));
   ok(j.frozen === true, 'Juli kommt jetzt aus dem Einfrierer');
 
+  // Und der Profileintrag eines abgeschlossenen Monats kommt aus derselben
+  // Quelle. Wird er neu gerechnet, zeigt derselbe Monat eine andere Wertung,
+  // sobald sich der Katalog bewegt — und das Prestige der Laufbahn mit ihm.
+  // Gemessen wird das an einer Marke: die eingefrorene Zeile wird umbenannt,
+  // und wer neu rechnet, kennt den Namen nicht.
+  const g = JSON.parse(K.eval(`JSON.stringify((function(){
+    const s = (seasons || []).find(x => x && x.id === '2026-07');
+    const t = seasonTitles('2026-07');
+    const erster = (t.awarded || [])[0];
+    if(!s || !erster) return {leer:true};
+    const sicher = JSON.stringify(s.titles);
+    try {
+      const kopie = JSON.parse(sicher);
+      kopie.awarded[0].name = 'Eingefroren';
+      s.titles = kopie;
+      invalidateCache();
+      const nach = seasonTitleOf(erster.pid, '2026-07');
+      return {name:nach ? nach.name : '', pid:erster.pid === (nach || {}).pid};
+    } finally {
+      s.titles = JSON.parse(sicher);
+      invalidateCache();
+    }
+  })())`));
+  ok(g.name === 'Eingefroren' && g.pid,
+     'der Profileintrag eines abgeschlossenen Monats kommt aus dem Einfrierer',
+     JSON.stringify(g));
+
   console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
   process.exit(fails ? 1 : 0);
 })();

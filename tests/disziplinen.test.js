@@ -1271,6 +1271,90 @@ ok(_prChron.abweichend === 0 && _prChron.staffeln.every(q =>
    'Chroniken wechseln alle drei Einträge in die nächste Wurzelstaffel',
    _prChron.staffeln.slice(0,8).map(q=>q.rang+'→√'+q.staffel).join(' · '));
 
+// Genau eine Monatsquelle je Spieler und Monat [§C32]. Ein dominanter Monat
+// gewinnt acht Quoten auf einmal, und die sagen alle dasselbe ueber denselben
+// Monat: gezaehlt wird, was in der Matrix steht. Und es muss derselbe Eintrag
+// sein, den das Profil zeigt — sonst stuende im Profil eine Wertung und im
+// Prestige eine andere, und die Zahl waere nirgends nachzuzaehlen.
+const _prMonat = JSON.parse(K.eval(`JSON.stringify((function(){
+  const doppelt = [], fremd = [];
+  let n = 0;
+  Object.keys(prestigeTabelle().byPid).forEach(pid => {
+    const je = {};
+    (prestigeTabelle().byPid[pid].quellen || []).filter(q => q.q === 'monat')
+      .forEach(q => {
+        n++;
+        je[q.sid] = (je[q.sid] || 0) + 1;
+        if(je[q.sid] > 1) doppelt.push(pname(pid) + ' ' + q.sid);
+        const t = seasonTitleOf(pid, q.sid);
+        if(!t || t.titleId !== q.id) fremd.push(pname(pid) + ' ' + q.sid
+          + ': ' + q.id + ' statt ' + ((t && t.titleId) || 'nichts'));
+      });
+  });
+  return {n, doppelt, fremd};
+})())`));
+ok(_prMonat.n > 0 && _prMonat.doppelt.length === 0,
+   'je Spieler und Monat zaehlt genau eine Chronik',
+   _prMonat.doppelt.slice(0, 3).join(', ') || _prMonat.n + ' Quellen');
+ok(_prMonat.fremd.length === 0,
+   'und es ist der Eintrag, den das Profil zeigt',
+   _prMonat.fremd.slice(0, 2).join(' | ') || 'alle');
+
+// Der Verlust eines Rekords zieht den Anteil wieder ab [§C34]: nur HEUTE
+// gehaltene Rekorde zaehlen. Gemessen wird an einem echten Halterwechsel der
+// Ligageschichte — wer den Bestwert an einem Zeitpunkt hielt und am naechsten
+// nicht mehr, hat danach auch keine Quelle mehr; und wer ihn teilen muss,
+// bekommt die Haelfte.
+const _prVerlust = JSON.parse(K.eval(`JSON.stringify((function(){
+  const ms = matches.map(m => mts(m)).sort((a, b) => a - b);
+  const frueh = ms[Math.floor(ms.length * 0.55)], spaet = ms[ms.length - 1];
+  const A = allChronicles(frueh), B = allChronicles(spaet);
+  const quelle = (pid, bis) => {
+    const e = prestigeTabelle(bis).byPid[pid];
+    return ((e && e.quellen) || []).filter(q => q.q === 'rekord');
+  };
+  // Ein Rekord, den jemand verloren hat, und einer, den jemand teilen musste.
+  let verloren = null, geteilt = null;
+  CHRONICLES.forEach(d => {
+    const a = (A.byId[d.id] || {pids:[]}).pids, b = (B.byId[d.id] || {pids:[]}).pids;
+    if(!verloren){
+      const weg = a.filter(pid => b.indexOf(pid) < 0)[0];
+      if(weg) verloren = {id:d.id, pid:weg};
+    }
+    if(!geteilt && a.length === 1 && b.length > 1 && b.indexOf(a[0]) >= 0)
+      geteilt = {id:d.id, pid:a[0], vor:a.length, nach:b.length};
+  });
+  const erg = {verloren:!!verloren, geteilt:!!geteilt};
+  if(verloren){
+    erg.hatte = quelle(verloren.pid, frueh).some(q => q.id === verloren.id);
+    erg.hatNoch = quelle(verloren.pid, spaet).some(q => q.id === verloren.id);
+    erg.wer = pname(verloren.pid) + ' / ' + verloren.id;
+  }
+  if(geteilt){
+    const v = quelle(geteilt.pid, frueh).find(q => q.id === geteilt.id);
+    const n = quelle(geteilt.pid, spaet).find(q => q.id === geteilt.id);
+    erg.teilung = (v && n) ? (n.basis / n.halter) < (v.basis / v.halter) : false;
+    erg.halter = (v ? v.halter : 0) + ' auf ' + (n ? n.halter : 0);
+  }
+  // Und keine Quelle nennt einen Rekord, den ihr Spieler heute nicht haelt.
+  const fremd = [];
+  Object.keys(prestigeTabelle().byPid).forEach(pid => {
+    quelle(pid, 0).forEach(q => {
+      const e = allChronicles().byId[q.id];
+      if(!e || e.pids.indexOf(pid) < 0) fremd.push(pname(pid) + ' / ' + q.id);
+    });
+  });
+  erg.fremd = fremd;
+  return erg;
+})())`));
+ok(_prVerlust.verloren && _prVerlust.hatte && !_prVerlust.hatNoch,
+   'ein verlorener Rekord zaehlt nicht mehr mit', _prVerlust.wer || 'kein Wechsel gefunden');
+ok(_prVerlust.geteilt && _prVerlust.teilung,
+   'und ein geteilter zaehlt nur noch geteilt', _prVerlust.halter || 'keine Teilung gefunden');
+ok(_prVerlust.fremd.length === 0,
+   'keine Rekordquelle gehoert einem, der ihn heute nicht haelt',
+   _prVerlust.fremd.slice(0, 3).join(', ') || 'alle');
+
 const _prRekord = JSON.parse(K.eval(`JSON.stringify((function(){
   const falsch=[];
   Object.values(prestigeTabelle().byPid).forEach(e => (e.quellen||[])
