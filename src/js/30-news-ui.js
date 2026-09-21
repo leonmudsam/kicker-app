@@ -981,7 +981,8 @@ function _newsSorte(s){
     // andere von EINEM Erfolg. Das ist vor dem ersten Satz zu sehen [§C27].
     if(d.quelle === 'spieler') return 'spieler';
     if(d.quelle === 'erfolg')  return 'erfolg';
-    return d.quelle === 'tafel' ? 'tafel' : 'spiel';
+    // Die kurze Strecke ist dieselbe Kammer und damit dieselbe Form [§C25].
+    return (d.quelle === 'tafel' || d.quelle === 'form') ? 'tafel' : 'spiel';
   }
   if((s && s.cat) === 'tafel' || t.indexOf('rekord_') === 0 || t.indexOf('chronik_') === 0) return 'tafel';
   // Rivalitaet, Serie und Duo sind drei verschiedene Aussagen und sahen als
@@ -1253,7 +1254,8 @@ function _renderNewsFeed(){
   // Vier Chips, nicht elf. Elf Rubriken sind eine Sortierhilfe für den, der
   // sie gebaut hat, nicht für den, der liest. Jeder Chip trägt seine Anzahl,
   // damit man vorher sieht, ob sich das Tippen lohnt.
-  const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel';
+  const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel'
+    || (s.dataRef||{}).quelle === 'form';
   const _istSpieltag = s => {
     const d = s.dataRef || {};
     // Die Filter sind redaktionelle Seiten, keine sich überschneidenden

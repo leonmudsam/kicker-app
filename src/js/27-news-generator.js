@@ -2178,9 +2178,14 @@ function _buildStories(){
                     // Fenster steht darin — er ist ein Liga-Rekord und
                     // gehoert in die Ewige Tafel; was ihn unterscheidet, ist
                     // allein, dass er kein „ausgebaut" meldet [§C35]. Eine
-                    // zweite Tafel-Karte je Tag trug gemessen an 13 von 19
-                    // Spieltagen dieselbe Schlagzeile wie die erste.
-                    causalKey:_storyGruppeKey('table', _tafelTag.tag),
+                    // Ein Rekord auf einem gleitenden Fenster bekommt dabei
+                    // seine eigene Achse: sein Wert bewegt sich auch, wenn
+                    // hinten ein schwaches Ergebnis herausfaellt, und er
+                    // meldet deshalb kein „ausgebaut" [§C35]. In einer Karte
+                    // mit den dauerhaften Rekorden war dieser Unterschied
+                    // nicht zu sehen; die Karte der kurzen Strecke traegt
+                    // dafuer eine eigene Schlagzeile [§C33].
+                    causalKey:_storyGruppeKey(def.fenster ? 'form' : 'table', _tafelTag.tag),
                     zufall:def.zufall || '', playerIds:wer.slice(0, 3), zeileText,
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
                     kammerLabel:_kammer(def.kind)}

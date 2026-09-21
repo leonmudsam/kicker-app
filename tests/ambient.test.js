@@ -649,6 +649,7 @@ const _tafelGrund = JSON.parse(K.eval(`JSON.stringify((function(){
   const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
     .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
   let ohneGrund = 0, meldungen = 0, mehrfach = [], gemessen = 0;
+  let mitForm = 0, beide = 0, falscheAchse = 0;
   tage.forEach(t => {
     matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
     invalidateCache();
@@ -661,11 +662,32 @@ const _tafelGrund = JSON.parse(K.eval(`JSON.stringify((function(){
     ohneGrund += tafel.filter(s => !(s.dataRef||{}).causalKey).length;
     let fertig = []; try { fertig = _consolidateStories(roh) || []; } catch(e){}
     const karten = fertig.filter(s => s.cat === 'tafel' && tagKey(s.when) === t);
-    if(karten.length > 1) mehrfach.push(t + ': ' + karten.map(s => s.title).join(' | '));
+    // Zwei Achsen, zwei Karten: die dauerhafte Tafel und die kurze Strecke
+    // erzaehlen etwas anderes [§C35]. Je Achse aber nur eine, und ihre
+    // Schlagzeilen muessen sich unterscheiden — gemessen trugen 13 von 19
+    // Spieltagen sonst zweimal „... bewegen die Ewige Tafel".
+    const jeAchse = {};
+    karten.forEach(s => {
+      const q = (s.dataRef||{}).quelle || (s.dataRef||{}).type;
+      jeAchse[q] = (jeAchse[q] || 0) + 1;
+    });
+    const doppelt = Object.keys(jeAchse).filter(q => jeAchse[q] > 1);
+    const titel = karten.map(s => s.title);
+    if(doppelt.length || new Set(titel).size !== titel.length)
+      mehrfach.push(t + ': ' + titel.join(' | '));
+    if(jeAchse.form) mitForm++;
+    if(jeAchse.form && jeAchse.tafel) beide++;
+    // Auf der Form-Achse steht nur, was auf einem gleitenden Fenster liegt.
+    tafel.filter(s => String((s.dataRef||{}).causalKey || '').indexOf('form:') === 0)
+      .forEach(s => {
+        const def = CHRONICLE_BY_ID[(s.dataRef||{}).rekordId];
+        if(!def || !def.fenster) falscheAchse++;
+      });
   });
   matches = alle; invalidateCache();
   _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
-  return {tage:tage.length, gemessen, meldungen, ohneGrund, mehrfach};
+  return {tage:tage.length, gemessen, meldungen, ohneGrund, mehrfach,
+          mitForm, beide, falscheAchse};
 })())`));
 console.log('  Spieltage 28.07.-26.08.: ' + _tafelGrund.tage + ' · mit Tafel-Meldung: '
   + _tafelGrund.gemessen + ' · Meldungen: ' + _tafelGrund.meldungen);
@@ -674,8 +696,16 @@ ok(_tafelGrund.meldungen >= 100, 'der Durchlauf trifft ueberhaupt Tafel-Meldunge
    _tafelGrund.meldungen + ' Meldungen an ' + _tafelGrund.gemessen + ' Spieltagen');
 ok(_tafelGrund.ohneGrund === 0, 'jede Tafel-Meldung nennt ihren Grund',
    _tafelGrund.ohneGrund + ' ohne causalKey');
-ok(_tafelGrund.mehrfach.length === 0, 'an einem Spieltag steht hoechstens eine Tafel-Karte',
+ok(_tafelGrund.mehrfach.length === 0,
+   'je Achse eine Tafel-Karte, und keine zwei mit derselben Schlagzeile',
    _tafelGrund.mehrfach.slice(0, 2).join(' || ') || 'keine Doppelung');
+ok(_tafelGrund.beide > 0,
+   'die kurze Strecke steht als eigene Karte neben der dauerhaften Tafel',
+   _tafelGrund.beide + ' von ' + _tafelGrund.gemessen + ' Spieltagen mit beiden, '
+   + _tafelGrund.mitForm + ' mit der kurzen Strecke');
+ok(_tafelGrund.falscheAchse === 0,
+   'und auf ihr steht nur, was auf einem gleitenden Fenster liegt',
+   _tafelGrund.falscheAchse + ' daneben');
 
 // ── Ein gleitendes Fenster wird nicht „ausgebaut" [§C33] ──────────────
 // Der Wert einer Laufbahn steigt, weil jemand besser gespielt hat; der Wert

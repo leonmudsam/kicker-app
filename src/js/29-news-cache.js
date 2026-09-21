@@ -919,7 +919,17 @@ function _consolidateStories(list){
       if(l.length < 2) return;
       const ident = l.map(x => String(x.st.id || '')).sort()[0];
       const key = 'tafel|moment|' + ident;
-      const g = {key, art:'tafel', teile:[], titel:new Set(), max:Infinity,
+      // ── Die dauerhafte Tafel und die kurze Strecke sind zwei Karten ──
+      // Ein Rekord auf einem gleitenden Fenster erzaehlt etwas anderes als
+      // eine Laufbahn: sein Wert bewegt sich auch, wenn hinten ein schwaches
+      // Ergebnis herausfaellt, und deshalb meldet er kein „ausgebaut"
+      // [§C35]. In einer Karte mit den dauerhaften Rekorden verschwand
+      // dieser Unterschied. Welche Achse eine Gruppe traegt, sagt ihr Grund;
+      // eine Gruppe ohne Grund (Zeilen aus aelteren Laeufen) bleibt die
+      // dauerhafte Tafel.
+      const istFormGruppe = l.every(x => String(x.d.causalKey || '').indexOf('form:') === 0);
+      const g = {key, art: istFormGruppe ? 'form' : 'tafel',
+                 teile:[], titel:new Set(), max:Infinity,
                  erster:l.reduce((n, x) => Math.min(n, x.idx), l[0].idx)};
       sammelGruppen.set(key, g);
       l.slice().sort((a, b) => a.idx - b.idx).forEach(x => {
@@ -1055,7 +1065,11 @@ function _consolidateStories(list){
     const teile = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
     const kopf = teile[0];
     const art = g.art || (g.key.indexOf('tafel|') === 0 ? 'tafel' : 'spiel');
-    const istTafel = art === 'tafel';
+    // Die kurze Strecke gehoert zur Ewigen Tafel: dieselbe Kammer, dieselbe
+    // Farbfamilie, derselbe Filter [§C25]. Verschieden ist nur, wovon die
+    // Karte erzaehlt — und damit ihre Schlagzeile.
+    const istForm = art === 'form';
+    const istTafel = art === 'tafel' || istForm;
     const pids = [];
     teile.forEach(t => {
       let ids = [];
@@ -1097,6 +1111,20 @@ function _consolidateStories(list){
       const namen = pids.map(nameOf);
       neuTitel = cfg.titel ? cfg.titel(_namenKurz(namen), kopf.dataRef || {}) : kopf.title;
       neuText = cfg.satz ? cfg.satz(teile.length, kopf.dataRef || {}) : _ersterSatz(kopf.desc);
+    } else if(istForm){
+      // Gemessen an den 19 Spieltagen vom 28.07. bis 26.08. trugen 13 von
+      // ihnen sonst zwei Karten mit derselben Schlagzeile [§C33].
+      const mz = teile.length > 1;
+      neuTitel = pids.length
+        ? `${_namenKurz(pids.map(nameOf))} `
+          + `${pids.length > 1 ? 'setzen' : 'setzt'} Marken auf kurzer Strecke`
+        : `${_zahlwortDe(teile.length)} Marken auf kurzer Strecke`;
+      // Gross am Satzanfang: `_zahlwortDe` liefert „drei", und der Satz
+      // begann damit klein.
+      const _zw = _zahlwortDe(teile.length);
+      neuText = `${_zw.charAt(0).toUpperCase() + _zw.slice(1)} `
+        + `${mz ? 'Bestmarken' : 'Bestmarke'} aus den letzten Partien. `
+        + `${mz ? 'Sie halten' : 'Sie hält'}, solange das Fenster reicht.`;
     } else if(istTafel){
       const bilder = [];
       const nr = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('rekord_') === 0).length;
@@ -1406,7 +1434,8 @@ function _consolidateStories(list){
     const k = _proTagKey(s);
     (_tagRang[k] = _tagRang[k] || []).push(s);
   });
-  const _istTafelKarte = s => !!s && (s.cat === 'tafel' || (s.dataRef || {}).quelle === 'tafel');
+  const _istTafelKarte = s => !!s && (s.cat === 'tafel'
+    || (s.dataRef || {}).quelle === 'tafel' || (s.dataRef || {}).quelle === 'form');
   const _istMatchGeschichte = s => {
     const d = (s && s.dataRef) || {};
     if(!d.matchId || _istTafelKarte(s)) return false;

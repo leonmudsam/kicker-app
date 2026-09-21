@@ -651,6 +651,7 @@ function _newsDetailMitte(s){
         // erreichen — und die entsteht am Ende eines Spieltags, nicht in
         // einer Partie.
         const kopfzeile = d.quelle === 'tafel' ? 'An der Ewigen Tafel'
+          : d.quelle === 'form' ? 'Auf kurzer Strecke'
           : d.quelle === 'spieler' ? 'Alles in diesem Moment'
           : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
           : d.quelle === 'ergebnis' ? 'Diese beiden Partien'
