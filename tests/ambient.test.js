@@ -3544,7 +3544,9 @@ const _serieTag = JSON.parse(K.eval(`JSON.stringify((function(){
   const dazu = [];
   const vor = basis - 20 * 3600000;
   // Tag davor: erst eine Niederlage, damit der Lauf bei null beginnt,
-  // dann vier Siege. Zieltag: drei Siege, also die Marken 5 und 7.
+  // dann vier Siege (Marke 3). Zieltag: drei Siege, also die Marke 5 — und
+  // mit der achten waere es die 8er; gemessen wird, dass der Tag nur EINE
+  // Karte traegt und die laengste seiner Marken.
   const bau = (praefix, ab, n, ersteVerloren) => {
     for(let i = 0; i < n; i++) dazu.push({
       id: praefix + i, a1:held, a2:rest[0], b1:rest[1], b2:rest[2],
@@ -3570,9 +3572,90 @@ const _serieTag = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_serieTag.n === 1,
    'und zwei Marken an einem Tag ergeben eine Karte, nicht zwei',
    _serieTag.n + ' Karten (' + _serieTag.marken.join(', ') + ')');
-ok(_serieTag.marken[0] === 7,
+ok(_serieTag.marken[0] === 5,
    'und zwar die laengste Marke des Tages',
    String(_serieTag.marken[0]));
+
+// ── Die Leiter der Marken und der Lauf als Einheit [§C33] ─────────────
+// Sie stand bei 5, 7, 10, 15, 20. Drei Siege in Folge sind das, was die
+// meisten ueberhaupt erreichen — dieselbe Schwelle, bei der am Wappen das
+// Feuer angeht [§C26] —, und sieben und zehn lagen dicht beieinander.
+// Gemessen ueber die 19 Spieltage vom 28.07. bis 26.08.: vorher acht
+// gebildete und fuenf gezeigte Serienkarten, jetzt siebzehn und neun.
+const _serienLauf = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
+    .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
+  const erlaubt = n => [3,5,8,10].indexOf(n) >= 0 || (n > 10 && n % 5 === 0);
+  let roh = 0, gezeigt = 0, falsch = [], doppeltMarke = 0, doppeltLauf = 0;
+  const gesehen = {};
+  tage.forEach(t => {
+    matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let r = []; try { r = _buildStories() || []; } catch(e){ return; }
+    const ws = r.filter(x => (x.dataRef||{}).type === 'win_streak');
+    roh += ws.length;
+    const jeMarke = {};
+    ws.forEach(x => {
+      const n = Number(x.dataRef.streak) || 0;
+      gesehen[n] = 1;
+      if(!erlaubt(n)) falsch.push(n);
+      const k = x.dataRef.pid + '|' + n;
+      jeMarke[k] = (jeMarke[k]||0) + 1;
+    });
+    doppeltMarke += Object.keys(jeMarke).filter(k => jeMarke[k] > 1).length;
+    let f = []; try { f = _consolidateStories(r) || []; } catch(e){}
+    const g = f.filter(x => (x.dataRef||{}).type === 'win_streak');
+    gezeigt += g.length;
+    const jeLauf = {};
+    g.forEach(x => { const k = x.dataRef.lauf || '?'; jeLauf[k] = (jeLauf[k]||0) + 1; });
+    doppeltLauf += Object.keys(jeLauf).filter(k => jeLauf[k] > 1).length;
+  });
+  matches = alle; invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  return {roh, gezeigt, falsch:[...new Set(falsch)],
+    marken:Object.keys(gesehen).map(Number).sort((a,b)=>a-b),
+    doppeltMarke, doppeltLauf};
+})())`));
+console.log('  Serienkarten im Durchlauf: ' + _serienLauf.roh + ' gebildet, '
+  + _serienLauf.gezeigt + ' gezeigt · Marken: ' + _serienLauf.marken.join(', '));
+ok(_serienLauf.falsch.length === 0, 'jede Serienmarke steht auf der Leiter',
+   _serienLauf.falsch.join(', ') || 'keine daneben');
+ok(_serienLauf.marken.indexOf(3) >= 0 && _serienLauf.marken.indexOf(8) >= 0,
+   'die Leiter beginnt bei drei und kennt die acht',
+   _serienLauf.marken.join(', '));
+ok(_serienLauf.doppeltMarke === 0, 'dieselbe Marke steht je Spieler nur einmal im Fenster',
+   _serienLauf.doppeltMarke + ' doppelt');
+ok(_serienLauf.doppeltLauf === 0, 'und von einem Lauf steht nur die laengste Marke im Feed',
+   _serienLauf.doppeltLauf + ' Laeufe mit zwei Karten');
+
+// ── Der Serien-Rekord der Liga ab fuenf ───────────────────────────────
+// Mit sechs blieb er einer jungen Liga verschlossen: sie erreicht die fuenf,
+// bevor sie die sechs erreicht, und genau dann ist die laengste Serie ihrer
+// Geschichte eine Nachricht. Im Fenster der Fixtures steht der Bestwert bei
+// dreizehn und liegt Monate zurueck, also wird die Schwelle selbst gemessen.
+const _recSchwelle = JSON.parse(K.eval(`JSON.stringify((function(){
+  const orig = _allTimeRecords;
+  const letzte = matches[matches.length - 1];
+  const bau = val => ({eloRec:null, streakRec:{val, pid:players[0].id,
+    matchId:letzte.id, when:letzte.created_at}});
+  const zaehl = () => {
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    return _buildStories().filter(s => (s.dataRef||{}).type === 'streak_record').length;
+  };
+  try {
+    _allTimeRecords = () => bau(5); const fuenf = zaehl();
+    _allTimeRecords = () => bau(4); const vier = zaehl();
+    return {fuenf, vier};
+  } finally {
+    _allTimeRecords = orig;
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_recSchwelle.fuenf === 1 && _recSchwelle.vier === 0,
+   'der Serien-Rekord der Liga wird ab fuenf Siegen gemeldet',
+   JSON.stringify(_recSchwelle));
 // ── Der Formlauf veraltet am Abstand, nicht an der Siegzahl ─────────
 // Verglichen wurde die Zahl der Siege im Fenster mit der von damals — und
 // das Fenster der letzten zehn Partien verschiebt sich schon im Lauf

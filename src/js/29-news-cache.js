@@ -447,7 +447,11 @@ function _consolidateStories(list){
   for(const s of src){
     const d = s.dataRef || {};
     if(d.type !== 'win_streak' || !d.pid) continue;
-    const k = d.pid + '|' + tagKey(s.when);
+    // Der Lauf ist die Einheit, nicht der Tag: die 5er-Marke von gestern
+    // steckt in der 8er von heute, und beide standen unter zwei Tageskoepfen
+    // als zwei Nachrichten. Zeilen aus aelteren Laeufen tragen den Lauf noch
+    // nicht und finden weiter ueber ihren Tag zusammen.
+    const k = d.pid + '|' + (d.lauf || tagKey(s.when));
     const n = Number(d.streak) || 0;
     if(!(_serieMax.get(k) >= n)) _serieMax.set(k, n);
   }
@@ -556,7 +560,8 @@ function _consolidateStories(list){
     // und die Gruppe „Serien im Gleichschritt" entsteht aus genau diesen
     // Mitgliedern — eine Grenze hier raeumt Einzelkarte und Gruppe zugleich.
     if(d.type === 'win_streak' && d.pid
-       && (Number(d.streak) || 0) < (_serieMax.get(d.pid + '|' + tagKey(s.when)) || 0)) continue;
+       && (Number(d.streak) || 0)
+          < (_serieMax.get(d.pid + '|' + (d.lauf || tagKey(s.when))) || 0)) continue;
     if(d.type === 'badge_unlocked' && d.badgeId){
       if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;

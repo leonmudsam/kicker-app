@@ -1334,7 +1334,11 @@ function _buildStories(){
     // auch ein Liga-Rekord war. Eine Quelle, eine Karte [§C27].
 
     // Längste Siegesserie aller Zeiten
-    if(mature && rec.streakRec && rec.streakRec.when && rec.streakRec.val >= 6){
+    // Ab fuenf: unter fuenf ist eine Serie in dieser Liga keine Seltenheit,
+    // und mit sechs blieb der Serien-Rekord einer jungen Liga verschlossen —
+    // sie erreicht die fuenf, bevor sie die sechs erreicht, und genau dann
+    // ist die laengste Serie ihrer Geschichte eine Nachricht.
+    if(mature && rec.streakRec && rec.streakRec.when && rec.streakRec.val >= 5){
       const pid = rec.streakRec.pid;
       if((nowTs - new Date(rec.streakRec.when).getTime()) < RECENT && pm[pid] && !pm[pid].hidden){
         stories.push({
@@ -1694,7 +1698,7 @@ function _buildStories(){
     });
   } catch(e){}
 
-  // ── 21. Marken einer Sieges-Streak (≥5 in Folge) ──────────────────
+  // ── 21. Marken einer Sieges-Streak (≥3 in Folge) ──────────────────
   // Eine Serie ist ein Ereignis des Matches, das die Marke vollmacht — kein
   // flüchtiger Live-Zustand. Die alte Fassung betrachtete nur das jüngste
   // Match eines Spielers. Nach der nächsten Niederlage verschwand damit auch
@@ -1702,18 +1706,30 @@ function _buildStories(){
   // Der chronologische Walk bildet stabile, idempotente Karten im Fenster.
   try {
     const seit = now.getTime() - 14 * _dayMs;
-    const lauf = {}, kandidaten = [];
-    const marken = new Set([5, 7, 10, 15, 20]);
+    const lauf = {}, laufStart = {}, kandidaten = [];
+    // Die Leiter beginnt bei drei. Drei Siege in Folge sind das, was die
+    // meisten ueberhaupt erreichen [§C26] — dieselbe Schwelle, bei der am
+    // Wappen das Feuer angeht; sie stand hier bei fuenf und damit eine Stufe
+    // ueber dem, was das Zeichen daneben schon feiert. Danach fuenf, acht,
+    // zehn und jede fuenfte: sieben und zehn lagen dicht beieinander, acht
+    // ist die Marke, die einen langen Spieltag abschliesst.
+    const marken = new Set([3, 5, 8, 10]);
     [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
       if(mts(m) > now.getTime()) return;
       const aGewinnt = m.winner === 'A';
       [[m.a1,aGewinnt],[m.a2,aGewinnt],[m.b1,!aGewinnt],[m.b2,!aGewinnt]].forEach(([pid, sieg]) => {
         if(!pid) return;
         lauf[pid] = sieg ? (lauf[pid] || 0) + 1 : 0;
+        // Der LAUF ist die Einheit, nicht der Tag: eine Serie, die ueber
+        // Nacht weiterlaeuft, ist eine Geschichte. Gemerkt wird deshalb die
+        // Partie, mit der sie angefangen hat — daran erkennt die Anzeige,
+        // dass die 5er-Marke von gestern in der 8er von heute steckt.
+        if(lauf[pid] === 1) laufStart[pid] = m.id;
         const n = lauf[pid];
-        const istMarke = marken.has(n) || (n > 20 && n % 5 === 0);
+        const istMarke = marken.has(n) || (n > 10 && n % 5 === 0);
         if(istMarke && mts(m) >= seit && pm[pid] && !pm[pid].hidden)
-          kandidaten.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id});
+          kandidaten.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
+                           lauf:laufStart[pid]});
       });
     });
     // ── Eine Serie je Spieler und Tag, die laengste ─────────────────
@@ -1729,7 +1745,20 @@ function _buildStories(){
       const alt = _jeTag.get(k);
       if(!alt || c.streak > alt.streak) _jeTag.set(k, c);
     });
-    [..._jeTag.values()].sort((a,b) => b.when - a.when || b.streak - a.streak)
+    // ── Dieselbe Marke ist einmal Nachricht ────────────────────────
+    // Seit die Leiter bei drei beginnt, erreicht derselbe Spieler dieselbe
+    // Marke im Fenster mehrmals: „Alex zuendet die 3er-Serie" stand gemessen
+    // zweimal im Feed, einmal als eigene Karte und einmal als Zeile einer
+    // Sammelkarte — zwei Laeufe, aber fuer den, der liest, dieselbe Zeile.
+    // Es bleibt die juengste; dieselbe Regel wie bei einer wiederholten
+    // Auszeichnung [§11.0c].
+    const _jeMarke = new Map();
+    [..._jeTag.values()].forEach(c => {
+      const k = c.pid + '|' + c.streak;
+      const alt = _jeMarke.get(k);
+      if(!alt || c.when > alt.when) _jeMarke.set(k, c);
+    });
+    [..._jeMarke.values()].sort((a,b) => b.when - a.when || b.streak - a.streak)
       .slice(0, NEWS_LIMITS.winStreak).forEach(c => {
       stories.push({
         id: 'win_streak_'+c.pid+'_'+c.matchId+'_'+c.streak,
@@ -1747,7 +1776,8 @@ function _buildStories(){
         })(),
         when: c.when,
         prio: STORY_PRIO.win_streak + (c.streak >= 10 ? 6 : c.streak >= 7 ? 3 : 0),
-        dataRef: {type:'win_streak', pid: c.pid, streak: c.streak, matchId:c.matchId}
+        dataRef: {type:'win_streak', pid: c.pid, streak: c.streak, matchId:c.matchId,
+                  lauf:c.lauf || ''}
       });
       });
   } catch(e){}
