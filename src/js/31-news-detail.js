@@ -726,6 +726,21 @@ function _newsDetailMitte(s){
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         const eloChg = d.matchId ? _newsEloDelta(d.newLeader, d.matchId) : null;
         const rankInfo = d.matchId ? _newsRankChange(d.newLeader, d.matchId) : null;
+        // Die Spitze kann an einem Tag mehrmals wechseln. Der Kopf zeigt den
+        // Stand am Ende des Tages; wer nur ihn sieht, erfaehrt nicht, dass
+        // die Tabelle zwischendurch schon einmal jemand anderem gehoerte.
+        // Gezeigt wird deshalb jeder Wechsel aus `events` — dieselben Fakten,
+        // aus denen die Karte entsteht [§11.0e]. Bei genau einem Wechsel
+        // bleiben die Zeilen weg: er steht zwei Zeilen darueber schon [§C33].
+        const ev = Array.isArray(d.events) ? d.events : [];
+        const wechselHtml = ev.length > 1 ? ev.map(e => {
+          const nach = (e.detail && e.detail.nach) || e.actorIds[0];
+          const vor  = (e.detail && e.detail.vor)  || e.actorIds[1];
+          return rcpZeileHtml({ic:'kingClass', name:nameOf(nach),
+            sub:'von ' + nameOf(vor) + (e.evidence ? ', ' + e.evidence : ''),
+            rechts:e.occurredAt ? _newsUhrzeit(e.occurredAt) : '',
+            attr:`data-pid="${esc(nach)}" style="cursor:pointer"`});
+        }).join('') : '';
         return `<div class="nd-section">Wechsel an der Spitze</div>
           <div class="nd-vs">
             <div class="nd-vs-p" data-pid="${esc(d.newLeader)}">
@@ -748,6 +763,7 @@ function _newsDetailMitte(s){
             <div class="nd-stat-label">Tabelle</div>
             <div class="nd-stat-val acid">#${rankInfo.pre} → #${rankInfo.post}</div>
           </div>` : ''}
+          ${wechselHtml ? `<div class="nd-section">Alle ${ev.length} Wechsel des Tages</div>${wechselHtml}` : ''}
           ${matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : ''}`;
       }
       case 'top_form': {

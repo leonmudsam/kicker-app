@@ -423,6 +423,7 @@ const _titelrennen = JSON.parse(K.eval(`JSON.stringify((function(){
       breaking: k.length ? _isBreaking(k[0]) : false,
       wechsel: k.length ? k[0].dataRef.wechsel : 0,
       tag: k.length ? k[0].dataRef.dayKey : '',
+      ereignisse: k.length ? (k[0].dataRef.events || []).length : 0,
       titel: k.length ? k[0].title : ''};
   } finally {
     matches = alle; invalidateCache();
@@ -435,6 +436,109 @@ ok(_titelrennen.karten === 1 && _titelrennen.tag === '2026-08-11',
    'und der Tag traegt genau eine Titelrennen-Karte',
    _titelrennen.karten + ' Karten: ' + _titelrennen.titel);
 ok(_titelrennen.breaking, 'sie ist Breaking');
+ok(_titelrennen.ereignisse === _titelrennen.wechsel && _titelrennen.ereignisse > 0,
+   'und traegt jeden Wechsel des Tages als Ereignis',
+   _titelrennen.ereignisse + ' von ' + _titelrennen.wechsel);
+
+// ── Das Blatt zeigt jeden Wechsel, nicht nur den letzten ──────────────
+// Der Kopf nennt den Stand am Ende des Tages. Wechselte die Spitze
+// zwischendurch schon einmal, erfuhr das niemand: das Blatt zeigte genau
+// dasselbe Paar noch einmal. Gebaut wird es deshalb aus denselben
+// Ereignissen, aus denen die Karte entsteht. Bei genau einem Wechsel bleiben
+// die Zeilen weg, sonst stuende er zweimal untereinander [§C33].
+const _ldBlatt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const a = players[0].id, b = players[1].id, c = players[2].id;
+  const ev = (nach, vor, iso, erg) => _storyEreignis({
+    type:'lead_change', occurredAt:iso, actorIds:[nach, vor],
+    subjectKey:'rang1', evidence:erg, detail:{vor:vor, nach:nach}});
+  const mk = l => _newsDetailMitte({dataRef:{type:'lead_change', sid:currentSeason().id,
+    newLeader:l[l.length - 1].detail.nach, prevLeader:l[0].detail.vor,
+    matchId:null, events:l}});
+  const eins = mk([ev(b, a, '2026-08-11T11:20:00', '10:6')]);
+  const zwei = mk([ev(b, a, '2026-08-11T11:20:00', '10:6'),
+                   ev(c, b, '2026-08-11T15:40:00', '10:8')]);
+  const zaehl = h => (String(h).match(/rcp-zeile-n/g) || []).length;
+  return {eins:zaehl(eins), zwei:zaehl(zwei),
+    namen:[a, b, c].map(id => zwei.indexOf(pname(id)) >= 0),
+    uhr:['11:20', '15:40'].map(u => zwei.indexOf(u) >= 0),
+    ergebnis:['10:6', '10:8'].map(e => zwei.indexOf(e) >= 0)};
+})())`));
+ok(_ldBlatt.zwei === 2, 'das Blatt zeigt beide Wechsel eines Tages',
+   _ldBlatt.zwei + ' Zeilen');
+ok(_ldBlatt.eins === 0, 'bei einem Wechsel bleibt die Zeile weg',
+   _ldBlatt.eins + ' Zeilen');
+ok(_ldBlatt.namen.every(Boolean) && _ldBlatt.uhr.every(Boolean)
+   && _ldBlatt.ergebnis.every(Boolean),
+   'jede Zeile nennt Uhrzeit, Ergebnis, Nachfolger und Vorgaenger',
+   JSON.stringify(_ldBlatt));
+
+// Und dieselbe Strecke gebaut statt behauptet: in den echten 466 Partien
+// wechselt die Spitze an keinem Spieltag zweimal. Der Tag wird deshalb
+// gebaut — es gewinnt abwechselnd, bis die Tabelle zweimal gekippt ist —
+// und dann muss die EINE Karte des Tages beide Wechsel tragen: als
+// Ereignis im `dataRef` und als Zeile im Blatt.
+const _ldZwei = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  try {
+    const basis = mts(alle[alle.length - 1]);
+    const sim0 = getGlobalSim();
+    const rang = Object.keys(sim0.elo || {})
+      .filter(pid => pmap()[pid] && !pmap()[pid].hidden)
+      .map(pid => ({pid, elo:sim0.elo[pid]})).sort((a, b) => b.elo - a.elo);
+    const erster = rang[0].pid, zweiter = rang[1].pid;
+    const rest = rang.slice(2, 4).map(x => x.pid);
+    // Die Elo kommt aus den persistierten Deltas: ohne sie bewegt sich die
+    // Tabelle nicht, und das Szenario waere immer gruen.
+    const partie = (i, sieger) => {
+      const d = {};
+      d[sieger] = 14; d[rest[0]] = 14;
+      d[sieger === zweiter ? erster : zweiter] = -14; d[rest[1]] = -14;
+      return {id:'ld' + i, a1:sieger, a2:rest[0],
+        b1:(sieger === zweiter ? erster : zweiter), b2:rest[1],
+        a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def',
+        score_a:10, score_b:3, winner:'A', exp_a:0.5,
+        created_at:new Date(basis + (i + 1) * 300000).toISOString(),
+        deltas:d};
+    };
+    const dazu = [];
+    let k = null;
+    for(let i = 0; i < 80; i++){
+      const sim = getGlobalSim();
+      const oben = Object.keys(sim.elo || {})
+        .filter(pid => pmap()[pid] && !pmap()[pid].hidden)
+        .sort((x, y) => sim.elo[y] - sim.elo[x])[0];
+      dazu.push(partie(i, oben === zweiter ? erster : zweiter));
+      matches = alle.concat(dazu);
+      invalidateCache();
+      _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+      let l = []; try { l = _buildStories(); } catch(e){ l = []; }
+      k = l.filter(x => (x.dataRef || {}).type === 'lead_change')[0] || null;
+      if(k && (k.dataRef.wechsel || 0) >= 2) break;
+    }
+    if(!k) return {karten:0};
+    const blatt = String(_newsDetailMitte(k) || '');
+    const ev = k.dataRef.events || [];
+    return {karten:1, wechsel:k.dataRef.wechsel || 0, ereignisse:ev.length,
+      zeilen:(blatt.match(/rcp-zeile-n/g) || []).length,
+      // Jedes Ereignis muss mit seiner eigenen Uhrzeit im Blatt stehen.
+      uhren:ev.filter(e => blatt.indexOf(new Date(e.occurredAt)
+        .toLocaleTimeString('de-DE', {hour:'2-digit', minute:'2-digit'})) >= 0).length,
+      letzter:k.dataRef.newLeader === (ev.length
+        ? ev[ev.length - 1].detail.nach : null)};
+  } finally {
+    matches = alle; invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_ldZwei.karten === 1 && _ldZwei.wechsel >= 2,
+   'ein Tag mit zwei Wechseln traegt eine Karte', JSON.stringify(_ldZwei));
+ok(_ldZwei.ereignisse === _ldZwei.wechsel,
+   'und darin jeden Wechsel als eigenes Ereignis',
+   _ldZwei.ereignisse + ' von ' + _ldZwei.wechsel);
+ok(_ldZwei.zeilen === _ldZwei.wechsel && _ldZwei.uhren === _ldZwei.ereignisse,
+   'das Blatt zeigt jeden davon mit seiner Uhrzeit',
+   _ldZwei.zeilen + ' Zeilen, ' + _ldZwei.uhren + ' Uhrzeiten');
+ok(_ldZwei.letzter, 'der Kopf nennt den Ersten am Ende des Tages');
 ok(br({type:'chronik_monat'}) === false, 'die Monatschronik ist kein Breaking');
 ok(br({type:'top_clash'}) === false, 'top_clash ist kein Breaking mehr');
 ok(br({type:'giant_slayer'}) === false, 'giant_slayer ist kein Breaking mehr');
@@ -4108,6 +4212,55 @@ ok(_worte.englisch.length === 0, 'keine englische Schlagzeile',
    _worte.englisch.slice(0, 2).join(' | ') || 'keine');
 ok(_worte.fragment.length === 0, 'kein Satzfragment als letzter Satz',
    _worte.fragment.slice(0, 2).join(' | ') || 'keins');
+
+console.log('=== ZWEIMAL LAUFEN ERGIBT DASSELBE ===');
+// Eine Story wird persistiert, damit alle Geraete dieselbe Karte zur selben
+// Zeit sehen. Das haelt nur, wenn derselbe Datenstand immer dieselbe ID,
+// denselben Zeitpunkt, dieselbe Gruppe und denselben Text ergibt: sonst legt
+// jeder Aufruf eine neue Zeile an, und der Feed waechst vom Oeffnen und
+// Schliessen der App von selbst. Gemessen wird deshalb zweimal derselbe Lauf
+// und einmal ein Lauf, der den Bestand des ersten schon vorfindet.
+const _zwei = JSON.parse(K.eval(`JSON.stringify((function(){
+  const kalt = () => { _cache._buildStoriesKey = null; _cache._buildStoriesResult = null; };
+  const lauf = () => {
+    kalt();
+    return (_buildStories() || []).map(s => ({id:s.id,
+      when:new Date(s.when).toISOString(), titel:String(s.title || ''),
+      text:String(s.desc || ''), grund:String((s.dataRef || {}).causalKey || '')}));
+  };
+  const sig = l => l.map(s => [s.id, s.when, s.grund, s.titel, s.text].join('~'));
+  const feed = () => {
+    kalt();
+    const l = _buildStories() || [];
+    return (_consolidateStories(l.slice()) || []).map(s => [s.id,
+      new Date(s.when).toISOString(),
+      ((s.dataRef || {}).teile || []).map(t => t.titel).join('+'),
+      String(s.title || '')].join('~'));
+  };
+  const vorher = _cache._stories;
+  _cache._stories = [];
+  const a = lauf(), b = lauf();
+  const f1 = feed(), f2 = feed();
+  // Der dritte Lauf findet die Karten des ersten vor: das ist das Oeffnen der
+  // App, nachdem sie in der Datenbank stehen.
+  _cache._stories = a.map(s => ({id:s.id, when:new Date(s.when),
+                                 title:s.titel, desc:s.text}));
+  const c = lauf();
+  _cache._stories = vorher;
+  kalt();
+  const ida = a.map(s => s.id);
+  return {n:a.length, fn:f1.length,
+    gleich:JSON.stringify(sig(a)) === JSON.stringify(sig(b)),
+    abw:sig(a).filter((x, i) => x !== sig(b)[i]).slice(0, 2),
+    feedGleich:JSON.stringify(f1) === JSON.stringify(f2),
+    neu:c.map(s => s.id).filter(id => ida.indexOf(id) < 0)};
+})())`));
+ok(_zwei.n > 0, 'der Generator bildet Karten', String(_zwei.n) + ' roh');
+ok(_zwei.gleich, 'zweimal laufen ergibt dieselben IDs, Zeitpunkte und Texte',
+   _zwei.abw.join(' | ').slice(0, 120) || 'gleich');
+ok(_zwei.feedGleich, 'und dieselbe Gruppierung', String(_zwei.fn) + ' Karten');
+ok(_zwei.neu.length === 0, 'ein Lauf mit dem eigenen Bestand legt nichts Neues an',
+   _zwei.neu.slice(0, 2).join(' | ') || 'nichts');
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);
