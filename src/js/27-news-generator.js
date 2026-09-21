@@ -750,8 +750,12 @@ function _buildStories(){
         // Eine WÜRDE ist je Saison neu zu holen und jedes Mal Nachricht;
         // alles andere nur beim ersten Mal und an runden Marken [§11.0c].
         const wuerde = (typeof BADGE_WUERDE !== 'undefined') && BADGE_WUERDE.has(ev.badge.id);
-        if(!wuerde && NEWS_BADGE_MARKEN.indexOf(_bRang(ev)) < 0) return false;
         const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+        // Der Takt haengt an der Klasse [§11.0c]: legendaer jedes Mal, selten
+        // beim ersten Mal und an den runden Marken. Eine Liste fuer alle war
+        // zu grob — sie liess dreizehn legendaere Erfolge zwischen der
+        // zehnten und der fuenfundzwanzigsten Verleihung wegfallen.
+        if(!wuerde && !_badgeTakt(rar, _bRang(ev))) return false;
         return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
       });
     // v9.7: pro Match nur EIN Badge-THEMA als News. Mehrere verschiedene Badges
@@ -835,7 +839,57 @@ function _buildStories(){
         dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar, nemesisOppId: _nemOpp || undefined}
       });
     });
-  } catch(e){}
+    // ── Die kleinen Marken eines Tages stehen zusammen ─────────────
+    // Eine gewoehnliche Auszeichnung kam im Feed gar nicht vor: nur
+    // legendaer, selten und die gewhitelisteten Sonderfaelle bekamen eine
+    // Karte. Damit fehlte genau das, was ein Spieler aus der unteren Haelfte
+    // ueberhaupt erreicht. Einzeln koennen sie es nicht sein — gemessen
+    // fallen an sieben der vierzehn Tage eine bis vier runde Marken, und vier
+    // Karten „X: Zittersieg" untereinander sind ein Protokoll. Also eine
+    // Karte je Tag (`awards:<Tag>`, [§11.0e]) und darin die Namen [§C33].
+    const _kleine = Object.values(dedupe).filter(ev => {
+      if(!pm[ev.playerId]) return false;
+      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      if(rar !== 'common') return false;
+      // Die gewhitelisteten Sonderfaelle haben ihre eigene Karte.
+      if(NEWS_BADGE_WHITELIST.has(ev.badge.id)) return false;
+      return _badgeTakt('common', _bRang(ev));
+    });
+    const _markenTag = {};
+    _kleine.forEach(ev => {
+      const k = tagKey(ev.when.getTime());
+      (_markenTag[k] = _markenTag[k] || []).push(ev);
+    });
+    Object.keys(_markenTag).forEach(tag => {
+      const l = _markenTag[tag].slice().sort((a, b) => a.when - b.when);
+      const namen = [...new Set(l.map(ev => nameOf(ev.playerId)))];
+      const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
+      stories.push({
+        id: 'badgemarken_' + tag,
+        cat: 'badge',
+        ic: (l.length === 1 && l[0].badge.ic) || 'medal',
+        title: l.length === 1 ? zeile(l[0])
+          : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
+        // Bei einer einzigen Marke steht alles schon in der Schlagzeile; dann
+        // traegt der Text die Bedingung aus dem Katalog — die Ausnahme, die
+        // fuer jede Auszeichnung gilt [§C33].
+        desc: l.length === 1
+          ? String(l[0].badge.desc || '').trim().replace(/([^.!?])$/, '$1.')
+          : `${l.length} Auszeichnungen an diesem Tag. ` + l.map(zeile).join(', ') + '.',
+        when: l[l.length - 1].when,
+        prio: STORY_PRIO.badge_marken,
+        dataRef: {type:'badge_marken', tag,
+                  playerIds:[...new Set(l.map(ev => ev.playerId))],
+                  causalKey:_storyGruppeKey('awards', tag),
+                  // Nur bei einer einzigen Marke gehoert die Karte zu einer
+                  // Partie. Sich aus mehreren eine auszusuchen ist genau der
+                  // Fehler, den die Tafel-Sammelkarte nicht macht [§C33].
+                  matchId: l.length === 1 ? l[0].matchId : null,
+                  marken: l.map(ev => ({pid:ev.playerId, badgeId:ev.badge.id,
+                                        name:ev.badge.name, rang:_bRang(ev)}))}
+      });
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] badges', e); }
 
   // ── 7. Rivalität (≥50 H2H-Duelle) ──
   // H2H = wie oft 2 Spieler in irgendeinem Match GEGENEINANDER waren (egal welcher Mate).

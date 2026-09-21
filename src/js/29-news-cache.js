@@ -679,7 +679,8 @@ function _consolidateStories(list){
   //
   // Genau eine Minute der ganzen Ligageschichte traegt zwei Partien; dort
   // bedeutet die Minute dasselbe wie der Moment.
-  const SAMMEL_SPIEL = new Set(['badge_unlocked','streak_killer','giant_slayer','group',
+  const SAMMEL_SPIEL = new Set(['badge_unlocked','badge_marken','streak_killer',
+    'giant_slayer','group',
     'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee',
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone','match_result']);

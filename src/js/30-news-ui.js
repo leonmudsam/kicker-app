@@ -957,6 +957,10 @@ function _newsSorte(s){
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
+  // Die gesammelten runden Marken eines Tages sind dieselbe Sache in der
+  // Mehrzahl und tragen deshalb dieselbe Form [§C27]. Ohne diese Zeile fiele
+  // sie auf „fakt" und waere die leiseste Karte des Feeds.
+  if(t === 'badge_marken') return 'badge';
   if(t === 'sammel'){
     // Zwei eigene Formen fuer die beiden zusammenfuehrenden Karten. Sie sahen
     // als Tafel- oder Spieltagskarte aus wie die Meldung, von der sie eine

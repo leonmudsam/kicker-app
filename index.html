@@ -4877,7 +4877,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.21.b66d6033';
+const BUILD_VERSION='2026.09.21.d2c03a0c';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18673,6 +18673,20 @@ const NEWS_DB_ZEILEN = 500;
 // dreißigste Zittersieg keine neue Geschichte; der fünfundzwanzigste ist
 // eine Zahl, über die man redet.
 const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
+// Und die Klasse entscheidet mit, wie oft. Eine Liste fuer alle drei war zu
+// grob in beide Richtungen: eine LEGENDAERE Auszeichnung ist das Seltenste,
+// was der Katalog hergibt — „Absoluter Sieger" ist der Grund, warum jemand
+// die App oeffnet, und das gilt beim zweiten Mal genauso; sie fiel nach der
+// Liste zwischen dem zehnten und dem fuenfundzwanzigsten Mal vierzehnmal
+// weg. Eine GEWOEHNLICHE dagegen ist beim ersten Mal keine Nachricht: einen
+// Zittersieg holt in der Liga jeder, der lange genug dabei ist. Der fuenfte
+// ist eine Zahl, ueber die man redet.
+const NEWS_BADGE_MARKEN_KLEIN = [5, 10, 25, 50, 100];
+function _badgeTakt(rar, rang){
+  if(rar === 'legendary') return true;
+  return (rar === 'common' ? NEWS_BADGE_MARKEN_KLEIN : NEWS_BADGE_MARKEN)
+    .indexOf(rang) >= 0;
+}
 
 // ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
 // Die Form-Karte maß das NIVEAU: neun von zehn gewonnen. Gemessen über die
@@ -18793,6 +18807,10 @@ const STORY_PRIO = {
   milestone_goals:   46,
   jubilee:           44,
   rivalry_milestone: 42,
+  // Die gesammelten kleinen Marken eines Tages: eine Karte, und die
+  // schwaechste des Spieltagsbandes. Sie sollen vorkommen, aber keinen
+  // Platz von einer Geschichte nehmen, die von diesem Tag erzaehlt.
+  badge_marken:      39,
   rekord_gesteigert: 40,   // ausbauen ist die schwächste der drei Meldungen
   elo_swing:         38,
 
@@ -19874,8 +19892,12 @@ function _buildStories(){
         // Eine WÜRDE ist je Saison neu zu holen und jedes Mal Nachricht;
         // alles andere nur beim ersten Mal und an runden Marken [§11.0c].
         const wuerde = (typeof BADGE_WUERDE !== 'undefined') && BADGE_WUERDE.has(ev.badge.id);
-        if(!wuerde && NEWS_BADGE_MARKEN.indexOf(_bRang(ev)) < 0) return false;
         const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+        // Der Takt haengt an der Klasse [§11.0c]: legendaer jedes Mal, selten
+        // beim ersten Mal und an den runden Marken. Eine Liste fuer alle war
+        // zu grob — sie liess dreizehn legendaere Erfolge zwischen der
+        // zehnten und der fuenfundzwanzigsten Verleihung wegfallen.
+        if(!wuerde && !_badgeTakt(rar, _bRang(ev))) return false;
         return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
       });
     // v9.7: pro Match nur EIN Badge-THEMA als News. Mehrere verschiedene Badges
@@ -19959,7 +19981,57 @@ function _buildStories(){
         dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar, nemesisOppId: _nemOpp || undefined}
       });
     });
-  } catch(e){}
+    // ── Die kleinen Marken eines Tages stehen zusammen ─────────────
+    // Eine gewoehnliche Auszeichnung kam im Feed gar nicht vor: nur
+    // legendaer, selten und die gewhitelisteten Sonderfaelle bekamen eine
+    // Karte. Damit fehlte genau das, was ein Spieler aus der unteren Haelfte
+    // ueberhaupt erreicht. Einzeln koennen sie es nicht sein — gemessen
+    // fallen an sieben der vierzehn Tage eine bis vier runde Marken, und vier
+    // Karten „X: Zittersieg" untereinander sind ein Protokoll. Also eine
+    // Karte je Tag (`awards:<Tag>`, [§11.0e]) und darin die Namen [§C33].
+    const _kleine = Object.values(dedupe).filter(ev => {
+      if(!pm[ev.playerId]) return false;
+      const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
+      if(rar !== 'common') return false;
+      // Die gewhitelisteten Sonderfaelle haben ihre eigene Karte.
+      if(NEWS_BADGE_WHITELIST.has(ev.badge.id)) return false;
+      return _badgeTakt('common', _bRang(ev));
+    });
+    const _markenTag = {};
+    _kleine.forEach(ev => {
+      const k = tagKey(ev.when.getTime());
+      (_markenTag[k] = _markenTag[k] || []).push(ev);
+    });
+    Object.keys(_markenTag).forEach(tag => {
+      const l = _markenTag[tag].slice().sort((a, b) => a.when - b.when);
+      const namen = [...new Set(l.map(ev => nameOf(ev.playerId)))];
+      const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
+      stories.push({
+        id: 'badgemarken_' + tag,
+        cat: 'badge',
+        ic: (l.length === 1 && l[0].badge.ic) || 'medal',
+        title: l.length === 1 ? zeile(l[0])
+          : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
+        // Bei einer einzigen Marke steht alles schon in der Schlagzeile; dann
+        // traegt der Text die Bedingung aus dem Katalog — die Ausnahme, die
+        // fuer jede Auszeichnung gilt [§C33].
+        desc: l.length === 1
+          ? String(l[0].badge.desc || '').trim().replace(/([^.!?])$/, '$1.')
+          : `${l.length} Auszeichnungen an diesem Tag. ` + l.map(zeile).join(', ') + '.',
+        when: l[l.length - 1].when,
+        prio: STORY_PRIO.badge_marken,
+        dataRef: {type:'badge_marken', tag,
+                  playerIds:[...new Set(l.map(ev => ev.playerId))],
+                  causalKey:_storyGruppeKey('awards', tag),
+                  // Nur bei einer einzigen Marke gehoert die Karte zu einer
+                  // Partie. Sich aus mehreren eine auszusuchen ist genau der
+                  // Fehler, den die Tafel-Sammelkarte nicht macht [§C33].
+                  matchId: l.length === 1 ? l[0].matchId : null,
+                  marken: l.map(ev => ({pid:ev.playerId, badgeId:ev.badge.id,
+                                        name:ev.badge.name, rang:_bRang(ev)}))}
+      });
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] badges', e); }
 
   // ── 7. Rivalität (≥50 H2H-Duelle) ──
   // H2H = wie oft 2 Spieler in irgendeinem Match GEGENEINANDER waren (egal welcher Mate).
@@ -23818,7 +23890,8 @@ function _consolidateStories(list){
   //
   // Genau eine Minute der ganzen Ligageschichte traegt zwei Partien; dort
   // bedeutet die Minute dasselbe wie der Moment.
-  const SAMMEL_SPIEL = new Set(['badge_unlocked','streak_killer','giant_slayer','group',
+  const SAMMEL_SPIEL = new Set(['badge_unlocked','badge_marken','streak_killer',
+    'giant_slayer','group',
     'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee',
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone','match_result']);
@@ -25868,6 +25941,10 @@ function _newsSorte(s){
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
+  // Die gesammelten runden Marken eines Tages sind dieselbe Sache in der
+  // Mehrzahl und tragen deshalb dieselbe Form [§C27]. Ohne diese Zeile fiele
+  // sie auf „fakt" und waere die leiseste Karte des Feeds.
+  if(t === 'badge_marken') return 'badge';
   if(t === 'sammel'){
     // Zwei eigene Formen fuer die beiden zusammenfuehrenden Karten. Sie sahen
     // als Tafel- oder Spieltagskarte aus wie die Meldung, von der sie eine
@@ -27073,6 +27150,29 @@ function _newsDetailMitte(s){
             <div class="nd-stat-label">Match-Elo</div>
             <div class="nd-stat-val ${eloChg>=0?'pos':'neg'}">${eloChg>=0?'+':''}${eloChg}</div></div>` : '')
           + (matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : '');
+      }
+      // Die gesammelten runden Marken eines Tages. Bei EINER Marke ist das
+      // dieselbe Aussage wie bei einer einzelnen Auszeichnung, also dasselbe
+      // Bauteil [§C27]: das Medaillon mit Klasse, Bedingung und Halterzahl.
+      // Bei mehreren traegt jede Zeile ihren Traeger, ihr Zeichen und die
+      // Zahl — ohne diesen Fall blieb das Blatt leer, und ein leeres Blatt
+      // ist schlimmer als eine Wiederholung [§C33].
+      case 'badge_marken': {
+        const l = Array.isArray(d.marken) ? d.marken : [];
+        const def = id => (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === id) : null;
+        if(l.length === 1){
+          const b0 = def(l[0].badgeId);
+          return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
+              (typeof rarityOf === 'function') ? rarityOf(l[0].badgeId) : 'common',
+              l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
+            + (d.matchId ? `<div class="nd-section">Auslösendes Match</div>`
+                + _newsMatchVsBlock(d.matchId) : '');
+        }
+        return `<div class="nd-section">${l.length} runde Marken</div>`
+          + l.map(x => rcpZeileHtml({ic:(def(x.badgeId) || {}).ic || 'medal',
+              name:nameOf(x.pid), sub:x.name,
+              rechts:'zum ' + x.rang + '. Mal',
+              attr:`data-pid="${esc(x.pid)}" style="cursor:pointer"`})).join('');
       }
       case 'rivalry': {
         // Live-Bilanz aus matches berechnen — günstig, da rivalry-Stories selten sind.

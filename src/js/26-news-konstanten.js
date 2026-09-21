@@ -199,6 +199,20 @@ const NEWS_DB_ZEILEN = 500;
 // dreißigste Zittersieg keine neue Geschichte; der fünfundzwanzigste ist
 // eine Zahl, über die man redet.
 const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
+// Und die Klasse entscheidet mit, wie oft. Eine Liste fuer alle drei war zu
+// grob in beide Richtungen: eine LEGENDAERE Auszeichnung ist das Seltenste,
+// was der Katalog hergibt — „Absoluter Sieger" ist der Grund, warum jemand
+// die App oeffnet, und das gilt beim zweiten Mal genauso; sie fiel nach der
+// Liste zwischen dem zehnten und dem fuenfundzwanzigsten Mal vierzehnmal
+// weg. Eine GEWOEHNLICHE dagegen ist beim ersten Mal keine Nachricht: einen
+// Zittersieg holt in der Liga jeder, der lange genug dabei ist. Der fuenfte
+// ist eine Zahl, ueber die man redet.
+const NEWS_BADGE_MARKEN_KLEIN = [5, 10, 25, 50, 100];
+function _badgeTakt(rar, rang){
+  if(rar === 'legendary') return true;
+  return (rar === 'common' ? NEWS_BADGE_MARKEN_KLEIN : NEWS_BADGE_MARKEN)
+    .indexOf(rang) >= 0;
+}
 
 // ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
 // Die Form-Karte maß das NIVEAU: neun von zehn gewonnen. Gemessen über die
@@ -319,6 +333,10 @@ const STORY_PRIO = {
   milestone_goals:   46,
   jubilee:           44,
   rivalry_milestone: 42,
+  // Die gesammelten kleinen Marken eines Tages: eine Karte, und die
+  // schwaechste des Spieltagsbandes. Sie sollen vorkommen, aber keinen
+  // Platz von einer Geschichte nehmen, die von diesem Tag erzaehlt.
+  badge_marken:      39,
   rekord_gesteigert: 40,   // ausbauen ist die schwächste der drei Meldungen
   elo_swing:         38,
 

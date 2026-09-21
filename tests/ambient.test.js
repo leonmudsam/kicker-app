@@ -293,6 +293,85 @@ ok(br({type:'top_clash'}) === false, 'top_clash ist kein Breaking mehr');
 ok(br({type:'giant_slayer'}) === false, 'giant_slayer ist kein Breaking mehr');
 ok(br({type:'potd'}) === false, 'Alltag bleibt Alltag');
 
+// ── Der Takt einer Auszeichnung haengt an ihrer Klasse [§11.0c] ───────
+// Eine Liste fuer alle drei Klassen war zu grob in beide Richtungen: sie
+// liess legendaere Erfolge zwischen der zehnten und der fuenfundzwanzigsten
+// Verleihung wegfallen, und eine gewoehnliche Auszeichnung war beim ersten
+// Mal eine eigene Karte, obwohl sie in der Liga jeder holt, der lange genug
+// dabei ist. Die kleinen Marken eines Tages stehen jetzt zusammen.
+const _takt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const einzel = roh.filter(s => (s.dataRef||{}).type === 'badge_unlocked');
+  const sam = roh.filter(s => (s.dataRef||{}).type === 'badge_marken');
+  const jeTag = {};
+  sam.forEach(s => { jeTag[s.dataRef.tag] = (jeTag[s.dataRef.tag]||0) + 1; });
+  const marken = [].concat.apply([], sam.map(s => s.dataRef.marken || []));
+  return {
+    legendaerImmer: [1,2,3,7,13,26].every(n => _badgeTakt('legendary', n) === true),
+    seltenMarken: [1,5,10,25,50,100].every(n => _badgeTakt('rare', n))
+      && ![2,3,7,11].some(n => _badgeTakt('rare', n)),
+    kleinOhneErstes: _badgeTakt('common', 1) === false
+      && [5,10,25,50,100].every(n => _badgeTakt('common', n)),
+    // Eine gewoehnliche Auszeichnung bekommt keine eigene Karte mehr; die
+    // gewhitelisteten Sonderfaelle sind davon ausgenommen.
+    einzelGewoehnlich: einzel.filter(s => rarityOf(s.dataRef.badgeId) === 'common'
+      && !NEWS_BADGE_WHITELIST.has(s.dataRef.badgeId)).length,
+    sammelKarten: sam.length,
+    proTagHoechstens1: Object.keys(jeTag).every(k => jeTag[k] === 1),
+    markenAufMarke: marken.every(m => NEWS_BADGE_MARKEN_KLEIN.indexOf(m.rang) >= 0),
+    markenGewoehnlich: marken.every(m => rarityOf(m.badgeId) === 'common'),
+    gruende: [...new Set(sam.map(s => (s.dataRef.causalKey||'').split(':')[0]))]
+  };
+})())`));
+// Im Vierzehn-Tage-Fenster traegt jede dieser Karten gerade eine Marke, und
+// damit waere die naechste Zusicherung vakuant. Gemessen wird sie deshalb
+// ueber die Spieltage der Liga: dort fallen an einem Tag bis zu vier.
+const _taktLauf = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
+    .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
+  let karten = 0, mehrere = 0, falsch = 0, mehrfachTag = 0;
+  tage.forEach(t => {
+    matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let roh = []; try { roh = _buildStories() || []; } catch(e){ return; }
+    const sam = roh.filter(s => (s.dataRef||{}).type === 'badge_marken');
+    const jeTag = {};
+    sam.forEach(s => {
+      karten++;
+      jeTag[s.dataRef.tag] = (jeTag[s.dataRef.tag]||0) + 1;
+      const m = s.dataRef.marken || [];
+      if(m.length > 1) mehrere++;
+      const soll = [...new Set(m.map(x => x.pid))].sort().join(',');
+      if((s.dataRef.playerIds||[]).slice().sort().join(',') !== soll) falsch++;
+    });
+    mehrfachTag += Object.keys(jeTag).filter(k => jeTag[k] > 1).length;
+  });
+  matches = alle; invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  return {karten, mehrere, falsch, mehrfachTag};
+})())`));
+ok(_taktLauf.mehrere > 0, 'der Durchlauf trifft Karten mit mehreren Marken',
+   _taktLauf.mehrere + ' von ' + _taktLauf.karten);
+ok(_taktLauf.falsch === 0, 'und jede nennt jeden, von dem sie erzaehlt',
+   _taktLauf.falsch + ' unvollstaendig');
+ok(_taktLauf.mehrfachTag === 0, 'nie zwei solche Karten an einem Tag',
+   _taktLauf.mehrfachTag + ' Tage doppelt');
+ok(_takt.legendaerImmer, 'eine legendaere Auszeichnung ist jedes Mal eine Nachricht');
+ok(_takt.seltenMarken, 'eine seltene beim ersten Mal und an den runden Marken');
+ok(_takt.kleinOhneErstes, 'eine gewoehnliche erst ab der fuenften Verleihung');
+ok(_takt.einzelGewoehnlich === 0,
+   'keine gewoehnliche Auszeichnung bekommt eine eigene Karte',
+   _takt.einzelGewoehnlich + ' eigene Karten');
+ok(_takt.sammelKarten > 0, 'die kleinen Marken eines Tages werden ueberhaupt gemeldet',
+   _takt.sammelKarten + ' Karten');
+ok(_takt.proTagHoechstens1 && _takt.gruende.join(',') === 'awards',
+   'je Spieltag EINE Karte, und ihr Grund sind die Auszeichnungen dieses Tages',
+   JSON.stringify(_takt.gruende));
+ok(_takt.markenAufMarke && _takt.markenGewoehnlich,
+   'darin steht nur eine gewoehnliche Auszeichnung auf einer runden Marke');
+
 console.log('\n=== 9b. DIE EWIGE TAFEL MELDET SICH ===');
 // Der ganze Awards-Reiter kam im Feed nicht vor: wer einen Liga-Rekord
 // uebernahm, eine Monatschronik holte oder eine Insignium-Stufe erreichte,
@@ -2669,8 +2748,11 @@ const _sprache = JSON.parse(K.eval(`JSON.stringify((function(){
     n: arten.length,
     strich: arten.filter(a => /[—–]/.test(a.t + a.d)).map(a => a.k),
     // Ausgenommen ist die Auszeichnung: ihr Text ist die Bedingung aus dem
-    // Katalog, und „Debuetant: Match gespielt" braucht keine Zahl.
-    ohneZahl: arten.filter(a => a.k !== 'badge_unlocked' && !/\\d/.test(a.d)).map(a => a.k),
+    // Katalog, und „Debuetant: Match gespielt" braucht keine Zahl. Das gilt
+    // fuer die gesammelten runden Marken genauso, solange es nur eine ist —
+    // dann ist die Karte eine Auszeichnung, und ihre Zahl steht im Titel.
+    ohneZahl: arten.filter(a => a.k !== 'badge_unlocked' && a.k !== 'badge_marken'
+      && !/\\d/.test(a.d)).map(a => a.k),
     titelDoppelt: arten.filter(a => norm(a.t).length >= 12
       && norm(a.d).indexOf(norm(a.t)) >= 0).map(a => a.k),
     // Ein Fragezeichen im Text heisst, dass ein Name nicht aufgeloest wurde.
