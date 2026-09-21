@@ -198,6 +198,14 @@ const NEWS_DB_ZEILEN = 500;
 // melden: Dort wächst der Wert gedämpft weiter [§C34], hier ist der
 // dreißigste Zittersieg keine neue Geschichte; der fünfundzwanzigste ist
 // eine Zahl, über die man redet.
+// ─── Der Schlusssprint einer Saison ──────────────────────────────────
+// „Noch fünf Tage" entstand an jedem der letzten sieben Tage, egal wie klar
+// die Sache war: gemessen lag der Vorsprung dabei auch schon bei 91 Elo, und
+// die Karte hieß trotzdem so. Eine Entscheidung ist offen, wenn die beiden
+// vorn dicht beieinander liegen — 25 Elo sind an den echten Partien
+// gemessen etwa zwei gewonnene Spitzenspiele.
+const SAISON_ENDSPURT_ELO = 25;
+
 const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
 // Und die Klasse entscheidet mit, wie oft. Eine Liste fuer alle drei war zu
 // grob in beide Richtungen: eine LEGENDAERE Auszeichnung ist das Seltenste,
@@ -342,7 +350,13 @@ const STORY_PRIO = {
 
   // ── Der Hintergrund ──
   rivalry:           30,   // ein Zähler, der seit fünfzig Duellen steht
-  season_endgame:    22,   // ein Countdown, kein Ereignis
+  // ── Der Schlusssprint ──
+  // Er stand mit 22 im Hintergrundband, als „Noch 5 Tage" an jedem Tag der
+  // Saison entstand — ein Countdown ist kein Ereignis. Mit der Elo-Grenze
+  // unten ist er etwas anderes: höchstens eine Karte je Saison, und nur,
+  // wenn die Entscheidung wirklich offen ist. Damit gehört er ins
+  // Breaking-Band [§C33].
+  season_endgame:    91,
   season_start:      20,
   dry_spell:         16,
   quiet_week:        14,

@@ -361,11 +361,19 @@ function _buildStories(){
   });
 
   // ── 1. Saison-Endspurt ──
-  // Letzte 7 Tage einer Saison + min. 2 Spieler im Saison-Top mit kleinem Abstand.
+  // Die letzten sieben Tage einer Saison, und die Entscheidung ist offen.
+  // Vorher entstand die Karte an jedem dieser Tage, egal wie klar die Sache
+  // war: gemessen stand „Noch 5 Tage" auch bei 91 Elo Vorsprung da, und der
+  // Text erklärte dann selbst, dass nichts mehr dazwischenkommt. Ein
+  // Countdown ohne Spannung ist kein Ereignis. Jetzt drei Bedingungen —
+  // Frist, Abstand und eine belastbare Rangliste —, und damit ist die Karte
+  // selten genug, um Breaking zu sein [§C33].
   try {
     const daysLeft = seasonDaysLeft();
-    if(daysLeft > 0 && daysLeft <= 7){
-      const sid = currentSeason().id;
+    const _espSid = currentSeason().id;
+    const _espFrei = _storyRangFrei(_espSid);
+    if(daysLeft > 0 && daysLeft <= 7 && _espFrei.frei){
+      const sid = _espSid;
       const sim = getGlobalSim();
       const endElos = sim.elo || {};
       const playedMap = (sim.seasonPlayed && sim.seasonPlayed[sid]) || {};
@@ -373,20 +381,23 @@ function _buildStories(){
         .filter(pid => pm[pid] && !pm[pid].hidden && (playedMap[pid]||0) > 0)
         .map(pid => ({pid, elo: Math.round(endElos[pid])}))
         .sort((a,b)=>b.elo-a.elo);
-      if(rankList.length >= 2){
-        const gap = rankList[0].elo - rankList[1].elo;
+      const gap = rankList.length >= 2 ? rankList[0].elo - rankList[1].elo : Infinity;
+      if(rankList.length >= 2 && gap <= SAISON_ENDSPURT_ELO){
         stories.push({
           id: 'season_endspurt_'+sid,
           cat: 'highlight',
           ic: 'rocket',
-          title: `Noch ${daysLeft} ${daysLeft===1?'Tag':'Tage'}`,
-          desc: gap <= 50
-            ? `Die Top 2 trennen nur ${gap} Elo. Das wird knapp.`
-            : `${nameOf(rankList[0].pid)} führt mit ${gap} Elo Vorsprung. `
-              + `So endet der Monat, wenn nichts mehr dazwischenkommt.`,
-          when: now,
-          prio: STORY_PRIO.season_endgame + (gap <= 15 ? 4 : gap <= 50 ? 2 : 0),
-          dataRef: {type:'season_endgame', sid, leader:rankList[0], second:rankList[1], daysLeft, gap}
+          title: `Noch ${daysLeft} ${daysLeft === 1 ? 'Tag' : 'Tage'} um den Monat`,
+          desc: `${nameOf(rankList[0].pid)} führt mit ${rankList[0].elo} Elo, `
+              + `${nameOf(rankList[1].pid)} liegt ${gap} dahinter.`,
+          // NICHT `now`: der Zeitstempel wäre der Moment, in dem jemand die
+          // App öffnet, und die Karte stünde im Feed über der letzten Partie
+          // statt unter ihr. Sie beschreibt den Stand nach dem letzten
+          // Spieltag, also gehört sie dorthin.
+          when: matches.length ? new Date(mts(matches[matches.length - 1])) : now,
+          prio: STORY_PRIO.season_endgame,
+          dataRef: {type:'season_endgame', sid, leader:rankList[0], second:rankList[1],
+                    daysLeft, gap, playerIds:[rankList[0].pid, rankList[1].pid]}
         });
       }
     }
@@ -2613,6 +2624,24 @@ function _buildStories(){
   // genannt wurde, tauchte daneben beliebig oft auf. Gemessen stand Maxi auf
   // neun von einunddreißig Karten und Stefan auf einer, obwohl der Deckel
   // formal bei drei lag.
+  // ── Was es je Tag genau einmal gibt, faellt hier nicht weg ────────
+  // Der Deckel zaehlt Karten je Spieler, und die Sortierung davor ist die
+  // Zeit: wer am Nachmittag noch drei Karten bekommt, hat sein Budget
+  // aufgebraucht, bevor der Deckel die Karte vom Mittag ansieht. Gemessen
+  // kostete das den einzigen Spitzenwechsel des Augusts — am 11.08. gab Leon
+  // die Tabelle an Martin ab, und die Titelrennen-Karte des Tages fiel aus,
+  // weil Martin an diesem Tag schon auf drei Karten stand. Dieselbe Falle
+  // stand vor jeder Insignium-Stufe (`d.pid`) und vor dem Spieler des Tages.
+  //
+  // Diese Karten gibt es je Tag, Woche oder Monat genau einmal, oder sie sind
+  // ein Breaking-Anlass [§C33]: sie sind nicht das Rauschen, gegen das der
+  // Deckel geschrieben ist. Sie zaehlen weiter in `imBild` mit, damit die
+  // uebrigen Karten zurueckstehen — verworfen werden sie nie. Dieselbe Regel
+  // wie `TAG_PFLICHT` in der Anzeige, nur eine Stufe frueher: was der
+  // Generator hier wegwirft, fehlt danach auch in seinem Buendel.
+  const GEN_PFLICHT = new Set(['lead_change', 'season_endgame', 'season_recap',
+    'potd', 'potw', 'woche', 'chronik_monat', 'chronik_erstling',
+    'insignium_stufe', 'streak_record']);
   const PER_PLAYER_LIMIT = 3;
   const NEBENROLLEN_LIMIT = 5;   // dazu höchstens so oft im Bild
   const perPlayer = {};
@@ -2625,13 +2654,14 @@ function _buildStories(){
     // die weiß, in welchem Feld die Ids je Typ liegen [§C33].
     let gesichter = [];
     try { gesichter = (typeof _newsPids === 'function') ? _newsPids(s) : []; } catch(e){ gesichter = []; }
-    if(pid && d.rarity !== 'legendary' && gesichter.length
+    const pflicht = GEN_PFLICHT.has(d.type);
+    if(pid && !pflicht && d.rarity !== 'legendary' && gesichter.length
        && gesichter.every(id => (imBild[id] || 0) >= NEBENROLLEN_LIMIT)) continue;
     // v9.17: Goldene (legendary) Auszeichnungen sind vom Limit ausgenommen. Sonst
     // konnte ein aktiver Spieler sein Budget mit Alltags-Stories aufbrauchen und
     // ausgerechnet das Karriere-Highlight fiel raus — und bei Team-Badges (10:0)
     // fehlte dann einer der beiden Namen in der zusammengefassten Karte.
-    if(!pid || d.rarity === 'legendary'){
+    if(!pid || pflicht || d.rarity === 'legendary'){
       gesichter.forEach(id => { imBild[id] = (imBild[id] || 0) + 1; });
       deduped.push(s);
       continue;

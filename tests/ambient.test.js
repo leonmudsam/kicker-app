@@ -330,14 +330,111 @@ console.log('\n=== 9. BREAKING: NUR DAS SELTENSTE ===');
 // Countdown gehoert nicht dazu — `season_endgame` („Noch 5 Tage") war zeitweise
 // die EINZIGE Breaking-Karte im Feed und meldete dabei nichts, was passiert war.
 const br = t => K.eval(`_isBreaking({dataRef:${JSON.stringify(t)}})`);
-[['lead_change'],['elo_record'],['streak_record'],['season_recap'],['rekord_erstmals']]
+[['lead_change'],['streak_record'],['season_recap'],['season_endgame']]
   .forEach(([t]) => ok(br({type:t}) === true, 'Breaking: ' + t));
 ok(br({type:'badge_unlocked', rarity:'legendary'}) === true, 'Breaking: legendaeres Badge');
 ok(br({type:'insignium_stufe', oben:true}) === true, 'Breaking: Lorbeerreif und Ordensstern');
 ok(br({type:'insignium_stufe', oben:false}) === false, 'die unteren Stufen sind kein Breaking');
+// Dieselbe Stufe kann zweimal erreicht werden [§C34]; beim zweiten Mal
+// bricht sie die Spalte nicht mehr.
+ok(br({type:'insignium_stufe', oben:true, wieder:'2026-08-12'}) === false,
+   'eine wieder getragene Stufe ist kein Breaking');
 ok(br({type:'badge_unlocked', rarity:'rare'}) === false, 'ein seltenes Badge reicht nicht');
-ok(br({type:'season_endgame'}) === false, 'ein Countdown ist kein Ereignis');
+// In der Fuellphase der Ewigen Tafel wird JEDER Rekord zum ersten Mal
+// vergeben: gemessen trugen elf der 18 Juni-Spieltage deshalb eine
+// Breaking-Karte, immer den Tafel-Moment des Tages.
+ok(br({type:'rekord_erstmals'}) === false,
+   'ein erstmals vergebener Liga-Rekord ist kein Breaking');
+// Die Karte bildet der Generator nicht mehr — der Bestwert steht als „Der
+// hoechste Gipfel" in der Tafel. Persistierte Zeilen tragen den Typ weiter.
+ok(br({type:'elo_record'}) === false, 'der Elo-Bestwert ist kein Breaking');
 ok(br({type:'rekord_geholt'}) === false, 'ein Halterwechsel allein ist kein Breaking');
+
+// ── Der Schlusssprint kommt nur bei offener Lage ──────────────────────
+// „Noch 5 Tage" entstand an jedem der letzten sieben Tage einer Saison, egal
+// wie klar die Sache war: gemessen stand die Karte auch bei 91 Elo Vorsprung
+// da, und ihr Text erklaerte dann selbst, dass nichts mehr dazwischenkommt.
+// Drei Bedingungen machen sie zum Ereignis — Frist, Abstand und eine
+// belastbare Rangliste. Und ihr Zeitstempel ist die letzte Partie, nicht der
+// Moment des Generatorlaufs.
+const _sprint = JSON.parse(K.eval(`JSON.stringify((function(){
+  const orig = getGlobalSim, ids = players.map(p => p.id);
+  const sid = currentSeason().id;
+  const bau = abstand => {
+    const elo = {}, gespielt = {};
+    ids.forEach((id, i) => { elo[id] = 1000 - (i === 0 ? 0 : abstand + i * 5);
+      gespielt[id] = 20; });
+    return {elo, seasonPlayed:{[sid]: gespielt}};
+  };
+  const hol = () => {
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    return _buildStories().filter(s => (s.dataRef||{}).type === 'season_endgame');
+  };
+  try {
+    getGlobalSim = () => bau(12);       const eng = hol();
+    getGlobalSim = () => bau(60);       const weit = hol();
+    const letzte = mts(matches[matches.length - 1]);
+    return {eng: eng.length, weit: weit.length,
+      tage: eng.length ? eng[0].dataRef.daysLeft : 0,
+      abstand: eng.length ? eng[0].dataRef.gap : 0,
+      breaking: eng.length ? _isBreaking(eng[0]) : false,
+      amSpieltag: eng.length ? +new Date(eng[0].when) === letzte : false,
+      grenze: SAISON_ENDSPURT_ELO, frei: _storyRangFrei(sid).frei};
+  } finally {
+    getGlobalSim = orig;
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_sprint.frei && _sprint.eng === 1 && _sprint.tage <= 7,
+   'bei offener Lage in den letzten sieben Tagen steht der Schlusssprint',
+   JSON.stringify(_sprint));
+ok(_sprint.weit === 0, 'bei klarem Vorsprung gar nicht',
+   _sprint.weit + ' Karten bei 60 Elo Abstand, Grenze ' + _sprint.grenze);
+ok(_sprint.breaking, 'und dann ist er Breaking');
+ok(_sprint.amSpieltag,
+   'sein Zeitstempel ist die letzte Partie, nicht der Moment des Laufs');
+
+// ── Der Spitzenwechsel faellt nicht dem Anti-Spam-Deckel zum Opfer ────
+// Der Deckel zaehlt Karten je Spieler, und die Sortierung davor ist die
+// Zeit: wer am Nachmittag noch drei Karten bekommt, hat sein Budget
+// aufgebraucht, bevor der Deckel die Karte vom Mittag ansieht. Gemessen
+// kostete das den EINZIGEN Spitzenwechsel des Augusts — am 11.08. gab Leon
+// die Tabelle an Martin ab, und die Titelrennen-Karte fiel aus, weil Martin
+// an diesem Tag schon auf drei Karten stand. Was es je Tag genau einmal
+// gibt, ist nicht das Rauschen, gegen das der Deckel geschrieben ist.
+const _titelrennen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const bis = new Date('2026-08-11T23:59:00').getTime();
+  try {
+    matches = alle.filter(m => mts(m) <= bis);
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    const roh = _buildStories();
+    const k = roh.filter(s => (s.dataRef||{}).type === 'lead_change');
+    // Der Wechsel selbst steht in den Snapshots: vor der ersten Partie des
+    // Tages fuehrte ein anderer als danach.
+    const snaps = getRankSnapshots();
+    const tg = _storyTagGrenzen(bis);
+    const desTages = matchesInSeason(currentSeason().id)
+      .filter(m => mts(m) >= tg.vonMs && mts(m) <= tg.letzte)
+      .sort((a, b) => mts(a) - mts(b));
+    const tops = [...new Set(desTages.map(m => (snaps[m.id]||{}).preTop1).filter(Boolean))];
+    return {karten:k.length, tops:tops.length,
+      breaking: k.length ? _isBreaking(k[0]) : false,
+      wechsel: k.length ? k[0].dataRef.wechsel : 0,
+      tag: k.length ? k[0].dataRef.dayKey : '',
+      titel: k.length ? k[0].title : ''};
+  } finally {
+    matches = alle; invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_titelrennen.tops > 1, 'am 11.08. wechselt die Tabellenspitze wirklich',
+   _titelrennen.tops + ' verschiedene Erste an diesem Tag');
+ok(_titelrennen.karten === 1 && _titelrennen.tag === '2026-08-11',
+   'und der Tag traegt genau eine Titelrennen-Karte',
+   _titelrennen.karten + ' Karten: ' + _titelrennen.titel);
+ok(_titelrennen.breaking, 'sie ist Breaking');
 ok(br({type:'chronik_monat'}) === false, 'die Monatschronik ist kein Breaking');
 ok(br({type:'top_clash'}) === false, 'top_clash ist kein Breaking mehr');
 ok(br({type:'giant_slayer'}) === false, 'giant_slayer ist kein Breaking mehr');
@@ -349,11 +446,11 @@ ok(br({type:'potd'}) === false, 'Alltag bleibt Alltag');
 // wird also NACH dem Buendeln entschieden, sonst verloere ein erstmals
 // vergebener Liga-Rekord seinen Rang, sobald er mit seinem Moment reist.
 const _brkZu = JSON.parse(K.eval(`JSON.stringify((function(){
-  const erlaubt = new Set(['lead_change','elo_record','streak_record',
-    'season_recap','rekord_erstmals']);
+  const erlaubt = new Set(['lead_change','streak_record','season_recap',
+    'season_endgame']);
   const anlass = d => erlaubt.has(d.type)
     || (d.type === 'badge_unlocked' && d.rarity === 'legendary')
-    || (d.type === 'insignium_stufe' && !!d.oben);
+    || (d.type === 'insignium_stufe' && !!d.oben && !d.wieder);
   const alle = matches.slice();
   const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
     .filter(t => t >= '2026-07-28' && t <= '2026-08-26');

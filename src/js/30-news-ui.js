@@ -308,20 +308,33 @@ function _isBreaking(s){
   // ausschließlich extrem seltene Auszeichnungen und echte EREIGNISSE —
   // etwas, das vorher noch nie da war oder die Spitze der Liga verschiebt.
   // Gefallen sind `top_clash` (Platz 1 schlägt Platz 2 — kam allein in einem
-  // Fenster von 33 Stories vor), `giant_slayer` (dafür gibt es die
-  // Highlight-Karte) und `season_endgame`: „Noch 5 Tage" ist ein Countdown,
-  // kein Ereignis, und es stand als einzige Breaking-Karte im Feed.
+  // Fenster von 33 Stories vor) und `giant_slayer` (dafür gibt es die
+  // Highlight-Karte).
   switch(d.type){
-    case 'lead_change':      // neuer Spitzenreiter der Liga
-    case 'elo_record':       // neuer Allzeit-Elo-Rekord
+    case 'lead_change':      // der Tabellenführer eines belastbaren Spieltags
     case 'streak_record':    // längste Siegesserie aller Zeiten
     case 'season_recap':     // der Meister steht fest
-    case 'rekord_erstmals':  // ein Liga-Rekord wird zum ersten Mal vergeben
+    case 'season_endgame':   // der Schlusssprint, und nur bei offener Lage
       return true;
     case 'badge_unlocked':   // nur legendäre Auszeichnungen
       return d.rarity === 'legendary';
+    // ── Nur der ERSTE Aufstieg in die oberen zwei Stufen ────────────
+    // Prestige aus Liga-Rekorden wird geteilt und fällt mit einem verlorenen
+    // Bestwert wieder [§C34]: dieselbe Stufe kann mehrmals erreicht werden,
+    // und beim zweiten Mal ist sie keine Nachricht mehr, die die Spalte
+    // bricht. Ob es das erste Mal ist, sagt `wieder` [§C33].
     case 'insignium_stufe':  // nur Lorbeerreif und Ordensstern [§C30]
-      return !!d.oben;
+      return !!d.oben && !d.wieder;
+    // ── Ein erstmals vergebener Liga-Rekord ist kein Breaking ───────
+    // Er stand auf der Liste, und in der Füllphase der Ewigen Tafel wird
+    // JEDER Rekord zum ersten Mal vergeben: gemessen über die 18 Spieltage
+    // des Juni 2026 trugen elf von ihnen eine Breaking-Karte, immer dieselbe
+    // — der Tafel-Moment des Tages, der es von einer seiner Zeilen erbte.
+    // Damit war Breaking in dieser Phase die Regel und nicht die Ausnahme.
+    // Dasselbe gilt für `elo_record`: die Karte bildet der Generator nicht
+    // mehr (der Bestwert steht als „Der höchste Gipfel" in der Tafel), aber
+    // persistierte Zeilen aus älteren Läufen tragen den Typ weiter und waren
+    // damit dieselbe Meldung zweimal, einmal laut.
     default:
       return false;
   }

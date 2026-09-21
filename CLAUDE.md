@@ -124,7 +124,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **746**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **747**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -304,7 +304,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung | 1320 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 192 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse und die These, die nicht vor dreissig Tagen wiederkommt | 397 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse, die These, die nicht vor dreissig Tagen wiederkommt, den Schlusssprint bei offener Lage und den Spitzenwechsel, der keinem Deckel zum Opfer faellt | 405 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest — **im echten Browser gemessen** | 139 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -718,6 +718,18 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Die Verteilung trägt jetzt allein der Generator (`PER_PLAYER_LIMIT`,
   `NEBENROLLEN_LIMIT`); gemessen steht danach kein Spieler auf mehr als einem
   Drittel der Karten, und jeder gewertete Spieler kommt vor.
+  **Was es je Tag genau einmal gibt, fällt dort nicht weg** (`GEN_PFLICHT`).
+  Der Deckel zählt Karten je Spieler, und sortiert ist davor nach Zeit: wer am
+  Nachmittag noch drei Karten bekommt, hat sein Budget aufgebraucht, bevor der
+  Deckel die Karte vom Mittag ansieht. Gemessen kostete das den EINZIGEN
+  Spitzenwechsel des Augusts — am 11.08. gab Leon die Tabelle an Martin ab,
+  und die Titelrennen-Karte des Tages fiel aus, weil Martin an diesem Tag
+  schon auf drei Karten stand; dieselbe Falle stand vor jeder Insignium-Stufe
+  und vor dem Spieler des Tages. Diese Karten zählen weiter mit, damit die
+  übrigen zurückstehen, verworfen werden sie nie — dieselbe Regel wie
+  `TAG_PFLICHT` in der Anzeige, nur eine Stufe früher: was der Generator hier
+  wegwirft, fehlt danach auch in seinem Bündel. Gemessen kamen im Juni 2026
+  dadurch zehn Ereignisse zurück, die in keiner Karte mehr standen.
 
   **Der Deckel je Sorte behält die stärksten, nicht die jüngsten.** Gezählt
   wurde in Feed-Reihenfolge, und die ist die Zeit. Gemessen an den echten
@@ -1532,19 +1544,36 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   den ein Spieler aus der unteren Hälfte sonst nie im Feed sieht.
 
   **Breaking ist das Seltenste, nicht das Lauteste.** Erlaubt sind allein:
-  ein legendäres Badge, ein neuer Allzeit-Elo-Rekord, die längste
-  Siegesserie aller Zeiten, ein neuer Spitzenreiter, der feststehende
-  Meister, ein zum ersten Mal vergebener Liga-Rekord und die beiden obersten
-  Insignium-Stufen [§C30]. **Entschieden wird es nach dem Bündeln**, nicht
-  davor: eine Sammelkarte erbt es von ihren Teilen (`_isBreaking`,
-  `sammel.breaking`), sonst verlöre ein erstmals vergebener Liga-Rekord
-  seinen Rang, sobald er mit seinem Moment reist. Die Liste ist geschlossen —
-  `tests/ambient` prüft jeden der sieben Anlässe einzeln und misst über die 19
-  Spieltage vom 28.07. bis 26.08., dass keine Karte des fertigen Feeds
-  Breaking trägt, deren Anlass nicht darauf steht; gemessen ist es in diesem
-  Zeitraum genau eine. Gefallen ist `season_endgame`: „Noch fünf Tage"
-  ist ein Countdown, kein Ereignis — und stand zeitweise als einzige
-  Breaking-Karte im Feed.
+  ein legendäres Badge, die längste Siegesserie aller Zeiten, der
+  Tabellenführer eines belastbaren Spieltags, der feststehende Meister, der
+  Schlusssprint einer Saison und der **erste** Aufstieg in die beiden
+  obersten Insignium-Stufen [§C30]. **Entschieden wird es nach dem Bündeln**,
+  nicht davor: eine Sammelkarte erbt es von ihren Teilen (`_isBreaking`,
+  `sammel.breaking`), sonst verlöre ein Anlass seinen Rang, sobald er mit
+  seinem Moment reist.
+  **Drei Anlässe sind gefallen, jeder gemessen.** Ein **erstmals vergebener
+  Liga-Rekord**: in der Füllphase der Ewigen Tafel wird jeder Rekord zum
+  ersten Mal vergeben, und gemessen trugen elf der 18 Spieltage des Juni 2026
+  deshalb eine Breaking-Karte — immer dieselbe, den Tafel-Moment des Tages,
+  der es von einer seiner Zeilen erbte. Damit war Breaking die Regel. Der
+  **Elo-Bestwert** (`elo_record`): die Karte bildet der Generator nicht mehr,
+  der Bestwert steht als „Der höchste Gipfel" in der Tafel, aber
+  persistierte Zeilen trugen den Typ weiter und waren dieselbe Meldung
+  zweimal, einmal laut. Und eine **wieder getragene** obere Insignium-Stufe:
+  Prestige aus Rekorden wird geteilt und fällt wieder [§C34], dieselbe Stufe
+  kann mehrmals erreicht werden, und beim zweiten Mal bricht sie die Spalte
+  nicht mehr — `wieder` sagt, ob es das erste Mal ist.
+  Der **Schlusssprint** ist dafür dazugekommen. „Noch fünf Tage" entstand an
+  jedem der letzten sieben Tage einer Saison, egal wie klar die Sache war:
+  gemessen stand die Karte auch bei 91 Elo Vorsprung da, und ihr Text
+  erklärte dann selbst, dass nichts mehr dazwischenkommt. Jetzt drei
+  Bedingungen — Frist, höchstens `SAISON_ENDSPURT_ELO` Abstand und eine
+  belastbare Rangliste —, und ihr Zeitstempel ist die letzte Partie statt
+  `now`, sonst stünde sie im Feed über dem Spieltag statt unter ihm.
+  Die Liste ist geschlossen: `tests/ambient` prüft jeden Anlass einzeln und
+  misst über die 19 Spieltage vom 28.07. bis 26.08., dass keine Karte des
+  fertigen Feeds Breaking trägt, deren Anlass nicht darauf steht. Gemessen
+  sind es dort zwei Karten und im Juni 2026 keine.
   **Und sie veraltet am Abstand, nicht an der Siegzahl.** Der Stale-Filter
   verglich die Siege im Fenster mit der Zahl von damals, und das Fenster der
   letzten zehn Partien verschiebt sich schon im Lauf desselben Spieltags: die
