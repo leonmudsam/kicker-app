@@ -2013,6 +2013,26 @@ function _buildStories(){
   // Was eine Aenderung wirklich gebracht hat, steht an EINER Stelle: der
   // Katalogwert ist der Grundwert, nicht der Zuwachs [§C34].
   const _tafelWirkung = pid => _prestigeWirkung(pid, _tafelVor, _tafelNach);
+  // Was ein Rekord der Laufbahn WIRKLICH bringt [§C34]. Gespeichert werden
+  // die beiden Stände und die Rechnung der Quelle, nie der Grundwert: ein
+  // zehnter Rekord gibt nicht 100 Prestige, er wird durch die Zahl seiner
+  // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
+  // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
+  // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.
+  const _rekordWirkung = (pids, rid) => {
+    const o = {};
+    (pids || []).slice(0, 3).forEach(pid => {
+      const w = _tafelWirkung(pid);
+      const q = w.quellen['rekord:' + rid] || null;
+      o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
+                anteilVor:w.rekordVor, anteilNach:w.rekordNach,
+                zahl:w.rekordZahl,
+                basis:q ? q.grundwert : 0, halter:q ? q.halter : 0,
+                rang:q ? q.rang : 0, staffel:q ? q.staffel : 1,
+                wert:q ? q.wert : 0};
+    });
+    return o;
+  };
   try {
     if(_tafelTag){
       const _letzteMs = _tafelTag.letzte;
@@ -2199,6 +2219,11 @@ function _buildStories(){
                     causalKey:_storyGruppeKey(def.fenster ? 'form' : 'table', _tafelTag.tag),
                     zufall:def.zufall || '', playerIds:wer.slice(0, 3), zeileText,
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
+                    // Die Punktewirkung gehoert zur Karte, nicht in eine
+                    // zweite Rechnung im Blatt: sie gilt fuer DIESEN
+                    // Tagesabschluss, und morgen sagt dieselbe Rechnung eine
+                    // andere Zahl [§C34].
+                    laufbahn:_rekordWirkung(wer, def.id), art:def.art,
                     kammerLabel:_kammer(def.kind)}
         });
       });

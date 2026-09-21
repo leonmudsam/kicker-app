@@ -4877,7 +4877,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.21.55dc0ea7';
+const BUILD_VERSION='2026.09.21.54f3f5f5';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21169,6 +21169,26 @@ function _buildStories(){
   // Was eine Aenderung wirklich gebracht hat, steht an EINER Stelle: der
   // Katalogwert ist der Grundwert, nicht der Zuwachs [§C34].
   const _tafelWirkung = pid => _prestigeWirkung(pid, _tafelVor, _tafelNach);
+  // Was ein Rekord der Laufbahn WIRKLICH bringt [§C34]. Gespeichert werden
+  // die beiden Stände und die Rechnung der Quelle, nie der Grundwert: ein
+  // zehnter Rekord gibt nicht 100 Prestige, er wird durch die Zahl seiner
+  // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
+  // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
+  // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.
+  const _rekordWirkung = (pids, rid) => {
+    const o = {};
+    (pids || []).slice(0, 3).forEach(pid => {
+      const w = _tafelWirkung(pid);
+      const q = w.quellen['rekord:' + rid] || null;
+      o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
+                anteilVor:w.rekordVor, anteilNach:w.rekordNach,
+                zahl:w.rekordZahl,
+                basis:q ? q.grundwert : 0, halter:q ? q.halter : 0,
+                rang:q ? q.rang : 0, staffel:q ? q.staffel : 1,
+                wert:q ? q.wert : 0};
+    });
+    return o;
+  };
   try {
     if(_tafelTag){
       const _letzteMs = _tafelTag.letzte;
@@ -21355,6 +21375,11 @@ function _buildStories(){
                     causalKey:_storyGruppeKey(def.fenster ? 'form' : 'table', _tafelTag.tag),
                     zufall:def.zufall || '', playerIds:wer.slice(0, 3), zeileText,
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
+                    // Die Punktewirkung gehoert zur Karte, nicht in eine
+                    // zweite Rechnung im Blatt: sie gilt fuer DIESEN
+                    // Tagesabschluss, und morgen sagt dieselbe Rechnung eine
+                    // andere Zahl [§C34].
+                    laufbahn:_rekordWirkung(wer, def.id), art:def.art,
                     kammerLabel:_kammer(def.kind)}
         });
       });
@@ -26901,6 +26926,47 @@ function _newsDetailMitte(s){
         <div class="nd-stat-val">${esc(def.cond)}</div></div>
       <button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>`;
   }
+  // ── Was der Rekord der Laufbahn bringt [§C34] ───────────────────
+  // Auf einer Rekord-Karte stand nichts darüber, und wer den Grundwert
+  // hineinschriebe, behauptete „+100 Prestige", während die Laufbahn um 34
+  // Punkte steigt. Gezeigt werden deshalb die beiden Stände aus
+  // `prestigeTabelle` vor und nach dem Tagesabschluss, die Rechnung der
+  // Quelle im gemeinsamen Satz (`_prestigeQuellSatz` [§C27]) und der Anteil,
+  // den alle heute gehaltenen Rekorde zusammen tragen. Eine Karte aus einem
+  // älteren Lauf hat die beiden Stände nicht — sie zeigt dann die Rechnung
+  // von heute und behauptet keinen Zuwachs.
+  const rekordLaufbahn = (rid) => {
+    const ids = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
+    if(!ids.length) return '';
+    const lb = d.laufbahn || {};
+    const zeilen = ids.map(pid => {
+      const w = lb[pid] || null;
+      let q = null;
+      if(!w){
+        try {
+          q = ((prestigeTabelle().byPid[pid] || {}).quellen || [])
+            .find(x => x.q === 'rekord' && x.id === rid) || null;
+        } catch(e){}
+        if(!q) return '';
+      }
+      const satz = _prestigeQuellSatz(w
+        ? {q:'rekord', art:d.art || 'ereignis', basis:w.basis, halter:w.halter,
+           rang:w.rang, staffel:w.staffel}
+        : q);
+      const rechts = w
+        ? `${w.vor} → ${w.nach} Prestige`
+        : `${komma(q.p).replace(',0', '')} Prestige`;
+      const anteil = w && w.zahl
+        ? `${satz} · ${w.zahl} ${w.zahl === 1 ? 'Rekord' : 'Rekorde'}: `
+          + `${w.anteilVor} → ${w.anteilNach}`
+        : satz;
+      return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+        <div class="nd-stat-label">${esc(nameOf(pid))}<small>${esc(anteil)}</small></div>
+        <div class="nd-stat-val acid">${esc(rechts)} ›</div></div>`;
+    }).filter(Boolean).join('');
+    return zeilen ? `<div class="nd-section">Für die Laufbahn</div>${zeilen}` : '';
+  };
+
   try {
     switch(d.type){
       // ── Die Ewige Tafel ─────────────────────────────────────────
@@ -26908,6 +26974,16 @@ function _newsDetailMitte(s){
       // Rekord-Karte oeffnete, sah den Kopf und den Satz, den er auf der
       // Karte schon gelesen hatte. Jetzt steht dort der Wert gross, die
       // Bedingung, wem er vorher gehoerte und wer dahinter liegt.
+      //
+      // Alle drei Rekord-Meldungen teilen dieses Blatt. Nur `rekord_geholt`
+      // hatte einen Fall, und der Schalter kennt keinen Rueckfall: ein
+      // erstmals vergebener und ein ausgebauter Rekord oeffneten damit ein
+      // Blatt mit NULL Zeichen Mitte, gemessen am gebauten Stand. Sie tragen
+      // dieselben Felder — Wert, Bedingung, Vorgaenger, Verfolger — und der
+      // Satz darueber sagt ohnehin schon, welcher der drei Faelle es ist
+      // [§C33].
+      case 'rekord_erstmals':
+      case 'rekord_gesteigert':
       case 'rekord_geholt': {
         const def = (typeof CHRONICLE_BY_ID !== 'undefined') ? CHRONICLE_BY_ID[d.rekordId] : null;
         const wert = _chronKurz(d.ev);
@@ -26927,6 +27003,7 @@ function _newsDetailMitte(s){
             <div class="nd-stat-label">Vorher gehalten von</div>
             <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
           ${_newsVerfolger(d.rekordId, d.playerIds, d.wert)}
+          ${rekordLaufbahn(d.rekordId)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen
@@ -34153,6 +34230,50 @@ function showPrestigeRegeln(pid){
 }
 
 // Das Sheet. Aufgerufen vom Avatar im Profilkopf.
+// ─── Warum ein Posten so viel wiegt [§C34] ───────────────────────────
+// Der Satz stand als Closure im Laufbahnblatt, und das Blatt einer
+// Tafel-Karte hatte deshalb keine Rechnung: dort hätte „+100 Prestige"
+// gestanden, während die Laufbahn um 34 Punkte steigt — der Grundwert ist
+// nicht, was jemand bekommt. Er wird durch die Zahl der Halter geteilt,
+// landet auf einem Rang im Stapel und wird dort durch die Wurzel seiner
+// Staffel geteilt. Eine Quelle, zwei Blätter, ein Satz [§C27].
+// Vorher stand hier „2 von 12" — die Zahl der heutigen Halter. Sie erklärte
+// den Wert nicht, sie war der Grund, warum er fiel.
+function _prestigeQuellSatz(q){
+  // Eine Nachkommastelle, aber ohne die überflüssige Null: die Posten müssen
+  // sichtbar zur Summe passen, sonst ist es keine Aufschlüsselung.
+  const zahl = v => {
+    const r = Math.round((Number(v) || 0) * 10) / 10;
+    return (Number.isInteger(r) ? String(r) : r.toFixed(1)).replace('.', ',');
+  };
+  const teile = [];
+  if(q.q === 'rekord'){
+    teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
+    let rechnung = `Grundwert ${zahl(q.basis)}`;
+    if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;
+    if(q.staffel > 1) rechnung += ` · ${q.rang}. Rekord ÷ √${q.staffel}`;
+    teile.push(rechnung);
+  }
+  else if(q.q === 'auszeichnung'){
+    teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
+    if(q.hinweis) teile.push(q.hinweis);
+    teile.push(`${q.mal}× erreicht`);
+    teile.push(q.mal > 1
+      ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
+      : `${zahl(q.basis)} P Startwert`);
+  }
+  else if(q.label) teile.push(q.label);
+  if(q.q === 'monat'){
+    if(CHRONIK_KLASSE_NAME[q.klasse]) teile.push(CHRONIK_KLASSE_NAME[q.klasse]);
+    if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
+    const basis = q.grundwert == null ? q.voll : q.grundwert;
+    let rechnung = `Chronikwert ${zahl(basis)}`;
+    if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
+    teile.push(rechnung);
+  }
+  return teile.join(' · ');
+}
+
 function showLaufbahn(pid){
   const p = (pmap() || {})[pid];
   if(!p) return;
@@ -34257,40 +34378,6 @@ function showLaufbahn(pid){
     return (Number.isInteger(r) ? String(r) : r.toFixed(1)).replace('.', ',');
   };
 
-  // Warum dieser Posten so viel wiegt. Vorher stand hier „2 von 12" — die
-  // Zahl der heutigen Halter. Sie erklärte den Wert nicht, sie war der
-  // Grund, warum er fiel. Jetzt steht da, was den Wert wirklich bestimmt:
-  // die Klasse der Auszeichnung, der Monat des Eintrags, die Art — und der
-  // Abschlag nur dort, wo es ihn gibt.
-  const grund = q => {
-    const teile = [];
-    if(q.q === 'rekord'){
-      teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
-      let rechnung = `Grundwert ${zahl(q.basis)}`;
-      if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;
-      if(q.staffel > 1) rechnung += ` · ${q.rang}. Rekord ÷ √${q.staffel}`;
-      teile.push(rechnung);
-    }
-    else if(q.q === 'auszeichnung'){
-      teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
-      if(q.hinweis) teile.push(q.hinweis);
-      teile.push(`${q.mal}× erreicht`);
-      teile.push(q.mal > 1
-        ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
-        : `${zahl(q.basis)} P Startwert`);
-    }
-    else if(q.label) teile.push(q.label);
-    if(q.q === 'monat'){
-      if(CHRONIK_KLASSE_NAME[q.klasse]) teile.push(CHRONIK_KLASSE_NAME[q.klasse]);
-      if(CHRONIK_ART_NAME[q.kunst]) teile.push(CHRONIK_ART_NAME[q.kunst]);
-      const basis = q.grundwert == null ? q.voll : q.grundwert;
-      let rechnung = `Chronikwert ${zahl(basis)}`;
-      if(q.staffel > 1) rechnung += ` · ${q.rang}. Chronik ÷ √${q.staffel}`;
-      teile.push(rechnung);
-    }
-    return teile.join(' · ');
-  };
-
 
   // ── Der Fingerabdruck [§13.11] ─────────────────────────────────────
   //     Das Prestige sagt, WAS jemand zusammengetragen hat. Der Abdruck
@@ -34300,7 +34387,7 @@ function showLaufbahn(pid){
   const _faTon = rangTon(pid);
 
   const zeile = (q, w) => `<div class="lb-q"${q.q === 'rekord' ? ` data-chron="${esc(q.id)}"` : ''}>
-      <span class="n">${esc(q.name)}<em>${esc(grund(q))}</em></span>
+      <span class="n">${esc(q.name)}<em>${esc(_prestigeQuellSatz(q))}</em></span>
       <span class="p num">${zahl(w)}</span>
     </div>`;
 

@@ -4213,6 +4213,69 @@ ok(_worte.englisch.length === 0, 'keine englische Schlagzeile',
 ok(_worte.fragment.length === 0, 'kein Satzfragment als letzter Satz',
    _worte.fragment.slice(0, 2).join(' | ') || 'keins');
 
+console.log('=== DER ROHE GRUNDWERT IST NICHT, WAS JEMAND BEKOMMT ===');
+// Ein zehnter Rekord gibt nicht 100 Prestige: er wird durch die Zahl seiner
+// Halter geteilt, landet auf einem Rang im Rekordstapel und wird dort durch
+// die Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
+// verschiebt, ist der Nettozuwachs noch eine dritte Zahl [§C34]. Das Blatt
+// zeigt deshalb die beiden Staende aus `prestigeTabelle` und die Rechnung,
+// nie den Grundwert als erhaltene Punkte. Und es zeigt ueberhaupt etwas: nur
+// „uebernommen" hatte einen Fall im Schalter, ein erstmals vergebener und ein
+// ausgebauter Rekord oeffneten ein Blatt mit null Zeichen Mitte.
+const _rekBlatt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const l = _buildStories() || [];
+  const k = l.filter(s => String((s.dataRef || {}).type || '').indexOf('rekord_') === 0);
+  if(!k.length) return {n:0};
+  const s0 = k[0], d0 = s0.dataRef;
+  const pid = (d0.playerIds || [])[0];
+  const w = (d0.laufbahn || {})[pid] || null;
+  const P = prestigeTabelle().byPid[pid] || {};
+  const q = (P.quellen || []).find(x => x.q === 'rekord' && x.id === d0.rekordId) || null;
+  const mitte = pid => String(_newsDetailMitte(s0) || '');
+  const m0 = mitte();
+  // Dieselbe Karte in den beiden anderen Rekordfaellen.
+  const bau = t => ({dataRef:Object.assign({}, d0, {type:t})});
+  const laengen = ['rekord_erstmals', 'rekord_geholt', 'rekord_gesteigert']
+    .map(t => String(_newsDetailMitte(bau(t)) || '').length);
+  // Und eine Karte aus einem aelteren Lauf, die die Staende nicht kennt.
+  const alt = {dataRef:Object.assign({}, d0, {laufbahn:null})};
+  const mAlt = String(_newsDetailMitte(alt) || '');
+  return {n:k.length, typen:[...new Set(k.map(x => x.dataRef.type))],
+    hatWirkung:!!w, laengen,
+    // Der gespeicherte Stand ist der von jetzt: der jüngste Spieltag rechnet
+    // „nachher" als 0 und damit gegen den heissen Cache [§11.0e].
+    standStimmt: w ? w.nach === Math.round(P.punkte || 0) : false,
+    quelleStimmt: (w && q) ? (w.basis === Math.round(q.basis)
+      && w.halter === q.halter && w.staffel === q.staffel) : false,
+    zeigtStaende: m0.indexOf(String(w ? w.vor : -1) + ' → ' + String(w ? w.nach : -1)) >= 0,
+    zeigtRechnung: m0.indexOf('Grundwert') >= 0,
+    rohWert: w ? (m0.indexOf('+' + w.basis + ' Prestige') >= 0
+                  || m0.indexOf(w.basis + ' Prestige ›') >= 0) : false,
+    altRechnung: mAlt.indexOf('Grundwert') >= 0,
+    // Gemessen wird die ZEILE, nicht das ganze Blatt: der Pfeil steht auch im
+    // Kopf einer anderen Zeile, und ein ODER darauf ist immer wahr.
+    altOhneZuwachs: mAlt.slice(mAlt.indexOf('Für die Laufbahn')).indexOf('→') < 0};
+})())`));
+ok(_rekBlatt.n > 0, 'der Generator bildet Rekord-Karten',
+   (_rekBlatt.typen || []).join(', '));
+ok(_rekBlatt.laengen && _rekBlatt.laengen.every(x => x > 400),
+   'jeder der drei Rekordfaelle oeffnet ein gefuelltes Blatt',
+   (_rekBlatt.laengen || []).join(' / '));
+ok(_rekBlatt.hatWirkung && _rekBlatt.standStimmt,
+   'die Karte traegt den Prestigestand aus prestigeTabelle',
+   String(_rekBlatt.standStimmt));
+ok(_rekBlatt.quelleStimmt,
+   'und Grundwert, Halterzahl und Wurzelstaffel ihrer Quelle',
+   String(_rekBlatt.quelleStimmt));
+ok(_rekBlatt.zeigtStaende && _rekBlatt.zeigtRechnung,
+   'das Blatt zeigt beide Staende und die Rechnung dahinter',
+   'Staende ' + _rekBlatt.zeigtStaende + ', Rechnung ' + _rekBlatt.zeigtRechnung);
+ok(_rekBlatt.rohWert === false,
+   'und nennt den rohen Grundwert nie als erhaltene Punkte');
+ok(_rekBlatt.altRechnung && _rekBlatt.altOhneZuwachs,
+   'eine Karte ohne gespeicherte Staende zeigt die Rechnung und keinen Zuwachs',
+   'Rechnung ' + _rekBlatt.altRechnung + ', ohne Zuwachs ' + _rekBlatt.altOhneZuwachs);
+
 console.log('=== ZWEIMAL LAUFEN ERGIBT DASSELBE ===');
 // Eine Story wird persistiert, damit alle Geraete dieselbe Karte zur selben
 // Zeit sehen. Das haelt nur, wenn derselbe Datenstand immer dieselbe ID,

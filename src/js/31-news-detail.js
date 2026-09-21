@@ -404,6 +404,47 @@ function _newsDetailMitte(s){
         <div class="nd-stat-val">${esc(def.cond)}</div></div>
       <button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>`;
   }
+  // ── Was der Rekord der Laufbahn bringt [§C34] ───────────────────
+  // Auf einer Rekord-Karte stand nichts darüber, und wer den Grundwert
+  // hineinschriebe, behauptete „+100 Prestige", während die Laufbahn um 34
+  // Punkte steigt. Gezeigt werden deshalb die beiden Stände aus
+  // `prestigeTabelle` vor und nach dem Tagesabschluss, die Rechnung der
+  // Quelle im gemeinsamen Satz (`_prestigeQuellSatz` [§C27]) und der Anteil,
+  // den alle heute gehaltenen Rekorde zusammen tragen. Eine Karte aus einem
+  // älteren Lauf hat die beiden Stände nicht — sie zeigt dann die Rechnung
+  // von heute und behauptet keinen Zuwachs.
+  const rekordLaufbahn = (rid) => {
+    const ids = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
+    if(!ids.length) return '';
+    const lb = d.laufbahn || {};
+    const zeilen = ids.map(pid => {
+      const w = lb[pid] || null;
+      let q = null;
+      if(!w){
+        try {
+          q = ((prestigeTabelle().byPid[pid] || {}).quellen || [])
+            .find(x => x.q === 'rekord' && x.id === rid) || null;
+        } catch(e){}
+        if(!q) return '';
+      }
+      const satz = _prestigeQuellSatz(w
+        ? {q:'rekord', art:d.art || 'ereignis', basis:w.basis, halter:w.halter,
+           rang:w.rang, staffel:w.staffel}
+        : q);
+      const rechts = w
+        ? `${w.vor} → ${w.nach} Prestige`
+        : `${komma(q.p).replace(',0', '')} Prestige`;
+      const anteil = w && w.zahl
+        ? `${satz} · ${w.zahl} ${w.zahl === 1 ? 'Rekord' : 'Rekorde'}: `
+          + `${w.anteilVor} → ${w.anteilNach}`
+        : satz;
+      return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+        <div class="nd-stat-label">${esc(nameOf(pid))}<small>${esc(anteil)}</small></div>
+        <div class="nd-stat-val acid">${esc(rechts)} ›</div></div>`;
+    }).filter(Boolean).join('');
+    return zeilen ? `<div class="nd-section">Für die Laufbahn</div>${zeilen}` : '';
+  };
+
   try {
     switch(d.type){
       // ── Die Ewige Tafel ─────────────────────────────────────────
@@ -411,6 +452,16 @@ function _newsDetailMitte(s){
       // Rekord-Karte oeffnete, sah den Kopf und den Satz, den er auf der
       // Karte schon gelesen hatte. Jetzt steht dort der Wert gross, die
       // Bedingung, wem er vorher gehoerte und wer dahinter liegt.
+      //
+      // Alle drei Rekord-Meldungen teilen dieses Blatt. Nur `rekord_geholt`
+      // hatte einen Fall, und der Schalter kennt keinen Rueckfall: ein
+      // erstmals vergebener und ein ausgebauter Rekord oeffneten damit ein
+      // Blatt mit NULL Zeichen Mitte, gemessen am gebauten Stand. Sie tragen
+      // dieselben Felder — Wert, Bedingung, Vorgaenger, Verfolger — und der
+      // Satz darueber sagt ohnehin schon, welcher der drei Faelle es ist
+      // [§C33].
+      case 'rekord_erstmals':
+      case 'rekord_gesteigert':
       case 'rekord_geholt': {
         const def = (typeof CHRONICLE_BY_ID !== 'undefined') ? CHRONICLE_BY_ID[d.rekordId] : null;
         const wert = _chronKurz(d.ev);
@@ -430,6 +481,7 @@ function _newsDetailMitte(s){
             <div class="nd-stat-label">Vorher gehalten von</div>
             <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
           ${_newsVerfolger(d.rekordId, d.playerIds, d.wert)}
+          ${rekordLaufbahn(d.rekordId)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
       // Die Monatschronik ist EINE Karte je Monat [§C33]. Im Blatt stehen
