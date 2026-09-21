@@ -212,6 +212,56 @@ const _kleinerPool = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_kleinerPool.n >= 1 && _kleinerPool.sauber,
    'ein kleiner Template-Pool bleibt funktionsfaehig', _kleinerPool.n + ' Karten');
 
+// ── Dieselbe These nicht vor dreissig Tagen ───────────────────────────
+// Der Typ-Cooldown sperrt sieben Tage, der Spieler-Cooldown zwei. Beides
+// verhindert die KOMBINATION nicht: die Fuehrungs-Typen zeigen strukturell
+// immer auf denselben Kopf, und „kurz vor dem Schildring: Johannes" stand
+// gemessen fuenfmal in vierzig Tagen. Eine These ist der Typ UND die Person
+// (`AMBIENT_PAAR_COOLDOWN_DAYS`) — derselbe Typ ueber jemand anderen ist eine
+// neue Aussage. Nachgespielt werden vierzig Tage, Slot fuer Slot, mit dem
+// Bestand, der dabei entsteht.
+// Ausgenommen sind die Rueckblicke mit festem Termin (`pflicht`): die
+// Monatshalbzeit gehoert dem 15. und der Jahresblick dem 1. Januar, sie
+// haengen nicht am Losverfahren. Gemessen stand `rueckblick_halbzeit`
+// nach 23 Tagen wieder da — einmal gezogen, einmal als Pflicht am 15.
+const _pflichtKeys = new Set(K.eval(
+  `_ambientTemplatePool(new Date(), pmap(), id=>pname(id))`
+  + `.filter(t => typeof t.pflicht === 'function').map(t => t.key)`));
+const _thesen = (function(){
+  const start = new Date('2026-08-20T00:00:00').getTime();
+  const bestand = [];
+  const wann = {};   // These -> letzter Tag
+  let verstoesse = [], thesen = 0;
+  for(let d = 0; d < 40; d++){
+    [10, 19].forEach(std => {
+      const t = new Date(start + d * 864e5);
+      t.setHours(std, 0, 0, 0);
+      let neu = [];
+      try { neu = build(t.toISOString(), bestand) || []; } catch(e){ return; }
+      neu.forEach(x => {
+        bestand.push({id:x.id, when:x.when, title:x.title, desc:'gespeichert',
+          prio:20, cat:'season', ic:'sparkle',
+          dataRef:{type:'ambient', sub:x.sub, ambientRubrik:x.rubrik, ambientPids:x.pids}});
+        (x.pids && x.pids.length ? x.pids : ['']).forEach(pid => {
+          const k = x.sub + '|' + pid;
+          thesen++;
+          if(wann[k] != null && d - wann[k] < 30 && !_pflichtKeys.has(x.sub))
+            verstoesse.push(k + ' nach ' + (d - wann[k]) + ' Tagen');
+          wann[k] = d;
+        });
+      });
+    });
+  }
+  return {thesen, karten:bestand.length, verstoesse:[...new Set(verstoesse)]};
+})();
+console.log('  Vierzig Tage Rotation: ' + _thesen.karten + ' Karten, '
+  + _thesen.thesen + ' Thesen');
+ok(_thesen.karten >= 40, 'der Nachlauf fuellt ueberhaupt Slots',
+   _thesen.karten + ' Karten');
+ok(_thesen.verstoesse.length === 0,
+   'dieselbe These steht nicht vor dreissig Tagen wieder da',
+   _thesen.verstoesse.slice(0, 3).join(' | ') || 'keine Wiederholung');
+
 console.log('\n=== 6. ZUKUENFTIGE SLOTS BLEIBEN ZU ===');
 const morning = build('2026-08-27T11:30:00Z', []);   // nach 10:00, vor 19:00 lokal
 ok(!morning.some(s => s.id === 'ambient_2026-08-27_19'), 'der heutige 19-Uhr-Slot wartet noch');
