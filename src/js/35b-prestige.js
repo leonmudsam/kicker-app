@@ -98,7 +98,12 @@ const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
 // Ein heute gehaltener Liga-Rekord wiegt deutlich schwerer als eine
 // Auszeichnung — es gibt ihn nur einmal in der Liga.
-const PRESTIGE_REKORD = 48;
+//
+// Fuenfzig und nicht achtundvierzig: mit `PRESTIGE_ART` ergibt das 100 fuer
+// einen Leistungsrekord und 50 fuer ein Ereignis, und eine runde Zahl ist im
+// Blatt nachrechenbar. „96 Punkte, geteilt durch zwei Halter, dann durch
+// Wurzel zwei" liest niemand nach; 100 schon.
+const PRESTIGE_REKORD = 50;
 
 // ─── Wiederholung zählt weniger, aber nie nichts ────────────────────
 // Die ersten beiden Erfolge belegen denselben Schritt und zählen deshalb

@@ -51,7 +51,7 @@ mit rotem Wächter oder roter Suite.
 ```
 src/index.html        Gerüst mit den Platzhaltern /*@@CSS*/ und /*@@JS*/
 src/css/              16 Dateien
-src/js/               42 Dateien
+src/js/               43 Dateien
 tools/build.mjs       hängt src/css/* und src/js/* ALPHABETISCH aneinander
 tools/check.mjs       vier Wächter
 tests/run.mjs         Testläufer, jede Suite ein eigener Prozess
@@ -124,7 +124,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **733**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **742**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -146,7 +146,7 @@ Datei, deren Aufgabe niemand aufgeschrieben hat.
 | Blätter (Sheets) | `14-top5-listen` · `16-sheet-infra` (Öffnen, Stapel, Wischgeste) · `19-bilanzen` · `21-head-to-head` |
 | Rückblicke | `05b-recap-teile` (Baukasten) · `07-positionsverlauf` (Woche, Tag) |
 | Zeichen und Wappen | `02-icons` (SVG-Katalog, `lossStreakInline`) · `09c-zeichen` (Feuer, Sterne, `avHtml`) · `17-badges` · `17b-fingerabdruck` · `35b-prestige` (Insignium, Schwinge, Laufbahn) |
-| News | `26-news-konstanten` (Kategorien, Limits) · `27-news-generator` (Ereignisse, Ewige Tafel) · `28-news-ambient` · `29-news-cache` (Realtime, Autosync, Entzerrung) · `30-news-ui` (`_isBreaking`) · `31-news-detail` |
+| News | `26-news-konstanten` (Kategorien, Limits) · `26b-story-fakten` (ein Stand der Liga, der Spieltag als Paar aus Vorher und Nachher, die Punktewirkung, das Tor vor der Rangliste) · `27-news-generator` (Ereignisse, Ewige Tafel) · `28-news-ambient` · `29-news-cache` (Realtime, Autosync, Entzerrung) · `30-news-ui` (`_isBreaking`) · `31-news-detail` |
 | Chronik | `32-chronik-katalog` (`DISZIPLINEN`) · `33-chronik-engine` (Monat) · `34-chronik-rekorde` (Allzeit, `CHRON_KINDS`, `chronicleRang`, `rekordZaehlung`) · `35-chronik-ui` |
 | Bedienung | `09-ui-infra` · `20-bind` · `23-match-edit` · `24-lock` · `25-helpers` · `36-backup` |
 
@@ -223,7 +223,16 @@ rechnet ihn mit Schnitt frisch nach [§10.2] — derselbe Monat kann damit unter
 zwei Namen erscheinen, je nachdem ob ein Schnitt mitgegeben wurde. Ein
 Schnitt hinter der letzten Partie fällt deshalb weg, und ein Schnitt hinter
 dem Monatsende fällt für DIESEN Monat weg. Gemessen sank der News-Generator
-dadurch von 241 auf 162 ms kalt (Median aus elf Läufen). Wo eine
+dadurch von 241 auf 162 ms kalt (Median aus elf Läufen). **Ein Generatorlauf nimmt genau zwei Stände** (`_storyStand`,
+`_storyTagGrenzen`, `_prestigeWirkung` in `26b-story-fakten.js`): den Stand
+vor der ersten Partie des Spieltags und den danach. Rekord, Monatschronik und
+Insignium rechneten sich ihre Tagesgrenze und ihren Zeitschnitt vorher jeder
+selbst aus, und jeder ein bisschen anders — die Chronik fragte
+`prestigeTabelle` am Zeitstempel der letzten Partie, also mit einem Schnitt,
+der nichts abschneidet. Drei Rechnungen über dieselbe Änderung nennen
+irgendwann drei Zahlen, und die stehen dann auf drei Karten derselben Minute.
+„Nachher" ist für den jüngsten Spieltag deshalb `0` und damit „jetzt": so
+treffen alle vier zentralen Funktionen ihren heißen Cache. Wo eine
 Rechnung an der Identität eines Arrays hängt statt an einer Version
 (`_winnerCountsOf`, `matchesOfPlayer`, `matchesByDay`), reicht eine `WeakMap`
 — `matches` wird immer **ersetzt**, nie an Ort und Stelle verändert, und ein
@@ -295,7 +304,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung | 1320 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 192 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt | 365 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, und den Spieltag als ein Paar von Staenden | 369 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest — **im echten Browser gemessen** | 139 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -1805,8 +1814,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Zwischen zwei Schwellen liegen drei Grade (`INSIGNIUM_GRADE`, ausgebaut
   in `INSIGNIUM_AUSBAU`). Ihre relativen Schwellen stehen in
   `INSIGNIUM_GRAD_SCHWELLEN` (0, 16 und 40 %): Leon und Martin tragen in
-  den Referenzdaten Volutenkranz III, Julian folgt auf II; zum Lorbeer bleibt
-  ein klarer Abstand. Der Grad baut den Gegenstand aus, die Stufe wechselt ihn.
+  den Referenzdaten Volutenkranz III, Julian folgt dahinter; zum Lorbeer
+  bleibt ein klarer Abstand. Der Grad baut den Gegenstand aus, die Stufe wechselt ihn.
   Vorher waren drei der fünf Stufen dasselbe Bild in anderer Dichte: acht,
   zwölf, sechzehn Zacken auf einem Kreis. Damit lässt sich keine Leiter
   erzählen — und **kein Körper läuft mehr spitz aus**. Wo doch etwas
@@ -1967,7 +1976,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   `chronikPunkte`. Erst die Zusammenrechnung dämpft die nach Wert sortierte
   Sammlung: Platz 1–2 zählen voll, 3–5 durch √2, 6–8 durch √3 und danach alle
   drei Werte eine Wurzelstufe weiter. Liga-Rekorde beginnen je nach Art bei
-  96 oder 48 Punkten, werden durch die Zahl ihrer heutigen Halter geteilt und
+  100 oder 50 Punkten (`PRESTIGE_REKORD` 50 × `PRESTIGE_ART`), werden durch
+  die Zahl ihrer heutigen Halter geteilt und
   dann wie Chroniken gestapelt: Platz 1–2 voll, 3–5 durch √2, 6–8 durch √3
   und danach alle drei Rekorde eine Wurzelstufe weiter. So bleiben Rekorde belohnend,
   Auszeichnungen tragend und zufälligere Chroniken sichtbar, ohne langfristig
@@ -1979,8 +1989,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   nur noch Klasse, Anzahl, Start- oder letzten Teilwert. Chronikzeilen zeigen den
   unveränderten Info-Sheet-Wert, Rang und Wurzelstufe. Rekordzeilen zeigen
   Grundwert, Halterteilung, Rang und Wurzelstufe. Die drei Quellensummen stehen
-  bereits oben; im echten Bestand tragen Auszeichnungen rund 57 %, Chroniken
-  21 % und Rekorde 22 % des Prestigevolumens.
+  bereits oben; im echten Bestand tragen Auszeichnungen rund 53 %, Chroniken
+  20 % und Rekorde 27 % des Prestigevolumens. Eine runde Zahl ist im Blatt
+  nachrechenbar: „96, geteilt durch zwei Halter, dann durch Wurzel zwei"
+  liest niemand nach, 100 schon.
   Die Seltenheitsklasse (`BADGE_RARITY`) sagt, wie schwer eine Auszeichnung
   zu HOLEN ist. Die Halterzahl ist die Gegenprobe, nicht die Definition: die
   zehn legendären halten null bis fünf der zwölf Spieler, die vierzehn
@@ -2412,8 +2424,8 @@ der ihn hält — und für sonst niemanden.
    fünfzig Katalogeinträge.
 3. **Die Schwellen in `INSIGNIEN` werden an der echten Liga kalibriert**
    [§C30]. Die Abstände steigen, aber nicht nach einer starren Verdopplung:
-   Leon und Martin sollen ungefähr Volutenkranz III tragen, Julian auf II
-   folgen, zum Lorbeer soll Luft bleiben und der erste Ordensstern bei
+   Leon und Martin sollen ungefähr Volutenkranz III tragen, Julian dicht
+   dahinter folgen, zum Lorbeer soll Luft bleiben und der erste Ordensstern bei
    **4.500 Prestige** langfristig erreichbar sein.
 
 Nichts davon wird geschätzt. `tests/disziplinen` misst es an den echten

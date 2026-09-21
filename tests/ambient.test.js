@@ -333,6 +333,39 @@ ok(_tafel.rekorde > 0, 'ein Halterwechsel wird gemeldet', _tafel.rekorde + ' Rek
 ok(_tafel.ausbauStumm === 0, 'nur sichtbar verbesserte Rekorde werden als „ausgebaut" gemeldet',
    _tafel.ausbauStumm + ' ohne sichtbare Aenderung');
 
+// ── Ein Spieltag, ein Paar von Staenden [§11.0e] ──────────────────────
+// Rekord, Monatschronik und Insignium rechneten sich ihre Tagesgrenze und
+// ihren Zeitschnitt jeder selbst aus. Drei Rechnungen ueber dieselbe
+// Aenderung nennen irgendwann drei Zahlen, und die stehen dann auf drei
+// Karten derselben Minute. `_storyTagGrenzen` und `_storyStand` sind die
+// eine Wahrheit dazwischen, `_prestigeWirkung` ihr Unterschied.
+const _tagRahmen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const letzte = matches.length ? mts(matches[matches.length-1]) : 0;
+  const tg = _storyTagGrenzen(letzte);
+  const vor = _storyStand(tg.vorMs), nach = _storyStand(tg.nachMs);
+  const tagPartien = matches.filter(m => mts(m) >= tg.vonMs && mts(m) <= tg.vonMs + 864e5 - 1).length;
+  const aktive = players.filter(p => p && !p.hidden);
+  const w = {};
+  aktive.forEach(p => { w[p.id] = _prestigeWirkung(p.id, vor, nach); });
+  return {
+    // Der juengste Spieltag ist „heute": ein Schnitt hinter seiner letzten
+    // Partie schneidet nichts ab und kostet nur eine kalte Rechnung [§3].
+    nachOhneSchnitt: tg.nachMs === 0 && tg.istHeute === true,
+    grenze: tg.vorMs === tg.vonMs - 1 && tg.tag === tagKey(tg.vonMs),
+    partien: tg.partien === tagPartien,
+    // Die Wirkung erfindet keine Punkte. Dass die Insignium-Karten eines
+    // Laufs genau die gekreuzten Stufen sind, misst die Probe insErwartet
+    // weiter oben schon — ein zweites Mass fuer dieselbe Aussage waere eins
+    // zu viel [§C27]. (Kein Backtick in diesem Kommentar: er steht in einer
+    // Template-Zeichenkette und wuerde sie beenden.)
+    summe: aktive.every(p => w[p.id].vor + w[p.id].delta === w[p.id].nach)
+  };
+})())`));
+ok(_tagRahmen.nachOhneSchnitt, 'der juengste Spieltag vergleicht gegen „jetzt", nicht gegen einen Schnitt');
+ok(_tagRahmen.grenze, 'Vorher ist eine Millisekunde vor Mitternacht, und der Tagesschluessel gehoert dazu');
+ok(_tagRahmen.partien, 'der Rahmen zaehlt die Partien seines Tages');
+ok(_tagRahmen.summe, 'die Punktewirkung erfindet keine Punkte');
+
 // ── Ein gleitendes Fenster wird nicht „ausgebaut" [§C33] ──────────────
 // Der Wert einer Laufbahn steigt, weil jemand besser gespielt hat; der Wert
 // eines Fensters steigt auch dann, wenn am hinteren Ende ein schwaches
