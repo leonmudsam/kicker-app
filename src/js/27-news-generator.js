@@ -1082,7 +1082,18 @@ function _buildStories(){
             title: `${nameOf(topElo[0].id)} ist Saison-Champion`,
             desc: `${_fakten.spiele} Partien, ${_fakten.tore} Tore und ${_fakten.engeSpiele} enge Spiele prägten ${seasonLabel(lastArchived.id)}. `
                 + `${nameOf(topElo[0].id)} schließt den Monat mit ${topElo[0].elo} Elo an der Spitze ab.`,
-            when: sStart,
+            // ── Der Rueckblick gehoert dem Monat, den er beschliesst ──
+            // Er stand auf `seasonStart()`, also am 1. des FOLGEmonats um
+            // 00:00 — unter dem Tageskopf eines Monats, von dem er gar nicht
+            // erzaehlt, und damit unter demselben Kopf wie die Monatschronik
+            // [§C33]. Er steht jetzt am letzten Kalendertag um 23:50: zehn
+            // Minuten vor dem Wechsel sind die Profileintraege eingefroren,
+            // und die Karte schliesst den Monat ab, statt den naechsten zu
+            // eroeffnen.
+            when: (function(){
+              const e = seasonEnd(lastArchived.id);
+              return new Date(e.getFullYear(), e.getMonth(), e.getDate(), 23, 50, 0, 0);
+            })(),
             prio: STORY_PRIO.season_recap,
             dataRef: {type:'season_recap', sid: lastArchived.id, championId: topElo[0].id,
                       championElo: topElo[0].elo, topElo, fakten:_fakten}

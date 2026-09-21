@@ -1371,6 +1371,45 @@ ok(_zeigtSich.band.indexOf('nf-sam-k') >= 0
 ok(_plan.chrZeit.every(t => t === '0:0'), 'die Chronik erscheint um 00:00',
    _plan.chrZeit.join(', ') || 'keine');
 ok(_plan.chrErster, 'am ersten Tag des Folgemonats');
+
+// ── Der Rueckblick schliesst seinen Monat ab ──────────────────────────
+// Er stand auf dem Saisonstart, also am 1. um 00:00 — unter dem Tageskopf
+// eines Monats, von dem er gar nicht erzaehlt, und damit unter demselben Kopf
+// wie die Monatschronik. Der Generator bildet ihn nur in den ersten zwei
+// Tagen einer Saison; dafuer wird die Uhr kurz auf den 1. gestellt.
+const _recap = (function(){
+  const Echt = globalThis.Date;
+  const stellen = ms => { globalThis.Date = class extends Echt {
+    constructor(...a){ if(a.length===0) super(ms); else super(...a); }
+    static now(){ return ms; } }; };
+  try {
+    stellen(new Echt(2026, 7, 1, 12, 0, 0).getTime());
+    return JSON.parse(K.eval(`JSON.stringify((function(){
+      invalidateCache();
+      _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+      const r = _buildStories().filter(x => (x.dataRef||{}).type === 'season_recap');
+      return r.map(x => { const d = new Date(x.when);
+        return {sid:x.dataRef.sid, iso:d.toISOString(),
+          zeit:d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'),
+          tag:d.getDate(),
+          letzter:new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(),
+          breaking:_isBreaking(x)};
+      });
+    })())`));
+  } finally {
+    globalThis.Date = FakeDate;
+    K.eval('(function(){ invalidateCache();'
+      + ' _cache._buildStoriesKey = null; _cache._buildStoriesResult = null; })()');
+  }
+})();
+ok(_recap.length === 1, 'am Monatsersten steht genau ein Saison-Rueckblick',
+   _recap.length + ' Karten');
+ok(_recap.every(x => x.zeit === '23:50'), 'er steht um 23:50',
+   _recap.map(x => x.zeit).join(', ') || 'keiner');
+ok(_recap.every(x => x.tag === x.letzter),
+   'und am letzten Kalendertag des Monats, von dem er erzaehlt',
+   _recap.map(x => x.sid + ' -> ' + x.iso).join(', '));
+ok(_recap.every(x => x.breaking), 'und er ist Breaking');
 ok(_plan.sammel.length > 0, 'es gibt Sammelkarten', _plan.sammel.length + '');
 ok(_plan.sammel.every(n => n >= 2), 'eine Sammelkarte traegt alle verbundenen Zeilen',
    _plan.sammel.join(', ') || 'keine');
