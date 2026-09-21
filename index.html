@@ -4877,7 +4877,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.21.c11a43b0';
+const BUILD_VERSION='2026.09.21.b66d6033';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -18615,13 +18615,20 @@ const NEWS_LIMITS = {
   // Bestmarke vor Monatschronik vor Insignium), die Zahl dahinter fuehrt
   // ins Blatt, und dort steht weiterhin jede Zeile [§C33].
   sammelZeilen: 6,
-  // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
-  // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
-  // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
-  // faengt die Stunde auf: keine der 466 Partien hat nach 18:31 angefangen,
-  // und der Fun Fact dieses Slots fällt an einem Spieltag ohnehin weg.
-  tagKartePartien: 8,
+  // Ab wann die Karte des Tages steht [§C33]. Acht Partien war der Median
+  // der Liga und damit eine Behauptung ueber den TAG: erreicht an 64 % der
+  // Spieltage, und die anderen 36 % warteten bis 19 Uhr auf ein Band, das
+  // laengst faellig war. Gemessen an den 19 Spieltagen vom 28.07. bis 26.08.
+  // hatten fuenf Partien schon vierzehn von ihnen um die Mittagszeit
+  // zusammen. Nach der fuenften Partie ist ein Spieltag entschieden genug
+  // fuer ein Band; die kuerzeren Tage faengt weiter die Stunde auf, keine
+  // der 466 Partien hat nach 18:31 angefangen.
+  tagKartePartien: 5,
   tagKarteStunde: 19,
+  // Bei genau einer Partie gar keine: ein Spiel ist kein Spieltag. Das Band
+  // saesse dort auf der einzigen Karte, die es ohnehin gibt, und sagte damit
+  // nichts — es zeichnet aus, was sich gegen andere Karten durchgesetzt hat.
+  tagKarteMin: 2,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
   // Neue, jedes Mal mit einem Prozentpunkt mehr: die ID ist damit eine andere,
@@ -26076,6 +26083,27 @@ function _newsTagSpannung(s){
 // passiert, was ein Tag von einem anderen unterscheidet: dort standen sonst
 // ein Fun Fact oder eine Zufallsstatistik groß im Bild, die mit diesem Tag
 // nichts zu tun haben und gestern genauso dagestanden hätten.
+// ── Wer kann das Band tragen? [§C33] ────────────────────────────────
+// Drei Sorten nicht, und jede aus ihrem eigenen Grund.
+// **Breaking** nicht: die Karte ist im Feed ohnehin die lauteste — voller
+// Rahmen, pulsierender Balken, Schein hinter der ganzen Flaeche. Das Band
+// darueber sagt dasselbe ein zweites Mal [§C27] und nimmt es genau der
+// Karte, die sonst keine Moeglichkeit hat, herauszustehen.
+// **Der Spieler des Tages** nicht: er ist eine Pflichtkarte und steht an
+// jedem gewerteten Spieltag da. Er traegt seine Goldkante schon und haette
+// das Band an jedem ruhigen Tag von selbst — dann zeichnet es nichts aus.
+// **Ein Rueckblick** nicht: Woche, Monat und Saison erzaehlen von einem
+// Zeitraum, das Band gehoert dem TAG.
+// Die Liste steht hier und nicht im Aufruf, weil `tests/ambient` und
+// `tests/blatt` dieselbe Frage stellen und sie sich vorher jeder selbst
+// beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
+const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
+  'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
+  'season_recap']);
+function _newsTagKarteWuerdig(st){
+  if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
+  return !_isBreaking(st);
+}
 function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || !items.length) return null;
   const tagMs = _newsTagMs(dayKey);
@@ -26089,13 +26117,20 @@ function _newsTagKarte(items, dayKey){
   // Spieltag noch lief und der Spieler des Tages noch gar nicht feststand.
   // Danach stand sie erst um 23:59 und damit einen halben Tag, nachdem die
   // letzte Partie gelaufen war [§C33].
-  if(tagMs.length < NEWS_LIMITS.tagKartePartien){
+  // Ein Spiel ist kein Spieltag: bei genau einer Partie gibt es kein Band.
+  if(tagMs.length < NEWS_LIMITS.tagKarteMin) return null;
+  if(tagMs.length >= NEWS_LIMITS.tagKartePartien){
+    // Nicht ab der Zahl allein, sondern ab dem MOMENT, in dem sie erreicht
+    // ist: sonst stuende das Band am Morgen des naechsten Tages rueckwirkend
+    // auch ueber einer Karte, die vor der fuenften Partie entstanden ist.
+    const zeiten = tagMs.map(m => mts(m)).sort((a, b) => a - b);
+    if(Date.now() < zeiten[NEWS_LIMITS.tagKartePartien - 1]) return null;
+  } else {
     const frei = new Date(dayKey + 'T00:00:00');
     frei.setHours(NEWS_LIMITS.tagKarteStunde, 0, 0, 0);
     if(Date.now() < frei.getTime()) return null;
   }
-  const OHNE = new Set(['ambient', 'dry_spell', 'season_endgame', 'quiet_week', 'season_start']);
-  const kandidaten = items.filter(x => !OHNE.has((x.dataRef || {}).type));
+  const kandidaten = items.filter(_newsTagKarteWuerdig);
   if(!kandidaten.length) return null;
   const beste = kandidaten.slice().sort((a, b) =>
     (_newsTagSpannung(b) - _newsTagSpannung(a))

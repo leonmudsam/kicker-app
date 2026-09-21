@@ -141,13 +141,20 @@ const NEWS_LIMITS = {
   // Bestmarke vor Monatschronik vor Insignium), die Zahl dahinter fuehrt
   // ins Blatt, und dort steht weiterhin jede Zeile [§C33].
   sammelZeilen: 6,
-  // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
-  // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
-  // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
-  // faengt die Stunde auf: keine der 466 Partien hat nach 18:31 angefangen,
-  // und der Fun Fact dieses Slots fällt an einem Spieltag ohnehin weg.
-  tagKartePartien: 8,
+  // Ab wann die Karte des Tages steht [§C33]. Acht Partien war der Median
+  // der Liga und damit eine Behauptung ueber den TAG: erreicht an 64 % der
+  // Spieltage, und die anderen 36 % warteten bis 19 Uhr auf ein Band, das
+  // laengst faellig war. Gemessen an den 19 Spieltagen vom 28.07. bis 26.08.
+  // hatten fuenf Partien schon vierzehn von ihnen um die Mittagszeit
+  // zusammen. Nach der fuenften Partie ist ein Spieltag entschieden genug
+  // fuer ein Band; die kuerzeren Tage faengt weiter die Stunde auf, keine
+  // der 466 Partien hat nach 18:31 angefangen.
+  tagKartePartien: 5,
   tagKarteStunde: 19,
+  // Bei genau einer Partie gar keine: ein Spiel ist kein Spieltag. Das Band
+  // saesse dort auf der einzigen Karte, die es ohnehin gibt, und sagte damit
+  // nichts — es zeichnet aus, was sich gegen andere Karten durchgesetzt hat.
+  tagKarteMin: 2,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
   // Neue, jedes Mal mit einem Prozentpunkt mehr: die ID ist damit eine andere,

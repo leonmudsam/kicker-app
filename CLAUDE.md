@@ -124,7 +124,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **742**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **744**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -304,7 +304,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung | 1320 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 192 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die eine Tafel-Karte, deren Grund in ihr steht, und die Stufe, die wieder getragen wird | 376 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, und das Band, das ab der fuenften Partie steht | 378 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest — **im echten Browser gemessen** | 139 |
 | `archiv` | Einfrieren abgeschlossener Monate | 8 |
@@ -383,7 +383,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Reihenfolge — zwei Podeste für dieselbe Aussage wären eins zu viel),
   die Segmentwähler sind `.ui-switch` (äußere Ebene, gerahmt) und `.ui-tabs`
   (innere Ebene, rahmenlos), das Rangabzeichen ist `.rangab`
-  (`rankBadgeHtml`).
+  (`rankBadgeHtml`), und wer die Karte des Tages tragen darf, sagt
+  `_newsTagKarteWuerdig` [§C33].
   **Eine Animation endet, wenn sie endet** (`_afterTransition`). Beim
   Zurückgehen aus einem Blatt schiebt sich das Kind nach unten, der Inhalt wird
   getauscht, das Eltern-Blatt kommt hoch. Der Tausch hing an `setTimeout(200)`,
@@ -1224,17 +1225,34 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Spieltagen**: an einem Tag ohne Partie ist nichts passiert, was ihn von einem
   anderen unterscheidet, und dort standen sonst ein Fun Fact oder eine
   Zufallsstatistik groß im Bild, die gestern genauso dagestanden hätten.
-  Und sie steht, **sobald der Spieltag entschieden ist**: zwei Bedingungen,
-  eine reicht. Entweder trägt der Tag `NEWS_LIMITS.tagKartePartien` Partien —
-  acht, gemessen der Median der Liga über 56 Spieltage und erreicht an 64 %
-  von ihnen — oder es ist `tagKarteStunde` geworden, 19 Uhr. Keine der 466
-  Partien hat nach 18:31 angefangen, und der Fun Fact dieses Slots fällt an
-  einem Spieltag ohnehin weg: die Stunde kostet also nichts und fängt die
-  kurzen Tage auf, die die Zahl nie erreichen.
-  Welche Story das Band trägt, entscheidet `_newsTagSpannung`: Breaking,
-  Rekordwechsel, große Überraschungen, Spitzenspiele und mehrteilige Ereignisse
-  stehen vor einer gewöhnlichen Tagesbilanz. `potd` bleibt eine Pflichtkarte
-  mit hoher Feed-Priorität, wird aber **nicht automatisch** Karte des Tages.
+  Und sie steht, **sobald der Spieltag entschieden ist**: mit der
+  `NEWS_LIMITS.tagKartePartien`-ten Partie des Tages, also der fünften, und in
+  dem Moment, in dem sie gelaufen ist — nicht ab der Zahl allein, sonst stünde
+  das Band am Morgen danach rückwirkend über einer Karte von vor der fünften
+  Partie. Acht Partien waren einmal die Schwelle, der Median der Liga, und
+  damit warteten 36 % der Spieltage bis zum Abend auf ein Band, das längst
+  fällig war; an vierzehn der 19 Spieltage vom 28.07. bis 26.08. lagen fünf
+  Partien um die Mittagszeit vor. Bei zwei bis vier Partien fängt
+  `tagKarteStunde` den Tag auf, 19 Uhr — keine der 466 Partien hat nach 18:31
+  angefangen. Und bei **genau einer Partie gibt es kein Band**
+  (`tagKarteMin`): ein Spiel ist kein Spieltag, und das Band säße auf der
+  einzigen Karte, die es ohnehin gibt.
+  Welche Story es trägt, entscheidet `_newsTagSpannung` unter denen, die es
+  tragen dürfen (`_newsTagKarteWuerdig`): Rekordwechsel, große
+  Überraschungen, Spitzenspiele und mehrteilige Ereignisse stehen vor einer
+  gewöhnlichen Tagesbilanz. **Drei Sorten tragen es nie**, jede aus ihrem
+  eigenen Grund. **Breaking** nicht: die Karte ist im Feed ohnehin die
+  lauteste, voller Rahmen, pulsierender Balken, Schein hinter der Fläche —
+  das Band darüber sagt dasselbe ein zweites Mal [§C27] und nimmt es genau
+  der Karte, die sonst keine Möglichkeit hat, herauszustehen. **Der Spieler
+  des Tages** nicht: er ist eine Pflichtkarte, steht an jedem gewerteten
+  Spieltag und trägt seine Goldkante schon — er hätte das Band an jedem
+  ruhigen Tag von selbst, und dann zeichnet es nichts aus. **Ein Rückblick**
+  nicht: Woche, Monat und Saison erzählen von einem Zeitraum, das Band gehört
+  dem Tag. Bleibt danach kein würdiger Kandidat, trägt an diesem Tag keine
+  Karte das Band. Die Liste steht an EINER Stelle, weil `tests/ambient` und
+  `tests/blatt` dieselbe Frage stellen und sie sich vorher jeder selbst
+  beantwortet haben.
   Die Auswahl ist deterministisch und verändert weder Story-ID noch Zeitpunkt.
   Sie wird aus allen Karten des Tages berechnet, nicht neu aus dem aktiven
   Filter; ist die Gewinnerstory dort ausgeblendet, bekommt keine Ersatzkarte

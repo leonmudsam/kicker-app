@@ -2007,20 +2007,27 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
       const k=d.type==='sammel' ? 'sammel:'+d.quelle : d.type;
       o[k]=(o[k]||0)+gewicht(s); return o; },{});
     const tage=[...new Set(sicht.map(s=>tagKey(s.when)))].filter(k=>_newsTagMs(k).length);
-    const ohne=new Set(['ambient','dry_spell','season_endgame','quiet_week','season_start']);
+    // Wuerdig ist, was das Band tragen darf — dieselbe Frage und dieselbe
+    // Liste wie in der App [§C27]. Vorher stand sie hier ein zweites Mal.
     const karten=tage.map(k=>{
       const items=sicht.filter(s=>tagKey(s.when)===k);
       const id=_newsTagKarte(items,k), karte=items.find(s=>s.id===id);
-      const kandidaten=items.filter(s=>!ohne.has((s.dataRef||{}).type));
-      const max=Math.max.apply(null,kandidaten.map(_newsTagSpannung));
+      const kandidaten=items.filter(_newsTagKarteWuerdig);
+      const max=kandidaten.length?Math.max.apply(null,kandidaten.map(_newsTagSpannung)):0;
       return {id,type:karte&&(karte.dataRef||{}).type,
-        score:karte?_newsTagSpannung(karte):0,max};
+        score:karte?_newsTagSpannung(karte):0,max,kand:kandidaten.length};
     });
     aus={tafel:tw,spiel:sw,fun:fun.length,quote:tw/(tw+sw+fun.length),
       tafelKarten:tafel.length,spielKarten:spiel.length,
       kartenQuote:tafel.length/(tafel.length+spiel.length+fun.length),
       tafelTypen:zaehlTypen(tafel),spielTypen:zaehlTypen(spiel),
-      karten, falsch:karten.filter(x=>!x.id||Math.abs(x.score-x.max)>1e-8).length};
+      // Ein Tag, an dem nur Breaking, der Spieler des Tages und Rueckblicke
+      // stehen, hat kein Band — und das ist richtig, nicht falsch.
+      karten, falsch:karten.filter(x=>x.kand
+        ? (!x.id||Math.abs(x.score-x.max)>1e-8) : !!x.id).length,
+      ohneBand:karten.filter(x=>!x.id).length,
+      bandUnwuerdig:karten.filter(x=>x.type
+        && !_newsTagKarteWuerdig({dataRef:{type:x.type}})).length};
   } finally {
     matches=alle; Date=AlteDate; invalidateCache(); _cache._stories=alteStories;
     _cache._consolFrom=null; _cache._frischVon=null;
@@ -2036,12 +2043,13 @@ ok(_mix.fun > 0,
    'die Gegenhaelfte enthaelt automatisch erzeugte Fun Facts',
    _mix.fun + ' Fun Facts');
 ok(_mix.karten.length >= 5 && _mix.falsch === 0
-   && _mix.karten.every(x=>x.score>=620 && x.type!=='ambient'),
+   && _mix.karten.every(x=>!x.id || x.score>=620),
    'jede echte Karte des Tages ist die spannendste wuerdige Geschichte ihres Spieltags',
-   _mix.karten.map(x=>x.type+':'+Math.round(x.score)).join(' · '));
-ok(_mix.karten.some(x=>x.type==='potd') && _mix.karten.some(x=>x.type!=='potd'),
-   'Spieler des Tages gewinnt das Band nur, wenn keine staerkere Story vorliegt',
-   _mix.karten.map(x=>x.type).join(', '));
+   _mix.karten.map(x=>(x.type||'ohne Band')+':'+Math.round(x.score)).join(' · '));
+ok(_mix.bandUnwuerdig === 0,
+   'kein Band gehoert Breaking, dem Spieler des Tages oder einem Rueckblick',
+   _mix.karten.map(x=>x.type||'ohne Band').join(', ')
+   + ' · ' + _mix.ohneBand + ' Tage ohne Band');
 
 // ── Das Rekord-Blatt nennt niemanden zweimal ────────────────────────
 // „Maxi, Leo und Julian uebernehmen" stand im Kopf, „Vorher gehalten von Maxi
@@ -2549,44 +2557,79 @@ ok(_meta.length === 0, 'kein Blatt erklaert die Regeln des Feeds', _meta.join(',
 // Sie kam einmal zwanzig Minuten nach dem ersten Spiel: der Rekord, der
 // gerade wechselte, war die einzige Karte des Tages und damit automatisch die
 // staerkste. Danach stand sie erst um 23:59 und damit einen halben Tag,
-// nachdem die letzte Partie gelaufen war. Jetzt zwei Bedingungen, eine
-// reicht: acht Partien oder 19 Uhr. Gemessen wird beides einzeln, also mit
-// einem Tag, der die Zahl erreicht, und einem, der sie nicht erreicht.
+// nachdem die letzte Partie gelaufen war. Danach ab acht Partien — dem Median
+// der Liga — oder ab 19 Uhr, und damit warteten 36 % der Spieltage bis zum
+// Abend auf ein Band, das laengst faellig war. Jetzt ab der fuenften Partie,
+// bei zwei bis vier ab 19 Uhr, und bei genau einer Partie gar nicht.
 const _tk = JSON.parse(K.eval(`JSON.stringify((function(){
   const tage = {};
   matches.forEach(m => { const k = tagKey(m.created_at); tage[k] = (tage[k]||0)+1; });
   const voll = Object.keys(tage).find(k => tage[k] >= NEWS_LIMITS.tagKartePartien);
-  const kurz = Object.keys(tage).find(k => tage[k] > 0 && tage[k] < NEWS_LIMITS.tagKartePartien);
+  const kurz = Object.keys(tage).find(k => tage[k] >= NEWS_LIMITS.tagKarteMin
+    && tage[k] < NEWS_LIMITS.tagKartePartien);
+  const einzeln = Object.keys(tage).find(k => tage[k] === 1);
   // POTD hat absichtlich die hoehere Feed-Prioritaet: die Tageskarte soll
   // trotzdem die seltenere Geschichte waehlen und nicht reflexhaft POTD.
+  // Die Breaking-Zeile steht daneben, weil sie im Feed schon die lauteste
+  // Karte ist und das Band damit dasselbe zweimal sagen wuerde.
   const items = [{id:'a', prio:999, dataRef:{type:'potd'}},
-                 {id:'b', prio:1, dataRef:{type:'giant_slayer', chance:.08}}];
-  const um = (tag, std, min) => {
-    const d = new Date(tag + 'T00:00:00'); d.setHours(std, min||0, 0, 0);
-    const echt = Date.now; Date.now = () => d.getTime();
+                 {id:'b', prio:1, dataRef:{type:'giant_slayer', chance:.08}},
+                 {id:'c', prio:998, dataRef:{type:'lead_change'}},
+                 {id:'d', prio:997, dataRef:{type:'woche'}}];
+  const beiMs = (ms, tag) => {
+    const echt = Date.now; Date.now = () => ms;
     let r = null; try { r = _newsTagKarte(items, tag); } finally { Date.now = echt; }
     return r;
   };
-  return {vollN: tage[voll], kurzN: tage[kurz],
-    vollFrueh: um(voll, 8), kurzFrueh: um(kurz, 12), kurzSpaet: um(kurz, 19),
-    kurzKnapp: um(kurz, 18, 59), leer: um('2020-01-01', 23),
-    stunde: NEWS_LIMITS.tagKarteStunde, partien: NEWS_LIMITS.tagKartePartien};
+  const um = (tag, std, min) => {
+    const d = new Date(tag + 'T00:00:00'); d.setHours(std, min||0, 0, 0);
+    return beiMs(d.getTime(), tag);
+  };
+  const zeiten = tag => matches.filter(m => tagKey(m.created_at) === tag)
+    .map(m => mts(m)).sort((a, b) => a - b);
+  const fuenfte = voll ? zeiten(voll)[NEWS_LIMITS.tagKartePartien - 1] : 0;
+  // Kein Spieltag der echten Liga hat genau eine Partie, also wird einer
+  // gebaut: ohne ihn waere die Zusicherung gruen, auch wenn die Regel fehlt.
+  const alle = matches.slice();
+  let einzelnGebaut = null, einzelnTag = kurz || voll;
+  try {
+    const erste = alle.filter(m => tagKey(m.created_at) === einzelnTag)
+      .sort((a, b) => mts(a) - mts(b))[0];
+    matches = alle.filter(m => tagKey(m.created_at) !== einzelnTag).concat([erste]);
+    einzelnGebaut = um(einzelnTag, 23);
+  } finally { matches = alle; }
+  return {vollN: tage[voll], kurzN: tage[kurz], einzelnN: einzeln ? tage[einzeln] : 0,
+    einzelnGebaut, einzelnTag,
+    vorFuenf: beiMs(fuenfte - 1, voll), abFuenf: beiMs(fuenfte, voll),
+    kurzFrueh: um(kurz, 12), kurzSpaet: um(kurz, 19), kurzKnapp: um(kurz, 18, 59),
+    leer: um('2020-01-01', 23),
+    breaking: _newsTagKarteWuerdig({dataRef:{type:'lead_change'}}),
+    potd: _newsTagKarteWuerdig({dataRef:{type:'potd'}}),
+    rueckblick: _newsTagKarteWuerdig({dataRef:{type:'woche'}}),
+    stunde: NEWS_LIMITS.tagKarteStunde, partien: NEWS_LIMITS.tagKartePartien,
+    mind: NEWS_LIMITS.tagKarteMin};
 })())`));
-ok(_tk.partien >= 6 && _tk.partien <= 10 && _tk.stunde === 19,
-   'die Schwelle liegt bei acht Partien und 19 Uhr',
-   _tk.partien + ' Partien, ' + _tk.stunde + ' Uhr');
-ok(_tk.vollFrueh === 'b', 'ein Tag mit acht Partien traegt seine Karte sofort',
-   _tk.vollN + ' Partien -> ' + _tk.vollFrueh);
-ok(_tk.vollFrueh !== 'a', 'Spieler des Tages wird nicht automatisch Karte des Tages',
-   'gewaehlt: ' + _tk.vollFrueh);
+ok(_tk.partien === 5 && _tk.stunde === 19 && _tk.mind === 2,
+   'die Schwelle liegt bei fuenf Partien, 19 Uhr und mindestens zwei Partien',
+   _tk.partien + ' Partien, ' + _tk.stunde + ' Uhr, ab ' + _tk.mind);
+ok(_tk.vorFuenf === null, 'vor der fuenften Partie steht noch kein Band',
+   _tk.vollN + ' Partien -> ' + _tk.vorFuenf);
+ok(_tk.abFuenf === 'b', 'mit der fuenften Partie steht es',
+   _tk.vollN + ' Partien -> ' + _tk.abFuenf);
 ok(_tk.kurzFrueh === null, 'ein kurzer Spieltag wartet bis 19 Uhr',
    _tk.kurzN + ' Partien um 12 Uhr -> ' + _tk.kurzFrueh);
 ok(_tk.kurzKnapp === null, 'eine Minute vor 19 Uhr steht sie noch nicht',
    String(_tk.kurzKnapp));
-ok(_tk.kurzSpaet === 'b', 'um 19 Uhr steht sie auch ohne acht Partien',
+ok(_tk.kurzSpaet === 'b', 'um 19 Uhr steht sie auch mit zwei bis vier Partien',
    String(_tk.kurzSpaet));
+ok(_tk.einzelnGebaut === null,
+   'ein Spieltag mit genau einer Partie bekommt kein Band',
+   _tk.einzelnTag + ' auf eine Partie gekuerzt -> ' + String(_tk.einzelnGebaut));
 ok(_tk.leer === null, 'ein Tag ohne Partie bekommt keine Karte des Tages',
    String(_tk.leer));
+ok(!_tk.breaking && !_tk.potd && !_tk.rueckblick,
+   'Breaking, der Spieler des Tages und ein Rueckblick tragen das Band nie',
+   JSON.stringify({breaking:_tk.breaking, potd:_tk.potd, rueckblick:_tk.rueckblick}));
 
 // ── Die Wochenkarte zeigt alle sechs Wertungen ──────────────────────
 // Sie zeigte drei und darunter „und 3 weitere Wertungen": die Ueberraschung,
