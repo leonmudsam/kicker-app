@@ -293,6 +293,49 @@ ok(br({type:'top_clash'}) === false, 'top_clash ist kein Breaking mehr');
 ok(br({type:'giant_slayer'}) === false, 'giant_slayer ist kein Breaking mehr');
 ok(br({type:'potd'}) === false, 'Alltag bleibt Alltag');
 
+// Und die Liste ist geschlossen: gemessen ueber die 19 Spieltage vom 28.07.
+// bis 26.08. traegt keine Karte des fertigen Feeds Breaking, deren Anlass
+// nicht darauf steht. Eine Sammelkarte erbt es von ihren Teilen — Breaking
+// wird also NACH dem Buendeln entschieden, sonst verloere ein erstmals
+// vergebener Liga-Rekord seinen Rang, sobald er mit seinem Moment reist.
+const _brkZu = JSON.parse(K.eval(`JSON.stringify((function(){
+  const erlaubt = new Set(['lead_change','elo_record','streak_record',
+    'season_recap','rekord_erstmals']);
+  const anlass = d => erlaubt.has(d.type)
+    || (d.type === 'badge_unlocked' && d.rarity === 'legendary')
+    || (d.type === 'insignium_stufe' && !!d.oben);
+  const alle = matches.slice();
+  const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
+    .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
+  let brk = 0, fremd = [], geerbt = 0;
+  tage.forEach(t => {
+    matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let r = []; try { r = _buildStories() || []; } catch(e){ return; }
+    let f = []; try { f = _consolidateStories(r) || []; } catch(e){}
+    f.filter(_isBreaking).forEach(x => {
+      brk++;
+      const d = x.dataRef || {};
+      if(d.type === 'sammel'){
+        const teile = d.teile || [];
+        // Die Zeile einer Sammelkarte traegt ihren Typ nicht mit, also wird
+        // der Anlass an den Rohmeldungen desselben Tages gesucht.
+        const titel = new Set(teile.map(z => z.titel));
+        if(r.filter(y => titel.has(y.title)).some(y => anlass(y.dataRef || {}))) geerbt++;
+        else fremd.push(x.title);
+      } else if(!anlass(d)) fremd.push(x.title);
+    });
+  });
+  matches = alle; invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  return {brk, geerbt, fremd:[...new Set(fremd)]};
+})())`));
+ok(_brkZu.brk > 0, 'der Durchlauf trifft ueberhaupt Breaking-Karten',
+   _brkZu.brk + ' Karten, ' + _brkZu.geerbt + ' davon gebuendelt');
+ok(_brkZu.fremd.length === 0, 'keine Karte traegt Breaking ohne einen Anlass von der Liste',
+   _brkZu.fremd.slice(0, 2).join(' | ') || 'keine');
+
 // ── Der Takt einer Auszeichnung haengt an ihrer Klasse [§11.0c] ───────
 // Eine Liste fuer alle drei Klassen war zu grob in beide Richtungen: sie
 // liess legendaere Erfolge zwischen der zehnten und der fuenfundzwanzigsten
