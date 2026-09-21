@@ -4213,6 +4213,52 @@ ok(_worte.englisch.length === 0, 'keine englische Schlagzeile',
 ok(_worte.fragment.length === 0, 'kein Satzfragment als letzter Satz',
    _worte.fragment.slice(0, 2).join(' | ') || 'keins');
 
+console.log('=== JEDE ZEILE HAT IHRE ZEIT, DIE WIRKUNG STEHT EINMAL ===');
+// Im Blatt eines Tafel-Moments stand eine Liste ohne jeden Zeitbezug,
+// obwohl ein Moment mehrere Partien umfasst. Und die Punktewirkung stand
+// gar nicht darin: sie ist je Spieler EINE Zahl, egal aus welcher Zeile sie
+// kommt — beide Staende gehoeren dem Spieltag [§11.0e]. Je Zeile gezeigt
+// waere dieselbe Rechnung neunmal untereinander.
+const _wirk = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories() || [];
+  _cache._consolFrom = null;
+  const feed = _consolidateStories(roh.slice()) || [];
+  const sam = feed.filter(s => (s.dataRef || {}).quelle === 'tafel')[0]
+           || feed.filter(s => (s.dataRef || {}).type === 'sammel')[0];
+  if(!sam) return {n:0};
+  const d = sam.dataRef, teile = d.teile || [];
+  const m = String(_newsDetailMitte(sam) || '');
+  const uhr = t => new Date(t.ms).toLocaleTimeString('de-DE',
+    {hour:'2-digit', minute:'2-digit'});
+  const standVon = t => {
+    const p = (matches || []).find(x => x.id === t.matchId);
+    if(!p) return '';
+    return p.winner === 'A' ? p.score_a + ':' + p.score_b
+                            : p.score_b + ':' + p.score_a;
+  };
+  const eigene = teile.filter(t => t.matchId && t.matchId !== d.matchId);
+  const wPos = m.indexOf('Wirkung auf das Insignium');
+  const spieler = {};
+  teile.forEach(t => Object.keys(t.lb || {}).forEach(pid => { spieler[pid] = 1; }));
+  return {n:teile.length,
+    zeiten:teile.filter(t => t.ms && m.indexOf(uhr(t)) >= 0).length,
+    eigene:eigene.length,
+    staende:eigene.filter(t => { const v = standVon(t); return v && m.indexOf(v) >= 0; }).length,
+    abschnitte:(m.match(/Wirkung auf das Insignium/g) || []).length,
+    reihen: wPos < 0 ? 0 : (m.slice(wPos).match(/nd-stat-row/g) || []).length,
+    spieler:Object.keys(spieler).length};
+})())`));
+ok(_wirk.n > 1, 'eine Sammelkarte mit mehreren Zeilen steht im Feed', String(_wirk.n));
+ok(_wirk.zeiten === _wirk.n, 'jede Zeile im Blatt nennt ihre eigene Uhrzeit',
+   _wirk.zeiten + ' von ' + _wirk.n);
+ok(_wirk.eigene === 0 || _wirk.staende === _wirk.eigene,
+   'und ihr eigenes Ergebnis, wo es ein anderes ist als oben',
+   _wirk.staende + ' von ' + _wirk.eigene);
+ok(_wirk.abschnitte === 1 && _wirk.reihen === _wirk.spieler && _wirk.spieler > 0,
+   'die Punktewirkung steht in einem Abschnitt, einmal je Spieler',
+   _wirk.abschnitte + ' Abschnitt, ' + _wirk.reihen + ' Zeilen für '
+   + _wirk.spieler + ' Spieler');
+
 console.log('=== DAS AUFGEHEN DER TAFEL IST EINE NACHRICHT ===');
 // Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik, und
 // gemeldet wird erst, was sich von der ersten gewerteten Lage an aendert

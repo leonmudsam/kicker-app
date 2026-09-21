@@ -2027,6 +2027,10 @@ function _buildStories(){
       o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
                 anteilVor:w.rekordVor, anteilNach:w.rekordNach,
                 zahl:w.rekordZahl,
+                // Die Stufe gehoert dazu: im Blatt eines Tafel-Moments steht
+                // EIN zusammengefasster Bereich „Wirkung auf das Insignium",
+                // und der braucht die beiden Staende samt Stufe [§C34].
+                stufeVor:w.stufeVor, stufeNach:w.stufeNach,
                 basis:q ? q.grundwert : 0, halter:q ? q.halter : 0,
                 rang:q ? q.rang : 0, staffel:q ? q.staffel : 1,
                 wert:q ? q.wert : 0};

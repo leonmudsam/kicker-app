@@ -741,13 +741,60 @@ function _newsDetailMitte(s){
         // dort zweimal ein Satz ueber ein Spiel, dessen Stand nur im
         // Sammelband der Karte zu sehen war.
         const jeZeileBand = d.quelle === 'ergebnis';
-        const zeilen = teile.map(t => `<div class="nw-zeile"${
+        // Jede Änderung mit ihrer eigenen Uhrzeit: ein Tafel-Moment umfasst
+        // mehrere Partien, und die Liste stand ohne jeden Zeitbezug da. Das
+        // Ergebnis der eigenen Partie kommt dazu, wo es ein anderes ist als
+        // das Band über der Liste — als Stand, nicht als zweites Band: neun
+        // Bänder mit je vier Wappen sind das, wovor „Detail folgt der Größe"
+        // warnt [§C33].
+        const zeileStand = t => {
+          if(!t.matchId || t.matchId === d.matchId) return '';
+          const m = (matches || []).find(x => x.id === t.matchId);
+          if(!m) return '';
+          return m.winner === 'A' ? m.score_a + ':' + m.score_b
+                                  : m.score_b + ':' + m.score_a;
+        };
+        const zeilen = teile.map(t => {
+          const uhr = t.ms ? _newsUhrzeit(t.ms) : '';
+          const stand = zeileStand(t);
+          const zeit = [uhr, stand].filter(Boolean).join(' · ');
+          return `<div class="nw-zeile"${
               (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span>${
                 t.wert ? `<span class="nw-wert">${esc(t.wert)}</span>` : ''}</div>
+              ${zeit ? `<div class="nw-satz num">${esc(zeit)}</div>` : ''}
               ${jeZeileBand && t.matchId ? _newsMatchVsBlock(t.matchId) : ''}
               ${_ndNeu(t.text) ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
-            </div>`).join('');
+            </div>`;
+        }).join('');
+        // ── Ein Bereich für die Wirkung, nicht einer je Zeile ───────────
+        // Die Punktewirkung eines Spieltags ist je Spieler EINE Zahl, egal
+        // aus welcher Zeile sie kommt: beide Stände gehören dem Tag, nicht
+        // dem einzelnen Rekord [§11.0e]. Je Zeile gezeigt stünde dieselbe
+        // Rechnung neunmal untereinander; hier steht sie einmal je Spieler.
+        const wirkung = (function(){
+          const je = {};
+          teile.forEach(t => {
+            const lb = t.lb;
+            if(!lb) return;
+            Object.keys(lb).forEach(pid => { if(!je[pid] && pm[pid]) je[pid] = lb[pid]; });
+          });
+          const ids = Object.keys(je);
+          if(!ids.length) return '';
+          return `<div class="nd-section">Wirkung auf das Insignium</div>`
+            + ids.map(pid => {
+              const w = je[pid];
+              const stufe = (typeof INSIGNIEN !== 'undefined' && w.stufeNach != null
+                             && INSIGNIEN[w.stufeNach]) ? INSIGNIEN[w.stufeNach].name : '';
+              const auf = (w.stufeNach != null && w.stufeVor != null
+                           && w.stufeNach > w.stufeVor);
+              return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+                <div class="nd-stat-label">${esc(nameOf(pid))}${stufe
+                  ? `<small>${esc(auf ? 'neu: ' + stufe : stufe)}</small>` : ''}</div>
+                <div class="nd-stat-val ${w.nach > w.vor ? 'acid' : ''}">${
+                  esc(w.vor + ' → ' + w.nach + ' Prestige')} ›</div></div>`;
+            }).join('');
+        })();
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand
         // auch ueber der Karte, auf der drei Spieler dieselbe Stufe
@@ -760,7 +807,7 @@ function _newsDetailMitte(s){
           : d.quelle === 'ergebnis' ? 'Diese beiden Partien'
           : 'In dieser Partie';
         return `<div class="nd-section">${kopfzeile}</div>
-          ${mv}<div class="nw-liste">${zeilen}</div>`;
+          ${mv}<div class="nw-liste">${zeilen}</div>${wirkung}`;
       }
       // Die Stufe IST die Story — und das Blatt war leer.
       case 'insignium_stufe': {
