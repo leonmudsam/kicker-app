@@ -491,6 +491,53 @@ ok(_insHistorisch.zeiten.every(t => t === _insHistorisch.kreuz),
 ok(_insHistorisch.gleich && new Set(_insHistorisch.ids).size === _insHistorisch.ids.length,
    'erneute Generatorlaeufe bleiben idempotent', _insHistorisch.ids.join(', '));
 
+// ── Erstmals erreicht oder wieder getragen ────────────────────────────
+// Prestige aus Liga-Rekorden wird unter den Haltern geteilt und faellt mit
+// einem verlorenen Bestwert wieder [§C34]: dieselbe Stufe kann zweimal
+// erreicht werden, und beide Male stand „X traegt den Volutenkranz" da, als
+// waere es das erste Mal. Der Beleg ist der eigene Bestand — die ID einer
+// Insignium-Karte traegt Spieler, Stufe und Spieltag.
+const _insWieder = JSON.parse(K.eval(`JSON.stringify((function(){
+  const original = prestigeOf, bestand = _cache._stories;
+  const pid = players[0].id;
+  const letzte = mts(matches[matches.length-1]);
+  const t0 = new Date(letzte); t0.setHours(0,0,0,0);
+  const tag = matches.filter(m => mts(m) >= t0.getTime()).sort((a,b)=>mts(a)-mts(b));
+  const kreuz = mts(tag[Math.min(1, tag.length-1)] || matches[matches.length-1]);
+  const stand = stufe => ({pid, punkte:stufe >= 2 ? 760 : stufe ? 260 : 100, stufe,
+    insignie:INSIGNIEN[stufe], naechste:INSIGNIEN[stufe+1] || null,
+    fehlt:stufe >= 2 ? 920 : stufe ? 460 : 140,
+    teile:{auszeichnung:80, monat:40, rekord:20},
+    zahlen:{auszeichnung:1, monat:1, rekord:1}, quellen:[], platz:1, von:players.length});
+  try {
+    prestigeOf = (id, bisMs) => id !== pid ? original(id, bisMs)
+      : stand((bisMs != null && bisMs < kreuz) ? 0 : 2);
+    // Nur fuer die zweite Stufe liegt eine aeltere Zeile im Bestand.
+    _cache._stories = [{id:'ins_' + pid + '_' + INSIGNIEN[2].key + '_2026-08-12'}];
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    const k = _buildStories().filter(s => (s.dataRef||{}).type === 'insignium_stufe'
+      && s.dataRef.pid === pid);
+    const je = {}; k.forEach(s => { je[s.dataRef.stufe] = s; });
+    return {
+      stufen: k.map(s => s.dataRef.stufe),
+      erstmals: !!je[1] && je[1].title.indexOf(' wieder') < 0 && je[1].dataRef.wieder === '',
+      wiederTitel: !!je[2] && je[2].title.slice(-7) === ' wieder',
+      wiederDatum: !!je[2] && je[2].desc.indexOf('Zuletzt stand die Stufe am 12.08.') === 0,
+      wiederRef: !!je[2] && je[2].dataRef.wieder === '2026-08-12'
+    };
+  } finally {
+    prestigeOf = original; _cache._stories = bestand;
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_insWieder.stufen.join(',') === '1,2', 'der Lauf trifft beide Stufen',
+   _insWieder.stufen.join(',') || 'keine');
+ok(_insWieder.erstmals, 'eine Stufe ohne aeltere Zeile im Bestand ist erstmals erreicht');
+ok(_insWieder.wiederTitel && _insWieder.wiederRef,
+   'eine Stufe, die schon einmal dastand, wird wieder getragen',
+   JSON.stringify(_insWieder));
+ok(_insWieder.wiederDatum, 'und die Karte nennt den Tag, an dem sie zuletzt stand');
+
 console.log('\n=== 9c. STORY-BLAETTER BLEIBEN BEI IHRER GESCHICHTE ===');
 // Story-Blätter zeigen ihren gesamten Beleg direkt. Zusätzliche Wege in
 // Rückblicke und Spielerprofile verdoppeln nur die Navigation und sind dort

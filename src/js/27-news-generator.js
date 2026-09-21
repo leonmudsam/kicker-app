@@ -2415,6 +2415,23 @@ function _buildStories(){
       const _insVorMs = _tafelTag.vorMs;
       const _insTagMatches = matches.filter(m => mts(m) > _insVorMs && mts(m) <= _insLetzte)
         .slice().sort((a,b) => mts(a)-mts(b));
+      // ── Erstmals erreicht oder wieder getragen ──────────────────────
+      // Prestige aus Liga-Rekorden wird unter den Haltern geteilt und faellt
+      // mit einem verlorenen Bestwert wieder [§C34]: dieselbe Stufe kann
+      // zweimal erreicht werden, und beide Male stand „X traegt den
+      // Volutenkranz" da, als waere es das erste Mal. Ob es das war, sagt
+      // der eigene Bestand: die ID einer Insignium-Karte traegt Spieler,
+      // Stufe und Spieltag, also ist eine aeltere Zeile mit demselben
+      // Spieler und derselben Stufe der Beleg. Aus dem Prestige selbst ist
+      // es nicht zu beantworten — dafuer muesste jeder Spieltag der
+      // Ligageschichte einzeln nachgerechnet werden.
+      const _insBestand = (Array.isArray(_cache._stories) ? _cache._stories : [])
+        .map(x => String((x && x.id) || '')).filter(id => id.indexOf('ins_') === 0);
+      const _insFrueher = (pid, key, tag) => {
+        const pre = 'ins_' + pid + '_' + key + '_';
+        return _insBestand.filter(id => id.indexOf(pre) === 0)
+          .map(id => id.slice(pre.length)).filter(t => t < tag).sort().pop() || '';
+      };
       (players || []).filter(p => p && !p.hidden).forEach(p => {
         // Derselbe Vergleich wie bei Rekord und Chronik und aus denselben
         // zwei Staenden [§11.0e]: eine Stufe ist ein Uebergang, kein
@@ -2439,6 +2456,7 @@ function _buildStories(){
           const ausloeser = _insTagMatches.find(m => mts(m) === treffer
             && (m.a1 === p.id || m.a2 === p.id || m.b1 === p.id || m.b2 === p.id));
           const oben = stufe >= 3;
+          const _frueher = _insFrueher(p.id, INSIGNIEN[stufe].key, tagKey(_insLetzte));
           stories.push({
             // Auch hier der Spieltag: das Prestige aus Liga-Rekorden wird
             // geteilt [§C34], eine Stufe kann also wieder fallen und erneut
@@ -2448,8 +2466,11 @@ function _buildStories(){
                 + '_' + tagKey(_insLetzte),
             cat: 'tafel',
             ic: 'award',
-            title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`,
-            desc: `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
+            title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`
+                 + (_frueher ? ' wieder' : ''),
+            desc: (_frueher ? `Zuletzt stand die Stufe am ${new Date(_frueher + 'T12:00:00')
+                    .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}. ` : '')
+                + `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
                 + `${stand.teile.monat} aus Monatswertungen und ${stand.teile.rekord} aus Rekorden.`
                 + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
             when: treffer,
@@ -2466,7 +2487,11 @@ function _buildStories(){
                       zeileText: `${stand.punkte} Prestige zusammen.`
                         + (stand.naechste
                            ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
-                      stufeName:INSIGNIEN[stufe].name, punkte:stand.punkte, oben}
+                      stufeName:INSIGNIEN[stufe].name, punkte:stand.punkte, oben,
+                      // Eine wiedererreichte Stufe ist kein erstmaliger
+                      // Aufstieg: das Blatt soll den Unterschied nennen
+                      // koennen, ohne ihn aus dem Titel zu lesen.
+                      wieder:_frueher || ''}
           });
         }
       });
