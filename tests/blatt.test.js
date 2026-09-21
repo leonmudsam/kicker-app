@@ -640,9 +640,15 @@ const ok = (c, msg, det) => {
       if(gr.length !== 1) return;
       // Traegt sie wirklich den hoechsten Nachrichtenwert ihres Tages?
       const ids = [...feed.querySelectorAll('.nf-card')].map(c => c.dataset.sid);
+      // Gewertet wird nur, wer das Band tragen darf: Breaking ist im Feed
+      // schon die lauteste Karte, der Spieler des Tages steht an jedem
+      // Spieltag da, und ein Rueckblick gehoert keinem Tag [§C33]. Die
+      // Frage stellt `_newsTagKarteWuerdig` — hier stand vorher eine
+      // zweite Liste dafuer [§C27].
       const beste = window.__k.eval(`(function(){
         const ids = ${JSON.stringify(ids)};
-        const s = getStoriesCache().filter(x => ids.indexOf(x.id) >= 0);
+        const s = getStoriesCache().filter(x => ids.indexOf(x.id) >= 0)
+          .filter(_newsTagKarteWuerdig);
         s.sort((a,b) => (_newsTagSpannung(b)-_newsTagSpannung(a))
           || ((b.prio||0)-(a.prio||0)) || String(a.id||'').localeCompare(String(b.id||'')));
         return s.length ? s[0].id : '';

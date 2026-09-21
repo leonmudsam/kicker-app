@@ -308,20 +308,33 @@ function _isBreaking(s){
   // ausschließlich extrem seltene Auszeichnungen und echte EREIGNISSE —
   // etwas, das vorher noch nie da war oder die Spitze der Liga verschiebt.
   // Gefallen sind `top_clash` (Platz 1 schlägt Platz 2 — kam allein in einem
-  // Fenster von 33 Stories vor), `giant_slayer` (dafür gibt es die
-  // Highlight-Karte) und `season_endgame`: „Noch 5 Tage" ist ein Countdown,
-  // kein Ereignis, und es stand als einzige Breaking-Karte im Feed.
+  // Fenster von 33 Stories vor) und `giant_slayer` (dafür gibt es die
+  // Highlight-Karte).
   switch(d.type){
-    case 'lead_change':      // neuer Spitzenreiter der Liga
-    case 'elo_record':       // neuer Allzeit-Elo-Rekord
+    case 'lead_change':      // der Tabellenführer eines belastbaren Spieltags
     case 'streak_record':    // längste Siegesserie aller Zeiten
     case 'season_recap':     // der Meister steht fest
-    case 'rekord_erstmals':  // ein Liga-Rekord wird zum ersten Mal vergeben
+    case 'season_endgame':   // der Schlusssprint, und nur bei offener Lage
       return true;
     case 'badge_unlocked':   // nur legendäre Auszeichnungen
       return d.rarity === 'legendary';
+    // ── Nur der ERSTE Aufstieg in die oberen zwei Stufen ────────────
+    // Prestige aus Liga-Rekorden wird geteilt und fällt mit einem verlorenen
+    // Bestwert wieder [§C34]: dieselbe Stufe kann mehrmals erreicht werden,
+    // und beim zweiten Mal ist sie keine Nachricht mehr, die die Spalte
+    // bricht. Ob es das erste Mal ist, sagt `wieder` [§C33].
     case 'insignium_stufe':  // nur Lorbeerreif und Ordensstern [§C30]
-      return !!d.oben;
+      return !!d.oben && !d.wieder;
+    // ── Ein erstmals vergebener Liga-Rekord ist kein Breaking ───────
+    // Er stand auf der Liste, und in der Füllphase der Ewigen Tafel wird
+    // JEDER Rekord zum ersten Mal vergeben: gemessen über die 18 Spieltage
+    // des Juni 2026 trugen elf von ihnen eine Breaking-Karte, immer dieselbe
+    // — der Tafel-Moment des Tages, der es von einer seiner Zeilen erbte.
+    // Damit war Breaking in dieser Phase die Regel und nicht die Ausnahme.
+    // Dasselbe gilt für `elo_record`: die Karte bildet der Generator nicht
+    // mehr (der Bestwert steht als „Der höchste Gipfel" in der Tafel), aber
+    // persistierte Zeilen aus älteren Läufen tragen den Typ weiter und waren
+    // damit dieselbe Meldung zweimal, einmal laut.
     default:
       return false;
   }
@@ -957,6 +970,10 @@ function _newsSorte(s){
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
+  // Die gesammelten runden Marken eines Tages sind dieselbe Sache in der
+  // Mehrzahl und tragen deshalb dieselbe Form [§C27]. Ohne diese Zeile fiele
+  // sie auf „fakt" und waere die leiseste Karte des Feeds.
+  if(t === 'badge_marken') return 'badge';
   if(t === 'sammel'){
     // Zwei eigene Formen fuer die beiden zusammenfuehrenden Karten. Sie sahen
     // als Tafel- oder Spieltagskarte aus wie die Meldung, von der sie eine
@@ -964,7 +981,8 @@ function _newsSorte(s){
     // andere von EINEM Erfolg. Das ist vor dem ersten Satz zu sehen [§C27].
     if(d.quelle === 'spieler') return 'spieler';
     if(d.quelle === 'erfolg')  return 'erfolg';
-    return d.quelle === 'tafel' ? 'tafel' : 'spiel';
+    // Die kurze Strecke ist dieselbe Kammer und damit dieselbe Form [§C25].
+    return (d.quelle === 'tafel' || d.quelle === 'form') ? 'tafel' : 'spiel';
   }
   if((s && s.cat) === 'tafel' || t.indexOf('rekord_') === 0 || t.indexOf('chronik_') === 0) return 'tafel';
   // Rivalitaet, Serie und Duo sind drei verschiedene Aussagen und sahen als
@@ -1172,6 +1190,27 @@ function _newsTagSpannung(s){
 // passiert, was ein Tag von einem anderen unterscheidet: dort standen sonst
 // ein Fun Fact oder eine Zufallsstatistik groß im Bild, die mit diesem Tag
 // nichts zu tun haben und gestern genauso dagestanden hätten.
+// ── Wer kann das Band tragen? [§C33] ────────────────────────────────
+// Drei Sorten nicht, und jede aus ihrem eigenen Grund.
+// **Breaking** nicht: die Karte ist im Feed ohnehin die lauteste — voller
+// Rahmen, pulsierender Balken, Schein hinter der ganzen Flaeche. Das Band
+// darueber sagt dasselbe ein zweites Mal [§C27] und nimmt es genau der
+// Karte, die sonst keine Moeglichkeit hat, herauszustehen.
+// **Der Spieler des Tages** nicht: er ist eine Pflichtkarte und steht an
+// jedem gewerteten Spieltag da. Er traegt seine Goldkante schon und haette
+// das Band an jedem ruhigen Tag von selbst — dann zeichnet es nichts aus.
+// **Ein Rueckblick** nicht: Woche, Monat und Saison erzaehlen von einem
+// Zeitraum, das Band gehoert dem TAG.
+// Die Liste steht hier und nicht im Aufruf, weil `tests/ambient` und
+// `tests/blatt` dieselbe Frage stellen und sie sich vorher jeder selbst
+// beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
+const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
+  'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
+  'season_recap']);
+function _newsTagKarteWuerdig(st){
+  if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
+  return !_isBreaking(st);
+}
 function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || !items.length) return null;
   const tagMs = _newsTagMs(dayKey);
@@ -1185,13 +1224,20 @@ function _newsTagKarte(items, dayKey){
   // Spieltag noch lief und der Spieler des Tages noch gar nicht feststand.
   // Danach stand sie erst um 23:59 und damit einen halben Tag, nachdem die
   // letzte Partie gelaufen war [§C33].
-  if(tagMs.length < NEWS_LIMITS.tagKartePartien){
+  // Ein Spiel ist kein Spieltag: bei genau einer Partie gibt es kein Band.
+  if(tagMs.length < NEWS_LIMITS.tagKarteMin) return null;
+  if(tagMs.length >= NEWS_LIMITS.tagKartePartien){
+    // Nicht ab der Zahl allein, sondern ab dem MOMENT, in dem sie erreicht
+    // ist: sonst stuende das Band am Morgen des naechsten Tages rueckwirkend
+    // auch ueber einer Karte, die vor der fuenften Partie entstanden ist.
+    const zeiten = tagMs.map(m => mts(m)).sort((a, b) => a - b);
+    if(Date.now() < zeiten[NEWS_LIMITS.tagKartePartien - 1]) return null;
+  } else {
     const frei = new Date(dayKey + 'T00:00:00');
     frei.setHours(NEWS_LIMITS.tagKarteStunde, 0, 0, 0);
     if(Date.now() < frei.getTime()) return null;
   }
-  const OHNE = new Set(['ambient', 'dry_spell', 'season_endgame', 'quiet_week', 'season_start']);
-  const kandidaten = items.filter(x => !OHNE.has((x.dataRef || {}).type));
+  const kandidaten = items.filter(_newsTagKarteWuerdig);
   if(!kandidaten.length) return null;
   const beste = kandidaten.slice().sort((a, b) =>
     (_newsTagSpannung(b) - _newsTagSpannung(a))
@@ -1208,7 +1254,8 @@ function _renderNewsFeed(){
   // Vier Chips, nicht elf. Elf Rubriken sind eine Sortierhilfe für den, der
   // sie gebaut hat, nicht für den, der liest. Jeder Chip trägt seine Anzahl,
   // damit man vorher sieht, ob sich das Tippen lohnt.
-  const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel';
+  const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel'
+    || (s.dataRef||{}).quelle === 'form';
   const _istSpieltag = s => {
     const d = s.dataRef || {};
     // Die Filter sind redaktionelle Seiten, keine sich überschneidenden

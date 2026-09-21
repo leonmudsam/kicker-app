@@ -212,6 +212,56 @@ const _kleinerPool = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_kleinerPool.n >= 1 && _kleinerPool.sauber,
    'ein kleiner Template-Pool bleibt funktionsfaehig', _kleinerPool.n + ' Karten');
 
+// ── Dieselbe These nicht vor dreissig Tagen ───────────────────────────
+// Der Typ-Cooldown sperrt sieben Tage, der Spieler-Cooldown zwei. Beides
+// verhindert die KOMBINATION nicht: die Fuehrungs-Typen zeigen strukturell
+// immer auf denselben Kopf, und „kurz vor dem Schildring: Johannes" stand
+// gemessen fuenfmal in vierzig Tagen. Eine These ist der Typ UND die Person
+// (`AMBIENT_PAAR_COOLDOWN_DAYS`) — derselbe Typ ueber jemand anderen ist eine
+// neue Aussage. Nachgespielt werden vierzig Tage, Slot fuer Slot, mit dem
+// Bestand, der dabei entsteht.
+// Ausgenommen sind die Rueckblicke mit festem Termin (`pflicht`): die
+// Monatshalbzeit gehoert dem 15. und der Jahresblick dem 1. Januar, sie
+// haengen nicht am Losverfahren. Gemessen stand `rueckblick_halbzeit`
+// nach 23 Tagen wieder da — einmal gezogen, einmal als Pflicht am 15.
+const _pflichtKeys = new Set(K.eval(
+  `_ambientTemplatePool(new Date(), pmap(), id=>pname(id))`
+  + `.filter(t => typeof t.pflicht === 'function').map(t => t.key)`));
+const _thesen = (function(){
+  const start = new Date('2026-08-20T00:00:00').getTime();
+  const bestand = [];
+  const wann = {};   // These -> letzter Tag
+  let verstoesse = [], thesen = 0;
+  for(let d = 0; d < 40; d++){
+    [10, 19].forEach(std => {
+      const t = new Date(start + d * 864e5);
+      t.setHours(std, 0, 0, 0);
+      let neu = [];
+      try { neu = build(t.toISOString(), bestand) || []; } catch(e){ return; }
+      neu.forEach(x => {
+        bestand.push({id:x.id, when:x.when, title:x.title, desc:'gespeichert',
+          prio:20, cat:'season', ic:'sparkle',
+          dataRef:{type:'ambient', sub:x.sub, ambientRubrik:x.rubrik, ambientPids:x.pids}});
+        (x.pids && x.pids.length ? x.pids : ['']).forEach(pid => {
+          const k = x.sub + '|' + pid;
+          thesen++;
+          if(wann[k] != null && d - wann[k] < 30 && !_pflichtKeys.has(x.sub))
+            verstoesse.push(k + ' nach ' + (d - wann[k]) + ' Tagen');
+          wann[k] = d;
+        });
+      });
+    });
+  }
+  return {thesen, karten:bestand.length, verstoesse:[...new Set(verstoesse)]};
+})();
+console.log('  Vierzig Tage Rotation: ' + _thesen.karten + ' Karten, '
+  + _thesen.thesen + ' Thesen');
+ok(_thesen.karten >= 40, 'der Nachlauf fuellt ueberhaupt Slots',
+   _thesen.karten + ' Karten');
+ok(_thesen.verstoesse.length === 0,
+   'dieselbe These steht nicht vor dreissig Tagen wieder da',
+   _thesen.verstoesse.slice(0, 3).join(' | ') || 'keine Wiederholung');
+
 console.log('\n=== 6. ZUKUENFTIGE SLOTS BLEIBEN ZU ===');
 const morning = build('2026-08-27T11:30:00Z', []);   // nach 10:00, vor 19:00 lokal
 ok(!morning.some(s => s.id === 'ambient_2026-08-27_19'), 'der heutige 19-Uhr-Slot wartet noch');
@@ -280,18 +330,237 @@ console.log('\n=== 9. BREAKING: NUR DAS SELTENSTE ===');
 // Countdown gehoert nicht dazu — `season_endgame` („Noch 5 Tage") war zeitweise
 // die EINZIGE Breaking-Karte im Feed und meldete dabei nichts, was passiert war.
 const br = t => K.eval(`_isBreaking({dataRef:${JSON.stringify(t)}})`);
-[['lead_change'],['elo_record'],['streak_record'],['season_recap'],['rekord_erstmals']]
+[['lead_change'],['streak_record'],['season_recap'],['season_endgame']]
   .forEach(([t]) => ok(br({type:t}) === true, 'Breaking: ' + t));
 ok(br({type:'badge_unlocked', rarity:'legendary'}) === true, 'Breaking: legendaeres Badge');
 ok(br({type:'insignium_stufe', oben:true}) === true, 'Breaking: Lorbeerreif und Ordensstern');
 ok(br({type:'insignium_stufe', oben:false}) === false, 'die unteren Stufen sind kein Breaking');
+// Dieselbe Stufe kann zweimal erreicht werden [§C34]; beim zweiten Mal
+// bricht sie die Spalte nicht mehr.
+ok(br({type:'insignium_stufe', oben:true, wieder:'2026-08-12'}) === false,
+   'eine wieder getragene Stufe ist kein Breaking');
 ok(br({type:'badge_unlocked', rarity:'rare'}) === false, 'ein seltenes Badge reicht nicht');
-ok(br({type:'season_endgame'}) === false, 'ein Countdown ist kein Ereignis');
+// In der Fuellphase der Ewigen Tafel wird JEDER Rekord zum ersten Mal
+// vergeben: gemessen trugen elf der 18 Juni-Spieltage deshalb eine
+// Breaking-Karte, immer den Tafel-Moment des Tages.
+ok(br({type:'rekord_erstmals'}) === false,
+   'ein erstmals vergebener Liga-Rekord ist kein Breaking');
+// Die Karte bildet der Generator nicht mehr — der Bestwert steht als „Der
+// hoechste Gipfel" in der Tafel. Persistierte Zeilen tragen den Typ weiter.
+ok(br({type:'elo_record'}) === false, 'der Elo-Bestwert ist kein Breaking');
 ok(br({type:'rekord_geholt'}) === false, 'ein Halterwechsel allein ist kein Breaking');
+
+// ── Der Schlusssprint kommt nur bei offener Lage ──────────────────────
+// „Noch 5 Tage" entstand an jedem der letzten sieben Tage einer Saison, egal
+// wie klar die Sache war: gemessen stand die Karte auch bei 91 Elo Vorsprung
+// da, und ihr Text erklaerte dann selbst, dass nichts mehr dazwischenkommt.
+// Drei Bedingungen machen sie zum Ereignis — Frist, Abstand und eine
+// belastbare Rangliste. Und ihr Zeitstempel ist die letzte Partie, nicht der
+// Moment des Generatorlaufs.
+const _sprint = JSON.parse(K.eval(`JSON.stringify((function(){
+  const orig = getGlobalSim, ids = players.map(p => p.id);
+  const sid = currentSeason().id;
+  const bau = abstand => {
+    const elo = {}, gespielt = {};
+    ids.forEach((id, i) => { elo[id] = 1000 - (i === 0 ? 0 : abstand + i * 5);
+      gespielt[id] = 20; });
+    return {elo, seasonPlayed:{[sid]: gespielt}};
+  };
+  const hol = () => {
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    return _buildStories().filter(s => (s.dataRef||{}).type === 'season_endgame');
+  };
+  try {
+    getGlobalSim = () => bau(12);       const eng = hol();
+    getGlobalSim = () => bau(60);       const weit = hol();
+    const letzte = mts(matches[matches.length - 1]);
+    return {eng: eng.length, weit: weit.length,
+      tage: eng.length ? eng[0].dataRef.daysLeft : 0,
+      abstand: eng.length ? eng[0].dataRef.gap : 0,
+      breaking: eng.length ? _isBreaking(eng[0]) : false,
+      amSpieltag: eng.length ? +new Date(eng[0].when) === letzte : false,
+      grenze: SAISON_ENDSPURT_ELO, frei: _storyRangFrei(sid).frei};
+  } finally {
+    getGlobalSim = orig;
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_sprint.frei && _sprint.eng === 1 && _sprint.tage <= 7,
+   'bei offener Lage in den letzten sieben Tagen steht der Schlusssprint',
+   JSON.stringify(_sprint));
+ok(_sprint.weit === 0, 'bei klarem Vorsprung gar nicht',
+   _sprint.weit + ' Karten bei 60 Elo Abstand, Grenze ' + _sprint.grenze);
+ok(_sprint.breaking, 'und dann ist er Breaking');
+ok(_sprint.amSpieltag,
+   'sein Zeitstempel ist die letzte Partie, nicht der Moment des Laufs');
+
+// ── Der Spitzenwechsel faellt nicht dem Anti-Spam-Deckel zum Opfer ────
+// Der Deckel zaehlt Karten je Spieler, und die Sortierung davor ist die
+// Zeit: wer am Nachmittag noch drei Karten bekommt, hat sein Budget
+// aufgebraucht, bevor der Deckel die Karte vom Mittag ansieht. Gemessen
+// kostete das den EINZIGEN Spitzenwechsel des Augusts — am 11.08. gab Leon
+// die Tabelle an Martin ab, und die Titelrennen-Karte fiel aus, weil Martin
+// an diesem Tag schon auf drei Karten stand. Was es je Tag genau einmal
+// gibt, ist nicht das Rauschen, gegen das der Deckel geschrieben ist.
+const _titelrennen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const bis = new Date('2026-08-11T23:59:00').getTime();
+  try {
+    matches = alle.filter(m => mts(m) <= bis);
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    const roh = _buildStories();
+    const k = roh.filter(s => (s.dataRef||{}).type === 'lead_change');
+    // Der Wechsel selbst steht in den Snapshots: vor der ersten Partie des
+    // Tages fuehrte ein anderer als danach.
+    const snaps = getRankSnapshots();
+    const tg = _storyTagGrenzen(bis);
+    const desTages = matchesInSeason(currentSeason().id)
+      .filter(m => mts(m) >= tg.vonMs && mts(m) <= tg.letzte)
+      .sort((a, b) => mts(a) - mts(b));
+    const tops = [...new Set(desTages.map(m => (snaps[m.id]||{}).preTop1).filter(Boolean))];
+    return {karten:k.length, tops:tops.length,
+      breaking: k.length ? _isBreaking(k[0]) : false,
+      wechsel: k.length ? k[0].dataRef.wechsel : 0,
+      tag: k.length ? k[0].dataRef.dayKey : '',
+      titel: k.length ? k[0].title : ''};
+  } finally {
+    matches = alle; invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_titelrennen.tops > 1, 'am 11.08. wechselt die Tabellenspitze wirklich',
+   _titelrennen.tops + ' verschiedene Erste an diesem Tag');
+ok(_titelrennen.karten === 1 && _titelrennen.tag === '2026-08-11',
+   'und der Tag traegt genau eine Titelrennen-Karte',
+   _titelrennen.karten + ' Karten: ' + _titelrennen.titel);
+ok(_titelrennen.breaking, 'sie ist Breaking');
 ok(br({type:'chronik_monat'}) === false, 'die Monatschronik ist kein Breaking');
 ok(br({type:'top_clash'}) === false, 'top_clash ist kein Breaking mehr');
 ok(br({type:'giant_slayer'}) === false, 'giant_slayer ist kein Breaking mehr');
 ok(br({type:'potd'}) === false, 'Alltag bleibt Alltag');
+
+// Und die Liste ist geschlossen: gemessen ueber die 19 Spieltage vom 28.07.
+// bis 26.08. traegt keine Karte des fertigen Feeds Breaking, deren Anlass
+// nicht darauf steht. Eine Sammelkarte erbt es von ihren Teilen — Breaking
+// wird also NACH dem Buendeln entschieden, sonst verloere ein erstmals
+// vergebener Liga-Rekord seinen Rang, sobald er mit seinem Moment reist.
+const _brkZu = JSON.parse(K.eval(`JSON.stringify((function(){
+  const erlaubt = new Set(['lead_change','streak_record','season_recap',
+    'season_endgame']);
+  const anlass = d => erlaubt.has(d.type)
+    || (d.type === 'badge_unlocked' && d.rarity === 'legendary')
+    || (d.type === 'insignium_stufe' && !!d.oben && !d.wieder);
+  const alle = matches.slice();
+  const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
+    .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
+  let brk = 0, fremd = [], geerbt = 0;
+  tage.forEach(t => {
+    matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let r = []; try { r = _buildStories() || []; } catch(e){ return; }
+    let f = []; try { f = _consolidateStories(r) || []; } catch(e){}
+    f.filter(_isBreaking).forEach(x => {
+      brk++;
+      const d = x.dataRef || {};
+      if(d.type === 'sammel'){
+        const teile = d.teile || [];
+        // Die Zeile einer Sammelkarte traegt ihren Typ nicht mit, also wird
+        // der Anlass an den Rohmeldungen desselben Tages gesucht.
+        const titel = new Set(teile.map(z => z.titel));
+        if(r.filter(y => titel.has(y.title)).some(y => anlass(y.dataRef || {}))) geerbt++;
+        else fremd.push(x.title);
+      } else if(!anlass(d)) fremd.push(x.title);
+    });
+  });
+  matches = alle; invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  return {brk, geerbt, fremd:[...new Set(fremd)]};
+})())`));
+ok(_brkZu.brk > 0, 'der Durchlauf trifft ueberhaupt Breaking-Karten',
+   _brkZu.brk + ' Karten, ' + _brkZu.geerbt + ' davon gebuendelt');
+ok(_brkZu.fremd.length === 0, 'keine Karte traegt Breaking ohne einen Anlass von der Liste',
+   _brkZu.fremd.slice(0, 2).join(' | ') || 'keine');
+
+// ── Der Takt einer Auszeichnung haengt an ihrer Klasse [§11.0c] ───────
+// Eine Liste fuer alle drei Klassen war zu grob in beide Richtungen: sie
+// liess legendaere Erfolge zwischen der zehnten und der fuenfundzwanzigsten
+// Verleihung wegfallen, und eine gewoehnliche Auszeichnung war beim ersten
+// Mal eine eigene Karte, obwohl sie in der Liga jeder holt, der lange genug
+// dabei ist. Die kleinen Marken eines Tages stehen jetzt zusammen.
+const _takt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const einzel = roh.filter(s => (s.dataRef||{}).type === 'badge_unlocked');
+  const sam = roh.filter(s => (s.dataRef||{}).type === 'badge_marken');
+  const jeTag = {};
+  sam.forEach(s => { jeTag[s.dataRef.tag] = (jeTag[s.dataRef.tag]||0) + 1; });
+  const marken = [].concat.apply([], sam.map(s => s.dataRef.marken || []));
+  return {
+    legendaerImmer: [1,2,3,7,13,26].every(n => _badgeTakt('legendary', n) === true),
+    seltenMarken: [1,5,10,25,50,100].every(n => _badgeTakt('rare', n))
+      && ![2,3,7,11].some(n => _badgeTakt('rare', n)),
+    kleinOhneErstes: _badgeTakt('common', 1) === false
+      && [5,10,25,50,100].every(n => _badgeTakt('common', n)),
+    // Eine gewoehnliche Auszeichnung bekommt keine eigene Karte mehr; die
+    // gewhitelisteten Sonderfaelle sind davon ausgenommen.
+    einzelGewoehnlich: einzel.filter(s => rarityOf(s.dataRef.badgeId) === 'common'
+      && !NEWS_BADGE_WHITELIST.has(s.dataRef.badgeId)).length,
+    sammelKarten: sam.length,
+    proTagHoechstens1: Object.keys(jeTag).every(k => jeTag[k] === 1),
+    markenAufMarke: marken.every(m => NEWS_BADGE_MARKEN_KLEIN.indexOf(m.rang) >= 0),
+    markenGewoehnlich: marken.every(m => rarityOf(m.badgeId) === 'common'),
+    gruende: [...new Set(sam.map(s => (s.dataRef.causalKey||'').split(':')[0]))]
+  };
+})())`));
+// Im Vierzehn-Tage-Fenster traegt jede dieser Karten gerade eine Marke, und
+// damit waere die naechste Zusicherung vakuant. Gemessen wird sie deshalb
+// ueber die Spieltage der Liga: dort fallen an einem Tag bis zu vier.
+const _taktLauf = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
+    .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
+  let karten = 0, mehrere = 0, falsch = 0, mehrfachTag = 0;
+  tage.forEach(t => {
+    matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let roh = []; try { roh = _buildStories() || []; } catch(e){ return; }
+    const sam = roh.filter(s => (s.dataRef||{}).type === 'badge_marken');
+    const jeTag = {};
+    sam.forEach(s => {
+      karten++;
+      jeTag[s.dataRef.tag] = (jeTag[s.dataRef.tag]||0) + 1;
+      const m = s.dataRef.marken || [];
+      if(m.length > 1) mehrere++;
+      const soll = [...new Set(m.map(x => x.pid))].sort().join(',');
+      if((s.dataRef.playerIds||[]).slice().sort().join(',') !== soll) falsch++;
+    });
+    mehrfachTag += Object.keys(jeTag).filter(k => jeTag[k] > 1).length;
+  });
+  matches = alle; invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  return {karten, mehrere, falsch, mehrfachTag};
+})())`));
+ok(_taktLauf.mehrere > 0, 'der Durchlauf trifft Karten mit mehreren Marken',
+   _taktLauf.mehrere + ' von ' + _taktLauf.karten);
+ok(_taktLauf.falsch === 0, 'und jede nennt jeden, von dem sie erzaehlt',
+   _taktLauf.falsch + ' unvollstaendig');
+ok(_taktLauf.mehrfachTag === 0, 'nie zwei solche Karten an einem Tag',
+   _taktLauf.mehrfachTag + ' Tage doppelt');
+ok(_takt.legendaerImmer, 'eine legendaere Auszeichnung ist jedes Mal eine Nachricht');
+ok(_takt.seltenMarken, 'eine seltene beim ersten Mal und an den runden Marken');
+ok(_takt.kleinOhneErstes, 'eine gewoehnliche erst ab der fuenften Verleihung');
+ok(_takt.einzelGewoehnlich === 0,
+   'keine gewoehnliche Auszeichnung bekommt eine eigene Karte',
+   _takt.einzelGewoehnlich + ' eigene Karten');
+ok(_takt.sammelKarten > 0, 'die kleinen Marken eines Tages werden ueberhaupt gemeldet',
+   _takt.sammelKarten + ' Karten');
+ok(_takt.proTagHoechstens1 && _takt.gruende.join(',') === 'awards',
+   'je Spieltag EINE Karte, und ihr Grund sind die Auszeichnungen dieses Tages',
+   JSON.stringify(_takt.gruende));
+ok(_takt.markenAufMarke && _takt.markenGewoehnlich,
+   'darin steht nur eine gewoehnliche Auszeichnung auf einer runden Marke');
 
 console.log('\n=== 9b. DIE EWIGE TAFEL MELDET SICH ===');
 // Der ganze Awards-Reiter kam im Feed nicht vor: wer einen Liga-Rekord
@@ -332,6 +601,111 @@ const _tafel = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_tafel.rekorde > 0, 'ein Halterwechsel wird gemeldet', _tafel.rekorde + ' Rekord-Karten');
 ok(_tafel.ausbauStumm === 0, 'nur sichtbar verbesserte Rekorde werden als „ausgebaut" gemeldet',
    _tafel.ausbauStumm + ' ohne sichtbare Aenderung');
+
+// ── Ein Spieltag, ein Paar von Staenden [§11.0e] ──────────────────────
+// Rekord, Monatschronik und Insignium rechneten sich ihre Tagesgrenze und
+// ihren Zeitschnitt jeder selbst aus. Drei Rechnungen ueber dieselbe
+// Aenderung nennen irgendwann drei Zahlen, und die stehen dann auf drei
+// Karten derselben Minute. `_storyTagGrenzen` und `_storyStand` sind die
+// eine Wahrheit dazwischen, `_prestigeWirkung` ihr Unterschied.
+const _tagRahmen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const letzte = matches.length ? mts(matches[matches.length-1]) : 0;
+  const tg = _storyTagGrenzen(letzte);
+  const vor = _storyStand(tg.vorMs), nach = _storyStand(tg.nachMs);
+  const tagPartien = matches.filter(m => mts(m) >= tg.vonMs && mts(m) <= tg.vonMs + 864e5 - 1).length;
+  const aktive = players.filter(p => p && !p.hidden);
+  const w = {};
+  aktive.forEach(p => { w[p.id] = _prestigeWirkung(p.id, vor, nach); });
+  return {
+    // Der juengste Spieltag ist „heute": ein Schnitt hinter seiner letzten
+    // Partie schneidet nichts ab und kostet nur eine kalte Rechnung [§3].
+    nachOhneSchnitt: tg.nachMs === 0 && tg.istHeute === true,
+    grenze: tg.vorMs === tg.vonMs - 1 && tg.tag === tagKey(tg.vonMs),
+    partien: tg.partien === tagPartien,
+    // Die Wirkung erfindet keine Punkte. Dass die Insignium-Karten eines
+    // Laufs genau die gekreuzten Stufen sind, misst die Probe insErwartet
+    // weiter oben schon — ein zweites Mass fuer dieselbe Aussage waere eins
+    // zu viel [§C27]. (Kein Backtick in diesem Kommentar: er steht in einer
+    // Template-Zeichenkette und wuerde sie beenden.)
+    summe: aktive.every(p => w[p.id].vor + w[p.id].delta === w[p.id].nach)
+  };
+})())`));
+ok(_tagRahmen.nachOhneSchnitt, 'der juengste Spieltag vergleicht gegen „jetzt", nicht gegen einen Schnitt');
+ok(_tagRahmen.grenze, 'Vorher ist eine Millisekunde vor Mitternacht, und der Tagesschluessel gehoert dazu');
+ok(_tagRahmen.partien, 'der Rahmen zaehlt die Partien seines Tages');
+ok(_tagRahmen.summe, 'die Punktewirkung erfindet keine Punkte');
+
+// ── Eine Tafel-Karte je Spieltag, und ihr Grund steht darin ───────────
+// Gebuendelt wurde nach Partie ODER Minute. Das ist ein Stellvertreter, und
+// er traf daneben: gemessen ueber die 19 Spieltage vom 28.07. bis 26.08.
+// stand am 29.07. eine zweite Tafel-Karte neben der ersten, weil eine
+// Insignium-Stufe eine andere Minute trug als die Rekorde desselben Tages.
+// Zwei Karten „X bewegen die Ewige Tafel" an einem Tag sind eine Nachricht
+// und eine Wiederholung [§C33]. Der Grund gehoert deshalb in die Karte.
+const _tafelGrund = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const arten = ['rekord_erstmals','rekord_geholt','rekord_gesteigert',
+                 'insignium_stufe','chronik_erstling','chronik_geholt'];
+  const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
+    .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
+  let ohneGrund = 0, meldungen = 0, mehrfach = [], gemessen = 0;
+  let mitForm = 0, beide = 0, falscheAchse = 0;
+  tage.forEach(t => {
+    matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let roh = []; try { roh = _buildStories() || []; } catch(e){ return; }
+    const tafel = roh.filter(s => arten.indexOf((s.dataRef||{}).type) >= 0);
+    if(!tafel.length) return;
+    gemessen++;
+    meldungen += tafel.length;
+    ohneGrund += tafel.filter(s => !(s.dataRef||{}).causalKey).length;
+    let fertig = []; try { fertig = _consolidateStories(roh) || []; } catch(e){}
+    const karten = fertig.filter(s => s.cat === 'tafel' && tagKey(s.when) === t);
+    // Zwei Achsen, zwei Karten: die dauerhafte Tafel und die kurze Strecke
+    // erzaehlen etwas anderes [§C35]. Je Achse aber nur eine, und ihre
+    // Schlagzeilen muessen sich unterscheiden — gemessen trugen 13 von 19
+    // Spieltagen sonst zweimal „... bewegen die Ewige Tafel".
+    const jeAchse = {};
+    karten.forEach(s => {
+      const q = (s.dataRef||{}).quelle || (s.dataRef||{}).type;
+      jeAchse[q] = (jeAchse[q] || 0) + 1;
+    });
+    const doppelt = Object.keys(jeAchse).filter(q => jeAchse[q] > 1);
+    const titel = karten.map(s => s.title);
+    if(doppelt.length || new Set(titel).size !== titel.length)
+      mehrfach.push(t + ': ' + titel.join(' | '));
+    if(jeAchse.form) mitForm++;
+    if(jeAchse.form && jeAchse.tafel) beide++;
+    // Auf der Form-Achse steht nur, was auf einem gleitenden Fenster liegt.
+    tafel.filter(s => String((s.dataRef||{}).causalKey || '').indexOf('form:') === 0)
+      .forEach(s => {
+        const def = CHRONICLE_BY_ID[(s.dataRef||{}).rekordId];
+        if(!def || !def.fenster) falscheAchse++;
+      });
+  });
+  matches = alle; invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  return {tage:tage.length, gemessen, meldungen, ohneGrund, mehrfach,
+          mitForm, beide, falscheAchse};
+})())`));
+console.log('  Spieltage 28.07.-26.08.: ' + _tafelGrund.tage + ' · mit Tafel-Meldung: '
+  + _tafelGrund.gemessen + ' · Meldungen: ' + _tafelGrund.meldungen);
+// Ohne diese Probe waere die naechste vakuant.
+ok(_tafelGrund.meldungen >= 100, 'der Durchlauf trifft ueberhaupt Tafel-Meldungen',
+   _tafelGrund.meldungen + ' Meldungen an ' + _tafelGrund.gemessen + ' Spieltagen');
+ok(_tafelGrund.ohneGrund === 0, 'jede Tafel-Meldung nennt ihren Grund',
+   _tafelGrund.ohneGrund + ' ohne causalKey');
+ok(_tafelGrund.mehrfach.length === 0,
+   'je Achse eine Tafel-Karte, und keine zwei mit derselben Schlagzeile',
+   _tafelGrund.mehrfach.slice(0, 2).join(' || ') || 'keine Doppelung');
+ok(_tafelGrund.beide > 0,
+   'die kurze Strecke steht als eigene Karte neben der dauerhaften Tafel',
+   _tafelGrund.beide + ' von ' + _tafelGrund.gemessen + ' Spieltagen mit beiden, '
+   + _tafelGrund.mitForm + ' mit der kurzen Strecke');
+ok(_tafelGrund.falscheAchse === 0,
+   'und auf ihr steht nur, was auf einem gleitenden Fenster liegt',
+   _tafelGrund.falscheAchse + ' daneben');
 
 // ── Ein gleitendes Fenster wird nicht „ausgebaut" [§C33] ──────────────
 // Der Wert einer Laufbahn steigt, weil jemand besser gespielt hat; der Wert
@@ -415,6 +789,53 @@ ok(_insHistorisch.zeiten.every(t => t === _insHistorisch.kreuz),
    'Insignium-Stories tragen den fachlichen Ereigniszeitpunkt');
 ok(_insHistorisch.gleich && new Set(_insHistorisch.ids).size === _insHistorisch.ids.length,
    'erneute Generatorlaeufe bleiben idempotent', _insHistorisch.ids.join(', '));
+
+// ── Erstmals erreicht oder wieder getragen ────────────────────────────
+// Prestige aus Liga-Rekorden wird unter den Haltern geteilt und faellt mit
+// einem verlorenen Bestwert wieder [§C34]: dieselbe Stufe kann zweimal
+// erreicht werden, und beide Male stand „X traegt den Volutenkranz" da, als
+// waere es das erste Mal. Der Beleg ist der eigene Bestand — die ID einer
+// Insignium-Karte traegt Spieler, Stufe und Spieltag.
+const _insWieder = JSON.parse(K.eval(`JSON.stringify((function(){
+  const original = prestigeOf, bestand = _cache._stories;
+  const pid = players[0].id;
+  const letzte = mts(matches[matches.length-1]);
+  const t0 = new Date(letzte); t0.setHours(0,0,0,0);
+  const tag = matches.filter(m => mts(m) >= t0.getTime()).sort((a,b)=>mts(a)-mts(b));
+  const kreuz = mts(tag[Math.min(1, tag.length-1)] || matches[matches.length-1]);
+  const stand = stufe => ({pid, punkte:stufe >= 2 ? 760 : stufe ? 260 : 100, stufe,
+    insignie:INSIGNIEN[stufe], naechste:INSIGNIEN[stufe+1] || null,
+    fehlt:stufe >= 2 ? 920 : stufe ? 460 : 140,
+    teile:{auszeichnung:80, monat:40, rekord:20},
+    zahlen:{auszeichnung:1, monat:1, rekord:1}, quellen:[], platz:1, von:players.length});
+  try {
+    prestigeOf = (id, bisMs) => id !== pid ? original(id, bisMs)
+      : stand((bisMs != null && bisMs < kreuz) ? 0 : 2);
+    // Nur fuer die zweite Stufe liegt eine aeltere Zeile im Bestand.
+    _cache._stories = [{id:'ins_' + pid + '_' + INSIGNIEN[2].key + '_2026-08-12'}];
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    const k = _buildStories().filter(s => (s.dataRef||{}).type === 'insignium_stufe'
+      && s.dataRef.pid === pid);
+    const je = {}; k.forEach(s => { je[s.dataRef.stufe] = s; });
+    return {
+      stufen: k.map(s => s.dataRef.stufe),
+      erstmals: !!je[1] && je[1].title.indexOf(' wieder') < 0 && je[1].dataRef.wieder === '',
+      wiederTitel: !!je[2] && je[2].title.slice(-7) === ' wieder',
+      wiederDatum: !!je[2] && je[2].desc.indexOf('Zuletzt stand die Stufe am 12.08.') === 0,
+      wiederRef: !!je[2] && je[2].dataRef.wieder === '2026-08-12'
+    };
+  } finally {
+    prestigeOf = original; _cache._stories = bestand;
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_insWieder.stufen.join(',') === '1,2', 'der Lauf trifft beide Stufen',
+   _insWieder.stufen.join(',') || 'keine');
+ok(_insWieder.erstmals, 'eine Stufe ohne aeltere Zeile im Bestand ist erstmals erreicht');
+ok(_insWieder.wiederTitel && _insWieder.wiederRef,
+   'eine Stufe, die schon einmal dastand, wird wieder getragen',
+   JSON.stringify(_insWieder));
+ok(_insWieder.wiederDatum, 'und die Karte nennt den Tag, an dem sie zuletzt stand');
 
 console.log('\n=== 9c. STORY-BLAETTER BLEIBEN BEI IHRER GESCHICHTE ===');
 // Story-Blätter zeigen ihren gesamten Beleg direkt. Zusätzliche Wege in
@@ -950,6 +1371,45 @@ ok(_zeigtSich.band.indexOf('nf-sam-k') >= 0
 ok(_plan.chrZeit.every(t => t === '0:0'), 'die Chronik erscheint um 00:00',
    _plan.chrZeit.join(', ') || 'keine');
 ok(_plan.chrErster, 'am ersten Tag des Folgemonats');
+
+// ── Der Rueckblick schliesst seinen Monat ab ──────────────────────────
+// Er stand auf dem Saisonstart, also am 1. um 00:00 — unter dem Tageskopf
+// eines Monats, von dem er gar nicht erzaehlt, und damit unter demselben Kopf
+// wie die Monatschronik. Der Generator bildet ihn nur in den ersten zwei
+// Tagen einer Saison; dafuer wird die Uhr kurz auf den 1. gestellt.
+const _recap = (function(){
+  const Echt = globalThis.Date;
+  const stellen = ms => { globalThis.Date = class extends Echt {
+    constructor(...a){ if(a.length===0) super(ms); else super(...a); }
+    static now(){ return ms; } }; };
+  try {
+    stellen(new Echt(2026, 7, 1, 12, 0, 0).getTime());
+    return JSON.parse(K.eval(`JSON.stringify((function(){
+      invalidateCache();
+      _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+      const r = _buildStories().filter(x => (x.dataRef||{}).type === 'season_recap');
+      return r.map(x => { const d = new Date(x.when);
+        return {sid:x.dataRef.sid, iso:d.toISOString(),
+          zeit:d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'),
+          tag:d.getDate(),
+          letzter:new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(),
+          breaking:_isBreaking(x)};
+      });
+    })())`));
+  } finally {
+    globalThis.Date = FakeDate;
+    K.eval('(function(){ invalidateCache();'
+      + ' _cache._buildStoriesKey = null; _cache._buildStoriesResult = null; })()');
+  }
+})();
+ok(_recap.length === 1, 'am Monatsersten steht genau ein Saison-Rueckblick',
+   _recap.length + ' Karten');
+ok(_recap.every(x => x.zeit === '23:50'), 'er steht um 23:50',
+   _recap.map(x => x.zeit).join(', ') || 'keiner');
+ok(_recap.every(x => x.tag === x.letzter),
+   'und am letzten Kalendertag des Monats, von dem er erzaehlt',
+   _recap.map(x => x.sid + ' -> ' + x.iso).join(', '));
+ok(_recap.every(x => x.breaking), 'und er ist Breaking');
 ok(_plan.sammel.length > 0, 'es gibt Sammelkarten', _plan.sammel.length + '');
 ok(_plan.sammel.every(n => n >= 2), 'eine Sammelkarte traegt alle verbundenen Zeilen',
    _plan.sammel.join(', ') || 'keine');
@@ -1885,20 +2345,27 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
       const k=d.type==='sammel' ? 'sammel:'+d.quelle : d.type;
       o[k]=(o[k]||0)+gewicht(s); return o; },{});
     const tage=[...new Set(sicht.map(s=>tagKey(s.when)))].filter(k=>_newsTagMs(k).length);
-    const ohne=new Set(['ambient','dry_spell','season_endgame','quiet_week','season_start']);
+    // Wuerdig ist, was das Band tragen darf — dieselbe Frage und dieselbe
+    // Liste wie in der App [§C27]. Vorher stand sie hier ein zweites Mal.
     const karten=tage.map(k=>{
       const items=sicht.filter(s=>tagKey(s.when)===k);
       const id=_newsTagKarte(items,k), karte=items.find(s=>s.id===id);
-      const kandidaten=items.filter(s=>!ohne.has((s.dataRef||{}).type));
-      const max=Math.max.apply(null,kandidaten.map(_newsTagSpannung));
+      const kandidaten=items.filter(_newsTagKarteWuerdig);
+      const max=kandidaten.length?Math.max.apply(null,kandidaten.map(_newsTagSpannung)):0;
       return {id,type:karte&&(karte.dataRef||{}).type,
-        score:karte?_newsTagSpannung(karte):0,max};
+        score:karte?_newsTagSpannung(karte):0,max,kand:kandidaten.length};
     });
     aus={tafel:tw,spiel:sw,fun:fun.length,quote:tw/(tw+sw+fun.length),
       tafelKarten:tafel.length,spielKarten:spiel.length,
       kartenQuote:tafel.length/(tafel.length+spiel.length+fun.length),
       tafelTypen:zaehlTypen(tafel),spielTypen:zaehlTypen(spiel),
-      karten, falsch:karten.filter(x=>!x.id||Math.abs(x.score-x.max)>1e-8).length};
+      // Ein Tag, an dem nur Breaking, der Spieler des Tages und Rueckblicke
+      // stehen, hat kein Band — und das ist richtig, nicht falsch.
+      karten, falsch:karten.filter(x=>x.kand
+        ? (!x.id||Math.abs(x.score-x.max)>1e-8) : !!x.id).length,
+      ohneBand:karten.filter(x=>!x.id).length,
+      bandUnwuerdig:karten.filter(x=>x.type
+        && !_newsTagKarteWuerdig({dataRef:{type:x.type}})).length};
   } finally {
     matches=alle; Date=AlteDate; invalidateCache(); _cache._stories=alteStories;
     _cache._consolFrom=null; _cache._frischVon=null;
@@ -1914,12 +2381,13 @@ ok(_mix.fun > 0,
    'die Gegenhaelfte enthaelt automatisch erzeugte Fun Facts',
    _mix.fun + ' Fun Facts');
 ok(_mix.karten.length >= 5 && _mix.falsch === 0
-   && _mix.karten.every(x=>x.score>=620 && x.type!=='ambient'),
+   && _mix.karten.every(x=>!x.id || x.score>=620),
    'jede echte Karte des Tages ist die spannendste wuerdige Geschichte ihres Spieltags',
-   _mix.karten.map(x=>x.type+':'+Math.round(x.score)).join(' · '));
-ok(_mix.karten.some(x=>x.type==='potd') && _mix.karten.some(x=>x.type!=='potd'),
-   'Spieler des Tages gewinnt das Band nur, wenn keine staerkere Story vorliegt',
-   _mix.karten.map(x=>x.type).join(', '));
+   _mix.karten.map(x=>(x.type||'ohne Band')+':'+Math.round(x.score)).join(' · '));
+ok(_mix.bandUnwuerdig === 0,
+   'kein Band gehoert Breaking, dem Spieler des Tages oder einem Rueckblick',
+   _mix.karten.map(x=>x.type||'ohne Band').join(', ')
+   + ' · ' + _mix.ohneBand + ' Tage ohne Band');
 
 // ── Das Rekord-Blatt nennt niemanden zweimal ────────────────────────
 // „Maxi, Leo und Julian uebernehmen" stand im Kopf, „Vorher gehalten von Maxi
@@ -2427,44 +2895,79 @@ ok(_meta.length === 0, 'kein Blatt erklaert die Regeln des Feeds', _meta.join(',
 // Sie kam einmal zwanzig Minuten nach dem ersten Spiel: der Rekord, der
 // gerade wechselte, war die einzige Karte des Tages und damit automatisch die
 // staerkste. Danach stand sie erst um 23:59 und damit einen halben Tag,
-// nachdem die letzte Partie gelaufen war. Jetzt zwei Bedingungen, eine
-// reicht: acht Partien oder 19 Uhr. Gemessen wird beides einzeln, also mit
-// einem Tag, der die Zahl erreicht, und einem, der sie nicht erreicht.
+// nachdem die letzte Partie gelaufen war. Danach ab acht Partien — dem Median
+// der Liga — oder ab 19 Uhr, und damit warteten 36 % der Spieltage bis zum
+// Abend auf ein Band, das laengst faellig war. Jetzt ab der fuenften Partie,
+// bei zwei bis vier ab 19 Uhr, und bei genau einer Partie gar nicht.
 const _tk = JSON.parse(K.eval(`JSON.stringify((function(){
   const tage = {};
   matches.forEach(m => { const k = tagKey(m.created_at); tage[k] = (tage[k]||0)+1; });
   const voll = Object.keys(tage).find(k => tage[k] >= NEWS_LIMITS.tagKartePartien);
-  const kurz = Object.keys(tage).find(k => tage[k] > 0 && tage[k] < NEWS_LIMITS.tagKartePartien);
+  const kurz = Object.keys(tage).find(k => tage[k] >= NEWS_LIMITS.tagKarteMin
+    && tage[k] < NEWS_LIMITS.tagKartePartien);
+  const einzeln = Object.keys(tage).find(k => tage[k] === 1);
   // POTD hat absichtlich die hoehere Feed-Prioritaet: die Tageskarte soll
   // trotzdem die seltenere Geschichte waehlen und nicht reflexhaft POTD.
+  // Die Breaking-Zeile steht daneben, weil sie im Feed schon die lauteste
+  // Karte ist und das Band damit dasselbe zweimal sagen wuerde.
   const items = [{id:'a', prio:999, dataRef:{type:'potd'}},
-                 {id:'b', prio:1, dataRef:{type:'giant_slayer', chance:.08}}];
-  const um = (tag, std, min) => {
-    const d = new Date(tag + 'T00:00:00'); d.setHours(std, min||0, 0, 0);
-    const echt = Date.now; Date.now = () => d.getTime();
+                 {id:'b', prio:1, dataRef:{type:'giant_slayer', chance:.08}},
+                 {id:'c', prio:998, dataRef:{type:'lead_change'}},
+                 {id:'d', prio:997, dataRef:{type:'woche'}}];
+  const beiMs = (ms, tag) => {
+    const echt = Date.now; Date.now = () => ms;
     let r = null; try { r = _newsTagKarte(items, tag); } finally { Date.now = echt; }
     return r;
   };
-  return {vollN: tage[voll], kurzN: tage[kurz],
-    vollFrueh: um(voll, 8), kurzFrueh: um(kurz, 12), kurzSpaet: um(kurz, 19),
-    kurzKnapp: um(kurz, 18, 59), leer: um('2020-01-01', 23),
-    stunde: NEWS_LIMITS.tagKarteStunde, partien: NEWS_LIMITS.tagKartePartien};
+  const um = (tag, std, min) => {
+    const d = new Date(tag + 'T00:00:00'); d.setHours(std, min||0, 0, 0);
+    return beiMs(d.getTime(), tag);
+  };
+  const zeiten = tag => matches.filter(m => tagKey(m.created_at) === tag)
+    .map(m => mts(m)).sort((a, b) => a - b);
+  const fuenfte = voll ? zeiten(voll)[NEWS_LIMITS.tagKartePartien - 1] : 0;
+  // Kein Spieltag der echten Liga hat genau eine Partie, also wird einer
+  // gebaut: ohne ihn waere die Zusicherung gruen, auch wenn die Regel fehlt.
+  const alle = matches.slice();
+  let einzelnGebaut = null, einzelnTag = kurz || voll;
+  try {
+    const erste = alle.filter(m => tagKey(m.created_at) === einzelnTag)
+      .sort((a, b) => mts(a) - mts(b))[0];
+    matches = alle.filter(m => tagKey(m.created_at) !== einzelnTag).concat([erste]);
+    einzelnGebaut = um(einzelnTag, 23);
+  } finally { matches = alle; }
+  return {vollN: tage[voll], kurzN: tage[kurz], einzelnN: einzeln ? tage[einzeln] : 0,
+    einzelnGebaut, einzelnTag,
+    vorFuenf: beiMs(fuenfte - 1, voll), abFuenf: beiMs(fuenfte, voll),
+    kurzFrueh: um(kurz, 12), kurzSpaet: um(kurz, 19), kurzKnapp: um(kurz, 18, 59),
+    leer: um('2020-01-01', 23),
+    breaking: _newsTagKarteWuerdig({dataRef:{type:'lead_change'}}),
+    potd: _newsTagKarteWuerdig({dataRef:{type:'potd'}}),
+    rueckblick: _newsTagKarteWuerdig({dataRef:{type:'woche'}}),
+    stunde: NEWS_LIMITS.tagKarteStunde, partien: NEWS_LIMITS.tagKartePartien,
+    mind: NEWS_LIMITS.tagKarteMin};
 })())`));
-ok(_tk.partien >= 6 && _tk.partien <= 10 && _tk.stunde === 19,
-   'die Schwelle liegt bei acht Partien und 19 Uhr',
-   _tk.partien + ' Partien, ' + _tk.stunde + ' Uhr');
-ok(_tk.vollFrueh === 'b', 'ein Tag mit acht Partien traegt seine Karte sofort',
-   _tk.vollN + ' Partien -> ' + _tk.vollFrueh);
-ok(_tk.vollFrueh !== 'a', 'Spieler des Tages wird nicht automatisch Karte des Tages',
-   'gewaehlt: ' + _tk.vollFrueh);
+ok(_tk.partien === 5 && _tk.stunde === 19 && _tk.mind === 2,
+   'die Schwelle liegt bei fuenf Partien, 19 Uhr und mindestens zwei Partien',
+   _tk.partien + ' Partien, ' + _tk.stunde + ' Uhr, ab ' + _tk.mind);
+ok(_tk.vorFuenf === null, 'vor der fuenften Partie steht noch kein Band',
+   _tk.vollN + ' Partien -> ' + _tk.vorFuenf);
+ok(_tk.abFuenf === 'b', 'mit der fuenften Partie steht es',
+   _tk.vollN + ' Partien -> ' + _tk.abFuenf);
 ok(_tk.kurzFrueh === null, 'ein kurzer Spieltag wartet bis 19 Uhr',
    _tk.kurzN + ' Partien um 12 Uhr -> ' + _tk.kurzFrueh);
 ok(_tk.kurzKnapp === null, 'eine Minute vor 19 Uhr steht sie noch nicht',
    String(_tk.kurzKnapp));
-ok(_tk.kurzSpaet === 'b', 'um 19 Uhr steht sie auch ohne acht Partien',
+ok(_tk.kurzSpaet === 'b', 'um 19 Uhr steht sie auch mit zwei bis vier Partien',
    String(_tk.kurzSpaet));
+ok(_tk.einzelnGebaut === null,
+   'ein Spieltag mit genau einer Partie bekommt kein Band',
+   _tk.einzelnTag + ' auf eine Partie gekuerzt -> ' + String(_tk.einzelnGebaut));
 ok(_tk.leer === null, 'ein Tag ohne Partie bekommt keine Karte des Tages',
    String(_tk.leer));
+ok(!_tk.breaking && !_tk.potd && !_tk.rueckblick,
+   'Breaking, der Spieler des Tages und ein Rueckblick tragen das Band nie',
+   JSON.stringify({breaking:_tk.breaking, potd:_tk.potd, rueckblick:_tk.rueckblick}));
 
 // ── Die Wochenkarte zeigt alle sechs Wertungen ──────────────────────
 // Sie zeigte drei und darunter „und 3 weitere Wertungen": die Ueberraschung,
@@ -2504,8 +3007,11 @@ const _sprache = JSON.parse(K.eval(`JSON.stringify((function(){
     n: arten.length,
     strich: arten.filter(a => /[—–]/.test(a.t + a.d)).map(a => a.k),
     // Ausgenommen ist die Auszeichnung: ihr Text ist die Bedingung aus dem
-    // Katalog, und „Debuetant: Match gespielt" braucht keine Zahl.
-    ohneZahl: arten.filter(a => a.k !== 'badge_unlocked' && !/\\d/.test(a.d)).map(a => a.k),
+    // Katalog, und „Debuetant: Match gespielt" braucht keine Zahl. Das gilt
+    // fuer die gesammelten runden Marken genauso, solange es nur eine ist —
+    // dann ist die Karte eine Auszeichnung, und ihre Zahl steht im Titel.
+    ohneZahl: arten.filter(a => a.k !== 'badge_unlocked' && a.k !== 'badge_marken'
+      && !/\\d/.test(a.d)).map(a => a.k),
     titelDoppelt: arten.filter(a => norm(a.t).length >= 12
       && norm(a.d).indexOf(norm(a.t)) >= 0).map(a => a.k),
     // Ein Fragezeichen im Text heisst, dass ein Name nicht aufgeloest wurde.
@@ -3297,7 +3803,9 @@ const _serieTag = JSON.parse(K.eval(`JSON.stringify((function(){
   const dazu = [];
   const vor = basis - 20 * 3600000;
   // Tag davor: erst eine Niederlage, damit der Lauf bei null beginnt,
-  // dann vier Siege. Zieltag: drei Siege, also die Marken 5 und 7.
+  // dann vier Siege (Marke 3). Zieltag: drei Siege, also die Marke 5 — und
+  // mit der achten waere es die 8er; gemessen wird, dass der Tag nur EINE
+  // Karte traegt und die laengste seiner Marken.
   const bau = (praefix, ab, n, ersteVerloren) => {
     for(let i = 0; i < n; i++) dazu.push({
       id: praefix + i, a1:held, a2:rest[0], b1:rest[1], b2:rest[2],
@@ -3323,9 +3831,90 @@ const _serieTag = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_serieTag.n === 1,
    'und zwei Marken an einem Tag ergeben eine Karte, nicht zwei',
    _serieTag.n + ' Karten (' + _serieTag.marken.join(', ') + ')');
-ok(_serieTag.marken[0] === 7,
+ok(_serieTag.marken[0] === 5,
    'und zwar die laengste Marke des Tages',
    String(_serieTag.marken[0]));
+
+// ── Die Leiter der Marken und der Lauf als Einheit [§C33] ─────────────
+// Sie stand bei 5, 7, 10, 15, 20. Drei Siege in Folge sind das, was die
+// meisten ueberhaupt erreichen — dieselbe Schwelle, bei der am Wappen das
+// Feuer angeht [§C26] —, und sieben und zehn lagen dicht beieinander.
+// Gemessen ueber die 19 Spieltage vom 28.07. bis 26.08.: vorher acht
+// gebildete und fuenf gezeigte Serienkarten, jetzt siebzehn und neun.
+const _serienLauf = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
+    .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
+  const erlaubt = n => [3,5,8,10].indexOf(n) >= 0 || (n > 10 && n % 5 === 0);
+  let roh = 0, gezeigt = 0, falsch = [], doppeltMarke = 0, doppeltLauf = 0;
+  const gesehen = {};
+  tage.forEach(t => {
+    matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let r = []; try { r = _buildStories() || []; } catch(e){ return; }
+    const ws = r.filter(x => (x.dataRef||{}).type === 'win_streak');
+    roh += ws.length;
+    const jeMarke = {};
+    ws.forEach(x => {
+      const n = Number(x.dataRef.streak) || 0;
+      gesehen[n] = 1;
+      if(!erlaubt(n)) falsch.push(n);
+      const k = x.dataRef.pid + '|' + n;
+      jeMarke[k] = (jeMarke[k]||0) + 1;
+    });
+    doppeltMarke += Object.keys(jeMarke).filter(k => jeMarke[k] > 1).length;
+    let f = []; try { f = _consolidateStories(r) || []; } catch(e){}
+    const g = f.filter(x => (x.dataRef||{}).type === 'win_streak');
+    gezeigt += g.length;
+    const jeLauf = {};
+    g.forEach(x => { const k = x.dataRef.lauf || '?'; jeLauf[k] = (jeLauf[k]||0) + 1; });
+    doppeltLauf += Object.keys(jeLauf).filter(k => jeLauf[k] > 1).length;
+  });
+  matches = alle; invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  return {roh, gezeigt, falsch:[...new Set(falsch)],
+    marken:Object.keys(gesehen).map(Number).sort((a,b)=>a-b),
+    doppeltMarke, doppeltLauf};
+})())`));
+console.log('  Serienkarten im Durchlauf: ' + _serienLauf.roh + ' gebildet, '
+  + _serienLauf.gezeigt + ' gezeigt · Marken: ' + _serienLauf.marken.join(', '));
+ok(_serienLauf.falsch.length === 0, 'jede Serienmarke steht auf der Leiter',
+   _serienLauf.falsch.join(', ') || 'keine daneben');
+ok(_serienLauf.marken.indexOf(3) >= 0 && _serienLauf.marken.indexOf(8) >= 0,
+   'die Leiter beginnt bei drei und kennt die acht',
+   _serienLauf.marken.join(', '));
+ok(_serienLauf.doppeltMarke === 0, 'dieselbe Marke steht je Spieler nur einmal im Fenster',
+   _serienLauf.doppeltMarke + ' doppelt');
+ok(_serienLauf.doppeltLauf === 0, 'und von einem Lauf steht nur die laengste Marke im Feed',
+   _serienLauf.doppeltLauf + ' Laeufe mit zwei Karten');
+
+// ── Der Serien-Rekord der Liga ab fuenf ───────────────────────────────
+// Mit sechs blieb er einer jungen Liga verschlossen: sie erreicht die fuenf,
+// bevor sie die sechs erreicht, und genau dann ist die laengste Serie ihrer
+// Geschichte eine Nachricht. Im Fenster der Fixtures steht der Bestwert bei
+// dreizehn und liegt Monate zurueck, also wird die Schwelle selbst gemessen.
+const _recSchwelle = JSON.parse(K.eval(`JSON.stringify((function(){
+  const orig = _allTimeRecords;
+  const letzte = matches[matches.length - 1];
+  const bau = val => ({eloRec:null, streakRec:{val, pid:players[0].id,
+    matchId:letzte.id, when:letzte.created_at}});
+  const zaehl = () => {
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    return _buildStories().filter(s => (s.dataRef||{}).type === 'streak_record').length;
+  };
+  try {
+    _allTimeRecords = () => bau(5); const fuenf = zaehl();
+    _allTimeRecords = () => bau(4); const vier = zaehl();
+    return {fuenf, vier};
+  } finally {
+    _allTimeRecords = orig;
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_recSchwelle.fuenf === 1 && _recSchwelle.vier === 0,
+   'der Serien-Rekord der Liga wird ab fuenf Siegen gemeldet',
+   JSON.stringify(_recSchwelle));
 // ── Der Formlauf veraltet am Abstand, nicht an der Siegzahl ─────────
 // Verglichen wurde die Zahl der Siege im Fenster mit der von damals — und
 // das Fenster der letzten zehn Partien verschiebt sich schon im Lauf

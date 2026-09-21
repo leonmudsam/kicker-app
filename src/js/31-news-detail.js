@@ -651,6 +651,7 @@ function _newsDetailMitte(s){
         // erreichen — und die entsteht am Ende eines Spieltags, nicht in
         // einer Partie.
         const kopfzeile = d.quelle === 'tafel' ? 'An der Ewigen Tafel'
+          : d.quelle === 'form' ? 'Auf kurzer Strecke'
           : d.quelle === 'spieler' ? 'Alles in diesem Moment'
           : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
           : d.quelle === 'ergebnis' ? 'Diese beiden Partien'
@@ -802,6 +803,29 @@ function _newsDetailMitte(s){
             <div class="nd-stat-label">Match-Elo</div>
             <div class="nd-stat-val ${eloChg>=0?'pos':'neg'}">${eloChg>=0?'+':''}${eloChg}</div></div>` : '')
           + (matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : '');
+      }
+      // Die gesammelten runden Marken eines Tages. Bei EINER Marke ist das
+      // dieselbe Aussage wie bei einer einzelnen Auszeichnung, also dasselbe
+      // Bauteil [§C27]: das Medaillon mit Klasse, Bedingung und Halterzahl.
+      // Bei mehreren traegt jede Zeile ihren Traeger, ihr Zeichen und die
+      // Zahl — ohne diesen Fall blieb das Blatt leer, und ein leeres Blatt
+      // ist schlimmer als eine Wiederholung [§C33].
+      case 'badge_marken': {
+        const l = Array.isArray(d.marken) ? d.marken : [];
+        const def = id => (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === id) : null;
+        if(l.length === 1){
+          const b0 = def(l[0].badgeId);
+          return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
+              (typeof rarityOf === 'function') ? rarityOf(l[0].badgeId) : 'common',
+              l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
+            + (d.matchId ? `<div class="nd-section">Auslösendes Match</div>`
+                + _newsMatchVsBlock(d.matchId) : '');
+        }
+        return `<div class="nd-section">${l.length} runde Marken</div>`
+          + l.map(x => rcpZeileHtml({ic:(def(x.badgeId) || {}).ic || 'medal',
+              name:nameOf(x.pid), sub:x.name,
+              rechts:'zum ' + x.rang + '. Mal',
+              attr:`data-pid="${esc(x.pid)}" style="cursor:pointer"`})).join('');
       }
       case 'rivalry': {
         // Live-Bilanz aus matches berechnen — günstig, da rivalry-Stories selten sind.

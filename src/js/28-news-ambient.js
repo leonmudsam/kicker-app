@@ -148,6 +148,14 @@ function _buildAmbientStories(now, pm, nameOf){
       if(h.rubrik && age <= AMBIENT_RUBRIK_COOLDOWN_DAYS * _dayMs) recentRubriken.add(h.rubrik);
       if(age <= AMBIENT_PLAYER_COOLDOWN_DAYS * _dayMs){ for(const pid of h.pids) recentPids.add(pid); }
       if(h.sub && age <= AMBIENT_PAAR_COOLDOWN_DAYS * _dayMs){
+        // Eine These OHNE Person ist der Typ selbst. Gemerkt wurde sie nicht,
+        // weil die Schleife ueber die Koepfe lief und es dort keinen gibt:
+        // „2 tragen den Reif, 7 den Schildring" haengt an der ganzen Liga.
+        // Gemessen ueber vierzig nachgespielte Tage stand `insignium_stand`
+        // damit nach drei, vier und sechs Tagen wieder da — der Typ-Cooldown
+        // von sieben Tagen faellt ab dem zweiten Durchgang, und ein
+        // personenloses Template liefert immer ein Ergebnis.
+        if(!h.pids.length) recentPaare.add(h.sub + '|');
         for(const pid of h.pids) recentPaare.add(h.sub + '|' + pid);
       }
     }
@@ -212,7 +220,9 @@ function _buildAmbientStories(now, pm, nameOf){
         }
         // Derselbe Fakt über dieselbe Person nicht zweimal im Monat. Diese
         // Sperre haelt bis in den dritten Durchgang.
-        if(pass < 3 && pids.length && pids.some(p => recentPaare.has(t.key + '|' + p))) continue;
+        if(pass < 3 && (pids.length
+            ? pids.some(p => recentPaare.has(t.key + '|' + p))
+            : recentPaare.has(t.key + '|'))) continue;
         chosen = res; chosenKey = t.key; break;
       }
     }

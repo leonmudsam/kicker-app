@@ -447,7 +447,11 @@ function _consolidateStories(list){
   for(const s of src){
     const d = s.dataRef || {};
     if(d.type !== 'win_streak' || !d.pid) continue;
-    const k = d.pid + '|' + tagKey(s.when);
+    // Der Lauf ist die Einheit, nicht der Tag: die 5er-Marke von gestern
+    // steckt in der 8er von heute, und beide standen unter zwei Tageskoepfen
+    // als zwei Nachrichten. Zeilen aus aelteren Laeufen tragen den Lauf noch
+    // nicht und finden weiter ueber ihren Tag zusammen.
+    const k = d.pid + '|' + (d.lauf || tagKey(s.when));
     const n = Number(d.streak) || 0;
     if(!(_serieMax.get(k) >= n)) _serieMax.set(k, n);
   }
@@ -556,7 +560,8 @@ function _consolidateStories(list){
     // und die Gruppe „Serien im Gleichschritt" entsteht aus genau diesen
     // Mitgliedern — eine Grenze hier raeumt Einzelkarte und Gruppe zugleich.
     if(d.type === 'win_streak' && d.pid
-       && (Number(d.streak) || 0) < (_serieMax.get(d.pid + '|' + tagKey(s.when)) || 0)) continue;
+       && (Number(d.streak) || 0)
+          < (_serieMax.get(d.pid + '|' + (d.lauf || tagKey(s.when))) || 0)) continue;
     if(d.type === 'badge_unlocked' && d.badgeId){
       if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
@@ -679,7 +684,8 @@ function _consolidateStories(list){
   //
   // Genau eine Minute der ganzen Ligageschichte traegt zwei Partien; dort
   // bedeutet die Minute dasselbe wie der Moment.
-  const SAMMEL_SPIEL = new Set(['badge_unlocked','streak_killer','giant_slayer','group',
+  const SAMMEL_SPIEL = new Set(['badge_unlocked','badge_marken','streak_killer',
+    'giant_slayer','group',
     'top_clash','milestone_wins','milestone_goals','milestone_elo','jubilee',
     'loss_streak','win_streak','top_form','team_streak','team_loss_streak',
     'rivalry','rivalry_milestone','match_result']);
@@ -878,8 +884,25 @@ function _consolidateStories(list){
     const eltern = _tafelKandidaten.map((_, i) => i);
     const finde = i => { while(eltern[i] !== i){ eltern[i] = eltern[eltern[i]]; i = eltern[i]; } return i; };
     const vereinige = (a, b) => { a = finde(a); b = finde(b); if(a !== b) eltern[b] = a; };
-    const jeMinute = new Map(), jeMatch = new Map();
+    // ── Der Grund steht in der Karte, nicht in der Uhrzeit ──────────
+    // Partie und Minute sind Stellvertreter fuer „gehoert zusammen", und als
+    // Stellvertreter sind sie beides: zu fein und zu grob. Zu fein, weil ein
+    // Rekord um 11:40 und eine Insignium-Stufe um 14:12 zum selben Spieltag
+    // gehoeren und trotzdem als zwei Tafel-Karten untereinander standen. Zu
+    // grob, weil alle Rekord-Karten eines Tages denselben Zeitstempel tragen
+    // und damit auch die der gleitenden Fenster mit hineinfielen — die
+    // erzaehlen etwas anderes, ihr Wert bewegt sich auch, wenn hinten ein
+    // Ergebnis herausfaellt [§C35]. Wo der Generator den Grund mitgibt
+    // (`causalKey`, [§11.0e]), entscheidet er allein; nur Zeilen aus
+    // aelteren Laeufen ohne diese Angabe finden weiter ueber Partie oder
+    // Minute zusammen.
+    const jeMinute = new Map(), jeMatch = new Map(), jeGrund = new Map();
     _tafelKandidaten.forEach((x, i) => {
+      if(x.d.causalKey){
+        if(jeGrund.has(x.d.causalKey)) vereinige(i, jeGrund.get(x.d.causalKey));
+        else jeGrund.set(x.d.causalKey, i);
+        return;
+      }
       const mk = _minKey(x.st.when);
       if(jeMinute.has(mk)) vereinige(i, jeMinute.get(mk)); else jeMinute.set(mk, i);
       if(x.d.matchId){
@@ -896,7 +919,17 @@ function _consolidateStories(list){
       if(l.length < 2) return;
       const ident = l.map(x => String(x.st.id || '')).sort()[0];
       const key = 'tafel|moment|' + ident;
-      const g = {key, art:'tafel', teile:[], titel:new Set(), max:Infinity,
+      // ── Die dauerhafte Tafel und die kurze Strecke sind zwei Karten ──
+      // Ein Rekord auf einem gleitenden Fenster erzaehlt etwas anderes als
+      // eine Laufbahn: sein Wert bewegt sich auch, wenn hinten ein schwaches
+      // Ergebnis herausfaellt, und deshalb meldet er kein „ausgebaut"
+      // [§C35]. In einer Karte mit den dauerhaften Rekorden verschwand
+      // dieser Unterschied. Welche Achse eine Gruppe traegt, sagt ihr Grund;
+      // eine Gruppe ohne Grund (Zeilen aus aelteren Laeufen) bleibt die
+      // dauerhafte Tafel.
+      const istFormGruppe = l.every(x => String(x.d.causalKey || '').indexOf('form:') === 0);
+      const g = {key, art: istFormGruppe ? 'form' : 'tafel',
+                 teile:[], titel:new Set(), max:Infinity,
                  erster:l.reduce((n, x) => Math.min(n, x.idx), l[0].idx)};
       sammelGruppen.set(key, g);
       l.slice().sort((a, b) => a.idx - b.idx).forEach(x => {
@@ -1032,7 +1065,11 @@ function _consolidateStories(list){
     const teile = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
     const kopf = teile[0];
     const art = g.art || (g.key.indexOf('tafel|') === 0 ? 'tafel' : 'spiel');
-    const istTafel = art === 'tafel';
+    // Die kurze Strecke gehoert zur Ewigen Tafel: dieselbe Kammer, dieselbe
+    // Farbfamilie, derselbe Filter [§C25]. Verschieden ist nur, wovon die
+    // Karte erzaehlt — und damit ihre Schlagzeile.
+    const istForm = art === 'form';
+    const istTafel = art === 'tafel' || istForm;
     const pids = [];
     teile.forEach(t => {
       let ids = [];
@@ -1074,6 +1111,20 @@ function _consolidateStories(list){
       const namen = pids.map(nameOf);
       neuTitel = cfg.titel ? cfg.titel(_namenKurz(namen), kopf.dataRef || {}) : kopf.title;
       neuText = cfg.satz ? cfg.satz(teile.length, kopf.dataRef || {}) : _ersterSatz(kopf.desc);
+    } else if(istForm){
+      // Gemessen an den 19 Spieltagen vom 28.07. bis 26.08. trugen 13 von
+      // ihnen sonst zwei Karten mit derselben Schlagzeile [§C33].
+      const mz = teile.length > 1;
+      neuTitel = pids.length
+        ? `${_namenKurz(pids.map(nameOf))} `
+          + `${pids.length > 1 ? 'setzen' : 'setzt'} Marken auf kurzer Strecke`
+        : `${_zahlwortDe(teile.length)} Marken auf kurzer Strecke`;
+      // Gross am Satzanfang: `_zahlwortDe` liefert „drei", und der Satz
+      // begann damit klein.
+      const _zw = _zahlwortDe(teile.length);
+      neuText = `${_zw.charAt(0).toUpperCase() + _zw.slice(1)} `
+        + `${mz ? 'Bestmarken' : 'Bestmarke'} aus den letzten Partien. `
+        + `${mz ? 'Sie halten' : 'Sie hält'}, solange das Fenster reicht.`;
     } else if(istTafel){
       const bilder = [];
       const nr = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('rekord_') === 0).length;
@@ -1383,7 +1434,8 @@ function _consolidateStories(list){
     const k = _proTagKey(s);
     (_tagRang[k] = _tagRang[k] || []).push(s);
   });
-  const _istTafelKarte = s => !!s && (s.cat === 'tafel' || (s.dataRef || {}).quelle === 'tafel');
+  const _istTafelKarte = s => !!s && (s.cat === 'tafel'
+    || (s.dataRef || {}).quelle === 'tafel' || (s.dataRef || {}).quelle === 'form');
   const _istMatchGeschichte = s => {
     const d = (s && s.dataRef) || {};
     if(!d.matchId || _istTafelKarte(s)) return false;

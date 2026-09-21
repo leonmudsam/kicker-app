@@ -141,13 +141,20 @@ const NEWS_LIMITS = {
   // Bestmarke vor Monatschronik vor Insignium), die Zahl dahinter fuehrt
   // ins Blatt, und dort steht weiterhin jede Zeile [§C33].
   sammelZeilen: 6,
-  // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
-  // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
-  // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
-  // faengt die Stunde auf: keine der 466 Partien hat nach 18:31 angefangen,
-  // und der Fun Fact dieses Slots fällt an einem Spieltag ohnehin weg.
-  tagKartePartien: 8,
+  // Ab wann die Karte des Tages steht [§C33]. Acht Partien war der Median
+  // der Liga und damit eine Behauptung ueber den TAG: erreicht an 64 % der
+  // Spieltage, und die anderen 36 % warteten bis 19 Uhr auf ein Band, das
+  // laengst faellig war. Gemessen an den 19 Spieltagen vom 28.07. bis 26.08.
+  // hatten fuenf Partien schon vierzehn von ihnen um die Mittagszeit
+  // zusammen. Nach der fuenften Partie ist ein Spieltag entschieden genug
+  // fuer ein Band; die kuerzeren Tage faengt weiter die Stunde auf, keine
+  // der 466 Partien hat nach 18:31 angefangen.
+  tagKartePartien: 5,
   tagKarteStunde: 19,
+  // Bei genau einer Partie gar keine: ein Spiel ist kein Spieltag. Das Band
+  // saesse dort auf der einzigen Karte, die es ohnehin gibt, und sagte damit
+  // nichts — es zeichnet aus, was sich gegen andere Karten durchgesetzt hat.
+  tagKarteMin: 2,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
   // Neue, jedes Mal mit einem Prozentpunkt mehr: die ID ist damit eine andere,
@@ -191,7 +198,29 @@ const NEWS_DB_ZEILEN = 500;
 // melden: Dort wächst der Wert gedämpft weiter [§C34], hier ist der
 // dreißigste Zittersieg keine neue Geschichte; der fünfundzwanzigste ist
 // eine Zahl, über die man redet.
+// ─── Der Schlusssprint einer Saison ──────────────────────────────────
+// „Noch fünf Tage" entstand an jedem der letzten sieben Tage, egal wie klar
+// die Sache war: gemessen lag der Vorsprung dabei auch schon bei 91 Elo, und
+// die Karte hieß trotzdem so. Eine Entscheidung ist offen, wenn die beiden
+// vorn dicht beieinander liegen — 25 Elo sind an den echten Partien
+// gemessen etwa zwei gewonnene Spitzenspiele.
+const SAISON_ENDSPURT_ELO = 25;
+
 const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
+// Und die Klasse entscheidet mit, wie oft. Eine Liste fuer alle drei war zu
+// grob in beide Richtungen: eine LEGENDAERE Auszeichnung ist das Seltenste,
+// was der Katalog hergibt — „Absoluter Sieger" ist der Grund, warum jemand
+// die App oeffnet, und das gilt beim zweiten Mal genauso; sie fiel nach der
+// Liste zwischen dem zehnten und dem fuenfundzwanzigsten Mal vierzehnmal
+// weg. Eine GEWOEHNLICHE dagegen ist beim ersten Mal keine Nachricht: einen
+// Zittersieg holt in der Liga jeder, der lange genug dabei ist. Der fuenfte
+// ist eine Zahl, ueber die man redet.
+const NEWS_BADGE_MARKEN_KLEIN = [5, 10, 25, 50, 100];
+function _badgeTakt(rar, rang){
+  if(rar === 'legendary') return true;
+  return (rar === 'common' ? NEWS_BADGE_MARKEN_KLEIN : NEWS_BADGE_MARKEN)
+    .indexOf(rang) >= 0;
+}
 
 // ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
 // Die Form-Karte maß das NIVEAU: neun von zehn gewonnen. Gemessen über die
@@ -312,12 +341,22 @@ const STORY_PRIO = {
   milestone_goals:   46,
   jubilee:           44,
   rivalry_milestone: 42,
+  // Die gesammelten kleinen Marken eines Tages: eine Karte, und die
+  // schwaechste des Spieltagsbandes. Sie sollen vorkommen, aber keinen
+  // Platz von einer Geschichte nehmen, die von diesem Tag erzaehlt.
+  badge_marken:      39,
   rekord_gesteigert: 40,   // ausbauen ist die schwächste der drei Meldungen
   elo_swing:         38,
 
   // ── Der Hintergrund ──
   rivalry:           30,   // ein Zähler, der seit fünfzig Duellen steht
-  season_endgame:    22,   // ein Countdown, kein Ereignis
+  // ── Der Schlusssprint ──
+  // Er stand mit 22 im Hintergrundband, als „Noch 5 Tage" an jedem Tag der
+  // Saison entstand — ein Countdown ist kein Ereignis. Mit der Elo-Grenze
+  // unten ist er etwas anderes: höchstens eine Karte je Saison, und nur,
+  // wenn die Entscheidung wirklich offen ist. Damit gehört er ins
+  // Breaking-Band [§C33].
+  season_endgame:    91,
   season_start:      20,
   dry_spell:         16,
   quiet_week:        14,
