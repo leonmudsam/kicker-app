@@ -255,7 +255,8 @@ function _consolidateStories(list){
   // ihren Siegern standen gemessen zwei im Feed — vier Spieltage verloren
   // genau die Karte, die ihre Schlagzeile ist. Solange das Fenster sieben
   // Tage breit war, fiel das nicht auf: da passten zwei Sieger hinein.
-  const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap']);
+  const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap',
+    'chronik_frei']);
 
   // v9.6: Veraltete „loss_streak"-Stories rausfiltern, BEVOR gruppiert/suppress-
   // iert wird. Eine Story bleibt nur, wenn die AKTUELLE Niederlagenserie des

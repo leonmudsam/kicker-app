@@ -445,6 +445,42 @@ function _newsDetailMitte(s){
     return zeilen ? `<div class="nd-section">Für die Laufbahn</div>${zeilen}` : '';
   };
 
+  // ── Drei Ebenen, die nicht dasselbe sind [§C32] ─────────────────
+  // In der MONATSTAFEL kann ein Spieler mehrere Disziplinen führen, im
+  // PROFIL steht genau eine davon, und nur diese eine zählt fürs PRESTIGE
+  // [§C34]. Die Zeile nannte einen Namen und einen Wert: wer „Der
+  // Nervenkitzel" neben „kein zusätzliches Prestige" las, konnte nicht
+  // sehen, dass dieser Name einem ANDEREN Eintrag gehört und die Chronik
+  // dieser Karte nur in der Tafel steht. Gezählt wird aus `seasonTitles` —
+  // derselben Quelle, aus der die Tafel selbst kommt. EIN Bauteil für beide
+  // Karten, die davon erzählen [§C27]: der Chronik-Wechsel und der Tag, an
+  // dem die Tafel aufgeht.
+  const chronikEbenen = (sid, ids, wertVon, modus, titleId) => ids.map(pid => {
+    const plus = Number(wertVon(pid)) || 0;
+    let tp = null;
+    try { tp = seasonTitleOf(pid, sid); } catch(e){}
+    const titel = (tp && tp.name) || (d.titelJeSpieler || {})[pid] || '';
+    const diese = (titleId && tp) ? tp.titleId === titleId : false;
+    let n = 0;
+    try {
+      const T = seasonTitles(sid);
+      n = ((T && T.awarded) || []).filter(a => a.pid === pid).length;
+    } catch(e){}
+    const ebenen = [];
+    if(n) ebenen.push(n + (n === 1 ? ' Eintrag' : ' Einträge') + ' in der Tafel');
+    if(diese) ebenen.push('im Profil steht diese');
+    else if(titel) ebenen.push('im Profil „' + titel + '"');
+    const aussage = modus === 'zuwachs'
+      ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
+      : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell'
+                  : 'zählt aktuell nicht');
+    return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
+      <div class="nd-stat-label">${esc(nameOf(pid))}${ebenen.length
+        ? `<small>${esc(ebenen.join(' · '))}</small>` : ''}</div>
+      <div class="nd-stat-val ${plus > 0 ? 'acid' : ''}">${aussage} ›</div>
+    </div>`;
+  }).join('');
+
   try {
     switch(d.type){
       // ── Die Ewige Tafel ─────────────────────────────────────────
@@ -508,47 +544,40 @@ function _newsDetailMitte(s){
         const cond = (def && def.cond && _ndNeu(def.cond)) ? def.cond : '';
         const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
         const laufbahn = _newsChronikPrestige(d);
-        // ── Drei Ebenen, die nicht dasselbe sind [§C32] ─────────────
-        // In der MONATSTAFEL kann ein Spieler mehrere Disziplinen führen, im
-        // PROFIL steht genau eine davon, und nur diese eine zählt für das
-        // PRESTIGE. Die Zeile nannte einen Namen und einen Wert: wer „Der
-        // Nervenkitzel" neben „kein zusätzliches Prestige" las, konnte nicht
-        // sehen, dass dieser Name einem ANDEREN Eintrag gehört und die
-        // Chronik dieser Karte nur in der Tafel steht. Gezählt wird dafür
-        // `seasonTitles` — dieselbe Quelle, aus der die Tafel selbst kommt.
-        const tafelZahl = pid => {
-          try {
-            const T = seasonTitles(d.sid);
-            return ((T && T.awarded) || []).filter(a => a.pid === pid).length;
-          } catch(e){ return 0; }
-        };
-        const beitrag = beitragIds.length ? `<div class="nd-section">Tafel, Profil und Laufbahn</div>`
-          + beitragIds.map(pid => {
-            const plus = Number(laufbahn.werte[pid]) || 0;
-            let tp = null;
-            try { tp = seasonTitleOf(pid, d.sid); } catch(e){}
-            const titel = (tp && tp.name) || (d.titelJeSpieler || {})[pid] || '';
-            const diese = tp ? tp.titleId === d.titleId : false;
-            const n = tafelZahl(pid);
-            const ebenen = [];
-            if(n) ebenen.push(n + (n === 1 ? ' Eintrag' : ' Einträge') + ' in der Tafel');
-            if(diese) ebenen.push('im Profil steht diese');
-            else if(titel) ebenen.push('im Profil „' + titel + '"');
-            const aussage = laufbahn.modus === 'zuwachs'
-              ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
-              : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell' : 'zählt aktuell nicht');
-            return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
-              <div class="nd-stat-label">${esc(nameOf(pid))}${ebenen.length
-                ? `<small>${esc(ebenen.join(' · '))}</small>` : ''}</div>
-              <div class="nd-stat-val ${plus > 0 ? 'acid' : ''}">${aussage} ›</div>
-            </div>`;
-          }).join('') : '';
+        const beitrag = beitragIds.length
+          ? `<div class="nd-section">Tafel, Profil und Laufbahn</div>`
+            + chronikEbenen(d.sid, beitragIds, pid => laufbahn.werte[pid],
+                            laufbahn.modus, d.titleId)
+          : '';
         return (def ? _chronFaktenHtml(def) : '')
           + (cond ? `<div class="tnote">${esc(cond)}</div>` : '')
           + (podest ? `<div class="nd-section">Dieser Monat</div>${podest}` : '')
           + (erfuellt > 1 ? `<div class="tnote">${erfuellt} erfüllen die Bedingung in diesem Monat.</div>` : '')
           + beitrag
           + `<button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
+      }
+      // Der Tag, an dem die Monatstafel aufgeht. Sie zeigt die vorläufigen
+      // Profileinträge und die echte Punktewirkung — dieselbe Zeile wie beim
+      // Chronik-Wechsel [§C27]. Ein `titleId` gibt es hier nicht: die Karte
+      // handelt von der ganzen Tafel, nicht von einem Eintrag.
+      case 'chronik_frei': {
+        // `traeger` und nicht `playerIds`: auf der Karte steht kein Name,
+        // damit der Deckel je Spieler die Karte nicht mitzaehlt [§C33].
+        const ids = (Array.isArray(d.traeger) ? d.traeger : []).filter(pid => pm[pid]);
+        // Der Monatsanteil aus der zentralen Tabelle, nicht aus dem Katalog:
+        // je Spieler und Monat zählt genau eine Chronik [§C32].
+        const monatWert = pid => {
+          try {
+            const q = ((prestigeTabelle().byPid[pid] || {}).quellen || [])
+              .find(x => x.q === 'monat' && (!x.sid || x.sid === d.sid));
+            return q ? Math.round((q.p || 0) * 10) / 10 : 0;
+          } catch(e){ return 0; }
+        };
+        return `<div class="nd-gwert metall"><b>${esc(String(d.eintraege != null ? d.eintraege : ''))}</b>
+            <span>Einträge in der Chronik</span></div>
+          ${ids.length ? `<div class="nd-section">Tafel, Profil und Laufbahn</div>`
+            + chronikEbenen(d.sid, ids, monatWert, 'bestand', '') : ''}
+          <button class="btn ghost sm" data-season-table="${esc(d.sid)}" style="margin-top:12px;width:100%">Ganze Tafel öffnen</button>`;
       }
       case 'chronik_monat': {
         const ids = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);

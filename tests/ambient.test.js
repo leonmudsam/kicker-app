@@ -4213,6 +4213,108 @@ ok(_worte.englisch.length === 0, 'keine englische Schlagzeile',
 ok(_worte.fragment.length === 0, 'kein Satzfragment als letzter Satz',
    _worte.fragment.slice(0, 2).join(' | ') || 'keins');
 
+console.log('=== DAS AUFGEHEN DER TAFEL IST EINE NACHRICHT ===');
+// Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik, und
+// gemeldet wird erst, was sich von der ersten gewerteten Lage an aendert
+// [§C32]. Damit stand am Tag, an dem der Monat zum ersten Mal gewertet wird,
+// gar nichts im Feed — obwohl in diesem Moment die ganze Monatstafel
+// entsteht und jeder Eintrag darin ab jetzt fuers Prestige zaehlt. Gemessen
+// wird am echten Verlauf: die Partien werden Spieltag fuer Spieltag
+// zurueckgenommen, bis die Tafel aufgeht.
+const _frei = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  try {
+    const sid = '2026-08';
+    const ms = alle.filter(m => (seasonOf(m.created_at) || {}).id === sid)
+      .map(m => mts(m)).sort((a, b) => a - b);
+    const tage = [...new Set(ms.map(t => tagKey(t)))];
+    // Der Spieltag, an dem die Tafel aufgeht: davor null, danach nicht.
+    let treffer = null;
+    for(let i = 0; i < tage.length; i++){
+      const grenze = Math.max(...ms.filter(t => tagKey(t) === tage[i]));
+      matches = alle.filter(m => mts(m) <= grenze);
+      invalidateCache();
+      if(seasonTitleHalter(sid)){ treffer = {i, grenze}; break; }
+    }
+    if(!treffer) return {tag:''};
+    matches = alle.filter(m => mts(m) <= treffer.grenze);
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    const roh = _buildStories() || [];
+    const k = roh.filter(x => (x.dataRef || {}).type === 'chronik_frei');
+    const wechsel = roh.filter(x => (x.dataRef || {}).type === 'chronik_geholt');
+    const blatt = k.length ? String(_newsDetailMitte(k[0]) || '') : '';
+    // Und am naechsten Spieltag nicht mehr: eine Karte je Monat.
+    let zweiter = -1;
+    if(treffer.i + 1 < tage.length){
+      const g2 = Math.max(...ms.filter(t => tagKey(t) === tage[treffer.i + 1]));
+      matches = alle.filter(m => mts(m) <= g2);
+      invalidateCache();
+      _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+      zweiter = (_buildStories() || [])
+        .filter(x => (x.dataRef || {}).type === 'chronik_frei').length;
+    }
+    return {tag:tagKey(treffer.grenze), n:k.length, wechsel:wechsel.length,
+      id:k.length ? k[0].id : '', titel:k.length ? k[0].title : '',
+      text:k.length ? k[0].desc : '',
+      match:k.length ? !!k[0].dataRef.matchId : false,
+      eintraege:k.length ? k[0].dataRef.eintraege : 0,
+      // Der Tagesdeckel gibt fuenf Plaetze her, und an einem ruhigen Tag
+      // faellt gar nichts weg — gemessen wird deshalb gegen sechs staerkere
+      // Karten desselben Tages, so wie beim schwachen Tafel-Wechsel.
+      pflicht:(function(){
+        if(!k.length) return false;
+        const stark = [];
+        const sorten = ['top_clash','top_clash','giant_slayer','giant_slayer',
+                        'streak_killer','streak_killer'];
+        for(let i = 0; i < 6; i++) stark.push({
+          id:'frei-st-' + i, cat:'highlight', ic:'ball',
+          when:new Date(treffer.grenze - (i + 1) * 60000),
+          prio: 90 + i, title:'Starke Karte ' + i,
+          desc:'Ein Satz mit ' + i + ' Zahlen.',
+          dataRef:{type:sorten[i], matchId:'kein-' + i, playerIds:[players[i].id]}
+        });
+        // Eine davon ist selbst eine Tafel-Karte, und zwar die staerkere:
+        // sonst haelt die neue Karte den fuer die Ewige Tafel reservierten
+        // Platz [§C33], und der Test misst nicht die Pflicht, sondern die
+        // Reservierung.
+        stark.push({id:'frei-st-tf', cat:'tafel', ic:'trophyStar',
+          when:new Date(treffer.grenze - 7 * 60000), prio: 97,
+          title:'Eine starke Tafel-Karte', desc:'Ein Rekord wandert um 2 Plätze.',
+          dataRef:{type:'rekord_geholt', rekordId:'xx', playerIds:[players[7].id]}});
+        _cache._consolFrom = null;
+        return (_consolidateStories(stark.concat([k[0]])) || [])
+          .some(x => (x.dataRef || {}).type === 'chronik_frei');
+      })(),
+      blattLen:blatt.length, ebenen:blatt.indexOf('Tafel, Profil und Laufbahn') >= 0,
+      zweiter};
+  } finally {
+    matches = alle; invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  }
+})())`));
+ok(_frei.tag && _frei.n === 1,
+   'am Tag, an dem die Monatstafel aufgeht, steht genau eine Karte',
+   _frei.tag + ': ' + _frei.n + ' — ' + (_frei.titel || ''));
+ok(_frei.wechsel === 0,
+   'und kein einziger Chronik-Wechsel daneben', String(_frei.wechsel));
+// „gehalten von 5 Spielern" ist richtig, „holt" waere die Behauptung, die
+// diese Karte gerade nicht aufstellt — gemessen wird deshalb das Wort, nicht
+// die Zeichenfolge.
+ok(_frei.id === 'chronik_frei_2026-08' && _frei.eintraege > 0
+   && /\d/.test(String(_frei.text))
+   && !/\b(holt|holen|geholt)\b/.test(String(_frei.text)),
+   'sie ist neutral, nennt die Zahl der Eintraege und behauptet keinen Erfolg',
+   _frei.id + ' · ' + String(_frei.text).slice(0, 110));
+ok(_frei.match === false,
+   'sie traegt keine Partie, denn sie kommt nicht aus der letzten');
+ok(_frei.pflicht, 'und faellt keinem Tagesdeckel zum Opfer');
+ok(_frei.blattLen > 200 && _frei.ebenen,
+   'ihr Blatt zeigt die vorlaeufigen Profileintraege samt Punktewirkung',
+   _frei.blattLen + ' Zeichen');
+ok(_frei.zweiter === 0,
+   'am naechsten Spieltag kommt sie nicht wieder', String(_frei.zweiter));
+
 console.log('=== TAFEL, PROFIL UND PRESTIGE SIND DREI EBENEN ===');
 // Ein Spieler kann in der Monatstafel mehrere Disziplinen fuehren, im Profil
 // steht genau eine davon, und nur diese eine zaehlt fuers Prestige [§C32].
