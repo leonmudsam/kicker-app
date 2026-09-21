@@ -4877,7 +4877,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.21.2e09aeee';
+const BUILD_VERSION='2026.09.21.8e44bdb4';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21189,6 +21189,20 @@ function _buildStories(){
               : art === 'geholt'   ? STORY_PRIO.rekord_geholt
                                    : STORY_PRIO.rekord_gesteigert,
           dataRef: {type:'rekord_' + art, rekordId:def.id, matchId:_mid, kammer:def.kind,
+                    // ── Der Grund steht in der Karte, nicht in der Uhrzeit ──
+                    // Gebuendelt wurde nach Partie ODER Minute, und das ist
+                    // ein Stellvertreter: ein Rekord, der um 11:40 wechselt,
+                    // und eine Insignium-Stufe um 14:12 gehoeren zum selben
+                    // Spieltag und standen als zwei Tafel-Karten
+                    // untereinander. Der Schluessel sagt jetzt, WARUM zwei
+                    // Fakten zusammengehoeren [§11.0e]: die dauerhafte Tafel
+                    // dieses Spieltags. Auch ein Rekord auf einem gleitenden
+                    // Fenster steht darin — er ist ein Liga-Rekord und
+                    // gehoert in die Ewige Tafel; was ihn unterscheidet, ist
+                    // allein, dass er kein „ausgebaut" meldet [§C35]. Eine
+                    // zweite Tafel-Karte je Tag trug gemessen an 13 von 19
+                    // Spieltagen dieselbe Schlagzeile wie die erste.
+                    causalKey:_storyGruppeKey('table', _tafelTag.tag),
                     zufall:def.zufall || '', playerIds:wer.slice(0, 3), zeileText,
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
                     kammerLabel:_kammer(def.kind)}
@@ -21259,7 +21273,12 @@ function _buildStories(){
                   + (x.ev ? ` ${_evSatz(x.ev)}.` : ''),
               when: wann + 60000,
               prio: STORY_PRIO.chronik_erstling,
-              dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name}
+              // Diese Karte gehoert keinem Spieltag: sie entsteht mit dem
+              // Monatswechsel. Ihr Grund ist die Chronik dieses Monats, und
+              // ueber ihn finden die Erstlinge zusammen — bisher tat das ihre
+              // gemeinsame Minute, und das ist ein Stellvertreter [§11.0e].
+              dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name,
+                        causalKey:_storyGruppeKey('recap', 'chronik_' + _vorSid)}
             });
           });
         }
@@ -21473,6 +21492,9 @@ function _buildStories(){
           // ueberstimmen [§C33].
           prio: STORY_PRIO.chronik_geholt,
           dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_partieVon2(m.wer),
+                    // Dieselbe dauerhafte Tafel, derselbe Spieltag, dieselbe
+                    // Karte [§11.0e].
+                    causalKey:_storyGruppeKey('table', _tafelTag.tag),
                     // Die Beteiligten sind die, um die es geht — nicht jeder
                     // Mithalter. „Martin zieht bei ‚Der Nachzuegler' gleich"
                     // trug Martin UND Julian, und in der Tafel-Sammelkarte
@@ -21551,6 +21573,7 @@ function _buildStories(){
             prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
             dataRef: {type:'insignium_stufe', pid:p.id,
                       matchId:ausloeser ? ausloeser.id : null, stufe,
+                      causalKey:_storyGruppeKey('table', _tafelTag.tag),
                       // In einer Sammelkarte steht die Herkunft des Prestiges
                       // nicht: drei Quellen mit drei Zahlen und dazu der
                       // Abstand zur naechsten Stufe waren gemessen 124 Zeichen
@@ -23962,8 +23985,25 @@ function _consolidateStories(list){
     const eltern = _tafelKandidaten.map((_, i) => i);
     const finde = i => { while(eltern[i] !== i){ eltern[i] = eltern[eltern[i]]; i = eltern[i]; } return i; };
     const vereinige = (a, b) => { a = finde(a); b = finde(b); if(a !== b) eltern[b] = a; };
-    const jeMinute = new Map(), jeMatch = new Map();
+    // ── Der Grund steht in der Karte, nicht in der Uhrzeit ──────────
+    // Partie und Minute sind Stellvertreter fuer „gehoert zusammen", und als
+    // Stellvertreter sind sie beides: zu fein und zu grob. Zu fein, weil ein
+    // Rekord um 11:40 und eine Insignium-Stufe um 14:12 zum selben Spieltag
+    // gehoeren und trotzdem als zwei Tafel-Karten untereinander standen. Zu
+    // grob, weil alle Rekord-Karten eines Tages denselben Zeitstempel tragen
+    // und damit auch die der gleitenden Fenster mit hineinfielen — die
+    // erzaehlen etwas anderes, ihr Wert bewegt sich auch, wenn hinten ein
+    // Ergebnis herausfaellt [§C35]. Wo der Generator den Grund mitgibt
+    // (`causalKey`, [§11.0e]), entscheidet er allein; nur Zeilen aus
+    // aelteren Laeufen ohne diese Angabe finden weiter ueber Partie oder
+    // Minute zusammen.
+    const jeMinute = new Map(), jeMatch = new Map(), jeGrund = new Map();
     _tafelKandidaten.forEach((x, i) => {
+      if(x.d.causalKey){
+        if(jeGrund.has(x.d.causalKey)) vereinige(i, jeGrund.get(x.d.causalKey));
+        else jeGrund.set(x.d.causalKey, i);
+        return;
+      }
       const mk = _minKey(x.st.when);
       if(jeMinute.has(mk)) vereinige(i, jeMinute.get(mk)); else jeMinute.set(mk, i);
       if(x.d.matchId){

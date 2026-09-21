@@ -2072,6 +2072,20 @@ function _buildStories(){
               : art === 'geholt'   ? STORY_PRIO.rekord_geholt
                                    : STORY_PRIO.rekord_gesteigert,
           dataRef: {type:'rekord_' + art, rekordId:def.id, matchId:_mid, kammer:def.kind,
+                    // ── Der Grund steht in der Karte, nicht in der Uhrzeit ──
+                    // Gebuendelt wurde nach Partie ODER Minute, und das ist
+                    // ein Stellvertreter: ein Rekord, der um 11:40 wechselt,
+                    // und eine Insignium-Stufe um 14:12 gehoeren zum selben
+                    // Spieltag und standen als zwei Tafel-Karten
+                    // untereinander. Der Schluessel sagt jetzt, WARUM zwei
+                    // Fakten zusammengehoeren [§11.0e]: die dauerhafte Tafel
+                    // dieses Spieltags. Auch ein Rekord auf einem gleitenden
+                    // Fenster steht darin — er ist ein Liga-Rekord und
+                    // gehoert in die Ewige Tafel; was ihn unterscheidet, ist
+                    // allein, dass er kein „ausgebaut" meldet [§C35]. Eine
+                    // zweite Tafel-Karte je Tag trug gemessen an 13 von 19
+                    // Spieltagen dieselbe Schlagzeile wie die erste.
+                    causalKey:_storyGruppeKey('table', _tafelTag.tag),
                     zufall:def.zufall || '', playerIds:wer.slice(0, 3), zeileText,
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
                     kammerLabel:_kammer(def.kind)}
@@ -2142,7 +2156,12 @@ function _buildStories(){
                   + (x.ev ? ` ${_evSatz(x.ev)}.` : ''),
               when: wann + 60000,
               prio: STORY_PRIO.chronik_erstling,
-              dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name}
+              // Diese Karte gehoert keinem Spieltag: sie entsteht mit dem
+              // Monatswechsel. Ihr Grund ist die Chronik dieses Monats, und
+              // ueber ihn finden die Erstlinge zusammen — bisher tat das ihre
+              // gemeinsame Minute, und das ist ein Stellvertreter [§11.0e].
+              dataRef: {type:'chronik_erstling', sid:_vorSid, pid:x.pid, titel:x.name,
+                        causalKey:_storyGruppeKey('recap', 'chronik_' + _vorSid)}
             });
           });
         }
@@ -2356,6 +2375,9 @@ function _buildStories(){
           // ueberstimmen [§C33].
           prio: STORY_PRIO.chronik_geholt,
           dataRef: {type:'chronik_geholt', titleId:m.t.id, sid:_sid, matchId:_partieVon2(m.wer),
+                    // Dieselbe dauerhafte Tafel, derselbe Spieltag, dieselbe
+                    // Karte [§11.0e].
+                    causalKey:_storyGruppeKey('table', _tafelTag.tag),
                     // Die Beteiligten sind die, um die es geht — nicht jeder
                     // Mithalter. „Martin zieht bei ‚Der Nachzuegler' gleich"
                     // trug Martin UND Julian, und in der Tafel-Sammelkarte
@@ -2434,6 +2456,7 @@ function _buildStories(){
             prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
             dataRef: {type:'insignium_stufe', pid:p.id,
                       matchId:ausloeser ? ausloeser.id : null, stufe,
+                      causalKey:_storyGruppeKey('table', _tafelTag.tag),
                       // In einer Sammelkarte steht die Herkunft des Prestiges
                       // nicht: drei Quellen mit drei Zahlen und dazu der
                       // Abstand zur naechsten Stufe waren gemessen 124 Zeichen

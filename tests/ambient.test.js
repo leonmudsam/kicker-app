@@ -366,6 +366,48 @@ ok(_tagRahmen.grenze, 'Vorher ist eine Millisekunde vor Mitternacht, und der Tag
 ok(_tagRahmen.partien, 'der Rahmen zaehlt die Partien seines Tages');
 ok(_tagRahmen.summe, 'die Punktewirkung erfindet keine Punkte');
 
+// ── Eine Tafel-Karte je Spieltag, und ihr Grund steht darin ───────────
+// Gebuendelt wurde nach Partie ODER Minute. Das ist ein Stellvertreter, und
+// er traf daneben: gemessen ueber die 19 Spieltage vom 28.07. bis 26.08.
+// stand am 29.07. eine zweite Tafel-Karte neben der ersten, weil eine
+// Insignium-Stufe eine andere Minute trug als die Rekorde desselben Tages.
+// Zwei Karten „X bewegen die Ewige Tafel" an einem Tag sind eine Nachricht
+// und eine Wiederholung [§C33]. Der Grund gehoert deshalb in die Karte.
+const _tafelGrund = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches.slice();
+  const arten = ['rekord_erstmals','rekord_geholt','rekord_gesteigert',
+                 'insignium_stufe','chronik_erstling','chronik_geholt'];
+  const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
+    .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
+  let ohneGrund = 0, meldungen = 0, mehrfach = [], gemessen = 0;
+  tage.forEach(t => {
+    matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
+    invalidateCache();
+    _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    let roh = []; try { roh = _buildStories() || []; } catch(e){ return; }
+    const tafel = roh.filter(s => arten.indexOf((s.dataRef||{}).type) >= 0);
+    if(!tafel.length) return;
+    gemessen++;
+    meldungen += tafel.length;
+    ohneGrund += tafel.filter(s => !(s.dataRef||{}).causalKey).length;
+    let fertig = []; try { fertig = _consolidateStories(roh) || []; } catch(e){}
+    const karten = fertig.filter(s => s.cat === 'tafel' && tagKey(s.when) === t);
+    if(karten.length > 1) mehrfach.push(t + ': ' + karten.map(s => s.title).join(' | '));
+  });
+  matches = alle; invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  return {tage:tage.length, gemessen, meldungen, ohneGrund, mehrfach};
+})())`));
+console.log('  Spieltage 28.07.-26.08.: ' + _tafelGrund.tage + ' · mit Tafel-Meldung: '
+  + _tafelGrund.gemessen + ' · Meldungen: ' + _tafelGrund.meldungen);
+// Ohne diese Probe waere die naechste vakuant.
+ok(_tafelGrund.meldungen >= 100, 'der Durchlauf trifft ueberhaupt Tafel-Meldungen',
+   _tafelGrund.meldungen + ' Meldungen an ' + _tafelGrund.gemessen + ' Spieltagen');
+ok(_tafelGrund.ohneGrund === 0, 'jede Tafel-Meldung nennt ihren Grund',
+   _tafelGrund.ohneGrund + ' ohne causalKey');
+ok(_tafelGrund.mehrfach.length === 0, 'an einem Spieltag steht hoechstens eine Tafel-Karte',
+   _tafelGrund.mehrfach.slice(0, 2).join(' || ') || 'keine Doppelung');
+
 // ── Ein gleitendes Fenster wird nicht „ausgebaut" [§C33] ──────────────
 // Der Wert einer Laufbahn steigt, weil jemand besser gespielt hat; der Wert
 // eines Fensters steigt auch dann, wenn am hinteren Ende ein schwaches

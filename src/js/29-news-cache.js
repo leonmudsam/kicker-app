@@ -878,8 +878,25 @@ function _consolidateStories(list){
     const eltern = _tafelKandidaten.map((_, i) => i);
     const finde = i => { while(eltern[i] !== i){ eltern[i] = eltern[eltern[i]]; i = eltern[i]; } return i; };
     const vereinige = (a, b) => { a = finde(a); b = finde(b); if(a !== b) eltern[b] = a; };
-    const jeMinute = new Map(), jeMatch = new Map();
+    // ── Der Grund steht in der Karte, nicht in der Uhrzeit ──────────
+    // Partie und Minute sind Stellvertreter fuer „gehoert zusammen", und als
+    // Stellvertreter sind sie beides: zu fein und zu grob. Zu fein, weil ein
+    // Rekord um 11:40 und eine Insignium-Stufe um 14:12 zum selben Spieltag
+    // gehoeren und trotzdem als zwei Tafel-Karten untereinander standen. Zu
+    // grob, weil alle Rekord-Karten eines Tages denselben Zeitstempel tragen
+    // und damit auch die der gleitenden Fenster mit hineinfielen — die
+    // erzaehlen etwas anderes, ihr Wert bewegt sich auch, wenn hinten ein
+    // Ergebnis herausfaellt [§C35]. Wo der Generator den Grund mitgibt
+    // (`causalKey`, [§11.0e]), entscheidet er allein; nur Zeilen aus
+    // aelteren Laeufen ohne diese Angabe finden weiter ueber Partie oder
+    // Minute zusammen.
+    const jeMinute = new Map(), jeMatch = new Map(), jeGrund = new Map();
     _tafelKandidaten.forEach((x, i) => {
+      if(x.d.causalKey){
+        if(jeGrund.has(x.d.causalKey)) vereinige(i, jeGrund.get(x.d.causalKey));
+        else jeGrund.set(x.d.causalKey, i);
+        return;
+      }
       const mk = _minKey(x.st.when);
       if(jeMinute.has(mk)) vereinige(i, jeMinute.get(mk)); else jeMinute.set(mk, i);
       if(x.d.matchId){
