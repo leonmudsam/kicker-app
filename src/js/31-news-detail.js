@@ -508,16 +508,38 @@ function _newsDetailMitte(s){
         const cond = (def && def.cond && _ndNeu(def.cond)) ? def.cond : '';
         const beitragIds = (Array.isArray(d.playerIds) ? d.playerIds : []).filter(pid => pm[pid]);
         const laufbahn = _newsChronikPrestige(d);
-        const beitrag = beitragIds.length ? `<div class="nd-section">Für die Laufbahn</div>`
+        // ── Drei Ebenen, die nicht dasselbe sind [§C32] ─────────────
+        // In der MONATSTAFEL kann ein Spieler mehrere Disziplinen führen, im
+        // PROFIL steht genau eine davon, und nur diese eine zählt für das
+        // PRESTIGE. Die Zeile nannte einen Namen und einen Wert: wer „Der
+        // Nervenkitzel" neben „kein zusätzliches Prestige" las, konnte nicht
+        // sehen, dass dieser Name einem ANDEREN Eintrag gehört und die
+        // Chronik dieser Karte nur in der Tafel steht. Gezählt wird dafür
+        // `seasonTitles` — dieselbe Quelle, aus der die Tafel selbst kommt.
+        const tafelZahl = pid => {
+          try {
+            const T = seasonTitles(d.sid);
+            return ((T && T.awarded) || []).filter(a => a.pid === pid).length;
+          } catch(e){ return 0; }
+        };
+        const beitrag = beitragIds.length ? `<div class="nd-section">Tafel, Profil und Laufbahn</div>`
           + beitragIds.map(pid => {
             const plus = Number(laufbahn.werte[pid]) || 0;
-            let titel = (d.titelJeSpieler || {})[pid] || '';
-            if(!titel){ try { const t = seasonTitleOf(pid, d.sid); titel = t ? t.name : ''; } catch(e){} }
+            let tp = null;
+            try { tp = seasonTitleOf(pid, d.sid); } catch(e){}
+            const titel = (tp && tp.name) || (d.titelJeSpieler || {})[pid] || '';
+            const diese = tp ? tp.titleId === d.titleId : false;
+            const n = tafelZahl(pid);
+            const ebenen = [];
+            if(n) ebenen.push(n + (n === 1 ? ' Eintrag' : ' Einträge') + ' in der Tafel');
+            if(diese) ebenen.push('im Profil steht diese');
+            else if(titel) ebenen.push('im Profil „' + titel + '"');
             const aussage = laufbahn.modus === 'zuwachs'
               ? (plus > 0 ? '+' + plus + ' Prestige' : 'kein zusätzliches Prestige')
               : (plus > 0 ? String(plus).replace('.', ',') + ' Prestige · zählt aktuell' : 'zählt aktuell nicht');
             return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
-              <div class="nd-stat-label">${esc(nameOf(pid))}${titel ? `<small>${esc(titel)}</small>` : ''}</div>
+              <div class="nd-stat-label">${esc(nameOf(pid))}${ebenen.length
+                ? `<small>${esc(ebenen.join(' · '))}</small>` : ''}</div>
               <div class="nd-stat-val ${plus > 0 ? 'acid' : ''}">${aussage} ›</div>
             </div>`;
           }).join('') : '';

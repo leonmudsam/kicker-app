@@ -4213,6 +4213,50 @@ ok(_worte.englisch.length === 0, 'keine englische Schlagzeile',
 ok(_worte.fragment.length === 0, 'kein Satzfragment als letzter Satz',
    _worte.fragment.slice(0, 2).join(' | ') || 'keins');
 
+console.log('=== TAFEL, PROFIL UND PRESTIGE SIND DREI EBENEN ===');
+// Ein Spieler kann in der Monatstafel mehrere Disziplinen fuehren, im Profil
+// steht genau eine davon, und nur diese eine zaehlt fuers Prestige [§C32].
+// Das Blatt nannte einen Namen und einen Wert: wer „Der Nervenkitzel" neben
+// „kein zusaetzliches Prestige" las, konnte nicht sehen, dass dieser Name
+// einem ANDEREN Eintrag gehoert und die Chronik dieser Karte nur in der
+// Tafel steht.
+const _drei = JSON.parse(K.eval(`JSON.stringify((function(){
+  const l = _buildStories() || [];
+  const k = l.filter(s => (s.dataRef || {}).type === 'chronik_geholt');
+  if(!k.length) return {n:0};
+  const roh = s => String(_newsDetailMitte(s) || '')
+    .replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
+  const echt = roh(k[0]);
+  // Und der Fall, den die echten Daten an diesem Tag nicht hergeben: eine
+  // Karte ueber eine Chronik, die NICHT der Profileintrag ihres Halters ist.
+  const sid = k[0].dataRef.sid;
+  const T = seasonTitles(sid) || {awarded:[]};
+  const je = {};
+  (T.awarded || []).forEach(a => { (je[a.pid] = je[a.pid] || []).push(a); });
+  const pid = Object.keys(je).filter(p => je[p].length > 1)[0] || '';
+  const profil = pid ? seasonTitleOf(pid, sid) : null;
+  const ander = pid ? je[pid].filter(a => a.titleId !== (profil || {}).titleId)[0] : null;
+  const gebaut = ander ? roh({dataRef:{type:'chronik_geholt', sid,
+    titleId:ander.titleId, playerIds:[pid]}}) : '';
+  return {n:k.length, echt,
+    tafel:/\\d+ Eintr(ag|äge) in der Tafel/.test(echt),
+    diese:echt.indexOf('im Profil steht diese') >= 0,
+    gebautDa:!!ander, gebaut,
+    fremd: ander ? (gebaut.indexOf('im Profil „' + profil.name) >= 0) : false,
+    keinPlus: ander ? (gebaut.indexOf('zählt aktuell nicht') >= 0
+                       || gebaut.indexOf('kein zusätzliches Prestige') >= 0) : false,
+    name: ander ? (pname(pid) + ': ' + ander.name + ' statt ' + profil.name) : ''};
+})())`));
+ok(_drei.n > 0, 'der Generator bildet Chronik-Karten', String(_drei.n));
+ok(_drei.tafel, 'das Blatt nennt die Zahl der Eintraege in der Monatstafel',
+   (_drei.echt || '').slice(0, 120));
+ok(_drei.diese, 'und dass diese Chronik der Profileintrag ist');
+ok(_drei.gebautDa && _drei.fremd,
+   'eine Chronik, die nicht im Profil steht, nennt den Eintrag, der dort steht',
+   _drei.name || 'kein Spieler mit zwei Eintraegen');
+ok(_drei.keinPlus, 'und behauptet kein zusaetzliches Prestige',
+   (_drei.gebaut || '').slice(0, 140));
+
 console.log('=== DER ROHE GRUNDWERT IST NICHT, WAS JEMAND BEKOMMT ===');
 // Ein zehnter Rekord gibt nicht 100 Prestige: er wird durch die Zahl seiner
 // Halter geteilt, landet auf einem Rang im Rekordstapel und wird dort durch
