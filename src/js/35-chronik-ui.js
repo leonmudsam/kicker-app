@@ -349,7 +349,6 @@ function showChronicle(cid){
   const q = h ? rekordQuelleVon(h.pid, cid) : null;
   const beitrag = q ? Math.round(q.p) : 0;
   const zahlen = rcpZahlenHtml([
-    {l:'Kammer',     v:CHRON_KINDS[def.kind].kurz},
     {l:'Bestwert',   v:h ? _chronKurz(h.ev) : '—'},
     {l:'Grundwert',  v:def.basis > 0 ? def.basis + ' P' : '0 P'},
     {l:'Beitrag',    v:def.basis > 0 ? (beitrag > 0 ? '+' + beitrag + ' P' : '—') : '0 P',
@@ -362,14 +361,13 @@ function showChronicle(cid){
     def.zeitraum ? ['Zeitraum', def.zeitraum] : null,
     def.mind     ? ['Mindestbasis', def.mind] : null,
     def.basis > 0
-      ? ['Für die Laufbahn', q ? _prestigeQuellSatz(q)
+      ? ['Für die Laufbahn', q ? _prestigeQuellSatz(q, true)
           : 'Grundwert ' + def.basis + ' P, geteilt durch die Zahl der Halter']
       : ['Für die Laufbahn', 'Eine Schattenseite zählt nichts und zieht nichts ab']
   ].filter(Boolean);
   openSheet(`
     <h3>${esc(def.name)}</h3>
-    <div class="sheet-sub">${esc(CHRON_KINDS[def.kind].label)}${
-      REKORD_STAND[def.stand] ? ' · ' + esc(REKORD_STAND[def.stand]) : ''}</div>
+    <div class="sheet-sub">${esc(CHRON_KINDS[def.kind].label)}</div>
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
@@ -400,10 +398,10 @@ function showChronicle(cid){
   _bindChronikClicks(document.getElementById('sheet'));
 }
 
-// Was mit dieser Fassung neu ist. Ohne die Marke sieht ein neuer Eintrag aus
-// wie einer, der schon immer dastand — und eine geaenderte Formel wie die
-// alte, unter der jemand seinen Rekord verloren hat.
-const REKORD_STAND = {neu:'Neu', ueberarbeitet:'Überarbeitet'};
+// Keine Marken „Neu" und „Ueberarbeitet" mehr. Sie sagten, was sich mit
+// dieser FASSUNG DER APP geaendert hat — fuer den Leser einer Rekordkarte ist
+// das nichts: er will wissen, was der Rekord misst und wer ihn haelt. Dieselbe
+// Regel wie „Das Blatt erklaert nicht die App" [§C33].
 
 // Die Zeile unter dem Beleg: Zeitpunkt, Zeitraum, Grundwert, Stand. Sie stand
 // vorher nur als Zeitpunkt da, und damit fehlte auf der Karte das, was die
@@ -416,8 +414,6 @@ function _rekordMeta(d, h){
   if(h && h.zeit) pillen.push(`<span class="rek-p zeit">${esc(String(h.zeit))}</span>`);
   if(d.zeitraum) pillen.push(`<span class="rek-p">${esc(d.zeitraum)}</span>`);
   if(d.basis > 0) pillen.push(`<span class="rek-p num">${d.basis} P Basis</span>`);
-  if(REKORD_STAND[d.stand]) pillen.push(
-    `<span class="rek-p stand">${esc(REKORD_STAND[d.stand])}</span>`);
   return pillen.length ? `<div class="rek-meta">${pillen.join('')}</div>` : '';
 }
 
