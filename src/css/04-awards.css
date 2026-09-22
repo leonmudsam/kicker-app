@@ -320,14 +320,25 @@
 
   /* Der Kammerfilter ist die INNERE Ebene [§C27]: rahmenlos unter dem
      gerahmten `.ui-switch` des Reiters. */
-  .ui-tabs.rek-kammern{margin-bottom:2px}
-  .ui-tabs.rek-kammern button{font-size:11.5px;padding-left:2px;padding-right:2px}
+  /* Sechs Chips statt fuenf: „Aktuelle Form" ist dazugekommen. Auf 430
+     Pixeln reicht die Breite nicht mehr, also scrollt die Leiste waagerecht.
+     Umgebrochen standen Fuegungen und Schatten in einer zweiten Zeile, und
+     die sah nicht mehr wie ein Reiterstreifen aus. */
+  .ui-tabs.rek-kammern{margin-bottom:2px;overflow-x:auto;scrollbar-width:none}
+  .ui-tabs.rek-kammern::-webkit-scrollbar{display:none}
+  .ui-tabs.rek-kammern button{font-size:11.5px;padding-left:6px;padding-right:6px;
+    flex:0 0 auto;display:inline-flex;align-items:center;gap:4px}
+  /* Die Zahl sagt, wie viele Rekorde in der Kammer stehen. Ohne sie war
+     nicht zu sehen, ob eine Kammer gefuellt ist. */
+  .ui-tabs.rek-kammern button .n{font-size:9.5px;color:var(--faint)}
+  .ui-tabs.rek-kammern button.on .n{color:var(--ink2)}
 
   .rek-gruppe{display:flex;align-items:center;gap:8px;color:var(--gold);
     margin:22px 4px 10px;font-family:'Sometype Mono',monospace;
     font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em}
   .rek-gruppe:first-child{margin-top:6px}
-  /* Vier Kammern, vier Toene. Gold gehoert dem Koennen und der Bestmarke,
+  /* Fuenf Kammern, drei Toene. Gold gehoert dem Koennen, der Form und der
+     Bestmarke,
      Metall der Fuegung [§C35] — sie zeichnet niemanden aus —, Rot der
      Richtung [§C25]. Als alle fuenfunddreissig Karten golden waren, sagte
      Gold nichts mehr. */
@@ -384,12 +395,30 @@
   .rek-ev{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:3px}
   .rek-w{font-size:13px;font-weight:700;color:var(--ink)}
   .rek.offen .rek-ev{font-style:italic}
-  /* Die Pille umschliesst ihren Inhalt — als Blockkind lief sie ueber die
-     ganze Kartenbreite. */
-  .rek-zeit{display:inline-block;margin-top:5px;
-    font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
+  /* Zeitpunkt, Zeitraum, Grundwert und Stand als Pillenzeile. Sie umbricht,
+     weil „Ganze Laufbahn, alle Sturmspiele" und „100 P Basis" auf 430 Pixeln
+     nicht nebeneinander passen; als eine Zeile mit `nowrap` lief die letzte
+     Pille aus der Karte. */
+  .rek-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  .rek-p{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
     letter-spacing:.06em;color:var(--muted);background:var(--bg2);
     border:1px solid var(--line);border-radius:99px;padding:1.5px 7px;white-space:nowrap}
+  .rek-p.zeit{color:var(--ink2)}
+  /* „Neu" und „Ueberarbeitet" tragen Metall und kein Gold: sie zeichnen
+     niemanden aus, sie sagen, was sich geaendert hat [§C25]. */
+  .rek-p.stand{color:var(--silber);border-color:rgba(194,201,208,.28)}
+
+  /* Die Faktenzeilen im Rekord-Blatt: Zeitraum, Mindestbasis und die
+     Rechnung fuer die Laufbahn. Saetze und keine Werte — in der Zahlenreihe
+     darueber liefen sie in die Nachbarzelle. */
+  .rek-def{margin-top:12px;display:flex;flex-direction:column;gap:1px;
+    background:var(--line);border:1px solid var(--line);
+    border-radius:var(--r-sm);overflow:hidden}
+  .rek-df{background:var(--surface);display:grid;grid-template-columns:96px 1fr;
+    gap:10px;padding:9px 11px}
+  .rek-df .l{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding-top:2px}
+  .rek-df .v{font-size:11.5px;color:var(--ink2);line-height:1.45}
 
   /* Verfolger unter dem Podest im Rekord-Blatt. */
   .rek-verfolger{margin-top:12px;display:flex;flex-direction:column;gap:1px;

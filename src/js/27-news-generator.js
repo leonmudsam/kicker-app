@@ -2223,6 +2223,18 @@ function _buildStories(){
                     causalKey:_storyGruppeKey(def.fenster ? 'form' : 'table', _tafelTag.tag),
                     zufall:def.zufall || '', playerIds:wer.slice(0, 3), zeileText,
                     vorher:(a && a.pids) || [], wert:n.val, ev:n.ev, cond:def.cond,
+                    // Was der Feed vorher nicht weitergab: der Name des
+                    // Rekords stand nur in der Schlagzeile, die Wechselart
+                    // nur im Typ-Praefix, der VOLLE neue Halterstand nur
+                    // gekuerzt in `playerIds` (drei Gesichter), der alte
+                    // Wert und der Grundwert gar nicht. Wer eine Karte
+                    // nachtraeglich lesen will — ein Blatt, eine
+                    // Sammelzeile, eine Auffrischung —, hat die Definition
+                    // nicht mehr zur Hand: ein gestrichener Rekord steht
+                    // gar nicht mehr im Katalog.
+                    rekordName:def.name, fall, basis:def.basis,
+                    halter:n.pids.slice(), wertVorher:(a ? a.val : null),
+                    evVorher:(a ? a.ev : ''), fenster:!!def.fenster,
                     // Die Punktewirkung gehoert zur Karte, nicht in eine
                     // zweite Rechnung im Blatt: sie gilt fuer DIESEN
                     // Tagesabschluss, und morgen sagt dieselbe Rechnung eine

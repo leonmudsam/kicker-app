@@ -124,7 +124,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **748**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **753**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -162,10 +162,10 @@ gehören dorthin und nirgendwo anders, und sie brauchen einen Rücksetzpunkt:
 `09-ui-infra.js` (Tabwechsel), `20-bind.js` (Zeitraumwechsel) und
 `24-lock.js` (Klick aufs Logo) setzen zurück.
 
-`rekKammer` gilt **nur** für den Rekorde-Reiter und ist leer für alle vier
-Kammern. Sie wird beim Tabwechsel UND beim Reiterwechsel geleert: wer den Tab
-verlässt, will beim Zurückkommen die ganze Tafel sehen und nicht den
-Ausschnitt von vorhin.
+`rekKammer` gilt **nur** für den Rekorde-Reiter und ist leer für alle fünf
+Kammern (`koennen`, `form`, `mark`, `fuegung`, `shame`). Sie wird beim
+Tabwechsel UND beim Reiterwechsel geleert: wer den Tab verlässt, will beim
+Zurückkommen die ganze Tafel sehen und nicht den Ausschnitt von vorhin.
 
 `ligaSeasonId` gilt **nur** für den Liga-Tab — Awards, News und Ambient
 rechnen weiter mit `currentSeason()`. Sie wird beim Tabwechsel UND beim
@@ -302,11 +302,11 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird | 1325 |
-| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 192 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse, die These, die nicht vor dreissig Tagen wiederkommt, den Schlusssprint bei offener Lage, den Spitzenwechsel, der keinem Deckel zum Opfer faellt, die kurze Strecke als eigene Karte und den Saison-Rueckblick, der seinen Monat abschliesst, den zweiten Lauf, der dieselben IDs, Zeitpunkte, Gruppen und Texte ergibt, und jeden Wechsel eines Tages im Blatt des Titelrennens den rohen Grundwert, der nie als erhaltene Punkte dasteht, die drei Ebenen aus Tafelplatz, Profileintrag und Prestigequelle den Tag, an dem die Monatstafel aufgeht, und die Zeile, die ihre eigene Uhrzeit nennt, neben der Wirkung, die einmal dasteht | 446 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird, den Katalog der fünfundsechzig samt seinen fünf Kammern, Grundwerten, eindeutigen Zeichen und vollständigen Angaben, die festen Endfenster, den Serienstand vor der Partie, die Rekordlage ohne spätere Partien, die Gegenpaare mit derselben Mindestbasis, die gestrichenen Rekorde samt ihrer alten Karten und die Laufbahn aus lauter Niederlagen, die nichts gewinnt | 1377 |
+| `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 193 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die Angaben, die eine Rekordkarte ans Storysystem weitergibt, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse, die These, die nicht vor dreissig Tagen wiederkommt, den Schlusssprint bei offener Lage, den Spitzenwechsel, der keinem Deckel zum Opfer faellt, die kurze Strecke als eigene Karte und den Saison-Rueckblick, der seinen Monat abschliesst, den zweiten Lauf, der dieselben IDs, Zeitpunkte, Gruppen und Texte ergibt, und jeden Wechsel eines Tages im Blatt des Titelrennens den rohen Grundwert, der nie als erhaltene Punkte dasteht, die drei Ebenen aus Tafelplatz, Profileintrag und Prestigequelle den Tag, an dem die Monatstafel aufgeht, und die Zeile, die ihre eigene Uhrzeit nennt, neben der Wirkung, die einmal dasteht | 451 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
-| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest — **im echten Browser gemessen** | 139 |
+| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest, die fünf Kammern samt ihren Zählern und die Kammerleiste, die auf dem Telefon erreichbar bleibt — **im echten Browser gemessen** | 142 |
 | `archiv` | Einfrieren abgeschlossener Monate und den Profileintrag, der daraus gelesen wird | 9 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -354,9 +354,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Schimmer; alle Kartenflächen bleiben dunkel. Zwölf eigene Vollfarben wären
   ein Regenbogen, eine einzige Goldfamilie machte dagegen jede zweite Karte
   zum vermeintlichen Titel.
-  Im Rekorde-Reiter heißt das: Können und Bestmarke tragen Gold, die Fügung
-  Metall [§C35] — sie zeichnet niemanden aus —, die Schattenseite Rot. Als
-  alle fünfunddreißig Karten golden waren, sagte Gold dort nichts mehr.
+  Im Rekorde-Reiter heißt das: Können, Aktuelle Form und Bestmarke tragen
+  Gold, die Fügung Metall [§C35] — sie zeichnet niemanden aus —, die
+  Schattenseite Rot. Als alle Karten golden waren, sagte Gold dort nichts
+  mehr. Fünf Kammern tragen deshalb drei Töne und nicht fünf: eine neue Farbe
+  je Kammer wäre ein Regenbogen, und das Farbgesetz kennt vier Rollen.
   Das gilt auch für die **Beinamen-Pille im Profilkopf**: „Der Gestrandete"
   kommt aus der Durststrecke und stand golden unter dem Namen wie ein
   Titel. Die Ausnahme gab es für die Zelle der Matrix und die Plakette seit
@@ -1529,6 +1531,18 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   einen Knopf in die Tafel. Schattenseiten meldet der Feed auch hier nicht. Quelle der Rekordmeldungen ist ein
   Zeitschnitt — `allChronicles(bisMs)` vor dem letzten Spieltag gegen heute;
   er kostet einmal ~18 ms und liegt danach im Cache.
+  **Eine Rekordkarte gibt ihre ganze Lage weiter.** Der Name des Rekords
+  stand nur in der Schlagzeile, die Wechselart nur im Typ-Präfix, der volle
+  neue Halterstand nur gekürzt in `playerIds` (drei Gesichter), der alte Wert
+  und der Grundwert gar nicht. Wer eine Karte nachträglich liest — ein Blatt,
+  eine Sammelzeile, eine Auffrischung —, hat die Definition nicht mehr zur
+  Hand: ein gestrichener Rekord steht gar nicht mehr im Katalog. Der `dataRef`
+  trägt deshalb `rekordId`, `rekordName`, `kammer` und `kammerLabel`, `fall`
+  (eine der fünf Wechselarten), `basis`, `halter` (alle neuen Halter),
+  `vorher` (alle alten), `wert` und `wertVorher`, `ev` und `evVorher`,
+  `cond`, `matchId`, `causalKey`, `fenster` und `laufbahn` (die
+  Punktewirkung); den Zeitpunkt trägt `when`. `tests/ambient` prüft das über
+  jeden vierten Spieltag der Ligageschichte.
   **Vier Fälle, vier Aussagen** (`_halterFall`): **erstmals vergeben** (den
   Rekord hatte vorher niemand), **übernommen** (der Halter wechselt), **jetzt
   allein** (das Feld ist enger geworden) und **gleichgezogen** (jemand kommt
@@ -2182,9 +2196,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Monatswertungen behalten ihren tatsächlichen Info-Sheet-Wert aus
   `chronikPunkte`. Erst die Zusammenrechnung dämpft die nach Wert sortierte
   Sammlung: Platz 1–2 zählen voll, 3–5 durch √2, 6–8 durch √3 und danach alle
-  drei Werte eine Wurzelstufe weiter. Liga-Rekorde beginnen je nach Art bei
-  100 oder 50 Punkten (`PRESTIGE_REKORD` 50 × `PRESTIGE_ART`), werden durch
-  die Zahl ihrer heutigen Halter geteilt und
+  drei Werte eine Wurzelstufe weiter. Liga-Rekorde beginnen bei dem
+  **Grundwert, der an ihrem Katalogeintrag steht** (`allzeit.basis`,
+  `_rekordBasis`): 100 für Können, für die leistungsbezogene Form und für
+  eine leistungsbezogene Bestmarke, 50 für einen Rollenwert und eine Fügung,
+  0 für eine Schattenseite. Er stand vorher allein in
+  `PRESTIGE_ART[art]` — und damit konnte „Der Unaufhaltsame" nicht 100
+  wiegen, ohne gleichzeitig seinen Platz in der Katalogreihenfolge und in
+  der Monatstafel zu verschieben: `art` ordnet den Katalog, der Grundwert
+  wiegt. `PRESTIGE_ART` bleibt der Rückfall für einen Eintrag, der ihn nicht
+  setzt. Sie werden durch die Zahl ihrer heutigen Halter geteilt und
   dann wie Chroniken gestapelt: Platz 1–2 voll, 3–5 durch √2, 6–8 durch √3
   und danach alle drei Rekorde eine Wurzelstufe weiter. So bleiben Rekorde belohnend,
   Auszeichnungen tragend und zufälligere Chroniken sichtbar, ohne langfristig
@@ -2233,11 +2254,59 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   gewinnt jede Quote und jede Serie — am Ende liegen alle Liga-Einträge bei
   denselben drei Spielern. Zweiundzwanzig von sechsunddreißig Rekorden
   fragten direkt nach Können, und drei Spieler hielten vierundzwanzig der
-  achtunddreißig Haltungen. Heute sind es fünfundsechzig Rekorde und
-  siebzig Haltungen, zweiunddreißig davon bei den drei Besten. Die
-  letzten fünf Einträge haben daran nichts hinzugefügt: sie messen den
-  **Abstand zum Eigenen** statt das Niveau [§C38] und gingen gemessen an den
-  Zehnten, Sechsten und Vierten der Siegquote.
+  achtunddreißig Haltungen. Heute sind es **fünfundsechzig Rekorde** in
+  **fünf Kammern** — 25 Können, 8 Aktuelle Form, 9 Bestmarken, 12 Fügungen,
+  11 Schattenseiten — und 74 Haltungen, 37 davon bei den drei Besten der
+  Siegquote. Gemessen hält der Spieler mit den meisten Partien neun Einträge
+  und der Vierte der Siegquote acht aus 97 Partien: die Tafel hängt nicht
+  mehr an der Spielzahl.
+  **Die Kammer steht am Eintrag** (`allzeit.kammer`), sie wird nicht mehr aus
+  `art` erraten. Abgeleitet war „Fügung, sonst Schatten, sonst Ereignis gleich
+  Bestmarke", und damit gab es die Kammer „Aktuelle Form" gar nicht: ein
+  Fenster-Rekord ist eine Leistung und landete im Können. Dort stand „Höchste
+  Siegquote in den letzten 20 Partien" neben „Beste Siegquote als Außenseiter
+  über die ganze Laufbahn", also zwei verschiedene Zeitachsen in einer
+  Kammer, und wer die Tafel liest, konnte nicht sehen, was gerade gilt und
+  was für immer.
+  **Die Karte nennt Zeitraum, Grundwert und Stand** (`zeitraum`, `basis`,
+  `stand`, `mind`). Die Mindestbasis musste der Leser aus dem Bedingungssatz
+  heraussuchen, und über welche Strecke gerechnet wird, stand nirgends. Der
+  Grundwert steht dabei ausdrücklich als „100 P Basis": er ist NICHT, was
+  jemand bekommt — er wird durch die Zahl der Halter geteilt und danach in
+  der Wurzelstaffel gedämpft [§C34]. Den tatsächlichen Beitrag zeigt das
+  Blatt.
+  **Aktuelle Form ist ein festes Endfenster und nie der beste Abschnitt.**
+  Acht Rekorde stehen auf den letzten 10, 20, 25, 30 oder 50 eigenen
+  Partien. Der beste Zwanzigerblock IRGENDWO in einer Laufbahn gehörte immer
+  dem Vielspieler: dreihundert Partien haben 281 solche Blöcke, dreißig
+  Partien haben elf, und das Maximum aus vielen Ziehungen ist größer.
+  `tests/disziplinen` rechnet jedes der sechs Fenster unabhängig aus den
+  echten Partien nach.
+  **Elf Rekorde sind gefallen, elf sind dazugekommen.** Weg sind „Der
+  Gigantentöter", „Der Nervenkitzler", „Der Unerschütterliche", „Der
+  Hausherr", „Das Sonntagskind", „Die starke Phase", „Der Aufschwung", „Die
+  kalte Dusche", „Die Torbilanz", „Der Angreifer" und die Laufbahn-Achse der
+  „Steigerung" (ihre Monatschronik bleibt). Neu sind „Gegen den Wind", „Der
+  Sturmführer", „Der Allrounder", „Der Laufstopper", „Der Lauf", „Die
+  Abwehrmauer", „Der Sturmtreue", „Der Seitenwechsler" und die
+  Laufbahn-Achsen von „Gegen jeden bestanden", „Der Deutliche" und „Der
+  Kaltstart". Die persistierten Karten der gestrichenen Rekorde sind in
+  `STORY_ABGEMELDET` namentlich abgemeldet: der Generator bildet ihre IDs
+  nicht mehr, also kann `_newsTexteAuffrischen` sie nicht umschreiben, und
+  sie behaupteten sonst für immer einen Rekord, den es nicht mehr gibt. Ihr
+  Blatt stürzt trotzdem nicht ab — die Definition wird überall mit `?`
+  abgefragt, der Text steht in der Zeile.
+  **Vierzehn Gegenpaare messen dieselbe Frage von zwei Seiten** und tragen
+  dieselbe Mindestbasis: sonst wäre eine Hälfte leichter zu halten als die
+  andere. Zwei sind je Seite geeicht und müssen es sein — eine Siegesserie ab
+  acht und eine Pleitenserie ab sieben sind nicht dieselbe Häufigkeit, und
+  die 35 % des Sonntagsschusses spiegeln sich als 65 % der bittersten Pleite.
+  **Eine Kammer, die die Auslosung misst, wiegt 50.** Rollenwerte und
+  Fügungen dürfen von einer Laufbahn aus lauter Niederlagen gehalten werden:
+  „Das Fundament" fragt nach der gleichmäßigsten Tordifferenz, und wer immer
+  0:10 verliert, ist gleichmäßig. Was 100 Punkte wert ist, darf sie nicht
+  erreichen — `tests/disziplinen` spielt genau diese Laufbahn gegen jeden
+  Rekord mit Grundwert 100.
   **Der Anteil an den eigenen Gelegenheiten kennt die Spielzahl nicht.** „Der
   Platzhirsch" und „Der Wochenherr" waren lange die einzigen zwei Rekorde
   dieser Bauart: sie zählen nicht, wie oft etwas gelang, sondern wie oft von
@@ -2253,21 +2322,26 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Katalogreihenfolge IST die Reihenfolge im Rekorde-Reiter, und ein Eintrag
   am Ende der Liste erklärt sich niemandem: „Der Tagesabschluss" steht neben
   „Der makellose Tag", „Der Ausgleicher" neben „Der Katalysator", „Auf
-  Augenhöhe" neben „Die ruhige Hand", „Das Metronom" neben „Der
-  Unerschütterliche", „Der Torrausch" und „Die Torbilanz" neben „Die dichte
-  Phase" und „Der Dauerstürmer" neben „Die Mauer" und „Der Wandler". Wer eine
+  Augenhöhe" neben „Die ruhige Hand", „Der Sturmführer" neben „Der
+  Abwehrchef", „Der Kaltstart" neben „Der letzte Ball", „Der Torrausch"
+  neben „Die dichte Phase", „Der Sturmtreue" neben „Die Mauer" und „Die
+  Abwehrmauer" neben „Der Dauerstürmer". Wer eine
   Monatschronik um ihre Laufbahn-Achse ergänzt, verschiebt ihren Eintrag
   dorthin; die Monatstafel bleibt davon unberührt, weil `SEASON_TITLES` nach
   Art, Chronik-Art und Ausschlag sortiert und nicht nach der Katalogfolge.
   **Die Schwelle ist keine Bedingung, sondern eine Kammer.** Ein Rekord
   DARF eine hohe Mindestzahl verlangen: wer sie hält, hat die Frage über eine
   lange Strecke beantwortet, und Rekorde sind auch dazu da, Können zu
-  belohnen. Er darf aber nicht nur das. Vierzehn Rekorde tragen deshalb
+  belohnen. Er darf aber nicht nur das. Rekorde tragen deshalb
   `offen` im Katalog: ihre Bedingung ist mit **fünfzig Partien** in der
-  Laufbahn erfüllbar — „Die starke Phase", „Die dichte Phase", „Der
-  Torrausch", „Die Torbilanz", „Der Angreifer", „Der
-  Souverän", „Der Aufschwung", „Das Übersoll", „Die Steigerung", „Der Höhenflug", „Der letzte
-  Ball", „Der Rückenwind", „Der Einzelkämpfer", „Der Dauerstürmer". Gemessen waren 13 der 21 bestehenden Rekorde
+  Laufbahn erfüllbar — unter anderem „Die dichte Phase", „Der Torrausch",
+  „Der Lauf", „Der Höhenflug", „Das Übersoll", „Der Souverän", „Der letzte
+  Ball", „Der Kaltstart", „Der Dauerstürmer", „Die Abwehrmauer", „Der
+  Sturmtreue", „Die Mauer" und „Der Laufstopper". Nicht offen sind die, die
+  eine lange Strecke verlangen: „Der Unaufhaltsame", „Der Wochenherr", „Der
+  höchste Gipfel", „Die Punktlandung" und „Die Achterbahn" — gemessen steht
+  in ihrem Rennen niemand mit unter hundert Partien, und genau das zählt
+  `tests/disziplinen` nach. Gemessen waren 13 der 21 damaligen Rekorde
   mit lesbarer Mindestzahl für einen solchen Spieler unerreichbar: „ab 50
   Sturmspielen", „ab 60 Gelegenheiten", „ab 80 Spielen" gehören dem
   Vielspieler, weil sie außer ihm niemand halten KANN. `offen` ist dabei
@@ -2280,11 +2354,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Ergebnis herausfällt. Dieselbe Begründung wie beim Verschlechtern [§C33]:
   wer nichts getan hat, hat nichts getan. Gemessen ergaben die drei ersten
   Fenster-Rekorde 26 der 135 Karten ihrer Familie, und keine davon nannte
-  eine Leistung; heute sind es zehn. Die Marke gilt auch, wo nichts
-  herausfällt, aber die **Mitte wandert**: „Die Steigerung" halbiert die
-  eigenen Spieltage, und mit jedem zweiten neuen Tag rutscht einer aus der
-  zweiten Hälfte in die erste — war er schwach, wächst der Abstand ohne eine
-  einzige neue Partie des Halters. Und die Teilmenge muss **mitwandern**: „in den ersten 25
+  eine Leistung; heute tragen alle acht Rekorde der Kammer „Aktuelle Form"
+  die Marke. Und die Teilmenge muss **mitwandern**: „in den ersten 25
   Partien" ist fertig, sobald jemand 25 Partien hat, und ein Rekord darauf
   könnte den Halter nie mehr wechseln.
   **Die Bedingung nennt jede Schwelle, die Erklärung sagt, wie gemessen wird.**
@@ -2320,7 +2391,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   die drei alten). Sie muss erreichbar sein: mindestens die halbe Liga steht
   im Rennen, und vergeben ist sie auch.
   **`'fund'`** ist ein einzelnes Zusammentreffen („Die Punktlandung", „Die
-  Achterbahn", „Die kalte Dusche"). Es darf selten sein und sogar unbesetzt
+  Achterbahn"). Es darf selten sein und sogar unbesetzt
   bleiben — sonst wäre es keins; höchstens die Hälfte der Funde darf leer
   stehen. Eine Quotenschwelle darauf anzuwenden hieße, das Seltene
   abzuschaffen.
@@ -2378,11 +2449,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   jemand schlecht war —, also ist nur der Extremfall gedeckelt: kein Halter
   über zwei Fünftel der Schandtafel, und mindestens sechs Namen tragen mit.
   **Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin** [§13.1].
-  Siebzehn Disziplinen tragen jetzt beide: `spotless`, `kopfhoch`,
-  `ausgleich`, `gleichauf`, `metronom`, `uebersoll`, `steigerung`, `hochform`,
-  `schlussball`, `evenkeel`, `drought`, `abyss`, `hardluck`, `sieve`,
-  `angstgegner`, `untersoll` und `misfire`. Zwei Namen
-  und zwei Icons für denselben Gedanken wären eins zu viel [§C27].
+  Neunzehn Disziplinen tragen beide: `spotless`, `kopfhoch`, `ausgleich`,
+  `gleichauf`, `metronom`, `uebersoll`, `hochform`, `schlussball`,
+  `kaltstart`, `deutlich`, `breitenwirkung`, `evenkeel`, `drought`, `abyss`,
+  `hardluck`, `sieve`, `angstgegner`, `untersoll` und `misfire`. Zwei Namen
+  und zwei Icons für denselben Gedanken wären eins zu viel [§C27] — deshalb
+  bekommen „Gegen jeden bestanden", „Der Deutliche" und „Der Kaltstart" ihre
+  Laufbahn-Achse an der bestehenden Monatsdisziplin und keine zweite daneben.
+  „Die Steigerung" ist den umgekehrten Weg gegangen: ihre Laufbahn-Achse ist
+  gefallen, die Monatschronik bleibt.
   **Die Laufbahn-Achse darf eine andere Rechnung brauchen als der Monat.**
   „Das Metronom" misst im Monat die Spanne zwischen bestem und schwächstem
   Spieltag; über eine ganze Laufbahn liegt dort fast immer die volle Spanne,
@@ -2395,12 +2470,6 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   hält „Die Mauer" schon: dieselbe Frage mit derselben Antwort sammelt sich
   beim selben Halter. Der Sturmanteil gehört dagegen dem Zehnten der
   Siegquote.
-  „Die Steigerung" hatte nur die Monatsachse, und der Vorschlag daraus wäre
-  ein zweiter Eintrag mit demselben Gedanken gewesen; sie hat jetzt beide.
-  Verwechselt wird sie damit nicht mit „Der Aufschwung": der vergleicht zwei
-  gleitende 25er-Fenster und fragt nach der Form von jetzt, sie halbiert die
-  ganze Laufbahn — gemessen hält Stefan die eine mit +12 und Martin die
-  andere mit +24 Punkten.
   Was auf der Monatsachse **nicht** trägt, bleibt weg: „Die stumme Antwort"
   schiebt ihre Schwelle dort gemessen höchstens 1,39 σ hinaus und wäre damit
   eine Chronik, deren Bester kaum weiter draußen liegt als der Schnitt
@@ -2603,6 +2672,11 @@ damit wertvoller als das einmalige Wochentags-Sammelziel.
 | dort `negativ` | `true`, **nur** wenn die Fügung von einer Niederlage erzählt | sie steht im Profil golden zwischen den Titeln und wird als Rekord mitgezählt [§C25]. Eine `art:'schatten'`-Disziplin braucht das Feld nicht — sie ist ohnehin negativ |
 | dort `zufall` | `'quote'` oder `'fund'`, **nur** wenn der Eintrag kein Können misst | ohne ihn steht die Fügung in der Kammer „Bestmarken" neben dem höchsten Elo-Stand der Ligageschichte. Der Wert entscheidet, welche Zusicherung in `tests/disziplinen` für ihn gilt [§C35] |
 | dort `paar` | die **id** des Eintrags, der das andere Ende desselben Werts wertet, **nur** bei einer Quoten-Fügung mit Vorzeichen | ohne ihn verlangt `tests/disziplinen` für jede Hälfte einzeln, dass die halbe Liga im Rennen steht — die Regel ist gegen eine zu hohe SCHWELLE geschrieben, und ein Vorzeichen ist keine Schwelle: gemessen standen fünf über und fünf unter dem eigenen Mittel, und beide Hälften fielen durch. Die Marke ist keine Beschriftung: der Partner muss zurückzeigen, und die beiden Rennen dürfen sich nicht schneiden. `paar` muss außerdem in der Projektion `_chronRoh` stehen — `CHRONICLES` nennt nur, was sie kennt, und ein Feld, das sie nicht nennt, kommt im Test gar nicht an |
+| `allzeit.kammer` | `koennen`, `form`, `mark`, `fuegung` oder `shame` [§C35] | ohne sie wird die Kammer aus `art` erraten, und die Ableitung kennt „Aktuelle Form" nicht: ein Fenster-Rekord landet im Können und steht dort neben einem Laufbahnwert. `tests/disziplinen` zählt die fünf Kammern und ihre Zahlen (25/8/9/12/11) nach |
+| `allzeit.basis` | der Grundwert fürs Prestige: 100 für Können, leistungsbezogene Form und leistungsbezogene Bestmarke, 50 für Rollenwert und Fügung, 0 für eine Schattenseite [§C34] | ohne ihn fällt der Eintrag auf `PRESTIGE_REKORD × PRESTIGE_ART[art]` zurück, und dann hängt sein Wert wieder an der Katalogreihenfolge: „Der Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 100. Er ist NICHT, was jemand bekommt — erst durch die Halter geteilt, dann gedämpft. `tests/disziplinen` prüft beide Schritte in dieser Reihenfolge |
+| `allzeit.mind` | die Mindestbasis in Worten, so wie sie auf der Karte steht | sie stand nur im Bedingungssatz, und wer die Karte las, musste sie daraus heraussuchen. Ein Gegenpaar muss dieselbe Zahl tragen, sonst ist eine Hälfte leichter zu halten als die andere — `tests/disziplinen` vergleicht die Zahlen der vierzehn Paare |
+| `allzeit.zeitraum` | über welche Strecke gerechnet wird („Ganze Laufbahn", „Die letzten 20 Partien", „Ein einzelner Spieltag") | ohne ihn steht auf der Karte nicht, ob der Wert für immer gilt oder für die letzten zwanzig Partien, und das ist der Unterschied zwischen zwei Kammern |
+| `allzeit.stand` | `neu` oder `ueberarbeitet`, solange es etwas zu sagen gibt | ohne die Marke sieht ein neuer Eintrag aus wie einer, der schon immer dastand, und eine geänderte Formel wie die alte, unter der jemand seinen Rekord verloren hat |
 | `allzeit.offen` | `true`, **nur** wenn die Bedingung mit fünfzig Partien in der Laufbahn erfüllbar ist [§C35] | ohne die Marke wächst der Katalog still zum Vielspieler: 13 der 21 bestehenden Rekorde mit lesbarer Mindestzahl sind für einen 50-Spieler unerreichbar. Die Marke ist keine Beschriftung — `tests/disziplinen` verlangt, dass im Rennen jemand mit unter hundert Partien steht, dass der Rekord vergeben ist und dass er nicht nur den drei Besten gehört |
 | `allzeit.fenster` | `true`, **nur** wenn der Wert auf einem gleitenden Fenster steht („die letzten 30 Partien", „zwei Fenster im Vergleich") | der Feed meldet „X baut den Rekord aus", sobald am hinteren Ende des Fensters ein schwaches Ergebnis herausfällt — und dann hat der Halter nichts getan [§C33]. Gemeldet wird bei ihm nur der Halterwechsel. `tests/ambient` misst es über jeden vierten Spieltag |
 | `allzeit.cond` | **jede** Schwelle, die die Wertfunktion erzwingt, nicht nur die auffälligste | sie steht auf der Karte im Rekorde-Reiter und ist das, was der Leser als Aufgabe versteht. „Die ruhige Hand" nannte nur die 9 Prozentpunkte und schwieg über die 14 engen Partien und die 20 % der Laufbahn — wer die Karte las, wusste nicht, warum er nicht im Rennen steht. `tests/disziplinen` liest die Schwellen aus dem Quelltext der Rechnung und verlangt jede im Text |
@@ -2616,8 +2690,13 @@ Wochen entschiede die Spielzahl statt der Leistung. Dann entfällt der Eintrag
 in `_seasonTitleCtx`, sonst nichts.
 
 **Misst ein Eintrag etwas, das eine Ansicht schon zeigt, rechnet er es nicht
-nach.** Der Positionswert steht an EINER Stelle (`posWert`, [§5.2]) und wird
-von der Positions-Rangliste und vom Liga-Rekord darauf benutzt. Das
+nach.** Der Positionswert steht an EINER Stelle: `posLeistung` ist der
+gemeinsame Kern aus Siegquote, Erwartungsabstand und Rollenbeitrag, und
+`posWert` multipliziert ihn für die Rangliste mit dem Erfahrungsfaktor
+[§5.2]. Der Liga-Rekord ruft `posLeistung` direkt — nach der Mindestbasis
+darf die Spielzahl den Wert nicht mehr heben, sonst hielte ihn wieder der
+Vielspieler. Eine zweite Formel daneben wäre genau der Fehler, den dieser
+Absatz verbietet. Das
 Sturm-/Abwehrprofil steht ebenso nur in `positionsProfilWert`; Profil und
 „Der Wandler" rufen dieselbe Funktion auf. Zwei
 Rechnungen über dieselbe Frage nennen irgendwann zwei verschiedene Beste, und

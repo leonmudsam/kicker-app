@@ -336,18 +336,55 @@ function showChronicle(cid){
   const h = chronicleHolders()[cid] || null;
   const halterN = h ? (h.pids || [h.pid]).length : 0;
   const verfolger = rang.slice(3);
+  // Die vier Angaben, die den Wert eines Rekords bestimmen, standen nirgends:
+  // wer ein Blatt oeffnete, sah die Bedingung und sonst nichts. Die
+  // Zahlenreihe ist `rcpZahlenHtml`, das Bauteil der Rueckblicke [§C27].
+  //
+  // Der BEITRAG ist nicht der Grundwert. Ein zehnter Rekord gibt nicht 100
+  // Prestige: er wird durch die Zahl seiner Halter geteilt, landet auf einem
+  // Rang im Rekordstapel und wird dort durch die Wurzel seiner Staffel
+  // geteilt [§C34]. Gezeigt wird deshalb der Stand des ersten Halters aus
+  // derselben Rechnung, aus der auch das Laufbahnblatt liest — und darunter
+  // die Rechnung selbst, damit die Zahl nachzuvollziehen ist.
+  const q = h ? rekordQuelleVon(h.pid, cid) : null;
+  const beitrag = q ? Math.round(q.p) : 0;
+  const zahlen = rcpZahlenHtml([
+    {l:'Kammer',     v:CHRON_KINDS[def.kind].kurz},
+    {l:'Bestwert',   v:h ? _chronKurz(h.ev) : '—'},
+    {l:'Grundwert',  v:def.basis > 0 ? def.basis + ' P' : '0 P'},
+    {l:'Beitrag',    v:def.basis > 0 ? (beitrag > 0 ? '+' + beitrag + ' P' : '—') : '0 P',
+     ton:def.neg ? 'neg' : ''}
+  ]);
+  // Zeitraum und Mindestbasis gehoeren nicht in die Zahlenreihe: es sind
+  // Saetze und keine Werte, und „12 Spieltage mit je 3 Partien" laeuft in
+  // einer 88-px-Zelle in die Nachbarzelle.
+  const fakten = [
+    def.zeitraum ? ['Zeitraum', def.zeitraum] : null,
+    def.mind     ? ['Mindestbasis', def.mind] : null,
+    def.basis > 0
+      ? ['Für die Laufbahn', q ? _prestigeQuellSatz(q)
+          : 'Grundwert ' + def.basis + ' P, geteilt durch die Zahl der Halter']
+      : ['Für die Laufbahn', 'Eine Schattenseite zählt nichts und zieht nichts ab']
+  ].filter(Boolean);
   openSheet(`
     <h3>${esc(def.name)}</h3>
     <div class="sheet-sub">${esc(CHRON_KINDS[def.kind].label)}${
-      halterN > 1 ? ' · punktgleich zu ' + halterN + '. gehalten' : ''}</div>
+      REKORD_STAND[def.stand] ? ' · ' + esc(REKORD_STAND[def.stand]) : ''}</div>
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
     </div>
+    ${zahlen}
+    <div class="rek-def">${fakten.map(([l, v]) =>
+      `<div class="rek-df"><span class="l">${esc(l)}</span><span class="v">${esc(v)}</span></div>`
+    ).join('')}</div>
+    ${halterN > 1 ? `<div class="tnote">Diesen Rekord halten ${halterN} Spieler
+      punktgleich. Der Grundwert wird deshalb durch ${halterN} geteilt; jeder
+      von ihnen hält ihn vollständig, bis einer ihn überbietet.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Die Tafel</h4></div>
-           <div class="m num">${rang.length} erfüllt${rang.length === 1 ? '' : 'en'} die Bedingung</div></div>
+           <div class="m num">${rang.length} von ${allChronicles().rated} erfüllen die Mindestbasis</div></div>
          ${_chronPodestHtml(rang.map(r => ({pid:r.pid, wert:_chronKurz(r.ev), zeit:r.zeit})))}`
       : emptyState('scroll', 'Diesen Rekord hat noch niemand erreicht.')}
     ${verfolger.length ? `<div class="rek-verfolger">${verfolger.map((r, i) => {
@@ -361,6 +398,27 @@ function showChronicle(cid){
     }).join('')}</div>` : ''}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+}
+
+// Was mit dieser Fassung neu ist. Ohne die Marke sieht ein neuer Eintrag aus
+// wie einer, der schon immer dastand — und eine geaenderte Formel wie die
+// alte, unter der jemand seinen Rekord verloren hat.
+const REKORD_STAND = {neu:'Neu', ueberarbeitet:'Überarbeitet'};
+
+// Die Zeile unter dem Beleg: Zeitpunkt, Zeitraum, Grundwert, Stand. Sie stand
+// vorher nur als Zeitpunkt da, und damit fehlte auf der Karte das, was die
+// Bedingung nicht sagt: ueber welche Strecke gerechnet wird und was der
+// Eintrag fuer die Laufbahn wert ist. Der Grundwert steht ausdruecklich als
+// „Basis" — er ist NICHT, was jemand bekommt: er wird durch die Halter
+// geteilt und danach gedaempft [§C34].
+function _rekordMeta(d, h){
+  const pillen = [];
+  if(h && h.zeit) pillen.push(`<span class="rek-p zeit">${esc(String(h.zeit))}</span>`);
+  if(d.zeitraum) pillen.push(`<span class="rek-p">${esc(d.zeitraum)}</span>`);
+  if(d.basis > 0) pillen.push(`<span class="rek-p num">${d.basis} P Basis</span>`);
+  if(REKORD_STAND[d.stand]) pillen.push(
+    `<span class="rek-p stand">${esc(REKORD_STAND[d.stand])}</span>`);
+  return pillen.length ? `<div class="rek-meta">${pillen.join('')}</div>` : '';
 }
 
 // Der Beleg als Zahl: auf dem Podest ist neben einem 44-px-Wappen kein Platz
@@ -423,12 +481,18 @@ function ligaRekordeHtml(weit){
   // Die große Form: ein Rekord ist ein Besitz, also bekommt er eine Karte
   // mit Halter-Gesicht und Beleg — nicht nur einen Namen am Zeilenende.
   //
-  // Vier Kammern statt einer Spalte. Fünfunddreißig Karten sahen alle gleich
+  // Fünf Kammern statt einer Spalte. Fünfundsechzig Karten sahen alle gleich
   // aus, und „Der Fels" stand neben „Das Scheunentor", als wären es
-  // dieselbe Aussage. CHRON_KINDS trennt sie längst — gezeigt wurde es nie:
+  // dieselbe Aussage. CHRON_KINDS trennt sie:
   //
   //   KÖNNEN        Ein Schnitt, eine Quote über die ganze Laufbahn.
   //                 Er hat keinen Zeitpunkt, er gilt heute.
+  //   AKTUELLE FORM Ein festes Endfenster: die letzten 10, 20, 25, 30 oder
+  //                 50 eigenen Partien. Sie stand vorher im Können, und
+  //                 damit stand „Höchste Siegquote in den letzten 20
+  //                 Partien" neben einem Laufbahnwert — zwei Zeitachsen in
+  //                 einer Kammer, und wer die Tafel liest, kann so nicht
+  //                 sehen, was gerade gilt und was für immer.
   //   BESTMARKEN    Ein Ereignis. Eine Serie, ein Elo-Tag, ein Gipfel —
   //                 an einem Datum passiert, und das steht dabei.
   //   FÜGUNGEN      Auslosung und letzter Ball [§C35]. Sie zeichnen
@@ -449,6 +513,7 @@ function ligaRekordeHtml(weit){
         <div class="rek-z1"><span class="rek-nt">${esc(d.name)}</span>
           <span class="rek-h"><span class="rek-hn">noch niemand</span></span></div>
         <div class="rek-ev">${esc(d.cond)}</div>
+        ${_rekordMeta(d, null)}
       </div>
     </div>`;
     const pids = (h.pids || [h.pid]).slice(0, 3);
@@ -457,7 +522,7 @@ function ligaRekordeHtml(weit){
     // Gold nichts mehr. Eine Fügung trägt deshalb Metall: sie ist kein
     // Können. Eine Schattenseite bleibt rot, die Richtung [§C25].
     const kl = d.neg ? ' schatten' : d.kind === 'fuegung' ? ' fuegung' : '';
-    const zeit = h.zeit ? `<span class="rek-zeit">${esc(String(h.zeit))}</span>` : '';
+    const meta = _rekordMeta(d, h);
     // Der Beleg beginnt fast immer mit seiner Zahl. Sie ist die Aussage der
     // Karte und stand bisher klein und grau unter dem Namen — als Letztes,
     // was man liest. Jetzt trägt sie die Karte, der Rest bleibt Metall.
@@ -478,7 +543,7 @@ function ligaRekordeHtml(weit){
             <span class="rek-hn">${esc(_chronHolderNames(h))}</span>
           </span></div>
         <div class="rek-ev num">${beleg}</div>
-        ${zeit}
+        ${meta}
       </div>
     </div>`;
   };
@@ -510,10 +575,17 @@ function ligaRekordeHtml(weit){
   // Der Kammerfilter ist `.ui-tabs` — die innere Ebene unter dem gerahmten
   // `.ui-switch` des Reiters [§C27]. Ein drittes Bauteil für dieselbe
   // Aussage wäre eines zu viel.
+  // Jeder Chip nennt seine Zahl. Ohne sie war nicht zu sehen, ob eine Kammer
+  // ueberhaupt gefuellt ist, und „Alle" sagte nicht, wie viele Rekorde es
+  // gibt — die Frage, mit der jeder auf diesen Reiter kommt. Fuenf Kammern
+  // und „Alle" sind sechs Chips: auf 430 Pixeln laeuft die Leiste deshalb
+  // waagerecht, statt Fuegungen und Schatten in eine zweite Zeile zu
+  // schieben, die man nicht als Reiter erkennt.
+  const chip = (k, lab, n, an) => `<button data-rekkammer="${esc(k)}"
+      class="${an ? 'on' : ''}">${esc(lab)}<span class="n num">${n}</span></button>`;
   const filter = `<div class="ui-tabs rek-kammern">
-    <button data-rekkammer="" class="${rekKammer ? '' : 'on'}">Alle</button>
-    ${gruppen.map(g => `<button data-rekkammer="${esc(g.k)}"
-      class="${rekKammer === g.k ? 'on' : ''}">${esc(g.def.kurz)}</button>`).join('')}
+    ${chip('', 'Alle', CHRONICLES.length, !rekKammer)}
+    ${gruppen.map(g => chip(g.k, g.def.kurz, g.liste.length, rekKammer === g.k)).join('')}
   </div>`;
   const sicht = gruppen.filter(g => !rekKammer || g.k === rekKammer);
   return leiste + filter + sicht.map(g => `
