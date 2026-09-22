@@ -1073,7 +1073,17 @@ function _consolidateStories(list){
     if(!g){ gesammelt.push(st); return; }
     if(gesetzt.has(g.key)) return;
     gesetzt.add(g.key);
-    const teile = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
+    // Sortiert nach `prio`: Bestmarke vor Monatschronik vor Insignium-Stufe
+    // [§C33]. Und wenn die Karte BREAKING ist, steht der Anlass zuerst.
+    // Gemessen erbte der Tafel-Moment des 17.09. sein Breaking von Martins
+    // erstem Lorbeerreif — und genau diese Zeile stand als LETZTE von sechs
+    // im Sammelband, weil die Insignium-Stufe die niedrigste `prio` der
+    // Tafel-Familie hat. Die Karte brach damit die Spalte, trug einen roten
+    // Balken und liess den Leser raten, wofuer. Eine Behauptung, die die
+    // Karte selbst nicht belegt, ist keine Nachricht.
+    const _brkT = t => { try { return !!_isBreaking(t); } catch(e){ return false; } };
+    const _nachPrio = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
+    const teile = _nachPrio.filter(_brkT).concat(_nachPrio.filter(t => !_brkT(t)));
     const kopf = teile[0];
     const art = g.art || (g.key.indexOf('tafel|') === 0 ? 'tafel' : 'spiel');
     // Die kurze Strecke gehoert zur Ewigen Tafel: dieselbe Kammer, dieselbe
@@ -1282,6 +1292,13 @@ function _consolidateStories(list){
                                          // davon das ist.
                                         marke: (t.dataRef||{}).zeigt === true
                                                ? 'in der Chronik' : '',
+                                         // Der Anlass des Breaking. Ohne ihn
+                                         // ist auf der lautesten Karte des
+                                         // Feeds nicht zu sehen, warum sie
+                                         // die Spalte bricht [§C33].
+                                         brk: (function(){
+                                           try { return _isBreaking(t); }
+                                           catch(e){ return false; } })(),
                                          pids: _pidsVon(t)}))}
     });
   });

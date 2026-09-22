@@ -1267,8 +1267,31 @@ const ok = (c, msg, det) => {
     // Das Serienband sagt, was seine Punkte zaehlen.
     const baender = [...sheet.querySelectorAll('.nf-ser')];
     const ohneLabel = baender.filter(b => !b.querySelector('span')).length;
+    // Und sie nimmt der Schlagzeile nicht den Platz. Wert und Gesichter
+    // standen NEBENeinander, und die Spalte war damit so breit wie beide
+    // zusammen: gemessen 169 von 316 Pixeln, also 53 % der Karte, waehrend
+    // die Schlagzeile auf 77 px zusammengedrueckt wurde und mitten im Satz
+    // abbrach. Uebereinander ist die Spalte so breit wie das Breitere von
+    // beiden. Gemessen in Prozent und nicht in Pixeln: die Karte ist auf
+    // jedem Telefon anders breit.
+    let breit = 0, breitAerger = '', maxA = 0;
+    karten.forEach(c => {
+      const l = c.querySelector('.nf-gr-l');
+      if(!l) return;
+      const a = l.getBoundingClientRect().width / c.getBoundingClientRect().width;
+      if(a > maxA){ maxA = a; breitAerger = c.className.split(' ')[1] + ' '
+        + Math.round(a * 100) + '%'; }
+      if(a > .28) breit++;
+    });
+    // Eine abgeschnittene Schlagzeile ist der Befund, nicht die Ursache:
+    // `-webkit-line-clamp` schneidet still ab, und im Feed stand
+    // „Johannes, Julian und zwei weitere bewegen die Ewige…".
+    const koepfeAb = [...sheet.querySelectorAll('.nf-card .nf-h')]
+      .filter(h => h.scrollHeight > h.clientHeight + 1);
     return {karten: karten.length, zuHoch, aerger, duelle: duelle.length,
-            duellDoppelt, duellBand, baender: baender.length, ohneLabel};
+            duellDoppelt, duellBand, baender: baender.length, ohneLabel,
+            breit, breitAerger, ab: koepfeAb.length,
+            abAerger: koepfeAb.length ? koepfeAb[0].textContent.trim().slice(0, 48) : ''};
   });
   ok(luecken.zuHoch === 0, 'die Bildzone macht die Karte nicht hoeher als ihr Text',
      luecken.zuHoch + ' zu hoch' + (luecken.aerger ? ' (' + luecken.aerger + ')' : ''));
@@ -1278,6 +1301,106 @@ const ok = (c, msg, det) => {
      luecken.duellDoppelt + ' doppelt');
   ok(luecken.baender === 0 || luecken.ohneLabel === 0,
      'das Serienband nennt, was es zaehlt', luecken.ohneLabel + ' ohne');
+  ok(luecken.breit === 0,
+     'die Bildzone nimmt der Schlagzeile nicht den Platz',
+     luecken.breit + ' ueber 28 % (breiteste: ' + luecken.breitAerger + ')');
+  // Der Feed eines Zeitschnitts traegt nicht jede Sorte: gemessen standen im
+  // Vierzehn-Tage-Fenster fuenf der zwoelf, und gerade die Marke — ein Wappen
+  // UND ein Wert nebeneinander — kam nicht vor. Eine Stichprobe genuegt hier
+  // nicht, also wird jede Sorte einmal gestellt und in derselben Spalte
+  // gemessen. Der laengste Aufschrift-Fall steht dabei ausdruecklich drin:
+  // „AKTUELLE FORM" zog die Spalte allein achtzig Pixel breit.
+  const alleSorten = await page.evaluate(() => {
+    const bau = window.__k.eval('_newsCardHtmlM2');
+    const sorte = window.__k.eval('_newsSorte');
+    const p = window.__k.eval('players.map(x => x.id)');
+    const mid = window.__k.eval('matches[matches.length-1].id');
+    const feed = document.querySelector('#sheet .nf-feed') || document.getElementById('sheet');
+    const huelle = document.createElement('div');
+    feed.appendChild(huelle);
+    // `cat` entscheidet in `_newsSorte` mit: alles mit `cat:'tafel'` ist eine
+    // Tafel-Karte, egal welchen Typ die Zeile traegt. Ohne diese Unterscheidung
+    // fielen acht der dreizehn Faelle auf dieselbe Sorte.
+    const karte = (titel, text, ref, cat) => ({id:'x', cat: cat || 'match',
+      ic:'medal2', prio:50, title:titel, desc:text,
+      when:new Date().toISOString(), dataRef:ref});
+    // Die laengste Schlagzeile, die der Generator ueber die Fixtures
+    // ueberhaupt bildet — gemessen 58 Zeichen bei einem Median von 34. Eine
+    // erfundene, laengere Zeile bricht in jeder Spaltenbreite ab und wuerde
+    // damit die Spalte nicht mehr messen.
+    const lang = 'Maxi, Julian, Jane und Johannes uebernehmen „Der Hoehenflug"';
+    const faelle = [
+      karte(lang, 'Ein Rekord der Kammer Aktuelle Form wechselt: 72 %.',
+            {type:'sammel', quelle:'form', rekordId:'best_record',
+             playerIds:[p[5], p[6], p[8], p[9]],
+             teile:[{titel:'a', pids:[p[5]]}, {titel:'b', pids:[p[6]]},
+                    {titel:'c', pids:[p[8]]}]}, 'tafel'),
+      karte(lang, 'Neun Wechsel an einem Tag.',
+            {type:'sammel', quelle:'tafel', playerIds:[p[5], p[6], p[8]],
+             teile:new Array(9).fill(0).map((_, i) => ({titel:'t' + i, pids:[p[5]]}))},
+            'tafel'),
+      karte(lang, 'Die vierte Stufe steht.', {type:'insignium_stufe', pid:p[9], stufe:3}),
+      karte(lang, '5 von 6 gewonnen.', {type:'potd', playerId:p[9], wr:.83, wins:5, games:6}),
+      karte(lang, 'Eine Auszeichnung mehr.', {type:'badge_unlocked', pid:p[9], badgeId:'wall'}),
+      karte(lang, '12 Siege in Folge.', {type:'win_streak', pid:p[9], streak:12}),
+      karte(lang, '18 Elo gewonnen.', {type:'elo_swing', pid:p[9], delta:18}),
+      karte(lang, '15 Siege in Folge erreicht.', {type:'milestone', pid:p[9], streak:15}),
+      karte(lang, 'Das 50. Duell.', {type:'rivalry_milestone', a:p[8], b:p[9], milestone:50}),
+      karte(lang, 'Vier Erfolge im selben Moment.',
+            {type:'sammel', quelle:'spieler', playerIds:[p[9]],
+             teile:[{titel:'a'}, {titel:'b'}, {titel:'c'}, {titel:'d'}]}),
+      karte(lang, 'Drei tragen jetzt dieselbe Stufe.',
+            {type:'sammel', quelle:'erfolg', art:'insignium_stufe', stufe:2,
+             playerIds:[p[7], p[8], p[9]],
+             teile:[{titel:'a', pids:[p[7]]}, {titel:'b', pids:[p[8]]},
+                    {titel:'c', pids:[p[9]]}]}),
+      karte(lang, 'Leon fuehrt mit 91 Elo Vorsprung.',
+            {type:'ambient', pid:p[8], vv:'91', vl:'Elo Vorsprung'}),
+      karte(lang, 'Ein Ergebnis des Tages.', {type:'match_result', matchId:mid})
+    ];
+    const gemessen = [];
+    faelle.forEach(f => {
+      huelle.innerHTML = bau(f, false, false);
+      const c = huelle.querySelector('.nf-card'), l = huelle.querySelector('.nf-gr-l');
+      if(!c) return;
+      // Ein Deckel auf der Spalte schneidet ab, statt zu schrumpfen: die
+      // Chipgruppe traegt `flex-shrink:0`, und bei 72 px stand der Deckel
+      // mitten in ihr — das dritte Zeichen („+2") war weg. Gemessen wird
+      // deshalb, ob ein Kind ueber den INHALT der Spalte hinausragt, und
+      // nicht nur, wie breit sie ist.
+      let ueber = 0;
+      if(l){
+        const lb = l.getBoundingClientRect(), cs = getComputedStyle(l);
+        const li = lb.left + parseFloat(cs.paddingLeft);
+        const re = lb.right - parseFloat(cs.paddingRight)
+                 - parseFloat(cs.borderRightWidth);
+        [...l.children].forEach(k => {
+          const kb = k.getBoundingClientRect();
+          ueber = Math.max(ueber, Math.round(Math.max(0, kb.right - re)
+                                           + Math.max(0, li - kb.left)));
+        });
+      }
+      gemessen.push({s: sorte(f), ueber,
+        a: l ? Math.round(l.getBoundingClientRect().width
+                          / c.getBoundingClientRect().width * 100) : 0});
+    });
+    huelle.remove();
+    return gemessen;
+  });
+  const sortenBreit = alleSorten.filter(x => x.a > 28);
+  ok(new Set(alleSorten.map(x => x.s)).size >= 11,
+     'jede Kartensorte wird einmal gestellt',
+     new Set(alleSorten.map(x => x.s)).size + ' Sorten');
+  ok(sortenBreit.length === 0,
+     'und keine von ihnen gibt der Bildzone mehr als 28 % der Karte',
+     sortenBreit.map(x => x.s + ' ' + x.a + ' %').join(', ')
+     || 'breiteste ' + Math.max.apply(null, alleSorten.map(x => x.a)) + ' %');
+  const sortenKlemm = alleSorten.filter(x => x.ueber > 0);
+  ok(sortenKlemm.length === 0, 'und keine schneidet ihr eigenes Bild ab',
+     sortenKlemm.map(x => x.s + ' ' + x.ueber + ' px').join(', '));
+
+  ok(luecken.ab === 0, 'und keine Schlagzeile bricht ab',
+     luecken.ab + ' abgeschnitten' + (luecken.abAerger ? ' („' + luecken.abAerger + '")' : ''));
 
   console.log('\n═══ DER RAND SAGT, WAS WIEGT ═══');
   const raender = await page.evaluate(() => {
