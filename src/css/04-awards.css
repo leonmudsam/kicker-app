@@ -404,9 +404,6 @@
     letter-spacing:.06em;color:var(--muted);background:var(--bg2);
     border:1px solid var(--line);border-radius:99px;padding:1.5px 7px;white-space:nowrap}
   .rek-p.zeit{color:var(--ink2)}
-  /* „Neu" und „Ueberarbeitet" tragen Metall und kein Gold: sie zeichnen
-     niemanden aus, sie sagen, was sich geaendert hat [§C25]. */
-  .rek-p.stand{color:var(--silber);border-color:rgba(194,201,208,.28)}
 
   /* Die Faktenzeilen im Rekord-Blatt: Zeitraum, Mindestbasis und die
      Rechnung fuer die Laufbahn. Saetze und keine Werte — in der Zahlenreihe

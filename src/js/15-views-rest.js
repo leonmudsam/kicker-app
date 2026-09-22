@@ -355,31 +355,31 @@ function vSettings(){
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <button class="btn ghost" id="expXlsxBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('scroll')} Matches als Excel (.xlsx)</button>
-        <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('shieldCheck')} Savepoint sichern (.json)</button>
+        <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('shieldCheck')} Sicherung speichern (.json)</button>
         <button class="btn ghost sm" id="expCsvBtn" style="width:100%;font-size:11px">Stattdessen als CSV</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px">
-        <b style="color:var(--acid)">Excel</b> — alle ${matches.length} Matches mit Namen, Positionen und Ergebnissen,
+        <b style="color:var(--acid)">Excel</b>: alle ${matches.length} Matches mit Namen, Positionen und Ergebnissen,
         dazu je ein Blatt für Spieler und Saisons. Zum Anschauen, Auswerten und Weitergeben.<br>
-        <b style="color:var(--acid)">Savepoint</b> — die vollständige Kopie inklusive Elo-Deltas und Formel-Einstellungen.
-        Das ist die Datei, mit der sich die Liga im Ernstfall wieder aufbauen lässt.
+        <b style="color:var(--acid)">Sicherung</b>: die vollständige Kopie mit allen Elo-Werten und den
+        Einstellungen der Elo-Rechnung. Das ist die Datei, mit der sich die Liga im Ernstfall wieder aufbauen lässt.
       </p>
       <div style="height:1px;background:var(--line);margin:14px 0"></div>
       <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('refresh')} Datei einspielen</button>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px">
         Nimmt .xlsx, .csv und .json. Vor dem Schreiben siehst du eine Vorschau, was ergänzt würde.
-        <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b> — nur fehlende Matches kommen dazu.
+        <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Matches kommen dazu.
       </p>
     </div>
 
     <div class="card" style="margin-top:14px">
-      <div class="mini-label">App-Version</div>
+      <div class="mini-label">Stand der App</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px">
         <div style="font-size:12px;color:var(--ink2);font-family:'Sometype Mono',monospace">${BUILD_VERSION}</div>
-        <button class="btn ghost sm" id="forceReloadBtn" style="padding:7px 12px;font-size:11px;flex-shrink:0">Cache leeren &amp; neu laden</button>
+        <button class="btn ghost sm" id="forceReloadBtn" style="padding:7px 12px;font-size:11px;flex-shrink:0">Neu laden</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:10px">
-        Falls neue Features nicht erscheinen, ist meist der iOS-PWA-/Browser-Cache schuld. Der Button erzwingt einen Frischen Load. Außerdem checkt die App im Hintergrund auf neue Versionen und blendet oben einen Banner ein.
+        Wenn eine Neuerung nicht auftaucht, hält das Telefon meist noch den alten Stand fest. Der Knopf holt ihn frisch. Sonst meldet sich ein neuer Stand von selbst mit einem Hinweis oben.
       </p>
     </div>
     ${players.filter(p=>p.hidden).length?`

@@ -124,7 +124,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **753**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **752**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -302,7 +302,7 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird, den Katalog der fünfundsechzig samt seinen fünf Kammern, Grundwerten, eindeutigen Zeichen und vollständigen Angaben, die festen Endfenster, den Serienstand vor der Partie, die Rekordlage ohne spätere Partien, die Gegenpaare mit derselben Mindestbasis, die gestrichenen Rekorde samt ihrer alten Karten und die Laufbahn aus lauter Niederlagen, die nichts gewinnt | 1377 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird, den Katalog der fünfundsechzig samt seinen fünf Kammern, Grundwerten, eindeutigen Zeichen und vollständigen Angaben, die festen Endfenster, den Serienstand vor der Partie, die Rekordlage ohne spätere Partien, die Gegenpaare mit derselben Mindestbasis, die gestrichenen Rekorde samt ihrer alten Karten und die Laufbahn aus lauter Niederlagen, die nichts gewinnt, und den sichtbaren Text, der die App nicht erklärt | 1379 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 193 |
 | `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die Angaben, die eine Rekordkarte ans Storysystem weitergibt, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse, die These, die nicht vor dreissig Tagen wiederkommt, den Schlusssprint bei offener Lage, den Spitzenwechsel, der keinem Deckel zum Opfer faellt, die kurze Strecke als eigene Karte und den Saison-Rueckblick, der seinen Monat abschliesst, den zweiten Lauf, der dieselben IDs, Zeitpunkte, Gruppen und Texte ergibt, und jeden Wechsel eines Tages im Blatt des Titelrennens den rohen Grundwert, der nie als erhaltene Punkte dasteht, die drei Ebenen aus Tafelplatz, Profileintrag und Prestigequelle den Tag, an dem die Monatstafel aufgeht, und die Zeile, die ihre eigene Uhrzeit nennt, neben der Wirkung, die einmal dasteht | 451 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
@@ -2268,13 +2268,26 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   über die ganze Laufbahn", also zwei verschiedene Zeitachsen in einer
   Kammer, und wer die Tafel liest, konnte nicht sehen, was gerade gilt und
   was für immer.
-  **Die Karte nennt Zeitraum, Grundwert und Stand** (`zeitraum`, `basis`,
-  `stand`, `mind`). Die Mindestbasis musste der Leser aus dem Bedingungssatz
+  **Die Karte nennt Zeitraum, Grundwert und Mindestbasis** (`zeitraum`,
+  `basis`, `mind`). Die Mindestbasis musste der Leser aus dem Bedingungssatz
   heraussuchen, und über welche Strecke gerechnet wird, stand nirgends. Der
   Grundwert steht dabei ausdrücklich als „100 P Basis": er ist NICHT, was
   jemand bekommt — er wird durch die Zahl der Halter geteilt und danach in
   der Wurzelstaffel gedämpft [§C34]. Den tatsächlichen Beitrag zeigt das
   Blatt.
+  **Und sie nennt nicht, was sich an der APP geändert hat.** Jede Karte trug
+  eine Marke „Neu" oder „Überarbeitet". Die sagt, welche Fassung der App
+  gerade läuft, und dem Leser einer Rekordkarte nichts: er will wissen, was
+  der Rekord misst und wer ihn hält. Dasselbe galt für die Erklärungen — dort
+  stand die Begründung gegen die frühere Rechnung („Der beste Zwanzigerblock
+  irgendwo in der Laufbahn gehörte immer dem, der am meisten gespielt hat",
+  „Deshalb wiegt der Eintrag 50 Punkte und nicht 100", „sonst wäre eine Seite
+  leichter zu halten als die andere"). Das ist die Bauanleitung und gehört in
+  einen Kommentar, nicht auf die Karte — dieselbe Regel wie „Das Blatt
+  erklärt nicht die App" [§C33]. `tests/disziplinen` prüft jeden sichtbaren
+  Text jedes Rekords und jeder Chronik gegen eine Liste solcher Wendungen und
+  gegen Entwicklersprache („Rohsicht", „Cache", „Projektion", „Savepoint",
+  ein Paragraphenzeichen).
   **Aktuelle Form ist ein festes Endfenster und nie der beste Abschnitt.**
   Acht Rekorde stehen auf den letzten 10, 20, 25, 30 oder 50 eigenen
   Partien. Der beste Zwanzigerblock IRGENDWO in einer Laufbahn gehörte immer
@@ -2548,6 +2561,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
 - Im Fließtext des Commits steht, was vorher falsch war.
 - **Kein Modellname** in Commit-Nachrichten, Code-Kommentaren, PR-Texten
   oder sonstigen Artefakten im Repository.
+- **Die Oberfläche beschreibt nicht sich selbst.** Kein „Neu", kein
+  „Überarbeitet", keine Begründung gegen eine frühere Rechnung, keine
+  Entwicklersprache („Rohsicht", „Cache", „Projektion", „Savepoint", ein
+  Paragraphenzeichen) und keine englische Aufschrift („Frischen Load",
+  „Features", „checkt"). Warum eine Zeile so aussieht, gehört in einen
+  Kommentar; auf dem Bildschirm steht, was die Zahl bedeutet. Der
+  Rekorde-Reiter war nur die Stelle, an der es auffiel: dort trug jede der
+  fünfundsechzig Karten eine Marke über die Fassung der App, und in den
+  Erklärungen stand „sonst wäre eine Seite leichter zu halten als die
+  andere". `tests/disziplinen` prüft jeden sichtbaren Text des Katalogs.
 - Kein `node_modules/` und kein `package-lock.json` einchecken.
 
 ---
@@ -2676,7 +2699,6 @@ damit wertvoller als das einmalige Wochentags-Sammelziel.
 | `allzeit.basis` | der Grundwert fürs Prestige: 100 für Können, leistungsbezogene Form und leistungsbezogene Bestmarke, 50 für Rollenwert und Fügung, 0 für eine Schattenseite [§C34] | ohne ihn fällt der Eintrag auf `PRESTIGE_REKORD × PRESTIGE_ART[art]` zurück, und dann hängt sein Wert wieder an der Katalogreihenfolge: „Der Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 100. Er ist NICHT, was jemand bekommt — erst durch die Halter geteilt, dann gedämpft. `tests/disziplinen` prüft beide Schritte in dieser Reihenfolge |
 | `allzeit.mind` | die Mindestbasis in Worten, so wie sie auf der Karte steht | sie stand nur im Bedingungssatz, und wer die Karte las, musste sie daraus heraussuchen. Ein Gegenpaar muss dieselbe Zahl tragen, sonst ist eine Hälfte leichter zu halten als die andere — `tests/disziplinen` vergleicht die Zahlen der vierzehn Paare |
 | `allzeit.zeitraum` | über welche Strecke gerechnet wird („Ganze Laufbahn", „Die letzten 20 Partien", „Ein einzelner Spieltag") | ohne ihn steht auf der Karte nicht, ob der Wert für immer gilt oder für die letzten zwanzig Partien, und das ist der Unterschied zwischen zwei Kammern |
-| `allzeit.stand` | `neu` oder `ueberarbeitet`, solange es etwas zu sagen gibt | ohne die Marke sieht ein neuer Eintrag aus wie einer, der schon immer dastand, und eine geänderte Formel wie die alte, unter der jemand seinen Rekord verloren hat |
 | `allzeit.offen` | `true`, **nur** wenn die Bedingung mit fünfzig Partien in der Laufbahn erfüllbar ist [§C35] | ohne die Marke wächst der Katalog still zum Vielspieler: 13 der 21 bestehenden Rekorde mit lesbarer Mindestzahl sind für einen 50-Spieler unerreichbar. Die Marke ist keine Beschriftung — `tests/disziplinen` verlangt, dass im Rennen jemand mit unter hundert Partien steht, dass der Rekord vergeben ist und dass er nicht nur den drei Besten gehört |
 | `allzeit.fenster` | `true`, **nur** wenn der Wert auf einem gleitenden Fenster steht („die letzten 30 Partien", „zwei Fenster im Vergleich") | der Feed meldet „X baut den Rekord aus", sobald am hinteren Ende des Fensters ein schwaches Ergebnis herausfällt — und dann hat der Halter nichts getan [§C33]. Gemeldet wird bei ihm nur der Halterwechsel. `tests/ambient` misst es über jeden vierten Spieltag |
 | `allzeit.cond` | **jede** Schwelle, die die Wertfunktion erzwingt, nicht nur die auffälligste | sie steht auf der Karte im Rekorde-Reiter und ist das, was der Leser als Aufgabe versteht. „Die ruhige Hand" nannte nur die 9 Prozentpunkte und schwieg über die 14 engen Partien und die 20 % der Laufbahn — wer die Karte las, wusste nicht, warum er nicht im Rennen steht. `tests/disziplinen` liest die Schwellen aus dem Quelltext der Rechnung und verlangt jede im Text |

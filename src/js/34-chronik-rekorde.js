@@ -95,10 +95,6 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   // dem Bedingungssatz heraussuchen.
   mind: d.allzeit.mind || '',
   zeitraum: d.allzeit.zeitraum || '',
-  // `neu` oder `ueberarbeitet`: der Rekorde-Reiter sagt damit, was sich mit
-  // dieser Fassung geaendert hat. Ohne die Marke sieht ein neuer Eintrag aus
-  // wie einer, der schon immer dastand.
-  stand: d.allzeit.stand || '',
   zufall: d.zufall || '',
   // `paar` nennt den Eintrag, der das ANDERE Ende desselben Werts wertet.
   // Fuer eine Quoten-Fuegung verlangt `tests/disziplinen` sonst, dass

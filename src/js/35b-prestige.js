@@ -1736,7 +1736,10 @@ function showPrestigeRegeln(pid){
 // Staffel geteilt. Eine Quelle, zwei Blätter, ein Satz [§C27].
 // Vorher stand hier „2 von 12" — die Zahl der heutigen Halter. Sie erklärte
 // den Wert nicht, sie war der Grund, warum er fiel.
-function _prestigeQuellSatz(q){
+// `ohneKopf` laesst die Einordnung weg — die Kammer bzw. die Klasse. Im
+// Rekord-Blatt steht sie zwei Zeilen darueber als Untertitel, und dieselbe
+// Angabe zweimal liest man zweimal und erfaehrt nichts [§C33].
+function _prestigeQuellSatz(q, ohneKopf){
   // Eine Nachkommastelle, aber ohne die überflüssige Null: die Posten müssen
   // sichtbar zur Summe passen, sonst ist es keine Aufschlüsselung.
   const zahl = v => {
@@ -1749,7 +1752,7 @@ function _prestigeQuellSatz(q){
     // Eintrag steht [§C34], sagt `art` ueber den Wert nichts mehr — „Der
     // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 100. Die Zeile
     // nannte damit eine Einordnung, die den Wert daneben nicht erklaerte.
-    teile.push((CHRON_KINDS[q.kind] || {}).label
+    if(!ohneKopf) teile.push((CHRON_KINDS[q.kind] || {}).label
       || PRESTIGE_ART_NAME[q.art] || 'Ereignis');
     let rechnung = `Grundwert ${zahl(q.basis)}`;
     if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;

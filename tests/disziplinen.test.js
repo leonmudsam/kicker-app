@@ -3017,5 +3017,53 @@ ok(_meistPartien !== _meistRekorde,
    nm(_meistPartien) + ' spielt am meisten, ' + nm(_meistRekorde)
    + ' haelt am meisten');
 
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ KEIN TEXT ERKLAERT DIE APP ═══');
+// „Das Blatt erklaert nicht die App" [§C33] gilt auch fuer den Katalog. Jede
+// Karte trug eine Marke „Neu" oder „Ueberarbeitet" — das sagt, was sich mit
+// dieser FASSUNG geaendert hat, und dem Leser einer Rekordkarte nichts. In den
+// Erklaerungen stand daneben die Begruendung gegen die frühere Rechnung: „Der
+// beste Zwanzigerblock irgendwo in der Laufbahn gehoerte immer dem, der am
+// meisten gespielt hat", „Deshalb wiegt der Eintrag 50 Punkte und nicht 100",
+// „sonst waere eine Seite leichter zu halten als die andere". Das ist die
+// Bauanleitung und nicht die Erklaerung des Rekords.
+const APP_SPRACHE = [
+  // Entwicklersprache und interne Bauteile
+  /\bRohsicht\b/i, /\bSortierwert\b/i, /\bZiehungen?\b/i, /\bWurzelstaffel\b/i,
+  /\bDatenpipeline\b/i, /\bCache\b/i, /\bProjektion\b/i, /\bFallback\b/i,
+  /\bdataRef\b/, /\bArray\b/i, /\bZusicherung\b/i, /\bBauanleitung\b/i,
+  /\bSpielerblatt\b/i, /\bSavepoint\b/i, /\bFeatures?\b/i, /§C?\d/,
+  // Marken ueber die Fassung der App
+  /\bÜberarbeitet\b/, /\bunveränderte Fassung\b/i, /\bneue Fassung\b/i,
+  // Begruendungen gegen eine frühere Rechnung
+  /sonst (?:wäre|hielte|gewinnt|stehen|steht|zählt|hing)/i,
+  /gehörte immer/i, /gewann, wer/i, /\bwüchse\b/i, /hing damit an/i,
+  /steckten die/i, /Deshalb wiegt/i, /wiegt darum/i,
+  /nicht auseinanderlaufen/i, /\bDie App\b/,
+];
+const _sprachFund = JSON.parse(K.eval(`JSON.stringify((function(){
+  const muster = ${JSON.stringify(APP_SPRACHE.map(r => [r.source, r.flags]))}
+    .map(([q, f]) => new RegExp(q, f));
+  const treffer = [];
+  const pruef = (wo, t) => { if(!t) return;
+    muster.forEach(r => { const m = r.exec(String(t));
+      if(m) treffer.push(wo + ': „' + m[0] + '"'); }); };
+  CHRONICLES.forEach(c => ['cond','wie','mind','zeitraum'].forEach(f =>
+    pruef(c.id + '.' + f, c[f])));
+  SEASON_TITLES.forEach(d => ['cond','wie','beiname'].forEach(f =>
+    pruef(d.id + '.monat.' + f, d[f])));
+  // Und die gebauten Belege, die mit echten Zahlen entstehen.
+  const H = chronicleHolders();
+  CHRONICLES.forEach(c => { const h = H[c.id]; if(h) pruef(c.id + '.ev', h.ev); });
+  return treffer;
+})())`));
+ok(_sprachFund.length === 0,
+   'kein sichtbarer Text eines Rekords oder einer Chronik erklaert die App',
+   _sprachFund.slice(0, 5).join(' · ') || 'alle Texte sauber');
+// Und es gibt die Marke „Neu"/„Ueberarbeitet" gar nicht mehr.
+ok(K.eval(`CHRONICLES.every(c => c.stand === undefined)`)
+   && K.eval(`typeof REKORD_STAND === 'undefined'`),
+   'es gibt keine Statusmarke „Neu" oder „Ueberarbeitet" mehr');
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);
