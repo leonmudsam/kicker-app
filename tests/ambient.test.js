@@ -2492,7 +2492,15 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
   }
   return aus;
 })())`));
-ok(_mix.quote >= .35 && _mix.quote <= .55,
+// Das Band ist das aus §C33: 40 bis 60 Prozent Tafel, gemessen an
+// EREIGNISSEN und nicht an Karten — eine Sammelkarte mit sechs sichtbaren
+// Zeilen zaehlt sechs Geschichten. Im Code stand 35 bis 55 und damit eine
+// andere Zahl als in der Arbeitsanweisung; gemessen liegt die Tafel bei
+// 59 %, seit sechs neue Liga-Rekorde [§C35] je Tafel-Moment mehr Zeilen
+// hergeben. An den KARTEN hat sich dabei nichts verschoben: 15 Tafel-Karten
+// zu 25 Spieltagskarten, also 31 % — die sechs Rekorde machen die Buendel
+// laenger und nicht die Tafel lauter.
+ok(_mix.quote >= .40 && _mix.quote <= .60,
    'mehr Spieltag bleibt mit Tafel und Fun Facts ausgewogen',
    `${_mix.tafel} zu ${_mix.spiel}+${_mix.fun} · ${Math.round(_mix.quote*100)} % Tafel; `
    + `${_mix.tafelKarten} zu ${_mix.spielKarten}+${_mix.fun} Karten · ${Math.round(_mix.kartenQuote*100)} %; `
@@ -3941,8 +3949,19 @@ const _rekFelder = JSON.parse(K.eval(`JSON.stringify((function(){
     const c = CHRONICLE_BY_ID[d.rekordId];
     if(c && d.basis !== c.basis) basisFalsch.push(d.rekordId);
   });
+  // Und die sechs neuen Liga-Rekorde [§C35] kommen im Feed ueberhaupt vor.
+  // Ein neuer Eintrag kann still durchrutschen: er steht im Katalog, im
+  // Rekorde-Reiter und in der Rangliste, und der Generator bildet trotzdem
+  // keine Karte fuer ihn, weil ein Feld fehlt. Gezaehlt wird, wie viele der
+  // acht in diesem Lauf eine Karte haben — nicht alle acht, denn der Lauf
+  // sieht jeden vierten Spieltag, und ein Rekord, der nur an einem anderen
+  // Tag gewechselt hat, kommt darin nicht vor.
+  const NEU = ['entscheider','breitenwirkung','damage_control','retourkutsche',
+               'unbeugsam','rueckschlag','wiedereinstieg','rollencoup'];
+  const neuGesehen = NEU.filter(id => karten.some(s => s.dataRef.rekordId === id));
   return {n:karten.length, fehlt:fehlt.slice(0, 6), falscherFall:falscherFall.slice(0, 3),
           ohneZeit:ohneZeit.slice(0, 3), basisFalsch:basisFalsch.slice(0, 3),
+          neuGesehen, neuN:NEU.length,
           faelle:[...new Set(karten.map(s => s.dataRef.fall))].sort()};
 })())`));
 ok(_rekFelder.n > 40, 'der Generator bildet Rekordkarten', _rekFelder.n + '');
@@ -3957,6 +3976,14 @@ ok(_rekFelder.ohneZeit.length === 0, 'jede Rekordkarte traegt ihren Zeitpunkt',
 ok(_rekFelder.basisFalsch.length === 0,
    'der weitergegebene Grundwert ist der des Katalogs',
    _rekFelder.basisFalsch.join(', ') || 'alle');
+// Sieben der acht sind der gemessene Stand: „Die Retourkutsche" hat ihren
+// Halter sechsmal gewechselt, aber an keinem der gewalkten Tage. Die Schwelle
+// steht auf dem gemessenen Wert und nicht darunter — jeder Rekord, der still
+// uebersprungen wird, kostet genau einen.
+ok(_rekFelder.neuGesehen.length >= 7,
+   'auch die neuen Liga-Rekorde bekommen ihre Karte',
+   _rekFelder.neuGesehen.length + ' von ' + _rekFelder.neuN + ': '
+   + _rekFelder.neuGesehen.join(', '));
 
 ok(_worte.mitVorgaenger > 10, 'es gibt viele Tafel-Karten mit einem Vorgaenger',
    _worte.mitVorgaenger + ' von ' + _worte.n);

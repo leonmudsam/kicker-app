@@ -62,6 +62,12 @@ const CHRON_KINDS = {
 // Unter dieser Spielzahl bekommt niemand eine Chronik. Eine Laufbahn braucht
 // eine Laufbahn — sonst trägt ein Gast nach zwölf Spielen einen Liga-Rekord.
 const CHRON_MIN_GAMES = 30;
+// Was „eine Pause" heisst: 72 vollstaendige Stunden ohne eigenes Match. Die
+// Zahl steht hier und nicht in der Rechnung, weil der Bedingungssatz des
+// Rekords sie nennt und zwei Stellen mit derselben Schwelle irgendwann zwei
+// verschiedene Zahlen sagen [§C27].
+const REKORD_PAUSE_STUNDEN = 72;
+const REKORD_PAUSE_MS = REKORD_PAUSE_STUNDEN * 3600 * 1000;
 
 // Die Allzeit-Wertung jeder Disziplin [§13.1]. Es gibt keinen zweiten
 // Katalog mehr: Wer hier steht, steht dort — mit demselben Namen, demselben
@@ -217,7 +223,13 @@ function _chronicleCtx(bisMs){
     expSum:0,                        // Summe der Siegchancen — das eigene Soll
     winStreak:0, winSpan:'', lossStreak:0, lossSpan:'',
     debacle:0, nail:0, bitter:0, close:0, closeW:0,
-    blowW:0, blowL:0, upsets:0, days:0, maxDay:0, maxDayLabel:'',
+    blowW:0, upsets:0, days:0, maxDay:0, maxDayLabel:'',
+    // Der Torrueckstand ueber ALLE Niederlagen. „Der Widerstand" fragt, wie
+    // hoch verloren wird, und nicht wie oft: vorher zaehlte an dieser Stelle
+    // nur die deutliche Pleite ab sieben Toren, und damit blieb offen, wie
+    // die uebrigen ausgingen. Die Summe steht hier und der Mittelwert im
+    // Katalog, damit der Nenner die eigenen Niederlagen bleiben.
+    wdSum:0,
     perfDays:0, bigDays:0,           // volle Spieltage / davon ohne Niederlage
     seasons:0, firstDay:'', firstLabel:'', lastDay:'',
     peak:0, potw:0, potd:0, weeks:0, founder:false,
@@ -268,7 +280,14 @@ function _chronicleCtx(bisMs){
     ahN:0, ahQ:0, ahRest:0, ahDelta:null,  // offene Partien gegen die uebrigen
     unterN:0, unterW:0,                  // als Aussenseiter
     favN:0, favKlar:0,                   // als Favorit
-    gjN:0, gjOk:0,                       // regelmaessige Gegner mit positiver Bilanz
+    gjN:0, gjMin:null,                   // regelmaessige Gegner, schwaechste Bilanz
+    rkN:0, rkW:0,                        // Wiedersehen nach einer Pleite gegen dasselbe Duo
+    rsN:0, rsW:0,                        // Antwort auf eine laufende eigene Pleitenserie
+    weN:0, weW:0,                        // die erste Partie nach einer Pause
+    // Der Ausschlag ueber der Erwartung, je Position getrennt. Gehalten wird
+    // die BESSERE der beiden qualifizierten Positionen; welche das ist, sagt
+    // `rcPos`, damit der Beleg sie nennen kann.
+    rcDelta:null, rcPos:'', rcQ:0, rcExp:0, rcW:0, rcN:0,
     lsN:0, lsW:0,                        // gegen einen Gegner in Siegesserie
     swN:0, swOk:0,                       // Rollenwechsel zwischen zwei Partien
     ausgN:0, ausgSd:null, ausgMit:0,     // Gleichmass in ausgeglichen angesetzten Partien
@@ -334,6 +353,12 @@ function _chronicleCtx(bisMs){
         // der Reihenfolge INNERHALB eines Tages, und die kennt nur die
         // fertige Liste.
         day,
+        // Der Zeitpunkt der Partie. „Der Wiedereinstieg" fragt nach 72
+        // vollstaendigen Stunden ohne eigenes Match, und das ist ein
+        // Zeitabstand und keine Differenz von Kalendertagen: zwei Partien am
+        // Abend des einen und am Morgen des uebernaechsten Tages liegen zwei
+        // Kalendertage und nur 36 Stunden auseinander.
+        ts: mts(m),
         // `mate` gehoert zur Rohsicht wie `geg`: „Der Klotz am Bein" fragt,
         // wie die Mitspieler AN DIESER SEITE stehen, und das ist ohne den
         // Partner nicht zu beantworten.
@@ -349,7 +374,7 @@ function _chronicleCtx(bisMs){
       if(!w && gf===9 && ga===10) p.bitter++;
       if(Math.abs(diff) <= 2){ p.close++; if(w) p.closeW++; }
       if(w && diff >= 7) p.blowW++;
-      if(!w && diff <= -7) p.blowL++;
+      if(!w) p.wdSum += ga - gf;
       if(w && exp < CHANCE_UPSET) p.upsets++;
       // Der Laufstopper: mindestens ein Gegner kam mit drei eigenen Siegen in
       // Folge. Gezaehlt wird die GELEGENHEIT und darunter der Sieg, damit der
@@ -624,18 +649,85 @@ function _chronicleCtx(bisMs){
     // gegen GENAU diesen Gegner und nicht gegen alle Partien [§C37].
     const geg = {};
     r.forEach(x => x.geg.forEach(g => { if(g) (geg[g] = geg[g] || []).push(x); }));
-    // „Gegen jeden bestanden": wie viele der regelmaessigen Gegner eine
-    // positive Bilanz gegen sich stehen lassen. Sechs Duelle machen einen
-    // Gegner regelmaessig; der Nenner sind genau diese Gegner, also kennt der
-    // Anteil die Spielzahl nicht [§C35].
+    // „Kein Angstgegner": die SCHWAECHSTE Bilanz gegen einen regelmaessigen
+    // Gegner. Sechs Duelle machen einen Gegner regelmaessig, vier solche
+    // Gegner machen einen Kreis; gewertet wird das Minimum, also entscheidet
+    // der eine Gegner, gegen den es am wenigsten laeuft. Der Anteil an den
+    // Gegnern mit positiver Bilanz stand hier vorher — der beantwortete eine
+    // andere Frage: wer gegen neun von zehn gut und gegen einen furchtbar
+    // steht, kam dort auf 90 % und hatte trotzdem einen Angstgegner. Der
+    // Nenner ist jeweils die Zahl der Duelle gegen GENAU diesen Gegner und
+    // nicht die Zahl aller Partien [§C37].
     {
       const reg = Object.keys(geg).filter(g => geg[g].length >= 6);
       p.gjN = reg.length;
-      p.gjOk = reg.filter(g => {
-        const d = geg[g], w = d.filter(x => x.w).length;
-        return w * 2 > d.length;
-      }).length;
+      if(reg.length >= 4){
+        p.gjMin = Math.min.apply(null, reg.map(g =>
+          geg[g].filter(x => x.w).length / geg[g].length));
+      }
     }
+    // „Die Retourkutsche": das naechste Wiedersehen mit genau dem Gegnerduo,
+    // gegen das das vorige Duell verloren ging. Der eigene Partner darf
+    // wechseln — gefragt ist die Antwort auf DIESE zwei, nicht auf eine
+    // Aufstellung. Gezaehlt wird die Gelegenheit und darunter der Sieg, damit
+    // der Wert ein Anteil bleibt und nicht mit der Spielzahl waechst [§C35].
+    // Der Schluessel ist sortiert: dasselbe Duo in anderer Reihenfolge ist
+    // dasselbe Duo.
+    {
+      const offen = {};
+      let n = 0, w = 0;
+      r.forEach(x => {
+        const k = x.geg.filter(Boolean).slice().sort().join('|');
+        if(!k) return;
+        if(offen[k]){ n++; if(x.w) w++; }
+        offen[k] = !x.w;
+      });
+      p.rkN = n; p.rkW = w;
+    }
+    // „Der Rueckschlag": jede Partie, vor der schon zwei eigene Niederlagen
+    // in Folge standen. Nach der dritten und jeder weiteren entsteht die
+    // Gelegenheit erneut — eine Serie, die nicht reisst, stellt die Frage
+    // jedes Mal neu. Gezaehlt wird der Stand VOR der Partie, sonst waere jede
+    // Gelegenheit ihr eigener Beweis.
+    {
+      let lauf = 0, n = 0, w = 0;
+      r.forEach(x => {
+        if(lauf >= 2){ n++; if(x.w) w++; }
+        if(x.w) lauf = 0; else lauf++;
+      });
+      p.rsN = n; p.rsW = w;
+    }
+    // „Der Wiedereinstieg": die erste eigene Partie nach 72 vollstaendigen
+    // Stunden ohne eigenes Match. Gemessen wird der Abstand der Zeitpunkte
+    // und nicht die Differenz der Kalendertage — Freitagabend und
+    // Sonntagmorgen sind zwei Kalendertage und keine drei Tage Pause. Die
+    // allererste Partie einer Laufbahn zaehlt nicht mit: vor ihr gibt es
+    // keine Pause, nur keine Liga.
+    {
+      let n = 0, w = 0;
+      for(let i = 1; i < r.length; i++){
+        if(r[i].ts - r[i - 1].ts >= REKORD_PAUSE_MS){ n++; if(r[i].w) w++; }
+      }
+      p.weN = n; p.weW = w;
+    }
+    // „Der Rollencoup": Sturm und Abwehr getrennt, und je Position nur die
+    // Partien, in denen die Elo-Rechnung dem eigenen Team unter 45 Prozent
+    // gab — dieselbe Linie, die „Aussenseiter" ueberall in der App heisst
+    // [§5.2]. Gehalten wird die BESSERE der beiden qualifizierten
+    // Positionen: wer auf einer Seite ueber dem Soll liegt, hat das dort
+    // getan, und ein Mittel ueber beide verwaesserte es mit der Seite, auf
+    // der er selten steht. Die Siegchance kommt aus der Partie und wird
+    // nicht mit heutigen Reglern nachgerechnet [Regel 8].
+    ['atk', 'def'].forEach(pos => {
+      const s = r.filter(x => x.pos === pos && x.exp < CHANCE_OFFEN);
+      if(s.length < 20) return;
+      const q = s.filter(x => x.w).length / s.length;
+      const e = _mit(s.map(x => x.exp));
+      if(p.rcDelta == null || q - e > p.rcDelta){
+        p.rcDelta = q - e; p.rcPos = pos; p.rcQ = q; p.rcExp = e;
+        p.rcW = s.filter(x => x.w).length; p.rcN = s.length;
+      }
+    })
     Object.keys(geg).forEach(g => {
       const d = geg[g];
       if(d.length < 20) return;
