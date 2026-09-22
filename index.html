@@ -4946,7 +4946,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.22.30026866';
+const BUILD_VERSION='2026.09.22.46ab5433';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5299,6 +5299,33 @@ const ICONS = {
   // Klotz am Bein: ein Gewicht an einer Kette — was die Mitspieler
   // mitziehen.
   dragWeight:    `<path d="M12 3v6"/><path d="M9 9h6l2 12H7z"/><path d="M10 6h4"/>`,
+  // ── Sechs Zeichen fuer sechs neue Liga-Rekorde [§C35] ──────────────
+  // Jedes muss sich von jedem anderen unterscheiden: in einer Zelle von 62
+  // Pixeln ist die Zeichnung das Erste, was man sieht, und zwei gleiche sind
+  // dort nicht auseinanderzuhalten.
+  //
+  // Entscheider: eine Muenze auf der Kante, darueber der Bogen des Wurfs.
+  // Die knappe Partie ist der Wurf, den er gewinnt.
+  coinFlip:      `<circle cx="12" cy="16" r="5"/><path d="M12 13v6"/><path d="M4 9a9 9 0 0116-1"/><polyline points="17 4 20 8 16 9"/>`,
+  // Retourkutsche: ein Bumerang als geschlossene Klinge — zwei gebogene
+  // Kanten, die sich an den Enden treffen. Zwei einzelne Striche im Winkel
+  // waren bei 62 px nicht von einem Knick zu unterscheiden, und die Kontur
+  // allein sah aus wie ein Telefonhoerer.
+  boomerang:     `<path d="M4 4c1 6 5 12 11 15l2-4c-4-2-7-6-8-11z"/>`,
+  // Unbeugsame: ein Amboss. Platte mit Horn, schmale Taille, breiter Fuss —
+  // was nicht nachgibt.
+  anvil:         `<path d="M4 8h10l4 2-4 2H4z"/><path d="M8 12l-1 4h8l-1-4"/><path d="M5 19h12"/>`,
+  // Rollencoup: zwei Felder und ein Pfeil, der von einem ins andere fuehrt —
+  // Sturm und Abwehr, und die Seite, auf der es geklappt hat.
+  posSwap:       `<rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7h7v6"/><polyline points="14 10 17 13 20 10"/>`,
+  // Rueckschlag: ein Zug nach unten auf den Boden und von dort ein Pfeil nach
+  // oben — der Absprung nach zwei Niederlagen. Zwei getrennte Pfeile ueber
+  // und unter einer Linie kreuzten sich bei 62 px zu einem Knaeuel; die
+  // Linie liegt jetzt am Fuss, und beide Arme stehen darueber.
+  reboundArrow:  `<path d="M3 21h18"/><path d="M7 4v9l5 7 5-9V6"/><polyline points="14 9 17 6 20 9"/>`,
+  // Wiedereinstieg: eine Tuer und ein Pfeil hinein — die erste Partie nach
+  // der Pause.
+  doorReturn:    `<path d="M4 3h9v18H4z"/><circle cx="10" cy="12" r="1"/><path d="M21 12h-5"/><polyline points="19 9 16 12 19 15"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -11283,8 +11310,11 @@ function _computeZirkus(ms){
   // Ein Duo, das viel gewinnt und seine drei Pleiten alle 10:2 kassiert, stand
   // damit hinter einem, das die Haelfte verliert und dabei mithaelt. Gefragt
   // ist das Zweite: wenn es schiefgeht, wie schlimm wird es.
-  // Dieselbe Frage stellt „Der Schadensbegrenzer" in der Chronik, und zwar
-  // mit demselben Nenner [§C27].
+  // Der Nenner sind deshalb die Pleiten und nicht alle Partien [§C37]. In der
+  // Chronik stand dieselbe Frage einmal als „Der Schadensbegrenzer"; der misst
+  // jetzt als „Der Widerstand" den mittleren Rueckstand jeder Niederlage und
+  // nicht mehr den Anteil der hohen [§C35] — der Nenner bleibt derselbe, die
+  // Frage ist nicht mehr dieselbe.
   const zirkus={};      // teamKey → {ids, v: # hohe Niederlagen}
   const tPleiten={};    // teamKey → # Niederlagen (Nenner; _computeZirkus sieht
                         //   den globalen agg nicht)
@@ -28561,6 +28591,23 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte in engen Spielen · ${pct(p.closeW/p.close)} statt ${pct((p.wins-p.closeW)/(p.games-p.close))} % sonst`
     }},
 
+  // Dieselbe Teilmenge wie „Die ruhige Hand" darueber, und deshalb steht er
+  // hier [§C35] — aber eine andere Frage: die ruhige Hand misst den SPRUNG
+  // gegenueber den uebrigen Partien, der Entscheider die Quote selbst. Wer in
+  // engen Partien so gut ist wie sonst, hat dort keinen Sprung und kann
+  // trotzdem der Beste sein; und wer sonst schwach ist, macht mit einem
+  // Sprung noch keine gute Quote. Zwei Namen fuer zwei Aussagen.
+  {id:'entscheider', name:'Der Entscheider', short:'Entscheid', ic:'coinFlip', tone:'gold', art:'leistung',
+    allzeit:{
+      kammer:'koennen', basis:100, offen:true,
+      zeitraum:'Ganze Laufbahn, alle engen Partien',
+      mind:'15 enge Partien',
+      wie:'Eng ist eine Partie mit höchstens zwei Toren Unterschied. Der Nenner sind genau diese Partien und nicht alle: wie viele enge Partien jemand hatte, ändert den Wert nicht.',
+      cond:'Höchste Siegquote in engen Partien, ab 15 engen Partien',
+      val:p => p.close >= 15 ? p.closeW / p.close : null,
+      ev:(p,v) => `${pct(v)} % in engen Partien gewonnen · ${p.closeW} von ${p.close}`
+    }},
+
   {id:'gleichauf', name:'Auf Augenhöhe', short:'Auf Höhe', ic:'weightSmall', tone:'gold', art:'leistung',
     // Die Laufbahn-Achse derselben Frage [§13.1]. „Die ruhige Hand" darueber
     // nimmt die ENGEN Partien, also die nach dem Ergebnis knappen: offen ist
@@ -28611,7 +28658,7 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.wins} Siege waren Kantersiege · ${p.blowW} Kantersiege`
     }},
 
-  {id:'breitenwirkung', name:'Gegen jeden bestanden', short:'Gegen alle', ic:'target', tone:'gold', art:'leistung',
+  {id:'breitenwirkung', name:'Kein Angstgegner', short:'Kein Angst', ic:'target', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Standhafte',
       art:'koennen',
@@ -28625,14 +28672,39 @@ const DISZIPLINEN = [
         1,
         p=>{const r=Object.values(p.gegnerGrp).filter(d=>d.length>=3);
       return `gegen ${r.filter(d=>d.filter(s=>s.win).length*2>d.length).length} von ${r.length} regelmäßigen Gegnern im Plus`;}))},
+    // Die Laufbahn-Achse fragt nach der SCHWAECHSTEN Bilanz und nicht mehr
+    // nach dem Anteil der positiven. Der Anteil beantwortete eine andere
+    // Frage als der Name: wer gegen neun von zehn Gegnern im Plus steht und
+    // gegen den zehnten 20 % holt, stand dort bei 90 % und hatte trotzdem
+    // genau den Angstgegner, den dieser Eintrag ausschliessen soll. Das
+    // Minimum kennt diese Ausnahme nicht — ein einziger Gegner kostet den
+    // Rekord. Die Monatsachse darunter bleibt der Anteil: in vier Wochen
+    // kommen drei Duelle gegen einen Gegner zusammen, und ein Minimum aus
+    // drei Partien ist ein Wurf und kein Muster.
     allzeit:{
       kammer:'koennen', basis:100, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'4 Gegner mit je 6 Duellen',
-      wie:'Ein Gegner zählt ab sechs gemeinsamen Duellen. Für jeden dieser Gegner wird geprüft, ob mehr Duelle gewonnen als verloren wurden. Der Nenner sind diese Gegner und nicht die Partien: wie oft gegen einen einzelnen gespielt wurde, ändert den Wert nicht.',
-      cond:'Größter Anteil regelmäßiger Gegner mit positiver Bilanz, ab 4 Gegnern mit je 6 Duellen',
-      val:p => p.gjN >= 4 ? p.gjOk / p.gjN : null,
-      ev:(p,v) => `${pct(v)} % der regelmäßigen Gegner im Plus · ${p.gjOk} von ${p.gjN}`
+      wie:'Ein Gegner zählt ab sechs gemeinsamen Duellen. Für jeden dieser Gegner steht eine eigene Siegquote, und gewertet wird die niedrigste davon. Der Nenner ist jeweils die Zahl der Duelle gegen genau diesen Gegner und nicht die Zahl aller Partien.',
+      cond:'Höchste Siegquote gegen den schwächsten eigenen Gegner, ab 4 Gegnern mit je 6 Duellen',
+      val:p => p.gjMin,
+      ev:(p,v) => `${pct(v)} % gegen jeden der ${p.gjN} regelmäßigen Gegner`
+    }},
+
+  // Derselbe Gegnerkreis wie darueber und deshalb hier [§C35], aber die
+  // Gegenrichtung: „Kein Angstgegner" fragt, ob eine Bilanz insgesamt
+  // haelt, die Retourkutsche fragt nach der einzelnen Antwort. Der eigene
+  // Partner darf wechseln — gefragt ist die Reaktion auf DIESE zwei, nicht
+  // die Bilanz einer Aufstellung.
+  {id:'retourkutsche', name:'Die Retourkutsche', short:'Retour', ic:'boomerang', tone:'gold', art:'leistung',
+    allzeit:{
+      kammer:'koennen', basis:100, offen:true,
+      zeitraum:'Ganze Laufbahn, jedes Wiedersehen',
+      mind:'10 Wiedersehen',
+      wie:'Ein Wiedersehen ist die nächste eigene Partie gegen genau dasselbe Gegnerduo, nachdem das vorige Duell gegen dieses Duo verloren ging. Der eigene Partner darf wechseln. Der Nenner sind diese Wiedersehen und nicht alle Partien.',
+      cond:'Höchste Siegquote beim nächsten Wiedersehen nach einer Pleite, ab 10 Wiedersehen',
+      val:p => p.rkN >= 10 ? p.rkW / p.rkN : null,
+      ev:(p,v) => `${pct(v)} % beim nächsten Wiedersehen gewonnen · ${p.rkW} von ${p.rkN}`
     }},
 
   {id:'deutlich', name:'Der Deutliche', short:'Deutlich', ic:'plusMinus', tone:'gold', art:'leistung',
@@ -28692,6 +28764,26 @@ const DISZIPLINEN = [
       ev:(p,v) => `${Math.round(v*100)} Abwehrwert · ${p.defW}:${p.defG-p.defW} in ${p.defG} Abwehrspielen`
     }},
 
+  // Dieselbe Achse wie die beiden darueber und deshalb hier [§C35]: der
+  // komplette Stuermer und der komplette Verteidiger messen die Position als
+  // Ganzes, der Rollencoup nur den Teil davon, den die Rechnung nicht
+  // vorhergesagt hat. Gewertet wird die BESSERE der beiden qualifizierten
+  // Positionen — wer auf einer Seite ueber dem Soll liegt, hat das dort
+  // getan, und ein Mittel ueber beide verwaesserte es mit der Seite, auf der
+  // er selten steht. Die Siegchance kommt aus der Partie und wird nicht mit
+  // heutigen Reglern nachgerechnet: eine zweite Rechnung ueber dieselbe
+  // Frage nennt irgendwann eine andere Zahl [§C27].
+  {id:'rollencoup', name:'Der Rollencoup', short:'Rollencoup', ic:'posSwap', tone:'orange', art:'leistung',
+    allzeit:{
+      kammer:'koennen', basis:100, offen:true,
+      zeitraum:'Ganze Laufbahn, je Position',
+      mind:'20 Außenseiterpartien auf einer Position',
+      wie:'Sturm und Abwehr werden getrennt gerechnet. Je Position zählen nur die Partien, in denen die Elo-Rechnung dem eigenen Team unter 45 Prozent Siegchance gab. Vom Anteil der gewonnenen Partien wird die mittlere Siegchance dieser Partien abgezogen; der bessere der beiden Positionswerte gilt. Die Zahl der Partien geht nicht in den Wert ein.',
+      cond:'Größter Vorsprung auf die Erwartung als Außenseiter auf einer Position, ab 20 solchen Partien',
+      val:p => (p.rcDelta != null && p.rcDelta > 0) ? p.rcDelta : null,
+      ev:(p,v) => `${Math.round(v*100)} Punkte über der Erwartung · ${pct(p.rcQ)} % statt ${pct(p.rcExp)} % ${p.rcPos === 'atk' ? 'im Sturm' : 'in der Abwehr'}`
+    }},
+
   {id:'rock', name:'Der Fels', short:'Fels', ic:'brick', tone:'blue', art:'leistung',
     allzeit:{
       kammer:'koennen', basis:100, offen:true,
@@ -28731,15 +28823,39 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} %-Punkte nach einer Pleite · ${pct(p.afterLoss/p.afterLossOpp)} statt ${pct((p.wins - p.afterLoss)/(p.games - p.afterLossOpp))} % sonst`
     }},
 
-  {id:'damage_control', name:'Der Schadensbegrenzer', short:'Limit', ic:'blockedShot', tone:'blue', art:'leistung',
+  // Dieselbe Familie wie der Stehaufmann darueber und deshalb hier [§C35],
+  // aber eine andere Lage: der Stehaufmann antwortet auf EINE Niederlage und
+  // misst den Sprung gegenueber den uebrigen Partien, der Rueckschlag
+  // antwortet auf eine laufende Serie und misst die Quote selbst. Wer nach
+  // einer Pleite immer gewinnt, hat einen Sprung; wer nach zwei Pleiten noch
+  // gewinnt, hat etwas anderes getan. Die Gelegenheit entsteht nach der
+  // dritten und jeder weiteren Niederlage erneut — eine Serie, die nicht
+  // reisst, stellt die Frage jedes Mal neu.
+  {id:'rueckschlag', name:'Der Rückschlag', short:'Rückschlag', ic:'reboundArrow', tone:'acid', art:'leistung',
+    allzeit:{
+      kammer:'koennen', basis:100, offen:true,
+      zeitraum:'Ganze Laufbahn',
+      mind:'10 Gelegenheiten',
+      wie:'Eine Gelegenheit ist jede Partie, vor der in Spielreihenfolge mindestens zwei eigene Niederlagen in Folge standen. Nach der dritten und jeder weiteren Niederlage entsteht für die nächste Partie erneut eine Gelegenheit. Der Nenner sind diese Gelegenheiten und nicht alle Partien.',
+      cond:'Höchste Siegquote nach zwei Niederlagen in Folge, ab 10 Gelegenheiten',
+      val:p => p.rsN >= 10 ? p.rsW / p.rsN : null,
+      ev:(p,v) => `${pct(v)} % nach zwei Niederlagen in Folge gewonnen · ${p.rsW} von ${p.rsN}`
+    }},
+
+  {id:'damage_control', name:'Der Widerstand', short:'Widerstand', ic:'blockedShot', tone:'blue', art:'leistung',
+    // Gemessen wird jetzt JEDE Niederlage und nicht mehr nur die deutliche ab
+    // sieben Toren. Der Anteil deutlicher Pleiten liess offen, wie die
+    // uebrigen ausgingen: wer nie hoch und immer mit fuenf Toren verliert,
+    // stand dort bei null Prozent und damit an der Spitze. Der mittlere
+    // Rueckstand beantwortet die Frage, die der Name stellt.
     allzeit:{
       kammer:'koennen', basis:100, offen:true,
       zeitraum:'Ganze Laufbahn, alle Niederlagen',
       mind:'20 Niederlagen',
-      wie:'Deutlich ist eine Niederlage mit sieben oder mehr Toren Rückstand. Der Nenner sind die eigenen Niederlagen: gewertet wird, wie hoch verloren wird, und nicht wie oft.',
-      cond:'Niedrigster Anteil deutlicher Pleiten an allen eigenen Niederlagen, ab 20 Niederlagen',
-      val:p => p.losses >= 20 ? -(p.blowL/p.losses) : null,
-      ev:p => `${Math.round(p.blowL/p.losses*100)} % aller ${p.losses} Niederlagen gingen deutlich verloren · ${p.blowL} davon`
+      wie:'Gemessen wird der Torrückstand jeder einzelnen Niederlage, gemittelt über alle. Der Nenner sind die eigenen Niederlagen: gewertet wird, wie hoch verloren wird, und nicht wie oft.',
+      cond:'Niedrigster mittlerer Torrückstand in allen eigenen Niederlagen, ab 20 Niederlagen',
+      val:p => p.losses >= 20 ? -(p.wdSum / p.losses) : null,
+      ev:p => `${komma(p.wdSum/p.losses, 2)} Tore Rückstand je Niederlage im Schnitt · ${p.losses} Niederlagen`
     }},
 
   {id:'metronom', name:'Das Metronom', short:'Metronom', ic:'clock', tone:'blue', art:'leistung',
@@ -28981,6 +29097,23 @@ const DISZIPLINEN = [
       ev:(p,v) => `+${Math.round(v*100)} Punkte · ${pct(p.ksDrin)} % in ${p.ksN} Startspielen, sonst ${pct(p.ksRaus)} %`
     }},
 
+  // Dieselbe Frage wie der Kaltstart darueber und deshalb hier [§C35], nur
+  // eine Ebene groesser: der Kaltstart misst das erste Spiel eines Abends,
+  // der Wiedereinstieg das erste nach einer echten Pause. Gemessen wird der
+  // Abstand der Zeitpunkte und nicht die Differenz der Kalendertage —
+  // Freitagabend und Sonntagmorgen sind zwei Kalendertage und keine drei
+  // Tage Pause.
+  {id:'wiedereinstieg', name:'Der Wiedereinstieg', short:'Rückkehr', ic:'doorReturn', tone:'gold', art:'leistung',
+    allzeit:{
+      kammer:'koennen', basis:100, offen:true,
+      zeitraum:'Ganze Laufbahn, jede Rückkehr',
+      mind:'8 Rückkehrspiele',
+      wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit der Differenz der Kalendertage. Die allererste Partie einer Laufbahn zählt nicht mit. Der Nenner sind diese Rückkehrspiele und nicht alle Partien.',
+      cond:'Höchste Siegquote in der ersten Partie nach 72 Stunden Pause, ab 8 Rückkehrspielen',
+      val:p => p.weN >= 8 ? p.weW / p.weN : null,
+      ev:(p,v) => `${pct(v)} % nach einer Pause gewonnen · ${p.weW} von ${p.weN}`
+    }},
+
   {id:'schlussball', name:'Der letzte Ball', short:'Schluss', ic:'whistle', tone:'gold', art:'leistung',
     monat:{
       beiname:'Der Nervenstarke',
@@ -29013,6 +29146,25 @@ const DISZIPLINEN = [
       unit:'Siege in Folge', min:8, raw:p => p.winStreak,
       ev:(p,v) => `${v} Siege in Folge`,
       zeit:p => p.winSpan || ''
+    }},
+
+  // Die andere Seite derselben Zaehlung und deshalb hier [§C35]: der
+  // Unaufhaltsame haelt die laengste Siegesserie der Liga, der Unbeugsame die
+  // KUERZESTE persoenliche Pleitenserie. Er ist damit kein Gegenpaar — das
+  // Gegenstueck der Siegesserie ist „Die Durststrecke" in der Schandtafel,
+  // die die laengste Pleitenserie zeigt. Hier gewinnt, bei wem sie nie lang
+  // geworden ist, und das ist eine Bestmarke und keine Kehrseite.
+  // Gerechnet wird mit dem negativen Serienwert, weil die Vergabe
+  // absteigend sortiert und ein kleinerer Wert hier der bessere ist.
+  {id:'unbeugsam', name:'Der Unbeugsame', short:'Unbeugsam', ic:'anvil', tone:'gold', art:'ereignis',
+    allzeit:{
+      kammer:'mark', basis:100, offen:true,
+      zeitraum:'Ganze Laufbahn',
+      mind:'50 Partien',
+      wie:'Gezählt werden Niederlagen, die ohne Sieg dazwischen aufeinanderfolgen, über Spieltage und Saisons hinweg. Von jedem Spieler steht die längste dieser Serien, und gewertet wird die niedrigste dieser Höchstmarken.',
+      cond:'Kürzeste längste Niederlagenserie einer Laufbahn, ab 50 Partien',
+      val:p => p.games >= 50 ? -p.lossStreak : null,
+      ev:p => `${p.lossStreak} Niederlagen in Folge als längste Serie · ${p.games} Partien`
     }},
 
   // Ein Abend, an dem alles saß. Braucht weder eine Laufbahn noch eine
@@ -31185,6 +31337,12 @@ const CHRON_KINDS = {
 // Unter dieser Spielzahl bekommt niemand eine Chronik. Eine Laufbahn braucht
 // eine Laufbahn — sonst trägt ein Gast nach zwölf Spielen einen Liga-Rekord.
 const CHRON_MIN_GAMES = 30;
+// Was „eine Pause" heisst: 72 vollstaendige Stunden ohne eigenes Match. Die
+// Zahl steht hier und nicht in der Rechnung, weil der Bedingungssatz des
+// Rekords sie nennt und zwei Stellen mit derselben Schwelle irgendwann zwei
+// verschiedene Zahlen sagen [§C27].
+const REKORD_PAUSE_STUNDEN = 72;
+const REKORD_PAUSE_MS = REKORD_PAUSE_STUNDEN * 3600 * 1000;
 
 // Die Allzeit-Wertung jeder Disziplin [§13.1]. Es gibt keinen zweiten
 // Katalog mehr: Wer hier steht, steht dort — mit demselben Namen, demselben
@@ -31340,7 +31498,13 @@ function _chronicleCtx(bisMs){
     expSum:0,                        // Summe der Siegchancen — das eigene Soll
     winStreak:0, winSpan:'', lossStreak:0, lossSpan:'',
     debacle:0, nail:0, bitter:0, close:0, closeW:0,
-    blowW:0, blowL:0, upsets:0, days:0, maxDay:0, maxDayLabel:'',
+    blowW:0, upsets:0, days:0, maxDay:0, maxDayLabel:'',
+    // Der Torrueckstand ueber ALLE Niederlagen. „Der Widerstand" fragt, wie
+    // hoch verloren wird, und nicht wie oft: vorher zaehlte an dieser Stelle
+    // nur die deutliche Pleite ab sieben Toren, und damit blieb offen, wie
+    // die uebrigen ausgingen. Die Summe steht hier und der Mittelwert im
+    // Katalog, damit der Nenner die eigenen Niederlagen bleiben.
+    wdSum:0,
     perfDays:0, bigDays:0,           // volle Spieltage / davon ohne Niederlage
     seasons:0, firstDay:'', firstLabel:'', lastDay:'',
     peak:0, potw:0, potd:0, weeks:0, founder:false,
@@ -31391,7 +31555,14 @@ function _chronicleCtx(bisMs){
     ahN:0, ahQ:0, ahRest:0, ahDelta:null,  // offene Partien gegen die uebrigen
     unterN:0, unterW:0,                  // als Aussenseiter
     favN:0, favKlar:0,                   // als Favorit
-    gjN:0, gjOk:0,                       // regelmaessige Gegner mit positiver Bilanz
+    gjN:0, gjMin:null,                   // regelmaessige Gegner, schwaechste Bilanz
+    rkN:0, rkW:0,                        // Wiedersehen nach einer Pleite gegen dasselbe Duo
+    rsN:0, rsW:0,                        // Antwort auf eine laufende eigene Pleitenserie
+    weN:0, weW:0,                        // die erste Partie nach einer Pause
+    // Der Ausschlag ueber der Erwartung, je Position getrennt. Gehalten wird
+    // die BESSERE der beiden qualifizierten Positionen; welche das ist, sagt
+    // `rcPos`, damit der Beleg sie nennen kann.
+    rcDelta:null, rcPos:'', rcQ:0, rcExp:0, rcW:0, rcN:0,
     lsN:0, lsW:0,                        // gegen einen Gegner in Siegesserie
     swN:0, swOk:0,                       // Rollenwechsel zwischen zwei Partien
     ausgN:0, ausgSd:null, ausgMit:0,     // Gleichmass in ausgeglichen angesetzten Partien
@@ -31457,6 +31628,12 @@ function _chronicleCtx(bisMs){
         // der Reihenfolge INNERHALB eines Tages, und die kennt nur die
         // fertige Liste.
         day,
+        // Der Zeitpunkt der Partie. „Der Wiedereinstieg" fragt nach 72
+        // vollstaendigen Stunden ohne eigenes Match, und das ist ein
+        // Zeitabstand und keine Differenz von Kalendertagen: zwei Partien am
+        // Abend des einen und am Morgen des uebernaechsten Tages liegen zwei
+        // Kalendertage und nur 36 Stunden auseinander.
+        ts: mts(m),
         // `mate` gehoert zur Rohsicht wie `geg`: „Der Klotz am Bein" fragt,
         // wie die Mitspieler AN DIESER SEITE stehen, und das ist ohne den
         // Partner nicht zu beantworten.
@@ -31472,7 +31649,7 @@ function _chronicleCtx(bisMs){
       if(!w && gf===9 && ga===10) p.bitter++;
       if(Math.abs(diff) <= 2){ p.close++; if(w) p.closeW++; }
       if(w && diff >= 7) p.blowW++;
-      if(!w && diff <= -7) p.blowL++;
+      if(!w) p.wdSum += ga - gf;
       if(w && exp < CHANCE_UPSET) p.upsets++;
       // Der Laufstopper: mindestens ein Gegner kam mit drei eigenen Siegen in
       // Folge. Gezaehlt wird die GELEGENHEIT und darunter der Sieg, damit der
@@ -31747,18 +31924,85 @@ function _chronicleCtx(bisMs){
     // gegen GENAU diesen Gegner und nicht gegen alle Partien [§C37].
     const geg = {};
     r.forEach(x => x.geg.forEach(g => { if(g) (geg[g] = geg[g] || []).push(x); }));
-    // „Gegen jeden bestanden": wie viele der regelmaessigen Gegner eine
-    // positive Bilanz gegen sich stehen lassen. Sechs Duelle machen einen
-    // Gegner regelmaessig; der Nenner sind genau diese Gegner, also kennt der
-    // Anteil die Spielzahl nicht [§C35].
+    // „Kein Angstgegner": die SCHWAECHSTE Bilanz gegen einen regelmaessigen
+    // Gegner. Sechs Duelle machen einen Gegner regelmaessig, vier solche
+    // Gegner machen einen Kreis; gewertet wird das Minimum, also entscheidet
+    // der eine Gegner, gegen den es am wenigsten laeuft. Der Anteil an den
+    // Gegnern mit positiver Bilanz stand hier vorher — der beantwortete eine
+    // andere Frage: wer gegen neun von zehn gut und gegen einen furchtbar
+    // steht, kam dort auf 90 % und hatte trotzdem einen Angstgegner. Der
+    // Nenner ist jeweils die Zahl der Duelle gegen GENAU diesen Gegner und
+    // nicht die Zahl aller Partien [§C37].
     {
       const reg = Object.keys(geg).filter(g => geg[g].length >= 6);
       p.gjN = reg.length;
-      p.gjOk = reg.filter(g => {
-        const d = geg[g], w = d.filter(x => x.w).length;
-        return w * 2 > d.length;
-      }).length;
+      if(reg.length >= 4){
+        p.gjMin = Math.min.apply(null, reg.map(g =>
+          geg[g].filter(x => x.w).length / geg[g].length));
+      }
     }
+    // „Die Retourkutsche": das naechste Wiedersehen mit genau dem Gegnerduo,
+    // gegen das das vorige Duell verloren ging. Der eigene Partner darf
+    // wechseln — gefragt ist die Antwort auf DIESE zwei, nicht auf eine
+    // Aufstellung. Gezaehlt wird die Gelegenheit und darunter der Sieg, damit
+    // der Wert ein Anteil bleibt und nicht mit der Spielzahl waechst [§C35].
+    // Der Schluessel ist sortiert: dasselbe Duo in anderer Reihenfolge ist
+    // dasselbe Duo.
+    {
+      const offen = {};
+      let n = 0, w = 0;
+      r.forEach(x => {
+        const k = x.geg.filter(Boolean).slice().sort().join('|');
+        if(!k) return;
+        if(offen[k]){ n++; if(x.w) w++; }
+        offen[k] = !x.w;
+      });
+      p.rkN = n; p.rkW = w;
+    }
+    // „Der Rueckschlag": jede Partie, vor der schon zwei eigene Niederlagen
+    // in Folge standen. Nach der dritten und jeder weiteren entsteht die
+    // Gelegenheit erneut — eine Serie, die nicht reisst, stellt die Frage
+    // jedes Mal neu. Gezaehlt wird der Stand VOR der Partie, sonst waere jede
+    // Gelegenheit ihr eigener Beweis.
+    {
+      let lauf = 0, n = 0, w = 0;
+      r.forEach(x => {
+        if(lauf >= 2){ n++; if(x.w) w++; }
+        if(x.w) lauf = 0; else lauf++;
+      });
+      p.rsN = n; p.rsW = w;
+    }
+    // „Der Wiedereinstieg": die erste eigene Partie nach 72 vollstaendigen
+    // Stunden ohne eigenes Match. Gemessen wird der Abstand der Zeitpunkte
+    // und nicht die Differenz der Kalendertage — Freitagabend und
+    // Sonntagmorgen sind zwei Kalendertage und keine drei Tage Pause. Die
+    // allererste Partie einer Laufbahn zaehlt nicht mit: vor ihr gibt es
+    // keine Pause, nur keine Liga.
+    {
+      let n = 0, w = 0;
+      for(let i = 1; i < r.length; i++){
+        if(r[i].ts - r[i - 1].ts >= REKORD_PAUSE_MS){ n++; if(r[i].w) w++; }
+      }
+      p.weN = n; p.weW = w;
+    }
+    // „Der Rollencoup": Sturm und Abwehr getrennt, und je Position nur die
+    // Partien, in denen die Elo-Rechnung dem eigenen Team unter 45 Prozent
+    // gab — dieselbe Linie, die „Aussenseiter" ueberall in der App heisst
+    // [§5.2]. Gehalten wird die BESSERE der beiden qualifizierten
+    // Positionen: wer auf einer Seite ueber dem Soll liegt, hat das dort
+    // getan, und ein Mittel ueber beide verwaesserte es mit der Seite, auf
+    // der er selten steht. Die Siegchance kommt aus der Partie und wird
+    // nicht mit heutigen Reglern nachgerechnet [Regel 8].
+    ['atk', 'def'].forEach(pos => {
+      const s = r.filter(x => x.pos === pos && x.exp < CHANCE_OFFEN);
+      if(s.length < 20) return;
+      const q = s.filter(x => x.w).length / s.length;
+      const e = _mit(s.map(x => x.exp));
+      if(p.rcDelta == null || q - e > p.rcDelta){
+        p.rcDelta = q - e; p.rcPos = pos; p.rcQ = q; p.rcExp = e;
+        p.rcW = s.filter(x => x.w).length; p.rcN = s.length;
+      }
+    })
     Object.keys(geg).forEach(g => {
       const d = geg[g];
       if(d.length < 20) return;

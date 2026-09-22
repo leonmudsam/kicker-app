@@ -282,6 +282,33 @@ const ICONS = {
   // Klotz am Bein: ein Gewicht an einer Kette — was die Mitspieler
   // mitziehen.
   dragWeight:    `<path d="M12 3v6"/><path d="M9 9h6l2 12H7z"/><path d="M10 6h4"/>`,
+  // ── Sechs Zeichen fuer sechs neue Liga-Rekorde [§C35] ──────────────
+  // Jedes muss sich von jedem anderen unterscheiden: in einer Zelle von 62
+  // Pixeln ist die Zeichnung das Erste, was man sieht, und zwei gleiche sind
+  // dort nicht auseinanderzuhalten.
+  //
+  // Entscheider: eine Muenze auf der Kante, darueber der Bogen des Wurfs.
+  // Die knappe Partie ist der Wurf, den er gewinnt.
+  coinFlip:      `<circle cx="12" cy="16" r="5"/><path d="M12 13v6"/><path d="M4 9a9 9 0 0116-1"/><polyline points="17 4 20 8 16 9"/>`,
+  // Retourkutsche: ein Bumerang als geschlossene Klinge — zwei gebogene
+  // Kanten, die sich an den Enden treffen. Zwei einzelne Striche im Winkel
+  // waren bei 62 px nicht von einem Knick zu unterscheiden, und die Kontur
+  // allein sah aus wie ein Telefonhoerer.
+  boomerang:     `<path d="M4 4c1 6 5 12 11 15l2-4c-4-2-7-6-8-11z"/>`,
+  // Unbeugsame: ein Amboss. Platte mit Horn, schmale Taille, breiter Fuss —
+  // was nicht nachgibt.
+  anvil:         `<path d="M4 8h10l4 2-4 2H4z"/><path d="M8 12l-1 4h8l-1-4"/><path d="M5 19h12"/>`,
+  // Rollencoup: zwei Felder und ein Pfeil, der von einem ins andere fuehrt —
+  // Sturm und Abwehr, und die Seite, auf der es geklappt hat.
+  posSwap:       `<rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7h7v6"/><polyline points="14 10 17 13 20 10"/>`,
+  // Rueckschlag: ein Zug nach unten auf den Boden und von dort ein Pfeil nach
+  // oben — der Absprung nach zwei Niederlagen. Zwei getrennte Pfeile ueber
+  // und unter einer Linie kreuzten sich bei 62 px zu einem Knaeuel; die
+  // Linie liegt jetzt am Fuss, und beide Arme stehen darueber.
+  reboundArrow:  `<path d="M3 21h18"/><path d="M7 4v9l5 7 5-9V6"/><polyline points="14 9 17 6 20 9"/>`,
+  // Wiedereinstieg: eine Tuer und ein Pfeil hinein — die erste Partie nach
+  // der Pause.
+  doorReturn:    `<path d="M4 3h9v18H4z"/><circle cx="10" cy="12" r="1"/><path d="M21 12h-5"/><polyline points="19 9 16 12 19 15"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};

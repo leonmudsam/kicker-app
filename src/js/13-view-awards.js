@@ -768,8 +768,11 @@ function _computeZirkus(ms){
   // Ein Duo, das viel gewinnt und seine drei Pleiten alle 10:2 kassiert, stand
   // damit hinter einem, das die Haelfte verliert und dabei mithaelt. Gefragt
   // ist das Zweite: wenn es schiefgeht, wie schlimm wird es.
-  // Dieselbe Frage stellt „Der Schadensbegrenzer" in der Chronik, und zwar
-  // mit demselben Nenner [§C27].
+  // Der Nenner sind deshalb die Pleiten und nicht alle Partien [§C37]. In der
+  // Chronik stand dieselbe Frage einmal als „Der Schadensbegrenzer"; der misst
+  // jetzt als „Der Widerstand" den mittleren Rueckstand jeder Niederlage und
+  // nicht mehr den Anteil der hohen [§C35] — der Nenner bleibt derselbe, die
+  // Frage ist nicht mehr dieselbe.
   const zirkus={};      // teamKey → {ids, v: # hohe Niederlagen}
   const tPleiten={};    // teamKey → # Niederlagen (Nenner; _computeZirkus sieht
                         //   den globalen agg nicht)

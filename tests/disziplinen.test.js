@@ -140,6 +140,137 @@ IDS.forEach(id => {
   ok(p.blowW===r.blowW, nm(id)+' Kantersiege', p.blowW+' vs '+r.blowW);
 });
 
+console.log('\n=== ACHT NEUE LIGA-REKORDE, UNABHAENGIG NACHGERECHNET ===');
+// Jede der acht Rechnungen steht hier ein ZWEITES Mal — aus den rohen
+// Matches, ohne einen Blick in `_chronicleCtx`. Zwei Rechnungen ueber
+// dieselbe Frage nennen irgendwann zwei verschiedene Beste [§C27], und eine
+// Zusicherung, die dieselbe Formel gegen sich selbst haelt, prueft nichts.
+// Gemessen wird der Wert je Spieler, nicht nur der des Halters: ein
+// Vorzeichenfehler trifft sonst zufaellig nur die, die gar nicht antreten.
+const _nr = {};
+const _nrSicht = {};
+ordered.forEach(mm => {
+  [mm.a1,mm.a2,mm.b1,mm.b2].forEach(id => {
+    const onA = (id===mm.a1||id===mm.a2);
+    const w = (onA && mm.winner==='A') || (!onA && mm.winner==='B');
+    const gf = onA ? mm.score_a : mm.score_b, ga = onA ? mm.score_b : mm.score_a;
+    const pos = id===mm.a1 ? mm.a1_pos : id===mm.a2 ? mm.a2_pos
+              : id===mm.b1 ? mm.b1_pos : mm.b2_pos;
+    (_nrSicht[id] = _nrSicht[id] || []).push({w, gf, ga, pos,
+      exp: onA ? (mm.exp_a || .5) : 1 - (mm.exp_a || .5),
+      ts: new Date(mm.created_at).getTime(),
+      geg: (onA ? [mm.b1,mm.b2] : [mm.a1,mm.a2]).filter(Boolean)});
+  });
+});
+Object.keys(_nrSicht).forEach(id => {
+  const r = _nrSicht[id], o = (_nr[id] = {});
+  // 1 Der Entscheider — Siegquote in Partien mit hoechstens zwei Toren Abstand
+  const eng = r.filter(x => Math.abs(x.gf - x.ga) <= 2);
+  o.entscheider = eng.length >= 15 ? eng.filter(x => x.w).length / eng.length : null;
+  // 2 Kein Angstgegner — die schwaechste Bilanz gegen einen regelmaessigen Gegner
+  const perGeg = {};
+  r.forEach(x => x.geg.forEach(g => (perGeg[g] = perGeg[g] || []).push(x)));
+  const reg = Object.keys(perGeg).filter(g => perGeg[g].length >= 6);
+  o.keinAngst = reg.length >= 4
+    ? Math.min.apply(null, reg.map(g => perGeg[g].filter(x => x.w).length / perGeg[g].length))
+    : null;
+  o.gegnerkreis = reg.length;
+  // 3 Der Widerstand — mittlerer Torrueckstand ueber alle Niederlagen
+  const pl = r.filter(x => !x.w);
+  o.widerstand = pl.length >= 20
+    ? -(pl.reduce((a, x) => a + (x.ga - x.gf), 0) / pl.length) : null;
+  // 4 Die Retourkutsche — das naechste Wiedersehen nach einer Pleite gegen dasselbe Duo
+  {
+    const offen = {}; let n = 0, wn = 0;
+    r.forEach(x => { const k = x.geg.slice().sort().join('|'); if(!k) return;
+      if(offen[k]){ n++; if(x.w) wn++; } offen[k] = !x.w; });
+    o.retour = n >= 10 ? wn / n : null; o.retourN = n;
+  }
+  // 5 Der Unbeugsame — die kuerzeste laengste Pleitenserie
+  {
+    let lauf = 0, mx = 0;
+    r.forEach(x => { if(x.w) lauf = 0; else { lauf++; if(lauf > mx) mx = lauf; } });
+    o.unbeugsam = r.length >= 50 ? -mx : null;
+  }
+  // 6 Der Rueckschlag — die Antwort auf zwei Niederlagen in Folge
+  {
+    let lauf = 0, n = 0, wn = 0;
+    r.forEach(x => { if(lauf >= 2){ n++; if(x.w) wn++; }
+      if(x.w) lauf = 0; else lauf++; });
+    o.rueckschlag = n >= 10 ? wn / n : null; o.rueckschlagN = n;
+  }
+  // 7 Der Wiedereinstieg — die erste Partie nach 72 vollstaendigen Stunden
+  {
+    let n = 0, wn = 0;
+    for(let i = 1; i < r.length; i++){
+      if(r[i].ts - r[i-1].ts >= 72 * 3600 * 1000){ n++; if(r[i].w) wn++; }
+    }
+    o.wieder = n >= 8 ? wn / n : null; o.wiederN = n;
+  }
+  // 8 Der Rollencoup — der Vorsprung auf die Erwartung als Aussenseiter, je Position
+  {
+    let best = null;
+    ['atk','def'].forEach(pos => {
+      const t = r.filter(x => x.pos === pos && x.exp < .45);
+      if(t.length < 20) return;
+      const d = t.filter(x => x.w).length / t.length
+              - t.reduce((a, x) => a + x.exp, 0) / t.length;
+      if(best == null || d > best) best = d;
+    });
+    o.rollencoup = (best != null && best > 0) ? best : null;
+  }
+});
+// Der Wert, den die App fuer denselben Spieler ausrechnet.
+const _appWert = JSON.parse(K.eval(`JSON.stringify((function(){
+  const C = _chronicleCtx(), o = {};
+  ['entscheider','breitenwirkung','damage_control','retourkutsche',
+   'unbeugsam','rueckschlag','wiedereinstieg','rollencoup'].forEach(cid => {
+    const def = CHRONICLE_BY_ID[cid]; o[cid] = {};
+    Object.keys(C.P).forEach(pid => {
+      let v = null; try { v = def.val(C.P[pid], C); } catch(e){ v = 'FEHLER'; }
+      o[cid][pid] = (v == null || v === false) ? null : v;
+    });
+  });
+  o._kreis = {};
+  Object.keys(C.P).forEach(pid => { o._kreis[pid] = C.P[pid].gjN; });
+  return o;
+})())`));
+const _nrGleich = (a, b) => (a == null && b == null)
+  || (a != null && b != null && Math.abs(a - b) < 1e-9);
+[['entscheider','entscheider'], ['breitenwirkung','keinAngst'],
+ ['damage_control','widerstand'], ['retourkutsche','retour'],
+ ['unbeugsam','unbeugsam'], ['rueckschlag','rueckschlag'],
+ ['wiedereinstieg','wieder'], ['rollencoup','rollencoup']].forEach(([cid, key]) => {
+  const ab = Object.keys(_appWert[cid]).filter(pid =>
+    !_nrGleich(_appWert[cid][pid], (_nr[pid] || {})[key]));
+  ok(ab.length === 0, cid + ': die App rechnet wie die Nachrechnung',
+     ab.map(pid => nm(pid) + ' ' + _appWert[cid][pid] + ' vs '
+       + (_nr[pid] || {})[key]).join(' · ') || 'alle gleich');
+});
+// Die Zahl der regelmaessigen Gegner steht im Beleg von „Kein Angstgegner"
+// und wird dort gezaehlt, nicht geschaetzt.
+{
+  const ab = Object.keys(_appWert._kreis).filter(pid =>
+    _appWert._kreis[pid] !== (_nr[pid] || {}).gegnerkreis);
+  ok(ab.length === 0, 'der Gegnerkreis im Beleg ist unabhaengig nachgezaehlt',
+     ab.map(pid => nm(pid)).join(', ') || 'alle gleich');
+}
+// Und die drei, die keiner der acht ersetzt, stehen unveraendert im Katalog:
+// „Die ruhige Hand" misst weiter den Sprung in engen Partien, nicht die
+// Quote, und die beiden Positionswerte messen weiter die Position als Ganzes.
+{
+  const _erhalten = JSON.parse(K.eval(`JSON.stringify(
+    ['clutch','atk_ace','def_ace'].map(id => { const c = CHRONICLE_BY_ID[id];
+      return c ? {id, name:c.name, cond:c.cond} : null; }))`));
+  ok(_erhalten.every(Boolean)
+     && _erhalten[0].name === 'Die ruhige Hand'
+     && /Leistungssprung in engen Partien/.test(_erhalten[0].cond)
+     && _erhalten[1].name === 'Der komplette Stürmer'
+     && _erhalten[2].name === 'Der komplette Verteidiger',
+     'die ruhige Hand und die beiden Positionswerte sind unveraendert',
+     _erhalten.map(x => x ? x.name : 'FEHLT').join(' · '));
+}
+
 console.log('\n=== 2. REKORDE SIND ECHTE BESTWERTE ===');
 const A = K.eval('allChronicles()');
 const CX = K.eval('_chronicleCtx()');
@@ -1450,9 +1581,15 @@ ok(_lbN.Leon && _lbN.Martin && _lbN.Leon.stufe === 2 && _lbN.Leon.grad === 2
    && _lbN.Martin.stufe === 2 && _lbN.Martin.grad === 2,
    'Leon und Martin tragen den Volutenkranz in Ebene III',
    ['Leon','Martin'].map(n=>n+' '+JSON.stringify(_lbN[n])).join(' · '));
-ok(_lbN.Julian && _lbN.Julian.stufe === 2 && _lbN.Julian.grad >= 1
-   && _lbN.Julian.punkte < Math.min(_lbN.Leon.punkte,_lbN.Martin.punkte),
-   'Julian folgt beiden im Volutenkranz dicht dahinter',
+// Gemessen wird, dass die drei DICHT BEIEINANDER im Volutenkranz stehen, und
+// nicht, wer von ihnen vorn liegt. Die Reihenfolge war festgeschrieben
+// („Julian hinter Leon und Martin"), und damit fiel diese Zusicherung bei
+// jedem neuen Rekord, der Punkte verschiebt: sechs neue Liga-Rekorde [§C35]
+// zogen Julian um neun Punkte an Martin vorbei, ohne dass sich an der Leiter
+// etwas geaendert hat. Kalibriert ist die Leiter und nicht die Tabelle.
+ok(_lbN.Julian && _lbN.Julian.stufe === 2 && _lbN.Julian.grad === 2
+   && Math.abs(_lbN.Julian.punkte - _lbN.Leon.punkte) < 300,
+   'Julian steht dicht bei beiden im Volutenkranz',
    JSON.stringify(_lbN.Julian));
 ok(_lb.min[3] - _lb.hoechste >= 300,
    'zwischen Ligaspitze und Lorbeerreif bleibt ein guter Abstand',
@@ -2491,10 +2628,10 @@ const _rk = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.map(c => ({
   mind:c.mind, zeitraum:c.zeitraum, cond:c.cond, wie:c.wie,
   neg:c.neg, fenster:c.fenster, hatVal:typeof c.val === 'function'
 })))`));
-ok(_rk.length === 65, 'der aktive Katalog enthaelt genau 65 Rekorde', _rk.length + '');
+ok(_rk.length === 71, 'der aktive Katalog enthaelt genau 71 Rekorde', _rk.length + '');
 const _rkZahl = {};
 _rk.forEach(c => { _rkZahl[c.kind] = (_rkZahl[c.kind] || 0) + 1; });
-const _rkSoll = {koennen:25, form:8, mark:9, fuegung:12, shame:11};
+const _rkSoll = {koennen:30, form:8, mark:10, fuegung:12, shame:11};
 Object.keys(_rkSoll).forEach(k => ok(_rkZahl[k] === _rkSoll[k],
   'die Kammer ' + k + ' hat ' + _rkSoll[k] + ' Rekorde', (_rkZahl[k] || 0) + ''));
 ok(Object.keys(_rkZahl).length === 5, 'es gibt genau fuenf Kammern',
