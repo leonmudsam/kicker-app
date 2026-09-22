@@ -28,19 +28,23 @@ function _buildAmbientStories(now, pm, nameOf){
   // ── Ein Slot entsteht HEUTE oder gar nicht ───────────────────────────
   // Ein Slot entsteht, wenn jemand die App nach seiner Uhrzeit öffnet. Wer
   // abends nicht hineinsieht, verpasst den 19-Uhr-Slot — und einmal wurden
-  // deshalb die letzten drei Tage nachgetragen, mit `when` auf der damaligen
-  // Slot-Zeit. Beides war falsch:
-  //   • Eine Karte, die JETZT entsteht und ein Datum von vorgestern trägt,
-  //     steht unter einem Tageskopf, den der Leser längst gelesen hat, und der
-  //     Lesestand zählt sie damit als gelesen [§C33]. Sie wird nie gesehen.
-  //   • Ihr Inhalt entstand aus den HEUTIGEN Zahlen und aus der Rotation, wie
-  //     sie heute aussieht — eine Behauptung über einen Stand, den es an jenem
-  //     Tag nicht gab. Gemessen zog derselbe Slot damit zwei verschiedene
-  //     Karten, je nachdem wann gefragt wurde.
-  // Nachgetragen wird deshalb nur, was zu HEUTE gehört, und der Zeitstempel
-  // ist der Moment des Entstehens: eine neue Karte ist die neueste Karte.
-  // Ihre ID trägt weiter Datum und Slot-Stunde, also entsteht sie genau einmal,
-  // und beim Upload gewinnt der erste Insert den Zeitstempel für alle Geräte.
+  // deshalb die letzten drei Tage nachgetragen. Das war falsch: der Inhalt
+  // entstand aus den HEUTIGEN Zahlen und aus der Rotation, wie sie heute
+  // aussieht, und behauptete damit einen Stand, den es an jenem Tag nicht gab.
+  // Gemessen zog derselbe Slot zwei verschiedene Karten, je nachdem wann
+  // gefragt wurde. Nachgetragen wird deshalb nur, was zu HEUTE gehört.
+  //
+  // Der Zeitstempel ist die SLOT-STUNDE und nicht der Moment des Entstehens.
+  // Er war einmal `now`, und damit stand über dem Fun Fact des 19-Uhr-Slots
+  // „20:17", wenn die App um 20:17 geöffnet wurde, und über dem des
+  // 10-Uhr-Slots „10:30" — die Karte nannte die Uhrzeit ihres Lesers und
+  // nicht die ihres Slots. Schlimmer: `event_at` gewinnt beim ersten Insert
+  // und gilt dann für alle Geräte, also hing die Stelle der Karte im Feed
+  // daran, wer die App zuerst geöffnet hat. Die Slot-Stunde ist dagegen aus
+  // der ID ableitbar und auf jedem Gerät dieselbe. Dass die Karte damit unter
+  // die Partien eines Spieltags rutscht, ist richtig und kein Problem: der
+  // Feed ist chronologisch [§C33], und an einem Tag mit echter Nachricht
+  // fällt der Fun Fact bei der Anzeige ohnehin weg.
   //
   // Datum und Uhrzeit kommen aus DERSELBEN lokalen Zeit. Vorher stand im
   // Schlüssel das UTC-Datum, in `when` aber die lokale Slot-Zeit — zwischen
@@ -65,11 +69,7 @@ function _buildAmbientStories(now, pm, nameOf){
                                slotHour, 0, 0, 0);
       if(faellig.getTime() > now.getTime()) continue;   // Slot ist noch nicht fällig
       if(slotHour >= AMBIENT_ABEND_AB && _spieltage.has(dk)) continue;
-      // `when` ist JETZT, nicht die Slot-Stunde: die Karte entsteht in diesem
-      // Moment und ist damit die neueste. Mit der Slot-Stunde rutschte ein um
-      // 22 Uhr nachgetragener 10-Uhr-Slot unter alles, was der Leser an diesem
-      // Tag schon gelesen hat.
-      dueSlots.push({dateKey: dk, slotHour, when: new Date(now.getTime())});
+      dueSlots.push({dateKey: dk, slotHour, when: faellig});
     }
   }
   if(!dueSlots.length) return out;
