@@ -792,8 +792,15 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
   // [§C32] — Metall, sie zeichnet niemanden aus [§C25].
   return `<div class="nf-sam">${rest.slice(0, grenze).map(t => {
     const ton = tafelTon(t);
-    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
+    // ── Der Anlass des Breaking traegt eine Marke ─────────────────
+    // Die Karte bricht die Spalte, weil EINE ihrer Zeilen Breaking ist. Sie
+    // stand zuletzt und ohne jedes Zeichen: die lauteste Karte des Feeds
+    // behauptete eine Dringlichkeit, die sie selbst nicht belegte. Sie
+    // steht jetzt zuerst [§C33] und sagt es auch — Rot, weil das die
+    // Richtung von Breaking ist [§C25].
+    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}${t.brk ? ' brk' : ''}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
     + `<span>${_newsBetont(t.titel || '')}</span>`
+    + (t.brk ? `<b class="nf-sam-brk">Der Anlass</b>` : '')
     + (t.marke ? `<b class="nf-sam-k">${esc(t.marke)}</b>` : '')
     // Auf der Ergebnis-Karte ist der Stand die Aussage. „Ben und Jonas
     // gewinnen ohne Gegentor" ohne die 10:0 daneben ist die halbe Nachricht,
@@ -1130,6 +1137,19 @@ function _breakingHeroText(s){
         const l = Array.isArray(d.losers) ? d.losers.map(nm).join(' & ') : 'den Favoriten';
         const pct = d.chance!=null ? Math.max(1, Math.round(d.chance*100)) : null;
         return `Die Sensation des Spieltags: Mit nur ${pct!=null?pct+'%':'minimaler'} Siegchance bezwingt ${w} das Favoriten-Team ${l}. So einen Coup sieht man in der Liga fast nie.`;
+      }
+      // ── Eine gebuendelte Karte erbt ihr Breaking von einer Zeile ──
+      // Der Schalter kennt sieben Typen und fiel sonst auf `desc` zurueck;
+      // weil der Nachsatz bei Gleichheit unterdrueckt wird, blieb er auf
+      // jeder gebuendelten Breaking-Karte ganz leer. Gezeigt wird deshalb
+      // der lange Satz DES ANLASSES: die Zeile im Sammelband nennt ihn
+      // kurz, der Nachsatz erzaehlt ihn aus [§C33].
+      case 'sammel': {
+        const teile = Array.isArray(d.teile) ? d.teile : [];
+        const anlass = teile.find(t => t && t.brk) || null;
+        const lang = anlass && String(anlass.text || '').trim();
+        if(lang) return lang;
+        break;
       }
     }
   } catch(e){}

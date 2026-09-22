@@ -695,6 +695,28 @@
   .nf-gr{display:grid;grid-template-columns:1fr;gap:12px;padding:11px 13px 12px;align-items:start}
   .nf-gr.mit-l{grid-template-columns:auto minmax(0,1fr)}
   .nf-gr-l{display:flex;align-items:center;gap:6px;padding-top:1px}
+  /* Ein Wert UND ein Bild standen nebeneinander, und die Spalte war damit so
+     breit wie beide zusammen: gemessen 169 von 316 Pixeln, also 53 % der
+     Karte, und die Schlagzeile brach daneben auf fuenf Zeilen um und wurde
+     trotzdem abgeschnitten („Johannes, Julian und zwei weitere bewegen die
+     Ewige…"). Uebereinander ist die Spalte so breit wie das Breitere von
+     beiden, gemessen 23 %.
+     Es gilt fuer beide Bildformen: die Chips einer Tafel-Karte (`.nf-face`)
+     und das einzelne Wappen einer Marke (`.rav`) — dort standen Wappen und
+     Elo-Wert nebeneinander und nahmen 36 % der Karte. Ein Duo ist davon
+     ausgenommen: dort sind die zwei Wappen selbst die Aussage und stehen
+     ueberlappend in einer Zeile. */
+  /* Der Deckel ist 68 px Inhalt plus die 13 px des Trennstrichs. Bei 72 px
+     stand er mitten in der Chipgruppe: zwei Wappen und ein „+2" sind
+     30 + 19 + 19 px, `.nf-face` schrumpft bewusst nicht, und die Karte
+     schneidet ab — das dritte Zeichen war weg. */
+  .nf-gr-l:has(.nf-wert):has(.nf-face),
+  .nf-gr-l:not(.nf-duo):has(.nf-wert):has(.rav){flex-direction:column;
+    align-items:center;gap:5px;max-width:81px}
+  /* Auch ohne Bild bleibt die Zone bei derselben Kante. Der Fun Fact traegt
+     nur eine Zahl und ihre Aufschrift, und „ELO VORSPRUNG" machte die Spalte
+     87 px breit — 28 % der Karte fuer eine Karte ohne Bild. */
+  .nf-gr-l:has(.nf-wert):not(:has(.nf-face)):not(:has(.rav)){max-width:81px}
   /* Das Zeichen auf der Erfolgs-Karte [§C30]. „Vier Spieler tragen jetzt den
      Schildring" zeigte den Schildring kein einziges Mal — daneben stand ein
      Pokal aus dem Icon-Katalog. Die Spalte stellt es ueber die Chips: die
@@ -742,8 +764,18 @@
   .nf-wert.rot b{color:var(--red);font-size:23px}
   /* Neben dem Wappen steht der Wert enger als allein in der Bildzone. */
   .nf-gr-l > .nf-wert{min-width:0;margin-left:2px}
+  /* Die Aufschrift zieht die Spalte nicht auf. Bei 80 px nahm der Fun Fact
+     mit „ELO VORSPRUNG" 30 % der Karte, ohne ueberhaupt ein Bild zu tragen;
+     72 px ist die Breite der gestapelten Spalte, also dieselbe Kante. */
   .nf-wert span{font-size:9px;color:var(--muted);margin-top:5px;letter-spacing:.05em;
-    text-transform:uppercase;max-width:80px;line-height:1.3}
+    text-transform:uppercase;max-width:72px;line-height:1.3}
+  /* In der gestapelten Spalte stehen Zahl und Aufschrift mittig, und unter
+     dem Bild bleibt weniger Luft als daneben. */
+  .nf-gr-l:has(.nf-face) > .nf-wert,
+  .nf-gr-l:not(.nf-duo):has(.rav) > .nf-wert{align-items:center;
+    text-align:center;min-width:0}
+  .nf-gr-l:has(.nf-face) > .nf-wert span,
+  .nf-gr-l:not(.nf-duo):has(.rav) > .nf-wert span{margin-top:3px}
 
   /* Sorte 3 Insignium: die Leiter zeigt den Weg. */
   .nf-leiter{display:flex;align-items:center;gap:4px;padding:10px 13px;
@@ -807,6 +839,17 @@
     border-radius:5px;background:var(--surface2);border:1px solid var(--line);
     color:var(--muted);font-size:9px;font-weight:600;letter-spacing:.04em;
     text-transform:uppercase;white-space:nowrap}
+  /* Der Anlass des Breaking. Rot ist die Richtung von Breaking [§C25], und
+     die Zeile bekommt dieselbe Kante: die Karte bricht die Spalte wegen
+     dieser einen Zeile, und die stand zuletzt und ohne jedes Zeichen. */
+  .nf-sam-z b.nf-sam-brk{flex:0 0 auto;margin-left:auto;padding:1px 6px;
+    border-radius:5px;background:rgba(240,86,106,.12);
+    border:1px solid rgba(240,86,106,.32);color:var(--red);
+    font-size:9px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;white-space:nowrap}
+  .nf-sam-z.brk b.nf-sam-k{margin-left:6px}
+  .nf-sam-z.brk{color:var(--ink)}
+  .nf-s-tafel .nf-sam-z.brk{--zeile-rgb:240,86,106}
   /* Der Stand einer Partie. Auf der Ergebnis-Karte ist er die Aussage und
      steht deshalb rechts in eigener Spalte, in Ziffernbreite — nicht im
      Satz, der sich kürzt. Metall wie die Marke: er zeichnet niemanden aus

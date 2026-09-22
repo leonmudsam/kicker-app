@@ -4544,6 +4544,65 @@ ok(_rekBlatt.altRechnung && _rekBlatt.altOhneZuwachs,
    'eine Karte ohne gespeicherte Staende zeigt die Rechnung und keinen Zuwachs',
    'Rechnung ' + _rekBlatt.altRechnung + ', ohne Zuwachs ' + _rekBlatt.altOhneZuwachs);
 
+console.log('=== DER ANLASS STEHT ZUERST ===');
+// Eine Sammelkarte erbt ihr Breaking von einer ihrer Zeilen [§C33]. Welche
+// das war, stand nirgends: `teile` ist nach `prio` sortiert, und die
+// Tafel-Familie ordnet Bestmarke vor Monatschronik vor Insignium-Stufe —
+// also stand gerade der erste Lorbeerreif der Ligageschichte als LETZTE von
+// sechs Zeilen im Sammelband, waehrend die Karte daneben roten Rahmen und
+// pulsierenden Balken trug und nicht sagte, wofuer. Und der Nachsatz fehlte
+// ganz: `_breakingHeroText` kannte sieben Typen und die Sammelkarte nicht,
+// fiel damit auf `desc` zurueck, und der Aufrufer unterdrueckt ihn genau
+// dann, wenn er `desc` ist.
+// Gemessen wird an einem gestellten Buendel, nicht an den Fixtures: die
+// echte Liga erreicht den Lorbeerreif nicht (§10.3 sichert gerade zu, dass
+// niemand dort ankommt), und damit gibt es in ihr keine gebuendelte
+// Breaking-Karte. Der Anlass traegt hier ausdruecklich die NIEDRIGSTE `prio`
+// der drei Zeilen — nach `prio` allein stuende er hinten.
+const _anlass = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p = players.map(x => x.id);
+  const t0 = new Date('2026-08-26T17:19:00Z').getTime();
+  const zeile = (id, ic, prio, ms, titel, text, ref) => ({id, cat:'tafel', ic, prio,
+    title:titel, desc:text, when:new Date(t0 + ms).toISOString(),
+    dataRef:Object.assign({playerIds:[ref.pid], causalKey:'table:2026-08-26',
+                           zeileText:text}, ref)});
+  const roh = [
+    zeile('t_rek', 'medal2', 80, 0, 'Leon uebernimmt „Der Massstab"',
+          '72 % aus 50 Spielen.',
+          {type:'rekord_geholt', rekordId:'best_record', kammer:'mark',
+           kammerLabel:'Bestmarke', pid:p[8]}),
+    zeile('t_chr', 'crown', 62, 60000, 'Maxi holt „Der Traummonat"',
+          'Ein starker Monat.',
+          {type:'chronik_geholt', titleId:'traumquote', sid:'2026-08', pid:p[10]}),
+    zeile('t_ins', 'insignium', 55, 120000, 'Martin traegt den Lorbeerreif',
+          'Die vierte Stufe der Laufbahn steht zum ersten Mal.',
+          {type:'insignium_stufe', stufe:3, oben:true, wieder:false, pid:p[9]})
+  ];
+  const fertig = _consolidateStories(roh.slice());
+  const sam = fertig.find(s => (s.dataRef || {}).type === 'sammel');
+  if(!sam) return {sam:false, typen:fertig.map(s => (s.dataRef || {}).type)};
+  const t = sam.dataRef.teile || [];
+  const html = _newsCardHtmlM2(sam, false, false);
+  const sub = _breakingHeroText(sam);
+  return {sam:true, breaking:!!_isBreaking(sam), n:t.length,
+    reihe:t.map(x => (x.brk ? '*' : '') + x.titel),
+    ersteBrk:!!(t[0] || {}).brk,
+    nurEine:t.filter(x => x.brk).length,
+    marke:html.indexOf('nf-sam-brk') >= 0,
+    sub:String(sub || ''), subFremd:String(sub || '') !== String(sam.desc || ''),
+    subImHtml:html.indexOf('nf-brk-sub') >= 0};
+})())`));
+ok(_anlass.sam && _anlass.breaking && _anlass.n === 3,
+   'drei Tafel-Zeilen eines Spieltags werden eine Breaking-Sammelkarte',
+   'Buendel ' + _anlass.sam + ', Breaking ' + _anlass.breaking + ', ' + _anlass.n + ' Zeilen');
+ok(_anlass.ersteBrk && _anlass.nurEine === 1,
+   'der Anlass des Breaking steht als erste Zeile',
+   _anlass.reihe.join(' | '));
+ok(_anlass.marke, 'und ist als Anlass gekennzeichnet');
+ok(_anlass.subImHtml && _anlass.subFremd,
+   'die Karte nennt im Nachsatz, wofuer sie Breaking ist',
+   _anlass.sub.slice(0, 60));
+
 console.log('=== ZWEIMAL LAUFEN ERGIBT DASSELBE ===');
 // Eine Story wird persistiert, damit alle Geraete dieselbe Karte zur selben
 // Zeit sehen. Das haelt nur, wenn derselbe Datenstand immer dieselbe ID,
