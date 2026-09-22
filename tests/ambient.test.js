@@ -108,8 +108,9 @@ console.log('=== 1. EIN SLOT ENTSTEHT HEUTE ODER GAR NICHT ===');
 //    Tag, der vorbei ist.
 const NOW = '2026-08-27T20:30:00Z';   // nach beiden Slots des Tages (lokal)
 const NOW_MS = new Date(NOW).getTime();
-const HEUTE = (function(){ const d = new Date(NOW);
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
+const tagKeyJS = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
+  +'-'+String(d.getDate()).padStart(2,'0');
+const HEUTE = tagKeyJS(new Date(NOW));
 const fresh = build(NOW, []);
 console.log('  Slots aus leerem Bestand: ' + fresh.length);
 fresh.forEach(s => console.log('    ' + s.id + '  ' + s.when.slice(0,16) + '  ' + s.sub));
@@ -126,15 +127,21 @@ ok(fresh.every(s => s.id.indexOf('ambient_' + HEUTE + '_') === 0),
 ok(new Set(fresh.map(s=>s.id)).size === fresh.length, 'keine doppelten IDs');
 ok(fresh.every(s => /^ambient_\d{4}-\d{2}-\d{2}_(10|19)$/.test(s.id)), 'ID-Schema unveraendert');
 
-console.log('\n=== 2. EINE NEUE KARTE IST DIE NEUESTE KARTE ===');
-//    `when` stand auf der Slot-Stunde, und damit rutschte ein um 22 Uhr
-//    nachgetragener 10-Uhr-Slot unter alles, was der Leser an diesem Tag schon
-//    gelesen hatte. Der Zeitstempel ist deshalb der Moment des Entstehens.
+console.log('\n=== 2. EINE KARTE TRAEGT IHRE SLOT-STUNDE ===');
+//    `when` stand auf `now`, und damit nannte der Fun Fact die Uhrzeit seines
+//    LESERS: ueber dem 19-Uhr-Slot stand „20:17", wenn die App um 20:17
+//    geoeffnet wurde, und ueber dem 10-Uhr-Slot „10:30". Und weil `event_at`
+//    beim ersten Insert gewinnt, hing die Stelle der Karte im Feed daran, wer
+//    die App zuerst geoeffnet hat. Die Slot-Stunde steht in der ID und ist auf
+//    jedem Geraet dieselbe.
 fresh.forEach(s => {
-  const d = new Date(s.when).getTime();
-  ok(Math.abs(d - NOW_MS) < 5000, s.id + ': entsteht jetzt, nicht zur Slot-Stunde',
-     new Date(s.when).toISOString());
-  ok(d <= NOW_MS + 5000, s.id + ': liegt nicht in der Zukunft');
+  const d = new Date(s.when);
+  const stunde = Number(/_(\d+)$/.exec(s.id)[1]);
+  ok(d.getHours() === stunde && d.getMinutes() === 0 && d.getSeconds() === 0,
+     s.id + ': traegt seine Slot-Stunde, nicht die Uhrzeit des Lesers',
+     d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'));
+  ok(tagKeyJS(d) === HEUTE, s.id + ': liegt am Tag seiner ID', tagKeyJS(d));
+  ok(d.getTime() <= NOW_MS + 5000, s.id + ': liegt nicht in der Zukunft');
 });
 
 console.log('\n=== 3. IDEMPOTENZ ===');
@@ -186,6 +193,47 @@ ok(_frost.n === asStored.length, 'die gespeicherten Fun Facts stehen im Feed',
    _frost.n + ' von ' + asStored.length);
 ok(_frost.geaendert.length === 0, 'die Auffrischung schreibt keinen Fun Fact um',
    _frost.geaendert.join(', ') || 'keiner');
+
+console.log('\n=== 4b. EINE ALTE KARTE BEKOMMT IHRE SLOT-STUNDE ===');
+//    Die Karten, die schon in der Datenbank liegen, tragen `event_at` aus der
+//    Zeit, in der dort `now` stand — und `ignoreDuplicates` schreibt eine
+//    bestehende Zeile nie um. Ohne Nacharbeit stuende ueber ihnen noch
+//    vierzehn Tage lang „20:17". Der Zeitpunkt eines Fun Facts ist aber keine
+//    Beobachtung, sondern seine Slot-Stunde, und die steht in seiner ID: fuer
+//    eine ableitbare Angabe gewinnt der Generator, genauso wie beim Wortlaut.
+//    Fuer jede andere Karte bleibt der Zeitpunkt der der Datenbank — sonst
+//    spraenge sie im Feed.
+const _uhr = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alt = ${JSON.stringify(asStored)}.map(s => Object.assign({}, s, {
+    // So stand es in der Datenbank: der Moment des ersten Oeffnens.
+    when: new Date(`+NOW_MS+`)}));
+  _cache._stories = alt;
+  delete _cache._buildStoriesKey; delete _cache._frischVon;
+  const aus = _newsTexteAuffrischen(alt)
+    .filter(s => String(s.id).indexOf('ambient_') === 0);
+  // Eine Karte, die KEIN Fun Fact ist, behaelt ihren Zeitpunkt.
+  const fremd = {id:'potd_2026-08-27', cat:'highlight', ic:'crown', prio:70,
+    title:'X ist Spieler des Tages', desc:'Alter Satz.',
+    when:new Date(`+NOW_MS+`), dataRef:{type:'potd', playerId:null}};
+  _cache._stories = alt.concat([fremd]);
+  delete _cache._buildStoriesKey; delete _cache._frischVon;
+  const mitFremd = _newsTexteAuffrischen(alt.concat([fremd]))
+    .find(s => s.id === 'potd_2026-08-27');
+  return {n:aus.length,
+    stunden:aus.map(s => s.id + ' -> ' + new Date(s.when).getHours()
+      + ':' + String(new Date(s.when).getMinutes()).padStart(2, '0')),
+    korrekt:aus.every(s => {
+      const d = new Date(s.when);
+      return d.getHours() === Number(/_(\\d+)$/.exec(s.id)[1]) && d.getMinutes() === 0;
+    }),
+    fremdUnberuehrt: !mitFremd
+      || new Date(mitFremd.when).getTime() === `+NOW_MS+`};
+})())`));
+ok(_uhr.n === asStored.length && _uhr.korrekt,
+   'ein gespeicherter Fun Fact wird auf seine Slot-Stunde gezogen',
+   _uhr.stunden.join(' | '));
+ok(_uhr.fremdUnberuehrt,
+   'jede andere Karte behaelt den Zeitpunkt der Datenbank');
 
 console.log('\n=== 5. ROTATION BLEIBT ===');
 const again = build(NOW, []);

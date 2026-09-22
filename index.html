@@ -4946,7 +4946,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.22.46ab5433';
+const BUILD_VERSION='2026.09.22.615ae48d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22131,19 +22131,23 @@ function _buildAmbientStories(now, pm, nameOf){
   // ── Ein Slot entsteht HEUTE oder gar nicht ───────────────────────────
   // Ein Slot entsteht, wenn jemand die App nach seiner Uhrzeit öffnet. Wer
   // abends nicht hineinsieht, verpasst den 19-Uhr-Slot — und einmal wurden
-  // deshalb die letzten drei Tage nachgetragen, mit `when` auf der damaligen
-  // Slot-Zeit. Beides war falsch:
-  //   • Eine Karte, die JETZT entsteht und ein Datum von vorgestern trägt,
-  //     steht unter einem Tageskopf, den der Leser längst gelesen hat, und der
-  //     Lesestand zählt sie damit als gelesen [§C33]. Sie wird nie gesehen.
-  //   • Ihr Inhalt entstand aus den HEUTIGEN Zahlen und aus der Rotation, wie
-  //     sie heute aussieht — eine Behauptung über einen Stand, den es an jenem
-  //     Tag nicht gab. Gemessen zog derselbe Slot damit zwei verschiedene
-  //     Karten, je nachdem wann gefragt wurde.
-  // Nachgetragen wird deshalb nur, was zu HEUTE gehört, und der Zeitstempel
-  // ist der Moment des Entstehens: eine neue Karte ist die neueste Karte.
-  // Ihre ID trägt weiter Datum und Slot-Stunde, also entsteht sie genau einmal,
-  // und beim Upload gewinnt der erste Insert den Zeitstempel für alle Geräte.
+  // deshalb die letzten drei Tage nachgetragen. Das war falsch: der Inhalt
+  // entstand aus den HEUTIGEN Zahlen und aus der Rotation, wie sie heute
+  // aussieht, und behauptete damit einen Stand, den es an jenem Tag nicht gab.
+  // Gemessen zog derselbe Slot zwei verschiedene Karten, je nachdem wann
+  // gefragt wurde. Nachgetragen wird deshalb nur, was zu HEUTE gehört.
+  //
+  // Der Zeitstempel ist die SLOT-STUNDE und nicht der Moment des Entstehens.
+  // Er war einmal `now`, und damit stand über dem Fun Fact des 19-Uhr-Slots
+  // „20:17", wenn die App um 20:17 geöffnet wurde, und über dem des
+  // 10-Uhr-Slots „10:30" — die Karte nannte die Uhrzeit ihres Lesers und
+  // nicht die ihres Slots. Schlimmer: `event_at` gewinnt beim ersten Insert
+  // und gilt dann für alle Geräte, also hing die Stelle der Karte im Feed
+  // daran, wer die App zuerst geöffnet hat. Die Slot-Stunde ist dagegen aus
+  // der ID ableitbar und auf jedem Gerät dieselbe. Dass die Karte damit unter
+  // die Partien eines Spieltags rutscht, ist richtig und kein Problem: der
+  // Feed ist chronologisch [§C33], und an einem Tag mit echter Nachricht
+  // fällt der Fun Fact bei der Anzeige ohnehin weg.
   //
   // Datum und Uhrzeit kommen aus DERSELBEN lokalen Zeit. Vorher stand im
   // Schlüssel das UTC-Datum, in `when` aber die lokale Slot-Zeit — zwischen
@@ -22168,11 +22172,7 @@ function _buildAmbientStories(now, pm, nameOf){
                                slotHour, 0, 0, 0);
       if(faellig.getTime() > now.getTime()) continue;   // Slot ist noch nicht fällig
       if(slotHour >= AMBIENT_ABEND_AB && _spieltage.has(dk)) continue;
-      // `when` ist JETZT, nicht die Slot-Stunde: die Karte entsteht in diesem
-      // Moment und ist damit die neueste. Mit der Slot-Stunde rutschte ein um
-      // 22 Uhr nachgetragener 10-Uhr-Slot unter alles, was der Leser an diesem
-      // Tag schon gelesen hat.
-      dueSlots.push({dateKey: dk, slotHour, when: new Date(now.getTime())});
+      dueSlots.push({dateKey: dk, slotHour, when: faellig});
     }
   }
   if(!dueSlots.length) return out;
@@ -23586,6 +23586,24 @@ function _newsPrio(s, frisch){
   return (typeof band === 'number') ? band : ((s && s.prio) | 0);
 }
 
+// Der Zeitpunkt eines Fun Facts steht in seiner ID: `ambient_2026-08-27_10`
+// gehoert zu 10 Uhr am 27.08. Er ist damit keine Beobachtung, sondern eine
+// ABLEITUNG — und fuer eine Ableitung gewinnt der Code, nicht die Datenbank
+// [§C33]. Dort stand einmal `now`, und weil `event_at` beim ersten Insert
+// gewinnt und `ignoreDuplicates` eine bestehende Zeile nie umschreibt, trugen
+// die gespeicherten Karten die Uhrzeit ihres ersten Lesers: gemessen „20:17"
+// ueber dem 19-Uhr-Slot und „10:30" ueber dem von 10 Uhr.
+// Gelesen wird die ID und nicht der Generator: ein Slot, der schon in der
+// Datenbank steht, wird gar nicht mehr gebildet [§11.1b], und damit haette
+// eine Auffrischung ueber den Generator genau die Karten nicht erreicht, um
+// die es geht. Gebaut wird eine LOKALE Zeit, weil der Tagesschluessel der
+// Karte auch lokal gebildet wird.
+function _ambientSlotWhen(id){
+  const m = /^ambient_(\d{4})-(\d{2})-(\d{2})_(\d{1,2})$/.exec(String(id || ''));
+  if(!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], 0, 0, 0);
+}
+
 function _newsTexteAuffrischen(list){
   list = Array.isArray(list) ? list : [];
   let frisch = null;
@@ -23599,6 +23617,14 @@ function _newsTexteAuffrischen(list){
   const vorhanden = new Set();
   list.forEach(s => {
     if(s && s.id) vorhanden.add(s.id);
+    // Die Slot-Stunde zuerst, und fuer BEIDE Zweige: ein Fun Fact, der schon in
+    // der Datenbank steht, wird vom Generator gar nicht mehr gebildet, also
+    // gibt es fuer ihn kein `n`.
+    const slot = s ? _ambientSlotWhen(s.id) : null;
+    if(slot && new Date(s.when).getTime() !== slot.getTime()){
+      geaendert = true;
+      s = Object.assign({}, s, {when: slot});
+    }
     const n = s && s.id ? nach.get(s.id) : null;
     const p = _newsPrio(s, n);
     if(!n){

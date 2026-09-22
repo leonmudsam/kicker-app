@@ -75,6 +75,24 @@ function _newsPrio(s, frisch){
   return (typeof band === 'number') ? band : ((s && s.prio) | 0);
 }
 
+// Der Zeitpunkt eines Fun Facts steht in seiner ID: `ambient_2026-08-27_10`
+// gehoert zu 10 Uhr am 27.08. Er ist damit keine Beobachtung, sondern eine
+// ABLEITUNG — und fuer eine Ableitung gewinnt der Code, nicht die Datenbank
+// [§C33]. Dort stand einmal `now`, und weil `event_at` beim ersten Insert
+// gewinnt und `ignoreDuplicates` eine bestehende Zeile nie umschreibt, trugen
+// die gespeicherten Karten die Uhrzeit ihres ersten Lesers: gemessen „20:17"
+// ueber dem 19-Uhr-Slot und „10:30" ueber dem von 10 Uhr.
+// Gelesen wird die ID und nicht der Generator: ein Slot, der schon in der
+// Datenbank steht, wird gar nicht mehr gebildet [§11.1b], und damit haette
+// eine Auffrischung ueber den Generator genau die Karten nicht erreicht, um
+// die es geht. Gebaut wird eine LOKALE Zeit, weil der Tagesschluessel der
+// Karte auch lokal gebildet wird.
+function _ambientSlotWhen(id){
+  const m = /^ambient_(\d{4})-(\d{2})-(\d{2})_(\d{1,2})$/.exec(String(id || ''));
+  if(!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], 0, 0, 0);
+}
+
 function _newsTexteAuffrischen(list){
   list = Array.isArray(list) ? list : [];
   let frisch = null;
@@ -88,6 +106,14 @@ function _newsTexteAuffrischen(list){
   const vorhanden = new Set();
   list.forEach(s => {
     if(s && s.id) vorhanden.add(s.id);
+    // Die Slot-Stunde zuerst, und fuer BEIDE Zweige: ein Fun Fact, der schon in
+    // der Datenbank steht, wird vom Generator gar nicht mehr gebildet, also
+    // gibt es fuer ihn kein `n`.
+    const slot = s ? _ambientSlotWhen(s.id) : null;
+    if(slot && new Date(s.when).getTime() !== slot.getTime()){
+      geaendert = true;
+      s = Object.assign({}, s, {when: slot});
+    }
     const n = s && s.id ? nach.get(s.id) : null;
     const p = _newsPrio(s, n);
     if(!n){
