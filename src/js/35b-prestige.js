@@ -104,6 +104,16 @@ const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
 // Blatt nachrechenbar. „96 Punkte, geteilt durch zwei Halter, dann durch
 // Wurzel zwei" liest niemand nach; 100 schon.
 const PRESTIGE_REKORD = 50;
+// Der Grundwert eines Rekords steht am Katalogeintrag [§C34]. Er stand allein
+// in `PRESTIGE_ART[art]`, und damit konnte eine Bestmarke wie die laengste
+// Siegesserie nicht 100 wiegen, ohne gleichzeitig ihren Platz in der
+// Katalogreihenfolge und in der Monatstafel zu verschieben: `art` ordnet den
+// Katalog, der Grundwert wiegt. Der Rueckfall bleibt fuer einen Eintrag, der
+// ihn nicht setzt.
+function _rekordBasis(def){
+  return (def && def.basis != null && isFinite(def.basis))
+    ? def.basis : PRESTIGE_REKORD * (PRESTIGE_ART[def && def.art] ?? 1);
+}
 
 // ─── Wiederholung zählt weniger, aber nie nichts ────────────────────
 // Die ersten beiden Erfolge belegen denselben Schritt und zählen deshalb
@@ -346,7 +356,8 @@ function prestigeTabelle(bisMs){
     const e = A.byId[d.id];
     if(!e) return;
     halterZahl[d.id] = e.pids.length;
-    e.pids.forEach(pid => { if(roh[pid]) roh[pid].rekord.push({id:d.id, name:d.name, art:d.art}); });
+    e.pids.forEach(pid => { if(roh[pid]) roh[pid].rekord.push(
+      {id:d.id, name:d.name, art:d.art, kind:d.kind, basis:d.basis}); });
   });
 
   // 2. Punkte.
@@ -396,11 +407,11 @@ function prestigeTabelle(bisMs){
     // dasselbe Gesetz wie überall.
     const re = [];
     r.rekord.forEach(x => {
-      const basis = PRESTIGE_REKORD * (PRESTIGE_ART[x.art] ?? 1);
+      const basis = _rekordBasis(x);
       const voll = basis / Math.max(1, halterZahl[x.id] || 1);
       if(voll <= 0) return;
       re.push({q:'rekord', id:x.id, name:x.name, p:voll, art:x.art,
-               basis, halter:halterZahl[x.id] || 1});
+               kind:x.kind, basis, halter:halterZahl[x.id] || 1});
     });
     const pr = _wurzelStapel(re, 3);
 
@@ -423,6 +434,11 @@ function prestigeTabelle(bisMs){
 }
 
 // Der Stand eines Spielers, fertig zum Anzeigen.
+function rekordQuelleVon(pid, cid){
+  const P = prestigeOf(pid);
+  return (P.quellen || []).find(q => q.q === 'rekord' && q.id === cid) || null;
+}
+
 function prestigeOf(pid, bisMs){
   const T = prestigeTabelle(bisMs);
   const e = T.byPid[pid];
@@ -1595,7 +1611,7 @@ function prestigeSchritte(pid, n){
         }
         if(mein == null || !isFinite(mein) || ziel == null || mein >= ziel) return;
         const rel = (ziel - mein) / Math.max(1e-9, Math.abs(ziel));
-        const voll = PRESTIGE_REKORD * (PRESTIGE_ART[def.art] ?? 1)
+        const voll = _rekordBasis(def)
           / Math.max(1, (halte ? halte.pids.length + 1 : 1));
         const gewinn = _wurzelZuwachs(
           P.quellen.filter(q => q.q === 'rekord').map(q => q.voll), voll, 3);
@@ -1729,7 +1745,12 @@ function _prestigeQuellSatz(q){
   };
   const teile = [];
   if(q.q === 'rekord'){
-    teile.push(PRESTIGE_ART_NAME[q.art] || 'Ereignis');
+    // Die KAMMER und nicht die Art der Disziplin: seit der Grundwert am
+    // Eintrag steht [§C34], sagt `art` ueber den Wert nichts mehr — „Der
+    // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 100. Die Zeile
+    // nannte damit eine Einordnung, die den Wert daneben nicht erklaerte.
+    teile.push((CHRON_KINDS[q.kind] || {}).label
+      || PRESTIGE_ART_NAME[q.art] || 'Ereignis');
     let rechnung = `Grundwert ${zahl(q.basis)}`;
     if(q.halter > 1) rechnung += ` ÷ ${q.halter} Halter`;
     if(q.staffel > 1) rechnung += ` · ${q.rang}. Rekord ÷ √${q.staffel}`;

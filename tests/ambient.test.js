@@ -996,6 +996,7 @@ console.log('\n=== 10. DER FEED [§C33] ===');
 // war — kein Gesicht, kein Wappen. Und er trug elf Kategoriefarben, in denen
 // Gold nichts Besonderes mehr hiess. Diese vier Zusicherungen halten beides.
 const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
+  const _nb = [];
   const roh = _buildStories();
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null;
@@ -1062,6 +1063,7 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     // Auflockerung — eine Karte, die den Tag wechselt, stuende unter dem
     // falschen Kopf.
     nachbarn: (function(){
+      // Debug-Ausgabe: welches Paar kollidiert?
       const tg = x => { const d = new Date(x.when);
         return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); };
       let n = 0;
@@ -1075,16 +1077,30 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
       // klares Zeichen" und „Julian und Leon retten ein 10:9 ins Ziel" als
       // dieselbe Karte, obwohl sie von zwei verschiedenen Partien und mit
       // zwei verschiedenen Zeichen erzaehlen.
+      // Eine SAMMELKARTE ist eine eigene Form, auch wenn ihr Kopf dieselbe
+      // Sorte traegt wie eine einzelne Karte darunter: sie hat eine
+      // zusammenfassende Schlagzeile und darunter ihr Sammelband [§C33].
+      // Gemessen am 26.08. stand „Johannes, Leo und Leon bewegen die Ewige
+      // Tafel" ueber „… uebernehmen ‚Der Hoehenflug'" — ein Buendel der
+      // dauerhaften Tafel und daneben ein einzelner Rekord auf kurzer
+      // Strecke, und genau diese beiden Karten sollen nebeneinander stehen
+      // duerfen. Zwei BUENDEL derselben Sorte bleiben der Fall, den die
+      // Buendelung verhindert.
       const art = x => { const d = x.dataRef || {};
-        if(d.type === 'sammel') return d.kopfTyp || 'sammel';
+        if(d.type === 'sammel') return 'sammel/' + (d.kopfTyp || '');
         if(d.type === 'match_result') return 'match_result/' + (d.resultKind || '');
         return d.type; };
       for(let i = 1; i < sichtbar.length; i++){
         const a = art(sichtbar[i-1]), b = art(sichtbar[i]);
-        if(a && a === b && tg(sichtbar[i-1]) === tg(sichtbar[i])) n++;
+        if(a && a === b && tg(sichtbar[i-1]) === tg(sichtbar[i])){
+          n++; _nb.push(a + ' :: ' + sichtbar[i-1].title + ' || ' + sichtbar[i].title
+            + ' || ' + ((sichtbar[i-1].dataRef||{}).causalKey||'-')
+            + ' / ' + ((sichtbar[i].dataRef||{}).causalKey||'-'));
+        }
       }
       return n;
     })(),
+    nbPaare: _nb.slice(0, 4),
     // Und die Gegenrechnung: der Feed ist wirklich chronologisch.
     ausDerReihe: (function(){
       let n = 0;
@@ -1122,7 +1138,7 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_feed.doppelText.length === 0, 'keine zwei Karten tragen denselben Text',
    _feed.doppelText.slice(0, 2).join(' | ') || 'keine');
 ok(_feed.nachbarn === 0, 'keine zwei Karten derselben Sorte am selben Tag direkt untereinander',
-   _feed.nachbarn + ' Paare');
+   _feed.nachbarn + ' Paare: ' + (_feed.nbPaare || []).join(' ### '));
 ok(_feed.ausDerReihe === 0, 'der Feed steht chronologisch, von neu nach alt',
    _feed.ausDerReihe + ' Karten aus der Reihe');
 // Gefragt ist, ob jemand den Feed BEHERRSCHT. Gezaehlt wird deshalb gegen die
@@ -3851,7 +3867,12 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
     const satz = txt.slice(i);
     (d.playerIds || []).forEach(pid => {
       const nm = pname(pid);
-      if(nm && satz.indexOf(nm) >= 0) selbstVorgaenger.push(s.title + ' || ' + satz);
+      // Auf Wortgrenzen geprueft: „Leo" steckt in „Leon", und ein reines
+      // indexOf meldete damit Leo als seinen eigenen Vorgaenger, obwohl im
+      // Satz Leon stand. Die Liga hat beide Namen.
+      if(nm && new RegExp('(^|[^A-Za-zÄÖÜäöüß])' + nm
+          + '($|[^A-Za-zÄÖÜäöüß])').test(satz))
+        selbstVorgaenger.push(s.title + ' || ' + satz);
     });
     // Und das Verb zaehlt die Genannten: ein Name „hielt", mehrere „hielten".
     // Erst den ganzen Satz nehmen, dann die bekannten Enden abstreifen: mit
@@ -3882,6 +3903,61 @@ ok(_worte.mitMatch > 0, 'Karten mit einer konkreten Partie werden gebildet',
 ok(_worte.fremdeNamen.length === 0,
    'und jede zeigt eine Partie, in der ein genannter Spieler mitgespielt hat',
    _worte.fremdeNamen.slice(0, 3).join(' | ') || 'alle');
+// ── Was eine Rekordkarte ans Storysystem weitergibt ────────────────
+// Der Name des Rekords stand nur in der Schlagzeile, die Wechselart nur im
+// Typ-Praefix, der VOLLE neue Halterstand nur gekuerzt in `playerIds` (drei
+// Gesichter), der alte Wert und der Grundwert gar nicht. Wer eine Karte
+// nachtraeglich lesen will — ein Blatt, eine Sammelzeile, eine Auffrischung
+// — hat die Definition nicht mehr zur Hand: ein gestrichener Rekord steht
+// gar nicht mehr im Katalog [§C35].
+const _rekFelder = JSON.parse(K.eval(`JSON.stringify((function(){
+  // Ueber jeden vierten Spieltag der Ligageschichte, nicht nur ueber heute:
+  // ein einziger Lauf traegt drei Rekordkarten, und dann prueft die
+  // Zusicherung genau die drei, die zufaellig gerade anstehen.
+  const alleMatches = matches.slice();
+  const alleTage = [...new Set(alleMatches.map(m => tagKey(mts(m))))].sort();
+  const roh = [], gesehen = new Set();
+  alleTage.filter((_, i) => i % 4 === 0 || i >= alleTage.length - 3).forEach(k => {
+    const grenze = Math.max(...alleMatches.filter(m => tagKey(mts(m)) === k).map(mts));
+    matches = alleMatches.filter(m => mts(m) <= grenze);
+    invalidateCache();
+    let l = [];
+    try { l = _buildStories(); } catch(e){}
+    l.forEach(x => { if(!gesehen.has(x.id)){ gesehen.add(x.id); roh.push(x); } });
+  });
+  matches = alleMatches;
+  invalidateCache();
+  const karten = roh.filter(s => String((s.dataRef || {}).type || '')
+    .indexOf('rekord_') === 0);
+  const PFLICHT = ['rekordId','rekordName','kammer','kammerLabel','fall',
+                   'basis','halter','vorher','wert','matchId','causalKey'];
+  const FAELLE = ['erstmals','uebernommen','dazu','allein','gesteigert'];
+  const fehlt = [], falscherFall = [], ohneZeit = [], basisFalsch = [];
+  karten.forEach(s => {
+    const d = s.dataRef;
+    PFLICHT.forEach(f => { if(d[f] === undefined) fehlt.push(d.rekordId + '.' + f); });
+    if(FAELLE.indexOf(d.fall) < 0) falscherFall.push(d.rekordId + ': ' + d.fall);
+    if(!s.when) ohneZeit.push(d.rekordId);
+    const c = CHRONICLE_BY_ID[d.rekordId];
+    if(c && d.basis !== c.basis) basisFalsch.push(d.rekordId);
+  });
+  return {n:karten.length, fehlt:fehlt.slice(0, 6), falscherFall:falscherFall.slice(0, 3),
+          ohneZeit:ohneZeit.slice(0, 3), basisFalsch:basisFalsch.slice(0, 3),
+          faelle:[...new Set(karten.map(s => s.dataRef.fall))].sort()};
+})())`));
+ok(_rekFelder.n > 40, 'der Generator bildet Rekordkarten', _rekFelder.n + '');
+ok(_rekFelder.fehlt.length === 0,
+   'jede Rekordkarte gibt ID, Name, Kammer, Wechselart, Grundwert, Halter, Vorgaenger, Wert und Partie weiter',
+   _rekFelder.fehlt.join(', ') || _rekFelder.n + ' Karten');
+ok(_rekFelder.falscherFall.length === 0,
+   'die Wechselart ist eine der fuenf bekannten',
+   _rekFelder.falscherFall.join(' · ') || _rekFelder.faelle.join('/'));
+ok(_rekFelder.ohneZeit.length === 0, 'jede Rekordkarte traegt ihren Zeitpunkt',
+   _rekFelder.ohneZeit.join(', ') || 'alle');
+ok(_rekFelder.basisFalsch.length === 0,
+   'der weitergegebene Grundwert ist der des Katalogs',
+   _rekFelder.basisFalsch.join(', ') || 'alle');
+
 ok(_worte.mitVorgaenger > 10, 'es gibt viele Tafel-Karten mit einem Vorgaenger',
    _worte.mitVorgaenger + ' von ' + _worte.n);
 ok(_worte.nSelbst === 0, 'niemand steht als sein eigener Vorgaenger im Satz',

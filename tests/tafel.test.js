@@ -553,8 +553,8 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
   const koepfe = (rek.match(/class="rek-g-n">([^<]+)</g)||[])
     .map(x => x.replace(/.*>/, ''));
   ok(koepfe.length >= 2, 'die Rekorde stehen in Gruppen', koepfe.join(' · '));
-  // Vier Kammern in der Reihenfolge des Katalogs.
-  const erwartet = ['Können', 'Bestmarken', 'Fügungen', 'Schattenseiten'];
+  // Fuenf Kammern in der Reihenfolge des Katalogs.
+  const erwartet = ['Können', 'Aktuelle Form', 'Bestmarken', 'Fügungen', 'Schattenseiten'];
   const rang = koepfe.map(k => erwartet.findIndex(e => k.indexOf(e) === 0));
   ok(rang.every((r, i) => r > -1 && (i === 0 || r > rang[i-1])),
      'Leistung vor Ereignis vor Schatten', koepfe.join(' · '));
@@ -564,7 +564,7 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
   // Ein Zeitpunkt steht nur dort, wo der Katalog einen liefert — und dort
   // wirklich. Eine erfundene Jahreszahl unter jedem Rekord wäre schlechter
   // als keine, eine nirgends sichtbare aber auch.
-  const mitZeit = (rek.match(/class="rek-zeit"/g)||[]).length;
+  const mitZeit = (rek.match(/class="rek-p zeit"/g)||[]).length;
   const kannZeit = K.eval(`CHRONICLES.filter(c=>c.zeit).length`);
   ok(kannZeit > 0 && mitZeit > 0 && mitZeit <= kannZeit,
      'der Zeitpunkt steht dort, wo es einen gibt — und nur dort',
@@ -598,7 +598,14 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
      vf + ' von ' + Math.max(0, feld - 3));
   // Was die Zahl bedeutet, steht dabei — sonst liest sich „27 %" wie eine
   // Siegquote.
-  ok(blatt.includes('Elo-Erwartungswert'), 'das Blatt erklärt, was der Wert ist');
+  const wie = K.eval(`CHRONICLE_BY_ID['hardnight'].wie`);
+  ok(wie.length > 40 && blatt.includes(wie.slice(0, 60)),
+     'das Blatt erklärt, was der Wert ist');
+  // Und es nennt Mindestbasis, Zeitraum und Grundwert — die Angaben, die
+  // vorher nur im Bedingungssatz steckten.
+  ok(blatt.includes('Mindestbasis') && blatt.includes('Zeitraum')
+     && blatt.includes('Grundwert'),
+     'das Blatt nennt Mindestbasis, Zeitraum und Grundwert');
 }
 // Die Vitrine ist zweispaltig. Bei ungerader Kachelzahl blieb unten rechts
 // ein Loch, und ein leeres Feld liest sich als Fehler, nicht als Ende.

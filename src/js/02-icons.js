@@ -126,7 +126,10 @@ const ICONS = {
   // Nadelöhr — jede Partie ging durch eine Öse von einem Tor.
   needleEye:     `<ellipse cx="12" cy="6" rx="3" ry="4"/><path d="M12 10v11"/><path d="M9.6 20.5h4.8"/>`,
   // Brausekopf — auf ein 10:0 folgt unmittelbar ein 0:10.
-  showerHead:    `<path d="M6 3h6a5 5 0 015 5v1"/><path d="M13 9h9"/><path d="M15 13v2M17.5 13v3M20 13v2"/>`,
+  // Seitenwechsler: zwei Pfeile, die die Seiten tauschen — Sturm und Abwehr
+  // im Wechsel. `refresh` ist der Kreis ohne Richtung, hier geht es hin und
+  // zurueck zwischen zwei festen Plaetzen.
+  sideSwap:      `<path d="M4 8h13l-3-3M20 16H7l3 3"/><path d="M4 8v-3M20 16v3"/>`,
   rainCloud:     `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3"/>`,
   // ── NEUE TEAM-AWARDS v4 ──
   // Unaufhaltsam: Loderndes Feuer mit Aufwärts-Pfeil — Team-Siegesserie
@@ -237,16 +240,18 @@ const ICONS = {
   // Torrausch: ein Ball mit Fahrtlinien dahinter — Tore in Folge, nicht ein
   // einzelner Treffer. `ball` ist der ruhende Ball, `strikeBoot` der Schuss.
   goalRush:      `<circle cx="16" cy="12" r="5"/><path d="M2 8h7M1 12h6M2 16h7"/>`,
-  // Torbilanz: zwei Pfeile gegeneinander, verschieden lang — das Verhaeltnis
-  // aus eigenen Toren und Gegentoren. `scaleBalance` ist die Waage, die
-  // aufgeht; hier geht sie gerade NICHT auf.
-  goalScale:     `<path d="M3 5v14"/><path d="M6 9h14l-3-3M6 15h8l-3 3"/>`,
+  // Allrounder: zwei Haelften, beide gefuellt — vorne wie hinten ueber der
+  // Erwartung. `switcher` fragt nach dem Gleichmass der Aufstellung, dieses
+  // Zeichen nach der Leistung auf beiden Seiten.
+  bothSides:     `<path d="M12 3v18"/><path d="M4 7h5M4 12h5M4 17h5"/><path d="M15 7h5M15 12h5M15 17h5"/>`,
   // Dichtes Tor: ein geschlossenes Gitter im Rahmen — nichts geht durch.
   gateShut:      `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M12 5v14M17 5v14M3 12h18"/>`,
   // Abwehrchef: Schild mit Rangwinkeln darin — die Ansage in der Abwehr.
   shieldRank:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><path d="M9 10l3-2 3 2M9 14l3-2 3 2"/>`,
-  // Hausherr: ein Dach über der eigenen Hälfte — das eigene Revier.
-  homeGround:    `<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>`,
+  // Laufstopper: eine Flamme hinter einer Sperre — die Serie des Gegners
+  // endet hier. `flameBreak` gehoert dem Serienbrecher des Monats; dieses
+  // Zeichen steht fuer den Anteil der Gelegenheiten, nicht fuer den Bruch.
+  streakStop:    `<path d="M9 20c-3 0-5-2-5-5 0-4 4-5 4-10 3 2 4 5 4 7 1-1 1-2 1-3 2 2 3 4 3 6"/><path d="M3 4l18 16"/>`,
   // Auftrieb: eine Treppe mit Pfeil — zwei Abschnitte, der zweite höher.
   stepsUp:       `<path d="M3 20h5v-5h5v-5h5V5"/><path d="M16 8l3-3 3 3"/>`,
   // Angreifer: ein Schuh am Ball — die eigenen Tore, nicht das Ergebnis.

@@ -428,8 +428,8 @@ function _newsDetailMitte(s){
         if(!q) return '';
       }
       const satz = _prestigeQuellSatz(w
-        ? {q:'rekord', art:d.art || 'ereignis', basis:w.basis, halter:w.halter,
-           rang:w.rang, staffel:w.staffel}
+        ? {q:'rekord', art:d.art || 'ereignis', kind:d.kammer || '',
+           basis:w.basis, halter:w.halter, rang:w.rang, staffel:w.staffel}
         : q);
       const rechts = w
         ? `${w.vor} → ${w.nach} Prestige`

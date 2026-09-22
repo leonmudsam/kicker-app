@@ -191,7 +191,17 @@ function _liveStreakForm(){
 // das es noch gibt, wäre damit stumm geschaltet. `tests/ambient` misst beides.
 const STORY_ABGEMELDET = [
   'upset_match_', 'thriller_', 'biggest_blowout_', 'potw_', 'team_woche_',
-  'anniversary_', 'elo_swing_week_'
+  'anniversary_', 'elo_swing_week_',
+  // Elf Liga-Rekorde sind aus dem Katalog gefallen. Ihre Karten liegen
+  // persistiert in der Datenbank und behaupten einen Rekord, den es nicht
+  // mehr gibt: „Leon uebernimmt ‚Der Gigantentoeter'" stand im Feed, und im
+  // Rekorde-Reiter gibt es den Eintrag nicht. Umschreiben kann sie niemand,
+  // weil der Generator diese IDs gar nicht mehr bildet — also werden sie
+  // abgemeldet. Das Blatt einer solchen Karte stuerzt nicht ab (die
+  // Definition wird ueberall mit `?` abgefragt), sie ist nur falsch.
+  'rek_giant_slayer_', 'rek_thriller_', 'rek_unbowed_', 'rek_homefield_',
+  'rek_sundaychild_', 'rek_strongphase_', 'rek_steigerung_', 'rek_upswing_',
+  'rek_coldshower_', 'rek_torbilanz_', 'rek_striker_u_'
 ];
 function _storyAbgemeldet(id){
   const t = String(id || '');

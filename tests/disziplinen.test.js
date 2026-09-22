@@ -98,18 +98,15 @@ ok(C.totalDays > 0, 'Spieltage gezählt');
 const raw = {};
 const ordered = realMatches.slice().sort((a,b)=>new Date(a.created_at)-new Date(b.created_at));
 const run = {}, runL = {};
-const vor = {}, tagX = {};
+const tagX = {};
 ordered.forEach(mm => {
   [mm.a1,mm.a2,mm.b1,mm.b2].forEach(id => {
-    const r = raw[id] || (raw[id] = {g:0,w:0,l:0,gf:0,ga:0,ws:0,ls:0,deb:0,nail:0,bit:0,close:0,closeW:0,blowW:0,dusche:0});
+    const r = raw[id] || (raw[id] = {g:0,w:0,l:0,gf:0,ga:0,ws:0,ls:0,deb:0,nail:0,bit:0,close:0,closeW:0,blowW:0});
     const onA = (id===mm.a1||id===mm.a2);
     const w = (onA && mm.winner==='A') || (!onA && mm.winner==='B');
     const gf = onA ? mm.score_a : mm.score_b, ga = onA ? mm.score_b : mm.score_a;
     r.g++; r.gf+=gf; r.ga+=ga; if(w) r.w++; else r.l++;
     if(!w&&gf===0&&ga===10) r.deb++;
-    // Die kalte Dusche: 10:0 gewonnen, unmittelbar danach 0:10 kassiert.
-    if(vor[id] && !w && gf===0 && ga===10) r.dusche++;
-    vor[id] = (w && gf===10 && ga===0);
     // Die Achterbahn: beides am selben Abend.
     const tk = mm.created_at.slice(0,10);
     const t = (tagX[id] = tagX[id] || {})[tk] || (tagX[id][tk] = {n10:0, n01:0});
@@ -132,9 +129,8 @@ IDS.forEach(id => {
   ok(p.winStreak===r.ws,nm(id)+' Siegesserie', p.winStreak+' vs '+r.ws);
   ok(p.lossStreak===r.ls,nm(id)+' Pleitenserie',p.lossStreak+' vs '+r.ls);
   ok(p.debacle===r.deb, nm(id)+' 0:10',        p.debacle+' vs '+r.deb);
-  // Die beiden Fügungen, die auf 10:0 und 0:10 aufbauen — unabhängig
-  // nachgezählt, nicht aus derselben Rechnung übernommen.
-  ok(p.dusche===r.dusche, nm(id)+' kalte Dusche', p.dusche+' vs '+r.dusche);
+  // Die Fügung, die auf 10:0 und 0:10 aufbaut — unabhängig nachgezählt,
+  // nicht aus derselben Rechnung übernommen.
   ok(p.beidesTag===Object.values(tagX[id]||{}).filter(t=>t.n10&&t.n01).length,
      nm(id)+' Achterbahn',
      p.beidesTag+' vs '+Object.values(tagX[id]||{}).filter(t=>t.n10&&t.n01).length);
@@ -658,7 +654,7 @@ ok(K.eval("DISZIPLINEN.filter(d=>d.monat&&d.monat.art==='schatten').every(d=>chr
 
 const ctxFields = K.eval(`(function(){
   const C=_chronicleCtx(); const p=C.P[Object.keys(C.P)[0]];
-  return ['afterLoss','afterLossOpp','potw','potd','gleichTag','wiederTag','beidesTag','dusche']
+  return ['afterLoss','afterLossOpp','potw','potd','gleichTag','wiederTag','beidesTag']
     .filter(f=>typeof p[f]!=='number').join(',');
 })()`);
 ok(ctxFields === '', 'Laufbahn-Kontext liefert die neuen Kennzahlen', ctxFields);
@@ -1731,8 +1727,18 @@ const _gl = JSON.parse(K.eval(`JSON.stringify((function(){
               rennenIds: ids.filter(pid => {
                 const v = c.val(C.P[pid], C); return v != null && isFinite(v); })};
     }),
-    // Traegt jeder gewertete Spieler mindestens einen Liga-Eintrag?
-    ohne: ids.filter(pid => !CHRONICLES.some(c => (A.byId[c.id] || {pids:[]}).pids.includes(pid))),
+    // Steht jeder gewertete Spieler in mindestens einem Rennen? Gefragt ist
+    // die ERREICHBARKEIT und nicht der Besitz: „jeder haelt einen Eintrag"
+    // hiesse, dass die Tafel auf die Spieler verteilt wird, und genau das
+    // darf sie nicht [Regel 15]. Wer die Mindestbasis eines Rekords erfuellt,
+    // kann ihn uebernehmen — mehr kann ein Katalog nicht zusichern, und wer
+    // neununddreissig Partien hat, hat eben noch keine Bestmarke.
+    ohne: ids.filter(pid => !CHRONICLES.some(c => {
+      const v = c.val(C.P[pid], C); return v != null && isFinite(v); })),
+    // Und wie viele Eintraege halten die Spieler tatsaechlich? Der Wert
+    // steht im Protokoll, damit eine leere Tafel auffaellt.
+    besitz: ids.map(pid => CHRONICLES.filter(c =>
+      (A.byId[c.id] || {pids:[]}).pids.includes(pid)).length),
     // Wie viele Haltungen der Fuegungen liegen bei den drei Besten?
     oben: F.reduce((n, c) => n + ((A.byId[c.id] || {pids:[]}).pids
             .filter(p => nachQuote.indexOf(p) < 3).length), 0),
@@ -1815,10 +1821,19 @@ const _glArt = _gl.halter.filter(h => h.art !== 'ereignis').map(h => h.name + ' 
 ok(_glArt.length === 0, 'keine Fuegung zaehlt als Leistung',
    _glArt.join(', ') || 'alle ' + _gl.halter.length + ' sind Ereignis');
 
-// 6. Das Ziel des Ganzen: niemand geht leer aus. Vorher hielten die drei
-//    Besten neun, neun und sechs Eintraege — und drei Spieler gar keinen.
-ok(_gl.ohne.length === 0, 'jeder gewertete Spieler traegt mindestens einen Liga-Eintrag',
+// 6. Das Ziel des Ganzen: niemand ist von vornherein ausgeschlossen. Jeder
+//    gewertete Spieler steht in mindestens einem Rennen und kann den Eintrag
+//    damit uebernehmen [Regel 18]. Verteilt wird nichts: wer neununddreissig
+//    Partien hat, haelt vielleicht keinen — er kann aber jeden holen, dessen
+//    Mindestbasis er erfuellt.
+ok(_gl.ohne.length === 0, 'jeder gewertete Spieler steht in mindestens einem Rennen',
    _gl.ohne.map(nm).join(', ') || _gl.feld + ' von ' + _gl.feld);
+// Und die Tafel ist nicht in wenigen Haenden: mindestens zwei Drittel des
+// Feldes halten wirklich etwas.
+const _mitBesitz = _gl.besitz.filter(n => n > 0).length;
+ok(_mitBesitz >= Math.ceil(_gl.feld * 2 / 3),
+   'mindestens zwei Drittel des Feldes halten einen Liga-Eintrag',
+   _mitBesitz + ' von ' + _gl.feld);
 
 
 // ══════════════════════════════════════════════════════════════════════
@@ -2338,7 +2353,7 @@ const _unten = JSON.parse(K.eval(`JSON.stringify((function(){
   Object.keys(C.P).forEach(id => {
     const p = C.P[id];
     [['atk', 'atk_ace', p.atkG], ['def', 'def_ace', p.defG]].forEach(([pos, k, g]) => {
-      if(g >= 50) return;
+      if(g >= 25) return;
       out.drunter.push(pos + ' ' + id + ' ' + g);
       if(d(k).val(p, C) != null) out.falsch.push(pos + ' ' + id + ' ' + g + ' Partien');
     });
@@ -2346,11 +2361,11 @@ const _unten = JSON.parse(K.eval(`JSON.stringify((function(){
   return out;
 })())`));
 ok(_unten.drunter.length > 0 && _unten.falsch.length === 0,
-   'unter 50 Partien auf einer Position gibt es keinen Wert',
+   'unter 25 Partien auf einer Position gibt es keinen Wert',
    _unten.falsch.join(', ')
    || _unten.drunter.length + ' Fälle unter der Grenze, keiner gewertet');
-ok(_pw.atk.spiele >= 50 && _pw.def.spiele >= 50,
-   'beide Positionsrekorde stehen auf mindestens 50 Partien',
+ok(_pw.atk.spiele >= 25 && _pw.def.spiele >= 25,
+   'beide Positionsrekorde stehen auf mindestens 25 Partien',
    'Sturm ' + _pw.atk.spiele + ' · Abwehr ' + _pw.def.spiele);
 
 // ── Der Wochenherr: Zaehler und Nenner aus derselben Zeit ───────────
@@ -2464,6 +2479,543 @@ ok(_wandler.soll.join(',') === _wandler.ist.join(','),
    'der ausgeglichenste Profilwert haelt den Wandler', _wandler.ist.map(nm).join(', '));
 ok(/% Sturm, \d+ % Abwehr/.test(_wandler.beleg),
    'der Wandler-Beleg zeigt die gemeinsame Profilzahl', _wandler.beleg);
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ DER KATALOG DER FUENFUNDSECHZIG ═══');
+// Fuenf Kammern, feste Zahlen, feste Grundwerte. Die Zahlen stehen hier und
+// nicht nur in der Arbeitsanweisung: ein Rekord, der durch einen Filter oder
+// eine unvollstaendige Liste faellt, ist unsichtbar, und genau das faellt
+// sonst niemandem auf.
+const _rk = JSON.parse(K.eval(`JSON.stringify(CHRONICLES.map(c => ({
+  id:c.id, name:c.name, kind:c.kind, basis:c.basis, ic:c.ic,
+  mind:c.mind, zeitraum:c.zeitraum, cond:c.cond, wie:c.wie,
+  neg:c.neg, fenster:c.fenster, hatVal:typeof c.val === 'function'
+})))`));
+ok(_rk.length === 65, 'der aktive Katalog enthaelt genau 65 Rekorde', _rk.length + '');
+const _rkZahl = {};
+_rk.forEach(c => { _rkZahl[c.kind] = (_rkZahl[c.kind] || 0) + 1; });
+const _rkSoll = {koennen:25, form:8, mark:9, fuegung:12, shame:11};
+Object.keys(_rkSoll).forEach(k => ok(_rkZahl[k] === _rkSoll[k],
+  'die Kammer ' + k + ' hat ' + _rkSoll[k] + ' Rekorde', (_rkZahl[k] || 0) + ''));
+ok(Object.keys(_rkZahl).length === 5, 'es gibt genau fuenf Kammern',
+   Object.keys(_rkZahl).join(', '));
+
+// Jede ID und jedes Zeichen genau einmal. Zwei Rekorde mit derselben
+// Zeichnung sind in einer Kachel von 34 Pixeln nicht zu unterscheiden.
+const _rkDopId = _rk.map(c => c.id).filter((x, i, a) => a.indexOf(x) !== i);
+ok(_rkDopId.length === 0, 'jede Rekord-ID ist eindeutig', _rkDopId.join(', ') || '65 Stueck');
+const _rkDopIc = _rk.map(c => c.ic).filter((x, i, a) => a.indexOf(x) !== i);
+ok(_rkDopIc.length === 0, 'jedes Rekord-Icon ist im Rekordkontext eindeutig',
+   _rkDopIc.join(', ') || _rk.length + ' verschiedene');
+
+// Jeder Eintrag traegt die sechs Angaben, die Karte und Blatt zeigen. Ohne
+// `mind` musste der Leser die Mindestbasis aus dem Bedingungssatz
+// heraussuchen, ohne `zeitraum` stand nirgends, ueber welche Strecke
+// gerechnet wird.
+const _rkUnvoll = _rk.filter(c => !c.name || !c.cond || !(c.wie || '').trim()
+  || !c.mind || !c.zeitraum || c.basis == null || !c.hatVal)
+  .map(c => c.id + '(' + ['name','cond','wie','mind','zeitraum','basis','val']
+    .filter(f => f === 'basis' ? c.basis == null
+      : f === 'val' ? !c.hatVal : !(c[f] || '').trim()).join('/') + ')');
+ok(_rkUnvoll.length === 0,
+   'jeder Rekord hat Name, Beschreibung, Berechnung, Mindestbasis, Zeitraum und Grundwert',
+   _rkUnvoll.slice(0, 4).join(' · ') || 'alle 65');
+// Die Erklaerung ist eine Erklaerung und kein Halbsatz.
+const _rkKurz = _rk.filter(c => (c.wie || '').length < 40).map(c => c.id);
+ok(_rkKurz.length === 0, 'jede Berechnung ist ausformuliert', _rkKurz.join(', ') || 'alle 65');
+// Kein Gedankenstrich in den sichtbaren Texten dieses Reiters.
+const _rkStrich = _rk.filter(c => /[—–]/.test(
+  [c.name, c.cond, c.wie, c.mind, c.zeitraum].join(' '))).map(c => c.id);
+ok(_rkStrich.length === 0, 'kein Gedankenstrich in Bedingung, Erklaerung oder Zeitraum',
+   _rkStrich.join(', ') || 'keiner');
+// Und kein interner Begriff.
+const _rkIntern = _rk.filter(c => /Rohsicht|Sortierwert|Ziehung|Wurzeld|Datenpipeline/i.test(
+  [c.cond, c.wie, c.mind, c.zeitraum].join(' '))).map(c => c.id);
+ok(_rkIntern.length === 0, 'kein interner Begriff in einem sichtbaren Text',
+   _rkIntern.join(', ') || 'keiner');
+
+// Die Grundwerte je Kammer [§C34]. Koennen und die leistungsbezogene Form
+// wiegen 100, eine Rolle und eine Fuegung 50, eine Schattenseite null.
+const _rolle = ['dauersturm','abwehrmauer','tailwind','solorun',
+                'wall','sturmtreue','switcher'];
+const _basisFehler = _rk.filter(c => {
+  const soll = c.kind === 'shame' ? 0
+    : c.kind === 'fuegung' ? 50
+    : _rolle.indexOf(c.id) >= 0 ? 50 : 100;
+  return c.basis !== soll;
+}).map(c => c.id + ' ' + c.basis);
+ok(_basisFehler.length === 0, 'jede Kammer traegt ihren Grundwert',
+   _basisFehler.join(', ') || '100 / 50 / 0');
+ok(_rk.filter(c => c.kind === 'koennen').every(c => c.basis === 100),
+   'Koennen gibt 100 Punkte Grundwert');
+ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) < 0)
+     .every(c => c.basis === 100),
+   'leistungsbezogene Form gibt 100 Punkte Grundwert');
+ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) >= 0)
+     .every(c => c.basis === 50),
+   'rollenbezogene Form gibt 50 Punkte Grundwert');
+ok(_rk.filter(c => c.kind === 'fuegung').every(c => c.basis === 50),
+   'eine Fuegung gibt 50 Punkte Grundwert');
+ok(_rk.filter(c => c.kind === 'shame').every(c => c.basis === 0),
+   'eine Schattenseite gibt null Punkte');
+// Und keine Schattenseite bringt Prestige.
+const _schPunkte = K.eval(`(function(){
+  const T = prestigeTabelle(); let n = 0;
+  Object.keys(T.byPid).forEach(pid => {
+    (T.byPid[pid].quellen || []).forEach(q => {
+      if(q.q !== 'rekord') return;
+      const c = CHRONICLE_BY_ID[q.id];
+      if(c && c.kind === 'shame' && q.p > 0) n++;
+    });
+  });
+  return n;
+})()`);
+ok(_schPunkte === 0, 'keine Schattenseite bringt Prestige', _schPunkte + ' Quellen');
+
+// ── Geteilt wird der Grundwert, gedaempft wird danach ────────────────
+// Die Reihenfolge ist die Aussage: erst durch die Zahl der Halter, dann in
+// die Wurzelstaffel. Andersherum haengte der Anteil eines Halters daran, wie
+// viele Rekorde er sonst haelt.
+const _teil = JSON.parse(K.eval(`JSON.stringify((function(){
+  const T = prestigeTabelle(), A = allChronicles().byId, out = [];
+  Object.keys(T.byPid).forEach(pid => {
+    (T.byPid[pid].quellen || []).forEach(q => {
+      if(q.q !== 'rekord') return;
+      const c = CHRONICLE_BY_ID[q.id]; if(!c) return;
+      out.push({id:q.id, pid, basis:q.basis, soll:c.basis,
+                halter:q.halter, echt:(A[q.id] || {pids:[]}).pids.length,
+                voll:q.voll, netto:q.p, staffel:q.staffel});
+    });
+  });
+  return out;
+})())`));
+ok(_teil.length > 10, 'es gibt Rekordquellen im Prestige', _teil.length + '');
+const _tBasis = _teil.filter(x => x.basis !== x.soll).map(x => x.id);
+ok(_tBasis.length === 0, 'die Quelle rechnet mit dem Grundwert des Katalogs',
+   _tBasis.join(', ') || 'alle');
+const _tHalter = _teil.filter(x => x.halter !== x.echt).map(x => x.id);
+ok(_tHalter.length === 0, 'die Quelle teilt durch die Zahl der heutigen Halter',
+   _tHalter.join(', ') || 'alle');
+const _tVoll = _teil.filter(x => Math.abs(x.voll - x.basis / x.halter) > 1e-9)
+  .map(x => x.id + ': ' + x.voll + ' statt ' + x.basis / x.halter);
+ok(_tVoll.length === 0, 'geteilte Rekorde teilen zuerst ihren Grundwert',
+   _tVoll.slice(0, 3).join(' · ') || _teil.length + ' Quellen');
+const _tNetto = _teil.filter(x =>
+  Math.abs(x.netto - x.voll / Math.sqrt(x.staffel)) > 1e-9)
+  .map(x => x.id);
+ok(_tNetto.length === 0, 'danach greift die zentrale Daempfung',
+   _tNetto.join(', ') || _teil.length + ' Quellen');
+// Und der rohe Grundwert ist nie das, was jemand bekommt.
+const _gedaempft = _teil.filter(x => x.netto < x.basis - 1e-9).length;
+ok(_gedaempft > 0, 'ein geteilter oder gestapelter Rekord gibt weniger als seinen Grundwert',
+   _gedaempft + ' von ' + _teil.length);
+
+// ── Die Mindestbasis entscheidet nur ueber die Teilnahme ────────────
+// Sie darf nicht in die Sortierung eingehen: wer sie erfuellt, wird nach dem
+// Wert verglichen, und mehr Partien duerfen den Wert nicht heben [Regel 6/7].
+const _sort = JSON.parse(K.eval(`JSON.stringify((function(){
+  const C = _chronicleCtx(), out = [];
+  CHRONICLES.forEach(c => {
+    const r = chronicleRang(c.id);
+    for(let i = 1; i < r.length; i++){
+      if(r[i].wert > r[i-1].wert + 1e-9){ out.push(c.id); break; }
+    }
+  });
+  return out;
+})())`));
+ok(_sort.length === 0, 'die Rangfolge folgt allein dem Wert',
+   _sort.join(', ') || 'alle 65 sortiert');
+// Und die Halter sind ALLE, die den Bestwert punktgleich halten.
+const _gleich = JSON.parse(K.eval(`JSON.stringify((function(){
+  const A = allChronicles().byId, out = {fehlt:[], geteilt:0};
+  CHRONICLES.forEach(c => {
+    const e = A[c.id]; if(!e) return;
+    const r = chronicleRang(c.id);
+    const soll = r.filter(x => Math.abs(x.wert - e.val) <= 1e-9).map(x => x.pid).sort();
+    if(soll.join(',') !== e.pids.slice().sort().join(','))
+      out.fehlt.push(c.id + ': ' + e.pids.length + ' statt ' + soll.length);
+    if(soll.length > 1) out.geteilt++;
+  });
+  return out;
+})())`));
+ok(_gleich.fehlt.length === 0, 'ein exakter Gleichstand erzeugt mehrere Halter',
+   _gleich.fehlt.join(' · ') || _gleich.geteilt + ' geteilte Rekorde');
+ok(_gleich.geteilt > 0, 'in den echten Partien gibt es geteilte Rekorde',
+   _gleich.geteilt + '');
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ DIE FENSTER SIND FESTE ENDFENSTER ═══');
+// Jedes Formfenster wird unabhaengig nachgerechnet: aus den echten Partien
+// je Spieler in Spielreihenfolge, genau die letzten N. Der beste Abschnitt
+// IRGENDWO in einer Laufbahn gehoerte dem Vielspieler, weil dreihundert
+// Partien 271 Dreissigerbloecke haben und dreissig Partien einen [Regel 20].
+const _sicht = {};
+ordered.forEach(mm => {
+  [mm.a1, mm.a2, mm.b1, mm.b2].forEach(id => {
+    if(!id) return;
+    const onA = (id === mm.a1 || id === mm.a2);
+    const w = (onA && mm.winner === 'A') || (!onA && mm.winner === 'B');
+    (_sicht[id] || (_sicht[id] = [])).push({
+      w, gf: onA ? mm.score_a : mm.score_b, ga: onA ? mm.score_b : mm.score_a,
+      pos: id === mm.a1 ? mm.a1_pos : id === mm.a2 ? mm.a2_pos
+         : id === mm.b1 ? mm.b1_pos : mm.b2_pos,
+      exp: onA ? mm.exp_a : 1 - mm.exp_a
+    });
+  });
+});
+const _wertVon = (cid) => JSON.parse(K.eval(`JSON.stringify((function(){
+  const C = _chronicleCtx(), c = CHRONICLE_BY_ID['${cid}'], out = {};
+  Object.keys(C.P).forEach(pid => { const v = c.val(C.P[pid], C);
+    out[pid] = (v == null || !isFinite(v)) ? null : v; });
+  return out;
+})())`));
+const _fenster = (cid, label, soll) => {
+  const ist = _wertVon(cid);
+  const fehler = Object.keys(ist).filter(pid => {
+    const r = _sicht[pid] || [];
+    const s = soll(r);
+    if(s == null) return ist[pid] != null;
+    return ist[pid] == null || Math.abs(ist[pid] - s) > 1e-9;
+  }).map(pid => nm(pid) + ': ' + ist[pid] + ' vs ' + soll(_sicht[pid] || []));
+  ok(fehler.length === 0, label, fehler.slice(0, 3).join(' · ')
+     || Object.keys(ist).length + ' Spieler geprueft');
+};
+const _rkQ = a => a.length ? a.filter(x => x.w).length / a.length : null;
+_fenster('lauf', '„Der Lauf" nimmt genau die letzten 20 Partien',
+  r => r.length >= 20 ? _rkQ(r.slice(-20)) : null);
+_fenster('hochform', '„Der Hoehenflug" vergleicht 10 gegen die vorherigen 10',
+  r => { if(r.length < 20) return null;
+    const d = _rkQ(r.slice(-10)) - _rkQ(r.slice(-20, -10)); return d > 0 ? d : null; });
+_fenster('torrausch', '„Der Torrausch" nimmt genau die letzten 30 Partien',
+  r => r.length >= 30 ? r.slice(-30).reduce((n, x) => n + x.gf, 0) / 30 : null);
+_fenster('densephase', '„Die dichte Phase" nimmt dieselben letzten 30 Partien',
+  r => r.length >= 30 ? -(r.slice(-30).reduce((n, x) => n + x.ga, 0) / 30) : null);
+_fenster('dauersturm', '„Der Dauerstuermer" nimmt genau die letzten 50 Partien',
+  r => r.length >= 50
+    ? r.slice(-50).filter(x => x.pos === 'atk').length / 50 : null);
+_fenster('abwehrmauer', '„Die Abwehrmauer" nimmt dieselben letzten 50 Partien',
+  r => r.length >= 50
+    ? r.slice(-50).filter(x => x.pos !== 'atk').length / 50 : null);
+// Und die beiden Haelften des Dauerstuermers ergeben zusammen genau eins.
+const _ds = _wertVon('dauersturm'), _am = _wertVon('abwehrmauer');
+const _dsSumme = Object.keys(_ds).filter(pid => _ds[pid] != null && _am[pid] != null)
+  .filter(pid => Math.abs(_ds[pid] + _am[pid] - 1) > 1e-9);
+ok(_dsSumme.length === 0, 'Sturm- und Abwehranteil des Fensters ergeben eins',
+   _dsSumme.map(nm).join(', ') || 'alle');
+
+// Die Mitspielerstaerke: 25 gegen die 25 davor, gerechnet mit der Elo VOR
+// der jeweiligen Partie [Regel 5]. Nachgerechnet wird sie aus derselben
+// Historie, aus der die App sie nimmt — eine zweite Elo-Rechnung hier waere
+// selbst der Fehler, den der Test sucht.
+const _rw = JSON.parse(K.eval(`JSON.stringify((function(){
+  const C = _chronicleCtx(), g = getGlobalSim(), vor = {};
+  (g.history || []).forEach(h => { vor[h.matchId] = h.eloBefore || {}; });
+  const roh = {};
+  matches.slice().sort((a,b) => new Date(a.created_at) - new Date(b.created_at))
+    .forEach(m => {
+      [m.a1,m.a2,m.b1,m.b2].forEach(id => {
+        if(!id) return;
+        const onA = (id === m.a1 || id === m.a2);
+        const mate = onA ? (id === m.a1 ? m.a2 : m.a1) : (id === m.b1 ? m.b2 : m.b1);
+        (roh[id] || (roh[id] = [])).push((vor[m.id] || {})[mate]);
+      });
+    });
+  const mit = a => { const w = a.filter(x => x != null && isFinite(x));
+    return w.length ? w.reduce((n,x) => n+x, 0) / w.length : null; };
+  const out = {tail:[], solo:[], n:0};
+  Object.keys(C.P).forEach(pid => {
+    const r = roh[pid] || [];
+    let soll = null;
+    if(r.length >= 50){
+      const a = mit(r.slice(-25)), b = mit(r.slice(-50, -25));
+      if(a != null && b != null) soll = a - b;
+    }
+    out.n++;
+    const t = CHRONICLE_BY_ID.tailwind.val(C.P[pid], C);
+    const s = CHRONICLE_BY_ID.solorun.val(C.P[pid], C);
+    const tSoll = (soll != null && soll > 0) ? soll : null;
+    const sSoll = (soll != null && soll < 0) ? -soll : null;
+    if((t == null) !== (tSoll == null) || (t != null && Math.abs(t - tSoll) > 1e-9))
+      out.tail.push(pid + ': ' + t + ' vs ' + tSoll);
+    if((s == null) !== (sSoll == null) || (s != null && Math.abs(s - sSoll) > 1e-9))
+      out.solo.push(pid + ': ' + s + ' vs ' + sSoll);
+  });
+  return out;
+})())`));
+ok(_rw.tail.length === 0, '„Der Rueckenwind" vergleicht 25 gegen die vorherigen 25',
+   _rw.tail.slice(0, 2).join(' · ') || _rw.n + ' Spieler geprueft');
+ok(_rw.solo.length === 0, '„Der Einzelkaempfer" nimmt dieselben beiden Fenster',
+   _rw.solo.slice(0, 2).join(' · ') || _rw.n + ' Spieler geprueft');
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ NICHTS AUS DER ZUKUNFT ═══');
+// Der Serienstand eines Gegners ist der Stand VOR dem Anpfiff, nicht die
+// Serie, die daraus spaeter geworden ist [Regel 3]. Unabhaengig nachgezaehlt.
+const _lsSoll = {};
+{
+  const run = {};
+  ordered.forEach(mm => {
+    const ids = [mm.a1, mm.a2, mm.b1, mm.b2];
+    const vorher = {};
+    ids.forEach(x => { if(x) vorher[x] = run[x] || 0; });
+    ids.forEach(id => {
+      if(!id) return;
+      const onA = (id === mm.a1 || id === mm.a2);
+      const w = (onA && mm.winner === 'A') || (!onA && mm.winner === 'B');
+      const geg = onA ? [mm.b1, mm.b2] : [mm.a1, mm.a2];
+      if(geg.some(g => g && (vorher[g] || 0) >= 3)){
+        const e = _lsSoll[id] || (_lsSoll[id] = {n:0, w:0});
+        e.n++; if(w) e.w++;
+      }
+    });
+    ids.forEach(id => { if(!id) return;
+      const onA = (id === mm.a1 || id === mm.a2);
+      const w = (onA && mm.winner === 'A') || (!onA && mm.winner === 'B');
+      run[id] = w ? (run[id] || 0) + 1 : 0; });
+  });
+}
+const _lsIst = JSON.parse(K.eval(`JSON.stringify((function(){
+  const C = _chronicleCtx(), o = {};
+  Object.keys(C.P).forEach(pid => { o[pid] = {n:C.P[pid].lsN, w:C.P[pid].lsW}; });
+  return o;
+})())`));
+const _lsFehler = Object.keys(_lsIst).filter(pid => {
+  const soll = _lsSoll[pid] || {n:0, w:0};
+  return _lsIst[pid].n !== soll.n || _lsIst[pid].w !== soll.w;
+}).map(pid => nm(pid) + ': ' + JSON.stringify(_lsIst[pid]) + ' vs ' + JSON.stringify(_lsSoll[pid]));
+ok(_lsFehler.length === 0, '„Der Laufstopper" zaehlt den Serienstand vor der Partie',
+   _lsFehler.slice(0, 3).join(' · ') || Object.keys(_lsIst).length + ' Spieler geprueft');
+
+// Jede Elo-Bedingung nimmt die Siegchance unmittelbar vor dem Anpfiff, also
+// `exp_a` aus der Partie selbst und keine spaeter gerechnete Quote [Regel 4].
+const _expSoll = {};
+ordered.forEach(mm => {
+  [mm.a1, mm.a2, mm.b1, mm.b2].forEach(id => {
+    if(!id) return;
+    const onA = (id === mm.a1 || id === mm.a2);
+    const e = onA ? mm.exp_a : 1 - mm.exp_a;
+    const w = (onA && mm.winner === 'A') || (!onA && mm.winner === 'B');
+    const r = _expSoll[id] || (_expSoll[id] = {uN:0, uW:0, fN:0, fW:0, fL:0, summe:0, g:0});
+    r.g++; r.summe += e;
+    if(e < 0.45){ r.uN++; if(w) r.uW++; }
+    if(e > 0.55){ r.fN++; if(w) r.fW++; else r.fL++; }
+  });
+});
+const _expIst = JSON.parse(K.eval(`JSON.stringify((function(){
+  const C = _chronicleCtx(), o = {};
+  Object.keys(C.P).forEach(pid => { const p = C.P[pid];
+    o[pid] = {uN:p.unterN, uW:p.unterW, fN:p.favN, fW:p.favW, fL:p.favL,
+              summe:p.expSum, g:p.games}; });
+  return o;
+})())`));
+const _expFehler = Object.keys(_expIst).filter(pid => {
+  const s = _expSoll[pid] || {};
+  const i = _expIst[pid];
+  return i.uN !== s.uN || i.uW !== s.uW || i.fN !== s.fN || i.fW !== s.fW
+      || i.fL !== s.fL || i.g !== s.g || Math.abs(i.summe - s.summe) > 1e-6;
+}).map(pid => nm(pid));
+ok(_expFehler.length === 0,
+   'Aussenseiter, Favorit und Soll kommen aus der Siegchance vor der Partie',
+   _expFehler.join(', ') || Object.keys(_expIst).length + ' Spieler geprueft');
+
+// Und eine historische Rekordlage kennt nur Partien von damals. Gemessen
+// wird die Lage an einem Schnitt gegen dieselbe Rechnung auf einem gekuerzten
+// Match-Array: kommt dasselbe heraus, ist nichts aus der Zukunft eingeflossen.
+const _histGrenze = new Date('2026-07-15T23:59:59Z').getTime();
+const _histSchnitt = K.eval(`JSON.stringify(Object.keys(
+  allChronicles(${_histGrenze}).byId).map(id => id + ':'
+    + JSON.stringify(allChronicles(${_histGrenze}).byId[id].pids.slice().sort())
+    + ':' + allChronicles(${_histGrenze}).byId[id].val.toFixed(6)).sort())`);
+const _histKurz = K.eval(`(function(){
+  const alle = matches;
+  try {
+    matches = alle.filter(m => new Date(m.created_at).getTime() <= ${_histGrenze});
+    invalidateCache();
+    const A = allChronicles().byId;
+    return JSON.stringify(Object.keys(A).map(id => id + ':'
+      + JSON.stringify(A[id].pids.slice().sort()) + ':' + A[id].val.toFixed(6)).sort());
+  } finally { matches = alle; invalidateCache(); }
+})()`);
+ok(_histSchnitt === _histKurz,
+   'eine historische Rekordlage rechnet ohne spaetere Partien',
+   _histSchnitt === _histKurz ? JSON.parse(_histSchnitt).length + ' Rekorde gleich'
+     : 'Schnitt und gekuerztes Array weichen ab');
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ DIE GEGENPAARE ═══');
+// Vierzehn Paare messen dieselbe Frage von zwei Seiten. Sie muessen dieselbe
+// Mindestbasis und denselben Zeitraum tragen: sonst waere eine Haelfte
+// leichter zu halten als die andere, und der Halter der schweren Seite
+// haette mehr getan fuer denselben Eintrag.
+const PAARE = [
+  ['atk_ace','def_ace'], ['sturmfuehrer','defchief'], ['sniper','rock'],
+  ['kaltstart','schlussball'], ['dauersturm','abwehrmauer'],
+  ['sturmtreue','wall'], ['bedrock','handwriting'], ['tailwind','solorun'],
+  ['uebersoll','untersoll'], ['catalyst','ballast'],
+  ['sovereign','favflop'], ['comeback_king','noanswer'],
+  ['unstoppable','drought'], ['fluke','bitterloss']
+];
+const _byId = {}; _rk.forEach(c => { _byId[c.id] = c; });
+const _paarFehlt = PAARE.filter(([a, b]) => !_byId[a] || !_byId[b])
+  .map(([a, b]) => a + '/' + b);
+ok(_paarFehlt.length === 0, 'jedes Gegenpaar steht im Katalog',
+   _paarFehlt.join(', ') || PAARE.length + ' Paare');
+// Die Zahl in der Mindestbasis muss auf beiden Seiten dieselbe sein. Der
+// Wortlaut darf abweichen — „20 Sturmspiele" und „20 Abwehrspiele" sind
+// dieselbe Huerde.
+const _zahlen = t => (String(t).match(/\d+/g) || []).join('/');
+// Zwei Paare sind je Seite geeicht und muessen es sein: eine Siegesserie ab
+// acht und eine Pleitenserie ab sieben sind nicht dieselbe Haeufigkeit, und
+// die 35 % des Sonntagsschusses spiegeln sich als 65 % der bittersten Pleite
+// — dasselbe Mass von der anderen Seite, nicht dieselbe Zahl.
+const GEEICHT = {'unstoppable|drought':1, 'fluke|bitterloss':1};
+const _paarMind = PAARE.filter(([a, b]) => _byId[a] && _byId[b]
+    && !GEEICHT[a + '|' + b]
+    && _zahlen(_byId[a].mind) !== _zahlen(_byId[b].mind))
+  .map(([a, b]) => a + ' „' + _byId[a].mind + '" vs ' + b + ' „' + _byId[b].mind + '"');
+ok(_paarMind.length === 0, 'jedes Gegenpaar hat dieselbe Mindestbasis',
+   _paarMind.join(' · ') || (PAARE.length - 2) + ' Paare');
+// Und die beiden geeichten spiegeln sich wirklich: 35 % gegen 65 %.
+ok(_zahlen(_byId.fluke.mind) === '35' && _zahlen(_byId.bitterloss.mind) === '65',
+   'Sonntagsschuss und bitterste Pleite spiegeln ihre Schwelle',
+   _byId.fluke.mind + ' / ' + _byId.bitterloss.mind);
+// Angriff und Abwehr werden gleich behandelt: die vier Rollenpaare tragen
+// denselben Zeitraum und denselben Grundwert.
+const ROLLENPAARE = [['atk_ace','def_ace'], ['sturmfuehrer','defchief'],
+  ['sniper','rock'], ['dauersturm','abwehrmauer'], ['sturmtreue','wall'],
+  ['bedrock','handwriting']];
+const _rollFehler = ROLLENPAARE.filter(([a, b]) =>
+    _byId[a].basis !== _byId[b].basis
+    || _zahlen(_byId[a].zeitraum) !== _zahlen(_byId[b].zeitraum))
+  .map(([a, b]) => a + '/' + b);
+ok(_rollFehler.length === 0, 'Angriff und Abwehr tragen denselben Wert und Zeitraum',
+   _rollFehler.join(', ') || ROLLENPAARE.length + ' Rollenpaare');
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ DIE GESTRICHENEN SIND WEG UND STUERZEN NICHT AB ═══');
+const WEG = ['giant_slayer','thriller','unbowed','homefield','sundaychild',
+             'strongphase','upswing','coldshower','torbilanz','striker_u'];
+const _nochDa = WEG.filter(id => _byId[id]);
+ok(_nochDa.length === 0, 'kein entfernter Rekord steht im aktiven Katalog',
+   _nochDa.join(', ') || WEG.length + ' geprueft');
+// „Die Steigerung" behaelt ihre Monatschronik und verliert nur die
+// Laufbahn-Achse: ein eingefrorener Monat traegt sie weiter.
+ok(!_byId.steigerung && K.eval(`!!SEASON_TITLE_BY_ID['steigerung']`),
+   '„Die Steigerung" verliert den Rekord und behaelt die Monatschronik');
+// Und die persistierten Karten der gestrichenen Rekorde sind abgemeldet,
+// sonst behaupten sie fuer immer einen Rekord, den es nicht mehr gibt.
+ok(K.eval(`${JSON.stringify(WEG.concat(['steigerung']))}
+     .every(id => _storyAbgemeldet('rek_' + id + '_geholt_x_1_2026-08-01'))`),
+   'jede Karte eines gestrichenen Rekords ist abgemeldet');
+// Eine alte Datenbankzeile mit einer entfernten Rekord-ID darf kein Blatt
+// zerreissen: die Definition steht nicht mehr im Katalog, der Text aber in
+// der Zeile.
+const _altBlatt = K.eval(`(function(){
+  const s = {id:'rek_giant_slayer_geholt_x_50_2026-07-01', cat:'tafel',
+    ic:'tornado', title:'Leon übernimmt „Der Gigantentöter"',
+    desc:'50 % als Außenseiter gewonnen. Vorher gehörte der Rekord Martin.',
+    when: Date.now(), prio: 60,
+    dataRef:{type:'rekord_geholt', rekordId:'giant_slayer', kammer:'koennen',
+             kammerLabel:'Können', playerIds:[players[8].id], vorher:[players[9].id],
+             wert:0.5, ev:'50 % als Außenseiter gewonnen', cond:'Beste Quote',
+             art:'leistung'}};
+  try { const h = _newsDetailMitte(s, s.dataRef); return 'ok:' + (h || '').length; }
+  catch(e){ return 'FEHLER: ' + e.message; }
+})()`);
+ok(String(_altBlatt).indexOf('ok:') === 0,
+   'eine alte Karte mit entfernter Rekord-ID oeffnet ihr Blatt ohne Fehler', _altBlatt + '');
+// Und der Rekorde-Reiter kennt sie gar nicht mehr.
+ok(K.eval(`!CHRONICLE_BY_ID['giant_slayer'] && (function(){
+     try { showChronicle('giant_slayer'); return true; } catch(e){ return false; }
+   })()`),
+   'ein Klick auf eine entfernte Rekord-ID tut nichts und wirft nichts');
+
+// ══════════════════════════════════════════════════════════════════════
+console.log('\n═══ KONSTANT SCHLECHT GEWINNT NICHTS ═══');
+// Mehrere Rekorde messen den Abstand zum EIGENEN Schnitt [§C38] — und eine
+// Reihe aus lauter Nullen hat keinen Abstand und keine Streuung. Genau dort
+// kippt so eine Formel: „nur das Gleichmass gemessen gewann, wer jeden Tag
+// gleich schlecht war". Geprueft wird mit einer erfundenen Laufbahn aus
+// sechzig Niederlagen, jede 0:10: in Koennen und Form darf sie keinen
+// Bestwert erreichen.
+//
+// In der Kammer der FUEGUNGEN darf sie es, und sie soll es koennen: „Das
+// Fundament" fragt nach der gleichmaessigsten Tordifferenz, und wer immer
+// 0:10 verliert, ist gleichmaessig. Dasselbe gilt fuer die ROLLENWERTE: „Der
+// Wandler" misst eine Aufstellung von fuenfzig zu fuenfzig, und wo jemand
+// steht, entscheidet die Auslosung. Beide zeichnen niemanden aus, sie
+// gehoeren jemandem [§C35] — deshalb wiegen sie 50 und nicht 100. Geprueft
+// wird also genau das, was 100 Punkte wert ist.
+const _nullLauf = {
+  id:'probe', games:60, wins:0, losses:60, gf:0, ga:600, gd:-600,
+  atkG:30, atkW:0, defG:30, defW:0, atkGoals:0, defConceded:600,
+  atkPerf:-15, defPerf:-15, expSum:30,
+  winStreak:0, winSpan:'', lossStreak:60, lossSpan:'',
+  debacle:60, nail:0, bitter:0, close:0, closeW:0, blowW:0, blowL:60, upsets:0,
+  days:20, maxDay:4, maxDayLabel:'', perfDays:0, bigDays:10,
+  seasons:2, firstDay:'', firstLabel:'', lastDay:'',
+  peak:100, potw:0, potd:0, weeks:10, founder:false,
+  afterLoss:0, afterLossOpp:59, dayElo:-50, dayEloLabel:'',
+  alt:0, altSpan:'', flukeExp:null, flukeLabel:'', bestMonth:null, fall:null,
+  hartTag:null, hartTagLabel:'', pechExp:null, pechLabel:'',
+  gleichTag:0, gleichTore:0, gleichLabel:'', wiederTag:0, wiederErg:'',
+  wiederLabel:'', beidesTag:0, beidesLabel:'',
+  l30N:30, l30Ga:300, l30Gf:0, l20N:20, l20W:0, r50N:50, r50Atk:25,
+  hfDelta:0, hfNeu:0, hfAlt:0, sbDelta:0, sbDrin:0, sbRaus:0, sbN:10,
+  ksDelta:0, ksDrin:0, ksRaus:0, ksN:10, rwDelta:0, rwNeu:100, rwAlt:100,
+  taN:20, taOk:0, agQ:0, agN:3, mtN:12, mtAvg:0, mtMad:0,
+  ahN:20, ahQ:0, ahRest:0, ahDelta:0, unterN:30, unterW:0,
+  favN:20, favKlar:0, favW:0, favL:20, gjN:4, gjOk:0, lsN:10, lsW:0,
+  swN:59, swOk:0, ausgN:40, ausgSd:0, ausgMit:-10, atkSd:0, atkMit:-10,
+  defSd:0, defMit:-10, angstQ:0, angstGeg:'', angstN:20, angstW:0,
+  einflussD:-0.3, einflussN:3
+};
+const _nullTreffer = JSON.parse(K.eval(`JSON.stringify((function(){
+  const C = _chronicleCtx(), A = allChronicles().byId;
+  const probe = ${JSON.stringify(_nullLauf)};
+  const out = {gewinnt:[], dabei:[]};
+  CHRONICLES.forEach(c => {
+    if(c.kind === 'shame' || c.kind === 'fuegung') return;
+    if(c.basis !== 100) return;
+    let v = null;
+    try { v = c.val(probe, C); } catch(e){ return; }
+    if(v == null || !isFinite(v)) return;
+    out.dabei.push(c.id);
+    const best = A[c.id] ? A[c.id].val : -Infinity;
+    if(v >= best - 1e-9) out.gewinnt.push(c.id + ' ' + v + ' >= ' + best);
+  });
+  return out;
+})())`));
+ok(_nullTreffer.gewinnt.length === 0,
+   'eine Laufbahn aus lauter Niederlagen haelt keinen Koennens- oder Formrekord',
+   _nullTreffer.gewinnt.join(' · ')
+   || 'in ' + _nullTreffer.dabei.length + ' Rennen dabei, keinen gewonnen');
+
+// Und kein Halter traegt mehr als ein Viertel der ganzen Tafel — dieselbe
+// Grenze wie in der Fuegungs-Kammer, nur ueber alle 65.
+const _verteilung = JSON.parse(K.eval(`JSON.stringify((function(){
+  const A = allChronicles().byId, n = {};
+  CHRONICLES.forEach(c => ((A[c.id] || {pids:[]}).pids || [])
+    .forEach(p => { n[p] = (n[p] || 0) + 1; }));
+  const summe = Object.keys(n).reduce((s, k) => s + n[k], 0);
+  return {n, summe, feld:Object.keys(_chronicleCtx().P).length};
+})())`));
+const _groesster = Math.max.apply(null, Object.values(_verteilung.n));
+ok(_groesster <= _verteilung.summe / 4,
+   'kein Halter traegt mehr als ein Viertel aller 65 Haltungen',
+   _groesster + ' von ' + _verteilung.summe);
+// Und die Tafel liegt nicht bei den Vielspielern: der Spieler mit den
+// meisten Partien haelt nicht die meisten Rekorde.
+const _meistPartien = JSON.parse(K.eval(`JSON.stringify((function(){
+  const P = _chronicleCtx().P;
+  return Object.keys(P).sort((a, b) => P[b].games - P[a].games)[0];
+})())`));
+const _meistRekorde = Object.keys(_verteilung.n)
+  .sort((a, b) => _verteilung.n[b] - _verteilung.n[a])[0];
+ok(_meistPartien !== _meistRekorde,
+   'wer am meisten spielt, haelt nicht die meisten Rekorde',
+   nm(_meistPartien) + ' spielt am meisten, ' + nm(_meistRekorde)
+   + ' haelt am meisten');
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

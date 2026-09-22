@@ -193,14 +193,25 @@ function posPerfFrom(id, matchSubset){
 // die Positions-Rangliste und der Liga-Rekord darauf [§13.1]. Zwei getrennte
 // Rechnungen über dieselbe Frage driften auseinander, und dann stünde in der
 // Chronik ein anderer Bester als in der Liste.
-function posWert(pos, g, w, goalsAvg, perfAvg){
+//
+// ZWEI Verwendungen, EINE Formel, ein Unterschied: die Rangliste wiegt die
+// ERFAHRUNG mit, der Liga-Rekord darf das nicht. Eine Mindestzahl entscheidet
+// dort nur über die Teilnahme; wer sie erfüllt hat, soll seinen Wert nicht
+// mehr durch weitere Partien steigern können — sonst gehört der Rekord wieder
+// dem Vielspieler [§C35]. `posLeistung` ist deshalb der gemeinsame Kern, und
+// `posWert` ist derselbe Kern mal Erfahrung. Zwei getrennte Formeln nebeneinander
+// wären die Doppelung, die diese Stelle gerade verhindert [§C27].
+function posLeistung(pos, g, w, goalsAvg, perfAvg){
   if(!g) return 0;
-  const expWeight = 1 - Math.exp(-g/5);
   const perfBonus = (perfAvg || 0) * 0.25;
   const roleBonus = pos === 'atk'
     ? Math.max(0, Math.min(1, goalsAvg/10)) * 0.2
     : Math.max(0, Math.min(1, (10-goalsAvg)/10)) * 0.2;
-  return (w/g + perfBonus + roleBonus) * expWeight;
+  return w/g + perfBonus + roleBonus;
+}
+function posWert(pos, g, w, goalsAvg, perfAvg){
+  if(!g) return 0;
+  return posLeistung(pos, g, w, goalsAvg, perfAvg) * (1 - Math.exp(-g/5));
 }
 
 // Ein gemeinsamer Positionswert fuer Profil, Chronik und alle Ableitungen.

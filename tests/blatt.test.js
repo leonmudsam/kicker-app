@@ -431,7 +431,7 @@ const ok = (c, msg, det) => {
 
   console.log('\n═══ DER REKORDE-REITER ═══');
   // Gemessen statt behauptet — und zwar am gerenderten Reiter mit den
-  // echten Partien: vier Kammern, eine Besitzleiste, die dieselben
+  // echten Partien: fuenf Kammern, eine Besitzleiste, die dieselben
   // Haltungen zählt wie die Karten, und ein Filter, der genau eine Kammer
   // stehen lässt.
   const CHRONICLES_N = await page.evaluate(() => window.__k.eval('CHRONICLES.length'));
@@ -441,10 +441,34 @@ const ok = (c, msg, det) => {
       karten: document.querySelectorAll('#app .rek').length,
       kammern: [...document.querySelectorAll('#app .rek-g-n')].map(e => e.textContent.trim()),
       saeulen: [...document.querySelectorAll('#app .rek-sl .z')].map(e => +e.textContent),
-      offen: [...document.querySelectorAll('#app .rek.offen')].length
+      offen: [...document.querySelectorAll('#app .rek.offen')].length,
+      // Die Chips mit ihrer Zahl. „Alle" steht zuerst und nennt den ganzen
+      // Katalog; ohne die Zahlen war nicht zu sehen, ob eine Kammer
+      // ueberhaupt gefuellt ist, und wieviele Rekorde es gibt.
+      chips: [...document.querySelectorAll('#app .rek-kammern button')].map(b => ({
+        k: b.dataset.rekkammer,
+        n: +(b.querySelector('.n') || {textContent:''}).textContent })),
+      // Und jede Kammer muss anklickbar sein: eine Leiste, die auf 430
+      // Pixeln nicht zu erreichen ist, versteckt ihre Rekorde.
+      leiste: (() => { const e = document.querySelector('#app .rek-kammern');
+        return e ? {scroll: e.scrollWidth, sicht: e.clientWidth} : null; })()
     };
   });
-  ok(rek.kammern.length === 4, 'der Reiter zeigt vier Kammern', rek.kammern.join(' · '));
+  ok(rek.kammern.length === 5, 'der Reiter zeigt fuenf Kammern', rek.kammern.join(' · '));
+  // Jeder Chip nennt seine Zahl, und „Alle" nennt den ganzen Katalog.
+  const chipSoll = await page.evaluate(() => window.__k.eval(
+    `(function(){ const z = {}; CHRONICLES.forEach(c => z[c.kind] = (z[c.kind]||0)+1);
+       return z; })()`));
+  const chipFehler = rek.chips.filter(c => c.k
+    ? c.n !== chipSoll[c.k] : c.n !== CHRONICLES_N);
+  ok(rek.chips.length === 6 && chipFehler.length === 0,
+     'jeder Kammer-Chip nennt seine Zahl, „Alle" den ganzen Katalog',
+     rek.chips.map(c => (c.k || 'alle') + ':' + c.n).join(' · '));
+  // Die Leiste ist erreichbar: entweder passt sie, oder sie scrollt.
+  ok(rek.leiste && (rek.leiste.scroll <= rek.leiste.sicht + 1
+      || rek.leiste.scroll > rek.leiste.sicht),
+     'die Kammerleiste ist auf dem Telefon vollstaendig erreichbar',
+     JSON.stringify(rek.leiste));
   ok(rek.karten === CHRONICLES_N, 'jeder Rekord des Katalogs hat eine Karte',
      rek.karten + ' von ' + CHRONICLES_N);
   // Die Besitzleiste zählt dieselben Haltungen, die die Karten zeigen — und
@@ -489,6 +513,29 @@ const ok = (c, msg, det) => {
   });
   ok(gefiltert.n === 1 && gefiltert.nurFuegung,
      'der Kammerfilter zeigt genau eine Kammer', JSON.stringify(gefiltert));
+  // Und jede Kammer zeigt genau ihre Zahl, „Alle" den ganzen Katalog. Ein
+  // Rekord, den ein Filter verschluckt, ist unsichtbar — und genau das
+  // faellt sonst niemandem auf.
+  const jeKammer = await page.evaluate(() => {
+    const K = s => window.__k.eval(s);
+    const soll = K(`(function(){ const z = {}; CHRONICLES.forEach(c =>
+      z[c.kind] = (z[c.kind]||0)+1); return z; })()`);
+    const out = {};
+    Object.keys(soll).concat(['']).forEach(k => {
+      K('rekKammer = ' + JSON.stringify(k) + '; render()');
+      out[k || 'alle'] = {ist: document.querySelectorAll('#app .rek').length,
+                          soll: k ? soll[k] : K('CHRONICLES.length')};
+    });
+    K('rekKammer = ""; render()');
+    return out;
+  });
+  const kammerFehler = Object.keys(jeKammer)
+    .filter(k => jeKammer[k].ist !== jeKammer[k].soll)
+    .map(k => k + ': ' + jeKammer[k].ist + ' statt ' + jeKammer[k].soll);
+  ok(kammerFehler.length === 0,
+     'jede Kammer zeigt ihre Zahl und „Alle" den ganzen Katalog',
+     kammerFehler.join(' · ')
+     || Object.keys(jeKammer).map(k => k + ':' + jeKammer[k].ist).join(' · '));
 
   // ── Was negativ ist, traegt Rot und zaehlt nicht ──────────────────
   // „Die bitterste Pleite" stand im Profil golden zwischen den Titeln und
