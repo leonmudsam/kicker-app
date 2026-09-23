@@ -492,26 +492,36 @@ function _buildStories(){
         const fuehrt = rang[0], zweiter = rang[1] || null;
         const abstand = zweiter ? fuehrt.elo - zweiter.elo : 0;
         const m = letzter.m;
-        const sieger = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
-        const stand = m.winner === 'A' ? m.score_a + ':' + m.score_b
-                                       : m.score_b + ':' + m.score_a;
-        const siegerN = _namenListe(sieger.map(nameOf));
-        const gewinnen = sieger.length > 1 ? 'gewinnen' : 'gewinnt';
-        // Die Schlagzeile nennt den Sieger der entscheidenden Partie und den
-        // Tabellenfuehrer, der am Ende des Tages oben steht. Stand einmal der
-        // Name des finalen Ersten in der Schlagzeile und im Satz darunter ein
-        // frueherer Wechsel, widersprach die Karte sich selbst.
-        const traegt = sieger.indexOf(fuehrt.pid) >= 0;
-        const title = traegt
-          ? `${siegerN} ${gewinnen} ${stand}. ${nameOf(fuehrt.pid)} führt die Tabelle`
-          : `${nameOf(fuehrt.pid)} führt die Tabelle`;
+        // ── Die Schlagzeile sagt, was passiert ist ──────────────────
+        // Sie trug das Ergebnis der entscheidenden Partie („Stefan und
+        // Julian gewinnen 10:7. Martin fuehrt die Tabelle"), und genau
+        // dieses Ergebnis steht als Band ueber dem Text [§C33]: zwei Saetze
+        // in einer Ueberschrift, und der erste davon eine Zeile hoeher noch
+        // einmal als Bild. Uebrig bleibt der Vorgang. Ob die Spitze neu
+        // uebernommen oder am selben Tag zurueckgeholt wurde, sagt der
+        // erste Wechsel des Tages.
+        // ── Der Vorgaenger ist der DIREKTE Vorgaenger ───────────────
+        // Genannt war, wer am Morgen oben stand. Wechselte die Spitze an
+        // einem Tag von A zu B und zurueck zu A, war A damit sein eigener
+        // Vorgaenger: das Blatt stellte denselben Spieler als „neuer #1"
+        // und „vorher #1" gegenueber, und der Breaking-Nachsatz schrieb „A
+        // verdraengt A". Der Vorgaenger des LETZTEN Wechsels ist nie der
+        // neue Erste — ein Wechsel hat zwei verschiedene Seiten.
+        const vorher = letzter.vor;
+        const zurueck = fuehrt.pid === wechsel[0].vor;
+        const title = zurueck
+          ? `${nameOf(fuehrt.pid)} holt die Tabellenspitze zurück`
+          : `${nameOf(fuehrt.pid)} übernimmt die Tabellenspitze`;
         const malWort = ['', 'einmal', 'zweimal', 'dreimal', 'viermal', 'fünfmal'];
         const wieOft = malWort[wechsel.length] || (wechsel.length + '-mal');
-        const desc = `${siegerN} ${gewinnen} ${stand} gegen `
-          + `${_namenListe((m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2]).map(nameOf))}. `
-          + `${nameOf(fuehrt.pid)} steht mit ${fuehrt.elo} Elo oben`
-          + (zweiter ? `, ${abstand} vor ${nameOf(zweiter.pid)}` : '')
-          + `. Die Spitze wechselte an diesem Tag ${wieOft}.`;
+        // Der Satz nennt den Stand, den Vorsprung und den Vorgaenger — und
+        // nicht mehr die Partie, die das Band darueber zeigt.
+        const desc = [
+          `${nameOf(fuehrt.pid)} steht mit ${fuehrt.elo} Elo oben`
+            + (zweiter ? `, ${abstand} vor ${nameOf(zweiter.pid)}` : '') + '.',
+          `Vorher stand dort ${nameOf(vorher)}.`,
+          wechsel.length > 1 ? `Die Spitze wechselte an diesem Tag ${wieOft}.` : ''
+        ].filter(Boolean).join(' ');
         const ereignisse = wechsel.map(w => _storyEreignis({
           type:'lead_change', occurredAt:new Date(w.ts).toISOString(), matchId:w.m.id,
           actorIds:[w.nach, w.vor], subjectKey:'rang1',
@@ -533,10 +543,11 @@ function _buildStories(){
           when: new Date(letzter.ts),
           prio: STORY_PRIO.lead_change,
           dataRef: {type:'lead_change', sid,
-                    newLeader:fuehrt.pid, prevLeader:wechsel[0].vor,
+                    newLeader:fuehrt.pid, prevLeader:vorher,
                     matchId:m.id, dayKey:tg.tag,
                     elo:fuehrt.elo, gap:abstand, wechsel:wechsel.length,
-                    playerIds:[fuehrt.pid, wechsel[0].vor],
+                    zurueck,
+                    playerIds:[fuehrt.pid, vorher],
                     causalKey:_storyGruppeKey('leader', tg.tag),
                     events:ereignisse}
         });
