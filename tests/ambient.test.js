@@ -1785,8 +1785,13 @@ ok(_memo.treffer === 5, 'der Memo der Konsolidierung greift', _memo.treffer + ' 
 // haelt fest, WAS abgemeldet gehoert, und faellt, wenn eines wieder von der
 // Abmeldung verschwindet. `elo_swing_week_` fehlte zuerst, weil sein Typ
 // (`elo_swing`) noch gebildet wird — die Karte stand weiter im Feed.
+// `lead_change_` kam dazu: es gab eine Karte je Wechsel, heute ist es EINE
+// Karte je Tag (`lead_day_`). Beide standen in derselben Minute im Feed und
+// nannten zwei verschiedene Vorspruenge. `elo_record_` ebenso — der Bestwert
+// steht als „Der hoechste Gipfel" in der Ewigen Tafel.
 const _historisch = ['upset_match_', 'thriller_', 'biggest_blowout_', 'potw_',
-                     'team_woche_', 'anniversary_', 'elo_swing_week_'];
+                     'team_woche_', 'anniversary_', 'elo_swing_week_',
+                     'lead_change_', 'elo_record_'];
 const _fehlend = JSON.parse(K.eval(`JSON.stringify(${JSON.stringify(_historisch)}
   .filter(p => !STORY_ABGEMELDET.includes(p)))`));
 ok(_fehlend.length === 0, 'jedes einmal gebildete, tote Praefix ist abgemeldet',
@@ -3581,6 +3586,105 @@ ok(/\d/.test(_brk.gleich.text) || /[Zz]wei|[Dd]rei|[Vv]ier/.test(_brk.gleich.tex
 ok(_brk.fremd.sammel === 0 && _brk.fremd.karten === 2,
    'zwei Breaking-Meldungen aus verschiedenen Partien bleiben zwei Karten',
    _brk.fremd.karten + ' Karten');
+// ── Was eine Auszeichnung erzaehlt, erzaehlt das Ergebnis nicht ────
+//    Die Regel stand nur im Generator, und damit galt sie nur fuer neue
+//    Karten. Gemessen am 15.09. lag „Maxi und Henry gewinnen ohne Gegentor"
+//    aus einem aelteren Lauf in der Datenbank — der Generator bildet diese
+//    ID nicht mehr, also konnte sie auch niemand umschreiben, und neben der
+//    Breaking-Karte mit dem Band 10:0 stand eine zweite mit demselben Band.
+const _gedeckt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
+  const m = _newsTagMs(tage[tage.length - 1])[0];
+  const erg = () => ({id:'match_result_zu_null_' + m.id, cat:'highlight', ic:'hundred',
+    when:new Date(mts(m)), prio:69,
+    title:'Zwei gewinnen ohne Gegentor', desc:'Ein makelloses 10:0.',
+    dataRef:{type:'match_result', resultKind:'zu_null', matchId:m.id,
+             playerIds:[players[0].id, players[1].id]}});
+  // Selten, nicht legendaer: eine legendaere Auszeichnung ist Breaking und
+  // wuerde das Ergebnis in ihr Buendel ziehen — dann waere die Zusicherung
+  // aus dem falschen Grund gruen.
+  const bdg = id => ({id:'badge_' + id + '_' + m.id, cat:'badge', ic:'medal',
+    when:new Date(mts(m)), prio:80,
+    title:'Eine Auszeichnung', desc:'Zehn zu null.',
+    dataRef:{type:'badge_unlocked', badgeId:id, rarity:'rare', matchId:m.id,
+             playerIds:[players[0].id]}});
+  const zaehl = l => { _cache._consolFrom = null;
+    return _consolidateStories(l).filter(x => (x.dataRef||{}).type === 'match_result').length; };
+  return {mitBadge: zaehl([bdg('perfect_win'), erg()]),
+          fremdBadge: zaehl([bdg('wall_badge'), erg()]),
+          allein: zaehl([erg()])};
+})())`));
+ok(_gedeckt.mitBadge === 0,
+   'ein gespeichertes Ergebnis faellt, wenn eine Auszeichnung derselben Partie es erzaehlt',
+   _gedeckt.mitBadge + ' Karten');
+ok(_gedeckt.fremdBadge === 1 && _gedeckt.allein === 1,
+   'und es bleibt, wenn keine solche Auszeichnung im Stapel liegt',
+   _gedeckt.fremdBadge + ' / ' + _gedeckt.allein);
+// ── Und die uebrigen Meldungen derselben Partie reisen mit ─────────
+//    Gemessen am 21.09. standen „Martin fuehrt die Tabelle" (Breaking,
+//    Band 10:7) und „Stefan und Julian stuerzen die Favoriten" (Band 10:7)
+//    untereinander: zwei Fakten, ein Moment, zweimal dasselbe Band.
+const _brkMit = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
+  const m = _newsTagMs(tage[tage.length - 1])[0];
+  const spitze = {id:'lead_day_x', cat:'highlight', ic:'kingClass',
+    when:new Date(mts(m)), prio:93,
+    title:players[0].name + ' übernimmt die Tabellenspitze',
+    desc:'Steht mit 216 Elo oben, 28 vor dem Zweiten.',
+    dataRef:{type:'lead_change', newLeader:players[0].id, prevLeader:players[1].id,
+             matchId:m.id, elo:216, gap:28, wechsel:1,
+             playerIds:[players[0].id, players[1].id]}};
+  const erg = {id:'match_result_upset_' + m.id, cat:'highlight', ic:'giantSlayer',
+    when:new Date(mts(m)), prio:67,
+    title:'Zwei stürzen die Favoriten', desc:'Nur 18 % Siegchance vor dem Anstoß.',
+    dataRef:{type:'match_result', resultKind:'upset', matchId:m.id,
+             playerIds:[players[2].id, players[3].id]}};
+  // Eine seltene Auszeichnung reist nicht mit: sie ist der Grund, warum
+  // jemand die App oeffnet, und steht nicht als Zeile unter einer fremden
+  // Schlagzeile. Nerves of Steel deckt den Krimi, nicht den Upset.
+  const selten = {id:'badge_rare_x', cat:'badge', ic:'medal',
+    when:new Date(mts(m)), prio:70,
+    title:'Eine seltene Auszeichnung', desc:'Drei Zittersiege in Folge.',
+    dataRef:{type:'badge_unlocked', badgeId:'nerves_of_steel', rarity:'rare',
+             matchId:m.id, playerIds:[players[4].id]}};
+  // Und eine negative Meldung auch nicht: „Absoluter Verlierer" haengt am
+  // selben 10:0 wie „Absoluter Sieger" und waere eine Zeile auf der Karte,
+  // die die Sieger feiert. Rot ist die Richtung, und eine Karte hat eine.
+  const schlecht = {id:'badge_neg_x', cat:'badge', ic:'dizzy',
+    when:new Date(mts(m)), prio:40,
+    title:'Absoluter Verlierer', desc:'0:10 Niederlage.',
+    dataRef:{type:'badge_unlocked', badgeId:'perfect_loss', rarity:'negative',
+             matchId:m.id, playerIds:[players[5].id]}};
+  const lauf = l => { _cache._consolFrom = null; return _consolidateStories(l); };
+  const a = lauf([spitze, erg]);
+  const sa = a.filter(x => (x.dataRef||{}).type === 'sammel');
+  const b = lauf([spitze, erg, selten]);
+  const c = lauf([spitze, erg, schlecht]);
+  return {negKarten:c.length, negEinzeln:c.filter(x => x.id === 'badge_neg_x').length,
+          karten:a.length, sammel:sa.length,
+          titel:sa.length ? sa[0].title : '',
+          zeilen:sa.length ? (sa[0].dataRef.teile || []).length : 0,
+          band:sa.length ? (sa[0].dataRef.matchId || null) : null,
+          brk:sa.length ? !!_isBreaking(sa[0]) : false,
+          mid:m.id,
+          mitSelten:b.length,
+          seltenEinzeln:b.filter(x => x.id === 'badge_rare_x').length};
+})())`));
+ok(_brkMit.karten === 1 && _brkMit.sammel === 1 && _brkMit.zeilen === 2,
+   'eine Breaking-Karte nimmt die uebrigen Meldungen ihrer Partie mit',
+   _brkMit.karten + ' Karten, ' + _brkMit.zeilen + ' Zeilen');
+ok(_brkMit.brk === true && _brkMit.band === _brkMit.mid,
+   'sie bleibt Breaking und zeigt das Band ihrer Partie',
+   String(_brkMit.brk) + ' / ' + String(_brkMit.band === _brkMit.mid));
+ok(/Tabellenspitze/.test(_brkMit.titel) && /Favoritensturz/.test(_brkMit.titel),
+   'ihre Schlagzeile nennt beide Anlaesse, und das Ergebnis mit seiner Sorte',
+   _brkMit.titel);
+ok(_brkMit.mitSelten === 2 && _brkMit.seltenEinzeln === 1,
+   'eine seltene Auszeichnung derselben Partie bleibt trotzdem eine eigene Karte',
+   _brkMit.mitSelten + ' Karten');
+ok(_brkMit.negKarten === 2 && _brkMit.negEinzeln === 1,
+   'und eine negative Meldung steht nicht auf der Karte, die die Sieger feiert',
+   _brkMit.negKarten + ' Karten');
 // ── Eine Serie je Spieler und Tag, auch im Feed ────────────────────
 //    Der Generator bildet nur noch die hoechste Marke, aber persistierte
 //    Zeilen aus aelteren Laeufen tragen die kuerzeren weiter. Gemessen stand
@@ -4248,14 +4352,14 @@ ok(_form.durch === 1, 'also bleibt die Karte im Feed', String(_form.durch));
 
 // ── Breaking scheitert auch nicht an der gleichen Schlagzeile ────────
 // Die Tabellenspitze wechselte am 14.09. zu Martin und am 15.09. zurueck zu
-// Maxi. Beide Karten heissen „Neuer Spitzenreiter: Maxi", also fiel die vom
-// 14. weg: der Tag, an dem er sie uebernahm, hatte danach keine
+// Maxi. Beide Karten heissen „Maxi uebernimmt die Tabellenspitze", also fiel
+// die vom 14. weg: der Tag, an dem er sie uebernahm, hatte danach keine
 // Breaking-Karte mehr. Zwei Wechsel sind zwei Ereignisse [§C33].
 const _brkTitel = JSON.parse(K.eval(`JSON.stringify((function(){
   const t0 = mts(matches[matches.length - 1]);
   const bau = (n, tag) => ({
-    id:'lead_change_' + n, cat:'highlight', ic:'crown',
-    title:'Neuer Spitzenreiter: Maxi',
+    id:'lead_day_' + n, cat:'highlight', ic:'crown',
+    title:'Maxi übernimmt die Tabellenspitze',
     desc:'Die Spitze wechselt, Nummer ' + n + '.',
     when:new Date(t0 - tag * 864e5).toISOString(), prio:93,
     dataRef:{type:'lead_change', pid:players[10].id, playerIds:[players[10].id]}
@@ -4322,6 +4426,15 @@ const _fw = JSON.parse(K.eval(`JSON.stringify((function(){
     created_at:new Date(basis + (i + 1) * 300000).toISOString(),
     deltas:Object.assign({}, d)
   });
+  // Und dieselbe Partie mit umgekehrten Vorzeichen: damit holt der alte
+  // Erste die Spitze am selben Tag zurueck, und der Tag traegt zwei Wechsel.
+  const zurueckPartie = i => ({
+    id:'fz' + i, a1:erster, a2:rest[1], b1:zweiter, b2:rest[0],
+    a1_pos:'atk', a2_pos:'def', b1_pos:'atk', b2_pos:'def',
+    score_a:10, score_b:2, winner:'A', exp_a:0.5,
+    created_at:new Date(basis + (i + 1) * 300000).toISOString(),
+    deltas:{[erster]:12, [rest[1]]:12, [zweiter]:-12, [rest[0]]:-12}
+  });
   // Die Karte entsteht nur, wenn die LETZTE Partie den Wechsel ausgeloest
   // hat: sie vergleicht den Stand von jetzt mit dem Rang vor diesem Spiel.
   // Angehaengt wird deshalb eine Partie nach der anderen, bis es kippt —
@@ -4337,9 +4450,46 @@ const _fw = JSON.parse(K.eval(`JSON.stringify((function(){
     fw = l.filter(x => (x.dataRef || {}).type === 'lead_change');
     if(fw.length) break;
   }
-  const erg = { n:fw.length, texte:fw.map(x => x.desc),
+  // Phase zwei: weiter anhaengen, bis der alte Erste wieder oben steht.
+  let fz = [];
+  const dazu2 = dazu.slice();
+  for(let i = dazu.length; i < 90; i++){
+    dazu2.push(zurueckPartie(i));
+    matches = alle.concat(dazu2);
+    invalidateCache();
+    let l2 = [];
+    try { l2 = _buildStories(); } catch(e){ l2 = []; }
+    const k = l2.filter(x => (x.dataRef || {}).type === 'lead_change');
+    if(k.length && k[0].dataRef.newLeader === erster){ fz = k; break; }
+  }
+  const erg = { n:fw.length, texte:fw.map(x => x.desc), titel:fw.map(x => x.title),
+    // Zwei Wechsel an einem Tag: die Karte nennt den DIREKTEN Vorgaenger
+    // (nie sich selbst), sagt, dass die Spitze zurueckgeholt wurde, und
+    // zaehlt die Wechsel.
+    zw: fz.length ? {
+      n: fz.length,
+      titel: fz[0].title,
+      text: fz[0].desc,
+      held: _breakingHeroText(fz[0]),
+      wechsel: fz[0].dataRef.wechsel,
+      eigenerVor: fz[0].dataRef.prevLeader === fz[0].dataRef.newLeader,
+      zurueck: fz[0].dataRef.zurueck === true
+    } : null,
     ohneZahl: fw.filter(x => !/\\d/.test(String(x.desc))).map(x => x.desc),
     floskel:  fw.filter(x => /nach dem letzten Spiel/.test(String(x.desc))).length,
+    // Das Ergebnis der entscheidenden Partie steht als Band ueber dem Text.
+    // Es stand zusaetzlich in der Schlagzeile UND im ersten Satz: „Stefan
+    // und Julian gewinnen 10:7. Martin fuehrt die Tabelle", und darunter
+    // dasselbe noch einmal.
+    standImTitel: fw.filter(x => /\\d+:\\d+/.test(String(x.title))).map(x => x.title),
+    standImText:  fw.filter(x => /\\d+:\\d+/.test(String(x.desc))).map(x => x.desc),
+    // Ein Wechsel hat zwei verschiedene Seiten. Genannt war, wer am Morgen
+    // oben stand — bei A → B → A war A damit sein eigener Vorgaenger.
+    eigenerVor: fw.filter(x => x.dataRef.prevLeader === x.dataRef.newLeader).length,
+    vorImText:  fw.filter(x => String(x.desc).indexOf('Vorher stand dort') < 0).length,
+    held:       fw.map(x => _breakingHeroText(x)),
+    heldOhneZahl: fw.filter(x => !/\\d/.test(String(_breakingHeroText(x)))).length,
+    heldEtikett:  fw.filter(x => /^[A-ZÄÖÜ][^.!?]*:/.test(String(_breakingHeroText(x)))).length,
     neuer:    fw.length ? (fw[0].dataRef.newLeader === zweiter) : false };
   matches = alle;
   invalidateCache();
@@ -4351,6 +4501,27 @@ ok(_fw.ohneZahl.length === 0, 'die Karte nennt den Elo-Stand der Spitze',
    _fw.ohneZahl[0] || (_fw.texte[0] || '').slice(0, 90));
 ok(_fw.floskel === 0, 'statt „nach dem letzten Spiel" ohne jede Zahl',
    String(_fw.floskel));
+ok(_fw.standImTitel.length === 0 && _fw.standImText.length === 0,
+   'und wiederholt nicht das Ergebnis, das ihr Band schon zeigt',
+   (_fw.standImTitel[0] || _fw.standImText[0] || 'keins'));
+ok(_fw.eigenerVor === 0 && _fw.vorImText === 0,
+   'der Vorgaenger steht im Satz',
+   _fw.eigenerVor + ' / ' + _fw.vorImText);
+ok(_fw.zw && _fw.zw.n === 1 && _fw.zw.wechsel === 2,
+   'zwei Wechsel an einem Tag ergeben EINE Karte mit beiden',
+   _fw.zw ? (_fw.zw.n + ' Karten, ' + _fw.zw.wechsel + ' Wechsel') : 'kein Rueckwechsel');
+ok(_fw.zw && _fw.zw.eigenerVor === false,
+   'und ihr Vorgaenger ist nie der neue Erste selbst',
+   String(_fw.zw && _fw.zw.eigenerVor));
+ok(_fw.zw && _fw.zw.zurueck === true && /zurück/.test(_fw.zw.titel),
+   'die Schlagzeile sagt, dass die Spitze zurueckgeholt wurde',
+   (_fw.zw || {}).titel);
+ok(_fw.zw && /zweimal/.test(_fw.zw.text) && /zurück/.test(_fw.zw.held),
+   'Satz und Breaking-Nachsatz sagen es auch',
+   (_fw.zw || {}).text + ' | ' + (_fw.zw || {}).held);
+ok(_fw.heldOhneZahl === 0 && _fw.heldEtikett === 0,
+   'der Breaking-Nachsatz nennt eine Zahl und kein Etikett mit Doppelpunkt',
+   (_fw.held[0] || '').slice(0, 110));
 
 ok(_worte.ergebnisFalsch.length === 0,
    'das Ergebnis im Text gehoert dem Sieger',

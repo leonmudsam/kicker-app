@@ -218,6 +218,22 @@ function _liveStreakForm(){
 const STORY_ABGEMELDET = [
   'upset_match_', 'thriller_', 'biggest_blowout_', 'potw_', 'team_woche_',
   'anniversary_', 'elo_swing_week_',
+  // ── Der Spitzenwechsel hiess einmal anders ───────────────────────
+  // Es gab eine Karte je Wechsel (`lead_change_<Saison>_<Partie>`), und der
+  // Vergleich lief nur ueber die letzte Partie. Heute ist es EINE Karte je
+  // Tag mit dem Endstand (`lead_day_<Saison>_<Tag>`). Die alten Zeilen
+  // liegen persistiert daneben und erzaehlen dasselbe ein zweites Mal:
+  // gemessen am 21.09. stand „Neuer Spitzenreiter: Martin · 11 vor Maxi"
+  // in derselben Minute wie „Martin fuehrt die Tabelle · 28 vor Maxi" —
+  // zwei Karten, ein Ereignis, und zwei verschiedene Zahlen, weil die alte
+  // ihren Vorsprung eingefroren traegt. Umschreiben kann sie niemand, den
+  // Praefix bildet der Generator nicht mehr.
+  'lead_change_',
+  // Der Elo-Bestwert steht als „Der hoechste Gipfel" in der Ewigen Tafel,
+  // und der Generator bildet die Karte deshalb nicht mehr. Die persistierte
+  // Zeile blieb: dieselbe Bestmarke, zweimal gemeldet. Ihr Breaking war ihr
+  // schon genommen [§C33] — die Doppelung damit nicht.
+  'elo_record_',
   // Elf Liga-Rekorde sind aus dem Katalog gefallen. Ihre Karten liegen
   // persistiert in der Datenbank und behaupten einen Rekord, den es nicht
   // mehr gibt: „Leon uebernimmt ‚Der Gigantentoeter'" stand im Feed, und im
@@ -380,6 +396,37 @@ function _consolidateStories(list){
       });
     });
   }
+  // ── Was eine Auszeichnung erzaehlt, erzaehlt das Ergebnis nicht ──
+  // Der Generator laesst die Ergebnis-Karte weg, wenn eine Auszeichnung aus
+  // genau dieser Partie denselben Fakt schon traegt: „Absoluter Sieger" IST
+  // das 10:0. Die Regel stand nur dort, und damit galt sie nur fuer neue
+  // Karten. Gemessen am 15.09. lag „Maxi und Henry gewinnen ohne Gegentor"
+  // aus einem aelteren Lauf in der Datenbank, und weil der Generator diese
+  // ID nicht mehr bildet, konnte sie auch niemand umschreiben: neben der
+  // Breaking-Karte mit dem Band 10:0 stand eine zweite Karte mit demselben
+  // Band, denselben vier Wappen und demselben Stand.
+  //
+  // Gefragt wird nach dem BESTAND, nicht nach dem Lauf: liegt die
+  // Auszeichnung im Stapel, faellt das Ergebnis — liegt sie nicht darin
+  // (eine gewoehnliche Auszeichnung bekommt nur an runden Marken eine eigene
+  // Karte [§C33]), bleibt das Ergebnis die einzige Nachricht darueber.
+  const BADGE_DECKT = {zu_null:['perfect_win'], upset:['upset_king'],
+                       krimi:['krimi', 'nerves_of_steel'],
+                       eng:['krimi', 'nerves_of_steel']};
+  const _badgeJeMatch = new Map();
+  list.forEach(s => {
+    const d = (s && s.dataRef) || {};
+    if(d.type !== 'badge_unlocked' || !d.matchId || !d.badgeId) return;
+    if(_storyAbgemeldet(s && s.id)) return;
+    const set = _badgeJeMatch.get(d.matchId) || new Set();
+    set.add(d.badgeId); _badgeJeMatch.set(d.matchId, set);
+  });
+  const _ergebnisGedeckt = d => {
+    const liste = BADGE_DECKT[d.resultKind];
+    if(!liste || !d.matchId) return false;
+    const set = _badgeJeMatch.get(d.matchId);
+    return !!set && liste.some(b => set.has(b));
+  };
   // Der Fun Fact ist die Füllung eines stillen Tages, nicht die Zugabe zu einem
   // lauten. „Leon führt das Prestige an" gilt seit Wochen und stand neben dem
   // Spieltag, an dem gerade etwas passierte. Der Abend-Slot schweigt an
@@ -448,6 +495,7 @@ function _consolidateStories(list){
     // bleibt eine Nachricht, auch wenn der Rekord Wochen spaeter weiterwandert
     // — sie erzaehlt von ihrem Tag, nicht von heute [§C33].
     if(_rekUeberholt.has(s.id)) return false;
+    if(d.type === 'match_result' && _ergebnisGedeckt(d)) return false;
     return true;
   });
 
@@ -1029,25 +1077,53 @@ function _consolidateStories(list){
   // Meldungen dort heraushaelt — und nach den beiden Erfolgs-Achsen, damit
   // ein gemeinsam geholter Erfolg seine eigene Karte behaelt [§C33].
   const _brkPartie = new Map();
+  // ── Und die uebrigen Meldungen derselben Partie reisen mit ────────
+  // Zusammengelegt wurde nur Breaking mit Breaking, und damit blieb die
+  // gewoehnliche Meldung derselben Partie als eigene Karte daneben stehen —
+  // mit demselben Ergebnisband, denselben vier Wappen und demselben Stand.
+  // Gemessen am 21.09.: „Martin fuehrt die Tabelle" (Breaking, Band 10:7)
+  // und „Stefan und Julian stuerzen die Favoriten" (Band 10:7) standen
+  // untereinander. Zwei Fakten, ja — aber ein Moment, und §C33 sagt, dass
+  // ein Moment eine Karte ist.
+  //
+  // Wer ohnehin einzeln bleibt, reist nicht mit: eine seltene oder
+  // legendaere Auszeichnung ist der Grund, warum jemand die App oeffnet,
+  // und steht nicht als Zeile unter einer fremden Schlagzeile [§C33].
+  const _spielPartie = new Map();
   result.forEach((st, idx) => {
     const d = (st && st.dataRef) || {};
     if(_tafelAchse.has(st.id) || _achse.has(st.id)) return;
-    if(!d.matchId || !SAMMEL_BREAKING.has(d.type)) return;
+    if(!d.matchId) return;
     let brk = false;
     try { brk = (typeof _isBreaking === 'function') && _isBreaking(st); } catch(e){}
-    if(!brk) return;
-    let l = _brkPartie.get(d.matchId);
-    if(!l){ l = []; _brkPartie.set(d.matchId, l); }
+    if(brk){
+      if(!SAMMEL_BREAKING.has(d.type)) return;
+      let l = _brkPartie.get(d.matchId);
+      if(!l){ l = []; _brkPartie.set(d.matchId, l); }
+      l.push({st, idx});
+      return;
+    }
+    if(_sammelEinzeln(st, d) || !SAMMEL_SPIEL.has(d.type)) return;
+    // Und eine negative Meldung reist auch nicht mit. „Absoluter Verlierer"
+    // haengt am selben 10:0 wie „Absoluter Sieger" und waere damit eine
+    // Zeile auf der Karte, die die Sieger feiert: Rot ist die Richtung
+    // [§C25], und eine Karte hat eine.
+    let neg = false;
+    try { neg = (typeof _newsIstNegativ === 'function') && _newsIstNegativ(st); } catch(e){}
+    if(neg) return;
+    let l = _spielPartie.get(d.matchId);
+    if(!l){ l = []; _spielPartie.set(d.matchId, l); }
     l.push({st, idx});
   });
   const _brkAchse = new Set();
   _brkPartie.forEach((l, mid) => {
-    if(l.length < 2) return;
+    const alle = l.concat(_spielPartie.get(mid) || []);
+    if(alle.length < 2) return;
     const key = 'spiel|breaking|' + mid;
     const g = {key, art:'spiel', teile:[], titel:new Set(), max:Infinity,
-               erster: l.reduce((mn, k) => Math.min(mn, k.idx), l[0].idx)};
+               erster: alle.reduce((mn, k) => Math.min(mn, k.idx), alle[0].idx)};
     sammelGruppen.set(key, g);
-    l.slice().sort((a, b) => a.idx - b.idx).forEach(k => {
+    alle.slice().sort((a, b) => a.idx - b.idx).forEach(k => {
       _brkAchse.add(k.st.id);
       _sammelZeile(g, k.st);
     });
@@ -1190,6 +1266,9 @@ function _consolidateStories(list){
       const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
       const motivName = {
         top_clash:'Spitzenduell', giant_slayer:'Favoritensturz',
+        // Ein Ergebnis heisst, was es war. „besonderes Ergebnis" stand als
+        // Anlass neben „neue Tabellenspitze" und sagte von den beiden
+        // Anlaessen genau den nicht, der die Partie ausmacht.
         match_result:'besonderes Ergebnis',
         streak_killer:'Serienbruch', win_streak:'Siegesserie',
         loss_streak:'Durststrecke', top_form:'Formlauf',
@@ -1203,12 +1282,28 @@ function _consolidateStories(list){
         lead_change:'neue Tabellenspitze', elo_record:'Elo-Rekord',
         streak_record:'Rekordserie'
       };
-      const motive = [...new Set(teile.map(t => motivName[(t.dataRef || {}).type]).filter(Boolean))];
+      // Das Ergebnis traegt seine Sorte im `dataRef`, also sagt der Anlass
+      // auch, welches Ergebnis es war.
+      const ERGEBNIS_MOTIV = {zu_null:'Sieg ohne Gegentor', upset:'Favoritensturz',
+                              krimi:'Ein-Tor-Krimi', kanter:'klarer Sieg',
+                              eng:'enges Spiel'};
+      const _motivVon = t => {
+        const dt = (t && t.dataRef) || {};
+        if(dt.type === 'match_result')
+          return ERGEBNIS_MOTIV[dt.resultKind] || motivName.match_result;
+        return motivName[dt.type];
+      };
+      const motive = [...new Set(teile.map(_motivVon).filter(Boolean))];
       const wer = namen.length ? _namenKurz(namen, 3) : 'die Beteiligten';
+      // Ob die Karte Breaking IST, nicht ob zwei ihrer Zeilen es sind: seit
+      // die uebrigen Meldungen derselben Partie mitreisen, traegt ein Buendel
+      // oft genau EINE Breaking-Zeile — und stand dann wieder unter „Ein
+      // Spiel, zwei Geschichten", also unter der Schlagzeile, die fuer jeden
+      // Spieltag gilt und den Anlass verschweigt [§C33].
       let brkBundle = false;
       try {
         brkBundle = (typeof _isBreaking === 'function')
-          && teile.filter(t => _isBreaking(t)).length > 1;
+          && teile.some(t => _isBreaking(t));
       } catch(e){}
       // ── Eine Breaking-Karte sagt, was daran Breaking ist ───────────
       // „Ein Spiel, zwei Geschichten für Maxi und Henry" gilt fuer jeden
@@ -1217,8 +1312,11 @@ function _consolidateStories(list){
       // deshalb die Anlaesse; welche Partie es war, steht im Band darueber.
       if(brkBundle && motive.length > 1){
         const bild = _namenListe(motive);
+        // Ab dem vierten Namen bleibt die Zeile ohne sie: „fuer Martin, Maxi
+        // und zwei weitere" nennt keinen davon vollstaendig, und wer gemeint
+        // ist, sagen Band und Sammelband darunter genauer.
         neuTitel = `${bild.charAt(0).toUpperCase() + bild.slice(1)} in einer Partie`
-          + (namen.length ? ` für ${_namenKurz(namen, 3)}` : '');
+          + (namen.length && namen.length <= 3 ? ` für ${_namenListe(namen)}` : '');
         const zw = _zahlwortDe(teile.length);
         neuText = `${zw.charAt(0).toUpperCase() + zw.slice(1)} Meldungen aus `
           + `demselben Spiel, und jede davon kommt nur wenige Male je Saison.`;

@@ -898,7 +898,7 @@ function _newsDetailMitte(s){
               <div class="nd-vs-name">${esc(nameOf(d.newLeader))}</div>
               <div class="nd-vs-elo" style="color:var(--acid)">neuer #1</div>
             </div>
-            <div class="nd-vs-mid">↑<div class="nd-vs-mid-sub">übernimmt</div></div>
+            <div class="nd-vs-mid">↑<div class="nd-vs-mid-sub">${d.zurueck ? 'holt zurück' : 'übernimmt'}</div></div>
             <div class="nd-vs-p" data-pid="${esc(d.prevLeader)}">
               ${avM(d.prevLeader)}
               <div class="nd-vs-name">${esc(nameOf(d.prevLeader))}</div>

@@ -1107,8 +1107,23 @@ function _breakingHeroText(s){
           + (runner ? `. Vor ${runner}.` : '.')
           + ` Wer stürzt ${champ} in der neuen Saison vom Thron?`;
       }
-      case 'lead_change':
-        return `Machtwechsel an der Tabellenspitze: ${nm(d.newLeader)} verdrängt ${nm(d.prevLeader)} und übernimmt die Führung. Das Titelrennen ist wieder völlig offen.`;
+      // ── Der Nachsatz nennt eine Zahl ────────────────────────────
+      // „Machtwechsel an der Tabellenspitze: X verdraengt Y und uebernimmt
+      // die Fuehrung. Das Titelrennen ist wieder voellig offen." war ein
+      // Etikett mit Doppelpunkt am Satzanfang [§C33], nannte keine einzige
+      // Zahl und behauptete eine offene Lage, die bei 91 Elo Vorsprung
+      // nicht stimmt. Und es stand „X verdraengt X", wenn X die Spitze am
+      // selben Tag abgab und zurueckholte.
+      case 'lead_change': {
+        const wv = Number(d.wechsel) || 1;
+        const holt = d.zurueck
+          ? `${nm(d.newLeader)} holt sich die Spitze von ${nm(d.prevLeader)} zurück`
+          : `${nm(d.newLeader)} verdrängt ${nm(d.prevLeader)} von der Spitze`;
+        return holt
+          + (d.elo != null ? ` und steht bei ${d.elo} Elo.` : '.')
+          + (d.gap != null ? ` ${d.gap} Elo Vorsprung auf den Zweiten.` : '')
+          + (wv > 1 ? ` ${wv} Wechsel an einem Tag.` : '');
+      }
       case 'top_clash': {
         // p1/p2 (v9.3): Platz-1- bzw. Platz-2-Spieler namentlich. Fallback auf
         // Sieger-Team für alte, vor v9.3 persistierte Stories.
