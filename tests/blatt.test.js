@@ -938,69 +938,68 @@ const ok = (c, msg, det) => {
   ok(achse.tafelMetall, 'der gemeinsame Tafel-Moment traegt kuehles Metall statt Gold',
      String(achse.tafelMetall));
 
-  // ── Zwei verdraengte Ergebnisse tragen eine Karte ────────────────
-  //    Sie hat ZWEI Partien und deshalb kein Ergebnisband: acht Wappen
-  //    uebereinander machten sie hoeher als ihren Text [§C27]. Die Staende
-  //    stehen stattdessen rechts in den Zeilen — gemessen, weil ein Stand
-  //    neben einer langen Schlagzeile sonst aus der Zeile laeuft.
-  const ergKarte = await page.evaluate(() => {
+  // ── Das Blatt einer Partie zeigt, was in ihr zu sehen war ────────
+  //    Es hatte gar keinen Fall: wer eine Partie-Karte oeffnete, sah den
+  //    Satz, den er auf der Karte schon gelesen hatte. Jetzt stehen die
+  //    Siegchance auf ihrer Skala und die Elo-Wirkung je Spieler darin — und
+  //    beides ist gezeichnet, also wird es gemessen und nicht behauptet.
+  const spielBlatt = await page.evaluate(() => {
     const K = window.__k.eval.bind(window.__k);
     const markup = K(`(function(){
       const tage=[...new Set(matches.map(m=>tagKey(mts(m))))].sort();
-      const p=_newsTagMs(tage[tage.length-1]).slice(0,3);
-      const l=[{id:'bg-0',cat:'highlight',ic:'swords',when:new Date(mts(p[0])+3600000),
-        prio:74,title:'Ein Favoritensturz',desc:'Ein Satz mit 1 Zahl.',
-        dataRef:{type:'giant_slayer',matchId:p[0].id,playerIds:[players[0].id]}}];
-      ['milestone_wins','milestone_goals','milestone_elo','jubilee','rivalry_milestone']
-        .forEach((typ,i)=>l.push({id:'bs-'+i,cat:'personal',ic:'medal',
-          when:new Date(mts(p[0])+i*60000),prio:85-i,title:'Starke Marke '+i,
-          desc:'Ein Satz mit '+i+' Zahlen.',
-          dataRef:{type:typ,pid:players[i%4].id,playerIds:[players[i%4].id]}}));
-      p.slice(1).forEach((m,i)=>l.push({id:'be-'+i,cat:'highlight',ic:'thriller',
-        when:new Date(mts(m)+3600000+(i+1)*60000),prio:63-i,
-        title:'Eine sehr lange Schlagzeile ueber ein enges Ergebnis '+i,
-        desc:'Ein Satz mit '+i+' Zahlen.',
-        dataRef:{type:'match_result',resultKind:'krimi',matchId:m.id,
-                 playerIds:[players[i%4].id]}}));
-      _cache._consolFrom=null;
-      const s=_consolidateStories(l).find(x=>(x.dataRef||{}).quelle==='ergebnis');
-      return s ? _newsCardHtmlM2(s,false,false) : '';
+      const m=_newsTagMs(tage[tage.length-1])[0];
+      const w=m.winner==='A'?[m.a1,m.a2]:[m.b1,m.b2];
+      const v=m.winner==='A'?[m.b1,m.b2]:[m.a1,m.a2];
+      const s={id:'spiel_'+m.id,cat:'highlight',ic:'thriller',
+        when:new Date(mts(m)),prio:41,
+        title:'Zwei entscheiden ein enges Spiel',
+        desc:'Vor dem Anstoss lag die Siegchance bei 57 %.',
+        dataRef:{type:'spiel',resultKind:'eng',matchId:m.id,winners:w,losers:v,
+                 playerIds:w,margin:2,quote:57}};
+      return _newsDetailBody(s);
     })()`);
     const host = document.createElement('div');
     host.style.width = '360px';
     host.innerHTML = markup;
     document.body.appendChild(host);
-    const karte = host.querySelector('.nf-card');
-    if(!karte){ host.remove(); return {fehlt:true}; }
-    const rub = karte.querySelector('.nf-rub b');
-    const zeilen = [...karte.querySelectorAll('.nf-sam-z')];
-    const stand = zeilen.map(z => {
-      const w = z.querySelector('b.nf-sam-w');
-      if(!w) return null;
-      const zr = z.getBoundingClientRect(), wr = w.getBoundingClientRect();
-      return {text:w.textContent.trim(), drin: wr.right <= zr.right + 0.5 && wr.width > 0};
-    });
-    const out = {fehlt:false, rubrik: rub ? rub.textContent.trim() : '',
-      zeilen: zeilen.length, staende: stand.filter(x => x && x.drin).length,
-      text: stand.map(x => x && x.text).join('/'),
-      // Kein Ergebnisband: die Karte zeigt zwei Partien, also keine.
-      baender: karte.querySelectorAll('.nf-erg').length,
-      chips: karte.querySelectorAll('.nf-face .av').length,
-      rest: karte.querySelectorAll('.nf-sam-m').length};
+    const sk = host.querySelector('.nd-chance');
+    const bahn = sk && sk.querySelector('.nd-chance-b');
+    const fuell = bahn && bahn.querySelector('i');
+    const striche = bahn ? [...bahn.querySelectorAll('u')] : [];
+    const zeilen = [...host.querySelectorAll('.nd-elo')];
+    const raus = zeilen.filter(z => {
+      const b = z.querySelector('.nd-elo-b i'), zr = z.getBoundingClientRect();
+      if(!b) return true;
+      const br = b.getBoundingClientRect();
+      return br.right > zr.right + 0.5 || br.width <= 0;
+    }).length;
+    const out = {
+      skala: !!sk, zeilen: zeilen.length, raus,
+      fuellDrin: !!(fuell && bahn
+        && fuell.getBoundingClientRect().right <= bahn.getBoundingClientRect().right + 0.5
+        && fuell.getBoundingClientRect().width > 0),
+      striche: striche.length,
+      stricheDrin: bahn ? striche.filter(u => {
+        const ur = u.getBoundingClientRect(), br = bahn.getBoundingClientRect();
+        return ur.left >= br.left - 0.5 && ur.right <= br.right + 0.5;
+      }).length : 0,
+      werte: [...host.querySelectorAll('.nd-elo-v')].map(x => x.textContent.trim()).join(' ')
+    };
     host.remove(); return out;
   });
-  ok(!ergKarte.fehlt, 'die Karte der zwei verdraengten Ergebnisse steht im Feed',
-     JSON.stringify(ergKarte));
-  ok(ergKarte.rubrik === 'AM SPIELTAG', 'sie traegt die Rubrik des Spieltags',
-     ergKarte.rubrik);
-  ok(ergKarte.zeilen === 2 && ergKarte.staende === 2 && ergKarte.rest === 0,
-     'beide Staende stehen vollstaendig in der Zeile, keiner laeuft heraus',
-     ergKarte.zeilen + ' Zeilen, ' + ergKarte.staende + ' Staende (' + ergKarte.text + ')');
-  ok(ergKarte.baender === 0,
-     'und sie sucht sich aus zwei Partien keine als Ergebnisband aus',
-     ergKarte.baender + ' Baender');
-  ok(ergKarte.chips >= 2, 'die Sieger stehen als Gesichter dabei',
-     ergKarte.chips + ' Chips');
+  ok(spielBlatt.skala, 'das Blatt einer Partie zeigt die Siegchance als Skala');
+  ok(spielBlatt.fuellDrin,
+     'ihr Balken bleibt in seiner Bahn',
+     spielBlatt.fuellDrin ? 'innerhalb' : 'laeuft heraus');
+  ok(spielBlatt.striche === 3 && spielBlatt.stricheDrin === 3,
+     'und die drei Linien der Elo-Rechnung stehen darin',
+     spielBlatt.stricheDrin + ' von ' + spielBlatt.striche);
+  ok(spielBlatt.zeilen === 4,
+     'die Elo-Wirkung steht je Spieler der Partie',
+     spielBlatt.zeilen + ' Zeilen: ' + spielBlatt.werte);
+  ok(spielBlatt.raus === 0,
+     'und kein Ausschlag laeuft aus seiner Zeile',
+     spielBlatt.raus + ' von ' + spielBlatt.zeilen);
 
   // ── Eine Sammelkarte bedeckt nicht den ganzen Bildschirm ─────────
   //    „Bündeln darf nichts verstecken" war fuer zwei bis vier Teile

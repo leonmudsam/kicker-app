@@ -1294,6 +1294,41 @@
   .nd-stat-val.acid{color:var(--acid)}
   .nd-stat-val.red{color:var(--red)}
   .nd-stat-val.gold{color:var(--gold)}
+  /* ── Die Siegchance als Skala ───────────────────────────────────────
+     „57 %" ist eine Zahl, die man erst einordnen muss. Der Balken zeigt, wo
+     die Partie zwischen Sensation und Pflichtsieg lag; die drei Striche sind
+     die Linien der Elo-Rechnung [§5.2]. */
+  .nd-chance{background:var(--surface);border:1px solid var(--line);
+    border-radius:10px;padding:11px 13px 12px;margin-bottom:6px}
+  .nd-chance-b{position:relative;height:8px;border-radius:999px;overflow:hidden;
+    background:var(--surface3);border:1px solid var(--line)}
+  .nd-chance-b i{display:block;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,var(--metal2),var(--metal))}
+  .nd-chance.g .nd-chance-b i{background:linear-gradient(90deg,var(--green2,var(--green)),var(--green))}
+  .nd-chance.r .nd-chance-b i{background:linear-gradient(90deg,var(--red2,var(--red)),var(--red))}
+  .nd-chance-b u{position:absolute;top:0;bottom:0;width:1px;
+    background:var(--line2,var(--line));z-index:1}
+  .nd-chance-z{display:flex;justify-content:space-between;gap:10px;margin-top:8px;
+    font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
+  .nd-chance-z b{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink)}
+  /* ── Die Elo-Wirkung je Spieler ─────────────────────────────────────
+     Vier Zahlen untereinander sagen nicht, wer am meisten gewonnen hat. Der
+     Balken zeigt den Ausschlag, der Rang dahinter, was er bewegt hat. */
+  .nd-elo{display:flex;align-items:center;gap:9px;padding:8px 12px;
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:10px;margin-bottom:6px}
+  .nd-elo-n{flex:0 0 74px;font-family:'Archivo Black',sans-serif;font-size:12px;
+    color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nd-elo-b{flex:1 1 auto;min-width:0;height:6px;border-radius:999px;
+    background:var(--surface3);overflow:hidden}
+  .nd-elo-b i{display:block;height:100%;border-radius:999px}
+  .nd-elo-b i.p{background:var(--green)}
+  .nd-elo-b i.n{background:var(--red)}
+  .nd-elo-v{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:12px}
+  .nd-elo-v.g{color:var(--green)}
+  .nd-elo-v.r{color:var(--red)}
+  .nd-elo em{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9px;
+    color:var(--muted);font-style:normal;letter-spacing:.04em}
   /* Versus-Block (für Rivalität/Endspurt-Stories) */
   .nd-vs{display:flex;align-items:center;gap:12px;background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:14px 12px;margin-bottom:10px}
