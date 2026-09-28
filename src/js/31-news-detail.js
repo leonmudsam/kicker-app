@@ -388,6 +388,66 @@ function _newsDetailBody(s){
   return kopf + mitte;
 }
 
+// ── Die Wirkung auf die Laufbahn, gezeichnet ─────────────────────────
+// Sie stand als Zeile da: „1205 → 1240 Prestige". Zwei Zahlen, die man erst
+// lesen und dann verrechnen muss, und bei neun Zeilen darueber weiss niemand
+// mehr, was daran ausschlaggebend war. Der Balken zeigt es: die Strecke von
+// dieser Insignium-Schwelle zur naechsten, darin heller, was der Spieltag
+// dazugelegt hat. Daneben der Zuwachs als Zahl und das Zeichen der Stufe.
+//
+// Gerechnet wird mit den GESPEICHERTEN Staenden und nicht mit `prestigeOf`:
+// eine Karte von vorletzter Woche erzaehlt vom Stand von damals [§C31].
+function _ndWirkungBlock(je){
+  const ids = Object.keys(je || {});
+  if(!ids.length) return '';
+  const pm = pmap();
+  // Der groesste Zuwachs zuerst: er ist das, was den Tag ausmacht.
+  return ids.sort((a, b) => (je[b].nach - je[b].vor) - (je[a].nach - je[a].vor))
+    .map(pid => {
+      const w = je[pid];
+      const nach = Math.round(Number(w.nach) || 0);
+      const vor = Math.round(Number(w.vor) || 0);
+      const delta = nach - vor;
+      const si = (w.stufeNach != null && typeof INSIGNIEN !== 'undefined'
+                  && INSIGNIEN[w.stufeNach]) ? w.stufeNach : null;
+      const ins = si != null ? INSIGNIEN[si] : null;
+      const next = (si != null && typeof INSIGNIEN !== 'undefined') ? INSIGNIEN[si + 1] : null;
+      const auf = (w.stufeNach != null && w.stufeVor != null && w.stufeNach > w.stufeVor);
+      let zeichen = '';
+      try {
+        if(ins && typeof insigniumStufeSvg === 'function')
+          zeichen = insigniumStufeSvg(ins.key, (getPlayerRank(pid) || {}).label, 0, 0) || '';
+      } catch(e){}
+      // Die Strecke ist die STUFE, nicht die Laufbahn: „noch 460 bis zum
+      // Lorbeerreif" ist die Frage, die ein Traeger hat [§C30].
+      let balken = '', rest = '';
+      if(ins && next){
+        const spanne = Math.max(1, next.min - ins.min);
+        const bis = Math.max(0, Math.min(100, (nach - ins.min) / spanne * 100));
+        // Beim Stufenaufstieg liegt der alte Stand unter dieser Schwelle: dann
+        // ist die ganze Strecke der Zuwachs.
+        const abVor = auf ? 0 : Math.max(0, Math.min(bis, (vor - ins.min) / spanne * 100));
+        balken = `<span class="nd-wk-b"><i style="width:${abVor.toFixed(1)}%"></i>`
+          + `<em style="width:${Math.max(0, bis - abVor).toFixed(1)}%"></em></span>`;
+        rest = `${nach} Prestige · noch ${Math.max(0, next.min - nach)} bis zum ${esc(next.name)}`;
+      } else if(ins){
+        rest = `${nach} Prestige · die letzte Stufe`;
+      } else {
+        rest = `${nach} Prestige`;
+      }
+      return `<div class="nd-wk" data-pid="${esc(pid)}" style="cursor:pointer">
+        ${zeichen ? `<span class="nd-wk-z">${zeichen}</span>` : ''}
+        <span class="nd-wk-t">
+          <span class="nd-wk-n">${esc((pm[pid] && pm[pid].name) || '?')}${ins
+            ? `<em>${esc(auf ? 'neu: ' + ins.name : ins.name)}</em>` : ''}</span>
+          ${balken}
+          <span class="nd-wk-r">${rest}</span>
+        </span>
+        <span class="nd-wk-d ${delta > 0 ? 'g' : ''}">${delta > 0 ? '+' + delta : '±0'}</span>
+      </div>`;
+    }).join('');
+}
+
 // ── Die Siegchance als Skala ─────────────────────────────────────────
 // „57 %" ist eine Zahl, die man erst lesen und dann einordnen muss: war das
 // ein Pflichtsieg oder eine Sensation? Die Elo-Rechnung hat dafuer vier
@@ -860,32 +920,51 @@ function _newsDetailMitte(s){
           });
           const ids = Object.keys(je);
           if(!ids.length) return '';
-          return `<div class="nd-section">Wirkung auf das Insignium</div>`
-            + ids.map(pid => {
-              const w = je[pid];
-              const stufe = (typeof INSIGNIEN !== 'undefined' && w.stufeNach != null
-                             && INSIGNIEN[w.stufeNach]) ? INSIGNIEN[w.stufeNach].name : '';
-              const auf = (w.stufeNach != null && w.stufeVor != null
-                           && w.stufeNach > w.stufeVor);
-              return `<div class="nd-stat-row" data-pid="${esc(pid)}" style="cursor:pointer">
-                <div class="nd-stat-label">${esc(nameOf(pid))}${stufe
-                  ? `<small>${esc(auf ? 'neu: ' + stufe : stufe)}</small>` : ''}</div>
-                <div class="nd-stat-val ${w.nach > w.vor ? 'acid' : ''}">${
-                  esc(w.vor + ' → ' + w.nach + ' Prestige')} ›</div></div>`;
-            }).join('');
+          return `<div class="nd-section">Wirkung auf die Laufbahn</div>`
+            + _ndWirkungBlock(je);
         })();
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand
         // auch ueber der Karte, auf der drei Spieler dieselbe Stufe
         // erreichen — und die entsteht am Ende eines Spieltags, nicht in
         // einer Partie.
+        // ── Was hier relevant ist, steht in Zahlen davor ────────────
+        // Neun Zeilen untereinander sagen nicht, wovon der Tag handelt: wie
+        // viele Rekorde wirklich den Halter gewechselt haben, wie viele nur
+        // ausgebaut wurden, wie viele Chroniken dazukamen und was am Ende an
+        // Prestige haengenblieb. Die Zahlenreihe ist das Bauteil, das die
+        // Rueckblicke dafuer schon haben [§C31].
+        const uebersicht = (function(){
+          if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';
+          if(typeof rcpZahlenHtml !== 'function') return '';
+          const typ = t => String((t && (t.typ || t.type)) || '');
+          const wech = teile.filter(t => typ(t).indexOf('rekord_') === 0
+            && typ(t) !== 'rekord_gesteigert').length;
+          const aus = teile.filter(t => typ(t) === 'rekord_gesteigert').length;
+          const chr = teile.filter(t => typ(t).indexOf('chronik_') === 0).length;
+          const insz = teile.filter(t => typ(t) === 'insignium_stufe').length;
+          let plus = 0;
+          const gez = {};
+          teile.forEach(t => { const lb = t.lb; if(!lb) return;
+            Object.keys(lb).forEach(pid => { if(gez[pid]) return; gez[pid] = 1;
+              plus += Math.max(0, Math.round(Number(lb[pid].nach) || 0)
+                                 - Math.round(Number(lb[pid].vor) || 0)); }); });
+          const z = [
+            wech ? {v: wech, l: wech === 1 ? 'Bestmarke' : 'Bestmarken', ton:'gold'} : null,
+            aus ? {v: aus, l: aus === 1 ? 'Ausbau' : 'Ausbauten'} : null,
+            chr ? {v: chr, l: chr === 1 ? 'Chronik' : 'Chroniken'} : null,
+            insz ? {v: insz, l: insz === 1 ? 'Insignium' : 'Insignien'} : null,
+            plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null
+          ].filter(Boolean);
+          return z.length > 1 ? rcpZahlenHtml(z) : '';
+        })();
         const kopfzeile = d.quelle === 'tafel' ? 'An der Ewigen Tafel'
           : d.quelle === 'form' ? 'Auf kurzer Strecke'
           : d.quelle === 'spieler' ? 'Alles in diesem Moment'
           : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
           : d.quelle === 'ergebnis' ? 'Diese beiden Partien'
           : 'In dieser Partie';
-        return `<div class="nd-section">${kopfzeile}</div>
+        return uebersicht + `<div class="nd-section">${kopfzeile}</div>
           ${mv}<div class="nw-liste">${zeilen}</div>${wirkung}`;
       }
       // Die Stufe IST die Story — und das Blatt war leer.
