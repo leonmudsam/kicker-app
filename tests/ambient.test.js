@@ -2355,9 +2355,15 @@ const _band = JSON.parse(K.eval(`JSON.stringify((function(){
     // zu viele, sobald ein Spieltag die Tafel wirklich bewegt: gemessen trug
     // ein Tafel-Moment achtzehn Zeilen, und die Karte war ein Block aus
     // Namen [§C33].
-    const rest = (x.dataRef.teile||[])
-      .filter(t => t.titel !== x.title).length;
-    if(Math.min(rest, NEWS_LIMITS.sammelZeilen) !== n) ohneBand++;
+    const teile = (x.dataRef.teile||[]).filter(t => t.titel !== x.title);
+    // Ein Ausbau steht nicht auf der Karte: derselbe Halter, ein besserer
+    // Wert, kein Wechsel. Gemessen trug ein Tafel-Moment achtzehn Zeilen, elf
+    // davon Ausbauten, und bei vier Plaetzen standen zwei Wechsel und zwei
+    // Ausbauten darauf [§C33].
+    const wechsel = teile.filter(t => t.typ !== 'rekord_gesteigert');
+    const soll = Math.min((wechsel.length ? wechsel : teile).length,
+                          NEWS_LIMITS.sammelZeilen);
+    if(soll !== n) ohneBand++;
   });
   return {n: sammel.length, ohneBand, zeilen,
     floskeln:sammel.filter(x=>/Einzelheiten|Alle Belege|eigenständige|zusammengehörige Ereignisse|Ereignisse in einem Moment/i
@@ -2370,6 +2376,50 @@ ok(_band.ohneBand === 0,
 ok(_band.floskeln.length === 0,
    'Sammelstories verzichten auf technische Erklaerfloskeln',
    _band.floskeln.join(' | ') || 'alle Texte redaktionell');
+
+// ── Ein Ausbau steht nicht auf der Karte ───────────────────────────
+// „Wichtig ist, was wirklich in der Chronik steht und welcher Rekord wirklich
+// uebernommen wurde" — ein Ausbau ist keins von beidem. Gemessen trug ein
+// Tafel-Moment achtzehn Zeilen, elf davon Ausbauten, und bei vier Plaetzen
+// standen zwei Wechsel und zwei Ausbauten auf der Karte [§C33].
+const _ausbau = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
+  const m = _newsTagMs(tage[tage.length - 1])[0];
+  const wann = new Date(mts(m));
+  const l = [];
+  // Zwei echte Wechsel und elf Ausbauten, alle im selben Moment.
+  for(let i = 0; i < 2; i++) l.push({
+    id:'w-' + i, cat:'tafel', ic:'trophyStar', when:wann, prio:80 - i,
+    title:'Ein Wechsel ' + i, desc:'Ein Satz mit ' + i + ' Zahlen.',
+    dataRef:{type:'rekord_geholt', rekordId:'rw' + i, matchId:m.id,
+             causalKey:_storyGruppeKey('table', tage[tage.length - 1]),
+             playerIds:[players[0].id]}});
+  for(let i = 0; i < 11; i++) l.push({
+    id:'a-' + i, cat:'tafel', ic:'chartBar', when:wann, prio:60 - i,
+    title:'Ein Ausbau ' + i, desc:'Ein Satz mit ' + i + ' Zahlen.',
+    dataRef:{type:'rekord_gesteigert', rekordId:'ra' + i, matchId:m.id,
+             causalKey:_storyGruppeKey('table', tage[tage.length - 1]),
+             playerIds:[players[0].id]}});
+  _cache._consolFrom = null;
+  const k = _consolidateStories(l).find(x => (x.dataRef||{}).type === 'sammel');
+  if(!k) return {fehlt:true};
+  const h = _newsCardHtmlM2(k, false, false);
+  const blatt = _newsDetailBody(k);
+  return {fehlt:false,
+          zeilen: h.split('nf-sam-z').length - 1,
+          ausbauAufKarte: (h.match(/Ein Ausbau/g) || []).length,
+          rest: (h.match(/und (\\d+) weitere/) || [])[1] || '',
+          imBlatt: (blatt.match(/Ein Ausbau/g) || []).length,
+          teile: (k.dataRef.teile || []).length};
+})())`));
+ok(!_ausbau.fehlt && _ausbau.zeilen === 2 && _ausbau.ausbauAufKarte === 0,
+   'auf der Karte stehen nur die echten Wechsel',
+   _ausbau.zeilen + ' Zeilen, ' + _ausbau.ausbauAufKarte + ' Ausbauten');
+ok(_ausbau.rest === '11', 'und die Ausbauten zaehlen in die Zahl dahinter',
+   'und ' + _ausbau.rest + ' weitere');
+ok(_ausbau.imBlatt === 11 && _ausbau.teile === 13,
+   'das Blatt zeigt jede Zeile',
+   _ausbau.imBlatt + ' Ausbauten von ' + _ausbau.teile + ' Zeilen');
 
 // ── Wer mehreres auf einmal holt, und was mehrere zugleich holen ────
 // Die Buendelung kannte nur Moment und Subjekt und borgte sich Rubrik und
@@ -4776,8 +4826,12 @@ const _wirk = JSON.parse(K.eval(`JSON.stringify((function(){
     zeiten:teile.filter(t => t.ms && m.indexOf(uhr(t)) >= 0).length,
     eigene:eigene.length,
     staende:eigene.filter(t => { const v = standVon(t); return v && m.indexOf(v) >= 0; }).length,
-    abschnitte:(m.match(/Wirkung auf das Insignium/g) || []).length,
-    reihen: wPos < 0 ? 0 : (m.slice(wPos).match(/nd-stat-row/g) || []).length,
+    abschnitte:(m.match(/Wirkung auf die Laufbahn/g) || []).length,
+    reihen: (m.match(/class="nd-wk"/g) || []).length,
+    // Der Balken zeigt die Strecke zur naechsten Schwelle, und darin heller,
+    // was der Spieltag dazugelegt hat: zwei Segmente je Zeile.
+    balken: (m.match(/class="nd-wk-b"/g) || []).length,
+    zuwachs: (m.match(/class="nd-wk-d/g) || []).length,
     spieler:Object.keys(spieler).length};
 })())`));
 ok(_wirk.n > 1, 'eine Sammelkarte mit mehreren Zeilen steht im Feed', String(_wirk.n));
@@ -4790,6 +4844,12 @@ ok(_wirk.abschnitte === 1 && _wirk.reihen === _wirk.spieler && _wirk.spieler > 0
    'die Punktewirkung steht in einem Abschnitt, einmal je Spieler',
    _wirk.abschnitte + ' Abschnitt, ' + _wirk.reihen + ' Zeilen für '
    + _wirk.spieler + ' Spieler');
+// „1205 → 1240 Prestige" sind zwei Zahlen, die man erst verrechnen muss, und
+// bei neun Zeilen darueber weiss niemand mehr, was ausschlaggebend war. Jede
+// Zeile traegt deshalb den Balken zur naechsten Schwelle und den Zuwachs.
+ok(_wirk.balken === _wirk.reihen && _wirk.zuwachs === _wirk.reihen,
+   'und jede Zeile zeigt den Weg zur naechsten Schwelle und den Zuwachs',
+   _wirk.balken + ' Balken, ' + _wirk.zuwachs + ' Zuwaechse');
 
 console.log('=== DAS AUFGEHEN DER TAFEL IST EINE NACHRICHT ===');
 // Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik, und

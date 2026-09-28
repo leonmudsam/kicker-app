@@ -938,6 +938,88 @@ const ok = (c, msg, det) => {
   ok(achse.tafelMetall, 'der gemeinsame Tafel-Moment traegt kuehles Metall statt Gold',
      String(achse.tafelMetall));
 
+  // ── Das Blatt der Ewigen Tafel zeigt, was ausschlaggebend war ────
+  //    Die Punktewirkung stand als Zeile „1205 → 1240 Prestige": zwei Zahlen,
+  //    die man erst lesen und dann verrechnen muss, und bei neun Zeilen
+  //    darueber weiss niemand mehr, was daran relevant ist. Jetzt tragen die
+  //    Zahlenreihe davor und der Balken je Spieler die Aussage — beides ist
+  //    gezeichnet, also wird es gemessen.
+  const tafelBlatt = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const tage=[...new Set(matches.map(m=>tagKey(mts(m))))].sort();
+      const tg=tage[tage.length-1];
+      const m=_newsTagMs(tg)[0];
+      const wann=new Date(mts(m));
+      const ck=_storyGruppeKey('table', tg);
+      const lb={};
+      lb[players[0].id]={vor:1150,nach:1240,delta:90,stufeVor:2,stufeNach:2};
+      lb[players[1].id]={vor:470,nach:520,delta:50,stufeVor:0,stufeNach:1};
+      const l=[
+        {id:'tw-0',cat:'tafel',ic:'trophyStar',when:wann,prio:80,
+         title:'Ein Wechsel',desc:'Ein Satz mit 1 Zahl.',
+         dataRef:{type:'rekord_geholt',rekordId:'rw',matchId:m.id,causalKey:ck,
+                  laufbahn:lb,playerIds:[players[0].id,players[1].id]}},
+        {id:'tw-1',cat:'tafel',ic:'chartBar',when:wann,prio:70,
+         title:'Ein Ausbau',desc:'Ein Satz mit 2 Zahlen.',
+         dataRef:{type:'rekord_gesteigert',rekordId:'ra',matchId:m.id,causalKey:ck,
+                  laufbahn:lb,playerIds:[players[0].id]}},
+        {id:'tw-2',cat:'tafel',ic:'calendar',when:wann,prio:62,
+         title:'Eine Chronik',desc:'Ein Satz mit 3 Zahlen.',
+         dataRef:{type:'chronik_geholt',titleId:'tc',matchId:m.id,causalKey:ck,
+                  laufbahn:lb,playerIds:[players[1].id]}}
+      ];
+      _cache._consolFrom=null;
+      const k=_consolidateStories(l).find(x=>(x.dataRef||{}).quelle==='tafel');
+      return k ? _newsDetailBody(k) : '';
+    })()`);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = markup;
+    document.body.appendChild(host);
+    const zellen = [...host.querySelectorAll('.rcp-z .rcp-z-s')]
+      .map(z => (z.querySelector('.rcp-z-v')||{}).textContent + '|'
+              + (z.querySelector('.rcp-z-l')||{}).textContent);
+    const reihen = [...host.querySelectorAll('.nd-wk')];
+    const raus = reihen.filter(r => {
+      const b = r.querySelector('.nd-wk-b');
+      if(!b) return true;
+      const seg = [...b.children];
+      if(seg.length !== 2) return true;
+      const br = b.getBoundingClientRect();
+      const sum = seg.reduce((n, x) => n + x.getBoundingClientRect().width, 0);
+      return sum > br.width + 0.5;
+    }).length;
+    // Der Zuwachs des Tages ist sichtbar, nicht nur gerechnet: das hellere
+    // Segment hat Breite.
+    const ohneZuwachs = reihen.filter(r => {
+      const seg = r.querySelectorAll('.nd-wk-b em');
+      return !seg.length || seg[0].getBoundingClientRect().width <= 0;
+    }).length;
+    const out = {zellen, reihen: reihen.length, raus, ohneZuwachs,
+      zeichen: host.querySelectorAll('.nd-wk-z svg').length,
+      werte: [...host.querySelectorAll('.nd-wk-d')].map(x => x.textContent.trim()).join(' ')};
+    host.remove(); return out;
+  });
+  ok(tafelBlatt.zellen.length >= 4
+     && tafelBlatt.zellen.some(z => /Bestmarke/.test(z))
+     && tafelBlatt.zellen.some(z => /Ausbau/.test(z))
+     && tafelBlatt.zellen.some(z => /Prestige/.test(z)),
+     'das Blatt eines Tafel-Moments nennt Wechsel, Ausbauten und Prestige in Zahlen',
+     tafelBlatt.zellen.join(' · '));
+  ok(tafelBlatt.reihen === 2,
+     'die Wirkung steht einmal je Spieler',
+     tafelBlatt.reihen + ' Zeilen: ' + tafelBlatt.werte);
+  ok(tafelBlatt.raus === 0,
+     'ihr Balken bleibt in seiner Bahn',
+     tafelBlatt.raus + ' laufen heraus');
+  ok(tafelBlatt.ohneZuwachs === 0,
+     'und der Zuwachs des Tages ist darin zu sehen',
+     tafelBlatt.ohneZuwachs + ' ohne sichtbaren Zuwachs');
+  ok(tafelBlatt.zeichen === 2,
+     'jede Zeile zeigt das Zeichen ihrer Stufe',
+     tafelBlatt.zeichen + ' Zeichen');
+
   // ── Das Blatt einer Partie zeigt, was in ihr zu sehen war ────────
   //    Es hatte gar keinen Fall: wer eine Partie-Karte oeffnete, sah den
   //    Satz, den er auf der Karte schon gelesen hatte. Jetzt stehen die

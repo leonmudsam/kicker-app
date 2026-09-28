@@ -774,6 +774,19 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
   // Bestmarke vor Monatschronik vor Insignium. Das Blatt zeigt jede Zeile.
   const grenze = vollstaendig
     ? Math.min(rest.length, NEWS_LIMITS.sammelZeilen || rest.length) : 3;
+  // ── Ein Ausbau steht nicht auf der Karte ──────────────────────────
+  // „Wichtig ist, was wirklich in der Chronik steht und welcher Rekord
+  // wirklich uebernommen wurde" — ein Ausbau ist keins von beidem: derselbe
+  // Halter, ein besserer Wert, kein Wechsel. Gemessen trug ein Tafel-Moment
+  // achtzehn Zeilen, elf davon Ausbauten, und bei vier Plaetzen standen zwei
+  // Wechsel und zwei Ausbauten auf der Karte. Sie zaehlen jetzt in die Zahl
+  // dahinter; das Blatt zeigt jede Zeile [§C33].
+  //
+  // Gibt es NUR Ausbauten, bleibt die staerkste stehen: eine Karte mit einem
+  // leeren Band ist schlimmer als eine, die einen Ausbau nennt.
+  const wechsel = rest.filter(t => String((t && (t.typ || t.type)) || '') !== 'rekord_gesteigert');
+  const zeige = (wechsel.length ? wechsel : rest).slice(0, grenze);
+  const uebrig = rest.length - zeige.length;
   // In einer gemischten Tafel-Karte bekommt jede Spur den Ton ihrer Kammer.
   // Der Kartenkopf bleibt eine gemeinsame Geschichte, die Zeilen verraten
   // aber sofort, ob darunter Rekord, Bestmarke, Chronik, Fügung, Schatten
@@ -790,7 +803,7 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
   };
   // Die Marke sagt in zwei Worten, welche Zeile in der Monatstafel landet
   // [§C32] — Metall, sie zeichnet niemanden aus [§C25].
-  return `<div class="nf-sam">${rest.slice(0, grenze).map(t => {
+  return `<div class="nf-sam">${zeige.map(t => {
     const ton = tafelTon(t);
     // ── Der Anlass des Breaking traegt eine Marke ─────────────────
     // Die Karte bricht die Spalte, weil EINE ihrer Zeilen Breaking ist. Sie
@@ -808,7 +821,7 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     + (t.wert ? `<b class="nf-sam-w">${esc(t.wert)}</b>` : '')
     + `</div>`;
   }).join('')}`
-    + (rest.length > grenze ? `<div class="nf-sam-m">und ${rest.length - grenze} weitere</div>` : '')
+    + (uebrig > 0 ? `<div class="nf-sam-m">und ${uebrig} weitere</div>` : '')
     + `</div>`;
 }
 
