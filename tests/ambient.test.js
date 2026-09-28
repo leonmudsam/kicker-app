@@ -2274,16 +2274,22 @@ const _band = JSON.parse(K.eval(`JSON.stringify((function(){
     // Eine Tafel-Karte darf deshalb auch mehr als vier Zeilen tragen. „Und 1
     // weitere" versteckte zuvor genau eine Meldung, nur um eine Zeile zu
     // sparen. Buendeln darf nichts verstecken [§C33].
+    // Bis zur Grenze steht jede Meldung auf der Karte; darueber fuehrt
+    // die Zahl ins Blatt, und dort steht weiterhin jede Zeile. Sechs waren
+    // zu viele, sobald ein Spieltag die Tafel wirklich bewegt: gemessen trug
+    // ein Tafel-Moment achtzehn Zeilen, und die Karte war ein Block aus
+    // Namen [§C33].
     const rest = (x.dataRef.teile||[])
       .filter(t => t.titel !== x.title).length;
-    if(rest !== n) ohneBand++;
+    if(Math.min(rest, NEWS_LIMITS.sammelZeilen) !== n) ohneBand++;
   });
   return {n: sammel.length, ohneBand, zeilen,
     floskeln:sammel.filter(x=>/Einzelheiten|Alle Belege|eigenständige|zusammengehörige Ereignisse|Ereignisse in einem Moment/i
       .test((x.title||'')+' '+(x.desc||''))).map(x=>x.title)};
 })())`));
 ok(_band.zeilen > 0, 'die Sammelkarte traegt ihr Band', _band.zeilen + ' Zeilen');
-ok(_band.ohneBand === 0, 'jede gebuendelte Meldung steht auf der Karte, nicht nur im Blatt',
+ok(_band.ohneBand === 0,
+   'die Karte traegt ihre staerksten Zeilen, das Blatt alle',
    _band.ohneBand + ' Karten ohne');
 ok(_band.floskeln.length === 0,
    'Sammelstories verzichten auf technische Erklaerfloskeln',
@@ -2374,9 +2380,9 @@ ok(_achsen.c[0] && _achsen.c[0].ti
    'die Schlagzeile nennt alle drei und verbindet den Tafel-Moment', (_achsen.c[0]||{}).ti);
 ok(_achsen.c[0] && /^Ein Moment, drei Spuren:/.test(_achsen.c[0].tx),
    'ihr Satz verbindet die drei Tafel-Spuren lebendig', (_achsen.c[0]||{}).tx);
-ok(_achsen.f.length === 1 && _achsen.f[0].n === 5 && _achsen.f[0].band === 5
+ok(_achsen.f.length === 1 && _achsen.f[0].n === 5 && _achsen.f[0].band === 4
    && _achsen.f[0].pids === 5 && _achsen.f[0].mehr === '3',
-   'auch ein grosses Buendel zeigt alle Ereignisse und zaehlt alle Gesichter korrekt',
+   'ein grosses Buendel fuehrt alle Ereignisse und zaehlt alle Gesichter korrekt',
    (_achsen.f[0]||{}).band + ' Zeilen, ' + (_achsen.f[0]||{}).pids
      + ' Spieler, +' + (_achsen.f[0]||{}).mehr);
 ok(_achsen.d.length === 1 && _achsen.d[0].q === 'tafel' && _achsen.d[0].n === 4,
@@ -2426,6 +2432,18 @@ const _wenig = JSON.parse(K.eval(`JSON.stringify((function(){
     let brk = false; try { brk = _isBreaking(s); } catch(e){}
     if(!brk) proTag[k] = (proTag[k]||0) + 1; });
   const zuViel = Object.keys(proTag).filter(k => proTag[k] > NEWS_LIMITS.proTag);
+  // Gezaehlt wird, was der Deckel auch wegnehmen kann. Breaking und die
+  // Pflichtkarte eines Tages sind davon ausgenommen — und besetzten vorher
+  // trotzdem einen Platz, obwohl der Feed sie ohnehin durchlaesst: gemessen
+  // gingen am letzten Spieltag der Fixtures zwei von fuenf Plaetzen an einen
+  // Countdown und den Spieler des Tages, und die 8er-Serie fiel heraus.
+  const PFLICHT = new Set(['potd','woche','chronik_monat','season_recap','chronik_frei']);
+  const zaehlbar = {};
+  sicht.forEach(s => { const k = tag(s), t = (s.dataRef||{}).type;
+    let brk = false; try { brk = _isBreaking(s); } catch(e){}
+    if(brk || PFLICHT.has(t)) return;
+    zaehlbar[k] = (zaehlbar[k] || 0) + 1; });
+  const zuVielZaehlbar = Object.keys(zaehlbar).filter(k => zaehlbar[k] > NEWS_LIMITS.proTag);
   // Ein Fun Fact steht nur an einem Tag ohne Nachricht.
   const echteTage = new Set();
   sicht.forEach(s => { const t = (s.dataRef||{}).type;
@@ -2433,14 +2451,16 @@ const _wenig = JSON.parse(K.eval(`JSON.stringify((function(){
   const funFacts = sicht.filter(s => (s.dataRef||{}).type === 'ambient');
   return {sicht: sicht.length, roh: roh.length,
           maxTag: Math.max.apply(null, Object.keys(proTag).map(k => proTag[k])),
-          zuViel,
+          zuViel, zuVielZaehlbar,
+          maxZaehlbar: Math.max.apply(null, Object.keys(zaehlbar).map(k => zaehlbar[k])),
           funFacts: funFacts.length,
           funAmLautenTag: funFacts.filter(s => echteTage.has(tag(s))).map(s => s.title),
           marken: roh.filter(s => (s.dataRef||{}).type === 'rivalry_milestone').length,
           deckel: NEWS_LIMITS.proTag, markenDeckel: NEWS_LIMITS.rivalryMarke};
 })())`));
-ok(_wenig.zuViel.length === 0, 'kein Tag traegt mehr Karten als der Deckel erlaubt',
-   _wenig.zuViel.join(', ') || 'hoechstens ' + _wenig.maxTag);
+ok(_wenig.zuVielZaehlbar.length === 0,
+   'kein Tag traegt mehr deckelbare Karten als der Deckel erlaubt',
+   _wenig.zuVielZaehlbar.join(', ') || 'hoechstens ' + _wenig.maxZaehlbar);
 ok(_wenig.funFacts > 0 && _wenig.funAmLautenTag.length === 0,
    'ein Fun Fact steht nur an einem Tag ohne Nachricht',
    _wenig.funAmLautenTag.join(' | ') || _wenig.funFacts + ' an stillen Tagen');
@@ -3685,6 +3705,133 @@ ok(_brkMit.mitSelten === 2 && _brkMit.seltenEinzeln === 1,
 ok(_brkMit.negKarten === 2 && _brkMit.negEinzeln === 1,
    'und eine negative Meldung steht nicht auf der Karte, die die Sieger feiert',
    _brkMit.negKarten + ' Karten');
+// ── Der Tafel-Moment ist lesbar, nicht vollstaendig ────────────────
+//    Gemessen am 28.09. trug er achtzehn Zeilen, davon elf Ausbauten, und
+//    der grosse Wert sagte „18 WECHSEL" — bei elf davon hat niemand
+//    gewechselt. Zuerst steht, was Wirkung hat: der Monatseintrag, der
+//    wirklich in der Chronik landet und fuers Prestige zaehlt.
+const _tafelOrd = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
+  const t = tage[tage.length - 1];
+  const m = _newsTagMs(t)[0], ms = mts(m), ck = 'table:' + t;
+  const basis = (id, typ, prio, titel, extra) => ({
+    id, cat:'tafel', ic:'trophy', when:new Date(ms), prio,
+    title:titel, desc:titel + '. Ein Satz mit 1 Zahl.',
+    dataRef:Object.assign({type:typ, causalKey:ck, matchId:m.id,
+      playerIds:[players[0].id]}, extra || {})
+  });
+  const bau = (ausbauten) => {
+    const l = [
+      basis('c-zeigt', 'chronik_geholt', 62, 'Ein Monatseintrag mit Marke',
+            {zeigt:true, titleId:'tz'}),
+      basis('c-nicht', 'chronik_geholt', 62, 'Ein Monatseintrag ohne Marke',
+            {zeigt:false, titleId:'tn'}),
+      basis('r-neu', 'rekord_geholt', 76, 'Eine Bestmarke wechselt',
+            {rekordId:'rn', kammer:'koennen'}),
+      basis('i-stufe', 'insignium_stufe', 58, 'Eine neue Stufe', {stufe:1})
+    ];
+    for(let i = 0; i < 4; i++)
+      l.push(basis('r-aus' + i, 'rekord_gesteigert', 40,
+        'Eine Bestmarke waechst, Nummer ' + (i + 1), {rekordId:'ra' + i, kammer:'koennen'}));
+    // Die spaeter dazukommende Zeile sortiert VOR allen anderen. Genau das
+    // ist der Fall, der die Karte vorher ihre Identitaet verlieren liess:
+    // der Schluessel war die alphabetisch erste Mitglieds-ID.
+    if(ausbauten) l.push(basis('a-spaeter', 'rekord_gesteigert', 40,
+      'Eine Bestmarke waechst spaeter', {rekordId:'rs', kammer:'koennen'}));
+    _cache._consolFrom = null;
+    const out = _consolidateStories(l);
+    const k = out.filter(x => (x.dataRef||{}).type === 'sammel'
+      && (x.dataRef||{}).quelle === 'tafel')[0] || null;
+    if(!k) return null;
+    const teile = k.dataRef.teile || [];
+    const wert = _newsTafelWert(k) || {};
+    const html = _newsCardHtmlM2(k, false, false);
+    return {id:k.id, prio:k.prio, n:teile.length,
+            reihe:teile.map(x => x.typ), marke:teile[0].marke || '',
+            wertV:String(wert.v), wertL:wert.l || '',
+            text:k.desc,
+            zeilen:(html.split('nf-sam-z').length - 1),
+            rest:/und (\\d+) weitere/.exec(html) ? /und (\\d+) weitere/.exec(html)[1] : ''};
+  };
+  return {vier: bau(0), fuenf: bau(1)};
+})())`));
+ok(_tafelOrd.vier && _tafelOrd.vier.n === 8,
+   'ein gestellter Tafel-Moment traegt acht Spuren',
+   _tafelOrd.vier ? String(_tafelOrd.vier.n) : 'keine Karte');
+ok(_tafelOrd.vier && _tafelOrd.vier.reihe[0] === 'chronik_geholt'
+   && _tafelOrd.vier.marke === 'in der Chronik',
+   'zuerst steht der Monatseintrag, der wirklich in der Chronik landet',
+   _tafelOrd.vier ? (_tafelOrd.vier.reihe[0] + ' / ' + _tafelOrd.vier.marke) : '');
+ok(_tafelOrd.vier
+   && _tafelOrd.vier.reihe.slice(0, 4).join(',')
+      === 'chronik_geholt,rekord_geholt,chronik_geholt,insignium_stufe'
+   && _tafelOrd.vier.reihe.slice(4).every(x => x === 'rekord_gesteigert'),
+   'dann jeder Halterwechsel, und das Ausbauen zuletzt',
+   _tafelOrd.vier ? _tafelOrd.vier.reihe.join(' ') : '');
+ok(_tafelOrd.vier && _tafelOrd.vier.prio === 89,
+   'die Karte bleibt im Band des Spieltags, statt ueber Breaking zu wachsen',
+   _tafelOrd.vier ? String(_tafelOrd.vier.prio) : '');
+ok(_tafelOrd.vier && _tafelOrd.vier.wertV === '4'
+   && _tafelOrd.vier.wertL === 'Wechsel',
+   'der grosse Wert zaehlt die Wechsel und nicht die Ausbauten',
+   _tafelOrd.vier ? (_tafelOrd.vier.wertV + ' ' + _tafelOrd.vier.wertL) : '');
+ok(_tafelOrd.vier && /[Ee]ine Bestmarke/.test(_tafelOrd.vier.text)
+   && /vier Ausbauten/.test(_tafelOrd.vier.text),
+   'und der Satz nennt Wechsel und Ausbauten getrennt',
+   _tafelOrd.vier ? _tafelOrd.vier.text : '');
+ok(_tafelOrd.vier && _tafelOrd.vier.zeilen === 4
+   && _tafelOrd.vier.rest === '4',
+   'auf der Karte stehen vier Zeilen, die Zahl fuehrt ins Blatt',
+   _tafelOrd.vier ? (_tafelOrd.vier.zeilen + ' Zeilen, +' + _tafelOrd.vier.rest) : '');
+ok(_tafelOrd.vier && _tafelOrd.fuenf
+   && _tafelOrd.vier.id === _tafelOrd.fuenf.id,
+   'und eine Zeile mehr ergibt dieselbe Karte, nicht eine neue',
+   _tafelOrd.vier ? (_tafelOrd.vier.id + ' | ' + (_tafelOrd.fuenf||{}).id) : '');
+// ── Breaking und die Pflichtkarte kosten keinen Tagesplatz ─────────
+//    Beide waren vor dem Verdraengen geschuetzt, besetzten aber trotzdem
+//    einen der Plaetze — und der Feed laesst sie ohnehin durch. Gemessen
+//    gingen so am letzten Spieltag der Fixtures zwei von fuenf Plaetzen an
+//    einen Countdown und den Spieler des Tages.
+const _platz = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
+  const t = tage[tage.length - 1];
+  const p = _newsTagMs(t);
+  const ms = i => mts(p[Math.min(i, p.length - 1)]) + i * 61000;
+  // Je Karte ein eigener Typ, eine eigene Minute und ein eigener Spieler:
+  // sonst buendelt die Minute sie, oder der Deckel je Sorte greift vorher.
+  const gew = [
+    {t:'giant_slayer', pr:74}, {t:'top_clash', pr:72}, {t:'streak_killer', pr:70},
+    {t:'win_streak', pr:68}, {t:'loss_streak', pr:66}, {t:'top_form', pr:64}
+  ].map((x, i) => ({id:'gew' + i, cat:'highlight', ic:'star', prio:x.pr,
+    when:new Date(ms(i + 2)), title:'Gewoehnliche Karte ' + i,
+    desc:'Ein Satz mit ' + (i + 1) + ' Zahl.',
+    dataRef:{type:x.t, pid:players[i].id, playerIds:[players[i].id], streak:99}}));
+  const brk = {id:'lead_day_platz', cat:'highlight', ic:'kingClass', prio:93,
+    when:new Date(ms(0)), title:'Ein Spitzenwechsel', desc:'Mit 216 Elo oben.',
+    dataRef:{type:'lead_change', newLeader:players[10].id, prevLeader:players[11].id,
+             elo:216, gap:28, wechsel:1, playerIds:[players[10].id, players[11].id]}};
+  const pflicht = {id:'potd_platz', cat:'highlight', ic:'medal', prio:88,
+    when:new Date(ms(1)), title:'Ein Spieler des Tages', desc:'5 von 7 gewonnen.',
+    dataRef:{type:'potd', pid:players[9].id, playerIds:[players[9].id], dayKey:t}};
+  const lauf = l => { _cache._consolFrom = null;
+    return _consolidateStories(l).filter(x => tagKey(x.when) === t); };
+  const mit = lauf([brk, pflicht].concat(gew));
+  const ohne = lauf(gew);
+  const zahl = l => l.filter(x => String(x.id).indexOf('gew') === 0).length;
+  return {mitGew: zahl(mit), ohneGew: zahl(ohne), mitAlle: mit.length,
+          deckel: NEWS_LIMITS.proTag,
+          brkDa: mit.some(x => x.id === 'lead_day_platz'),
+          pflichtDa: mit.some(x => x.id === 'potd_platz')};
+})())`));
+ok(_platz.ohneGew === _platz.deckel,
+   'ein Tag ohne Breaking behaelt genau so viele Karten, wie der Deckel sagt',
+   _platz.ohneGew + ' von ' + _platz.deckel);
+ok(_platz.mitGew === _platz.deckel,
+   'und Breaking und der Spieler des Tages nehmen keiner davon den Platz',
+   _platz.mitGew + ' von ' + _platz.deckel);
+ok(_platz.brkDa && _platz.pflichtDa && _platz.mitAlle === _platz.deckel + 2,
+   'sie stehen trotzdem beide im Feed',
+   _platz.mitAlle + ' Karten');
 // ── Eine Serie je Spieler und Tag, auch im Feed ────────────────────
 //    Der Generator bildet nur noch die hoechste Marke, aber persistierte
 //    Zeilen aus aelteren Laeufen tragen die kuerzeren weiter. Gemessen stand

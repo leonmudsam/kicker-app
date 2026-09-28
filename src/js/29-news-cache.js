@@ -1002,7 +1002,17 @@ function _consolidateStories(list){
     });
     komponenten.forEach(l => {
       if(l.length < 2) return;
-      const ident = l.map(x => String(x.st.id || '')).sort()[0];
+      // ── Der Schluessel ist der Grund, nicht das erste Mitglied ──
+      // Er war die alphabetisch erste Mitglieds-ID, und damit wechselte die
+      // Karte ihre Identitaet, sobald im naechsten Spiel eine Aenderung mit
+      // kleinerer ID dazukam: der Leser sah nicht dieselbe Karte wachsen,
+      // sondern eine neue an ihrer Stelle — und die gelesene war weg.
+      // Gemessen am 28.09. ergaben drei Partien drei verschiedene
+      // Tafel-Karten. Der Grund (`causalKey`) gilt fuer den ganzen Spieltag
+      // [§11.0e]; nur Zeilen aus aelteren Laeufen haben keinen.
+      const gruende = [...new Set(l.map(x => String(x.d.causalKey || '')))];
+      const ident = (gruende.length === 1 && gruende[0])
+        ? gruende[0] : l.map(x => String(x.st.id || '')).sort()[0];
       const key = 'tafel|moment|' + ident;
       // ── Die dauerhafte Tafel und die kurze Strecke sind zwei Karten ──
       // Ein Rekord auf einem gleitenden Fenster erzaehlt etwas anderes als
@@ -1156,9 +1166,15 @@ function _consolidateStories(list){
       k.pids.forEach(p => ziel.pids.add(p));
       ziel.eintraege.push(k);
     });
-    gruppen.forEach((gr, i) => {
+    gruppen.forEach(gr => {
       if(gr.eintraege.length < 2) return;
-      const key = 'spiel|' + mk + '|' + i;
+      // Der Schluessel war die Position der Gruppe in der Schleife. Sie
+      // verschiebt sich, sobald zwei Gruppen verschmelzen — dieselbe Karte
+      // bekam damit eine andere ID, und der Lesestand daran hing. Er kommt
+      // jetzt aus dem Inhalt: die kleinste Mitglieds-ID ist unabhaengig von
+      // der Reihenfolge, in der die Gruppen entstehen [§C33].
+      const key = 'spiel|' + mk + '|'
+        + gr.eintraege.map(e => String(e.st.id || '')).sort()[0];
       const g = {key, art:'spiel', teile:[], titel:new Set(), max:Infinity, erster: gr.erster};
       sammelGruppen.set(key, g);
       gr.eintraege.sort((a, b) => a.idx - b.idx).forEach(e => _sammelZeile(g, e.st));
@@ -1184,9 +1200,34 @@ function _consolidateStories(list){
     // Balken und liess den Leser raten, wofuer. Eine Behauptung, die die
     // Karte selbst nicht belegt, ist keine Nachricht.
     const _brkT = t => { try { return !!_isBreaking(t); } catch(e){ return false; } };
+    // ── Zuerst, was Wirkung hat ──────────────────────────────────────
+    // Sortiert war nur nach `prio`, also nach der Familie: Bestmarke,
+    // Monatschronik, Insignium. Bei achtzehn Zeilen sagt das nichts mehr —
+    // gemessen am 28.09. standen elf Ausbauten in der Liste, und der eine
+    // Monatseintrag, der wirklich in der Chronik landet und fuers Prestige
+    // zaehlt [§C32], lag dahinter. Drei Stufen: der gekennzeichnete
+    // Chronik-Eintrag, dann jeder Halterwechsel, dann das Ausbauen — bei dem
+    // niemand gewechselt hat.
+    const _wirkung = t => {
+      const dt = (t && t.dataRef) || {};
+      if(dt.type === 'chronik_geholt' && dt.zeigt === true) return 0;
+      if(dt.type === 'rekord_gesteigert') return 2;
+      return 1;
+    };
+    // ── Die Reihenfolge der Zeilen wiegt die Karte nicht ─────────────
+    // `kopf` traegt Rang, Rubrik und Zeichen der Sammelkarte, und `kopf` war
+    // die erste ANGEZEIGTE Zeile. Damit sank der Rang der Karte, sobald die
+    // Anzeige umsortierte: gemessen fiel der Tafel-Moment des 26.08. von 84
+    // auf 70, weil vorne jetzt die Monatschronik steht und nicht die
+    // Bestmarke — und damit unter den Tagesdeckel. Der Kopf ist der
+    // staerkste Teil, die Reihenfolge eine Frage der Lesbarkeit.
     const _nachPrio = g.teile.slice().sort((a, b) => (b.prio||0) - (a.prio||0));
-    const teile = _nachPrio.filter(_brkT).concat(_nachPrio.filter(t => !_brkT(t)));
-    const kopf = teile[0];
+    const _prioOrd = _nachPrio.filter(_brkT).concat(_nachPrio.filter(t => !_brkT(t)));
+    const kopf = _prioOrd[0];
+    const teile = _prioOrd.slice().sort((a, b) =>
+      ((_brkT(b) ? 1 : 0) - (_brkT(a) ? 1 : 0))
+      || (_wirkung(a) - _wirkung(b))
+      || ((b.prio||0) - (a.prio||0)));
     const art = g.art || (g.key.indexOf('tafel|') === 0 ? 'tafel' : 'spiel');
     // Die kurze Strecke gehoert zur Ewigen Tafel: dieselbe Kammer, dieselbe
     // Farbfamilie, derselbe Filter [§C25]. Verschieden ist nur, wovon die
@@ -1250,12 +1291,20 @@ function _consolidateStories(list){
         + `${mz ? 'Sie halten' : 'Sie hält'}, solange das Fenster reicht.`;
     } else if(istTafel){
       const bilder = [];
-      const nr = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('rekord_') === 0).length;
+      // Ein Ausbau ist keine gewechselte Bestmarke. Gezaehlt waren beide
+      // zusammen, und damit stand „elf Bestmarken" ueber einem Moment, in
+      // dem zwei den Halter wechselten und neun von ihrem eigenen Halter
+      // verbessert wurden — wer nichts abgegeben hat, hat nichts abgegeben
+      // [§C33].
+      const nr = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('rekord_') === 0
+        && (t.dataRef || {}).type !== 'rekord_gesteigert').length;
+      const na = teile.filter(t => (t.dataRef || {}).type === 'rekord_gesteigert').length;
       const nc = teile.filter(t => ((t.dataRef || {}).type || '').indexOf('chronik_') === 0).length;
       const ni = teile.filter(t => (t.dataRef || {}).type === 'insignium_stufe').length;
       // Zahlwort, nicht Ziffer: „Eine Bestmarke, 2 Monatschroniken und ein
       // neues Insignium" mischte beides in einem Satz.
       if(nr) bilder.push(nr === 1 ? 'eine Bestmarke' : `${_zahlwortDe(nr)} Bestmarken`);
+      if(na) bilder.push(na === 1 ? 'ein Ausbau' : `${_zahlwortDe(na)} Ausbauten`);
       if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${_zahlwortDe(nc)} Monatschroniken`);
       if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${_zahlwortDe(ni)} neue Insignien`);
       const bild = _namenListe(bilder.length ? bilder : ['mehrere Laufbahnen']);
@@ -1362,8 +1411,13 @@ function _consolidateStories(list){
       // Kopf stand „Jannik und Stefan tragen jetzt den Schildring" auf dem
       // Rang einer einzelnen Insignium-Stufe und fiel an ihrem eigenen
       // Spieltag heraus — der einzigen Karte, auf der die beiden standen.
-      prio: Math.max((kopf.prio || 0) + 2 * Math.max(1, teile.length - 1),
-                     STORY_PRIO['sammel_' + art] || 0),
+      // Sie waechst mit jeder Zeile um zwei — und sprengte damit die Skala:
+      // achtzehn Zeilen ergaben 110 und standen ueber dem Breaking-Band, ohne
+      // Breaking zu sein. Ihren Platz haelt sie auch ohne das (die Tafel hat
+      // je Tag einen reservierten), also bleibt sie im Band des Spieltags.
+      prio: Math.min(PRIO_SPIELTAG_MAX,
+                     Math.max((kopf.prio || 0) + 2 * Math.max(1, teile.length - 1),
+                              STORY_PRIO['sammel_' + art] || 0)),
       dataRef: {type:'sammel', quelle: art,
                 // ── Eine Partie oder keine ──────────────────────────
                 // Die Karte borgte die matchId ihres Kopfes. Ein
@@ -1640,8 +1694,24 @@ function _consolidateStories(list){
   // Ein Serienbruch oder eine Auszeichnung hat eine Partie, erzaehlt aber
   // von etwas anderem — die gehoeren nicht in eine Ergebnis-Karte.
   const ERG_SORTEN = new Set(['match_result', 'top_clash', 'giant_slayer']);
+  // ── Der Deckel zaehlt nur, was er auch wegnehmen kann ─────────────
+  // „Breaking zaehlt nicht mit" und „was es je Tag genau einmal gibt, faellt
+  // nie darunter" stand als Regel da — umgesetzt war nur die Haelfte davon:
+  // beide waren vor dem VERDRAENGEN geschuetzt, besetzten aber trotzdem
+  // einen der fuenf Plaetze. Und danach laesst `fertig0` sie ohnehin durch,
+  // ob sie in der Auswahl stehen oder nicht: der Platz war verschenkt.
+  // Gemessen am letzten Spieltag der Fixtures gingen so zwei von fuenf
+  // Plaetzen an „Noch 5 Tage um den Monat" (Breaking) und den Spieler des
+  // Tages, und „Martin zuendet die 8er-Serie" fiel heraus — der Tag zeigte
+  // drei selbst gewaehlte Karten statt fuenf.
+  const _zaehltGegenDeckel = s => {
+    const t = (s && s.dataRef || {}).type;
+    if(TAG_PFLICHT.has(t)) return false;
+    try { if(typeof _isBreaking === 'function' && _isBreaking(s)) return false; } catch(e){}
+    return true;
+  };
   Object.keys(_tagRang).forEach(k => {
-    const rang = _tagRang[k].slice()
+    const rang = _tagRang[k].filter(_zaehltGegenDeckel)
       .sort((a, b) => (b.prio || 0) - (a.prio || 0));
     const auswahl = rang.slice(0, NEWS_LIMITS.proTag);
     const soll = [];
