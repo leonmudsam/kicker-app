@@ -107,7 +107,12 @@ const NEWS_LIMITS = {
   // verschieben. Sie werden vor der Bündelung nicht mehr abgeschnitten:
   // dieselbe Partie bzw. Minute ergibt später eine einzige vollständige
   // Tafel-Karte. So sinkt die Kartenzahl, nicht der fachliche Inhalt.
-  proTag: 5,
+  // Vier, nicht fuenf: der Deckel zaehlt seit der Korrektur nur, was er auch
+  // wegnehmen kann, und Breaking und die Pflichtkarte kommen dazu. Bei fuenf
+  // trug ein Spieltag damit gemessen sieben Karten — das ist wieder ein
+  // Protokoll. Vier eigene Plaetze plus der Sieger des Tages plus, wenn es
+  // eines gibt, ein Breaking: gemessen drei bis sechs Karten je Spieltag.
+  proTag: 4,
   // Neben POTD und Tafel braucht ein echter Spieltag mindestens eine Karte,
   // die an einer konkreten Partie haengen: Ergebnis, Beteiligte und das,
   // was genau dort passiert ist. Das ist kein zusaetzliches Kartenbudget;
@@ -140,7 +145,12 @@ const NEWS_LIMITS = {
   // sechs stehen auf der Karte (`teile` ist nach `prio` sortiert, also
   // Bestmarke vor Monatschronik vor Insignium), die Zahl dahinter fuehrt
   // ins Blatt, und dort steht weiterhin jede Zeile [§C33].
-  sammelZeilen: 6,
+  // Sechs waren zu viele, sobald ein Spieltag die Tafel wirklich bewegt:
+  // gemessen am 28.09. trug ein Tafel-Moment achtzehn Zeilen, davon elf
+  // Ausbauten, und die Karte war ein Block aus Namen. Vier stehen auf der
+  // Karte — zuerst, was Wirkung hat [§C33] —, die Zahl dahinter fuehrt ins
+  // Blatt, und dort steht weiterhin jede Zeile.
+  sammelZeilen: 4,
   // Ab wann die Karte des Tages steht [§C33]. Acht Partien war der Median
   // der Liga und damit eine Behauptung ueber den TAG: erreicht an 64 % der
   // Spieltage, und die anderen 36 % warteten bis 19 Uhr auf ein Band, das
@@ -289,6 +299,13 @@ const FORM_VORSPRUNG = 0.25; // Anteilspunkte über dem eigenen Schnitt
 // 5er) bleiben ein Zuschlag auf den Grundwert. Der Zuschlag darf sein Band
 // verlassen, wo der Typ das auch darf: eine legendäre Auszeichnung und die
 // beiden obersten Insignium-Stufen sind Breaking [§C33].
+// Die Obergrenze des Spieltagsbandes [§C33]. Breaking beginnt bei 90, der
+// Spieltag reicht bis 89 — und eine Sammelkarte waechst mit jeder Zeile um
+// zwei. Gemessen am 28.09. bundelte ein Tafel-Moment achtzehn Aenderungen
+// und stand damit bei 110: ueber dem Breaking-Band, ohne Breaking zu sein.
+// Damit gab es die zweite Skala wieder, gegen die `STORY_PRIO` gebaut ist.
+const PRIO_SPIELTAG_MAX = 89;
+
 const STORY_PRIO = {
   // ── Breaking ──
   rekord_erstmals:   96,   // ein Liga-Rekord wird zum ersten Mal vergeben

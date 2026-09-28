@@ -899,7 +899,15 @@ function _newsTafelWert(s){
     return (d.punkte | 0) > 0 ? {v:'+' + d.punkte, l:'Prestige'} : null;
   }
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
-  if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
+  // ── „Wechsel" zaehlt nur, was gewechselt hat ─────────────────────
+  // Gezaehlt waren alle Zeilen, und damit stand „18 WECHSEL" ueber einem
+  // Moment, in dem elf davon Ausbauten waren: derselbe Halter, ein besserer
+  // Wert, kein Wechsel [§C33]. Die Aufschrift sagt, was die Zahl zaehlt.
+  if(d.teile && d.teile.length){
+    const w = d.teile.filter(t => t && t.typ !== 'rekord_gesteigert').length;
+    if(w) return {v: w, l: w === 1 ? 'Wechsel' : 'Wechsel'};
+    return {v: d.teile.length, l: d.teile.length === 1 ? 'Ausbau' : 'Ausbauten'};
+  }
   // „Bestwert" war geraten. Die Zahl kommt aus einem Regex ueber den
   // Fliesstext, und bei „Der Wandler" stand damit „0 %" unter der
   // Aufschrift BESTWERT — der Wert ist dort ein UNTERSCHIED zwischen zwei

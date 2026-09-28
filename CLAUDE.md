@@ -124,7 +124,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **755**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **756**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -304,7 +304,7 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird, den Katalog der fünfundsechzig samt seinen fünf Kammern, Grundwerten, eindeutigen Zeichen und vollständigen Angaben, die festen Endfenster, den Serienstand vor der Partie, die Rekordlage ohne spätere Partien, die Gegenpaare mit derselben Mindestbasis, die gestrichenen Rekorde samt ihrer alten Karten und die Laufbahn aus lauter Niederlagen, die nichts gewinnt, den sichtbaren Text, der die App nicht erklärt, und die acht Rekorde aus engen Partien, Gegnerkreis, Niederlagen, Wiedersehen, Pleitenserie, Serienantwort, Pause und Rolle, jeder ein zweites Mal aus den rohen Partien nachgerechnet | 1443 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie und jede CSS-Variable, die auch gelesen wird | 193 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die Angaben, die eine Rekordkarte ans Storysystem weitergibt, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse, die These, die nicht vor dreissig Tagen wiederkommt, den Schlusssprint bei offener Lage, den Spitzenwechsel, der keinem Deckel zum Opfer faellt, die kurze Strecke als eigene Karte und den Saison-Rueckblick, der seinen Monat abschliesst, den zweiten Lauf, der dieselben IDs, Zeitpunkte, Gruppen und Texte ergibt, und jeden Wechsel eines Tages im Blatt des Titelrennens den rohen Grundwert, der nie als erhaltene Punkte dasteht, die drei Ebenen aus Tafelplatz, Profileintrag und Prestigequelle den Tag, an dem die Monatstafel aufgeht, und die Zeile, die ihre eigene Uhrzeit nennt, neben der Wirkung, die einmal dasteht, den Anlass eines Breaking, der als erste Zeile steht, gekennzeichnet ist und den Nachsatz der Karte trägt, die neuen Liga-Rekorde, die im Feed vorkommen, und den Fun Fact, der seine Slot-Stunde trägt und nicht die Uhrzeit seines Lesers, die Breaking-Karte, die die übrigen Meldungen ihrer Partie mitnimmt und die seltene Auszeichnung dabei stehen lässt, das Ergebnis, das eine Auszeichnung derselben Partie schon erzählt, und den Spitzenwechsel, der seinen direkten Vorgänger nennt statt das Ergebnis seines Bandes | 474 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die gemeinsame Karte zweier verdrängter Ergebnisse, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die Angaben, die eine Rekordkarte ans Storysystem weitergibt, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse, die These, die nicht vor dreissig Tagen wiederkommt, den Schlusssprint bei offener Lage, den Spitzenwechsel, der keinem Deckel zum Opfer faellt, die kurze Strecke als eigene Karte und den Saison-Rueckblick, der seinen Monat abschliesst, den zweiten Lauf, der dieselben IDs, Zeitpunkte, Gruppen und Texte ergibt, und jeden Wechsel eines Tages im Blatt des Titelrennens den rohen Grundwert, der nie als erhaltene Punkte dasteht, die drei Ebenen aus Tafelplatz, Profileintrag und Prestigequelle den Tag, an dem die Monatstafel aufgeht, und die Zeile, die ihre eigene Uhrzeit nennt, neben der Wirkung, die einmal dasteht, den Anlass eines Breaking, der als erste Zeile steht, gekennzeichnet ist und den Nachsatz der Karte trägt, die neuen Liga-Rekorde, die im Feed vorkommen, und den Fun Fact, der seine Slot-Stunde trägt und nicht die Uhrzeit seines Lesers, die Breaking-Karte, die die übrigen Meldungen ihrer Partie mitnimmt und die seltene Auszeichnung dabei stehen lässt, das Ergebnis, das eine Auszeichnung derselben Partie schon erzählt, und den Spitzenwechsel, der seinen direkten Vorgänger nennt statt das Ergebnis seines Bandes, den Tagesdeckel, der nur zählt, was er wegnehmen kann, und den Tafel-Moment, der zuerst zeigt, was Wirkung hat, seinen Rang nicht aus der Anzeigereihenfolge zieht, im Band des Spieltags bleibt und beim Dazukommen einer Zeile dieselbe Karte bleibt | 485 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest, die fünf Kammern samt ihren Zählern und die Kammerleiste, die auf dem Telefon erreichbar bleibt, und die Bildzone jeder der zwölf Kartensorten, die der Schlagzeile nicht den Platz nimmt und ihr eigenes Bild nicht abschneidet — **im echten Browser gemessen** | 147 |
 | `archiv` | Einfrieren abgeschlossener Monate und den Profileintrag, der daraus gelesen wird | 9 |
@@ -772,8 +772,18 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   93) den Platz von `matchProTagMin`, weil auch eine Breaking-Karte eine Partie
   nennt, und die Karte, die den Spieltag am konkretesten erzählt, verschwand
   für eine, die ohnehin im Feed stand.
-  **Ein Tag trägt fünf Karten** (`NEWS_LIMITS.proTag`). Gemessen trug ein
-  Spieltag neun: zwei Sammelkarten, zwei Serien, zwei Auszeichnungen, den
+  **Ein Tag trägt vier Karten** (`NEWS_LIMITS.proTag`), und der Deckel zählt
+  nur, was er auch wegnehmen kann. „Breaking zählt nicht mit" stand als Regel
+  da, umgesetzt war die Hälfte davon: Breaking und die Pflichtkarte waren vor
+  dem Verdrängen geschützt, besetzten aber trotzdem einen Platz — und der
+  Feed lässt sie ohnehin durch, der Platz war verschenkt. Gemessen am letzten
+  Spieltag der Fixtures gingen zwei von fünf Plätzen an „Noch 5 Tage um den
+  Monat" und den Spieler des Tages, „Martin zündet die 8er-Serie" fiel heraus,
+  und der Tag zeigte drei selbst gewählte Karten statt fünf; über das ganze
+  Fenster lag die Ewige Tafel damit bei 64 % statt der gemessenen Hälfte. Vier
+  eigene Plätze plus der Sieger des Tages plus, wenn es eines gibt, ein
+  Breaking — gemessen drei bis sechs Karten je Spieltag. Gemessen trug ein
+  Spieltag vorher neun: zwei Sammelkarten, zwei Serien, zwei Auszeichnungen, den
   Spieler des Tages, den Elo-Ausschlag und einen Serienbrecher. Das ist keine
   Tafel mehr, das ist ein Protokoll. Der Tag behält seine stärksten, gemessen
   an `prio` — der Reihenfolge, die der Generator ohnehin vergibt und aus der
@@ -788,11 +798,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   was wegfällt, nicht wo etwas steht — die Reihenfolge bleibt die Zeit.
   `prio` sortiert den Feed seit dem chronologischen Umbau nicht mehr; sie
   entscheidet nur noch über Gewicht und Tagesdeckel.
-  **Die Mischung gehört dem Tag, nicht dem Fenster.** Zwei der fünf Plätze
+  **Die Mischung gehört dem Tag, nicht dem Fenster.** Zwei der vier Plätze
   sind reserviert: `NEWS_LIMITS.tafelProTagMin` für die **Ewige Tafel**, wenn
   sie sich an diesem Tag bewegt hat, und `NEWS_LIMITS.matchProTagMin` für eine
   Geschichte, deren **konkrete Partie** die Karte zeigen kann. Gibt es das an
-  diesem Tag nicht, bleibt der Platz beim Nächststarken; eine sechste Karte
+  diesem Tag nicht, bleibt der Platz beim Nächststarken; eine fünfte Karte
   entsteht daraus nie. Vorher war es eine Quote über die ganzen vierzehn Tage —
   mindestens 40 % Tafel, gemessen am Inhalt der Karten —, und erfüllt wurde sie,
   indem SPIELTAGSKARTEN wegfielen: gemessen schnitt das den Feed von 42 auf 23
@@ -862,6 +872,17 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   neun der 19 Spieltage vom 28.07. bis 26.08. eine solche Karte, acht davon
   neben der dauerhaften. Zeilen aus älteren Läufen ohne `causalKey` finden
   weiter über Partie oder Minute zusammen und bleiben die dauerhafte Tafel.
+  **Der Schlüssel einer Sammelkarte kommt aus ihrem Inhalt, nicht aus der
+  Reihenfolge.** Der Tafel-Moment hieß nach seiner alphabetisch ersten
+  Mitglieds-ID und die Spieltags-Karte nach der Position ihrer Gruppe in der
+  Schleife. Beides verschiebt sich, sobald eine Zeile dazukommt oder zwei
+  Gruppen verschmelzen: der Leser sah nicht dieselbe Karte wachsen, sondern
+  eine neue an ihrer Stelle, und der Lesestand hing daran. Gemessen ergaben
+  drei Partien eines Tages drei verschiedene Tafel-Karten. Der Tafel-Moment
+  heißt deshalb nach seinem **Grund** (`causalKey`, für den ganzen Spieltag
+  derselbe), die Spieltags-Karte nach der kleinsten Mitglieds-ID; nur Zeilen
+  aus älteren Läufen ohne Grund finden weiter über das erste Mitglied
+  zusammen.
   Ein vollständiges Bundle entsteht auch dann, wenn eine Zeile Breaking ist. Spieltags-Ereignisse brauchen zusätzlich **ein
   gemeinsames Subjekt**; Fun Facts gehören nie dazu, weil sie nicht aus dem
   Moment entstanden sind. Jede Karte erhält eine **gemeinsame Aussage**, die
@@ -1053,10 +1074,35 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Tafel-Moment neunzehn Zeilen — fünf Bestmarken, dreizehn Monatschroniken und
   ein Insignium —, und die Karte war gerendert 852 px hoch und damit höher als
   das Telefon: damit versteckte gerade die vollständige Liste alles andere des
-  Tages. Auf der Karte stehen deshalb die **stärksten sechs** und dahinter die
-  Zahl der übrigen; `teile` ist nach `prio` sortiert, also Bestmarke vor
-  Monatschronik vor Insignium-Stufe. Im **Blatt** steht weiterhin jede
-  einzelne Zeile — die Karte fasst zusammen, das Blatt zeigt alles. Jede Zeile trägt ihre
+  Tages. Sechs waren noch zu viele: gemessen am 28.09. trug ein Tafel-Moment
+  achtzehn Zeilen, und die Karte war ein Block aus Namen. Auf der Karte
+  stehen deshalb **vier** und dahinter die Zahl der übrigen. Im **Blatt**
+  steht weiterhin jede einzelne Zeile — die Karte fasst zusammen, das Blatt
+  zeigt alles.
+  **Und zuerst steht, was Wirkung hat.** Sortiert war nach `prio`, also nach
+  der Familie: Bestmarke, Monatschronik, Insignium. Bei achtzehn Zeilen sagt
+  das nichts mehr — elf davon waren Ausbauten, und der eine Monatseintrag,
+  der wirklich in der Chronik landet und fürs Prestige zählt [§C32], lag
+  dahinter. Drei Stufen: der **gekennzeichnete Chronik-Eintrag**
+  (`zeigt === true`, die Marke „in der Chronik"), dann jeder
+  **Halterwechsel** — darin weiter Bestmarke vor Monatschronik vor
+  Insignium-Stufe —, dann das **Ausbauen**, bei dem niemand gewechselt hat.
+  **Die Reihenfolge wiegt die Karte dabei nicht.** `kopf` trägt Rang, Rubrik
+  und Zeichen der Sammelkarte, und `kopf` war die erste ANGEZEIGTE Zeile:
+  gemessen fiel der Tafel-Moment des 26.08. von 84 auf 70, sobald vorne die
+  Monatschronik stand und nicht die Bestmarke — und damit unter den
+  Tagesdeckel. Der Kopf ist der stärkste Teil, die Reihenfolge eine Frage der
+  Lesbarkeit.
+  **Und sie wächst nicht über ihr Band hinaus** (`PRIO_SPIELTAG_MAX`). Die
+  Karte wiegt mehr mit jeder Zeile, zwei Punkte je Stück: achtzehn Zeilen
+  ergaben 110 und standen damit über dem Breaking-Band (90+), ohne Breaking zu
+  sein [§C33 `STORY_PRIO`]. Ihren Platz hält sie auch ohne das — die Ewige
+  Tafel hat je Tag einen reservierten —, also bleibt sie bei 89.
+  **Der große Wert zählt Wechsel, keine Ausbauten.** „18 WECHSEL" stand über
+  einem Moment, in dem elf Zeilen ein Ausbau waren: derselbe Halter, ein
+  besserer Wert, kein Wechsel. Dasselbe im Satz — „elf Bestmarken" zählte
+  beide zusammen; er nennt sie jetzt getrennt („Eine Bestmarke, vier
+  Ausbauten, zwei Monatschroniken und ein neues Insignium"). Jede Zeile trägt ihre
   Beteiligten (`pids`) — daran hängt die Bündelung, und im Blatt führt die
   Zeile damit zu dem, von dem sie handelt.
   Verknüpfte Spielstories heißen „Ein Spiel, zwei Geschichten für …"; ihr
@@ -1072,7 +1118,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   keine Fensterbreite — sie hängt daran, wie viel gerade los war, und wer
   nach einer Woche Pause hineinsah, fand seinen eigenen Spieltag nicht mehr.
   `NEWS_LIMITS.total` ist entsprechend auf 120 gesetzt: vierzehn Tage mal
-  fünf Karten sind siebzig, der Rest ist Luft für Breaking und die
+  vier Karten sind sechsundfünfzig, der Rest ist Luft für Breaking und die
   Pflichtkarten, die nicht gegen den Tagesdeckel zählen.
   **Dieselbe Auszeichnung ist einmal Nachricht, dann an runden Marken**
   (`NEWS_BADGE_MARKEN`: 1, 5, 10, 25, 50, 100). Die Karte entstand jedes Mal
@@ -1431,10 +1477,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Tag, nachdem die letzte Partie gelaufen war. Welche Partien zu einem
   Kalendertag gehören, sagt `_newsTagMs` — in Ortszeit, weil der Feed nach
   Ortszeit gruppiert und `matchesByDay` nach UTC schlüsselt.
-  **Die Sammelkarte zeigt jede gebündelte Zeile**, solange sie in eine Karte
-  passt. Ihr eigener Titel ist eine Zusammenfassung und entspricht deshalb
-  keinem Einzelereignis. Bis `NEWS_LIMITS.sammelZeilen` stehen alle Teile
-  vollständig im Sammelband; „und 1 weitere" gibt es dort nicht.
+  **Die Sammelkarte zeigt ihre stärksten Zeilen, das Blatt alle.** Ihr eigener
+  Titel ist eine Zusammenfassung und entspricht deshalb keinem Einzelereignis.
+  Bis `NEWS_LIMITS.sammelZeilen` stehen alle Teile im Sammelband, darüber
+  führt die Zahl der übrigen ins Blatt.
   **Wo der Erfolg ein Zeichen ist, steht das Zeichen dabei**
   (`_newsErfolgZeichen`). „Vier Spieler tragen jetzt den Schildring" zeigte
   den Schildring kein einziges Mal — daneben stand ein Pokal aus dem

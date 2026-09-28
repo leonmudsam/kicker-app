@@ -1053,8 +1053,8 @@ const ok = (c, msg, det) => {
   });
   ok(!flut.fehlt && flut.teile === 19,
      'ein Tafel-Moment kann neunzehn Spuren tragen', JSON.stringify(flut));
-  ok(flut.zeilen === 6 && /13/.test(flut.rest),
-     'die Karte zeigt die staerksten sechs und zaehlt den Rest',
+  ok(flut.zeilen === 4 && /15/.test(flut.rest),
+     'die Karte zeigt die staerksten vier und zaehlt den Rest',
      flut.zeilen + ' Zeilen, „' + flut.rest + '"');
   ok(flut.hoehe < 640,
      'und bleibt damit kuerzer als ein Telefonbildschirm',
