@@ -1049,6 +1049,12 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null;
   const sichtbar = getStoriesCache();
+  // Eine Partie-Karte ist keine Wiederholung: jede Partie bekommt ihre Karte,
+  // und neun Partien an einem Tag sind neun Ereignisse. Die Regeln gegen
+  // Wiederholung fragen nach dem Gegenteil und lassen sie deshalb in Ruhe.
+  const _prt = s => { const d=(s&&s.dataRef)||{};
+    return d.type==='spiel' || (d.type==='sammel' && d.quelle==='spiel' && !!d.matchId); };
+  const ohnePartie = sichtbar.filter(s => !_prt(s));
   const zaehl = {}, proTag = {};
   sichtbar.forEach(s => { const t=(s.dataRef&&s.dataRef.type)||'-';
     zaehl[t]=(zaehl[t]||0)+1;
@@ -1058,14 +1064,30 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     // Gemessen wird die Verteilung ueber die EREIGNISSE, nicht ueber die
     // Karten: eine Sammelkarte buendelt bis zu vier davon, und wer sie als
     // eine zaehlt, bestraft genau die Buendelung.
-    ereignisse: sichtbar.reduce((n, s) => {
+    ereignisse: ohnePartie.reduce((n, s) => {
       const t = ((s.dataRef||{}).teile||[]); return n + (t.length > 1 ? t.length : 1); }, 0),
     // Wer in der Geschichte vorkommt, bekommt sein Gesicht.
     mitSpieler: sichtbar.filter(s => _newsPids(s).length > 0).length,
     ohneGesicht: sichtbar.filter(s => _newsPids(s).length > 0 && !_newsGesichtHtml(s)).length,
     wappen: sichtbar.filter(s => _newsGesichtHtml(s).indexOf('class="ins"') >= 0).length,
     matchKarten: sichtbar.filter(s => (s.dataRef||{}).matchId).length,
-    matchResult: sichtbar.filter(s => (s.dataRef||{}).type === 'match_result').length,
+    matchResult: sichtbar.filter(s => (s.dataRef||{}).type === 'spiel').length,
+    // ── Jede Partie bekommt ihre Karte ──────────────────────────────
+    // Gebildet wurde nur ein auffaelliges Muster, und der Deckel nahm den
+    // Rest: von 52 Partien des Fensters kamen 18 in einer sichtbaren Karte
+    // vor. Wer am Abend nachliest, erfuhr von zwei Dritteln nichts.
+    partienOhneKarte: (function(){
+      const seit = Date.now() - NEWS_FENSTER_TAGE * 86400000;
+      const genannt = new Set();
+      sichtbar.forEach(s => { const d = s.dataRef || {};
+        if(d.matchId) genannt.add(d.matchId);
+        (d.teile || []).forEach(t => { if(t.matchId) genannt.add(t.matchId); }); });
+      return matches.filter(m => mts(m) >= seit && !genannt.has(m.id)).length;
+    })(),
+    partienImFenster: (function(){
+      const seit = Date.now() - NEWS_FENSTER_TAGE * 86400000;
+      return matches.filter(m => mts(m) >= seit).length;
+    })(),
     matchOhneBand: sichtbar.filter(s => {
       const d=s.dataRef||{}; if(!d.matchId) return false;
       const m=matches.find(x=>x.id===d.matchId);
@@ -1089,18 +1111,27 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     // eigenen Tages.
     haeufung: Object.keys(proTag).filter(k => proTag[k] > 2 &&
       ['ambient','group','lead_change','elo_record','streak_record',
-       'season_recap','season_endgame','sammel','woche',
+       'season_recap','season_endgame','sammel','woche','spiel',
        'potd','chronik_monat'].indexOf(k.split('|')[0]) < 0)
       .map(k => k + '×' + proTag[k]),
     // Doppelte Schlagzeilen: zweimal dieselbe Zeile ist eine Zeile zu viel.
     doppelt: (function(){
-      const g = {}; sichtbar.forEach(s => { g[s.title]=(g[s.title]||0)+1; });
+      // Was es je Tag genau einmal gibt, darf dieselbe Schlagzeile zweimal
+      // tragen: zwei Spieltage, zwei Sieger, und jede Karte nennt im Text ihr
+      // eigenes Datum. Dieselbe Ausnahme gilt fuer die Partie.
+      const PFL = ['potd','woche','chronik_monat','season_recap','chronik_frei'];
+      const g = {}; sichtbar.filter(s => !_prt(s)
+        && PFL.indexOf((s.dataRef||{}).type) < 0)
+        .forEach(s => { g[s.title]=(g[s.title]||0)+1; });
       return Object.keys(g).filter(t => g[t] > 1);
     })(),
     // Und zweimal derselbe Text erst recht nicht — „Eine grosse Rivalitaet —
     // die Liga liebt's" stand wortgleich unter zwei Karten untereinander.
     doppelText: (function(){
-      const g = {}; sichtbar.forEach(s => { g[s.desc]=(g[s.desc]||0)+1; });
+      const PFL = ['potd','woche','chronik_monat','season_recap','chronik_frei'];
+      const g = {}; sichtbar.filter(s => !_prt(s)
+        && PFL.indexOf((s.dataRef||{}).type) < 0)
+        .forEach(s => { g[s.desc]=(g[s.desc]||0)+1; });
       return Object.keys(g).filter(t => t && g[t] > 1);
     })(),
     // Nichts steht zweimal DIREKT untereinander: zwei gleiche Sorten in Folge
@@ -1136,9 +1167,10 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
       // Buendelung verhindert.
       const art = x => { const d = x.dataRef || {};
         if(d.type === 'sammel') return 'sammel/' + (d.kopfTyp || '');
-        if(d.type === 'match_result') return 'match_result/' + (d.resultKind || '');
+        if(d.type === 'spiel') return 'spiel/' + (d.resultKind || '');
         return d.type; };
       for(let i = 1; i < sichtbar.length; i++){
+        if(_prt(sichtbar[i-1]) || _prt(sichtbar[i])) continue;
         const a = art(sichtbar[i-1]), b = art(sichtbar[i]);
         if(a && a === b && tg(sichtbar[i-1]) === tg(sichtbar[i])){
           n++; _nb.push(a + ' :: ' + sichtbar[i-1].title + ' || ' + sichtbar[i].title
@@ -1160,16 +1192,26 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     // Wie ungleich sind die Gesichter verteilt? Vorher stand ein Spieler auf
     // neun von einunddreissig Karten und ein anderer auf einer.
     gesichter: (function(){
-      const g = {}; sichtbar.forEach(s => _newsPids(s).forEach(id => { g[id]=(g[id]||0)+1; }));
+      // Gezaehlt wird ueber die Karten, die eine AUSWAHL sind. Eine
+      // Partie-Karte ist keine: wer oft spielt, steht oft darauf, und das ist
+      // kein Uebergewicht im Feed, sondern der Spielplan.
+      const g = {}; ohnePartie.forEach(s => _newsPids(s).forEach(id => { g[id]=(g[id]||0)+1; }));
       const w = Object.keys(g).map(k => g[k]).sort((x,y) => y-x);
       // Wer gewertet ist, muss auch vorkommen. Das ist die staerkere Frage als
       // die nach dem Spitzenreiter: der Feed darf jemanden feiern, aber er
       // darf niemanden uebergehen.
+      // Und gefragt ist, wer im FENSTER gespielt hat. Wer vier Wochen nicht
+      // angetreten ist, hat keine Nachricht: seine Karte war eine Behauptung
+      // ueber eine Serie von damals, und genau die ist gefallen.
+      const seit = Date.now() - NEWS_FENSTER_TAGE * 86400000;
       const zahl = {};
-      matches.forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(id => { if(id) zahl[id]=(zahl[id]||0)+1; }));
-      const gewertet = Object.keys(zahl).filter(id => pmap()[id] && !pmap()[id].hidden && zahl[id] >= 20);
+      matches.filter(m => mts(m) >= seit)
+        .forEach(m => [m.a1,m.a2,m.b1,m.b2].forEach(id => { if(id) zahl[id]=(zahl[id]||0)+1; }));
+      const alleG = {};
+      sichtbar.forEach(s => _newsPids(s).forEach(id => { alleG[id]=(alleG[id]||0)+1; }));
+      const gewertet = Object.keys(zahl).filter(id => pmap()[id] && !pmap()[id].hidden && zahl[id] >= 4);
       return {koepfe: Object.keys(g).length, max: w[0] || 0,
-              gewertet: gewertet.length, ohne: gewertet.filter(id => !g[id]).map(id => pmap()[id].name)};
+              gewertet: gewertet.length, ohne: gewertet.filter(id => !alleG[id]).map(id => pmap()[id].name)};
     })(),
     // Kann ein Spieler mit wenigen Partien ueberhaupt vorkommen? Gefragt ist
     // die MOEGLICHKEIT, nicht der Treffer an diesem Tag.
@@ -1235,6 +1277,9 @@ ok(_feed.gesichter.koepfe >= 8, 'der Feed zeigt viele verschiedene Gesichter',
    _feed.gesichter.koepfe + ' Köpfe');
 ok(_feed.kleinsteMoeglich === true,
    'auch ein Spieler mit wenigen Partien kann eine Story bekommen');
+ok(_feed.partienImFenster > 20 && _feed.partienOhneKarte === 0,
+   'jede Partie des Fensters steht in einer sichtbaren Karte',
+   _feed.partienImFenster + ' Partien, ' + _feed.partienOhneKarte + ' ohne Karte');
 ok(_feed.matchKarten >= 3 && _feed.matchResult > 0,
    'der Feed erzaehlt regelmaessig von konkreten und besonderen Partien',
    _feed.matchKarten + ' Karten mit Matchbezug, ' + _feed.matchResult + ' Ergebnisgeschichte');
@@ -1264,7 +1309,14 @@ ok(_feed.doppelt.length === 0,
 // rückwirkend verschwinden, nur weil der Spieler danach verloren hat.
 const _serienHistorisch = JSON.parse(K.eval(`JSON.stringify((function(){
   const a=_buildStories().filter(s=>(s.dataRef||{}).type==='win_streak');
-  const live=_liveStreakForm().win || {};
+  // Die lebende Serie je Spieler, hier selbst gezaehlt: die App kennt sie
+  // nicht mehr, seit jede Marke an ihrer Partie haengt und keine Karte mehr
+  // rueckwirkend geloescht wird.
+  const live={};
+  const nachZeit=[...matches].sort((x,y)=>mts(x)-mts(y));
+  nachZeit.forEach(m=>{ const aw=m.winner==='A';
+    [[m.a1,aw],[m.a2,aw],[m.b1,!aw],[m.b2,!aw]].forEach(([pid,sieg])=>{
+      if(pid) live[pid]=sieg?(live[pid]||0)+1:0; }); });
   const vergangen=a.filter(s=>(live[(s.dataRef||{}).pid]||0)<((s.dataRef||{}).streak||0));
   const map=new Map(matches.map(m=>[m.id,new Date(m.created_at).getTime()]));
   const falsch=a.filter(s=>!(s.dataRef||{}).matchId
@@ -1306,10 +1358,18 @@ const _plan = JSON.parse(K.eval(`JSON.stringify((function(){
     sammel: s.filter(x => (x.dataRef||{}).type === 'sammel')
              .map(x => ((x.dataRef||{}).teile||[]).length),
     sammelErsetzt: (function(){
-      const titelImFeed = new Set(s.filter(x => (x.dataRef||{}).type !== 'sammel').map(x => x.title));
+      // Verglichen wird ueber die Schlagzeile, und die unterscheidet zwei
+      // Partien nicht: „Maxi und Martin setzen sich gegen Leon und Johannes
+      // durch" heisst an einem Tag mit zwei Begegnungen derselben vier Leute
+      // zweimal so. Die Zeile einer Partie bleibt deshalb aussen vor.
+      const einzel = s.filter(x => (x.dataRef||{}).type !== 'sammel');
+      const titelImFeed = new Set(einzel.filter(x => (x.dataRef||{}).type !== 'spiel')
+        .map(x => x.title));
       let daneben = 0;
       s.filter(x => (x.dataRef||{}).type === 'sammel').forEach(x => {
-        ((x.dataRef||{}).teile || []).forEach(t => { if(titelImFeed.has(t.titel)) daneben++; });
+        ((x.dataRef||{}).teile || []).forEach(t => {
+          if(t.typ === 'spiel') return;
+          if(titelImFeed.has(t.titel)) daneben++; });
       });
       return daneben;
     })(),
@@ -1724,39 +1784,47 @@ ok(_cd.abgelaufenDurch === 0, 'ein abgelaufener Countdown steht nicht mehr im Fe
 ok(_cd.laufendeGebildet === 0 || _cd.laufendeImFeed === _cd.laufendeGebildet,
    'der laufende Countdown bleibt', _cd.laufendeImFeed + ' von ' + _cd.laufendeGebildet);
 
-// ── Eine ueberholte Serie verschwindet, auch zu zweit ────────────────
-// Die ID einer Serienkarte traegt ihre Laenge (`team_streak_A_B_7`), also
-// wird JEDE Laenge einzeln persistiert. Aus einer Serie, die von sieben auf
-// zehn wuchs, standen vier Karten im Feed. Fuer Einzelspieler wurde das
-// laengst gefiltert, fuer Duos nie.
+// ── Eine Serienmarke haengt an ihrer Partie, nicht am heutigen Stand ──
+// Gerechnet wurde der Stand NACH der letzten Partie der Liga, und die ID trug
+// die Laenge (`team_streak_A_B_7`): jede Laenge wurde einzeln persistiert, und
+// aus einer Serie, die von fuenf auf zehn wuchs, standen vier Karten im Feed.
+// Der Ausweg war ein Filter, der jede Karte wegnahm, deren Laenge die LEBENDE
+// Serie nicht mehr erreicht — und damit verschwand die 5er-Marke vom Dienstag,
+// sobald die Serie am Mittwoch riss. Eine Karte, die zu ihrem Zeitpunkt
+// richtig war, bleibt richtig [§C33].
 const _ts = JSON.parse(K.eval(`JSON.stringify((function(){
   const frisch = _buildStories();
-  const echt = frisch.find(s => (s.dataRef||{}).type === 'team_streak'
+  const SORTEN = ['team_streak', 'team_loss_streak', 'loss_streak', 'win_streak'];
+  const marken = frisch.filter(s => SORTEN.indexOf((s.dataRef||{}).type) >= 0);
+  // Jede Marke nennt die Partie, mit der sie fiel, und steht auf ihrer Zeit.
+  const zeit = new Map(matches.map(m => [m.id, new Date(m.created_at).getTime()]));
+  const ohnePartie = marken.filter(s => !(s.dataRef||{}).matchId);
+  const falscheZeit = marken.filter(s => (s.dataRef||{}).matchId
+    && zeit.get(s.dataRef.matchId) !== new Date(s.when).getTime());
+  // Und eine Marke, deren Serie langst gerissen ist, bleibt im Feed. Gestellt
+  // mit einer Laenge, die kein Duo und kein Spieler der Liga je erreicht hat:
+  // genau die Lage, in der der Filter zuschlug.
+  const echt = marken.find(s => (s.dataRef||{}).type === 'team_streak'
                              || (s.dataRef||{}).type === 'team_loss_streak');
-  if(!echt) return {keine:true};
-  const ueberholt = Object.assign({}, echt, {id: echt.id + '_alt',
-    dataRef: Object.assign({}, echt.dataRef, {streak: (echt.dataRef.streak || 5) + 5})});
-  // NUR die beiden Karten: gemessen wird der Stale-Filter, nicht der
-  // Tagesdeckel. Mit dem ganzen Lauf entschied die Rangfolge des Tages mit,
-  // und eine Karte, die als siebtstaerkste faellt, sagt nichts darueber,
-  // ob die Serie noch laeuft.
-  _cache._consolFrom = null;
-  const sicht = _consolidateStories([ueberholt, echt]);
-  // Gezaehlt wird die AUSSAGE, nicht die Karte: die laufende Serie kann als
-  // Zeile in einer Sammelkarte stehen, und dann steht sie trotzdem im Feed.
-  const zeilen = [];
-  sicht.forEach(x => {
-    const t = ((x.dataRef||{}).teile||[]);
-    if(t.length > 1) t.forEach(u => zeilen.push(u.titel));
-    else zeilen.push(x.title);
-  });
-  return {ueberholtDurch: sicht.filter(x => x.id === ueberholt.id).length,
-          echteBleibt: zeilen.filter(t => t === echt.title).length};
+  let gerissen = 0;
+  if(echt){
+    const alt = Object.assign({}, echt, {id: echt.id + '_alt',
+      title: echt.title + ' (alt)',
+      dataRef: Object.assign({}, echt.dataRef, {streak: (echt.dataRef.streak || 5) + 20})});
+    _cache._consolFrom = null;
+    gerissen = _consolidateStories([alt]).length;
+  }
+  return {n: marken.length, ohnePartie: ohnePartie.length,
+          falscheZeit: falscheZeit.length, gerissen, hatEchte: !!echt};
 })())`));
-ok(!_ts.keine && _ts.ueberholtDurch === 0,
-   'eine ueberholte Duo-Serie steht nicht mehr im Feed', JSON.stringify(_ts));
-ok(!_ts.keine && _ts.echteBleibt === 1,
-   'die laufende Duo-Serie bleibt', JSON.stringify(_ts));
+ok(_ts.n > 0 && _ts.ohnePartie === 0,
+   'jede Serienmarke nennt die Partie, mit der sie fiel',
+   _ts.n + ' Marken, ' + _ts.ohnePartie + ' ohne Partie');
+ok(_ts.falscheZeit === 0, 'und steht auf der Zeit dieser Partie',
+   _ts.falscheZeit + ' mit fremder Zeit');
+ok(_ts.hatEchte && _ts.gerissen === 1,
+   'eine Marke bleibt im Feed, auch wenn die Serie langst gerissen ist',
+   String(_ts.gerissen));
 
 // ── Der Memo greift ─────────────────────────────────────────────────
 // `_newsTexteAuffrischen` lieferte bei jedem Aufruf ein frisches Array, und
@@ -1822,7 +1890,15 @@ const _dop = JSON.parse(K.eval(`JSON.stringify((function(){
   _cache._stories = vier.concat(roh);
   _cache._consolFrom = null; _cache._frischVon = null;
   const sicht = getStoriesCache();
-  const titel = sicht.map(s => String(s.title||''));
+  // Eine Partie-Karte und eine Pflichtkarte duerfen dieselbe Schlagzeile
+  // zweimal tragen: zwei Spieltage, zwei Sieger — und zwei Partien mit
+  // denselben vier Leuten und demselben Ausgang heissen gleich. Sie stehen
+  // unter zwei Tagesköpfen bzw. zu zwei Uhrzeiten [§C33].
+  const _prt = s => { const d=(s&&s.dataRef)||{};
+    return d.type==='spiel' || (d.type==='sammel' && d.quelle==='spiel' && !!d.matchId); };
+  const _PFL = ['potd','woche','chronik_monat','season_recap','chronik_frei'];
+  const titel = sicht.filter(s => !_prt(s) && _PFL.indexOf((s.dataRef||{}).type) < 0)
+    .map(s => String(s.title||''));
   const zeilen = [];
   sicht.forEach(s => ((s.dataRef||{}).teile || []).forEach(t => {
     if(t && t.titel) zeilen.push(String(t.titel)); }));
@@ -2390,12 +2466,18 @@ ok(_achsen.d.length === 1 && _achsen.d[0].q === 'tafel' && _achsen.d[0].n === 4,
    _achsen.d.map(x => x.q + ':' + x.n).join(', '));
 ok(_achsen.e.length === 0, 'ein einzelner Erfolg bleibt eine eigene Karte',
    _achsen.e.length + ' Sammelkarten');
+// „Ein Spiel, zwei Geschichten" gilt fuer jeden Spieltag und sagt von keinem
+// der beiden Anlaesse etwas. Seit jede Partie ihre Karte hat, ist ein Buendel
+// immer eine Partie samt allem, was aus ihr folgte — und genau das gehoert in
+// die Zeile [§C33].
 ok(_achsen.g[0] && _achsen.g[0].ti
-   === 'Ein Spiel, zwei Geschichten für ' + _achsen.n0 + ' und ' + _achsen.n1,
-   'verknuepfte Spielstories bekommen eine natuerliche gemeinsame Schlagzeile',
+   === 'Durststrecke und gemeinsame Durststrecke in einer Partie für '
+       + _achsen.n0 + ' und ' + _achsen.n1,
+   'verknuepfte Spielstories nennen ihre Anlaesse in der Schlagzeile',
    (_achsen.g[0]||{}).ti);
-ok(_achsen.g[0] && /nach dem Schlusspfiff|Schlusspfiff doppelt/.test(_achsen.g[0].tx),
-   'ihr Teaser erzaehlt die Verbindung statt die Kartenstruktur',
+ok(_achsen.g[0] && /Meldungen hängen daran|Siegchance lag vor dem Anstoß/.test(_achsen.g[0].tx)
+   && !/Geschichten wachsen|wachsen \\d/.test(_achsen.g[0].tx),
+   'ihr Teaser erzaehlt die Partie statt die Kartenstruktur',
    (_achsen.g[0]||{}).tx);
 ok(_achsen.b[0] && _achsen.b[0].sorte === 'spieler' && _achsen.c[0].sorte === 'tafel'
    && _achsen.b[0].rub !== _achsen.c[0].rub,
@@ -2437,11 +2519,17 @@ const _wenig = JSON.parse(K.eval(`JSON.stringify((function(){
   // trotzdem einen Platz, obwohl der Feed sie ohnehin durchlaesst: gemessen
   // gingen am letzten Spieltag der Fixtures zwei von fuenf Plaetzen an einen
   // Countdown und den Spieler des Tages, und die 8er-Serie fiel heraus.
+  // Und eine PARTIE-Karte zaehlt gar nicht mit: sie ist keine Auswahl, sie
+  // wurde gespielt. Gemessen kamen von 52 Partien des Fensters 18 in einer
+  // sichtbaren Karte vor, weil der Deckel die uebrigen wegnahm [§C33].
   const PFLICHT = new Set(['potd','woche','chronik_monat','season_recap','chronik_frei']);
+  const prt = s => { const d = (s&&s.dataRef)||{};
+    return d.type === 'spiel'
+        || (d.type === 'sammel' && d.quelle === 'spiel' && !!d.matchId); };
   const zaehlbar = {};
   sicht.forEach(s => { const k = tag(s), t = (s.dataRef||{}).type;
     let brk = false; try { brk = _isBreaking(s); } catch(e){}
-    if(brk || PFLICHT.has(t)) return;
+    if(brk || PFLICHT.has(t) || prt(s)) return;
     zaehlbar[k] = (zaehlbar[k] || 0) + 1; });
   const zuVielZaehlbar = Object.keys(zaehlbar).filter(k => zaehlbar[k] > NEWS_LIMITS.proTag);
   // Ein Fun Fact steht nur an einem Tag ohne Nachricht.
@@ -2565,16 +2653,17 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
   }
   return aus;
 })())`));
-// Das Band ist das aus §C33: 40 bis 60 Prozent Tafel, gemessen an
-// EREIGNISSEN und nicht an Karten — eine Sammelkarte mit sechs sichtbaren
-// Zeilen zaehlt sechs Geschichten. Im Code stand 35 bis 55 und damit eine
-// andere Zahl als in der Arbeitsanweisung; gemessen liegt die Tafel bei
-// 59 %, seit sechs neue Liga-Rekorde [§C35] je Tafel-Moment mehr Zeilen
-// hergeben. An den KARTEN hat sich dabei nichts verschoben: 15 Tafel-Karten
-// zu 25 Spieltagskarten, also 31 % — die sechs Rekorde machen die Buendel
-// laenger und nicht die Tafel lauter.
-ok(_mix.quote >= .40 && _mix.quote <= .60,
-   'mehr Spieltag bleibt mit Tafel und Fun Facts ausgewogen',
+// Das Band ist das aus §C33: 25 bis 50 Prozent Tafel, gemessen an
+// EREIGNISSEN und nicht an Karten — eine Sammelkarte mit vier sichtbaren
+// Zeilen zaehlt vier Geschichten. Es stand bei 40 bis 60, und das war die
+// Lage, in der nur ein Bruchteil der Partien ueberhaupt eine Karte hatte:
+// gemessen kamen von 52 Partien des Fensters 18 vor. Seit jede Partie ihre
+// Karte bekommt, fuehrt der Spieltag — die Tafel ist die zweite Ebene
+// daneben und nicht die halbe Tafel. Gemessen liegt sie bei 35 % der
+// Ereignisse und 16 % der Karten, und ihren Platz je Tag haelt sie ueber die
+// Reservierung, nicht ueber die Quote.
+ok(_mix.quote >= .25 && _mix.quote <= .50,
+   'der Spieltag fuehrt, und die Tafel bleibt die zweite Ebene daneben',
    `${_mix.tafel} zu ${_mix.spiel}+${_mix.fun} · ${Math.round(_mix.quote*100)} % Tafel; `
    + `${_mix.tafelKarten} zu ${_mix.spielKarten}+${_mix.fun} Karten · ${Math.round(_mix.kartenQuote*100)} %; `
    + JSON.stringify({tafel:_mix.tafelTypen,spiel:_mix.spielTypen}));
@@ -3325,21 +3414,28 @@ const _tagmix = JSON.parse(K.eval(`JSON.stringify((function(){
   // Und kein Tag traegt mehr als den Deckel — Pflicht und Breaking zaehlen
   // nicht mit [§C33].
   const pflicht = new Set(['potd','woche','chronik_monat','season_recap']);
+  // Eine Partie-Karte zaehlt nicht mit: sie ist keine Auswahl, sie wurde
+  // gespielt. Neun Partien an einem Tag sind neun Ereignisse [§C33].
+  const prt = s => { const d = (s&&s.dataRef)||{};
+    return d.type === 'spiel'
+        || (d.type === 'sammel' && d.quelle === 'spiel' && !!d.matchId); };
   const ueber = Object.keys(proTag).filter(k => proTag[k].filter(s => {
     const t = (s.dataRef||{}).type;
     let b = false; try { b = _isBreaking(s); } catch(e){}
-    return !b && !pflicht.has(t);
+    return !b && !pflicht.has(t) && !prt(s);
   }).length > NEWS_LIMITS.proTag);
   // Wo sich die Tafel bewegt hat, steht sie auch im Feed.
   const tafelTage = Object.keys(rohTag).filter(k => rohTag[k].some(istTafel));
   const ohneTafel = tafelTage.filter(k => !(proTag[k] || []).some(istTafel));
   // Von einer Achse hoechstens zwei Buendel je Tag: vier Karten „Ein Spiel,
-  // N Geschichten" untereinander sind drei zu viel.
+  // N Geschichten" untereinander sind drei zu viel. Die Achse der PARTIE ist
+  // davon ausgenommen — vier Partien sind vier Nachrichten, und jede
+  // Schlagzeile nennt seit dem Umbau, was in ihrer Partie passiert ist.
   const achseZuViel = [];
   Object.keys(proTag).forEach(k => {
     const z = {};
     proTag[k].forEach(s => { const d = s.dataRef||{};
-      if(d.type !== 'sammel') return;
+      if(d.type !== 'sammel' || prt(s)) return;
       const a = 'sammel/' + (d.quelle || 'spiel');
       z[a] = (z[a]||0) + 1; });
     Object.keys(z).forEach(a => { if(z[a] > 2) achseZuViel.push(k + ' ' + a + ' ' + z[a]); });
@@ -3439,7 +3535,7 @@ const _vierBuendel = JSON.parse(K.eval(`JSON.stringify((function(){
       dataRef:{type:'streak_killer', matchId:'mm' + i, playerIds:[p1, p2]}});
     l.push({id:'b' + i + 'b', cat:'highlight', ic:'thriller', when:wann, prio:69,
       title:'Krimi ' + i, desc:'Noch ein Satz mit ' + i + ' Zahlen.',
-      dataRef:{type:'match_result', resultKind:'krimi', matchId:'mm' + i,
+      dataRef:{type:'spiel', resultKind:'krimi', matchId:'mm' + i,
                playerIds:[p1, p2]}});
   }
   _cache._consolFrom = null;
@@ -3447,80 +3543,56 @@ const _vierBuendel = JSON.parse(K.eval(`JSON.stringify((function(){
   return {buendel: out.filter(s => (s.dataRef||{}).quelle === 'spiel').length,
           karten: out.length};
 })())`));
-ok(_vierBuendel.buendel === 2,
-   'und aus vier gebuendelten Partien eines Tages werden zwei Karten',
+ok(_vierBuendel.buendel === 4,
+   'und vier Partien eines Tages tragen vier Karten',
    _vierBuendel.buendel + ' Buendel von ' + _vierBuendel.karten + ' Karten');
-// ── Zwei verdraengte Ergebnisse tragen eine Karte ──────────────────
+// ── Eine Partie faellt unter keinen Deckel ─────────────────────────
 //    Gemessen fielen am 07.09. der Probeliga „Ben und Jonas gewinnen ohne
 //    Gegentor" (73) und „Kai und Ella stuerzen die Favoriten" (71) unter den
 //    Tagesdeckel, weil Tafel, Spieler des Tages und zwei Sammelkarten
 //    darueber standen: von neun Partien stand am Ende kein einziges Ergebnis
-//    im Feed. Gebaut wird genau dieser Tag — fuenf starke Karten ohne Partie
-//    und drei Ergebnisse, von denen die Reservierung eins hereinholt.
+//    im Feed. Der Ausweg war einmal eine gemeinsame Karte fuer zwei
+//    verdraengte Ergebnisse. Heute wird gar nichts verdraengt — eine Karte je
+//    Partie IST der Deckel des Spieltags [§C33].
 const _ergSam = JSON.parse(K.eval(`JSON.stringify((function(){
   const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
   const tag = tage[tage.length - 1];
   const partien = _newsTagMs(tag).slice(0, 3);
   const basis = mts(partien[0]);
   const l = [];
-  // Fuenf starke Karten ohne Partie: sie belegen den Tag, ohne der
-  // Reservierung fuer eine Match-Geschichte in die Quere zu kommen.
+  // Sechs starke Karten ohne Partie: sie belegen den Tag weit ueber den
+  // Deckel hinaus.
   const starke = ['milestone_wins','milestone_goals','milestone_elo',
-                  'jubilee','rivalry_milestone'];
+                  'jubilee','rivalry_milestone','rivalry'];
   starke.forEach((typ, i) => l.push({
     id:'sk-' + i, cat:'personal', ic:'medal', when:new Date(basis + i * 60000),
     prio: 85 - i, title:'Starke Marke ' + i, desc:'Ein Satz mit ' + i + ' Zahlen.',
     dataRef:{type:typ, pid:players[i % 4].id, playerIds:[players[i % 4].id]}
   }));
-  // Ein Favoritensturz und zwei Ergebnisse, jedes mit einer echten Partie.
-  // Der Sturz ist die staerkste Match-Geschichte und nimmt damit den
-  // reservierten Platz [§C33] — genau die Lage des 07.09.: die Reservierung
-  // war erfuellt, und beide Ergebnisse fielen weg. Die Spieler stehen auch
-  // auf den starken Karten, damit nicht die Regel „der Deckel darf niemanden
-  // ganz verschwinden lassen" die Auswahl macht.
-  l.push({id:'gs-0', cat:'highlight', ic:'swords',
-    when:new Date(mts(partien[0]) + 3600000), prio: 74,
-    title:'Ein Favoritensturz', desc:'Ein Satz mit 1 Zahl.',
-    dataRef:{type:'giant_slayer', matchId:partien[0].id,
-             playerIds:[players[0].id]}});
-  partien.slice(1).forEach((m, i) => l.push({
+  // Drei Partien, jede mit ihrer eigenen Karte und dem schwaechsten Rang des
+  // Spieltagsbandes. Keine davon darf wegfallen.
+  partien.forEach((m, i) => l.push({
     id:'er-' + i, cat:'highlight', ic:'thriller',
-    when:new Date(mts(m) + 3600000 + (i + 1) * 60000), prio: 63 - i,
+    when:new Date(mts(m) + 3600000 + i * 60000), prio: 41,
     title:'Ein Ergebnis ' + i, desc:'Ein Satz mit ' + i + ' Zahlen.',
-    dataRef:{type:'match_result', resultKind:'krimi', matchId:m.id,
+    dataRef:{type:'spiel', resultKind:'krimi', matchId:m.id,
              playerIds:[players[i % 4].id]}
   }));
   _cache._consolFrom = null;
   const out = _consolidateStories(l);
-  const sam = out.filter(s => (s.dataRef||{}).quelle === 'ergebnis');
   const amTag = out.filter(s => tagKey(s.when) === tag);
-  const zeilen = sam.length ? (sam[0].dataRef.teile || []) : [];
-  return {sammel: sam.length, karten: amTag.length,
-          zeilen: zeilen.length, mitWert: zeilen.filter(z => !!z.wert).length,
-          mitPartie: zeilen.filter(z => !!z.matchId).length,
-          titel: sam.length ? sam[0].title : '',
-          text: sam.length ? sam[0].desc : '',
-          einzeln: out.filter(s => (s.dataRef||{}).type === 'match_result').length,
-          sturz: out.filter(s => (s.dataRef||{}).type === 'giant_slayer').length};
+  return {partien: partien.length,
+          durch: out.filter(s => (s.dataRef||{}).type === 'spiel').length,
+          deckelbar: amTag.filter(s => (s.dataRef||{}).type !== 'spiel').length,
+          deckel: NEWS_LIMITS.proTag,
+          karten: amTag.length};
 })())`));
-ok(_ergSam.sammel === 1,
-   'zwei verdraengte Ergebnisse werden zu einer Karte',
-   _ergSam.sammel + ' Sammelkarte, ' + _ergSam.einzeln + ' einzeln');
-ok(_ergSam.einzeln === 0 && _ergSam.sturz === 1,
-   'und die staerkste Match-Geschichte des Tages steht mit ihrem eigenen Band',
-   _ergSam.einzeln + ' Ergebnis einzeln, ' + _ergSam.sturz + ' Favoritensturz');
-ok(_ergSam.karten <= 5,
-   'die Karte kostet einen Tagesplatz, nicht zwei',
-   _ergSam.karten + ' Karten am Tag');
-ok(_ergSam.zeilen === 2 && _ergSam.mitWert === 2,
-   'sie nennt beide Staende im Sammelband',
-   _ergSam.zeilen + ' Zeilen, ' + _ergSam.mitWert + ' mit Stand');
-ok(_ergSam.mitPartie === 2,
-   'und jede Zeile traegt ihre Partie fuer das Ergebnisband im Blatt',
-   _ergSam.mitPartie + ' von ' + _ergSam.zeilen);
-ok(/\d/.test(_ergSam.text) && _ergSam.titel.indexOf(':') < 0,
-   'ihr Text nennt eine Zahl und ihre Schlagzeile kein Etikett',
-   _ergSam.titel + ' — ' + _ergSam.text);
+ok(_ergSam.durch === _ergSam.partien,
+   'jede Partie steht im Feed, auch wenn der Tag voll ist',
+   _ergSam.durch + ' von ' + _ergSam.partien);
+ok(_ergSam.deckelbar <= _ergSam.deckel,
+   'und der Deckel greift weiter fuer alles, was ueber den Partien liegt',
+   _ergSam.deckelbar + ' deckelbare von ' + _ergSam.karten + ' Karten');
 // ── Eine Partie oder keine ─────────────────────────────────────────
 //    Die Sammelkarte borgte die matchId ihres Kopfes. Ein Tafel-Moment
 //    entsteht aber ueber die MINUTE und umfasst damit mehrere Partien: ueber
@@ -3607,39 +3679,42 @@ ok(_brk.fremd.sammel === 0 && _brk.fremd.karten === 2,
    'zwei Breaking-Meldungen aus verschiedenen Partien bleiben zwei Karten',
    _brk.fremd.karten + ' Karten');
 // ── Was eine Auszeichnung erzaehlt, erzaehlt das Ergebnis nicht ────
-//    Die Regel stand nur im Generator, und damit galt sie nur fuer neue
-//    Karten. Gemessen am 15.09. lag „Maxi und Henry gewinnen ohne Gegentor"
-//    aus einem aelteren Lauf in der Datenbank — der Generator bildet diese
-//    ID nicht mehr, also konnte sie auch niemand umschreiben, und neben der
-//    Breaking-Karte mit dem Band 10:0 stand eine zweite mit demselben Band.
+//    „Absoluter Sieger" IST das 10:0, und beides in einer Schlagzeile nennt
+//    dasselbe zweimal. Gefallen ist dabei nicht die Karte, sondern der
+//    ANLASS: eine Partie hoert nicht auf, gespielt worden zu sein, und
+//    Ergebnis und Auszeichnung stehen ohnehin in derselben Karte.
 const _gedeckt = JSON.parse(K.eval(`JSON.stringify((function(){
   const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
   const m = _newsTagMs(tage[tage.length - 1])[0];
-  const erg = () => ({id:'match_result_zu_null_' + m.id, cat:'highlight', ic:'hundred',
+  const erg = () => ({id:'spiel_' + m.id, cat:'highlight', ic:'hundred',
     when:new Date(mts(m)), prio:69,
     title:'Zwei gewinnen ohne Gegentor', desc:'Ein makelloses 10:0.',
-    dataRef:{type:'match_result', resultKind:'zu_null', matchId:m.id,
+    dataRef:{type:'spiel', resultKind:'zu_null', matchId:m.id,
              playerIds:[players[0].id, players[1].id]}});
-  // Selten, nicht legendaer: eine legendaere Auszeichnung ist Breaking und
-  // wuerde das Ergebnis in ihr Buendel ziehen — dann waere die Zusicherung
-  // aus dem falschen Grund gruen.
+  // Gewoehnlich, nicht selten: eine seltene Auszeichnung bleibt eine eigene
+  // Karte und bildet mit dem Ergebnis gar kein Buendel.
   const bdg = id => ({id:'badge_' + id + '_' + m.id, cat:'badge', ic:'medal',
     when:new Date(mts(m)), prio:80,
     title:'Eine Auszeichnung', desc:'Zehn zu null.',
-    dataRef:{type:'badge_unlocked', badgeId:id, rarity:'rare', matchId:m.id,
+    dataRef:{type:'badge_unlocked', badgeId:id, rarity:'common', matchId:m.id,
              playerIds:[players[0].id]}});
-  const zaehl = l => { _cache._consolFrom = null;
-    return _consolidateStories(l).filter(x => (x.dataRef||{}).type === 'match_result').length; };
-  return {mitBadge: zaehl([bdg('perfect_win'), erg()]),
-          fremdBadge: zaehl([bdg('wall_badge'), erg()]),
-          allein: zaehl([erg()])};
+  const titelVon = l => { _cache._consolFrom = null;
+    const out = _consolidateStories(l);
+    const sam = out.find(x => (x.dataRef||{}).type === 'sammel');
+    return {karten: out.length, titel: sam ? sam.title : (out[0]||{}).title || ''};
+  };
+  return {mitBadge: titelVon([bdg('perfect_win'), erg()]),
+          fremdBadge: titelVon([bdg('wall_badge'), erg()]),
+          allein: titelVon([erg()])};
 })())`));
-ok(_gedeckt.mitBadge === 0,
-   'ein gespeichertes Ergebnis faellt, wenn eine Auszeichnung derselben Partie es erzaehlt',
-   _gedeckt.mitBadge + ' Karten');
-ok(_gedeckt.fremdBadge === 1 && _gedeckt.allein === 1,
-   'und es bleibt, wenn keine solche Auszeichnung im Stapel liegt',
-   _gedeckt.fremdBadge + ' / ' + _gedeckt.allein);
+ok(_gedeckt.mitBadge.karten === 1
+   && !/ohne Gegentor/.test(_gedeckt.mitBadge.titel),
+   'der Anlass des Ergebnisses faellt, wenn eine Auszeichnung derselben Partie ihn erzaehlt',
+   _gedeckt.mitBadge.titel);
+ok(/Sieg ohne Gegentor/.test(_gedeckt.fremdBadge.titel)
+   && /ohne Gegentor/.test(_gedeckt.allein.titel),
+   'und er bleibt, wenn keine solche Auszeichnung im Stapel liegt',
+   _gedeckt.fremdBadge.titel + ' / ' + _gedeckt.allein.titel);
 // ── Und die uebrigen Meldungen derselben Partie reisen mit ─────────
 //    Gemessen am 21.09. standen „Martin fuehrt die Tabelle" (Breaking,
 //    Band 10:7) und „Stefan und Julian stuerzen die Favoriten" (Band 10:7)
@@ -3654,10 +3729,10 @@ const _brkMit = JSON.parse(K.eval(`JSON.stringify((function(){
     dataRef:{type:'lead_change', newLeader:players[0].id, prevLeader:players[1].id,
              matchId:m.id, elo:216, gap:28, wechsel:1,
              playerIds:[players[0].id, players[1].id]}};
-  const erg = {id:'match_result_upset_' + m.id, cat:'highlight', ic:'giantSlayer',
+  const erg = {id:'spiel_' + m.id, cat:'highlight', ic:'giantSlayer',
     when:new Date(mts(m)), prio:67,
     title:'Zwei stürzen die Favoriten', desc:'Nur 18 % Siegchance vor dem Anstoß.',
-    dataRef:{type:'match_result', resultKind:'upset', matchId:m.id,
+    dataRef:{type:'spiel', resultKind:'upset', matchId:m.id,
              playerIds:[players[2].id, players[3].id]}};
   // Eine seltene Auszeichnung reist nicht mit: sie ist der Grund, warum
   // jemand die App oeffnet, und steht nicht als Zeile unter einer fremden
@@ -3931,7 +4006,7 @@ const _nachlauf = JSON.parse(K.eval(`JSON.stringify((function(){
   l2.push({id:'rv-erg', cat:'highlight', ic:'thriller',
     when:new Date(basis + 600000), prio:63, title:'Ein Ergebnis',
     desc:'Ein Satz mit 1 Zahl.',
-    dataRef:{type:'match_result', resultKind:'krimi', matchId:p[1].id,
+    dataRef:{type:'spiel', resultKind:'krimi', matchId:p[1].id,
              playerIds:[players[0].id]}});
   _cache._consolFrom = null;
   const mitErg = _consolidateStories(l2);
@@ -4086,7 +4161,7 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
     const d = s.dataRef || {};
     const mid = d.matchId;
     if(!mid) return;
-    if(['top_clash','giant_slayer','match_result'].indexOf(d.type) < 0) return;
+    if(['top_clash','giant_slayer','spiel'].indexOf(d.type) < 0) return;
     const m = matches.find(x => x.id === mid);
     if(!m) return;
     const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
@@ -4421,17 +4496,20 @@ const _recSchwelle = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_recSchwelle.fuenf === 1 && _recSchwelle.vier === 0,
    'der Serien-Rekord der Liga wird ab fuenf Siegen gemeldet',
    JSON.stringify(_recSchwelle));
-// ── Der Formlauf veraltet am Abstand, nicht an der Siegzahl ─────────
-// Verglichen wurde die Zahl der Siege im Fenster mit der von damals — und
-// das Fenster der letzten zehn Partien verschiebt sich schon im Lauf
-// desselben Spieltags. Die Karte entsteht nach der vierten Partie mit 8 von
-// 10, nach der siebten stehen dort 7, und die eigene Karte von heute Mittag
-// fiel als veraltet weg. Gemessen am echten Vierzehn-Tage-Verlauf wurden
-// acht Formkarten gebildet und keine einzige gezeigt.
+// ── Der Formlauf gehoert seiner Partie, nicht dem heutigen Stand ─────
+// Gerechnet wurde der Stand NACH der letzten Partie der Liga, und ein Filter
+// nahm die Karte weg, sobald der Vorsprung wieder unter die Schwelle fiel.
+// Damit verschwand eine Karte, die zu ihrem Zeitpunkt richtig war — und im
+// Lauf desselben Spieltags verschiebt sich das Fenster schon so weit, dass die
+// eigene Karte vom Mittag als veraltet galt: gemessen wurden acht gebildet und
+// keine einzige gezeigt. Der Uebertritt ueber die Schwelle haengt jetzt an der
+// Partie, mit der er passierte, und bleibt damit stehen.
 const _form = JSON.parse(K.eval(`JSON.stringify((function(){
   const alle = matches.slice();
   const basis = mts(alle[alle.length - 1]);
-  const held = (players.find(p => p.name === 'Jane') || players[0]).id;
+  // Henry: er hat im Fenster nicht gespielt, sein Vorsprung steht also klar
+  // unter der Schwelle, bis die gestellten Siege kommen.
+  const held = (players.find(p => p.name === 'Henry') || players[0]).id;
   const rest = players.filter(p => p.id !== held).slice(0, 3).map(p => p.id);
   const bau = (praefix, ab, n, gewinnt) => {
     const out = [];
@@ -4444,58 +4522,43 @@ const _form = JSON.parse(K.eval(`JSON.stringify((function(){
     });
     return out;
   };
-  // Zehn Siege am Vormittag: das Fenster ist voll, die Form steht klar ueber
-  // dem eigenen Schnitt. Mehr waeren kontraproduktiv — jeder Sieg jenseits
-  // des Fensters hebt den eigenen Schnitt und damit den Vergleichswert.
-  const hoch = bau('fh', basis + 300000, 10, true);
-  // Danach eine Niederlage am selben Tag: das Fenster verschiebt sich, der
-  // Vorsprung bleibt.
-  const tief = bau('ft', basis + 11 * 300000, 1, false);
-
-  matches = alle.concat(hoch);
-  invalidateCache();
-  const fh = _liveStreakForm();
-  // Die Karte vom Vormittag, gebaut wie im Generator: die Zahl der Siege im
-  // Fenster steht in dataRef, und genau daran hing der Stale-Filter einmal.
-  // (Kein Backtick in diesem Kommentar: er steht in einem Template-Literal.)
-  //
-  // Sie wird hier gestellt und nicht aus dem Generator gefischt: wer zehn
-  // Partien am Stueck gewinnt, uebernimmt an diesem Tag auch Rekorde, steht
-  // damit auf den Tafel-Karten des Tages und faellt mit der dritten eigenen
-  // Karte unter den Deckel fuer Nebenrollen [§C33]. Das ist richtig so — die
-  // Form steht dann schon als Siegesserie im Feed. Gefragt ist hier der
-  // Stale-Filter und nicht der Deckel, und die Datenbank liefert am Abend
-  // genau diese Zeile.
+  const hoch = bau('fh', basis + 300000, FORM_FENSTER, true);
+  const tief = bau('ft', basis + (FORM_FENSTER + 1) * 300000, FORM_FENSTER, false);
+  // Die Karte vom Vormittag, wie sie der Generator baut und die Datenbank sie
+  // am Abend liefert: der Uebertritt haengt an seiner Partie.
   const frueh = {
-    id:'top_form_' + held + '_probe', cat:'highlight', ic:'flame',
+    id:'top_form_' + held + '_' + hoch[FORM_FENSTER - 1].id,
+    cat:'highlight', ic:'flame',
     title:'Formlauf', desc:'Zehn von zehn Partien gewonnen.',
-    when:new Date(basis + 11 * 300000).toISOString(),
+    when:new Date(basis + FORM_FENSTER * 300000).toISOString(),
     prio:STORY_PRIO.top_form,
-    dataRef:{type:'top_form', pid:held, wins:fh.form[held]}
+    dataRef:{type:'top_form', pid:held, matchId:hoch[FORM_FENSTER - 1].id,
+             qJetzt:100, qBasis:39, vorsprung:61}
   };
-
   matches = alle.concat(hoch, tief);
   invalidateCache();
-  // Die Karte vom Vormittag, gegen den Stand von jetzt gehalten: genau der
-  // Fall, den die Datenbank liefert.
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+  // Der Vorsprung von jetzt, hier selbst gerechnet: die App kennt ihn nicht
+  // mehr, seit die Karte an ihrer Partie haengt.
+  const eigene = matches.filter(m => [m.a1,m.a2,m.b1,m.b2].indexOf(held) >= 0)
+    .sort((x, y) => mts(x) - mts(y));
+  const fenster = eigene.slice(-FORM_FENSTER);
+  const davor = eigene.slice(0, -FORM_FENSTER);
+  const vor = fenster.filter(m => won(held, m)).length / FORM_FENSTER
+            - davor.filter(m => won(held, m)).length / davor.length;
+  _cache._consolFrom = null;
   const durch = _consolidateStories([frueh]).length;
-  const sf = _liveStreakForm();
-  const erg = { frueh: frueh.dataRef.wins,
-                jetzt: sf.form[held], vor: sf.vor[held], durch,
-                schwelle: FORM_VORSPRUNG };
+  const erg = {vor, durch, schwelle: FORM_VORSPRUNG};
   matches = alle;
   invalidateCache();
+  _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
   return erg;
 })())`));
-ok(_form.frueh === 10, 'der Formlauf steht am Vormittag bei zehn von zehn',
-   String(_form.frueh));
-ok(_form.jetzt < _form.frueh,
-   'und das Fenster verschiebt sich noch am selben Tag',
-   _form.jetzt + ' statt ' + _form.frueh);
-ok(_form.vor >= _form.schwelle,
-   'der Vorsprung auf den eigenen Schnitt steht trotzdem noch',
-   String(Math.round(_form.vor * 100)) + ' Punkte');
-ok(_form.durch === 1, 'also bleibt die Karte im Feed', String(_form.durch));
+ok(_form.vor < _form.schwelle,
+   'nach zehn Niederlagen steht der Vorsprung auf den eigenen Schnitt nicht mehr',
+   Math.round(_form.vor * 100) + ' gegen ' + Math.round(_form.schwelle * 100) + ' Punkte');
+ok(_form.durch === 1, 'die Karte vom Vormittag bleibt trotzdem im Feed',
+   String(_form.durch));
 
 // ── Breaking scheitert auch nicht an der gleichen Schlagzeile ────────
 // Die Tabellenspitze wechselte am 14.09. zu Martin und am 15.09. zurueck zu

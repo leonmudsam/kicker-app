@@ -388,6 +388,58 @@ function _newsDetailBody(s){
   return kopf + mitte;
 }
 
+// ── Die Siegchance als Skala ─────────────────────────────────────────
+// „57 %" ist eine Zahl, die man erst lesen und dann einordnen muss: war das
+// ein Pflichtsieg oder eine Sensation? Die Elo-Rechnung hat dafuer vier
+// Linien [§5.2], und sie stehen an EINER Stelle. Der Balken zeigt, wo die
+// Partie darin lag, und die Aufschrift nennt das Wort dazu.
+function _ndChanceSkala(chance){
+  const c = Number(chance);
+  if(!isFinite(c) || c <= 0 || c >= 1) return '';
+  const pct = Math.max(1, Math.round(c * 100));
+  const wort = c < CHANCE_SENSATION ? 'Sensation'
+             : c < CHANCE_UPSET ? 'Außenseiter'
+             : c <= CHANCE_OFFEN ? 'Augenhöhe'
+             : c < CHANCE_FAVORIT ? 'Augenhöhe' : 'Favorit';
+  // Rot nur, wo die Rechnung dagegenstand: Gruen und Rot sind die Richtung
+  // [§C25], Metall ist alles Uebrige.
+  const ton = c < CHANCE_UPSET ? ' r' : (c >= CHANCE_FAVORIT ? ' g' : '');
+  const linien = [CHANCE_SENSATION, CHANCE_UPSET, CHANCE_FAVORIT]
+    .map(x => `<u style="left:${Math.round(x * 100)}%"></u>`).join('');
+  return `<div class="nd-chance${ton}">
+    <div class="nd-chance-b">${linien}<i style="width:${pct}%"></i></div>
+    <div class="nd-chance-z"><span>Siegchance vor dem Anstoß</span>
+      <span><b>${pct} %</b> · ${esc(wort)}</span></div>
+  </div>`;
+}
+
+// ── Die Elo-Wirkung je Spieler ───────────────────────────────────────
+// Vier Zahlen untereinander sagen nicht, wer am meisten gewonnen und wer am
+// meisten verloren hat. Der Balken zeigt den Ausschlag, die Mitte ist die
+// Null, und der Rang dahinter sagt, was die Partie in der Tabelle bewegt hat.
+function _ndEloWirkung(matchId, pids){
+  try {
+    const liste = (pids || []).map(pid => ({pid, d: _newsEloDelta(pid, matchId)}))
+      .filter(x => x.d != null);
+    if(!liste.length) return '';
+    const max = Math.max.apply(null, liste.map(x => Math.abs(x.d))) || 1;
+    const pm = pmap();
+    return liste.sort((a, b) => b.d - a.d).map(x => {
+      const breit = Math.max(4, Math.round(Math.abs(x.d) / max * 50));
+      const rk = _newsRankChange(x.pid, matchId);
+      // Nur ein WECHSEL ist eine Aussage. „6 → 6" ist keine.
+      const rang = (rk && rk.pre !== rk.post)
+        ? `<em>Rang ${rk.pre} → ${rk.post}</em>` : '';
+      return `<div class="nd-elo" data-pid="${esc(x.pid)}" style="cursor:pointer">
+        <span class="nd-elo-n">${esc((pm[x.pid] && pm[x.pid].name) || '?')}</span>
+        <span class="nd-elo-b"><i class="${x.d >= 0 ? 'p' : 'n'}" style="width:${breit}%"></i></span>
+        <span class="nd-elo-v ${x.d >= 0 ? 'g' : 'r'}">${x.d >= 0 ? '+' : ''}${x.d}</span>
+        ${rang}
+      </div>`;
+    }).join('');
+  } catch(e){ return ''; }
+}
+
 function _newsDetailMitte(s){
   const d = s.dataRef || {};
   const pm = pmap();
@@ -641,6 +693,33 @@ function _newsDetailMitte(s){
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">Die Sensation</div>${pct}` + (matchHtml ? matchHtml : '');
       }
+      // ── Das Blatt einer Partie ───────────────────────────────────
+      // Jede Partie hat eine Karte, und ihr Blatt hatte keinen Fall: wer sie
+      // oeffnete, sah den Satz, den er auf der Karte schon gelesen hatte.
+      // Es zeigt deshalb, was in dieser Partie zu sehen war — die Siegchance
+      // auf ihrer Skala, die Elo-Wirkung je Spieler und, wo es eines gibt,
+      // das Wort fuer das Muster des Ergebnisses.
+      case 'spiel': {
+        const beteiligt = (Array.isArray(d.winners) ? d.winners : [])
+          .concat(Array.isArray(d.losers) ? d.losers : []);
+        const skala = _ndChanceSkala(d.chance != null ? d.chance
+          : (d.quote != null ? d.quote / 100 : null));
+        const elo = d.matchId ? _ndEloWirkung(d.matchId, beteiligt) : '';
+        const wort = {
+          zu_null: ['Ohne Gegentor', 'Kein Treffer für die Gegenseite'],
+          upset:   ['Außenseiter-Sieg', 'Die Rechnung stand dagegen'],
+          krimi:   ['Entscheidung', '1 Tor Unterschied'],
+          kanter:  ['Entscheidung', (d.margin || 0) + ' Tore Unterschied'],
+          eng:     ['Entscheidung', (d.margin || 2) + ' Tore Unterschied']
+        }[d.resultKind];
+        const muster = wort ? `<div class="nd-stat-row">
+            <div class="nd-stat-label">${esc(wort[0])}</div>
+            <div class="nd-stat-val acid">${esc(wort[1])}</div></div>` : '';
+        return (muster ? `<div class="nd-section">Was dieses Spiel besonders macht</div>${muster}` : '')
+          + (skala ? `<div class="nd-section">Wie erwartbar war das</div>${skala}` : '')
+          + (elo ? `<div class="nd-section">Was die Partie bewegt hat</div>${elo}` : '');
+      }
+      // Zeilen aus aelteren Laeufen: der Generator bildet den Typ nicht mehr.
       case 'match_result': {
         const fakten = {
           zu_null: ['Ohne Gegentor', 'Kein Treffer für die Gegenseite'],
@@ -1025,10 +1104,18 @@ function _newsDetailMitte(s){
           (t.ids || []).includes(d.a) && (t.ids || []).includes(d.b)); } catch(e){}
         // Die Zahl der Partien steht schon als Lauf darueber — sie stand hier
         // ein zweites Mal als Ziffer.
+        //
+        // Und die letzte gemeinsame Partie steht nur da, wenn die Karte keine
+        // eigene nennt. Seit die Marke an ihrer ausloesenden Partie haengt,
+        // zeigt der Kopf diese schon, und darunter stand eine ZWEITE
+        // Begegnung derselben beiden — die Partie steht hoechstens einmal im
+        // Blatt [§C27].
         let letzte = null;
-        try { letzte = [...matches].reverse().find(m =>
-          [m.a1, m.a2].every(x => x === d.a || x === d.b) ||
-          [m.b1, m.b2].every(x => x === d.a || x === d.b)); } catch(e){}
+        if(!d.matchId){
+          try { letzte = [...matches].reverse().find(m =>
+            [m.a1, m.a2].every(x => x === d.a || x === d.b) ||
+            [m.b1, m.b2].every(x => x === d.a || x === d.b)); } catch(e){}
+        }
         return `<div class="nd-section">${verloren ? 'Die Durststrecke' : 'Die Serie'}</div>
           ${_newsSerienBand(d.streak, verloren)}
           ${tw ? `<div class="nd-stat-row"><div class="nd-stat-label">Gemeinsame Bilanz</div>

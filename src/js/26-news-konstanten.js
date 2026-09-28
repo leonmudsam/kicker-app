@@ -113,16 +113,6 @@ const NEWS_LIMITS = {
   // Protokoll. Vier eigene Plaetze plus der Sieger des Tages plus, wenn es
   // eines gibt, ein Breaking: gemessen drei bis sechs Karten je Spieltag.
   proTag: 4,
-  // Neben POTD und Tafel braucht ein echter Spieltag mindestens eine Karte,
-  // die an einer konkreten Partie haengen: Ergebnis, Beteiligte und das,
-  // was genau dort passiert ist. Das ist kein zusaetzliches Kartenbudget;
-  // bei einem vollen Tag ersetzen sie schwächere, abstrakte Meldungen.
-  matchProTagMin: 1,
-  // Ergebnis-Stories entstehen aus mehreren klaren Matchmustern (Krimi,
-  // Kantersieg, Zu-null und echter Außenseiter-Sieg). Zwei Kandidaten pro
-  // Spieltag reichen, um konkrete Partien regelmäßig sichtbar zu machen,
-  // ohne aus dem Feed einen Ergebnisdienst zu bauen.
-  matchResultProTag: 2,
   // So viele Plätze eines Tages gehören der Ewigen Tafel, wenn sie sich an
   // diesem Tag bewegt hat. Die Mischung war vorher eine Quote über das ganze
   // Fenster, und erfüllt wurde sie, indem Spieltagskarten wegfielen: gemessen
@@ -130,13 +120,6 @@ const NEWS_LIMITS = {
   // Spieltagen vollständig, ohne der Tafel eine einzige Karte hinzuzufügen.
   // Reserviert statt quotiert, und je Tag statt je Fenster [§C33].
   tafelProTagMin: 1,
-  // Wie viele verdraengte Ergebnisse eine gemeinsame Karte traegt. Gemessen
-  // fielen am 07.09. der Probeliga zwei Ergebnis-Karten unter den Deckel
-  // (prio 73 und 71), weil Tafel, Spieler des Tages und zwei Sammelkarten
-  // darueber standen — der Leser erfuhr von neun Partien kein einziges
-  // Ergebnis. Zwei in einer Karte kosten einen Platz statt zwei; drei waeren
-  // wieder ein Ergebnisdienst [§C33].
-  ergebnisProKarte: 2,
   // Wie viele Zeilen eine Sammelkarte im Band zeigt. „Bündeln darf nichts
   // verstecken" war fuer zwei bis vier Teile geschrieben; gemessen trug ein
   // Tafel-Moment neunzehn — fuenf Bestmarken, dreizehn Monatschroniken und
@@ -332,10 +315,6 @@ const STORY_PRIO = {
   // eigenen Spieltag unter den Deckel.
   sammel_erfolg:     66,
   sammel_spieler:    66,
-  // Die Ergebnis-Sammelkarte traegt zwei Partien, also mehr als eine
-  // einzelne Ergebnis-Karte (63) und weniger als der Formlauf (64) — sie
-  // ist der Ersatz fuer zwei verdraengte, nicht eine neue Wertung.
-  sammel_ergebnis:   64,
   potd:              88,   // der Sieger des Spieltags IST seine Schlagzeile
   chronik_monat:     86,
   // Der Tag, an dem die Monatstafel aufgeht: eine Karte je Monat, und sie
@@ -352,6 +331,11 @@ const STORY_PRIO = {
   win_streak:        68,
   loss_streak:       66,
   top_form:          64,   // weiter vorn als sonst [§11.0b]
+  // Die Karte einer Partie ist der Anker ihres Spiels: alles, was darin
+  // passiert ist, haengt sich beim Buendeln an sie, und das Buendel traegt
+  // danach den Rang seines staerksten Teils [§C33]. Allein steht sie fuer
+  // das Ergebnis, und das ist die leiseste Nachricht des Spieltagsbandes.
+  spiel:             41,
   match_result:      63,   // ein außergewöhnliches, exakt belegtes Ergebnis
   chronik_geholt:    62,
   team_streak:       60,

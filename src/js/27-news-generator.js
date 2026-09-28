@@ -555,83 +555,113 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── 3b. Team-News: gemeinsame Siegesserie eines Duos (v9.1, v9.5) ──
-  // Match-getriggert (when = Match-Zeit) → erscheint direkt „nach Spielen".
-  // Nur bei Meilenstein-Serienlängen, damit es nicht nach jedem Sieg spammt.
-  // v9.5: erst ab 5 gemeinsamen Siegen (vorher 3) — 3 war zu schnell erreicht.
-  // Ein Pass über alle Matches (matches ist asc-sortiert) → O(N).
+  // ── 3b. Team-News: gemeinsame Siegesserie eines Duos ────────────────
+  // Gerechnet wurde der Stand NACH der letzten Partie der Liga, und die ID
+  // trug die Laenge (`team_streak_A_B_7`): jede Laenge wurde einzeln
+  // persistiert, und aus einer Serie, die von fuenf auf zehn wuchs, standen
+  // vier Karten im Feed. Der Ausweg war ein Filter, der jede Karte wegnahm,
+  // deren Laenge die LEBENDE Serie nicht mehr erreicht — und damit verschwand
+  // die 5er-Marke vom Dienstag, sobald die Serie am Mittwoch riss. Eine Karte,
+  // die zu ihrem Zeitpunkt richtig war, bleibt richtig [§C33].
+  //
+  // Die Marke ist deshalb ein Ereignis ihrer Partie, genau wie die Serie eines
+  // Einzelspielers: der Lauf ueber die Partien in Spielreihenfolge, die Marke
+  // an der ausloesenden Partie, und die ID aus Duo, Partie und Laenge. Sie
+  // haengt sich damit auch an die Karte ihres Spiels.
   try {
-    const TEAM_STREAK_MS = new Set([5,7,10,15,20]);
-    const tstate = {}; // teamKey → {cur, ids, lastT}
-    for(const m of matches){
-      const sides = [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']];
-      for(const [x,y,won] of sides){
-        if(!x || !y) continue;
-        const ids = [x,y].sort(), k = ids.join('|');
-        if(!tstate[k]) tstate[k] = {cur:0, ids};
-        tstate[k].cur = won ? tstate[k].cur + 1 : 0;
-        tstate[k].lastT = new Date(m.created_at);
-      }
-    }
-    const teamCands = Object.values(tstate).filter(t =>
-      TEAM_STREAK_MS.has(t.cur) &&
-      pm[t.ids[0]] && pm[t.ids[1]] && !pm[t.ids[0]].hidden && !pm[t.ids[1]].hidden);
-    teamCands.sort((a,b) => b.cur - a.cur || b.lastT - a.lastT);
-    teamCands.slice(0, 3).forEach(t => {
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
+    const TEAM_STREAK_MS = new Set([5, 7, 10, 15, 20]);
+    const lauf = {}, laufStart = {}, kand = [];
+    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+      if(mts(m) > now.getTime()) return;
+      [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, won]) => {
+        if(!x || !y) return;
+        const ids = [x, y].sort(), k = ids.join('|');
+        lauf[k] = won ? (lauf[k] || 0) + 1 : 0;
+        if(lauf[k] === 1) laufStart[k] = m.id;
+        const n = lauf[k];
+        if(!(TEAM_STREAK_MS.has(n) || (n > 20 && n % 5 === 0))) return;
+        if(mts(m) < seit) return;
+        if(!pm[ids[0]] || !pm[ids[1]] || pm[ids[0]].hidden || pm[ids[1]].hidden) return;
+        kand.push({ids, streak:n, when:new Date(m.created_at), matchId:m.id,
+                   lauf:laufStart[k] || ''});
+      });
+    });
+    // Eine Serie je Duo und Tag, die laengste: die laengere enthaelt die
+    // kuerzere, und beide untereinander sind eine Nachricht und eine
+    // Wiederholung [§C33].
+    const jeTag = new Map();
+    kand.forEach(c => {
+      const k = c.ids.join('|') + '@' + tagKey(c.when);
+      const alt = jeTag.get(k);
+      if(!alt || c.streak > alt.streak) jeTag.set(k, c);
+    });
+    [...jeTag.values()].sort((a, b) => b.when - a.when || b.streak - a.streak)
+      .slice(0, 3).forEach(t => {
       stories.push({
-        id: 'team_streak_'+t.ids.join('_')+'_'+t.cur,
+        id: 'team_streak_' + t.ids.join('_') + '_' + t.matchId + '_' + t.streak,
         cat: 'team',
         ic: 'unstoppable',
         title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} gewinnen zusammen alles`,
-        desc: `${t.cur} gemeinsame Spiele, ${t.cur} Siege. Die Serie läuft noch.`,
-        when: t.lastT,
-        prio: STORY_PRIO.team_streak + (t.cur >= 7 ? 4 : 0),
-        dataRef: {type:'team_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
+        desc: `${_zahlwortDe(t.streak)} gemeinsame Spiele, ${_zahlwortDe(t.streak)} Siege.`,
+        when: t.when,
+        prio: STORY_PRIO.team_streak + (t.streak >= 7 ? 4 : 0),
+        dataRef: {type:'team_streak', a:t.ids[0], b:t.ids[1], streak:t.streak,
+                  matchId:t.matchId, lauf:t.lauf}
       });
     });
-  } catch(e){}
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] team_streak', e); }
 
-  // ── 3c. Team-News: gemeinsame Niederlagenserie eines Duos (v9.5) ──
-  // Pendant zu 3b, aber ab 3 gemeinsamen Niederlagen in Folge. Gleiche
-  // Mechanik (Match-getriggert, Meilenstein-Serienlängen, O(N)).
+  // ── 3c. Team-News: gemeinsame Niederlagenserie eines Duos ───────────
+  // Pendant zu 3b, ab drei gemeinsamen Niederlagen in Folge — und aus demselben
+  // Grund ein Ereignis ihrer Partie und kein Stand von heute.
   try {
-    const TEAM_LOSS_MS = new Set([3,5,7,10]);
-    const lstate = {}; // teamKey → {cur, ids, lastT}
-    for(const m of matches){
-      const sides = [[m.a1,m.a2,m.winner==='A'],[m.b1,m.b2,m.winner==='B']];
-      for(const [x,y,won] of sides){
-        if(!x || !y) continue;
-        const ids = [x,y].sort(), k = ids.join('|');
-        if(!lstate[k]) lstate[k] = {cur:0, ids};
-        lstate[k].cur = won ? 0 : lstate[k].cur + 1;
-        // Wann die Serie begann — ohne das Datum sagt die Karte für jedes Duo
-        // wortwörtlich dasselbe.
-        if(lstate[k].cur === 1) lstate[k].firstT = new Date(m.created_at);
-        lstate[k].lastT = new Date(m.created_at);
-      }
-    }
-    const lossCands = Object.values(lstate).filter(t =>
-      TEAM_LOSS_MS.has(t.cur) &&
-      pm[t.ids[0]] && pm[t.ids[1]] && !pm[t.ids[0]].hidden && !pm[t.ids[1]].hidden);
-    lossCands.sort((a,b) => b.cur - a.cur || b.lastT - a.lastT);
-    lossCands.slice(0, 3).forEach(t => {
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
+    const TEAM_LOSS_MS = new Set([3, 5, 7, 10]);
+    const lauf = {}, laufStart = {}, ersteT = {}, kand = [];
+    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+      if(mts(m) > now.getTime()) return;
+      [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, won]) => {
+        if(!x || !y) return;
+        const ids = [x, y].sort(), k = ids.join('|');
+        lauf[k] = won ? 0 : (lauf[k] || 0) + 1;
+        // Wann die Serie begann — ohne das Datum sagt die Karte fuer jedes Duo
+        // wortwoertlich dasselbe.
+        if(lauf[k] === 1){ laufStart[k] = m.id; ersteT[k] = new Date(m.created_at); }
+        const n = lauf[k];
+        if(!(TEAM_LOSS_MS.has(n) || (n > 10 && n % 5 === 0))) return;
+        if(mts(m) < seit) return;
+        if(!pm[ids[0]] || !pm[ids[1]] || pm[ids[0]].hidden || pm[ids[1]].hidden) return;
+        kand.push({ids, streak:n, when:new Date(m.created_at), matchId:m.id,
+                   lauf:laufStart[k] || '', firstT:ersteT[k]});
+      });
+    });
+    const jeTag = new Map();
+    kand.forEach(c => {
+      const k = c.ids.join('|') + '@' + tagKey(c.when);
+      const alt = jeTag.get(k);
+      if(!alt || c.streak > alt.streak) jeTag.set(k, c);
+    });
+    [...jeTag.values()].sort((a, b) => b.when - a.when || b.streak - a.streak)
+      .slice(0, 3).forEach(t => {
       stories.push({
-        id: 'team_loss_streak_'+t.ids.join('_')+'_'+t.cur,
+        id: 'team_loss_streak_' + t.ids.join('_') + '_' + t.matchId + '_' + t.streak,
         cat: 'team',
         ic: 'trendCrash',
         title: `${nameOf(t.ids[0])} und ${nameOf(t.ids[1])} verlieren zusammen alles`,
-        // Der Satz war für jedes Duo derselbe und stand damit wortgleich
+        // Der Satz war fuer jedes Duo derselbe und stand damit wortgleich
         // zweimal im Feed. Die Namen stehen schon in der Schlagzeile; hier
         // steht, seit wann und wie oft.
         desc: `Seit dem `
-            + `${new Date(t.firstT || t.lastT).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
-            + `gehen ${_zahlwortDe(t.cur)} gemeinsame Spiele in Folge verloren.`,
-        when: t.lastT,
-        prio: STORY_PRIO.team_loss_streak + (t.cur >= 7 ? 4 : 0),
-        dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.cur}
+            + `${new Date(t.firstT || t.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
+            + `gehen ${_zahlwortDe(t.streak)} gemeinsame Spiele in Folge verloren.`,
+        when: t.when,
+        prio: STORY_PRIO.team_loss_streak + (t.streak >= 7 ? 4 : 0),
+        dataRef: {type:'team_loss_streak', a:t.ids[0], b:t.ids[1], streak:t.streak,
+                  matchId:t.matchId, lauf:t.lauf}
       });
     });
-  } catch(e){}
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] team_loss_streak', e); }
 
   // ── 4. Über dem eigenen Schnitt (letzte 10 gegen die Laufbahn davor) ──
   // Gemessen wird der ABSTAND, nicht das Niveau [§11.0b]. „Neun von zehn"
@@ -639,29 +669,52 @@ function _buildStories(){
   // nannte die Karte über die ganze Ligageschichte vier Spieler, einen davon
   // zehnmal. Wer von 42 auf 70 Prozent springt, hat mehr getan als wer von
   // 63 auf 70 kommt — und davon erfuhr der Feed nichts.
+  //
+  // Sie war ein Stand von HEUTE, gerechnet nach der letzten Partie der Liga,
+  // und ein Filter nahm sie weg, sobald der Vorsprung wieder fiel. Damit
+  // verschwand eine Karte, die zu ihrem Zeitpunkt richtig war — und im Lauf
+  // desselben Spieltags verschob sich das Fenster schon so weit, dass die
+  // eigene Karte vom Mittag als veraltet galt: gemessen wurden acht gebildet
+  // und keine einzige gezeigt. Der Sprung gehoert deshalb der Partie, mit der
+  // er entstanden ist: gerechnet wird nach JEDER Partie eines Spielers, und
+  // gemeldet wird der Uebertritt ueber die Schwelle, nicht der Zustand.
   try {
-    const candidates = [];
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
+    const kand = [];
     activePlayers().forEach(p => {
-      // byPlayer ist asc-sortiert (=ältestes first). Letzte 10 = slice(-10).
+      // byPlayer ist asc-sortiert (=aeltestes first).
       const arr = byPlayer[p.id] || [];
       if(arr.length < FORM_FENSTER + FORM_BASIS_MIN) return;
-      const fenster = arr.slice(-FORM_FENSTER);
-      const davor   = arr.slice(0, -FORM_FENSTER);
-      const wins = fenster.filter(m => won(p.id, m)).length;
-      const qJetzt = wins / FORM_FENSTER;
-      const qBasis = davor.filter(m => won(p.id, m)).length / davor.length;
-      const vorsprung = qJetzt - qBasis;
-      if(vorsprung >= FORM_VORSPRUNG){
-        candidates.push({pid: p.id, wins, qJetzt, qBasis, vorsprung,
-                         when: new Date(fenster[fenster.length - 1].created_at)});
+      // Praefixsumme der Siege, damit jedes Fenster in O(1) faellt.
+      const pre = [0];
+      for(let i = 0; i < arr.length; i++) pre.push(pre[i] + (won(p.id, arr[i]) ? 1 : 0));
+      let drin = false;
+      for(let i = FORM_FENSTER + FORM_BASIS_MIN - 1; i < arr.length; i++){
+        const bis = i + 1;
+        const wins = pre[bis] - pre[bis - FORM_FENSTER];
+        const qJetzt = wins / FORM_FENSTER;
+        const nDavor = bis - FORM_FENSTER;
+        const qBasis = pre[nDavor] / nDavor;
+        const vor = qJetzt - qBasis;
+        const jetztDrin = vor >= FORM_VORSPRUNG;
+        // Nur der Uebertritt ist eine Nachricht. Bleibt der Vorsprung ueber
+        // mehrere Partien stehen, ist das dieselbe Aussage und nicht jede
+        // Partie neu.
+        if(jetztDrin && !drin){
+          const m = arr[i];
+          if(mts(m) >= seit && mts(m) <= now.getTime())
+            kand.push({pid:p.id, wins, qJetzt, qBasis, vorsprung:vor,
+                       when:new Date(m.created_at), matchId:m.id});
+        }
+        drin = jetztDrin;
       }
     });
-    // Der größte Sprung zuerst, nicht die höchste Quote: die Karte handelt
+    // Der groesste Sprung zuerst, nicht die hoechste Quote: die Karte handelt
     // vom Abstand.
-    candidates.sort((a,b) => b.vorsprung - a.vorsprung || b.when - a.when);
-    candidates.slice(0, NEWS_LIMITS.topForm).forEach(c => {
+    kand.sort((a, b) => b.vorsprung - a.vorsprung || b.when - a.when);
+    kand.slice(0, NEWS_LIMITS.topForm).forEach(c => {
       stories.push({
-        id: 'top_form_'+c.pid+'_'+c.when.toISOString().slice(0,10),
+        id: 'top_form_' + c.pid + '_' + c.matchId,
         cat: 'highlight',
         ic: 'flame',
         // Kein Possessivpronomen über einen Spieler [§6]: „über dem eigenen
@@ -670,48 +723,62 @@ function _buildStories(){
         desc: `${Math.round(c.qJetzt * 100)} % aus den letzten ${FORM_FENSTER} Partien. `
             + `Über die Laufbahn davor sind es ${Math.round(c.qBasis * 100)} %.`,
         when: c.when,
-        // `wins` bleibt die Zahl der Siege im Fenster: daran erkennt der
-        // Stale-Filter, ob die Form noch steht [§11.2].
         prio: STORY_PRIO.top_form + (c.vorsprung >= 0.4 ? 4 : 2),
-        dataRef: {type:'top_form', pid: c.pid, wins: c.wins,
+        dataRef: {type:'top_form', pid: c.pid, wins: c.wins, matchId: c.matchId,
                   qJetzt: Math.round(c.qJetzt * 100), qBasis: Math.round(c.qBasis * 100),
                   vorsprung: Math.round(c.vorsprung * 100)}
       });
     });
-  } catch(e){}
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] top_form', e); }
 
-  // ── 5. Niederlagenserie (≥5 in Folge, aktuell laufend) ──
-  // Nur Spieler, deren JÜNGSTES Match Niederlage war + Serie ≥ 5.
+  // ── 5. Niederlagenserie als Ereignis ihrer Partie ───────────────────
+  // Gezaehlt wurde die LAUFENDE Serie, und die ID trug das Datum des Laufs:
+  // die Karte war damit eine Behauptung ueber heute, und ein Filter nahm sie
+  // weg, sobald die Serie riss. Damit verschwand eine Karte, die zu ihrem
+  // Zeitpunkt richtig war — genau das, was der Feed nie tun darf [§C33]. Die
+  // Marke gehoert deshalb ihrer Partie, wie die Siegesserie.
   try {
-    const candidates = [];
-    activePlayers().forEach(p => {
-      // byPlayer asc → von hinten iterieren = neueste zuerst. Frühzeitig brechen.
-      const arr = byPlayer[p.id] || [];
-      if(!arr.length) return;
-      let streak = 0;
-      for(let i = arr.length - 1; i >= 0; i--){
-        if(won(p.id, arr[i])) break;
-        streak++;
-        if(streak > 12) break; // Schutz
-      }
-      if(streak >= 5){
-        candidates.push({pid: p.id, streak, when: new Date(arr[arr.length-1].created_at)});
-      }
+    const seit = now.getTime() - NEWS_FENSTER_TAGE * _dayMs;
+    const marken = new Set([5, 8, 10]);
+    const lauf = {}, laufStart = {}, kand = [];
+    [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
+      if(mts(m) > now.getTime()) return;
+      const aGewinnt = m.winner === 'A';
+      [[m.a1, aGewinnt], [m.a2, aGewinnt], [m.b1, !aGewinnt], [m.b2, !aGewinnt]]
+        .forEach(([pid, sieg]) => {
+        if(!pid) return;
+        lauf[pid] = sieg ? 0 : (lauf[pid] || 0) + 1;
+        if(lauf[pid] === 1) laufStart[pid] = m.id;
+        const n = lauf[pid];
+        if(!(marken.has(n) || (n > 10 && n % 5 === 0))) return;
+        if(mts(m) < seit || !pm[pid] || pm[pid].hidden) return;
+        kand.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
+                   lauf:laufStart[pid] || ''});
+      });
     });
-    candidates.sort((a,b) => b.streak - a.streak);
-    candidates.slice(0, NEWS_LIMITS.lossStreak).forEach(c => {
+    // Eine Serie je Spieler und Tag, die laengste.
+    const jeTag = new Map();
+    kand.forEach(c => {
+      const k = c.pid + '|' + tagKey(c.when);
+      const alt = jeTag.get(k);
+      if(!alt || c.streak > alt.streak) jeTag.set(k, c);
+    });
+    [...jeTag.values()].sort((a, b) => b.when - a.when || b.streak - a.streak)
+      .slice(0, NEWS_LIMITS.lossStreak).forEach(c => {
       stories.push({
-        id: 'loss_streak_'+c.pid+'_'+c.when.toISOString().slice(0,10),
+        id: 'loss_streak_' + c.pid + '_' + c.matchId + '_' + c.streak,
         cat: 'misfortune',
         ic: c.streak >= 7 ? 'dropTriple' : 'dropDouble',
         title: `${nameOf(c.pid)} findet gerade kein Mittel`,
-        desc: `${c.streak} Niederlagen am Stück. So lange hat ${nameOf(c.pid)} nicht mehr gewonnen.`,
+        desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück. `
+            + `So lange hat ${nameOf(c.pid)} nicht mehr gewonnen.`,
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
-        dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak}
+        dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
+                  matchId:c.matchId, lauf:c.lauf}
       });
     });
-  } catch(e){}
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] loss_streak', e); }
 
   // ── 6. Badge freigeschaltet (letzte 7 Tage) ──
   // Tap-Quelle: getBadgeEarnedCache. Wir zeigen die NEUSTEN N freigeschalteten,
@@ -1440,22 +1507,22 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── 16d. Das Ergebnis selbst ist die Geschichte ─────────────────────
-  // Nicht jeder Spieltag liefert einen Rekord oder eine neue Auszeichnung.
-  // Außergewöhnliche Partien sollen trotzdem im Blatt stehen: mit Endstand,
-  // beiden Teams und genau dem Merkmal, das diese Begegnung besonders macht.
-  // Pro Partie gewinnt nur das stärkste Muster, pro Tag höchstens zwei. So
-  // entstehen mehr echte Spieltagsgeschichten, aber kein Ergebnisprotokoll.
+  // ── 16d. Jede Partie bekommt ihre Karte ─────────────────────────────
+  // Gebildet wurde nur, was ein auffaelliges Muster traf — ein 10:0, ein
+  // Krimi, ein Aussenseitersieg —, und davon hoechstens zwei je Tag.
+  // Gemessen ueber das Vierzehn-Tage-Fenster: 52 Partien, und 18 davon kamen
+  // in einer sichtbaren Karte ueberhaupt vor. Wer am Abend den Spieltag
+  // nachliest, erfuhr von zwei Dritteln der Spiele nichts.
+  //
+  // Jede Partie bekommt deshalb eine Karte, und sie ist der ANKER ihres
+  // Spiels: alles, was in dieser Partie passiert ist — eine Serienmarke, eine
+  // Auszeichnung, ein Meilenstein — haengt sich beim Buendeln an sie [§C33].
+  // Ohne einen einzigen Fakt bleibt sie das Ergebnis mit den beiden Zahlen,
+  // die jede Partie hat: die Siegchance vor dem Anstoss und die Elo danach.
+  // Der Deckel je Tag entfaellt fuer sie — eine Karte je Partie IST der
+  // Deckel, und eine Partie hoert nicht auf, gespielt worden zu sein.
   try {
     const seit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
-    const jeTag = new Map();
-    const badgeJeMatch = new Map();
-    stories.forEach(s => {
-      const d = (s && s.dataRef) || {};
-      if(d.type !== 'badge_unlocked' || !d.matchId || !d.badgeId) return;
-      const set = badgeJeMatch.get(d.matchId) || new Set();
-      set.add(d.badgeId); badgeJeMatch.set(d.matchId, set);
-    });
     for(let i = matches.length - 1; i >= 0; i--){
       const m = matches[i], ts = mts(m);
       if(ts > now.getTime()) continue;
@@ -1469,60 +1536,56 @@ function _buildStories(){
       const h = histMap.get(m.id);
       const expA = h && h.expA != null ? h.expA : (m.exp_a == null ? 0.5 : m.exp_a);
       const chance = m.winner === 'A' ? expA : 1 - expA;
-      let art = '', rang = 0, title = '', desc = '', ic = 'ball';
       const wn = _namenListe(winners.map(nameOf));
       const ln = _namenListe(losers.map(nameOf));
+      const pct = Math.max(1, Math.round(chance * 100));
+      const dl = m.deltas || {};
+      // Der groesste Elo-Gewinn der Siegerseite. Er steht auch im `dataRef`,
+      // damit die Sammelkarte dieser Partie ihn nennen kann, ohne den Satz
+      // dieser Karte abzuschreiben [§C33].
+      const plus = winners.map(id => Math.round(dl[id] || 0))
+        .filter(x => x > 0).sort((x, y) => y - x)[0] || 0;
+      let art = 'normal', rang = 0, title = '', desc = '', ic = 'ball';
       if(hoch === 10 && tief === 0){
-        art = 'zu_null'; rang = 69; ic = 'hundred';
+        art = 'zu_null'; rang = 10; ic = 'hundred';
         title = `${wn} gewinnen ohne Gegentor`;
         desc = `Ein makelloses 10:0 gegen ${ln}. Auf der anderen Seite fällt kein einziger Treffer.`;
       } else if(chance >= CHANCE_SENSATION && chance < CHANCE_UPSET){
-        art = 'upset'; rang = 67; ic = 'giantSlayer';
+        art = 'upset'; rang = 8; ic = 'giantSlayer';
         title = `${wn} stürzen die Favoriten`;
-        desc = `Nur ${Math.max(1, Math.round(chance * 100))} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;
+        desc = `Nur ${pct} % Siegchance vor dem Anstoß. Trotzdem fällt das Spiel gegen ${ln} an die Außenseiter.`;
       } else if(diff === 1 && tief >= 8){
-        art = 'krimi'; rang = 65; ic = 'thriller';
-        // Das Ergebnis aus der Sicht des Siegers. Es stand in der Reihenfolge
-        // der Eingabe, und „Maxi und Leo retten ein 9:10 ins Ziel" nannte die
-        // Sieger und dahinter den Stand des Verlierers [§C33].
+        art = 'krimi'; rang = 6; ic = 'thriller';
         title = `${wn} retten ein ${hoch}:${tief} ins Ziel`;
         desc = `Nur 1 Tor trennt beide Teams. ${ln} bleiben bis zum letzten Ball im Spiel.`;
       } else if(diff >= 7){
-        art = 'kanter'; rang = 61; ic = 'thumbsUp';
+        art = 'kanter'; rang = 4; ic = 'thumbsUp';
         title = `${wn} setzen ein klares Zeichen`;
         desc = `${hoch}:${tief} gegen ${ln}. Mit ${diff} Toren Abstand ist das eine klare Angelegenheit.`;
       } else if(diff === 2 && tief >= 8){
-        art = 'eng'; rang = 59; ic = 'thriller';
+        art = 'eng'; rang = 2; ic = 'thriller';
         title = `${wn} entscheiden ein enges Spiel`;
         desc = `${ln} halten die Partie bis in die Schlussphase offen. Am Ende steht ein ${hoch}:${tief}.`;
+      } else {
+        // Eine Partie ohne Muster hat trotzdem zwei Zahlen, die jede hat.
+        // Das Ergebnis selbst steht im Band darueber und gehoert nicht in
+        // den Satz [§C33].
+        title = `${wn} setzen sich gegen ${ln} durch`;
+        desc = `Vor dem Anstoß lag die Siegchance bei ${pct} %.`
+             + (plus ? ` Der Sieg bringt +${plus} Elo.` : '');
       }
-      if(!art) continue;
-      // Eine Auszeichnung aus genau diesem Match darf denselben Fakt nicht
-      // noch einmal als Ergebnis-Story erzählen. In allen anderen Fällen ist
-      // die Partie selbst die einzige Nachricht über dieses Resultat.
-      const bm = badgeJeMatch.get(m.id) || new Set();
-      const abgedeckt = art === 'zu_null' ? bm.has('perfect_win')
-        : art === 'upset' ? bm.has('upset_king')
-        : (art === 'krimi' || art === 'eng') ? (bm.has('krimi') || bm.has('nerves_of_steel'))
-        : false;
-      if(abgedeckt) continue;
-      const tag = tagKey(ts);
-      const list = jeTag.get(tag) || [];
-      list.push({m, ts, art, rang, title, desc, ic, winners, losers, chance, diff});
-      jeTag.set(tag, list);
+      stories.push({
+        id: 'spiel_' + m.id,
+        cat: 'highlight', ic, title, desc,
+        when: new Date(ts), prio: STORY_PRIO.spiel + rang,
+        dataRef: {type:'spiel', resultKind:art, matchId:m.id,
+                  playerIds:winners, winners, losers, margin:diff,
+                  stand: hoch + ':' + tief, quote: pct, elo: plus,
+                  chance: art === 'upset' ? chance : undefined,
+                  causalKey:_storyGruppeKey('match', m.id)}
+      });
     }
-    jeTag.forEach(list => list
-      .sort((x, y) => y.rang - x.rang || y.ts - x.ts)
-      .slice(0, NEWS_LIMITS.matchResultProTag || 2)
-      .forEach(x => stories.push({
-        id: `match_result_${x.art}_${x.m.id}`,
-        cat: 'highlight', ic:x.ic, title:x.title, desc:x.desc,
-        when:new Date(x.ts), prio:STORY_PRIO.match_result + (x.rang - 59),
-        dataRef:{type:'match_result', resultKind:x.art, matchId:x.m.id,
-                 playerIds:x.winners, winners:x.winners, losers:x.losers,
-                 chance:x.art === 'upset' ? x.chance : undefined, margin:x.diff}
-      })));
-  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] match result', e); }
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] spiel', e); }
 
   // ── 17. Serienkiller (Match beendete ≥4er Sieges-Streak des Gegners) ──
   // Nutzt getStreakSnapshots — pro Match {pid: streak_VOR_match}. v9.7: Schwelle
@@ -1877,52 +1940,64 @@ function _buildStories(){
     }
   } catch(e){}
 
-  // ── Spieler des Tages (POTD) des letzten Spieltags (v8.7) ──
-  // Persistente News am Folgetag (früh), analog zum POTD-Recap-Sheet.
+  // ── Spieler des Tages, je Spieltag des Fensters ──────────────────────
+  // Er entstand nur fuer den LETZTEN Spieltag (`_potdLastDayData` sucht von
+  // hinten den ersten Tag mit einem Kandidaten und hoert dann auf). Der Feed
+  // reicht aber vierzehn Tage zurueck, und in ihm liegen sechs bis sieben
+  // Spieltage: gemessen ueber das Fenster war genau EINE Karte gebildet, und
+  // die sechs Tage davor hatten keinen Sieger mehr. Der Spieler des Tages IST
+  // die Schlagzeile seines Spieltags [§C33] — wer am Abend nachliest, findet
+  // sonst Partien ohne Zusammenfassung. Die ID traegt den Tag, ist also
+  // stabil, und ein zweiter Lauf legt keine Zeile dazu.
   try {
-    if(typeof _potdLastDayData === 'function'){
-      const data = _potdLastDayData(); // {dayKey, dayMatches} | null
-      if(data){
-        // v9.17: Tages-Regel = meiste Siege (Tiebreak Elo-Delta) — identisch zu
-        // showPotdRecap und zum Badge-Zähler countDayWins.
-        const res = _newsPeriodWinner(data.dayMatches, 3, 'wins');
-        if(res){
-          // Die Karte erscheint um 23:59 DESSELBEN Tages, nicht mehr um 07:00
-          // des Folgetags. Um 23:59 kann keine Partie mehr dazukommen (die
-          // späteste der Liga hat um 18 Uhr angefangen), und die Karte steht
-          // damit unter dem Datum, an dem gespielt wurde.
-          const rep = new Date(data.dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
-          if(now.getTime() >= rep.getTime()){
-            const main = res.main;
-            const names = res.winners.map(w => nameOf(w.id));
-            // Auch hier die Aufzaehlung der App [§C27]: „Leon & Martin holen
-            // den Tag" war die letzte Schlagzeile mit „&" im Feed.
-            const titleNames = _namenKurz(names);
-            const p = data.dayKey.split('-');
-            const dLabel = p[2] + '.' + p[1] + '.';
-            stories.push({
-              id: 'potd_' + data.dayKey,
-              cat: 'highlight',
-              ic: 'dayKing',
-              title: names.length > 1 ? `${titleNames}: Spieler des Tages` : `${titleNames} ist Spieler des Tages`,
-              // v9.17: Die Siegquote steht NICHT mehr vorn — der Titel wird über
-              // die absoluten Tagessiege vergeben (siehe _newsPeriodWinner). Die
-              // Quote bleibt als Kontext, damit die Zahl einordbar ist.
-              // „Am 16.07. hat niemand mehr geholt" — geholt WAS? Der Satz
-              // nennt jetzt, worum es geht: mehr Siege.
-              desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, `
-                  + `das sind ${Math.round(main.wr*100)} %. Mehr Siege hat am `
-                  + `${dLabel} niemand geholt.`,
-              when: rep,
-              prio: STORY_PRIO.potd,
-              dataRef: {type:'potd', dayKey: data.dayKey, playerId: main.id, playerIds: res.winners.map(w => w.id),
-                        wins: main.wins, games: main.wins + main.losses, wr: main.wr}
-            });
-          }
-        }
-      }
-    }
-  } catch(e){}
+    const potdSeit = now.getTime() - NEWS_FENSTER_TAGE * 86400000;
+    const potdTage = new Map();
+    matches.forEach(m => {
+      const ts = mts(m);
+      if(ts < potdSeit || ts > now.getTime()) return;
+      const dk = tagKey(ts);
+      let l = potdTage.get(dk);
+      if(!l){ l = []; potdTage.set(dk, l); }
+      l.push(m);
+    });
+    potdTage.forEach((dayMatches, dayKey) => {
+      // Die Karte steht um 23:59 DESSELBEN Tages, nicht am Morgen danach: um
+      // 23:59 kann keine Partie mehr dazukommen (die spaeteste der Liga hat um
+      // 18 Uhr angefangen), und die Karte steht damit unter dem Datum, an dem
+      // gespielt wurde.
+      const rep = new Date(dayKey + 'T00:00:00'); rep.setHours(23, 59, 0, 0);
+      if(now.getTime() < rep.getTime()) return;
+      // Tages-Regel = meiste Siege (Tiebreak Elo-Delta) — identisch zu
+      // showPotdRecap und zum Badge-Zaehler countDayWins.
+      const res = _newsPeriodWinner(dayMatches, 3, 'wins');
+      if(!res) return;
+      const main = res.main;
+      const names = res.winners.map(w => nameOf(w.id));
+      // Auch hier die Aufzaehlung der App [§C27]: „Leon & Martin holen den
+      // Tag" war die letzte Schlagzeile mit „&" im Feed.
+      const titleNames = _namenKurz(names);
+      const p = dayKey.split('-');
+      const dLabel = p[2] + '.' + p[1] + '.';
+      stories.push({
+        id: 'potd_' + dayKey,
+        cat: 'highlight',
+        ic: 'dayKing',
+        title: names.length > 1 ? `${titleNames}: Spieler des Tages` : `${titleNames} ist Spieler des Tages`,
+        // Die Siegquote steht NICHT vorn — der Titel wird ueber die absoluten
+        // Tagessiege vergeben (siehe `_newsPeriodWinner`). Die Quote bleibt als
+        // Kontext, damit die Zahl einordbar ist. „Am 16.07. hat niemand mehr
+        // geholt" — geholt WAS? Der Satz nennt, worum es geht: mehr Siege.
+        desc: `${main.wins} von ${main.wins + main.losses} Spielen gewonnen, `
+            + `das sind ${Math.round(main.wr*100)} %. Mehr Siege hat am `
+            + `${dLabel} niemand geholt.`,
+        when: rep,
+        prio: STORY_PRIO.potd,
+        dataRef: {type:'potd', dayKey, playerId: main.id,
+                  playerIds: res.winners.map(w => w.id),
+                  wins: main.wins, games: main.wins + main.losses, wr: main.wr}
+      });
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
   // Hinweis (v8.6): Die Konsolidierung gegen Match-Event-Spam (mehrere fast
   // identische Karten pro Match) passiert bewusst NICHT hier im Generator,
@@ -2756,6 +2831,16 @@ function _buildStories(){
   const deduped = [];
   for(const s of stories){
     const d = s.dataRef || {};
+    // ── Eine Partie ist keine Auswahl ───────────────────────────────
+    // Der Deckel ist gegen das Rauschen geschrieben: ein Spieler soll den
+    // Feed nicht beherrschen. Die Karte einer Partie ist aber kein Rauschen,
+    // sie ist der Anker ihres Spiels — und sie nennt zwangslaeufig die, die
+    // gespielt haben. Gezaehlt stand ein Vielspieler nach den ersten Partien
+    // eines Tages bei fuenf Nebenrollen, und danach fiel gemessen jede
+    // Formkarte, jede Serienmarke und jeder Meilenstein desselben Tages weg:
+    // von fuenf gebildeten Formkarten kam keine einzige durch. Sie zaehlt
+    // deshalb nicht mit und wird nie verworfen.
+    if(d.type === 'spiel'){ deduped.push(s); continue; }
     const pid = d.pid || d.playerId || d.newLeader || null;
     // Wer sonst noch auf der Karte steht. `_newsPids` ist die einzige Stelle,
     // die weiß, in welchem Feld die Ids je Typ liegen [§C33].
