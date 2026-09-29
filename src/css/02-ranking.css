@@ -61,7 +61,11 @@
      stand — der Halter einer Rekordkarte, eine Zeile im Blatt —, war er ein
      Blockelement: die Initialen klebten oben links und wurden abgeschnitten. */
   .av{display:inline-grid;place-items:center;flex-shrink:0;line-height:1;overflow:hidden;
-    font-family:'Archivo Black',sans-serif;color:var(--bg);text-transform:uppercase;vertical-align:middle}
+    font-family:'Archivo Black',sans-serif;color:var(--bg);text-transform:uppercase;vertical-align:middle;
+    /* Ohne `--av` ist jede der drei Angaben ungültig und fällt weg — dann
+       misst der Behälter, wie bisher. */
+    width:var(--av);height:var(--av);border-radius:calc(var(--av) / 2);
+    font-size:calc(var(--av) * .36)}
   .rrow .av{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;
     font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--bg);text-transform:uppercase}
   /* Emoji-Avatar Variante (grauer Hintergrund mit Emoji) */

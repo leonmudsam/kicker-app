@@ -2361,7 +2361,8 @@ const ok = (c, msg, det) => {
       ['Torjäger', "showAward('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
       ['Wochenkönig', "period='week';openTopList('periodKing')"],
       ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])'],
-      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')']];
+      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed()']];
+    const gesicht = [];
     const rand = [];
     const out = [], woerter = [];
     // Dieselbe Sache heißt überall gleich, und niemand wird angesprochen:
@@ -2383,6 +2384,14 @@ const ok = (c, msg, det) => {
       // Kachel „Monatschroniken" der Laufbahn zog ihre Spalte auf.
       // Gemessen wird am Innenrand: das Blatt hat 20 px Rand, und eine Karte,
       // die in ihn hineinläuft, steht sichtbar schief neben den anderen.
+      // Ein Gesicht hat eine Größe, auch ohne Wappen: unter 48 px kam es
+      // nackt zurück, und das Duo einer Durststrecke stand als „LMA" da.
+      document.querySelectorAll('#sheet .av').forEach(a => {
+        if(!a.textContent.trim()) return;
+        const r = a.getBoundingClientRect();
+        if(r.width && (r.width < 16 || Math.abs(r.width - r.height) > 1))
+          gesicht.push(name + ': ' + a.textContent.trim() + ' ' + Math.round(r.width) + 'x' + Math.round(r.height));
+      });
       const sh = document.getElementById('sheet'), sb = sh.getBoundingClientRect();
       const sr = {right: sb.right - parseFloat(getComputedStyle(sh).paddingRight)};
       sh.querySelectorAll('*').forEach(el => {
@@ -2405,14 +2414,43 @@ const ok = (c, msg, det) => {
       (document.getElementById('main').innerText.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
     }
     K("tab='ranking';render()");
-    return {out, woerter, rand:[...new Set(rand)].slice(0, 8)};
+    return {out, woerter, rand:[...new Set(rand)].slice(0, 8), gesicht:[...new Set(gesicht)].slice(0, 6)};
   });
+  ok(blattPunkt.gesicht.length === 0, 'jedes Gesicht in einem Blatt hat eine Größe und ist rund',
+     blattPunkt.gesicht.join(' | ') || 'alle');
   ok(blattPunkt.rand.length === 0, 'kein Blatt läuft bei 360 px über seinen Rand',
      blattPunkt.rand.join(' | ') || 'alle innerhalb');
   const blattWort = blattPunkt.woerter;
   blattPunkt = blattPunkt.out;
   ok(blattWort.length === 0, 'dieselbe Sache heißt überall gleich, und niemand wird geduzt',
      [...new Set(blattWort)].join(' | ') || 'keine Abweichung');
+  // Das Blatt einer Partie nennt ihre Sieger und die Siegchance aus der
+  // Elo-Bahn, und jeder Spieler steht bei den Auszeichnungen einmal. Es
+  // stand „Team A gewinnt", und fünf Marken zweier Spieler als fünf Karten.
+  const partie = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const ids = K('matches.slice(-40).map(m=>m.id)');
+    const fehler = [];
+    let mitMarken = 0;
+    for(const mid of ids){
+      K('closeSheet(true);showMatchDetail(' + JSON.stringify(mid) + ')');
+      const soll = K(`(function(){ const m=matches.find(x=>x.id===${JSON.stringify(mid)});
+        const h=getHistoryByMatchId().get(m.id); const e=h&&h.expA!=null?h.expA:m.exp_a;
+        return {namen:(m.winner==='A'?[m.a1,m.a2]:[m.b1,m.b2]).map(pname),
+          pct:Math.max(1,Math.round((m.winner==='A'?e:1-e)*100))}; })()`);
+      const sub = (document.querySelector('#sheet .sheet-sub') || {}).textContent || '';
+      if(/Team [AB]/.test(sub) || !soll.namen.every(n => sub.includes(n)) || !sub.includes(soll.pct + ' %'))
+        fehler.push(sub + ' / ' + soll.pct);
+      const zeilen = [...document.querySelectorAll('#sheet .rrow .rname')].map(e => e.textContent.trim());
+      if(zeilen.length) mitMarken++;
+      if(new Set(zeilen).size !== zeilen.length) fehler.push('doppelt: ' + zeilen.join(','));
+    }
+    K('closeSheet(true)');
+    return {fehler, mitMarken};
+  });
+  ok(partie.fehler.length === 0 && partie.mitMarken > 0,
+     'das Blatt einer Partie nennt Sieger und Siegchance und jeden Spieler einmal',
+     partie.fehler.slice(0,3).join(' | ') || partie.mitMarken + ' Partien mit Auszeichnungen');
   const reiterPunkt = reiter.filter(r => r.punkt.length).map(r => r.name + ': ' + r.punkt.join(' '));
   ok(reiterPunkt.length + blattPunkt.length === 0,
      'keine Dezimalzahl mit Punkt in einem Reiter oder Blatt',

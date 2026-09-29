@@ -296,7 +296,12 @@ function insAvWrap(pid, innerHtml, opts){
   // sie, und drei Aufrufer im Feed zeichneten Wappen bei 30 px. Gemessen
   // waren das 225 der 258 Kilobyte Markup einer Tafel — vier Wappen je
   // Ergebnisband.
-  if(px < 48) return innerHtml;
+  // Ohne Wappen bleibt das Gesicht — aber in seiner Größe. Es kam nackt
+  // zurück, ohne Breite und Höhe, und wo kein Behälter eine Größe setzt,
+  // standen die Initialen als Text da: das Duo einer Durststrecke im Feed
+  // war „LMA", zwei Buchstabenhaufen ineinander. `--av` greift nur, wo kein
+  // Behälter selbst misst (siehe `.av` in 02-ranking.css).
+  if(px < 48) return String(innerHtml).replace(/^(<span class="av[^"]*"[^>]*?style=")/, `$1--av:${px}px;`);
   const band = !!(opts && opts.band);
   const t = opts.titel !== undefined ? opts.titel : znTitel(pid);
   const f = opts.feuer !== undefined ? opts.feuer : znFeuer(pid);

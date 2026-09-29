@@ -92,7 +92,7 @@ function showSeasonTable(sid){
     ${T.live ? `<div class="tnote">Stand von heute, bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>
-        <span class="tx"><span class="n">${esc(pname(ch.pid))} — ${T.live ? 'führt die Saison an' : 'Meister'}</span>
+        <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
           <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
       </div><div style="height:14px"></div>` : ''}
     <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid})).join('')}</div>

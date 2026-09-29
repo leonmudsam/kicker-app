@@ -291,18 +291,18 @@ function showTeam(p1Id,p2Id){
     streaksHtml = `
       <div style="margin-bottom:18px">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Serien</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
           <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
             <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:${curColor};line-height:1">${curLabel}</div>
             <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Aktuell</div>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1">${d.longestWinStreak||'–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Sieges</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1">${d.longestWinStreak ? d.longestWinStreak + (d.longestWinStreak === 1 ? ' Sieg' : ' Siege') : '–'}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Beste Serie</div>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--red);line-height:1">${d.longestLossStreak||'–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Pleiten</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--red);line-height:1">${d.longestLossStreak ? d.longestLossStreak + (d.longestLossStreak === 1 ? ' Pleite' : ' Pleiten') : '–'}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Durststrecke</div>
           </div>
         </div>
       </div>`;
@@ -471,23 +471,39 @@ function showMatchDetail(mid){
   // Auszeichnungen durch dieses Match
   const earned=badgesEarnedInMatch(mid);
   const earnedHtml=earned.length?`
-    <div class="mini-label" style="margin-top:14px">Auszeichnungen in diesem Match</div>
+    <div class="mini-label" style="margin-top:14px">Auszeichnungen in dieser Partie</div>
     <div style="display:flex;flex-direction:column;gap:5px">
-      ${earned.map(e=>{
-        // Rarity-Farbe pro Badge: legendary=gold, rare=purple, common=acid, negative=red.
-        // Bewusst dezent — nur Icon + Border-Akzent + Badge-Name in der Farbe,
-        // damit die Liste auseinanderhaltbar bleibt, aber nicht überladen wirkt.
-        const rarity = rarityOf(e.badge.id);
-        const color = (RARITY_META[rarity]||{}).color || 'var(--ink2)';
-        return `<div class="rrow" style="padding:10px 13px;cursor:default;border-left:3px solid ${color}">
-          <span class="ic svg-ic" style="font-size:18px;width:32px;text-align:center;color:${color}">${badgeIc(e.badge,'18px')}</span>
-          <div class="rmid"><div class="rname" style="font-size:13px">${esc(pname(e.playerId))}</div>
-            <div class="rmeta"><span style="color:${color};opacity:.85">${e.badge.name}</span></div></div>
-        </div>`;
-      }).join('')}
+      ${(()=>{
+        // Eine Zeile je Spieler, nicht je Auszeichnung: fünf Marken zweier
+        // Spieler standen als fünf Karten untereinander, und derselbe Name
+        // dreimal. Die Farbe je Marke sagt weiter die Klasse (legendär Gold,
+        // selten Violett, gewöhnlich Grün, negativ Rot).
+        const jeSpieler = new Map();
+        earned.forEach(e => { if(!jeSpieler.has(e.playerId)) jeSpieler.set(e.playerId, []);
+          jeSpieler.get(e.playerId).push(e.badge); });
+        return [...jeSpieler].map(([pid, bs]) => `<div class="rrow" style="padding:10px 13px;cursor:default;align-items:flex-start">
+          <div class="rmid"><div class="rname" style="font-size:13px">${esc(pname(pid))}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px">${bs.map(b => {
+              const color = (RARITY_META[rarityOf(b.id)]||{}).color || 'var(--ink2)';
+              return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:${color}">`
+                + `<span class="svg-ic" style="display:inline-flex">${badgeIc(b,'14px')}</span>${esc(b.name)}</span>`;
+            }).join('')}</div></div>
+        </div>`).join('');
+      })()}
     </div>`:''
   ;
-  openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · Team ${m.winner} gewinnt</div>
+  // „Team A gewinnt" sagte, was das Band darunter ohnehin zeigt, und nannte
+  // niemanden. Die Siegchance vor dem Anpfiff steht dagegen sonst nirgends
+  // im Blatt, ohne dass man die Elo-Analyse aufklappt.
+  const sieger = m.winner==='A' ? [m.a1,m.a2] : [m.b1,m.b2];
+  // Dieselbe Quelle wie die Karte der Partie im Feed: die Erwartung aus der
+  // Elo-Bahn, erst dahinter der gespeicherte Wert. Mit `m.exp_a` allein
+  // stand hier 50 %, auf der Karte derselben Partie 57 %.
+  const _h = getHistoryByMatchId().get(mid);
+  const _expA = _h && _h.expA != null ? _h.expA : (typeof m.exp_a === 'number' ? m.exp_a : null);
+  const chance = _expA == null ? null
+    : Math.max(1, Math.round((m.winner==='A' ? _expA : 1 - _expA) * 100));
+  openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · ${esc(sieger.map(pname).join(' und '))} gewinnen${chance!=null ? ' · Siegchance vorher ' + chance + ' %' : ''}</div>
     <div style="display:flex;gap:8px;margin-top:12px">
       <div data-team="${esc([m.a1,m.a2].sort().join('|'))}" style="flex:1;background:var(--surface);border:1px solid ${m.winner==='A'?'var(--acid2)':'var(--line)'};border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Sometype Mono',monospace">Team A</div>
