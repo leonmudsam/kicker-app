@@ -811,9 +811,16 @@
 
   /* Sorte 5 Woche: die Wertungen als Zeilen, drei davon als Vorschau. */
   .nf-wl{border-top:1px solid var(--line)}
-  .nf-wl-z{display:flex;align-items:baseline;gap:9px;padding:7px 13px;
+  .nf-wl-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px}
   .nf-wl-z:last-child{border-bottom:0}
+  /* Das Zeichen der Wertung. Sechs Zeilen Text untereinander sagen vor dem
+     Lesen nicht, welche davon der Spieler der Woche ist. Gold nur bei ihm —
+     die uebrigen fuenf sind Metall [§C25]. */
+  .nf-wl-i{flex:0 0 15px;width:15px;height:15px;display:grid;place-items:center;
+    color:var(--muted)}
+  .nf-wl-i svg{width:14px;height:14px;display:block}
+  .nf-wl-z.held .nf-wl-i{color:var(--gold)}
   .nf-wl-z span{color:var(--ink);font-weight:600;flex:0 0 auto}
   .nf-wl-z i{font-style:normal;color:var(--muted);min-width:0;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap}
@@ -1331,6 +1338,31 @@
   .nd-stat-val.acid{color:var(--acid)}
   .nd-stat-val.red{color:var(--red)}
   .nd-stat-val.gold{color:var(--gold)}
+  /* ── Der Spieltag als Bahn ──────────────────────────────────────────
+     Zehn Partien als zehn Vs-Bloecke sind vierzig Wappen und eine Wand. Die
+     Bahn zeigt den Tag in einer Zeile: ein Feld je Partie, gruen fuer einen
+     Sieg, rot fuer eine Niederlage, in Spielreihenfolge. */
+  .nd-bahn{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
+  .nd-bahn i{flex:0 0 auto;min-width:40px;padding:6px 7px;border-radius:8px;
+    font-family:'Sometype Mono',monospace;font-size:10.5px;font-style:normal;
+    text-align:center;letter-spacing:.02em}
+  .nd-bahn i.w{background:rgba(190,242,100,.14);border:1px solid rgba(190,242,100,.34);
+    color:var(--acid)}
+  .nd-bahn i.l{background:rgba(240,86,106,.12);border:1px solid rgba(240,86,106,.3);
+    color:var(--red)}
+  /* Und darunter jede Partie kurz: Uhrzeit, Stand, Gegner. Das ist der Beleg
+     zur Bahn, ohne vier Wappen je Zeile. */
+  .nd-tml{display:flex;flex-direction:column;gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:9px}
+  .nd-tm{display:flex;align-items:baseline;gap:9px;padding:8px 12px;background:var(--bg2);
+    cursor:pointer}
+  .nd-tm-u{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9.5px;
+    color:var(--muted);letter-spacing:.04em}
+  .nd-tm-s{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:12.5px}
+  .nd-tm.w .nd-tm-s{color:var(--acid)}
+  .nd-tm.l .nd-tm-s{color:var(--red)}
+  .nd-tm-g{flex:1 1 auto;min-width:0;font-size:11px;color:var(--ink2);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* ── Die Wirkung auf die Laufbahn ───────────────────────────────────
      Sie stand als Zeile „1205 → 1240 Prestige": zwei Zahlen, die man erst
      verrechnen muss. Der Balken zeigt die Strecke von dieser Schwelle zur

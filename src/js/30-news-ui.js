@@ -521,8 +521,18 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     // sie ueberflog, sah die Ueberraschung, den Krimi und das Team der Woche
     // gar nicht, obwohl die Karte fuer nichts anderes da ist.
     const teile = Array.isArray(d.teile) ? d.teile : [];
+    // Der Sieger der Woche steht mit seinem Wappen da. Die Karte trug sechs
+    // Zeilen Text und kein einziges Gesicht — im Feed hat jeder eins [§C33],
+    // und diese Karte gibt es einmal je Woche.
+    const held = (teile.find(t => t.held) || teile[0] || {});
+    const hpid = (held.pids || [])[0];
+    if(hpid) gesicht = `<div class="nf-gr-l">${av(hpid, 48)}</div>`;
+    // Und jede Wertung trägt ihr Zeichen: sechs Zeilen Text untereinander
+    // sagen vor dem Lesen nicht, welche davon der Spieler der Woche ist.
     fuss = `<div class="nf-wl">${teile.map(t =>
-      `<div class="nf-wl-z"><span>${esc(t.label || '')}</span>`
+      `<div class="nf-wl-z${t.held ? ' held' : ''}">`
+      + (t.ic ? `<em class="nf-wl-i">${svgI(t.ic)}</em>` : '')
+      + `<span>${esc(t.label || '')}</span>`
       + `<i>${esc(_namenKurz((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean), 2))}</i>`
       + `<b>${esc(t.wert || '')}</b></div>`).join('')}</div>`;
   } else if(sorte === 'duell'){

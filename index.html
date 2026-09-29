@@ -2493,9 +2493,16 @@
 
   /* Sorte 5 Woche: die Wertungen als Zeilen, drei davon als Vorschau. */
   .nf-wl{border-top:1px solid var(--line)}
-  .nf-wl-z{display:flex;align-items:baseline;gap:9px;padding:7px 13px;
+  .nf-wl-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px}
   .nf-wl-z:last-child{border-bottom:0}
+  /* Das Zeichen der Wertung. Sechs Zeilen Text untereinander sagen vor dem
+     Lesen nicht, welche davon der Spieler der Woche ist. Gold nur bei ihm —
+     die uebrigen fuenf sind Metall [§C25]. */
+  .nf-wl-i{flex:0 0 15px;width:15px;height:15px;display:grid;place-items:center;
+    color:var(--muted)}
+  .nf-wl-i svg{width:14px;height:14px;display:block}
+  .nf-wl-z.held .nf-wl-i{color:var(--gold)}
   .nf-wl-z span{color:var(--ink);font-weight:600;flex:0 0 auto}
   .nf-wl-z i{font-style:normal;color:var(--muted);min-width:0;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap}
@@ -3013,6 +3020,31 @@
   .nd-stat-val.acid{color:var(--acid)}
   .nd-stat-val.red{color:var(--red)}
   .nd-stat-val.gold{color:var(--gold)}
+  /* ── Der Spieltag als Bahn ──────────────────────────────────────────
+     Zehn Partien als zehn Vs-Bloecke sind vierzig Wappen und eine Wand. Die
+     Bahn zeigt den Tag in einer Zeile: ein Feld je Partie, gruen fuer einen
+     Sieg, rot fuer eine Niederlage, in Spielreihenfolge. */
+  .nd-bahn{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
+  .nd-bahn i{flex:0 0 auto;min-width:40px;padding:6px 7px;border-radius:8px;
+    font-family:'Sometype Mono',monospace;font-size:10.5px;font-style:normal;
+    text-align:center;letter-spacing:.02em}
+  .nd-bahn i.w{background:rgba(190,242,100,.14);border:1px solid rgba(190,242,100,.34);
+    color:var(--acid)}
+  .nd-bahn i.l{background:rgba(240,86,106,.12);border:1px solid rgba(240,86,106,.3);
+    color:var(--red)}
+  /* Und darunter jede Partie kurz: Uhrzeit, Stand, Gegner. Das ist der Beleg
+     zur Bahn, ohne vier Wappen je Zeile. */
+  .nd-tml{display:flex;flex-direction:column;gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:9px}
+  .nd-tm{display:flex;align-items:baseline;gap:9px;padding:8px 12px;background:var(--bg2);
+    cursor:pointer}
+  .nd-tm-u{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9.5px;
+    color:var(--muted);letter-spacing:.04em}
+  .nd-tm-s{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:12.5px}
+  .nd-tm.w .nd-tm-s{color:var(--acid)}
+  .nd-tm.l .nd-tm-s{color:var(--red)}
+  .nd-tm-g{flex:1 1 auto;min-width:0;font-size:11px;color:var(--ink2);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   /* ── Die Wirkung auf die Laufbahn ───────────────────────────────────
      Sie stand als Zeile „1205 → 1240 Prestige": zwei Zahlen, die man erst
      verrechnen muss. Der Balken zeigt die Strecke von dieser Schwelle zur
@@ -5057,7 +5089,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.e32f7995';
+const BUILD_VERSION='2026.09.29.38b6a8df';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19833,6 +19865,10 @@ function _buildStories(){
           prio: STORY_PRIO.season_start,
           dataRef: {type:'season_start', sid,
                     leader:rang[0], second:rang[1], gap:vor,
+                    // Der Vorsprung als Bildzone: die Karte trug sonst nur
+                    // zwei Wappen und sagte vor dem Lesen nichts ueber die
+                    // Lage [§C27].
+                    vv:String(vor), vl:'Elo Vorsprung',
                     partien:frei.partien, aktive:frei.genug, gebraucht:frei.gebraucht}
         });
       }
@@ -26218,8 +26254,18 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     // sie ueberflog, sah die Ueberraschung, den Krimi und das Team der Woche
     // gar nicht, obwohl die Karte fuer nichts anderes da ist.
     const teile = Array.isArray(d.teile) ? d.teile : [];
+    // Der Sieger der Woche steht mit seinem Wappen da. Die Karte trug sechs
+    // Zeilen Text und kein einziges Gesicht — im Feed hat jeder eins [§C33],
+    // und diese Karte gibt es einmal je Woche.
+    const held = (teile.find(t => t.held) || teile[0] || {});
+    const hpid = (held.pids || [])[0];
+    if(hpid) gesicht = `<div class="nf-gr-l">${av(hpid, 48)}</div>`;
+    // Und jede Wertung trägt ihr Zeichen: sechs Zeilen Text untereinander
+    // sagen vor dem Lesen nicht, welche davon der Spieler der Woche ist.
     fuss = `<div class="nf-wl">${teile.map(t =>
-      `<div class="nf-wl-z"><span>${esc(t.label || '')}</span>`
+      `<div class="nf-wl-z${t.held ? ' held' : ''}">`
+      + (t.ic ? `<em class="nf-wl-i">${svgI(t.ic)}</em>` : '')
+      + `<span>${esc(t.label || '')}</span>`
       + `<i>${esc(_namenKurz((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean), 2))}</i>`
       + `<b>${esc(t.wert || '')}</b></div>`).join('')}</div>`;
   } else if(sorte === 'duell'){
@@ -27544,6 +27590,53 @@ function _newsDetailBody(s){
   return kopf + mitte;
 }
 
+// ── Der Spieltag als Bahn ────────────────────────────────────────────
+// Das Blatt des Spielers des Tages zeigte jede Partie als vollen Vs-Block:
+// vier Wappen, zwei Namenszeilen, ein Stand. An einem Tag mit zehn Partien
+// sind das zehn solche Bloecke und vierzig Wappen — „Detail folgt der Groesse"
+// warnt genau davor [§6]. Die Bahn zeigt den Tag dagegen in einer Zeile: ein
+// Feld je Partie, gruen fuer einen Sieg, rot fuer eine Niederlage, in
+// Spielreihenfolge. Darunter steht jede Partie kurz mit Uhrzeit, Stand und
+// Gegner — das ist der Beleg, ohne die Wand.
+function _ndTagesbahn(pid, liste){
+  try {
+    const ids = (Array.isArray(pid) ? pid : [pid]).filter(Boolean);
+    if(!ids.length || !liste || !liste.length) return '';
+    const haupt = ids[0];
+    const pm = pmap();
+    const reihe = liste.slice().sort((a, b) => mts(a) - mts(b));
+    const sieg = m => {
+      const aSeite = (m.a1 === haupt || m.a2 === haupt);
+      return aSeite ? m.winner === 'A' : m.winner === 'B';
+    };
+    const dabei = m => [m.a1, m.a2, m.b1, m.b2].indexOf(haupt) >= 0;
+    const eigene = reihe.filter(dabei);
+    if(!eigene.length) return '';
+    const felder = eigene.map(m => {
+      const s = sieg(m);
+      const hoch = Math.max(Number(m.score_a) || 0, Number(m.score_b) || 0);
+      const tief = Math.min(Number(m.score_a) || 0, Number(m.score_b) || 0);
+      return `<i class="${s ? 'w' : 'l'}">${s ? hoch + ':' + tief : tief + ':' + hoch}</i>`;
+    }).join('');
+    const zeilen = eigene.map(m => {
+      const s = sieg(m);
+      const aSeite = (m.a1 === haupt || m.a2 === haupt);
+      const mit = (aSeite ? [m.a1, m.a2] : [m.b1, m.b2]).filter(x => x && x !== haupt);
+      const geg = (aSeite ? [m.b1, m.b2] : [m.a1, m.a2]).filter(Boolean);
+      const nm = x => (pm[x] && pm[x].name) || '?';
+      const hoch = Math.max(Number(m.score_a) || 0, Number(m.score_b) || 0);
+      const tief = Math.min(Number(m.score_a) || 0, Number(m.score_b) || 0);
+      return `<div class="nd-tm ${s ? 'w' : 'l'}" data-mid="${esc(m.id)}">
+        <span class="nd-tm-u">${esc(_newsUhrzeit(mts(m)))}</span>
+        <span class="nd-tm-s">${s ? hoch + ':' + tief : tief + ':' + hoch}</span>
+        <span class="nd-tm-g">${mit.length ? 'mit ' + esc(nm(mit[0])) + ', ' : ''}gegen ${
+          esc(geg.map(nm).join(' & '))}</span>
+      </div>`;
+    }).join('');
+    return `<div class="nd-bahn">${felder}</div><div class="nd-tml">${zeilen}</div>`;
+  } catch(e){ return ''; }
+}
+
 // ── Die Wirkung auf die Laufbahn, gezeichnet ─────────────────────────
 // Sie stand als Zeile da: „1205 → 1240 Prestige". Zwei Zahlen, die man erst
 // lesen und dann verrechnen muss, und bei neun Zeilen darueber weiss niemand
@@ -27990,10 +28083,13 @@ function _newsDetailMitte(s){
         // nach vier Zeilen abbrechen: an vollen Spieltagen gingen dadurch
         // genau die Partien verloren, auf denen die Tageswertung beruht.
         const tag = _newsTagPartien(d.dayKey, pids);
-        const spiele = tag.length
-          ? `<div class="nd-section">${pids.length > 1 ? 'Die Partien der Tagessieger' : 'Die Partien an diesem Tag'}</div>`
-            + tag.map(m => _newsMatchVsBlock(m.id)).join('')
-          : '';
+        const bahn = _ndTagesbahn(pids, tag);
+        const spiele = bahn
+          ? `<div class="nd-section">${pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien'}</div>` + bahn
+          : (tag.length
+              ? `<div class="nd-section">Die Partien an diesem Tag</div>`
+                + tag.map(m => _newsMatchVsBlock(m.id)).join('')
+              : '');
         return satz + gitter + weitere + spiele;
       }
       // ── Die Woche: sechs Wertungen in einem Blatt ────────────────────

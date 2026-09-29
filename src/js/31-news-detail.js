@@ -407,6 +407,53 @@ function _newsDetailBody(s){
   return kopf + mitte;
 }
 
+// ── Der Spieltag als Bahn ────────────────────────────────────────────
+// Das Blatt des Spielers des Tages zeigte jede Partie als vollen Vs-Block:
+// vier Wappen, zwei Namenszeilen, ein Stand. An einem Tag mit zehn Partien
+// sind das zehn solche Bloecke und vierzig Wappen — „Detail folgt der Groesse"
+// warnt genau davor [§6]. Die Bahn zeigt den Tag dagegen in einer Zeile: ein
+// Feld je Partie, gruen fuer einen Sieg, rot fuer eine Niederlage, in
+// Spielreihenfolge. Darunter steht jede Partie kurz mit Uhrzeit, Stand und
+// Gegner — das ist der Beleg, ohne die Wand.
+function _ndTagesbahn(pid, liste){
+  try {
+    const ids = (Array.isArray(pid) ? pid : [pid]).filter(Boolean);
+    if(!ids.length || !liste || !liste.length) return '';
+    const haupt = ids[0];
+    const pm = pmap();
+    const reihe = liste.slice().sort((a, b) => mts(a) - mts(b));
+    const sieg = m => {
+      const aSeite = (m.a1 === haupt || m.a2 === haupt);
+      return aSeite ? m.winner === 'A' : m.winner === 'B';
+    };
+    const dabei = m => [m.a1, m.a2, m.b1, m.b2].indexOf(haupt) >= 0;
+    const eigene = reihe.filter(dabei);
+    if(!eigene.length) return '';
+    const felder = eigene.map(m => {
+      const s = sieg(m);
+      const hoch = Math.max(Number(m.score_a) || 0, Number(m.score_b) || 0);
+      const tief = Math.min(Number(m.score_a) || 0, Number(m.score_b) || 0);
+      return `<i class="${s ? 'w' : 'l'}">${s ? hoch + ':' + tief : tief + ':' + hoch}</i>`;
+    }).join('');
+    const zeilen = eigene.map(m => {
+      const s = sieg(m);
+      const aSeite = (m.a1 === haupt || m.a2 === haupt);
+      const mit = (aSeite ? [m.a1, m.a2] : [m.b1, m.b2]).filter(x => x && x !== haupt);
+      const geg = (aSeite ? [m.b1, m.b2] : [m.a1, m.a2]).filter(Boolean);
+      const nm = x => (pm[x] && pm[x].name) || '?';
+      const hoch = Math.max(Number(m.score_a) || 0, Number(m.score_b) || 0);
+      const tief = Math.min(Number(m.score_a) || 0, Number(m.score_b) || 0);
+      return `<div class="nd-tm ${s ? 'w' : 'l'}" data-mid="${esc(m.id)}">
+        <span class="nd-tm-u">${esc(_newsUhrzeit(mts(m)))}</span>
+        <span class="nd-tm-s">${s ? hoch + ':' + tief : tief + ':' + hoch}</span>
+        <span class="nd-tm-g">${mit.length ? 'mit ' + esc(nm(mit[0])) + ', ' : ''}gegen ${
+          esc(geg.map(nm).join(' & '))}</span>
+      </div>`;
+    }).join('');
+    return `<div class="nd-bahn">${felder}</div><div class="nd-tml">${zeilen}</div>`;
+  } catch(e){ return ''; }
+}
+
 // ── Die Wirkung auf die Laufbahn, gezeichnet ─────────────────────────
 // Sie stand als Zeile da: „1205 → 1240 Prestige". Zwei Zahlen, die man erst
 // lesen und dann verrechnen muss, und bei neun Zeilen darueber weiss niemand
@@ -853,10 +900,13 @@ function _newsDetailMitte(s){
         // nach vier Zeilen abbrechen: an vollen Spieltagen gingen dadurch
         // genau die Partien verloren, auf denen die Tageswertung beruht.
         const tag = _newsTagPartien(d.dayKey, pids);
-        const spiele = tag.length
-          ? `<div class="nd-section">${pids.length > 1 ? 'Die Partien der Tagessieger' : 'Die Partien an diesem Tag'}</div>`
-            + tag.map(m => _newsMatchVsBlock(m.id)).join('')
-          : '';
+        const bahn = _ndTagesbahn(pids, tag);
+        const spiele = bahn
+          ? `<div class="nd-section">${pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien'}</div>` + bahn
+          : (tag.length
+              ? `<div class="nd-section">Die Partien an diesem Tag</div>`
+                + tag.map(m => _newsMatchVsBlock(m.id)).join('')
+              : '');
         return satz + gitter + weitere + spiele;
       }
       // ── Die Woche: sechs Wertungen in einem Blatt ────────────────────

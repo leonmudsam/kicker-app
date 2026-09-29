@@ -1013,7 +1013,10 @@ const _rueck = JSON.parse(K.eval(`JSON.stringify((function(){
     keineRueckblicke: alleBodies.indexOf('data-recap=') < 0 && alleBodies.indexOf('Rückblick öffnen') < 0,
     hatPotd: !!potd,
     potdErwartet: potd ? _newsTagPartien(pd.dayKey, pids).length : 0,
-    potdGezeigt: (potdBody.match(/class="nd-match"/g)||[]).length,
+    // Die Partien stehen als BAHN und als kurze Zeile, nicht als voller
+    // Vs-Block: zehn Bloecke sind vierzig Wappen und eine Wand [§6].
+    potdGezeigt: (potdBody.match(/class="nd-tm /g)||[]).length,
+    potdBahn: (potdBody.match(/class="nd-bahn"/g)||[]).length,
     hatWoche: !!wo,
     wocheStunde: wo ? new Date(wo.when).getHours() : -1,
     wocheTag: wo ? new Date(wo.when).getDay() : -1,
@@ -1029,6 +1032,8 @@ ok(_rueck.keineProfile, 'kein Story-Blatt trägt einen Profil-Button');
 ok(_rueck.keineRueckblicke, 'kein Story-Blatt trägt einen Rückblick-Button');
 ok(!_rueck.hatPotd || _rueck.potdGezeigt === _rueck.potdErwartet,
    'Spieler des Tages zeigt ausnahmslos alle Partien', _rueck.potdGezeigt + ' von ' + _rueck.potdErwartet);
+ok(!_rueck.hatPotd || _rueck.potdBahn === 1,
+   'und den Tag als Bahn darueber', String(_rueck.potdBahn));
 ok(_rueck.hatWoche, 'der Wochenrueckblick steht als eine Karte');
 ok(!_rueck.hatWoche || _rueck.wocheTag === 0, 'die Wochenkarte steht am Sonntag', _rueck.wocheTag);
 ok(!_rueck.hatWoche || _rueck.wocheStunde === 23, 'die Wochenkarte steht um 23:00', _rueck.wocheStunde);
