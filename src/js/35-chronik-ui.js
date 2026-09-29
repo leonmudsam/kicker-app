@@ -122,6 +122,12 @@ function showSeasonTable(sid){
   _bindChronikClicks(document.getElementById('sheet'));
 }
 
+// „zu 3. gehalten" stand da, eine Ordnungszahl, wo ein Zahlwort hingehört.
+function _zuMehreren(n){
+  const w = {2:'zu zweit', 3:'zu dritt', 4:'zu viert', 5:'zu fünft', 6:'zu sechst'}[n];
+  return w || `zu ${n}`;
+}
+
 // Chronik fürs Profil: EINE Karte. Nicht mehr eine Liste — genau die eine
 // Auszeichnung, die diesen Spieler von allen anderen unterscheidet. Darunter
 // der Saison-Streifen: was er Monat für Monat geholt hat.
@@ -151,7 +157,7 @@ function _chronStripHtml(pid){
       <span class="ic">${svgI(x.ic)}</span>
       <span class="tx">
         <span class="n">${esc(x.name)}${x.shared
-          ? `<span class="shared">zu ${x.pids.length}. gehalten</span>` : ''}</span>
+          ? `<span class="shared">${_zuMehreren(x.pids.length)} gehalten</span>` : ''}</span>
         <span class="e num">${esc(x.ev)}</span>
       </span>
       <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"

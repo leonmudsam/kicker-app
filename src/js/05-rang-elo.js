@@ -64,8 +64,8 @@ function rankBadgeHtml(id, size='sm'){
 // Elo heißt dabei im Zeitraum der Zuwachs, in Saison und Gesamt der Stand —
 // beides ist „die Elo dieses Zeitraums", nur einmal als Strecke und einmal
 // als Punkt.
-const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegrate',
-  goaldiff:'Tordiff',prestige:'Prestige',games:'Spiele'};
+const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegquote',
+  goaldiff:'Torbilanz',prestige:'Prestige',games:'Spiele'};
 // Die LIGA-Rangliste ist die Elo-Rangliste — in Saison, Woche und Tag gibt
 // es dort nichts zu sortieren. Wer nach Siegrate oder Tordiff schaut, sucht
 // keine Rangliste, sondern eine Bestenliste, und die steht im Awards-Tab.

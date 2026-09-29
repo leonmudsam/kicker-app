@@ -175,7 +175,9 @@
     color:var(--muted);letter-spacing:.08em;text-transform:uppercase;line-height:1}
 
   /* Beziehungen — 2×2 Grid (Wrapper für die bestehenden .pp-r-rich Karten) */
-  .pp-rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  /* minmax(0,…): `1fr` wächst mit dem längsten Wort, und „Schwächster
+     Partner" schob die rechte Spalte aus dem Blatt. */
+  .pp-rel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .pp-rel-grid > .pp-r-rich{display:flex;align-items:center;gap:10px;border-radius:14px;border-left-width:1px;border-left-style:solid}
 
   /* Auszeichnungs-Strip (Übersicht im Profil) — vereinfacht */

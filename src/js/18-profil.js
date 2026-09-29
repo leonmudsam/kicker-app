@@ -711,8 +711,8 @@ const rankProgHtml = rInfo ? `
       </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
-        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegrate</div></div>
-        <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Tordiff</div></div>
+        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
+        <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Torbilanz</div></div>
       </div>
     </div>
 
@@ -819,13 +819,13 @@ const rankProgHtml = rInfo ? `
           // Bester Mate
           const bestAttr  = best?` data-team="${esc([id,best.mid].sort().join('|'))}"`:'';
           const bestCard  = best
-            ? card('good', bestAttr, 'handshake', 'Bester Mate', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
-            : card('good', '', 'handshake', 'Bester Mate', null);
+            ? card('good', bestAttr, 'handshake', 'Bester Partner', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
+            : card('good', '', 'handshake', 'Bester Partner', null);
           // Schlechtester Mate (nur wenn ≠ Bester)
           const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}"`:'';
           const worstCard = worst&&best&&worst.mid!==best.mid
-            ? card('bad', worstAttr, 'chartDown', 'Schlecht. Mate', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
-            : card('bad', '', 'chartDown', 'Schlecht. Mate', null);
+            ? card('bad', worstAttr, 'chartDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
+            : card('bad', '', 'chartDown', 'Schwächster Partner', null);
           // Lieblingsgegner → klickbar zum Gegnerprofil
           const favAttr  = fav?` data-detail="${esc(fav.oid)}"`:'';
           const favCard  = fav
@@ -1579,7 +1579,7 @@ function _badgeStreakState(badgeId, playerId){
       ordered.forEach(m => {
         cur = Math.abs(m.score_a-m.score_b) <= 2 ? cur+1 : 0;
       });
-      return {cur, tgt:5, label:'Krimis in Folge (Tordiff ≤ 2)', hint:'Setzt bei klarem Ergebnis (Tordiff > 2) zurück'};
+      return {cur, tgt:5, label:'Krimis in Folge (höchstens 2 Tore Unterschied)', hint:'Setzt bei klarem Ergebnis (mehr als 2 Tore Unterschied) zurück'};
     }
     case 'repeat_score': {
       // Siege mit identischem Endstand in Folge — Niederlage oder anderer Score bricht.

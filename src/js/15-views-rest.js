@@ -128,7 +128,7 @@ function vTeams(){
     </div>
     <div class="ui-tabs">
       <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Siegquote</button>
-      <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Tordifferenz</button>
+      <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Torbilanz</button>
       <button data-teamsort="elo" class="${teamSort==='elo'?'on':''}">Elo-Zuwachs</button>
     </div>
     ${arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden')}`;

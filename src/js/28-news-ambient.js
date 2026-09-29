@@ -783,7 +783,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'target', prio:5,
       title:`${nameOf(best.pid)} hat Nerven aus Stahl`,
-      desc:`Gewinnt aktuell ${Math.round(best.v*100)}% der engen Spiele (Tordiff ≤ 2). ${a.cw} von ${a.cg} in 14 Tagen.`,
+      desc:`Gewinnt aktuell ${Math.round(best.v*100)}% der engen Spiele (höchstens 2 Tore Unterschied). ${a.cw} von ${a.cg} in 14 Tagen.`,
       vv: Math.round(best.v*100)+'%', vl:'eng gewonnen',
       dataRef:{ ambientPid: best.pid } };
   }});

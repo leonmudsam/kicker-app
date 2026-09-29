@@ -2347,25 +2347,45 @@ const ok = (c, msg, det) => {
      'Bilanz und Torzeile einer Ranglistenzeile stehen auf einer Zeile',
      reiterBruch.map(r => r.name + ': ' + r.bruch.join(', ')).join(' | ') || 'alle einzeilig');
   // Dieselbe Frage für die Blätter, die Zahlen mit Nachkommastelle zeigen.
-  const blattPunkt = await page.evaluate(async () => {
+  let blattPunkt = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const P = n => JSON.stringify(K('(players.find(p=>p.name===' + JSON.stringify(n) + ')||{}).id'));
     const blaetter = [['Profil', 'showPlayer(' + P('Leon') + ')'],
       ['Duo', 'showTeam(' + P('Leon') + ',' + P('Maxi') + ')'],
       ['Partie', 'showMatchDetail(matches[matches.length-1].id)'],
-      ['Torjäger', "openTopList('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
+      ['Vergleich', 'showH2H(' + P('Leon') + ',' + P('Martin') + ')'],
+      ['Torjäger', "showAward('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
+      ['Wochenkönig', "period='week';openTopList('periodKing')"],
       ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])']];
-    const out = [];
+    const out = [], woerter = [];
+    // Dieselbe Sache heißt überall gleich, und niemand wird angesprochen:
+    // „Siegrate" neben „Siegquote", „Mate" neben „Partner", „Winrate",
+    // „Tordiff", „Head-to-Head", „Team-Sheet", ein „du" in den Einstellungen
+    // und „zu 3. gehalten".
+    // Groß und klein: `innerText` liefert die Schreibweise nach
+    // `text-transform`, und „Bester Mate" steht dort als „BESTER MATE".
+    const WORT = /\b(Mate|Siegrate|Winrate|Tordiff|Head-to-Head|Sheet|Upset|All-Time)\b|zu \d+\. gehalten|\b(?:du|dein\w*)\b(?=\s[a-zäöü])/gi;
     for(const [name, auf] of blaetter){
       try{ K('closeSheet(true)'); K(auf); }catch(e){ out.push(name + ': ' + e.message); continue; }
       await new Promise(r => requestAnimationFrame(r));
-      const m = (document.getElementById('sheet').innerText
-        .match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
+      const txt = document.getElementById('sheet').innerText;
+      const m = (txt.match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
       if(m.length) out.push(name + ': ' + m.slice(0,3).join(' '));
+      (txt.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
     }
     K('closeSheet(true)');
-    return out;
+    for(const [name, setz] of [['Liga', "tab='ranking'"], ['Teams', "tab='teams'"],
+        ['Awards', "tab='awards';awView='awards'"], ['Einstellungen', "tab='settings'"]]){
+      K(setz + ';render()');
+      (document.getElementById('main').innerText.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
+    }
+    K("tab='ranking';render()");
+    return {out, woerter};
   });
+  const blattWort = blattPunkt.woerter;
+  blattPunkt = blattPunkt.out;
+  ok(blattWort.length === 0, 'dieselbe Sache heißt überall gleich, und niemand wird geduzt',
+     [...new Set(blattWort)].join(' | ') || 'keine Abweichung');
   const reiterPunkt = reiter.filter(r => r.punkt.length).map(r => r.name + ': ' + r.punkt.join(' '));
   ok(reiterPunkt.length + blattPunkt.length === 0,
      'keine Dezimalzahl mit Punkt in einem Reiter oder Blatt',

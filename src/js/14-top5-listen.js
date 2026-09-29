@@ -114,34 +114,34 @@ function openTopList(kind){
   if(kind==='periodTeam'){
     return showTopList({title:'Bestes Team', sub:periodLabel(period),
       ic:'handshake', cls:'blue', rows:_teamEloRanking(matchesInPeriod(period),1).filter(t=>t.elo>0).map(teamRow),
-      why:'Duo mit dem höchsten gemeinsamen Elo-Zuwachs in diesem Zeitraum.'});
+      why:'Das Duo mit dem höchsten gemeinsamen Elo-Zuwachs in diesem Zeitraum.'});
   }
   if(kind==='periodStreak'){
     return showTopList({title:'Heißeste Serie', sub:periodLabel(period),
       ic:'flame', cls:'acid',
       rows:longestStreaks(matchesInPeriod(period)).map(s=>({ids:[s.id], name:pname(s.id), val:s.v+'×', detail:'Siege in Folge'})),
-      why:'Längste Siegesserie innerhalb dieses Zeitraums. Min. 2 Siege in Folge.'});
+      why:'Die längste Siegesserie innerhalb dieses Zeitraums, ab 2 Siegen in Folge.'});
   }
   if(kind==='periodUpset'){
-    return showTopList({title:'Größter Upset', sub:periodLabel(period),
+    return showTopList({title:'Größte Überraschung', sub:periodLabel(period),
       ic:'bolt', cls:'blue',
       rows:_upsetRanking(matchesInPeriod(period)).map(u=>{
         const w=u.m.winner==='A'?[u.m.a1,u.m.a2]:[u.m.b1,u.m.b2];
         return {ids:w, matchId:u.m.id, name:w.map(pname).join(' & '),
           val:u.winPct+'%', detail:u.m.score_a+':'+u.m.score_b+' · '+dateStr(u.m.created_at)};
       }),
-      why:'Sieg mit der niedrigsten Siegerwartung. Je kleiner die Chance, desto größer der Upset.'});
+      why:'Der Sieg mit der niedrigsten Siegchance vor dem Anpfiff.'});
   }
   if(kind==='periodKing'){
     const isWeek=period==='week';
     const list=(getCachedAwardRankings('all')[isWeek?'weekKingList':'dayKingList'])||[];
-    return showTopList({title:isWeek?'Wochenkönig':'Tageskönig', sub:'All-Time',
+    return showTopList({title:isWeek?'Wochenkönig':'Tageskönig', sub:'Alle Saisons',
       ic:isWeek?'weekKing':'dayKing', cls:'gold',
       rows:list.map(k=>({ids:[k.id], name:pname(k.id), val:k.v+'×',
         detail:isWeek?'Player of the Week':'Player of the Day'})),
       why:isWeek
-        ? 'Wie oft ein Spieler eine abgeschlossene Woche als Bester beendet hat (min. 5 Siege).'
-        : 'Wie oft ein Spieler einen Spieltag als Bester beendet hat (min. 3 Siege).'});
+        ? 'Wie oft ein Spieler eine abgeschlossene Woche als Bester beendet hat, mit mindestens 5 Siegen.'
+        : 'Wie oft ein Spieler einen Spieltag als Bester beendet hat, mit mindestens 3 Siegen.'});
   }
 }
 

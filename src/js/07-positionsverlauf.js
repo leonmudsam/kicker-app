@@ -561,7 +561,7 @@ function showPotwRecap(opts){
     hl('shieldCheck', 'Eiserne Abwehr', bestDefender ? pname(bestDefender.id) : null,
        bestDefender ? 'Ø '+komma(bestDefender.avg,1)+' Gegentore' : null,
        `data-potw-award="wall" data-potw-week="${wkStartMs}"`);
-    hl('bolt', 'Größter Upset', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
+    hl('bolt', 'Größte Überraschung', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
        (topUpset && upsetNames) ? Math.round(topUpset.sp*100)+'% Chance' : null,
        `data-potw-award="upset" data-potw-week="${wkStartMs}"`);
 
@@ -838,7 +838,7 @@ function showPotdRecap(opts){
     tagHl('chartUp', 'Elo-Aufstieg', tagAufstieg ? pname(tagAufstieg.id) : null,
           tagAufstieg ? '+'+tagAufstieg.d+' Elo' : null,
           tagAufstieg ? `data-potd-player="${esc(tagAufstieg.id)}"` : '');
-    tagHl('bolt', 'Größter Upset', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
+    tagHl('bolt', 'Größte Überraschung', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
           tagUpset ? Math.round(tagUpset.chance*100)+'% Chance' : null,
           upsetSieger ? `data-potd-team="${esc(upsetSieger.slice().sort().join('|'))}"` : '');
 

@@ -71,7 +71,7 @@ function showTeam(p1Id,p2Id){
       : dateStr(m.created_at);
     const labelMap={
       win:    {l:'Höchster Sieg',     ic:'explosion', col:'var(--acid)'},
-      upset:  {l:'Größter Upset',     ic:'tornado',   col:'var(--purple)'},
+      upset:  {l:'Größte Überraschung',     ic:'tornado',   col:'var(--purple)'},
       loss:   {l:'Schlimmste Niederlage', ic:'skull',     col:'var(--red)'}
     };
     const cfg=labelMap[kind];
@@ -400,7 +400,7 @@ function showTeam(p1Id,p2Id){
       </div>
       <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
         <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${gdStr}</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Tordiff</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Torbilanz</div>
       </div>
       <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
         <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:${eloColor};line-height:1">${eloStr}</div>

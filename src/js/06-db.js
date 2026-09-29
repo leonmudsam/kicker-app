@@ -380,7 +380,7 @@ function showSeasonRecap(season, opts){
       <div class="rcp-tos-info">
         <div class="rcp-tos-label">Team der Saison</div>
         <div class="rcp-tos-name">${esc(pname(a)+' & '+pname(b))}</div>
-        <div class="rcp-tos-detail num">${tg?tg+' Spiele · '+Math.round(tw/tg*100)+'% Siegrate':'–'}</div>
+        <div class="rcp-tos-detail num">${tg?tg+' Spiele · '+Math.round(tw/tg*100)+'% Siegquote':'–'}</div>
       </div>
     </div>`;
   }
@@ -474,19 +474,19 @@ function showSeasonRecap(season, opts){
   if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
   if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),komma((wall.v/wall.g),1)+' Gegen/Sp.','wall');
   if(streak)  kachel('flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks');
-  if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegrate','perfect');
+  if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegquote','perfect');
   if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× POTW','weekKing');
   if(dayKing) kachel('crown','Tageskönig',pname(dayKing.id),dayKing.v+'× POTD','dayKing');
   if(grinder) kachel('gamepad','Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
   if(upset){
     const sieger = upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];
-    kachel('bolt','Größter Upset',pname(sieger[0])+' & '+pname(sieger[1]),
+    kachel('bolt','Größte Überraschung',pname(sieger[0])+' & '+pname(sieger[1]),
            Math.round((1-upset.sp)*100)+'% Chance','upset');
   }
   // Die Schattenseiten stehen hinten und in Rot — Rot sagt hier die
   // Richtung, nicht die Wichtigkeit [§C25].
   if(worstWr) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Schlechtester',
-    name:pname(worstWr.id),wert:Math.round(worstWr.wr*100)+'% Siegrate',ton:'red',
+    name:pname(worstWr.id),wert:Math.round(worstWr.wr*100)+'% Siegquote',ton:'red',
     attr:'data-award="worstWr"'}));
   if(pechvogel) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Pechvogel',
     name:pname(pechvogel.id),wert:Math.round(pechvogel.pct*100)+'% knapp verloren',ton:'red',
