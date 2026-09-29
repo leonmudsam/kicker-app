@@ -550,6 +550,13 @@
     100%{box-shadow:0 0 0 0 rgba(240,86,106,0)}}
   @media(prefers-reduced-motion:reduce){.nf-brk-punkt{animation:none}}
   .nf-brk-zeit{margin-left:auto;letter-spacing:.06em;color:rgba(255,138,138,.7)}
+  /* Wie viel die gebuendelte Karte traegt. Sie trug denselben Balken wie eine
+     einzelne Breaking-Karte, und die fuenf Meldungen darunter sah nur, wer
+     weiterlas. Kleiner als das Wort und in einer eigenen Pille: sie zaehlt,
+     sie ruft nicht. */
+  .nf-brk-n{flex:0 0 auto;padding:1px 6px;border-radius:5px;
+    background:rgba(240,86,106,.18);border:1px solid rgba(240,86,106,.34);
+    font-size:9px;letter-spacing:.1em;color:#ffb4b4}
   /* Die Schlagzeile traegt die Karte: sie ist der Grund, warum Breaking
      ueberhaupt Breaking heisst. */
   .nf-brk .nf-h{font-size:21px;line-height:1.06;-webkit-line-clamp:5}
@@ -867,7 +874,16 @@
     font-size:9px;font-weight:700;letter-spacing:.06em;
     text-transform:uppercase;white-space:nowrap}
   .nf-sam-z.brk b.nf-sam-k{margin-left:6px}
-  .nf-sam-z.brk{color:var(--ink)}
+  /* Und die Zeile selbst traegt die Kante. Die Marke am rechten Rand war zu
+     leise: die Karte hatte einen vollen roten Rahmen, einen pulsierenden
+     Punkt und einen Schein hinter der Flaeche und nannte ihren Grund in
+     derselben grauen Zeile wie fuenf andere. Rote Kante links, eine ganz
+     schwache Flaeche und das Zeichen in Rot [§C25] — damit ist der Anlass
+     zu sehen, bevor ein Wort gelesen ist. */
+  .nf-sam-z.brk{color:var(--ink);background:rgba(240,86,106,.07);
+    box-shadow:inset 3px 0 0 var(--red)}
+  .nf-sam-z.brk .nf-sam-i{color:var(--red);background:rgba(240,86,106,.12);
+    border-color:rgba(240,86,106,.4)}
   .nf-s-tafel .nf-sam-z.brk{--zeile-rgb:240,86,106}
   /* Der Stand einer Partie. Auf der Ergebnis-Karte ist er die Aussage und
      steht deshalb rechts in eigener Spalte, in Ziffernbreite — nicht im

@@ -2262,13 +2262,18 @@ function _buildStories(){
           desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
         }
         stories.push({
-          // Die ID traegt den ANGEZEIGTEN Wert, nicht den rohen. Mit
-          // `Math.round(val * 1e4)` bekam jede Partie eine eigene ID: nach zwei
-          // Spielen standen zwei Karten „Martin baut ‚Der Fels' aus" im Feed,
-          // beide mit 6.9 gegen 7.0, nur einmal mit 151 und einmal mit 152
-          // Spielen. Gemeldet wird, was man SIEHT — also ist auch die Identitaet
-          // der Karte das, was man sieht. Die Halter stehen sortiert darin,
-          // sonst ergaebe dieselbe Gruppe in anderer Reihenfolge eine zweite ID.
+          // ── Die ID ist das Ereignis, nicht der Stand des Augenblicks ──
+          // Sie trug den angezeigten Wert und die sortierten Halter. Beides
+          // bewegt sich im Lauf eines Spieltags: gemessen stand nach der
+          // vierten Partie des 26.08. „Maxi uebernimmt ‚Der Hoehenflug'" im
+          // Feed, nach der fuenften „Maxi und Johannes uebernehmen" und nach
+          // der siebten „Maxi, Julian, Jane und Johannes uebernehmen" — drei
+          // IDs, drei Karten, und die gelesene war jedes Mal weg. Der Rekord
+          // wechselt an diesem Spieltag aber EINMAL: gerechnet wird gegen den
+          // Stand vor dem Spieltag, und ob danach einer oder vier halten, ist
+          // derselbe Vorgang. Die ID ist deshalb Rekord und Spieltag, der
+          // Wortlaut kommt aus dem Generator und der Zeitpunkt aus der
+          // Datenbank [§C33] — die Karte waechst mit, statt ersetzt zu werden.
           // ── Der Spieltag gehoert in die ID ──────────────────────
           // Ohne ihn beschreibt dieselbe ID zwei verschiedene Ereignisse.
           // Ein Halterfeld wird enger und wieder weiter: geht der Rekord
@@ -2281,9 +2286,7 @@ function _buildStories(){
           // Sammelkarte des 26.08., und der 24. hatte keine Tafel-Karte
           // mehr. Eine Wiederkehr ist ein neues Ereignis und bekommt eine
           // eigene Karte [§C33].
-          id: `rek_${def.id}_${art}_${n.pids.slice().sort().join('-')}`
-            + `_${String(wertNeu).replace(/[^0-9a-zA-Z]/g, '')}`
-            + `_${tagKey(_letzteMs)}`,
+          id: `rek_${def.id}_${tagKey(_letzteMs)}`,
           cat: 'tafel',
           ic: def.ic,
           title, desc,
@@ -2638,14 +2641,16 @@ function _buildStories(){
       _meldungen.sort((x, y) => y.punkte - x.punkte);
       _meldungen.forEach(m => {
         stories.push({
-          // Die ID traegt Chronik, Monat und die sortierten Halter. Damit ist
-          // sie stabil, solange derselbe sie haelt, und eine Uebernahme
-          // bekommt eine eigene.
-          // Mit dem Spieltag: dieselbe Chronik kann in derselben Woche
-          // weggehen und zurueckkommen, und dann sind das zwei Ereignisse
-          // [§C33]. „Johannes holt ‚Der Beidfuessige'" trug sonst den
-          // Zeitstempel des 24. und die Partie des 26.
-          id: `chrget_${m.t.id}_${_sid}_${m.n.pids.join('-')}_${tagKey(_letzteMs2)}`,
+          // Die ID traegt Chronik, Monat und Spieltag — nicht die Halter.
+          // Ein Halterfeld wird im Lauf eines Tages enger und weiter: am
+          // 08.09. stand „Leo holt ‚Ohne Schwachstelle'", neun Minuten
+          // spaeter „Leo und Maxi holen" und drei Stunden danach „Maxi holt".
+          // Mit den Haltern in der ID waren das drei Karten, von denen zwei
+          // wieder verschwanden; es ist ein Vorgang an einem Spieltag, also
+          // eine Karte, die mitwaechst [§C33]. Der Spieltag bleibt darin:
+          // dieselbe Chronik kann in derselben Woche weggehen und
+          // zurueckkommen, und das sind zwei Ereignisse.
+          id: `chrget_${m.t.id}_${_sid}_${tagKey(_letzteMs2)}`,
           cat: 'tafel',
           ic: m.t.ic,
           title: m.title,

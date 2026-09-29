@@ -446,8 +446,18 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Breaking sprang bisher als Hero an den Kopf des Feeds und damit aus der
   // Chronologie. Es bleibt jetzt an seinem Platz und trägt stattdessen einen
   // roten Kopfbalken mit Punkt und Zeitstempel [§11.6b].
+  // ── Eine gebuendelte Breaking-Karte sagt, wie viel sie traegt ────
+  // Sie sah aus wie jede andere Breaking-Karte: derselbe Balken, dasselbe
+  // Wort. Dass unter der Schlagzeile noch fuenf weitere Meldungen desselben
+  // Moments stehen, stand nur im Sammelband darunter — und wer die Karte
+  // ueberflog, las „BREAKING" und hielt sie fuer eine einzelne Nachricht.
+  // Die Zahl steht deshalb im Balken, neben dem Wort, das sie erklaert.
+  const brkTeile = (brk && d.type === 'sammel' && Array.isArray(d.teile))
+    ? d.teile.length : 0;
   const balken = brk
     ? `<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING`
+      + (brkTeile > 1
+          ? `<span class="nf-brk-n">${brkTeile} Meldungen</span>` : '')
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
   // Eine Sammelkarte hat einen eigenen Gruppenkopf. Darunter stehen ALLE
@@ -1314,7 +1324,10 @@ function _newsTagKarte(items, dayKey){
     (_newsTagSpannung(b) - _newsTagSpannung(a))
       || ((b.prio || 0) - (a.prio || 0))
       || String(a.id || '').localeCompare(String(b.id || '')))[0];
-  return beste ? beste.id : null;
+  if(!beste) return null;
+  // Staerker als eine Tagesbilanz, sonst kein Band [§C33].
+  if(_newsTagSpannung(beste) < (NEWS_LIMITS.tagKarteSpannung || 0)) return null;
+  return beste.id;
 }
 function _renderNewsFeed(){
   _sheetSetReopen(()=>_renderNewsFeed());
