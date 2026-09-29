@@ -5181,7 +5181,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.efc1579f';
+const BUILD_VERSION='2026.09.29.0619af11';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7472,7 +7472,12 @@ function _buildPositionChartSvg(data){
   } else {
     tickDays.push(1);
     for(let d=5; d<=D; d+=5) tickDays.push(d);
-    if(tickDays[tickDays.length-1] !== D) tickDays.push(D); // Endpunkt immer
+    // Endpunkt immer — und der Fünferschritt davor fällt weg, wenn er zu
+    // nah daran liegt: am 26. standen „25" und „26" als „2526" übereinander.
+    if(tickDays[tickDays.length-1] !== D){
+      if(D - tickDays[tickDays.length-1] < 3) tickDays.pop();
+      tickDays.push(D);
+    }
   }
   // Dedup
   const seenTicks = new Set();
@@ -7558,7 +7563,7 @@ function _renderPosvDetail(el, data, hlId){
   const stats = getSeasonPlayerStats(data.seasonId);
   if(!hlId){
     el.classList.add('empty');
-    el.innerHTML = `<div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>`;
+    el.innerHTML = `<div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>`;
     return;
   }
   el.classList.remove('empty');
@@ -7698,14 +7703,14 @@ function showPositionHistory(seasonId){
         ${_buildPositionChartSvg(data)}
       </div>
 
-      <div class="posv-hint">Tippe auf einen Spieler, um ihn hervorzuheben</div>
+      <div class="posv-hint">Linie oder Gesicht antippen, um einen Spieler hervorzuheben</div>
 
       <div class="posv-detail empty" id="posvDetail">
-        <div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>
+        <div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>
       </div>
 
       <div class="posv-update">
-        <span>Letztes Update: Heute, ${headerDate}</span>
+        <span>Stand: heute, ${headerDate}</span>
         <button class="posv-refresh" id="posvRefreshBtn" title="Aktualisieren">
           <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></svg>
         </button>
@@ -10331,8 +10336,8 @@ function _vRankingCore(){
       // Spieler gross genug steht, um es zu tragen; in der Tabelle darunter
       // bleibt es beim Reif, weil eine Zeile die Hoehe nicht hat.
       const titelTxt   = period==='day' ? 'Player of the Day' : 'Player of the Week';
-      const regelTxt   = period==='day' ? 'min. 3 Siege · meiste Siege'
-                                        : 'min. 5 Siege · beste Quote';
+      const regelTxt   = period==='day' ? 'ab 3 Siegen · die meisten Siege'
+                                        : 'ab 5 Siegen · die beste Quote';
       const eloLabel   = period==='day' ? 'Elo Tag' : 'Elo Woche';
       if(winner){
         const wp=pmap()[winner.id];
@@ -13102,7 +13107,7 @@ function vSettings(){
       ${sl('cfgRisk','Risiko-Split (schwacher Partner)',c.risk,0,100,'%')}
       ${sl('cfgPos','Positions-Swing',c.pos,0,100,'%')}
       ${sl('cfgExpW','Positions-Erfahrungs-Gewicht',c.expW,0,100,'%')}
-      ${sl('cfgPosMin','Min. Spiele für Positions-Wertung',c.posMin,1,10,'')}
+      ${sl('cfgPosMin','Mindestspiele je Position',c.posMin,1,10,'')}
     </div>
 
     <div class="cfg-section-title">Sieg & Niederlage</div>
@@ -13136,7 +13141,7 @@ function vSettings(){
         <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
         <b style="color:var(--acid)">Positions-Swing</b> — Bonus für Siege auf der schwachen Position. Ein Abwehr-Spieler der im Sturm gewinnt bekommt extra Elo.<br>
         <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Performance. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur Über-Erwartungs-Performance zählt.<br>
-        <b style="color:var(--acid)">Min. Spiele Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
+        <b style="color:var(--acid)">Mindestspiele je Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
         <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
@@ -17027,7 +17032,7 @@ function _badgeProgress(badgeId, playerId){
       const stats = playerStats(playerId);
       const atkW = stats.atkW || 0, defW = stats.defW || 0;
       const cur = Math.min(atkW, defW, 20);
-      return {cur, tgt: 20, label: 'min. Sturm- & Abwehr-Siege'};
+      return {cur, tgt: 20, label: 'Siege auf der schwächeren Position'};
     }
     case 'mr_disaster': {
       // Aktuelle Saison: wie viele 0:10-Niederlagen hat der Spieler bereits?
@@ -17375,7 +17380,7 @@ function showPlayerH2HList(playerId){
         <div class="rname" style="font-size:13px;line-height:1.15">${esc(other.name)}</div>
         <div class="num" style="font-size:11px;margin-top:3px;font-family:'Sometype Mono',monospace">${teamChip}${sep}${oppChip}</div>
       </div>
-      <div class="num" style="font-size:11px;color:var(--muted);flex-shrink:0">${x.total}</div>
+      <div class="num" style="font-size:11px;color:var(--muted);flex-shrink:0">${x.total} Sp.</div>
       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;opacity:.7"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
   }).join('');
@@ -17386,9 +17391,9 @@ function showPlayerH2HList(playerId){
       <div><h3>Bilanzen</h3><div class="sheet-sub">${esc(p.name)} · ${h2hList.length} Mitspieler</div></div>
     </div>
     <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em;margin-top:14px;margin-bottom:10px">
-      <span style="color:var(--blue);font-weight:700">T</span> = als Team · <span style="color:var(--purple);font-weight:700">G</span> = als Gegner · Tap für Details
+      <span style="color:var(--blue);font-weight:700">T</span> = als Team · <span style="color:var(--purple);font-weight:700">G</span> = als Gegner · Antippen für Einzelheiten
     </div>
-    ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('swords','Noch keine Mitspieler mit min. 3 Begegnungen')}
+    ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('swords','Noch keine Mitspieler ab 3 Begegnungen')}
     <button class="btn ghost sm" id="backToPlayerH2H" style="margin-top:16px">← Zurück zum Profil</button>
   `);
 

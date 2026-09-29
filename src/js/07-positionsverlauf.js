@@ -65,7 +65,12 @@ function _buildPositionChartSvg(data){
   } else {
     tickDays.push(1);
     for(let d=5; d<=D; d+=5) tickDays.push(d);
-    if(tickDays[tickDays.length-1] !== D) tickDays.push(D); // Endpunkt immer
+    // Endpunkt immer — und der Fünferschritt davor fällt weg, wenn er zu
+    // nah daran liegt: am 26. standen „25" und „26" als „2526" übereinander.
+    if(tickDays[tickDays.length-1] !== D){
+      if(D - tickDays[tickDays.length-1] < 3) tickDays.pop();
+      tickDays.push(D);
+    }
   }
   // Dedup
   const seenTicks = new Set();
@@ -151,7 +156,7 @@ function _renderPosvDetail(el, data, hlId){
   const stats = getSeasonPlayerStats(data.seasonId);
   if(!hlId){
     el.classList.add('empty');
-    el.innerHTML = `<div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>`;
+    el.innerHTML = `<div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>`;
     return;
   }
   el.classList.remove('empty');
@@ -291,14 +296,14 @@ function showPositionHistory(seasonId){
         ${_buildPositionChartSvg(data)}
       </div>
 
-      <div class="posv-hint">Tippe auf einen Spieler, um ihn hervorzuheben</div>
+      <div class="posv-hint">Linie oder Gesicht antippen, um einen Spieler hervorzuheben</div>
 
       <div class="posv-detail empty" id="posvDetail">
-        <div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>
+        <div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>
       </div>
 
       <div class="posv-update">
-        <span>Letztes Update: Heute, ${headerDate}</span>
+        <span>Stand: heute, ${headerDate}</span>
         <button class="posv-refresh" id="posvRefreshBtn" title="Aktualisieren">
           <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></svg>
         </button>

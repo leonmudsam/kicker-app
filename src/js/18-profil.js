@@ -1478,7 +1478,7 @@ function _badgeProgress(badgeId, playerId){
       const stats = playerStats(playerId);
       const atkW = stats.atkW || 0, defW = stats.defW || 0;
       const cur = Math.min(atkW, defW, 20);
-      return {cur, tgt: 20, label: 'min. Sturm- & Abwehr-Siege'};
+      return {cur, tgt: 20, label: 'Siege auf der schwächeren Position'};
     }
     case 'mr_disaster': {
       // Aktuelle Saison: wie viele 0:10-Niederlagen hat der Spieler bereits?

@@ -2371,7 +2371,7 @@ const ok = (c, msg, det) => {
       ['Wochenkönig', "period='week';openTopList('periodKing')"],
       ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])'],
       ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed()'],
-      ['Positionsverlauf', 'showPositionHistory(seasons[2].id)'],
+      ['Positionsverlauf', 'showPositionHistory(seasons[3].id)'],
       ['Liga-Chronik', 'showLigaChronik()'], ['Rangsystem', 'showRangSystem()'],
       ['Bilanzen', 'showPlayerH2HList(' + P('Leon') + ')'],
       ['Saisons', 'showPlayerSeasons(' + P('Leon') + ')'],
@@ -2391,7 +2391,7 @@ const ok = (c, msg, det) => {
     // und „zu 3. gehalten".
     // Groß und klein: `innerText` liefert die Schreibweise nach
     // `text-transform`, und „Bester Mate" steht dort als „BESTER MATE".
-    const WORT = /\b(Mate|Siegrate|Winrate|Tordiff|Head-to-Head|Sheet|Upset|All-Time)\b|zu \d+\. gehalten|\b(?:du|dein\w*)\b(?=\s[a-zäöü])/gi;
+    const WORT = /\b(Mate|Siegrate|Winrate|Tordiff|Head-to-Head|Sheet|Upset|All-Time|Tippe|Tap|Update)\b|(?<![A-Za-zÄÖÜäöüß])(min|mind|max)\.\s|zu \d+\. gehalten|\b(?:du|dein\w*)\b(?=\s[a-zäöü])/gi;
     for(const [name, auf] of blaetter){
       try{ K('closeSheet(true)'); K(auf); }catch(e){ out.push(name + ': ' + e.message); continue; }
       await new Promise(r => requestAnimationFrame(r));
@@ -2399,6 +2399,11 @@ const ok = (c, msg, det) => {
       const m = (txt.match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
       if(m.length) out.push(name + ': ' + m.slice(0,3).join(' '));
       (txt.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
+      // Keine zwei Beschriftungen einer Achse übereinander: am 26. standen
+      // im Positionsverlauf „25" und „26" als „2526".
+      const ticks = [...document.querySelectorAll('#sheet .posv-x-tick')].map(t => t.getBoundingClientRect());
+      for(let i = 1; i < ticks.length; i++)
+        if(ticks[i].left < ticks[i-1].right) rand.push(name + ': Achse überlappt');
       // Und nichts läuft über den Rand des Blatts: die Beziehungskarten im
       // Profil standen mit „Schwächster Partner" 19 px darüber hinaus, die
       // Kachel „Monatschroniken" der Laufbahn zog ihre Spalte auf.

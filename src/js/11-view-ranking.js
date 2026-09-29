@@ -243,8 +243,8 @@ function _vRankingCore(){
       // Spieler gross genug steht, um es zu tragen; in der Tabelle darunter
       // bleibt es beim Reif, weil eine Zeile die Hoehe nicht hat.
       const titelTxt   = period==='day' ? 'Player of the Day' : 'Player of the Week';
-      const regelTxt   = period==='day' ? 'min. 3 Siege · meiste Siege'
-                                        : 'min. 5 Siege · beste Quote';
+      const regelTxt   = period==='day' ? 'ab 3 Siegen · die meisten Siege'
+                                        : 'ab 5 Siegen · die beste Quote';
       const eloLabel   = period==='day' ? 'Elo Tag' : 'Elo Woche';
       if(winner){
         const wp=pmap()[winner.id];
