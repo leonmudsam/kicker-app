@@ -1230,25 +1230,26 @@ function _newsDetailMitte(s){
           ${matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : ''}`;
       }
       case 'top_form': {
-        const form = _newsRecentForm(d.pid, 10);
-        return `<div class="nd-section">Letzte 10 Matches</div>
+        const form = _newsRecentForm(d.pid, 10, s);
+        return `<div class="nd-section">Die letzten 10 Partien bis hierher</div>
           ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
           <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
             <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
             <div class="nd-stat-val acid">${d.wins}/10 Siege</div></div>
           ${form.currentStreak >= 2 ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Aktuelle Serie</div>
-            <div class="nd-stat-val acid">${form.currentStreak}× Sieg</div></div>` : ''}`;
+            <div class="nd-stat-label">Siege in Folge</div>
+            <div class="nd-stat-val acid">${form.currentStreak}</div></div>` : ''}`;
       }
       case 'loss_streak': {
-        const form = _newsRecentForm(d.pid, 10);
+        // Die Reihe der letzten zehn steht nur, wenn sie mehr zeigt als die
+        // Serie selbst: bei zehn Pleiten in Folge ist sie dieselbe Zeichnung
+        // ein zweites Mal. Die Zeile „Leo · 10× Niederlage in Folge" darunter
+        // nannte dieselbe Zahl ein drittes Mal und ist weg [§C33 `_ndNeu`].
+        const form = d.streak < 10 ? _newsRecentForm(d.pid, 10, s) : {strip:''};
         return `<div class="nd-section">Die Serie</div>
           ${_newsSerienBand(d.streak, true)}
-          <div class="nd-section">Letzte 10 Matches</div>
-          ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
-          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
-            <div class="nd-stat-val neg">${d.streak}× Niederlage in Folge</div></div>`;
+          ${form.strip ? `<div class="nd-section">Die letzten 10 Partien bis hierher</div>
+          <div class="nd-form-strip">${form.strip}</div>` : ''}`;
       }
       case 'badge_unlocked': {
         // v8.6: bei konsolidierten Karten (mehrere Spieler, gleicher Badge im
@@ -1455,7 +1456,7 @@ function _newsDetailMitte(s){
         // Vorher stand hier der Name — den der Kopf zwei Zeilen darueber schon
         // zeigt — und die Zahl, die auf der Karte stand. Jetzt traegt das Blatt
         // den Ausschlag gross und daneben, woher er kommt.
-        const form = _newsRecentForm(d.pid, 10);
+        const form = _newsRecentForm(d.pid, 10, s);
         let elo = null;
         try { elo = Math.round(((getGlobalSim() || {}).careerElo || {})[d.pid]); } catch(e){}
         return `<div class="nd-gwert ${d.delta >= 0 ? '' : 'rot'}">
@@ -1465,8 +1466,8 @@ function _newsDetailMitte(s){
           ${elo ? `<div class="nd-stat-row"><div class="nd-stat-label">Stand jetzt</div>
             <div class="nd-stat-val">${elo} Elo</div></div>` : ''}
           ${form.currentStreak >= 2 ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Aktuelle Serie</div>
-            <div class="nd-stat-val ${d.delta >= 0 ? 'acid' : 'neg'}">${form.currentStreak}×</div></div>` : ''}`;
+            <div class="nd-stat-label">Siege in Folge an diesem Tag</div>
+            <div class="nd-stat-val ${d.delta >= 0 ? 'acid' : 'neg'}">${form.currentStreak}</div></div>` : ''}`;
       }
       // ── v8.2 Neue Typen ──
       case 'streak_killer': {
@@ -1506,13 +1507,11 @@ function _newsDetailMitte(s){
           ${d.matchId ? `<div class="nd-section">Jubiläums-Duell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'win_streak': {
-        const form = _newsRecentForm(d.pid, Math.min(d.streak, 10));
-        return `<div class="nd-section">Aktuelle Serie</div>
-          ${_newsSerienBand(d.streak, false)}
-          ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
-          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
-            <div class="nd-stat-val acid">${d.streak}× Sieg in Folge</div></div>`;
+        // „Aktuelle Serie" stand über einer Marke, die an ihrer Partie hängt
+        // und nach dem Riss stehen bleibt [§C33]; darunter dieselbe Zahl als
+        // Punktreihe und als Zeile — dreimal eine Serie.
+        return `<div class="nd-section">Die Serie</div>
+          ${_newsSerienBand(d.streak, false)}`;
       }
       case 'dry_spell': {
         return `<div class="nd-section">Liga-Pause</div>
@@ -1614,9 +1613,23 @@ function _newsRankChange(pid, matchId){
 
 // Form-Strip + Win-Streak der letzten N Matches. Walks die filter()-Variante
 // nur über matches (gesamt) — wird im Detail aufgerufen, also einmalig.
-function _newsRecentForm(pid, n){
+// `bis` ist die Story, deren Blatt die Reihe zeigt: gezählt wird bis zu IHRER
+// Partie, nicht bis heute. Das Blatt der 10er-Pleitenserie von 14:20 zeigte
+// unter „10 Pleiten nacheinander" die letzten zehn Partien von JETZT — mit dem
+// Sieg von 14:32 am Ende, der die Serie beendet hat und von dem die Karte gar
+// nicht erzählt.
+function _newsRecentForm(pid, n, bis){
   const arr = [];
-  for(let i = matches.length - 1; i >= 0 && arr.length < n; i--){
+  const d = (bis && bis.dataRef) || {};
+  let start = matches.length - 1;
+  if(d.matchId){
+    const k = matches.findIndex(m => m.id === d.matchId);
+    if(k >= 0) start = k;
+  } else if(bis && bis.when){
+    const t = new Date(bis.when).getTime();
+    while(start >= 0 && new Date(matches[start].created_at).getTime() > t) start--;
+  }
+  for(let i = start; i >= 0 && arr.length < n; i--){
     if(matchOf(pid, matches[i])) arr.unshift(matches[i]);
   }
   if(!arr.length) return {strip:'', currentStreak:0};

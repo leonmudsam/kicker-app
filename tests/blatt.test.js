@@ -2492,6 +2492,30 @@ const ok = (c, msg, det) => {
   ok(beziehung.n >= 3 && beziehung.fehler.length === 0,
      'ein Story-Blatt nennt eine Beziehung, die etwas sagt, und seine Zahl einmal',
      beziehung.fehler.join(', ') || beziehung.n + ' Blätter');
+  // Das Blatt einer Serie zeigt den Stand ihrer Partie, nicht den von heute.
+  // Unter „10 Pleiten nacheinander" stand „Letzte 10 Matches" mit dem Sieg,
+  // der die Serie Stunden später beendet hat — und dieselbe Zahl als Band,
+  // als Punktreihe und als Zeile.
+  const serie = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const fehler = [];
+    const ids = K("getStoriesCache().filter(s => /^(loss_streak|win_streak|top_form)$/.test((s.dataRef||{}).type)).map(s => s.id)");
+    for(const id of ids){
+      const t = K('(getStoriesCache().find(s => s.id === ' + JSON.stringify(id) + ').dataRef || {}).type');
+      K('closeSheet(true); openNewsDetail(' + JSON.stringify(id) + ')');
+      const nd = document.getElementById('nd');
+      const punkte = [...nd.querySelectorAll('.nd-form-strip .nd-form-dot')];
+      const letzter = punkte.length ? punkte[punkte.length - 1].classList.contains('w') : null;
+      if(t === 'loss_streak' && letzter === true) fehler.push(id + ': Reihe endet mit Sieg');
+      if(t === 'top_form' && letzter === false) fehler.push(id + ': Formkarte endet mit Pleite');
+      if(/in Folge<\/div>/.test(nd.innerHTML) && /× (Niederlage|Sieg) in Folge/.test(nd.innerText)) fehler.push(id + ': Zahl dreimal');
+    }
+    K('typeof closeNewsDetail === "function" && closeNewsDetail()');
+    return {n: ids.length, fehler};
+  });
+  ok(serie.n > 0 && serie.fehler.length === 0,
+     'das Blatt einer Serie zeigt den Stand ihrer Partie und die Zahl einmal',
+     serie.fehler.slice(0, 3).join(' | ') || serie.n + ' Blätter');
   // Das Blatt einer Partie nennt ihre Sieger und die Siegchance aus der
   // Elo-Bahn, und jeder Spieler steht bei den Auszeichnungen einmal. Es
   // stand „Team A gewinnt", und fünf Marken zweier Spieler als fünf Karten.
