@@ -2321,7 +2321,16 @@ const ok = (c, msg, det) => {
       // und die Version fallen durch den Ausschluss nach der Zahl heraus.
       const punkt = (document.getElementById('main').innerText
         .match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
-      out.push({name, punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
+      // Eine Bilanz bricht nicht um, und die Torzeile der Positionen wird
+      // nicht abgeschnitten: gemessen stand „81–" über „40", und „Ø 8.8 T…"
+      // endete mitten im Wort.
+      const bruch = [...document.querySelectorAll('#main .rmeta > span:first-child')]
+        .filter(e => { const rg = document.createRange(); rg.selectNodeContents(e);
+          return new Set([...rg.getClientRects()].map(r => Math.round(r.top))).size > 1; })
+        .map(e => e.textContent);
+      [...document.querySelectorAll('#main .rmeta-tore')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push(e.textContent));
+      out.push({name, bruch:bruch.slice(0,3), punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
         fab: fab ? getComputedStyle(fab).display : ''});
     }
     K("tab='ranking';period='season';rankMetric='elo';awView='awards';render()");
@@ -2333,6 +2342,10 @@ const ok = (c, msg, det) => {
   const reiterSchief = reiter.filter(r => r.schief.length);
   ok(reiterSchief.length === 0, 'jedes Gesicht trägt seine Initialen in der Mitte',
      reiterSchief.map(r => r.name + ': ' + r.schief.join(', ')).join(' | ') || 'alle mittig');
+  const reiterBruch = reiter.filter(r => r.bruch.length);
+  ok(reiterBruch.length === 0 && reiter.some(r => r.name === 'Positionen Sturm'),
+     'Bilanz und Torzeile einer Ranglistenzeile stehen auf einer Zeile',
+     reiterBruch.map(r => r.name + ': ' + r.bruch.join(', ')).join(' | ') || 'alle einzeilig');
   // Dieselbe Frage für die Blätter, die Zahlen mit Nachkommastelle zeigen.
   const blattPunkt = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);

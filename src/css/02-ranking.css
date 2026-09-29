@@ -230,9 +230,11 @@
     flex-shrink:0;font-family:'Archivo Black',sans-serif;color:#0a0c0b}
   .sh-chip-pair .sh-chip-av+.sh-chip-av{margin-left:-7px}
 
-  /* Zusatzangabe in der Meta-Zeile (Positionen: Ø Tore je Spiel). Sie steht
-     hinter der Siegrate und weicht als Erstes, wenn es eng wird. */
-  .rmeta .rmeta-sep{color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Die Tore je Spiel in der Positionsliste: eine eigene Zeile. Hinter
+     Bilanz, Balken und Quote brach „Ø 8,8 T…" bei 360 px mitten im Wort ab. */
+  /* Eine Bilanz ist eine Zahl und bricht nicht um („81–" über „40"). */
+  .rmeta > span:first-child{white-space:nowrap}
+  .rmeta.rmeta-tore{color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 
   /* ── Das Podest [§C6] ─────────────────────────────────────────────
      EIN Podest für die ganze App: Ewige Tafel und Award-Sammler. Drei

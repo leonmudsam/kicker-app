@@ -27,7 +27,10 @@ function vPositions(){
   const atk=posList('atk'), def=posList('def');
   const block=(arr,pos)=>{
     if(!arr.length)return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
-    const valLbl = pos==='atk' ? 'Tore/Sp.' : 'Geg./Sp.';
+    // Die Tore stehen in einer eigenen Zeile. Hinter Bilanz, Balken und
+    // Quote war bei 360 px kein Platz mehr: „Ø 8,8 T…" brach mitten im Wort
+    // ab, und die Bilanz „81–40" stand auf zwei Zeilen.
+    const valLbl = pos==='atk' ? 'Tore je Spiel' : 'Gegentore je Spiel';
     return `<div class="rlist">${arr.map((x,i)=>{
       const perfChip = x.pAvg>0.08?'<span class="perf-up">▲</span>':x.pAvg<-0.08?'<span class="perf-dn">▼</span>':'';
       const goalsTxt = komma(x.goalsAvg,1);
@@ -45,21 +48,20 @@ function vPositions(){
             <span>${x.w}–${x.g-x.w}</span>
             <span class="wbar"><i style="width:${Math.round(x.wr*100)}%"></i></span>
             <span>${Math.round(x.wr*100)}%</span>
-            <span class="rmeta-sep">Ø ${goalsTxt} ${valLbl}</span>
           </div>
+          <div class="rmeta rmeta-tore">Ø ${goalsTxt} ${valLbl}</div>
         </div>
         <div class="rval"><div class="big num">${wert}</div><div class="small">Wert</div></div>
       </div>`;}).join('')}</div>`;
   };
   const which = rankMetric==='def'?'def':'atk';
-  const subLbl = which==='atk' ? 'Performance · Erfahrung · Ø Tore' : 'Performance · Erfahrung · Ø Gegentore';
   return `
-    <div class="view-head"><h2>Positionen</h2><p>Beste Spieler je Position · ${subLbl}</p></div>
+    <div class="view-head"><h2>Positionen</h2><p>Wer vorn und hinten am stärksten ist, über alle Partien. Der Wert verbindet Siegquote, Leistung gegen die Erwartung und Erfahrung.</p></div>
     <div class="ui-switch">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('bolt')}Sturm</span></button>
       <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('shield')}Abwehr</span></button>
     </div>
-    <div class="mini-label">▲ über Erwartung · ▼ unter Erwartung (berücksichtigt Mate- & Gegnerstärke)</div>
+    <div class="mini-label">▲ über · ▼ unter der Erwartung, gemessen an Partner und Gegnern</div>
     ${which==='atk'?block(atk,'atk'):block(def,'def')}`;
 }
 
