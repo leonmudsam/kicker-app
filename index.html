@@ -5146,7 +5146,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.3f3b203a';
+const BUILD_VERSION='2026.09.29.06771d43';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21043,8 +21043,15 @@ function _buildStories(){
       // Der groesste Elo-Gewinn der Siegerseite. Er steht auch im `dataRef`,
       // damit die Sammelkarte dieser Partie ihn nennen kann, ohne den Satz
       // dieser Karte abzuschreiben [§C33].
-      const plus = winners.map(id => Math.round(dl[id] || 0))
-        .filter(x => x > 0).sort((x, y) => y - x)[0] || 0;
+      //
+      // ── Und der Gewinn gehoert einem, nicht der Partie ──────────────
+      // „Der Sieg bringt +19 Elo" stand da, und die Zahl ist die des
+      // STAERKEREN von zwei Siegern: gemessen tragen nur 24 der 466 Partien
+      // fuer beide dieselbe Zahl, und der Abstand geht bis 38 Elo. Der Satz
+      // nennt deshalb, wem sie gehoert; die Elo je Spieler zeigt das Blatt.
+      const _best = winners.map(id => ({id, d: Math.round(dl[id] || 0)}))
+        .filter(x => x.d > 0).sort((x, y) => y.d - x.d)[0] || null;
+      const plus = _best ? _best.d : 0;
       let art = 'normal', rang = 0, title = '', desc = '', ic = 'ball';
       if(hoch === 10 && tief === 0){
         art = 'zu_null'; rang = 10; ic = 'hundred';
@@ -21072,7 +21079,7 @@ function _buildStories(){
         // den Satz [§C33].
         title = `${wn} setzen sich gegen ${ln} durch`;
         desc = `Vor dem Anstoß lag die Siegchance bei ${pct} %.`
-             + (plus ? ` Der Sieg bringt +${plus} Elo.` : '');
+             + (plus ? ` Für ${nameOf(_best.id)} bringt der Sieg +${plus} Elo.` : '');
       }
       stories.push({
         id: 'spiel_' + m.id,
@@ -21081,6 +21088,10 @@ function _buildStories(){
         dataRef: {type:'spiel', resultKind:art, matchId:m.id,
                   playerIds:winners, winners, losers, margin:diff,
                   stand: hoch + ':' + tief, quote: pct, elo: plus,
+                  // Wem der Elo-Gewinn gehoert: die Sammelkarte nennt ihn
+                  // im selben Satz, und ohne die ID stuende die Zahl dort
+                  // wieder als die der ganzen Partie.
+                  eloPid: _best ? _best.id : undefined,
                   chance: art === 'upset' ? chance : undefined,
                   causalKey:_storyGruppeKey('match', m.id)}
       });
@@ -24225,16 +24236,31 @@ function _consolidateStories(list){
   // faellt, ist der ANLASS in der Schlagzeile: „Sieg ohne Gegentor und
   // Auszeichnung in einer Partie" nennt dasselbe zweimal, denn „Absoluter
   // Sieger" IST das 10:0.
+  // „Zittersieg" heisst im Katalog `nail_biter` und ist auf „10:9 Sieg"
+  // definiert — dasselbe wie der Ein-Tor-Krimi, nur mit anderem Namen. Er
+  // fehlte in der Liste, und gemessen am 25.08. hiess die Karte damit
+  // „Ein-Tor-Krimi und Auszeichnung in einer Partie", waehrend ihre Zeile
+  // „Johannes holt ‚Zittersieg' zum 5. Mal · 10:9 Sieg" trug.
   const BADGE_DECKT = {zu_null:['perfect_win'], upset:['upset_king'],
-                       krimi:['krimi', 'nerves_of_steel'],
+                       krimi:['krimi', 'nerves_of_steel', 'nail_biter'],
                        eng:['krimi', 'nerves_of_steel']};
   const _badgeJeMatch = new Map();
+  // ── Eine gewoehnliche Auszeichnung deckt genauso ──────────────────
+  // Gesammelt wurde nur aus `badge_unlocked`, und eine gewoehnliche
+  // Auszeichnung bekommt gar keine eigene Karte: sie steht in der
+  // gemeinsamen Tageskarte `badge_marken` [§C33]. Genau ihre Marken sind es
+  // aber, die das Ergebnis erzaehlen — „Zittersieg" ist das 10:9.
+  const _merk = (mid, bid) => {
+    if(!mid || !bid) return;
+    const set = _badgeJeMatch.get(mid) || new Set();
+    set.add(bid); _badgeJeMatch.set(mid, set);
+  };
   list.forEach(s => {
     const d = (s && s.dataRef) || {};
-    if(d.type !== 'badge_unlocked' || !d.matchId || !d.badgeId) return;
     if(_storyAbgemeldet(s && s.id)) return;
-    const set = _badgeJeMatch.get(d.matchId) || new Set();
-    set.add(d.badgeId); _badgeJeMatch.set(d.matchId, set);
+    if(d.type === 'badge_unlocked') return _merk(d.matchId, d.badgeId);
+    if(d.type === 'badge_marken')
+      (d.marken || []).forEach(m => _merk(d.matchId || (m && m.matchId), m && m.badgeId));
   });
   const _ergebnisGedeckt = d => {
     const liste = BADGE_DECKT[d.resultKind];
@@ -25279,8 +25305,14 @@ function _consolidateStories(list){
         // sie nicht noch einmal. Er nennt die zwei Zahlen, die jede Partie
         // hat und die sonst nirgends stehen: wie erwartbar der Sieg war und
         // was er bewegt hat.
+        // Der Elo-Gewinn gehoert EINEM der beiden Sieger und nicht der
+        // Partie: gemessen tragen nur 24 der 466 Partien fuer beide dieselbe
+        // Zahl, und der Abstand geht bis 38 Elo. Kennt eine aeltere Zeile den
+        // Traeger nicht, bleibt die Zahl weg — eine Behauptung ueber zwei
+        // Leute ist schlimmer als eine Zahl weniger.
+        const eloNm = ds.eloPid ? nameOf(ds.eloPid) : '';
         neuText = `Die Siegchance lag vor dem Anstoß bei ${ds.quote} %`
-          + (ds.elo ? `, der Sieg bringt +${ds.elo} Elo` : '') + '.'
+          + (ds.elo && eloNm ? `, für ${eloNm} bringt der Sieg +${ds.elo} Elo` : '') + '.'
           + (motive.length ? '' : ` ${folge}.`);
       } else if(brkBundle){
         neuText = `${folge}, und jede davon kommt nur wenige Male je Saison.`;

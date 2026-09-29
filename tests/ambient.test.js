@@ -1561,6 +1561,43 @@ ok(_lstr.n === 0 || _lstr.ohne.length === 0,
    'jede Pleitenserie nennt den Tag, vor dem der letzte Sieg liegt',
    _lstr.ohne.join(' | ') || _lstr.n + ' Pleitenserien');
 
+// ── Der Elo-Gewinn gehoert einem, nicht der Partie ──────────────────
+// „Der Sieg bringt +19 Elo" stand da, und die Zahl ist die des STAERKEREN
+// von zwei Siegern: gemessen tragen nur 24 der 466 Partien fuer beide
+// dieselbe Zahl, und der Abstand geht bis 38 Elo. Gemessen wird gegen die
+// rohen Deltas der Partie, nicht gegen den Wert, den die Karte selbst
+// mitbringt — sonst prueft der Test seine eigene Quelle.
+const _eloSatz = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const falsch = [], ohneNm = [];
+  let n = 0;
+  roh.forEach(s => {
+    const d = s.dataRef || {};
+    if(d.type !== 'spiel' || !d.elo) return;
+    n++;
+    const nm = d.eloPid && pmap()[d.eloPid] ? pmap()[d.eloPid].name : '';
+    if(!nm){ ohneNm.push(s.id); return; }
+    // Wo der Satz die Zahl NENNT, nennt er auch den Traeger. Eine Partie mit
+    // Muster erzaehlt ihr eigenes Motiv und traegt den Wert nur im dataRef,
+    // damit die Sammelkarte ihn hat.
+    const nenntElo = String(s.desc || '').indexOf(d.elo + ' Elo') >= 0;
+    if(nenntElo && String(s.desc || '').indexOf(nm) < 0){ falsch.push(s.desc); return; }
+    // Und die Zahl ist wirklich sein Delta, und das groesste der Sieger.
+    const m = (matches || []).find(x => x.id === d.matchId);
+    const dl = (m && m.deltas) || {};
+    const eigen = Math.round(dl[d.eloPid] || 0);
+    const best = (d.winners || []).map(id => Math.round(dl[id] || 0))
+      .reduce((a, x) => (x > a ? x : a), 0);
+    if(eigen !== d.elo || eigen !== best)
+      falsch.push(s.id + ': ' + d.elo + ' gegen ' + eigen + ' / best ' + best);
+  });
+  return {n, falsch:falsch.slice(0, 3), ohneNm:ohneNm.slice(0, 3)};
+})())`));
+ok(_eloSatz.n > 0 && _eloSatz.falsch.length === 0 && _eloSatz.ohneNm.length === 0,
+   'der Elo-Gewinn einer Partie nennt den Spieler, dem er gehoert',
+   _eloSatz.falsch.concat(_eloSatz.ohneNm).join(' | ')
+     || _eloSatz.n + ' Partien mit Elo-Gewinn');
+
 // ── Das Blatt sagt die Aufzaehlung nicht vor ihrer eigenen Reihe ─────
 // Ueber den Zellen „1 BESTMARKE / 1 AUSBAU / 2 CHRONIKEN" stand „Eine
 // Bestmarke, ein Ausbau, zwei Monatschroniken und ein neues Insignium: fuer
@@ -1633,6 +1670,59 @@ const _nachsatz = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_nachsatz.eigen,
    'der Schlusssprint bekommt keinen Nachsatz, weil er keinen eigenen hat',
    _nachsatz.hat || 'keiner');
+
+// ── Eine gewoehnliche Auszeichnung deckt das Ergebnis genauso ───────
+// „Zittersieg" heisst im Katalog `nail_biter` und ist auf „10:9 Sieg"
+// definiert — dasselbe wie der Ein-Tor-Krimi. Er fehlte in `BADGE_DECKT`,
+// und gesammelt wurde ausserdem nur aus `badge_unlocked`: eine gewoehnliche
+// Auszeichnung bekommt gar keine eigene Karte, sie steht in der gemeinsamen
+// Tageskarte `badge_marken`. Gemessen hiess die Karte des 25.08. damit
+// „Ein-Tor-Krimi und Auszeichnung in einer Partie", waehrend ihre Zeile
+// „Johannes holt ‚Zittersieg' zum 5. Mal || 10:9 Sieg" trug.
+const _deckt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  // Welche Partien tragen eine Marke, die ihr Ergebnis schon erzaehlt?
+  const deckt = {zu_null:['perfect_win'], upset:['upset_king'],
+                 krimi:['krimi', 'nerves_of_steel', 'nail_biter'],
+                 eng:['krimi', 'nerves_of_steel']};
+  const jeMatch = {};
+  roh.forEach(s => {
+    const d = s.dataRef || {};
+    if(d.type === 'badge_unlocked' && d.matchId && d.badgeId)
+      (jeMatch[d.matchId] = jeMatch[d.matchId] || []).push(d.badgeId);
+    if(d.type === 'badge_marken')
+      (d.marken || []).forEach(m => {
+        const mid = d.matchId || (m && m.matchId);
+        if(mid && m && m.badgeId) (jeMatch[mid] = jeMatch[mid] || []).push(m.badgeId);
+      });
+  });
+  const motiv = {zu_null:'Sieg ohne Gegentor', upset:'Favoritensturz',
+                 krimi:'Ein-Tor-Krimi', kanter:'klarer Sieg', eng:'enges Spiel'};
+  const falsch = [];
+  let n = 0;
+  getStoriesCache().forEach(s => {
+    const d = s.dataRef || {};
+    if(d.type !== 'sammel' || d.quelle !== 'spiel' || !d.matchId) return;
+    // Die Zeile traegt kein resultKind — das steht an der Story, aus der
+    // sie kommt. Gesucht wird sie an ihrer ID.
+    const erg = (d.teile || []).find(t => String((t && (t.typ || t.type)) || '') === 'spiel');
+    const src = erg && roh.find(x => x.id === erg.id);
+    const kind = src && (src.dataRef || {}).resultKind;
+    const liste = deckt[String(kind || '')] || [];
+    const hat = jeMatch[d.matchId] || [];
+    if(!liste.length || !liste.some(b => hat.indexOf(b) >= 0)) return;
+    n++;
+    // Gedeckt: das Motiv des Ergebnisses darf in der Schlagzeile nicht stehen.
+    if(String(s.title || '').indexOf(motiv[kind]) >= 0)
+      falsch.push(s.title + ' → ' + motiv[kind] + ' + ' + hat.join(','));
+  });
+  return {n, falsch:falsch.slice(0, 3)};
+})())`));
+ok(_deckt.n > 0 && _deckt.falsch.length === 0,
+   'was eine Auszeichnung derselben Partie erzaehlt, nennt die Schlagzeile nicht',
+   _deckt.falsch.join(' | ') || _deckt.n + ' gedeckte Partien');
 
 // ── Dieselbe Aussage zweimal: die spaetere gilt ──────────────────────
 // Die Sperrfrist laesst eine Aussage drei Tage lang nur einmal durch, und
