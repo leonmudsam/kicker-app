@@ -56,6 +56,12 @@
   .form-dots .dot{width:7px;height:7px;border-radius:50%}
   .form-dots .dot.w{background:var(--acid)}.form-dots .dot.l{background:var(--red)}
   .rank-gap{font-size:9px;color:var(--muted);text-align:center;padding:2px 0;font-family:'Sometype Mono',monospace}
+  /* Die Grundform jedes Gesichts. Es gab nur Regeln je Behälter (.rrow,
+     .nf-face-paar, .rcp-av …), und wo ein Avatar ohne eigenen Behälter
+     stand — der Halter einer Rekordkarte, eine Zeile im Blatt —, war er ein
+     Blockelement: die Initialen klebten oben links und wurden abgeschnitten. */
+  .av{display:inline-grid;place-items:center;flex-shrink:0;line-height:1;overflow:hidden;
+    font-family:'Archivo Black',sans-serif;color:var(--bg);text-transform:uppercase;vertical-align:middle}
   .rrow .av{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;
     font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--bg);text-transform:uppercase}
   /* Emoji-Avatar Variante (grauer Hintergrund mit Emoji) */

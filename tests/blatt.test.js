@@ -2274,6 +2274,66 @@ const ok = (c, msg, det) => {
   ok(leiter.kleinste >= 40, 'ein Feld der Leiter ist mindestens 40 px breit',
      leiter.kleinste + ' px');
 
+  // ── Jeder Reiter bei 360 px ──────────────────────────────────────
+  // Gemessen wurde bisher je Bauteil, und damit fiel durch, was zwischen
+  // zwei Bauteilen liegt: der Knopf „Neu laden" trug die volle Breite von
+  // `.btn` und lief 112 px aus den Einstellungen, eine Pille der Rekorde lief
+  // aus der Karte, und ein Gesicht ohne eigenen Behälter hatte seine
+  // Initialen oben links. Hier wird jeder Reiter einmal ganz gezeichnet.
+  console.log('\n═══ JEDER REITER BEI 360 PX ═══');
+  await page.setViewportSize({width:360, height:780});
+  const reiter = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const sichten = [
+      ['Liga', "tab='ranking';period='season'"], ['Liga gesamt', "period='all'"],
+      ['Positionen Sturm', "period='season';tab='positions';rankMetric='atk'"],
+      ['Positionen Abwehr', "rankMetric='def'"],
+      ['Awards', "tab='awards';awView='awards';awPeriod='season'"], ['Awards Woche', "awPeriod='week'"],
+      ['Rekorde', "awPeriod='season';awView='rekorde'"], ['Chronik', "awView='chronik'"],
+      ['Teams', "awView='awards';tab='teams'"], ['Verlauf', "tab='history'"],
+      ['Match', "tab='match'"], ['Einstellungen', "tab='settings'"]];
+    const W = document.documentElement.clientWidth, out = [];
+    for(const [name, setz] of sichten){
+      K(setz + ';render()');
+      await new Promise(r => requestAnimationFrame(r));
+      const raus = [], schief = [];
+      document.querySelectorAll('#main *').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if(!r.width || !r.height) return;
+        let p = el.parentElement, scroller = false;
+        while(p && p.id !== 'main'){ const cs = getComputedStyle(p);
+          if(/(auto|scroll|hidden|clip)/.test(cs.overflowX)){ scroller = true; break; } p = p.parentElement; }
+        if(!scroller && (r.right > W + 1 || r.left < -1))
+          raus.push(el.tagName.toLowerCase() + '.' + String(el.className).split(' ')[0] + ' bis ' + Math.round(r.right));
+      });
+      document.querySelectorAll('#main .av').forEach(av => {
+        const t = [...av.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+        if(!t) return;
+        const rg = document.createRange(); rg.selectNodeContents(t);
+        const a = av.getBoundingClientRect(), b = rg.getBoundingClientRect();
+        if(Math.abs((a.left+a.right)/2 - (b.left+b.right)/2) > 2.5
+          || Math.abs((a.top+a.bottom)/2 - (b.top+b.bottom)/2) > 3)
+          schief.push(t.textContent.trim());
+      });
+      const fab = document.getElementById('fab');
+      out.push({name, raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
+        fab: fab ? getComputedStyle(fab).display : ''});
+    }
+    K("tab='ranking';period='season';rankMetric='elo';awView='awards';render()");
+    return out;
+  });
+  const reiterRaus = reiter.filter(r => r.raus.length);
+  ok(reiterRaus.length === 0, 'kein Reiter läuft bei 360 px aus dem Bildschirm',
+     reiterRaus.map(r => r.name + ': ' + r.raus.join(', ')).join(' | ') || reiter.length + ' Reiter');
+  const reiterSchief = reiter.filter(r => r.schief.length);
+  ok(reiterSchief.length === 0, 'jedes Gesicht trägt seine Initialen in der Mitte',
+     reiterSchief.map(r => r.name + ': ' + r.schief.join(', ')).join(' | ') || 'alle mittig');
+  ok(reiter.find(r => r.name === 'Match').fab === 'none'
+     && reiter.find(r => r.name === 'Liga').fab !== 'none',
+     'der Knopf „Match eintragen" fehlt nur auf der Match-Seite',
+     reiter.map(r => r.name + ':' + r.fab).join(' '));
+  await page.setViewportSize({width:430, height:932});
+
   console.log('\n' + '═'.repeat(60));
   console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
   await browser.close();

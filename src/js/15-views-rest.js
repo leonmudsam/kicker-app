@@ -232,12 +232,12 @@ function vMatch(){
         <div class="stepper"><button data-step="sb,-1">−</button><span class="sval num" id="svB" data-scoreedit="sb">${M.sb}</span><button data-step="sb,1">+</button></div></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 0 10px">
-      <span style="font-size:10.5px;color:var(--muted)">Tipp: auf die Zahl tippen (0–10)</span>
-      <button class="btn ghost" id="shuffleBtn" style="padding:8px 14px;font-size:11px;border-radius:10px">Mischen</button>
+      <span style="font-size:10.5px;color:var(--muted)">Zahl antippen, um sie direkt einzugeben</span>
+      <button class="btn ghost" id="shuffleBtn" style="width:auto;flex-shrink:0;padding:8px 14px;font-size:11px;border-radius:10px">Mischen</button>
     </div>
     <div id="previewSlot"></div>
     <div class="btn-row" style="margin-top:4px">
-      <button class="btn ghost sm" id="clearM" style="flex:0 0 38%">Reset</button>
+      <button class="btn ghost sm" id="clearM" style="flex:0 0 38%">Leeren</button>
       <button class="btn" id="saveM" disabled>Speichern</button>
     </div>`;
 }
@@ -280,7 +280,7 @@ function vSettings(){
 
     <div class="cfg-section-title">Spielerlast & Position</div>
     <div class="card">
-      ${sl('cfgRisk','Risiko-Split (schwacher Mate)',c.risk,0,100,'%')}
+      ${sl('cfgRisk','Risiko-Split (schwacher Partner)',c.risk,0,100,'%')}
       ${sl('cfgPos','Positions-Swing',c.pos,0,100,'%')}
       ${sl('cfgExpW','Positions-Erfahrungs-Gewicht',c.expW,0,100,'%')}
       ${sl('cfgPosMin','Min. Spiele für Positions-Wertung',c.posMin,1,10,'')}
@@ -314,7 +314,7 @@ function vSettings(){
       <div style="font-size:12px;color:var(--ink2);line-height:1.8">
         <b style="color:var(--acid)">K-Faktor</b> — Wie stark einzelne Matches die Elo verändern. Hoch = schnelle Änderungen, niedrig = stabile Elo.<br>
         <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
-        <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk}% verlierst du weniger Elo wenn dein Mate deutlich schlechter ist.<br>
+        <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
         <b style="color:var(--acid)">Positions-Swing</b> — Bonus für Siege auf der schwachen Position. Ein Abwehr-Spieler der im Sturm gewinnt bekommt extra Elo.<br>
         <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Performance. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur Über-Erwartungs-Performance zählt.<br>
         <b style="color:var(--acid)">Min. Spiele Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
@@ -333,15 +333,15 @@ function vSettings(){
       </div>
     </div>
     <div class="card" style="margin-top:14px;border:1px solid rgba(190,242,100,.18);background:linear-gradient(155deg,rgba(190,242,100,.06),var(--surface) 80%)">
-      <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Slider-Verhalten</div>
+      <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Wirkung der Regler</div>
       <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:8px">
-        Slider-Änderungen wirken <b style="color:var(--acid)">nur auf neue Matches</b>.
+        Änderungen an den Reglern wirken <b style="color:var(--acid)">nur auf neue Matches</b>.
         Vergangene Matches behalten ihre damaligen Elo-Werte — abgeschlossene Saisons bleiben stabil,
         Awards &amp; Achievements ändern sich nicht.
       </p>
       <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:6px">
-        Falls du die Slider <b>rückwirkend</b> auf die gesamte Historie anwenden willst, kannst du alle
-        Matches neu berechnen lassen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
+        Sollen die Regler <b>rückwirkend</b> für die gesamte Historie gelten, lassen sich alle
+        Matches neu berechnen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
         gespeicherten Match-Deltas überschrieben.
       </p>
       <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('cycle')} Alle Matches rückwirkend neu berechnen</button>
@@ -351,7 +351,7 @@ function vSettings(){
       <div class="mini-label">Backup &amp; Export</div>
       <p style="font-size:11.5px;color:var(--ink2);line-height:1.6;margin-top:10px">
         Die Liga lebt in einer Datenbank in der Cloud. Damit sie auch dann nicht verloren geht,
-        wenn dort etwas passiert, kannst du hier jederzeit eine eigene Kopie ziehen.
+        wenn dort etwas passiert, lässt sich hier jederzeit eine eigene Kopie ziehen.
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <button class="btn ghost" id="expXlsxBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('scroll')} Matches als Excel (.xlsx)</button>
@@ -367,7 +367,7 @@ function vSettings(){
       <div style="height:1px;background:var(--line);margin:14px 0"></div>
       <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('refresh')} Datei einspielen</button>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px">
-        Nimmt .xlsx, .csv und .json. Vor dem Schreiben siehst du eine Vorschau, was ergänzt würde.
+        Nimmt .xlsx, .csv und .json. Vor dem Schreiben erscheint eine Vorschau, was ergänzt würde.
         <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Matches kommen dazu.
       </p>
     </div>
@@ -376,7 +376,7 @@ function vSettings(){
       <div class="mini-label">Stand der App</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px">
         <div style="font-size:12px;color:var(--ink2);font-family:'Sometype Mono',monospace">${BUILD_VERSION}</div>
-        <button class="btn ghost sm" id="forceReloadBtn" style="padding:7px 12px;font-size:11px;flex-shrink:0">Neu laden</button>
+        <button class="btn ghost sm" id="forceReloadBtn" style="width:auto;padding:7px 12px;font-size:11px;flex-shrink:0">Neu laden</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:10px">
         Wenn eine Neuerung nicht auftaucht, hält das Telefon meist noch den alten Stand fest. Der Knopf holt ihn frisch. Sonst meldet sich ein neuer Stand von selbst mit einem Hinweis oben.
@@ -392,7 +392,7 @@ function vSettings(){
               ${avHtml(p,'width:32px;height:32px;border-radius:9px;font-size:11px')}
               <span style="font-weight:600">${esc(p.name)}</span>
             </div>
-            <button data-unhide="${p.id}" class="btn ghost sm" style="padding:7px 12px;font-size:11px">Einblenden</button>
+            <button data-unhide="${p.id}" class="btn ghost sm" style="width:auto;padding:7px 12px;font-size:11px">Einblenden</button>
           </div>`).join('')}
       </div>
     </div>`:''}
