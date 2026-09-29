@@ -518,6 +518,13 @@
     border:1px solid var(--line);border-left:2px solid var(--story,var(--line2));
     border-radius:4px 14px 14px 4px;padding:12px;cursor:pointer;transition:.15s}
   .nf-card:active{transform:scale(.992)}
+  /* Der Feed hat rund siebzig Karten und 4600 Knoten, und das Layout kostete
+     bei jedem Öffnen und bei jedem Zurück aus einem Story-Blatt gemessen
+     110 bis 140 ms — das Parsen des Markups nur zehn. Karten außerhalb des
+     Bildschirms werden erst gelegt, wenn sie hineinkommen: gemessen 35 ms.
+     Breaking und die Karte des Tages sind ausgenommen: ihr Schein liegt
+     außerhalb der Fläche, und die Eindämmung schnitte ihn ab. */
+  .nf-card:not(.nf-brk):not(.nf-gross){content-visibility:auto;contain-intrinsic-size:auto 190px}
   /* Eine Lichtkante oben. Ohne sie sass die Karte flach auf dem Grund und
      zehn davon untereinander waren ein einziges dunkles Feld. */
   .nf-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}

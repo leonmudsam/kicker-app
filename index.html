@@ -2222,6 +2222,13 @@
     border:1px solid var(--line);border-left:2px solid var(--story,var(--line2));
     border-radius:4px 14px 14px 4px;padding:12px;cursor:pointer;transition:.15s}
   .nf-card:active{transform:scale(.992)}
+  /* Der Feed hat rund siebzig Karten und 4600 Knoten, und das Layout kostete
+     bei jedem Öffnen und bei jedem Zurück aus einem Story-Blatt gemessen
+     110 bis 140 ms — das Parsen des Markups nur zehn. Karten außerhalb des
+     Bildschirms werden erst gelegt, wenn sie hineinkommen: gemessen 35 ms.
+     Breaking und die Karte des Tages sind ausgenommen: ihr Schein liegt
+     außerhalb der Fläche, und die Eindämmung schnitte ihn ab. */
+  .nf-card:not(.nf-brk):not(.nf-gross){content-visibility:auto;contain-intrinsic-size:auto 190px}
   /* Eine Lichtkante oben. Ohne sie sass die Karte flach auf dem Grund und
      zehn davon untereinander waren ein einziges dunkles Feld. */
   .nf-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
@@ -5174,7 +5181,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.c2664471';
+const BUILD_VERSION='2026.09.29.98a7a62d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());

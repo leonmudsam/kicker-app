@@ -104,6 +104,12 @@ const ok = (c, msg, det) => {
   await page.addScriptTag({content: code});
   const K = async src => page.evaluate(s => window.__k.eval(s), src);
   ok(errors.length === 0, 'Skript lädt ohne Fehler', errors[0]);
+  // Karten außerhalb des Bildschirms legt der Feed erst, wenn sie hineinkommen
+  // (`content-visibility:auto`) — ihr Inhalt hat bis dahin keine Geometrie.
+  // Gemessen wird hier aber, wie eine Karte AUSSIEHT, also so, wie sie auf
+  // dem Bildschirm liegt. Dass die Regel greift, prüft ein eigener Check.
+  await page.addStyleTag({content: '.nf-card{content-visibility:visible!important}'})
+    .then(h => h.evaluate(e => e.id = 'cv-aus'));
 
   await K(`
     players = ${JSON.stringify(PLAYERS)};
@@ -2424,6 +2430,26 @@ const ok = (c, msg, det) => {
   blattPunkt = blattPunkt.out;
   ok(blattWort.length === 0, 'dieselbe Sache heißt überall gleich, und niemand wird geduzt',
      [...new Set(blattWort)].join(' | ') || 'keine Abweichung');
+  // Der Feed legt nur, was zu sehen ist: rund siebzig Karten und 4600
+  // Knoten kosteten beim Öffnen und bei jedem Zurück aus einem Story-Blatt
+  // 110 bis 140 ms Layout. Breaking und die Karte des Tages sind
+  // ausgenommen — ihr Schein liegt außerhalb der Fläche.
+  const cv = await page.evaluate(async () => {
+    const aus = document.getElementById('cv-aus'); if(aus) aus.disabled = true;
+    window.__k.eval('closeSheet(true); openNewsFeed()');
+    await new Promise(r => requestAnimationFrame(r));
+    const karten = [...document.querySelectorAll('#sheet .nf-card')];
+    const falsch = karten.filter(k => {
+      const soll = (k.classList.contains('nf-brk') || k.classList.contains('nf-gross')) ? 'visible' : 'auto';
+      return getComputedStyle(k).contentVisibility !== soll;
+    }).map(k => k.className.split(' ').slice(0, 2).join('.'));
+    window.__k.eval('closeSheet(true)');
+    if(aus) aus.disabled = false;
+    return {n: karten.length, falsch};
+  });
+  ok(cv.n > 20 && cv.falsch.length === 0,
+     'der Feed legt Karten außerhalb des Bildschirms erst beim Hineinscrollen',
+     cv.falsch.slice(0, 4).join(', ') || cv.n + ' Karten');
   // Das Blatt einer Partie nennt ihre Sieger und die Siegchance aus der
   // Elo-Bahn, und jeder Spieler steht bei den Auszeichnungen einmal. Es
   // stand „Team A gewinnt", und fünf Marken zweier Spieler als fünf Karten.
