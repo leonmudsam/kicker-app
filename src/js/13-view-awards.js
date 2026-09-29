@@ -1336,13 +1336,13 @@ function _vAwardsCore(){
   // ── SCHANDTAFEL ──
   const neg=[];
   neg.push(wwr0
-    ? card('worstWr','red','Schlechtester Spieler',[wwr0.id],esc(topNames(R.worstWr,x=>Math.round(x.wr*100),x=>pname(x.id))),wwr0.w+'–'+(wwr0.g-wwr0.w),Math.round(wwr0.wr*100)+'%',{neg:true})
-    : empty('worstWr','red','Schlechtester Spieler'));
+    ? card('worstWr','red','Schwächste Bilanz',[wwr0.id],esc(topNames(R.worstWr,x=>Math.round(x.wr*100),x=>pname(x.id))),wwr0.w+'–'+(wwr0.g-wwr0.w),Math.round(wwr0.wr*100)+'%',{neg:true})
+    : empty('worstWr','red','Schwächste Bilanz'));
   if(cs0&&cs0.v>=2) neg.push(card('coldStreak','red','Eiskalt erwischt',[cs0.id],esc(topNames(R.coldStreak,x=>x.v,x=>pname(x.id))),'aktuelle Serie',cs0.v+'er',{neg:true}));
   const ls0=g(R.lossStreaks);
   neg.push(ls0
-    ? card('lossStreaks','red','Längste Niederlagenserie',[ls0.id],esc(topNames(R.lossStreaks,x=>x.v,x=>pname(x.id))),'insgesamt',ls0.v+'er',{neg:true})
-    : empty('lossStreaks','red','Längste Niederlagenserie'));
+    ? card('lossStreaks','red','Längste Pleitenserie',[ls0.id],esc(topNames(R.lossStreaks,x=>x.v,x=>pname(x.id))),'insgesamt',ls0.v+'er',{neg:true})
+    : empty('lossStreaks','red','Längste Pleitenserie'));
   neg.push(ft0
     ? card('formtief','red','Formtief',[ft0.id],esc(topNames(R.formtief,x=>Math.round(x.drop),x=>pname(x.id))),'Peak '+ft0.peak+' → jetzt '+ft0.cur,'-'+Math.round(ft0.drop),{neg:true})
     : empty('formtief','red','Formtief'));
@@ -1451,9 +1451,9 @@ const AWARD_META={
   biggest:     {title:'Höchster Sieg',         cls:'purple',why:`Die Partie mit dem größten Torabstand.`},
   perfect:     {title:'Beste Bilanz',          cls:'gold',  why:`Die höchste Siegquote im Zeitraum. Verlangt sind 15 % der Partien des fleißigsten Spielers, mindestens ${AW_MIN.spieler} und höchstens 6.`},
   grinder:     {title:'Vielspieler',           cls:'blue',  why:`Die meisten gespielten Partien im Zeitraum.`},
-  worstWr:     {title:'Schlechtester Spieler', cls:'red',   why:`Die niedrigste Siegquote im Zeitraum. Ab ${AW_MIN.spieler} Partien.`},
+  worstWr:     {title:'Schwächste Bilanz', cls:'red',   why:`Die niedrigste Siegquote im Zeitraum. Ab ${AW_MIN.spieler} Partien.`},
   coldStreak:  {title:'Eiskalt erwischt',      cls:'red',   why:`Die längste Niederlagenserie, die gerade noch läuft.`},
-  lossStreaks: {title:'Längste Niederlagenserie',cls:'red', why:`Die meisten Niederlagen in Folge im Zeitraum.`},
+  lossStreaks: {title:'Längste Pleitenserie',cls:'red', why:`Die meisten Niederlagen in Folge im Zeitraum.`},
   worstAtk:    {title:'Zahnloser Stürmer',     cls:'red',   why:`Die wenigsten Tore je Partie im Sturm. Ab ${AW_MIN.position} Sturmpartien.`},
   worstDef:    {title:'Löchrigste Abwehr',     cls:'red',   why:`Die meisten Gegentore je Partie in der Abwehr. Ab ${AW_MIN.position} Abwehrpartien.`},
   worstTeam:   {title:'Schlechtestes Team',    cls:'red',   why:`Das Duo mit der niedrigsten Siegquote. Ab 2 gemeinsamen Partien.`},

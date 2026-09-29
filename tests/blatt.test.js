@@ -2340,6 +2340,9 @@ const ok = (c, msg, det) => {
       // sortiert: in der Ewigen Tafel standen „Siegq…" und „Torbil…".
       [...document.querySelectorAll('#main .ui-tabs button, #main .ui-switch button')]
         .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Reiter ' + e.textContent.trim()));
+      // Ebenso der Name einer Award-Kachel: „Längste Siegesser…".
+      [...document.querySelectorAll('#main .aw-t-lbl')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Kachel ' + e.textContent.trim()));
       out.push({name, bruch:bruch.slice(0,3), punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
         fab: fab ? getComputedStyle(fab).display : ''});
     }
@@ -2354,7 +2357,7 @@ const ok = (c, msg, det) => {
      reiterSchief.map(r => r.name + ': ' + r.schief.join(', ')).join(' | ') || 'alle mittig');
   const reiterBruch = reiter.filter(r => r.bruch.length);
   ok(reiterBruch.length === 0 && reiter.some(r => r.name === 'Positionen Sturm'),
-     'Bilanz, Torzeile und Reiter stehen ungekürzt auf einer Zeile',
+     'Bilanz, Torzeile, Reiter und Kachelnamen stehen ungekürzt auf einer Zeile',
      reiterBruch.map(r => r.name + ': ' + r.bruch.join(', ')).join(' | ') || 'alle einzeilig');
   // Dieselbe Frage für die Blätter, die Zahlen mit Nachkommastelle zeigen.
   let blattPunkt = await page.evaluate(async () => {
