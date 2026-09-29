@@ -1055,17 +1055,15 @@ function _consolidateStories(list){
       if(_tafelAchse.has(st.id) || _achse.has(st.id)) return;
       if(!d.matchId || !SAMMEL_SPIEL.has(d.type)) return;
       if(d.type !== 'spiel' && _negT(st)) return;
-      // ── Wer ohnehin einzeln bleibt, reist nicht mit ───────────────
-      // Eine SELTENE Auszeichnung steht nicht als Zeile unter einer fremden
-      // Schlagzeile: „Nerven aus Stahl" ist der Grund, warum jemand die App
-      // oeffnet. Breaking ist davon ausgenommen — zwei Breaking-Meldungen
-      // derselben Partie sind eine Nachricht, und genau das ist der Fall, fuer
-      // den die Achse gebaut ist [§C33].
-      if(_sammelEinzeln(st, d)){
-        let brk = false;
-        try { brk = (typeof _isBreaking === 'function') && _isBreaking(st); } catch(e){}
-        if(!brk) return;
-      }
+      // ── Eine Partie, eine Karte ──────────────────────────────────
+      // Eine seltene Auszeichnung blieb hier einzeln stehen, damit sie nicht
+      // als Kleingedrucktes unter einer fremden Schlagzeile endet. Seit jede
+      // Partie ihre Karte hat, steht sie damit aber NEBEN der Karte desselben
+      // Spiels — gemessen zweimal dasselbe 10:4 mit denselben vier Wappen
+      // untereinander, und wer scrollt, liest zwei Partien statt einer. Sie
+      // reist deshalb mit und wird in der Zeile gekennzeichnet: die
+      // Schlagzeile nennt ihre Klasse, das Sammelband traegt die Marke, und
+      // im Blatt steht ihr Medaillon [§C33].
       let l = jeMatch.get(d.matchId);
       if(!l){ l = []; jeMatch.set(d.matchId, l); }
       l.push({st, idx});
@@ -1273,6 +1271,7 @@ function _consolidateStories(list){
         loss_streak:'Durststrecke', top_form:'Formlauf',
         team_streak:'Teamserie', team_loss_streak:'gemeinsame Durststrecke',
         badge_unlocked:'Auszeichnung', milestone_wins:'Siegmarke',
+        badge_marken:'Auszeichnung',
         milestone_goals:'Tormarke', milestone_elo:'Elo-Sprung',
         jubilee:'Jubiläum', rivalry_milestone:'Rivalitätsmarke',
         // Die drei seltenen Wechsel tragen ihren eigenen Namen. Ohne sie
@@ -1294,6 +1293,14 @@ function _consolidateStories(list){
         // „Serienbruch" zaehlt auf, dass gespielt wurde.
         if(dt.type === 'spiel')
           return _ergebnisGedeckt(dt) ? null : (ERGEBNIS_MOTIV[dt.resultKind] || null);
+        // Die Klasse gehoert in die Zeile: „Auszeichnung" sagt nicht, dass es
+        // die seltenste Sache des Katalogs war, und genau dafuer stand sie
+        // einmal als eigene Karte da.
+        if(dt.type === 'badge_unlocked'){
+          if(dt.rarity === 'legendary') return 'legendäre Auszeichnung';
+          if(dt.rarity === 'rare') return 'seltene Auszeichnung';
+          return motivName.badge_unlocked;
+        }
         return motivName[dt.type];
       };
       const motive = [...new Set(teile.map(_motivVon).filter(Boolean))];
@@ -1446,6 +1453,21 @@ function _consolidateStories(list){
                                          // davon das ist.
                                         marke: (t.dataRef||{}).zeigt === true
                                                ? 'in der Chronik' : '',
+                                         // ── Eine seltene Auszeichnung geht
+                                         // nicht unter ──────────────────────
+                                         // Sie blieb einmal einzeln stehen und
+                                         // damit neben der Karte desselben
+                                         // Spiels: zweimal dasselbe 10:4 mit
+                                         // denselben vier Wappen. Sie reist
+                                         // jetzt mit, und ihre Zeile traegt
+                                         // ihre Klasse — sonst waere sie
+                                         // genau das Kleingedruckte, das die
+                                         // alte Regel verhindern wollte.
+                                        klasse: ((t.dataRef||{}).type === 'badge_unlocked'
+                                          && ((t.dataRef||{}).rarity === 'rare'
+                                              || (t.dataRef||{}).rarity === 'legendary'))
+                                          ? ((t.dataRef||{}).rarity === 'legendary'
+                                             ? 'Legendär' : 'Selten') : '',
                                          // Der Anlass des Breaking. Ohne ihn
                                          // ist auf der lautesten Karte des
                                          // Feeds nicht zu sehen, warum sie
@@ -1667,6 +1689,39 @@ function _consolidateStories(list){
       ausbalanciert = fertig.concat(dazu)
         .sort((a, b) => new Date(b.when) - new Date(a.when));
     }
+  }
+  // ── Eine Partie zeigt ihr Ergebnis einmal ─────────────────────────
+  // Jede Geschichte mit einer `matchId` zeigt das Ergebnisband — vier Wappen
+  // und den Endstand [§C33]. Stehen zwei Karten derselben Partie im Feed,
+  // steht dasselbe Band zweimal untereinander: gemessen ein 10:4 als
+  // Spieltags-Sammelkarte und daneben die seltene Auszeichnung derselben
+  // Partie, mit denselben vier Wappen und demselben Stand. Wer scrollt, liest
+  // zwei Partien statt einer.
+  //
+  // Zusammengelegt wird, wo es geht; was daneben stehen BLEIBT — eine negative
+  // Meldung hat ihre eigene Richtung [§C25] —, verzichtet auf das Band. Damit
+  // ist die Trennung eindeutig: eine Partie, ein Band. Die Karte behaelt ihr
+  // Gesicht und im Blatt steht die Partie weiterhin.
+  //
+  // Wer das Band behaelt, entscheidet nicht die Reihenfolge, sondern der
+  // Inhalt: die Partie-Karte und ihr Buendel gehoeren dem Spiel, alles andere
+  // haengt nur daran.
+  {
+    const besitzer = new Map();
+    ausbalanciert.forEach(s => {
+      const d = (s && s.dataRef) || {};
+      if(!d.matchId) return;
+      const alt = besitzer.get(d.matchId);
+      const rang = _istPartie(s) ? 2 : 1;
+      if(!alt || rang > alt.rang) besitzer.set(d.matchId, {id:s.id, rang});
+    });
+    ausbalanciert = ausbalanciert.map(s => {
+      const d = (s && s.dataRef) || {};
+      if(!d.matchId) return s;
+      const b = besitzer.get(d.matchId);
+      if(!b || b.id === s.id) return s;
+      return Object.assign({}, s, {dataRef: Object.assign({}, d, {bandFremd:true})});
+    });
   }
   _cache._consolFrom = list;
   _cache._consolList = ausbalanciert;

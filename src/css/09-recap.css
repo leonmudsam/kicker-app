@@ -116,10 +116,14 @@
 
   /* Die Zahlenleiste. In der Heldenkarte durch eine Goldlinie abgesetzt,
      außerhalb als eigene Reihe. */
-  .rcp-z{display:flex;gap:8px;margin:0 0 16px}
+  /* Fuenf Zellen passen auf dem Telefon nicht in eine Zeile: gemessen war die
+     Zelle 62 px breit und „BESTMARKEN" 75 px, und `overflow:hidden` schnitt es
+     ab. Die Reihe darf deshalb umbrechen, und die Aufschrift darf zwei Zeilen
+     nehmen — abgeschnitten sagt sie nichts. */
+  .rcp-z{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
   .rcp-held .rcp-z{justify-content:center;gap:16px;margin:14px 0 0;padding-top:13px;
     border-top:1px solid var(--line)}
-  .rcp-z-s{flex:1;min-width:0;text-align:center;background:var(--surface);
+  .rcp-z-s{flex:1 1 78px;min-width:78px;text-align:center;background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:10px 6px}
   .rcp-held .rcp-z-s{background:none;border:none;padding:0}
   .rcp-z-v{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;
@@ -133,7 +137,8 @@
   .rcp-z-v.sehrlang{font-size:11.5px;letter-spacing:-.03em;line-height:1.15}
   .rcp-z-s{overflow:hidden}
   .rcp-z-l{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
-    color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:5px}
+    color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:5px;
+    white-space:normal;overflow-wrap:anywhere;line-height:1.25}
 
   /* Avatare ohne Wappen (unter 48 px) und Paare. */
   .rcp-av{position:relative;flex-shrink:0;width:var(--rav);height:var(--rav);

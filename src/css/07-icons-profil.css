@@ -839,6 +839,18 @@
     border-radius:5px;background:var(--surface2);border:1px solid var(--line);
     color:var(--muted);font-size:9px;font-weight:600;letter-spacing:.04em;
     text-transform:uppercase;white-space:nowrap}
+  /* Die Klasse einer seltenen oder legendaeren Auszeichnung. Sie stand einmal
+     als eigene Karte da, damit sie nicht untergeht — und damit neben der Karte
+     desselben Spiels, zweimal dasselbe Ergebnis mit denselben vier Wappen.
+     Jetzt reist sie mit und wird gekennzeichnet: Violett, die Familie der
+     Auszeichnungen [§C25], und deutlicher als die Metallmarke daneben. */
+  .nf-sam-z b.nf-sam-kl{flex:0 0 auto;margin-left:auto;padding:1px 6px;
+    border-radius:5px;background:rgba(167,139,250,.14);
+    border:1px solid rgba(167,139,250,.38);color:var(--purple);
+    font-size:9px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;white-space:nowrap}
+  .nf-sam-z b.nf-sam-k + b.nf-sam-kl,
+  .nf-sam-z.brk b.nf-sam-kl{margin-left:6px}
   /* Der Anlass des Breaking. Rot ist die Richtung von Breaking [§C25], und
      die Zeile bekommt dieselbe Kante: die Karte bricht die Spalte wegen
      dieser einen Zeile, und die stand zuletzt und ohne jedes Zeichen. */
@@ -1087,9 +1099,25 @@
   .nw-liste{display:flex;flex-direction:column;gap:1px;background:var(--line);
     border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:10px}
   .nw-zeile{background:var(--bg2);padding:10px 13px}
-  .nw-zeile .nw-zeile-kopf{display:flex;align-items:baseline;gap:10px}
-  .nw-label{font-family:'Archivo Black',sans-serif;font-size:12px;letter-spacing:-.01em;
-    color:var(--ink);line-height:1.2}
+  .nw-zeile .nw-zeile-kopf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  /* Das Zeichen der Zeile. In einer Liste von zweiundzwanzig Eintraegen ist es
+     das Erste, was man sieht: es sagt vor dem ersten Wort, ob dort eine
+     Bestmarke, eine Chronik oder ein Insignium steht [§C27]. */
+  .nw-ic{flex:0 0 18px;width:18px;height:18px;display:grid;place-items:center;
+    color:var(--muted)}
+  .nw-ic svg{width:15px;height:15px;display:block}
+  .nw-label{flex:1 1 auto;min-width:0;font-family:'Archivo Black',sans-serif;
+    font-size:12px;letter-spacing:-.01em;color:var(--ink);line-height:1.25}
+  /* Die Klasse einer seltenen Auszeichnung und die Marke der Chronik: beide
+     stehen NEBEN dem Text, nicht darin — er kuerzt sich, und eine Marke im
+     abgeschnittenen Teil waere gar nicht da [§C32]. */
+  .nw-kl{flex:0 0 auto;padding:1px 6px;border-radius:5px;
+    background:rgba(167,139,250,.14);border:1px solid rgba(167,139,250,.38);
+    color:var(--purple);font-size:8.5px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;white-space:nowrap}
+  .nw-mk{flex:0 0 auto;padding:1px 6px;border-radius:5px;background:var(--surface2);
+    border:1px solid var(--line);color:var(--muted);font-size:8.5px;font-weight:600;
+    letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
   .nw-wert{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:12px;
     color:var(--gold);white-space:nowrap}
   .nw-satz{font-size:11.5px;line-height:1.45;color:var(--ink2);margin-top:5px}
@@ -1210,13 +1238,22 @@
      Ein Rekord ohne Verfolger ist eine Zahl ohne Massstab. */
   .nd-vf{display:flex;flex-direction:column;gap:1px;background:var(--line);
     border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  .nd-vf-z{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);
-    cursor:pointer}
+  .nd-vf-z{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 12px;
+    background:var(--bg2);cursor:pointer}
   .nd-vf-z.hat{background:linear-gradient(96deg,rgba(247,207,74,.1),var(--bg2) 70%)}
   .nd-vf-n{width:16px;flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:11px;
     color:var(--muted)}
   .nd-vf-nm{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     font-size:12.5px;color:var(--ink)}
+  /* Wie weit dahinter, sieht man. Die Liste nannte Rang, Name und Wert; ob der
+     Zweite knapp dran ist oder weit weg, musste man daraus ausrechnen. */
+  /* Volle Zeilenbreite: sonst ist die Bahn in jeder Zeile anders lang, weil
+     der Wert daneben verschieden breit ist — und dann sagt derselbe Anteil
+     zwei verschiedene Laengen. */
+  .nd-vf-b{flex:0 0 100%;display:block;height:4px;border-radius:999px;margin-top:1px;
+    background:var(--surface3);overflow:hidden}
+  .nd-vf-b i{display:block;height:100%;border-radius:999px;background:var(--silber);
+    opacity:.6}
   .nd-vf-z b{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink2)}
   /* Eine Wertung ist ein Name, keine Zahl: sie darf kuerzen statt zu sprengen. */
   .nd-vf-z b.nd-vf-t{font-family:inherit;font-size:11px;font-weight:600;color:var(--gold);
@@ -1298,23 +1335,33 @@
      Sie stand als Zeile „1205 → 1240 Prestige": zwei Zahlen, die man erst
      verrechnen muss. Der Balken zeigt die Strecke von dieser Schwelle zur
      naechsten, darin heller, was der Spieltag dazugelegt hat. */
-  .nd-wk{display:flex;align-items:center;gap:10px;padding:9px 12px;
+  .nd-wk{display:flex;align-items:center;gap:10px;padding:10px 12px;
     background:var(--surface);border:1px solid var(--line);
     border-radius:10px;margin-bottom:6px}
-  .nd-wk-z{flex:0 0 34px;width:34px;height:34px;display:block}
+  /* 48 px ist die Untergrenze fuer ein Wappen [§6]: bei 34 blieb vom Zeichen
+     ein dunkler Fleck, und auf dem Telefon war es von einem Kratzer nicht zu
+     unterscheiden. */
+  .nd-wk-z{flex:0 0 48px;width:48px;height:48px;display:block}
   .nd-wk-z svg{width:100%;height:100%;display:block}
   .nd-wk-t{flex:1 1 auto;min-width:0;display:block}
-  .nd-wk-n{display:block;font-family:'Archivo Black',sans-serif;font-size:12px;
-    color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .nd-wk-n em{font-family:'Sometype Mono',monospace;font-size:9px;font-style:normal;
-    color:var(--muted);letter-spacing:.06em;margin-left:6px}
-  .nd-wk-b{display:flex;height:6px;border-radius:999px;overflow:hidden;
-    background:var(--surface3);margin:6px 0 4px}
-  .nd-wk-b i{display:block;height:100%;background:var(--metal)}
+  .nd-wk-n{display:flex;align-items:baseline;gap:6px;min-width:0;
+    font-family:'Archivo Black',sans-serif;font-size:12.5px;color:var(--ink)}
+  .nd-wk-n b{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;font-weight:inherit;font-family:inherit}
+  .nd-wk-n em{flex:1 1 auto;min-width:0;font-family:'Sometype Mono',monospace;
+    font-size:9px;font-style:normal;color:var(--muted);letter-spacing:.06em;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nd-wk-b{display:flex;height:7px;border-radius:999px;overflow:hidden;
+    background:var(--surface3);border:1px solid var(--line);margin:6px 0 4px}
+  /* Der Teil, der schon da war, und der von heute. Der erste war
+     Silber auf var(--surface3). Es stand var(--metal) da, und dieses Token gibt
+     es nicht: der Balken hatte gar keine Fuellung. */
+  .nd-wk-b i{display:block;height:100%;background:var(--silber);opacity:.5}
   .nd-wk-b em{display:block;height:100%;background:var(--gold)}
+  /* Die Zeile darf umbrechen: „noch 1615 bis zum Ordensstern" endete auf dem
+     Telefon als „noch 1615 bis zum Ord…" und nannte damit die Stufe nicht. */
   .nd-wk-r{display:block;font-family:'Sometype Mono',monospace;font-size:9px;
-    color:var(--muted);letter-spacing:.04em;white-space:nowrap;overflow:hidden;
-    text-overflow:ellipsis}
+    color:var(--muted);letter-spacing:.04em;line-height:1.35}
   .nd-wk-d{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:15px;
     color:var(--muted)}
   .nd-wk-d.g{color:var(--gold)}
@@ -1327,11 +1374,11 @@
   .nd-chance-b{position:relative;height:8px;border-radius:999px;overflow:hidden;
     background:var(--surface3);border:1px solid var(--line)}
   .nd-chance-b i{display:block;height:100%;border-radius:999px;
-    background:linear-gradient(90deg,var(--metal2),var(--metal))}
-  .nd-chance.g .nd-chance-b i{background:linear-gradient(90deg,var(--green2,var(--green)),var(--green))}
-  .nd-chance.r .nd-chance-b i{background:linear-gradient(90deg,var(--red2,var(--red)),var(--red))}
+    background:linear-gradient(90deg,rgba(194,201,208,.35),var(--silber))}
+  .nd-chance.g .nd-chance-b i{background:linear-gradient(90deg,rgba(190,242,100,.35),var(--acid))}
+  .nd-chance.r .nd-chance-b i{background:linear-gradient(90deg,rgba(240,86,106,.35),var(--red))}
   .nd-chance-b u{position:absolute;top:0;bottom:0;width:1px;
-    background:var(--line2,var(--line));z-index:1}
+    background:var(--line2);z-index:1}
   .nd-chance-z{display:flex;justify-content:space-between;gap:10px;margin-top:8px;
     font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
   .nd-chance-z b{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink)}
@@ -1346,10 +1393,10 @@
   .nd-elo-b{flex:1 1 auto;min-width:0;height:6px;border-radius:999px;
     background:var(--surface3);overflow:hidden}
   .nd-elo-b i{display:block;height:100%;border-radius:999px}
-  .nd-elo-b i.p{background:var(--green)}
+  .nd-elo-b i.p{background:var(--acid)}
   .nd-elo-b i.n{background:var(--red)}
   .nd-elo-v{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:12px}
-  .nd-elo-v.g{color:var(--green)}
+  .nd-elo-v.g{color:var(--acid)}
   .nd-elo-v.r{color:var(--red)}
   .nd-elo em{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9px;
     color:var(--muted);font-style:normal;letter-spacing:.04em}

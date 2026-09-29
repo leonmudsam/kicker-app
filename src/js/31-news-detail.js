@@ -269,16 +269,35 @@ function _newsVerfolger(rekordId, halter, wert){
     const grenze = (wert == null || !isFinite(wert)) ? null : wert + 1e-9;
     const davor = grenze == null ? [] : rang.filter(r =>
       oben.indexOf(r.pid || r.id) < 0 && r.wert > grenze);
-    const zeilen = rang.filter(r => oben.indexOf(r.pid || r.id) < 0
-                                 && (grenze == null || r.wert <= grenze))
-      .slice(0, 3).map((r, i) => {
+    const dahinter = rang.filter(r => oben.indexOf(r.pid || r.id) < 0
+                                   && (grenze == null || r.wert <= grenze))
+      .slice(0, 3);
+    // ── Wie weit dahinter, sieht man ──────────────────────────────────
+    // Die Liste nannte Rang, Name und Wert. Ob der Zweite knapp dran ist oder
+    // weit weg, muss man daraus ausrechnen — und bei „84 %" gegen „81 %"
+    // gegen „62 %" ist gerade das die Aussage. Der Balken zeigt den Anteil am
+    // Bestwert. Nur wo er etwas bedeutet: ein Rekord, dessen Sortierwert
+    // negativ ist (weniger Gegentore ist besser), hat keinen sinnvollen
+    // Anteil, und dann bleibt der Balken weg.
+    const basis = (wert != null && isFinite(wert) && wert > 0
+                   && dahinter.every(r => isFinite(r.wert) && r.wert >= 0)) ? wert : null;
+    const zeilen = dahinter.map((r, i) => {
       const pid = r.pid || r.id;
       if(!pm[pid]) return '';
+      // Kein Mindestmaß: ein aufgerundeter Balken stellte den Vierten vor den
+      // Dritten, und dann sagt er das Gegenteil von dem, was er soll.
+      const anteil = basis ? Math.min(100, r.wert / basis * 100) : null;
+      // Der Balken steht auf EIGENER Zeile und nicht neben dem Namen: die
+      // Namensspalte ist so breit, wie der Wert daneben es uebrig laesst, und
+      // damit war dieselbe Prozentzahl in jeder Zeile eine andere Laenge —
+      // gemessen stand der Vierte mit einem laengeren Balken als der Dritte.
       return `<div class="nd-vf-z" data-pid="${esc(pid)}">
         <span class="nd-vf-n">${oben.length + i + 1}</span>
         ${avHtml(pm[pid], '', {ins:true, px:30, feuer:0})}
         <span class="nd-vf-nm">${esc(pm[pid].name)}</span>
         <b>${esc(_chronKurz(r.ev))}</b>
+        ${anteil != null
+          ? `<span class="nd-vf-b"><i style="width:${anteil.toFixed(1)}%"></i></span>` : ''}
       </div>`;
     }).filter(Boolean).join('');
     // Steht jemand darueber, ist der Rekord weitergewandert. Das gehoert
@@ -438,7 +457,7 @@ function _ndWirkungBlock(je){
       return `<div class="nd-wk" data-pid="${esc(pid)}" style="cursor:pointer">
         ${zeichen ? `<span class="nd-wk-z">${zeichen}</span>` : ''}
         <span class="nd-wk-t">
-          <span class="nd-wk-n">${esc((pm[pid] && pm[pid].name) || '?')}${ins
+          <span class="nd-wk-n"><b>${esc((pm[pid] && pm[pid].name) || '?')}</b>${ins
             ? `<em>${esc(auf ? 'neu: ' + ins.name : ins.name)}</em>` : ''}</span>
           ${balken}
           <span class="nd-wk-r">${rest}</span>
@@ -893,19 +912,54 @@ function _newsDetailMitte(s){
           return m.winner === 'A' ? m.score_a + ':' + m.score_b
                                   : m.score_b + ':' + m.score_a;
         };
-        const zeilen = teile.map(t => {
+        const _zeile = t => {
           const uhr = t.ms ? _newsUhrzeit(t.ms) : '';
           const stand = zeileStand(t);
           const zeit = [uhr, stand].filter(Boolean).join(' · ');
           return `<div class="nw-zeile"${
               (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
-              <div class="nw-zeile-kopf"><span class="nw-label">${esc(t.titel || '')}</span>${
+              <div class="nw-zeile-kopf">${t.ic
+                ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}<span class="nw-label">${
+                esc(t.titel || '')}</span>${
+                t.klasse ? `<b class="nw-kl">${esc(t.klasse)}</b>` : ''}${
+                t.marke ? `<b class="nw-mk">${esc(t.marke)}</b>` : ''}${
                 t.wert ? `<span class="nw-wert">${esc(t.wert)}</span>` : ''}</div>
               ${zeit ? `<div class="nw-satz num">${esc(zeit)}</div>` : ''}
               ${jeZeileBand && t.matchId ? _newsMatchVsBlock(t.matchId) : ''}
               ${_ndNeu(t.text) ? `<div class="nw-satz">${esc(t.text)}</div>` : ''}
             </div>`;
-        }).join('');
+        };
+        // ── Zweiundzwanzig Zeilen sind keine Liste, sie sind eine Wand ──
+        // Gemessen trug ein Tafel-Moment 22 Zeilen — sechs Bestmarken, neun
+        // Ausbauten, fuenf Chroniken und zwei Insignien — und sie standen als
+        // EIN Stapel untereinander. Wer ihn oeffnete, konnte nicht sehen, was
+        // ein Wechsel und was nur ein besserer Wert war. Gruppen mit Zeichen
+        // und Zahl machen das navigierbar; `rcpAbschnitt` ist die
+        // Ueberschrift, die die App dafuer schon hat [§C31].
+        const gruppiert = (function(){
+          if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';
+          if(typeof rcpAbschnitt !== 'function') return '';
+          const typ = t => String((t && (t.typ || t.type)) || '');
+          const gr = [
+            {t:'Bestmarken', f:x => typ(x).indexOf('rekord_') === 0
+                                 && typ(x) !== 'rekord_gesteigert'},
+            {t:'Monatschroniken', f:x => typ(x).indexOf('chronik_') === 0},
+            {t:'Neue Insignien', f:x => typ(x) === 'insignium_stufe'},
+            {t:'Ausbauten', f:x => typ(x) === 'rekord_gesteigert'}
+          ];
+          const rest = teile.slice();
+          const aus = [];
+          gr.forEach(g => {
+            const l = rest.filter(g.f);
+            l.forEach(x => rest.splice(rest.indexOf(x), 1));
+            if(l.length) aus.push(rcpAbschnitt(g.t, l.length)
+              + `<div class="nw-liste">${l.map(_zeile).join('')}</div>`);
+          });
+          if(rest.length) aus.push(`<div class="nw-liste">${rest.map(_zeile).join('')}</div>`);
+          // Unter vier Zeilen sagt eine Gruppierung nichts.
+          return teile.length >= 4 ? aus.join('') : '';
+        })();
+        const zeilen = teile.map(_zeile).join('');
         // ── Ein Bereich für die Wirkung, nicht einer je Zeile ───────────
         // Die Punktewirkung eines Spieltags ist je Spieler EINE Zahl, egal
         // aus welcher Zeile sie kommt: beide Stände gehören dem Tag, nicht
@@ -964,8 +1018,11 @@ function _newsDetailMitte(s){
           : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
           : d.quelle === 'ergebnis' ? 'Diese beiden Partien'
           : 'In dieser Partie';
-        return uebersicht + `<div class="nd-section">${kopfzeile}</div>
-          ${mv}<div class="nw-liste">${zeilen}</div>${wirkung}`;
+        return uebersicht
+          + (gruppiert
+              ? `<div class="nd-section">${kopfzeile}</div>${mv}${gruppiert}`
+              : `<div class="nd-section">${kopfzeile}</div>${mv}<div class="nw-liste">${zeilen}</div>`)
+          + wirkung;
       }
       // Die Stufe IST die Story — und das Blatt war leer.
       case 'insignium_stufe': {
@@ -1255,9 +1312,32 @@ function _newsDetailMitte(s){
           <div class="nd-stat-row"><div class="nd-stat-label">Saison</div><div class="nd-stat-val">${esc(d.sid)}</div></div>
           ${zahlen}${klar}${torreich}`;
       }
+      // Die Karte sagt, dass der Monat eine Tabelle hat, und ihr Blatt zeigte
+      // nur die Saison-ID — eine Zeichenkette, die niemanden interessiert. Die
+      // Angaben liegen im `dataRef`: die beiden an der Spitze, ihr Abstand und
+      // die Stichprobe, ab der gewertet wird. Der Vs-Block und die Zahlenreihe
+      // sind die Bauteile, die die App dafuer schon hat [§C27].
       case 'season_start': {
-        return `<div class="nd-section">Aktuelle Saison</div>
-          <div class="nd-stat-row"><div class="nd-stat-label">Saison-ID</div><div class="nd-stat-val">${esc(d.sid)}</div></div>`;
+        const pA = d.leader, pB = d.second;
+        const vs = (pA && pB) ? `<div class="nd-vs">
+            <div class="nd-vs-p" data-pid="${esc(pA.pid)}">
+              ${avM(pA.pid)}
+              <div class="nd-vs-name">${esc(nameOf(pA.pid))}</div>
+              <div class="nd-vs-elo">${pA.elo} Elo</div>
+            </div>
+            <div class="nd-vs-mid">${d.gap}<div class="nd-vs-mid-sub">Elo Diff</div></div>
+            <div class="nd-vs-p" data-pid="${esc(pB.pid)}">
+              ${avM(pB.pid)}
+              <div class="nd-vs-name">${esc(nameOf(pB.pid))}</div>
+              <div class="nd-vs-elo">${pB.elo} Elo</div>
+            </div>
+          </div>` : '';
+        const z = (typeof rcpZahlenHtml === 'function') ? rcpZahlenHtml([
+          d.partien ? {v: d.partien, l: d.partien === 1 ? 'Partie' : 'Partien'} : null,
+          d.aktive ? {v: d.aktive, l:'Gewertete'} : null
+        ].filter(Boolean)) : '';
+        return (vs ? `<div class="nd-section">Oben in der Tabelle</div>${vs}` : '')
+          + (z ? `<div class="nd-section">Die Stichprobe</div>${z}` : '');
       }
       // Neue Typen (Phase 8) hängen sich hier dran an
       case 'milestone_wins':
@@ -1302,7 +1382,12 @@ function _newsDetailMitte(s){
           </div>`;
         const zeit = lauf.von ? `<div class="nd-satz">Die Serie begann am <b>${esc(lauf.von)}</b>`
             + (lauf.bis ? ` und endete am <b>${esc(lauf.bis)}</b>.` : '.') + `</div>` : '';
-        return `<div class="nd-section">Die Serie von ${esc(nameOf(d.victimPid))}</div>${gitter}${zeit}`;
+        // Acht ist eine Zahl, die Reihe zeigt, wie lang acht sind — dasselbe
+        // Bauteil, mit dem eine laufende Serie im Feed steht [§C27].
+        const band = (typeof _newsSerienBand === 'function')
+          ? _newsSerienBand(d.streak, false) : '';
+        return `<div class="nd-section">Die Serie von ${esc(nameOf(d.victimPid))}</div>`
+          + band + gitter + zeit;
       }
       case 'rivalry_milestone': {
         const h2h = _newsH2HRecord(d.a, d.b);

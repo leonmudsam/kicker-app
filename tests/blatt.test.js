@@ -1020,6 +1020,120 @@ const ok = (c, msg, det) => {
      'jede Zeile zeigt das Zeichen ihrer Stufe',
      tafelBlatt.zeichen + ' Zeichen');
 
+  // ── Jedes Blatt passt auf das Telefon ────────────────────────────
+  //    Gemessen am Blatt eines Tafel-Moments: die Zahlenreihe trug fuenf
+  //    Zellen, „BESTMARKEN" war 75 px breit und die Zelle 62 — `overflow:
+  //    hidden` schnitt die Aufschrift ab. Daneben endete „noch 1615 bis zum
+  //    Ordensstern" als „noch 1615 bis zum Ord…" und nannte die Stufe nicht.
+  //    Gefragt ist deshalb bei JEDEM Story-Typ, ob etwas aus seinem Kasten
+  //    laeuft oder abgeschnitten ist — bei 360 px, der Breite, mit der die
+  //    uebrigen Messungen dieser Suite rechnen.
+  const mobil = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const r = _buildStories();
+      _cache._stories = r.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+      _cache._consolFrom = null; _cache._frischVon = null;
+      const alle = getStoriesCache();
+      const out = [], gesehen = {};
+      alle.concat(r).forEach(s => {
+        const d = s.dataRef || {};
+        const t = (d.type||'?') + (d.quelle ? '/' + d.quelle : '');
+        if(gesehen[t]) return; gesehen[t] = 1;
+        let b = ''; try { b = _newsDetailBody(s); } catch(e){ b = ''; }
+        if(b) out.push({typ:t, html:b});
+      });
+      return out;
+    })())`);
+    const arr = JSON.parse(roh);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.style.overflow = 'hidden';
+    document.body.appendChild(host);
+    const raus = [], abgeschnitten = [];
+    arr.forEach(x => {
+      host.innerHTML = x.html;
+      const hr = host.getBoundingClientRect();
+      // Laeuft etwas ueber den Rand des Blatts hinaus?
+      host.querySelectorAll('*').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if(r.width > 0 && r.right > hr.right + 0.5)
+          raus.push(x.typ + ' ' + el.className);
+      });
+      // Und ist ein Text abgeschnitten, obwohl er nicht kuerzen darf? Die
+      // Aufschriften der Zahlenreihe und die Zeile der Wirkung sind die
+      // gemessenen Faelle; eine Schlagzeile DARF kuerzen.
+      host.querySelectorAll('.rcp-z-l, .nd-wk-r, .nd-chance-z, .nw-ic').forEach(el => {
+        if(el.scrollWidth > el.clientWidth + 1)
+          abgeschnitten.push(x.typ + ' ' + el.className + ' '
+            + el.scrollWidth + '>' + el.clientWidth);
+      });
+    });
+    host.remove();
+    return {n: arr.length, raus: [...new Set(raus)], ab: [...new Set(abgeschnitten)]};
+  });
+  ok(mobil.n >= 15, 'jeder Story-Typ baut ein Blatt', mobil.n + ' Typen');
+  ok(mobil.raus.length === 0, 'und keines laeuft bei 360 px aus seinem Rand',
+     mobil.raus.slice(0, 4).join(' | ') || 'keines');
+  ok(mobil.ab.length === 0, 'keine Aufschrift ist abgeschnitten',
+     mobil.ab.slice(0, 4).join(' | ') || 'keine');
+
+  // ── Wie weit dahinter, sieht man ─────────────────────────────────
+  //    Die Verfolgerliste nannte Rang, Name und Wert. Ob der Zweite knapp
+  //    dran ist oder weit weg, musste man daraus ausrechnen — und bei „84 %"
+  //    gegen „81 %" gegen „62 %" ist gerade das die Aussage. Der Balken zeigt
+  //    den Anteil am Bestwert, und nur dort, wo er etwas bedeutet.
+  const verfolger = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const out = [];
+      // Ein Rekord mit positivem Sortierwert traegt den Balken, einer mit
+      // negativem nicht: „weniger Gegentore ist besser" hat keinen Anteil.
+      const byId = (allChronicles() || {}).byId || {};
+      Object.keys(byId).forEach(id => {
+        const r = byId[id];
+        if(!r || !r.pids || !r.pids.length) return;
+        const rang = chronicleRang(id) || [];
+        if(rang.length < 3) return;
+        out.push({id, wert:r.val, html:_newsVerfolger(id, r.pids, r.val)});
+      });
+      return out.slice(0, 40);
+    })())`);
+    const arr = JSON.parse(roh);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    document.body.appendChild(host);
+    let mitBalken = 0, ohneBalken = 0, raus = 0, falschRum = 0;
+    arr.forEach(x => {
+      host.innerHTML = x.html;
+      const zeilen = [...host.querySelectorAll('.nd-vf-z')];
+      const balken = [...host.querySelectorAll('.nd-vf-b')];
+      if(!zeilen.length) return;
+      if(x.wert > 0){
+        if(balken.length === zeilen.length) mitBalken++; else ohneBalken++;
+        // Der Balken bleibt in seiner Bahn, und weiter hinten ist er kuerzer.
+        let vor = Infinity;
+        balken.forEach(b => {
+          const i = b.querySelector('i');
+          if(!i) { raus++; return; }
+          const ir = i.getBoundingClientRect(), br = b.getBoundingClientRect();
+          if(ir.right > br.right + 0.5 || ir.width <= 0) raus++;
+          if(ir.width > vor + 0.5) falschRum++;
+          vor = ir.width;
+        });
+      } else if(balken.length){ ohneBalken++; }
+    });
+    host.remove();
+    return {n: arr.length, mitBalken, ohneBalken, raus, falschRum};
+  });
+  ok(verfolger.mitBalken > 0 && verfolger.ohneBalken === 0,
+     'jede Verfolgerzeile eines Rekords mit Anteil traegt ihren Balken',
+     verfolger.mitBalken + ' Rekorde, ' + verfolger.ohneBalken + ' ohne');
+  ok(verfolger.raus === 0, 'der Balken bleibt in seiner Bahn',
+     verfolger.raus + ' laufen heraus');
+  ok(verfolger.falschRum === 0, 'und wer weiter hinten liegt, hat den kuerzeren',
+     verfolger.falschRum + ' verdreht');
+
   // ── Das Blatt einer Partie zeigt, was in ihr zu sehen war ────────
   //    Es hatte gar keinen Fall: wer eine Partie-Karte oeffnete, sah den
   //    Satz, den er auf der Karte schon gelesen hatte. Jetzt stehen die

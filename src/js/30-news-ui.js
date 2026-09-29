@@ -466,7 +466,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   const av = (pid, px) => (pm[pid] ? avHtml(pm[pid], '', {ins:true, px:px||48, feuer:0}) : '');
 
   if(sorte === 'spiel'){
-    kopf = _newsErgebnisBand(d.matchId);
+    kopf = d.bandFremd ? '' : _newsErgebnisBand(d.matchId);
     fuss = _newsZahlband(_newsSpielZahlen(s));
     // Die Ergebnis-Sammelkarte hat ZWEI Partien und deshalb keine, die sie
     // als Band zeigen könnte: acht Wappen übereinander machten sie höher als
@@ -572,7 +572,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // zeigt diese Partie. Das gilt auch fuer Auszeichnungen, Serien und
   // Tafelwechsel: Der Typ bestimmt weiter Farbe und Aufbau, aber Ergebnis,
   // Teams und Ausloeser verschwinden nicht mehr hinter der Rubrik.
-  if(d.matchId && (sorte === 'duell' || !kopf)){
+  // Das Band gehoert der Partie, nicht jeder Karte, die sie nennt: steht schon
+  // eine andere Karte derselben Partie im Feed, zeigt sie es [§C33].
+  if(d.matchId && !d.bandFremd && (sorte === 'duell' || !kopf)){
     kopf = _newsErgebnisBand(d.matchId) || kopf;
   }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
@@ -815,6 +817,9 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     + `<span>${_newsBetont(t.titel || '')}</span>`
     + (t.brk ? `<b class="nf-sam-brk">Der Anlass</b>` : '')
     + (t.marke ? `<b class="nf-sam-k">${esc(t.marke)}</b>` : '')
+    // Die Klasse einer seltenen Auszeichnung: Violett, die Familie der
+    // Auszeichnungen [§C25] — Gold waere ein Titel, Rot eine Richtung.
+    + (t.klasse ? `<b class="nf-sam-kl">${esc(t.klasse)}</b>` : '')
     // Auf der Ergebnis-Karte ist der Stand die Aussage. „Ben und Jonas
     // gewinnen ohne Gegentor" ohne die 10:0 daneben ist die halbe Nachricht,
     // und in den Satz gehört sie nicht: die Zeile kürzt sich [§C32].
