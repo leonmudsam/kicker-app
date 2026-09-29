@@ -178,6 +178,9 @@ function _ndBeziehung(s, anzahl){
   if(t === 'chronik_monat') return 'die meisten Einträge in diesem Monat';
   if(t === 'badge_unlocked') return 'mit derselben Auszeichnung';
   if(t === 'potd' || t === 'potw') return 'punktgleich an der Spitze';
+  // Das Blatt einer Partie zeigt ihre Sieger. „in derselben Partie" stand
+  // darunter — auf dem Blatt, das diese Partie IST.
+  if(t === 'spiel') return 'gewinnen diese Partie';
   // Die Sammelkarte buendelt einen MOMENT, nicht zwingend eine Partie: die
   // Gruppe entsteht ueber die Minute [§C33].
   if(t === 'sammel'){
@@ -187,6 +190,9 @@ function _ndBeziehung(s, anzahl){
     if(q === 'erfolg') return 'mit demselben Erfolg';
     // Zwei Ergebnisse desselben Tages verbindet der Tag, nicht die Partie.
     if(q === 'ergebnis') return 'an diesem Spieltag';
+    // Die Karte einer Partie hat ihre Partie: „im selben Moment" stimmt,
+    // sagt aber weniger als das, was alle Zeilen gemeinsam haben.
+    if(q === 'spiel' && (s.dataRef || {}).matchId) return 'in dieser Partie';
     return q === 'tafel' ? 'an der Ewigen Tafel' : 'im selben Moment';
   }
   if(((s && s.dataRef) || {}).matchId) return 'in derselben Partie';
@@ -948,7 +954,12 @@ function _newsDetailMitte(s){
         // „3 Partien an 2 Tagen" steht schon im Text der Karte, drei Zeilen
         // darueber. Die Zeile bleibt nur, wenn er sie nicht nennt.
         const kopfWert = `${d.spiele || 0} an ${d.tage || 0} ${d.tage === 1 ? 'Tag' : 'Tagen'}`;
-        const kopf = _ndOben.indexOf(_ndNormal(kopfWert)) >= 0 ? '' : `<div class="nd-stat-row">
+        // Der Text sagt „20 Spiele an 4 Tagen", die Zeile „20 an 4 Tagen" —
+        // verglichen wurde nur die zweite Form, und beide standen da.
+        const nennt = [kopfWert, `${d.spiele || 0} Spiele an ${d.tage || 0}`,
+          `${d.spiele || 0} Partien an ${d.tage || 0}`]
+          .some(v => _ndOben.indexOf(_ndNormal(v)) >= 0);
+        const kopf = nennt ? '' : `<div class="nd-stat-row">
             <div class="nd-stat-label">Partien in dieser Woche</div>
             <div class="nd-stat-val acid">${esc(kopfWert)}</div></div>`;
         const zeilen = teile.map(t => {

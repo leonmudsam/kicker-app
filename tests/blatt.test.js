@@ -2469,6 +2469,29 @@ const ok = (c, msg, det) => {
   ok(cv.n > 20 && cv.falsch.length === 0,
      'der Feed legt Karten außerhalb des Bildschirms erst beim Hineinscrollen',
      cv.falsch.slice(0, 4).join(', ') || cv.n + ' Karten');
+  // Die Beziehung unter den Wappen eines Story-Blatts sagt etwas: auf dem
+  // Blatt einer Partie stand „in derselben Partie", auf der Karte einer
+  // Partie „im selben Moment". Und die Wochenkarte nannte „20 an 4 Tagen"
+  // direkt unter ihrem eigenen Satz „20 Spiele an 4 Tagen".
+  const beziehung = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const fehler = [];
+    const alle = K('getStoriesCache().map(s => ({id:s.id, t:(s.dataRef||{}).type, q:(s.dataRef||{}).quelle, m:!!(s.dataRef||{}).matchId}))');
+    const ziel = alle.filter(x => x.t === 'spiel' || (x.t === 'sammel' && x.q === 'spiel' && x.m)).slice(0, 10)
+      .concat(alle.filter(x => x.t === 'woche'));
+    for(const x of ziel){
+      K('closeSheet(true); openNewsDetail(' + JSON.stringify(x.id) + ')');
+      // Ein Story-Blatt steht in #nd, nicht im Blatt-Stapel.
+      const txt = (document.getElementById('nd') || {}).innerText || '';
+      if(/in derselben Partie|im selben Moment/.test(txt)) fehler.push(x.id);
+      if(x.t === 'woche' && /Spiele an \d+ Tag/.test(txt) && /Partien in dieser Woche/i.test(txt)) fehler.push(x.id + ' doppelt');
+    }
+    K('closeSheet(true); typeof closeNewsDetail === "function" && closeNewsDetail()');
+    return {n: ziel.length, fehler};
+  });
+  ok(beziehung.n >= 3 && beziehung.fehler.length === 0,
+     'ein Story-Blatt nennt eine Beziehung, die etwas sagt, und seine Zahl einmal',
+     beziehung.fehler.join(', ') || beziehung.n + ' Blätter');
   // Das Blatt einer Partie nennt ihre Sieger und die Siegchance aus der
   // Elo-Bahn, und jeder Spieler steht bei den Auszeichnungen einmal. Es
   // stand „Team A gewinnt", und fünf Marken zweier Spieler als fünf Karten.
