@@ -1013,7 +1013,10 @@ const _rueck = JSON.parse(K.eval(`JSON.stringify((function(){
     keineRueckblicke: alleBodies.indexOf('data-recap=') < 0 && alleBodies.indexOf('Rückblick öffnen') < 0,
     hatPotd: !!potd,
     potdErwartet: potd ? _newsTagPartien(pd.dayKey, pids).length : 0,
-    potdGezeigt: (potdBody.match(/class="nd-match"/g)||[]).length,
+    // Die Partien stehen als BAHN und als kurze Zeile, nicht als voller
+    // Vs-Block: zehn Bloecke sind vierzig Wappen und eine Wand [§6].
+    potdGezeigt: (potdBody.match(/class="nd-tm /g)||[]).length,
+    potdBahn: (potdBody.match(/class="nd-bahn"/g)||[]).length,
     hatWoche: !!wo,
     wocheStunde: wo ? new Date(wo.when).getHours() : -1,
     wocheTag: wo ? new Date(wo.when).getDay() : -1,
@@ -1029,6 +1032,8 @@ ok(_rueck.keineProfile, 'kein Story-Blatt trägt einen Profil-Button');
 ok(_rueck.keineRueckblicke, 'kein Story-Blatt trägt einen Rückblick-Button');
 ok(!_rueck.hatPotd || _rueck.potdGezeigt === _rueck.potdErwartet,
    'Spieler des Tages zeigt ausnahmslos alle Partien', _rueck.potdGezeigt + ' von ' + _rueck.potdErwartet);
+ok(!_rueck.hatPotd || _rueck.potdBahn === 1,
+   'und den Tag als Bahn darueber', String(_rueck.potdBahn));
 ok(_rueck.hatWoche, 'der Wochenrueckblick steht als eine Karte');
 ok(!_rueck.hatWoche || _rueck.wocheTag === 0, 'die Wochenkarte steht am Sonntag', _rueck.wocheTag);
 ok(!_rueck.hatWoche || _rueck.wocheStunde === 23, 'die Wochenkarte steht um 23:00', _rueck.wocheStunde);
@@ -1090,6 +1095,11 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
     })(),
     matchOhneBand: sichtbar.filter(s => {
       const d=s.dataRef||{}; if(!d.matchId) return false;
+      // Das Band gehoert der Partie, nicht jeder Karte, die sie nennt: steht
+      // schon eine andere Karte derselben Partie im Feed, zeigt sie es. Sonst
+      // stand dasselbe 10:4 zweimal untereinander, mit denselben vier Wappen
+      // und demselben Stand [§C33].
+      if(d.bandFremd) return false;
       const m=matches.find(x=>x.id===d.matchId);
       const html=_newsCardHtmlM2(s, false, false);
       const ids=m ? [m.a1,m.a2,m.b1,m.b2].filter(Boolean) : [];
@@ -2049,8 +2059,12 @@ const _sub = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_sub.sammel > 0, 'es gibt Sammelkarten', _sub.sammel + '');
 ok(_sub.fremd.length === 0, 'jede Zeile eines Spiel-Buendels teilt einen Spieler mit dem Rest',
    _sub.fremd.slice(0, 3).join(' | ') || 'keine fremde Zeile');
+// In der KARTE IHRER PARTIE steht sie mit — sonst stuende dasselbe Ergebnis
+// zweimal untereinander. In einem fremden Buendel nicht: „Nerven aus Stahl"
+// ist der Grund, warum jemand die App oeffnet, und steht nicht als
+// Kleingedrucktes unter der Duo-Serie zweier anderer [§C33].
 ok(_sub.selten > 0 && _sub.versteckt.length === 0,
-   'eine seltene Auszeichnung steht nie als Zeile in einem Buendel',
+   'eine seltene Auszeichnung steht nicht als Zeile in einem fremden Buendel',
    _sub.versteckt.join(', ') || _sub.selten + ' seltene, alle einzeln');
 ok(_sub.ohnePids === 0, 'jede Zeile weiss, von wem sie handelt',
    _sub.ohnePids + ' ohne');
@@ -3784,9 +3798,11 @@ const _brkMit = JSON.parse(K.eval(`JSON.stringify((function(){
     title:'Zwei stürzen die Favoriten', desc:'Nur 18 % Siegchance vor dem Anstoß.',
     dataRef:{type:'spiel', resultKind:'upset', matchId:m.id,
              playerIds:[players[2].id, players[3].id]}};
-  // Eine seltene Auszeichnung reist nicht mit: sie ist der Grund, warum
-  // jemand die App oeffnet, und steht nicht als Zeile unter einer fremden
-  // Schlagzeile. Nerves of Steel deckt den Krimi, nicht den Upset.
+  // Eine seltene Auszeichnung reist MIT und wird gekennzeichnet. Sie blieb
+  // einmal einzeln stehen, damit sie nicht als Kleingedrucktes unter einer
+  // fremden Schlagzeile endet — und stand damit neben der Karte desselben
+  // Spiels: gemessen zweimal dasselbe 10:4 mit denselben vier Wappen und
+  // demselben Stand. Nerves of Steel deckt den Krimi, nicht den Upset.
   const selten = {id:'badge_rare_x', cat:'badge', ic:'medal',
     when:new Date(mts(m)), prio:70,
     title:'Eine seltene Auszeichnung', desc:'Drei Zittersiege in Folge.',
@@ -3813,7 +3829,17 @@ const _brkMit = JSON.parse(K.eval(`JSON.stringify((function(){
           brk:sa.length ? !!_isBreaking(sa[0]) : false,
           mid:m.id,
           mitSelten:b.length,
-          seltenEinzeln:b.filter(x => x.id === 'badge_rare_x').length};
+          seltenEinzeln:b.filter(x => x.id === 'badge_rare_x').length,
+          seltenZeile:(function(){
+            const g = b.find(x => (x.dataRef||{}).type === 'sammel');
+            const t = g ? (g.dataRef.teile || []) : [];
+            const z = t.find(u => u.typ === 'badge_unlocked');
+            return z ? (z.klasse || '') : '';
+          })(),
+          seltenTitel:(function(){
+            const g = b.find(x => (x.dataRef||{}).type === 'sammel');
+            return g ? g.title : '';
+          })()};
 })())`));
 ok(_brkMit.karten === 1 && _brkMit.sammel === 1 && _brkMit.zeilen === 2,
    'eine Breaking-Karte nimmt die uebrigen Meldungen ihrer Partie mit',
@@ -3824,9 +3850,15 @@ ok(_brkMit.brk === true && _brkMit.band === _brkMit.mid,
 ok(/Tabellenspitze/.test(_brkMit.titel) && /Favoritensturz/.test(_brkMit.titel),
    'ihre Schlagzeile nennt beide Anlaesse, und das Ergebnis mit seiner Sorte',
    _brkMit.titel);
-ok(_brkMit.mitSelten === 2 && _brkMit.seltenEinzeln === 1,
-   'eine seltene Auszeichnung derselben Partie bleibt trotzdem eine eigene Karte',
+ok(_brkMit.mitSelten === 1 && _brkMit.seltenEinzeln === 0,
+   'eine seltene Auszeichnung derselben Partie steht in derselben Karte',
    _brkMit.mitSelten + ' Karten');
+ok(_brkMit.seltenZeile === 'Selten',
+   'und ihre Zeile traegt die Klasse, damit sie nicht untergeht',
+   '„' + _brkMit.seltenZeile + '"');
+ok(/seltene Auszeichnung/.test(_brkMit.seltenTitel),
+   'die Schlagzeile nennt sie als seltene Auszeichnung',
+   _brkMit.seltenTitel);
 ok(_brkMit.negKarten === 2 && _brkMit.negEinzeln === 1,
    'und eine negative Meldung steht nicht auf der Karte, die die Sieger feiert',
    _brkMit.negKarten + ' Karten');

@@ -445,6 +445,10 @@ function _buildStories(){
           prio: STORY_PRIO.season_start,
           dataRef: {type:'season_start', sid,
                     leader:rang[0], second:rang[1], gap:vor,
+                    // Der Vorsprung als Bildzone: die Karte trug sonst nur
+                    // zwei Wappen und sagte vor dem Lesen nichts ueber die
+                    // Lage [§C27].
+                    vv:String(vor), vl:'Elo Vorsprung',
                     partien:frei.partien, aktive:frei.genug, gebraucht:frei.gebraucht}
         });
       }

@@ -1020,6 +1020,231 @@ const ok = (c, msg, det) => {
      'jede Zeile zeigt das Zeichen ihrer Stufe',
      tafelBlatt.zeichen + ' Zeichen');
 
+  // ── Und jede KARTE passt auch ────────────────────────────────────
+  //    Dasselbe fuer den Feed selbst: eine Karte, die bei 360 px aus ihrem
+  //    Rand laeuft, schiebt die ganze Tafel waagerecht. Gepruefte Karten sind
+  //    die echten des Fensters, jede Sorte einmal.
+  const kartenMobil = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const r = _buildStories();
+      _cache._stories = r.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+      _cache._consolFrom = null; _cache._frischVon = null;
+      const alle = getStoriesCache();
+      const out = [], gesehen = {};
+      alle.forEach(s => {
+        const d = s.dataRef || {};
+        const t = (d.type||'?') + (d.quelle ? '/' + d.quelle : '');
+        if(gesehen[t]) return; gesehen[t] = 1;
+        // Beide Fassungen: die gewoehnliche Karte und die des Tages, die
+        // breiter baut und ein Band darueber traegt.
+        out.push({typ:t, html:_newsCardHtmlM2(s, false, false)});
+        out.push({typ:t + ' (gross)', html:_newsCardHtmlM2(s, false, true)});
+      });
+      return out;
+    })())`);
+    const arr = JSON.parse(roh);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    document.body.appendChild(host);
+    const raus = [], ohneBild = [];
+    // Eine Karte ohne Bildzone ist eine Textzeile in einer Tafel voller
+    // Zeichnungen. Gezaehlt wird jedes Bauteil, das §C27 dafuer nennt:
+    // Ergebnisband, grosser Wert, Leiter, Bilanzbalken, Serienlauf,
+    // Sammelband, Zahlenband, Wochenliste, Duellband, Auszeichnungsfuss oder
+    // das Gesicht selbst.
+    const BILD = ['nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
+                  'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face'];
+    arr.forEach(x => {
+      host.innerHTML = x.html;
+      const karte = host.querySelector('.nf-card');
+      if(!karte) return;
+      if(!BILD.some(c => karte.querySelector('.' + c))) ohneBild.push(x.typ);
+      const kr = karte.getBoundingClientRect();
+      karte.querySelectorAll('*').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if(r.width > 0 && (r.right > kr.right + 0.5 || r.left < kr.left - 0.5))
+          raus.push(x.typ + ' ' + (el.className || el.tagName));
+      });
+    });
+    host.remove();
+    return {n: arr.length, raus: [...new Set(raus)],
+            ohneBild: [...new Set(ohneBild)]};
+  });
+  ok(kartenMobil.n >= 20, 'jede Sorte baut ihre Karte', kartenMobil.n + ' Fassungen');
+  ok(kartenMobil.ohneBild.length === 0,
+     'und jede traegt eine Bildzone, nicht nur Text',
+     kartenMobil.ohneBild.join(', ') || 'jede mit Bild');
+  ok(kartenMobil.raus.length === 0, 'und keine laeuft bei 360 px aus ihrem Rand',
+     kartenMobil.raus.slice(0, 4).join(' | ') || 'keine');
+
+  // ── Jedes Blatt passt auf das Telefon ────────────────────────────
+  //    Gemessen am Blatt eines Tafel-Moments: die Zahlenreihe trug fuenf
+  //    Zellen, „BESTMARKEN" war 75 px breit und die Zelle 62 — `overflow:
+  //    hidden` schnitt die Aufschrift ab. Daneben endete „noch 1615 bis zum
+  //    Ordensstern" als „noch 1615 bis zum Ord…" und nannte die Stufe nicht.
+  //    Gefragt ist deshalb bei JEDEM Story-Typ, ob etwas aus seinem Kasten
+  //    laeuft oder abgeschnitten ist — bei 360 px, der Breite, mit der die
+  //    uebrigen Messungen dieser Suite rechnen.
+  const mobil = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const r = _buildStories();
+      _cache._stories = r.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+      _cache._consolFrom = null; _cache._frischVon = null;
+      const alle = getStoriesCache();
+      const out = [], gesehen = {};
+      alle.concat(r).forEach(s => {
+        const d = s.dataRef || {};
+        const t = (d.type||'?') + (d.quelle ? '/' + d.quelle : '');
+        if(gesehen[t]) return; gesehen[t] = 1;
+        let b = ''; try { b = _newsDetailBody(s); } catch(e){ b = ''; }
+        if(b) out.push({typ:t, html:b});
+      });
+      return out;
+    })())`);
+    const arr = JSON.parse(roh);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.style.overflow = 'hidden';
+    document.body.appendChild(host);
+    const raus = [], abgeschnitten = [];
+    arr.forEach(x => {
+      host.innerHTML = x.html;
+      const hr = host.getBoundingClientRect();
+      // Laeuft etwas ueber den Rand des Blatts hinaus?
+      host.querySelectorAll('*').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if(r.width > 0 && r.right > hr.right + 0.5)
+          raus.push(x.typ + ' ' + el.className);
+      });
+      // Und ist ein Text abgeschnitten, obwohl er nicht kuerzen darf? Die
+      // Aufschriften der Zahlenreihe und die Zeile der Wirkung sind die
+      // gemessenen Faelle; eine Schlagzeile DARF kuerzen.
+      host.querySelectorAll('.rcp-z-l, .nd-wk-r, .nd-chance-z, .nw-ic').forEach(el => {
+        if(el.scrollWidth > el.clientWidth + 1)
+          abgeschnitten.push(x.typ + ' ' + el.className + ' '
+            + el.scrollWidth + '>' + el.clientWidth);
+      });
+    });
+    host.remove();
+    return {n: arr.length, raus: [...new Set(raus)], ab: [...new Set(abgeschnitten)]};
+  });
+  ok(mobil.n >= 15, 'jeder Story-Typ baut ein Blatt', mobil.n + ' Typen');
+  ok(mobil.raus.length === 0, 'und keines laeuft bei 360 px aus seinem Rand',
+     mobil.raus.slice(0, 4).join(' | ') || 'keines');
+  ok(mobil.ab.length === 0, 'keine Aufschrift ist abgeschnitten',
+     mobil.ab.slice(0, 4).join(' | ') || 'keine');
+
+  // ── Der Spieltag als Bahn ────────────────────────────────────────
+  //    Das Blatt des Spielers des Tages zeigte jede Partie als vollen
+  //    Vs-Block: an einem Tag mit zehn Partien vierzig Wappen und eine Wand.
+  //    Die Bahn zeigt den Tag in einer Zeile, und die Farbe IST die Aussage —
+  //    also wird sie gemessen.
+  const bahn = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const r = _buildStories();
+      const p = r.find(s => (s.dataRef||{}).type === 'potd');
+      if(!p) return null;
+      const d = p.dataRef || {};
+      const pids = (Array.isArray(d.playerIds) && d.playerIds.length) ? d.playerIds : [d.playerId];
+      const held = pids[0];
+      const tag = _newsTagPartien(d.dayKey, pids)
+        .filter(m => [m.a1,m.a2,m.b1,m.b2].indexOf(held) >= 0)
+        .sort((a,b) => mts(a) - mts(b));
+      const siege = tag.map(m => {
+        const aSeite = (m.a1 === held || m.a2 === held);
+        return aSeite ? m.winner === 'A' : m.winner === 'B';
+      });
+      return {html:_newsDetailBody(p), n:tag.length, siege};
+    })())`);
+    if(roh === 'null') return {fehlt:true};
+    const x = JSON.parse(roh);
+    if(!x) return {fehlt:true};
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = x.html;
+    document.body.appendChild(host);
+    const felder = [...host.querySelectorAll('.nd-bahn i')];
+    const zeilen = [...host.querySelectorAll('.nd-tm')];
+    // Die Farbe folgt dem Ausgang, und die Reihenfolge ist die Zeit.
+    const falsch = felder.filter((f, i) =>
+      f.classList.contains('w') !== !!x.siege[i]).length;
+    const bahnBox = host.querySelector('.nd-bahn');
+    const raus = bahnBox ? felder.filter(f =>
+      f.getBoundingClientRect().right > bahnBox.getBoundingClientRect().right + 0.5).length : 0;
+    const out = {fehlt:false, n:x.n, felder:felder.length, zeilen:zeilen.length,
+                 falsch, raus,
+                 bloecke: host.querySelectorAll('.nd-match').length};
+    host.remove(); return out;
+  });
+  ok(!bahn.fehlt && bahn.felder === bahn.n && bahn.zeilen === bahn.n,
+     'die Bahn zeigt jede eigene Partie des Tages',
+     bahn.felder + ' Felder und ' + bahn.zeilen + ' Zeilen von ' + bahn.n);
+  ok(!bahn.fehlt && bahn.falsch === 0,
+     'und jedes Feld traegt die Farbe seines Ausgangs',
+     bahn.falsch + ' verkehrt');
+  ok(!bahn.fehlt && bahn.raus === 0 && bahn.bloecke === 0,
+     'sie bleibt in ihrer Zeile und ersetzt die Vs-Bloecke',
+     bahn.raus + ' heraus, ' + bahn.bloecke + ' Bloecke');
+
+  // ── Wie weit dahinter, sieht man ─────────────────────────────────
+  //    Die Verfolgerliste nannte Rang, Name und Wert. Ob der Zweite knapp
+  //    dran ist oder weit weg, musste man daraus ausrechnen — und bei „84 %"
+  //    gegen „81 %" gegen „62 %" ist gerade das die Aussage. Der Balken zeigt
+  //    den Anteil am Bestwert, und nur dort, wo er etwas bedeutet.
+  const verfolger = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const out = [];
+      // Ein Rekord mit positivem Sortierwert traegt den Balken, einer mit
+      // negativem nicht: „weniger Gegentore ist besser" hat keinen Anteil.
+      const byId = (allChronicles() || {}).byId || {};
+      Object.keys(byId).forEach(id => {
+        const r = byId[id];
+        if(!r || !r.pids || !r.pids.length) return;
+        const rang = chronicleRang(id) || [];
+        if(rang.length < 3) return;
+        out.push({id, wert:r.val, html:_newsVerfolger(id, r.pids, r.val)});
+      });
+      return out.slice(0, 40);
+    })())`);
+    const arr = JSON.parse(roh);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    document.body.appendChild(host);
+    let mitBalken = 0, ohneBalken = 0, raus = 0, falschRum = 0;
+    arr.forEach(x => {
+      host.innerHTML = x.html;
+      const zeilen = [...host.querySelectorAll('.nd-vf-z')];
+      const balken = [...host.querySelectorAll('.nd-vf-b')];
+      if(!zeilen.length) return;
+      if(x.wert > 0){
+        if(balken.length === zeilen.length) mitBalken++; else ohneBalken++;
+        // Der Balken bleibt in seiner Bahn, und weiter hinten ist er kuerzer.
+        let vor = Infinity;
+        balken.forEach(b => {
+          const i = b.querySelector('i');
+          if(!i) { raus++; return; }
+          const ir = i.getBoundingClientRect(), br = b.getBoundingClientRect();
+          if(ir.right > br.right + 0.5 || ir.width <= 0) raus++;
+          if(ir.width > vor + 0.5) falschRum++;
+          vor = ir.width;
+        });
+      } else if(balken.length){ ohneBalken++; }
+    });
+    host.remove();
+    return {n: arr.length, mitBalken, ohneBalken, raus, falschRum};
+  });
+  ok(verfolger.mitBalken > 0 && verfolger.ohneBalken === 0,
+     'jede Verfolgerzeile eines Rekords mit Anteil traegt ihren Balken',
+     verfolger.mitBalken + ' Rekorde, ' + verfolger.ohneBalken + ' ohne');
+  ok(verfolger.raus === 0, 'der Balken bleibt in seiner Bahn',
+     verfolger.raus + ' laufen heraus');
+  ok(verfolger.falschRum === 0, 'und wer weiter hinten liegt, hat den kuerzeren',
+     verfolger.falschRum + ' verdreht');
+
   // ── Das Blatt einer Partie zeigt, was in ihr zu sehen war ────────
   //    Es hatte gar keinen Fall: wer eine Partie-Karte oeffnete, sah den
   //    Satz, den er auf der Karte schon gelesen hatte. Jetzt stehen die
@@ -1548,7 +1773,44 @@ const ok = (c, msg, det) => {
   });
   ok(ruhig.band === 'none' && ruhig.stern === 'none' && ruhig.punkt === 'none',
      'bei prefers-reduced-motion steht alles still', JSON.stringify(ruhig));
+  // Dieselbe Frage für die Zeichnungen im Blatt: ein Balken waechst auf, und
+  // die Bahn laeuft in Spielreihenfolge auf. Beides ruht ebenso.
+  const balkenRuhe = await page.evaluate(() => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="nd">'
+      + '<div class="nd-chance"><div class="nd-chance-b"><i style="width:50%"></i></div></div>'
+      + '<div class="nd-elo"><span class="nd-elo-b"><i class="p" style="width:30%"></i></span></div>'
+      + '<div class="nd-bahn"><i class="w">10:4</i><i class="l">4:10</i></div></div>';
+    document.body.appendChild(host);
+    const n = el => el ? getComputedStyle(el).animationName : 'fehlt';
+    const out = {chance:n(host.querySelector('.nd-chance-b i')),
+                 elo:n(host.querySelector('.nd-elo-b i')),
+                 bahn:n(host.querySelector('.nd-bahn i'))};
+    host.remove(); return out;
+  });
+  ok(balkenRuhe.chance === 'none' && balkenRuhe.elo === 'none'
+     && balkenRuhe.bahn === 'none',
+     'und auch die Balken und die Bahn im Blatt', JSON.stringify(balkenRuhe));
   await page.emulateMedia({reducedMotion: 'no-preference'});
+  const balkenLebt = await page.evaluate(() => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="nd">'
+      + '<div class="nd-chance"><div class="nd-chance-b"><i style="width:50%"></i></div></div>'
+      + '<div class="nd-bahn"><i class="w">10:4</i><i class="l">4:10</i></div></div>';
+    document.body.appendChild(host);
+    const el = host.querySelector('.nd-chance-b i');
+    const b2 = host.querySelectorAll('.nd-bahn i')[1];
+    const out = {chance: el ? getComputedStyle(el).animationName : 'fehlt',
+                 bahn: b2 ? getComputedStyle(b2).animationName : 'fehlt',
+                 // Die Bahn laeuft nacheinander auf, nicht auf einmal.
+                 verzug: b2 ? getComputedStyle(b2).animationDelay : '0s'};
+    host.remove(); return out;
+  });
+  ok(balkenLebt.chance !== 'none' && balkenLebt.chance !== 'fehlt',
+     'sonst waechst ein Balken auf', String(balkenLebt.chance));
+  ok(balkenLebt.bahn !== 'none' && parseFloat(balkenLebt.verzug) > 0,
+     'und die Bahn laeuft in Spielreihenfolge auf',
+     balkenLebt.bahn + ' nach ' + balkenLebt.verzug);
 
   console.log('\n═══ BREAKING BRICHT DIE SPALTE ═══');
   const brk = await page.evaluate(() => {
