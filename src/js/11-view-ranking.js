@@ -521,7 +521,7 @@ function _vRankingCore(){
       // Die Zahl im Schild ist der Podestplatz, nicht die Position der
       // laufenden Saison: auf dieser Karte gilt die Karriere.
       const avWappen = avHtml(pp, '', {ins:true, band:true, pos:platz,
-                                        px:platz===1?92:78, klasse:'pod-av'});
+                                        px:platz===1?88:70, klasse:'pod-av'});
       // Ein Ligatitel ist Player of the Season, sonst nichts — dieselbe Zahl,
       // die auch die Sterne unter dem Avatar und die Schwingen des Wappens
       // sagen [§C26]. Hier wurde Team of the Season mitgezählt: auf der Karte

@@ -247,6 +247,9 @@
   .ui-tabs{border-color:transparent;background:rgba(255,255,255,.028);
     margin-bottom:14px}
   .ui-tabs button{font-size:12.5px;padding:8px 5px 10px}
+  /* Ab fünf Reitern wird die Schrift kleiner statt das Wort kürzer:
+     „Prest…" und „Torbil…" sagten nicht mehr, wonach sortiert wird. */
+  .ui-tabs:has(> button:nth-child(5)) button{font-size:11px;padding-inline:1px}
   .ui-tabs button.on{background:var(--surface2)}
   .ui-tabs button.on::after{bottom:4px;width:14px}
 
@@ -535,18 +538,21 @@
      Balkendiagramm, das unten aus der Karte lief.
      Was die Karte trägt, sagt der Inhalt: hier Karriere-Elo, dort die
      Zahl der Auszeichnungen. Die Form ist dieselbe. */
-  .podest{display:grid;grid-template-columns:1fr 1.16fr 1fr;gap:8px;
+  /* minmax(0,…): mit `1fr` war jede Spalte mindestens so breit wie ihr
+     Wappen samt Schwinge, und bei 360 px stand die rechte Karte 4 px im
+     Rand des Blatts. */
+  .podest{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.16fr) minmax(0,1fr);gap:8px;
     align-items:end;margin-bottom:16px}
   .pod-karte{--m:var(--silber);--mrgb:194,201,208;
     position:relative;background:var(--surface);border:1px solid var(--line);
-    border-radius:16px;padding:12px 8px 12px;text-align:center;cursor:pointer;
+    border-radius:16px;padding:12px 4px 12px;text-align:center;cursor:pointer;
     transition:transform .14s,border-color .14s}
   .pod-karte:active{transform:translateY(-2px)}
   .pod-karte.gold  {--m:var(--gold);  --mrgb:247,207,74}
   .pod-karte.silber{--m:var(--silber);--mrgb:194,201,208}
   .pod-karte.bronze{--m:var(--bronze);--mrgb:192,132,87}
   /* Der Erste steht höher, ist wärmer hinterlegt und trägt den Rand. */
-  .pod-karte.erster{padding:14px 10px 14px;
+  .pod-karte.erster{padding:14px 6px 14px;
     border-color:rgba(var(--mrgb),.42);
     background:
       radial-gradient(120% 80% at 50% -10%,rgba(var(--mrgb),.10),transparent 62%),
@@ -4466,11 +4472,15 @@
     letter-spacing:.10em;font-family:'Sometype Mono',monospace}
   .lb-st-n{margin-left:auto;font-size:11.5px;color:var(--ak)}
 
-  .lb-teile{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  /* Drei gleich breite Kacheln: mit `1fr` zog „Monatschroniken" seine
+     Spalte auf, und die Rekorde standen in einer halb so breiten daneben.
+     Das lange Wort passt dafür mit 9,5 px und schmalerem Rand hinein. */
+  .lb-teile{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .lb-teil{border:1px solid var(--line);border-radius:var(--r-sm);
-    background:var(--surface);padding:11px 8px;text-align:center}
+    background:var(--surface);padding:11px 3px;text-align:center}
   .lb-t-n{font-family:'Archivo Black',sans-serif;font-size:21px;color:var(--ink)}
-  .lb-t-l{font-size:10.5px;font-weight:700;color:var(--ink2);margin-top:3px}
+  .lb-t-l{font-size:9.5px;font-weight:700;color:var(--ink2);margin-top:3px;letter-spacing:-.01em;
+    white-space:nowrap}
   .lb-t-s{font-size:9.5px;color:var(--muted);margin-top:1px}
 
   /* Das Buch: jeder Posten mit dem Grund, warum er so viel wiegt.
@@ -5160,7 +5170,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.3f20402a';
+const BUILD_VERSION='2026.09.29.28cb6d18';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6306,6 +6316,10 @@ function rankBadgeHtml(id, size='sm'){
 // als Punkt.
 const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegquote',
   goaldiff:'Torbilanz',prestige:'Prestige',games:'Spiele'};
+// Fünf Reiter teilen sich 328 px: „Siegquote" stand dort als „Siegq…".
+// Im Reiter reicht das Wort, das die Spalte meint; unter der Zahl steht
+// weiter der volle Name.
+const METRIC_REITER={winrate:'Quote'};
 // Die LIGA-Rangliste ist die Elo-Rangliste — in Saison, Woche und Tag gibt
 // es dort nichts zu sortieren. Wer nach Siegrate oder Tordiff schaut, sucht
 // keine Rangliste, sondern eine Bestenliste, und die steht im Awards-Tab.
@@ -6343,7 +6357,7 @@ function metrikLeisteHtml(per){
   if(liste.length < 2) return '';
   const jetzt = metrikFuer(per);
   return `<div class="ui-tabs">${liste.map(k =>
-    `<button data-metric="${k}" class="${jetzt===k?'on':''}">${METRIC_LABEL[k]}</button>`
+    `<button data-metric="${k}" class="${jetzt===k?'on':''}">${METRIC_REITER[k]||METRIC_LABEL[k]}</button>`
   ).join('')}</div>`;
 }
 
@@ -7149,7 +7163,7 @@ function showSeasonRecap(season, opts){
       const p = pmap()[e.id];
       const titelBis = seasons.filter(x => x.id <= sid && seasonChampion(x.id) === e.id).length;
       const av = avHtml(p, '', {ins:true, band:true, pos:platz, titel:titelBis, feuer:0,
-                                px:platz===1?92:78, klasse:'pod-av'});
+                                px:platz===1?88:70, klasse:'pod-av'});
       // Ohne Titel steht dort die Spielzahl — ein Strich sieht aus, als
       // fehlte die Zahl, statt zu sagen: dieser Spieler hat noch keinen.
       const sub = titelBis
@@ -10579,7 +10593,7 @@ function _vRankingCore(){
       // Die Zahl im Schild ist der Podestplatz, nicht die Position der
       // laufenden Saison: auf dieser Karte gilt die Karriere.
       const avWappen = avHtml(pp, '', {ins:true, band:true, pos:platz,
-                                        px:platz===1?92:78, klasse:'pod-av'});
+                                        px:platz===1?88:70, klasse:'pod-av'});
       // Ein Ligatitel ist Player of the Season, sonst nichts — dieselbe Zahl,
       // die auch die Sterne unter dem Avatar und die Schwingen des Wappens
       // sagen [§C26]. Hier wurde Team of the Season mitgezählt: auf der Karte
@@ -22316,7 +22330,7 @@ function _buildStories(){
             desc: (_frueher ? `Zuletzt stand die Stufe am ${new Date(_frueher + 'T12:00:00')
                     .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}. ` : '')
                 + `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
-                + `${stand.teile.monat} aus Monatswertungen und ${stand.teile.rekord} aus Rekorden.`
+                + `${stand.teile.monat} aus Monatschroniken und ${stand.teile.rekord} aus Rekorden.`
                 + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
             when: treffer,
             prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
@@ -23860,7 +23874,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         title:`Halbzeit im ${seasonLabel(sid)}`,
         desc: `${T2.matches} Partien an ${T2.days} Spieltagen. `
           + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo aus ${fuehrend.games} Spielen. ` : '')
-          + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatswertungen sind vergeben, ${offen} noch offen`
+          + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben, ${offen} noch offen`
           + (ohne ? `, ${ohne} Spieler ${ohne === 1 ? 'trägt' : 'tragen'} noch keine.` : '.')
           + ` Die zweite Monatshälfte entscheidet.`,
         vv:String(offen), vl:'noch offen',
@@ -33896,7 +33910,7 @@ function showDisziplin(tid, sid){
 
   openSheet(`
     <h3>${esc(def.name)}</h3>
-    <div class="sheet-sub">Monatswertung · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
+    <div class="sheet-sub">Monatschronik · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
@@ -36352,7 +36366,7 @@ function showLaufbahn(pid){
   //     Rechnung: jeder Posten mit dem Grund, warum er so viel wiegt.
   const gruppen = [
     {q:'auszeichnung', kopf:'Auszeichnungen', leer:'noch keine erhalten', lab:'Stück'},
-    {q:'monat',        kopf:'Monatswertungen', leer:'noch keine getragen', lab:'getragen'},
+    {q:'monat',        kopf:'Monatschroniken', leer:'noch keine getragen', lab:'getragen'},
     {q:'rekord',       kopf:'Rekorde',         leer:'noch keinen gehalten', lab:'gehalten'},
   ];
   const posten = gruppen.map(g => P.quellen.filter(q => q.q === g.q));
@@ -36385,7 +36399,7 @@ function showLaufbahn(pid){
 
   const SICHTBAR = 4;
   const regeln = `<button class="lb-regel-auf" type="button" data-prestige-regeln>
-    <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven sauber erklärt</em></span>
+    <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven</em></span>
     ${svgI('chevron')}
   </button>`;
   const block = (g, gi) => {

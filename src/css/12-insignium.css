@@ -223,11 +223,15 @@
     letter-spacing:.10em;font-family:'Sometype Mono',monospace}
   .lb-st-n{margin-left:auto;font-size:11.5px;color:var(--ak)}
 
-  .lb-teile{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  /* Drei gleich breite Kacheln: mit `1fr` zog „Monatschroniken" seine
+     Spalte auf, und die Rekorde standen in einer halb so breiten daneben.
+     Das lange Wort passt dafür mit 9,5 px und schmalerem Rand hinein. */
+  .lb-teile{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .lb-teil{border:1px solid var(--line);border-radius:var(--r-sm);
-    background:var(--surface);padding:11px 8px;text-align:center}
+    background:var(--surface);padding:11px 3px;text-align:center}
   .lb-t-n{font-family:'Archivo Black',sans-serif;font-size:21px;color:var(--ink)}
-  .lb-t-l{font-size:10.5px;font-weight:700;color:var(--ink2);margin-top:3px}
+  .lb-t-l{font-size:9.5px;font-weight:700;color:var(--ink2);margin-top:3px;letter-spacing:-.01em;
+    white-space:nowrap}
   .lb-t-s{font-size:9.5px;color:var(--muted);margin-top:1px}
 
   /* Das Buch: jeder Posten mit dem Grund, warum er so viel wiegt.

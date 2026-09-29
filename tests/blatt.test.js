@@ -2130,7 +2130,7 @@ const ok = (c, msg, det) => {
     K('showLaufbahn(' + JSON.stringify(daten.pid) + ')');
     await new Promise(r => requestAnimationFrame(r));
     const gruppen=[...document.querySelectorAll('#sheet .lb-grp')];
-    const grp=gruppen.find(e => /Monatswertungen/.test(e.textContent||''));
+    const grp=gruppen.find(e => /Monatschroniken/.test(e.textContent||''));
     const regelKnopf=document.querySelector('#sheet [data-prestige-regeln]');
     const regelHinweis=regelKnopf ? (regelKnopf.textContent||'').replace(/\s+/g,' ').trim() : '';
     const sport=/Sportliche Leistung/.test((document.querySelector('#sheet')||{}).textContent||'');
@@ -2330,6 +2330,10 @@ const ok = (c, msg, det) => {
         .map(e => e.textContent);
       [...document.querySelectorAll('#main .rmeta-tore')]
         .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push(e.textContent));
+      // Ein Reiter, dessen Wort abgeschnitten ist, sagt nicht, wonach er
+      // sortiert: in der Ewigen Tafel standen „Siegq…" und „Torbil…".
+      [...document.querySelectorAll('#main .ui-tabs button, #main .ui-switch button')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Reiter ' + e.textContent.trim()));
       out.push({name, bruch:bruch.slice(0,3), punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
         fab: fab ? getComputedStyle(fab).display : ''});
     }
@@ -2344,7 +2348,7 @@ const ok = (c, msg, det) => {
      reiterSchief.map(r => r.name + ': ' + r.schief.join(', ')).join(' | ') || 'alle mittig');
   const reiterBruch = reiter.filter(r => r.bruch.length);
   ok(reiterBruch.length === 0 && reiter.some(r => r.name === 'Positionen Sturm'),
-     'Bilanz und Torzeile einer Ranglistenzeile stehen auf einer Zeile',
+     'Bilanz, Torzeile und Reiter stehen ungekürzt auf einer Zeile',
      reiterBruch.map(r => r.name + ': ' + r.bruch.join(', ')).join(' | ') || 'alle einzeilig');
   // Dieselbe Frage für die Blätter, die Zahlen mit Nachkommastelle zeigen.
   let blattPunkt = await page.evaluate(async () => {
@@ -2356,7 +2360,9 @@ const ok = (c, msg, det) => {
       ['Vergleich', 'showH2H(' + P('Leon') + ',' + P('Martin') + ')'],
       ['Torjäger', "showAward('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
       ['Wochenkönig', "period='week';openTopList('periodKing')"],
-      ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])']];
+      ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])'],
+      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')']];
+    const rand = [];
     const out = [], woerter = [];
     // Dieselbe Sache heißt überall gleich, und niemand wird angesprochen:
     // „Siegrate" neben „Siegquote", „Mate" neben „Partner", „Winrate",
@@ -2372,6 +2378,25 @@ const ok = (c, msg, det) => {
       const m = (txt.match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
       if(m.length) out.push(name + ': ' + m.slice(0,3).join(' '));
       (txt.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
+      // Und nichts läuft über den Rand des Blatts: die Beziehungskarten im
+      // Profil standen mit „Schwächster Partner" 19 px darüber hinaus, die
+      // Kachel „Monatschroniken" der Laufbahn zog ihre Spalte auf.
+      // Gemessen wird am Innenrand: das Blatt hat 20 px Rand, und eine Karte,
+      // die in ihn hineinläuft, steht sichtbar schief neben den anderen.
+      const sh = document.getElementById('sheet'), sb = sh.getBoundingClientRect();
+      const sr = {right: sb.right - parseFloat(getComputedStyle(sh).paddingRight)};
+      sh.querySelectorAll('*').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if(!r.width || !r.height) return;
+        let q = el.parentElement, scroller = false;
+        // Ausgenommen ist, was ein Vorfahr abschneidet oder waagerecht
+        // scrollt (Titelreihe, Karussell). Der senkrechte Scroller des
+        // Blatts selbst zählt nicht, sonst wäre alles ausgenommen.
+        while(q && q !== sh){ const ox = getComputedStyle(q).overflowX;
+          if(/(hidden|clip)/.test(ox) || (/(auto|scroll)/.test(ox) && q.scrollHeight <= q.clientHeight + 1)){ scroller = true; break; }
+          q = q.parentElement; }
+        if(!scroller && r.right > sr.right + 1) rand.push(name + ': ' + String(el.className).split(' ')[0] + ' +' + Math.round(r.right - sr.right));
+      });
     }
     K('closeSheet(true)');
     for(const [name, setz] of [['Liga', "tab='ranking'"], ['Teams', "tab='teams'"],
@@ -2380,8 +2405,10 @@ const ok = (c, msg, det) => {
       (document.getElementById('main').innerText.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
     }
     K("tab='ranking';render()");
-    return {out, woerter};
+    return {out, woerter, rand:[...new Set(rand)].slice(0, 8)};
   });
+  ok(blattPunkt.rand.length === 0, 'kein Blatt läuft bei 360 px über seinen Rand',
+     blattPunkt.rand.join(' | ') || 'alle innerhalb');
   const blattWort = blattPunkt.woerter;
   blattPunkt = blattPunkt.out;
   ok(blattWort.length === 0, 'dieselbe Sache heißt überall gleich, und niemand wird geduzt',

@@ -345,7 +345,7 @@ function showSeasonRecap(season, opts){
       const p = pmap()[e.id];
       const titelBis = seasons.filter(x => x.id <= sid && seasonChampion(x.id) === e.id).length;
       const av = avHtml(p, '', {ins:true, band:true, pos:platz, titel:titelBis, feuer:0,
-                                px:platz===1?92:78, klasse:'pod-av'});
+                                px:platz===1?88:70, klasse:'pod-av'});
       // Ohne Titel steht dort die Spielzahl — ein Strich sieht aus, als
       // fehlte die Zahl, statt zu sagen: dieser Spieler hat noch keinen.
       const sub = titelBis

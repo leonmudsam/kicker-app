@@ -134,6 +134,9 @@
   .ui-tabs{border-color:transparent;background:rgba(255,255,255,.028);
     margin-bottom:14px}
   .ui-tabs button{font-size:12.5px;padding:8px 5px 10px}
+  /* Ab fünf Reitern wird die Schrift kleiner statt das Wort kürzer:
+     „Prest…" und „Torbil…" sagten nicht mehr, wonach sortiert wird. */
+  .ui-tabs:has(> button:nth-child(5)) button{font-size:11px;padding-inline:1px}
   .ui-tabs button.on{background:var(--surface2)}
   .ui-tabs button.on::after{bottom:4px;width:14px}
 

@@ -247,18 +247,21 @@
      Balkendiagramm, das unten aus der Karte lief.
      Was die Karte trägt, sagt der Inhalt: hier Karriere-Elo, dort die
      Zahl der Auszeichnungen. Die Form ist dieselbe. */
-  .podest{display:grid;grid-template-columns:1fr 1.16fr 1fr;gap:8px;
+  /* minmax(0,…): mit `1fr` war jede Spalte mindestens so breit wie ihr
+     Wappen samt Schwinge, und bei 360 px stand die rechte Karte 4 px im
+     Rand des Blatts. */
+  .podest{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.16fr) minmax(0,1fr);gap:8px;
     align-items:end;margin-bottom:16px}
   .pod-karte{--m:var(--silber);--mrgb:194,201,208;
     position:relative;background:var(--surface);border:1px solid var(--line);
-    border-radius:16px;padding:12px 8px 12px;text-align:center;cursor:pointer;
+    border-radius:16px;padding:12px 4px 12px;text-align:center;cursor:pointer;
     transition:transform .14s,border-color .14s}
   .pod-karte:active{transform:translateY(-2px)}
   .pod-karte.gold  {--m:var(--gold);  --mrgb:247,207,74}
   .pod-karte.silber{--m:var(--silber);--mrgb:194,201,208}
   .pod-karte.bronze{--m:var(--bronze);--mrgb:192,132,87}
   /* Der Erste steht höher, ist wärmer hinterlegt und trägt den Rand. */
-  .pod-karte.erster{padding:14px 10px 14px;
+  .pod-karte.erster{padding:14px 6px 14px;
     border-color:rgba(var(--mrgb),.42);
     background:
       radial-gradient(120% 80% at 50% -10%,rgba(var(--mrgb),.10),transparent 62%),

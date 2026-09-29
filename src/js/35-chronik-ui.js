@@ -301,7 +301,7 @@ function showDisziplin(tid, sid){
 
   openSheet(`
     <h3>${esc(def.name)}</h3>
-    <div class="sheet-sub">Monatswertung · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
+    <div class="sheet-sub">Monatschronik · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
