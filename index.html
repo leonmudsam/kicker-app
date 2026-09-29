@@ -5181,7 +5181,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.0a7b3193';
+const BUILD_VERSION='2026.09.29.eef2ffef';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -28916,7 +28916,7 @@ function _newsDetailMitte(s){
       case 'team_loss_streak': {
         const verloren = d.type === 'team_loss_streak';
         let tw = null;
-        try { tw = teamStatsFromMatches(matches).find(t =>
+        try { tw = teamStatsFromMatches(_ndBisPartie(s)).find(t =>
           (t.ids || []).includes(d.a) && (t.ids || []).includes(d.b)); } catch(e){}
         // Die Zahl der Partien steht schon als Lauf darueber — sie stand hier
         // ein zweites Mal als Ziffer.
@@ -28934,7 +28934,7 @@ function _newsDetailMitte(s){
         }
         return `<div class="nd-section">${verloren ? 'Die Durststrecke' : 'Die Serie'}</div>
           ${_newsSerienBand(d.streak, verloren)}
-          ${tw ? `<div class="nd-stat-row"><div class="nd-stat-label">Gemeinsame Bilanz</div>
+          ${tw ? `<div class="nd-stat-row"><div class="nd-stat-label">Gemeinsame Bilanz bis hierher</div>
             <div class="nd-stat-val">${tw.w}:${tw.g - tw.w}</div></div>
           <div class="nd-stat-row"><div class="nd-stat-label">Siegquote als Duo</div>
             <div class="nd-stat-val ${tw.w * 2 >= tw.g ? 'acid' : 'neg'}">${Math.round(tw.w / tw.g * 100)} %</div></div>
@@ -28945,17 +28945,14 @@ function _newsDetailMitte(s){
       }
       case 'jubilee': {
         // Karriere-Bilanz nutzen statt nur Total — bestehende Stats-Funktion.
-        const stats = _newsPlayerCareer(d.pid);
-        return `<div class="nd-section">Karriere</div>
-          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
-            <div class="nd-stat-val gold">${d.total} Spiele</div></div>
+        const stats = _ndBilanzBis(d.pid, s);
+        return `<div class="nd-section">Die ersten ${esc(String(d.total))} Spiele</div>
           ${stats ? `<div class="nd-stat-row">
             <div class="nd-stat-label">Siege / Niederlagen</div>
             <div class="nd-stat-val">${stats.wins} / ${stats.losses}</div></div>
           <div class="nd-stat-row">
-            <div class="nd-stat-label">Win-Rate</div>
-            <div class="nd-stat-val acid">${stats.winRate}%</div></div>` : ''}
+            <div class="nd-stat-label">Siegquote</div>
+            <div class="nd-stat-val acid">${stats.winRate} %</div></div>` : ''}
           ${d.matchId ? `<div class="nd-section">Jubiläums-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'quiet_week': {
@@ -29023,14 +29020,14 @@ function _newsDetailMitte(s){
       case 'milestone_wins':
       case 'milestone_goals':
       case 'milestone_elo': {
-        const stats = _newsPlayerCareer(d.pid);
+        const stats = _ndBilanzBis(d.pid, s);
         return `<div class="nd-section">Meilenstein</div>
           <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
             <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
             <div class="nd-stat-val gold">${esc(d.milestone)}</div></div>
           ${stats ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Karriere-Bilanz</div>
-            <div class="nd-stat-val">${stats.wins}W · ${stats.losses}L</div></div>` : ''}
+            <div class="nd-stat-label">Bilanz bis zu dieser Partie</div>
+            <div class="nd-stat-val">${stats.wins} : ${stats.losses}</div></div>` : ''}
           ${d.matchId ? `<div class="nd-section">Meilenstein-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'elo_swing': {
@@ -29274,29 +29271,26 @@ function _newsH2HRecord(aPid, bPid){
   return {aWins: e.wins[aPid] || 0, bWins: e.wins[bPid] || 0, lastMatchId: e.lastMatchId};
 }
 
-// Karriere-Bilanz (wins, losses, winRate) eines Spielers. Nutzt bestehende
-// playerStats falls verfügbar, sonst einmaliger walk.
-function _newsPlayerCareer(pid){
-  try {
-    if(typeof playerStats === 'function'){
-      const st = playerStats(pid);
-      if(st && (st.wins !== undefined || st.gp !== undefined)){
-        const wins = st.wins || 0;
-        const losses = st.losses || ((st.gp || 0) - wins);
-        const total = wins + losses;
-        const winRate = total ? Math.round((wins/total)*100) : 0;
-        return {wins, losses, winRate};
-      }
-    }
-  } catch(e){}
-  // Fallback: schneller direkter walk
-  let wins = 0, losses = 0;
-  for(let i = 0; i < matches.length; i++){
-    if(!matchOf(pid, matches[i])) continue;
-    if(won(pid, matches[i])) wins++; else losses++;
+// Die Partien bis zu der, von der eine Story erzählt. Ein Blatt, das neben
+// „100 Spiele" die Bilanz von HEUTE nennt („221 / 134"), widerspricht sich
+// selbst; dasselbe bei der gemeinsamen Bilanz unter einer Duo-Serie.
+function _ndBisPartie(s){
+  const d = (s && s.dataRef) || {};
+  if(d.matchId){
+    const k = matches.findIndex(m => m.id === d.matchId);
+    if(k >= 0) return matches.slice(0, k + 1);
   }
+  if(s && s.when){
+    const t = new Date(s.when).getTime();
+    return matches.filter(m => new Date(m.created_at).getTime() <= t);
+  }
+  return matches;
+}
+function _ndBilanzBis(pid, s){
+  let wins = 0, losses = 0;
+  _ndBisPartie(s).forEach(m => { if(!matchOf(pid, m)) return; if(won(pid, m)) wins++; else losses++; });
   const total = wins + losses;
-  return {wins, losses, winRate: total ? Math.round((wins/total)*100) : 0};
+  return total ? {wins, losses, winRate: Math.round(wins / total * 100)} : null;
 }
 
 // ─── Hookup: News-Button-Click + Backdrop-Close ──────────────────────
