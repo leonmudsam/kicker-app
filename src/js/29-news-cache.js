@@ -349,16 +349,31 @@ function _consolidateStories(list){
   // faellt, ist der ANLASS in der Schlagzeile: „Sieg ohne Gegentor und
   // Auszeichnung in einer Partie" nennt dasselbe zweimal, denn „Absoluter
   // Sieger" IST das 10:0.
+  // „Zittersieg" heisst im Katalog `nail_biter` und ist auf „10:9 Sieg"
+  // definiert — dasselbe wie der Ein-Tor-Krimi, nur mit anderem Namen. Er
+  // fehlte in der Liste, und gemessen am 25.08. hiess die Karte damit
+  // „Ein-Tor-Krimi und Auszeichnung in einer Partie", waehrend ihre Zeile
+  // „Johannes holt ‚Zittersieg' zum 5. Mal · 10:9 Sieg" trug.
   const BADGE_DECKT = {zu_null:['perfect_win'], upset:['upset_king'],
-                       krimi:['krimi', 'nerves_of_steel'],
+                       krimi:['krimi', 'nerves_of_steel', 'nail_biter'],
                        eng:['krimi', 'nerves_of_steel']};
   const _badgeJeMatch = new Map();
+  // ── Eine gewoehnliche Auszeichnung deckt genauso ──────────────────
+  // Gesammelt wurde nur aus `badge_unlocked`, und eine gewoehnliche
+  // Auszeichnung bekommt gar keine eigene Karte: sie steht in der
+  // gemeinsamen Tageskarte `badge_marken` [§C33]. Genau ihre Marken sind es
+  // aber, die das Ergebnis erzaehlen — „Zittersieg" ist das 10:9.
+  const _merk = (mid, bid) => {
+    if(!mid || !bid) return;
+    const set = _badgeJeMatch.get(mid) || new Set();
+    set.add(bid); _badgeJeMatch.set(mid, set);
+  };
   list.forEach(s => {
     const d = (s && s.dataRef) || {};
-    if(d.type !== 'badge_unlocked' || !d.matchId || !d.badgeId) return;
     if(_storyAbgemeldet(s && s.id)) return;
-    const set = _badgeJeMatch.get(d.matchId) || new Set();
-    set.add(d.badgeId); _badgeJeMatch.set(d.matchId, set);
+    if(d.type === 'badge_unlocked') return _merk(d.matchId, d.badgeId);
+    if(d.type === 'badge_marken')
+      (d.marken || []).forEach(m => _merk(d.matchId || (m && m.matchId), m && m.badgeId));
   });
   const _ergebnisGedeckt = d => {
     const liste = BADGE_DECKT[d.resultKind];

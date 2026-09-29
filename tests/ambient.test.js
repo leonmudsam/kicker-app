@@ -1634,6 +1634,59 @@ ok(_nachsatz.eigen,
    'der Schlusssprint bekommt keinen Nachsatz, weil er keinen eigenen hat',
    _nachsatz.hat || 'keiner');
 
+// ── Eine gewoehnliche Auszeichnung deckt das Ergebnis genauso ───────
+// „Zittersieg" heisst im Katalog `nail_biter` und ist auf „10:9 Sieg"
+// definiert — dasselbe wie der Ein-Tor-Krimi. Er fehlte in `BADGE_DECKT`,
+// und gesammelt wurde ausserdem nur aus `badge_unlocked`: eine gewoehnliche
+// Auszeichnung bekommt gar keine eigene Karte, sie steht in der gemeinsamen
+// Tageskarte `badge_marken`. Gemessen hiess die Karte des 25.08. damit
+// „Ein-Tor-Krimi und Auszeichnung in einer Partie", waehrend ihre Zeile
+// „Johannes holt ‚Zittersieg' zum 5. Mal || 10:9 Sieg" trug.
+const _deckt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  // Welche Partien tragen eine Marke, die ihr Ergebnis schon erzaehlt?
+  const deckt = {zu_null:['perfect_win'], upset:['upset_king'],
+                 krimi:['krimi', 'nerves_of_steel', 'nail_biter'],
+                 eng:['krimi', 'nerves_of_steel']};
+  const jeMatch = {};
+  roh.forEach(s => {
+    const d = s.dataRef || {};
+    if(d.type === 'badge_unlocked' && d.matchId && d.badgeId)
+      (jeMatch[d.matchId] = jeMatch[d.matchId] || []).push(d.badgeId);
+    if(d.type === 'badge_marken')
+      (d.marken || []).forEach(m => {
+        const mid = d.matchId || (m && m.matchId);
+        if(mid && m && m.badgeId) (jeMatch[mid] = jeMatch[mid] || []).push(m.badgeId);
+      });
+  });
+  const motiv = {zu_null:'Sieg ohne Gegentor', upset:'Favoritensturz',
+                 krimi:'Ein-Tor-Krimi', kanter:'klarer Sieg', eng:'enges Spiel'};
+  const falsch = [];
+  let n = 0;
+  getStoriesCache().forEach(s => {
+    const d = s.dataRef || {};
+    if(d.type !== 'sammel' || d.quelle !== 'spiel' || !d.matchId) return;
+    // Die Zeile traegt kein resultKind — das steht an der Story, aus der
+    // sie kommt. Gesucht wird sie an ihrer ID.
+    const erg = (d.teile || []).find(t => String((t && (t.typ || t.type)) || '') === 'spiel');
+    const src = erg && roh.find(x => x.id === erg.id);
+    const kind = src && (src.dataRef || {}).resultKind;
+    const liste = deckt[String(kind || '')] || [];
+    const hat = jeMatch[d.matchId] || [];
+    if(!liste.length || !liste.some(b => hat.indexOf(b) >= 0)) return;
+    n++;
+    // Gedeckt: das Motiv des Ergebnisses darf in der Schlagzeile nicht stehen.
+    if(String(s.title || '').indexOf(motiv[kind]) >= 0)
+      falsch.push(s.title + ' → ' + motiv[kind] + ' + ' + hat.join(','));
+  });
+  return {n, falsch:falsch.slice(0, 3)};
+})())`));
+ok(_deckt.n > 0 && _deckt.falsch.length === 0,
+   'was eine Auszeichnung derselben Partie erzaehlt, nennt die Schlagzeile nicht',
+   _deckt.falsch.join(' | ') || _deckt.n + ' gedeckte Partien');
+
 // ── Dieselbe Aussage zweimal: die spaetere gilt ──────────────────────
 // Die Sperrfrist laesst eine Aussage drei Tage lang nur einmal durch, und
 // welche der beiden das ist, ist die Frage: die zweite traegt den Stand, der
