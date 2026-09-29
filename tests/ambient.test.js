@@ -1248,12 +1248,45 @@ const _stabil = JSON.parse(K.eval(`JSON.stringify((function(){
       const drin = new Set();
       sicht.forEach(s => { drin.add(s.id);
         ((s.dataRef||{}).teile||[]).forEach(t => { if(t.id) drin.add(t.id); }); });
-      schritte.push({drin:[...drin], zeit:sicht.map(s => s.id + '@' + new Date(s.when).getTime())});
+      // Die Aussage einer Karte: was fuer ein Ereignis und worum es geht. Die
+      // Beteiligten stehen NICHT darin — wechselt der groesste Ausschlag des
+      // Tages von einem Spieler zum naechsten, ist das dieselbe Aussage mit
+      // einem neuen Stand.
+      const aus = {};
+      [...db.values()].forEach(s => { const d = s.dataRef || {};
+        aus[s.id] = (d.type || '') + '|'
+          + (d.rekordId || d.badgeId || d.disziplinId || d.titleId || d.titel || '')
+          + '@' + new Date(s.when).getTime(); });
+      schritte.push({drin:[...drin], aus,
+                     zeit:sicht.map(s => s.id + '@' + new Date(s.when).getTime())});
     }
     const weg = [], gewandert = [];
     for(let i = 1; i < schritte.length; i++){
       const jetzt = new Set(schritte[i].drin);
-      schritte[i-1].drin.forEach(id => { if(!jetzt.has(id)) weg.push('P' + i + ' ' + id); });
+      // Dieselbe Aussage ein zweites Mal ist die Nachricht von JETZT: „Der
+      // groesste Ausschlag des Tages" gehoerte um 13:56 Leo und um 14:20
+      // jemand anderem, und die zweite Karte traegt den Stand, der gilt.
+      // Dann faellt die erste, und die spaetere Wiederholung steht mit ihrem
+      // eigenen Zeitpunkt da. Alles andere bleibt.
+      const spaeter = new Set();
+      Object.keys(schritte[i].aus).forEach(id => {
+        if(!jetzt.has(id)) return;
+        const p = schritte[i].aus[id].lastIndexOf('@');
+        spaeter.add(schritte[i].aus[id].slice(0, p) + '|' + schritte[i].aus[id].slice(p + 1));
+      });
+      const ersetzt = id => {
+        const v = schritte[i-1].aus[id]; if(!v) return false;
+        const p = v.lastIndexOf('@');
+        const sache = v.slice(0, p), ms = Number(v.slice(p + 1));
+        return [...spaeter].some(x => {
+          const q = x.lastIndexOf('|');
+          return x.slice(0, q) === sache && Number(x.slice(q + 1)) > ms;
+        });
+      };
+      schritte[i-1].drin.forEach(id => {
+        if(jetzt.has(id) || ersetzt(id)) return;
+        weg.push('P' + i + ' ' + id);
+      });
       const vorZeit = {}; schritte[i-1].zeit.forEach(x => {
         const p = x.lastIndexOf('@'); vorZeit[x.slice(0,p)] = x.slice(p+1); });
       schritte[i].zeit.forEach(x => { const p = x.lastIndexOf('@');
@@ -1289,7 +1322,7 @@ const _stabil = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_stabil.partien >= 5, 'der Spieltag der Messung hat genug Partien',
    _stabil.tag + ' mit ' + _stabil.partien);
 ok(_stabil.weg.length === 0,
-   'keine Karte verlaesst den Feed, wenn eine weitere Partie dazukommt',
+   'keine Karte verlaesst den Feed, ausser fuer ihre eigene spaetere Fassung',
    _stabil.weg.slice(0, 5).join(' | ') || _stabil.karten + ' Karten am Ende');
 ok(_stabil.gewandert.length === 0,
    'und keine Karte, die dasteht, wechselt ihren Zeitpunkt',
@@ -1297,6 +1330,32 @@ ok(_stabil.gewandert.length === 0,
 ok(_stabil.sachen > 0 && _stabil.mehrfach.length === 0,
    'ein Rekord und eine Chronik tragen je Spieltag genau eine Karte',
    _stabil.mehrfach.join(' | ') || _stabil.sachen + ' Eintraege');
+
+// ── Dieselbe Aussage zweimal: die spaetere gilt ──────────────────────
+// Die Sperrfrist laesst eine Aussage drei Tage lang nur einmal durch, und
+// welche der beiden das ist, ist die Frage: die zweite traegt den Stand, der
+// jetzt gilt („Der groesste Ausschlag des Tages" gehoerte gestern jemand
+// anderem). Also faellt die erste, und die spaetere Wiederholung steht mit
+// ihrem eigenen Zeitpunkt da. Gestellt wird ein Paar mit derselben Aussage,
+// zwei Tage auseinander und mit verschiedenen Schlagzeilen, damit nicht der
+// Vergleich der Schlagzeilen misst.
+const _sperrRichtung = JSON.parse(K.eval(`JSON.stringify((function(){
+  const a = players[0].id, b = players[1].id;
+  const t0 = new Date(mts(matches[matches.length - 1])).getTime();
+  const mach = (id, ms, titel) => ({id, cat:'personal', ic:'swords', prio:32,
+    when:new Date(ms).toISOString(), title:titel,
+    desc:'Ein Satz mit 5 Zahlen.',
+    dataRef:{type:'rivalry', a, b, playerIds:[a, b]}});
+  _cache._consolFrom = null;
+  const raus = _consolidateStories([
+    mach('rv-neu', t0, 'Das Duell steht bei 12'),
+    mach('rv-alt', t0 - 2 * 86400000, 'Das Duell steht bei 11')
+  ]).map(x => x.id);
+  return {raus};
+})())`));
+ok(_sperrRichtung.raus.indexOf('rv-neu') >= 0 && _sperrRichtung.raus.indexOf('rv-alt') < 0,
+   'von zwei gleichen Aussagen innerhalb der Sperrfrist bleibt die spaetere',
+   _sperrRichtung.raus.join(', '));
 
 // ── Ein Deckel vergibt seine Plaetze in der Reihenfolge der Zeit ─────
 // Beide Deckel — der je Sorte und der je Tag — waehlten nach `prio` aus, und
@@ -1315,7 +1374,7 @@ const _deckelZeit = JSON.parse(K.eval(`JSON.stringify((function(){
   // Fuenf deckelbare Karten verschiedener Sorten: der Tagesdeckel laesst die
   // ersten proTag-Plaetze stehen.
   _cache._consolFrom = null;
-  const sorten = ['rivalry','jubilee','milestone_wins','elo_swing','top_form'];
+  const sorten = ['rivalry','jubilee','milestone_wins','milestone_goals','top_form'];
   const tagD = _consolidateStories(sorten.map((t, i) =>
     k('d-' + i, t, i === sorten.length - 1 ? 89 : 20 + i, i * 60, p[i]))).map(s => s.id);
   return {tagD, deckel: NEWS_LIMITS.proTag};
@@ -2703,7 +2762,7 @@ const _wenig = JSON.parse(K.eval(`JSON.stringify((function(){
   }
   sicht.forEach(s => { const k = tag(s), t = (s.dataRef||{}).type;
     let brk = false; try { brk = _isBreaking(s); } catch(e){}
-    if(brk || PFLICHT.has(t) || prt(s) || _frei.has(s.id)) return;
+    if(brk || PFLICHT.has(t) || t === 'elo_swing' || prt(s) || _frei.has(s.id)) return;
     zaehlbar[k] = (zaehlbar[k] || 0) + 1; });
   const zuVielZaehlbar = Object.keys(zaehlbar).filter(k => zaehlbar[k] > NEWS_LIMITS.proTag);
   // Ein Fun Fact steht nur an einem Tag ohne Nachricht.
@@ -3590,7 +3649,9 @@ const _tagmix = JSON.parse(K.eval(`JSON.stringify((function(){
     && !(proTag[k] || []).length);
   // Und kein Tag traegt mehr als den Deckel — Pflicht und Breaking zaehlen
   // nicht mit [§C33].
-  const pflicht = new Set(['potd','woche','chronik_monat','season_recap']);
+  // Der Sieger des Tages und sein Gegenpart „Harter Tag fuer X" fassen den
+  // ganzen Tag zusammen, stehen an seinem Ende und zaehlen nicht mit [§C33].
+  const pflicht = new Set(['potd','woche','chronik_monat','season_recap','elo_swing']);
   // Eine Partie-Karte zaehlt nicht mit: sie ist keine Auswahl, sie wurde
   // gespielt. Neun Partien an einem Tag sind neun Ereignisse [§C33].
   const prt = s => { const d = (s&&s.dataRef)||{};

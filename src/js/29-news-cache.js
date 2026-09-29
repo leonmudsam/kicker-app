@@ -591,9 +591,7 @@ function _consolidateStories(list){
   // mehr aus dem Feed nehmen. Bei gleichem Zeitpunkt bleibt die Reihenfolge
   // der Liste — die Liste umzudrehen vertauschte auch die Karten derselben
   // Minute, und damit nannte eine Sammelkarte ihre drei Namen verkehrt.
-  const _srcAlt = src.map((s, i) => ({s, i}))
-    .sort((a, b) => (new Date(a.s.when) - new Date(b.s.when)) || (a.i - b.i))
-    .map(x => x.s);
+  const _srcAlt = src;
   for(const s of _srcAlt){
     const d = s.dataRef || {};
     // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
@@ -1669,9 +1667,19 @@ function _consolidateStories(list){
   // nachliest, erfuhr von zwei Dritteln der Spiele nichts. Eine Karte je
   // Partie IST der Deckel des Spieltags; gedeckelt wird nur noch, was ueber
   // den Partien liegt und von gestern schon gelten koennte.
+  // ── Eine Tagessumme steht am Ende des Tages und zaehlt nicht mit ───
+  // „Harter Tag fuer X" ist der Gegenpart zum Sieger des Tages: es gibt sie
+  // je Tag einmal, sie fasst den ganzen Tag zusammen, und sie traegt deshalb
+  // 23:58 — die Uhrzeit, zu der der Tag zu ist, nicht die der Partie, die sie
+  // ausgeloest hat. Seit der Deckel seine Plaetze von vorn vergibt, verliert
+  // eine solche Karte immer: gemessen stand sie nach der vierten Partie des
+  // 26.08. im Feed und fiel nach der fuenften heraus, weil inzwischen vier
+  // Karten mit frueherer Uhrzeit dazugekommen waren. Eine Wiederholung kann
+  // sie nicht sein, also nimmt sie niemandem etwas weg.
+  const TAG_SUMME = new Set(['elo_swing']);
   const _zaehltGegenDeckel = s => {
     const t = (s && s.dataRef || {}).type;
-    if(TAG_PFLICHT.has(t)) return false;
+    if(TAG_PFLICHT.has(t) || TAG_SUMME.has(t)) return false;
     if(_istPartie(s)) return false;
     try { if(typeof _isBreaking === 'function' && _isBreaking(s)) return false; } catch(e){}
     return true;
@@ -1710,6 +1718,7 @@ function _consolidateStories(list){
   const fertig = entzerrt.filter(s => {
     if(_behalten.has(s.id)) return true;
     if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
+    if(TAG_SUMME.has((s.dataRef || {}).type)) return true;
     if(_istPartie(s)) return true;
     try { return (typeof _isBreaking === 'function') && _isBreaking(s); } catch(e){ return false; }
   });

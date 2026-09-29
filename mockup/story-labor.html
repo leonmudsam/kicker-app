@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Story-Labor</title>
+<!--
+  ╔══════════════════════════════════════════════════════════════════════════╗
+  ║  STORY-LABOR — Partien eintragen, Stories sehen                          ║
+  ║                                                                          ║
+  ║  Kein Teil der App und kein Teil des Bauablaufs. Die Seite lädt die      ║
+  ║  ausgelieferte `index.html`, hängt ihr einen Haken ein und füttert sie    ║
+  ║  mit erfundenen Partien. Gerechnet und gezeichnet wird ausschliesslich    ║
+  ║  mit dem Code der App — eine zweite Story-Engine gäbe irgendwann andere   ║
+  ║  Karten als die echte.                                                   ║
+  ║                                                                          ║
+  ║  Nichts verlässt diese Seite:                                            ║
+  ║   · Die App läuft in einem abgeriegelten Rahmen (`sandbox`), also ohne    ║
+  ║     Zugriff auf diese Seite und ohne eigene Adresse.                     ║
+  ║   · Der Supabase-Client ist eine Attrappe, die jeden Aufruf schluckt —    ║
+  ║     das CDN-Script wird gar nicht geladen. Es gibt keine Verbindung zur   ║
+  ║     Datenbank, also auch kein Schreiben.                                 ║
+  ║   · `fetch` ist abgeschaltet, der Speicher der Seite ist ein eigener      ║
+  ║     Topf im Hauptspeicher. Die App und das Labor liegen auf derselben     ║
+  ║     Adresse; ohne diesen Topf überschriebe das Labor den Lesestand des    ║
+  ║     Feeds.                                                               ║
+  ╚══════════════════════════════════════════════════════════════════════════╝
+-->
+<style>
+  :root{
+    --bg:#0b0d10; --flaeche:#14171c; --flaeche2:#1b1f26; --linie:#272c35;
+    --schrift:#e8ebf0; --leise:#9aa3b2; --blass:#667081;
+    --gruen:#5ad18c; --rot:#f0566a; --gold:#e8c45a; --blau:#6aa9f0;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--schrift);
+    font:14px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif}
+  .huelle{max-width:1180px;margin:0 auto;padding:18px 16px 60px}
+  h1{font-size:19px;margin:0 0 4px;letter-spacing:.01em}
+  h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--leise);
+    margin:26px 0 10px;font-weight:700}
+  p.hinweis{margin:0 0 18px;color:var(--leise);font-size:12.5px;max-width:78ch}
+  .kasten{background:var(--flaeche);border:1px solid var(--linie);border-radius:12px;padding:14px}
+  .reihe{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+  label{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--blass);margin-bottom:4px}
+  input,select,textarea,button{font:inherit;color:var(--schrift);background:var(--flaeche2);
+    border:1px solid var(--linie);border-radius:8px;padding:7px 9px}
+  input[type=number]{width:62px}
+  textarea{width:100%;min-height:92px;resize:vertical;font-family:ui-monospace,monospace;font-size:12.5px}
+  button{cursor:pointer}
+  button:hover{border-color:#3a4150}
+  button.wichtig{background:linear-gradient(180deg,#2c3a4d,#1e2836);border-color:#3c4c63;font-weight:600}
+  button.leise{color:var(--leise)}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--blass);font-weight:700;padding:6px 6px;border-bottom:1px solid var(--linie)}
+  td{padding:4px 6px;border-bottom:1px solid #1d222a;vertical-align:middle}
+  td select{padding:5px 6px;max-width:116px}
+  td input[type=datetime-local]{padding:5px 6px}
+  .tot{color:var(--rot);background:none;border:0;padding:2px 6px;font-size:16px;line-height:1}
+  .wolke{display:flex;gap:18px;flex-wrap:wrap;margin-top:16px;align-items:flex-start}
+  .rahmen{flex:0 0 auto;border:1px solid var(--linie);border-radius:22px;overflow:hidden;
+    background:#000;box-shadow:0 18px 50px -24px #000}
+  iframe{display:block;border:0;width:392px;height:800px;background:#0b0d10}
+  .seite{flex:1 1 380px;min-width:320px}
+  .liste{font-size:12px;font-family:ui-monospace,monospace;white-space:pre-wrap;
+    background:var(--flaeche);border:1px solid var(--linie);border-radius:10px;
+    padding:11px;max-height:800px;overflow:auto;color:var(--leise)}
+  .liste b{color:var(--schrift);font-weight:600}
+  .liste .neu{color:var(--gruen)}
+  .liste .weg{color:var(--rot)}
+  .liste .kopf{color:var(--gold)}
+  .stand{font-size:12px;color:var(--leise);margin-top:8px}
+  .stand.fehler{color:var(--rot)}
+  .reiter{display:flex;gap:6px;margin-bottom:10px}
+  .reiter button.on{background:#25303f;border-color:#3c4c63;color:#fff}
+  .fuss{margin-top:22px;color:var(--blass);font-size:11.5px;max-width:80ch}
+  code{background:var(--flaeche2);border:1px solid var(--linie);border-radius:4px;padding:1px 4px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="huelle">
+
+  <h1>Story-Labor</h1>
+  <p class="hinweis">
+    Partien eintragen und sehen, welche Stories daraus entstehen — gerechnet und
+    gezeichnet mit dem Code der echten App. Es wird keine Datenbank angefasst:
+    der Supabase-Client ist eine Attrappe, das CDN-Script wird nicht geladen,
+    <code>fetch</code> ist abgeschaltet und der Speicher der Seite ist ein
+    eigener Topf. Nichts von dem, was hier steht, erreicht die Liga.
+  </p>
+
+  <h2>1 · Die App laden</h2>
+  <div class="kasten">
+    <div class="reihe">
+      <button id="btnFetch" class="wichtig">index.html aus dem Ordner laden</button>
+      <div>
+        <label>oder von Hand auswählen</label>
+        <input type="file" id="datei" accept=".html,text/html">
+      </div>
+    </div>
+    <div class="stand" id="standApp">Noch nicht geladen. Über <code>file://</code>
+      verbietet der Browser das Nachladen von Nachbardateien — dann die Datei
+      rechts auswählen, oder die Seite über einen kleinen Server öffnen
+      (<code>python3 -m http.server</code>).</div>
+  </div>
+
+  <h2>2 · Spieler</h2>
+  <div class="kasten">
+    <label for="spieler">Ein Name je Zeile</label>
+    <textarea id="spieler"></textarea>
+  </div>
+
+  <h2>3 · Partien</h2>
+  <div class="kasten">
+    <table>
+      <thead><tr>
+        <th style="width:172px">Zeitpunkt</th>
+        <th>Team A · Sturm</th><th>Team A · Abwehr</th>
+        <th>Team B · Sturm</th><th>Team B · Abwehr</th>
+        <th style="width:60px">Tore A</th><th style="width:60px">Tore B</th><th style="width:30px"></th>
+      </tr></thead>
+      <tbody id="zeilen"></tbody>
+    </table>
+    <div class="reihe" style="margin-top:12px">
+      <button id="btnZeile">Partie hinzufügen</button>
+      <button id="btnKopie" class="leise">letzte Partie wiederholen</button>
+      <button id="btnSpieltag" class="leise">Beispiel-Spieltag (7 Partien)</button>
+      <button id="btnLeer" class="leise">alle löschen</button>
+    </div>
+  </div>
+
+  <h2>4 · Rechnen</h2>
+  <div class="kasten">
+    <div class="reihe">
+      <div>
+        <label for="jetzt">„Jetzt" (der Feed reicht 14 Tage zurück)</label>
+        <input type="datetime-local" id="jetzt">
+      </div>
+      <button id="btnRun" class="wichtig">Stories berechnen</button>
+      <button id="btnSchritte">Spieltag Schritt für Schritt</button>
+      <button id="btnJson" class="leise">Szenario als JSON</button>
+    </div>
+    <div class="stand" id="stand"></div>
+  </div>
+
+  <div class="wolke">
+    <div class="rahmen"><iframe id="app" sandbox="allow-scripts" title="App-Vorschau"></iframe></div>
+    <div class="seite">
+      <div class="reiter">
+        <button data-v="karten" class="on">Karten</button>
+        <button data-v="schritte">Schritt für Schritt</button>
+        <button data-v="json">JSON</button>
+      </div>
+      <div class="liste" id="ausgabe">Noch nichts gerechnet.</div>
+    </div>
+  </div>
+
+  <p class="fuss">
+    Der Rahmen zeigt den echten Feed der App, samt Tagesköpfen, Sammelkarten und
+    Blättern — er ist anklickbar. Die Liste daneben nennt je Karte ihre ID, ihren
+    Typ, ihren Zeitpunkt und ihr Gewicht. „Schritt für Schritt" spielt den
+    letzten Spieltag Partie für Partie nach und zeigt, welche Karte dazukommt
+    und welche verschwindet — mit einem Bestand, der sich verhält wie die
+    Datenbank: eine ID wird genau einmal eingefügt und behält ihren Zeitpunkt.
+  </p>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  const EchtDate = Date;
+  const $ = id => document.getElementById(id);
+
+  // ── Der Haken in die App ───────────────────────────────────────────
+  // Die Logik der App ist eine IIFE ohne Exporte. Der Testläufer hängt sich
+  // seit jeher denselben Haken ein: eine Zeile vor dem Ende der IIFE, die eine
+  // `eval`-Brücke nach draussen legt. Damit rechnet das Labor mit genau dem
+  // Code, der ausgeliefert wird.
+  const BOOT = [
+    '<scr' + 'ipt>',
+    '(function(){',
+    '  var kette = function(){ return new Proxy(function(){}, {',
+    '    get: function(_, p){ return p === "then" ? undefined : kette(); },',
+    '    apply: function(){ return kette(); } }); };',
+    '  window.supabase = { createClient: function(){ return { from:kette, channel:kette,',
+    '    rpc:kette, auth:kette(), removeChannel:function(){} }; } };',
+    '  window.fetch = function(){ return Promise.resolve({ ok:true,',
+    '    json:function(){ return Promise.resolve({}); },',
+    '    text:function(){ return Promise.resolve(""); } }); };',
+    '  var topf = {};',
+    '  try { Object.defineProperty(window, "localStorage", { configurable:true, value:{',
+    '    getItem:function(k){ return (k in topf) ? topf[k] : null; },',
+    '    setItem:function(k,v){ topf[k] = String(v); },',
+    '    removeItem:function(k){ delete topf[k]; },',
+    '    clear:function(){ for(var k in topf) delete topf[k]; },',
+    '    key:function(i){ return Object.keys(topf)[i] || null; },',
+    '    get length(){ return Object.keys(topf).length; } } }); } catch(e){}',
+    '  try { Object.defineProperty(navigator, "serviceWorker", { configurable:true,',
+    '    value:{ register:function(){ return Promise.resolve(); } } }); } catch(e){}',
+    '  var Echt = Date, JETZT = Echt.now();',
+    '  window.__uhr = function(ms){ JETZT = ms; };',
+    '  function LaborDate(){ if(!arguments.length) return new Echt(JETZT);',
+    '    return new (Function.prototype.bind.apply(Echt, [null].concat([].slice.call(arguments))))(); }',
+    '  LaborDate.prototype = Echt.prototype;',
+    '  LaborDate.now = function(){ return JETZT; };',
+    '  LaborDate.parse = Echt.parse; LaborDate.UTC = Echt.UTC;',
+    '  window.Date = LaborDate;',
+    '  window.addEventListener("message", function(ev){',
+    '    var d = ev.data || {}, out;',
+    '    try { out = { id:d.id, ok:true, wert: window.__lab ? window.__lab.run(d.code) : null }; }',
+    '    catch(e){ out = { id:d.id, ok:false, fehler: String((e && e.message) || e) }; }',
+    '    parent.postMessage(out, "*");',
+    '  });',
+    '})();',
+    '</scr' + 'ipt>'
+  ].join('\n');
+
+  function baue(html){
+    let s = html;
+    // Das CDN-Script fällt weg: kein Netz, und die Attrappe soll gewinnen.
+    s = s.replace(/<script\s+src="https:\/\/cdn\.jsdelivr\.net[^"]*"><\/script>/i, '');
+    // Kein Autostart: `loadAll` würde die Liga laden wollen.
+    s = s.replace(/loadAll\(\);\s*\n\s*checkForUpdate\(\);/, '/* Labor: kein Autostart */');
+    // Der Haken, eine Zeile vor dem Ende der IIFE.
+    const i = s.lastIndexOf('})();');
+    if(i < 0) throw new Error('Die IIFE der App ist nicht zu finden.');
+    s = s.slice(0, i) + '\nwindow.__lab = { run: function(c){ return eval(c); } };\n' + s.slice(i);
+    // Der Bootstrap steht VOR dem Script der App — gesucht vom Ende der IIFE
+    // aus rückwärts. Nach vorn gesucht traf `indexOf` die Zeichenfolge
+    // „<script>" im Kommentarkopf der Datei, und der Bootstrap landete in
+    // einem Kommentar: die Attrappe wurde nie gesetzt, und die App suchte
+    // ihren Supabase-Client.
+    const j = s.lastIndexOf('<script>', i);
+    if(j < 0) throw new Error('Das Script der App ist nicht zu finden.');
+    return s.slice(0, j) + BOOT + s.slice(j);
+  }
+
+  let seq = 0;
+  const offen = new Map();
+  window.addEventListener('message', ev => {
+    const r = ev.data || {};
+    const f = offen.get(r.id);
+    if(!f) return;
+    offen.delete(r.id);
+    f(r);
+  });
+  function ruf(code){
+    return new Promise((res, rej) => {
+      const id = ++seq;
+      offen.set(id, r => r.ok ? res(r.wert) : rej(new Error(r.fehler)));
+      $('app').contentWindow.postMessage({ id, code }, '*');
+      setTimeout(() => { if(offen.has(id)){ offen.delete(id); rej(new Error('Keine Antwort aus der App.')); } }, 20000);
+    });
+  }
+
+  // ── Eingabe ────────────────────────────────────────────────────────
+  const STD_SPIELER = ['Ada','Bruno','Carla','Dario','Elif','Finn','Greta','Hugo'];
+  let bereit = false;
+
+  function namen(){
+    return $('spieler').value.split('\n').map(x => x.trim()).filter(Boolean);
+  }
+  function pid(i){
+    // Feste, gültige UUID je Platz — die App erwartet IDs, keine Namen.
+    return '00000000-0000-4000-8000-' + String(i).padStart(12, '0');
+  }
+  function optionen(sel, wahl){
+    const n = namen();
+    sel.innerHTML = n.map((x, i) => '<option value="' + i + '">' + x.replace(/[<&]/g, '') + '</option>').join('');
+    sel.value = String(Math.min(wahl, Math.max(0, n.length - 1)));
+  }
+
+  function zeile(werte){
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td><input type="datetime-local"></td>'
+      + '<td><select></select></td><td><select></select></td>'
+      + '<td><select></select></td><td><select></select></td>'
+      + '<td><input type="number" min="0" max="20" value="10"></td>'
+      + '<td><input type="number" min="0" max="20" value="6"></td>'
+      + '<td><button class="tot" title="Zeile löschen">×</button></td>';
+    const sel = tr.querySelectorAll('select');
+    [0,1,2,3].forEach(k => optionen(sel[k], (werte && werte.p[k]) != null ? werte.p[k] : k));
+    tr.querySelector('input[type=datetime-local]').value = werte ? werte.t : lokal(EchtDate.now());
+    if(werte){
+      const z = tr.querySelectorAll('input[type=number]');
+      z[0].value = werte.a; z[1].value = werte.b;
+    }
+    tr.querySelector('.tot').onclick = () => { tr.remove(); };
+    $('zeilen').appendChild(tr);
+    return tr;
+  }
+
+  function lokal(ms){
+    const d = new EchtDate(ms);
+    const p = n => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate())
+      + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  function partien(){
+    const n = namen();
+    const out = [];
+    [...$('zeilen').children].forEach((tr, i) => {
+      const t = tr.querySelector('input[type=datetime-local]').value;
+      if(!t) return;
+      const s = [...tr.querySelectorAll('select')].map(x => Number(x.value));
+      const z = [...tr.querySelectorAll('input[type=number]')].map(x => Number(x.value));
+      if(new Set(s).size < 4) return;                   // niemand spielt gegen sich
+      out.push({
+        id: 'lab' + String(i).padStart(4, '0'),
+        a1: pid(s[0]), a2: pid(s[1]), b1: pid(s[2]), b2: pid(s[3]),
+        a1_pos: 'atk', a2_pos: 'def', b1_pos: 'atk', b2_pos: 'def',
+        score_a: z[0], score_b: z[1],
+        winner: z[0] >= z[1] ? 'A' : 'B',
+        created_at: new EchtDate(t).toISOString(),
+        deltas: {}
+      });
+      void n;
+    });
+    out.sort((a, b) => new EchtDate(a.created_at) - new EchtDate(b.created_at));
+    out.forEach((m, i) => { m.id = 'lab' + String(i).padStart(4, '0'); });
+    return out;
+  }
+
+  function saisons(ms, ps){
+    // Abgeschlossene Monate stehen in `seasons`; der Monat von „Jetzt" ist die
+    // laufende Saison und wird von der App selbst abgeleitet.
+    const p = n => String(n).padStart(2, '0');
+    const letzter = (j, mo) => new EchtDate(j, mo + 1, 0);
+    const jetzt = new EchtDate(ms);
+    const lauf = jetzt.getFullYear() * 12 + jetzt.getMonth();
+    const monate = new Set();
+    ps.forEach(m => { const d = new EchtDate(m.created_at);
+      monate.add(d.getFullYear() * 12 + d.getMonth()); });
+    return [...monate].filter(x => x < lauf).sort((a, b) => a - b).map(x => {
+      const j = Math.floor(x / 12), mo = x % 12;
+      const vor = letzter(j, mo - 1), end = letzter(j, mo);
+      const iso = d => d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+      return { id: j + '-' + p(mo + 1),
+        label: new EchtDate(j, mo, 1).toLocaleDateString('de-DE', {month:'long', year:'numeric'}),
+        start_date: iso(vor), end_date: iso(end) };
+    });
+  }
+
+  function spielerRohe(){
+    return namen().map((nm, i) => ({ id: pid(i), name: nm, hidden: false,
+      elo: 0, atk: 0.5, avatar_id: null }));
+  }
+
+  // ── Der Code, der in der App läuft ─────────────────────────────────
+  // Er tut, was `tests/run.mjs` seit jeher tut: Zustand setzen, die Deltas
+  // einmal nachrechnen (der Export hat keine) und die Saisonköpfe füllen.
+  function setzCode(ps, ms, sa){
+    return '(function(){'
+      + 'players = ' + JSON.stringify(ps) + ';'
+      + 'matches = ' + JSON.stringify(ms) + ';'
+      + 'seasons = ' + JSON.stringify(sa) + ';'
+      + 'unlocked = true;'
+      + 'invalidateCache();'
+      + 'var rc = simulateEloWithSliders(matches), d = {};'
+      + 'rc.history.forEach(function(h){ d[h.matchId] = h; });'
+      + 'matches.forEach(function(m){ var h = d[m.id];'
+      + '  m.deltas = (h && h.deltas) || {}; if(h && h.expA != null) m.exp_a = h.expA; });'
+      + 'invalidateCache();'
+      + 'var g = getGlobalSim();'
+      + 'seasons.forEach(function(s){'
+      + '  var snap = g.seasonEndElos[s.id] || {}, pl = g.seasonPlayed[s.id] || {};'
+      + '  var top = Object.keys(pl).filter(function(id){ return pl[id] > 0; })'
+      + '    .map(function(id){ return { id:id, elo: Math.round(snap[id] != null ? snap[id] : cfg.start_elo),'
+      + '      wins:0, losses:0 }; }).sort(function(a,b){ return b.elo - a.elo; });'
+      + '  s.top_elo = JSON.stringify(top.slice(0,3)); s.player_id = top[0] ? top[0].id : null; });'
+      + 'invalidateCache();'
+      + 'return matches.length;'
+      + '})()';
+  }
+
+  const FEED = '(function(){'
+    + '_cache._stories = null; _cache._consolFrom = null; _cache._frischVon = null;'
+    + 'var roh = _buildStories();'
+    + '_cache._stories = roh.slice().sort(function(a,b){ return new Date(b.when) - new Date(a.when); });'
+    + '_cache._consolFrom = null; _cache._frischVon = null;'
+    + 'var sicht = getStoriesCache();'
+    + 'try { tab = "liga"; render(); } catch(e){}'
+    + 'try { _renderNewsFeed(); } catch(e){}'
+    + 'return { roh: roh.length, karten: sicht.map(function(s){ var d = s.dataRef || {};'
+    + '  return { id:s.id, typ:d.type || "", quelle:d.quelle || "", prio:s.prio || 0,'
+    + '    when:new Date(s.when).toISOString(), titel:s.title, text:s.desc,'
+    + '    teile:(d.teile || []).map(function(t){ return t.titel || ""; }) }; }) };'
+    + '})()';
+
+  // Ein Spieltag Partie für Partie, mit einem Bestand wie in der Datenbank:
+  // eine ID wird genau einmal eingefügt und behält ihren Zeitpunkt.
+  const SCHRITTE = '(function(){'
+    + 'var alle = matches.slice();'
+    + 'var tage = {}; alle.forEach(function(m){ var k = tagKey(mts(m)); (tage[k] = tage[k] || []).push(m); });'
+    + 'var ziel = Object.keys(tage).sort().pop(); if(!ziel) return { fehlt:true };'
+    + 'var bis = alle.length - tage[ziel].length, db = {}, aus = [];'
+    + 'try {'
+    + '  for(var k = 1; k <= tage[ziel].length; k++){'
+    + '    matches = alle.slice(0, bis + k);'
+    + '    invalidateCache();'
+    + '    _cache._stories = null; _cache._consolFrom = null; _cache._frischVon = null;'
+    + '    _buildStories().forEach(function(s){ if(!db[s.id]) db[s.id] = s; });'
+    + '    var best = Object.keys(db).map(function(i){ return db[i]; })'
+    + '      .sort(function(a,b){ return new Date(b.when) - new Date(a.when); });'
+    + '    _cache._stories = best; _cache._consolFrom = null; _cache._frischVon = null;'
+    + '    var sicht = getStoriesCache().filter(function(s){ return tagKey(s.when) === ziel; });'
+    + '    aus.push({ partie: k, uhr: new Date(mts(alle[bis + k - 1])).toISOString(),'
+    + '      karten: sicht.map(function(s){ return { id:s.id, typ:(s.dataRef||{}).type || "",'
+    + '        when:new Date(s.when).toISOString(), titel:s.title }; }) });'
+    + '  }'
+    + '} finally { matches = alle; invalidateCache();'
+    + '  _cache._stories = null; _cache._consolFrom = null; _cache._frischVon = null; }'
+    + 'return { tag: ziel, schritte: aus };'
+    + '})()';
+
+  // ── Ausgabe ────────────────────────────────────────────────────────
+  let letzteKarten = null, letzteSchritte = null;
+
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  }
+  function uhr(iso){ return new EchtDate(iso).toLocaleString('de-DE',
+    {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}); }
+
+  function zeigeKarten(){
+    if(!letzteKarten){ $('ausgabe').textContent = 'Noch nichts gerechnet.'; return; }
+    const k = letzteKarten;
+    let h = '<span class="kopf">' + k.roh + ' gebildet, ' + k.karten.length + ' im Feed</span>\n\n';
+    let tag = '';
+    k.karten.forEach(c => {
+      const t = uhr(c.when).slice(0, 5);
+      if(t !== tag){ tag = t; h += '\n<span class="kopf">── ' + esc(t) + ' ──</span>\n'; }
+      h += esc(uhr(c.when).slice(-5)) + '  ' + String(c.prio).padStart(3)
+        + '  <b>' + esc(c.titel) + '</b>\n'
+        + '        ' + esc(c.typ + (c.quelle ? '/' + c.quelle : '')) + '  ' + esc(c.id) + '\n';
+      c.teile.forEach(z => { h += '          · ' + esc(z) + '\n'; });
+    });
+    $('ausgabe').innerHTML = h;
+  }
+
+  function zeigeSchritte(){
+    if(!letzteSchritte){ $('ausgabe').textContent = 'Noch nicht Schritt für Schritt gerechnet.'; return; }
+    const s = letzteSchritte;
+    if(s.fehlt){ $('ausgabe').textContent = 'Keine Partien eingetragen.'; return; }
+    let h = '<span class="kopf">Spieltag ' + esc(s.tag) + ', ' + s.schritte.length + ' Partien</span>\n';
+    s.schritte.forEach((st, i) => {
+      const vor = i ? s.schritte[i-1].karten : [];
+      const jetzt = st.karten;
+      const idsVor = new Set(vor.map(x => x.id)), idsJetzt = new Set(jetzt.map(x => x.id));
+      h += '\n<span class="kopf">── nach Partie ' + st.partie + ' ('
+        + esc(uhr(st.uhr).slice(-5)) + '), ' + jetzt.length + ' Karten ──</span>\n';
+      jetzt.filter(x => !idsVor.has(x.id)).forEach(x => {
+        h += '  <span class="neu">+ ' + esc(x.titel) + '</span>\n'; });
+      vor.filter(x => !idsJetzt.has(x.id)).forEach(x => {
+        h += '  <span class="weg">− ' + esc(x.titel) + '  [' + esc(x.id) + ']</span>\n'; });
+      if(i && jetzt.length === vor.length
+         && !jetzt.some(x => !idsVor.has(x.id))) h += '  (unverändert)\n';
+    });
+    $('ausgabe').innerHTML = h;
+  }
+
+  function zeigeJson(){
+    $('ausgabe').textContent = JSON.stringify({
+      spieler: namen(),
+      jetzt: $('jetzt').value,
+      partien: [...$('zeilen').children].map(tr => ({
+        t: tr.querySelector('input[type=datetime-local]').value,
+        p: [...tr.querySelectorAll('select')].map(x => Number(x.value)),
+        a: Number(tr.querySelectorAll('input[type=number]')[0].value),
+        b: Number(tr.querySelectorAll('input[type=number]')[1].value)
+      }))
+    }, null, 1);
+  }
+
+  let sicht = 'karten';
+  function zeige(){
+    if(sicht === 'karten') zeigeKarten();
+    else if(sicht === 'schritte') zeigeSchritte();
+    else zeigeJson();
+  }
+  document.querySelectorAll('.reiter button').forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll('.reiter button').forEach(x => x.classList.remove('on'));
+      b.classList.add('on'); sicht = b.dataset.v; zeige();
+    };
+  });
+
+  // ── Steuerung ──────────────────────────────────────────────────────
+  function melde(text, fehler){
+    $('stand').textContent = text;
+    $('stand').className = 'stand' + (fehler ? ' fehler' : '');
+  }
+
+  async function starte(html){
+    const doc = baue(html);
+    await new Promise(res => {
+      const f = $('app');
+      f.onload = () => res();
+      f.srcdoc = doc;
+    });
+    bereit = true;
+    $('standApp').textContent = 'Geladen: ' + Math.round(html.length / 1024)
+      + ' kB. Die App läuft im Rahmen — ohne Datenbank, ohne Netz, mit eigenem Speicher.';
+  }
+
+  $('btnFetch').onclick = async () => {
+    $('standApp').textContent = 'Lade …';
+    try {
+      const r = await fetch('../index.html', {cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP ' + r.status);
+      await starte(await r.text());
+    } catch(e){
+      $('standApp').textContent = 'Konnte ../index.html nicht laden (' + e.message
+        + '). Über file:// ist das dem Browser verboten — die Datei rechts auswählen.';
+    }
+  };
+  $('datei').onchange = async ev => {
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    try { await starte(await f.text()); }
+    catch(e){ $('standApp').textContent = 'Fehler: ' + e.message; }
+  };
+
+  async function rechne(was){
+    if(!bereit){ melde('Erst die App laden (Schritt 1).', true); return; }
+    const ps = spielerRohe(), ms = partien();
+    if(ps.length < 4){ melde('Mindestens vier Spieler.', true); return; }
+    if(!ms.length){ melde('Mindestens eine Partie.', true); return; }
+    const jetzt = $('jetzt').value
+      ? new EchtDate($('jetzt').value).getTime()
+      : new EchtDate(ms[ms.length-1].created_at).getTime() + 300000;
+    melde('Rechne …');
+    try {
+      await ruf('window.__uhr(' + jetzt + ')');
+      await ruf(setzCode(ps, ms, saisons(jetzt, ms)));
+      if(was === 'schritte'){
+        letzteSchritte = await ruf(SCHRITTE);
+        letzteKarten = await ruf(FEED);
+        sicht = 'schritte';
+      } else {
+        letzteKarten = await ruf(FEED);
+        sicht = 'karten';
+      }
+      document.querySelectorAll('.reiter button').forEach(x =>
+        x.classList.toggle('on', x.dataset.v === sicht));
+      zeige();
+      melde(ms.length + ' Partien, ' + letzteKarten.roh + ' Stories gebildet, '
+        + letzteKarten.karten.length + ' im Feed.');
+    } catch(e){ melde('Fehler: ' + e.message, true); }
+  }
+
+  $('btnRun').onclick = () => rechne('feed');
+  $('btnSchritte').onclick = () => rechne('schritte');
+  $('btnJson').onclick = () => {
+    sicht = 'json';
+    document.querySelectorAll('.reiter button').forEach(x =>
+      x.classList.toggle('on', x.dataset.v === 'json'));
+    zeige();
+  };
+
+  $('btnZeile').onclick = () => zeile(null);
+  $('btnKopie').onclick = () => {
+    const l = $('zeilen').lastElementChild;
+    if(!l){ zeile(null); return; }
+    const t = new EchtDate(l.querySelector('input[type=datetime-local]').value);
+    t.setMinutes(t.getMinutes() + 12);
+    zeile({ t: lokal(t.getTime()),
+      p: [...l.querySelectorAll('select')].map(x => Number(x.value)),
+      a: Number(l.querySelectorAll('input[type=number]')[0].value),
+      b: Number(l.querySelectorAll('input[type=number]')[1].value) });
+  };
+  $('btnLeer').onclick = () => { $('zeilen').innerHTML = ''; };
+
+  $('btnSpieltag').onclick = () => {
+    $('zeilen').innerHTML = '';
+    const n = Math.max(4, namen().length);
+    const tag = new EchtDate();
+    tag.setHours(10, 30, 0, 0);
+    // Sieben Partien, die alle Eingetragenen durchlaufen: ein Beispiel mit
+    // vier Spielern an sieben Partien sagt nichts über eine Liga, in der
+    // gewechselt wird.
+    const staende = [[10,6],[10,9],[7,10],[10,0],[10,8],[5,10],[10,4]];
+    const paare = staende.map((_, i) => [0, 1, 2, 3].map(k => (i * 2 + k) % n));
+    paare[3] = paare[0].slice();        // ein Wiedersehen derselben Vierer
+    paare.forEach((p, i) => {
+      const t = new EchtDate(tag.getTime() + i * 22 * 60000);
+      zeile({ t: lokal(t.getTime()), p: p.map(x => x % n),
+        a: staende[i][0], b: staende[i][1] });
+    });
+    $('jetzt').value = lokal(tag.getTime() + 7 * 22 * 60000 + 300000);
+  };
+
+  $('spieler').oninput = () => {
+    [...$('zeilen').children].forEach(tr => {
+      [...tr.querySelectorAll('select')].forEach((s, k) => optionen(s, Number(s.value) || k));
+    });
+  };
+
+  // Start
+  $('spieler').value = STD_SPIELER.join('\n');
+  $('btnSpieltag').click();
+})();
+</script>
+</body>
+</html>
