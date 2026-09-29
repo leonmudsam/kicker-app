@@ -28,6 +28,7 @@ const AW_MIN = {
   teamPleiten: 2,    // Pleiten eines Duos (Zirkus)
   duell: 2,          // direkte Duelle (Erzfeinde, Endgegner)
   spieler: 3,        // Partien eines Spielers, wenn ein Schnitt gebildet wird
+  position: 2,       // Partien auf einer Position (Torjaeger, Eiserne Abwehr)
   spielerSaldo: 5,   // Tor-Saldo je Spiel — ein 10:0 verzerrt sonst zu stark
   enge: 2,           // enge Partien eines Spielers (Clutch, Pechvogel)
   favorit: 3,        // Partien als Favorit (Favoriten-Versager)
@@ -298,9 +299,9 @@ function _awardRankingsUncached(period, sid){
   const mvt=Object.entries(agg.tElo).map(([k,v])=>({ids:k.split('|'),v,g:agg.tGames[k]||0}))
     .filter(x=>x.g>=2).sort((a,b)=>b.v-a.v);
   
-  const scorer=Object.entries(agg.atkGoals).filter(([,v])=>v>0).map(([id,v])=>({id,v,g:agg.atkGoalGames[id],avg:v/agg.atkGoalGames[id]})).filter(x=>x.g>=2).sort((a,b)=>b.avg-a.avg||b.v-a.v);
+  const scorer=Object.entries(agg.atkGoals).filter(([,v])=>v>0).map(([id,v])=>({id,v,g:agg.atkGoalGames[id],avg:v/agg.atkGoalGames[id]})).filter(x=>x.g>=AW_MIN.position).sort((a,b)=>b.avg-a.avg||b.v-a.v);
   const wall=Object.entries(agg.defConceded).filter(([id])=>agg.defGames_[id]!==0).map(([id,v])=>({id,v,g:agg.defGames_[id]||1}))
-    .filter(x=>x.g>=2).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
+    .filter(x=>x.g>=AW_MIN.position).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
   const iceList=Object.entries(agg.iceWins).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
   
   const grinder=Object.entries(agg.pGames).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
@@ -313,11 +314,11 @@ function _awardRankingsUncached(period, sid){
   const streaks=longestStreaks(ms);
   
   const worstWr=Object.entries(agg.pWins).map(([id,w])=>({id,w,g:agg.pGames[id],wr:agg.pGames[id]?w/agg.pGames[id]:0}))
-    .filter(x=>x.g>=3).sort((a,b)=>a.wr-b.wr||b.g-a.g);
+    .filter(x=>x.g>=AW_MIN.spieler).sort((a,b)=>a.wr-b.wr||b.g-a.g);
   const worstAtk=Object.entries(agg.atkGoals).map(([id,v])=>({id,v,g:agg.atkGoalGames[id]||1}))
-    .filter(x=>x.g>=2).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
+    .filter(x=>x.g>=AW_MIN.position).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
   const worstDef=Object.entries(agg.defConceded).map(([id,v])=>({id,v,g:agg.defGames_[id]||1}))
-    .filter(x=>x.g>=2).sort((a,b)=>(b.v/b.g)-(a.v/a.g));
+    .filter(x=>x.g>=AW_MIN.position).sort((a,b)=>(b.v/b.g)-(a.v/a.g));
   const worstElo=Object.entries(agg.pElo).map(([id,v])=>({id,v})).sort((a,b)=>a.v-b.v);
 
   // ═══ NEUE AWARDS v3 ═══
@@ -1435,47 +1436,47 @@ function vAwards(){
 //   cls   — Farbklasse (acid|blue|gold|orange|purple|red)
 //   why   — Knappe Erklärung (1 Satz, idealerweise inkl. Mindestschwellen)
 const AWARD_META={
-  wins:        {title:'Meiste Siege',          cls:'gold',  why:'Wer hat im Zeitraum die meisten Spiele gewonnen.'},
-  mvt:         {title:'Bestes Team',           cls:'gold',  why:'Das Duo, das im Zeitraum zusammen die meisten Elo-Punkte geholt hat.'},
-  streaks:     {title:'Längste Siegesserie',   cls:'acid',  why:'Meiste Siege in Folge im Zeitraum.'},
-  onFire:      {title:'On Fire',               cls:'acid',  why:'Längste aktuell noch laufende Siegesserie.'},
-  scorer:      {title:'Torjäger',              cls:'orange',why:'Höchster Tore-Schnitt pro Spiel als Stürmer. Min. 2 Sturm-Spiele.'},
-  wall:        {title:'Eiserne Abwehr',        cls:'blue',  why:'Niedrigster Gegentore-Schnitt pro Spiel als Verteidiger. Min. 2 Abwehr-Spiele.'},
-  ice:         {title:'Eiskalt',               cls:'blue',  why:'Meiste Zu-Null-Siege als Verteidiger.'},
-  endgegner:   {title:'Endgegner',             cls:'purple',why:'Spieler-Paar mit dem höchsten Anteil "wir treffen als Gegner aufeinander" an der gemeinsamen Match-Aktivität. Min. 3 Begegnungen, beide Spieler min. 5 Spiele.'},
-  clutch:      {title:'Clutch-Player',         cls:'acid',  why:'Höchste Siegrate in knappen Spielen (Tordifferenz ≤ 2). Min. 2 knappe Spiele.'},
-  carryKing:   {title:'Carry-King',            cls:'acid',  why:'Meiste Siege, bei denen der Mitspieler einer der drei schwächsten Spieler im Match war.'},
-  bestDuo:     {title:'Unzertrennlich',        cls:'blue',  why:'Duo mit den meisten gemeinsamen Spielen im Zeitraum.'},
-  upset:       {title:'Größte Überraschung',   cls:'orange',why:'Das Match mit der niedrigsten Sieg-Wahrscheinlichkeit für den späteren Sieger.'},
-  biggest:     {title:'Höchster Sieg',         cls:'purple',why:'Das Match mit der größten Tordifferenz.'},
-  perfect:     {title:'Beste Bilanz',          cls:'gold',  why:'Höchste Siegrate im Zeitraum, mit einer dynamischen Mindest-Spielzahl für Stabilität.'},
-  grinder:     {title:'Vielspieler',           cls:'blue',  why:'Wer hat im Zeitraum die meisten Matches gespielt.'},
-  worstWr:     {title:'Schlechtester Spieler', cls:'red',   why:'Niedrigste Siegrate im Zeitraum. Min. 3 Spiele.'},
-  coldStreak:  {title:'Eiskalt erwischt',      cls:'red',   why:'Längste aktuell noch laufende Niederlagenserie.'},
-  lossStreaks: {title:'Längste Niederlagenserie',cls:'red', why:'Meiste Niederlagen in Folge im Zeitraum.'},
-  worstAtk:    {title:'Zahnloser Stürmer',     cls:'red',   why:'Wenigste erzielte Tore pro Spiel als Stürmer. Min. 2 Sturm-Spiele.'},
-  worstDef:    {title:'Löchrigste Abwehr',     cls:'red',   why:'Meiste kassierte Tore pro Spiel als Verteidiger. Min. 2 Abwehr-Spiele.'},
-  worstTeam:   {title:'Schlechtestes Team',    cls:'red',   why:'Duo mit der niedrigsten Siegrate. Min. 2 gemeinsame Spiele.'},
-  showmaster:  {title:'Showmaster',            cls:'gold',  why:'Meiste 10:0-Siege im Zeitraum.'},
-  solo:        {title:'Einzelkämpfer',         cls:'acid',  why:'Höchste Siegrate in Spielen mit einem Bottom-3-Mitspieler. Min. 2 solche Spiele.'},
-  formtief:    {title:'Formtief',              cls:'red',   why:'Größter Abstand zwischen persönlichem Peak-Elo und aktueller Elo (innerhalb einer Saison).'},
-  zirkus:      {title:'Zirkus',                cls:'red',   why:'Team mit dem höchsten Anteil hoher Niederlagen (5+ Tore Unterschied) an den gemeinsamen Spielen. Min. 5 Team-Spiele.'},
-  baustelle:   {title:'Baustelle',             cls:'red',   why:'Team mit der längsten gemeinsamen Niederlagenserie.'},
-  peakElo:     {title:'Peak Elo',              cls:'gold',  why:'Höchster jemals erreichter Saison-Elo-Stand, saison-übergreifend.'},
-  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:'Spieler mit den meisten Player-of-the-Week-Auszeichnungen. Die laufende Woche wird nicht gezählt.'},
-  dayKing:     {title:'Tageskönig',            cls:'gold',  why:'Spieler mit den meisten Player-of-the-Day-Auszeichnungen. Der laufende Tag wird nicht gezählt.'},
+  wins:        {title:'Meiste Siege',          cls:'gold',  why:`Die meisten gewonnenen Partien im Zeitraum.`},
+  mvt:         {title:'Bestes Team',           cls:'gold',  why:`Das Duo, das im Zeitraum zusammen die meisten Elo-Punkte geholt hat. Ab 2 gemeinsamen Partien.`},
+  streaks:     {title:'Längste Siegesserie',   cls:'acid',  why:`Die meisten Siege in Folge im Zeitraum.`},
+  onFire:      {title:'On Fire',               cls:'acid',  why:`Die längste Siegesserie, die gerade noch läuft.`},
+  scorer:      {title:'Torjäger',              cls:'orange',why:`Die meisten Tore je Partie im Sturm. Ab ${AW_MIN.position} Sturmpartien.`},
+  wall:        {title:'Eiserne Abwehr',        cls:'blue',  why:`Die wenigsten Gegentore je Partie in der Abwehr. Ab ${AW_MIN.position} Abwehrpartien.`},
+  ice:         {title:'Eiskalt',               cls:'blue',  why:`Die meisten Siege ohne Gegentor in der Abwehr.`},
+  endgegner:   {title:'Endgegner',             cls:'purple',why:`Zwei Spieler, die sich am häufigsten als Gegner begegnen, gemessen am Anteil an den Partien dessen, der weniger spielt. Ab ${AW_MIN.duell} Begegnungen, beide ab ${AW_MIN.spieler} Partien.`},
+  clutch:      {title:'Clutch-Player',         cls:'acid',  why:`Die höchste Siegquote in engen Partien (höchstens 2 Tore Unterschied). Ab ${AW_MIN.enge} engen Partien.`},
+  carryKing:   {title:'Carry-King',            cls:'acid',  why:`Die meisten Siege mit einem Partner, der vor der Partie der Schwächste der vier war.`},
+  bestDuo:     {title:'Unzertrennlich',        cls:'blue',  why:`Das Duo mit den meisten gemeinsamen Partien im Zeitraum.`},
+  upset:       {title:'Größte Überraschung',   cls:'orange',why:`Die Partie mit der niedrigsten Siegchance für den späteren Sieger.`},
+  biggest:     {title:'Höchster Sieg',         cls:'purple',why:`Die Partie mit dem größten Torabstand.`},
+  perfect:     {title:'Beste Bilanz',          cls:'gold',  why:`Die höchste Siegquote im Zeitraum. Verlangt sind 15 % der Partien des fleißigsten Spielers, mindestens ${AW_MIN.spieler} und höchstens 6.`},
+  grinder:     {title:'Vielspieler',           cls:'blue',  why:`Die meisten gespielten Partien im Zeitraum.`},
+  worstWr:     {title:'Schlechtester Spieler', cls:'red',   why:`Die niedrigste Siegquote im Zeitraum. Ab ${AW_MIN.spieler} Partien.`},
+  coldStreak:  {title:'Eiskalt erwischt',      cls:'red',   why:`Die längste Niederlagenserie, die gerade noch läuft.`},
+  lossStreaks: {title:'Längste Niederlagenserie',cls:'red', why:`Die meisten Niederlagen in Folge im Zeitraum.`},
+  worstAtk:    {title:'Zahnloser Stürmer',     cls:'red',   why:`Die wenigsten Tore je Partie im Sturm. Ab ${AW_MIN.position} Sturmpartien.`},
+  worstDef:    {title:'Löchrigste Abwehr',     cls:'red',   why:`Die meisten Gegentore je Partie in der Abwehr. Ab ${AW_MIN.position} Abwehrpartien.`},
+  worstTeam:   {title:'Schlechtestes Team',    cls:'red',   why:`Das Duo mit der niedrigsten Siegquote. Ab 2 gemeinsamen Partien.`},
+  showmaster:  {title:'Showmaster',            cls:'gold',  why:`Die meisten 10:0-Siege im Zeitraum.`},
+  solo:        {title:'Einzelkämpfer',         cls:'acid',  why:`Die höchste Siegquote in Partien, in denen man vor dem Anpfiff der Stärkste der vier war. Ab 2 solchen Partien.`},
+  formtief:    {title:'Formtief',              cls:'red',   why:`Der größte Abstand zwischen dem höchsten und dem aktuellen Elo-Stand innerhalb einer Saison.`},
+  zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
+  baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},
+  peakElo:     {title:'Peak Elo',              cls:'gold',  why:`Der höchste je erreichte Elo-Stand innerhalb einer Saison, über alle Saisons.`},
+  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Die meisten Titel als Player of the Week. Die laufende Woche zählt noch nicht.`},
+  dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Die meisten Titel als Player of the Day. Der laufende Tag zählt noch nicht.`},
   // ── AWARDS v3 ──
-  plusMinus:   {title:'Plus-Minus',            cls:'orange',why:'Höchster Tor-Saldo pro Spiel (Tore minus Gegentore). Min. 10 Spiele.'},
-  underdog:    {title:'Underdog-Held',         cls:'purple',why:'Meiste Siege mit weniger als 35 % Sieg-Wahrscheinlichkeit.'},
-  pechvogel:   {title:'Pechvogel',             cls:'red',   why:'Höchster Anteil knapper Niederlagen (Tordiff. ≤ 2) an allen Spielen. Min. 2 knappe Niederlagen und 5 Spiele.'},
+  plusMinus:   {title:'Plus-Minus',            cls:'orange',why:`Der höchste Torsaldo je Partie (Tore minus Gegentore). Ab ${AW_MIN.spielerSaldo} Partien.`},
+  underdog:    {title:'Underdog-Held',         cls:'purple',why:`Die höchste Siegquote als Außenseiter (Siegchance unter 35 %). Ab ${AW_MIN.unter} solchen Partien.`},
+  pechvogel:   {title:'Pechvogel',             cls:'red',   why:`Der höchste Anteil verlorener enger Partien (höchstens 2 Tore Unterschied). Ab ${AW_MIN.enge} engen Partien.`},
   // ── TEAM-AWARDS v4 ──
-  unstoppable: {title:'Unaufhaltsam',          cls:'acid',  why:'Team mit der längsten Siegesserie. Eine Niederlage beendet die Serie sofort.'},
-  concreteWall:{title:'Betonmauer',            cls:'blue',  why:'Team mit dem niedrigsten Gegentore-Schnitt pro Spiel. Min. 10 gemeinsame Spiele.'},
-  luckyCharm:  {title:'Glückspilze',           cls:'acid',  why:'Team mit dem höchsten Anteil knapper Siege (1 Tor Vorsprung) an den gemeinsamen Spielen. Min. 10 Team-Spiele.'},
-  giantSlayer: {title:'Giant Slayer',          cls:'orange',why:'Team mit der höchsten Erfolgsquote als Underdog (Quote: Siege gegen stärkeres Team / Spiele gegen ein stärkeres Team). Min. 5 Underdog-Matches.'},
-  favoritenschreck:{title:'Favoritenschreck',  cls:'red',   why:'Größter Team-Elo-Unterschied, der durch einen Sieg überwunden wurde.'},
-  rivalry:     {title:'Erzfeinde',             cls:'purple',why:'Team-Paar mit dem höchsten Anteil direkter Duelle an der gemeinsamen Match-Aktivität. Min. 3 Duelle, beide Teams min. 5 Spiele.'},
+  unstoppable: {title:'Unaufhaltsam',          cls:'acid',  why:`Das Duo mit der längsten Siegesserie. Eine Niederlage beendet sie.`},
+  concreteWall:{title:'Betonmauer',            cls:'blue',  why:`Das Duo mit den wenigsten Gegentoren je Partie. Ab ${AW_MIN.teamSpiele} gemeinsamen Partien.`},
+  luckyCharm:  {title:'Glückspilze',           cls:'acid',  why:`Das Duo, das die meisten Partien mit einem Tor Unterschied gewinnt, gemessen an allen solchen Partien. Ab ${AW_MIN.teamEnge} davon.`},
+  giantSlayer: {title:'Giant Slayer',          cls:'orange',why:`Die höchste Siegquote eines Duos gegen ein stärkeres Duo. Ab ${AW_MIN.teamUnter} solchen Partien.`},
+  favoritenschreck:{title:'Favoritenschreck',  cls:'red',   why:`Der größte Elo-Unterschied, den ein Duo mit einem Sieg überwunden hat.`},
+  rivalry:     {title:'Erzfeinde',             cls:'purple',why:`Zwei Duos, die sich am häufigsten gegenüberstehen, gemessen am Anteil an den Partien des Duos, das weniger spielt. Ab ${AW_MIN.duell} Duellen, beide ab ${AW_MIN.teamSpiele} Partien.`},
   // ── NEUE NEGATIV-AWARDS v6 ──
-  cheesePlatter:{title:'Käseteller',           cls:'red',   why:'Team mit dem höchsten Gegentor-Schnitt pro Spiel. Min. 10 gemeinsame Spiele.'},
-  favoriteLoser:{title:'Favoriten-Versager',   cls:'red',   why:'Höchste Niederlagen-Quote in Favoriten-Rollen (Siegerwartung ≥ 65 %). Min. 5 Favoriten-Matches.'}
+  cheesePlatter:{title:'Käseteller',           cls:'red',   why:`Das Duo mit den meisten Gegentoren je Partie. Ab ${AW_MIN.teamSpiele} gemeinsamen Partien.`},
+  favoriteLoser:{title:'Favoriten-Versager',   cls:'red',   why:`Die höchste Niederlagenquote als Favorit (Siegchance ab 65 %). Ab ${AW_MIN.favorit} solchen Partien.`}
 };

@@ -3,13 +3,13 @@
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function vTeams(){
   const T=teamStats().filter(t=>t.g>=4);
-  if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Min. 4 gemeinsame Spiele</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
+  if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
   const showBest=teamView!=='worst';
   
   // ═══ SORTIERUNG BASIEREND AUF teamSort VARIABLE ═══
   let sorted;
   if(teamSort==='wr'){
-    // Standard: Nach Winrate
+    // Standard: nach Siegquote
     sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
   } else if(teamSort==='gd'){
     // Nach Tordifferenz
@@ -55,7 +55,6 @@ function vTeams(){
   };
 
   const gSim=getGlobalSim();
-  const seasonTeamMap=gSim.seasonTeamElo[currentSeason().id]||{};
 
   // Dezente Team-/Spieler-Suche: filtert das aktuelle (sortierte) Feld nach
   // Spielername ODER kombiniertem Team-Namen. Beim Suchen keine Top-3-Medaillen.
@@ -75,25 +74,21 @@ function vTeams(){
     const wr=Math.round(t.w/t.g*100);
     const gd=t.gf-t.ga;
     const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
-    const eloGain=Math.round(seasonTeamMap[keyTeam]||0);
     
     // ═══ DYNAMISCHE HAUPTMETRIK BASIEREND AUF teamSort ═══
     // Grün und Rot heißen Richtung [§C25]: Tordifferenz und Elo-Zuwachs haben
     // eine, eine Siegrate hat keine. Die trägt deshalb Tinte — und Gold, wenn
     // sie dem ersten Platz gehört (weiter unten über TOP[]).
-    let mainValue, mainLabel, mainColor;
+    let mainValue, mainColor;
     if(teamSort==='wr'){
       mainValue=wr+'%';
-      mainLabel='WR';
       mainColor='var(--ink)';
     } else if(teamSort==='gd'){
       mainValue=(gd>=0?'+':'')+gd;
-      mainLabel='TD';
       mainColor=gd>=0?'var(--acid)':'var(--red)';
     } else if(teamSort==='elo'){
       const eloGainTotal=Math.round(gSim.teamElo[keyTeam]||0);
       mainValue=(eloGainTotal>=0?'+':'')+eloGainTotal;
-      mainLabel='Elo';
       mainColor=eloGainTotal>=0?'var(--acid)':'var(--red)';
     }
 
@@ -111,7 +106,7 @@ function vTeams(){
         ${avPair(t.ids[0],t.ids[1])}
         <div style="flex:1;min-width:0">
           <div style="font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em;line-height:1.1">${esc(t.ids.map(pname).join(' & '))}</div>
-          <div class="num" style="margin-top:4px;font-size:10.5px;color:var(--muted)">${t.w}–${t.g-t.w} · TD ${gd>=0?'+':''}${gd}</div>
+          <div class="num" style="margin-top:4px;font-size:10.5px;color:var(--muted)">${t.w}–${t.g-t.w} · ${gd>=0?'+':''}${gd} Tore</div>
         </div>
         <div style="font-family:'Archivo Black',sans-serif;font-size:20px;color:${i===0&&isTop&&teamSort==='wr'?'var(--gold)':mainColor};line-height:1;flex-shrink:0">${mainValue}</div>
       </div>
@@ -120,7 +115,7 @@ function vTeams(){
 
 
   return `
-    <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' mit min. 4 gemeinsamen Spielen'}</p></div>
+    <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}</p></div>
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
@@ -132,8 +127,8 @@ function vTeams(){
       <button data-teamtoggle="worst" class="${!showBest?'on':''}">▼ Schlechteste</button>
     </div>
     <div class="ui-tabs">
-      <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Winrate</button>
-      <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Tordiff</button>
+      <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Siegquote</button>
+      <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Tordifferenz</button>
       <button data-teamsort="elo" class="${teamSort==='elo'?'on':''}">Elo-Zuwachs</button>
     </div>
     ${arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden')}`;

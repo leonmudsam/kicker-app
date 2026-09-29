@@ -1191,6 +1191,40 @@ ok(_awSchwelle.leer.length <= 2,
    'nach einer vollen Woche steht fast jede Award-Kachel',
    _awSchwelle.leer.length + ' leer: ' + _awSchwelle.leer.join(' '));
 
+// ── Die Erklärung einer Kachel nennt die Schwelle, die gilt ─────────
+// „So wird gewertet" stand als fester Text da und war den Schwellen nicht
+// gefolgt: die Betonmauer verlangte laut Text zehn gemeinsame Spiele und
+// in der Rechnung drei, der Carry-King nannte „einen der drei schwächsten"
+// Mitspieler und zählte den schwächsten der vier. Wo eine Schwelle aus
+// AW_MIN kommt, steht ihre Zahl im Text — und die Liste hält sie ein.
+const _awWhy = JSON.parse(K.eval(`JSON.stringify((function(){
+  const soll = {scorer:'position', wall:'position', worstAtk:'position', worstDef:'position',
+    worstWr:'spieler', clutch:'enge', pechvogel:'enge', concreteWall:'teamSpiele',
+    cheesePlatter:'teamSpiele', luckyCharm:'teamEnge', giantSlayer:'teamUnter',
+    zirkus:'teamPleiten', plusMinus:'spielerSaldo', underdog:'unter', favoriteLoser:'favorit'};
+  const falsch = [];
+  Object.keys(soll).forEach(k => {
+    const w = (AWARD_META[k] || {}).why || '';
+    const zahlen = (w.match(/\\d+/g) || []).map(Number);
+    const n = AW_MIN[soll[k]];
+    const fremd = zahlen.filter(z => z > 1 && z < 30 && z !== n && z !== 2 && z !== 5);
+    if(!zahlen.includes(n) || fremd.length) falsch.push(k + ': ' + w);
+  });
+  Object.keys(AWARD_META).forEach(k => {
+    if(/\\bMin\\./.test(AWARD_META[k].why)) falsch.push(k + ' kürzt ab');
+  });
+  // Eine Woche, weil dort Spieler mit einer einzigen Sturmpartie vorkommen.
+  const R = awardRankings('week');
+  const unter = [];
+  [['scorer','position'],['wall','position'],['worstAtk','position'],['worstDef','position'],['worstWr','spieler']]
+    .forEach(([k, f]) => (R[k] || []).forEach(x => { if(x.g < AW_MIN[f]) unter.push(k + ' ' + x.g); }));
+  return {falsch, unter};
+})())`));
+ok(_awWhy.falsch.length === 0, 'jede Erklärung einer Kachel nennt die Schwelle, die gilt',
+   _awWhy.falsch.join(' | ') || 'alle');
+ok(_awWhy.unter.length === 0, 'und jede Liste hält diese Schwelle ein',
+   _awWhy.unter.join(', ') || 'alle');
+
 // ── Der Nenner ist die Teilmenge, um die es geht ────────────────────
 // „Pechvogel" zaehlte knappe Niederlagen gegen ALLE Partien und kuerte
 // damit den Vielspieler statt den Pechvogel. Er ist der Spiegel des
