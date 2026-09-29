@@ -123,7 +123,7 @@
   .pp-pos-c.atk .bar > i{background:linear-gradient(90deg,var(--orange),#ffb47e)}
   .pp-pos-c.def .bar > i{background:linear-gradient(90deg,var(--blue),#9bd6f5)}
 
-  .pp-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .pp-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
   .pp-k{padding:15px 10px;text-align:center;background:var(--surface);
     border:1px solid rgba(255,255,255,.05);border-radius:var(--r);
     box-shadow:0 6px 16px -10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.03);
@@ -331,7 +331,7 @@
   .pp-r-rich .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex-shrink:0;border:1.5px solid var(--surface);font-family:'Archivo Black',sans-serif;color:#0a0c0b}
   .pp-r-rich .av.empty{background:var(--surface3);color:var(--muted);font-size:14px}
   .pp-r-rich .info{flex:1;min-width:0}
-  .pp-r-rich .l{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:'Sometype Mono',monospace;display:flex;align-items:center;gap:4px;line-height:1}
+  .pp-r-rich .l{font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-family:'Sometype Mono',monospace;display:flex;align-items:center;gap:4px;line-height:1}
   .pp-r-rich .l svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
   .pp-r-rich .name{font-family:'Archivo Black',sans-serif;font-size:12.5px;letter-spacing:-.01em;margin-top:4px;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pp-r-rich .stat{font-family:'Sometype Mono',monospace;font-size:10.5px;margin-top:3px;font-weight:600}

@@ -71,16 +71,16 @@ function playerAwards(id){
   // Display-Werte für die Trophäen-Anzeige im Spieler-Awards-Sheet.
   // Format ist konsistent mit den Card-Aufrufen in vAwards (Awards-Tab).
   const singleDisplayFns={
-    wins:x=>x.v, streaks:x=>x.v+'er', scorer:x=>x.avg.toFixed(1),
-    wall:x=>(x.v/x.g).toFixed(1), perfect:x=>Math.round(x.wr*100)+'%', grinder:x=>x.v,
+    wins:x=>x.v, streaks:x=>x.v+'er', scorer:x=>komma(x.avg,1),
+    wall:x=>komma((x.v/x.g),1), perfect:x=>Math.round(x.wr*100)+'%', grinder:x=>x.v,
     worstWr:x=>Math.round(x.wr*100)+'%',
-    worstAtk:x=>(x.v/x.g).toFixed(1), worstDef:x=>(x.v/x.g).toFixed(1),
+    worstAtk:x=>komma((x.v/x.g),1), worstDef:x=>komma((x.v/x.g),1),
     clutch:x=>Math.round(x.wr*100)+'%',
     carryKing:x=>x.v, onFire:x=>x.v+'er', coldStreak:x=>x.v+'er',
     lossStreaks:x=>x.v+'er', solo:x=>Math.round(x.wr*100)+'%',
     formtief:x=>'-'+Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
     peakElo:x=>x.v, weekKing:x=>x.v, dayKing:x=>x.v,
-    plusMinus:x=>(x.v>=0?'+':'')+x.v.toFixed(1), underdog:x=>x.v,
+    plusMinus:x=>(x.v>=0?'+':'')+komma(x.v,1), underdog:x=>x.v,
     pechvogel:x=>Math.round(x.pct*100)+'%',
     // ── NEUE NEGATIV-AWARDS v6 ──
     favoriteLoser:x=>Math.round(x.v*100)+'%'
@@ -132,12 +132,12 @@ function playerAwards(id){
     baustelle:x=>x.best+'er',
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppable:x=>x.v+'er',
-    concreteWall:x=>x.v.toFixed(2),
+    concreteWall:x=>komma(x.v,2),
     luckyCharm:x=>Math.round(x.v*100)+'%',
     giantSlayer:x=>Math.round(x.v*100)+'%',
     favoritenschreck:x=>x.v+' Elo',
     // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:x=>x.v.toFixed(2)
+    cheesePlatter:x=>komma(x.v,2)
   };
   Object.entries(teamKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;
@@ -692,8 +692,8 @@ const rankProgHtml = rInfo ? `
               <div class="pp-rd-meta"><b>${w}</b>/<b>${g}</b> Spiele<br>Ø <b>${valNum}</b> ${valLbl}</div>
             </div>`;
         };
-        const atkAvg = s.atkG ? (s.atkGoals/s.atkG).toFixed(1) : '–';
-        const defAvg = s.defG ? (s.defConceded/s.defG).toFixed(1) : '–';
+        const atkAvg = s.atkG ? komma((s.atkGoals/s.atkG),1) : '–';
+        const defAvg = s.defG ? komma((s.defConceded/s.defG),1) : '–';
         return `<div class="pp-pos-combined">
           <div class="head"><div class="t">Rollen-Performance</div></div>
           <div class="pp-roles-donuts">
@@ -706,13 +706,13 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.35s">
       <div class="pp-sec-title">
-        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamt-Stats</h4></div>
+        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamtbilanz</h4></div>
         <div class="m">${s.games} Spiele</div>
       </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
-        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegrate</div></div>
-        <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Tordiff</div></div>
+        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
+        <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Torbilanz</div></div>
       </div>
     </div>
 
@@ -819,13 +819,13 @@ const rankProgHtml = rInfo ? `
           // Bester Mate
           const bestAttr  = best?` data-team="${esc([id,best.mid].sort().join('|'))}"`:'';
           const bestCard  = best
-            ? card('good', bestAttr, 'handshake', 'Bester Mate', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
-            : card('good', '', 'handshake', 'Bester Mate', null);
+            ? card('good', bestAttr, 'handshake', 'Bester Partner', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
+            : card('good', '', 'handshake', 'Bester Partner', null);
           // Schlechtester Mate (nur wenn ≠ Bester)
           const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}"`:'';
           const worstCard = worst&&best&&worst.mid!==best.mid
-            ? card('bad', worstAttr, 'chartDown', 'Schlecht. Mate', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
-            : card('bad', '', 'chartDown', 'Schlecht. Mate', null);
+            ? card('bad', worstAttr, 'chartDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
+            : card('bad', '', 'chartDown', 'Schwächster Partner', null);
           // Lieblingsgegner → klickbar zum Gegnerprofil
           const favAttr  = fav?` data-detail="${esc(fav.oid)}"`:'';
           const favCard  = fav
@@ -1478,7 +1478,7 @@ function _badgeProgress(badgeId, playerId){
       const stats = playerStats(playerId);
       const atkW = stats.atkW || 0, defW = stats.defW || 0;
       const cur = Math.min(atkW, defW, 20);
-      return {cur, tgt: 20, label: 'min. Sturm- & Abwehr-Siege'};
+      return {cur, tgt: 20, label: 'Siege auf der schwächeren Position'};
     }
     case 'mr_disaster': {
       // Aktuelle Saison: wie viele 0:10-Niederlagen hat der Spieler bereits?
@@ -1579,7 +1579,7 @@ function _badgeStreakState(badgeId, playerId){
       ordered.forEach(m => {
         cur = Math.abs(m.score_a-m.score_b) <= 2 ? cur+1 : 0;
       });
-      return {cur, tgt:5, label:'Krimis in Folge (Tordiff ≤ 2)', hint:'Setzt bei klarem Ergebnis (Tordiff > 2) zurück'};
+      return {cur, tgt:5, label:'Krimis in Folge (höchstens 2 Tore Unterschied)', hint:'Setzt bei klarem Ergebnis (mehr als 2 Tore Unterschied) zurück'};
     }
     case 'repeat_score': {
       // Siege mit identischem Endstand in Folge — Niederlage oder anderer Score bricht.

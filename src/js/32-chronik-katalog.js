@@ -1735,7 +1735,7 @@ const DISZIPLINEN = [
       const q=Math.max(_stPBinom(a.map(s=>s.exp),a.filter(s=>s.win).length),1e-6);
       if(!b||q<b.q)b={q,a};});p._au=b;return b?-Math.log10(b.q):null;},
         1.5228787452803376,
-        (p,v)=>`${p._au.a.filter(s=>s.win).length} von ${p._au.a.length} an einem Tag · erwartet waren ${Math.round(p._au.q*1000)/10} %`))}},
+        (p,v)=>`${p._au.a.filter(s=>s.win).length} von ${p._au.a.length} an einem Tag · erwartet waren ${komma(p._au.q*100, 1)} %`))}},
 
   {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rocket', tone:'gold', art:'leistung',
     monat:{

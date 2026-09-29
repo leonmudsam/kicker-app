@@ -178,6 +178,9 @@ function _ndBeziehung(s, anzahl){
   if(t === 'chronik_monat') return 'die meisten Einträge in diesem Monat';
   if(t === 'badge_unlocked') return 'mit derselben Auszeichnung';
   if(t === 'potd' || t === 'potw') return 'punktgleich an der Spitze';
+  // Das Blatt einer Partie zeigt ihre Sieger. „in derselben Partie" stand
+  // darunter — auf dem Blatt, das diese Partie IST.
+  if(t === 'spiel') return 'gewinnen diese Partie';
   // Die Sammelkarte buendelt einen MOMENT, nicht zwingend eine Partie: die
   // Gruppe entsteht ueber die Minute [§C33].
   if(t === 'sammel'){
@@ -187,6 +190,9 @@ function _ndBeziehung(s, anzahl){
     if(q === 'erfolg') return 'mit demselben Erfolg';
     // Zwei Ergebnisse desselben Tages verbindet der Tag, nicht die Partie.
     if(q === 'ergebnis') return 'an diesem Spieltag';
+    // Die Karte einer Partie hat ihre Partie: „im selben Moment" stimmt,
+    // sagt aber weniger als das, was alle Zeilen gemeinsam haben.
+    if(q === 'spiel' && (s.dataRef || {}).matchId) return 'in dieser Partie';
     return q === 'tafel' ? 'an der Ewigen Tafel' : 'im selben Moment';
   }
   if(((s && s.dataRef) || {}).matchId) return 'in derselben Partie';
@@ -948,7 +954,12 @@ function _newsDetailMitte(s){
         // „3 Partien an 2 Tagen" steht schon im Text der Karte, drei Zeilen
         // darueber. Die Zeile bleibt nur, wenn er sie nicht nennt.
         const kopfWert = `${d.spiele || 0} an ${d.tage || 0} ${d.tage === 1 ? 'Tag' : 'Tagen'}`;
-        const kopf = _ndOben.indexOf(_ndNormal(kopfWert)) >= 0 ? '' : `<div class="nd-stat-row">
+        // Der Text sagt „20 Spiele an 4 Tagen", die Zeile „20 an 4 Tagen" —
+        // verglichen wurde nur die zweite Form, und beide standen da.
+        const nennt = [kopfWert, `${d.spiele || 0} Spiele an ${d.tage || 0}`,
+          `${d.spiele || 0} Partien an ${d.tage || 0}`]
+          .some(v => _ndOben.indexOf(_ndNormal(v)) >= 0);
+        const kopf = nennt ? '' : `<div class="nd-stat-row">
             <div class="nd-stat-label">Partien in dieser Woche</div>
             <div class="nd-stat-val acid">${esc(kopfWert)}</div></div>`;
         const zeilen = teile.map(t => {
@@ -1216,28 +1227,29 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val acid">#${rankInfo.pre} → #${rankInfo.post}</div>
           </div>` : ''}
           ${wechselHtml ? `<div class="nd-section">Alle ${ev.length} Wechsel des Tages</div>${wechselHtml}` : ''}
-          ${matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : ''}`;
+          ${matchHtml ? `<div class="nd-section">Die Partie</div>${matchHtml}` : ''}`;
       }
       case 'top_form': {
-        const form = _newsRecentForm(d.pid, 10);
-        return `<div class="nd-section">Letzte 10 Matches</div>
+        const form = _newsRecentForm(d.pid, 10, s);
+        return `<div class="nd-section">Die letzten 10 Partien bis hierher</div>
           ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
           <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
             <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
             <div class="nd-stat-val acid">${d.wins}/10 Siege</div></div>
           ${form.currentStreak >= 2 ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Aktuelle Serie</div>
-            <div class="nd-stat-val acid">${form.currentStreak}× Sieg</div></div>` : ''}`;
+            <div class="nd-stat-label">Siege in Folge</div>
+            <div class="nd-stat-val acid">${form.currentStreak}</div></div>` : ''}`;
       }
       case 'loss_streak': {
-        const form = _newsRecentForm(d.pid, 10);
+        // Die Reihe der letzten zehn steht nur, wenn sie mehr zeigt als die
+        // Serie selbst: bei zehn Pleiten in Folge ist sie dieselbe Zeichnung
+        // ein zweites Mal. Die Zeile „Leo · 10× Niederlage in Folge" darunter
+        // nannte dieselbe Zahl ein drittes Mal und ist weg [§C33 `_ndNeu`].
+        const form = d.streak < 10 ? _newsRecentForm(d.pid, 10, s) : {strip:''};
         return `<div class="nd-section">Die Serie</div>
           ${_newsSerienBand(d.streak, true)}
-          <div class="nd-section">Letzte 10 Matches</div>
-          ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
-          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
-            <div class="nd-stat-val neg">${d.streak}× Niederlage in Folge</div></div>`;
+          ${form.strip ? `<div class="nd-section">Die letzten 10 Partien bis hierher</div>
+          <div class="nd-form-strip">${form.strip}</div>` : ''}`;
       }
       case 'badge_unlocked': {
         // v8.6: bei konsolidierten Karten (mehrere Spieler, gleicher Badge im
@@ -1268,9 +1280,9 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val neg">${esc(nameOf(d.nemesisOppId))} ›</div></div>` : '';
         return medaille + playersHtml + nemRow
           + (eloChg !== null ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Match-Elo</div>
+            <div class="nd-stat-label">Elo aus dieser Partie</div>
             <div class="nd-stat-val ${eloChg>=0?'pos':'neg'}">${eloChg>=0?'+':''}${eloChg}</div></div>` : '')
-          + (matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : '');
+          + (matchHtml ? `<div class="nd-section">Die Partie</div>${matchHtml}` : '');
       }
       // Die gesammelten runden Marken eines Tages. Bei EINER Marke ist das
       // dieselbe Aussage wie bei einer einzelnen Auszeichnung, also dasselbe
@@ -1286,7 +1298,7 @@ function _newsDetailMitte(s){
           return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
               (typeof rarityOf === 'function') ? rarityOf(l[0].badgeId) : 'common',
               l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
-            + (d.matchId ? `<div class="nd-section">Auslösendes Match</div>`
+            + (d.matchId ? `<div class="nd-section">Die Partie</div>`
                 + _newsMatchVsBlock(d.matchId) : '');
         }
         return `<div class="nd-section">${l.length} runde Marken</div>`
@@ -1323,7 +1335,7 @@ function _newsDetailMitte(s){
       case 'team_loss_streak': {
         const verloren = d.type === 'team_loss_streak';
         let tw = null;
-        try { tw = teamStatsFromMatches(matches).find(t =>
+        try { tw = teamStatsFromMatches(_ndBisPartie(s)).find(t =>
           (t.ids || []).includes(d.a) && (t.ids || []).includes(d.b)); } catch(e){}
         // Die Zahl der Partien steht schon als Lauf darueber — sie stand hier
         // ein zweites Mal als Ziffer.
@@ -1341,7 +1353,7 @@ function _newsDetailMitte(s){
         }
         return `<div class="nd-section">${verloren ? 'Die Durststrecke' : 'Die Serie'}</div>
           ${_newsSerienBand(d.streak, verloren)}
-          ${tw ? `<div class="nd-stat-row"><div class="nd-stat-label">Gemeinsame Bilanz</div>
+          ${tw ? `<div class="nd-stat-row"><div class="nd-stat-label">Gemeinsame Bilanz bis hierher</div>
             <div class="nd-stat-val">${tw.w}:${tw.g - tw.w}</div></div>
           <div class="nd-stat-row"><div class="nd-stat-label">Siegquote als Duo</div>
             <div class="nd-stat-val ${tw.w * 2 >= tw.g ? 'acid' : 'neg'}">${Math.round(tw.w / tw.g * 100)} %</div></div>
@@ -1352,18 +1364,15 @@ function _newsDetailMitte(s){
       }
       case 'jubilee': {
         // Karriere-Bilanz nutzen statt nur Total — bestehende Stats-Funktion.
-        const stats = _newsPlayerCareer(d.pid);
-        return `<div class="nd-section">Karriere</div>
-          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
-            <div class="nd-stat-val gold">${d.total} Spiele</div></div>
+        const stats = _ndBilanzBis(d.pid, s);
+        return `<div class="nd-section">Die ersten ${esc(String(d.total))} Spiele</div>
           ${stats ? `<div class="nd-stat-row">
             <div class="nd-stat-label">Siege / Niederlagen</div>
             <div class="nd-stat-val">${stats.wins} / ${stats.losses}</div></div>
           <div class="nd-stat-row">
-            <div class="nd-stat-label">Win-Rate</div>
-            <div class="nd-stat-val acid">${stats.winRate}%</div></div>` : ''}
-          ${d.matchId ? `<div class="nd-section">Jubiläums-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+            <div class="nd-stat-label">Siegquote</div>
+            <div class="nd-stat-val acid">${stats.winRate} %</div></div>` : ''}
+          ${d.matchId ? `<div class="nd-section">Die Jubiläumspartie</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'quiet_week': {
         return `<div class="nd-section">Aktivität</div>
@@ -1430,21 +1439,21 @@ function _newsDetailMitte(s){
       case 'milestone_wins':
       case 'milestone_goals':
       case 'milestone_elo': {
-        const stats = _newsPlayerCareer(d.pid);
+        const stats = _ndBilanzBis(d.pid, s);
         return `<div class="nd-section">Meilenstein</div>
           <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
             <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
             <div class="nd-stat-val gold">${esc(d.milestone)}</div></div>
           ${stats ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Karriere-Bilanz</div>
-            <div class="nd-stat-val">${stats.wins}W · ${stats.losses}L</div></div>` : ''}
-          ${d.matchId ? `<div class="nd-section">Meilenstein-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+            <div class="nd-stat-label">Bilanz bis zu dieser Partie</div>
+            <div class="nd-stat-val">${stats.wins} : ${stats.losses}</div></div>` : ''}
+          ${d.matchId ? `<div class="nd-section">Die Partie zum Meilenstein</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'elo_swing': {
         // Vorher stand hier der Name — den der Kopf zwei Zeilen darueber schon
         // zeigt — und die Zahl, die auf der Karte stand. Jetzt traegt das Blatt
         // den Ausschlag gross und daneben, woher er kommt.
-        const form = _newsRecentForm(d.pid, 10);
+        const form = _newsRecentForm(d.pid, 10, s);
         let elo = null;
         try { elo = Math.round(((getGlobalSim() || {}).careerElo || {})[d.pid]); } catch(e){}
         return `<div class="nd-gwert ${d.delta >= 0 ? '' : 'rot'}">
@@ -1454,8 +1463,8 @@ function _newsDetailMitte(s){
           ${elo ? `<div class="nd-stat-row"><div class="nd-stat-label">Stand jetzt</div>
             <div class="nd-stat-val">${elo} Elo</div></div>` : ''}
           ${form.currentStreak >= 2 ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Aktuelle Serie</div>
-            <div class="nd-stat-val ${d.delta >= 0 ? 'acid' : 'neg'}">${form.currentStreak}×</div></div>` : ''}`;
+            <div class="nd-stat-label">Siege in Folge an diesem Tag</div>
+            <div class="nd-stat-val ${d.delta >= 0 ? 'acid' : 'neg'}">${form.currentStreak}</div></div>` : ''}`;
       }
       // ── v8.2 Neue Typen ──
       case 'streak_killer': {
@@ -1492,16 +1501,14 @@ function _newsDetailMitte(s){
               <div class="nd-vs-elo">${h2h.bWins} Siege</div>
             </div>
           </div>
-          ${d.matchId ? `<div class="nd-section">Jubiläums-Duell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+          ${d.matchId ? `<div class="nd-section">Das Jubiläumsduell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'win_streak': {
-        const form = _newsRecentForm(d.pid, Math.min(d.streak, 10));
-        return `<div class="nd-section">Aktuelle Serie</div>
-          ${_newsSerienBand(d.streak, false)}
-          ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
-          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
-            <div class="nd-stat-val acid">${d.streak}× Sieg in Folge</div></div>`;
+        // „Aktuelle Serie" stand über einer Marke, die an ihrer Partie hängt
+        // und nach dem Riss stehen bleibt [§C33]; darunter dieselbe Zahl als
+        // Punktreihe und als Zeile — dreimal eine Serie.
+        return `<div class="nd-section">Die Serie</div>
+          ${_newsSerienBand(d.streak, false)}`;
       }
       case 'dry_spell': {
         return `<div class="nd-section">Liga-Pause</div>
@@ -1603,9 +1610,23 @@ function _newsRankChange(pid, matchId){
 
 // Form-Strip + Win-Streak der letzten N Matches. Walks die filter()-Variante
 // nur über matches (gesamt) — wird im Detail aufgerufen, also einmalig.
-function _newsRecentForm(pid, n){
+// `bis` ist die Story, deren Blatt die Reihe zeigt: gezählt wird bis zu IHRER
+// Partie, nicht bis heute. Das Blatt der 10er-Pleitenserie von 14:20 zeigte
+// unter „10 Pleiten nacheinander" die letzten zehn Partien von JETZT — mit dem
+// Sieg von 14:32 am Ende, der die Serie beendet hat und von dem die Karte gar
+// nicht erzählt.
+function _newsRecentForm(pid, n, bis){
   const arr = [];
-  for(let i = matches.length - 1; i >= 0 && arr.length < n; i--){
+  const d = (bis && bis.dataRef) || {};
+  let start = matches.length - 1;
+  if(d.matchId){
+    const k = matches.findIndex(m => m.id === d.matchId);
+    if(k >= 0) start = k;
+  } else if(bis && bis.when){
+    const t = new Date(bis.when).getTime();
+    while(start >= 0 && new Date(matches[start].created_at).getTime() > t) start--;
+  }
+  for(let i = start; i >= 0 && arr.length < n; i--){
     if(matchOf(pid, matches[i])) arr.unshift(matches[i]);
   }
   if(!arr.length) return {strip:'', currentStreak:0};
@@ -1669,29 +1690,26 @@ function _newsH2HRecord(aPid, bPid){
   return {aWins: e.wins[aPid] || 0, bWins: e.wins[bPid] || 0, lastMatchId: e.lastMatchId};
 }
 
-// Karriere-Bilanz (wins, losses, winRate) eines Spielers. Nutzt bestehende
-// playerStats falls verfügbar, sonst einmaliger walk.
-function _newsPlayerCareer(pid){
-  try {
-    if(typeof playerStats === 'function'){
-      const st = playerStats(pid);
-      if(st && (st.wins !== undefined || st.gp !== undefined)){
-        const wins = st.wins || 0;
-        const losses = st.losses || ((st.gp || 0) - wins);
-        const total = wins + losses;
-        const winRate = total ? Math.round((wins/total)*100) : 0;
-        return {wins, losses, winRate};
-      }
-    }
-  } catch(e){}
-  // Fallback: schneller direkter walk
-  let wins = 0, losses = 0;
-  for(let i = 0; i < matches.length; i++){
-    if(!matchOf(pid, matches[i])) continue;
-    if(won(pid, matches[i])) wins++; else losses++;
+// Die Partien bis zu der, von der eine Story erzählt. Ein Blatt, das neben
+// „100 Spiele" die Bilanz von HEUTE nennt („221 / 134"), widerspricht sich
+// selbst; dasselbe bei der gemeinsamen Bilanz unter einer Duo-Serie.
+function _ndBisPartie(s){
+  const d = (s && s.dataRef) || {};
+  if(d.matchId){
+    const k = matches.findIndex(m => m.id === d.matchId);
+    if(k >= 0) return matches.slice(0, k + 1);
   }
+  if(s && s.when){
+    const t = new Date(s.when).getTime();
+    return matches.filter(m => new Date(m.created_at).getTime() <= t);
+  }
+  return matches;
+}
+function _ndBilanzBis(pid, s){
+  let wins = 0, losses = 0;
+  _ndBisPartie(s).forEach(m => { if(!matchOf(pid, m)) return; if(won(pid, m)) wins++; else losses++; });
   const total = wins + losses;
-  return {wins, losses, winRate: total ? Math.round((wins/total)*100) : 0};
+  return total ? {wins, losses, winRate: Math.round(wins / total * 100)} : null;
 }
 
 // ─── Hookup: News-Button-Click + Backdrop-Close ──────────────────────

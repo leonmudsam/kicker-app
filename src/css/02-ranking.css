@@ -56,6 +56,16 @@
   .form-dots .dot{width:7px;height:7px;border-radius:50%}
   .form-dots .dot.w{background:var(--acid)}.form-dots .dot.l{background:var(--red)}
   .rank-gap{font-size:9px;color:var(--muted);text-align:center;padding:2px 0;font-family:'Sometype Mono',monospace}
+  /* Die Grundform jedes Gesichts. Es gab nur Regeln je Behälter (.rrow,
+     .nf-face-paar, .rcp-av …), und wo ein Avatar ohne eigenen Behälter
+     stand — der Halter einer Rekordkarte, eine Zeile im Blatt —, war er ein
+     Blockelement: die Initialen klebten oben links und wurden abgeschnitten. */
+  .av{display:inline-grid;place-items:center;flex-shrink:0;line-height:1;overflow:hidden;
+    font-family:'Archivo Black',sans-serif;color:var(--bg);text-transform:uppercase;vertical-align:middle;
+    /* Ohne `--av` ist jede der drei Angaben ungültig und fällt weg — dann
+       misst der Behälter, wie bisher. */
+    width:var(--av);height:var(--av);border-radius:calc(var(--av) / 2);
+    font-size:calc(var(--av) * .36)}
   .rrow .av{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;
     font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--bg);text-transform:uppercase}
   /* Emoji-Avatar Variante (grauer Hintergrund mit Emoji) */
@@ -224,9 +234,11 @@
     flex-shrink:0;font-family:'Archivo Black',sans-serif;color:#0a0c0b}
   .sh-chip-pair .sh-chip-av+.sh-chip-av{margin-left:-7px}
 
-  /* Zusatzangabe in der Meta-Zeile (Positionen: Ø Tore je Spiel). Sie steht
-     hinter der Siegrate und weicht als Erstes, wenn es eng wird. */
-  .rmeta .rmeta-sep{color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Die Tore je Spiel in der Positionsliste: eine eigene Zeile. Hinter
+     Bilanz, Balken und Quote brach „Ø 8,8 T…" bei 360 px mitten im Wort ab. */
+  /* Eine Bilanz ist eine Zahl und bricht nicht um („81–" über „40"). */
+  .rmeta > span:first-child{white-space:nowrap}
+  .rmeta.rmeta-tore{color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 
   /* ── Das Podest [§C6] ─────────────────────────────────────────────
      EIN Podest für die ganze App: Ewige Tafel und Award-Sammler. Drei
@@ -239,18 +251,21 @@
      Balkendiagramm, das unten aus der Karte lief.
      Was die Karte trägt, sagt der Inhalt: hier Karriere-Elo, dort die
      Zahl der Auszeichnungen. Die Form ist dieselbe. */
-  .podest{display:grid;grid-template-columns:1fr 1.16fr 1fr;gap:8px;
+  /* minmax(0,…): mit `1fr` war jede Spalte mindestens so breit wie ihr
+     Wappen samt Schwinge, und bei 360 px stand die rechte Karte 4 px im
+     Rand des Blatts. */
+  .podest{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.16fr) minmax(0,1fr);gap:8px;
     align-items:end;margin-bottom:16px}
   .pod-karte{--m:var(--silber);--mrgb:194,201,208;
     position:relative;background:var(--surface);border:1px solid var(--line);
-    border-radius:16px;padding:12px 8px 12px;text-align:center;cursor:pointer;
+    border-radius:16px;padding:12px 4px 12px;text-align:center;cursor:pointer;
     transition:transform .14s,border-color .14s}
   .pod-karte:active{transform:translateY(-2px)}
   .pod-karte.gold  {--m:var(--gold);  --mrgb:247,207,74}
   .pod-karte.silber{--m:var(--silber);--mrgb:194,201,208}
   .pod-karte.bronze{--m:var(--bronze);--mrgb:192,132,87}
   /* Der Erste steht höher, ist wärmer hinterlegt und trägt den Rand. */
-  .pod-karte.erster{padding:14px 10px 14px;
+  .pod-karte.erster{padding:14px 6px 14px;
     border-color:rgba(var(--mrgb),.42);
     background:
       radial-gradient(120% 80% at 50% -10%,rgba(var(--mrgb),.10),transparent 62%),

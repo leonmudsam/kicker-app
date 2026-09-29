@@ -783,7 +783,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'target', prio:5,
       title:`${nameOf(best.pid)} hat Nerven aus Stahl`,
-      desc:`Gewinnt aktuell ${Math.round(best.v*100)}% der engen Spiele (Tordiff ≤ 2). ${a.cw} von ${a.cg} in 14 Tagen.`,
+      desc:`Gewinnt aktuell ${Math.round(best.v*100)}% der engen Spiele (höchstens 2 Tore Unterschied). ${a.cw} von ${a.cg} in 14 Tagen.`,
       vv: Math.round(best.v*100)+'%', vl:'eng gewonnen',
       dataRef:{ ambientPid: best.pid } };
   }});
@@ -1368,7 +1368,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         title:`Halbzeit im ${seasonLabel(sid)}`,
         desc: `${T2.matches} Partien an ${T2.days} Spieltagen. `
           + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo aus ${fuehrend.games} Spielen. ` : '')
-          + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatswertungen sind vergeben, ${offen} noch offen`
+          + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben, ${offen} noch offen`
           + (ohne ? `, ${ohne} Spieler ${ohne === 1 ? 'trägt' : 'tragen'} noch keine.` : '.')
           + ` Die zweite Monatshälfte entscheidet.`,
         vv:String(offen), vl:'noch offen',

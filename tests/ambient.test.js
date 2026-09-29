@@ -5810,5 +5810,29 @@ ok(_zwei.feedGleich, 'und dieselbe Gruppierung', String(_zwei.fn) + ' Karten');
 ok(_zwei.neu.length === 0, 'ein Lauf mit dem eigenen Bestand legt nichts Neues an',
    _zwei.neu.slice(0, 2).join(' | ') || 'nichts');
 
+// ── Das Blatt rechnet bis zu seiner Partie ──────────────────────────
+// Das Jubiläum „100 Spiele" nannte darunter die Bilanz von heute („221 /
+// 134"), der Meilenstein „221W · 134L", die Duo-Serie die gemeinsame Bilanz
+// von heute. Gestellt: das hundertste Spiel eines Spielers, und die Bilanz
+// im Blatt muss zusammen hundert ergeben.
+const _bisPartie = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pid = players.find(p => matches.filter(m => matchOf(p.id, m)).length > 150).id;
+  const eigene = matches.filter(m => matchOf(pid, m));
+  const m100 = eigene[99];
+  const s = {id:'test_jubilee', when:m100.created_at, title:'x', desc:'y',
+    dataRef:{type:'jubilee', pid, total:100, matchId:m100.id}};
+  const h = String(_newsDetailMitte(s)).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
+  const z = h.match(/Siege \\/ Niederlagen (\\d+) \\/ (\\d+)/);
+  const ms = {id:'test_ms', when:m100.created_at, title:'x', desc:'y',
+    dataRef:{type:'milestone_wins', pid, milestone:'x', matchId:m100.id}};
+  const h2 = String(_newsDetailMitte(ms)).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
+  const z2 = h2.match(/(\\d+) : (\\d+)/);
+  return {summe: z ? +z[1] + +z[2] : null, summe2: z2 ? +z2[1] + +z2[2] : null,
+    englisch: /Win-Rate|\\d+W · \\d+L/.test(h + h2)};
+})())`));
+ok(_bisPartie.summe === 100 && _bisPartie.summe2 === 100 && !_bisPartie.englisch,
+   'das Blatt eines Jubiläums und eines Meilensteins rechnet bis zu seiner Partie',
+   'Jubiläum ' + _bisPartie.summe + ', Meilenstein ' + _bisPartie.summe2);
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

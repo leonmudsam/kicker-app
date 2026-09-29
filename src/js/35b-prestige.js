@@ -1865,7 +1865,7 @@ function showLaufbahn(pid){
   //     Rechnung: jeder Posten mit dem Grund, warum er so viel wiegt.
   const gruppen = [
     {q:'auszeichnung', kopf:'Auszeichnungen', leer:'noch keine erhalten', lab:'Stück'},
-    {q:'monat',        kopf:'Monatswertungen', leer:'noch keine getragen', lab:'getragen'},
+    {q:'monat',        kopf:'Monatschroniken', leer:'noch keine getragen', lab:'getragen'},
     {q:'rekord',       kopf:'Rekorde',         leer:'noch keinen gehalten', lab:'gehalten'},
   ];
   const posten = gruppen.map(g => P.quellen.filter(q => q.q === g.q));
@@ -1898,7 +1898,7 @@ function showLaufbahn(pid){
 
   const SICHTBAR = 4;
   const regeln = `<button class="lb-regel-auf" type="button" data-prestige-regeln>
-    <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven sauber erklärt</em></span>
+    <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven</em></span>
     ${svgI('chevron')}
   </button>`;
   const block = (g, gi) => {

@@ -114,34 +114,34 @@ function openTopList(kind){
   if(kind==='periodTeam'){
     return showTopList({title:'Bestes Team', sub:periodLabel(period),
       ic:'handshake', cls:'blue', rows:_teamEloRanking(matchesInPeriod(period),1).filter(t=>t.elo>0).map(teamRow),
-      why:'Duo mit dem höchsten gemeinsamen Elo-Zuwachs in diesem Zeitraum.'});
+      why:'Das Duo mit dem höchsten gemeinsamen Elo-Zuwachs in diesem Zeitraum.'});
   }
   if(kind==='periodStreak'){
     return showTopList({title:'Heißeste Serie', sub:periodLabel(period),
       ic:'flame', cls:'acid',
       rows:longestStreaks(matchesInPeriod(period)).map(s=>({ids:[s.id], name:pname(s.id), val:s.v+'×', detail:'Siege in Folge'})),
-      why:'Längste Siegesserie innerhalb dieses Zeitraums. Min. 2 Siege in Folge.'});
+      why:'Die längste Siegesserie innerhalb dieses Zeitraums, ab 2 Siegen in Folge.'});
   }
   if(kind==='periodUpset'){
-    return showTopList({title:'Größter Upset', sub:periodLabel(period),
+    return showTopList({title:'Größte Überraschung', sub:periodLabel(period),
       ic:'bolt', cls:'blue',
       rows:_upsetRanking(matchesInPeriod(period)).map(u=>{
         const w=u.m.winner==='A'?[u.m.a1,u.m.a2]:[u.m.b1,u.m.b2];
         return {ids:w, matchId:u.m.id, name:w.map(pname).join(' & '),
           val:u.winPct+'%', detail:u.m.score_a+':'+u.m.score_b+' · '+dateStr(u.m.created_at)};
       }),
-      why:'Sieg mit der niedrigsten Siegerwartung. Je kleiner die Chance, desto größer der Upset.'});
+      why:'Der Sieg mit der niedrigsten Siegchance vor dem Anpfiff.'});
   }
   if(kind==='periodKing'){
     const isWeek=period==='week';
     const list=(getCachedAwardRankings('all')[isWeek?'weekKingList':'dayKingList'])||[];
-    return showTopList({title:isWeek?'Wochenkönig':'Tageskönig', sub:'All-Time',
+    return showTopList({title:isWeek?'Wochenkönig':'Tageskönig', sub:'Alle Saisons',
       ic:isWeek?'weekKing':'dayKing', cls:'gold',
       rows:list.map(k=>({ids:[k.id], name:pname(k.id), val:k.v+'×',
         detail:isWeek?'Player of the Week':'Player of the Day'})),
       why:isWeek
-        ? 'Wie oft ein Spieler eine abgeschlossene Woche als Bester beendet hat (min. 5 Siege).'
-        : 'Wie oft ein Spieler einen Spieltag als Bester beendet hat (min. 3 Siege).'});
+        ? 'Wie oft ein Spieler eine abgeschlossene Woche als Bester beendet hat, mit mindestens 5 Siegen.'
+        : 'Wie oft ein Spieler einen Spieltag als Bester beendet hat, mit mindestens 3 Siegen.'});
   }
 }
 
@@ -314,13 +314,13 @@ function showAward(key){
         case 'wins':       return R.winsList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Siege',sort:x.v}));
         case 'mvt':        return R.mvt.map(x=>({ids:x.ids,name:tn(x.ids),val:(x.v>=0?'+':'')+Math.round(x.v)+' Elo',sort:Math.round(x.v)}));
         case 'streaks':    return R.streaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+x.avg.toFixed(1)+' Tore',sort:Math.round(x.avg*10)}));
-        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma(x.avg,1)+' Tore',sort:Math.round(x.avg*10)}));
+        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
         case 'perfect':    return R.perfect.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'grinder':    return R.grinder.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Spiele',sort:x.v}));
         case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
-        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
-        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
+        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
         case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.g+'×)',sort:Math.round(x.pct*1000)}));
         case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Zu-Null',sort:x.v}));
@@ -339,16 +339,16 @@ function showAward(key){
         case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTW',sort:x.v}));
         case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTD',sort:x.v}));
         // ── NEUE AWARDS v3 ──
-        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+x.v.toFixed(1)+' /Sp.',sort:Math.round(x.v*10)}));
+        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+komma(x.v,1)+' /Sp.',sort:Math.round(x.v*10)}));
         case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Underdog-Sieg',sort:x.v}));
         case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         // ── NEUE TEAM-AWARDS v4 ──
         case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
-        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
+        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
         case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         // ── NEUE NEGATIV-AWARDS v6 ──
-        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
+        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
         case 'favoriteLoser': return R.favoriteLoserList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.v*100)+'% ('+x.losses+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         default: return [];
       }

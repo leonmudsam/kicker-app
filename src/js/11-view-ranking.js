@@ -159,7 +159,7 @@ function _vRankingCore(){
       const wr=x.games?Math.round(x.wins/x.games*100):0;
       if(metrik==='wins')     return {big:x.wins, small:'Siege'};
       if(metrik==='winrate')  return {big:wr+'%', small:x.wins+'–'+x.losses};
-      if(metrik==='goaldiff') return {big:(x.gd>=0?'+':'')+x.gd, small:'Tordiff'};
+      if(metrik==='goaldiff') return {big:(x.gd>=0?'+':'')+x.gd, small:'Torbilanz'};
       if(metrik==='streak')   return {big:x.curStreak>0?x.curStreak+'W':x.curStreak<0?(-x.curStreak)+'L':'–',
                                       small:x.curStreak>0?'Siege':x.curStreak<0?'Niederlagen':'neutral'};
       if(metrik==='games')    return {big:x.games, small:'Spiele'};
@@ -243,8 +243,8 @@ function _vRankingCore(){
       // Spieler gross genug steht, um es zu tragen; in der Tabelle darunter
       // bleibt es beim Reif, weil eine Zeile die Hoehe nicht hat.
       const titelTxt   = period==='day' ? 'Player of the Day' : 'Player of the Week';
-      const regelTxt   = period==='day' ? 'min. 3 Siege · meiste Siege'
-                                        : 'min. 5 Siege · beste Quote';
+      const regelTxt   = period==='day' ? 'ab 3 Siegen · die meisten Siege'
+                                        : 'ab 5 Siegen · die beste Quote';
       const eloLabel   = period==='day' ? 'Elo Tag' : 'Elo Woche';
       if(winner){
         const wp=pmap()[winner.id];
@@ -311,7 +311,7 @@ function _vRankingCore(){
       const mitte = period==='week'
         ? renderHl('streak','Heißeste Serie','flame', topStreak?pname(topStreak.id):null,
             topStreak?`${topStreak.v} in Folge`:'', topStreak?'data-toplist="periodStreak"':'')
-        : renderHl('upset','Größter Upset','bolt', upsetName,
+        : renderHl('upset','Größte Überraschung','bolt', upsetName,
             topUpset?`${topUpset.winPct}% Chance`:'', topUpset?'data-toplist="periodUpset"':'');
       nebenHtml+=`
         <div class="wk-highlights">
@@ -521,7 +521,7 @@ function _vRankingCore(){
       // Die Zahl im Schild ist der Podestplatz, nicht die Position der
       // laufenden Saison: auf dieser Karte gilt die Karriere.
       const avWappen = avHtml(pp, '', {ins:true, band:true, pos:platz,
-                                        px:platz===1?92:78, klasse:'pod-av'});
+                                        px:platz===1?88:70, klasse:'pod-av'});
       // Ein Ligatitel ist Player of the Season, sonst nichts — dieselbe Zahl,
       // die auch die Sterne unter dem Avatar und die Schwingen des Wappens
       // sagen [§C26]. Hier wurde Team of the Season mitgezählt: auf der Karte
@@ -596,7 +596,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
   }
 
   else if(metric==='winrate'){big=Math.round(s.wr*100)+'%'; small=s.wins+'–'+s.losses;}
-  else if(metric==='goaldiff'){big=(s.gd>=0?'+':'')+s.gd; small='Tordiff';}
+  else if(metric==='goaldiff'){big=(s.gd>=0?'+':'')+s.gd; small='Torbilanz';}
   else if(metric==='prestige'){
     // Die Zahl groß, die Stufe klein. Das Zeichen trägt der Avatar links
     // schon — aber in 52 px erkennt man den Schildring nicht vom

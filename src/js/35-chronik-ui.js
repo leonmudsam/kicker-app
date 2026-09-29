@@ -92,7 +92,7 @@ function showSeasonTable(sid){
     ${T.live ? `<div class="tnote">Stand von heute, bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>
-        <span class="tx"><span class="n">${esc(pname(ch.pid))} — ${T.live ? 'führt die Saison an' : 'Meister'}</span>
+        <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
           <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
       </div><div style="height:14px"></div>` : ''}
     <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
@@ -120,6 +120,12 @@ function showSeasonTable(sid){
       }).join('')}</div>` : ''}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+}
+
+// „zu 3. gehalten" stand da, eine Ordnungszahl, wo ein Zahlwort hingehört.
+function _zuMehreren(n){
+  const w = {2:'zu zweit', 3:'zu dritt', 4:'zu viert', 5:'zu fünft', 6:'zu sechst'}[n];
+  return w || `zu ${n}`;
 }
 
 // Chronik fürs Profil: EINE Karte. Nicht mehr eine Liste — genau die eine
@@ -151,7 +157,7 @@ function _chronStripHtml(pid){
       <span class="ic">${svgI(x.ic)}</span>
       <span class="tx">
         <span class="n">${esc(x.name)}${x.shared
-          ? `<span class="shared">zu ${x.pids.length}. gehalten</span>` : ''}</span>
+          ? `<span class="shared">${_zuMehreren(x.pids.length)} gehalten</span>` : ''}</span>
         <span class="e num">${esc(x.ev)}</span>
       </span>
       <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -295,7 +301,7 @@ function showDisziplin(tid, sid){
 
   openSheet(`
     <h3>${esc(def.name)}</h3>
-    <div class="sheet-sub">Monatswertung · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
+    <div class="sheet-sub">Monatschronik · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>

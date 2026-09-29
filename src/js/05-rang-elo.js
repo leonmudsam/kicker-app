@@ -64,8 +64,12 @@ function rankBadgeHtml(id, size='sm'){
 // Elo heißt dabei im Zeitraum der Zuwachs, in Saison und Gesamt der Stand —
 // beides ist „die Elo dieses Zeitraums", nur einmal als Strecke und einmal
 // als Punkt.
-const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegrate',
-  goaldiff:'Tordiff',prestige:'Prestige',games:'Spiele'};
+const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegquote',
+  goaldiff:'Torbilanz',prestige:'Prestige',games:'Spiele'};
+// Fünf Reiter teilen sich 328 px: „Siegquote" stand dort als „Siegq…".
+// Im Reiter reicht das Wort, das die Spalte meint; unter der Zahl steht
+// weiter der volle Name.
+const METRIC_REITER={winrate:'Quote'};
 // Die LIGA-Rangliste ist die Elo-Rangliste — in Saison, Woche und Tag gibt
 // es dort nichts zu sortieren. Wer nach Siegrate oder Tordiff schaut, sucht
 // keine Rangliste, sondern eine Bestenliste, und die steht im Awards-Tab.
@@ -103,7 +107,7 @@ function metrikLeisteHtml(per){
   if(liste.length < 2) return '';
   const jetzt = metrikFuer(per);
   return `<div class="ui-tabs">${liste.map(k =>
-    `<button data-metric="${k}" class="${jetzt===k?'on':''}">${METRIC_LABEL[k]}</button>`
+    `<button data-metric="${k}" class="${jetzt===k?'on':''}">${METRIC_REITER[k]||METRIC_LABEL[k]}</button>`
   ).join('')}</div>`;
 }
 

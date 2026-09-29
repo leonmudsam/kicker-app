@@ -71,7 +71,7 @@ function showTeam(p1Id,p2Id){
       : dateStr(m.created_at);
     const labelMap={
       win:    {l:'Höchster Sieg',     ic:'explosion', col:'var(--acid)'},
-      upset:  {l:'Größter Upset',     ic:'tornado',   col:'var(--purple)'},
+      upset:  {l:'Größte Überraschung',     ic:'tornado',   col:'var(--purple)'},
       loss:   {l:'Schlimmste Niederlage', ic:'skull',     col:'var(--red)'}
     };
     const cfg=labelMap[kind];
@@ -291,18 +291,18 @@ function showTeam(p1Id,p2Id){
     streaksHtml = `
       <div style="margin-bottom:18px">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Serien</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
           <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
             <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:${curColor};line-height:1">${curLabel}</div>
             <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Aktuell</div>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1">${d.longestWinStreak||'–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Sieges</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1">${d.longestWinStreak ? d.longestWinStreak + (d.longestWinStreak === 1 ? ' Sieg' : ' Siege') : '–'}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Beste Serie</div>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--red);line-height:1">${d.longestLossStreak||'–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Pleiten</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--red);line-height:1">${d.longestLossStreak ? d.longestLossStreak + (d.longestLossStreak === 1 ? ' Pleite' : ' Pleiten') : '–'}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Durststrecke</div>
           </div>
         </div>
       </div>`;
@@ -329,8 +329,8 @@ function showTeam(p1Id,p2Id){
   // Bewusst kompakt — vier 1/2-Spalten-Cards (oder 1/3 wenn topScore vorhanden).
   let funFactsHtml = '';
   if(d.games >= 2){
-    const avgGf = (d.gf / d.games).toFixed(1);
-    const avgGa = (d.ga / d.games).toFixed(1);
+    const avgGf = komma((d.gf / d.games),1);
+    const avgGa = komma((d.ga / d.games),1);
     const facts = [
       { label:'Ø Tore', value:avgGf, color:'var(--acid)' },
       { label:'Ø Gegen', value:avgGa, color:'var(--red)' },
@@ -341,7 +341,7 @@ function showTeam(p1Id,p2Id){
     const cols = facts.length >= 4 ? 'repeat(4,1fr)' : 'repeat('+facts.length+',1fr)';
     funFactsHtml = `
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Fun Facts</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">In Zahlen</div>
         <div style="display:grid;grid-template-columns:${cols};gap:8px">
           ${facts.map(f => `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center">
             <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${f.color};line-height:1">${f.value}</div>
@@ -400,7 +400,7 @@ function showTeam(p1Id,p2Id){
       </div>
       <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
         <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${gdStr}</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Tordiff</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Torbilanz</div>
       </div>
       <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
         <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:${eloColor};line-height:1">${eloStr}</div>
@@ -432,7 +432,7 @@ function showTeam(p1Id,p2Id){
 
     ${highlights?`
     <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Highlights</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Höhepunkte</div>
       <div style="display:flex;flex-direction:column;gap:6px">${highlights}</div>
     </div>`:''}
 
@@ -471,23 +471,39 @@ function showMatchDetail(mid){
   // Auszeichnungen durch dieses Match
   const earned=badgesEarnedInMatch(mid);
   const earnedHtml=earned.length?`
-    <div class="mini-label" style="margin-top:14px">Auszeichnungen in diesem Match</div>
+    <div class="mini-label" style="margin-top:14px">Auszeichnungen in dieser Partie</div>
     <div style="display:flex;flex-direction:column;gap:5px">
-      ${earned.map(e=>{
-        // Rarity-Farbe pro Badge: legendary=gold, rare=purple, common=acid, negative=red.
-        // Bewusst dezent — nur Icon + Border-Akzent + Badge-Name in der Farbe,
-        // damit die Liste auseinanderhaltbar bleibt, aber nicht überladen wirkt.
-        const rarity = rarityOf(e.badge.id);
-        const color = (RARITY_META[rarity]||{}).color || 'var(--ink2)';
-        return `<div class="rrow" style="padding:10px 13px;cursor:default;border-left:3px solid ${color}">
-          <span class="ic svg-ic" style="font-size:18px;width:32px;text-align:center;color:${color}">${badgeIc(e.badge,'18px')}</span>
-          <div class="rmid"><div class="rname" style="font-size:13px">${esc(pname(e.playerId))}</div>
-            <div class="rmeta"><span style="color:${color};opacity:.85">${e.badge.name}</span></div></div>
-        </div>`;
-      }).join('')}
+      ${(()=>{
+        // Eine Zeile je Spieler, nicht je Auszeichnung: fünf Marken zweier
+        // Spieler standen als fünf Karten untereinander, und derselbe Name
+        // dreimal. Die Farbe je Marke sagt weiter die Klasse (legendär Gold,
+        // selten Violett, gewöhnlich Grün, negativ Rot).
+        const jeSpieler = new Map();
+        earned.forEach(e => { if(!jeSpieler.has(e.playerId)) jeSpieler.set(e.playerId, []);
+          jeSpieler.get(e.playerId).push(e.badge); });
+        return [...jeSpieler].map(([pid, bs]) => `<div class="rrow" style="padding:10px 13px;cursor:default;align-items:flex-start">
+          <div class="rmid"><div class="rname" style="font-size:13px">${esc(pname(pid))}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px">${bs.map(b => {
+              const color = (RARITY_META[rarityOf(b.id)]||{}).color || 'var(--ink2)';
+              return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:${color}">`
+                + `<span class="svg-ic" style="display:inline-flex">${badgeIc(b,'14px')}</span>${esc(b.name)}</span>`;
+            }).join('')}</div></div>
+        </div>`).join('');
+      })()}
     </div>`:''
   ;
-  openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · Team ${m.winner} gewinnt</div>
+  // „Team A gewinnt" sagte, was das Band darunter ohnehin zeigt, und nannte
+  // niemanden. Die Siegchance vor dem Anpfiff steht dagegen sonst nirgends
+  // im Blatt, ohne dass man die Elo-Analyse aufklappt.
+  const sieger = m.winner==='A' ? [m.a1,m.a2] : [m.b1,m.b2];
+  // Dieselbe Quelle wie die Karte der Partie im Feed: die Erwartung aus der
+  // Elo-Bahn, erst dahinter der gespeicherte Wert. Mit `m.exp_a` allein
+  // stand hier 50 %, auf der Karte derselben Partie 57 %.
+  const _h = getHistoryByMatchId().get(mid);
+  const _expA = _h && _h.expA != null ? _h.expA : (typeof m.exp_a === 'number' ? m.exp_a : null);
+  const chance = _expA == null ? null
+    : Math.max(1, Math.round((m.winner==='A' ? _expA : 1 - _expA) * 100));
+  openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · ${esc(sieger.map(pname).join(' und '))} gewinnen${chance!=null ? ' · Siegchance vorher ' + chance + ' %' : ''}</div>
     <div style="display:flex;gap:8px;margin-top:12px">
       <div data-team="${esc([m.a1,m.a2].sort().join('|'))}" style="flex:1;background:var(--surface);border:1px solid ${m.winner==='A'?'var(--acid2)':'var(--line)'};border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Sometype Mono',monospace">Team A</div>
@@ -530,7 +546,7 @@ function showMatchDetail(mid){
     const rows=ids.map(id=>{
       const b=bd[id]; if(!b)return '';
       // Elo-Analyse zeigt exakte Werte mit 2 Nachkommastellen — keine Rundung wie überall sonst.
-      const sign=v=>v>=0 ? '+'+v.toFixed(2) : v.toFixed(2);
+      const sign=v=>v>=0 ? '+'+komma(v,2) : komma(v,2);
       // Der Detail-Header zeigt IMMER den präzisen Sim-Wert, damit die große Zahl
       // exakt der Summe der Faktoren-Liste darunter entspricht. Der gerundete DB-Wert
       // bleibt nur oben in der Match-Übersicht sichtbar (eigener Render-Pfad).
@@ -538,7 +554,7 @@ function showMatchDetail(mid){
       const headerDelta=b.finalDelta;
       // Saison-Elo: bei DB-Werten sind das gespeicherte Integer (deshalb keine zusätzliche
       // Präzision möglich). Bei Sim-Fallback geben wir 1 Nachkommastelle aus.
-      const fmtElo=v=>Number.isInteger(v)?String(v):v.toFixed(1);
+      const fmtElo=v=>Number.isInteger(v)?String(v):komma(v,1);
       const seasonBefore=fmtElo(hasDb?dbBefore[id]:b.startElo);
       const seasonAfter=fmtElo(hasDb?dbAfter[id]:b.endElo);
       const simDelta=b.finalDelta;
@@ -546,10 +562,10 @@ function showMatchDetail(mid){
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
       if(Math.abs(b.movEffect)>0.1) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
-      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+((b.winBoost-1)*100).toFixed(1)+'% für Siege'});
-      if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:((1-b.expProtect)*100).toFixed(1)+'% Schutz'});
+      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
+      if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'% Schutz'});
       if(b.lowEloDamp!==undefined && b.lowEloDamp<0.995){
-        factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:((1-b.lowEloDamp)*100).toFixed(1)+'% Schutz (schwacher Spieler)'});
+        factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'% Schutz (schwacher Spieler)'});
       }
       if(b.underdogMult>1.005){
         // Underdog-Boost setzt sich aus zwei unabhängig clampten Komponenten zusammen
@@ -562,9 +578,9 @@ function showMatchDetail(mid){
         const undEffect = b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1);
         factors.push({label:'Underdog-Boost',val:undEffect, desc});
       }
-      if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Mate-Stärke-Verteilung'});
+      if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
       if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posMult>1?'Schwache':'Starke')+' Position'});
-      factors.push({label:'Spielbonus',val:b.matchBonus,desc:'Flat +'+b.matchBonus.toFixed(2)+' pro Match'});
+      factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
       const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
         <span style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
@@ -578,7 +594,7 @@ function showMatchDetail(mid){
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between">
             <span>${seasonBefore} → ${seasonAfter}</span>
-            <span>K=${b.kFactor.toFixed(1)} · Erw. ${(b.expected*100).toFixed(1)}%</span>
+            <span>K=${komma(b.kFactor,1)} · Erw. ${komma((b.expected*100),1)}%</span>
           </div>
         </div>
         ${factorRows}

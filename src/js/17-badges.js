@@ -70,22 +70,22 @@ const BADGES=[
 
     // ══ MEHRFACH-BADGES — gruppiert nach Thema ══
 //Reihenfolge überarbeitet / Möglciherweise Abweichung von Namen in //
-  {id:'upset_king',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
+  {id:'upset_king',ic:'tornado',name:'Außenseiterkönig',desc:'Als Außenseiter gewonnen (unter 35 % Siegchance)',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&myExp(id,m)<0.35).length},
   // Zeile 6 — Frühschicht, Unschlagbar (Tages-Patterns)
   {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
-  {id:'unbeatable',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
+  {id:'unbeatable',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (ab 3 Partien)',
     multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
   // Zeile 7 — Comeback-Tag, Revanchist (Wiedergutmachung)
-  {id:'comeback_day',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit Niederlage gestartet und mit Sieg beendet (min. 3 Matches an dem Tag)',
+  {id:'comeback_day',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit einer Niederlage begonnen und mit einem Sieg beendet (ab 3 Partien an dem Tag)',
     multi:true,count:(id,ms)=>countComebackDays(id,ms)},
   {id:'revanchist',ic:'rematch',name:'Revanchist',desc:'Nach Niederlage gegen ein Team direkt im nächsten Match wieder auf dasselbe Team getroffen und gewonnen',
     multi:true,count:(id,ms)=>countRevenge(id,ms)},
   // Zeile 8 — Klares Ding, Krimi-Reihe (Tordifferenz-Pattern)
-  {id:'clear_win',ic:'thumbsUp',name:'Klares Ding',desc:'Sieg mit Tordifferenz ≥ 7',
+  {id:'clear_win',ic:'thumbsUp',name:'Klares Ding',desc:'Sieg mit mindestens 7 Toren Vorsprung',
     multi:true,count:(id,ms)=>countClearWins(id,ms)},
-  {id:'krimi',ic:'thriller',name:'Krimi-Reihe',desc:'5 Spiele in Folge mit Tordifferenz ≤ 2 (Sieg oder Niederlage)',
+  {id:'krimi',ic:'thriller',name:'Krimi-Reihe',desc:'5 Partien in Folge mit höchstens 2 Toren Unterschied, gewonnen oder verloren',
     multi:true,count:(id,ms)=>countKrimiStreaks(id,ms)},
   // Zeile 9 — Wiederholungstäter, Losing Streak
   {id:'repeat_score',ic:'duplicate',name:'Wiederholungstäter',desc:'3 Siege in Folge mit identischem Endstand',
@@ -116,11 +116,11 @@ const BADGES=[
   {id:'streak20',ic:'crownFlame',name:'20er Serie',desc:'20 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,20)},
   // Zeile 14 — Mauer, Carry
-  {id:'wall_badge',ic:'brick',name:'Mauer',desc:'Sieg mit max. 2 Gegentoren als Verteidiger',
+  {id:'wall_badge',ic:'brick',name:'Mauer',desc:'Sieg mit höchstens 2 Gegentoren in der Abwehr',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>{if(!won(id,m))return false;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
-  {id:'carry',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
+  {id:'carry',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler der Partie als Partner',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
   // Zeile 15 — Meister, Vize-Meister
   // Der Meister hatte bis hierher KEINE Auszeichnung. Der Vize hatte eine.
@@ -136,34 +136,34 @@ const BADGES=[
   {id:'team_of_season',ic:'handshake',name:'Team der Saison',desc:'Bestes Duo einer Saison',
     multi:true,count:(id,ms,bis)=>countTeamOfSeason(id,bis)},
   // Zeile 16 — Award-Sammler
-  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison min. 5 Tagessieger und 2 Wochensieger',
+  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5-mal Player of the Day und 2-mal Player of the Week',
     multi:true,count:(id,ms)=>countAwardCollector(id,ms)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
-  {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
+  {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab 5 Siegen)',
     multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
-  {id:'potd',ic:'trophyDay',name:'Player of the Day',desc:'Meiste Siege an einem Tag (min. 3)',
+  {id:'potd',ic:'trophyDay',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab 3)',
     multi:true,count:(id,ms)=>countDayWins(id,ms)},
   // ── NEUE BADGES v4 ──
   // Thronfäller: Sieg gegen den Top-1 der laufenden Saison-Rangliste (Stand vor dem Match)
-  {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Top-1 Spieler der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
+  {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Ersten der Saison-Rangliste, gemessen vor der Partie',
     multi:true,count:(id,ms)=>countKingslayer(id,ms)},
   // Überholmanöver: Sieg gegen einen Spieler, der dadurch in der Saison-Rangliste überholt wurde
-  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Einen Spieler im Match besiegt und dadurch in der Saison-Rangliste überholt',
+  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Einen Gegner der Partie besiegt und dabei in der Saison-Rangliste überholt',
     multi:true,count:(id,ms)=>countOvertake(id,ms)},
   // ── NEUE BADGES v5 ──
   // Pflichterfüller: Sieg gegen mindestens einen Gegner aus den Bottom-2 der
   // Saison-Rangliste (Stand vor dem Match). Erst ab 5 Spielern in der Saison sinnvoll.
-  {id:'duty_done',ic:'trophyCheck',name:'Pflichterfüller',desc:'Sieg gegen mind. einen Gegner aus den Bottom-2 der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
+  {id:'duty_done',ic:'trophyCheck',name:'Pflichterfüller',desc:'Sieg gegen mindestens einen der beiden Letzten der Saison-Rangliste, gemessen vor der Partie',
     multi:true,count:(id,ms)=>countBottomTwoMatchWins(id,ms)},
   // Serienbrecher: Direktsieg, der eine laufende Siegesserie (≥4) eines Gegners beendet hat.
-  {id:'streak_breaker',ic:'flameBreak',name:'Serienbrecher',desc:'Siegesserie eines Gegners (mind. 4 in Folge) durch direkten Sieg gestoppt',
+  {id:'streak_breaker',ic:'flameBreak',name:'Serienbrecher',desc:'Die Siegesserie eines Gegners (ab 4 in Folge) mit einem Sieg beendet',
     multi:true,count:(id,ms)=>countStreakBreaker(id,ms)},
   // ── NEUE NEGATIV-BADGES v6 ──
   // Schwarzer Tag: ein Tag mit mind. 3 absolvierten Spielen, alle verloren.
-  {id:'black_day',ic:'blackDay',name:'Schwarzer Tag',desc:'Tag mit mind. 3 Spielen, alle verloren',
+  {id:'black_day',ic:'blackDay',name:'Schwarzer Tag',desc:'Spieltag mit mindestens 3 Partien, alle verloren',
     multi:true,count:(id,ms)=>countBlackDays(id,ms)},
   // Krimi-Versager: 3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge.
-  {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge',
+  {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen in Folge, je höchstens 2 Tore Unterschied',
     multi:true,count:(id,ms)=>countCloseLossStreaks(id,ms,3)},
   // ── NEUE LEGENDARY-BADGES v7 ──
   // Untouchable: 3 Saisons in Folge unter den Top-3 abgeschlossen.
@@ -173,10 +173,10 @@ const BADGES=[
   {id:'mr_perfect',ic:'tripleCup',name:'Mr. Perfect',desc:'3× 10:0-Sieg in einer Saison',
     multi:true,count:(id,ms)=>countMrPerfect(id,ms)},
   // Allwetter: an 5 verschiedenen Wochentagen Player-of-the-Day geworden.
-  {id:'allwetter',ic:'weatherMix',name:'Allwetter',desc:'An 5 verschiedenen Wochentagen Player-of-the-Day geworden',
+  {id:'allwetter',ic:'weatherMix',name:'Allwetter',desc:'An 5 verschiedenen Wochentagen Player of the Day geworden',
     multi:true,count:(id,ms)=>countAllwetter(id,ms)},
   // Tag der Götter: 3 eigene Spieltage in Folge als POTD gewonnen.
-  {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 Spieltagen in Folge Player-of-the-Day geworden (nur mitgespielte Tage)',
+  {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 eigenen Spieltagen in Folge Player of the Day geworden',
     multi:true,count:(id,ms)=>countGodlyStreak(id,ms)},
   // ── NEUE NEGATIV-BADGES v8 ──
   // Bittere Pille: 9:10-Niederlage (Pendant zu nail_biter / 10:9-Sieg).
@@ -186,7 +186,7 @@ const BADGES=[
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
     multi:true,count:(id,ms)=>countMrDisaster(id,ms)},
   // Zusammenbruch: Tag mit Sieg gestartet, mit Niederlage beendet, min. 3 Matches (Pendant zu comeback_day).
-  {id:'crash_day',ic:'crashDay',name:'Zusammenbruch',desc:'Tag mit Sieg gestartet und mit Niederlage beendet (min. 3 Matches an dem Tag)',
+  {id:'crash_day',ic:'crashDay',name:'Zusammenbruch',desc:'Tag mit einem Sieg begonnen und mit einer Niederlage beendet (ab 3 Partien an dem Tag)',
     multi:true,count:(id,ms)=>countCrashDays(id,ms)},
   // Angstgegner: 5× in Folge gegen denselben Gegner-Spieler verloren (egal in welcher Konstellation).
   {id:'nemesis',ic:'ghost',name:'Angstgegner',desc:'5× in Folge gegen denselben Gegner verloren',
@@ -273,7 +273,7 @@ const BADGE_RARITY = {
   overtake:        'common',    // Überholmanöver — Spieler in Rangliste überholt
   duty_done:       'common',    // Pflichterfüller — Sieg gegen Bottom-3
   streak_breaker:  'common',    // Serienbrecher — Streak >=4 eines Gegners gestoppt
-  upset_king:      'common',    // Upset-König — 11 Halter, 54 mal vergeben
+  upset_king:      'common',    // Außenseiterkönig — 11 Halter, 54 mal vergeben
   clear_win:       'common',    // Klares Ding — 10 Halter, 136 mal vergeben
   streak5:         'common',    // 5er Serie — 8 Halter, 30 mal vergeben
   // -- NEGATIVE (8) --

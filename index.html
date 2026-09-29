@@ -247,6 +247,9 @@
   .ui-tabs{border-color:transparent;background:rgba(255,255,255,.028);
     margin-bottom:14px}
   .ui-tabs button{font-size:12.5px;padding:8px 5px 10px}
+  /* Ab fünf Reitern wird die Schrift kleiner statt das Wort kürzer:
+     „Prest…" und „Torbil…" sagten nicht mehr, wonach sortiert wird. */
+  .ui-tabs:has(> button:nth-child(5)) button{font-size:11px;padding-inline:1px}
   .ui-tabs button.on{background:var(--surface2)}
   .ui-tabs button.on::after{bottom:4px;width:14px}
 
@@ -344,6 +347,16 @@
   .form-dots .dot{width:7px;height:7px;border-radius:50%}
   .form-dots .dot.w{background:var(--acid)}.form-dots .dot.l{background:var(--red)}
   .rank-gap{font-size:9px;color:var(--muted);text-align:center;padding:2px 0;font-family:'Sometype Mono',monospace}
+  /* Die Grundform jedes Gesichts. Es gab nur Regeln je Behälter (.rrow,
+     .nf-face-paar, .rcp-av …), und wo ein Avatar ohne eigenen Behälter
+     stand — der Halter einer Rekordkarte, eine Zeile im Blatt —, war er ein
+     Blockelement: die Initialen klebten oben links und wurden abgeschnitten. */
+  .av{display:inline-grid;place-items:center;flex-shrink:0;line-height:1;overflow:hidden;
+    font-family:'Archivo Black',sans-serif;color:var(--bg);text-transform:uppercase;vertical-align:middle;
+    /* Ohne `--av` ist jede der drei Angaben ungültig und fällt weg — dann
+       misst der Behälter, wie bisher. */
+    width:var(--av);height:var(--av);border-radius:calc(var(--av) / 2);
+    font-size:calc(var(--av) * .36)}
   .rrow .av{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;
     font-family:'Archivo Black',sans-serif;font-size:15px;color:var(--bg);text-transform:uppercase}
   /* Emoji-Avatar Variante (grauer Hintergrund mit Emoji) */
@@ -512,9 +525,11 @@
     flex-shrink:0;font-family:'Archivo Black',sans-serif;color:#0a0c0b}
   .sh-chip-pair .sh-chip-av+.sh-chip-av{margin-left:-7px}
 
-  /* Zusatzangabe in der Meta-Zeile (Positionen: Ø Tore je Spiel). Sie steht
-     hinter der Siegrate und weicht als Erstes, wenn es eng wird. */
-  .rmeta .rmeta-sep{color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Die Tore je Spiel in der Positionsliste: eine eigene Zeile. Hinter
+     Bilanz, Balken und Quote brach „Ø 8,8 T…" bei 360 px mitten im Wort ab. */
+  /* Eine Bilanz ist eine Zahl und bricht nicht um („81–" über „40"). */
+  .rmeta > span:first-child{white-space:nowrap}
+  .rmeta.rmeta-tore{color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 
   /* ── Das Podest [§C6] ─────────────────────────────────────────────
      EIN Podest für die ganze App: Ewige Tafel und Award-Sammler. Drei
@@ -527,18 +542,21 @@
      Balkendiagramm, das unten aus der Karte lief.
      Was die Karte trägt, sagt der Inhalt: hier Karriere-Elo, dort die
      Zahl der Auszeichnungen. Die Form ist dieselbe. */
-  .podest{display:grid;grid-template-columns:1fr 1.16fr 1fr;gap:8px;
+  /* minmax(0,…): mit `1fr` war jede Spalte mindestens so breit wie ihr
+     Wappen samt Schwinge, und bei 360 px stand die rechte Karte 4 px im
+     Rand des Blatts. */
+  .podest{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.16fr) minmax(0,1fr);gap:8px;
     align-items:end;margin-bottom:16px}
   .pod-karte{--m:var(--silber);--mrgb:194,201,208;
     position:relative;background:var(--surface);border:1px solid var(--line);
-    border-radius:16px;padding:12px 8px 12px;text-align:center;cursor:pointer;
+    border-radius:16px;padding:12px 4px 12px;text-align:center;cursor:pointer;
     transition:transform .14s,border-color .14s}
   .pod-karte:active{transform:translateY(-2px)}
   .pod-karte.gold  {--m:var(--gold);  --mrgb:247,207,74}
   .pod-karte.silber{--m:var(--silber);--mrgb:194,201,208}
   .pod-karte.bronze{--m:var(--bronze);--mrgb:192,132,87}
   /* Der Erste steht höher, ist wärmer hinterlegt und trägt den Rand. */
-  .pod-karte.erster{padding:14px 10px 14px;
+  .pod-karte.erster{padding:14px 6px 14px;
     border-color:rgba(var(--mrgb),.42);
     background:
       radial-gradient(120% 80% at 50% -10%,rgba(var(--mrgb),.10),transparent 62%),
@@ -850,7 +868,7 @@
   .aw-t-ic{flex:0 0 auto;display:flex;color:var(--awc)}
   .aw-t-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;
     stroke-linecap:round;stroke-linejoin:round}
-  .aw-t-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.09em;
+  .aw-t-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.04em;
     font-family:'Sometype Mono',monospace;color:var(--muted);font-weight:700;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 
@@ -1095,7 +1113,11 @@
   .rek-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
   .rek-p{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
     letter-spacing:.06em;color:var(--muted);background:var(--bg2);
-    border:1px solid var(--line);border-radius:99px;padding:1.5px 7px;white-space:nowrap}
+    border:1px solid var(--line);border-radius:8px;padding:1.5px 7px;line-height:1.45;
+    max-width:100%}
+  /* Nicht `nowrap`: „Ganze Laufbahn, ausgeglichen angesetzte Partien" ist bei
+     360 px breiter als die Karte und lief rechts aus dem Bildschirm. Abkürzen
+     wäre schlimmer — die Pille ist die einzige Stelle, die den Zeitraum nennt. */
   .rek-p.zeit{color:var(--ink2)}
 
   /* Die Faktenzeilen im Rekord-Blatt: Zeitraum, Mindestbasis und die
@@ -1361,7 +1383,7 @@
   .pp-pos-c.atk .bar > i{background:linear-gradient(90deg,var(--orange),#ffb47e)}
   .pp-pos-c.def .bar > i{background:linear-gradient(90deg,var(--blue),#9bd6f5)}
 
-  .pp-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .pp-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
   .pp-k{padding:15px 10px;text-align:center;background:var(--surface);
     border:1px solid rgba(255,255,255,.05);border-radius:var(--r);
     box-shadow:0 6px 16px -10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.03);
@@ -1569,7 +1591,7 @@
   .pp-r-rich .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex-shrink:0;border:1.5px solid var(--surface);font-family:'Archivo Black',sans-serif;color:#0a0c0b}
   .pp-r-rich .av.empty{background:var(--surface3);color:var(--muted);font-size:14px}
   .pp-r-rich .info{flex:1;min-width:0}
-  .pp-r-rich .l{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:'Sometype Mono',monospace;display:flex;align-items:center;gap:4px;line-height:1}
+  .pp-r-rich .l{font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-family:'Sometype Mono',monospace;display:flex;align-items:center;gap:4px;line-height:1}
   .pp-r-rich .l svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
   .pp-r-rich .name{font-family:'Archivo Black',sans-serif;font-size:12.5px;letter-spacing:-.01em;margin-top:4px;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pp-r-rich .stat{font-family:'Sometype Mono',monospace;font-size:10.5px;margin-top:3px;font-weight:600}
@@ -1857,7 +1879,9 @@
     color:var(--muted);letter-spacing:.08em;text-transform:uppercase;line-height:1}
 
   /* Beziehungen — 2×2 Grid (Wrapper für die bestehenden .pp-r-rich Karten) */
-  .pp-rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  /* minmax(0,…): `1fr` wächst mit dem längsten Wort, und „Schwächster
+     Partner" schob die rechte Spalte aus dem Blatt. */
+  .pp-rel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .pp-rel-grid > .pp-r-rich{display:flex;align-items:center;gap:10px;border-radius:14px;border-left-width:1px;border-left-style:solid}
 
   /* Auszeichnungs-Strip (Übersicht im Profil) — vereinfacht */
@@ -2198,6 +2222,13 @@
     border:1px solid var(--line);border-left:2px solid var(--story,var(--line2));
     border-radius:4px 14px 14px 4px;padding:12px;cursor:pointer;transition:.15s}
   .nf-card:active{transform:scale(.992)}
+  /* Der Feed hat rund siebzig Karten und 4600 Knoten, und das Layout kostete
+     bei jedem Öffnen und bei jedem Zurück aus einem Story-Blatt gemessen
+     110 bis 140 ms — das Parsen des Markups nur zehn. Karten außerhalb des
+     Bildschirms werden erst gelegt, wenn sie hineinkommen: gemessen 35 ms.
+     Breaking und die Karte des Tages sind ausgenommen: ihr Schein liegt
+     außerhalb der Fläche, und die Eindämmung schnitte ihn ab. */
+  .nf-card:not(.nf-brk):not(.nf-gross){content-visibility:auto;contain-intrinsic-size:auto 190px}
   /* Eine Lichtkante oben. Ohne sie sass die Karte flach auf dem Grund und
      zehn davon untereinander waren ein einziges dunkles Feld. */
   .nf-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
@@ -4452,11 +4483,15 @@
     letter-spacing:.10em;font-family:'Sometype Mono',monospace}
   .lb-st-n{margin-left:auto;font-size:11.5px;color:var(--ak)}
 
-  .lb-teile{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  /* Drei gleich breite Kacheln: mit `1fr` zog „Monatschroniken" seine
+     Spalte auf, und die Rekorde standen in einer halb so breiten daneben.
+     Das lange Wort passt dafür mit 9,5 px und schmalerem Rand hinein. */
+  .lb-teile{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
   .lb-teil{border:1px solid var(--line);border-radius:var(--r-sm);
-    background:var(--surface);padding:11px 8px;text-align:center}
+    background:var(--surface);padding:11px 3px;text-align:center}
   .lb-t-n{font-family:'Archivo Black',sans-serif;font-size:21px;color:var(--ink)}
-  .lb-t-l{font-size:10.5px;font-weight:700;color:var(--ink2);margin-top:3px}
+  .lb-t-l{font-size:9.5px;font-weight:700;color:var(--ink2);margin-top:3px;letter-spacing:-.01em;
+    white-space:nowrap}
   .lb-t-s{font-size:9.5px;color:var(--muted);margin-top:1px}
 
   /* Das Buch: jeder Posten mit dem Grund, warum er so viel wiegt.
@@ -5146,7 +5181,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.06771d43';
+const BUILD_VERSION='2026.09.29.bcb59952';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6290,8 +6325,12 @@ function rankBadgeHtml(id, size='sm'){
 // Elo heißt dabei im Zeitraum der Zuwachs, in Saison und Gesamt der Stand —
 // beides ist „die Elo dieses Zeitraums", nur einmal als Strecke und einmal
 // als Punkt.
-const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegrate',
-  goaldiff:'Tordiff',prestige:'Prestige',games:'Spiele'};
+const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegquote',
+  goaldiff:'Torbilanz',prestige:'Prestige',games:'Spiele'};
+// Fünf Reiter teilen sich 328 px: „Siegquote" stand dort als „Siegq…".
+// Im Reiter reicht das Wort, das die Spalte meint; unter der Zahl steht
+// weiter der volle Name.
+const METRIC_REITER={winrate:'Quote'};
 // Die LIGA-Rangliste ist die Elo-Rangliste — in Saison, Woche und Tag gibt
 // es dort nichts zu sortieren. Wer nach Siegrate oder Tordiff schaut, sucht
 // keine Rangliste, sondern eine Bestenliste, und die steht im Awards-Tab.
@@ -6329,7 +6368,7 @@ function metrikLeisteHtml(per){
   if(liste.length < 2) return '';
   const jetzt = metrikFuer(per);
   return `<div class="ui-tabs">${liste.map(k =>
-    `<button data-metric="${k}" class="${jetzt===k?'on':''}">${METRIC_LABEL[k]}</button>`
+    `<button data-metric="${k}" class="${jetzt===k?'on':''}">${METRIC_REITER[k]||METRIC_LABEL[k]}</button>`
   ).join('')}</div>`;
 }
 
@@ -7135,7 +7174,7 @@ function showSeasonRecap(season, opts){
       const p = pmap()[e.id];
       const titelBis = seasons.filter(x => x.id <= sid && seasonChampion(x.id) === e.id).length;
       const av = avHtml(p, '', {ins:true, band:true, pos:platz, titel:titelBis, feuer:0,
-                                px:platz===1?92:78, klasse:'pod-av'});
+                                px:platz===1?88:70, klasse:'pod-av'});
       // Ohne Titel steht dort die Spielzahl — ein Strich sieht aus, als
       // fehlte die Zahl, statt zu sagen: dieser Spieler hat noch keinen.
       const sub = titelBis
@@ -7170,7 +7209,7 @@ function showSeasonRecap(season, opts){
       <div class="rcp-tos-info">
         <div class="rcp-tos-label">Team der Saison</div>
         <div class="rcp-tos-name">${esc(pname(a)+' & '+pname(b))}</div>
-        <div class="rcp-tos-detail num">${tg?tg+' Spiele · '+Math.round(tw/tg*100)+'% Siegrate':'–'}</div>
+        <div class="rcp-tos-detail num">${tg?tg+' Spiele · '+Math.round(tw/tg*100)+'% Siegquote':'–'}</div>
       </div>
     </div>`;
   }
@@ -7261,22 +7300,22 @@ function showSeasonRecap(season, opts){
   // trägt es das Podest, sonst nichts.
   const kachel=(ic,label,name,wert,key)=>kacheln.push(rcpKachelHtml({
     ic, label, name, wert, ton:'metall', attr:`data-award="${key}"`}));
-  if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+scorer.avg.toFixed(1)+' Tore','scorer');
-  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),(wall.v/wall.g).toFixed(1)+' Gegen/Sp.','wall');
+  if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
+  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),komma((wall.v/wall.g),1)+' Gegen/Sp.','wall');
   if(streak)  kachel('flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks');
-  if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegrate','perfect');
+  if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegquote','perfect');
   if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× POTW','weekKing');
   if(dayKing) kachel('crown','Tageskönig',pname(dayKing.id),dayKing.v+'× POTD','dayKing');
   if(grinder) kachel('gamepad','Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
   if(upset){
     const sieger = upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];
-    kachel('bolt','Größter Upset',pname(sieger[0])+' & '+pname(sieger[1]),
+    kachel('bolt','Größte Überraschung',pname(sieger[0])+' & '+pname(sieger[1]),
            Math.round((1-upset.sp)*100)+'% Chance','upset');
   }
   // Die Schattenseiten stehen hinten und in Rot — Rot sagt hier die
   // Richtung, nicht die Wichtigkeit [§C25].
   if(worstWr) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Schlechtester',
-    name:pname(worstWr.id),wert:Math.round(worstWr.wr*100)+'% Siegrate',ton:'red',
+    name:pname(worstWr.id),wert:Math.round(worstWr.wr*100)+'% Siegquote',ton:'red',
     attr:'data-award="worstWr"'}));
   if(pechvogel) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Pechvogel',
     name:pname(pechvogel.id),wert:Math.round(pechvogel.pct*100)+'% knapp verloren',ton:'red',
@@ -7433,7 +7472,12 @@ function _buildPositionChartSvg(data){
   } else {
     tickDays.push(1);
     for(let d=5; d<=D; d+=5) tickDays.push(d);
-    if(tickDays[tickDays.length-1] !== D) tickDays.push(D); // Endpunkt immer
+    // Endpunkt immer — und der Fünferschritt davor fällt weg, wenn er zu
+    // nah daran liegt: am 26. standen „25" und „26" als „2526" übereinander.
+    if(tickDays[tickDays.length-1] !== D){
+      if(D - tickDays[tickDays.length-1] < 3) tickDays.pop();
+      tickDays.push(D);
+    }
   }
   // Dedup
   const seenTicks = new Set();
@@ -7519,7 +7563,7 @@ function _renderPosvDetail(el, data, hlId){
   const stats = getSeasonPlayerStats(data.seasonId);
   if(!hlId){
     el.classList.add('empty');
-    el.innerHTML = `<div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>`;
+    el.innerHTML = `<div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>`;
     return;
   }
   el.classList.remove('empty');
@@ -7659,14 +7703,14 @@ function showPositionHistory(seasonId){
         ${_buildPositionChartSvg(data)}
       </div>
 
-      <div class="posv-hint">Tippe auf einen Spieler, um ihn hervorzuheben</div>
+      <div class="posv-hint">Linie oder Gesicht antippen, um einen Spieler hervorzuheben</div>
 
       <div class="posv-detail empty" id="posvDetail">
-        <div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>
+        <div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>
       </div>
 
       <div class="posv-update">
-        <span>Letztes Update: Heute, ${headerDate}</span>
+        <span>Stand: heute, ${headerDate}</span>
         <button class="posv-refresh" id="posvRefreshBtn" title="Aktualisieren">
           <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></svg>
         </button>
@@ -7919,17 +7963,17 @@ function showPotwRecap(opts){
        teamOfTheWeek ? teamOfTheWeek.games+' Spiele · '
          +Math.round(teamOfTheWeek.wins/teamOfTheWeek.games*100)+'%' : null,
        `data-potw-award="mvt" data-potw-week="${wkStartMs}"`);
-    hl('chartUp', 'Elo-Aufstieg',
+    hl('chartUp', 'Größter Aufwind',
        biggestEloGain ? pname(biggestEloGain[0]) : null,
        biggestEloGain ? '+'+Math.round(biggestEloGain[1].eloDelta)+' Elo' : null,
        biggestEloGain ? `data-potw-player="${esc(biggestEloGain[0])}"` : '');
-    hl('ball', 'Top-Tor', topScorer ? pname(topScorer.id) : null,
-       topScorer ? 'Ø '+topScorer.avg.toFixed(1)+' Tore' : null,
+    hl('ball', 'Torjäger', topScorer ? pname(topScorer.id) : null,
+       topScorer ? 'Ø '+komma(topScorer.avg,1)+' Tore' : null,
        `data-potw-award="scorer" data-potw-week="${wkStartMs}"`);
     hl('shieldCheck', 'Eiserne Abwehr', bestDefender ? pname(bestDefender.id) : null,
-       bestDefender ? 'Ø '+bestDefender.avg.toFixed(1)+' Gegentore' : null,
+       bestDefender ? 'Ø '+komma(bestDefender.avg,1)+' Gegentore' : null,
        `data-potw-award="wall" data-potw-week="${wkStartMs}"`);
-    hl('bolt', 'Größter Upset', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
+    hl('bolt', 'Größte Überraschung', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
        (topUpset && upsetNames) ? Math.round(topUpset.sp*100)+'% Chance' : null,
        `data-potw-award="upset" data-potw-week="${wkStartMs}"`);
 
@@ -8200,13 +8244,13 @@ function showPotdRecap(opts){
     const tagKacheln = [];
     const tagHl = (ic, label, name, wert, attr) => tagKacheln.push(rcpKachelHtml(
       name ? {ic, label, name, wert, ton:'metall', attr} : {ic, label, leer:true}));
-    tagHl('ball', 'Top-Tor', tagScorer ? pname(tagScorer.id) : null,
-          tagScorer ? 'Ø '+tagScorer.avg.toFixed(1)+' Tore' : null,
+    tagHl('ball', 'Torjäger', tagScorer ? pname(tagScorer.id) : null,
+          tagScorer ? 'Ø '+komma(tagScorer.avg,1)+' Tore' : null,
           tagScorer ? `data-potd-player="${esc(tagScorer.id)}"` : '');
-    tagHl('chartUp', 'Elo-Aufstieg', tagAufstieg ? pname(tagAufstieg.id) : null,
+    tagHl('chartUp', 'Größter Aufwind', tagAufstieg ? pname(tagAufstieg.id) : null,
           tagAufstieg ? '+'+tagAufstieg.d+' Elo' : null,
           tagAufstieg ? `data-potd-player="${esc(tagAufstieg.id)}"` : '');
-    tagHl('bolt', 'Größter Upset', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
+    tagHl('bolt', 'Größte Überraschung', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
           tagUpset ? Math.round(tagUpset.chance*100)+'% Chance' : null,
           upsetSieger ? `data-potd-team="${esc(upsetSieger.slice().sort().join('|'))}"` : '');
 
@@ -8737,8 +8781,8 @@ function teamAchievements(p1Id, p2Id){
     zirkus:           x => Math.round(x.pct*100)+'%',
     baustelle:        x => x.best+'er',
     unstoppable:      x => x.v+'er',
-    concreteWall:     x => x.v.toFixed(2),
-    cheesePlatter:    x => x.v.toFixed(2),
+    concreteWall:     x => komma(x.v,2),
+    cheesePlatter:    x => komma(x.v,2),
     luckyCharm:       x => Math.round(x.v*100)+'%',
     giantSlayer:      x => Math.round(x.v*100)+'%',
     favoritenschreck: x => x.v+' Elo'
@@ -9042,8 +9086,9 @@ function renderNav(){
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
     awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';
     window.scrollTo(0,0);render();});
-  // FAB nur außerhalb des Match-Tabs sinnvoll
-  document.getElementById('fab').style.display = 'grid';
+  // FAB nur außerhalb des Match-Tabs sinnvoll: dort führt er auf die Seite,
+  // auf der man schon ist, und lag über dem Knopf „Mischen".
+  document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
 }
 
 function render(){
@@ -9446,7 +9491,12 @@ function insAvWrap(pid, innerHtml, opts){
   // sie, und drei Aufrufer im Feed zeichneten Wappen bei 30 px. Gemessen
   // waren das 225 der 258 Kilobyte Markup einer Tafel — vier Wappen je
   // Ergebnisband.
-  if(px < 48) return innerHtml;
+  // Ohne Wappen bleibt das Gesicht — aber in seiner Größe. Es kam nackt
+  // zurück, ohne Breite und Höhe, und wo kein Behälter eine Größe setzt,
+  // standen die Initialen als Text da: das Duo einer Durststrecke im Feed
+  // war „LMA", zwei Buchstabenhaufen ineinander. `--av` greift nur, wo kein
+  // Behälter selbst misst (siehe `.av` in 02-ranking.css).
+  if(px < 48) return String(innerHtml).replace(/^(<span class="av[^"]*"[^>]*?style=")/, `$1--av:${px}px;`);
   const band = !!(opts && opts.band);
   const t = opts.titel !== undefined ? opts.titel : znTitel(pid);
   const f = opts.feuer !== undefined ? opts.feuer : znFeuer(pid);
@@ -10202,7 +10252,7 @@ function _vRankingCore(){
       const wr=x.games?Math.round(x.wins/x.games*100):0;
       if(metrik==='wins')     return {big:x.wins, small:'Siege'};
       if(metrik==='winrate')  return {big:wr+'%', small:x.wins+'–'+x.losses};
-      if(metrik==='goaldiff') return {big:(x.gd>=0?'+':'')+x.gd, small:'Tordiff'};
+      if(metrik==='goaldiff') return {big:(x.gd>=0?'+':'')+x.gd, small:'Torbilanz'};
       if(metrik==='streak')   return {big:x.curStreak>0?x.curStreak+'W':x.curStreak<0?(-x.curStreak)+'L':'–',
                                       small:x.curStreak>0?'Siege':x.curStreak<0?'Niederlagen':'neutral'};
       if(metrik==='games')    return {big:x.games, small:'Spiele'};
@@ -10286,8 +10336,8 @@ function _vRankingCore(){
       // Spieler gross genug steht, um es zu tragen; in der Tabelle darunter
       // bleibt es beim Reif, weil eine Zeile die Hoehe nicht hat.
       const titelTxt   = period==='day' ? 'Player of the Day' : 'Player of the Week';
-      const regelTxt   = period==='day' ? 'min. 3 Siege · meiste Siege'
-                                        : 'min. 5 Siege · beste Quote';
+      const regelTxt   = period==='day' ? 'ab 3 Siegen · die meisten Siege'
+                                        : 'ab 5 Siegen · die beste Quote';
       const eloLabel   = period==='day' ? 'Elo Tag' : 'Elo Woche';
       if(winner){
         const wp=pmap()[winner.id];
@@ -10354,7 +10404,7 @@ function _vRankingCore(){
       const mitte = period==='week'
         ? renderHl('streak','Heißeste Serie','flame', topStreak?pname(topStreak.id):null,
             topStreak?`${topStreak.v} in Folge`:'', topStreak?'data-toplist="periodStreak"':'')
-        : renderHl('upset','Größter Upset','bolt', upsetName,
+        : renderHl('upset','Größte Überraschung','bolt', upsetName,
             topUpset?`${topUpset.winPct}% Chance`:'', topUpset?'data-toplist="periodUpset"':'');
       nebenHtml+=`
         <div class="wk-highlights">
@@ -10564,7 +10614,7 @@ function _vRankingCore(){
       // Die Zahl im Schild ist der Podestplatz, nicht die Position der
       // laufenden Saison: auf dieser Karte gilt die Karriere.
       const avWappen = avHtml(pp, '', {ins:true, band:true, pos:platz,
-                                        px:platz===1?92:78, klasse:'pod-av'});
+                                        px:platz===1?88:70, klasse:'pod-av'});
       // Ein Ligatitel ist Player of the Season, sonst nichts — dieselbe Zahl,
       // die auch die Sterne unter dem Avatar und die Schwingen des Wappens
       // sagen [§C26]. Hier wurde Team of the Season mitgezählt: auf der Karte
@@ -10639,7 +10689,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
   }
 
   else if(metric==='winrate'){big=Math.round(s.wr*100)+'%'; small=s.wins+'–'+s.losses;}
-  else if(metric==='goaldiff'){big=(s.gd>=0?'+':'')+s.gd; small='Tordiff';}
+  else if(metric==='goaldiff'){big=(s.gd>=0?'+':'')+s.gd; small='Torbilanz';}
   else if(metric==='prestige'){
     // Die Zahl groß, die Stufe klein. Das Zeichen trägt der Avatar links
     // schon — aber in 52 px erkennt man den Schildring nicht vom
@@ -10704,10 +10754,13 @@ function vPositions(){
   const atk=posList('atk'), def=posList('def');
   const block=(arr,pos)=>{
     if(!arr.length)return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
-    const valLbl = pos==='atk' ? 'Tore/Sp.' : 'Geg./Sp.';
+    // Die Tore stehen in einer eigenen Zeile. Hinter Bilanz, Balken und
+    // Quote war bei 360 px kein Platz mehr: „Ø 8,8 T…" brach mitten im Wort
+    // ab, und die Bilanz „81–40" stand auf zwei Zeilen.
+    const valLbl = pos==='atk' ? 'Tore je Spiel' : 'Gegentore je Spiel';
     return `<div class="rlist">${arr.map((x,i)=>{
       const perfChip = x.pAvg>0.08?'<span class="perf-up">▲</span>':x.pAvg<-0.08?'<span class="perf-dn">▼</span>':'';
-      const goalsTxt = x.goalsAvg.toFixed(1);
+      const goalsTxt = komma(x.goalsAvg,1);
       // Die Liste sortiert nach `score`, zeigte als große Zahl aber Ø Tore —
       // dadurch stand 8.8 über 8.9 und die Reihenfolge widersprach sich
       // selbst. Jetzt steht rechts der Wert, nach dem tatsächlich sortiert
@@ -10722,21 +10775,20 @@ function vPositions(){
             <span>${x.w}–${x.g-x.w}</span>
             <span class="wbar"><i style="width:${Math.round(x.wr*100)}%"></i></span>
             <span>${Math.round(x.wr*100)}%</span>
-            <span class="rmeta-sep">Ø ${goalsTxt} ${valLbl}</span>
           </div>
+          <div class="rmeta rmeta-tore">Ø ${goalsTxt} ${valLbl}</div>
         </div>
         <div class="rval"><div class="big num">${wert}</div><div class="small">Wert</div></div>
       </div>`;}).join('')}</div>`;
   };
   const which = rankMetric==='def'?'def':'atk';
-  const subLbl = which==='atk' ? 'Performance · Erfahrung · Ø Tore' : 'Performance · Erfahrung · Ø Gegentore';
   return `
-    <div class="view-head"><h2>Positionen</h2><p>Beste Spieler je Position · ${subLbl}</p></div>
+    <div class="view-head"><h2>Positionen</h2><p>Wer vorn und hinten am stärksten ist, über alle Partien. Der Wert verbindet Siegquote, Leistung gegen die Erwartung und Erfahrung.</p></div>
     <div class="ui-switch">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('bolt')}Sturm</span></button>
       <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('shield')}Abwehr</span></button>
     </div>
-    <div class="mini-label">▲ über Erwartung · ▼ unter Erwartung (berücksichtigt Mate- & Gegnerstärke)</div>
+    <div class="mini-label">▲ über · ▼ unter der Erwartung, gemessen an Partner und Gegnern</div>
     ${which==='atk'?block(atk,'atk'):block(def,'def')}`;
 }
 
@@ -10770,6 +10822,7 @@ const AW_MIN = {
   teamPleiten: 2,    // Pleiten eines Duos (Zirkus)
   duell: 2,          // direkte Duelle (Erzfeinde, Endgegner)
   spieler: 3,        // Partien eines Spielers, wenn ein Schnitt gebildet wird
+  position: 2,       // Partien auf einer Position (Torjaeger, Eiserne Abwehr)
   spielerSaldo: 5,   // Tor-Saldo je Spiel — ein 10:0 verzerrt sonst zu stark
   enge: 2,           // enge Partien eines Spielers (Clutch, Pechvogel)
   favorit: 3,        // Partien als Favorit (Favoriten-Versager)
@@ -11040,9 +11093,9 @@ function _awardRankingsUncached(period, sid){
   const mvt=Object.entries(agg.tElo).map(([k,v])=>({ids:k.split('|'),v,g:agg.tGames[k]||0}))
     .filter(x=>x.g>=2).sort((a,b)=>b.v-a.v);
   
-  const scorer=Object.entries(agg.atkGoals).filter(([,v])=>v>0).map(([id,v])=>({id,v,g:agg.atkGoalGames[id],avg:v/agg.atkGoalGames[id]})).filter(x=>x.g>=2).sort((a,b)=>b.avg-a.avg||b.v-a.v);
+  const scorer=Object.entries(agg.atkGoals).filter(([,v])=>v>0).map(([id,v])=>({id,v,g:agg.atkGoalGames[id],avg:v/agg.atkGoalGames[id]})).filter(x=>x.g>=AW_MIN.position).sort((a,b)=>b.avg-a.avg||b.v-a.v);
   const wall=Object.entries(agg.defConceded).filter(([id])=>agg.defGames_[id]!==0).map(([id,v])=>({id,v,g:agg.defGames_[id]||1}))
-    .filter(x=>x.g>=2).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
+    .filter(x=>x.g>=AW_MIN.position).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
   const iceList=Object.entries(agg.iceWins).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
   
   const grinder=Object.entries(agg.pGames).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
@@ -11055,11 +11108,11 @@ function _awardRankingsUncached(period, sid){
   const streaks=longestStreaks(ms);
   
   const worstWr=Object.entries(agg.pWins).map(([id,w])=>({id,w,g:agg.pGames[id],wr:agg.pGames[id]?w/agg.pGames[id]:0}))
-    .filter(x=>x.g>=3).sort((a,b)=>a.wr-b.wr||b.g-a.g);
+    .filter(x=>x.g>=AW_MIN.spieler).sort((a,b)=>a.wr-b.wr||b.g-a.g);
   const worstAtk=Object.entries(agg.atkGoals).map(([id,v])=>({id,v,g:agg.atkGoalGames[id]||1}))
-    .filter(x=>x.g>=2).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
+    .filter(x=>x.g>=AW_MIN.position).sort((a,b)=>(a.v/a.g)-(b.v/b.g));
   const worstDef=Object.entries(agg.defConceded).map(([id,v])=>({id,v,g:agg.defGames_[id]||1}))
-    .filter(x=>x.g>=2).sort((a,b)=>(b.v/b.g)-(a.v/a.g));
+    .filter(x=>x.g>=AW_MIN.position).sort((a,b)=>(b.v/b.g)-(a.v/a.g));
   const worstElo=Object.entries(agg.pElo).map(([id,v])=>({id,v})).sort((a,b)=>a.v-b.v);
 
   // ═══ NEUE AWARDS v3 ═══
@@ -11979,7 +12032,7 @@ function _vAwardsCore(){
       ? card('dayKing','gold','Tageskönig',[dk0.id],esc(topNames(R.dayKingList,x=>x.v,x=>pname(x.id))),dk0.v+'× Player of the Day',dk0.v)
       : empty('dayKing','gold','Tageskönig'));
   }
-  sect('star','gold','Highlights',highlights);
+  sect('star','gold','Höhepunkte',highlights);
 
   // ── TEAMS ──
   const teams=[];
@@ -11996,7 +12049,7 @@ function _vAwardsCore(){
     : empty('unstoppable','acid','Unaufhaltsam'));
   // Betonmauer: niedrigster Gegentor-Schnitt (min. 10 Sp.)
   teams.push(cw0
-    ? card('concreteWall','blue','Betonmauer',cw0.ids,esc(topTeamNames(R.concreteWallList,x=>-Math.round(x.v*100))),cw0.v.toFixed(2)+' Gegentore/Sp.',cw0.v.toFixed(2))
+    ? card('concreteWall','blue','Betonmauer',cw0.ids,esc(topTeamNames(R.concreteWallList,x=>-Math.round(x.v*100))),komma(cw0.v,2)+' Gegentore/Sp.',komma(cw0.v,2))
     : empty('concreteWall','blue','Betonmauer'));
   // Glückspilze: meiste 1-Tor-Siege
   teams.push(lc0
@@ -12022,17 +12075,17 @@ function _vAwardsCore(){
   // ── ANGRIFF & VERTEIDIGUNG ──
   const combat=[];
   combat.push(sc0
-    ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+sc0.avg.toFixed(1)+' Tore/Sp.',sc0.avg.toFixed(1))
+    ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+komma(sc0.avg,1)+' Tore/Sp.',komma(sc0.avg,1))
     : empty('scorer','orange','Torjäger'));
   combat.push(wl0
-    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wl0.v/wl0.g).toFixed(1)+' Gegentore/Sp.',(wl0.v/wl0.g).toFixed(1))
+    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wl0.v/wl0.g),1)+' Gegentore/Sp.',komma((wl0.v/wl0.g),1))
     : empty('wall','blue','Eiserne Abwehr'));
   combat.push(ic0&&ic0.v>=1
     ? card('ice','blue','Eiskalt',[ic0.id],esc(topNames(R.iceList,x=>x.v,x=>pname(x.id))),ic0.v+'× Zu-Null als Verteidiger',ic0.v)
     : empty('ice','blue','Eiskalt'));
   // Plus-Minus: Ø Tor-Saldo pro Spiel. Vorzeichen vor dem Wert für klares "Plus"-Gefühl.
   combat.push(pm0
-    ? card('plusMinus','orange','Plus-Minus',[pm0.id],esc(topNames(R.plusMinusList,x=>Math.round(x.v*10),x=>pname(x.id))),pm0.gf+':'+pm0.ga+' · '+pm0.g+' Spiele',(pm0.v>=0?'+':'')+pm0.v.toFixed(1))
+    ? card('plusMinus','orange','Plus-Minus',[pm0.id],esc(topNames(R.plusMinusList,x=>Math.round(x.v*10),x=>pname(x.id))),pm0.gf+':'+pm0.ga+' · '+pm0.g+' Spiele',(pm0.v>=0?'+':'')+komma(pm0.v,1))
     : empty('plusMinus','orange','Plus-Minus'));
   sect('shield','purple','Angriff & Verteidigung',combat);
 
@@ -12077,21 +12130,21 @@ function _vAwardsCore(){
   // ── SCHANDTAFEL ──
   const neg=[];
   neg.push(wwr0
-    ? card('worstWr','red','Schlechtester Spieler',[wwr0.id],esc(topNames(R.worstWr,x=>Math.round(x.wr*100),x=>pname(x.id))),wwr0.w+'–'+(wwr0.g-wwr0.w),Math.round(wwr0.wr*100)+'%',{neg:true})
-    : empty('worstWr','red','Schlechtester Spieler'));
+    ? card('worstWr','red','Schwächste Bilanz',[wwr0.id],esc(topNames(R.worstWr,x=>Math.round(x.wr*100),x=>pname(x.id))),wwr0.w+'–'+(wwr0.g-wwr0.w),Math.round(wwr0.wr*100)+'%',{neg:true})
+    : empty('worstWr','red','Schwächste Bilanz'));
   if(cs0&&cs0.v>=2) neg.push(card('coldStreak','red','Eiskalt erwischt',[cs0.id],esc(topNames(R.coldStreak,x=>x.v,x=>pname(x.id))),'aktuelle Serie',cs0.v+'er',{neg:true}));
   const ls0=g(R.lossStreaks);
   neg.push(ls0
-    ? card('lossStreaks','red','Längste Niederlagenserie',[ls0.id],esc(topNames(R.lossStreaks,x=>x.v,x=>pname(x.id))),'insgesamt',ls0.v+'er',{neg:true})
-    : empty('lossStreaks','red','Längste Niederlagenserie'));
+    ? card('lossStreaks','red','Längste Pleitenserie',[ls0.id],esc(topNames(R.lossStreaks,x=>x.v,x=>pname(x.id))),'insgesamt',ls0.v+'er',{neg:true})
+    : empty('lossStreaks','red','Längste Pleitenserie'));
   neg.push(ft0
     ? card('formtief','red','Formtief',[ft0.id],esc(topNames(R.formtief,x=>Math.round(x.drop),x=>pname(x.id))),'Peak '+ft0.peak+' → jetzt '+ft0.cur,'-'+Math.round(ft0.drop),{neg:true})
     : empty('formtief','red','Formtief'));
   neg.push(wa0
-    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(topNames(R.worstAtk,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wa0.v/wa0.g).toFixed(1)+' Tore/Sp.',(wa0.v/wa0.g).toFixed(1),{neg:true})
+    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(topNames(R.worstAtk,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wa0.v/wa0.g),1)+' Tore/Sp.',komma((wa0.v/wa0.g),1),{neg:true})
     : empty('worstAtk','red','Zahnloser Stürmer'));
   neg.push(wd0
-    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1),{neg:true})
+    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wd0.v/wd0.g),1)+' Gegentore/Sp.',komma((wd0.v/wd0.g),1),{neg:true})
     : empty('worstDef','red','Löchrigste Abwehr'));
   neg.push(zk0
     ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>Math.round(x.pct*1000))),zk0.v+' von '+zk0.g+' Pleiten waren Debakel',Math.round(zk0.pct*100)+'%',{neg:true})
@@ -12114,7 +12167,7 @@ function _vAwardsCore(){
   // ── NEUE NEGATIV-AWARDS v6 ──
   // Käseteller: Spiegel zu Concrete Wall — höchster Gegentor-Schnitt als Team.
   neg.push(cp0
-    ? card('cheesePlatter','red','Käseteller',cp0.ids,esc(topTeamNames(R.cheesePlatterList,x=>Math.round(x.v*100))),cp0.v.toFixed(2)+' Gegentore/Sp.',cp0.v.toFixed(2),{neg:true})
+    ? card('cheesePlatter','red','Käseteller',cp0.ids,esc(topTeamNames(R.cheesePlatterList,x=>Math.round(x.v*100))),komma(cp0.v,2)+' Gegentore/Sp.',komma(cp0.v,2),{neg:true})
     : empty('cheesePlatter','red','Käseteller'));
   // Favoriten-Versager: Spiegel zu Underdog-Held — höchste Niederlagen-Quote bei myExp ≥ 65%.
   neg.push(fl0
@@ -12177,49 +12230,49 @@ function vAwards(){
 //   cls   — Farbklasse (acid|blue|gold|orange|purple|red)
 //   why   — Knappe Erklärung (1 Satz, idealerweise inkl. Mindestschwellen)
 const AWARD_META={
-  wins:        {title:'Meiste Siege',          cls:'gold',  why:'Wer hat im Zeitraum die meisten Spiele gewonnen.'},
-  mvt:         {title:'Bestes Team',           cls:'gold',  why:'Das Duo, das im Zeitraum zusammen die meisten Elo-Punkte geholt hat.'},
-  streaks:     {title:'Längste Siegesserie',   cls:'acid',  why:'Meiste Siege in Folge im Zeitraum.'},
-  onFire:      {title:'On Fire',               cls:'acid',  why:'Längste aktuell noch laufende Siegesserie.'},
-  scorer:      {title:'Torjäger',              cls:'orange',why:'Höchster Tore-Schnitt pro Spiel als Stürmer. Min. 2 Sturm-Spiele.'},
-  wall:        {title:'Eiserne Abwehr',        cls:'blue',  why:'Niedrigster Gegentore-Schnitt pro Spiel als Verteidiger. Min. 2 Abwehr-Spiele.'},
-  ice:         {title:'Eiskalt',               cls:'blue',  why:'Meiste Zu-Null-Siege als Verteidiger.'},
-  endgegner:   {title:'Endgegner',             cls:'purple',why:'Spieler-Paar mit dem höchsten Anteil "wir treffen als Gegner aufeinander" an der gemeinsamen Match-Aktivität. Min. 3 Begegnungen, beide Spieler min. 5 Spiele.'},
-  clutch:      {title:'Clutch-Player',         cls:'acid',  why:'Höchste Siegrate in knappen Spielen (Tordifferenz ≤ 2). Min. 2 knappe Spiele.'},
-  carryKing:   {title:'Carry-King',            cls:'acid',  why:'Meiste Siege, bei denen der Mitspieler einer der drei schwächsten Spieler im Match war.'},
-  bestDuo:     {title:'Unzertrennlich',        cls:'blue',  why:'Duo mit den meisten gemeinsamen Spielen im Zeitraum.'},
-  upset:       {title:'Größte Überraschung',   cls:'orange',why:'Das Match mit der niedrigsten Sieg-Wahrscheinlichkeit für den späteren Sieger.'},
-  biggest:     {title:'Höchster Sieg',         cls:'purple',why:'Das Match mit der größten Tordifferenz.'},
-  perfect:     {title:'Beste Bilanz',          cls:'gold',  why:'Höchste Siegrate im Zeitraum, mit einer dynamischen Mindest-Spielzahl für Stabilität.'},
-  grinder:     {title:'Vielspieler',           cls:'blue',  why:'Wer hat im Zeitraum die meisten Matches gespielt.'},
-  worstWr:     {title:'Schlechtester Spieler', cls:'red',   why:'Niedrigste Siegrate im Zeitraum. Min. 3 Spiele.'},
-  coldStreak:  {title:'Eiskalt erwischt',      cls:'red',   why:'Längste aktuell noch laufende Niederlagenserie.'},
-  lossStreaks: {title:'Längste Niederlagenserie',cls:'red', why:'Meiste Niederlagen in Folge im Zeitraum.'},
-  worstAtk:    {title:'Zahnloser Stürmer',     cls:'red',   why:'Wenigste erzielte Tore pro Spiel als Stürmer. Min. 2 Sturm-Spiele.'},
-  worstDef:    {title:'Löchrigste Abwehr',     cls:'red',   why:'Meiste kassierte Tore pro Spiel als Verteidiger. Min. 2 Abwehr-Spiele.'},
-  worstTeam:   {title:'Schlechtestes Team',    cls:'red',   why:'Duo mit der niedrigsten Siegrate. Min. 2 gemeinsame Spiele.'},
-  showmaster:  {title:'Showmaster',            cls:'gold',  why:'Meiste 10:0-Siege im Zeitraum.'},
-  solo:        {title:'Einzelkämpfer',         cls:'acid',  why:'Höchste Siegrate in Spielen mit einem Bottom-3-Mitspieler. Min. 2 solche Spiele.'},
-  formtief:    {title:'Formtief',              cls:'red',   why:'Größter Abstand zwischen persönlichem Peak-Elo und aktueller Elo (innerhalb einer Saison).'},
-  zirkus:      {title:'Zirkus',                cls:'red',   why:'Team mit dem höchsten Anteil hoher Niederlagen (5+ Tore Unterschied) an den gemeinsamen Spielen. Min. 5 Team-Spiele.'},
-  baustelle:   {title:'Baustelle',             cls:'red',   why:'Team mit der längsten gemeinsamen Niederlagenserie.'},
-  peakElo:     {title:'Peak Elo',              cls:'gold',  why:'Höchster jemals erreichter Saison-Elo-Stand, saison-übergreifend.'},
-  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:'Spieler mit den meisten Player-of-the-Week-Auszeichnungen. Die laufende Woche wird nicht gezählt.'},
-  dayKing:     {title:'Tageskönig',            cls:'gold',  why:'Spieler mit den meisten Player-of-the-Day-Auszeichnungen. Der laufende Tag wird nicht gezählt.'},
+  wins:        {title:'Meiste Siege',          cls:'gold',  why:`Die meisten gewonnenen Partien im Zeitraum.`},
+  mvt:         {title:'Bestes Team',           cls:'gold',  why:`Das Duo, das im Zeitraum zusammen die meisten Elo-Punkte geholt hat. Ab 2 gemeinsamen Partien.`},
+  streaks:     {title:'Längste Siegesserie',   cls:'acid',  why:`Die meisten Siege in Folge im Zeitraum.`},
+  onFire:      {title:'On Fire',               cls:'acid',  why:`Die längste Siegesserie, die gerade noch läuft.`},
+  scorer:      {title:'Torjäger',              cls:'orange',why:`Die meisten Tore je Partie im Sturm. Ab ${AW_MIN.position} Sturmpartien.`},
+  wall:        {title:'Eiserne Abwehr',        cls:'blue',  why:`Die wenigsten Gegentore je Partie in der Abwehr. Ab ${AW_MIN.position} Abwehrpartien.`},
+  ice:         {title:'Eiskalt',               cls:'blue',  why:`Die meisten Siege ohne Gegentor in der Abwehr.`},
+  endgegner:   {title:'Endgegner',             cls:'purple',why:`Zwei Spieler, die sich am häufigsten als Gegner begegnen, gemessen am Anteil an den Partien dessen, der weniger spielt. Ab ${AW_MIN.duell} Begegnungen, beide ab ${AW_MIN.spieler} Partien.`},
+  clutch:      {title:'Clutch-Player',         cls:'acid',  why:`Die höchste Siegquote in engen Partien (höchstens 2 Tore Unterschied). Ab ${AW_MIN.enge} engen Partien.`},
+  carryKing:   {title:'Carry-King',            cls:'acid',  why:`Die meisten Siege mit einem Partner, der vor der Partie der Schwächste der vier war.`},
+  bestDuo:     {title:'Unzertrennlich',        cls:'blue',  why:`Das Duo mit den meisten gemeinsamen Partien im Zeitraum.`},
+  upset:       {title:'Größte Überraschung',   cls:'orange',why:`Die Partie mit der niedrigsten Siegchance für den späteren Sieger.`},
+  biggest:     {title:'Höchster Sieg',         cls:'purple',why:`Die Partie mit dem größten Torabstand.`},
+  perfect:     {title:'Beste Bilanz',          cls:'gold',  why:`Die höchste Siegquote im Zeitraum. Verlangt sind 15 % der Partien des fleißigsten Spielers, mindestens ${AW_MIN.spieler} und höchstens 6.`},
+  grinder:     {title:'Vielspieler',           cls:'blue',  why:`Die meisten gespielten Partien im Zeitraum.`},
+  worstWr:     {title:'Schwächste Bilanz', cls:'red',   why:`Die niedrigste Siegquote im Zeitraum. Ab ${AW_MIN.spieler} Partien.`},
+  coldStreak:  {title:'Eiskalt erwischt',      cls:'red',   why:`Die längste Niederlagenserie, die gerade noch läuft.`},
+  lossStreaks: {title:'Längste Pleitenserie',cls:'red', why:`Die meisten Niederlagen in Folge im Zeitraum.`},
+  worstAtk:    {title:'Zahnloser Stürmer',     cls:'red',   why:`Die wenigsten Tore je Partie im Sturm. Ab ${AW_MIN.position} Sturmpartien.`},
+  worstDef:    {title:'Löchrigste Abwehr',     cls:'red',   why:`Die meisten Gegentore je Partie in der Abwehr. Ab ${AW_MIN.position} Abwehrpartien.`},
+  worstTeam:   {title:'Schlechtestes Team',    cls:'red',   why:`Das Duo mit der niedrigsten Siegquote. Ab 2 gemeinsamen Partien.`},
+  showmaster:  {title:'Showmaster',            cls:'gold',  why:`Die meisten 10:0-Siege im Zeitraum.`},
+  solo:        {title:'Einzelkämpfer',         cls:'acid',  why:`Die höchste Siegquote in Partien, in denen man vor dem Anpfiff der Stärkste der vier war. Ab 2 solchen Partien.`},
+  formtief:    {title:'Formtief',              cls:'red',   why:`Der größte Abstand zwischen dem höchsten und dem aktuellen Elo-Stand innerhalb einer Saison.`},
+  zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
+  baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},
+  peakElo:     {title:'Peak Elo',              cls:'gold',  why:`Der höchste je erreichte Elo-Stand innerhalb einer Saison, über alle Saisons.`},
+  weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Die meisten Titel als Player of the Week. Die laufende Woche zählt noch nicht.`},
+  dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Die meisten Titel als Player of the Day. Der laufende Tag zählt noch nicht.`},
   // ── AWARDS v3 ──
-  plusMinus:   {title:'Plus-Minus',            cls:'orange',why:'Höchster Tor-Saldo pro Spiel (Tore minus Gegentore). Min. 10 Spiele.'},
-  underdog:    {title:'Underdog-Held',         cls:'purple',why:'Meiste Siege mit weniger als 35 % Sieg-Wahrscheinlichkeit.'},
-  pechvogel:   {title:'Pechvogel',             cls:'red',   why:'Höchster Anteil knapper Niederlagen (Tordiff. ≤ 2) an allen Spielen. Min. 2 knappe Niederlagen und 5 Spiele.'},
+  plusMinus:   {title:'Plus-Minus',            cls:'orange',why:`Der höchste Torsaldo je Partie (Tore minus Gegentore). Ab ${AW_MIN.spielerSaldo} Partien.`},
+  underdog:    {title:'Underdog-Held',         cls:'purple',why:`Die höchste Siegquote als Außenseiter (Siegchance unter 35 %). Ab ${AW_MIN.unter} solchen Partien.`},
+  pechvogel:   {title:'Pechvogel',             cls:'red',   why:`Der höchste Anteil verlorener enger Partien (höchstens 2 Tore Unterschied). Ab ${AW_MIN.enge} engen Partien.`},
   // ── TEAM-AWARDS v4 ──
-  unstoppable: {title:'Unaufhaltsam',          cls:'acid',  why:'Team mit der längsten Siegesserie. Eine Niederlage beendet die Serie sofort.'},
-  concreteWall:{title:'Betonmauer',            cls:'blue',  why:'Team mit dem niedrigsten Gegentore-Schnitt pro Spiel. Min. 10 gemeinsame Spiele.'},
-  luckyCharm:  {title:'Glückspilze',           cls:'acid',  why:'Team mit dem höchsten Anteil knapper Siege (1 Tor Vorsprung) an den gemeinsamen Spielen. Min. 10 Team-Spiele.'},
-  giantSlayer: {title:'Giant Slayer',          cls:'orange',why:'Team mit der höchsten Erfolgsquote als Underdog (Quote: Siege gegen stärkeres Team / Spiele gegen ein stärkeres Team). Min. 5 Underdog-Matches.'},
-  favoritenschreck:{title:'Favoritenschreck',  cls:'red',   why:'Größter Team-Elo-Unterschied, der durch einen Sieg überwunden wurde.'},
-  rivalry:     {title:'Erzfeinde',             cls:'purple',why:'Team-Paar mit dem höchsten Anteil direkter Duelle an der gemeinsamen Match-Aktivität. Min. 3 Duelle, beide Teams min. 5 Spiele.'},
+  unstoppable: {title:'Unaufhaltsam',          cls:'acid',  why:`Das Duo mit der längsten Siegesserie. Eine Niederlage beendet sie.`},
+  concreteWall:{title:'Betonmauer',            cls:'blue',  why:`Das Duo mit den wenigsten Gegentoren je Partie. Ab ${AW_MIN.teamSpiele} gemeinsamen Partien.`},
+  luckyCharm:  {title:'Glückspilze',           cls:'acid',  why:`Das Duo, das die meisten Partien mit einem Tor Unterschied gewinnt, gemessen an allen solchen Partien. Ab ${AW_MIN.teamEnge} davon.`},
+  giantSlayer: {title:'Giant Slayer',          cls:'orange',why:`Die höchste Siegquote eines Duos gegen ein stärkeres Duo. Ab ${AW_MIN.teamUnter} solchen Partien.`},
+  favoritenschreck:{title:'Favoritenschreck',  cls:'red',   why:`Der größte Elo-Unterschied, den ein Duo mit einem Sieg überwunden hat.`},
+  rivalry:     {title:'Erzfeinde',             cls:'purple',why:`Zwei Duos, die sich am häufigsten gegenüberstehen, gemessen am Anteil an den Partien des Duos, das weniger spielt. Ab ${AW_MIN.duell} Duellen, beide ab ${AW_MIN.teamSpiele} Partien.`},
   // ── NEUE NEGATIV-AWARDS v6 ──
-  cheesePlatter:{title:'Käseteller',           cls:'red',   why:'Team mit dem höchsten Gegentor-Schnitt pro Spiel. Min. 10 gemeinsame Spiele.'},
-  favoriteLoser:{title:'Favoriten-Versager',   cls:'red',   why:'Höchste Niederlagen-Quote in Favoriten-Rollen (Siegerwartung ≥ 65 %). Min. 5 Favoriten-Matches.'}
+  cheesePlatter:{title:'Käseteller',           cls:'red',   why:`Das Duo mit den meisten Gegentoren je Partie. Ab ${AW_MIN.teamSpiele} gemeinsamen Partien.`},
+  favoriteLoser:{title:'Favoriten-Versager',   cls:'red',   why:`Die höchste Niederlagenquote als Favorit (Siegchance ab 65 %). Ab ${AW_MIN.favorit} solchen Partien.`}
 };
 // ╔═══ §5.3c ─── TOP-5-LISTEN FÜR STATISTIK-KARTEN (v9.16) ─────────────╗
 //     Statistik-/Superlativ-Karten (Team of the Season, Peak-Elo, Bestes
@@ -12337,34 +12390,34 @@ function openTopList(kind){
   if(kind==='periodTeam'){
     return showTopList({title:'Bestes Team', sub:periodLabel(period),
       ic:'handshake', cls:'blue', rows:_teamEloRanking(matchesInPeriod(period),1).filter(t=>t.elo>0).map(teamRow),
-      why:'Duo mit dem höchsten gemeinsamen Elo-Zuwachs in diesem Zeitraum.'});
+      why:'Das Duo mit dem höchsten gemeinsamen Elo-Zuwachs in diesem Zeitraum.'});
   }
   if(kind==='periodStreak'){
     return showTopList({title:'Heißeste Serie', sub:periodLabel(period),
       ic:'flame', cls:'acid',
       rows:longestStreaks(matchesInPeriod(period)).map(s=>({ids:[s.id], name:pname(s.id), val:s.v+'×', detail:'Siege in Folge'})),
-      why:'Längste Siegesserie innerhalb dieses Zeitraums. Min. 2 Siege in Folge.'});
+      why:'Die längste Siegesserie innerhalb dieses Zeitraums, ab 2 Siegen in Folge.'});
   }
   if(kind==='periodUpset'){
-    return showTopList({title:'Größter Upset', sub:periodLabel(period),
+    return showTopList({title:'Größte Überraschung', sub:periodLabel(period),
       ic:'bolt', cls:'blue',
       rows:_upsetRanking(matchesInPeriod(period)).map(u=>{
         const w=u.m.winner==='A'?[u.m.a1,u.m.a2]:[u.m.b1,u.m.b2];
         return {ids:w, matchId:u.m.id, name:w.map(pname).join(' & '),
           val:u.winPct+'%', detail:u.m.score_a+':'+u.m.score_b+' · '+dateStr(u.m.created_at)};
       }),
-      why:'Sieg mit der niedrigsten Siegerwartung. Je kleiner die Chance, desto größer der Upset.'});
+      why:'Der Sieg mit der niedrigsten Siegchance vor dem Anpfiff.'});
   }
   if(kind==='periodKing'){
     const isWeek=period==='week';
     const list=(getCachedAwardRankings('all')[isWeek?'weekKingList':'dayKingList'])||[];
-    return showTopList({title:isWeek?'Wochenkönig':'Tageskönig', sub:'All-Time',
+    return showTopList({title:isWeek?'Wochenkönig':'Tageskönig', sub:'Alle Saisons',
       ic:isWeek?'weekKing':'dayKing', cls:'gold',
       rows:list.map(k=>({ids:[k.id], name:pname(k.id), val:k.v+'×',
         detail:isWeek?'Player of the Week':'Player of the Day'})),
       why:isWeek
-        ? 'Wie oft ein Spieler eine abgeschlossene Woche als Bester beendet hat (min. 5 Siege).'
-        : 'Wie oft ein Spieler einen Spieltag als Bester beendet hat (min. 3 Siege).'});
+        ? 'Wie oft ein Spieler eine abgeschlossene Woche als Bester beendet hat, mit mindestens 5 Siegen.'
+        : 'Wie oft ein Spieler einen Spieltag als Bester beendet hat, mit mindestens 3 Siegen.'});
   }
 }
 
@@ -12537,13 +12590,13 @@ function showAward(key){
         case 'wins':       return R.winsList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Siege',sort:x.v}));
         case 'mvt':        return R.mvt.map(x=>({ids:x.ids,name:tn(x.ids),val:(x.v>=0?'+':'')+Math.round(x.v)+' Elo',sort:Math.round(x.v)}));
         case 'streaks':    return R.streaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+x.avg.toFixed(1)+' Tore',sort:Math.round(x.avg*10)}));
-        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma(x.avg,1)+' Tore',sort:Math.round(x.avg*10)}));
+        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
         case 'perfect':    return R.perfect.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'grinder':    return R.grinder.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Spiele',sort:x.v}));
         case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
-        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
-        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
+        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
         case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.g+'×)',sort:Math.round(x.pct*1000)}));
         case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Zu-Null',sort:x.v}));
@@ -12562,16 +12615,16 @@ function showAward(key){
         case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTW',sort:x.v}));
         case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTD',sort:x.v}));
         // ── NEUE AWARDS v3 ──
-        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+x.v.toFixed(1)+' /Sp.',sort:Math.round(x.v*10)}));
+        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+komma(x.v,1)+' /Sp.',sort:Math.round(x.v*10)}));
         case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Underdog-Sieg',sort:x.v}));
         case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         // ── NEUE TEAM-AWARDS v4 ──
         case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
-        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
+        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
         case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         // ── NEUE NEGATIV-AWARDS v6 ──
-        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
+        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
         case 'favoriteLoser': return R.favoriteLoserList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.v*100)+'% ('+x.losses+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         default: return [];
       }
@@ -12779,13 +12832,13 @@ function showAward(key){
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function vTeams(){
   const T=teamStats().filter(t=>t.g>=4);
-  if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Min. 4 gemeinsame Spiele</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
+  if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
   const showBest=teamView!=='worst';
   
   // ═══ SORTIERUNG BASIEREND AUF teamSort VARIABLE ═══
   let sorted;
   if(teamSort==='wr'){
-    // Standard: Nach Winrate
+    // Standard: nach Siegquote
     sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
   } else if(teamSort==='gd'){
     // Nach Tordifferenz
@@ -12831,7 +12884,6 @@ function vTeams(){
   };
 
   const gSim=getGlobalSim();
-  const seasonTeamMap=gSim.seasonTeamElo[currentSeason().id]||{};
 
   // Dezente Team-/Spieler-Suche: filtert das aktuelle (sortierte) Feld nach
   // Spielername ODER kombiniertem Team-Namen. Beim Suchen keine Top-3-Medaillen.
@@ -12851,25 +12903,21 @@ function vTeams(){
     const wr=Math.round(t.w/t.g*100);
     const gd=t.gf-t.ga;
     const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
-    const eloGain=Math.round(seasonTeamMap[keyTeam]||0);
     
     // ═══ DYNAMISCHE HAUPTMETRIK BASIEREND AUF teamSort ═══
     // Grün und Rot heißen Richtung [§C25]: Tordifferenz und Elo-Zuwachs haben
     // eine, eine Siegrate hat keine. Die trägt deshalb Tinte — und Gold, wenn
     // sie dem ersten Platz gehört (weiter unten über TOP[]).
-    let mainValue, mainLabel, mainColor;
+    let mainValue, mainColor;
     if(teamSort==='wr'){
       mainValue=wr+'%';
-      mainLabel='WR';
       mainColor='var(--ink)';
     } else if(teamSort==='gd'){
       mainValue=(gd>=0?'+':'')+gd;
-      mainLabel='TD';
       mainColor=gd>=0?'var(--acid)':'var(--red)';
     } else if(teamSort==='elo'){
       const eloGainTotal=Math.round(gSim.teamElo[keyTeam]||0);
       mainValue=(eloGainTotal>=0?'+':'')+eloGainTotal;
-      mainLabel='Elo';
       mainColor=eloGainTotal>=0?'var(--acid)':'var(--red)';
     }
 
@@ -12887,7 +12935,7 @@ function vTeams(){
         ${avPair(t.ids[0],t.ids[1])}
         <div style="flex:1;min-width:0">
           <div style="font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em;line-height:1.1">${esc(t.ids.map(pname).join(' & '))}</div>
-          <div class="num" style="margin-top:4px;font-size:10.5px;color:var(--muted)">${t.w}–${t.g-t.w} · TD ${gd>=0?'+':''}${gd}</div>
+          <div class="num" style="margin-top:4px;font-size:10.5px;color:var(--muted)">${t.w}–${t.g-t.w} · ${gd>=0?'+':''}${gd} Tore</div>
         </div>
         <div style="font-family:'Archivo Black',sans-serif;font-size:20px;color:${i===0&&isTop&&teamSort==='wr'?'var(--gold)':mainColor};line-height:1;flex-shrink:0">${mainValue}</div>
       </div>
@@ -12896,7 +12944,7 @@ function vTeams(){
 
 
   return `
-    <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' mit min. 4 gemeinsamen Spielen'}</p></div>
+    <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}</p></div>
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
@@ -12908,8 +12956,8 @@ function vTeams(){
       <button data-teamtoggle="worst" class="${!showBest?'on':''}">▼ Schlechteste</button>
     </div>
     <div class="ui-tabs">
-      <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Winrate</button>
-      <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Tordiff</button>
+      <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Siegquote</button>
+      <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Torbilanz</button>
       <button data-teamsort="elo" class="${teamSort==='elo'?'on':''}">Elo-Zuwachs</button>
     </div>
     ${arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden')}`;
@@ -13008,12 +13056,12 @@ function vMatch(){
         <div class="stepper"><button data-step="sb,-1">−</button><span class="sval num" id="svB" data-scoreedit="sb">${M.sb}</span><button data-step="sb,1">+</button></div></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 0 10px">
-      <span style="font-size:10.5px;color:var(--muted)">Tipp: auf die Zahl tippen (0–10)</span>
-      <button class="btn ghost" id="shuffleBtn" style="padding:8px 14px;font-size:11px;border-radius:10px">Mischen</button>
+      <span style="font-size:10.5px;color:var(--muted)">Zahl antippen, um sie direkt einzugeben</span>
+      <button class="btn ghost" id="shuffleBtn" style="width:auto;flex-shrink:0;padding:8px 14px;font-size:11px;border-radius:10px">Mischen</button>
     </div>
     <div id="previewSlot"></div>
     <div class="btn-row" style="margin-top:4px">
-      <button class="btn ghost sm" id="clearM" style="flex:0 0 38%">Reset</button>
+      <button class="btn ghost sm" id="clearM" style="flex:0 0 38%">Leeren</button>
       <button class="btn" id="saveM" disabled>Speichern</button>
     </div>`;
 }
@@ -13032,7 +13080,7 @@ function vSettings(){
     pos:        Math.round((cfg.pos_swing ?? 0.45)*100),
     winBoost:   Math.round((cfg.win_boost ?? 1.12)*100),
     movDamp:    Math.round((cfg.mov_loss_damp ?? 0.5)*100),
-    bonus:      ((cfg.match_bonus ?? 1.5)).toFixed(1),
+    bonus:      komma(cfg.match_bonus ?? 1.5, 1),
     startElo:   Math.round(cfg.start_elo ?? 0),
     posMin:     Math.round(cfg.pos_min_games ?? 3),
     expW:       Math.round((cfg.exp_weight ?? 0.5)*100),
@@ -13056,10 +13104,10 @@ function vSettings(){
 
     <div class="cfg-section-title">Spielerlast & Position</div>
     <div class="card">
-      ${sl('cfgRisk','Risiko-Split (schwacher Mate)',c.risk,0,100,'%')}
+      ${sl('cfgRisk','Risiko-Split (schwacher Partner)',c.risk,0,100,'%')}
       ${sl('cfgPos','Positions-Swing',c.pos,0,100,'%')}
       ${sl('cfgExpW','Positions-Erfahrungs-Gewicht',c.expW,0,100,'%')}
-      ${sl('cfgPosMin','Min. Spiele für Positions-Wertung',c.posMin,1,10,'')}
+      ${sl('cfgPosMin','Mindestspiele je Position',c.posMin,1,10,'')}
     </div>
 
     <div class="cfg-section-title">Sieg & Niederlage</div>
@@ -13090,10 +13138,10 @@ function vSettings(){
       <div style="font-size:12px;color:var(--ink2);line-height:1.8">
         <b style="color:var(--acid)">K-Faktor</b> — Wie stark einzelne Matches die Elo verändern. Hoch = schnelle Änderungen, niedrig = stabile Elo.<br>
         <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
-        <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk}% verlierst du weniger Elo wenn dein Mate deutlich schlechter ist.<br>
+        <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
         <b style="color:var(--acid)">Positions-Swing</b> — Bonus für Siege auf der schwachen Position. Ein Abwehr-Spieler der im Sturm gewinnt bekommt extra Elo.<br>
         <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Performance. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur Über-Erwartungs-Performance zählt.<br>
-        <b style="color:var(--acid)">Min. Spiele Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
+        <b style="color:var(--acid)">Mindestspiele je Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
         <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
@@ -13109,15 +13157,15 @@ function vSettings(){
       </div>
     </div>
     <div class="card" style="margin-top:14px;border:1px solid rgba(190,242,100,.18);background:linear-gradient(155deg,rgba(190,242,100,.06),var(--surface) 80%)">
-      <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Slider-Verhalten</div>
+      <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Wirkung der Regler</div>
       <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:8px">
-        Slider-Änderungen wirken <b style="color:var(--acid)">nur auf neue Matches</b>.
+        Änderungen an den Reglern wirken <b style="color:var(--acid)">nur auf neue Matches</b>.
         Vergangene Matches behalten ihre damaligen Elo-Werte — abgeschlossene Saisons bleiben stabil,
         Awards &amp; Achievements ändern sich nicht.
       </p>
       <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:6px">
-        Falls du die Slider <b>rückwirkend</b> auf die gesamte Historie anwenden willst, kannst du alle
-        Matches neu berechnen lassen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
+        Sollen die Regler <b>rückwirkend</b> für die gesamte Historie gelten, lassen sich alle
+        Matches neu berechnen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
         gespeicherten Match-Deltas überschrieben.
       </p>
       <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('cycle')} Alle Matches rückwirkend neu berechnen</button>
@@ -13127,7 +13175,7 @@ function vSettings(){
       <div class="mini-label">Backup &amp; Export</div>
       <p style="font-size:11.5px;color:var(--ink2);line-height:1.6;margin-top:10px">
         Die Liga lebt in einer Datenbank in der Cloud. Damit sie auch dann nicht verloren geht,
-        wenn dort etwas passiert, kannst du hier jederzeit eine eigene Kopie ziehen.
+        wenn dort etwas passiert, lässt sich hier jederzeit eine eigene Kopie ziehen.
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <button class="btn ghost" id="expXlsxBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('scroll')} Matches als Excel (.xlsx)</button>
@@ -13143,7 +13191,7 @@ function vSettings(){
       <div style="height:1px;background:var(--line);margin:14px 0"></div>
       <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('refresh')} Datei einspielen</button>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px">
-        Nimmt .xlsx, .csv und .json. Vor dem Schreiben siehst du eine Vorschau, was ergänzt würde.
+        Nimmt .xlsx, .csv und .json. Vor dem Schreiben erscheint eine Vorschau, was ergänzt würde.
         <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Matches kommen dazu.
       </p>
     </div>
@@ -13152,7 +13200,7 @@ function vSettings(){
       <div class="mini-label">Stand der App</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px">
         <div style="font-size:12px;color:var(--ink2);font-family:'Sometype Mono',monospace">${BUILD_VERSION}</div>
-        <button class="btn ghost sm" id="forceReloadBtn" style="padding:7px 12px;font-size:11px;flex-shrink:0">Neu laden</button>
+        <button class="btn ghost sm" id="forceReloadBtn" style="width:auto;padding:7px 12px;font-size:11px;flex-shrink:0">Neu laden</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:10px">
         Wenn eine Neuerung nicht auftaucht, hält das Telefon meist noch den alten Stand fest. Der Knopf holt ihn frisch. Sonst meldet sich ein neuer Stand von selbst mit einem Hinweis oben.
@@ -13168,7 +13216,7 @@ function vSettings(){
               ${avHtml(p,'width:32px;height:32px;border-radius:9px;font-size:11px')}
               <span style="font-weight:600">${esc(p.name)}</span>
             </div>
-            <button data-unhide="${p.id}" class="btn ghost sm" style="padding:7px 12px;font-size:11px">Einblenden</button>
+            <button data-unhide="${p.id}" class="btn ghost sm" style="width:auto;padding:7px 12px;font-size:11px">Einblenden</button>
           </div>`).join('')}
       </div>
     </div>`:''}
@@ -13235,7 +13283,7 @@ function updatePreview(){
       <div class="pb" style="width:${pB}%">${pB}%</div>
     </div>
     <div class="prob-cap">Siegchance (Saison-Elo) · Team ${winner} gewinnt ${M.sa}:${M.sb}
-      ${c.mov>1.08?' · Kantersieg ×'+c.mov.toFixed(2):''}
+      ${c.mov>1.08?' · Kantersieg ×'+komma(c.mov,2):''}
     </div>
     <div class="delta-list">
       ${line(teamA[0])}${line(teamA[1])}
@@ -13747,22 +13795,22 @@ const BADGES=[
 
     // ══ MEHRFACH-BADGES — gruppiert nach Thema ══
 //Reihenfolge überarbeitet / Möglciherweise Abweichung von Namen in //
-  {id:'upset_king',ic:'tornado',name:'Upset-König',desc:'Als Underdog gewonnen (<35% Chance)',
+  {id:'upset_king',ic:'tornado',name:'Außenseiterkönig',desc:'Als Außenseiter gewonnen (unter 35 % Siegchance)',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&myExp(id,m)<0.35).length},
   // Zeile 6 — Frühschicht, Unschlagbar (Tages-Patterns)
   {id:'early_bird',ic:'sunrise',name:'Frühschicht',desc:'Erstes Match des Tages gewonnen',
     multi:true,count:(id,ms)=>countEarlyBirdDays(id,ms)},
-  {id:'unbeatable',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (min. 3 Spiele)',
+  {id:'unbeatable',ic:'crownPlus',name:'Unschlagbar',desc:'Ganzer Tag ohne Niederlage (ab 3 Partien)',
     multi:true,count:(id,ms)=>countUnbeatableDays(id,ms)},
   // Zeile 7 — Comeback-Tag, Revanchist (Wiedergutmachung)
-  {id:'comeback_day',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit Niederlage gestartet und mit Sieg beendet (min. 3 Matches an dem Tag)',
+  {id:'comeback_day',ic:'comeback',name:'Comeback-Tag',desc:'Tag mit einer Niederlage begonnen und mit einem Sieg beendet (ab 3 Partien an dem Tag)',
     multi:true,count:(id,ms)=>countComebackDays(id,ms)},
   {id:'revanchist',ic:'rematch',name:'Revanchist',desc:'Nach Niederlage gegen ein Team direkt im nächsten Match wieder auf dasselbe Team getroffen und gewonnen',
     multi:true,count:(id,ms)=>countRevenge(id,ms)},
   // Zeile 8 — Klares Ding, Krimi-Reihe (Tordifferenz-Pattern)
-  {id:'clear_win',ic:'thumbsUp',name:'Klares Ding',desc:'Sieg mit Tordifferenz ≥ 7',
+  {id:'clear_win',ic:'thumbsUp',name:'Klares Ding',desc:'Sieg mit mindestens 7 Toren Vorsprung',
     multi:true,count:(id,ms)=>countClearWins(id,ms)},
-  {id:'krimi',ic:'thriller',name:'Krimi-Reihe',desc:'5 Spiele in Folge mit Tordifferenz ≤ 2 (Sieg oder Niederlage)',
+  {id:'krimi',ic:'thriller',name:'Krimi-Reihe',desc:'5 Partien in Folge mit höchstens 2 Toren Unterschied, gewonnen oder verloren',
     multi:true,count:(id,ms)=>countKrimiStreaks(id,ms)},
   // Zeile 9 — Wiederholungstäter, Losing Streak
   {id:'repeat_score',ic:'duplicate',name:'Wiederholungstäter',desc:'3 Siege in Folge mit identischem Endstand',
@@ -13793,11 +13841,11 @@ const BADGES=[
   {id:'streak20',ic:'crownFlame',name:'20er Serie',desc:'20 Siege in Folge',
     multi:true,count:(id,ms)=>countStreakOccurrences(id,ms,20)},
   // Zeile 14 — Mauer, Carry
-  {id:'wall_badge',ic:'brick',name:'Mauer',desc:'Sieg mit max. 2 Gegentoren als Verteidiger',
+  {id:'wall_badge',ic:'brick',name:'Mauer',desc:'Sieg mit höchstens 2 Gegentoren in der Abwehr',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>{if(!won(id,m))return false;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
       return pos==='def'&&goalsAgainst(id,m)<=2;}).length},
-  {id:'carry',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler im Match als Mate',
+  {id:'carry',ic:'weightSmall',name:'Carry',desc:'Sieg mit dem schwächsten Spieler der Partie als Partner',
     multi:true,count:(id,ms)=>countCarries(id,ms)},
   // Zeile 15 — Meister, Vize-Meister
   // Der Meister hatte bis hierher KEINE Auszeichnung. Der Vize hatte eine.
@@ -13813,34 +13861,34 @@ const BADGES=[
   {id:'team_of_season',ic:'handshake',name:'Team der Saison',desc:'Bestes Duo einer Saison',
     multi:true,count:(id,ms,bis)=>countTeamOfSeason(id,bis)},
   // Zeile 16 — Award-Sammler
-  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison min. 5 Tagessieger und 2 Wochensieger',
+  {id:'award_collector',ic:'medalTrio',name:'Award-Sammler',desc:'In einer Saison mindestens 5-mal Player of the Day und 2-mal Player of the Week',
     multi:true,count:(id,ms)=>countAwardCollector(id,ms)},
   // Zeile 17 — POTW, POTD (Perioden-Auszeichnungen, ganz am Ende)
-  {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Quote in einer Kalenderwoche (min. 5 Siege)',
+  {id:'potw',ic:'weekly',name:'Player of the Week',desc:'Höchste Siegquote einer Kalenderwoche (ab 5 Siegen)',
     multi:true,count:(id,ms)=>countPeriodWins(id,ms,'week')},
-  {id:'potd',ic:'trophyDay',name:'Player of the Day',desc:'Meiste Siege an einem Tag (min. 3)',
+  {id:'potd',ic:'trophyDay',name:'Player of the Day',desc:'Die meisten Siege eines Spieltags (ab 3)',
     multi:true,count:(id,ms)=>countDayWins(id,ms)},
   // ── NEUE BADGES v4 ──
   // Thronfäller: Sieg gegen den Top-1 der laufenden Saison-Rangliste (Stand vor dem Match)
-  {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Top-1 Spieler der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
+  {id:'kingslayer',ic:'kingFall',name:'Thronfäller',desc:'Sieg gegen den Ersten der Saison-Rangliste, gemessen vor der Partie',
     multi:true,count:(id,ms)=>countKingslayer(id,ms)},
   // Überholmanöver: Sieg gegen einen Spieler, der dadurch in der Saison-Rangliste überholt wurde
-  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Einen Spieler im Match besiegt und dadurch in der Saison-Rangliste überholt',
+  {id:'overtake',ic:'overtake',name:'Überholmanöver',desc:'Einen Gegner der Partie besiegt und dabei in der Saison-Rangliste überholt',
     multi:true,count:(id,ms)=>countOvertake(id,ms)},
   // ── NEUE BADGES v5 ──
   // Pflichterfüller: Sieg gegen mindestens einen Gegner aus den Bottom-2 der
   // Saison-Rangliste (Stand vor dem Match). Erst ab 5 Spielern in der Saison sinnvoll.
-  {id:'duty_done',ic:'trophyCheck',name:'Pflichterfüller',desc:'Sieg gegen mind. einen Gegner aus den Bottom-2 der Saison-Rangliste (Stand zum Zeitpunkt des Matches)',
+  {id:'duty_done',ic:'trophyCheck',name:'Pflichterfüller',desc:'Sieg gegen mindestens einen der beiden Letzten der Saison-Rangliste, gemessen vor der Partie',
     multi:true,count:(id,ms)=>countBottomTwoMatchWins(id,ms)},
   // Serienbrecher: Direktsieg, der eine laufende Siegesserie (≥4) eines Gegners beendet hat.
-  {id:'streak_breaker',ic:'flameBreak',name:'Serienbrecher',desc:'Siegesserie eines Gegners (mind. 4 in Folge) durch direkten Sieg gestoppt',
+  {id:'streak_breaker',ic:'flameBreak',name:'Serienbrecher',desc:'Die Siegesserie eines Gegners (ab 4 in Folge) mit einem Sieg beendet',
     multi:true,count:(id,ms)=>countStreakBreaker(id,ms)},
   // ── NEUE NEGATIV-BADGES v6 ──
   // Schwarzer Tag: ein Tag mit mind. 3 absolvierten Spielen, alle verloren.
-  {id:'black_day',ic:'blackDay',name:'Schwarzer Tag',desc:'Tag mit mind. 3 Spielen, alle verloren',
+  {id:'black_day',ic:'blackDay',name:'Schwarzer Tag',desc:'Spieltag mit mindestens 3 Partien, alle verloren',
     multi:true,count:(id,ms)=>countBlackDays(id,ms)},
   // Krimi-Versager: 3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge.
-  {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen (Tordifferenz ≤ 2) in Folge',
+  {id:'krimi_loser',ic:'dramaTear',name:'Krimi-Versager',desc:'3 knappe Niederlagen in Folge, je höchstens 2 Tore Unterschied',
     multi:true,count:(id,ms)=>countCloseLossStreaks(id,ms,3)},
   // ── NEUE LEGENDARY-BADGES v7 ──
   // Untouchable: 3 Saisons in Folge unter den Top-3 abgeschlossen.
@@ -13850,10 +13898,10 @@ const BADGES=[
   {id:'mr_perfect',ic:'tripleCup',name:'Mr. Perfect',desc:'3× 10:0-Sieg in einer Saison',
     multi:true,count:(id,ms)=>countMrPerfect(id,ms)},
   // Allwetter: an 5 verschiedenen Wochentagen Player-of-the-Day geworden.
-  {id:'allwetter',ic:'weatherMix',name:'Allwetter',desc:'An 5 verschiedenen Wochentagen Player-of-the-Day geworden',
+  {id:'allwetter',ic:'weatherMix',name:'Allwetter',desc:'An 5 verschiedenen Wochentagen Player of the Day geworden',
     multi:true,count:(id,ms)=>countAllwetter(id,ms)},
   // Tag der Götter: 3 eigene Spieltage in Folge als POTD gewonnen.
-  {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 Spieltagen in Folge Player-of-the-Day geworden (nur mitgespielte Tage)',
+  {id:'godly_streak',ic:'godRay',name:'Tag der Götter',desc:'An 3 eigenen Spieltagen in Folge Player of the Day geworden',
     multi:true,count:(id,ms)=>countGodlyStreak(id,ms)},
   // ── NEUE NEGATIV-BADGES v8 ──
   // Bittere Pille: 9:10-Niederlage (Pendant zu nail_biter / 10:9-Sieg).
@@ -13863,7 +13911,7 @@ const BADGES=[
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
     multi:true,count:(id,ms)=>countMrDisaster(id,ms)},
   // Zusammenbruch: Tag mit Sieg gestartet, mit Niederlage beendet, min. 3 Matches (Pendant zu comeback_day).
-  {id:'crash_day',ic:'crashDay',name:'Zusammenbruch',desc:'Tag mit Sieg gestartet und mit Niederlage beendet (min. 3 Matches an dem Tag)',
+  {id:'crash_day',ic:'crashDay',name:'Zusammenbruch',desc:'Tag mit einem Sieg begonnen und mit einer Niederlage beendet (ab 3 Partien an dem Tag)',
     multi:true,count:(id,ms)=>countCrashDays(id,ms)},
   // Angstgegner: 5× in Folge gegen denselben Gegner-Spieler verloren (egal in welcher Konstellation).
   {id:'nemesis',ic:'ghost',name:'Angstgegner',desc:'5× in Folge gegen denselben Gegner verloren',
@@ -13950,7 +13998,7 @@ const BADGE_RARITY = {
   overtake:        'common',    // Überholmanöver — Spieler in Rangliste überholt
   duty_done:       'common',    // Pflichterfüller — Sieg gegen Bottom-3
   streak_breaker:  'common',    // Serienbrecher — Streak >=4 eines Gegners gestoppt
-  upset_king:      'common',    // Upset-König — 11 Halter, 54 mal vergeben
+  upset_king:      'common',    // Außenseiterkönig — 11 Halter, 54 mal vergeben
   clear_win:       'common',    // Klares Ding — 10 Halter, 136 mal vergeben
   streak5:         'common',    // 5er Serie — 8 Halter, 30 mal vergeben
   // -- NEGATIVE (8) --
@@ -15577,16 +15625,16 @@ function playerAwards(id){
   // Display-Werte für die Trophäen-Anzeige im Spieler-Awards-Sheet.
   // Format ist konsistent mit den Card-Aufrufen in vAwards (Awards-Tab).
   const singleDisplayFns={
-    wins:x=>x.v, streaks:x=>x.v+'er', scorer:x=>x.avg.toFixed(1),
-    wall:x=>(x.v/x.g).toFixed(1), perfect:x=>Math.round(x.wr*100)+'%', grinder:x=>x.v,
+    wins:x=>x.v, streaks:x=>x.v+'er', scorer:x=>komma(x.avg,1),
+    wall:x=>komma((x.v/x.g),1), perfect:x=>Math.round(x.wr*100)+'%', grinder:x=>x.v,
     worstWr:x=>Math.round(x.wr*100)+'%',
-    worstAtk:x=>(x.v/x.g).toFixed(1), worstDef:x=>(x.v/x.g).toFixed(1),
+    worstAtk:x=>komma((x.v/x.g),1), worstDef:x=>komma((x.v/x.g),1),
     clutch:x=>Math.round(x.wr*100)+'%',
     carryKing:x=>x.v, onFire:x=>x.v+'er', coldStreak:x=>x.v+'er',
     lossStreaks:x=>x.v+'er', solo:x=>Math.round(x.wr*100)+'%',
     formtief:x=>'-'+Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
     peakElo:x=>x.v, weekKing:x=>x.v, dayKing:x=>x.v,
-    plusMinus:x=>(x.v>=0?'+':'')+x.v.toFixed(1), underdog:x=>x.v,
+    plusMinus:x=>(x.v>=0?'+':'')+komma(x.v,1), underdog:x=>x.v,
     pechvogel:x=>Math.round(x.pct*100)+'%',
     // ── NEUE NEGATIV-AWARDS v6 ──
     favoriteLoser:x=>Math.round(x.v*100)+'%'
@@ -15638,12 +15686,12 @@ function playerAwards(id){
     baustelle:x=>x.best+'er',
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppable:x=>x.v+'er',
-    concreteWall:x=>x.v.toFixed(2),
+    concreteWall:x=>komma(x.v,2),
     luckyCharm:x=>Math.round(x.v*100)+'%',
     giantSlayer:x=>Math.round(x.v*100)+'%',
     favoritenschreck:x=>x.v+' Elo',
     // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:x=>x.v.toFixed(2)
+    cheesePlatter:x=>komma(x.v,2)
   };
   Object.entries(teamKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;
@@ -16198,8 +16246,8 @@ const rankProgHtml = rInfo ? `
               <div class="pp-rd-meta"><b>${w}</b>/<b>${g}</b> Spiele<br>Ø <b>${valNum}</b> ${valLbl}</div>
             </div>`;
         };
-        const atkAvg = s.atkG ? (s.atkGoals/s.atkG).toFixed(1) : '–';
-        const defAvg = s.defG ? (s.defConceded/s.defG).toFixed(1) : '–';
+        const atkAvg = s.atkG ? komma((s.atkGoals/s.atkG),1) : '–';
+        const defAvg = s.defG ? komma((s.defConceded/s.defG),1) : '–';
         return `<div class="pp-pos-combined">
           <div class="head"><div class="t">Rollen-Performance</div></div>
           <div class="pp-roles-donuts">
@@ -16212,13 +16260,13 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.35s">
       <div class="pp-sec-title">
-        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamt-Stats</h4></div>
+        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamtbilanz</h4></div>
         <div class="m">${s.games} Spiele</div>
       </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
-        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegrate</div></div>
-        <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Tordiff</div></div>
+        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
+        <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Torbilanz</div></div>
       </div>
     </div>
 
@@ -16325,13 +16373,13 @@ const rankProgHtml = rInfo ? `
           // Bester Mate
           const bestAttr  = best?` data-team="${esc([id,best.mid].sort().join('|'))}"`:'';
           const bestCard  = best
-            ? card('good', bestAttr, 'handshake', 'Bester Mate', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
-            : card('good', '', 'handshake', 'Bester Mate', null);
+            ? card('good', bestAttr, 'handshake', 'Bester Partner', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
+            : card('good', '', 'handshake', 'Bester Partner', null);
           // Schlechtester Mate (nur wenn ≠ Bester)
           const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}"`:'';
           const worstCard = worst&&best&&worst.mid!==best.mid
-            ? card('bad', worstAttr, 'chartDown', 'Schlecht. Mate', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
-            : card('bad', '', 'chartDown', 'Schlecht. Mate', null);
+            ? card('bad', worstAttr, 'chartDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
+            : card('bad', '', 'chartDown', 'Schwächster Partner', null);
           // Lieblingsgegner → klickbar zum Gegnerprofil
           const favAttr  = fav?` data-detail="${esc(fav.oid)}"`:'';
           const favCard  = fav
@@ -16984,7 +17032,7 @@ function _badgeProgress(badgeId, playerId){
       const stats = playerStats(playerId);
       const atkW = stats.atkW || 0, defW = stats.defW || 0;
       const cur = Math.min(atkW, defW, 20);
-      return {cur, tgt: 20, label: 'min. Sturm- & Abwehr-Siege'};
+      return {cur, tgt: 20, label: 'Siege auf der schwächeren Position'};
     }
     case 'mr_disaster': {
       // Aktuelle Saison: wie viele 0:10-Niederlagen hat der Spieler bereits?
@@ -17085,7 +17133,7 @@ function _badgeStreakState(badgeId, playerId){
       ordered.forEach(m => {
         cur = Math.abs(m.score_a-m.score_b) <= 2 ? cur+1 : 0;
       });
-      return {cur, tgt:5, label:'Krimis in Folge (Tordiff ≤ 2)', hint:'Setzt bei klarem Ergebnis (Tordiff > 2) zurück'};
+      return {cur, tgt:5, label:'Krimis in Folge (höchstens 2 Tore Unterschied)', hint:'Setzt bei klarem Ergebnis (mehr als 2 Tore Unterschied) zurück'};
     }
     case 'repeat_score': {
       // Siege mit identischem Endstand in Folge — Niederlage oder anderer Score bricht.
@@ -17332,7 +17380,7 @@ function showPlayerH2HList(playerId){
         <div class="rname" style="font-size:13px;line-height:1.15">${esc(other.name)}</div>
         <div class="num" style="font-size:11px;margin-top:3px;font-family:'Sometype Mono',monospace">${teamChip}${sep}${oppChip}</div>
       </div>
-      <div class="num" style="font-size:11px;color:var(--muted);flex-shrink:0">${x.total}</div>
+      <div class="num" style="font-size:11px;color:var(--muted);flex-shrink:0">${x.total} Sp.</div>
       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;opacity:.7"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
   }).join('');
@@ -17343,9 +17391,9 @@ function showPlayerH2HList(playerId){
       <div><h3>Bilanzen</h3><div class="sheet-sub">${esc(p.name)} · ${h2hList.length} Mitspieler</div></div>
     </div>
     <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em;margin-top:14px;margin-bottom:10px">
-      <span style="color:var(--blue);font-weight:700">T</span> = als Team · <span style="color:var(--purple);font-weight:700">G</span> = als Gegner · Tap für Details
+      <span style="color:var(--blue);font-weight:700">T</span> = als Team · <span style="color:var(--purple);font-weight:700">G</span> = als Gegner · Antippen für Einzelheiten
     </div>
-    ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('swords','Noch keine Mitspieler mit min. 3 Begegnungen')}
+    ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('swords','Noch keine Mitspieler ab 3 Begegnungen')}
     <button class="btn ghost sm" id="backToPlayerH2H" style="margin-top:16px">← Zurück zum Profil</button>
   `);
 
@@ -17787,7 +17835,7 @@ function showH2H(idA, idB){
   if(d.total === 0){
     openSheet(`
       <div style="text-align:center;margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Head-to-Head</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Direkter Vergleich</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
           <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
           <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>
@@ -17833,14 +17881,14 @@ function showH2H(idA, idB){
       <div style="display:flex;gap:7px">
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1">${teamGd}</div>
-          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Tordiff</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Torbilanz</div>
         </div>
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1;color:${teamEloCol}">${teamEloStr}</div>
-          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Σ Elo</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Elo zusammen</div>
         </div>
         <button data-team="${esc([idA,idB].sort().join('|'))}" style="flex:1.2;background:rgba(86,180,232,.1);border:1px solid rgba(86,180,232,.3);border-radius:9px;padding:8px;color:var(--blue);font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
-          Team-Sheet
+          Zum Duo
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
@@ -17869,7 +17917,7 @@ function showH2H(idA, idB){
       <div style="display:flex;gap:7px">
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1">${oppGd}</div>
-          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Tordiff</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Torbilanz</div>
         </div>
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1;color:${oppEloCol}">${oppEloStr}</div>
@@ -17909,7 +17957,7 @@ function showH2H(idA, idB){
 
   openSheet(`
     <div style="text-align:center;margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Head-to-Head</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Direkter Vergleich</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
         <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
         <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>
@@ -18012,7 +18060,7 @@ function showTeam(p1Id,p2Id){
       : dateStr(m.created_at);
     const labelMap={
       win:    {l:'Höchster Sieg',     ic:'explosion', col:'var(--acid)'},
-      upset:  {l:'Größter Upset',     ic:'tornado',   col:'var(--purple)'},
+      upset:  {l:'Größte Überraschung',     ic:'tornado',   col:'var(--purple)'},
       loss:   {l:'Schlimmste Niederlage', ic:'skull',     col:'var(--red)'}
     };
     const cfg=labelMap[kind];
@@ -18232,18 +18280,18 @@ function showTeam(p1Id,p2Id){
     streaksHtml = `
       <div style="margin-bottom:18px">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Serien</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
           <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
             <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:${curColor};line-height:1">${curLabel}</div>
             <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Aktuell</div>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1">${d.longestWinStreak||'–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Sieges</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1">${d.longestWinStreak ? d.longestWinStreak + (d.longestWinStreak === 1 ? ' Sieg' : ' Siege') : '–'}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Beste Serie</div>
           </div>
           <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--red);line-height:1">${d.longestLossStreak||'–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Pleiten</div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--red);line-height:1">${d.longestLossStreak ? d.longestLossStreak + (d.longestLossStreak === 1 ? ' Pleite' : ' Pleiten') : '–'}</div>
+            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Durststrecke</div>
           </div>
         </div>
       </div>`;
@@ -18270,8 +18318,8 @@ function showTeam(p1Id,p2Id){
   // Bewusst kompakt — vier 1/2-Spalten-Cards (oder 1/3 wenn topScore vorhanden).
   let funFactsHtml = '';
   if(d.games >= 2){
-    const avgGf = (d.gf / d.games).toFixed(1);
-    const avgGa = (d.ga / d.games).toFixed(1);
+    const avgGf = komma((d.gf / d.games),1);
+    const avgGa = komma((d.ga / d.games),1);
     const facts = [
       { label:'Ø Tore', value:avgGf, color:'var(--acid)' },
       { label:'Ø Gegen', value:avgGa, color:'var(--red)' },
@@ -18282,7 +18330,7 @@ function showTeam(p1Id,p2Id){
     const cols = facts.length >= 4 ? 'repeat(4,1fr)' : 'repeat('+facts.length+',1fr)';
     funFactsHtml = `
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Fun Facts</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">In Zahlen</div>
         <div style="display:grid;grid-template-columns:${cols};gap:8px">
           ${facts.map(f => `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center">
             <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${f.color};line-height:1">${f.value}</div>
@@ -18341,7 +18389,7 @@ function showTeam(p1Id,p2Id){
       </div>
       <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
         <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${gdStr}</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Tordiff</div>
+        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Torbilanz</div>
       </div>
       <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
         <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:${eloColor};line-height:1">${eloStr}</div>
@@ -18373,7 +18421,7 @@ function showTeam(p1Id,p2Id){
 
     ${highlights?`
     <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Highlights</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Höhepunkte</div>
       <div style="display:flex;flex-direction:column;gap:6px">${highlights}</div>
     </div>`:''}
 
@@ -18412,23 +18460,39 @@ function showMatchDetail(mid){
   // Auszeichnungen durch dieses Match
   const earned=badgesEarnedInMatch(mid);
   const earnedHtml=earned.length?`
-    <div class="mini-label" style="margin-top:14px">Auszeichnungen in diesem Match</div>
+    <div class="mini-label" style="margin-top:14px">Auszeichnungen in dieser Partie</div>
     <div style="display:flex;flex-direction:column;gap:5px">
-      ${earned.map(e=>{
-        // Rarity-Farbe pro Badge: legendary=gold, rare=purple, common=acid, negative=red.
-        // Bewusst dezent — nur Icon + Border-Akzent + Badge-Name in der Farbe,
-        // damit die Liste auseinanderhaltbar bleibt, aber nicht überladen wirkt.
-        const rarity = rarityOf(e.badge.id);
-        const color = (RARITY_META[rarity]||{}).color || 'var(--ink2)';
-        return `<div class="rrow" style="padding:10px 13px;cursor:default;border-left:3px solid ${color}">
-          <span class="ic svg-ic" style="font-size:18px;width:32px;text-align:center;color:${color}">${badgeIc(e.badge,'18px')}</span>
-          <div class="rmid"><div class="rname" style="font-size:13px">${esc(pname(e.playerId))}</div>
-            <div class="rmeta"><span style="color:${color};opacity:.85">${e.badge.name}</span></div></div>
-        </div>`;
-      }).join('')}
+      ${(()=>{
+        // Eine Zeile je Spieler, nicht je Auszeichnung: fünf Marken zweier
+        // Spieler standen als fünf Karten untereinander, und derselbe Name
+        // dreimal. Die Farbe je Marke sagt weiter die Klasse (legendär Gold,
+        // selten Violett, gewöhnlich Grün, negativ Rot).
+        const jeSpieler = new Map();
+        earned.forEach(e => { if(!jeSpieler.has(e.playerId)) jeSpieler.set(e.playerId, []);
+          jeSpieler.get(e.playerId).push(e.badge); });
+        return [...jeSpieler].map(([pid, bs]) => `<div class="rrow" style="padding:10px 13px;cursor:default;align-items:flex-start">
+          <div class="rmid"><div class="rname" style="font-size:13px">${esc(pname(pid))}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:5px">${bs.map(b => {
+              const color = (RARITY_META[rarityOf(b.id)]||{}).color || 'var(--ink2)';
+              return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:${color}">`
+                + `<span class="svg-ic" style="display:inline-flex">${badgeIc(b,'14px')}</span>${esc(b.name)}</span>`;
+            }).join('')}</div></div>
+        </div>`).join('');
+      })()}
     </div>`:''
   ;
-  openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · Team ${m.winner} gewinnt</div>
+  // „Team A gewinnt" sagte, was das Band darunter ohnehin zeigt, und nannte
+  // niemanden. Die Siegchance vor dem Anpfiff steht dagegen sonst nirgends
+  // im Blatt, ohne dass man die Elo-Analyse aufklappt.
+  const sieger = m.winner==='A' ? [m.a1,m.a2] : [m.b1,m.b2];
+  // Dieselbe Quelle wie die Karte der Partie im Feed: die Erwartung aus der
+  // Elo-Bahn, erst dahinter der gespeicherte Wert. Mit `m.exp_a` allein
+  // stand hier 50 %, auf der Karte derselben Partie 57 %.
+  const _h = getHistoryByMatchId().get(mid);
+  const _expA = _h && _h.expA != null ? _h.expA : (typeof m.exp_a === 'number' ? m.exp_a : null);
+  const chance = _expA == null ? null
+    : Math.max(1, Math.round((m.winner==='A' ? _expA : 1 - _expA) * 100));
+  openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · ${esc(sieger.map(pname).join(' und '))} gewinnen${chance!=null ? ' · Siegchance vorher ' + chance + ' %' : ''}</div>
     <div style="display:flex;gap:8px;margin-top:12px">
       <div data-team="${esc([m.a1,m.a2].sort().join('|'))}" style="flex:1;background:var(--surface);border:1px solid ${m.winner==='A'?'var(--acid2)':'var(--line)'};border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Sometype Mono',monospace">Team A</div>
@@ -18471,7 +18535,7 @@ function showMatchDetail(mid){
     const rows=ids.map(id=>{
       const b=bd[id]; if(!b)return '';
       // Elo-Analyse zeigt exakte Werte mit 2 Nachkommastellen — keine Rundung wie überall sonst.
-      const sign=v=>v>=0 ? '+'+v.toFixed(2) : v.toFixed(2);
+      const sign=v=>v>=0 ? '+'+komma(v,2) : komma(v,2);
       // Der Detail-Header zeigt IMMER den präzisen Sim-Wert, damit die große Zahl
       // exakt der Summe der Faktoren-Liste darunter entspricht. Der gerundete DB-Wert
       // bleibt nur oben in der Match-Übersicht sichtbar (eigener Render-Pfad).
@@ -18479,7 +18543,7 @@ function showMatchDetail(mid){
       const headerDelta=b.finalDelta;
       // Saison-Elo: bei DB-Werten sind das gespeicherte Integer (deshalb keine zusätzliche
       // Präzision möglich). Bei Sim-Fallback geben wir 1 Nachkommastelle aus.
-      const fmtElo=v=>Number.isInteger(v)?String(v):v.toFixed(1);
+      const fmtElo=v=>Number.isInteger(v)?String(v):komma(v,1);
       const seasonBefore=fmtElo(hasDb?dbBefore[id]:b.startElo);
       const seasonAfter=fmtElo(hasDb?dbAfter[id]:b.endElo);
       const simDelta=b.finalDelta;
@@ -18487,10 +18551,10 @@ function showMatchDetail(mid){
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
       if(Math.abs(b.movEffect)>0.1) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
-      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+((b.winBoost-1)*100).toFixed(1)+'% für Siege'});
-      if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:((1-b.expProtect)*100).toFixed(1)+'% Schutz'});
+      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
+      if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'% Schutz'});
       if(b.lowEloDamp!==undefined && b.lowEloDamp<0.995){
-        factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:((1-b.lowEloDamp)*100).toFixed(1)+'% Schutz (schwacher Spieler)'});
+        factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'% Schutz (schwacher Spieler)'});
       }
       if(b.underdogMult>1.005){
         // Underdog-Boost setzt sich aus zwei unabhängig clampten Komponenten zusammen
@@ -18503,9 +18567,9 @@ function showMatchDetail(mid){
         const undEffect = b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1);
         factors.push({label:'Underdog-Boost',val:undEffect, desc});
       }
-      if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Mate-Stärke-Verteilung'});
+      if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
       if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posMult>1?'Schwache':'Starke')+' Position'});
-      factors.push({label:'Spielbonus',val:b.matchBonus,desc:'Flat +'+b.matchBonus.toFixed(2)+' pro Match'});
+      factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
       const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
         <span style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
@@ -18519,7 +18583,7 @@ function showMatchDetail(mid){
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between">
             <span>${seasonBefore} → ${seasonAfter}</span>
-            <span>K=${b.kFactor.toFixed(1)} · Erw. ${(b.expected*100).toFixed(1)}%</span>
+            <span>K=${komma(b.kFactor,1)} · Erw. ${komma((b.expected*100),1)}%</span>
           </div>
         </div>
         ${factorRows}
@@ -22303,7 +22367,7 @@ function _buildStories(){
             desc: (_frueher ? `Zuletzt stand die Stufe am ${new Date(_frueher + 'T12:00:00')
                     .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}. ` : '')
                 + `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
-                + `${stand.teile.monat} aus Monatswertungen und ${stand.teile.rekord} aus Rekorden.`
+                + `${stand.teile.monat} aus Monatschroniken und ${stand.teile.rekord} aus Rekorden.`
                 + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
             when: treffer,
             prio: STORY_PRIO.insignium_stufe + (oben ? 34 : 0),
@@ -23262,7 +23326,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     const a = agg[best.pid];
     return { cat:'personal', ic:'target', prio:5,
       title:`${nameOf(best.pid)} hat Nerven aus Stahl`,
-      desc:`Gewinnt aktuell ${Math.round(best.v*100)}% der engen Spiele (Tordiff ≤ 2). ${a.cw} von ${a.cg} in 14 Tagen.`,
+      desc:`Gewinnt aktuell ${Math.round(best.v*100)}% der engen Spiele (höchstens 2 Tore Unterschied). ${a.cw} von ${a.cg} in 14 Tagen.`,
       vv: Math.round(best.v*100)+'%', vl:'eng gewonnen',
       dataRef:{ ambientPid: best.pid } };
   }});
@@ -23847,7 +23911,7 @@ function _ambientTemplatePool(now, pm, nameOf){
         title:`Halbzeit im ${seasonLabel(sid)}`,
         desc: `${T2.matches} Partien an ${T2.days} Spieltagen. `
           + (fuehrend ? `${nameOf(fuehrend.pid)} führt mit ${fuehrend.elo} Elo aus ${fuehrend.games} Spielen. ` : '')
-          + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatswertungen sind vergeben, ${offen} noch offen`
+          + `${T2.awarded.length} von ${SEASON_TITLES.length} Monatschroniken sind vergeben, ${offen} noch offen`
           + (ohne ? `, ${ohne} Spieler ${ohne === 1 ? 'trägt' : 'tragen'} noch keine.` : '.')
           + ` Die zweite Monatshälfte entscheidet.`,
         vv:String(offen), vl:'noch offen',
@@ -27695,6 +27759,9 @@ function _ndBeziehung(s, anzahl){
   if(t === 'chronik_monat') return 'die meisten Einträge in diesem Monat';
   if(t === 'badge_unlocked') return 'mit derselben Auszeichnung';
   if(t === 'potd' || t === 'potw') return 'punktgleich an der Spitze';
+  // Das Blatt einer Partie zeigt ihre Sieger. „in derselben Partie" stand
+  // darunter — auf dem Blatt, das diese Partie IST.
+  if(t === 'spiel') return 'gewinnen diese Partie';
   // Die Sammelkarte buendelt einen MOMENT, nicht zwingend eine Partie: die
   // Gruppe entsteht ueber die Minute [§C33].
   if(t === 'sammel'){
@@ -27704,6 +27771,9 @@ function _ndBeziehung(s, anzahl){
     if(q === 'erfolg') return 'mit demselben Erfolg';
     // Zwei Ergebnisse desselben Tages verbindet der Tag, nicht die Partie.
     if(q === 'ergebnis') return 'an diesem Spieltag';
+    // Die Karte einer Partie hat ihre Partie: „im selben Moment" stimmt,
+    // sagt aber weniger als das, was alle Zeilen gemeinsam haben.
+    if(q === 'spiel' && (s.dataRef || {}).matchId) return 'in dieser Partie';
     return q === 'tafel' ? 'an der Ewigen Tafel' : 'im selben Moment';
   }
   if(((s && s.dataRef) || {}).matchId) return 'in derselben Partie';
@@ -28465,7 +28535,12 @@ function _newsDetailMitte(s){
         // „3 Partien an 2 Tagen" steht schon im Text der Karte, drei Zeilen
         // darueber. Die Zeile bleibt nur, wenn er sie nicht nennt.
         const kopfWert = `${d.spiele || 0} an ${d.tage || 0} ${d.tage === 1 ? 'Tag' : 'Tagen'}`;
-        const kopf = _ndOben.indexOf(_ndNormal(kopfWert)) >= 0 ? '' : `<div class="nd-stat-row">
+        // Der Text sagt „20 Spiele an 4 Tagen", die Zeile „20 an 4 Tagen" —
+        // verglichen wurde nur die zweite Form, und beide standen da.
+        const nennt = [kopfWert, `${d.spiele || 0} Spiele an ${d.tage || 0}`,
+          `${d.spiele || 0} Partien an ${d.tage || 0}`]
+          .some(v => _ndOben.indexOf(_ndNormal(v)) >= 0);
+        const kopf = nennt ? '' : `<div class="nd-stat-row">
             <div class="nd-stat-label">Partien in dieser Woche</div>
             <div class="nd-stat-val acid">${esc(kopfWert)}</div></div>`;
         const zeilen = teile.map(t => {
@@ -28733,28 +28808,29 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val acid">#${rankInfo.pre} → #${rankInfo.post}</div>
           </div>` : ''}
           ${wechselHtml ? `<div class="nd-section">Alle ${ev.length} Wechsel des Tages</div>${wechselHtml}` : ''}
-          ${matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : ''}`;
+          ${matchHtml ? `<div class="nd-section">Die Partie</div>${matchHtml}` : ''}`;
       }
       case 'top_form': {
-        const form = _newsRecentForm(d.pid, 10);
-        return `<div class="nd-section">Letzte 10 Matches</div>
+        const form = _newsRecentForm(d.pid, 10, s);
+        return `<div class="nd-section">Die letzten 10 Partien bis hierher</div>
           ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
           <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
             <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
             <div class="nd-stat-val acid">${d.wins}/10 Siege</div></div>
           ${form.currentStreak >= 2 ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Aktuelle Serie</div>
-            <div class="nd-stat-val acid">${form.currentStreak}× Sieg</div></div>` : ''}`;
+            <div class="nd-stat-label">Siege in Folge</div>
+            <div class="nd-stat-val acid">${form.currentStreak}</div></div>` : ''}`;
       }
       case 'loss_streak': {
-        const form = _newsRecentForm(d.pid, 10);
+        // Die Reihe der letzten zehn steht nur, wenn sie mehr zeigt als die
+        // Serie selbst: bei zehn Pleiten in Folge ist sie dieselbe Zeichnung
+        // ein zweites Mal. Die Zeile „Leo · 10× Niederlage in Folge" darunter
+        // nannte dieselbe Zahl ein drittes Mal und ist weg [§C33 `_ndNeu`].
+        const form = d.streak < 10 ? _newsRecentForm(d.pid, 10, s) : {strip:''};
         return `<div class="nd-section">Die Serie</div>
           ${_newsSerienBand(d.streak, true)}
-          <div class="nd-section">Letzte 10 Matches</div>
-          ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
-          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
-            <div class="nd-stat-val neg">${d.streak}× Niederlage in Folge</div></div>`;
+          ${form.strip ? `<div class="nd-section">Die letzten 10 Partien bis hierher</div>
+          <div class="nd-form-strip">${form.strip}</div>` : ''}`;
       }
       case 'badge_unlocked': {
         // v8.6: bei konsolidierten Karten (mehrere Spieler, gleicher Badge im
@@ -28785,9 +28861,9 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val neg">${esc(nameOf(d.nemesisOppId))} ›</div></div>` : '';
         return medaille + playersHtml + nemRow
           + (eloChg !== null ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Match-Elo</div>
+            <div class="nd-stat-label">Elo aus dieser Partie</div>
             <div class="nd-stat-val ${eloChg>=0?'pos':'neg'}">${eloChg>=0?'+':''}${eloChg}</div></div>` : '')
-          + (matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : '');
+          + (matchHtml ? `<div class="nd-section">Die Partie</div>${matchHtml}` : '');
       }
       // Die gesammelten runden Marken eines Tages. Bei EINER Marke ist das
       // dieselbe Aussage wie bei einer einzelnen Auszeichnung, also dasselbe
@@ -28803,7 +28879,7 @@ function _newsDetailMitte(s){
           return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
               (typeof rarityOf === 'function') ? rarityOf(l[0].badgeId) : 'common',
               l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
-            + (d.matchId ? `<div class="nd-section">Auslösendes Match</div>`
+            + (d.matchId ? `<div class="nd-section">Die Partie</div>`
                 + _newsMatchVsBlock(d.matchId) : '');
         }
         return `<div class="nd-section">${l.length} runde Marken</div>`
@@ -28840,7 +28916,7 @@ function _newsDetailMitte(s){
       case 'team_loss_streak': {
         const verloren = d.type === 'team_loss_streak';
         let tw = null;
-        try { tw = teamStatsFromMatches(matches).find(t =>
+        try { tw = teamStatsFromMatches(_ndBisPartie(s)).find(t =>
           (t.ids || []).includes(d.a) && (t.ids || []).includes(d.b)); } catch(e){}
         // Die Zahl der Partien steht schon als Lauf darueber — sie stand hier
         // ein zweites Mal als Ziffer.
@@ -28858,7 +28934,7 @@ function _newsDetailMitte(s){
         }
         return `<div class="nd-section">${verloren ? 'Die Durststrecke' : 'Die Serie'}</div>
           ${_newsSerienBand(d.streak, verloren)}
-          ${tw ? `<div class="nd-stat-row"><div class="nd-stat-label">Gemeinsame Bilanz</div>
+          ${tw ? `<div class="nd-stat-row"><div class="nd-stat-label">Gemeinsame Bilanz bis hierher</div>
             <div class="nd-stat-val">${tw.w}:${tw.g - tw.w}</div></div>
           <div class="nd-stat-row"><div class="nd-stat-label">Siegquote als Duo</div>
             <div class="nd-stat-val ${tw.w * 2 >= tw.g ? 'acid' : 'neg'}">${Math.round(tw.w / tw.g * 100)} %</div></div>
@@ -28869,18 +28945,15 @@ function _newsDetailMitte(s){
       }
       case 'jubilee': {
         // Karriere-Bilanz nutzen statt nur Total — bestehende Stats-Funktion.
-        const stats = _newsPlayerCareer(d.pid);
-        return `<div class="nd-section">Karriere</div>
-          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
-            <div class="nd-stat-val gold">${d.total} Spiele</div></div>
+        const stats = _ndBilanzBis(d.pid, s);
+        return `<div class="nd-section">Die ersten ${esc(String(d.total))} Spiele</div>
           ${stats ? `<div class="nd-stat-row">
             <div class="nd-stat-label">Siege / Niederlagen</div>
             <div class="nd-stat-val">${stats.wins} / ${stats.losses}</div></div>
           <div class="nd-stat-row">
-            <div class="nd-stat-label">Win-Rate</div>
-            <div class="nd-stat-val acid">${stats.winRate}%</div></div>` : ''}
-          ${d.matchId ? `<div class="nd-section">Jubiläums-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+            <div class="nd-stat-label">Siegquote</div>
+            <div class="nd-stat-val acid">${stats.winRate} %</div></div>` : ''}
+          ${d.matchId ? `<div class="nd-section">Die Jubiläumspartie</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'quiet_week': {
         return `<div class="nd-section">Aktivität</div>
@@ -28947,21 +29020,21 @@ function _newsDetailMitte(s){
       case 'milestone_wins':
       case 'milestone_goals':
       case 'milestone_elo': {
-        const stats = _newsPlayerCareer(d.pid);
+        const stats = _ndBilanzBis(d.pid, s);
         return `<div class="nd-section">Meilenstein</div>
           <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
             <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
             <div class="nd-stat-val gold">${esc(d.milestone)}</div></div>
           ${stats ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Karriere-Bilanz</div>
-            <div class="nd-stat-val">${stats.wins}W · ${stats.losses}L</div></div>` : ''}
-          ${d.matchId ? `<div class="nd-section">Meilenstein-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+            <div class="nd-stat-label">Bilanz bis zu dieser Partie</div>
+            <div class="nd-stat-val">${stats.wins} : ${stats.losses}</div></div>` : ''}
+          ${d.matchId ? `<div class="nd-section">Die Partie zum Meilenstein</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'elo_swing': {
         // Vorher stand hier der Name — den der Kopf zwei Zeilen darueber schon
         // zeigt — und die Zahl, die auf der Karte stand. Jetzt traegt das Blatt
         // den Ausschlag gross und daneben, woher er kommt.
-        const form = _newsRecentForm(d.pid, 10);
+        const form = _newsRecentForm(d.pid, 10, s);
         let elo = null;
         try { elo = Math.round(((getGlobalSim() || {}).careerElo || {})[d.pid]); } catch(e){}
         return `<div class="nd-gwert ${d.delta >= 0 ? '' : 'rot'}">
@@ -28971,8 +29044,8 @@ function _newsDetailMitte(s){
           ${elo ? `<div class="nd-stat-row"><div class="nd-stat-label">Stand jetzt</div>
             <div class="nd-stat-val">${elo} Elo</div></div>` : ''}
           ${form.currentStreak >= 2 ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Aktuelle Serie</div>
-            <div class="nd-stat-val ${d.delta >= 0 ? 'acid' : 'neg'}">${form.currentStreak}×</div></div>` : ''}`;
+            <div class="nd-stat-label">Siege in Folge an diesem Tag</div>
+            <div class="nd-stat-val ${d.delta >= 0 ? 'acid' : 'neg'}">${form.currentStreak}</div></div>` : ''}`;
       }
       // ── v8.2 Neue Typen ──
       case 'streak_killer': {
@@ -29009,16 +29082,14 @@ function _newsDetailMitte(s){
               <div class="nd-vs-elo">${h2h.bWins} Siege</div>
             </div>
           </div>
-          ${d.matchId ? `<div class="nd-section">Jubiläums-Duell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+          ${d.matchId ? `<div class="nd-section">Das Jubiläumsduell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'win_streak': {
-        const form = _newsRecentForm(d.pid, Math.min(d.streak, 10));
-        return `<div class="nd-section">Aktuelle Serie</div>
-          ${_newsSerienBand(d.streak, false)}
-          ${form.strip ? `<div class="nd-form-strip">${form.strip}</div>` : ''}
-          <div class="nd-stat-row" data-pid="${esc(d.pid)}" style="cursor:pointer">
-            <div class="nd-stat-label">${esc(nameOf(d.pid))}</div>
-            <div class="nd-stat-val acid">${d.streak}× Sieg in Folge</div></div>`;
+        // „Aktuelle Serie" stand über einer Marke, die an ihrer Partie hängt
+        // und nach dem Riss stehen bleibt [§C33]; darunter dieselbe Zahl als
+        // Punktreihe und als Zeile — dreimal eine Serie.
+        return `<div class="nd-section">Die Serie</div>
+          ${_newsSerienBand(d.streak, false)}`;
       }
       case 'dry_spell': {
         return `<div class="nd-section">Liga-Pause</div>
@@ -29120,9 +29191,23 @@ function _newsRankChange(pid, matchId){
 
 // Form-Strip + Win-Streak der letzten N Matches. Walks die filter()-Variante
 // nur über matches (gesamt) — wird im Detail aufgerufen, also einmalig.
-function _newsRecentForm(pid, n){
+// `bis` ist die Story, deren Blatt die Reihe zeigt: gezählt wird bis zu IHRER
+// Partie, nicht bis heute. Das Blatt der 10er-Pleitenserie von 14:20 zeigte
+// unter „10 Pleiten nacheinander" die letzten zehn Partien von JETZT — mit dem
+// Sieg von 14:32 am Ende, der die Serie beendet hat und von dem die Karte gar
+// nicht erzählt.
+function _newsRecentForm(pid, n, bis){
   const arr = [];
-  for(let i = matches.length - 1; i >= 0 && arr.length < n; i--){
+  const d = (bis && bis.dataRef) || {};
+  let start = matches.length - 1;
+  if(d.matchId){
+    const k = matches.findIndex(m => m.id === d.matchId);
+    if(k >= 0) start = k;
+  } else if(bis && bis.when){
+    const t = new Date(bis.when).getTime();
+    while(start >= 0 && new Date(matches[start].created_at).getTime() > t) start--;
+  }
+  for(let i = start; i >= 0 && arr.length < n; i--){
     if(matchOf(pid, matches[i])) arr.unshift(matches[i]);
   }
   if(!arr.length) return {strip:'', currentStreak:0};
@@ -29186,29 +29271,26 @@ function _newsH2HRecord(aPid, bPid){
   return {aWins: e.wins[aPid] || 0, bWins: e.wins[bPid] || 0, lastMatchId: e.lastMatchId};
 }
 
-// Karriere-Bilanz (wins, losses, winRate) eines Spielers. Nutzt bestehende
-// playerStats falls verfügbar, sonst einmaliger walk.
-function _newsPlayerCareer(pid){
-  try {
-    if(typeof playerStats === 'function'){
-      const st = playerStats(pid);
-      if(st && (st.wins !== undefined || st.gp !== undefined)){
-        const wins = st.wins || 0;
-        const losses = st.losses || ((st.gp || 0) - wins);
-        const total = wins + losses;
-        const winRate = total ? Math.round((wins/total)*100) : 0;
-        return {wins, losses, winRate};
-      }
-    }
-  } catch(e){}
-  // Fallback: schneller direkter walk
-  let wins = 0, losses = 0;
-  for(let i = 0; i < matches.length; i++){
-    if(!matchOf(pid, matches[i])) continue;
-    if(won(pid, matches[i])) wins++; else losses++;
+// Die Partien bis zu der, von der eine Story erzählt. Ein Blatt, das neben
+// „100 Spiele" die Bilanz von HEUTE nennt („221 / 134"), widerspricht sich
+// selbst; dasselbe bei der gemeinsamen Bilanz unter einer Duo-Serie.
+function _ndBisPartie(s){
+  const d = (s && s.dataRef) || {};
+  if(d.matchId){
+    const k = matches.findIndex(m => m.id === d.matchId);
+    if(k >= 0) return matches.slice(0, k + 1);
   }
+  if(s && s.when){
+    const t = new Date(s.when).getTime();
+    return matches.filter(m => new Date(m.created_at).getTime() <= t);
+  }
+  return matches;
+}
+function _ndBilanzBis(pid, s){
+  let wins = 0, losses = 0;
+  _ndBisPartie(s).forEach(m => { if(!matchOf(pid, m)) return; if(won(pid, m)) wins++; else losses++; });
   const total = wins + losses;
-  return {wins, losses, winRate: total ? Math.round((wins/total)*100) : 0};
+  return total ? {wins, losses, winRate: Math.round(wins / total * 100)} : null;
 }
 
 // ─── Hookup: News-Button-Click + Backdrop-Close ──────────────────────
@@ -30972,7 +31054,7 @@ const DISZIPLINEN = [
       const q=Math.max(_stPBinom(a.map(s=>s.exp),a.filter(s=>s.win).length),1e-6);
       if(!b||q<b.q)b={q,a};});p._au=b;return b?-Math.log10(b.q):null;},
         1.5228787452803376,
-        (p,v)=>`${p._au.a.filter(s=>s.win).length} von ${p._au.a.length} an einem Tag · erwartet waren ${Math.round(p._au.q*1000)/10} %`))}},
+        (p,v)=>`${p._au.a.filter(s=>s.win).length} von ${p._au.a.length} an einem Tag · erwartet waren ${komma(p._au.q*100, 1)} %`))}},
 
   {id:'endspurt', name:'Der Endspurt', short:'Endspurt', ic:'rocket', tone:'gold', art:'leistung',
     monat:{
@@ -33674,7 +33756,7 @@ function showSeasonTable(sid){
     ${T.live ? `<div class="tnote">Stand von heute, bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>
-        <span class="tx"><span class="n">${esc(pname(ch.pid))} — ${T.live ? 'führt die Saison an' : 'Meister'}</span>
+        <span class="tx"><span class="n">${esc(pname(ch.pid))} ${T.live ? 'führt die Saison an' : 'ist Meister'}</span>
           <span class="e num">${ch.elo} Elo · ${ch.wins} Siege aus ${ch.games} Spielen</span></span>
       </div><div style="height:14px"></div>` : ''}
     <div class="tplates">${sichtbar.map(a => _titlePlateHtml(a, {sid})).join('')}</div>
@@ -33702,6 +33784,12 @@ function showSeasonTable(sid){
       }).join('')}</div>` : ''}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+}
+
+// „zu 3. gehalten" stand da, eine Ordnungszahl, wo ein Zahlwort hingehört.
+function _zuMehreren(n){
+  const w = {2:'zu zweit', 3:'zu dritt', 4:'zu viert', 5:'zu fünft', 6:'zu sechst'}[n];
+  return w || `zu ${n}`;
 }
 
 // Chronik fürs Profil: EINE Karte. Nicht mehr eine Liste — genau die eine
@@ -33733,7 +33821,7 @@ function _chronStripHtml(pid){
       <span class="ic">${svgI(x.ic)}</span>
       <span class="tx">
         <span class="n">${esc(x.name)}${x.shared
-          ? `<span class="shared">zu ${x.pids.length}. gehalten</span>` : ''}</span>
+          ? `<span class="shared">${_zuMehreren(x.pids.length)} gehalten</span>` : ''}</span>
         <span class="e num">${esc(x.ev)}</span>
       </span>
       <span class="go"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -33877,7 +33965,7 @@ function showDisziplin(tid, sid){
 
   openSheet(`
     <h3>${esc(def.name)}</h3>
-    <div class="sheet-sub">Monatswertung · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
+    <div class="sheet-sub">Monatschronik · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
       <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
@@ -36333,7 +36421,7 @@ function showLaufbahn(pid){
   //     Rechnung: jeder Posten mit dem Grund, warum er so viel wiegt.
   const gruppen = [
     {q:'auszeichnung', kopf:'Auszeichnungen', leer:'noch keine erhalten', lab:'Stück'},
-    {q:'monat',        kopf:'Monatswertungen', leer:'noch keine getragen', lab:'getragen'},
+    {q:'monat',        kopf:'Monatschroniken', leer:'noch keine getragen', lab:'getragen'},
     {q:'rekord',       kopf:'Rekorde',         leer:'noch keinen gehalten', lab:'gehalten'},
   ];
   const posten = gruppen.map(g => P.quellen.filter(q => q.q === g.q));
@@ -36366,7 +36454,7 @@ function showLaufbahn(pid){
 
   const SICHTBAR = 4;
   const regeln = `<button class="lb-regel-auf" type="button" data-prestige-regeln>
-    <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven sauber erklärt</em></span>
+    <span><b>Wie die Punkte entstehen</b><em>Klassen, Startwerte und Kurven</em></span>
     ${svgI('chevron')}
   </button>`;
   const block = (g, gi) => {

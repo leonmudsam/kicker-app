@@ -32,7 +32,7 @@ function showPlayerH2HList(playerId){
         <div class="rname" style="font-size:13px;line-height:1.15">${esc(other.name)}</div>
         <div class="num" style="font-size:11px;margin-top:3px;font-family:'Sometype Mono',monospace">${teamChip}${sep}${oppChip}</div>
       </div>
-      <div class="num" style="font-size:11px;color:var(--muted);flex-shrink:0">${x.total}</div>
+      <div class="num" style="font-size:11px;color:var(--muted);flex-shrink:0">${x.total} Sp.</div>
       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--muted)" stroke-width="2.5" stroke-linecap="round" style="flex-shrink:0;opacity:.7"><path d="M9 18l6-6-6-6"/></svg>
     </div>`;
   }).join('');
@@ -43,9 +43,9 @@ function showPlayerH2HList(playerId){
       <div><h3>Bilanzen</h3><div class="sheet-sub">${esc(p.name)} · ${h2hList.length} Mitspieler</div></div>
     </div>
     <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em;margin-top:14px;margin-bottom:10px">
-      <span style="color:var(--blue);font-weight:700">T</span> = als Team · <span style="color:var(--purple);font-weight:700">G</span> = als Gegner · Tap für Details
+      <span style="color:var(--blue);font-weight:700">T</span> = als Team · <span style="color:var(--purple);font-weight:700">G</span> = als Gegner · Antippen für Einzelheiten
     </div>
-    ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('swords','Noch keine Mitspieler mit min. 3 Begegnungen')}
+    ${h2hList.length ? `<div class="rlist">${rows}</div>` : emptyState('swords','Noch keine Mitspieler ab 3 Begegnungen')}
     <button class="btn ghost sm" id="backToPlayerH2H" style="margin-top:16px">← Zurück zum Profil</button>
   `);
 

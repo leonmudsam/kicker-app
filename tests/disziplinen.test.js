@@ -888,6 +888,16 @@ ok(_sprachTreffer.strich.length === 0, 'kein Gedankenstrich in Beleg, Bedingung 
 ok(_sprachTreffer.pron.length === 0, 'und kein Pronomen ueber einen Spieler',
    _sprachTreffer.pron.slice(0, 4).join(', ') || 'keins');
 
+// Die Beschreibung einer Auszeichnung ist ein Satz, keine Formel: „Sieg mit
+// Tordifferenz ≥ 7", „Als Underdog gewonnen (<35% Chance)", „min. 3
+// Matches", „mind. einen Gegner aus den Bottom-2", „als Mate". Sie steht im
+// Blatt und als Text der Karte im Feed.
+const _badgeKuerzel = JSON.parse(K.eval(`JSON.stringify(BADGES
+  .filter(b => /(^|[^A-Za-zÄÖÜäöüß])(min|max|mind)\\.|[≤≥<>]|Underdog|\\bMate\\b|Bottom-|Top-1/.test(b.desc))
+  .map(b => b.id + ': ' + b.desc))`));
+ok(_badgeKuerzel.length === 0, 'die Beschreibung einer Auszeichnung ist ein Satz ohne Kürzel',
+   _badgeKuerzel.slice(0, 3).join(' | ') || 'alle');
+
 // ── Die Chronik gehoert nicht nur den besten Drei ───────────────────
 // Wer eine Quote gewinnt, gewinnt fast jede: gemessen gingen sechzig Prozent
 // der Monatseintraege an die besten Drei, und der Monatserste allein hielt

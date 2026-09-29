@@ -65,7 +65,12 @@ function _buildPositionChartSvg(data){
   } else {
     tickDays.push(1);
     for(let d=5; d<=D; d+=5) tickDays.push(d);
-    if(tickDays[tickDays.length-1] !== D) tickDays.push(D); // Endpunkt immer
+    // Endpunkt immer — und der Fünferschritt davor fällt weg, wenn er zu
+    // nah daran liegt: am 26. standen „25" und „26" als „2526" übereinander.
+    if(tickDays[tickDays.length-1] !== D){
+      if(D - tickDays[tickDays.length-1] < 3) tickDays.pop();
+      tickDays.push(D);
+    }
   }
   // Dedup
   const seenTicks = new Set();
@@ -151,7 +156,7 @@ function _renderPosvDetail(el, data, hlId){
   const stats = getSeasonPlayerStats(data.seasonId);
   if(!hlId){
     el.classList.add('empty');
-    el.innerHTML = `<div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>`;
+    el.innerHTML = `<div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>`;
     return;
   }
   el.classList.remove('empty');
@@ -291,14 +296,14 @@ function showPositionHistory(seasonId){
         ${_buildPositionChartSvg(data)}
       </div>
 
-      <div class="posv-hint">Tippe auf einen Spieler, um ihn hervorzuheben</div>
+      <div class="posv-hint">Linie oder Gesicht antippen, um einen Spieler hervorzuheben</div>
 
       <div class="posv-detail empty" id="posvDetail">
-        <div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>
+        <div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>
       </div>
 
       <div class="posv-update">
-        <span>Letztes Update: Heute, ${headerDate}</span>
+        <span>Stand: heute, ${headerDate}</span>
         <button class="posv-refresh" id="posvRefreshBtn" title="Aktualisieren">
           <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></svg>
         </button>
@@ -551,17 +556,17 @@ function showPotwRecap(opts){
        teamOfTheWeek ? teamOfTheWeek.games+' Spiele · '
          +Math.round(teamOfTheWeek.wins/teamOfTheWeek.games*100)+'%' : null,
        `data-potw-award="mvt" data-potw-week="${wkStartMs}"`);
-    hl('chartUp', 'Elo-Aufstieg',
+    hl('chartUp', 'Größter Aufwind',
        biggestEloGain ? pname(biggestEloGain[0]) : null,
        biggestEloGain ? '+'+Math.round(biggestEloGain[1].eloDelta)+' Elo' : null,
        biggestEloGain ? `data-potw-player="${esc(biggestEloGain[0])}"` : '');
-    hl('ball', 'Top-Tor', topScorer ? pname(topScorer.id) : null,
-       topScorer ? 'Ø '+topScorer.avg.toFixed(1)+' Tore' : null,
+    hl('ball', 'Torjäger', topScorer ? pname(topScorer.id) : null,
+       topScorer ? 'Ø '+komma(topScorer.avg,1)+' Tore' : null,
        `data-potw-award="scorer" data-potw-week="${wkStartMs}"`);
     hl('shieldCheck', 'Eiserne Abwehr', bestDefender ? pname(bestDefender.id) : null,
-       bestDefender ? 'Ø '+bestDefender.avg.toFixed(1)+' Gegentore' : null,
+       bestDefender ? 'Ø '+komma(bestDefender.avg,1)+' Gegentore' : null,
        `data-potw-award="wall" data-potw-week="${wkStartMs}"`);
-    hl('bolt', 'Größter Upset', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
+    hl('bolt', 'Größte Überraschung', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
        (topUpset && upsetNames) ? Math.round(topUpset.sp*100)+'% Chance' : null,
        `data-potw-award="upset" data-potw-week="${wkStartMs}"`);
 
@@ -832,13 +837,13 @@ function showPotdRecap(opts){
     const tagKacheln = [];
     const tagHl = (ic, label, name, wert, attr) => tagKacheln.push(rcpKachelHtml(
       name ? {ic, label, name, wert, ton:'metall', attr} : {ic, label, leer:true}));
-    tagHl('ball', 'Top-Tor', tagScorer ? pname(tagScorer.id) : null,
-          tagScorer ? 'Ø '+tagScorer.avg.toFixed(1)+' Tore' : null,
+    tagHl('ball', 'Torjäger', tagScorer ? pname(tagScorer.id) : null,
+          tagScorer ? 'Ø '+komma(tagScorer.avg,1)+' Tore' : null,
           tagScorer ? `data-potd-player="${esc(tagScorer.id)}"` : '');
-    tagHl('chartUp', 'Elo-Aufstieg', tagAufstieg ? pname(tagAufstieg.id) : null,
+    tagHl('chartUp', 'Größter Aufwind', tagAufstieg ? pname(tagAufstieg.id) : null,
           tagAufstieg ? '+'+tagAufstieg.d+' Elo' : null,
           tagAufstieg ? `data-potd-player="${esc(tagAufstieg.id)}"` : '');
-    tagHl('bolt', 'Größter Upset', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
+    tagHl('bolt', 'Größte Überraschung', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
           tagUpset ? Math.round(tagUpset.chance*100)+'% Chance' : null,
           upsetSieger ? `data-potd-team="${esc(upsetSieger.slice().sort().join('|'))}"` : '');
 
