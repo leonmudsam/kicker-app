@@ -3150,7 +3150,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   „Siegrate", im Teams-Reiter „Winrate" und in der Chronik „Siegquote";
   der Partner war „Mate", die Tordifferenz „Tordiff" oder „TD", die größte
   Überraschung in den Rückblicken „Größter Upset" und in den Awards „Größte
-  Überraschung", der direkte Vergleich „Head-to-Head". Jetzt: Siegquote,
+  Überraschung", der direkte Vergleich „Head-to-Head", die
+  Höhepunkte im Awards-Reiter und im Duo-Blatt „Highlights", die
+  Gesamtbilanz im Profil „Gesamt-Stats", die Partie im Story-Blatt
+  „Auslösendes Match". Jetzt: Siegquote,
   Partner, Torbilanz (sie passt in eine Kachel von 73 px, „Tordifferenz"
   nicht), Größte Überraschung, Direkter Vergleich. „Player of the Week/Day/
   Season" bleiben, das sind die Namen der Wertungen. Ebenso wenig steht dort

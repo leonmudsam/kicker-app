@@ -5181,7 +5181,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.eef2ffef';
+const BUILD_VERSION='2026.09.29.bcb59952';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -12032,7 +12032,7 @@ function _vAwardsCore(){
       ? card('dayKing','gold','Tageskönig',[dk0.id],esc(topNames(R.dayKingList,x=>x.v,x=>pname(x.id))),dk0.v+'× Player of the Day',dk0.v)
       : empty('dayKing','gold','Tageskönig'));
   }
-  sect('star','gold','Highlights',highlights);
+  sect('star','gold','Höhepunkte',highlights);
 
   // ── TEAMS ──
   const teams=[];
@@ -16260,7 +16260,7 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.35s">
       <div class="pp-sec-title">
-        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamt-Stats</h4></div>
+        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamtbilanz</h4></div>
         <div class="m">${s.games} Spiele</div>
       </div>
       <div class="pp-kpi">
@@ -18330,7 +18330,7 @@ function showTeam(p1Id,p2Id){
     const cols = facts.length >= 4 ? 'repeat(4,1fr)' : 'repeat('+facts.length+',1fr)';
     funFactsHtml = `
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Fun Facts</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">In Zahlen</div>
         <div style="display:grid;grid-template-columns:${cols};gap:8px">
           ${facts.map(f => `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center">
             <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${f.color};line-height:1">${f.value}</div>
@@ -18421,7 +18421,7 @@ function showTeam(p1Id,p2Id){
 
     ${highlights?`
     <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Highlights</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Höhepunkte</div>
       <div style="display:flex;flex-direction:column;gap:6px">${highlights}</div>
     </div>`:''}
 
@@ -28808,7 +28808,7 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val acid">#${rankInfo.pre} → #${rankInfo.post}</div>
           </div>` : ''}
           ${wechselHtml ? `<div class="nd-section">Alle ${ev.length} Wechsel des Tages</div>${wechselHtml}` : ''}
-          ${matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : ''}`;
+          ${matchHtml ? `<div class="nd-section">Die Partie</div>${matchHtml}` : ''}`;
       }
       case 'top_form': {
         const form = _newsRecentForm(d.pid, 10, s);
@@ -28861,9 +28861,9 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val neg">${esc(nameOf(d.nemesisOppId))} ›</div></div>` : '';
         return medaille + playersHtml + nemRow
           + (eloChg !== null ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Match-Elo</div>
+            <div class="nd-stat-label">Elo aus dieser Partie</div>
             <div class="nd-stat-val ${eloChg>=0?'pos':'neg'}">${eloChg>=0?'+':''}${eloChg}</div></div>` : '')
-          + (matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : '');
+          + (matchHtml ? `<div class="nd-section">Die Partie</div>${matchHtml}` : '');
       }
       // Die gesammelten runden Marken eines Tages. Bei EINER Marke ist das
       // dieselbe Aussage wie bei einer einzelnen Auszeichnung, also dasselbe
@@ -28879,7 +28879,7 @@ function _newsDetailMitte(s){
           return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
               (typeof rarityOf === 'function') ? rarityOf(l[0].badgeId) : 'common',
               l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
-            + (d.matchId ? `<div class="nd-section">Auslösendes Match</div>`
+            + (d.matchId ? `<div class="nd-section">Die Partie</div>`
                 + _newsMatchVsBlock(d.matchId) : '');
         }
         return `<div class="nd-section">${l.length} runde Marken</div>`
@@ -28953,7 +28953,7 @@ function _newsDetailMitte(s){
           <div class="nd-stat-row">
             <div class="nd-stat-label">Siegquote</div>
             <div class="nd-stat-val acid">${stats.winRate} %</div></div>` : ''}
-          ${d.matchId ? `<div class="nd-section">Jubiläums-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+          ${d.matchId ? `<div class="nd-section">Die Jubiläumspartie</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'quiet_week': {
         return `<div class="nd-section">Aktivität</div>
@@ -29028,7 +29028,7 @@ function _newsDetailMitte(s){
           ${stats ? `<div class="nd-stat-row">
             <div class="nd-stat-label">Bilanz bis zu dieser Partie</div>
             <div class="nd-stat-val">${stats.wins} : ${stats.losses}</div></div>` : ''}
-          ${d.matchId ? `<div class="nd-section">Meilenstein-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+          ${d.matchId ? `<div class="nd-section">Die Partie zum Meilenstein</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'elo_swing': {
         // Vorher stand hier der Name — den der Kopf zwei Zeilen darueber schon
@@ -29082,7 +29082,7 @@ function _newsDetailMitte(s){
               <div class="nd-vs-elo">${h2h.bWins} Siege</div>
             </div>
           </div>
-          ${d.matchId ? `<div class="nd-section">Jubiläums-Duell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+          ${d.matchId ? `<div class="nd-section">Das Jubiläumsduell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'win_streak': {
         // „Aktuelle Serie" stand über einer Marke, die an ihrer Partie hängt

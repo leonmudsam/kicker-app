@@ -1227,7 +1227,7 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val acid">#${rankInfo.pre} → #${rankInfo.post}</div>
           </div>` : ''}
           ${wechselHtml ? `<div class="nd-section">Alle ${ev.length} Wechsel des Tages</div>${wechselHtml}` : ''}
-          ${matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : ''}`;
+          ${matchHtml ? `<div class="nd-section">Die Partie</div>${matchHtml}` : ''}`;
       }
       case 'top_form': {
         const form = _newsRecentForm(d.pid, 10, s);
@@ -1280,9 +1280,9 @@ function _newsDetailMitte(s){
             <div class="nd-stat-val neg">${esc(nameOf(d.nemesisOppId))} ›</div></div>` : '';
         return medaille + playersHtml + nemRow
           + (eloChg !== null ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">Match-Elo</div>
+            <div class="nd-stat-label">Elo aus dieser Partie</div>
             <div class="nd-stat-val ${eloChg>=0?'pos':'neg'}">${eloChg>=0?'+':''}${eloChg}</div></div>` : '')
-          + (matchHtml ? `<div class="nd-section">Auslösendes Match</div>${matchHtml}` : '');
+          + (matchHtml ? `<div class="nd-section">Die Partie</div>${matchHtml}` : '');
       }
       // Die gesammelten runden Marken eines Tages. Bei EINER Marke ist das
       // dieselbe Aussage wie bei einer einzelnen Auszeichnung, also dasselbe
@@ -1298,7 +1298,7 @@ function _newsDetailMitte(s){
           return _newsMedaillon((b0 && b0.ic) || s.ic || 'medal',
               (typeof rarityOf === 'function') ? rarityOf(l[0].badgeId) : 'common',
               l[0].name || (b0 && b0.name) || '', b0 ? b0.desc : '', l[0].badgeId)
-            + (d.matchId ? `<div class="nd-section">Auslösendes Match</div>`
+            + (d.matchId ? `<div class="nd-section">Die Partie</div>`
                 + _newsMatchVsBlock(d.matchId) : '');
         }
         return `<div class="nd-section">${l.length} runde Marken</div>`
@@ -1372,7 +1372,7 @@ function _newsDetailMitte(s){
           <div class="nd-stat-row">
             <div class="nd-stat-label">Siegquote</div>
             <div class="nd-stat-val acid">${stats.winRate} %</div></div>` : ''}
-          ${d.matchId ? `<div class="nd-section">Jubiläums-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+          ${d.matchId ? `<div class="nd-section">Die Jubiläumspartie</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'quiet_week': {
         return `<div class="nd-section">Aktivität</div>
@@ -1447,7 +1447,7 @@ function _newsDetailMitte(s){
           ${stats ? `<div class="nd-stat-row">
             <div class="nd-stat-label">Bilanz bis zu dieser Partie</div>
             <div class="nd-stat-val">${stats.wins} : ${stats.losses}</div></div>` : ''}
-          ${d.matchId ? `<div class="nd-section">Meilenstein-Match</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+          ${d.matchId ? `<div class="nd-section">Die Partie zum Meilenstein</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'elo_swing': {
         // Vorher stand hier der Name — den der Kopf zwei Zeilen darueber schon
@@ -1501,7 +1501,7 @@ function _newsDetailMitte(s){
               <div class="nd-vs-elo">${h2h.bWins} Siege</div>
             </div>
           </div>
-          ${d.matchId ? `<div class="nd-section">Jubiläums-Duell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
+          ${d.matchId ? `<div class="nd-section">Das Jubiläumsduell</div>${_newsMatchVsBlock(d.matchId)}` : ''}`;
       }
       case 'win_streak': {
         // „Aktuelle Serie" stand über einer Marke, die an ihrer Partie hängt

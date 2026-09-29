@@ -1238,7 +1238,7 @@ function _vAwardsCore(){
       ? card('dayKing','gold','Tageskönig',[dk0.id],esc(topNames(R.dayKingList,x=>x.v,x=>pname(x.id))),dk0.v+'× Player of the Day',dk0.v)
       : empty('dayKing','gold','Tageskönig'));
   }
-  sect('star','gold','Highlights',highlights);
+  sect('star','gold','Höhepunkte',highlights);
 
   // ── TEAMS ──
   const teams=[];
