@@ -1278,8 +1278,27 @@ function _consolidateStories(list){
       // und „8" als Ziffer neben „drei" als Wort mischt beide Schreibweisen
       // im selben Satz [§C27]. Uebrig bleibt, was passiert ist, und der
       // Zeitraum, fuer den es gilt.
+      // ── Und er nennt, was am Ende haengenblieb ────────────────────
+      // Die Aufzaehlung bleibt: der grosse Wert zaehlt nur die Wechsel, und
+      // ein Ausbau steht sonst nirgends auf der Karte [§C33]. Dazu kommt die
+      // eine Zahl, die die Karte bisher nicht nannte — was der Spieltag fuer
+      // die Laufbahn wirklich gebracht hat.
+      const plusTafel = (function(){
+        let p = 0; const gez = {};
+        teile.forEach(t => {
+          const lb = (t.dataRef || {}).laufbahn || {};
+          Object.keys(lb).forEach(pid => {
+            if(gez[pid]) return; gez[pid] = 1;
+            p += Math.max(0, Math.round(Number(lb[pid].nach) || 0)
+                            - Math.round(Number(lb[pid].vor) || 0));
+          });
+        });
+        return p;
+      })();
       neuText = `${bild.charAt(0).toUpperCase() + bild.slice(1)}: `
-        + `der Spieltag ordnet die Ewige Tafel neu.`;
+        + (plusTafel
+            ? `für die Laufbahn bleiben ${plusTafel} Prestige.`
+            : `der Spieltag ordnet die Ewige Tafel neu.`);
     } else {
       const namen = pids.map(nameOf);
       const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';

@@ -2445,8 +2445,16 @@
 
   /* Sorte 2 Tafel: der Wert ist die Hauptsache, nicht der Satz darueber. */
   .nf-wert{display:flex;flex-direction:column;align-items:flex-start;min-width:62px}
+  /* Ein langer Wert wird kleiner, nicht zweizeilig. „+10 %" brach zu „+10"
+     und „%" untereinander, sobald das Vorzeichen dazukam, und drueckte die
+     Schlagzeile daneben auf drei Zeilen — dieselbe Regel wie in der
+     Zahlenreihe des Blatts [§C27]. Die Stufe haengt an der Zeichenzahl, die
+     der Aufrufer als `data-lang` mitgibt: gerechnet wird sie dort, wo der
+     Wert entsteht, nicht im CSS. */
   .nf-wert b{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1;
-    letter-spacing:-.03em;color:var(--ink)}
+    letter-spacing:-.03em;color:var(--ink);white-space:nowrap}
+  .nf-wert[data-lang="1"] b{font-size:21px}
+  .nf-wert[data-lang="2"] b{font-size:17px}
   .nf-wert.gold b{color:var(--gold)}
   .nf-wert.ton b{color:var(--story,var(--ink2))}
   .nf-wert.metall b{color:var(--ink2);font-size:23px}
@@ -2837,8 +2845,13 @@
      einem Pfeil, und „4 Siege · 57 %" las sich wie eine Karriere-Siegquote. */
   .nd-held{display:flex;align-items:center;gap:13px;padding:2px 0 4px;cursor:pointer}
   .nd-held-duo{cursor:default}
-  .nd-held-av{display:flex}
-  .nd-held-av > *:nth-child(2){margin-left:-12px}
+  .nd-held-av{display:flex;align-items:center}
+  /* Der Kopf zeigt so viele Wappen, wie die Zeile daneben Namen nennt — bis
+     zu drei, danach einen Chip mit dem Rest. `nth-child(2)` ueberlappte nur
+     das zweite, das dritte stand damit mit einer Luecke daneben. */
+  .nd-held-av > *:nth-child(n+2){margin-left:-12px}
+  .nd-held-mehr{width:48px;height:48px;border-radius:50%;display:grid;
+    place-items:center;font-size:13px;border:2px solid var(--surface)}
   /* Das Ergebnis der Partie ueber dem Kopf. Vorher stand es je nach Typ mal
      als Block, mal gar nicht. */
   .nd-erg{border:1px solid var(--line);border-radius:12px;background:var(--bg2);
@@ -5133,7 +5146,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.616da827';
+const BUILD_VERSION='2026.09.29.3f3b203a';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -20228,8 +20241,11 @@ function _buildStories(){
         const n = lauf[pid];
         if(!(marken.has(n) || (n > 10 && n % 5 === 0))) return;
         if(mts(m) < seit || !pm[pid] || pm[pid].hidden) return;
+        // Der Zeitpunkt der Partie, mit der die Serie angefangen hat: die
+        // Karte nennt ihn im Satz, damit sie nicht zweimal dasselbe sagt.
+        const _st = matches.find(x => x.id === laufStart[pid]);
         kand.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
-                   lauf:laufStart[pid] || ''});
+                   lauf:laufStart[pid] || '', seit:_st ? mts(_st) : 0});
       });
     });
     // Eine Serie je Spieler und Tag, die laengste.
@@ -20246,8 +20262,16 @@ function _buildStories(){
         cat: 'misfortune',
         ic: c.streak >= 7 ? 'dropTriple' : 'dropDouble',
         title: `${nameOf(c.pid)} findet gerade kein Mittel`,
-        desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück. `
-            + `So lange hat ${nameOf(c.pid)} nicht mehr gewonnen.`,
+        // ── Der zweite Satz nennt eine neue Zahl ─────────────────────
+        // Er hiess „So lange hat Leo nicht mehr gewonnen": die Zahl stand
+        // schon im ersten Satz, der Name in der Schlagzeile, und eine neue
+        // Angabe kam nicht dazu [§C33]. Der Tag, an dem die Serie anfing,
+        // sagt etwas, das sonst nirgends steht — die Duo-Pleitenserie macht
+        // es seit jeher so.
+        desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück.`
+            // Kein Punkt dahinter: „25.08." traegt seinen eigenen schon.
+            + (c.seit ? ` Der letzte Sieg liegt vor dem ${new Date(c.seit)
+                .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}` : ''),
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
@@ -25130,8 +25154,27 @@ function _consolidateStories(list){
       // und „8" als Ziffer neben „drei" als Wort mischt beide Schreibweisen
       // im selben Satz [§C27]. Uebrig bleibt, was passiert ist, und der
       // Zeitraum, fuer den es gilt.
+      // ── Und er nennt, was am Ende haengenblieb ────────────────────
+      // Die Aufzaehlung bleibt: der grosse Wert zaehlt nur die Wechsel, und
+      // ein Ausbau steht sonst nirgends auf der Karte [§C33]. Dazu kommt die
+      // eine Zahl, die die Karte bisher nicht nannte — was der Spieltag fuer
+      // die Laufbahn wirklich gebracht hat.
+      const plusTafel = (function(){
+        let p = 0; const gez = {};
+        teile.forEach(t => {
+          const lb = (t.dataRef || {}).laufbahn || {};
+          Object.keys(lb).forEach(pid => {
+            if(gez[pid]) return; gez[pid] = 1;
+            p += Math.max(0, Math.round(Number(lb[pid].nach) || 0)
+                            - Math.round(Number(lb[pid].vor) || 0));
+          });
+        });
+        return p;
+      })();
       neuText = `${bild.charAt(0).toUpperCase() + bild.slice(1)}: `
-        + `der Spieltag ordnet die Ewige Tafel neu.`;
+        + (plusTafel
+            ? `für die Laufbahn bleiben ${plusTafel} Prestige.`
+            : `der Spieltag ordnet die Ewige Tafel neu.`);
     } else {
       const namen = pids.map(nameOf);
       const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
@@ -26407,8 +26450,23 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Eine Sammelkarte hat einen eigenen Gruppenkopf. Darunter stehen ALLE
   // verbundenen Einzelereignisse im Band; keines wird zum heimlichen Kopf
   // und keines hinter „weitere" versteckt [§C33].
+  // ── Das Ergebnis steht nicht als Zeile unter seinem eigenen Band ──
+  // Die Zeile hiess „Leon und Maxi setzen sich gegen Leo und Anton durch" und
+  // stand unmittelbar unter dem Ergebnisband, das dieselben vier Namen mit
+  // Wappen und Stand zeigt — gemessen brach sie dabei mit Auslassungspunkten
+  // ab. Ihr Anlass steht ausserdem in der Schlagzeile („… in einer Partie")
+  // und ihre beiden Zahlen im Satz darunter. Sie bleibt Teil des Buendels,
+  // damit die Karte ihr Band und ihre Siegchance behaelt [§C33], und
+  // verschwindet nur aus dem Band, wo sie nichts hinzufuegt.
+  // Nur auf der Achse der PARTIE: eine Karte über zwei Ergebnisse desselben
+  // Tages (`quelle:'ergebnis'`) besteht aus lauter Ergebnis-Zeilen, und die
+  // sind dort die Aussage — gemessen blieben sonst elf Karten ohne Band.
+  const sammelTeile = (d.type === 'sammel' && d.quelle === 'spiel'
+                       && d.matchId && !d.bandFremd)
+    ? (d.teile || []).filter(t => String((t && (t.typ || t.type)) || '') !== 'spiel')
+    : d.teile;
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, [s.title], true) : '';
+    ? _newsSammelBand(sammelTeile, [s.title], true) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -26899,7 +26957,21 @@ function _newsTafelWert(s){
   // Wie die Zahl heisst, weiss der Katalog: die Kammer sagt, was ein
   // Eintrag ueberhaupt ist [§C35]. Ein Liga-Rekord ist ein Bestwert, eine
   // Fuegung nicht, und eine Schattenseite schon gar nicht.
-  const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
+  // ── Und der Wert wird nicht mehr geraten ─────────────────────────
+  // Gelesen wurde die erste Zahl des FLIESSTEXTS, ohne Vorzeichen und ohne
+  // Einheit: unter „Maxi, Julian, Jane und Johannes uebernehmen ‚Der
+  // Hoehenflug'" stand damit „10 %", waehrend der Satz darunter „+10
+  // %-Punkte, 70 % in den letzten 10 statt 60 %" nennt — ein Unterschied
+  // liest sich als Anteil, und das Plus fehlt. Der Beleg beginnt garantiert
+  // mit dem Sortierwert [§C35], also steht er dort und muss nicht gesucht
+  // werden; nur alte Karten ohne `ev` fallen auf den Satz zurueck.
+  // Ohne „-Punkte": der grosse Wert bleibt kurz, sonst brach „+10 %-Punkte"
+  // in zwei Zeilen und drueckte die Schlagzeile daneben auf drei [§C27]. Das
+  // Vorzeichen sagt, dass es ein Unterschied ist; die Einheit nennt der Satz.
+  const zahl = /^\s*([+−-]?\d+(?:[.,]\d+)?\s?(?:%|Elo|Tore)?)/;
+  const m = String(d.ev || '').match(zahl)
+         || String(s.desc || '').match(zahl)
+         || String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
   if(!m) return null;
   let label = 'Bestwert';
   try {
@@ -27019,7 +27091,13 @@ function _newsErgebnisBand(matchId){
 // die Hauptsache, nicht der Satz darüber.
 function _newsWertBlock(wert, label, farbe){
   if(!wert) return '';
-  return `<div class="nf-wert ${farbe || ''}"><b>${esc(String(wert))}</b>`
+  // Ein langer Wert wird kleiner, nicht zweizeilig: „+10 %" brach zu „+10"
+  // und „%" untereinander und drueckte die Schlagzeile auf drei Zeilen. Die
+  // Stufe steht hier, weil nur hier die Laenge bekannt ist [§C27].
+  const n = String(wert).length;
+  const lang = n > 8 ? 2 : (n > 5 ? 1 : 0);
+  return `<div class="nf-wert ${farbe || ''}"${lang ? ` data-lang="${lang}"` : ''}>`
+       + `<b>${esc(String(wert))}</b>`
        + (label ? `<span>${esc(label)}</span>` : '') + `</div>`;
 }
 
@@ -27123,14 +27201,14 @@ function _breakingHeroText(s){
           ? `Gipfeltreffen an der Spitze: Tabellenführer ${a} bezwingt Verfolger ${b} im direkten Duell und baut den Vorsprung an der Spitze aus.`
           : `Gipfeltreffen an der Spitze: ${a} setzt sich im Spitzenspiel durch und zieht weiter davon.`;
       }
-      case 'season_endgame': {
-        const leader = d.leader && d.leader.pid ? nm(d.leader.pid) : '';
-        const dl = d.daysLeft;
-        const dtxt = dl != null ? `Nur noch ${dl} ${dl === 1 ? 'Tag' : 'Tage'} bis zum Saisonende` : 'Der Saison-Endspurt läuft';
-        return `${dtxt}: ${leader} führt`
-          + (d.gap != null ? `, doch der Vorsprung von ${d.gap} Elo ist alles andere als sicher.` : '.')
-          + ' Jetzt zählt jedes Spiel.';
-      }
+      // Der Countdown hat keinen Nachsatz. Er hiess „Nur noch 6 Tage bis zum
+      // Saisonende: Martin führt, doch der Vorsprung von 11 Elo ist alles
+      // andere als sicher. Jetzt zählt jedes Spiel." Drei Fehler: ein Etikett
+      // mit Doppelpunkt am Satzanfang, jede Zahl darin stand in der
+      // Schlagzeile („Noch 6 Tage um den Monat") und im Text („Martin führt
+      // mit 390 Elo, Leon liegt 11 dahinter") schon, und der Schlusssatz
+      // nennt keine [§C33]. Wo es nichts Neues zu sagen gibt, gibt es keinen
+      // dritten Satz: der Aufrufer unterdrueckt den Rueckfall auf `desc`.
       case 'badge_unlocked':
         return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
       case 'elo_record':
@@ -27408,6 +27486,24 @@ function _renderNewsFeed(){
 // ─── §11.7 — Story-Detail (dynamisch je Typ) ─────────────────────────
 // Detail-Popover (z-index 140) — kann ÜBER dem Sheet (100)
 // liegen und ist unabhängig schließbar.
+// ── Was unten in Zahlen steht, sagt der Satz oben nicht ────────────
+// Der Satz der Tafel-Karte zaehlt auf, was passiert ist („Eine Bestmarke,
+// ein Ausbau, zwei Monatschroniken und ein neues Insignium: …") — im FEED
+// ist das die ganze Aussage. Im Blatt steht direkt darunter die Zahlenreihe
+// mit denselben vier Angaben, und damit dieselbe Information zweimal in
+// sechs Zeilen [§C27]. Der Kopf laesst die Aufzaehlung dort weg; was danach
+// kommt — der Zuwachs fuer die Laufbahn — bleibt, denn das zaehlt die Reihe
+// nicht auf [§C33 `_ndNeu`].
+//
+// Eine eigene Funktion, weil die Regel sonst nur im Zeichnen des Blatts
+// stuende und damit nur mit einem Dokument zu messen waere.
+function _ndLead(desc, body){
+  const lead = String(desc || '');
+  if(String(body || '').indexOf('rcp-z') < 0 || !/^[^:]+:\s+\S/.test(lead)) return lead;
+  const rest = lead.replace(/^[^:]+:\s+/, '');
+  return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : lead;
+}
+
 function openNewsDetail(sid){
   const stories = getStoriesCache();
   const s = stories.find(x => x.id === sid);
@@ -27433,6 +27529,7 @@ function openNewsDetail(sid){
   const cat = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   // Body-HTML dynamisch je Typ — nutzt vorhandene Avatar/Stat-Helper
   const body = _newsDetailBody(s);
+  const lead = _ndLead(s.desc, body);
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
   if(!nd || !bg) return;
@@ -27461,7 +27558,7 @@ function openNewsDetail(sid){
       </div>
       <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>
     </div>
-    <div class="nd-desc">${_newsBetont(s.desc)}</div>
+    <div class="nd-desc">${_newsBetont(lead)}</div>
     ${body}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
@@ -27592,9 +27689,19 @@ function _newsBlattKopf(s){
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
+  //
+  // ── So viele Wappen wie Namen ────────────────────────────────────
+  // Gezeigt wurden immer die ersten ZWEI, waehrend die Zeile daneben bis zu
+  // drei Namen nennt: gemessen stand „Johannes, Leo und Leon bewegen die
+  // Ewige Tafel" ueber zwei Gesichtern, und welcher der drei fehlt, sagte
+  // nichts. Der Deckel ist deshalb derselbe wie der von `_namenKurz` — drei,
+  // und ab dem vierten zaehlt ein Chip den Rest, wie auf der Karte [§C27].
   if(ids.length > 1){
+    const zeig = ids.slice(0, 3);
+    const rest = ids.length - zeig.length;
     return erg + `<div class="nd-held nd-held-duo">
-      <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
+      <div class="nd-held-av">${zeig.map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}${
+        rest > 0 ? `<span class="av nf-face-mehr nd-held-mehr">+${rest}</span>` : ''}</div>
       <div><div class="nd-held-nm">${esc(_namenKurz(ids.map(nm)))}</div>
       <div class="nd-held-un">${esc(_ndBeziehung(s, ids.length))}</div></div></div>`;
   }

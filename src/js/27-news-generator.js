@@ -756,8 +756,11 @@ function _buildStories(){
         const n = lauf[pid];
         if(!(marken.has(n) || (n > 10 && n % 5 === 0))) return;
         if(mts(m) < seit || !pm[pid] || pm[pid].hidden) return;
+        // Der Zeitpunkt der Partie, mit der die Serie angefangen hat: die
+        // Karte nennt ihn im Satz, damit sie nicht zweimal dasselbe sagt.
+        const _st = matches.find(x => x.id === laufStart[pid]);
         kand.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
-                   lauf:laufStart[pid] || ''});
+                   lauf:laufStart[pid] || '', seit:_st ? mts(_st) : 0});
       });
     });
     // Eine Serie je Spieler und Tag, die laengste.
@@ -774,8 +777,16 @@ function _buildStories(){
         cat: 'misfortune',
         ic: c.streak >= 7 ? 'dropTriple' : 'dropDouble',
         title: `${nameOf(c.pid)} findet gerade kein Mittel`,
-        desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück. `
-            + `So lange hat ${nameOf(c.pid)} nicht mehr gewonnen.`,
+        // ── Der zweite Satz nennt eine neue Zahl ─────────────────────
+        // Er hiess „So lange hat Leo nicht mehr gewonnen": die Zahl stand
+        // schon im ersten Satz, der Name in der Schlagzeile, und eine neue
+        // Angabe kam nicht dazu [§C33]. Der Tag, an dem die Serie anfing,
+        // sagt etwas, das sonst nirgends steht — die Duo-Pleitenserie macht
+        // es seit jeher so.
+        desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück.`
+            // Kein Punkt dahinter: „25.08." traegt seinen eigenen schon.
+            + (c.seit ? ` Der letzte Sieg liegt vor dem ${new Date(c.seit)
+                .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}` : ''),
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,

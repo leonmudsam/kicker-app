@@ -1,6 +1,24 @@
 // ─── §11.7 — Story-Detail (dynamisch je Typ) ─────────────────────────
 // Detail-Popover (z-index 140) — kann ÜBER dem Sheet (100)
 // liegen und ist unabhängig schließbar.
+// ── Was unten in Zahlen steht, sagt der Satz oben nicht ────────────
+// Der Satz der Tafel-Karte zaehlt auf, was passiert ist („Eine Bestmarke,
+// ein Ausbau, zwei Monatschroniken und ein neues Insignium: …") — im FEED
+// ist das die ganze Aussage. Im Blatt steht direkt darunter die Zahlenreihe
+// mit denselben vier Angaben, und damit dieselbe Information zweimal in
+// sechs Zeilen [§C27]. Der Kopf laesst die Aufzaehlung dort weg; was danach
+// kommt — der Zuwachs fuer die Laufbahn — bleibt, denn das zaehlt die Reihe
+// nicht auf [§C33 `_ndNeu`].
+//
+// Eine eigene Funktion, weil die Regel sonst nur im Zeichnen des Blatts
+// stuende und damit nur mit einem Dokument zu messen waere.
+function _ndLead(desc, body){
+  const lead = String(desc || '');
+  if(String(body || '').indexOf('rcp-z') < 0 || !/^[^:]+:\s+\S/.test(lead)) return lead;
+  const rest = lead.replace(/^[^:]+:\s+/, '');
+  return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : lead;
+}
+
 function openNewsDetail(sid){
   const stories = getStoriesCache();
   const s = stories.find(x => x.id === sid);
@@ -26,6 +44,7 @@ function openNewsDetail(sid){
   const cat = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   // Body-HTML dynamisch je Typ — nutzt vorhandene Avatar/Stat-Helper
   const body = _newsDetailBody(s);
+  const lead = _ndLead(s.desc, body);
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
   if(!nd || !bg) return;
@@ -54,7 +73,7 @@ function openNewsDetail(sid){
       </div>
       <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>
     </div>
-    <div class="nd-desc">${_newsBetont(s.desc)}</div>
+    <div class="nd-desc">${_newsBetont(lead)}</div>
     ${body}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
@@ -185,9 +204,19 @@ function _newsBlattKopf(s){
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
+  //
+  // ── So viele Wappen wie Namen ────────────────────────────────────
+  // Gezeigt wurden immer die ersten ZWEI, waehrend die Zeile daneben bis zu
+  // drei Namen nennt: gemessen stand „Johannes, Leo und Leon bewegen die
+  // Ewige Tafel" ueber zwei Gesichtern, und welcher der drei fehlt, sagte
+  // nichts. Der Deckel ist deshalb derselbe wie der von `_namenKurz` — drei,
+  // und ab dem vierten zaehlt ein Chip den Rest, wie auf der Karte [§C27].
   if(ids.length > 1){
+    const zeig = ids.slice(0, 3);
+    const rest = ids.length - zeig.length;
     return erg + `<div class="nd-held nd-held-duo">
-      <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
+      <div class="nd-held-av">${zeig.map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}${
+        rest > 0 ? `<span class="av nf-face-mehr nd-held-mehr">+${rest}</span>` : ''}</div>
       <div><div class="nd-held-nm">${esc(_namenKurz(ids.map(nm)))}</div>
       <div class="nd-held-un">${esc(_ndBeziehung(s, ids.length))}</div></div></div>`;
   }
