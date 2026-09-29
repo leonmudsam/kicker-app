@@ -1331,6 +1331,309 @@ ok(_stabil.sachen > 0 && _stabil.mehrfach.length === 0,
    'ein Rekord und eine Chronik tragen je Spieltag genau eine Karte',
    _stabil.mehrfach.join(' | ') || _stabil.sachen + ' Eintraege');
 
+// ── Der Tafel-Moment sagt ueberall dieselbe Zahl ─────────────────────
+// Im Blatt stand „+2 PRESTIGE" in der Zahlenreihe und drei Zeilen darunter
+// „Johannes +9 Prestige fuer die Laufbahn" — eines von beidem liest sich als
+// Fehler. Zwei Ursachen: nur die REKORD-Zeile trug die Laufbahn-Angabe, also
+// fehlte im Bereich „Wirkung auf die Laufbahn" jeder, der nur eine Chronik
+// geholt hat (gemessen fehlte Leo ganz, und die Summe stand auf dem Zuwachs
+// eines einzigen Spielers); und die Zeile nannte ihre Zahl „fuer die
+// Laufbahn", also mit derselben Aufschrift wie die Reihe, obwohl dort der
+// Zuwachs des ganzen Spieltags steht.
+const _tmoment = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const s = getStoriesCache().find(x => (x.dataRef||{}).quelle === 'tafel');
+  if(!s) return {fehlt:true};
+  const d = s.dataRef || {};
+  const teile = d.teile || [];
+  const html = _newsDetailBody(s);
+  // Wer auf der Karte steht, kommt in der Wirkung vor. Gefragt wird nach den
+  // Beteiligten der KARTE und nicht nach den Laufbahn-Angaben der Zeilen:
+  // sonst prueft der Test die Implementierung gegen sich selbst und bleibt
+  // gruen, gerade wenn eine Zeile ihre Angabe nicht mitbringt.
+  const genannt = (d.playerIds || []).filter(x => pmap()[x]);
+  const inWirkung = (html.match(/class="nd-wk" data-pid="([0-9a-f-]+)"/g) || [])
+    .map(x => x.slice(x.indexOf('data-pid="') + 10, -1));
+  // Und die Prestige-Zelle wird gegen das gezaehlt, was der Bereich darunter
+  // ZEIGT — zwei Stellen im Markup, nicht zweimal dieselbe Rechnung.
+  const zelle = (html.match(/>\\+(\\d+)<\\/div><div class="rcp-z-l">Prestige</) || [])[1];
+  const summe = (html.match(/class="nd-wk-d g">\\+(\\d+)</g) || [])
+    .reduce((a, x) => a + Number((x.match(/\\+(\\d+)/) || [0, 0])[1]), 0);
+  return {fehlt:false, n:teile.length,
+    ohneWirkung: genannt.filter(p => inWirkung.indexOf(p) < 0).map(p => pmap()[p].name),
+    zelle: zelle == null ? null : Number(zelle), summe,
+    // Die Zeile nennt den Beitrag DIESES Eintrags und ihren Halter einmal.
+    zeilen: teile.filter(t => String(t.typ||'').indexOf('chronik_') === 0)
+      .map(t => t.text || ''),
+    dopName: teile.filter(t => {
+      const nm = (String(t.titel||'').match(/^(\\S+) /) || [])[1];
+      return nm && String(t.text||'').indexOf(nm) >= 0;
+    }).map(t => t.titel)};
+})())`));
+ok(!_tmoment.fehlt && _tmoment.n >= 3, 'der Tafel-Moment der Messung hat genug Zeilen',
+   _tmoment.n + ' Zeilen');
+ok(_tmoment.ohneWirkung.length === 0,
+   'jeder, von dem eine Tafel-Zeile erzaehlt, steht in der Wirkung auf die Laufbahn',
+   _tmoment.ohneWirkung.join(', ') || 'keiner fehlt');
+ok(_tmoment.zelle != null && _tmoment.zelle === _tmoment.summe,
+   'und die Prestige-Zelle ist die Summe aller, nicht der Zuwachs eines',
+   _tmoment.zelle + ' gegen ' + _tmoment.summe);
+// ── Der Zeitpunkt gehoert einer Zeile, die die Karte ZEIGT ───────────
+// Gestellt wird der gemessene Fall: der Ausbau um 15:19 ist die aelteste
+// Zeile, die beiden Wechsel liegen um 15:37 — und ein Ausbau steht gar nicht
+// auf der Karte [§C33]. Ueber den echten Partien trifft das nicht zu, dort
+// ist die aelteste Zeile zufaellig ein Wechsel.
+const _tzeit = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p = players.map(x => x.id);
+  const tag = tagKey(mts(matches[matches.length - 1]));
+  const t0 = new Date(tag + 'T15:19:00').getTime();
+  const z = (id, typ, min, titel, ref) => ({id, cat:'tafel', ic:'medal2', prio:70,
+    when:new Date(t0 + min * 60000).toISOString(), title:titel,
+    desc:'Ein Satz mit 5 Zahlen.',
+    dataRef:Object.assign({type:typ, causalKey:'table:' + tag,
+                           playerIds:[ref], zeileText:'Kurz, 5 Zahlen.'}, {})});
+  _cache._consolFrom = null;
+  const aus = _consolidateStories([
+    z('tz-aus', 'rekord_gesteigert', 0, 'A baut „Der Fels" aus', p[0]),
+    z('tz-rek', 'rekord_geholt', 18, 'B uebernimmt „Der Massstab"', p[1]),
+    z('tz-chr', 'chronik_geholt', 18, 'C holt „Der Nachzuegler"', p[2])
+  ]);
+  const sam = aus.find(x => (x.dataRef||{}).type === 'sammel');
+  if(!sam) return {fehlt:true};
+  const teile = sam.dataRef.teile || [];
+  const ms = new Date(sam.when).getTime();
+  return {fehlt:false, uhr:new Date(ms).toISOString().slice(11,16),
+    passt: teile.some(t => t.typ !== 'rekord_gesteigert' && t.ms === ms)};
+})())`));
+ok(!_tzeit.fehlt && _tzeit.passt,
+   'die Karte traegt den Zeitpunkt einer Zeile, die sie auch zeigt',
+   'Karte steht auf ' + _tzeit.uhr);
+ok(_tmoment.zeilen.length > 0
+   && _tmoment.zeilen.every(t => /aus diesem Eintrag/.test(t) || !/Prestige/.test(t)),
+   'eine Chronik-Zeile sagt, dass ihre Zahl aus diesem Eintrag kommt',
+   _tmoment.zeilen.join(' | ').slice(0, 140));
+ok(_tmoment.dopName.length === 0,
+   'und keine Zeile nennt den Namen aus ihrer eigenen Schlagzeile noch einmal',
+   _tmoment.dopName.join(' | ') || 'keine');
+
+// ── Eine negative Gruppe reist nicht mit ─────────────────────────────
+// Mehrere Pleitenserien derselben Partie werden EINE Zeile („2 Pechvögel"),
+// und die traegt `type:'group'` mit `loss_streak` in `sub`. Geprueft wurde
+// nur `type`, also galt sie als positiv: gemessen stand sie als Zeile auf
+// „Teamserie in einer Partie", der Karte ueber den SIEG der beiden anderen
+// [§C25]. Und eine Gruppe traegt den Anlass ihrer Mitglieder: ohne das hiess
+// ein Buendel aus fuenf Zeilen nur „Teamserie in einer Partie".
+const _grp = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p = players.map(x => x.id);
+  const m = matches[matches.length - 1];
+  const t0 = mts(m);
+  _cache._consolFrom = null;
+  const liste = [
+    {id:'g-spiel', cat:'highlight', ic:'ball', prio:41, when:new Date(t0).toISOString(),
+     title:'Sieg', desc:'Ein Satz mit 1 Zahl.',
+     dataRef:{type:'spiel', matchId:m.id, resultKind:'kanter', playerIds:[p[0], p[1]],
+              quote:'70', elo:9}},
+    {id:'g-ws', cat:'personal', ic:'flame', prio:70, when:new Date(t0).toISOString(),
+     title:'Serien im Gleichschritt', desc:'Zwei Serien, 2 Marken.',
+     dataRef:{type:'group', sub:'win_streak', matchId:m.id, playerIds:[p[0], p[1]]}},
+    {id:'g-ls', cat:'misfortune', ic:'dropDouble', prio:52, when:new Date(t0).toISOString(),
+     title:'2 Pechvögel', desc:'Zwei Pleitenserien, 2 Marken.',
+     dataRef:{type:'group', sub:'loss_streak', matchId:m.id, playerIds:[p[2], p[3]]}}
+  ];
+  const aus = _consolidateStories(liste);
+  const sam = aus.find(x => (x.dataRef||{}).type === 'sammel');
+  return {karten:aus.map(x => x.id),
+    titel: sam ? sam.title : '',
+    zeilen: sam ? (sam.dataRef.teile||[]).map(t => t.id) : []};
+})())`));
+ok(_grp.zeilen.indexOf('g-ls') < 0 && _grp.karten.indexOf('g-ls') >= 0,
+   'eine Gruppe von Pleitenserien bleibt ihre eigene Karte',
+   _grp.zeilen.join(', ') + ' · Karten: ' + _grp.karten.join(', '));
+ok(/Siegesserie/.test(_grp.titel),
+   'und die Schlagzeile nennt den Anlass der uebrigen Gruppe', _grp.titel);
+
+// ── Ein gleitendes Fenster nennt den alten Wert nicht ────────────────
+// „Maxi, Julian, Jane und Johannes uebernehmen ‚Der Hoehenflug'. +10
+// %-Punkte … Vorher hielt Leon den Rekord mit +20 %" — eine Uebernahme mit
+// dem SCHLECHTEREN Wert. Bei einem Fenster gilt der Wert des Vorgaengers
+// nicht mehr, sein Fenster ist weitergerutscht [§C35].
+const _fenst = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const rek = roh.filter(s => String((s.dataRef||{}).type||'').indexOf('rekord_') === 0);
+  return {n:rek.length,
+    falsch: rek.filter(s => (s.dataRef||{}).fenster
+                         && /den Rekord mit /.test(String(s.desc||'')))
+      .map(s => s.title)};
+})())`));
+ok(_fenst.n > 0 && _fenst.falsch.length === 0,
+   'keine Fenster-Bestmarke vergleicht sich mit dem Wert ihres Vorgaengers',
+   _fenst.falsch.join(' | ') || _fenst.n + ' Rekord-Karten');
+
+// ── Der grosse Wert kommt aus dem Beleg, mit Vorzeichen ──────────────
+// Gelesen wurde die erste Zahl des FLIESSTEXTS: unter einer Uebernahme von
+// „Der Hoehenflug" stand „10 %", waehrend der Satz „+10 %-Punkte" nennt —
+// ein Unterschied als Anteil gelesen, und das Plus fehlt. Der Beleg beginnt
+// garantiert mit dem Sortierwert [§C35], also steht der Wert dort.
+const _gwert = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const rek = roh.filter(s => String((s.dataRef||{}).type||'').indexOf('rekord_') === 0
+                           && (s.dataRef||{}).ev);
+  const falsch = [];
+  rek.forEach(s => {
+    const w = _newsTafelWert(s);
+    const soll = (String(s.dataRef.ev).match(/^\\s*([+−-]?\\d+(?:[.,]\\d+)?\\s?(?:%|Elo|Tore)?)/)||[])[1];
+    if(!w || !soll || w.v !== soll) falsch.push(s.title + ' → ' + (w && w.v) + ' statt ' + soll);
+  });
+  return {n:rek.length, falsch:falsch.slice(0, 4)};
+})())`));
+ok(_gwert.n > 0 && _gwert.falsch.length === 0,
+   'der grosse Wert einer Bestmarke ist der Sortierwert ihres Belegs',
+   _gwert.falsch.join(' | ') || _gwert.n + ' Rekord-Karten');
+
+// ── Die Zeile der Partie steht nicht unter ihrer eigenen Karte ───────
+// Jede Partie hat eine Karte, und ihr Buendel traegt das Ergebnisband schon
+// [§C33]. Die Zeile „Sieg ohne Gegentor" stand darunter im Sammelband noch
+// einmal und sagte, was das Band zwei Zeilen hoeher zeigt.
+const _spBand = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const alle = getStoriesCache();
+  const sam = alle.filter(x => (x.dataRef||{}).type === 'sammel'
+                            && (x.dataRef||{}).quelle === 'spiel');
+  const leer = [], doppelt = [];
+  // Gemessen wird an der fertigen KARTE und nicht am selbst gefilterten
+  // Band: sonst prueft der Test seine eigene Kopie der Regel. Gesucht wird
+  // die Zeile an ihrem Titel — das Band traegt keine ID.
+  sam.forEach(s => {
+    const html = _newsCardHtmlM2(s, false, false);
+    const i0 = html.indexOf('class="nf-sam"');
+    if(i0 < 0){ leer.push(s.id); return; }
+    // Ohne Tags: der Titel steht im Band mit den fetten Namen darin
+    // (_newsBetont), ein roher Vergleich findet ihn deshalb nie.
+    const band = html.slice(i0).replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ');
+    (s.dataRef.teile||[]).forEach(t => {
+      const tt = String(t.titel || '');
+      if(String((t && (t.typ || t.type)) || '') === 'spiel'
+         && tt && band.indexOf(tt.slice(0, 18)) >= 0) doppelt.push(s.id + ' :: ' + tt);
+    });
+  });
+  // Und der Filter gilt NUR fuer die Achse der Partie. Der Ergebnis-Strom
+  // besteht ausschliesslich aus Partie-Zeilen, breiter gefiltert stand dort
+  // gar nichts mehr — in den echten Partien kommt diese Achse nicht vor,
+  // also wird sie gestellt.
+  const m = matches[matches.length - 1];
+  const p = players.map(x => x.id);
+  const e = (id, pid) => ({id, cat:'highlight', ic:'ball', prio:41,
+    when:new Date(mts(m)).toISOString(), title:'Ergebnis ' + id,
+    desc:'Ein Satz mit 3 Zahlen.',
+    dataRef:{type:'spiel', matchId:m.id, playerIds:[pid], zeileText:'Kurz, 3 Zahlen.'}});
+  const ergKarte = {id:'sam-erg', cat:'highlight', ic:'ball', prio:45,
+    when:new Date(mts(m)).toISOString(), title:'Zwei Ergebnisse an diesem Tag',
+    desc:'Ein Satz mit 2 Zahlen.',
+    dataRef:{type:'sammel', quelle:'ergebnis', playerIds:[p[0], p[1]],
+      teile:[{id:'e1', typ:'spiel', titel:'A und B gewinnen ohne Gegentor', ic:'ball', wert:'10:0'},
+             {id:'e2', typ:'spiel', titel:'C und D retten ein 10:9 ins Ziel', ic:'ball', wert:'10:9'}]}};
+  const ergBand = _newsCardHtmlM2(ergKarte, false, false).indexOf('class="nf-sam"') >= 0;
+  return {n:sam.length, leer:leer.slice(0, 4), doppelt:doppelt.slice(0, 4), ergBand};
+})())`));
+ok(_spBand.n > 0 && _spBand.doppelt.length === 0 && _spBand.leer.length === 0,
+   'das Band einer Partie-Karte nennt die Partie nicht, die darueber steht',
+   _spBand.doppelt.join(' | ') || _spBand.leer.join(', ')
+     || _spBand.n + ' Partie-Sammelkarten');
+ok(_spBand.ergBand,
+   'und die Karte zweier Ergebnisse behaelt ihr Band', String(_spBand.ergBand));
+
+// ── Eine Pleitenserie sagt, wie lange der letzte Sieg her ist ────────
+// „Fuenf Niederlagen am Stueck." nannte die Zahl und sonst nichts: ob das
+// vor zwei Wochen oder gestern anfing, stand nirgends, und genau das ist die
+// Frage, die eine Durststrecke aufwirft.
+const _lstr = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const ls = roh.filter(s => (s.dataRef||{}).type === 'loss_streak');
+  return {n:ls.length,
+    ohne: ls.filter(s => !/\\d{2}\\.\\d{2}\\./.test(String(s.desc||'')))
+      .map(s => s.desc).slice(0, 3)};
+})())`));
+ok(_lstr.n === 0 || _lstr.ohne.length === 0,
+   'jede Pleitenserie nennt den Tag, vor dem der letzte Sieg liegt',
+   _lstr.ohne.join(' | ') || _lstr.n + ' Pleitenserien');
+
+// ── Das Blatt sagt die Aufzaehlung nicht vor ihrer eigenen Reihe ─────
+// Ueber den Zellen „1 BESTMARKE / 1 AUSBAU / 2 CHRONIKEN" stand „Eine
+// Bestmarke, ein Ausbau, zwei Monatschroniken und ein neues Insignium: fuer
+// die Laufbahn bleiben 279 Prestige." — dieselbe Angabe zweimal in sechs
+// Zeilen. Die Zahlenreihe zaehlt, der Satz sagt, was bleibt.
+const _blead = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const s = getStoriesCache().find(x => (x.dataRef||{}).quelle === 'tafel');
+  if(!s) return {fehlt:true};
+  const html = _newsDetailBody(s);
+  return {fehlt:false, lead:_ndLead(s.desc, html),
+    zahlen: html.indexOf('rcp-z') >= 0, voll: s.desc};
+})())`));
+ok(!_blead.fehlt && _blead.zahlen && !/^[^:]{6,}:\s/.test(_blead.lead),
+   'das Blatt eines Tafel-Moments zeigt die Aufzaehlung nur in seiner Zahlenreihe',
+   _blead.lead.slice(0, 90));
+
+// ── So viele Wappen wie Namen ────────────────────────────────────────
+// Der Kopf zeigte immer die ersten ZWEI, waehrend die Zeile daneben bis zu
+// drei Namen nennt: „Johannes, Leo und Leon bewegen die Ewige Tafel" stand
+// ueber zwei Gesichtern, und welcher der drei fehlt, sagte nichts.
+const _kopfN = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const falsch = [];
+  let n = 0;
+  getStoriesCache().forEach(s => {
+    let ids = [];
+    try { ids = (_newsPids(s)||[]).filter(x => pmap()[x]); } catch(e){}
+    if(ids.length < 3) return;
+    n++;
+    const kopf = _newsBlattKopf(s);
+    // Gezaehlt wird am Markup: wie viele Gesichter stehen da, und steht der
+    // Chip mit dem Rest daneben?
+    const nAv = (kopf.match(/class="rav zn"/g) || []).length;
+    const mehr = (kopf.match(/nd-held-mehr">\\+(\\d+)</) || [])[1];
+    const zeig = Math.min(3, ids.length);
+    const rest = ids.length - zeig;
+    if(nAv !== zeig || (rest > 0 ? Number(mehr) !== rest : mehr != null))
+      falsch.push(s.title + ' → ' + nAv + ' von ' + ids.length + (mehr ? ' +' + mehr : ''));
+  });
+  return {n, falsch:falsch.slice(0, 4)};
+})())`));
+ok(_kopfN.n > 0 && _kopfN.falsch.length === 0,
+   'der Blattkopf zeigt so viele Wappen, wie seine Zeile Namen nennt',
+   _kopfN.falsch.join(' | ') || _kopfN.n + ' Koepfe mit drei und mehr');
+
+// ── Der Nachsatz ist ein Satz, kein Etikett ─────────────────────────
+// Unter dem Schlusssprint stand „Machtwechsel an der Tabellenspitze: … Das
+// Titelrennen ist wieder voellig offen" — ein Etikett mit Doppelpunkt am
+// Satzanfang, ohne jede Zahl, und die offene Lage stimmt bei 91 Elo
+// Vorsprung nicht [§C33]. Wo es keinen eigenen langen Satz gibt, bleibt der
+// Nachsatz weg; `desc` steht schon eine Zeile hoeher. Gestellt, weil die
+// echte Liga den Schlusssprint gerade nicht traegt — der Sweep ueber den
+// fertigen Feed prueft den Wortlaut schon, findet dort aber nur die eine
+// Breaking-Karte, die es gibt.
+const _nachsatz = JSON.parse(K.eval(`JSON.stringify((function(){
+  const ohne = {id:'bs-1', cat:'liga', ic:'clock', prio:91,
+    when:new Date(mts(matches[matches.length-1])).toISOString(),
+    title:'Noch 5 Tage', desc:'Ein Satz mit 5 Zahlen.',
+    dataRef:{type:'season_endgame', sid:currentSeason(), playerIds:[]}};
+  let h = '';
+  try { h = _breakingHeroText(ohne) || ''; } catch(e){ h = 'FEHLER ' + e.message; }
+  return {eigen: !h || String(h).trim() === String(ohne.desc).trim(),
+    hat: String(h).slice(0, 70)};
+})())`));
+ok(_nachsatz.eigen,
+   'der Schlusssprint bekommt keinen Nachsatz, weil er keinen eigenen hat',
+   _nachsatz.hat || 'keiner');
+
 // ── Dieselbe Aussage zweimal: die spaetere gilt ──────────────────────
 // Die Sperrfrist laesst eine Aussage drei Tage lang nur einmal durch, und
 // welche der beiden das ist, ist die Frage: die zweite traegt den Stand, der
@@ -2532,8 +2835,17 @@ const _band = JSON.parse(K.eval(`JSON.stringify((function(){
     // davon Ausbauten, und bei vier Plaetzen standen zwei Wechsel und zwei
     // Ausbauten darauf [§C33].
     const wechsel = teile.filter(t => t.typ !== 'rekord_gesteigert');
-    const soll = Math.min((wechsel.length ? wechsel : teile).length,
-                          NEWS_LIMITS.sammelZeilen);
+    // Und das Ergebnis steht nicht als Zeile unter seinem eigenen Band: die
+    // Zeile „X und Y setzen sich gegen A und B durch" nennt dieselben vier
+    // Namen, die das Band mit Wappen und Stand darueber zeigt, und ihr
+    // Anlass steht in der Schlagzeile [§C33]. Nur auf der Achse der PARTIE —
+    // eine Karte ueber zwei Ergebnisse desselben Tages besteht aus lauter
+    // Ergebnis-Zeilen, und die sind dort die Aussage.
+    const ohneErg = (x.dataRef.quelle === 'spiel' && x.dataRef.matchId
+                     && !x.dataRef.bandFremd)
+      ? (wechsel.length ? wechsel : teile).filter(t => t.typ !== 'spiel')
+      : (wechsel.length ? wechsel : teile);
+    const soll = Math.min(ohneErg.length, NEWS_LIMITS.sammelZeilen);
     if(soll !== n) ohneBand++;
   });
   return {n: sammel.length, ohneBand, zeilen,
@@ -2675,8 +2987,16 @@ ok(_achsen.c.length === 1 && _achsen.c[0].q === 'tafel',
 ok(_achsen.c[0] && _achsen.c[0].ti
    === _achsen.n0 + ', ' + _achsen.n1 + ' und ' + _achsen.n2 + ' bewegen die Ewige Tafel',
    'die Schlagzeile nennt alle drei und verbindet den Tafel-Moment', (_achsen.c[0]||{}).ti);
-ok(_achsen.c[0] && /^Ein Moment, drei Spuren:/.test(_achsen.c[0].tx),
-   'ihr Satz verbindet die drei Tafel-Spuren lebendig', (_achsen.c[0]||{}).tx);
+// Der Satz nennt, was passiert ist — und zaehlt es nicht dreimal. Er hiess
+// „Ein Moment, 8 Spuren: 5 Ausbauten und drei Monatschroniken ordnen die
+// Ewige Tafel neu": „Ein Moment" ueber einen ganzen Spieltag, „8 Spuren" als
+// Floskel ueber derselben Aufzaehlung, und eine Ziffer neben einem Zahlwort
+// im selben Satz [§C27]. Gemessen wird die Aufzaehlung und das Fehlen
+// beider Fehler, nicht der Wortlaut.
+ok(_achsen.c[0] && /^Drei neue Insignien: /.test(_achsen.c[0].tx)
+   && !/Moment|Spur/.test(_achsen.c[0].tx)
+   && !/\d/.test(_achsen.c[0].tx),
+   'ihr Satz zaehlt die Tafel-Spuren einmal und ohne Floskel', (_achsen.c[0]||{}).tx);
 ok(_achsen.f.length === 1 && _achsen.f[0].n === 5 && _achsen.f[0].band === 4
    && _achsen.f[0].pids === 5 && _achsen.f[0].mehr === '3',
    'ein grosses Buendel fuehrt alle Ereignisse und zaehlt alle Gesichter korrekt',
@@ -4481,6 +4801,11 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
   // Kein Etikett mit Doppelpunkt am Satzanfang („Saison-Endspurt: …").
   const etikett = roh.filter(s => /^[A-ZÄÖÜ][^.!?:]{2,24}:\\s/.test(String(s.desc || '')))
     .map(s => s.title + ' → ' + String(s.desc).slice(0, 40));
+  // Und kein doppelter Punkt. „25.08." traegt seinen eigenen, und dahinter
+  // stand der des Satzes: „Der letzte Sieg liegt vor dem 25.08.." Jede
+  // abgekuerzte Angabe am Satzende hat dieses Problem.
+  const punkte = roh.filter(s => /\\.\\./.test(String(s.desc || '').replace(/\\.\\.\\./g, '')))
+    .map(s => String(s.desc).slice(-44));
   // Und kein englischer Kartentitel.
   // Gesucht sind durchgehend englische Aufschriften. „Player of the Week"
   // und „Player of the Day" sind die Namen, unter denen die Liga ihre
@@ -4542,6 +4867,7 @@ const _worte = JSON.parse(K.eval(`JSON.stringify((function(){
       && String(s.desc || '').indexOf('Vorher') >= 0;
   }).length;
   return {n: roh.length, ergebnisFalsch, echo, etikett, englisch, fragment,
+          punkte: punkte.slice(0, 4),
           mitMatch: mitMatch.length, fremdeNamen, serienDoppelt,
           mitVorgaenger, selbstVorgaenger:selbstVorgaenger.slice(0, 4),
           nSelbst:selbstVorgaenger.length,
@@ -5007,6 +5333,8 @@ ok(_worte.ergebnisFalsch.length === 0,
    _worte.ergebnisFalsch.slice(0, 2).join(' | ') || 'alle');
 ok(_worte.echo.length === 0, 'kein Text wiederholt nur seine Schlagzeile',
    _worte.echo.slice(0, 2).join(' | ') || 'keiner');
+ok((_worte.punkte || []).length === 0, 'kein Satz endet auf zwei Punkten',
+   (_worte.punkte || []).join(' | ') || 'keiner');
 ok(_worte.etikett.length === 0, 'kein Etikett mit Doppelpunkt am Satzanfang',
    _worte.etikett.slice(0, 2).join(' | ') || 'keins');
 ok(_worte.englisch.length === 0, 'keine englische Schlagzeile',

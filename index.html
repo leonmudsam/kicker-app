@@ -2445,8 +2445,16 @@
 
   /* Sorte 2 Tafel: der Wert ist die Hauptsache, nicht der Satz darueber. */
   .nf-wert{display:flex;flex-direction:column;align-items:flex-start;min-width:62px}
+  /* Ein langer Wert wird kleiner, nicht zweizeilig. „+10 %" brach zu „+10"
+     und „%" untereinander, sobald das Vorzeichen dazukam, und drueckte die
+     Schlagzeile daneben auf drei Zeilen — dieselbe Regel wie in der
+     Zahlenreihe des Blatts [§C27]. Die Stufe haengt an der Zeichenzahl, die
+     der Aufrufer als `data-lang` mitgibt: gerechnet wird sie dort, wo der
+     Wert entsteht, nicht im CSS. */
   .nf-wert b{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1;
-    letter-spacing:-.03em;color:var(--ink)}
+    letter-spacing:-.03em;color:var(--ink);white-space:nowrap}
+  .nf-wert[data-lang="1"] b{font-size:21px}
+  .nf-wert[data-lang="2"] b{font-size:17px}
   .nf-wert.gold b{color:var(--gold)}
   .nf-wert.ton b{color:var(--story,var(--ink2))}
   .nf-wert.metall b{color:var(--ink2);font-size:23px}
@@ -2837,8 +2845,13 @@
      einem Pfeil, und „4 Siege · 57 %" las sich wie eine Karriere-Siegquote. */
   .nd-held{display:flex;align-items:center;gap:13px;padding:2px 0 4px;cursor:pointer}
   .nd-held-duo{cursor:default}
-  .nd-held-av{display:flex}
-  .nd-held-av > *:nth-child(2){margin-left:-12px}
+  .nd-held-av{display:flex;align-items:center}
+  /* Der Kopf zeigt so viele Wappen, wie die Zeile daneben Namen nennt — bis
+     zu drei, danach einen Chip mit dem Rest. `nth-child(2)` ueberlappte nur
+     das zweite, das dritte stand damit mit einer Luecke daneben. */
+  .nd-held-av > *:nth-child(n+2){margin-left:-12px}
+  .nd-held-mehr{width:48px;height:48px;border-radius:50%;display:grid;
+    place-items:center;font-size:13px;border:2px solid var(--surface)}
   /* Das Ergebnis der Partie ueber dem Kopf. Vorher stand es je nach Typ mal
      als Block, mal gar nicht. */
   .nd-erg{border:1px solid var(--line);border-radius:12px;background:var(--bg2);
@@ -5133,7 +5146,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.8ae47768';
+const BUILD_VERSION='2026.09.29.3f3b203a';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -20228,8 +20241,11 @@ function _buildStories(){
         const n = lauf[pid];
         if(!(marken.has(n) || (n > 10 && n % 5 === 0))) return;
         if(mts(m) < seit || !pm[pid] || pm[pid].hidden) return;
+        // Der Zeitpunkt der Partie, mit der die Serie angefangen hat: die
+        // Karte nennt ihn im Satz, damit sie nicht zweimal dasselbe sagt.
+        const _st = matches.find(x => x.id === laufStart[pid]);
         kand.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
-                   lauf:laufStart[pid] || ''});
+                   lauf:laufStart[pid] || '', seit:_st ? mts(_st) : 0});
       });
     });
     // Eine Serie je Spieler und Tag, die laengste.
@@ -20246,8 +20262,16 @@ function _buildStories(){
         cat: 'misfortune',
         ic: c.streak >= 7 ? 'dropTriple' : 'dropDouble',
         title: `${nameOf(c.pid)} findet gerade kein Mittel`,
-        desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück. `
-            + `So lange hat ${nameOf(c.pid)} nicht mehr gewonnen.`,
+        // ── Der zweite Satz nennt eine neue Zahl ─────────────────────
+        // Er hiess „So lange hat Leo nicht mehr gewonnen": die Zahl stand
+        // schon im ersten Satz, der Name in der Schlagzeile, und eine neue
+        // Angabe kam nicht dazu [§C33]. Der Tag, an dem die Serie anfing,
+        // sagt etwas, das sonst nirgends steht — die Duo-Pleitenserie macht
+        // es seit jeher so.
+        desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück.`
+            // Kein Punkt dahinter: „25.08." traegt seinen eigenen schon.
+            + (c.seit ? ` Der letzte Sieg liegt vor dem ${new Date(c.seit)
+                .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}` : ''),
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
@@ -21581,6 +21605,22 @@ function _buildStories(){
   // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
   // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
   // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.
+  // ── Jede Tafel-Meldung traegt die Wirkung ihrer Beteiligten ──────
+  // Im Blatt eines Tafel-Moments steht EIN Bereich „Wirkung auf die
+  // Laufbahn", und der liest die Angabe aus den Zeilen. Nur die Rekord-Zeile
+  // trug sie: gemessen fehlte Leo dort ganz, obwohl seine Zeile „+80
+  // Prestige fuer die Laufbahn" nennt — und die Summe in der Zahlenreihe
+  // stand auf +196, dem Zuwachs eines einzigen Spielers. Wer genannt wird,
+  // kommt vor.
+  const _tafelLaufbahn = pids => {
+    const o = {};
+    (pids || []).slice(0, 3).forEach(pid => {
+      const w = _tafelWirkung(pid);
+      o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
+                stufeVor:w.stufeVor, stufeNach:w.stufeNach};
+    });
+    return o;
+  };
   const _rekordWirkung = (pids, rid) => {
     const o = {};
     (pids || []).slice(0, 3).forEach(pid => {
@@ -21724,7 +21764,16 @@ function _buildStories(){
           // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
-          desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu
+          // ── Ein Fenster nennt den alten Wert nicht ──────────────
+          // Bei einem gleitenden Fenster gilt der Wert des Vorgaengers nicht
+          // mehr: sein Fenster ist weitergerutscht, waehrend der neue Halter
+          // sein eigenes gefuellt hat. Gemessen stand „Maxi, Julian, Jane und
+          // Johannes uebernehmen ‚Der Hoehenflug'. +10 %-Punkte … Vorher
+          // hielt Leon den Rekord mit +20 %" — eine Uebernahme mit dem
+          // schlechteren Wert, und der Satz erklaert nicht, wieso. Dieselbe
+          // Begruendung wie beim ausgebliebenen „ausgebaut" [§C35]: was am
+          // hinteren Ende herausfaellt, ist keine Leistung und kein Vergleich.
+          desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu && !def.fenster
             ? `Vorher ${hielten} ${altN} den Rekord mit ${wertAlt}.`
             : `Vorher gehörte der Rekord ${altN}.`);
         } else {
@@ -22095,10 +22144,23 @@ function _buildStories(){
         // Bauanleitung des Feeds, nicht die Nachricht [§C33].
         // Die Zeile nennt deshalb den Wert, die Klasse und den Zuwachs, wo es
         // einen gibt. Der ganze Text bleibt an der einzelnen Karte.
-        const zeileText = (n.ev ? _evSatz(n.ev) + '. ' : '') + `${artikel} Chronik.`
+        // ── Die Zahl sagt, woher sie kommt, und der Name steht einmal ──
+        // Sie hiess „Johannes +67 Prestige fuer die Laufbahn." Zwei Fehler:
+        // der Name steht in der Schlagzeile derselben Zeile schon („Johannes
+        // holt ‚Der Beidfuessige'"), und „fuer die Laufbahn" ist dieselbe
+        // Aufschrift wie die Zahlenreihe der Karte und der Bereich darunter —
+        // dort steht aber der Zuwachs des ganzen SPIELTAGS. Gemessen las man
+        // „+9 Prestige" in der Zeile und „+2 PRESTIGE" in der Reihe und
+        // hielt eines von beidem fuer einen Fehler. Die Zeile nennt deshalb
+        // ausdruecklich den Beitrag DIESES Eintrags; steht sie allein, faellt
+        // der Name weg [§C33].
+        const zeileText = (n.ev ? _evSatz(n.ev) + '. ' : '') + `${artikel} Chronik`
           + (mitPlus.length
-             ? ` ${_namenListe(mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`))}`
-               + ' Prestige für die Laufbahn.' : '');
+             ? (mitPlus.length === 1
+                 ? `, +${prestigeDelta[mitPlus[0]]} Prestige aus diesem Eintrag.`
+                 : `. ${_namenListe(mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`))}`
+                   + ' Prestige aus diesem Eintrag.')
+             : '.');
         _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer,
           prestigeDelta, titelJeSpieler, zeileText,
           title: titel,
@@ -22144,6 +22206,7 @@ function _buildStories(){
                     // erzaehlen. Wer schon Halter war, hat an diesem Tag
                     // nichts getan [§C33].
                     playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
+                    laufbahn:_tafelLaufbahn(m.wer),
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
                     zeileText:m.zeileText,
                     chronArt:m.t.kunst, aus:m.t.aus,
@@ -22236,6 +22299,7 @@ function _buildStories(){
             dataRef: {type:'insignium_stufe', pid:p.id,
                       matchId:ausloeser ? ausloeser.id : null, stufe,
                       causalKey:_storyGruppeKey('table', _tafelTag.tag),
+                      laufbahn:_tafelLaufbahn([p.id]),
                       // In einer Sammelkarte steht die Herkunft des Prestiges
                       // nicht: drei Quellen mit drei Zahlen und dazu der
                       // Abstand zur naechsten Stufe waren gemessen 124 Zeichen
@@ -25081,8 +25145,36 @@ function _consolidateStories(list){
       if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${_zahlwortDe(nc)} Monatschroniken`);
       if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${_zahlwortDe(ni)} neue Insignien`);
       const bild = _namenListe(bilder.length ? bilder : ['mehrere Laufbahnen']);
-      neuText = `Ein Moment, ${_zahlwortDe(teile.length)} Spuren: `
-        + `${bild.charAt(0).toUpperCase() + bild.slice(1)} ordnen die Ewige Tafel neu.`;
+      // ── Der Satz zaehlt nicht dreimal und behauptet keinen Moment ──
+      // Er hiess „Ein Moment, 8 Spuren: 5 Ausbauten und drei Monatschroniken
+      // ordnen die Ewige Tafel neu." Drei Fehler in einer Zeile: „Ein
+      // Moment" ist falsch, weil ein Tafel-Moment den ganzen Spieltag
+      // umfasst und seine Zeilen gemessen 14:09 und 14:32 tragen; „8 Spuren"
+      // ist eine Floskel und zaehlt dasselbe wie die Aufzaehlung dahinter;
+      // und „8" als Ziffer neben „drei" als Wort mischt beide Schreibweisen
+      // im selben Satz [§C27]. Uebrig bleibt, was passiert ist, und der
+      // Zeitraum, fuer den es gilt.
+      // ── Und er nennt, was am Ende haengenblieb ────────────────────
+      // Die Aufzaehlung bleibt: der grosse Wert zaehlt nur die Wechsel, und
+      // ein Ausbau steht sonst nirgends auf der Karte [§C33]. Dazu kommt die
+      // eine Zahl, die die Karte bisher nicht nannte — was der Spieltag fuer
+      // die Laufbahn wirklich gebracht hat.
+      const plusTafel = (function(){
+        let p = 0; const gez = {};
+        teile.forEach(t => {
+          const lb = (t.dataRef || {}).laufbahn || {};
+          Object.keys(lb).forEach(pid => {
+            if(gez[pid]) return; gez[pid] = 1;
+            p += Math.max(0, Math.round(Number(lb[pid].nach) || 0)
+                            - Math.round(Number(lb[pid].vor) || 0));
+          });
+        });
+        return p;
+      })();
+      neuText = `${bild.charAt(0).toUpperCase() + bild.slice(1)}: `
+        + (plusTafel
+            ? `für die Laufbahn bleiben ${plusTafel} Prestige.`
+            : `der Spieltag ordnet die Ewige Tafel neu.`);
     } else {
       const namen = pids.map(nameOf);
       const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
@@ -25129,6 +25221,15 @@ function _consolidateStories(list){
           if(dt.rarity === 'rare') return 'seltene Auszeichnung';
           return motivName.badge_unlocked;
         }
+        // ── Eine Gruppe traegt den Anlass ihrer Mitglieder ───────────
+        // Zwei Spieler, die in derselben Partie ihre Serie zuenden, werden
+        // EINE Zeile („2 Serien im Gleichschritt"), und die traegt
+        // `type:'group'` mit dem urspruenglichen Typ in `sub`. Der
+        // Anlass-Katalog kennt „group" nicht, also fiel er weg: gemessen
+        // hiess ein Buendel aus fuenf Zeilen nur „Teamserie in einer
+        // Partie", obwohl auch zwei Einzelserien und eine Auszeichnung
+        // daranhingen [§C33].
+        if(dt.type === 'group') return motivName[dt.sub] || null;
         return motivName[dt.type];
       };
       const motive = [...new Set(teile.map(_motivVon).filter(Boolean))];
@@ -25208,16 +25309,26 @@ function _consolidateStories(list){
       // Die Karte spricht nur ueber das Ganze. Kein Einzelereignis wird im
       // Kopf wiederholt oder durch eine Hervorhebung wichtiger gemacht.
       desc: neuText,
-      // ── Eine Karte, die waechst, bleibt an ihrer Stelle ──────────
-      // Der Zeitpunkt war der JUENGSTE Teil, und ein Tafel-Moment umfasst den
-      // ganzen Spieltag: die Karte stand nach der zweiten Partie um 10:44 im
-      // Feed und wanderte mit jeder weiteren nach unten, bis sie um 14:32
-      // unter allen Partien lag. Wer sie am Mittag gelesen hatte, fand sie
-      // abends an einer anderen Stelle — und eine Karte, die ihren Zeitpunkt
-      // wechselt, ist im Feed eine andere. Sie entstand mit ihrer ersten
-      // Zeile, also steht sie dort; jede Zeile nennt ohnehin ihre eigene
-      // Uhrzeit [§C33].
-      when: teile.reduce((mn, t) => (new Date(t.when) < new Date(mn) ? t.when : mn), teile[0].when),
+      // ── Die Karte traegt den Zeitpunkt dessen, was sie ZEIGT ─────
+      // Er war der aelteste Teil ueberhaupt, damit die Karte im Feed nicht
+      // wandert. Gemessen stand darueber „Heute, 15:19" und darunter, in
+      // jeder einzelnen Zeile und im Ergebnisband, „15:37": die aelteste
+      // Zeile eines Tafel-Moments ist fast immer ein Ausbau, und ein Ausbau
+      // steht gar nicht auf der Karte [§C33]. Sie nannte damit eine Uhrzeit,
+      // zu der nichts von dem passiert ist, was sie zeigt.
+      //
+      // Den juengsten Teil zu nehmen loest das, kostet die Karte aber ihren
+      // Platz: der Tagesdeckel vergibt chronologisch, und der reservierte
+      // Platz der Ewigen Tafel geht an die FRUEHESTE Tafel-Karte des Tages —
+      // gemessen fiel der ganze Tafel-Moment damit aus dem Feed. Also die
+      // frueheste Zeile, die auch auf der Karte stehen kann: sie bleibt
+      // stehen, weil eine frueher gespielte Partie nicht nachtraeglich
+      // dazukommt, und ein Ausbau wird nie ein Wechsel.
+      when: (function(){
+        const zeigt = teile.filter(t => ((t.dataRef || {}).type || '') !== 'rekord_gesteigert');
+        const l = zeigt.length ? zeigt : teile;
+        return l.reduce((mn, t) => (new Date(t.when) < new Date(mn) ? t.when : mn), l[0].when);
+      })(),
       // Die Sammelkarte trägt, was sie zusammenfasst: den stärksten Teil und
       // einen Schritt je weiterem. Mit `+1` wog eine Karte, die drei
       // Insignium-Stufen bündelt, kaum mehr als eine einzelne davon — und
@@ -25274,7 +25385,21 @@ function _consolidateStories(list){
                                          // Zusage: was einmal dastand, bleibt
                                          // stehen [§C33].
                                         id: t.id,
-                                        text: (t.dataRef || {}).zeileText || t.desc,
+                                         // ── Das Ergebnis steht nicht dreimal ──
+                                         // Die Zeile der Partie hiess „Leon
+                                         // und Maxi setzen sich gegen Leo und
+                                         // Anton durch" und darunter „Vor dem
+                                         // Anstoss lag die Siegchance bei
+                                         // 81 %. Der Sieg bringt +7 Elo." Das
+                                         // Band zeigt dieselben vier Namen und
+                                         // den Stand, und der Kartentext
+                                         // nennt wortgleich dieselben zwei
+                                         // Zahlen [§C33 `_ndNeu`]. Der Anlass
+                                         // bleibt als Zeile stehen, sein Text
+                                         // faellt weg.
+                                        text: (art === 'spiel'
+                                               && (t.dataRef || {}).type === 'spiel')
+                                          ? '' : ((t.dataRef || {}).zeileText || t.desc),
                                         typ: (t.dataRef||{}).type || '',
                                         kammer: (t.dataRef||{}).kammer || '',
                                          // Jede Aenderung mit ihrer eigenen
@@ -26254,7 +26379,15 @@ function _newsUhrzeit(when){
 // grünen Schimmer einer positiven Serie annimmt.
 function _newsIstNegativ(s){
   const d = (s && s.dataRef) || {};
-  return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+  // ── Eine Gruppe ist so negativ wie ihre Mitglieder ─────────────────
+  // Mehrere Pleitenserien derselben Partie werden EINE Zeile („2 Pechvögel:
+  // Anton & Maxi"), und die trägt `type:'group'` mit `loss_streak` in `sub`.
+  // Geprüft wurde nur `type`, also galt die Gruppe als positiv: gemessen
+  // stand sie als Zeile auf der Karte „Teamserie in einer Partie", die
+  // Johannes und Martins Sieg feiert — Rot ist die Richtung, und eine Karte
+  // hat eine [§C25].
+  const typ = (d.type === 'group' ? (d.sub || '') : (d.type || ''));
+  return /loss|dry_spell/.test(typ) || d.rarity === 'negative';
 }
 
 // Die Ewige Tafel hat mehrere Kammern. Ein einziger silberner Ton machte
@@ -26317,8 +26450,23 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Eine Sammelkarte hat einen eigenen Gruppenkopf. Darunter stehen ALLE
   // verbundenen Einzelereignisse im Band; keines wird zum heimlichen Kopf
   // und keines hinter „weitere" versteckt [§C33].
+  // ── Das Ergebnis steht nicht als Zeile unter seinem eigenen Band ──
+  // Die Zeile hiess „Leon und Maxi setzen sich gegen Leo und Anton durch" und
+  // stand unmittelbar unter dem Ergebnisband, das dieselben vier Namen mit
+  // Wappen und Stand zeigt — gemessen brach sie dabei mit Auslassungspunkten
+  // ab. Ihr Anlass steht ausserdem in der Schlagzeile („… in einer Partie")
+  // und ihre beiden Zahlen im Satz darunter. Sie bleibt Teil des Buendels,
+  // damit die Karte ihr Band und ihre Siegchance behaelt [§C33], und
+  // verschwindet nur aus dem Band, wo sie nichts hinzufuegt.
+  // Nur auf der Achse der PARTIE: eine Karte über zwei Ergebnisse desselben
+  // Tages (`quelle:'ergebnis'`) besteht aus lauter Ergebnis-Zeilen, und die
+  // sind dort die Aussage — gemessen blieben sonst elf Karten ohne Band.
+  const sammelTeile = (d.type === 'sammel' && d.quelle === 'spiel'
+                       && d.matchId && !d.bandFremd)
+    ? (d.teile || []).filter(t => String((t && (t.typ || t.type)) || '') !== 'spiel')
+    : d.teile;
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, [s.title], true) : '';
+    ? _newsSammelBand(sammelTeile, [s.title], true) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -26809,7 +26957,21 @@ function _newsTafelWert(s){
   // Wie die Zahl heisst, weiss der Katalog: die Kammer sagt, was ein
   // Eintrag ueberhaupt ist [§C35]. Ein Liga-Rekord ist ein Bestwert, eine
   // Fuegung nicht, und eine Schattenseite schon gar nicht.
-  const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
+  // ── Und der Wert wird nicht mehr geraten ─────────────────────────
+  // Gelesen wurde die erste Zahl des FLIESSTEXTS, ohne Vorzeichen und ohne
+  // Einheit: unter „Maxi, Julian, Jane und Johannes uebernehmen ‚Der
+  // Hoehenflug'" stand damit „10 %", waehrend der Satz darunter „+10
+  // %-Punkte, 70 % in den letzten 10 statt 60 %" nennt — ein Unterschied
+  // liest sich als Anteil, und das Plus fehlt. Der Beleg beginnt garantiert
+  // mit dem Sortierwert [§C35], also steht er dort und muss nicht gesucht
+  // werden; nur alte Karten ohne `ev` fallen auf den Satz zurueck.
+  // Ohne „-Punkte": der grosse Wert bleibt kurz, sonst brach „+10 %-Punkte"
+  // in zwei Zeilen und drueckte die Schlagzeile daneben auf drei [§C27]. Das
+  // Vorzeichen sagt, dass es ein Unterschied ist; die Einheit nennt der Satz.
+  const zahl = /^\s*([+−-]?\d+(?:[.,]\d+)?\s?(?:%|Elo|Tore)?)/;
+  const m = String(d.ev || '').match(zahl)
+         || String(s.desc || '').match(zahl)
+         || String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
   if(!m) return null;
   let label = 'Bestwert';
   try {
@@ -26929,7 +27091,13 @@ function _newsErgebnisBand(matchId){
 // die Hauptsache, nicht der Satz darüber.
 function _newsWertBlock(wert, label, farbe){
   if(!wert) return '';
-  return `<div class="nf-wert ${farbe || ''}"><b>${esc(String(wert))}</b>`
+  // Ein langer Wert wird kleiner, nicht zweizeilig: „+10 %" brach zu „+10"
+  // und „%" untereinander und drueckte die Schlagzeile auf drei Zeilen. Die
+  // Stufe steht hier, weil nur hier die Laenge bekannt ist [§C27].
+  const n = String(wert).length;
+  const lang = n > 8 ? 2 : (n > 5 ? 1 : 0);
+  return `<div class="nf-wert ${farbe || ''}"${lang ? ` data-lang="${lang}"` : ''}>`
+       + `<b>${esc(String(wert))}</b>`
        + (label ? `<span>${esc(label)}</span>` : '') + `</div>`;
 }
 
@@ -27033,14 +27201,14 @@ function _breakingHeroText(s){
           ? `Gipfeltreffen an der Spitze: Tabellenführer ${a} bezwingt Verfolger ${b} im direkten Duell und baut den Vorsprung an der Spitze aus.`
           : `Gipfeltreffen an der Spitze: ${a} setzt sich im Spitzenspiel durch und zieht weiter davon.`;
       }
-      case 'season_endgame': {
-        const leader = d.leader && d.leader.pid ? nm(d.leader.pid) : '';
-        const dl = d.daysLeft;
-        const dtxt = dl != null ? `Nur noch ${dl} ${dl === 1 ? 'Tag' : 'Tage'} bis zum Saisonende` : 'Der Saison-Endspurt läuft';
-        return `${dtxt}: ${leader} führt`
-          + (d.gap != null ? `, doch der Vorsprung von ${d.gap} Elo ist alles andere als sicher.` : '.')
-          + ' Jetzt zählt jedes Spiel.';
-      }
+      // Der Countdown hat keinen Nachsatz. Er hiess „Nur noch 6 Tage bis zum
+      // Saisonende: Martin führt, doch der Vorsprung von 11 Elo ist alles
+      // andere als sicher. Jetzt zählt jedes Spiel." Drei Fehler: ein Etikett
+      // mit Doppelpunkt am Satzanfang, jede Zahl darin stand in der
+      // Schlagzeile („Noch 6 Tage um den Monat") und im Text („Martin führt
+      // mit 390 Elo, Leon liegt 11 dahinter") schon, und der Schlusssatz
+      // nennt keine [§C33]. Wo es nichts Neues zu sagen gibt, gibt es keinen
+      // dritten Satz: der Aufrufer unterdrueckt den Rueckfall auf `desc`.
       case 'badge_unlocked':
         return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
       case 'elo_record':
@@ -27318,6 +27486,24 @@ function _renderNewsFeed(){
 // ─── §11.7 — Story-Detail (dynamisch je Typ) ─────────────────────────
 // Detail-Popover (z-index 140) — kann ÜBER dem Sheet (100)
 // liegen und ist unabhängig schließbar.
+// ── Was unten in Zahlen steht, sagt der Satz oben nicht ────────────
+// Der Satz der Tafel-Karte zaehlt auf, was passiert ist („Eine Bestmarke,
+// ein Ausbau, zwei Monatschroniken und ein neues Insignium: …") — im FEED
+// ist das die ganze Aussage. Im Blatt steht direkt darunter die Zahlenreihe
+// mit denselben vier Angaben, und damit dieselbe Information zweimal in
+// sechs Zeilen [§C27]. Der Kopf laesst die Aufzaehlung dort weg; was danach
+// kommt — der Zuwachs fuer die Laufbahn — bleibt, denn das zaehlt die Reihe
+// nicht auf [§C33 `_ndNeu`].
+//
+// Eine eigene Funktion, weil die Regel sonst nur im Zeichnen des Blatts
+// stuende und damit nur mit einem Dokument zu messen waere.
+function _ndLead(desc, body){
+  const lead = String(desc || '');
+  if(String(body || '').indexOf('rcp-z') < 0 || !/^[^:]+:\s+\S/.test(lead)) return lead;
+  const rest = lead.replace(/^[^:]+:\s+/, '');
+  return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : lead;
+}
+
 function openNewsDetail(sid){
   const stories = getStoriesCache();
   const s = stories.find(x => x.id === sid);
@@ -27343,6 +27529,7 @@ function openNewsDetail(sid){
   const cat = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   // Body-HTML dynamisch je Typ — nutzt vorhandene Avatar/Stat-Helper
   const body = _newsDetailBody(s);
+  const lead = _ndLead(s.desc, body);
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
   if(!nd || !bg) return;
@@ -27371,7 +27558,7 @@ function openNewsDetail(sid){
       </div>
       <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>
     </div>
-    <div class="nd-desc">${_newsBetont(s.desc)}</div>
+    <div class="nd-desc">${_newsBetont(lead)}</div>
     ${body}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
@@ -27502,9 +27689,19 @@ function _newsBlattKopf(s){
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
+  //
+  // ── So viele Wappen wie Namen ────────────────────────────────────
+  // Gezeigt wurden immer die ersten ZWEI, waehrend die Zeile daneben bis zu
+  // drei Namen nennt: gemessen stand „Johannes, Leo und Leon bewegen die
+  // Ewige Tafel" ueber zwei Gesichtern, und welcher der drei fehlt, sagte
+  // nichts. Der Deckel ist deshalb derselbe wie der von `_namenKurz` — drei,
+  // und ab dem vierten zaehlt ein Chip den Rest, wie auf der Karte [§C27].
   if(ids.length > 1){
+    const zeig = ids.slice(0, 3);
+    const rest = ids.length - zeig.length;
     return erg + `<div class="nd-held nd-held-duo">
-      <div class="nd-held-av">${ids.slice(0, 2).map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</div>
+      <div class="nd-held-av">${zeig.map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}${
+        rest > 0 ? `<span class="av nf-face-mehr nd-held-mehr">+${rest}</span>` : ''}</div>
       <div><div class="nd-held-nm">${esc(_namenKurz(ids.map(nm)))}</div>
       <div class="nd-held-un">${esc(_ndBeziehung(s, ids.length))}</div></div></div>`;
   }
@@ -28385,9 +28582,17 @@ function _newsDetailMitte(s){
           : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
           : d.quelle === 'ergebnis' ? 'Diese beiden Partien'
           : 'In dieser Partie';
+        // ── Eine Ueberschrift ueber Ueberschriften sagt nichts ─────────
+        // „An der Ewigen Tafel" stand als Sammelueberschrift direkt ueber
+        // „Bestmarken 1" und „Monatschroniken 2" — und dieselbe Aussage stand
+        // auf demselben Blatt schon dreimal: in der Rubrik, in der
+        // Schlagzeile („… bewegen die Ewige Tafel") und unter den Wappen
+        // („an der Ewigen Tafel"). Wo die Liste ihre eigenen Ueberschriften
+        // traegt, faellt die darueber weg; ohne Gruppierung bleibt sie, denn
+        // dann hat die Liste keine [§C33].
         return uebersicht
           + (gruppiert
-              ? `<div class="nd-section">${kopfzeile}</div>${mv}${gruppiert}`
+              ? `${mv}${gruppiert}`
               : `<div class="nd-section">${kopfzeile}</div>${mv}<div class="nw-liste">${zeilen}</div>`)
           + wirkung;
       }

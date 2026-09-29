@@ -400,7 +400,15 @@ function _newsUhrzeit(when){
 // grünen Schimmer einer positiven Serie annimmt.
 function _newsIstNegativ(s){
   const d = (s && s.dataRef) || {};
-  return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+  // ── Eine Gruppe ist so negativ wie ihre Mitglieder ─────────────────
+  // Mehrere Pleitenserien derselben Partie werden EINE Zeile („2 Pechvögel:
+  // Anton & Maxi"), und die trägt `type:'group'` mit `loss_streak` in `sub`.
+  // Geprüft wurde nur `type`, also galt die Gruppe als positiv: gemessen
+  // stand sie als Zeile auf der Karte „Teamserie in einer Partie", die
+  // Johannes und Martins Sieg feiert — Rot ist die Richtung, und eine Karte
+  // hat eine [§C25].
+  const typ = (d.type === 'group' ? (d.sub || '') : (d.type || ''));
+  return /loss|dry_spell/.test(typ) || d.rarity === 'negative';
 }
 
 // Die Ewige Tafel hat mehrere Kammern. Ein einziger silberner Ton machte
@@ -463,8 +471,23 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Eine Sammelkarte hat einen eigenen Gruppenkopf. Darunter stehen ALLE
   // verbundenen Einzelereignisse im Band; keines wird zum heimlichen Kopf
   // und keines hinter „weitere" versteckt [§C33].
+  // ── Das Ergebnis steht nicht als Zeile unter seinem eigenen Band ──
+  // Die Zeile hiess „Leon und Maxi setzen sich gegen Leo und Anton durch" und
+  // stand unmittelbar unter dem Ergebnisband, das dieselben vier Namen mit
+  // Wappen und Stand zeigt — gemessen brach sie dabei mit Auslassungspunkten
+  // ab. Ihr Anlass steht ausserdem in der Schlagzeile („… in einer Partie")
+  // und ihre beiden Zahlen im Satz darunter. Sie bleibt Teil des Buendels,
+  // damit die Karte ihr Band und ihre Siegchance behaelt [§C33], und
+  // verschwindet nur aus dem Band, wo sie nichts hinzufuegt.
+  // Nur auf der Achse der PARTIE: eine Karte über zwei Ergebnisse desselben
+  // Tages (`quelle:'ergebnis'`) besteht aus lauter Ergebnis-Zeilen, und die
+  // sind dort die Aussage — gemessen blieben sonst elf Karten ohne Band.
+  const sammelTeile = (d.type === 'sammel' && d.quelle === 'spiel'
+                       && d.matchId && !d.bandFremd)
+    ? (d.teile || []).filter(t => String((t && (t.typ || t.type)) || '') !== 'spiel')
+    : d.teile;
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, [s.title], true) : '';
+    ? _newsSammelBand(sammelTeile, [s.title], true) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
@@ -955,7 +978,21 @@ function _newsTafelWert(s){
   // Wie die Zahl heisst, weiss der Katalog: die Kammer sagt, was ein
   // Eintrag ueberhaupt ist [§C35]. Ein Liga-Rekord ist ein Bestwert, eine
   // Fuegung nicht, und eine Schattenseite schon gar nicht.
-  const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
+  // ── Und der Wert wird nicht mehr geraten ─────────────────────────
+  // Gelesen wurde die erste Zahl des FLIESSTEXTS, ohne Vorzeichen und ohne
+  // Einheit: unter „Maxi, Julian, Jane und Johannes uebernehmen ‚Der
+  // Hoehenflug'" stand damit „10 %", waehrend der Satz darunter „+10
+  // %-Punkte, 70 % in den letzten 10 statt 60 %" nennt — ein Unterschied
+  // liest sich als Anteil, und das Plus fehlt. Der Beleg beginnt garantiert
+  // mit dem Sortierwert [§C35], also steht er dort und muss nicht gesucht
+  // werden; nur alte Karten ohne `ev` fallen auf den Satz zurueck.
+  // Ohne „-Punkte": der grosse Wert bleibt kurz, sonst brach „+10 %-Punkte"
+  // in zwei Zeilen und drueckte die Schlagzeile daneben auf drei [§C27]. Das
+  // Vorzeichen sagt, dass es ein Unterschied ist; die Einheit nennt der Satz.
+  const zahl = /^\s*([+−-]?\d+(?:[.,]\d+)?\s?(?:%|Elo|Tore)?)/;
+  const m = String(d.ev || '').match(zahl)
+         || String(s.desc || '').match(zahl)
+         || String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
   if(!m) return null;
   let label = 'Bestwert';
   try {
@@ -1075,7 +1112,13 @@ function _newsErgebnisBand(matchId){
 // die Hauptsache, nicht der Satz darüber.
 function _newsWertBlock(wert, label, farbe){
   if(!wert) return '';
-  return `<div class="nf-wert ${farbe || ''}"><b>${esc(String(wert))}</b>`
+  // Ein langer Wert wird kleiner, nicht zweizeilig: „+10 %" brach zu „+10"
+  // und „%" untereinander und drueckte die Schlagzeile auf drei Zeilen. Die
+  // Stufe steht hier, weil nur hier die Laenge bekannt ist [§C27].
+  const n = String(wert).length;
+  const lang = n > 8 ? 2 : (n > 5 ? 1 : 0);
+  return `<div class="nf-wert ${farbe || ''}"${lang ? ` data-lang="${lang}"` : ''}>`
+       + `<b>${esc(String(wert))}</b>`
        + (label ? `<span>${esc(label)}</span>` : '') + `</div>`;
 }
 
@@ -1179,14 +1222,14 @@ function _breakingHeroText(s){
           ? `Gipfeltreffen an der Spitze: Tabellenführer ${a} bezwingt Verfolger ${b} im direkten Duell und baut den Vorsprung an der Spitze aus.`
           : `Gipfeltreffen an der Spitze: ${a} setzt sich im Spitzenspiel durch und zieht weiter davon.`;
       }
-      case 'season_endgame': {
-        const leader = d.leader && d.leader.pid ? nm(d.leader.pid) : '';
-        const dl = d.daysLeft;
-        const dtxt = dl != null ? `Nur noch ${dl} ${dl === 1 ? 'Tag' : 'Tage'} bis zum Saisonende` : 'Der Saison-Endspurt läuft';
-        return `${dtxt}: ${leader} führt`
-          + (d.gap != null ? `, doch der Vorsprung von ${d.gap} Elo ist alles andere als sicher.` : '.')
-          + ' Jetzt zählt jedes Spiel.';
-      }
+      // Der Countdown hat keinen Nachsatz. Er hiess „Nur noch 6 Tage bis zum
+      // Saisonende: Martin führt, doch der Vorsprung von 11 Elo ist alles
+      // andere als sicher. Jetzt zählt jedes Spiel." Drei Fehler: ein Etikett
+      // mit Doppelpunkt am Satzanfang, jede Zahl darin stand in der
+      // Schlagzeile („Noch 6 Tage um den Monat") und im Text („Martin führt
+      // mit 390 Elo, Leon liegt 11 dahinter") schon, und der Schlusssatz
+      // nennt keine [§C33]. Wo es nichts Neues zu sagen gibt, gibt es keinen
+      // dritten Satz: der Aufrufer unterdrueckt den Rueckfall auf `desc`.
       case 'badge_unlocked':
         return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
       case 'elo_record':

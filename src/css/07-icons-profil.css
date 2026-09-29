@@ -763,8 +763,16 @@
 
   /* Sorte 2 Tafel: der Wert ist die Hauptsache, nicht der Satz darueber. */
   .nf-wert{display:flex;flex-direction:column;align-items:flex-start;min-width:62px}
+  /* Ein langer Wert wird kleiner, nicht zweizeilig. „+10 %" brach zu „+10"
+     und „%" untereinander, sobald das Vorzeichen dazukam, und drueckte die
+     Schlagzeile daneben auf drei Zeilen — dieselbe Regel wie in der
+     Zahlenreihe des Blatts [§C27]. Die Stufe haengt an der Zeichenzahl, die
+     der Aufrufer als `data-lang` mitgibt: gerechnet wird sie dort, wo der
+     Wert entsteht, nicht im CSS. */
   .nf-wert b{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1;
-    letter-spacing:-.03em;color:var(--ink)}
+    letter-spacing:-.03em;color:var(--ink);white-space:nowrap}
+  .nf-wert[data-lang="1"] b{font-size:21px}
+  .nf-wert[data-lang="2"] b{font-size:17px}
   .nf-wert.gold b{color:var(--gold)}
   .nf-wert.ton b{color:var(--story,var(--ink2))}
   .nf-wert.metall b{color:var(--ink2);font-size:23px}
@@ -1155,8 +1163,13 @@
      einem Pfeil, und „4 Siege · 57 %" las sich wie eine Karriere-Siegquote. */
   .nd-held{display:flex;align-items:center;gap:13px;padding:2px 0 4px;cursor:pointer}
   .nd-held-duo{cursor:default}
-  .nd-held-av{display:flex}
-  .nd-held-av > *:nth-child(2){margin-left:-12px}
+  .nd-held-av{display:flex;align-items:center}
+  /* Der Kopf zeigt so viele Wappen, wie die Zeile daneben Namen nennt — bis
+     zu drei, danach einen Chip mit dem Rest. `nth-child(2)` ueberlappte nur
+     das zweite, das dritte stand damit mit einer Luecke daneben. */
+  .nd-held-av > *:nth-child(n+2){margin-left:-12px}
+  .nd-held-mehr{width:48px;height:48px;border-radius:50%;display:grid;
+    place-items:center;font-size:13px;border:2px solid var(--surface)}
   /* Das Ergebnis der Partie ueber dem Kopf. Vorher stand es je nach Typ mal
      als Block, mal gar nicht. */
   .nd-erg{border:1px solid var(--line);border-radius:12px;background:var(--bg2);
