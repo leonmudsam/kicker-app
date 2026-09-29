@@ -2370,7 +2370,18 @@ const ok = (c, msg, det) => {
       ['Torjäger', "showAward('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
       ['Wochenkönig', "period='week';openTopList('periodKing')"],
       ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])'],
-      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed()']];
+      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed()'],
+      ['Positionsverlauf', 'showPositionHistory(seasons[2].id)'],
+      ['Liga-Chronik', 'showLigaChronik()'], ['Rangsystem', 'showRangSystem()'],
+      ['Bilanzen', 'showPlayerH2HList(' + P('Leon') + ')'],
+      ['Saisons', 'showPlayerSeasons(' + P('Leon') + ')'],
+      ['Regeln', 'showPrestigeRegeln(' + P('Leon') + ')'],
+      ['Auszeichnungen', 'showPlayerBadges(' + P('Jane') + ')'],
+      ['Monatstafel', "showSeasonTable('2026-08')"], ['Rekord', 'showChronicle(CHRONICLES[0].id)'],
+      ['Tag', 'showPotdRecap({force:true})'],
+      ['Spieler bearbeiten', 'showEditPlayer(' + P('Leon') + ')'],
+      ['Partie bearbeiten', 'showEditMatch(matches[matches.length-1].id)'],
+      ['Neuer Spieler', 'showAddPlayer()']];
     const gesicht = [];
     const rand = [];
     const out = [], woerter = [];
