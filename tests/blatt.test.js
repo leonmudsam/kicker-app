@@ -1773,7 +1773,44 @@ const ok = (c, msg, det) => {
   });
   ok(ruhig.band === 'none' && ruhig.stern === 'none' && ruhig.punkt === 'none',
      'bei prefers-reduced-motion steht alles still', JSON.stringify(ruhig));
+  // Dieselbe Frage für die Zeichnungen im Blatt: ein Balken waechst auf, und
+  // die Bahn laeuft in Spielreihenfolge auf. Beides ruht ebenso.
+  const balkenRuhe = await page.evaluate(() => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="nd">'
+      + '<div class="nd-chance"><div class="nd-chance-b"><i style="width:50%"></i></div></div>'
+      + '<div class="nd-elo"><span class="nd-elo-b"><i class="p" style="width:30%"></i></span></div>'
+      + '<div class="nd-bahn"><i class="w">10:4</i><i class="l">4:10</i></div></div>';
+    document.body.appendChild(host);
+    const n = el => el ? getComputedStyle(el).animationName : 'fehlt';
+    const out = {chance:n(host.querySelector('.nd-chance-b i')),
+                 elo:n(host.querySelector('.nd-elo-b i')),
+                 bahn:n(host.querySelector('.nd-bahn i'))};
+    host.remove(); return out;
+  });
+  ok(balkenRuhe.chance === 'none' && balkenRuhe.elo === 'none'
+     && balkenRuhe.bahn === 'none',
+     'und auch die Balken und die Bahn im Blatt', JSON.stringify(balkenRuhe));
   await page.emulateMedia({reducedMotion: 'no-preference'});
+  const balkenLebt = await page.evaluate(() => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="nd">'
+      + '<div class="nd-chance"><div class="nd-chance-b"><i style="width:50%"></i></div></div>'
+      + '<div class="nd-bahn"><i class="w">10:4</i><i class="l">4:10</i></div></div>';
+    document.body.appendChild(host);
+    const el = host.querySelector('.nd-chance-b i');
+    const b2 = host.querySelectorAll('.nd-bahn i')[1];
+    const out = {chance: el ? getComputedStyle(el).animationName : 'fehlt',
+                 bahn: b2 ? getComputedStyle(b2).animationName : 'fehlt',
+                 // Die Bahn laeuft nacheinander auf, nicht auf einmal.
+                 verzug: b2 ? getComputedStyle(b2).animationDelay : '0s'};
+    host.remove(); return out;
+  });
+  ok(balkenLebt.chance !== 'none' && balkenLebt.chance !== 'fehlt',
+     'sonst waechst ein Balken auf', String(balkenLebt.chance));
+  ok(balkenLebt.bahn !== 'none' && parseFloat(balkenLebt.verzug) > 0,
+     'und die Bahn laeuft in Spielreihenfolge auf',
+     balkenLebt.bahn + ' nach ' + balkenLebt.verzug);
 
   console.log('\n═══ BREAKING BRICHT DIE SPALTE ═══');
   const brk = await page.evaluate(() => {

@@ -1338,6 +1338,34 @@
   .nd-stat-val.acid{color:var(--acid)}
   .nd-stat-val.red{color:var(--red)}
   .nd-stat-val.gold{color:var(--gold)}
+  /* ── Ein Balken wächst, er erscheint nicht ──────────────────────────
+     Eine Zahl, die man gezeichnet sieht, versteht man schneller; eine
+     Zeichnung, die aufgeht, sieht man überhaupt. Bewegt wird nur Deckkraft
+     und Höhe: die BREITE ist die Aussage, und wer sie animiert, misst
+     während der Bewegung eine falsche Länge. Sie ruht bei
+     `prefers-reduced-motion` — dieselbe Regel wie beim Puls von Breaking
+     und beim Schimmer der Karte des Tages [§C27]. */
+  @keyframes nd-balken{from{opacity:0;transform:scaleY(.2)}to{opacity:1;transform:none}}
+  .nd-chance-b i, .nd-elo-b i, .nd-wk-b i, .nd-wk-b em, .nd-vf-b i, .nd-ins-b i{
+    animation:nd-balken .42s cubic-bezier(.2,.75,.3,1) both}
+  /* Und die Bahn läuft von links nach rechts auf, in Spielreihenfolge: so
+     liest man den Tag in der Richtung, in der er passiert ist. */
+  @keyframes nd-bahn-ein{from{opacity:0}to{opacity:1}}
+  .nd-bahn i{animation:nd-bahn-ein .3s ease-out both}
+  .nd-bahn i:nth-child(2){animation-delay:.04s}
+  .nd-bahn i:nth-child(3){animation-delay:.08s}
+  .nd-bahn i:nth-child(4){animation-delay:.12s}
+  .nd-bahn i:nth-child(5){animation-delay:.16s}
+  .nd-bahn i:nth-child(6){animation-delay:.2s}
+  .nd-bahn i:nth-child(7){animation-delay:.24s}
+  .nd-bahn i:nth-child(8){animation-delay:.28s}
+  .nd-bahn i:nth-child(9){animation-delay:.32s}
+  .nd-bahn i:nth-child(n+10){animation-delay:.36s}
+  @media(prefers-reduced-motion:reduce){
+    .nd-chance-b i, .nd-elo-b i, .nd-wk-b i, .nd-wk-b em, .nd-vf-b i,
+    .nd-ins-b i, .nd-bahn i{animation:none}
+  }
+
   /* ── Der Spieltag als Bahn ──────────────────────────────────────────
      Zehn Partien als zehn Vs-Bloecke sind vierzig Wappen und eine Wand. Die
      Bahn zeigt den Tag in einer Zeile: ein Feld je Partie, gruen fuer einen
