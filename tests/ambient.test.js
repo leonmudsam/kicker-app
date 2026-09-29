@@ -1561,6 +1561,43 @@ ok(_lstr.n === 0 || _lstr.ohne.length === 0,
    'jede Pleitenserie nennt den Tag, vor dem der letzte Sieg liegt',
    _lstr.ohne.join(' | ') || _lstr.n + ' Pleitenserien');
 
+// ── Der Elo-Gewinn gehoert einem, nicht der Partie ──────────────────
+// „Der Sieg bringt +19 Elo" stand da, und die Zahl ist die des STAERKEREN
+// von zwei Siegern: gemessen tragen nur 24 der 466 Partien fuer beide
+// dieselbe Zahl, und der Abstand geht bis 38 Elo. Gemessen wird gegen die
+// rohen Deltas der Partie, nicht gegen den Wert, den die Karte selbst
+// mitbringt — sonst prueft der Test seine eigene Quelle.
+const _eloSatz = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const falsch = [], ohneNm = [];
+  let n = 0;
+  roh.forEach(s => {
+    const d = s.dataRef || {};
+    if(d.type !== 'spiel' || !d.elo) return;
+    n++;
+    const nm = d.eloPid && pmap()[d.eloPid] ? pmap()[d.eloPid].name : '';
+    if(!nm){ ohneNm.push(s.id); return; }
+    // Wo der Satz die Zahl NENNT, nennt er auch den Traeger. Eine Partie mit
+    // Muster erzaehlt ihr eigenes Motiv und traegt den Wert nur im dataRef,
+    // damit die Sammelkarte ihn hat.
+    const nenntElo = String(s.desc || '').indexOf(d.elo + ' Elo') >= 0;
+    if(nenntElo && String(s.desc || '').indexOf(nm) < 0){ falsch.push(s.desc); return; }
+    // Und die Zahl ist wirklich sein Delta, und das groesste der Sieger.
+    const m = (matches || []).find(x => x.id === d.matchId);
+    const dl = (m && m.deltas) || {};
+    const eigen = Math.round(dl[d.eloPid] || 0);
+    const best = (d.winners || []).map(id => Math.round(dl[id] || 0))
+      .reduce((a, x) => (x > a ? x : a), 0);
+    if(eigen !== d.elo || eigen !== best)
+      falsch.push(s.id + ': ' + d.elo + ' gegen ' + eigen + ' / best ' + best);
+  });
+  return {n, falsch:falsch.slice(0, 3), ohneNm:ohneNm.slice(0, 3)};
+})())`));
+ok(_eloSatz.n > 0 && _eloSatz.falsch.length === 0 && _eloSatz.ohneNm.length === 0,
+   'der Elo-Gewinn einer Partie nennt den Spieler, dem er gehoert',
+   _eloSatz.falsch.concat(_eloSatz.ohneNm).join(' | ')
+     || _eloSatz.n + ' Partien mit Elo-Gewinn');
+
 // ── Das Blatt sagt die Aufzaehlung nicht vor ihrer eigenen Reihe ─────
 // Ueber den Zellen „1 BESTMARKE / 1 AUSBAU / 2 CHRONIKEN" stand „Eine
 // Bestmarke, ein Ausbau, zwei Monatschroniken und ein neues Insignium: fuer

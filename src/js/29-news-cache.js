@@ -1418,8 +1418,14 @@ function _consolidateStories(list){
         // sie nicht noch einmal. Er nennt die zwei Zahlen, die jede Partie
         // hat und die sonst nirgends stehen: wie erwartbar der Sieg war und
         // was er bewegt hat.
+        // Der Elo-Gewinn gehoert EINEM der beiden Sieger und nicht der
+        // Partie: gemessen tragen nur 24 der 466 Partien fuer beide dieselbe
+        // Zahl, und der Abstand geht bis 38 Elo. Kennt eine aeltere Zeile den
+        // Traeger nicht, bleibt die Zahl weg — eine Behauptung ueber zwei
+        // Leute ist schlimmer als eine Zahl weniger.
+        const eloNm = ds.eloPid ? nameOf(ds.eloPid) : '';
         neuText = `Die Siegchance lag vor dem Anstoß bei ${ds.quote} %`
-          + (ds.elo ? `, der Sieg bringt +${ds.elo} Elo` : '') + '.'
+          + (ds.elo && eloNm ? `, für ${eloNm} bringt der Sieg +${ds.elo} Elo` : '') + '.'
           + (motive.length ? '' : ` ${folge}.`);
       } else if(brkBundle){
         neuText = `${folge}, und jede davon kommt nur wenige Male je Saison.`;

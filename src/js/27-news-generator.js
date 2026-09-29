@@ -1558,8 +1558,15 @@ function _buildStories(){
       // Der groesste Elo-Gewinn der Siegerseite. Er steht auch im `dataRef`,
       // damit die Sammelkarte dieser Partie ihn nennen kann, ohne den Satz
       // dieser Karte abzuschreiben [§C33].
-      const plus = winners.map(id => Math.round(dl[id] || 0))
-        .filter(x => x > 0).sort((x, y) => y - x)[0] || 0;
+      //
+      // ── Und der Gewinn gehoert einem, nicht der Partie ──────────────
+      // „Der Sieg bringt +19 Elo" stand da, und die Zahl ist die des
+      // STAERKEREN von zwei Siegern: gemessen tragen nur 24 der 466 Partien
+      // fuer beide dieselbe Zahl, und der Abstand geht bis 38 Elo. Der Satz
+      // nennt deshalb, wem sie gehoert; die Elo je Spieler zeigt das Blatt.
+      const _best = winners.map(id => ({id, d: Math.round(dl[id] || 0)}))
+        .filter(x => x.d > 0).sort((x, y) => y.d - x.d)[0] || null;
+      const plus = _best ? _best.d : 0;
       let art = 'normal', rang = 0, title = '', desc = '', ic = 'ball';
       if(hoch === 10 && tief === 0){
         art = 'zu_null'; rang = 10; ic = 'hundred';
@@ -1587,7 +1594,7 @@ function _buildStories(){
         // den Satz [§C33].
         title = `${wn} setzen sich gegen ${ln} durch`;
         desc = `Vor dem Anstoß lag die Siegchance bei ${pct} %.`
-             + (plus ? ` Der Sieg bringt +${plus} Elo.` : '');
+             + (plus ? ` Für ${nameOf(_best.id)} bringt der Sieg +${plus} Elo.` : '');
       }
       stories.push({
         id: 'spiel_' + m.id,
@@ -1596,6 +1603,10 @@ function _buildStories(){
         dataRef: {type:'spiel', resultKind:art, matchId:m.id,
                   playerIds:winners, winners, losers, margin:diff,
                   stand: hoch + ':' + tief, quote: pct, elo: plus,
+                  // Wem der Elo-Gewinn gehoert: die Sammelkarte nennt ihn
+                  // im selben Satz, und ohne die ID stuende die Zahl dort
+                  // wieder als die der ganzen Partie.
+                  eloPid: _best ? _best.id : undefined,
                   chance: art === 'upset' ? chance : undefined,
                   causalKey:_storyGruppeKey('match', m.id)}
       });
