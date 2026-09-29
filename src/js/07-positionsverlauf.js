@@ -556,10 +556,10 @@ function showPotwRecap(opts){
        biggestEloGain ? '+'+Math.round(biggestEloGain[1].eloDelta)+' Elo' : null,
        biggestEloGain ? `data-potw-player="${esc(biggestEloGain[0])}"` : '');
     hl('ball', 'Top-Tor', topScorer ? pname(topScorer.id) : null,
-       topScorer ? 'Ø '+topScorer.avg.toFixed(1)+' Tore' : null,
+       topScorer ? 'Ø '+komma(topScorer.avg,1)+' Tore' : null,
        `data-potw-award="scorer" data-potw-week="${wkStartMs}"`);
     hl('shieldCheck', 'Eiserne Abwehr', bestDefender ? pname(bestDefender.id) : null,
-       bestDefender ? 'Ø '+bestDefender.avg.toFixed(1)+' Gegentore' : null,
+       bestDefender ? 'Ø '+komma(bestDefender.avg,1)+' Gegentore' : null,
        `data-potw-award="wall" data-potw-week="${wkStartMs}"`);
     hl('bolt', 'Größter Upset', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
        (topUpset && upsetNames) ? Math.round(topUpset.sp*100)+'% Chance' : null,
@@ -833,7 +833,7 @@ function showPotdRecap(opts){
     const tagHl = (ic, label, name, wert, attr) => tagKacheln.push(rcpKachelHtml(
       name ? {ic, label, name, wert, ton:'metall', attr} : {ic, label, leer:true}));
     tagHl('ball', 'Top-Tor', tagScorer ? pname(tagScorer.id) : null,
-          tagScorer ? 'Ø '+tagScorer.avg.toFixed(1)+' Tore' : null,
+          tagScorer ? 'Ø '+komma(tagScorer.avg,1)+' Tore' : null,
           tagScorer ? `data-potd-player="${esc(tagScorer.id)}"` : '');
     tagHl('chartUp', 'Elo-Aufstieg', tagAufstieg ? pname(tagAufstieg.id) : null,
           tagAufstieg ? '+'+tagAufstieg.d+' Elo' : null,

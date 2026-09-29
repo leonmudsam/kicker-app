@@ -1254,7 +1254,7 @@ function _vAwardsCore(){
     : empty('unstoppable','acid','Unaufhaltsam'));
   // Betonmauer: niedrigster Gegentor-Schnitt (min. 10 Sp.)
   teams.push(cw0
-    ? card('concreteWall','blue','Betonmauer',cw0.ids,esc(topTeamNames(R.concreteWallList,x=>-Math.round(x.v*100))),cw0.v.toFixed(2)+' Gegentore/Sp.',cw0.v.toFixed(2))
+    ? card('concreteWall','blue','Betonmauer',cw0.ids,esc(topTeamNames(R.concreteWallList,x=>-Math.round(x.v*100))),komma(cw0.v,2)+' Gegentore/Sp.',komma(cw0.v,2))
     : empty('concreteWall','blue','Betonmauer'));
   // Glückspilze: meiste 1-Tor-Siege
   teams.push(lc0
@@ -1280,17 +1280,17 @@ function _vAwardsCore(){
   // ── ANGRIFF & VERTEIDIGUNG ──
   const combat=[];
   combat.push(sc0
-    ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+sc0.avg.toFixed(1)+' Tore/Sp.',sc0.avg.toFixed(1))
+    ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+komma(sc0.avg,1)+' Tore/Sp.',komma(sc0.avg,1))
     : empty('scorer','orange','Torjäger'));
   combat.push(wl0
-    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wl0.v/wl0.g).toFixed(1)+' Gegentore/Sp.',(wl0.v/wl0.g).toFixed(1))
+    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wl0.v/wl0.g),1)+' Gegentore/Sp.',komma((wl0.v/wl0.g),1))
     : empty('wall','blue','Eiserne Abwehr'));
   combat.push(ic0&&ic0.v>=1
     ? card('ice','blue','Eiskalt',[ic0.id],esc(topNames(R.iceList,x=>x.v,x=>pname(x.id))),ic0.v+'× Zu-Null als Verteidiger',ic0.v)
     : empty('ice','blue','Eiskalt'));
   // Plus-Minus: Ø Tor-Saldo pro Spiel. Vorzeichen vor dem Wert für klares "Plus"-Gefühl.
   combat.push(pm0
-    ? card('plusMinus','orange','Plus-Minus',[pm0.id],esc(topNames(R.plusMinusList,x=>Math.round(x.v*10),x=>pname(x.id))),pm0.gf+':'+pm0.ga+' · '+pm0.g+' Spiele',(pm0.v>=0?'+':'')+pm0.v.toFixed(1))
+    ? card('plusMinus','orange','Plus-Minus',[pm0.id],esc(topNames(R.plusMinusList,x=>Math.round(x.v*10),x=>pname(x.id))),pm0.gf+':'+pm0.ga+' · '+pm0.g+' Spiele',(pm0.v>=0?'+':'')+komma(pm0.v,1))
     : empty('plusMinus','orange','Plus-Minus'));
   sect('shield','purple','Angriff & Verteidigung',combat);
 
@@ -1346,10 +1346,10 @@ function _vAwardsCore(){
     ? card('formtief','red','Formtief',[ft0.id],esc(topNames(R.formtief,x=>Math.round(x.drop),x=>pname(x.id))),'Peak '+ft0.peak+' → jetzt '+ft0.cur,'-'+Math.round(ft0.drop),{neg:true})
     : empty('formtief','red','Formtief'));
   neg.push(wa0
-    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(topNames(R.worstAtk,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wa0.v/wa0.g).toFixed(1)+' Tore/Sp.',(wa0.v/wa0.g).toFixed(1),{neg:true})
+    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(topNames(R.worstAtk,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wa0.v/wa0.g),1)+' Tore/Sp.',komma((wa0.v/wa0.g),1),{neg:true})
     : empty('worstAtk','red','Zahnloser Stürmer'));
   neg.push(wd0
-    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1),{neg:true})
+    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wd0.v/wd0.g),1)+' Gegentore/Sp.',komma((wd0.v/wd0.g),1),{neg:true})
     : empty('worstDef','red','Löchrigste Abwehr'));
   neg.push(zk0
     ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>Math.round(x.pct*1000))),zk0.v+' von '+zk0.g+' Pleiten waren Debakel',Math.round(zk0.pct*100)+'%',{neg:true})
@@ -1372,7 +1372,7 @@ function _vAwardsCore(){
   // ── NEUE NEGATIV-AWARDS v6 ──
   // Käseteller: Spiegel zu Concrete Wall — höchster Gegentor-Schnitt als Team.
   neg.push(cp0
-    ? card('cheesePlatter','red','Käseteller',cp0.ids,esc(topTeamNames(R.cheesePlatterList,x=>Math.round(x.v*100))),cp0.v.toFixed(2)+' Gegentore/Sp.',cp0.v.toFixed(2),{neg:true})
+    ? card('cheesePlatter','red','Käseteller',cp0.ids,esc(topTeamNames(R.cheesePlatterList,x=>Math.round(x.v*100))),komma(cp0.v,2)+' Gegentore/Sp.',komma(cp0.v,2),{neg:true})
     : empty('cheesePlatter','red','Käseteller'));
   // Favoriten-Versager: Spiegel zu Underdog-Held — höchste Niederlagen-Quote bei myExp ≥ 65%.
   neg.push(fl0

@@ -30,7 +30,7 @@ function vPositions(){
     const valLbl = pos==='atk' ? 'Tore/Sp.' : 'Geg./Sp.';
     return `<div class="rlist">${arr.map((x,i)=>{
       const perfChip = x.pAvg>0.08?'<span class="perf-up">▲</span>':x.pAvg<-0.08?'<span class="perf-dn">▼</span>':'';
-      const goalsTxt = x.goalsAvg.toFixed(1);
+      const goalsTxt = komma(x.goalsAvg,1);
       // Die Liste sortiert nach `score`, zeigte als große Zahl aber Ø Tore —
       // dadurch stand 8.8 über 8.9 und die Reihenfolge widersprach sich
       // selbst. Jetzt steht rechts der Wert, nach dem tatsächlich sortiert

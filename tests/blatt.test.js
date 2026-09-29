@@ -2316,7 +2316,12 @@ const ok = (c, msg, det) => {
           schief.push(t.textContent.trim());
       });
       const fab = document.getElementById('fab');
-      out.push({name, raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
+      // Eine Dezimalzahl trägt ein Komma [§C27] — „4.00 Gegentore" stand in
+      // der Betonmauer, „Ø 8.8" in der Positionsliste. Ein Datum („26.08.")
+      // und die Version fallen durch den Ausschluss nach der Zahl heraus.
+      const punkt = (document.getElementById('main').innerText
+        .match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
+      out.push({name, punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
         fab: fab ? getComputedStyle(fab).display : ''});
     }
     K("tab='ranking';period='season';rankMetric='elo';awView='awards';render()");
@@ -2328,6 +2333,30 @@ const ok = (c, msg, det) => {
   const reiterSchief = reiter.filter(r => r.schief.length);
   ok(reiterSchief.length === 0, 'jedes Gesicht trägt seine Initialen in der Mitte',
      reiterSchief.map(r => r.name + ': ' + r.schief.join(', ')).join(' | ') || 'alle mittig');
+  // Dieselbe Frage für die Blätter, die Zahlen mit Nachkommastelle zeigen.
+  const blattPunkt = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const P = n => JSON.stringify(K('(players.find(p=>p.name===' + JSON.stringify(n) + ')||{}).id'));
+    const blaetter = [['Profil', 'showPlayer(' + P('Leon') + ')'],
+      ['Duo', 'showTeam(' + P('Leon') + ',' + P('Maxi') + ')'],
+      ['Partie', 'showMatchDetail(matches[matches.length-1].id)'],
+      ['Torjäger', "openTopList('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
+      ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])']];
+    const out = [];
+    for(const [name, auf] of blaetter){
+      try{ K('closeSheet(true)'); K(auf); }catch(e){ out.push(name + ': ' + e.message); continue; }
+      await new Promise(r => requestAnimationFrame(r));
+      const m = (document.getElementById('sheet').innerText
+        .match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
+      if(m.length) out.push(name + ': ' + m.slice(0,3).join(' '));
+    }
+    K('closeSheet(true)');
+    return out;
+  });
+  const reiterPunkt = reiter.filter(r => r.punkt.length).map(r => r.name + ': ' + r.punkt.join(' '));
+  ok(reiterPunkt.length + blattPunkt.length === 0,
+     'keine Dezimalzahl mit Punkt in einem Reiter oder Blatt',
+     reiterPunkt.concat(blattPunkt).join(' | ') || 'alle mit Komma');
   ok(reiter.find(r => r.name === 'Match').fab === 'none'
      && reiter.find(r => r.name === 'Liga').fab !== 'none',
      'der Knopf „Match eintragen" fehlt nur auf der Match-Seite',

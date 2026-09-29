@@ -5156,7 +5156,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.f78f0064';
+const BUILD_VERSION='2026.09.29.74882c0d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7271,8 +7271,8 @@ function showSeasonRecap(season, opts){
   // trägt es das Podest, sonst nichts.
   const kachel=(ic,label,name,wert,key)=>kacheln.push(rcpKachelHtml({
     ic, label, name, wert, ton:'metall', attr:`data-award="${key}"`}));
-  if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+scorer.avg.toFixed(1)+' Tore','scorer');
-  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),(wall.v/wall.g).toFixed(1)+' Gegen/Sp.','wall');
+  if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
+  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),komma((wall.v/wall.g),1)+' Gegen/Sp.','wall');
   if(streak)  kachel('flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks');
   if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegrate','perfect');
   if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× POTW','weekKing');
@@ -7934,10 +7934,10 @@ function showPotwRecap(opts){
        biggestEloGain ? '+'+Math.round(biggestEloGain[1].eloDelta)+' Elo' : null,
        biggestEloGain ? `data-potw-player="${esc(biggestEloGain[0])}"` : '');
     hl('ball', 'Top-Tor', topScorer ? pname(topScorer.id) : null,
-       topScorer ? 'Ø '+topScorer.avg.toFixed(1)+' Tore' : null,
+       topScorer ? 'Ø '+komma(topScorer.avg,1)+' Tore' : null,
        `data-potw-award="scorer" data-potw-week="${wkStartMs}"`);
     hl('shieldCheck', 'Eiserne Abwehr', bestDefender ? pname(bestDefender.id) : null,
-       bestDefender ? 'Ø '+bestDefender.avg.toFixed(1)+' Gegentore' : null,
+       bestDefender ? 'Ø '+komma(bestDefender.avg,1)+' Gegentore' : null,
        `data-potw-award="wall" data-potw-week="${wkStartMs}"`);
     hl('bolt', 'Größter Upset', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
        (topUpset && upsetNames) ? Math.round(topUpset.sp*100)+'% Chance' : null,
@@ -8211,7 +8211,7 @@ function showPotdRecap(opts){
     const tagHl = (ic, label, name, wert, attr) => tagKacheln.push(rcpKachelHtml(
       name ? {ic, label, name, wert, ton:'metall', attr} : {ic, label, leer:true}));
     tagHl('ball', 'Top-Tor', tagScorer ? pname(tagScorer.id) : null,
-          tagScorer ? 'Ø '+tagScorer.avg.toFixed(1)+' Tore' : null,
+          tagScorer ? 'Ø '+komma(tagScorer.avg,1)+' Tore' : null,
           tagScorer ? `data-potd-player="${esc(tagScorer.id)}"` : '');
     tagHl('chartUp', 'Elo-Aufstieg', tagAufstieg ? pname(tagAufstieg.id) : null,
           tagAufstieg ? '+'+tagAufstieg.d+' Elo' : null,
@@ -8747,8 +8747,8 @@ function teamAchievements(p1Id, p2Id){
     zirkus:           x => Math.round(x.pct*100)+'%',
     baustelle:        x => x.best+'er',
     unstoppable:      x => x.v+'er',
-    concreteWall:     x => x.v.toFixed(2),
-    cheesePlatter:    x => x.v.toFixed(2),
+    concreteWall:     x => komma(x.v,2),
+    cheesePlatter:    x => komma(x.v,2),
     luckyCharm:       x => Math.round(x.v*100)+'%',
     giantSlayer:      x => Math.round(x.v*100)+'%',
     favoritenschreck: x => x.v+' Elo'
@@ -10718,7 +10718,7 @@ function vPositions(){
     const valLbl = pos==='atk' ? 'Tore/Sp.' : 'Geg./Sp.';
     return `<div class="rlist">${arr.map((x,i)=>{
       const perfChip = x.pAvg>0.08?'<span class="perf-up">▲</span>':x.pAvg<-0.08?'<span class="perf-dn">▼</span>':'';
-      const goalsTxt = x.goalsAvg.toFixed(1);
+      const goalsTxt = komma(x.goalsAvg,1);
       // Die Liste sortiert nach `score`, zeigte als große Zahl aber Ø Tore —
       // dadurch stand 8.8 über 8.9 und die Reihenfolge widersprach sich
       // selbst. Jetzt steht rechts der Wert, nach dem tatsächlich sortiert
@@ -12007,7 +12007,7 @@ function _vAwardsCore(){
     : empty('unstoppable','acid','Unaufhaltsam'));
   // Betonmauer: niedrigster Gegentor-Schnitt (min. 10 Sp.)
   teams.push(cw0
-    ? card('concreteWall','blue','Betonmauer',cw0.ids,esc(topTeamNames(R.concreteWallList,x=>-Math.round(x.v*100))),cw0.v.toFixed(2)+' Gegentore/Sp.',cw0.v.toFixed(2))
+    ? card('concreteWall','blue','Betonmauer',cw0.ids,esc(topTeamNames(R.concreteWallList,x=>-Math.round(x.v*100))),komma(cw0.v,2)+' Gegentore/Sp.',komma(cw0.v,2))
     : empty('concreteWall','blue','Betonmauer'));
   // Glückspilze: meiste 1-Tor-Siege
   teams.push(lc0
@@ -12033,17 +12033,17 @@ function _vAwardsCore(){
   // ── ANGRIFF & VERTEIDIGUNG ──
   const combat=[];
   combat.push(sc0
-    ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+sc0.avg.toFixed(1)+' Tore/Sp.',sc0.avg.toFixed(1))
+    ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+komma(sc0.avg,1)+' Tore/Sp.',komma(sc0.avg,1))
     : empty('scorer','orange','Torjäger'));
   combat.push(wl0
-    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wl0.v/wl0.g).toFixed(1)+' Gegentore/Sp.',(wl0.v/wl0.g).toFixed(1))
+    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wl0.v/wl0.g),1)+' Gegentore/Sp.',komma((wl0.v/wl0.g),1))
     : empty('wall','blue','Eiserne Abwehr'));
   combat.push(ic0&&ic0.v>=1
     ? card('ice','blue','Eiskalt',[ic0.id],esc(topNames(R.iceList,x=>x.v,x=>pname(x.id))),ic0.v+'× Zu-Null als Verteidiger',ic0.v)
     : empty('ice','blue','Eiskalt'));
   // Plus-Minus: Ø Tor-Saldo pro Spiel. Vorzeichen vor dem Wert für klares "Plus"-Gefühl.
   combat.push(pm0
-    ? card('plusMinus','orange','Plus-Minus',[pm0.id],esc(topNames(R.plusMinusList,x=>Math.round(x.v*10),x=>pname(x.id))),pm0.gf+':'+pm0.ga+' · '+pm0.g+' Spiele',(pm0.v>=0?'+':'')+pm0.v.toFixed(1))
+    ? card('plusMinus','orange','Plus-Minus',[pm0.id],esc(topNames(R.plusMinusList,x=>Math.round(x.v*10),x=>pname(x.id))),pm0.gf+':'+pm0.ga+' · '+pm0.g+' Spiele',(pm0.v>=0?'+':'')+komma(pm0.v,1))
     : empty('plusMinus','orange','Plus-Minus'));
   sect('shield','purple','Angriff & Verteidigung',combat);
 
@@ -12099,10 +12099,10 @@ function _vAwardsCore(){
     ? card('formtief','red','Formtief',[ft0.id],esc(topNames(R.formtief,x=>Math.round(x.drop),x=>pname(x.id))),'Peak '+ft0.peak+' → jetzt '+ft0.cur,'-'+Math.round(ft0.drop),{neg:true})
     : empty('formtief','red','Formtief'));
   neg.push(wa0
-    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(topNames(R.worstAtk,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wa0.v/wa0.g).toFixed(1)+' Tore/Sp.',(wa0.v/wa0.g).toFixed(1),{neg:true})
+    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(topNames(R.worstAtk,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wa0.v/wa0.g),1)+' Tore/Sp.',komma((wa0.v/wa0.g),1),{neg:true})
     : empty('worstAtk','red','Zahnloser Stürmer'));
   neg.push(wd0
-    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),(wd0.v/wd0.g).toFixed(1)+' Gegentore/Sp.',(wd0.v/wd0.g).toFixed(1),{neg:true})
+    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wd0.v/wd0.g),1)+' Gegentore/Sp.',komma((wd0.v/wd0.g),1),{neg:true})
     : empty('worstDef','red','Löchrigste Abwehr'));
   neg.push(zk0
     ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>Math.round(x.pct*1000))),zk0.v+' von '+zk0.g+' Pleiten waren Debakel',Math.round(zk0.pct*100)+'%',{neg:true})
@@ -12125,7 +12125,7 @@ function _vAwardsCore(){
   // ── NEUE NEGATIV-AWARDS v6 ──
   // Käseteller: Spiegel zu Concrete Wall — höchster Gegentor-Schnitt als Team.
   neg.push(cp0
-    ? card('cheesePlatter','red','Käseteller',cp0.ids,esc(topTeamNames(R.cheesePlatterList,x=>Math.round(x.v*100))),cp0.v.toFixed(2)+' Gegentore/Sp.',cp0.v.toFixed(2),{neg:true})
+    ? card('cheesePlatter','red','Käseteller',cp0.ids,esc(topTeamNames(R.cheesePlatterList,x=>Math.round(x.v*100))),komma(cp0.v,2)+' Gegentore/Sp.',komma(cp0.v,2),{neg:true})
     : empty('cheesePlatter','red','Käseteller'));
   // Favoriten-Versager: Spiegel zu Underdog-Held — höchste Niederlagen-Quote bei myExp ≥ 65%.
   neg.push(fl0
@@ -12548,13 +12548,13 @@ function showAward(key){
         case 'wins':       return R.winsList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Siege',sort:x.v}));
         case 'mvt':        return R.mvt.map(x=>({ids:x.ids,name:tn(x.ids),val:(x.v>=0?'+':'')+Math.round(x.v)+' Elo',sort:Math.round(x.v)}));
         case 'streaks':    return R.streaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+x.avg.toFixed(1)+' Tore',sort:Math.round(x.avg*10)}));
-        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma(x.avg,1)+' Tore',sort:Math.round(x.avg*10)}));
+        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
         case 'perfect':    return R.perfect.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'grinder':    return R.grinder.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Spiele',sort:x.v}));
         case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
-        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
-        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
+        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
         case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.g+'×)',sort:Math.round(x.pct*1000)}));
         case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Zu-Null',sort:x.v}));
@@ -12573,16 +12573,16 @@ function showAward(key){
         case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTW',sort:x.v}));
         case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTD',sort:x.v}));
         // ── NEUE AWARDS v3 ──
-        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+x.v.toFixed(1)+' /Sp.',sort:Math.round(x.v*10)}));
+        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+komma(x.v,1)+' /Sp.',sort:Math.round(x.v*10)}));
         case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Underdog-Sieg',sort:x.v}));
         case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         // ── NEUE TEAM-AWARDS v4 ──
         case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
-        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
+        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
         case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         // ── NEUE NEGATIV-AWARDS v6 ──
-        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
+        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
         case 'favoriteLoser': return R.favoriteLoserList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.v*100)+'% ('+x.losses+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         default: return [];
       }
@@ -13043,7 +13043,7 @@ function vSettings(){
     pos:        Math.round((cfg.pos_swing ?? 0.45)*100),
     winBoost:   Math.round((cfg.win_boost ?? 1.12)*100),
     movDamp:    Math.round((cfg.mov_loss_damp ?? 0.5)*100),
-    bonus:      ((cfg.match_bonus ?? 1.5)).toFixed(1),
+    bonus:      komma(cfg.match_bonus ?? 1.5, 1),
     startElo:   Math.round(cfg.start_elo ?? 0),
     posMin:     Math.round(cfg.pos_min_games ?? 3),
     expW:       Math.round((cfg.exp_weight ?? 0.5)*100),
@@ -13246,7 +13246,7 @@ function updatePreview(){
       <div class="pb" style="width:${pB}%">${pB}%</div>
     </div>
     <div class="prob-cap">Siegchance (Saison-Elo) · Team ${winner} gewinnt ${M.sa}:${M.sb}
-      ${c.mov>1.08?' · Kantersieg ×'+c.mov.toFixed(2):''}
+      ${c.mov>1.08?' · Kantersieg ×'+komma(c.mov,2):''}
     </div>
     <div class="delta-list">
       ${line(teamA[0])}${line(teamA[1])}
@@ -15588,16 +15588,16 @@ function playerAwards(id){
   // Display-Werte für die Trophäen-Anzeige im Spieler-Awards-Sheet.
   // Format ist konsistent mit den Card-Aufrufen in vAwards (Awards-Tab).
   const singleDisplayFns={
-    wins:x=>x.v, streaks:x=>x.v+'er', scorer:x=>x.avg.toFixed(1),
-    wall:x=>(x.v/x.g).toFixed(1), perfect:x=>Math.round(x.wr*100)+'%', grinder:x=>x.v,
+    wins:x=>x.v, streaks:x=>x.v+'er', scorer:x=>komma(x.avg,1),
+    wall:x=>komma((x.v/x.g),1), perfect:x=>Math.round(x.wr*100)+'%', grinder:x=>x.v,
     worstWr:x=>Math.round(x.wr*100)+'%',
-    worstAtk:x=>(x.v/x.g).toFixed(1), worstDef:x=>(x.v/x.g).toFixed(1),
+    worstAtk:x=>komma((x.v/x.g),1), worstDef:x=>komma((x.v/x.g),1),
     clutch:x=>Math.round(x.wr*100)+'%',
     carryKing:x=>x.v, onFire:x=>x.v+'er', coldStreak:x=>x.v+'er',
     lossStreaks:x=>x.v+'er', solo:x=>Math.round(x.wr*100)+'%',
     formtief:x=>'-'+Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
     peakElo:x=>x.v, weekKing:x=>x.v, dayKing:x=>x.v,
-    plusMinus:x=>(x.v>=0?'+':'')+x.v.toFixed(1), underdog:x=>x.v,
+    plusMinus:x=>(x.v>=0?'+':'')+komma(x.v,1), underdog:x=>x.v,
     pechvogel:x=>Math.round(x.pct*100)+'%',
     // ── NEUE NEGATIV-AWARDS v6 ──
     favoriteLoser:x=>Math.round(x.v*100)+'%'
@@ -15649,12 +15649,12 @@ function playerAwards(id){
     baustelle:x=>x.best+'er',
     // ── NEUE TEAM-AWARDS v4 ──
     unstoppable:x=>x.v+'er',
-    concreteWall:x=>x.v.toFixed(2),
+    concreteWall:x=>komma(x.v,2),
     luckyCharm:x=>Math.round(x.v*100)+'%',
     giantSlayer:x=>Math.round(x.v*100)+'%',
     favoritenschreck:x=>x.v+' Elo',
     // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:x=>x.v.toFixed(2)
+    cheesePlatter:x=>komma(x.v,2)
   };
   Object.entries(teamKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;
@@ -16209,8 +16209,8 @@ const rankProgHtml = rInfo ? `
               <div class="pp-rd-meta"><b>${w}</b>/<b>${g}</b> Spiele<br>Ø <b>${valNum}</b> ${valLbl}</div>
             </div>`;
         };
-        const atkAvg = s.atkG ? (s.atkGoals/s.atkG).toFixed(1) : '–';
-        const defAvg = s.defG ? (s.defConceded/s.defG).toFixed(1) : '–';
+        const atkAvg = s.atkG ? komma((s.atkGoals/s.atkG),1) : '–';
+        const defAvg = s.defG ? komma((s.defConceded/s.defG),1) : '–';
         return `<div class="pp-pos-combined">
           <div class="head"><div class="t">Rollen-Performance</div></div>
           <div class="pp-roles-donuts">
@@ -18281,8 +18281,8 @@ function showTeam(p1Id,p2Id){
   // Bewusst kompakt — vier 1/2-Spalten-Cards (oder 1/3 wenn topScore vorhanden).
   let funFactsHtml = '';
   if(d.games >= 2){
-    const avgGf = (d.gf / d.games).toFixed(1);
-    const avgGa = (d.ga / d.games).toFixed(1);
+    const avgGf = komma((d.gf / d.games),1);
+    const avgGa = komma((d.ga / d.games),1);
     const facts = [
       { label:'Ø Tore', value:avgGf, color:'var(--acid)' },
       { label:'Ø Gegen', value:avgGa, color:'var(--red)' },
@@ -18482,7 +18482,7 @@ function showMatchDetail(mid){
     const rows=ids.map(id=>{
       const b=bd[id]; if(!b)return '';
       // Elo-Analyse zeigt exakte Werte mit 2 Nachkommastellen — keine Rundung wie überall sonst.
-      const sign=v=>v>=0 ? '+'+v.toFixed(2) : v.toFixed(2);
+      const sign=v=>v>=0 ? '+'+komma(v,2) : komma(v,2);
       // Der Detail-Header zeigt IMMER den präzisen Sim-Wert, damit die große Zahl
       // exakt der Summe der Faktoren-Liste darunter entspricht. Der gerundete DB-Wert
       // bleibt nur oben in der Match-Übersicht sichtbar (eigener Render-Pfad).
@@ -18490,7 +18490,7 @@ function showMatchDetail(mid){
       const headerDelta=b.finalDelta;
       // Saison-Elo: bei DB-Werten sind das gespeicherte Integer (deshalb keine zusätzliche
       // Präzision möglich). Bei Sim-Fallback geben wir 1 Nachkommastelle aus.
-      const fmtElo=v=>Number.isInteger(v)?String(v):v.toFixed(1);
+      const fmtElo=v=>Number.isInteger(v)?String(v):komma(v,1);
       const seasonBefore=fmtElo(hasDb?dbBefore[id]:b.startElo);
       const seasonAfter=fmtElo(hasDb?dbAfter[id]:b.endElo);
       const simDelta=b.finalDelta;
@@ -18498,10 +18498,10 @@ function showMatchDetail(mid){
       const factors=[];
       factors.push({label:'Basis (Erwartung)',val:b.rawBase,desc:b.won?'Sieg'+(b.expected<0.5?' gegen stärkeres Team':''):'Niederlage'+(b.expected>0.5?' gegen schwächeres Team':'')});
       if(Math.abs(b.movEffect)>0.1) factors.push({label:'Tordifferenz',val:b.movEffect,desc:b.won?'Klarer Sieg':'Hohe Niederlage'+(b.movMult<1.2?' (gedämpft)':'')});
-      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+((b.winBoost-1)*100).toFixed(1)+'% für Siege'});
-      if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:((1-b.expProtect)*100).toFixed(1)+'% Schutz'});
+      if(Math.abs(b.winBoostEffect)>0.1) factors.push({label:'Sieg-Boost',val:b.winBoostEffect,desc:'+'+komma(((b.winBoost-1)*100),1)+'% für Siege'});
+      if(b.expProtect<1) factors.push({label:'Erfahrungs-Schutz',val:b.expProtectEffect,desc:komma(((1-b.expProtect)*100),1)+'% Schutz'});
       if(b.lowEloDamp!==undefined && b.lowEloDamp<0.995){
-        factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:((1-b.lowEloDamp)*100).toFixed(1)+'% Schutz (schwacher Spieler)'});
+        factors.push({label:'Low-Elo Schutz',val:b.lowEloEffect,desc:komma(((1-b.lowEloDamp)*100),1)+'% Schutz (schwacher Spieler)'});
       }
       if(b.underdogMult>1.005){
         // Underdog-Boost setzt sich aus zwei unabhängig clampten Komponenten zusammen
@@ -18514,9 +18514,9 @@ function showMatchDetail(mid){
         const undEffect = b.rawBase*b.movMult*b.winBoost*b.expProtect*(b.underdogMult-1);
         factors.push({label:'Underdog-Boost',val:undEffect, desc});
       }
-      if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Mate-Stärke-Verteilung'});
+      if(Math.abs(b.riskEffect)>0.1) factors.push({label:b.riskShare<1?'Risiko-Split (stark)':'Risiko-Split (schwach)',val:b.riskEffect,desc:'Stärkeverteilung im Team'});
       if(Math.abs(b.posEffect)>0.1) factors.push({label:'Positions-Bonus',val:b.posEffect,desc:(b.posMult>1?'Schwache':'Starke')+' Position'});
-      factors.push({label:'Spielbonus',val:b.matchBonus,desc:'Flat +'+b.matchBonus.toFixed(2)+' pro Match'});
+      factors.push({label:'Spielbonus',val:b.matchBonus,desc:'fest +'+komma(b.matchBonus,2)+' je Match'});
       const factorRows=factors.map(f=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px">
         <div><span style="color:var(--ink)">${f.label}</span> <span style="color:var(--muted);font-size:10px">${f.desc}</span></div>
         <span style="font-family:'Sometype Mono',monospace;font-weight:700;color:${f.val>=0?'var(--acid)':'var(--red)'}">${sign(f.val)}</span>
@@ -18530,7 +18530,7 @@ function showMatchDetail(mid){
         <div style="font-size:10px;color:var(--muted);margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line)">
           <div style="display:flex;justify-content:space-between">
             <span>${seasonBefore} → ${seasonAfter}</span>
-            <span>K=${b.kFactor.toFixed(1)} · Erw. ${(b.expected*100).toFixed(1)}%</span>
+            <span>K=${komma(b.kFactor,1)} · Erw. ${komma((b.expected*100),1)}%</span>
           </div>
         </div>
         ${factorRows}

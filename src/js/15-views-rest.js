@@ -256,7 +256,7 @@ function vSettings(){
     pos:        Math.round((cfg.pos_swing ?? 0.45)*100),
     winBoost:   Math.round((cfg.win_boost ?? 1.12)*100),
     movDamp:    Math.round((cfg.mov_loss_damp ?? 0.5)*100),
-    bonus:      ((cfg.match_bonus ?? 1.5)).toFixed(1),
+    bonus:      komma(cfg.match_bonus ?? 1.5, 1),
     startElo:   Math.round(cfg.start_elo ?? 0),
     posMin:     Math.round(cfg.pos_min_games ?? 3),
     expW:       Math.round((cfg.exp_weight ?? 0.5)*100),
@@ -459,7 +459,7 @@ function updatePreview(){
       <div class="pb" style="width:${pB}%">${pB}%</div>
     </div>
     <div class="prob-cap">Siegchance (Saison-Elo) · Team ${winner} gewinnt ${M.sa}:${M.sb}
-      ${c.mov>1.08?' · Kantersieg ×'+c.mov.toFixed(2):''}
+      ${c.mov>1.08?' · Kantersieg ×'+komma(c.mov,2):''}
     </div>
     <div class="delta-list">
       ${line(teamA[0])}${line(teamA[1])}

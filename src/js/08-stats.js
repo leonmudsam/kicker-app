@@ -354,8 +354,8 @@ function teamAchievements(p1Id, p2Id){
     zirkus:           x => Math.round(x.pct*100)+'%',
     baustelle:        x => x.best+'er',
     unstoppable:      x => x.v+'er',
-    concreteWall:     x => x.v.toFixed(2),
-    cheesePlatter:    x => x.v.toFixed(2),
+    concreteWall:     x => komma(x.v,2),
+    cheesePlatter:    x => komma(x.v,2),
     luckyCharm:       x => Math.round(x.v*100)+'%',
     giantSlayer:      x => Math.round(x.v*100)+'%',
     favoritenschreck: x => x.v+' Elo'
