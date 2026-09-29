@@ -1068,9 +1068,17 @@ function _newsDetailMitte(s){
           : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
           : d.quelle === 'ergebnis' ? 'Diese beiden Partien'
           : 'In dieser Partie';
+        // ── Eine Ueberschrift ueber Ueberschriften sagt nichts ─────────
+        // „An der Ewigen Tafel" stand als Sammelueberschrift direkt ueber
+        // „Bestmarken 1" und „Monatschroniken 2" — und dieselbe Aussage stand
+        // auf demselben Blatt schon dreimal: in der Rubrik, in der
+        // Schlagzeile („… bewegen die Ewige Tafel") und unter den Wappen
+        // („an der Ewigen Tafel"). Wo die Liste ihre eigenen Ueberschriften
+        // traegt, faellt die darueber weg; ohne Gruppierung bleibt sie, denn
+        // dann hat die Liste keine [§C33].
         return uebersicht
           + (gruppiert
-              ? `<div class="nd-section">${kopfzeile}</div>${mv}${gruppiert}`
+              ? `${mv}${gruppiert}`
               : `<div class="nd-section">${kopfzeile}</div>${mv}<div class="nw-liste">${zeilen}</div>`)
           + wirkung;
       }

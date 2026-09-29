@@ -1331,6 +1331,146 @@ ok(_stabil.sachen > 0 && _stabil.mehrfach.length === 0,
    'ein Rekord und eine Chronik tragen je Spieltag genau eine Karte',
    _stabil.mehrfach.join(' | ') || _stabil.sachen + ' Eintraege');
 
+// ── Der Tafel-Moment sagt ueberall dieselbe Zahl ─────────────────────
+// Im Blatt stand „+2 PRESTIGE" in der Zahlenreihe und drei Zeilen darunter
+// „Johannes +9 Prestige fuer die Laufbahn" — eines von beidem liest sich als
+// Fehler. Zwei Ursachen: nur die REKORD-Zeile trug die Laufbahn-Angabe, also
+// fehlte im Bereich „Wirkung auf die Laufbahn" jeder, der nur eine Chronik
+// geholt hat (gemessen fehlte Leo ganz, und die Summe stand auf dem Zuwachs
+// eines einzigen Spielers); und die Zeile nannte ihre Zahl „fuer die
+// Laufbahn", also mit derselben Aufschrift wie die Reihe, obwohl dort der
+// Zuwachs des ganzen Spieltags steht.
+const _tmoment = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const s = getStoriesCache().find(x => (x.dataRef||{}).quelle === 'tafel');
+  if(!s) return {fehlt:true};
+  const d = s.dataRef || {};
+  const teile = d.teile || [];
+  const html = _newsDetailBody(s);
+  // Wer auf der Karte steht, kommt in der Wirkung vor. Gefragt wird nach den
+  // Beteiligten der KARTE und nicht nach den Laufbahn-Angaben der Zeilen:
+  // sonst prueft der Test die Implementierung gegen sich selbst und bleibt
+  // gruen, gerade wenn eine Zeile ihre Angabe nicht mitbringt.
+  const genannt = (d.playerIds || []).filter(x => pmap()[x]);
+  const inWirkung = (html.match(/class="nd-wk" data-pid="([0-9a-f-]+)"/g) || [])
+    .map(x => x.slice(x.indexOf('data-pid="') + 10, -1));
+  // Und die Prestige-Zelle wird gegen das gezaehlt, was der Bereich darunter
+  // ZEIGT — zwei Stellen im Markup, nicht zweimal dieselbe Rechnung.
+  const zelle = (html.match(/>\\+(\\d+)<\\/div><div class="rcp-z-l">Prestige</) || [])[1];
+  const summe = (html.match(/class="nd-wk-d g">\\+(\\d+)</g) || [])
+    .reduce((a, x) => a + Number((x.match(/\\+(\\d+)/) || [0, 0])[1]), 0);
+  return {fehlt:false, n:teile.length,
+    ohneWirkung: genannt.filter(p => inWirkung.indexOf(p) < 0).map(p => pmap()[p].name),
+    zelle: zelle == null ? null : Number(zelle), summe,
+    // Die Zeile nennt den Beitrag DIESES Eintrags und ihren Halter einmal.
+    zeilen: teile.filter(t => String(t.typ||'').indexOf('chronik_') === 0)
+      .map(t => t.text || ''),
+    dopName: teile.filter(t => {
+      const nm = (String(t.titel||'').match(/^(\\S+) /) || [])[1];
+      return nm && String(t.text||'').indexOf(nm) >= 0;
+    }).map(t => t.titel)};
+})())`));
+ok(!_tmoment.fehlt && _tmoment.n >= 3, 'der Tafel-Moment der Messung hat genug Zeilen',
+   _tmoment.n + ' Zeilen');
+ok(_tmoment.ohneWirkung.length === 0,
+   'jeder, von dem eine Tafel-Zeile erzaehlt, steht in der Wirkung auf die Laufbahn',
+   _tmoment.ohneWirkung.join(', ') || 'keiner fehlt');
+ok(_tmoment.zelle != null && _tmoment.zelle === _tmoment.summe,
+   'und die Prestige-Zelle ist die Summe aller, nicht der Zuwachs eines',
+   _tmoment.zelle + ' gegen ' + _tmoment.summe);
+// ── Der Zeitpunkt gehoert einer Zeile, die die Karte ZEIGT ───────────
+// Gestellt wird der gemessene Fall: der Ausbau um 15:19 ist die aelteste
+// Zeile, die beiden Wechsel liegen um 15:37 — und ein Ausbau steht gar nicht
+// auf der Karte [§C33]. Ueber den echten Partien trifft das nicht zu, dort
+// ist die aelteste Zeile zufaellig ein Wechsel.
+const _tzeit = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p = players.map(x => x.id);
+  const tag = tagKey(mts(matches[matches.length - 1]));
+  const t0 = new Date(tag + 'T15:19:00').getTime();
+  const z = (id, typ, min, titel, ref) => ({id, cat:'tafel', ic:'medal2', prio:70,
+    when:new Date(t0 + min * 60000).toISOString(), title:titel,
+    desc:'Ein Satz mit 5 Zahlen.',
+    dataRef:Object.assign({type:typ, causalKey:'table:' + tag,
+                           playerIds:[ref], zeileText:'Kurz, 5 Zahlen.'}, {})});
+  _cache._consolFrom = null;
+  const aus = _consolidateStories([
+    z('tz-aus', 'rekord_gesteigert', 0, 'A baut „Der Fels" aus', p[0]),
+    z('tz-rek', 'rekord_geholt', 18, 'B uebernimmt „Der Massstab"', p[1]),
+    z('tz-chr', 'chronik_geholt', 18, 'C holt „Der Nachzuegler"', p[2])
+  ]);
+  const sam = aus.find(x => (x.dataRef||{}).type === 'sammel');
+  if(!sam) return {fehlt:true};
+  const teile = sam.dataRef.teile || [];
+  const ms = new Date(sam.when).getTime();
+  return {fehlt:false, uhr:new Date(ms).toISOString().slice(11,16),
+    passt: teile.some(t => t.typ !== 'rekord_gesteigert' && t.ms === ms)};
+})())`));
+ok(!_tzeit.fehlt && _tzeit.passt,
+   'die Karte traegt den Zeitpunkt einer Zeile, die sie auch zeigt',
+   'Karte steht auf ' + _tzeit.uhr);
+ok(_tmoment.zeilen.length > 0
+   && _tmoment.zeilen.every(t => /aus diesem Eintrag/.test(t) || !/Prestige/.test(t)),
+   'eine Chronik-Zeile sagt, dass ihre Zahl aus diesem Eintrag kommt',
+   _tmoment.zeilen.join(' | ').slice(0, 140));
+ok(_tmoment.dopName.length === 0,
+   'und keine Zeile nennt den Namen aus ihrer eigenen Schlagzeile noch einmal',
+   _tmoment.dopName.join(' | ') || 'keine');
+
+// ── Eine negative Gruppe reist nicht mit ─────────────────────────────
+// Mehrere Pleitenserien derselben Partie werden EINE Zeile („2 Pechvögel"),
+// und die traegt `type:'group'` mit `loss_streak` in `sub`. Geprueft wurde
+// nur `type`, also galt sie als positiv: gemessen stand sie als Zeile auf
+// „Teamserie in einer Partie", der Karte ueber den SIEG der beiden anderen
+// [§C25]. Und eine Gruppe traegt den Anlass ihrer Mitglieder: ohne das hiess
+// ein Buendel aus fuenf Zeilen nur „Teamserie in einer Partie".
+const _grp = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p = players.map(x => x.id);
+  const m = matches[matches.length - 1];
+  const t0 = mts(m);
+  _cache._consolFrom = null;
+  const liste = [
+    {id:'g-spiel', cat:'highlight', ic:'ball', prio:41, when:new Date(t0).toISOString(),
+     title:'Sieg', desc:'Ein Satz mit 1 Zahl.',
+     dataRef:{type:'spiel', matchId:m.id, resultKind:'kanter', playerIds:[p[0], p[1]],
+              quote:'70', elo:9}},
+    {id:'g-ws', cat:'personal', ic:'flame', prio:70, when:new Date(t0).toISOString(),
+     title:'Serien im Gleichschritt', desc:'Zwei Serien, 2 Marken.',
+     dataRef:{type:'group', sub:'win_streak', matchId:m.id, playerIds:[p[0], p[1]]}},
+    {id:'g-ls', cat:'misfortune', ic:'dropDouble', prio:52, when:new Date(t0).toISOString(),
+     title:'2 Pechvögel', desc:'Zwei Pleitenserien, 2 Marken.',
+     dataRef:{type:'group', sub:'loss_streak', matchId:m.id, playerIds:[p[2], p[3]]}}
+  ];
+  const aus = _consolidateStories(liste);
+  const sam = aus.find(x => (x.dataRef||{}).type === 'sammel');
+  return {karten:aus.map(x => x.id),
+    titel: sam ? sam.title : '',
+    zeilen: sam ? (sam.dataRef.teile||[]).map(t => t.id) : []};
+})())`));
+ok(_grp.zeilen.indexOf('g-ls') < 0 && _grp.karten.indexOf('g-ls') >= 0,
+   'eine Gruppe von Pleitenserien bleibt ihre eigene Karte',
+   _grp.zeilen.join(', ') + ' · Karten: ' + _grp.karten.join(', '));
+ok(/Siegesserie/.test(_grp.titel),
+   'und die Schlagzeile nennt den Anlass der uebrigen Gruppe', _grp.titel);
+
+// ── Ein gleitendes Fenster nennt den alten Wert nicht ────────────────
+// „Maxi, Julian, Jane und Johannes uebernehmen ‚Der Hoehenflug'. +10
+// %-Punkte … Vorher hielt Leon den Rekord mit +20 %" — eine Uebernahme mit
+// dem SCHLECHTEREN Wert. Bei einem Fenster gilt der Wert des Vorgaengers
+// nicht mehr, sein Fenster ist weitergerutscht [§C35].
+const _fenst = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  const rek = roh.filter(s => String((s.dataRef||{}).type||'').indexOf('rekord_') === 0);
+  return {n:rek.length,
+    falsch: rek.filter(s => (s.dataRef||{}).fenster
+                         && /den Rekord mit /.test(String(s.desc||'')))
+      .map(s => s.title)};
+})())`));
+ok(_fenst.n > 0 && _fenst.falsch.length === 0,
+   'keine Fenster-Bestmarke vergleicht sich mit dem Wert ihres Vorgaengers',
+   _fenst.falsch.join(' | ') || _fenst.n + ' Rekord-Karten');
+
 // ── Dieselbe Aussage zweimal: die spaetere gilt ──────────────────────
 // Die Sperrfrist laesst eine Aussage drei Tage lang nur einmal durch, und
 // welche der beiden das ist, ist die Frage: die zweite traegt den Stand, der
@@ -2675,8 +2815,16 @@ ok(_achsen.c.length === 1 && _achsen.c[0].q === 'tafel',
 ok(_achsen.c[0] && _achsen.c[0].ti
    === _achsen.n0 + ', ' + _achsen.n1 + ' und ' + _achsen.n2 + ' bewegen die Ewige Tafel',
    'die Schlagzeile nennt alle drei und verbindet den Tafel-Moment', (_achsen.c[0]||{}).ti);
-ok(_achsen.c[0] && /^Ein Moment, drei Spuren:/.test(_achsen.c[0].tx),
-   'ihr Satz verbindet die drei Tafel-Spuren lebendig', (_achsen.c[0]||{}).tx);
+// Der Satz nennt, was passiert ist — und zaehlt es nicht dreimal. Er hiess
+// „Ein Moment, 8 Spuren: 5 Ausbauten und drei Monatschroniken ordnen die
+// Ewige Tafel neu": „Ein Moment" ueber einen ganzen Spieltag, „8 Spuren" als
+// Floskel ueber derselben Aufzaehlung, und eine Ziffer neben einem Zahlwort
+// im selben Satz [§C27]. Gemessen wird die Aufzaehlung und das Fehlen
+// beider Fehler, nicht der Wortlaut.
+ok(_achsen.c[0] && /^Drei neue Insignien: /.test(_achsen.c[0].tx)
+   && !/Moment|Spur/.test(_achsen.c[0].tx)
+   && !/\d/.test(_achsen.c[0].tx),
+   'ihr Satz zaehlt die Tafel-Spuren einmal und ohne Floskel', (_achsen.c[0]||{}).tx);
 ok(_achsen.f.length === 1 && _achsen.f[0].n === 5 && _achsen.f[0].band === 4
    && _achsen.f[0].pids === 5 && _achsen.f[0].mehr === '3',
    'ein grosses Buendel fuehrt alle Ereignisse und zaehlt alle Gesichter korrekt',

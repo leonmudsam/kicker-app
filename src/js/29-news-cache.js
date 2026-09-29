@@ -1269,8 +1269,17 @@ function _consolidateStories(list){
       if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${_zahlwortDe(nc)} Monatschroniken`);
       if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${_zahlwortDe(ni)} neue Insignien`);
       const bild = _namenListe(bilder.length ? bilder : ['mehrere Laufbahnen']);
-      neuText = `Ein Moment, ${_zahlwortDe(teile.length)} Spuren: `
-        + `${bild.charAt(0).toUpperCase() + bild.slice(1)} ordnen die Ewige Tafel neu.`;
+      // ── Der Satz zaehlt nicht dreimal und behauptet keinen Moment ──
+      // Er hiess „Ein Moment, 8 Spuren: 5 Ausbauten und drei Monatschroniken
+      // ordnen die Ewige Tafel neu." Drei Fehler in einer Zeile: „Ein
+      // Moment" ist falsch, weil ein Tafel-Moment den ganzen Spieltag
+      // umfasst und seine Zeilen gemessen 14:09 und 14:32 tragen; „8 Spuren"
+      // ist eine Floskel und zaehlt dasselbe wie die Aufzaehlung dahinter;
+      // und „8" als Ziffer neben „drei" als Wort mischt beide Schreibweisen
+      // im selben Satz [§C27]. Uebrig bleibt, was passiert ist, und der
+      // Zeitraum, fuer den es gilt.
+      neuText = `${bild.charAt(0).toUpperCase() + bild.slice(1)}: `
+        + `der Spieltag ordnet die Ewige Tafel neu.`;
     } else {
       const namen = pids.map(nameOf);
       const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
@@ -1317,6 +1326,15 @@ function _consolidateStories(list){
           if(dt.rarity === 'rare') return 'seltene Auszeichnung';
           return motivName.badge_unlocked;
         }
+        // ── Eine Gruppe traegt den Anlass ihrer Mitglieder ───────────
+        // Zwei Spieler, die in derselben Partie ihre Serie zuenden, werden
+        // EINE Zeile („2 Serien im Gleichschritt"), und die traegt
+        // `type:'group'` mit dem urspruenglichen Typ in `sub`. Der
+        // Anlass-Katalog kennt „group" nicht, also fiel er weg: gemessen
+        // hiess ein Buendel aus fuenf Zeilen nur „Teamserie in einer
+        // Partie", obwohl auch zwei Einzelserien und eine Auszeichnung
+        // daranhingen [§C33].
+        if(dt.type === 'group') return motivName[dt.sub] || null;
         return motivName[dt.type];
       };
       const motive = [...new Set(teile.map(_motivVon).filter(Boolean))];
@@ -1396,16 +1414,26 @@ function _consolidateStories(list){
       // Die Karte spricht nur ueber das Ganze. Kein Einzelereignis wird im
       // Kopf wiederholt oder durch eine Hervorhebung wichtiger gemacht.
       desc: neuText,
-      // ── Eine Karte, die waechst, bleibt an ihrer Stelle ──────────
-      // Der Zeitpunkt war der JUENGSTE Teil, und ein Tafel-Moment umfasst den
-      // ganzen Spieltag: die Karte stand nach der zweiten Partie um 10:44 im
-      // Feed und wanderte mit jeder weiteren nach unten, bis sie um 14:32
-      // unter allen Partien lag. Wer sie am Mittag gelesen hatte, fand sie
-      // abends an einer anderen Stelle — und eine Karte, die ihren Zeitpunkt
-      // wechselt, ist im Feed eine andere. Sie entstand mit ihrer ersten
-      // Zeile, also steht sie dort; jede Zeile nennt ohnehin ihre eigene
-      // Uhrzeit [§C33].
-      when: teile.reduce((mn, t) => (new Date(t.when) < new Date(mn) ? t.when : mn), teile[0].when),
+      // ── Die Karte traegt den Zeitpunkt dessen, was sie ZEIGT ─────
+      // Er war der aelteste Teil ueberhaupt, damit die Karte im Feed nicht
+      // wandert. Gemessen stand darueber „Heute, 15:19" und darunter, in
+      // jeder einzelnen Zeile und im Ergebnisband, „15:37": die aelteste
+      // Zeile eines Tafel-Moments ist fast immer ein Ausbau, und ein Ausbau
+      // steht gar nicht auf der Karte [§C33]. Sie nannte damit eine Uhrzeit,
+      // zu der nichts von dem passiert ist, was sie zeigt.
+      //
+      // Den juengsten Teil zu nehmen loest das, kostet die Karte aber ihren
+      // Platz: der Tagesdeckel vergibt chronologisch, und der reservierte
+      // Platz der Ewigen Tafel geht an die FRUEHESTE Tafel-Karte des Tages —
+      // gemessen fiel der ganze Tafel-Moment damit aus dem Feed. Also die
+      // frueheste Zeile, die auch auf der Karte stehen kann: sie bleibt
+      // stehen, weil eine frueher gespielte Partie nicht nachtraeglich
+      // dazukommt, und ein Ausbau wird nie ein Wechsel.
+      when: (function(){
+        const zeigt = teile.filter(t => ((t.dataRef || {}).type || '') !== 'rekord_gesteigert');
+        const l = zeigt.length ? zeigt : teile;
+        return l.reduce((mn, t) => (new Date(t.when) < new Date(mn) ? t.when : mn), l[0].when);
+      })(),
       // Die Sammelkarte trägt, was sie zusammenfasst: den stärksten Teil und
       // einen Schritt je weiterem. Mit `+1` wog eine Karte, die drei
       // Insignium-Stufen bündelt, kaum mehr als eine einzelne davon — und
@@ -1462,7 +1490,21 @@ function _consolidateStories(list){
                                          // Zusage: was einmal dastand, bleibt
                                          // stehen [§C33].
                                         id: t.id,
-                                        text: (t.dataRef || {}).zeileText || t.desc,
+                                         // ── Das Ergebnis steht nicht dreimal ──
+                                         // Die Zeile der Partie hiess „Leon
+                                         // und Maxi setzen sich gegen Leo und
+                                         // Anton durch" und darunter „Vor dem
+                                         // Anstoss lag die Siegchance bei
+                                         // 81 %. Der Sieg bringt +7 Elo." Das
+                                         // Band zeigt dieselben vier Namen und
+                                         // den Stand, und der Kartentext
+                                         // nennt wortgleich dieselben zwei
+                                         // Zahlen [§C33 `_ndNeu`]. Der Anlass
+                                         // bleibt als Zeile stehen, sein Text
+                                         // faellt weg.
+                                        text: (art === 'spiel'
+                                               && (t.dataRef || {}).type === 'spiel')
+                                          ? '' : ((t.dataRef || {}).zeileText || t.desc),
                                         typ: (t.dataRef||{}).type || '',
                                         kammer: (t.dataRef||{}).kammer || '',
                                          // Jede Aenderung mit ihrer eigenen

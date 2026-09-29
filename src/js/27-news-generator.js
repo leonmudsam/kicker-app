@@ -2109,6 +2109,22 @@ function _buildStories(){
   // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
   // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
   // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.
+  // ── Jede Tafel-Meldung traegt die Wirkung ihrer Beteiligten ──────
+  // Im Blatt eines Tafel-Moments steht EIN Bereich „Wirkung auf die
+  // Laufbahn", und der liest die Angabe aus den Zeilen. Nur die Rekord-Zeile
+  // trug sie: gemessen fehlte Leo dort ganz, obwohl seine Zeile „+80
+  // Prestige fuer die Laufbahn" nennt — und die Summe in der Zahlenreihe
+  // stand auf +196, dem Zuwachs eines einzigen Spielers. Wer genannt wird,
+  // kommt vor.
+  const _tafelLaufbahn = pids => {
+    const o = {};
+    (pids || []).slice(0, 3).forEach(pid => {
+      const w = _tafelWirkung(pid);
+      o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
+                stufeVor:w.stufeVor, stufeNach:w.stufeNach};
+    });
+    return o;
+  };
   const _rekordWirkung = (pids, rid) => {
     const o = {};
     (pids || []).slice(0, 3).forEach(pid => {
@@ -2252,7 +2268,16 @@ function _buildStories(){
           // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
-          desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu
+          // ── Ein Fenster nennt den alten Wert nicht ──────────────
+          // Bei einem gleitenden Fenster gilt der Wert des Vorgaengers nicht
+          // mehr: sein Fenster ist weitergerutscht, waehrend der neue Halter
+          // sein eigenes gefuellt hat. Gemessen stand „Maxi, Julian, Jane und
+          // Johannes uebernehmen ‚Der Hoehenflug'. +10 %-Punkte … Vorher
+          // hielt Leon den Rekord mit +20 %" — eine Uebernahme mit dem
+          // schlechteren Wert, und der Satz erklaert nicht, wieso. Dieselbe
+          // Begruendung wie beim ausgebliebenen „ausgebaut" [§C35]: was am
+          // hinteren Ende herausfaellt, ist keine Leistung und kein Vergleich.
+          desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu && !def.fenster
             ? `Vorher ${hielten} ${altN} den Rekord mit ${wertAlt}.`
             : `Vorher gehörte der Rekord ${altN}.`);
         } else {
@@ -2623,10 +2648,23 @@ function _buildStories(){
         // Bauanleitung des Feeds, nicht die Nachricht [§C33].
         // Die Zeile nennt deshalb den Wert, die Klasse und den Zuwachs, wo es
         // einen gibt. Der ganze Text bleibt an der einzelnen Karte.
-        const zeileText = (n.ev ? _evSatz(n.ev) + '. ' : '') + `${artikel} Chronik.`
+        // ── Die Zahl sagt, woher sie kommt, und der Name steht einmal ──
+        // Sie hiess „Johannes +67 Prestige fuer die Laufbahn." Zwei Fehler:
+        // der Name steht in der Schlagzeile derselben Zeile schon („Johannes
+        // holt ‚Der Beidfuessige'"), und „fuer die Laufbahn" ist dieselbe
+        // Aufschrift wie die Zahlenreihe der Karte und der Bereich darunter —
+        // dort steht aber der Zuwachs des ganzen SPIELTAGS. Gemessen las man
+        // „+9 Prestige" in der Zeile und „+2 PRESTIGE" in der Reihe und
+        // hielt eines von beidem fuer einen Fehler. Die Zeile nennt deshalb
+        // ausdruecklich den Beitrag DIESES Eintrags; steht sie allein, faellt
+        // der Name weg [§C33].
+        const zeileText = (n.ev ? _evSatz(n.ev) + '. ' : '') + `${artikel} Chronik`
           + (mitPlus.length
-             ? ` ${_namenListe(mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`))}`
-               + ' Prestige für die Laufbahn.' : '');
+             ? (mitPlus.length === 1
+                 ? `, +${prestigeDelta[mitPlus[0]]} Prestige aus diesem Eintrag.`
+                 : `. ${_namenListe(mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`))}`
+                   + ' Prestige aus diesem Eintrag.')
+             : '.');
         _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer,
           prestigeDelta, titelJeSpieler, zeileText,
           title: titel,
@@ -2672,6 +2710,7 @@ function _buildStories(){
                     // erzaehlen. Wer schon Halter war, hat an diesem Tag
                     // nichts getan [§C33].
                     playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
+                    laufbahn:_tafelLaufbahn(m.wer),
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
                     zeileText:m.zeileText,
                     chronArt:m.t.kunst, aus:m.t.aus,
@@ -2764,6 +2803,7 @@ function _buildStories(){
             dataRef: {type:'insignium_stufe', pid:p.id,
                       matchId:ausloeser ? ausloeser.id : null, stufe,
                       causalKey:_storyGruppeKey('table', _tafelTag.tag),
+                      laufbahn:_tafelLaufbahn([p.id]),
                       // In einer Sammelkarte steht die Herkunft des Prestiges
                       // nicht: drei Quellen mit drei Zahlen und dazu der
                       // Abstand zur naechsten Stufe waren gemessen 124 Zeichen

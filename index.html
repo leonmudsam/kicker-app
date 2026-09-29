@@ -5133,7 +5133,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.8ae47768';
+const BUILD_VERSION='2026.09.29.616da827';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21581,6 +21581,22 @@ function _buildStories(){
   // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
   // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
   // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.
+  // ── Jede Tafel-Meldung traegt die Wirkung ihrer Beteiligten ──────
+  // Im Blatt eines Tafel-Moments steht EIN Bereich „Wirkung auf die
+  // Laufbahn", und der liest die Angabe aus den Zeilen. Nur die Rekord-Zeile
+  // trug sie: gemessen fehlte Leo dort ganz, obwohl seine Zeile „+80
+  // Prestige fuer die Laufbahn" nennt — und die Summe in der Zahlenreihe
+  // stand auf +196, dem Zuwachs eines einzigen Spielers. Wer genannt wird,
+  // kommt vor.
+  const _tafelLaufbahn = pids => {
+    const o = {};
+    (pids || []).slice(0, 3).forEach(pid => {
+      const w = _tafelWirkung(pid);
+      o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
+                stufeVor:w.stufeVor, stufeNach:w.stufeNach};
+    });
+    return o;
+  };
   const _rekordWirkung = (pids, rid) => {
     const o = {};
     (pids || []).slice(0, 3).forEach(pid => {
@@ -21724,7 +21740,16 @@ function _buildStories(){
           // Die Vorgaenger-Zahl nur, wenn sie sichtbar anders ist: „8.9 Tore
           // … Julian stand bei 8.9" nennt zweimal dieselbe Zahl und erklaert
           // damit gar nichts.
-          desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu
+          // ── Ein Fenster nennt den alten Wert nicht ──────────────
+          // Bei einem gleitenden Fenster gilt der Wert des Vorgaengers nicht
+          // mehr: sein Fenster ist weitergerutscht, waehrend der neue Halter
+          // sein eigenes gefuellt hat. Gemessen stand „Maxi, Julian, Jane und
+          // Johannes uebernehmen ‚Der Hoehenflug'. +10 %-Punkte … Vorher
+          // hielt Leon den Rekord mit +20 %" — eine Uebernahme mit dem
+          // schlechteren Wert, und der Satz erklaert nicht, wieso. Dieselbe
+          // Begruendung wie beim ausgebliebenen „ausgebaut" [§C35]: was am
+          // hinteren Ende herausfaellt, ist keine Leistung und kein Vergleich.
+          desc = `${belegSatz}. ` + (wertAlt && wertAlt !== wertNeu && !def.fenster
             ? `Vorher ${hielten} ${altN} den Rekord mit ${wertAlt}.`
             : `Vorher gehörte der Rekord ${altN}.`);
         } else {
@@ -22095,10 +22120,23 @@ function _buildStories(){
         // Bauanleitung des Feeds, nicht die Nachricht [§C33].
         // Die Zeile nennt deshalb den Wert, die Klasse und den Zuwachs, wo es
         // einen gibt. Der ganze Text bleibt an der einzelnen Karte.
-        const zeileText = (n.ev ? _evSatz(n.ev) + '. ' : '') + `${artikel} Chronik.`
+        // ── Die Zahl sagt, woher sie kommt, und der Name steht einmal ──
+        // Sie hiess „Johannes +67 Prestige fuer die Laufbahn." Zwei Fehler:
+        // der Name steht in der Schlagzeile derselben Zeile schon („Johannes
+        // holt ‚Der Beidfuessige'"), und „fuer die Laufbahn" ist dieselbe
+        // Aufschrift wie die Zahlenreihe der Karte und der Bereich darunter —
+        // dort steht aber der Zuwachs des ganzen SPIELTAGS. Gemessen las man
+        // „+9 Prestige" in der Zeile und „+2 PRESTIGE" in der Reihe und
+        // hielt eines von beidem fuer einen Fehler. Die Zeile nennt deshalb
+        // ausdruecklich den Beitrag DIESES Eintrags; steht sie allein, faellt
+        // der Name weg [§C33].
+        const zeileText = (n.ev ? _evSatz(n.ev) + '. ' : '') + `${artikel} Chronik`
           + (mitPlus.length
-             ? ` ${_namenListe(mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`))}`
-               + ' Prestige für die Laufbahn.' : '');
+             ? (mitPlus.length === 1
+                 ? `, +${prestigeDelta[mitPlus[0]]} Prestige aus diesem Eintrag.`
+                 : `. ${_namenListe(mitPlus.map(pid => `${nameOf(pid)} +${prestigeDelta[pid]}`))}`
+                   + ' Prestige aus diesem Eintrag.')
+             : '.');
         _meldungen.push({t, n, a, punkte, art, zeigt: _zeigt, wer,
           prestigeDelta, titelJeSpieler, zeileText,
           title: titel,
@@ -22144,6 +22182,7 @@ function _buildStories(){
                     // erzaehlen. Wer schon Halter war, hat an diesem Tag
                     // nichts getan [§C33].
                     playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
+                    laufbahn:_tafelLaufbahn(m.wer),
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
                     zeileText:m.zeileText,
                     chronArt:m.t.kunst, aus:m.t.aus,
@@ -22236,6 +22275,7 @@ function _buildStories(){
             dataRef: {type:'insignium_stufe', pid:p.id,
                       matchId:ausloeser ? ausloeser.id : null, stufe,
                       causalKey:_storyGruppeKey('table', _tafelTag.tag),
+                      laufbahn:_tafelLaufbahn([p.id]),
                       // In einer Sammelkarte steht die Herkunft des Prestiges
                       // nicht: drei Quellen mit drei Zahlen und dazu der
                       // Abstand zur naechsten Stufe waren gemessen 124 Zeichen
@@ -25081,8 +25121,17 @@ function _consolidateStories(list){
       if(nc) bilder.push(nc === 1 ? 'eine Monatschronik' : `${_zahlwortDe(nc)} Monatschroniken`);
       if(ni) bilder.push(ni === 1 ? 'ein neues Insignium' : `${_zahlwortDe(ni)} neue Insignien`);
       const bild = _namenListe(bilder.length ? bilder : ['mehrere Laufbahnen']);
-      neuText = `Ein Moment, ${_zahlwortDe(teile.length)} Spuren: `
-        + `${bild.charAt(0).toUpperCase() + bild.slice(1)} ordnen die Ewige Tafel neu.`;
+      // ── Der Satz zaehlt nicht dreimal und behauptet keinen Moment ──
+      // Er hiess „Ein Moment, 8 Spuren: 5 Ausbauten und drei Monatschroniken
+      // ordnen die Ewige Tafel neu." Drei Fehler in einer Zeile: „Ein
+      // Moment" ist falsch, weil ein Tafel-Moment den ganzen Spieltag
+      // umfasst und seine Zeilen gemessen 14:09 und 14:32 tragen; „8 Spuren"
+      // ist eine Floskel und zaehlt dasselbe wie die Aufzaehlung dahinter;
+      // und „8" als Ziffer neben „drei" als Wort mischt beide Schreibweisen
+      // im selben Satz [§C27]. Uebrig bleibt, was passiert ist, und der
+      // Zeitraum, fuer den es gilt.
+      neuText = `${bild.charAt(0).toUpperCase() + bild.slice(1)}: `
+        + `der Spieltag ordnet die Ewige Tafel neu.`;
     } else {
       const namen = pids.map(nameOf);
       const beteiligte = namen.length ? ` für ${_namenKurz(namen, 3)}` : '';
@@ -25129,6 +25178,15 @@ function _consolidateStories(list){
           if(dt.rarity === 'rare') return 'seltene Auszeichnung';
           return motivName.badge_unlocked;
         }
+        // ── Eine Gruppe traegt den Anlass ihrer Mitglieder ───────────
+        // Zwei Spieler, die in derselben Partie ihre Serie zuenden, werden
+        // EINE Zeile („2 Serien im Gleichschritt"), und die traegt
+        // `type:'group'` mit dem urspruenglichen Typ in `sub`. Der
+        // Anlass-Katalog kennt „group" nicht, also fiel er weg: gemessen
+        // hiess ein Buendel aus fuenf Zeilen nur „Teamserie in einer
+        // Partie", obwohl auch zwei Einzelserien und eine Auszeichnung
+        // daranhingen [§C33].
+        if(dt.type === 'group') return motivName[dt.sub] || null;
         return motivName[dt.type];
       };
       const motive = [...new Set(teile.map(_motivVon).filter(Boolean))];
@@ -25208,16 +25266,26 @@ function _consolidateStories(list){
       // Die Karte spricht nur ueber das Ganze. Kein Einzelereignis wird im
       // Kopf wiederholt oder durch eine Hervorhebung wichtiger gemacht.
       desc: neuText,
-      // ── Eine Karte, die waechst, bleibt an ihrer Stelle ──────────
-      // Der Zeitpunkt war der JUENGSTE Teil, und ein Tafel-Moment umfasst den
-      // ganzen Spieltag: die Karte stand nach der zweiten Partie um 10:44 im
-      // Feed und wanderte mit jeder weiteren nach unten, bis sie um 14:32
-      // unter allen Partien lag. Wer sie am Mittag gelesen hatte, fand sie
-      // abends an einer anderen Stelle — und eine Karte, die ihren Zeitpunkt
-      // wechselt, ist im Feed eine andere. Sie entstand mit ihrer ersten
-      // Zeile, also steht sie dort; jede Zeile nennt ohnehin ihre eigene
-      // Uhrzeit [§C33].
-      when: teile.reduce((mn, t) => (new Date(t.when) < new Date(mn) ? t.when : mn), teile[0].when),
+      // ── Die Karte traegt den Zeitpunkt dessen, was sie ZEIGT ─────
+      // Er war der aelteste Teil ueberhaupt, damit die Karte im Feed nicht
+      // wandert. Gemessen stand darueber „Heute, 15:19" und darunter, in
+      // jeder einzelnen Zeile und im Ergebnisband, „15:37": die aelteste
+      // Zeile eines Tafel-Moments ist fast immer ein Ausbau, und ein Ausbau
+      // steht gar nicht auf der Karte [§C33]. Sie nannte damit eine Uhrzeit,
+      // zu der nichts von dem passiert ist, was sie zeigt.
+      //
+      // Den juengsten Teil zu nehmen loest das, kostet die Karte aber ihren
+      // Platz: der Tagesdeckel vergibt chronologisch, und der reservierte
+      // Platz der Ewigen Tafel geht an die FRUEHESTE Tafel-Karte des Tages —
+      // gemessen fiel der ganze Tafel-Moment damit aus dem Feed. Also die
+      // frueheste Zeile, die auch auf der Karte stehen kann: sie bleibt
+      // stehen, weil eine frueher gespielte Partie nicht nachtraeglich
+      // dazukommt, und ein Ausbau wird nie ein Wechsel.
+      when: (function(){
+        const zeigt = teile.filter(t => ((t.dataRef || {}).type || '') !== 'rekord_gesteigert');
+        const l = zeigt.length ? zeigt : teile;
+        return l.reduce((mn, t) => (new Date(t.when) < new Date(mn) ? t.when : mn), l[0].when);
+      })(),
       // Die Sammelkarte trägt, was sie zusammenfasst: den stärksten Teil und
       // einen Schritt je weiterem. Mit `+1` wog eine Karte, die drei
       // Insignium-Stufen bündelt, kaum mehr als eine einzelne davon — und
@@ -25274,7 +25342,21 @@ function _consolidateStories(list){
                                          // Zusage: was einmal dastand, bleibt
                                          // stehen [§C33].
                                         id: t.id,
-                                        text: (t.dataRef || {}).zeileText || t.desc,
+                                         // ── Das Ergebnis steht nicht dreimal ──
+                                         // Die Zeile der Partie hiess „Leon
+                                         // und Maxi setzen sich gegen Leo und
+                                         // Anton durch" und darunter „Vor dem
+                                         // Anstoss lag die Siegchance bei
+                                         // 81 %. Der Sieg bringt +7 Elo." Das
+                                         // Band zeigt dieselben vier Namen und
+                                         // den Stand, und der Kartentext
+                                         // nennt wortgleich dieselben zwei
+                                         // Zahlen [§C33 `_ndNeu`]. Der Anlass
+                                         // bleibt als Zeile stehen, sein Text
+                                         // faellt weg.
+                                        text: (art === 'spiel'
+                                               && (t.dataRef || {}).type === 'spiel')
+                                          ? '' : ((t.dataRef || {}).zeileText || t.desc),
                                         typ: (t.dataRef||{}).type || '',
                                         kammer: (t.dataRef||{}).kammer || '',
                                          // Jede Aenderung mit ihrer eigenen
@@ -26254,7 +26336,15 @@ function _newsUhrzeit(when){
 // grünen Schimmer einer positiven Serie annimmt.
 function _newsIstNegativ(s){
   const d = (s && s.dataRef) || {};
-  return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+  // ── Eine Gruppe ist so negativ wie ihre Mitglieder ─────────────────
+  // Mehrere Pleitenserien derselben Partie werden EINE Zeile („2 Pechvögel:
+  // Anton & Maxi"), und die trägt `type:'group'` mit `loss_streak` in `sub`.
+  // Geprüft wurde nur `type`, also galt die Gruppe als positiv: gemessen
+  // stand sie als Zeile auf der Karte „Teamserie in einer Partie", die
+  // Johannes und Martins Sieg feiert — Rot ist die Richtung, und eine Karte
+  // hat eine [§C25].
+  const typ = (d.type === 'group' ? (d.sub || '') : (d.type || ''));
+  return /loss|dry_spell/.test(typ) || d.rarity === 'negative';
 }
 
 // Die Ewige Tafel hat mehrere Kammern. Ein einziger silberner Ton machte
@@ -28385,9 +28475,17 @@ function _newsDetailMitte(s){
           : d.quelle === 'erfolg' ? 'Alle mit diesem Erfolg'
           : d.quelle === 'ergebnis' ? 'Diese beiden Partien'
           : 'In dieser Partie';
+        // ── Eine Ueberschrift ueber Ueberschriften sagt nichts ─────────
+        // „An der Ewigen Tafel" stand als Sammelueberschrift direkt ueber
+        // „Bestmarken 1" und „Monatschroniken 2" — und dieselbe Aussage stand
+        // auf demselben Blatt schon dreimal: in der Rubrik, in der
+        // Schlagzeile („… bewegen die Ewige Tafel") und unter den Wappen
+        // („an der Ewigen Tafel"). Wo die Liste ihre eigenen Ueberschriften
+        // traegt, faellt die darueber weg; ohne Gruppierung bleibt sie, denn
+        // dann hat die Liste keine [§C33].
         return uebersicht
           + (gruppiert
-              ? `<div class="nd-section">${kopfzeile}</div>${mv}${gruppiert}`
+              ? `${mv}${gruppiert}`
               : `<div class="nd-section">${kopfzeile}</div>${mv}<div class="nw-liste">${zeilen}</div>`)
           + wirkung;
       }

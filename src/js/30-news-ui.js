@@ -400,7 +400,15 @@ function _newsUhrzeit(when){
 // grünen Schimmer einer positiven Serie annimmt.
 function _newsIstNegativ(s){
   const d = (s && s.dataRef) || {};
-  return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+  // ── Eine Gruppe ist so negativ wie ihre Mitglieder ─────────────────
+  // Mehrere Pleitenserien derselben Partie werden EINE Zeile („2 Pechvögel:
+  // Anton & Maxi"), und die trägt `type:'group'` mit `loss_streak` in `sub`.
+  // Geprüft wurde nur `type`, also galt die Gruppe als positiv: gemessen
+  // stand sie als Zeile auf der Karte „Teamserie in einer Partie", die
+  // Johannes und Martins Sieg feiert — Rot ist die Richtung, und eine Karte
+  // hat eine [§C25].
+  const typ = (d.type === 'group' ? (d.sub || '') : (d.type || ''));
+  return /loss|dry_spell/.test(typ) || d.rarity === 'negative';
 }
 
 // Die Ewige Tafel hat mehrere Kammern. Ein einziger silberner Ton machte
