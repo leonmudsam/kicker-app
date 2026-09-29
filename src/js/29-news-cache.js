@@ -541,8 +541,16 @@ function _consolidateStories(list){
   // worum es geht (Rekord, Auszeichnung, Duell). Wer den Rekord übernimmt,
   // trägt andere Spieler im Schlüssel — eine Übernahme bleibt also Nachricht,
   // auch am Tag nach einer anderen.
-  // `src` steht von neu nach alt, also überlebt die jüngste Karte und ältere
-  // gleiche fallen weg, solange sie innerhalb der Sperre liegen.
+  // ── Wer zuerst dastand, bleibt ─────────────────────────────────────
+  // `src` steht von neu nach alt, und die Schleife lief so: damit ueberlebte
+  // die JUENGSTE Karte, und eine aeltere gleiche fiel weg. Eine Karte, die
+  // um 11 Uhr im Feed stand, verschwand dadurch um 14 Uhr, weil nach der
+  // naechsten Partie dieselbe Aussage noch einmal entstand — gemessen
+  // ersetzte ein Spieltag so nach jeder Partie einen Teil seiner Meldungen.
+  // Eine Nachricht ist aber kein Zustand: sie gehoert ihrem Zeitpunkt.
+  // Entschieden wird deshalb in der Reihenfolge, in der die Nachrichten
+  // entstanden sind — die erste bleibt, die spaetere Wiederholung faellt —,
+  // und am Ende steht die Liste wieder von neu nach alt.
   const _sperreMs = (NEWS_LIMITS.sperreTage || 0) * 86400000;
   // Was es je Tag, Woche oder Monat genau einmal gibt, kann sich gar nicht
   // wiederholen — und Breaking darf an keiner Sperre scheitern [§C33]. Die
@@ -578,7 +586,15 @@ function _consolidateStories(list){
   // Spieltag ist nicht erlaubt: gemessen stand der 13.08. mit einer einzigen
   // Karte im Feed und der 19.08. mit keiner, obwohl an beiden gespielt wurde.
   const verworfen = [];
-  for(const s of src){
+  // Von alt nach neu: nur so haengt die Entscheidung ueber eine Karte allein
+  // an dem, was VOR ihr dastand, und eine spaetere Partie kann sie nicht
+  // mehr aus dem Feed nehmen. Bei gleichem Zeitpunkt bleibt die Reihenfolge
+  // der Liste — die Liste umzudrehen vertauschte auch die Karten derselben
+  // Minute, und damit nannte eine Sammelkarte ihre drei Namen verkehrt.
+  const _srcAlt = src.map((s, i) => ({s, i}))
+    .sort((a, b) => (new Date(a.s.when) - new Date(b.s.when)) || (a.i - b.i))
+    .map(x => x.s);
+  for(const s of _srcAlt){
     const d = s.dataRef || {};
     // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
     // eine (spezifischere) Meilenstein-Story hat.
@@ -609,8 +625,10 @@ function _consolidateStories(list){
       const gk = d.type + '|' + (d.matchId || tagKey(s.when));
       let g = typeGroups.get(gk);
       if(!g){ g = { type:d.type, rep: s, members: [], seen: new Set() }; typeGroups.set(gk, g); slots.push({ t: gk }); }
-      // v9.4: pro Spieler nur EINMAL (list ist newest-first → jüngster Stand
-      // bleibt). Verhindert Duplikate wie „Maxi, Maxi, Alex … Alex".
+      // Pro Spieler nur EINMAL. Gelesen wird von alt nach neu, also bleibt
+      // der erste Stand — dieselbe Regel wie fuer die drei Sperren darunter:
+      // was einmal dastand, bleibt stehen. Verhindert Duplikate wie
+      // „Maxi, Maxi, Alex … Alex".
       if(!g.seen.has(d.pid)){ g.seen.add(d.pid); g.members.push(s); }
     } else {
       // Breaking scheitert an keiner Sperre [§C33] — auch nicht am
@@ -1380,7 +1398,16 @@ function _consolidateStories(list){
       // Die Karte spricht nur ueber das Ganze. Kein Einzelereignis wird im
       // Kopf wiederholt oder durch eine Hervorhebung wichtiger gemacht.
       desc: neuText,
-      when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
+      // ── Eine Karte, die waechst, bleibt an ihrer Stelle ──────────
+      // Der Zeitpunkt war der JUENGSTE Teil, und ein Tafel-Moment umfasst den
+      // ganzen Spieltag: die Karte stand nach der zweiten Partie um 10:44 im
+      // Feed und wanderte mit jeder weiteren nach unten, bis sie um 14:32
+      // unter allen Partien lag. Wer sie am Mittag gelesen hatte, fand sie
+      // abends an einer anderen Stelle — und eine Karte, die ihren Zeitpunkt
+      // wechselt, ist im Feed eine andere. Sie entstand mit ihrer ersten
+      // Zeile, also steht sie dort; jede Zeile nennt ohnehin ihre eigene
+      // Uhrzeit [§C33].
+      when: teile.reduce((mn, t) => (new Date(t.when) < new Date(mn) ? t.when : mn), teile[0].when),
       // Die Sammelkarte trägt, was sie zusammenfasst: den stärksten Teil und
       // einen Schritt je weiterem. Mit `+1` wog eine Karte, die drei
       // Insignium-Stufen bündelt, kaum mehr als eine einzelne davon — und
@@ -1429,6 +1456,14 @@ function _consolidateStories(list){
                 // Tafel-Moments neunmal der volle Kartentext untereinander,
                 // bis zu 183 Zeichen je Zeile [§C33].
                 teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t),
+                                         // Jede Zeile nennt die Karte, aus
+                                         // der sie kommt. Ohne das ist nicht
+                                         // nachzumessen, ob eine Karte, die
+                                         // im Buendel aufgeht, ihren Inhalt
+                                         // behaelt — und genau das ist die
+                                         // Zusage: was einmal dastand, bleibt
+                                         // stehen [§C33].
+                                        id: t.id,
                                         text: (t.dataRef || {}).zeileText || t.desc,
                                         typ: (t.dataRef||{}).type || '',
                                         kammer: (t.dataRef||{}).kammer || '',
@@ -1504,14 +1539,16 @@ function _consolidateStories(list){
     const t = d.type || '';
     return t === 'sammel' ? 'sammel/' + (d.quelle || 'spiel') : t;
   };
-  // ── Der Deckel behaelt die STAERKSTEN, nicht die juengsten ─────────
-  // Gezaehlt wurde in Feed-Reihenfolge, und die ist die Zeit: von vier
-  // Ergebnis-Karten eines Tages blieben die zwei jungen stehen. Gemessen trug
-  // der 15.09. ein 10:0 um 11:39 und ein 10:5 um 12:32 — „Maxi und Henry
-  // gewinnen ohne Gegentor" (73) fiel weg, „setzen ein klares Zeichen" (65)
-  // blieb. Der Tagesdeckel entscheidet nach `prio` [§C33], und der Deckel je
-  // Sorte ist dieselbe Frage eine Ebene tiefer. Die Reihenfolge bleibt die
-  // Zeit: ausgewaehlt wird, WAS wegfaellt, nicht wo etwas steht.
+  // ── Der Deckel behaelt die ERSTEN, nicht die staerksten ────────────
+  // Er entschied nach `prio`, und damit hing das Ergebnis am ganzen Tag: die
+  // Karte, die um 11 Uhr im Feed stand, fiel um 14 Uhr heraus, weil nach der
+  // naechsten Partie eine staerkere derselben Sorte dazukam. Gemessen
+  // verschwand so am 26.08. „Leo und Maxi verlieren zusammen alles" zwischen
+  // der fuenften und der sechsten Partie — der Spieltag schrieb seine eigene
+  // Tafel nach jeder Partie um. Eine Nachricht gehoert ihrem Zeitpunkt: die
+  // ersten zwei einer Sorte bleiben, alles Spaetere wartet auf morgen. Nach
+  // dem staerksten auszuwaehlen hiess frueher auch, eine Partie zu opfern —
+  // die zaehlt hier ohnehin nicht mehr mit.
   const _deckelBleibt = new Map();
   {
     const proKey = new Map();
@@ -1525,8 +1562,7 @@ function _consolidateStories(list){
     });
     proKey.forEach((l, k) => {
       _deckelBleibt.set(k, new Set(l.slice()
-        .sort((a, b) => (b.prio || 0) - (a.prio || 0)
-                     || new Date(b.when) - new Date(a.when))
+        .sort((a, b) => new Date(a.when) - new Date(b.when))
         .slice(0, NF_DECKEL).map(s => s.id)));
     });
   }
@@ -1640,25 +1676,36 @@ function _consolidateStories(list){
     try { if(typeof _isBreaking === 'function' && _isBreaking(s)) return false; } catch(e){}
     return true;
   };
+  // ── Die Plaetze werden in der Reihenfolge der Zeit vergeben ────────
+  // Vergeben wurden sie nach `prio`, und damit hing die Auswahl eines Tages
+  // an seinem Ende: wer nach der ersten Partie im Feed stand, fiel nach der
+  // vierten heraus, weil inzwischen eine staerkere Karte dazugekommen war.
+  // Gemessen ersetzte der 26.08. so nach fast jeder Partie eine Meldung —
+  // wer mittags gelesen hatte, fand abends etwas anderes vor. Eine Nachricht
+  // gehoert ihrem Zeitpunkt, also bekommt sie ihren Platz in dem Moment, in
+  // dem sie entsteht, und behaelt ihn: entschieden wird nur gegen das, was
+  // VOR ihr dastand.
+  //
+  // Der Platz der Ewigen Tafel ist deshalb kein Tausch mehr, sondern ein
+  // eigener: die erste Tafel-Karte eines Tages zaehlt nicht gegen den Deckel.
+  // Getauscht wurde vorher die schwaechste Karte heraus, und wenn die Tafel
+  // erst am Nachmittag kam, traf das eine Karte, die seit dem Vormittag im
+  // Feed stand. Reserviert und ungenutzt waere der Platz an einem Tag ohne
+  // Tafel dagegen verschenkt — der Tag trug dann drei statt vier Karten.
+  // Die erste ist chronologisch die erste: spaeter kann keine davorrutschen.
+  const _tafelSoll = NEWS_LIMITS.tafelProTagMin || 0;
   Object.keys(_tagRang).forEach(k => {
-    const rang = _tagRang[k].filter(_zaehltGegenDeckel)
-      .sort((a, b) => (b.prio || 0) - (a.prio || 0));
-    const auswahl = rang.slice(0, NEWS_LIMITS.proTag);
-    // Die Ewige Tafel behaelt ihren Platz: sie ist die zweite Ebene des
-    // Spieltags und steht neben den Partien, nicht gegen sie.
-    const soll = rang.filter(_istTafelKarte).slice(0, NEWS_LIMITS.tafelProTagMin || 0);
-    soll.forEach(s => {
-      if(auswahl.indexOf(s) >= 0) return;
-      // Ersetzt wird die schwaechste Karte desselben Tages, die keinen Platz
-      // haelt. Pflicht und Breaking stehen hier ohnehin nicht drin.
-      let raus = -1;
-      for(let i = auswahl.length - 1; i >= 0; i--){
-        if(soll.indexOf(auswahl[i]) < 0){ raus = i; break; }
-      }
-      if(raus >= 0) auswahl[raus] = s;
-      else if(auswahl.length < NEWS_LIMITS.proTag) auswahl.push(s);
+    const rang = _tagRang[k].slice()
+      .sort((a, b) => new Date(a.when) - new Date(b.when));
+    const frei = new Set(rang.filter(_istTafelKarte).slice(0, _tafelSoll).map(s => s.id));
+    frei.forEach(id => _behalten.add(id));
+    let belegt = 0;
+    rang.filter(_zaehltGegenDeckel).forEach(s => {
+      if(frei.has(s.id)) return;
+      if(belegt >= NEWS_LIMITS.proTag) return;
+      belegt++;
+      _behalten.add(s.id);
     });
-    auswahl.forEach(s => _behalten.add(s.id));
   });
   const fertig = entzerrt.filter(s => {
     if(_behalten.has(s.id)) return true;
@@ -1686,10 +1733,18 @@ function _consolidateStories(list){
     });
     if(zurueck.size){
       const dazu = [...zurueck.values()].filter(s => fertig.indexOf(s) < 0);
-      ausbalanciert = fertig.concat(dazu)
-        .sort((a, b) => new Date(b.when) - new Date(a.when));
+      ausbalanciert = fertig.concat(dazu);
     }
   }
+  // ── Die Reihenfolge ist die Zeit ───────────────────────────────────
+  // Entschieden wird von alt nach neu, damit eine spaetere Partie keine Karte
+  // mehr verdraengen kann; gelesen wird von neu nach alt. Der Feed sortiert
+  // nicht mehr um [§C33], also steht die Reihenfolge hier — einmal, nach dem
+  // Zeitpunkt und nach nichts anderem. Eine Karte bleibt damit da, wo sie
+  // entstanden ist: am Anfang eines Tages, zwischen zwei Partien oder an
+  // seinem Ende.
+  ausbalanciert = ausbalanciert.slice()
+    .sort((a, b) => new Date(b.when) - new Date(a.when));
   // ── Eine Partie zeigt ihr Ergebnis einmal ─────────────────────────
   // Jede Geschichte mit einer `matchId` zeigt das Ergebnisband — vier Wappen
   // und den Endstand [§C33]. Stehen zwei Karten derselben Partie im Feed,

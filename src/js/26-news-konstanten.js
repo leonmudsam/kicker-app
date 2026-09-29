@@ -148,6 +148,14 @@ const NEWS_LIMITS = {
   // saesse dort auf der einzigen Karte, die es ohnehin gibt, und sagte damit
   // nichts — es zeichnet aus, was sich gegen andere Karten durchgesetzt hat.
   tagKarteMin: 2,
+  // ── Und nur fuer eine Geschichte, die etwas hergibt ──────────────
+  // Das Band ging an die staerkste Karte des Tages, auch wenn die staerkste
+  // der schwaechste Bau des Generators war: gemessen trug ein Spieltag es auf
+  // „Der groesste Ausschlag des Tages" mit 564 Punkten — unter dem Wert einer
+  // Tagesbilanz (620). Ein Band, das eine beliebige Karte auszeichnet,
+  // zeichnet nichts aus. Bleibt niemand darueber, traegt an diesem Tag keine
+  // Karte das Band [§C33].
+  tagKarteSpannung: 620,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
   // Neue, jedes Mal mit einem Prozentpunkt mehr: die ID ist damit eine andere,

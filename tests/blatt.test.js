@@ -1408,16 +1408,39 @@ const ok = (c, msg, det) => {
     const karte = host.querySelector('.nf-card');
     const d = karte ? karte.querySelector('.nf-d') : null;
     const sub = karte ? karte.querySelector('.nf-brk-sub') : null;
+    // ── Der Anlass ist zu SEHEN, nicht nur zu lesen ────────────────
+    //     Die Karte bricht die Spalte wegen EINER ihrer Zeilen, und die stand
+    //     in derselben grauen Zeile wie die uebrigen — nur eine kleine Marke
+    //     am rechten Rand sagte es. Gemessen wird deshalb die Zeile selbst:
+    //     eine eigene Kante und eine eigene Flaeche.
+    const zl = karte ? [].slice.call(karte.querySelectorAll('.nf-sam-z')) : [];
+    const anl = zl.filter(x => x.classList.contains('brk'))[0] || null;
+    const rest = zl.filter(x => !x.classList.contains('brk'))[0] || null;
     const out = {fehlt:false,
       brk: !!(karte && karte.classList.contains('nf-brk')),
       band: karte ? karte.querySelectorAll('.nf-erg').length : 0,
-      zeilen: karte ? karte.querySelectorAll('.nf-sam-z').length : 0,
+      zeilen: zl.length,
+      anlassKante: anl ? getComputedStyle(anl).boxShadow : '',
+      // Eine eigene Flaeche heisst: nicht durchsichtig. Ein Vergleich mit der
+      // Nachbarzeile taugt nicht — in diesem Buendel ist jede Zeile Breaking,
+      // und dann gibt es keine Nachbarzeile ohne Marke.
+      anlassBrk: zl.filter(x => x.classList.contains('brk')).length,
+      anlassFlaeche: !!(anl
+        && getComputedStyle(anl).backgroundColor !== 'rgba(0, 0, 0, 0)'
+        && getComputedStyle(anl).backgroundColor !== 'transparent'),
+      anlassZahl: karte ? karte.querySelectorAll('.nf-brk-n').length : 0,
       doppelt: !!(sub && d && sub.textContent.trim() === d.textContent.trim())};
     host.remove(); return out;
   });
   ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 2,
      'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen',
      JSON.stringify(brkKarte));
+  ok(brkKarte.anlassKante && brkKarte.anlassKante !== 'none' && brkKarte.anlassFlaeche,
+     'und seine Anlass-Zeile traegt eine eigene Kante und eine eigene Flaeche',
+     brkKarte.anlassKante + ' / Flaeche ' + brkKarte.anlassFlaeche);
+  ok(brkKarte.anlassZahl === 1,
+     'der Breaking-Balken einer gebuendelten Karte zeigt die Zahl der Meldungen',
+     brkKarte.anlassZahl + ' Pille');
   ok(brkKarte.doppelt === false,
      'und seinen Teaser nur einmal, nicht als Nachsatz ein zweites Mal',
      String(brkKarte.doppelt));
