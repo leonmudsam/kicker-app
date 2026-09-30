@@ -1742,6 +1742,33 @@ ok(_schein.naeher.every(x => !x.bildGefiltert && x.passt),
    'das Zeichen trägt in jedem Rang die Rangfarbe, gezeichnet und ohne Filter',
    _schein.naeher.map(x => x.r + ' ' + (x.bildGefiltert ? 'Filter' : 'ohne') + (x.passt ? ' passt' : '')).join(' · '));
 
+// Die Leiter steigt, sie springt nicht zurück [§C30]: der dritte Grad einer
+// Stufe trägt nie mehr Steine und nie mehr Gold als der erste der nächsten.
+// Zierkranz III hatte Steine im Reif und rotgoldenes Laub, Lorbeerreif I
+// keins von beidem — und sah damit wertvoller aus als die Stufe darüber.
+// Und die Zeichnung liegt nicht als Ganzes unter einem Filter: WebKit
+// rechnet Filter in Bildern ohne die Pixeldichte des Geräts, und das ganze
+// Zeichen war auf dem Telefon unscharf.
+const _steigt = JSON.parse(K.eval(`JSON.stringify((() => {
+  const gold = z => { let n = 0; const r = z.reif || {};
+    [r.metall, r.kanal, r.nieten && r.nieten.m, z.lilie, z.raute,
+     (z.sichel||z.volute||z.zier||z.lorbeer||z.eiche||z.strahlen||{}).m].forEach(m => { if(m === 'gold') n++; });
+    return n; };
+  const fehler = [];
+  for(let i = 1; i < INSIGNIEN.length; i++){
+    const a = INS_ZEICHEN[INSIGNIEN[i-1].key][2], b = INS_ZEICHEN[INSIGNIEN[i].key][0];
+    const sa = (a.reif||{}).steine || 0, sb = (b.reif||{}).steine || 0;
+    if(sa > sb) fehler.push(INSIGNIEN[i-1].name + ' III ' + sa + ' Steine > ' + INSIGNIEN[i].name + ' I ' + sb);
+    if(gold(a) > gold(b)) fehler.push(INSIGNIEN[i-1].name + ' III Gold ' + gold(a) + ' > ' + INSIGNIEN[i].name + ' I ' + gold(b));
+  }
+  const svg = _izStufe('krone', 2, INS_RANGFARBE.Elite);
+  const ganz = /<g[^>]*filter=/.test(svg);
+  return {fehler, ganz};
+})())`));
+ok(_steigt.fehler.length === 0, 'der dritte Grad trägt nie mehr Steine oder Gold als der erste der nächsten Stufe',
+   _steigt.fehler.join(' · ') || 'jede Stufe');
+ok(!_steigt.ganz, 'die Zeichnung liegt nicht als Ganzes unter einem Filter', String(_steigt.ganz));
+
 
 // ══════════════════════════════════════════════════════════════════════
 console.log('\n═══ REKORDE ZUM STAND EINES MONATS ═══');
