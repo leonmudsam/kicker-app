@@ -1070,6 +1070,15 @@
     stroke-linecap:round;stroke-linejoin:round}
   .rek-g-line{flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent)}
   .rek-g-z{font-size:11px;color:var(--muted)}
+  .rek-g-sub{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:-4px 4px 10px;font-size:11px;color:var(--muted)}
+  .rek-g-satz{min-width:0}
+  .rek-g-vorn{display:flex;gap:8px;flex:0 0 auto}
+  .rek-g-vorn>span{display:inline-flex;align-items:center;gap:3px;cursor:pointer}
+  .rek-g-vorn b{font-size:10.5px;color:var(--ink2)}
+  .rek-g-sub.koennen .rek-g-vorn>span:first-child b,
+  .rek-g-sub.form .rek-g-vorn>span:first-child b,
+  .rek-g-sub.mark .rek-g-vorn>span:first-child b{color:var(--gold)}
 
   .rek-liste{display:flex;flex-direction:column;gap:8px}
   .rek{display:grid;grid-template-columns:34px 1fr;gap:11px;
@@ -1113,18 +1122,38 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rek.offen .rek-hn{font-style:italic;color:var(--faint)}
   /* Der Beleg ist die Aussage der Karte, also traegt seine Zahl sie auch. */
-  .rek-ev{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:3px}
-  .rek-w{font-size:13px;font-weight:700;color:var(--ink)}
-  .rek.offen .rek-ev{font-style:italic}
+  /* Wert und Beleg in einer Reihe: der Wert groß in der Farbe der Kammer,
+     der Rest des Belegs daneben und darunter umbrechend. */
+  .rek-wz{display:flex;align-items:baseline;gap:8px;margin-top:4px;min-width:0}
+  .rek-ev{font-size:11.5px;color:var(--muted);line-height:1.4;min-width:0}
+  .rek-w{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:19px;line-height:1;
+    color:var(--gold);text-shadow:0 0 14px rgba(247,207,74,.28);letter-spacing:-.01em}
+  .rek.fuegung .rek-w{color:var(--silber);text-shadow:none}
+  .rek.schatten .rek-w{color:var(--red);text-shadow:none}
+  .rek.offen .rek-ev{font-style:italic;margin-top:3px}
+  /* Der Feldstreifen: jeder im Rennen ein Punkt, der Halter groß am
+     rechten Ende, daneben der Erste, der ihn nicht hält. */
+  .rek-feld{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+    gap:10px;margin-top:7px}
+  .rek-feld .bl-feld{height:16px}
+  .rek-feld .bl-feld-bahn{top:7px}
+  .rek-feld .bl-feld-mitte{top:2px;height:12px}
+  .rek-feld .bl-feld i{top:5px}
+  .rek-feld .bl-feld i.er{top:2px;width:10px;height:10px;margin-left:-5px}
+  .rek.fuegung .bl-feld i.er{background:var(--silber);box-shadow:none}
+  .rek.schatten .bl-feld i.er{background:var(--red);box-shadow:none}
+  .rek-zw{font-size:10.5px;color:var(--muted);white-space:nowrap;max-width:46vw;
+    overflow:hidden;text-overflow:ellipsis}
+  .rek-zw b{color:var(--ink2);font-weight:700}
   /* Zeitpunkt, Zeitraum, Grundwert und Stand als Pillenzeile. Sie umbricht,
      weil „Ganze Laufbahn, alle Sturmspiele" und „100 P Basis" auf 430 Pixeln
      nicht nebeneinander passen; als eine Zeile mit `nowrap` lief die letzte
      Pille aus der Karte. */
-  .rek-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  /* Eine leise Zeile statt Pillen: zwei gerahmte Pillen brachen fast immer
+     in zwei Zeilen um und waren lauter als der Wert. */
+  .rek-meta{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:6px}
   .rek-p{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
-    letter-spacing:.06em;color:var(--muted);background:var(--bg2);
-    border:1px solid var(--line);border-radius:8px;padding:1.5px 7px;line-height:1.45;
-    max-width:100%}
+    letter-spacing:.05em;color:var(--faint);line-height:1.45;max-width:100%}
   /* Nicht `nowrap`: „Ganze Laufbahn, ausgeglichen angesetzte Partien" ist bei
      360 px breiter als die Karte und lief rechts aus dem Bildschirm. Abkürzen
      wäre schlimmer — die Pille ist die einzige Stelle, die den Zeitraum nennt. */
@@ -5669,7 +5698,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.1de95b29';
+const BUILD_VERSION='2026.09.30.212a9eaf';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -33513,12 +33542,21 @@ function seasonTitleHistory(pid, bisMs){
 // Partien" neben „Beste Siegquote als Außenseiter über die ganze Laufbahn":
 // zwei verschiedene Zeitachsen in einer Kammer. Wer die Tafel liest, kann so
 // nicht sehen, was gerade gilt und was für immer.
+// `satz` steht unter der Überschrift der Kammer im Rekorde-Reiter: was die
+// Rekorde darin gemeinsam haben. Ohne ihn stand „Fügungen" über zwölf
+// Karten, und warum „Der Rückenwind" dort steht und nicht im Können, sagte
+// erst das Blatt.
 const CHRON_KINDS = {
-  koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:0},
-  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'chartUp',    ord:1},
-  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:2},
-  fuegung: {label:'Fügung',        pl:'Fügungen',       kurz:'Fügungen', ic:'weatherMix', ord:3},
-  shame:   {label:'Schattenseite', pl:'Schattenseiten', kurz:'Schatten', ic:'ghost',      ord:4},
+  koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:0,
+            satz:'Schnitt und Quote über die ganze Laufbahn'},
+  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'chartUp',    ord:1,
+            satz:'Gerechnet über die letzten eigenen Partien'},
+  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:2,
+            satz:'Einzelne Bestleistungen, jede an einem Tag erreicht'},
+  fuegung: {label:'Fügung',        pl:'Fügungen',       kurz:'Fügungen', ic:'weatherMix', ord:3,
+            satz:'Was Auslosung und letzter Ball entscheiden'},
+  shame:   {label:'Schattenseite', pl:'Schattenseiten', kurz:'Schatten', ic:'ghost',      ord:4,
+            satz:'Die Kehrseite. Sie bringt kein Prestige'},
 };
 // Unter dieser Spielzahl bekommt niemand eine Chronik. Eine Laufbahn braucht
 // eine Laufbahn — sonst trägt ein Gast nach zwölf Spielen einen Liga-Rekord.
@@ -34587,7 +34625,10 @@ function chronicleRang(cid){
     || C.P[b.pid].wins - C.P[a.pid].wins
     || C.P[b.pid].gd - C.P[a.pid].gd
     || (a.pid < b.pid ? -1 : 1));
-  _topfDeckel(_cache._chronRang, 12);
+  // Der Rekorde-Reiter fragt jede Reihenfolge des Katalogs auf einmal ab
+  // (der Feldstreifen jeder Karte). Mit zwölf räumte er bei jedem Zeichnen
+  // die Einträge, die Blatt und Feed gerade brauchten [§3].
+  _topfDeckel(_cache._chronRang, CHRONICLES.length + 12);
   _cache._chronRang[key] = reihe;
   return reihe;
 }
@@ -35298,7 +35339,10 @@ function ligaRekordeHtml(weit){
     // was man liest. Jetzt trägt sie die Karte, der Rest bleibt Metall.
     const ev = String(h.ev || '');
     const m = ev.match(/^([+\u2212-]?\d[^\s]*(?:\s?%)?)\s+(.*)$/);
-    const beleg = m ? `<span class="rek-w">${esc(m[1])}</span> ${esc(m[2])}` : esc(ev);
+    // Der Wert steht groß und links, der Rest des Belegs daneben: „6 %"
+    // war fett in 13 px und damit nicht größer als der Name darüber.
+    const beleg = m ? `<span class="rek-w num">${esc(m[1])}</span><span class="rek-ev">${esc(m[2])}</span>`
+                    : `<span class="rek-ev">${esc(ev)}</span>`;
     // Die Kammer steht als Datum an der Karte, nicht als Farbklasse: eine
     // Fuegung, die von einer Niederlage erzaehlt, traegt Rot und bleibt
     // trotzdem eine Fuegung. Ueber die Klasse waeren Kammer und Farbe
@@ -35312,7 +35356,8 @@ function ligaRekordeHtml(weit){
               return p ? avHtml(p, 'width:21px;height:21px;font-size:9px;border-radius:7px') : ''; }).join('')}
             <span class="rek-hn">${esc(_chronHolderNames(h))}</span>
           </span></div>
-        <div class="rek-ev num">${beleg}</div>
+        <div class="rek-wz">${beleg}</div>
+        ${_rekFeldHtml(d, h)}
         ${meta}
       </div>
     </div>`;
@@ -35360,14 +35405,54 @@ function ligaRekordeHtml(weit){
     ${gruppen.map(g => chip(g.k, g.def.kurz, g.liste.length, rekKammer === g.k)).join('')}
   </div>`;
   const sicht = gruppen.filter(g => !rekKammer || g.k === rekKammer);
-  return leiste + filter + sicht.map(g => `
-    <div class="rek-gruppe ${esc(g.k)}">
+  // ── Der Kopf einer Kammer sagt, was sie misst und wem sie gehört ──
+  // „Fügungen" stand über zwölf Karten, und warum „Der Rückenwind" dort
+  // steht und nicht im Können, sagte erst das Blatt. Darunter die drei, die
+  // in der Kammer am meisten halten: die Säulen oben zählen die ganze Tafel,
+  // und wer die Form hält, ist nicht zwingend der, der das Können hält.
+  const kopfVon = g => {
+    const n = {};
+    g.liste.forEach(d => { const h = holders[d.id];
+      if(h) (h.pids || [h.pid]).forEach(pid => { n[pid] = (n[pid] || 0) + 1; }); });
+    const vorn = Object.keys(n).filter(pid => pmap()[pid])
+      .sort((a, b) => n[b] - n[a] || pname(a).localeCompare(pname(b))).slice(0, 3);
+    const vergeben = g.liste.filter(d => holders[d.id]).length;
+    return `<div class="rek-gruppe ${esc(g.k)}">
       <span class="rek-g-ic">${svgI(g.def.ic)}</span>
       <span class="rek-g-n">${esc(g.def.pl)}</span>
       <span class="rek-g-line"></span>
       <span class="rek-g-z num">${g.liste.length}</span>
     </div>
-    <div class="rek-liste">${g.liste.map(karte).join('')}</div>`).join('');
+    <div class="rek-g-sub ${esc(g.k)}">
+      <span class="rek-g-satz">${esc(g.def.satz || '')}${vergeben < g.liste.length
+        ? ` · ${g.liste.length - vergeben} offen` : ''}</span>
+      ${vorn.length ? `<span class="rek-g-vorn">${vorn.map(pid =>
+        `<span data-tplayer="${esc(pid)}">${avHtml(pmap()[pid], 'width:16px;height:16px;font-size:7px;border-radius:5px')}<b class="num">${n[pid]}</b></span>`).join('')}</span>` : ''}
+    </div>`;
+  };
+  return leiste + filter + sicht.map(g => kopfVon(g)
+    + `<div class="rek-liste">${g.liste.map(karte).join('')}</div>`).join('');
+}
+
+// ── Wo der Halter im Feld steht ─────────────────────────────────────
+// Eine Karte nannte den Wert des Halters und sonst nichts: ob der Zweite
+// knapp dahinter liegt oder weit weg, stand erst im Blatt. Der Streifen ist
+// das Bauteil „Wo im Feld" des Belegs [§C27] — jeder im Rennen ein Punkt,
+// der Halter groß am rechten Ende —, daneben der Erste, der ihn nicht hält,
+// mit seinem Wert. Gelesen wird dieselbe Reihenfolge, aus der Podest und
+// Verfolger des Blatts kommen (`chronicleRang`); keine zweite Rechnung.
+function _rekFeldHtml(d, h){
+  try {
+    const rang = chronicleRang(d.id);
+    if(!Array.isArray(rang) || rang.length < 3) return '';
+    const halter = new Set(h.pids || [h.pid]);
+    const feld = belegFeldHtml(rang.map(r => ({v:r.wert, t:'', er:halter.has(r.pid)})));
+    if(!feld) return '';
+    const z = rang.find(r => !halter.has(r.pid));
+    const p = z && pmap()[z.pid];
+    return `<div class="rek-feld">${feld}${p
+      ? `<span class="rek-zw">vor ${esc(p.name)} <b class="num">${esc(_chronKurz(z.ev))}</b></span>` : ''}</div>`;
+  } catch(e){ return ''; }
 }
 
 // Die Saison-Matrix: Zeilen sind Spieler, Spalten Monate, Zellen Titel.

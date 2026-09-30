@@ -571,6 +571,28 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
      'gezeigt ' + mitZeit + ' von ' + kannZeit + ' möglichen');
   ok(!rek.includes('rek-kopf'),
      'keine zweite Überschrift über der ersten Gruppe');
+  // Der Feldstreifen jeder Karte liest dieselbe Reihenfolge wie Podest und
+  // Verfolger des Blatts: der Halter steht am rechten Ende, daneben der
+  // Erste, der ihn nicht hält, mit seinem Wert.
+  const feldFehler = JSON.parse(K.eval(`(()=>{
+    const H = chronicleHolders(), f = [];
+    let n = 0;
+    CHRONICLES.forEach(d => {
+      const h = H[d.id]; if(!h) return;
+      const html = _rekFeldHtml(d, h), rang = chronicleRang(d.id);
+      if(rang.length < 3 || !(rang[0].wert > rang[rang.length-1].wert)){ if(html) f.push(d.id + ': Streifen ohne Feld'); return; }
+      n++;
+      const halter = new Set(h.pids || [h.pid]);
+      const z = rang.find(r => !halter.has(r.pid));
+      const er = (html.match(/class="er" style="left:([0-9.]+)%/) || [])[1];
+      if(!html || +er < 95) f.push(d.id + ': Halter nicht am Ende ' + er);
+      if(z && html.indexOf('vor ' + pname(z.pid) + ' ') < 0) f.push(d.id + ': Zweiter fehlt');
+    });
+    return JSON.stringify({f, n});
+  })()`));
+  ok(feldFehler.n > 40 && feldFehler.f.length === 0,
+     'jede Rekordkarte zeigt den Halter vorn im Feld und den Ersten dahinter',
+     feldFehler.f.slice(0, 3).join(' | ') || feldFehler.n + ' Karten');
 
   // Ein Tipp auf einen Rekord öffnet den REKORD, nicht das Spielerprofil —
   // und zeigt dort ein Podest, weil ein Rekord ein Wettstreit ist [§C27].

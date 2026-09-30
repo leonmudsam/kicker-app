@@ -312,6 +312,15 @@
     stroke-linecap:round;stroke-linejoin:round}
   .rek-g-line{flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent)}
   .rek-g-z{font-size:11px;color:var(--muted)}
+  .rek-g-sub{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    margin:-4px 4px 10px;font-size:11px;color:var(--muted)}
+  .rek-g-satz{min-width:0}
+  .rek-g-vorn{display:flex;gap:8px;flex:0 0 auto}
+  .rek-g-vorn>span{display:inline-flex;align-items:center;gap:3px;cursor:pointer}
+  .rek-g-vorn b{font-size:10.5px;color:var(--ink2)}
+  .rek-g-sub.koennen .rek-g-vorn>span:first-child b,
+  .rek-g-sub.form .rek-g-vorn>span:first-child b,
+  .rek-g-sub.mark .rek-g-vorn>span:first-child b{color:var(--gold)}
 
   .rek-liste{display:flex;flex-direction:column;gap:8px}
   .rek{display:grid;grid-template-columns:34px 1fr;gap:11px;
@@ -355,18 +364,38 @@
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rek.offen .rek-hn{font-style:italic;color:var(--faint)}
   /* Der Beleg ist die Aussage der Karte, also traegt seine Zahl sie auch. */
-  .rek-ev{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:3px}
-  .rek-w{font-size:13px;font-weight:700;color:var(--ink)}
-  .rek.offen .rek-ev{font-style:italic}
+  /* Wert und Beleg in einer Reihe: der Wert groß in der Farbe der Kammer,
+     der Rest des Belegs daneben und darunter umbrechend. */
+  .rek-wz{display:flex;align-items:baseline;gap:8px;margin-top:4px;min-width:0}
+  .rek-ev{font-size:11.5px;color:var(--muted);line-height:1.4;min-width:0}
+  .rek-w{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:19px;line-height:1;
+    color:var(--gold);text-shadow:0 0 14px rgba(247,207,74,.28);letter-spacing:-.01em}
+  .rek.fuegung .rek-w{color:var(--silber);text-shadow:none}
+  .rek.schatten .rek-w{color:var(--red);text-shadow:none}
+  .rek.offen .rek-ev{font-style:italic;margin-top:3px}
+  /* Der Feldstreifen: jeder im Rennen ein Punkt, der Halter groß am
+     rechten Ende, daneben der Erste, der ihn nicht hält. */
+  .rek-feld{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;
+    gap:10px;margin-top:7px}
+  .rek-feld .bl-feld{height:16px}
+  .rek-feld .bl-feld-bahn{top:7px}
+  .rek-feld .bl-feld-mitte{top:2px;height:12px}
+  .rek-feld .bl-feld i{top:5px}
+  .rek-feld .bl-feld i.er{top:2px;width:10px;height:10px;margin-left:-5px}
+  .rek.fuegung .bl-feld i.er{background:var(--silber);box-shadow:none}
+  .rek.schatten .bl-feld i.er{background:var(--red);box-shadow:none}
+  .rek-zw{font-size:10.5px;color:var(--muted);white-space:nowrap;max-width:46vw;
+    overflow:hidden;text-overflow:ellipsis}
+  .rek-zw b{color:var(--ink2);font-weight:700}
   /* Zeitpunkt, Zeitraum, Grundwert und Stand als Pillenzeile. Sie umbricht,
      weil „Ganze Laufbahn, alle Sturmspiele" und „100 P Basis" auf 430 Pixeln
      nicht nebeneinander passen; als eine Zeile mit `nowrap` lief die letzte
      Pille aus der Karte. */
-  .rek-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  /* Eine leise Zeile statt Pillen: zwei gerahmte Pillen brachen fast immer
+     in zwei Zeilen um und waren lauter als der Wert. */
+  .rek-meta{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:6px}
   .rek-p{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
-    letter-spacing:.06em;color:var(--muted);background:var(--bg2);
-    border:1px solid var(--line);border-radius:8px;padding:1.5px 7px;line-height:1.45;
-    max-width:100%}
+    letter-spacing:.05em;color:var(--faint);line-height:1.45;max-width:100%}
   /* Nicht `nowrap`: „Ganze Laufbahn, ausgeglichen angesetzte Partien" ist bei
      360 px breiter als die Karte und lief rechts aus dem Bildschirm. Abkürzen
      wäre schlimmer — die Pille ist die einzige Stelle, die den Zeitraum nennt. */
