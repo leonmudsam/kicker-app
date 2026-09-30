@@ -5989,39 +5989,91 @@ ok(_faden.endeOk && _faden.wendeOk,
    'nur der erste Riss beendet eine Serie, nur der erste Sieg wendet eine Pleitenserie',
    'Ende ' + _faden.endeOk + ', Wende ' + _faden.wendeOk);
 
-// ── Bogen und Chips einer Partie [§C33] ─────────────────────────────
-// Die Siegchance steht als Bogen im Fuß, der Gewinn je Sieger als Chip mit
-// Gesicht — und der Satz darüber nennt beides nicht noch einmal. Der Bogen
-// trägt dieselbe Zahl wie der Satz, die Chips dieselbe wie das Blatt.
+// ── Die Bildzone einer Partie folgt ihrem Anlass [§C33] ─────────────
+// Jede Partie-Karte trug denselben Fuß, Bogen und Chips, und dreißig Karten
+// sahen im Feed gleich aus. Jetzt wählt der Anlass die Zeichnung. Geprüft
+// wird dreierlei, jeweils gegen die rohen Partien nachgerechnet: dass jede
+// Zeichnung stimmt, dass es Vielfalt gibt (keine Form trägt die Hälfte der
+// Karten), und dass der Satz darüber nicht wiederholt, was der Fuß zeigt.
 const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
   const alle = getStoriesCache().filter(s => _newsSorte(s) === 'spiel' && (s.dataRef||{}).matchId);
-  const falsch = []; let n = 0;
+  const falsch = [], formen = {}; let n = 0;
+  const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
+  const gew = (pid, m) => (m.winner === 'A') === (m.a1 === pid || m.a2 === pid);
   alle.forEach(s => {
     const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
     if(!m) return;
     const html = _newsCardHtmlM2(s, false, false);
-    const b = html.match(/nf-bogen[^>]*>[\\s\\S]*?<b class="num">(\\d+) %<\\/b>/);
-    const tp = (glieder => glieder.find(x => x.type === 'spiel'))(
-      (d.type === 'sammel' ? (d.teile||[]) : [d]).map(t => t.dataRef || t));
-    const quote = d.quote != null ? d.quote : null;
-    if(!b){ falsch.push(s.id + ' ohne Bogen'); return; }
-    n++;
-    if(quote != null && +b[1] !== Math.max(1, quote)) falsch.push(s.id + ' Bogen ' + b[1] + ' statt ' + quote);
+    const form = ['nf-spitze','nf-riss','nf-wende','nf-ser','nf-spf','nf-bil','nf-meds','nf-rgs','nf-tor','nf-waage']
+      .find(k => html.indexOf('class="' + k) >= 0 || html.indexOf(' ' + k + '"') >= 0);
+    if(!form){ falsch.push(s.id + ' ohne Bildzone'); return; }
+    n++; formen[form] = (formen[form] || 0) + 1;
     const w = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+    const l = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+    const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+    // Der Bogen trägt die Siegchance der Sieger, die Chips den Gewinn je Sieger.
+    const b = html.match(/nf-bogen[^>]*>[\\s\\S]*?<b class="num">(\\d+) %<\\/b>/);
+    if(b && d.quote != null && +b[1] !== Math.max(1, d.quote)) falsch.push(s.id + ' Bogen ' + b[1] + ' statt ' + d.quote);
     const chips = [...html.matchAll(/nf-eloc[\\s\\S]*?<b class="[gr]">([+-]?\\d+)<\\/b>/g)].map(x => +x[1]);
-    const soll = w.map(p => _newsEloDelta(p, m.id)).filter(v => v != null);
-    if(chips.join() !== soll.join()) falsch.push(s.id + ' Chips ' + chips + ' statt ' + soll);
+    if(chips.length && chips.join() !== w.map(p => _newsEloDelta(p, m.id)).filter(v => v != null).join())
+      falsch.push(s.id + ' Chips ' + chips);
+    // Die Waage trägt alle vier, die Verlierer links.
+    if(form === 'nf-waage'){
+      const z = [...html.matchAll(/<b class="[gr] num">([+-]?\\d+)<\\/b>/g)].map(x => +x[1]);
+      const soll = l.concat(w).map(p => _newsEloDelta(p, m.id)).filter(v => v != null);
+      if(z.join() !== soll.join()) falsch.push(s.id + ' Waage ' + z + ' statt ' + soll);
+    }
+    // Die Wende ist der erste Sieg nach mindestens drei Pleiten in Folge.
+    if(form === 'nf-wende'){
+      const k = +(html.match(/(\\d+) Pleiten, dann dieser Sieg/) || [,0])[1];
+      const ok = w.some(pid => {
+        const eig = reihe.filter(x => [x.a1,x.a2,x.b1,x.b2].includes(pid));
+        let i = eig.indexOf(m) - 1, c = 0;
+        while(i >= 0 && !gew(pid, eig[i])){ c++; i--; }
+        return c === k;
+      });
+      if(k < 3 || !ok) falsch.push(s.id + ' Wende nach ' + k);
+    }
+    // Die Torleiste nur ab sechs Toren, und „zuletzt am" ist wirklich der
+    // letzte Tag mit mindestens diesem Abstand.
+    if(form === 'nf-tor'){
+      if(hoch - tief < 6) falsch.push(s.id + ' Torleiste bei ' + hoch + ':' + tief);
+      const vor = reihe.filter(x => mts(x) < mts(m) && Math.abs(x.score_a - x.score_b) >= hoch - tief);
+      const soll = vor.length ? new Date(mts(vor[vor.length - 1])).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'}) : null;
+      if(soll && html.indexOf('zuletzt am ' + soll) < 0) falsch.push(s.id + ' Torleiste nennt nicht ' + soll);
+    }
+    // Der Rangsprung: mindestens zwei Plätze, so wie die Rangtabelle es sagt.
+    if(form === 'nf-rgs'){
+      [...html.matchAll(/Platz (\\d+)<\\/span><i aria-hidden="true"><\\/i><span class="num g">(\\d+)/g)].forEach(x => {
+        if(+x[1] - +x[2] < 2) falsch.push(s.id + ' Sprung ' + x[1] + '→' + x[2]);
+      });
+    }
     const satz = (html.match(/class="nf-d">([\\s\\S]*?)<\\/div>/) || [,''])[1].replace(/<[^>]+>/g, '');
-    if(/Siegchance lag|bringt der Sieg/.test(satz)) falsch.push(s.id + ' Satz wiederholt den Fuß');
+    if((b || form === 'nf-waage' || chips.length) && /bringt der Sieg/.test(satz)) falsch.push(s.id + ' Satz wiederholt die Elo');
+    if(b && /Siegchance lag/.test(satz)) falsch.push(s.id + ' Satz wiederholt die Siegchance');
   });
+  // Gestellt, weil das Fenster sie nicht trägt: der Spitzenwechsel und die
+  // Auszeichnung einer Partie.
+  const [A, B] = players.map(p => p.id);
+  const sp = _newsSpitzeBild({newLeader:A, prevLeader:B, elo:390, gap:11});
+  const med = _newsMedailleBild([{pid:A, badgeId:BADGES[0].id, rang:5}]);
   const ser = [_newsSerienBand(4, false, true), _newsSerienBand(8, false, true),
                _newsSerienBand(6, true, true), _newsSerienBand(5, false, false)];
   const leer = h => (h.match(/<i class="x">/g) || []).length;
-  return {n, falsch, ser: ser.map(h => leer(h) + (/Marke (\\d+)/.exec(h) || [,'-'])[1])};
+  return {n, falsch, formen,
+    gestellt: /390 Elo/.test(sp) && /<b class="num">11<\\/b> vor/.test(sp)
+      && med.indexOf(esc(BADGES[0].name)) >= 0 && /zum 5\\. Mal/.test(med),
+    ser: ser.map(h => leer(h) + (/Marke (\\d+)/.exec(h) || [,'-'])[1])};
 })())`));
+const _formZahl = Object.keys(_bogen.formen).length;
+const _formMax = Math.max(0, ...Object.values(_bogen.formen));
 ok(_bogen.n > 0 && _bogen.falsch.length === 0,
-   'jede Partie-Karte trägt Bogen und Chips, und der Satz wiederholt sie nicht',
+   'jede Partie-Karte trägt eine Bildzone, die mit den Partien stimmt, und der Satz wiederholt sie nicht',
    _bogen.falsch.slice(0, 2).join(' | ') || _bogen.n + ' Karten');
+ok(_formZahl >= 6 && _formMax <= _bogen.n * 0.45,
+   'die Bildzonen der Partie-Karten sind verschieden: keine Form trägt die Hälfte',
+   JSON.stringify(_bogen.formen));
+ok(_bogen.gestellt, 'Spitzenwechsel und Auszeichnung einer Partie zeigen Stand, Abstand und Zahl');
 ok(_bogen.ser.join() === '15,210,0-,0-',
    'der Lauf zeigt die nächste Marke als leere Felder, eine Pleitenserie hat keine',
    _bogen.ser.join(' · '));

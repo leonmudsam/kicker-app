@@ -409,12 +409,13 @@ function showChronicle(cid){
     zweiter: zweitA && _belegIstQuote(zweit.ev, zweitA) ? {name:pname(zweit.pid), q:zweitA.k / zweitA.n} : null,
     verlauf: cid
   }) : '';
-  // Der Weg weiter: ins Profil des Halters und in den direkten Vergleich
-  // mit dem, der dahinter liegt [§C27].
+  // Der Weg weiter: ins Profil des Halters, mit seinem Namen auf dem Knopf.
+  // Daneben stand „Direkter Vergleich" und öffnete die Bilanz von Halter und
+  // Zweitem gegeneinander — eine Frage, die mit dem Rekord nichts zu tun hat,
+  // und der Knopf sagte nicht einmal, wer mit wem verglichen wird. Die
+  // Verfolger darunter führen ohnehin in ihr Profil.
   const fussRek = h ? blattFussHtml([
-    {label:'Profil', ic:'user', attr:`data-tplayer="${esc(h.pid)}"`},
-    zweit ? {label:'Direkter Vergleich', ic:'crossedSwords', prim:true,
-             attr:`data-vergleich="${esc(h.pid + '|' + zweit.pid)}"`} : null]) : '';
+    {label:'Profil von ' + pname(h.pid), ic:'user', prim:true, attr:`data-tplayer="${esc(h.pid)}"`}]) : '';
   // Gold für Können, Form und Bestmarke, Metall für die Fügung, Rot für
   // die Kehrseite [§C25].
   const rekTon = def.neg ? 'rot' : def.kind === 'fuegung' ? '' : 'gold';
@@ -449,9 +450,6 @@ function showChronicle(cid){
     ${fussRek}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
-  document.querySelectorAll('#sheet [data-vergleich]').forEach(el => {
-    el.onclick = () => { const [a, b] = el.dataset.vergleich.split('|'); sheetNav(() => showH2H(a, b)); };
-  });
   belegVerlaufLaden(document.getElementById('sheet'));
 }
 

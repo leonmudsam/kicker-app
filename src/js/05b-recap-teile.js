@@ -235,14 +235,18 @@ function belegSpanneHtml(a, zweiter){
   const [u, o] = belegSpanne(a.k, a.n);
   const pz = v => Math.round(v * 100);
   const q = a.k / a.n;
-  let satz = `Bei ${a.k} von ${a.n} liegt der Anteil auf lange Sicht mit großer Wahrscheinlichkeit zwischen <b>${pz(u)} und ${pz(o)} %</b>.`;
+  // In Worten, die man ohne Statistik versteht. Dort stand „der Abstand ist
+  // mehr als Zufall" — richtig gerechnet, aber niemand wusste, was es
+  // heißt. Gesagt wird jetzt, was die Spanne bedeutet: ein paar Partien
+  // anders, und der Wert läge woanders; und ob der Zweite dann vorne wäre.
+  let satz = `${a.k} von ${a.n} sind ${pz(q)} %. Wären ein paar Partien anders ausgegangen, läge der Wert wohl irgendwo zwischen <b>${pz(u)} und ${pz(o)} %</b>.`;
   let ref = '';
   if(zweiter && zweiter.q != null && isFinite(zweiter.q)){
     const drin = zweiter.q >= u - 1e-9 && zweiter.q <= o + 1e-9;
     ref = `<span class="bl-ref" style="left:${(zweiter.q * 100).toFixed(1)}%"></span>`;
     satz += drin
-      ? ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % darin: der Abstand kann noch Zufall sein.`
-      : ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % außerhalb: der Abstand ist mehr als Zufall.`;
+      ? ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % in diesem Bereich: der Vorsprung ist noch knapp.`
+      : ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % klar darunter: der Vorsprung ist gesichert.`;
   }
   return `<div class="bl-spanne"><span class="bl-spanne-bahn"></span>
       <span class="bl-spanne-ber" style="left:${(u * 100).toFixed(1)}%;width:${((o - u) * 100).toFixed(1)}%"></span>

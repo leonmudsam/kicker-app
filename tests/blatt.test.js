@@ -1891,14 +1891,22 @@ const ok = (c, msg, det) => {
       const card = f.closest('.nf-card');
       f.querySelectorAll('.nf-bogen, .nf-eloc').forEach(el => drin(el, card, 'Fuss'));
     });
+    // Jede Bildzone einer Partie-Karte [§C33], mit jedem Kind: ein Name, der
+    // über die Karte läuft, ist so falsch wie ein Balken.
+    const zonen = [...sheet.querySelectorAll('.nf-s-spiel :is(.nf-waage,.nf-tor,.nf-rgs,.nf-meds,.nf-spitze,.nf-ser,.nf-bil)')];
+    zonen.forEach(z => {
+      const card = z.closest('.nf-card');
+      drin(z, card, z.className.split(' ').pop());
+      z.querySelectorAll('*').forEach(el => { if(el.getClientRects().length) drin(el, card, z.className.split(' ').pop() + ' ' + el.tagName); });
+    });
     const fd = [...sheet.querySelectorAll('.nf-faden')];
     fd.forEach(f => drin(f, f.closest('.nf-card'), 'Faden'));
     const bogenOhneWert = spf.filter(f => f.querySelector('.nf-bogen') && !f.querySelector('.nf-bogen .v')).length;
-    return {spf: spf.length, faeden: fd.length, raus, bogenOhneWert};
+    return {spf: spf.length, faeden: fd.length, raus, bogenOhneWert, zonen: zonen.length};
   });
-  ok(fuss.spf > 0 && fuss.faeden > 0 && fuss.raus.length === 0 && fuss.bogenOhneWert === 0,
-     'Bogen, Chips und Faden bleiben in ihrer Karte',
-     fuss.raus.slice(0, 3).join(' | ') || fuss.spf + ' Fuesse, ' + fuss.faeden + ' Faeden');
+  ok(fuss.spf > 0 && fuss.faeden > 0 && fuss.zonen > 20 && fuss.raus.length === 0 && fuss.bogenOhneWert === 0,
+     'Bogen, Chips, Faden und jede andere Bildzone bleiben in ihrer Karte',
+     fuss.raus.slice(0, 3).join(' | ') || fuss.spf + ' Bögen, ' + fuss.zonen + ' Bildzonen, ' + fuss.faeden + ' Faeden');
   const fadenAuf = await page.evaluate(() => {
     const sheet = document.getElementById('sheet');
     const f = sheet.querySelector('.nf-faden');

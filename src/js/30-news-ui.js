@@ -787,7 +787,7 @@ function _newsBilanzBalken(aPid, bPid, aW, bW){
 // Die Partien einer Serie als Punkte. „7 Siege" ist eine Zahl, die Reihe
 // zeigt, wie lang sieben sind. Ab zwölf Punkten steht der Rest als Ziffer:
 // eine Reihe, die über die Karte hinausläuft, sagt nichts mehr.
-function _newsSerienBand(laenge, verloren, mitZiel){
+function _newsSerienBand(laenge, verloren, mitZiel, wer){
   const n = Math.max(0, Number(laenge) || 0);
   if(!n) return '';
   const zeige = Math.min(n, 12);
@@ -799,7 +799,11 @@ function _newsSerienBand(laenge, verloren, mitZiel){
   // Rechts steht, was die Punkte zaehlen. Ohne die Angabe war die halbe
   // Bandbreite leer, und die Reihe sagte nicht, ob sie Siege oder Pleiten
   // meint.
-  return `<div class="nf-ser${verloren ? ' r' : ''}">`
+  // Auf der Karte einer Partie steht die Serie unter vier Wappen, und dort
+  // sagt ein kleines Gesicht davor, WESSEN Serie es ist [§C33].
+  const pmS = wer ? pmap() : null;
+  const gesicht = wer ? [].concat(wer).map(p => pmS[p] ? avHtml(pmS[p], '', {}) : '').join('') : '';
+  return `<div class="nf-ser${verloren ? ' r' : ''}">${gesicht ? `<span class="nf-ser-av">${gesicht}</span>` : ''}`
     + Array.from({length: zeige}, () => '<i></i>').join('')
     + Array.from({length: leer}, () => '<i class="x"></i>').join('')
     + (n > zeige ? `<em>+${n - zeige}</em>` : '')
@@ -906,25 +910,217 @@ function _newsSpielZahlen(s){
 // gehört einem und nicht der Partie (`eloPid`): der Satz nennt den Besten,
 // die Chips nennen beide Sieger mit Gesicht. Die Chance ist die der Sieger
 // aus der Elo-Bahn, wie im Blatt der Partie.
+// ── Die Bildzone einer Partie folgt ihrem Anlass [§C33] ─────────────
+// Jede Partie-Karte trug denselben Fuß: Bogen der Siegchance und zwei
+// Elo-Chips. Im Feed standen damit dreißig Karten mit derselben Zeichnung
+// untereinander, und der Bogen sagte bei einem 81-%-Favoritensieg nichts,
+// was eine Karte besonders macht. Jetzt zeigt der Fuß, WOVON die Partie
+// erzählt — in fester Rangfolge, das erste, was zutrifft:
+//   Spitzenwechsel   die neue Spitze und ihr Abstand          _newsSpitzeBild
+//   Serienbruch      die Serie, die hier gerissen ist         _newsRissBild
+//   Serie            der Lauf und die nächste Marke           _newsSerienBand
+//   Außenseitersieg  der Bogen der Siegchance und die Chips   _newsChanceBogen
+//   Rivalitätsmarke  die Bilanz der beiden bis zu dieser Partie
+//   Auszeichnung     das Zeichen der Auszeichnung             _newsMedailleBild
+//   Ein-Tor-Krimi    der Bogen: wie offen es vorher stand
+//   sonst            die Elo-Waage aller vier Spieler         _newsEloWaage
+// Der Fakt kommt aus den ungebündelten Meldungen der Karte
+// (`_newsRohIndex`), weil eine Sammelzeile nur Titel und Zeichen trägt.
+function _newsRohIndex(){
+  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  let m = _newsRohMemo.get(roh);
+  if(!m){ m = new Map(roh.map(x => [x.id, x])); _newsRohMemo.set(roh, m); }
+  return m;
+}
+const _newsRohMemo = new WeakMap();
+function _newsSpielFakten(s){
+  const d = s.dataRef || {};
+  if(d.type !== 'sammel' || !Array.isArray(d.teile)) return [d];
+  const idx = _newsRohIndex();
+  return d.teile.map(t => ((idx.get(t && t.id) || {}).dataRef) || {type: t && (t.typ || t.type)});
+}
 function _newsSpielFuss(s){
   const d = s.dataRef || {};
   const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
   if(!m) return '';
   let c = d.quote != null ? d.quote / 100 : null;
+  const fakten = _newsSpielFakten(s);
+  const sp = fakten.find(f => f.type === 'spiel');
+  if(c == null && sp && sp.quote != null) c = sp.quote / 100;
   if(c == null){
     const h = getHistoryByMatchId().get(m.id);
     const e = h && h.expA != null ? h.expA : m.exp_a;
     if(e != null) c = m.winner === 'A' ? e : 1 - e;
   }
-  const bogen = (c != null && c > 0 && c < 1) ? _newsChanceBogen(c) : '';
+  const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+  const f = t => fakten.find(x => x.type === t);
+  const bogenMitChips = () => {
+    const bogen = (c != null && c > 0 && c < 1) ? _newsChanceBogen(c) : '';
+    const chips = _newsEloChips(m);
+    return (bogen || chips) ? `<div class="nf-spf">${bogen}${chips}</div>` : '';
+  };
+  let x;
+  if((x = f('lead_change')) && x.newLeader) return _newsSpitzeBild(x);
+  if((x = f('streak_killer')) && x.victimPid) return _newsRissBild(x.victimPid, x.streak);
+  if((x = f('win_streak')) && x.streak) return _newsSerienBand(x.streak, false, true, x.pid);
+  if((x = f('team_streak')) && x.streak) return _newsSerienBand(x.streak, false, true, [x.a, x.b]);
+  if(c != null && c < CHANCE_UPSET) return bogenMitChips();
+  const sieger = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+  const wende = sieger.map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
+    .filter(w => w.n >= 3).sort((a, b) => b.n - a.n)[0];
+  if(wende) return _newsWendeBild(wende.pid, wende.n);
+  if((x = f('rivalry_milestone')) && x.a && x.b){
+    const b = _newsDuellBis(x.a, x.b, m.id);
+    if(b.a + b.b) return _newsBilanzBalken(x.a, x.b, b.a, b.b);
+  }
+  if((x = f('badge_unlocked')) && x.badgeId) return _newsMedailleBild([{pid:x.playerId, badgeId:x.badgeId}]);
+  if((x = f('badge_marken')) && Array.isArray(x.marken) && x.marken.length) return _newsMedailleBild(x.marken);
+  const sprung = sieger.map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
+    .filter(w => w.r && w.r.pre - w.r.post >= 2);
+  if(sprung.length) return _newsRangBild(sprung);
+  if(hoch - tief === 1) return bogenMitChips();
+  if(hoch - tief >= 6) return _newsTorleiste(m, hoch, tief);
+  return _newsEloWaage(m);
+}
+function _newsEloChips(m){
   const pm = pmap();
   const chips = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).map(pid => {
     const v = _newsEloDelta(pid, m.id);
     if(v == null || !pm[pid]) return '';
     return `<span class="nf-eloc">${avHtml(pm[pid], '', {})}<b class="${v >= 0 ? 'g' : 'r'}">${v >= 0 ? '+' : ''}${v}</b></span>`;
   }).join('');
-  if(!bogen && !chips) return '';
-  return `<div class="nf-spf">${bogen}${chips ? `<div class="nf-elocs">${chips}</div>` : ''}</div>`;
+  return chips ? `<div class="nf-elocs">${chips}</div>` : '';
+}
+// Die Elo-Waage: alle vier Spieler um die Null, Verlierer links in Rot,
+// Sieger rechts in Grün [§C25]. Die Chips zeigten nur die Sieger, und wer
+// wie viel abgegeben hat, stand nirgends auf der Karte. Die Länge ist der
+// Betrag im Verhältnis zum größten der vier — die Zahl steht daneben.
+function _newsEloWaage(m){
+  const pm = pmap();
+  const w = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+  const l = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+  const v = pid => _newsEloDelta(pid, m.id);
+  const alle = w.concat(l).map(v).filter(x => x != null);
+  if(!alle.length) return '';
+  const max = Math.max(8, ...alle.map(Math.abs));
+  const zeile = (pid, seite) => {
+    const x = v(pid);
+    if(x == null || !pm[pid]) return '';
+    const b = (Math.abs(x) / max * 100).toFixed(0);
+    return `<span class="nf-wg-z">${avHtml(pm[pid], '', {})}<b class="${x >= 0 ? 'g' : 'r'} num">${x >= 0 ? '+' : ''}${x}</b>`
+      + `<i style="width:${b}%"></i></span>`;
+  };
+  return `<div class="nf-waage" title="Elo je Spieler">`
+    + `<div class="nf-wg-s l">${l.map(p => zeile(p, 'l')).join('')}</div>`
+    + `<span class="nf-wg-null"></span>`
+    + `<div class="nf-wg-s r">${w.map(p => zeile(p, 'r')).join('')}</div></div>`;
+}
+// Der Spitzenwechsel: wer oben steht, mit welchem Stand, und wie weit davor.
+// Die Krone ist Gold, weil die Tabellenspitze ein Titel auf Zeit ist [§C25];
+// der Vorgänger steht leiser daneben.
+function _newsSpitzeBild(x){
+  const pm = pmap(), neu = pm[x.newLeader], alt = pm[x.prevLeader];
+  if(!neu) return '';
+  return `<div class="nf-spitze">${zkHtml('crown', 'k', 'gold')}`
+    + `<span class="nf-sp-n">${avHtml(neu, '', {})}<b>${esc(neu.name)}</b>${x.elo != null ? `<em class="num">${x.elo} Elo</em>` : ''}</span>`
+    + (alt ? `<span class="nf-sp-a">${x.gap != null ? `<b class="num">${x.gap}</b> vor ` : 'vor '}${avHtml(alt, '', {})}${esc(alt.name)}</span>` : '')
+    + `</div>`;
+}
+// Der Serienbruch zeigt die Serie, die hier endet: ihre Länge in Feldern und
+// ein letztes, gerissenes. „Leon und Maxi brechen Martins 8er-Serie" nennt
+// eine Zahl; die Reihe zeigt, wie lang acht sind.
+function _newsRissBild(pid, laenge){
+  const n = Math.max(0, Number(laenge) || 0), p = pmap()[pid];
+  if(!n || !p) return '';
+  const zeige = Math.min(n, 12);
+  return `<div class="nf-ser nf-riss">${avHtml(p, '', {})}`
+    + Array.from({length: zeige}, () => '<i></i>').join('')
+    + (n > zeige ? `<em>+${n - zeige}</em>` : '')
+    + `<i class="bruch"></i><span>${n} Siege von ${esc(p.name)}, dann Schluss</span></div>`;
+}
+// Die Torleiste eines deutlichen Siegs: zehn Felder je Seite, und daneben,
+// wann die Liga zuletzt so deutlich gespielt hat. Der Stand steht im Band
+// darüber; „7 Tore Unterschied" darunter rechnete ihn nur vor [§C33] — wie
+// selten er ist, sagt keine andere Stelle der Karte.
+function _newsTorleiste(m, hoch, tief){
+  const diff = hoch - tief, t = mts(m);
+  let zuletzt = null;
+  (matches || []).forEach(x => {
+    const xt = mts(x);
+    if(xt >= t || Math.abs(x.score_a - x.score_b) < diff) return;
+    if(!zuletzt || xt > mts(zuletzt)) zuletzt = x;
+  });
+  const reihe = (k, cls) => Array.from({length:10}, (_, i) => `<i${i < k ? ` class="${cls}"` : ''}></i>`).join('');
+  const satz = zuletzt
+    ? `So deutlich zuletzt am ${new Date(mts(zuletzt)).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}`
+    : 'So deutlich noch nie in der Liga';
+  return `<div class="nf-tor"><div class="nf-tor-r"><span class="w">${reihe(hoch, 'w')}</span>`
+    + `<span class="v">${reihe(tief, 'v')}</span></div><span class="nf-tor-s">${esc(satz)}</span></div>`;
+}
+// Die Wende: wie viele Partien in Folge ein Sieger vor dieser verloren hat.
+// Gezählt wird rückwärts ab der Partie, nicht ab heute [§C33].
+function _newsPleitenVor(pid, m){
+  const eig = matchesOfPlayer(pid, matches);
+  let i = eig.indexOf(m), n = 0;
+  if(i < 0) return 0;
+  for(i--; i >= 0; i--){
+    const x = eig[i];
+    const aSeite = x.a1 === pid || x.a2 === pid;
+    if((aSeite && x.winner === 'A') || (!aSeite && x.winner === 'B')) break;
+    n++;
+  }
+  return n;
+}
+function _newsWendeBild(pid, n){
+  const p = pmap()[pid];
+  if(!p) return '';
+  const zeige = Math.min(n, 12);
+  return `<div class="nf-ser nf-wende">${avHtml(p, '', {})}`
+    + `${n > zeige ? `<em>+${n - zeige}</em>` : ''}`
+    + Array.from({length: zeige}, () => '<i class="p"></i>').join('')
+    + `<i class="w"></i><span>${n} Pleiten, dann dieser Sieg</span></div>`;
+}
+// Der Sprung in der Monatstabelle: vorher, nachher, und ein Pfeil in Grün —
+// Grün ist die Richtung [§C25]. Ab zwei Plätzen; ein Platz ist an jedem
+// Spieltag irgendwem passiert.
+function _newsRangBild(liste){
+  const pm = pmap();
+  const z = liste.map(w => pm[w.pid] ? `<span class="nf-rg">${avHtml(pm[w.pid], '', {})}`
+    + `<b>${esc(pm[w.pid].name)}</b><span class="num">Platz ${w.r.pre}</span>`
+    + `<i aria-hidden="true"></i><span class="num g">${w.r.post}</span></span>` : '').join('');
+  return z ? `<div class="nf-rgs" title="Platz in der Monatstabelle">${z}</div>` : '';
+}
+// Die Bilanz zweier Spieler gegeneinander bis zu dieser Partie — die Marke
+// steht an ihrer Partie, und der Stand von heute gehört nicht auf sie.
+function _newsDuellBis(a, b, matchId){
+  const r = {a:0, b:0};
+  const bis = (matches || []).find(x => x.id === matchId);
+  const grenze = bis ? mts(bis) : Infinity;
+  (matches || []).forEach(m => {
+    if(mts(m) > grenze) return;
+    const A = [m.a1, m.a2], B = [m.b1, m.b2];
+    const aIn = A.includes(a) ? 'A' : B.includes(a) ? 'B' : null;
+    const bIn = A.includes(b) ? 'A' : B.includes(b) ? 'B' : null;
+    if(!aIn || !bIn || aIn === bIn) return;
+    if(m.winner === aIn) r.a++; else r.b++;
+  });
+  return r;
+}
+// Die Auszeichnung zeigt ihr Zeichen in der Farbe ihrer Klasse: Violett für
+// Auszeichnungen [§C25], Gold nur für eine legendäre. Mehrere Marken einer
+// Partie stehen als Reihe, jede mit dem Namen dessen, der sie trägt.
+function _newsMedailleBild(liste){
+  const pm = pmap();
+  const z = (liste || []).slice(0, 3).map(e => {
+    const b = (typeof BADGES !== 'undefined' ? BADGES : []).find(x => x.id === e.badgeId);
+    if(!b) return '';
+    const kl = rarityOf(b.id);
+    const ton = kl === 'legendary' ? 'gold' : 'viol';
+    const wer = pm[e.pid] ? pm[e.pid].name : '';
+    return `<span class="nf-med">${zkHtml(b.ic, 'k', ton)}<span><b>${esc(b.name)}</b>`
+      + `<i>${esc(wer)}${e.rang > 1 ? ` · zum ${e.rang}. Mal` : ''}</i></span></span>`;
+  }).join('');
+  return z ? `<div class="nf-meds">${z}</div>` : '';
 }
 // ── Was der Fuß zeigt, sagt der Satz nicht [§C33] ────────────────────
 // „Vor dem Anstoß lag die Siegchance bei 81 %. Für Maxi bringt der Sieg +7
@@ -938,11 +1134,20 @@ function _newsSpielFuss(s){
 function _newsSpielSatz(desc, fussHtml){
   const t = String(desc || '');
   if(!fussHtml) return t;
-  const bogen = fussHtml.includes('nf-bogen'), chips = fussHtml.includes('nf-eloc');
+  // Die Elo steht als Chip ODER als Waage im Fuß; beide nennen den Gewinn
+  // jedes Siegers. Steht nur die Waage da, bleibt die Siegchance im Satz —
+  // sie ist dann die einzige Stelle, an der sie steht.
+  const bogen = fussHtml.includes('nf-bogen');
+  const elo = fussHtml.includes('nf-eloc') || fussHtml.includes('nf-waage');
   return t.split(/(?<=\.)\s+/).map(x => {
-    if(bogen && chips && /^Die Siegchance lag vor dem Anstoß bei \d+ %(, für .+ bringt der Sieg \+\d+ Elo)?\.$/.test(x)) return '';
+    const z = x.match(/^Die Siegchance lag vor dem Anstoß bei (\d+) %(, für .+ bringt der Sieg \+\d+ Elo)?\.$/);
+    if(z){
+      if(bogen && (elo || !z[2])) return '';
+      if(elo && z[2]) return `Die Siegchance lag vor dem Anstoß bei ${z[1]} %.`;
+      return x;
+    }
     if(bogen && /^Vor dem Anstoß lag die Siegchance bei \d+ %\.$/.test(x)) return '';
-    if(chips && /^Für .+ bringt der Sieg \+\d+ Elo\.$/.test(x)) return '';
+    if(elo && /^Für .+ bringt der Sieg \+\d+ Elo\.$/.test(x)) return '';
     return x;
   }).filter(Boolean).join(' ');
 }
