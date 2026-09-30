@@ -2905,6 +2905,49 @@ const ok = (c, msg, det) => {
      && reiter.find(r => r.name === 'Liga').fab !== 'none',
      'der Knopf „Match eintragen" fehlt nur auf der Match-Seite',
      reiter.map(r => r.name + ':' + r.fab).join(' '));
+  // ── Die Meisterbühne [§C31] bei 360 px ─────────────────────────────
+  // Podest, Titelrennen und Tage vorn stehen auf Karte und Blatt. Gemessen
+  // wird, dass nichts davon über den Innenrand läuft, dass der Strahlenkranz
+  // hinter dem Podest liegt und nicht davor, und dass Kranz und Linien bei
+  // Bewegungsruhe stillstehen.
+  await page.setViewportSize({width:360, height:780});
+  const meisterMess = async () => page.evaluate(() => window.__k.eval(`(()=>{
+    const sid = '2026-07', se = seasons.find(x => x.id === sid), top = JSON.parse(se.top_elo);
+    const s = {id:'season_recap_' + sid, cat:'season', ic:'crown', title:'x', desc:'x',
+      when:new Date(2026, 6, 31, 23, 50).getTime(), prio:92,
+      dataRef:{type:'season_recap', sid, championId:top[0].id, championElo:top[0].elo, topElo:top, fakten:{}}};
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0;width:328px';
+    host.innerHTML = '<div class="nf-wrap">' + _newsCardHtmlM2(s, false, false, '') + '</div>'
+      + '<div class="nd" style="position:static;transform:none;max-height:none">' + _newsDetailBody(s) + '</div>';
+    document.body.appendChild(host);
+    const raus = [];
+    [host.querySelector('.nf-card'), host.querySelector('.nd')].forEach(box => {
+      if(!box) { raus.push('fehlt'); return; }
+      const b = box.getBoundingClientRect();
+      box.querySelectorAll('.pod-karte, .srn-svg, .srn-band, .srn-leg, .srn-t, .srn-z, .nf-zb').forEach(e => {
+        const r = e.getBoundingClientRect();
+        if(r.left < b.left - 0.5 || r.right > b.right + 0.5) raus.push(e.className.baseVal || e.className);
+      });
+    });
+    const kranz = host.querySelector('.nf-ms-strahl'), linie = host.querySelector('.srn-l.gold');
+    const tage = host.querySelector('.srn-t .b i');
+    const out = {raus, kranz:kranz ? getComputedStyle(kranz).animationName : 'fehlt',
+      hinten:kranz ? getComputedStyle(kranz).zIndex : 'fehlt',
+      linie:linie ? getComputedStyle(linie).animationName : 'fehlt',
+      tage:tage ? getComputedStyle(tage).animationName : 'fehlt'};
+    host.remove(); return out;
+  })()`));
+  const mb = await meisterMess();
+  ok(mb.raus.length === 0, 'die Meisterbühne bleibt bei 360 px in Karte und Blatt', mb.raus.join(', '));
+  ok(mb.hinten === '-1' && mb.kranz !== 'none' && mb.linie !== 'none' && mb.tage !== 'none',
+     'der Strahlenkranz liegt hinter dem Podest, Kranz und Linien bewegen sich', JSON.stringify(mb));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const mbRuhig = await meisterMess();
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(mbRuhig.kranz === 'none' && mbRuhig.linie === 'none' && mbRuhig.tage === 'none',
+     'bei prefers-reduced-motion steht die Meisterbühne still', JSON.stringify(mbRuhig));
+
   await page.setViewportSize({width:430, height:932});
 
   console.log('\n' + '═'.repeat(60));

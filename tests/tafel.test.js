@@ -1481,6 +1481,72 @@ ok(_beleg.f.length === 0 && _beleg.zellen > 5 && _beleg.felder > 30 && _beleg.sp
    _beleg.f.slice(0, 5).join(' · ') || _beleg.zellen + ' Zellenreihen · ' + _beleg.felder + ' Felder · '
      + _beleg.spannen + ' Vorsprünge · ' + _beleg.verlaeufe + ' Verläufe');
 
+// ── Die Meisterbühne [§C31] ─────────────────────────────────────────
+// Der Meister stand im Feed als Karte ohne ein einziges Bild, und sein Blatt
+// nannte drei Elo-Zahlen und die Saison-ID. Jetzt zeichnen Karte und Blatt
+// Podest, Titelrennen und Tage vorn — und jede dieser Zahlen muss zu der
+// Rechnung passen, aus der Liga-Tab und Rückblick sie auch nehmen.
+console.log('\n═══ 6b. DIE MEISTERBÜHNE ═══');
+['2026-05', '2026-06', '2026-07'].forEach(sid => {
+  const r = JSON.parse(K.eval(`(()=>{
+    const sid = ${JSON.stringify(sid)};
+    const ph = getSeasonPositionHistory(sid), sp = saisonSpitze(sid), rang = saisonRang(sid);
+    // Unabhängig nachgerechnet: die Saison-Elo aus den Deltas der Partien,
+    // Tag für Tag, und wer am Ende jedes Spieltags vorn lag.
+    const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b));
+    const elo = {}, vorn = {};
+    let tag = null;
+    const zu = () => { if(tag == null) return;
+      const b = Object.keys(elo).sort((a,c)=>elo[c]-elo[a] || a.localeCompare(c))[0];
+      if(b) vorn[b] = (vorn[b]||0) + 1; };
+    ms.forEach(m => {
+      const d = new Date(m.created_at).getDate();
+      if(d !== tag){ zu(); tag = d; }
+      [m.a1,m.a2,m.b1,m.b2].forEach(id => { if(elo[id] == null) elo[id] = cfg.start_elo ?? 0; });
+      Object.keys(m.deltas||{}).forEach(id => { if(elo[id] != null) elo[id] += m.deltas[id]; });
+    });
+    zu();
+    const tage = new Set(ms.map(m => new Date(m.created_at).getDate())).size;
+    const abw = rang.map(e => Math.abs((ph.eloByDay[e.id]||[])[ph.lastDay-1] - e.elo)).reduce((a,b)=>Math.max(a,b),0);
+    return JSON.stringify({sp, vorn, tage, abw, champ:rang[0] && rang[0].id,
+      summe:Object.values(sp.tage).reduce((a,b)=>a+b,0)});
+  })()`));
+  ok(r.sp.spieltage === r.tage && r.summe === r.tage,
+     `${sid}: jeder Spieltag hat genau einen, der vorn lag (${r.tage})`, JSON.stringify([r.sp.spieltage, r.summe, r.tage]));
+  ok(JSON.stringify(Object.entries(r.sp.tage).sort()) === JSON.stringify(Object.entries(r.vorn).sort()),
+     `${sid}: die Tage an der Spitze stimmen mit den Partien überein`, JSON.stringify([r.sp.tage, r.vorn]));
+  ok(r.abw <= 1, `${sid}: das Titelrennen endet auf der Elo der Rangliste`, 'Abweichung ' + r.abw);
+});
+// Die echte Karte, so wie der Generator sie am 1. August bildet.
+NOW = new RealDate(2026, 7, 1, 9, 0, 0).getTime();
+const mst = JSON.parse(K.eval(`(()=>{ invalidateCache();
+  const s = _buildStories().find(x => (x.dataRef||{}).type === 'season_recap');
+  if(!s) return 'null';
+  const d = s.dataRef, karte = _newsCardHtmlM2(s, false, false, ''), blatt = _newsDetailBody(s);
+  const ph = getSeasonPositionHistory(d.sid);
+  return JSON.stringify({sorte:_newsSorte(s), held:_breakingHeroText(s), karte, blatt,
+    champ:d.championId, label:seasonLabel(d.sid), tage:ph.lastDay});
+})()`));
+NOW = new RealDate(2026, 7, 26, 21, 0, 0).getTime();
+K.eval('invalidateCache()');
+ok(mst && mst.sorte === 'held', 'der Meister trägt die Form des Helden, nicht die eines Fun Facts', mst && mst.sorte);
+if(mst){
+  console.log(`     Nachsatz: ${mst.held}`);
+  ok(!/\d{4}-\d{2}/.test(mst.held) && mst.held.indexOf(mst.label) === 0,
+     'der Nachsatz nennt den Monat beim Namen, nicht die Saison-ID', mst.held);
+  ok(!/(^|\.\s)Vor \S+\.(\s|$)/.test(mst.held), 'der Nachsatz hat kein Satzfragment', mst.held);
+  const erster = (mst.karte.match(/pod-karte gold erster" data-mpid="([^"]+)"/) || [])[1];
+  ok(erster === mst.champ, 'die Karte zeigt das Podest mit dem Meister in der Mitte', erster);
+  ok(/class="srn klein"/.test(mst.karte) && /srn-l gold/.test(mst.karte),
+     'die Karte zeigt das Titelrennen, der Meister golden');
+  const felder = ((mst.blatt.match(/<div class="srn-band"[^>]*>([\s\S]*?)<\/div>/) || [])[1] || '').match(/<i /g) || [];
+  ok(felder.length === mst.tage, 'das Band der Spitze hat ein Feld je Tag', felder.length + ' von ' + mst.tage);
+  ok(new RegExp('srn-t gold" data-pid="' + mst.champ).test(mst.blatt),
+     'bei den Tagen vorn steht der Meister golden');
+  ok(/class="srn-z"/.test(mst.blatt) && !/2026-\d\d/.test(mst.blatt.replace(/data-[a-z]+="[^"]*"/g, '')),
+     'das Blatt zeigt die Saison des Meisters als Zellen und keine Saison-ID');
+}
+
 // ── Ein Strich für jedes Zeichen [§C27] ─────────────────────────────
 // Die Strichstärke stand an 78 Stellen in 13 Werten: dieselbe Krone war in
 // der Liga dünner als im Blatt, und ein stroke-width am <svg> im Markup
