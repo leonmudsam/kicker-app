@@ -372,6 +372,26 @@ ok(gebaut.rueckblick_jahr.leer, 'der Jahresrueckblick schweigt ohne Vorjahr');
 neuKeys.filter(k => !gebaut[k].leer).forEach(k =>
   ok(!/undefined|NaN|\[object/.test(gebaut[k].title + gebaut[k].desc),
      k + ' sauber formuliert', gebaut[k].desc));
+// Die Leiter der Liga [§C30]: die Karte trägt ihren Stand mit — je Stufe die
+// Zahl der Träger und je Spieler sein Feld —, und beides muss zur Tabelle
+// passen, sonst zeigt das Blatt Gesichter auf Feldern, die sie nicht tragen.
+const _leiter = JSON.parse(K.eval(`(function(){
+  const pm = pmap(), nameOf = pid => (pm[pid]||{}).name || '?';
+  const t = _ambientTemplatePool(new Date(), pm, nameOf).find(x => x.key === 'insignium_stand');
+  const r = t && t.make(_ambientRng(1));
+  const L = r && r.dataRef && r.dataRef.leiter;
+  if(!L) return JSON.stringify({fehlt:true});
+  const falsch = L.felder.filter(([pid, si, nr]) => {
+    const P = prestigeOf(pid);
+    return P.stufe !== si || _insBildNr(P.insignie.key, P.zacken, P.grad) !== nr;
+  }).length;
+  return JSON.stringify({je:L.je, felder:L.felder.length, falsch, n:+r.vv, title:r.title});
+})()`));
+ok(!_leiter.fehlt && _leiter.je.length === 7
+   && _leiter.je.reduce((a, b) => a + b, 0) === _leiter.n && _leiter.felder === _leiter.n,
+   'die Leiter der Liga zaehlt jeden Spieler genau einmal', JSON.stringify(_leiter));
+ok(!_leiter.fehlt && _leiter.falsch === 0,
+   'und jeder steht auf dem Feld, das er traegt', JSON.stringify(_leiter));
 
 console.log('\n=== 9. BREAKING: NUR DAS SELTENSTE ===');
 // Breaking heisst: extrem seltene Auszeichnung oder echtes Ereignis. Ein
