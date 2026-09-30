@@ -1154,11 +1154,7 @@ const _toteRegeln = (function(){
   // Ohne die Kommentare: sie sind auf Deutsch, und ein Wort wie „Karte"
   // machte jede Klasse, die mit ihm anfaengt, still zu einer benutzten.
   const js = (skripte.join('\n') + ohneKomm.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' '))
-    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ')
-    // Ohne eingebettete Bilder: ihr Base64 ist Buchstabensalat, und darin
-    // stand zufaellig „rg" als eigenes Stueck — die tote Regel `.pp-rk .rg`
-    // galt damit als benutzt, bis ein neues Bild das Stueck nicht mehr trug.
-    .replace(/data:[a-z]+\/[-+.\w]+;base64,[A-Za-z0-9+\/=]+/g, ' ');
+    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
   const stuecke = new Set(js.match(/[-A-Za-z0-9_]+/g) || []);
   const benutzt = n => {
     if(stuecke.has(n)) return true;

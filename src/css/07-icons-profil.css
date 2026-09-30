@@ -88,6 +88,12 @@
     --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-aw.empty .ic.svg-ic{color:var(--faint);opacity:.5}
 
+  /* Rang-Steps */
+  .pp-rk .ic.svg-ic{display:grid;place-items:center;width:22px;height:22px;margin:0 auto 4px;color:var(--ink2)}
+  .pp-rk .ic.svg-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
+  .pp-rk.active .ic.svg-ic{color:var(--pp-tier-1);filter:drop-shadow(0 0 7px var(--pp-tier-glow))}
+
   /* Position-Header im Profil (Sturm/Abwehr) */
   .pp-pos-c .h .ic.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px}
   .pp-pos-c .h .ic.svg-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;
@@ -843,32 +849,6 @@
   .nf-lt-p.hat{opacity:1}
   .nf-lt-p.jetzt{outline:1.5px solid var(--gold);outline-offset:1px;opacity:1}
   .nf-lt-t{flex-basis:100%;text-align:right;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
-  /* Die Leiter der Liga: unter jedem Zeichen die Zahl seiner Träger. */
-  .nf-ll-f{flex:1 1 0;min-width:0;max-width:40px;display:flex;flex-direction:column;
-    align-items:center;gap:2px}
-  .nf-ll-f .nf-lt-p{width:100%;flex:0 0 auto}
-  .nf-ll-n{font-size:10px;font-weight:700;color:var(--ink2);line-height:1}
-  .nf-ll-n.leer{color:var(--faint)}
-  /* Die Leiter der Liga im Blatt: je Stufe eine Zeile, die Gesichter auf
-     ihrem Feld. */
-  .nd-ll{display:grid;gap:5px;margin-top:6px}
-  .nd-ll-z{display:grid;grid-template-columns:minmax(0,92px) minmax(0,1fr);align-items:center;gap:6px}
-  .nd-ll-n b{display:block;font-size:12px;font-weight:600;color:var(--ink2);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .nd-ll-n span{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--faint)}
-  .nd-ll-r{display:flex;gap:4px;min-width:0}
-  .nd-ll-f{position:relative;flex:1 1 0;min-width:0;max-width:52px;aspect-ratio:1}
-  .nd-ll-f > svg.ins{display:block;width:100%;height:100%;opacity:.38}
-  .nd-ll-f.da > svg.ins{opacity:1}
-  .nd-ll-g{position:absolute;left:50%;bottom:-3px;transform:translateX(-50%);display:flex}
-  .nd-ll-av{margin-left:-5px;border-radius:50%;box-shadow:0 0 0 1.5px var(--bg);cursor:pointer}
-  .nd-ll-av:first-child{margin-left:0}
-  /* Das Gesicht misst hier selbst: ohne Behälter mit Größe stand es als
-     Rechteck aus Initialen auf dem Zeichen [§C27]. */
-  .nd-ll-av .av{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
-    font-size:7px;line-height:1;overflow:hidden}
-  .nd-ll-mehr{margin-left:2px;font-size:9px;font-weight:700;color:var(--ink2);
-    align-self:center;background:var(--surface2);border-radius:7px;padding:1px 4px}
 
   /* Sorte 4 Held: Wappen gross, drei Zahlen im Fuss. */
 

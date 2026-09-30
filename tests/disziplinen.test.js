@@ -1578,16 +1578,10 @@ const _lb = JSON.parse(K.eval(`JSON.stringify((function(){
     // Ändert der Grad die Zeichnung überhaupt? Gefragt ist die Form, nicht
     // die Farbe — deshalb dasselbe Metall, nur ein anderer Grad.
     lorbeerAb: INSIGNIEN.find(x=>x.key==='lorbeer').min,
-    // Gefragt wird das Bild selbst ({eigen:true}): ein Verweis auf den Topf
-    // ist in jedem Grad gleich. Verglichen wird ein Prüfwert über den ganzen
-    // Inhalt — zwei verschiedene Bilder können gleich lang sein.
-    formen: INSIGNIEN.map(x=>({key:x.key, n:INS_BILD[x.key].length,
-      bilder: INS_BILD[x.key].map((b, g) => {
-        const s = insigniumStufeSvg(x.key, m, x.key==='stern' ? ORDENSSTERN_START+g : 0, g, {eigen:true})
-          .match(/href="([^"]+)"/)[1];
-        let h = 0; for(let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-        return h; })})),
-    schritt: ORDENSSTERN_SCHRITT
+    formen: INSIGNIEN.slice(0,-1).map(x=>({key:x.key,
+      a: insigniumStufeSvg(x.key, m, 0, 0).length,
+      b: insigniumStufeSvg(x.key, m, 0, 1).length,
+      c: insigniumStufeSvg(x.key, m, 0, 2).length}))
   };
 })())`));
 console.log('  Schwellen: ' + _lb.min.join(' · '));
@@ -1595,30 +1589,29 @@ console.log('  Getragen:  ' + _lb.namen.map((n,i)=>n+' '+_lb.stufen[i]).join(' �
 console.log('  Bester Stand: ' + _lb.hoechste);
 console.log('  Spitze: ' + _lb.werte.slice(0,3).map(x=>x.name+' '+x.punkte+' / '+x.stufe+'.'+x.grad).join(' · '));
 
-// Die Schwellen sind vorgegeben, nicht kalibriert [§C30]: 0, 500, 1000,
-// 1800, 2600, 3600, 4500, danach alle 500 Prestige eine Zacke.
-ok(_lb.min.join(',') === '0,500,1000,1800,2600,3600,4500',
+ok(_lb.min.join(',') === '0,500,1200,1950,2800,3700,4700',
    'die sieben Insignien beginnen an den festgelegten Schwellen',
    _lb.min.join(' · '));
 const _sternI = _lb.min.length - 1;
-ok(_lb.schritt === 500, 'der Ordensstern bekommt alle 500 Prestige eine Zacke',
-   String(_lb.schritt));
-// Keine Spanne ist leer oder rückwärts: eine Stufe, die man mit derselben
-// Punktzahl erreicht wie die vorige, wäre keine.
+
+// Jede Stufe wird teurer als die vorherige. Entscheidend ist eine steigende,
+// aber nicht starr verdoppelte Hürde bis zum Ordensstern bei 4700.
 const _spannen = _lb.min.slice(1).map((v,i)=>v - _lb.min[i]);
-ok(_spannen.every(s => s >= 500),
-   'jede Stufe liegt mindestens 500 Prestige über der vorigen',
+let _steil = true;
+for(let i=1;i<_spannen.length;i++) if(_spannen[i] <= _spannen[i-1]) _steil = false;
+ok(_steil,
+   'jede Stufe kostet mehr als die vorige',
    'Spannen ' + _spannen.join(' · '));
 
 const _lbN = Object.fromEntries(_lb.werte.map(x=>[x.name,x]));
-// Die Spitze steht im Zierkranz, der Stufe zwischen Volute und Lorbeer:
+// Die Spitze steht im Rankenkranz, der Stufe zwischen Volute und Lorbeer:
 // angekommen, aber mit der oberen Hälfte der Leiter noch vor sich. Leon im
 // dritten Grad, Martin mindestens im zweiten.
 ok(_lbN.Leon && _lbN.Martin && _lbN.Leon.stufe === 3 && _lbN.Leon.grad === 2
    && _lbN.Martin.stufe === 3 && _lbN.Martin.grad >= 1,
-   'Leon und Martin tragen den Zierkranz, Leon in Ebene III',
+   'Leon und Martin tragen den Rankenkranz, Leon in Ebene III',
    ['Leon','Martin'].map(n=>n+' '+JSON.stringify(_lbN[n])).join(' · '));
-// Gemessen wird, dass die drei DICHT BEIEINANDER im Zierkranz stehen, und
+// Gemessen wird, dass die drei DICHT BEIEINANDER im Rankenkranz stehen, und
 // nicht, wer von ihnen vorn liegt. Die Reihenfolge war festgeschrieben
 // („Julian hinter Leon und Martin"), und damit fiel diese Zusicherung bei
 // jedem neuen Rekord, der Punkte verschiebt: sechs neue Liga-Rekorde [§C35]
@@ -1626,8 +1619,11 @@ ok(_lbN.Leon && _lbN.Martin && _lbN.Leon.stufe === 3 && _lbN.Leon.grad === 2
 // etwas geaendert hat. Kalibriert ist die Leiter und nicht die Tabelle.
 ok(_lbN.Julian && _lbN.Julian.stufe === 3 && _lbN.Julian.grad >= 1
    && Math.abs(_lbN.Julian.punkte - _lbN.Leon.punkte) < 300,
-   'Julian steht dicht bei beiden im Zierkranz',
+   'Julian steht dicht bei beiden im Rankenkranz',
    JSON.stringify(_lbN.Julian));
+ok(_lb.lorbeerAb - _lb.hoechste >= 300,
+   'zwischen Ligaspitze und Lorbeerreif bleibt ein guter Abstand',
+   (_lb.lorbeerAb - _lb.hoechste) + ' Punkte');
 
 const _sternMoeglich = K.eval(`BADGES.reduce((sum,b)=>
   sum + auszeichnungsPunkte(b.id,10),0)`);
@@ -1682,18 +1678,17 @@ ok(_lb.erstStufe > _lb.spieler / 2,
 
 // 4. Der Grad muss man SEHEN. Zwischen zwei Schwellen liegen hunderte
 //    Punkte; täte sich am Zeichen nichts, wäre die halbe Laufbahn ein
-//    Stillstand. Jeder Grad hat sein eigenes Bild, der Ordensstern drei —
-//    eines je Zacke, bis die größte erreicht ist.
-const _stumm = _lb.formen.filter(f => new Set(f.bilder).size !== f.bilder.length
-  || f.n !== 3);
+//    Stillstand. Geprüft wird jede Stufe außer dem Ordensstern — der zählt
+//    Zacken statt Grade.
+const _stumm = _lb.formen.filter(f => f.a === f.b || f.b === f.c);
 ok(_stumm.length === 0,
    'jeder Grad zeichnet ein anderes Insignium',
    _stumm.length ? _stumm.map(f=>f.key).join(', ') + ' ändern sich nicht'
-                 : _lb.formen.map(f=>f.key + ' ' + f.n).join(', '));
+                 : _lb.formen.map(f=>f.key).join(', '));
 
 // 5. Breaking gehört dem ERSTEN Aufstieg in die beiden obersten Stufen
 //    [§C33]. Die Grenze stand als „stufe >= 3" im Generator und wäre mit
-//    zwei neuen Stufen still beim Zierkranz gelandet — dann bräche die
+//    zwei neuen Stufen still beim Rankenkranz gelandet — dann bräche die
 //    halbe Ligaspitze die Spalte.
 const _oben = JSON.parse(K.eval(`JSON.stringify({i:INSIGNIUM_OBEN, n:INSIGNIEN.length,
   keys:INSIGNIEN.slice(INSIGNIUM_OBEN).map(x=>x.key)})`));
@@ -1704,10 +1699,9 @@ ok(_oben.i === _oben.n - 2 && _oben.keys.join(',') === 'krone,stern',
 // 6. Der Schimmer wächst mit der Leiter. Hof und Glut in der Rangfarbe sind
 //    Licht, keine Form (`data-schein`), und sie sollen höheres Prestige
 //    heller machen, ohne dass dafür ein Körper dazukommt: die Glut vom
-//    Schildring an von Feld zu Feld, der Hof ab dem Zierkranz von Stufe zu
-//    Stufe. Und das Bild trägt die Rangfarbe: gezeichnet ist es im Violett
-//    der Elite, jeder andere Rang färbt es mit einem Filter um, dessen
-//    Farbmatrix die Rangfarbe ist.
+//    Schildring an von Feld zu Feld, der Hof ab dem Rankenkranz von Stufe zu
+//    Stufe. Und die Lichter des Metalls tragen die Rangfarbe — auch das Gold
+//    der Legende, das auf Weißmetall sonst als Creme gelesen wurde.
 const _schein = JSON.parse(K.eval(`JSON.stringify((function(){
   const op = (svg, was) => {
     const kreis = svg.split('<circle').find(k => k.indexOf('data-schein') >= 0 && k.indexOf(was + ')') >= 0);
@@ -1715,19 +1709,12 @@ const _schein = JSON.parse(K.eval(`JSON.stringify((function(){
     return m ? +m[1] : 0; };
   const glut = [], hof = [];
   INSIGNIEN.forEach(x => [0,1,2].forEach(g => {
-    const s = insigniumStufeSvg(x.key, 'Elite', 0, g, {eigen:true});
+    const s = insigniumStufeSvg(x.key, 'Elite', 0, g);
     glut.push(op(s, 'glut')); if(g === 0) hof.push(op(s, 'hof')); }));
-  // Die zweite Farbmatrix des Filters trägt die Rangfarbe als Verhältnis
-  // ihrer drei Zeilen; ohne Filter bliebe das Violett der Vorlage stehen.
   const naeher = Object.keys(INS_RANGFARBE).map(r => {
-    const s = insigniumStufeSvg('reif', r, 0, 0, {eigen:true});
-    const bildGefiltert = /<image[^>]*filter="url\\(#[^)]*rf\\)"/.test(s);
-    const mats = s.match(/<feColorMatrix[^>]*values="([^"]+)"/g) || [];
-    const v = mats[1] ? mats[1].match(/values="([^"]+)"/)[1].split(/\\s+/).map(Number) : null;
-    const rf = INS_RANGFARBE[r].replace('#',''), soll = [0,2,4].map(i => parseInt(rf.substr(i,2),16));
-    const ist = v ? [v[0], v[5], v[10]] : null;
-    const passt = ist ? ist.every((x, i) => Math.abs(x / ist[0] - soll[i] / soll[0]) < .02) : false;
-    return {r, bildGefiltert, passt};
+    const c = _insSatz(r), rf = INS_RANGFARBE[r];
+    const d = (a, b) => [1,3,5].reduce((s, i) => s + Math.abs(parseInt(a.substr(i,2),16) - parseInt(b.substr(i,2),16)), 0);
+    return {r, mit:d(c.hell, rf), ohne:d(_insMix(c.m, '#FFFFFF', .70), rf)};
   });
   return {glut, hof, naeher};
 })())`));
@@ -1738,11 +1725,11 @@ ok(_glutSteigt, 'die Glut in der Rangfarbe wird von Feld zu Feld nicht schwäche
    _schein.glut.join(' · '));
 const _hofSteigt = _schein.hof.slice(0, 3).every(v => v === 0)
   && _schein.hof.slice(3).every((v, i, a) => i === 0 || v > a[i-1]);
-ok(_hofSteigt, 'der Hof kommt ab dem Zierkranz und wird mit jeder Stufe kräftiger',
+ok(_hofSteigt, 'der Hof kommt ab dem Rankenkranz und wird mit jeder Stufe kräftiger',
    _schein.hof.join(' · '));
-ok(_schein.naeher.every(x => x.r === 'Elite' ? !x.bildGefiltert : (x.bildGefiltert && x.passt)),
-   'das Zeichen trägt in jedem Rang die Rangfarbe, die Elite ungefiltert',
-   _schein.naeher.map(x => x.r + ' ' + (x.bildGefiltert ? 'Filter' : 'ohne') + (x.passt ? ' passt' : '')).join(' · '));
+ok(_schein.naeher.every(x => x.mit < x.ohne),
+   'die Lichter des Metalls tragen in jedem Rang die Rangfarbe',
+   _schein.naeher.map(x => x.r + ' ' + x.mit + '<' + x.ohne).join(' · '));
 
 
 // ══════════════════════════════════════════════════════════════════════

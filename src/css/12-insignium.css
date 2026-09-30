@@ -7,9 +7,9 @@
      Ohne Band ist die viewBox "-22 -22 144 144" und QUADRATISCH auf den
      Reifmittelpunkt zentriert: waagerecht wie senkrecht sitzt er bei 50 %,
      translate(-50%,-50%) reicht also.
-     Mit Band ist sie "-40 -33 180 155", Reifmitte bei (50,50):
+     Mit Band ist sie "-40 -29 180 137", Reifmitte bei (50,50):
        waagerecht  (50+40)/180 = 50,00 %  → schon mittig, kein Versatz
-       senkrecht   (50+33)/155 = 53,55 %  → 3,55 % nach oben schieben
+       senkrecht   (50+29)/137 = 57,66 %  → 7,66 % nach oben schieben
      Der Reif misst 85 der 144 Einheiten — 59,0 % der Kantenlänge, innen
      52,1 %. Der Avatar bekommt 46 %, damit ein schmaler dunkler Sitz
      bleibt. */
@@ -68,11 +68,11 @@
   .rav.zn-l1::after{opacity:.13}
   .rav.zn-l2::after{opacity:.19}
   .rav.zn-l3::after{opacity:.26}
-  /* Die Sterne sitzen UNTER DER RAUTE. Auf dem Band lagen sie bei 77,8 %
-     der Höhe, und dort steht jetzt in jedem Zeichen die Raute des Bildes
-     [§C30]: die Titel lagen als goldener Fleck auf dem Stein. Die Spitze der
-     Raute endet bei 90,5 %, darunter ist bis zum Rand der Kachel Platz. */
-  .rav .zn-ti{bottom:auto;top:calc(var(--rav) * .95);
+  /* Die Sterne sitzen MITTIG AUF DEM BAND: der Reif liegt bei 27,8 % der
+     Kantenlänge vom Mittelpunkt, also bei 77,8 % der Höhe. Dort ist im
+     Zeichen ohne Band der Platz frei — die Raute am Fuß steht nur mit
+     Band, wo sie die Ligaposition trägt. */
+  .rav .zn-ti{bottom:auto;top:calc(var(--rav) * .778);
     transform:translate(-50%,-50%)}
 
   /* ── Dasselbe Wappen mit Banner [§C27] ────────────────────────────
@@ -83,21 +83,21 @@
      ist die viewBox 144 statt 132 Einheiten breit, also muss das SVG um
      144/132 = 109,09 % wachsen, damit die 80 Einheiten Reif dieselbe Zahl
      Pixel messen.
-     Senkrecht liegen 83 der 155 Einheiten über der Reifmitte, also 53,55 %
-     statt 50 % — das SVG rückt um 3,55 % seiner eigenen Höhe nach oben.
-     Die Höhe des SVG ist 1,25 · 155/180 = 1,076 Kantenlängen; oben steht es
-     damit 7,6 % der Kantenlänge über die Kachel hinaus, unten gar nicht.
-     Diese 7,6 % sind der Streifen der Titelsterne über dem Kristall des
-     Ordenssterns. Unten reicht die Box bis 122, weil die untere Spitze des
-     Sterns bis 120,7 reicht. */
+     Senkrecht liegen 79 der 137 Einheiten über der Reifmitte, also 57,66 %
+     statt 50 % — das SVG rückt um 7,66 % seiner eigenen Höhe nach oben.
+     Die Höhe des SVG ist 1,25 · 137/180 = 0,951 Kantenlängen; oben steht es
+     damit 4,9 % der Kantenlänge über die Kachel hinaus, unten gar nicht.
+     Diese 4,9 % sind der Streifen der Titelsterne. Jede Karte, auf der ein
+     Zeichen mit Band steht, hat oben mehr Innenabstand als das — bei 92 px
+     Kachel sind es viereinhalb Pixel. */
   .rav.rav-band > svg.ins{width:125%;
-    transform:translate(-50%,-50%) translateY(-3.548%)}
+    transform:translate(-50%,-50%) translateY(-7.664%)}
 
   /* Die Zeichnung ragt oben und unten über den 108px-Avatar hinaus. Der
      Rand wird aus der Breite gerechnet, damit der Name nicht in den Ranken
-     steht, wenn --ins-w sich ändert. Von den 155 Einheiten der Bandbox
-     liegen 83 über der Reifmitte und 72 darunter — bezogen auf die BREITE
-     von 180 sind das 0,461 und 0,400. Der Avatar deckt davon je 54px ab.
+     steht, wenn --ins-w sich ändert. Von den 137 Einheiten der Bandbox
+     liegen 79 über der Reifmitte und 58 darunter — bezogen auf die BREITE
+     von 180 sind das 0,439 und 0,322. Der Avatar deckt davon je 54px ab.
 
      --ins-w ist breiter als früher, weil die Schwinge weiter ausgreift und
      der Reif trotzdem größer bleiben muss als der 108px-Avatar: innen misst
@@ -108,11 +108,11 @@
      noch über die Bandbox hinausschlägt, und es braucht dafür Platz, den
      das Zeichen allein nicht braucht. */
   .pp-av-wrap{--ins-w:min(306px,84vw);
-    margin-top:calc(var(--ins-w) * .461 - 54px + var(--feuerluft, 0px));
-    margin-bottom:calc(var(--ins-w) * .400 - 40px)}
+    margin-top:calc(var(--ins-w) * .439 - 54px + var(--feuerluft, 0px));
+    margin-bottom:calc(var(--ins-w) * .322 - 40px)}
   .pp-av-wrap .ins{position:absolute;left:50%;top:50%;
     width:var(--ins-w);height:auto;z-index:0;pointer-events:none;
-    transform:translate(-50%,-50%) translateY(-3.548%);
+    transform:translate(-50%,-50%) translateY(-7.664%);
     /* Zurückgenommen: das Zeichen bringt seine eigene Unterlage mit, und
        zwei Schatten übereinander machten aus dem Profilkopf einen dunklen
        Fleck. Hier bleibt nur, was das Zeichen von der Karte abhebt. */
@@ -141,23 +141,20 @@
   /* Der Zeichenplatz hat eine feste Höhe: der Ordensstern baut höher als der
      glatte Reif, und ohne festen Platz sprängen die Beschriftungen beim
      Schieben von Karte zu Karte auf eine andere Höhe. */
-  .lb-k-ins{height:132px;display:grid;place-items:center}
+  .lb-k-ins{height:104px;display:grid;place-items:center}
   /* Offene Stufen sind entfärbt: man sieht, dass es sie gibt — und dass man
      sie nicht hat. Ein ausgeblendetes Zeichen sähe nach Fehler aus. */
-  .lb-k-ins svg.ins{width:60px;height:60px;filter:grayscale(1);opacity:.28;
+  .lb-k-ins svg.ins{width:56px;height:56px;filter:grayscale(1);opacity:.28;
     transition:width .22s,height .22s,opacity .22s}
   .lb-k.erreicht .lb-k-ins svg.ins{filter:none;opacity:.55}
   .lb-k.jetzt .lb-k-ins svg.ins{filter:none;opacity:.85}
   /* Die Karte in der Mitte ist die, die man ansieht — sie bekommt den Platz.
      Getragen oder nicht entscheidet die FARBE, nicht die Größe: sonst wären
      zwei Aussagen auf derselben Achse. */
-  .lb-k.fokus .lb-k-ins svg.ins{width:130px;height:130px;opacity:1;
+  .lb-k.fokus .lb-k-ins svg.ins{width:98px;height:98px;opacity:1;
     filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
-  /* In der Mitte zeigt auch eine offene Stufe ihre Farbe, etwas leiser: man
-     soll sehen können, worauf man zuläuft [§C30]. Entfärbt bleiben nur die
-     Nachbarn am Rand. */
-  .lb-k.fokus.offen .lb-k-ins svg.ins{filter:drop-shadow(0 4px 14px rgba(0,0,0,.6));
-    opacity:.72}
+  .lb-k.fokus.offen .lb-k-ins svg.ins{filter:grayscale(1) drop-shadow(0 4px 14px rgba(0,0,0,.6));
+    opacity:.45}
   /* Beschriftet wird nur die Karte in der Mitte. Die Nachbarn ragen absichtlich
      halb ins Bild — mit Text hieß das ein abgeschnittenes „erbring" am Rand,
      und ein halbes Wort liest sich als Fehler, nicht als Andeutung. Der Platz
@@ -174,41 +171,18 @@
 
   /* Die drei Grade einer Stufe. Sie sind das, was zwischen zwei Schwellen
      passiert — ohne sie stünde das Zeichen hunderte Punkte lang still. */
-  /* Knöpfe, keine Marken: jeder Grad hat sein Bild und zeigt es oben. Der
-     gezeigte trägt einen Rahmen, der eigene einen Punkt. */
-  .lb-k-grad{display:flex;gap:4px;margin-top:3px}
-  .lb-k-grad button{font-family:'Sometype Mono',monospace;font-style:normal;
-    font-size:9px;font-weight:700;letter-spacing:.04em;line-height:1;
-    color:var(--faint);border:1px solid var(--line);border-radius:5px;background:none;
-    padding:4px 6px;min-width:22px;text-align:center;cursor:pointer;position:relative}
-  .lb-k-grad button.an{color:var(--ink2);border-color:var(--line2);
+  .lb-k-grad{display:flex;gap:3px;margin-top:3px}
+  .lb-k-grad i{font-family:'Sometype Mono',monospace;font-style:normal;
+    font-size:8px;font-weight:700;letter-spacing:.04em;line-height:1;
+    color:var(--faint);border:1px solid var(--line);border-radius:4px;
+    padding:2px 4px;min-width:15px;text-align:center}
+  .lb-k-grad i.an{color:var(--ink2);border-color:var(--line2);
     background:var(--surface2)}
-  .lb-k.jetzt .lb-k-grad button.an{color:var(--ak);border-color:rgba(var(--ak-rgb),.45);
+  .lb-k.jetzt .lb-k-grad i.an{color:var(--ak);border-color:rgba(var(--ak-rgb),.45);
     background:rgba(var(--ak-rgb),.10)}
-  .lb-k-grad button.zeigt{border-color:var(--ak);color:var(--ink)}
-  .lb-k-grad button.hier::after{content:"";position:absolute;right:-3px;top:-3px;
-    width:6px;height:6px;border-radius:50%;background:var(--ak)}
   .lb-k-z{font-family:'Sometype Mono',monospace;font-size:8.5px;color:var(--faint);
     margin-top:5px;letter-spacing:.04em}
   .lb-k.jetzt .lb-k-z{color:var(--ak)}
-
-  /* ── Alle Stufen [§C30] ────────────────────────────────────────────
-     Jede Stufe eine Zeile, jedes Feld ein Knopf mit seinem Bild. Erreicht
-     steht voll da, das eigene gerahmt, was noch kommt leise, aber in Farbe:
-     entfärbt sähe man nicht, wie es aussehen wird, und genau das ist die
-     Frage dieser Liste. */
-  .lb-alle{display:grid;gap:4px;margin-top:8px}
-  .lb-alle-z{display:grid;grid-template-columns:minmax(0,96px) minmax(0,1fr);
-    align-items:center;gap:6px}
-  .lb-alle-n b{display:block;font-size:12px;font-weight:600;color:var(--ink2);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .lb-alle-n span{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--faint)}
-  .lb-alle-f{display:flex;gap:3px;min-width:0}
-  .lb-feld{flex:1 1 0;min-width:0;max-width:52px;aspect-ratio:1;padding:1px;
-    border:1px solid transparent;border-radius:10px;background:none;cursor:pointer}
-  .lb-feld svg.ins{display:block;width:100%;height:100%;opacity:.38}
-  .lb-feld.da svg.ins{opacity:1}
-  .lb-feld.jetzt{border-color:rgba(var(--ak-rgb),.6);background:rgba(var(--ak-rgb),.10)}
 
   /* ── Die zweite Leiter: die Schwinge [§C36] ────────────────────────
      Sechs Ränge nebeneinander, jeder in derselben Zeichenfläche: nur so

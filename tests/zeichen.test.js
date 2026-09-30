@@ -124,15 +124,9 @@ const ok = (c, msg, det) => {
     window._topfRetten();
     const a = window._reifBox(document.getElementById('rA'));
     const voll = document.getElementById('rB');
-    // Das Zeichen ist ein Bild [§C30]: der Reif liegt in ihm, mittig, und
-    // misst 2 · INS_R von INS_BILD_KANTE seiner Kante. Daraus folgt, wo er
-    // gezeichnet ist — gemessen am gerenderten <image>.
     let echt = null;
-    const img = voll.querySelector('svg.ins image');
-    if(img){
-      const r = img.getBoundingClientRect(), k = K('INS_BILD_KANTE'), w = r.width * 80 / k;
-      echt = {left: r.left + (r.width - w) / 2, top: r.top + (r.height - w) / 2, width: w};
-    }
+    for(const c of voll.querySelectorAll('svg.ins circle'))
+      if(Math.abs(+c.getAttribute('r') - 40) < .01){ echt = c.getBoundingClientRect(); break; }
     const b = window._reifBox(voll);
     return {a, echt: echt && {left:echt.left, top:echt.top, width:echt.width}, b,
             verweis: !!document.querySelector('#rA use'),
@@ -172,7 +166,7 @@ const ok = (c, msg, det) => {
       const el = document.querySelector(sel + ' > svg.ins');
       if(!el) return null;
       let b = null;
-      el.querySelectorAll('circle,path,ellipse,rect,use,image').forEach(n => {
+      el.querySelectorAll('circle,path,ellipse,rect,use').forEach(n => {
         let x; try { x = n.getBoundingClientRect(); } catch(e){ return; }
         if(!x || !x.width) return;
         b = b ? {l:Math.min(b.l, x.left), t:Math.min(b.t, x.top),
@@ -608,126 +602,142 @@ const ok = (c, msg, det) => {
 
 
   console.log('\n═══ 7. DIE LEITER DES INSIGNIUMS ═══');
-  // Sieben Stufen, einundzwanzig Bilder aus der Vorlage [§C30]. Gemalt ist
-  // die Vorlage, nicht gezeichnet: was hier gemessen wird, ist, ob jedes
-  // Bild so in der App steht, wie das Zeichen es braucht — mittig, gespiegelt,
-  // das Loch frei für das Gesicht, der Reif auf INS_R, nichts am Rand
-  // abgeschnitten, jeder Grad sichtbar anders und die Rangfarbe da.
-  const leiter = await page.evaluate(async () => {
+  // Sieben Stufen, einundzwanzig Zeichnungen, und die eine Zusage, die
+  // zählt: von Feld 1 bis 21 darf kein Zeichen schwächer wirken als sein
+  // Vorgänger —
+  // auch nicht über eine Stufengrenze hinweg [§C30].
+  //
+  // „Wirkt schwächer" ist keine Frage an den Umriss: der Reif wächst gar
+  // nicht nach außen, er bekommt Nieten und einen zweiten Ring nach INNEN.
+  // Gemessen wird deshalb der SCHMUCK — jedes Zeichen wird gerastert und
+  // Bildpunkt für Bildpunkt mit dem BLANKEN REIF verglichen; gezählt wird,
+  // was sich von ihm unterscheidet.
+  //
+  // Reine Deckung taugte nicht: eine Niete liegt AUF dem Band und verdeckt
+  // keinen Bildpunkt zusätzlich, obwohl man sie sieht. Genau daran hat die
+  // erste Fassung dieser Messung drei Brüche übersehen.
+  const gradBild = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const stufen = K('INSIGNIEN.map(x => x.key)');
-    const bild = async (src, G) => {
-      const b = new Image(); b.src = src; await b.decode();
-      const c = document.createElement('canvas'); c.width = c.height = G;
-      const x = c.getContext('2d', {willReadFrequently:true});
-      x.drawImage(b, 0, 0, G, G);
-      return x.getImageData(0, 0, G, G).data;
+    const raster = async (svgText, S) => {
+      const bild = new Image();
+      bild.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgText)));
+      await bild.decode();
+      const c = document.createElement('canvas');
+      c.width = c.height = S;
+      const ctx = c.getContext('2d', {willReadFrequently:true});
+      ctx.drawImage(bild, 0, 0, S, S);
+      return ctx.getImageData(0, 0, S, S).data;
     };
-    const svgBild = (k, g, rang) => 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(
-      K('insigniumStufeSvg(' + JSON.stringify(k) + ', ' + JSON.stringify(rang || 'Elite') + ', '
-        + (k === 'stern' ? 'ORDENSSTERN_START + ' + g : 0) + ', ' + g + ', {eigen:true})')
-      .replace(/<circle data-schein[^>]*\/>/g, '')
-      .replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" '))));
-    const G = 160, out = [], urls = new Set();
-    let n = 0;
-    for(const k of stufen){
-      const liste = K('INS_BILD[' + JSON.stringify(k) + ']');
-      for(let g = 0; g < liste.length; g++){
-        n++; urls.add(liste[g]);
-        const d = await bild(liste[g], G);
-        const A = (x, y) => d[(y*G + x)*4 + 3];
-        let sx = 0, sa = 0, spiegel = 0, loch = 0, lochN = 0;
-        for(let y = 0; y < G; y++) for(let x = 0; x < G; x++){
-          const a = A(x, y); sx += a * x; sa += a;
-          spiegel += Math.abs(a - A(G - 1 - x, y));
-          const r = Math.hypot(x - G/2 + .5, y - G/2 + .5) / G;
-          if(r < .19){ lochN++; if(a > 40) loch++; }
-        }
-        // Der Reif: um 23,5 % der Kante (22 bis 25 %) muss rundum Metall liegen.
-        let ring = 0;
-        for(let w = 0; w < 72; w++){
-          const ang = w / 72 * Math.PI * 2;
-          let m = 0;
-          for(let rr = .22; rr <= .25; rr += .005)
-            m = Math.max(m, A(Math.round(G/2 - .5 + Math.cos(ang) * G * rr), Math.round(G/2 - .5 + Math.sin(ang) * G * rr)));
-          if(m > 100) ring++;
-        }
-        // Und im fertigen Zeichen: am Rand der Zeichenfläche nichts, das
-        // abgeschnitten würde.
-        const z = await bild(svgBild(k, g), 144);
-        let rand = 0;
-        for(let i = 0; i < 144; i++) for(const [x, y] of [[i,0],[i,143],[0,i],[143,i]])
-          if(z[(y*144 + x)*4 + 3] > 60) rand++;
-        out.push({k, g, versatz: +((sx / sa + .5) / G - .5).toFixed(3),
-                  spiegel: +(spiegel / 2 / sa).toFixed(3),
-                  loch: +(loch / lochN).toFixed(3), ring: +(ring / 72).toFixed(2), rand});
+    // Hof und Glut in der Rangfarbe sind Licht und keine Form (`data-schein`):
+    // gemessen wird der Schmuck, und ein Hof über die ganze Kachel zählte
+    // jeden Bildpunkt als Schmuck.
+    const svg = (k, g, z) => K('insigniumStufeSvg(' + JSON.stringify(k) + ', "Elite", '
+        + (z || 0) + ', ' + g + ')').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ')
+        .replace(/<circle data-schein[^>]*\/>/g, '');
+    // Der Schmuck: Bildpunkte, die sich vom blanken Reif unterscheiden.
+    // Grob gerastert wäre das Rauschen; 160 px sind fein genug, dass acht
+    // Nieten zählbar bleiben.
+    const G = 160;
+    const blank = await raster(svg('reif', 0), G);
+    const schmuck = [];
+    for(const k of stufen) for(const g of [0,1,2]){
+      const d = await raster(svg(k, g, k === 'stern' ? 8 + g : 0), G);
+      let n = 0;
+      for(let i = 0; i < G*G; i++){
+        const o = i*4;
+        if(Math.abs(d[o]-blank[o]) + Math.abs(d[o+1]-blank[o+1])
+         + Math.abs(d[o+2]-blank[o+2]) + Math.abs(d[o+3]-blank[o+3]) > 30) n++;
       }
+      schmuck.push({k, g, n});
     }
-    // Jeder Grad ist bei 52 px sichtbar anders als der vorige.
-    const klein = {};
+    // Und dasselbe auf 52 px: was in einer Ranglistenzeile nicht ankommt,
+    // ist für die halbe Liga kein Fortschritt. Verglichen wird die FARBE,
+    // nicht die Deckung — eine Niete liegt auf dem Band und deckt keinen
+    // Bildpunkt zusätzlich, obwohl man sie sieht.
+    const S = 52;
+    const maske = async (k, g, z) => raster(svg(k, g, z), S);
+    const bilder = {}, box = {};
     for(const k of stufen){
-      klein[k] = [];
-      for(const u of K('INS_BILD[' + JSON.stringify(k) + ']')) klein[k].push(await bild(u, 52));
+      bilder[k] = []; box[k] = [];
+      for(const g of [0,1,2]){
+        bilder[k].push(await maske(k, g, k === 'stern' ? 8 + g : 0));
+        const h = document.createElement('div');
+        h.innerHTML = svg(k, g, k === 'stern' ? 8 + g : 0);
+        document.body.appendChild(h);
+        const bb = h.querySelector('svg').getBBox();
+        box[k].push([bb.x, bb.y, bb.x + bb.width, bb.y + bb.height].map(v => Math.round(v)));
+        h.remove();
+      }
     }
     const unterschied = (a, b) => {
       let d = 0, n = 0;
       for(let i = 0; i < a.length; i += 4){
-        const ab = Math.abs(a[i]-b[i]) + Math.abs(a[i+1]-b[i+1]) + Math.abs(a[i+2]-b[i+2]) + Math.abs(a[i+3]-b[i+3]);
+        const ab = Math.abs(a[i]-b[i]) + Math.abs(a[i+1]-b[i+1])
+                 + Math.abs(a[i+2]-b[i+2]) + Math.abs(a[i+3]-b[i+3]);
         if(ab > 30) d++;
         if(a[i+3] > 40 || b[i+3] > 40) n++;
       }
-      return n ? Math.round(d / n * 1000) / 10 : 0;
+      return n ? Math.round(d / n * 1000) / 10 : 0;   // Prozent der Tinte
     };
-    const grade = stufen.map(k => ({k, d: klein[k].slice(1).map((b, i) => unterschied(klein[k][i], b))}));
-    // Die Rangfarbe: gezeichnet ist Violett. Der Kopf des Reifs I (die Lilie)
-    // muss für die Elite violett und für die Legende golden sein.
-    const farbe = async (rang) => {
-      const z = await bild(svgBild('reif', 0, rang), 144);
-      let r = 0, g = 0, b = 0, n = 0;
-      for(let y = 0; y < 40; y++) for(let x = 60; x < 84; x++){
-        const o = (y*144 + x)*4; if(z[o+3] < 160) continue;
-        const s = Math.max(z[o], z[o+1], z[o+2]) - Math.min(z[o], z[o+1], z[o+2]);
-        if(s < 60) continue;                 // nur die Farbe, nicht das Metall
-        r += z[o]; g += z[o+1]; b += z[o+2]; n++;
-      }
-      return n ? {r: r/n, g: g/n, b: b/n, n} : null;
-    };
-    return {out, n, verschieden: urls.size, grade,
-            elite: await farbe('Elite'), legende: await farbe('Legende')};
+    const inStufe = {};
+    stufen.forEach(k => { inStufe[k] = [unterschied(bilder[k][0], bilder[k][1]),
+                                        unterschied(bilder[k][1], bilder[k][2])]; });
+    // Der Sprung über eine Stufengrenze muss größer sein als jeder Sprung
+    // von Grad zu Grad. Sonst wären die sieben Stufen nur noch einundzwanzig
+    // Abstufungen derselben Sache [§C30].
+    let innen = 100, fremd = 100;
+    stufen.forEach((k, a) => [0,1,2].forEach(g => {
+      [0,1,2].forEach(h => { if(h > g) innen = Math.min(innen, unterschied(bilder[k][g], bilder[k][h])); });
+      stufen.forEach((j, b) => { if(b > a) [0,1,2].forEach(h =>
+        { fremd = Math.min(fremd, unterschied(bilder[k][g], bilder[j][h])); }); });
+    }));
+    return {schmuck, inStufe, box, innen, fremd};
   });
   const NAMEN = {reif:'Reif', schild:'Schildring', volute:'Volutenkranz',
-                 zier:'Zierkranz', lorbeer:'Lorbeerreif', krone:'Kronenreif',
+                 ranke:'Rankenkranz', lorbeer:'Lorbeerreif', krone:'Kronenreif',
                  stern:'Ordensstern'};
-  leiter.out.forEach(x => console.log('  ' + (NAMEN[x.k] + '            ').slice(0,13)
-    + (x.g+1) + '   Versatz ' + x.versatz + '  Spiegel ' + x.spiegel + '  Loch ' + x.loch
-    + '  Reif ' + x.ring + '  Rand ' + x.rand));
+  gradBild.schmuck.forEach(x => console.log('  ' + (NAMEN[x.k] + '            ').slice(0,13)
+    + 'Grad ' + (x.g+1) + '   Schmuck ' + String(x.n).padStart(6)));
 
-  ok(leiter.n === 21 && leiter.verschieden === 21,
-     'Insignium: sieben Stufen mit je drei eigenen Bildern',
-     leiter.n + ' Felder, ' + leiter.verschieden + ' verschiedene Bilder');
-  const _schief = leiter.out.filter(x => Math.abs(x.versatz) > .01);
-  ok(_schief.length === 0, 'Insignium: jedes Zeichen sitzt waagerecht mittig',
-     _schief.map(x => NAMEN[x.k] + ' ' + (x.g+1) + ': ' + x.versatz).join(', ') || 'alle innerhalb 1 %');
-  const _krumm = leiter.out.filter(x => x.spiegel > .06);
-  ok(_krumm.length === 0, 'Insignium: jedes Zeichen ist spiegelgleich',
-     _krumm.map(x => NAMEN[x.k] + ' ' + (x.g+1) + ': ' + x.spiegel).join(', ') || 'Abweichung höchstens 6 %');
-  const _zu = leiter.out.filter(x => x.loch > .02);
-  ok(_zu.length === 0, 'Insignium: das Loch des Reifs ist frei für das Gesicht',
-     _zu.map(x => NAMEN[x.k] + ' ' + (x.g+1) + ': ' + x.loch).join(', ') || 'innerhalb 19 % der Kante nichts');
-  const _ringlos = leiter.out.filter(x => x.ring < .8);
-  ok(_ringlos.length === 0, 'Insignium: der Reif jedes Bildes liegt auf INS_R',
-     _ringlos.map(x => NAMEN[x.k] + ' ' + (x.g+1) + ': ' + x.ring).join(', ') || 'rundum Metall bei 22 bis 25 %');
-  const _raus = leiter.out.filter(x => x.rand > 0);
-  ok(_raus.length === 0, 'Insignium: nichts wird am Rand der Zeichenfläche abgeschnitten',
-     _raus.map(x => NAMEN[x.k] + ' ' + (x.g+1) + ': ' + x.rand + ' px').join(', ') || 'alle einundzwanzig');
-  const _stumm = leiter.grade.filter(x => x.d.some(v => v < 5));
-  ok(_stumm.length === 0, 'Insignium: jeder Grad ist bei 52 px sichtbar anders',
-     _stumm.map(x => x.k + ' ' + x.d.join('/') + ' %').join(', ')
-     || leiter.grade.map(x => x.k + ' ' + x.d.join('/')).join(' · ') + ' %');
-  const E = leiter.elite, L = leiter.legende;
-  ok(E && L && E.b > E.g + 40 && L.r > L.b + 40 && L.g > L.b,
-     'Insignium: die Lilie ist für die Elite violett und für die Legende golden',
-     JSON.stringify({elite: E && [E.r, E.g, E.b].map(Math.round), legende: L && [L.r, L.g, L.b].map(Math.round)}));
+  // 1. Von Feld 1 bis 21 fällt der Schmuck nie. Das ist die ganze Leiter in
+  //    einer Zeile — und die Stelle, an der ein neuer Katalog-Eintrag oder
+  //    eine geänderte Form als erstes auffällt.
+  const _bruch = [];
+  gradBild.schmuck.forEach((x, i) => {
+    if(i && x.n <= gradBild.schmuck[i-1].n) _bruch.push(NAMEN[x.k] + ' Grad ' + (x.g+1));
+  });
+  ok(_bruch.length === 0, 'Insignium: von Feld 1 bis 21 wirkt keines schwächer als sein Vorgänger',
+     _bruch.join(', ') || gradBild.schmuck.map(x => x.n).join(' → '));
+
+  // 2. Und jeder einzelne Grad tauscht auf 52 px mindestens fünf Prozent der
+  //    Tinte — sonst gäbe es zwischen zwei Schwellen eine Stelle, an der
+  //    sich in der Rangliste überhaupt nichts tut.
+  const _stumm = Object.keys(gradBild.inStufe).filter(k =>
+    gradBild.inStufe[k][0] < 5 || gradBild.inStufe[k][1] < 5);
+  ok(_stumm.length === 0, 'Insignium: kein Grad lässt das Zeichen unverändert',
+     _stumm.map(k => k + ' ' + gradBild.inStufe[k].join('/') + ' %').join(', ')
+     || Object.keys(gradBild.inStufe).map(k =>
+          k + ' ' + gradBild.inStufe[k].join('/')).join(' · ') + ' %');
+
+  // 3. Zwei verschiedene Stufen stehen nie so dicht beieinander wie zwei
+  //    Grade derselben Stufe. Das ist die Grenze, die eine Stufe zur Stufe
+  //    macht: ein Grad baut das EIGENE Zeichen aus, eine Stufe wechselt den
+  //    Gegenstand. Ohne diese Grenze wären die sieben nur noch einundzwanzig
+  //    Abstufungen derselben Sache [§C30].
+  ok(gradBild.fremd > gradBild.innen,
+     'Insignium: zwei Stufen stehen weiter auseinander als zwei Grade',
+     'nächste fremde Stufe ' + gradBild.fremd + ' %, nächster eigener Grad '
+     + gradBild.innen + ' %');
+
+  // 4. Das Zeichen bleibt in seiner Zeichenfläche. Die viewBox reicht von
+  //    -22 bis 122; was darüber hinausragt, schneidet der Browser lautlos ab.
+  const _raus = [];
+  Object.keys(gradBild.box).forEach(k => gradBild.box[k].forEach((b,g) => {
+    if(b[0] < -22 || b[1] < -22 || b[2] > 122 || b[3] > 122) _raus.push(k + ' ' + (g+1));
+  }));
+  ok(_raus.length === 0, 'Insignium: kein Grad ragt aus der Zeichenfläche',
+     _raus.join(', ') || 'alle einundzwanzig innerhalb von -22…122');
 
   // 5. Dasselbe für die UNTERLAGE im vollen Zeichen. Sie setzt den Reif auf
   //    die Schwinge und muss dabei über den ganzen Schmuck reichen — die
@@ -777,7 +787,8 @@ const ok = (c, msg, det) => {
   const sternMess = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const id = 'st_';
-    K('window.__c = _insSatz("Elite");');
+    K('window.__c = _insSatz("Elite"); __c.unterlage = true;'
+      + '__c.akz = _insAkzent("' + id + '", __c); __c.metallStein = _insStahl("' + id + '", __c);');
     const vb = K('INS_BAND_BOX').split(/\s+/).map(Number);
     const B = 300, H = Math.round(B * vb[3] / vb[2]);
     const defs = K('_insDefs("' + id + '", __c, 1)');
@@ -806,9 +817,9 @@ const ok = (c, msg, det) => {
     for(const k of stufen) for(const g of [0,1,2]){
       const z = await raster(
         K('_insBandGruppe(_insSchwingen(5, "' + id + '"))')
-        + K('_insStufe("' + k + '", __c, ' + (8 + g) + ', "' + id + '", ' + g + ')')
+        + K('_insStufe("' + k + '", __c, 8, "' + id + '", ' + g + ')')
             .replace(/<circle data-schein[^>]*\/>/g, '')
-        + K('_insFuss(3)'));
+        + K('_insFuss(__c, 3, __c.akz)'));
       for(const t of [1, 3, 5, 8, 12, 20]){
         let n = 0, sn = 0;
         for(let i = 0; i < z.length; i++){ if(sterne[t][i]){ sn++; if(z[i]) n++; } }
@@ -857,8 +868,8 @@ const ok = (c, msg, det) => {
   });
   console.log('  Luft über dem obersten Stern: ' + sternMess.luft + ' Einheiten');
 
-  // 1. Kein Bildpunkt der Sterne liegt auf dem Zeichen — in keinem der
-  //    einundzwanzig Bilder und bei keiner Titelzahl.
+  // 1. Kein Bildpunkt der Sterne liegt auf dem Zeichen — in keiner der
+  //    einundzwanzig Zeichnungen und bei keiner Titelzahl.
   ok(sternMess.treffer.length === 0,
      'Sterne: kein Zeichen liegt unter ihnen',
      sternMess.treffer.slice(0, 4).join(' · ')

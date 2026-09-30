@@ -1291,46 +1291,41 @@ function _ambientTemplatePool(now, pm, nameOf){
       dataRef:{ ambientPid:pid, prestige:true } };
   }});
 
-  // ── Die Leiter der Liga [§C30] ────────────────────────────────────
-  //     Die Leiter hat einundzwanzig Zeichen, und die meisten hat nie
-  //     jemand gesehen: wer im Zierkranz steht, erfährt vom Kronenreif nur,
-  //     wenn er in der Laufbahn zufällig so weit schiebt. Diese Karte zeigt
-  //     sie der ganzen Liga — die sieben Stufen mit der Zahl ihrer Träger,
-  //     und im Blatt jedes Feld mit den Gesichtern, die es tragen.
-  //     Der Stand wird MIT der Karte gespeichert (`leiter`): ein Fun Fact ist
-  //     eine Ziehung und erzählt vom Tag, an dem er stand [§C33].
   T.push({ key:'insignium_stand', make: () => {
     if(typeof prestigeTabelle !== 'function' || typeof INSIGNIEN === 'undefined') return null;
     let P = null; try { P = prestigeTabelle(); } catch(e){ return null; }
-    const zahl = INSIGNIEN.map(() => 0), felder = [];
-    let n = 0, spitze = null;
+    const zahl = INSIGNIEN.map(() => 0);
+    let n = 0;
     Object.keys(P.byPid).forEach(pid => {
       if(!pm[pid]) return;
-      const S = prestigeOf(pid);
-      zahl[S.stufe]++; n++;
-      felder.push([pid, S.stufe, _insBildNr(S.insignie.key, S.zacken, S.grad)]);
-      if(!spitze || S.punkte > spitze.punkte) spitze = S;
+      zahl[prestigeOf(pid).stufe]++; n++;
     });
-    if(!n || !spitze) return null;
-    const leer = zahl.filter(v => v === 0).length;
-    const wort = x => ['keine', 'eine', 'zwei', 'drei', 'vier', 'fünf', 'sechs'][x] || String(x);
-    const letzte = INSIGNIEN[INSIGNIEN.length - 1];
+    if(!n) return null;
+    const hoechste = zahl.reduce((acc, v, i) => v > 0 ? i : acc, 0);
+    const oben = INSIGNIEN[hoechste];
+    const leer = INSIGNIEN.length - 1 - hoechste;
     return { cat:'history', ic:'medalTrio', prio:4,
-      // Die Schlagzeile nennt, was noch niemand gesehen hat: das ist der
-      // Grund, die Karte zu öffnen. „Die Liga trägt drei verschiedene
-      // Insignien" zählte, was jeder in der Rangliste ohnehin sieht.
-      title: leer === 0 ? 'Jede Stufe der Leiter ist vergeben'
-        : leer === 1 ? 'Eine Stufe der Leiter trägt noch niemand'
-        : `${wort(leer).replace(/^./, c => c.toUpperCase())} Stufen der Leiter trägt noch niemand`,
-      desc: `Die Spitze trägt den ${spitze.insignie.name}`
-        + (spitze.naechste
-            ? `, bis zum ${spitze.naechste.name} fehlen ${spitze.fehlt} Prestige.`
-              + (spitze.insignie.key !== letzte.key && spitze.naechste.key !== letzte.key
-                  ? ` Der ${letzte.name} beginnt bei ${letzte.min}.` : '')
-            : ` mit ${spitze.zacken} Zacken.`),
+      // „Die Liga traegt 1 verschiedene Insignien" war ein Zahlwort im
+      // Plural, und der Satz darunter war eine Liste aus Etiketten samt
+      // Nullen: „Reif: 12, Schildring: 0, Volutenkranz: 0". Genannt wird
+      // jetzt nur, was auch jemand traegt, und im Satz stehen Traeger statt
+      // Doppelpunkte [§C33].
+      title: (function(){
+        const k = zahl.filter(v => v > 0).length;
+        return k === 1 ? `Die ganze Liga trägt dieselbe Stufe`
+                       : `Die Liga trägt ${_zahlwortDe(k)} verschiedene Insignien`;
+      })(),
+      desc: INSIGNIEN.map((s, i) => ({s, v:zahl[i]})).filter(x => x.v > 0)
+          // „7 traegt den Schildring" — die Zahl stand im Plural, das Verb
+          // im Singular.
+          .map(x => `${x.v === 1 ? 'einer trägt' : x.v + ' tragen'} den ${x.s.name}`)
+          .reduce((txt, teil, i, arr) => txt + (i === 0 ? '' : i === arr.length - 1 ? ' und ' : ', ') + teil, '')
+          .replace(/^./, c => c.toUpperCase())
+        + `. Höchste getragene Stufe ist der ${oben.name}`
+        + (leer > 0 ? `, darüber ${leer === 1 ? 'liegt noch eine Stufe' : 'liegen noch ' + leer + ' Stufen'}, die niemand erreicht hat.` : '.'),
       // „12 gewertet" sagte nicht, WAS gewertet ist. Die Zahl zaehlt Spieler.
       vv:String(n), vl:'Spieler',
-      dataRef:{ ambientPids:[], leiter:{je:zahl, felder} } };
+      dataRef:{ ambientPids:[] } };
   }});
 
   T.push({ key:'titelband_stand', make: () => {

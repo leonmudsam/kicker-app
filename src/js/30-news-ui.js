@@ -615,8 +615,6 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     // Fun Fact: die Zahl links, der Satz rechts. Bewusst der leiseste Bau.
     if(d.vv != null && d.vv !== '') gesicht = `<div class="nf-gr-l">${_newsWertBlock(d.vv, d.vl, 'metall')}</div>`;
     else gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
-    // Die Leiter der Liga zeigt ihre Stufen, darunter die Zahl der Träger.
-    if(d.leiter) fuss = _newsLigaLeiter(d.leiter);
   }
   // Jede Geschichte, die durch eine konkrete Partie ausgeloest wurde,
   // zeigt diese Partie. Das gilt auch fuer Auszeichnungen, Serien und
@@ -1604,24 +1602,6 @@ function _newsLeiter(pid){
     }).join('');
     const rest = P.naechste ? `${P.punkte} / ${P.naechste.min}` : `${P.punkte}`;
     return `<div class="nf-leiter">${punkte}<span class="nf-lt-t">${esc(rest)}</span></div>`;
-  } catch(e){ return ''; }
-}
-
-// Die Leiter der ganzen Liga [§C30]: jede Stufe im ersten Grad, darunter,
-// wie viele sie tragen. Gezeichnet im Violett der Vorlage — die Karte gehört
-// keinem Spieler, also auch keinem Rang. Eine Stufe ohne Träger steht leise
-// da, aber sie steht da: sie ist der Grund der Karte.
-function _newsLigaLeiter(L){
-  try {
-    const je = Array.isArray(L && L.je) ? L.je : [];
-    const f = INSIGNIEN.map((ins, i) => {
-      const n = je[i] | 0;
-      let z = '';
-      try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG, 0, 0) || ''; } catch(e){ z = ''; }
-      return `<span class="nf-ll-f"><span class="nf-lt-p${n ? ' hat' : ''}">${z}</span>`
-        + `<span class="nf-ll-n num${n ? '' : ' leer'}">${n || '–'}</span></span>`;
-    }).join('');
-    return `<div class="nf-leiter nf-ll">${f}<span class="nf-lt-t">Träger je Stufe</span></div>`;
   } catch(e){ return ''; }
 }
 
