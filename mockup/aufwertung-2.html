@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sieben Insignien</title>
+<!--
+  Entwurf für den nächsten Auftrag: die Insignium-Leiter mit sieben Stufen in
+  zwei Richtungen, dazu Bewegung und neue grafische Ansichten. Eigenständige
+  Seite ohne Bauablauf, kein Teil der App [CLAUDE.md §2]. Die Zeichnungen
+  entstehen hier mit derselben Bauweise wie in 35b-prestige.js (Röhrenband,
+  zweiflächige Körper, Rangfarbe als Stein), damit das Mockup so aussieht wie
+  das, was eingebaut würde. Namen und Zahlen der Liga stehen als Anschauung.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sometype+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c0b; --bg2:#0f1311; --surface:#141a16; --surface2:#1a221d;
+  --surface3:#222b25; --line:#28332b; --line2:#34423a;
+  --ink:#eef3ef; --ink2:#b9c4bd; --muted:#717f76; --faint:#4a554e;
+  --acid:#BEF264; --acid2:#A3E635; --acid-deep:#1A2E08;
+  --orange:#ff7849; --blue:#56b4e8; --red:#f0566a; --gold:#f7cf4a; --purple:#a78bfa;
+  --silber:#C2C9D0; --bronze:#C08457;
+  --r:18px;
+  --mono:'Sometype Mono',ui-monospace,monospace;
+  --disp:'Archivo Black',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+  line-height:1.45;-webkit-font-smoothing:antialiased;padding-bottom:80px;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(700px circle at 85% -5%,rgba(190,242,100,.07),transparent 55%),
+             radial-gradient(600px circle at 10% 105%,rgba(167,139,250,.06),transparent 55%)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+
+header.kopf{max-width:1240px;margin:0 auto;padding:36px 16px 10px}
+header.kopf h1{font-family:var(--disp);font-size:clamp(26px,4vw,40px);letter-spacing:-.03em;line-height:1.02}
+header.kopf h1 small{display:block;font-family:'Space Grotesk',system-ui,sans-serif;font-size:14px;font-weight:600;
+  color:var(--acid);letter-spacing:0;margin-top:8px}
+header.kopf p{color:var(--muted);font-size:14px;max-width:80ch;margin-top:12px}
+header.kopf p b{color:var(--ink2);font-weight:600}
+
+nav.leiste{position:sticky;top:0;z-index:40;background:rgba(10,12,11,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);margin:20px 0 30px}
+nav.leiste .in{max-width:1240px;margin:0 auto;padding:10px 16px;display:flex;gap:6px;
+  overflow-x:auto;scrollbar-width:none;align-items:center}
+nav.leiste .in::-webkit-scrollbar{display:none}
+nav.leiste a{flex-shrink:0;color:var(--muted);text-decoration:none;font-size:12.5px;font-weight:600;
+  padding:6px 11px;border-radius:9px;border:1px solid transparent}
+nav.leiste a:hover{color:var(--ink);border-color:var(--line)}
+nav.leiste label{margin-left:auto;flex-shrink:0;display:flex;gap:7px;align-items:center;
+  font-size:11.5px;color:var(--muted);cursor:pointer;padding-left:12px}
+nav.leiste input{accent-color:var(--acid)}
+
+section.abs{max-width:1240px;margin:0 auto 64px;padding:0 16px;scroll-margin-top:70px}
+section.abs>h2{font-family:var(--disp);font-size:22px;letter-spacing:-.02em;display:flex;
+  align-items:baseline;gap:12px;flex-wrap:wrap}
+section.abs>h2 .nr{font-family:var(--mono);font-size:12px;color:var(--acid);letter-spacing:.06em}
+section.abs>.lead{color:var(--muted);font-size:14px;max-width:82ch;margin:8px 0 22px}
+section.abs>.lead b{color:var(--ink2);font-weight:600}
+.reihe{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:28px;align-items:start}
+.notiz{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 8px}
+.notiz h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:12px}
+.notiz ol{list-style:none;counter-reset:n}
+.notiz li{counter-increment:n;position:relative;padding:0 0 14px 34px;font-size:13.5px;color:var(--ink2)}
+.notiz li::before{content:counter(n);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:7px;
+  display:grid;place-items:center;font:700 11px var(--mono);color:var(--acid);background:rgba(190,242,100,.08);
+  border:1px solid rgba(190,242,100,.25)}
+.notiz li b{color:var(--ink);font-weight:600}
+.notiz p{font-size:13.5px;color:var(--ink2);margin-bottom:12px}
+.regel{margin-top:6px;margin-bottom:14px;font-size:12.5px;color:var(--muted);border-left:2px solid var(--line2);padding:2px 0 2px 12px}
+.regel b{color:var(--ink2)}
+
+/* ── Die Leiter ──────────────────────────────────────────────── */
+.leiter-kopf{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+.leiter-kopf .t{font:700 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.rangwahl{display:inline-flex;gap:3px;padding:3px;border-radius:12px;background:var(--bg2);border:1px solid var(--line)}
+.rangwahl button{border:0;background:none;padding:6px 11px;border-radius:9px;font-size:12px;font-weight:600;color:var(--muted)}
+.rangwahl button.an{background:var(--surface3);color:var(--ink)}
+.rangwahl button i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.leiter{display:grid;gap:10px}
+.stufe{display:grid;grid-template-columns:132px repeat(3,minmax(0,1fr));gap:8px;align-items:center;
+  background:linear-gradient(180deg,var(--surface),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.stufe .name{display:flex;flex-direction:column;gap:2px}
+.stufe .name b{font-size:14.5px}
+.stufe .name span{font:600 10.5px var(--mono);color:var(--muted);letter-spacing:.04em}
+.stufe .name em{font-style:normal;font-size:11px;color:var(--ink2);line-height:1.35;margin-top:4px}
+.stufe .name .neu{align-self:flex-start;margin-top:5px;font:700 9px var(--mono);letter-spacing:.12em;color:var(--purple);
+  border:1px solid rgba(167,139,250,.35);background:rgba(167,139,250,.08);border-radius:6px;padding:1px 6px}
+.feld{display:flex;flex-direction:column;align-items:center;gap:2px}
+.feld .bild{width:min(100%,128px);aspect-ratio:1}
+.feld .bild svg{width:100%;height:100%;display:block;overflow:visible}
+.feld span{font:600 10px var(--mono);color:var(--muted)}
+@media (max-width:640px){
+  .stufe{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .stufe .name{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:8px}
+  .stufe .name em{flex-basis:100%}
+}
+
+/* ── Im Alltag ───────────────────────────────────────────────── */
+.tel{background:var(--bg2);border:1px solid var(--line2);border-radius:30px;padding:14px 12px 16px;max-width:380px;
+  margin:0 auto;width:100%;box-shadow:0 30px 70px -40px rgba(0,0,0,.8)}
+.tel .cap{font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:10px}
+.rzeile{display:grid;grid-template-columns:22px 52px minmax(0,1fr) auto;gap:10px;align-items:center;
+  padding:6px 8px;border-radius:14px}
+.rzeile + .rzeile{margin-top:2px}
+.rzeile:nth-child(odd){background:rgba(255,255,255,.018)}
+.rzeile .p{font:700 12px var(--mono);color:var(--muted);text-align:center}
+.rzeile .w{position:relative;width:52px;height:52px}
+.rzeile .w svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.rzeile .w .av{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;
+  display:grid;place-items:center;font:700 9px 'Space Grotesk',sans-serif;color:#0b0f0d}
+.rzeile .n b{display:block;font-size:14px}
+.rzeile .n span{font-size:11px;color:var(--muted)}
+.rzeile .e{font:700 14px var(--mono)}
+.zwei{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.zwei > div > .t{font:700 9.5px var(--mono);letter-spacing:.14em;color:var(--muted);text-align:center;margin:4px 0 6px}
+.zwei .rzeile{grid-template-columns:52px minmax(0,1fr);padding:4px}
+.zwei .rzeile .e,.zwei .rzeile .p{display:none}
+.lt{display:flex;gap:3px;align-items:center;margin-top:8px}
+.lt i{flex:1 1 0;min-width:0;max-width:40px;aspect-ratio:1;opacity:.42}
+.lt i svg{width:100%;height:100%;display:block;overflow:visible}
+.lt i.hat{opacity:1}
+.lt i.jetzt{outline:1.5px solid var(--gold);outline-offset:1px;border-radius:50%}
+.lt-t{display:flex;justify-content:space-between;font:600 10px var(--mono);color:var(--muted);margin-top:6px}
+.lt-t b{color:var(--ink)}
+.karte{background:linear-gradient(180deg,var(--surface),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:12px}
+.karte .rub{font:700 9.5px var(--mono);letter-spacing:.14em;color:var(--purple);text-transform:uppercase}
+.karte h4{font-size:15px;margin-top:6px}
+
+/* ── Der Aufstieg ────────────────────────────────────────────── */
+.aufstieg{position:relative;display:grid;place-items:center;height:260px;border-radius:22px;overflow:hidden;
+  background:radial-gradient(60% 60% at 50% 45%,rgba(167,139,250,.14),transparent 70%),var(--surface);border:1px solid var(--line)}
+.aufstieg .bild{width:190px;height:190px}
+.aufstieg .bild svg{width:100%;height:100%;overflow:visible}
+.aufstieg .txt{position:absolute;bottom:14px;left:0;right:0;text-align:center}
+.aufstieg .txt b{display:block;font-size:17px}
+.aufstieg .txt span{font:600 11px var(--mono);color:var(--muted)}
+.aufstieg .schein{position:absolute;inset:-20%;background:conic-gradient(from 0deg,transparent,rgba(247,207,74,.10),transparent 30%);
+  opacity:0;pointer-events:none}
+.aufstieg.laeuft .schein{animation:aufSchein 2.4s ease-out both}
+@keyframes aufSchein{0%{opacity:0;transform:rotate(0)}30%{opacity:1}100%{opacity:0;transform:rotate(120deg)}}
+.lage-neu{transform-origin:50px 50px;animation:lageEin .9s cubic-bezier(.2,.9,.25,1.2) both}
+@keyframes lageEin{from{opacity:0;transform:scale(.72) rotate(-8deg)}to{opacity:1;transform:none}}
+.lage-neu-b{animation:lageB 1s ease-out both}
+@keyframes lageB{from{opacity:0}to{opacity:1}}
+.knopfreihe{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.knopf{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:12.5px;padding:9px 13px;border-radius:12px;
+  background:var(--surface2);border:1px solid var(--line2)}
+.knopf.prim{background:var(--acid);color:var(--acid-deep);border-color:transparent}
+
+/* ── Bewegung ────────────────────────────────────────────────── */
+.demo{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.demo h4{font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.demo h4 small{font:600 10px var(--mono);color:var(--muted);letter-spacing:.06em}
+.demo p.k{font-size:12.5px;color:var(--muted);margin:6px 0 12px}
+.demo .kost{margin-top:10px;font:600 10.5px var(--mono);color:var(--acid);letter-spacing:.02em}
+/* Rangliste nach einer Partie: FLIP */
+.flip .rzeile{grid-template-columns:22px 30px minmax(0,1fr) auto;background:var(--surface);border:1px solid var(--line);
+  will-change:transform}
+.flip .rzeile + .rzeile{margin-top:5px}
+.flip .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 10px "Space Grotesk",sans-serif;color:#0b0f0d}
+.flip .d{font:700 11px var(--mono);padding:2px 6px;border-radius:7px;opacity:0;transform:translateY(4px);transition:opacity .3s,transform .3s}
+.flip .d.an{opacity:1;transform:none}
+.flip .d.g{color:var(--acid);background:rgba(190,242,100,.1)} .flip .d.r{color:var(--red);background:rgba(240,86,106,.1)}
+.flip .rzeile.hoch{box-shadow:inset 3px 0 0 var(--acid)}
+/* Zahl zählt */
+.zr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.zr div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
+.zr b{display:block;font:400 24px var(--disp);letter-spacing:-.02em}
+.zr span{font-size:10.5px;color:var(--muted)}
+/* Stories */
+.st{position:relative;height:420px;border-radius:24px;overflow:hidden;background:#080a09;border:1px solid var(--line2);user-select:none}
+.st .bars{position:absolute;top:10px;left:12px;right:12px;display:flex;gap:4px;z-index:3}
+.st .bars i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden}
+.st .bars i b{display:block;height:100%;width:100%;background:#fff;transform-origin:left;transform:scaleX(0)}
+.st .bars i.fertig b{transform:scaleX(1)}
+.st .bars i.jetzt b{animation:stLauf 4.5s linear forwards}
+@keyframes stLauf{to{transform:scaleX(1)}}
+.st .seite{position:absolute;inset:0;padding:34px 18px 20px;display:flex;flex-direction:column;justify-content:flex-end;
+  opacity:0;transform:scale(1.04);transition:opacity .35s,transform .45s}
+.st .seite.an{opacity:1;transform:none}
+.st .seite .rub{font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase}
+.st .seite h5{font:400 26px/1.08 var(--disp);letter-spacing:-.02em;margin:8px 0}
+.st .seite p{font-size:13px;color:var(--ink2)}
+.st .gross{font:400 84px/1 var(--disp);letter-spacing:-.05em;margin-bottom:auto;margin-top:30px}
+.st .tipp{position:absolute;inset:0;display:grid;grid-template-columns:1fr 2fr;z-index:4}
+/* Pull to refresh */
+.ptr{position:relative;height:240px;border-radius:20px;overflow:hidden;background:var(--surface);border:1px solid var(--line);touch-action:none}
+.ptr .inh{position:absolute;inset:0;padding:14px;will-change:transform}
+.ptr .ball{position:absolute;left:50%;top:-34px;width:26px;height:26px;margin-left:-13px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,#d8ddd9 45%,#8a938d);box-shadow:0 4px 10px rgba(0,0,0,.5)}
+.ptr .ball::after{content:"";position:absolute;inset:4px;border-radius:50%;border:1.5px dashed rgba(10,12,11,.35)}
+.ptr .zeilen div{height:34px;border-radius:10px;background:var(--surface2);margin-bottom:8px}
+.skel{background:linear-gradient(100deg,var(--surface2) 40%,var(--surface3) 50%,var(--surface2) 60%) 0 0/200% 100%;
+  animation:skel 1.4s linear infinite}
+@keyframes skel{to{background-position:-200% 0}}
+
+/* ── Neue Ansichten ──────────────────────────────────────────── */
+.kal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.kal i{aspect-ratio:1;border-radius:6px;background:var(--surface2);position:relative}
+.kal i.l1{background:rgba(190,242,100,.18)} .kal i.l2{background:rgba(190,242,100,.38)}
+.kal i.l3{background:rgba(190,242,100,.62)} .kal i.l4{background:var(--acid)}
+.kal i.potd::after{content:"";position:absolute;inset:-2px;border-radius:8px;box-shadow:0 0 0 1.5px var(--gold)}
+.kal-k{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font:600 9.5px var(--mono);color:var(--muted);text-align:center;margin-bottom:4px}
+.leg{display:flex;align-items:center;gap:6px;font:600 10px var(--mono);color:var(--muted);margin-top:8px}
+.leg i{width:12px;height:12px;border-radius:4px;display:inline-block}
+svg.graf{width:100%;height:auto;display:block;overflow:visible}
+.zeichne{stroke-dasharray:var(--l,600);stroke-dashoffset:var(--l,600);animation:zeichne 1.6s ease-out forwards}
+@keyframes zeichne{to{stroke-dashoffset:0}}
+.plan{display:grid;gap:10px}
+.plan > div{display:grid;grid-template-columns:44px 1fr;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.plan .n{font:700 20px var(--disp);color:var(--acid)}
+.plan h4{font-size:14px}
+.plan p{font-size:12.5px;color:var(--muted);margin-top:3px}
+.tab{width:100%;border-collapse:collapse;font-size:12.5px}
+.tab th,.tab td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
+.tab th{font:700 10px var(--mono);letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.tab td.num{text-align:right}
+.tab tr.neu td{color:var(--purple)}
+
+body.ruhig *,body.ruhig *::before,body.ruhig *::after{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<header class="kopf">
+  <h1>Sieben Insignien<small>Mockup · zwei Richtungen für die Leiter, dazu Bewegung und neue Ansichten</small></h1>
+  <p>Die Leiter bekommt zwei Stufen mehr, damit zwischen <b>Volutenkranz (1200)</b> und <b>Lorbeerreif (2800)</b> und zwischen Lorbeerreif und <b>Ordensstern</b> keine langen Strecken ohne neues Zeichen liegen. Der erste Versuch setzte zwei weitere fremde Gegenstände zwischen die fünf alten, und die Leiter las sich als Flickwerk. Hier stehen deshalb <b>zwei vollständige Leitern</b> mit je 21 Zeichnungen, jede nach einer einzigen Idee gebaut. Beide nutzen dieselben Schwellen, dieselbe Machart und dieselbe Rangfarbe als Stein. Die Rangwahl über jeder Leiter zeigt das Metall der vier Ränge.</p>
+</header>
+
+<nav class="leiste"><div class="in">
+  <a href="#schwellen">Schwellen</a><a href="#a">A · Schicht für Schicht</a><a href="#b">B · Eine Bauweise</a>
+  <a href="#alltag">Im Alltag</a><a href="#aufstieg">Der Aufstieg</a><a href="#bewegung">Bewegung</a><a href="#ideen">Neue Ansichten</a><a href="#plan">Reihenfolge</a>
+  <label><input type="checkbox" id="ruhig"> Bewegung reduzieren</label>
+</div></nav>
+
+<!-- ═══ SCHWELLEN ═══════════════════════════════════════════════════ -->
+<section class="abs" id="schwellen">
+  <h2><span class="nr">01</span>Sieben Stufen, eine steigende Leiter</h2>
+  <p class="lead">Die Schwellen gelten für beide Richtungen. Jede Spanne ist teurer als die vorige, der <b>Lorbeerreif beginnt weiter bei 2800</b> und niemand verliert durch den Umbau seine Stufe. Der Ordensstern rückt von 4500 auf 4700, damit die Spannen weiter wachsen. Die drei Grade bleiben bei 0, 16 und 40 % der Spanne.</p>
+  <div class="reihe">
+    <table class="tab">
+      <thead><tr><th>Stufe</th><th>A</th><th>B</th><th class="num">ab</th><th class="num">Spanne</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Reif</td><td>Reif</td><td class="num">0</td><td class="num">500</td></tr>
+        <tr><td>2</td><td>Schildring</td><td>Schildring</td><td class="num">500</td><td class="num">700</td></tr>
+        <tr><td>3</td><td>Volutenkranz</td><td>Volutenkranz</td><td class="num">1200</td><td class="num">750</td></tr>
+        <tr class="neu"><td>4</td><td>Juwelenkranz</td><td>Kleinod</td><td class="num">1950</td><td class="num">850</td></tr>
+        <tr><td>5</td><td>Lorbeerreif</td><td>Lorbeerreif</td><td class="num">2800</td><td class="num">900</td></tr>
+        <tr class="neu"><td>6</td><td>Kronreif</td><td>Kronreif</td><td class="num">3700</td><td class="num">1000</td></tr>
+        <tr><td>7</td><td>Ordensstern</td><td>Ordensstern</td><td class="num">4700</td><td class="num">Zacken</td></tr>
+      </tbody>
+    </table>
+    <div class="notiz"><h3>Wo die Liga dann steht</h3><ol>
+      <li><b>Die Spitze im Juwelenkranz bzw. Kleinod.</b> Leon (2377), Julian (2239) und Martin (2230) stehen in den Fixtures in Stufe 4, alle drei in Grad II oder III. Heute tragen sie Volutenkranz III.</li>
+      <li><b>Martin mit 2875 (Stand der Datenbank) bleibt Lorbeerreif I.</b> Die Schwelle bewegt sich nicht.</li>
+      <li><b>Nach oben bleiben zwei Stufen offen.</b> Kronreif bei 3700 und der Ordensstern bei 4700 sind für die heutige Spitze noch über 1300 Punkte entfernt.</li>
+      <li><b>Breaking</b> bleibt der erste Aufstieg in die beiden obersten Stufen, also Kronreif und Ordensstern.</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ═══ A ═══════════════════════════════════════════════════════════ -->
+<section class="abs" id="a">
+  <h2><span class="nr">02</span>A · Schicht für Schicht</h2>
+  <p class="lead">Jede Stufe behält, was die vorige hatte, und legt <b>genau eine Schicht</b> dazu: Nieten → Kartuschen → Voluten → Juwelen → Lorbeer → Krone → Strahlen. Die Schichten liegen auf festen Ringen um den Reif, deshalb stören sie sich nicht. Ab dem Lorbeerreif wachsen die Zweige von unten, und die Voluten bleiben nur oben neben dem Kopf. Man sieht auf einen Blick, <b>wie weit</b> jemand ist, weil jede spätere Stufe die frühere enthält.</p>
+  <div class="leiter-kopf"><span class="t">Metall des Rangs</span><div class="rangwahl" data-fuer="A"></div></div>
+  <div class="leiter" id="leiterA"></div>
+</section>
+
+<!-- ═══ B ═══════════════════════════════════════════════════════════ -->
+<section class="abs" id="b">
+  <h2><span class="nr">03</span>B · Sieben Gegenstände, eine Bauweise</h2>
+  <p class="lead">Jede Stufe bleibt ein <b>eigener Gegenstand</b> wie heute, aber alle folgen denselben Regeln. Der Schmuck steht auf einem Kranz, der mit jeder Stufe ein Stück weiter ausgreift. Alle Körper sind massiv gezeichnet, keiner als Draht. Und die drei Grade bedeuten überall dasselbe: <b>I der Gegenstand, II mit Perlen, III mit Steinen</b> in der Rangfarbe. Der Kopf wächst mit: Stein → Lilie → Lilie auf Stein → Krone.</p>
+  <div class="leiter-kopf"><span class="t">Metall des Rangs</span><div class="rangwahl" data-fuer="B"></div></div>
+  <div class="leiter" id="leiterB"></div>
+</section>
+
+<!-- ═══ ALLTAG ═══════════════════════════════════════════════════════ -->
+<section class="abs" id="alltag">
+  <h2><span class="nr">04</span>Im Alltag: 52 Pixel und die Leiter im Feed</h2>
+  <p class="lead">Die Zeichnung wirkt nicht auf 128 px, sondern in der <b>Ranglistenzeile</b>: dort ist der Reif 52 px groß, und das Gesicht liegt in der Mitte. Beide Richtungen stehen hier nebeneinander, dieselben Spieler auf derselben Stufe. Darunter steht die Leiter einer Insignium-Karte im Feed: <b>sieben Felder</b> passen bei 360 px nur, wenn die Felder schmaler werden und die Zahl in eine eigene Zeile rückt.</p>
+  <div class="reihe">
+    <div class="tel"><div class="cap">Liga · Rangliste bei 360 px</div>
+      <div class="zwei"><div><div class="t">A</div><div id="zeilenA"></div></div><div><div class="t">B</div><div id="zeilenB"></div></div></div>
+    </div>
+    <div class="tel"><div class="cap">News · Insignium-Karte</div>
+      <div class="karte"><div class="rub">Das Zeichen</div><h4>Leon erreicht den Juwelenkranz</h4>
+        <div class="lt" id="ltA"></div><div class="lt-t"><span>Leiter A</span><span><b>2377</b> / 2800 bis Lorbeerreif</span></div></div>
+      <div class="karte"><div class="rub">Das Zeichen</div><h4>Leon erreicht das Kleinod</h4>
+        <div class="lt" id="ltB"></div><div class="lt-t"><span>Leiter B</span><span><b>2377</b> / 2800 bis Lorbeerreif</span></div></div>
+    </div>
+    <div class="notiz"><h3>Was sich daraus ergibt</h3><ol>
+      <li><b>A lebt vom Umriss.</b> In der Zeile sieht man, wie viele Schichten jemand trägt, auch ohne das Zeichen zu kennen. Ab Stufe 5 wird das Zeichen dicht, der Ordensstern ist ein volles Ordenszeichen.</li>
+      <li><b>B lebt vom Gegenstand.</b> Jede Stufe hat eine eigene Silhouette, und wer die Leiter kennt, liest die Stufe am Gegenstand. Die Grade sind überall gleich: Perlen und Steine.</li>
+      <li><b>Die Feed-Leiter</b> bekommt flexible Felder (<code>flex:1 1 0; max-width:40px</code>) und die Zahl in eine eigene Zeile. Mit sieben festen 40-px-Feldern liefe sie bei 360 px über den Rand.</li>
+      <li><b>Die Laufbahn-Vitrine</b> zeigt dann sieben statt fünf Karten, die Wischgeste bleibt.</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ═══ AUFSTIEG ════════════════════════════════════════════════════ -->
+<section class="abs" id="aufstieg">
+  <h2><span class="nr">05</span>Der Aufstieg: eine Stufe, die man ankommen sieht</h2>
+  <p class="lead">Heute wechselt das Zeichen still, und der Feed meldet es als Text. Neu wäre ein <b>Blatt beim ersten Öffnen nach dem Aufstieg</b>: das alte Zeichen steht da, und die neue Schicht (A) oder der neue Gegenstand (B) wächst hinein. Dahinter läuft einmal ein goldener Lichtkegel. Bewegt werden nur <code>transform</code> und <code>opacity</code>, und das einmal, nicht in Schleife.</p>
+  <div class="reihe">
+    <div>
+      <div class="aufstieg" id="aufA"><div class="schein"></div><div class="bild"></div><div class="txt"><b>Juwelenkranz</b><span>A · ab 1950 Prestige</span></div></div>
+      <div class="knopfreihe"><button class="knopf prim" data-auf="A">Aufstieg A abspielen</button><button class="knopf" data-auf-weiter="A">Nächste Stufe</button></div>
+    </div>
+    <div>
+      <div class="aufstieg" id="aufB"><div class="schein"></div><div class="bild"></div><div class="txt"><b>Kleinod</b><span>B · ab 1950 Prestige</span></div></div>
+      <div class="knopfreihe"><button class="knopf prim" data-auf="B">Aufstieg B abspielen</button><button class="knopf" data-auf-weiter="B">Nächste Stufe</button></div>
+    </div>
+    <div class="notiz"><h3>Regeln für den Aufstieg</h3><ol>
+      <li><b>Einmal je Stufe und Gerät.</b> Der Lesestand merkt sich die letzte gesehene Stufe; wer sie schon kennt, sieht das Blatt nicht noch einmal.</li>
+      <li><b>Bei A wächst die neue Schicht,</b> bei B blendet der neue Gegenstand über den alten. Das Gesicht bleibt stehen.</li>
+      <li><b>Ohne Bewegung</b> steht das neue Zeichen sofort da, der Lichtkegel fällt weg.</li>
+    </ol></div>
+  </div>
+</section>
+
+<!-- ═══ BEWEGUNG ════════════════════════════════════════════════════ -->
+<section class="abs" id="bewegung">
+  <h2><span class="nr">06</span>Bewegung, die etwas erklärt</h2>
+  <p class="lead">Jede Bewegung hier beantwortet eine Frage: <b>Wer ist an wem vorbei?</b> <b>Wie groß ist die Zahl?</b> <b>Was war heute los?</b> Alle laufen auf der Grafikkarte (<code>transform</code>, <code>opacity</code>), keine misst während der Bewegung eine Breite, und alle ruhen bei reduzierter Bewegung. Die Schalter oben rechts und in den Systemeinstellungen stellen sie ab.</p>
+  <div class="reihe">
+    <div class="demo">
+      <h4>Die Rangliste nach einer Partie <small>FLIP</small></h4>
+      <p class="k">Nach dem Speichern gleiten die Zeilen an ihren neuen Platz, statt zu springen. Die Elo-Änderung erscheint neben dem Namen und bleibt drei Sekunden stehen.</p>
+      <div class="flip" id="flip"></div>
+      <div class="knopfreihe"><button class="knopf prim" id="flipLos">Partie eintragen</button></div>
+      <div class="kost">Eine Messung vor, eine nach dem Zeichnen · 300 ms transform</div>
+    </div>
+    <div class="demo">
+      <h4>Zahlen, die hochzählen <small>rAF</small></h4>
+      <p class="k">Die Zahlenreihe eines Blatts zählt beim ersten Erscheinen in 600 ms von null auf ihren Wert. Das geschieht einmal, nicht bei jedem Neuzeichnen, und die Breite steht vorher fest (<code>tabular-nums</code>), damit nichts wackelt.</p>
+      <div class="zr" id="zr"><div><b data-z="2377">0</b><span>Prestige</span></div><div><b data-z="62" data-e=" %">0</b><span>Siegquote</span></div><div><b data-z="13" data-e="×">0</b><span>längste Serie</span></div></div>
+      <div class="knopfreihe"><button class="knopf" id="zrLos">Noch einmal</button></div>
+      <div class="kost">Ein requestAnimationFrame für alle Zellen · nur Text</div>
+    </div>
+    <div class="demo">
+      <h4>Der Spieltag als Stories <small>neu</small></h4>
+      <p class="k">Ein Knopf über dem Tageskopf öffnet den Spieltag als Vollbild: eine Seite je Karte, von der ersten Partie bis zum Spieler des Tages. Tippen rechts geht weiter, links zurück. Das ist die schnelle Art, einen Tag nachzulesen, ohne zu scrollen.</p>
+      <div class="st" id="st"><div class="bars"></div><div class="tipp"><span data-st="-1"></span><span data-st="1"></span></div></div>
+      <div class="kost">Seiten liegen fertig im DOM · Wechsel mit opacity und transform</div>
+    </div>
+    <div class="demo">
+      <h4>Neu laden durch Ziehen <small>Geste</small></h4>
+      <p class="k">In der PWA gibt es kein Browser-Neuladen. Wer die Liste nach unten zieht, holt einen Kickerball herein, der beim Loslassen rollt, bis die Daten da sind. Solange lädt, stehen die Zeilen als Platzhalter mit einem ruhigen Schimmer da.</p>
+      <div class="ptr" id="ptr"><div class="ball"></div><div class="inh"><div class="zeilen"><div></div><div></div><div></div><div></div><div></div></div></div></div>
+      <div class="kost">Ziehen folgt dem Finger per transform · Schimmer als Hintergrundverlauf</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NEUE ANSICHTEN ══════════════════════════════════════════════ -->
+<section class="abs" id="ideen">
+  <h2><span class="nr">07</span>Neue Ansichten, gezeichnet statt gezählt</h2>
+  <p class="lead">Vier Stellen, an denen die App heute Listen zeigt und eine Zeichnung mehr sagen würde. Alle rechnen aus Daten, die es schon gibt (Partien, Elo-Bahn, Spieltagssieger), und brauchen keinen neuen Topf außer einem je Ansicht mit Version im Schlüssel.</p>
+  <div class="reihe">
+    <div class="demo">
+      <h4>Der Monat als Kalender <small>Profil · Liga</small></h4>
+      <p class="k">Ein Feld je Tag, heller mit mehr Partien, ein goldener Rahmen für jeden Tag als Spieler des Tages. Im Profil der eigene Monat, in der Liga die ganze.</p>
+      <div class="kal-k"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+      <div class="kal" id="kal"></div>
+      <div class="leg"><i style="background:var(--surface2)"></i>keine <i style="background:rgba(190,242,100,.38)"></i>einige <i style="background:var(--acid)"></i>viele <i style="box-shadow:0 0 0 1.5px var(--gold);background:none"></i>Spieler des Tages</div>
+    </div>
+    <div class="demo">
+      <h4>Das Rennen um die Spitze <small>Liga · Saison</small></h4>
+      <p class="k">Die Plätze der ersten sechs über die Spieltage des Monats als Linien. Wer die Tabelle wann übernommen hat, sieht man an den Kreuzungen, und das ist im Titelrennen die eigentliche Geschichte.</p>
+      <svg class="graf" id="rennen" viewBox="0 0 340 200"></svg>
+    </div>
+    <div class="demo">
+      <h4>Wer mit wem <small>Teams</small></h4>
+      <p class="k">Die Duos als Netz: je Spieler ein Punkt, je Duo eine Linie. Die Dicke zeigt die Zahl gemeinsamer Partien, Grün eine gute Quote, Rot eine schlechte [§C25]. Antippen eines Spielers hebt seine Partner hervor.</p>
+      <svg class="graf" id="netz" viewBox="0 0 320 250"></svg>
+    </div>
+    <div class="demo">
+      <h4>Die Elo als Bergkette <small>Profil</small></h4>
+      <p class="k">Die Elo-Bahn der Laufbahn als Silhouette, der Gipfel beschriftet und die Monatsgrenzen als feine Täler. Das liest sich schneller als eine Linie auf einem Gitter, und „Der höchste Gipfel“ bekommt sein Bild.</p>
+      <svg class="graf" id="berg" viewBox="0 0 340 150"></svg>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PLAN ════════════════════════════════════════════════════════ -->
+<section class="abs" id="plan">
+  <h2><span class="nr">08</span>Reihenfolge nach der Wahl</h2>
+  <div class="plan">
+    <div><span class="n">1</span><div><h4>Die gewählte Leiter einbauen</h4><p>INSIGNIEN mit sieben Einträgen und den Schwellen aus Abschnitt 01, die Zeichnungen in 35b-prestige.js, INSIGNIUM_OBEN für Breaking. tests/zeichen misst den Schmuck über alle 21 Felder, tests/disziplinen die neue Kalibrierung.</p></div></div>
+    <div><span class="n">2</span><div><h4>Leiter im Feed, Laufbahn-Vitrine, Insignium-Block</h4><p>Flexible Felder, Zahl in eigener Zeile, sieben Karten in der Vitrine. tests/blatt misst jedes Blatt bei 360 px.</p></div></div>
+    <div><span class="n">3</span><div><h4>Der Aufstieg als Blatt</h4><p>Einmal je Stufe und Gerät, gemerkt neben dem Lesestand. Ohne Bewegung ohne Animation.</p></div></div>
+    <div><span class="n">4</span><div><h4>Bewegung</h4><p>FLIP in der Rangliste, Zahlen zählen hoch, Neu laden durch Ziehen, Platzhalter beim Laden, der Spieltag als Stories.</p></div></div>
+    <div><span class="n">5</span><div><h4>Neue Ansichten</h4><p>Kalender, Rennen um die Spitze, Duo-Netz, Bergkette. Je Ansicht ein Topf mit Version und Deckel.</p></div></div>
+  </div>
+</section>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   Die Zeichnung. Dieselbe Bauweise wie 35b-prestige.js: der Reif als
+   Röhre, jeder Körper mit heller und dunkler Hälfte an einer harten Kante,
+   keine Spitzen, die Rangfarbe als geschliffener Stein.
+   ════════════════════════════════════════════════════════════════════ */
+const R = 40, BR = 5, RA = R + BR / 2, BOX = '-22 -22 144 144';
+const n1 = v => Math.round(v * 10) / 10;
+const pt = (a, r) => [50 + Math.cos(a) * r, 50 + Math.sin(a) * r];
+const K = ([x, y]) => n1(x) + ' ' + n1(y);
+const ang = (i, n) => -Math.PI/2 + (i + (n % 2 ? 0 : .5)) / n * Math.PI * 2;
+function mix(hex, ziel, f){
+  const a = hex.slice(1), b = ziel.slice(1); let s = '#';
+  for(let i = 0; i < 3; i++){ const p = parseInt(a.substr(i*2,2),16), q = parseInt(b.substr(i*2,2),16);
+    s += Math.round(p + (q - p) * f).toString(16).padStart(2,'0'); }
+  return s;
+}
+const METALL = {Solide:'#7D858D', Stark:'#9AA2AA', Elite:'#C2C9D0', Legende:'#EEF3F8'};
+const RANGF  = {Solide:'#56b4e8', Stark:'#BEF264', Elite:'#a78bfa', Legende:'#f7cf4a'};
+function satz(rang){
+  const m = rang === 'Legende' ? METALL[rang] : mix(METALL[rang], RANGF[rang], .26);
+  return {m, rf:RANGF[rang], hell:mix(m,'#FFFFFF',.70), tief:mix(m,'#05080B',.48),
+    glanz:mix(m,'#FFFFFF',.96), kante:mix(m,'#05080B',.78), unter:'#04070A'};
+}
+function defs(id, c){
+  const st = (o, col, op) => `<stop offset="${o}" stop-color="${col}"${op !== undefined ? ` stop-opacity="${op}"` : ''}/>`;
+  const lin = (nm, x2, y2, s) => `<linearGradient id="${id}${nm}" x1="0" y1="0" x2="${x2}" y2="${y2}">${s}</linearGradient>`;
+  return `<defs>`
+    + lin('mt', '.30', 1, st(0,c.glanz)+st('.22',c.hell)+st('.52',c.m)+st('.80',c.tief)+st(1,c.kante))
+    + lin('kp', '.35', 1, st(0,c.glanz)+st('.40',c.hell)+st(1,c.m))
+    + lin('kt', '.35', 1, st(0,c.m)+st('.45',c.tief)+st(1,c.kante))
+    + lin('bl', 1, '.30', st(0,mix(c.hell,'#FFFFFF',.35))+st('.50',c.hell)+st(1,c.m))
+    + lin('bt', 1, '.30', st(0,c.m)+st('.52',c.tief)+st(1,c.kante))
+    + lin('rg', '.25', 1, st(0,mix(c.rf,'#FFFFFF',.62))+st('.34',mix(c.rf,'#FFFFFF',.15))+st('.72',c.rf)+st(1,mix(c.rf,'#000000',.52)))
+    + lin('rt', '.25', 1, st(0,mix(c.rf,'#000000',.24))+st('.55',mix(c.rf,'#000000',.52))+st(1,mix(c.rf,'#000000',.76)))
+    + `<radialGradient id="${id}pl" cx=".38" cy=".32" r=".85">${st(0,'#1e242b')+st('.55','#141920')+st(1,'#090d11')}</radialGradient>`
+    + `</defs>`;
+}
+const punkte = (l, r) => l.map(([x, y]) => `M${n1(x-r)} ${n1(y)}a${r} ${r} 0 1 0 ${r*2} 0a${r} ${r} 0 1 0 ${-r*2} 0Z`).join('');
+function bogen(r, a0, a1){
+  const [x0,y0] = pt(a0, r), [x1,y1] = pt(a1, r);
+  return `M${n1(x0)} ${n1(y0)}A${n1(r)} ${n1(r)} 0 ${(a1-a0) > Math.PI ? 1 : 0} 1 ${n1(x1)} ${n1(y1)}`;
+}
+const perlen = (l, r, c) => l.length ? `<path d="${punkte(l, r)}" fill="${c.m}" stroke="${c.kante}" stroke-width=".55"/>`
+  + `<path d="${punkte(l.map(([x,y]) => [x - r*.3, y - r*.3]), r*.42)}" fill="${c.glanz}" opacity=".72"/>` : '';
+function schildchen(a, aus, ein, hw, ch){
+  const [cx,cy] = pt(a, R), ux = Math.cos(a), uy = Math.sin(a), vx = -uy, vy = ux;
+  const P = (r,t) => [cx + ux*r + vx*t, cy + uy*r + vy*t];
+  const seite = sp => 'M'+K(P(aus,0))+'L'+K(P(aus,sp*(hw-ch)))+'L'+K(P(aus-ch,sp*hw))
+    +'L'+K(P(-ein+ch*.7,sp*hw))+'L'+K(P(-ein,sp*(hw-ch*.7)))+'L'+K(P(-ein,0))+'Z';
+  return {h:seite(-1), d:seite(1), g:'M'+K(P(aus-ch*.8,-hw*.26))+'L'+K(P(aus-ch*.8,-hw*.68))+'L'+K(P(-ein+ch,-hw*.56))+'L'+K(P(-ein+ch,-hw*.22))+'Z'};
+}
+function spiral(sx, sy, th0, L, dreh, N, spitz){
+  const ds = L/N, b = []; let x = sx, y = sy, th = th0;
+  for(let i = 0; i <= N; i++){ b.push([x,y,th]); th += dreh*(0.16 + 3.9*Math.pow(i/N, spitz||2.1))/N; x += Math.cos(th)*ds; y += Math.sin(th)*ds; }
+  return b;
+}
+function bandHalb(bahn, w0, w1){
+  const N = bahn.length - 1, m = [], o = [], u = [];
+  bahn.forEach(([px,py,pth], i) => { const w = w0 + (w1-w0)*(i/N), nx = -Math.sin(pth)*w, ny = Math.cos(pth)*w;
+    m.push(n1(px)+' '+n1(py)); o.push(n1(px+nx)+' '+n1(py+ny)); u.push(n1(px-nx)+' '+n1(py-ny)); });
+  return {h:'M'+o.join('L')+'L'+m.slice().reverse().join('L')+'Z', d:'M'+m.join('L')+'L'+u.slice().reverse().join('L')+'Z', g:''};
+}
+function strahl(a, r0, L, w){
+  return 'M'+K(pt(a-w,r0))+'L'+K(pt(a-w*.22,r0+L))+'L'+K(pt(a+w*.22,r0+L))+'L'+K(pt(a+w,r0))+'Z';
+}
+function laub(x, y, dreh, L, W){
+  const c = Math.cos(dreh), s = Math.sin(dreh);
+  const P = (t, o) => [x + o*c + L*t*s, y + o*s - L*t*c];
+  const seite = sp => 'M'+K(P(1,0))+'C'+K(P(.62,sp*W*.82))+' '+K(P(.06,sp*W))+' '+K(P(-.42,sp*W*.56))
+    +'C'+K(P(-.76,sp*W*.28))+' '+K(P(-.94,sp*W*.10))+' '+K(P(-1,0))+'Z';
+  return {h:seite(-1), d:seite(1), g:'M'+K(P(.86,0))+'C'+K(P(.52,-W*.52))+' '+K(P(.02,-W*.62))+' '+K(P(-.34,-W*.34))
+    +'C'+K(P(-.04,-W*.14))+' '+K(P(.44,-W*.10))+' '+K(P(.86,0))+'Z'};
+}
+function raute(cx, cy, h, w, f){
+  const T = [cx,cy-h], B = [cx,cy+h], L = [cx-w,cy], Rr = [cx+w,cy], M = [cx,cy];
+  const p = (a,b) => 'M'+K(a)+'L'+K(b)+'L'+K(M)+'Z';
+  return `<path d="${p(T,L)}" fill="${f.hell}"/><path d="${p(T,Rr)}" fill="${f.mitt}"/><path d="${p(L,B)}" fill="${f.mitt2}"/><path d="${p(Rr,B)}" fill="${f.tief}"/>`
+    + `<path d="M${K(T)}L${K(L)}L${K(B)}L${K(Rr)}Z" fill="none" stroke="${f.kante}" stroke-width=".5" stroke-linejoin="round"/>`;
+}
+function cabochon(x, y, rx, ry, dreh, id, c){
+  const t = `transform="rotate(${n1(dreh*180/Math.PI)} ${n1(x)} ${n1(y)})"`;
+  return `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="${n1(rx+.9)}" ry="${n1(ry+.9)}" ${t} fill="url(#${id}kp)" stroke="${c.kante}" stroke-width=".45"/>`
+    + `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="${n1(rx)}" ry="${n1(ry)}" ${t} fill="url(#${id}rg)" stroke="${mix(c.rf,'#000000',.72)}" stroke-width=".4"/>`
+    + `<ellipse cx="${n1(x - rx*.28)}" cy="${n1(y - ry*.34)}" rx="${n1(Math.max(rx,ry)*.30)}" ry="${n1(Math.min(rx,ry)*.22)}" fill="#fff" opacity=".55"/>`;
+}
+function lilie(r0, gr, akz, drehGrad){
+  const [cx,cy] = pt(-Math.PI/2, r0), w = 5*gr, h = 8.6*gr;
+  const P = (x,y) => n1(cx + x*w) + ' ' + n1(cy - y*h);
+  const mitte = 'M'+P(0,1)+'C'+P(.40,.56)+' '+P(.30,.24)+' '+P(.26,.02)+'L'+P(-.26,.02)+'C'+P(-.30,.24)+' '+P(-.40,.56)+' '+P(0,1)+'Z';
+  const seite = sp => 'M'+P(sp*.24,.30)+'C'+P(sp*.86,.44)+' '+P(sp*1.02,.04)+' '+P(sp*.66,-.34)+'C'+P(sp*.92,.02)+' '+P(sp*.62,.10)+' '+P(sp*.24,.04)+'Z';
+  const fuss = 'M'+P(-.20,-.18)+'C'+P(-.30,-.46)+' '+P(-.16,-.66)+' '+P(0,-.72)+'C'+P(.16,-.66)+' '+P(.30,-.46)+' '+P(.20,-.18)+'Z';
+  const g = `<path d="${mitte+seite(1)+seite(-1)+fuss}" fill="${akz.fill}" stroke="${akz.kante}" stroke-width=".45" stroke-linejoin="round"/>`
+    + `<path d="M${P(-.54,.06)}L${P(.54,.06)}L${P(.54,-.16)}L${P(-.54,-.16)}Z" fill="${akz.tief}" stroke="${akz.kante}" stroke-width=".4"/>`;
+  return drehGrad ? `<g transform="rotate(${n1(drehGrad)} 50 50)">${g}</g>` : g;
+}
+function krone(r0, gr, zacken, id, c, akz){
+  const [cx,cy] = pt(-Math.PI/2, r0), b = 8.6*gr, h = 8.4*gr, sb = 2.6*gr;
+  const X = t => cx + t*b, Y = t => cy - t*h;
+  const zack = Array.from({length:zacken}, (_, i) => { const t = zacken === 1 ? 0 : -.86 + 1.72*i/(zacken-1);
+    return [t, .52 + .48*Math.cos(t*Math.PI/1.9)]; });
+  let d = 'M'+n1(X(-1))+' '+n1(cy);
+  zack.forEach(([t,hh], i) => { if(i) d += 'L'+n1(X((zack[i-1][0]+t)/2))+' '+n1(Y(hh*.16)); d += 'L'+n1(X(t))+' '+n1(Y(hh)); });
+  d += 'L'+n1(X(1))+' '+n1(cy)+'Z';
+  return `<path d="${d}" fill="${akz.fill}" stroke="${akz.kante}" stroke-width=".45" stroke-linejoin="round"/>`
+    + `<path d="M${n1(X(-1.06))} ${n1(cy)}H${n1(X(1.06))}V${n1(cy+sb)}H${n1(X(-1.06))}Z" fill="${akz.tief}" stroke="${akz.kante}" stroke-width=".45"/>`
+    + perlen(zack.map(([t,hh]) => [X(t), Y(hh) - .3*gr]), 1.5*gr, c)
+    + raute(cx, cy + sb*.5, 2.2*gr, 1.6*gr, c.stahl);
+}
+function koerper(k, c, id){
+  if(!k.h && !k.d) return '';
+  return `<path d="${k.h}" fill="url(#${id}kp)" stroke="${c.kante}" stroke-width=".4" stroke-linejoin="round"/>`
+    + `<path d="${k.d}" fill="url(#${id}kt)" stroke="${c.kante}" stroke-width=".4" stroke-linejoin="round"/>`
+    + (k.g ? `<path d="${k.g}" fill="${c.glanz}" opacity=".55"/>` : '');
+}
+function reif(id, c){
+  return `<circle cx="50" cy="50" r="${n1(RA+.5)}" fill="none" stroke="${c.unter}" stroke-width="1"/>`
+    + `<circle cx="50" cy="50" r="${R}" fill="none" stroke="url(#${id}mt)" stroke-width="${BR}"/>`
+    + `<path d="${bogen(R - BR*.24, -2.95, -1.15)}" fill="none" stroke="${c.glanz}" stroke-width="${n1(BR*.30)}" stroke-linecap="round" opacity=".92"/>`
+    + `<path d="${bogen(R + BR*.30, .30, 1.85)}" fill="none" stroke="${c.hell}" stroke-width="${n1(BR*.16)}" stroke-linecap="round" opacity=".45"/>`
+    + `<circle cx="50" cy="50" r="${n1(R - BR/2 - .45)}" fill="none" stroke="${c.unter}" stroke-width=".9"/>`;
+}
+
+/* ── Die Schichten ─────────────────────────────────────────────────
+   Jede Schicht schreibt in feste Lagen: `strahl` ganz hinten, `hinten`
+   (Lorbeer, Fries), `hk` (Körper hinter dem Band: Voluten), dann der Reif,
+   `band` (Stege, Perlen auf dem Band), `bk` (Körper auf dem Band:
+   Kartuschen), `vorn` (Steine, Kopf). */
+const neu = () => ({strahl:'', hinten:'', hk:{h:'',d:'',g:''}, band:'', bk:{h:'',d:'',g:''}, vorn:''});
+const nimm = (ziel, f) => { ziel.h += f.h; ziel.d += f.d; ziel.g += (f.g || ''); };
+function lKartuschen(L, n, id, c, gross){
+  const hw = gross ? 4.6 : 5.0; let stege = '';
+  for(let i = 0; i < n; i++){ const a = ang(i, n);
+    nimm(L.bk, schildchen(a, gross ? 4.8 : 4.4, 3.1, hw, 1.8));
+    stege += bogen(R, a + hw/R*1.25, ang(i+1, n) - hw/R*1.25); }
+  L.band += `<path d="${stege}" fill="none" stroke="${c.kante}" stroke-width="2" stroke-linecap="round"/>`
+    + `<path d="${stege}" fill="none" stroke="url(#${id}kp)" stroke-width="1.4" stroke-linecap="round"/>`
+    + `<path d="${stege}" fill="none" stroke="${c.glanz}" stroke-width=".8" stroke-linecap="round" opacity=".55"/>`;
+}
+function lVoluten(L, winkel, lang, dick, c, augen, konsole, id){
+  const aug = [];
+  winkel.forEach(a => {
+    [1,-1].forEach(sp => {
+      const [sx,sy] = pt(a, RA - .6);
+      const bahn = spiral(sx, sy, a + sp*(Math.PI/2 - .30), lang, -sp*1.9, 20, 3.4);
+      const v = bandHalb(bahn, dick, dick*.26);
+      nimm(L.hk, sp > 0 ? v : {h:v.d, d:v.h, g:''});
+      aug.push([bahn[20][0], bahn[20][1]]);
+    });
+    if(konsole === 'stein'){ const [x,y] = pt(a, R); L.vorn += cabochon(x, y, 2.2, 2.2, 0, id, c); }
+    else { const [x,y] = pt(a, R); L.vorn += raute(x, y, konsole, konsole*.7, c.akz); }
+  });
+  if(augen) L.vorn += perlen(aug, 1.4, c);
+}
+function lLorbeer(L, blatt, gr, beeren, id, c){
+  let bH = '', bD = '', bG = '', zweig = ''; const be = []; const rB = RA + .4;
+  [1,-1].forEach(sp => {
+    const a0 = Math.PI/2 - sp*0.44, a1 = Math.PI/2 - sp*2.58;
+    zweig += 'M'+K(pt(a0,rB))+'A'+n1(rB)+' '+n1(rB)+' 0 0 '+(sp > 0 ? 0 : 1)+' '+K(pt(a1,rB));
+    for(let i = 0; i < blatt; i++){
+      const t = (i + .5)/blatt, g = (0.74 + 0.32*Math.sin(Math.PI*Math.min(1, t*1.04)))*gr;
+      const a = a0 + (a1 - a0)*t, Ln = 8.6*g, W = Ln*.34;
+      const [x,y] = pt(a, rB + Ln*.80), b = laub(x, y, a + Math.PI/2 - sp*0.72, Ln, W);
+      if(sp > 0){ bH += b.h; bD += b.d; bG += b.g; } else { bH += b.d; bD += b.h; }
+      if(beeren && i % 3 === 1) be.push(pt(a - sp*.04, rB + 2.0));
+    }
+  });
+  L.hinten += `<path d="${zweig}" fill="none" stroke="${mix(c.m,'#05080B',.46)}" stroke-width="1.7" stroke-linecap="round"/>`
+    + `<path d="${bH}" fill="url(#${id}bl)" stroke="${c.kante}" stroke-width=".42" stroke-linejoin="round"/>`
+    + `<path d="${bD}" fill="url(#${id}bt)" stroke="${c.kante}" stroke-width=".42" stroke-linejoin="round"/>`
+    + `<path d="${bG}" fill="${c.glanz}" opacity=".38"/>`
+    + (be.length ? `<path d="${punkte(be, 1.6)}" fill="${c.hell}" stroke="${c.kante}" stroke-width=".42"/>` : '');
+}
+function lStrahlen(L, dichte, laenge, id, c){
+  const glorie = 4 * dichte; let kurz = '', hell = ''; const r0 = RA + .4;
+  for(let i = 0; i < glorie; i++){ const a = ang(i, glorie), ab = Math.abs(((a*180/Math.PI + 405) % 90) - 45);
+    if(ab > 34) continue; kurz += strahl(a, r0, (19 + laenge) * (1.30 - .55*(ab/34)) * (i % 2 ? .64 : 1), .042); }
+  [28,22,15,11,8].forEach((Lg, k) => { const w = .022 - k*.002;
+    for(let i = 0; i < 4; i++){ const a0 = -Math.PI/4 + i*Math.PI/2;
+      if(k === 0) hell += strahl(a0, r0, Lg + laenge, w); else [1,-1].forEach(sp => hell += strahl(a0 + sp*k*.115, r0, Lg + laenge*.6, w)); } });
+  L.strahl += `<path d="${kurz}" fill="url(#${id}kp)" opacity=".78"/><path d="${hell}" fill="url(#${id}kp)"/>`
+    + `<circle cx="50" cy="50" r="${n1(r0)}" fill="none" stroke="url(#${id}mt)" stroke-width="5.2"/>`;
+}
+// Der Bogenfries (B · Kleinod): massive Bögen, jeder an seiner Achse in
+// Licht und Schatten geteilt — kein Draht.
+function lFries(L, n, kranz, dick, id, c){
+  const rK = RA + kranz, knoten = [], scheitel = [];
+  for(let i = 0; i < n; i++){
+    const a0 = ang(i, n), a1 = ang(i+1, n), m = (a0 + a1)/2;
+    if(Math.abs(Math.cos(m)) < .16) continue;          // oben und unten frei
+    const P0 = pt(a0, RA - .4), P1 = pt(a1, RA - .4), hoch = kranz;
+    const bahn = [];
+    for(let k = 0; k <= 16; k++){
+      const t = k/16, s = Math.sin(t*Math.PI);
+      const a = a0 + (a1 - a0)*t, r = RA - .4 + hoch*s;
+      const [x,y] = pt(a, r); bahn.push([x, y, 0]);
+    }
+    for(let k = 0; k < bahn.length; k++){
+      const p = bahn[Math.max(0,k-1)], q = bahn[Math.min(bahn.length-1,k+1)];
+      bahn[k][2] = Math.atan2(q[1]-p[1], q[0]-p[0]);
+    }
+    nimm(L.hk, bandHalb(bahn, dick, dick));
+    knoten.push(P0, P1); scheitel.push(pt(m, rK - .3));
+  }
+  return {knoten, scheitel, rK};
+}
+// Der Fleuronkranz (B · Kronreif): Lilien stehen rundum auf dem Band.
+function lFleurons(L, n, gr, akz, r0){
+  for(let i = 0; i < n; i++){ const a = ang(i, n); if(Math.abs(Math.cos(a)) < .2) continue;
+    L.hinten += lilie((r0 || RA) + 5.2*gr, gr, akz, (a + Math.PI/2)*180/Math.PI); }
+}
+
+function zeichnen(fn, stufe, grad, rang){
+  const id = 'z' + (++zeichnen.n) + '_', c = satz(rang);
+  c.akz = {fill:`url(#${id}rg)`, tief:`url(#${id}rt)`, hell:mix(c.rf,'#FFFFFF',.52), mitt:c.rf, mitt2:mix(c.rf,'#000000',.42), kante:mix(c.rf,'#000000',.72)};
+  c.stahl = {fill:`url(#${id}kp)`, tief:`url(#${id}kt)`, hell:mix(c.m,'#FFFFFF',.72), mitt:c.hell, mitt2:c.m, kante:c.kante};
+  const L = neu(); const extra = fn(L, stufe, grad, id, c) || {};
+  const lagen = (x, k) => `<g class="${extra.neu === k ? extra.neuKlasse : ''}">${x}</g>`;
+  return `<svg viewBox="${BOX}" aria-hidden="true">${defs(id, c)}`
+    + `<circle cx="50" cy="50" r="${n1(RA + .4)}" fill="url(#${id}pl)"/>`
+    + lagen(L.strahl, 'strahl') + lagen(L.hinten, 'hinten') + lagen(koerper(L.hk, c, id), 'hk')
+    + reif(id, c) + lagen(L.band, 'band') + lagen(koerper(L.bk, c, id), 'bk') + lagen(L.vorn, 'vorn') + `</svg>`;
+}
+zeichnen.n = 0;
+
+/* ── Richtung A: Schicht für Schicht ─────────────────────────────── */
+const STUFEN_A = [
+  {name:'Reif', ab:0, satz:'Das blanke Band. Grad II mit Nieten, Grad III mit einem zweiten Ring nach innen.'},
+  {name:'Schildring', ab:500, satz:'Kartuschen legen sich auf das Band und werden durch Stege zu einer Kette.'},
+  {name:'Volutenkranz', ab:1200, satz:'Aus der Kette wachsen Schneckenpaare nach außen, oben die Lilie.'},
+  {name:'Juwelenkranz', ab:1950, neu:true, satz:'Die Kartuschen werden zu Fassungen: Steine in der Rangfarbe, dazwischen Perlen. Die Lilie steht auf einem Stein.'},
+  {name:'Lorbeerreif', ab:2800, satz:'Zwei Zweige wachsen von unten um alles herum; die Voluten bleiben oben neben dem Kopf.'},
+  {name:'Kronreif', ab:3700, neu:true, satz:'Der Kopf wird zur Krone. Grad für Grad kommen Zacken und Steine dazu.'},
+  {name:'Ordensstern', ab:4700, satz:'Hinter allem steht die Glorie. Sie wird mit jeder Zacke dichter und endet nie.'},
+];
+function bauA(L, s, g, id, c){
+  // Schicht 0: der Reif. Nur auf der ersten Stufe trägt er Nieten — danach
+  // liegt dort die Kette.
+  if(s === 0){
+    if(g >= 1) L.hinten += `<circle cx="50" cy="50" r="${R - 8.5}" fill="none" stroke="${c.hell}" stroke-width="${g === 2 ? 1.1 : .7}" opacity=".72"/>`;
+    if(g >= 1) L.band += perlen(Array.from({length: g === 2 ? 12 : 8}, (_, i) => pt(ang(i, g === 2 ? 12 : 8), R)), 2.1*(g === 2 ? 1.25 : 1), c);
+    return {neu:'band'};
+  }
+  // Schicht 1: die Kette.
+  lKartuschen(L, s === 1 ? [4,6,8][g] : 8, id, c, s >= 3);
+  if(s === 1){ if(g === 2){ const [x,y] = pt(-Math.PI/2, RA + 4.4); L.vorn += raute(x, y, 4.4, 3.0, c.akz); } return {neu:'bk'}; }
+  // Schicht 2: Voluten. Auf ihrer Stufe rundum, danach die vier großen, ab
+  // dem Lorbeer nur noch die beiden oben neben dem Kopf.
+  // Auf der Juwelen-Stufe bleiben alle acht Paare stehen — sonst wirkte sie
+  // ärmer als der Volutenkranz III darunter. Ab dem Lorbeer bleiben die oben.
+  const volA = s === 2 ? [4,6,8][g] : 8;
+  let winkel = Array.from({length: volA}, (_, i) => ang(i, volA));
+  if(s >= 4) winkel = winkel.filter(a => Math.sin(a) < 0);
+  lVoluten(L, winkel, 24, s === 2 ? [3.1,2.35,2.05][g] : (s >= 4 ? 2.6 : 2.05), c, true, 2.6, id);
+  // Der Kopf wächst mit: Lilie, Lilie auf Stein, Krone.
+  if(s === 2){ L.vorn += lilie(RA + 2.6 + g*.3, 1.02 + g*.06, c.akz); return {neu:'hk'}; }
+  // Schicht 3: Steine in den Kartuschen, Perlen dazwischen.
+  const steine = s === 3 ? [4,8,8][g] : 8;
+  for(let i = 0; i < 8; i++){ if(steine === 4 && i % 2) continue; const a = ang(i, 8), [x,y] = pt(a, R);
+    L.vorn += cabochon(x, y, 3.8, 2.9, a + Math.PI/2, id, c); }
+  if(s > 3 || g === 2) L.vorn += perlen(Array.from({length:8}, (_, i) => pt(ang(i,8) + Math.PI/8, R)), 1.3, c);
+  const lilieAufStein = gr => { const [x,y] = pt(-Math.PI/2, RA + .6); return cabochon(x, y, 3.2, 2.5, 0, id, c) + lilie(RA + 5.4, gr, c.akz); };
+  if(s === 3){ L.vorn += lilieAufStein(1.14 + g*.05); return {neu:'vorn'}; }
+  // Schicht 4: Lorbeer.
+  lLorbeer(L, s === 4 ? [8,9,11][g] : 11, s === 4 ? [1.16,1.21,1.27][g] : 1.27, s > 4 || g >= 1, id, c);
+  if(s === 4){ L.vorn += lilieAufStein(1.28 + g*.04); return {neu:'hinten'}; }
+  // Schicht 5: die Krone.
+  if(s === 5){ L.vorn += krone(RA + 4.6, [1.34,1.44,1.54][g], [5,5,7][g], id, c, c.akz);
+    if(g >= 1) [-1,1].forEach(sp => { const [x,y] = pt(-Math.PI/2 + sp*.50, RA + 3.0); L.vorn += cabochon(x, y, 2.2, 2.2, 0, id, c); });
+    if(g === 2) [-1,1].forEach(sp => { const [x,y] = pt(-Math.PI/2 + sp*.78, RA + 2.6); L.vorn += cabochon(x, y, 1.8, 1.8, 0, id, c); });
+    return {neu:'vorn'}; }
+  // Schicht 6: die Glorie.
+  lStrahlen(L, [6,7,8][g], [0,1.2,2.4][g], id, c);
+  L.vorn += krone(RA + 4.8, 1.6, 7, id, c, c.akz);
+  [-1,1].forEach(sp => { const [x,y] = pt(-Math.PI/2 + sp*.50, RA + 3.0); L.vorn += cabochon(x, y, 2.2, 2.2, 0, id, c); });
+  return {neu:'strahl'};
+}
+
+/* ── Richtung B: sieben Gegenstände, eine Bauweise ───────────────── */
+const STUFEN_B = [
+  {name:'Reif', ab:0, satz:'Das Band. II: Perlen auf dem Band. III: dazu vier Steine auf den Diagonalen.'},
+  {name:'Schildring', ab:500, satz:'Eine Kette aus acht Kartuschen. II: Perlen zwischen den Gliedern. III: ein Stein in jeder Kartusche.'},
+  {name:'Volutenkranz', ab:1200, satz:'Sechs Schneckenpaare rundum. II: Perlen im Auge. III: Steine in den Konsolen.'},
+  {name:'Kleinod', ab:1950, neu:true, satz:'Ein massiver Bogenfries um das Band. II: Perlen an den Knoten. III: ein Stein in jedem Bogen.'},
+  {name:'Lorbeerreif', ab:2800, satz:'Der geschlossene Kranz aus zwei Zweigen. II: Beeren. III: Steine am Ansatz und auf dem Band.'},
+  {name:'Kronreif', ab:3700, neu:true, satz:'Lilien stehen rundum auf dem Band wie auf einer Krone. II: Perlen dazwischen. III: Steine am Fuß jeder Lilie.'},
+  {name:'Ordensstern', ab:4700, satz:'Die Glorie und die Krone. II: ein Perlenkranz. III: Steine auf den Diagonalen, dichter mit jeder Zacke.'},
+];
+function bauB(L, s, g, id, c){
+  const kopfLilie = gr => { L.vorn += lilie(RA + 3 + gr, gr, c.akz); };
+  if(s === 0){
+    if(g >= 1) L.band += perlen(Array.from({length:8}, (_, i) => pt(ang(i, 8), R)), 2.0, c);
+    if(g === 2) for(let i = 0; i < 4; i++){ const a = -Math.PI/4 + i*Math.PI/2, [x,y] = pt(a, R); L.vorn += cabochon(x, y, 2.8, 2.2, a + Math.PI/2, id, c); }
+    return {neu:'band'};
+  }
+  if(s === 1){
+    lKartuschen(L, 8, id, c);
+    if(g >= 1) L.vorn += perlen(Array.from({length:8}, (_, i) => pt(ang(i,8) + Math.PI/8, R)), 1.25, c);
+    if(g === 2) for(let i = 0; i < 8; i++){ const a = ang(i,8), [x,y] = pt(a, R + .6); L.vorn += raute(x, y, 2.2, 1.6, c.akz); }
+    const [x,y] = pt(-Math.PI/2, RA + 3.6); L.vorn += raute(x, y, 3.6 + g*.4, 2.5 + g*.3, c.akz);
+    return {neu:'bk'};
+  }
+  if(s === 2){
+    lVoluten(L, Array.from({length:6}, (_, i) => ang(i, 6)), 26, 2.9, c, g >= 1, g === 2 ? 'stein' : 2.4, id);
+    kopfLilie(1.04 + g*.05);
+    return {neu:'hk'};
+  }
+  if(s === 3){
+    const f = lFries(L, 10, 12, 2.5, id, c);
+    if(g >= 1) L.vorn += perlen(f.knoten, 1.9, c);
+    if(g === 2) f.scheitel.forEach(([x,y], i) => { const a = Math.atan2(y - 50, x - 50), [px,py] = pt(a, RA + 6.2); L.vorn += cabochon(px, py, 2.6, 2.0, a + Math.PI/2, id, c); });
+    const [x,y] = pt(-Math.PI/2, RA + .8); L.vorn += cabochon(x, y, 3.2, 2.5, 0, id, c) + lilie(RA + 5.6, 1.16 + g*.05, c.akz);
+    return {neu:'hk'};
+  }
+  if(s === 4){
+    lLorbeer(L, 10, 1.24, g >= 1, id, c);
+    if(g === 2){ [-1,1].forEach(sp => { const [x,y] = pt(Math.PI/2 - sp*0.40, RA + 4.6); L.vorn += raute(x, y, 3.6, 2.5, c.akz); });
+      for(let i = 0; i < 4; i++){ const a = -Math.PI/4 + i*Math.PI/2, [x,y] = pt(a, R); L.vorn += cabochon(x, y, 2.6, 2.0, a + Math.PI/2, id, c); } }
+    kopfLilie(1.26 + g*.05);
+    return {neu:'hinten'};
+  }
+  if(s === 5){
+    // Der Kronreif hat ein zweites Band, aus dem die Lilien wachsen: der
+    // Reif einer Krone, ganz herum.
+    const rk = RA + 3.2;
+    L.hinten += `<circle cx="50" cy="50" r="${rk}" fill="none" stroke="${c.kante}" stroke-width="4.2"/>`
+      + `<circle cx="50" cy="50" r="${rk}" fill="none" stroke="url(#${id}mt)" stroke-width="3.2"/>`;
+    lFleurons(L, 8, 1.34, c.akz, rk + .6);
+    // Zwischen den Lilien Perlenzinken: kurze Stiele mit einer Perle, wie
+    // auf dem Reif einer Krone. Ohne sie standen acht Lilien einzeln da und
+    // lasen sich als Pfeilspitzen.
+    const zinken = [];
+    for(let i = 0; i < 8; i++){ const a = ang(i, 8) + Math.PI/8; if(Math.abs(Math.cos(a)) < .2) continue;
+      L.hinten += `<path d="M${K(pt(a, rk))}L${K(pt(a, rk + 7))}" stroke="${c.kante}" stroke-width="2.2" stroke-linecap="round"/>`
+        + `<path d="M${K(pt(a, rk))}L${K(pt(a, rk + 7))}" stroke="url(#${id}kp)" stroke-width="1.3" stroke-linecap="round"/>`;
+      zinken.push(pt(a, rk + 8.2)); }
+    L.hinten += perlen(zinken, 2.0, c);
+    if(g >= 1) L.band += perlen(Array.from({length:16}, (_, i) => pt(ang(i,16), rk)), 1.3, c);
+    if(g === 2) for(let i = 0; i < 8; i++){ const a = ang(i,8); if(Math.abs(Math.cos(a)) < .2) continue; const [x,y] = pt(a, rk); L.band += cabochon(x, y, 2.4, 1.9, a + Math.PI/2, id, c); }
+    const [x,y] = pt(-Math.PI/2, rk); L.vorn += cabochon(x, y, 3.4, 2.6, 0, id, c) + lilie(rk + 7.4, 1.42 + g*.05, c.akz);
+    return {neu:'hinten'};
+  }
+  lStrahlen(L, [8,9,10][g], [0,1,2][g], id, c);
+  if(g >= 1) L.band += perlen(Array.from({length:16}, (_, i) => pt(ang(i,16), R)), 1.4, c);
+  if(g === 2){ for(let i = 0; i < 4; i++){ const a = -Math.PI/4 + i*Math.PI/2, [x,y] = pt(a, R); L.vorn += raute(x, y, 3.2, 2.2, c.akz); }
+    for(let i = 0; i < 8; i++){ const [x,y] = pt(ang(i,8), R); L.vorn += raute(x, y, 2.0, 1.4, c.akz); } }
+  L.vorn += krone(RA + 4.4, 1.15, 5, id, c, c.akz);
+  return {neu:'strahl'};
+}
+
+/* ── Die Seite ───────────────────────────────────────────────────── */
+const RANGE = ['Solide','Stark','Elite','Legende'];
+const rangLeiter = {A:'Elite', B:'Elite'};
+function leiter(v){
+  const S = v === 'A' ? STUFEN_A : STUFEN_B, fn = v === 'A' ? bauA : bauB;
+  document.getElementById('leiter' + v).innerHTML = S.map((st, s) => `<div class="stufe">
+    <div class="name"><b>${st.name}</b><span>ab ${st.ab}</span>${st.neu ? '<span class="neu">NEU</span>' : ''}<em>${st.satz}</em></div>
+    ${[0,1,2].map(g => `<div class="feld"><div class="bild">${zeichnen(fn, s, g, rangLeiter[v])}</div><span>${['I','II','III'][g]}</span></div>`).join('')}
+  </div>`).join('');
+}
+document.querySelectorAll('.rangwahl').forEach(w => {
+  const v = w.dataset.fuer;
+  w.innerHTML = RANGE.map(r => `<button data-r="${r}" class="${r === rangLeiter[v] ? 'an' : ''}"><i style="background:${RANGF[r]}"></i>${r}</button>`).join('');
+  w.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return;
+    rangLeiter[v] = b.dataset.r; w.querySelectorAll('button').forEach(x => x.classList.toggle('an', x === b)); leiter(v); });
+});
+leiter('A'); leiter('B');
+
+// Rangliste und Feed-Leiter
+const SPIELER = [
+  {n:'Leon', f:'#f0566a', s:3, g:1, r:'Legende'}, {n:'Julian', f:'#ff9f43', s:3, g:1, r:'Elite'},
+  {n:'Martin', f:'#56b4e8', s:4, g:0, r:'Elite'}, {n:'Jane', f:'#f78fb3', s:2, g:0, r:'Stark'},
+  {n:'Maxi', f:'#f7cf4a', s:1, g:2, r:'Stark'}, {n:'Leo', f:'#4ecdc4', s:1, g:0, r:'Solide'},
+  {n:'Henry', f:'#a78bfa', s:0, g:2, r:'Solide'}];
+['A','B'].forEach(v => {
+  const fn = v === 'A' ? bauA : bauB, S = v === 'A' ? STUFEN_A : STUFEN_B;
+  document.getElementById('zeilen' + v).innerHTML = SPIELER.map(p => `<div class="rzeile">
+    <div class="w">${zeichnen(fn, p.s, p.g, p.r)}<span class="av" style="background:${p.f}">${p.n.slice(0,2).toUpperCase()}</span></div>
+    <div class="n"><b>${p.n}</b><span>${S[p.s].name} ${['I','II','III'][p.g]}</span></div></div>`).join('');
+  document.getElementById('lt' + v).innerHTML = S.map((st, s) => `<i class="${s <= 3 ? 'hat' : ''}${s === 3 ? ' jetzt' : ''}">${zeichnen(fn, s, s === 3 ? 1 : 0, 'Legende')}</i>`).join('');
+});
+
+// Der Aufstieg
+const aufStand = {A:3, B:3};
+function aufZeigen(v, spielen){
+  const fn = v === 'A' ? bauA : bauB, S = v === 'A' ? STUFEN_A : STUFEN_B, s = aufStand[v];
+  const box = document.getElementById('auf' + v);
+  let svg = zeichnen((L, st, g, id, c) => { const r = fn(L, st, g, id, c); r.neuKlasse = spielen ? (v === 'A' ? 'lage-neu' : 'lage-neu-b') : ''; return r; }, s, 0, 'Legende');
+  box.querySelector('.bild').innerHTML = svg;
+  box.querySelector('.txt b').textContent = S[s].name;
+  box.querySelector('.txt span').textContent = v + ' · ab ' + S[s].ab + ' Prestige';
+  if(spielen){ box.classList.remove('laeuft'); void box.offsetWidth; box.classList.add('laeuft'); }
+}
+document.querySelectorAll('[data-auf]').forEach(b => b.onclick = () => aufZeigen(b.dataset.auf, true));
+document.querySelectorAll('[data-auf-weiter]').forEach(b => b.onclick = () => { const v = b.dataset.aufWeiter;
+  aufStand[v] = (aufStand[v] + 1) % 7; aufZeigen(v, true); });
+aufZeigen('A', false); aufZeigen('B', false);
+
+/* ── Bewegung ─────────────────────────────────────────────────────── */
+document.getElementById('ruhig').onchange = e => document.body.classList.toggle('ruhig', e.target.checked);
+const ruhig = () => document.body.classList.contains('ruhig') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// FLIP
+let liste = [{n:'Leon',f:'#f0566a',e:412},{n:'Martin',f:'#56b4e8',e:398},{n:'Julian',f:'#ff9f43',e:391},{n:'Jane',f:'#f78fb3',e:352},{n:'Maxi',f:'#f7cf4a',e:344}];
+function flipZeichnen(delta){
+  const el = document.getElementById('flip');
+  el.innerHTML = liste.map((p, i) => `<div class="rzeile${delta && delta[p.n] > 0 ? ' hoch' : ''}" data-n="${p.n}"><span class="p">${i+1}</span>
+    <span class="dot" style="background:${p.f}">${p.n.slice(0,2).toUpperCase()}</span><span class="n"><b>${p.n}</b></span>
+    <span style="display:flex;gap:8px;align-items:center">${delta && delta[p.n] ? `<span class="d ${delta[p.n] > 0 ? 'g' : 'r'}">${delta[p.n] > 0 ? '+' : ''}${delta[p.n]}</span>` : ''}<span class="e">${p.e}</span></span></div>`).join('');
+}
+flipZeichnen();
+let flipDreh = 0;
+document.getElementById('flipLos').onclick = () => {
+  const el = document.getElementById('flip');
+  const vorher = {}; el.querySelectorAll('.rzeile').forEach(r => vorher[r.dataset.n] = r.getBoundingClientRect().top);
+  const paare = [[{Julian:+19, Jane:+17, Leon:-18, Maxi:-4}], [{Maxi:+22, Martin:+14, Julian:-15, Jane:-9}], [{Leon:+16, Jane:+12, Martin:-11, Maxi:-10}]];
+  const delta = paare[flipDreh++ % paare.length][0];
+  liste.forEach(p => p.e += delta[p.n] || 0); liste.sort((a, b) => b.e - a.e);
+  flipZeichnen(delta);
+  el.querySelectorAll('.rzeile').forEach(r => {
+    const dy = vorher[r.dataset.n] - r.getBoundingClientRect().top;
+    if(!dy || ruhig()) return;
+    r.animate([{transform:`translateY(${dy}px)`}, {transform:'none'}], {duration:420, easing:'cubic-bezier(.2,.8,.2,1)'});
+  });
+  requestAnimationFrame(() => el.querySelectorAll('.d').forEach(d => d.classList.add('an')));
+  setTimeout(() => el.querySelectorAll('.d').forEach(d => d.classList.remove('an')), 3000);
+};
+
+// Zahlen zählen hoch
+function zaehlen(){
+  const zellen = [...document.querySelectorAll('#zr b')], t0 = performance.now(), T = 600;
+  if(ruhig()){ zellen.forEach(z => z.textContent = z.dataset.z + (z.dataset.e || '')); return; }
+  const schritt = t => { const f = Math.min(1, (t - t0)/T), e = 1 - Math.pow(1 - f, 3);
+    zellen.forEach(z => z.textContent = Math.round(z.dataset.z * e) + (z.dataset.e || ''));
+    if(f < 1) requestAnimationFrame(schritt); };
+  requestAnimationFrame(schritt);
+}
+new IntersectionObserver((e, o) => { if(e[0].isIntersecting){ zaehlen(); o.disconnect(); } }).observe(document.getElementById('zr'));
+document.getElementById('zrLos').onclick = zaehlen;
+
+// Stories
+const SEITEN = [
+  {rub:'Am Spieltag · 10:44', farbe:'var(--acid)', gross:'10:5', h:'Leon und Maxi holen die Teamserie', p:'Sieben gemeinsame Siege nacheinander, die nächste Marke ist acht.'},
+  {rub:'Am Spieltag · 14:09', farbe:'var(--acid)', gross:'30 %', h:'Johannes und Anton stürzen die Favoriten', p:'Nur 30 % Siegchance vor dem Anstoß. Es war der erste gemeinsame Sieg nach drei Pleiten.'},
+  {rub:'Ewige Tafel · 14:32', farbe:'var(--silber)', gross:'+10', h:'Maxi, Julian, Jane und Johannes übernehmen „Der Höhenflug“', p:'Zehn Prozentpunkte über dem eigenen Schnitt in den letzten zehn Partien.'},
+  {rub:'Spieler des Tages', farbe:'var(--gold)', gross:'6/9', h:'Julian ist Spieler des Tages', p:'Sechs von neun Partien gewonnen, mehr Siege hatte an diesem Tag niemand.'},
+];
+const st = document.getElementById('st'); let stI = 0, stT = null;
+st.insertAdjacentHTML('afterbegin', SEITEN.map((x, i) => `<div class="seite" data-i="${i}" style="background:radial-gradient(90% 60% at 80% 10%,color-mix(in srgb,${x.farbe} 18%,transparent),transparent 60%)">
+  <div class="gross" style="color:${x.farbe}">${x.gross}</div><div class="rub" style="color:${x.farbe}">${x.rub}</div><h5>${x.h}</h5><p>${x.p}</p></div>`).join(''));
+st.querySelector('.bars').innerHTML = SEITEN.map(() => '<i><b></b></i>').join('');
+function stZeigen(i){
+  stI = (i + SEITEN.length) % SEITEN.length; clearTimeout(stT);
+  st.querySelectorAll('.seite').forEach((s, k) => s.classList.toggle('an', k === stI));
+  st.querySelectorAll('.bars i').forEach((b, k) => { b.className = k < stI ? 'fertig' : ''; });
+  const jetzt = st.querySelectorAll('.bars i')[stI]; void jetzt.offsetWidth; jetzt.className = 'jetzt';
+  if(!ruhig()) stT = setTimeout(() => stZeigen(stI + 1), 4500);
+}
+st.querySelectorAll('[data-st]').forEach(t => t.onclick = () => stZeigen(stI + (+t.dataset.st)));
+stZeigen(0);
+
+// Neu laden durch Ziehen
+(function(){
+  const box = document.getElementById('ptr'), inh = box.querySelector('.inh'), ball = box.querySelector('.ball');
+  let y0 = null, dy = 0;
+  box.addEventListener('pointerdown', e => { y0 = e.clientY; box.setPointerCapture(e.pointerId); inh.style.transition = ball.style.transition = 'none'; });
+  box.addEventListener('pointermove', e => { if(y0 === null) return; dy = Math.max(0, Math.min(110, (e.clientY - y0) * .55));
+    inh.style.transform = `translateY(${dy}px)`; ball.style.transform = `translateY(${dy + 6}px) rotate(${dy * 4}deg)`; });
+  box.addEventListener('pointerup', () => {
+    if(y0 === null) return; y0 = null;
+    const laden = dy > 60;
+    inh.style.transition = ball.style.transition = 'transform .35s cubic-bezier(.2,.8,.2,1)';
+    if(!laden){ inh.style.transform = ball.style.transform = ''; return; }
+    inh.style.transform = 'translateY(56px)';
+    ball.animate([{transform:'translateY(62px) rotate(0)'}, {transform:'translateY(62px) rotate(720deg)'}], {duration:900, iterations:2});
+    inh.querySelectorAll('.zeilen div').forEach(z => z.classList.add('skel'));
+    setTimeout(() => { inh.style.transform = ball.style.transform = ''; inh.querySelectorAll('.zeilen div').forEach(z => z.classList.remove('skel')); }, 1800);
+  });
+})();
+
+/* ── Neue Ansichten ───────────────────────────────────────────────── */
+// Kalender August: Spieltage aus den Fixtures, Stufen nach Partienzahl.
+const AUG = {3:6,4:9,5:4,6:7,7:3,10:8,11:10,12:5,13:6,14:9,17:4,18:8,19:3,20:10,21:5,24:7,25:9,26:11};
+const POTD = new Set([4,11,14,20,25]);
+document.getElementById('kal').innerHTML = Array.from({length:4}, () => '<i style="visibility:hidden"></i>').join('')
+  + Array.from({length:31}, (_, i) => { const d = i + 1, n = AUG[d] || 0;
+    const l = !n ? '' : n < 5 ? 'l1' : n < 8 ? 'l2' : n < 10 ? 'l3' : 'l4';
+    return `<i class="${l}${POTD.has(d) ? ' potd' : ''}" title="${d}.08. · ${n} Partien"></i>`; }).join('');
+
+// Rennen um die Spitze
+(function(){
+  const namen = [['Leon','#f0566a'],['Martin','#56b4e8'],['Julian','#ff9f43'],['Jane','#f78fb3'],['Maxi','#f7cf4a'],['Leo','#4ecdc4']];
+  const plaetze = [[2,1,1,1,2,1,1,2,1,1,1,1],[1,2,2,2,1,2,2,1,2,2,3,2],[4,3,3,4,3,3,4,3,3,3,2,3],[3,4,5,3,4,4,3,4,4,5,4,4],[5,5,4,5,6,5,5,5,6,4,5,6],[6,6,6,6,5,6,6,6,5,6,6,5]];
+  const W = 340, H = 200, x = i => 34 + i * (W - 70) / 11, y = p => 14 + (p - 1) * 34;
+  let s = '';
+  for(let p = 1; p <= 6; p++) s += `<text x="8" y="${y(p) + 4}" fill="#4a554e" font-family="Sometype Mono, monospace" font-size="10">${p}</text>`;
+  namen.forEach(([n, f], k) => {
+    const d = plaetze[k].map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p)).join('');
+    s += `<path d="${d}" fill="none" stroke="${f}" stroke-width="${k < 2 ? 3 : 2}" stroke-linejoin="round" stroke-linecap="round" opacity="${k < 2 ? 1 : .55}" class="zeichne" style="--l:520"/>`;
+    const last = plaetze[k][11];
+    s += `<circle cx="${x(11)}" cy="${y(last)}" r="4" fill="${f}"/><text x="${x(11) + 8}" y="${y(last) + 4}" fill="${f}" font-family="Space Grotesk, sans-serif" font-size="11" font-weight="600">${n}</text>`;
+  });
+  document.getElementById('rennen').innerHTML = s;
+})();
+
+// Duo-Netz
+(function(){
+  const sp = [['Leon','#f0566a'],['Martin','#56b4e8'],['Julian','#ff9f43'],['Jane','#f78fb3'],['Maxi','#f7cf4a'],['Leo','#4ecdc4'],['Henry','#a78bfa'],['Johannes','#e07cf0']];
+  const duos = [[0,4,34,.68],[0,1,12,.75],[1,2,18,.72],[2,4,15,.6],[3,5,20,.45],[4,6,26,.38],[5,7,9,.33],[0,6,11,.55],[1,3,14,.64],[2,7,8,.5],[3,6,10,.4],[1,5,16,.56],[4,7,7,.29]];
+  const cx = 160, cy = 125, rr = 92;
+  const pos = sp.map((_, i) => { const a = -Math.PI/2 + i/sp.length*Math.PI*2; return [cx + Math.cos(a)*rr, cy + Math.sin(a)*rr]; });
+  let s = duos.map(([a, b, n, q]) => `<line data-a="${a}" data-b="${b}" x1="${pos[a][0]}" y1="${pos[a][1]}" x2="${pos[b][0]}" y2="${pos[b][1]}"
+      stroke="${q >= .5 ? '#BEF264' : '#f0566a'}" stroke-opacity="${.25 + Math.abs(q - .5)}" stroke-width="${1 + n/6}" stroke-linecap="round"/>`).join('');
+  s += sp.map(([n, f], i) => `<g data-i="${i}" style="cursor:pointer"><circle cx="${pos[i][0]}" cy="${pos[i][1]}" r="15" fill="${f}"/>
+      <text x="${pos[i][0]}" y="${pos[i][1] + 4}" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="700" font-size="10" fill="#0b0f0d">${n.slice(0,2).toUpperCase()}</text></g>`).join('');
+  const svg = document.getElementById('netz'); svg.innerHTML = s;
+  svg.addEventListener('click', e => { const g = e.target.closest('g[data-i]'); const i = g ? +g.dataset.i : -1;
+    svg.querySelectorAll('line').forEach(l => l.style.opacity = (i < 0 || +l.dataset.a === i || +l.dataset.b === i) ? '' : .08); });
+})();
+
+// Bergkette
+(function(){
+  const elo = [0,12,8,25,40,33,52,70,61,88,104,96,120,142,130,151,168,160,183,214,199,188,205,221,210,236,228,249,262,244,258,271,255,280,268];
+  const W = 340, H = 150, lo = -10, hi = 300, x = i => i * W/(elo.length - 1), y = v => H - 18 - (v - lo)/(hi - lo)*(H - 40);
+  const d = elo.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join('');
+  const gi = elo.indexOf(Math.max(...elo));
+  let s = `<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BEF264" stop-opacity=".35"/><stop offset="1" stop-color="#BEF264" stop-opacity="0"/></linearGradient></defs>`;
+  [8,17,26].forEach(i => s += `<line x1="${x(i)}" y1="10" x2="${x(i)}" y2="${H - 18}" stroke="#28332b" stroke-dasharray="2 3"/>`);
+  s += `<path d="${d}L${W} ${H - 18}L0 ${H - 18}Z" fill="url(#bg)"/><path d="${d}" fill="none" stroke="#BEF264" stroke-width="2" stroke-linejoin="round" class="zeichne" style="--l:700"/>`;
+  s += `<circle cx="${x(gi)}" cy="${y(elo[gi])}" r="4" fill="#f7cf4a"/><text x="${x(gi) - 6}" y="${y(elo[gi]) - 10}" text-anchor="end" fill="#f7cf4a" font-family="Sometype Mono, monospace" font-size="10" font-weight="700">Gipfel 280</text>`;
+  ['Mai','Jun','Jul','Aug'].forEach((m, k) => s += `<text x="${4 + k*85}" y="${H - 4}" fill="#717f76" font-family="Sometype Mono, monospace" font-size="10">${m}</text>`);
+  document.getElementById('berg').innerHTML = s;
+})();
+</script>
+</body>
+</html>

@@ -110,7 +110,12 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       und der Entwurf der visuellen Aufwertung: Befunde,
                       Zeichenraster, Reiter, Kacheln, statistische Belege,
                       Stories samt Faden zwischen Karten, Blätter und die
-                      Reihenfolge der Umsetzung (aufwertung.html)
+                      Reihenfolge der Umsetzung (aufwertung.html), und der
+                      Entwurf der Insignium-Leiter mit sieben Stufen in zwei
+                      Richtungen — Schicht für Schicht oder sieben Gegenstände
+                      in einer Bauweise, je 21 Zeichnungen in der Machart von
+                      35b-prestige.js —, dazu Bewegung, die etwas erklärt, und
+                      neue gezeichnete Ansichten (aufwertung-2.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
