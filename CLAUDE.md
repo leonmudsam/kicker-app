@@ -114,8 +114,10 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Entwurf der Insignium-Leiter mit sieben Stufen als
                       sieben Gegenstände in einer Bauweise: eine Medaille auf
                       einem Kranz, geprägt mit Fuge statt Haarlinie, vom Reif
-                      über Zweig, Eiche und Lorbeer zu Krone, Band und Stern,
-                      21 Zeichnungen samt Bühne für den Aufstieg, dazu
+                      über Zweig, Eiche und Lorbeer zu Krone und Stern, ohne
+                      Band, die Raute mit der Platzierung am Fuß und der Rang
+                      als Schimmer im Metall, 21 Zeichnungen in fünf Rängen
+                      samt Bühne für den Aufstieg, dazu
                       Bewegung, die etwas erklärt, und neue gezeichnete
                       Ansichten (aufwertung-2.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
