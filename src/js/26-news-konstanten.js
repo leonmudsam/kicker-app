@@ -297,6 +297,19 @@ const FORM_VORSPRUNG = 0.25; // Anteilspunkte über dem eigenen Schnitt
 // Damit gab es die zweite Skala wieder, gegen die `STORY_PRIO` gebaut ist.
 const PRIO_SPIELTAG_MAX = 89;
 
+// ── Die Leiter der Serienmarken [§C33] ───────────────────────────────
+// Drei, fünf, acht, zehn und danach jede fünfte. Sie stand als Menge im
+// Generator; die Karte einer Serie zeigt jetzt auch die NÄCHSTE Marke als
+// leere Felder, und zwei Kopien der Leiter nennen irgendwann zwei Ziele.
+function istSerienMarke(n){
+  return n === 3 || n === 5 || n === 8 || n === 10 || (n > 10 && n % 5 === 0);
+}
+function naechsteSerienMarke(n){
+  let z = Math.max(1, (n | 0) + 1);
+  while(!istSerienMarke(z)) z++;
+  return z;
+}
+
 const STORY_PRIO = {
   // ── Breaking ──
   rekord_erstmals:   96,   // ein Liga-Rekord wird zum ersten Mal vergeben

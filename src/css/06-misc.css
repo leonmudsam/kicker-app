@@ -3,6 +3,39 @@
   .empty .ee{font-size:34px;margin-bottom:12px;opacity:.5}
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
+  /* ── Der Glanz [§C25] ──────────────────────────────────────────────
+     Breaking glimmt und die Karte des Tages trägt ein Lauflicht. Dasselbe
+     Licht liegt jetzt dort, wo Gold einen Titel bedeutet und EINER ihn
+     trägt: der Erste auf jedem Podest, der Spieler des Tages und der Woche
+     im Feed samt ihrem Blatt, der Held der Rückblicke. Nirgends sonst — ein
+     Licht auf jeder goldenen Zahl wäre eine Kirmes, und das Farbgesetz
+     sagt, dass Gold nur trägt, was selten ist.
+     Ein eigenes Pseudo-Element und nicht der Hintergrund: die Fläche der
+     Karte bleibt dunkel und unberührt. Es liegt genau über der Box und
+     braucht kein `overflow:hidden` — die Schwinge des Ersten ragt aus dem
+     Podest heraus und wäre sonst abgeschnitten. Die Strecke läuft in
+     anderthalb Sekunden, danach ruht sie gut sechs: ein Signal, kein
+     Flackern. Bei reduzierter Bewegung steht nichts still da, es fehlt ganz. */
+  @keyframes glanzLauf{0%,78%{background-position:140% 0}100%{background-position:-40% 0}}
+  .pod-karte.erster.gold::after,
+  .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
+  .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
+  .rcp-held::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.18) 50%,transparent 58%)
+      no-repeat;background-size:250% 100%;background-position:140% 0;
+    animation:glanzLauf 8s ease-in-out infinite}
+  /* Zwei Lichter nebeneinander laufen versetzt: die Wochenkarte beginnt
+     später als der Spieler des Tages, der Rückblick später als das Podest. */
+  .nf-s-woche:not(.read)::after,.nd-s-woche .nd-head::after{animation-delay:-3s}
+  .rcp-held::after{animation-delay:-5s}
+  .nd-s-held .nd-head,.nd-s-woche .nd-head{position:relative;border-radius:14px}
+  @media(prefers-reduced-motion:reduce){
+    .pod-karte.erster.gold::after,
+    .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
+    .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
+    .rcp-held::after{animation:none;background:none}}
+
   .mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
     margin:0 2px 8px;font-weight:600}
 

@@ -1841,6 +1841,82 @@ const ok = (c, msg, det) => {
      'und die Bahn laeuft in Spielreihenfolge auf',
      balkenLebt.bahn + ' nach ' + balkenLebt.verzug);
 
+  console.log('\n═══ DER GLANZ GEHOERT DEM TITEL ═══');
+  // Breaking glimmt, die Karte des Tages traegt ein Lauflicht — und dasselbe
+  // Licht liegt dort, wo Gold einen Titel bedeutet und EINER ihn traegt
+  // [§C25]: der Erste des Podests, der Spieler des Tages und der Woche, der
+  // Held eines Rueckblicks. Ein silberner Erster, eine gelesene Siegerkarte
+  // und eine gewoehnliche Partie tragen es nicht.
+  const glanz = async () => page.evaluate(() => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="podest"><div class="pod-karte gold erster" id="g1"></div>'
+      + '<div class="pod-karte silber erster" id="g2"></div></div>'
+      + '<div class="nf-card nf-s-held" id="g3"></div><div class="nf-card nf-s-held read" id="g4"></div>'
+      + '<div class="nf-card nf-s-spiel" id="g5"></div><div class="rcp-held" id="g6"></div>'
+      + '<div class="nd nd-s-held"><div class="nd-head" id="g7"></div></div>';
+    document.body.appendChild(host);
+    const a = id => getComputedStyle(host.querySelector('#' + id), '::after').animationName;
+    const out = {gold:a('g1'), silber:a('g2'), held:a('g3'), gelesen:a('g4'),
+                 spiel:a('g5'), rueckblick:a('g6'), blatt:a('g7')};
+    host.remove(); return out;
+  });
+  const gl = await glanz();
+  ok(gl.gold === 'glanzLauf' && gl.held === 'glanzLauf' && gl.rueckblick === 'glanzLauf'
+     && gl.blatt === 'glanzLauf',
+     'der Erste in Gold, der Spieler des Tages samt Blatt und der Held tragen den Glanz',
+     JSON.stringify(gl));
+  ok(gl.silber !== 'glanzLauf' && gl.gelesen !== 'glanzLauf' && gl.spiel !== 'glanzLauf',
+     'ein silberner Erster, eine gelesene und eine gewoehnliche Karte nicht',
+     JSON.stringify(gl));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const glRuhig = await glanz();
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(Object.values(glRuhig).every(v => v !== 'glanzLauf'),
+     'bei prefers-reduced-motion ruht der Glanz', JSON.stringify(glRuhig));
+
+  console.log('\n═══ BOGEN, CHIPS UND FADEN BEI 360 PX ═══');
+  // Der Fuss einer Partie traegt die Siegchance als Bogen und den Gewinn je
+  // Sieger als Chip, und der Faden fuehrt zur frueheren Karte [§C33]. Alles
+  // muss in der Karte bleiben, und der Faden muss oeffnen, wohin er zeigt.
+  const fuss = await page.evaluate(() => {
+    const sheet = document.getElementById('sheet');
+    sheet.querySelectorAll('.nf-card').forEach(c => { c.style.contentVisibility = 'visible'; });
+    const raus = [];
+    const drin = (el, card, was) => {
+      const r = el.getBoundingClientRect(), k = card.getBoundingClientRect();
+      if(r.left < k.left - .5 || r.right > k.right + .5) raus.push(was + ' ' + Math.round(r.right - k.right) + ' px');
+    };
+    const spf = [...sheet.querySelectorAll('.nf-spf')];
+    spf.forEach(f => {
+      const card = f.closest('.nf-card');
+      f.querySelectorAll('.nf-bogen, .nf-eloc').forEach(el => drin(el, card, 'Fuss'));
+    });
+    const fd = [...sheet.querySelectorAll('.nf-faden')];
+    fd.forEach(f => drin(f, f.closest('.nf-card'), 'Faden'));
+    const bogenOhneWert = spf.filter(f => f.querySelector('.nf-bogen') && !f.querySelector('.nf-bogen .v')).length;
+    return {spf: spf.length, faeden: fd.length, raus, bogenOhneWert};
+  });
+  ok(fuss.spf > 0 && fuss.faeden > 0 && fuss.raus.length === 0 && fuss.bogenOhneWert === 0,
+     'Bogen, Chips und Faden bleiben in ihrer Karte',
+     fuss.raus.slice(0, 3).join(' | ') || fuss.spf + ' Fuesse, ' + fuss.faeden + ' Faeden');
+  const fadenAuf = await page.evaluate(() => {
+    const sheet = document.getElementById('sheet');
+    const f = sheet.querySelector('.nf-faden');
+    if(!f) return {ok:false};
+    const ziel = sheet.querySelector('.nf-card[data-sid="' + CSS.escape(f.dataset.ziel) + '"] .nf-h');
+    const vorher = document.getElementById('nd').innerHTML;
+    f.click();
+    const nd = document.getElementById('nd');
+    const titel = (nd.querySelector('.nd-title') || {}).textContent || '';
+    const weiter = [...nd.querySelectorAll('.nd-faeden .nf-faden')].map(x => x.textContent);
+    try { window.__k.eval('closeNewsDetail()'); } catch(e){}
+    return {ok: true, soll: ziel ? ziel.textContent : '(nicht im Feed)', titel,
+            weiter: weiter.some(x => /Geht weiter/.test(x)), neu: nd.innerHTML !== vorher};
+  });
+  ok(fadenAuf.ok && fadenAuf.titel === fadenAuf.soll && fadenAuf.weiter,
+     'der Faden oeffnet die fruehere Karte, und deren Blatt zeigt, wo es weitergeht',
+     fadenAuf.titel + ' / ' + fadenAuf.soll);
+
   console.log('\n═══ BREAKING BRICHT DIE SPALTE ═══');
   const brk = await page.evaluate(() => {
     // Kein Breaking im Fenster: eines nachbauen und in denselben Feed haengen.

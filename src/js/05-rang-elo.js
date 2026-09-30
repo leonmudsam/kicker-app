@@ -138,6 +138,12 @@ const CHANCE_SENSATION = 0.20;
 // zaehlt deshalb `<= CHANCE_UPSET`, der Aussenseiter-Sieg zaehlt `<`. Die
 // Grenze ist dieselbe, die Randbedingung nicht — und sie wird nicht
 // stillschweigend vereinheitlicht, weil die Schwellen daran geeicht sind.
+// Das Wort zu einer Siegchance, an EINER Stelle: die Skala im Blatt einer
+// Partie und der Bogen auf ihrer Karte sagen sonst zu 30 % zwei Dinge.
+function chanceWort(c){
+  return c < CHANCE_SENSATION ? 'Sensation' : c < CHANCE_UPSET ? 'Außenseiter'
+       : c < CHANCE_FAVORIT ? 'Augenhöhe' : 'Favorit';
+}
 function posFactor(ps,sw){ return 1+sw*(0.5-ps)*2; }
 function riskWeights(hi,lo,rs){ const gap=Math.min(Math.abs(hi-lo)/400,1); const s=rs*gap; return {strong:1-s,weak:1+s}; }
 

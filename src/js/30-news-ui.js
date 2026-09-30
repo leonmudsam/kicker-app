@@ -437,7 +437,7 @@ function _newsTafelTon(s){
   return arten.length === 1 ? arten[0] : (arten.length > 1 ? 'mix' : 'rekord');
 }
 
-function _newsCardHtmlM2(s, isRead, istTagesKarte){
+function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
@@ -493,6 +493,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
   // untereinander sahen alle gleich aus.
   let kopf = '', fuss = '', gesicht = '';
+  // Der Satz unter der Schlagzeile. Nur die Partie-Karte kürzt ihn: was ihr
+  // Fuß als Bogen und Chips zeigt, sagt er nicht noch einmal (_newsSpielSatz).
+  let satz = s.desc;
   const pm = pmap();
   // 48 px ist die Untergrenze fuer ein Wappen [§6]; darunter gibt `insAvWrap`
   // nur den Avatar zurueck, und die Karte verloere ihr Gesicht [§C33].
@@ -500,7 +503,9 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
 
   if(sorte === 'spiel'){
     kopf = d.bandFremd ? '' : _newsErgebnisBand(d.matchId);
-    fuss = _newsZahlband(_newsSpielZahlen(s));
+    const spf = _newsSpielFuss(s);
+    satz = _newsSpielSatz(s.desc, spf);
+    fuss = spf + _newsZahlband(_newsSpielZahlen(s));
     // Die Ergebnis-Sammelkarte hat ZWEI Partien und deshalb keine, die sie
     // als Band zeigen könnte: acht Wappen übereinander machten sie höher als
     // ihr Text [§C27]. Die Stände stehen im Sammelband, die Sieger als Chips
@@ -587,7 +592,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     gesicht = d.a && d.b
       ? `<div class="nf-gr-l nf-duo">${av(d.a, 38)}${av(d.b, 38)}</div>`
       : `<div class="nf-gr-l">${av(d.pid || d.playerId, 48)}</div>`;
-    fuss = _newsSerienBand(d.streak, verloren);
+    fuss = _newsSerienBand(d.streak, verloren, true);
   } else if(sorte === 'badge'){
     gesicht = `<div class="nf-gr-l">${av(d.playerId, 48)}</div>`;
     // Der Name der Auszeichnung steht schon in der Schlagzeile. Im Fuss stand
@@ -656,12 +661,13 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     ${kopf}
     <div class="nf-gr${gesicht?' mit-l':''}">
       ${gesicht}
-      <div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc)}</div></div>
+      <div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div>${satz ? `<div class="nf-d">${_newsBetont(satz)}</div>` : ''}</div>
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
     ${sammelBand}
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
+    ${fadenHtml || ''}
   </div>`;
 }
 
@@ -781,17 +787,23 @@ function _newsBilanzBalken(aPid, bPid, aW, bW){
 // Die Partien einer Serie als Punkte. „7 Siege" ist eine Zahl, die Reihe
 // zeigt, wie lang sieben sind. Ab zwölf Punkten steht der Rest als Ziffer:
 // eine Reihe, die über die Karte hinausläuft, sagt nichts mehr.
-function _newsSerienBand(laenge, verloren){
+function _newsSerienBand(laenge, verloren, mitZiel){
   const n = Math.max(0, Number(laenge) || 0);
   if(!n) return '';
   const zeige = Math.min(n, 12);
+  // Die Karte einer Siegesserie zeigt die nächste Marke als leere Felder:
+  // man sieht, wie weit es noch ist. Eine Pleitenserie hat kein Ziel —
+  // eine Marke, auf die man zuläuft, wäre dort ein Wunsch [§C25].
+  const ziel = mitZiel && !verloren ? naechsteSerienMarke(n) : 0;
+  const leer = ziel && ziel <= 12 ? ziel - zeige : 0;
   // Rechts steht, was die Punkte zaehlen. Ohne die Angabe war die halbe
   // Bandbreite leer, und die Reihe sagte nicht, ob sie Siege oder Pleiten
   // meint.
   return `<div class="nf-ser${verloren ? ' r' : ''}">`
     + Array.from({length: zeige}, () => '<i></i>').join('')
+    + Array.from({length: leer}, () => '<i class="x"></i>').join('')
     + (n > zeige ? `<em>+${n - zeige}</em>` : '')
-    + `<span>${n} ${verloren ? 'Pleiten' : 'Siege'} nacheinander</span></div>`;
+    + `<span>${n} ${verloren ? 'Pleiten' : 'Siege'} nacheinander${ziel ? ` · Marke ${ziel}` : ''}</span></div>`;
 }
 
 // ── Das Sammelband ──────────────────────────────────────────────────
@@ -880,11 +892,234 @@ function _newsSpielZahlen(s){
   const out = [];
   if(d.streak) out.push({v: d.streak, l:'Siege, jetzt beendet', f:'g'});
   if(d.gap) out.push({v: 'Platz ' + (d.winnerRank || d.gap), l:'schlägt Platz ' + (d.loserRank || '')});
-  if(d.chance != null) out.push({v: Math.max(1, Math.round(d.chance*100)) + ' %', l:'Siegchance vorher'});
-  // Die Tordifferenz steht NICHT im Band: das Ergebnisband darüber zeigt
-  // beide Zahlen, und „4 Tore Unterschied" unter einem 6:10 rechnet dem
-  // Leser vor, was er gerade gelesen hat.
+  // Die Siegchance steht nicht mehr als Zahl im Band, sondern als Bogen
+  // darüber (_newsSpielFuss). Die Tordifferenz steht gar nicht darin: das
+  // Ergebnisband zeigt beide Zahlen, und „4 Tore Unterschied" unter einem
+  // 6:10 rechnet dem Leser vor, was er gerade gelesen hat.
   return out;
+}
+
+// ── Bogen und Elo einer Partie [§C33] ────────────────────────────────
+// „30 %" muss man erst einordnen; der Halbkreis mit der Mitte zeigt, wie
+// weit die Rechnung dagegen stand, und das Wort daneben sagt es
+// (chanceWort, dieselbe Quelle wie die Skala im Blatt). Der Elo-Gewinn
+// gehört einem und nicht der Partie (`eloPid`): der Satz nennt den Besten,
+// die Chips nennen beide Sieger mit Gesicht. Die Chance ist die der Sieger
+// aus der Elo-Bahn, wie im Blatt der Partie.
+function _newsSpielFuss(s){
+  const d = s.dataRef || {};
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  if(!m) return '';
+  let c = d.quote != null ? d.quote / 100 : null;
+  if(c == null){
+    const h = getHistoryByMatchId().get(m.id);
+    const e = h && h.expA != null ? h.expA : m.exp_a;
+    if(e != null) c = m.winner === 'A' ? e : 1 - e;
+  }
+  const bogen = (c != null && c > 0 && c < 1) ? _newsChanceBogen(c) : '';
+  const pm = pmap();
+  const chips = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).map(pid => {
+    const v = _newsEloDelta(pid, m.id);
+    if(v == null || !pm[pid]) return '';
+    return `<span class="nf-eloc">${avHtml(pm[pid], '', {})}<b class="${v >= 0 ? 'g' : 'r'}">${v >= 0 ? '+' : ''}${v}</b></span>`;
+  }).join('');
+  if(!bogen && !chips) return '';
+  return `<div class="nf-spf">${bogen}${chips ? `<div class="nf-elocs">${chips}</div>` : ''}</div>`;
+}
+// ── Was der Fuß zeigt, sagt der Satz nicht [§C33] ────────────────────
+// „Vor dem Anstoß lag die Siegchance bei 81 %. Für Maxi bringt der Sieg +7
+// Elo." stand über einem Bogen mit 81 % und einem Chip mit Maxis +7 —
+// dieselben zwei Zahlen zweimal in einer Karte. Wie `_ndLead` im Blatt eine
+// Ableitung aus dem Text, also gilt sie auch für gespeicherte Karten; der
+// Text selbst bleibt, das Blatt und die Datenbank tragen ihn weiter.
+// Gestrichen werden nur Sätze, die NICHTS als diese Zahlen sagen: „Nur 30 %
+// Siegchance vor dem Anstoß. Trotzdem …" ist die Geschichte eines
+// Außenseitersiegs und bleibt stehen.
+function _newsSpielSatz(desc, fussHtml){
+  const t = String(desc || '');
+  if(!fussHtml) return t;
+  const bogen = fussHtml.includes('nf-bogen'), chips = fussHtml.includes('nf-eloc');
+  return t.split(/(?<=\.)\s+/).map(x => {
+    if(bogen && chips && /^Die Siegchance lag vor dem Anstoß bei \d+ %(, für .+ bringt der Sieg \+\d+ Elo)?\.$/.test(x)) return '';
+    if(bogen && /^Vor dem Anstoß lag die Siegchance bei \d+ %\.$/.test(x)) return '';
+    if(chips && /^Für .+ bringt der Sieg \+\d+ Elo\.$/.test(x)) return '';
+    return x;
+  }).filter(Boolean).join(' ');
+}
+function _newsChanceBogen(c){
+  const pct = Math.max(1, Math.round(c * 100));
+  const f = Math.min(.995, Math.max(.005, c));
+  const a = Math.PI * (1 - f);
+  const x = (29 + 24 * Math.cos(a)).toFixed(1), y = (30 - 24 * Math.sin(a)).toFixed(1);
+  // Unter der Linie der Überraschung hebt sich der Bogen ab: dort stand die
+  // Rechnung dagegen [CHANCE_UPSET].
+  return `<div class="nf-bogen${c < CHANCE_UPSET ? ' u' : ''}">`
+    + `<svg viewBox="0 0 58 34" aria-hidden="true"><path class="b" d="M5 30A24 24 0 0 1 53 30"/>`
+    + `<path class="v" d="M5 30A24 24 0 0 1 ${x} ${y}"/><path class="m" d="M29 3.5v5"/></svg>`
+    + `<span><b class="num">${pct} %</b>${esc(chanceWort(c))}</span></div>`;
+}
+
+// ── Der Faden [§C33] ────────────────────────────────────────────────
+// Eine Karte, die eine frühere fortsetzt, sagt es. Im Feed standen „Anton
+// und Johannes verlieren zusammen alles" am 24.08. und „Johannes und Anton
+// stürzen die Favoriten" am 26.08. als zwei Fremde — dass die zweite die
+// erste beendet, musste der Leser selbst finden. Der Faden ist eine
+// ABLEITUNG wie `_isBreaking`: nichts davon wird gespeichert, und er zeigt
+// nur auf eine Karte, die im Feed steht und älter ist.
+//
+// Gefragt wird nach dem Fakt, nicht nach der Karte: eine Sammelkarte trägt
+// ihre Zeilen, und die Serie, die sie beendet, kann in einer anderen
+// Sammelkarte stecken. Deshalb läuft die Suche über die ungebündelten
+// Meldungen (`_newsTexteAuffrischen`, dieselbe Referenz wie in
+// `getStoriesCache`) und bildet sie auf die Karte ab, in der sie stehen.
+//
+// Jede Beziehung wird an den Partien nachgeprüft, nicht am Wortlaut: eine
+// Pleitenserie ist erst mit dem ERSTEN Sieg danach gewendet, eine Revanche
+// nur die nächste Begegnung derselben zwei Duos, und eine Serie endet nur,
+// wenn dazwischen keine Niederlage lag. Ohne diese Prüfung zeigte jede
+// spätere Partie derselben Leute auf dieselbe alte Karte.
+//
+// Die „Rückkehr" aus dem Entwurf gibt es nicht: die Karte der Pause fällt
+// mit der nächsten Partie weg (`_consolidateStories` prüft `lastMatchId`),
+// also steht nie eine im Feed, auf die eine Rückkehr zeigen könnte.
+const NEWS_FADEN_ART = {
+  ende:     {kap:'ENDE',          vor:'Beendet'},
+  wende:    {kap:'WENDE',         vor:'Beendet'},
+  revanche: {kap:'REVANCHE',      vor:'Antwort auf'},
+  zurueck:  {kap:'RÜCKEROBERUNG', vor:'Folgt auf'},
+  weiter:   {kap:'FORTSETZUNG',   vor:'Setzt fort'},
+  spitze:   {kap:'WECHSEL',       vor:'Folgt auf'},
+};
+const _newsFadenMemo = new WeakMap();
+function _newsFaeden(cards){
+  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  const alt = _newsFadenMemo.get(roh);
+  if(alt && alt.m === matches && alt.n === cards.length) return alt.map;
+  const map = new Map();
+  _newsFadenMemo.set(roh, {m: matches, n: cards.length, map});
+  const rohId = new Map(roh.map(x => [x.id, x]));
+  // Jede Meldung → die Karte, in der sie steht.
+  const karteVon = new Map();
+  const glieder = new Map();
+  cards.forEach(c => {
+    const d = c.dataRef || {};
+    const ids = d.type === 'sammel' && Array.isArray(d.teile)
+      ? d.teile.map(t => t && t.id).filter(Boolean) : [c.id];
+    const g = ids.map(id => rohId.get(id) || (id === c.id ? c : null)).filter(Boolean);
+    g.forEach(x => karteVon.set(x.id, c));
+    glieder.set(c.id, g);
+  });
+  const idx = new Map();
+  const reihe = [...(matches || [])].sort((a, b) => mts(a) - mts(b));
+  reihe.forEach((m, i) => idx.set(m.id, i));
+  const sieger = m => m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+  const verlierer = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+  const gleich = (x, y) => x.length === y.length && x.every(v => y.includes(v));
+  // Lag zwischen zwei Partien (beide ausgeschlossen) eine, auf die `f` passt?
+  const dazwischen = (vonId, bisId, f) => {
+    const a = idx.get(vonId), b = idx.get(bisId);
+    if(a == null || b == null || a >= b) return true;
+    for(let i = a + 1; i < b; i++) if(f(reihe[i])) return true;
+    return false;
+  };
+  // Alle Meldungen, zeitlich von neu nach alt — die jüngste passende ältere
+  // Karte gewinnt.
+  const alle = [];
+  cards.forEach(c => (glieder.get(c.id) || []).forEach(x => alle.push({x, c})));
+  alle.sort((p, q) => new Date(q.c.when) - new Date(p.c.when));
+  const suche = (c, f) => {
+    const t = new Date(c.when).getTime();
+    for(const {x, c: k} of alle){
+      if(k === c || new Date(k.when).getTime() >= t) continue;
+      if(f(x.dataRef || {}, x)) return k;
+    }
+    return null;
+  };
+  const RANG = ['ende', 'wende', 'revanche', 'zurueck', 'spitze', 'weiter'];
+  cards.forEach(c => {
+    let best = null;
+    const nimm = (art, ziel) => {
+      if(!ziel) return;
+      if(!best || RANG.indexOf(art) < RANG.indexOf(best.art)) best = {art, ziel: ziel.id};
+    };
+    (glieder.get(c.id) || []).forEach(x => {
+      const d = x.dataRef || {};
+      const t = d.type || '';
+      if(t === 'streak_killer' && d.victimPid && d.matchId){
+        const v = d.victimPid;
+        nimm('ende', suche(c, e => e.type === 'win_streak' && e.pid === v && e.matchId
+          && !dazwischen(e.matchId, d.matchId, m => verlierer(m).includes(v))));
+      }
+      if(t === 'spiel' && d.matchId){
+        const m = reihe[idx.get(d.matchId)];
+        if(!m) return;
+        const w = sieger(m), l = verlierer(m);
+        // Die Wende: der erste gemeinsame Sieg nach der Pleitenserie des Duos,
+        // oder der erste eigene nach einer Pleitenserie.
+        nimm('wende', suche(c, e => e.type === 'team_loss_streak' && e.matchId
+          && gleich([e.a, e.b], w)
+          && !dazwischen(e.matchId, d.matchId, n => gleich(sieger(n), w))));
+        nimm('wende', suche(c, e => e.type === 'loss_streak' && e.matchId && w.includes(e.pid)
+          && !dazwischen(e.matchId, d.matchId, n => sieger(n).includes(e.pid))));
+        // Die Revanche: die vorige Begegnung genau dieser zwei Duos ging an
+        // die andere Seite.
+        let vor = null;
+        for(let i = idx.get(m.id) - 1; i >= 0; i--){
+          const n = reihe[i];
+          const seiten = [[n.a1, n.a2], [n.b1, n.b2]];
+          if(seiten.some(sd => gleich(sd, w)) && seiten.some(sd => gleich(sd, l))){ vor = n; break; }
+        }
+        // Nur über Tage: das Rückspiel direkt danach ist am Kicker der Normalfall
+        // und keine Geschichte — gemessen waren es sieben von zehn Fäden, und
+        // jede zweite Partie eines Spieltags zeigte auf die davor.
+        if(vor && gleich(sieger(vor), l) && tagKey(mts(vor)) !== tagKey(mts(m))){
+          const k = karteVon.get('spiel_' + vor.id);
+          if(k && k !== c && new Date(k.when) < new Date(c.when)) nimm('revanche', k);
+        }
+      }
+      // Dieselbe Serie über mehrere Tage: derselbe Lauf, eine frühere Marke.
+      if(/^(win_streak|loss_streak|team_streak|team_loss_streak)$/.test(t) && d.lauf){
+        nimm('weiter', suche(c, e => e.type === t && e.lauf === d.lauf
+          && (e.pid || '') === (d.pid || '') && (e.a || '') === (d.a || '') && (e.b || '') === (d.b || '')));
+      }
+      // Derselbe Rekord, dieselbe Monatschronik: wer ihn vor der früheren
+      // Karte hielt und ihn jetzt wieder hat, holt ihn zurück.
+      if((/^rekord_/.test(t) && d.rekordId) || (t === 'chronik_geholt' && d.titleId)){
+        const zielK = suche(c, e => t === 'chronik_geholt'
+          ? e.type === 'chronik_geholt' && e.titleId === d.titleId && e.sid === d.sid
+          : /^rekord_/.test(e.type || '') && e.rekordId === d.rekordId);
+        if(zielK){
+          const ze = (glieder.get(zielK.id) || []).map(y => y.dataRef || {})
+            .find(e => t === 'chronik_geholt' ? e.titleId === d.titleId : e.rekordId === d.rekordId) || {};
+          const jetzt = d.halter || d.playerIds || [];
+          const damalsWeg = ze.vorher || [];
+          const damalsNeu = ze.halter || ze.playerIds || [];
+          const zurueck = jetzt.some(p => damalsWeg.includes(p)) && !jetzt.some(p => damalsNeu.includes(p));
+          nimm(zurueck ? 'zurueck' : 'weiter', zielK);
+        }
+      }
+      if(t === 'lead_change' && d.sid){
+        nimm('spitze', suche(c, e => e.type === 'lead_change' && e.sid === d.sid));
+      }
+    });
+    if(best) map.set(c.id, best);
+  });
+  return map;
+}
+// `nach` ist die Gegenrichtung für das Blatt: dort steht auch, welche
+// spätere Karte diese fortsetzt — sonst endet die Geschichte an der Stelle,
+// an der man sie gerade liest.
+function _newsFadenHtml(faden, stories, nach){
+  if(!faden) return '';
+  const ziel = (stories || []).find(x => x.id === (nach ? faden.von : faden.ziel));
+  const art = NEWS_FADEN_ART[faden.art];
+  if(!ziel || !art) return '';
+  const tag = new Date(ziel.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+  return `<button class="nf-faden" type="button" data-ziel="${esc(ziel.id)}">`
+    // Tag vor Titel: der Titel kürzt sich, und in einer Zeile ging dabei das
+    // Datum verloren — gerade das sagt, wie weit die Geschichte zurückreicht.
+    + `${svgI('faden')}<span><i>${nach ? 'Geht weiter' : esc(art.vor)} · ${esc(tag)}</i> <b>${esc(ziel.title)}</b></span>`
+    + `<em>${esc(art.kap)}</em></button>`;
 }
 
 // Eine einzige Quelle für den Chronik-Beitrag in Karte und Detailblatt.
@@ -1420,6 +1655,9 @@ function _renderNewsFeed(){
   if(!cards.length){
     listHtml = '<div class="nf-empty">Keine Stories in dieser Auswahl.</div>';
   } else {
+    // Über alle Karten des Feeds, nicht nur die des Filters: der Faden
+    // gehört der Geschichte und nicht der Auswahl.
+    const faeden = _newsFaeden(stories);
     const gruppen = [];
     cards.forEach(st => {
       const k = tagKey(st.when);
@@ -1447,7 +1685,8 @@ function _renderNewsFeed(){
         + `<span class="nf-tag-n${neu?' neu':''}">${neu ? neu + ' NEU' : g.items.length + (g.items.length===1?' KARTE':' KARTEN')}</span></div>`
         + `</div>
         <div class="nf-feed">${g.items.map(st =>
-            _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte)).join('')}</div>`;
+            _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte,
+              _newsFadenHtml(faeden.get(st.id), stories))).join('')}</div>`;
     }).join('');
   }
 
@@ -1491,6 +1730,10 @@ function _renderNewsFeed(){
       _renderNewsFeed();
     };
   }
+  // Der Faden öffnet die frühere Karte, nicht die, in der er steht.
+  sheet.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
+    el.onclick = ev => { ev.stopPropagation(); openNewsDetail(el.dataset.ziel); };
+  });
   // Karten + Hero klickbar → Detail.
   sheet.querySelectorAll('[data-sid]').forEach(el => {
     el.onclick = () => {

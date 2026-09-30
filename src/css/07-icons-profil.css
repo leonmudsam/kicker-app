@@ -791,6 +791,10 @@
     white-space:nowrap;font-family:'Sometype Mono',monospace;font-size:10.5px;
     font-weight:650;line-height:1.2;color:var(--muted)}
   .nf-erg-s.w .nf-erg-team{color:var(--ink)}
+  /* Die Sieger hell, die Verlierer leise: vorher trugen beide Seiten
+     dieselbe Deckkraft, und wer gewonnen hat, stand nur in der Farbe der
+     Zahl. Gedaempft wird das Gesicht, der Name bleibt lesbar. */
+  .nf-erg-s:not(.w) .nf-erg-avs{opacity:.55}
   .nf-erg-sc{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:19px;
     letter-spacing:-.03em;display:flex;align-items:baseline;gap:1px}
   .nf-erg-sc b.w{color:var(--ink)} .nf-erg-sc b.v{color:var(--faint)}
@@ -1123,6 +1127,57 @@
   /* Rechts steht, was die Punkte zaehlen — sonst war die halbe Bandbreite leer. */
   .nf-ser span{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:9.5px;
     letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+  /* Die naechste Marke als leere Felder: man sieht, wie weit es noch ist.
+     Leer heisst Metall, nicht Gruen — noch ist nichts gewonnen [§C25]. */
+  .nf-ser i.x{background:var(--surface3);box-shadow:inset 0 0 0 1px var(--line2)}
+
+  /* ── Bogen und Elo einer Partie [§C33] ──────────────────────────────
+     Die Siegchance als Halbkreis mit der Mitte: „30 %" liest man erst,
+     wenn man es einordnet, der Bogen zeigt es. Daneben der Gewinn je
+     Sieger mit Gesicht, weil er einem gehoert und nicht der Partie. */
+  .nf-spf{display:flex;align-items:center;gap:10px;padding:9px 13px;
+    border-top:1px solid var(--line);min-width:0}
+  .nf-bogen{display:flex;align-items:center;gap:8px;min-width:0}
+  .nf-bogen svg{width:52px;height:30px;flex:0 0 auto;overflow:visible}
+  .nf-bogen path{fill:none;stroke-linecap:round}
+  .nf-bogen .b{stroke:var(--surface3);stroke-width:5}
+  .nf-bogen .v{stroke:var(--acid);stroke-width:5}
+  .nf-bogen .m{stroke:var(--faint);stroke-width:1.5}
+  /* Unter der Linie der Ueberraschung stand die Rechnung dagegen: der Bogen
+     bleibt gruen (die Sieger haben gewonnen), bekommt aber Licht. */
+  .nf-bogen.u .v{filter:drop-shadow(0 0 4px rgba(190,242,100,.55))}
+  .nf-bogen span{font-size:10px;line-height:1.3;color:var(--muted);white-space:nowrap}
+  .nf-bogen span b{display:block;font-family:'Sometype Mono',monospace;font-size:13px;
+    font-weight:700;color:var(--ink)}
+  .nf-elocs{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto;min-width:0}
+  .nf-eloc{display:inline-flex;align-items:center;gap:5px;padding:2px 7px 2px 2px;
+    border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;white-space:nowrap}
+  .nf-eloc .av{--av:18px;width:18px;height:18px;font-size:7px;box-shadow:none}
+  .nf-eloc b.g{color:var(--acid)} .nf-eloc b.r{color:var(--red)}
+
+  /* ── Der Faden [§C33] ──────────────────────────────────────────────
+     Eine Zeile unter der Karte, wenn sie eine frühere fortsetzt. Gestrichelt
+     abgesetzt, weil sie nicht zur Nachricht gehört, sondern zu der davor;
+     in der Farbe der Sorte, weil sie deren Geschichte weitererzählt. Ein
+     Knopf und kein Text: sie öffnet die frühere Karte. */
+  .nf-faden{display:flex;align-items:center;gap:8px;width:100%;min-width:0;
+    padding:8px 13px 9px;border:0;border-top:1px dashed var(--line2);background:none;
+    font:inherit;font-size:11px;color:var(--muted);text-align:left;cursor:pointer}
+  .nf-faden .ic{flex:0 0 auto;width:14px;height:14px;color:rgb(var(--story-rgb,185,196,189))}
+  .nf-faden .ic svg{width:14px;height:14px;fill:none;stroke:currentColor}
+  .nf-faden span{flex:1;min-width:0;overflow:hidden;line-height:1.35;
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+  .nf-faden span i{font-style:normal;font-family:'Sometype Mono',monospace;font-size:10px}
+  .nf-faden b{color:var(--ink2);font-weight:600}
+  .nf-faden em{flex:0 0 auto;font-style:normal;font-family:'Sometype Mono',monospace;
+    font-size:9px;font-weight:700;letter-spacing:.08em;color:rgb(var(--story-rgb,185,196,189))}
+  .nf-faden:active{background:rgba(255,255,255,.03)}
+  /* Im Blatt stehen die Fäden als eigener Block über dem Schließen, mit
+     ganzem Rahmen statt Strichlinie: dort ist keine Karte, unter der sie
+     hängen könnten. */
+  .nd-faeden{display:flex;flex-direction:column;gap:6px;margin:14px 0 4px}
+  .nd-faeden .nf-faden{border:1px dashed var(--line2);border-radius:12px;padding:9px 11px}
 
   /* ── Breaking bricht die Spalte ───────────────────────────────────
      Es ist das Seltenste im Feed, also darf es das Lauteste sein. Vorher

@@ -316,6 +316,8 @@ const ICONS = {
   alert:         `<path d="M12 4.2l8.6 15a1 1 0 01-.9 1.5H4.3a1 1 0 01-.9-1.5z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r=".6" fill="currentColor"/>`,
   trash:         `<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>`,
   hochladen:     `<path d="M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4"/><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/>`,
+  // Zwei Kettenglieder: der Faden einer Karte zu der, die sie fortsetzt [§C33].
+  faden:         `<path d="M9.5 14.5l5-5"/><path d="M11 6.5l1.4-1.4a4 4 0 015.6 5.6L16.5 12M13 17.5l-1.4 1.4a4 4 0 01-5.6-5.6L7.5 12"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
