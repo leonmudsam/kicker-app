@@ -597,7 +597,9 @@ function ligaRekordeHtml(weit){
   // schieben, die man nicht als Reiter erkennt.
   const chip = (k, lab, n, an) => `<button data-rekkammer="${esc(k)}"
       class="${an ? 'on' : ''}">${esc(lab)}<span class="n num">${n}</span></button>`;
-  const filter = `<div class="ui-tabs rek-kammern">
+  // `roll`: die Kammern sind verschieden breit, darunter kann kein
+  // Schlitten gleiten [§C27].
+  const filter = `<div class="ui-tabs roll rek-kammern">
     ${chip('', 'Alle', CHRONICLES.length, !rekKammer)}
     ${gruppen.map(g => chip(g.k, g.def.kurz, g.liste.length, rekKammer === g.k)).join('')}
   </div>`;

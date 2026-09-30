@@ -67,10 +67,15 @@
     display:flex;gap:2px;border-top:1px solid var(--line)}
   .botnav button{flex:1;background:none;border:none;cursor:pointer;padding:7px 2px;border-radius:13px;
     display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);transition:.18s;position:relative}
-  .botnav button .ic{width:23px;height:23px;display:grid;place-items:center}
+  /* Das Zeichen sitzt in einer Pille. Der gewählte Reiter unterschied sich
+     nur in der Farbe des Worts und des Strichs — bei Sonne auf dem Telefon
+     war das kaum zu sehen. Die Pille ist Acid, die Farbe des Bedienens. */
+  .botnav button .ic{width:52px;height:28px;border-radius:14px;display:grid;place-items:center;
+    transition:background .2s,box-shadow .2s}
+  .botnav button .ic svg{width:21px;height:21px;--strich:1.75}
   .botnav button .lb{font-size:9.5px;font-weight:600;letter-spacing:.01em}
   .botnav button.on{color:var(--acid)}
-  .botnav button.on .ic{transform:translateY(-1px)}
+  .botnav button.on .ic{background:rgba(190,242,100,.12);box-shadow:inset 0 0 0 1px rgba(190,242,100,.25)}
   .botnav button:active{transform:scale(.9)}
 
   /* ============ [§C13] FAB ============ */

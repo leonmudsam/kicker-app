@@ -70,8 +70,11 @@ function _vRankingCore(){
   // keine Saison.
   const sid = ligaSaisonId(), laeuft = ligaSaisonLaeuft();
   const saisonArg = period==='season' ? sid : undefined;
+  // Der Zeitraum ist die erste Wahl dieser Seite, also der äußere Wähler
+  // [§C27] — wie „Awards · Rekorde · Chronik" im Awards-Reiter. Als innere
+  // Ebene stand er gleichrangig über „Spieler · Teams" und der Metrik.
   const periodBar=`
-    <div class="ui-tabs">
+    <div class="ui-switch">
       <button data-period="season" class="${period==='season'?'on':''}">Saison</button>
       <button data-period="week" class="${period==='week'?'on':''}">Woche</button>
       <button data-period="day" class="${period==='day'?'on':''}">Tag</button>
@@ -359,12 +362,31 @@ function _vRankingCore(){
     // Monat ist, liest man im Vorbeigehen. Die Überschrift ist entfallen:
     // „Tag 12 von 31" unter einer Seite, die „August 2026" heißt, braucht
     // keine Erklärung, dass es um die Saison geht.
-    const fortschritt=(jetzt,gesamt,einheit)=>{
-      const pct=Math.max(0,Math.min(100,Math.round(jetzt/gesamt*100)));
+    // Der Zeitraum als Reihe aus Zellen, eine je Tag (oder Stunde): hell,
+    // wo gespielt wurde, leise, wo nicht, gerahmt der heutige. Ein Balken
+    // zeigte nur, wie viel Kalender vergangen ist — ob noch fünf Spieltage
+    // kommen oder einer, stand nirgends.
+    const fortschritt=(jetzt,gesamt,einheit,gespielt)=>{
+      let zellen='';
+      for(let i=1;i<=gesamt;i++){
+        const cls=i>jetzt?'':(gespielt.has(i)?'s':'v')+(i===jetzt?' h':'');
+        zellen+=`<i${cls?` class="${cls}"`:''}></i>`;
+      }
       return `<div class="lauf">
           <span class="lauf-t">${einheit} <b class="num">${jetzt}</b> von <b class="num">${gesamt}</b></span>
-          <span class="lauf-s"><i style="width:${pct}%"></i></span>
+          <span class="lauf-z" style="--g:${gesamt}">${zellen}</span>
         </div>`;
+    };
+    // Welche Tage (1-basiert ab `start`) eine Partie hatten — nach dem
+    // Kalendertag der Uhr, wie der Feed [tagKey]. Über Millisekunden
+    // gezählt verrutscht ein Tag an der Zeitumstellung um eine Stunde.
+    const spieltage=(start, anzahl)=>{
+      const keys=new Set(periodMs.map(m=>tagKey(m.created_at))), s=new Set();
+      for(let i=1;i<=anzahl;i++){
+        const d=new Date(start); d.setDate(d.getDate()+i-1);
+        if(keys.has(tagKey(d))) s.add(i);
+      }
+      return s;
     };
     let kontextHtml='';
     if(period==='season'){
@@ -374,7 +396,7 @@ function _vRankingCore(){
         const elapsedMs=Math.max(0,Math.min(totalMs,Date.now()-sStart));
         kontextHtml=fortschritt(
           Math.max(1,Math.ceil(elapsedMs/86400000)),
-          Math.ceil(totalMs/86400000), 'Tag');
+          Math.ceil(totalMs/86400000), 'Tag', spieltage(sStart, Math.ceil(totalMs/86400000)));
       } else {
         // Eine abgeschlossene Saison hat keinen Fortschritt. Der Balken
         // stünde voll da und behauptete, es ginge noch weiter. Statt seiner
@@ -391,13 +413,14 @@ function _vRankingCore(){
       const wkEnd=new Date(wkStart); wkEnd.setDate(wkEnd.getDate()+7);
       const el=Math.max(0,Math.min(wkEnd-wkStart,Date.now()-wkStart));
       kontextHtml=fortschritt(
-        Math.max(1,Math.min(7,Math.ceil(el/86400000))), 7, 'Tag');
+        Math.max(1,Math.min(7,Math.ceil(el/86400000))), 7, 'Tag', spieltage(wkStart, 7));
     } else if(period==='day'){
       const dyStart=periodStart('day');
       const dyEnd=new Date(dyStart); dyEnd.setDate(dyEnd.getDate()+1);
       const el=Math.max(0,Math.min(dyEnd-dyStart,Date.now()-dyStart));
       kontextHtml=fortschritt(
-        Math.max(1,Math.min(24,Math.ceil(el/3600000))), 24, 'Stunde');
+        Math.max(1,Math.min(24,Math.ceil(el/3600000))), 24, 'Stunde',
+        new Set(periodMs.map(m=>new Date(m.created_at).getHours()+1)));
     }
 
     // ── Zwei Ranglisten über denselben Zeitraum [§C29] ───────────────
@@ -408,8 +431,8 @@ function _vRankingCore(){
     // einen Reiter gewechselt, nicht über eine zweite Seite.
     const sichtBar = period==='season' ? `
       <div class="ui-tabs">
-        <button data-ligasicht="spieler" class="${ligaSicht==='spieler'?'on':''}">Spieler der Saison</button>
-        <button data-ligasicht="duos" class="${ligaSicht==='duos'?'on':''}">Teams der Saison</button>
+        <button data-ligasicht="spieler" class="${ligaSicht==='spieler'?'on':''}">${svgI('user')}Spieler</button>
+        <button data-ligasicht="duos" class="${ligaSicht==='duos'?'on':''}">${svgI('users')}Teams</button>
       </div>` : '';
 
     if(period==='season' && ligaSicht==='duos'){
