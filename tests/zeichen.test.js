@@ -602,8 +602,9 @@ const ok = (c, msg, det) => {
 
 
   console.log('\n═══ 7. DIE LEITER DES INSIGNIUMS ═══');
-  // Fünf Stufen, fünfzehn Zeichnungen, und die eine Zusage, die zählt: von
-  // Feld 1 bis 15 darf kein Zeichen schwächer wirken als sein Vorgänger —
+  // Sieben Stufen, einundzwanzig Zeichnungen, und die eine Zusage, die
+  // zählt: von Feld 1 bis 21 darf kein Zeichen schwächer wirken als sein
+  // Vorgänger —
   // auch nicht über eine Stufengrenze hinweg [§C30].
   //
   // „Wirkt schwächer" ist keine Frage an den Umriss: der Reif wächst gar
@@ -617,7 +618,7 @@ const ok = (c, msg, det) => {
   // erste Fassung dieser Messung drei Brüche übersehen.
   const gradBild = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
-    const stufen = ['reif','schild','volute','lorbeer','stern'];
+    const stufen = K('INSIGNIEN.map(x => x.key)');
     const raster = async (svgText, S) => {
       const bild = new Image();
       bild.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgText)));
@@ -628,8 +629,12 @@ const ok = (c, msg, det) => {
       ctx.drawImage(bild, 0, 0, S, S);
       return ctx.getImageData(0, 0, S, S).data;
     };
+    // Hof und Glut in der Rangfarbe sind Licht und keine Form (`data-schein`):
+    // gemessen wird der Schmuck, und ein Hof über die ganze Kachel zählte
+    // jeden Bildpunkt als Schmuck.
     const svg = (k, g, z) => K('insigniumStufeSvg(' + JSON.stringify(k) + ', "Elite", '
-        + (z || 0) + ', ' + g + ')').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ');
+        + (z || 0) + ', ' + g + ')').replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ')
+        .replace(/<circle data-schein[^>]*\/>/g, '');
     // Der Schmuck: Bildpunkte, die sich vom blanken Reif unterscheiden.
     // Grob gerastert wäre das Rauschen; 160 px sind fein genug, dass acht
     // Nieten zählbar bleiben.
@@ -679,7 +684,7 @@ const ok = (c, msg, det) => {
     stufen.forEach(k => { inStufe[k] = [unterschied(bilder[k][0], bilder[k][1]),
                                         unterschied(bilder[k][1], bilder[k][2])]; });
     // Der Sprung über eine Stufengrenze muss größer sein als jeder Sprung
-    // von Grad zu Grad. Sonst wären die fünf Stufen nur noch fünfzehn
+    // von Grad zu Grad. Sonst wären die sieben Stufen nur noch einundzwanzig
     // Abstufungen derselben Sache [§C30].
     let innen = 100, fremd = 100;
     stufen.forEach((k, a) => [0,1,2].forEach(g => {
@@ -690,18 +695,19 @@ const ok = (c, msg, det) => {
     return {schmuck, inStufe, box, innen, fremd};
   });
   const NAMEN = {reif:'Reif', schild:'Schildring', volute:'Volutenkranz',
-                 lorbeer:'Lorbeerreif', stern:'Ordensstern'};
+                 ranke:'Rankenkranz', lorbeer:'Lorbeerreif', krone:'Kronenreif',
+                 stern:'Ordensstern'};
   gradBild.schmuck.forEach(x => console.log('  ' + (NAMEN[x.k] + '            ').slice(0,13)
     + 'Grad ' + (x.g+1) + '   Schmuck ' + String(x.n).padStart(6)));
 
-  // 1. Von Feld 1 bis 15 fällt der Schmuck nie. Das ist die ganze Leiter in
+  // 1. Von Feld 1 bis 21 fällt der Schmuck nie. Das ist die ganze Leiter in
   //    einer Zeile — und die Stelle, an der ein neuer Katalog-Eintrag oder
   //    eine geänderte Form als erstes auffällt.
   const _bruch = [];
   gradBild.schmuck.forEach((x, i) => {
     if(i && x.n <= gradBild.schmuck[i-1].n) _bruch.push(NAMEN[x.k] + ' Grad ' + (x.g+1));
   });
-  ok(_bruch.length === 0, 'Insignium: von Feld 1 bis 15 wirkt keines schwächer als sein Vorgänger',
+  ok(_bruch.length === 0, 'Insignium: von Feld 1 bis 21 wirkt keines schwächer als sein Vorgänger',
      _bruch.join(', ') || gradBild.schmuck.map(x => x.n).join(' → '));
 
   // 2. Und jeder einzelne Grad tauscht auf 52 px mindestens fünf Prozent der
@@ -717,7 +723,7 @@ const ok = (c, msg, det) => {
   // 3. Zwei verschiedene Stufen stehen nie so dicht beieinander wie zwei
   //    Grade derselben Stufe. Das ist die Grenze, die eine Stufe zur Stufe
   //    macht: ein Grad baut das EIGENE Zeichen aus, eine Stufe wechselt den
-  //    Gegenstand. Ohne diese Grenze wären die fünf nur noch fünfzehn
+  //    Gegenstand. Ohne diese Grenze wären die sieben nur noch einundzwanzig
   //    Abstufungen derselben Sache [§C30].
   ok(gradBild.fremd > gradBild.innen,
      'Insignium: zwei Stufen stehen weiter auseinander als zwei Grade',
@@ -731,7 +737,7 @@ const ok = (c, msg, det) => {
     if(b[0] < -22 || b[1] < -22 || b[2] > 122 || b[3] > 122) _raus.push(k + ' ' + (g+1));
   }));
   ok(_raus.length === 0, 'Insignium: kein Grad ragt aus der Zeichenfläche',
-     _raus.join(', ') || 'alle fünfzehn innerhalb von -22…122');
+     _raus.join(', ') || 'alle einundzwanzig innerhalb von -22…122');
 
   // 5. Dasselbe für die UNTERLAGE im vollen Zeichen. Sie setzt den Reif auf
   //    die Schwinge und muss dabei über den ganzen Schmuck reichen — die
@@ -803,7 +809,7 @@ const ok = (c, msg, det) => {
     };
     // Das Zeichen: die größte Schwinge, damit auch ihre Spitzen mitgemessen
     // sind, dazu die Stufe und die Raute.
-    const stufen = ['reif','schild','volute','lorbeer','stern'];
+    const stufen = K('INSIGNIEN.map(x => x.key)');
     const sterne = {};
     for(const t of [1, 3, 5, 8, 12, 20])
       sterne[t] = await raster(K('_insSterne(' + t + ', "' + id + '")'));
@@ -812,6 +818,7 @@ const ok = (c, msg, det) => {
       const z = await raster(
         K('_insBandGruppe(_insSchwingen(5, "' + id + '"))')
         + K('_insStufe("' + k + '", __c, 8, "' + id + '", ' + g + ')')
+            .replace(/<circle data-schein[^>]*\/>/g, '')
         + K('_insFuss(__c, 3, __c.akz)'));
       for(const t of [1, 3, 5, 8, 12, 20]){
         let n = 0, sn = 0;
@@ -862,11 +869,11 @@ const ok = (c, msg, det) => {
   console.log('  Luft über dem obersten Stern: ' + sternMess.luft + ' Einheiten');
 
   // 1. Kein Bildpunkt der Sterne liegt auf dem Zeichen — in keiner der
-  //    fünfzehn Zeichnungen und bei keiner Titelzahl.
+  //    einundzwanzig Zeichnungen und bei keiner Titelzahl.
   ok(sternMess.treffer.length === 0,
      'Sterne: kein Zeichen liegt unter ihnen',
      sternMess.treffer.slice(0, 4).join(' · ')
-     || '15 Zeichnungen × 6 Titelstände, keine Überdeckung');
+     || '21 Zeichnungen × 6 Titelstände, keine Überdeckung');
 
   // 2. Und gezeichnet werden sie überhaupt. Ohne diese Zeile wäre die erste
   //    Zusicherung auch dann grün, wenn gar keine Sterne mehr kämen.

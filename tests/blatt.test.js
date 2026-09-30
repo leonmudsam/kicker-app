@@ -265,7 +265,7 @@ const ok = (c, msg, det) => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     const out = {karten:k.length, schritte:[]};
     // Rückwärts, damit auch der Sprung über die ganze Breite dabei ist.
-    for(const i of [4, 0, 3, 1, 2]){
+    for(const i of [6, 0, 3, 1, 5, 2, 4]){
       k[i].click();
       await warte(700);
       const mitte = d.scrollLeft + d.clientWidth / 2;
@@ -276,8 +276,8 @@ const ok = (c, msg, det) => {
     }
     return out;
   });
-  ok(!vitrine.fehlt && vitrine.karten === 5,
-     'die Vitrine steht mit allen fünf Stufen', JSON.stringify(vitrine));
+  ok(!vitrine.fehlt && vitrine.karten === 7,
+     'die Vitrine steht mit allen sieben Stufen', JSON.stringify(vitrine));
   if(!vitrine.fehlt){
     const daneben = vitrine.schritte.filter(s => s.fokus !== s.i);
     ok(daneben.length === 0, 'jede angetippte Stufe wird die gewählte',
@@ -2358,7 +2358,7 @@ const ok = (c, msg, det) => {
   ok(leiter.mit > 0, 'die Leiter zeichnet ueberhaupt etwas', leiter.mit + ' Felder');
   ok(leiter.ohne === 0, 'jedes Feld der Leiter traegt sein echtes Zeichen',
      leiter.ohne + ' Felder ohne Zeichen');
-  ok(leiter.stufen === 5, 'die Leiter zeigt alle fuenf Stufen', leiter.stufen + ' Felder');
+  ok(leiter.stufen === 7, 'die Leiter zeigt alle sieben Stufen', leiter.stufen + ' Felder');
   // Unter 40 px bleibt vom Schildring ein Ring. Bei 28 px war er von der
   // blanken Stufe nicht zu unterscheiden, gemessen an der Zeichnung.
   ok(leiter.kleinste >= 40, 'ein Feld der Leiter ist mindestens 40 px breit',

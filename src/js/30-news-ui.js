@@ -323,7 +323,7 @@ function _isBreaking(s){
     // Bestwert wieder [§C34]: dieselbe Stufe kann mehrmals erreicht werden,
     // und beim zweiten Mal ist sie keine Nachricht mehr, die die Spalte
     // bricht. Ob es das erste Mal ist, sagt `wieder` [§C33].
-    case 'insignium_stufe':  // nur Lorbeerreif und Ordensstern [§C30]
+    case 'insignium_stufe':  // nur Kronenreif und Ordensstern [§C30]
       return !!d.oben && !d.wieder;
     // ── Ein erstmals vergebener Liga-Rekord ist kein Breaking ───────
     // Er stand auf der Liste, und in der Füllphase der Ewigen Tafel wird
@@ -1562,7 +1562,7 @@ function _newsWertBlock(wert, label, farbe){
        + (label ? `<span>${esc(label)}</span>` : '') + `</div>`;
 }
 
-// Die Insignium-Leiter: fünf Punkte, die erreichten hell, der neue umrandet.
+// Die Insignium-Leiter: sieben Zeichen, die erreichten hell, das eigene umrandet.
 // Damit sieht man auf einen Blick, wo jemand steht und wie weit es noch ist.
 // Das Zeichen, um das eine Erfolgs-Karte geht. Nur dort, wo der Erfolg
 // ueberhaupt eines HAT: eine Insignium-Stufe hat eins, ein Jubilaeum nicht.
@@ -1584,11 +1584,10 @@ function _newsLeiter(pid){
     const P = prestigeOf(pid);
     if(!P) return '';
     const stufe = P.stufe || 0;
-    // Die ECHTEN fünf Zeichen, nicht fünf gefärbte Punkte. Vorher stand hier
-    // ein CSS-Kreis je Stufe (`repeating-conic-gradient`), und der hatte mit
-    // dem Zeichen, das ein Spieler trägt, nichts zu tun: fünf Rosetten in
-    // fünf Farben, wo Reif, Schildring, Volutenkranz, Lorbeerreif und
-    // Ordensstern stehen müssten. `insigniumStufeSvg` trägt seine Verläufe
+    // Die ECHTEN Zeichen, nicht gefärbte Punkte. Vorher stand hier ein
+    // CSS-Kreis je Stufe (`repeating-conic-gradient`), und der hatte mit dem
+    // Zeichen, das ein Spieler trägt, nichts zu tun: Rosetten in fünf
+    // Farben, wo Reif, Schildring und Volutenkranz stehen müssten. `insigniumStufeSvg` trägt seine Verläufe
     // selbst [§C30] und funktioniert deshalb auch im Blatt.
     // Der Grad ist der eigene nur an der eigenen Stufe; die übrigen stehen
     // im ersten Grad, sonst behauptete die Leiter einen Ausbau, den es an

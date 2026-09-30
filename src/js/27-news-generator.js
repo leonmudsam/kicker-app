@@ -2825,7 +2825,7 @@ function _buildStories(){
           // Ergebnisband mit vier fremden Wappen [§C33].
           const ausloeser = _insTagMatches.find(m => mts(m) === treffer
             && (m.a1 === p.id || m.a2 === p.id || m.b1 === p.id || m.b2 === p.id));
-          const oben = stufe >= 3;
+          const oben = stufe >= INSIGNIUM_OBEN;
           const _frueher = _insFrueher(p.id, INSIGNIEN[stufe].key, tagKey(_insLetzte));
           stories.push({
             // Auch hier der Spieltag: das Prestige aus Liga-Rekorden wird

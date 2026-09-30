@@ -832,21 +832,23 @@
   .nf-gr-l:not(.nf-duo):has(.rav) > .nf-wert span{margin-top:3px}
 
   /* Sorte 3 Insignium: die Leiter zeigt den Weg. */
-  .nf-leiter{display:flex;align-items:center;gap:4px;padding:10px 13px;
+  .nf-leiter{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:10px 13px;
     border-top:1px solid var(--line)}
   /* Die Leiter zeigt die echten Zeichen [§C30]. Sechzehn Pixel waren fuer
      einen gefaerbten Punkt gedacht; bei achtundzwanzig blieb vom Schildring
-     ein Ring. Vierzig ist das Maximum, bei dem fuenf Stufen und die Zahl
-     daneben in eine 430-px-Karte passen, und die Untergrenze, ab der Reif,
-     Schildring und Volutenkranz zu unterscheiden sind.
+     ein Ring. Vierzig ist die Untergrenze, ab der Reif, Schildring und
+     Volutenkranz zu unterscheiden sind — und mit sieben Stufen passt die
+     Zahl nicht mehr daneben: sieben Felder und die Zahl liefen bei 360 px
+     ueber den Rand. Die Felder teilen sich deshalb die Zeile bis hoechstens
+     40 px, und die Zahl steht darunter.
      Die noch nicht erreichten stehen nicht auf .3 sondern auf .45: bei .3
      war eine Kontur auf dunklem Grund von nichts zu unterscheiden. */
-  .nf-lt-p{width:40px;height:40px;flex:0 0 auto;opacity:.45;
+  .nf-lt-p{flex:1 1 0;min-width:0;max-width:40px;aspect-ratio:1;opacity:.45;
     display:grid;place-items:center;border-radius:50%}
   .nf-lt-p .ins{width:100%;height:100%;display:block}
   .nf-lt-p.hat{opacity:1}
   .nf-lt-p.jetzt{outline:1.5px solid var(--gold);outline-offset:1px;opacity:1}
-  .nf-lt-t{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
+  .nf-lt-t{flex-basis:100%;text-align:right;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
 
   /* Sorte 4 Held: Wappen gross, drei Zahlen im Fuss. */
 
