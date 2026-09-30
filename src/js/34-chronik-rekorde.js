@@ -1131,6 +1131,52 @@ function chronicleRang(cid){
   return reihe;
 }
 
+// Wie ein Rekord zu seinem Halter kam: der Wert des Halters und des Zweiten
+// an jedem Monatsende der letzten sechs Monate und heute — für den Beleg im
+// Rekord-Blatt [§C27]. Gerechnet über den Zeitschnitt, den es gibt
+// (_chronicleCtx), und nicht neu: ein Schnitt rechnet die Elo-Bahn bis
+// dorthin nach, gemessen 7 bis 36 ms je Monat. Deshalb in Schritten, einer
+// je Takt, und erst nach dem Öffnen des Blatts — sechs Schnitte auf einmal
+// stünden mitten in der Animation. Die Schnitte selbst liegen danach im
+// Cache und teilen ihn mit dem Feed und den Rückblicken.
+function rekordVerlauf(cid, fertig){
+  const def = CHRONICLE_BY_ID[cid];
+  const key = cid + '_' + matches.length + '_' + _cache.version;
+  if(!_cache._rekVerlauf) _cache._rekVerlauf = {};
+  if(key in _cache._rekVerlauf){ fertig(_cache._rekVerlauf[key]); return; }
+  const rang = def && def.val ? chronicleRang(cid) : [];
+  if(!rang.length){ fertig(null); return; }
+  const a = rang[0].pid;
+  const zweit = rang.find(r => r.wert < rang[0].wert - 1e-9) || rang[1] || null;
+  const b = zweit ? zweit.pid : null;
+  const monate = allPastSeasons().slice(-6);
+  const schnitte = monate.map(sid => seasonEnd(sid).getTime()).concat([0]);
+  const labels = monate.map(sid => String(seasonLabel(sid)).split(' ')[0].slice(0, 3)).concat(['heute']);
+  const va = [], vb = [], vorn = [];
+  const wert = (C, pid) => {
+    if(!pid || !C.P[pid]) return null;
+    try { const v = def.val(C.P[pid], C); return v == null || !isFinite(v) ? null : v; } catch(e){ return null; }
+  };
+  let i = 0;
+  const schritt = () => {
+    const C = _chronicleCtx(schnitte[i] || undefined);
+    const x = wert(C, a);
+    let best = -Infinity;
+    Object.keys(C.P).forEach(pid => { const v = wert(C, pid); if(v != null && v > best) best = v; });
+    va.push(x); vb.push(wert(C, b)); vorn.push(x != null && x >= best - 1e-9);
+    if(++i < schnitte.length){ setTimeout(schritt, 0); return; }
+    // „vorn seit": der erste Monat, ab dem der Halter bis heute nie
+    // dahinter lag. Heute liegt er vorn — er hält den Rekord.
+    let seit = vorn.length - 1;
+    while(seit > 0 && vorn[seit - 1]) seit--;
+    const ergebnis = {labels, a:va, b:b ? vb : null, aName:pname(a), bName:b ? pname(b) : '', seit};
+    _topfDeckel(_cache._rekVerlauf, 16);
+    _cache._rekVerlauf[key] = ergebnis;
+    fertig(ergebnis);
+  };
+  schritt();
+}
+
 // Der Titel, der im Profil unter dem Namen steht: laufender Saisontitel vor
 // letztem abgeschlossenem. Ehrentitel gibt es bewusst nicht mehr — sie waren
 // nur eine zweite Anzeige derselben Aussage.

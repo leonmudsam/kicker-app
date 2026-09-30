@@ -90,6 +90,16 @@ function sheetNav(openChild){
 }
 window.sheetNav = sheetNav;
 
+// Der Kopf eines Abschnitts im Blatt [§C27]: ein leises Zeichen, der Name
+// in Großbuchstaben, rechts worauf er sich bezieht. Jedes Blatt baute ihn
+// selbst — als Inline-Style im Duo-Blatt, als `.pp-sec-title` im
+// Rekord-Blatt, als `.aw-list-label` im Award-Blatt — und kein zweites sah
+// aus wie das erste.
+function blattAbschnittHtml(ic, titel, rechts){
+  return `<div class="blatt-abschn">${ic ? svgI(ic) : ''}<span>${esc(titel)}</span>${
+    rechts ? `<em class="num">${esc(String(rechts))}</em>` : ''}</div>`;
+}
+
 function openSheet(html, opts){
   opts = opts || {};
   const sheet=document.getElementById('sheet');

@@ -217,3 +217,50 @@
     border-top:2px solid currentColor;transform:rotate(45deg);border-radius:1px}
   /* Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen. */
   .rcp-awards.ungerade > :last-child{grid-column:1 / -1}
+
+  /* ── Der Beleg [§C27] ─────────────────────────────────────────────
+     Vier Formen in einem ruhigen Kasten. Gold trägt nur der Halter [§C25],
+     alles andere ist Metall; die Zellen sind Richtung (grün und rot). */
+  .bl-box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .bl-satz{font-size:12px;color:var(--ink2);line-height:1.45;margin-top:8px}
+  .bl-satz b{color:var(--ink);font-weight:700}
+  .bl-zellen{display:grid;grid-template-columns:repeat(25,minmax(0,1fr));gap:2px}
+  .bl-zellen i{aspect-ratio:1;border-radius:2px;background:rgba(240,86,106,.4)}
+  .bl-zellen i.j{background:var(--acid)}
+  .bl-feld{position:relative;height:20px}
+  .bl-feld-bahn{position:absolute;left:0;right:0;top:9px;height:2px;border-radius:1px;background:var(--surface3)}
+  .bl-feld-mitte{position:absolute;top:3px;width:1px;height:14px;background:var(--muted)}
+  /* Leise und ohne Rand: zehn Punkte auf zwei Zentimetern überlappen, und
+     jeder Rand zeichnete dort eine Klammer. */
+  .bl-feld i{position:absolute;top:7px;width:6px;height:6px;margin-left:-3px;border-radius:50%;
+    background:rgba(185,196,189,.4)}
+  .bl-feld i.er{top:4px;width:12px;height:12px;margin-left:-6px;background:var(--gold);
+    box-shadow:0 0 0 2px var(--surface),0 0 10px rgba(247,207,74,.6)}
+  .bl-feld-l{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:var(--faint);margin-top:2px}
+  .bl-spanne{position:relative;height:24px}
+  .bl-spanne-bahn{position:absolute;left:0;right:0;top:11px;height:2px;background:var(--surface3)}
+  .bl-spanne-ber{position:absolute;top:7px;height:10px;border-radius:5px;background:rgba(247,207,74,.18);
+    box-shadow:inset 0 0 0 1px rgba(247,207,74,.42)}
+  .bl-spanne-pkt{position:absolute;top:5px;width:14px;height:14px;margin-left:-7px;border-radius:50%;
+    background:var(--gold);box-shadow:0 0 0 2px var(--surface)}
+  .bl-ref{position:absolute;top:1px;width:2px;height:22px;margin-left:-1px;border-radius:1px;background:var(--silber);opacity:.8}
+  .bl-verlauf{display:block;width:100%;height:84px;overflow:visible}
+  .bl-verlauf polyline{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+  .bl-verlauf .bl-v-a{stroke:var(--gold);stroke-width:2.2}
+  .bl-verlauf .bl-v-b{stroke:var(--muted);stroke-width:1.6}
+  .bl-verlauf circle.bl-v-a{fill:var(--gold);stroke:none}
+  .bl-verlauf circle.bl-v-b{fill:var(--muted);stroke:none}
+  .bl-verlauf .bl-v-seit{fill:var(--gold);stroke:var(--surface);stroke-width:2}
+  .bl-verlauf text{font-family:'Sometype Mono',monospace;font-size:9px;fill:var(--faint)}
+  .bl-legende{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:6px}
+  .bl-legende span::before{content:"";display:inline-block;width:10px;height:2px;border-radius:1px;margin-right:6px;vertical-align:3px;background:var(--muted)}
+  .bl-legende .a::before{background:var(--gold)}
+  .bl-legende .seit{margin-left:auto;color:var(--ink2)}
+  .bl-legende .seit::before{width:7px;height:7px;border-radius:50%;background:var(--gold);vertical-align:1px}
+  /* Bis der Verlauf gerechnet ist, steht ein Schimmer in seiner Höhe: ein
+     leerer Kasten liest sich als Fehler, ein springender als Ruckeln. */
+  .bl-lade{height:84px;border-radius:8px;
+    background:linear-gradient(100deg,var(--surface2) 30%,var(--surface3) 50%,var(--surface2) 70%) 0 0/300% 100%;
+    animation:bl-schimmer 1.3s linear infinite}
+  @keyframes bl-schimmer{from{background-position:100% 0}to{background-position:0 0}}
+  @media (prefers-reduced-motion:reduce){.bl-lade{animation:none}}

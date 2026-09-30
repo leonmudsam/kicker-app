@@ -969,18 +969,15 @@
   .aw-trophy.empty .aw-t-lbl{color:var(--muted)}
   .aw-trophy.empty .aw-t-beleg{font-style:italic;color:var(--faint);font-size:11px}
 
-  /* Die Lage im Feld: jeder Eintrag ein Punkt, die Halter in der Farbe der
-     Kachel, die Mitte als Strich. */
-  .aw-feld{position:relative;height:14px}
-  .aw-feld-bahn{position:absolute;left:0;right:0;top:6px;height:2px;border-radius:1px;background:var(--surface3)}
-  .aw-feld-mitte{position:absolute;top:1px;width:1px;height:12px;background:var(--muted)}
-  /* Leise und ohne Rand: zehn Punkte auf zwei Zentimetern überlappen, und
-     jeder Rand zeichnete dort eine Klammer. */
-  .aw-feld i{position:absolute;top:4px;width:6px;height:6px;margin-left:-3px;border-radius:50%;
-    background:rgba(185,196,189,.38)}
-  .aw-feld i.er{top:1px;width:12px;height:12px;margin-left:-6px;background:var(--awc);
+  /* Die Lage im Feld ist der Beleg (.bl-feld); auf der Kachel tragen die
+     Halter die Farbe ihrer Rolle statt Gold, und der Rand die der Kachel. */
+  .aw-trophy .bl-feld{height:14px}
+  .aw-trophy .bl-feld-bahn{top:6px}
+  .aw-trophy .bl-feld-mitte{top:1px;height:12px}
+  .aw-trophy .bl-feld i{top:4px}
+  .aw-trophy .bl-feld i.er{top:1px;background:var(--awc);
     box-shadow:0 0 0 2px var(--bg2),0 0 10px rgba(var(--awc-rgb),.6)}
-  .aw-feld-l{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:var(--faint);margin-top:-4px}
+  .aw-trophy .bl-feld-l{margin-top:-4px}
   /* Eine Serie als Lauf aus Feldern, in der Farbe der Kachel. */
   .aw-lauf{display:flex;gap:3px}
   .aw-lauf i{flex:1;max-width:16px;height:7px;border-radius:3px;background:var(--awc);opacity:.85}
@@ -1247,6 +1244,13 @@
   .posbar.atk .pl{color:var(--orange)} .posbar.def .pl{color:var(--blue)}
   .posbar .pg{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace}
   .ring{position:relative;width:54px;height:54px;margin:0 auto 6px}
+
+  /* Der Kopf eines Abschnitts im Blatt (blattAbschnittHtml) [§C27]. */
+  .blatt-abschn{display:flex;align-items:center;gap:8px;margin:18px 2px 9px;
+    font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .blatt-abschn .ic{font-size:13px;color:var(--faint)}
+  .blatt-abschn em{margin-left:auto;font-style:normal;letter-spacing:.04em;color:var(--faint);white-space:nowrap}
 
   /* ============ [§C12] BOTTOM NAV ============ */
   .botnav{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:520px;margin:0 auto;
@@ -3750,6 +3754,53 @@
     border-top:2px solid currentColor;transform:rotate(45deg);border-radius:1px}
   /* Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen. */
   .rcp-awards.ungerade > :last-child{grid-column:1 / -1}
+
+  /* ── Der Beleg [§C27] ─────────────────────────────────────────────
+     Vier Formen in einem ruhigen Kasten. Gold trägt nur der Halter [§C25],
+     alles andere ist Metall; die Zellen sind Richtung (grün und rot). */
+  .bl-box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .bl-satz{font-size:12px;color:var(--ink2);line-height:1.45;margin-top:8px}
+  .bl-satz b{color:var(--ink);font-weight:700}
+  .bl-zellen{display:grid;grid-template-columns:repeat(25,minmax(0,1fr));gap:2px}
+  .bl-zellen i{aspect-ratio:1;border-radius:2px;background:rgba(240,86,106,.4)}
+  .bl-zellen i.j{background:var(--acid)}
+  .bl-feld{position:relative;height:20px}
+  .bl-feld-bahn{position:absolute;left:0;right:0;top:9px;height:2px;border-radius:1px;background:var(--surface3)}
+  .bl-feld-mitte{position:absolute;top:3px;width:1px;height:14px;background:var(--muted)}
+  /* Leise und ohne Rand: zehn Punkte auf zwei Zentimetern überlappen, und
+     jeder Rand zeichnete dort eine Klammer. */
+  .bl-feld i{position:absolute;top:7px;width:6px;height:6px;margin-left:-3px;border-radius:50%;
+    background:rgba(185,196,189,.4)}
+  .bl-feld i.er{top:4px;width:12px;height:12px;margin-left:-6px;background:var(--gold);
+    box-shadow:0 0 0 2px var(--surface),0 0 10px rgba(247,207,74,.6)}
+  .bl-feld-l{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:var(--faint);margin-top:2px}
+  .bl-spanne{position:relative;height:24px}
+  .bl-spanne-bahn{position:absolute;left:0;right:0;top:11px;height:2px;background:var(--surface3)}
+  .bl-spanne-ber{position:absolute;top:7px;height:10px;border-radius:5px;background:rgba(247,207,74,.18);
+    box-shadow:inset 0 0 0 1px rgba(247,207,74,.42)}
+  .bl-spanne-pkt{position:absolute;top:5px;width:14px;height:14px;margin-left:-7px;border-radius:50%;
+    background:var(--gold);box-shadow:0 0 0 2px var(--surface)}
+  .bl-ref{position:absolute;top:1px;width:2px;height:22px;margin-left:-1px;border-radius:1px;background:var(--silber);opacity:.8}
+  .bl-verlauf{display:block;width:100%;height:84px;overflow:visible}
+  .bl-verlauf polyline{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+  .bl-verlauf .bl-v-a{stroke:var(--gold);stroke-width:2.2}
+  .bl-verlauf .bl-v-b{stroke:var(--muted);stroke-width:1.6}
+  .bl-verlauf circle.bl-v-a{fill:var(--gold);stroke:none}
+  .bl-verlauf circle.bl-v-b{fill:var(--muted);stroke:none}
+  .bl-verlauf .bl-v-seit{fill:var(--gold);stroke:var(--surface);stroke-width:2}
+  .bl-verlauf text{font-family:'Sometype Mono',monospace;font-size:9px;fill:var(--faint)}
+  .bl-legende{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:6px}
+  .bl-legende span::before{content:"";display:inline-block;width:10px;height:2px;border-radius:1px;margin-right:6px;vertical-align:3px;background:var(--muted)}
+  .bl-legende .a::before{background:var(--gold)}
+  .bl-legende .seit{margin-left:auto;color:var(--ink2)}
+  .bl-legende .seit::before{width:7px;height:7px;border-radius:50%;background:var(--gold);vertical-align:1px}
+  /* Bis der Verlauf gerechnet ist, steht ein Schimmer in seiner Höhe: ein
+     leerer Kasten liest sich als Fehler, ein springender als Ruckeln. */
+  .bl-lade{height:84px;border-radius:8px;
+    background:linear-gradient(100deg,var(--surface2) 30%,var(--surface3) 50%,var(--surface2) 70%) 0 0/300% 100%;
+    animation:bl-schimmer 1.3s linear infinite}
+  @keyframes bl-schimmer{from{background-position:100% 0}to{background-position:0 0}}
+  @media (prefers-reduced-motion:reduce){.bl-lade{animation:none}}
   /* ============ [§C21] AWARD SHEET REDESIGN (Winner Hero + Liste) ============ */
   /* Saubere Award-Liste statt Podium */
   .aw-list-label{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
@@ -5265,7 +5316,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.57ef13bc';
+const BUILD_VERSION='2026.09.30.8fe9c31b';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6922,6 +6973,171 @@ function rcpNotizHtml(o){
     <span class="rcp-notiz-ic">${svgI(o.ic)}</span>
     <span class="rcp-notiz-tx">${o.text}</span>
   </div>`;
+}
+
+// ╔═══ §C27 ─── DER BELEG ─────────────────────────────────────────────╗
+//     Ein Rekord, ein Award und eine Chronik sind Behauptungen, und das
+//     Blatt belegte sie mit einem Satz. „72 %" aus fünfzig und aus
+//     fünfhundert Partien sind zwei verschiedene Aussagen, und ob der Zweite
+//     knapp dahinter liegt oder weit weg, musste man aus der Liste
+//     ausrechnen. Vier Formen, jede für eine Frage, und jede nur, wo sie
+//     etwas sagt:
+//       Woraus         die Stichprobe als Zellen, eine je Gelegenheit
+//       Wo im Feld     jeder im Rennen als Punkt, der Halter hervorgehoben
+//       Wie sicher     die Spanne, in der ein Anteil bei dieser Stichprobe
+//                      liegt, und der Zweite darin
+//       Wie es dazu kam  der Verlauf über die Monatsenden
+//     Gerechnet wird hier nichts Neues: die Zahlen kommen aus dem Beleg des
+//     Katalogs, aus chronicleRang, aus AW_WERT und aus dem Zeitschnitt, den
+//     es gibt (_chronicleCtx).
+// ╚═════════════════════════════════════════════════════════════════════╝
+
+// „27 von 49 Spielen um den letzten Ball" aus einem Beleg. Ohne „x von y"
+// gibt es keine Stichprobe zu zeigen — dann fällt die Form weg, statt eine
+// zu erfinden.
+function belegAnteil(text){
+  const s = String(text || '');
+  const m = s.match(/(\d+)\s+von\s+(\d+)/);
+  if(!m) return null;
+  const k = +m[1], n = +m[2];
+  if(!(n > 0) || k > n) return null;
+  return {k, n, satz:s.slice(m.index).split(' · ')[0].replace(/[.,;]\s*$/, '')};
+}
+// Ist der Anteil derselbe Wert, den der Beleg groß nennt? Nur dann trägt
+// die Spanne: „6 % aller 48 Spieltage · 3 Tage" zählt drei von 48, und die
+// Spanne über drei von 48 beschreibt genau diese sechs Prozent.
+function _belegIstQuote(text, a){
+  const m = String(text || '').match(/([\d,]+)\s?%/);
+  return !!(m && a && Math.abs(parseFloat(m[1].replace(',', '.')) - a.k / a.n * 100) <= 1);
+}
+// Woraus: eine Zelle je Gelegenheit. Ab hundert fasst eine Zelle mehrere —
+// hundert Zellen sind auf dem Telefon vier Reihen, mehr wäre eine Fläche.
+function belegZellenHtml(a){
+  if(!a) return '';
+  const je = Math.max(1, Math.ceil(a.n / 100));
+  const z = Math.ceil(a.n / je), voll = Math.round(a.k / je);
+  let zellen = '';
+  for(let i = 0; i < z; i++) zellen += i < voll ? '<i class="j"></i>' : '<i></i>';
+  return `<div class="bl-zellen">${zellen}</div>
+    <div class="bl-satz">${esc(a.satz)}${je > 1 ? ` · eine Zelle für je ${je}` : ''}</div>`;
+}
+// Wo im Feld: `eintraege` sind {v, t, er} — Sortierwert, sein Text, und ob
+// er zu den Haltern gehört. Links steht der kleinste Wert, rechts der
+// größte; die Mitte ist der Median. Nur ab drei Einträgen: zwei Punkte
+// sind kein Feld.
+function belegFeldHtml(eintraege, mitSkala){
+  const e = (eintraege || []).filter(x => x && x.v != null && isFinite(x.v));
+  if(e.length < 3) return '';
+  const lo = Math.min(...e.map(x => x.v)), hi = Math.max(...e.map(x => x.v));
+  if(!(hi > lo)) return '';
+  const pos = v => ((v - lo) / (hi - lo) * 92 + 4).toFixed(1);
+  const sortiert = e.slice().sort((a, b) => a.v - b.v);
+  const mitte = sortiert[Math.floor((sortiert.length - 1) / 2)];
+  // Halter zuletzt, damit ihr Punkt über den anderen liegt.
+  const punkte = e.filter(x => !x.er).concat(e.filter(x => x.er))
+    .map(x => `<i${x.er ? ' class="er"' : ''} style="left:${pos(x.v)}%"></i>`).join('');
+  const skala = mitSkala
+    ? `<div class="bl-feld-l num"><span>${esc(String(sortiert[0].t))}</span><span>Mitte ${esc(String(mitte.t))}</span><span>${esc(String(sortiert[sortiert.length - 1].t))}</span></div>`
+    : '';
+  return `<div class="bl-feld" title="${e.length} im Feld"><span class="bl-feld-bahn"></span>`
+    + `<span class="bl-feld-mitte" style="left:${pos(mitte.v)}%"></span>${punkte}</div>${skala}`;
+}
+// Wie sicher: die Spanne um einen Anteil (Wilson, 90 %). Sie sagt, was bei
+// dieser Stichprobe noch Zufall sein kann — und ob der Zweite darin liegt.
+function belegSpanne(k, n){
+  const z = 1.645, p = k / n, z2 = z * z, d = 1 + z2 / n;
+  const c = (p + z2 / (2 * n)) / d;
+  const h = z * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / d;
+  return [Math.max(0, c - h), Math.min(1, c + h)];
+}
+function belegSpanneHtml(a, zweiter){
+  if(!a || a.n < 3) return '';
+  const [u, o] = belegSpanne(a.k, a.n);
+  const pz = v => Math.round(v * 100);
+  const q = a.k / a.n;
+  let satz = `Bei ${a.k} von ${a.n} liegt der Anteil auf lange Sicht mit großer Wahrscheinlichkeit zwischen <b>${pz(u)} und ${pz(o)} %</b>.`;
+  let ref = '';
+  if(zweiter && zweiter.q != null && isFinite(zweiter.q)){
+    const drin = zweiter.q >= u - 1e-9 && zweiter.q <= o + 1e-9;
+    ref = `<span class="bl-ref" style="left:${(zweiter.q * 100).toFixed(1)}%"></span>`;
+    satz += drin
+      ? ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % darin: der Abstand kann noch Zufall sein.`
+      : ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % außerhalb: der Abstand ist mehr als Zufall.`;
+  }
+  return `<div class="bl-spanne"><span class="bl-spanne-bahn"></span>
+      <span class="bl-spanne-ber" style="left:${(u * 100).toFixed(1)}%;width:${((o - u) * 100).toFixed(1)}%"></span>
+      ${ref}<span class="bl-spanne-pkt" style="left:${(q * 100).toFixed(1)}%"></span></div>
+    <div class="bl-feld-l num"><span>0 %</span><span>50 %</span><span>100 %</span></div>
+    <div class="bl-satz">${satz}</div>`;
+}
+// Wie es dazu kam: der Wert des Halters und des Zweiten an jedem Monatsende
+// und heute. `serie` = {labels, a, b, aName, bName, seit}; ein fehlender
+// Wert (noch nicht in der Wertung) unterbricht die Linie.
+function belegVerlaufHtml(s){
+  if(!s || !s.labels || s.labels.length < 2) return '';
+  const alle = s.a.concat(s.b || []).filter(v => v != null && isFinite(v));
+  if(alle.length < 2) return '';
+  let lo = Math.min(...alle), hi = Math.max(...alle);
+  if(!(hi > lo)){ lo -= 1; hi += 1; }
+  const W = 300, H = 74, n = s.labels.length;
+  const x = i => (8 + i * (W - 16) / (n - 1)).toFixed(1);
+  const y = v => (H - 16 - (v - lo) / (hi - lo) * (H - 26)).toFixed(1);
+  const linie = (werte, cls) => {
+    const teile = []; let lauf = [];
+    werte.forEach((v, i) => {
+      if(v == null || !isFinite(v)){ if(lauf.length) teile.push(lauf); lauf = []; return; }
+      lauf.push(x(i) + ',' + y(v));
+    });
+    if(lauf.length) teile.push(lauf);
+    return teile.map(t => t.length > 1
+      ? `<polyline class="${cls}" points="${t.join(' ')}"/>`
+      : `<circle class="${cls}" cx="${t[0].split(',')[0]}" cy="${t[0].split(',')[1]}" r="2"/>`).join('');
+  };
+  const seit = s.seit != null && s.a[s.seit] != null
+    ? `<circle class="bl-v-seit" cx="${x(s.seit)}" cy="${y(s.a[s.seit])}" r="4.5"/>` : '';
+  const achse = s.labels.map((l, i) => (i === 0 || i === n - 1 || n <= 6)
+    ? `<text x="${x(i)}" y="${H - 2}" text-anchor="${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}">${esc(l)}</text>` : '').join('');
+  return `<svg class="bl-verlauf" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      ${s.b ? linie(s.b, 'bl-v-b') : ''}${linie(s.a, 'bl-v-a')}${seit}${achse}</svg>
+    <div class="bl-legende"><span class="a">${esc(s.aName)}</span>${s.b ? `<span class="b">${esc(s.bName)}</span>` : ''}${
+      s.seit != null ? `<span class="seit">vorn seit ${esc(s.labels[s.seit])}</span>` : ''}</div>`;
+}
+// Der Beleg in seiner festen Reihenfolge — nur die Formen, die für die
+// Größe etwas sagen: eine Serie hat keine Spanne, ein Monat keinen Verlauf.
+//   o.ev       der Beleg des Halters („36 von 50 Partien gewonnen")
+//   o.feld     {v, t, er} je Eintrag im Rennen
+//   o.dahinter ein Satz über den Zweiten
+//   o.zweiter  {name, q} für die Spanne
+//   o.verlauf  die id eines Liga-Rekords: sein Verlauf kommt nach dem
+//              Öffnen (belegVerlaufLaden)
+function belegHtml(o){
+  const a = belegAnteil(o.ev);
+  const teile = [];
+  if(a) teile.push(blattAbschnittHtml('chartBar', 'Woraus', a.n + ' insgesamt')
+    + `<div class="bl-box">${belegZellenHtml(a)}</div>`);
+  const feld = belegFeldHtml(o.feld, true);
+  if(feld) teile.push(blattAbschnittHtml('users', 'Wo im Feld', o.feld.length + ' im Rennen')
+    + `<div class="bl-box">${feld}${o.dahinter ? `<div class="bl-satz">${o.dahinter}</div>` : ''}</div>`);
+  const sp = a && _belegIstQuote(o.ev, a) ? belegSpanneHtml(a, o.zweiter) : '';
+  if(sp) teile.push(blattAbschnittHtml('target', 'Wie sicher') + `<div class="bl-box">${sp}</div>`);
+  if(o.verlauf) teile.push(blattAbschnittHtml('chartUp', 'Wie es dazu kam', 'Monatsenden')
+    + `<div class="bl-box" data-verlauf="${esc(o.verlauf)}"><div class="bl-lade"></div></div>`);
+  return teile.join('');
+}
+// Der Verlauf kommt nach: er braucht einen Zeitschnitt je Monat
+// [rekordVerlauf]. Ist das Blatt inzwischen ein anderes, fällt er weg.
+function belegVerlaufLaden(root){
+  const box = root && root.querySelector('[data-verlauf]');
+  if(!box) return;
+  setTimeout(() => {
+    if(!box.isConnected) return;
+    rekordVerlauf(box.dataset.verlauf, s => {
+      if(!box.isConnected) return;
+      const html = belegVerlaufHtml(s);
+      if(html) box.innerHTML = html;
+      else { const kopf = box.previousElementSibling; box.remove(); if(kopf) kopf.remove(); }
+    });
+  }, 360);
 }
 // ╔═══ §3.1 ─── DATENBANK-LAYER ────────────────────────────────────────╗
 //     loadAll() lädt Spieler/Matches/Config/Seasons, persistRecalc()
@@ -12119,26 +12335,13 @@ const AW_LEER = {
 };
 // Die Lage im Feld: jeder Eintrag der Liste als Punkt auf seiner Skala, die
 // Halter hervorgehoben, die Mitte als Strich. „72 %" sagt allein nicht, ob
-// das knapp vorn oder weit weg ist — die Liste steht erst im Blatt.
-// Nur ab drei Einträgen: zwei Punkte sind kein Feld.
+// das knapp vorn oder weit weg ist — die Liste steht erst im Blatt. Das
+// Bauteil ist der Beleg (belegFeldHtml) [§C27].
 function awFeldHtml(key, liste, top, mitSkala){
   const w = AW_WERT[key];
-  if(!w || !w.f || !liste || liste.length < 3) return '';
-  const werte = liste.map(w.f);
-  const lo = Math.min(...werte), hi = Math.max(...werte);
-  if(!(hi > lo)) return '';
-  const pos = v => ((v - lo) / (hi - lo) * 92 + 4).toFixed(1);
-  const sortiert = liste.slice().sort((a, b) => w.f(a) - w.f(b));
-  const mitte = sortiert[Math.floor((sortiert.length - 1) / 2)];
+  if(!w || !w.f || !liste) return '';
   const halter = new Set(top);
-  // Halter zuletzt, damit ihr Punkt über den anderen liegt.
-  const punkte = liste.filter(x => !halter.has(x)).concat(top)
-    .map(x => `<i${halter.has(x) ? ' class="er"' : ''} style="left:${pos(w.f(x))}%"></i>`).join('');
-  const skala = mitSkala
-    ? `<div class="aw-feld-l num"><span>${esc(String(w.z(sortiert[0])))}</span><span>Mitte ${esc(String(w.z(mitte)))}</span><span>${esc(String(w.z(sortiert[sortiert.length-1])))}</span></div>`
-    : '';
-  return `<div class="aw-feld" title="${liste.length} im Feld"><span class="aw-feld-bahn"></span>`
-    + `<span class="aw-feld-mitte" style="left:${pos(w.f(mitte))}%"></span>${punkte}</div>${skala}`;
+  return belegFeldHtml(liste.map(x => ({v:w.f(x), t:w.z(x), er:halter.has(x)})), mitSkala);
 }
 // Eine Serie als Lauf aus Feldern, wie im Feed (_newsSerienBand): acht ist
 // eine Zahl, die Reihe zeigt, wie lang acht sind. Ab zwölf Feldern trägt
@@ -12524,7 +12727,7 @@ function showAward(key){
     // sagte zu derselben Serie „8er Serie", während die Kachel „8er" trug.
     const arr = awListe(key, R).map(x => {
       const t = awText(key, x);
-      return {ids:awIds(key, x), name:awIds(key, x).map(pname).join(' & '),
+      return {x, ids:awIds(key, x), name:awIds(key, x).map(pname).join(' & '),
         z:t.z, e:t.e, val:t.e ? t.z+' '+t.e : t.z, detail:t.b, sort:AW_WERT[key].s(x)};
     });
 
@@ -12664,8 +12867,19 @@ function showAward(key){
         }
       }
 
+      // Der Beleg [§C27]: woraus der Wert besteht, wo er im Feld liegt und
+      // wie sicher der Abstand zum Nächsten ist — aus derselben Liste.
+      const w = AW_WERT[key];
+      const zweitE = arr.find(e => e.sort !== top.sort) || null;
+      const zA = zweitE ? belegAnteil(zweitE.detail) : null;
+      const belegAw = belegHtml({
+        ev: top.z + ' ' + (top.detail || ''),
+        feld: w.f ? arr.map(e => ({v:w.f(e.x), t:e.z, er:e.sort === top.sort})) : null,
+        dahinter: zweitE ? `Dahinter: <b>${esc(zweitE.name)}</b> mit ${esc(zweitE.z)}.` : '',
+        zweiter: zA && _belegIstQuote(zweitE.z + ' ' + zweitE.detail, zA) ? {name:zweitE.name, q:zA.k / zA.n} : null
+      });
       const listLabel = isNeg ? 'Weitere Sünder' : 'Weitere Plätze';
-      bodyHtml = heroHtml + (listItems.length
+      bodyHtml = heroHtml + belegAw + (listItems.length
         ? `<div class="aw-list-label">${listLabel}</div><div class="aw-list">${listItems.join('')}</div>`
         : '');
     }
@@ -13330,6 +13544,16 @@ function sheetNav(openChild){
   }
 }
 window.sheetNav = sheetNav;
+
+// Der Kopf eines Abschnitts im Blatt [§C27]: ein leises Zeichen, der Name
+// in Großbuchstaben, rechts worauf er sich bezieht. Jedes Blatt baute ihn
+// selbst — als Inline-Style im Duo-Blatt, als `.pp-sec-title` im
+// Rekord-Blatt, als `.aw-list-label` im Award-Blatt — und kein zweites sah
+// aus wie das erste.
+function blattAbschnittHtml(ic, titel, rechts){
+  return `<div class="blatt-abschn">${ic ? svgI(ic) : ''}<span>${esc(titel)}</span>${
+    rechts ? `<em class="num">${esc(String(rechts))}</em>` : ''}</div>`;
+}
 
 function openSheet(html, opts){
   opts = opts || {};
@@ -28012,6 +28236,8 @@ function _newsDetailMitte(s){
             <div class="nd-stat-label">Vorher gehalten von</div>
             <div class="nd-stat-val">${esc(_namenListe(vor.map(nameOf)))} ›</div></div>` : ''}
           ${_newsVerfolger(d.rekordId, d.playerIds, d.wert)}
+          ${/* Woraus der Wert der KARTE besteht — ihr gespeicherter Beleg,
+                nicht der von heute [§C33 „Und niemand davor"]. */ belegHtml({ev:d.ev})}
           ${rekordLaufbahn(d.rekordId)}
           ${def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : ''}`;
       }
@@ -33283,6 +33509,52 @@ function chronicleRang(cid){
   return reihe;
 }
 
+// Wie ein Rekord zu seinem Halter kam: der Wert des Halters und des Zweiten
+// an jedem Monatsende der letzten sechs Monate und heute — für den Beleg im
+// Rekord-Blatt [§C27]. Gerechnet über den Zeitschnitt, den es gibt
+// (_chronicleCtx), und nicht neu: ein Schnitt rechnet die Elo-Bahn bis
+// dorthin nach, gemessen 7 bis 36 ms je Monat. Deshalb in Schritten, einer
+// je Takt, und erst nach dem Öffnen des Blatts — sechs Schnitte auf einmal
+// stünden mitten in der Animation. Die Schnitte selbst liegen danach im
+// Cache und teilen ihn mit dem Feed und den Rückblicken.
+function rekordVerlauf(cid, fertig){
+  const def = CHRONICLE_BY_ID[cid];
+  const key = cid + '_' + matches.length + '_' + _cache.version;
+  if(!_cache._rekVerlauf) _cache._rekVerlauf = {};
+  if(key in _cache._rekVerlauf){ fertig(_cache._rekVerlauf[key]); return; }
+  const rang = def && def.val ? chronicleRang(cid) : [];
+  if(!rang.length){ fertig(null); return; }
+  const a = rang[0].pid;
+  const zweit = rang.find(r => r.wert < rang[0].wert - 1e-9) || rang[1] || null;
+  const b = zweit ? zweit.pid : null;
+  const monate = allPastSeasons().slice(-6);
+  const schnitte = monate.map(sid => seasonEnd(sid).getTime()).concat([0]);
+  const labels = monate.map(sid => String(seasonLabel(sid)).split(' ')[0].slice(0, 3)).concat(['heute']);
+  const va = [], vb = [], vorn = [];
+  const wert = (C, pid) => {
+    if(!pid || !C.P[pid]) return null;
+    try { const v = def.val(C.P[pid], C); return v == null || !isFinite(v) ? null : v; } catch(e){ return null; }
+  };
+  let i = 0;
+  const schritt = () => {
+    const C = _chronicleCtx(schnitte[i] || undefined);
+    const x = wert(C, a);
+    let best = -Infinity;
+    Object.keys(C.P).forEach(pid => { const v = wert(C, pid); if(v != null && v > best) best = v; });
+    va.push(x); vb.push(wert(C, b)); vorn.push(x != null && x >= best - 1e-9);
+    if(++i < schnitte.length){ setTimeout(schritt, 0); return; }
+    // „vorn seit": der erste Monat, ab dem der Halter bis heute nie
+    // dahinter lag. Heute liegt er vorn — er hält den Rekord.
+    let seit = vorn.length - 1;
+    while(seit > 0 && vorn[seit - 1]) seit--;
+    const ergebnis = {labels, a:va, b:b ? vb : null, aName:pname(a), bName:b ? pname(b) : '', seit};
+    _topfDeckel(_cache._rekVerlauf, 16);
+    _cache._rekVerlauf[key] = ergebnis;
+    fertig(ergebnis);
+  };
+  schritt();
+}
+
 // Der Titel, der im Profil unter dem Namen steht: laufender Saisontitel vor
 // letztem abgeschlossenem. Ehrentitel gibt es bewusst nicht mehr — sie waren
 // nur eine zweite Anzeige derselben Aussage.
@@ -33667,11 +33939,23 @@ function showDisziplin(tid, sid){
     } catch(e){ rang = []; }
   }
 
-  const podest = _chronPodestHtml(rang.map(pid => {
+  const reihe = rang.map(pid => {
     let wert = '';
     try { wert = evFuer ? evFuer(pid) : ''; } catch(e){ wert = ''; }
     return {pid, wert, v: wertVon ? wertVon(pid) : null};
-  }));
+  });
+  const podest = _chronPodestHtml(reihe);
+  // Der Beleg [§C27] aus derselben Reihenfolge wie das Podest. Einen
+  // Verlauf hat ein Monat nicht — er ist die Zeitachse selbst.
+  const halterM = new Set(eigene.map(a => a.pid));
+  const zweitM = reihe.find(r => !halterM.has(r.pid)) || null;
+  const zweitMA = zweitM ? belegAnteil(zweitM.wert) : null;
+  const beleg = reihe.length ? belegHtml({
+    ev: (eigene[0] && eigene[0].ev) || (reihe[0] && reihe[0].wert) || '',
+    feld: reihe.map(r => ({v:r.v, t:_chronKurz(r.wert), er:halterM.has(r.pid)})),
+    dahinter: zweitM ? `Dahinter: <b>${esc(pname(zweitM.pid))}</b> mit ${esc(_chronKurz(zweitM.wert))}.` : '',
+    zweiter: zweitMA && _belegIstQuote(zweitM.wert, zweitMA) ? {name:pname(zweitM.pid), q:zweitMA.k / zweitMA.n} : null
+  }) : '';
 
   openSheet(`
     <h3>${esc(def.name)}</h3>
@@ -33693,6 +33977,7 @@ function showDisziplin(tid, sid){
     </div>
     ${_chronFaktenHtml(def)}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
+    ${beleg}
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Dieser Monat</h4></div>
            <div class="m num">${rang.length} erfüllt${rang.length === 1 ? '' : 'en'} die Bedingung</div></div>
@@ -33747,6 +34032,19 @@ function showChronicle(cid){
           : 'Grundwert ' + def.basis + ' P, geteilt durch die Zahl der Halter']
       : ['Für die Laufbahn', 'Eine Schattenseite zählt nichts und zieht nichts ab']
   ].filter(Boolean);
+  // Der Beleg [§C27]: woraus der Bestwert besteht, wo er im Feld liegt, wie
+  // sicher der Abstand ist und wie es dazu kam — aus chronicleRang und dem
+  // Beleg des Katalogs, ohne zweite Rechnung.
+  const halterSet = new Set(h ? (h.pids || [h.pid]) : []);
+  const zweit = rang.find(r => !halterSet.has(r.pid)) || null;
+  const zweitA = zweit ? belegAnteil(zweit.ev) : null;
+  const beleg = rang.length ? belegHtml({
+    ev: h ? h.ev : '',
+    feld: rang.map(r => ({v:r.wert, t:_chronKurz(r.ev), er:halterSet.has(r.pid)})),
+    dahinter: zweit ? `Dahinter: <b>${esc(pname(zweit.pid))}</b> mit ${esc(_chronKurz(zweit.ev))}.` : '',
+    zweiter: zweitA && _belegIstQuote(zweit.ev, zweitA) ? {name:pname(zweit.pid), q:zweitA.k / zweitA.n} : null,
+    verlauf: cid
+  }) : '';
   openSheet(`
     <h3>${esc(def.name)}</h3>
     <div class="sheet-sub">${esc(CHRON_KINDS[def.kind].label)}</div>
@@ -33762,6 +34060,7 @@ function showChronicle(cid){
       punktgleich. Der Grundwert wird deshalb durch ${halterN} geteilt; jeder
       von ihnen hält ihn vollständig, bis einer ihn überbietet.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
+    ${beleg}
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Die Tafel</h4></div>
            <div class="m num">${rang.length} von ${allChronicles().rated} erfüllen die Mindestbasis</div></div>
@@ -33778,6 +34077,7 @@ function showChronicle(cid){
     }).join('')}</div>` : ''}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+  belegVerlaufLaden(document.getElementById('sheet'));
 }
 
 // Keine Marken „Neu" und „Ueberarbeitet" mehr. Sie sagten, was sich mit

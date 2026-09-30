@@ -1242,26 +1242,13 @@ const AW_LEER = {
 };
 // Die Lage im Feld: jeder Eintrag der Liste als Punkt auf seiner Skala, die
 // Halter hervorgehoben, die Mitte als Strich. „72 %" sagt allein nicht, ob
-// das knapp vorn oder weit weg ist — die Liste steht erst im Blatt.
-// Nur ab drei Einträgen: zwei Punkte sind kein Feld.
+// das knapp vorn oder weit weg ist — die Liste steht erst im Blatt. Das
+// Bauteil ist der Beleg (belegFeldHtml) [§C27].
 function awFeldHtml(key, liste, top, mitSkala){
   const w = AW_WERT[key];
-  if(!w || !w.f || !liste || liste.length < 3) return '';
-  const werte = liste.map(w.f);
-  const lo = Math.min(...werte), hi = Math.max(...werte);
-  if(!(hi > lo)) return '';
-  const pos = v => ((v - lo) / (hi - lo) * 92 + 4).toFixed(1);
-  const sortiert = liste.slice().sort((a, b) => w.f(a) - w.f(b));
-  const mitte = sortiert[Math.floor((sortiert.length - 1) / 2)];
+  if(!w || !w.f || !liste) return '';
   const halter = new Set(top);
-  // Halter zuletzt, damit ihr Punkt über den anderen liegt.
-  const punkte = liste.filter(x => !halter.has(x)).concat(top)
-    .map(x => `<i${halter.has(x) ? ' class="er"' : ''} style="left:${pos(w.f(x))}%"></i>`).join('');
-  const skala = mitSkala
-    ? `<div class="aw-feld-l num"><span>${esc(String(w.z(sortiert[0])))}</span><span>Mitte ${esc(String(w.z(mitte)))}</span><span>${esc(String(w.z(sortiert[sortiert.length-1])))}</span></div>`
-    : '';
-  return `<div class="aw-feld" title="${liste.length} im Feld"><span class="aw-feld-bahn"></span>`
-    + `<span class="aw-feld-mitte" style="left:${pos(w.f(mitte))}%"></span>${punkte}</div>${skala}`;
+  return belegFeldHtml(liste.map(x => ({v:w.f(x), t:w.z(x), er:halter.has(x)})), mitSkala);
 }
 // Eine Serie als Lauf aus Feldern, wie im Feed (_newsSerienBand): acht ist
 // eine Zahl, die Reihe zeigt, wie lang acht sind. Ab zwölf Feldern trägt

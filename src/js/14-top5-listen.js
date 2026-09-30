@@ -295,7 +295,7 @@ function showAward(key){
     // sagte zu derselben Serie „8er Serie", während die Kachel „8er" trug.
     const arr = awListe(key, R).map(x => {
       const t = awText(key, x);
-      return {ids:awIds(key, x), name:awIds(key, x).map(pname).join(' & '),
+      return {x, ids:awIds(key, x), name:awIds(key, x).map(pname).join(' & '),
         z:t.z, e:t.e, val:t.e ? t.z+' '+t.e : t.z, detail:t.b, sort:AW_WERT[key].s(x)};
     });
 
@@ -435,8 +435,19 @@ function showAward(key){
         }
       }
 
+      // Der Beleg [§C27]: woraus der Wert besteht, wo er im Feld liegt und
+      // wie sicher der Abstand zum Nächsten ist — aus derselben Liste.
+      const w = AW_WERT[key];
+      const zweitE = arr.find(e => e.sort !== top.sort) || null;
+      const zA = zweitE ? belegAnteil(zweitE.detail) : null;
+      const belegAw = belegHtml({
+        ev: top.z + ' ' + (top.detail || ''),
+        feld: w.f ? arr.map(e => ({v:w.f(e.x), t:e.z, er:e.sort === top.sort})) : null,
+        dahinter: zweitE ? `Dahinter: <b>${esc(zweitE.name)}</b> mit ${esc(zweitE.z)}.` : '',
+        zweiter: zA && _belegIstQuote(zweitE.z + ' ' + zweitE.detail, zA) ? {name:zweitE.name, q:zA.k / zA.n} : null
+      });
       const listLabel = isNeg ? 'Weitere Sünder' : 'Weitere Plätze';
-      bodyHtml = heroHtml + (listItems.length
+      bodyHtml = heroHtml + belegAw + (listItems.length
         ? `<div class="aw-list-label">${listLabel}</div><div class="aw-list">${listItems.join('')}</div>`
         : '');
     }

@@ -59,6 +59,13 @@
   .posbar .pg{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace}
   .ring{position:relative;width:54px;height:54px;margin:0 auto 6px}
 
+  /* Der Kopf eines Abschnitts im Blatt (blattAbschnittHtml) [§C27]. */
+  .blatt-abschn{display:flex;align-items:center;gap:8px;margin:18px 2px 9px;
+    font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted)}
+  .blatt-abschn .ic{font-size:13px;color:var(--faint)}
+  .blatt-abschn em{margin-left:auto;font-style:normal;letter-spacing:.04em;color:var(--faint);white-space:nowrap}
+
   /* ============ [§C12] BOTTOM NAV ============ */
   .botnav{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:520px;margin:0 auto;
     padding:8px 10px calc(8px + var(--safe-bot));

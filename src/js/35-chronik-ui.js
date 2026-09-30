@@ -303,11 +303,23 @@ function showDisziplin(tid, sid){
     } catch(e){ rang = []; }
   }
 
-  const podest = _chronPodestHtml(rang.map(pid => {
+  const reihe = rang.map(pid => {
     let wert = '';
     try { wert = evFuer ? evFuer(pid) : ''; } catch(e){ wert = ''; }
     return {pid, wert, v: wertVon ? wertVon(pid) : null};
-  }));
+  });
+  const podest = _chronPodestHtml(reihe);
+  // Der Beleg [§C27] aus derselben Reihenfolge wie das Podest. Einen
+  // Verlauf hat ein Monat nicht — er ist die Zeitachse selbst.
+  const halterM = new Set(eigene.map(a => a.pid));
+  const zweitM = reihe.find(r => !halterM.has(r.pid)) || null;
+  const zweitMA = zweitM ? belegAnteil(zweitM.wert) : null;
+  const beleg = reihe.length ? belegHtml({
+    ev: (eigene[0] && eigene[0].ev) || (reihe[0] && reihe[0].wert) || '',
+    feld: reihe.map(r => ({v:r.v, t:_chronKurz(r.wert), er:halterM.has(r.pid)})),
+    dahinter: zweitM ? `Dahinter: <b>${esc(pname(zweitM.pid))}</b> mit ${esc(_chronKurz(zweitM.wert))}.` : '',
+    zweiter: zweitMA && _belegIstQuote(zweitM.wert, zweitMA) ? {name:pname(zweitM.pid), q:zweitMA.k / zweitMA.n} : null
+  }) : '';
 
   openSheet(`
     <h3>${esc(def.name)}</h3>
@@ -329,6 +341,7 @@ function showDisziplin(tid, sid){
     </div>
     ${_chronFaktenHtml(def)}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
+    ${beleg}
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Dieser Monat</h4></div>
            <div class="m num">${rang.length} erfüllt${rang.length === 1 ? '' : 'en'} die Bedingung</div></div>
@@ -383,6 +396,19 @@ function showChronicle(cid){
           : 'Grundwert ' + def.basis + ' P, geteilt durch die Zahl der Halter']
       : ['Für die Laufbahn', 'Eine Schattenseite zählt nichts und zieht nichts ab']
   ].filter(Boolean);
+  // Der Beleg [§C27]: woraus der Bestwert besteht, wo er im Feld liegt, wie
+  // sicher der Abstand ist und wie es dazu kam — aus chronicleRang und dem
+  // Beleg des Katalogs, ohne zweite Rechnung.
+  const halterSet = new Set(h ? (h.pids || [h.pid]) : []);
+  const zweit = rang.find(r => !halterSet.has(r.pid)) || null;
+  const zweitA = zweit ? belegAnteil(zweit.ev) : null;
+  const beleg = rang.length ? belegHtml({
+    ev: h ? h.ev : '',
+    feld: rang.map(r => ({v:r.wert, t:_chronKurz(r.ev), er:halterSet.has(r.pid)})),
+    dahinter: zweit ? `Dahinter: <b>${esc(pname(zweit.pid))}</b> mit ${esc(_chronKurz(zweit.ev))}.` : '',
+    zweiter: zweitA && _belegIstQuote(zweit.ev, zweitA) ? {name:pname(zweit.pid), q:zweitA.k / zweitA.n} : null,
+    verlauf: cid
+  }) : '';
   openSheet(`
     <h3>${esc(def.name)}</h3>
     <div class="sheet-sub">${esc(CHRON_KINDS[def.kind].label)}</div>
@@ -398,6 +424,7 @@ function showChronicle(cid){
       punktgleich. Der Grundwert wird deshalb durch ${halterN} geteilt; jeder
       von ihnen hält ihn vollständig, bis einer ihn überbietet.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
+    ${beleg}
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Die Tafel</h4></div>
            <div class="m num">${rang.length} von ${allChronicles().rated} erfüllen die Mindestbasis</div></div>
@@ -414,6 +441,7 @@ function showChronicle(cid){
     }).join('')}</div>` : ''}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+  belegVerlaufLaden(document.getElementById('sheet'));
 }
 
 // Keine Marken „Neu" und „Ueberarbeitet" mehr. Sie sagten, was sich mit

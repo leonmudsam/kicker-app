@@ -1403,6 +1403,69 @@ ok(_awNenner.zkNenner && _awNenner.zkNenner.gemeldet === _awNenner.zkNenner.geza
    'der Zirkus misst an den Pleiten des Duos, nicht an allen Partien',
    JSON.stringify(_awNenner.zkNenner));
 
+// ── Der Beleg [§C27] ────────────────────────────────────────────────
+// Ein Rekord belegte seinen Bestwert mit einem Satz. „72 %" aus fünfzig und
+// aus fünfhundert Partien sind zwei Aussagen, und ob der Zweite knapp
+// dahinter liegt, stand nur in der Liste. Der Beleg zeigt die Stichprobe als
+// Zellen, die Halter im Feld, die Spanne um einen Anteil und den Verlauf —
+// und jede dieser Zahlen muss stimmen, sonst ist die Zeichnung eine
+// Behauptung mehr.
+const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
+  const f = []; let zellen = 0, felder = 0, spannen = 0, verlaeufe = 0;
+  const H = chronicleHolders();
+  const st = globalThis.setTimeout;
+  globalThis.setTimeout = fn => fn();
+  try {
+    CHRONICLES.forEach(c => {
+      const h = H[c.id]; if(!h) return;
+      let out = ''; const echt = openSheet; openSheet = x => { out = x; };
+      try { showChronicle(c.id); } catch(e){ f.push(c.id + ': ' + e.message); } finally { openSheet = echt; }
+      const a = belegAnteil(h.ev);
+      const z = out.match(/<div class="bl-zellen">([\\s\\S]*?)<\\/div>/);
+      if(a){
+        if(!z) f.push(c.id + ': ohne Zellen');
+        else {
+          zellen++;
+          const je = Math.max(1, Math.ceil(a.n / 100));
+          const n = (z[1].match(/<i/g) || []).length, k = (z[1].match(/class="j"/g) || []).length;
+          if(n !== Math.ceil(a.n / je) || k !== Math.round(a.k / je))
+            f.push(c.id + ': ' + k + '/' + n + ' Zellen statt ' + a.k + '/' + a.n);
+        }
+      } else if(z) f.push(c.id + ': Zellen ohne Stichprobe');
+      const feld = out.match(/<div class="bl-feld"[\\s\\S]*?<\\/div>/);
+      if(feld){
+        felder++;
+        const er = (feld[0].match(/class="er"/g) || []).length, soll = (h.pids || [h.pid]).length;
+        if(er !== soll) f.push(c.id + ': ' + er + ' Halter im Feld statt ' + soll);
+      }
+      const sp = out.match(/zwischen <b>(\\d+) und (\\d+) %/);
+      if(sp){
+        spannen++;
+        // Unabhängig nachgerechnet: Wilson, 90 %.
+        const p = a.k / a.n, n = a.n, z2 = 1.645 * 1.645, d = 1 + z2 / n;
+        const m = (p + z2 / (2 * n)) / d, w = 1.645 * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / d;
+        if(Math.round(Math.max(0, m - w) * 100) !== +sp[1] || Math.round(Math.min(1, m + w) * 100) !== +sp[2])
+          f.push(c.id + ': Spanne ' + sp[1] + '–' + sp[2]);
+        if(!_belegIstQuote(h.ev, a)) f.push(c.id + ': Spanne um etwas, das kein Anteil ist');
+      }
+      // Der Verlauf endet heute beim Bestwert, und „vorn seit" zeigt auf
+      // einen Monat, in dem der Halter wirklich vorn lag.
+      rekordVerlauf(c.id, v => {
+        if(!v) return;
+        verlaeufe++;
+        const r = chronicleRang(c.id);
+        if(Math.abs(v.a[v.a.length - 1] - r[0].wert) > 1e-9) f.push(c.id + ': Verlauf endet bei ' + v.a[v.a.length - 1] + ' statt ' + r[0].wert);
+        if(v.seit == null || v.a[v.seit] == null) f.push(c.id + ': vorn seit einem Monat ohne Wert');
+      });
+    });
+  } finally { globalThis.setTimeout = st; }
+  return {f, zellen, felder, spannen, verlaeufe};
+})())`));
+ok(_beleg.f.length === 0 && _beleg.zellen > 5 && _beleg.felder > 30 && _beleg.spannen > 3 && _beleg.verlaeufe > 30,
+   'der Beleg zählt seine Stichprobe, zeigt die Halter im Feld, rechnet die Spanne und endet beim Bestwert',
+   _beleg.f.slice(0, 5).join(' · ') || _beleg.zellen + ' Zellenreihen · ' + _beleg.felder + ' Felder · '
+     + _beleg.spannen + ' Spannen · ' + _beleg.verlaeufe + ' Verläufe');
+
 // ── Ein Strich für jedes Zeichen [§C27] ─────────────────────────────
 // Die Strichstärke stand an 78 Stellen in 13 Werten: dieselbe Krone war in
 // der Liga dünner als im Blatt, und ein stroke-width am <svg> im Markup

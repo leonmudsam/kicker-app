@@ -212,18 +212,15 @@
   .aw-trophy.empty .aw-t-lbl{color:var(--muted)}
   .aw-trophy.empty .aw-t-beleg{font-style:italic;color:var(--faint);font-size:11px}
 
-  /* Die Lage im Feld: jeder Eintrag ein Punkt, die Halter in der Farbe der
-     Kachel, die Mitte als Strich. */
-  .aw-feld{position:relative;height:14px}
-  .aw-feld-bahn{position:absolute;left:0;right:0;top:6px;height:2px;border-radius:1px;background:var(--surface3)}
-  .aw-feld-mitte{position:absolute;top:1px;width:1px;height:12px;background:var(--muted)}
-  /* Leise und ohne Rand: zehn Punkte auf zwei Zentimetern überlappen, und
-     jeder Rand zeichnete dort eine Klammer. */
-  .aw-feld i{position:absolute;top:4px;width:6px;height:6px;margin-left:-3px;border-radius:50%;
-    background:rgba(185,196,189,.38)}
-  .aw-feld i.er{top:1px;width:12px;height:12px;margin-left:-6px;background:var(--awc);
+  /* Die Lage im Feld ist der Beleg (.bl-feld); auf der Kachel tragen die
+     Halter die Farbe ihrer Rolle statt Gold, und der Rand die der Kachel. */
+  .aw-trophy .bl-feld{height:14px}
+  .aw-trophy .bl-feld-bahn{top:6px}
+  .aw-trophy .bl-feld-mitte{top:1px;height:12px}
+  .aw-trophy .bl-feld i{top:4px}
+  .aw-trophy .bl-feld i.er{top:1px;background:var(--awc);
     box-shadow:0 0 0 2px var(--bg2),0 0 10px rgba(var(--awc-rgb),.6)}
-  .aw-feld-l{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:var(--faint);margin-top:-4px}
+  .aw-trophy .bl-feld-l{margin-top:-4px}
   /* Eine Serie als Lauf aus Feldern, in der Farbe der Kachel. */
   .aw-lauf{display:flex;gap:3px}
   .aw-lauf i{flex:1;max-width:16px;height:7px;border-radius:3px;background:var(--awc);opacity:.85}
