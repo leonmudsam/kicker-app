@@ -128,10 +128,12 @@ const ok = (c, msg, det) => {
     // mittig, und misst 2 · INS_R von INS_BILD_KANTE seiner Kante. Daraus folgt, wo er
     // gezeichnet ist — gemessen am gerenderten <image>.
     let echt = null;
-    const img = voll.querySelector('svg.ins image');
-    if(img){
-      const r = img.getBoundingClientRect(), k = K('INS_BILD_KANTE'), w = r.width * 80 / k;
-      echt = {left: r.left + (r.width - w) / 2, top: r.top + (r.height - w) / 2, width: w};
+    // Die Zeichnung ist eine Vektorgruppe auf 1000 × 1000, verschoben und
+    // verkleinert [§C30]. Ihre Bildschirmmatrix sagt, wo der Reif landet.
+    const g = voll.querySelector('svg.ins g[transform]');
+    if(g){
+      const m = g.getScreenCTM(), k = K('INS_BILD_KANTE'), halb = 40 * 1000 / k;
+      echt = {left: m.a * (500 - halb) + m.e, top: m.d * (500 - halb) + m.f, width: m.a * 2 * halb};
     }
     const b = window._reifBox(voll);
     return {a, echt: echt && {left:echt.left, top:echt.top, width:echt.width}, b,
@@ -623,6 +625,10 @@ const ok = (c, msg, det) => {
       x.drawImage(b, 0, 0, G, G);
       return x.getImageData(0, 0, G, G).data;
     };
+    // Die Zeichnung als eigenständige Datei, zum Rastern: die App stellt sie
+    // als Vektor ins Dokument [§C30], gemessen wird sie für sich.
+    K("window.izDatei = (k, g) => 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent("
+      + "'<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\">' + (t => t.defs + t.bild)(_izTeile(k, g, INS_RANGFARBE[INS_BILD_RANG])) + '</svg>')))");
     const svgBild = (k, g, rang) => 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(
       K('insigniumStufeSvg(' + JSON.stringify(k) + ', ' + JSON.stringify(rang || 'Elite') + ', '
         + (k === 'stern' ? 'ORDENSSTERN_START + ' + g : 0) + ', ' + g + ', {eigen:true})')
@@ -631,7 +637,7 @@ const ok = (c, msg, det) => {
     const G = 160, out = [], urls = new Set();
     let n = 0;
     for(const k of stufen){
-      const liste = K('INS_ZEICHEN[' + JSON.stringify(k) + '].map((_, g) => insBild(' + JSON.stringify(k) + ', g, INS_BILD_RANG))');
+      const liste = K('INS_ZEICHEN[' + JSON.stringify(k) + '].map((_, g) => izDatei(' + JSON.stringify(k) + ', g))');
       for(let g = 0; g < liste.length; g++){
         n++; urls.add(liste[g]);
         const d = await bild(liste[g], G);
@@ -667,7 +673,7 @@ const ok = (c, msg, det) => {
     const klein = {};
     for(const k of stufen){
       klein[k] = [];
-      for(const u of K('INS_ZEICHEN[' + JSON.stringify(k) + '].map((_, g) => insBild(' + JSON.stringify(k) + ', g, INS_BILD_RANG))')) klein[k].push(await bild(u, 52));
+      for(const u of K('INS_ZEICHEN[' + JSON.stringify(k) + '].map((_, g) => izDatei(' + JSON.stringify(k) + ', g))')) klein[k].push(await bild(u, 52));
     }
     const unterschied = (a, b) => {
       let d = 0, n = 0;
@@ -685,14 +691,15 @@ const ok = (c, msg, det) => {
     // lauteste Fleck des Zeichens.
     const farbe = async (rang, y0, y1) => {
       const z = await bild(svgBild('reif', 0, rang), 144);
-      let r = 0, g = 0, b = 0, n = 0;
+      let r = 0, g = 0, b = 0, n = 0, alle = 0;
       for(let y = y0; y < y1; y++) for(let x = 64; x < 80; x++){
         const o = (y*144 + x)*4; if(z[o+3] < 160) continue;
+        alle++;
         const s = Math.max(z[o], z[o+1], z[o+2]) - Math.min(z[o], z[o+1], z[o+2]);
         if(s < 60) continue;                 // nur die Farbe, nicht das Metall
         r += z[o]; g += z[o+1]; b += z[o+2]; n++;
       }
-      return n ? {r: r/n, g: g/n, b: b/n, n} : null;
+      return n ? {r: r/n, g: g/n, b: b/n, n, alle} : (alle ? {r:0, g:0, b:0, n:0, alle} : null);
     };
     return {out, n, verschieden: urls.size, grade,
             elite: await farbe('Elite', 104, 120), legende: await farbe('Legende', 104, 120),
@@ -732,9 +739,11 @@ const ok = (c, msg, det) => {
      'Insignium: der Stein ist für die Elite violett und für die Legende golden',
      JSON.stringify({elite: E && [E.r, E.g, E.b].map(Math.round), legende: L && [L.r, L.g, L.b].map(Math.round)}));
   const Li = leiter.lilie;
-  ok(!Li || Li.b <= Li.g + 25,
+  // Gezählt wird der Anteil farbiger Punkte an der ganzen Lilie: die Steine
+  // in ihr tragen die Rangfarbe voll und sollen das auch, die Blätter nicht.
+  ok(Li && Li.alle > 20 && Li.n / Li.alle < .3,
      'Insignium: die Lilie ist Metall und nicht in voller Rangfarbe',
-     JSON.stringify(Li && [Li.r, Li.g, Li.b].map(Math.round)));
+     Li && (Li.n + ' von ' + Li.alle + ' Punkten farbig'));
 
   // 5. Dasselbe für die UNTERLAGE im vollen Zeichen. Sie setzt den Reif auf
   //    die Schwinge und muss dabei über den ganzen Schmuck reichen — die
@@ -813,7 +822,7 @@ const ok = (c, msg, det) => {
     for(const k of stufen) for(const g of [0,1,2]){
       const z = await raster(
         K('_insBandGruppe(_insSchwingen(5, "' + id + '"))')
-        + K('_insStufe("' + k + '", __c, ' + (8 + g) + ', "' + id + '", ' + g + ')')
+        + K('_insStufe("' + k + '", __c, ' + (8 + g) + ', "' + id + '", ' + g + ', true)')
             .replace(/<circle data-schein[^>]*\/>/g, '')
         + K('_insFuss(3)'));
       for(const t of [1, 3, 5, 8, 12, 20]){

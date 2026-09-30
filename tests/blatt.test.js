@@ -2984,6 +2984,36 @@ return JSON.stringify(funde,null,1);
      'kein Insignium liegt unter einem Filter oder einer Skalierung',
      Object.keys(_filterFunde).slice(0, 4).join(' · '));
   await page.evaluate(() => { try { window.__k.eval('closeSheet(true)'); } catch(e){} });
+  // Und groß ist die Zeichnung Vektor, kein Bild: ein `<image>` mit einer
+  // SVG-Datei rastert Safari in seinen 170 Einheiten, und im Profilkopf
+  // wurden sie auf 270 px gezogen [§C30]. Klein bleibt sie Bild — ein
+  // Verweis klont die ganze Zeichnung, und der Feed öffnete damit doppelt
+  // so langsam. Gemessen wird beides: der Profilkopf und die Laufbahn ohne
+  // Bild, die Ranglistenzeile mit.
+  const _vektor = await page.evaluate(async () => {
+    const K = window.__k.eval;
+    const w = ms => new Promise(r => setTimeout(r, ms));
+    K("tab='ranking'; render()");
+    const bildIn = el => { let n = 0; el.querySelectorAll('use').forEach(u => {
+      const z = document.querySelector(u.getAttribute('href'));
+      if(z && z.querySelector('image[href^="data:image/svg"]')) n++; });
+      return n + el.querySelectorAll('image[href^="data:image/svg"]').length; };
+    const zeile = bildIn(document.querySelector('#app .rrow') || document.body);
+    const pid = K("players.find(p=>p.name==='Martin').id");
+    K('showPlayer(' + JSON.stringify(pid) + ')'); await w(300);
+    const kopf = document.querySelector('#sheet .pp-av-wrap');
+    const profil = kopf ? bildIn(kopf) : -1;
+    const vektor = kopf ? kopf.querySelectorAll('use[href^="#izg"]').length : 0;
+    K('closeSheet(true)'); K('showLaufbahn(' + JSON.stringify(pid) + ')'); await w(300);
+    const lb = bildIn(document.getElementById('sheet'));
+    K('closeSheet(true)');
+    return {zeile, profil, vektor, lb};
+  });
+  ok(_vektor.profil === 0 && _vektor.vektor > 0 && _vektor.lb === 0,
+     'groß ist jedes Insignium eine Vektorzeichnung, kein eingebettetes Bild',
+     JSON.stringify(_vektor));
+  ok(_vektor.zeile > 0, 'klein bleibt es ein Bild, damit Liste und Feed schnell bleiben',
+     JSON.stringify(_vektor));
 
   await page.setViewportSize({width:430, height:932});
 

@@ -1584,7 +1584,7 @@ const _lb = JSON.parse(K.eval(`JSON.stringify((function(){
     formen: INSIGNIEN.map(x=>({key:x.key, n:INS_ZEICHEN[x.key].length,
       bilder: INS_ZEICHEN[x.key].map((b, g) => {
         const s = insigniumStufeSvg(x.key, m, x.key==='stern' ? ORDENSSTERN_START+g : 0, g, {eigen:true})
-          .match(/href="([^"]+)"/)[1];
+          .replace(/(ize|e)[0-9]+_/g, '');
         let h = 0; for(let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
         return h; })})),
     schritt: ORDENSSTERN_SCHRITT
@@ -1721,9 +1721,10 @@ const _schein = JSON.parse(K.eval(`JSON.stringify((function(){
   // dem Bild. Geprüft wird die Mitte des Steinsatzes im Bild jedes Rangs.
   const naeher = Object.keys(INS_RANGFARBE).map(r => {
     const s = insigniumStufeSvg('reif', r, 0, 0, {eigen:true});
-    const bildGefiltert = /<image[^>]*filter=/.test(s);
-    const href = (s.split("base64,")[1] || "").split(String.fromCharCode(34))[0];
-    const svg = href ? atob(href) : '';
+    // Die Zeichnung steht als Vektor im Markup [§C30]; ein Filter darin
+    // oder darüber wäre auf dem Telefon unscharf.
+    const bildGefiltert = /filter=/.test(s);
+    const svg = s;
     const passt = svg.indexOf(_izStein(INS_RANGFARBE[r])[2]) >= 0;
     return {r, bildGefiltert, passt};
   });
@@ -1761,13 +1762,13 @@ const _steigt = JSON.parse(K.eval(`JSON.stringify((() => {
     if(sa > sb) fehler.push(INSIGNIEN[i-1].name + ' III ' + sa + ' Steine > ' + INSIGNIEN[i].name + ' I ' + sb);
     if(gold(a) > gold(b)) fehler.push(INSIGNIEN[i-1].name + ' III Gold ' + gold(a) + ' > ' + INSIGNIEN[i].name + ' I ' + gold(b));
   }
-  const svg = _izStufe('krone', 2, INS_RANGFARBE.Elite);
-  const ganz = /<g[^>]*filter=/.test(svg);
+  const t = _izTeile('krone', 2, INS_RANGFARBE.Elite);
+  const ganz = /filter/.test(t.defs + t.bild);
   return {fehler, ganz};
 })())`));
 ok(_steigt.fehler.length === 0, 'der dritte Grad trägt nie mehr Steine oder Gold als der erste der nächsten Stufe',
    _steigt.fehler.join(' · ') || 'jede Stufe');
-ok(!_steigt.ganz, 'die Zeichnung liegt nicht als Ganzes unter einem Filter', String(_steigt.ganz));
+ok(!_steigt.ganz, 'die Zeichnung trägt keinen Filter', String(_steigt.ganz));
 
 
 // ══════════════════════════════════════════════════════════════════════

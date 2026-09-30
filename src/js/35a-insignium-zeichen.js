@@ -141,6 +141,10 @@ const IZ_METALL = {
   rose:    ['#fff8f4', '#ead8d4', '#b69c9d', '#624e52', '#261b1e'],
   champ:   ['#fff4e3', '#edcea8', '#bb8f66', '#6a482d', '#28190d'],
   rotgold: ['#fff1de', '#f3c99c', '#c98c5c', '#733f22', '#2b170a'],
+  // Heller und kühler als Silber: das Metall der oberen Stufen. Rotgold und
+  // Champagner liefen dort nebeneinander, und neben Silber lasen sie sich
+  // als Bronze — Zier- und Lorbeerkranz sahen weniger wert aus als der Reif.
+  platin:  ['#ffffff', '#f2f4f9', '#c3c9d6', '#6c7486', '#1f2430'],
   gold:    ['#fff8dc', '#f6dc8e', '#cfa140', '#785212', '#2c1d03'],
 };
 
@@ -220,16 +224,17 @@ function _izDefs(metalle, st){
     stop(0, '#fff', .85) + stop(.3, '#fff', .12) + stop(.62, '#fff', 0) + stop(1, '#fff', .35), 1);
   // Ein weicher Schatten unter dem Ganzen hebt es vom Grund ab; der Reif
   // wirft einen eigenen auf das, was hinter ihm liegt.
-  // Der Schatten ist ein eigener Filter, der NUR den Schatten liefert: er
-  // liegt unter einer Kopie, und die Zeichnung selbst steht ungefiltert
-  // darüber. Lag der Schlagschatten als Filter auf der ganzen Zeichnung,
-  // rechnete WebKit sie in einem Bild ohne die Pixeldichte des Geräts — auf
-  // dem Telefon war das ganze Insignium unscharf.
-  s += `<filter id="sh" x="-20%" y="-20%" width="140%" height="140%">`
-    + `<feGaussianBlur in="SourceAlpha" stdDeviation="7"/><feOffset dy="7"/>`
-    + `<feComponentTransfer><feFuncA type="linear" slope=".6"/></feComponentTransfer></filter>`;
-  s += `<filter id="ao" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="7"/></filter>`;
-  s += `<filter id="wb" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter>`;
+  // Kein Filter in der Zeichnung. Safari rechnet ein gefiltertes Element in
+  // CSS-Pixeln statt in Gerätepixeln, und die Zeichnung steht in jedem
+  // Wappen einmal: auf dem Telefon waren die Insignien treppig wie
+  // ausgeschnitten. Die Schatten sind deshalb weiche Radialverläufe — ein
+  // Ring um das Band, einmal als Schlagschatten nach unten versetzt und
+  // einmal als Schatten des Reifs auf dem Schmuck dahinter.
+  const ring = (id, cy, r, innen, voll, bis, op) => `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="500" cy="${cy}" r="${r}">`
+    + stop(0, '#000', 0) + stop(innen / r, '#000', 0) + stop(voll / r, '#000', op) + stop(bis / r, '#000', op * .75)
+    + stop(1, '#000', 0) + '</radialGradient>';
+  s += ring('ssh', 508, IZ_RA + 44, IZ_RI - 4, IZ_RM, IZ_RA + 6, .5);
+  s += ring('sao', 506, IZ_RA + 30, IZ_RI - 10, IZ_RI + 6, IZ_RA + 4, .55);
   return s + '</defs>';
 }
 
@@ -240,9 +245,14 @@ function _izForm(d, fill, m, breit){
     + ` stroke-linejoin="round" stroke-opacity=".8"/>`;
 }
 // Ein Lichtstreif: weich, weiß, mit runden Enden.
+// Zwei Striche statt eines Weichzeichners: ein breiter, leiser Hof und ein
+// schmaler Kern. Mit Filter wurde jeder Lichtstreif auf dem Telefon in
+// CSS-Pixeln gerechnet [§C30].
 function _izLicht(d, breit, op){
-  return `<path d="${d}" fill="none" stroke="#fff" stroke-width="${breit}" stroke-linecap="round"`
-    + ` stroke-opacity="${op}" filter="url(#wb)"/>`;
+  return `<path d="${d}" fill="none" stroke="#fff" stroke-width="${_izN(breit * 2.2)}" stroke-linecap="round"`
+    + ` stroke-linejoin="round" stroke-opacity="${_izN(op * .22 * 100) / 100}"/>`
+    + `<path d="${d}" fill="none" stroke="#fff" stroke-width="${_izN(breit * .8)}" stroke-linecap="round"`
+    + ` stroke-linejoin="round" stroke-opacity="${_izN(op * .75 * 100) / 100}"/>`;
 }
 // Nieten: ein Knopf mit Schatten darunter und einem Lichtpunkt darauf.
 function _izNieten(r, n, m, gr, frei){
@@ -309,8 +319,7 @@ function _izReif(o){
 // Der Schatten des Reifs auf dem, was hinter ihm liegt: ohne ihn liefen
 // Laub und Ranken flach in das Band hinein.
 function _izReifSchatten(){
-  return `<circle cx="500" cy="506" r="${IZ_RM}" fill="none" stroke="#000" stroke-opacity=".55"`
-    + ` stroke-width="${IZ_RA - IZ_RI + 20}" filter="url(#ao)"/>`;
+  return `<circle cx="500" cy="506" r="${IZ_RA + 30}" fill="url(#sao)"/>`;
 }
 
 // Die Lilie auf zwölf Uhr, in der Rangfarbe: ein Mittelblatt, zwei
@@ -337,7 +346,7 @@ function _izLilie(y, st, m){
   const bund = `M${P(-.5, .1)}C${P(-.2, .16)} ${P(.2, .16)} ${P(.5, .1)}L${P(.48, -.16)}C${P(.2, -.1)} ${P(-.2, -.1)} ${P(-.48, -.16)}Z`;
   // Die Blätter sind Metall; die Rangfarbe liegt als Schimmer darauf und
   // sitzt voll nur im Stein am Bund [§C30].
-  const hell = `url(#o${m})`, dunkel = `url(#d${m})`, tint = `fill="url(#sl)" opacity=".5"`;
+  const hell = `url(#o${m})`, dunkel = `url(#d${m})`, tint = `fill="url(#sl)" opacity=".28"`;
   return `<circle cx="500" cy="${_izN(y - h * .42)}" r="${_izN(h * .8)}" fill="url(#ss)" opacity=".4"/>`
     + `<path d="${fuss}" fill="${dunkel}" ${kante}/>`
     + `<path d="${seite(-1)}" fill="${hell}" ${kante}/><path d="${seite(-1)}" ${tint}/>`
@@ -393,57 +402,62 @@ function _izRauteStein(m){
 
 // ── Stufe für Stufe ────────────────────────────────────────────────────
 // Die drei Grade jeder Stufe, als Angaben. Gezeichnet werden sie von
-// `_izStufe` weiter unten; die Liste ist der Katalog der Leiter.
+// `_izTeile` weiter unten; die Liste ist der Katalog der Leiter.
 const INS_ZEICHEN = {
+  // ── Eine silberne Leiter mit goldenen Akzenten ─────────────────────
+  // Die Stufen liefen von Silber über Rose, Champagner und Rotgold zu Gold,
+  // und neben Silber las sich jedes warme Metall als Bronze: Zier- und
+  // Lorbeerkranz sahen weniger wert aus als Reif und Schildring. Jetzt ist
+  // der Bau durchgehend Silber und oben Platin, der Rang liegt als Schimmer
+  // darauf, und Gold kommt nur als Akzent — Nieten, Lilie, Fassung der
+  // Raute — ab dem Lorbeerreif und erst am Ordensstern in der Fläche.
+  // Der dritte Grad einer Stufe trägt nie mehr Steine oder Gold als der
+  // erste der nächsten [§C30].
   reif: [
     {reif:{metall:'silber'}},
-    {reif:{metall:'silber', profil:'rand', kanal:'silber', wulst:9, nieten:{n:24, gr:4.4, m:'rotgold'}}},
-    {reif:{metall:'rotgold', profil:'rand', kanal:'flieder', wulst:11, nieten:{n:18, gr:7.5, m:'rotgold'}}},
+    {reif:{metall:'silber', profil:'rand', kanal:'silber', wulst:9, nieten:{n:24, gr:4.4, m:'silber'}}},
+    {reif:{metall:'silber', profil:'rand', kanal:'flieder', wulst:11, nieten:{n:18, gr:7.5, m:'platin'}}},
   ],
   schild: [
-    {reif:{metall:'silber', nieten:{n:4, gr:5.5, m:'rotgold', frei:[[-80, 80], [100, 180], [-180, -100]]}},
+    {reif:{metall:'silber', nieten:{n:4, gr:5.5, m:'platin', frei:[[-80, 80], [100, 180], [-180, -100]]}},
      sichel:{m:'silber', von:-50, bis:-170, breit:64, abstand:4, los:80}},
-    {reif:{metall:'silber', profil:'rand', kanal:'silber', wulst:9, nieten:{n:22, gr:4.4, m:'rotgold'}},
+    {reif:{metall:'silber', profil:'rand', kanal:'silber', wulst:9, nieten:{n:22, gr:4.4, m:'platin'}},
      sichel:{m:'silber', von:-36, bis:-122, breit:52, abstand:4, los:60}, klinge:{m:'silber', breit:52}},
-    {reif:{metall:'rose', profil:'rand', kanal:'flieder', nieten:{n:20, gr:5.8, m:'rotgold'}},
-     sichel:{m:'rose', von:-34, bis:-124, breit:66, abstand:4, los:66}, klinge:{m:'rose', breit:64, lang:1.08}},
+    {reif:{metall:'platin', profil:'rand', kanal:'flieder', nieten:{n:20, gr:5.8, m:'platin'}},
+     sichel:{m:'platin', von:-34, bis:-124, breit:66, abstand:4, los:66}, klinge:{m:'platin', breit:64, lang:1.08}},
   ],
-  // ── Die Leiter steigt, sie springt nicht zurück ─────────────────
-  // Der dritte Grad einer Stufe trägt nie mehr als der erste der nächsten:
-  // Zierkranz III hatte Steine im Reif und rotgoldenes Laub, Lorbeerreif I
-  // keins von beidem, und Lorbeerreif III Steine und ein Krönchen neben
-  // einem steinlosen Kronenreif I. Das Gold kommt mit dem Lorbeer (Kehle,
-  // Nieten), die Steine mit seinem zweiten Grad, und der Ordensstern trägt
-  // einen ganz goldenen Reif statt einer fliederfarbenen Kehle [§C30].
   volute: [
-    {reif:{metall:'champ', nieten:{n:4, gr:5.5, m:'rotgold', frei:[[-80, 80], [100, 180], [-180, -100]]}}, volute:{m:'champ', gr:1}},
-    {reif:{metall:'champ', profil:'rand', kanal:'rose', nieten:{n:16, gr:4.2, m:'rotgold'}}, volute:{m:'champ', gr:2}},
-    {reif:{metall:'rotgold', profil:'rand', kanal:'rose', nieten:{n:20, gr:4.6, m:'rotgold'}}, volute:{m:'champ', gr:3}},
+    {reif:{metall:'silber', nieten:{n:4, gr:5.5, m:'platin', frei:[[-80, 80], [100, 180], [-180, -100]]}}, volute:{m:'silber', gr:1}},
+    {reif:{metall:'platin', profil:'rand', kanal:'flieder', nieten:{n:16, gr:4.2, m:'platin'}}, volute:{m:'silber', gr:2}},
+    {reif:{metall:'platin', profil:'rand', kanal:'flieder', nieten:{n:20, gr:4.6, m:'platin'}}, volute:{m:'platin', gr:3}},
   ],
   zier: [
-    {reif:{metall:'rotgold', profil:'rand', kanal:'champ', nieten:{n:16, gr:4.2, m:'rotgold'}}, zier:{m:'champ', gr:1}},
-    {reif:{metall:'rotgold', profil:'rand', kanal:'flieder', nieten:{n:18, gr:4.4, m:'rotgold'}}, zier:{m:'champ', gr:2}},
-    {reif:{metall:'rotgold', profil:'rand', kanal:'champ', nieten:{n:22, gr:4.6, m:'rotgold'}}, zier:{m:'champ', gr:3}},
+    {reif:{metall:'platin', profil:'rand', kanal:'silber', nieten:{n:16, gr:4.2, m:'platin'}}, zier:{m:'silber', gr:1}},
+    {reif:{metall:'platin', profil:'rand', kanal:'flieder', nieten:{n:18, gr:4.4, m:'platin'}}, zier:{m:'platin', gr:2}},
+    {reif:{metall:'platin', profil:'rand', kanal:'flieder', nieten:{n:22, gr:4.6, m:'platin'}}, zier:{m:'platin', gr:3}},
   ],
+  // Der Lorbeer steht zwischen Zier- und Kronenreif: zwei Reihen Laub von
+  // Anfang an, dazu das erste Gold als Akzent.
   lorbeer: [
-    {reif:{metall:'rotgold', profil:'rand', kanal:'gold', wulst:9, nieten:{n:24, gr:4.4, m:'gold'}}, lorbeer:{m:'rotgold', n:8, beeren:1},
-     lilie:'gold'},
-    {reif:{metall:'rotgold', profil:'rand', kanal:'gold', nieten:{n:26, gr:4.6, m:'gold'}, steine:8}, lorbeer:{m:'gold', n:10, doppel:1, beeren:1},
-     lilie:'gold', raute:'gold'},
-    {reif:{metall:'gold', profil:'rand', kanal:'rotgold', nieten:{n:24, gr:4.8, m:'gold'}, steine:8}, lorbeer:{m:'gold', n:11, doppel:1, beeren:1, bis:-34},
-     krone:{m:'gold', klein:1}, raute:'gold'},
+    {reif:{metall:'platin', profil:'rand', kanal:'flieder', wulst:9, nieten:{n:24, gr:4.4, m:'gold'}},
+     lorbeer:{m:'platin', n:10, doppel:1, aussen:1, beeren:1, gross:1}, lilie:'gold'},
+    {reif:{metall:'platin', profil:'rand', kanal:'flieder', nieten:{n:26, gr:4.6, m:'gold'}, steine:8},
+     lorbeer:{m:'platin', n:11, doppel:1, aussen:1, beeren:1, gross:1}, lilie:'gold', raute:'gold'},
+    {reif:{metall:'platin', profil:'rand', kanal:'gold', nieten:{n:24, gr:4.8, m:'gold'}, steine:8},
+     lorbeer:{m:'platin', n:12, doppel:1, aussen:1, beeren:1, gross:1, bis:-34}, krone:{m:'gold', klein:1}, raute:'gold'},
   ],
   krone: [
-    {reif:{metall:'gold', profil:'rand', kanal:'gold', nieten:{n:22, gr:4.6, m:'gold'}, steine:8}, eiche:{m:'gold', gr:1}, krone:{m:'gold'}, raute:'gold'},
-    {reif:{metall:'gold', profil:'rand', kanal:'gold', nieten:{n:22, gr:4.6, m:'gold'}, steine:12}, eiche:{m:'gold', gr:2}, krone:{m:'gold'}, raute:'gold'},
-    {reif:{metall:'gold', profil:'rand', kanal:'rotgold', nieten:{n:24, gr:4.8, m:'gold'}, steine:16}, eiche:{m:'gold', gr:3}, krone:{m:'gold'}, raute:'gold'},
+    {reif:{metall:'platin', profil:'rand', kanal:'gold', nieten:{n:22, gr:4.6, m:'gold'}, steine:8}, eiche:{m:'platin', gr:1}, krone:{m:'gold'}, raute:'gold'},
+    {reif:{metall:'platin', profil:'rand', kanal:'gold', nieten:{n:22, gr:4.6, m:'gold'}, steine:12}, eiche:{m:'platin', gr:2}, krone:{m:'gold'}, raute:'gold'},
+    {reif:{metall:'platin', profil:'rand', kanal:'gold', nieten:{n:24, gr:4.8, m:'gold'}, steine:16}, eiche:{m:'platin', gr:3}, krone:{m:'gold'}, raute:'gold'},
   ],
+  // Der Ordensstern ist die Stufe, in der das Gold die Fläche trägt.
   stern: [
-    {reif:{metall:'gold', profil:'rand', kanal:'gold', nieten:{n:16, gr:4.8, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
+    {reif:{metall:'gold', profil:'rand', kanal:'platin', nieten:{n:16, gr:4.8, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
      strahlen:{m:'gold', n:72, lang:120}, krone:{m:'gold', stern:1}, raute:'gold'},
-    {reif:{metall:'gold', profil:'rand', kanal:'gold', nieten:{n:16, gr:4.8, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
+    {reif:{metall:'gold', profil:'rand', kanal:'platin', nieten:{n:16, gr:4.8, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
      strahlen:{m:'gold', n:88, lang:124}, krone:{m:'gold', stern:1}, raute:'gold'},
-    {reif:{metall:'gold', profil:'rand', kanal:'rotgold', nieten:{n:16, gr:5, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
+    {reif:{metall:'gold', profil:'rand', kanal:'gold', nieten:{n:16, gr:5, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
      strahlen:{m:'gold', n:96, lang:118, gross:1}, krone:{m:'gold', stern:1}, raute:'gold'},
   ],
 };
@@ -731,7 +745,8 @@ function _izEichenkranz(o, st){
   }
   const zweig = _izBogen(rz, a0 - 4, a1 + 2);
   return _izSchleife(st, m, g)
-    + hinten + `<g opacity=".999">` + _izJe(zweig, d => `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="30" filter="url(#ao)"/>`) + `</g>`
+    + hinten + _izJe(zweig, d => `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".12" stroke-width="34" stroke-linecap="round"/>`
+        + `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".16" stroke-width="18" stroke-linecap="round"/>`)
     + _izJe(zweig, d => `<path d="${d}" fill="none" stroke="${IZ_METALL[m][3]}" stroke-width="9" stroke-linecap="round"/>`)
     + vorn + eicheln;
 }
@@ -756,6 +771,16 @@ function _izLorbeer(o){
       B.push([xi, yi, a - 14, 96 * gr, 17 * gr, .05]);
     }
   }
+  // Die äußere Reihe legt sich zwischen die vorderen Blätter, weiter
+  // draußen und flacher: aus einem Zweig wird ein voller Kranz, und der
+  // Lorbeer steht damit sichtbar über dem Zierkranz.
+  const aussen = [];
+  if(o.aussen) for(let i = 0; i < n - 1; i++){
+    const t = (i + 1) / n, a = a0 + (a1 - a0) * t;
+    const gr = (.62 + .3 * Math.sin(Math.PI * t)) * g;
+    const [x, y] = _izPol(rz + 20, a);
+    aussen.push([x, y, a - 58, 112 * gr, 20 * gr, .12]);
+  }
   const zweig = _izBogen(rz, a0 - 4, a1 + 4);
   // Beeren in der Rangfarbe zwischen den Blättern, ab dem zweiten Grad.
   let beeren = '';
@@ -765,8 +790,9 @@ function _izLorbeer(o){
     beeren += _izJe(_izKreis(x, y, 8.5), d => `<path d="${d}" fill="url(#sk)" stroke="${o.st[4]}" stroke-width="1.4"/>`)
       + _izJe(_izKreis(x - 2.6, y - 2.8, 2.6), d => `<path d="${d}" fill="#fff" opacity=".85"/>`);
   }
-  return _izJe(zweig, d => `<path d="${d}" fill="none" stroke="${IZ_METALL[o.m][3]}" stroke-width="7" stroke-linecap="round"/>`)
-    + _izBlaetter(B, o.m, o.farbe || 0) + beeren;
+  return (aussen.length ? _izBlaetter(aussen, o.m, .22) : '')
+    + _izJe(zweig, d => `<path d="${d}" fill="none" stroke="${IZ_METALL[o.m][3]}" stroke-width="7" stroke-linecap="round"/>`)
+    + _izBlaetter(B, o.m, o.farbe || .12) + beeren;
 }
 
 // Die Krone: fünf Zacken auf einem Reif, die mittlere trägt den Kristall in
@@ -893,14 +919,15 @@ function _izStrahlen(o){
 
 // Eine Stufe als Zeichnung: hinten die Zierde, darauf der Schatten des
 // Reifs, der Reif, oben Lilie oder Krone, unten der Stein.
-function _izStufe(key, nr, farbe){
+function _izTeile(key, nr, farbe){
   const z = (INS_ZEICHEN[key] || INS_ZEICHEN.reif)[nr] || INS_ZEICHEN.reif[0];
   const st = _izStein(farbe);
-  const metalle = new Set(['rotgold', 'silber', 'flieder']);
+  const metalle = new Set(['silber', 'flieder']);
   const merk = o => { if(o && o.m) metalle.add(o.m); if(o && o.metall) metalle.add(o.metall);
     if(o && o.kanal) metalle.add(o.kanal); if(o && o.nieten && o.nieten.m) metalle.add(o.nieten.m); };
   [z.reif, z.sichel, z.klinge, z.volute, z.zier, z.lorbeer, z.eiche, z.krone, z.strahlen].forEach(merk);
-  if(z.lilie) metalle.add(z.lilie);
+  const lilie = z.lilie || 'silber', raute = z.raute || 'silber';
+  metalle.add(lilie); metalle.add(raute);
   let hinten = '';
   if(z.strahlen) hinten += _izStrahlen(z.strahlen);
   if(z.sichel) hinten += _izSichel(z.sichel);
@@ -909,25 +936,34 @@ function _izStufe(key, nr, farbe){
   if(z.zier) hinten += _izZier(z.zier, st);
   if(z.lorbeer) hinten += _izLorbeer(Object.assign({st}, z.lorbeer));
   if(z.eiche) hinten += _izEichenkranz(z.eiche, st);
-  const kopf = z.krone ? _izKrone(z.krone, st) : _izLilie(500 - IZ_RA + 4, st, z.lilie || 'rotgold');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">`
-    + _izDefs([...metalle], st)
-    + `<use href="#iz" filter="url(#sh)"/>`
-    + `<g id="iz">` + hinten + (hinten ? _izReifSchatten() : '') + _izReif(z.reif)
-    + kopf + _izRauteStein(z.raute || 'rotgold') + `</g></svg>`;
+  const kopf = z.krone ? _izKrone(z.krone, st) : _izLilie(500 - IZ_RA + 4, st, lilie);
+  return {defs: _izDefs([...metalle], st),
+          bild: `<circle cx="500" cy="508" r="${IZ_RA + 44}" fill="url(#ssh)"/>`
+            + hinten + (hinten ? _izReifSchatten() : '') + _izReif(z.reif)
+            + kopf + _izRauteStein(raute)};
 }
-
-// Die Zeichnung als Bild für ein <image>: je Rang, Stufe und Grad einmal
-// gebaut. Als Bild und nicht als Markup, weil jede Zeichnung ihre eigenen
-// Verläufe trägt und der Browser ein Bild einmal rastert — ein Wappen mit
-// dreihundert Knoten in jeder Ranglistenzeile kostete beim Scrollen.
+// Die Zeichnung als Bild, für die kleinen Wappen in Listen und im Feed:
+// dort stehen sie zu Dutzenden, und ein Bild rastert der Browser einmal,
+// während jeder Verweis auf die Vektorgruppe die ganze Zeichnung klont —
+// gemessen öffnete der Feed damit doppelt so langsam. Bis 64 px reicht das
+// Bild: es wird in seinen 170 Einheiten gerastert und erscheint mit dem
+// 1,18-Fachen der Wappengröße [§C30].
 const _IZ_BILD = new Map();
 function insBild(key, nr, rang){
   const schl = rang + '|' + key + '|' + nr;
   let u = _IZ_BILD.get(schl);
   if(!u){
-    u = 'data:image/svg+xml;base64,' + btoa(_izStufe(key, nr, INS_RANGFARBE[rang] || INS_RANGFARBE.Solide));
+    const t = _izTeile(key, nr, INS_RANGFARBE[rang] || INS_RANGFARBE.Solide);
+    u = 'data:image/svg+xml;base64,' + btoa(
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">${t.defs}${t.bild}</svg>`);
     _IZ_BILD.set(schl, u);
   }
   return u;
+}
+// Die Kennungen einer Zeichnung mit einem Präfix: im Dokument stehen viele
+// Zeichnungen nebeneinander, und jede hat einen Verlauf namens „bsilber".
+function _izPraefix(s, p){
+  return s.replace(/id="([^"]+)"/g, 'id="' + p + '$1"')
+    .replace(/url\(#([^)]+)\)/g, 'url(#' + p + '$1)')
+    .replace(/href="#([^"]+)"/g, 'href="#' + p + '$1"');
 }
