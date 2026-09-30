@@ -203,7 +203,9 @@ function bind(){
   bindSlider('cfgVetDamp','veteran_damp',v=>v/100,v=>Math.round(v));
   const recalcBtn=document.getElementById('recalcBtn');
   if(recalcBtn) recalcBtn.onclick=async()=>{
-    if(!confirm('Wirklich alle Matches mit aktuellen Slidern rückwirkend neu berechnen?\n\nAlle gespeicherten Match-Deltas werden überschrieben. Vergangene Saison-Ergebnisse und Awards können sich dadurch ändern.\n\nDieser Vorgang kann nicht rückgängig gemacht werden.')) return;
+    if(!(await bestaetigen({ic:'alert', gefahr:true, ja:'Neu berechnen',
+      titel:'Alle Partien neu berechnen?',
+      text:'Die gespeicherte Elo jeder Partie wird mit den aktuellen Reglern überschrieben. Vergangene Saisons und Auszeichnungen können sich dadurch ändern. Das lässt sich nicht rückgängig machen.'}))) return;
     toast('Berechne alle Matches neu…');
     await persistRecalc(matches);
     toast('Neuberechnung abgeschlossen','ok');

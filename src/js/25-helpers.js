@@ -36,11 +36,62 @@ function emptyState(e,t){
   const inner = ICONS[e] ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;
   return `<div class="empty">${inner}${t}</div>`;
 }
+// ── Der Hinweis [§C27] ───────────────────────────────────────────────
+// Ein Balken in voller Farbe mit einem Satz: grün hieß „gespeichert", rot
+// „Fehler", und alles andere stand weiß da — auch „Berechne neu…", das
+// gerade noch läuft. Jetzt trägt er seine Rolle als Zeichenkachel [§C25],
+// eine zweite Zeile mit der Wirkung und, wo es eine gibt, eine Aktion.
+//   kind   'ok' | true (Fehler) | 'info' | nichts (läuft noch)
+//   o.sub  die zweite Zeile, o.aktion {label, fn}, o.ms die Standzeit
 let tt;
-function toast(msg,kind){let t=document.querySelector('.toast');
-  if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
-  t.textContent=msg;t.className='toast '+(kind===true?'err':kind||'');void t.offsetWidth;t.classList.add('show');
-  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2400);}
+const TOAST_ROLLE = {ok:['check','gruen'], err:['x','rot'], info:['info',''], lauf:['hourglass','']};
+function toast(msg, kind, o){
+  o = o || {};
+  const rolle = kind === true ? 'err' : (TOAST_ROLLE[kind] ? kind : 'lauf');
+  let t = document.querySelector('.toast');
+  if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  const [ic, ton] = TOAST_ROLLE[rolle];
+  t.innerHTML = zkHtml(ic, 'k', ton) + '<span class="toast-tx"><b></b><span></span></span>';
+  t.querySelector('b').textContent = msg;
+  const sub = t.querySelector('.toast-tx span');
+  if(o.sub) sub.textContent = o.sub; else sub.remove();
+  if(o.aktion){
+    const k = document.createElement('button');
+    k.className = 'toast-akt'; k.type = 'button'; k.textContent = o.aktion.label;
+    k.onclick = () => { t.classList.remove('show'); clearTimeout(tt); o.aktion.fn(); };
+    t.appendChild(k);
+  }
+  t.className = 'toast ' + rolle + (o.aktion ? ' mit-akt' : '');
+  void t.offsetWidth; t.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), o.ms || (o.aktion ? 6000 : 2400));
+}
+
+// ── Die Bestätigung [§C27] ───────────────────────────────────────────
+// Vier Stellen fragten mit `confirm()` — einem Fenster des Browsers, das
+// die App nicht gestalten kann, das auf dem Telefon „Seite sagt" darüber
+// schreibt und bei dem der zerstörende Knopf „OK" heißt. Der Dialog nennt,
+// was verloren geht, der sichere Knopf steht links, der zerstörende rechts
+// und rot. Er liegt über einem offenen Blatt und nicht darin.
+function bestaetigen(o){
+  return new Promise(fertig => {
+    const bg = document.createElement('div');
+    bg.className = 'dlg-bg';
+    bg.innerHTML = `<div class="dlg" role="alertdialog" aria-modal="true">
+      ${zkHtml(o.ic || 'alert', 'g', o.gefahr ? 'rot' : '')}
+      <h4></h4><p></p>
+      <div class="blatt-fuss"><button type="button" class="btn ghost" data-dlg="0"></button>
+        <button type="button" class="btn ${o.gefahr ? 'gefahr' : ''}" data-dlg="1"></button></div></div>`;
+    bg.querySelector('h4').textContent = o.titel;
+    bg.querySelector('p').textContent = o.text || '';
+    bg.querySelector('[data-dlg="0"]').textContent = o.nein || 'Abbrechen';
+    bg.querySelector('[data-dlg="1"]').textContent = o.ja || 'Bestätigen';
+    const zu = ja => { bg.classList.remove('show'); setTimeout(() => bg.remove(), 200); fertig(ja); };
+    bg.onclick = e => { if(e.target === bg) zu(false); };
+    bg.querySelectorAll('[data-dlg]').forEach(b => b.onclick = () => zu(b.dataset.dlg === '1'));
+    document.body.appendChild(bg);
+    void bg.offsetWidth; bg.classList.add('show');
+  });
+}
 
 // ─── Achievement-Toast: gestapelte Anzeige für neue Badges nach Match-Eingabe ───
 // Sequenzielle Queue verhindert, dass mehrere Achievements einander überschreiben.

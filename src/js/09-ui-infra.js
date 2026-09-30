@@ -62,20 +62,9 @@ function avHtml(player, extraStyle, opts){
 function initials(n){return n.trim().slice(0,2).toUpperCase();}
 
 // ╔═══ §4.2 ─── AWARD AVATAR HELPER (Hero/Mini/Li) ─────────────────────╗
-//     awHeroAv, awMiniAv etc. — einheitliche Avatar-Rendering-Funktionen für
+//     awHeroAv, awLiAv etc. — einheitliche Avatar-Rendering-Funktionen für
 //     Award-Details, Pair-Avatare für Team-Awards.
 // ╚═════════════════════════════════════════════════════════════════════════╝
-// Kleines Avatar (22px) für Award-Cards.
-function awMiniAv(pid){
-  const p=pmap()[pid];
-  if(!p) return '<div class="aw-mini-av" style="background:var(--surface3);color:var(--muted)">?</div>';
-  const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
-  if(em) return `<div class="aw-mini-av" style="background:var(--surface3);color:var(--ink);font-size:13px">${em}</div>`;
-  return `<div class="aw-mini-av" style="background:${avColor(p.id)}">${esc(initials(p.name))}</div>`;
-}
-function awMiniPair(p1,p2){
-  return `<div class="aw-mini-pair">${awMiniAv(p1)}${awMiniAv(p2)}</div>`;
-}
 // Neue Avatar-Hilfsfunktionen für Award-Listen
 // aw-li-av ist 34px, in tied-rows ist sie 30px.
 // Für ein Wappen ist das zu klein — bei 34px bliebe vom Gesicht ein Punkt

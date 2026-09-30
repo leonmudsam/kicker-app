@@ -21,7 +21,6 @@ function showTeam(p1Id,p2Id){
   const wr=Math.round(d.wr*100);
   const gdStr=(d.gd>=0?'+':'')+d.gd;
   const eloStr=(d.eloDelta>=0?'+':'')+d.eloDelta;
-  const eloColor=d.eloDelta>=0?'var(--acid)':'var(--red)';
 
   // Die beiden Hälften des Duos, jede im eigenen Wappen [§C27]. Hier stand
   // ein von Hand gebauter Kreis mit eigenem Rand und eigener Schriftgröße —
@@ -44,7 +43,7 @@ function showTeam(p1Id,p2Id){
   const oppRow=(opp,label,labelColor)=>{
     const op=pm[opp.oid]; if(!op) return '';
     return `<div style="margin-bottom:14px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">${label}</div>
+      ${blattAbschnittHtml('crossedSwords', label)}
       <div class="rrow" data-detail="${esc(op.id)}" style="padding:12px 14px">
         ${avSm(op,false)}
         <div class="rmid" style="margin-left:11px">
@@ -87,68 +86,62 @@ function showTeam(p1Id,p2Id){
     </div>`;
   };
 
-  // ─── FORM-VERLAUF: Spark der kumulativen Team-Elo über alle Spiele ───
-  // Nutzt sim.history.deltas (live Sim, gecached) statt m.deltas (kann stale sein),
-  // damit der Endwert exakt zur angezeigten "Elo"-Statistik passt.
-  let teamFormHtml = '';
-  if(d.games >= 2){
+  // ─── KENNZAHLEN, gezeichnet [§C27] ───
+  // Vier Zahlen standen in vier Kästen in vier Farben, darunter ein Balken
+  // mit derselben Quote noch einmal, drei Kästen „Serien" und weiter unten
+  // ein Form-Verlauf, dessen Endwert die Elo aus dem Kasten oben war. Jetzt
+  // trägt jede Kennzahl ihre Zeichnung: die Siegquote jede Partie als Zelle
+  // in Spielreihenfolge, die Torbilanz je Partie auf ihrer Skala, die Elo
+  // ihren Verlauf, die laufende Serie ihren Lauf. Nichts steht zweimal.
+  let kennzahlenHtml = '';
+  if(d.games >= 1){
+    // Die Elo-Bahn des Duos aus der Sim-History (live, gecached) statt aus
+    // m.deltas, damit der Endwert zur Elo passt, die überall sonst steht.
     const histById = getHistoryByMatchId();
+    const mById = new Map(matches.map(x => [x.id, x]));
     let trace = 0;
-    const series = [0];
+    const series = [0], folge = [];
     for(const mid of d.matchIdsChrono){
-      const h = histById.get(mid);
-      let dSum = 0;
-      if(h && h.deltas){
-        dSum = (h.deltas[d.ids[0]] || 0) + (h.deltas[d.ids[1]] || 0);
-      } else {
-        // Fallback: gespeicherte DB-Deltas, falls kein History-Eintrag
-        const m = matches.find(x=>x.id===mid);
-        if(m && m.deltas){
-          dSum = (m.deltas[d.ids[0]] || 0) + (m.deltas[d.ids[1]] || 0);
-        }
-      }
-      trace += dSum;
+      const h = histById.get(mid), mm = mById.get(mid);
+      const ds = h && h.deltas ? h.deltas : (mm && mm.deltas) || {};
+      trace += (ds[d.ids[0]] || 0) + (ds[d.ids[1]] || 0);
       series.push(trace);
+      if(mm){
+        const aufA = d.ids.includes(mm.a1) && d.ids.includes(mm.a2);
+        folge.push((aufA ? mm.winner === 'A' : mm.winner === 'B') ? 'j' : 'n');
+      }
     }
-    const minE = Math.min(...series), maxE = Math.max(...series);
-    const range = Math.max(20, maxE - minE);
-    const W = 300, H = 56, pad = 6;
-    const usableH = H - 2*pad;
-    const points = series.map((e,i) => {
-      const x = (i/(series.length-1))*W;
-      const y = pad + (1 - (e-minE)/range)*usableH;
-      return [x,y];
-    });
-    const linePath = 'M' + points.map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
-    const fillPath = linePath + ` L${W},${H} L0,${H} Z`;
-    const last = points[points.length-1];
-    const net = Math.round(series[series.length-1] - series[0]);
-    const netCls = net >= 0 ? 'pos' : 'neg';
-    const netTxt = (net >= 0 ? '+' : '') + net;
-    const lineCol = net >= 0 ? 'var(--acid)' : 'var(--red)';
-    const gradId = 'tspark-' + d.ids.join('-');
-    teamFormHtml = `
-      <div style="margin-bottom:18px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Form-Verlauf</div>
-          <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em">${d.games} Spiele · alle Saisons</div>
-        </div>
-        <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="display:block">
-          <defs>
-            <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="${lineCol}" stop-opacity=".35"/>
-              <stop offset="100%" stop-color="${lineCol}" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <path d="${fillPath}" fill="url(#${gradId})"/>
-          <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3.5" fill="${lineCol}"/>
-        </svg>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;font-family:'Sometype Mono',monospace">
-          <span style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">Team-Elo</span>
-          <span style="font-size:13px;font-weight:700;color:${lineCol}">${netTxt}</span>
-        </div>
-      </div>`;
+    // Siegquote: die letzten 50 Partien als Zellen — eine Wand aus zweihundert
+    // wäre keine Zeichnung mehr.
+    const zellen = folge.slice(-50).map(z => `<i${z === 'j' ? ' class="j"' : ''}></i>`).join('');
+    // Torbilanz je Partie auf ihrer Skala von −10 bis +10.
+    const jePartie = d.games ? d.gd / d.games : 0;
+    const bw = Math.min(50, Math.abs(jePartie) / 10 * 50);
+    // Elo: der Verlauf als Linie.
+    const W = 120, H = 26;
+    const minE = Math.min(...series), maxE = Math.max(...series), range = Math.max(20, maxE - minE);
+    const pfad = series.map((e, i) => (series.length > 1 ? i / (series.length - 1) * W : 0).toFixed(1)
+      + ',' + (3 + (1 - (e - minE) / range) * (H - 6)).toFixed(1)).join(' ');
+    // Serie: der laufende Lauf, dahinter die längsten.
+    const cs = d.currentStreak;
+    const serieZ = cs === 0 ? '–' : Math.abs(cs);
+    const serieE = cs > 0 ? (cs === 1 ? 'Sieg in Folge' : 'Siege in Folge')
+                 : cs < 0 ? (cs === -1 ? 'Niederlage in Folge' : 'Niederlagen in Folge') : 'keine Serie';
+    const lauf = Math.min(12, Math.abs(cs));
+    kennzahlenHtml = `<div class="duo-kz">
+      <div class="duo-kz-k"><div class="duo-kz-w"><b class="${wr >= 50 ? 'auf' : 'ab'}">${wr} %</b><span>Siegquote</span></div>
+        <div class="duo-kz-zellen">${zellen}</div>
+        <div class="duo-kz-s num">${d.wins} Siege · ${d.losses} Niederlagen${folge.length > 50 ? ' · die letzten 50' : ''}</div></div>
+      <div class="duo-kz-k"><div class="duo-kz-w"><b class="${d.gd >= 0 ? 'auf' : 'ab'}">${gdStr}</b><span>Torbilanz</span></div>
+        <div class="duo-kz-skala"><i class="${jePartie >= 0 ? 'auf' : 'ab'}" style="${jePartie >= 0 ? 'left:50%' : 'right:50%'};width:${bw.toFixed(1)}%"></i></div>
+        <div class="duo-kz-s num">Ø ${jePartie >= 0 ? '+' : ''}${komma(jePartie, 1)} je Partie</div></div>
+      <div class="duo-kz-k"><div class="duo-kz-w"><b class="${d.eloDelta >= 0 ? 'auf' : 'ab'}">${eloStr}</b><span>Elo zusammen</span></div>
+        <svg class="duo-kz-linie ${d.eloDelta >= 0 ? 'auf' : 'ab'}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pfad}"/></svg>
+        <div class="duo-kz-s num">aus ${d.games} ${d.games === 1 ? 'Partie' : 'Partien'}, alle Saisons</div></div>
+      <div class="duo-kz-k"><div class="duo-kz-w"><b class="${cs > 0 ? 'auf' : cs < 0 ? 'ab' : ''}">${serieZ}</b><span>${serieE}</span></div>
+        ${lauf ? `<div class="aw-lauf duo-kz-lauf ${cs > 0 ? 'auf' : 'ab'}">${'<i></i>'.repeat(lauf)}</div>` : ''}
+        <div class="duo-kz-s num">am längsten ${d.longestWinStreak || 0} Siege · ${d.longestLossStreak || 0} Niederlagen</div></div>
+    </div>`;
   }
 
   // ─── AUFSTELLUNG: TYPISCH + (optional) BESTE ───
@@ -209,7 +202,7 @@ function showTeam(p1Id,p2Id){
     const bestWr = Math.round(d.bestLineup.wr * 100);
     lineupHtml = `
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:10px;font-family:'Sometype Mono',monospace">Aufstellungs-Vergleich</div>
+        ${blattAbschnittHtml('users', 'Aufstellungs-Vergleich')}
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
           ${buildLineupCard('Typisch', typWr+'% aus '+typGames, d.posStats[d.ids[0]].dom, 48)}
           ${buildLineupCard('Beste Quote', bestWr+'% aus '+d.bestLineup.games, d.bestLineup.p0, 48)}
@@ -238,7 +231,7 @@ function showTeam(p1Id,p2Id){
       </div>` : '';
     lineupHtml = `
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:12px;font-family:'Sometype Mono',monospace">Typische Aufstellung</div>
+        ${blattAbschnittHtml('users', 'Typische Aufstellung')}
         <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             ${renderPlayerLineup(pA, d.posStats[pA.id].dom)}
@@ -265,48 +258,15 @@ function showTeam(p1Id,p2Id){
   const _tR = awardRankings('all');
   const teamAwardsHtml = tAch.length ? `
     <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Auszeichnungen als Team</div>
+      ${blattAbschnittHtml('medal', 'Auszeichnungen als Team')}
       ${awVitrineHtml(tAch.map(a => awKachelHtml(a.key, [a.x],
         {rang:a.rank || null, mehr:0, liste:awListe(a.key, _tR), attr:`data-team-award="${esc(a.key)}"`})))}
     </div>` : '';
 
-  // ─── STREAKS (aktuelle + längste) ───
-  // Verzichten auf Last-N-Dots wie im Spieler-Profil — hier ist die reine
-  // Zahlen-Anzeige übersichtlicher (Form-Spark daneben deckt die Verlaufs-
-  // Visualisierung schon ab).
-  let streaksHtml = '';
-  if(d.games >= 2){
-    const curLabel = d.currentStreak === 0 ? '–'
-      : d.currentStreak > 0 ? d.currentStreak+' Siege'
-      : (-d.currentStreak)+(d.currentStreak === -1 ? ' Niederlage' : ' Niederlagen');
-    const curColor = d.currentStreak > 0 ? 'var(--acid)' : (d.currentStreak < 0 ? 'var(--red)' : 'var(--muted)');
-    streaksHtml = `
-      <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Serien</div>
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
-          <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:${curColor};line-height:1">${curLabel}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Aktuell</div>
-          </div>
-          <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1">${d.longestWinStreak ? d.longestWinStreak + (d.longestWinStreak === 1 ? ' Sieg' : ' Siege') : '–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Beste Serie</div>
-          </div>
-          <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--red);line-height:1">${d.longestLossStreak ? d.longestLossStreak + (d.longestLossStreak === 1 ? ' Pleite' : ' Pleiten') : '–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Durststrecke</div>
-          </div>
-        </div>
-      </div>`;
-  }
-
   // ─── LIGA-TITEL (Team of the Season) ───
   const titlesHtml = d.seasonTitles.length ? `
     <div style="margin-bottom:18px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Liga-Titel</div>
-        <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.seasonTitles.length} ${d.seasonTitles.length===1?'Titel':'Titel'}</div>
-      </div>
+      ${blattAbschnittHtml('crown', 'Liga-Titel', d.seasonTitles.length + ' Titel')}
       <div class="pp-trophies" style="margin:0 -16px;padding:4px 16px">
         ${d.seasonTitles.map(t => `<div class="pp-tr team">
           <span class="ic svg-ic">${svgI('handshake')}</span>
@@ -333,7 +293,7 @@ function showTeam(p1Id,p2Id){
     const cols = facts.length >= 4 ? 'repeat(4,1fr)' : 'repeat('+facts.length+',1fr)';
     funFactsHtml = `
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">In Zahlen</div>
+        ${blattAbschnittHtml('chartBar', 'In Zahlen')}
         <div style="display:grid;grid-template-columns:${cols};gap:8px">
           ${facts.map(f => `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center">
             <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${f.color};line-height:1">${f.value}</div>
@@ -381,41 +341,10 @@ function showTeam(p1Id,p2Id){
       <div style="font-family:'Archivo Black',sans-serif;font-size:20px;letter-spacing:-.02em;line-height:1.1;margin-top:14px">${esc(pA.name)} &amp; ${esc(pB.name)}</div>
     </div>
 
-    <div style="display:flex;gap:8px;margin-bottom:18px">
-      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-        <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${d.games}</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Spiele</div>
-      </div>
-      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-        <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--acid);line-height:1">${wr}%</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Quote</div>
-      </div>
-      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-        <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${gdStr}</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Torbilanz</div>
-      </div>
-      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-        <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:${eloColor};line-height:1">${eloStr}</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Elo</div>
-      </div>
-    </div>
-
-    <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Bilanz</div>
-      <div style="display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--line)">
-        <div style="width:${d.games?(d.wins/d.games*100):0}%;background:var(--acid)"></div>
-        <div style="width:${d.games?(d.losses/d.games*100):0}%;background:var(--red)"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px" class="num">
-        <span style="color:var(--acid)">${d.wins} Siege</span>
-        <span style="color:var(--red)">${d.losses} Niederlagen</span>
-      </div>
-    </div>
+    ${kennzahlenHtml}
 
     ${teamAwardsHtml}
-    ${streaksHtml}
     ${titlesHtml}
-    ${teamFormHtml}
     ${lineupHtml}
     ${funFactsHtml}
 
@@ -424,13 +353,13 @@ function showTeam(p1Id,p2Id){
 
     ${highlights?`
     <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Höhepunkte</div>
+      ${blattAbschnittHtml('star', 'Höhepunkte')}
       <div style="display:flex;flex-direction:column;gap:6px">${highlights}</div>
     </div>`:''}
 
     ${recentRows?`
     <div>
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Letzte ${Math.min(10,d.recent.length)} Spiele</div>
+      ${blattAbschnittHtml('clock', 'Letzte ' + Math.min(10,d.recent.length) + ' Spiele')}
       <div style="display:flex;flex-direction:column;gap:6px">${recentRows}</div>
     </div>`:''}
   `);
@@ -458,7 +387,8 @@ function showMatchDetail(mid){
   // matchBreakdown() bleibt für Slider-Detail-Komponenten verfügbar.
   const line=(id,pos)=>{
     const d=(m.deltas||{})[id]||0;
-    return `<div class="delta-row" data-md-spieler="${esc(id)}" style="cursor:pointer"><span class="dn">${esc(pname(id))} <span class="chip ${pos}">${pos==='atk'?'STU':'ABW'}</span></span><span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></div>`;
+    // Die Position als Wort mit Zeichen, nicht als „STU" und „ABW" [§6].
+    return `<div class="delta-row" data-md-spieler="${esc(id)}" style="cursor:pointer"><span class="dn">${esc(pname(id))} <span class="chip ${pos}">${svgI(pos==='atk'?'bolt':'shield')}${pos==='atk'?'Sturm':'Abwehr'}</span></span><span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></div>`;
   };
   // Auszeichnungen durch dieses Match
   const earned=badgesEarnedInMatch(mid);
@@ -495,26 +425,21 @@ function showMatchDetail(mid){
   const _expA = _h && _h.expA != null ? _h.expA : (typeof m.exp_a === 'number' ? m.exp_a : null);
   const chance = _expA == null ? null
     : Math.max(1, Math.round((m.winner==='A' ? _expA : 1 - _expA) * 100));
-  openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · ${esc(sieger.map(pname).join(' und '))} gewinnen${chance!=null ? ' · Siegchance vorher ' + chance + ' %' : ''}</div>
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <div data-team="${esc([m.a1,m.a2].sort().join('|'))}" style="flex:1;background:var(--surface);border:1px solid ${m.winner==='A'?'var(--acid2)':'var(--line)'};border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Sometype Mono',monospace">Team A</div>
-        <div style="font-size:12px;margin-top:2px;line-height:1.2">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
-      </div>
-      <div data-team="${esc([m.b1,m.b2].sort().join('|'))}" style="flex:1;background:var(--surface);border:1px solid ${m.winner==='B'?'var(--acid2)':'var(--line)'};border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Sometype Mono',monospace">Team B</div>
-        <div style="font-size:12px;margin-top:2px;line-height:1.2">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
-      </div>
-    </div>
+  // Kopf und Bühne wie in jedem Blatt einer Partie [§C27]: die Sieger hell,
+  // die Verlierer leiser, der Stand in der Mitte. Vorher stand der Stand als
+  // Überschrift und darunter zwei graue Kästen „Team A" und „Team B".
+  openSheet(`${blattKopfHtml({ic:'ball', titel:'Partie', unter:dateStr(m.created_at)})}
+    ${buehneHtml(m, {zeile: sieger.map(pname).join(' und ') + ' gewinnen'
+      + (chance != null ? ' · Siegchance vorher ' + chance + ' %' : '')})}
     <div class="preview" style="margin-top:16px"><div class="delta-list">
       ${line(m.a1,m.a1_pos)}${line(m.a2,m.a2_pos)}<div class="delta-div"></div>${line(m.b1,m.b1_pos)}${line(m.b2,m.b2_pos)}
     </div></div>
     <button class="btn ghost sm" id="showBreakdownBtn" style="margin-top:10px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px">${svgI('chartBar')} Elo-Analyse anzeigen</button>
     <div id="breakdownSlot"></div>
     ${earnedHtml}
-    <div class="btn-row" style="margin-top:14px">
-      <button class="btn ghost sm" id="editThisMatch" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">${svgI('edit')} Bearbeiten</button>
-      <button class="btn ghost sm" id="delThisMatch" style="flex:0 0 38%;color:var(--red)">Löschen</button>
+    <div class="blatt-fuss">
+      <button type="button" class="btn gefahr" id="delThisMatch">${svgI('trash')}Löschen</button>
+      <button type="button" class="btn" id="editThisMatch">${svgI('edit')}Bearbeiten</button>
     </div>`);
   // Breakdown-Button
     document.getElementById('showBreakdownBtn').onclick=()=>{
@@ -602,15 +527,14 @@ function showMatchDetail(mid){
 
   document.getElementById('editThisMatch').onclick=()=>showEditMatch(mid);
   document.getElementById('delThisMatch').onclick=async()=>{
-        if(!confirm('Match wirklich löschen? Die gesamte Rangliste wird danach automatisch neu berechnet.'))return;
-    closeSheet(true); toast('Lösche & berechne neu…');
-    await sb.from('matches').delete().eq('id',mid);
-    const rest=matches.filter(x=>x.id!==mid);
-    invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']); // <-- HIER INVALIDIEREN
-    await persistRecalc(rest);
-    toast('Gelöscht & neu berechnet','ok'); await loadAll();
-
-
+    // Die Frage nennt, was verloren geht: diese Partie und alles, was aus
+    // ihr gerechnet wurde.
+    const ja = await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
+      titel:'Partie löschen?',
+      text:`${pname(m.a1)} & ${pname(m.a2)} gegen ${pname(m.b1)} & ${pname(m.b2)}, ${m.score_a}:${m.score_b} vom ${dateStr(m.created_at)}. Elo, Serien und Rekorde werden danach neu gerechnet.`});
+    if(!ja) return;
+    closeSheet(true);
+    await partieLoeschen(mid);
   };
   // Die vier Namen führen ins Profil: das Blatt zeigte je Spieler die Elo
   // dieser Partie, und von dort ging es nur zum Duo weiter, nicht zu ihm.
@@ -627,3 +551,15 @@ function showMatchDetail(mid){
   });
 }
 
+// Eine Partie löschen und die Liga neu rechnen. Eine Stelle für das Blatt
+// der Partie und für „Rückgängig" nach dem Speichern [§C27] — zwei Kopien
+// hätten irgendwann verschiedene Töpfe geleert.
+async function partieLoeschen(mid){
+  toast('Lösche & berechne neu…');
+  await sb.from('matches').delete().eq('id', mid);
+  const rest = matches.filter(x => x.id !== mid);
+  invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
+  await persistRecalc(rest);
+  toast('Gelöscht & neu berechnet', 'ok');
+  await loadAll();
+}

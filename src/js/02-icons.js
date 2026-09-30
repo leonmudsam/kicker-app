@@ -309,6 +309,13 @@ const ICONS = {
   // Wiedereinstieg: eine Tuer und ein Pfeil hinein — die erste Partie nach
   // der Pause.
   doorReturn:    `<path d="M4 3h9v18H4z"/><circle cx="10" cy="12" r="1"/><path d="M21 12h-5"/><polyline points="19 9 16 12 19 15"/>`,
+  // Bedienung: Schließen, Warten, Warnen, Löschen — der Hinweis und die
+  // Bestätigung tragen ihre Rolle als Zeichen [§C27].
+  x:             `<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>`,
+  hourglass:     `<path d="M7 3.5h10M7 20.5h10M8 3.5c0 4.5 4 5.5 4 8.5s-4 4-4 8.5M16 3.5c0 4.5-4 5.5-4 8.5s4 4 4 8.5"/>`,
+  alert:         `<path d="M12 4.2l8.6 15a1 1 0 01-.9 1.5H4.3a1 1 0 01-.9-1.5z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r=".6" fill="currentColor"/>`,
+  trash:         `<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>`,
+  hochladen:     `<path d="M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4"/><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};

@@ -90,6 +90,64 @@ function sheetNav(openChild){
 }
 window.sheetNav = sheetNav;
 
+// Der Kopf eines Abschnitts im Blatt [§C27]: ein leises Zeichen, der Name
+// in Großbuchstaben, rechts worauf er sich bezieht. Jedes Blatt baute ihn
+// selbst — als Inline-Style im Duo-Blatt, als `.pp-sec-title` im
+// Rekord-Blatt, als `.aw-list-label` im Award-Blatt — und kein zweites sah
+// aus wie das erste.
+function blattAbschnittHtml(ic, titel, rechts){
+  return `<div class="blatt-abschn">${ic ? svgI(ic) : ''}<span>${esc(titel)}</span>${
+    rechts ? `<em class="num">${esc(String(rechts))}</em>` : ''}</div>`;
+}
+
+// Der Kopf eines Blatts [§C27]: die Zeichenkachel in der Farbe der Rolle,
+// der Titel, darunter Zeitraum und Art. Blätter hatten fünf Köpfe — ein
+// leuchtender Kreis über der Mitte im Award-Blatt, ein nackter Titel im
+// Rekord-Blatt, ein Kasten mit Zeichen darunter im Chronik-Blatt, ein
+// 48-px-Gesicht neben „Awards" im Profil, und im Partie-Blatt der Stand als
+// Überschrift. Wer zwei nacheinander öffnete, fand nichts an derselben
+// Stelle. Ein Blatt über einen Menschen (Profil, Duo, Rückblick, Story)
+// behält seinen Heldenkopf: dort ist das Gesicht die Überschrift.
+function blattKopfHtml(o){
+  return `<div class="blatt-kopf">${o.ic ? zkHtml(o.ic, 'g', o.ton || '') : ''}
+    <div class="blatt-kopf-t"><h3>${esc(o.titel)}</h3>${
+      o.unter ? `<div class="sheet-sub">${esc(o.unter)}</div>` : ''}</div></div>`;
+}
+// Der Fuß: der Weg weiter, höchstens zwei Knöpfe, der wichtigere gefüllt.
+// Vorher führten Namen irgendwo im Blatt weiter, und nicht jedes Blatt
+// hatte einen Weg in die Partie oder das Profil, von dem es handelt.
+//   knoepfe  [{label, ic, attr, prim}]
+function blattFussHtml(knoepfe){
+  const k = (knoepfe || []).filter(Boolean).slice(0, 2);
+  if(!k.length) return '';
+  return `<div class="blatt-fuss${k.length === 1 ? ' eins' : ''}">${k.map(b =>
+    `<button type="button" class="btn${b.prim ? '' : ' ghost'}" ${b.attr || ''}>${
+      b.ic ? svgI(b.ic) : ''}${esc(b.label)}</button>`).join('')}</div>`;
+}
+// Die Partie als Bühne [§C27]: die Sieger links und hell, die Verlierer
+// rechts und leiser, der Stand groß in der Mitte, darunter Zeit, Abstand
+// und Siegchance. Ein Bauteil für das Award-Blatt einer Partie und das
+// Blatt der Partie selbst. Im Award-Blatt standen die Teams als volle
+// Farbbalken mit Initialen — `.aw-mini-av` hatte keine einzige Regel —,
+// im Partie-Blatt als zwei graue Kästen neben einem Stand als Überschrift.
+//   m        die Partie, o.zeile der Satz darunter, o.marke das Wort über den
+//            Siegern (Standard „Sieger"), o.gleich keiner liegt vorn
+function buehneHtml(m, o){
+  o = o || {};
+  // `gleich`: keiner liegt vorn (Erzfeinde mit gleich vielen Siegen) — dann
+  // steht keine Seite zurück und keine trägt eine Marke.
+  const siegA = m.winner === 'A';
+  const marke = o.gleich ? '' : (o.marke != null ? o.marke : 'Sieger');
+  const seite = (ids, sieg) => `<div class="buehne-s${sieg || o.gleich ? ' sieg' : ' nied'}" data-team="${esc(ids.slice().sort().join('|'))}">
+      <span class="buehne-marke">${sieg ? esc(marke) : ''}</span>
+      <span class="buehne-paar">${ids.map(id => { const p = pmap()[id]; return p ? avHtml(p, '', {}) : ''; }).join('')}</span>
+      <span class="buehne-n">${ids.map(id => esc(pname(id))).join('<br>')}</span></div>`;
+  const a = seite([m.a1, m.a2], siegA), b = seite([m.b1, m.b2], !siegA);
+  // Der Stand steht in der Reihenfolge der Seiten: links A, rechts B.
+  return `<div class="buehne">${a}<div class="buehne-stand num">${m.score_a}<i>:</i>${m.score_b}</div>${b}${
+    o.zeile ? `<div class="buehne-zeile num">${esc(o.zeile)}</div>` : ''}</div>`;
+}
+
 function openSheet(html, opts){
   opts = opts || {};
   const sheet=document.getElementById('sheet');
@@ -101,7 +159,13 @@ function openSheet(html, opts){
   // closeSheet dazwischen), zuerst dessen Swipe-Listener aufräumen — sonst
   // stapeln sich window-mousemove/mouseup-Listener und lecken.
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
-  sheet.innerHTML=`<div class="sheet-grab" id="sheetGrab"></div>${html}`;
+  // Griff und Schließen stehen in einer Leiste, die beim Scrollen oben
+  // bleibt. Geschlossen wurde bisher nur durch Wischen, einen Tipp neben
+  // das Blatt oder einen Knopf, den jedes Blatt selbst baute oder nicht —
+  // am Ende eines langen Blatts war kein Weg hinaus zu sehen [§C27].
+  sheet.innerHTML=`<div class="sheet-leiste"><div class="sheet-grab" id="sheetGrab"></div>`
+    + `<button type="button" class="sheet-zu" id="sheetZu" aria-label="Schließen">${svgI('x')}</button></div>${html}`;
+  document.getElementById('sheetZu').onclick = () => closeSheet(true);
   // Scroll-Position zurücksetzen — sonst landet man im neuen Sheet dort, wo
   // im vorigen Sheet (oder bei vorigem Öffnen desselben Sheets) gescrollt war.
   // Muss nach innerHTML kommen, damit das Layout schon steht.

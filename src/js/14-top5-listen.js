@@ -73,23 +73,12 @@ function showTopList(c){
     </div>`;
   }).join('');
   openSheet(`
-    <div class="aw-hero-icon">
-      <div class="aw-hero-icon-glow ${c.cls||'gold'}">
-        <svg viewBox="0 0 24 24">${ICONS[c.ic||'trophy']||''}</svg>
-      </div>
-      <div class="aw-hero-title">${esc(c.title||'')}</div>
-      <div class="aw-hero-sub">${esc(c.sub||'')}</div>
-    </div>
-    ${items?`<div class="aw-list-label">${esc(c.listLabel||('Top '+rows.length))}</div>
+    ${blattKopfHtml({ic:c.ic || 'trophy', ton:c.cls === 'blue' ? 'blau' : c.cls === 'red' ? 'rot' : 'gold',
+      titel:c.title || '', unter:c.sub || ''})}
+    ${items?`${blattAbschnittHtml('medal', c.listLabel || ('Top ' + rows.length))}
       <div class="aw-list">${items}</div>`
      :`<div class="empty" style="margin-top:24px">Noch keine Daten</div>`}
-    ${c.why?`<div class="aw-why">
-      <div class="aw-why-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg></div>
-      <div class="aw-why-content">
-        <div class="aw-why-label">So wird gewertet</div>
-        <div class="aw-why-body">${esc(c.why)}</div>
-      </div>
-    </div>`:''}`);
+    ${c.why?`${blattAbschnittHtml('info', 'So wird gewertet')}<div class="blatt-text">${esc(c.why)}</div>`:''}`);
   // Zeilen weiterverlinken — gleiche Ziele wie vorher die Karte selbst.
   document.querySelectorAll('.aw-li[data-li-player]').forEach(el=>{
     el.onclick=()=>{ sheetNav(()=>showPlayer(el.dataset.liPlayer)); };
@@ -158,7 +147,7 @@ function showAward(key){
   const RIVALRY_AWARDS = new Set(['rivalry']);
   const FAVS_AWARDS = new Set(['favoritenschreck']);
 
-  let bodyHtml='';
+  let bodyHtml='', fuss='', arrTop=null, topGleich=0;
 
   if(MATCH_AWARDS.has(key)){
     const arr = key==='upset' ? R.upsets : R.biggest;
@@ -166,27 +155,14 @@ function showAward(key){
       const top = arr[0];
       const m = top.m;
       const winnerSide = m.winner;
-      const isUpsetVariant = key==='upset';
-      const upsetWinPct = isUpsetVariant ? Math.round((1-top.sp)*100) : null;
-      const diffStr = key==='biggest' ? '+'+top.diff+' Tore' : 'Siegchance nur '+upsetWinPct+'%';
-      bodyHtml = `
-        <div class="aw-match${isUpsetVariant?' upset':''}">
-          <div class="aw-match-score">${m.score_a} : ${m.score_b}</div>
-          <div class="aw-match-meta">${dateStr(m.created_at)} · ${diffStr}</div>
-          <div class="aw-match-teams">
-            <div class="aw-match-team">
-              ${winnerSide==='A'?'<div class="aw-match-winner">Gewinner</div>':''}
-              ${awMiniPair(m.a1,m.a2)}
-              <div class="aw-match-team-name">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
-            </div>
-            <div class="aw-match-vs">vs</div>
-            <div class="aw-match-team">
-              ${winnerSide==='B'?'<div class="aw-match-winner">Gewinner</div>':''}
-              ${awMiniPair(m.b1,m.b2)}
-              <div class="aw-match-team-name">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
-            </div>
-          </div>
-        </div>`;
+      // Die Partie als Bühne [§C27] — dieselbe wie im Blatt der Partie.
+      const zeile = key === 'biggest'
+        ? dateStr(m.created_at) + ' · ' + top.diff + ' Tore Unterschied'
+        : dateStr(m.created_at) + ' · Siegchance ' + Math.round((1 - top.sp) * 100) + ' %';
+      bodyHtml = buehneHtml(m, {zeile});
+      fuss = blattFussHtml([
+        {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
+        {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(_awSieger(top).slice().sort().join('|'))}"`}]);
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     }
@@ -198,25 +174,10 @@ function showAward(key){
     if(arr && arr.length){
       const top = arr[0];
       const m = top.m;
-      const winnerSide = m.winner;
-      bodyHtml = `
-        <div class="aw-match upset">
-          <div class="aw-match-score">${m.score_a} : ${m.score_b}</div>
-          <div class="aw-match-meta">${dateStr(m.created_at)} · ${top.v} Elo überwunden</div>
-          <div class="aw-match-teams">
-            <div class="aw-match-team">
-              ${winnerSide==='A'?'<div class="aw-match-winner">Sieger</div>':''}
-              ${awMiniPair(m.a1,m.a2)}
-              <div class="aw-match-team-name">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
-            </div>
-            <div class="aw-match-vs">vs</div>
-            <div class="aw-match-team">
-              ${winnerSide==='B'?'<div class="aw-match-winner">Sieger</div>':''}
-              ${awMiniPair(m.b1,m.b2)}
-              <div class="aw-match-team-name">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
-            </div>
-          </div>
-        </div>`;
+      bodyHtml = buehneHtml(m, {zeile: dateStr(m.created_at) + ' · ' + top.v + ' Elo überwunden'});
+      fuss = blattFussHtml([
+        {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
+        {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(top.ids.slice().sort().join('|'))}"`}]);
       // Weitere Plätze als kompakte Liste — andere Teams mit ihren best-Coups
       if(arr.length > 1){
         const rest = arr.slice(1, 7);
@@ -229,7 +190,7 @@ function showAward(key){
             <div class="aw-li-val">${e.v} Elo</div>
           </div>`;
         }).join('');
-        bodyHtml += `<div class="aw-list-label">Weitere Coups</div><div class="aw-list">${items}</div>`;
+        bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Coups')}<div class="aw-list">${items}</div>`;
       }
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
@@ -241,28 +202,12 @@ function showAward(key){
       const top = arr[0];
       const teamAName = pname(top.idsA[0]) + ' & ' + pname(top.idsA[1]);
       const teamBName = pname(top.idsB[0]) + ' & ' + pname(top.idsB[1]);
-      const aLeading = top.wA > top.wB;
-      const bLeading = top.wB > top.wA;
-      bodyHtml = `
-        <div class="aw-match">
-          <div class="aw-match-score">${Math.round(top.pct*100)}%</div>
-          <div class="aw-match-meta">${top.g} direkte Duelle · ${top.gfA}:${top.gfB} Tore gesamt</div>
-          <div class="aw-match-teams">
-            <div class="aw-match-team" data-li-team="${esc(top.idsA.slice().sort().join('|'))}" style="cursor:pointer">
-              ${aLeading?'<div class="aw-match-winner">Führt</div>':''}
-              ${awMiniPair(top.idsA[0],top.idsA[1])}
-              <div class="aw-match-team-name">${esc(teamAName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} ${top.wA===1?'Sieg':'Siege'} · ${top.gA} Partien als Duo</div>
-            </div>
-            <div class="aw-match-vs">vs</div>
-            <div class="aw-match-team" data-li-team="${esc(top.idsB.slice().sort().join('|'))}" style="cursor:pointer">
-              ${bLeading?'<div class="aw-match-winner">Führt</div>':''}
-              ${awMiniPair(top.idsB[0],top.idsB[1])}
-              <div class="aw-match-team-name">${esc(teamBName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} ${top.wB===1?'Sieg':'Siege'} · ${top.gB} Partien als Duo</div>
-            </div>
-          </div>
-        </div>`;
+      // Zwei Duos auf der Bühne [§C27]; in der Mitte stehen die Siege
+      // gegeneinander, und „führt" steht über dem, der vorn liegt.
+      bodyHtml = buehneHtml({a1:top.idsA[0], a2:top.idsA[1], b1:top.idsB[0], b2:top.idsB[1],
+          score_a:top.wA, score_b:top.wB, winner: top.wA > top.wB ? 'A' : top.wB > top.wA ? 'B' : ''},
+        {marke:'Führt', gleich: top.wA === top.wB,
+         zeile: Math.round(top.pct*100) + ' % als Gegner · ' + top.g + ' Duelle · ' + top.gfA + ':' + top.gfB + ' Tore'});
       // Weitere Rivalitäten
       if(arr.length > 1){
         const rest = arr.slice(1, 7);
@@ -283,7 +228,7 @@ function showAward(key){
             <div class="aw-li-val">${Math.round(e.pct*100)}% · ${e.g}×</div>
           </div>`;
         }).join('');
-        bodyHtml += `<div class="aw-list-label">Weitere Rivalitäten</div><div class="aw-list">${items}</div>`;
+        bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Rivalitäten')}<div class="aw-list">${items}</div>`;
       }
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
@@ -295,7 +240,7 @@ function showAward(key){
     // sagte zu derselben Serie „8er Serie", während die Kachel „8er" trug.
     const arr = awListe(key, R).map(x => {
       const t = awText(key, x);
-      return {ids:awIds(key, x), name:awIds(key, x).map(pname).join(' & '),
+      return {x, ids:awIds(key, x), name:awIds(key, x).map(pname).join(' & '),
         z:t.z, e:t.e, val:t.e ? t.z+' '+t.e : t.z, detail:t.b, sort:AW_WERT[key].s(x)};
     });
 
@@ -305,14 +250,15 @@ function showAward(key){
     } else {
       const isTeamAward = arr[0].ids.length === 2;
       const isNeg = awNeg(key);
-      // meta.cls → RGB für Hero-Akzentfarbe
-      const CLS_RGB = {gold:'247,207,74',acid:'190,242,100',blue:'86,180,232',orange:'255,120,73',purple:'167,139,250',red:'240,86,106'};
-      const heroRgb = CLS_RGB[meta.cls] || CLS_RGB.gold;
+      // Der Held trägt die Farbe seiner Rolle [§C25] — Gold, Blau für ein
+      // Duo, Rot für die Kehrseite —, nicht einen der sechs Katalogtöne.
+      const heroRgb = isNeg ? '240,86,106' : isTeamAward ? '86,180,232' : '247,207,74';
 
       // ─── Hero (#1) – alle bei sort=arr[0].sort sind geteilte #1 ───
       const topGroup = arr.filter(x => x.sort === arr[0].sort);
       const isShared = topGroup.length > 1;
       const top = arr[0];
+      arrTop = top; topGleich = topGroup.length;
       // Wert (für Hero – alle teilen denselben Wert)
       const heroVal = `<b>${esc(top.z)}</b>${top.e ? ' '+esc(top.e) : ''}`;
 
@@ -435,57 +381,57 @@ function showAward(key){
         }
       }
 
+      // Der Beleg [§C27]: woraus der Wert besteht, wo er im Feld liegt und
+      // wie sicher der Abstand zum Nächsten ist — aus derselben Liste.
+      const w = AW_WERT[key];
+      const zweitE = arr.find(e => e.sort !== top.sort) || null;
+      const zA = zweitE ? belegAnteil(zweitE.detail) : null;
+      const belegAw = belegHtml({
+        ev: top.z + ' ' + (top.detail || ''),
+        feld: w.f ? arr.map(e => ({v:w.f(e.x), t:e.z, er:e.sort === top.sort})) : null,
+        dahinter: zweitE ? `Dahinter: <b>${esc(zweitE.name)}</b> mit ${esc(zweitE.z)}.` : '',
+        zweiter: zA && _belegIstQuote(zweitE.z + ' ' + zweitE.detail, zA) ? {name:zweitE.name, q:zA.k / zA.n} : null
+      });
       const listLabel = isNeg ? 'Weitere Sünder' : 'Weitere Plätze';
-      bodyHtml = heroHtml + (listItems.length
-        ? `<div class="aw-list-label">${listLabel}</div><div class="aw-list">${listItems.join('')}</div>`
+      bodyHtml = heroHtml + belegAw + (listItems.length
+        ? `${blattAbschnittHtml('medal', listLabel)}<div class="aw-list">${listItems.join('')}</div>`
         : '');
     }
   }
 
-  const heroCls = meta.cls || 'gold';
-
+  // Kopf, Beleg, Liste, Regel, Weg weiter — in jedem Blatt dieselbe
+  // Reihenfolge [§C27]. Der Ton ist die Rolle [§C25], nicht einer von sechs
+  // Katalogtönen: der leuchtende Kreis trug Orange, Violett und Acid.
+  const kopfIds = (awTop(key, R)[0] ? awIds(key, awTop(key, R)[0]) : []);
+  const kopfTon = awNeg(key) ? 'rot' : kopfIds.length >= 2 ? 'blau' : 'gold';
+  if(!fuss && arrTop && arrTop.ids.length && topGleich === 1)
+    fuss = blattFussHtml([arrTop.ids.length === 2
+      ? {label:'Zum Duo', ic:'users', prim:true, attr:`data-li-team="${esc(arrTop.ids.slice().sort().join('|'))}"`}
+      : {label:'Zum Profil', ic:'user', prim:true, attr:`data-li-player="${esc(arrTop.ids[0])}"`}]);
   openSheet(`
-    <div class="aw-hero-icon">
-      <div class="aw-hero-icon-glow ${heroCls}">
-        <svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>
-      </div>
-      <div class="aw-hero-title">${meta.title}</div>
-      <div class="aw-hero-sub">${pl}</div>
-    </div>
+    ${blattKopfHtml({ic:AW_IC[key] || 'trophy', ton:kopfTon, titel:meta.title, unter:pl + ' · Award'})}
     ${bodyHtml}
-    <div class="aw-why">
-      <div class="aw-why-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg></div>
-      <div class="aw-why-content">
-        <div class="aw-why-label">So wird gewertet</div>
-        <div class="aw-why-body">${meta.why}</div>
-      </div>
-    </div>`);
+    ${blattAbschnittHtml('info', 'So wird gewertet')}
+    <div class="blatt-text">${meta.why}</div>
+    ${fuss}`);
 
-  // Match-Card klickbar
-  if(MATCH_AWARDS.has(key)){
-    const arr = key==='upset' ? R.upsets : R.biggest;
-    if(arr&&arr.length){
-      const el = document.querySelector('.aw-match');
-      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ sheetNav(()=>showMatchDetail(arr[0].m.id)); }; }
-    }
-  }
-  // Favoritenschreck: Hauptkarte führt zum Match-Detail
-  if(FAVS_AWARDS.has(key)){
-    const arr = R.favoritenschreckList;
-    if(arr && arr.length){
-      const el = document.querySelector('.aw-match');
-      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ sheetNav(()=>showMatchDetail(arr[0].m.id)); }; }
-    }
-  }
-  // Erzfeinde: die zwei Team-Boxen tragen data-li-team und werden durch den
-  // generischen Team-Handler unten (querySelectorAll[data-li-team]) klickbar.
-
+  // Die Bühne und der Fuß führen, wohin sie zeigen: eine Seite ins Duo, der
+  // Knopf in die Partie, das Profil oder das Duo.
+  document.querySelectorAll('#sheet .buehne-s[data-team], #sheet .blatt-fuss [data-li-team]').forEach(el=>{
+    el.onclick=()=>{ const [a,b]=(el.dataset.team||el.dataset.liTeam).split('|'); if(a&&b) sheetNav(()=>showTeam(a,b)); };
+  });
+  document.querySelectorAll('#sheet .blatt-fuss [data-li-player]').forEach(el=>{
+    el.onclick=()=>{ sheetNav(()=>showPlayer(el.dataset.liPlayer)); };
+  });
+  document.querySelectorAll('#sheet .blatt-fuss [data-li-match]').forEach(el=>{
+    el.onclick=()=>{ sheetNav(()=>showMatchDetail(el.dataset.liMatch)); };
+  });
   // Listen-Einträge klickbar
   document.querySelectorAll('.aw-li[data-li-player], .aw-li-tied-row[data-li-player], .aw-winner[data-li-player], .aw-winner-tied-entry[data-li-player]').forEach(el=>{
     el.style.cursor='pointer';
     el.onclick=()=>{ const pid=el.dataset.liPlayer; sheetNav(()=>showPlayer(pid)); };
   });
-  document.querySelectorAll('.aw-li[data-li-team], .aw-li-tied-row[data-li-team], .aw-winner[data-li-team], .aw-winner-tied-entry[data-li-team], .aw-match-team[data-li-team]').forEach(el=>{
+  document.querySelectorAll('.aw-li[data-li-team], .aw-li-tied-row[data-li-team], .aw-winner[data-li-team], .aw-winner-tied-entry[data-li-team]').forEach(el=>{
     el.style.cursor='pointer';
     el.onclick=(ev)=>{ ev.stopPropagation(); const [a,b]=el.dataset.liTeam.split('|'); sheetNav(()=>showTeam(a,b)); };
   });

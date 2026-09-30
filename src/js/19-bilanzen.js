@@ -40,10 +40,7 @@ function showPlayerH2HList(playerId){
   }).join('');
 
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div><h3>Bilanzen</h3><div class="sheet-sub">${esc(p.name)} · ${h2hList.length} Mitspieler</div></div>
-    </div>
+    ${blattKopfHtml({ic:'users', titel:'Bilanzen', unter:p.name + ' · ' + h2hList.length + ' Mitspieler'})}
     <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em;margin-top:14px;margin-bottom:10px">
       Siege und Niederlagen <span style="color:var(--blue);font-weight:700">mit</span> und <span style="color:var(--purple);font-weight:700">gegen</span> jeden · Antippen für Einzelheiten
     </div>
@@ -103,19 +100,17 @@ function showPlayerSeasons(playerId){
     return out;
   }).join('');
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div><h3>Saison-Titel</h3><div class="sheet-sub">${esc(p.name)} · ${(()=>{let n=0;sa.forEach(s=>{if(s.player_id===playerId)n++;if(s.team_p1===playerId||s.team_p2===playerId)n++;});return n;})()} Titel</div></div>
-    </div>
+    ${blattKopfHtml({ic:'crown', ton:'gold', titel:'Saison-Titel',
+      unter:p.name + ' · ' + (()=>{let n=0;sa.forEach(s=>{if(s.player_id===playerId)n++;if(s.team_p1===playerId||s.team_p2===playerId)n++;});return n;})() + ' Titel'})}
     <div class="rlist" style="margin-top:16px">${rows}</div>
-    <button class="btn ghost sm" id="backToPlayer3" style="margin-top:14px">← Zurück zum Profil</button>
+    ${blattFussHtml([{label:'Zurück zum Profil', ic:'user', attr:'id="backToPlayer3"'}])}
   `);
   const back=document.getElementById('backToPlayer3');
   if(back) back.onclick=()=>closeSheet();
 }
 
 function showAddPlayer(){
-  openSheet(`<h3>Neuer Spieler</h3><div class="sheet-sub">Startet bei ${cfg.start_elo} Elo</div>
+  openSheet(`${blattKopfHtml({ic:'user', titel:'Neuer Spieler', unter:'Startet bei ' + cfg.start_elo + ' Elo'})}
     <input type="text" class="text-in" id="newName" placeholder="Name…" style="margin-top:18px" autofocus>
     <button class="btn" id="confirmAdd" style="margin-top:12px">Hinzufügen</button>`);
   const ni=document.getElementById('newName');ni.focus();

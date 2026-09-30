@@ -57,8 +57,7 @@ function showSeasonTable(sid){
   _sheetSetReopen(()=>showSeasonTable(sid));
   const T = seasonTitles(sid);
   if(!T.awarded.length && !T.champ){
-    openSheet(`<h3>${esc(seasonLabel(sid))}</h3>
-      <div class="sheet-sub">Noch keine Chronik-Einträge</div>
+    openSheet(`${blattKopfHtml({ic:'scroll', ton:'gold', titel:seasonLabel(sid), unter:'Noch keine Chronik-Einträge'})}
       ${emptyState('trophy', T.live ? 'Die Saison läuft, noch erfüllt niemand eine Bedingung.' : 'Kein Eintrag in dieser Saison')}`);
     return;
   }
@@ -87,8 +86,8 @@ function showSeasonTable(sid){
   const gt = titleTone('gold');
   const ch = T.champ;
   openSheet(`
-    <h3>Die Chronik der Saison</h3>
-    <div class="sheet-sub num">${esc(T.label)} · ${T.matches} Matches an ${T.days} Spieltag${T.days===1?'':'en'}${T.live ? ' · läuft noch' : ''}</div>
+    ${blattKopfHtml({ic:'scroll', ton:'gold', titel:'Die Chronik der Saison',
+      unter:T.label + ' · ' + T.matches + ' Matches an ' + T.days + ' Spieltag' + (T.days===1?'':'en') + (T.live ? ' · läuft noch' : '')})}
     ${T.live ? `<div class="tnote">Stand von heute, bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>
@@ -303,17 +302,30 @@ function showDisziplin(tid, sid){
     } catch(e){ rang = []; }
   }
 
-  const podest = _chronPodestHtml(rang.map(pid => {
+  const reihe = rang.map(pid => {
     let wert = '';
     try { wert = evFuer ? evFuer(pid) : ''; } catch(e){ wert = ''; }
     return {pid, wert, v: wertVon ? wertVon(pid) : null};
-  }));
+  });
+  const podest = _chronPodestHtml(reihe);
+  // Der Beleg [§C27] aus derselben Reihenfolge wie das Podest. Einen
+  // Verlauf hat ein Monat nicht — er ist die Zeitachse selbst.
+  const halterM = new Set(eigene.map(a => a.pid));
+  const zweitM = reihe.find(r => !halterM.has(r.pid)) || null;
+  const zweitMA = zweitM ? belegAnteil(zweitM.wert) : null;
+  const beleg = reihe.length ? belegHtml({
+    ev: (eigene[0] && eigene[0].ev) || (reihe[0] && reihe[0].wert) || '',
+    feld: reihe.map(r => ({v:r.v, t:_chronKurz(r.wert), er:halterM.has(r.pid)})),
+    dahinter: zweitM ? `Dahinter: <b>${esc(pname(zweitM.pid))}</b> mit ${esc(_chronKurz(zweitM.wert))}.` : '',
+    zweiter: zweitMA && _belegIstQuote(zweitM.wert, zweitMA) ? {name:pname(zweitM.pid), q:zweitMA.k / zweitMA.n} : null
+  }) : '';
 
+  // Der Kopf jedes Blatts [§C27]; der Kasten darunter trägt die Bedingung.
+  const monatSchatten = def.monat && def.monat.art === 'schatten';
   openSheet(`
-    <h3>${esc(def.name)}</h3>
-    <div class="sheet-sub">Monatschronik · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
+    ${blattKopfHtml({ic:def.ic, ton:monatSchatten ? 'rot' : 'gold', titel:def.name,
+      unter:'Monatschronik · ' + seasonLabel(sid) + (T.live ? ' · läuft noch' : '')})}
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
-      <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
       ${/* Der Beiname stand nur im Profilkopf [§C39], und im Blatt der
             Wertung war nicht zu sehen, wie ihr Halter dort heisst: „Der
@@ -329,6 +341,7 @@ function showDisziplin(tid, sid){
     </div>
     ${_chronFaktenHtml(def)}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
+    ${beleg}
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Dieser Monat</h4></div>
            <div class="m num">${rang.length} erfüllt${rang.length === 1 ? '' : 'en'} die Bedingung</div></div>
@@ -383,11 +396,31 @@ function showChronicle(cid){
           : 'Grundwert ' + def.basis + ' P, geteilt durch die Zahl der Halter']
       : ['Für die Laufbahn', 'Eine Schattenseite zählt nichts und zieht nichts ab']
   ].filter(Boolean);
+  // Der Beleg [§C27]: woraus der Bestwert besteht, wo er im Feld liegt, wie
+  // sicher der Abstand ist und wie es dazu kam — aus chronicleRang und dem
+  // Beleg des Katalogs, ohne zweite Rechnung.
+  const halterSet = new Set(h ? (h.pids || [h.pid]) : []);
+  const zweit = rang.find(r => !halterSet.has(r.pid)) || null;
+  const zweitA = zweit ? belegAnteil(zweit.ev) : null;
+  const beleg = rang.length ? belegHtml({
+    ev: h ? h.ev : '',
+    feld: rang.map(r => ({v:r.wert, t:_chronKurz(r.ev), er:halterSet.has(r.pid)})),
+    dahinter: zweit ? `Dahinter: <b>${esc(pname(zweit.pid))}</b> mit ${esc(_chronKurz(zweit.ev))}.` : '',
+    zweiter: zweitA && _belegIstQuote(zweit.ev, zweitA) ? {name:pname(zweit.pid), q:zweitA.k / zweitA.n} : null,
+    verlauf: cid
+  }) : '';
+  // Der Weg weiter: ins Profil des Halters und in den direkten Vergleich
+  // mit dem, der dahinter liegt [§C27].
+  const fussRek = h ? blattFussHtml([
+    {label:'Profil', ic:'user', attr:`data-tplayer="${esc(h.pid)}"`},
+    zweit ? {label:'Direkter Vergleich', ic:'crossedSwords', prim:true,
+             attr:`data-vergleich="${esc(h.pid + '|' + zweit.pid)}"`} : null]) : '';
+  // Gold für Können, Form und Bestmarke, Metall für die Fügung, Rot für
+  // die Kehrseite [§C25].
+  const rekTon = def.neg ? 'rot' : def.kind === 'fuegung' ? '' : 'gold';
   openSheet(`
-    <h3>${esc(def.name)}</h3>
-    <div class="sheet-sub">${esc(CHRON_KINDS[def.kind].label)}</div>
+    ${blattKopfHtml({ic:def.ic, ton:rekTon, titel:def.name, unter:'Liga-Rekord · ' + CHRON_KINDS[def.kind].label})}
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
-      <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
     </div>
     ${zahlen}
@@ -398,6 +431,7 @@ function showChronicle(cid){
       punktgleich. Der Grundwert wird deshalb durch ${halterN} geteilt; jeder
       von ihnen hält ihn vollständig, bis einer ihn überbietet.</div>` : ''}
     ${def.wie ? `<div class="tnote">${esc(def.wie)}</div>` : ''}
+    ${beleg}
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Die Tafel</h4></div>
            <div class="m num">${rang.length} von ${allChronicles().rated} erfüllen die Mindestbasis</div></div>
@@ -412,8 +446,13 @@ function showChronicle(cid){
         <span class="w num">${esc(_chronKurz(r.ev))}</span>
       </div>`;
     }).join('')}</div>` : ''}
+    ${fussRek}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+  document.querySelectorAll('#sheet [data-vergleich]').forEach(el => {
+    el.onclick = () => { const [a, b] = el.dataset.vergleich.split('|'); sheetNav(() => showH2H(a, b)); };
+  });
+  belegVerlaufLaden(document.getElementById('sheet'));
 }
 
 // Keine Marken „Neu" und „Ueberarbeitet" mehr. Sie sagten, was sich mit
@@ -686,16 +725,16 @@ function showLigaChronik(){
   const matrix = ligaChronikMatrixHtml();
 
   if(!matrix){
-    openSheet(`<h3>Liga-Chronik</h3>
-      <div class="sheet-sub">${recs.length ? recs.length + ' Liga-Rekorde · noch keine Saison mit Chronik' : 'Noch keine Saison mit Chronik'}</div>
+    openSheet(`${blattKopfHtml({ic:'scroll', ton:'gold', titel:'Liga-Chronik',
+      unter:recs.length ? recs.length + ' Liga-Rekorde · noch keine Saison mit Chronik' : 'Noch keine Saison mit Chronik'})}
       ${recHtml || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.')}`);
     _bindChronikClicks(document.getElementById('sheet'));
     return;
   }
   const total = cols.reduce((n,T) => n + T.awarded.length, 0);
   openSheet(`
-    <h3>Liga-Chronik</h3>
-    <div class="sheet-sub num">${cols.length} Saison${cols.length===1?'':'s'} · ${total} Einträge · ${recs.length} Rekorde</div>
+    ${blattKopfHtml({ic:'scroll', ton:'gold', titel:'Liga-Chronik',
+      unter:cols.length + ' Saison' + (cols.length===1?'':'s') + ' · ' + total + ' Einträge · ' + recs.length + ' Rekorde'})}
     ${matrix}
     ${recHtml}
   `);

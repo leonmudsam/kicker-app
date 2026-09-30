@@ -14,7 +14,7 @@ function showEditMatch(mid){
   const slot=(t,n)=>`<div class="slot">
     <div class="psel"><select data-ep="${t}${n}">${opts(t+n)}</select></div>
     <div class="possel">${pos(t+n)}</div></div>`;
-  openSheet(`<h3>Match bearbeiten</h3><div class="sheet-sub">Änderungen lösen eine Neuberechnung aus</div>
+  openSheet(`${blattKopfHtml({ic:'edit', titel:'Match bearbeiten', unter:'Änderungen lösen eine Neuberechnung aus'})}
     <div class="builder" style="margin-top:16px">
       <div class="team-block A"><div class="team-label">Team A</div>${slot('A',1)}${slot('A',2)}</div>
       <div class="vs-mid"><span class="line"></span><span class="vs">VS</span><span class="line"></span></div>

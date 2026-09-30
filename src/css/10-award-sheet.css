@@ -1,9 +1,5 @@
   /* ============ [§C21] AWARD SHEET REDESIGN (Winner Hero + Liste) ============ */
   /* Saubere Award-Liste statt Podium */
-  .aw-list-label{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
-    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:18px 4px 8px;
-    display:flex;align-items:center;gap:8px}
-  .aw-list-label::after{content:"";flex:1;height:1px;background:var(--line)}
   .aw-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
   .aw-li{display:flex;align-items:center;gap:12px;background:var(--surface);
     border:1px solid var(--line);border-radius:14px;padding:10px 14px;position:relative;overflow:hidden;
@@ -47,11 +43,6 @@
     font-size:9px;font-weight:700;color:var(--muted);background:var(--surface3);
     padding:2px 7px;border-radius:6px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;align-self:flex-start}
 
-  /* Loser-Hero-Icon-Variante */
-  .aw-hero-icon-glow.red{
-    background:linear-gradient(155deg,rgba(240,86,106,.15),rgba(240,86,106,.04));
-    border:1px solid rgba(240,86,106,.35);color:var(--red);
-    box-shadow:0 0 24px rgba(240,86,106,.25)}
 
   /* ═══ AWARD-HERO (Platz 1 als großer Hero, ersetzt Podium) ═══
      Farbe wird per inline-style --c="R,G,B" gesetzt (aus meta.cls). */
