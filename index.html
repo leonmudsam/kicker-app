@@ -5180,7 +5180,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.7aba1be9';
+const BUILD_VERSION='2026.09.30.ab3fa1cc';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -31413,7 +31413,7 @@ const DISZIPLINEN = [
       art:'fuegung',
       klasse:'besonders', aus:2.54,
       wie:'Der Torschnitt der eigenen Partien gegen den aller Partien desselben Monats.',
-      cond:'In den eigenen Partien fallen mindestens 1 Tore mehr als im Ligaschnitt des Monats',
+      cond:'In den eigenen Partien fällt mindestens 1 Tor je Partie mehr als im Ligaschnitt des Monats',
       ...(_stWertung(
         p=>p.games>=8,
         (p,c)=>(p.gf+p.ga)/p.games-c.L.torSchnitt,
