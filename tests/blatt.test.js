@@ -2449,6 +2449,49 @@ const ok = (c, msg, det) => {
   blattPunkt = blattPunkt.out;
   ok(blattWort.length === 0, 'dieselbe Sache heißt überall gleich, und niemand wird geduzt',
      [...new Set(blattWort)].join(' | ') || 'keine Abweichung');
+  // Jedes Award-Blatt, beide Zeiträume: ein Wert trägt seine Einheit
+  // ausgeschrieben („6,5 /Sp.", „9,7 Gegen/Sp.", „4× POTD", „0 S · 3 Sp."),
+  // eine Serie beginnt beim zweiten Ergebnis („1er Serie", „1er
+  // Niederlagen"), eins steht in der Einzahl („1 Carries"), und die Spitze
+  // heißt nicht „Best". Dazu dieselbe Zahl für dieselbe Überraschung: die
+  // Kachel zeigte 71 %, die Chance der Gegenseite, Blatt und Liga 30 %. Und
+  // die Liste des Underdog-Helden war nach Quote sortiert und zeigte die
+  // Anzahl: Platz 5 stand mit 2× hinter Platz 2 mit 1×.
+  const awBlatt = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const fehler = [];
+    const KURZ = /\/Sp\.|Gegen\/|\bPOT[WD]\b|(^|\s)1 Carries\b|(^|\s)1er\b|\d S · |\bSp\.|\bBest ·/i;
+    for(const p of ['season', 'week']){
+      K("tab='awards';awView='awards';awPeriod='" + p + "';render()");
+      for(const k of K('Object.keys(AWARD_META)')){
+        K('closeSheet(true)'); K('showAward(' + JSON.stringify(k) + ')');
+        const zeilen = document.getElementById('sheet').innerText.split('\n');
+        zeilen.filter(z => KURZ.test(z)).forEach(z => fehler.push(p + ' ' + k + ': ' + z.trim()));
+      }
+      K('closeSheet(true)');
+      const kachel = (document.querySelector('[data-award="upset"] .aw-t-val') || {}).textContent;
+      K("showAward('upset')");
+      const blatt = (document.getElementById('sheet').innerText.match(/Siegchance nur (\d+)/) || [])[1];
+      if(kachel && kachel !== blatt + '%') fehler.push(p + ' Überraschung: Kachel ' + kachel + ', Blatt ' + blatt + '%');
+      K('closeSheet(true)');
+      const ud = K("(awardRankings(awPeriod, awSeasonId).underdogList||[]).map(x=>x.pct)");
+      if(ud.some((v, i) => i && v > ud[i-1])) fehler.push(p + ' Underdog-Held nicht nach Quote');
+      K("showAward('underdog')");
+      const udW = [...document.querySelectorAll('#sheet .aw-winner-val, #sheet .aw-li-val')].map(e => e.textContent.trim());
+      if(ud.length && !udW.every(w => /^\d+%/.test(w))) fehler.push(p + ' Underdog-Held zeigt ' + udW.slice(0, 3).join(', '));
+      K('closeSheet(true)');
+    }
+    // Neben den Siegern steht ihr Stand zuerst: „Stefan & Martin 8:10".
+    K("period='season'; openTopList('periodUpset')");
+    [...document.querySelectorAll('#sheet .aw-li-detail')].forEach(d => {
+      const m = d.textContent.match(/^(\d+):(\d+)/);
+      if(m && +m[1] < +m[2]) fehler.push('Überraschung: ' + d.textContent.trim());
+    });
+    K("closeSheet(true); tab='ranking'; render()");
+    return fehler;
+  });
+  ok(awBlatt.length === 0, 'jedes Award-Blatt nennt seine Einheit ganz und die Überraschung mit einer Zahl',
+     [...new Set(awBlatt)].slice(0, 6).join(' | ') || 'alle');
   // Der Feed legt nur, was zu sehen ist: rund siebzig Karten und 4600
   // Knoten kosteten beim Öffnen und bei jedem Zurück aus einem Story-Blatt
   // 110 bis 140 ms Layout. Breaking und die Karte des Tages sind

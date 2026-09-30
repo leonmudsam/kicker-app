@@ -128,7 +128,7 @@ function openTopList(kind){
       rows:_upsetRanking(matchesInPeriod(period)).map(u=>{
         const w=u.m.winner==='A'?[u.m.a1,u.m.a2]:[u.m.b1,u.m.b2];
         return {ids:w, matchId:u.m.id, name:w.map(pname).join(' & '),
-          val:u.winPct+'%', detail:u.m.score_a+':'+u.m.score_b+' · '+dateStr(u.m.created_at)};
+          val:u.winPct+'%', detail:standSieger(u.m)+' · '+dateStr(u.m.created_at)};
       }),
       why:'Der Sieg mit der niedrigsten Siegchance vor dem Anpfiff.'});
   }
@@ -158,7 +158,7 @@ function showAward(key){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
+    zirkus:'circus',       baustelle:'cone',
     weekKing:'weekKing',   dayKing:'dayKing',
     plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
     // ── NEUE TEAM-AWARDS v4 ──
@@ -277,14 +277,14 @@ function showAward(key){
               ${aLeading?'<div class="aw-match-winner">Führt</div>':''}
               ${awMiniPair(top.idsA[0],top.idsA[1])}
               <div class="aw-match-team-name">${esc(teamAName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} S · ${top.gA} Sp.</div>
+              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} ${top.wA===1?'Sieg':'Siege'} · ${top.gA} Partien als Duo</div>
             </div>
             <div class="aw-match-vs">vs</div>
             <div class="aw-match-team" data-li-team="${esc(top.idsB.slice().sort().join('|'))}" style="cursor:pointer">
               ${bLeading?'<div class="aw-match-winner">Führt</div>':''}
               ${awMiniPair(top.idsB[0],top.idsB[1])}
               <div class="aw-match-team-name">${esc(teamBName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} S · ${top.gB} Sp.</div>
+              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} ${top.wB===1?'Sieg':'Siege'} · ${top.gB} Partien als Duo</div>
             </div>
           </div>
         </div>`;
@@ -309,46 +309,48 @@ function showAward(key){
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     }
   } else {
+    // Ein Wert trägt seine Einheit ausgeschrieben: „6,5 /Sp.", „9,7 Gegen/Sp."
+    // und „4× POTD" standen hier als Kürzel, dieselbe Größe hieß in drei
+    // Zeilen dreimal anders, und „1 Carries" stand in der Mehrzahl [§6].
     const arr = (() => {
       switch(key){
         case 'wins':       return R.winsList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Siege',sort:x.v}));
         case 'mvt':        return R.mvt.map(x=>({ids:x.ids,name:tn(x.ids),val:(x.v>=0?'+':'')+Math.round(x.v)+' Elo',sort:Math.round(x.v)}));
         case 'streaks':    return R.streaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
         case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma(x.avg,1)+' Tore',sort:Math.round(x.avg*10)}));
-        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Gegentore',sort:-Math.round(x.v/x.g*10)}));
         case 'perfect':    return R.perfect.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'grinder':    return R.grinder.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Spiele',sort:x.v}));
         case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
-        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
-        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
+        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Tore',sort:-Math.round(x.v/x.g*10)}));
+        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Gegentore',sort:Math.round(x.v/x.g*10)}));
         case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.g+'×)',sort:Math.round(x.pct*1000)}));
         case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Zu-Null',sort:x.v}));
+        case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+(x.v===1?' Sieg':' Siege')+' zu null',sort:x.v}));
         case 'worstTeam':  return R.worstTeam.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.w/x.g*100)+'%',sort:-Math.round(x.w/x.g*100)}));
         case 'bestDuo':    return R.bestDuo.map(x=>({ids:x.ids,name:tn(x.ids),val:x.g+' Spiele',sort:x.g}));
         case 'onFire':     return R.onFire.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'coldStreak': return R.coldStreak.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Niederlagen',sort:x.v}));
+        case 'coldStreak': return R.coldStreak.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
         case 'lossStreaks':return R.lossStreaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'carryKing':  return R.carryList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Carries',sort:x.v}));
+        case 'carryKing':  return R.carryList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+(x.v===1?' Carry':' Carries'),sort:x.v}));
         case 'showmaster': return R.showmasterList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× 10:0',sort:x.v}));
         case 'solo':       return R.soloList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'formtief':   return R.formtief.map(x=>({ids:[x.id],name:pname(x.id),val:'-'+Math.round(x.drop)+' Elo',sort:Math.round(x.drop)}));
         case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         case 'baustelle':  return R.baustelleList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.best+'er Serie',sort:x.best}));
-        case 'peakElo':    return (R.peakEloList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Elo',sort:x.v}));
-        case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTW',sort:x.v}));
-        case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTD',sort:x.v}));
+        case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Player of the Week',sort:x.v}));
+        case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Player of the Day',sort:x.v}));
         // ── NEUE AWARDS v3 ──
-        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+komma(x.v,1)+' /Sp.',sort:Math.round(x.v*10)}));
-        case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Underdog-Sieg',sort:x.v}));
+        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+(x.v>=0?'+':'')+komma(x.v,1)+' Tore',sort:Math.round(x.v*10)}));
+        case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         // ── NEUE TEAM-AWARDS v4 ──
         case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
-        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
+        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:'Ø '+komma(x.v,2)+' Gegentore',sort:-Math.round(x.v*100)}));
         case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         // ── NEUE NEGATIV-AWARDS v6 ──
-        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
+        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:'Ø '+komma(x.v,2)+' Gegentore',sort:Math.round(x.v*100)}));
         case 'favoriteLoser': return R.favoriteLoserList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.v*100)+'% ('+x.losses+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         default: return [];
       }
@@ -387,7 +389,7 @@ function showAward(key){
           : `<div class="aw-winner-crown">${svgI('crown')}</div>`;
         const heroBadge = isNeg
           ? `<span class="aw-winner-badge">Schandfleck · #1</span>`
-          : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Best · #1</span>`;
+          : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Spitze · #1</span>`;
 
         heroHtml = `
           <div class="aw-winner ${isNeg?'shame':''}" style="--c:${heroRgb}" ${heroClick}>

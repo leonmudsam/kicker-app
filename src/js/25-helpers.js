@@ -22,6 +22,13 @@ function komma(v, n){
   const z = Number(v);
   return (isFinite(z) ? z : 0).toFixed(n == null ? 1 : n).replace('.', ',');
 }
+// Der Stand aus Sicht der Sieger. Wo neben einem Stand nur die Sieger stehen,
+// las „Stefan & Martin 8:10" als Niederlage: gespeichert ist der Stand in der
+// Reihenfolge der Eingabe (Team A zuerst), und fünf Stellen schrieben ihn so
+// ab, während zwei andere ihn schon umdrehten [§C27].
+function standSieger(m){
+  return m.winner === 'B' ? m.score_b + ':' + m.score_a : m.score_a + ':' + m.score_b;
+}
 function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen

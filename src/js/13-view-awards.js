@@ -435,23 +435,6 @@ function _awardRankingsUncached(period, sid){
   const baustelleList=_computeBarstelle(ms);
   const showmasterList=_computeShowmaster(ms);
 
-  // Peak Elo: höchster je in einer Saison erreichter Elo-Stand. NUR im Gesamt-Modus.
-  // Wert überdauert Saison-Resets, ist also der Allzeit-Höchststand pro Spieler.
-  let peakEloList=[];
-  if(period==='all'){
-    const pk = getGlobalSim().peakElo || {};
-    const startElo = cfg.start_elo ?? 0;
-    peakEloList = Object.entries(pk)
-      .map(([id,v])=>({id, v:Math.round(v)}))
-      .filter(x => {
-        const p = pmap()[x.id];
-        if(!p || p.hidden) return false;
-        // Nur Spieler die jemals über start_elo lagen
-        return x.v > startElo;
-      })
-      .sort((a,b)=>b.v-a.v);
-  }
-
   // ═══ POTW-/POTD-KÖNIG: kumulierte Player-of-the-Week / Player-of-the-Day Auszeichnungen ═══
   // Beide Funktionen schließen den laufenden Zeitraum automatisch aus und sind identisch
   // mit dem Zähler der POTW-/POTD-Badges → konsistent zwischen Award und Badge.
@@ -621,7 +604,6 @@ function _awardRankingsUncached(period, sid){
     soloList:_fSingle(soloList), formtief, // formtief filtert hidden bereits intern
     zirkusList:_fTeam(zirkusList), baustelleList:_fTeam(baustelleList),
     showmasterList:_fSingle(showmasterList),
-    peakEloList:_fSingle(peakEloList),
     weekKingList, dayKingList, // weekKingList/dayKingList nutzen activePlayers() bereits
     // ── NEUE AWARDS v3 ──
     plusMinusList:_fSingle(plusMinusList),
@@ -846,7 +828,10 @@ function currentStreaks(ms,forWins){
       if(forWins?w:!w) cur[id]=(cur[id]||0)+1; else cur[id]=0;
     });
   });
-  return Object.entries(cur).filter(([,v])=>v>=1).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
+  // Eine Serie beginnt mit dem zweiten Ergebnis. Die Kachel verlangt das seit
+  // jeher, das Blatt dahinter nicht: unter „On Fire" standen „1er Serie" und
+  // unter „Eiskalt erwischt" sieben Spieler mit „1er Niederlagen".
+  return Object.entries(cur).filter(([,v])=>v>=2).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
 }
 
 // Längste Siegesserie je Spieler innerhalb der (zeitlich sortierten) Match-Liste
@@ -913,7 +898,7 @@ function _vAwardsCore(){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
+    zirkus:'circus',       baustelle:'cone',
     weekKing:'weekKing',   dayKing:'dayKing',
     plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
     // ── NEUE TEAM-AWARDS v4 ──
@@ -1034,7 +1019,7 @@ function _vAwardsCore(){
         eg0=g(R.endgegner),cl0=g(R.clutchList),ic0=g(R.iceList),
         wt0=g(R.worstTeam),bd0=g(R.bestDuo),of0=g(R.onFire),cs0=g(R.coldStreak),ck0=g(R.carryList),
         sl0=g(R.soloList),ft0=g(R.formtief),zk0=g(R.zirkusList),bs0=g(R.baustelleList),
-        sm0=g(R.showmasterList),pk0=g(R.peakEloList),
+        sm0=g(R.showmasterList),
         wk0=g(R.weekKingList),dk0=g(R.dayKingList),
         // ── NEUE AWARDS v3 ──
         pm0=g(R.plusMinusList),uh0=g(R.underdogList),pv0=g(R.pechvogelList),
@@ -1311,11 +1296,14 @@ function _vAwardsCore(){
     : empty('solo','acid','Einzelkämpfer'));
   // Match-Awards: zeigen die Avatare des Gewinner-Teams (winnerSide via m.winner)
   // Match-Awards haben pro Match nur einen Eintrag → keine Komma-Liste nötig
+  // Die Zahl der Überraschung ist die Siegchance der SIEGER, wie in der Liga,
+  // in der Top-5-Liste und im Blatt. Die Kachel zeigte die der Gegenseite, und
+  // dieselbe Partie stand mit 71 % hier und mit 30 % überall sonst.
   special.push(u0
-    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),u0.m.score_a+':'+u0.m.score_b+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round(u0.sp*100)+'%')
+    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),standSieger(u0.m)+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round((1-u0.sp)*100)+'%')
     : empty('upset','orange','Größte Überraschung'));
   special.push(b0
-    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),b0.m.score_a+':'+b0.m.score_b,'+'+b0.diff)
+    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),standSieger(b0.m),'+'+b0.diff)
     : empty('biggest','purple','Höchster Sieg'));
   special.push(gr0
     ? card('grinder','blue','Vielspieler',[gr0.id],esc(topNames(R.grinder,x=>x.v,x=>pname(x.id))),pl,gr0.v)
@@ -1462,7 +1450,6 @@ const AWARD_META={
   formtief:    {title:'Formtief',              cls:'red',   why:`Der größte Abstand zwischen dem höchsten und dem aktuellen Elo-Stand innerhalb einer Saison.`},
   zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
   baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},
-  peakElo:     {title:'Peak Elo',              cls:'gold',  why:`Der höchste je erreichte Elo-Stand innerhalb einer Saison, über alle Saisons.`},
   weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Die meisten Titel als Player of the Week. Die laufende Woche zählt noch nicht.`},
   dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Die meisten Titel als Player of the Day. Der laufende Tag zählt noch nicht.`},
   // ── AWARDS v3 ──

@@ -5181,7 +5181,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.2f38bb97';
+const BUILD_VERSION='2026.09.30.51d9a08f';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -11229,23 +11229,6 @@ function _awardRankingsUncached(period, sid){
   const baustelleList=_computeBarstelle(ms);
   const showmasterList=_computeShowmaster(ms);
 
-  // Peak Elo: höchster je in einer Saison erreichter Elo-Stand. NUR im Gesamt-Modus.
-  // Wert überdauert Saison-Resets, ist also der Allzeit-Höchststand pro Spieler.
-  let peakEloList=[];
-  if(period==='all'){
-    const pk = getGlobalSim().peakElo || {};
-    const startElo = cfg.start_elo ?? 0;
-    peakEloList = Object.entries(pk)
-      .map(([id,v])=>({id, v:Math.round(v)}))
-      .filter(x => {
-        const p = pmap()[x.id];
-        if(!p || p.hidden) return false;
-        // Nur Spieler die jemals über start_elo lagen
-        return x.v > startElo;
-      })
-      .sort((a,b)=>b.v-a.v);
-  }
-
   // ═══ POTW-/POTD-KÖNIG: kumulierte Player-of-the-Week / Player-of-the-Day Auszeichnungen ═══
   // Beide Funktionen schließen den laufenden Zeitraum automatisch aus und sind identisch
   // mit dem Zähler der POTW-/POTD-Badges → konsistent zwischen Award und Badge.
@@ -11415,7 +11398,6 @@ function _awardRankingsUncached(period, sid){
     soloList:_fSingle(soloList), formtief, // formtief filtert hidden bereits intern
     zirkusList:_fTeam(zirkusList), baustelleList:_fTeam(baustelleList),
     showmasterList:_fSingle(showmasterList),
-    peakEloList:_fSingle(peakEloList),
     weekKingList, dayKingList, // weekKingList/dayKingList nutzen activePlayers() bereits
     // ── NEUE AWARDS v3 ──
     plusMinusList:_fSingle(plusMinusList),
@@ -11640,7 +11622,10 @@ function currentStreaks(ms,forWins){
       if(forWins?w:!w) cur[id]=(cur[id]||0)+1; else cur[id]=0;
     });
   });
-  return Object.entries(cur).filter(([,v])=>v>=1).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
+  // Eine Serie beginnt mit dem zweiten Ergebnis. Die Kachel verlangt das seit
+  // jeher, das Blatt dahinter nicht: unter „On Fire" standen „1er Serie" und
+  // unter „Eiskalt erwischt" sieben Spieler mit „1er Niederlagen".
+  return Object.entries(cur).filter(([,v])=>v>=2).map(([id,v])=>({id,v})).sort((a,b)=>b.v-a.v);
 }
 
 // Längste Siegesserie je Spieler innerhalb der (zeitlich sortierten) Match-Liste
@@ -11707,7 +11692,7 @@ function _vAwardsCore(){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
+    zirkus:'circus',       baustelle:'cone',
     weekKing:'weekKing',   dayKing:'dayKing',
     plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
     // ── NEUE TEAM-AWARDS v4 ──
@@ -11828,7 +11813,7 @@ function _vAwardsCore(){
         eg0=g(R.endgegner),cl0=g(R.clutchList),ic0=g(R.iceList),
         wt0=g(R.worstTeam),bd0=g(R.bestDuo),of0=g(R.onFire),cs0=g(R.coldStreak),ck0=g(R.carryList),
         sl0=g(R.soloList),ft0=g(R.formtief),zk0=g(R.zirkusList),bs0=g(R.baustelleList),
-        sm0=g(R.showmasterList),pk0=g(R.peakEloList),
+        sm0=g(R.showmasterList),
         wk0=g(R.weekKingList),dk0=g(R.dayKingList),
         // ── NEUE AWARDS v3 ──
         pm0=g(R.plusMinusList),uh0=g(R.underdogList),pv0=g(R.pechvogelList),
@@ -12105,11 +12090,14 @@ function _vAwardsCore(){
     : empty('solo','acid','Einzelkämpfer'));
   // Match-Awards: zeigen die Avatare des Gewinner-Teams (winnerSide via m.winner)
   // Match-Awards haben pro Match nur einen Eintrag → keine Komma-Liste nötig
+  // Die Zahl der Überraschung ist die Siegchance der SIEGER, wie in der Liga,
+  // in der Top-5-Liste und im Blatt. Die Kachel zeigte die der Gegenseite, und
+  // dieselbe Partie stand mit 71 % hier und mit 30 % überall sonst.
   special.push(u0
-    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),u0.m.score_a+':'+u0.m.score_b+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round(u0.sp*100)+'%')
+    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),standSieger(u0.m)+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round((1-u0.sp)*100)+'%')
     : empty('upset','orange','Größte Überraschung'));
   special.push(b0
-    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),b0.m.score_a+':'+b0.m.score_b,'+'+b0.diff)
+    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),standSieger(b0.m),'+'+b0.diff)
     : empty('biggest','purple','Höchster Sieg'));
   special.push(gr0
     ? card('grinder','blue','Vielspieler',[gr0.id],esc(topNames(R.grinder,x=>x.v,x=>pname(x.id))),pl,gr0.v)
@@ -12256,7 +12244,6 @@ const AWARD_META={
   formtief:    {title:'Formtief',              cls:'red',   why:`Der größte Abstand zwischen dem höchsten und dem aktuellen Elo-Stand innerhalb einer Saison.`},
   zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
   baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},
-  peakElo:     {title:'Peak Elo',              cls:'gold',  why:`Der höchste je erreichte Elo-Stand innerhalb einer Saison, über alle Saisons.`},
   weekKing:    {title:'Wochenkönig',           cls:'gold',  why:`Die meisten Titel als Player of the Week. Die laufende Woche zählt noch nicht.`},
   dayKing:     {title:'Tageskönig',            cls:'gold',  why:`Die meisten Titel als Player of the Day. Der laufende Tag zählt noch nicht.`},
   // ── AWARDS v3 ──
@@ -12404,7 +12391,7 @@ function openTopList(kind){
       rows:_upsetRanking(matchesInPeriod(period)).map(u=>{
         const w=u.m.winner==='A'?[u.m.a1,u.m.a2]:[u.m.b1,u.m.b2];
         return {ids:w, matchId:u.m.id, name:w.map(pname).join(' & '),
-          val:u.winPct+'%', detail:u.m.score_a+':'+u.m.score_b+' · '+dateStr(u.m.created_at)};
+          val:u.winPct+'%', detail:standSieger(u.m)+' · '+dateStr(u.m.created_at)};
       }),
       why:'Der Sieg mit der niedrigsten Siegchance vor dem Anpfiff.'});
   }
@@ -12434,7 +12421,7 @@ function showAward(key){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
+    zirkus:'circus',       baustelle:'cone',
     weekKing:'weekKing',   dayKing:'dayKing',
     plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
     // ── NEUE TEAM-AWARDS v4 ──
@@ -12553,14 +12540,14 @@ function showAward(key){
               ${aLeading?'<div class="aw-match-winner">Führt</div>':''}
               ${awMiniPair(top.idsA[0],top.idsA[1])}
               <div class="aw-match-team-name">${esc(teamAName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} S · ${top.gA} Sp.</div>
+              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} ${top.wA===1?'Sieg':'Siege'} · ${top.gA} Partien als Duo</div>
             </div>
             <div class="aw-match-vs">vs</div>
             <div class="aw-match-team" data-li-team="${esc(top.idsB.slice().sort().join('|'))}" style="cursor:pointer">
               ${bLeading?'<div class="aw-match-winner">Führt</div>':''}
               ${awMiniPair(top.idsB[0],top.idsB[1])}
               <div class="aw-match-team-name">${esc(teamBName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} S · ${top.gB} Sp.</div>
+              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} ${top.wB===1?'Sieg':'Siege'} · ${top.gB} Partien als Duo</div>
             </div>
           </div>
         </div>`;
@@ -12585,46 +12572,48 @@ function showAward(key){
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     }
   } else {
+    // Ein Wert trägt seine Einheit ausgeschrieben: „6,5 /Sp.", „9,7 Gegen/Sp."
+    // und „4× POTD" standen hier als Kürzel, dieselbe Größe hieß in drei
+    // Zeilen dreimal anders, und „1 Carries" stand in der Mehrzahl [§6].
     const arr = (() => {
       switch(key){
         case 'wins':       return R.winsList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Siege',sort:x.v}));
         case 'mvt':        return R.mvt.map(x=>({ids:x.ids,name:tn(x.ids),val:(x.v>=0?'+':'')+Math.round(x.v)+' Elo',sort:Math.round(x.v)}));
         case 'streaks':    return R.streaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
         case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma(x.avg,1)+' Tore',sort:Math.round(x.avg*10)}));
-        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
+        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Gegentore',sort:-Math.round(x.v/x.g*10)}));
         case 'perfect':    return R.perfect.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'grinder':    return R.grinder.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Spiele',sort:x.v}));
         case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
-        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
-        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:komma((x.v/x.g),1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
+        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Tore',sort:-Math.round(x.v/x.g*10)}));
+        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Gegentore',sort:Math.round(x.v/x.g*10)}));
         case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.g+'×)',sort:Math.round(x.pct*1000)}));
         case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Zu-Null',sort:x.v}));
+        case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+(x.v===1?' Sieg':' Siege')+' zu null',sort:x.v}));
         case 'worstTeam':  return R.worstTeam.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.w/x.g*100)+'%',sort:-Math.round(x.w/x.g*100)}));
         case 'bestDuo':    return R.bestDuo.map(x=>({ids:x.ids,name:tn(x.ids),val:x.g+' Spiele',sort:x.g}));
         case 'onFire':     return R.onFire.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'coldStreak': return R.coldStreak.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Niederlagen',sort:x.v}));
+        case 'coldStreak': return R.coldStreak.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
         case 'lossStreaks':return R.lossStreaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'carryKing':  return R.carryList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Carries',sort:x.v}));
+        case 'carryKing':  return R.carryList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+(x.v===1?' Carry':' Carries'),sort:x.v}));
         case 'showmaster': return R.showmasterList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× 10:0',sort:x.v}));
         case 'solo':       return R.soloList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
         case 'formtief':   return R.formtief.map(x=>({ids:[x.id],name:pname(x.id),val:'-'+Math.round(x.drop)+' Elo',sort:Math.round(x.drop)}));
         case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         case 'baustelle':  return R.baustelleList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.best+'er Serie',sort:x.best}));
-        case 'peakElo':    return (R.peakEloList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Elo',sort:x.v}));
-        case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTW',sort:x.v}));
-        case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTD',sort:x.v}));
+        case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Player of the Week',sort:x.v}));
+        case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Player of the Day',sort:x.v}));
         // ── NEUE AWARDS v3 ──
-        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+komma(x.v,1)+' /Sp.',sort:Math.round(x.v*10)}));
-        case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Underdog-Sieg',sort:x.v}));
+        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+(x.v>=0?'+':'')+komma(x.v,1)+' Tore',sort:Math.round(x.v*10)}));
+        case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
         // ── NEUE TEAM-AWARDS v4 ──
         case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
-        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
+        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:'Ø '+komma(x.v,2)+' Gegentore',sort:-Math.round(x.v*100)}));
         case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         // ── NEUE NEGATIV-AWARDS v6 ──
-        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:komma(x.v,2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
+        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:'Ø '+komma(x.v,2)+' Gegentore',sort:Math.round(x.v*100)}));
         case 'favoriteLoser': return R.favoriteLoserList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.v*100)+'% ('+x.losses+'/'+x.games+')',sort:Math.round(x.v*1000)}));
         default: return [];
       }
@@ -12663,7 +12652,7 @@ function showAward(key){
           : `<div class="aw-winner-crown">${svgI('crown')}</div>`;
         const heroBadge = isNeg
           ? `<span class="aw-winner-badge">Schandfleck · #1</span>`
-          : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Best · #1</span>`;
+          : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Spitze · #1</span>`;
 
         heroHtml = `
           <div class="aw-winner ${isNeg?'shame':''}" style="--c:${heroRgb}" ${heroClick}>
@@ -15594,7 +15583,7 @@ function playerAwards(id){
     clutch:R.clutchList, carryKing:R.carryList,
     onFire:R.onFire, coldStreak:R.coldStreak, lossStreaks:R.lossStreaks,
     solo:R.soloList, formtief:R.formtief, showmaster:R.showmasterList,
-    ice:R.iceList, peakElo:R.peakEloList,
+    ice:R.iceList,
     weekKing:R.weekKingList, dayKing:R.dayKingList,
     // ── NEUE AWARDS v3 ──
     plusMinus:R.plusMinusList, underdog:R.underdogList, pechvogel:R.pechvogelList,
@@ -15612,11 +15601,12 @@ function playerAwards(id){
     carryKing:x=>x.v, onFire:x=>x.v, coldStreak:x=>x.v,
     lossStreaks:x=>x.v, solo:x=>Math.round(x.wr*100),
     formtief:x=>Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
-    peakElo:x=>x.v,
     weekKing:x=>x.v, dayKing:x=>x.v,
     // ── NEUE AWARDS v3 ──
     plusMinus:x=>Math.round(x.v*10), // höchster Tor-Saldo gewinnt
-    underdog:x=>x.v,                  // meiste Underdog-Siege gewinnt
+    // Die Quote, wie im Awards-Reiter: nach der Anzahl sortiert stand hier ein
+    // anderer Erster als auf der Kachel, die denselben Namen trägt.
+    underdog:x=>Math.round(x.pct*1000),
     pechvogel:x=>Math.round(x.pct*1000),  // höchstes Pct an knappen Niederlagen = Top-1
     // ── NEUE NEGATIV-AWARDS v6 ──
     favoriteLoser:x=>Math.round(x.v*1000) // rate-basiert (v = Quote)
@@ -15633,8 +15623,8 @@ function playerAwards(id){
     carryKing:x=>x.v, onFire:x=>x.v+'er', coldStreak:x=>x.v+'er',
     lossStreaks:x=>x.v+'er', solo:x=>Math.round(x.wr*100)+'%',
     formtief:x=>'-'+Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
-    peakElo:x=>x.v, weekKing:x=>x.v, dayKing:x=>x.v,
-    plusMinus:x=>(x.v>=0?'+':'')+komma(x.v,1), underdog:x=>x.v,
+    weekKing:x=>x.v, dayKing:x=>x.v,
+    plusMinus:x=>(x.v>=0?'+':'')+komma(x.v,1), underdog:x=>Math.round(x.pct*100)+'%',
     pechvogel:x=>Math.round(x.pct*100)+'%',
     // ── NEUE NEGATIV-AWARDS v6 ──
     favoriteLoser:x=>Math.round(x.v*100)+'%'
@@ -15921,7 +15911,7 @@ function showPlayer(id){
   // Negative: Schandtafel + negative Rollen-Awards (Zahnloser Stürmer, Löchrigste Abwehr).
   const POSITIVE_KEYS = new Set([
     'wins','perfect','clutch','carryKing','solo',
-    'grinder','showmaster','onFire','streaks','peakElo',
+    'grinder','showmaster','onFire','streaks',
     'weekKing','dayKing',
     // Rollen-Awards (positiv)
     'scorer','wall','ice',
@@ -16752,7 +16742,7 @@ function showPlayerAwards(playerId, awards){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
+    zirkus:'circus',       baustelle:'cone',
     weekKing:'weekKing',   dayKing:'dayKing',
     plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
     // ── NEUE TEAM-AWARDS v4 ──
@@ -18808,6 +18798,13 @@ function komma(v, n){
   const z = Number(v);
   return (isFinite(z) ? z : 0).toFixed(n == null ? 1 : n).replace('.', ',');
 }
+// Der Stand aus Sicht der Sieger. Wo neben einem Stand nur die Sieger stehen,
+// las „Stefan & Martin 8:10" als Niederlage: gespeichert ist der Stand in der
+// Reihenfolge der Eingabe (Team A zuerst), und fünf Stellen schrieben ihn so
+// ab, während zwei andere ihn schon umdrehten [§C27].
+function standSieger(m){
+  return m.winner === 'B' ? m.score_b + ':' + m.score_a : m.score_a + ':' + m.score_b;
+}
 function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen
@@ -20099,8 +20096,7 @@ function _buildStories(){
           actorIds:[w.nach, w.vor], subjectKey:'rang1',
           title:`${nameOf(w.nach)} übernimmt Platz 1`,
           text:`${nameOf(w.vor)} gibt die Spitze ab.`,
-          evidence:(w.m.winner === 'A' ? w.m.score_a + ':' + w.m.score_b
-                                       : w.m.score_b + ':' + w.m.score_a),
+          evidence:standSieger(w.m),
           importance:9,
           detail:{vor:w.vor, nach:w.nach}
         }));
@@ -20898,7 +20894,7 @@ function _buildStories(){
       const _sg = (biggest.m.winner === 'A' ? [biggest.m.a1, biggest.m.a2] : [biggest.m.b1, biggest.m.b2]).filter(Boolean);
       _wochenTeile.push({
         art: 'blowout', ic: 'thriller', label: 'Klarster Sieg',
-        pids: _sg, wert: biggest.m.score_a + ':' + biggest.m.score_b, matchId: biggest.m.id,
+        pids: _sg, wert: standSieger(biggest.m), matchId: biggest.m.id,
         satz: `${_sg.map(nameOf).join(' und ')} gewinnen mit ${biggest.diff} Toren Unterschied. Kein Sieg dieser Woche war deutlicher.`
       });
     }
@@ -21077,8 +21073,7 @@ function _buildStories(){
         const wNames = _namenListe(gs.winners.map(nameOf));
         const lNames = _namenListe(gs.losers.map(nameOf));
         const pct = Math.max(1, Math.round(gs.chance * 100));
-        const tore = gs.m.winner === 'A'
-          ? gs.m.score_a + ':' + gs.m.score_b : gs.m.score_b + ':' + gs.m.score_a;
+        const tore = standSieger(gs.m);
         stories.push({
           id: 'giant_slayer_'+gs.m.id,
           cat: 'highlight', ic: 'giantSlayer',
@@ -21272,7 +21267,7 @@ function _buildStories(){
       const _tg = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).filter(Boolean);
       _wochenTeile.push({
         art: 'thriller', ic: 'thriller', label: 'Krimi der Woche',
-        pids: _tg, wert: m.score_a + ':' + m.score_b, matchId: m.id,
+        pids: _tg, wert: standSieger(m), matchId: m.id,
         satz: `${_tg.map(nameOf).join(' und ')} entscheiden das Spiel mit dem letzten Tor. ${thriller.totalScore} Tore fielen, mehr als in jeder anderen Partie dieser Woche.`
       });
     }
@@ -23075,7 +23070,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'history', ic:'calendar', prio:5,
       title:`Die ${marke}. Partie der Liga`,
       desc: sieger.length
-        ? `Gespielt am ${dd}, gewonnen von ${sieger.join(' und ')} mit ${mObj.score_a}:${mObj.score_b}.`
+        ? `Gespielt am ${dd}, gewonnen von ${sieger.join(' und ')} mit ${standSieger(mObj)}.`
         : `Gespielt am ${dd}, Endstand ${mObj.score_a}:${mObj.score_b}.`,
       vv: marke, vl:'Partien' };
   }});
@@ -28611,8 +28606,7 @@ function _newsDetailMitte(s){
           if(!t.matchId || t.matchId === d.matchId) return '';
           const m = (matches || []).find(x => x.id === t.matchId);
           if(!m) return '';
-          return m.winner === 'A' ? m.score_a + ':' + m.score_b
-                                  : m.score_b + ':' + m.score_a;
+          return standSieger(m);
         };
         const _zeile = t => {
           const uhr = t.ms ? _newsUhrzeit(t.ms) : '';

@@ -40,7 +40,7 @@ function playerAwards(id){
     clutch:R.clutchList, carryKing:R.carryList,
     onFire:R.onFire, coldStreak:R.coldStreak, lossStreaks:R.lossStreaks,
     solo:R.soloList, formtief:R.formtief, showmaster:R.showmasterList,
-    ice:R.iceList, peakElo:R.peakEloList,
+    ice:R.iceList,
     weekKing:R.weekKingList, dayKing:R.dayKingList,
     // ── NEUE AWARDS v3 ──
     plusMinus:R.plusMinusList, underdog:R.underdogList, pechvogel:R.pechvogelList,
@@ -58,11 +58,12 @@ function playerAwards(id){
     carryKing:x=>x.v, onFire:x=>x.v, coldStreak:x=>x.v,
     lossStreaks:x=>x.v, solo:x=>Math.round(x.wr*100),
     formtief:x=>Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
-    peakElo:x=>x.v,
     weekKing:x=>x.v, dayKing:x=>x.v,
     // ── NEUE AWARDS v3 ──
     plusMinus:x=>Math.round(x.v*10), // höchster Tor-Saldo gewinnt
-    underdog:x=>x.v,                  // meiste Underdog-Siege gewinnt
+    // Die Quote, wie im Awards-Reiter: nach der Anzahl sortiert stand hier ein
+    // anderer Erster als auf der Kachel, die denselben Namen trägt.
+    underdog:x=>Math.round(x.pct*1000),
     pechvogel:x=>Math.round(x.pct*1000),  // höchstes Pct an knappen Niederlagen = Top-1
     // ── NEUE NEGATIV-AWARDS v6 ──
     favoriteLoser:x=>Math.round(x.v*1000) // rate-basiert (v = Quote)
@@ -79,8 +80,8 @@ function playerAwards(id){
     carryKing:x=>x.v, onFire:x=>x.v+'er', coldStreak:x=>x.v+'er',
     lossStreaks:x=>x.v+'er', solo:x=>Math.round(x.wr*100)+'%',
     formtief:x=>'-'+Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
-    peakElo:x=>x.v, weekKing:x=>x.v, dayKing:x=>x.v,
-    plusMinus:x=>(x.v>=0?'+':'')+komma(x.v,1), underdog:x=>x.v,
+    weekKing:x=>x.v, dayKing:x=>x.v,
+    plusMinus:x=>(x.v>=0?'+':'')+komma(x.v,1), underdog:x=>Math.round(x.pct*100)+'%',
     pechvogel:x=>Math.round(x.pct*100)+'%',
     // ── NEUE NEGATIV-AWARDS v6 ──
     favoriteLoser:x=>Math.round(x.v*100)+'%'
@@ -367,7 +368,7 @@ function showPlayer(id){
   // Negative: Schandtafel + negative Rollen-Awards (Zahnloser Stürmer, Löchrigste Abwehr).
   const POSITIVE_KEYS = new Set([
     'wins','perfect','clutch','carryKing','solo',
-    'grinder','showmaster','onFire','streaks','peakElo',
+    'grinder','showmaster','onFire','streaks',
     'weekKing','dayKing',
     // Rollen-Awards (positiv)
     'scorer','wall','ice',
@@ -1198,7 +1199,7 @@ function showPlayerAwards(playerId, awards){
     carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
     grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
     formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
+    zirkus:'circus',       baustelle:'cone',
     weekKing:'weekKing',   dayKing:'dayKing',
     plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
     // ── NEUE TEAM-AWARDS v4 ──
