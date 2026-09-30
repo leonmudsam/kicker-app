@@ -124,10 +124,15 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Ansichten (aufwertung-2.html), und der Entwurf nur
                       der Insignium-Leiter: gezeichnet mit dem Code aus
                       35b-prestige.js, der beim Erzeugen eingesetzt wird,
-                      der Zierkranz aus Schnörkelbügeln statt des
-                      Rankenkranzes, ein Kronenreif aus lodernden Blättern
-                      mit Kristallkrone, im dritten Grad jeder Stufe ein
-                      Vorgriff auf die nächste, die Verwandlung als Bühne,
+                      nach Vorlagen je Stufe — Reif mit Nieten, Schildring
+                      aus Sicheln, Volutenkranz aus Schnörkelbügeln,
+                      Zierkranz aus Schnörkeln und Blättern, Lorbeerreif
+                      mit Krone im dritten Grad, Kronenreif aus breitem
+                      Lorbeer, Ordensstern wie in der App —, Lilie oben
+                      und Raute unten auf jeder Stufe, Schwellen 0 bis
+                      4.500 und danach alle 500 eine Zacke, Metall, das mit
+                      der Stufe wärmer wird, die Verwandlung als Bühne, die
+                      ganze Leiter in der Laufbahn, der Fun Fact dazu,
                       52 px und der Schmuck je Feld im Browser gemessen
                       (insignium.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
