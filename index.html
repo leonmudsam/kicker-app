@@ -5181,7 +5181,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.29.c438aa3c';
+const BUILD_VERSION='2026.09.30.1126e810';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -20639,8 +20639,12 @@ function _buildStories(){
         // einmal. Der Satz nennt jetzt, was in diesen Partien zusammengekommen
         // ist [§C33].
         title: `${nameOf(c.pid)} feiert das ${c.total}. Spiel`,
+        // Die Siege der ersten hundert Partien, nicht die von heute: gezählt
+        // wurde über die ganze Laufbahn, und unter „Aus 100 Partien" konnten
+        // damit mehr als hundert Siege stehen.
         desc: (function(){
-          const alle = matchesOfPlayer(c.pid, matches) || [];
+          const t = new Date(c.when).getTime();
+          const alle = (matchesOfPlayer(c.pid, matches) || []).filter(m => mts(m) <= t);
           const siege = alle.filter(m => won(c.pid, m)).length;
           return `Aus ${c.total} Partien sind ${siege} Siege geworden, `
                + `das sind ${Math.round(100 * siege / Math.max(1, c.total))} %.`;
@@ -20781,8 +20785,11 @@ function _buildStories(){
           // Der Satz hiess „X feiert den 100. Sieg" und stand damit wortgleich
           // ueber sich selbst. Jeder Text nennt eine Zahl, die die Schlagzeile
           // noch nicht hat [§C33]: hier die Quote, aus der die Marke kommt.
+          // Die Partien bis zu der, mit der die Marke fiel — sonst wächst
+          // der Nenner mit jeder späteren Partie unter derselben Karte.
           desc: (function(){
-            const ges = (matchesOfPlayer(p.id, matches) || []).length;
+            const t = mts(last);
+            const ges = (matchesOfPlayer(p.id, matches) || []).filter(m => mts(m) <= t).length;
             return ges
               ? `${mark} Siege aus ${ges} Partien, das sind ${Math.round(100 * mark / ges)} %.`
               : `${mark} Siege stehen jetzt in der Bilanz.`;
@@ -21453,8 +21460,13 @@ function _buildStories(){
         // „kein Stolpern: Mit diesem Schlusspfiff waechst der Lauf zur echten
         // Serie" nannte keine Zahl, die die Schlagzeile nicht schon hat, und
         // stand gemessen fuenfzigmal wortgleich im Feed [§C33].
+        // „damit" heißt: bis zu DIESER Partie. Gezählt wurde bis heute —
+        // „Martin zündet die 8er-Serie" um 10:56 nannte „134 Siege aus 211
+        // Partien", die Zahl nach seiner letzten Partie des Tages, und sie
+        // wuchs mit jeder weiteren, unter einer Karte, die stehen bleibt.
         desc: (function(){
-          const alle = matchesOfPlayer(c.pid, matches) || [];
+          const t = new Date(c.when).getTime();
+          const alle = (matchesOfPlayer(c.pid, matches) || []).filter(m => mts(m) <= t);
           const siege = alle.filter(m => won(c.pid, m)).length;
           return `${_zahlwortDe(c.streak)} Siege in Folge. In der Laufbahn `
                + `stehen damit ${siege} Siege aus ${alle.length} Partien.`;

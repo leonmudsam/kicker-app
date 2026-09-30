@@ -5828,6 +5828,26 @@ ok(_saisonStart && _saisonStart.zahl === _saisonStart.soll && _saisonStart.soll 
    _saisonStart ? _saisonStart.zahl + ' Partien genannt, ' + _saisonStart.soll + ' bis dahin, '
      + _saisonStart.alle + ' im ganzen Monat' : 'keine Karte');
 
+// ── „damit" heißt bis zu dieser Partie ──────────────────────────────
+// „Martin zündet die 8er-Serie" um 10:56 nannte „134 Siege aus 211 Partien"
+// — die Zahl nach seiner letzten Partie des Tages. Jede Serienmarke im
+// Fenster wird gegen die rohen Partien bis zu ihrem Zeitpunkt nachgezählt.
+const _damit = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch = []; let n = 0;
+  _buildStories().filter(x => (x.dataRef || {}).type === 'win_streak').forEach(x => {
+    const z = x.desc.match(/(\\d+) Siege aus (\\d+) Partien/);
+    if(!z) return; n++;
+    const t = new Date(x.when).getTime(), pid = x.dataRef.pid;
+    const bis = matches.filter(m => matchOf(pid, m) && new Date(m.created_at).getTime() <= t);
+    const siege = bis.filter(m => won(pid, m)).length;
+    if(+z[1] !== siege || +z[2] !== bis.length) falsch.push(x.id + ': ' + z[0] + ' statt ' + siege + '/' + bis.length);
+  });
+  return {n, falsch};
+})())`));
+ok(_damit.n > 0 && _damit.falsch.length === 0,
+   'eine Serienmarke zählt die Laufbahn bis zu ihrer Partie',
+   _damit.falsch.slice(0, 2).join(' | ') || _damit.n + ' Marken');
+
 // ── Das Blatt rechnet bis zu seiner Partie ──────────────────────────
 // Das Jubiläum „100 Spiele" nannte darunter die Bilanz von heute („221 /
 // 134"), der Meilenstein „221W · 134L", die Duo-Serie die gemeinsame Bilanz
