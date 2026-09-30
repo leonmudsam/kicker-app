@@ -3,6 +3,26 @@
   .ic svg{display:block;width:1em;height:1em;stroke:currentColor;fill:none;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
+  /* Die Zeichenkachel [§C27] (zkHtml). Drei Größen, sechs Töne nach den
+     Rollen des Farbgesetzes [§C25]; ohne Ton Metall. Getönt ist nur die
+     Fläche und der Innenrand — das Zeichen selbst trägt die Farbe. */
+  .zk{--z:36px;--zt:var(--ink2);--ztr:185,196,189;width:var(--z);height:var(--z);flex-shrink:0;
+    border-radius:calc(var(--z) * .3);display:inline-grid;place-items:center;color:var(--zt);
+    background:linear-gradient(160deg,rgba(var(--ztr),.16),rgba(var(--ztr),.06));
+    box-shadow:inset 0 0 0 1px rgba(var(--ztr),.22),inset 0 1px 0 rgba(255,255,255,.05)}
+  .zk svg{display:block;width:18px;height:18px;stroke:currentColor;fill:none;
+    stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+  .zk.k{--z:28px}
+  .zk.k svg{width:15px;height:15px;stroke-width:2}
+  .zk.g{--z:48px}
+  .zk.g svg{width:24px;height:24px;stroke-width:1.6}
+  .zk.gold  {--zt:var(--gold);  --ztr:247,207,74}
+  .zk.rot   {--zt:var(--red);   --ztr:240,86,106}
+  .zk.gruen {--zt:var(--acid);  --ztr:190,242,100}
+  .zk.blau  {--zt:var(--blue);  --ztr:86,180,232}
+  .zk.viol  {--zt:var(--purple);--ztr:167,139,250}
+  .zk.bronze{--zt:var(--bronze);--ztr:192,132,87}
+
   /* Medaillen-Badge (Top-3) – ersetzt 🥇🥈🥉 */
   .medal-b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:6px;
     font-family:'Archivo Black',sans-serif;font-size:10px;line-height:1;

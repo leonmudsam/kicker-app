@@ -1256,6 +1256,52 @@ ok(_awSchwelle.leer.length <= 2,
    'nach einer vollen Woche steht fast jede Award-Kachel',
    _awSchwelle.leer.length + ' leer: ' + _awSchwelle.leer.join(' '));
 
+// ── Ein Wert je Auszeichnung [§5.3d] ────────────────────────────────
+// Kachel, Blatt, Profil und Duo-Blatt formatierten jeden Award selbst:
+// dieselbe Serie hieß „8", „8er", „8er Serie" und „8 Siege in Folge", die
+// Kachel trug ihre Zahl ohne Einheit („6,90", „+10"), und die Stichprobe
+// wurde gebaut und nie gezeigt. Jetzt liest jede Stelle aus AW_WERT — und
+// jede Kachel trägt die Zahl MIT ihrer Sache.
+const _awEin = JSON.parse(K.eval(`JSON.stringify((function(){
+  const f = [];
+  Object.keys(AWARD_META).forEach(k => { if(!AW_WERT[k]) f.push('ohne Wert: ' + k); });
+  Object.keys(AW_WERT).forEach(k => {
+    if(!AWARD_META[k]) f.push('ohne Titel: ' + k);
+    if(!AW_IC[k]) f.push('ohne Zeichen: ' + k);
+  });
+  let kacheln = 0;
+  for(const per of ['season', 'week']){
+    awPeriod = per; awSeasonId = null; awView = 'awards';
+    const R = awardRankings(per);
+    const teile = String(_vAwardsCore()).split('data-award="');
+    for(let i = 1; i < teile.length; i++){
+      const key = teile[i].slice(0, teile[i].indexOf('"'));
+      const nx = teile[i].indexOf('data-award="');
+      const block = nx < 0 ? teile[i] : teile[i].slice(0, nx);
+      if(/aw-t-leer/.test(block)) continue;
+      kacheln++;
+      const t = awText(key, awTop(key, R)[0]);
+      const b = block.match(/class="aw-t-val"><b>([^<]*)<\\/b>(?:<span>([^<]*)<\\/span>)?/) || [];
+      if(b[1] !== esc(t.z)) f.push(per + ' ' + key + ': Kachel ' + b[1] + ' statt ' + t.z);
+      if(!b[2]) f.push(per + ' ' + key + ': Zahl ohne Einheit (' + b[1] + ')');
+      const text = block.replace(/<[^>]+>/g, ' ');
+      if(/\\d+er\\b|\\/Sp\\.|Niederl\\.|\\bSp\\./.test(text)) f.push(per + ' ' + key + ': Kürzel in „' + text.replace(/\\s+/g, ' ').trim().slice(0, 60) + '"');
+    }
+  }
+  // Profil und Duo-Blatt nennen dieselbe Zahl wie die Kachel desselben
+  // Eintrags — gleicher Platz aus derselben Zählung.
+  awPeriod = 'season'; awSeasonId = null;
+  activePlayers().forEach(p => playerAwards(p.id).forEach(a => {
+    if(a.val !== awText(a.key, a.x).z) f.push('Profil ' + p.name + ' ' + a.key + ': ' + a.val);
+    if(a.rank === 0 && !awTop(a.key, awardRankings('season', currentSeason().id)).includes(a.x))
+      f.push('Profil ' + p.name + ' ' + a.key + ': Platz 1, aber nicht an der Spitze');
+  }));
+  return {f, kacheln};
+})())`));
+ok(_awEin.f.length === 0 && _awEin.kacheln > 50,
+   'jede Award-Kachel nennt Zahl und Einheit aus derselben Quelle wie Blatt und Profil',
+   _awEin.f.slice(0, 6).join(' · ') || _awEin.kacheln + ' Kacheln');
+
 // ── Die Erklärung einer Kachel nennt die Schwelle, die gilt ─────────
 // „So wird gewertet" stand als fester Text da und war den Schwellen nicht
 // gefolgt: die Betonmauer verlangte laut Text zehn gemeinsame Spiele und

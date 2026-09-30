@@ -31,7 +31,6 @@ function standFuer(m, gewonnen = true){
   const s = m.winner === 'B' ? [m.score_b, m.score_a] : [m.score_a, m.score_b];
   return gewonnen ? s[0] + ':' + s[1] : s[1] + ':' + s[0];
 }
-function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen
   const inner = ICONS[e] ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;

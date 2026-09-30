@@ -316,6 +316,18 @@ function svgI(name, opts){
   const path = ICONS[name] || '';
   return `<span class="ic svg-ic${cls}"><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg></span>`;
 }
+// Die Zeichenkachel [§C27]. Ein Zeichen, das eine Fläche braucht, steht in
+// DIESER Kachel: drei Größen (k 28 px für Zeile und Band, ohne Zusatz 36 px
+// für Kachel und Karte, g 48 px für den Blattkopf) und sechs Töne nach den
+// Rollen des Farbgesetzes [§C25] — ohne Ton ist sie Metall. Vorher baute
+// jede Ansicht ihren eigenen Kasten: die Award-Kachel ein nacktes Zeichen
+// von 14 px, das Award-Blatt einen leuchtenden Kreis, der Rückblick ein
+// Quadrat mit 11 px Rundung, das Rubrikband der Stories ein viertes.
+const ZK_TON = {gold:1, rot:1, gruen:1, blau:1, viol:1, bronze:1};
+function zkHtml(name, groesse, ton){
+  return `<span class="zk${groesse ? ' '+groesse : ''}${ZK_TON[ton] ? ' '+ton : ''}">`
+    + `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.trophy}</svg></span>`;
+}
 // Medaillen-Badge (1/2/3) statt 🥇🥈🥉
 function medalB(i){
   if(i<0||i>2) return '';

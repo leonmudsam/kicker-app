@@ -290,23 +290,6 @@ function teamDetail(p1,p2){
 }
 
 // ════════════════════════════════════════════════════════════════════
-// RANG-HELPER (extracted aus playerAwards für Wiederverwendung)
-// ════════════════════════════════════════════════════════════════════
-// Liefert 0-basierten Rang (0,1,2) wenn der Eintrag in den Top-3 einer
-// Liste vorkommt — oder -1 wenn nicht. Tie-aware (Spieler mit gleichem
-// Wert teilen sich den Rang).
-function getRankInList(arr, valFn, checkFn){
-  if(!arr || !arr.length) return -1;
-  let rank = 1;
-  for(let i=0; i<Math.min(arr.length, 10); i++){
-    if(i>0 && valFn(arr[i]) !== valFn(arr[i-1])) rank = i+1;
-    if(rank > 3) break;
-    if(checkFn(arr[i])) return rank - 1;
-  }
-  return -1;
-}
-
-// ════════════════════════════════════════════════════════════════════
 // TEAM-ACHIEVEMENTS: alle Team-Awards (Lifetime), in denen dieses
 // konkrete Duo Top-3 erreicht hat. Genutzt vom Team-Profil-Sheet, um
 // die Auszeichnungen des Duos prominent zu zeigen.
@@ -318,74 +301,22 @@ function getRankInList(arr, valFn, checkFn){
 function teamAchievements(p1Id, p2Id){
   const R = awardRankings('all');
   const sortKey = [p1Id, p2Id].sort().join('|');
-
-  const TEAM_AWARD_LISTS = {
-    mvt:              R.mvt,
-    bestDuo:          R.bestDuo,
-    worstTeam:        R.worstTeam,
-    zirkus:           R.zirkusList,
-    baustelle:        R.baustelleList,
-    unstoppable:      R.unstoppableList,
-    concreteWall:     R.concreteWallList,
-    cheesePlatter:    R.cheesePlatterList,
-    luckyCharm:       R.luckyCharmList,
-    giantSlayer:      R.giantSlayerList,
-    favoritenschreck: R.favoritenschreckList
-  };
-  // Sortier-Funktionen — konsistent mit playerAwards (teamValFns)
-  const VAL_FNS = {
-    mvt:              x => Math.round(x.v),
-    bestDuo:          x => x.g,
-    worstTeam:        x => -Math.round(x.w/x.g*100),
-    zirkus:           x => Math.round(x.pct*1000),
-    baustelle:        x => x.best,
-    unstoppable:      x => x.v,
-    concreteWall:     x => -Math.round(x.v*100),
-    cheesePlatter:    x => Math.round(x.v*100),
-    luckyCharm:       x => Math.round(x.v*1000),
-    giantSlayer:      x => Math.round(x.v*1000),
-    favoritenschreck: x => x.v
-  };
-  // Display-Werte für die Anzeige der erreichten Quote/Anzahl
-  const DISP_FNS = {
-    mvt:              x => (x.v>=0?'+':'')+Math.round(x.v),
-    bestDuo:          x => x.g+' Spiele',
-    worstTeam:        x => Math.round(x.w/x.g*100)+'%',
-    zirkus:           x => Math.round(x.pct*100)+'%',
-    baustelle:        x => x.best+'er',
-    unstoppable:      x => x.v+'er',
-    concreteWall:     x => komma(x.v,2),
-    cheesePlatter:    x => komma(x.v,2),
-    luckyCharm:       x => Math.round(x.v*100)+'%',
-    giantSlayer:      x => Math.round(x.v*100)+'%',
-    favoritenschreck: x => x.v+' Elo'
-  };
-
+  const duo = ids => ids.slice().sort().join('|') === sortKey;
+  // Platz und Wert aus AW_WERT [§5.3d], wie Kachel, Blatt und Profil. Hier
+  // stand die dritte Kopie der Sortier- und Anzeigeregeln (VAL_FNS,
+  // DISP_FNS), und sie schrieb die Baustelle als „8er".
+  // Nicht dabei: ein Award einer einzelnen Partie (er gehört dem Spiel, nicht
+  // dem Duo) und der Endgegner, der zwei Gegner zählt und kein Duo.
   const found = [];
-  Object.entries(TEAM_AWARD_LISTS).forEach(([key, arr]) => {
-    if(!arr || !arr.length) return;
-    const matchFn = x => x.ids && x.ids.slice().sort().join('|') === sortKey;
-    const rank = getRankInList(arr, VAL_FNS[key], matchFn);
-    if(rank >= 0 && rank <= 2){
-      const entry = arr.find(matchFn);
-      if(entry) found.push({key, rank, val: DISP_FNS[key](entry)});
-    }
+  Object.keys(AW_WERT).forEach(key => {
+    const w = AW_WERT[key];
+    if(w.einzeln || w.gegner) return;
+    const trifft = key === 'rivalry'
+      ? x => duo(x.idsA) || duo(x.idsB)
+      : x => { const ids = awIds(key, x); return ids.length === 2 && duo(ids); };
+    const r = awRang(key, R, trifft);
+    if(r) found.push({key, rank:r.rang, x:r.x, val:awText(key, r.x).z});
   });
-
-  // Rivalry: 4-Spieler-Award — Duo kann entweder idsA oder idsB sein
-  if(R.rivalryList && R.rivalryList.length){
-    const matchFn = x => {
-      const a = x.idsA.slice().sort().join('|');
-      const b = x.idsB.slice().sort().join('|');
-      return a === sortKey || b === sortKey;
-    };
-    const rank = getRankInList(R.rivalryList, x => Math.round(x.pct*1000), matchFn);
-    if(rank >= 0 && rank <= 2){
-      const entry = R.rivalryList.find(matchFn);
-      if(entry) found.push({key:'rivalry', rank, val: Math.round(entry.pct*100)+'%'});
-    }
-  }
-
   return found;
 }
 

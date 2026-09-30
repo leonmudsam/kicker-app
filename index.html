@@ -840,106 +840,104 @@
   .aw-trophy.ton-team{--awc:var(--blue); --awc-rgb:86,180,232}
   .aw-trophy.ton-neg {--awc:var(--red);  --awc-rgb:240,86,106}
   /* ── Die Kachel [§C8] ────────────────────────────────────────────
-     Reihenfolge auf der Kachel: was es ist, wer es hat, wie viel.
-     Vorher stand der Träger als 18px-Chip ganz unten und das Symbol war
-     mit 50 px das Größte auf der Karte — die Auszeichnung sah wichtiger
-     aus als der, der sie geholt hat. Jetzt ist er das Motiv, mit Sternen
-     und Feuer wie in jeder Ranglistenzeile.
-     Mit Wappen, wie in jeder Ranglistenzeile [§C27] — die Kachel misst
-     dafür am Reif und nicht mehr am Gesicht. */
+     Drei Fragen, in dieser Reihenfolge: wer hat es, wie viel, woraus.
+     Vorher stand die Zahl ohne Einheit („6,90", „+10", „8er") und ohne
+     Stichprobe in der Mitte; ob 72 % aus fünf oder aus fünfzig Partien
+     kamen, stand erst im Blatt. Der Träger trägt dasselbe Wappen wie in der
+     Ranglistenzeile [§C27], die Kachel misst am Reif (52 px). */
   .aw-trophy{background-color:var(--bg2);
-    background-image:radial-gradient(circle at 50% 22%,rgba(var(--awc-rgb),.11),transparent 62%);
-    border:1px solid var(--line2);border-radius:14px;padding:11px 10px 13px;
-    text-align:center;position:relative;cursor:pointer;transition:.15s;
-    min-width:0;
-    display:flex;flex-direction:column;align-items:center;gap:7px}
+    background-image:radial-gradient(120% 80% at 0% 0%,rgba(var(--awc-rgb),.10),transparent 60%);
+    border:1px solid rgba(var(--awc-rgb),.20);border-radius:16px;padding:11px 11px 12px;
+    position:relative;cursor:pointer;transition:transform .15s;min-width:0;
+    display:flex;flex-direction:column;gap:9px;text-align:left}
   .aw-trophy:active{transform:translateY(-2px)}
-  /* Der Farbstreifen oben statt der grauen Linie unten: er nennt den
-     Abschnitt, dem die Kachel gehört, und liegt dort, wo das Auge anfängt. */
+  /* Die Kante oben nennt die Rolle, dort fängt das Auge an. */
   .aw-trophy::before{content:"";position:absolute;left:14px;right:14px;top:0;height:2px;
     border-radius:0 0 2px 2px;
     background:linear-gradient(90deg,transparent,rgba(var(--awc-rgb),.75),transparent)}
 
-  /* Kopfzeile: Symbol und Name der Auszeichnung in einer Zeile. Das Symbol
-     ist klein geworden — es sagt nur noch, WELCHE Auszeichnung das ist,
-     und muss dafür nicht so groß sein wie ein Gesicht. */
-  .aw-t-kopf{display:flex;align-items:center;justify-content:center;gap:5px;
-    max-width:100%;min-width:0}
-  .aw-t-ic{flex:0 0 auto;display:flex;color:var(--awc)}
-  .aw-t-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;
-    stroke-linecap:round;stroke-linejoin:round}
-  .aw-t-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.04em;
-    font-family:'Sometype Mono',monospace;color:var(--muted);font-weight:700;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  /* Kopf: Zeichenkachel und Name. Der Name bricht um statt abzubrechen —
+     „Längste Siegesser…" stand gekürzt da. */
+  .aw-t-kopf{display:flex;align-items:center;gap:8px;min-width:0}
+  .aw-t-lbl{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.2;min-width:0;letter-spacing:-.005em;
+    overflow-wrap:break-word;hyphens:auto}
+  /* Gleichauf oder ein Platz unter der Spitze: eine Marke AUF der oberen
+     Kante, nicht im Namen. Im Kopf nahm sie dem Namen ein Drittel der
+     Breite, und „Tageskönig" brach mitten im Wort. */
+  .aw-t-gleich{position:absolute;top:-8px;right:10px;z-index:1;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;font-weight:700;color:var(--ink2);background:var(--surface2);
+    border:1px solid rgba(var(--awc-rgb),.35);border-radius:7px;padding:1px 6px;white-space:nowrap;line-height:1.4}
 
-  /* Der Träger. Die feste Höhe hält die Zahlen aller Kacheln einer Reihe
-     auf einer Linie — ein Avatar mit Feuer ist sonst höher als einer ohne. */
-  /* Feste Hoehe, damit die Zahlen aller Kacheln einer Reihe auf einer Linie
-     stehen — und hoch genug fuer die Sterne, die unter dem Avatar haengen.
-     Ohne die Zugabe stiessen sie an den Kartenrand. */
-  .aw-t-held{height:64px;display:grid;place-items:center}
-  .aw-trophy.gross .aw-t-held{height:78px}
-  /* Der eigene Schlagschatten am Gesicht ist entfallen: es sitzt jetzt IM
-     Reif, und der bringt seinen mit. Zwei Schatten ineinander machen aus
-     dem Sitz einen dunklen Ring. */
-  .aw-t-leer{width:var(--awp);height:var(--awp);border-radius:50%;
+  /* Der Träger mit Name und Stichprobe daneben. */
+  .aw-t-held{display:flex;align-items:center;gap:9px;min-height:52px;min-width:0}
+  .aw-t-held > .rav, .aw-t-held > .av, .aw-t-held > .aw-t-paar, .aw-t-held > .aw-t-vier,
+  .aw-t-held > .aw-t-leer{flex-shrink:0}
+  .aw-t-held > .av{--av:40px}
+  .aw-t-wer{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+  .aw-t-name{font-size:13px;font-weight:700;color:var(--ink);line-height:1.2;overflow-wrap:break-word;hyphens:auto}
+  .aw-t-beleg{font-size:10.5px;color:var(--muted);line-height:1.3}
+  .aw-t-leer{width:40px;height:40px;border-radius:50%;
     border:1px dashed var(--line2);display:grid;place-items:center;
     color:var(--faint);font-family:'Sometype Mono',monospace;font-size:15px}
-  /* Zwei Chips für ein Duo: sie überlappen, damit sie als EIN Ding lesen.
-     Ein Duo hat keinen Rang, also auch kein Wappen [§C27]. */
+  /* Zwei Gesichter für ein Duo: sie überlappen, damit sie als EIN Ding
+     lesen. Ein Duo hat keinen Rang, also auch kein Wappen [§C27]. */
   .aw-t-paar{display:inline-flex;align-items:center}
-  .aw-t-chip{width:calc(var(--awp) * .82);height:calc(var(--awp) * .82);
-    border-radius:50%;flex-shrink:0;display:grid;place-items:center;
-    font-style:normal;font-size:calc(var(--awp) * .30);
-    font-family:'Archivo Black',sans-serif;color:#0a0c0b;
-    border:2px solid var(--bg2)}
-  /* Sie ueberlappen, damit sie als EIN Ding lesen — aber nur so weit, dass
-     die Kuerzel beider Seiten lesbar bleiben. */
-  .aw-t-chip+.aw-t-chip{margin-left:calc(var(--awp) * -.20)}
+  .aw-t-paar .av{--av:32px;box-shadow:0 0 0 2px var(--bg2)}
+  .aw-t-paar .av + .av{margin-left:-9px}
   /* Erzfeinde: vier Spieler. Vier Gesichter passen nicht auf eine halbe
      Kachel, und drei davon wären dann zu klein, um jemanden zu erkennen. */
-  .aw-t-vier{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+  .aw-t-vier{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
     color:var(--awc);background:rgba(var(--awc-rgb),.10);
     box-shadow:inset 0 0 0 1px rgba(var(--awc-rgb),.30)}
-  .aw-t-vier svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .aw-t-vier svg{width:20px;height:20px}
 
-  .aw-t-val{font-family:'Archivo Black',sans-serif;font-size:23px;line-height:1;
-    color:var(--awc);text-shadow:0 0 14px rgba(var(--awc-rgb),.40);letter-spacing:-.02em}
-  .aw-t-name{font-size:11px;font-weight:700;color:var(--ink2);max-width:100%;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2}
-  .aw-t-name .leer{color:var(--faint);font-weight:500;font-style:italic}
-  /* Gleichstand: ein Name plus Zähler. Alle Namen nebeneinander waren eine
-     Zeile, die niemand zu Ende las und die die Kachel auseinanderzog. */
-  .aw-t-mehr{font-family:'Sometype Mono',monospace;font-size:9.5px;
-    font-weight:700;color:var(--muted);margin-left:5px;vertical-align:1px}
+  /* Die Zahl mit ihrer Sache. Sie steht unten, damit die Zahlen einer
+     Reihe auf einer Linie liegen, egal wie lang die Namen darüber sind. */
+  .aw-t-val{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px;margin-top:auto}
+  .aw-t-val b{font-family:'Archivo Black',sans-serif;font-size:22px;font-weight:400;line-height:1;
+    color:var(--awc);text-shadow:0 0 14px rgba(var(--awc-rgb),.35);letter-spacing:-.02em;white-space:nowrap}
+  .aw-t-val span{font-size:11px;font-weight:600;color:var(--ink2);line-height:1.25}
 
-  /* Der Aufmacher: quer über beide Spalten, waagerecht gesetzt. Der Träger
-     links, die Zahl rechts — so fängt der Abschnitt mit einem Gesicht an
-     und hört mit dem Ergebnis auf. */
-  .aw-trophy.gross{grid-column:1 / -1;flex-direction:row;align-items:center;
-    gap:13px;text-align:left;padding:13px 15px;
-    background-image:radial-gradient(circle at 14% 50%,rgba(var(--awc-rgb),.15),transparent 64%)}
-  .aw-trophy.gross .aw-t-held{flex:0 0 auto}
-  .aw-trophy.gross .aw-t-mitte{flex:1;min-width:0;display:flex;
-    flex-direction:column;gap:4px;align-items:flex-start}
-  .aw-trophy.gross .aw-t-kopf{justify-content:flex-start}
-  .aw-trophy.gross .aw-t-ic svg{width:15px;height:15px}
-  .aw-trophy.gross .aw-t-name{font-size:14px;color:var(--ink)}
-  .aw-trophy.gross .aw-t-val{flex:0 0 auto;font-size:30px}
+  /* Der Aufmacher: quer über beide Spalten, der Träger links, die Zahl
+     rechts, darunter die Lage im Feld mit ihrer Skala. */
+  .aw-trophy.gross{grid-column:1 / -1;padding:13px 14px;
+    background-image:radial-gradient(90% 120% at 0% 0%,rgba(var(--awc-rgb),.15),transparent 62%)}
+  .aw-t-zeile{display:flex;align-items:center;gap:12px;min-width:0}
+  .aw-t-zeile .aw-t-held{flex:1}
+  .aw-trophy.gross .aw-t-name{font-size:15px}
+  .aw-trophy.gross .aw-t-val{flex-direction:column;align-items:flex-end;text-align:right;margin-top:0;flex:0 0 auto;max-width:42%}
+  .aw-trophy.gross .aw-t-val b{font-size:30px}
 
   /* Eine ungerade Kachel nimmt die ganze Reihe, statt unten rechts ein Loch
-     zu lassen — ein leeres Feld liest sich als Fehler, nicht als Ende.
-     Sie bleibt dabei die Hochkant-Kachel und wird nur breiter; als zweiter
-     Aufmacher gelesen zu werden wäre falsch, denn sie ist nur die letzte. */
+     zu lassen — ein leeres Feld liest sich als Fehler, nicht als Ende. */
   .aw-trophy.allein{grid-column:1 / -1}
+  /* Im Blatt ist das Blatt der Behälter: ein zweiter Kasten darin nahm
+     jeder Kachel 28 px Breite, und die Namen brachen einmal mehr um. */
+  #sheet .aw-vitrine{background:none;border:0;padding:0;gap:12px 8px}
 
-  /* Nicht vergeben: gestrichelt, nicht halbdurchsichtig. Eine blasse Kachel
-     liest sich als Ladefehler, eine gestrichelte als „hier ist noch frei". */
+  /* Nicht vergeben: gestrichelt, nicht halbdurchsichtig, und mit einem
+     Satz, was noch fehlt. Eine blasse Kachel liest sich als Ladefehler. */
   .aw-trophy.empty{background-image:none;background-color:transparent;
-    border-style:dashed;border-color:var(--line)}
+    border-style:dashed;border-color:var(--line2)}
   .aw-trophy.empty::before{background:none}
-  .aw-trophy.empty .aw-t-ic{color:var(--faint)}
-  .aw-trophy.empty .aw-t-val{color:var(--muted);text-shadow:none;font-size:19px}
+  .aw-trophy.empty .aw-t-lbl{color:var(--muted)}
+  .aw-trophy.empty .aw-t-beleg{font-style:italic;color:var(--faint);font-size:11px}
+
+  /* Die Lage im Feld: jeder Eintrag ein Punkt, die Halter in der Farbe der
+     Kachel, die Mitte als Strich. */
+  .aw-feld{position:relative;height:14px}
+  .aw-feld-bahn{position:absolute;left:0;right:0;top:6px;height:2px;border-radius:1px;background:var(--surface3)}
+  .aw-feld-mitte{position:absolute;top:1px;width:1px;height:12px;background:var(--muted)}
+  /* Leise und ohne Rand: zehn Punkte auf zwei Zentimetern überlappen, und
+     jeder Rand zeichnete dort eine Klammer. */
+  .aw-feld i{position:absolute;top:4px;width:6px;height:6px;margin-left:-3px;border-radius:50%;
+    background:rgba(185,196,189,.38)}
+  .aw-feld i.er{top:1px;width:12px;height:12px;margin-left:-6px;background:var(--awc);
+    box-shadow:0 0 0 2px var(--bg2),0 0 10px rgba(var(--awc-rgb),.6)}
+  .aw-feld-l{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:var(--faint);margin-top:-4px}
+  /* Eine Serie als Lauf aus Feldern, in der Farbe der Kachel. */
+  .aw-lauf{display:flex;gap:3px}
+  .aw-lauf i{flex:1;max-width:16px;height:7px;border-radius:3px;background:var(--awc);opacity:.85}
 
   /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============ */
   .aw-hero-icon{display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
@@ -1706,6 +1704,26 @@
   .ic{display:inline-grid;place-items:center;vertical-align:middle;line-height:1}
   .ic svg{display:block;width:1em;height:1em;stroke:currentColor;fill:none;
     stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* Die Zeichenkachel [§C27] (zkHtml). Drei Größen, sechs Töne nach den
+     Rollen des Farbgesetzes [§C25]; ohne Ton Metall. Getönt ist nur die
+     Fläche und der Innenrand — das Zeichen selbst trägt die Farbe. */
+  .zk{--z:36px;--zt:var(--ink2);--ztr:185,196,189;width:var(--z);height:var(--z);flex-shrink:0;
+    border-radius:calc(var(--z) * .3);display:inline-grid;place-items:center;color:var(--zt);
+    background:linear-gradient(160deg,rgba(var(--ztr),.16),rgba(var(--ztr),.06));
+    box-shadow:inset 0 0 0 1px rgba(var(--ztr),.22),inset 0 1px 0 rgba(255,255,255,.05)}
+  .zk svg{display:block;width:18px;height:18px;stroke:currentColor;fill:none;
+    stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+  .zk.k{--z:28px}
+  .zk.k svg{width:15px;height:15px;stroke-width:2}
+  .zk.g{--z:48px}
+  .zk.g svg{width:24px;height:24px;stroke-width:1.6}
+  .zk.gold  {--zt:var(--gold);  --ztr:247,207,74}
+  .zk.rot   {--zt:var(--red);   --ztr:240,86,106}
+  .zk.gruen {--zt:var(--acid);  --ztr:190,242,100}
+  .zk.blau  {--zt:var(--blue);  --ztr:86,180,232}
+  .zk.viol  {--zt:var(--purple);--ztr:167,139,250}
+  .zk.bronze{--zt:var(--bronze);--ztr:192,132,87}
 
   /* Medaillen-Badge (Top-3) – ersetzt 🥇🥈🥉 */
   .medal-b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:6px;
@@ -5180,7 +5198,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.1400413a';
+const BUILD_VERSION='2026.09.30.efb80bf8';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5566,6 +5584,18 @@ function svgI(name, opts){
   const cls = o.cls ? ' '+o.cls : '';
   const path = ICONS[name] || '';
   return `<span class="ic svg-ic${cls}"><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg></span>`;
+}
+// Die Zeichenkachel [§C27]. Ein Zeichen, das eine Fläche braucht, steht in
+// DIESER Kachel: drei Größen (k 28 px für Zeile und Band, ohne Zusatz 36 px
+// für Kachel und Karte, g 48 px für den Blattkopf) und sechs Töne nach den
+// Rollen des Farbgesetzes [§C25] — ohne Ton ist sie Metall. Vorher baute
+// jede Ansicht ihren eigenen Kasten: die Award-Kachel ein nacktes Zeichen
+// von 14 px, das Award-Blatt einen leuchtenden Kreis, der Rückblick ein
+// Quadrat mit 11 px Rundung, das Rubrikband der Stories ein viertes.
+const ZK_TON = {gold:1, rot:1, gruen:1, blau:1, viol:1, bronze:1};
+function zkHtml(name, groesse, ton){
+  return `<span class="zk${groesse ? ' '+groesse : ''}${ZK_TON[ton] ? ' '+ton : ''}">`
+    + `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.trophy}</svg></span>`;
 }
 // Medaillen-Badge (1/2/3) statt 🥇🥈🥉
 function medalB(i){
@@ -7288,37 +7318,23 @@ function showSeasonRecap(season, opts){
   awSeasonId = sid;
   const R = awardRankings('season');
   awSeasonId = vorherAw;
-  const eins = (x)=> x && x[0];
   const kacheln = [];
-  const scorer=eins(R.scorer), wall=eins(R.wall), streak=eins(R.streaks), upset=eins(R.upsets);
-  const grinder=eins(R.grinder), perfect=eins(R.perfect);
-  const weekKing=eins(R.weekKingList), dayKing=eins(R.dayKingList);
-  const worstWr=eins(R.worstWr), pechvogel=eins(R.pechvogelList);
+  // Name, Zahl und Einheit aus AW_WERT [§5.3d], wie im Awards-Reiter — hier
+  // stand eine fünfte Schreibweise („8 in Folge", „30% Chance"), und bei
+  // Gleichstand nannte der Rückblick nur den ersten.
   // Metall, nicht Gold. Gold gehört den Titeln [§C25] — und wenn acht
   // Kacheln golden umrandet sind, sagt Gold nichts mehr. Auf dieser Seite
-  // trägt es das Podest, sonst nichts.
-  const kachel=(ic,label,name,wert,key)=>kacheln.push(rcpKachelHtml({
-    ic, label, name, wert, ton:'metall', attr:`data-award="${key}"`}));
-  if(scorer)  kachel(AW_IC.scorer,'Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
-  if(wall)    kachel(AW_IC.wall,'Eiserne Abwehr',pname(wall.id),'Ø '+komma((wall.v/wall.g),1)+' Gegentore','wall');
-  if(streak)  kachel(AW_IC.streaks,AWARD_META.streaks.title,pname(streak.id),streak.v+' in Folge','streaks');
-  if(perfect) kachel(AW_IC.perfect,'Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegquote','perfect');
-  if(weekKing)kachel(AW_IC.weekKing,'Wochenkönig',pname(weekKing.id),weekKing.v+'× Player of the Week','weekKing');
-  if(dayKing) kachel(AW_IC.dayKing,'Tageskönig',pname(dayKing.id),dayKing.v+'× Player of the Day','dayKing');
-  if(grinder) kachel(AW_IC.grinder,'Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
-  if(upset){
-    const sieger = upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];
-    kachel(AW_IC.upset,'Größte Überraschung',pname(sieger[0])+' & '+pname(sieger[1]),
-           Math.round((1-upset.sp)*100)+'% Chance','upset');
-  }
-  // Die Schattenseiten stehen hinten und in Rot — Rot sagt hier die
-  // Richtung, nicht die Wichtigkeit [§C25].
-  if(worstWr) kacheln.push(rcpKachelHtml({ic:AW_IC.worstWr,label:AWARD_META.worstWr.title,
-    name:pname(worstWr.id),wert:Math.round(worstWr.wr*100)+'% Siegquote',ton:'red',
-    attr:'data-award="worstWr"'}));
-  if(pechvogel) kacheln.push(rcpKachelHtml({ic:AW_IC.pechvogel,label:'Pechvogel',
-    name:pname(pechvogel.id),wert:Math.round(pechvogel.pct*100)+'% knapp verloren',ton:'red',
-    attr:'data-award="pechvogel"'}));
+  // trägt es das Podest, sonst nichts. Die Schattenseiten stehen hinten und
+  // in Rot — Rot sagt hier die Richtung, nicht die Wichtigkeit.
+  const kachel = (key, ton) => {
+    const top = awTop(key, R); if(!top.length) return;
+    const t = awText(key, top[0]);
+    kacheln.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
+      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
+      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:`data-award="${key}"`}));
+  };
+  ['scorer','wall','streaks','perfect','weekKing','dayKing','grinder','upset'].forEach(k => kachel(k, 'metall'));
+  ['worstWr','pechvogel'].forEach(k => kachel(k, 'red'));
   // Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen.
   const awardsHtml = kacheln.length
     ? rcpAbschnitt('Auszeichnungen', kacheln.length)
@@ -8716,23 +8732,6 @@ function teamDetail(p1,p2){
 }
 
 // ════════════════════════════════════════════════════════════════════
-// RANG-HELPER (extracted aus playerAwards für Wiederverwendung)
-// ════════════════════════════════════════════════════════════════════
-// Liefert 0-basierten Rang (0,1,2) wenn der Eintrag in den Top-3 einer
-// Liste vorkommt — oder -1 wenn nicht. Tie-aware (Spieler mit gleichem
-// Wert teilen sich den Rang).
-function getRankInList(arr, valFn, checkFn){
-  if(!arr || !arr.length) return -1;
-  let rank = 1;
-  for(let i=0; i<Math.min(arr.length, 10); i++){
-    if(i>0 && valFn(arr[i]) !== valFn(arr[i-1])) rank = i+1;
-    if(rank > 3) break;
-    if(checkFn(arr[i])) return rank - 1;
-  }
-  return -1;
-}
-
-// ════════════════════════════════════════════════════════════════════
 // TEAM-ACHIEVEMENTS: alle Team-Awards (Lifetime), in denen dieses
 // konkrete Duo Top-3 erreicht hat. Genutzt vom Team-Profil-Sheet, um
 // die Auszeichnungen des Duos prominent zu zeigen.
@@ -8744,74 +8743,22 @@ function getRankInList(arr, valFn, checkFn){
 function teamAchievements(p1Id, p2Id){
   const R = awardRankings('all');
   const sortKey = [p1Id, p2Id].sort().join('|');
-
-  const TEAM_AWARD_LISTS = {
-    mvt:              R.mvt,
-    bestDuo:          R.bestDuo,
-    worstTeam:        R.worstTeam,
-    zirkus:           R.zirkusList,
-    baustelle:        R.baustelleList,
-    unstoppable:      R.unstoppableList,
-    concreteWall:     R.concreteWallList,
-    cheesePlatter:    R.cheesePlatterList,
-    luckyCharm:       R.luckyCharmList,
-    giantSlayer:      R.giantSlayerList,
-    favoritenschreck: R.favoritenschreckList
-  };
-  // Sortier-Funktionen — konsistent mit playerAwards (teamValFns)
-  const VAL_FNS = {
-    mvt:              x => Math.round(x.v),
-    bestDuo:          x => x.g,
-    worstTeam:        x => -Math.round(x.w/x.g*100),
-    zirkus:           x => Math.round(x.pct*1000),
-    baustelle:        x => x.best,
-    unstoppable:      x => x.v,
-    concreteWall:     x => -Math.round(x.v*100),
-    cheesePlatter:    x => Math.round(x.v*100),
-    luckyCharm:       x => Math.round(x.v*1000),
-    giantSlayer:      x => Math.round(x.v*1000),
-    favoritenschreck: x => x.v
-  };
-  // Display-Werte für die Anzeige der erreichten Quote/Anzahl
-  const DISP_FNS = {
-    mvt:              x => (x.v>=0?'+':'')+Math.round(x.v),
-    bestDuo:          x => x.g+' Spiele',
-    worstTeam:        x => Math.round(x.w/x.g*100)+'%',
-    zirkus:           x => Math.round(x.pct*100)+'%',
-    baustelle:        x => x.best+'er',
-    unstoppable:      x => x.v+'er',
-    concreteWall:     x => komma(x.v,2),
-    cheesePlatter:    x => komma(x.v,2),
-    luckyCharm:       x => Math.round(x.v*100)+'%',
-    giantSlayer:      x => Math.round(x.v*100)+'%',
-    favoritenschreck: x => x.v+' Elo'
-  };
-
+  const duo = ids => ids.slice().sort().join('|') === sortKey;
+  // Platz und Wert aus AW_WERT [§5.3d], wie Kachel, Blatt und Profil. Hier
+  // stand die dritte Kopie der Sortier- und Anzeigeregeln (VAL_FNS,
+  // DISP_FNS), und sie schrieb die Baustelle als „8er".
+  // Nicht dabei: ein Award einer einzelnen Partie (er gehört dem Spiel, nicht
+  // dem Duo) und der Endgegner, der zwei Gegner zählt und kein Duo.
   const found = [];
-  Object.entries(TEAM_AWARD_LISTS).forEach(([key, arr]) => {
-    if(!arr || !arr.length) return;
-    const matchFn = x => x.ids && x.ids.slice().sort().join('|') === sortKey;
-    const rank = getRankInList(arr, VAL_FNS[key], matchFn);
-    if(rank >= 0 && rank <= 2){
-      const entry = arr.find(matchFn);
-      if(entry) found.push({key, rank, val: DISP_FNS[key](entry)});
-    }
+  Object.keys(AW_WERT).forEach(key => {
+    const w = AW_WERT[key];
+    if(w.einzeln || w.gegner) return;
+    const trifft = key === 'rivalry'
+      ? x => duo(x.idsA) || duo(x.idsB)
+      : x => { const ids = awIds(key, x); return ids.length === 2 && duo(ids); };
+    const r = awRang(key, R, trifft);
+    if(r) found.push({key, rank:r.rang, x:r.x, val:awText(key, r.x).z});
   });
-
-  // Rivalry: 4-Spieler-Award — Duo kann entweder idsA oder idsB sein
-  if(R.rivalryList && R.rivalryList.length){
-    const matchFn = x => {
-      const a = x.idsA.slice().sort().join('|');
-      const b = x.idsB.slice().sort().join('|');
-      return a === sortKey || b === sortKey;
-    };
-    const rank = getRankInList(R.rivalryList, x => Math.round(x.pct*1000), matchFn);
-    if(rank >= 0 && rank <= 2){
-      const entry = R.rivalryList.find(matchFn);
-      if(entry) found.push({key:'rivalry', rank, val: Math.round(entry.pct*100)+'%'});
-    }
-  }
-
   return found;
 }
 
@@ -11427,7 +11374,7 @@ function _awardRankingsUncached(period, sid){
   };
 }
 
-// ─── §5.3a Award-Hilfsfunktionen (topNames, topTeamNames, _addColl) ──
+// ─── §5.3a Award-Hilfsfunktionen (laufende und längste Serien) ──
 function _computeCarry(ms, snapMap){
   const result={};
   for(let i=0; i<ms.length; i++){
@@ -11689,129 +11636,12 @@ function _vAwardsCore(){
   const pl=awPeriodLabel();
   if(!R.counts.matches)
     return `${periodBar}${emptyState('trophy','Keine Matches in diesem Zeitraum')}`;
-  const tn=ids=>ids.map(pname).join(' & ');
-  const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
-
-  // Trophy-Builder für die Vitrine.
-  //   key, cls(color), label, ids(array of 1 or 2 player ids; null = empty),
-  //   name (Komma-Liste bei Gleichstand), detail (im Sheet, hier ignoriert),
-  //   val (große Zahl auf der Trophäe), opts.hero (Aufmacher der Vitrine).
-  //
-  // AUFBAU: was es ist → wer es hat → wie viel. In dieser Reihenfolge.
-  // Vorher war der Träger ein 18px-Chip ganz unten und das Symbol mit 50px
-  // das größte auf der Kachel — die Auszeichnung sah wichtiger aus als der,
-  // der sie geholt hat. Jetzt steht er in der Mitte, mit Sternen und Feuer
-  // wie in jeder Ranglistenzeile [§C26].
-  //
-  // Mit Wappen [§C27]. Es stand hier lange nicht, aus zwei Gründen, und
-  // beide sind mit dem neuen Zeichen hinfällig: „Detail folgt der Größe"
-  // galt für einen Kranz, von dem bei 40 px nur ein Blätterrand übrig war —
-  // der Reif liest sich auch klein. Und die Zahl: sechzehn Wappen auf dieser
-  // Seite sind so viele wie in der Ewigen Tafel, die es ohne Klage trägt.
-  // Die Kachel misst am WAPPEN, nicht mehr am Gesicht: der Avatar ist 46 %
-  // davon [§C23], ein 40er Gesicht bräuchte also 87 px und spränge aus der
-  // halben Kachel. 60 px sind der Reif in der Ranglistenzeile plus acht.
-  const trophy = (key, cls, label, ids, name, detail, val, opts) => {
-    const isEmpty = !ids || !ids.length;
-    const emptyCls = isEmpty ? ' empty' : '';
-    const gross = !!(opts && opts.hero) && !isEmpty;
-    const px = gross ? 48 : 40;
-    const rav = gross ? 76 : 60;
-
-    // ── Der Träger ──
-    // Einer: Avatar mit Zeichen. Zwei: überlappende Chips, weil ein Duo
-    // keinen Rang hat [§C27]. Vier (Erzfeinde): nur Text, für vier Gesichter
-    // ist auf einer halben Kachel kein Platz.
-    let traeger;
-    if(isEmpty){
-      traeger = `<span class="aw-t-leer" style="--awp:${px}px">—</span>`;
-    } else if(ids.length === 1){
-      const p = pmap()[ids[0]];
-      // Dasselbe Wappen wie in jeder Ranglistenzeile, mit Sternen und Feuer.
-      // Ohne Band: das Band erzählt von der Laufbahn, diese Kachel von einer
-      // einzelnen Auszeichnung.
-      traeger = p ? avHtml(p, '', {ins:true, px:rav}) : '';
-    } else if(ids.length === 4){
-      traeger = `<span class="aw-t-vier">${svgI('crossedSwords')}</span>`;
-    } else {
-      traeger = `<span class="aw-t-paar" style="--awp:${px}px">${
-        ids.slice(0,2).map(id => {
-          const pp = pmap()[id];
-          const em = pp && pp.avatar_id ? avatarEmoji(pp.avatar_id) : null;
-          return em
-            ? `<i class="aw-t-chip" style="background:var(--surface3)">${em}</i>`
-            : `<i class="aw-t-chip" style="background:${avColor(id)}">${
-                esc(initials(pp ? pp.name : '?'))}</i>`;
-        }).join('')
-      }</span>`;
-    }
-
-    const kopf = `<div class="aw-t-kopf"><span class="aw-t-ic">${ic(key)}</span>`
-      + `<span class="aw-t-lbl">${label}</span></div>`;
-
-    // Bei Gleichstand kommen ALLE Namen als eine mit ', ' verbundene Liste an
-    // (topNames/topTeamNames). Fünf gleichauf liegende Duos ergaben damit eine
-    // Zeile von über hundert Zeichen — und weil eine Rasterspalte mindestens
-    // so breit wird wie ihr Inhalt, schob sie die halbe Vitrine über den
-    // Bildschirmrand. Auf der Kachel steht deshalb der erste Name und wie
-    // viele noch gleichauf liegen; im Blatt stehen sie alle.
-    // Getrennt wird an ', ': genau daran fügt topNames zusammen, Duonamen
-    // benutzen ' & ', und esc() erzeugt kein Komma.
-    const namen = String(name || '').split(', ');
-    const nameTxt = namen.length > 1
-      ? `${namen[0]}<span class="aw-t-mehr">+${namen.length - 1}</span>`
-      : name;
-    const nameHtml = `<div class="aw-t-name">${
-      isEmpty ? '<span class="leer">noch keine Daten</span>' : nameTxt}</div>`;
-    const valHtml = `<div class="aw-t-val">${isEmpty ? '—' : esc(String(val))}</div>`;
-
-    // Der Aufmacher liegt quer über beide Spalten und setzt den Träger nach
-    // links, die Zahl nach rechts — sonst sähe er aus wie jede andere Kachel
-    // und der Abschnitt finge ohne Einstieg an.
-    if(gross) return `<div class="aw-trophy gross ${cls}" data-award="${esc(key)}">
-      <div class="aw-t-held">${traeger}</div>
-      <div class="aw-t-mitte">${kopf}${nameHtml}</div>
-      ${valHtml}
-    </div>`;
-    return `<div class="aw-trophy ${cls}${emptyCls}" data-award="${esc(key)}">
-      ${kopf}
-      <div class="aw-t-held">${traeger}</div>
-      ${valHtml}
-      ${nameHtml}
-    </div>`;
-  };
-  // Alias für Rückwärtskompatibilität — alle bestehenden card(...)-Aufrufe nutzen jetzt trophy()
-  const card = trophy;
-
-  // Sammelt alle Platz-1-Namen bei Gleichstand (für Einzel-Awards)
-  const topNames=(arr,valFn,nameFn)=>{
-    if(!arr||!arr.length)return null;
-    const topVal=valFn(arr[0]);
-    return arr.filter(x=>valFn(x)===topVal).map(nameFn).join(', ');
-  };
-  const topTeamNames=(arr,valFn)=>{
-    if(!arr||!arr.length)return null;
-    const topVal=valFn(arr[0]);
-    return arr.filter(x=>valFn(x)===topVal).map(x=>tn(x.ids)).join(', ');
-  };
-  const g=(arr)=>arr&&arr.length?arr[0]:null;
-  const wn0=g(R.winsList),mvt0=g(R.mvt),st0=g(R.streaks),
-        sc0=g(R.scorer),wl0=g(R.wall),u0=g(R.upsets),b0=g(R.biggest),
-        pf0=g(R.perfect),gr0=g(R.grinder),
-        wwr0=g(R.worstWr),wa0=g(R.worstAtk),wd0=g(R.worstDef),we0=g(R.worstElo),
-        eg0=g(R.endgegner),cl0=g(R.clutchList),ic0=g(R.iceList),
-        wt0=g(R.worstTeam),bd0=g(R.bestDuo),of0=g(R.onFire),cs0=g(R.coldStreak),ck0=g(R.carryList),
-        sl0=g(R.soloList),ft0=g(R.formtief),zk0=g(R.zirkusList),bs0=g(R.baustelleList),
-        sm0=g(R.showmasterList),
-        wk0=g(R.weekKingList),dk0=g(R.dayKingList),
-        // ── NEUE AWARDS v3 ──
-        pm0=g(R.plusMinusList),uh0=g(R.underdogList),pv0=g(R.pechvogelList),
-        // ── NEUE TEAM-AWARDS v4 ──
-        un0=g(R.unstoppableList), cw0=g(R.concreteWallList), lc0=g(R.luckyCharmList),
-        gs0=g(R.giantSlayerList), fs0=g(R.favoritenschreckList), rv0=g(R.rivalryList),
-        // ── NEUE NEGATIV-AWARDS v6 ──
-        cp0=g(R.cheesePlatterList), fl0=g(R.favoriteLoserList);
-
+  // Wer eine Kachel trägt, wie viel und woraus, sagt AW_WERT [§5.3d];
+  // gezeichnet wird sie von awKachelHtml. Hier steht nur noch, welche
+  // Kacheln in welchem Abschnitt stehen.
+  // Wochen- und Tageskönig zählen Wochen und Tage: in EINER Woche wäre die
+  // Antwort immer eins.
+  const zeigen = key => !(awPeriod === 'week' && (key === 'weekKing' || key === 'dayKing'));
   let html='';
   // ════════════════════════════════════════════════════════════════
   // AWARD-SAMMLER-PODIUM (Top-3 Spieler nach Anzahl gewonnener Awards)
@@ -11822,69 +11652,15 @@ function _vAwardsCore(){
   // NICHT in den Sammler-Counter ein.
   // ════════════════════════════════════════════════════════════════
   const _coll = {}; // playerId → count
-  const _addColl = (ids) => {
-    if(!ids) return;
-    ids.forEach(id => { if(id) _coll[id] = (_coll[id] || 0) + 1; });
-  };
-  // ────────────────────────────────────────────────────────────────
-  // Tie-aware Top-1-Sammler. Bei geteilten Platz-1-Auszeichnungen
-  // werden ALLE Spieler/Teams mit demselben Top-Wert gezählt.
-  // valFn muss zur Sort-Logik der jeweiligen Award-Card passen (die
-  // Listen sind bereits desc nach valFn sortiert; list[0] = Top-Wert).
-  // ────────────────────────────────────────────────────────────────
-  const _topSingleIds = (list, valFn) => {
-    if(!list || !list.length) return [];
-    const topVal = valFn(list[0]);
-    return list.filter(x => valFn(x) === topVal).map(x => x.id);
-  };
-  const _topTeamIds = (list, valFn) => {
-    if(!list || !list.length) return [];
-    const topVal = valFn(list[0]);
-    const out = [];
-    list.filter(x => valFn(x) === topVal).forEach(x => x.ids.forEach(id => out.push(id)));
-    return out;
-  };
-  // Highlights
-  if(wn0) _addColl(_topSingleIds(R.winsList, x => x.v));
-  if(of0 && of0.v >= 2) _addColl(_topSingleIds(R.onFire, x => x.v));
-  if(pf0) _addColl(_topSingleIds(R.perfect, x => Math.round(x.wr*100)));
-  if(st0) _addColl(_topSingleIds(R.streaks, x => x.v));
-  if(sm0) _addColl(_topSingleIds(R.showmasterList, x => x.v));
-  if(awPeriod !== 'week'){
-    if(wk0) _addColl(_topSingleIds(R.weekKingList, x => x.v));
-    if(dk0) _addColl(_topSingleIds(R.dayKingList, x => x.v));
-  }
-  // Teams
-  if(mvt0) _addColl(_topTeamIds(R.mvt, x => Math.round(x.v)));
-  if(bd0 && bd0.g >= 2) _addColl(_topTeamIds(R.bestDuo, x => x.g));
-  // Angriff & Verteidigung
-  if(sc0) _addColl(_topSingleIds(R.scorer, x => Math.round(x.avg*10)));
-  if(wl0) _addColl(_topSingleIds(R.wall, x => Math.round(x.v/x.g*10)));
-  if(ic0 && ic0.v >= 1) _addColl(_topSingleIds(R.iceList, x => x.v));
-  if(pm0) _addColl(_topSingleIds(R.plusMinusList, x => Math.round(x.v*10)));
-  // Spezial
-  if(eg0) _addColl(_topTeamIds(R.endgegner, x => Math.round(x.pct*1000)));
-  if(cl0) _addColl(_topSingleIds(R.clutchList, x => Math.round(x.wr*100)));
-  if(ck0 && ck0.v >= 1) _addColl(_topSingleIds(R.carryList, x => x.v));
-  if(sl0) _addColl(_topSingleIds(R.soloList, x => Math.round(x.wr*100)));
-  // upset / biggest sind Einzel-Match-Awards (kein Top-1-Konzept wie bei Listen)
-  if(u0) _addColl(u0.m.winner === 'A' ? [u0.m.a1, u0.m.a2] : [u0.m.b1, u0.m.b2]);
-  if(b0) _addColl(b0.m.winner === 'A' ? [b0.m.a1, b0.m.a2] : [b0.m.b1, b0.m.b2]);
-  if(gr0) _addColl(_topSingleIds(R.grinder, x => x.v));
-  if(uh0) _addColl(_topSingleIds(R.underdogList, x => Math.round(x.pct * 1000)));
-  // ── NEUE TEAM-AWARDS v4 (positive Awards → in Sammler-Counter) ──
-  if(un0) _addColl(_topTeamIds(R.unstoppableList, x => x.v));
-  if(cw0) _addColl(_topTeamIds(R.concreteWallList, x => -Math.round(x.v*100))); // niedriger = besser
-  if(lc0) _addColl(_topTeamIds(R.luckyCharmList, x => Math.round(x.v*1000)));   // Quote
-  if(gs0) _addColl(_topTeamIds(R.giantSlayerList, x => Math.round(x.v*1000)));  // Quote
-  // Rivalry zählt für alle 4 Spieler beider Teams (idsA + idsB), Sortierung per Quote.
-  if(rv0){
-    const topPct = Math.round(rv0.pct*1000);
-    R.rivalryList.filter(x => Math.round(x.pct*1000) === topPct).forEach(x => _addColl([...x.idsA, ...x.idsB]));
-  }
-  // Favoritenschreck ist semantisch negativ/dramatisch (für den Verlierer) — wir werten
-  // ihn neutral, also NICHT im Award-Sammler.
-  // Schandtafel-Awards (inkl. Pechvogel) fließen bewusst NICHT in den Sammler.
+  // Gezählt wird jede positive Kachel, die gerade steht, und jeder, der sie
+  // trägt — gleichauf heißt geteilt. Die Liste der Kacheln und ihre
+  // Sortierung kommen aus AW_WERT: hier stand eine vierte Kopie der
+  // Sortierfunktionen, und sie wich schon ab (die Eiserne Abwehr zählte
+  // aufsteigend, das Profil absteigend).
+  Object.keys(AW_WERT).forEach(key => {
+    if(awNeg(key) || !zeigen(key)) return;
+    awTop(key, R).forEach(x => awIds(key, x).forEach(id => { if(id) _coll[id] = (_coll[id] || 0) + 1; }));
+  });
 
   const _collTop = Object.entries(_coll)
     .map(([id, count]) => ({id, count}))
@@ -11951,213 +11727,37 @@ function _vAwardsCore(){
   }
 
   // Section header: kleiner farbiger Punkt + Caps-Label + verlaufende Linie.
-  // Cards landen in einer aw-vitrine (Schaukasten-Container) darunter.
-  // Die Vitrine ist zweispaltig. Bei ungerader Kachelzahl blieb unten
-  // rechts ein Loch — und ein leeres Feld liest sich als Fehler, nicht als
-  // Ende. Die letzte Kachel nimmt dann die ganze Reihe und stellt sich
-  // waagerecht, wie der Aufmacher. Der Aufmacher zählt dabei nicht mit: er
-  // hat seine Reihe schon für sich.
-  // Jede Vitrine läuft hier durch — auch die Schandtafel, die ihre eigene
-  // Überschrift hat und deshalb nicht über sect() geht.
-  const vitrine = (cards, cls) => {
-    const liste = cards.slice();
-    const hero  = liste.length > 0 && liste[0].indexOf('aw-trophy gross') > -1;
-    if((liste.length - (hero ? 1 : 0)) % 2 === 1){
-      const i = liste.length - 1;
-      liste[i] = liste[i].replace('class="aw-trophy ', 'class="aw-trophy allein ');
-    }
-    return `<div class="aw-vitrine ${cls}">${liste.join('')}</div>`;
-  };
+  // Die Kacheln landen in der Vitrine darunter (awVitrineHtml).
   const sect = (iconKey, iconCol, title, cards) => {
     html += `<div class="aw-sect ${iconCol}">
       <span class="aw-sect-dot"></span>
       <span>${title}</span>
       <span class="aw-sect-line"></span>
-    </div>` + vitrine(cards, iconCol);
+    </div>` + awVitrineHtml(cards, iconCol);
   };
-  const empty=(key,cls,label)=>card(key,cls,label,null,'–','noch keine Daten','');
+  // Eine Kachel je Award. OHNE_LEER: eine Serie, die gerade niemand hat,
+  // ist kein Fehlen, sie ist vorbei — On Fire und Eiskalt erwischt stehen
+  // nur, solange eine läuft.
+  const OHNE_LEER = new Set(['onFire','coldStreak']);
+  const kacheln = (keys, aufmacher) => keys.filter(zeigen).map((key, i) => {
+    const top = awTop(key, R);
+    if(!top.length && OHNE_LEER.has(key)) return '';
+    return awKachelHtml(key, top, {gross: aufmacher && i === 0, liste: awListe(key, R)});
+  }).filter(Boolean);
 
-  // ── HIGHLIGHTS ──
-  const highlights=[];
-  // Hero: Meiste Siege
-  highlights.push(wn0
-    ? card('wins','gold','Meiste Siege',[wn0.id],esc(topNames(R.winsList,x=>x.v,x=>pname(x.id))),pl,wn0.v,{hero:true,valSuffix:'Siege'})
-    : empty('wins','gold','Meiste Siege'));
-  if(of0&&of0.v>=2) highlights.push(card('onFire','acid','On Fire',[of0.id],esc(topNames(R.onFire,x=>x.v,x=>pname(x.id))),'aktuelle Serie',of0.v+'er'));
-  highlights.push(pf0
-    ? card('perfect','gold','Beste Bilanz',[pf0.id],esc(topNames(R.perfect,x=>Math.round(x.wr*100),x=>pname(x.id))),pf0.w+'–'+(pf0.g-pf0.w),Math.round(pf0.wr*100)+'%')
-    : empty('perfect','gold','Beste Bilanz'));
-  highlights.push(st0
-    ? card('streaks','acid','Längste Siegesserie',[st0.id],esc(topNames(R.streaks,x=>x.v,x=>pname(x.id))),pl,st0.v+'er')
-    : empty('streaks','acid','Längste Siegesserie'));
-  highlights.push(sm0
-    ? card('showmaster','gold','Showmaster',[sm0.id],esc(topNames(R.showmasterList,x=>x.v,x=>pname(x.id))),sm0.v+'× 10:0',sm0.v)
-    : empty('showmaster','gold','Showmaster'));
-  // Peak Elo stand hier, solange es den Zeitraum „Gesamt" gab. Der
-  // Allzeit-Höchststand ist ein Liga-Rekord — „Der höchste Gipfel" —
-  // und steht im Reiter nebenan. Zweimal dieselbe Zahl, zwei Namen.
-  // Wochenkönig & Tageskönig: nur in Saison/Gesamt sinnvoll (in Woche wäre Zeitraum=1).
-  // Beide nutzen exakt die Zähler-Logik der POTW-/POTD-Badges (Konsistenz garantiert).
-  if(awPeriod!=='week'){
-    highlights.push(wk0
-      ? card('weekKing','gold','Wochenkönig',[wk0.id],esc(topNames(R.weekKingList,x=>x.v,x=>pname(x.id))),wk0.v+'× Player of the Week',wk0.v)
-      : empty('weekKing','gold','Wochenkönig'));
-    highlights.push(dk0
-      ? card('dayKing','gold','Tageskönig',[dk0.id],esc(topNames(R.dayKingList,x=>x.v,x=>pname(x.id))),dk0.v+'× Player of the Day',dk0.v)
-      : empty('dayKing','gold','Tageskönig'));
-  }
-  sect('star','gold','Höhepunkte',highlights);
-
-  // ── TEAMS ──
-  const teams=[];
-  teams.push(mvt0
-    ? card('mvt','blue','Bestes Team',mvt0.ids,esc(topTeamNames(R.mvt,x=>Math.round(x.v))),'gemeinsamer Elo-Zuwachs · '+pl,(mvt0.v>=0?'+':'')+Math.round(mvt0.v))
-    : empty('mvt','blue','Bestes Team'));
-  teams.push(bd0&&bd0.g>=2
-    ? card('bestDuo','blue','Unzertrennlich',bd0.ids,esc(topTeamNames(R.bestDuo,x=>x.g)),bd0.g+' gemeinsame Spiele',bd0.g)
-    : empty('bestDuo','blue','Unzertrennlich'));
-  // ── NEUE TEAM-AWARDS v4 ──
-  // Unaufhaltsam: längste Team-Siegesserie
-  teams.push(un0
-    ? card('unstoppable','acid','Unaufhaltsam',un0.ids,esc(topTeamNames(R.unstoppableList,x=>x.v)),un0.v+' Siege in Folge',un0.v)
-    : empty('unstoppable','acid','Unaufhaltsam'));
-  // Betonmauer: niedrigster Gegentor-Schnitt (min. 10 Sp.)
-  teams.push(cw0
-    ? card('concreteWall','blue','Betonmauer',cw0.ids,esc(topTeamNames(R.concreteWallList,x=>-Math.round(x.v*100))),komma(cw0.v,2)+' Gegentore/Sp.',komma(cw0.v,2))
-    : empty('concreteWall','blue','Betonmauer'));
-  // Glückspilze: meiste 1-Tor-Siege
-  teams.push(lc0
-    ? card('luckyCharm','acid','Glückspilze',lc0.ids,esc(topTeamNames(R.luckyCharmList,x=>Math.round(x.v*1000))),lc0.wins+' von '+lc0.games+' engen Partien gewonnen',Math.round(lc0.v*100)+'%')
-    : empty('luckyCharm','acid','Glückspilze'));
-  // Giant Slayer: meiste Siege gegen stärkere Teams
-  teams.push(gs0
-    ? card('giantSlayer','orange','Giant Slayer',gs0.ids,esc(topTeamNames(R.giantSlayerList,x=>Math.round(x.v*1000))),Math.round(gs0.v*100)+'% Favoriten besiegt ('+gs0.wins+'/'+gs0.games+')',Math.round(gs0.v*100)+'%')
-    : empty('giantSlayer','orange','Giant Slayer'));
-  // Favoritenschreck: höchster überwundener Team-Elo-Unterschied (Match-Award je Team)
-  teams.push(fs0
-    ? card('favoritenschreck','red','Favoritenschreck',fs0.ids,esc(topTeamNames(R.favoritenschreckList,x=>x.v)),fs0.v+' Elo überwunden · '+dateStr(fs0.m.created_at),fs0.v)
-    : empty('favoritenschreck','red','Favoritenschreck'));
-  // Erzfeinde: 4-Spieler-Rivalität — beide Teams im name-String "X & Y vs Z & W"
-  if(rv0){
-    // Gleichauf liegende Rivalitäten teilen sich die Kachel, wie bei jedem
-    // anderen Award („+2" hinter dem ersten Namen): der Sammler zählte sie
-    // für alle vier Spieler jeder davon, die Kachel nannte nur die erste.
-    const rivalryName = R.rivalryList.filter(x => Math.round(x.pct*1000) === Math.round(rv0.pct*1000))
-      .map(x => pname(x.idsA[0])+' & '+pname(x.idsA[1])+' vs '+pname(x.idsB[0])+' & '+pname(x.idsB[1])).join(', ');
-    teams.push(card('rivalry','purple','Erzfeinde',[...rv0.idsA, ...rv0.idsB],esc(rivalryName),Math.round(rv0.pct*100)+'% aller Spiele ('+rv0.g+' Duelle)',Math.round(rv0.pct*100)+'%'));
-  } else {
-    teams.push(empty('rivalry','purple','Erzfeinde'));
-  }
-  sect('handshake','blue','Teams',teams);
-
-  // ── ANGRIFF & VERTEIDIGUNG ──
-  const combat=[];
-  combat.push(sc0
-    ? card('scorer','orange','Torjäger',[sc0.id],esc(topNames(R.scorer,x=>Math.round(x.avg*10),x=>pname(x.id))),'Ø '+komma(sc0.avg,1)+' Tore/Sp.',komma(sc0.avg,1))
-    : empty('scorer','orange','Torjäger'));
-  combat.push(wl0
-    ? card('wall','blue','Eiserne Abwehr',[wl0.id],esc(topNames(R.wall,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wl0.v/wl0.g),1)+' Gegentore/Sp.',komma((wl0.v/wl0.g),1))
-    : empty('wall','blue','Eiserne Abwehr'));
-  combat.push(ic0&&ic0.v>=1
-    ? card('ice','blue','Eiskalt',[ic0.id],esc(topNames(R.iceList,x=>x.v,x=>pname(x.id))),ic0.v+'× Zu-Null als Verteidiger',ic0.v)
-    : empty('ice','blue','Eiskalt'));
-  // Plus-Minus: Ø Tor-Saldo pro Spiel. Vorzeichen vor dem Wert für klares "Plus"-Gefühl.
-  combat.push(pm0
-    ? card('plusMinus','orange','Plus-Minus',[pm0.id],esc(topNames(R.plusMinusList,x=>Math.round(x.v*10),x=>pname(x.id))),pm0.gf+':'+pm0.ga+' · '+pm0.g+' Spiele',(pm0.v>=0?'+':'')+komma(pm0.v,1))
-    : empty('plusMinus','orange','Plus-Minus'));
-  sect('shield','purple','Angriff & Verteidigung',combat);
-
-  // ── SPEZIAL ──
-  const special=[];
-  special.push(eg0
-    ? card('endgegner','purple','Endgegner',eg0.ids,esc(topTeamNames(R.endgegner,x=>Math.round(x.pct*1000))),Math.round(eg0.pct*100)+'% als Gegner ('+eg0.g+'×)',Math.round(eg0.pct*100)+'%')
-    : empty('endgegner','purple','Endgegner'));
-  special.push(cl0
-    ? card('clutch','acid','Clutch-Player',[cl0.id],esc(topNames(R.clutchList,x=>Math.round(x.wr*100),x=>pname(x.id))),cl0.g+' knappe Spiele',Math.round(cl0.wr*100)+'%')
-    : empty('clutch','acid','Clutch-Player'));
-  special.push(ck0&&ck0.v>=1
-    ? card('carryKing','acid','Carry-King',[ck0.id],esc(topNames(R.carryList,x=>x.v,x=>pname(x.id))),ck0.v+'× mit schwachem Mate',ck0.v)
-    : empty('carryKing','acid','Carry-King'));
-  special.push(sl0
-    ? card('solo','acid','Leitwolf',[sl0.id],esc(topNames(R.soloList,x=>Math.round(x.wr*100),x=>pname(x.id))),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%')
-    : empty('solo','acid','Leitwolf'));
-  // Match-Awards: zeigen die Avatare des Gewinner-Teams (winnerSide via m.winner)
-  // Match-Awards haben pro Match nur einen Eintrag → keine Komma-Liste nötig
-  // Die Zahl der Überraschung ist die Siegchance der SIEGER, wie in der Liga,
-  // in der Top-5-Liste und im Blatt. Die Kachel zeigte die der Gegenseite, und
-  // dieselbe Partie stand mit 71 % hier und mit 30 % überall sonst.
-  special.push(u0
-    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),standFuer(u0.m)+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round((1-u0.sp)*100)+'%')
-    : empty('upset','orange','Größte Überraschung'));
-  special.push(b0
-    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),standFuer(b0.m),'+'+b0.diff)
-    : empty('biggest','purple','Höchster Sieg'));
-  special.push(gr0
-    ? card('grinder','blue','Vielspieler',[gr0.id],esc(topNames(R.grinder,x=>x.v,x=>pname(x.id))),pl,gr0.v)
-    : empty('grinder','blue','Vielspieler'));
-  // Underdog-Held: meiste Underdog-Siege (myExp < 35%). Anders als die Match-Trophy
-  // "Größte Überraschung" (= einzelner Match) ist das hier ein Saison-Counter.
-  special.push(uh0
-    ? card('underdog','purple','Underdog-Held',[uh0.id],
-        esc(topNames(R.underdogList,x=>Math.round(x.pct*1000),x=>pname(x.id))),
-        uh0.v+' von '+uh0.g+' Partien als Außenseiter gewonnen',
-        Math.round(uh0.pct*100)+'%')
-    : empty('underdog','purple','Underdog-Held'));
+  sect('star','gold','Höhepunkte',
+    kacheln(['wins','onFire','perfect','streaks','showmaster','weekKing','dayKing'], true));
+  sect('handshake','blue','Teams',
+    kacheln(['mvt','bestDuo','unstoppable','concreteWall','luckyCharm','giantSlayer','favoritenschreck','rivalry']));
+  sect('shield','purple','Angriff & Verteidigung',
+    kacheln(['scorer','wall','ice','plusMinus']));
   // Spezial trägt Metall: es ist die Gruppe für alles, was in keine der
   // anderen passt — eine eigene Buntfarbe würde ihr eine Bedeutung geben,
   // die sie nicht hat.
-  sect('bolt','silber','Spezial',special);
-
-  // ── SCHANDTAFEL ──
-  const neg=[];
-  neg.push(wwr0
-    ? card('worstWr','red','Schwächste Bilanz',[wwr0.id],esc(topNames(R.worstWr,x=>Math.round(x.wr*100),x=>pname(x.id))),wwr0.w+'–'+(wwr0.g-wwr0.w),Math.round(wwr0.wr*100)+'%',{neg:true})
-    : empty('worstWr','red','Schwächste Bilanz'));
-  if(cs0&&cs0.v>=2) neg.push(card('coldStreak','red','Eiskalt erwischt',[cs0.id],esc(topNames(R.coldStreak,x=>x.v,x=>pname(x.id))),'aktuelle Serie',cs0.v+'er',{neg:true}));
-  const ls0=g(R.lossStreaks);
-  neg.push(ls0
-    ? card('lossStreaks','red','Längste Pleitenserie',[ls0.id],esc(topNames(R.lossStreaks,x=>x.v,x=>pname(x.id))),'insgesamt',ls0.v+'er',{neg:true})
-    : empty('lossStreaks','red','Längste Pleitenserie'));
-  neg.push(ft0
-    ? card('formtief','red','Formtief',[ft0.id],esc(topNames(R.formtief,x=>Math.round(x.drop),x=>pname(x.id))),'Peak '+ft0.peak+' → jetzt '+ft0.cur,'-'+Math.round(ft0.drop),{neg:true})
-    : empty('formtief','red','Formtief'));
-  neg.push(wa0
-    ? card('worstAtk','red','Zahnloser Stürmer',[wa0.id],esc(topNames(R.worstAtk,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wa0.v/wa0.g),1)+' Tore/Sp.',komma((wa0.v/wa0.g),1),{neg:true})
-    : empty('worstAtk','red','Zahnloser Stürmer'));
-  neg.push(wd0
-    ? card('worstDef','red','Löchrigste Abwehr',[wd0.id],esc(topNames(R.worstDef,x=>Math.round(x.v/x.g*10),x=>pname(x.id))),komma((wd0.v/wd0.g),1)+' Gegentore/Sp.',komma((wd0.v/wd0.g),1),{neg:true})
-    : empty('worstDef','red','Löchrigste Abwehr'));
-  neg.push(zk0
-    ? card('zirkus','red','Zirkus',zk0.ids,esc(topTeamNames(R.zirkusList,x=>Math.round(x.pct*1000))),zk0.v+' von '+zk0.g+' Pleiten waren Debakel',Math.round(zk0.pct*100)+'%',{neg:true})
-    : empty('zirkus','red','Zirkus'));
-  neg.push(wt0
-    ? card('worstTeam','red','Schlechtestes Team',wt0.ids,esc(topTeamNames(R.worstTeam,x=>Math.round(x.w/x.g*100))),wt0.w+'–'+(wt0.g-wt0.w),Math.round(wt0.w/wt0.g*100)+'%',{neg:true})
-    : empty('worstTeam','red','Schlechtestes Team'));
-  neg.push(bs0
-    ? card('baustelle','red','Baustelle',bs0.ids,esc(topTeamNames(R.baustelleList,x=>x.best)),'Niederlagenserie',bs0.best+'er',{neg:true})
-    : empty('baustelle','red','Baustelle'));
-  // Pechvogel: Anteil verlorener enger Partien. Der Spiegel des Clutch-Players,
-  // aus derselben Zaehlung [§C27].
-  neg.push(pv0
-    ? card('pechvogel','red','Pechvogel',[pv0.id],
-        esc(topNames(R.pechvogelList,x=>Math.round(x.pct*1000),x=>pname(x.id))),
-        pv0.v+' von '+pv0.g+' engen Partien verloren',
-        Math.round(pv0.pct*100)+'%',
-        {neg:true})
-    : empty('pechvogel','red','Pechvogel'));
-  // ── NEUE NEGATIV-AWARDS v6 ──
-  // Käseteller: Spiegel zu Concrete Wall — höchster Gegentor-Schnitt als Team.
-  neg.push(cp0
-    ? card('cheesePlatter','red','Käseteller',cp0.ids,esc(topTeamNames(R.cheesePlatterList,x=>Math.round(x.v*100))),komma(cp0.v,2)+' Gegentore/Sp.',komma(cp0.v,2),{neg:true})
-    : empty('cheesePlatter','red','Käseteller'));
-  // Favoriten-Versager: Spiegel zu Underdog-Held — höchste Niederlagen-Quote bei myExp ≥ 65%.
-  neg.push(fl0
-    ? card('favoriteLoser','red','Favoriten-Versager',[fl0.id],
-        esc(topNames(R.favoriteLoserList,x=>Math.round(x.v*1000),x=>pname(x.id))),
-        fl0.losses+' verloren in '+fl0.games+' Favoriten-Spielen',
-        Math.round(fl0.v*100)+'%',
-        {neg:true})
-    : empty('favoriteLoser','red','Favoriten-Versager'));
+  sect('bolt','silber','Spezial',
+    kacheln(['endgegner','clutch','carryKing','solo','upset','biggest','grinder','underdog']));
+  const neg = kacheln(['worstWr','coldStreak','lossStreaks','formtief','worstAtk','worstDef',
+    'zirkus','worstTeam','baustelle','pechvogel','cheesePlatter','favoriteLoser']);
   html+=`<div class="aw-shame-divider">
     <div class="line"></div>
     <div class="lbl">
@@ -12165,7 +11765,7 @@ function _vAwardsCore(){
       Schandtafel
     </div>
     <div class="line r"></div>
-  </div>` + vitrine(neg, 'red');
+  </div>` + awVitrineHtml(neg, 'red');
 
   return `${periodBar}${html}`;
 }
@@ -12280,6 +11880,227 @@ const AWARD_META={
   cheesePlatter:{title:'Käseteller',           cls:'red',   why:`Das Duo mit den meisten Gegentoren je Partie. Ab ${AW_MIN.teamSpiele} gemeinsamen Partien.`},
   favoriteLoser:{title:'Favoriten-Versager',   cls:'red',   why:`Die höchste Niederlagenquote als Favorit (Siegchance ab 65 %). Ab ${AW_MIN.favorit} solchen Partien.`}
 };
+
+// ╔═══ §5.3d ─── EIN WERT JE AUSZEICHNUNG ────────────────────────────╗
+//     Liste, Sortierung, Zahl, Einheit und Stichprobe jeder Auszeichnung
+//     an EINER Stelle [§C27]. Sie standen viermal da — Kachel, Blatt,
+//     Profil, Duo-Blatt —, jede Stelle mit eigener Sortierung und eigener
+//     Schreibweise: dieselbe Serie hieß „8", „8er", „8er Serie" und
+//     „8 Siege in Folge", die Betonmauer trug im Profil „4,00" ohne Einheit,
+//     das Duo-Blatt zählte die Plätze mit einer dritten Kopie der
+//     Sortierfunktionen und der Award-Sammler mit einer vierten.
+// ╚═════════════════════════════════════════════════════════════════════╝
+//   l(R)   die Liste aus awardRankings, schon sortiert
+//   s(x)   der Wert, nach dem gleichauf entschieden wird
+//   z(x)   die Zahl, e(x) ihre Einheit ausgeschrieben, b(x) die Stichprobe
+//   f(x)   der rohe Wert für die Lage im Feld — nur, wo alle Einträge
+//          dieselbe Größe auf derselben Skala messen (Quote, Schnitt)
+//   lauf   eine Serie: gezeichnet als Lauf aus Feldern
+//   gilt   was ein Eintrag mindestens braucht, um Halter zu sein
+//   einzeln  eine einzelne Partie: der Platz ist die Reihenfolge der Liste
+//   gegner   zwei Spieler, die sich gegenüberstehen — kein Duo
+const _awPz = v => Math.round(v * 100) + '%';
+const _awN = (n, eins, viele) => n === 1 ? eins : viele;
+const _awSieger = x => x.m.winner === 'A' ? [x.m.a1, x.m.a2] : [x.m.b1, x.m.b2];
+const AW_WERT = {
+  wins:        {l:R=>R.winsList, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg','Siege'), b:x=>'aus '+x.g+' Partien'},
+  onFire:      {l:R=>R.onFire, s:x=>x.v, z:x=>x.v, e:x=>'Siege in Folge', b:()=>'läuft noch', lauf:true, gilt:x=>x.v>=2},
+  perfect:     {l:R=>R.perfect, s:x=>Math.round(x.wr*100), z:x=>_awPz(x.wr), e:()=>'Siegquote', b:x=>x.w+' von '+x.g+' Partien gewonnen', f:x=>x.wr},
+  streaks:     {l:R=>R.streaks, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg in Folge','Siege in Folge'), lauf:true},
+  showmaster:  {l:R=>R.showmasterList, s:x=>x.v, z:x=>x.v+'×', e:()=>'10:0 gewonnen'},
+  weekKing:    {l:R=>R.weekKingList||[], s:x=>x.v, z:x=>x.v+'×', e:()=>'Player of the Week', gilt:x=>x.v>=1},
+  dayKing:     {l:R=>R.dayKingList||[], s:x=>x.v, z:x=>x.v+'×', e:()=>'Player of the Day', gilt:x=>x.v>=1},
+  mvt:         {l:R=>R.mvt, s:x=>Math.round(x.v), z:x=>(x.v>=0?'+':'')+Math.round(x.v), e:()=>'Elo zusammen', b:x=>x.g+' Partien zusammen'},
+  bestDuo:     {l:R=>R.bestDuo, s:x=>x.g, z:x=>x.g, e:()=>'Partien zusammen', b:x=>x.w+' davon gewonnen', gilt:x=>x.g>=2},
+  unstoppable: {l:R=>R.unstoppableList, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg in Folge','Siege in Folge'), lauf:true},
+  concreteWall:{l:R=>R.concreteWallList, s:x=>-Math.round(x.v*100), z:x=>'Ø '+komma(x.v,2), e:()=>'Gegentore je Partie', b:x=>'aus '+x.g+' Partien zusammen', f:x=>x.v},
+  luckyCharm:  {l:R=>R.luckyCharmList, s:x=>Math.round(x.v*1000), z:x=>_awPz(x.v), e:()=>'Ein-Tor-Partien gewonnen', b:x=>x.wins+' von '+x.games+' Partien', f:x=>x.v},
+  giantSlayer: {l:R=>R.giantSlayerList, s:x=>Math.round(x.v*1000), z:x=>_awPz(x.v), e:()=>'Siegquote gegen Stärkere', b:x=>x.wins+' von '+x.games+' Partien gewonnen', f:x=>x.v},
+  favoritenschreck:{l:R=>R.favoritenschreckList, s:x=>x.v, z:x=>x.v, e:()=>'Elo überwunden', b:x=>standFuer(x.m)+' am '+dateStr(x.m.created_at)},
+  rivalry:     {l:R=>R.rivalryList, ids:x=>[...x.idsA, ...x.idsB], s:x=>Math.round(x.pct*1000), z:x=>_awPz(x.pct), e:()=>'als Gegner', b:x=>x.g+' Duelle', f:x=>x.pct},
+  scorer:      {l:R=>R.scorer, s:x=>Math.round(x.avg*10), z:x=>'Ø '+komma(x.avg,1), e:()=>'Tore je Partie', b:x=>'aus '+x.g+' Sturmpartien', f:x=>x.avg},
+  wall:        {l:R=>R.wall, s:x=>-Math.round(x.v/x.g*10), z:x=>'Ø '+komma(x.v/x.g,1), e:()=>'Gegentore je Partie', b:x=>'aus '+x.g+' Abwehrpartien', f:x=>x.v/x.g},
+  ice:         {l:R=>R.iceList, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg zu null','Siege zu null'), b:()=>'in der Abwehr', gilt:x=>x.v>=1},
+  plusMinus:   {l:R=>R.plusMinusList, s:x=>Math.round(x.v*10), z:x=>'Ø '+(x.v>=0?'+':'')+komma(x.v,1), e:()=>'Torbilanz je Partie', b:x=>x.gf+':'+x.ga+' aus '+x.g+' Partien', f:x=>x.v},
+  endgegner:   {l:R=>R.endgegner, gegner:true, s:x=>Math.round(x.pct*1000), z:x=>_awPz(x.pct), e:()=>'als Gegner', b:x=>x.g+' Begegnungen', f:x=>x.pct},
+  clutch:      {l:R=>R.clutchList, s:x=>Math.round(x.wr*100), z:x=>_awPz(x.wr), e:()=>'Siegquote in engen Partien', b:x=>x.w+' von '+x.g+' engen Partien gewonnen', f:x=>x.wr},
+  carryKing:   {l:R=>R.carryList, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Sieg mit dem Schwächsten','Siege mit dem Schwächsten'), gilt:x=>x.v>=1},
+  solo:        {l:R=>R.soloList, s:x=>Math.round(x.wr*100), z:x=>_awPz(x.wr), e:()=>'Siegquote als Stärkster', b:x=>x.w+' von '+x.g+' Partien gewonnen', f:x=>x.wr},
+  upset:       {l:R=>R.upsets, ids:_awSieger, s:x=>Math.round(x.sp*100), z:x=>_awPz(1-x.sp), e:()=>'Siegchance', b:x=>standFuer(x.m)+' am '+dateStr(x.m.created_at), einzeln:true},
+  biggest:     {l:R=>R.biggest, ids:_awSieger, s:x=>x.diff, z:x=>standFuer(x.m), e:x=>x.diff+' Tore Unterschied', b:x=>'am '+dateStr(x.m.created_at), einzeln:true},
+  grinder:     {l:R=>R.grinder, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Partie','Partien')},
+  underdog:    {l:R=>R.underdogList, s:x=>Math.round(x.pct*1000), z:x=>_awPz(x.pct), e:()=>'Siegquote als Außenseiter', b:x=>x.v+' von '+x.g+' Partien gewonnen', f:x=>x.pct},
+  worstWr:     {l:R=>R.worstWr, s:x=>-Math.round(x.wr*100), z:x=>_awPz(x.wr), e:()=>'Siegquote', b:x=>x.w+' von '+x.g+' Partien gewonnen', f:x=>x.wr},
+  coldStreak:  {l:R=>R.coldStreak, s:x=>x.v, z:x=>x.v, e:()=>'Niederlagen in Folge', b:()=>'läuft noch', lauf:true, gilt:x=>x.v>=2},
+  lossStreaks: {l:R=>R.lossStreaks, s:x=>x.v, z:x=>x.v, e:x=>_awN(x.v,'Niederlage in Folge','Niederlagen in Folge'), lauf:true},
+  formtief:    {l:R=>R.formtief, s:x=>Math.round(x.drop), z:x=>'−'+Math.round(x.drop), e:()=>'Elo unter dem Hoch', b:x=>'Hoch '+x.peak+', jetzt '+x.cur},
+  worstAtk:    {l:R=>R.worstAtk, s:x=>-Math.round(x.v/x.g*10), z:x=>'Ø '+komma(x.v/x.g,1), e:()=>'Tore je Partie', b:x=>'aus '+x.g+' Sturmpartien', f:x=>x.v/x.g},
+  worstDef:    {l:R=>R.worstDef, s:x=>Math.round(x.v/x.g*10), z:x=>'Ø '+komma(x.v/x.g,1), e:()=>'Gegentore je Partie', b:x=>'aus '+x.g+' Abwehrpartien', f:x=>x.v/x.g},
+  zirkus:      {l:R=>R.zirkusList, s:x=>Math.round(x.pct*1000), z:x=>_awPz(x.pct), e:()=>'der Niederlagen hoch', b:x=>x.v+' von '+x.g+' Niederlagen', f:x=>x.pct},
+  worstTeam:   {l:R=>R.worstTeam, s:x=>-Math.round(x.w/x.g*100), z:x=>_awPz(x.w/x.g), e:()=>'Siegquote', b:x=>x.w+' von '+x.g+' Partien gewonnen', f:x=>x.w/x.g},
+  baustelle:   {l:R=>R.baustelleList, s:x=>x.best, z:x=>x.best, e:x=>_awN(x.best,'Niederlage in Folge','Niederlagen in Folge'), b:x=>x.cur===x.best&&x.cur>0?'läuft noch':'', lauf:true},
+  pechvogel:   {l:R=>R.pechvogelList, s:x=>Math.round(x.pct*1000), z:x=>_awPz(x.pct), e:()=>'enge Partien verloren', b:x=>x.v+' von '+x.g+' engen Partien', f:x=>x.pct},
+  cheesePlatter:{l:R=>R.cheesePlatterList, s:x=>Math.round(x.v*100), z:x=>'Ø '+komma(x.v,2), e:()=>'Gegentore je Partie', b:x=>'aus '+x.g+' Partien zusammen', f:x=>x.v},
+  favoriteLoser:{l:R=>R.favoriteLoserList, s:x=>Math.round(x.v*1000), z:x=>_awPz(x.v), e:()=>'als Favorit verloren', b:x=>x.losses+' von '+x.games+' Partien', f:x=>x.v}
+};
+// Die Liste eines Awards, ohne Einträge, die nicht als Halter gelten.
+function awListe(key, R){
+  const w = AW_WERT[key]; if(!w || !R) return [];
+  const l = w.l(R) || [];
+  return w.gilt ? l.filter(w.gilt) : l;
+}
+function awIds(key, x){
+  const w = AW_WERT[key];
+  return w && w.ids ? w.ids(x) : (x.ids || [x.id]);
+}
+// Alle, die den Award heute tragen: gleichauf heißt geteilt.
+function awTop(key, R){
+  const l = awListe(key, R); if(!l.length) return [];
+  const w = AW_WERT[key];
+  if(w.einzeln) return [l[0]];
+  const t = w.s(l[0]);
+  return l.filter(x => w.s(x) === t);
+}
+// Der Platz eines Eintrags (0-basiert, gleichauf teilt) unter den ersten
+// drei — oder null. Dieselbe Zählung für Profil, Duo-Blatt und Award-Blatt.
+function awRang(key, R, trifft){
+  const l = awListe(key, R), w = AW_WERT[key];
+  let rang = 1;
+  for(let i = 0; i < Math.min(l.length, 10); i++){
+    if(w.einzeln) rang = i + 1;
+    else if(i > 0 && w.s(l[i]) !== w.s(l[i-1])) rang = i + 1;
+    if(rang > 3) break;
+    if(trifft(l[i])) return {rang:rang - 1, x:l[i]};
+  }
+  return null;
+}
+function awText(key, x){
+  const w = AW_WERT[key];
+  return {z:String(w.z(x)), e:w.e ? w.e(x) : '', b:w.b ? w.b(x) : ''};
+}
+// Negativ ist, was rot ist [§C25] — eine Liste, nicht vier Kopien.
+function awNeg(key){ const m = AWARD_META[key]; return !!(m && m.cls === 'red'); }
+// Was auf einer leeren Kachel steht. Ein Strich sagt nicht, ob es niemand
+// geschafft hat oder ob etwas kaputt ist [§6 „Ein leeres Feld liest sich
+// als Fehler"]; der Satz nennt, was noch fehlt.
+const AW_LEER = {
+  showmaster:'Noch kein 10:0 gespielt', ice:'Noch kein Sieg zu null',
+  carryKing:'Noch kein Sieg mit dem Schwächsten', favoritenschreck:'Noch kein Sieg gegen ein stärkeres Duo',
+  underdog:'Noch zu wenige Partien als Außenseiter', giantSlayer:'Noch zu wenige Partien gegen Stärkere',
+  favoriteLoser:'Noch zu wenige Partien als Favorit', clutch:'Noch zu wenige enge Partien',
+  pechvogel:'Noch zu wenige enge Partien', luckyCharm:'Noch zu wenige Ein-Tor-Partien',
+  weekKing:'Noch keine Woche abgeschlossen', dayKing:'Noch kein Spieltag abgeschlossen'
+};
+// Die Lage im Feld: jeder Eintrag der Liste als Punkt auf seiner Skala, die
+// Halter hervorgehoben, die Mitte als Strich. „72 %" sagt allein nicht, ob
+// das knapp vorn oder weit weg ist — die Liste steht erst im Blatt.
+// Nur ab drei Einträgen: zwei Punkte sind kein Feld.
+function awFeldHtml(key, liste, top, mitSkala){
+  const w = AW_WERT[key];
+  if(!w || !w.f || !liste || liste.length < 3) return '';
+  const werte = liste.map(w.f);
+  const lo = Math.min(...werte), hi = Math.max(...werte);
+  if(!(hi > lo)) return '';
+  const pos = v => ((v - lo) / (hi - lo) * 92 + 4).toFixed(1);
+  const sortiert = liste.slice().sort((a, b) => w.f(a) - w.f(b));
+  const mitte = sortiert[Math.floor((sortiert.length - 1) / 2)];
+  const halter = new Set(top);
+  // Halter zuletzt, damit ihr Punkt über den anderen liegt.
+  const punkte = liste.filter(x => !halter.has(x)).concat(top)
+    .map(x => `<i${halter.has(x) ? ' class="er"' : ''} style="left:${pos(w.f(x))}%"></i>`).join('');
+  const skala = mitSkala
+    ? `<div class="aw-feld-l num"><span>${esc(String(w.z(sortiert[0])))}</span><span>Mitte ${esc(String(w.z(mitte)))}</span><span>${esc(String(w.z(sortiert[sortiert.length-1])))}</span></div>`
+    : '';
+  return `<div class="aw-feld" title="${liste.length} im Feld"><span class="aw-feld-bahn"></span>`
+    + `<span class="aw-feld-mitte" style="left:${pos(w.f(mitte))}%"></span>${punkte}</div>${skala}`;
+}
+// Eine Serie als Lauf aus Feldern, wie im Feed (_newsSerienBand): acht ist
+// eine Zahl, die Reihe zeigt, wie lang acht sind. Ab zwölf Feldern trägt
+// die Zahl allein, die Reihe würde nur schmaler.
+function awLaufHtml(n){
+  const k = Math.max(0, Math.min(12, n | 0));
+  return k ? `<div class="aw-lauf">${'<i></i>'.repeat(k)}</div>` : '';
+}
+function _awNameVon(key, x){
+  return key === 'rivalry'
+    ? pname(x.idsA[0])+' & '+pname(x.idsA[1])+' vs '+pname(x.idsB[0])+' & '+pname(x.idsB[1])
+    : awIds(key, x).map(pname).join(AW_WERT[key] && AW_WERT[key].gegner ? ' gegen ' : ' & ');
+}
+// ── Die Award-Kachel [§C27] ─────────────────────────────────────────
+// EIN Bauteil für Awards-Reiter, Award-Blatt des Profils und Duo-Blatt.
+// Reihenfolge der Fragen: wer hat es, wie viel, woraus. Vorher stand der
+// Wert ohne Einheit („6,90", „+10", „8er") und ohne Stichprobe da, die
+// Stichprobe (`detail`) wurde gebaut und nie gezeigt, und das Profil und
+// das Duo-Blatt bauten je eine eigene Kachel mit eigenen Farben.
+//   top     Einträge, die den Award tragen (gleichauf) — leer: unbesetzt
+//   o.gross der Aufmacher eines Abschnitts: quer, mit Skala unter dem Feld
+//   o.liste die ganze Liste für die Lage im Feld
+//   o.rang  Platz 2 oder 3, wo die Kachel keinen Platz 1 zeigt (Duo-Blatt)
+//   o.attr  was ein Tippen öffnet; ohne Angabe das Award-Blatt
+function awKachelHtml(key, top, o){
+  o = o || {};
+  const meta = AWARD_META[key] || {title:key};
+  const w = AW_WERT[key];
+  const leer = !top || !top.length || !w;
+  const x = leer ? null : top[0];
+  const ids = leer ? [] : awIds(key, x);
+  const neg = awNeg(key);
+  // Drei Rollen, nicht sechs Katalogtöne [§C25].
+  const ton = neg ? 'ton-neg' : ids.length >= 2 ? 'ton-team' : 'ton-pos';
+  const zkTon = neg ? 'rot' : ids.length >= 2 ? 'blau' : 'gold';
+  const gross = !!o.gross && !leer;
+  const attr = o.attr != null ? o.attr : `data-award="${esc(key)}"`;
+  const kopf = `<div class="aw-t-kopf">${zkHtml(AW_IC[key] || 'trophy', 'k', leer ? '' : zkTon)}`
+    + `<span class="aw-t-lbl">${esc(meta.title)}</span></div>`;
+  if(leer) return `<div class="aw-trophy ${ton} empty" ${attr}>${kopf}
+      <div class="aw-t-held"><span class="aw-t-leer">—</span>
+        <div class="aw-t-wer"><span class="aw-t-beleg">${esc(AW_LEER[key] || 'Noch nicht vergeben')}</span></div></div>
+    </div>`;
+
+  let traeger;
+  if(ids.length === 1){
+    const p = pmap()[ids[0]];
+    // Dasselbe Wappen wie in der Ranglistenzeile [§C27]; auf der
+    // Schandtafel ohne Reif und Feuer, ein glänzendes Zeichen wäre dort ein
+    // Lob [awHeroAv].
+    traeger = !p ? '' : neg
+      ? avHtml(p, `--av:${gross ? 48 : 40}px`, {})
+      : avHtml(p, '', {ins:true, px:gross ? 64 : 52});
+  } else if(ids.length === 4){
+    traeger = `<span class="aw-t-vier">${svgI('crossedSwords')}</span>`;
+  } else {
+    traeger = `<span class="aw-t-paar">${ids.slice(0,2).map(id => {
+      const p = pmap()[id];
+      return p ? avHtml(p, '', {}) : '';
+    }).join('')}</span>`;
+  }
+  const t = awText(key, x);
+  const mehr = o.mehr != null ? o.mehr : top.length - 1;
+  const marke = o.rang ? `<span class="aw-t-gleich">Platz ${o.rang + 1}</span>`
+    : mehr > 0 ? `<span class="aw-t-gleich" title="gleichauf">+${mehr}</span>` : '';
+  const held = `<div class="aw-t-held">${traeger}<div class="aw-t-wer">`
+    + `<span class="aw-t-name">${esc(_awNameVon(key, x))}</span>`
+    + (t.b ? `<span class="aw-t-beleg">${esc(t.b)}</span>` : '') + `</div></div>`;
+  const val = `<div class="aw-t-val"><b>${esc(t.z)}</b>${t.e ? `<span>${esc(t.e)}</span>` : ''}</div>`;
+  const bild = w.lauf ? awLaufHtml(w.s(x)) : awFeldHtml(key, o.liste, top, gross);
+  return `<div class="aw-trophy ${ton}${gross ? ' gross' : ''}" ${attr}>${marke}${kopf}${
+    gross ? `<div class="aw-t-zeile">${held}${val}</div>` : held + val}${bild}</div>`;
+}
+
+// Die Vitrine ist zweispaltig. Bei ungerader Kachelzahl blieb unten rechts
+// ein Loch — und ein leeres Feld liest sich als Fehler, nicht als Ende. Die
+// letzte Kachel nimmt dann die ganze Reihe. Der Aufmacher zählt nicht mit:
+// er hat seine Reihe schon für sich. Ein Bauteil für Awards-Reiter,
+// Profil- und Duo-Blatt [§C27] — dort blieb das Loch stehen.
+function awVitrineHtml(kacheln, cls){
+  const liste = kacheln.slice();
+  const hero = liste.length > 0 && / gross"/.test(liste[0].slice(0, liste[0].indexOf('>')));
+  if((liste.length - (hero ? 1 : 0)) % 2 === 1){
+    const i = liste.length - 1;
+    liste[i] = liste[i].replace('class="aw-trophy ', 'class="aw-trophy allein ');
+  }
+  return `<div class="aw-vitrine${cls ? ' '+cls : ''}">${liste.join('')}</div>`;
+}
 // ╔═══ §5.3c ─── TOP-5-LISTEN FÜR STATISTIK-KARTEN (v9.16) ─────────────╗
 //     Statistik-/Superlativ-Karten (Team of the Season, Peak-Elo, Bestes
 //     Team, Größter Upset …) öffneten bisher direkt das Spieler- bzw.
@@ -12437,15 +12258,8 @@ function showAward(key){
   // gewinner/verlierer sind aber TEAMS — daher haben wir ein eigenes Layout unten.
   // rivalry ist ein 4-Spieler-Award mit Sonderlayout (Team A vs Team B).
   const MATCH_AWARDS = new Set(['upset','biggest']);
-  const TEAM_AWARDS = new Set([
-    'mvt','bestDuo','endgegner','worstTeam','zirkus','baustelle',
-    'unstoppable','concreteWall','luckyCharm','giantSlayer',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    'cheesePlatter'
-  ]);
   const RIVALRY_AWARDS = new Set(['rivalry']);
   const FAVS_AWARDS = new Set(['favoritenschreck']);
-  const NEG_KEYS = new Set(['worstWr','worstAtk','worstDef','worstTeam','formtief','coldStreak','lossStreaks','zirkus','baustelle','pechvogel','favoritenschreck','cheesePlatter','favoriteLoser']);
 
   let bodyHtml='';
 
@@ -12578,59 +12392,22 @@ function showAward(key){
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     }
   } else {
-    // Ein Wert trägt seine Einheit ausgeschrieben: „6,5 /Sp.", „9,7 Gegen/Sp."
-    // und „4× POTD" standen hier als Kürzel, dieselbe Größe hieß in drei
-    // Zeilen dreimal anders, und „1 Carries" stand in der Mehrzahl [§6].
-    const arr = (() => {
-      switch(key){
-        case 'wins':       return R.winsList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Siege',sort:x.v}));
-        case 'mvt':        return R.mvt.map(x=>({ids:x.ids,name:tn(x.ids),val:(x.v>=0?'+':'')+Math.round(x.v)+' Elo',sort:Math.round(x.v)}));
-        case 'streaks':    return R.streaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma(x.avg,1)+' Tore',sort:Math.round(x.avg*10)}));
-        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Gegentore',sort:-Math.round(x.v/x.g*10)}));
-        case 'perfect':    return R.perfect.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'grinder':    return R.grinder.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Spiele',sort:x.v}));
-        case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
-        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Tore',sort:-Math.round(x.v/x.g*10)}));
-        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Gegentore',sort:Math.round(x.v/x.g*10)}));
-        case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.g+'×)',sort:Math.round(x.pct*1000)}));
-        case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+(x.v===1?' Sieg':' Siege')+' zu null',sort:x.v}));
-        case 'worstTeam':  return R.worstTeam.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.w/x.g*100)+'%',sort:-Math.round(x.w/x.g*100)}));
-        case 'bestDuo':    return R.bestDuo.map(x=>({ids:x.ids,name:tn(x.ids),val:x.g+' Spiele',sort:x.g}));
-        case 'onFire':     return R.onFire.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'coldStreak': return R.coldStreak.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'lossStreaks':return R.lossStreaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'carryKing':  return R.carryList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+(x.v===1?' Carry':' Carries'),sort:x.v}));
-        case 'showmaster': return R.showmasterList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× 10:0',sort:x.v}));
-        case 'solo':       return R.soloList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'formtief':   return R.formtief.map(x=>({ids:[x.id],name:pname(x.id),val:'-'+Math.round(x.drop)+' Elo',sort:Math.round(x.drop)}));
-        case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
-        case 'baustelle':  return R.baustelleList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.best+'er Serie',sort:x.best}));
-        case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Player of the Week',sort:x.v}));
-        case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Player of the Day',sort:x.v}));
-        // ── NEUE AWARDS v3 ──
-        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+(x.v>=0?'+':'')+komma(x.v,1)+' Tore',sort:Math.round(x.v*10)}));
-        case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
-        case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
-        // ── NEUE TEAM-AWARDS v4 ──
-        case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
-        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:'Ø '+komma(x.v,2)+' Gegentore',sort:-Math.round(x.v*100)}));
-        case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
-        case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
-        // ── NEUE NEGATIV-AWARDS v6 ──
-        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:'Ø '+komma(x.v,2)+' Gegentore',sort:Math.round(x.v*100)}));
-        case 'favoriteLoser': return R.favoriteLoserList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.v*100)+'% ('+x.losses+'/'+x.games+')',sort:Math.round(x.v*1000)}));
-        default: return [];
-      }
-    })();
+    // Liste, Sortierung, Zahl, Einheit und Stichprobe kommen aus AW_WERT
+    // [§5.3d] — dieselbe Zeile, aus der Kachel, Profil und Duo-Blatt lesen.
+    // Hier stand eine eigene Kopie aller neununddreißig Formate, und sie
+    // sagte zu derselben Serie „8er Serie", während die Kachel „8er" trug.
+    const arr = awListe(key, R).map(x => {
+      const t = awText(key, x);
+      return {ids:awIds(key, x), name:awIds(key, x).map(pname).join(' & '),
+        z:t.z, e:t.e, val:t.e ? t.z+' '+t.e : t.z, detail:t.b, sort:AW_WERT[key].s(x)};
+    });
 
     // Hero (#1) + Liste der weiteren Plätze
     if(!arr.length){
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     } else {
-      const isTeamAward = TEAM_AWARDS.has(key);
-      const isNeg = NEG_KEYS.has(key);
+      const isTeamAward = arr[0].ids.length === 2;
+      const isNeg = awNeg(key);
       // meta.cls → RGB für Hero-Akzentfarbe
       const CLS_RGB = {gold:'247,207,74',acid:'190,242,100',blue:'86,180,232',orange:'255,120,73',purple:'167,139,250',red:'240,86,106'};
       const heroRgb = CLS_RGB[meta.cls] || CLS_RGB.gold;
@@ -12640,11 +12417,7 @@ function showAward(key){
       const isShared = topGroup.length > 1;
       const top = arr[0];
       // Wert (für Hero – alle teilen denselben Wert)
-      const heroVal = (() => {
-        const v = top.val;
-        const m = v.match(/^([+\-]?\d+(?:[.,]\d+)?)/);
-        return m ? `<b>${esc(m[1])}</b>${esc(v.slice(m[1].length))}` : esc(v);
-      })();
+      const heroVal = `<b>${esc(top.z)}</b>${top.e ? ' '+esc(top.e) : ''}`;
 
       let heroHtml;
       if(!isShared){
@@ -12734,8 +12507,9 @@ function showAward(key){
               ${avHtml}
               <div class="aw-li-info">
                 <div class="aw-li-name">${esc(e.name)}</div>
+                ${e.detail ? `<div class="aw-li-detail">${esc(e.detail)}</div>` : ''}
               </div>
-              <div class="aw-li-val">${esc(e.val)}</div>
+              <div class="aw-li-val">${esc(e.z)}</div>
             </div>
           `);
         } else {
@@ -12759,7 +12533,7 @@ function showAward(key){
                 ${tiedRows}
                 <span class="aw-li-tie-badge">Geteilt · ${entries.length} ${isTeamAward?'Teams':'Spieler'}</span>
               </div>
-              <div class="aw-li-val">${esc(entries[0].val)}</div>
+              <div class="aw-li-val">${esc(entries[0].z)}</div>
             </div>`);
         }
       }
@@ -15567,181 +15341,27 @@ function playerAwards(id){
   if(!_cache._playerAwards) _cache._playerAwards = {};
   if(_cache._playerAwards[_pawKey]) return _cache._playerAwards[_pawKey];
   const R=awardRankings('season', _pawSid);
+  // Platz und Wert kommen aus AW_WERT [§5.3d]: dieselbe Sortierung wie
+  // Kachel und Blatt, gleichauf heißt geteilt. Hier standen drei eigene
+  // Tabellen (Einzel, Duo, Partie) mit eigenen Sortier- und Anzeigeregeln,
+  // und dieselbe Serie hieß im Profil „8er" und im Blatt „8er Serie".
+  // Ein Award einer Partie gilt nur für die Sieger (awIds), nicht für alle
+  // vier auf dem Platz.
   const found=[];
-
-  // Hilfsfunktion: Rang eines Spielers in einem Array berechnen
-  // berücksichtigt geteilte Plätze
-  const getRank=(arr,valFn,checkFn)=>{
-    if(!arr||!arr.length) return -1;
-    const topVal=valFn(arr[0]);
-    let rank=1;
-    for(let i=0;i<Math.min(arr.length,10);i++){
-      const val=valFn(arr[i]);
-      if(i>0 && val!==valFn(arr[i-1])) rank=i+1;
-      if(rank>3) break;
-      if(checkFn(arr[i])) return rank-1; // 0-basiert für Kompatibilität
+  Object.keys(AW_WERT).forEach(key=>{
+    const r=awRang(key, R, x=>awIds(key, x).includes(id));
+    if(!r) return;
+    const ids=awIds(key, r.x);
+    const eintrag={key, rank:r.rang, x:r.x, val:awText(key, r.x).z,
+      mehr:r.rang===0 ? awTop(key, R).length-1 : 0};
+    if(key==='rivalry'){
+      const gegner=r.x.idsA.includes(id) ? r.x.idsB : r.x.idsA;
+      eintrag.partner=null;
+      eintrag.partnerLabel='vs '+gegner.map(pname).join(' & ');
+    } else if(ids.length===2 && !AW_WERT[key].einzeln && !AW_WERT[key].gegner){
+      eintrag.partner=ids.find(x=>x!==id)||null;
     }
-    return -1;
-  };
-
-  // Einzel-Awards
-  const singleKeys={
-    wins:R.winsList, streaks:R.streaks, scorer:R.scorer, wall:R.wall,
-    perfect:R.perfect, grinder:R.grinder, worstWr:R.worstWr,
-    worstAtk:R.worstAtk, worstDef:R.worstDef,
-    clutch:R.clutchList, carryKing:R.carryList,
-    onFire:R.onFire, coldStreak:R.coldStreak, lossStreaks:R.lossStreaks,
-    solo:R.soloList, formtief:R.formtief, showmaster:R.showmasterList,
-    ice:R.iceList,
-    weekKing:R.weekKingList, dayKing:R.dayKingList,
-    // ── NEUE AWARDS v3 ──
-    plusMinus:R.plusMinusList, underdog:R.underdogList, pechvogel:R.pechvogelList,
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    favoriteLoser:R.favoriteLoserList
-  };
-  const singleValFns={
-    wins:x=>x.v, streaks:x=>x.v, scorer:x=>Math.round(x.avg*10),
-    wall:x=>-Math.round(x.v/x.g*10), // weniger = besser → negieren
-    perfect:x=>Math.round(x.wr*100), grinder:x=>x.v,
-    worstWr:x=>-Math.round(x.wr*100), // weniger = "besser" für Schandtafel → negieren
-    worstAtk:x=>-Math.round(x.v/x.g*10),
-    worstDef:x=>Math.round(x.v/x.g*10),
-    clutch:x=>Math.round(x.wr*100),
-    carryKing:x=>x.v, onFire:x=>x.v, coldStreak:x=>x.v,
-    lossStreaks:x=>x.v, solo:x=>Math.round(x.wr*100),
-    formtief:x=>Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
-    weekKing:x=>x.v, dayKing:x=>x.v,
-    // ── NEUE AWARDS v3 ──
-    plusMinus:x=>Math.round(x.v*10), // höchster Tor-Saldo gewinnt
-    // Die Quote, wie im Awards-Reiter: nach der Anzahl sortiert stand hier ein
-    // anderer Erster als auf der Kachel, die denselben Namen trägt.
-    underdog:x=>Math.round(x.pct*1000),
-    pechvogel:x=>Math.round(x.pct*1000),  // höchstes Pct an knappen Niederlagen = Top-1
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    favoriteLoser:x=>Math.round(x.v*1000) // rate-basiert (v = Quote)
-  };
-
-  // Display-Werte für die Trophäen-Anzeige im Spieler-Awards-Sheet.
-  // Format ist konsistent mit den Card-Aufrufen in vAwards (Awards-Tab).
-  const singleDisplayFns={
-    wins:x=>x.v, streaks:x=>x.v+'er', scorer:x=>komma(x.avg,1),
-    wall:x=>komma((x.v/x.g),1), perfect:x=>Math.round(x.wr*100)+'%', grinder:x=>x.v,
-    worstWr:x=>Math.round(x.wr*100)+'%',
-    worstAtk:x=>komma((x.v/x.g),1), worstDef:x=>komma((x.v/x.g),1),
-    clutch:x=>Math.round(x.wr*100)+'%',
-    carryKing:x=>x.v, onFire:x=>x.v+'er', coldStreak:x=>x.v+'er',
-    lossStreaks:x=>x.v+'er', solo:x=>Math.round(x.wr*100)+'%',
-    formtief:x=>'-'+Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
-    weekKing:x=>x.v, dayKing:x=>x.v,
-    plusMinus:x=>(x.v>=0?'+':'')+komma(x.v,1), underdog:x=>Math.round(x.pct*100)+'%',
-    pechvogel:x=>Math.round(x.pct*100)+'%',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    favoriteLoser:x=>Math.round(x.v*100)+'%'
-  };
-
-  Object.entries(singleKeys).forEach(([key,arr])=>{
-    if(!arr||!arr.length) return;
-    const valFn=singleValFns[key]||(x=>x.v);
-    const rank=getRank(arr,valFn,x=>x.id===id);
-    if(rank>=0 && rank<=2){
-      const entry=arr.find(x=>x.id===id);
-      const dispFn=singleDisplayFns[key]||(x=>x.v);
-      found.push({key,rank,val:entry?String(dispFn(entry)):''});
-    }
-  });
-
-  // Team-Awards (2 Spieler)
-  const teamKeys={
-    mvt:R.mvt, bestDuo:R.bestDuo, worstTeam:R.worstTeam,
-    endgegner:R.endgegner,
-    zirkus:R.zirkusList, baustelle:R.baustelleList,
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:R.unstoppableList, concreteWall:R.concreteWallList,
-    luckyCharm:R.luckyCharmList, giantSlayer:R.giantSlayerList,
-    favoritenschreck:R.favoritenschreckList,
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:R.cheesePlatterList
-  };
-  const teamValFns={
-    mvt:x=>Math.round(x.v), bestDuo:x=>x.g,
-    worstTeam:x=>-Math.round(x.w/x.g*100),
-    endgegner:x=>Math.round(x.pct*1000),       // rate-basiert
-    zirkus:x=>Math.round(x.pct*1000),          // rate-basiert
-    baustelle:x=>x.best,
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:x=>x.v,
-    concreteWall:x=>-Math.round(x.v*100),      // niedriger = besser → negieren
-    luckyCharm:x=>Math.round(x.v*1000),        // rate-basiert (v = Quote)
-    giantSlayer:x=>Math.round(x.v*1000),       // rate-basiert (v = Quote)
-    favoritenschreck:x=>x.v,
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:x=>Math.round(x.v*100)       // höher = schlechter, direkt sortieren
-  };
-  const teamDisplayFns={
-    mvt:x=>(x.v>=0?'+':'')+Math.round(x.v), bestDuo:x=>x.g+' Spiele',
-    worstTeam:x=>Math.round(x.w/x.g*100)+'%',
-    endgegner:x=>Math.round(x.pct*100)+'%',
-    zirkus:x=>Math.round(x.pct*100)+'%',
-    baustelle:x=>x.best+'er',
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:x=>x.v+'er',
-    concreteWall:x=>komma(x.v,2),
-    luckyCharm:x=>Math.round(x.v*100)+'%',
-    giantSlayer:x=>Math.round(x.v*100)+'%',
-    favoritenschreck:x=>x.v+' Elo',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:x=>komma(x.v,2)
-  };
-  Object.entries(teamKeys).forEach(([key,arr])=>{
-    if(!arr||!arr.length) return;
-    const valFn=teamValFns[key]||(x=>x.v);
-    const rank=getRank(arr,valFn,x=>x.ids&&x.ids.includes(id));
-    if(rank>=0 && rank<=2){
-      const entry=arr.find(x=>x.ids&&x.ids.includes(id));
-      const partner=entry?entry.ids.find(x=>x!==id):null;
-      const dispFn=teamDisplayFns[key]||(x=>x.v);
-      found.push({key,rank,partner,val:entry?String(dispFn(entry)):''});
-    }
-  });
-
-  // Rivalry-Award (4 Spieler) — alle 4 erhalten den Award.
-  // Partner-Anzeige: das jeweils andere Team ("vs X & Y")
-  if(R.rivalryList && R.rivalryList.length){
-    const rArr = R.rivalryList;
-    const valFn = x => Math.round(x.pct*1000); // rate-basiert
-    const rank = getRank(rArr, valFn, x => [...x.idsA, ...x.idsB].includes(id));
-    if(rank>=0 && rank<=2){
-      const entry = rArr.find(x => [...x.idsA, ...x.idsB].includes(id));
-      if(entry){
-        const onA = entry.idsA.includes(id);
-        const opponentIds = onA ? entry.idsB : entry.idsA;
-        const partnerLabel = pname(opponentIds[0])+' & '+pname(opponentIds[1]);
-        // partner=null signalisiert dem Renderer "Spezial-Label statt Avatar-Plaque"
-        found.push({key:'rivalry', rank, partner:null, partnerLabel:'vs '+partnerLabel, val:Math.round(entry.pct*100)+'%'});
-      }
-    }
-  }
-
-  // Match-Awards
-  // ⚠ BUG-FIX: Match-Awards (upset/biggest) gelten NUR für das Gewinner-Team.
-  // Vorher hat .includes(id) ALLE 4 Spieler des Matches erkannt — auch die
-  // Verlierer haben "Größte Überraschung" als positiven Award bekommen.
-  // Konsistent mit vAwards()/_addColl und showAward(), die jeweils die
-  // Avatare des Gewinner-Teams (m.winner) zeigen.
-  const matchKeys={upset:R.upsets, biggest:R.biggest};
-  const matchValFns={upset:x=>Math.round(x.sp*100), biggest:x=>x.diff};
-  // Die Überraschung zeigt die Siegchance der Sieger, wie Kachel und Blatt.
-  const matchDisplayFns={upset:x=>Math.round((1-x.sp)*100)+'%', biggest:x=>x.diff+' Tore'};
-  const winnerIds = x => x.m.winner === 'A' ? [x.m.a1, x.m.a2] : [x.m.b1, x.m.b2];
-  Object.entries(matchKeys).forEach(([key,arr])=>{
-    if(!arr||!arr.length) return;
-    const valFn=matchValFns[key];
-    const rank=getRank(arr,valFn,x=>winnerIds(x).includes(id));
-    if(rank>=0 && rank<=2){
-      const entry=arr.find(x=>winnerIds(x).includes(id));
-      const dispFn=matchDisplayFns[key];
-      found.push({key,rank,val:entry?String(dispFn(entry)):''});
-    }
+    found.push(eintrag);
   });
 
   _cache._playerAwards[_pawKey] = found;
@@ -15913,44 +15533,17 @@ function showPlayer(id){
   const awards=playerAwards(id).filter(a=>a.rank===0);
   const awardCount=awards.length;
 
-  // Awards-Kategorisierung: jede Award gehört zu GENAU EINER Kategorie (exklusiv).
-  // Aufteilung in 3 thematische Cluster für klare Übersicht.
-  // Positive: rein individuelle Leistung + (positive) Rollen-Awards (Torjäger, Abwehr, Eiskalt).
-  // Team:     alle Awards, die ein DUO/Team ausmachen (mvt, bestDuo, endgegner, neue Team-Awards
-  //           inkl. Erzfeinde/Rivalry).
-  // Negative: Schandtafel + negative Rollen-Awards (Zahnloser Stürmer, Löchrigste Abwehr).
-  const POSITIVE_KEYS = new Set([
-    'wins','perfect','clutch','carryKing','solo',
-    'grinder','showmaster','onFire','streaks',
-    'weekKing','dayKing',
-    // Rollen-Awards (positiv)
-    'scorer','wall','ice',
-    // ── NEUE AWARDS v3 ──
-    'plusMinus','underdog'
-  ]);
-  const TEAM_KEYS = new Set([
-    'mvt','bestDuo','endgegner',
-    // Match-Awards sind Team-Leistungen — Sieg/Coup eines konkreten Duos.
-    'upset','biggest',
-    // ── NEUE TEAM-AWARDS v4 ──
-    'unstoppable','concreteWall','luckyCharm','giantSlayer','rivalry'
-  ]);
-  const NEGATIVE_KEYS = new Set([
-    'worstWr','coldStreak','lossStreaks','formtief','worstTeam','zirkus','baustelle',
-    'worstAtk','worstDef',
-    // ── NEUE AWARDS v3 ──
-    'pechvogel',
-    // ── NEUE TEAM-AWARDS v4 ──
-    'favoritenschreck',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    'cheesePlatter','favoriteLoser'
-  ]);
-
-  const cnt = (set) => awards.filter(a => set.has(a.key)).length;
+  // Jede Auszeichnung gehört zu GENAU EINER von drei Gruppen, und die Gruppe
+  // ist dieselbe Rolle, die ihre Kachel färbt [§C25]: rot ist die
+  // Kehrseite, wer sie zu zweit oder zu viert trägt, gehört zum Team, der
+  // Rest ist eigene Leistung. Hier standen drei feste Schlüssellisten, die
+  // bei jeder neuen Auszeichnung von Hand nachgezogen werden mussten.
+  const awArt = a => awNeg(a.key) ? 'neg' : awIds(a.key, a.x).length >= 2 ? 'team' : 'pos';
+  const cnt = art => awards.filter(a => awArt(a) === art).length;
   const awCats = [
-    {ic:'star',      nm:'Positive<br>Awards', n: cnt(POSITIVE_KEYS)},
-    {ic:'handshake', nm:'Team<br>Awards',     n: cnt(TEAM_KEYS)},
-    {ic:'skull',     nm:'Negative<br>Awards', n: cnt(NEGATIVE_KEYS)},
+    {ic:'star',      nm:'Positive<br>Awards', n: cnt('pos')},
+    {ic:'handshake', nm:'Team<br>Awards',     n: cnt('team')},
+    {ic:'skull',     nm:'Negative<br>Awards', n: cnt('neg')},
   ];
 
   const badges=getCachedBadges(id);
@@ -16742,50 +16335,16 @@ function showRangSystem(){
 function showPlayerAwards(playerId, awards){
   const p=pmap()[playerId]; if(!p)return;
   _sheetSetReopen(()=>showPlayerAwards(playerId, awards));
-  const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
-
-  // Award-Trophäe für das Sheet: gleiche Optik wie im Awards-Tab.
-  // Plakette: bei Team-Awards zeigen wir den Partner-NAMEN als reinen Text
-  // (kein Profilbild) — konsistent zum Wunsch des Users und sauber für den
-  // 4-Spieler-Award "Erzfeinde" (a.partnerLabel statt a.partner).
-  const trophy = (a) => {
-    const m = AWARD_META[a.key]; if(!m) return '';
-    const valDisplay = a.val ? esc(a.val) : '#1';
-    let plaqueContent;
-    if(a.partnerLabel){
-      // Rivalry / 4-Spieler: keine Partner-Plaque, sondern Beschriftung "vs X & Y"
-      plaqueContent = `<span class="aw-trophy-plaque-name" style="font-size:10px">${esc(a.partnerLabel)}</span>`;
-    } else if(a.partner){
-      // Team-Award (2 Spieler): Partner-Name ohne Avatar/Initial-Bubble
-      plaqueContent = `<span class="aw-trophy-plaque-name" style="font-size:10.5px">mit ${esc(pname(a.partner))}</span>`;
-    } else {
-      plaqueContent = `<span class="aw-trophy-plaque-name" style="color:var(--muted);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase">Top-1</span>`;
-    }
-    // Dieselbe Kachel wie im Awards-Reiter [§C27]. Sie baute hier noch die
-    // ALTE: `aw-trophy-cup`, `-lbl`, `-val`, `-plaque` — Klassennamen, zu
-    // denen es seit dem Umbau der Vitrine keine Regel mehr gibt. Uebrig
-    // blieb der Kasten und darin unformatierter Text; das Sheet hatte seine
-    // Farbe nicht verloren, es hatte sein Bauteil verloren.
-    //
-    // Der Farbstich kommt aus DREI Rollen und nicht aus sechs Katalogtoenen
-    // [§C25]: Gold fuer das Koennen, Blau fuer das, was zu zweit geholt
-    // wurde, Rot fuer die Kehrseite. Sechs Toene nebeneinander waren ein
-    // Farbverlauf ohne Aussage — derselbe Fehler wie die elf
-    // Kategoriefarben im Feed.
-    const ton = m.cls === 'red' ? 'ton-neg'
-              : (a.partner || a.partnerLabel) ? 'ton-team' : 'ton-pos';
-    const kopf = `<div class="aw-t-kopf"><span class="aw-t-ic">${ic(a.key)}</span>`
-      + `<span class="aw-t-lbl">${esc(m.title)}</span></div>`;
-    return `<div class="aw-trophy ${ton}" data-paward2="${esc(a.key)}">
-      ${kopf}
-      <div class="aw-t-held">${avHtml(p, '', {ins:true, px:60})}</div>
-      <div class="aw-t-val">${valDisplay}</div>
-      <div class="aw-t-name">${plaqueContent}</div>
-    </div>`;
-  };
+  // Dieselbe Kachel wie im Awards-Reiter [§C27] — mit Wert, Einheit und
+  // Stichprobe aus AW_WERT. Hier stand eine eigene Fassung: Wert ohne
+  // Einheit, der Partner als Text auf einer Plakette, „Top-1" als Marke.
+  // Die Lage im Feld braucht die Liste des Monats, aus der der Platz kommt.
+  const R = awardRankings('season', currentSeason().id);
+  const trophy = a => awKachelHtml(a.key, [a.x],
+    {mehr:a.mehr, liste:awListe(a.key, R), attr:`data-paward2="${esc(a.key)}"`});
 
   const body = awards.length
-    ? `<div class="aw-vitrine" style="margin-top:16px">${awards.map(trophy).join('')}</div>`
+    ? `<div style="margin-top:16px">${awVitrineHtml(awards.map(trophy))}</div>`
     : `<div class="empty" style="margin-top:24px;text-align:center;color:var(--muted)">
         <div class="ee svg-ic" style="color:var(--faint);margin-bottom:6px">${svgI('trophy')}</div>
         Noch keine Top-1-Auszeichnungen
@@ -16802,8 +16361,11 @@ function showPlayerAwards(playerId, awards){
     ${body}
     <button class="btn ghost sm" id="backToPlayer" style="margin-top:14px;width:100%">← Zurück zum Profil</button>
   `);
+  // Das Blatt zeigt den Zeitraum, aus dem der Platz kommt: den laufenden
+  // Monat. Ohne das öffnete es, was der Awards-Reiter zuletzt eingestellt
+  // hatte — eine Woche oder einen anderen Monat.
   document.querySelectorAll('[data-paward2]').forEach(el=>el.onclick=()=>{
-    sheetNav(()=>showAward(el.dataset.paward2));
+    sheetNav(()=>{ awPeriod='season'; awSeasonId=null; showAward(el.dataset.paward2); });
   });
   const back=document.getElementById('backToPlayer');
   if(back) back.onclick=()=>closeSheet();
@@ -18230,26 +17792,16 @@ function showTeam(p1Id,p2Id){
   // Die Zeichen kommen aus AW_IC wie überall sonst. Hier stand eine eigene
   // Tabelle, und zwei ihrer Namen gab es im Katalog nicht: „Schlechtestes
   // Team" und „Baustelle" standen im Duo-Blatt ohne Zeichen.
+  // Dieselbe Kachel wie im Awards-Reiter [§C27]. Hier stand eine dritte
+  // Fassung mit sechs Katalogfarben statt drei Rollen [§C25], dem Wert ohne
+  // Einheit („8er", „4,00") und „#2" als Platz.
   const tAch = teamAchievements(p1Id, p2Id);
-  const RANK_LABEL = ['#1','#2','#3'];
+  const _tR = awardRankings('all');
   const teamAwardsHtml = tAch.length ? `
     <div style="margin-bottom:18px">
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Auszeichnungen als Team</div>
-      <div class="pp-awards" style="grid-template-columns:repeat(3,1fr)">
-        ${tAch.map(a => {
-          const meta = AWARD_META[a.key]; if(!meta) return '';
-          const icKey = AW_IC[a.key] || 'trophy';
-          // Farb-Klasse aus AWARD_META, Wertanzeige in Farbe
-          const colorMap = {acid:'var(--acid)', blue:'var(--blue)', gold:'var(--gold)', orange:'var(--orange)', purple:'var(--purple)', red:'var(--red)'};
-          const col = colorMap[meta.cls] || 'var(--ink)';
-          return `<div class="pp-aw" data-team-award="${esc(a.key)}" style="border-top:2px solid ${col}">
-            <span class="ic svg-ic" style="color:${col}">${svgI(icKey)}</span>
-            <div class="nm">${esc(meta.title)}</div>
-            <div class="num" style="color:${col};font-size:11px">${esc(a.val)}</div>
-            <div style="font-size:8.5px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace">${RANK_LABEL[a.rank]||''}</div>
-          </div>`;
-        }).join('')}
-      </div>
+      ${awVitrineHtml(tAch.map(a => awKachelHtml(a.key, [a.x],
+        {rang:a.rank || null, mehr:0, liste:awListe(a.key, _tR), attr:`data-team-award="${esc(a.key)}"`})))}
     </div>` : '';
 
   // ─── STREAKS (aktuelle + längste) ───
@@ -18260,7 +17812,7 @@ function showTeam(p1Id,p2Id){
   if(d.games >= 2){
     const curLabel = d.currentStreak === 0 ? '–'
       : d.currentStreak > 0 ? d.currentStreak+' Siege'
-      : (-d.currentStreak)+' Niederl.';
+      : (-d.currentStreak)+(d.currentStreak === -1 ? ' Niederlage' : ' Niederlagen');
     const curColor = d.currentStreak > 0 ? 'var(--acid)' : (d.currentStreak < 0 ? 'var(--red)' : 'var(--muted)');
     streaksHtml = `
       <div style="margin-bottom:18px">
@@ -18802,7 +18354,6 @@ function standFuer(m, gewonnen = true){
   const s = m.winner === 'B' ? [m.score_b, m.score_a] : [m.score_a, m.score_b];
   return gewonnen ? s[0] + ':' + s[1] : s[1] + ':' + s[0];
 }
-function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen
   const inner = ICONS[e] ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;

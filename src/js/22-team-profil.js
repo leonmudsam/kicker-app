@@ -258,26 +258,16 @@ function showTeam(p1Id,p2Id){
   // Die Zeichen kommen aus AW_IC wie überall sonst. Hier stand eine eigene
   // Tabelle, und zwei ihrer Namen gab es im Katalog nicht: „Schlechtestes
   // Team" und „Baustelle" standen im Duo-Blatt ohne Zeichen.
+  // Dieselbe Kachel wie im Awards-Reiter [§C27]. Hier stand eine dritte
+  // Fassung mit sechs Katalogfarben statt drei Rollen [§C25], dem Wert ohne
+  // Einheit („8er", „4,00") und „#2" als Platz.
   const tAch = teamAchievements(p1Id, p2Id);
-  const RANK_LABEL = ['#1','#2','#3'];
+  const _tR = awardRankings('all');
   const teamAwardsHtml = tAch.length ? `
     <div style="margin-bottom:18px">
       <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Auszeichnungen als Team</div>
-      <div class="pp-awards" style="grid-template-columns:repeat(3,1fr)">
-        ${tAch.map(a => {
-          const meta = AWARD_META[a.key]; if(!meta) return '';
-          const icKey = AW_IC[a.key] || 'trophy';
-          // Farb-Klasse aus AWARD_META, Wertanzeige in Farbe
-          const colorMap = {acid:'var(--acid)', blue:'var(--blue)', gold:'var(--gold)', orange:'var(--orange)', purple:'var(--purple)', red:'var(--red)'};
-          const col = colorMap[meta.cls] || 'var(--ink)';
-          return `<div class="pp-aw" data-team-award="${esc(a.key)}" style="border-top:2px solid ${col}">
-            <span class="ic svg-ic" style="color:${col}">${svgI(icKey)}</span>
-            <div class="nm">${esc(meta.title)}</div>
-            <div class="num" style="color:${col};font-size:11px">${esc(a.val)}</div>
-            <div style="font-size:8.5px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace">${RANK_LABEL[a.rank]||''}</div>
-          </div>`;
-        }).join('')}
-      </div>
+      ${awVitrineHtml(tAch.map(a => awKachelHtml(a.key, [a.x],
+        {rang:a.rank || null, mehr:0, liste:awListe(a.key, _tR), attr:`data-team-award="${esc(a.key)}"`})))}
     </div>` : '';
 
   // ─── STREAKS (aktuelle + längste) ───
@@ -288,7 +278,7 @@ function showTeam(p1Id,p2Id){
   if(d.games >= 2){
     const curLabel = d.currentStreak === 0 ? '–'
       : d.currentStreak > 0 ? d.currentStreak+' Siege'
-      : (-d.currentStreak)+' Niederl.';
+      : (-d.currentStreak)+(d.currentStreak === -1 ? ' Niederlage' : ' Niederlagen');
     const curColor = d.currentStreak > 0 ? 'var(--acid)' : (d.currentStreak < 0 ? 'var(--red)' : 'var(--muted)');
     streaksHtml = `
       <div style="margin-bottom:18px">

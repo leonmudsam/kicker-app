@@ -2475,7 +2475,7 @@ const ok = (c, msg, det) => {
         zeilen.filter(z => KURZ.test(z)).forEach(z => fehler.push(p + ' ' + k + ': ' + z.trim()));
       }
       K('closeSheet(true)');
-      const kachel = (document.querySelector('[data-award="upset"] .aw-t-val') || {}).textContent;
+      const kachel = (document.querySelector('[data-award="upset"] .aw-t-val b') || {}).textContent;
       K("showAward('upset')");
       const blatt = (document.getElementById('sheet').innerText.match(/Siegchance nur (\d+)/) || [])[1];
       if(kachel && kachel !== blatt + '%') fehler.push(p + ' Überraschung: Kachel ' + kachel + ', Blatt ' + blatt + '%');
