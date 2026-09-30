@@ -1210,6 +1210,21 @@ ok(_awZeichen.fehlt.length === 0 && _awZeichen.ohne.length === 0,
    'jede Auszeichnung hat ein Zeichen, und jedes steht im Katalog',
    [..._awZeichen.fehlt, ..._awZeichen.ohne.map(k => k + ' ohne Zeichen')].join(' · ') || 'alle');
 
+// Und ein Name gehoert einer Frage. Der Award „Einzelkaempfer" wertete die
+// Siegquote als Staerkster der vier, der Liga-Rekord „Der Einzelkaempfer"
+// den Rueckgang der Mitspielerstaerke — zwei Fragen unter einem Namen.
+// Erlaubt sind nur die drei Paare, die dieselbe Idee auf zwei Zeitachsen
+// messen: Torjaeger, Pechvogel und Favoritenschreck.
+const _awNamen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const n = s => String(s).replace(/^(Der|Die|Das) /, '').toLowerCase();
+  const ch = new Map(DISZIPLINEN.map(d => [n(d.name), d.id]));
+  const erlaubt = new Set(['scorer|sniper', 'pechvogel|hardluck', 'favoritenschreck|favschreck']);
+  return Object.entries(AWARD_META).filter(([k, m]) => ch.has(n(m.title)) && !erlaubt.has(k + '|' + ch.get(n(m.title))))
+    .map(([k, m]) => k + ' und ' + ch.get(n(m.title)) + ': ' + m.title);
+})())`));
+ok(_awNamen.length === 0, 'kein Award heisst wie eine Chronik, die etwas anderes misst',
+   _awNamen.join(' · ') || 'keiner');
+
 // ── Die Awards: jede Kachel muss in einer Woche erreichbar sein ─────
 // Die Schwellen stammen aus der Zeit, in der es den Zeitraum „Gesamt" gab.
 // Gemessen spielt ein Duo in einer Woche im Mittel DREI Partien, und sieben
