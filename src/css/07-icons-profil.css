@@ -1156,6 +1156,90 @@
   .nf-eloc .av{--av:18px;width:18px;height:18px;font-size:7px;box-shadow:none}
   .nf-eloc b.g{color:var(--acid)} .nf-eloc b.r{color:var(--red)}
 
+  /* ── Die Elo-Waage ────────────────────────────────────────────────
+     Vier Spieler um eine Null: die Verlierer wachsen nach links, die Sieger
+     nach rechts. Gleich breite Hälften (minmax(0,1fr)), damit dieselbe Zahl
+     links und rechts gleich lang ist. */
+  .nf-waage{display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);
+    gap:0 8px;align-items:center;padding:9px 13px;border-top:1px solid var(--line)}
+  .nf-wg-null{align-self:stretch;background:var(--line2)}
+  .nf-wg-s{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .nf-wg-z{display:flex;align-items:center;gap:6px;min-width:0}
+  .nf-wg-s.l .nf-wg-z{flex-direction:row-reverse}
+  .nf-wg-z .av{--av:18px;width:18px;height:18px;font-size:7px;box-shadow:none;flex:0 0 auto}
+  .nf-wg-z b{font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;
+    flex:0 0 auto;min-width:26px}
+  .nf-wg-s.l .nf-wg-z b{text-align:right}
+  .nf-wg-z b.g{color:var(--acid)} .nf-wg-z b.r{color:var(--red)}
+  .nf-wg-z i{display:block;height:6px;border-radius:3px;min-width:3px;flex:0 1 auto;
+    transform-origin:left center;animation:nd-balken .5s ease-out both}
+  .nf-wg-s.r .nf-wg-z i{order:-1;background:linear-gradient(90deg,rgba(190,242,100,.35),var(--acid))}
+  .nf-wg-s.r .nf-wg-z{justify-content:flex-start}
+  .nf-wg-s.l .nf-wg-z i{order:-1;transform-origin:right center;
+    background:linear-gradient(270deg,rgba(240,86,106,.35),var(--red))}
+  /* Der Balken steht an der Null, dahinter Zahl und Gesicht: so beginnen
+     alle vier an derselben Linie, und die Länge ist vergleichbar. */
+  .nf-wg-s.r .nf-wg-z{flex-direction:row}
+  .nf-wg-s.r .nf-wg-z i{order:0} .nf-wg-s.r .nf-wg-z b{order:1} .nf-wg-s.r .nf-wg-z .av{order:2}
+  .nf-wg-s.l .nf-wg-z{flex-direction:row-reverse}
+  .nf-wg-s.l .nf-wg-z i{order:0} .nf-wg-s.l .nf-wg-z b{order:1} .nf-wg-s.l .nf-wg-z .av{order:2}
+  @media(prefers-reduced-motion:reduce){.nf-wg-z i{animation:none}}
+
+  /* ── Die neue Spitze ──────────────────────────────────────────────── */
+  .nf-spitze{display:flex;align-items:center;gap:9px;padding:9px 13px;
+    border-top:1px solid var(--line);min-width:0;font-size:11px;color:var(--muted)}
+  .nf-sp-n{display:flex;align-items:center;gap:6px;min-width:0}
+  .nf-sp-n b{color:var(--ink);font-size:12.5px;white-space:nowrap}
+  .nf-sp-n em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:10.5px;
+    color:var(--gold);white-space:nowrap}
+  .nf-sp-a{margin-left:auto;display:flex;align-items:center;gap:5px;white-space:nowrap;min-width:0}
+  .nf-sp-a b{color:var(--ink);font-family:'Sometype Mono',monospace}
+  .nf-sp-a .av{opacity:.6}
+  .nf-spitze .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:none;flex:0 0 auto}
+
+  /* ── Die gerissene Serie und das Gesicht vor einem Lauf ──────────── */
+  .nf-ser .av{--av:18px;width:18px;height:18px;font-size:7px;box-shadow:none;flex:0 0 auto}
+  .nf-ser-av{display:flex;margin-right:4px}
+  .nf-ser-av .av+.av{margin-left:-6px}
+  .nf-riss > .av{margin-right:4px}
+  /* Das letzte Feld ist die Partie, in der die Serie riss: ein Spalt in
+     Rot, nicht ein weiteres grünes Feld. */
+  .nf-ser i.bruch{background:none;box-shadow:inset 0 0 0 1.5px var(--red);position:relative}
+  .nf-ser i.bruch::before{content:"";position:absolute;left:50%;top:1px;bottom:1px;width:1.5px;
+    background:var(--red);transform:translateX(-50%) rotate(28deg)}
+
+  /* Die Wende: rote Felder für die Pleiten davor, ein grünes für diesen
+     Sieg — die Richtung wechselt in der Reihe [§C25]. */
+  .nf-ser i.p{background:linear-gradient(158deg,#f0566a,#8d2f3a);opacity:.75}
+  .nf-ser i.w{box-shadow:0 0 0 2px rgba(190,242,100,.28),inset 0 0 0 1px rgba(255,255,255,.14)}
+  .nf-wende > .av{margin-right:4px}
+
+  /* ── Die Torleiste ────────────────────────────────────────────────
+     Zehn Felder je Seite: die Sieger voll in Grün, die Verlierer leise. */
+  .nf-tor{display:flex;align-items:center;gap:12px;padding:9px 13px;border-top:1px solid var(--line)}
+  .nf-tor-r{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}
+  .nf-tor-r > span{display:flex;gap:2px}
+  .nf-tor-r i{width:8px;height:8px;border-radius:2px;background:var(--surface3)}
+  .nf-tor-r i.w{background:linear-gradient(158deg,var(--acid),#6d9a26)}
+  .nf-tor-r i.v{background:var(--faint)}
+  .nf-tor-s{margin-left:auto;font-size:10.5px;color:var(--muted);text-align:right;line-height:1.3}
+
+  /* ── Der Sprung in der Monatstabelle ─────────────────────────────── */
+  .nf-rgs{display:flex;flex-wrap:wrap;gap:6px 14px;padding:9px 13px;border-top:1px solid var(--line)}
+  .nf-rg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);white-space:nowrap}
+  .nf-rg .av{--av:18px;width:18px;height:18px;font-size:7px;box-shadow:none}
+  .nf-rg b{color:var(--ink);font-size:11.5px}
+  .nf-rg .num.g{color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace}
+  .nf-rg i{width:14px;height:8px;background:var(--acid);opacity:.8;
+    clip-path:polygon(0 35%,60% 35%,60% 0,100% 50%,60% 100%,60% 65%,0 65%)}
+
+  /* ── Die Auszeichnung einer Partie ───────────────────────────────── */
+  .nf-meds{display:flex;flex-wrap:wrap;gap:6px 12px;padding:9px 13px;border-top:1px solid var(--line)}
+  .nf-med{display:flex;align-items:center;gap:7px;min-width:0}
+  .nf-med > span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+  .nf-med b{font-size:11.5px;color:var(--ink);white-space:nowrap}
+  .nf-med i{font-style:normal;font-size:10px;color:var(--muted);white-space:nowrap}
+
   /* ── Der Faden [§C33] ──────────────────────────────────────────────
      Eine Zeile unter der Karte, wenn sie eine frühere fortsetzt. Gestrichelt
      abgesetzt, weil sie nicht zur Nachricht gehört, sondern zu der davor;
