@@ -1275,8 +1275,8 @@ function _vAwardsCore(){
     ? card('carryKing','acid','Carry-King',[ck0.id],esc(topNames(R.carryList,x=>x.v,x=>pname(x.id))),ck0.v+'× mit schwachem Mate',ck0.v)
     : empty('carryKing','acid','Carry-King'));
   special.push(sl0
-    ? card('solo','acid','Einzelkämpfer',[sl0.id],esc(topNames(R.soloList,x=>Math.round(x.wr*100),x=>pname(x.id))),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%')
-    : empty('solo','acid','Einzelkämpfer'));
+    ? card('solo','acid','Leitwolf',[sl0.id],esc(topNames(R.soloList,x=>Math.round(x.wr*100),x=>pname(x.id))),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%')
+    : empty('solo','acid','Leitwolf'));
   // Match-Awards: zeigen die Avatare des Gewinner-Teams (winnerSide via m.winner)
   // Match-Awards haben pro Match nur einen Eintrag → keine Komma-Liste nötig
   // Die Zahl der Überraschung ist die Siegchance der SIEGER, wie in der Liga,
@@ -1452,7 +1452,10 @@ const AWARD_META={
   worstDef:    {title:'Löchrigste Abwehr',     cls:'red',   why:`Die meisten Gegentore je Partie in der Abwehr. Ab ${AW_MIN.position} Abwehrpartien.`},
   worstTeam:   {title:'Schlechtestes Team',    cls:'red',   why:`Das Duo mit der niedrigsten Siegquote. Ab 2 gemeinsamen Partien.`},
   showmaster:  {title:'Showmaster',            cls:'gold',  why:`Die meisten 10:0-Siege im Zeitraum.`},
-  solo:        {title:'Einzelkämpfer',         cls:'acid',  why:`Die höchste Siegquote in Partien, in denen man vor dem Anpfiff der Stärkste der vier war. Ab 2 solchen Partien.`},
+  // Leitwolf und nicht Einzelkämpfer: so heißt der Liga-Rekord, der den
+  // Rückgang der Mitspielerstärke misst. Eine andere Frage, und zwei
+  // Einträge unter einem Namen waren nicht auseinanderzuhalten.
+  solo:        {title:'Leitwolf',              cls:'acid',  why:`Die höchste Siegquote in Partien, in denen man vor dem Anpfiff der Stärkste der vier war. Ab 2 solchen Partien.`},
   formtief:    {title:'Formtief',              cls:'red',   why:`Der größte Abstand zwischen dem höchsten und dem aktuellen Elo-Stand innerhalb einer Saison.`},
   zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
   baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},

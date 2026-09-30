@@ -383,7 +383,7 @@ const DISZIPLINEN = [
       art:'konstanz',
       klasse:'besonders', aus:1.64,
       wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen.',
-      cond:'An mindestens 100 % der eigenen Spieltage eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
+      cond:'An jedem eigenen Spieltag eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=3,
         p=>{const t=Object.values(p.tagGrp);return t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length/t.length;},

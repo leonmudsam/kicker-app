@@ -5180,7 +5180,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.94b0e2e5';
+const BUILD_VERSION='2026.09.30.1400413a';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -10384,7 +10384,7 @@ function _vRankingCore(){
       // „Überraschung", die Kurzformen der Award-Namen („Größte Überra…"):
       // „Heißeste Serie" war ein dritter Name für dieselbe Liste, „Längste
       // Siegesserie" passt nicht in ein Drittel. Aus demselben Grund steht
-      // unter dem König die Zahl der Wochen oder Spieltage und nicht
+      // unter dem König die Zahl der Wochen- oder Tagessiege und nicht
       // „4× Player of the Day" — das endete als „4× Player of t…".
       const renderHl=(cls,labelTxt,iconKey,nameTxt,detailTxt,clickAttr='')=>{
         const kopf=`<div class="wk-hl-kopf"><span class="wk-hl-ic">${svgI(iconKey)}</span>`
@@ -10420,7 +10420,7 @@ function _vRankingCore(){
           ${mitte}
           ${renderHl('king', period==='week'?'Wochenkönig':'Tageskönig', period==='week'?'weekKing':'dayKing',
               topKing?pname(topKing.id):null,
-              topKing?(period==='week'?`${topKing.v} ${topKing.v===1?'Woche':'Wochen'}`:`${topKing.v} ${topKing.v===1?'Spieltag':'Spieltage'}`):'',
+              topKing?(period==='week'?`${topKing.v} ${topKing.v===1?'Wochensieg':'Wochensiege'}`:`${topKing.v} ${topKing.v===1?'Tagessieg':'Tagessiege'}`):'',
               topKing?'data-toplist="periodKing"':'')}
         </div>`;
 
@@ -12079,8 +12079,8 @@ function _vAwardsCore(){
     ? card('carryKing','acid','Carry-King',[ck0.id],esc(topNames(R.carryList,x=>x.v,x=>pname(x.id))),ck0.v+'× mit schwachem Mate',ck0.v)
     : empty('carryKing','acid','Carry-King'));
   special.push(sl0
-    ? card('solo','acid','Einzelkämpfer',[sl0.id],esc(topNames(R.soloList,x=>Math.round(x.wr*100),x=>pname(x.id))),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%')
-    : empty('solo','acid','Einzelkämpfer'));
+    ? card('solo','acid','Leitwolf',[sl0.id],esc(topNames(R.soloList,x=>Math.round(x.wr*100),x=>pname(x.id))),sl0.g+' Spiele mit Bottom-3',Math.round(sl0.wr*100)+'%')
+    : empty('solo','acid','Leitwolf'));
   // Match-Awards: zeigen die Avatare des Gewinner-Teams (winnerSide via m.winner)
   // Match-Awards haben pro Match nur einen Eintrag → keine Komma-Liste nötig
   // Die Zahl der Überraschung ist die Siegchance der SIEGER, wie in der Liga,
@@ -12256,7 +12256,10 @@ const AWARD_META={
   worstDef:    {title:'Löchrigste Abwehr',     cls:'red',   why:`Die meisten Gegentore je Partie in der Abwehr. Ab ${AW_MIN.position} Abwehrpartien.`},
   worstTeam:   {title:'Schlechtestes Team',    cls:'red',   why:`Das Duo mit der niedrigsten Siegquote. Ab 2 gemeinsamen Partien.`},
   showmaster:  {title:'Showmaster',            cls:'gold',  why:`Die meisten 10:0-Siege im Zeitraum.`},
-  solo:        {title:'Einzelkämpfer',         cls:'acid',  why:`Die höchste Siegquote in Partien, in denen man vor dem Anpfiff der Stärkste der vier war. Ab 2 solchen Partien.`},
+  // Leitwolf und nicht Einzelkämpfer: so heißt der Liga-Rekord, der den
+  // Rückgang der Mitspielerstärke misst. Eine andere Frage, und zwei
+  // Einträge unter einem Namen waren nicht auseinanderzuhalten.
+  solo:        {title:'Leitwolf',              cls:'acid',  why:`Die höchste Siegquote in Partien, in denen man vor dem Anpfiff der Stärkste der vier war. Ab 2 solchen Partien.`},
   formtief:    {title:'Formtief',              cls:'red',   why:`Der größte Abstand zwischen dem höchsten und dem aktuellen Elo-Stand innerhalb einer Saison.`},
   zirkus:      {title:'Zirkus',                cls:'red',   why:`Das Duo, bei dem die meisten Niederlagen hoch ausfallen (ab 5 Tore Unterschied), gemessen an allen Niederlagen. Ab ${AW_MIN.teamPleiten} Niederlagen.`},
   baustelle:   {title:'Baustelle',             cls:'red',   why:`Das Duo mit der längsten gemeinsamen Niederlagenserie.`},
@@ -13746,14 +13749,17 @@ document.addEventListener('keydown', (e) => {
 const BADGES=[
   // ══ EINMALIGE BADGES (Karriere-Meilensteine) ══
   // Zeile 1 — Debütant, Stammgast
-  {id:'first_match',ic:'egg',name:'Debütant',desc:'Match gespielt',
+  {id:'first_match',ic:'egg',name:'Debütant',desc:'Erstes Match gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=1?1:0},
   {id:'games25',ic:'controller',name:'Stammgast',desc:'25 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=25?1:0},
-  // Zeile 2 — Legende, Allrounder
-  {id:'games150',ic:'diamond',name:'Legende',desc:'150 Matches gespielt',
+  // Zeile 2 — Dauerbrenner, Allrounder
+  // Nicht „Legende": so heißt die oberste Stufe des Karriere-Rangs, und im
+  // Profil standen der Rang und eine Auszeichnung für 150 Partien unter
+  // demselben Wort.
+  {id:'games150',ic:'diamond',name:'Dauerbrenner',desc:'150 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=150?1:0},
-  {id:'allrounder',ic:'refresh',name:'Allrounder',desc:'20+ Siege auf jeder Position',
+  {id:'allrounder',ic:'refresh',name:'Allrounder',desc:'Mindestens 20 Siege auf jeder Position',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return(s.atkW>=20&&s.defW>=20)?1:0;}},
   // Zeile 2b — Urgestein, Siegermaschine (Langzeit-Meilensteine, v9.17)
   // Bewusst goldene Stufen ÜBER „Legende" (150 Matches): Sie belohnen nicht
@@ -13813,14 +13819,14 @@ const BADGES=[
   {id:'losing5',ic:'trendCrash',name:'Die Talfahrt',desc:'5 Niederlagen in Folge',
     multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
   // Zeile 10 — Absoluter Verlierer, Absoluter Sieger
-  {id:'perfect_loss',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',
+  {id:'perfect_loss',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10-Niederlage',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&shutout(id,m,0,10)).length},
-  {id:'perfect_win',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
+  {id:'perfect_win',ic:'hundred',name:'Absoluter Sieger',desc:'10:0-Sieg',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&shutout(id,m,10,0)).length},
   // Zeile 11 — Nerven aus Stahl,  Zittersieg (Score-Spezial)
    {id:'nerves_of_steel',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
     multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
-  {id:'nail_biter',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
+  {id:'nail_biter',ic:'pinch',name:'Zittersieg',desc:'10:9-Sieg',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
   // Zeile 12 — 5er Serie, 10er Serie
   {id:'streak5',ic:'flame',name:'5er Serie',desc:'5 Siege in Folge',
@@ -13897,7 +13903,7 @@ const BADGES=[
     multi:true,count:(id,ms)=>countGodlyStreak(id,ms)},
   // ── NEUE NEGATIV-BADGES v8 ──
   // Bittere Pille: 9:10-Niederlage (Pendant zu nail_biter / 10:9-Sieg).
-  {id:'bitter_loss',ic:'heartBroken',name:'Bittere Pille',desc:'9:10 Niederlage',
+  {id:'bitter_loss',ic:'heartBroken',name:'Bittere Pille',desc:'9:10-Niederlage',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&goalsFor(id,m)===9&&goalsAgainst(id,m)===10).length},
   // Mr. Disaster: 3× 0:10-Niederlage in einer Saison (Pendant zu mr_perfect).
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
@@ -19320,7 +19326,7 @@ const NEWS_BADGE_WHITELIST = new Set([
   'untouchable','mr_perfect','allwetter','godly_streak',
   // Rare — kuratierte Auswahl: nur die mit besonderer Story
   'wall_badge','upset_king','unbeatable','streak10','vice_champion','potw','krimi',
-  'games150', // "Legende" (150 Matches) — Karriere-Meilenstein, v8.6 ergänzt
+  'games150', // "Dauerbrenner" (150 Matches) — Karriere-Meilenstein, v8.6 ergänzt
   // Negative — nur die seltenen, "krassen" Niederlagen
   'mr_disaster','nemesis','perfect_loss',
   // v9.5: explizit als News gewünscht (negativ, aber „immer newsworthy")
@@ -28347,7 +28353,7 @@ function _newsDetailMitte(s){
             erfuellt = r.rang.length;
             podest = _chronPodestHtml(r.rang.map(pid => {
               let w = ''; try { w = r.evFuer ? r.evFuer(pid) : ''; } catch(e){}
-              return {pid, wert:_chronKurz(w)};
+              return {pid, wert:_chronKurz(w), v:r.wert ? r.wert(pid) : null};
             }));
           }
         } catch(e){}
@@ -29718,7 +29724,7 @@ const DISZIPLINEN = [
       art:'konstanz',
       klasse:'besonders', aus:1.64,
       wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen.',
-      cond:'An mindestens 100 % der eigenen Spieltage eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
+      cond:'An jedem eigenen Spieltag eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen',
       ...(_stWertung(
         p=>p.tagN>=3,
         p=>{const t=Object.values(p.tagGrp);return t.filter(a=>a.filter(s=>s.win).length*2>=a.length).length/t.length;},
@@ -33936,14 +33942,24 @@ function _chronStripHtml(pid){
 // Das Podest der ersten drei — dasselbe Bauteil im Monats- und im
 // Rekord-Blatt [§C27]. Erwartet wird eine Reihenfolge aus {pid, wert, zeit};
 // wer weniger als drei hat, bekommt leere Plaetze statt einer Luecke.
+// Der Platz kommt aus dem Wert (`v`), nicht aus der Reihenfolge: Martin und
+// Julian halten „Der Unaufhaltsame" mit 13 punktgleich, das Blatt sagt es
+// darunter, und das Podest zeigte Julian als 02 — die Reihenfolge bricht
+// Gleichstand nur, damit sie feststeht. Wer gleich viel hat, steht auf
+// demselben Platz und trägt dasselbe Metall.
+function _chronPlatz(reihe, r){
+  if(r == null || r.v == null) return null;
+  return 1 + reihe.filter(x => x.v != null && x.v - r.v > 1e-9).length;
+}
 function _chronPodestHtml(reihe){
   const METALL = ['gold', 'silber', 'bronze'];
   const platz = (i) => {
     const r = reihe[i];
     const p = r && pmap()[r.pid];
     if(!p) return '<div class="pod-leer"></div>';
-    return `<div class="pod-karte ${METALL[i]}${i === 0 ? ' erster' : ''}" data-tplayer="${esc(r.pid)}">
-      <div class="pod-platz num">${String(i + 1).padStart(2, '0')}</div>
+    const n = _chronPlatz(reihe, r) || i + 1;
+    return `<div class="pod-karte ${METALL[Math.min(n, 3) - 1]}${i === 0 ? ' erster' : ''}" data-tplayer="${esc(r.pid)}">
+      <div class="pod-platz num">${String(n).padStart(2, '0')}</div>
       ${avHtml(p, '', {ins:true, px:(i === 0 ? 84 : 70), klasse:'pod-av'})}
       <div class="pod-name">${esc(p.name)}</div>
       <div class="pod-sub"><span>${esc(r.wert || '')}</span>${
@@ -33965,18 +33981,18 @@ function showDisziplin(tid, sid){
   // Ein eingefrorener Monat wird NICHT nachgerechnet [§13.3a]: er lief gegen
   // den Katalog von damals, und die heutige Bedingung ergäbe dort ein
   // anderes Podest als die Tafel daneben zeigt.
-  let rang = [], evFuer = null;
+  let rang = [], evFuer = null, wertVon = null;
   if(!T.frozen){
     try {
       const r = def.pick(_seasonTitleCtx(sid), new Set());
-      if(r && r.rang){ rang = r.rang; evFuer = r.evFuer; }
+      if(r && r.rang){ rang = r.rang; evFuer = r.evFuer; wertVon = r.wert; }
     } catch(e){ rang = []; }
   }
 
   const podest = _chronPodestHtml(rang.map(pid => {
     let wert = '';
     try { wert = evFuer ? evFuer(pid) : ''; } catch(e){ wert = ''; }
-    return {pid, wert};
+    return {pid, wert, v: wertVon ? wertVon(pid) : null};
   }));
 
   openSheet(`
@@ -33991,8 +34007,10 @@ function showDisziplin(tid, sid){
             beide Namen standen nirgends nebeneinander. Er sitzt IM Kopf
             des Blatts, weil er zur Wertung gehoert und nicht zu ihren
             Zahlen — die Zahlenreihe darunter traegt die vier Angaben,
-            die ihren Wert bestimmen [§C39]. */
-        def.beiname ? `<span class="chron-kose"><i>Beiname im Profil</i>`
+            die ihren Wert bestimmen [§C39]. Heisst die Wertung schon wie
+            ihr Halter („Der Beidfuessige"), steht er nicht darunter noch
+            einmal: neun Blaetter trugen denselben Namen zweimal. */
+        def.beiname && def.beiname !== def.name ? `<span class="chron-kose"><i>Beiname im Profil</i>`
         + `<b>${esc(def.beiname)}</b></span>` : ''}
     </div>
     ${_chronFaktenHtml(def)}
@@ -34069,12 +34087,12 @@ function showChronicle(cid){
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Die Tafel</h4></div>
            <div class="m num">${rang.length} von ${allChronicles().rated} erfüllen die Mindestbasis</div></div>
-         ${_chronPodestHtml(rang.map(r => ({pid:r.pid, wert:_chronKurz(r.ev), zeit:r.zeit})))}`
+         ${_chronPodestHtml(rang.map(r => ({pid:r.pid, wert:_chronKurz(r.ev), zeit:r.zeit, v:r.wert})))}`
       : emptyState('scroll', 'Diesen Rekord hat noch niemand erreicht.')}
     ${verfolger.length ? `<div class="rek-verfolger">${verfolger.map((r, i) => {
       const p = pmap()[r.pid];
       return `<div class="rvf" data-tplayer="${esc(r.pid)}">
-        <span class="p num">${i + 4}</span>
+        <span class="p num">${_chronPlatz(rang.map(x => ({v:x.wert})), {v:r.wert}) || i + 4}</span>
         ${p ? avHtml(p, 'width:21px;height:21px;font-size:9px;border-radius:7px') : ''}
         <span class="n">${esc(p ? p.name : '?')}</span>
         <span class="w num">${esc(_chronKurz(r.ev))}</span>

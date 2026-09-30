@@ -866,12 +866,13 @@ const PRONOMEN = new RegExp('(?<!' + _DW + ')(seiner|seine|seinem|seinen|sein'
 // lief durch, weil die Klasse nur Kleinbuchstaben kannte und ein Pronomen am
 // Satzanfang gross steht.
 const _sprachTreffer = JSON.parse(K.eval(`JSON.stringify((function(){
-  const strich = [], pron = [], einzahl = [];
+  const strich = [], pron = [], einzahl = [], voll = [];
   const re = ${'PRONOMEN'};
   const pruef = (wo, txt) => { const t = String(txt || ''); if(!t) return;
     if(/[—–]/.test(t)) strich.push(wo);
     if(re.test(t)) pron.push(wo);
-    if(/(^|[^\\d,.])1 (Tore|Gegentore|Siege|Spiele|Partien|Niederlagen|Spieltage|Tage|Wochen)(?![A-Za-zÄÖÜäöüß])/.test(t)) einzahl.push(wo + ': ' + t); };
+    if(/(^|[^\\d,.])1 (Tore|Gegentore|Siege|Spiele|Partien|Niederlagen|Spieltage|Tage|Wochen)(?![A-Za-zÄÖÜäöüß])/.test(t)) einzahl.push(wo + ': ' + t);
+    if(/mindestens 100 ?%/.test(t)) voll.push(wo + ': ' + t); };
   DISZIPLINEN.forEach(d => {
     ['cond','wie'].forEach(k => pruef(d.id + '.' + k, d[k]));
     // Der Beiname steht im Profilkopf unter dem Namen eines Spielers und
@@ -882,7 +883,7 @@ const _sprachTreffer = JSON.parse(K.eval(`JSON.stringify((function(){
   const H = chronicleHolders();
   CHRONICLES.forEach(c => { const h = H[c.id]; if(h) pruef(c.id + '.ev', h.ev); });
   BADGES.forEach(b => pruef('badge.' + b.id, b.desc));
-  return {strich, pron, einzahl};
+  return {strich, pron, einzahl, voll};
 })())`.replace('${PRONOMEN}', PRONOMEN.toString())));
 ok(_sprachTreffer.strich.length === 0, 'kein Gedankenstrich in Beleg, Bedingung oder Erklaerung',
    _sprachTreffer.strich.slice(0, 4).join(', ') || 'keiner');
@@ -892,16 +893,25 @@ ok(_sprachTreffer.pron.length === 0, 'und kein Pronomen ueber einen Spieler',
 // Torhagels im Blatt: eins steht in der Einzahl.
 ok(_sprachTreffer.einzahl.length === 0, 'und eins steht in der Einzahl',
    _sprachTreffer.einzahl.slice(0, 3).join(' | ') || 'alle');
+// „An mindestens 100 % der eigenen Spieltage" hiess „an jedem".
+ok(_sprachTreffer.voll.length === 0, 'und alles heisst jedes, nicht mindestens 100 %',
+   _sprachTreffer.voll.slice(0, 3).join(' | ') || 'alle');
 
 // Die Beschreibung einer Auszeichnung ist ein Satz, keine Formel: „Sieg mit
 // Tordifferenz ≥ 7", „Als Underdog gewonnen (<35% Chance)", „min. 3
 // Matches", „mind. einen Gegner aus den Bottom-2", „als Mate". Sie steht im
 // Blatt und als Text der Karte im Feed.
 const _badgeKuerzel = JSON.parse(K.eval(`JSON.stringify(BADGES
-  .filter(b => /(^|[^A-Za-zÄÖÜäöüß])(min|max|mind)\\.|[≤≥<>]|Underdog|\\bMate\\b|Bottom-|Top-1/.test(b.desc))
+  .filter(b => /(^|[^A-Za-zÄÖÜäöüß])(min|max|mind)\\.|[≤≥<>]|Underdog|\\bMate\\b|Bottom-|Top-1|\\d\\+|\\d:\\d+ (Sieg|Niederlage)|^Match gespielt/.test(b.desc))
   .map(b => b.id + ': ' + b.desc))`));
 ok(_badgeKuerzel.length === 0, 'die Beschreibung einer Auszeichnung ist ein Satz ohne Kürzel',
    _badgeKuerzel.slice(0, 3).join(' | ') || 'alle');
+// Und keine Auszeichnung heisst wie eine Stufe des Karriere-Rangs: die fuer
+// 150 Partien hiess „Legende", und im Profil stand dasselbe Wort als Rang.
+const _badgeRang = JSON.parse(K.eval(`JSON.stringify(BADGES
+  .filter(b => RANKS.some(r => r.label === b.name)).map(b => b.id + ': ' + b.name))`));
+ok(_badgeRang.length === 0, 'keine Auszeichnung heisst wie eine Rangstufe',
+   _badgeRang.join(' | ') || 'keine');
 
 // ── Die Chronik gehoert nicht nur den besten Drei ───────────────────
 // Wer eine Quote gewinnt, gewinnt fast jede: gemessen gingen sechzig Prozent

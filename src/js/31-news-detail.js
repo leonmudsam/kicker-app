@@ -749,7 +749,7 @@ function _newsDetailMitte(s){
             erfuellt = r.rang.length;
             podest = _chronPodestHtml(r.rang.map(pid => {
               let w = ''; try { w = r.evFuer ? r.evFuer(pid) : ''; } catch(e){}
-              return {pid, wert:_chronKurz(w)};
+              return {pid, wert:_chronKurz(w), v:r.wert ? r.wert(pid) : null};
             }));
           }
         } catch(e){}

@@ -793,14 +793,39 @@ const _kose = JSON.parse(K.eval(`JSON.stringify((function(){
   SEASON_TITLES.forEach(t => {
     let out=''; const echt=openSheet; openSheet=(h)=>{out=h;};
     try { showDisziplin(t.id, '2026-08'); } catch(e){ out=''; } finally { openSheet=echt; }
-    if(out.indexOf('chron-kose') < 0 || out.indexOf(t.beiname) < 0) fehlt.push(t.id);
+    // Heisst die Wertung schon wie ihr Halter, steht der Name nicht zweimal
+    // im Kopf: neun Blaetter trugen „Der Beidfuessige" als Titel und darunter
+    // „Beiname im Profil: Der Beidfuessige".
+    const gleich = t.beiname === t.name;
+    if(gleich ? out.indexOf('chron-kose') >= 0
+              : (out.indexOf('chron-kose') < 0 || out.indexOf(t.beiname) < 0)) fehlt.push(t.id);
   });
   return {fehlt, n: SEASON_TITLES.length};
 })())`));
 ok(_kose.fehlt.length === 0,
-   'jedes Chronik-Blatt nennt den Beinamen seines Halters',
+   'jedes Chronik-Blatt nennt den Beinamen seines Halters, wenn er anders heisst als die Wertung',
    _kose.fehlt.join(', ') || _kose.n + ' Blaetter');
 K.eval('closeSheet(true)');
+// Wer einen Rekord punktgleich haelt, steht auf dem Podest auf Platz 1:
+// „Der Unaufhaltsame" gehoert Martin und Julian mit 13, das Blatt sagte es
+// in einer Notiz, und das Podest zeigte Julian als 02.
+const _podGleich = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch = []; const H = chronicleHolders(); let geteilt = 0;
+  CHRONICLES.forEach(c => {
+    const h = H[c.id]; if(!h) return;
+    const n = Math.min(3, (h.pids || [h.pid]).length);
+    if(n > 1) geteilt++;
+    let out=''; const echt=openSheet; openSheet=(x)=>{out=x;};
+    try { showChronicle(c.id); } catch(e){ out=''; } finally { openSheet=echt; }
+    const erste = (out.match(/pod-platz num">01</g) || []).length;
+    if(erste !== n) falsch.push(c.id + ': ' + erste + ' statt ' + n);
+  });
+  return {falsch, geteilt};
+})())`));
+ok(_podGleich.falsch.length === 0 && _podGleich.geteilt > 0,
+   'wer einen Rekord punktgleich haelt, steht auf dem Podest auf Platz 1',
+   _podGleich.falsch.slice(0, 4).join(', ') || _podGleich.geteilt + ' geteilte Rekorde');
+
 // Die Erklaerung sagt, was die Zahl daneben bedeutet — „+15 Punkte" las sich
 // wie Elo. Wo eine Groesse nicht selbsterklaerend ist, steht sie im Blatt.
 ok(K.eval(`(function(){
@@ -1184,6 +1209,21 @@ const _awZeichen = JSON.parse(K.eval(`JSON.stringify({
 ok(_awZeichen.fehlt.length === 0 && _awZeichen.ohne.length === 0,
    'jede Auszeichnung hat ein Zeichen, und jedes steht im Katalog',
    [..._awZeichen.fehlt, ..._awZeichen.ohne.map(k => k + ' ohne Zeichen')].join(' · ') || 'alle');
+
+// Und ein Name gehoert einer Frage. Der Award „Einzelkaempfer" wertete die
+// Siegquote als Staerkster der vier, der Liga-Rekord „Der Einzelkaempfer"
+// den Rueckgang der Mitspielerstaerke — zwei Fragen unter einem Namen.
+// Erlaubt sind nur die drei Paare, die dieselbe Idee auf zwei Zeitachsen
+// messen: Torjaeger, Pechvogel und Favoritenschreck.
+const _awNamen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const n = s => String(s).replace(/^(Der|Die|Das) /, '').toLowerCase();
+  const ch = new Map(DISZIPLINEN.map(d => [n(d.name), d.id]));
+  const erlaubt = new Set(['scorer|sniper', 'pechvogel|hardluck', 'favoritenschreck|favschreck']);
+  return Object.entries(AWARD_META).filter(([k, m]) => ch.has(n(m.title)) && !erlaubt.has(k + '|' + ch.get(n(m.title))))
+    .map(([k, m]) => k + ' und ' + ch.get(n(m.title)) + ': ' + m.title);
+})())`));
+ok(_awNamen.length === 0, 'kein Award heisst wie eine Chronik, die etwas anderes misst',
+   _awNamen.join(' · ') || 'keiner');
 
 // ── Die Awards: jede Kachel muss in einer Woche erreichbar sein ─────
 // Die Schwellen stammen aus der Zeit, in der es den Zeitraum „Gesamt" gab.

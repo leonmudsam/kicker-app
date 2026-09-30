@@ -29,14 +29,17 @@
 const BADGES=[
   // ══ EINMALIGE BADGES (Karriere-Meilensteine) ══
   // Zeile 1 — Debütant, Stammgast
-  {id:'first_match',ic:'egg',name:'Debütant',desc:'Match gespielt',
+  {id:'first_match',ic:'egg',name:'Debütant',desc:'Erstes Match gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=1?1:0},
   {id:'games25',ic:'controller',name:'Stammgast',desc:'25 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=25?1:0},
-  // Zeile 2 — Legende, Allrounder
-  {id:'games150',ic:'diamond',name:'Legende',desc:'150 Matches gespielt',
+  // Zeile 2 — Dauerbrenner, Allrounder
+  // Nicht „Legende": so heißt die oberste Stufe des Karriere-Rangs, und im
+  // Profil standen der Rang und eine Auszeichnung für 150 Partien unter
+  // demselben Wort.
+  {id:'games150',ic:'diamond',name:'Dauerbrenner',desc:'150 Matches gespielt',
     multi:true,count:(id,ms)=>countGames(id,ms)>=150?1:0},
-  {id:'allrounder',ic:'refresh',name:'Allrounder',desc:'20+ Siege auf jeder Position',
+  {id:'allrounder',ic:'refresh',name:'Allrounder',desc:'Mindestens 20 Siege auf jeder Position',
     multi:true,count:(id,ms)=>{const s=playerStats(id,ms);return(s.atkW>=20&&s.defW>=20)?1:0;}},
   // Zeile 2b — Urgestein, Siegermaschine (Langzeit-Meilensteine, v9.17)
   // Bewusst goldene Stufen ÜBER „Legende" (150 Matches): Sie belohnen nicht
@@ -96,14 +99,14 @@ const BADGES=[
   {id:'losing5',ic:'trendCrash',name:'Die Talfahrt',desc:'5 Niederlagen in Folge',
     multi:true,count:(id,ms)=>countLossStreakOccurrences(id,ms,5)},
   // Zeile 10 — Absoluter Verlierer, Absoluter Sieger
-  {id:'perfect_loss',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10 Niederlage',
+  {id:'perfect_loss',ic:'dizzy',name:'Absoluter Verlierer',desc:'0:10-Niederlage',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&shutout(id,m,0,10)).length},
-  {id:'perfect_win',ic:'hundred',name:'Absoluter Sieger',desc:'10:0 Sieg',
+  {id:'perfect_win',ic:'hundred',name:'Absoluter Sieger',desc:'10:0-Sieg',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&shutout(id,m,10,0)).length},
   // Zeile 11 — Nerven aus Stahl,  Zittersieg (Score-Spezial)
    {id:'nerves_of_steel',ic:'nerves',name:'Nerven aus Stahl',desc:'3 Zittersiege (10:9) in Folge',
     multi:true,count:(id,ms)=>countNailBiterStreaks(id,ms,3)},
-  {id:'nail_biter',ic:'pinch',name:'Zittersieg',desc:'10:9 Sieg',
+  {id:'nail_biter',ic:'pinch',name:'Zittersieg',desc:'10:9-Sieg',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>won(id,m)&&goalsFor(id,m)===10&&goalsAgainst(id,m)===9).length},
   // Zeile 12 — 5er Serie, 10er Serie
   {id:'streak5',ic:'flame',name:'5er Serie',desc:'5 Siege in Folge',
@@ -180,7 +183,7 @@ const BADGES=[
     multi:true,count:(id,ms)=>countGodlyStreak(id,ms)},
   // ── NEUE NEGATIV-BADGES v8 ──
   // Bittere Pille: 9:10-Niederlage (Pendant zu nail_biter / 10:9-Sieg).
-  {id:'bitter_loss',ic:'heartBroken',name:'Bittere Pille',desc:'9:10 Niederlage',
+  {id:'bitter_loss',ic:'heartBroken',name:'Bittere Pille',desc:'9:10-Niederlage',
     multi:true,count:(id,ms)=>matchesOfPlayer(id,ms).filter(m=>!won(id,m)&&goalsFor(id,m)===9&&goalsAgainst(id,m)===10).length},
   // Mr. Disaster: 3× 0:10-Niederlage in einer Saison (Pendant zu mr_perfect).
   {id:'mr_disaster',ic:'tripleCrash',name:'Mr. Disaster',desc:'3× 0:10-Niederlage in einer Saison',
