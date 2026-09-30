@@ -292,7 +292,7 @@ function _vRankingCore(){
       // „Überraschung", die Kurzformen der Award-Namen („Größte Überra…"):
       // „Heißeste Serie" war ein dritter Name für dieselbe Liste, „Längste
       // Siegesserie" passt nicht in ein Drittel. Aus demselben Grund steht
-      // unter dem König die Zahl der Wochen oder Spieltage und nicht
+      // unter dem König die Zahl der Wochen- oder Tagessiege und nicht
       // „4× Player of the Day" — das endete als „4× Player of t…".
       const renderHl=(cls,labelTxt,iconKey,nameTxt,detailTxt,clickAttr='')=>{
         const kopf=`<div class="wk-hl-kopf"><span class="wk-hl-ic">${svgI(iconKey)}</span>`
@@ -328,7 +328,7 @@ function _vRankingCore(){
           ${mitte}
           ${renderHl('king', period==='week'?'Wochenkönig':'Tageskönig', period==='week'?'weekKing':'dayKing',
               topKing?pname(topKing.id):null,
-              topKing?(period==='week'?`${topKing.v} ${topKing.v===1?'Woche':'Wochen'}`:`${topKing.v} ${topKing.v===1?'Spieltag':'Spieltage'}`):'',
+              topKing?(period==='week'?`${topKing.v} ${topKing.v===1?'Wochensieg':'Wochensiege'}`:`${topKing.v} ${topKing.v===1?'Tagessieg':'Tagessiege'}`):'',
               topKing?'data-toplist="periodKing"':'')}
         </div>`;
 
