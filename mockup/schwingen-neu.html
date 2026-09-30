@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Neue Schwingen — Titel 1 bis 10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;600;700&family=Sometype+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#070a08;--surface:#0e1410;--surface2:#131a15;--line:#29342c;
+  --ink:#f2f4f0;--ink2:#bdc6bf;--muted:#78847b;--faint:#4c5850;
+  --acid:#bef264;--gold:#e8c25e;--violet:#a78bfa;
+  --mono:'Sometype Mono',ui-monospace,monospace;
+  --display:'Archivo Black',system-ui,sans-serif;
+}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:
+  radial-gradient(900px 520px at 50% -120px,rgba(232,194,94,.1),transparent 65%),
+  linear-gradient(180deg,#090d0a,var(--bg));color:var(--ink);font-family:'Space Grotesk',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input{font:inherit}button{color:inherit}
+.shell{width:min(1180px,calc(100% - 32px));margin:auto;padding:42px 0 80px}
+.eyebrow{font:700 10px var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+h1{font:400 clamp(34px,7vw,72px)/.95 var(--display);letter-spacing:-.055em;margin:12px 0 18px;max-width:900px}
+.intro{max-width:760px;color:var(--ink2);font-size:clamp(15px,2vw,18px);line-height:1.65;margin:0}
+.intro b{color:var(--ink)}
+.rule{height:1px;background:linear-gradient(90deg,var(--gold),rgba(232,194,94,.08) 55%,transparent);margin:34px 0}
+
+.hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(290px,.75fr);gap:18px;align-items:stretch}
+.stage,.panel,.card,.concept{border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,rgba(255,255,255,.025),transparent 35%),var(--surface);box-shadow:0 28px 80px rgba(0,0,0,.28)}
+.stage{position:relative;min-height:580px;overflow:hidden;display:grid;grid-template-rows:auto 1fr auto}
+.stage::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(360px circle at 50% 45%,rgba(232,194,94,.08),transparent 70%)}
+.stage-head{display:flex;justify-content:space-between;align-items:flex-start;padding:22px 22px 0;position:relative;z-index:2}
+.stage-kicker{font:700 10px var(--mono);letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.stage-name{font-size:20px;font-weight:700;margin-top:4px;letter-spacing:-.02em}
+.counter{font:400 42px/1 var(--display);color:var(--gold);text-shadow:0 0 24px rgba(232,194,94,.22)}
+.counter small{font:700 10px var(--mono);letter-spacing:.12em;color:var(--muted);margin-left:5px}
+#mainWing{width:100%;height:100%;min-height:385px;display:block;position:relative;z-index:1}
+.range-wrap{position:relative;z-index:2;padding:0 24px 24px}
+.range-labels{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin:0 1px 8px}
+.range-labels button{border:0;background:none;padding:5px 0;color:var(--faint);font:700 11px var(--mono);cursor:pointer;border-radius:7px}
+.range-labels button.active{color:#0b0e0c;background:var(--gold);box-shadow:0 0 20px rgba(232,194,94,.2)}
+input[type=range]{width:100%;accent-color:var(--gold)}
+
+.panel{padding:24px;display:flex;flex-direction:column}
+.panel h2,.section-head h2{font:400 24px/1.1 var(--display);letter-spacing:-.035em;margin:8px 0 0}
+.metric{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;padding:17px 0;border-bottom:1px solid var(--line)}
+.metric span{font-size:12px;color:var(--muted)}.metric b{font:700 13px var(--mono);color:var(--ink2)}
+.bar{grid-column:1/-1;height:3px;background:#202a23;border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;width:var(--v);background:linear-gradient(90deg,#906617,var(--gold),#fff0b0);box-shadow:0 0 10px rgba(232,194,94,.36);transition:width .35s ease}
+.ingredients{padding-top:18px}
+.ingredients h3{margin:0 0 11px;font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{border:1px solid #364239;background:#161e18;border-radius:999px;padding:6px 9px;font-size:11px;color:var(--ink2);transition:.25s}.chip.on{border-color:rgba(232,194,94,.48);background:rgba(232,194,94,.08);color:#f5dfa1}.chip.new{box-shadow:0 0 0 1px rgba(232,194,94,.1),0 0 18px rgba(232,194,94,.08)}
+.principle{margin-top:auto;padding-top:24px;color:var(--muted);font-size:13px;line-height:1.55}.principle b{color:var(--ink2)}
+
+.section-head{display:flex;justify-content:space-between;gap:18px;align-items:end;margin:70px 0 20px}.section-head p{max-width:570px;margin:0;color:var(--muted);font-size:14px;line-height:1.55}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}
+.card{padding:10px 8px 12px;cursor:pointer;transition:.22s ease;min-width:0}.card:hover,.card.active{transform:translateY(-3px);border-color:rgba(232,194,94,.5);background:linear-gradient(180deg,rgba(232,194,94,.065),transparent 45%),var(--surface2)}
+.card svg{width:100%;height:auto;display:block}.card-foot{display:flex;justify-content:space-between;align-items:center;padding:3px 7px 1px;gap:4px}.card-foot b{font:400 18px var(--display);color:var(--gold)}.card-foot span{font:700 8px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.concept{margin-top:70px;overflow:hidden}.concept img{display:block;width:100%;height:auto}.concept-copy{display:flex;justify-content:space-between;gap:24px;padding:18px 22px 20px;align-items:center}.concept-copy h2{font:400 20px var(--display);margin:0}.concept-copy p{margin:4px 0 0;color:var(--muted);font-size:13px}.tag{font:700 9px var(--mono);letter-spacing:.12em;text-transform:uppercase;border:1px solid rgba(167,139,250,.35);color:#cab8ff;border-radius:999px;padding:7px 10px;white-space:nowrap}
+
+.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}.spec{border-top:1px solid var(--line);padding:18px 4px}.spec b{display:block;font:700 10px var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--gold);margin-bottom:7px}.spec p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+.note{margin-top:38px;padding:18px 20px;border:1px solid rgba(190,242,100,.2);border-radius:16px;background:rgba(190,242,100,.035);font-size:13px;color:var(--ink2);line-height:1.6}.note b{color:var(--acid)}
+@keyframes funkeln{0%,100%{opacity:.35;transform:scale(.85);transform-origin:center}50%{opacity:1;transform:scale(1.35);transform-origin:center}}
+#mainWing .spark{animation:funkeln 2.4s ease-in-out infinite}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.panel{min-height:400px}.grid{grid-template-columns:repeat(2,1fr)}.specs{grid-template-columns:1fr}.stage{min-height:540px}}
+@media(max-width:560px){.shell{width:min(100% - 20px,1180px);padding-top:28px}.stage{min-height:500px;border-radius:20px}.stage-head{padding:18px 16px 0}#mainWing{min-height:340px}.range-wrap{padding:0 14px 18px}.grid{gap:7px}.card{padding:5px 3px 8px}.card-foot{padding:0 5px}.card-foot span{font-size:7px}.section-head{display:block;margin-top:52px}.section-head p{margin-top:10px}.concept-copy{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<main class="shell">
+  <div class="eyebrow">Mockup · Titelband 2.0</div>
+  <h1>Schwingen, die man sich verdienen will.</h1>
+  <p class="intro">Die Schwinge beginnt nicht mehr als kaum sichtbare Verzierung hinter dem Reif. <b>Schon Titel 1 erhält eine klare, breite Silhouette.</b> Jeder weitere Titel ergänzt danach genau eine neue Ebene: mehr Spannweite, mehr Relief, mehr Höhe und zuletzt mehr Licht — ohne die Insignien zu übertönen.</p>
+  <div class="rule"></div>
+
+  <section class="hero" aria-label="Interaktive Großansicht">
+    <div class="stage">
+      <div class="stage-head">
+        <div><div class="stage-kicker">Aktive Entwicklungsstufe</div><div class="stage-name" id="stageName">Die erste Schwinge</div></div>
+        <div class="counter"><span id="counter">1</span><small>TITEL</small></div>
+      </div>
+      <svg id="mainWing" viewBox="0 0 600 390" role="img" aria-label="Schwingen-Entwurf für einen Titel"></svg>
+      <div class="range-wrap">
+        <div class="range-labels" id="rangeLabels"></div>
+        <input id="level" type="range" min="1" max="10" step="1" value="1" aria-label="Titelanzahl">
+      </div>
+    </div>
+
+    <aside class="panel">
+      <div class="eyebrow">Designsystem</div>
+      <h2 id="panelTitle">Sichtbarkeit zuerst</h2>
+      <div class="metric"><span>Spannweite</span><b id="spanText">220%</b><div class="bar"><i id="spanBar" style="--v:28%"></i></div></div>
+      <div class="metric"><span>Relieftiefe</span><b id="depthText">1 Ebene</b><div class="bar"><i id="depthBar" style="--v:12%"></i></div></div>
+      <div class="metric"><span>Lichtintensität</span><b id="lightText">ruhig</b><div class="bar"><i id="lightBar" style="--v:10%"></i></div></div>
+      <div class="ingredients"><h3>Elemente dieser Stufe</h3><div class="chips" id="chips"></div></div>
+      <p class="principle" id="principle"><b>Prinzip:</b> Goldene Lorbeerblätter ragen deutlich über den Reif hinaus. Der breite negative Raum zwischen Blattwerk und Metall hält beide Formen lesbar.</p>
+    </aside>
+  </section>
+
+  <div class="section-head">
+    <div><div class="eyebrow">01—10 · vollständige Leiter</div><h2>Jeder Titel verändert die Silhouette</h2></div>
+    <p>Die Karten nutzen bewusst denselben Kronenreif. So lässt sich prüfen, ob die Schwinge auch hinter einer bereits sehr reichen Insignie eigenständig lesbar bleibt.</p>
+  </div>
+  <section class="grid" id="grid" aria-label="Alle zehn Schwingenstufen"></section>
+
+  <section class="concept">
+    <img src="schwingen-konzept.png" alt="Konzeptbogen mit zehn zunehmend prächtigeren goldenen Schwingen">
+    <div class="concept-copy"><div><h2>Material- und Stimmungsreferenz</h2><p>Detailgrad, Metalltiefe, Edelsteine und kontrollierter Schimmer für die spätere Ausarbeitung.</p></div><span class="tag">Concept render</span></div>
+  </section>
+
+  <div class="section-head">
+    <div><div class="eyebrow">Gestaltungsregeln</div><h2>Spektakulär, aber weiterhin lesbar</h2></div>
+  </div>
+  <section class="specs">
+    <article class="spec"><b>01 · Grundmaß</b><p>Die Flügelspitzen stehen ab Titel 1 mindestens einen Reifradius außerhalb der Insignie. Wachstum findet nie nur hinter dem Reif statt.</p></article>
+    <article class="spec"><b>02 · Formensprache</b><p>Lorbeer, Akanthus und Voluten greifen die vorhandenen Insignien auf. Keine eigenständige Vogel- oder Engelsästhetik.</p></article>
+    <article class="spec"><b>03 · Materialtrennung</b><p>Champagnergold für Titel, dunklere Kanten für Relief, Violett ausschließlich als kleiner Rangstein. So bleibt Prestige vom Titel unterscheidbar.</p></article>
+    <article class="spec"><b>04 · Wachstum</b><p>1–4 bauen Breite auf, 5–7 gewinnen Höhe und zweite Ebenen, 8–10 ergänzen Strahlen, Halo und Licht. Jede Zahl erhält eine erkennbare Veränderung.</p></article>
+    <article class="spec"><b>05 · Effekte</b><p>Schimmer läuft nur über Metallkanten. Glut und Partikel beginnen spät; sonst würden niedrige Stufen künstlich wertvoller wirken als ihre Form.</p></article>
+    <article class="spec"><b>06 · Kleine Größen</b><p>In Listen bleiben nur Silhouette, Hauptblätter und ein Lichtsaum. Perlen, Gravur und Funken sind Details der Profil- und Laufbahnansicht.</p></article>
+  </section>
+  <p class="note"><b>Scope:</b> Dieses Dokument ist ausschließlich ein eigenständiges Design-Mockup. Es verändert keine App-Daten, keine Titelberechnung und keine bestehende Insignien- oder Schwingenlogik.</p>
+</main>
+
+<script>
+const stages=[
+ {name:'Die erste Schwinge',title:'Sichtbarkeit zuerst',span:'220%',depth:'1 Ebene',light:'ruhig',sv:28,dv:12,lv:10,items:['Lorbeerarm','8 Großblätter','Goldkante'],text:'Goldene Lorbeerblätter ragen deutlich über den Reif hinaus. Der breite negative Raum zwischen Blattwerk und Metall hält beide Formen lesbar.'},
+ {name:'Doppelschwinge',title:'Mehr Rhythmus',span:'235%',depth:'2 Ebenen',light:'sanft',sv:36,dv:22,lv:16,items:['Lorbeerarm','12 Großblätter','Innenfieder','Goldkante'],text:'Eine zweite, kürzere Blattlage füllt die Schulter. Außen bleibt die Kontur lang und ruhig, innen entsteht sichtbar mehr Wertigkeit.'},
+ {name:'Volutenschwinge',title:'Die Sprache der Insignien',span:'248%',depth:'2 Ebenen',light:'sanft',sv:44,dv:30,lv:22,items:['Lorbeerarm','Innenfieder','Voluten','Goldperlen'],text:'Eingerollte Voluten an der Schulter zitieren den Volutenkranz. Kleine Goldperlen markieren erstmals den Titelrang.'},
+ {name:'Akanthusschwinge',title:'Mehr Relief',span:'260%',depth:'3 Ebenen',light:'konturiert',sv:52,dv:42,lv:30,items:['Doppellorbeer','Voluten','Akanthus','Goldperlen'],text:'Breite Akanthusblätter sitzen als dunklere Mittellage zwischen Reif und Lorbeer. Das Zeichen gewinnt Tiefe, ohne dichter zu wirken.'},
+ {name:'Hohe Schwinge',title:'Die Silhouette steigt',span:'272%',depth:'3 Ebenen',light:'konturiert',sv:60,dv:50,lv:38,items:['Hochlorbeer','Akanthus','Voluten','Schulterspitzen'],text:'Die äußeren Äste drehen sichtbar nach oben. Damit wächst die Auszeichnung erstmals in der Höhe und wirkt im Profil wie ein offener Triumphbogen.'},
+ {name:'Schwinge mit Band',title:'Feierlicher Abschluss',span:'282%',depth:'4 Ebenen',light:'glänzend',sv:68,dv:60,lv:48,items:['Hochlorbeer','Akanthus','Goldband','Perlenkette'],text:'Ein schmales, graviertes Goldband bindet beide Seiten optisch zusammen. Perlen an den äußeren Knotenpunkten schaffen kostbare Fernwirkung.'},
+ {name:'Haloschwinge',title:'Ein zweiter Horizont',span:'292%',depth:'4 Ebenen',light:'Aura',sv:75,dv:68,lv:60,items:['Doppellorbeer','Voluten','Goldband','Halo-Bogen','Rangstein'],text:'Ein feiner Halo erscheint hinter den oberen Spitzen. Er bleibt offen, damit Kopf und Krone der Insignie weiterhin Luft bekommen.'},
+ {name:'Strahlenschwinge',title:'Kontrollierte Energie',span:'302%',depth:'5 Ebenen',light:'strahlend',sv:83,dv:78,lv:72,items:['Doppellorbeer','Halo-Bogen','Lichtlanzen','3 Rangsteine'],text:'Schmale Lichtlanzen verlängern die Bewegungsrichtung der Blätter. Drei kleine Rangsteine verbinden Titelgold und Rangfarbe.'},
+ {name:'Kronenschwinge',title:'Fast am Gipfel',span:'312%',depth:'5 Ebenen',light:'Glorie',sv:91,dv:88,lv:86,items:['Doppellorbeer','Doppelhalo','Lichtlanzen','Kronenfächer','5 Rangsteine'],text:'Ein niedriger Kronenfächer über dem Reif schließt die obere Kontur. Der Doppelhalo steigert die Präsenz, bleibt aber dünner als das Metall.'},
+ {name:'Imperiale Schwinge',title:'Die volle Inszenierung',span:'324%',depth:'6 Ebenen',light:'Aurora',sv:100,dv:100,lv:100,items:['Doppellorbeer','Akanthus','Voluten','Doppelhalo','Strahlenkrone','7 Rangsteine','Goldfunken'],text:'Alle Motive greifen ineinander: breiter Lorbeer, tiefe Voluten, Strahlenkrone und wenige Goldfunken. Der Effekt ist maximal, die Mitte bleibt trotzdem klar.'}
+];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function defs(id,l){return `<defs>
+ <linearGradient id="${id}gold" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#fff6cf"/><stop offset=".24" stop-color="#f2d77e"/><stop offset=".58" stop-color="#c99632"/><stop offset=".82" stop-color="#f0cf70"/><stop offset="1" stop-color="#6d470c"/></linearGradient>
+ <linearGradient id="${id}deep" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8df9a"/><stop offset=".48" stop-color="#aa731d"/><stop offset="1" stop-color="#3f2706"/></linearGradient>
+ <radialGradient id="${id}gem" cx=".35" cy=".25"><stop stop-color="#fff"/><stop offset=".2" stop-color="#dccdff"/><stop offset=".48" stop-color="#a78bfa"/><stop offset=".78" stop-color="#6840bb"/><stop offset="1" stop-color="#241139"/></radialGradient>
+ <radialGradient id="${id}aura"><stop stop-color="#f6d36d" stop-opacity="${.05+l*.012}"/><stop offset=".5" stop-color="#d7a532" stop-opacity="${.025+l*.007}"/><stop offset="1" stop-color="#d7a532" stop-opacity="0"/></radialGradient>
+ <filter id="${id}shadow" x="-40%" y="-40%" width="180%" height="190%"><feDropShadow dx="0" dy="6" stdDeviation="5" flood-color="#000" flood-opacity=".75"/></filter>
+ <filter id="${id}glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <path id="${id}leaf" d="M0 0 C14 -20 31 -25 44 -23 C37 -8 23 3 0 0Z"/>
+ <path id="${id}leaf2" d="M0 0 C11 -16 23 -20 34 -17 C28 -5 17 3 0 0Z"/>
+ </defs>`}
+function leftWing(id,l){
+ const leafN=4+Math.floor((l-1)/2), top=235-Math.min(5,l)*8, out=80-Math.min(l,8)*2;
+ let s=`<g filter="url(#${id}shadow)"><path d="M278 248 C224 266 165 263 ${out} ${top}" fill="none" stroke="url(#${id}deep)" stroke-width="9" stroke-linecap="round"/><path d="M278 246 C218 260 158 252 ${out} ${top}" fill="none" stroke="#f5d779" stroke-opacity=".78" stroke-width="2.2" stroke-linecap="round"/>`;
+ for(let i=0;i<leafN;i++){
+   const u=i/(Math.max(1,leafN-1)),x=246-u*(154+Math.min(l,8)*8),y=249-u*(35+Math.min(l,6)*8),sc=.72+u*.28+(l*.012),rot=-150-u*26;
+   s+=`<use href="#${id}leaf" transform="translate(${x} ${y}) rotate(${rot}) scale(${sc})" fill="url(#${id}gold)" stroke="#583704" stroke-width="1.25"/>`;
+   if(l>=2)s+=`<use href="#${id}leaf2" transform="translate(${x-4} ${y-7}) rotate(${rot+43}) scale(${sc*.8})" fill="url(#${id}deep)" stroke="#4a2d05" stroke-width="1"/>`;
+ }
+ if(l>=3)s+=`<path d="M265 232 C225 194 184 201 179 232 C176 252 204 255 211 234 C216 219 197 213 190 228" fill="none" stroke="url(#${id}gold)" stroke-width="8" stroke-linecap="round"/><circle cx="190" cy="228" r="5" fill="#fff1bd" stroke="#68420b" stroke-width="2"/>`;
+ if(l>=4)s+=`<path d="M256 222 C230 205 216 176 221 145 C239 158 247 176 246 197 C233 187 229 173 231 158" fill="url(#${id}deep)" stroke="#5b3908" stroke-width="1.4"/>`;
+ if(l>=5)s+=`<path d="M178 221 C128 190 89 145 80 91 C115 112 139 144 151 182" fill="none" stroke="url(#${id}gold)" stroke-width="7" stroke-linecap="round"/>`;
+ if(l>=6){s+=`<path d="M258 263 C220 287 176 298 121 292 C153 278 189 267 232 255Z" fill="url(#${id}deep)" stroke="#5c3b08" stroke-width="1.3"/><path d="M251 268 C214 285 178 291 142 289" fill="none" stroke="#ffe9a0" stroke-opacity=".65" stroke-width="1.6"/>`;for(let i=0;i<4;i++)s+=`<circle cx="${105-i*8}" cy="${168-i*23}" r="${3+i*.3}" fill="#ffedaa" stroke="#67420a" stroke-width="1.4"/>`}
+ if(l>=8)s+=`<path d="M142 174 L100 108 L151 157Z" fill="url(#${id}gold)" stroke="#60400b"/><path d="M112 210 L60 176 L122 193Z" fill="url(#${id}gold)" stroke="#60400b"/>`;
+ if(l>=8)s+=gem(id,128,185,8);if(l>=9)s+=gem(id,188,128,9);if(l>=10)s+=gem(id,78,116,7);
+ return s+'</g>';
+}
+function gem(id,x,y,r){return `<path d="M${x} ${y-r} L${x+r*.72} ${y} L${x} ${y+r} L${x-r*.72} ${y}Z" fill="url(#${id}gem)" stroke="#f7d873" stroke-width="1.4" filter="url(#${id}glow)"/>`}
+function decoration(id,l){let s='';
+ if(l>=7)s+=`<path d="M105 170 A205 155 0 0 1 495 170" fill="none" stroke="url(#${id}gold)" stroke-width="3" opacity=".72"/><circle cx="105" cy="170" r="4" fill="#ffeab0"/><circle cx="495" cy="170" r="4" fill="#ffeab0"/>`;
+ if(l>=9)s+=`<path d="M135 162 A180 130 0 0 1 465 162" fill="none" stroke="#f4d773" stroke-width="1.4" opacity=".55"/>`;
+ if(l>=9){for(let i=-3;i<=3;i++){const x=300+i*28,y=101+Math.abs(i)*8,h=42-Math.abs(i)*5;s+=`<path d="M${x} ${y} L${x-5} ${y+h} L${x+5} ${y+h}Z" fill="url(#${id}gold)" opacity="${.92-Math.abs(i)*.08}"/>`}}
+ if(l>=10){for(let i=0;i<12;i++){const x=62+(i*43)%476,y=82+(i%3)*20;s+=`<circle cx="${x}" cy="${y}" r="${i%2?1.4:2.1}" fill="#ffe99d" opacity="${.35+(i%4)*.14}"/>`}}
+ return s}
+function insignia(l){return `<g filter="url(#w${l}_shadow)">
+ <circle cx="300" cy="220" r="103" fill="#0a0e0c" stroke="#3a2c12" stroke-width="16"/>
+ <circle cx="300" cy="220" r="99" fill="none" stroke="url(#w${l}_gold)" stroke-width="11"/>
+ <circle cx="300" cy="220" r="85" fill="#111a16" stroke="#eee1c2" stroke-opacity=".55" stroke-width="3"/>
+ <circle cx="300" cy="220" r="76" fill="radial-gradient(circle,#17221c,#0b100d)"/>
+ <path d="M300 101 L313 116 L309 135 L291 135 L287 116Z" fill="url(#w${l}_gold)" stroke="#62410c" stroke-width="2"/>
+ ${gem('w'+l,300,112,9)}
+ <path d="M300 311 L320 333 L300 357 L280 333Z" fill="url(#w${l}_gold)" stroke="#5c3a08" stroke-width="2.5"/>
+ ${gem('w'+l,300,332,12)}
+ <text x="300" y="212" text-anchor="middle" font-family="Archivo Black, sans-serif" font-size="27" fill="#e9eee9">LEON</text>
+ <text x="300" y="236" text-anchor="middle" font-family="Sometype Mono, monospace" font-size="10" letter-spacing="2.4" fill="#89968d">LEGENDE</text>
+ </g>`}
+function svgMarkup(l,main=false){const id='w'+l+'_',spark=l>=10?' sparkle':'';return `${defs(id,l)}<ellipse cx="300" cy="215" rx="${170+l*7}" ry="${115+l*5}" fill="url(#${id}aura)"/>${decoration(id,l)}<g>${leftWing(id,l)}</g><g transform="translate(600 0) scale(-1 1)">${leftWing(id,l)}</g>${insigniaWithId(id,l)}${spark?`<g class="spark"><circle cx="83" cy="116" r="2" fill="#fff2bb"/><circle cx="517" cy="116" r="2" fill="#fff2bb"/></g>`:''}`}
+function insigniaWithId(id,l){return `<g filter="url(#${id}shadow)"><circle cx="300" cy="220" r="103" fill="#0a0e0c" stroke="#453313" stroke-width="16"/><circle cx="300" cy="220" r="99" fill="none" stroke="url(#${id}gold)" stroke-width="11"/><circle cx="300" cy="220" r="85" fill="#111a16" stroke="#eee1c2" stroke-opacity=".55" stroke-width="3"/><circle cx="300" cy="220" r="76" fill="#111915"/><path d="M300 101 L313 116 L309 135 L291 135 L287 116Z" fill="url(#${id}gold)" stroke="#62410c" stroke-width="2"/>${gem(id,300,112,9)}<path d="M300 311 L320 333 L300 357 L280 333Z" fill="url(#${id}gold)" stroke="#5c3a08" stroke-width="2.5"/>${gem(id,300,332,12)}<text x="300" y="214" text-anchor="middle" font-family="Archivo Black, sans-serif" font-size="27" fill="#e9eee9">LEON</text><text x="300" y="237" text-anchor="middle" font-family="Sometype Mono, monospace" font-size="10" letter-spacing="2.4" fill="#89968d">LEGENDE</text></g>`}
+
+const main=document.getElementById('mainWing'),slider=document.getElementById('level'),labels=document.getElementById('rangeLabels'),grid=document.getElementById('grid');
+labels.innerHTML=stages.map((_,i)=>`<button type="button" data-level="${i+1}">${i+1}</button>`).join('');
+grid.innerHTML=stages.map((s,i)=>`<article class="card" data-level="${i+1}" tabindex="0"><svg viewBox="0 35 600 350" aria-label="${esc(i+1)} Titel: ${esc(s.name)}">${svgMarkup(i+1)}</svg><div class="card-foot"><b>${i+1}</b><span>${esc(s.name)}</span></div></article>`).join('');
+function show(l){l=Number(l);const s=stages[l-1];slider.value=l;main.innerHTML=svgMarkup(l,true);main.setAttribute('aria-label',`${l} Titel: ${s.name}`);document.getElementById('counter').textContent=l;document.getElementById('stageName').textContent=s.name;document.getElementById('panelTitle').textContent=s.title;document.getElementById('spanText').textContent=s.span;document.getElementById('depthText').textContent=s.depth;document.getElementById('lightText').textContent=s.light;document.getElementById('spanBar').style.setProperty('--v',s.sv+'%');document.getElementById('depthBar').style.setProperty('--v',s.dv+'%');document.getElementById('lightBar').style.setProperty('--v',s.lv+'%');document.getElementById('chips').innerHTML=s.items.map((x,i)=>`<span class="chip on ${i===s.items.length-1?'new':''}">${esc(x)}</span>`).join('');document.getElementById('principle').innerHTML='<b>Prinzip:</b> '+esc(s.text);document.querySelectorAll('[data-level]').forEach(x=>x.classList.toggle('active',Number(x.dataset.level)===l))}
+slider.addEventListener('input',e=>show(e.target.value));
+labels.addEventListener('click',e=>{const b=e.target.closest('button');if(b)show(b.dataset.level)});
+grid.addEventListener('click',e=>{const c=e.target.closest('.card');if(c){show(c.dataset.level);document.querySelector('.hero').scrollIntoView({behavior:'smooth',block:'center'})}});
+grid.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.closest('.card')){e.preventDefault();e.target.closest('.card').click()}});
+const start=Math.max(1,Math.min(10,Number(new URLSearchParams(location.search).get('titel'))||1));
+show(start);
+</script>
+</body>
+</html>
