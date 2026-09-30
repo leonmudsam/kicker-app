@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 240" role="img" aria-labelledby="title desc" data-family="ordenstern" data-level="3">
+  <title id="title">Ordenstern 3</title>
+  <desc id="desc">Neu gezeichnete metallisch-violette Rang-Insignie mit mittigem unterem Platzierungsslot.</desc>
+  <defs>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbf7ff"/>
+      <stop offset="0.18" stop-color="#a9a2be"/>
+      <stop offset="0.42" stop-color="#4a465d"/>
+      <stop offset="0.66" stop-color="#ded8e9"/>
+      <stop offset="1" stop-color="#5a536f"/>
+    </linearGradient>
+    <linearGradient id="metalDark" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#918aa9"/>
+      <stop offset="0.5" stop-color="#2a2737"/>
+      <stop offset="1" stop-color="#b9afc9"/>
+    </linearGradient>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2d8ff"/>
+      <stop offset="0.28" stop-color="#b66cff"/>
+      <stop offset="0.62" stop-color="#6c20cd"/>
+      <stop offset="1" stop-color="#2a0b68"/>
+    </linearGradient>
+    <linearGradient id="roseMetal" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff0ed"/>
+      <stop offset="0.35" stop-color="#bd8f99"/>
+      <stop offset="0.7" stop-color="#5d455c"/>
+      <stop offset="1" stop-color="#e9b6a8"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff3c1"/>
+      <stop offset="0.32" stop-color="#d6a45d"/>
+      <stop offset="0.65" stop-color="#6b3f30"/>
+      <stop offset="1" stop-color="#ffc981"/>
+    </linearGradient>
+    <radialGradient id="gem" cx="35%" cy="25%" r="78%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.2" stop-color="#dba6ff"/>
+      <stop offset="0.62" stop-color="#7a29dd"/>
+      <stop offset="1" stop-color="#230847"/>
+    </radialGradient>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="2.2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <g id="starburst" opacity="0.96"><path d="M206 116 L250 116" stroke="url(#violet)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M205.33 126.18 L230.12 129.44" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M203.34 136.19 L232.32 143.95" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M200.06 145.85 L223.16 155.42" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M195.55 155 L233.66 177" stroke="url(#metal)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M189.88 163.48 L209.72 178.7" stroke="url(#violet)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M183.15 171.15 L204.37 192.37" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M175.48 177.88 L190.7 197.72" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M167 183.55 L189 221.66" stroke="url(#metal)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M157.85 188.06 L167.42 211.16" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M148.19 191.34 L155.95 220.32" stroke="url(#violet)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M138.18 193.33 L141.44 218.12" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M128 194 L128 238" stroke="url(#metal)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M117.82 193.33 L114.56 218.12" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M107.81 191.34 L100.05 220.32" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M98.15 188.06 L88.58 211.16" stroke="url(#violet)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M89 183.55 L67 221.66" stroke="url(#metal)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M80.52 177.88 L65.3 197.72" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M72.85 171.15 L51.63 192.37" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M66.12 163.48 L46.28 178.7" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M60.45 155 L22.34 177" stroke="url(#violet)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M55.94 145.85 L32.84 155.42" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M52.66 136.19 L23.68 143.95" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M50.67 126.18 L25.88 129.44" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M50 116 L6 116" stroke="url(#metal)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M50.67 105.82 L25.88 102.56" stroke="url(#violet)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M52.66 95.81 L23.68 88.05" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M55.94 86.15 L32.84 76.58" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M60.45 77 L22.34 55" stroke="url(#metal)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M66.12 68.52 L46.28 53.3" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M72.85 60.85 L51.63 39.63" stroke="url(#violet)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M80.52 54.12 L65.3 34.28" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M89 48.45 L67 10.34" stroke="url(#metal)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M98.15 43.94 L88.58 20.84" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M107.81 40.66 L100.05 11.68" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M117.82 38.67 L114.56 13.88" stroke="url(#violet)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M128 38 L128 -6" stroke="url(#metal)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M138.18 38.67 L141.44 13.88" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M148.19 40.66 L155.95 11.68" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M157.85 43.94 L167.42 20.84" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M167 48.45 L189 10.34" stroke="url(#violet)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M175.48 54.12 L190.7 34.28" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M183.15 60.85 L204.37 39.63" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M189.88 68.52 L209.72 53.3" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M195.55 77 L233.66 55" stroke="url(#metal)" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M200.06 86.15 L223.16 76.58" stroke="url(#violet)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M203.34 95.81 L232.32 88.05" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/>
+<path d="M205.33 105.82 L230.12 102.56" stroke="url(#metal)" stroke-width="1.1" stroke-linecap="round"/></g><g id="core-ring">
+    <circle cx="128" cy="116" r="70" fill="none" stroke="url(#metalDark)" stroke-width="13" opacity="0.92"/>
+    <circle cx="128" cy="116" r="70" fill="none" stroke="url(#metal)" stroke-width="9"/>
+    <path d="M76 76 A70 70 0 0 1 176 65" fill="none" stroke="#fff" stroke-width="1.8" opacity="0.64" stroke-linecap="round"/>
+    <path d="M83 168 A70 70 0 0 0 173 171" fill="none" stroke="#281d3d" stroke-width="2.2" opacity="0.8" stroke-linecap="round"/>
+  </g><circle cx="128" cy="46" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="158.37" cy="52.93" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="182.73" cy="72.36" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="196.24" cy="100.42" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="196.24" cy="131.58" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="182.73" cy="159.64" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="158.37" cy="179.07" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="128" cy="186" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="97.63" cy="179.07" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="73.27" cy="159.64" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="59.76" cy="131.58" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="59.76" cy="100.42" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="73.27" cy="72.36" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/>
+<circle cx="97.63" cy="52.93" r="3.1" fill="url(#metal)" stroke="#3d354e" stroke-width="0.8"/><g id="crown" filter="url(#glow)">
+    <path d="M88 49 L88,49 L93,31 L102,39 L128,18 L154,39 L163,31 L168,49 L164 58 L92 58 Z" fill="url(#gold)" stroke="url(#metal)" stroke-width="1.6"/>
+    <path d="M92 49 Q128 40 164 49 L163 57 L93 57 Z" fill="url(#violet)" opacity="0.88"/>
+    <rect x="93.3" y="45.3" width="5.4" height="5.4" rx="1" fill="url(#gem)" stroke="#e8d8ff" stroke-width="0.9" transform="rotate(45 96 48)"/><rect x="114.63" y="45.3" width="5.4" height="5.4" rx="1" fill="url(#gem)" stroke="#e8d8ff" stroke-width="0.9" transform="rotate(45 117.33 48)"/><rect x="135.97" y="45.3" width="5.4" height="5.4" rx="1" fill="url(#gem)" stroke="#e8d8ff" stroke-width="0.9" transform="rotate(45 138.67 48)"/><rect x="157.3" y="45.3" width="5.4" height="5.4" rx="1" fill="url(#gem)" stroke="#e8d8ff" stroke-width="0.9" transform="rotate(45 160 48)"/>
+  </g><g id="level-ornaments"><rect x="55" y="113" width="6" height="6" rx="1" fill="url(#gem)" stroke="#e8d8ff" stroke-width="0.9" transform="rotate(45 58 116)"/><rect x="195" y="113" width="6" height="6" rx="1" fill="url(#gem)" stroke="#e8d8ff" stroke-width="0.9" transform="rotate(45 198 116)"/></g><g id="placement-slot" data-placement-slot="center-bottom" aria-label="Mittiger unterer Platzierungsslot">
+    <rect id="slot-hit-area" x="106" y="179" width="44" height="44" fill="transparent"/>
+    <path d="M128 180 L149 201 L128 222 L107 201 Z" fill="#24172e" stroke="url(#metalDark)" stroke-width="5"/>
+    <path id="slot-face" d="M128 184 L145 201 L128 218 L111 201 Z" fill="url(#gem)" stroke="url(#roseMetal)" stroke-width="2.8"/>
+    <path d="M116 196 L128 185 L140 196" fill="none" stroke="#fff" stroke-width="1" opacity="0.65"/>
+  </g>
+</svg>
