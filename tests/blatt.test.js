@@ -2522,6 +2522,67 @@ const ok = (c, msg, det) => {
   blattPunkt = blattPunkt.out;
   ok(blattWort.length === 0, 'dieselbe Sache heißt überall gleich, und niemand wird geduzt',
      [...new Set(blattWort)].join(' | ') || 'keine Abweichung');
+  // ── Ein Kopf, ein Fuß [§C27] ──────────────────────────────────────
+  // Blätter hatten fünf Köpfe, und geschlossen wurde nur durch Wischen oder
+  // einen Knopf, den jedes Blatt selbst baute. Jedes Blatt mit Titel trägt
+  // jetzt denselben Kopf aus Zeichenkachel, Titel und Unterzeile, jedes
+  // Blatt den Knopf zum Schließen, und ein Fuß höchstens einen gefüllten
+  // Knopf. Der Hinweis trägt seine Rolle, die Bestätigung nennt, was
+  // verloren geht, und der zerstörende Knopf steht rechts.
+  const kopfFuss = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const P = n => JSON.stringify(K('(players.find(p=>p.name===' + JSON.stringify(n) + ')||{}).id'));
+    const mitKopf = [['Partie', 'showMatchDetail(matches[matches.length-1].id)'],
+      ['Torjäger', "tab='awards';awPeriod='season';awSeasonId=null;showAward('scorer')"], ['Höchster Sieg', "showAward('biggest')"],
+      ['Erzfeinde', "showAward('rivalry')"], ['Wochenkönig', "period='week';openTopList('periodKing')"],
+      ['Rekord', 'showChronicle(CHRONICLES[0].id)'], ['Chronik', 'showDisziplin(SEASON_TITLES[0].id)'],
+      ['Monatstafel', "showSeasonTable('2026-08')"], ['Liga-Chronik', 'showLigaChronik()'],
+      ['Rangsystem', 'showRangSystem()'], ['Bilanzen', 'showPlayerH2HList(' + P('Leon') + ')'],
+      ['Saisons', 'showPlayerSeasons(' + P('Leon') + ')'], ['Regeln', 'showPrestigeRegeln(' + P('Leon') + ')'],
+      ['Auszeichnungen', 'showPlayerBadges(' + P('Jane') + ')'], ['Positionsverlauf', 'showPositionHistory(seasons[3].id)'],
+      ['Spieler bearbeiten', 'showEditPlayer(' + P('Leon') + ')'], ['Partie bearbeiten', 'showEditMatch(matches[matches.length-1].id)'],
+      ['Neuer Spieler', 'showAddPlayer()'],
+      ['Awards im Profil', 'showPlayerAwards(' + P('Leon') + ',playerAwards(' + P('Leon') + ').filter(a=>a.rank===0))']];
+    const f = [];
+    for(const [name, auf] of mitKopf){
+      try{ K('closeSheet(true)'); K(auf); }catch(e){ f.push(name + ': ' + e.message); continue; }
+      const sh = document.getElementById('sheet');
+      const kopf = sh.querySelector('.blatt-kopf');
+      if(!kopf || !kopf.querySelector('.zk.g svg') || !kopf.querySelector('h3')) f.push(name + ': ohne Kopf');
+      if(!sh.querySelector('#sheetZu')) f.push(name + ': ohne Schließen');
+      sh.querySelectorAll('.blatt-fuss').forEach(fu => {
+        const voll = [...fu.querySelectorAll('.btn')].filter(b => !b.classList.contains('ghost') && !b.classList.contains('gefahr'));
+        if(voll.length > 1) f.push(name + ': ' + voll.length + ' gefüllte Knöpfe im Fuß');
+      });
+    }
+    // Die Bühne im Award-Blatt einer Partie: Gesichter mit Größe, nicht als
+    // Farbbalken über die ganze Breite.
+    K("closeSheet(true);showAward('biggest')");
+    const av = [...document.querySelectorAll('#sheet .buehne .av')];
+    if(av.length !== 4 || av.some(a => a.getBoundingClientRect().width > 44)) f.push('Bühne: ' + av.map(a => Math.round(a.getBoundingClientRect().width)).join(','));
+    // Schließen schließt.
+    document.getElementById('sheetZu').click();
+    await new Promise(r => setTimeout(r, 380));
+    if(document.getElementById('sheet').classList.contains('show')) f.push('Schließen lässt das Blatt offen');
+    // Der Hinweis und die Bestätigung.
+    K("toast('Match gespeichert','ok',{sub:'Leon und Martin gewinnen 10:7',aktion:{label:'Rückgängig',fn:()=>{window.__rg=1}}})");
+    const t = document.querySelector('.toast');
+    if(!t.querySelector('.zk.gruen') || !/gewinnen/.test(t.textContent)) f.push('Hinweis ohne Rolle oder zweite Zeile');
+    t.querySelector('.toast-akt').click();
+    if(!window.__rg) f.push('Rückgängig führt nichts aus');
+    const frage = K("bestaetigen({titel:'Partie löschen?',text:'Eine Partie',ja:'Löschen',gefahr:true,ic:'trash'})");
+    await new Promise(r => setTimeout(r, 50));
+    const d = document.querySelector('.dlg');
+    const kn = d ? [...d.querySelectorAll('.btn')] : [];
+    if(kn.length !== 2 || !kn[1].classList.contains('gefahr') || kn[0].textContent !== 'Abbrechen') f.push('Bestätigung: Knöpfe ' + kn.map(b => b.textContent).join('/'));
+    if(kn[0]) kn[0].click();
+    const antwort = await frage;
+    if(antwort !== false) f.push('Abbrechen bestätigt');
+    return f;
+  });
+  ok(kopfFuss.length === 0, 'jedes Blatt trägt denselben Kopf, Schließen und höchstens einen gefüllten Knopf',
+     kopfFuss.slice(0, 5).join(' | ') || 'alle');
+
   // Jedes Award-Blatt, beide Zeiträume: ein Wert trägt seine Einheit
   // ausgeschrieben („6,5 /Sp.", „9,7 Gegen/Sp.", „4× POTD", „0 S · 3 Sp."),
   // eine Serie beginnt beim zweiten Ergebnis („1er Serie", „1er
@@ -2544,7 +2605,8 @@ const ok = (c, msg, det) => {
       K('closeSheet(true)');
       const kachel = (document.querySelector('[data-award="upset"] .aw-t-val b') || {}).textContent;
       K("showAward('upset')");
-      const blatt = (document.getElementById('sheet').innerText.match(/Siegchance nur (\d+)/) || [])[1];
+      // Die Bühne nennt die Siegchance der Sieger [§C27].
+      const blatt = (document.getElementById('sheet').innerText.match(/Siegchance (\d+)\s?%/) || [])[1];
       if(kachel && kachel !== blatt + '%') fehler.push(p + ' Überraschung: Kachel ' + kachel + ', Blatt ' + blatt + '%');
       K('closeSheet(true)');
       const ud = K("(awardRankings(awPeriod, awSeasonId).underdogList||[]).map(x=>x.pct)");
@@ -2569,12 +2631,14 @@ const ok = (c, msg, det) => {
     for(const k of K('Object.keys(AWARD_META)')){
       K('closeSheet(true)'); K('showAward(' + JSON.stringify(k) + ')');
       const sh = document.getElementById('sheet');
+      // Die Namen einer Bühne stehen je Zeile einzeln [§C27].
+      const buehne = t => [...t.querySelector('.buehne-n').childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join(' & ');
       let namen = [...sh.querySelectorAll('.aw-winner-name, .aw-winner-tied-name')].map(e => e.textContent.trim())
-        .concat([...sh.querySelectorAll('.aw-match-team')].map(t => t.querySelector('.aw-match-team-name').textContent.trim()));
+        .concat([...sh.querySelectorAll('.buehne-s')].map(buehne));
       if(k === 'rivalry') [...sh.querySelectorAll('.aw-li')].filter(r => r.querySelector('.aw-li-rank').textContent.trim() === '1.')
         .forEach(r => r.querySelectorAll('.aw-li-name').forEach(n => namen.push(n.textContent.replace(/^vs /i, '').trim())));
       if(k === 'upset' || k === 'biggest' || k === 'favoritenschreck')
-        namen = [...sh.querySelectorAll('.aw-match-team')].filter(t => t.querySelector('.aw-match-winner')).map(t => t.querySelector('.aw-match-team-name').textContent.trim());
+        namen = [...sh.querySelectorAll('.buehne-s.sieg')].map(buehne);
       const blatt = [...new Set(namen.flatMap(n => n.split(' & ')).map(n => n.trim().toLowerCase()))].sort().join(',');
       const profil = [...new Set((prof[k] || []).map(n => n.toLowerCase()))].sort().join(',');
       if(blatt !== profil) fehler.push(k + ': Blatt ' + blatt + ' · Profil ' + profil);
@@ -2680,7 +2744,8 @@ const ok = (c, msg, det) => {
         const h=getHistoryByMatchId().get(m.id); const e=h&&h.expA!=null?h.expA:m.exp_a;
         return {namen:(m.winner==='A'?[m.a1,m.a2]:[m.b1,m.b2]).map(pname),
           pct:Math.max(1,Math.round((m.winner==='A'?e:1-e)*100))}; })()`);
-      const sub = (document.querySelector('#sheet .sheet-sub') || {}).textContent || '';
+      // Sieger und Siegchance stehen unter dem Stand auf der Bühne [§C27].
+      const sub = (document.querySelector('#sheet .buehne-zeile') || {}).textContent || '';
       if(/Team [AB]/.test(sub) || !soll.namen.every(n => sub.includes(n)) || !sub.includes(soll.pct + ' %'))
         fehler.push(sub + ' / ' + soll.pct);
       const zeilen = [...document.querySelectorAll('#sheet .rrow .rname')].map(e => e.textContent.trim());

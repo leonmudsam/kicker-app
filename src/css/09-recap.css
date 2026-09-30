@@ -264,3 +264,30 @@
     animation:bl-schimmer 1.3s linear infinite}
   @keyframes bl-schimmer{from{background-position:100% 0}to{background-position:0 0}}
   @media (prefers-reduced-motion:reduce){.bl-lade{animation:none}}
+
+  /* ── Die Kennzahlen des Duo-Blatts [§C27] ──────────────────────────
+     Vier Kacheln, jede mit ihrer Zeichnung. Grün und Rot sind hier
+     Richtung [§C25]: über oder unter der Hälfte, über oder unter null. */
+  .duo-kz{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0 4px}
+  .duo-kz-k{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 11px 10px;
+    display:flex;flex-direction:column;gap:8px;min-width:0}
+  .duo-kz-w{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px}
+  .duo-kz-w b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;line-height:1;letter-spacing:-.02em;color:var(--ink)}
+  .duo-kz-w b.auf{color:var(--acid)}
+  .duo-kz-w b.ab{color:var(--red)}
+  .duo-kz-w span{font-size:11px;font-weight:600;color:var(--ink2)}
+  .duo-kz-s{font-size:10px;color:var(--muted);line-height:1.35}
+  .duo-kz-zellen{display:grid;grid-template-columns:repeat(25,minmax(0,1fr));gap:1.5px}
+  .duo-kz-zellen i{aspect-ratio:1;border-radius:1.5px;background:rgba(240,86,106,.55)}
+  .duo-kz-zellen i.j{background:var(--acid)}
+  .duo-kz-skala{position:relative;height:8px;border-radius:4px;background:var(--surface3)}
+  .duo-kz-skala::after{content:"";position:absolute;left:50%;top:-3px;width:1px;height:14px;background:var(--muted)}
+  .duo-kz-skala i{position:absolute;top:0;bottom:0;border-radius:4px}
+  .duo-kz-skala i.auf{background:var(--acid)}
+  .duo-kz-skala i.ab{background:var(--red)}
+  .duo-kz-linie{display:block;width:100%;height:26px}
+  .duo-kz-linie polyline{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+  .duo-kz-linie.auf polyline{stroke:var(--acid)}
+  .duo-kz-linie.ab polyline{stroke:var(--red)}
+  .duo-kz-lauf.auf i{background:var(--acid)}
+  .duo-kz-lauf.ab i{background:var(--red)}

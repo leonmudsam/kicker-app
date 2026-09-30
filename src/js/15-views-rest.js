@@ -509,7 +509,13 @@ async function doSaveMatch(){
   if(toastWorthy.length){
     toastWorthy.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
   } else {
-    toast('Match gespeichert', 'ok');
+    // Die Wirkung in der zweiten Zeile, und ein Weg zurück: wer sich beim
+    // Stand vertippt hat, musste bisher die Partie suchen, öffnen und
+    // löschen.
+    const sieger = winner === 'A' ? [M.A1, M.A2] : [M.B1, M.B2];
+    toast('Match gespeichert', 'ok', {
+      sub: sieger.map(pname).join(' & ') + ' gewinnen ' + standFuer(savedRow),
+      aktion: {label:'Rückgängig', fn: () => partieLoeschen(savedRow.id)}});
   }
   M = {A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
   tab = 'ranking'; await loadAll();

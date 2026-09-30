@@ -265,7 +265,7 @@ function showPositionHistory(seasonId){
     openSheet(`
       <div class="posv-empty">
         <div class="posv-empty-title">Noch kein Verlauf</div>
-        <div>Sobald in dieser Saison die ersten Matches gespielt sind,<br>siehst du hier die Entwicklung der Tabellenpositionen.</div>
+        <div>Sobald in dieser Saison die ersten Matches gespielt sind,<br>steht hier die Entwicklung der Tabellenplätze.</div>
       </div>
     `);
     return;
@@ -277,9 +277,9 @@ function showPositionHistory(seasonId){
     : `${sLabel} · Saison abgeschlossen`;
 
   openSheet(`
-    <div style="padding:6px 4px 8px">
-      <h2 style="font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;margin-bottom:4px">Saison-Positionsverlauf</h2>
-      <div style="color:var(--muted);font-size:12px;margin-bottom:14px">Entwicklung der Tabellenplatzierungen während der Saison</div>
+    <div style="padding:0 0 8px">
+      ${blattKopfHtml({ic:'chartUp', titel:'Positionsverlauf', unter:'Tabellenplätze während der Saison'})}
+      <div style="height:12px"></div>
 
       <div class="posv-info-pill">
         <div class="posv-info-ic">

@@ -794,8 +794,7 @@ function _showImportPreview(filename){
   }
 
   openSheet(`
-    <h3>Wiederherstellen</h3>
-    <div class="sheet-sub">${esc(filename)}</div>
+    ${blattKopfHtml({ic:'hochladen', titel:'Wiederherstellen', unter:filename})}
     <div style="margin-top:14px">${body}</div>
     <p style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:14px">
       Es wird nichts gelöscht und nichts überschrieben — nur fehlende Einträge werden ergänzt.

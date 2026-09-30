@@ -1716,8 +1716,8 @@ function showPrestigeRegeln(pid){
     </div>`;
   }).join('');
   openSheet(`<div class="pp-root lb-regelblatt">
-    <h3>Wert der Auszeichnungen</h3>
-    <div class="sheet-sub num">${esc((p && p.name) || '')} · dieselbe Auszeichnung wächst immer weiter</div>
+    ${blattKopfHtml({ic:'info', titel:'Wert der Auszeichnungen',
+      unter:((p && p.name) || '') + ' · dieselbe Auszeichnung wächst immer weiter'})}
     <p class="lb-regel-intro">Jede Auszeichnung beginnt mit ihrem Startwert. Die ersten beiden Erfolge zählen voll, danach sinkt ihr Wert in Zweiergruppen. Je seltener und bedeutender die Leistung, desto langsamer fällt ihre Kurve.</p>
     ${_prestigeRegelKarten()}
     <div class="pp-sec-title"><div class="l"><h4>Besondere Wertung</h4></div></div>

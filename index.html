@@ -433,6 +433,7 @@
 
   .chip{display:inline-flex;align-items:center;font-size:9.5px;padding:2px 7px;border-radius:6px;
     text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .chip .ic{font-size:10px;margin-right:3px}
   .chip.atk{background:rgba(255,120,73,.16);color:var(--orange)}
   .chip.def{background:rgba(86,180,232,.16);color:var(--blue)}
   .perf-up{color:var(--acid);font-size:11px} .perf-dn{color:var(--red);font-size:11px}
@@ -982,18 +983,9 @@
   .aw-lauf{display:flex;gap:3px}
   .aw-lauf i{flex:1;max-width:16px;height:7px;border-radius:3px;background:var(--awc);opacity:.85}
 
-  /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============ */
-  .aw-hero-icon{display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
-  .aw-hero-icon-glow{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;position:relative}
-  .aw-hero-icon-glow svg{width:32px;height:32px;stroke:currentColor;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
-  .aw-hero-icon-glow.gold  {background:rgba(247,207,74,.12); color:var(--gold);  box-shadow:0 0 60px rgba(247,207,74,.18)}
-  .aw-hero-icon-glow.acid  {background:rgba(190,242,100,.12); color:var(--acid);  box-shadow:0 0 60px rgba(190,242,100,.18)}
-  .aw-hero-icon-glow.blue  {background:rgba(86,180,232,.12); color:var(--blue);  box-shadow:0 0 60px rgba(86,180,232,.18)}
-  .aw-hero-icon-glow.red   {background:rgba(240,86,106,.12); color:var(--red);   box-shadow:0 0 60px rgba(240,86,106,.18)}
-  .aw-hero-icon-glow.orange{background:rgba(255,120,73,.12); color:var(--orange);box-shadow:0 0 60px rgba(255,120,73,.18)}
-  .aw-hero-icon-glow.purple{background:rgba(167,139,250,.12);color:var(--purple);box-shadow:0 0 60px rgba(167,139,250,.18)}
-  .aw-hero-title{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;margin:14px 0 0;text-align:center}
-  .aw-hero-sub{color:var(--muted);font-size:11px;margin-top:4px;font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.16em;text-align:center}
+  /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============
+     Kopf, Bühne und Fuß des Award-Blatts sind die gemeinsamen Bauteile des
+     Blatts (05-nav-sheet); hier steht nur, was das Award-Blatt allein hat. */
   .aw-pod.first .aw-pod-av{width:64px;height:64px;font-size:30px;border-color:var(--gold);box-shadow:0 0 20px rgba(247,207,74,.4)}
   .aw-pod.second .aw-pod-av{border-color:var(--silber)}
   .aw-pod.first .aw-pod-pair .aw-pod-av{width:48px;height:48px;font-size:20px;box-shadow:0 0 20px rgba(247,207,74,.4)}
@@ -1012,29 +1004,6 @@
 
   /* Empty-Slot dezenter „—" Hinweis */
   .aw-pod.empty .aw-pod-empty-hint{font-family:'Sometype Mono',monospace;font-size:14px;color:var(--faint);margin-bottom:6px}
-
-  /* Match-Award detail (Upset / Höchster Sieg) */
-  .aw-match{margin-top:18px;background:linear-gradient(135deg,rgba(247,207,74,.06),var(--surface) 55%);
-    border:1px solid rgba(247,207,74,.3);border-radius:18px;padding:18px 16px}
-  .aw-match.upset{background:linear-gradient(135deg,rgba(255,120,73,.06),var(--surface) 55%);border-color:rgba(255,120,73,.3)}
-  .aw-match-score{font-family:'Archivo Black',sans-serif;font-size:36px;letter-spacing:-.02em;text-align:center;line-height:1}
-  .aw-match-meta{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:6px}
-  .aw-match-teams{display:flex;align-items:flex-start;justify-content:space-between;margin-top:18px;gap:10px}
-  .aw-match-team{flex:1;text-align:center;font-size:12px;min-width:0}
-  .aw-match-team .aw-mini-pair{justify-content:center;margin-bottom:6px}
-  .aw-match-team-name{font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:-.01em;line-height:1.2;color:var(--ink);
-    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .aw-match-vs{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);align-self:center;flex-shrink:0;padding-top:18px}
-  .aw-match-winner{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--acid);font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
-
-  /* Why card */
-  .aw-why{margin-top:18px;background:linear-gradient(135deg,rgba(190,242,100,.04),var(--surface) 55%);
-    border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start}
-  .aw-why-ic{color:var(--acid);flex-shrink:0;margin-top:1px}
-  .aw-why-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
-  .aw-why-content{flex:1;min-width:0}
-  .aw-why-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace;margin-bottom:5px}
-  .aw-why-body{font-size:12.5px;color:var(--ink2);line-height:1.55}
 
 
   /* Die Reiter des Awards-Tabs benutzen .ui-switch und .ui-tabs aus
@@ -1227,6 +1196,15 @@
 .sheet.is-dragging{transition:none !important;}
 
   .sheet-grab{width:38px;height:4px;border-radius:2px;background:var(--line2);margin:6px auto 16px}
+  /* Griff und Schließen bleiben beim Scrollen oben; der Verlauf dahinter
+     hält den Knopf lesbar, ohne eine Kante zu ziehen. */
+  .sheet-leiste{position:sticky;top:-10px;z-index:6;margin-top:-10px;padding-top:10px;
+    background:linear-gradient(180deg,var(--bg2) 55%,rgba(15,19,17,0))}
+  .sheet-zu{position:absolute;top:8px;right:0;width:34px;height:34px;border-radius:11px;
+    display:grid;place-items:center;cursor:pointer;color:var(--muted);
+    background:var(--surface);border:1px solid var(--line)}
+  .sheet-zu .ic{font-size:15px}
+  .sheet-zu:active{transform:scale(.94)}
   /* Nudge-Animation: wenn Backdrop-Click während Schutz-Phase blockiert wird,
      bewegt sich das Sheet kurz, um zu signalisieren: "ich existiere noch". */
   @keyframes sheetNudge { 0%,100%{transform:translateY(0)} 25%{transform:translateY(-4px)} 75%{transform:translateY(2px)} }
@@ -1280,13 +1258,37 @@
   .fab:active{transform:scale(.9) rotate(90deg)}
 
   /* ============ [§C14] TOAST ============ */
+  /* Der Hinweis: dunkel wie ein Blatt, die Rolle als Zeichenkachel [§C25],
+     darunter die Wirkung. Die volle grüne und rote Fläche war lauter als
+     alles, worüber sie lag. */
   .toast{position:fixed;left:50%;bottom:calc(100px + var(--safe-bot));z-index:200;
     transform:translateX(-50%) translateY(20px);opacity:0;pointer-events:none;
-    background:var(--ink);color:var(--bg);padding:13px 22px;border-radius:14px;font-weight:700;
-    font-size:13px;box-shadow:var(--shadow);transition:.3s;max-width:88vw;text-align:center}
+    display:flex;align-items:center;gap:10px;width:max-content;max-width:min(92vw,420px);
+    background:rgba(26,34,29,.97);color:var(--ink);padding:9px 14px 9px 9px;border-radius:15px;
+    border:1px solid var(--line2);box-shadow:0 14px 40px -10px rgba(0,0,0,.9);
+    transition:opacity .3s,transform .3s}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .toast.err{background:var(--red);color:#fff}
-  .toast.ok{background:var(--acid);color:var(--acid-deep)}
+  .toast.mit-akt.show{pointer-events:auto}
+  .toast.err{border-color:rgba(240,86,106,.45)}
+  .toast.ok{border-color:rgba(190,242,100,.35)}
+  .toast-tx{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+  .toast-tx b{font-size:13px;font-weight:700}
+  .toast-tx span{font-size:11.5px;color:var(--muted)}
+  .toast-akt{margin-left:6px;flex-shrink:0;font:700 12px 'Space Grotesk',system-ui,sans-serif;color:var(--acid);
+    background:rgba(190,242,100,.1);border:1px solid rgba(190,242,100,.3);border-radius:10px;padding:7px 10px;cursor:pointer}
+
+  /* Die Bestätigung: über allem, auch über einem offenen Blatt. */
+  .dlg-bg{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:20px;
+    background:rgba(0,0,0,.6);opacity:0;transition:opacity .2s}
+  .dlg-bg.show{opacity:1}
+  .dlg{width:100%;max-width:340px;background:var(--surface);border:1px solid var(--line2);border-radius:22px;
+    padding:20px 18px 18px;text-align:center;box-shadow:0 30px 60px -20px #000;
+    transform:scale(.96);transition:transform .2s}
+  .dlg-bg.show .dlg{transform:scale(1)}
+  .dlg h4{font-family:'Archivo Black',sans-serif;font-size:18px;letter-spacing:-.01em;margin-top:12px}
+  .dlg p{font-size:13px;color:var(--ink2);line-height:1.5;margin-top:6px}
+  .dlg .blatt-fuss{margin-top:16px}
+  .btn.gefahr{background:rgba(240,86,106,.14);color:var(--red);border:1px solid rgba(240,86,106,.4)}
 
   /* ─── Achievement-Toast: gestapelt über dem normalen Toast, mit Badge-Icon ─── */
   .ach-toast{position:fixed;left:50%;bottom:calc(160px + var(--safe-bot));z-index:201;
@@ -1311,6 +1313,35 @@
   .ach-toast-sub{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;
     margin-top:3px;letter-spacing:.02em}
 
+
+  /* ── Kopf, Fuß und Bühne eines Blatts [§C27] ─────────────────────── */
+  .blatt-kopf{display:flex;align-items:center;gap:12px;padding:2px 44px 14px 0;
+    border-bottom:1px solid var(--line);margin-bottom:4px}
+  .blatt-kopf h3{font-size:20px;line-height:1.12}
+  .blatt-kopf-t{min-width:0}
+  .blatt-kopf .sheet-sub{text-transform:uppercase;letter-spacing:.08em;font-size:10.5px;margin-top:5px}
+  .blatt-fuss{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-top:18px}
+  .blatt-fuss.eins{grid-template-columns:minmax(0,1fr)}
+  .blatt-fuss .btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:12px 10px;
+    font-size:13px;border-radius:12px}
+  .blatt-fuss .btn .ic{font-size:15px}
+  .buehne{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;
+    padding:14px 10px 12px;border-radius:16px;margin-top:14px;
+    background:radial-gradient(90% 120% at 20% 0%,rgba(190,242,100,.08),transparent 60%),var(--surface);
+    border:1px solid var(--line)}
+  .buehne-s{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0;cursor:pointer}
+  .buehne-s.nied{opacity:.6}
+  .buehne-marke{height:10px;font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--acid)}
+  .buehne-paar{display:flex}
+  .buehne-paar .av{--av:38px;box-shadow:0 0 0 2px var(--surface)}
+  .buehne-paar .av + .av{margin-left:-10px}
+  .buehne-n{font-size:12px;font-weight:600;color:var(--ink);line-height:1.25;overflow-wrap:anywhere}
+  .buehne-stand{font-family:'Archivo Black',sans-serif;font-size:38px;line-height:1;letter-spacing:-.03em;white-space:nowrap}
+  .buehne-stand i{font-style:normal;color:var(--faint);margin:0 1px}
+  .buehne-zeile{grid-column:1 / -1;text-align:center;font-size:10.5px;color:var(--muted);margin-top:4px}
+  /* Fließtext eines Abschnitts, etwa „So wird gewertet". */
+  .blatt-text{font-size:12.5px;color:var(--ink2);line-height:1.55;padding:0 2px}
   /* ============ [§C15] MISC ============ */
   .empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
   .empty .ee{font-size:34px;margin-bottom:12px;opacity:.5}
@@ -3801,12 +3832,35 @@
     animation:bl-schimmer 1.3s linear infinite}
   @keyframes bl-schimmer{from{background-position:100% 0}to{background-position:0 0}}
   @media (prefers-reduced-motion:reduce){.bl-lade{animation:none}}
+
+  /* ── Die Kennzahlen des Duo-Blatts [§C27] ──────────────────────────
+     Vier Kacheln, jede mit ihrer Zeichnung. Grün und Rot sind hier
+     Richtung [§C25]: über oder unter der Hälfte, über oder unter null. */
+  .duo-kz{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0 4px}
+  .duo-kz-k{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 11px 10px;
+    display:flex;flex-direction:column;gap:8px;min-width:0}
+  .duo-kz-w{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px}
+  .duo-kz-w b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;line-height:1;letter-spacing:-.02em;color:var(--ink)}
+  .duo-kz-w b.auf{color:var(--acid)}
+  .duo-kz-w b.ab{color:var(--red)}
+  .duo-kz-w span{font-size:11px;font-weight:600;color:var(--ink2)}
+  .duo-kz-s{font-size:10px;color:var(--muted);line-height:1.35}
+  .duo-kz-zellen{display:grid;grid-template-columns:repeat(25,minmax(0,1fr));gap:1.5px}
+  .duo-kz-zellen i{aspect-ratio:1;border-radius:1.5px;background:rgba(240,86,106,.55)}
+  .duo-kz-zellen i.j{background:var(--acid)}
+  .duo-kz-skala{position:relative;height:8px;border-radius:4px;background:var(--surface3)}
+  .duo-kz-skala::after{content:"";position:absolute;left:50%;top:-3px;width:1px;height:14px;background:var(--muted)}
+  .duo-kz-skala i{position:absolute;top:0;bottom:0;border-radius:4px}
+  .duo-kz-skala i.auf{background:var(--acid)}
+  .duo-kz-skala i.ab{background:var(--red)}
+  .duo-kz-linie{display:block;width:100%;height:26px}
+  .duo-kz-linie polyline{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+  .duo-kz-linie.auf polyline{stroke:var(--acid)}
+  .duo-kz-linie.ab polyline{stroke:var(--red)}
+  .duo-kz-lauf.auf i{background:var(--acid)}
+  .duo-kz-lauf.ab i{background:var(--red)}
   /* ============ [§C21] AWARD SHEET REDESIGN (Winner Hero + Liste) ============ */
   /* Saubere Award-Liste statt Podium */
-  .aw-list-label{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
-    letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:18px 4px 8px;
-    display:flex;align-items:center;gap:8px}
-  .aw-list-label::after{content:"";flex:1;height:1px;background:var(--line)}
   .aw-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
   .aw-li{display:flex;align-items:center;gap:12px;background:var(--surface);
     border:1px solid var(--line);border-radius:14px;padding:10px 14px;position:relative;overflow:hidden;
@@ -3850,11 +3904,6 @@
     font-size:9px;font-weight:700;color:var(--muted);background:var(--surface3);
     padding:2px 7px;border-radius:6px;letter-spacing:.08em;text-transform:uppercase;margin-top:2px;align-self:flex-start}
 
-  /* Loser-Hero-Icon-Variante */
-  .aw-hero-icon-glow.red{
-    background:linear-gradient(155deg,rgba(240,86,106,.15),rgba(240,86,106,.04));
-    border:1px solid rgba(240,86,106,.35);color:var(--red);
-    box-shadow:0 0 24px rgba(240,86,106,.25)}
 
   /* ═══ AWARD-HERO (Platz 1 als großer Hero, ersetzt Podium) ═══
      Farbe wird per inline-style --c="R,G,B" gesetzt (aus meta.cls). */
@@ -4353,14 +4402,11 @@
   .chline .hd{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:10.5px;
     color:var(--tt);max-width:88px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-  /* Kopfzeile im Rekord-Sheet: Bedingung im Klartext */
-  .chron-hero{display:flex;align-items:center;gap:12px;margin-bottom:14px;
+  /* Die Bedingung im Klartext, unter dem Kopf des Blatts. Das Zeichen trägt
+     der Kopf (blattKopfHtml) — hier stand es ein zweites Mal. */
+  .chron-hero{display:flex;align-items:center;gap:12px;margin:14px 0;
     background:linear-gradient(120deg,rgba(var(--ttr),.13),transparent 70%),var(--surface);
     border:1px solid rgba(var(--ttr),.22);border-radius:15px;padding:13px 14px}
-  .chron-hero .ic{width:40px;height:40px;flex:0 0 auto;border-radius:13px;
-    display:grid;place-items:center;color:var(--tt);background:rgba(var(--ttr),.14)}
-  .chron-hero .ic svg{width:21px;height:21px;fill:none;stroke:currentColor;
-    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .chron-hero .c{font-size:11.5px;color:var(--ink2);line-height:1.5}
 
   /* ── Avatar-Status-Ring (§13.7) ───────────────────────────────────── */
@@ -5316,7 +5362,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.8fe9c31b';
+const BUILD_VERSION='2026.09.30.2dde6770';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5696,6 +5742,13 @@ const ICONS = {
   // Wiedereinstieg: eine Tuer und ein Pfeil hinein — die erste Partie nach
   // der Pause.
   doorReturn:    `<path d="M4 3h9v18H4z"/><circle cx="10" cy="12" r="1"/><path d="M21 12h-5"/><polyline points="19 9 16 12 19 15"/>`,
+  // Bedienung: Schließen, Warten, Warnen, Löschen — der Hinweis und die
+  // Bestätigung tragen ihre Rolle als Zeichen [§C27].
+  x:             `<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>`,
+  hourglass:     `<path d="M7 3.5h10M7 20.5h10M8 3.5c0 4.5 4 5.5 4 8.5s-4 4-4 8.5M16 3.5c0 4.5-4 5.5-4 8.5s4 4 4 8.5"/>`,
+  alert:         `<path d="M12 4.2l8.6 15a1 1 0 01-.9 1.5H4.3a1 1 0 01-.9-1.5z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r=".6" fill="currentColor"/>`,
+  trash:         `<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>`,
+  hochladen:     `<path d="M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4"/><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
@@ -7970,7 +8023,7 @@ function showPositionHistory(seasonId){
     openSheet(`
       <div class="posv-empty">
         <div class="posv-empty-title">Noch kein Verlauf</div>
-        <div>Sobald in dieser Saison die ersten Matches gespielt sind,<br>siehst du hier die Entwicklung der Tabellenpositionen.</div>
+        <div>Sobald in dieser Saison die ersten Matches gespielt sind,<br>steht hier die Entwicklung der Tabellenplätze.</div>
       </div>
     `);
     return;
@@ -7982,9 +8035,9 @@ function showPositionHistory(seasonId){
     : `${sLabel} · Saison abgeschlossen`;
 
   openSheet(`
-    <div style="padding:6px 4px 8px">
-      <h2 style="font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;margin-bottom:4px">Saison-Positionsverlauf</h2>
-      <div style="color:var(--muted);font-size:12px;margin-bottom:14px">Entwicklung der Tabellenplatzierungen während der Saison</div>
+    <div style="padding:0 0 8px">
+      ${blattKopfHtml({ic:'chartUp', titel:'Positionsverlauf', unter:'Tabellenplätze während der Saison'})}
+      <div style="height:12px"></div>
 
       <div class="posv-info-pill">
         <div class="posv-info-ic">
@@ -9228,20 +9281,9 @@ function avHtml(player, extraStyle, opts){
 function initials(n){return n.trim().slice(0,2).toUpperCase();}
 
 // ╔═══ §4.2 ─── AWARD AVATAR HELPER (Hero/Mini/Li) ─────────────────────╗
-//     awHeroAv, awMiniAv etc. — einheitliche Avatar-Rendering-Funktionen für
+//     awHeroAv, awLiAv etc. — einheitliche Avatar-Rendering-Funktionen für
 //     Award-Details, Pair-Avatare für Team-Awards.
 // ╚═════════════════════════════════════════════════════════════════════════╝
-// Kleines Avatar (22px) für Award-Cards.
-function awMiniAv(pid){
-  const p=pmap()[pid];
-  if(!p) return '<div class="aw-mini-av" style="background:var(--surface3);color:var(--muted)">?</div>';
-  const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
-  if(em) return `<div class="aw-mini-av" style="background:var(--surface3);color:var(--ink);font-size:13px">${em}</div>`;
-  return `<div class="aw-mini-av" style="background:${avColor(p.id)}">${esc(initials(p.name))}</div>`;
-}
-function awMiniPair(p1,p2){
-  return `<div class="aw-mini-pair">${awMiniAv(p1)}${awMiniAv(p2)}</div>`;
-}
 // Neue Avatar-Hilfsfunktionen für Award-Listen
 // aw-li-av ist 34px, in tied-rows ist sie 30px.
 // Für ein Wappen ist das zu klein — bei 34px bliebe vom Gesicht ein Punkt
@@ -12505,23 +12547,12 @@ function showTopList(c){
     </div>`;
   }).join('');
   openSheet(`
-    <div class="aw-hero-icon">
-      <div class="aw-hero-icon-glow ${c.cls||'gold'}">
-        <svg viewBox="0 0 24 24">${ICONS[c.ic||'trophy']||''}</svg>
-      </div>
-      <div class="aw-hero-title">${esc(c.title||'')}</div>
-      <div class="aw-hero-sub">${esc(c.sub||'')}</div>
-    </div>
-    ${items?`<div class="aw-list-label">${esc(c.listLabel||('Top '+rows.length))}</div>
+    ${blattKopfHtml({ic:c.ic || 'trophy', ton:c.cls === 'blue' ? 'blau' : c.cls === 'red' ? 'rot' : 'gold',
+      titel:c.title || '', unter:c.sub || ''})}
+    ${items?`${blattAbschnittHtml('medal', c.listLabel || ('Top ' + rows.length))}
       <div class="aw-list">${items}</div>`
      :`<div class="empty" style="margin-top:24px">Noch keine Daten</div>`}
-    ${c.why?`<div class="aw-why">
-      <div class="aw-why-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg></div>
-      <div class="aw-why-content">
-        <div class="aw-why-label">So wird gewertet</div>
-        <div class="aw-why-body">${esc(c.why)}</div>
-      </div>
-    </div>`:''}`);
+    ${c.why?`${blattAbschnittHtml('info', 'So wird gewertet')}<div class="blatt-text">${esc(c.why)}</div>`:''}`);
   // Zeilen weiterverlinken — gleiche Ziele wie vorher die Karte selbst.
   document.querySelectorAll('.aw-li[data-li-player]').forEach(el=>{
     el.onclick=()=>{ sheetNav(()=>showPlayer(el.dataset.liPlayer)); };
@@ -12590,7 +12621,7 @@ function showAward(key){
   const RIVALRY_AWARDS = new Set(['rivalry']);
   const FAVS_AWARDS = new Set(['favoritenschreck']);
 
-  let bodyHtml='';
+  let bodyHtml='', fuss='', arrTop=null, topGleich=0;
 
   if(MATCH_AWARDS.has(key)){
     const arr = key==='upset' ? R.upsets : R.biggest;
@@ -12598,27 +12629,14 @@ function showAward(key){
       const top = arr[0];
       const m = top.m;
       const winnerSide = m.winner;
-      const isUpsetVariant = key==='upset';
-      const upsetWinPct = isUpsetVariant ? Math.round((1-top.sp)*100) : null;
-      const diffStr = key==='biggest' ? '+'+top.diff+' Tore' : 'Siegchance nur '+upsetWinPct+'%';
-      bodyHtml = `
-        <div class="aw-match${isUpsetVariant?' upset':''}">
-          <div class="aw-match-score">${m.score_a} : ${m.score_b}</div>
-          <div class="aw-match-meta">${dateStr(m.created_at)} · ${diffStr}</div>
-          <div class="aw-match-teams">
-            <div class="aw-match-team">
-              ${winnerSide==='A'?'<div class="aw-match-winner">Gewinner</div>':''}
-              ${awMiniPair(m.a1,m.a2)}
-              <div class="aw-match-team-name">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
-            </div>
-            <div class="aw-match-vs">vs</div>
-            <div class="aw-match-team">
-              ${winnerSide==='B'?'<div class="aw-match-winner">Gewinner</div>':''}
-              ${awMiniPair(m.b1,m.b2)}
-              <div class="aw-match-team-name">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
-            </div>
-          </div>
-        </div>`;
+      // Die Partie als Bühne [§C27] — dieselbe wie im Blatt der Partie.
+      const zeile = key === 'biggest'
+        ? dateStr(m.created_at) + ' · ' + top.diff + ' Tore Unterschied'
+        : dateStr(m.created_at) + ' · Siegchance ' + Math.round((1 - top.sp) * 100) + ' %';
+      bodyHtml = buehneHtml(m, {zeile});
+      fuss = blattFussHtml([
+        {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
+        {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(_awSieger(top).slice().sort().join('|'))}"`}]);
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     }
@@ -12630,25 +12648,10 @@ function showAward(key){
     if(arr && arr.length){
       const top = arr[0];
       const m = top.m;
-      const winnerSide = m.winner;
-      bodyHtml = `
-        <div class="aw-match upset">
-          <div class="aw-match-score">${m.score_a} : ${m.score_b}</div>
-          <div class="aw-match-meta">${dateStr(m.created_at)} · ${top.v} Elo überwunden</div>
-          <div class="aw-match-teams">
-            <div class="aw-match-team">
-              ${winnerSide==='A'?'<div class="aw-match-winner">Sieger</div>':''}
-              ${awMiniPair(m.a1,m.a2)}
-              <div class="aw-match-team-name">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
-            </div>
-            <div class="aw-match-vs">vs</div>
-            <div class="aw-match-team">
-              ${winnerSide==='B'?'<div class="aw-match-winner">Sieger</div>':''}
-              ${awMiniPair(m.b1,m.b2)}
-              <div class="aw-match-team-name">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
-            </div>
-          </div>
-        </div>`;
+      bodyHtml = buehneHtml(m, {zeile: dateStr(m.created_at) + ' · ' + top.v + ' Elo überwunden'});
+      fuss = blattFussHtml([
+        {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
+        {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(top.ids.slice().sort().join('|'))}"`}]);
       // Weitere Plätze als kompakte Liste — andere Teams mit ihren best-Coups
       if(arr.length > 1){
         const rest = arr.slice(1, 7);
@@ -12661,7 +12664,7 @@ function showAward(key){
             <div class="aw-li-val">${e.v} Elo</div>
           </div>`;
         }).join('');
-        bodyHtml += `<div class="aw-list-label">Weitere Coups</div><div class="aw-list">${items}</div>`;
+        bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Coups')}<div class="aw-list">${items}</div>`;
       }
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
@@ -12673,28 +12676,12 @@ function showAward(key){
       const top = arr[0];
       const teamAName = pname(top.idsA[0]) + ' & ' + pname(top.idsA[1]);
       const teamBName = pname(top.idsB[0]) + ' & ' + pname(top.idsB[1]);
-      const aLeading = top.wA > top.wB;
-      const bLeading = top.wB > top.wA;
-      bodyHtml = `
-        <div class="aw-match">
-          <div class="aw-match-score">${Math.round(top.pct*100)}%</div>
-          <div class="aw-match-meta">${top.g} direkte Duelle · ${top.gfA}:${top.gfB} Tore gesamt</div>
-          <div class="aw-match-teams">
-            <div class="aw-match-team" data-li-team="${esc(top.idsA.slice().sort().join('|'))}" style="cursor:pointer">
-              ${aLeading?'<div class="aw-match-winner">Führt</div>':''}
-              ${awMiniPair(top.idsA[0],top.idsA[1])}
-              <div class="aw-match-team-name">${esc(teamAName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} ${top.wA===1?'Sieg':'Siege'} · ${top.gA} Partien als Duo</div>
-            </div>
-            <div class="aw-match-vs">vs</div>
-            <div class="aw-match-team" data-li-team="${esc(top.idsB.slice().sort().join('|'))}" style="cursor:pointer">
-              ${bLeading?'<div class="aw-match-winner">Führt</div>':''}
-              ${awMiniPair(top.idsB[0],top.idsB[1])}
-              <div class="aw-match-team-name">${esc(teamBName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} ${top.wB===1?'Sieg':'Siege'} · ${top.gB} Partien als Duo</div>
-            </div>
-          </div>
-        </div>`;
+      // Zwei Duos auf der Bühne [§C27]; in der Mitte stehen die Siege
+      // gegeneinander, und „führt" steht über dem, der vorn liegt.
+      bodyHtml = buehneHtml({a1:top.idsA[0], a2:top.idsA[1], b1:top.idsB[0], b2:top.idsB[1],
+          score_a:top.wA, score_b:top.wB, winner: top.wA > top.wB ? 'A' : top.wB > top.wA ? 'B' : ''},
+        {marke:'Führt', gleich: top.wA === top.wB,
+         zeile: Math.round(top.pct*100) + ' % als Gegner · ' + top.g + ' Duelle · ' + top.gfA + ':' + top.gfB + ' Tore'});
       // Weitere Rivalitäten
       if(arr.length > 1){
         const rest = arr.slice(1, 7);
@@ -12715,7 +12702,7 @@ function showAward(key){
             <div class="aw-li-val">${Math.round(e.pct*100)}% · ${e.g}×</div>
           </div>`;
         }).join('');
-        bodyHtml += `<div class="aw-list-label">Weitere Rivalitäten</div><div class="aw-list">${items}</div>`;
+        bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Rivalitäten')}<div class="aw-list">${items}</div>`;
       }
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
@@ -12737,14 +12724,15 @@ function showAward(key){
     } else {
       const isTeamAward = arr[0].ids.length === 2;
       const isNeg = awNeg(key);
-      // meta.cls → RGB für Hero-Akzentfarbe
-      const CLS_RGB = {gold:'247,207,74',acid:'190,242,100',blue:'86,180,232',orange:'255,120,73',purple:'167,139,250',red:'240,86,106'};
-      const heroRgb = CLS_RGB[meta.cls] || CLS_RGB.gold;
+      // Der Held trägt die Farbe seiner Rolle [§C25] — Gold, Blau für ein
+      // Duo, Rot für die Kehrseite —, nicht einen der sechs Katalogtöne.
+      const heroRgb = isNeg ? '240,86,106' : isTeamAward ? '86,180,232' : '247,207,74';
 
       // ─── Hero (#1) – alle bei sort=arr[0].sort sind geteilte #1 ───
       const topGroup = arr.filter(x => x.sort === arr[0].sort);
       const isShared = topGroup.length > 1;
       const top = arr[0];
+      arrTop = top; topGleich = topGroup.length;
       // Wert (für Hero – alle teilen denselben Wert)
       const heroVal = `<b>${esc(top.z)}</b>${top.e ? ' '+esc(top.e) : ''}`;
 
@@ -12880,55 +12868,44 @@ function showAward(key){
       });
       const listLabel = isNeg ? 'Weitere Sünder' : 'Weitere Plätze';
       bodyHtml = heroHtml + belegAw + (listItems.length
-        ? `<div class="aw-list-label">${listLabel}</div><div class="aw-list">${listItems.join('')}</div>`
+        ? `${blattAbschnittHtml('medal', listLabel)}<div class="aw-list">${listItems.join('')}</div>`
         : '');
     }
   }
 
-  const heroCls = meta.cls || 'gold';
-
+  // Kopf, Beleg, Liste, Regel, Weg weiter — in jedem Blatt dieselbe
+  // Reihenfolge [§C27]. Der Ton ist die Rolle [§C25], nicht einer von sechs
+  // Katalogtönen: der leuchtende Kreis trug Orange, Violett und Acid.
+  const kopfIds = (awTop(key, R)[0] ? awIds(key, awTop(key, R)[0]) : []);
+  const kopfTon = awNeg(key) ? 'rot' : kopfIds.length >= 2 ? 'blau' : 'gold';
+  if(!fuss && arrTop && arrTop.ids.length && topGleich === 1)
+    fuss = blattFussHtml([arrTop.ids.length === 2
+      ? {label:'Zum Duo', ic:'users', prim:true, attr:`data-li-team="${esc(arrTop.ids.slice().sort().join('|'))}"`}
+      : {label:'Zum Profil', ic:'user', prim:true, attr:`data-li-player="${esc(arrTop.ids[0])}"`}]);
   openSheet(`
-    <div class="aw-hero-icon">
-      <div class="aw-hero-icon-glow ${heroCls}">
-        <svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>
-      </div>
-      <div class="aw-hero-title">${meta.title}</div>
-      <div class="aw-hero-sub">${pl}</div>
-    </div>
+    ${blattKopfHtml({ic:AW_IC[key] || 'trophy', ton:kopfTon, titel:meta.title, unter:pl + ' · Award'})}
     ${bodyHtml}
-    <div class="aw-why">
-      <div class="aw-why-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg></div>
-      <div class="aw-why-content">
-        <div class="aw-why-label">So wird gewertet</div>
-        <div class="aw-why-body">${meta.why}</div>
-      </div>
-    </div>`);
+    ${blattAbschnittHtml('info', 'So wird gewertet')}
+    <div class="blatt-text">${meta.why}</div>
+    ${fuss}`);
 
-  // Match-Card klickbar
-  if(MATCH_AWARDS.has(key)){
-    const arr = key==='upset' ? R.upsets : R.biggest;
-    if(arr&&arr.length){
-      const el = document.querySelector('.aw-match');
-      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ sheetNav(()=>showMatchDetail(arr[0].m.id)); }; }
-    }
-  }
-  // Favoritenschreck: Hauptkarte führt zum Match-Detail
-  if(FAVS_AWARDS.has(key)){
-    const arr = R.favoritenschreckList;
-    if(arr && arr.length){
-      const el = document.querySelector('.aw-match');
-      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ sheetNav(()=>showMatchDetail(arr[0].m.id)); }; }
-    }
-  }
-  // Erzfeinde: die zwei Team-Boxen tragen data-li-team und werden durch den
-  // generischen Team-Handler unten (querySelectorAll[data-li-team]) klickbar.
-
+  // Die Bühne und der Fuß führen, wohin sie zeigen: eine Seite ins Duo, der
+  // Knopf in die Partie, das Profil oder das Duo.
+  document.querySelectorAll('#sheet .buehne-s[data-team], #sheet .blatt-fuss [data-li-team]').forEach(el=>{
+    el.onclick=()=>{ const [a,b]=(el.dataset.team||el.dataset.liTeam).split('|'); if(a&&b) sheetNav(()=>showTeam(a,b)); };
+  });
+  document.querySelectorAll('#sheet .blatt-fuss [data-li-player]').forEach(el=>{
+    el.onclick=()=>{ sheetNav(()=>showPlayer(el.dataset.liPlayer)); };
+  });
+  document.querySelectorAll('#sheet .blatt-fuss [data-li-match]').forEach(el=>{
+    el.onclick=()=>{ sheetNav(()=>showMatchDetail(el.dataset.liMatch)); };
+  });
   // Listen-Einträge klickbar
   document.querySelectorAll('.aw-li[data-li-player], .aw-li-tied-row[data-li-player], .aw-winner[data-li-player], .aw-winner-tied-entry[data-li-player]').forEach(el=>{
     el.style.cursor='pointer';
     el.onclick=()=>{ const pid=el.dataset.liPlayer; sheetNav(()=>showPlayer(pid)); };
   });
-  document.querySelectorAll('.aw-li[data-li-team], .aw-li-tied-row[data-li-team], .aw-winner[data-li-team], .aw-winner-tied-entry[data-li-team], .aw-match-team[data-li-team]').forEach(el=>{
+  document.querySelectorAll('.aw-li[data-li-team], .aw-li-tied-row[data-li-team], .aw-winner[data-li-team], .aw-winner-tied-entry[data-li-team]').forEach(el=>{
     el.style.cursor='pointer';
     el.onclick=(ev)=>{ ev.stopPropagation(); const [a,b]=el.dataset.liTeam.split('|'); sheetNav(()=>showTeam(a,b)); };
   });
@@ -13447,7 +13424,13 @@ async function doSaveMatch(){
   if(toastWorthy.length){
     toastWorthy.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
   } else {
-    toast('Match gespeichert', 'ok');
+    // Die Wirkung in der zweiten Zeile, und ein Weg zurück: wer sich beim
+    // Stand vertippt hat, musste bisher die Partie suchen, öffnen und
+    // löschen.
+    const sieger = winner === 'A' ? [M.A1, M.A2] : [M.B1, M.B2];
+    toast('Match gespeichert', 'ok', {
+      sub: sieger.map(pname).join(' & ') + ' gewinnen ' + standFuer(savedRow),
+      aktion: {label:'Rückgängig', fn: () => partieLoeschen(savedRow.id)}});
   }
   M = {A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
   tab = 'ranking'; await loadAll();
@@ -13555,6 +13538,54 @@ function blattAbschnittHtml(ic, titel, rechts){
     rechts ? `<em class="num">${esc(String(rechts))}</em>` : ''}</div>`;
 }
 
+// Der Kopf eines Blatts [§C27]: die Zeichenkachel in der Farbe der Rolle,
+// der Titel, darunter Zeitraum und Art. Blätter hatten fünf Köpfe — ein
+// leuchtender Kreis über der Mitte im Award-Blatt, ein nackter Titel im
+// Rekord-Blatt, ein Kasten mit Zeichen darunter im Chronik-Blatt, ein
+// 48-px-Gesicht neben „Awards" im Profil, und im Partie-Blatt der Stand als
+// Überschrift. Wer zwei nacheinander öffnete, fand nichts an derselben
+// Stelle. Ein Blatt über einen Menschen (Profil, Duo, Rückblick, Story)
+// behält seinen Heldenkopf: dort ist das Gesicht die Überschrift.
+function blattKopfHtml(o){
+  return `<div class="blatt-kopf">${o.ic ? zkHtml(o.ic, 'g', o.ton || '') : ''}
+    <div class="blatt-kopf-t"><h3>${esc(o.titel)}</h3>${
+      o.unter ? `<div class="sheet-sub">${esc(o.unter)}</div>` : ''}</div></div>`;
+}
+// Der Fuß: der Weg weiter, höchstens zwei Knöpfe, der wichtigere gefüllt.
+// Vorher führten Namen irgendwo im Blatt weiter, und nicht jedes Blatt
+// hatte einen Weg in die Partie oder das Profil, von dem es handelt.
+//   knoepfe  [{label, ic, attr, prim}]
+function blattFussHtml(knoepfe){
+  const k = (knoepfe || []).filter(Boolean).slice(0, 2);
+  if(!k.length) return '';
+  return `<div class="blatt-fuss${k.length === 1 ? ' eins' : ''}">${k.map(b =>
+    `<button type="button" class="btn${b.prim ? '' : ' ghost'}" ${b.attr || ''}>${
+      b.ic ? svgI(b.ic) : ''}${esc(b.label)}</button>`).join('')}</div>`;
+}
+// Die Partie als Bühne [§C27]: die Sieger links und hell, die Verlierer
+// rechts und leiser, der Stand groß in der Mitte, darunter Zeit, Abstand
+// und Siegchance. Ein Bauteil für das Award-Blatt einer Partie und das
+// Blatt der Partie selbst. Im Award-Blatt standen die Teams als volle
+// Farbbalken mit Initialen — `.aw-mini-av` hatte keine einzige Regel —,
+// im Partie-Blatt als zwei graue Kästen neben einem Stand als Überschrift.
+//   m        die Partie, o.zeile der Satz darunter, o.marke das Wort über den
+//            Siegern (Standard „Sieger"), o.gleich keiner liegt vorn
+function buehneHtml(m, o){
+  o = o || {};
+  // `gleich`: keiner liegt vorn (Erzfeinde mit gleich vielen Siegen) — dann
+  // steht keine Seite zurück und keine trägt eine Marke.
+  const siegA = m.winner === 'A';
+  const marke = o.gleich ? '' : (o.marke != null ? o.marke : 'Sieger');
+  const seite = (ids, sieg) => `<div class="buehne-s${sieg || o.gleich ? ' sieg' : ' nied'}" data-team="${esc(ids.slice().sort().join('|'))}">
+      <span class="buehne-marke">${sieg ? esc(marke) : ''}</span>
+      <span class="buehne-paar">${ids.map(id => { const p = pmap()[id]; return p ? avHtml(p, '', {}) : ''; }).join('')}</span>
+      <span class="buehne-n">${ids.map(id => esc(pname(id))).join('<br>')}</span></div>`;
+  const a = seite([m.a1, m.a2], siegA), b = seite([m.b1, m.b2], !siegA);
+  // Der Stand steht in der Reihenfolge der Seiten: links A, rechts B.
+  return `<div class="buehne">${a}<div class="buehne-stand num">${m.score_a}<i>:</i>${m.score_b}</div>${b}${
+    o.zeile ? `<div class="buehne-zeile num">${esc(o.zeile)}</div>` : ''}</div>`;
+}
+
 function openSheet(html, opts){
   opts = opts || {};
   const sheet=document.getElementById('sheet');
@@ -13566,7 +13597,13 @@ function openSheet(html, opts){
   // closeSheet dazwischen), zuerst dessen Swipe-Listener aufräumen — sonst
   // stapeln sich window-mousemove/mouseup-Listener und lecken.
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
-  sheet.innerHTML=`<div class="sheet-grab" id="sheetGrab"></div>${html}`;
+  // Griff und Schließen stehen in einer Leiste, die beim Scrollen oben
+  // bleibt. Geschlossen wurde bisher nur durch Wischen, einen Tipp neben
+  // das Blatt oder einen Knopf, den jedes Blatt selbst baute oder nicht —
+  // am Ende eines langen Blatts war kein Weg hinaus zu sehen [§C27].
+  sheet.innerHTML=`<div class="sheet-leiste"><div class="sheet-grab" id="sheetGrab"></div>`
+    + `<button type="button" class="sheet-zu" id="sheetZu" aria-label="Schließen">${svgI('x')}</button></div>${html}`;
+  document.getElementById('sheetZu').onclick = () => closeSheet(true);
   // Scroll-Position zurücksetzen — sonst landet man im neuen Sheet dort, wo
   // im vorigen Sheet (oder bei vorigem Öffnen desselben Sheets) gescrollt war.
   // Muss nach innerHTML kommen, damit das Layout schon steht.
@@ -16492,8 +16529,7 @@ const rankProgHtml = rInfo ? `
     if(inMatches){
       _pushCurrentSheet(); // Spielerprofil stapeln → „Zurück" möglich
       openSheet(`
-        <h3>Spieler entfernen</h3>
-        <div class="sheet-sub">${esc(p.name)} · ${gamesPlayed(id)} Matches</div>
+        ${blattKopfHtml({ic:'trash', ton:'rot', titel:'Spieler entfernen', unter:p.name + ' · ' + gamesPlayed(id) + ' Matches'})}
         <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
           <button class="btn ghost" id="hidePlayerBtn" style="text-align:left;padding:16px">
             <div style="font-weight:700">Aus Rangliste ausblenden</div>
@@ -16514,10 +16550,13 @@ const rankProgHtml = rInfo ? `
       `);
       document.getElementById('hidePlayerBtn').onclick=async()=>{
         await sb.from('players').update({hidden:true}).eq('id',id);
-        closeSheet(true); toast(esc(p.name)+' ausgeblendet'); await loadAll();
+        // textContent, nicht HTML: esc() stand hier und zeigte „&amp;".
+        closeSheet(true); toast(p.name+' ausgeblendet','ok'); await loadAll();
       };
       document.getElementById('deletePlayerBtn').onclick=async()=>{
-        if(!confirm('Wirklich komplett löschen? Namen erscheinen dann als "?" in allen Matches.')) return;
+        if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
+          titel:p.name+' löschen?',
+          text:'In allen Partien erscheint danach ein Fragezeichen statt des Namens. Das lässt sich nicht rückgängig machen.'}))) return;
         await sb.from('players').delete().eq('id',id);
         closeSheet(true); toast('Gelöscht'); await loadAll();
       };
@@ -16525,7 +16564,8 @@ const rankProgHtml = rInfo ? `
         closeSheet(); // zurück zum Spielerprofil (Stack-Pop)
       };
     } else {
-      if(!confirm(`Spieler "${p.name}" löschen?`)) return;
+      if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
+        titel:p.name+' löschen?', text:'Der Spieler hat noch keine Partie.'}))) return;
       await sb.from('players').delete().eq('id',id);
       closeSheet(true); toast('Gelöscht'); await loadAll();
     }
@@ -16550,8 +16590,7 @@ function showEditPlayer(id){
     </div>`;
 
   openSheet(`
-    <h3>Profil bearbeiten</h3>
-    <div class="sheet-sub">${esc(p.name)}</div>
+    ${blattKopfHtml({ic:'edit', titel:'Profil bearbeiten', unter:p.name})}
 
     <div class="field-label">Profilbild</div>
     ${avPickerHtml}
@@ -16676,10 +16715,8 @@ function showRangSystem(){
       </div>`:''}    </div>`;
   }).join('');
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      <span class="emoji svg-ic" style="width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--surface2);color:var(--ink2)"><svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">${ICONS['crown']||''}</svg></span>
-      <div><h3>Rang-System</h3><div class="sheet-sub">Basiert auf Ø Saison-Elo</div></div>
-    </div>
+    ${blattKopfHtml({ic:'crown', titel:'Rang-System', unter:'Nach Ø Saison-Elo'})}
+    <div style="height:12px"></div>
     ${rows}
   `);
 }
@@ -16698,19 +16735,14 @@ function showPlayerAwards(playerId, awards){
     ? `<div style="margin-top:16px">${awVitrineHtml(awards.map(trophy))}</div>`
     : `<div class="empty" style="margin-top:24px;text-align:center;color:var(--muted)">
         <div class="ee svg-ic" style="color:var(--faint);margin-bottom:6px">${svgI('trophy')}</div>
-        Noch keine Top-1-Auszeichnungen
+        Noch kein Award auf Platz 1
        </div>`;
 
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div>
-        <h3>Awards</h3>
-        <div class="sheet-sub">${esc(p.name)} · ${awards.length} Top-1-Auszeichnung${awards.length===1?'':'en'}</div>
-      </div>
-    </div>
+    ${blattKopfHtml({ic:'trophy', ton:'gold', titel:'Awards',
+      unter:p.name + ' · ' + awards.length + (awards.length === 1 ? ' Award' : ' Awards') + ' auf Platz 1'})}
     ${body}
-    <button class="btn ghost sm" id="backToPlayer" style="margin-top:14px;width:100%">← Zurück zum Profil</button>
+    ${blattFussHtml([{label:'Zurück zum Profil', ic:'user', attr:'id="backToPlayer"'}])}
   `);
   // Das Blatt zeigt den Zeitraum, aus dem der Platz kommt: den laufenden
   // Monat. Ohne das öffnete es, was der Awards-Reiter zuletzt eingestellt
@@ -16809,17 +16841,13 @@ function showPlayerBadges(playerId){
     <div class="bsh-grid">${negativeCards}</div>` : '';
 
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div>
-        <h3>Auszeichnungen</h3>
-        <div class="sheet-sub">${esc(p.name)} · <b style="color:var(--acid)">${haveTotal}</b> von ${BADGES.length} · ${trigCount}× ausgelöst</div>
-      </div>
-    </div>
+    ${blattKopfHtml({ic:'medal', ton:'viol', titel:'Auszeichnungen',
+      unter:p.name + ' · ' + haveTotal + ' von ' + BADGES.length + ' · ' + trigCount + '× geholt'})}
+    <div style="height:12px"></div>
     ${counterHtml}
     <div class="bsh-grid">${positiveCards}</div>
     ${negativeBlock}
-    <button class="btn ghost sm" id="backToPlayer2" style="margin-top:18px">← Zurück zum Profil</button>
+    ${blattFussHtml([{label:'Zurück zum Profil', ic:'user', attr:'id="backToPlayer2"'}])}
   `);
   const back = document.getElementById('backToPlayer2');
   if(back) back.onclick = () => closeSheet();
@@ -17282,10 +17310,7 @@ function showPlayerH2HList(playerId){
   }).join('');
 
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div><h3>Bilanzen</h3><div class="sheet-sub">${esc(p.name)} · ${h2hList.length} Mitspieler</div></div>
-    </div>
+    ${blattKopfHtml({ic:'users', titel:'Bilanzen', unter:p.name + ' · ' + h2hList.length + ' Mitspieler'})}
     <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em;margin-top:14px;margin-bottom:10px">
       Siege und Niederlagen <span style="color:var(--blue);font-weight:700">mit</span> und <span style="color:var(--purple);font-weight:700">gegen</span> jeden · Antippen für Einzelheiten
     </div>
@@ -17345,19 +17370,17 @@ function showPlayerSeasons(playerId){
     return out;
   }).join('');
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div><h3>Saison-Titel</h3><div class="sheet-sub">${esc(p.name)} · ${(()=>{let n=0;sa.forEach(s=>{if(s.player_id===playerId)n++;if(s.team_p1===playerId||s.team_p2===playerId)n++;});return n;})()} Titel</div></div>
-    </div>
+    ${blattKopfHtml({ic:'crown', ton:'gold', titel:'Saison-Titel',
+      unter:p.name + ' · ' + (()=>{let n=0;sa.forEach(s=>{if(s.player_id===playerId)n++;if(s.team_p1===playerId||s.team_p2===playerId)n++;});return n;})() + ' Titel'})}
     <div class="rlist" style="margin-top:16px">${rows}</div>
-    <button class="btn ghost sm" id="backToPlayer3" style="margin-top:14px">← Zurück zum Profil</button>
+    ${blattFussHtml([{label:'Zurück zum Profil', ic:'user', attr:'id="backToPlayer3"'}])}
   `);
   const back=document.getElementById('backToPlayer3');
   if(back) back.onclick=()=>closeSheet();
 }
 
 function showAddPlayer(){
-  openSheet(`<h3>Neuer Spieler</h3><div class="sheet-sub">Startet bei ${cfg.start_elo} Elo</div>
+  openSheet(`${blattKopfHtml({ic:'user', titel:'Neuer Spieler', unter:'Startet bei ' + cfg.start_elo + ' Elo'})}
     <input type="text" class="text-in" id="newName" placeholder="Name…" style="margin-top:18px" autofocus>
     <button class="btn" id="confirmAdd" style="margin-top:12px">Hinzufügen</button>`);
   const ni=document.getElementById('newName');ni.focus();
@@ -17574,7 +17597,9 @@ function bind(){
   bindSlider('cfgVetDamp','veteran_damp',v=>v/100,v=>Math.round(v));
   const recalcBtn=document.getElementById('recalcBtn');
   if(recalcBtn) recalcBtn.onclick=async()=>{
-    if(!confirm('Wirklich alle Matches mit aktuellen Slidern rückwirkend neu berechnen?\n\nAlle gespeicherten Match-Deltas werden überschrieben. Vergangene Saison-Ergebnisse und Awards können sich dadurch ändern.\n\nDieser Vorgang kann nicht rückgängig gemacht werden.')) return;
+    if(!(await bestaetigen({ic:'alert', gefahr:true, ja:'Neu berechnen',
+      titel:'Alle Partien neu berechnen?',
+      text:'Die gespeicherte Elo jeder Partie wird mit den aktuellen Reglern überschrieben. Vergangene Saisons und Auszeichnungen können sich dadurch ändern. Das lässt sich nicht rückgängig machen.'}))) return;
     toast('Berechne alle Matches neu…');
     await persistRecalc(matches);
     toast('Neuberechnung abgeschlossen','ok');
@@ -17906,7 +17931,6 @@ function showTeam(p1Id,p2Id){
   const wr=Math.round(d.wr*100);
   const gdStr=(d.gd>=0?'+':'')+d.gd;
   const eloStr=(d.eloDelta>=0?'+':'')+d.eloDelta;
-  const eloColor=d.eloDelta>=0?'var(--acid)':'var(--red)';
 
   // Die beiden Hälften des Duos, jede im eigenen Wappen [§C27]. Hier stand
   // ein von Hand gebauter Kreis mit eigenem Rand und eigener Schriftgröße —
@@ -17929,7 +17953,7 @@ function showTeam(p1Id,p2Id){
   const oppRow=(opp,label,labelColor)=>{
     const op=pm[opp.oid]; if(!op) return '';
     return `<div style="margin-bottom:14px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">${label}</div>
+      ${blattAbschnittHtml('crossedSwords', label)}
       <div class="rrow" data-detail="${esc(op.id)}" style="padding:12px 14px">
         ${avSm(op,false)}
         <div class="rmid" style="margin-left:11px">
@@ -17972,68 +17996,62 @@ function showTeam(p1Id,p2Id){
     </div>`;
   };
 
-  // ─── FORM-VERLAUF: Spark der kumulativen Team-Elo über alle Spiele ───
-  // Nutzt sim.history.deltas (live Sim, gecached) statt m.deltas (kann stale sein),
-  // damit der Endwert exakt zur angezeigten "Elo"-Statistik passt.
-  let teamFormHtml = '';
-  if(d.games >= 2){
+  // ─── KENNZAHLEN, gezeichnet [§C27] ───
+  // Vier Zahlen standen in vier Kästen in vier Farben, darunter ein Balken
+  // mit derselben Quote noch einmal, drei Kästen „Serien" und weiter unten
+  // ein Form-Verlauf, dessen Endwert die Elo aus dem Kasten oben war. Jetzt
+  // trägt jede Kennzahl ihre Zeichnung: die Siegquote jede Partie als Zelle
+  // in Spielreihenfolge, die Torbilanz je Partie auf ihrer Skala, die Elo
+  // ihren Verlauf, die laufende Serie ihren Lauf. Nichts steht zweimal.
+  let kennzahlenHtml = '';
+  if(d.games >= 1){
+    // Die Elo-Bahn des Duos aus der Sim-History (live, gecached) statt aus
+    // m.deltas, damit der Endwert zur Elo passt, die überall sonst steht.
     const histById = getHistoryByMatchId();
+    const mById = new Map(matches.map(x => [x.id, x]));
     let trace = 0;
-    const series = [0];
+    const series = [0], folge = [];
     for(const mid of d.matchIdsChrono){
-      const h = histById.get(mid);
-      let dSum = 0;
-      if(h && h.deltas){
-        dSum = (h.deltas[d.ids[0]] || 0) + (h.deltas[d.ids[1]] || 0);
-      } else {
-        // Fallback: gespeicherte DB-Deltas, falls kein History-Eintrag
-        const m = matches.find(x=>x.id===mid);
-        if(m && m.deltas){
-          dSum = (m.deltas[d.ids[0]] || 0) + (m.deltas[d.ids[1]] || 0);
-        }
-      }
-      trace += dSum;
+      const h = histById.get(mid), mm = mById.get(mid);
+      const ds = h && h.deltas ? h.deltas : (mm && mm.deltas) || {};
+      trace += (ds[d.ids[0]] || 0) + (ds[d.ids[1]] || 0);
       series.push(trace);
+      if(mm){
+        const aufA = d.ids.includes(mm.a1) && d.ids.includes(mm.a2);
+        folge.push((aufA ? mm.winner === 'A' : mm.winner === 'B') ? 'j' : 'n');
+      }
     }
-    const minE = Math.min(...series), maxE = Math.max(...series);
-    const range = Math.max(20, maxE - minE);
-    const W = 300, H = 56, pad = 6;
-    const usableH = H - 2*pad;
-    const points = series.map((e,i) => {
-      const x = (i/(series.length-1))*W;
-      const y = pad + (1 - (e-minE)/range)*usableH;
-      return [x,y];
-    });
-    const linePath = 'M' + points.map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L');
-    const fillPath = linePath + ` L${W},${H} L0,${H} Z`;
-    const last = points[points.length-1];
-    const net = Math.round(series[series.length-1] - series[0]);
-    const netCls = net >= 0 ? 'pos' : 'neg';
-    const netTxt = (net >= 0 ? '+' : '') + net;
-    const lineCol = net >= 0 ? 'var(--acid)' : 'var(--red)';
-    const gradId = 'tspark-' + d.ids.join('-');
-    teamFormHtml = `
-      <div style="margin-bottom:18px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Form-Verlauf</div>
-          <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;letter-spacing:.04em">${d.games} Spiele · alle Saisons</div>
-        </div>
-        <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" style="display:block">
-          <defs>
-            <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="${lineCol}" stop-opacity=".35"/>
-              <stop offset="100%" stop-color="${lineCol}" stop-opacity="0"/>
-            </linearGradient>
-          </defs>
-          <path d="${fillPath}" fill="url(#${gradId})"/>
-          <path d="${linePath}" fill="none" stroke="${lineCol}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="${last[0].toFixed(1)}" cy="${last[1].toFixed(1)}" r="3.5" fill="${lineCol}"/>
-        </svg>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;font-family:'Sometype Mono',monospace">
-          <span style="font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase">Team-Elo</span>
-          <span style="font-size:13px;font-weight:700;color:${lineCol}">${netTxt}</span>
-        </div>
-      </div>`;
+    // Siegquote: die letzten 50 Partien als Zellen — eine Wand aus zweihundert
+    // wäre keine Zeichnung mehr.
+    const zellen = folge.slice(-50).map(z => `<i${z === 'j' ? ' class="j"' : ''}></i>`).join('');
+    // Torbilanz je Partie auf ihrer Skala von −10 bis +10.
+    const jePartie = d.games ? d.gd / d.games : 0;
+    const bw = Math.min(50, Math.abs(jePartie) / 10 * 50);
+    // Elo: der Verlauf als Linie.
+    const W = 120, H = 26;
+    const minE = Math.min(...series), maxE = Math.max(...series), range = Math.max(20, maxE - minE);
+    const pfad = series.map((e, i) => (series.length > 1 ? i / (series.length - 1) * W : 0).toFixed(1)
+      + ',' + (3 + (1 - (e - minE) / range) * (H - 6)).toFixed(1)).join(' ');
+    // Serie: der laufende Lauf, dahinter die längsten.
+    const cs = d.currentStreak;
+    const serieZ = cs === 0 ? '–' : Math.abs(cs);
+    const serieE = cs > 0 ? (cs === 1 ? 'Sieg in Folge' : 'Siege in Folge')
+                 : cs < 0 ? (cs === -1 ? 'Niederlage in Folge' : 'Niederlagen in Folge') : 'keine Serie';
+    const lauf = Math.min(12, Math.abs(cs));
+    kennzahlenHtml = `<div class="duo-kz">
+      <div class="duo-kz-k"><div class="duo-kz-w"><b class="${wr >= 50 ? 'auf' : 'ab'}">${wr} %</b><span>Siegquote</span></div>
+        <div class="duo-kz-zellen">${zellen}</div>
+        <div class="duo-kz-s num">${d.wins} Siege · ${d.losses} Niederlagen${folge.length > 50 ? ' · die letzten 50' : ''}</div></div>
+      <div class="duo-kz-k"><div class="duo-kz-w"><b class="${d.gd >= 0 ? 'auf' : 'ab'}">${gdStr}</b><span>Torbilanz</span></div>
+        <div class="duo-kz-skala"><i class="${jePartie >= 0 ? 'auf' : 'ab'}" style="${jePartie >= 0 ? 'left:50%' : 'right:50%'};width:${bw.toFixed(1)}%"></i></div>
+        <div class="duo-kz-s num">Ø ${jePartie >= 0 ? '+' : ''}${komma(jePartie, 1)} je Partie</div></div>
+      <div class="duo-kz-k"><div class="duo-kz-w"><b class="${d.eloDelta >= 0 ? 'auf' : 'ab'}">${eloStr}</b><span>Elo zusammen</span></div>
+        <svg class="duo-kz-linie ${d.eloDelta >= 0 ? 'auf' : 'ab'}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pfad}"/></svg>
+        <div class="duo-kz-s num">aus ${d.games} ${d.games === 1 ? 'Partie' : 'Partien'}, alle Saisons</div></div>
+      <div class="duo-kz-k"><div class="duo-kz-w"><b class="${cs > 0 ? 'auf' : cs < 0 ? 'ab' : ''}">${serieZ}</b><span>${serieE}</span></div>
+        ${lauf ? `<div class="aw-lauf duo-kz-lauf ${cs > 0 ? 'auf' : 'ab'}">${'<i></i>'.repeat(lauf)}</div>` : ''}
+        <div class="duo-kz-s num">am längsten ${d.longestWinStreak || 0} Siege · ${d.longestLossStreak || 0} Niederlagen</div></div>
+    </div>`;
   }
 
   // ─── AUFSTELLUNG: TYPISCH + (optional) BESTE ───
@@ -18094,7 +18112,7 @@ function showTeam(p1Id,p2Id){
     const bestWr = Math.round(d.bestLineup.wr * 100);
     lineupHtml = `
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:10px;font-family:'Sometype Mono',monospace">Aufstellungs-Vergleich</div>
+        ${blattAbschnittHtml('users', 'Aufstellungs-Vergleich')}
         <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
           ${buildLineupCard('Typisch', typWr+'% aus '+typGames, d.posStats[d.ids[0]].dom, 48)}
           ${buildLineupCard('Beste Quote', bestWr+'% aus '+d.bestLineup.games, d.bestLineup.p0, 48)}
@@ -18123,7 +18141,7 @@ function showTeam(p1Id,p2Id){
       </div>` : '';
     lineupHtml = `
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:12px;font-family:'Sometype Mono',monospace">Typische Aufstellung</div>
+        ${blattAbschnittHtml('users', 'Typische Aufstellung')}
         <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 14px 12px">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             ${renderPlayerLineup(pA, d.posStats[pA.id].dom)}
@@ -18150,48 +18168,15 @@ function showTeam(p1Id,p2Id){
   const _tR = awardRankings('all');
   const teamAwardsHtml = tAch.length ? `
     <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Auszeichnungen als Team</div>
+      ${blattAbschnittHtml('medal', 'Auszeichnungen als Team')}
       ${awVitrineHtml(tAch.map(a => awKachelHtml(a.key, [a.x],
         {rang:a.rank || null, mehr:0, liste:awListe(a.key, _tR), attr:`data-team-award="${esc(a.key)}"`})))}
     </div>` : '';
 
-  // ─── STREAKS (aktuelle + längste) ───
-  // Verzichten auf Last-N-Dots wie im Spieler-Profil — hier ist die reine
-  // Zahlen-Anzeige übersichtlicher (Form-Spark daneben deckt die Verlaufs-
-  // Visualisierung schon ab).
-  let streaksHtml = '';
-  if(d.games >= 2){
-    const curLabel = d.currentStreak === 0 ? '–'
-      : d.currentStreak > 0 ? d.currentStreak+' Siege'
-      : (-d.currentStreak)+(d.currentStreak === -1 ? ' Niederlage' : ' Niederlagen');
-    const curColor = d.currentStreak > 0 ? 'var(--acid)' : (d.currentStreak < 0 ? 'var(--red)' : 'var(--muted)');
-    streaksHtml = `
-      <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Serien</div>
-        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
-          <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:${curColor};line-height:1">${curLabel}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Aktuell</div>
-          </div>
-          <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--acid);line-height:1">${d.longestWinStreak ? d.longestWinStreak + (d.longestWinStreak === 1 ? ' Sieg' : ' Siege') : '–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Beste Serie</div>
-          </div>
-          <div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-            <div style="font-family:'Archivo Black',sans-serif;font-size:16px;color:var(--red);line-height:1">${d.longestLossStreak ? d.longestLossStreak + (d.longestLossStreak === 1 ? ' Pleite' : ' Pleiten') : '–'}</div>
-            <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Längste Durststrecke</div>
-          </div>
-        </div>
-      </div>`;
-  }
-
   // ─── LIGA-TITEL (Team of the Season) ───
   const titlesHtml = d.seasonTitles.length ? `
     <div style="margin-bottom:18px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Liga-Titel</div>
-        <div style="font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace">${d.seasonTitles.length} ${d.seasonTitles.length===1?'Titel':'Titel'}</div>
-      </div>
+      ${blattAbschnittHtml('crown', 'Liga-Titel', d.seasonTitles.length + ' Titel')}
       <div class="pp-trophies" style="margin:0 -16px;padding:4px 16px">
         ${d.seasonTitles.map(t => `<div class="pp-tr team">
           <span class="ic svg-ic">${svgI('handshake')}</span>
@@ -18218,7 +18203,7 @@ function showTeam(p1Id,p2Id){
     const cols = facts.length >= 4 ? 'repeat(4,1fr)' : 'repeat('+facts.length+',1fr)';
     funFactsHtml = `
       <div style="margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">In Zahlen</div>
+        ${blattAbschnittHtml('chartBar', 'In Zahlen')}
         <div style="display:grid;grid-template-columns:${cols};gap:8px">
           ${facts.map(f => `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center">
             <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:15px;color:${f.color};line-height:1">${f.value}</div>
@@ -18266,41 +18251,10 @@ function showTeam(p1Id,p2Id){
       <div style="font-family:'Archivo Black',sans-serif;font-size:20px;letter-spacing:-.02em;line-height:1.1;margin-top:14px">${esc(pA.name)} &amp; ${esc(pB.name)}</div>
     </div>
 
-    <div style="display:flex;gap:8px;margin-bottom:18px">
-      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-        <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${d.games}</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Spiele</div>
-      </div>
-      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-        <div style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--acid);line-height:1">${wr}%</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Quote</div>
-      </div>
-      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-        <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--ink);line-height:1">${gdStr}</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Torbilanz</div>
-      </div>
-      <div style="flex:1;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 8px;text-align:center">
-        <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:18px;color:${eloColor};line-height:1">${eloStr}</div>
-        <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:4px">Elo</div>
-      </div>
-    </div>
-
-    <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Bilanz</div>
-      <div style="display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--line)">
-        <div style="width:${d.games?(d.wins/d.games*100):0}%;background:var(--acid)"></div>
-        <div style="width:${d.games?(d.losses/d.games*100):0}%;background:var(--red)"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px" class="num">
-        <span style="color:var(--acid)">${d.wins} Siege</span>
-        <span style="color:var(--red)">${d.losses} Niederlagen</span>
-      </div>
-    </div>
+    ${kennzahlenHtml}
 
     ${teamAwardsHtml}
-    ${streaksHtml}
     ${titlesHtml}
-    ${teamFormHtml}
     ${lineupHtml}
     ${funFactsHtml}
 
@@ -18309,13 +18263,13 @@ function showTeam(p1Id,p2Id){
 
     ${highlights?`
     <div style="margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Höhepunkte</div>
+      ${blattAbschnittHtml('star', 'Höhepunkte')}
       <div style="display:flex;flex-direction:column;gap:6px">${highlights}</div>
     </div>`:''}
 
     ${recentRows?`
     <div>
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:8px;font-family:'Sometype Mono',monospace">Letzte ${Math.min(10,d.recent.length)} Spiele</div>
+      ${blattAbschnittHtml('clock', 'Letzte ' + Math.min(10,d.recent.length) + ' Spiele')}
       <div style="display:flex;flex-direction:column;gap:6px">${recentRows}</div>
     </div>`:''}
   `);
@@ -18343,7 +18297,8 @@ function showMatchDetail(mid){
   // matchBreakdown() bleibt für Slider-Detail-Komponenten verfügbar.
   const line=(id,pos)=>{
     const d=(m.deltas||{})[id]||0;
-    return `<div class="delta-row" data-md-spieler="${esc(id)}" style="cursor:pointer"><span class="dn">${esc(pname(id))} <span class="chip ${pos}">${pos==='atk'?'STU':'ABW'}</span></span><span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></div>`;
+    // Die Position als Wort mit Zeichen, nicht als „STU" und „ABW" [§6].
+    return `<div class="delta-row" data-md-spieler="${esc(id)}" style="cursor:pointer"><span class="dn">${esc(pname(id))} <span class="chip ${pos}">${svgI(pos==='atk'?'bolt':'shield')}${pos==='atk'?'Sturm':'Abwehr'}</span></span><span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></div>`;
   };
   // Auszeichnungen durch dieses Match
   const earned=badgesEarnedInMatch(mid);
@@ -18380,26 +18335,21 @@ function showMatchDetail(mid){
   const _expA = _h && _h.expA != null ? _h.expA : (typeof m.exp_a === 'number' ? m.exp_a : null);
   const chance = _expA == null ? null
     : Math.max(1, Math.round((m.winner==='A' ? _expA : 1 - _expA) * 100));
-  openSheet(`<h3>${m.score_a} : ${m.score_b}</h3><div class="sheet-sub">${dateStr(m.created_at)} · ${esc(sieger.map(pname).join(' und '))} gewinnen${chance!=null ? ' · Siegchance vorher ' + chance + ' %' : ''}</div>
-    <div style="display:flex;gap:8px;margin-top:12px">
-      <div data-team="${esc([m.a1,m.a2].sort().join('|'))}" style="flex:1;background:var(--surface);border:1px solid ${m.winner==='A'?'var(--acid2)':'var(--line)'};border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Sometype Mono',monospace">Team A</div>
-        <div style="font-size:12px;margin-top:2px;line-height:1.2">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
-      </div>
-      <div data-team="${esc([m.b1,m.b2].sort().join('|'))}" style="flex:1;background:var(--surface);border:1px solid ${m.winner==='B'?'var(--acid2)':'var(--line)'};border-radius:10px;padding:8px 10px;cursor:pointer;text-align:center">
-        <div style="font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-family:'Sometype Mono',monospace">Team B</div>
-        <div style="font-size:12px;margin-top:2px;line-height:1.2">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
-      </div>
-    </div>
+  // Kopf und Bühne wie in jedem Blatt einer Partie [§C27]: die Sieger hell,
+  // die Verlierer leiser, der Stand in der Mitte. Vorher stand der Stand als
+  // Überschrift und darunter zwei graue Kästen „Team A" und „Team B".
+  openSheet(`${blattKopfHtml({ic:'ball', titel:'Partie', unter:dateStr(m.created_at)})}
+    ${buehneHtml(m, {zeile: sieger.map(pname).join(' und ') + ' gewinnen'
+      + (chance != null ? ' · Siegchance vorher ' + chance + ' %' : '')})}
     <div class="preview" style="margin-top:16px"><div class="delta-list">
       ${line(m.a1,m.a1_pos)}${line(m.a2,m.a2_pos)}<div class="delta-div"></div>${line(m.b1,m.b1_pos)}${line(m.b2,m.b2_pos)}
     </div></div>
     <button class="btn ghost sm" id="showBreakdownBtn" style="margin-top:10px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:6px">${svgI('chartBar')} Elo-Analyse anzeigen</button>
     <div id="breakdownSlot"></div>
     ${earnedHtml}
-    <div class="btn-row" style="margin-top:14px">
-      <button class="btn ghost sm" id="editThisMatch" style="flex:1;display:inline-flex;align-items:center;justify-content:center;gap:6px">${svgI('edit')} Bearbeiten</button>
-      <button class="btn ghost sm" id="delThisMatch" style="flex:0 0 38%;color:var(--red)">Löschen</button>
+    <div class="blatt-fuss">
+      <button type="button" class="btn gefahr" id="delThisMatch">${svgI('trash')}Löschen</button>
+      <button type="button" class="btn" id="editThisMatch">${svgI('edit')}Bearbeiten</button>
     </div>`);
   // Breakdown-Button
     document.getElementById('showBreakdownBtn').onclick=()=>{
@@ -18487,15 +18437,14 @@ function showMatchDetail(mid){
 
   document.getElementById('editThisMatch').onclick=()=>showEditMatch(mid);
   document.getElementById('delThisMatch').onclick=async()=>{
-        if(!confirm('Match wirklich löschen? Die gesamte Rangliste wird danach automatisch neu berechnet.'))return;
-    closeSheet(true); toast('Lösche & berechne neu…');
-    await sb.from('matches').delete().eq('id',mid);
-    const rest=matches.filter(x=>x.id!==mid);
-    invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']); // <-- HIER INVALIDIEREN
-    await persistRecalc(rest);
-    toast('Gelöscht & neu berechnet','ok'); await loadAll();
-
-
+    // Die Frage nennt, was verloren geht: diese Partie und alles, was aus
+    // ihr gerechnet wurde.
+    const ja = await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
+      titel:'Partie löschen?',
+      text:`${pname(m.a1)} & ${pname(m.a2)} gegen ${pname(m.b1)} & ${pname(m.b2)}, ${m.score_a}:${m.score_b} vom ${dateStr(m.created_at)}. Elo, Serien und Rekorde werden danach neu gerechnet.`});
+    if(!ja) return;
+    closeSheet(true);
+    await partieLoeschen(mid);
   };
   // Die vier Namen führen ins Profil: das Blatt zeigte je Spieler die Elo
   // dieser Partie, und von dort ging es nur zum Duo weiter, nicht zu ihm.
@@ -18512,6 +18461,18 @@ function showMatchDetail(mid){
   });
 }
 
+// Eine Partie löschen und die Liga neu rechnen. Eine Stelle für das Blatt
+// der Partie und für „Rückgängig" nach dem Speichern [§C27] — zwei Kopien
+// hätten irgendwann verschiedene Töpfe geleert.
+async function partieLoeschen(mid){
+  toast('Lösche & berechne neu…');
+  await sb.from('matches').delete().eq('id', mid);
+  const rest = matches.filter(x => x.id !== mid);
+  invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
+  await persistRecalc(rest);
+  toast('Gelöscht & neu berechnet', 'ok');
+  await loadAll();
+}
 // ╔═══ §9.4 ─── MATCH BEARBEITEN ───────────────────────────────────────╗
 //     Edit-Sheet für nachträgliche Korrektur eines Matches.
 // ╚═════════════════════════════════════════════════════════════════════════╝
@@ -18528,7 +18489,7 @@ function showEditMatch(mid){
   const slot=(t,n)=>`<div class="slot">
     <div class="psel"><select data-ep="${t}${n}">${opts(t+n)}</select></div>
     <div class="possel">${pos(t+n)}</div></div>`;
-  openSheet(`<h3>Match bearbeiten</h3><div class="sheet-sub">Änderungen lösen eine Neuberechnung aus</div>
+  openSheet(`${blattKopfHtml({ic:'edit', titel:'Match bearbeiten', unter:'Änderungen lösen eine Neuberechnung aus'})}
     <div class="builder" style="margin-top:16px">
       <div class="team-block A"><div class="team-label">Team A</div>${slot('A',1)}${slot('A',2)}</div>
       <div class="vs-mid"><span class="line"></span><span class="vs">VS</span><span class="line"></span></div>
@@ -18710,11 +18671,62 @@ function emptyState(e,t){
   const inner = ICONS[e] ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;
   return `<div class="empty">${inner}${t}</div>`;
 }
+// ── Der Hinweis [§C27] ───────────────────────────────────────────────
+// Ein Balken in voller Farbe mit einem Satz: grün hieß „gespeichert", rot
+// „Fehler", und alles andere stand weiß da — auch „Berechne neu…", das
+// gerade noch läuft. Jetzt trägt er seine Rolle als Zeichenkachel [§C25],
+// eine zweite Zeile mit der Wirkung und, wo es eine gibt, eine Aktion.
+//   kind   'ok' | true (Fehler) | 'info' | nichts (läuft noch)
+//   o.sub  die zweite Zeile, o.aktion {label, fn}, o.ms die Standzeit
 let tt;
-function toast(msg,kind){let t=document.querySelector('.toast');
-  if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
-  t.textContent=msg;t.className='toast '+(kind===true?'err':kind||'');void t.offsetWidth;t.classList.add('show');
-  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2400);}
+const TOAST_ROLLE = {ok:['check','gruen'], err:['x','rot'], info:['info',''], lauf:['hourglass','']};
+function toast(msg, kind, o){
+  o = o || {};
+  const rolle = kind === true ? 'err' : (TOAST_ROLLE[kind] ? kind : 'lauf');
+  let t = document.querySelector('.toast');
+  if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  const [ic, ton] = TOAST_ROLLE[rolle];
+  t.innerHTML = zkHtml(ic, 'k', ton) + '<span class="toast-tx"><b></b><span></span></span>';
+  t.querySelector('b').textContent = msg;
+  const sub = t.querySelector('.toast-tx span');
+  if(o.sub) sub.textContent = o.sub; else sub.remove();
+  if(o.aktion){
+    const k = document.createElement('button');
+    k.className = 'toast-akt'; k.type = 'button'; k.textContent = o.aktion.label;
+    k.onclick = () => { t.classList.remove('show'); clearTimeout(tt); o.aktion.fn(); };
+    t.appendChild(k);
+  }
+  t.className = 'toast ' + rolle + (o.aktion ? ' mit-akt' : '');
+  void t.offsetWidth; t.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), o.ms || (o.aktion ? 6000 : 2400));
+}
+
+// ── Die Bestätigung [§C27] ───────────────────────────────────────────
+// Vier Stellen fragten mit `confirm()` — einem Fenster des Browsers, das
+// die App nicht gestalten kann, das auf dem Telefon „Seite sagt" darüber
+// schreibt und bei dem der zerstörende Knopf „OK" heißt. Der Dialog nennt,
+// was verloren geht, der sichere Knopf steht links, der zerstörende rechts
+// und rot. Er liegt über einem offenen Blatt und nicht darin.
+function bestaetigen(o){
+  return new Promise(fertig => {
+    const bg = document.createElement('div');
+    bg.className = 'dlg-bg';
+    bg.innerHTML = `<div class="dlg" role="alertdialog" aria-modal="true">
+      ${zkHtml(o.ic || 'alert', 'g', o.gefahr ? 'rot' : '')}
+      <h4></h4><p></p>
+      <div class="blatt-fuss"><button type="button" class="btn ghost" data-dlg="0"></button>
+        <button type="button" class="btn ${o.gefahr ? 'gefahr' : ''}" data-dlg="1"></button></div></div>`;
+    bg.querySelector('h4').textContent = o.titel;
+    bg.querySelector('p').textContent = o.text || '';
+    bg.querySelector('[data-dlg="0"]').textContent = o.nein || 'Abbrechen';
+    bg.querySelector('[data-dlg="1"]').textContent = o.ja || 'Bestätigen';
+    const zu = ja => { bg.classList.remove('show'); setTimeout(() => bg.remove(), 200); fertig(ja); };
+    bg.onclick = e => { if(e.target === bg) zu(false); };
+    bg.querySelectorAll('[data-dlg]').forEach(b => b.onclick = () => zu(b.dataset.dlg === '1'));
+    document.body.appendChild(bg);
+    void bg.offsetWidth; bg.classList.add('show');
+  });
+}
 
 // ─── Achievement-Toast: gestapelte Anzeige für neue Badges nach Match-Eingabe ───
 // Sequenzielle Queue verhindert, dass mehrere Achievements einander überschreiben.
@@ -33693,8 +33705,7 @@ function showSeasonTable(sid){
   _sheetSetReopen(()=>showSeasonTable(sid));
   const T = seasonTitles(sid);
   if(!T.awarded.length && !T.champ){
-    openSheet(`<h3>${esc(seasonLabel(sid))}</h3>
-      <div class="sheet-sub">Noch keine Chronik-Einträge</div>
+    openSheet(`${blattKopfHtml({ic:'scroll', ton:'gold', titel:seasonLabel(sid), unter:'Noch keine Chronik-Einträge'})}
       ${emptyState('trophy', T.live ? 'Die Saison läuft, noch erfüllt niemand eine Bedingung.' : 'Kein Eintrag in dieser Saison')}`);
     return;
   }
@@ -33723,8 +33734,8 @@ function showSeasonTable(sid){
   const gt = titleTone('gold');
   const ch = T.champ;
   openSheet(`
-    <h3>Die Chronik der Saison</h3>
-    <div class="sheet-sub num">${esc(T.label)} · ${T.matches} Matches an ${T.days} Spieltag${T.days===1?'':'en'}${T.live ? ' · läuft noch' : ''}</div>
+    ${blattKopfHtml({ic:'scroll', ton:'gold', titel:'Die Chronik der Saison',
+      unter:T.label + ' · ' + T.matches + ' Matches an ' + T.days + ' Spieltag' + (T.days===1?'':'en') + (T.live ? ' · läuft noch' : '')})}
     ${T.live ? `<div class="tnote">Stand von heute, bis zum Monatsende kann sich alles noch ändern.</div>` : ''}
     ${ch ? `<div class="chron-one" style="--tt:${gt.c};--ttr:${gt.rgb}" data-tplayer="${esc(ch.pid)}">
         <span class="ic">${svgI('crown')}</span>
@@ -33957,11 +33968,12 @@ function showDisziplin(tid, sid){
     zweiter: zweitMA && _belegIstQuote(zweitM.wert, zweitMA) ? {name:pname(zweitM.pid), q:zweitMA.k / zweitMA.n} : null
   }) : '';
 
+  // Der Kopf jedes Blatts [§C27]; der Kasten darunter trägt die Bedingung.
+  const monatSchatten = def.monat && def.monat.art === 'schatten';
   openSheet(`
-    <h3>${esc(def.name)}</h3>
-    <div class="sheet-sub">Monatschronik · ${esc(seasonLabel(sid))}${T.live ? ' · läuft noch' : ''}</div>
+    ${blattKopfHtml({ic:def.ic, ton:monatSchatten ? 'rot' : 'gold', titel:def.name,
+      unter:'Monatschronik · ' + seasonLabel(sid) + (T.live ? ' · läuft noch' : '')})}
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
-      <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
       ${/* Der Beiname stand nur im Profilkopf [§C39], und im Blatt der
             Wertung war nicht zu sehen, wie ihr Halter dort heisst: „Der
@@ -34045,11 +34057,18 @@ function showChronicle(cid){
     zweiter: zweitA && _belegIstQuote(zweit.ev, zweitA) ? {name:pname(zweit.pid), q:zweitA.k / zweitA.n} : null,
     verlauf: cid
   }) : '';
+  // Der Weg weiter: ins Profil des Halters und in den direkten Vergleich
+  // mit dem, der dahinter liegt [§C27].
+  const fussRek = h ? blattFussHtml([
+    {label:'Profil', ic:'user', attr:`data-tplayer="${esc(h.pid)}"`},
+    zweit ? {label:'Direkter Vergleich', ic:'crossedSwords', prim:true,
+             attr:`data-vergleich="${esc(h.pid + '|' + zweit.pid)}"`} : null]) : '';
+  // Gold für Können, Form und Bestmarke, Metall für die Fügung, Rot für
+  // die Kehrseite [§C25].
+  const rekTon = def.neg ? 'rot' : def.kind === 'fuegung' ? '' : 'gold';
   openSheet(`
-    <h3>${esc(def.name)}</h3>
-    <div class="sheet-sub">${esc(CHRON_KINDS[def.kind].label)}</div>
+    ${blattKopfHtml({ic:def.ic, ton:rekTon, titel:def.name, unter:'Liga-Rekord · ' + CHRON_KINDS[def.kind].label})}
     <div class="chron-hero" style="--tt:${t.c};--ttr:${t.rgb}">
-      <span class="ic">${svgI(def.ic)}</span>
       <span class="c">${esc(def.cond)}</span>
     </div>
     ${zahlen}
@@ -34075,8 +34094,12 @@ function showChronicle(cid){
         <span class="w num">${esc(_chronKurz(r.ev))}</span>
       </div>`;
     }).join('')}</div>` : ''}
+    ${fussRek}
   `);
   _bindChronikClicks(document.getElementById('sheet'));
+  document.querySelectorAll('#sheet [data-vergleich]').forEach(el => {
+    el.onclick = () => { const [a, b] = el.dataset.vergleich.split('|'); sheetNav(() => showH2H(a, b)); };
+  });
   belegVerlaufLaden(document.getElementById('sheet'));
 }
 
@@ -34350,16 +34373,16 @@ function showLigaChronik(){
   const matrix = ligaChronikMatrixHtml();
 
   if(!matrix){
-    openSheet(`<h3>Liga-Chronik</h3>
-      <div class="sheet-sub">${recs.length ? recs.length + ' Liga-Rekorde · noch keine Saison mit Chronik' : 'Noch keine Saison mit Chronik'}</div>
+    openSheet(`${blattKopfHtml({ic:'scroll', ton:'gold', titel:'Liga-Chronik',
+      unter:recs.length ? recs.length + ' Liga-Rekorde · noch keine Saison mit Chronik' : 'Noch keine Saison mit Chronik'})}
       ${recHtml || emptyState('scroll','Sobald ein Monat gespielt ist, füllt sich die Chronik.')}`);
     _bindChronikClicks(document.getElementById('sheet'));
     return;
   }
   const total = cols.reduce((n,T) => n + T.awarded.length, 0);
   openSheet(`
-    <h3>Liga-Chronik</h3>
-    <div class="sheet-sub num">${cols.length} Saison${cols.length===1?'':'s'} · ${total} Einträge · ${recs.length} Rekorde</div>
+    ${blattKopfHtml({ic:'scroll', ton:'gold', titel:'Liga-Chronik',
+      unter:cols.length + ' Saison' + (cols.length===1?'':'s') + ' · ' + total + ' Einträge · ' + recs.length + ' Rekorde'})}
     ${matrix}
     ${recHtml}
   `);
@@ -36286,8 +36309,8 @@ function showPrestigeRegeln(pid){
     </div>`;
   }).join('');
   openSheet(`<div class="pp-root lb-regelblatt">
-    <h3>Wert der Auszeichnungen</h3>
-    <div class="sheet-sub num">${esc((p && p.name) || '')} · dieselbe Auszeichnung wächst immer weiter</div>
+    ${blattKopfHtml({ic:'info', titel:'Wert der Auszeichnungen',
+      unter:((p && p.name) || '') + ' · dieselbe Auszeichnung wächst immer weiter'})}
     <p class="lb-regel-intro">Jede Auszeichnung beginnt mit ihrem Startwert. Die ersten beiden Erfolge zählen voll, danach sinkt ihr Wert in Zweiergruppen. Je seltener und bedeutender die Leistung, desto langsamer fällt ihre Kurve.</p>
     ${_prestigeRegelKarten()}
     <div class="pp-sec-title"><div class="l"><h4>Besondere Wertung</h4></div></div>
@@ -37375,8 +37398,7 @@ function _showImportPreview(filename){
   }
 
   openSheet(`
-    <h3>Wiederherstellen</h3>
-    <div class="sheet-sub">${esc(filename)}</div>
+    ${blattKopfHtml({ic:'hochladen', titel:'Wiederherstellen', unter:filename})}
     <div style="margin-top:14px">${body}</div>
     <p style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:14px">
       Es wird nichts gelöscht und nichts überschrieben — nur fehlende Einträge werden ergänzt.

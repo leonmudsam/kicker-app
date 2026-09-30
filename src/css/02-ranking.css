@@ -99,6 +99,7 @@
 
   .chip{display:inline-flex;align-items:center;font-size:9.5px;padding:2px 7px;border-radius:6px;
     text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+  .chip .ic{font-size:10px;margin-right:3px}
   .chip.atk{background:rgba(255,120,73,.16);color:var(--orange)}
   .chip.def{background:rgba(86,180,232,.16);color:var(--blue)}
   .perf-up{color:var(--acid);font-size:11px} .perf-dn{color:var(--red);font-size:11px}

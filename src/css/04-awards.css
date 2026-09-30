@@ -225,18 +225,9 @@
   .aw-lauf{display:flex;gap:3px}
   .aw-lauf i{flex:1;max-width:16px;height:7px;border-radius:3px;background:var(--awc);opacity:.85}
 
-  /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============ */
-  .aw-hero-icon{display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
-  .aw-hero-icon-glow{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;position:relative}
-  .aw-hero-icon-glow svg{width:32px;height:32px;stroke:currentColor;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
-  .aw-hero-icon-glow.gold  {background:rgba(247,207,74,.12); color:var(--gold);  box-shadow:0 0 60px rgba(247,207,74,.18)}
-  .aw-hero-icon-glow.acid  {background:rgba(190,242,100,.12); color:var(--acid);  box-shadow:0 0 60px rgba(190,242,100,.18)}
-  .aw-hero-icon-glow.blue  {background:rgba(86,180,232,.12); color:var(--blue);  box-shadow:0 0 60px rgba(86,180,232,.18)}
-  .aw-hero-icon-glow.red   {background:rgba(240,86,106,.12); color:var(--red);   box-shadow:0 0 60px rgba(240,86,106,.18)}
-  .aw-hero-icon-glow.orange{background:rgba(255,120,73,.12); color:var(--orange);box-shadow:0 0 60px rgba(255,120,73,.18)}
-  .aw-hero-icon-glow.purple{background:rgba(167,139,250,.12);color:var(--purple);box-shadow:0 0 60px rgba(167,139,250,.18)}
-  .aw-hero-title{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;margin:14px 0 0;text-align:center}
-  .aw-hero-sub{color:var(--muted);font-size:11px;margin-top:4px;font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.16em;text-align:center}
+  /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============
+     Kopf, Bühne und Fuß des Award-Blatts sind die gemeinsamen Bauteile des
+     Blatts (05-nav-sheet); hier steht nur, was das Award-Blatt allein hat. */
   .aw-pod.first .aw-pod-av{width:64px;height:64px;font-size:30px;border-color:var(--gold);box-shadow:0 0 20px rgba(247,207,74,.4)}
   .aw-pod.second .aw-pod-av{border-color:var(--silber)}
   .aw-pod.first .aw-pod-pair .aw-pod-av{width:48px;height:48px;font-size:20px;box-shadow:0 0 20px rgba(247,207,74,.4)}
@@ -255,29 +246,6 @@
 
   /* Empty-Slot dezenter „—" Hinweis */
   .aw-pod.empty .aw-pod-empty-hint{font-family:'Sometype Mono',monospace;font-size:14px;color:var(--faint);margin-bottom:6px}
-
-  /* Match-Award detail (Upset / Höchster Sieg) */
-  .aw-match{margin-top:18px;background:linear-gradient(135deg,rgba(247,207,74,.06),var(--surface) 55%);
-    border:1px solid rgba(247,207,74,.3);border-radius:18px;padding:18px 16px}
-  .aw-match.upset{background:linear-gradient(135deg,rgba(255,120,73,.06),var(--surface) 55%);border-color:rgba(255,120,73,.3)}
-  .aw-match-score{font-family:'Archivo Black',sans-serif;font-size:36px;letter-spacing:-.02em;text-align:center;line-height:1}
-  .aw-match-meta{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:6px}
-  .aw-match-teams{display:flex;align-items:flex-start;justify-content:space-between;margin-top:18px;gap:10px}
-  .aw-match-team{flex:1;text-align:center;font-size:12px;min-width:0}
-  .aw-match-team .aw-mini-pair{justify-content:center;margin-bottom:6px}
-  .aw-match-team-name{font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:-.01em;line-height:1.2;color:var(--ink);
-    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .aw-match-vs{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);align-self:center;flex-shrink:0;padding-top:18px}
-  .aw-match-winner{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--acid);font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
-
-  /* Why card */
-  .aw-why{margin-top:18px;background:linear-gradient(135deg,rgba(190,242,100,.04),var(--surface) 55%);
-    border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start}
-  .aw-why-ic{color:var(--acid);flex-shrink:0;margin-top:1px}
-  .aw-why-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
-  .aw-why-content{flex:1;min-width:0}
-  .aw-why-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace;margin-bottom:5px}
-  .aw-why-body{font-size:12.5px;color:var(--ink2);line-height:1.55}
 
 
   /* Die Reiter des Awards-Tabs benutzen .ui-switch und .ui-tabs aus

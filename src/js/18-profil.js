@@ -815,8 +815,7 @@ const rankProgHtml = rInfo ? `
     if(inMatches){
       _pushCurrentSheet(); // Spielerprofil stapeln → „Zurück" möglich
       openSheet(`
-        <h3>Spieler entfernen</h3>
-        <div class="sheet-sub">${esc(p.name)} · ${gamesPlayed(id)} Matches</div>
+        ${blattKopfHtml({ic:'trash', ton:'rot', titel:'Spieler entfernen', unter:p.name + ' · ' + gamesPlayed(id) + ' Matches'})}
         <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
           <button class="btn ghost" id="hidePlayerBtn" style="text-align:left;padding:16px">
             <div style="font-weight:700">Aus Rangliste ausblenden</div>
@@ -837,10 +836,13 @@ const rankProgHtml = rInfo ? `
       `);
       document.getElementById('hidePlayerBtn').onclick=async()=>{
         await sb.from('players').update({hidden:true}).eq('id',id);
-        closeSheet(true); toast(esc(p.name)+' ausgeblendet'); await loadAll();
+        // textContent, nicht HTML: esc() stand hier und zeigte „&amp;".
+        closeSheet(true); toast(p.name+' ausgeblendet','ok'); await loadAll();
       };
       document.getElementById('deletePlayerBtn').onclick=async()=>{
-        if(!confirm('Wirklich komplett löschen? Namen erscheinen dann als "?" in allen Matches.')) return;
+        if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
+          titel:p.name+' löschen?',
+          text:'In allen Partien erscheint danach ein Fragezeichen statt des Namens. Das lässt sich nicht rückgängig machen.'}))) return;
         await sb.from('players').delete().eq('id',id);
         closeSheet(true); toast('Gelöscht'); await loadAll();
       };
@@ -848,7 +850,8 @@ const rankProgHtml = rInfo ? `
         closeSheet(); // zurück zum Spielerprofil (Stack-Pop)
       };
     } else {
-      if(!confirm(`Spieler "${p.name}" löschen?`)) return;
+      if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
+        titel:p.name+' löschen?', text:'Der Spieler hat noch keine Partie.'}))) return;
       await sb.from('players').delete().eq('id',id);
       closeSheet(true); toast('Gelöscht'); await loadAll();
     }
@@ -873,8 +876,7 @@ function showEditPlayer(id){
     </div>`;
 
   openSheet(`
-    <h3>Profil bearbeiten</h3>
-    <div class="sheet-sub">${esc(p.name)}</div>
+    ${blattKopfHtml({ic:'edit', titel:'Profil bearbeiten', unter:p.name})}
 
     <div class="field-label">Profilbild</div>
     ${avPickerHtml}
@@ -999,10 +1001,8 @@ function showRangSystem(){
       </div>`:''}    </div>`;
   }).join('');
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      <span class="emoji svg-ic" style="width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--surface2);color:var(--ink2)"><svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">${ICONS['crown']||''}</svg></span>
-      <div><h3>Rang-System</h3><div class="sheet-sub">Basiert auf Ø Saison-Elo</div></div>
-    </div>
+    ${blattKopfHtml({ic:'crown', titel:'Rang-System', unter:'Nach Ø Saison-Elo'})}
+    <div style="height:12px"></div>
     ${rows}
   `);
 }
@@ -1021,19 +1021,14 @@ function showPlayerAwards(playerId, awards){
     ? `<div style="margin-top:16px">${awVitrineHtml(awards.map(trophy))}</div>`
     : `<div class="empty" style="margin-top:24px;text-align:center;color:var(--muted)">
         <div class="ee svg-ic" style="color:var(--faint);margin-bottom:6px">${svgI('trophy')}</div>
-        Noch keine Top-1-Auszeichnungen
+        Noch kein Award auf Platz 1
        </div>`;
 
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div>
-        <h3>Awards</h3>
-        <div class="sheet-sub">${esc(p.name)} · ${awards.length} Top-1-Auszeichnung${awards.length===1?'':'en'}</div>
-      </div>
-    </div>
+    ${blattKopfHtml({ic:'trophy', ton:'gold', titel:'Awards',
+      unter:p.name + ' · ' + awards.length + (awards.length === 1 ? ' Award' : ' Awards') + ' auf Platz 1'})}
     ${body}
-    <button class="btn ghost sm" id="backToPlayer" style="margin-top:14px;width:100%">← Zurück zum Profil</button>
+    ${blattFussHtml([{label:'Zurück zum Profil', ic:'user', attr:'id="backToPlayer"'}])}
   `);
   // Das Blatt zeigt den Zeitraum, aus dem der Platz kommt: den laufenden
   // Monat. Ohne das öffnete es, was der Awards-Reiter zuletzt eingestellt
@@ -1132,17 +1127,13 @@ function showPlayerBadges(playerId){
     <div class="bsh-grid">${negativeCards}</div>` : '';
 
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div>
-        <h3>Auszeichnungen</h3>
-        <div class="sheet-sub">${esc(p.name)} · <b style="color:var(--acid)">${haveTotal}</b> von ${BADGES.length} · ${trigCount}× ausgelöst</div>
-      </div>
-    </div>
+    ${blattKopfHtml({ic:'medal', ton:'viol', titel:'Auszeichnungen',
+      unter:p.name + ' · ' + haveTotal + ' von ' + BADGES.length + ' · ' + trigCount + '× geholt'})}
+    <div style="height:12px"></div>
     ${counterHtml}
     <div class="bsh-grid">${positiveCards}</div>
     ${negativeBlock}
-    <button class="btn ghost sm" id="backToPlayer2" style="margin-top:18px">← Zurück zum Profil</button>
+    ${blattFussHtml([{label:'Zurück zum Profil', ic:'user', attr:'id="backToPlayer2"'}])}
   `);
   const back = document.getElementById('backToPlayer2');
   if(back) back.onclick = () => closeSheet();
