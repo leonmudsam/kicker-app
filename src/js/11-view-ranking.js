@@ -546,8 +546,10 @@ function _vRankingCore(){
       // längste Niederlagenserie der Liga ist kein Verdienst — die bitterste
       // Pleite auch nicht.
       const rek = chroniclesOfPlayer(pp.id).filter(x => !x.neg).length;
-      const sub = [t ? t + ' Titel' : '', entry.s.games + ' Sp.',
-                   rek ? rek + ' Rek.' : '']
+      // Ausgeschrieben: „90 Sp." und „10 Rek." waren die letzten Kürzel
+      // der Tafel, und jede Zeile steht auf einer eigenen Linie.
+      const sub = [t ? t + ' Titel' : '', entry.s.games + ' Spiele',
+                   rek ? rek + (rek === 1 ? ' Rekord' : ' Rekorde') : '']
         .filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
       return `
         <div class="pod-karte ${METALL[platz-1]}${platz===1?' erster':''}" data-detail="${pp.id}">

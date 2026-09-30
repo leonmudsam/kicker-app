@@ -349,7 +349,7 @@ function teamAchievements(p1Id, p2Id){
   // Display-Werte für die Anzeige der erreichten Quote/Anzahl
   const DISP_FNS = {
     mvt:              x => (x.v>=0?'+':'')+Math.round(x.v),
-    bestDuo:          x => x.g+' Sp.',
+    bestDuo:          x => x.g+' Spiele',
     worstTeam:        x => Math.round(x.w/x.g*100)+'%',
     zirkus:           x => Math.round(x.pct*100)+'%',
     baustelle:        x => x.best+'er',

@@ -126,7 +126,7 @@ function playerAwards(id){
     cheesePlatter:x=>Math.round(x.v*100)       // höher = schlechter, direkt sortieren
   };
   const teamDisplayFns={
-    mvt:x=>(x.v>=0?'+':'')+Math.round(x.v), bestDuo:x=>x.g+' Sp.',
+    mvt:x=>(x.v>=0?'+':'')+Math.round(x.v), bestDuo:x=>x.g+' Spiele',
     worstTeam:x=>Math.round(x.w/x.g*100)+'%',
     endgegner:x=>Math.round(x.pct*100)+'%',
     zirkus:x=>Math.round(x.pct*100)+'%',

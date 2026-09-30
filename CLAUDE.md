@@ -3211,7 +3211,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   ein Befehl in Du-Form („Tippe auf eine Linie"), ein englisches Wort
   („Tap für Details", „Letztes Update", „Rollen-Performance", „Peak",
   „Savepoint", „Backup") oder ein Kürzel („min. 5 Siege", „Min. Spiele",
-  „Ø 7,5 Tore/Sp."), und eins steht in der Einzahl („1 Niederlagen" stand
+  „Ø 7,5 Tore/Sp.", „257 Sp.", „10 Rek.", „39-30T · 116-72G" mit einer
+  Legende darüber), und eins steht in der Einzahl („1 Niederlagen" stand
   als aktuelle Serie im Profil). `tests/blatt` liest den Text der Reiter und von
   dreiundzwanzig Blättern danach ab.
 - **Keine Possessivpronomen über einen Spieler.** „42 % seiner Niederlagen"
