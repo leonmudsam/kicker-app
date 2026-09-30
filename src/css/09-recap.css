@@ -237,13 +237,29 @@
   .bl-feld i.er{top:4px;width:12px;height:12px;margin-left:-6px;background:var(--gold);
     box-shadow:0 0 0 2px var(--surface),0 0 10px rgba(247,207,74,.6)}
   .bl-feld-l{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:var(--faint);margin-top:2px}
-  .bl-spanne{position:relative;height:24px}
-  .bl-spanne-bahn{position:absolute;left:0;right:0;top:11px;height:2px;background:var(--surface3)}
-  .bl-spanne-ber{position:absolute;top:7px;height:10px;border-radius:5px;background:rgba(247,207,74,.18);
-    box-shadow:inset 0 0 0 1px rgba(247,207,74,.42)}
-  .bl-spanne-pkt{position:absolute;top:5px;width:14px;height:14px;margin-left:-7px;border-radius:50%;
-    background:var(--gold);box-shadow:0 0 0 2px var(--surface)}
-  .bl-ref{position:absolute;top:1px;width:2px;height:22px;margin-left:-1px;border-radius:1px;background:var(--silber);opacity:.8}
+  /* Wie knapp: die Luft als Zahl, als Zellen und als zwei Balken. Die Farbe
+     des Worts folgt dem Abstand — eng rot getönt wäre eine Richtung
+     [§C25], also bleibt es Gold für den Halter und Metall für den Rest. */
+  .bl-luft{display:grid;gap:8px}
+  .bl-lz-kopf{display:flex;align-items:baseline;gap:8px}
+  .bl-lz-zahl{font-family:'Archivo Black',sans-serif;font-size:30px;line-height:1;color:var(--gold);
+    text-shadow:0 0 18px rgba(247,207,74,.35)}
+  .bl-lz-was{font-size:12px;color:var(--ink2)}
+  .bl-lz-wort{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.08em;
+    text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2)}
+  .bl-luft[data-ton="eng"] .bl-lz-wort{border-color:rgba(247,207,74,.45);color:var(--gold)}
+  .bl-luft[data-ton="weit"] .bl-lz-wort{background:rgba(247,207,74,.12);border-color:rgba(247,207,74,.55);color:var(--gold)}
+  .bl-lz-zellen{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+  .bl-lz-zellen i{width:14px;height:14px;border-radius:3px;background:linear-gradient(160deg,var(--gold),#b8871f);
+    box-shadow:0 0 8px rgba(247,207,74,.35)}
+  .bl-lz-zellen b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--gold);margin-left:4px}
+  .bl-lz-z{display:grid;grid-template-columns:minmax(0,72px) minmax(0,1fr) 38px;gap:8px;align-items:center;font-size:11.5px}
+  .bl-lz-z .n{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bl-lz-z .b{height:8px;border-radius:4px;background:var(--surface3);overflow:hidden}
+  .bl-lz-z .b i{display:block;height:100%;border-radius:4px;background:var(--muted)}
+  .bl-lz-z.a .b i{background:linear-gradient(90deg,#b8871f,var(--gold));box-shadow:0 0 10px rgba(247,207,74,.45)}
+  .bl-lz-z.a .n,.bl-lz-z.a .v{color:var(--gold)}
+  .bl-lz-z .v{text-align:right;color:var(--ink2)}
   .bl-verlauf{display:block;width:100%;height:84px;overflow:visible}
   .bl-verlauf polyline{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
   .bl-verlauf .bl-v-a{stroke:var(--gold);stroke-width:2.2}

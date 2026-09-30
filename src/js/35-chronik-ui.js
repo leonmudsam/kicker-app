@@ -397,7 +397,7 @@ function showChronicle(cid){
       : ['Für die Laufbahn', 'Eine Schattenseite zählt nichts und zieht nichts ab']
   ].filter(Boolean);
   // Der Beleg [§C27]: woraus der Bestwert besteht, wo er im Feld liegt, wie
-  // sicher der Abstand ist und wie es dazu kam — aus chronicleRang und dem
+  // knapp der Abstand ist und wie es dazu kam — aus chronicleRang und dem
   // Beleg des Katalogs, ohne zweite Rechnung.
   const halterSet = new Set(h ? (h.pids || [h.pid]) : []);
   const zweit = rang.find(r => !halterSet.has(r.pid)) || null;

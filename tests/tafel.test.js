@@ -1411,7 +1411,7 @@ ok(_awNenner.zkNenner && _awNenner.zkNenner.gemeldet === _awNenner.zkNenner.geza
 // Ein Rekord belegte seinen Bestwert mit einem Satz. „72 %" aus fünfzig und
 // aus fünfhundert Partien sind zwei Aussagen, und ob der Zweite knapp
 // dahinter liegt, stand nur in der Liste. Der Beleg zeigt die Stichprobe als
-// Zellen, die Halter im Feld, die Spanne um einen Anteil und den Verlauf —
+// Zellen, die Halter im Feld, den Vorsprung in Ergebnissen und den Verlauf —
 // und jede dieser Zahlen muss stimmen, sonst ist die Zeichnung eine
 // Behauptung mehr.
 const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
@@ -1448,18 +1448,20 @@ const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
       if(/data-vergleich/.test(out)) f.push(c.id + ': Knopf ohne Bezug zum Rekord');
       const nm = (pmap()[h.pid] || {}).name;
       if(nm && out.indexOf('Profil von ' + esc(nm)) < 0) f.push(c.id + ': Knopf ohne den Namen des Halters');
-      // Der Satz der Spanne kommt ohne Statistik aus: „mehr als Zufall"
-      // war richtig gerechnet und von niemandem zu verstehen.
-      if(/Zufall|Wahrscheinlichkeit/.test(out)) f.push(c.id + ': Spanne in Statistiksprache');
-      const sp = out.match(/zwischen <b>(\\d+) und (\\d+) %/);
-      if(sp){
+      // Wie knapp: so viele der eigenen Gelegenheiten hätten anders
+      // ausgehen müssen, damit der Zweite gleichauf läge — unabhängig
+      // nachgerechnet aus dem Beleg des Zweiten. Die Spanne davor war
+      // richtig gerechnet und nicht zu lesen.
+      if(/Zufall|Wahrscheinlichkeit|irgendwo zwischen/.test(out)) f.push(c.id + ': Statistiksprache');
+      const lz = out.match(/data-luft="(\\d+)"/);
+      if(lz){
         spannen++;
-        // Unabhängig nachgerechnet: Wilson, 90 %.
-        const p = a.k / a.n, n = a.n, z2 = 1.645 * 1.645, d = 1 + z2 / n;
-        const m = (p + z2 / (2 * n)) / d, w = 1.645 * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / d;
-        if(Math.round(Math.max(0, m - w) * 100) !== +sp[1] || Math.round(Math.min(1, m + w) * 100) !== +sp[2])
-          f.push(c.id + ': Spanne ' + sp[1] + '–' + sp[2]);
-        if(!_belegIstQuote(h.ev, a)) f.push(c.id + ': Spanne um etwas, das kein Anteil ist');
+        const halter = new Set(h.pids || [h.pid]);
+        const zw = chronicleRang(c.id).find(r => !halter.has(r.pid));
+        const za = zw && belegAnteil(zw.ev);
+        const soll = za ? Math.max(0, Math.ceil(a.k - za.k / za.n * a.n - 1e-9)) : null;
+        if(soll !== +lz[1]) f.push(c.id + ': ' + lz[1] + ' Ergebnisse Vorsprung statt ' + soll);
+        if(!_belegIstQuote(h.ev, a)) f.push(c.id + ': Vorsprung um etwas, das kein Anteil ist');
       }
       // Der Verlauf endet heute beim Bestwert, und „vorn seit" zeigt auf
       // einen Monat, in dem der Halter wirklich vorn lag.
@@ -1475,9 +1477,9 @@ const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
   return {f, zellen, felder, spannen, verlaeufe};
 })())`));
 ok(_beleg.f.length === 0 && _beleg.zellen > 5 && _beleg.felder > 30 && _beleg.spannen > 3 && _beleg.verlaeufe > 30,
-   'der Beleg zählt seine Stichprobe, zeigt die Halter im Feld, rechnet die Spanne und endet beim Bestwert',
+   'der Beleg zählt seine Stichprobe, zeigt die Halter im Feld, zählt den Vorsprung und endet beim Bestwert',
    _beleg.f.slice(0, 5).join(' · ') || _beleg.zellen + ' Zellenreihen · ' + _beleg.felder + ' Felder · '
-     + _beleg.spannen + ' Spannen · ' + _beleg.verlaeufe + ' Verläufe');
+     + _beleg.spannen + ' Vorsprünge · ' + _beleg.verlaeufe + ' Verläufe');
 
 // ── Ein Strich für jedes Zeichen [§C27] ─────────────────────────────
 // Die Strichstärke stand an 78 Stellen in 13 Werten: dieselbe Krone war in

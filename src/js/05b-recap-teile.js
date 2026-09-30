@@ -164,8 +164,8 @@ function rcpNotizHtml(o){
 //     etwas sagt:
 //       Woraus         die Stichprobe als Zellen, eine je Gelegenheit
 //       Wo im Feld     jeder im Rennen als Punkt, der Halter hervorgehoben
-//       Wie sicher     die Spanne, in der ein Anteil bei dieser Stichprobe
-//                      liegt, und der Zweite darin
+//       Wie knapp      wie viele der eigenen Gelegenheiten anders hätten
+//                      ausgehen müssen, damit der Zweite gleichauf läge
 //       Wie es dazu kam  der Verlauf über die Monatsenden
 //     Gerechnet wird hier nichts Neues: die Zahlen kommen aus dem Beleg des
 //     Katalogs, aus chronicleRang, aus AW_WERT und aus dem Zeitschnitt, den
@@ -222,36 +222,36 @@ function belegFeldHtml(eintraege, mitSkala){
   return `<div class="bl-feld" title="${e.length} im Feld"><span class="bl-feld-bahn"></span>`
     + `<span class="bl-feld-mitte" style="left:${pos(mitte.v)}%"></span>${punkte}</div>${skala}`;
 }
-// Wie sicher: die Spanne um einen Anteil (Wilson, 90 %). Sie sagt, was bei
-// dieser Stichprobe noch Zufall sein kann — und ob der Zweite darin liegt.
-function belegSpanne(k, n){
-  const z = 1.645, p = k / n, z2 = z * z, d = 1 + z2 / n;
-  const c = (p + z2 / (2 * n)) / d;
-  const h = z * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / d;
-  return [Math.max(0, c - h), Math.min(1, c + h)];
-}
-function belegSpanneHtml(a, zweiter){
-  if(!a || a.n < 3) return '';
-  const [u, o] = belegSpanne(a.k, a.n);
-  const pz = v => Math.round(v * 100);
-  const q = a.k / a.n;
-  // In Worten, die man ohne Statistik versteht. Dort stand „der Abstand ist
-  // mehr als Zufall" — richtig gerechnet, aber niemand wusste, was es
-  // heißt. Gesagt wird jetzt, was die Spanne bedeutet: ein paar Partien
-  // anders, und der Wert läge woanders; und ob der Zweite dann vorne wäre.
-  let satz = `${a.k} von ${a.n} sind ${pz(q)} %. Wären ein paar Partien anders ausgegangen, läge der Wert wohl irgendwo zwischen <b>${pz(u)} und ${pz(o)} %</b>.`;
-  let ref = '';
-  if(zweiter && zweiter.q != null && isFinite(zweiter.q)){
-    const drin = zweiter.q >= u - 1e-9 && zweiter.q <= o + 1e-9;
-    ref = `<span class="bl-ref" style="left:${(zweiter.q * 100).toFixed(1)}%"></span>`;
-    satz += drin
-      ? ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % in diesem Bereich: der Vorsprung ist noch knapp.`
-      : ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % klar darunter: der Vorsprung ist gesichert.`;
-  }
-  return `<div class="bl-spanne"><span class="bl-spanne-bahn"></span>
-      <span class="bl-spanne-ber" style="left:${(u * 100).toFixed(1)}%;width:${((o - u) * 100).toFixed(1)}%"></span>
-      ${ref}<span class="bl-spanne-pkt" style="left:${(q * 100).toFixed(1)}%"></span></div>
-    <div class="bl-feld-l num"><span>0 %</span><span>50 %</span><span>100 %</span></div>
+// Wie knapp: wie viele der eigenen Gelegenheiten anders hätten ausgehen
+// müssen, damit der Zweite gleichauf läge. Dort stand vorher die Spanne um
+// den Anteil (Wilson, 90 %) — „Wären ein paar Partien anders ausgegangen,
+// läge der Wert wohl irgendwo zwischen 36 und 57 %" war richtig gerechnet
+// und trotzdem nicht zu lesen: eine Spanne ist eine Frage an den Leser.
+// Eine Zahl, die man abzählen kann, beantwortet sie: zwei Partien.
+function belegLuft(k, n, q2){ return Math.max(0, Math.ceil(k - q2 * n - 1e-9)); }
+const _BELEG_ZAHL = ['keine', 'eine', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf'];
+function belegLuftHtml(a, zweiter){
+  if(!a || !zweiter || zweiter.q == null || !isFinite(zweiter.q)) return '';
+  const m = belegLuft(a.k, a.n, zweiter.q);
+  const q = a.k / a.n, pz = v => Math.round(v * 100);
+  const [wort, ton] = m === 0 ? ['gleichauf', 'eng'] : m === 1 ? ['hauchdünn', 'eng']
+    : m <= 3 ? ['knapp', 'eng'] : m <= 7 ? ['solide', 'mittel'] : ['deutlich', 'weit'];
+  const zahl = _BELEG_ZAHL[m] || String(m);
+  const satz = m === 0
+    ? `${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % gleichauf.`
+    : `${zahl.charAt(0).toUpperCase() + zahl.slice(1)} der ${a.n} Ergebnisse anders, und <b>${esc(zweiter.name)}</b> läge gleichauf.`;
+  // Die Luft als Zellen: je eine für eine Gelegenheit Vorsprung, höchstens
+  // zwölf — darüber ist der Vorsprung deutlich, und die Zahl sagt den Rest.
+  const zellen = Array.from({length: Math.min(m, 12)}, () => '<i></i>').join('') + (m > 12 ? '<b>+' + (m - 12) + '</b>' : '');
+  const balken = (wert, name, cls) => `<div class="bl-lz-z ${cls}"><span class="n">${esc(name)}</span>`
+    + `<span class="b"><i style="width:${(wert * 100).toFixed(1)}%"></i></span><span class="v num">${pz(wert)} %</span></div>`;
+  return `<div class="bl-luft" data-luft="${m}" data-ton="${ton}">
+      <div class="bl-lz-kopf"><span class="bl-lz-zahl num">${m}</span>
+        <span class="bl-lz-was">${m === 1 ? 'Ergebnis' : 'Ergebnisse'} Vorsprung</span>
+        <span class="bl-lz-wort">${wort}</span></div>
+      ${m ? `<div class="bl-lz-zellen">${zellen}</div>` : ''}
+      ${balken(q, 'Bestwert', 'a')}${balken(zweiter.q, zweiter.name, 'b')}
+    </div>
     <div class="bl-satz">${satz}</div>`;
 }
 // Wie es dazu kam: der Wert des Halters und des Zweiten an jedem Monatsende
@@ -302,8 +302,8 @@ function belegHtml(o){
   const feld = belegFeldHtml(o.feld, true);
   if(feld) teile.push(blattAbschnittHtml('users', 'Wo im Feld', o.feld.length + ' im Rennen')
     + `<div class="bl-box">${feld}${o.dahinter ? `<div class="bl-satz">${o.dahinter}</div>` : ''}</div>`);
-  const sp = a && _belegIstQuote(o.ev, a) ? belegSpanneHtml(a, o.zweiter) : '';
-  if(sp) teile.push(blattAbschnittHtml('target', 'Wie sicher') + `<div class="bl-box">${sp}</div>`);
+  const lz = a && _belegIstQuote(o.ev, a) ? belegLuftHtml(a, o.zweiter) : '';
+  if(lz) teile.push(blattAbschnittHtml('target', 'Wie knapp') + `<div class="bl-box">${lz}</div>`);
   if(o.verlauf) teile.push(blattAbschnittHtml('chartUp', 'Wie es dazu kam', 'Monatsenden')
     + `<div class="bl-box" data-verlauf="${esc(o.verlauf)}"><div class="bl-lade"></div></div>`);
   return teile.join('');
