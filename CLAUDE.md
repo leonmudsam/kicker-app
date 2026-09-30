@@ -111,11 +111,17 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Zeichenraster, Reiter, Kacheln, statistische Belege,
                       Stories samt Faden zwischen Karten, Blätter und die
                       Reihenfolge der Umsetzung (aufwertung.html), und der
-                      Entwurf der Insignium-Leiter mit sieben Stufen in zwei
-                      Richtungen — Schicht für Schicht oder sieben Gegenstände
-                      in einer Bauweise, je 21 Zeichnungen in der Machart von
-                      35b-prestige.js —, dazu Bewegung, die etwas erklärt, und
-                      neue gezeichnete Ansichten (aufwertung-2.html)
+                      Entwurf der Insignium-Leiter mit sieben Stufen als
+                      sieben Gegenstände in einer Bauweise: eine Medaille auf
+                      einem Kranz, geprägt mit Fuge statt Haarlinie, vom Reif
+                      über Zweig, Eiche und Lorbeer zu Krone und Stern, ohne
+                      Band, die Raute mit der Platzierung am Fuß und der Rang
+                      als Schimmer im Metall, 21 Zeichnungen in fünf Rängen
+                      samt Bühne für den Aufstieg — eingebaut ist stattdessen
+                      die Leiter in der Machart von 35b-prestige.js [§C30],
+                      vom Entwurf kommt der Schimmer —, dazu
+                      Bewegung, die etwas erklärt, und neue gezeichnete
+                      Ansichten (aufwertung-2.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
@@ -142,7 +148,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **821**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **822**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -327,7 +333,7 @@ globalem Zustand ist.
 
 | Suite | prüft | Checks |
 |---|---|--:|
-| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird, den Katalog der fünfundsechzig samt seinen fünf Kammern, Grundwerten, eindeutigen Zeichen und vollständigen Angaben, die festen Endfenster, den Serienstand vor der Partie, die Rekordlage ohne spätere Partien, die Gegenpaare mit derselben Mindestbasis, die gestrichenen Rekorde samt ihrer alten Karten und die Laufbahn aus lauter Niederlagen, die nichts gewinnt, den sichtbaren Text, der die App nicht erklärt, und die acht Rekorde aus engen Partien, Gegnerkreis, Niederlagen, Wiedersehen, Pleitenserie, Serienantwort, Pause und Rolle, jeder ein zweites Mal aus den rohen Partien nachgerechnet, die Beschreibung jeder Auszeichnung als Satz ohne Kürzel, die Einzahl, wo eins steht, „jeder" statt „mindestens 100 %" und keine Auszeichnung, die wie eine Rangstufe heißt | 1447 |
+| `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird, den Katalog der fünfundsechzig samt seinen fünf Kammern, Grundwerten, eindeutigen Zeichen und vollständigen Angaben, die festen Endfenster, den Serienstand vor der Partie, die Rekordlage ohne spätere Partien, die Gegenpaare mit derselben Mindestbasis, die gestrichenen Rekorde samt ihrer alten Karten und die Laufbahn aus lauter Niederlagen, die nichts gewinnt, den sichtbaren Text, der die App nicht erklärt, und die acht Rekorde aus engen Partien, Gegnerkreis, Niederlagen, Wiedersehen, Pleitenserie, Serienantwort, Pause und Rolle, jeder ein zweites Mal aus den rohen Partien nachgerechnet, die Beschreibung jeder Auszeichnung als Satz ohne Kürzel, die Einzahl, wo eins steht, „jeder" statt „mindestens 100 %" und keine Auszeichnung, die wie eine Rangstufe heißt, die Breaking-Grenze der beiden obersten Insignium-Stufen und den Schimmer, der mit der Leiter wächst | 1451 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie, jede CSS-Variable, die auch gelesen wird, die Erklärung jeder Award-Kachel, die die Schwelle nennt, die gilt, und jede Schriftangabe mit einer Schriftfamilie dahinter, jedes Award-Zeichen, das im Katalog steht, das Podest, auf dem punktgleiche Halter denselben Platz tragen, und keinen Award, der wie eine Chronik heißt, die etwas anderes misst, und jede Award-Kachel, die Zahl und Einheit aus derselben Tabelle nennt wie Blatt und Profil, und jedes Zeichen, das seinen Strich aus einer Regel zieht, und den Beleg, der seine Stichprobe zählt, die Halter im Feld zeigt, die Spanne richtig rechnet, in Worten ohne Statistik erklärt und beim Bestwert endet, und den Knopf des Rekord-Blatts, der den Halter nennt | 203 |
 | `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die Karte, die jede Partie des Fensters bekommt, samt ihren Anlässen in der Schlagzeile, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die Angaben, die eine Rekordkarte ans Storysystem weitergibt, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse, die These, die nicht vor dreissig Tagen wiederkommt, den Schlusssprint bei offener Lage, den Spitzenwechsel, der keinem Deckel zum Opfer faellt, die kurze Strecke als eigene Karte und den Saison-Rueckblick, der seinen Monat abschliesst, den zweiten Lauf, der dieselben IDs, Zeitpunkte, Gruppen und Texte ergibt, und jeden Wechsel eines Tages im Blatt des Titelrennens den rohen Grundwert, der nie als erhaltene Punkte dasteht, die drei Ebenen aus Tafelplatz, Profileintrag und Prestigequelle den Tag, an dem die Monatstafel aufgeht, und die Zeile, die ihre eigene Uhrzeit nennt, neben der Wirkung, die einmal dasteht, den Anlass eines Breaking, der als erste Zeile steht, gekennzeichnet ist und den Nachsatz der Karte trägt, die neuen Liga-Rekorde, die im Feed vorkommen, und den Fun Fact, der seine Slot-Stunde trägt und nicht die Uhrzeit seines Lesers, die Breaking-Karte, die die übrigen Meldungen ihrer Partie mitnimmt und die seltene Auszeichnung dabei stehen lässt, das Ergebnis, das eine Auszeichnung derselben Partie schon erzählt, und den Spitzenwechsel, der seinen direkten Vorgänger nennt statt das Ergebnis seines Bandes, den Tagesdeckel, der nur zählt, was er wegnehmen kann, und den Tafel-Moment, der zuerst zeigt, was Wirkung hat, seinen Rang nicht aus der Anzeigereihenfolge zieht, im Band des Spieltags bleibt, beim Dazukommen einer Zeile dieselbe Karte bleibt und seine Ausbauten erst im Blatt zeigt, die Serienmarke, die an ihrer Partie hängt und nach dem Riss nicht verschwindet, und den Spieler des Tages an jedem Spieltag des Fensters, die seltene Auszeichnung, die in der Karte ihrer Partie steht und dort gekennzeichnet ist, die Karte, die stehen bleibt, wenn eine weitere Partie dazukommt, samt ihrem Zeitpunkt und der einen Karte je Rekord und Spieltag, die spätere von zwei gleichen Aussagen, die beiden Deckel, die ihre Plätze in der Reihenfolge der Zeit vergeben, und die Zahl der gebündelten Meldungen im Breaking-Balken, jeden Genannten einer Tafel-Karte samt der Prestige-Zelle, die ihre Summe ist, die Zeile, die ihren Namen und den Kartentext nicht wiederholt, den Zeitpunkt, der einer gezeigten Zeile gehört, die negative Gruppe, die nicht mitreist, und die Fenster-Bestmarke, die sich nicht mit dem Wert ihres Vorgängers vergleicht, den großen Wert, der der Sortierwert seines Belegs ist, das Band, das die Partie über ihm nicht wiederholt, die Pleitenserie, die den Tag ihres letzten Siegs nennt, die Aufzählung, die nur in der Zahlenreihe steht, den Blattkopf, der so viele Wappen zeigt, wie seine Zeile Namen nennt, den Schlusssprint, der keinen Nachsatz bekommt, den Satz, der nicht auf zwei Punkten endet, die gewöhnliche Auszeichnung, die das Ergebnis ihrer Partie deckt, den Elo-Gewinn, der den Spieler nennt, dem er gehört, das Blatt eines Jubiläums, das bis zu seiner Partie rechnet, die Tabelle des Monats, die den Stand ihres Tages nennt, und die Serienmarke, die die Laufbahn bis zu ihrer Partie zählt, den Faden, der auf eine ältere Karte im Feed zeigt und an den Partien stimmt, die Bildzone einer Partie, die ihrem Anlass folgt, mit den Partien stimmt, verschieden ausfällt und vom Satz nicht wiederholt wird, und den Lauf mit seiner nächsten Marke | 525 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, Unterlage, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung — **im echten Browser gemessen** | 80 |
@@ -2803,23 +2809,50 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   standen Wochen- und Tages-Rückblick zu großen Teilen als Inline-Style im
   JavaScript, und derselbe Spieler sah in drei Rückblicken dreimal anders
   aus. `tests/tafel` misst beides.
-- **§C30 Fünf Stufen, fünf Gegenstände.** Das Insignium hat fünf Stufen
-  (`INSIGNIEN`) bei 0, 500, 1200, 2800 und 4500 Prestige. Jede Spanne ist
-  teurer als die vorige; der Ordensstern liegt weit über der heutigen
-  Ligaspitze, bleibt durch die stetig wachsenden Erfolgsfolgen
-  aber erreichbar. Jede Stufe ist ein eigener GEGENSTAND:
+- **§C30 Sieben Stufen, sieben Gegenstände.** Das Insignium hat sieben
+  Stufen (`INSIGNIEN`) bei 0, 500, 1200, 1950, 2800, 3700 und 4700 Prestige.
+  Es waren fünf, und zwischen Volutenkranz und Lorbeerreif lagen 1600
+  Punkte ohne neues Zeichen, bis zum Ordensstern noch einmal 1700 — gerade
+  dort, wo jeder Punkt am schwersten zu holen ist. Jede Spanne ist teurer
+  als die vorige (500, 700, 750, 850, 900, 1000); der Ordensstern liegt weit
+  über der heutigen Ligaspitze, bleibt durch die stetig wachsenden
+  Erfolgsfolgen aber erreichbar. Jede Stufe ist ein eigener GEGENSTAND:
   **Reif** (das blanke Band, ab Grad II mit runden Nieten und einem zweiten
   Ring nach innen) · **Schildring** (Kartuschen quer auf dem Band, durch
   erhabene Stege zu einer Kette verbunden) · **Volutenkranz** (gespiegelte
   Schneckenpaare auf dem Reif, ein Stein am Ansatz, eine Perle im Auge) ·
-  **Lorbeerreif** (zwei Zweige, unten zusammenlaufend, oben offen) ·
-  **Ordensstern** (eine Glorie feiner Strahlen auf eigenem Kranzring, vier
-  Bündel auf den Diagonalen, Steine, Perlenkranz, darüber die Krone).
+  **Rankenkranz** (zwei Ranken steigen vom Fuß auf, treiben Blätter und
+  rollen sich oben nach außen ein — die Volute der Stufe davor, jetzt mit
+  Laub, und damit die Brücke zum Lorbeer) · **Lorbeerreif** (zwei Zweige,
+  unten zusammenlaufend, oben offen) · **Kronenreif** (derselbe Lorbeer,
+  voller und bis an den Scheitel geschlossen, darauf die Krone, Steine auf
+  dem Band) · **Ordensstern** (eine Glorie feiner Strahlen auf eigenem
+  Kranzring, vier Bündel auf den Diagonalen, Steine, Perlenkranz, darüber
+  die Krone). Der Kronenreif schließt höher als der Lorbeerreif, weil die
+  Krone allein bei 52 px kaum größer ist als die Lilie: gemessen
+  unterschieden sich Lorbeerreif III und Kronenreif I in vier Prozent der
+  Tinte. Seine Krone bleibt kleiner als die des Ordenssterns.
+  Die beiden obersten Stufen stehen als `INSIGNIUM_OBEN` an einer Stelle:
+  ihr erster Aufstieg ist Breaking [§C33], und als Zahl im Generator wäre
+  die Grenze beim Einfügen einer Stufe still beim Rankenkranz gelandet.
   Zwischen zwei Schwellen liegen drei Grade (`INSIGNIUM_GRADE`, ausgebaut
   in `INSIGNIUM_AUSBAU`). Ihre relativen Schwellen stehen in
-  `INSIGNIUM_GRAD_SCHWELLEN` (0, 16 und 40 %): Leon und Martin tragen in
-  den Referenzdaten Volutenkranz III, Julian folgt dahinter; zum Lorbeer
-  bleibt ein klarer Abstand. Der Grad baut den Gegenstand aus, die Stufe wechselt ihn.
+  `INSIGNIUM_GRAD_SCHWELLEN` (0, 16 und 40 %): Leon trägt in den
+  Referenzdaten Rankenkranz III, Martin und Julian folgen dicht dahinter;
+  zum Lorbeer bleibt ein klarer Abstand. Der Grad baut den Gegenstand aus, die Stufe wechselt ihn.
+  **Der Rang ist ein Schimmer, und höheres Prestige leuchtet mehr.** Die
+  Lichter des Metalls (`hell`, `glanz` in `_insSatz`) tragen die Rangfarbe
+  stärker als der Grund — Gold, Violett, Grün, Blau, Orange —, das Metall
+  bleibt Metall und wird nicht angemalt; auf dem Weißmetall der Legende
+  braucht das Gold mehr Anteil, sonst liest es sich als Creme. Dazu zwei
+  Lichter in der Rangfarbe, beide als Kreis mit einem Verlauf aus dem
+  gemeinsamen Topf und ohne Filter, weil ein `blur()` auf zwölf Wappen einer
+  Rangliste in jedem Bild des Scrollens kostet: die **Glut** am Innenrand
+  zwischen Gesicht und Band, vom Schildring an mit jedem Feld der Leiter
+  kräftiger, und ab dem Rankenkranz der **Hof** hinter dem Zeichen, mit
+  jeder Stufe kräftiger. So sieht man den Aufstieg auch dort, wo vom
+  Schmuck in einer Zeile wenig ankommt. Beide tragen `data-schein`: sie
+  sind Licht und keine Form, und die Messung des Schmucks lässt sie weg.
   Vorher waren drei der fünf Stufen dasselbe Bild in anderer Dichte: acht,
   zwölf, sechzehn Zacken auf einem Kreis. Damit lässt sich keine Leiter
   erzählen — und **kein Körper läuft mehr spitz aus**. Wo doch etwas
@@ -2827,7 +2860,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Oben und unten bleibt ein Platz frei.** Unten die Raute mit der
   Ligaposition (nur mit Band — in der Liste sitzen dort die Titelsterne
   [§C26]), oben der Kopf: ein Stein im Schildring, ab dem Volutenkranz die
-  **Lilie**, im Ordensstern die **Krone**. Der Kopf sagt auf einen Blick,
+  **Lilie**, ab dem Kronenreif die **Krone**. Der Kopf sagt auf einen Blick,
   in welcher Hälfte der Leiter jemand steht. Deshalb steht in keiner Stufe
   ein Körper auf zwölf oder auf sechs Uhr.
   Der Kopf gehört zum Zeichen, die Sterne nicht: sie stehen in einem eigenen
@@ -2901,10 +2934,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   ist `transition:all` und stellte auch den Blur zur Animation, der in jedem
   Bild alles hinter sich neu rechnet.
 
-  Gemessen, nicht behauptet: `tests/zeichen` rastert alle fünfzehn
-  Zeichnungen und zählt den **Schmuck** — die Bildpunkte, die ein Zeichen
-  vom blanken Reif unterscheiden. Von Feld 1 bis 15 fällt er nie, und zwei
-  Stufen stehen weiter auseinander als zwei Grade. Reine Deckung taugt
+  Gemessen, nicht behauptet: `tests/zeichen` rastert alle einundzwanzig
+  Zeichnungen ohne Hof und Glut und zählt den **Schmuck** — die Bildpunkte,
+  die ein Zeichen vom blanken Reif unterscheiden. Von Feld 1 bis 21 fällt er
+  nie, und zwei Stufen stehen weiter auseinander als zwei Grade. Reine Deckung taugt
   dafür nicht: eine Niete liegt AUF dem Band und verdeckt keinen Bildpunkt
   zusätzlich, obwohl man sie sieht.
   Der Ordensstern hat keine Grade, er zählt Zacken und hört nicht auf: mit
@@ -2917,9 +2950,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Schildring, Volutenkranz, Lorbeerreif und Ordensstern stehen müssten, und
   damit einen Platzhalter, der mit dem Zeichen eines Spielers nichts zu tun
   hatte. `insigniumStufeSvg` trägt seine Verläufe selbst und funktioniert
-  deshalb auch dort. Ein Feld ist **40 px** breit: bei 28 blieb vom
+  deshalb auch dort. Ein Feld ist **höchstens 40 px** breit: bei 28 blieb vom
   Schildring ein Ring, und die sechzehn des CSS-Punktes waren für einen Punkt
-  gedacht. `tests/blatt` misst beides.
+  gedacht. Sieben Felder und die Zahl daneben liefen bei 360 px über den
+  Rand; die Felder teilen sich deshalb die Zeile, und die Zahl steht
+  darunter. `tests/blatt` misst beides.
   Die Laufbahn zeigt die Leiter als Vitrine (`.lb-karus`/`.lb-k`): eine
   Stufe groß in der Mitte, die übrigen schiebt man heran — **oder tippt sie
   an**. Wischen allein hat die letzte Stufe nie erreicht: der Blatt-Zug
@@ -3625,9 +3660,9 @@ der ihn hält — und für sonst niemanden.
    fünfzig Katalogeinträge.
 3. **Die Schwellen in `INSIGNIEN` werden an der echten Liga kalibriert**
    [§C30]. Die Abstände steigen, aber nicht nach einer starren Verdopplung:
-   Leon und Martin sollen ungefähr Volutenkranz III tragen, Julian dicht
-   dahinter folgen, zum Lorbeer soll Luft bleiben und der erste Ordensstern bei
-   **4.500 Prestige** langfristig erreichbar sein.
+   Leon soll Rankenkranz III tragen, Martin und Julian dicht dahinter im
+   Rankenkranz, zum Lorbeer soll Luft bleiben und der erste Ordensstern bei
+   **4.700 Prestige** langfristig erreichbar sein.
 
 Nichts davon wird geschätzt. `tests/disziplinen` misst es an den echten
 Partien und fällt, wenn es kippt:
@@ -3640,8 +3675,10 @@ Partien und fällt, wenn es kippt:
 | mehr als die halbe Liga trägt mindestens den Schildring | die erste Sprosse zu hoch hängt |
 | der Beste trägt noch keinen Lorbeerreif | der Katalog die Spitze nach oben schiebt |
 | der Ordensstern ist von niemandem erreicht | dasselbe, eine Stufe höher |
+| nur Kronenreif und Ordensstern sind die obersten Stufen | die Breaking-Grenze beim Einfügen einer Stufe verrutscht [§C33] |
+| Glut und Hof in der Rangfarbe werden mit der Leiter nicht schwächer, die Lichter tragen die Rangfarbe | der Schimmer nicht mehr sagt, wer weiter oben steht [§C30] |
 | jede Stufe kostet mehr als die vorige | die Leiter nach oben flacher wird |
-| Leon und Martin tragen Volutenkranz III, Julian steht dicht dabei | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird der ABSTAND der drei und nicht ihre Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
+| Leon und Martin tragen den Rankenkranz, Leon in Grad III, Julian steht dicht dabei | Schwellen und Grade die heutige Liga falsch abbilden. Gemessen wird der ABSTAND der drei und nicht ihre Reihenfolge: die war festgeschrieben, und damit fiel die Zusicherung bei jedem Rekord, der Punkte verschiebt — kalibriert ist die Leiter und nicht die Tabelle |
 | mindestens 300 Punkte Luft zum Lorbeer | die nächste Form praktisch schon erreicht ist |
 | das Langzeitmodell kann den Ordensstern erreichen | ein weicher Deckel zur harten Obergrenze wird |
 | jede positive Dauerquelle behält einen positiven Zuwachs | spätere Ordensstern-Zacken mathematisch unerreichbar werden |
