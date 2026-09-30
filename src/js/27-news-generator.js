@@ -1854,7 +1854,6 @@ function _buildStories(){
     // ueber dem, was das Zeichen daneben schon feiert. Danach fuenf, acht,
     // zehn und jede fuenfte: sieben und zehn lagen dicht beieinander, acht
     // ist die Marke, die einen langen Spieltag abschliesst.
-    const marken = new Set([3, 5, 8, 10]);
     [...matches].sort((a, b) => mts(a) - mts(b)).forEach(m => {
       if(mts(m) > now.getTime()) return;
       const aGewinnt = m.winner === 'A';
@@ -1867,7 +1866,7 @@ function _buildStories(){
         // dass die 5er-Marke von gestern in der 8er von heute steckt.
         if(lauf[pid] === 1) laufStart[pid] = m.id;
         const n = lauf[pid];
-        const istMarke = marken.has(n) || (n > 10 && n % 5 === 0);
+        const istMarke = istSerienMarke(n);
         if(istMarke && mts(m) >= seit && pm[pid] && !pm[pid].hidden)
           kandidaten.push({pid, streak:n, when:new Date(m.created_at), matchId:m.id,
                            lauf:laufStart[pid]});

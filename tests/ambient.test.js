@@ -5872,5 +5872,159 @@ ok(_bisPartie.summe === 100 && _bisPartie.summe2 === 100 && !_bisPartie.englisch
    'das Blatt eines Jubiläums und eines Meilensteins rechnet bis zu seiner Partie',
    'Jubiläum ' + _bisPartie.summe + ', Meilenstein ' + _bisPartie.summe2);
 
+// ── Der Faden zeigt auf eine ältere Karte im Feed [§C33] ─────────────
+// Eine Karte, die eine frühere fortsetzt, sagt es — aber nur, wenn es
+// stimmt. Nachgerechnet wird jede Beziehung an den rohen Partien, nicht an
+// der Ableitung selbst: eine Wende ist der ERSTE Sieg nach der Pleitenserie,
+// eine Revanche die nächste Begegnung derselben zwei Duos an einem anderen
+// Tag, und eine Serie endet nur, wenn dazwischen keine Niederlage lag.
+const _faden = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const alle = getStoriesCache();
+  const fd = _newsFaeden(alle);
+  const nochmal = _newsFaeden(getStoriesCache()) === fd;
+  const by = new Map(alle.map(x => [x.id, x]));
+  const rohBy = new Map(_newsTexteAuffrischen(_cache._stories).map(x => [x.id, x]));
+  const glied = c => { const d = c.dataRef || {};
+    return d.type === 'sammel' ? (d.teile||[]).map(t => rohBy.get(t.id)).filter(Boolean) : [c]; };
+  const reihe = [...matches].sort((a,b) => mts(a) - mts(b));
+  const ix = new Map(reihe.map((m, i) => [m.id, i]));
+  const sieger = m => m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+  const verl = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+  const gl = (x, y) => x.length === y.length && x.every(v => y.includes(v));
+  const falsch = [], arten = {};
+  fd.forEach((f, id) => {
+    arten[f.art] = (arten[f.art] || 0) + 1;
+    const c = by.get(id), z = by.get(f.ziel);
+    if(!c || !z){ falsch.push(id + ' zeigt ins Leere'); return; }
+    if(!(new Date(z.when) < new Date(c.when))) falsch.push(id + ' zeigt nicht zurück');
+    if(!NEWS_FADEN_ART[f.art]) falsch.push(id + ' ohne Art');
+    const cs = glied(c).map(x => x.dataRef || {}), zs = glied(z).map(x => x.dataRef || {});
+    if(f.art === 'wende'){
+      const sp = cs.find(d => d.type === 'spiel'); const m = sp && reihe[ix.get(sp.matchId)];
+      const ls = zs.find(d => (d.type === 'team_loss_streak' && m && gl([d.a, d.b], sieger(m)))
+                            || (d.type === 'loss_streak' && m && sieger(m).includes(d.pid)));
+      if(!m || !ls){ falsch.push(id + ' Wende ohne Serie'); return; }
+      const wer = ls.type === 'loss_streak' ? [ls.pid] : [ls.a, ls.b];
+      for(let i = ix.get(ls.matchId) + 1; i < ix.get(m.id); i++){
+        const w = sieger(reihe[i]);
+        if(wer.every(p => w.includes(p))){ falsch.push(id + ' Wende nach einem früheren Sieg'); break; }
+      }
+    }
+    if(f.art === 'revanche'){
+      const sp = cs.find(d => d.type === 'spiel'); const m = sp && reihe[ix.get(sp.matchId)];
+      const vz = zs.find(d => d.type === 'spiel'); const v = vz && reihe[ix.get(vz.matchId)];
+      if(!m || !v || !gl(sieger(v), verl(m)) || !gl(verl(v), sieger(m))){ falsch.push(id + ' Revanche ohne Paarung'); return; }
+      if(tagKey(mts(v)) === tagKey(mts(m))) falsch.push(id + ' Revanche am selben Tag');
+      for(let i = ix.get(v.id) + 1; i < ix.get(m.id); i++){
+        const n = reihe[i], sd = [[n.a1,n.a2],[n.b1,n.b2]];
+        if(sd.some(x => gl(x, sieger(m))) && sd.some(x => gl(x, verl(m)))){ falsch.push(id + ' Revanche überspringt eine Begegnung'); break; }
+      }
+    }
+    if(f.art === 'ende'){
+      const k = cs.find(d => d.type === 'streak_killer');
+      const w = k && zs.find(d => d.type === 'win_streak' && d.pid === k.victimPid);
+      if(!w){ falsch.push(id + ' Ende ohne Serie'); return; }
+      for(let i = ix.get(w.matchId) + 1; i < ix.get(k.matchId); i++)
+        if(verl(reihe[i]).includes(k.victimPid)){ falsch.push(id + ' Ende einer schon gerissenen Serie'); break; }
+    }
+  });
+  // Gestellt: derselbe Rekord zweimal. Wer ihn vor der früheren Karte hielt
+  // und jetzt wieder hat, holt ihn zurück — wer ihn nur ausbaut, setzt fort.
+  const [A, B] = players.map(p => p.id);
+  const mk = (id, when, halter, vorher) => ({id, title:id, desc:'x', when:new Date(when),
+    dataRef:{type:'rekord_geholt', rekordId:'test_r', halter, vorher, playerIds:halter}});
+  const alt = mk('r1', '2026-08-20T10:00:00Z', [B], [A]);
+  const neu = mk('r2', '2026-08-24T10:00:00Z', [A], [B]);
+  const aus = mk('r3', '2026-08-25T10:00:00Z', [A], [A]);
+  const vorher = _cache._stories;
+  _cache._stories = [aus, neu, alt];
+  const g = _newsFaeden([aus, neu, alt]);
+  _cache._stories = vorher;
+  // Gestellt an echten Partien: ein Spieler gewinnt (Marke), verliert, und
+  // verliert noch einmal. Der Serienbruch der ERSTEN Niederlage beendet die
+  // Serie, der der zweiten nicht — sie war da schon gerissen. Dasselbe
+  // umgekehrt für die Wende: nur der erste Sieg nach der Pleite wendet sie.
+  const reiheS = [...matches].sort((a,b) => mts(a) - mts(b));
+  const P = players[0].id;
+  const eig = reiheS.filter(m => [m.a1,m.a2,m.b1,m.b2].includes(P));
+  const gew = m => (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).includes(P);
+  let i0 = eig.findIndex((m, i) => gew(m) && eig[i+1] && !gew(eig[i+1]) && eig[i+2] && !gew(eig[i+2]));
+  const [s1, s2, s3] = [eig[i0], eig[i0+1], eig[i0+2]];
+  const zeit = m => new Date(mts(m));
+  const ks = [
+    {id:'ws', title:'ws', desc:'x', when:zeit(s1), dataRef:{type:'win_streak', pid:P, streak:3, matchId:s1.id, lauf:s1.id}},
+    {id:'k2', title:'k2', desc:'x', when:zeit(s2), dataRef:{type:'streak_killer', victimPid:P, matchId:s2.id}},
+    {id:'k3', title:'k3', desc:'x', when:zeit(s3), dataRef:{type:'streak_killer', victimPid:P, matchId:s3.id}}];
+  let j0 = eig.findIndex((m, i) => !gew(m) && eig[i+1] && gew(eig[i+1]) && eig[i+2] && gew(eig[i+2]));
+  const [w1, w2, w3] = [eig[j0], eig[j0+1], eig[j0+2]];
+  const sp = m => ({id:'sp_'+m.id, title:'sp', desc:'x', when:zeit(m), dataRef:{type:'spiel', matchId:m.id}});
+  const ws = [{id:'ls', title:'ls', desc:'x', when:zeit(w1), dataRef:{type:'loss_streak', pid:P, streak:3, matchId:w1.id, lauf:w1.id}},
+              sp(w2), sp(w3)];
+  const vorherS = _cache._stories;
+  _cache._stories = ks.slice().reverse();
+  const gk = _newsFaeden(ks.slice().reverse());
+  _cache._stories = ws.slice().reverse();
+  const gw = _newsFaeden(ws.slice().reverse());
+  _cache._stories = vorherS;
+  const endeOk = (gk.get('k2')||{}).art === 'ende' && !gk.has('k3');
+  const wendeOk = (gw.get('sp_'+w2.id)||{}).art === 'wende' && (gw.get('sp_'+w3.id)||{}).art !== 'wende';
+  return {n: fd.size, arten, falsch, nochmal, endeOk, wendeOk,
+    zurueck: (g.get('r2')||{}).art + '→' + (g.get('r2')||{}).ziel,
+    weiter: (g.get('r3')||{}).art + '→' + (g.get('r3')||{}).ziel,
+    erste: g.has('r1')};
+})())`));
+ok(_faden.n > 0 && _faden.falsch.length === 0,
+   'jeder Faden zeigt auf eine ältere Karte im Feed und stimmt mit den Partien',
+   _faden.falsch.slice(0, 2).join(' | ') || JSON.stringify(_faden.arten));
+ok(_faden.arten.wende > 0 && _faden.arten.ende > 0 && _faden.arten.revanche > 0,
+   'Wende, Ende und Revanche kommen im Fenster vor', JSON.stringify(_faden.arten));
+ok(_faden.zurueck === 'zurueck→r1' && _faden.weiter === 'weiter→r2' && !_faden.erste,
+   'ein Rekord kommt zurück oder wird fortgesetzt, die erste Karte hat keinen Faden',
+   _faden.zurueck + ' · ' + _faden.weiter);
+ok(_faden.nochmal, 'derselbe Bestand rechnet den Faden nicht zweimal');
+ok(_faden.endeOk && _faden.wendeOk,
+   'nur der erste Riss beendet eine Serie, nur der erste Sieg wendet eine Pleitenserie',
+   'Ende ' + _faden.endeOk + ', Wende ' + _faden.wendeOk);
+
+// ── Bogen und Chips einer Partie [§C33] ─────────────────────────────
+// Die Siegchance steht als Bogen im Fuß, der Gewinn je Sieger als Chip mit
+// Gesicht — und der Satz darüber nennt beides nicht noch einmal. Der Bogen
+// trägt dieselbe Zahl wie der Satz, die Chips dieselbe wie das Blatt.
+const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = getStoriesCache().filter(s => _newsSorte(s) === 'spiel' && (s.dataRef||{}).matchId);
+  const falsch = []; let n = 0;
+  alle.forEach(s => {
+    const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
+    if(!m) return;
+    const html = _newsCardHtmlM2(s, false, false);
+    const b = html.match(/nf-bogen[^>]*>[\\s\\S]*?<b class="num">(\\d+) %<\\/b>/);
+    const tp = (glieder => glieder.find(x => x.type === 'spiel'))(
+      (d.type === 'sammel' ? (d.teile||[]) : [d]).map(t => t.dataRef || t));
+    const quote = d.quote != null ? d.quote : null;
+    if(!b){ falsch.push(s.id + ' ohne Bogen'); return; }
+    n++;
+    if(quote != null && +b[1] !== Math.max(1, quote)) falsch.push(s.id + ' Bogen ' + b[1] + ' statt ' + quote);
+    const w = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+    const chips = [...html.matchAll(/nf-eloc[\\s\\S]*?<b class="[gr]">([+-]?\\d+)<\\/b>/g)].map(x => +x[1]);
+    const soll = w.map(p => _newsEloDelta(p, m.id)).filter(v => v != null);
+    if(chips.join() !== soll.join()) falsch.push(s.id + ' Chips ' + chips + ' statt ' + soll);
+    const satz = (html.match(/class="nf-d">([\\s\\S]*?)<\\/div>/) || [,''])[1].replace(/<[^>]+>/g, '');
+    if(/Siegchance lag|bringt der Sieg/.test(satz)) falsch.push(s.id + ' Satz wiederholt den Fuß');
+  });
+  const ser = [_newsSerienBand(4, false, true), _newsSerienBand(8, false, true),
+               _newsSerienBand(6, true, true), _newsSerienBand(5, false, false)];
+  const leer = h => (h.match(/<i class="x">/g) || []).length;
+  return {n, falsch, ser: ser.map(h => leer(h) + (/Marke (\\d+)/.exec(h) || [,'-'])[1])};
+})())`));
+ok(_bogen.n > 0 && _bogen.falsch.length === 0,
+   'jede Partie-Karte trägt Bogen und Chips, und der Satz wiederholt sie nicht',
+   _bogen.falsch.slice(0, 2).join(' | ') || _bogen.n + ' Karten');
+ok(_bogen.ser.join() === '15,210,0-,0-',
+   'der Lauf zeigt die nächste Marke als leere Felder, eine Pleitenserie hat keine',
+   _bogen.ser.join(' · '));
+
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

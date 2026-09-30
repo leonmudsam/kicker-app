@@ -48,6 +48,16 @@ function openNewsDetail(sid){
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
   if(!nd || !bg) return;
+  // Der Faden [§C33] in beide Richtungen: woran diese Karte anschließt und
+  // welche spätere sie fortsetzt. Dieselbe Ableitung wie im Feed.
+  let fadenHtml = '';
+  try {
+    const fd = _newsFaeden(stories);
+    const zurueck = fd.get(sid);
+    let weiter = null;
+    fd.forEach((f, id) => { if(f.ziel === sid && !weiter) weiter = {art: f.art, von: id}; });
+    fadenHtml = _newsFadenHtml(zurueck, stories) + _newsFadenHtml(weiter, stories, true);
+  } catch(e){}
   // Das Blatt setzt fort, was die Karte angefangen hat: dieselbe Rubrik,
   // dasselbe Motiv, dieselben fetten Akzente [§C27]. Vorher stand oben der
   // Kategorienname aus der Datenbank („Badge & Awards"), den es auf der
@@ -75,10 +85,14 @@ function openNewsDetail(sid){
     </div>
     <div class="nd-desc">${_newsBetont(lead)}</div>
     ${body}
+    ${fadenHtml ? `<div class="nd-faeden">${fadenHtml}</div>` : ''}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
   document.getElementById('ndCloseBtn').onclick = closeNewsDetail;
   document.getElementById('ndXBtn').onclick = closeNewsDetail;
+  nd.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
+    el.onclick = () => openNewsDetail(el.dataset.ziel);
+  });
   // Match-Refs: bei Klick zum Match-Detail springen
   nd.querySelectorAll('[data-mid]').forEach(el => {
     el.onclick = () => {
@@ -558,10 +572,7 @@ function _ndChanceSkala(chance){
   const c = Number(chance);
   if(!isFinite(c) || c <= 0 || c >= 1) return '';
   const pct = Math.max(1, Math.round(c * 100));
-  const wort = c < CHANCE_SENSATION ? 'Sensation'
-             : c < CHANCE_UPSET ? 'Außenseiter'
-             : c <= CHANCE_OFFEN ? 'Augenhöhe'
-             : c < CHANCE_FAVORIT ? 'Augenhöhe' : 'Favorit';
+  const wort = chanceWort(c);
   // Rot nur, wo die Rechnung dagegenstand: Gruen und Rot sind die Richtung
   // [§C25], Metall ist alles Uebrige.
   const ton = c < CHANCE_UPSET ? ' r' : (c >= CHANCE_FAVORIT ? ' g' : '');
