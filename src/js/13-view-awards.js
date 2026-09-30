@@ -1075,8 +1075,8 @@ function _vAwardsCore(){
   if(gs0) _addColl(_topTeamIds(R.giantSlayerList, x => Math.round(x.v*1000)));  // Quote
   // Rivalry zählt für alle 4 Spieler beider Teams (idsA + idsB), Sortierung per Quote.
   if(rv0){
-    const topPct = rv0.pct;
-    R.rivalryList.filter(x => x.pct === topPct).forEach(x => _addColl([...x.idsA, ...x.idsB]));
+    const topPct = Math.round(rv0.pct*1000);
+    R.rivalryList.filter(x => Math.round(x.pct*1000) === topPct).forEach(x => _addColl([...x.idsA, ...x.idsB]));
   }
   // Favoritenschreck ist semantisch negativ/dramatisch (für den Verlierer) — wir werten
   // ihn neutral, also NICHT im Award-Sammler.
@@ -1235,7 +1235,11 @@ function _vAwardsCore(){
     : empty('favoritenschreck','red','Favoritenschreck'));
   // Erzfeinde: 4-Spieler-Rivalität — beide Teams im name-String "X & Y vs Z & W"
   if(rv0){
-    const rivalryName = pname(rv0.idsA[0])+' & '+pname(rv0.idsA[1])+' vs '+pname(rv0.idsB[0])+' & '+pname(rv0.idsB[1]);
+    // Gleichauf liegende Rivalitäten teilen sich die Kachel, wie bei jedem
+    // anderen Award („+2" hinter dem ersten Namen): der Sammler zählte sie
+    // für alle vier Spieler jeder davon, die Kachel nannte nur die erste.
+    const rivalryName = R.rivalryList.filter(x => Math.round(x.pct*1000) === Math.round(rv0.pct*1000))
+      .map(x => pname(x.idsA[0])+' & '+pname(x.idsA[1])+' vs '+pname(x.idsB[0])+' & '+pname(x.idsB[1])).join(', ');
     teams.push(card('rivalry','purple','Erzfeinde',[...rv0.idsA, ...rv0.idsB],esc(rivalryName),Math.round(rv0.pct*100)+'% aller Spiele ('+rv0.g+' Duelle)',Math.round(rv0.pct*100)+'%'));
   } else {
     teams.push(empty('rivalry','purple','Erzfeinde'));

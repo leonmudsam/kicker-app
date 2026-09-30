@@ -273,11 +273,16 @@ function showAward(key){
       // Weitere Rivalitäten
       if(arr.length > 1){
         const rest = arr.slice(1, 7);
+        // Der Platz zählt, wer eine höhere Quote hat: gleichauf mit der
+        // Spitze heißt Platz 1, nicht 2., 3. und 4. — das Profil und der
+        // Award-Sammler zählen diese Rivalitäten längst als geteilte Spitze.
+        const q = x => Math.round(x.pct*1000);
         const items = rest.map((e, idx) => {
+          const platz = arr.filter(x => q(x) > q(e)).length + 1;
           const aN = pname(e.idsA[0]) + ' & ' + pname(e.idsA[1]);
           const bN = pname(e.idsB[0]) + ' & ' + pname(e.idsB[1]);
           return `<div class="aw-li">
-            <div class="aw-li-rank">${idx+2}.</div>
+            <div class="aw-li-rank">${platz}.</div>
             <div class="aw-li-info" style="min-width:0">
               <div class="aw-li-name" style="font-size:12px">${esc(aN)}</div>
               <div class="aw-li-name" style="font-size:9.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px">vs ${esc(bN)}</div>

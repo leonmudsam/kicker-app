@@ -178,7 +178,8 @@ function playerAwards(id){
   // Avatare des Gewinner-Teams (m.winner) zeigen.
   const matchKeys={upset:R.upsets, biggest:R.biggest};
   const matchValFns={upset:x=>Math.round(x.sp*100), biggest:x=>x.diff};
-  const matchDisplayFns={upset:x=>Math.round(x.sp*100)+'%', biggest:x=>x.diff+' Tore'};
+  // Die Überraschung zeigt die Siegchance der Sieger, wie Kachel und Blatt.
+  const matchDisplayFns={upset:x=>Math.round((1-x.sp)*100)+'%', biggest:x=>x.diff+' Tore'};
   const winnerIds = x => x.m.winner === 'A' ? [x.m.a1, x.m.a2] : [x.m.b1, x.m.b2];
   Object.entries(matchKeys).forEach(([key,arr])=>{
     if(!arr||!arr.length) return;

@@ -2493,6 +2493,26 @@ const ok = (c, msg, det) => {
       const m = d.textContent.match(/^(\d+):(\d+)/);
       if(m && +m[1] < +m[2]) fehler.push('Überraschung: ' + d.textContent.trim());
     });
+    // Wer im Profil einen Award auf Platz 1 trägt, steht auch im Blatt oben:
+    // der Underdog-Held wertete im Profil die Anzahl, im Blatt die Quote,
+    // und die Erzfeinde nannten im Blatt eine Rivalität, im Profil neun
+    // Spieler aus vier gleichauf liegenden.
+    K("awPeriod='season';awSeasonId=null;tab='awards';awView='awards';render()");
+    const prof = K("(function(){ const o={}; activePlayers().forEach(p=>playerAwards(p.id).filter(a=>a.rank===0).forEach(a=>{ (o[a.key]=o[a.key]||[]).push(p.name); })); return o; })()");
+    for(const k of K('Object.keys(AWARD_META)')){
+      K('closeSheet(true)'); K('showAward(' + JSON.stringify(k) + ')');
+      const sh = document.getElementById('sheet');
+      let namen = [...sh.querySelectorAll('.aw-winner-name, .aw-winner-tied-name')].map(e => e.textContent.trim())
+        .concat([...sh.querySelectorAll('.aw-match-team')].map(t => t.querySelector('.aw-match-team-name').textContent.trim()));
+      if(k === 'rivalry') [...sh.querySelectorAll('.aw-li')].filter(r => r.querySelector('.aw-li-rank').textContent.trim() === '1.')
+        .forEach(r => r.querySelectorAll('.aw-li-name').forEach(n => namen.push(n.textContent.replace(/^vs /i, '').trim())));
+      if(k === 'upset' || k === 'biggest' || k === 'favoritenschreck')
+        namen = [...sh.querySelectorAll('.aw-match-team')].filter(t => t.querySelector('.aw-match-winner')).map(t => t.querySelector('.aw-match-team-name').textContent.trim());
+      const blatt = [...new Set(namen.flatMap(n => n.split(' & ')).map(n => n.trim().toLowerCase()))].sort().join(',');
+      const profil = [...new Set((prof[k] || []).map(n => n.toLowerCase()))].sort().join(',');
+      if(blatt !== profil) fehler.push(k + ': Blatt ' + blatt + ' · Profil ' + profil);
+    }
+    K('closeSheet(true)');
     // Und in den letzten Spielen eines Duos und im Direkten Vergleich steht
     // der eigene Stand zuerst: neben dem roten Kreuz stand „10 : 8".
     const P = n => JSON.stringify(K('(players.find(p=>p.name===' + JSON.stringify(n) + ')||{}).id'));
@@ -2510,7 +2530,7 @@ const ok = (c, msg, det) => {
     K("closeSheet(true); tab='ranking'; render()");
     return fehler;
   });
-  ok(awBlatt.length === 0, 'jedes Award-Blatt nennt seine Einheit ganz, die Überraschung mit einer Zahl und den eigenen Stand zuerst',
+  ok(awBlatt.length === 0, 'jedes Award-Blatt nennt seine Einheit ganz, die Überraschung mit einer Zahl, den eigenen Stand zuerst und dieselbe Spitze wie das Profil',
      [...new Set(awBlatt)].slice(0, 6).join(' | ') || 'alle');
   // Der Feed legt nur, was zu sehen ist: rund siebzig Karten und 4600
   // Knoten kosteten beim Öffnen und bei jedem Zurück aus einem Story-Blatt
