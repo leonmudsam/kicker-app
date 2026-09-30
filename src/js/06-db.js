@@ -472,11 +472,11 @@ function showSeasonRecap(season, opts){
   const kachel=(ic,label,name,wert,key)=>kacheln.push(rcpKachelHtml({
     ic, label, name, wert, ton:'metall', attr:`data-award="${key}"`}));
   if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
-  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),komma((wall.v/wall.g),1)+' Gegen/Sp.','wall');
+  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),'Ø '+komma((wall.v/wall.g),1)+' Gegentore','wall');
   if(streak)  kachel('flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks');
   if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegquote','perfect');
-  if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× POTW','weekKing');
-  if(dayKing) kachel('crown','Tageskönig',pname(dayKing.id),dayKing.v+'× POTD','dayKing');
+  if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× Player of the Week','weekKing');
+  if(dayKing) kachel('crown','Tageskönig',pname(dayKing.id),dayKing.v+'× Player of the Day','dayKing');
   if(grinder) kachel('gamepad','Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
   if(upset){
     const sieger = upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];

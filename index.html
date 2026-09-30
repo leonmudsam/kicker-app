@@ -1198,7 +1198,7 @@
   .dcell .dl{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
   .dcell .dv{font-family:'Archivo Black',sans-serif;font-size:16px;margin-top:5px}
   .dcell .dv.sm{font-size:13px}
-  .dcell .dv .u{font-size:11px;color:var(--muted);font-family:'Space Grotesk';font-weight:600}
+  .dcell .dv .u{font-size:11px;color:var(--muted);font-family:'Space Grotesk',system-ui,sans-serif;font-weight:600}
   .posbar .pl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:600;margin-bottom:8px}
   .posbar.atk .pl{color:var(--orange)} .posbar.def .pl{color:var(--blue)}
   .posbar .pg{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace}
@@ -1440,7 +1440,7 @@
     animation:ppSlideThumb 1.2s cubic-bezier(.2,.8,.2,1) .3s both}
   .pp-posprof .ppf{margin-top:10px;text-align:center;font-family:'Sometype Mono',monospace;
     font-size:11px;color:var(--muted);letter-spacing:.02em}
-  .pp-posprof .ppf .lab{color:var(--ink);font-weight:700;font-family:'Space Grotesk';margin-left:4px}
+  .pp-posprof .ppf .lab{color:var(--ink);font-weight:700;font-family:'Space Grotesk',system-ui,sans-serif;margin-left:4px}
 
   .pp-trophies{display:flex;gap:11px;overflow-x:auto;margin:0 -16px;padding:4px 16px 4px;
     scroll-snap-type:x mandatory;scrollbar-width:none}
@@ -1661,7 +1661,7 @@
 
   .pp-del{margin-top:18px;text-align:center}
   .pp-del button{background:transparent;border:1px solid rgba(240,86,106,.2);color:var(--red);
-    font-family:'Space Grotesk';font-size:11px;font-weight:600;padding:8px 16px;border-radius:10px;
+    font-family:'Space Grotesk',system-ui,sans-serif;font-size:11px;font-weight:600;padding:8px 16px;border-radius:10px;
     letter-spacing:.04em;cursor:pointer}
 
   /* Avatar-Picker im Edit-Sheet */
@@ -5181,7 +5181,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.51d9a08f';
+const BUILD_VERSION='2026.09.30.6f6536aa';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -7301,11 +7301,11 @@ function showSeasonRecap(season, opts){
   const kachel=(ic,label,name,wert,key)=>kacheln.push(rcpKachelHtml({
     ic, label, name, wert, ton:'metall', attr:`data-award="${key}"`}));
   if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
-  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),komma((wall.v/wall.g),1)+' Gegen/Sp.','wall');
+  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),'Ø '+komma((wall.v/wall.g),1)+' Gegentore','wall');
   if(streak)  kachel('flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks');
   if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegquote','perfect');
-  if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× POTW','weekKing');
-  if(dayKing) kachel('crown','Tageskönig',pname(dayKing.id),dayKing.v+'× POTD','dayKing');
+  if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× Player of the Week','weekKing');
+  if(dayKing) kachel('crown','Tageskönig',pname(dayKing.id),dayKing.v+'× Player of the Day','dayKing');
   if(grinder) kachel('gamepad','Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
   if(upset){
     const sieger = upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];
@@ -7870,12 +7870,12 @@ function showPotwRecap(opts){
       potwWinners = candidates.filter(c => Math.abs(c[2] - topWr) < 0.001);
     }
     
-    if (!potwWinners.length) { toast('Kein POTW in Vorwoche', 'info'); return; }
+    if (!potwWinners.length) { toast('Die Vorwoche hat keinen Player of the Week', 'info'); return; }
 
     const mainPotwPlayerId = potwWinners[0][0];
     const mainPotwStats = potwWinners[0][1];
     const mainPotwPlayer = pm[mainPotwPlayerId];
-    if (!mainPotwPlayer) { toast('Kein POTW in Vorwoche', 'info'); return; }
+    if (!mainPotwPlayer) { toast('Die Vorwoche hat keinen Player of the Week', 'info'); return; }
 
     const weekLabel='KW '+isoWeek(weekStart);
     const sundayDate=new Date(weekEnd);
@@ -8120,7 +8120,7 @@ function showPotdRecap(opts){
   _sheetSetReopen(()=>showPotdRecap());
   try{
     const now=new Date();
-    if(!matches.length){ if(opts.force) toast('Keine Matches vorhanden','info'); return; }
+    if(!matches.length){ if(opts.force) toast('Noch keine Partien','info'); return; }
 
     // v9.15 BUGFIX: Der "gesehen"-Guard hing am HEUTIGEN Datum statt am
     // recappten Spieltag. Folge: Gab es dazwischen spielfreie Tage, bekam
@@ -8131,7 +8131,7 @@ function showPotdRecap(opts){
     // Tage folgen. Dafür muss der letzte Spieltag VOR dem Guard ermittelt
     // werden (zentral via _potdLastDayData, identisch zum Auto-Trigger).
     const _guardDay=_potdLastDayData();
-    if(!_guardDay){ if(opts.force) toast('Kein qualifizierter Spieltag','info'); return; }
+    if(!_guardDay){ if(opts.force) toast('Noch kein gewerteter Spieltag','info'); return; }
     if(!opts.force && _recapSeen('potd_shown_'+_guardDay.dayKey, 'potd:'+_guardDay.dayKey)) return;
 
     // Konflikte vermeiden: nicht zeigen wenn ein Sheet offen ist
@@ -13129,7 +13129,7 @@ function vSettings(){
         <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
         <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
         <b style="color:var(--acid)">Positions-Swing</b> — Bonus für Siege auf der schwachen Position. Ein Abwehr-Spieler der im Sturm gewinnt bekommt extra Elo.<br>
-        <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Performance. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur Über-Erwartungs-Performance zählt.<br>
+        <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Leistung. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur die Leistung über der Erwartung zählt.<br>
         <b style="color:var(--acid)">Mindestspiele je Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
@@ -13161,7 +13161,7 @@ function vSettings(){
     </div>
 
     <div class="card" style="margin-top:14px">
-      <div class="mini-label">Backup &amp; Export</div>
+      <div class="mini-label">Sicherung und Export</div>
       <p style="font-size:11.5px;color:var(--ink2);line-height:1.6;margin-top:10px">
         Die Liga lebt in einer Datenbank in der Cloud. Damit sie auch dann nicht verloren geht,
         wenn dort etwas passiert, lässt sich hier jederzeit eine eigene Kopie ziehen.
@@ -16169,7 +16169,7 @@ const rankProgHtml = rInfo ? `
             <div class="sub">Saison</div>
           </div>
           <div class="pp-et-col peak">
-            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Peak</div>
+            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
             <div class="val">${ps}</div>
             <div class="sub">diese Saison</div>
           </div>
@@ -16196,7 +16196,7 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.3s">
       ${(()=>{
-        // Rollen-Performance: zwei Donut-Diagramme (orange = Sturm, blau = Abwehr).
+        // Sturm und Abwehr: zwei Donut-Diagramme (orange = Sturm, blau = Abwehr).
         // Ring zeigt die Win-Rate visuell, Zahl in der Mitte konkret. Subtext zeigt
         // Tor/Gegentor-Schnitt — passt zu den Awards Torjäger / Eiserne Abwehr
         // und zum Positionen-Tab. Werte kommen aus playerStats: s.atkGoals und
@@ -16204,7 +16204,7 @@ const rankProgHtml = rInfo ? `
         const tot = s.atkG + s.defG;
         if(tot === 0){
           return `<div class="pp-pos-combined">
-            <div class="head"><div class="t">Rollen-Performance</div></div>
+            <div class="head"><div class="t">Sturm und Abwehr</div></div>
             <div class="pp-roles-empty">Keine Spiele</div>
           </div>`;
         }
@@ -16233,16 +16233,16 @@ const rankProgHtml = rInfo ? `
                 <div class="pp-rd-inner"><div class="pp-rd-wr">${wr}<small>%</small></div></div>
               </div>
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
-              <div class="pp-rd-meta"><b>${w}</b>/<b>${g}</b> Spiele<br>Ø <b>${valNum}</b> ${valLbl}</div>
+              <div class="pp-rd-meta"><b>${w}</b> von <b>${g}</b> gewonnen<br>Ø <b>${valNum}</b> ${valLbl}</div>
             </div>`;
         };
         const atkAvg = s.atkG ? komma((s.atkGoals/s.atkG),1) : '–';
         const defAvg = s.defG ? komma((s.defConceded/s.defG),1) : '–';
         return `<div class="pp-pos-combined">
-          <div class="head"><div class="t">Rollen-Performance</div></div>
+          <div class="head"><div class="t">Sturm und Abwehr</div></div>
           <div class="pp-roles-donuts">
-            ${donut('atk','Sturm','bolt',atkWr,s.atkW,s.atkG,'Tore/Sp.',atkAvg,'var(--orange)')}
-            ${donut('def','Abwehr','shield',defWr,s.defW,s.defG,'Gegentore/Sp.',defAvg,'var(--blue)')}
+            ${donut('atk','Sturm','bolt',atkWr,s.atkW,s.atkG,'Tore',atkAvg,'var(--orange)')}
+            ${donut('def','Abwehr','shield',defWr,s.defW,s.defG,'Gegentore',defAvg,'var(--blue)')}
           </div>
         </div>`;
       })()}
@@ -16267,7 +16267,7 @@ const rankProgHtml = rInfo ? `
       <div class="pp-streaks">
         <div class="pp-st">
           <div class="l">Aktuelle Serie</div>
-          <div class="v ${streak===0?'empty':''}">${streak>0?streak+' Siege':streak<0?(-streak)+' Niederlagen':'–'}</div>
+          <div class="v ${streak===0?'empty':''}">${streak===1?'1 Sieg':streak>0?streak+' Siege':streak===-1?'1 Niederlage':streak<0?(-streak)+' Niederlagen':'–'}</div>
           ${_last15.length?`<div class="dots mixed">${last15DotsHtml}</div>`:''}
         </div>
         <div class="pp-st">
@@ -17457,7 +17457,7 @@ function showAddPlayer(){
   const ni=document.getElementById('newName');ni.focus();
   const go=async()=>{const n=ni.value.trim();if(!n){toast('Name fehlt',true);return;}
     const{error}=await sb.from('players').insert({name:n,elo:cfg.start_elo,atk:0.5});
-    if(error){toast(error.message.includes('duplicate')?'Name existiert':'Fehler',true);return;}
+    if(error){toast(error.message.includes('duplicate')?'Der Name ist schon vergeben':'Fehler',true);return;}
     closeSheet(true);toast('Spieler angelegt','ok');await loadAll();};
   document.getElementById('confirmAdd').onclick=go;
   ni.onkeydown=e=>{if(e.key==='Enter')go();};
@@ -37140,9 +37140,9 @@ async function exportSavepoint(){
     const json = JSON.stringify(_buildSavepoint(), null, 1);
     const blob = new Blob([json], {type:'application/json'});
     await _saveFile(blob, 'kicker-savepoint_' + _backupStamp() + '.json');
-    toast('Savepoint gesichert · ' + matches.length + ' Matches','ok');
+    toast('Sicherung gespeichert · ' + matches.length + ' Matches','ok');
   }catch(e){
-    toast('Savepoint fehlgeschlagen: ' + e.message, true);
+    toast('Sicherung fehlgeschlagen: ' + e.message, true);
   }
 }
 
@@ -37154,7 +37154,7 @@ async function _readBackupFile(file){
   if(lower.endsWith('.json')){
     const sp = JSON.parse(await file.text());
     if(!sp || sp.kind !== 'savepoint' || !Array.isArray(sp.matches)){
-      throw new Error('Die JSON-Datei ist kein Savepoint dieser App.');
+      throw new Error('Die JSON-Datei ist keine Sicherung dieser Liga.');
     }
     return {savepoint: sp};
   }
@@ -37356,7 +37356,7 @@ function _showImportPreview(filename){
     const sp = p.savepoint;
     canApply = (p.neuM.length + p.neuP.length + p.neuS.length) > 0;
     body = `
-      <div class="nd-section">Savepoint</div>
+      <div class="nd-section">Sicherung</div>
       ${line('Erstellt', new Date(sp.createdAt).toLocaleString('de-DE'))}
       ${line('App-Version', sp.build || '—')}
       ${line('Enthält', `${(sp.players||[]).length} Spieler · ${sp.matches.length} Matches`)}

@@ -1049,6 +1049,20 @@ ok(_totVar.n > 40, 'die Tokens werden gefunden', _totVar.n + ' Variablen');
 ok(_totVar.tot.length === 0, 'jede CSS-Variable wird auch gelesen',
    _totVar.tot.join(', ') || 'alle ' + _totVar.n);
 
+// ─── Eine Schrift hat einen Rückfall ────────────────────────────────
+// Die Schriften kommen aus dem Netz, und eine App, die offline startet, hat
+// sie nicht. Drei Angaben nannten nur „'Space Grotesk'" ohne Familie
+// dahinter, und dort fiel der Browser auf eine Serifenschrift zurück: im
+// Positions-Profil stand „Verteidiger" in Times neben lauter Grotesk.
+const _schriftOhne = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  return (quelle.match(/font-family:\s*[^;}"`]*/g) || [])
+    .map(x => x.trim())
+    .filter(x => !/(monospace|sans-serif|serif|inherit|system-ui)\s*$/.test(x));
+})();
+ok(_schriftOhne.length === 0, 'jede Schriftangabe endet auf einer Schriftfamilie',
+   [...new Set(_schriftOhne)].join(' | ') || 'alle');
+
 // ─── Und die Elo-Rechnung zieht ihre Grenzen an einer Stelle ─────────
 // Die Erwartungsformel stand zweimal in der Auslieferung: `expected` und ein
 // wortgleiches `localExp` in der Elo-Engine. Die drei Chancen-Linien standen

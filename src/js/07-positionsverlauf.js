@@ -463,12 +463,12 @@ function showPotwRecap(opts){
       potwWinners = candidates.filter(c => Math.abs(c[2] - topWr) < 0.001);
     }
     
-    if (!potwWinners.length) { toast('Kein POTW in Vorwoche', 'info'); return; }
+    if (!potwWinners.length) { toast('Die Vorwoche hat keinen Player of the Week', 'info'); return; }
 
     const mainPotwPlayerId = potwWinners[0][0];
     const mainPotwStats = potwWinners[0][1];
     const mainPotwPlayer = pm[mainPotwPlayerId];
-    if (!mainPotwPlayer) { toast('Kein POTW in Vorwoche', 'info'); return; }
+    if (!mainPotwPlayer) { toast('Die Vorwoche hat keinen Player of the Week', 'info'); return; }
 
     const weekLabel='KW '+isoWeek(weekStart);
     const sundayDate=new Date(weekEnd);
@@ -713,7 +713,7 @@ function showPotdRecap(opts){
   _sheetSetReopen(()=>showPotdRecap());
   try{
     const now=new Date();
-    if(!matches.length){ if(opts.force) toast('Keine Matches vorhanden','info'); return; }
+    if(!matches.length){ if(opts.force) toast('Noch keine Partien','info'); return; }
 
     // v9.15 BUGFIX: Der "gesehen"-Guard hing am HEUTIGEN Datum statt am
     // recappten Spieltag. Folge: Gab es dazwischen spielfreie Tage, bekam
@@ -724,7 +724,7 @@ function showPotdRecap(opts){
     // Tage folgen. Dafür muss der letzte Spieltag VOR dem Guard ermittelt
     // werden (zentral via _potdLastDayData, identisch zum Auto-Trigger).
     const _guardDay=_potdLastDayData();
-    if(!_guardDay){ if(opts.force) toast('Kein qualifizierter Spieltag','info'); return; }
+    if(!_guardDay){ if(opts.force) toast('Noch kein gewerteter Spieltag','info'); return; }
     if(!opts.force && _recapSeen('potd_shown_'+_guardDay.dayKey, 'potd:'+_guardDay.dayKey)) return;
 
     // Konflikte vermeiden: nicht zeigen wenn ein Sheet offen ist

@@ -626,7 +626,7 @@ const rankProgHtml = rInfo ? `
             <div class="sub">Saison</div>
           </div>
           <div class="pp-et-col peak">
-            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Peak</div>
+            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
             <div class="val">${ps}</div>
             <div class="sub">diese Saison</div>
           </div>
@@ -653,7 +653,7 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.3s">
       ${(()=>{
-        // Rollen-Performance: zwei Donut-Diagramme (orange = Sturm, blau = Abwehr).
+        // Sturm und Abwehr: zwei Donut-Diagramme (orange = Sturm, blau = Abwehr).
         // Ring zeigt die Win-Rate visuell, Zahl in der Mitte konkret. Subtext zeigt
         // Tor/Gegentor-Schnitt — passt zu den Awards Torjäger / Eiserne Abwehr
         // und zum Positionen-Tab. Werte kommen aus playerStats: s.atkGoals und
@@ -661,7 +661,7 @@ const rankProgHtml = rInfo ? `
         const tot = s.atkG + s.defG;
         if(tot === 0){
           return `<div class="pp-pos-combined">
-            <div class="head"><div class="t">Rollen-Performance</div></div>
+            <div class="head"><div class="t">Sturm und Abwehr</div></div>
             <div class="pp-roles-empty">Keine Spiele</div>
           </div>`;
         }
@@ -690,16 +690,16 @@ const rankProgHtml = rInfo ? `
                 <div class="pp-rd-inner"><div class="pp-rd-wr">${wr}<small>%</small></div></div>
               </div>
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
-              <div class="pp-rd-meta"><b>${w}</b>/<b>${g}</b> Spiele<br>Ø <b>${valNum}</b> ${valLbl}</div>
+              <div class="pp-rd-meta"><b>${w}</b> von <b>${g}</b> gewonnen<br>Ø <b>${valNum}</b> ${valLbl}</div>
             </div>`;
         };
         const atkAvg = s.atkG ? komma((s.atkGoals/s.atkG),1) : '–';
         const defAvg = s.defG ? komma((s.defConceded/s.defG),1) : '–';
         return `<div class="pp-pos-combined">
-          <div class="head"><div class="t">Rollen-Performance</div></div>
+          <div class="head"><div class="t">Sturm und Abwehr</div></div>
           <div class="pp-roles-donuts">
-            ${donut('atk','Sturm','bolt',atkWr,s.atkW,s.atkG,'Tore/Sp.',atkAvg,'var(--orange)')}
-            ${donut('def','Abwehr','shield',defWr,s.defW,s.defG,'Gegentore/Sp.',defAvg,'var(--blue)')}
+            ${donut('atk','Sturm','bolt',atkWr,s.atkW,s.atkG,'Tore',atkAvg,'var(--orange)')}
+            ${donut('def','Abwehr','shield',defWr,s.defW,s.defG,'Gegentore',defAvg,'var(--blue)')}
           </div>
         </div>`;
       })()}
@@ -724,7 +724,7 @@ const rankProgHtml = rInfo ? `
       <div class="pp-streaks">
         <div class="pp-st">
           <div class="l">Aktuelle Serie</div>
-          <div class="v ${streak===0?'empty':''}">${streak>0?streak+' Siege':streak<0?(-streak)+' Niederlagen':'–'}</div>
+          <div class="v ${streak===0?'empty':''}">${streak===1?'1 Sieg':streak>0?streak+' Siege':streak===-1?'1 Niederlage':streak<0?(-streak)+' Niederlagen':'–'}</div>
           ${_last15.length?`<div class="dots mixed">${last15DotsHtml}</div>`:''}
         </div>
         <div class="pp-st">

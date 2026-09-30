@@ -119,7 +119,7 @@ function showAddPlayer(){
   const ni=document.getElementById('newName');ni.focus();
   const go=async()=>{const n=ni.value.trim();if(!n){toast('Name fehlt',true);return;}
     const{error}=await sb.from('players').insert({name:n,elo:cfg.start_elo,atk:0.5});
-    if(error){toast(error.message.includes('duplicate')?'Name existiert':'Fehler',true);return;}
+    if(error){toast(error.message.includes('duplicate')?'Der Name ist schon vergeben':'Fehler',true);return;}
     closeSheet(true);toast('Spieler angelegt','ok');await loadAll();};
   document.getElementById('confirmAdd').onclick=go;
   ni.onkeydown=e=>{if(e.key==='Enter')go();};
