@@ -1438,6 +1438,15 @@ const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
         const er = (feld[0].match(/class="er"/g) || []).length, soll = (h.pids || [h.pid]).length;
         if(er !== soll) f.push(c.id + ': ' + er + ' Halter im Feld statt ' + soll);
       }
+      // Der Knopf sagt, wohin er führt: ins Profil des Halters, mit Namen.
+      // Dort stand „Direkter Vergleich" ohne zu sagen, wer mit wem — und
+      // die Bilanz von Halter und Zweitem hat mit dem Rekord nichts zu tun.
+      if(/data-vergleich/.test(out)) f.push(c.id + ': Knopf ohne Bezug zum Rekord');
+      const nm = (pmap()[h.pid] || {}).name;
+      if(nm && out.indexOf('Profil von ' + esc(nm)) < 0) f.push(c.id + ': Knopf ohne den Namen des Halters');
+      // Der Satz der Spanne kommt ohne Statistik aus: „mehr als Zufall"
+      // war richtig gerechnet und von niemandem zu verstehen.
+      if(/Zufall|Wahrscheinlichkeit/.test(out)) f.push(c.id + ': Spanne in Statistiksprache');
       const sp = out.match(/zwischen <b>(\\d+) und (\\d+) %/);
       if(sp){
         spannen++;
