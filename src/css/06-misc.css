@@ -74,25 +74,24 @@
     --pp-tier-glow:rgba(167,139,250,.35);
     --pp-tier-bg:rgba(167,139,250,.14);
     --pp-tier-bg2:rgba(167,139,250,.06);
-    --pp-tier-border:rgba(167,139,250,.32);
   }
   .pp-header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
     background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
   .pp-tier-legende{--pp-tier-1:var(--gold);--pp-tier-2:#ffd96b;
     --pp-tier-glow:rgba(247,207,74,.4);--pp-tier-bg:rgba(247,207,74,.14);
-    --pp-tier-bg2:rgba(247,207,74,.06);--pp-tier-border:rgba(247,207,74,.34)}
+    --pp-tier-bg2:rgba(247,207,74,.06);}
   .pp-tier-elite{--pp-tier-1:var(--purple);--pp-tier-2:#9d80ff;
     --pp-tier-glow:rgba(167,139,250,.38);--pp-tier-bg:rgba(167,139,250,.14);
-    --pp-tier-bg2:rgba(167,139,250,.06);--pp-tier-border:rgba(167,139,250,.32)}
+    --pp-tier-bg2:rgba(167,139,250,.06);}
   .pp-tier-stark{--pp-tier-1:var(--acid);--pp-tier-2:var(--acid2);
     --pp-tier-glow:rgba(190,242,100,.35);--pp-tier-bg:rgba(190,242,100,.12);
-    --pp-tier-bg2:rgba(190,242,100,.06);--pp-tier-border:rgba(190,242,100,.3)}
+    --pp-tier-bg2:rgba(190,242,100,.06);}
   .pp-tier-solide{--pp-tier-1:var(--blue);--pp-tier-2:#7fc4ee;
     --pp-tier-glow:rgba(86,180,232,.3);--pp-tier-bg:rgba(86,180,232,.12);
-    --pp-tier-bg2:rgba(86,180,232,.06);--pp-tier-border:rgba(86,180,232,.3)}
+    --pp-tier-bg2:rgba(86,180,232,.06);}
   .pp-tier-einsteiger{--pp-tier-1:var(--orange);--pp-tier-2:#ffa078;
     --pp-tier-glow:rgba(255,120,73,.3);--pp-tier-bg:rgba(255,120,73,.12);
-    --pp-tier-bg2:rgba(255,120,73,.06);--pp-tier-border:rgba(255,120,73,.3)}
+    --pp-tier-bg2:rgba(255,120,73,.06);}
 
   /* Edit-Button im Header oben rechts */
   .pp-edit-btn{position:absolute;top:14px;right:14px;width:34px;height:34px;
@@ -268,19 +267,6 @@
   .pp-sn .el.pos{color:var(--acid)} .pp-sn .el.neg{color:var(--red)}
   .pp-sn .rc{margin-top:9px;text-align:center;font-family:'Sometype Mono',monospace;font-size:10.5px;
     color:var(--ink2);padding-top:7px;border-top:1px solid rgba(255,255,255,.05)}
-  .pp-rk.active{background:linear-gradient(180deg,var(--pp-tier-bg) 0%,transparent 70%);
-    border-color:var(--pp-tier-border);
-    box-shadow:0 0 24px -8px var(--pp-tier-glow),inset 0 1px 0 rgba(255,255,255,.05);
-    animation:ppRankPulse 2.8s ease-in-out infinite}
-  .pp-rk .ic{font-size:18px;line-height:1;display:block;margin-bottom:4px}
-  .pp-rk.active .ic{filter:drop-shadow(0 0 7px var(--pp-tier-glow))}
-  .pp-rk .nm{font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.02em}
-  .pp-rk.active .nm{color:var(--pp-tier-1)}
-  .pp-rk .rg{margin-top:3px;font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted)}
-  .pp-rk.active::after{content:"";position:absolute;top:-3px;left:50%;transform:translateX(-50%);
-    width:22px;height:3px;border-radius:2px;
-    background:linear-gradient(90deg,var(--pp-tier-2),var(--pp-tier-1));
-    box-shadow:0 0 7px var(--pp-tier-glow)}
   .pp-percentile-bar > .marker{position:absolute;top:-3px;width:2px;height:12px;
     background:var(--ink);border-radius:1px;opacity:.6;
     box-shadow:0 0 4px rgba(255,255,255,.4)}
@@ -463,8 +449,6 @@
   @keyframes ppFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @keyframes ppFadeScale{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
   @keyframes ppPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
-  @keyframes ppRankPulse{0%,100%{box-shadow:0 0 24px -8px var(--pp-tier-glow),inset 0 1px 0 rgba(255,255,255,.05)}
-    50%{box-shadow:0 0 32px -6px var(--pp-tier-glow),inset 0 1px 0 rgba(255,255,255,.05)}}
   @keyframes ppFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-2deg)}
     50%{transform:translateX(-50%) translateY(-3px) rotate(-2deg)}}
   @keyframes ppBarIn{from{width:0 !important}}
