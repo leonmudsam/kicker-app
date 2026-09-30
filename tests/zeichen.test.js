@@ -679,12 +679,14 @@ const ok = (c, msg, det) => {
       return n ? Math.round(d / n * 1000) / 10 : 0;
     };
     const grade = stufen.map(k => ({k, d: klein[k].slice(1).map((b, i) => unterschied(klein[k][i], b))}));
-    // Die Rangfarbe: gezeichnet ist Violett. Der Kopf des Reifs I (die Lilie)
-    // muss für die Elite violett und für die Legende golden sein.
-    const farbe = async (rang) => {
+    // Die Rangfarbe ist ein Akzent: sie sitzt im Stein der Raute und muss
+    // dort für die Elite violett und für die Legende golden sein. Die Lilie
+    // ist Metall mit einem Schimmer — in voller Rangfarbe war sie der
+    // lauteste Fleck des Zeichens.
+    const farbe = async (rang, y0, y1) => {
       const z = await bild(svgBild('reif', 0, rang), 144);
       let r = 0, g = 0, b = 0, n = 0;
-      for(let y = 0; y < 40; y++) for(let x = 60; x < 84; x++){
+      for(let y = y0; y < y1; y++) for(let x = 64; x < 80; x++){
         const o = (y*144 + x)*4; if(z[o+3] < 160) continue;
         const s = Math.max(z[o], z[o+1], z[o+2]) - Math.min(z[o], z[o+1], z[o+2]);
         if(s < 60) continue;                 // nur die Farbe, nicht das Metall
@@ -693,7 +695,8 @@ const ok = (c, msg, det) => {
       return n ? {r: r/n, g: g/n, b: b/n, n} : null;
     };
     return {out, n, verschieden: urls.size, grade,
-            elite: await farbe('Elite'), legende: await farbe('Legende')};
+            elite: await farbe('Elite', 104, 120), legende: await farbe('Legende', 104, 120),
+            lilie: await farbe('Elite', 4, 30)};
   });
   const NAMEN = {reif:'Reif', schild:'Schildring', volute:'Volutenkranz',
                  zier:'Zierkranz', lorbeer:'Lorbeerreif', krone:'Kronenreif',
@@ -725,9 +728,13 @@ const ok = (c, msg, det) => {
      _stumm.map(x => x.k + ' ' + x.d.join('/') + ' %').join(', ')
      || leiter.grade.map(x => x.k + ' ' + x.d.join('/')).join(' · ') + ' %');
   const E = leiter.elite, L = leiter.legende;
-  ok(E && L && E.b > E.g + 40 && L.r > L.b + 40 && L.g > L.b,
-     'Insignium: die Lilie ist für die Elite violett und für die Legende golden',
+  ok(E && L && E.b > E.g + 25 && L.r > L.b + 25 && L.g > L.b,
+     'Insignium: der Stein ist für die Elite violett und für die Legende golden',
      JSON.stringify({elite: E && [E.r, E.g, E.b].map(Math.round), legende: L && [L.r, L.g, L.b].map(Math.round)}));
+  const Li = leiter.lilie;
+  ok(!Li || Li.b <= Li.g + 25,
+     'Insignium: die Lilie ist Metall und nicht in voller Rangfarbe',
+     JSON.stringify(Li && [Li.r, Li.g, Li.b].map(Math.round)));
 
   // 5. Dasselbe für die UNTERLAGE im vollen Zeichen. Sie setzt den Reif auf
   //    die Schwinge und muss dabei über den ganzen Schmuck reichen — die

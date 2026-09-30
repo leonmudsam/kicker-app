@@ -5698,7 +5698,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.212a9eaf';
+const BUILD_VERSION='2026.09.30.e41f0d8b';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -35912,9 +35912,12 @@ function _izHex(H, S, L){
   const f = n => L - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
   return '#' + [f(0), f(8), f(4)].map(x => Math.round(x * 255).toString(16).padStart(2, '0')).join('');
 }
+// Gedämpft: in voller Sättigung standen Lilie, Steine, Beeren und Band als
+// violette Flecken auf dem Metall und liefen dem Schmuck den Rang ab. Die
+// Rangfarbe ist ein Schimmer und ein Akzent, nicht die Farbe des Zeichens.
 function _izStein(farbe){
   const [H, S] = _izHsl(farbe || '#a78bfa');
-  const s = Math.min(1, S);
+  const s = Math.min(1, S) * .62;
   return [_izHex(H, s * .9, .9), _izHex(H, s, .7), _izHex(H, s * .85, .52),
           _izHex(H, s * .8, .28), _izHex(H, s * .7, .13)];
 }
@@ -35957,15 +35960,21 @@ function _izDefs(metalle, st){
   // Der Schein um den Reif: erst außerhalb des Bands, das Loch bleibt frei
   // für das Gesicht.
   s += `<radialGradient id="sr" gradientUnits="userSpaceOnUse" cx="500" cy="500" r="430">`
-    + stop(0, st[1], 0) + stop(.6, st[1], 0) + stop(.66, st[1], .55) + stop(.8, st[1], .18) + stop(1, st[1], 0) + '</radialGradient>';
-  s += `<radialGradient id="ss">` + stop(0, st[1], .75) + stop(.45, st[1], .25) + stop(1, st[1], 0) + '</radialGradient>';
+    + stop(0, st[1], 0) + stop(.6, st[1], 0) + stop(.66, st[1], .26) + stop(.8, st[1], .08) + stop(1, st[1], 0) + '</radialGradient>';
+  s += `<radialGradient id="ss">` + stop(0, st[1], .45) + stop(.45, st[1], .14) + stop(1, st[1], 0) + '</radialGradient>';
   // Der Glanz auf dem Band: ein Streifen Licht oben, ein schwacher unten.
   s += lin('gl', [0, 500 - IZ_RA], [0, 500 + IZ_RA],
     stop(0, '#fff', .85) + stop(.3, '#fff', .12) + stop(.62, '#fff', 0) + stop(1, '#fff', .35), 1);
   // Ein weicher Schatten unter dem Ganzen hebt es vom Grund ab; der Reif
   // wirft einen eigenen auf das, was hinter ihm liegt.
+  // Der Schatten ist ein eigener Filter, der NUR den Schatten liefert: er
+  // liegt unter einer Kopie, und die Zeichnung selbst steht ungefiltert
+  // darüber. Lag der Schlagschatten als Filter auf der ganzen Zeichnung,
+  // rechnete WebKit sie in einem Bild ohne die Pixeldichte des Geräts — auf
+  // dem Telefon war das ganze Insignium unscharf.
   s += `<filter id="sh" x="-20%" y="-20%" width="140%" height="140%">`
-    + `<feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#000" flood-opacity=".6"/></filter>`;
+    + `<feGaussianBlur in="SourceAlpha" stdDeviation="7"/><feOffset dy="7"/>`
+    + `<feComponentTransfer><feFuncA type="linear" slope=".6"/></feComponentTransfer></filter>`;
   s += `<filter id="ao" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="7"/></filter>`;
   s += `<filter id="wb" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.4"/></filter>`;
   return s + '</defs>';
@@ -36060,7 +36069,7 @@ function _izReifSchatten(){
 function _izLilie(y, st, m){
   const w = 70, h = 118;
   const P = (x, yy) => _izN(500 + x * w) + ' ' + _izN(y - yy * h);
-  const kante = `stroke="${st[4]}" stroke-opacity=".8" stroke-width="2" stroke-linejoin="round"`;
+  const kante = `stroke="${IZ_METALL[m][4]}" stroke-opacity=".8" stroke-width="2" stroke-linejoin="round"`;
   const mitteL = `M${P(0, 1)}C${P(-.3, .74)} ${P(-.34, .36)} ${P(-.2, .06)}L${P(0, .06)}Z`;
   const mitteR = `M${P(0, 1)}C${P(.3, .74)} ${P(.34, .36)} ${P(.2, .06)}L${P(0, .06)}Z`;
   // Ein Seitenblatt: vom Fuß nach oben und außen, in weitem Bogen zurück
@@ -36073,18 +36082,22 @@ function _izLilie(y, st, m){
   const fuss = `M${P(-.24, -.14)}C${P(-.3, -.42)} ${P(-.14, -.62)} ${P(0, -.72)}`
     + `C${P(.14, -.62)} ${P(.3, -.42)} ${P(.24, -.14)}Z`;
   const bund = `M${P(-.5, .1)}C${P(-.2, .16)} ${P(.2, .16)} ${P(.5, .1)}L${P(.48, -.16)}C${P(.2, -.1)} ${P(-.2, -.1)} ${P(-.48, -.16)}Z`;
-  return `<circle cx="500" cy="${_izN(y - h * .42)}" r="${_izN(h * .8)}" fill="url(#ss)" opacity=".55"/>`
-    + `<path d="${fuss}" fill="url(#sd)" ${kante}/>`
-    + `<path d="${seite(-1)}" fill="url(#sg)" ${kante}/>`
-    + `<path d="${seite(1)}" fill="url(#sd)" ${kante}/>`
+  // Die Blätter sind Metall; die Rangfarbe liegt als Schimmer darauf und
+  // sitzt voll nur im Stein am Bund [§C30].
+  const hell = `url(#o${m})`, dunkel = `url(#d${m})`, tint = `fill="url(#sl)" opacity=".5"`;
+  return `<circle cx="500" cy="${_izN(y - h * .42)}" r="${_izN(h * .8)}" fill="url(#ss)" opacity=".4"/>`
+    + `<path d="${fuss}" fill="${dunkel}" ${kante}/>`
+    + `<path d="${seite(-1)}" fill="${hell}" ${kante}/><path d="${seite(-1)}" ${tint}/>`
+    + `<path d="${seite(1)}" fill="${dunkel}" ${kante}/><path d="${seite(1)}" ${tint}/>`
     + `<path d="M${P(-.3, .38)}C${P(-.56, .6)} ${P(-.88, .56)} ${P(-.96, .3)}" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>`
     + `<path d="M${P(.34, .4)}C${P(.58, .58)} ${P(.86, .54)} ${P(.94, .34)}" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2" stroke-linecap="round"/>`
-    + `<path d="${mitteL}" fill="url(#sg)" ${kante}/>`
-    + `<path d="${mitteR}" fill="url(#sd)" ${kante}/>`
+    + `<path d="${mitteL}" fill="${hell}" ${kante}/><path d="${mitteL}" ${tint}/>`
+    + `<path d="${mitteR}" fill="${dunkel}" ${kante}/><path d="${mitteR}" ${tint}/>`
     + `<path d="M${P(-.05, .9)}C${P(-.2, .66)} ${P(-.22, .36)} ${P(-.13, .1)}" fill="none" stroke="#fff" stroke-opacity=".65" stroke-width="3.2" stroke-linecap="round"/>`
     + _izForm(bund, `url(#o${m})`, m, 2)
     + `<path d="M${P(-.44, .07)}C${P(-.2, .12)} ${P(.2, .12)} ${P(.44, .07)}" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2.2" stroke-linecap="round"/>`
-    + `<path fill="url(#sk)" stroke="${st[4]}" stroke-width="1.2" d="${_izRaute(500, y + .02 * h, 7, 8)}"/>`
+    + `<path fill="url(#sk)" stroke="${st[4]}" stroke-width="1.2" d="${_izRaute(500, y + .02 * h, 9, 11)}"/>`
+    + `<path fill="url(#sk)" stroke="${st[4]}" stroke-width="1.2" d="${_izRaute(500, y - .5 * h, 8, 11)}"/>`
     + _izFunkeln(500 - w * .08, y - h * .8, 13, .85);
 }
 
@@ -36097,7 +36110,7 @@ function _izRauteStein(m){
   const au = [[500, cy - A], [500 + A, cy], [500, cy + A], [500 - A, cy]];
   const in_ = [[500, cy - I], [500 + I, cy], [500, cy + I], [500 - I, cy]];
   // Der Schein um den Stein, in seiner Farbe.
-  let s = `<circle cx="500" cy="${cy}" r="120" fill="url(#ss)" opacity=".45"/>`;
+  let s = `<circle cx="500" cy="${cy}" r="120" fill="url(#ss)" opacity=".3"/>`;
   // Die Fassung: oben rechts, unten rechts, unten links, oben links.
   const tonF = [l, t, mi, g];
   for(let i = 0; i < 4; i++){
@@ -36142,33 +36155,43 @@ const INS_ZEICHEN = {
     {reif:{metall:'rose', profil:'rand', kanal:'flieder', nieten:{n:20, gr:5.8, m:'rotgold'}},
      sichel:{m:'rose', von:-34, bis:-124, breit:66, abstand:4, los:66}, klinge:{m:'rose', breit:64, lang:1.08}},
   ],
+  // ── Die Leiter steigt, sie springt nicht zurück ─────────────────
+  // Der dritte Grad einer Stufe trägt nie mehr als der erste der nächsten:
+  // Zierkranz III hatte Steine im Reif und rotgoldenes Laub, Lorbeerreif I
+  // keins von beidem, und Lorbeerreif III Steine und ein Krönchen neben
+  // einem steinlosen Kronenreif I. Das Gold kommt mit dem Lorbeer (Kehle,
+  // Nieten), die Steine mit seinem zweiten Grad, und der Ordensstern trägt
+  // einen ganz goldenen Reif statt einer fliederfarbenen Kehle [§C30].
   volute: [
     {reif:{metall:'champ', nieten:{n:4, gr:5.5, m:'rotgold', frei:[[-80, 80], [100, 180], [-180, -100]]}}, volute:{m:'champ', gr:1}},
     {reif:{metall:'champ', profil:'rand', kanal:'rose', nieten:{n:16, gr:4.2, m:'rotgold'}}, volute:{m:'champ', gr:2}},
-    {reif:{metall:'rotgold', profil:'rand', kanal:'rose', nieten:{n:16, gr:4.6, m:'rotgold'}, steine:8}, volute:{m:'champ', gr:3}},
+    {reif:{metall:'rotgold', profil:'rand', kanal:'rose', nieten:{n:20, gr:4.6, m:'rotgold'}}, volute:{m:'champ', gr:3}},
   ],
   zier: [
     {reif:{metall:'rotgold', profil:'rand', kanal:'champ', nieten:{n:16, gr:4.2, m:'rotgold'}}, zier:{m:'champ', gr:1}},
-    {reif:{metall:'rotgold', profil:'rand', kanal:'flieder', nieten:{n:16, gr:4.4, m:'rotgold'}}, zier:{m:'champ', gr:2}},
-    {reif:{metall:'rotgold', profil:'rand', kanal:'flieder', nieten:{n:18, gr:4.6, m:'rotgold'}, steine:8}, zier:{m:'rotgold', gr:3}},
+    {reif:{metall:'rotgold', profil:'rand', kanal:'flieder', nieten:{n:18, gr:4.4, m:'rotgold'}}, zier:{m:'champ', gr:2}},
+    {reif:{metall:'rotgold', profil:'rand', kanal:'champ', nieten:{n:22, gr:4.6, m:'rotgold'}}, zier:{m:'champ', gr:3}},
   ],
   lorbeer: [
-    {reif:{metall:'rotgold', profil:'rand', kanal:'champ', wulst:9, nieten:{n:24, gr:4.2, m:'rotgold'}}, lorbeer:{m:'rotgold', n:8, beeren:1}},
-    {reif:{metall:'rotgold', profil:'rand', kanal:'flieder', nieten:{n:26, gr:4.6, m:'gold'}, steine:8}, lorbeer:{m:'rotgold', n:10, doppel:1, beeren:1}},
-    {reif:{metall:'gold', profil:'rand', kanal:'rotgold', nieten:{n:24, gr:4.8, m:'gold'}, steine:8}, lorbeer:{m:'gold', n:11, doppel:1, beeren:1, bis:-34}, krone:{m:'gold', klein:1}},
+    {reif:{metall:'rotgold', profil:'rand', kanal:'gold', wulst:9, nieten:{n:24, gr:4.4, m:'gold'}}, lorbeer:{m:'rotgold', n:8, beeren:1},
+     lilie:'gold'},
+    {reif:{metall:'rotgold', profil:'rand', kanal:'gold', nieten:{n:26, gr:4.6, m:'gold'}, steine:8}, lorbeer:{m:'gold', n:10, doppel:1, beeren:1},
+     lilie:'gold', raute:'gold'},
+    {reif:{metall:'gold', profil:'rand', kanal:'rotgold', nieten:{n:24, gr:4.8, m:'gold'}, steine:8}, lorbeer:{m:'gold', n:11, doppel:1, beeren:1, bis:-34},
+     krone:{m:'gold', klein:1}, raute:'gold'},
   ],
   krone: [
-    {reif:{metall:'gold', profil:'rand', kanal:'rotgold', nieten:{n:22, gr:4.4, m:'gold'}}, eiche:{m:'gold', gr:1}, krone:{m:'gold'}},
-    {reif:{metall:'gold', profil:'rand', kanal:'flieder', nieten:{n:22, gr:4.6, m:'gold'}, steine:12}, eiche:{m:'gold', gr:2}, krone:{m:'gold'}},
-    {reif:{metall:'gold', profil:'rand', kanal:'flieder', nieten:{n:24, gr:4.8, m:'gold'}, steine:16}, eiche:{m:'gold', gr:3}, krone:{m:'gold'}},
+    {reif:{metall:'gold', profil:'rand', kanal:'gold', nieten:{n:22, gr:4.6, m:'gold'}, steine:8}, eiche:{m:'gold', gr:1}, krone:{m:'gold'}, raute:'gold'},
+    {reif:{metall:'gold', profil:'rand', kanal:'gold', nieten:{n:22, gr:4.6, m:'gold'}, steine:12}, eiche:{m:'gold', gr:2}, krone:{m:'gold'}, raute:'gold'},
+    {reif:{metall:'gold', profil:'rand', kanal:'rotgold', nieten:{n:24, gr:4.8, m:'gold'}, steine:16}, eiche:{m:'gold', gr:3}, krone:{m:'gold'}, raute:'gold'},
   ],
   stern: [
-    {reif:{metall:'gold', profil:'rand', kanal:'flieder', nieten:{n:16, gr:4.8, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
-     strahlen:{m:'gold', n:72, lang:120}, krone:{m:'gold', stern:1}},
-    {reif:{metall:'gold', profil:'rand', kanal:'rose', nieten:{n:16, gr:4.8, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
-     strahlen:{m:'gold', n:88, lang:124}, krone:{m:'gold', stern:1}},
+    {reif:{metall:'gold', profil:'rand', kanal:'gold', nieten:{n:16, gr:4.8, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
+     strahlen:{m:'gold', n:72, lang:120}, krone:{m:'gold', stern:1}, raute:'gold'},
+    {reif:{metall:'gold', profil:'rand', kanal:'gold', nieten:{n:16, gr:4.8, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
+     strahlen:{m:'gold', n:88, lang:124}, krone:{m:'gold', stern:1}, raute:'gold'},
     {reif:{metall:'gold', profil:'rand', kanal:'rotgold', nieten:{n:16, gr:5, m:'gold', frei:[[-12, 12], [165, 180], [-180, -165]]}, steine:16},
-     strahlen:{m:'gold', n:96, lang:118, gross:1}, krone:{m:'gold', stern:1}},
+     strahlen:{m:'gold', n:96, lang:118, gross:1}, krone:{m:'gold', stern:1}, raute:'gold'},
   ],
 };
 
@@ -36336,7 +36359,7 @@ function _izWedel(p, n, B, m, farbe, st, stein){
 // zweite einen zweiten Wedel und die Rangfarbe im Laub, der dritte einen
 // dritten, Steine in den Augen und Ranken um den Kopf.
 function _izZier(o, st){
-  const g = o.gr, m = o.m, farbe = g === 1 ? 0 : g === 2 ? .35 : .5;
+  const g = o.gr, m = o.m, farbe = g === 1 ? 0 : g === 2 ? .18 : .26;
   const wedel = (r0, r1, a0, a1, L, dreh, n, B) =>
     _izWedel(_izRollbahn(r0, a0, a1, L, dreh, 1.8, r1), n, B, m, farbe, st, g >= 3);
   let s = '';
@@ -36416,8 +36439,11 @@ function _izSchleife(st, m, gr){
   const umriss = _izGlatt(L, false) + 'L' + _izPt(kerbe) + 'L' + R.slice().reverse().map(_izPt).join('L') + 'Z';
   const licht = _izHalb(p, t => 17 + 5 * t, -1);
   const k = IZ_METALL[m];
-  return _izJe(umriss, d => `<path d="${d}" fill="url(#sd)" stroke="${k[2]}" stroke-width="3.2" stroke-linejoin="round"/>`)
-    + _izJe(licht, d => `<path d="${d}" fill="url(#sg)" opacity=".75"/>`)
+  // Metall mit einem Schimmer der Rangfarbe: ganz in Violett war das Band
+  // der lauteste Fleck des Kronenreifs.
+  return _izJe(umriss, d => `<path d="${d}" fill="url(#d${m})" stroke="${k[2]}" stroke-width="3.2" stroke-linejoin="round"/>`)
+    + _izJe(umriss, d => `<path d="${d}" fill="url(#sd)" opacity=".35"/>`)
+    + _izJe(licht, d => `<path d="${d}" fill="url(#h${m})" opacity=".7"/>`)
     + (gr >= 3 ? _izJe(_izGlatt(p.slice(1, n - 1)), d => `<path d="${d}" fill="none" stroke="${k[1]}" stroke-width="3" stroke-linecap="round" stroke-dasharray="1 9"/>`) : '')
     + _izJe(_izGrat(p, t => 11, -1, .1, .8), d => _izLicht(d, 2.4, .6));
 }
@@ -36447,8 +36473,8 @@ function _izEichenkranz(o, st){
     const a = a0 + 18 + i * (a1 - a0 - 40) / Math.max(1, zahl - 1);
     const [x, y] = _izPol(rz + 22, a + 8);
     if(paar){
-      eicheln += _izEichel(x, y, a - 122, 60, m, true, st) + _izEichel(x, y, a - 78, 60, m, true, st);
-    } else eicheln += _izEichel(x, y, a - 100, 64, m, true, st);
+      eicheln += _izEichel(x, y, a - 122, 60, m, g >= 3 || i % 2 === 0, st) + _izEichel(x, y, a - 78, 60, m, g >= 3, st);
+    } else eicheln += _izEichel(x, y, a - 100, 64, m, false, st);
   }
   const zweig = _izBogen(rz, a0 - 4, a1 + 2);
   return _izSchleife(st, m, g)
@@ -36499,7 +36525,7 @@ function _izKrone(o, st){
   const P = (...a) => a.map(p => _izPt(T(p[0], p[1]))).join(' ');
   const [g, l, mi, t, k] = IZ_METALL[m];
   // Der Schein hinter der Krone.
-  let s = `<circle cx="500" cy="${_izN(y0 - 70 * f)}" r="${_izN(120 * f)}" fill="url(#ss)" opacity=".5"/>`;
+  let s = `<circle cx="500" cy="${_izN(y0 - 70 * f)}" r="${_izN(120 * f)}" fill="url(#ss)" opacity=".35"/>`;
   // Die Zacken, jede mit einer Lichtseite: außen zwei, die sich nach außen
   // neigen, innen zwei hohe, dazwischen niedrige Spitzen.
   const zacke = (b0, b1, sp, tal) =>
@@ -36517,7 +36543,7 @@ function _izKrone(o, st){
   s += _izJe(zackenLicht, d => `<path d="${d}" fill="#fff" opacity=".3"/>`);
   // In den großen Zacken ein Keil in der Rangfarbe, wie in der Vorlage.
   const keile = `M${P([-106, -62])}L${P([-94, -34])}L${P([-82, -34])}Z M${P([-56, -76])}L${P([-63, -34])}L${P([-49, -34])}Z`;
-  s += _izJe(keile, d => `<path d="${d}" fill="url(#sg)" opacity=".85"/>`);
+  s += _izJe(keile, d => `<path d="${d}" fill="url(#sg)" opacity=".5"/>`);
   // Der Kronreif: leicht gewölbt, mit einem Grat oben und unten.
   const reif = `M${P([-102, -2])}C${P([-40, 8], [40, 8], [102, -2])}L${P([98, -34])}C${P([40, -28], [-40, -28], [-98, -34])}Z`;
   s += _izForm(reif, `url(#b${m})`, m);
@@ -36599,10 +36625,11 @@ function _izStrahlen(o){
     if(Math.abs(a) < 5) continue;
     spitze(a, i % 2 ? 372 : 414, i % 2 ? 7 : 8.5);
   } else [-90, 90, 180].forEach(a => spitze(a, 416, 5.5));
-  return `<circle cx="500" cy="500" r="430" fill="url(#sr)" opacity="${o.gross ? .9 : .6}"/>`
+  return `<circle cx="500" cy="500" r="430" fill="url(#sr)" opacity="${o.gross ? .8 : .6}"/>`
     + `<path d="${glorie}" fill="url(#o${m})" opacity=".8"/>`
     + `<path d="${hell}" fill="url(#h${m})"/>`
-    + `<path d="${grossR}" fill="${o.gross ? 'url(#sd)' : `url(#d${m})`}"/>`
+    + `<path d="${grossR}" fill="url(#d${m})"/>`
+    + (o.gross ? `<path d="${grossR}" fill="url(#sd)" opacity=".3"/>` : '')
     + `<path d="${grossL}" fill="url(#h${m})"/>`
     + `<path d="${gross}" fill="none" stroke="${k}" stroke-opacity=".6" stroke-width="1.4" stroke-linejoin="round"/>`
     // Der Kranzring, aus dem die Strahlen springen: ohne ihn säßen sie
@@ -36620,6 +36647,7 @@ function _izStufe(key, nr, farbe){
   const merk = o => { if(o && o.m) metalle.add(o.m); if(o && o.metall) metalle.add(o.metall);
     if(o && o.kanal) metalle.add(o.kanal); if(o && o.nieten && o.nieten.m) metalle.add(o.nieten.m); };
   [z.reif, z.sichel, z.klinge, z.volute, z.zier, z.lorbeer, z.eiche, z.krone, z.strahlen].forEach(merk);
+  if(z.lilie) metalle.add(z.lilie);
   let hinten = '';
   if(z.strahlen) hinten += _izStrahlen(z.strahlen);
   if(z.sichel) hinten += _izSichel(z.sichel);
@@ -36628,11 +36656,12 @@ function _izStufe(key, nr, farbe){
   if(z.zier) hinten += _izZier(z.zier, st);
   if(z.lorbeer) hinten += _izLorbeer(Object.assign({st}, z.lorbeer));
   if(z.eiche) hinten += _izEichenkranz(z.eiche, st);
-  const kopf = z.krone ? _izKrone(z.krone, st) : _izLilie(500 - IZ_RA + 4, st, 'rotgold');
+  const kopf = z.krone ? _izKrone(z.krone, st) : _izLilie(500 - IZ_RA + 4, st, z.lilie || 'rotgold');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">`
     + _izDefs([...metalle], st)
-    + `<g filter="url(#sh)">` + hinten + (hinten ? _izReifSchatten() : '') + _izReif(z.reif)
-    + kopf + _izRauteStein('rotgold') + `</g></svg>`;
+    + `<use href="#iz" filter="url(#sh)"/>`
+    + `<g id="iz">` + hinten + (hinten ? _izReifSchatten() : '') + _izReif(z.reif)
+    + kopf + _izRauteStein(z.raute || 'rotgold') + `</g></svg>`;
 }
 
 // Die Zeichnung als Bild für ein <image>: je Rang, Stufe und Grad einmal
