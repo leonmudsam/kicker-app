@@ -122,18 +122,13 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       vom Entwurf kommt der Schimmer —, dazu
                       Bewegung, die etwas erklärt, und neue gezeichnete
                       Ansichten (aufwertung-2.html), und der Entwurf nur
-                      der Insignium-Leiter: gezeichnet mit dem Code aus
-                      35b-prestige.js, der beim Erzeugen eingesetzt wird,
-                      nach Vorlagen je Stufe — Reif mit Nieten, Schildring
-                      aus Sicheln, Volutenkranz aus Schnörkelbügeln,
-                      Zierkranz aus Schnörkeln und Blättern, Lorbeerreif
-                      mit Krone im dritten Grad, Kronenreif aus breitem
-                      Lorbeer, Ordensstern wie in der App —, Lilie oben
-                      und Raute unten auf jeder Stufe, Schwellen 0 bis
-                      4.500 und danach alle 500 eine Zacke, Metall, das mit
-                      der Stufe wärmer wird, die Verwandlung als Bühne, die
-                      ganze Leiter in der Laufbahn, der Fun Fact dazu,
-                      52 px und der Schmuck je Feld im Browser gemessen
+                      der Insignium-Leiter: die 23 Zeichen sind die
+                      Bilder der Vorlage, ausgeschnitten und freigestellt,
+                      je Rang werden nur die violetten Bildpunkte
+                      umgefärbt, dazu Glut, Hof, Glanz und die Zahl in der
+                      Raute, Schwellen 0 bis 4.500 und danach alle 500 eine
+                      Zacke, die Verwandlung als Bühne, die ganze Leiter
+                      in der Laufbahn, der Fun Fact dazu und 52 px
                       (insignium.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
