@@ -2937,7 +2937,9 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   sind Licht und keine Form.
   **Die Raute am Fuß trägt die Ligaposition** (`_insFuss`, nur mit Band):
   eine dunkle Raute mit der Zahl, genau auf dem Stein (`INS_RAUTE_Y`, aus
-  `IZ_RAUTE`). In der Liste steht keine Zahl darauf; die Titelsterne sitzen
+  `IZ_RAUTE`). Der Stein ist so groß wie die Ziffer darauf und nicht
+  größer: mit 86 Einheiten Halbdiagonale zog er den Blick vom Gesicht
+  weg nach unten, mit 64 bleibt von ihm die Fassung als Rand um die Zahl. In der Liste steht keine Zahl darauf; die Titelsterne sitzen
   dort **unter** der Raute [§C26], weil der Stein die Stelle am Fuß schon
   belegt.
   Die Sterne stehen mit Band in einem eigenen **Streifen darüber**, auf

@@ -725,12 +725,15 @@ function _izLilie(y, st, m){
 // Die Fassung ist eine Fase auf vier Seiten, jede im eigenen Licht; der
 // Stein trägt eine Tafel in der Mitte und acht Facetten darum.
 function _izRauteStein(m){
-  const cy = IZ_RAUTE, A = 86, I = 71, T = 30;
+  // Kleiner als der Reif breit ist: mit 86 Einheiten stand der Stein
+  // größer da als die Ziffer der Platzierung, die auf ihm liegt, und zog
+  // den Blick vom Gesicht weg nach unten.
+  const cy = IZ_RAUTE, A = 64, I = 52, T = 22;
   const [g, l, mi, t, k] = IZ_METALL[m];
   const au = [[500, cy - A], [500 + A, cy], [500, cy + A], [500 - A, cy]];
   const in_ = [[500, cy - I], [500 + I, cy], [500, cy + I], [500 - I, cy]];
   // Der Schein um den Stein, in seiner Farbe.
-  let s = `<circle cx="500" cy="${cy}" r="120" fill="url(#ss)" opacity=".3"/>`;
+  let s = `<circle cx="500" cy="${cy}" r="90" fill="url(#ss)" opacity=".3"/>`;
   // Die Fassung: oben rechts, unten rechts, unten links, oben links.
   const tonF = [l, t, mi, g];
   for(let i = 0; i < 4; i++){
@@ -754,7 +757,7 @@ function _izRauteStein(m){
     s += `<path d="M${f3.map(_izPt).join('L')}Z" fill="${v > 0 ? '#fff' : '#000'}" opacity="${Math.abs(v)}"/>`;
   });
   s += `<path d="M${tf.map(_izPt).join('L')}Z" fill="url(#sg)" opacity=".5" stroke="#fff" stroke-opacity=".25" stroke-width="1"/>`;
-  s += _izFunkeln(500 - 20, cy - 26, 15, .9);
+  s += _izFunkeln(500 - 15, cy - 19, 11, .9);
   return s;
 }
 
