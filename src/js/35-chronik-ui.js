@@ -256,14 +256,24 @@ function _chronStripHtml(pid){
 // Das Podest der ersten drei — dasselbe Bauteil im Monats- und im
 // Rekord-Blatt [§C27]. Erwartet wird eine Reihenfolge aus {pid, wert, zeit};
 // wer weniger als drei hat, bekommt leere Plaetze statt einer Luecke.
+// Der Platz kommt aus dem Wert (`v`), nicht aus der Reihenfolge: Martin und
+// Julian halten „Der Unaufhaltsame" mit 13 punktgleich, das Blatt sagt es
+// darunter, und das Podest zeigte Julian als 02 — die Reihenfolge bricht
+// Gleichstand nur, damit sie feststeht. Wer gleich viel hat, steht auf
+// demselben Platz und trägt dasselbe Metall.
+function _chronPlatz(reihe, r){
+  if(r == null || r.v == null) return null;
+  return 1 + reihe.filter(x => x.v != null && x.v - r.v > 1e-9).length;
+}
 function _chronPodestHtml(reihe){
   const METALL = ['gold', 'silber', 'bronze'];
   const platz = (i) => {
     const r = reihe[i];
     const p = r && pmap()[r.pid];
     if(!p) return '<div class="pod-leer"></div>';
-    return `<div class="pod-karte ${METALL[i]}${i === 0 ? ' erster' : ''}" data-tplayer="${esc(r.pid)}">
-      <div class="pod-platz num">${String(i + 1).padStart(2, '0')}</div>
+    const n = _chronPlatz(reihe, r) || i + 1;
+    return `<div class="pod-karte ${METALL[Math.min(n, 3) - 1]}${i === 0 ? ' erster' : ''}" data-tplayer="${esc(r.pid)}">
+      <div class="pod-platz num">${String(n).padStart(2, '0')}</div>
       ${avHtml(p, '', {ins:true, px:(i === 0 ? 84 : 70), klasse:'pod-av'})}
       <div class="pod-name">${esc(p.name)}</div>
       <div class="pod-sub"><span>${esc(r.wert || '')}</span>${
@@ -285,18 +295,18 @@ function showDisziplin(tid, sid){
   // Ein eingefrorener Monat wird NICHT nachgerechnet [§13.3a]: er lief gegen
   // den Katalog von damals, und die heutige Bedingung ergäbe dort ein
   // anderes Podest als die Tafel daneben zeigt.
-  let rang = [], evFuer = null;
+  let rang = [], evFuer = null, wertVon = null;
   if(!T.frozen){
     try {
       const r = def.pick(_seasonTitleCtx(sid), new Set());
-      if(r && r.rang){ rang = r.rang; evFuer = r.evFuer; }
+      if(r && r.rang){ rang = r.rang; evFuer = r.evFuer; wertVon = r.wert; }
     } catch(e){ rang = []; }
   }
 
   const podest = _chronPodestHtml(rang.map(pid => {
     let wert = '';
     try { wert = evFuer ? evFuer(pid) : ''; } catch(e){ wert = ''; }
-    return {pid, wert};
+    return {pid, wert, v: wertVon ? wertVon(pid) : null};
   }));
 
   openSheet(`
@@ -391,12 +401,12 @@ function showChronicle(cid){
     ${rang.length
       ? `<div class="pp-sec-title" style="margin-top:14px"><div class="l"><h4>Die Tafel</h4></div>
            <div class="m num">${rang.length} von ${allChronicles().rated} erfüllen die Mindestbasis</div></div>
-         ${_chronPodestHtml(rang.map(r => ({pid:r.pid, wert:_chronKurz(r.ev), zeit:r.zeit})))}`
+         ${_chronPodestHtml(rang.map(r => ({pid:r.pid, wert:_chronKurz(r.ev), zeit:r.zeit, v:r.wert})))}`
       : emptyState('scroll', 'Diesen Rekord hat noch niemand erreicht.')}
     ${verfolger.length ? `<div class="rek-verfolger">${verfolger.map((r, i) => {
       const p = pmap()[r.pid];
       return `<div class="rvf" data-tplayer="${esc(r.pid)}">
-        <span class="p num">${i + 4}</span>
+        <span class="p num">${_chronPlatz(rang.map(x => ({v:x.wert})), {v:r.wert}) || i + 4}</span>
         ${p ? avHtml(p, 'width:21px;height:21px;font-size:9px;border-radius:7px') : ''}
         <span class="n">${esc(p ? p.name : '?')}</span>
         <span class="w num">${esc(_chronKurz(r.ev))}</span>

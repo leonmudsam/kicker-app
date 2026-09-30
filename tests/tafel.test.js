@@ -806,6 +806,26 @@ ok(_kose.fehlt.length === 0,
    'jedes Chronik-Blatt nennt den Beinamen seines Halters, wenn er anders heisst als die Wertung',
    _kose.fehlt.join(', ') || _kose.n + ' Blaetter');
 K.eval('closeSheet(true)');
+// Wer einen Rekord punktgleich haelt, steht auf dem Podest auf Platz 1:
+// „Der Unaufhaltsame" gehoert Martin und Julian mit 13, das Blatt sagte es
+// in einer Notiz, und das Podest zeigte Julian als 02.
+const _podGleich = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch = []; const H = chronicleHolders(); let geteilt = 0;
+  CHRONICLES.forEach(c => {
+    const h = H[c.id]; if(!h) return;
+    const n = Math.min(3, (h.pids || [h.pid]).length);
+    if(n > 1) geteilt++;
+    let out=''; const echt=openSheet; openSheet=(x)=>{out=x;};
+    try { showChronicle(c.id); } catch(e){ out=''; } finally { openSheet=echt; }
+    const erste = (out.match(/pod-platz num">01</g) || []).length;
+    if(erste !== n) falsch.push(c.id + ': ' + erste + ' statt ' + n);
+  });
+  return {falsch, geteilt};
+})())`));
+ok(_podGleich.falsch.length === 0 && _podGleich.geteilt > 0,
+   'wer einen Rekord punktgleich haelt, steht auf dem Podest auf Platz 1',
+   _podGleich.falsch.slice(0, 4).join(', ') || _podGleich.geteilt + ' geteilte Rekorde');
+
 // Die Erklaerung sagt, was die Zahl daneben bedeutet — „+15 Punkte" las sich
 // wie Elo. Wo eine Groesse nicht selbsterklaerend ist, steht sie im Blatt.
 ok(K.eval(`(function(){
