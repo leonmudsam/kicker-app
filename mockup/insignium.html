@@ -558,7 +558,7 @@ function funfact(){
   const frei = INSIGNIEN.filter((s, si) => !jeStufe[si]);
   document.getElementById('ffKarte').innerHTML = `
     <div class="top"><span class="rb"><i>✦</i>FUN FACT · LAUFBAHN</span><span>10:00</span></div>
-    <h5>Sieben Stufen, ${FELDER.length} Formen: ${['keine','eine','zwei','drei','vier','fünf'][frei.length].replace(/^e/, 'E').replace(/^k/,'K') || zahl(frei.length)} Stufen trägt noch niemand</h5>
+    <h5>Sieben Stufen, ${FELDER.length} Formen: ${frei.length === 1 ? 'eine Stufe' : (['keine','eine','zwei','drei','vier','fünf'][frei.length] || zahl(frei.length)) + ' Stufen'} trägt noch niemand</h5>
     <p>Die Spitze trägt den <b>${oben.name}</b>. Bis zum <b>${naechste.name}</b> fehlen <b>${zahl(naechste.min - spitze.p)}</b> Prestige, bis zum Ordensstern <b>${zahl(INSIGNIEN[INSIGNIEN.length - 1].min - spitze.p)}</b>.</p>
     <div class="ff-band">${INSIGNIEN.map((s, si) => `<div><div class="b${jeStufe[si] ? '' : ' leer'}">${zeichenSvg(s.key, 0, {ohneLicht:true, fuss:false})}</div>
       <small class="${jeStufe[si] ? '' : 'leer'}">${jeStufe[si] || '–'}</small></div>`).join('')}</div>
