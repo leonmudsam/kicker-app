@@ -164,8 +164,8 @@ function rcpNotizHtml(o){
 //     etwas sagt:
 //       Woraus         die Stichprobe als Zellen, eine je Gelegenheit
 //       Wo im Feld     jeder im Rennen als Punkt, der Halter hervorgehoben
-//       Wie sicher     die Spanne, in der ein Anteil bei dieser Stichprobe
-//                      liegt, und der Zweite darin
+//       Wie knapp      wie viele der eigenen Gelegenheiten anders hätten
+//                      ausgehen müssen, damit der Zweite gleichauf läge
 //       Wie es dazu kam  der Verlauf über die Monatsenden
 //     Gerechnet wird hier nichts Neues: die Zahlen kommen aus dem Beleg des
 //     Katalogs, aus chronicleRang, aus AW_WERT und aus dem Zeitschnitt, den
@@ -222,36 +222,36 @@ function belegFeldHtml(eintraege, mitSkala){
   return `<div class="bl-feld" title="${e.length} im Feld"><span class="bl-feld-bahn"></span>`
     + `<span class="bl-feld-mitte" style="left:${pos(mitte.v)}%"></span>${punkte}</div>${skala}`;
 }
-// Wie sicher: die Spanne um einen Anteil (Wilson, 90 %). Sie sagt, was bei
-// dieser Stichprobe noch Zufall sein kann — und ob der Zweite darin liegt.
-function belegSpanne(k, n){
-  const z = 1.645, p = k / n, z2 = z * z, d = 1 + z2 / n;
-  const c = (p + z2 / (2 * n)) / d;
-  const h = z * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / d;
-  return [Math.max(0, c - h), Math.min(1, c + h)];
-}
-function belegSpanneHtml(a, zweiter){
-  if(!a || a.n < 3) return '';
-  const [u, o] = belegSpanne(a.k, a.n);
-  const pz = v => Math.round(v * 100);
-  const q = a.k / a.n;
-  // In Worten, die man ohne Statistik versteht. Dort stand „der Abstand ist
-  // mehr als Zufall" — richtig gerechnet, aber niemand wusste, was es
-  // heißt. Gesagt wird jetzt, was die Spanne bedeutet: ein paar Partien
-  // anders, und der Wert läge woanders; und ob der Zweite dann vorne wäre.
-  let satz = `${a.k} von ${a.n} sind ${pz(q)} %. Wären ein paar Partien anders ausgegangen, läge der Wert wohl irgendwo zwischen <b>${pz(u)} und ${pz(o)} %</b>.`;
-  let ref = '';
-  if(zweiter && zweiter.q != null && isFinite(zweiter.q)){
-    const drin = zweiter.q >= u - 1e-9 && zweiter.q <= o + 1e-9;
-    ref = `<span class="bl-ref" style="left:${(zweiter.q * 100).toFixed(1)}%"></span>`;
-    satz += drin
-      ? ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % in diesem Bereich: der Vorsprung ist noch knapp.`
-      : ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % klar darunter: der Vorsprung ist gesichert.`;
-  }
-  return `<div class="bl-spanne"><span class="bl-spanne-bahn"></span>
-      <span class="bl-spanne-ber" style="left:${(u * 100).toFixed(1)}%;width:${((o - u) * 100).toFixed(1)}%"></span>
-      ${ref}<span class="bl-spanne-pkt" style="left:${(q * 100).toFixed(1)}%"></span></div>
-    <div class="bl-feld-l num"><span>0 %</span><span>50 %</span><span>100 %</span></div>
+// Wie knapp: wie viele der eigenen Gelegenheiten anders hätten ausgehen
+// müssen, damit der Zweite gleichauf läge. Dort stand vorher die Spanne um
+// den Anteil (Wilson, 90 %) — „Wären ein paar Partien anders ausgegangen,
+// läge der Wert wohl irgendwo zwischen 36 und 57 %" war richtig gerechnet
+// und trotzdem nicht zu lesen: eine Spanne ist eine Frage an den Leser.
+// Eine Zahl, die man abzählen kann, beantwortet sie: zwei Partien.
+function belegLuft(k, n, q2){ return Math.max(0, Math.ceil(k - q2 * n - 1e-9)); }
+const _BELEG_ZAHL = ['keine', 'eine', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf'];
+function belegLuftHtml(a, zweiter){
+  if(!a || !zweiter || zweiter.q == null || !isFinite(zweiter.q)) return '';
+  const m = belegLuft(a.k, a.n, zweiter.q);
+  const q = a.k / a.n, pz = v => Math.round(v * 100);
+  const [wort, ton] = m === 0 ? ['gleichauf', 'eng'] : m === 1 ? ['hauchdünn', 'eng']
+    : m <= 3 ? ['knapp', 'eng'] : m <= 7 ? ['solide', 'mittel'] : ['deutlich', 'weit'];
+  const zahl = _BELEG_ZAHL[m] || String(m);
+  const satz = m === 0
+    ? `${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % gleichauf.`
+    : `${zahl.charAt(0).toUpperCase() + zahl.slice(1)} der ${a.n} Ergebnisse anders, und <b>${esc(zweiter.name)}</b> läge gleichauf.`;
+  // Die Luft als Zellen: je eine für eine Gelegenheit Vorsprung, höchstens
+  // zwölf — darüber ist der Vorsprung deutlich, und die Zahl sagt den Rest.
+  const zellen = Array.from({length: Math.min(m, 12)}, () => '<i></i>').join('') + (m > 12 ? '<b>+' + (m - 12) + '</b>' : '');
+  const balken = (wert, name, cls) => `<div class="bl-lz-z ${cls}"><span class="n">${esc(name)}</span>`
+    + `<span class="b"><i style="width:${(wert * 100).toFixed(1)}%"></i></span><span class="v num">${pz(wert)} %</span></div>`;
+  return `<div class="bl-luft" data-luft="${m}" data-ton="${ton}">
+      <div class="bl-lz-kopf"><span class="bl-lz-zahl num">${m}</span>
+        <span class="bl-lz-was">${m === 1 ? 'Ergebnis' : 'Ergebnisse'} Vorsprung</span>
+        <span class="bl-lz-wort">${wort}</span></div>
+      ${m ? `<div class="bl-lz-zellen">${zellen}</div>` : ''}
+      ${balken(q, 'Bestwert', 'a')}${balken(zweiter.q, zweiter.name, 'b')}
+    </div>
     <div class="bl-satz">${satz}</div>`;
 }
 // Wie es dazu kam: der Wert des Halters und des Zweiten an jedem Monatsende
@@ -302,8 +302,8 @@ function belegHtml(o){
   const feld = belegFeldHtml(o.feld, true);
   if(feld) teile.push(blattAbschnittHtml('users', 'Wo im Feld', o.feld.length + ' im Rennen')
     + `<div class="bl-box">${feld}${o.dahinter ? `<div class="bl-satz">${o.dahinter}</div>` : ''}</div>`);
-  const sp = a && _belegIstQuote(o.ev, a) ? belegSpanneHtml(a, o.zweiter) : '';
-  if(sp) teile.push(blattAbschnittHtml('target', 'Wie sicher') + `<div class="bl-box">${sp}</div>`);
+  const lz = a && _belegIstQuote(o.ev, a) ? belegLuftHtml(a, o.zweiter) : '';
+  if(lz) teile.push(blattAbschnittHtml('target', 'Wie knapp') + `<div class="bl-box">${lz}</div>`);
   if(o.verlauf) teile.push(blattAbschnittHtml('chartUp', 'Wie es dazu kam', 'Monatsenden')
     + `<div class="bl-box" data-verlauf="${esc(o.verlauf)}"><div class="bl-lade"></div></div>`);
   return teile.join('');
@@ -322,4 +322,182 @@ function belegVerlaufLaden(root){
       else { const kopf = box.previousElementSibling; box.remove(); if(kopf) kopf.remove(); }
     });
   }, 360);
+}
+
+// ╔═══ §C31 ─── DIE MEISTERBÜHNE ──────────────────────────────────────╗
+//     Der Meister einer Saison stand im Feed als rote Breaking-Karte mit
+//     zwei Sätzen und ohne ein einziges Bild, und sein Blatt nannte drei
+//     Elo-Zahlen untereinander und darunter die Saison-ID. Das Podest, das
+//     Rennen um die Spitze und die Tage vorn gab es nur im Saison-Rückblick
+//     — oder gar nicht. Die Bauteile stehen deshalb hier, einmal, und
+//     Rückblick, Karte und Blatt zeichnen daraus [§C27].
+// ╚═════════════════════════════════════════════════════════════════════╝
+
+// Die Rangliste einer Saison — EINE Quelle für Podest, Liste und Wappen.
+// Vorher rechnete das Podest aus season.top_elo und die Liste aus dem
+// Simulator: zwei Reihenfolgen, die bei Gleichstand auseinanderliefen.
+// Die dritte Zahl ist die Tordifferenz: der Elo-Zuwachs des Monats ist die
+// Saison-Elo selbst, der Simulator setzt zu jedem Monatsbeginn zurück.
+function saisonRang(sid){
+  const ms = matchesInSeason(sid);
+  const gSim = getGlobalSim();
+  const stand = gSim.seasonEndElos[sid] || {};
+  const gespielt = gSim.seasonPlayed[sid] || {};
+  const sw = {}, sl = {}, gf = {}, ga = {};
+  ms.forEach(m => {
+    [[m.a1, m.a2, m.winner === 'A', m.score_a, m.score_b],
+     [m.b1, m.b2, m.winner === 'B', m.score_b, m.score_a]].forEach(([x, y, won, f, g]) => {
+      [x, y].forEach(id => {
+        if(won) sw[id] = (sw[id] || 0) + 1; else sl[id] = (sl[id] || 0) + 1;
+        gf[id] = (gf[id] || 0) + (f || 0); ga[id] = (ga[id] || 0) + (g || 0);
+      });
+    });
+  });
+  return Object.keys(gespielt).filter(id => gespielt[id] > 0 && pmap()[id])
+    .map(id => ({id, elo:Math.round(stand[id] ?? cfg.start_elo),
+                 wins:sw[id] || 0, losses:sl[id] || 0, diff:(gf[id] || 0) - (ga[id] || 0)}))
+    .sort((a, b) => b.elo - a.elo);
+}
+
+// Das Podest einer Saison, dasselbe Bauteil wie in der Ewigen Tafel [§C27]:
+// drei Karten, der Erste höher und wärmer, das Wappen mit Banner. Die Zahl
+// im Schild ist der Platz DIESER Saison, die Schwingen zählen die Titel bis
+// zu ihr — ein Rückblick auf den Mai trägt nicht die Titel vom August [§C26].
+function saisonPodestHtml(sid, rang, o){
+  o = o || {};
+  if(!rang || !rang.length) return '';
+  const METALL = ['gold', 'silber', 'bronze'];
+  const karte = (e, platz) => {
+    const p = pmap()[e.id];
+    if(!p) return '<div class="pod-leer"></div>';
+    const titelBis = seasons.filter(x => x.id <= sid && seasonChampion(x.id) === e.id).length;
+    const av = avHtml(p, '', {ins:true, band:true, pos:platz, titel:titelBis, feuer:0,
+                              px:platz === 1 ? (o.px1 || 88) : (o.px || 70), klasse:'pod-av'});
+    // Ohne Titel steht dort die Spielzahl — ein Strich sähe aus, als fehlte
+    // die Zahl, statt zu sagen: dieser Spieler hat noch keinen.
+    const sub = titelBis ? titelBis + ' Titel' : (e.wins + e.losses) + ' Spiele';
+    return `<div class="pod-karte ${METALL[platz - 1]}${platz === 1 ? ' erster' : ''}" ${o.attr || 'data-detail'}="${esc(e.id)}">
+      <div class="pod-platz num">${String(platz).padStart(2, '0')}</div>
+      ${av}
+      <div class="pod-name">${esc(p.name)}</div>
+      <div class="pod-wert num">${e.elo}</div>
+      <div class="pod-sub num">${esc(sub)}</div>
+    </div>`;
+  };
+  const folge = [rang[1], rang[0], rang[2]], plaetze = [2, 1, 3];
+  return `<div class="podest rcp-podest${o.klasse ? ' ' + o.klasse : ''}">${
+    folge.map((e, k) => e ? karte(e, plaetze[k]) : '<div class="pod-leer"></div>').join('')}</div>`;
+}
+
+// Wer an wie vielen Spieltagen vorn lag, und wie oft die Spitze wechselte.
+// Gezählt wird der Stand am Ende jedes Tages mit Partie, aus dem
+// Positionsverlauf — derselben Rechnung, die dessen Linien zeichnet.
+function saisonSpitze(sid){
+  const ph = getSeasonPositionHistory(sid);
+  const tage = {}, folge = [];
+  if(!ph || ph.empty) return {tage, folge, spieltage:0, wechsel:0};
+  (ph.spielTage || []).forEach(day => {
+    const vorn = ph.activeIds.find(id => (ph.positionsByDay[id] || [])[day - 1] === 1);
+    if(!vorn) return;
+    tage[vorn] = (tage[vorn] || 0) + 1;
+    folge.push({day, pid:vorn});
+  });
+  let wechsel = 0;
+  for(let i = 1; i < folge.length; i++) if(folge[i].pid !== folge[i - 1].pid) wechsel++;
+  return {tage, folge, spieltage:folge.length, wechsel};
+}
+
+// Das Titelrennen: die Saison-Elo der drei auf dem Podest am Ende jedes
+// Tages, der Meister golden und obenauf, darunter ein Band, das an jedem
+// Spieltag in der Farbe dessen steht, der vorn lag. Die Linien zeichnen sich
+// von links auf — in der Richtung, in der der Monat passiert ist —, und bei
+// Bewegungsruhe stehen sie still. `o.klein` ist die Fassung für die Karte:
+// ohne Band, ohne Legende.
+function saisonRennenHtml(sid, pids, o){
+  o = o || {};
+  const ph = getSeasonPositionHistory(sid);
+  if(!ph || ph.empty || ph.lastDay < 2) return '';
+  const ids = (pids || []).filter(id => ph.eloByDay && ph.eloByDay[id]).slice(0, 3);
+  if(!ids.length) return '';
+  const W = 320, H = o.klein ? 64 : 120, tief = o.klein ? 6 : 10;
+  const werte = [];
+  ids.forEach(id => ph.eloByDay[id].forEach(v => { if(v != null) werte.push(v); }));
+  if(werte.length < 2) return '';
+  let lo = Math.min(...werte), hi = Math.max(...werte);
+  if(!(hi > lo)){ lo -= 1; hi += 1; }
+  const n = ph.lastDay;
+  const x = d => (6 + d * (W - 12) / (n - 1)).toFixed(1);
+  const y = v => (H - tief - (v - lo) / (hi - lo) * (H - tief - 8)).toFixed(1);
+  const METALL = ['gold', 'silber', 'bronze'];
+  let linien = '', flaeche = '';
+  // Von hinten nach vorn: der Meister liegt zuletzt und damit obenauf.
+  ids.slice().reverse().forEach(id => {
+    const k = ids.indexOf(id), reihe = ph.eloByDay[id];
+    const pts = [];
+    reihe.forEach((v, d) => { if(v != null) pts.push([x(d), y(v)]); });
+    if(pts.length < 2) return;
+    const pfad = 'M' + pts.map(p => p.join(',')).join('L');
+    if(k === 0) flaeche = `<path class="srn-fl" d="${pfad}L${pts[pts.length - 1][0]},${H}L${pts[0][0]},${H}Z"/>`;
+    const e = pts[pts.length - 1];
+    linien += `<path class="srn-l ${METALL[k]}" pathLength="1" d="${pfad}"/>`
+      + `<circle class="srn-p ${METALL[k]}" cx="${e[0]}" cy="${e[1]}" r="${k === 0 ? 4 : 3}"/>`;
+  });
+  const gid = 'srnFl' + String(sid).replace(/\W/g, '') + (o.klein ? 'k' : '');
+  const svg = `<svg class="srn-svg" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7cf4a" stop-opacity=".32"/><stop offset="1" stop-color="#f7cf4a" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${[.25, .5, .75].map(t => `<line class="srn-g" x1="0" x2="${W}" y1="${(8 + t * (H - tief - 8)).toFixed(1)}" y2="${(8 + t * (H - tief - 8)).toFixed(1)}"/>`).join('')}
+    ${flaeche.replace('class="srn-fl"', `class="srn-fl" fill="url(#${gid})"`)}${linien}</svg>`;
+  if(o.klein) return `<div class="srn klein">${svg}</div>`;
+  // Das Band der Spitze: ein Feld je Kalendertag, gefärbt nach dem, der am
+  // Ende eines Spieltags vorn lag — wer nicht auf dem Podest steht, in Metall.
+  const sp = saisonSpitze(sid);
+  const vorn = {}; sp.folge.forEach(f => { vorn[f.day] = f.pid; });
+  let zuletzt = null;
+  const band = Array.from({length:n}, (_, d) => {
+    const pid = vorn[d + 1] || null;
+    if(pid) zuletzt = pid;
+    const k = zuletzt ? ids.indexOf(zuletzt) : -1;
+    const cls = k >= 0 ? METALL[k] : (zuletzt ? 'rest' : 'leer');
+    return `<i class="${cls}${pid ? '' : ' still'}"></i>`;
+  }).join('');
+  const pm = pmap();
+  const legende = ids.map((id, k) => `<span class="${METALL[k]}" data-pid="${esc(id)}"><u></u>${
+    esc((pm[id] || {}).name || '?')}<b class="num">${ph.eloByDay[id][n - 1] != null ? ph.eloByDay[id][n - 1] : ''}</b></span>`).join('');
+  return `<div class="srn">${svg}
+    <div class="srn-band" title="Wer am Ende eines Spieltags vorn lag">${band}</div>
+    <div class="srn-achse num"><span>1.</span><span>${Math.ceil(n / 2)}.</span><span>${n}.</span></div>
+    <div class="srn-leg">${legende}</div></div>`;
+}
+
+// Die Tage an der Spitze als Balken, der Meister golden. Wer nie vorn lag,
+// steht nicht da — eine Zeile mit null ist keine Aussage.
+function saisonSpitzeHtml(sid, podium){
+  const sp = saisonSpitze(sid);
+  const ids = Object.keys(sp.tage).sort((a, b) => sp.tage[b] - sp.tage[a]);
+  if(!ids.length) return '';
+  const max = sp.tage[ids[0]] || 1, pm = pmap();
+  const METALL = ['gold', 'silber', 'bronze'];
+  return `<div class="srn-tage">${ids.map(id => {
+    const k = (podium || []).indexOf(id);
+    return `<div class="srn-t ${k >= 0 ? METALL[k] : 'rest'}" data-pid="${esc(id)}">
+      <span class="n">${esc((pm[id] || {}).name || '?')}</span>
+      <span class="b"><i style="width:${(sp.tage[id] / max * 100).toFixed(1)}%"></i></span>
+      <span class="v num">${sp.tage[id]}</span></div>`;
+  }).join('')}</div>
+    <div class="bl-satz">${sp.spieltage} ${sp.spieltage === 1 ? 'Spieltag' : 'Spieltage'}, ${
+      sp.wechsel === 0 ? 'die Spitze hat nie gewechselt' : sp.wechsel === 1 ? 'die Spitze hat einmal gewechselt'
+      : 'die Spitze hat ' + (_BELEG_ZAHL[sp.wechsel] ? _BELEG_ZAHL[sp.wechsel] + 'mal' : sp.wechsel + '-mal') + ' gewechselt'}.</div>`;
+}
+
+// Die Saison eines Spielers als Zellen, eine je Partie, in Spielreihenfolge:
+// grün ein Sieg, rot eine Niederlage [§C25]. „31 zu 12" muss man sich
+// vorstellen, die Zellen sieht man.
+function saisonZellenHtml(sid, pid){
+  const ms = matchesInSeason(sid).filter(m => [m.a1, m.a2, m.b1, m.b2].includes(pid))
+    .slice().sort((a, b) => mts(a) - mts(b));
+  if(!ms.length) return '';
+  const sieg = m => ((m.a1 === pid || m.a2 === pid) ? m.winner === 'A' : m.winner === 'B');
+  return `<div class="srn-z">${ms.map(m => `<i class="${sieg(m) ? 'w' : 'l'}"></i>`).join('')}</div>`;
 }

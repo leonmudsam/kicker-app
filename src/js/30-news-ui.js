@@ -521,6 +521,14 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
+  } else if(sorte === 'held' && d.type === 'season_recap'){
+    // ── Die Meisterbühne [§C31] ────────────────────────────────────
+    // Zwei Sätze und kein Bild: so stand der Meister im Feed, die seltenste
+    // Karte des Monats. Jetzt steht das Podest über dem Satz — dasselbe
+    // Bauteil wie im Saison-Rückblick [§C27] —, und im Fuß das Rennen um die
+    // Spitze, klein, samt der Tage vorn und dem Vorsprung.
+    kopf = _newsMeisterKopf(d);
+    fuss = _newsMeisterFuss(d);
   } else if(sorte === 'held'){
     const pid = d.playerId || (Array.isArray(d.playerIds) ? d.playerIds[0] : null);
     gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
@@ -629,7 +637,8 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
   // haetten sie ein zweites Mal daneben gestellt.
-  if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'){
+  if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'
+     && d.type !== 'season_recap'){
     const g = _newsGesichtHtml(s);
     if(g) gesicht = `<div class="nf-gr-l">${g}</div>`;
   }
@@ -1501,6 +1510,10 @@ function _newsSorte(s){
   if(t === 'insignium_stufe') return 'ins';               // die Leiter
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
+  // Der Meister ist der Held schlechthin. Ohne diese Zeile fiel er auf
+  // „fakt" — die leiseste Karte des Feeds trug die Nachricht, die es je
+  // Monat genau einmal gibt, und Gold gehört den Titeln [§C25].
+  if(t === 'season_recap') return 'held';
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
   // Die gesammelten runden Marken eines Tages sind dieselbe Sache in der
   // Mehrzahl und tragen deshalb dieselbe Form [§C27]. Ohne diese Zeile fiele
@@ -1635,6 +1648,38 @@ function _newsZahlband(werte){
     `<div><b class="${x.f || ''}">${esc(String(x.v))}</b><span>${esc(x.l || '')}</span></div>`).join('')}</div>`;
 }
 
+// ── Die Meisterbühne im Feed [§C31] ─────────────────────────────────
+// Das Podest kommt aus derselben Rangliste wie im Saison-Rückblick
+// (`saisonRang`); die Karte nennt aber, was bei ihrer Entstehung galt, also
+// steht der Meister aus dem `dataRef` in der Mitte. Kleiner als im Blatt:
+// 64 und 52 px, darunter bliebe vom Wappen nichts [§6]. Hinter dem Ersten
+// liegt ein Strahlenkranz in Gold — er ist Licht und keine Form, und bei
+// Bewegungsruhe steht er still.
+function _newsMeisterKopf(d){
+  try {
+    const rang = saisonRang(d.sid);
+    if(!rang.length) return '';
+    return `<div class="nf-meister"><span class="nf-ms-strahl" aria-hidden="true"></span>${
+      saisonPodestHtml(d.sid, rang, {px1:64, px:52, klasse:'nf-podest', attr:'data-mpid'})}</div>`;
+  } catch(e){ return ''; }
+}
+function _newsMeisterFuss(d){
+  try {
+    const te = Array.isArray(d.topElo) ? d.topElo : [];
+    const ids = te.map(x => x && x.id).filter(Boolean);
+    const sp = saisonSpitze(d.sid);
+    const n = sp.tage[d.championId] || 0;
+    const vorsprung = te[0] && te[1] ? Math.max(0, te[0].elo - te[1].elo) : null;
+    const r = saisonRang(d.sid).find(x => x.id === d.championId);
+    const sp2 = r ? r.wins + r.losses : 0;
+    return saisonRennenHtml(d.sid, ids, {klein:true}) + _newsZahlband([
+      {v: sp.spieltage ? n + ' von ' + sp.spieltage : null, l:'Spieltage vorn', f:'g'},
+      {v: vorsprung != null ? '+' + vorsprung : null, l:'Elo vor Platz 2'},
+      {v: sp2 ? Math.round(r.wins / sp2 * 100) + ' %' : null, l:'Siegquote'}
+    ]);
+  } catch(e){ return ''; }
+}
+
 // Breaking-Hero — das Herzstück oben im Sheet, bewusst dramatisch.
 // v9.1: etwas längerer, spannenderer Hero-Text je Breaking-Typ — display-seitig
 // aus dataRef gebaut (wirkt auch auf bereits persistierte Rows). Bewusst 1–2
@@ -1646,14 +1691,31 @@ function _breakingHeroText(s){
   const nm = id => (pm[id] && pm[id].name) || '?';
   try {
     switch(d.type){
+      // ── Der Monat heißt, wie er heißt ────────────────────────────
+      // „Die Saison 2026-08 ist Geschichte" nannte die Saison-ID, eine
+      // Zeichenkette, die niemanden interessiert, und „Vor Johannes." war ein
+      // Satz ohne Verb [§C33]. Elo, Vorsprung und Tage vorn stehen auf der
+      // Karte im Podest und im Zahlenband; der Nachsatz erzählt, was dort
+      // nicht steht: wann der Titel entschieden war.
       case 'season_recap': {
         const te = Array.isArray(d.topElo) ? d.topElo : [];
-        const champ = nm(d.championId || (te[0] && te[0].id));
-        const runner = te[1] && te[1].id ? nm(te[1].id) : null;
-        const elo = d.championElo != null ? d.championElo : (te[0] && te[0].elo);
-        return `Die Saison ${d.sid || ''} ist Geschichte: ${champ} krönt sich mit ${elo} Elo zum Champion`
-          + (runner ? `. Vor ${runner}.` : '.')
-          + ` Wer stürzt ${champ} in der neuen Saison vom Thron?`;
+        const cid = d.championId || (te[0] && te[0].id);
+        const champ = nm(cid);
+        const monat = d.sid && typeof seasonLabel === 'function' ? seasonLabel(d.sid) : 'Die Saison';
+        let lauf = '';
+        try {
+          const sp = saisonSpitze(d.sid), f = sp.folge;
+          const mm = String(d.sid || '').slice(5, 7);
+          let i = f.length - 1;
+          while(i > 0 && f[i - 1].pid === cid) i--;
+          if(f.length && f[f.length - 1].pid === cid){
+            lauf = i === 0
+              ? ` ${champ} lag vom ersten Spieltag an vorn und gab die Spitze nie ab.`
+              : ` Die Spitze wechselte ${sp.wechsel === 1 ? 'einmal' : (_BELEG_ZAHL[sp.wechsel] ? _BELEG_ZAHL[sp.wechsel] + 'mal' : sp.wechsel + '-mal')}, `
+                + `und vom ${String(f[i].day).padStart(2, '0')}.${mm}. an blieb ${champ} vorn.`;
+          }
+        } catch(e){}
+        return `${monat} ist entschieden: ${champ} holt den Titel.` + lauf;
       }
       // ── Der Nachsatz nennt eine Zahl ────────────────────────────
       // „Machtwechsel an der Tabellenspitze: X verdraengt Y und uebernimmt

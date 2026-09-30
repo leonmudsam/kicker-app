@@ -308,61 +308,11 @@ function showSeasonRecap(season, opts){
   const tage = new Set(ms.map(mdayKey)).size;
 
   // ─── Die Rangliste der Saison — EINE Quelle für alles darunter ──────
-  // Podest, Liste und der Schild im Wappen ziehen ihren Platz von hier.
-  // Vorher rechnete das Podest aus season.top_elo und die Liste aus dem
-  // Simulator: zwei Reihenfolgen, die bei Gleichstand auseinanderliefen.
-  const gSim = getGlobalSim();
-  const stand = gSim.seasonEndElos[sid] || {};
-  const gespielt = gSim.seasonPlayed[sid] || {};
-  // Die dritte Zahl der Zeile ist die Tordifferenz. Vorher stand dort der
-  // Elo-Zuwachs des Monats — und der ist die Saison-Elo selbst: der
-  // Simulator setzt zu jedem Monatsbeginn auf den Startwert zurück. In
-  // jeder Zeile stand damit zweimal dieselbe Zahl.
-  const sw = {}, sl = {}, gf = {}, ga = {};
-  ms.forEach(m=>{
-    [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],
-     [m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]].forEach(([x,y,won,f,g])=>{
-      [x,y].forEach(id=>{
-        if(won) sw[id]=(sw[id]||0)+1; else sl[id]=(sl[id]||0)+1;
-        gf[id]=(gf[id]||0)+(f||0); ga[id]=(ga[id]||0)+(g||0);
-      });
-    });
-  });
-  const rang = Object.keys(gespielt).filter(id=>gespielt[id]>0 && pmap()[id])
-    .map(id=>({id, elo:Math.round(stand[id] ?? cfg.start_elo),
-               wins:sw[id]||0, losses:sl[id]||0, diff:(gf[id]||0)-(ga[id]||0)}))
-    .sort((a,b)=>b.elo-a.elo);
-
-  // ─── Podest ────────────────────────────────────────────────────────
-  // Dasselbe Bauteil wie in der Ewigen Tafel [§C27]: drei Karten, der Erste
-  // höher und wärmer, das Wappen mit Banner. Die Zahl im Schild ist der
-  // Platz dieser Saison, die Schwingen zählen die Titel bis zu ihr — ein
-  // Rückblick auf den Mai darf nicht die Titel vom August tragen [§C26].
-  let podestHtml = '';
-  if(rang.length){
-    const METALL = ['gold','silber','bronze'];
-    const karte = (e, platz) => {
-      const p = pmap()[e.id];
-      const titelBis = seasons.filter(x => x.id <= sid && seasonChampion(x.id) === e.id).length;
-      const av = avHtml(p, '', {ins:true, band:true, pos:platz, titel:titelBis, feuer:0,
-                                px:platz===1?88:70, klasse:'pod-av'});
-      // Ohne Titel steht dort die Spielzahl — ein Strich sieht aus, als
-      // fehlte die Zahl, statt zu sagen: dieser Spieler hat noch keinen.
-      const sub = titelBis
-        ? titelBis + (titelBis === 1 ? ' Titel' : ' Titel')
-        : (e.wins + e.losses) + ' Spiele';
-      return `<div class="pod-karte ${METALL[platz-1]}${platz===1?' erster':''}" data-detail="${esc(e.id)}">
-        <div class="pod-platz num">${String(platz).padStart(2,'0')}</div>
-        ${av}
-        <div class="pod-name">${esc(p.name)}</div>
-        <div class="pod-wert num">${e.elo}</div>
-        <div class="pod-sub num">${esc(sub)}</div>
-      </div>`;
-    };
-    const folge = [rang[1], rang[0], rang[2]], plaetze = [2,1,3];
-    podestHtml = `<div class="podest rcp-podest">${
-      folge.map((e,k)=> e ? karte(e, plaetze[k]) : '<div class="pod-leer"></div>').join('')}</div>`;
-  }
+  // Podest, Liste und der Schild im Wappen ziehen ihren Platz von hier;
+  // Rangliste und Podest stehen in der Meisterbühne [§C31], weil die
+  // Meister-Karte des Feeds dasselbe Podest zeigt.
+  const rang = saisonRang(sid);
+  const podestHtml = saisonPodestHtml(sid, rang);
 
   // ─── Team der Saison ───────────────────────────────────────────────
   let teamHtml='';

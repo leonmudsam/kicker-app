@@ -3983,13 +3983,29 @@
   .bl-feld i.er{top:4px;width:12px;height:12px;margin-left:-6px;background:var(--gold);
     box-shadow:0 0 0 2px var(--surface),0 0 10px rgba(247,207,74,.6)}
   .bl-feld-l{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:var(--faint);margin-top:2px}
-  .bl-spanne{position:relative;height:24px}
-  .bl-spanne-bahn{position:absolute;left:0;right:0;top:11px;height:2px;background:var(--surface3)}
-  .bl-spanne-ber{position:absolute;top:7px;height:10px;border-radius:5px;background:rgba(247,207,74,.18);
-    box-shadow:inset 0 0 0 1px rgba(247,207,74,.42)}
-  .bl-spanne-pkt{position:absolute;top:5px;width:14px;height:14px;margin-left:-7px;border-radius:50%;
-    background:var(--gold);box-shadow:0 0 0 2px var(--surface)}
-  .bl-ref{position:absolute;top:1px;width:2px;height:22px;margin-left:-1px;border-radius:1px;background:var(--silber);opacity:.8}
+  /* Wie knapp: die Luft als Zahl, als Zellen und als zwei Balken. Die Farbe
+     des Worts folgt dem Abstand — eng rot getönt wäre eine Richtung
+     [§C25], also bleibt es Gold für den Halter und Metall für den Rest. */
+  .bl-luft{display:grid;gap:8px}
+  .bl-lz-kopf{display:flex;align-items:baseline;gap:8px}
+  .bl-lz-zahl{font-family:'Archivo Black',sans-serif;font-size:30px;line-height:1;color:var(--gold);
+    text-shadow:0 0 18px rgba(247,207,74,.35)}
+  .bl-lz-was{font-size:12px;color:var(--ink2)}
+  .bl-lz-wort{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.08em;
+    text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2)}
+  .bl-luft[data-ton="eng"] .bl-lz-wort{border-color:rgba(247,207,74,.45);color:var(--gold)}
+  .bl-luft[data-ton="weit"] .bl-lz-wort{background:rgba(247,207,74,.12);border-color:rgba(247,207,74,.55);color:var(--gold)}
+  .bl-lz-zellen{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+  .bl-lz-zellen i{width:14px;height:14px;border-radius:3px;background:linear-gradient(160deg,var(--gold),#b8871f);
+    box-shadow:0 0 8px rgba(247,207,74,.35)}
+  .bl-lz-zellen b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--gold);margin-left:4px}
+  .bl-lz-z{display:grid;grid-template-columns:minmax(0,72px) minmax(0,1fr) 38px;gap:8px;align-items:center;font-size:11.5px}
+  .bl-lz-z .n{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bl-lz-z .b{height:8px;border-radius:4px;background:var(--surface3);overflow:hidden}
+  .bl-lz-z .b i{display:block;height:100%;border-radius:4px;background:var(--muted)}
+  .bl-lz-z.a .b i{background:linear-gradient(90deg,#b8871f,var(--gold));box-shadow:0 0 10px rgba(247,207,74,.45)}
+  .bl-lz-z.a .n,.bl-lz-z.a .v{color:var(--gold)}
+  .bl-lz-z .v{text-align:right;color:var(--ink2)}
   .bl-verlauf{display:block;width:100%;height:84px;overflow:visible}
   .bl-verlauf polyline{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
   .bl-verlauf .bl-v-a{stroke:var(--gold);stroke-width:2.2}
@@ -4037,6 +4053,93 @@
   .duo-kz-linie.ab polyline{stroke:var(--red)}
   .duo-kz-lauf.auf i{background:var(--acid)}
   .duo-kz-lauf.ab i{background:var(--red)}
+
+  /* ============ DIE MEISTERBÜHNE [§C31] ============
+     Podest unter einem Strahlenkranz, das Rennen um die Spitze als Linien,
+     die Tage vorn als Balken, die Saison des Meisters als Zellen. Gold nur
+     für den Meister [§C25]; Silber und Bronze sind die Metalle des Podests,
+     wer nicht darauf steht, bleibt Metall. Der Kranz ist Licht und keine
+     Form: er dreht sich langsam und steht bei Bewegungsruhe still. */
+  .nf-meister{position:relative;isolation:isolate;margin:2px 0 10px;padding-top:4px}
+  .nf-ms-strahl{position:absolute;left:50%;top:46%;width:250px;height:250px;margin:-125px 0 0 -125px;
+    z-index:-1;pointer-events:none;border-radius:50%;
+    background:repeating-conic-gradient(from 0deg,rgba(247,207,74,.17) 0 5deg,transparent 5deg 15deg);
+    -webkit-mask:radial-gradient(circle,#000 0 16%,transparent 64%);
+            mask:radial-gradient(circle,#000 0 16%,transparent 64%);
+    animation:msDreh 48s linear infinite}
+  .nf-ms-strahl::after{content:"";position:absolute;inset:28%;border-radius:50%;
+    background:radial-gradient(circle,rgba(247,207,74,.28),transparent 70%)}
+  .nf-meister.gross .nf-ms-strahl{width:360px;height:360px;margin:-180px 0 0 -180px}
+  @keyframes msDreh{to{transform:rotate(360deg)}}
+  .nf-podest{gap:6px;align-items:end}
+  .nf-podest .pod-karte{padding:8px 4px 9px}
+  .nf-podest .pod-karte.erster{padding:10px 4px 10px}
+  .nf-podest .pod-name{font-size:12.5px}
+  .nf-podest .pod-karte.erster .pod-name{font-size:14px}
+  .nf-podest .pod-wert{font-size:17px}
+  .nf-podest .pod-karte.erster .pod-wert{font-size:22px}
+  .nf-podest .pod-platz{font-size:10px}
+
+  .nd-meister{position:relative;margin:2px 0 4px}
+  .nd-ms-band{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;
+    font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+  .nd-ms-band svg{width:16px;height:16px;filter:drop-shadow(0 0 6px rgba(247,207,74,.6))}
+  .nd-ms-band i{font-style:normal;color:var(--ink2);letter-spacing:.12em}
+
+  .srn{margin:8px 0 2px}
+  .srn.klein{margin:2px 0 6px}
+  .srn-svg{display:block;width:100%;height:auto;overflow:visible}
+  .srn-g{stroke:var(--line);stroke-width:1;stroke-dasharray:2 5}
+  .srn-l{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:1;stroke-dashoffset:1;animation:srnZieh 1.6s cubic-bezier(.3,.7,.2,1) .15s forwards}
+  .srn-l.gold{stroke:var(--gold);stroke-width:2.6;filter:drop-shadow(0 0 4px rgba(247,207,74,.55))}
+  .srn-l.silber{stroke:var(--silber);opacity:.75}
+  .srn-l.bronze{stroke:var(--bronze);opacity:.75}
+  .srn-p{opacity:0;transform-box:fill-box;transform-origin:center;animation:srnDa .35s 1.6s forwards}
+  .srn-p.gold{fill:var(--gold);animation:srnDa .35s 1.6s forwards,srnPuls 2.6s 2.2s ease-in-out infinite}
+  .srn-p.silber{fill:var(--silber)} .srn-p.bronze{fill:var(--bronze)}
+  .srn-fl{opacity:0;animation:srnDa .9s .8s forwards}
+  @keyframes srnZieh{to{stroke-dashoffset:0}}
+  @keyframes srnDa{to{opacity:1}}
+  @keyframes srnPuls{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
+  .srn-band{display:flex;gap:1px;height:7px;margin-top:6px;border-radius:3px;overflow:hidden}
+  .srn-band i{flex:1;background:rgba(255,255,255,.05)}
+  .srn-band i.gold{background:var(--gold)} .srn-band i.silber{background:var(--silber)}
+  .srn-band i.bronze{background:var(--bronze)} .srn-band i.rest{background:var(--faint)}
+  .srn-band i.still{opacity:.4}
+  .srn-achse{display:flex;justify-content:space-between;margin-top:3px;font-size:10px;color:var(--muted)}
+  .srn-leg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12px;color:var(--ink2)}
+  .srn-leg span{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .srn-leg u{display:inline-block;width:14px;height:3px;border-radius:2px;background:var(--faint)}
+  .srn-leg .gold u{background:var(--gold);box-shadow:0 0 6px rgba(247,207,74,.6)}
+  .srn-leg .silber u{background:var(--silber)} .srn-leg .bronze u{background:var(--bronze)}
+  .srn-leg b{color:var(--ink);font-weight:700}
+  .srn-leg .gold b{color:var(--gold)}
+
+  .srn-tage{display:grid;gap:7px;margin:6px 0 2px}
+  .srn-t{display:grid;grid-template-columns:minmax(0,76px) minmax(0,1fr) 26px;align-items:center;gap:8px;
+    font-size:12.5px;color:var(--ink2);cursor:pointer}
+  .srn-t .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .srn-t .b{height:8px;border-radius:4px;background:rgba(255,255,255,.05);overflow:hidden}
+  .srn-t .b i{display:block;height:100%;border-radius:4px;background:var(--faint);
+    transform-origin:left center;animation:srnWachs .8s cubic-bezier(.3,.7,.2,1) both}
+  .srn-t.gold .b i{background:linear-gradient(90deg,rgba(247,207,74,.55),var(--gold));
+    box-shadow:0 0 10px rgba(247,207,74,.4)}
+  .srn-t.silber .b i{background:var(--silber)} .srn-t.bronze .b i{background:var(--bronze)}
+  .srn-t.gold .n,.srn-t.gold .v{color:var(--gold)}
+  .srn-t .v{text-align:right;font-weight:700;color:var(--ink)}
+  @keyframes srnWachs{from{opacity:0;transform:scaleY(.2)}to{opacity:1;transform:none}}
+
+  .srn-z{display:flex;flex-wrap:wrap;gap:3px;margin:10px 0 2px}
+  .srn-z i{width:10px;height:10px;border-radius:2px;background:rgba(240,86,106,.5)}
+  .srn-z i.w{background:var(--acid)}
+
+  @media (prefers-reduced-motion:reduce){
+    .nf-ms-strahl{animation:none}
+    .srn-l{animation:none;stroke-dashoffset:0}
+    .srn-p,.srn-p.gold,.srn-fl{animation:none;opacity:1}
+    .srn-t .b i{animation:none}
+  }
   /* ============ [§C21] AWARD SHEET REDESIGN (Winner Hero + Liste) ============ */
   /* Saubere Award-Liste statt Podium */
   .aw-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
@@ -5566,7 +5669,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.fba1557d';
+const BUILD_VERSION='2026.09.30.1de95b29';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6473,7 +6576,7 @@ function getSeasonPositionHistory(seasonId){
   // Empty-State: 0 oder 1 aktive Spieler → kein sinnvolles Diagramm
   if(activeIds.length < 1){
     const result = {seasonId, isCurrent, totalDays, lastDay:0, activeIds:[], entryDay:{},
-      positionsByDay:{}, finalElo:{}, colorOf:{}, days:[], builtAt:Date.now(), empty:true};
+      positionsByDay:{}, eloByDay:{}, spielTage:[], finalElo:{}, colorOf:{}, days:[], builtAt:Date.now(), empty:true};
     _cache._posHistKey = key;
     _cache._posHist = result;
     return result;
@@ -6498,15 +6601,25 @@ function getSeasonPositionHistory(seasonId){
   // positionsByDay[pid][dayIdx] = Position (1..N) ODER null wenn vor Eintritt
   const positionsByDay = {};
   activeIds.forEach(id => positionsByDay[id] = new Array(lastDay).fill(null));
+  // Die Saison-Elo am Ende jedes Tages steht daneben, aus DERSELBEN Schleife:
+  // das Titelrennen des Meister-Blatts zeichnet sie, und eine zweite Rechnung
+  // über dieselben Deltas nennte irgendwann einen anderen Ersten als die
+  // Linien des Positionsverlaufs [§C27]. `spielTage` sind die Tage mit einer
+  // Partie — „an der Spitze" zählt nur, wo auch gespielt wurde.
+  const eloByDay = {};
+  activeIds.forEach(id => eloByDay[id] = new Array(lastDay).fill(null));
+  const spielTage = [];
 
   let mIdx = 0;
   for(let day=1; day<=lastDay; day++){
     // Alle Matches dieses Tages anwenden
+    let gespielt = false;
     while(mIdx < sMatches.length){
       const m = sMatches[mIdx];
       const mDay = new Date(m.created_at).getDate();
       if(mDay > day) break;
       if(mDay === day){
+        gespielt = true;
         const histEntry = histMap.get(m.id);
         if(histEntry && histEntry.deltas){
           const ds = histEntry.deltas;
@@ -6523,9 +6636,11 @@ function getSeasonPositionHistory(seasonId){
       .filter(id => entryDay[id] !== undefined && day >= entryDay[id])
       .map(id => [id, seasonElo[id]])
       .sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
-    ranked.forEach(([pid], idx) => {
+    ranked.forEach(([pid, elo], idx) => {
       positionsByDay[pid][day-1] = idx + 1;
+      eloByDay[pid][day-1] = Math.round(elo);
     });
+    if(gespielt) spielTage.push(day);
   }
 
   // Eindeutiges Farb-Mapping: über alphabetisch sortierte ID-Liste → 12 Farben
@@ -6536,7 +6651,7 @@ function getSeasonPositionHistory(seasonId){
 
   const result = {
     seasonId, isCurrent, totalDays, lastDay,
-    activeIds, entryDay, positionsByDay,
+    activeIds, entryDay, positionsByDay, eloByDay, spielTage,
     finalElo: {...seasonElo},
     colorOf,
     days: Array.from({length:lastDay}, (_,i)=>i+1),
@@ -7249,8 +7364,8 @@ function rcpNotizHtml(o){
 //     etwas sagt:
 //       Woraus         die Stichprobe als Zellen, eine je Gelegenheit
 //       Wo im Feld     jeder im Rennen als Punkt, der Halter hervorgehoben
-//       Wie sicher     die Spanne, in der ein Anteil bei dieser Stichprobe
-//                      liegt, und der Zweite darin
+//       Wie knapp      wie viele der eigenen Gelegenheiten anders hätten
+//                      ausgehen müssen, damit der Zweite gleichauf läge
 //       Wie es dazu kam  der Verlauf über die Monatsenden
 //     Gerechnet wird hier nichts Neues: die Zahlen kommen aus dem Beleg des
 //     Katalogs, aus chronicleRang, aus AW_WERT und aus dem Zeitschnitt, den
@@ -7307,36 +7422,36 @@ function belegFeldHtml(eintraege, mitSkala){
   return `<div class="bl-feld" title="${e.length} im Feld"><span class="bl-feld-bahn"></span>`
     + `<span class="bl-feld-mitte" style="left:${pos(mitte.v)}%"></span>${punkte}</div>${skala}`;
 }
-// Wie sicher: die Spanne um einen Anteil (Wilson, 90 %). Sie sagt, was bei
-// dieser Stichprobe noch Zufall sein kann — und ob der Zweite darin liegt.
-function belegSpanne(k, n){
-  const z = 1.645, p = k / n, z2 = z * z, d = 1 + z2 / n;
-  const c = (p + z2 / (2 * n)) / d;
-  const h = z * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / d;
-  return [Math.max(0, c - h), Math.min(1, c + h)];
-}
-function belegSpanneHtml(a, zweiter){
-  if(!a || a.n < 3) return '';
-  const [u, o] = belegSpanne(a.k, a.n);
-  const pz = v => Math.round(v * 100);
-  const q = a.k / a.n;
-  // In Worten, die man ohne Statistik versteht. Dort stand „der Abstand ist
-  // mehr als Zufall" — richtig gerechnet, aber niemand wusste, was es
-  // heißt. Gesagt wird jetzt, was die Spanne bedeutet: ein paar Partien
-  // anders, und der Wert läge woanders; und ob der Zweite dann vorne wäre.
-  let satz = `${a.k} von ${a.n} sind ${pz(q)} %. Wären ein paar Partien anders ausgegangen, läge der Wert wohl irgendwo zwischen <b>${pz(u)} und ${pz(o)} %</b>.`;
-  let ref = '';
-  if(zweiter && zweiter.q != null && isFinite(zweiter.q)){
-    const drin = zweiter.q >= u - 1e-9 && zweiter.q <= o + 1e-9;
-    ref = `<span class="bl-ref" style="left:${(zweiter.q * 100).toFixed(1)}%"></span>`;
-    satz += drin
-      ? ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % in diesem Bereich: der Vorsprung ist noch knapp.`
-      : ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % klar darunter: der Vorsprung ist gesichert.`;
-  }
-  return `<div class="bl-spanne"><span class="bl-spanne-bahn"></span>
-      <span class="bl-spanne-ber" style="left:${(u * 100).toFixed(1)}%;width:${((o - u) * 100).toFixed(1)}%"></span>
-      ${ref}<span class="bl-spanne-pkt" style="left:${(q * 100).toFixed(1)}%"></span></div>
-    <div class="bl-feld-l num"><span>0 %</span><span>50 %</span><span>100 %</span></div>
+// Wie knapp: wie viele der eigenen Gelegenheiten anders hätten ausgehen
+// müssen, damit der Zweite gleichauf läge. Dort stand vorher die Spanne um
+// den Anteil (Wilson, 90 %) — „Wären ein paar Partien anders ausgegangen,
+// läge der Wert wohl irgendwo zwischen 36 und 57 %" war richtig gerechnet
+// und trotzdem nicht zu lesen: eine Spanne ist eine Frage an den Leser.
+// Eine Zahl, die man abzählen kann, beantwortet sie: zwei Partien.
+function belegLuft(k, n, q2){ return Math.max(0, Math.ceil(k - q2 * n - 1e-9)); }
+const _BELEG_ZAHL = ['keine', 'eine', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf'];
+function belegLuftHtml(a, zweiter){
+  if(!a || !zweiter || zweiter.q == null || !isFinite(zweiter.q)) return '';
+  const m = belegLuft(a.k, a.n, zweiter.q);
+  const q = a.k / a.n, pz = v => Math.round(v * 100);
+  const [wort, ton] = m === 0 ? ['gleichauf', 'eng'] : m === 1 ? ['hauchdünn', 'eng']
+    : m <= 3 ? ['knapp', 'eng'] : m <= 7 ? ['solide', 'mittel'] : ['deutlich', 'weit'];
+  const zahl = _BELEG_ZAHL[m] || String(m);
+  const satz = m === 0
+    ? `${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % gleichauf.`
+    : `${zahl.charAt(0).toUpperCase() + zahl.slice(1)} der ${a.n} Ergebnisse anders, und <b>${esc(zweiter.name)}</b> läge gleichauf.`;
+  // Die Luft als Zellen: je eine für eine Gelegenheit Vorsprung, höchstens
+  // zwölf — darüber ist der Vorsprung deutlich, und die Zahl sagt den Rest.
+  const zellen = Array.from({length: Math.min(m, 12)}, () => '<i></i>').join('') + (m > 12 ? '<b>+' + (m - 12) + '</b>' : '');
+  const balken = (wert, name, cls) => `<div class="bl-lz-z ${cls}"><span class="n">${esc(name)}</span>`
+    + `<span class="b"><i style="width:${(wert * 100).toFixed(1)}%"></i></span><span class="v num">${pz(wert)} %</span></div>`;
+  return `<div class="bl-luft" data-luft="${m}" data-ton="${ton}">
+      <div class="bl-lz-kopf"><span class="bl-lz-zahl num">${m}</span>
+        <span class="bl-lz-was">${m === 1 ? 'Ergebnis' : 'Ergebnisse'} Vorsprung</span>
+        <span class="bl-lz-wort">${wort}</span></div>
+      ${m ? `<div class="bl-lz-zellen">${zellen}</div>` : ''}
+      ${balken(q, 'Bestwert', 'a')}${balken(zweiter.q, zweiter.name, 'b')}
+    </div>
     <div class="bl-satz">${satz}</div>`;
 }
 // Wie es dazu kam: der Wert des Halters und des Zweiten an jedem Monatsende
@@ -7387,8 +7502,8 @@ function belegHtml(o){
   const feld = belegFeldHtml(o.feld, true);
   if(feld) teile.push(blattAbschnittHtml('users', 'Wo im Feld', o.feld.length + ' im Rennen')
     + `<div class="bl-box">${feld}${o.dahinter ? `<div class="bl-satz">${o.dahinter}</div>` : ''}</div>`);
-  const sp = a && _belegIstQuote(o.ev, a) ? belegSpanneHtml(a, o.zweiter) : '';
-  if(sp) teile.push(blattAbschnittHtml('target', 'Wie sicher') + `<div class="bl-box">${sp}</div>`);
+  const lz = a && _belegIstQuote(o.ev, a) ? belegLuftHtml(a, o.zweiter) : '';
+  if(lz) teile.push(blattAbschnittHtml('target', 'Wie knapp') + `<div class="bl-box">${lz}</div>`);
   if(o.verlauf) teile.push(blattAbschnittHtml('chartUp', 'Wie es dazu kam', 'Monatsenden')
     + `<div class="bl-box" data-verlauf="${esc(o.verlauf)}"><div class="bl-lade"></div></div>`);
   return teile.join('');
@@ -7407,6 +7522,184 @@ function belegVerlaufLaden(root){
       else { const kopf = box.previousElementSibling; box.remove(); if(kopf) kopf.remove(); }
     });
   }, 360);
+}
+
+// ╔═══ §C31 ─── DIE MEISTERBÜHNE ──────────────────────────────────────╗
+//     Der Meister einer Saison stand im Feed als rote Breaking-Karte mit
+//     zwei Sätzen und ohne ein einziges Bild, und sein Blatt nannte drei
+//     Elo-Zahlen untereinander und darunter die Saison-ID. Das Podest, das
+//     Rennen um die Spitze und die Tage vorn gab es nur im Saison-Rückblick
+//     — oder gar nicht. Die Bauteile stehen deshalb hier, einmal, und
+//     Rückblick, Karte und Blatt zeichnen daraus [§C27].
+// ╚═════════════════════════════════════════════════════════════════════╝
+
+// Die Rangliste einer Saison — EINE Quelle für Podest, Liste und Wappen.
+// Vorher rechnete das Podest aus season.top_elo und die Liste aus dem
+// Simulator: zwei Reihenfolgen, die bei Gleichstand auseinanderliefen.
+// Die dritte Zahl ist die Tordifferenz: der Elo-Zuwachs des Monats ist die
+// Saison-Elo selbst, der Simulator setzt zu jedem Monatsbeginn zurück.
+function saisonRang(sid){
+  const ms = matchesInSeason(sid);
+  const gSim = getGlobalSim();
+  const stand = gSim.seasonEndElos[sid] || {};
+  const gespielt = gSim.seasonPlayed[sid] || {};
+  const sw = {}, sl = {}, gf = {}, ga = {};
+  ms.forEach(m => {
+    [[m.a1, m.a2, m.winner === 'A', m.score_a, m.score_b],
+     [m.b1, m.b2, m.winner === 'B', m.score_b, m.score_a]].forEach(([x, y, won, f, g]) => {
+      [x, y].forEach(id => {
+        if(won) sw[id] = (sw[id] || 0) + 1; else sl[id] = (sl[id] || 0) + 1;
+        gf[id] = (gf[id] || 0) + (f || 0); ga[id] = (ga[id] || 0) + (g || 0);
+      });
+    });
+  });
+  return Object.keys(gespielt).filter(id => gespielt[id] > 0 && pmap()[id])
+    .map(id => ({id, elo:Math.round(stand[id] ?? cfg.start_elo),
+                 wins:sw[id] || 0, losses:sl[id] || 0, diff:(gf[id] || 0) - (ga[id] || 0)}))
+    .sort((a, b) => b.elo - a.elo);
+}
+
+// Das Podest einer Saison, dasselbe Bauteil wie in der Ewigen Tafel [§C27]:
+// drei Karten, der Erste höher und wärmer, das Wappen mit Banner. Die Zahl
+// im Schild ist der Platz DIESER Saison, die Schwingen zählen die Titel bis
+// zu ihr — ein Rückblick auf den Mai trägt nicht die Titel vom August [§C26].
+function saisonPodestHtml(sid, rang, o){
+  o = o || {};
+  if(!rang || !rang.length) return '';
+  const METALL = ['gold', 'silber', 'bronze'];
+  const karte = (e, platz) => {
+    const p = pmap()[e.id];
+    if(!p) return '<div class="pod-leer"></div>';
+    const titelBis = seasons.filter(x => x.id <= sid && seasonChampion(x.id) === e.id).length;
+    const av = avHtml(p, '', {ins:true, band:true, pos:platz, titel:titelBis, feuer:0,
+                              px:platz === 1 ? (o.px1 || 88) : (o.px || 70), klasse:'pod-av'});
+    // Ohne Titel steht dort die Spielzahl — ein Strich sähe aus, als fehlte
+    // die Zahl, statt zu sagen: dieser Spieler hat noch keinen.
+    const sub = titelBis ? titelBis + ' Titel' : (e.wins + e.losses) + ' Spiele';
+    return `<div class="pod-karte ${METALL[platz - 1]}${platz === 1 ? ' erster' : ''}" ${o.attr || 'data-detail'}="${esc(e.id)}">
+      <div class="pod-platz num">${String(platz).padStart(2, '0')}</div>
+      ${av}
+      <div class="pod-name">${esc(p.name)}</div>
+      <div class="pod-wert num">${e.elo}</div>
+      <div class="pod-sub num">${esc(sub)}</div>
+    </div>`;
+  };
+  const folge = [rang[1], rang[0], rang[2]], plaetze = [2, 1, 3];
+  return `<div class="podest rcp-podest${o.klasse ? ' ' + o.klasse : ''}">${
+    folge.map((e, k) => e ? karte(e, plaetze[k]) : '<div class="pod-leer"></div>').join('')}</div>`;
+}
+
+// Wer an wie vielen Spieltagen vorn lag, und wie oft die Spitze wechselte.
+// Gezählt wird der Stand am Ende jedes Tages mit Partie, aus dem
+// Positionsverlauf — derselben Rechnung, die dessen Linien zeichnet.
+function saisonSpitze(sid){
+  const ph = getSeasonPositionHistory(sid);
+  const tage = {}, folge = [];
+  if(!ph || ph.empty) return {tage, folge, spieltage:0, wechsel:0};
+  (ph.spielTage || []).forEach(day => {
+    const vorn = ph.activeIds.find(id => (ph.positionsByDay[id] || [])[day - 1] === 1);
+    if(!vorn) return;
+    tage[vorn] = (tage[vorn] || 0) + 1;
+    folge.push({day, pid:vorn});
+  });
+  let wechsel = 0;
+  for(let i = 1; i < folge.length; i++) if(folge[i].pid !== folge[i - 1].pid) wechsel++;
+  return {tage, folge, spieltage:folge.length, wechsel};
+}
+
+// Das Titelrennen: die Saison-Elo der drei auf dem Podest am Ende jedes
+// Tages, der Meister golden und obenauf, darunter ein Band, das an jedem
+// Spieltag in der Farbe dessen steht, der vorn lag. Die Linien zeichnen sich
+// von links auf — in der Richtung, in der der Monat passiert ist —, und bei
+// Bewegungsruhe stehen sie still. `o.klein` ist die Fassung für die Karte:
+// ohne Band, ohne Legende.
+function saisonRennenHtml(sid, pids, o){
+  o = o || {};
+  const ph = getSeasonPositionHistory(sid);
+  if(!ph || ph.empty || ph.lastDay < 2) return '';
+  const ids = (pids || []).filter(id => ph.eloByDay && ph.eloByDay[id]).slice(0, 3);
+  if(!ids.length) return '';
+  const W = 320, H = o.klein ? 64 : 120, tief = o.klein ? 6 : 10;
+  const werte = [];
+  ids.forEach(id => ph.eloByDay[id].forEach(v => { if(v != null) werte.push(v); }));
+  if(werte.length < 2) return '';
+  let lo = Math.min(...werte), hi = Math.max(...werte);
+  if(!(hi > lo)){ lo -= 1; hi += 1; }
+  const n = ph.lastDay;
+  const x = d => (6 + d * (W - 12) / (n - 1)).toFixed(1);
+  const y = v => (H - tief - (v - lo) / (hi - lo) * (H - tief - 8)).toFixed(1);
+  const METALL = ['gold', 'silber', 'bronze'];
+  let linien = '', flaeche = '';
+  // Von hinten nach vorn: der Meister liegt zuletzt und damit obenauf.
+  ids.slice().reverse().forEach(id => {
+    const k = ids.indexOf(id), reihe = ph.eloByDay[id];
+    const pts = [];
+    reihe.forEach((v, d) => { if(v != null) pts.push([x(d), y(v)]); });
+    if(pts.length < 2) return;
+    const pfad = 'M' + pts.map(p => p.join(',')).join('L');
+    if(k === 0) flaeche = `<path class="srn-fl" d="${pfad}L${pts[pts.length - 1][0]},${H}L${pts[0][0]},${H}Z"/>`;
+    const e = pts[pts.length - 1];
+    linien += `<path class="srn-l ${METALL[k]}" pathLength="1" d="${pfad}"/>`
+      + `<circle class="srn-p ${METALL[k]}" cx="${e[0]}" cy="${e[1]}" r="${k === 0 ? 4 : 3}"/>`;
+  });
+  const gid = 'srnFl' + String(sid).replace(/\W/g, '') + (o.klein ? 'k' : '');
+  const svg = `<svg class="srn-svg" viewBox="0 0 ${W} ${H}" aria-hidden="true">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7cf4a" stop-opacity=".32"/><stop offset="1" stop-color="#f7cf4a" stop-opacity="0"/>
+    </linearGradient></defs>
+    ${[.25, .5, .75].map(t => `<line class="srn-g" x1="0" x2="${W}" y1="${(8 + t * (H - tief - 8)).toFixed(1)}" y2="${(8 + t * (H - tief - 8)).toFixed(1)}"/>`).join('')}
+    ${flaeche.replace('class="srn-fl"', `class="srn-fl" fill="url(#${gid})"`)}${linien}</svg>`;
+  if(o.klein) return `<div class="srn klein">${svg}</div>`;
+  // Das Band der Spitze: ein Feld je Kalendertag, gefärbt nach dem, der am
+  // Ende eines Spieltags vorn lag — wer nicht auf dem Podest steht, in Metall.
+  const sp = saisonSpitze(sid);
+  const vorn = {}; sp.folge.forEach(f => { vorn[f.day] = f.pid; });
+  let zuletzt = null;
+  const band = Array.from({length:n}, (_, d) => {
+    const pid = vorn[d + 1] || null;
+    if(pid) zuletzt = pid;
+    const k = zuletzt ? ids.indexOf(zuletzt) : -1;
+    const cls = k >= 0 ? METALL[k] : (zuletzt ? 'rest' : 'leer');
+    return `<i class="${cls}${pid ? '' : ' still'}"></i>`;
+  }).join('');
+  const pm = pmap();
+  const legende = ids.map((id, k) => `<span class="${METALL[k]}" data-pid="${esc(id)}"><u></u>${
+    esc((pm[id] || {}).name || '?')}<b class="num">${ph.eloByDay[id][n - 1] != null ? ph.eloByDay[id][n - 1] : ''}</b></span>`).join('');
+  return `<div class="srn">${svg}
+    <div class="srn-band" title="Wer am Ende eines Spieltags vorn lag">${band}</div>
+    <div class="srn-achse num"><span>1.</span><span>${Math.ceil(n / 2)}.</span><span>${n}.</span></div>
+    <div class="srn-leg">${legende}</div></div>`;
+}
+
+// Die Tage an der Spitze als Balken, der Meister golden. Wer nie vorn lag,
+// steht nicht da — eine Zeile mit null ist keine Aussage.
+function saisonSpitzeHtml(sid, podium){
+  const sp = saisonSpitze(sid);
+  const ids = Object.keys(sp.tage).sort((a, b) => sp.tage[b] - sp.tage[a]);
+  if(!ids.length) return '';
+  const max = sp.tage[ids[0]] || 1, pm = pmap();
+  const METALL = ['gold', 'silber', 'bronze'];
+  return `<div class="srn-tage">${ids.map(id => {
+    const k = (podium || []).indexOf(id);
+    return `<div class="srn-t ${k >= 0 ? METALL[k] : 'rest'}" data-pid="${esc(id)}">
+      <span class="n">${esc((pm[id] || {}).name || '?')}</span>
+      <span class="b"><i style="width:${(sp.tage[id] / max * 100).toFixed(1)}%"></i></span>
+      <span class="v num">${sp.tage[id]}</span></div>`;
+  }).join('')}</div>
+    <div class="bl-satz">${sp.spieltage} ${sp.spieltage === 1 ? 'Spieltag' : 'Spieltage'}, ${
+      sp.wechsel === 0 ? 'die Spitze hat nie gewechselt' : sp.wechsel === 1 ? 'die Spitze hat einmal gewechselt'
+      : 'die Spitze hat ' + (_BELEG_ZAHL[sp.wechsel] ? _BELEG_ZAHL[sp.wechsel] + 'mal' : sp.wechsel + '-mal') + ' gewechselt'}.</div>`;
+}
+
+// Die Saison eines Spielers als Zellen, eine je Partie, in Spielreihenfolge:
+// grün ein Sieg, rot eine Niederlage [§C25]. „31 zu 12" muss man sich
+// vorstellen, die Zellen sieht man.
+function saisonZellenHtml(sid, pid){
+  const ms = matchesInSeason(sid).filter(m => [m.a1, m.a2, m.b1, m.b2].includes(pid))
+    .slice().sort((a, b) => mts(a) - mts(b));
+  if(!ms.length) return '';
+  const sieg = m => ((m.a1 === pid || m.a2 === pid) ? m.winner === 'A' : m.winner === 'B');
+  return `<div class="srn-z">${ms.map(m => `<i class="${sieg(m) ? 'w' : 'l'}"></i>`).join('')}</div>`;
 }
 // ╔═══ §3.1 ─── DATENBANK-LAYER ────────────────────────────────────────╗
 //     loadAll() lädt Spieler/Matches/Config/Seasons, persistRecalc()
@@ -7718,61 +8011,11 @@ function showSeasonRecap(season, opts){
   const tage = new Set(ms.map(mdayKey)).size;
 
   // ─── Die Rangliste der Saison — EINE Quelle für alles darunter ──────
-  // Podest, Liste und der Schild im Wappen ziehen ihren Platz von hier.
-  // Vorher rechnete das Podest aus season.top_elo und die Liste aus dem
-  // Simulator: zwei Reihenfolgen, die bei Gleichstand auseinanderliefen.
-  const gSim = getGlobalSim();
-  const stand = gSim.seasonEndElos[sid] || {};
-  const gespielt = gSim.seasonPlayed[sid] || {};
-  // Die dritte Zahl der Zeile ist die Tordifferenz. Vorher stand dort der
-  // Elo-Zuwachs des Monats — und der ist die Saison-Elo selbst: der
-  // Simulator setzt zu jedem Monatsbeginn auf den Startwert zurück. In
-  // jeder Zeile stand damit zweimal dieselbe Zahl.
-  const sw = {}, sl = {}, gf = {}, ga = {};
-  ms.forEach(m=>{
-    [[m.a1,m.a2,m.winner==='A',m.score_a,m.score_b],
-     [m.b1,m.b2,m.winner==='B',m.score_b,m.score_a]].forEach(([x,y,won,f,g])=>{
-      [x,y].forEach(id=>{
-        if(won) sw[id]=(sw[id]||0)+1; else sl[id]=(sl[id]||0)+1;
-        gf[id]=(gf[id]||0)+(f||0); ga[id]=(ga[id]||0)+(g||0);
-      });
-    });
-  });
-  const rang = Object.keys(gespielt).filter(id=>gespielt[id]>0 && pmap()[id])
-    .map(id=>({id, elo:Math.round(stand[id] ?? cfg.start_elo),
-               wins:sw[id]||0, losses:sl[id]||0, diff:(gf[id]||0)-(ga[id]||0)}))
-    .sort((a,b)=>b.elo-a.elo);
-
-  // ─── Podest ────────────────────────────────────────────────────────
-  // Dasselbe Bauteil wie in der Ewigen Tafel [§C27]: drei Karten, der Erste
-  // höher und wärmer, das Wappen mit Banner. Die Zahl im Schild ist der
-  // Platz dieser Saison, die Schwingen zählen die Titel bis zu ihr — ein
-  // Rückblick auf den Mai darf nicht die Titel vom August tragen [§C26].
-  let podestHtml = '';
-  if(rang.length){
-    const METALL = ['gold','silber','bronze'];
-    const karte = (e, platz) => {
-      const p = pmap()[e.id];
-      const titelBis = seasons.filter(x => x.id <= sid && seasonChampion(x.id) === e.id).length;
-      const av = avHtml(p, '', {ins:true, band:true, pos:platz, titel:titelBis, feuer:0,
-                                px:platz===1?88:70, klasse:'pod-av'});
-      // Ohne Titel steht dort die Spielzahl — ein Strich sieht aus, als
-      // fehlte die Zahl, statt zu sagen: dieser Spieler hat noch keinen.
-      const sub = titelBis
-        ? titelBis + (titelBis === 1 ? ' Titel' : ' Titel')
-        : (e.wins + e.losses) + ' Spiele';
-      return `<div class="pod-karte ${METALL[platz-1]}${platz===1?' erster':''}" data-detail="${esc(e.id)}">
-        <div class="pod-platz num">${String(platz).padStart(2,'0')}</div>
-        ${av}
-        <div class="pod-name">${esc(p.name)}</div>
-        <div class="pod-wert num">${e.elo}</div>
-        <div class="pod-sub num">${esc(sub)}</div>
-      </div>`;
-    };
-    const folge = [rang[1], rang[0], rang[2]], plaetze = [2,1,3];
-    podestHtml = `<div class="podest rcp-podest">${
-      folge.map((e,k)=> e ? karte(e, plaetze[k]) : '<div class="pod-leer"></div>').join('')}</div>`;
-  }
+  // Podest, Liste und der Schild im Wappen ziehen ihren Platz von hier;
+  // Rangliste und Podest stehen in der Meisterbühne [§C31], weil die
+  // Meister-Karte des Feeds dasselbe Podest zeigt.
+  const rang = saisonRang(sid);
+  const podestHtml = saisonPodestHtml(sid, rang);
 
   // ─── Team der Saison ───────────────────────────────────────────────
   let teamHtml='';
@@ -13072,7 +13315,7 @@ function showAward(key){
       }
 
       // Der Beleg [§C27]: woraus der Wert besteht, wo er im Feld liegt und
-      // wie sicher der Abstand zum Nächsten ist — aus derselben Liste.
+      // wie knapp der Abstand zum Nächsten ist — aus derselben Liste.
       const w = AW_WERT[key];
       const zweitE = arr.find(e => e.sort !== top.sort) || null;
       const zA = zweitE ? belegAnteil(zweitE.detail) : null;
@@ -26766,6 +27009,14 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
+  } else if(sorte === 'held' && d.type === 'season_recap'){
+    // ── Die Meisterbühne [§C31] ────────────────────────────────────
+    // Zwei Sätze und kein Bild: so stand der Meister im Feed, die seltenste
+    // Karte des Monats. Jetzt steht das Podest über dem Satz — dasselbe
+    // Bauteil wie im Saison-Rückblick [§C27] —, und im Fuß das Rennen um die
+    // Spitze, klein, samt der Tage vorn und dem Vorsprung.
+    kopf = _newsMeisterKopf(d);
+    fuss = _newsMeisterFuss(d);
   } else if(sorte === 'held'){
     const pid = d.playerId || (Array.isArray(d.playerIds) ? d.playerIds[0] : null);
     gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
@@ -26874,7 +27125,8 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
   // haetten sie ein zweites Mal daneben gestellt.
-  if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'){
+  if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'
+     && d.type !== 'season_recap'){
     const g = _newsGesichtHtml(s);
     if(g) gesicht = `<div class="nf-gr-l">${g}</div>`;
   }
@@ -27746,6 +27998,10 @@ function _newsSorte(s){
   if(t === 'insignium_stufe') return 'ins';               // die Leiter
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
+  // Der Meister ist der Held schlechthin. Ohne diese Zeile fiel er auf
+  // „fakt" — die leiseste Karte des Feeds trug die Nachricht, die es je
+  // Monat genau einmal gibt, und Gold gehört den Titeln [§C25].
+  if(t === 'season_recap') return 'held';
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
   // Die gesammelten runden Marken eines Tages sind dieselbe Sache in der
   // Mehrzahl und tragen deshalb dieselbe Form [§C27]. Ohne diese Zeile fiele
@@ -27880,6 +28136,38 @@ function _newsZahlband(werte){
     `<div><b class="${x.f || ''}">${esc(String(x.v))}</b><span>${esc(x.l || '')}</span></div>`).join('')}</div>`;
 }
 
+// ── Die Meisterbühne im Feed [§C31] ─────────────────────────────────
+// Das Podest kommt aus derselben Rangliste wie im Saison-Rückblick
+// (`saisonRang`); die Karte nennt aber, was bei ihrer Entstehung galt, also
+// steht der Meister aus dem `dataRef` in der Mitte. Kleiner als im Blatt:
+// 64 und 52 px, darunter bliebe vom Wappen nichts [§6]. Hinter dem Ersten
+// liegt ein Strahlenkranz in Gold — er ist Licht und keine Form, und bei
+// Bewegungsruhe steht er still.
+function _newsMeisterKopf(d){
+  try {
+    const rang = saisonRang(d.sid);
+    if(!rang.length) return '';
+    return `<div class="nf-meister"><span class="nf-ms-strahl" aria-hidden="true"></span>${
+      saisonPodestHtml(d.sid, rang, {px1:64, px:52, klasse:'nf-podest', attr:'data-mpid'})}</div>`;
+  } catch(e){ return ''; }
+}
+function _newsMeisterFuss(d){
+  try {
+    const te = Array.isArray(d.topElo) ? d.topElo : [];
+    const ids = te.map(x => x && x.id).filter(Boolean);
+    const sp = saisonSpitze(d.sid);
+    const n = sp.tage[d.championId] || 0;
+    const vorsprung = te[0] && te[1] ? Math.max(0, te[0].elo - te[1].elo) : null;
+    const r = saisonRang(d.sid).find(x => x.id === d.championId);
+    const sp2 = r ? r.wins + r.losses : 0;
+    return saisonRennenHtml(d.sid, ids, {klein:true}) + _newsZahlband([
+      {v: sp.spieltage ? n + ' von ' + sp.spieltage : null, l:'Spieltage vorn', f:'g'},
+      {v: vorsprung != null ? '+' + vorsprung : null, l:'Elo vor Platz 2'},
+      {v: sp2 ? Math.round(r.wins / sp2 * 100) + ' %' : null, l:'Siegquote'}
+    ]);
+  } catch(e){ return ''; }
+}
+
 // Breaking-Hero — das Herzstück oben im Sheet, bewusst dramatisch.
 // v9.1: etwas längerer, spannenderer Hero-Text je Breaking-Typ — display-seitig
 // aus dataRef gebaut (wirkt auch auf bereits persistierte Rows). Bewusst 1–2
@@ -27891,14 +28179,31 @@ function _breakingHeroText(s){
   const nm = id => (pm[id] && pm[id].name) || '?';
   try {
     switch(d.type){
+      // ── Der Monat heißt, wie er heißt ────────────────────────────
+      // „Die Saison 2026-08 ist Geschichte" nannte die Saison-ID, eine
+      // Zeichenkette, die niemanden interessiert, und „Vor Johannes." war ein
+      // Satz ohne Verb [§C33]. Elo, Vorsprung und Tage vorn stehen auf der
+      // Karte im Podest und im Zahlenband; der Nachsatz erzählt, was dort
+      // nicht steht: wann der Titel entschieden war.
       case 'season_recap': {
         const te = Array.isArray(d.topElo) ? d.topElo : [];
-        const champ = nm(d.championId || (te[0] && te[0].id));
-        const runner = te[1] && te[1].id ? nm(te[1].id) : null;
-        const elo = d.championElo != null ? d.championElo : (te[0] && te[0].elo);
-        return `Die Saison ${d.sid || ''} ist Geschichte: ${champ} krönt sich mit ${elo} Elo zum Champion`
-          + (runner ? `. Vor ${runner}.` : '.')
-          + ` Wer stürzt ${champ} in der neuen Saison vom Thron?`;
+        const cid = d.championId || (te[0] && te[0].id);
+        const champ = nm(cid);
+        const monat = d.sid && typeof seasonLabel === 'function' ? seasonLabel(d.sid) : 'Die Saison';
+        let lauf = '';
+        try {
+          const sp = saisonSpitze(d.sid), f = sp.folge;
+          const mm = String(d.sid || '').slice(5, 7);
+          let i = f.length - 1;
+          while(i > 0 && f[i - 1].pid === cid) i--;
+          if(f.length && f[f.length - 1].pid === cid){
+            lauf = i === 0
+              ? ` ${champ} lag vom ersten Spieltag an vorn und gab die Spitze nie ab.`
+              : ` Die Spitze wechselte ${sp.wechsel === 1 ? 'einmal' : (_BELEG_ZAHL[sp.wechsel] ? _BELEG_ZAHL[sp.wechsel] + 'mal' : sp.wechsel + '-mal')}, `
+                + `und vom ${String(f[i].day).padStart(2, '0')}.${mm}. an blieb ${champ} vorn.`;
+          }
+        } catch(e){}
+        return `${monat} ist entschieden: ${champ} holt den Titel.` + lauf;
       }
       // ── Der Nachsatz nennt eine Zahl ────────────────────────────
       // „Machtwechsel an der Tabellenspitze: X verdraengt Y und uebernimmt
@@ -28439,6 +28744,9 @@ function _newsBlattKopf(s){
   let ids = [];
   try { ids = (_newsPids(s) || []).filter(id => pm[id]); } catch(e){}
   const erg = d.matchId ? _newsBlattErgebnis(d.matchId) : '';
+  // Die Meisterbühne IST der Kopf: das Podest darunter zeigt den Meister
+  // groß, ein Wappen darüber sagte dasselbe ein zweites Mal [§C27].
+  if(d.type === 'season_recap') return erg;
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
@@ -29644,31 +29952,51 @@ function _newsDetailMitte(s){
       case 'season_recap': {
         // Der Monatsrückblick und die Monatschronik sind zwei verschiedene
         // Geschichten: hier stehen Saisonspitze und Spielgeschehen, dort die
-        // vergebenen Chronik-Einträge. So folgt auf die Breaking-Karte nicht
-        // noch einmal dieselbe Liste in einer Tafel-Karte.
-        const top = (d.topElo || []).slice(0,3);
-        const rows = top.map((p, i) => p && p.id && pm[p.id] ? `
-          <div class="nd-stat-row" data-pid="${esc(p.id)}" style="cursor:pointer">
-            <div class="nd-stat-label">${i+1}. ${esc(nameOf(p.id))}</div>
-            <div class="nd-stat-val ${i===0?'gold':i===1?'':''}">${p.elo} Elo</div></div>` : '').join('');
+        // vergebenen Chronik-Einträge.
+        //
+        // ── Die Meisterbühne [§C31] ────────────────────────────────
+        // Das Blatt nannte drei Elo-Zahlen untereinander und darunter die
+        // Saison-ID. Wie der Titel zustande kam — ob der Meister die Spitze
+        // nie hergab oder sie am letzten Tag holte —, stand nirgends. Jetzt:
+        // das Podest unter einem Strahlenkranz, das Rennen um die Spitze als
+        // Linien, die Tage vorn als Balken und die Saison des Meisters als
+        // Zellen, eine je Partie. Alles aus den Bauteilen, die der
+        // Saison-Rückblick auch zeichnet [§C27].
+        const rang = saisonRang(d.sid);
+        const te = Array.isArray(d.topElo) ? d.topElo : [];
+        const ids = te.map(x => x && x.id).filter(id => id && pm[id]);
+        const monat = typeof seasonLabel === 'function' ? seasonLabel(d.sid) : '';
+        const buehne = rang.length ? `<div class="nd-meister">
+            <div class="nd-ms-band">${svgI('crown')}<span>Meister</span><i>${esc(monat)}</i></div>
+            <div class="nf-meister gross"><span class="nf-ms-strahl" aria-hidden="true"></span>${
+              saisonPodestHtml(d.sid, rang, {px1:96, px:64, attr:'data-pid'})}</div></div>` : '';
+        const rennen = saisonRennenHtml(d.sid, ids);
+        const spitze = saisonSpitzeHtml(d.sid, ids);
+        const r = rang.find(x => x.id === d.championId);
+        // Drei Zellen je Reihe: eine vierte bricht bei 360 px in eine eigene
+        // Zeile um und steht dann doppelt so breit da wie ihre Nachbarn.
+        const meister = r ? rcpZahlenHtml([
+          {v: Math.round(r.wins / Math.max(1, r.wins + r.losses) * 100) + ' %', l:'Siegquote', ton:'gold'},
+          {v: r.wins + ':' + r.losses, l:'Siege zu Niederlagen'},
+          {v: (r.diff >= 0 ? '+' : '') + r.diff, l:'Torbilanz'}
+        ]) + saisonZellenHtml(d.sid, d.championId) : '';
         const f = d.fakten || {};
-        const zahlen = (f.spiele != null || f.tore != null) ? `
-          <div class="nd-section">Der Monat in Zahlen</div>
-          <div class="nd-gitter">
-            ${f.spiele != null ? `<div><b>${esc(String(f.spiele))}</b><span>Partien</span></div>` : ''}
-            ${f.tore != null ? `<div><b>${esc(String(f.tore))}</b><span>Tore</span></div>` : ''}
-            ${f.engeSpiele != null ? `<div><b>${esc(String(f.engeSpiele))}</b><span>Spiele mit höchstens 2 Toren Abstand</span></div>` : ''}
-            ${f.toreJeSpiel != null ? `<div><b>${esc(String(f.toreJeSpiel).replace('.', ','))}</b><span>Tore pro Partie</span></div>` : ''}
-          </div>` : '';
+        const zahlen = (f.spiele != null || f.tore != null) ? rcpZahlenHtml([
+          f.spiele != null ? {v: f.spiele, l:'Partien'} : null,
+          f.toreJeSpiel != null ? {v: komma(f.toreJeSpiel), l:'Tore je Partie'} : null,
+          f.engeSpiele != null ? {v: f.engeSpiele, l:'knapp entschieden'} : null
+        ]) : '';
         const klar = f.klarstes && f.klarstes.matchId
           ? `<div class="nd-section">Klarstes Ergebnis</div>${_newsMatchVsBlock(f.klarstes.matchId)}` : '';
         const torreich = f.torreichstes && f.torreichstes.matchId
           && (!f.klarstes || f.torreichstes.matchId !== f.klarstes.matchId)
           ? `<div class="nd-section">Torreichstes Spiel</div>${_newsMatchVsBlock(f.torreichstes.matchId)}` : '';
-        return `<div class="nd-section">Saison-Top-3</div>
-          ${rows}
-          <div class="nd-stat-row"><div class="nd-stat-label">Saison</div><div class="nd-stat-val">${esc(d.sid)}</div></div>
-          ${zahlen}${klar}${torreich}`;
+        return buehne
+          + (rennen ? `<div class="nd-section">Das Titelrennen</div>${rennen}` : '')
+          + (spitze ? `<div class="nd-section">An der Spitze</div>${spitze}` : '')
+          + (meister ? `<div class="nd-section">Die Saison von ${esc(nameOf(d.championId))}</div>${meister}` : '')
+          + (zahlen ? `<div class="nd-section">Der Monat in Zahlen</div>${zahlen}` : '')
+          + klar + torreich;
       }
       // Die Karte sagt, dass der Monat eine Tabelle hat, und ihr Blatt zeigte
       // nur die Saison-ID — eine Zeichenkette, die niemanden interessiert. Die
@@ -34788,7 +35116,7 @@ function showChronicle(cid){
       : ['Für die Laufbahn', 'Eine Schattenseite zählt nichts und zieht nichts ab']
   ].filter(Boolean);
   // Der Beleg [§C27]: woraus der Bestwert besteht, wo er im Feld liegt, wie
-  // sicher der Abstand ist und wie es dazu kam — aus chronicleRang und dem
+  // knapp der Abstand ist und wie es dazu kam — aus chronicleRang und dem
   // Beleg des Katalogs, ohne zweite Rechnung.
   const halterSet = new Set(h ? (h.pids || [h.pid]) : []);
   const zweit = rang.find(r => !halterSet.has(r.pid)) || null;

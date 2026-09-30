@@ -382,7 +382,7 @@ function showAward(key){
       }
 
       // Der Beleg [§C27]: woraus der Wert besteht, wo er im Feld liegt und
-      // wie sicher der Abstand zum Nächsten ist — aus derselben Liste.
+      // wie knapp der Abstand zum Nächsten ist — aus derselben Liste.
       const w = AW_WERT[key];
       const zweitE = arr.find(e => e.sort !== top.sort) || null;
       const zA = zweitE ? belegAnteil(zweitE.detail) : null;

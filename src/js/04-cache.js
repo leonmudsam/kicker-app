@@ -274,7 +274,7 @@ function getSeasonPositionHistory(seasonId){
   // Empty-State: 0 oder 1 aktive Spieler → kein sinnvolles Diagramm
   if(activeIds.length < 1){
     const result = {seasonId, isCurrent, totalDays, lastDay:0, activeIds:[], entryDay:{},
-      positionsByDay:{}, finalElo:{}, colorOf:{}, days:[], builtAt:Date.now(), empty:true};
+      positionsByDay:{}, eloByDay:{}, spielTage:[], finalElo:{}, colorOf:{}, days:[], builtAt:Date.now(), empty:true};
     _cache._posHistKey = key;
     _cache._posHist = result;
     return result;
@@ -299,15 +299,25 @@ function getSeasonPositionHistory(seasonId){
   // positionsByDay[pid][dayIdx] = Position (1..N) ODER null wenn vor Eintritt
   const positionsByDay = {};
   activeIds.forEach(id => positionsByDay[id] = new Array(lastDay).fill(null));
+  // Die Saison-Elo am Ende jedes Tages steht daneben, aus DERSELBEN Schleife:
+  // das Titelrennen des Meister-Blatts zeichnet sie, und eine zweite Rechnung
+  // über dieselben Deltas nennte irgendwann einen anderen Ersten als die
+  // Linien des Positionsverlaufs [§C27]. `spielTage` sind die Tage mit einer
+  // Partie — „an der Spitze" zählt nur, wo auch gespielt wurde.
+  const eloByDay = {};
+  activeIds.forEach(id => eloByDay[id] = new Array(lastDay).fill(null));
+  const spielTage = [];
 
   let mIdx = 0;
   for(let day=1; day<=lastDay; day++){
     // Alle Matches dieses Tages anwenden
+    let gespielt = false;
     while(mIdx < sMatches.length){
       const m = sMatches[mIdx];
       const mDay = new Date(m.created_at).getDate();
       if(mDay > day) break;
       if(mDay === day){
+        gespielt = true;
         const histEntry = histMap.get(m.id);
         if(histEntry && histEntry.deltas){
           const ds = histEntry.deltas;
@@ -324,9 +334,11 @@ function getSeasonPositionHistory(seasonId){
       .filter(id => entryDay[id] !== undefined && day >= entryDay[id])
       .map(id => [id, seasonElo[id]])
       .sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
-    ranked.forEach(([pid], idx) => {
+    ranked.forEach(([pid, elo], idx) => {
       positionsByDay[pid][day-1] = idx + 1;
+      eloByDay[pid][day-1] = Math.round(elo);
     });
+    if(gespielt) spielTage.push(day);
   }
 
   // Eindeutiges Farb-Mapping: über alphabetisch sortierte ID-Liste → 12 Farben
@@ -337,7 +349,7 @@ function getSeasonPositionHistory(seasonId){
 
   const result = {
     seasonId, isCurrent, totalDays, lastDay,
-    activeIds, entryDay, positionsByDay,
+    activeIds, entryDay, positionsByDay, eloByDay, spielTage,
     finalElo: {...seasonElo},
     colorOf,
     days: Array.from({length:lastDay}, (_,i)=>i+1),
