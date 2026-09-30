@@ -121,7 +121,15 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       die Leiter in der Machart von 35b-prestige.js [§C30],
                       vom Entwurf kommt der Schimmer —, dazu
                       Bewegung, die etwas erklärt, und neue gezeichnete
-                      Ansichten (aufwertung-2.html)
+                      Ansichten (aufwertung-2.html), und der Entwurf nur
+                      der Insignium-Leiter: gezeichnet mit dem Code aus
+                      35b-prestige.js, der beim Erzeugen eingesetzt wird,
+                      der Zierkranz aus Schnörkelbügeln statt des
+                      Rankenkranzes, ein Kronenreif aus lodernden Blättern
+                      mit Kristallkrone, im dritten Grad jeder Stufe ein
+                      Vorgriff auf die nächste, die Verwandlung als Bühne,
+                      52 px und der Schmuck je Feld im Browser gemessen
+                      (insignium.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
