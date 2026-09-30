@@ -2948,6 +2948,43 @@ const ok = (c, msg, det) => {
   ok(mbRuhig.kranz === 'none' && mbRuhig.linie === 'none' && mbRuhig.tage === 'none',
      'bei prefers-reduced-motion steht die Meisterbühne still', JSON.stringify(mbRuhig));
 
+  // ── Kein Filter über dem Zeichen [§C30] ─────────────────────────────
+  // Jedes Wappen trug `filter: drop-shadow(…)` am ganzen `svg.ins`, und
+  // Safari rechnet ein SVG unter einem CSS-Filter in CSS-Pixeln und zieht
+  // es hoch: auf dem Telefon standen alle Insignien mit Treppenkanten da,
+  // wie ausgeschnitten. Dasselbe gilt für eine Ebene, die skaliert. Gesucht
+  // wird über Liga, Positionen, Awards, Rekorde, Profil, Laufbahn und Feed;
+  // ausgenommen ist nur das Entfärben einer Stufe, die niemand trägt.
+  const _filterFunde = JSON.parse(await K(`(async()=>{
+const warte=ms=>new Promise(r=>setTimeout(r,ms));
+const funde={};
+const pruef=(wo)=>{
+  // Bilder direkt und über <use> verwiesene Gruppen: gezählt wird das Element, das sichtbar zeichnet
+  const ziele=[...document.querySelectorAll('image, use')].filter(e=>{const h=e.getAttribute('href')||'';return e.tagName==='image'?h.startsWith('data:image/svg'):/^#ins/.test(h);});
+  ziele.forEach(im=>{let e=im.parentElement;const k=[];while(e&&e!==document.documentElement){const cs=getComputedStyle(e);
+    const f=e.getAttribute&&e.getAttribute('filter');
+    if(cs.filter&&cs.filter!=='none'&&!/grayscale/.test(cs.filter))k.push((e.className.baseVal??e.className)+':'+cs.filter.slice(0,30));
+    if(f)k.push((e.className.baseVal??e.className)+':attr '+f);
+    const m=cs.transform; if(m&&m.startsWith('matrix(')){const a=parseFloat(m.slice(7)); if(Math.abs(a-1)>.01&&!/nd-bg|nd |sheet/.test(e.className))k.push((e.className.baseVal??e.className)+':scale '+a);}
+    e=e.parentElement;}
+    if(k.length){const key=wo+' | '+k.join(' < ');funde[key]=(funde[key]||0)+1;}});
+};
+tab='ranking'; render(); await warte(50); pruef('liga'); tab='positions'; render(); await warte(50); pruef('positionen');
+tab='awards'; awView='awards'; render(); await warte(50); pruef('awards');
+awView='rekorde'; render(); await warte(50); pruef('rekorde');
+const pid=players.find(p=>p.name==='Martin').id;
+showPlayer(pid); await warte(900); pruef('profil');
+try{ showLaufbahn&&showLaufbahn(pid);}catch(e){}
+await warte(600); pruef('laufbahn');
+closeSheet(true); openNewsFeed(); await warte(600); pruef('feed');
+return JSON.stringify(funde,null,1);
+})()
+`));
+  ok(Object.keys(_filterFunde).length === 0,
+     'kein Insignium liegt unter einem Filter oder einer Skalierung',
+     Object.keys(_filterFunde).slice(0, 4).join(' · '));
+  await page.evaluate(() => { try { window.__k.eval('closeSheet(true)'); } catch(e){} });
+
   await page.setViewportSize({width:430, height:932});
 
   console.log('\n' + '═'.repeat(60));
