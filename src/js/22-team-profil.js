@@ -466,7 +466,7 @@ function showMatchDetail(mid){
   // matchBreakdown() bleibt für Slider-Detail-Komponenten verfügbar.
   const line=(id,pos)=>{
     const d=(m.deltas||{})[id]||0;
-    return `<div class="delta-row"><span class="dn">${esc(pname(id))} <span class="chip ${pos}">${pos==='atk'?'STU':'ABW'}</span></span><span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></div>`;
+    return `<div class="delta-row" data-md-spieler="${esc(id)}" style="cursor:pointer"><span class="dn">${esc(pname(id))} <span class="chip ${pos}">${pos==='atk'?'STU':'ABW'}</span></span><span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></div>`;
   };
   // Auszeichnungen durch dieses Match
   const earned=badgesEarnedInMatch(mid);
@@ -620,6 +620,11 @@ function showMatchDetail(mid){
 
 
   };
+  // Die vier Namen führen ins Profil: das Blatt zeigte je Spieler die Elo
+  // dieser Partie, und von dort ging es nur zum Duo weiter, nicht zu ihm.
+  document.querySelectorAll('#sheet [data-md-spieler]').forEach(el=>{
+    el.onclick=()=>sheetNav(()=>showPlayer(el.dataset.mdSpieler));
+  });
   // Team-Chips → Team-Profil
   document.querySelectorAll('[data-team]').forEach(el=>{
     el.onclick=()=>{

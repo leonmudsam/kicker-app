@@ -416,13 +416,29 @@ function _buildStories(){
   // steht ueber die Tabelle nichts im Feed.
   try {
     const sid = currentSeason().id;
-    const frei = _storyRangFrei(sid);
+    // Die Karte steht an der Partie, die die Tabelle freigegeben hat — und
+    // sie nennt den Stand DIESER Partie. Sie rechnete mit dem Stand von
+    // heute: gemessen stand am 04.08. „Martin führt mit 390 Elo, 11 vor Leon.
+    // Gewertet sind 107 Partien" — die Zahlen des 26.08., und sie wuchsen mit
+    // jeder Partie des Monats weiter, unter einem Datum, das stehen blieb.
+    const saison = matchesInSeason(sid).slice().sort((a, b) => mts(a) - mts(b));
+    let frei = {frei:false}, k = -1;
+    for(let i = STORY_RANG_MIN_PARTIEN - 1; i < saison.length; i++){
+      const f = _storyRangFrei(sid, mts(saison[i]));
+      if(f.frei){ frei = f; k = i; break; }
+    }
     if(frei.frei){
-      const sim = getGlobalSim();
-      const played = (sim.seasonPlayed && sim.seasonPlayed[sid]) || {};
-      const rang = Object.keys(sim.elo || {})
-        .filter(pid => pm[pid] && !pm[pid].hidden && (played[pid] || 0) > 0)
-        .map(pid => ({pid, elo: Math.round(sim.elo[pid])}))
+      // Der Elo-Stand nach der freigebenden Partie: der letzte Stand jedes
+      // Spielers aus der Elo-Bahn, bis dorthin [§11.0e].
+      const hm = getHistoryByMatchId();
+      const stand = {};
+      for(let i = 0; i <= k; i++){
+        const h = hm.get(saison[i].id);
+        if(h && h.eloAfter) Object.keys(h.eloAfter).forEach(pid => { stand[pid] = h.eloAfter[pid]; });
+      }
+      const rang = Object.keys(stand)
+        .filter(pid => pm[pid] && !pm[pid].hidden)
+        .map(pid => ({pid, elo: Math.round(stand[pid])}))
         .sort((a, b) => b.elo - a.elo);
       if(rang.length >= 2){
         const vor = rang[0].elo - rang[1].elo;
@@ -439,9 +455,7 @@ function _buildStories(){
           // und nicht der Moment des Nachschlagens: eine Karte, die beim
           // Oeffnen der App entsteht, traegt sonst den Zeitstempel des
           // Lesers [§C33].
-          when: (function(){ const ms = matchesInSeason(sid)
-            .slice().sort((a, b) => mts(a) - mts(b));
-            return ms.length ? new Date(ms[Math.min(ms.length, STORY_RANG_MIN_PARTIEN) - 1].created_at) : now; })(),
+          when: new Date(saison[k].created_at),
           prio: STORY_PRIO.season_start,
           dataRef: {type:'season_start', sid,
                     leader:rang[0], second:rang[1], gap:vor,
@@ -1076,8 +1090,12 @@ function _buildStories(){
         // einmal. Der Satz nennt jetzt, was in diesen Partien zusammengekommen
         // ist [§C33].
         title: `${nameOf(c.pid)} feiert das ${c.total}. Spiel`,
+        // Die Siege der ersten hundert Partien, nicht die von heute: gezählt
+        // wurde über die ganze Laufbahn, und unter „Aus 100 Partien" konnten
+        // damit mehr als hundert Siege stehen.
         desc: (function(){
-          const alle = matchesOfPlayer(c.pid, matches) || [];
+          const t = new Date(c.when).getTime();
+          const alle = (matchesOfPlayer(c.pid, matches) || []).filter(m => mts(m) <= t);
           const siege = alle.filter(m => won(c.pid, m)).length;
           return `Aus ${c.total} Partien sind ${siege} Siege geworden, `
                + `das sind ${Math.round(100 * siege / Math.max(1, c.total))} %.`;
@@ -1218,8 +1236,11 @@ function _buildStories(){
           // Der Satz hiess „X feiert den 100. Sieg" und stand damit wortgleich
           // ueber sich selbst. Jeder Text nennt eine Zahl, die die Schlagzeile
           // noch nicht hat [§C33]: hier die Quote, aus der die Marke kommt.
+          // Die Partien bis zu der, mit der die Marke fiel — sonst wächst
+          // der Nenner mit jeder späteren Partie unter derselben Karte.
           desc: (function(){
-            const ges = (matchesOfPlayer(p.id, matches) || []).length;
+            const t = mts(last);
+            const ges = (matchesOfPlayer(p.id, matches) || []).filter(m => mts(m) <= t).length;
             return ges
               ? `${mark} Siege aus ${ges} Partien, das sind ${Math.round(100 * mark / ges)} %.`
               : `${mark} Siege stehen jetzt in der Bilanz.`;
@@ -1890,8 +1911,13 @@ function _buildStories(){
         // „kein Stolpern: Mit diesem Schlusspfiff waechst der Lauf zur echten
         // Serie" nannte keine Zahl, die die Schlagzeile nicht schon hat, und
         // stand gemessen fuenfzigmal wortgleich im Feed [§C33].
+        // „damit" heißt: bis zu DIESER Partie. Gezählt wurde bis heute —
+        // „Martin zündet die 8er-Serie" um 10:56 nannte „134 Siege aus 211
+        // Partien", die Zahl nach seiner letzten Partie des Tages, und sie
+        // wuchs mit jeder weiteren, unter einer Karte, die stehen bleibt.
         desc: (function(){
-          const alle = matchesOfPlayer(c.pid, matches) || [];
+          const t = new Date(c.when).getTime();
+          const alle = (matchesOfPlayer(c.pid, matches) || []).filter(m => mts(m) <= t);
           const siege = alle.filter(m => won(c.pid, m)).length;
           return `${_zahlwortDe(c.streak)} Siege in Folge. In der Laufbahn `
                + `stehen damit ${siege} Siege aus ${alle.length} Partien.`;

@@ -5810,6 +5810,44 @@ ok(_zwei.feedGleich, 'und dieselbe Gruppierung', String(_zwei.fn) + ' Karten');
 ok(_zwei.neu.length === 0, 'ein Lauf mit dem eigenen Bestand legt nichts Neues an',
    _zwei.neu.slice(0, 2).join(' | ') || 'nichts');
 
+// ── Die Tabelle des Monats nennt den Stand ihres Tages ──────────────
+// Die Karte „August 2026 hat eine Tabelle" stand am 04.08. und nannte die
+// Zahlen des 26.08. („Martin führt mit 390 Elo … Gewertet sind 107
+// Partien"). Gemessen wird gegen die rohen Partien: so viele Partien, wie
+// der Monat bis zu ihrem Zeitpunkt hatte.
+const _saisonStart = JSON.parse(K.eval(`JSON.stringify((function(){
+  const s = _buildStories().find(x => (x.dataRef || {}).type === 'season_start');
+  if(!s) return null;
+  const d = s.dataRef, t = new Date(s.when).getTime();
+  const bis = matchesInSeason(d.sid).filter(m => new Date(m.created_at).getTime() <= t);
+  const zahl = +((s.desc.match(/Gewertet sind (\\d+) Partien/) || [])[1]);
+  return {zahl, soll: bis.length, alle: matchesInSeason(d.sid).length};
+})())`));
+ok(_saisonStart && _saisonStart.zahl === _saisonStart.soll && _saisonStart.soll < _saisonStart.alle,
+   'die Tabelle des Monats nennt den Stand ihres Tages, nicht den von heute',
+   _saisonStart ? _saisonStart.zahl + ' Partien genannt, ' + _saisonStart.soll + ' bis dahin, '
+     + _saisonStart.alle + ' im ganzen Monat' : 'keine Karte');
+
+// ── „damit" heißt bis zu dieser Partie ──────────────────────────────
+// „Martin zündet die 8er-Serie" um 10:56 nannte „134 Siege aus 211 Partien"
+// — die Zahl nach seiner letzten Partie des Tages. Jede Serienmarke im
+// Fenster wird gegen die rohen Partien bis zu ihrem Zeitpunkt nachgezählt.
+const _damit = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch = []; let n = 0;
+  _buildStories().filter(x => (x.dataRef || {}).type === 'win_streak').forEach(x => {
+    const z = x.desc.match(/(\\d+) Siege aus (\\d+) Partien/);
+    if(!z) return; n++;
+    const t = new Date(x.when).getTime(), pid = x.dataRef.pid;
+    const bis = matches.filter(m => matchOf(pid, m) && new Date(m.created_at).getTime() <= t);
+    const siege = bis.filter(m => won(pid, m)).length;
+    if(+z[1] !== siege || +z[2] !== bis.length) falsch.push(x.id + ': ' + z[0] + ' statt ' + siege + '/' + bis.length);
+  });
+  return {n, falsch};
+})())`));
+ok(_damit.n > 0 && _damit.falsch.length === 0,
+   'eine Serienmarke zählt die Laufbahn bis zu ihrer Partie',
+   _damit.falsch.slice(0, 2).join(' | ') || _damit.n + ' Marken');
+
 // ── Das Blatt rechnet bis zu seiner Partie ──────────────────────────
 // Das Jubiläum „100 Spiele" nannte darunter die Bilanz von heute („221 /
 // 134"), der Meilenstein „221W · 134L", die Duo-Serie die gemeinsame Bilanz

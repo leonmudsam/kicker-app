@@ -2537,9 +2537,16 @@ const ok = (c, msg, det) => {
       if(zeilen.length) mitMarken++;
       if(new Set(zeilen).size !== zeilen.length) fehler.push('doppelt: ' + zeilen.join(','));
     }
+    // Und ein Name in der Elo-Liste führt ins Profil.
+    K('closeSheet(true);showMatchDetail(matches[matches.length-1].id)');
+    const zeile = document.querySelector('#sheet [data-md-spieler]');
+    let profil = false;
+    if(zeile){ zeile.click(); await new Promise(r => setTimeout(r, 700));
+      profil = !!document.querySelector('#sheet .pp-root'); }
     K('closeSheet(true)');
-    return {fehler, mitMarken};
+    return {fehler, mitMarken, profil};
   });
+  ok(partie.profil, 'ein Name im Blatt einer Partie führt ins Profil');
   ok(partie.fehler.length === 0 && partie.mitMarken > 0,
      'das Blatt einer Partie nennt Sieger und Siegchance und jeden Spieler einmal',
      partie.fehler.slice(0,3).join(' | ') || partie.mitMarken + ' Partien mit Auszeichnungen');
