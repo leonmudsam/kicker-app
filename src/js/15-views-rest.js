@@ -123,8 +123,8 @@ function vTeams(){
       <input type="text" id="teamSearch" placeholder="Spieler oder Team suchen…" value="${esc(teamSearch)}">
     </div>
     <div class="ui-switch">
-      <button data-teamtoggle="best" class="${showBest?'on':''}">▲ Beste</button>
-      <button data-teamtoggle="worst" class="${!showBest?'on':''}">▼ Schlechteste</button>
+      <button data-teamtoggle="best" class="${showBest?'on':''}">${svgI('chartUp')}Beste</button>
+      <button data-teamtoggle="worst" class="${!showBest?'on':''}">${svgI('chartDown')}Schlechteste</button>
     </div>
     <div class="ui-tabs">
       <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Siegquote</button>

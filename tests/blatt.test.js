@@ -2280,6 +2280,73 @@ const ok = (c, msg, det) => {
   ok(leiter.kleinste >= 40, 'ein Feld der Leiter ist mindestens 40 px breit',
      leiter.kleinste + ' px');
 
+  // ── Der Schlitten deckt die Wahl, und er fährt [§C27] ────────────
+  // Die Wahl eines Segmentwählers war ein Knopf, der die Farbe wechselt,
+  // und zwischen zwei Wahlen sprang sie. Jetzt gleitet eine Fläche (außen)
+  // oder ein Strich (innen) zum gewählten Segment. Lage und Breite rechnet
+  // das CSS aus :has(); stimmt die Rechnung nicht, steht der Schlitten
+  // neben dem Wort, und das sieht niemand an einem einzelnen Bild.
+  console.log('\n═══ SCHLITTEN ═══');
+  await page.setViewportSize({width:360, height:780});
+  const schlitten = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const f = [];
+    let gemessen = 0;
+    const warte = () => new Promise(r => setTimeout(r, 420));
+    for(const setz of ["tab='ranking';period='season';ligaSicht='duos'", "ligaSicht='spieler'", "period='week'",
+        "period='all';rankMetric='winrate'", "tab='awards';awView='rekorde'", "awView='awards';awPeriod='week'",
+        "awPeriod='season';tab='teams'", "tab='positions';rankMetric='def'"]){
+      K(setz + ';render()');
+      await warte();
+      document.querySelectorAll('#main .ui-switch:not(.roll), #main .ui-tabs:not(.roll)').forEach(w => {
+        const on = w.querySelector(':scope > button.on'); if(!on) return;
+        const aussen = w.classList.contains('ui-switch');
+        const cs = getComputedStyle(w, aussen ? '::before' : '::after');
+        const links = parseFloat(cs.left), breite = parseFloat(cs.width);
+        const mitte = links + breite / 2, soll = on.offsetLeft + on.offsetWidth / 2;
+        gemessen++;
+        if(Math.abs(mitte - soll) > 1.5 || (aussen && Math.abs(breite - on.offsetWidth) > 1.5))
+          f.push(setz + ': „' + on.textContent.trim() + '" ' + Math.round(mitte) + ' statt ' + Math.round(soll));
+      });
+    }
+    // Nach dem Tipp zeichnet die Ansicht neu — der Schlitten muss trotzdem
+    // dort anfangen, wo er stand, sonst springt er.
+    K("tab='ranking';period='season';render()");
+    await warte();
+    const ziel = document.querySelector('#main .ui-switch [data-period="all"]');
+    ziel.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true}));
+    ziel.click();
+    const w2 = document.querySelector('#main .ui-switch');
+    const start = parseFloat(getComputedStyle(w2, '::before').left);
+    await warte();
+    const ende = parseFloat(getComputedStyle(w2, '::before').left);
+    // Die Tage des Monats als Zellen: so viele, wie der Monat hat, und der
+    // heutige gerahmt.
+    K("period='season';render()");
+    const t = (document.querySelector('#main .lauf-t') || {}).textContent || '';
+    const [, jetzt, gesamt] = (t.match(/(\d+)\s*von\s*(\d+)/) || []).map(Number);
+    const zellen = [...document.querySelectorAll('#main .lauf-z i')];
+    const heute = zellen.findIndex(z => z.classList.contains('h')) + 1;
+    const gespielt = zellen.filter(z => z.classList.contains('s')).length;
+    const tage = new Set(K("matchesInPeriod('season').map(m=>tagKey(m.created_at))")).size;
+    return {f, gemessen, start, ende, zellen:zellen.length, gesamt, jetzt, heute, gespielt, tage};
+  });
+  ok(schlitten.f.length === 0 && schlitten.gemessen >= 12, 'der Schlitten jedes Wählers steht unter der Wahl',
+     schlitten.f.slice(0, 4).join(' · ') || schlitten.gemessen + ' Wähler');
+  ok(schlitten.ende - schlitten.start > 40, 'der Schlitten gleitet nach dem Neuzeichnen, statt zu springen',
+     Math.round(schlitten.start) + ' → ' + Math.round(schlitten.ende) + ' px');
+  ok(schlitten.zellen === schlitten.gesamt && schlitten.heute === schlitten.jetzt && schlitten.gespielt === schlitten.tage,
+     'der Monat steht als Zellen: jeder Tag eine, der heutige gerahmt, jeder Spieltag hell',
+     schlitten.zellen + ' Zellen · ' + schlitten.gesamt + ' Tage · heute ' + schlitten.heute + '/' + schlitten.jetzt
+     + ' · ' + schlitten.gespielt + ' von ' + schlitten.tage + ' Spieltagen');
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const schlittenRuhig = await page.evaluate(() => {
+    const w = document.querySelector('#main .ui-switch');
+    return getComputedStyle(w, '::before').transitionDuration;
+  });
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(/^0s(, 0s)*$/.test(schlittenRuhig), 'bei prefers-reduced-motion springt der Schlitten', schlittenRuhig);
+
   // ── Jeder Reiter bei 360 px ──────────────────────────────────────
   // Gemessen wurde bisher je Bauteil, und damit fiel durch, was zwischen
   // zwei Bauteilen liegt: der Knopf „Neu laden" trug die volle Breite von
@@ -2475,7 +2542,7 @@ const ok = (c, msg, det) => {
         zeilen.filter(z => KURZ.test(z)).forEach(z => fehler.push(p + ' ' + k + ': ' + z.trim()));
       }
       K('closeSheet(true)');
-      const kachel = (document.querySelector('[data-award="upset"] .aw-t-val') || {}).textContent;
+      const kachel = (document.querySelector('[data-award="upset"] .aw-t-val b') || {}).textContent;
       K("showAward('upset')");
       const blatt = (document.getElementById('sheet').innerText.match(/Siegchance nur (\d+)/) || [])[1];
       if(kachel && kachel !== blatt + '%') fehler.push(p + ' Überraschung: Kachel ' + kachel + ', Blatt ' + blatt + '%');

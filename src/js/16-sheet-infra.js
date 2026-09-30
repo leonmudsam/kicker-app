@@ -106,6 +106,7 @@ function openSheet(html, opts){
   // im vorigen Sheet (oder bei vorigem Öffnen desselben Sheets) gescrollt war.
   // Muss nach innerHTML kommen, damit das Layout schon steht.
   sheet.scrollTop = 0;
+  schlittenFahren(sheet);
   bg.classList.add('show');
   sheet.classList.add('show');
   // ⚠ Schutz-Phase: für auto-getriggerte Pop-Ups (Saison-/POTW-/POTD-Recap)

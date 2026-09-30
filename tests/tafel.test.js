@@ -1256,6 +1256,52 @@ ok(_awSchwelle.leer.length <= 2,
    'nach einer vollen Woche steht fast jede Award-Kachel',
    _awSchwelle.leer.length + ' leer: ' + _awSchwelle.leer.join(' '));
 
+// ── Ein Wert je Auszeichnung [§5.3d] ────────────────────────────────
+// Kachel, Blatt, Profil und Duo-Blatt formatierten jeden Award selbst:
+// dieselbe Serie hieß „8", „8er", „8er Serie" und „8 Siege in Folge", die
+// Kachel trug ihre Zahl ohne Einheit („6,90", „+10"), und die Stichprobe
+// wurde gebaut und nie gezeigt. Jetzt liest jede Stelle aus AW_WERT — und
+// jede Kachel trägt die Zahl MIT ihrer Sache.
+const _awEin = JSON.parse(K.eval(`JSON.stringify((function(){
+  const f = [];
+  Object.keys(AWARD_META).forEach(k => { if(!AW_WERT[k]) f.push('ohne Wert: ' + k); });
+  Object.keys(AW_WERT).forEach(k => {
+    if(!AWARD_META[k]) f.push('ohne Titel: ' + k);
+    if(!AW_IC[k]) f.push('ohne Zeichen: ' + k);
+  });
+  let kacheln = 0;
+  for(const per of ['season', 'week']){
+    awPeriod = per; awSeasonId = null; awView = 'awards';
+    const R = awardRankings(per);
+    const teile = String(_vAwardsCore()).split('data-award="');
+    for(let i = 1; i < teile.length; i++){
+      const key = teile[i].slice(0, teile[i].indexOf('"'));
+      const nx = teile[i].indexOf('data-award="');
+      const block = nx < 0 ? teile[i] : teile[i].slice(0, nx);
+      if(/aw-t-leer/.test(block)) continue;
+      kacheln++;
+      const t = awText(key, awTop(key, R)[0]);
+      const b = block.match(/class="aw-t-val"><b>([^<]*)<\\/b>(?:<span>([^<]*)<\\/span>)?/) || [];
+      if(b[1] !== esc(t.z)) f.push(per + ' ' + key + ': Kachel ' + b[1] + ' statt ' + t.z);
+      if(!b[2]) f.push(per + ' ' + key + ': Zahl ohne Einheit (' + b[1] + ')');
+      const text = block.replace(/<[^>]+>/g, ' ');
+      if(/\\d+er\\b|\\/Sp\\.|Niederl\\.|\\bSp\\./.test(text)) f.push(per + ' ' + key + ': Kürzel in „' + text.replace(/\\s+/g, ' ').trim().slice(0, 60) + '"');
+    }
+  }
+  // Profil und Duo-Blatt nennen dieselbe Zahl wie die Kachel desselben
+  // Eintrags — gleicher Platz aus derselben Zählung.
+  awPeriod = 'season'; awSeasonId = null;
+  activePlayers().forEach(p => playerAwards(p.id).forEach(a => {
+    if(a.val !== awText(a.key, a.x).z) f.push('Profil ' + p.name + ' ' + a.key + ': ' + a.val);
+    if(a.rank === 0 && !awTop(a.key, awardRankings('season', currentSeason().id)).includes(a.x))
+      f.push('Profil ' + p.name + ' ' + a.key + ': Platz 1, aber nicht an der Spitze');
+  }));
+  return {f, kacheln};
+})())`));
+ok(_awEin.f.length === 0 && _awEin.kacheln > 50,
+   'jede Award-Kachel nennt Zahl und Einheit aus derselben Quelle wie Blatt und Profil',
+   _awEin.f.slice(0, 6).join(' · ') || _awEin.kacheln + ' Kacheln');
+
 // ── Die Erklärung einer Kachel nennt die Schwelle, die gilt ─────────
 // „So wird gewertet" stand als fester Text da und war den Schwellen nicht
 // gefolgt: die Betonmauer verlangte laut Text zehn gemeinsame Spiele und
@@ -1356,6 +1402,32 @@ ok(_awNenner.udEcht === true,
 ok(_awNenner.zkNenner && _awNenner.zkNenner.gemeldet === _awNenner.zkNenner.gezaehlt,
    'der Zirkus misst an den Pleiten des Duos, nicht an allen Partien',
    JSON.stringify(_awNenner.zkNenner));
+
+// ── Ein Strich für jedes Zeichen [§C27] ─────────────────────────────
+// Die Strichstärke stand an 78 Stellen in 13 Werten: dieselbe Krone war in
+// der Liga dünner als im Blatt, und ein stroke-width am <svg> im Markup
+// setzte 2,5 neben 2. Jetzt gibt es EINE Regel; ein Behälter setzt
+// höchstens --strich, und davon gibt es drei Werte.
+const _strich = (function(){
+  const html = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const css = (html.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || [])
+    .join('\n').replace(/<\/?style[^>]*>/gi, '').replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const eigene = [], werte = new Set();
+  let global = 0;
+  for(const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
+    const sel = m[1].trim(), body = m[2];
+    if(/url\(/.test(body)) continue;
+    if(sel === 'svg[viewBox="0 0 24 24"]' && /stroke-width:var\(--strich\)/.test(body)) global++;
+    else if(/\bsvg\b/.test(sel) && /(^|;)\s*stroke-width:/.test(body)) eigene.push(sel.replace(/\s+/g, ' ').slice(-40));
+    (body.match(/--strich:([\d.]+)/g) || []).forEach(v => werte.add(v.split(':')[1]));
+  }
+  return {eigene, global, werte:[...werte].sort()};
+})();
+ok(_strich.global === 1 && _strich.eigene.length === 0,
+   'jedes Zeichen zieht seinen Strich aus einer Regel',
+   _strich.eigene.join(' · ') || 'eine Regel');
+ok(_strich.werte.every(v => ['1.4', '1.75', '2'].includes(v)),
+   'die Strichstärke kennt drei Werte', _strich.werte.join(', '));
 
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);

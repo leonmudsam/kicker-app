@@ -1,7 +1,33 @@
   /* ============ [§C16] ICON SYSTEM ============ */
   .ic{display:inline-grid;place-items:center;vertical-align:middle;line-height:1}
+  /* Ein Strich für jedes Zeichen des Katalogs (24er-Raster). Die Regel steht
+     HIER und nirgends sonst; ein Behälter setzt höchstens --strich. Sie
+     überschreibt auch ein stroke-width am <svg> im Markup: dort standen
+     2,2 und 2,5 neben 2, und Stern und Krone liefen mit spitzen Ecken neben
+     runden Zeichen. */
+  svg[viewBox="0 0 24 24"]{stroke-width:var(--strich);stroke-linecap:round;stroke-linejoin:round}
   .ic svg{display:block;width:1em;height:1em;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
+
+  /* Die Zeichenkachel [§C27] (zkHtml). Drei Größen, sechs Töne nach den
+     Rollen des Farbgesetzes [§C25]; ohne Ton Metall. Getönt ist nur die
+     Fläche und der Innenrand — das Zeichen selbst trägt die Farbe. */
+  .zk{--z:36px;--zt:var(--ink2);--ztr:185,196,189;width:var(--z);height:var(--z);flex-shrink:0;
+    border-radius:calc(var(--z) * .3);display:inline-grid;place-items:center;color:var(--zt);
+    background:linear-gradient(160deg,rgba(var(--ztr),.16),rgba(var(--ztr),.06));
+    box-shadow:inset 0 0 0 1px rgba(var(--ztr),.22),inset 0 1px 0 rgba(255,255,255,.05)}
+  .zk svg{display:block;width:18px;height:18px;stroke:currentColor;fill:none;
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
+  .zk.k{--z:28px}
+  .zk.k svg{width:15px;height:15px;}
+  .zk.g{--z:48px}
+  .zk.g svg{width:24px;height:24px;--strich:1.75;}
+  .zk.gold  {--zt:var(--gold);  --ztr:247,207,74}
+  .zk.rot   {--zt:var(--red);   --ztr:240,86,106}
+  .zk.gruen {--zt:var(--acid);  --ztr:190,242,100}
+  .zk.blau  {--zt:var(--blue);  --ztr:86,180,232}
+  .zk.viol  {--zt:var(--purple);--ztr:167,139,250}
+  .zk.bronze{--zt:var(--bronze);--ztr:192,132,87}
 
   /* Medaillen-Badge (Top-3) – ersetzt 🥇🥈🥉 */
   .medal-b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:6px;
@@ -33,70 +59,70 @@
   /* Rang-Tier Icon-Container (👑🥇🥈🥉 -> SVG) */
   .tier-ic{display:inline-grid;place-items:center;width:18px;height:18px;color:inherit}
   .tier-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Lock/Settings-Button – Inhalt jetzt SVG */
   .lock-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Award-Empty-State Icon-Wrapper */
   .ee.svg-ic{display:grid;place-items:center;color:var(--faint)}
   .ee.svg-ic svg{width:48px;height:48px;stroke:currentColor;fill:none;
-    stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Award-Card mit SVG-Icon (override emoji font-size) */
   .award .emoji.svg-ic{color:inherit}
   .award .emoji.svg-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Trophäen-Karten im Profil – kleinere SVGs statt 34px Emoji */
   .pp-tr .ic.svg-ic{display:grid;place-items:center;width:38px;height:38px;margin:0 auto 7px;
     color:var(--gold);filter:drop-shadow(0 4px 9px rgba(247,207,74,.35))}
   .pp-tr.team .ic.svg-ic{color:var(--blue);filter:drop-shadow(0 4px 9px rgba(86,180,232,.35))}
   .pp-tr .ic.svg-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Award-Slots im Profil */
   .pp-aw .ic.svg-ic{display:grid;place-items:center;width:24px;height:24px;margin:0 auto 3px;color:var(--ink2)}
   .pp-aw .ic.svg-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-aw.empty .ic.svg-ic{color:var(--faint);opacity:.5}
 
   /* Rang-Steps */
   .pp-rk .ic.svg-ic{display:grid;place-items:center;width:22px;height:22px;margin:0 auto 4px;color:var(--ink2)}
   .pp-rk .ic.svg-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-rk.active .ic.svg-ic{color:var(--pp-tier-1);filter:drop-shadow(0 0 7px var(--pp-tier-glow))}
 
   /* Position-Header im Profil (Sturm/Abwehr) */
   .pp-pos-c .h .ic.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px}
   .pp-pos-c .h .ic.svg-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;
-    stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Inline-Icon im Profil-Header Section-Title */
   .pp-sec-title .l .ic.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px;color:var(--ink2)}
   .pp-sec-title .l .ic.svg-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Mate/Fav-Row Icons */
   .pp-r .l .ic.svg-ic{display:inline-grid;place-items:center;width:13px;height:13px;color:var(--ink2);margin-right:4px;vertical-align:-2px}
   .pp-r .l .ic.svg-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Inline-Position-Tag */
   .lf .ic.svg-ic, .rt .ic.svg-ic{display:inline-grid;place-items:center;width:11px;height:11px;vertical-align:-1px}
   .lf .ic.svg-ic svg, .rt .ic.svg-ic svg{width:11px;height:11px;stroke:currentColor;fill:none;
-    stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Match-Highlight im Verlauf */
   .match-trophy.svg-ic{display:inline-grid;place-items:center;width:22px;height:22px;color:var(--gold)}
   .match-trophy.svg-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .match-small.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px;vertical-align:-2px}
   .match-small.svg-ic.win{color:var(--gold)}
   .match-small.svg-ic.tie{color:var(--ink2)}
   .match-small.svg-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* ════════════════════════════════════════════════════════════
      ─── PLAYER PROFILE — V3 OVERHAUL ───
@@ -110,7 +136,7 @@
     background:var(--surface);border:1px solid var(--line);
     font-size:11px;color:var(--ink2);font-weight:500;line-height:1}
   .pp-pill svg{width:12px;height:12px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-tier-legende    .pp-pill.tier{background:linear-gradient(180deg,rgba(247,207,74,.16),rgba(247,207,74,.06));border-color:rgba(247,207,74,.4);color:var(--gold)}
   .pp-tier-elite      .pp-pill.tier{background:linear-gradient(180deg,rgba(167,139,250,.16),rgba(167,139,250,.06));border-color:rgba(167,139,250,.4);color:var(--purple)}
   .pp-tier-stark      .pp-pill.tier{background:linear-gradient(180deg,rgba(190,242,100,.16),rgba(190,242,100,.06));border-color:rgba(190,242,100,.4);color:var(--acid)}
@@ -134,7 +160,7 @@
     display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;line-height:1;
   }
   .pp-et-col .label svg{width:10px;height:10px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-et-col .val{font-family:'Archivo Black',sans-serif;font-size:24px;
     letter-spacing:-.02em;line-height:1;color:var(--ink)}
   .pp-et-col.now .val{color:var(--acid)}
@@ -186,9 +212,9 @@
   .pp-badges-card:active{transform:scale(.985)}
   .pp-badges-strip{display:flex;gap:7px;flex-wrap:wrap;color:var(--ink2);flex:1;min-width:0}
   .pp-badges-strip svg{width:20px;height:20px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-badges-card .chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
-  .pp-badges-card .chev svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;
+  .pp-badges-card .chev svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-linecap:round;stroke-linejoin:round}
 
   /* ════════════════════════════════════════════════════════════════
@@ -201,7 +227,7 @@
   .pp-bcard-strip{flex:1;min-width:0;display:flex;gap:6px;align-items:center}
   .pp-bmini{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
     border:1px solid var(--line2);background:var(--bg2);flex-shrink:0;color:var(--ink2)}
-  .pp-bmini svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+  .pp-bmini svg{width:15px;height:15px;stroke:currentColor;fill:none;
     stroke-linecap:round;stroke-linejoin:round}
   .pp-bmini.legendary{color:var(--gold);border-color:rgba(247,207,74,.4)}
   .pp-bmini.rare{color:var(--purple);border-color:rgba(167,139,250,.38)}
@@ -210,7 +236,7 @@
   .pp-bcard-rest{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;
     font-weight:700;margin-left:3px}
   .pp-bcard-chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
-  .pp-bcard-chev svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;
+  .pp-bcard-chev svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-linecap:round}
   .pp-bcard-bar{height:3px;background:var(--bg2);border-radius:99px;display:flex;
     overflow:hidden;gap:2px;margin-top:10px}
@@ -251,7 +277,7 @@
     padding:14px;padding-top:18px;text-align:center;position:relative;overflow:hidden;transition:.15s}
   .bsh-card-ic{font-size:30px;margin-bottom:10px;display:flex;justify-content:center;
     align-items:center;min-height:32px}
-  .bsh-card-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:2;
+  .bsh-card-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round}
   .bsh-card-name{font-weight:700;font-size:13px;margin-bottom:4px;letter-spacing:-.005em}
   .bsh-card-desc{font-size:10.5px;color:var(--muted);line-height:1.4;margin-bottom:8px}
@@ -318,7 +344,7 @@
   .bp-ic.common{background:rgba(190,242,100,.12);color:var(--acid)}
   .bp-ic.negative{background:rgba(240,86,106,.12);color:var(--red)}
   .bp-ic.locked{background:var(--surface3);color:var(--muted)}
-  .bp-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;
+  .bp-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round}
   .bp-title{font-family:'Archivo Black',sans-serif;font-size:17px;line-height:1.1;letter-spacing:-.01em}
   .bp-desc{color:var(--ink2);font-size:11.5px;margin-top:5px;line-height:1.45}
@@ -409,7 +435,7 @@
   .st-card .st-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;margin-bottom:10px}
   .st-card.recap .st-ic{background:rgba(247,207,74,.14);color:var(--gold)}
   .st-card.pos .st-ic{background:rgba(86,180,232,.14);color:var(--blue)}
-  .st-card .st-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .st-card .st-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .st-card .st-tt{display:block;font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1.1;letter-spacing:-.01em}
   .st-card .st-su{display:block;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:4px}
   /* Das Mini-Popup ist entfallen [§11.5]; mit ihm die .nv-* Karte, ihre
@@ -606,7 +632,7 @@
     .nf-gross-band::after{animation:none;opacity:0}
     .nf-gross-band svg{animation:none;opacity:1}}
   .nf-gross-band svg{width:12px;height:12px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--gold);
+    stroke-linecap:round;stroke-linejoin:round;color:var(--gold);
     filter:drop-shadow(0 0 5px rgba(247,207,74,.38))}
   .nf-gross .nf-h{font-size:19px;line-height:1.1;-webkit-line-clamp:5}
   .nf-gross .nf-d{font-size:12.5px;-webkit-line-clamp:6}
@@ -705,7 +731,7 @@
     place-items:center;background:rgba(var(--story-rgb,185,196,189),.09);
     box-shadow:inset 0 0 0 1px rgba(var(--story-rgb,185,196,189),.17)}
   .nf-rub svg{width:11px;height:11px;flex-shrink:0;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .nf-rub b{font-size:9px;font-weight:700;overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap;letter-spacing:.17em}
   .nf-gr{display:grid;grid-template-columns:1fr;gap:12px;padding:11px 13px 12px;align-items:start}
@@ -913,7 +939,7 @@
   .nf-sam-i{width:20px;height:20px;flex:0 0 auto;border-radius:6px;
     display:grid;place-items:center;background:var(--surface2);
     border:1px solid var(--line);color:var(--muted)}
-  .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+  .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;}
   /* Gemischte Tafel-Momente bleiben eine Karte, aber nicht eine graue Liste:
      jede Zeile trägt den dezenten Farbton ihres Inhalts. */
   .nf-s-tafel .nf-sam-z{--zeile-rgb:135,168,178;border-left:2px solid
@@ -989,7 +1015,7 @@
   .nf-bd{display:flex;align-items:center;gap:10px;padding:9px 13px;border-top:1px solid var(--line)}
   .nf-bd-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
     background:var(--surface2);color:var(--ink2)}
-  .nf-bd-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;
+  .nf-bd-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   .nf-bd-legendary{background:rgba(247,207,74,.14);color:var(--gold)}
   .nf-bd-rare{background:rgba(86,180,232,.12);color:var(--blue)}
@@ -1034,7 +1060,7 @@
   .nf-motiv{position:absolute;right:9px;top:50%;width:96px;height:96px;
     transform:translateY(-50%) rotate(-9deg);pointer-events:none;z-index:0;
     opacity:.08;color:var(--story,var(--ink2))}
-  .nf-motiv svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.4;
+  .nf-motiv svg{width:100%;height:100%;fill:none;stroke:currentColor;--strich:1.4;
     stroke-linecap:round;stroke-linejoin:round}
   /* Ein weicher Schein hinter dem Zeichen. Als reine Kontur bei sechs Prozent
      war das Motiv auf dem Telefon kaum von einem Kratzer zu unterscheiden. */
@@ -1055,7 +1081,7 @@
   .nf-card > *:not(.nf-motiv){position:relative;z-index:1}
   .nf-chev{align-self:center;flex:0 0 auto;color:var(--faint);display:flex;
     margin-left:2px}
-  .nf-chev svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;
+  .nf-chev svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   .nf-card:active .nf-chev{color:var(--ink2)}
   /* Der Winkel ist die dritte Spalte des Rasters — ohne sie stuende er unter
@@ -1065,7 +1091,7 @@
   /* Betont wird das Ergebnis, die Zahl und der Name — mehr waere wieder
      gleich laut. */
   .nf-d b{color:var(--ink);font-weight:700}
-  .nf-when svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2;
+  .nf-when svg{width:10px;height:10px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round;opacity:.55}
   /* Die Zone links ist abgetrennt: Wappen, Ergebnis oder Wert stehen fuer
      sich, der Satz beginnt dahinter. */
@@ -1131,7 +1157,7 @@
   /* Die Filterchips tragen dasselbe Zeichen wie das Rubrikband der Karten,
      zu denen sie filtern [§C27]. */
   .nf-chip-f svg{width:12px;height:12px;margin-right:6px;vertical-align:-2px;
-    fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
 
   /* ── Das Blatt: die Zeilen der Wochen- und Sammelkarte ────────────
      Der Kopf fasst zusammen; alle Einzelereignisse stehen gleichrangig
@@ -1215,7 +1241,7 @@
     background:radial-gradient(150px 110px at 14% 0%,rgba(255,255,255,.05),transparent 70%),var(--bg2)}
   .nd-med-r{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
     background:var(--surface);box-shadow:inset 0 0 0 2px var(--line2)}
-  .nd-med-r svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;
+  .nd-med-r svg{width:30px;height:30px;fill:none;stroke:currentColor;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round;color:var(--ink2)}
   .nd-med-n{font-family:'Archivo Black',sans-serif;font-size:16px;line-height:1.15;
     letter-spacing:-.02em}
@@ -1315,7 +1341,7 @@
   .nd-desc b{color:var(--ink);font-weight:700}
   .nd-satz b{color:var(--ink);font-weight:700}
   .nd-when{display:flex;align-items:center;gap:6px}
-  .nd-when svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2;
+  .nd-when svg{width:10px;height:10px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round;opacity:.6}
   /* Breaking bleibt auch im Blatt Breaking: derselbe Balken, derselbe Puls. */
   .nd.nd-brk{border-color:rgba(240,86,106,.5);
@@ -1355,7 +1381,7 @@
     border-radius:18px 18px 0 0;
     background:linear-gradient(90deg,var(--story,var(--line2)),transparent 78%)}
   .nd-brk::before{background:linear-gradient(90deg,var(--red),transparent 70%)}
-  .nd-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .nd-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .nd-title-wrap{flex:1;min-width:0}
   .nd-cat{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;
     font-family:'Sometype Mono',monospace;color:var(--story,var(--muted));margin-bottom:3px}
@@ -1562,7 +1588,7 @@
     margin:0 auto 10px;background:rgba(247,207,74,.15);color:var(--gold);filter:none}
   .pp-tr.team .ic.svg-ic{background:rgba(86,180,232,.15);color:var(--blue);filter:none}
   .pp-tr .ic.svg-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-tr .ti{font-size:11px;font-weight:700;line-height:1.25;margin-bottom:4px;color:var(--ink)}
   .pp-tr .su{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace}
 
@@ -1574,7 +1600,7 @@
   .pp-aw .ic.svg-ic{width:32px;height:32px;border-radius:10px;background:var(--surface3);
     color:var(--ink2);display:grid;place-items:center;margin:0 auto 8px}
   .pp-aw .ic.svg-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-aw .nm{font-size:9.5px;line-height:1.25;color:var(--ink2);margin-bottom:6px}
   .pp-aw .num{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--acid);line-height:1}
   .pp-aw.empty .num{color:var(--muted)}
@@ -1603,7 +1629,7 @@
     font-size:10px;color:var(--muted);margin-bottom:10px;font-family:'Sometype Mono',monospace}
   .pp-posprof .pph .lf,.pp-posprof .pph .rt{display:inline-flex;align-items:center;gap:4px}
   .pp-posprof .pph svg{width:11px;height:11px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-posprof .pph .pct{color:var(--ink);font-weight:700}
   .pp-posprof .pp-slider{position:relative;height:6px;background:var(--surface3);border-radius:3px}
   /* Der Strahl gehoert der Seite, die ueberwiegt, und laeuft von dort zur
@@ -1636,7 +1662,7 @@
     color:var(--red);padding:12px;border-radius:13px;font-family:inherit;font-size:12px;
     font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
   .pp-del button svg{width:13px;height:13px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   /* ─── ENDE PLAYER PROFILE V3 OVERHAUL ─── */
 
 

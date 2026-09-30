@@ -72,7 +72,7 @@
     border:1px solid rgba(var(--c,247,207,74),.3);border-radius:99px;
     position:relative;z-index:1}
   .aw-winner-badge svg{width:11px;height:11px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   /* Eigene Zeile, mittig: als inline-block stellte sich das Wappen neben
      die Aufschrift, sobald beide zusammen in die Breite passten. */
   .aw-winner-av-wrap{position:relative;display:block;width:fit-content;
@@ -96,7 +96,7 @@
   /* SVG-Krone: kleiner, in den Avatar-Rand integriert, Farbe matcht das Award (--c).
      Doppel-Filter: dunkler Drop-Shadow für Tiefe, plus Award-Color-Glow für Branding. */
   .aw-winner-crown svg{width:20px;height:20px;stroke:rgb(var(--c,247,207,74));fill:none;
-    stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;display:block;
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round;display:block;
     filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)) drop-shadow(0 0 6px rgba(var(--c,247,207,74),.7))}
   .aw-winner-marker{position:absolute;top:-10px;right:-6px;width:28px;height:28px;border-radius:50%;
     background:#dc2626;border:2px solid var(--surface);display:grid;place-items:center;
@@ -121,7 +121,7 @@
     margin:14px 0 4px;z-index:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
   /* SVG-Krone für Shared Hero: Farbe matcht das Award (--c), kleiner als vorher (24px statt 30px) */
   .aw-winner-shared-marker svg{width:24px;height:24px;stroke:rgb(var(--c,247,207,74));fill:none;
-    stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round;
     filter:drop-shadow(0 4px 8px rgba(var(--c,247,207,74),.55))}
   .aw-winner-shared-marker.shame{filter:drop-shadow(0 2px 8px rgba(220,38,38,.5))}
   .aw-winner-shared-grid{display:flex;flex-direction:column;gap:8px;margin:12px 0 10px;position:relative;z-index:1}
@@ -153,12 +153,12 @@
     background:radial-gradient(circle,rgba(247,207,74,.13),transparent 65%);pointer-events:none}
   .potw-recap-ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
     background:rgba(247,207,74,.16);color:var(--gold);flex-shrink:0;position:relative;z-index:1}
-  .potw-recap-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .potw-recap-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .potw-recap-text{flex:1;min-width:0;position:relative;z-index:1}
   .potw-recap-label{font-family:'Archivo Black',sans-serif;font-size:13.5px;letter-spacing:-.01em;line-height:1.1}
   .potw-recap-sub{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace;letter-spacing:.04em}
   .potw-recap-arrow{color:var(--muted);flex-shrink:0;display:grid;place-items:center;position:relative;z-index:1}
-  .potw-recap-arrow svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .potw-recap-arrow svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
 
   /* ============ [§C21] SAISON-POSITIONSVERLAUF ============ */
   /* Bottom-Sheet mit Liniendiagramm: Tabellenposition jedes Saison-Spielers
@@ -168,7 +168,7 @@
     background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:14px}
   .posv-info-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
     background:var(--acid-deep);color:var(--acid);flex-shrink:0;font-size:16px}
-  .posv-info-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .posv-info-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .posv-info-text{flex:1;min-width:0}
   .posv-info-title{font-family:'Archivo Black',sans-serif;font-size:13px;line-height:1.1}
   .posv-info-sub{font-size:11px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace;letter-spacing:.04em}
@@ -240,7 +240,7 @@
     display:grid;place-items:center}
   .posv-refresh:active{color:var(--acid)}
   .posv-refresh.spin{transform:rotate(360deg)}
-  .posv-refresh svg{width:13px;height:13px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .posv-refresh svg{width:13px;height:13px;display:block;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
 
   .posv-empty{padding:32px 20px;text-align:center;color:var(--muted);
     background:var(--surface);border:1px solid var(--line);border-radius:14px;

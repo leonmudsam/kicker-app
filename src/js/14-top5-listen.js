@@ -155,15 +155,8 @@ function showAward(key){
   // gewinner/verlierer sind aber TEAMS — daher haben wir ein eigenes Layout unten.
   // rivalry ist ein 4-Spieler-Award mit Sonderlayout (Team A vs Team B).
   const MATCH_AWARDS = new Set(['upset','biggest']);
-  const TEAM_AWARDS = new Set([
-    'mvt','bestDuo','endgegner','worstTeam','zirkus','baustelle',
-    'unstoppable','concreteWall','luckyCharm','giantSlayer',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    'cheesePlatter'
-  ]);
   const RIVALRY_AWARDS = new Set(['rivalry']);
   const FAVS_AWARDS = new Set(['favoritenschreck']);
-  const NEG_KEYS = new Set(['worstWr','worstAtk','worstDef','worstTeam','formtief','coldStreak','lossStreaks','zirkus','baustelle','pechvogel','favoritenschreck','cheesePlatter','favoriteLoser']);
 
   let bodyHtml='';
 
@@ -296,59 +289,22 @@ function showAward(key){
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     }
   } else {
-    // Ein Wert trägt seine Einheit ausgeschrieben: „6,5 /Sp.", „9,7 Gegen/Sp."
-    // und „4× POTD" standen hier als Kürzel, dieselbe Größe hieß in drei
-    // Zeilen dreimal anders, und „1 Carries" stand in der Mehrzahl [§6].
-    const arr = (() => {
-      switch(key){
-        case 'wins':       return R.winsList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Siege',sort:x.v}));
-        case 'mvt':        return R.mvt.map(x=>({ids:x.ids,name:tn(x.ids),val:(x.v>=0?'+':'')+Math.round(x.v)+' Elo',sort:Math.round(x.v)}));
-        case 'streaks':    return R.streaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma(x.avg,1)+' Tore',sort:Math.round(x.avg*10)}));
-        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Gegentore',sort:-Math.round(x.v/x.g*10)}));
-        case 'perfect':    return R.perfect.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'grinder':    return R.grinder.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Spiele',sort:x.v}));
-        case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
-        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Tore',sort:-Math.round(x.v/x.g*10)}));
-        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+komma((x.v/x.g),1)+' Gegentore',sort:Math.round(x.v/x.g*10)}));
-        case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.g+'×)',sort:Math.round(x.pct*1000)}));
-        case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+(x.v===1?' Sieg':' Siege')+' zu null',sort:x.v}));
-        case 'worstTeam':  return R.worstTeam.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.w/x.g*100)+'%',sort:-Math.round(x.w/x.g*100)}));
-        case 'bestDuo':    return R.bestDuo.map(x=>({ids:x.ids,name:tn(x.ids),val:x.g+' Spiele',sort:x.g}));
-        case 'onFire':     return R.onFire.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'coldStreak': return R.coldStreak.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'lossStreaks':return R.lossStreaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'carryKing':  return R.carryList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+(x.v===1?' Carry':' Carries'),sort:x.v}));
-        case 'showmaster': return R.showmasterList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× 10:0',sort:x.v}));
-        case 'solo':       return R.soloList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'formtief':   return R.formtief.map(x=>({ids:[x.id],name:pname(x.id),val:'-'+Math.round(x.drop)+' Elo',sort:Math.round(x.drop)}));
-        case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
-        case 'baustelle':  return R.baustelleList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.best+'er Serie',sort:x.best}));
-        case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Player of the Week',sort:x.v}));
-        case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Player of the Day',sort:x.v}));
-        // ── NEUE AWARDS v3 ──
-        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+(x.v>=0?'+':'')+komma(x.v,1)+' Tore',sort:Math.round(x.v*10)}));
-        case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
-        case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
-        // ── NEUE TEAM-AWARDS v4 ──
-        case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
-        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:'Ø '+komma(x.v,2)+' Gegentore',sort:-Math.round(x.v*100)}));
-        case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
-        case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
-        // ── NEUE NEGATIV-AWARDS v6 ──
-        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:'Ø '+komma(x.v,2)+' Gegentore',sort:Math.round(x.v*100)}));
-        case 'favoriteLoser': return R.favoriteLoserList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.v*100)+'% ('+x.losses+'/'+x.games+')',sort:Math.round(x.v*1000)}));
-        default: return [];
-      }
-    })();
+    // Liste, Sortierung, Zahl, Einheit und Stichprobe kommen aus AW_WERT
+    // [§5.3d] — dieselbe Zeile, aus der Kachel, Profil und Duo-Blatt lesen.
+    // Hier stand eine eigene Kopie aller neununddreißig Formate, und sie
+    // sagte zu derselben Serie „8er Serie", während die Kachel „8er" trug.
+    const arr = awListe(key, R).map(x => {
+      const t = awText(key, x);
+      return {ids:awIds(key, x), name:awIds(key, x).map(pname).join(' & '),
+        z:t.z, e:t.e, val:t.e ? t.z+' '+t.e : t.z, detail:t.b, sort:AW_WERT[key].s(x)};
+    });
 
     // Hero (#1) + Liste der weiteren Plätze
     if(!arr.length){
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     } else {
-      const isTeamAward = TEAM_AWARDS.has(key);
-      const isNeg = NEG_KEYS.has(key);
+      const isTeamAward = arr[0].ids.length === 2;
+      const isNeg = awNeg(key);
       // meta.cls → RGB für Hero-Akzentfarbe
       const CLS_RGB = {gold:'247,207,74',acid:'190,242,100',blue:'86,180,232',orange:'255,120,73',purple:'167,139,250',red:'240,86,106'};
       const heroRgb = CLS_RGB[meta.cls] || CLS_RGB.gold;
@@ -358,11 +314,7 @@ function showAward(key){
       const isShared = topGroup.length > 1;
       const top = arr[0];
       // Wert (für Hero – alle teilen denselben Wert)
-      const heroVal = (() => {
-        const v = top.val;
-        const m = v.match(/^([+\-]?\d+(?:[.,]\d+)?)/);
-        return m ? `<b>${esc(m[1])}</b>${esc(v.slice(m[1].length))}` : esc(v);
-      })();
+      const heroVal = `<b>${esc(top.z)}</b>${top.e ? ' '+esc(top.e) : ''}`;
 
       let heroHtml;
       if(!isShared){
@@ -452,8 +404,9 @@ function showAward(key){
               ${avHtml}
               <div class="aw-li-info">
                 <div class="aw-li-name">${esc(e.name)}</div>
+                ${e.detail ? `<div class="aw-li-detail">${esc(e.detail)}</div>` : ''}
               </div>
-              <div class="aw-li-val">${esc(e.val)}</div>
+              <div class="aw-li-val">${esc(e.z)}</div>
             </div>
           `);
         } else {
@@ -477,7 +430,7 @@ function showAward(key){
                 ${tiedRows}
                 <span class="aw-li-tie-badge">Geteilt · ${entries.length} ${isTeamAward?'Teams':'Spieler'}</span>
               </div>
-              <div class="aw-li-val">${esc(entries[0].val)}</div>
+              <div class="aw-li-val">${esc(entries[0].z)}</div>
             </div>`);
         }
       }
