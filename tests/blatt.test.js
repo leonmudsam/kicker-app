@@ -289,6 +289,46 @@ const ok = (c, msg, det) => {
        schief.map(s => s.i + ': ' + s.ab + ' px daneben').join(' '));
   }
 
+  // ── Alle Stufen [§C30] ──────────────────────────────────────────────
+  //    Jedes Feld der Leiter steht im Blatt, das eigene ist markiert, und ein
+  //    Feld anzutippen legt genau dieses Bild in die Vitrine: seine Stufe in
+  //    die Mitte, seinen Grad als gezeigten Knopf. Vorher gab es die Grade
+  //    nur als Marken, und wie ein Grad aussieht, sah man nirgends.
+  const alle = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const felder = [...document.querySelectorAll('#lbAlle [data-lbfeld]')];
+    if(!felder.length) return {fehlt:true};
+    const d = document.getElementById('lbLeiter'), k = [...d.querySelectorAll('.lb-k')];
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const jetzt = [...document.querySelectorAll('#lbAlle .lb-feld.jetzt')].map(b => b.getAttribute('data-lbfeld'));
+    const bildVon = i => (k[i].querySelector('.lb-k-ins use') || {getAttribute:()=>''}).getAttribute('href');
+    const out = {felder:felder.length, jetzt, schritte:[]};
+    for(const f of ['5,2', '1,0', '3,1']){
+      const [i, g] = f.split(',').map(Number);
+      const vorher = bildVon(i);
+      document.querySelector('#lbAlle [data-lbfeld="' + f + '"]').click();
+      await warte(700);
+      const zeigt = k[i].querySelector('[data-lbgrad].zeigt');
+      out.schritte.push({f, fokus: k.findIndex(x => x.classList.contains('fokus')),
+        zeigt: zeigt ? +zeigt.getAttribute('data-lbgrad') : null,
+        bild: bildVon(i), soll: K('insigniumStufeSvg(INSIGNIEN[' + i + '].key, "Elite", '
+          + (i === 6 ? 'ORDENSSTERN_START + ' + g : 0) + ', ' + g + ')').match(/href="([^"]+)"/)[1],
+        vorher});
+    }
+    return out;
+  });
+  ok(!alle.fehlt && alle.felder === 21, 'die Laufbahn zeigt alle einundzwanzig Felder',
+     JSON.stringify({felder: alle.felder}));
+  ok(!alle.fehlt && alle.jetzt.length === 1, 'genau ein Feld ist das eigene', JSON.stringify(alle.jetzt));
+  if(!alle.fehlt){
+    const falsch = alle.schritte.filter(s => s.fokus !== +s.f[0] || s.zeigt !== +s.f[2]);
+    ok(falsch.length === 0, 'ein angetipptes Feld liegt mit seinem Grad in der Vitrine',
+       JSON.stringify(alle.schritte.map(s => ({f:s.f, fokus:s.fokus, zeigt:s.zeigt}))));
+    const bild = alle.schritte.filter(s => !s.bild || s.bild.split('#').pop().split('"')[0] === '');
+    ok(bild.length === 0 && alle.schritte.every(s => typeof s.bild === 'string' && s.bild.length > 1),
+       'und die Vitrine zeigt dessen Bild', JSON.stringify(alle.schritte.map(s => s.bild)));
+  }
+
   console.log('\n═══ 3. JEDES WAPPEN FINDET SEINE VERLÄUFE ═══');
   // Geprüft wird nach JEDEM Tabwechsel und jedem Blatt, denn genau daran
   // hängt es: render() ersetzt #app, openSheet ersetzt das Blatt — der Topf
@@ -325,7 +365,11 @@ const ok = (c, msg, det) => {
               // Verläufe absichtlich selbst und sind kein Verweis [§C30].
               rav: document.querySelectorAll('.rav > svg.ins').length,
               ravUse: document.querySelectorAll('.rav > svg.ins > use').length,
-              symbole: document.querySelectorAll('#insDefs defs > g[id]').length,
+              // Nur die Wappen (`insy…`): im selben Topf stehen seit den
+              // Bildern auch die Stufen der Leiter (`inst…`, §C30), und die
+              // gehören nicht zu der Frage, wie viele Wappen sich eine
+              // Zeichnung teilen.
+              symbole: document.querySelectorAll('#insDefs defs > g[id^="insy"]').length,
               offen: [...offen].slice(0, 5), verwaist: [...verwaist].slice(0, 5)};
     }, t));
   }
@@ -359,7 +403,11 @@ const ok = (c, msg, det) => {
               // Verläufe absichtlich selbst und sind kein Verweis [§C30].
               rav: document.querySelectorAll('.rav > svg.ins').length,
               ravUse: document.querySelectorAll('.rav > svg.ins > use').length,
-              symbole: document.querySelectorAll('#insDefs defs > g[id]').length,
+              // Nur die Wappen (`insy…`): im selben Topf stehen seit den
+              // Bildern auch die Stufen der Leiter (`inst…`, §C30), und die
+              // gehören nicht zu der Frage, wie viele Wappen sich eine
+              // Zeichnung teilen.
+              symbole: document.querySelectorAll('#insDefs defs > g[id^="insy"]').length,
               offen: [...offen].slice(0, 5), verwaist: [...verwaist].slice(0, 5)};
     }, ruf));
   }
