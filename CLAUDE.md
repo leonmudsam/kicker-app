@@ -2472,7 +2472,9 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Monat kann eine Chronik tragen, die es nicht mehr gibt; dann bleibt der
   gespeicherte Name.
   **Das Blatt der Wertung nennt ihn trotzdem** (`.chron-kose`): dort steht,
-  wie ihr Halter im Profil heißt. Sonst war der Beiname nirgends neben seiner
+  wie ihr Halter im Profil heißt — außer die Wertung heißt schon so: neun
+  Blätter trugen „Der Beidfüßige" als Titel und darunter noch einmal als
+  Beinamen. Sonst war der Beiname nirgends neben seiner
   Wertung zu sehen — „Der Nervenkitzel" macht seinen Träger zum
   „Dauerzitterer", und wer das Blatt öffnete, erfuhr davon nichts. Er sitzt
   im Kopf des Blatts auf einer eigenen Zeile, nicht in der Zahlenreihe

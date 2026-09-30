@@ -793,12 +793,17 @@ const _kose = JSON.parse(K.eval(`JSON.stringify((function(){
   SEASON_TITLES.forEach(t => {
     let out=''; const echt=openSheet; openSheet=(h)=>{out=h;};
     try { showDisziplin(t.id, '2026-08'); } catch(e){ out=''; } finally { openSheet=echt; }
-    if(out.indexOf('chron-kose') < 0 || out.indexOf(t.beiname) < 0) fehlt.push(t.id);
+    // Heisst die Wertung schon wie ihr Halter, steht der Name nicht zweimal
+    // im Kopf: neun Blaetter trugen „Der Beidfuessige" als Titel und darunter
+    // „Beiname im Profil: Der Beidfuessige".
+    const gleich = t.beiname === t.name;
+    if(gleich ? out.indexOf('chron-kose') >= 0
+              : (out.indexOf('chron-kose') < 0 || out.indexOf(t.beiname) < 0)) fehlt.push(t.id);
   });
   return {fehlt, n: SEASON_TITLES.length};
 })())`));
 ok(_kose.fehlt.length === 0,
-   'jedes Chronik-Blatt nennt den Beinamen seines Halters',
+   'jedes Chronik-Blatt nennt den Beinamen seines Halters, wenn er anders heisst als die Wertung',
    _kose.fehlt.join(', ') || _kose.n + ' Blaetter');
 K.eval('closeSheet(true)');
 // Die Erklaerung sagt, was die Zahl daneben bedeutet — „+15 Punkte" las sich
