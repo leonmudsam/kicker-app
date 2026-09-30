@@ -1189,25 +1189,6 @@ function showRangSystem(){
 function showPlayerAwards(playerId, awards){
   const p=pmap()[playerId]; if(!p)return;
   _sheetSetReopen(()=>showPlayerAwards(playerId, awards));
-  // Mapping wie in vAwards/AW_IC für konsistente Icons
-  // ⚑ HOTSPOT — Spiegel von AW_IC aus §5.3 (vAwards). Bei neuen Awards HIER
-  //  und in den anderen 2 AW_IC-Definitionen gleichzeitig erweitern.
-  const AW_IC = {
-    wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
-    showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
-    wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
-    carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
-    grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
-    formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',
-    weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
-  };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
   // Award-Trophäe für das Sheet: gleiche Optik wie im Awards-Tab.

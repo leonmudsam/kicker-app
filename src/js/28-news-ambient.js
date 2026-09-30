@@ -501,7 +501,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'history', ic:'calendar', prio:5,
       title:`Die ${marke}. Partie der Liga`,
       desc: sieger.length
-        ? `Gespielt am ${dd}, gewonnen von ${sieger.join(' und ')} mit ${standSieger(mObj)}.`
+        ? `Gespielt am ${dd}, gewonnen von ${sieger.join(' und ')} mit ${standFuer(mObj)}.`
         : `Gespielt am ${dd}, Endstand ${mObj.score_a}:${mObj.score_b}.`,
       vv: marke, vl:'Partien' };
   }});

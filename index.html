@@ -5132,8 +5132,7 @@
  *    NEUES AWARD
  *      1. ICONS — neues SVG-Icon hinzufügen (falls nötig)         [§1.1]
  *      2. awardRankings — Berechnung + Hidden-Filter + Return     [§3.2]
- *      3. AW_IC — Icon-Mapping (3×! in vAwards/showAward/         [§5.3, §8.3,
- *         showPlayerAwards)                                        §8.4]
+ *      3. AW_IC — Icon-Mapping, eine Tabelle für alle Ansichten   [§5.3]
  *      4. AWARD_META — Titel + Klasse + Erklärung                 [§5.3]
  *      5. vAwards — Card im richtigen Section-Block               [§5.3]
  *      6. showAward — TEAM_AWARDS/MATCH_AWARDS-Set + switch-case  [§8.3]
@@ -5181,7 +5180,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.6f6536aa';
+const BUILD_VERSION='2026.09.30.59ac660d';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5252,7 +5251,7 @@ let awWeekStart=null;       // konkrete Woche (Date für Montag, lokale Zeit) f�
 
 // ╔═══ §1.1 ─── ICON LIBRARY (SVG line-icons) ──────────────────────────╗
 //     ⚑ HOTSPOT — Wer hier ein Icon hinzufügt, sollte es ggf. auch im
-//     AW_IC-Mapping (§5.3, §8.3, §8.4) und/oder im BADGES-Array (§7.1)
+//     AW_IC-Mapping (§5.3) und/oder im BADGES-Array (§7.1)
 //     referenzieren.
 //     Konvention: Path-Strings ohne viewBox/svg-Wrapper. Wrapper kommt
 //     von svgI() / ic() Helper-Funktionen.
@@ -7300,24 +7299,24 @@ function showSeasonRecap(season, opts){
   // trägt es das Podest, sonst nichts.
   const kachel=(ic,label,name,wert,key)=>kacheln.push(rcpKachelHtml({
     ic, label, name, wert, ton:'metall', attr:`data-award="${key}"`}));
-  if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
-  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),'Ø '+komma((wall.v/wall.g),1)+' Gegentore','wall');
-  if(streak)  kachel('flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks');
-  if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegquote','perfect');
-  if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× Player of the Week','weekKing');
-  if(dayKing) kachel('crown','Tageskönig',pname(dayKing.id),dayKing.v+'× Player of the Day','dayKing');
-  if(grinder) kachel('gamepad','Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
+  if(scorer)  kachel(AW_IC.scorer,'Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
+  if(wall)    kachel(AW_IC.wall,'Eiserne Abwehr',pname(wall.id),'Ø '+komma((wall.v/wall.g),1)+' Gegentore','wall');
+  if(streak)  kachel(AW_IC.streaks,AWARD_META.streaks.title,pname(streak.id),streak.v+' in Folge','streaks');
+  if(perfect) kachel(AW_IC.perfect,'Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegquote','perfect');
+  if(weekKing)kachel(AW_IC.weekKing,'Wochenkönig',pname(weekKing.id),weekKing.v+'× Player of the Week','weekKing');
+  if(dayKing) kachel(AW_IC.dayKing,'Tageskönig',pname(dayKing.id),dayKing.v+'× Player of the Day','dayKing');
+  if(grinder) kachel(AW_IC.grinder,'Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
   if(upset){
     const sieger = upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];
-    kachel('bolt','Größte Überraschung',pname(sieger[0])+' & '+pname(sieger[1]),
+    kachel(AW_IC.upset,'Größte Überraschung',pname(sieger[0])+' & '+pname(sieger[1]),
            Math.round((1-upset.sp)*100)+'% Chance','upset');
   }
   // Die Schattenseiten stehen hinten und in Rot — Rot sagt hier die
   // Richtung, nicht die Wichtigkeit [§C25].
-  if(worstWr) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Schlechtester',
+  if(worstWr) kacheln.push(rcpKachelHtml({ic:AW_IC.worstWr,label:AWARD_META.worstWr.title,
     name:pname(worstWr.id),wert:Math.round(worstWr.wr*100)+'% Siegquote',ton:'red',
     attr:'data-award="worstWr"'}));
-  if(pechvogel) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Pechvogel',
+  if(pechvogel) kacheln.push(rcpKachelHtml({ic:AW_IC.pechvogel,label:'Pechvogel',
     name:pname(pechvogel.id),wert:Math.round(pechvogel.pct*100)+'% knapp verloren',ton:'red',
     attr:'data-award="pechvogel"'}));
   // Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen.
@@ -10112,7 +10111,10 @@ function _seasonToolsHtml(){
   // Der Verlauf braucht Partien — in einer Saison ohne eine einzige gäbe es
   // nichts zu zeichnen.
   const hasPos = matchesInSeason(sid).length > 0;
-  const past = seasons.filter(s => s.id !== cur.id);
+  // Die jüngste abgeschlossene zuerst, egal in welcher Reihenfolge die
+  // Saisons geladen wurden: aufsteigend sortiert stand hier der Mai.
+  const past = seasons.filter(s => s.id !== cur.id)
+    .sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)));
   // Zurückblicken lässt sich nur auf eine abgeschlossene Saison. Steht die
   // laufende oben, bleibt es beim letzten abgeschlossenen Monat.
   const recapS = laeuft ? past[0] : seasons.find(s => s.id === sid);
@@ -10126,7 +10128,7 @@ function _seasonToolsHtml(){
   if(hasRecap){
     cards += `<button type="button" class="st-card recap" data-seasontool="recap"
       data-sid="${esc(recapS.id)}">
-      <span class="st-ic">${recapIc}</span><span class="st-tt">Saison-Recap</span>
+      <span class="st-ic">${recapIc}</span><span class="st-tt">Saison-Rückblick</span>
       <span class="st-su">${esc(seasonLabel(recapS.id))} ansehen</span></button>`;
   }
   if(hasPos){
@@ -10136,7 +10138,7 @@ function _seasonToolsHtml(){
       <span class="st-su">${esc(seasonLabel(sid))}</span></button>`;
   }
   const one = (hasRecap && hasPos) ? '' : ' one';
-  return `<div class="seasontools"><div class="st-sec">Saison-Tools</div><div class="st-grid${one}">${cards}</div></div>`;
+  return `<div class="seasontools"><div class="st-sec">Mehr zur Saison</div><div class="st-grid${one}">${cards}</div></div>`;
 }
 // ── Die Form der letzten fuenf [§C26] ───────────────────────────────
 // Die Punkte einer laufenden Siegesserie brennen mit — dieselbe Aussage wie
@@ -10378,6 +10380,12 @@ function _vRankingCore(){
       // Das Symbol steht IN der Kopfzeile, nicht in der Ecke: bei einem
       // Drittel der Breite bliebe für die Beschriftung sonst nicht genug
       // Platz, und „Heißeste Serie" bräche mitten im Wort ab.
+      // Die Serie heißt hier „Siegesserie" und die Überraschung
+      // „Überraschung", die Kurzformen der Award-Namen („Größte Überra…"):
+      // „Heißeste Serie" war ein dritter Name für dieselbe Liste, „Längste
+      // Siegesserie" passt nicht in ein Drittel. Aus demselben Grund steht
+      // unter dem König die Zahl der Wochen oder Spieltage und nicht
+      // „4× Player of the Day" — das endete als „4× Player of t…".
       const renderHl=(cls,labelTxt,iconKey,nameTxt,detailTxt,clickAttr='')=>{
         const kopf=`<div class="wk-hl-kopf"><span class="wk-hl-ic">${svgI(iconKey)}</span>`
           + `<span class="wk-hl-label">${labelTxt}</span></div>`;
@@ -10402,17 +10410,17 @@ function _vRankingCore(){
       const _kingList=period==='week'?(_allRanks.weekKingList||[]):(_allRanks.dayKingList||[]);
       const topKing=_kingList[0]||null;
       const mitte = period==='week'
-        ? renderHl('streak','Heißeste Serie','flame', topStreak?pname(topStreak.id):null,
+        ? renderHl('streak','Siegesserie',AW_IC.streaks, topStreak?pname(topStreak.id):null,
             topStreak?`${topStreak.v} in Folge`:'', topStreak?'data-toplist="periodStreak"':'')
-        : renderHl('upset','Größte Überraschung','bolt', upsetName,
+        : renderHl('upset','Überraschung',AW_IC.upset, upsetName,
             topUpset?`${topUpset.winPct}% Chance`:'', topUpset?'data-toplist="periodUpset"':'');
       nebenHtml+=`
         <div class="wk-highlights">
-          ${renderHl('team','Bestes Team','handshake', teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', bestTeam?'data-toplist="periodTeam"':'')}
+          ${renderHl('team','Bestes Team',AW_IC.mvt, teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', bestTeam?'data-toplist="periodTeam"':'')}
           ${mitte}
           ${renderHl('king', period==='week'?'Wochenkönig':'Tageskönig', period==='week'?'weekKing':'dayKing',
               topKing?pname(topKing.id):null,
-              topKing?`${topKing.v}× ${period==='week'?'Player of Week':'Player of Day'}`:'',
+              topKing?(period==='week'?`${topKing.v} ${topKing.v===1?'Woche':'Wochen'}`:`${topKing.v} ${topKing.v===1?'Spieltag':'Spieltage'}`):'',
               topKing?'data-toplist="periodKing"':'')}
         </div>`;
 
@@ -10798,7 +10806,7 @@ function vPositions(){
 //
 //     Reihenfolge in dieser Sektion:
 //       1. AWARD_META       — Titel, Klasse (Farbe), Erklärung
-//       2. AW_IC (1/3)      — Award-ID -> Icon-Name (gespiegelt in §8.3, §8.4)
+//       2. AW_IC            — Award-ID -> Icon-Name, für alle Ansichten
 //       3. vAwards()        — baut Awards-Tab mit Story-Cards
 // ╚═════════════════════════════════════════════════════════════════════════╝
 // Cache-Wrapper für awardRankings.
@@ -11680,27 +11688,6 @@ function _vAwardsCore(){
   if(!R.counts.matches)
     return `${periodBar}${emptyState('trophy','Keine Matches in diesem Zeitraum')}`;
   const tn=ids=>ids.map(pname).join(' & ');
-  // ⚑ HOTSPOT — Award-ID -> Icon-Name. DIESE Map existiert 3x identisch in:
-  //   §5.3 vAwards()       (Awards-Tab)
-  //   §8.3 showAward()     (Award-Detail-Sheet)
-  //   §8.4 showPlayerAwards() (Spieler-Awards-Sheet)
-  // Neue Awards brauchen einen Eintrag in ALLEN 3 Maps, sonst fallback auf 'trophy'.
-  const AW_IC = {
-    wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
-    showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
-    wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
-    carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
-    grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
-    formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',
-    weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
-  };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
   // Trophy-Builder für die Vitrine.
@@ -12094,10 +12081,10 @@ function _vAwardsCore(){
   // in der Top-5-Liste und im Blatt. Die Kachel zeigte die der Gegenseite, und
   // dieselbe Partie stand mit 71 % hier und mit 30 % überall sonst.
   special.push(u0
-    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),standSieger(u0.m)+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round((1-u0.sp)*100)+'%')
+    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),standFuer(u0.m)+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round((1-u0.sp)*100)+'%')
     : empty('upset','orange','Größte Überraschung'));
   special.push(b0
-    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),standSieger(b0.m),'+'+b0.diff)
+    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),standFuer(b0.m),'+'+b0.diff)
     : empty('biggest','purple','Höchster Sieg'));
   special.push(gr0
     ? card('grinder','blue','Vielspieler',[gr0.id],esc(topNames(R.grinder,x=>x.v,x=>pname(x.id))),pl,gr0.v)
@@ -12209,6 +12196,29 @@ function vAwards(){
   }
   return kopf + _vAwardsCore();
 }
+
+// Award-ID -> Icon-Name. Eine Tabelle für Awards-Reiter, Award-Blatt,
+// Spieler-Awards, Saison-Rückblick und die Nebenwertungen der Liga [§C27].
+// Sie stand dreimal wortgleich in drei Funktionen, und die beiden Stellen
+// ohne eigene Kopie suchten sich ihr Zeichen selbst aus: im Rückblick trugen
+// Wochen- und Tageskönig dieselbe Krone und der Pechvogel das Gespenst der
+// schwächsten Bilanz, in der Liga die Überraschung einen Blitz.
+const AW_IC = {
+  wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
+  showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
+  wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
+  carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
+  grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
+  formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
+  zirkus:'circus',       baustelle:'cone',
+  weekKing:'weekKing',   dayKing:'dayKing',
+  plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
+  // ── NEUE TEAM-AWARDS v4 ──
+  unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
+  giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
+  // ── NEUE NEGATIV-AWARDS v6 ──
+  cheesePlatter:'cheese', favoriteLoser:'crownFallen'
+};
 
 // ⚑ HOTSPOT — Award-Metadaten (Titel, Klasse, Erklärung).
 // Eine fehlende Erweiterung hier führt dazu, dass das Detail-Sheet im
@@ -12376,22 +12386,22 @@ function openTopList(kind){
     val:(t.elo>=0?'+':'')+Math.round(t.elo)+' Elo', detail:t.w+'/'+t.g+' Siege'});
   if(kind==='periodTeam'){
     return showTopList({title:'Bestes Team', sub:periodLabel(period),
-      ic:'handshake', cls:'blue', rows:_teamEloRanking(matchesInPeriod(period),1).filter(t=>t.elo>0).map(teamRow),
+      ic:AW_IC.mvt, cls:'blue', rows:_teamEloRanking(matchesInPeriod(period),1).filter(t=>t.elo>0).map(teamRow),
       why:'Das Duo mit dem höchsten gemeinsamen Elo-Zuwachs in diesem Zeitraum.'});
   }
   if(kind==='periodStreak'){
-    return showTopList({title:'Heißeste Serie', sub:periodLabel(period),
-      ic:'flame', cls:'acid',
+    return showTopList({title:AWARD_META.streaks.title, sub:periodLabel(period),
+      ic:AW_IC.streaks, cls:'acid',
       rows:longestStreaks(matchesInPeriod(period)).map(s=>({ids:[s.id], name:pname(s.id), val:s.v+'×', detail:'Siege in Folge'})),
       why:'Die längste Siegesserie innerhalb dieses Zeitraums, ab 2 Siegen in Folge.'});
   }
   if(kind==='periodUpset'){
     return showTopList({title:'Größte Überraschung', sub:periodLabel(period),
-      ic:'bolt', cls:'blue',
+      ic:AW_IC.upset, cls:'blue',
       rows:_upsetRanking(matchesInPeriod(period)).map(u=>{
         const w=u.m.winner==='A'?[u.m.a1,u.m.a2]:[u.m.b1,u.m.b2];
         return {ids:w, matchId:u.m.id, name:w.map(pname).join(' & '),
-          val:u.winPct+'%', detail:standSieger(u.m)+' · '+dateStr(u.m.created_at)};
+          val:u.winPct+'%', detail:standFuer(u.m)+' · '+dateStr(u.m.created_at)};
       }),
       why:'Der Sieg mit der niedrigsten Siegchance vor dem Anpfiff.'});
   }
@@ -12412,24 +12422,6 @@ function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
   _sheetSetReopen(()=>showAward(key));
   const tn=ids=>ids.map(pname).join(' & ');
-  // ⚑ HOTSPOT — Spiegel von AW_IC aus §5.3 (vAwards). Bei neuen Awards HIER
-  //  und in den anderen 2 AW_IC-Definitionen gleichzeitig erweitern.
-  const AW_IC = {
-    wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
-    showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
-    wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
-    carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
-    grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
-    formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',
-    weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
-  };
 
   // ── NEUE TEAM-AWARDS v4 ──
   // favoritenschreck verhält sich wie ein Match-Award (zeigt ein konkretes Spiel),
@@ -16732,25 +16724,6 @@ function showRangSystem(){
 function showPlayerAwards(playerId, awards){
   const p=pmap()[playerId]; if(!p)return;
   _sheetSetReopen(()=>showPlayerAwards(playerId, awards));
-  // Mapping wie in vAwards/AW_IC für konsistente Icons
-  // ⚑ HOTSPOT — Spiegel von AW_IC aus §5.3 (vAwards). Bei neuen Awards HIER
-  //  und in den anderen 2 AW_IC-Definitionen gleichzeitig erweitern.
-  const AW_IC = {
-    wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
-    showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
-    wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
-    carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
-    grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
-    formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',
-    weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
-  };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
   // Award-Trophäe für das Sheet: gleiche Optik wie im Awards-Tab.
@@ -17921,7 +17894,7 @@ function showH2H(idA, idB){
     const m = enc.m;
     const won = enc.wonForA;
     const isTeam = enc.type === 'team';
-    const score = m.score_a + ':' + m.score_b;
+    const score = standFuer(m, won);
     const typeChip = isTeam
       ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(86,180,232,.12);color:var(--blue);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:6px;font-family:'Sometype Mono',monospace">Team</span>`
       : `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(167,139,250,.12);color:var(--purple);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:6px;font-family:'Sometype Mono',monospace">Gegner</span>`;
@@ -18141,7 +18114,7 @@ function showTeam(p1Id,p2Id){
   const pB_pos = d.posStats[pB.id].dom;
   const isSplit = d.games >= 2 && d.dominantCount === d.swapped; // 50/50
 
-  const buildLineupCard = (label, sublabel, p0Pos) => {
+  const buildLineupCard = (label, sublabel, p0Pos, px = 58) => {
     const opos = p0Pos==='atk' ? 'def' : 'atk';
     // Der farbige Ring um den Avatar ist entfallen: an seiner Stelle steht
     // das Wappen. Die Position sagt die Zeile darüber schon zweimal, mit
@@ -18149,7 +18122,7 @@ function showTeam(p1Id,p2Id){
     // ihrer eigenen Aufschrift.
     const buildSide = (player, pos) => {
       const avInner = `<div style="margin:0 auto 6px">${
-        avHtml(player, '', {ins:true, px:58})}</div>`;
+        avHtml(player, '', {ins:true, px})}</div>`;
       return `<div style="flex:1;text-align:center;cursor:pointer" data-detail="${esc(player.id)}">
         <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;color:${POS_COLOR[pos]}">
           <span class="svg-ic" style="width:11px;height:11px;display:inline-flex">${POS_ICON[pos]}</span>
@@ -18160,13 +18133,13 @@ function showTeam(p1Id,p2Id){
       </div>`;
     };
     return `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:9px">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">${label}</div>
         <div style="font-size:9px;color:var(--ink2);font-family:'Sometype Mono',monospace;letter-spacing:.04em">${sublabel}</div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         ${buildSide(pA, p0Pos)}
-        <span style="color:var(--muted);font-size:10px">vs</span>
+        <span style="color:var(--muted);font-size:10px">&amp;</span>
         ${buildSide(pB, opos)}
       </div>
     </div>`;
@@ -18176,6 +18149,11 @@ function showTeam(p1Id,p2Id){
 
   if(d.bestLineup){
     // Zwei Karten nebeneinander: TYPISCH (Mehrheits) + BESTE (höhere Quote)
+    // Nebeneinander misst das Wappen 48 statt 58 px und das Raster teilt nach
+    // minmax(0,1fr) [§C27]: zwei Wappen zu 58 px, das Zeichen dazwischen und
+    // die Abstände sind breiter als eine halbe Zeile, und die zweite Karte
+    // lief 30 px über den Rand des Blatts. Zwischen den beiden steht „&" —
+    // sie spielen zusammen, „vs" stand zwischen zwei Partnern.
     // typGames/typWr aus teamDetail.bestLineup ableiten: bestLineup.p0 ist
     // die seltenere (=bessere) Pos, also die typische = die andere.
     const typGames = d.dominantCount;
@@ -18184,9 +18162,9 @@ function showTeam(p1Id,p2Id){
     lineupHtml = `
       <div style="margin-bottom:18px">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:10px;font-family:'Sometype Mono',monospace">Aufstellungs-Vergleich</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          ${buildLineupCard('Typisch', typGames+' Sp · '+typWr+'%', d.posStats[d.ids[0]].dom)}
-          ${buildLineupCard('Beste Quote', d.bestLineup.games+' Sp · '+bestWr+'%', d.bestLineup.p0)}
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+          ${buildLineupCard('Typisch', typWr+'% aus '+typGames, d.posStats[d.ids[0]].dom, 48)}
+          ${buildLineupCard('Beste Quote', bestWr+'% aus '+d.bestLineup.games, d.bestLineup.p0, 48)}
         </div>
       </div>`;
   } else {
@@ -18229,12 +18207,9 @@ function showTeam(p1Id,p2Id){
   // ─── TEAM-AWARDS (Lifetime — alle Saisons) ───
   // Spiegel des Spieler-Awards-Konzepts: zeigt die Top-3-Platzierungen des
   // Duos in der saison-übergreifenden awardRankings('all')-Liste.
-  const TEAM_AW_IC = {
-    mvt:'handshake', bestDuo:'duo', worstTeam:'crashTeam',
-    zirkus:'circus', baustelle:'construction', unstoppable:'unstoppable',
-    concreteWall:'concreteWall', cheesePlatter:'cheese', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords'
-  };
+  // Die Zeichen kommen aus AW_IC wie überall sonst. Hier stand eine eigene
+  // Tabelle, und zwei ihrer Namen gab es im Katalog nicht: „Schlechtestes
+  // Team" und „Baustelle" standen im Duo-Blatt ohne Zeichen.
   const tAch = teamAchievements(p1Id, p2Id);
   const RANK_LABEL = ['#1','#2','#3'];
   const teamAwardsHtml = tAch.length ? `
@@ -18243,7 +18218,7 @@ function showTeam(p1Id,p2Id){
       <div class="pp-awards" style="grid-template-columns:repeat(3,1fr)">
         ${tAch.map(a => {
           const meta = AWARD_META[a.key]; if(!meta) return '';
-          const icKey = TEAM_AW_IC[a.key] || 'trophy';
+          const icKey = AW_IC[a.key] || 'trophy';
           // Farb-Klasse aus AWARD_META, Wertanzeige in Farbe
           const colorMap = {acid:'var(--acid)', blue:'var(--blue)', gold:'var(--gold)', orange:'var(--orange)', purple:'var(--purple)', red:'var(--red)'};
           const col = colorMap[meta.cls] || 'var(--ink)';
@@ -18312,11 +18287,11 @@ function showTeam(p1Id,p2Id){
     const avgGa = komma((d.ga / d.games),1);
     const facts = [
       { label:'Ø Tore', value:avgGf, color:'var(--acid)' },
-      { label:'Ø Gegen', value:avgGa, color:'var(--red)' },
+      { label:'Ø Gegentore', value:avgGa, color:'var(--red)' },
     ];
     if(d.shutouts > 0) facts.push({ label:'Zu Null', value:d.shutouts+'×', color:'var(--blue)' });
     if(d.perfectWins > 0) facts.push({ label:'10:0', value:d.perfectWins+'×', color:'var(--gold)' });
-    if(d.topScore) facts.push({ label:'Top-Stand', value:d.topScore, color:'var(--purple)', sub:d.topScoreCount+'×' });
+    if(d.topScore) facts.push({ label:'Häufigster Stand', value:d.topScore, color:'var(--purple)', sub:d.topScoreCount+'×' });
     const cols = facts.length >= 4 ? 'repeat(4,1fr)' : 'repeat('+facts.length+',1fr)';
     funFactsHtml = `
       <div style="margin-bottom:18px">
@@ -18353,7 +18328,7 @@ function showTeam(p1Id,p2Id){
         <div style="font-size:12px;line-height:1.2">vs <span style="color:var(--ink2)">${esc((o1?o1.name:'?')+' & '+(o2?o2.name:'?'))}</span></div>
         <div class="num" style="font-size:10px;color:var(--muted);margin-top:2px">${dateStr(m.created_at)}</div>
       </div>
-      <div class="num" style="font-size:13px;font-weight:600;color:var(--ink);flex-shrink:0">${m.score_a} : ${m.score_b}</div>
+      <div class="num" style="font-size:13px;font-weight:600;color:var(--ink);flex-shrink:0">${standFuer(m, won).replace(':', ' : ')}</div>
     </div>`;
   }).join('');
 
@@ -18798,12 +18773,14 @@ function komma(v, n){
   const z = Number(v);
   return (isFinite(z) ? z : 0).toFixed(n == null ? 1 : n).replace('.', ',');
 }
-// Der Stand aus Sicht der Sieger. Wo neben einem Stand nur die Sieger stehen,
-// las „Stefan & Martin 8:10" als Niederlage: gespeichert ist der Stand in der
-// Reihenfolge der Eingabe (Team A zuerst), und fünf Stellen schrieben ihn so
-// ab, während zwei andere ihn schon umdrehten [§C27].
-function standSieger(m){
-  return m.winner === 'B' ? m.score_b + ':' + m.score_a : m.score_a + ':' + m.score_b;
+// Der Stand aus Sicht einer Seite: ihre Tore zuerst. Ohne zweites Argument
+// die der Sieger. Gespeichert ist er in der Reihenfolge der Eingabe (Team A
+// zuerst), und neun Stellen schrieben ihn so ab, während zwei andere ihn
+// selbst umdrehten [§C27]: „Stefan & Martin 8:10" in der Liste der
+// Überraschungen, und im Duo-Blatt stand neben einem roten Kreuz „10 : 8".
+function standFuer(m, gewonnen = true){
+  const s = m.winner === 'B' ? [m.score_b, m.score_a] : [m.score_a, m.score_b];
+  return gewonnen ? s[0] + ':' + s[1] : s[1] + ':' + s[0];
 }
 function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
 function emptyState(e,t){
@@ -20096,7 +20073,7 @@ function _buildStories(){
           actorIds:[w.nach, w.vor], subjectKey:'rang1',
           title:`${nameOf(w.nach)} übernimmt Platz 1`,
           text:`${nameOf(w.vor)} gibt die Spitze ab.`,
-          evidence:standSieger(w.m),
+          evidence:standFuer(w.m),
           importance:9,
           detail:{vor:w.vor, nach:w.nach}
         }));
@@ -20894,7 +20871,7 @@ function _buildStories(){
       const _sg = (biggest.m.winner === 'A' ? [biggest.m.a1, biggest.m.a2] : [biggest.m.b1, biggest.m.b2]).filter(Boolean);
       _wochenTeile.push({
         art: 'blowout', ic: 'thriller', label: 'Klarster Sieg',
-        pids: _sg, wert: standSieger(biggest.m), matchId: biggest.m.id,
+        pids: _sg, wert: standFuer(biggest.m), matchId: biggest.m.id,
         satz: `${_sg.map(nameOf).join(' und ')} gewinnen mit ${biggest.diff} Toren Unterschied. Kein Sieg dieser Woche war deutlicher.`
       });
     }
@@ -21073,7 +21050,7 @@ function _buildStories(){
         const wNames = _namenListe(gs.winners.map(nameOf));
         const lNames = _namenListe(gs.losers.map(nameOf));
         const pct = Math.max(1, Math.round(gs.chance * 100));
-        const tore = standSieger(gs.m);
+        const tore = standFuer(gs.m);
         stories.push({
           id: 'giant_slayer_'+gs.m.id,
           cat: 'highlight', ic: 'giantSlayer',
@@ -21267,7 +21244,7 @@ function _buildStories(){
       const _tg = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).filter(Boolean);
       _wochenTeile.push({
         art: 'thriller', ic: 'thriller', label: 'Krimi der Woche',
-        pids: _tg, wert: standSieger(m), matchId: m.id,
+        pids: _tg, wert: standFuer(m), matchId: m.id,
         satz: `${_tg.map(nameOf).join(' und ')} entscheiden das Spiel mit dem letzten Tor. ${thriller.totalScore} Tore fielen, mehr als in jeder anderen Partie dieser Woche.`
       });
     }
@@ -23070,7 +23047,7 @@ function _ambientTemplatePool(now, pm, nameOf){
     return { cat:'history', ic:'calendar', prio:5,
       title:`Die ${marke}. Partie der Liga`,
       desc: sieger.length
-        ? `Gespielt am ${dd}, gewonnen von ${sieger.join(' und ')} mit ${standSieger(mObj)}.`
+        ? `Gespielt am ${dd}, gewonnen von ${sieger.join(' und ')} mit ${standFuer(mObj)}.`
         : `Gespielt am ${dd}, Endstand ${mObj.score_a}:${mObj.score_b}.`,
       vv: marke, vl:'Partien' };
   }});
@@ -28606,7 +28583,7 @@ function _newsDetailMitte(s){
           if(!t.matchId || t.matchId === d.matchId) return '';
           const m = (matches || []).find(x => x.id === t.matchId);
           if(!m) return '';
-          return standSieger(m);
+          return standFuer(m);
         };
         const _zeile = t => {
           const uhr = t.ms ? _newsUhrzeit(t.ms) : '';

@@ -545,7 +545,7 @@ function _buildStories(){
           actorIds:[w.nach, w.vor], subjectKey:'rang1',
           title:`${nameOf(w.nach)} übernimmt Platz 1`,
           text:`${nameOf(w.vor)} gibt die Spitze ab.`,
-          evidence:standSieger(w.m),
+          evidence:standFuer(w.m),
           importance:9,
           detail:{vor:w.vor, nach:w.nach}
         }));
@@ -1343,7 +1343,7 @@ function _buildStories(){
       const _sg = (biggest.m.winner === 'A' ? [biggest.m.a1, biggest.m.a2] : [biggest.m.b1, biggest.m.b2]).filter(Boolean);
       _wochenTeile.push({
         art: 'blowout', ic: 'thriller', label: 'Klarster Sieg',
-        pids: _sg, wert: standSieger(biggest.m), matchId: biggest.m.id,
+        pids: _sg, wert: standFuer(biggest.m), matchId: biggest.m.id,
         satz: `${_sg.map(nameOf).join(' und ')} gewinnen mit ${biggest.diff} Toren Unterschied. Kein Sieg dieser Woche war deutlicher.`
       });
     }
@@ -1522,7 +1522,7 @@ function _buildStories(){
         const wNames = _namenListe(gs.winners.map(nameOf));
         const lNames = _namenListe(gs.losers.map(nameOf));
         const pct = Math.max(1, Math.round(gs.chance * 100));
-        const tore = standSieger(gs.m);
+        const tore = standFuer(gs.m);
         stories.push({
           id: 'giant_slayer_'+gs.m.id,
           cat: 'highlight', ic: 'giantSlayer',
@@ -1716,7 +1716,7 @@ function _buildStories(){
       const _tg = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).filter(Boolean);
       _wochenTeile.push({
         art: 'thriller', ic: 'thriller', label: 'Krimi der Woche',
-        pids: _tg, wert: standSieger(m), matchId: m.id,
+        pids: _tg, wert: standFuer(m), matchId: m.id,
         satz: `${_tg.map(nameOf).join(' und ')} entscheiden das Spiel mit dem letzten Tor. ${thriller.totalScore} Tore fielen, mehr als in jeder anderen Partie dieser Woche.`
       });
     }

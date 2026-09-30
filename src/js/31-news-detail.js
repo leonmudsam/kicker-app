@@ -999,7 +999,7 @@ function _newsDetailMitte(s){
           if(!t.matchId || t.matchId === d.matchId) return '';
           const m = (matches || []).find(x => x.id === t.matchId);
           if(!m) return '';
-          return standSieger(m);
+          return standFuer(m);
         };
         const _zeile = t => {
           const uhr = t.ms ? _newsUhrzeit(t.ms) : '';

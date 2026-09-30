@@ -471,24 +471,24 @@ function showSeasonRecap(season, opts){
   // trägt es das Podest, sonst nichts.
   const kachel=(ic,label,name,wert,key)=>kacheln.push(rcpKachelHtml({
     ic, label, name, wert, ton:'metall', attr:`data-award="${key}"`}));
-  if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
-  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),'Ø '+komma((wall.v/wall.g),1)+' Gegentore','wall');
-  if(streak)  kachel('flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks');
-  if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegquote','perfect');
-  if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× Player of the Week','weekKing');
-  if(dayKing) kachel('crown','Tageskönig',pname(dayKing.id),dayKing.v+'× Player of the Day','dayKing');
-  if(grinder) kachel('gamepad','Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
+  if(scorer)  kachel(AW_IC.scorer,'Torjäger',pname(scorer.id),'Ø '+komma(scorer.avg,1)+' Tore','scorer');
+  if(wall)    kachel(AW_IC.wall,'Eiserne Abwehr',pname(wall.id),'Ø '+komma((wall.v/wall.g),1)+' Gegentore','wall');
+  if(streak)  kachel(AW_IC.streaks,AWARD_META.streaks.title,pname(streak.id),streak.v+' in Folge','streaks');
+  if(perfect) kachel(AW_IC.perfect,'Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegquote','perfect');
+  if(weekKing)kachel(AW_IC.weekKing,'Wochenkönig',pname(weekKing.id),weekKing.v+'× Player of the Week','weekKing');
+  if(dayKing) kachel(AW_IC.dayKing,'Tageskönig',pname(dayKing.id),dayKing.v+'× Player of the Day','dayKing');
+  if(grinder) kachel(AW_IC.grinder,'Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
   if(upset){
     const sieger = upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];
-    kachel('bolt','Größte Überraschung',pname(sieger[0])+' & '+pname(sieger[1]),
+    kachel(AW_IC.upset,'Größte Überraschung',pname(sieger[0])+' & '+pname(sieger[1]),
            Math.round((1-upset.sp)*100)+'% Chance','upset');
   }
   // Die Schattenseiten stehen hinten und in Rot — Rot sagt hier die
   // Richtung, nicht die Wichtigkeit [§C25].
-  if(worstWr) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Schlechtester',
+  if(worstWr) kacheln.push(rcpKachelHtml({ic:AW_IC.worstWr,label:AWARD_META.worstWr.title,
     name:pname(worstWr.id),wert:Math.round(worstWr.wr*100)+'% Siegquote',ton:'red',
     attr:'data-award="worstWr"'}));
-  if(pechvogel) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Pechvogel',
+  if(pechvogel) kacheln.push(rcpKachelHtml({ic:AW_IC.pechvogel,label:'Pechvogel',
     name:pname(pechvogel.id),wert:Math.round(pechvogel.pct*100)+'% knapp verloren',ton:'red',
     attr:'data-award="pechvogel"'}));
   // Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen.

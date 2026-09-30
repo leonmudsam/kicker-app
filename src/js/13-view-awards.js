@@ -4,7 +4,7 @@
 //
 //     Reihenfolge in dieser Sektion:
 //       1. AWARD_META       — Titel, Klasse (Farbe), Erklärung
-//       2. AW_IC (1/3)      — Award-ID -> Icon-Name (gespiegelt in §8.3, §8.4)
+//       2. AW_IC            — Award-ID -> Icon-Name, für alle Ansichten
 //       3. vAwards()        — baut Awards-Tab mit Story-Cards
 // ╚═════════════════════════════════════════════════════════════════════════╝
 // Cache-Wrapper für awardRankings.
@@ -886,27 +886,6 @@ function _vAwardsCore(){
   if(!R.counts.matches)
     return `${periodBar}${emptyState('trophy','Keine Matches in diesem Zeitraum')}`;
   const tn=ids=>ids.map(pname).join(' & ');
-  // ⚑ HOTSPOT — Award-ID -> Icon-Name. DIESE Map existiert 3x identisch in:
-  //   §5.3 vAwards()       (Awards-Tab)
-  //   §8.3 showAward()     (Award-Detail-Sheet)
-  //   §8.4 showPlayerAwards() (Spieler-Awards-Sheet)
-  // Neue Awards brauchen einen Eintrag in ALLEN 3 Maps, sonst fallback auf 'trophy'.
-  const AW_IC = {
-    wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
-    showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
-    wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
-    carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
-    grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
-    formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',
-    weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
-  };
   const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
 
   // Trophy-Builder für die Vitrine.
@@ -1300,10 +1279,10 @@ function _vAwardsCore(){
   // in der Top-5-Liste und im Blatt. Die Kachel zeigte die der Gegenseite, und
   // dieselbe Partie stand mit 71 % hier und mit 30 % überall sonst.
   special.push(u0
-    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),standSieger(u0.m)+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round((1-u0.sp)*100)+'%')
+    ? card('upset','orange','Größte Überraschung',u0.m.winner==='A'?[u0.m.a1,u0.m.a2]:[u0.m.b1,u0.m.b2],esc(mlabel(u0.m)),standFuer(u0.m)+' · '+Math.round((1-u0.sp)*100)+'% Chance',Math.round((1-u0.sp)*100)+'%')
     : empty('upset','orange','Größte Überraschung'));
   special.push(b0
-    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),standSieger(b0.m),'+'+b0.diff)
+    ? card('biggest','purple','Höchster Sieg',b0.m.winner==='A'?[b0.m.a1,b0.m.a2]:[b0.m.b1,b0.m.b2],esc(mlabel(b0.m)),standFuer(b0.m),'+'+b0.diff)
     : empty('biggest','purple','Höchster Sieg'));
   special.push(gr0
     ? card('grinder','blue','Vielspieler',[gr0.id],esc(topNames(R.grinder,x=>x.v,x=>pname(x.id))),pl,gr0.v)
@@ -1415,6 +1394,29 @@ function vAwards(){
   }
   return kopf + _vAwardsCore();
 }
+
+// Award-ID -> Icon-Name. Eine Tabelle für Awards-Reiter, Award-Blatt,
+// Spieler-Awards, Saison-Rückblick und die Nebenwertungen der Liga [§C27].
+// Sie stand dreimal wortgleich in drei Funktionen, und die beiden Stellen
+// ohne eigene Kopie suchten sich ihr Zeichen selbst aus: im Rückblick trugen
+// Wochen- und Tageskönig dieselbe Krone und der Pechvogel das Gespenst der
+// schwächsten Bilanz, in der Liga die Überraschung einen Blitz.
+const AW_IC = {
+  wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
+  showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
+  wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
+  carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
+  grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
+  formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
+  zirkus:'circus',       baustelle:'cone',
+  weekKing:'weekKing',   dayKing:'dayKing',
+  plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
+  // ── NEUE TEAM-AWARDS v4 ──
+  unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
+  giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
+  // ── NEUE NEGATIV-AWARDS v6 ──
+  cheesePlatter:'cheese', favoriteLoser:'crownFallen'
+};
 
 // ⚑ HOTSPOT — Award-Metadaten (Titel, Klasse, Erklärung).
 // Eine fehlende Erweiterung hier führt dazu, dass das Detail-Sheet im

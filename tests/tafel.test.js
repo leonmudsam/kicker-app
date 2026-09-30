@@ -1174,6 +1174,17 @@ const _toteIcons = (function(){
 ok(_toteIcons.length === 0, 'kein Zeichen im Katalog ohne Aufrufer',
    _toteIcons.join(' · ') || 'alle');
 
+// Und jedes Award-Zeichen steht im Katalog. Die Tabelle stand viermal da,
+// und die Kopie im Duo-Blatt nannte zwei Namen, die es nicht gibt: dort
+// standen „Schlechtestes Team" und „Baustelle" ohne Zeichen. Ein fehlendes
+// Zeichen wirft keinen Fehler, die Kachel bleibt einfach leer.
+const _awZeichen = JSON.parse(K.eval(`JSON.stringify({
+  fehlt: Object.entries(AW_IC).filter(([k, v]) => !ICONS[v]).map(([k, v]) => k + '→' + v),
+  ohne: Object.keys(AWARD_META).filter(k => !AW_IC[k])})`));
+ok(_awZeichen.fehlt.length === 0 && _awZeichen.ohne.length === 0,
+   'jede Auszeichnung hat ein Zeichen, und jedes steht im Katalog',
+   [..._awZeichen.fehlt, ..._awZeichen.ohne.map(k => k + ' ohne Zeichen')].join(' · ') || 'alle');
+
 // ── Die Awards: jede Kachel muss in einer Woche erreichbar sein ─────
 // Die Schwellen stammen aus der Zeit, in der es den Zeitraum „Gesamt" gab.
 // Gemessen spielt ein Duo in einer Woche im Mittel DREI Partien, und sieben

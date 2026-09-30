@@ -162,7 +162,7 @@ function showTeam(p1Id,p2Id){
   const pB_pos = d.posStats[pB.id].dom;
   const isSplit = d.games >= 2 && d.dominantCount === d.swapped; // 50/50
 
-  const buildLineupCard = (label, sublabel, p0Pos) => {
+  const buildLineupCard = (label, sublabel, p0Pos, px = 58) => {
     const opos = p0Pos==='atk' ? 'def' : 'atk';
     // Der farbige Ring um den Avatar ist entfallen: an seiner Stelle steht
     // das Wappen. Die Position sagt die Zeile darüber schon zweimal, mit
@@ -170,7 +170,7 @@ function showTeam(p1Id,p2Id){
     // ihrer eigenen Aufschrift.
     const buildSide = (player, pos) => {
       const avInner = `<div style="margin:0 auto 6px">${
-        avHtml(player, '', {ins:true, px:58})}</div>`;
+        avHtml(player, '', {ins:true, px})}</div>`;
       return `<div style="flex:1;text-align:center;cursor:pointer" data-detail="${esc(player.id)}">
         <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;color:${POS_COLOR[pos]}">
           <span class="svg-ic" style="width:11px;height:11px;display:inline-flex">${POS_ICON[pos]}</span>
@@ -181,13 +181,13 @@ function showTeam(p1Id,p2Id){
       </div>`;
     };
     return `<div style="background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:11px 10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:9px">
         <div style="font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">${label}</div>
         <div style="font-size:9px;color:var(--ink2);font-family:'Sometype Mono',monospace;letter-spacing:.04em">${sublabel}</div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
         ${buildSide(pA, p0Pos)}
-        <span style="color:var(--muted);font-size:10px">vs</span>
+        <span style="color:var(--muted);font-size:10px">&amp;</span>
         ${buildSide(pB, opos)}
       </div>
     </div>`;
@@ -197,6 +197,11 @@ function showTeam(p1Id,p2Id){
 
   if(d.bestLineup){
     // Zwei Karten nebeneinander: TYPISCH (Mehrheits) + BESTE (höhere Quote)
+    // Nebeneinander misst das Wappen 48 statt 58 px und das Raster teilt nach
+    // minmax(0,1fr) [§C27]: zwei Wappen zu 58 px, das Zeichen dazwischen und
+    // die Abstände sind breiter als eine halbe Zeile, und die zweite Karte
+    // lief 30 px über den Rand des Blatts. Zwischen den beiden steht „&" —
+    // sie spielen zusammen, „vs" stand zwischen zwei Partnern.
     // typGames/typWr aus teamDetail.bestLineup ableiten: bestLineup.p0 ist
     // die seltenere (=bessere) Pos, also die typische = die andere.
     const typGames = d.dominantCount;
@@ -205,9 +210,9 @@ function showTeam(p1Id,p2Id){
     lineupHtml = `
       <div style="margin-bottom:18px">
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--muted);font-weight:700;margin-bottom:10px;font-family:'Sometype Mono',monospace">Aufstellungs-Vergleich</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          ${buildLineupCard('Typisch', typGames+' Sp · '+typWr+'%', d.posStats[d.ids[0]].dom)}
-          ${buildLineupCard('Beste Quote', d.bestLineup.games+' Sp · '+bestWr+'%', d.bestLineup.p0)}
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+          ${buildLineupCard('Typisch', typWr+'% aus '+typGames, d.posStats[d.ids[0]].dom, 48)}
+          ${buildLineupCard('Beste Quote', bestWr+'% aus '+d.bestLineup.games, d.bestLineup.p0, 48)}
         </div>
       </div>`;
   } else {
@@ -250,12 +255,9 @@ function showTeam(p1Id,p2Id){
   // ─── TEAM-AWARDS (Lifetime — alle Saisons) ───
   // Spiegel des Spieler-Awards-Konzepts: zeigt die Top-3-Platzierungen des
   // Duos in der saison-übergreifenden awardRankings('all')-Liste.
-  const TEAM_AW_IC = {
-    mvt:'handshake', bestDuo:'duo', worstTeam:'crashTeam',
-    zirkus:'circus', baustelle:'construction', unstoppable:'unstoppable',
-    concreteWall:'concreteWall', cheesePlatter:'cheese', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords'
-  };
+  // Die Zeichen kommen aus AW_IC wie überall sonst. Hier stand eine eigene
+  // Tabelle, und zwei ihrer Namen gab es im Katalog nicht: „Schlechtestes
+  // Team" und „Baustelle" standen im Duo-Blatt ohne Zeichen.
   const tAch = teamAchievements(p1Id, p2Id);
   const RANK_LABEL = ['#1','#2','#3'];
   const teamAwardsHtml = tAch.length ? `
@@ -264,7 +266,7 @@ function showTeam(p1Id,p2Id){
       <div class="pp-awards" style="grid-template-columns:repeat(3,1fr)">
         ${tAch.map(a => {
           const meta = AWARD_META[a.key]; if(!meta) return '';
-          const icKey = TEAM_AW_IC[a.key] || 'trophy';
+          const icKey = AW_IC[a.key] || 'trophy';
           // Farb-Klasse aus AWARD_META, Wertanzeige in Farbe
           const colorMap = {acid:'var(--acid)', blue:'var(--blue)', gold:'var(--gold)', orange:'var(--orange)', purple:'var(--purple)', red:'var(--red)'};
           const col = colorMap[meta.cls] || 'var(--ink)';
@@ -333,11 +335,11 @@ function showTeam(p1Id,p2Id){
     const avgGa = komma((d.ga / d.games),1);
     const facts = [
       { label:'Ø Tore', value:avgGf, color:'var(--acid)' },
-      { label:'Ø Gegen', value:avgGa, color:'var(--red)' },
+      { label:'Ø Gegentore', value:avgGa, color:'var(--red)' },
     ];
     if(d.shutouts > 0) facts.push({ label:'Zu Null', value:d.shutouts+'×', color:'var(--blue)' });
     if(d.perfectWins > 0) facts.push({ label:'10:0', value:d.perfectWins+'×', color:'var(--gold)' });
-    if(d.topScore) facts.push({ label:'Top-Stand', value:d.topScore, color:'var(--purple)', sub:d.topScoreCount+'×' });
+    if(d.topScore) facts.push({ label:'Häufigster Stand', value:d.topScore, color:'var(--purple)', sub:d.topScoreCount+'×' });
     const cols = facts.length >= 4 ? 'repeat(4,1fr)' : 'repeat('+facts.length+',1fr)';
     funFactsHtml = `
       <div style="margin-bottom:18px">
@@ -374,7 +376,7 @@ function showTeam(p1Id,p2Id){
         <div style="font-size:12px;line-height:1.2">vs <span style="color:var(--ink2)">${esc((o1?o1.name:'?')+' & '+(o2?o2.name:'?'))}</span></div>
         <div class="num" style="font-size:10px;color:var(--muted);margin-top:2px">${dateStr(m.created_at)}</div>
       </div>
-      <div class="num" style="font-size:13px;font-weight:600;color:var(--ink);flex-shrink:0">${m.score_a} : ${m.score_b}</div>
+      <div class="num" style="font-size:13px;font-weight:600;color:var(--ink);flex-shrink:0">${standFuer(m, won).replace(':', ' : ')}</div>
     </div>`;
   }).join('');
 
