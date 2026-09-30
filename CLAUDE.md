@@ -106,7 +106,11 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       CDN-Script wird nicht geladen, `fetch` ist abgeschaltet
                       und der Speicher ist ein eigener Topf — App und Labor
                       liegen auf derselben Adresse, und ohne ihn ueberschriebe
-                      das Labor den Lesestand des Feeds (story-labor.html)
+                      das Labor den Lesestand des Feeds (story-labor.html),
+                      und der Entwurf der visuellen Aufwertung: Befunde,
+                      Zeichenraster, Reiter, Kacheln, statistische Belege,
+                      Stories samt Faden zwischen Karten, Blätter und die
+                      Reihenfolge der Umsetzung (aufwertung.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
