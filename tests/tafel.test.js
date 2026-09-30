@@ -495,7 +495,7 @@ console.log('\n═══ 7c. DER LIGA-TAB ZEIGT EINE GEWÄHLTE SAISON ═══'
   // Die Verlaufs-ids im Wappen sind ein Zähler, der bei jedem Zeichnen
   // hochläuft ('i17_'). Sie gehören nicht zum Inhalt — sonst wäre kein
   // zweiter Aufruf je gleich. Vor dem Vergleich also wegnormieren.
-  const ohneIds = h => h.replace(/\bi\d+_/g, 'i_');
+  const ohneIds = h => h.replace(/\b(i|ize)\d+_/g, 'i_');
   const awJetzt = ohneIds(K.eval(`ligaSeasonId=null;  awView='awards'; awPeriod='season'; awSeasonId=null; vAwards()`));
   const awJuni  = ohneIds(K.eval(`ligaSeasonId=${JSON.stringify(alt)}; awView='awards'; awPeriod='season'; awSeasonId=null; vAwards()`));
   ok(awJetzt === awJuni,

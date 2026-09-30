@@ -307,8 +307,10 @@ function insAvWrap(pid, innerHtml, opts){
   const f = opts.feuer !== undefined ? opts.feuer : znFeuer(pid);
   // Ein Verweis statt der ganzen Zeichnung: in einer Liste steht dasselbe
   // Wappen vielfach, und die Zeichnung ist dieselbe [§C30].
+  // Die Größe bestimmt, ob die Zeichnung als Bild oder als Vektor kommt
+  // [§C30]: kleine Wappen stehen zu Dutzenden, große müssen scharf sein.
   const ins = insigniumRef(pid, band
-    ? {band:true, pos:opts.pos, titel:opts.titel} : {band:false});
+    ? {band:true, pos:opts.pos, titel:opts.titel, px} : {band:false, px});
   const cls = 'rav zn' + (band ? ' rav-band' : '') + (f ? ' zn-l'+f : '')
             + (opts.klasse ? ' '+opts.klasse : '');
   return `<span class="${cls}" style="--rav:${px}px"`

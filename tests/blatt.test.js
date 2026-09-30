@@ -2948,6 +2948,73 @@ const ok = (c, msg, det) => {
   ok(mbRuhig.kranz === 'none' && mbRuhig.linie === 'none' && mbRuhig.tage === 'none',
      'bei prefers-reduced-motion steht die Meisterbühne still', JSON.stringify(mbRuhig));
 
+  // ── Kein Filter über dem Zeichen [§C30] ─────────────────────────────
+  // Jedes Wappen trug `filter: drop-shadow(…)` am ganzen `svg.ins`, und
+  // Safari rechnet ein SVG unter einem CSS-Filter in CSS-Pixeln und zieht
+  // es hoch: auf dem Telefon standen alle Insignien mit Treppenkanten da,
+  // wie ausgeschnitten. Dasselbe gilt für eine Ebene, die skaliert. Gesucht
+  // wird über Liga, Positionen, Awards, Rekorde, Profil, Laufbahn und Feed;
+  // ausgenommen ist nur das Entfärben einer Stufe, die niemand trägt.
+  const _filterFunde = JSON.parse(await K(`(async()=>{
+const warte=ms=>new Promise(r=>setTimeout(r,ms));
+const funde={};
+const pruef=(wo)=>{
+  // Bilder direkt und über <use> verwiesene Gruppen: gezählt wird das Element, das sichtbar zeichnet
+  const ziele=[...document.querySelectorAll('image, use')].filter(e=>{const h=e.getAttribute('href')||'';return e.tagName==='image'?h.startsWith('data:image/svg'):/^#ins/.test(h);});
+  ziele.forEach(im=>{let e=im.parentElement;const k=[];while(e&&e!==document.documentElement){const cs=getComputedStyle(e);
+    const f=e.getAttribute&&e.getAttribute('filter');
+    if(cs.filter&&cs.filter!=='none'&&!/grayscale/.test(cs.filter))k.push((e.className.baseVal??e.className)+':'+cs.filter.slice(0,30));
+    if(f)k.push((e.className.baseVal??e.className)+':attr '+f);
+    const m=cs.transform; if(m&&m.startsWith('matrix(')){const a=parseFloat(m.slice(7)); if(Math.abs(a-1)>.01&&!/nd-bg|nd |sheet/.test(e.className))k.push((e.className.baseVal??e.className)+':scale '+a);}
+    e=e.parentElement;}
+    if(k.length){const key=wo+' | '+k.join(' < ');funde[key]=(funde[key]||0)+1;}});
+};
+tab='ranking'; render(); await warte(50); pruef('liga'); tab='positions'; render(); await warte(50); pruef('positionen');
+tab='awards'; awView='awards'; render(); await warte(50); pruef('awards');
+awView='rekorde'; render(); await warte(50); pruef('rekorde');
+const pid=players.find(p=>p.name==='Martin').id;
+showPlayer(pid); await warte(900); pruef('profil');
+try{ showLaufbahn&&showLaufbahn(pid);}catch(e){}
+await warte(600); pruef('laufbahn');
+closeSheet(true); openNewsFeed(); await warte(600); pruef('feed');
+return JSON.stringify(funde,null,1);
+})()
+`));
+  ok(Object.keys(_filterFunde).length === 0,
+     'kein Insignium liegt unter einem Filter oder einer Skalierung',
+     Object.keys(_filterFunde).slice(0, 4).join(' · '));
+  await page.evaluate(() => { try { window.__k.eval('closeSheet(true)'); } catch(e){} });
+  // Und groß ist die Zeichnung Vektor, kein Bild: ein `<image>` mit einer
+  // SVG-Datei rastert Safari in seinen 170 Einheiten, und im Profilkopf
+  // wurden sie auf 270 px gezogen [§C30]. Klein bleibt sie Bild — ein
+  // Verweis klont die ganze Zeichnung, und der Feed öffnete damit doppelt
+  // so langsam. Gemessen wird beides: der Profilkopf und die Laufbahn ohne
+  // Bild, die Ranglistenzeile mit.
+  const _vektor = await page.evaluate(async () => {
+    const K = window.__k.eval;
+    const w = ms => new Promise(r => setTimeout(r, ms));
+    K("tab='ranking'; render()");
+    const bildIn = el => { let n = 0; el.querySelectorAll('use').forEach(u => {
+      const z = document.querySelector(u.getAttribute('href'));
+      if(z && z.querySelector('image[href^="data:image/svg"]')) n++; });
+      return n + el.querySelectorAll('image[href^="data:image/svg"]').length; };
+    const zeile = bildIn(document.querySelector('#app .rrow') || document.body);
+    const pid = K("players.find(p=>p.name==='Martin').id");
+    K('showPlayer(' + JSON.stringify(pid) + ')'); await w(300);
+    const kopf = document.querySelector('#sheet .pp-av-wrap');
+    const profil = kopf ? bildIn(kopf) : -1;
+    const vektor = kopf ? kopf.querySelectorAll('use[href^="#izg"]').length : 0;
+    K('closeSheet(true)'); K('showLaufbahn(' + JSON.stringify(pid) + ')'); await w(300);
+    const lb = bildIn(document.getElementById('sheet'));
+    K('closeSheet(true)');
+    return {zeile, profil, vektor, lb};
+  });
+  ok(_vektor.profil === 0 && _vektor.vektor > 0 && _vektor.lb === 0,
+     'groß ist jedes Insignium eine Vektorzeichnung, kein eingebettetes Bild',
+     JSON.stringify(_vektor));
+  ok(_vektor.zeile > 0, 'klein bleibt es ein Bild, damit Liste und Feed schnell bleiben',
+     JSON.stringify(_vektor));
+
   await page.setViewportSize({width:430, height:932});
 
   console.log('\n' + '═'.repeat(60));

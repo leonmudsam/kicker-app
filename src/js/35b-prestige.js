@@ -708,7 +708,7 @@ function _insBildNr(key, zacken, grad){
 
 // Das Zeichen einer Stufe: das Bild, darunter die Lichter. `zacken` zählt
 // nur beim Ordensstern, `grad` bei allen anderen.
-function _insStufe(key, c, zacken, id, grad){
+function _insStufe(key, c, zacken, id, grad, eigen, bild){
   const nr = _insBildNr(key, zacken, grad);
   const k = INS_BILD_KANTE, o = 50 - k / 2;
   // Der Hof in der Rangfarbe, ab dem Zierkranz und mit jeder Stufe kräftiger:
@@ -724,9 +724,48 @@ function _insStufe(key, c, zacken, id, grad){
   const glut = feld >= INSIGNIUM_GRADE ? `<circle data-schein="1" cx="50" cy="50"
       r="${_n(INS_R - INS_BREIT/2)}" fill="url(#${id}glut)"
       opacity="${_n(Math.min(1, .22 + (feld - INSIGNIUM_GRADE) * .045))}"/>` : '';
-  return hof + glut
-    + `<image href="${insBild(INS_ZEICHEN[key] ? key : 'reif', nr, c.rang)}" x="${_n(o)}" y="${_n(o)}"`
-    + ` width="${_n(k)}" height="${_n(k)}"/>`;
+  const kk = INS_ZEICHEN[key] ? key : 'reif';
+  if(bild && !eigen) return hof + glut
+    + `<image href="${insBild(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
+  return hof + glut + _insZeichnung(kk, nr, c.rang, o, k, eigen);
+}
+
+// ── Die Zeichnung als Vektor im Dokument [§C30] ──────────────────────
+// Sie stand als `<image>` mit einer SVG-Datei darin. Safari rastert ein
+// solches Bild in der Größe seiner Nutzereinheiten und nicht in der, in der
+// es erscheint: im Profilkopf wurden 170 Einheiten auf 270 px gezogen, und
+// jedes Insignium stand mit Treppenkanten da wie ausgeschnitten. Als Vektor
+// zeichnet der Browser es in jeder Größe neu. Es steht einmal je Rang, Stufe
+// und Grad im Topf, die Verläufe NEBEN der Gruppe — ein `<use>` klont nur,
+// was es verweist, und die Verläufe braucht es nicht je Wappen. Ohne Topf
+// (`eigen`, Tests, Rastern außerhalb des Dokuments) steht die Zeichnung
+// vollständig im Markup.
+// Das gilt ab einer Wappengröße von `INS_VEKTOR_PX`: darunter bleibt es beim
+// Bild (`insBild`), weil ein Verweis die ganze Zeichnung klont und der Feed
+// mit siebzig Wappen damit doppelt so lange zum Öffnen brauchte.
+const INS_VEKTOR_PX = 64;
+const _insZIds = new Map();          // Rang|Stufe|Bild → id der Gruppe
+const _insZDrin = new Set();
+let _insZTopf = null, _insZLauf = 0;
+function _insZeichnung(key, nr, rang, o, k, eigen){
+  const hin = inner => `<g transform="translate(${_n(o)} ${_n(o)}) scale(${(k / 1000).toFixed(5)})">${inner}</g>`;
+  const farbe = INS_RANGFARBE[rang] || INS_RANGFARBE.Solide;
+  const topf = eigen ? null : _insTopfHolen();
+  if(!topf){
+    const t = _izTeile(key, nr, farbe), p = 'ize' + (++_insZLauf) + '_';
+    return hin(_izPraefix(t.defs + t.bild, p));
+  }
+  if(topf !== _insZTopf){ _insZTopf = topf; _insZDrin.clear(); }
+  const schl = rang + '|' + key + '|' + nr;
+  let id = _insZIds.get(schl);
+  if(!id){ id = 'izg' + _insZIds.size; _insZIds.set(schl, id); }
+  if(!_insZDrin.has(id)){
+    const t = _izTeile(key, nr, farbe);
+    topf.insertAdjacentHTML('beforeend',
+      _izPraefix(t.defs, id + '_') + `<defs><g id="${id}">${_izPraefix(t.bild, id + '_')}</g></defs>`);
+    _insZDrin.add(id);
+  }
+  return hin(`<use href="#${id}"/>`);
 }
 
 // Die Raute am Fuß gehört zum Bild. Mit Band trägt sie die Ligaposition: ein
@@ -943,10 +982,15 @@ const INS_BAND_BOX = '-40 -33 180 155';
 // Kilobyte. Eine App, die auf einem Telefon tagelang offen steht, sammelte
 // darin irgendwann mehr als sie anzeigt.
 const _INS_MEMO = new Map();
-let _insMemoStand = -1;
+let _insMemoStand = -1, _insMemoTopf = null;
 function insigniumSvg(pid, opt){
   opt = opt || {};
   if(_insMemoStand !== _cache.version){ _INS_MEMO.clear(); _insMemoStand = _cache.version; }
+  // Ein gemerktes Wappen verweist auf Zeichnung und Verläufe im Topf. Ist der
+  // Topf ein neuer (der Rumpf wurde ersetzt), stünden die Verweise ins Leere,
+  // und ein Verweis ins Leere zeichnet nichts.
+  const _topfJetzt = _insTopfHolen();
+  if(_topfJetzt !== _insMemoTopf){ _INS_MEMO.clear(); _insMemoTopf = _topfJetzt; }
   const P = prestigeOf(pid);
   const rangLabel = (getPlayerRank(pid) || {}).label;
   const band = opt.band !== false;
@@ -955,8 +999,10 @@ function insigniumSvg(pid, opt){
   const pos = band ? (opt.pos !== undefined ? opt.pos : ligaPosition(pid)) : 0;
   const glanz = rang >= 0 ? INS_SCHWINGE[rang].glanz : .3;
   // Der Schlüssel nennt alles, was die Zeichnung bestimmt, und sonst nichts.
+  // Ohne Größe ist das Zeichen groß (Profilkopf) und wird Vektor.
+  const bild = opt.px != null && opt.px < INS_VEKTOR_PX;
   const schl = [rangLabel, P.insignie.key, P.grad, P.zacken, band ? 1 : 0,
-                titel, pos].join('|');
+                titel, pos, bild ? 1 : 0].join('|');
   const fertig = _INS_MEMO.get(schl);
   if(fertig !== undefined) return fertig;
   const ref = _insDefsRef(rangLabel, glanz);
@@ -984,7 +1030,7 @@ function insigniumSvg(pid, opt){
   s += `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${id}pl)"/>`
     + `<circle cx="50" cy="50" r="${_n(INS_R - INS_BREIT/2 - 1.6)}" fill="none"
        stroke="#000000" stroke-width="2.4" opacity=".38"/>`
-    + _insStufe(P.insignie.key, c, P.zacken, id, P.grad)
+    + _insStufe(P.insignie.key, c, P.zacken, id, P.grad, ref.inline, bild)
     + (band ? _insFuss(pos) : '')
     + (band ? _insSterne(titel, id) : '')
     + `</svg>`;
@@ -1075,7 +1121,7 @@ function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
   return `<svg viewBox="${INS_BOX}" class="ins" aria-hidden="true">`
     + _insDefs(id, c)
     + `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${id}pl)"/>`
-    + _insStufe(key, c, zacken || 0, id, grad || 0)
+    + _insStufe(key, c, zacken || 0, id, grad || 0, true)
     + `</svg>`;
 }
 

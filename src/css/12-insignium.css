@@ -29,10 +29,13 @@
   .rav{--rav:52px;position:relative;flex-shrink:0;
     width:var(--rav);height:var(--rav);
     display:inline-grid;place-items:center;isolation:isolate}
+  /* Kein CSS-Filter auf dem Zeichen. Safari rechnet ein SVG unter
+     `filter` in CSS-Pixeln und skaliert das Ergebnis hoch: auf dem Telefon
+     stand jedes Wappen mit Treppenkanten da, als wäre es ausgeschnitten. Den
+     Schatten bringt die Zeichnung selbst mit (die Kopie unter ihr) [§C30]. */
   .rav > svg.ins{position:absolute;left:50%;top:50%;
     width:100%;height:auto;transform:translate(-50%,-50%);
-    z-index:0;pointer-events:none;
-    filter:drop-shadow(0 3px 9px rgba(0,0,0,.5))}
+    z-index:0;pointer-events:none}
   .rav > .av,.rav > .rav-av{position:relative;z-index:1;
     width:calc(var(--rav) * .46);height:calc(var(--rav) * .46);
     border-radius:50%;display:grid;place-items:center;overflow:hidden;
@@ -112,11 +115,9 @@
     margin-bottom:calc(var(--ins-w) * .400 - 40px)}
   .pp-av-wrap .ins{position:absolute;left:50%;top:50%;
     width:var(--ins-w);height:auto;z-index:0;pointer-events:none;
-    transform:translate(-50%,-50%) translateY(-3.548%);
-    /* Zurückgenommen: das Zeichen bringt seine eigene Unterlage mit, und
-       zwei Schatten übereinander machten aus dem Profilkopf einen dunklen
-       Fleck. Hier bleibt nur, was das Zeichen von der Karte abhebt. */
-    filter:drop-shadow(0 4px 13px rgba(0,0,0,.42))}
+    transform:translate(-50%,-50%) translateY(-3.548%)}
+  /* Auch hier kein Filter: der Profilkopf ist die größte Stelle, an der das
+     Zeichen steht, und dort sah man die Treppenkanten am deutlichsten. */
   .pp-av-wrap .pp-av-ring{z-index:1}
 
   /* ── Laufbahn-Sheet [§13.10] ───────────────────────────────────────
@@ -151,13 +152,11 @@
   /* Die Karte in der Mitte ist die, die man ansieht — sie bekommt den Platz.
      Getragen oder nicht entscheidet die FARBE, nicht die Größe: sonst wären
      zwei Aussagen auf derselben Achse. */
-  .lb-k.fokus .lb-k-ins svg.ins{width:130px;height:130px;opacity:1;
-    filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
+  .lb-k.fokus .lb-k-ins svg.ins{width:130px;height:130px;opacity:1;filter:none}
   /* In der Mitte zeigt auch eine offene Stufe ihre Farbe, etwas leiser: man
      soll sehen können, worauf man zuläuft [§C30]. Entfärbt bleiben nur die
      Nachbarn am Rand. */
-  .lb-k.fokus.offen .lb-k-ins svg.ins{filter:drop-shadow(0 4px 14px rgba(0,0,0,.6));
-    opacity:.72}
+  .lb-k.fokus.offen .lb-k-ins svg.ins{filter:none;opacity:.72}
   /* Beschriftet wird nur die Karte in der Mitte. Die Nachbarn ragen absichtlich
      halb ins Bild — mit Text hieß das ein abgeschnittenes „erbring" am Rand,
      und ein halbes Wort liest sich als Fehler, nicht als Andeutung. Der Platz
@@ -223,8 +222,7 @@
      es die Stufe gibt — und dass man sie nicht hat. */
   .lb-sw-b svg.ins{width:100%;height:auto;filter:grayscale(1);opacity:.24}
   .lb-sw.erreicht .lb-sw-b svg.ins{filter:none;opacity:.5}
-  .lb-sw.jetzt .lb-sw-b svg.ins{filter:none;opacity:1;
-    filter:drop-shadow(0 2px 7px rgba(0,0,0,.5))}
+  .lb-sw.jetzt .lb-sw-b svg.ins{filter:none;opacity:1}
   .lb-sw-p{font-family:'Sometype Mono',monospace;font-size:8.5px;
     color:var(--faint)}
   .lb-sw.erreicht .lb-sw-p{color:var(--muted)}
