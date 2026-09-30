@@ -395,34 +395,6 @@ function _ndNeu(txt){
   return _ndOben.indexOf(n) >= 0 ? '' : txt;
 }
 
-// ── Die Leiter der Liga im Blatt ─────────────────────────────────────
-// Jede Stufe eine Zeile, jedes Feld mit seinem Bild und darauf die Gesichter
-// derer, die es an diesem Tag trugen — höchstens drei, danach die Zahl. Die
-// Zeichen stehen im Violett der Vorlage: das Blatt gehört keinem Rang.
-function _ndLigaLeiter(L){
-  try {
-    const pm = pmap(), felder = Array.isArray(L && L.felder) ? L.felder : [];
-    const zeilen = INSIGNIEN.map((ins, i) => {
-      const n = (INS_BILD[ins.key] || []).length || INSIGNIUM_GRADE;
-      const f = Array.from({length:n}, (_, g) => {
-        const da = felder.filter(x => x[1] === i && x[2] === g && pm[x[0]]).map(x => x[0]);
-        let z = '';
-        try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG,
-                ins.key === 'stern' ? ORDENSSTERN_START + g : 0, g) || ''; } catch(e){ z = ''; }
-        const gesichter = da.slice(0, 3).map(pid =>
-          `<span class="nd-ll-av" data-pid="${esc(pid)}">${avHtml(pm[pid], '', {px:18})}</span>`).join('')
-          + (da.length > 3 ? `<span class="nd-ll-mehr num">+${da.length - 3}</span>` : '');
-        return `<span class="nd-ll-f${da.length ? ' da' : ''}">${z}`
-          + (gesichter ? `<span class="nd-ll-g">${gesichter}</span>` : '') + `</span>`;
-      }).join('');
-      return `<div class="nd-ll-z"><div class="nd-ll-n"><b>${esc(ins.name)}</b>`
-        + `<span class="num">${i === 0 ? 'Start' : 'ab ' + ins.min}</span></div>`
-        + `<div class="nd-ll-r">${f}</div></div>`;
-    }).join('');
-    return `<div class="nd-ll">${zeilen}</div>`;
-  } catch(e){ return ''; }
-}
-
 // ── Das Insignium im Blatt ───────────────────────────────────────────
 // Die Karte „Stefan trägt den Schildring" öffnete ein Blatt mit NULL Zeichen
 // Inhalt: kein Zeichen, keine Leiter, keine Punkte. Ausgerechnet die Story,
@@ -1180,10 +1152,6 @@ function _newsDetailMitte(s){
         const wertBlock = (d.vv != null && d.vv !== '')
           ? `<div class="nd-gwert ${d.prestige ? 'gold' : ''}"><b>${esc(String(d.vv))}</b>`
             + `<span>${esc(d.vl || '')}</span></div>` : '';
-        // Die Leiter der Liga: jedes Feld mit den Gesichtern, die es tragen,
-        // so wie es am Tag der Karte stand [§C30].
-        if(d.leiter) return wertBlock + `<div class="nd-section">Die Leiter der Liga</div>`
-          + _ndLigaLeiter(d.leiter);
         if(d.ambientPid && pm[d.ambientPid]){
           return wertBlock
             + (d.prestige ? `<div class="nd-section">Der Stand am Zeichen</div>`
