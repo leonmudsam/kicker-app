@@ -24,7 +24,7 @@ function showH2H(idA, idB){
   if(d.total === 0){
     openSheet(`
       <div style="text-align:center;margin-bottom:18px">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Head-to-Head</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Direkter Vergleich</div>
         <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
           <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
           <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>
@@ -70,14 +70,14 @@ function showH2H(idA, idB){
       <div style="display:flex;gap:7px">
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1">${teamGd}</div>
-          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Tordiff</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Torbilanz</div>
         </div>
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1;color:${teamEloCol}">${teamEloStr}</div>
-          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Σ Elo</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Elo zusammen</div>
         </div>
         <button data-team="${esc([idA,idB].sort().join('|'))}" style="flex:1.2;background:rgba(86,180,232,.1);border:1px solid rgba(86,180,232,.3);border-radius:9px;padding:8px;color:var(--blue);font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px">
-          Team-Sheet
+          Zum Duo
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
       </div>
@@ -106,7 +106,7 @@ function showH2H(idA, idB){
       <div style="display:flex;gap:7px">
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1">${oppGd}</div>
-          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Tordiff</div>
+          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-top:3px">Torbilanz</div>
         </div>
         <div style="flex:1;background:var(--bg2);border-radius:9px;padding:8px;text-align:center">
           <div class="num" style="font-family:'Archivo Black',sans-serif;font-size:14px;line-height:1;color:${oppEloCol}">${oppEloStr}</div>
@@ -120,7 +120,7 @@ function showH2H(idA, idB){
     const m = enc.m;
     const won = enc.wonForA;
     const isTeam = enc.type === 'team';
-    const score = m.score_a + ':' + m.score_b;
+    const score = standFuer(m, won);
     const typeChip = isTeam
       ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(86,180,232,.12);color:var(--blue);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:6px;font-family:'Sometype Mono',monospace">Team</span>`
       : `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(167,139,250,.12);color:var(--purple);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:6px;font-family:'Sometype Mono',monospace">Gegner</span>`;
@@ -146,7 +146,7 @@ function showH2H(idA, idB){
 
   openSheet(`
     <div style="text-align:center;margin-bottom:18px">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Head-to-Head</div>
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--muted);font-weight:700;font-family:'Sometype Mono',monospace">Direkter Vergleich</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px">
         <div data-detail="${esc(pA.id)}" style="cursor:pointer">${avBig(pA)}</div>
         <span class="svg-ic" style="color:var(--muted);width:18px;height:18px">${svgI('swords')}</span>

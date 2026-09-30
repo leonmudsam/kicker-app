@@ -1,0 +1,823 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sieben Insignien</title>
+<!--
+  Entwurf für den nächsten Auftrag: die Insignium-Leiter mit sieben Stufen in
+  zwei Richtungen, dazu Bewegung und neue grafische Ansichten. Eigenständige
+  Seite ohne Bauablauf, kein Teil der App [CLAUDE.md §2]. Die Leiter folgt
+  Richtung B aus der ersten Fassung (sieben Gegenstände, eine Bauweise),
+  neu gezeichnet: klare Silhouetten, ein Metallverlauf über das ganze
+  Zeichen, Kränze, die mit der Stufe wachsen, die Krone als Krönung.
+  Namen und Zahlen der Liga stehen als Anschauung.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sometype+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c0b; --bg2:#0f1311; --surface:#141a16; --surface2:#1a221d;
+  --surface3:#222b25; --line:#28332b; --line2:#34423a;
+  --ink:#eef3ef; --ink2:#b9c4bd; --muted:#717f76; --faint:#4a554e;
+  --acid:#BEF264; --acid2:#A3E635; --acid-deep:#1A2E08;
+  --orange:#ff7849; --blue:#56b4e8; --red:#f0566a; --gold:#f7cf4a; --purple:#a78bfa;
+  --silber:#C2C9D0; --bronze:#C08457;
+  --r:18px;
+  --mono:'Sometype Mono',ui-monospace,monospace;
+  --disp:'Archivo Black',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+  line-height:1.45;-webkit-font-smoothing:antialiased;padding-bottom:80px;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(700px circle at 85% -5%,rgba(190,242,100,.07),transparent 55%),
+             radial-gradient(600px circle at 10% 105%,rgba(167,139,250,.06),transparent 55%)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+
+header.kopf{max-width:1240px;margin:0 auto;padding:36px 16px 10px}
+header.kopf h1{font-family:var(--disp);font-size:clamp(26px,4vw,40px);letter-spacing:-.03em;line-height:1.02}
+header.kopf h1 small{display:block;font-family:'Space Grotesk',system-ui,sans-serif;font-size:14px;font-weight:600;
+  color:var(--acid);letter-spacing:0;margin-top:8px}
+header.kopf p{color:var(--muted);font-size:14px;max-width:80ch;margin-top:12px}
+header.kopf p b{color:var(--ink2);font-weight:600}
+
+nav.leiste{position:sticky;top:0;z-index:40;background:rgba(10,12,11,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);margin:20px 0 30px}
+nav.leiste .in{max-width:1240px;margin:0 auto;padding:10px 16px;display:flex;gap:6px;
+  overflow-x:auto;scrollbar-width:none;align-items:center}
+nav.leiste .in::-webkit-scrollbar{display:none}
+nav.leiste a{flex-shrink:0;color:var(--muted);text-decoration:none;font-size:12.5px;font-weight:600;
+  padding:6px 11px;border-radius:9px;border:1px solid transparent}
+nav.leiste a:hover{color:var(--ink);border-color:var(--line)}
+nav.leiste label{margin-left:auto;flex-shrink:0;display:flex;gap:7px;align-items:center;
+  font-size:11.5px;color:var(--muted);cursor:pointer;padding-left:12px}
+nav.leiste input{accent-color:var(--acid)}
+
+section.abs{max-width:1240px;margin:0 auto 64px;padding:0 16px;scroll-margin-top:70px}
+section.abs>h2{font-family:var(--disp);font-size:22px;letter-spacing:-.02em;display:flex;
+  align-items:baseline;gap:12px;flex-wrap:wrap}
+section.abs>h2 .nr{font-family:var(--mono);font-size:12px;color:var(--acid);letter-spacing:.06em}
+section.abs>.lead{color:var(--muted);font-size:14px;max-width:82ch;margin:8px 0 22px}
+section.abs>.lead b{color:var(--ink2);font-weight:600}
+.reihe{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:28px;align-items:start}
+.notiz{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 8px}
+.notiz h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:12px}
+.notiz ol{list-style:none;counter-reset:n}
+.notiz li{counter-increment:n;position:relative;padding:0 0 14px 34px;font-size:13.5px;color:var(--ink2)}
+.notiz li::before{content:counter(n);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:7px;
+  display:grid;place-items:center;font:700 11px var(--mono);color:var(--acid);background:rgba(190,242,100,.08);
+  border:1px solid rgba(190,242,100,.25)}
+.notiz li b{color:var(--ink);font-weight:600}
+.notiz p{font-size:13.5px;color:var(--ink2);margin-bottom:12px}
+.regel{margin-top:6px;margin-bottom:14px;font-size:12.5px;color:var(--muted);border-left:2px solid var(--line2);padding:2px 0 2px 12px}
+.regel b{color:var(--ink2)}
+
+/* ── Die Leiter ──────────────────────────────────────────────── */
+.leiter-kopf{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+.leiter-kopf .t{font:700 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.rangwahl{display:inline-flex;gap:3px;padding:3px;border-radius:12px;background:var(--bg2);border:1px solid var(--line)}
+.rangwahl button{border:0;background:none;padding:6px 11px;border-radius:9px;font-size:12px;font-weight:600;color:var(--muted)}
+.rangwahl button.an{background:var(--surface3);color:var(--ink)}
+.rangwahl button i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.leiter{display:grid;gap:10px}
+.stufe{display:grid;grid-template-columns:132px repeat(3,minmax(0,1fr));gap:8px;align-items:center;
+  background:linear-gradient(180deg,var(--surface),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.stufe .name{display:flex;flex-direction:column;gap:2px}
+.stufe .name b{font-size:14.5px}
+.stufe .name span{font:600 10.5px var(--mono);color:var(--muted);letter-spacing:.04em}
+.stufe .name em{font-style:normal;font-size:11px;color:var(--ink2);line-height:1.35;margin-top:4px}
+.stufe .name .neu{align-self:flex-start;margin-top:5px;font:700 9px var(--mono);letter-spacing:.12em;color:var(--purple);
+  border:1px solid rgba(167,139,250,.35);background:rgba(167,139,250,.08);border-radius:6px;padding:1px 6px}
+.feld{display:flex;flex-direction:column;align-items:center;gap:2px}
+.feld .bild{width:min(100%,128px);aspect-ratio:1}
+.feld .bild svg{width:100%;height:100%;display:block;overflow:visible}
+.feld span{font:600 10px var(--mono);color:var(--muted)}
+@media (max-width:640px){
+  .stufe{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .stufe .name{grid-column:1/-1;flex-direction:row;flex-wrap:wrap;align-items:baseline;gap:8px}
+  .stufe .name em{flex-basis:100%}
+}
+
+/* ── Im Alltag ───────────────────────────────────────────────── */
+.tel{background:var(--bg2);border:1px solid var(--line2);border-radius:30px;padding:14px 12px 16px;max-width:380px;
+  margin:0 auto;width:100%;box-shadow:0 30px 70px -40px rgba(0,0,0,.8)}
+.tel .cap{font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:center;margin-bottom:10px}
+.rzeile{display:grid;grid-template-columns:22px 52px minmax(0,1fr) auto;gap:10px;align-items:center;
+  padding:6px 8px;border-radius:14px}
+.rzeile + .rzeile{margin-top:2px}
+.rzeile:nth-child(odd){background:rgba(255,255,255,.018)}
+.rzeile .p{font:700 12px var(--mono);color:var(--muted);text-align:center}
+.rzeile .w{position:relative;width:52px;height:52px}
+.rzeile .w svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.rzeile .w .av{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;
+  display:grid;place-items:center;font:700 9px 'Space Grotesk',sans-serif;color:#0b0f0d}
+.rzeile .n b{display:block;font-size:14px}
+.rzeile .n span{font-size:11px;color:var(--muted)}
+.rzeile .e{font:700 14px var(--mono)}
+.zwei{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.zwei > div > .t{font:700 9.5px var(--mono);letter-spacing:.14em;color:var(--muted);text-align:center;margin:4px 0 6px}
+.zwei .rzeile{grid-template-columns:52px minmax(0,1fr);padding:4px}
+.zwei .rzeile .e,.zwei .rzeile .p{display:none}
+.lt{display:flex;gap:3px;align-items:center;margin-top:8px}
+.lt i{flex:1 1 0;min-width:0;max-width:40px;aspect-ratio:1;opacity:.42}
+.lt i svg{width:100%;height:100%;display:block;overflow:visible}
+.lt i.hat{opacity:1}
+.lt i.jetzt{outline:1.5px solid var(--gold);outline-offset:1px;border-radius:50%}
+.lt-t{display:flex;justify-content:space-between;font:600 10px var(--mono);color:var(--muted);margin-top:6px}
+.lt-t b{color:var(--ink)}
+.karte{background:linear-gradient(180deg,var(--surface),var(--bg2));border:1px solid var(--line);border-radius:16px;padding:12px;margin-top:12px}
+.karte .rub{font:700 9.5px var(--mono);letter-spacing:.14em;color:var(--purple);text-transform:uppercase}
+.karte h4{font-size:15px;margin-top:6px}
+
+.knopfreihe{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.knopf{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:12.5px;padding:9px 13px;border-radius:12px;
+  background:var(--surface2);border:1px solid var(--line2)}
+.knopf.prim{background:var(--acid);color:var(--acid-deep);border-color:transparent}
+
+/* ── Bewegung ────────────────────────────────────────────────── */
+.demo{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.demo h4{font-size:14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.demo h4 small{font:600 10px var(--mono);color:var(--muted);letter-spacing:.06em}
+.demo p.k{font-size:12.5px;color:var(--muted);margin:6px 0 12px}
+.demo .kost{margin-top:10px;font:600 10.5px var(--mono);color:var(--acid);letter-spacing:.02em}
+/* Rangliste nach einer Partie: FLIP */
+.flip .rzeile{grid-template-columns:22px 30px minmax(0,1fr) auto;background:var(--surface);border:1px solid var(--line);
+  will-change:transform}
+.flip .rzeile + .rzeile{margin-top:5px}
+.flip .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font:700 10px "Space Grotesk",sans-serif;color:#0b0f0d}
+.flip .d{font:700 11px var(--mono);padding:2px 6px;border-radius:7px;opacity:0;transform:translateY(4px);transition:opacity .3s,transform .3s}
+.flip .d.an{opacity:1;transform:none}
+.flip .d.g{color:var(--acid);background:rgba(190,242,100,.1)} .flip .d.r{color:var(--red);background:rgba(240,86,106,.1)}
+.flip .rzeile.hoch{box-shadow:inset 3px 0 0 var(--acid)}
+/* Zahl zählt */
+.zr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.zr div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
+.zr b{display:block;font:400 24px var(--disp);letter-spacing:-.02em}
+.zr span{font-size:10.5px;color:var(--muted)}
+/* Stories */
+.st{position:relative;height:420px;border-radius:24px;overflow:hidden;background:#080a09;border:1px solid var(--line2);user-select:none}
+.st .bars{position:absolute;top:10px;left:12px;right:12px;display:flex;gap:4px;z-index:3}
+.st .bars i{flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden}
+.st .bars i b{display:block;height:100%;width:100%;background:#fff;transform-origin:left;transform:scaleX(0)}
+.st .bars i.fertig b{transform:scaleX(1)}
+.st .bars i.jetzt b{animation:stLauf 4.5s linear forwards}
+@keyframes stLauf{to{transform:scaleX(1)}}
+.st .seite{position:absolute;inset:0;padding:34px 18px 20px;display:flex;flex-direction:column;justify-content:flex-end;
+  opacity:0;transform:scale(1.04);transition:opacity .35s,transform .45s}
+.st .seite.an{opacity:1;transform:none}
+.st .seite .rub{font:700 10px var(--mono);letter-spacing:.16em;text-transform:uppercase}
+.st .seite h5{font:400 26px/1.08 var(--disp);letter-spacing:-.02em;margin:8px 0}
+.st .seite p{font-size:13px;color:var(--ink2)}
+.st .gross{font:400 84px/1 var(--disp);letter-spacing:-.05em;margin-bottom:auto;margin-top:30px}
+.st .tipp{position:absolute;inset:0;display:grid;grid-template-columns:1fr 2fr;z-index:4}
+/* Pull to refresh */
+.ptr{position:relative;height:240px;border-radius:20px;overflow:hidden;background:var(--surface);border:1px solid var(--line);touch-action:none}
+.ptr .inh{position:absolute;inset:0;padding:14px;will-change:transform}
+.ptr .ball{position:absolute;left:50%;top:-34px;width:26px;height:26px;margin-left:-13px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#fff,#d8ddd9 45%,#8a938d);box-shadow:0 4px 10px rgba(0,0,0,.5)}
+.ptr .ball::after{content:"";position:absolute;inset:4px;border-radius:50%;border:1.5px dashed rgba(10,12,11,.35)}
+.ptr .zeilen div{height:34px;border-radius:10px;background:var(--surface2);margin-bottom:8px}
+.skel{background:linear-gradient(100deg,var(--surface2) 40%,var(--surface3) 50%,var(--surface2) 60%) 0 0/200% 100%;
+  animation:skel 1.4s linear infinite}
+@keyframes skel{to{background-position:-200% 0}}
+
+/* ── Neue Ansichten ──────────────────────────────────────────── */
+.kal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.kal i{aspect-ratio:1;border-radius:6px;background:var(--surface2);position:relative}
+.kal i.l1{background:rgba(190,242,100,.18)} .kal i.l2{background:rgba(190,242,100,.38)}
+.kal i.l3{background:rgba(190,242,100,.62)} .kal i.l4{background:var(--acid)}
+.kal i.potd::after{content:"";position:absolute;inset:-2px;border-radius:8px;box-shadow:0 0 0 1.5px var(--gold)}
+.kal-k{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font:600 9.5px var(--mono);color:var(--muted);text-align:center;margin-bottom:4px}
+.leg{display:flex;align-items:center;gap:6px;font:600 10px var(--mono);color:var(--muted);margin-top:8px}
+.leg i{width:12px;height:12px;border-radius:4px;display:inline-block}
+svg.graf{width:100%;height:auto;display:block;overflow:visible}
+.zeichne{stroke-dasharray:var(--l,600);stroke-dashoffset:var(--l,600);animation:zeichne 1.6s ease-out forwards}
+@keyframes zeichne{to{stroke-dashoffset:0}}
+.plan{display:grid;gap:10px}
+.plan > div{display:grid;grid-template-columns:44px 1fr;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.plan .n{font:700 20px var(--disp);color:var(--acid)}
+.plan h4{font-size:14px}
+.plan p{font-size:12.5px;color:var(--muted);margin-top:3px}
+.tab{width:100%;border-collapse:collapse;font-size:12.5px}
+.tab th,.tab td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:left}
+.tab th{font:700 10px var(--mono);letter-spacing:.1em;color:var(--muted);text-transform:uppercase}
+.tab td.num{text-align:right}
+.tab tr.neu td{color:var(--purple)}
+
+body.ruhig *,body.ruhig *::before,body.ruhig *::after{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ── Größen und Rangliste ───────────────────────────────────────── */
+.groessen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:end}
+.groessen > div{display:flex;flex-direction:column;align-items:center;gap:6px}
+.groessen .b{width:100%;aspect-ratio:1}
+.groessen .b svg{width:100%;height:100%;overflow:visible}
+.groessen span{font:600 9px var(--mono);color:var(--muted);text-align:center;max-width:100%;white-space:nowrap}
+.tel .rzeile{grid-template-columns:22px 52px minmax(0,1fr) auto}
+/* ── Die Bühne ─────────────────────────────────────────────────── */
+.buehne{position:relative;height:430px;border-radius:26px;overflow:hidden;border:1px solid var(--line2);
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 14px,rgba(0,0,0,.08) 14px 30px),
+    radial-gradient(120% 80% at 50% 0%,#1a2230,#0b0f14 70%)}
+.buehne .licht{position:absolute;left:50%;top:-40px;width:420px;height:470px;margin-left:-210px;pointer-events:none;
+  background:conic-gradient(from 180deg at 50% 0%,transparent 160deg,rgba(255,255,255,.10) 172deg,rgba(255,255,255,.16) 180deg,rgba(255,255,255,.10) 188deg,transparent 200deg);
+  filter:blur(6px)}
+.buehne .podest{position:absolute;left:50%;bottom:34px;width:230px;margin-left:-115px}
+.buehne .podest i{display:block;margin:0 auto;border-radius:50%;
+  background:linear-gradient(180deg,#e9eef3,#7c8590 55%,#2a3038);box-shadow:0 10px 24px rgba(0,0,0,.6)}
+.buehne .podest i:nth-child(1){width:150px;height:22px;margin-bottom:-8px}
+.buehne .podest i:nth-child(2){width:190px;height:26px;margin-bottom:-8px;filter:brightness(.8)}
+.buehne .podest i:nth-child(3){width:230px;height:30px;filter:brightness(.62)}
+.buehne .emblem{position:absolute;left:50%;top:40px;width:230px;height:230px;margin-left:-115px;
+  filter:drop-shadow(0 18px 24px rgba(0,0,0,.55));animation:schweben 5s ease-in-out infinite}
+.buehne .emblem svg{width:100%;height:100%;overflow:visible}
+@keyframes schweben{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.buehne .emblem::after{content:"";position:absolute;inset:18%;border-radius:50%;pointer-events:none;
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%) no-repeat;
+  background-size:250% 100%;background-position:140% 0;mix-blend-mode:screen;animation:glanz 6s ease-in-out infinite}
+@keyframes glanz{0%,70%{background-position:140% 0}100%{background-position:-40% 0}}
+.buehne .titel{position:absolute;left:0;right:0;bottom:6px;text-align:center}
+.buehne .titel b{font:400 19px var(--disp);letter-spacing:-.01em}
+.buehne .titel span{display:block;font:600 10.5px var(--mono);color:var(--muted)}
+.buehne.an .emblem svg{animation:ankommen 1.1s cubic-bezier(.2,.9,.25,1.15) both}
+@keyframes ankommen{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+.buehne.an .licht{animation:lichtAn 1.4s ease-out both}
+@keyframes lichtAn{from{opacity:0}to{opacity:1}}
+.vergleich{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.vergleich img{width:100%;border-radius:12px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<header class="kopf">
+  <h1>Sieben Insignien<small>Mockup · Richtung B, neu gezeichnet · dazu Bewegung und neue Ansichten</small></h1>
+  <p>Die Leiter bekommt zwei Stufen mehr, damit zwischen den oberen Schwellen keine langen Strecken ohne neues Zeichen liegen. Jede Stufe ist ein eigener Gegenstand, alle in derselben Bauweise: <b>eine Medaille auf einem Kranz</b>, ruhige Silhouetten mit viel Luft, ein Metallverlauf über das ganze Zeichen und wenige, große Teile. Die Kränze wachsen mit der Stufe, <b>die Krone</b> kommt als Krönung, ganz oben steht <b>der Stern</b>. Ein Band gibt es nicht. Der Fuß bleibt in jeder Stufe frei für <b>die Raute mit der Platzierung</b>, und der Rang gibt dem Metall seinen <b>Schimmer</b>: Gold, Violett, Grün, Blau oder Orange.</p>
+</header>
+
+<nav class="leiste"><div class="in">
+  <a href="#schwellen">Schwellen</a><a href="#leiter-abs">Die Leiter</a><a href="#alltag">Im Alltag</a><a href="#buehne-abs">Die Bühne</a>
+  <a href="#bewegung">Bewegung</a><a href="#ideen">Neue Ansichten</a><a href="#plan">Reihenfolge</a>
+  <label><input type="checkbox" id="ruhig"> Bewegung reduzieren</label>
+</div></nav>
+
+<section class="abs" id="schwellen">
+  <h2><span class="nr">01</span>Sieben Stufen, eine steigende Leiter</h2>
+  <p class="lead">Jede Spanne ist teurer als die vorige. Der Ordensstern rückt von 4500 auf 4700, damit die Spannen weiter wachsen. Die drei Grade bleiben bei 0, 16 und 40 % der Spanne und bauen den Gegenstand ihrer Stufe aus: <b>längere Zweige, mehr Blätter, eine größere Krone</b>.</p>
+  <div class="reihe">
+    <table class="tab">
+      <thead><tr><th>Stufe</th><th>Gegenstand</th><th>heute</th><th class="num">ab</th><th class="num">Spanne</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>Reif</td><td>Reif</td><td class="num">0</td><td class="num">500</td></tr>
+        <tr><td>2</td><td>Zweigreif</td><td>Schildring</td><td class="num">500</td><td class="num">700</td></tr>
+        <tr><td>3</td><td>Eichenkranz</td><td>Volutenkranz</td><td class="num">1200</td><td class="num">750</td></tr>
+        <tr class="neu"><td>4</td><td>Lorbeerkranz</td><td>—</td><td class="num">1950</td><td class="num">850</td></tr>
+        <tr class="neu"><td>5</td><td>Kronenkranz</td><td>Lorbeerreif</td><td class="num">2800</td><td class="num">900</td></tr>
+        <tr class="neu"><td>6</td><td>Königskranz</td><td>—</td><td class="num">3700</td><td class="num">1000</td></tr>
+        <tr><td>7</td><td>Ordensstern</td><td>Ordensstern</td><td class="num">4700</td><td class="num">Zacken</td></tr>
+      </tbody>
+    </table>
+    <div class="notiz"><h3>Wo die Liga dann steht</h3><ol>
+      <li><b>Die Spitze im Lorbeerkranz.</b> Leon (2377), Julian (2239) und Martin (2230) stehen in den Fixtures in Stufe 4.</li>
+      <li><b>Martin mit 2875 (Stand der Datenbank) trägt den Kronenkranz I.</b> Die Schwelle 2800 bleibt, nur der Gegenstand heißt anders.</li>
+      <li><b>Nach oben bleiben zwei Stufen offen.</b> Königskranz und Ordensstern sind für die Spitze über 800 Punkte entfernt.</li>
+      <li><b>Breaking</b> bleibt der erste Aufstieg in die beiden obersten Stufen, also Königskranz und Ordensstern.</li>
+    </ol></div>
+  </div>
+</section>
+
+<section class="abs" id="leiter-abs">
+  <h2><span class="nr">02</span>Die Leiter</h2>
+  <p class="lead">Jede Stufe ist ein eigener Gegenstand, und alle folgen denselben Regeln. Der Kranz liegt hinter dem Reif auf demselben Bogen und setzt rechts und links der Raute an, die in jeder Stufe die Platzierung trägt. Jede Fläche hat eine helle und eine dunkle Hälfte, zwischen zwei Teilen liegt eine Fuge statt einer Haarlinie. Die Lichter des Metalls tragen den Schimmer des Rangs, ab dem Lorbeer dazu ein leiser Hof. Oben bleibt der Scheitel frei für Stein, Krone und Lilie.</p>
+  <div class="leiter-kopf"><span class="t">Metall des Rangs</span><div class="rangwahl"></div></div>
+  <div class="leiter" id="leiter"></div>
+</section>
+
+<section class="abs" id="alltag">
+  <h2><span class="nr">03</span>Im Alltag: 52 Pixel und die Leiter im Feed</h2>
+  <p class="lead">Wirken muss das Zeichen in der <b>Ranglistenzeile</b>. Dort ist es 52 px groß und trägt das Gesicht in der Mitte. Die Silhouetten sind deshalb so gewählt, dass man die Stufe schon am Umriss liest: Ring, Zweige am Fuß, Eichenlaub bis über die Mitte, voller Lorbeer, Lorbeer mit Krone, voller Kranz mit Lilienkrone, Stern dahinter. Unten sitzt in jeder Stufe die Raute mit der Platzierung.</p>
+  <div class="reihe">
+    <div class="tel"><div class="cap">Liga · Rangliste bei 360 px</div><div id="zeilen"></div></div>
+    <div>
+      <div class="tel"><div class="cap">News · Insignium-Karte</div>
+        <div class="karte"><div class="rub">Das Zeichen</div><h4>Leon trägt den Lorbeerkranz III</h4>
+          <div class="lt" id="lt"></div><div class="lt-t"><span>Lorbeerkranz III</span><span><b>2377</b> / 2800 bis Kronenkranz</span></div></div>
+      </div>
+      <div class="notiz" style="margin-top:18px"><h3>Größen</h3><div class="groessen" id="gross"></div>
+        <p style="margin-top:12px">Die Feed-Leiter bekommt flexible Felder (<code>flex:1 1 0; max-width:40px</code>) und die Zahl eine eigene Zeile. Mit sieben festen 40-px-Feldern liefe sie bei 360 px über den Rand.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="abs" id="buehne-abs">
+  <h2><span class="nr">04</span>Die Bühne: der Aufstieg</h2>
+  <p class="lead">Beim ersten Öffnen nach einem Aufstieg steht das neue Zeichen einmal auf einer Bühne: ein Lichtkegel, ein Podest, das Zeichen schwebt darüber und fängt einen Glanz. Das passiert <b>einmal je Stufe und Gerät</b>. Bewegt werden nur <code>transform</code> und <code>opacity</code>, und ohne Bewegung steht es still da. Dasselbe Bild trägt die Laufbahn als Kopf.</p>
+  <div class="reihe">
+    <div>
+      <div class="buehne" id="buehne"><div class="licht"></div><div class="podest"><i></i><i></i><i></i></div><div class="emblem"></div>
+        <div class="titel"><b>Kronenkranz</b><span>ab 2800 Prestige</span></div></div>
+      <div class="knopfreihe"><button class="knopf prim" id="buehneLos">Aufstieg abspielen</button><button class="knopf" id="buehneWeiter">Nächste Stufe</button></div>
+    </div>
+    <div class="notiz"><h3>Bauregeln der Leiter</h3><ol>
+      <li><b>Ein Verlauf für das ganze Zeichen.</b> Reif, Blätter, Krone und Perlen liegen im selben Licht. Vorher hatte jedes Teil seinen eigenen Verlauf, und das Zeichen sah zusammengesetzt aus.</li>
+      <li><b>Fuge statt Haarlinie.</b> Zwischen zwei Teilen liegt ein schmaler Streifen in der Farbe des Grunds. Haarlinien über überlappenden Blättern ergaben ein Netz aus Strichen; die Fuge trennt Blatt von Blatt wie ein Prägestempel.</li><li><b>Der Kranz liegt hinter dem Reif.</b> Das Zeichen ist eine Medaille auf einem Kranz. Die inneren Blätter tauchen unter den Reif.</li><li><b>Wenige, große Teile.</b> Blätter ohne Rippen, keine Beeren und Eicheln, kein Band. Die Stufe liest man am Umriss, nicht am Kleinkram.</li>
+      <li><b>Die Stufe wechselt den Gegenstand, der Grad baut ihn aus.</b> Längere Zweige, größere Blätter, ein Stein. Eine Krone wächst von drei auf fünf Zacken.</li>
+      <li><b>Der Rang als Schimmer:</b> die Lichter des Metalls, Raute, Steine und ein leiser Hof in der Rangfarbe. Das Metall bleibt Metall und wird nicht angemalt.</li>
+      <li><b>Die Raute bleibt, wo sie ist:</b> unten in der Mitte, mit der Platzierung. Kein Kranz reicht in ihren Platz.</li>
+      <li><b>Die Schwinge</b> für Meistertitel wird im selben Stil nachgezogen: zwei Palmzweige hinter dem Kranz statt der Ranken.</li>
+    </ol></div>
+  </div>
+</section>
+<!-- ═══ BEWEGUNG ════════════════════════════════════════════════════ -->
+<section class="abs" id="bewegung">
+  <h2><span class="nr">05</span>Bewegung, die etwas erklärt</h2>
+  <p class="lead">Jede Bewegung hier beantwortet eine Frage: <b>Wer ist an wem vorbei?</b> <b>Wie groß ist die Zahl?</b> <b>Was war heute los?</b> Alle laufen auf der Grafikkarte (<code>transform</code>, <code>opacity</code>), keine misst während der Bewegung eine Breite, und alle ruhen bei reduzierter Bewegung. Die Schalter oben rechts und in den Systemeinstellungen stellen sie ab.</p>
+  <div class="reihe">
+    <div class="demo">
+      <h4>Die Rangliste nach einer Partie <small>FLIP</small></h4>
+      <p class="k">Nach dem Speichern gleiten die Zeilen an ihren neuen Platz, statt zu springen. Die Elo-Änderung erscheint neben dem Namen und bleibt drei Sekunden stehen.</p>
+      <div class="flip" id="flip"></div>
+      <div class="knopfreihe"><button class="knopf prim" id="flipLos">Partie eintragen</button></div>
+      <div class="kost">Eine Messung vor, eine nach dem Zeichnen · 300 ms transform</div>
+    </div>
+    <div class="demo">
+      <h4>Zahlen, die hochzählen <small>rAF</small></h4>
+      <p class="k">Die Zahlenreihe eines Blatts zählt beim ersten Erscheinen in 600 ms von null auf ihren Wert. Das geschieht einmal, nicht bei jedem Neuzeichnen, und die Breite steht vorher fest (<code>tabular-nums</code>), damit nichts wackelt.</p>
+      <div class="zr" id="zr"><div><b data-z="2377">0</b><span>Prestige</span></div><div><b data-z="62" data-e=" %">0</b><span>Siegquote</span></div><div><b data-z="13" data-e="×">0</b><span>längste Serie</span></div></div>
+      <div class="knopfreihe"><button class="knopf" id="zrLos">Noch einmal</button></div>
+      <div class="kost">Ein requestAnimationFrame für alle Zellen · nur Text</div>
+    </div>
+    <div class="demo">
+      <h4>Der Spieltag als Stories <small>neu</small></h4>
+      <p class="k">Ein Knopf über dem Tageskopf öffnet den Spieltag als Vollbild: eine Seite je Karte, von der ersten Partie bis zum Spieler des Tages. Tippen rechts geht weiter, links zurück. Das ist die schnelle Art, einen Tag nachzulesen, ohne zu scrollen.</p>
+      <div class="st" id="st"><div class="bars"></div><div class="tipp"><span data-st="-1"></span><span data-st="1"></span></div></div>
+      <div class="kost">Seiten liegen fertig im DOM · Wechsel mit opacity und transform</div>
+    </div>
+    <div class="demo">
+      <h4>Neu laden durch Ziehen <small>Geste</small></h4>
+      <p class="k">In der PWA gibt es kein Browser-Neuladen. Wer die Liste nach unten zieht, holt einen Kickerball herein, der beim Loslassen rollt, bis die Daten da sind. Solange lädt, stehen die Zeilen als Platzhalter mit einem ruhigen Schimmer da.</p>
+      <div class="ptr" id="ptr"><div class="ball"></div><div class="inh"><div class="zeilen"><div></div><div></div><div></div><div></div><div></div></div></div></div>
+      <div class="kost">Ziehen folgt dem Finger per transform · Schimmer als Hintergrundverlauf</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ NEUE ANSICHTEN ══════════════════════════════════════════════ -->
+<section class="abs" id="ideen">
+  <h2><span class="nr">06</span>Neue Ansichten, gezeichnet statt gezählt</h2>
+  <p class="lead">Vier Stellen, an denen die App heute Listen zeigt und eine Zeichnung mehr sagen würde. Alle rechnen aus Daten, die es schon gibt (Partien, Elo-Bahn, Spieltagssieger), und brauchen keinen neuen Topf außer einem je Ansicht mit Version im Schlüssel.</p>
+  <div class="reihe">
+    <div class="demo">
+      <h4>Der Monat als Kalender <small>Profil · Liga</small></h4>
+      <p class="k">Ein Feld je Tag, heller mit mehr Partien, ein goldener Rahmen für jeden Tag als Spieler des Tages. Im Profil der eigene Monat, in der Liga die ganze.</p>
+      <div class="kal-k"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span>Fr</span><span>Sa</span><span>So</span></div>
+      <div class="kal" id="kal"></div>
+      <div class="leg"><i style="background:var(--surface2)"></i>keine <i style="background:rgba(190,242,100,.38)"></i>einige <i style="background:var(--acid)"></i>viele <i style="box-shadow:0 0 0 1.5px var(--gold);background:none"></i>Spieler des Tages</div>
+    </div>
+    <div class="demo">
+      <h4>Das Rennen um die Spitze <small>Liga · Saison</small></h4>
+      <p class="k">Die Plätze der ersten sechs über die Spieltage des Monats als Linien. Wer die Tabelle wann übernommen hat, sieht man an den Kreuzungen, und das ist im Titelrennen die eigentliche Geschichte.</p>
+      <svg class="graf" id="rennen" viewBox="0 0 340 200"></svg>
+    </div>
+    <div class="demo">
+      <h4>Wer mit wem <small>Teams</small></h4>
+      <p class="k">Die Duos als Netz: je Spieler ein Punkt, je Duo eine Linie. Die Dicke zeigt die Zahl gemeinsamer Partien, Grün eine gute Quote, Rot eine schlechte [§C25]. Antippen eines Spielers hebt seine Partner hervor.</p>
+      <svg class="graf" id="netz" viewBox="0 0 320 250"></svg>
+    </div>
+    <div class="demo">
+      <h4>Die Elo als Bergkette <small>Profil</small></h4>
+      <p class="k">Die Elo-Bahn der Laufbahn als Silhouette, der Gipfel beschriftet und die Monatsgrenzen als feine Täler. Das liest sich schneller als eine Linie auf einem Gitter, und „Der höchste Gipfel“ bekommt sein Bild.</p>
+      <svg class="graf" id="berg" viewBox="0 0 340 150"></svg>
+    </div>
+  </div>
+</section>
+
+<section class="abs" id="plan">
+  <h2><span class="nr">07</span>Reihenfolge nach der Freigabe</h2>
+  <div class="plan">
+    <div><span class="n">1</span><div><h4>Die Leiter einbauen</h4><p>INSIGNIEN mit sieben Einträgen und den Schwellen aus Abschnitt 01, die Zeichnungen in 35b-prestige.js mit einem Verlauf je Zeichen. Dazu INSIGNIUM_OBEN für Breaking und der Schimmer je Rang im Verlauf. tests/zeichen misst den Schmuck über alle 21 Felder, tests/disziplinen die neue Kalibrierung.</p></div></div>
+    <div><span class="n">2</span><div><h4>Schwinge im selben Stil</h4><p>Palmzweige statt Ranken, damit Insignium und Schwinge dieselbe Sprache sprechen.</p></div></div>
+    <div><span class="n">3</span><div><h4>Leiter im Feed, Laufbahn-Vitrine, Insignium-Block</h4><p>Flexible Felder, Zahl in eigener Zeile, sieben Karten in der Vitrine. tests/blatt misst jedes Blatt bei 360 px.</p></div></div>
+    <div><span class="n">4</span><div><h4>Die Bühne</h4><p>Einmal je Stufe und Gerät, gemerkt neben dem Lesestand. Ohne Bewegung ohne Animation.</p></div></div>
+    <div><span class="n">5</span><div><h4>Bewegung und neue Ansichten</h4><p>FLIP in der Rangliste, Zahlen zählen hoch, Neu laden durch Ziehen, der Spieltag als Stories. Dazu Kalender, Rennen um die Spitze, Duo-Netz und Bergkette, je Ansicht ein Topf mit Version und Deckel.</p></div></div>
+  </div>
+</section>
+
+<script>
+/* ════════════════════════════════════════════════════════════════════
+   Die Zeichnung. Eine Medaille auf einem Kranz, und alles aus EINEM Guss:
+   ein Metallverlauf liegt über dem ganzen Zeichen (userSpaceOnUse), jede
+   Fläche hat eine helle und eine dunkle Hälfte, zwischen zwei Teilen liegt
+   eine Fuge in der Farbe des Grunds. Wenige, große Teile: Blätter ohne
+   Rippen, keine Beeren, kein Band.
+   Der Rang gibt dem Metall seinen Schimmer — Gold, Violett, Grün, Blau,
+   Orange — in den Lichtern und als leisen Hof dahinter. Der Fuß bleibt in
+   jeder Stufe frei für die Raute mit der Platzierung.
+   ════════════════════════════════════════════════════════════════════ */
+const C = 50, RING = 40, BOX = '-22 -22 144 144';
+const n1 = v => Math.round(v * 10) / 10;
+const rad = g => g * Math.PI / 180;
+const pt = (a, r) => [C + Math.cos(a) * r, C + Math.sin(a) * r];
+const K = ([x, y]) => n1(x) + ' ' + n1(y);
+const LICHT = [-.6, -.8];
+function mix(hex, ziel, f){
+  const a = hex.slice(1), b = ziel.slice(1); let s = '#';
+  for(let i = 0; i < 3; i++){ const p = parseInt(a.substr(i*2,2),16), q = parseInt(b.substr(i*2,2),16);
+    s += Math.round(p + (q - p) * f).toString(16).padStart(2,'0'); }
+  return s;
+}
+// Metall und Rangfarbe wie in 35b-prestige.js (INS_METALL_ROH, INS_RANGFARBE).
+const METALL = {Einsteiger:'#606870', Solide:'#7D858D', Stark:'#9AA2AA', Elite:'#C2C9D0', Legende:'#EEF3F8'};
+const RANGF  = {Einsteiger:'#ff7849', Solide:'#56b4e8', Stark:'#BEF264', Elite:'#a78bfa', Legende:'#f7cf4a'};
+const FUGE = '#080b0f';
+// Der Schimmer: das Metall bleibt Metall, aber seine LICHTER tragen die
+// Rangfarbe. Ein Anstrich machte jedes Zeichen zu einer Farbfläche; im
+// Licht gelesen bleibt es Silber, das golden, violett oder blau glänzt.
+function satz(rang){
+  const rf = RANGF[rang], roh = METALL[rang];
+  // Die Legende ist Weißmetall, und auf Weiß braucht Gold mehr Anteil als
+  // Violett auf Stahl, sonst liest es sich als Creme.
+  const st = rang === 'Legende' ? 1.5 : 1;
+  const m = mix(roh, rf, .22 * st);
+  return {m, rf,
+    glanz:mix('#FFFFFF', rf, .28 * st), hell:mix(mix(m,'#FFFFFF',.5), rf, .32 * st),
+    tief:mix(mix(m,'#05080B',.5), rf, .1), kante:mix(m,'#05080B',.8)};
+}
+function defs(id, c){
+  const st = (o, col, op) => `<stop offset="${o}" stop-color="${col}"${op !== undefined ? ` stop-opacity="${op}"` : ''}/>`;
+  const rf = c.rf;
+  return `<defs>`
+    + `<linearGradient id="${id}m" gradientUnits="userSpaceOnUse" x1="6" y1="-14" x2="94" y2="116">`
+      + st(0,c.glanz)+st('.2',c.hell)+st('.38',c.m)+st('.5',c.hell)+st('.6',c.m)+st('.82',c.tief)+st(1,c.kante)
+    + `</linearGradient>`
+    + `<linearGradient id="${id}ring" gradientUnits="userSpaceOnUse" x1="18" y1="10" x2="82" y2="90">`
+      + st(0,c.glanz)+st('.3',c.hell)+st('.55',c.m)+st('.8',c.tief)+st(1,c.kante)
+    + `</linearGradient>`
+    + `<radialGradient id="${id}g" cx=".35" cy=".3" r=".85">`
+      + st(0,mix(rf,'#FFFFFF',.75))+st('.3',mix(rf,'#FFFFFF',.2))+st('.7',rf)+st(1,mix(rf,'#000000',.6))
+    + `</radialGradient>`
+    + `<radialGradient id="${id}f" cx=".4" cy=".3" r=".9">`+st(0,'#1d232b')+st('.6','#12171d')+st(1,'#080b0f')+`</radialGradient>`
+    + `<radialGradient id="${id}hof">`+st('.45',rf,'.22')+st('.75',rf,'.07')+st(1,rf,'0')+`</radialGradient>`
+    + `</defs>`;
+}
+
+/* ── Bausteine ───────────────────────────────────────────────────── */
+const flaeche = (voll, dunkel, id, fuge = .7) =>
+  `<path d="${voll}" fill="url(#${id}m)" stroke="${FUGE}" stroke-width="${fuge}" stroke-linejoin="round"/>`
+  + `<path d="${dunkel}" fill="${FUGE}" opacity=".4"/>`;
+
+function blatt(bx, by, dx, dy, L, W, form, bieg){
+  const nx = -dy, ny = dx, N = form === 'eiche' ? 26 : 12;
+  const mitte = t => { const o = bieg * L * Math.sin(Math.PI * t); return [bx + dx*L*t + nx*o, by + dy*L*t + ny*o]; };
+  const breite = t => form === 'eiche'
+    ? W * Math.pow(Math.sin(Math.PI * Math.pow(t, .95)), .55) * (.5 + .5 * Math.pow(Math.abs(Math.sin(Math.PI * (t * 3.2 + .12))), .3))
+    : W * Math.pow(Math.sin(Math.PI * Math.pow(t, .78)), .9);
+  const l = [], r = [], m = [];
+  for(let i = 0; i <= N; i++){ const t = i / N, [x, y] = mitte(t), w = breite(t);
+    l.push([x + nx*w, y + ny*w]); r.push([x - nx*w, y - ny*w]); m.push([x, y]); }
+  const voll = 'M' + l.map(K).join('L') + 'L' + r.slice(0, -1).reverse().map(K).join('L') + 'Z';
+  // Die Hälfte, deren Normale vom Licht weg zeigt, liegt im Schatten.
+  const seite = (nx*LICHT[0] + ny*LICHT[1]) > 0 ? r : l;
+  const dunkel = 'M' + seite.map(K).join('L') + 'L' + m.slice(0, -1).reverse().map(K).join('L') + 'Z';
+  return {voll, dunkel};
+}
+function perle(x, y, r, id){
+  return `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r)}" fill="url(#${id}m)" stroke="${FUGE}" stroke-width=".55"/>`
+    + `<circle cx="${n1(x - r*.3)}" cy="${n1(y - r*.34)}" r="${n1(r*.36)}" fill="#fff" opacity=".75"/>`;
+}
+function stein(x, y, r, id){
+  return `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r + .9)}" fill="url(#${id}m)" stroke="${FUGE}" stroke-width=".55"/>`
+    + `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r)}" fill="url(#${id}g)"/>`
+    + `<circle cx="${n1(x - r*.32)}" cy="${n1(y - r*.36)}" r="${n1(r*.3)}" fill="#fff" opacity=".8"/>`;
+}
+function lilie(x, y, s, id){
+  const P = (dx, dy) => n1(x + dx*s) + ' ' + n1(y + dy*s);
+  const mitte = `M${P(0,-1.6)}C${P(-2.3,-4.2)} ${P(-1.7,-7.6)} ${P(0,-10)}C${P(1.7,-7.6)} ${P(2.3,-4.2)} ${P(0,-1.6)}Z`;
+  const flanke = sp => `M${P(sp*.7,-2.2)}C${P(sp*2.6,-6.6)} ${P(sp*6.4,-6.8)} ${P(sp*6,-3.4)}C${P(sp*5.8,-1.8)} ${P(sp*4.2,-1.7)} ${P(sp*3.8,-2.8)}`
+    + `C${P(sp*4.9,-3.1)} ${P(sp*4.8,-4.6)} ${P(sp*3.9,-4.6)}C${P(sp*2.8,-4.6)} ${P(sp*2,-3.4)} ${P(sp*1.5,-1.2)}Z`;
+  const bund = `M${P(-3.2,-2.6)}H${n1(x + 3.2*s)}V${n1(y - 1.1*s)}H${n1(x - 3.2*s)}Z`;
+  const fuss = `M${P(-1.3,-1.1)}L${P(0,1)}L${P(1.3,-1.1)}Z`;
+  return flaeche(flanke(-1) + flanke(1), flanke(1), id, .6)
+    + flaeche(mitte, `M${P(0,-1.6)}C${P(1.7,-4.2)} ${P(1.4,-7.6)} ${P(0,-10)}Z`, id, .6)
+    + flaeche(bund + fuss, `M${P(-3.2,-1.85)}H${n1(x + 3.2*s)}V${n1(y - 1.1*s)}H${n1(x - 3.2*s)}Z`, id, .6);
+}
+function krone(o, id){
+  const B = o.B, by = C - RING + 2, bh = 4.6, top = by - bh;
+  const z = o.zacken, xs = Array.from({length:z}, (_, i) => -1 + 2*i/(z - 1));
+  const hoehe = x => o.H * (.72 + .28*Math.cos(x * Math.PI / 2.1));
+    // Der Umriss von Zacke i bis j; die rechte Hälfte liegt im Schatten.
+  const umriss = (i0, i1) => {
+    let d = `M${n1(C + xs[i0]*B)} ${n1(top)}L${n1(C + xs[i0]*B)} ${n1(top - hoehe(xs[i0]))}`;
+    for(let i = i0 + 1; i <= i1; i++){ const m = (xs[i-1] + xs[i]) / 2;
+      d += `Q${n1(C + m*B)} ${n1(top - o.H*.06)} ${n1(C + xs[i]*B)} ${n1(top - hoehe(xs[i]))}`; }
+    return d + `L${n1(C + xs[i1]*B)} ${n1(top)}Z`;
+  };
+  const d = umriss(0, z - 1), dunkel = umriss((z - 1) / 2, z - 1);
+  const band = `M${n1(C - B - .6)} ${n1(top)}H${n1(C + B + .6)}L${n1(C + B)} ${n1(by)}Q${C} ${n1(by + 1.6)} ${n1(C - B)} ${n1(by)}Z`;
+  let s = flaeche(d, dunkel, id)
+    + flaeche(band, `M${n1(C - B - .6)} ${n1(top + bh*.55)}H${n1(C + B + .6)}L${n1(C + B)} ${n1(by)}Q${C} ${n1(by + 1.6)} ${n1(C - B)} ${n1(by)}Z`, id);
+  xs.forEach(x => { if(o.lilie && Math.abs(x) < .01) return; s += perle(C + x*B, top - hoehe(x) - .6, 1.7, id); });
+  if(o.lilie) s += lilie(C, top - o.H*.2, o.lilie, id);
+  if(o.juwelen) [-1, 0, 1].forEach(k => { if(o.juwelen < 2 && k) return; s += stein(C + k*B*.55, top + bh*.5, k ? 1.15 : 1.45, id); });
+  return s;
+}
+
+// Die Raute am Fuß mit der Platzierung — dieselbe Form wie _insFuss. Sie
+// steht in JEDER Stufe, und kein Kranz reicht in ihren Platz.
+function raute(pos, id, c){
+  const a = Math.PI/2, T = pt(a, RING + 15), B = pt(a, RING - 7);
+  const L = pt(a - .205, RING + 3.9), R = pt(a + .205, RING + 3.9), M = pt(a, RING + 3.9);
+  const halb = (x, y) => `M${K(x)}L${K(y)}L${K(M)}Z`;
+  const y0 = C + RING + 3.9, fl = 5;
+  return `<path d="M${K(T)}L${K(L)}L${K(B)}L${K(R)}Z" fill="url(#${id}g)" stroke="${FUGE}" stroke-width="1.1" stroke-linejoin="round"/>`
+    + `<path d="${halb(T, R)}${halb(R, B)}" fill="${FUGE}" opacity=".28"/>`
+    + `<path d="M50 ${n1(y0 - fl*1.55)}L${n1(50 + fl*1.18)} ${n1(y0 + fl*.15)}L50 ${n1(y0 + fl*1.85)}L${n1(50 - fl*1.18)} ${n1(y0 + fl*.15)}Z" fill="#0a0e12" opacity=".9"/>`
+    + `<text x="50" y="${n1(y0 + fl*.74)}" text-anchor="middle" font-size="8" font-family="'Archivo Black',sans-serif" font-weight="700" fill="${mix(c.m,'#FFFFFF',.6)}">${pos}</text>`;
+}
+
+// Ein Kranz: zwei Zweige, die rechts und links der Raute ansetzen und auf
+// einem Bogen um den Reif nach oben wachsen. Blätter wechselnd außen und
+// innen, zur Spitze hin kleiner, am Ende ein Blatt in Wuchsrichtung.
+// Gezeichnet vom Fuß zur Spitze, damit jedes Blatt den Ansatz des vorigen
+// deckt.
+function kranz(o, id){
+  let stiel = '', teile = '';
+  [1, -1].forEach(sp => {
+    const a0 = 90 - sp*o.ab, a1 = 90 - sp*(o.ab + o.span), aS = 90 - sp*6;
+    const [xs, ys] = pt(rad(aS), o.r), [xe, ye] = pt(rad(a1), o.r);
+    stiel += `M${n1(xs)} ${n1(ys)}A${o.r} ${o.r} 0 0 ${sp > 0 ? 0 : 1} ${n1(xe)} ${n1(ye)}`;
+    const setze = (t, aussen, gr) => {
+      const a = rad(a0 + (a1 - a0) * t), [px, py] = pt(a, o.r);
+      const tx = sp*Math.sin(a), ty = -sp*Math.cos(a), ox = Math.cos(a), oy = Math.sin(a);
+      const k = Math.cos(rad(o.winkel)), s = Math.sin(rad(o.winkel)) * (aussen ? 1 : -1);
+      let dx = tx*k + ox*s, dy = ty*k + oy*s; const l = Math.hypot(dx, dy); dx /= l; dy /= l;
+      const f = (1 - o.verj * t) * gr;
+      const b = blatt(px, py, dx, dy, o.L * f, o.W * f, o.form, (aussen ? -1 : 1) * sp * .06);
+      teile += flaeche(b.voll, b.dunkel, id);
+    };
+    for(let i = 0; i < o.n; i++){
+      const t = i / o.n;
+      setze(t, true, 1);
+      if(!o.nurAussen) setze(t + .5 / o.n, false, .84);
+    }
+    const a = rad(a1), [px, py] = pt(a, o.r);
+    const b = blatt(px, py, sp*Math.sin(a), -sp*Math.cos(a), o.L*(1 - o.verj)*1.08, o.W*(1 - o.verj), o.form, 0);
+    teile += flaeche(b.voll, b.dunkel, id);
+  });
+  return `<path d="${stiel}" fill="none" stroke="${FUGE}" stroke-width="2.6" stroke-linecap="round"/>`
+    + `<path d="${stiel}" fill="none" stroke="url(#${id}m)" stroke-width="1.3" stroke-linecap="round"/>`
+    + teile;
+}
+// Der Stern hinter dem Kranz: acht breite Zacken, jede mit einem Grat und
+// einer hellen und einer dunklen Flanke. Lang auf den Diagonalen — dort
+// ist in der Kachel Platz —, kurz auf den Achsen, wo oben die Krone und
+// unten die Raute stehen.
+function stern(o, id){
+  let hell = '', dunkel = '';
+  const zacke = (a, R, w) => {
+    const sp = pt(a, R), l = pt(a - w, RING + 3), r = pt(a + w, RING + 3), m = pt(a, RING - 8);
+    const zl = `M${K(m)}L${K(l)}L${K(sp)}Z`, zr = `M${K(m)}L${K(r)}L${K(sp)}Z`;
+    const nl = [Math.cos(a - Math.PI/2), Math.sin(a - Math.PI/2)];
+    hell += zl + zr; dunkel += (nl[0]*LICHT[0] + nl[1]*LICHT[1] > 0) ? zr : zl;
+  };
+  const n = o.n;
+  for(let i = 0; i < n; i++){ const a = -Math.PI/2 + i*2*Math.PI/n, diag = (i * 8 / n) % 2 === 1;
+    if(Math.abs(Math.cos(a)) < .01 && o.achsenFrei) continue;
+    zacke(a, diag ? o.lang : o.kurz, diag ? o.w : o.w*.8); }
+  let s = `<circle cx="${C}" cy="${C}" r="${o.lang + 2}" fill="url(#${id}hof)"/>` + flaeche(hell, dunkel, id, .9);
+  if(o.steine) [45, 135, 225, 315].forEach(w => { const [x, y] = pt(rad(w), o.lang - 9); s += stein(x, y, 2.1, id); });
+  return s;
+}
+function reif(id, o){
+  let s = '';
+  if(o.email) s += `<circle cx="${C}" cy="${C}" r="${RING + 4.8}" fill="none" stroke="${FUGE}" stroke-width="4.4"/>`
+    + `<circle cx="${C}" cy="${C}" r="${RING + 4.8}" fill="none" stroke="url(#${id}g)" stroke-width="2.4"/>`;
+  else if(o.aussen) s += `<circle cx="${C}" cy="${C}" r="${RING + 4.6}" fill="none" stroke="${FUGE}" stroke-width="2.4"/>`
+    + `<circle cx="${C}" cy="${C}" r="${RING + 4.6}" fill="none" stroke="url(#${id}ring)" stroke-width="1.2"/>`;
+  if(o.email) s += `<circle cx="${C}" cy="${C}" r="${RING + 7.4}" fill="none" stroke="${FUGE}" stroke-width="2"/>`
+    + `<circle cx="${C}" cy="${C}" r="${RING + 7.4}" fill="none" stroke="url(#${id}ring)" stroke-width="1"/>`;
+  return s + `<circle cx="${C}" cy="${C}" r="${RING}" fill="none" stroke="${FUGE}" stroke-width="5.8"/>`
+    + `<circle cx="${C}" cy="${C}" r="${RING}" fill="none" stroke="url(#${id}ring)" stroke-width="4"/>`
+    + `<circle cx="${C}" cy="${C}" r="${RING - 1.25}" fill="none" stroke="#fff" stroke-width=".45" opacity=".45"/>`;
+}
+
+/* ── Die sieben Stufen ───────────────────────────────────────────────
+   Die Stufe wechselt den Gegenstand, der Grad baut ihn aus. Jeder Kranz
+   steht auf demselben Bogen mit derselben Blattform; ab dem Kronenkranz
+   endet er so, dass die Krone in seiner Lücke sitzt. */
+const STUFEN = [
+  {name:'Reif', ab:0, satz:'Der blanke Reif. II: ein feiner zweiter Ring. III: dazwischen ein Streifen in der Rangfarbe.'},
+  {name:'Zweigreif', ab:500, satz:'Zwei Lorbeerzweige setzen neben der Raute an. Mit jedem Grad wachsen sie ein Blattpaar höher.'},
+  {name:'Eichenkranz', ab:1200, satz:'Breites Eichenlaub bis über die Mitte des Reifs, mit jedem Grad ein Stück höher.'},
+  {name:'Lorbeerkranz', ab:1950, neu:true, satz:'Der volle Kranz, oben offen. Im dritten Grad sitzt ein Stein in der Rangfarbe auf dem Scheitel.'},
+  {name:'Kronenkranz', ab:2800, neu:true, satz:'Auf dem Scheitel sitzt eine Krone. Sie wächst von drei auf fünf Zacken und bekommt Steine.'},
+  {name:'Königskranz', ab:3700, neu:true, satz:'Der Kranz wird voller, mit größeren Blättern auf einem weiteren Bogen, und die Krone trägt die Lilie.'},
+  {name:'Ordensstern', ab:4700, satz:'Hinter dem Königskranz steht ein Stern. Er wird mit jeder Zacke dichter und hört nicht auf.'},
+];
+const LORBEER = {r:50, ab:17, L:17, W:4.7, verj:.3, winkel:26, form:'lorbeer'};
+function bau(s, g, id, c, pos){
+  let hinten = '', kr = '', oben = '';
+  const ring = s === 0 ? [{}, {aussen:true}, {email:true}][g] : {};
+  if(s === 1) kr = kranz({...LORBEER, span:[28,42,56][g], n:[2,3,4][g]}, id);
+  if(s === 2) kr = kranz({...LORBEER, form:'eiche', L:19, W:6.6, verj:.22, winkel:36, span:[70,88,106][g], n:[3,3,4][g], nurAussen:true}, id);
+  if(s === 3) kr = kranz({...LORBEER, span:[112,127,141][g], n:[5,6,7][g]}, id);
+  if(s === 4) kr = kranz({...LORBEER, span:141, n:7}, id);
+  // Der Königskranz ist derselbe Kranz, nur voller: größere Blätter auf
+  // einem weiteren Bogen. Ein zweiter Kranz daneben waren doppelt so viele
+  // Teile für dieselbe Aussage.
+  if(s >= 5) kr = kranz({...LORBEER, r:52, L:[19,20,21][s === 6 ? 2 : g], W:[5.2,5.5,5.8][s === 6 ? 2 : g], span:141, n:7}, id);
+  if(s === 3 && g === 2) oben += stein(C, C - RING - 1.4, 2.9, id);
+  if(s === 4) oben += krone({B:[11,14,15][g], H:[11,13,14][g], zacken:[3,5,5][g], juwelen:[0,1,2][g]}, id);
+  if(s >= 5) oben += krone({B:17, H:17, zacken:5, lilie:1.6, juwelen:2}, id);
+  if(s === 6) hinten += stern({n:[8,16,16][g], lang:[70,74,75][g], kurz:[58,60,61][g], w:[.34,.22,.22][g], achsenFrei:true, steine:g === 2}, id);
+  // Ein leiser Hof in der Rangfarbe ab dem Lorbeer: der Schimmer braucht
+  // Luft um sich, und in den unteren Stufen ist das Zeichen dafür zu klein.
+  if(s >= 3 && s < 6) hinten = `<circle cx="${C}" cy="${C}" r="66" fill="url(#${id}hof)"/>` + hinten;
+  return hinten + kr + `<circle cx="${C}" cy="${C}" r="${RING - 1.8}" fill="url(#${id}f)"/>`
+    + reif(id, ring) + (pos ? raute(pos, id, c) : '') + oben;
+}
+function zeichnen(s, g, rang, klasse, pos){
+  const id = 'z' + (++zeichnen.n) + '_', c = satz(rang);
+  return `<svg viewBox="${BOX}" aria-hidden="true"${klasse ? ` class="${klasse}"` : ''}>${defs(id, c)}${bau(s, g, id, c, pos === undefined ? 1 : pos)}</svg>`;
+}
+zeichnen.n = 0;
+
+/* ── Die Seite ───────────────────────────────────────────────────── */
+const RANGE = ['Einsteiger','Solide','Stark','Elite','Legende'];
+let rangLeiter = 'Legende';
+function leiter(){
+  document.getElementById('leiter').innerHTML = STUFEN.map((st, s) => `<div class="stufe">
+    <div class="name"><b>${st.name}</b><span>ab ${st.ab}</span>${st.neu ? '<span class="neu">NEU</span>' : ''}<em>${st.satz}</em></div>
+    ${[0,1,2].map(g => `<div class="feld"><div class="bild">${zeichnen(s, g, rangLeiter)}</div><span>${['I','II','III'][g]}</span></div>`).join('')}
+  </div>`).join('');
+}
+const rw = document.querySelector('.rangwahl');
+rw.innerHTML = RANGE.map(r => `<button data-r="${r}" class="${r === rangLeiter ? 'an' : ''}"><i style="background:${RANGF[r]}"></i>${r}</button>`).join('');
+rw.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return;
+  rangLeiter = b.dataset.r; rw.querySelectorAll('button').forEach(x => x.classList.toggle('an', x === b)); leiter(); });
+leiter();
+
+// Rangliste, Feed-Leiter
+const SPIELER = [
+  {n:'Martin', f:'#56b4e8', s:4, g:0, r:'Legende'}, {n:'Leon', f:'#f0566a', s:3, g:2, r:'Elite'},
+  {n:'Julian', f:'#ff9f43', s:3, g:1, r:'Elite'}, {n:'Jane', f:'#f78fb3', s:2, g:0, r:'Stark'},
+  {n:'Maxi', f:'#f7cf4a', s:1, g:2, r:'Stark'}, {n:'Leo', f:'#4ecdc4', s:1, g:1, r:'Solide'},
+  {n:'Henry', f:'#a78bfa', s:1, g:0, r:'Solide'}, {n:'Anton', f:'#e07cf0', s:0, g:0, r:'Einsteiger'}];
+document.getElementById('zeilen').innerHTML = SPIELER.map((p, i) => `<div class="rzeile"><span class="p">${i+1}</span>
+  <div class="w">${zeichnen(p.s, p.g, p.r, '', i + 1)}<span class="av" style="background:${p.f}">${p.n.slice(0,2).toUpperCase()}</span></div>
+  <div class="n"><b>${p.n}</b><span>${STUFEN[p.s].name} ${['I','II','III'][p.g]}</span></div><span class="e">${[412,398,391,352,344,301,288,240][i]}</span></div>`).join('');
+document.getElementById('lt').innerHTML = STUFEN.map((st, s) => `<i class="${s <= 3 ? 'hat' : ''}${s === 3 ? ' jetzt' : ''}">${zeichnen(s, s === 3 ? 2 : 0, 'Elite', '', 0)}</i>`).join('');
+document.getElementById('gross').innerHTML = [0,3,4,6].map(s => `<div><div class="b">${zeichnen(s, 2, 'Legende')}</div><span>${STUFEN[s].name}</span></div>`).join('');
+
+// Die Bühne
+let buehneS = 4;
+function buehne(spielen){
+  const b = document.getElementById('buehne');
+  b.querySelector('.emblem').innerHTML = zeichnen(buehneS, 0, 'Legende');
+  b.querySelector('.titel b').textContent = STUFEN[buehneS].name;
+  b.querySelector('.titel span').textContent = 'ab ' + STUFEN[buehneS].ab + ' Prestige';
+  if(spielen){ b.classList.remove('an'); void b.offsetWidth; b.classList.add('an'); }
+}
+document.getElementById('buehneLos').onclick = () => buehne(true);
+document.getElementById('buehneWeiter').onclick = () => { buehneS = (buehneS + 1) % 7; buehne(true); };
+buehne(false);
+
+/* ── Bewegung ─────────────────────────────────────────────────────── */
+document.getElementById('ruhig').onchange = e => document.body.classList.toggle('ruhig', e.target.checked);
+const ruhig = () => document.body.classList.contains('ruhig') || matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// FLIP
+let liste = [{n:'Leon',f:'#f0566a',e:412},{n:'Martin',f:'#56b4e8',e:398},{n:'Julian',f:'#ff9f43',e:391},{n:'Jane',f:'#f78fb3',e:352},{n:'Maxi',f:'#f7cf4a',e:344}];
+function flipZeichnen(delta){
+  const el = document.getElementById('flip');
+  el.innerHTML = liste.map((p, i) => `<div class="rzeile${delta && delta[p.n] > 0 ? ' hoch' : ''}" data-n="${p.n}"><span class="p">${i+1}</span>
+    <span class="dot" style="background:${p.f}">${p.n.slice(0,2).toUpperCase()}</span><span class="n"><b>${p.n}</b></span>
+    <span style="display:flex;gap:8px;align-items:center">${delta && delta[p.n] ? `<span class="d ${delta[p.n] > 0 ? 'g' : 'r'}">${delta[p.n] > 0 ? '+' : ''}${delta[p.n]}</span>` : ''}<span class="e">${p.e}</span></span></div>`).join('');
+}
+flipZeichnen();
+let flipDreh = 0;
+document.getElementById('flipLos').onclick = () => {
+  const el = document.getElementById('flip');
+  const vorher = {}; el.querySelectorAll('.rzeile').forEach(r => vorher[r.dataset.n] = r.getBoundingClientRect().top);
+  const paare = [[{Julian:+19, Jane:+17, Leon:-18, Maxi:-4}], [{Maxi:+22, Martin:+14, Julian:-15, Jane:-9}], [{Leon:+16, Jane:+12, Martin:-11, Maxi:-10}]];
+  const delta = paare[flipDreh++ % paare.length][0];
+  liste.forEach(p => p.e += delta[p.n] || 0); liste.sort((a, b) => b.e - a.e);
+  flipZeichnen(delta);
+  el.querySelectorAll('.rzeile').forEach(r => {
+    const dy = vorher[r.dataset.n] - r.getBoundingClientRect().top;
+    if(!dy || ruhig()) return;
+    r.animate([{transform:`translateY(${dy}px)`}, {transform:'none'}], {duration:420, easing:'cubic-bezier(.2,.8,.2,1)'});
+  });
+  requestAnimationFrame(() => el.querySelectorAll('.d').forEach(d => d.classList.add('an')));
+  setTimeout(() => el.querySelectorAll('.d').forEach(d => d.classList.remove('an')), 3000);
+};
+
+// Zahlen zählen hoch
+function zaehlen(){
+  const zellen = [...document.querySelectorAll('#zr b')], t0 = performance.now(), T = 600;
+  if(ruhig()){ zellen.forEach(z => z.textContent = z.dataset.z + (z.dataset.e || '')); return; }
+  const schritt = t => { const f = Math.min(1, (t - t0)/T), e = 1 - Math.pow(1 - f, 3);
+    zellen.forEach(z => z.textContent = Math.round(z.dataset.z * e) + (z.dataset.e || ''));
+    if(f < 1) requestAnimationFrame(schritt); };
+  requestAnimationFrame(schritt);
+}
+new IntersectionObserver((e, o) => { if(e[0].isIntersecting){ zaehlen(); o.disconnect(); } }).observe(document.getElementById('zr'));
+document.getElementById('zrLos').onclick = zaehlen;
+
+// Stories
+const SEITEN = [
+  {rub:'Am Spieltag · 10:44', farbe:'var(--acid)', gross:'10:5', h:'Leon und Maxi holen die Teamserie', p:'Sieben gemeinsame Siege nacheinander, die nächste Marke ist acht.'},
+  {rub:'Am Spieltag · 14:09', farbe:'var(--acid)', gross:'30 %', h:'Johannes und Anton stürzen die Favoriten', p:'Nur 30 % Siegchance vor dem Anstoß. Es war der erste gemeinsame Sieg nach drei Pleiten.'},
+  {rub:'Ewige Tafel · 14:32', farbe:'var(--silber)', gross:'+10', h:'Maxi, Julian, Jane und Johannes übernehmen „Der Höhenflug“', p:'Zehn Prozentpunkte über dem eigenen Schnitt in den letzten zehn Partien.'},
+  {rub:'Spieler des Tages', farbe:'var(--gold)', gross:'6/9', h:'Julian ist Spieler des Tages', p:'Sechs von neun Partien gewonnen, mehr Siege hatte an diesem Tag niemand.'},
+];
+const st = document.getElementById('st'); let stI = 0, stT = null;
+st.insertAdjacentHTML('afterbegin', SEITEN.map((x, i) => `<div class="seite" data-i="${i}" style="background:radial-gradient(90% 60% at 80% 10%,color-mix(in srgb,${x.farbe} 18%,transparent),transparent 60%)">
+  <div class="gross" style="color:${x.farbe}">${x.gross}</div><div class="rub" style="color:${x.farbe}">${x.rub}</div><h5>${x.h}</h5><p>${x.p}</p></div>`).join(''));
+st.querySelector('.bars').innerHTML = SEITEN.map(() => '<i><b></b></i>').join('');
+function stZeigen(i){
+  stI = (i + SEITEN.length) % SEITEN.length; clearTimeout(stT);
+  st.querySelectorAll('.seite').forEach((s, k) => s.classList.toggle('an', k === stI));
+  st.querySelectorAll('.bars i').forEach((b, k) => { b.className = k < stI ? 'fertig' : ''; });
+  const jetzt = st.querySelectorAll('.bars i')[stI]; void jetzt.offsetWidth; jetzt.className = 'jetzt';
+  if(!ruhig()) stT = setTimeout(() => stZeigen(stI + 1), 4500);
+}
+st.querySelectorAll('[data-st]').forEach(t => t.onclick = () => stZeigen(stI + (+t.dataset.st)));
+stZeigen(0);
+
+// Neu laden durch Ziehen
+(function(){
+  const box = document.getElementById('ptr'), inh = box.querySelector('.inh'), ball = box.querySelector('.ball');
+  let y0 = null, dy = 0;
+  box.addEventListener('pointerdown', e => { y0 = e.clientY; box.setPointerCapture(e.pointerId); inh.style.transition = ball.style.transition = 'none'; });
+  box.addEventListener('pointermove', e => { if(y0 === null) return; dy = Math.max(0, Math.min(110, (e.clientY - y0) * .55));
+    inh.style.transform = `translateY(${dy}px)`; ball.style.transform = `translateY(${dy + 6}px) rotate(${dy * 4}deg)`; });
+  box.addEventListener('pointerup', () => {
+    if(y0 === null) return; y0 = null;
+    const laden = dy > 60;
+    inh.style.transition = ball.style.transition = 'transform .35s cubic-bezier(.2,.8,.2,1)';
+    if(!laden){ inh.style.transform = ball.style.transform = ''; return; }
+    inh.style.transform = 'translateY(56px)';
+    ball.animate([{transform:'translateY(62px) rotate(0)'}, {transform:'translateY(62px) rotate(720deg)'}], {duration:900, iterations:2});
+    inh.querySelectorAll('.zeilen div').forEach(z => z.classList.add('skel'));
+    setTimeout(() => { inh.style.transform = ball.style.transform = ''; inh.querySelectorAll('.zeilen div').forEach(z => z.classList.remove('skel')); }, 1800);
+  });
+})();
+
+/* ── Neue Ansichten ───────────────────────────────────────────────── */
+// Kalender August: Spieltage aus den Fixtures, Stufen nach Partienzahl.
+const AUG = {3:6,4:9,5:4,6:7,7:3,10:8,11:10,12:5,13:6,14:9,17:4,18:8,19:3,20:10,21:5,24:7,25:9,26:11};
+const POTD = new Set([4,11,14,20,25]);
+document.getElementById('kal').innerHTML = Array.from({length:4}, () => '<i style="visibility:hidden"></i>').join('')
+  + Array.from({length:31}, (_, i) => { const d = i + 1, n = AUG[d] || 0;
+    const l = !n ? '' : n < 5 ? 'l1' : n < 8 ? 'l2' : n < 10 ? 'l3' : 'l4';
+    return `<i class="${l}${POTD.has(d) ? ' potd' : ''}" title="${d}.08. · ${n} Partien"></i>`; }).join('');
+
+// Rennen um die Spitze
+(function(){
+  const namen = [['Leon','#f0566a'],['Martin','#56b4e8'],['Julian','#ff9f43'],['Jane','#f78fb3'],['Maxi','#f7cf4a'],['Leo','#4ecdc4']];
+  const plaetze = [[2,1,1,1,2,1,1,2,1,1,1,1],[1,2,2,2,1,2,2,1,2,2,3,2],[4,3,3,4,3,3,4,3,3,3,2,3],[3,4,5,3,4,4,3,4,4,5,4,4],[5,5,4,5,6,5,5,5,6,4,5,6],[6,6,6,6,5,6,6,6,5,6,6,5]];
+  const W = 340, H = 200, x = i => 34 + i * (W - 70) / 11, y = p => 14 + (p - 1) * 34;
+  let s = '';
+  for(let p = 1; p <= 6; p++) s += `<text x="8" y="${y(p) + 4}" fill="#4a554e" font-family="Sometype Mono, monospace" font-size="10">${p}</text>`;
+  namen.forEach(([n, f], k) => {
+    const d = plaetze[k].map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p)).join('');
+    s += `<path d="${d}" fill="none" stroke="${f}" stroke-width="${k < 2 ? 3 : 2}" stroke-linejoin="round" stroke-linecap="round" opacity="${k < 2 ? 1 : .55}" class="zeichne" style="--l:520"/>`;
+    const last = plaetze[k][11];
+    s += `<circle cx="${x(11)}" cy="${y(last)}" r="4" fill="${f}"/><text x="${x(11) + 8}" y="${y(last) + 4}" fill="${f}" font-family="Space Grotesk, sans-serif" font-size="11" font-weight="600">${n}</text>`;
+  });
+  document.getElementById('rennen').innerHTML = s;
+})();
+
+// Duo-Netz
+(function(){
+  const sp = [['Leon','#f0566a'],['Martin','#56b4e8'],['Julian','#ff9f43'],['Jane','#f78fb3'],['Maxi','#f7cf4a'],['Leo','#4ecdc4'],['Henry','#a78bfa'],['Johannes','#e07cf0']];
+  const duos = [[0,4,34,.68],[0,1,12,.75],[1,2,18,.72],[2,4,15,.6],[3,5,20,.45],[4,6,26,.38],[5,7,9,.33],[0,6,11,.55],[1,3,14,.64],[2,7,8,.5],[3,6,10,.4],[1,5,16,.56],[4,7,7,.29]];
+  const cx = 160, cy = 125, rr = 92;
+  const pos = sp.map((_, i) => { const a = -Math.PI/2 + i/sp.length*Math.PI*2; return [cx + Math.cos(a)*rr, cy + Math.sin(a)*rr]; });
+  let s = duos.map(([a, b, n, q]) => `<line data-a="${a}" data-b="${b}" x1="${pos[a][0]}" y1="${pos[a][1]}" x2="${pos[b][0]}" y2="${pos[b][1]}"
+      stroke="${q >= .5 ? '#BEF264' : '#f0566a'}" stroke-opacity="${.25 + Math.abs(q - .5)}" stroke-width="${1 + n/6}" stroke-linecap="round"/>`).join('');
+  s += sp.map(([n, f], i) => `<g data-i="${i}" style="cursor:pointer"><circle cx="${pos[i][0]}" cy="${pos[i][1]}" r="15" fill="${f}"/>
+      <text x="${pos[i][0]}" y="${pos[i][1] + 4}" text-anchor="middle" font-family="Space Grotesk, sans-serif" font-weight="700" font-size="10" fill="#0b0f0d">${n.slice(0,2).toUpperCase()}</text></g>`).join('');
+  const svg = document.getElementById('netz'); svg.innerHTML = s;
+  svg.addEventListener('click', e => { const g = e.target.closest('g[data-i]'); const i = g ? +g.dataset.i : -1;
+    svg.querySelectorAll('line').forEach(l => l.style.opacity = (i < 0 || +l.dataset.a === i || +l.dataset.b === i) ? '' : .08); });
+})();
+
+// Bergkette
+(function(){
+  const elo = [0,12,8,25,40,33,52,70,61,88,104,96,120,142,130,151,168,160,183,214,199,188,205,221,210,236,228,249,262,244,258,271,255,280,268];
+  const W = 340, H = 150, lo = -10, hi = 300, x = i => i * W/(elo.length - 1), y = v => H - 18 - (v - lo)/(hi - lo)*(H - 40);
+  const d = elo.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join('');
+  const gi = elo.indexOf(Math.max(...elo));
+  let s = `<defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#BEF264" stop-opacity=".35"/><stop offset="1" stop-color="#BEF264" stop-opacity="0"/></linearGradient></defs>`;
+  [8,17,26].forEach(i => s += `<line x1="${x(i)}" y1="10" x2="${x(i)}" y2="${H - 18}" stroke="#28332b" stroke-dasharray="2 3"/>`);
+  s += `<path d="${d}L${W} ${H - 18}L0 ${H - 18}Z" fill="url(#bg)"/><path d="${d}" fill="none" stroke="#BEF264" stroke-width="2" stroke-linejoin="round" class="zeichne" style="--l:700"/>`;
+  s += `<circle cx="${x(gi)}" cy="${y(elo[gi])}" r="4" fill="#f7cf4a"/><text x="${x(gi) - 6}" y="${y(elo[gi]) - 10}" text-anchor="end" fill="#f7cf4a" font-family="Sometype Mono, monospace" font-size="10" font-weight="700">Gipfel 280</text>`;
+  ['Mai','Jun','Jul','Aug'].forEach((m, k) => s += `<text x="${4 + k*85}" y="${H - 4}" fill="#717f76" font-family="Sometype Mono, monospace" font-size="10">${m}</text>`);
+  document.getElementById('berg').innerHTML = s;
+})();
+</script>
+</body>
+</html>

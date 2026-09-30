@@ -104,6 +104,12 @@ const ok = (c, msg, det) => {
   await page.addScriptTag({content: code});
   const K = async src => page.evaluate(s => window.__k.eval(s), src);
   ok(errors.length === 0, 'Skript lädt ohne Fehler', errors[0]);
+  // Karten außerhalb des Bildschirms legt der Feed erst, wenn sie hineinkommen
+  // (`content-visibility:auto`) — ihr Inhalt hat bis dahin keine Geometrie.
+  // Gemessen wird hier aber, wie eine Karte AUSSIEHT, also so, wie sie auf
+  // dem Bildschirm liegt. Dass die Regel greift, prüft ein eigener Check.
+  await page.addStyleTag({content: '.nf-card{content-visibility:visible!important}'})
+    .then(h => h.evaluate(e => e.id = 'cv-aus'));
 
   await K(`
     players = ${JSON.stringify(PLAYERS)};
@@ -126,6 +132,76 @@ const ok = (c, msg, det) => {
     invalidateCache();
     bindSheetSwipe();
     'bereit'`);
+
+  // ── DER INHALTSTAUSCH HÄNGT AM ENDE DES ZUSCHIEBENS ─────────────────
+  //    Beim Zurückgehen schiebt sich das Kind-Blatt nach unten, der Inhalt
+  //    wird getauscht, das Eltern-Blatt kommt hoch. Der Tausch baut das
+  //    Eltern-Blatt neu, und der Feed kostet dabei gemessen über 100 ms
+  //    Hauptthread — 94 % seines Markups sind die SVG der Wappen.
+  //    Geplant war er per `setTimeout(200)`, und ein Timer ist nicht das Ende
+  //    einer Transition: er läuft ab dem Aufruf, die Transition erst ab dem
+  //    nächsten Style-Flush. Der Block fiel damit in die letzten Bilder des
+  //    Zuschiebens und riss sie ab.
+  //    Gemessen wird der ABSTAND zwischen dem `transitionend` des Zuschiebens
+  //    und dem Tausch. Die Position des Blatts taugt dafür nicht — sie steht
+  //    in beiden Fassungen auf 100 %, weil der Umbau vor dem nächsten Bild
+  //    fertig wird. Und bei den echten 200 ms liegen Timer und Transitionsende
+  //    so dicht beieinander, dass der Vergleich zufällig ausfällt: die Dauer
+  //    wird deshalb für die Messung heruntergesetzt, damit ein Timer
+  //    überhaupt von einem Ende zu unterscheiden ist.
+  //    Das Kind-Blatt muss dafür erst stehen: wird es im selben Durchlauf
+  //    geöffnet und geschlossen, wechselt sein Transform nie und es gibt
+  //    überhaupt keine Transition, die enden könnte.
+  console.log('\n═══ DER TAUSCH HÄNGT AM ENDE DES ZUSCHIEBENS ═══');
+  const stapel = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const st = document.createElement('style');
+    st.id = 'messDauer';
+    st.textContent = '#sheet{transition-duration:20ms !important}';
+    document.head.appendChild(st);
+    K('openSheet("<h3>Eltern</h3><div id=\'elternMark\'>da</div>")');
+    window.__swapT = null;
+    K('_sheetSetReopen(function(){ window.__swapT = performance.now() - window.__t0;'
+      + ' openSheet("<h3>Eltern</h3><div id=\'elternMark\'>da</div>"); })');
+    K('_pushCurrentSheet(); openSheet("<h3>Kind</h3>")');
+    return K('_sheetStack.length');
+  });
+  await page.waitForTimeout(500);
+  const swap = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const sheet = document.getElementById('sheet');
+    // Der eigene Horcher wird VOR dem Schließen gesetzt und läuft damit vor
+    // dem des Blatts: das erste Ende ist gemessen, bevor getauscht wird.
+    window.__enden = [];
+    const horch = (e) => {
+      if(e.target === sheet && e.propertyName === 'transform')
+        window.__enden.push(performance.now() - window.__t0);
+    };
+    sheet.addEventListener('transitionend', horch);
+    return new Promise(res => {
+      window.__t0 = performance.now();
+      K('closeSheet()');
+      setTimeout(() => {
+        sheet.removeEventListener('transitionend', horch);
+        const s = document.getElementById('messDauer');
+        if(s) s.remove();
+        res({tausch: window.__swapT, enden: window.__enden,
+             elternDa: !!document.getElementById('elternMark')});
+      }, 1200);
+    });
+  });
+  ok(stapel === 1, 'ein Eltern-Blatt liegt auf dem Stapel', String(stapel));
+  ok(swap.elternDa, 'nach dem Zurückgehen steht das Eltern-Blatt wieder da');
+  ok(swap.tausch != null, 'der Tausch wurde gemessen', String(swap.tausch));
+  ok(swap.enden.length >= 1, 'das Zuschieben läuft als Transition zu Ende',
+     JSON.stringify(swap.enden));
+  // Am Ende gemessen: 5 ms Abstand. Mit dem Timer waren es 180 ms, und in
+  // dieser Zeit stand das Blatt unten und wartete.
+  const zuEnde = swap.enden[0];
+  const abstand = swap.tausch != null && zuEnde != null ? swap.tausch - zuEnde : null;
+  ok(abstand != null && abstand >= -5 && abstand <= 100,
+     'der Tausch hängt am Ende des Zuschiebens, nicht an einem Timer',
+     abstand == null ? 'nicht gemessen' : Math.round(abstand) + ' ms Abstand');
 
   console.log('\n═══ 1. EINE GESTE GEHÖRT EINEM ═══');
   // Gewischt wird mit echten Touch-Ereignissen. Gemessen werden die beiden
@@ -189,7 +265,7 @@ const ok = (c, msg, det) => {
     const warte = ms => new Promise(r => setTimeout(r, ms));
     const out = {karten:k.length, schritte:[]};
     // Rückwärts, damit auch der Sprung über die ganze Breite dabei ist.
-    for(const i of [4, 0, 3, 1, 2]){
+    for(const i of [6, 0, 3, 1, 5, 2, 4]){
       k[i].click();
       await warte(700);
       const mitte = d.scrollLeft + d.clientWidth / 2;
@@ -200,8 +276,8 @@ const ok = (c, msg, det) => {
     }
     return out;
   });
-  ok(!vitrine.fehlt && vitrine.karten === 5,
-     'die Vitrine steht mit allen fünf Stufen', JSON.stringify(vitrine));
+  ok(!vitrine.fehlt && vitrine.karten === 7,
+     'die Vitrine steht mit allen sieben Stufen', JSON.stringify(vitrine));
   if(!vitrine.fehlt){
     const daneben = vitrine.schritte.filter(s => s.fokus !== s.i);
     ok(daneben.length === 0, 'jede angetippte Stufe wird die gewählte',
@@ -211,6 +287,46 @@ const ok = (c, msg, det) => {
     const schief = vitrine.schritte.filter(s => s.ab > 2);
     ok(schief.length === 0, 'und liegt danach in der Mitte',
        schief.map(s => s.i + ': ' + s.ab + ' px daneben').join(' '));
+  }
+
+  // ── Alle Stufen [§C30] ──────────────────────────────────────────────
+  //    Jedes Feld der Leiter steht im Blatt, das eigene ist markiert, und ein
+  //    Feld anzutippen legt genau dieses Bild in die Vitrine: seine Stufe in
+  //    die Mitte, seinen Grad als gezeigten Knopf. Vorher gab es die Grade
+  //    nur als Marken, und wie ein Grad aussieht, sah man nirgends.
+  const alle = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const felder = [...document.querySelectorAll('#lbAlle [data-lbfeld]')];
+    if(!felder.length) return {fehlt:true};
+    const d = document.getElementById('lbLeiter'), k = [...d.querySelectorAll('.lb-k')];
+    const warte = ms => new Promise(r => setTimeout(r, ms));
+    const jetzt = [...document.querySelectorAll('#lbAlle .lb-feld.jetzt')].map(b => b.getAttribute('data-lbfeld'));
+    const bildVon = i => (k[i].querySelector('.lb-k-ins use') || {getAttribute:()=>''}).getAttribute('href');
+    const out = {felder:felder.length, jetzt, schritte:[]};
+    for(const f of ['5,2', '1,0', '3,1']){
+      const [i, g] = f.split(',').map(Number);
+      const vorher = bildVon(i);
+      document.querySelector('#lbAlle [data-lbfeld="' + f + '"]').click();
+      await warte(700);
+      const zeigt = k[i].querySelector('[data-lbgrad].zeigt');
+      out.schritte.push({f, fokus: k.findIndex(x => x.classList.contains('fokus')),
+        zeigt: zeigt ? +zeigt.getAttribute('data-lbgrad') : null,
+        bild: bildVon(i), soll: K('insigniumStufeSvg(INSIGNIEN[' + i + '].key, "Elite", '
+          + (i === 6 ? 'ORDENSSTERN_START + ' + g : 0) + ', ' + g + ')').match(/href="([^"]+)"/)[1],
+        vorher});
+    }
+    return out;
+  });
+  ok(!alle.fehlt && alle.felder === 21, 'die Laufbahn zeigt alle einundzwanzig Felder',
+     JSON.stringify({felder: alle.felder}));
+  ok(!alle.fehlt && alle.jetzt.length === 1, 'genau ein Feld ist das eigene', JSON.stringify(alle.jetzt));
+  if(!alle.fehlt){
+    const falsch = alle.schritte.filter(s => s.fokus !== +s.f[0] || s.zeigt !== +s.f[2]);
+    ok(falsch.length === 0, 'ein angetipptes Feld liegt mit seinem Grad in der Vitrine',
+       JSON.stringify(alle.schritte.map(s => ({f:s.f, fokus:s.fokus, zeigt:s.zeigt}))));
+    const bild = alle.schritte.filter(s => !s.bild || s.bild.split('#').pop().split('"')[0] === '');
+    ok(bild.length === 0 && alle.schritte.every(s => typeof s.bild === 'string' && s.bild.length > 1),
+       'und die Vitrine zeigt dessen Bild', JSON.stringify(alle.schritte.map(s => s.bild)));
   }
 
   console.log('\n═══ 3. JEDES WAPPEN FINDET SEINE VERLÄUFE ═══');
@@ -231,10 +347,30 @@ const ok = (c, msg, det) => {
           if(m && !document.getElementById(m[1])) offen.add(m[1]);
         });
       });
+      // Seit das Wappen in einer Liste ein `<use>` auf ein Symbol im selben
+      // Topf ist [§C30], gilt dieselbe Frage fuer die Symbole: ein Verweis
+      // auf eines, das es nicht gibt, wirft keinen Fehler und zeichnet
+      // nichts — die Kachel bleibt leer. Gemessen wird deshalb beides.
+      const verwaist = new Set();
+      document.querySelectorAll('use').forEach(u => {
+        const h = u.getAttribute('href') || u.getAttribute('xlink:href') || '';
+        const m = h.match(/^#(.+)$/);
+        if(m && !document.getElementById(m[1])) verwaist.add(m[1]);
+      });
       const t = document.getElementById('insDefs');
       return {tab, topf: !!t && !t.closest('#app') && !t.closest('.sheet'),
               wappen: document.querySelectorAll('svg.ins').length,
-              offen: [...offen].slice(0, 5)};
+              // Gemessen wird das Bauteil der Liste (`.rav`, §C27), nicht
+              // jede Zeichnung: die elf Stufen der Laufbahn tragen ihre
+              // Verläufe absichtlich selbst und sind kein Verweis [§C30].
+              rav: document.querySelectorAll('.rav > svg.ins').length,
+              ravUse: document.querySelectorAll('.rav > svg.ins > use').length,
+              // Nur die Wappen (`insy…`): im selben Topf stehen seit den
+              // Bildern auch die Stufen der Leiter (`inst…`, §C30), und die
+              // gehören nicht zu der Frage, wie viele Wappen sich eine
+              // Zeichnung teilen.
+              symbole: document.querySelectorAll('#insDefs defs > g[id^="insy"]').length,
+              offen: [...offen].slice(0, 5), verwaist: [...verwaist].slice(0, 5)};
     }, t));
   }
   for(const ruf of ['showPlayer(players[8].id)', 'showLaufbahn(players[8].id)']){
@@ -249,10 +385,30 @@ const ok = (c, msg, det) => {
           if(m && !document.getElementById(m[1])) offen.add(m[1]);
         });
       });
+      // Seit das Wappen in einer Liste ein `<use>` auf ein Symbol im selben
+      // Topf ist [§C30], gilt dieselbe Frage fuer die Symbole: ein Verweis
+      // auf eines, das es nicht gibt, wirft keinen Fehler und zeichnet
+      // nichts — die Kachel bleibt leer. Gemessen wird deshalb beides.
+      const verwaist = new Set();
+      document.querySelectorAll('use').forEach(u => {
+        const h = u.getAttribute('href') || u.getAttribute('xlink:href') || '';
+        const m = h.match(/^#(.+)$/);
+        if(m && !document.getElementById(m[1])) verwaist.add(m[1]);
+      });
       const t = document.getElementById('insDefs');
       return {tab: src.split('(')[0], topf: !!t && !t.closest('#app') && !t.closest('.sheet'),
               wappen: document.querySelectorAll('svg.ins').length,
-              offen: [...offen].slice(0, 5)};
+              // Gemessen wird das Bauteil der Liste (`.rav`, §C27), nicht
+              // jede Zeichnung: die elf Stufen der Laufbahn tragen ihre
+              // Verläufe absichtlich selbst und sind kein Verweis [§C30].
+              rav: document.querySelectorAll('.rav > svg.ins').length,
+              ravUse: document.querySelectorAll('.rav > svg.ins > use').length,
+              // Nur die Wappen (`insy…`): im selben Topf stehen seit den
+              // Bildern auch die Stufen der Leiter (`inst…`, §C30), und die
+              // gehören nicht zu der Frage, wie viele Wappen sich eine
+              // Zeichnung teilen.
+              symbole: document.querySelectorAll('#insDefs defs > g[id^="insy"]').length,
+              offen: [...offen].slice(0, 5), verwaist: [...verwaist].slice(0, 5)};
     }, ruf));
   }
   console.log('  Wappen je Ansicht: '
@@ -270,6 +426,18 @@ const ok = (c, msg, det) => {
   const kaputt = verweise.filter(v => v.offen.length);
   ok(kaputt.length === 0, 'kein Verweis zeigt auf einen Verlauf, den es nicht gibt',
      kaputt.map(v => v.tab + ': ' + v.offen.join(', ')).join(' | '));
+  const leer = verweise.filter(v => v.verwaist.length);
+  ok(leer.length === 0, 'kein Verweis zeigt auf ein Symbol, das es nicht gibt',
+     leer.map(v => v.tab + ': ' + v.verwaist.join(', ')).join(' | '));
+  // Und die Wappen einer Ansicht sind wirklich Verweise: sonst stehen in der
+  // Liste wieder 76 Kopien derselben Zeichnung.
+  const kopien = verweise.filter(v => v.rav > 0 && v.ravUse < v.rav);
+  ok(kopien.length === 0, 'jedes Wappen des Listen-Bauteils ist ein Verweis',
+     kopien.map(v => v.tab + ': ' + v.ravUse + ' von ' + v.rav).join(' | '));
+  const viele = verweise.filter(v => v.rav >= 10);
+  ok(viele.length > 0 && viele.every(v => v.symbole >= 1 && v.symbole < v.rav),
+     'viele Wappen teilen wenige Zeichnungen',
+     verweise.map(v => v.tab + ':' + v.symbole + '/' + v.rav).join(' '));
 
   console.log('\n═══ 4. IM HINTERGRUND WIRD NICHT GELADEN ═══');
   // Der Takt ruft nicht mehr blind. Geprüft wird an der Stelle, an der es
@@ -317,7 +485,7 @@ const ok = (c, msg, det) => {
 
   console.log('\n═══ DER REKORDE-REITER ═══');
   // Gemessen statt behauptet — und zwar am gerenderten Reiter mit den
-  // echten Partien: vier Kammern, eine Besitzleiste, die dieselben
+  // echten Partien: fuenf Kammern, eine Besitzleiste, die dieselben
   // Haltungen zählt wie die Karten, und ein Filter, der genau eine Kammer
   // stehen lässt.
   const CHRONICLES_N = await page.evaluate(() => window.__k.eval('CHRONICLES.length'));
@@ -327,18 +495,59 @@ const ok = (c, msg, det) => {
       karten: document.querySelectorAll('#app .rek').length,
       kammern: [...document.querySelectorAll('#app .rek-g-n')].map(e => e.textContent.trim()),
       saeulen: [...document.querySelectorAll('#app .rek-sl .z')].map(e => +e.textContent),
-      offen: [...document.querySelectorAll('#app .rek.offen')].length
+      offen: [...document.querySelectorAll('#app .rek.offen')].length,
+      // Die Chips mit ihrer Zahl. „Alle" steht zuerst und nennt den ganzen
+      // Katalog; ohne die Zahlen war nicht zu sehen, ob eine Kammer
+      // ueberhaupt gefuellt ist, und wieviele Rekorde es gibt.
+      chips: [...document.querySelectorAll('#app .rek-kammern button')].map(b => ({
+        k: b.dataset.rekkammer,
+        n: +(b.querySelector('.n') || {textContent:''}).textContent })),
+      // Und jede Kammer muss anklickbar sein: eine Leiste, die auf 430
+      // Pixeln nicht zu erreichen ist, versteckt ihre Rekorde.
+      leiste: (() => { const e = document.querySelector('#app .rek-kammern');
+        return e ? {scroll: e.scrollWidth, sicht: e.clientWidth} : null; })()
     };
   });
-  ok(rek.kammern.length === 4, 'der Reiter zeigt vier Kammern', rek.kammern.join(' · '));
+  ok(rek.kammern.length === 5, 'der Reiter zeigt fuenf Kammern', rek.kammern.join(' · '));
+  // Jeder Chip nennt seine Zahl, und „Alle" nennt den ganzen Katalog.
+  const chipSoll = await page.evaluate(() => window.__k.eval(
+    `(function(){ const z = {}; CHRONICLES.forEach(c => z[c.kind] = (z[c.kind]||0)+1);
+       return z; })()`));
+  const chipFehler = rek.chips.filter(c => c.k
+    ? c.n !== chipSoll[c.k] : c.n !== CHRONICLES_N);
+  ok(rek.chips.length === 6 && chipFehler.length === 0,
+     'jeder Kammer-Chip nennt seine Zahl, „Alle" den ganzen Katalog',
+     rek.chips.map(c => (c.k || 'alle') + ':' + c.n).join(' · '));
+  // Die Leiste ist erreichbar: entweder passt sie, oder sie scrollt.
+  ok(rek.leiste && (rek.leiste.scroll <= rek.leiste.sicht + 1
+      || rek.leiste.scroll > rek.leiste.sicht),
+     'die Kammerleiste ist auf dem Telefon vollstaendig erreichbar',
+     JSON.stringify(rek.leiste));
   ok(rek.karten === CHRONICLES_N, 'jeder Rekord des Katalogs hat eine Karte',
      rek.karten + ' von ' + CHRONICLES_N);
-  // Die Besitzleiste zählt dieselben Haltungen, die die Karten zeigen.
+  // Die Besitzleiste zählt dieselben Haltungen, die die Karten zeigen — und
+  // zwar die, die ein Rekord SIND: eine Schattenseite und eine negative
+  // Fuegung zaehlen nicht mit [§C25].
   const haltungen = await page.evaluate(() => window.__k.eval(
-    `Object.values(allChronicles().byId).reduce((n, e) => n + e.pids.length, 0)`));
+    `Object.values(allChronicles().byId)
+       .reduce((n, e) => n + (e.neg ? 0 : e.pids.length), 0)`));
   const summe = rek.saeulen.reduce((a, b) => a + b, 0);
   ok(summe === haltungen, 'die Besitzleiste zählt so viele Haltungen wie die Tafel',
      summe + ' vs ' + haltungen);
+  // Und sie sagt dieselbe Zahl wie das Podest der Ewigen Tafel und das
+  // Profil. Sie tat es nicht: Martins Saeule stand auf 13, seine
+  // Podestkarte auf „10 Rek.", und beides war unter demselben Wort zu
+  // lesen. Gemessen wird je Spieler, nicht als Summe — eine Summe stimmt
+  // auch dann, wenn zwei Spieler ihre Zahlen tauschen.
+  const einig = await page.evaluate(() => window.__k.eval(
+    `(function(){
+       return rekordZaehlung().map(z => ({
+         n: pname(z.pid), leiste: z.n,
+         podest: chroniclesOfPlayer(z.pid).filter(x => !x.neg).length
+       })).filter(r => r.leiste !== r.podest);
+     })()`));
+  ok(einig.length === 0, 'die Besitzleiste sagt je Spieler dieselbe Zahl wie das Podest',
+     einig.map(r => r.n + ': ' + r.leiste + ' vs ' + r.podest).join(' · '));
   // Ein Rekord, den niemand hält, steht gestrichelt da statt zu fehlen.
   const unbesetzt = await page.evaluate(() => window.__k.eval(
     `(function(){ const h = chronicleHolders();
@@ -358,6 +567,29 @@ const ok = (c, msg, det) => {
   });
   ok(gefiltert.n === 1 && gefiltert.nurFuegung,
      'der Kammerfilter zeigt genau eine Kammer', JSON.stringify(gefiltert));
+  // Und jede Kammer zeigt genau ihre Zahl, „Alle" den ganzen Katalog. Ein
+  // Rekord, den ein Filter verschluckt, ist unsichtbar — und genau das
+  // faellt sonst niemandem auf.
+  const jeKammer = await page.evaluate(() => {
+    const K = s => window.__k.eval(s);
+    const soll = K(`(function(){ const z = {}; CHRONICLES.forEach(c =>
+      z[c.kind] = (z[c.kind]||0)+1); return z; })()`);
+    const out = {};
+    Object.keys(soll).concat(['']).forEach(k => {
+      K('rekKammer = ' + JSON.stringify(k) + '; render()');
+      out[k || 'alle'] = {ist: document.querySelectorAll('#app .rek').length,
+                          soll: k ? soll[k] : K('CHRONICLES.length')};
+    });
+    K('rekKammer = ""; render()');
+    return out;
+  });
+  const kammerFehler = Object.keys(jeKammer)
+    .filter(k => jeKammer[k].ist !== jeKammer[k].soll)
+    .map(k => k + ': ' + jeKammer[k].ist + ' statt ' + jeKammer[k].soll);
+  ok(kammerFehler.length === 0,
+     'jede Kammer zeigt ihre Zahl und „Alle" den ganzen Katalog',
+     kammerFehler.join(' · ')
+     || Object.keys(jeKammer).map(k => k + ':' + jeKammer[k].ist).join(' · '));
 
   // ── Was negativ ist, traegt Rot und zaehlt nicht ──────────────────
   // „Die bitterste Pleite" stand im Profil golden zwischen den Titeln und
@@ -453,7 +685,7 @@ const ok = (c, msg, det) => {
     // Wie viele verschiedene Kalendertage tragen die Karten wirklich?
     const tage = window.__k.eval(`(function(){
       const s = getStoriesCache();
-      return new Set(s.map(x => _newsDayKey(x.when))).size;
+      return new Set(s.map(x => tagKey(x.when))).size;
     })()`);
     const chips = (sheet ? [...sheet.querySelectorAll('.nf-chip-f')] : []).map(e => ({
       text: e.textContent.trim(), zahl: e.querySelector('i') ? +e.querySelector('i').textContent : null
@@ -509,9 +741,15 @@ const ok = (c, msg, det) => {
       if(gr.length !== 1) return;
       // Traegt sie wirklich den hoechsten Nachrichtenwert ihres Tages?
       const ids = [...feed.querySelectorAll('.nf-card')].map(c => c.dataset.sid);
+      // Gewertet wird nur, wer das Band tragen darf: Breaking ist im Feed
+      // schon die lauteste Karte, der Spieler des Tages steht an jedem
+      // Spieltag da, und ein Rueckblick gehoert keinem Tag [§C33]. Die
+      // Frage stellt `_newsTagKarteWuerdig` — hier stand vorher eine
+      // zweite Liste dafuer [§C27].
       const beste = window.__k.eval(`(function(){
         const ids = ${JSON.stringify(ids)};
-        const s = getStoriesCache().filter(x => ids.indexOf(x.id) >= 0);
+        const s = getStoriesCache().filter(x => ids.indexOf(x.id) >= 0)
+          .filter(_newsTagKarteWuerdig);
         s.sort((a,b) => (_newsTagSpannung(b)-_newsTagSpannung(a))
           || ((b.prio||0)-(a.prio||0)) || String(a.id||'').localeCompare(String(b.id||'')));
         return s.length ? s[0].id : '';
@@ -754,6 +992,513 @@ const ok = (c, msg, det) => {
   ok(achse.tafelMetall, 'der gemeinsame Tafel-Moment traegt kuehles Metall statt Gold',
      String(achse.tafelMetall));
 
+  // ── Das Blatt der Ewigen Tafel zeigt, was ausschlaggebend war ────
+  //    Die Punktewirkung stand als Zeile „1205 → 1240 Prestige": zwei Zahlen,
+  //    die man erst lesen und dann verrechnen muss, und bei neun Zeilen
+  //    darueber weiss niemand mehr, was daran relevant ist. Jetzt tragen die
+  //    Zahlenreihe davor und der Balken je Spieler die Aussage — beides ist
+  //    gezeichnet, also wird es gemessen.
+  const tafelBlatt = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const tage=[...new Set(matches.map(m=>tagKey(mts(m))))].sort();
+      const tg=tage[tage.length-1];
+      const m=_newsTagMs(tg)[0];
+      const wann=new Date(mts(m));
+      const ck=_storyGruppeKey('table', tg);
+      const lb={};
+      lb[players[0].id]={vor:1150,nach:1240,delta:90,stufeVor:2,stufeNach:2};
+      lb[players[1].id]={vor:470,nach:520,delta:50,stufeVor:0,stufeNach:1};
+      const l=[
+        {id:'tw-0',cat:'tafel',ic:'trophyStar',when:wann,prio:80,
+         title:'Ein Wechsel',desc:'Ein Satz mit 1 Zahl.',
+         dataRef:{type:'rekord_geholt',rekordId:'rw',matchId:m.id,causalKey:ck,
+                  laufbahn:lb,playerIds:[players[0].id,players[1].id]}},
+        {id:'tw-1',cat:'tafel',ic:'chartBar',when:wann,prio:70,
+         title:'Ein Ausbau',desc:'Ein Satz mit 2 Zahlen.',
+         dataRef:{type:'rekord_gesteigert',rekordId:'ra',matchId:m.id,causalKey:ck,
+                  laufbahn:lb,playerIds:[players[0].id]}},
+        {id:'tw-2',cat:'tafel',ic:'calendar',when:wann,prio:62,
+         title:'Eine Chronik',desc:'Ein Satz mit 3 Zahlen.',
+         dataRef:{type:'chronik_geholt',titleId:'tc',matchId:m.id,causalKey:ck,
+                  laufbahn:lb,playerIds:[players[1].id]}}
+      ];
+      _cache._consolFrom=null;
+      const k=_consolidateStories(l).find(x=>(x.dataRef||{}).quelle==='tafel');
+      return k ? _newsDetailBody(k) : '';
+    })()`);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = markup;
+    document.body.appendChild(host);
+    const zellen = [...host.querySelectorAll('.rcp-z .rcp-z-s')]
+      .map(z => (z.querySelector('.rcp-z-v')||{}).textContent + '|'
+              + (z.querySelector('.rcp-z-l')||{}).textContent);
+    const reihen = [...host.querySelectorAll('.nd-wk')];
+    const raus = reihen.filter(r => {
+      const b = r.querySelector('.nd-wk-b');
+      if(!b) return true;
+      const seg = [...b.children];
+      if(seg.length !== 2) return true;
+      const br = b.getBoundingClientRect();
+      const sum = seg.reduce((n, x) => n + x.getBoundingClientRect().width, 0);
+      return sum > br.width + 0.5;
+    }).length;
+    // Der Zuwachs des Tages ist sichtbar, nicht nur gerechnet: das hellere
+    // Segment hat Breite.
+    const ohneZuwachs = reihen.filter(r => {
+      const seg = r.querySelectorAll('.nd-wk-b em');
+      return !seg.length || seg[0].getBoundingClientRect().width <= 0;
+    }).length;
+    const out = {zellen, reihen: reihen.length, raus, ohneZuwachs,
+      zeichen: host.querySelectorAll('.nd-wk-z svg').length,
+      werte: [...host.querySelectorAll('.nd-wk-d')].map(x => x.textContent.trim()).join(' ')};
+    host.remove(); return out;
+  });
+  ok(tafelBlatt.zellen.length >= 4
+     && tafelBlatt.zellen.some(z => /Bestmarke/.test(z))
+     && tafelBlatt.zellen.some(z => /Ausbau/.test(z))
+     && tafelBlatt.zellen.some(z => /Prestige/.test(z)),
+     'das Blatt eines Tafel-Moments nennt Wechsel, Ausbauten und Prestige in Zahlen',
+     tafelBlatt.zellen.join(' · '));
+  ok(tafelBlatt.reihen === 2,
+     'die Wirkung steht einmal je Spieler',
+     tafelBlatt.reihen + ' Zeilen: ' + tafelBlatt.werte);
+  ok(tafelBlatt.raus === 0,
+     'ihr Balken bleibt in seiner Bahn',
+     tafelBlatt.raus + ' laufen heraus');
+  ok(tafelBlatt.ohneZuwachs === 0,
+     'und der Zuwachs des Tages ist darin zu sehen',
+     tafelBlatt.ohneZuwachs + ' ohne sichtbaren Zuwachs');
+  ok(tafelBlatt.zeichen === 2,
+     'jede Zeile zeigt das Zeichen ihrer Stufe',
+     tafelBlatt.zeichen + ' Zeichen');
+
+  // ── Und jede KARTE passt auch ────────────────────────────────────
+  //    Dasselbe fuer den Feed selbst: eine Karte, die bei 360 px aus ihrem
+  //    Rand laeuft, schiebt die ganze Tafel waagerecht. Gepruefte Karten sind
+  //    die echten des Fensters, jede Sorte einmal.
+  const kartenMobil = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const r = _buildStories();
+      _cache._stories = r.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+      _cache._consolFrom = null; _cache._frischVon = null;
+      const alle = getStoriesCache();
+      const out = [], gesehen = {};
+      alle.forEach(s => {
+        const d = s.dataRef || {};
+        const t = (d.type||'?') + (d.quelle ? '/' + d.quelle : '');
+        if(gesehen[t]) return; gesehen[t] = 1;
+        // Beide Fassungen: die gewoehnliche Karte und die des Tages, die
+        // breiter baut und ein Band darueber traegt.
+        out.push({typ:t, html:_newsCardHtmlM2(s, false, false)});
+        out.push({typ:t + ' (gross)', html:_newsCardHtmlM2(s, false, true)});
+      });
+      return out;
+    })())`);
+    const arr = JSON.parse(roh);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    document.body.appendChild(host);
+    const raus = [], ohneBild = [];
+    // Eine Karte ohne Bildzone ist eine Textzeile in einer Tafel voller
+    // Zeichnungen. Gezaehlt wird jedes Bauteil, das §C27 dafuer nennt:
+    // Ergebnisband, grosser Wert, Leiter, Bilanzbalken, Serienlauf,
+    // Sammelband, Zahlenband, Wochenliste, Duellband, Auszeichnungsfuss oder
+    // das Gesicht selbst.
+    const BILD = ['nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
+                  'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face'];
+    arr.forEach(x => {
+      host.innerHTML = x.html;
+      const karte = host.querySelector('.nf-card');
+      if(!karte) return;
+      if(!BILD.some(c => karte.querySelector('.' + c))) ohneBild.push(x.typ);
+      const kr = karte.getBoundingClientRect();
+      karte.querySelectorAll('*').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if(r.width > 0 && (r.right > kr.right + 0.5 || r.left < kr.left - 0.5))
+          raus.push(x.typ + ' ' + (el.className || el.tagName));
+      });
+    });
+    host.remove();
+    return {n: arr.length, raus: [...new Set(raus)],
+            ohneBild: [...new Set(ohneBild)]};
+  });
+  ok(kartenMobil.n >= 20, 'jede Sorte baut ihre Karte', kartenMobil.n + ' Fassungen');
+  ok(kartenMobil.ohneBild.length === 0,
+     'und jede traegt eine Bildzone, nicht nur Text',
+     kartenMobil.ohneBild.join(', ') || 'jede mit Bild');
+  ok(kartenMobil.raus.length === 0, 'und keine laeuft bei 360 px aus ihrem Rand',
+     kartenMobil.raus.slice(0, 4).join(' | ') || 'keine');
+
+  // ── Jedes Blatt passt auf das Telefon ────────────────────────────
+  //    Gemessen am Blatt eines Tafel-Moments: die Zahlenreihe trug fuenf
+  //    Zellen, „BESTMARKEN" war 75 px breit und die Zelle 62 — `overflow:
+  //    hidden` schnitt die Aufschrift ab. Daneben endete „noch 1615 bis zum
+  //    Ordensstern" als „noch 1615 bis zum Ord…" und nannte die Stufe nicht.
+  //    Gefragt ist deshalb bei JEDEM Story-Typ, ob etwas aus seinem Kasten
+  //    laeuft oder abgeschnitten ist — bei 360 px, der Breite, mit der die
+  //    uebrigen Messungen dieser Suite rechnen.
+  const mobil = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const r = _buildStories();
+      _cache._stories = r.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+      _cache._consolFrom = null; _cache._frischVon = null;
+      const alle = getStoriesCache();
+      const out = [], gesehen = {};
+      alle.concat(r).forEach(s => {
+        const d = s.dataRef || {};
+        const t = (d.type||'?') + (d.quelle ? '/' + d.quelle : '');
+        if(gesehen[t]) return; gesehen[t] = 1;
+        let b = ''; try { b = _newsDetailBody(s); } catch(e){ b = ''; }
+        if(b) out.push({typ:t, html:b});
+      });
+      return out;
+    })())`);
+    const arr = JSON.parse(roh);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.style.overflow = 'hidden';
+    document.body.appendChild(host);
+    const raus = [], abgeschnitten = [];
+    arr.forEach(x => {
+      host.innerHTML = x.html;
+      const hr = host.getBoundingClientRect();
+      // Laeuft etwas ueber den Rand des Blatts hinaus?
+      host.querySelectorAll('*').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if(r.width > 0 && r.right > hr.right + 0.5)
+          raus.push(x.typ + ' ' + el.className);
+      });
+      // Und ist ein Text abgeschnitten, obwohl er nicht kuerzen darf? Die
+      // Aufschriften der Zahlenreihe und die Zeile der Wirkung sind die
+      // gemessenen Faelle; eine Schlagzeile DARF kuerzen.
+      host.querySelectorAll('.rcp-z-l, .nd-wk-r, .nd-chance-z, .nw-ic').forEach(el => {
+        if(el.scrollWidth > el.clientWidth + 1)
+          abgeschnitten.push(x.typ + ' ' + el.className + ' '
+            + el.scrollWidth + '>' + el.clientWidth);
+      });
+    });
+    host.remove();
+    return {n: arr.length, raus: [...new Set(raus)], ab: [...new Set(abgeschnitten)]};
+  });
+  ok(mobil.n >= 15, 'jeder Story-Typ baut ein Blatt', mobil.n + ' Typen');
+  ok(mobil.raus.length === 0, 'und keines laeuft bei 360 px aus seinem Rand',
+     mobil.raus.slice(0, 4).join(' | ') || 'keines');
+  ok(mobil.ab.length === 0, 'keine Aufschrift ist abgeschnitten',
+     mobil.ab.slice(0, 4).join(' | ') || 'keine');
+
+  // ── Der Spieltag als Bahn ────────────────────────────────────────
+  //    Das Blatt des Spielers des Tages zeigte jede Partie als vollen
+  //    Vs-Block: an einem Tag mit zehn Partien vierzig Wappen und eine Wand.
+  //    Die Bahn zeigt den Tag in einer Zeile, und die Farbe IST die Aussage —
+  //    also wird sie gemessen.
+  const bahn = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const r = _buildStories();
+      const p = r.find(s => (s.dataRef||{}).type === 'potd');
+      if(!p) return null;
+      const d = p.dataRef || {};
+      const pids = (Array.isArray(d.playerIds) && d.playerIds.length) ? d.playerIds : [d.playerId];
+      const held = pids[0];
+      const tag = _newsTagPartien(d.dayKey, pids)
+        .filter(m => [m.a1,m.a2,m.b1,m.b2].indexOf(held) >= 0)
+        .sort((a,b) => mts(a) - mts(b));
+      const siege = tag.map(m => {
+        const aSeite = (m.a1 === held || m.a2 === held);
+        return aSeite ? m.winner === 'A' : m.winner === 'B';
+      });
+      return {html:_newsDetailBody(p), n:tag.length, siege};
+    })())`);
+    if(roh === 'null') return {fehlt:true};
+    const x = JSON.parse(roh);
+    if(!x) return {fehlt:true};
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = x.html;
+    document.body.appendChild(host);
+    const felder = [...host.querySelectorAll('.nd-bahn i')];
+    const zeilen = [...host.querySelectorAll('.nd-tm')];
+    // Die Farbe folgt dem Ausgang, und die Reihenfolge ist die Zeit.
+    const falsch = felder.filter((f, i) =>
+      f.classList.contains('w') !== !!x.siege[i]).length;
+    const bahnBox = host.querySelector('.nd-bahn');
+    const raus = bahnBox ? felder.filter(f =>
+      f.getBoundingClientRect().right > bahnBox.getBoundingClientRect().right + 0.5).length : 0;
+    const out = {fehlt:false, n:x.n, felder:felder.length, zeilen:zeilen.length,
+                 falsch, raus,
+                 bloecke: host.querySelectorAll('.nd-match').length};
+    host.remove(); return out;
+  });
+  ok(!bahn.fehlt && bahn.felder === bahn.n && bahn.zeilen === bahn.n,
+     'die Bahn zeigt jede eigene Partie des Tages',
+     bahn.felder + ' Felder und ' + bahn.zeilen + ' Zeilen von ' + bahn.n);
+  ok(!bahn.fehlt && bahn.falsch === 0,
+     'und jedes Feld traegt die Farbe seines Ausgangs',
+     bahn.falsch + ' verkehrt');
+  ok(!bahn.fehlt && bahn.raus === 0 && bahn.bloecke === 0,
+     'sie bleibt in ihrer Zeile und ersetzt die Vs-Bloecke',
+     bahn.raus + ' heraus, ' + bahn.bloecke + ' Bloecke');
+
+  // ── Wie weit dahinter, sieht man ─────────────────────────────────
+  //    Die Verfolgerliste nannte Rang, Name und Wert. Ob der Zweite knapp
+  //    dran ist oder weit weg, musste man daraus ausrechnen — und bei „84 %"
+  //    gegen „81 %" gegen „62 %" ist gerade das die Aussage. Der Balken zeigt
+  //    den Anteil am Bestwert, und nur dort, wo er etwas bedeutet.
+  const verfolger = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const roh = K(`JSON.stringify((function(){
+      const out = [];
+      // Ein Rekord mit positivem Sortierwert traegt den Balken, einer mit
+      // negativem nicht: „weniger Gegentore ist besser" hat keinen Anteil.
+      const byId = (allChronicles() || {}).byId || {};
+      Object.keys(byId).forEach(id => {
+        const r = byId[id];
+        if(!r || !r.pids || !r.pids.length) return;
+        const rang = chronicleRang(id) || [];
+        if(rang.length < 3) return;
+        out.push({id, wert:r.val, html:_newsVerfolger(id, r.pids, r.val)});
+      });
+      return out.slice(0, 40);
+    })())`);
+    const arr = JSON.parse(roh);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    document.body.appendChild(host);
+    let mitBalken = 0, ohneBalken = 0, raus = 0, falschRum = 0;
+    arr.forEach(x => {
+      host.innerHTML = x.html;
+      const zeilen = [...host.querySelectorAll('.nd-vf-z')];
+      const balken = [...host.querySelectorAll('.nd-vf-b')];
+      if(!zeilen.length) return;
+      if(x.wert > 0){
+        if(balken.length === zeilen.length) mitBalken++; else ohneBalken++;
+        // Der Balken bleibt in seiner Bahn, und weiter hinten ist er kuerzer.
+        let vor = Infinity;
+        balken.forEach(b => {
+          const i = b.querySelector('i');
+          if(!i) { raus++; return; }
+          const ir = i.getBoundingClientRect(), br = b.getBoundingClientRect();
+          if(ir.right > br.right + 0.5 || ir.width <= 0) raus++;
+          if(ir.width > vor + 0.5) falschRum++;
+          vor = ir.width;
+        });
+      } else if(balken.length){ ohneBalken++; }
+    });
+    host.remove();
+    return {n: arr.length, mitBalken, ohneBalken, raus, falschRum};
+  });
+  ok(verfolger.mitBalken > 0 && verfolger.ohneBalken === 0,
+     'jede Verfolgerzeile eines Rekords mit Anteil traegt ihren Balken',
+     verfolger.mitBalken + ' Rekorde, ' + verfolger.ohneBalken + ' ohne');
+  ok(verfolger.raus === 0, 'der Balken bleibt in seiner Bahn',
+     verfolger.raus + ' laufen heraus');
+  ok(verfolger.falschRum === 0, 'und wer weiter hinten liegt, hat den kuerzeren',
+     verfolger.falschRum + ' verdreht');
+
+  // ── Das Blatt einer Partie zeigt, was in ihr zu sehen war ────────
+  //    Es hatte gar keinen Fall: wer eine Partie-Karte oeffnete, sah den
+  //    Satz, den er auf der Karte schon gelesen hatte. Jetzt stehen die
+  //    Siegchance auf ihrer Skala und die Elo-Wirkung je Spieler darin — und
+  //    beides ist gezeichnet, also wird es gemessen und nicht behauptet.
+  const spielBlatt = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const tage=[...new Set(matches.map(m=>tagKey(mts(m))))].sort();
+      const m=_newsTagMs(tage[tage.length-1])[0];
+      const w=m.winner==='A'?[m.a1,m.a2]:[m.b1,m.b2];
+      const v=m.winner==='A'?[m.b1,m.b2]:[m.a1,m.a2];
+      const s={id:'spiel_'+m.id,cat:'highlight',ic:'thriller',
+        when:new Date(mts(m)),prio:41,
+        title:'Zwei entscheiden ein enges Spiel',
+        desc:'Vor dem Anstoss lag die Siegchance bei 57 %.',
+        dataRef:{type:'spiel',resultKind:'eng',matchId:m.id,winners:w,losers:v,
+                 playerIds:w,margin:2,quote:57}};
+      return _newsDetailBody(s);
+    })()`);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = markup;
+    document.body.appendChild(host);
+    const sk = host.querySelector('.nd-chance');
+    const bahn = sk && sk.querySelector('.nd-chance-b');
+    const fuell = bahn && bahn.querySelector('i');
+    const striche = bahn ? [...bahn.querySelectorAll('u')] : [];
+    const zeilen = [...host.querySelectorAll('.nd-elo')];
+    const raus = zeilen.filter(z => {
+      const b = z.querySelector('.nd-elo-b i'), zr = z.getBoundingClientRect();
+      if(!b) return true;
+      const br = b.getBoundingClientRect();
+      return br.right > zr.right + 0.5 || br.width <= 0;
+    }).length;
+    const out = {
+      skala: !!sk, zeilen: zeilen.length, raus,
+      fuellDrin: !!(fuell && bahn
+        && fuell.getBoundingClientRect().right <= bahn.getBoundingClientRect().right + 0.5
+        && fuell.getBoundingClientRect().width > 0),
+      striche: striche.length,
+      stricheDrin: bahn ? striche.filter(u => {
+        const ur = u.getBoundingClientRect(), br = bahn.getBoundingClientRect();
+        return ur.left >= br.left - 0.5 && ur.right <= br.right + 0.5;
+      }).length : 0,
+      werte: [...host.querySelectorAll('.nd-elo-v')].map(x => x.textContent.trim()).join(' ')
+    };
+    host.remove(); return out;
+  });
+  ok(spielBlatt.skala, 'das Blatt einer Partie zeigt die Siegchance als Skala');
+  ok(spielBlatt.fuellDrin,
+     'ihr Balken bleibt in seiner Bahn',
+     spielBlatt.fuellDrin ? 'innerhalb' : 'laeuft heraus');
+  ok(spielBlatt.striche === 3 && spielBlatt.stricheDrin === 3,
+     'und die drei Linien der Elo-Rechnung stehen darin',
+     spielBlatt.stricheDrin + ' von ' + spielBlatt.striche);
+  ok(spielBlatt.zeilen === 4,
+     'die Elo-Wirkung steht je Spieler der Partie',
+     spielBlatt.zeilen + ' Zeilen: ' + spielBlatt.werte);
+  ok(spielBlatt.raus === 0,
+     'und kein Ausschlag laeuft aus seiner Zeile',
+     spielBlatt.raus + ' von ' + spielBlatt.zeilen);
+
+  // ── Eine Sammelkarte bedeckt nicht den ganzen Bildschirm ─────────
+  //    „Bündeln darf nichts verstecken" war fuer zwei bis vier Teile
+  //    geschrieben. Gemessen trug ein Tafel-Moment neunzehn Zeilen — fuenf
+  //    Bestmarken, dreizehn Monatschroniken und ein Insignium —, und die
+  //    Karte war dreimal so hoch wie das Telefon: damit versteckte gerade
+  //    die vollstaendige Liste alles andere. Auf der Karte stehen die
+  //    staerksten, im Blatt jede Zeile.
+  const flut = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const daten = K(`(function(){
+      const when = matches[matches.length-1].created_at;
+      const mk = (i) => ({id:'flut-'+i, cat:'tafel', ic:'trophyStar', when,
+        prio: i < 5 ? 76 : i < 18 ? 62 : 40,
+        title:(i < 5 ? 'Ein Rekord ' : i < 18 ? 'Eine Chronik ' : 'Ein Ausbau ') + i,
+        desc:'Ein Satz mit ' + i + ' Zahlen.',
+        dataRef:{type: i < 5 ? 'rekord_geholt' : i < 18 ? 'chronik_geholt' : 'rekord_gesteigert',
+                 rekordId:'r'+i, titleId:'t'+i, playerIds:[players[i % 4].id]}});
+      const l = []; for(let i = 0; i < 19; i++) l.push(mk(i));
+      _cache._consolFrom = null;
+      const s = _consolidateStories(l).find(x => (x.dataRef||{}).quelle === 'tafel');
+      return s ? JSON.stringify({karte:_newsCardHtmlM2(s, false, false),
+                                 blatt:_newsDetailMitte(s) || '',
+                                 teile:(s.dataRef.teile||[]).length}) : '';
+    })()`);
+    if(!daten) return {fehlt:true};
+    const d = JSON.parse(daten);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = d.karte;
+    document.body.appendChild(host);
+    const karte = host.querySelector('.nf-card');
+    const zeilen = karte ? karte.querySelectorAll('.nf-sam-z').length : 0;
+    const rest = karte ? karte.querySelector('.nf-sam-m') : null;
+    const hoehe = karte ? karte.getBoundingClientRect().height : 0;
+    // Gemessen wird die SCHRIFT, nicht der Kasten: mit 6 px Innenabstand
+    // endete „und 13 weitere" einen Pixel ueber der Kartenkante, und die
+    // Ecke von 14 px schnitt sie an.
+    let luft = 0;
+    if(rest && rest.firstChild){
+      const r = document.createRange();
+      r.selectNodeContents(rest);
+      luft = Math.round(karte.getBoundingClientRect().bottom - r.getBoundingClientRect().bottom);
+    }
+    host.innerHTML = '<div class="nd">' + d.blatt + '</div>';
+    const imBlatt = host.querySelectorAll('.nw-zeile').length;
+    const out = {fehlt:false, teile:d.teile, zeilen, hoehe: Math.round(hoehe),
+                 rest: rest ? rest.textContent.trim() : '', luft, imBlatt};
+    host.remove(); return out;
+  });
+  ok(!flut.fehlt && flut.teile === 19,
+     'ein Tafel-Moment kann neunzehn Spuren tragen', JSON.stringify(flut));
+  ok(flut.zeilen === 4 && /15/.test(flut.rest),
+     'die Karte zeigt die staerksten vier und zaehlt den Rest',
+     flut.zeilen + ' Zeilen, „' + flut.rest + '"');
+  ok(flut.hoehe < 640,
+     'und bleibt damit kuerzer als ein Telefonbildschirm',
+     flut.hoehe + ' px');
+  // Die Ecke der Karte misst 14 px und `overflow:hidden` schneidet: was
+  // darunter liegt, wird von der Rundung angeschnitten. Gemessen blieben
+  // 10 px, und „und 13 weitere" sah aus wie ein Darstellungsfehler.
+  ok(flut.luft >= 14,
+     'und die Zahl der uebrigen Zeilen steht frei von der gerundeten Ecke',
+     flut.luft + ' px Luft bei 14 px Radius');
+  ok(flut.imBlatt === 19,
+     'das Blatt zeigt trotzdem jede einzelne Zeile',
+     flut.imBlatt + ' von ' + flut.teile);
+
+  // ── Was oben steht, steht unten nicht noch einmal ────────────────
+  //    `_breakingHeroText` hat nur fuer sieben Typen einen eigenen Satz und
+  //    fiel sonst auf `s.desc` zurueck: gemessen stand der Teaser auf der
+  //    gebuendelten Breaking-Karte zweimal untereinander.
+  const brkKarte = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const p = matches[matches.length-1];
+      const l = [
+        {id:'bk-1', cat:'team', ic:'medal', when:new Date(mts(p)), prio:90,
+         title:pname(p.a1)+' und '+pname(p.a2)+': Absoluter Sieger',
+         desc:'Ein Spiel 10:0 gewonnen.',
+         dataRef:{type:'badge_unlocked', badgeId:'perfect_win', rarity:'legendary',
+                  badgeName:'Absoluter Sieger', matchId:p.id,
+                  playerIds:[p.a1, p.a2]}},
+        {id:'bk-2', cat:'liga', ic:'crown', when:new Date(mts(p)), prio:93,
+         title:'Neuer Spitzenreiter: '+pname(p.a1),
+         desc:pname(p.a1)+' steht nach 1 Spiel an der Spitze.',
+         dataRef:{type:'lead_change', newLeader:p.a1, prevLeader:p.b1,
+                  matchId:p.id}}
+      ];
+      _cache._consolFrom = null;
+      const s = _consolidateStories(l).find(x => (x.dataRef||{}).type === 'sammel');
+      return s ? _newsCardHtmlM2(s, false, false) : '';
+    })()`);
+    if(!markup) return {fehlt:true};
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = markup;
+    document.body.appendChild(host);
+    const karte = host.querySelector('.nf-card');
+    const d = karte ? karte.querySelector('.nf-d') : null;
+    const sub = karte ? karte.querySelector('.nf-brk-sub') : null;
+    // ── Der Anlass ist zu SEHEN, nicht nur zu lesen ────────────────
+    //     Die Karte bricht die Spalte wegen EINER ihrer Zeilen, und die stand
+    //     in derselben grauen Zeile wie die uebrigen — nur eine kleine Marke
+    //     am rechten Rand sagte es. Gemessen wird deshalb die Zeile selbst:
+    //     eine eigene Kante und eine eigene Flaeche.
+    const zl = karte ? [].slice.call(karte.querySelectorAll('.nf-sam-z')) : [];
+    const anl = zl.filter(x => x.classList.contains('brk'))[0] || null;
+    const rest = zl.filter(x => !x.classList.contains('brk'))[0] || null;
+    const out = {fehlt:false,
+      brk: !!(karte && karte.classList.contains('nf-brk')),
+      band: karte ? karte.querySelectorAll('.nf-erg').length : 0,
+      zeilen: zl.length,
+      anlassKante: anl ? getComputedStyle(anl).boxShadow : '',
+      // Eine eigene Flaeche heisst: nicht durchsichtig. Ein Vergleich mit der
+      // Nachbarzeile taugt nicht — in diesem Buendel ist jede Zeile Breaking,
+      // und dann gibt es keine Nachbarzeile ohne Marke.
+      anlassBrk: zl.filter(x => x.classList.contains('brk')).length,
+      anlassFlaeche: !!(anl
+        && getComputedStyle(anl).backgroundColor !== 'rgba(0, 0, 0, 0)'
+        && getComputedStyle(anl).backgroundColor !== 'transparent'),
+      anlassZahl: karte ? karte.querySelectorAll('.nf-brk-n').length : 0,
+      doppelt: !!(sub && d && sub.textContent.trim() === d.textContent.trim())};
+    host.remove(); return out;
+  });
+  ok(!brkKarte.fehlt && brkKarte.brk && brkKarte.band === 1 && brkKarte.zeilen === 2,
+     'der gemeinsame Breaking-Moment zeigt Ergebnis und beide Meldungen',
+     JSON.stringify(brkKarte));
+  ok(brkKarte.anlassKante && brkKarte.anlassKante !== 'none' && brkKarte.anlassFlaeche,
+     'und seine Anlass-Zeile traegt eine eigene Kante und eine eigene Flaeche',
+     brkKarte.anlassKante + ' / Flaeche ' + brkKarte.anlassFlaeche);
+  ok(brkKarte.anlassZahl === 1,
+     'der Breaking-Balken einer gebuendelten Karte zeigt die Zahl der Meldungen',
+     brkKarte.anlassZahl + ' Pille');
+  ok(brkKarte.doppelt === false,
+     'und seinen Teaser nur einmal, nicht als Nachsatz ein zweites Mal',
+     String(brkKarte.doppelt));
+
   const palette = await page.evaluate(() => {
     const host = document.createElement('div');
     const sorten = ['spiel','tafel','ins','held','woche','duell','serie','badge','marke',
@@ -894,23 +1639,151 @@ const ok = (c, msg, det) => {
     });
     // Das Duell traegt seine Wappen im Band ueber dem Text — nicht noch
     // einmal daneben.
+    // Ein Duell traegt ein Band ueber dem Text — entweder die Bilanz beider
+    // Wappen, oder, wenn eine konkrete Partie die Marke gerissen hat, das
+    // Ergebnis dieser Partie. Beide uebereinander waeren zwei Baender fuer
+    // dieselbe Aussage: „50. Duell" steht schon in der Schlagzeile [§C33].
     const duelle = [...sheet.querySelectorAll('.nf-s-duell')];
     const duellDoppelt = duelle.filter(c => c.querySelector('.nf-gr-l')).length;
-    const duellBand = duelle.filter(c => c.querySelector('.nf-duell-band')).length;
+    const duellBand = duelle.filter(c =>
+      c.querySelector('.nf-duell-band') || c.querySelector('.nf-erg')).length;
     // Das Serienband sagt, was seine Punkte zaehlen.
     const baender = [...sheet.querySelectorAll('.nf-ser')];
     const ohneLabel = baender.filter(b => !b.querySelector('span')).length;
+    // Und sie nimmt der Schlagzeile nicht den Platz. Wert und Gesichter
+    // standen NEBENeinander, und die Spalte war damit so breit wie beide
+    // zusammen: gemessen 169 von 316 Pixeln, also 53 % der Karte, waehrend
+    // die Schlagzeile auf 77 px zusammengedrueckt wurde und mitten im Satz
+    // abbrach. Uebereinander ist die Spalte so breit wie das Breitere von
+    // beiden. Gemessen in Prozent und nicht in Pixeln: die Karte ist auf
+    // jedem Telefon anders breit.
+    let breit = 0, breitAerger = '', maxA = 0;
+    karten.forEach(c => {
+      const l = c.querySelector('.nf-gr-l');
+      if(!l) return;
+      const a = l.getBoundingClientRect().width / c.getBoundingClientRect().width;
+      if(a > maxA){ maxA = a; breitAerger = c.className.split(' ')[1] + ' '
+        + Math.round(a * 100) + '%'; }
+      if(a > .28) breit++;
+    });
+    // Eine abgeschnittene Schlagzeile ist der Befund, nicht die Ursache:
+    // `-webkit-line-clamp` schneidet still ab, und im Feed stand
+    // „Johannes, Julian und zwei weitere bewegen die Ewige…".
+    const koepfeAb = [...sheet.querySelectorAll('.nf-card .nf-h')]
+      .filter(h => h.scrollHeight > h.clientHeight + 1);
     return {karten: karten.length, zuHoch, aerger, duelle: duelle.length,
-            duellDoppelt, duellBand, baender: baender.length, ohneLabel};
+            duellDoppelt, duellBand, baender: baender.length, ohneLabel,
+            breit, breitAerger, ab: koepfeAb.length,
+            abAerger: koepfeAb.length ? koepfeAb[0].textContent.trim().slice(0, 48) : ''};
   });
   ok(luecken.zuHoch === 0, 'die Bildzone macht die Karte nicht hoeher als ihr Text',
      luecken.zuHoch + ' zu hoch' + (luecken.aerger ? ' (' + luecken.aerger + ')' : ''));
-  ok(luecken.duelle === 0 || luecken.duellBand === luecken.duelle,
+  ok(luecken.duelle > 0 && luecken.duellBand === luecken.duelle,
      'das Duell traegt sein Band', luecken.duellBand + ' von ' + luecken.duelle);
   ok(luecken.duellDoppelt === 0, 'das Duell zeigt seine Wappen nur einmal',
      luecken.duellDoppelt + ' doppelt');
   ok(luecken.baender === 0 || luecken.ohneLabel === 0,
      'das Serienband nennt, was es zaehlt', luecken.ohneLabel + ' ohne');
+  ok(luecken.breit === 0,
+     'die Bildzone nimmt der Schlagzeile nicht den Platz',
+     luecken.breit + ' ueber 28 % (breiteste: ' + luecken.breitAerger + ')');
+  // Der Feed eines Zeitschnitts traegt nicht jede Sorte: gemessen standen im
+  // Vierzehn-Tage-Fenster fuenf der zwoelf, und gerade die Marke — ein Wappen
+  // UND ein Wert nebeneinander — kam nicht vor. Eine Stichprobe genuegt hier
+  // nicht, also wird jede Sorte einmal gestellt und in derselben Spalte
+  // gemessen. Der laengste Aufschrift-Fall steht dabei ausdruecklich drin:
+  // „AKTUELLE FORM" zog die Spalte allein achtzig Pixel breit.
+  const alleSorten = await page.evaluate(() => {
+    const bau = window.__k.eval('_newsCardHtmlM2');
+    const sorte = window.__k.eval('_newsSorte');
+    const p = window.__k.eval('players.map(x => x.id)');
+    const mid = window.__k.eval('matches[matches.length-1].id');
+    const feed = document.querySelector('#sheet .nf-feed') || document.getElementById('sheet');
+    const huelle = document.createElement('div');
+    feed.appendChild(huelle);
+    // `cat` entscheidet in `_newsSorte` mit: alles mit `cat:'tafel'` ist eine
+    // Tafel-Karte, egal welchen Typ die Zeile traegt. Ohne diese Unterscheidung
+    // fielen acht der dreizehn Faelle auf dieselbe Sorte.
+    const karte = (titel, text, ref, cat) => ({id:'x', cat: cat || 'match',
+      ic:'medal2', prio:50, title:titel, desc:text,
+      when:new Date().toISOString(), dataRef:ref});
+    // Die laengste Schlagzeile, die der Generator ueber die Fixtures
+    // ueberhaupt bildet — gemessen 58 Zeichen bei einem Median von 34. Eine
+    // erfundene, laengere Zeile bricht in jeder Spaltenbreite ab und wuerde
+    // damit die Spalte nicht mehr messen.
+    const lang = 'Maxi, Julian, Jane und Johannes uebernehmen „Der Hoehenflug"';
+    const faelle = [
+      karte(lang, 'Ein Rekord der Kammer Aktuelle Form wechselt: 72 %.',
+            {type:'sammel', quelle:'form', rekordId:'best_record',
+             playerIds:[p[5], p[6], p[8], p[9]],
+             teile:[{titel:'a', pids:[p[5]]}, {titel:'b', pids:[p[6]]},
+                    {titel:'c', pids:[p[8]]}]}, 'tafel'),
+      karte(lang, 'Neun Wechsel an einem Tag.',
+            {type:'sammel', quelle:'tafel', playerIds:[p[5], p[6], p[8]],
+             teile:new Array(9).fill(0).map((_, i) => ({titel:'t' + i, pids:[p[5]]}))},
+            'tafel'),
+      karte(lang, 'Die vierte Stufe steht.', {type:'insignium_stufe', pid:p[9], stufe:3}),
+      karte(lang, '5 von 6 gewonnen.', {type:'potd', playerId:p[9], wr:.83, wins:5, games:6}),
+      karte(lang, 'Eine Auszeichnung mehr.', {type:'badge_unlocked', pid:p[9], badgeId:'wall'}),
+      karte(lang, '12 Siege in Folge.', {type:'win_streak', pid:p[9], streak:12}),
+      karte(lang, '18 Elo gewonnen.', {type:'elo_swing', pid:p[9], delta:18}),
+      karte(lang, '15 Siege in Folge erreicht.', {type:'milestone', pid:p[9], streak:15}),
+      karte(lang, 'Das 50. Duell.', {type:'rivalry_milestone', a:p[8], b:p[9], milestone:50}),
+      karte(lang, 'Vier Erfolge im selben Moment.',
+            {type:'sammel', quelle:'spieler', playerIds:[p[9]],
+             teile:[{titel:'a'}, {titel:'b'}, {titel:'c'}, {titel:'d'}]}),
+      karte(lang, 'Drei tragen jetzt dieselbe Stufe.',
+            {type:'sammel', quelle:'erfolg', art:'insignium_stufe', stufe:2,
+             playerIds:[p[7], p[8], p[9]],
+             teile:[{titel:'a', pids:[p[7]]}, {titel:'b', pids:[p[8]]},
+                    {titel:'c', pids:[p[9]]}]}),
+      karte(lang, 'Leon fuehrt mit 91 Elo Vorsprung.',
+            {type:'ambient', pid:p[8], vv:'91', vl:'Elo Vorsprung'}),
+      karte(lang, 'Ein Ergebnis des Tages.', {type:'match_result', matchId:mid})
+    ];
+    const gemessen = [];
+    faelle.forEach(f => {
+      huelle.innerHTML = bau(f, false, false);
+      const c = huelle.querySelector('.nf-card'), l = huelle.querySelector('.nf-gr-l');
+      if(!c) return;
+      // Ein Deckel auf der Spalte schneidet ab, statt zu schrumpfen: die
+      // Chipgruppe traegt `flex-shrink:0`, und bei 72 px stand der Deckel
+      // mitten in ihr — das dritte Zeichen („+2") war weg. Gemessen wird
+      // deshalb, ob ein Kind ueber den INHALT der Spalte hinausragt, und
+      // nicht nur, wie breit sie ist.
+      let ueber = 0;
+      if(l){
+        const lb = l.getBoundingClientRect(), cs = getComputedStyle(l);
+        const li = lb.left + parseFloat(cs.paddingLeft);
+        const re = lb.right - parseFloat(cs.paddingRight)
+                 - parseFloat(cs.borderRightWidth);
+        [...l.children].forEach(k => {
+          const kb = k.getBoundingClientRect();
+          ueber = Math.max(ueber, Math.round(Math.max(0, kb.right - re)
+                                           + Math.max(0, li - kb.left)));
+        });
+      }
+      gemessen.push({s: sorte(f), ueber,
+        a: l ? Math.round(l.getBoundingClientRect().width
+                          / c.getBoundingClientRect().width * 100) : 0});
+    });
+    huelle.remove();
+    return gemessen;
+  });
+  const sortenBreit = alleSorten.filter(x => x.a > 28);
+  ok(new Set(alleSorten.map(x => x.s)).size >= 11,
+     'jede Kartensorte wird einmal gestellt',
+     new Set(alleSorten.map(x => x.s)).size + ' Sorten');
+  ok(sortenBreit.length === 0,
+     'und keine von ihnen gibt der Bildzone mehr als 28 % der Karte',
+     sortenBreit.map(x => x.s + ' ' + x.a + ' %').join(', ')
+     || 'breiteste ' + Math.max.apply(null, alleSorten.map(x => x.a)) + ' %');
+  const sortenKlemm = alleSorten.filter(x => x.ueber > 0);
+  ok(sortenKlemm.length === 0, 'und keine schneidet ihr eigenes Bild ab',
+     sortenKlemm.map(x => x.s + ' ' + x.ueber + ' px').join(', '));
+
+  ok(luecken.ab === 0, 'und keine Schlagzeile bricht ab',
+     luecken.ab + ' abgeschnitten' + (luecken.abAerger ? ' („' + luecken.abAerger + '")' : ''));
 
   console.log('\n═══ DER RAND SAGT, WAS WIEGT ═══');
   const raender = await page.evaluate(() => {
@@ -977,7 +1850,128 @@ const ok = (c, msg, det) => {
   });
   ok(ruhig.band === 'none' && ruhig.stern === 'none' && ruhig.punkt === 'none',
      'bei prefers-reduced-motion steht alles still', JSON.stringify(ruhig));
+  // Dieselbe Frage für die Zeichnungen im Blatt: ein Balken waechst auf, und
+  // die Bahn laeuft in Spielreihenfolge auf. Beides ruht ebenso.
+  const balkenRuhe = await page.evaluate(() => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="nd">'
+      + '<div class="nd-chance"><div class="nd-chance-b"><i style="width:50%"></i></div></div>'
+      + '<div class="nd-elo"><span class="nd-elo-b"><i class="p" style="width:30%"></i></span></div>'
+      + '<div class="nd-bahn"><i class="w">10:4</i><i class="l">4:10</i></div></div>';
+    document.body.appendChild(host);
+    const n = el => el ? getComputedStyle(el).animationName : 'fehlt';
+    const out = {chance:n(host.querySelector('.nd-chance-b i')),
+                 elo:n(host.querySelector('.nd-elo-b i')),
+                 bahn:n(host.querySelector('.nd-bahn i'))};
+    host.remove(); return out;
+  });
+  ok(balkenRuhe.chance === 'none' && balkenRuhe.elo === 'none'
+     && balkenRuhe.bahn === 'none',
+     'und auch die Balken und die Bahn im Blatt', JSON.stringify(balkenRuhe));
   await page.emulateMedia({reducedMotion: 'no-preference'});
+  const balkenLebt = await page.evaluate(() => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="nd">'
+      + '<div class="nd-chance"><div class="nd-chance-b"><i style="width:50%"></i></div></div>'
+      + '<div class="nd-bahn"><i class="w">10:4</i><i class="l">4:10</i></div></div>';
+    document.body.appendChild(host);
+    const el = host.querySelector('.nd-chance-b i');
+    const b2 = host.querySelectorAll('.nd-bahn i')[1];
+    const out = {chance: el ? getComputedStyle(el).animationName : 'fehlt',
+                 bahn: b2 ? getComputedStyle(b2).animationName : 'fehlt',
+                 // Die Bahn laeuft nacheinander auf, nicht auf einmal.
+                 verzug: b2 ? getComputedStyle(b2).animationDelay : '0s'};
+    host.remove(); return out;
+  });
+  ok(balkenLebt.chance !== 'none' && balkenLebt.chance !== 'fehlt',
+     'sonst waechst ein Balken auf', String(balkenLebt.chance));
+  ok(balkenLebt.bahn !== 'none' && parseFloat(balkenLebt.verzug) > 0,
+     'und die Bahn laeuft in Spielreihenfolge auf',
+     balkenLebt.bahn + ' nach ' + balkenLebt.verzug);
+
+  console.log('\n═══ DER GLANZ GEHOERT DEM TITEL ═══');
+  // Breaking glimmt, die Karte des Tages traegt ein Lauflicht — und dasselbe
+  // Licht liegt dort, wo Gold einen Titel bedeutet und EINER ihn traegt
+  // [§C25]: der Erste des Podests, der Spieler des Tages und der Woche, der
+  // Held eines Rueckblicks. Ein silberner Erster, eine gelesene Siegerkarte
+  // und eine gewoehnliche Partie tragen es nicht.
+  const glanz = async () => page.evaluate(() => {
+    const host = document.createElement('div');
+    host.innerHTML = '<div class="podest"><div class="pod-karte gold erster" id="g1"></div>'
+      + '<div class="pod-karte silber erster" id="g2"></div></div>'
+      + '<div class="nf-card nf-s-held" id="g3"></div><div class="nf-card nf-s-held read" id="g4"></div>'
+      + '<div class="nf-card nf-s-spiel" id="g5"></div><div class="rcp-held" id="g6"></div>'
+      + '<div class="nd nd-s-held"><div class="nd-head" id="g7"></div></div>';
+    document.body.appendChild(host);
+    const a = id => getComputedStyle(host.querySelector('#' + id), '::after').animationName;
+    const out = {gold:a('g1'), silber:a('g2'), held:a('g3'), gelesen:a('g4'),
+                 spiel:a('g5'), rueckblick:a('g6'), blatt:a('g7')};
+    host.remove(); return out;
+  });
+  const gl = await glanz();
+  ok(gl.gold === 'glanzLauf' && gl.held === 'glanzLauf' && gl.rueckblick === 'glanzLauf'
+     && gl.blatt === 'glanzLauf',
+     'der Erste in Gold, der Spieler des Tages samt Blatt und der Held tragen den Glanz',
+     JSON.stringify(gl));
+  ok(gl.silber !== 'glanzLauf' && gl.gelesen !== 'glanzLauf' && gl.spiel !== 'glanzLauf',
+     'ein silberner Erster, eine gelesene und eine gewoehnliche Karte nicht',
+     JSON.stringify(gl));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const glRuhig = await glanz();
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(Object.values(glRuhig).every(v => v !== 'glanzLauf'),
+     'bei prefers-reduced-motion ruht der Glanz', JSON.stringify(glRuhig));
+
+  console.log('\n═══ BOGEN, CHIPS UND FADEN BEI 360 PX ═══');
+  // Der Fuss einer Partie traegt die Siegchance als Bogen und den Gewinn je
+  // Sieger als Chip, und der Faden fuehrt zur frueheren Karte [§C33]. Alles
+  // muss in der Karte bleiben, und der Faden muss oeffnen, wohin er zeigt.
+  const fuss = await page.evaluate(() => {
+    const sheet = document.getElementById('sheet');
+    sheet.querySelectorAll('.nf-card').forEach(c => { c.style.contentVisibility = 'visible'; });
+    const raus = [];
+    const drin = (el, card, was) => {
+      const r = el.getBoundingClientRect(), k = card.getBoundingClientRect();
+      if(r.left < k.left - .5 || r.right > k.right + .5) raus.push(was + ' ' + Math.round(r.right - k.right) + ' px');
+    };
+    const spf = [...sheet.querySelectorAll('.nf-spf')];
+    spf.forEach(f => {
+      const card = f.closest('.nf-card');
+      f.querySelectorAll('.nf-bogen, .nf-eloc').forEach(el => drin(el, card, 'Fuss'));
+    });
+    // Jede Bildzone einer Partie-Karte [§C33], mit jedem Kind: ein Name, der
+    // über die Karte läuft, ist so falsch wie ein Balken.
+    const zonen = [...sheet.querySelectorAll('.nf-s-spiel :is(.nf-waage,.nf-tor,.nf-rgs,.nf-meds,.nf-spitze,.nf-ser,.nf-bil)')];
+    zonen.forEach(z => {
+      const card = z.closest('.nf-card');
+      drin(z, card, z.className.split(' ').pop());
+      z.querySelectorAll('*').forEach(el => { if(el.getClientRects().length) drin(el, card, z.className.split(' ').pop() + ' ' + el.tagName); });
+    });
+    const fd = [...sheet.querySelectorAll('.nf-faden')];
+    fd.forEach(f => drin(f, f.closest('.nf-card'), 'Faden'));
+    const bogenOhneWert = spf.filter(f => f.querySelector('.nf-bogen') && !f.querySelector('.nf-bogen .v')).length;
+    return {spf: spf.length, faeden: fd.length, raus, bogenOhneWert, zonen: zonen.length};
+  });
+  ok(fuss.spf > 0 && fuss.faeden > 0 && fuss.zonen > 20 && fuss.raus.length === 0 && fuss.bogenOhneWert === 0,
+     'Bogen, Chips, Faden und jede andere Bildzone bleiben in ihrer Karte',
+     fuss.raus.slice(0, 3).join(' | ') || fuss.spf + ' Bögen, ' + fuss.zonen + ' Bildzonen, ' + fuss.faeden + ' Faeden');
+  const fadenAuf = await page.evaluate(() => {
+    const sheet = document.getElementById('sheet');
+    const f = sheet.querySelector('.nf-faden');
+    if(!f) return {ok:false};
+    const ziel = sheet.querySelector('.nf-card[data-sid="' + CSS.escape(f.dataset.ziel) + '"] .nf-h');
+    const vorher = document.getElementById('nd').innerHTML;
+    f.click();
+    const nd = document.getElementById('nd');
+    const titel = (nd.querySelector('.nd-title') || {}).textContent || '';
+    const weiter = [...nd.querySelectorAll('.nd-faeden .nf-faden')].map(x => x.textContent);
+    try { window.__k.eval('closeNewsDetail()'); } catch(e){}
+    return {ok: true, soll: ziel ? ziel.textContent : '(nicht im Feed)', titel,
+            weiter: weiter.some(x => /Geht weiter/.test(x)), neu: nd.innerHTML !== vorher};
+  });
+  ok(fadenAuf.ok && fadenAuf.titel === fadenAuf.soll && fadenAuf.weiter,
+     'der Faden oeffnet die fruehere Karte, und deren Blatt zeigt, wo es weitergeht',
+     fadenAuf.titel + ' / ' + fadenAuf.soll);
 
   console.log('\n═══ BREAKING BRICHT DIE SPALTE ═══');
   const brk = await page.evaluate(() => {
@@ -1274,7 +2268,7 @@ const ok = (c, msg, det) => {
     K('showLaufbahn(' + JSON.stringify(daten.pid) + ')');
     await new Promise(r => requestAnimationFrame(r));
     const gruppen=[...document.querySelectorAll('#sheet .lb-grp')];
-    const grp=gruppen.find(e => /Monatswertungen/.test(e.textContent||''));
+    const grp=gruppen.find(e => /Monatschroniken/.test(e.textContent||''));
     const regelKnopf=document.querySelector('#sheet [data-prestige-regeln]');
     const regelHinweis=regelKnopf ? (regelKnopf.textContent||'').replace(/\s+/g,' ').trim() : '';
     const sport=/Sportliche Leistung/.test((document.querySelector('#sheet')||{}).textContent||'');
@@ -1412,11 +2406,506 @@ const ok = (c, msg, det) => {
   ok(leiter.mit > 0, 'die Leiter zeichnet ueberhaupt etwas', leiter.mit + ' Felder');
   ok(leiter.ohne === 0, 'jedes Feld der Leiter traegt sein echtes Zeichen',
      leiter.ohne + ' Felder ohne Zeichen');
-  ok(leiter.stufen === 5, 'die Leiter zeigt alle fuenf Stufen', leiter.stufen + ' Felder');
+  ok(leiter.stufen === 7, 'die Leiter zeigt alle sieben Stufen', leiter.stufen + ' Felder');
   // Unter 40 px bleibt vom Schildring ein Ring. Bei 28 px war er von der
   // blanken Stufe nicht zu unterscheiden, gemessen an der Zeichnung.
   ok(leiter.kleinste >= 40, 'ein Feld der Leiter ist mindestens 40 px breit',
      leiter.kleinste + ' px');
+
+  // ── Der Schlitten deckt die Wahl, und er fährt [§C27] ────────────
+  // Die Wahl eines Segmentwählers war ein Knopf, der die Farbe wechselt,
+  // und zwischen zwei Wahlen sprang sie. Jetzt gleitet eine Fläche (außen)
+  // oder ein Strich (innen) zum gewählten Segment. Lage und Breite rechnet
+  // das CSS aus :has(); stimmt die Rechnung nicht, steht der Schlitten
+  // neben dem Wort, und das sieht niemand an einem einzelnen Bild.
+  console.log('\n═══ SCHLITTEN ═══');
+  await page.setViewportSize({width:360, height:780});
+  const schlitten = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const f = [];
+    let gemessen = 0;
+    const warte = () => new Promise(r => setTimeout(r, 420));
+    for(const setz of ["tab='ranking';period='season';ligaSicht='duos'", "ligaSicht='spieler'", "period='week'",
+        "period='all';rankMetric='winrate'", "tab='awards';awView='rekorde'", "awView='awards';awPeriod='week'",
+        "awPeriod='season';tab='teams'", "tab='positions';rankMetric='def'"]){
+      K(setz + ';render()');
+      await warte();
+      document.querySelectorAll('#main .ui-switch:not(.roll), #main .ui-tabs:not(.roll)').forEach(w => {
+        const on = w.querySelector(':scope > button.on'); if(!on) return;
+        const aussen = w.classList.contains('ui-switch');
+        const cs = getComputedStyle(w, aussen ? '::before' : '::after');
+        const links = parseFloat(cs.left), breite = parseFloat(cs.width);
+        const mitte = links + breite / 2, soll = on.offsetLeft + on.offsetWidth / 2;
+        gemessen++;
+        if(Math.abs(mitte - soll) > 1.5 || (aussen && Math.abs(breite - on.offsetWidth) > 1.5))
+          f.push(setz + ': „' + on.textContent.trim() + '" ' + Math.round(mitte) + ' statt ' + Math.round(soll));
+      });
+    }
+    // Nach dem Tipp zeichnet die Ansicht neu — der Schlitten muss trotzdem
+    // dort anfangen, wo er stand, sonst springt er.
+    K("tab='ranking';period='season';render()");
+    await warte();
+    const ziel = document.querySelector('#main .ui-switch [data-period="all"]');
+    ziel.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true}));
+    ziel.click();
+    const w2 = document.querySelector('#main .ui-switch');
+    const start = parseFloat(getComputedStyle(w2, '::before').left);
+    await warte();
+    const ende = parseFloat(getComputedStyle(w2, '::before').left);
+    // Die Tage des Monats als Zellen: so viele, wie der Monat hat, und der
+    // heutige gerahmt.
+    K("period='season';render()");
+    const t = (document.querySelector('#main .lauf-t') || {}).textContent || '';
+    const [, jetzt, gesamt] = (t.match(/(\d+)\s*von\s*(\d+)/) || []).map(Number);
+    const zellen = [...document.querySelectorAll('#main .lauf-z i')];
+    const heute = zellen.findIndex(z => z.classList.contains('h')) + 1;
+    const gespielt = zellen.filter(z => z.classList.contains('s')).length;
+    const tage = new Set(K("matchesInPeriod('season').map(m=>tagKey(m.created_at))")).size;
+    return {f, gemessen, start, ende, zellen:zellen.length, gesamt, jetzt, heute, gespielt, tage};
+  });
+  ok(schlitten.f.length === 0 && schlitten.gemessen >= 12, 'der Schlitten jedes Wählers steht unter der Wahl',
+     schlitten.f.slice(0, 4).join(' · ') || schlitten.gemessen + ' Wähler');
+  ok(schlitten.ende - schlitten.start > 40, 'der Schlitten gleitet nach dem Neuzeichnen, statt zu springen',
+     Math.round(schlitten.start) + ' → ' + Math.round(schlitten.ende) + ' px');
+  ok(schlitten.zellen === schlitten.gesamt && schlitten.heute === schlitten.jetzt && schlitten.gespielt === schlitten.tage,
+     'der Monat steht als Zellen: jeder Tag eine, der heutige gerahmt, jeder Spieltag hell',
+     schlitten.zellen + ' Zellen · ' + schlitten.gesamt + ' Tage · heute ' + schlitten.heute + '/' + schlitten.jetzt
+     + ' · ' + schlitten.gespielt + ' von ' + schlitten.tage + ' Spieltagen');
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const schlittenRuhig = await page.evaluate(() => {
+    const w = document.querySelector('#main .ui-switch');
+    return getComputedStyle(w, '::before').transitionDuration;
+  });
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(/^0s(, 0s)*$/.test(schlittenRuhig), 'bei prefers-reduced-motion springt der Schlitten', schlittenRuhig);
+
+  // ── Jeder Reiter bei 360 px ──────────────────────────────────────
+  // Gemessen wurde bisher je Bauteil, und damit fiel durch, was zwischen
+  // zwei Bauteilen liegt: der Knopf „Neu laden" trug die volle Breite von
+  // `.btn` und lief 112 px aus den Einstellungen, eine Pille der Rekorde lief
+  // aus der Karte, und ein Gesicht ohne eigenen Behälter hatte seine
+  // Initialen oben links. Hier wird jeder Reiter einmal ganz gezeichnet.
+  console.log('\n═══ JEDER REITER BEI 360 PX ═══');
+  await page.setViewportSize({width:360, height:780});
+  const reiter = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const sichten = [
+      ['Liga', "tab='ranking';period='season'"], ['Liga gesamt', "period='all'"],
+      ['Liga Woche', "period='week'"], ['Liga Tag', "period='day'"],
+      ['Positionen Sturm', "period='season';tab='positions';rankMetric='atk'"],
+      ['Positionen Abwehr', "rankMetric='def'"],
+      ['Awards', "tab='awards';awView='awards';awPeriod='season'"], ['Awards Woche', "awPeriod='week'"],
+      ['Rekorde', "awPeriod='season';awView='rekorde'"], ['Chronik', "awView='chronik'"],
+      ['Teams', "awView='awards';tab='teams'"], ['Verlauf', "tab='history'"],
+      ['Match', "tab='match'"], ['Einstellungen', "tab='settings'"]];
+    const W = document.documentElement.clientWidth, out = [];
+    for(const [name, setz] of sichten){
+      K(setz + ';render()');
+      await new Promise(r => requestAnimationFrame(r));
+      const raus = [], schief = [];
+      document.querySelectorAll('#main *').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if(!r.width || !r.height) return;
+        let p = el.parentElement, scroller = false;
+        while(p && p.id !== 'main'){ const cs = getComputedStyle(p);
+          if(/(auto|scroll|hidden|clip)/.test(cs.overflowX)){ scroller = true; break; } p = p.parentElement; }
+        if(!scroller && (r.right > W + 1 || r.left < -1))
+          raus.push(el.tagName.toLowerCase() + '.' + String(el.className).split(' ')[0] + ' bis ' + Math.round(r.right));
+      });
+      document.querySelectorAll('#main .av').forEach(av => {
+        const t = [...av.childNodes].find(n => n.nodeType === 3 && n.textContent.trim());
+        if(!t) return;
+        const rg = document.createRange(); rg.selectNodeContents(t);
+        const a = av.getBoundingClientRect(), b = rg.getBoundingClientRect();
+        if(Math.abs((a.left+a.right)/2 - (b.left+b.right)/2) > 2.5
+          || Math.abs((a.top+a.bottom)/2 - (b.top+b.bottom)/2) > 3)
+          schief.push(t.textContent.trim());
+      });
+      const fab = document.getElementById('fab');
+      // Eine Dezimalzahl trägt ein Komma [§C27] — „4.00 Gegentore" stand in
+      // der Betonmauer, „Ø 8.8" in der Positionsliste. Ein Datum („26.08.")
+      // und die Version fallen durch den Ausschluss nach der Zahl heraus.
+      const punkt = (document.getElementById('main').innerText
+        .match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
+      // Eine Bilanz bricht nicht um, und die Torzeile der Positionen wird
+      // nicht abgeschnitten: gemessen stand „81–" über „40", und „Ø 8.8 T…"
+      // endete mitten im Wort.
+      const bruch = [...document.querySelectorAll('#main .rmeta > span:first-child')]
+        .filter(e => { const rg = document.createRange(); rg.selectNodeContents(e);
+          return new Set([...rg.getClientRects()].map(r => Math.round(r.top))).size > 1; })
+        .map(e => e.textContent);
+      [...document.querySelectorAll('#main .rmeta-tore')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push(e.textContent));
+      // Ein Reiter, dessen Wort abgeschnitten ist, sagt nicht, wonach er
+      // sortiert: in der Ewigen Tafel standen „Siegq…" und „Torbil…".
+      [...document.querySelectorAll('#main .ui-tabs button, #main .ui-switch button')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Reiter ' + e.textContent.trim()));
+      // Ebenso der Name einer Award-Kachel: „Längste Siegesser…".
+      [...document.querySelectorAll('#main .aw-t-lbl')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Kachel ' + e.textContent.trim()));
+      // Und die Nebenwertungen der Liga: „Längste Siege…", „4× Player of t…".
+      [...document.querySelectorAll('#main .wk-hl-label, #main .wk-hl-detail')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Nebenwertung ' + e.textContent.trim()));
+      out.push({name, bruch:bruch.slice(0,3), punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
+        fab: fab ? getComputedStyle(fab).display : ''});
+    }
+    K("tab='ranking';period='season';rankMetric='elo';awView='awards';render()");
+    return out;
+  });
+  const reiterRaus = reiter.filter(r => r.raus.length);
+  ok(reiterRaus.length === 0, 'kein Reiter läuft bei 360 px aus dem Bildschirm',
+     reiterRaus.map(r => r.name + ': ' + r.raus.join(', ')).join(' | ') || reiter.length + ' Reiter');
+  const reiterSchief = reiter.filter(r => r.schief.length);
+  ok(reiterSchief.length === 0, 'jedes Gesicht trägt seine Initialen in der Mitte',
+     reiterSchief.map(r => r.name + ': ' + r.schief.join(', ')).join(' | ') || 'alle mittig');
+  const reiterBruch = reiter.filter(r => r.bruch.length);
+  ok(reiterBruch.length === 0 && reiter.some(r => r.name === 'Positionen Sturm'),
+     'Bilanz, Torzeile, Reiter und Kachelnamen stehen ungekürzt auf einer Zeile',
+     reiterBruch.map(r => r.name + ': ' + r.bruch.join(', ')).join(' | ') || 'alle einzeilig');
+  // Dieselbe Frage für die Blätter, die Zahlen mit Nachkommastelle zeigen.
+  let blattPunkt = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const P = n => JSON.stringify(K('(players.find(p=>p.name===' + JSON.stringify(n) + ')||{}).id'));
+    const blaetter = [['Profil', 'showPlayer(' + P('Leon') + ')'],
+      ['Duo', 'showTeam(' + P('Leon') + ',' + P('Maxi') + ')'],
+      // Leo und Maxi haben zwei Aufstellungen, die nebeneinander stehen.
+      ['Duo mit zwei Aufstellungen', 'showTeam(' + P('Leo') + ',' + P('Maxi') + ')'],
+      ['Partie', 'showMatchDetail(matches[matches.length-1].id)'],
+      ['Vergleich', 'showH2H(' + P('Leon') + ',' + P('Martin') + ')'],
+      ['Torjäger', "showAward('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
+      ['Wochenkönig', "period='week';openTopList('periodKing')"],
+      ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])'],
+      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed()'],
+      ['Positionsverlauf', 'showPositionHistory(seasons[3].id)'],
+      ['Liga-Chronik', 'showLigaChronik()'], ['Rangsystem', 'showRangSystem()'],
+      ['Bilanzen', 'showPlayerH2HList(' + P('Leon') + ')'],
+      ['Saisons', 'showPlayerSeasons(' + P('Leon') + ')'],
+      ['Regeln', 'showPrestigeRegeln(' + P('Leon') + ')'],
+      ['Auszeichnungen', 'showPlayerBadges(' + P('Jane') + ')'],
+      ['Monatstafel', "showSeasonTable('2026-08')"], ['Rekord', 'showChronicle(CHRONICLES[0].id)'],
+      ['Tag', 'showPotdRecap({force:true})'],
+      ['Spieler bearbeiten', 'showEditPlayer(' + P('Leon') + ')'],
+      ['Partie bearbeiten', 'showEditMatch(matches[matches.length-1].id)'],
+      ['Neuer Spieler', 'showAddPlayer()']];
+    const gesicht = [];
+    const rand = [];
+    const out = [], woerter = [];
+    // Dieselbe Sache heißt überall gleich, und niemand wird angesprochen:
+    // „Siegrate" neben „Siegquote", „Mate" neben „Partner", „Winrate",
+    // „Tordiff", „Head-to-Head", „Team-Sheet", ein „du" in den Einstellungen
+    // und „zu 3. gehalten".
+    // Groß und klein: `innerText` liefert die Schreibweise nach
+    // `text-transform`, und „Bester Mate" steht dort als „BESTER MATE".
+    const WORT = /\b(Mate|Siegrate|Winrate|Tordiff|Head-to-Head|Sheet|Upset|All-Time|Tippe|Tap|Update|Highlights|Stats|Win-Rate|Performance|Peak|Savepoint|Backup)\b|\bSp\.|(?<![A-Za-zÄÖÜäöüß])[TG] = als|(?<![\d,])1 (?:Niederlagen|Siege)\b|(?<![A-Za-zÄÖÜäöüß])(min|mind|max)\.\s|zu \d+\. gehalten|\b(?:du|dein\w*)\b(?=\s[a-zäöü])/gi;
+    for(const [name, auf] of blaetter){
+      try{ K('closeSheet(true)'); K(auf); }catch(e){ out.push(name + ': ' + e.message); continue; }
+      await new Promise(r => requestAnimationFrame(r));
+      const txt = document.getElementById('sheet').innerText;
+      const m = (txt.match(/(^|[^\d.,])\d{1,3}\.\d{1,2}(?![\d.])/g) || []).map(x => x.trim());
+      if(m.length) out.push(name + ': ' + m.slice(0,3).join(' '));
+      (txt.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
+      // Keine zwei Beschriftungen einer Achse übereinander: am 26. standen
+      // im Positionsverlauf „25" und „26" als „2526".
+      const ticks = [...document.querySelectorAll('#sheet .posv-x-tick')].map(t => t.getBoundingClientRect());
+      for(let i = 1; i < ticks.length; i++)
+        if(ticks[i].left < ticks[i-1].right) rand.push(name + ': Achse überlappt');
+      // Und nichts läuft über den Rand des Blatts: die Beziehungskarten im
+      // Profil standen mit „Schwächster Partner" 19 px darüber hinaus, die
+      // Kachel „Monatschroniken" der Laufbahn zog ihre Spalte auf.
+      // Gemessen wird am Innenrand: das Blatt hat 20 px Rand, und eine Karte,
+      // die in ihn hineinläuft, steht sichtbar schief neben den anderen.
+      // Ein Gesicht hat eine Größe, auch ohne Wappen: unter 48 px kam es
+      // nackt zurück, und das Duo einer Durststrecke stand als „LMA" da.
+      document.querySelectorAll('#sheet .av').forEach(a => {
+        if(!a.textContent.trim()) return;
+        const r = a.getBoundingClientRect();
+        if(r.width && (r.width < 16 || Math.abs(r.width - r.height) > 1))
+          gesicht.push(name + ': ' + a.textContent.trim() + ' ' + Math.round(r.width) + 'x' + Math.round(r.height));
+      });
+      const sh = document.getElementById('sheet'), sb = sh.getBoundingClientRect();
+      const sr = {right: sb.right - parseFloat(getComputedStyle(sh).paddingRight)};
+      sh.querySelectorAll('*').forEach(el => {
+        const r = el.getBoundingClientRect();
+        if(!r.width || !r.height) return;
+        let q = el.parentElement, scroller = false;
+        // Ausgenommen ist, was ein Vorfahr abschneidet oder waagerecht
+        // scrollt (Titelreihe, Karussell). Der senkrechte Scroller des
+        // Blatts selbst zählt nicht, sonst wäre alles ausgenommen.
+        while(q && q !== sh){ const ox = getComputedStyle(q).overflowX;
+          if(/(hidden|clip)/.test(ox) || (/(auto|scroll)/.test(ox) && q.scrollHeight <= q.clientHeight + 1)){ scroller = true; break; }
+          q = q.parentElement; }
+        if(!scroller && r.right > sr.right + 1) rand.push(name + ': ' + String(el.className).split(' ')[0] + ' +' + Math.round(r.right - sr.right));
+      });
+    }
+    K('closeSheet(true)');
+    for(const [name, setz] of [['Liga', "tab='ranking'"], ['Teams', "tab='teams'"],
+        ['Awards', "tab='awards';awView='awards'"], ['Einstellungen', "tab='settings'"]]){
+      K(setz + ';render()');
+      (document.getElementById('main').innerText.match(WORT) || []).forEach(w => woerter.push(name + ': ' + w));
+    }
+    K("tab='ranking';render()");
+    return {out, woerter, rand:[...new Set(rand)].slice(0, 8), gesicht:[...new Set(gesicht)].slice(0, 6)};
+  });
+  ok(blattPunkt.gesicht.length === 0, 'jedes Gesicht in einem Blatt hat eine Größe und ist rund',
+     blattPunkt.gesicht.join(' | ') || 'alle');
+  ok(blattPunkt.rand.length === 0, 'kein Blatt läuft bei 360 px über seinen Rand',
+     blattPunkt.rand.join(' | ') || 'alle innerhalb');
+  const blattWort = blattPunkt.woerter;
+  blattPunkt = blattPunkt.out;
+  ok(blattWort.length === 0, 'dieselbe Sache heißt überall gleich, und niemand wird geduzt',
+     [...new Set(blattWort)].join(' | ') || 'keine Abweichung');
+  // ── Ein Kopf, ein Fuß [§C27] ──────────────────────────────────────
+  // Blätter hatten fünf Köpfe, und geschlossen wurde nur durch Wischen oder
+  // einen Knopf, den jedes Blatt selbst baute. Jedes Blatt mit Titel trägt
+  // jetzt denselben Kopf aus Zeichenkachel, Titel und Unterzeile, jedes
+  // Blatt den Knopf zum Schließen, und ein Fuß höchstens einen gefüllten
+  // Knopf. Der Hinweis trägt seine Rolle, die Bestätigung nennt, was
+  // verloren geht, und der zerstörende Knopf steht rechts.
+  const kopfFuss = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const P = n => JSON.stringify(K('(players.find(p=>p.name===' + JSON.stringify(n) + ')||{}).id'));
+    const mitKopf = [['Partie', 'showMatchDetail(matches[matches.length-1].id)'],
+      ['Torjäger', "tab='awards';awPeriod='season';awSeasonId=null;showAward('scorer')"], ['Höchster Sieg', "showAward('biggest')"],
+      ['Erzfeinde', "showAward('rivalry')"], ['Wochenkönig', "period='week';openTopList('periodKing')"],
+      ['Rekord', 'showChronicle(CHRONICLES[0].id)'], ['Chronik', 'showDisziplin(SEASON_TITLES[0].id)'],
+      ['Monatstafel', "showSeasonTable('2026-08')"], ['Liga-Chronik', 'showLigaChronik()'],
+      ['Rangsystem', 'showRangSystem()'], ['Bilanzen', 'showPlayerH2HList(' + P('Leon') + ')'],
+      ['Saisons', 'showPlayerSeasons(' + P('Leon') + ')'], ['Regeln', 'showPrestigeRegeln(' + P('Leon') + ')'],
+      ['Auszeichnungen', 'showPlayerBadges(' + P('Jane') + ')'], ['Positionsverlauf', 'showPositionHistory(seasons[3].id)'],
+      ['Spieler bearbeiten', 'showEditPlayer(' + P('Leon') + ')'], ['Partie bearbeiten', 'showEditMatch(matches[matches.length-1].id)'],
+      ['Neuer Spieler', 'showAddPlayer()'],
+      ['Awards im Profil', 'showPlayerAwards(' + P('Leon') + ',playerAwards(' + P('Leon') + ').filter(a=>a.rank===0))']];
+    const f = [];
+    for(const [name, auf] of mitKopf){
+      try{ K('closeSheet(true)'); K(auf); }catch(e){ f.push(name + ': ' + e.message); continue; }
+      const sh = document.getElementById('sheet');
+      const kopf = sh.querySelector('.blatt-kopf');
+      if(!kopf || !kopf.querySelector('.zk.g svg') || !kopf.querySelector('h3')) f.push(name + ': ohne Kopf');
+      if(!sh.querySelector('#sheetZu')) f.push(name + ': ohne Schließen');
+      sh.querySelectorAll('.blatt-fuss').forEach(fu => {
+        const voll = [...fu.querySelectorAll('.btn')].filter(b => !b.classList.contains('ghost') && !b.classList.contains('gefahr'));
+        if(voll.length > 1) f.push(name + ': ' + voll.length + ' gefüllte Knöpfe im Fuß');
+      });
+    }
+    // Die Bühne im Award-Blatt einer Partie: Gesichter mit Größe, nicht als
+    // Farbbalken über die ganze Breite.
+    K("closeSheet(true);showAward('biggest')");
+    const av = [...document.querySelectorAll('#sheet .buehne .av')];
+    if(av.length !== 4 || av.some(a => a.getBoundingClientRect().width > 44)) f.push('Bühne: ' + av.map(a => Math.round(a.getBoundingClientRect().width)).join(','));
+    // Schließen schließt.
+    document.getElementById('sheetZu').click();
+    await new Promise(r => setTimeout(r, 380));
+    if(document.getElementById('sheet').classList.contains('show')) f.push('Schließen lässt das Blatt offen');
+    // Der Hinweis und die Bestätigung.
+    K("toast('Match gespeichert','ok',{sub:'Leon und Martin gewinnen 10:7',aktion:{label:'Rückgängig',fn:()=>{window.__rg=1}}})");
+    const t = document.querySelector('.toast');
+    if(!t.querySelector('.zk.gruen') || !/gewinnen/.test(t.textContent)) f.push('Hinweis ohne Rolle oder zweite Zeile');
+    t.querySelector('.toast-akt').click();
+    if(!window.__rg) f.push('Rückgängig führt nichts aus');
+    const frage = K("bestaetigen({titel:'Partie löschen?',text:'Eine Partie',ja:'Löschen',gefahr:true,ic:'trash'})");
+    await new Promise(r => setTimeout(r, 50));
+    const d = document.querySelector('.dlg');
+    const kn = d ? [...d.querySelectorAll('.btn')] : [];
+    if(kn.length !== 2 || !kn[1].classList.contains('gefahr') || kn[0].textContent !== 'Abbrechen') f.push('Bestätigung: Knöpfe ' + kn.map(b => b.textContent).join('/'));
+    if(kn[0]) kn[0].click();
+    const antwort = await frage;
+    if(antwort !== false) f.push('Abbrechen bestätigt');
+    return f;
+  });
+  ok(kopfFuss.length === 0, 'jedes Blatt trägt denselben Kopf, Schließen und höchstens einen gefüllten Knopf',
+     kopfFuss.slice(0, 5).join(' | ') || 'alle');
+
+  // Jedes Award-Blatt, beide Zeiträume: ein Wert trägt seine Einheit
+  // ausgeschrieben („6,5 /Sp.", „9,7 Gegen/Sp.", „4× POTD", „0 S · 3 Sp."),
+  // eine Serie beginnt beim zweiten Ergebnis („1er Serie", „1er
+  // Niederlagen"), eins steht in der Einzahl („1 Carries"), und die Spitze
+  // heißt nicht „Best". Dazu dieselbe Zahl für dieselbe Überraschung: die
+  // Kachel zeigte 71 %, die Chance der Gegenseite, Blatt und Liga 30 %. Und
+  // die Liste des Underdog-Helden war nach Quote sortiert und zeigte die
+  // Anzahl: Platz 5 stand mit 2× hinter Platz 2 mit 1×.
+  const awBlatt = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const fehler = [];
+    const KURZ = /\/Sp\.|Gegen\/|\bPOT[WD]\b|(^|\s)1 Carries\b|(^|\s)1er\b|\d S · |\bSp\.|\bBest ·/i;
+    for(const p of ['season', 'week']){
+      K("tab='awards';awView='awards';awPeriod='" + p + "';render()");
+      for(const k of K('Object.keys(AWARD_META)')){
+        K('closeSheet(true)'); K('showAward(' + JSON.stringify(k) + ')');
+        const zeilen = document.getElementById('sheet').innerText.split('\n');
+        zeilen.filter(z => KURZ.test(z)).forEach(z => fehler.push(p + ' ' + k + ': ' + z.trim()));
+      }
+      K('closeSheet(true)');
+      const kachel = (document.querySelector('[data-award="upset"] .aw-t-val b') || {}).textContent;
+      K("showAward('upset')");
+      // Die Bühne nennt die Siegchance der Sieger [§C27].
+      const blatt = (document.getElementById('sheet').innerText.match(/Siegchance (\d+)\s?%/) || [])[1];
+      if(kachel && kachel !== blatt + '%') fehler.push(p + ' Überraschung: Kachel ' + kachel + ', Blatt ' + blatt + '%');
+      K('closeSheet(true)');
+      const ud = K("(awardRankings(awPeriod, awSeasonId).underdogList||[]).map(x=>x.pct)");
+      if(ud.some((v, i) => i && v > ud[i-1])) fehler.push(p + ' Underdog-Held nicht nach Quote');
+      K("showAward('underdog')");
+      const udW = [...document.querySelectorAll('#sheet .aw-winner-val, #sheet .aw-li-val')].map(e => e.textContent.trim());
+      if(ud.length && !udW.every(w => /^\d+%/.test(w))) fehler.push(p + ' Underdog-Held zeigt ' + udW.slice(0, 3).join(', '));
+      K('closeSheet(true)');
+    }
+    // Neben den Siegern steht ihr Stand zuerst: „Stefan & Martin 8:10".
+    K("period='season'; openTopList('periodUpset')");
+    [...document.querySelectorAll('#sheet .aw-li-detail')].forEach(d => {
+      const m = d.textContent.match(/^(\d+):(\d+)/);
+      if(m && +m[1] < +m[2]) fehler.push('Überraschung: ' + d.textContent.trim());
+    });
+    // Wer im Profil einen Award auf Platz 1 trägt, steht auch im Blatt oben:
+    // der Underdog-Held wertete im Profil die Anzahl, im Blatt die Quote,
+    // und die Erzfeinde nannten im Blatt eine Rivalität, im Profil neun
+    // Spieler aus vier gleichauf liegenden.
+    K("awPeriod='season';awSeasonId=null;tab='awards';awView='awards';render()");
+    const prof = K("(function(){ const o={}; activePlayers().forEach(p=>playerAwards(p.id).filter(a=>a.rank===0).forEach(a=>{ (o[a.key]=o[a.key]||[]).push(p.name); })); return o; })()");
+    for(const k of K('Object.keys(AWARD_META)')){
+      K('closeSheet(true)'); K('showAward(' + JSON.stringify(k) + ')');
+      const sh = document.getElementById('sheet');
+      // Die Namen einer Bühne stehen je Zeile einzeln [§C27].
+      const buehne = t => [...t.querySelector('.buehne-n').childNodes].filter(n => n.nodeType === 3).map(n => n.textContent.trim()).join(' & ');
+      let namen = [...sh.querySelectorAll('.aw-winner-name, .aw-winner-tied-name')].map(e => e.textContent.trim())
+        .concat([...sh.querySelectorAll('.buehne-s')].map(buehne));
+      if(k === 'rivalry') [...sh.querySelectorAll('.aw-li')].filter(r => r.querySelector('.aw-li-rank').textContent.trim() === '1.')
+        .forEach(r => r.querySelectorAll('.aw-li-name').forEach(n => namen.push(n.textContent.replace(/^vs /i, '').trim())));
+      if(k === 'upset' || k === 'biggest' || k === 'favoritenschreck')
+        namen = [...sh.querySelectorAll('.buehne-s.sieg')].map(buehne);
+      const blatt = [...new Set(namen.flatMap(n => n.split(' & ')).map(n => n.trim().toLowerCase()))].sort().join(',');
+      const profil = [...new Set((prof[k] || []).map(n => n.toLowerCase()))].sort().join(',');
+      if(blatt !== profil) fehler.push(k + ': Blatt ' + blatt + ' · Profil ' + profil);
+    }
+    K('closeSheet(true)');
+    // Und in den letzten Spielen eines Duos und im Direkten Vergleich steht
+    // der eigene Stand zuerst: neben dem roten Kreuz stand „10 : 8".
+    const P = n => JSON.stringify(K('(players.find(p=>p.name===' + JSON.stringify(n) + ')||{}).id'));
+    for(const auf of ['showTeam(' + P('Leo') + ',' + P('Maxi') + ')', 'showH2H(' + P('Leon') + ',' + P('Martin') + ')']){
+      K('closeSheet(true)'); K(auf);
+      document.querySelectorAll('#sheet .rrow[data-match]').forEach(r => {
+        const m = r.textContent.match(/(\d+)\s*:\s*(\d+)\s*$/);
+        // Nur die Zeilen mit Haken oder Kreuz; die Höhepunkte darüber tragen
+        // ein eigenes Zeichen und ihren Stand ohnehin aus eigener Sicht.
+        if(!m || !r.querySelector('polyline, path[d^="M6 6L18"]')) return;
+        const sieg = !!r.querySelector('polyline');
+        if(sieg !== (+m[1] > +m[2])) fehler.push(auf.slice(0, 8) + ': ' + (sieg ? 'Sieg ' : 'Niederlage ') + m[1] + ':' + m[2]);
+      });
+    }
+    K("closeSheet(true); tab='ranking'; render()");
+    return fehler;
+  });
+  ok(awBlatt.length === 0, 'jedes Award-Blatt nennt seine Einheit ganz, die Überraschung mit einer Zahl, den eigenen Stand zuerst und dieselbe Spitze wie das Profil',
+     [...new Set(awBlatt)].slice(0, 6).join(' | ') || 'alle');
+  // Der Feed legt nur, was zu sehen ist: rund siebzig Karten und 4600
+  // Knoten kosteten beim Öffnen und bei jedem Zurück aus einem Story-Blatt
+  // 110 bis 140 ms Layout. Breaking und die Karte des Tages sind
+  // ausgenommen — ihr Schein liegt außerhalb der Fläche.
+  const cv = await page.evaluate(async () => {
+    const aus = document.getElementById('cv-aus'); if(aus) aus.disabled = true;
+    window.__k.eval('closeSheet(true); openNewsFeed()');
+    await new Promise(r => requestAnimationFrame(r));
+    const karten = [...document.querySelectorAll('#sheet .nf-card')];
+    const falsch = karten.filter(k => {
+      const soll = (k.classList.contains('nf-brk') || k.classList.contains('nf-gross')) ? 'visible' : 'auto';
+      return getComputedStyle(k).contentVisibility !== soll;
+    }).map(k => k.className.split(' ').slice(0, 2).join('.'));
+    window.__k.eval('closeSheet(true)');
+    if(aus) aus.disabled = false;
+    return {n: karten.length, falsch};
+  });
+  ok(cv.n > 20 && cv.falsch.length === 0,
+     'der Feed legt Karten außerhalb des Bildschirms erst beim Hineinscrollen',
+     cv.falsch.slice(0, 4).join(', ') || cv.n + ' Karten');
+  // Die Beziehung unter den Wappen eines Story-Blatts sagt etwas: auf dem
+  // Blatt einer Partie stand „in derselben Partie", auf der Karte einer
+  // Partie „im selben Moment". Und die Wochenkarte nannte „20 an 4 Tagen"
+  // direkt unter ihrem eigenen Satz „20 Spiele an 4 Tagen".
+  const beziehung = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const fehler = [];
+    const alle = K('getStoriesCache().map(s => ({id:s.id, t:(s.dataRef||{}).type, q:(s.dataRef||{}).quelle, m:!!(s.dataRef||{}).matchId}))');
+    const ziel = alle.filter(x => x.t === 'spiel' || (x.t === 'sammel' && x.q === 'spiel' && x.m)).slice(0, 10)
+      .concat(alle.filter(x => x.t === 'woche'));
+    for(const x of ziel){
+      K('closeSheet(true); openNewsDetail(' + JSON.stringify(x.id) + ')');
+      // Ein Story-Blatt steht in #nd, nicht im Blatt-Stapel.
+      const txt = (document.getElementById('nd') || {}).innerText || '';
+      if(/in derselben Partie|im selben Moment/.test(txt)) fehler.push(x.id);
+      if(x.t === 'woche' && /Spiele an \d+ Tag/.test(txt) && /Partien in dieser Woche/i.test(txt)) fehler.push(x.id + ' doppelt');
+    }
+    K('closeSheet(true); typeof closeNewsDetail === "function" && closeNewsDetail()');
+    return {n: ziel.length, fehler};
+  });
+  ok(beziehung.n >= 3 && beziehung.fehler.length === 0,
+     'ein Story-Blatt nennt eine Beziehung, die etwas sagt, und seine Zahl einmal',
+     beziehung.fehler.join(', ') || beziehung.n + ' Blätter');
+  // Das Blatt einer Serie zeigt den Stand ihrer Partie, nicht den von heute.
+  // Unter „10 Pleiten nacheinander" stand „Letzte 10 Matches" mit dem Sieg,
+  // der die Serie Stunden später beendet hat — und dieselbe Zahl als Band,
+  // als Punktreihe und als Zeile.
+  const serie = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const fehler = [];
+    const ids = K("getStoriesCache().filter(s => /^(loss_streak|win_streak|top_form)$/.test((s.dataRef||{}).type)).map(s => s.id)");
+    for(const id of ids){
+      const t = K('(getStoriesCache().find(s => s.id === ' + JSON.stringify(id) + ').dataRef || {}).type');
+      K('closeSheet(true); openNewsDetail(' + JSON.stringify(id) + ')');
+      const nd = document.getElementById('nd');
+      const punkte = [...nd.querySelectorAll('.nd-form-strip .nd-form-dot')];
+      const letzter = punkte.length ? punkte[punkte.length - 1].classList.contains('w') : null;
+      if(t === 'loss_streak' && letzter === true) fehler.push(id + ': Reihe endet mit Sieg');
+      if(t === 'top_form' && letzter === false) fehler.push(id + ': Formkarte endet mit Pleite');
+      if(/in Folge<\/div>/.test(nd.innerHTML) && /× (Niederlage|Sieg) in Folge/.test(nd.innerText)) fehler.push(id + ': Zahl dreimal');
+    }
+    K('typeof closeNewsDetail === "function" && closeNewsDetail()');
+    return {n: ids.length, fehler};
+  });
+  ok(serie.n > 0 && serie.fehler.length === 0,
+     'das Blatt einer Serie zeigt den Stand ihrer Partie und die Zahl einmal',
+     serie.fehler.slice(0, 3).join(' | ') || serie.n + ' Blätter');
+  // Das Blatt einer Partie nennt ihre Sieger und die Siegchance aus der
+  // Elo-Bahn, und jeder Spieler steht bei den Auszeichnungen einmal. Es
+  // stand „Team A gewinnt", und fünf Marken zweier Spieler als fünf Karten.
+  const partie = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const ids = K('matches.slice(-40).map(m=>m.id)');
+    const fehler = [];
+    let mitMarken = 0;
+    for(const mid of ids){
+      K('closeSheet(true);showMatchDetail(' + JSON.stringify(mid) + ')');
+      const soll = K(`(function(){ const m=matches.find(x=>x.id===${JSON.stringify(mid)});
+        const h=getHistoryByMatchId().get(m.id); const e=h&&h.expA!=null?h.expA:m.exp_a;
+        return {namen:(m.winner==='A'?[m.a1,m.a2]:[m.b1,m.b2]).map(pname),
+          pct:Math.max(1,Math.round((m.winner==='A'?e:1-e)*100))}; })()`);
+      // Sieger und Siegchance stehen unter dem Stand auf der Bühne [§C27].
+      const sub = (document.querySelector('#sheet .buehne-zeile') || {}).textContent || '';
+      if(/Team [AB]/.test(sub) || !soll.namen.every(n => sub.includes(n)) || !sub.includes(soll.pct + ' %'))
+        fehler.push(sub + ' / ' + soll.pct);
+      const zeilen = [...document.querySelectorAll('#sheet .rrow .rname')].map(e => e.textContent.trim());
+      if(zeilen.length) mitMarken++;
+      if(new Set(zeilen).size !== zeilen.length) fehler.push('doppelt: ' + zeilen.join(','));
+    }
+    // Und ein Name in der Elo-Liste führt ins Profil.
+    K('closeSheet(true);showMatchDetail(matches[matches.length-1].id)');
+    const zeile = document.querySelector('#sheet [data-md-spieler]');
+    let profil = false;
+    if(zeile){ zeile.click(); await new Promise(r => setTimeout(r, 700));
+      profil = !!document.querySelector('#sheet .pp-root'); }
+    K('closeSheet(true)');
+    return {fehler, mitMarken, profil};
+  });
+  ok(partie.profil, 'ein Name im Blatt einer Partie führt ins Profil');
+  ok(partie.fehler.length === 0 && partie.mitMarken > 0,
+     'das Blatt einer Partie nennt Sieger und Siegchance und jeden Spieler einmal',
+     partie.fehler.slice(0,3).join(' | ') || partie.mitMarken + ' Partien mit Auszeichnungen');
+  const reiterPunkt = reiter.filter(r => r.punkt.length).map(r => r.name + ': ' + r.punkt.join(' '));
+  ok(reiterPunkt.length + blattPunkt.length === 0,
+     'keine Dezimalzahl mit Punkt in einem Reiter oder Blatt',
+     reiterPunkt.concat(blattPunkt).join(' | ') || 'alle mit Komma');
+  ok(reiter.find(r => r.name === 'Match').fab === 'none'
+     && reiter.find(r => r.name === 'Liga').fab !== 'none',
+     'der Knopf „Match eintragen" fehlt nur auf der Match-Seite',
+     reiter.map(r => r.name + ':' + r.fab).join(' '));
+  await page.setViewportSize({width:430, height:932});
 
   console.log('\n' + '═'.repeat(60));
   console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);

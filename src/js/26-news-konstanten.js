@@ -68,6 +68,17 @@ const NEWS_AMBIENT_STIL = {
 };
 
 const NEWS_LS_SEEN  = 'eso_news_seen_v1';
+// ── Der Lesestand ───────────────────────────────────────────────────
+// Der Zeitpunkt der neuesten Karte, die beim letzten „Alles gelesen" im
+// Feed stand. Ohne ihn zaehlte die App als neu, was sie noch nicht in der
+// Liste der gelesenen IDs findet — und das ist nicht dasselbe: eine Karte
+// faellt unter einen Deckel, eine Schlagzeile verdraengt eine gleichlautende,
+// eine Sperrfrist laeuft ab. Gemessen ueber fuenfundvierzig Tage trugen 81
+// von 267 neu auftauchenden Karten (30 %) einen Zeitpunkt, der laenger
+// zurueckliegt als alles, was der Leser schon gesehen hat: „Martin und Alex
+// brechen Julians 7er-Serie" vom 09.07. kam am 14.07. und am 20.07. erneut
+// als neu hoch. Neu ist, was SEIT dem letzten Blick dazugekommen ist.
+const NEWS_LS_STAND = 'eso_news_stand_v1';
 const NEWS_LS_TOAST = 'eso_news_toast_v1';  // v8.1: zeitstempel + count des letzten Toasts
 const NEWS_LS_MAX_SEEN = 600; // Ring-Buffer-Limit (deckt das ganze Fenster)
 const NEWS_TOAST_COOLDOWN_MS = 6 * 60 * 60 * 1000; // 6h zwischen identischen Toast-Counts
@@ -96,29 +107,55 @@ const NEWS_LIMITS = {
   // verschieben. Sie werden vor der Bündelung nicht mehr abgeschnitten:
   // dieselbe Partie bzw. Minute ergibt später eine einzige vollständige
   // Tafel-Karte. So sinkt die Kartenzahl, nicht der fachliche Inhalt.
-  proTag: 5,
-  // Neben POTD und Tafel braucht ein echter Spieltag mindestens eine Karte,
-  // die an einer konkreten Partie haengen: Ergebnis, Beteiligte und das,
-  // was genau dort passiert ist. Das ist kein zusaetzliches Kartenbudget;
-  // bei einem vollen Tag ersetzen sie schwächere, abstrakte Meldungen.
-  matchProTagMin: 1,
-  // Ergebnis-Stories entstehen aus mehreren klaren Matchmustern (Krimi,
-  // Kantersieg, Zu-null und echter Außenseiter-Sieg). Zwei Kandidaten pro
-  // Spieltag reichen, um konkrete Partien regelmäßig sichtbar zu machen,
-  // ohne aus dem Feed einen Ergebnisdienst zu bauen.
-  matchResultProTag: 2,
-  // Redaktionelles Mindestgewicht im 14-Tage-Fenster. Gezählt werden die
-  // sichtbaren Zeilen eines Bundles, nicht nur sein äußerer Kartenrahmen.
-  // 40–60 % ist die belastbare Auslegung von „ungefähr halb"; Pflichtkarten,
-  // Breaking und die stärkste Karte jedes Spieltags bleiben unangetastet.
-  tafelAnteilMin: 0.40,
-  // Ab wann die Karte des Tages steht [§C33]. Gemessen ueber 56 Spieltage:
-  // Median 9 Partien, oberes Viertel 10 — acht Partien trifft 64 % aller
-  // Spieltage, und dort ist der Tag praktisch gelaufen. Die kuerzeren Tage
-  // faengt die Stunde auf: keine der 466 Partien hat nach 18:31 angefangen,
-  // und der Fun Fact dieses Slots fällt an einem Spieltag ohnehin weg.
-  tagKartePartien: 8,
+  // Vier, nicht fuenf: der Deckel zaehlt seit der Korrektur nur, was er auch
+  // wegnehmen kann, und Breaking und die Pflichtkarte kommen dazu. Bei fuenf
+  // trug ein Spieltag damit gemessen sieben Karten — das ist wieder ein
+  // Protokoll. Vier eigene Plaetze plus der Sieger des Tages plus, wenn es
+  // eines gibt, ein Breaking: gemessen drei bis sechs Karten je Spieltag.
+  proTag: 4,
+  // So viele Plätze eines Tages gehören der Ewigen Tafel, wenn sie sich an
+  // diesem Tag bewegt hat. Die Mischung war vorher eine Quote über das ganze
+  // Fenster, und erfüllt wurde sie, indem Spieltagskarten wegfielen: gemessen
+  // schnitt das den Feed von 42 auf 23 Karten und leerte zwei von sieben
+  // Spieltagen vollständig, ohne der Tafel eine einzige Karte hinzuzufügen.
+  // Reserviert statt quotiert, und je Tag statt je Fenster [§C33].
+  tafelProTagMin: 1,
+  // Wie viele Zeilen eine Sammelkarte im Band zeigt. „Bündeln darf nichts
+  // verstecken" war fuer zwei bis vier Teile geschrieben; gemessen trug ein
+  // Tafel-Moment neunzehn — fuenf Bestmarken, dreizehn Monatschroniken und
+  // ein Insignium —, und die Karte bedeckte den ganzen Bildschirm. Damit
+  // versteckt gerade die vollstaendige Liste alles andere. Die staerksten
+  // sechs stehen auf der Karte (`teile` ist nach `prio` sortiert, also
+  // Bestmarke vor Monatschronik vor Insignium), die Zahl dahinter fuehrt
+  // ins Blatt, und dort steht weiterhin jede Zeile [§C33].
+  // Sechs waren zu viele, sobald ein Spieltag die Tafel wirklich bewegt:
+  // gemessen am 28.09. trug ein Tafel-Moment achtzehn Zeilen, davon elf
+  // Ausbauten, und die Karte war ein Block aus Namen. Vier stehen auf der
+  // Karte — zuerst, was Wirkung hat [§C33] —, die Zahl dahinter fuehrt ins
+  // Blatt, und dort steht weiterhin jede Zeile.
+  sammelZeilen: 4,
+  // Ab wann die Karte des Tages steht [§C33]. Acht Partien war der Median
+  // der Liga und damit eine Behauptung ueber den TAG: erreicht an 64 % der
+  // Spieltage, und die anderen 36 % warteten bis 19 Uhr auf ein Band, das
+  // laengst faellig war. Gemessen an den 19 Spieltagen vom 28.07. bis 26.08.
+  // hatten fuenf Partien schon vierzehn von ihnen um die Mittagszeit
+  // zusammen. Nach der fuenften Partie ist ein Spieltag entschieden genug
+  // fuer ein Band; die kuerzeren Tage faengt weiter die Stunde auf, keine
+  // der 466 Partien hat nach 18:31 angefangen.
+  tagKartePartien: 5,
   tagKarteStunde: 19,
+  // Bei genau einer Partie gar keine: ein Spiel ist kein Spieltag. Das Band
+  // saesse dort auf der einzigen Karte, die es ohnehin gibt, und sagte damit
+  // nichts — es zeichnet aus, was sich gegen andere Karten durchgesetzt hat.
+  tagKarteMin: 2,
+  // ── Und nur fuer eine Geschichte, die etwas hergibt ──────────────
+  // Das Band ging an die staerkste Karte des Tages, auch wenn die staerkste
+  // der schwaechste Bau des Generators war: gemessen trug ein Spieltag es auf
+  // „Der groesste Ausschlag des Tages" mit 564 Punkten — unter dem Wert einer
+  // Tagesbilanz (620). Ein Band, das eine beliebige Karte auszeichnet,
+  // zeichnet nichts aus. Bleibt niemand darueber, traegt an diesem Tag keine
+  // Karte das Band [§C33].
+  tagKarteSpannung: 620,
   // Dieselbe Aussage über dieselben Leute kommt drei Tage lang nur einmal.
   // „Martin baut ‚Der Maßstab' aus" gilt nach jedem gewonnenen Spiel aufs
   // Neue, jedes Mal mit einem Prozentpunkt mehr: die ID ist damit eine andere,
@@ -162,7 +199,29 @@ const NEWS_DB_ZEILEN = 500;
 // melden: Dort wächst der Wert gedämpft weiter [§C34], hier ist der
 // dreißigste Zittersieg keine neue Geschichte; der fünfundzwanzigste ist
 // eine Zahl, über die man redet.
+// ─── Der Schlusssprint einer Saison ──────────────────────────────────
+// „Noch fünf Tage" entstand an jedem der letzten sieben Tage, egal wie klar
+// die Sache war: gemessen lag der Vorsprung dabei auch schon bei 91 Elo, und
+// die Karte hieß trotzdem so. Eine Entscheidung ist offen, wenn die beiden
+// vorn dicht beieinander liegen — 25 Elo sind an den echten Partien
+// gemessen etwa zwei gewonnene Spitzenspiele.
+const SAISON_ENDSPURT_ELO = 25;
+
 const NEWS_BADGE_MARKEN = [1, 5, 10, 25, 50, 100];
+// Und die Klasse entscheidet mit, wie oft. Eine Liste fuer alle drei war zu
+// grob in beide Richtungen: eine LEGENDAERE Auszeichnung ist das Seltenste,
+// was der Katalog hergibt — „Absoluter Sieger" ist der Grund, warum jemand
+// die App oeffnet, und das gilt beim zweiten Mal genauso; sie fiel nach der
+// Liste zwischen dem zehnten und dem fuenfundzwanzigsten Mal vierzehnmal
+// weg. Eine GEWOEHNLICHE dagegen ist beim ersten Mal keine Nachricht: einen
+// Zittersieg holt in der Liga jeder, der lange genug dabei ist. Der fuenfte
+// ist eine Zahl, ueber die man redet.
+const NEWS_BADGE_MARKEN_KLEIN = [5, 10, 25, 50, 100];
+function _badgeTakt(rar, rang){
+  if(rar === 'legendary') return true;
+  return (rar === 'common' ? NEWS_BADGE_MARKEN_KLEIN : NEWS_BADGE_MARKEN)
+    .indexOf(rang) >= 0;
+}
 
 // ─── §11.0b — Wann jemand über sich hinauswächst ─────────────────────
 // Die Form-Karte maß das NIVEAU: neun von zehn gewonnen. Gemessen über die
@@ -231,6 +290,26 @@ const FORM_VORSPRUNG = 0.25; // Anteilspunkte über dem eigenen Schnitt
 // 5er) bleiben ein Zuschlag auf den Grundwert. Der Zuschlag darf sein Band
 // verlassen, wo der Typ das auch darf: eine legendäre Auszeichnung und die
 // beiden obersten Insignium-Stufen sind Breaking [§C33].
+// Die Obergrenze des Spieltagsbandes [§C33]. Breaking beginnt bei 90, der
+// Spieltag reicht bis 89 — und eine Sammelkarte waechst mit jeder Zeile um
+// zwei. Gemessen am 28.09. bundelte ein Tafel-Moment achtzehn Aenderungen
+// und stand damit bei 110: ueber dem Breaking-Band, ohne Breaking zu sein.
+// Damit gab es die zweite Skala wieder, gegen die `STORY_PRIO` gebaut ist.
+const PRIO_SPIELTAG_MAX = 89;
+
+// ── Die Leiter der Serienmarken [§C33] ───────────────────────────────
+// Drei, fünf, acht, zehn und danach jede fünfte. Sie stand als Menge im
+// Generator; die Karte einer Serie zeigt jetzt auch die NÄCHSTE Marke als
+// leere Felder, und zwei Kopien der Leiter nennen irgendwann zwei Ziele.
+function istSerienMarke(n){
+  return n === 3 || n === 5 || n === 8 || n === 10 || (n > 10 && n % 5 === 0);
+}
+function naechsteSerienMarke(n){
+  let z = Math.max(1, (n | 0) + 1);
+  while(!istSerienMarke(z)) z++;
+  return z;
+}
+
 const STORY_PRIO = {
   // ── Breaking ──
   rekord_erstmals:   96,   // ein Liga-Rekord wird zum ersten Mal vergeben
@@ -259,6 +338,11 @@ const STORY_PRIO = {
   sammel_spieler:    66,
   potd:              88,   // der Sieger des Spieltags IST seine Schlagzeile
   chronik_monat:     86,
+  // Der Tag, an dem die Monatstafel aufgeht: eine Karte je Monat, und sie
+  // betrifft die ganze Liga. Sie steht ueber dem einzelnen Chronik-Wechsel,
+  // weil es an diesem Tag gar keinen gibt [§C32], und unter dem Rueckblick
+  // des Vormonats, der von einem abgeschlossenen Monat erzaehlt.
+  chronik_frei:      82,
   woche:             84,
   chronik_erstling:  80,   // zum ersten Mal überhaupt in der Chronik
   rekord_geholt:     76,
@@ -268,6 +352,11 @@ const STORY_PRIO = {
   win_streak:        68,
   loss_streak:       66,
   top_form:          64,   // weiter vorn als sonst [§11.0b]
+  // Die Karte einer Partie ist der Anker ihres Spiels: alles, was darin
+  // passiert ist, haengt sich beim Buendeln an sie, und das Buendel traegt
+  // danach den Rang seines staerksten Teils [§C33]. Allein steht sie fuer
+  // das Ergebnis, und das ist die leiseste Nachricht des Spieltagsbandes.
+  spiel:             41,
   match_result:      63,   // ein außergewöhnliches, exakt belegtes Ergebnis
   chronik_geholt:    62,
   team_streak:       60,
@@ -279,12 +368,22 @@ const STORY_PRIO = {
   milestone_goals:   46,
   jubilee:           44,
   rivalry_milestone: 42,
+  // Die gesammelten kleinen Marken eines Tages: eine Karte, und die
+  // schwaechste des Spieltagsbandes. Sie sollen vorkommen, aber keinen
+  // Platz von einer Geschichte nehmen, die von diesem Tag erzaehlt.
+  badge_marken:      39,
   rekord_gesteigert: 40,   // ausbauen ist die schwächste der drei Meldungen
   elo_swing:         38,
 
   // ── Der Hintergrund ──
   rivalry:           30,   // ein Zähler, der seit fünfzig Duellen steht
-  season_endgame:    22,   // ein Countdown, kein Ereignis
+  // ── Der Schlusssprint ──
+  // Er stand mit 22 im Hintergrundband, als „Noch 5 Tage" an jedem Tag der
+  // Saison entstand — ein Countdown ist kein Ereignis. Mit der Elo-Grenze
+  // unten ist er etwas anderes: höchstens eine Karte je Saison, und nur,
+  // wenn die Entscheidung wirklich offen ist. Damit gehört er ins
+  // Breaking-Band [§C33].
+  season_endgame:    91,
   season_start:      20,
   dry_spell:         16,
   quiet_week:        14,
@@ -349,13 +448,6 @@ const AMBIENT_SLOT_ROLLE = {
 };
 function _ambientRolleVon(key){ return AMBIENT_SLOT_ROLLE[key] || null; }
 function _ambientRolleFuerSlot(stunde){ return stunde < 15 ? 'stand' : 'geschichte'; }
-// v9.18: Wie viele Tage zurück verpasste Slots nachgetragen werden. Ein Slot
-// entstand bisher nur, wenn jemand die App zwischen seiner Uhrzeit und
-// Mitternacht geöffnet hat — wer abends nicht reinschaut, verlor den 19-Uhr-Slot
-// endgültig. Drei Tage sind der Kompromiss: Löcher im Feed verschwinden, aber
-// die Fun Facts (die aus den HEUTIGEN Zahlen entstehen) bleiben nah genug am
-// Zeitpunkt, den sie behaupten.
-const AMBIENT_BACKFILL_DAYS = 3;
 // Cooldown-Fenster (Tage): so lange wird ein bereits gezeigter Fun-Fact-Typ
 // nicht erneut gewählt. Bei 2 Fun Facts / Tag sperrt das die letzten ~14 Typen
 // (der Pool hat 18) → genug Rotation, keine schnellen Wiederholungen.
@@ -395,7 +487,7 @@ const NEWS_BADGE_WHITELIST = new Set([
   'untouchable','mr_perfect','allwetter','godly_streak',
   // Rare — kuratierte Auswahl: nur die mit besonderer Story
   'wall_badge','upset_king','unbeatable','streak10','vice_champion','potw','krimi',
-  'games150', // "Legende" (150 Matches) — Karriere-Meilenstein, v8.6 ergänzt
+  'games150', // "Dauerbrenner" (150 Matches) — Karriere-Meilenstein, v8.6 ergänzt
   // Negative — nur die seltenen, "krassen" Niederlagen
   'mr_disaster','nemesis','perfect_loss',
   // v9.5: explizit als News gewünscht (negativ, aber „immer newsworthy")

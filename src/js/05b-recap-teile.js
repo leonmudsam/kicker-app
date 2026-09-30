@@ -154,3 +154,172 @@ function rcpNotizHtml(o){
     <span class="rcp-notiz-tx">${o.text}</span>
   </div>`;
 }
+
+// ╔═══ §C27 ─── DER BELEG ─────────────────────────────────────────────╗
+//     Ein Rekord, ein Award und eine Chronik sind Behauptungen, und das
+//     Blatt belegte sie mit einem Satz. „72 %" aus fünfzig und aus
+//     fünfhundert Partien sind zwei verschiedene Aussagen, und ob der Zweite
+//     knapp dahinter liegt oder weit weg, musste man aus der Liste
+//     ausrechnen. Vier Formen, jede für eine Frage, und jede nur, wo sie
+//     etwas sagt:
+//       Woraus         die Stichprobe als Zellen, eine je Gelegenheit
+//       Wo im Feld     jeder im Rennen als Punkt, der Halter hervorgehoben
+//       Wie sicher     die Spanne, in der ein Anteil bei dieser Stichprobe
+//                      liegt, und der Zweite darin
+//       Wie es dazu kam  der Verlauf über die Monatsenden
+//     Gerechnet wird hier nichts Neues: die Zahlen kommen aus dem Beleg des
+//     Katalogs, aus chronicleRang, aus AW_WERT und aus dem Zeitschnitt, den
+//     es gibt (_chronicleCtx).
+// ╚═════════════════════════════════════════════════════════════════════╝
+
+// „27 von 49 Spielen um den letzten Ball" aus einem Beleg. Ohne „x von y"
+// gibt es keine Stichprobe zu zeigen — dann fällt die Form weg, statt eine
+// zu erfinden.
+function belegAnteil(text){
+  const s = String(text || '');
+  const m = s.match(/(\d+)\s+von\s+(\d+)/);
+  if(!m) return null;
+  const k = +m[1], n = +m[2];
+  if(!(n > 0) || k > n) return null;
+  return {k, n, satz:s.slice(m.index).split(' · ')[0].replace(/[.,;]\s*$/, '')};
+}
+// Ist der Anteil derselbe Wert, den der Beleg groß nennt? Nur dann trägt
+// die Spanne: „6 % aller 48 Spieltage · 3 Tage" zählt drei von 48, und die
+// Spanne über drei von 48 beschreibt genau diese sechs Prozent.
+function _belegIstQuote(text, a){
+  const m = String(text || '').match(/([\d,]+)\s?%/);
+  return !!(m && a && Math.abs(parseFloat(m[1].replace(',', '.')) - a.k / a.n * 100) <= 1);
+}
+// Woraus: eine Zelle je Gelegenheit. Ab hundert fasst eine Zelle mehrere —
+// hundert Zellen sind auf dem Telefon vier Reihen, mehr wäre eine Fläche.
+function belegZellenHtml(a){
+  if(!a) return '';
+  const je = Math.max(1, Math.ceil(a.n / 100));
+  const z = Math.ceil(a.n / je), voll = Math.round(a.k / je);
+  let zellen = '';
+  for(let i = 0; i < z; i++) zellen += i < voll ? '<i class="j"></i>' : '<i></i>';
+  return `<div class="bl-zellen">${zellen}</div>
+    <div class="bl-satz">${esc(a.satz)}${je > 1 ? ` · eine Zelle für je ${je}` : ''}</div>`;
+}
+// Wo im Feld: `eintraege` sind {v, t, er} — Sortierwert, sein Text, und ob
+// er zu den Haltern gehört. Links steht der kleinste Wert, rechts der
+// größte; die Mitte ist der Median. Nur ab drei Einträgen: zwei Punkte
+// sind kein Feld.
+function belegFeldHtml(eintraege, mitSkala){
+  const e = (eintraege || []).filter(x => x && x.v != null && isFinite(x.v));
+  if(e.length < 3) return '';
+  const lo = Math.min(...e.map(x => x.v)), hi = Math.max(...e.map(x => x.v));
+  if(!(hi > lo)) return '';
+  const pos = v => ((v - lo) / (hi - lo) * 92 + 4).toFixed(1);
+  const sortiert = e.slice().sort((a, b) => a.v - b.v);
+  const mitte = sortiert[Math.floor((sortiert.length - 1) / 2)];
+  // Halter zuletzt, damit ihr Punkt über den anderen liegt.
+  const punkte = e.filter(x => !x.er).concat(e.filter(x => x.er))
+    .map(x => `<i${x.er ? ' class="er"' : ''} style="left:${pos(x.v)}%"></i>`).join('');
+  const skala = mitSkala
+    ? `<div class="bl-feld-l num"><span>${esc(String(sortiert[0].t))}</span><span>Mitte ${esc(String(mitte.t))}</span><span>${esc(String(sortiert[sortiert.length - 1].t))}</span></div>`
+    : '';
+  return `<div class="bl-feld" title="${e.length} im Feld"><span class="bl-feld-bahn"></span>`
+    + `<span class="bl-feld-mitte" style="left:${pos(mitte.v)}%"></span>${punkte}</div>${skala}`;
+}
+// Wie sicher: die Spanne um einen Anteil (Wilson, 90 %). Sie sagt, was bei
+// dieser Stichprobe noch Zufall sein kann — und ob der Zweite darin liegt.
+function belegSpanne(k, n){
+  const z = 1.645, p = k / n, z2 = z * z, d = 1 + z2 / n;
+  const c = (p + z2 / (2 * n)) / d;
+  const h = z * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / d;
+  return [Math.max(0, c - h), Math.min(1, c + h)];
+}
+function belegSpanneHtml(a, zweiter){
+  if(!a || a.n < 3) return '';
+  const [u, o] = belegSpanne(a.k, a.n);
+  const pz = v => Math.round(v * 100);
+  const q = a.k / a.n;
+  // In Worten, die man ohne Statistik versteht. Dort stand „der Abstand ist
+  // mehr als Zufall" — richtig gerechnet, aber niemand wusste, was es
+  // heißt. Gesagt wird jetzt, was die Spanne bedeutet: ein paar Partien
+  // anders, und der Wert läge woanders; und ob der Zweite dann vorne wäre.
+  let satz = `${a.k} von ${a.n} sind ${pz(q)} %. Wären ein paar Partien anders ausgegangen, läge der Wert wohl irgendwo zwischen <b>${pz(u)} und ${pz(o)} %</b>.`;
+  let ref = '';
+  if(zweiter && zweiter.q != null && isFinite(zweiter.q)){
+    const drin = zweiter.q >= u - 1e-9 && zweiter.q <= o + 1e-9;
+    ref = `<span class="bl-ref" style="left:${(zweiter.q * 100).toFixed(1)}%"></span>`;
+    satz += drin
+      ? ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % in diesem Bereich: der Vorsprung ist noch knapp.`
+      : ` ${esc(zweiter.name)} liegt mit ${pz(zweiter.q)} % klar darunter: der Vorsprung ist gesichert.`;
+  }
+  return `<div class="bl-spanne"><span class="bl-spanne-bahn"></span>
+      <span class="bl-spanne-ber" style="left:${(u * 100).toFixed(1)}%;width:${((o - u) * 100).toFixed(1)}%"></span>
+      ${ref}<span class="bl-spanne-pkt" style="left:${(q * 100).toFixed(1)}%"></span></div>
+    <div class="bl-feld-l num"><span>0 %</span><span>50 %</span><span>100 %</span></div>
+    <div class="bl-satz">${satz}</div>`;
+}
+// Wie es dazu kam: der Wert des Halters und des Zweiten an jedem Monatsende
+// und heute. `serie` = {labels, a, b, aName, bName, seit}; ein fehlender
+// Wert (noch nicht in der Wertung) unterbricht die Linie.
+function belegVerlaufHtml(s){
+  if(!s || !s.labels || s.labels.length < 2) return '';
+  const alle = s.a.concat(s.b || []).filter(v => v != null && isFinite(v));
+  if(alle.length < 2) return '';
+  let lo = Math.min(...alle), hi = Math.max(...alle);
+  if(!(hi > lo)){ lo -= 1; hi += 1; }
+  const W = 300, H = 74, n = s.labels.length;
+  const x = i => (8 + i * (W - 16) / (n - 1)).toFixed(1);
+  const y = v => (H - 16 - (v - lo) / (hi - lo) * (H - 26)).toFixed(1);
+  const linie = (werte, cls) => {
+    const teile = []; let lauf = [];
+    werte.forEach((v, i) => {
+      if(v == null || !isFinite(v)){ if(lauf.length) teile.push(lauf); lauf = []; return; }
+      lauf.push(x(i) + ',' + y(v));
+    });
+    if(lauf.length) teile.push(lauf);
+    return teile.map(t => t.length > 1
+      ? `<polyline class="${cls}" points="${t.join(' ')}"/>`
+      : `<circle class="${cls}" cx="${t[0].split(',')[0]}" cy="${t[0].split(',')[1]}" r="2"/>`).join('');
+  };
+  const seit = s.seit != null && s.a[s.seit] != null
+    ? `<circle class="bl-v-seit" cx="${x(s.seit)}" cy="${y(s.a[s.seit])}" r="4.5"/>` : '';
+  const achse = s.labels.map((l, i) => (i === 0 || i === n - 1 || n <= 6)
+    ? `<text x="${x(i)}" y="${H - 2}" text-anchor="${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}">${esc(l)}</text>` : '').join('');
+  return `<svg class="bl-verlauf" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      ${s.b ? linie(s.b, 'bl-v-b') : ''}${linie(s.a, 'bl-v-a')}${seit}${achse}</svg>
+    <div class="bl-legende"><span class="a">${esc(s.aName)}</span>${s.b ? `<span class="b">${esc(s.bName)}</span>` : ''}${
+      s.seit != null ? `<span class="seit">vorn seit ${esc(s.labels[s.seit])}</span>` : ''}</div>`;
+}
+// Der Beleg in seiner festen Reihenfolge — nur die Formen, die für die
+// Größe etwas sagen: eine Serie hat keine Spanne, ein Monat keinen Verlauf.
+//   o.ev       der Beleg des Halters („36 von 50 Partien gewonnen")
+//   o.feld     {v, t, er} je Eintrag im Rennen
+//   o.dahinter ein Satz über den Zweiten
+//   o.zweiter  {name, q} für die Spanne
+//   o.verlauf  die id eines Liga-Rekords: sein Verlauf kommt nach dem
+//              Öffnen (belegVerlaufLaden)
+function belegHtml(o){
+  const a = belegAnteil(o.ev);
+  const teile = [];
+  if(a) teile.push(blattAbschnittHtml('chartBar', 'Woraus', a.n + ' insgesamt')
+    + `<div class="bl-box">${belegZellenHtml(a)}</div>`);
+  const feld = belegFeldHtml(o.feld, true);
+  if(feld) teile.push(blattAbschnittHtml('users', 'Wo im Feld', o.feld.length + ' im Rennen')
+    + `<div class="bl-box">${feld}${o.dahinter ? `<div class="bl-satz">${o.dahinter}</div>` : ''}</div>`);
+  const sp = a && _belegIstQuote(o.ev, a) ? belegSpanneHtml(a, o.zweiter) : '';
+  if(sp) teile.push(blattAbschnittHtml('target', 'Wie sicher') + `<div class="bl-box">${sp}</div>`);
+  if(o.verlauf) teile.push(blattAbschnittHtml('chartUp', 'Wie es dazu kam', 'Monatsenden')
+    + `<div class="bl-box" data-verlauf="${esc(o.verlauf)}"><div class="bl-lade"></div></div>`);
+  return teile.join('');
+}
+// Der Verlauf kommt nach: er braucht einen Zeitschnitt je Monat
+// [rekordVerlauf]. Ist das Blatt inzwischen ein anderes, fällt er weg.
+function belegVerlaufLaden(root){
+  const box = root && root.querySelector('[data-verlauf]');
+  if(!box) return;
+  setTimeout(() => {
+    if(!box.isConnected) return;
+    rekordVerlauf(box.dataset.verlauf, s => {
+      if(!box.isConnected) return;
+      const html = belegVerlaufHtml(s);
+      if(html) box.innerHTML = html;
+      else { const kopf = box.previousElementSibling; box.remove(); if(kopf) kopf.remove(); }
+    });
+  }, 360);
+}

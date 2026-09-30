@@ -1,7 +1,33 @@
   /* ============ [§C16] ICON SYSTEM ============ */
   .ic{display:inline-grid;place-items:center;vertical-align:middle;line-height:1}
+  /* Ein Strich für jedes Zeichen des Katalogs (24er-Raster). Die Regel steht
+     HIER und nirgends sonst; ein Behälter setzt höchstens --strich. Sie
+     überschreibt auch ein stroke-width am <svg> im Markup: dort standen
+     2,2 und 2,5 neben 2, und Stern und Krone liefen mit spitzen Ecken neben
+     runden Zeichen. */
+  svg[viewBox="0 0 24 24"]{stroke-width:var(--strich);stroke-linecap:round;stroke-linejoin:round}
   .ic svg{display:block;width:1em;height:1em;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
+
+  /* Die Zeichenkachel [§C27] (zkHtml). Drei Größen, sechs Töne nach den
+     Rollen des Farbgesetzes [§C25]; ohne Ton Metall. Getönt ist nur die
+     Fläche und der Innenrand — das Zeichen selbst trägt die Farbe. */
+  .zk{--z:36px;--zt:var(--ink2);--ztr:185,196,189;width:var(--z);height:var(--z);flex-shrink:0;
+    border-radius:calc(var(--z) * .3);display:inline-grid;place-items:center;color:var(--zt);
+    background:linear-gradient(160deg,rgba(var(--ztr),.16),rgba(var(--ztr),.06));
+    box-shadow:inset 0 0 0 1px rgba(var(--ztr),.22),inset 0 1px 0 rgba(255,255,255,.05)}
+  .zk svg{display:block;width:18px;height:18px;stroke:currentColor;fill:none;
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
+  .zk.k{--z:28px}
+  .zk.k svg{width:15px;height:15px;}
+  .zk.g{--z:48px}
+  .zk.g svg{width:24px;height:24px;--strich:1.75;}
+  .zk.gold  {--zt:var(--gold);  --ztr:247,207,74}
+  .zk.rot   {--zt:var(--red);   --ztr:240,86,106}
+  .zk.gruen {--zt:var(--acid);  --ztr:190,242,100}
+  .zk.blau  {--zt:var(--blue);  --ztr:86,180,232}
+  .zk.viol  {--zt:var(--purple);--ztr:167,139,250}
+  .zk.bronze{--zt:var(--bronze);--ztr:192,132,87}
 
   /* Medaillen-Badge (Top-3) – ersetzt 🥇🥈🥉 */
   .medal-b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:6px;
@@ -33,70 +59,64 @@
   /* Rang-Tier Icon-Container (👑🥇🥈🥉 -> SVG) */
   .tier-ic{display:inline-grid;place-items:center;width:18px;height:18px;color:inherit}
   .tier-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Lock/Settings-Button – Inhalt jetzt SVG */
   .lock-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Award-Empty-State Icon-Wrapper */
   .ee.svg-ic{display:grid;place-items:center;color:var(--faint)}
   .ee.svg-ic svg{width:48px;height:48px;stroke:currentColor;fill:none;
-    stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Award-Card mit SVG-Icon (override emoji font-size) */
   .award .emoji.svg-ic{color:inherit}
   .award .emoji.svg-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Trophäen-Karten im Profil – kleinere SVGs statt 34px Emoji */
   .pp-tr .ic.svg-ic{display:grid;place-items:center;width:38px;height:38px;margin:0 auto 7px;
     color:var(--gold);filter:drop-shadow(0 4px 9px rgba(247,207,74,.35))}
   .pp-tr.team .ic.svg-ic{color:var(--blue);filter:drop-shadow(0 4px 9px rgba(86,180,232,.35))}
   .pp-tr .ic.svg-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Award-Slots im Profil */
   .pp-aw .ic.svg-ic{display:grid;place-items:center;width:24px;height:24px;margin:0 auto 3px;color:var(--ink2)}
   .pp-aw .ic.svg-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-aw.empty .ic.svg-ic{color:var(--faint);opacity:.5}
-
-  /* Rang-Steps */
-  .pp-rk .ic.svg-ic{display:grid;place-items:center;width:22px;height:22px;margin:0 auto 4px;color:var(--ink2)}
-  .pp-rk .ic.svg-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .pp-rk.active .ic.svg-ic{color:var(--pp-tier-1);filter:drop-shadow(0 0 7px var(--pp-tier-glow))}
 
   /* Position-Header im Profil (Sturm/Abwehr) */
   .pp-pos-c .h .ic.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px}
   .pp-pos-c .h .ic.svg-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;
-    stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Inline-Icon im Profil-Header Section-Title */
   .pp-sec-title .l .ic.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px;color:var(--ink2)}
   .pp-sec-title .l .ic.svg-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Mate/Fav-Row Icons */
   .pp-r .l .ic.svg-ic{display:inline-grid;place-items:center;width:13px;height:13px;color:var(--ink2);margin-right:4px;vertical-align:-2px}
   .pp-r .l .ic.svg-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Inline-Position-Tag */
   .lf .ic.svg-ic, .rt .ic.svg-ic{display:inline-grid;place-items:center;width:11px;height:11px;vertical-align:-1px}
   .lf .ic.svg-ic svg, .rt .ic.svg-ic svg{width:11px;height:11px;stroke:currentColor;fill:none;
-    stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Match-Highlight im Verlauf */
   .match-trophy.svg-ic{display:inline-grid;place-items:center;width:22px;height:22px;color:var(--gold)}
   .match-trophy.svg-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .match-small.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px;vertical-align:-2px}
   .match-small.svg-ic.win{color:var(--gold)}
   .match-small.svg-ic.tie{color:var(--ink2)}
   .match-small.svg-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* ════════════════════════════════════════════════════════════
      ─── PLAYER PROFILE — V3 OVERHAUL ───
@@ -110,7 +130,7 @@
     background:var(--surface);border:1px solid var(--line);
     font-size:11px;color:var(--ink2);font-weight:500;line-height:1}
   .pp-pill svg{width:12px;height:12px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-tier-legende    .pp-pill.tier{background:linear-gradient(180deg,rgba(247,207,74,.16),rgba(247,207,74,.06));border-color:rgba(247,207,74,.4);color:var(--gold)}
   .pp-tier-elite      .pp-pill.tier{background:linear-gradient(180deg,rgba(167,139,250,.16),rgba(167,139,250,.06));border-color:rgba(167,139,250,.4);color:var(--purple)}
   .pp-tier-stark      .pp-pill.tier{background:linear-gradient(180deg,rgba(190,242,100,.16),rgba(190,242,100,.06));border-color:rgba(190,242,100,.4);color:var(--acid)}
@@ -134,7 +154,7 @@
     display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;line-height:1;
   }
   .pp-et-col .label svg{width:10px;height:10px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-et-col .val{font-family:'Archivo Black',sans-serif;font-size:24px;
     letter-spacing:-.02em;line-height:1;color:var(--ink)}
   .pp-et-col.now .val{color:var(--acid)}
@@ -175,7 +195,9 @@
     color:var(--muted);letter-spacing:.08em;text-transform:uppercase;line-height:1}
 
   /* Beziehungen — 2×2 Grid (Wrapper für die bestehenden .pp-r-rich Karten) */
-  .pp-rel-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  /* minmax(0,…): `1fr` wächst mit dem längsten Wort, und „Schwächster
+     Partner" schob die rechte Spalte aus dem Blatt. */
+  .pp-rel-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .pp-rel-grid > .pp-r-rich{display:flex;align-items:center;gap:10px;border-radius:14px;border-left-width:1px;border-left-style:solid}
 
   /* Auszeichnungs-Strip (Übersicht im Profil) — vereinfacht */
@@ -184,9 +206,9 @@
   .pp-badges-card:active{transform:scale(.985)}
   .pp-badges-strip{display:flex;gap:7px;flex-wrap:wrap;color:var(--ink2);flex:1;min-width:0}
   .pp-badges-strip svg{width:20px;height:20px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-badges-card .chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
-  .pp-badges-card .chev svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;
+  .pp-badges-card .chev svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-linecap:round;stroke-linejoin:round}
 
   /* ════════════════════════════════════════════════════════════════
@@ -199,7 +221,7 @@
   .pp-bcard-strip{flex:1;min-width:0;display:flex;gap:6px;align-items:center}
   .pp-bmini{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
     border:1px solid var(--line2);background:var(--bg2);flex-shrink:0;color:var(--ink2)}
-  .pp-bmini svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+  .pp-bmini svg{width:15px;height:15px;stroke:currentColor;fill:none;
     stroke-linecap:round;stroke-linejoin:round}
   .pp-bmini.legendary{color:var(--gold);border-color:rgba(247,207,74,.4)}
   .pp-bmini.rare{color:var(--purple);border-color:rgba(167,139,250,.38)}
@@ -208,7 +230,7 @@
   .pp-bcard-rest{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;
     font-weight:700;margin-left:3px}
   .pp-bcard-chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
-  .pp-bcard-chev svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;
+  .pp-bcard-chev svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-linecap:round}
   .pp-bcard-bar{height:3px;background:var(--bg2);border-radius:99px;display:flex;
     overflow:hidden;gap:2px;margin-top:10px}
@@ -249,7 +271,7 @@
     padding:14px;padding-top:18px;text-align:center;position:relative;overflow:hidden;transition:.15s}
   .bsh-card-ic{font-size:30px;margin-bottom:10px;display:flex;justify-content:center;
     align-items:center;min-height:32px}
-  .bsh-card-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:2;
+  .bsh-card-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round}
   .bsh-card-name{font-weight:700;font-size:13px;margin-bottom:4px;letter-spacing:-.005em}
   .bsh-card-desc{font-size:10.5px;color:var(--muted);line-height:1.4;margin-bottom:8px}
@@ -301,7 +323,7 @@
      Sheet bleibt aktiv und scrollbar nach Schließen des Popovers. */
   .bp-bg{position:fixed;inset:0;z-index:120;background:rgba(0,0,0,.65);
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-    opacity:0;pointer-events:none;transition:.2s;
+    opacity:0;pointer-events:none;transition:opacity .2s;
     display:flex;align-items:center;justify-content:center;padding:24px}
   .bp-bg.show{opacity:1;pointer-events:auto}
   .bp{background:var(--bg2);border:1px solid var(--line);border-radius:18px;
@@ -316,7 +338,7 @@
   .bp-ic.common{background:rgba(190,242,100,.12);color:var(--acid)}
   .bp-ic.negative{background:rgba(240,86,106,.12);color:var(--red)}
   .bp-ic.locked{background:var(--surface3);color:var(--muted)}
-  .bp-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;
+  .bp-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round}
   .bp-title{font-family:'Archivo Black',sans-serif;font-size:17px;line-height:1.1;letter-spacing:-.01em}
   .bp-desc{color:var(--ink2);font-size:11.5px;margin-top:5px;line-height:1.45}
@@ -407,7 +429,7 @@
   .st-card .st-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;margin-bottom:10px}
   .st-card.recap .st-ic{background:rgba(247,207,74,.14);color:var(--gold)}
   .st-card.pos .st-ic{background:rgba(86,180,232,.14);color:var(--blue)}
-  .st-card .st-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .st-card .st-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .st-card .st-tt{display:block;font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1.1;letter-spacing:-.01em}
   .st-card .st-su{display:block;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:4px}
   /* Das Mini-Popup ist entfallen [§11.5]; mit ihm die .nv-* Karte, ihre
@@ -516,6 +538,13 @@
     border:1px solid var(--line);border-left:2px solid var(--story,var(--line2));
     border-radius:4px 14px 14px 4px;padding:12px;cursor:pointer;transition:.15s}
   .nf-card:active{transform:scale(.992)}
+  /* Der Feed hat rund siebzig Karten und 4600 Knoten, und das Layout kostete
+     bei jedem Öffnen und bei jedem Zurück aus einem Story-Blatt gemessen
+     110 bis 140 ms — das Parsen des Markups nur zehn. Karten außerhalb des
+     Bildschirms werden erst gelegt, wenn sie hineinkommen: gemessen 35 ms.
+     Breaking und die Karte des Tages sind ausgenommen: ihr Schein liegt
+     außerhalb der Fläche, und die Eindämmung schnitte ihn ab. */
+  .nf-card:not(.nf-brk):not(.nf-gross){content-visibility:auto;contain-intrinsic-size:auto 190px}
   /* Eine Lichtkante oben. Ohne sie sass die Karte flach auf dem Grund und
      zehn davon untereinander waren ein einziges dunkles Feld. */
   .nf-card{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
@@ -550,6 +579,13 @@
     100%{box-shadow:0 0 0 0 rgba(240,86,106,0)}}
   @media(prefers-reduced-motion:reduce){.nf-brk-punkt{animation:none}}
   .nf-brk-zeit{margin-left:auto;letter-spacing:.06em;color:rgba(255,138,138,.7)}
+  /* Wie viel die gebuendelte Karte traegt. Sie trug denselben Balken wie eine
+     einzelne Breaking-Karte, und die fuenf Meldungen darunter sah nur, wer
+     weiterlas. Kleiner als das Wort und in einer eigenen Pille: sie zaehlt,
+     sie ruft nicht. */
+  .nf-brk-n{flex:0 0 auto;padding:1px 6px;border-radius:5px;
+    background:rgba(240,86,106,.18);border:1px solid rgba(240,86,106,.34);
+    font-size:9px;letter-spacing:.1em;color:#ffb4b4}
   /* Die Schlagzeile traegt die Karte: sie ist der Grund, warum Breaking
      ueberhaupt Breaking heisst. */
   .nf-brk .nf-h{font-size:21px;line-height:1.06;-webkit-line-clamp:5}
@@ -590,7 +626,7 @@
     .nf-gross-band::after{animation:none;opacity:0}
     .nf-gross-band svg{animation:none;opacity:1}}
   .nf-gross-band svg{width:12px;height:12px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--gold);
+    stroke-linecap:round;stroke-linejoin:round;color:var(--gold);
     filter:drop-shadow(0 0 5px rgba(247,207,74,.38))}
   .nf-gross .nf-h{font-size:19px;line-height:1.1;-webkit-line-clamp:5}
   .nf-gross .nf-d{font-size:12.5px;-webkit-line-clamp:6}
@@ -689,12 +725,34 @@
     place-items:center;background:rgba(var(--story-rgb,185,196,189),.09);
     box-shadow:inset 0 0 0 1px rgba(var(--story-rgb,185,196,189),.17)}
   .nf-rub svg{width:11px;height:11px;flex-shrink:0;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .nf-rub b{font-size:9px;font-weight:700;overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap;letter-spacing:.17em}
   .nf-gr{display:grid;grid-template-columns:1fr;gap:12px;padding:11px 13px 12px;align-items:start}
   .nf-gr.mit-l{grid-template-columns:auto minmax(0,1fr)}
   .nf-gr-l{display:flex;align-items:center;gap:6px;padding-top:1px}
+  /* Ein Wert UND ein Bild standen nebeneinander, und die Spalte war damit so
+     breit wie beide zusammen: gemessen 169 von 316 Pixeln, also 53 % der
+     Karte, und die Schlagzeile brach daneben auf fuenf Zeilen um und wurde
+     trotzdem abgeschnitten („Johannes, Julian und zwei weitere bewegen die
+     Ewige…"). Uebereinander ist die Spalte so breit wie das Breitere von
+     beiden, gemessen 23 %.
+     Es gilt fuer beide Bildformen: die Chips einer Tafel-Karte (`.nf-face`)
+     und das einzelne Wappen einer Marke (`.rav`) — dort standen Wappen und
+     Elo-Wert nebeneinander und nahmen 36 % der Karte. Ein Duo ist davon
+     ausgenommen: dort sind die zwei Wappen selbst die Aussage und stehen
+     ueberlappend in einer Zeile. */
+  /* Der Deckel ist 68 px Inhalt plus die 13 px des Trennstrichs. Bei 72 px
+     stand er mitten in der Chipgruppe: zwei Wappen und ein „+2" sind
+     30 + 19 + 19 px, `.nf-face` schrumpft bewusst nicht, und die Karte
+     schneidet ab — das dritte Zeichen war weg. */
+  .nf-gr-l:has(.nf-wert):has(.nf-face),
+  .nf-gr-l:not(.nf-duo):has(.nf-wert):has(.rav){flex-direction:column;
+    align-items:center;gap:5px;max-width:81px}
+  /* Auch ohne Bild bleibt die Zone bei derselben Kante. Der Fun Fact traegt
+     nur eine Zahl und ihre Aufschrift, und „ELO VORSPRUNG" machte die Spalte
+     87 px breit — 28 % der Karte fuer eine Karte ohne Bild. */
+  .nf-gr-l:has(.nf-wert):not(:has(.nf-face)):not(:has(.rav)){max-width:81px}
   /* Das Zeichen auf der Erfolgs-Karte [§C30]. „Vier Spieler tragen jetzt den
      Schildring" zeigte den Schildring kein einziges Mal — daneben stand ein
      Pokal aus dem Icon-Katalog. Die Spalte stellt es ueber die Chips: die
@@ -727,6 +785,10 @@
     white-space:nowrap;font-family:'Sometype Mono',monospace;font-size:10.5px;
     font-weight:650;line-height:1.2;color:var(--muted)}
   .nf-erg-s.w .nf-erg-team{color:var(--ink)}
+  /* Die Sieger hell, die Verlierer leise: vorher trugen beide Seiten
+     dieselbe Deckkraft, und wer gewonnen hat, stand nur in der Farbe der
+     Zahl. Gedaempft wird das Gesicht, der Name bleibt lesbar. */
+  .nf-erg-s:not(.w) .nf-erg-avs{opacity:.55}
   .nf-erg-sc{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:19px;
     letter-spacing:-.03em;display:flex;align-items:baseline;gap:1px}
   .nf-erg-sc b.w{color:var(--ink)} .nf-erg-sc b.v{color:var(--faint)}
@@ -734,33 +796,79 @@
 
   /* Sorte 2 Tafel: der Wert ist die Hauptsache, nicht der Satz darueber. */
   .nf-wert{display:flex;flex-direction:column;align-items:flex-start;min-width:62px}
+  /* Ein langer Wert wird kleiner, nicht zweizeilig. „+10 %" brach zu „+10"
+     und „%" untereinander, sobald das Vorzeichen dazukam, und drueckte die
+     Schlagzeile daneben auf drei Zeilen — dieselbe Regel wie in der
+     Zahlenreihe des Blatts [§C27]. Die Stufe haengt an der Zeichenzahl, die
+     der Aufrufer als `data-lang` mitgibt: gerechnet wird sie dort, wo der
+     Wert entsteht, nicht im CSS. */
   .nf-wert b{font-family:'Archivo Black',sans-serif;font-size:27px;line-height:1;
-    letter-spacing:-.03em;color:var(--ink)}
+    letter-spacing:-.03em;color:var(--ink);white-space:nowrap}
+  .nf-wert[data-lang="1"] b{font-size:21px}
+  .nf-wert[data-lang="2"] b{font-size:17px}
   .nf-wert.gold b{color:var(--gold)}
   .nf-wert.ton b{color:var(--story,var(--ink2))}
   .nf-wert.metall b{color:var(--ink2);font-size:23px}
   .nf-wert.rot b{color:var(--red);font-size:23px}
   /* Neben dem Wappen steht der Wert enger als allein in der Bildzone. */
   .nf-gr-l > .nf-wert{min-width:0;margin-left:2px}
+  /* Die Aufschrift zieht die Spalte nicht auf. Bei 80 px nahm der Fun Fact
+     mit „ELO VORSPRUNG" 30 % der Karte, ohne ueberhaupt ein Bild zu tragen;
+     72 px ist die Breite der gestapelten Spalte, also dieselbe Kante. */
   .nf-wert span{font-size:9px;color:var(--muted);margin-top:5px;letter-spacing:.05em;
-    text-transform:uppercase;max-width:80px;line-height:1.3}
+    text-transform:uppercase;max-width:72px;line-height:1.3}
+  /* In der gestapelten Spalte stehen Zahl und Aufschrift mittig, und unter
+     dem Bild bleibt weniger Luft als daneben. */
+  .nf-gr-l:has(.nf-face) > .nf-wert,
+  .nf-gr-l:not(.nf-duo):has(.rav) > .nf-wert{align-items:center;
+    text-align:center;min-width:0}
+  .nf-gr-l:has(.nf-face) > .nf-wert span,
+  .nf-gr-l:not(.nf-duo):has(.rav) > .nf-wert span{margin-top:3px}
 
   /* Sorte 3 Insignium: die Leiter zeigt den Weg. */
-  .nf-leiter{display:flex;align-items:center;gap:4px;padding:10px 13px;
+  .nf-leiter{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:10px 13px;
     border-top:1px solid var(--line)}
   /* Die Leiter zeigt die echten Zeichen [§C30]. Sechzehn Pixel waren fuer
      einen gefaerbten Punkt gedacht; bei achtundzwanzig blieb vom Schildring
-     ein Ring. Vierzig ist das Maximum, bei dem fuenf Stufen und die Zahl
-     daneben in eine 430-px-Karte passen, und die Untergrenze, ab der Reif,
-     Schildring und Volutenkranz zu unterscheiden sind.
+     ein Ring. Vierzig ist die Untergrenze, ab der Reif, Schildring und
+     Volutenkranz zu unterscheiden sind — und mit sieben Stufen passt die
+     Zahl nicht mehr daneben: sieben Felder und die Zahl liefen bei 360 px
+     ueber den Rand. Die Felder teilen sich deshalb die Zeile bis hoechstens
+     40 px, und die Zahl steht darunter.
      Die noch nicht erreichten stehen nicht auf .3 sondern auf .45: bei .3
      war eine Kontur auf dunklem Grund von nichts zu unterscheiden. */
-  .nf-lt-p{width:40px;height:40px;flex:0 0 auto;opacity:.45;
+  .nf-lt-p{flex:1 1 0;min-width:0;max-width:40px;aspect-ratio:1;opacity:.45;
     display:grid;place-items:center;border-radius:50%}
   .nf-lt-p .ins{width:100%;height:100%;display:block}
   .nf-lt-p.hat{opacity:1}
   .nf-lt-p.jetzt{outline:1.5px solid var(--gold);outline-offset:1px;opacity:1}
-  .nf-lt-t{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
+  .nf-lt-t{flex-basis:100%;text-align:right;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
+  /* Die Leiter der Liga: unter jedem Zeichen die Zahl seiner Träger. */
+  .nf-ll-f{flex:1 1 0;min-width:0;max-width:40px;display:flex;flex-direction:column;
+    align-items:center;gap:2px}
+  .nf-ll-f .nf-lt-p{width:100%;flex:0 0 auto}
+  .nf-ll-n{font-size:10px;font-weight:700;color:var(--ink2);line-height:1}
+  .nf-ll-n.leer{color:var(--faint)}
+  /* Die Leiter der Liga im Blatt: je Stufe eine Zeile, die Gesichter auf
+     ihrem Feld. */
+  .nd-ll{display:grid;gap:5px;margin-top:6px}
+  .nd-ll-z{display:grid;grid-template-columns:minmax(0,92px) minmax(0,1fr);align-items:center;gap:6px}
+  .nd-ll-n b{display:block;font-size:12px;font-weight:600;color:var(--ink2);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nd-ll-n span{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--faint)}
+  .nd-ll-r{display:flex;gap:4px;min-width:0}
+  .nd-ll-f{position:relative;flex:1 1 0;min-width:0;max-width:52px;aspect-ratio:1}
+  .nd-ll-f > svg.ins{display:block;width:100%;height:100%;opacity:.38}
+  .nd-ll-f.da > svg.ins{opacity:1}
+  .nd-ll-g{position:absolute;left:50%;bottom:-3px;transform:translateX(-50%);display:flex}
+  .nd-ll-av{margin-left:-5px;border-radius:50%;box-shadow:0 0 0 1.5px var(--bg);cursor:pointer}
+  .nd-ll-av:first-child{margin-left:0}
+  /* Das Gesicht misst hier selbst: ohne Behälter mit Größe stand es als
+     Rechteck aus Initialen auf dem Zeichen [§C27]. */
+  .nd-ll-av .av{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;
+    font-size:7px;line-height:1;overflow:hidden}
+  .nd-ll-mehr{margin-left:2px;font-size:9px;font-weight:700;color:var(--ink2);
+    align-self:center;background:var(--surface2);border-radius:7px;padding:1px 4px}
 
   /* Sorte 4 Held: Wappen gross, drei Zahlen im Fuss. */
 
@@ -779,9 +887,16 @@
 
   /* Sorte 5 Woche: die Wertungen als Zeilen, drei davon als Vorschau. */
   .nf-wl{border-top:1px solid var(--line)}
-  .nf-wl-z{display:flex;align-items:baseline;gap:9px;padding:7px 13px;
+  .nf-wl-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px}
   .nf-wl-z:last-child{border-bottom:0}
+  /* Das Zeichen der Wertung. Sechs Zeilen Text untereinander sagen vor dem
+     Lesen nicht, welche davon der Spieler der Woche ist. Gold nur bei ihm —
+     die uebrigen fuenf sind Metall [§C25]. */
+  .nf-wl-i{flex:0 0 15px;width:15px;height:15px;display:grid;place-items:center;
+    color:var(--muted)}
+  .nf-wl-i svg{width:14px;height:14px;display:block}
+  .nf-wl-z.held .nf-wl-i{color:var(--gold)}
   .nf-wl-z span{color:var(--ink);font-weight:600;flex:0 0 auto}
   .nf-wl-z i{font-style:normal;color:var(--muted);min-width:0;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap}
@@ -807,10 +922,50 @@
     border-radius:5px;background:var(--surface2);border:1px solid var(--line);
     color:var(--muted);font-size:9px;font-weight:600;letter-spacing:.04em;
     text-transform:uppercase;white-space:nowrap}
+  /* Die Klasse einer seltenen oder legendaeren Auszeichnung. Sie stand einmal
+     als eigene Karte da, damit sie nicht untergeht — und damit neben der Karte
+     desselben Spiels, zweimal dasselbe Ergebnis mit denselben vier Wappen.
+     Jetzt reist sie mit und wird gekennzeichnet: Violett, die Familie der
+     Auszeichnungen [§C25], und deutlicher als die Metallmarke daneben. */
+  .nf-sam-z b.nf-sam-kl{flex:0 0 auto;margin-left:auto;padding:1px 6px;
+    border-radius:5px;background:rgba(167,139,250,.14);
+    border:1px solid rgba(167,139,250,.38);color:var(--purple);
+    font-size:9px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;white-space:nowrap}
+  .nf-sam-z b.nf-sam-k + b.nf-sam-kl,
+  .nf-sam-z.brk b.nf-sam-kl{margin-left:6px}
+  /* Der Anlass des Breaking. Rot ist die Richtung von Breaking [§C25], und
+     die Zeile bekommt dieselbe Kante: die Karte bricht die Spalte wegen
+     dieser einen Zeile, und die stand zuletzt und ohne jedes Zeichen. */
+  .nf-sam-z b.nf-sam-brk{flex:0 0 auto;margin-left:auto;padding:1px 6px;
+    border-radius:5px;background:rgba(240,86,106,.12);
+    border:1px solid rgba(240,86,106,.32);color:var(--red);
+    font-size:9px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;white-space:nowrap}
+  .nf-sam-z.brk b.nf-sam-k{margin-left:6px}
+  /* Und die Zeile selbst traegt die Kante. Die Marke am rechten Rand war zu
+     leise: die Karte hatte einen vollen roten Rahmen, einen pulsierenden
+     Punkt und einen Schein hinter der Flaeche und nannte ihren Grund in
+     derselben grauen Zeile wie fuenf andere. Rote Kante links, eine ganz
+     schwache Flaeche und das Zeichen in Rot [§C25] — damit ist der Anlass
+     zu sehen, bevor ein Wort gelesen ist. */
+  .nf-sam-z.brk{color:var(--ink);background:rgba(240,86,106,.07);
+    box-shadow:inset 3px 0 0 var(--red)}
+  .nf-sam-z.brk .nf-sam-i{color:var(--red);background:rgba(240,86,106,.12);
+    border-color:rgba(240,86,106,.4)}
+  .nf-s-tafel .nf-sam-z.brk{--zeile-rgb:240,86,106}
+  /* Der Stand einer Partie. Auf der Ergebnis-Karte ist er die Aussage und
+     steht deshalb rechts in eigener Spalte, in Ziffernbreite — nicht im
+     Satz, der sich kürzt. Metall wie die Marke: er zeichnet niemanden aus
+     [§C25], die Richtung steht im Text. */
+  .nf-sam-z b.nf-sam-w{flex:0 0 auto;margin-left:auto;padding:1px 6px;
+    border-radius:5px;background:var(--surface2);border:1px solid var(--line);
+    color:var(--ink);font-size:11px;font-weight:800;letter-spacing:.02em;
+    font-variant-numeric:tabular-nums;white-space:nowrap}
   .nf-sam-i{width:20px;height:20px;flex:0 0 auto;border-radius:6px;
     display:grid;place-items:center;background:var(--surface2);
     border:1px solid var(--line);color:var(--muted)}
-  .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+  .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;}
   /* Gemischte Tafel-Momente bleiben eine Karte, aber nicht eine graue Liste:
      jede Zeile trägt den dezenten Farbton ihres Inhalts. */
   .nf-s-tafel .nf-sam-z{--zeile-rgb:135,168,178;border-left:2px solid
@@ -825,8 +980,12 @@
   .nf-s-tafel .nf-sam-z .nf-sam-i{color:rgb(var(--zeile-rgb));
     border-color:rgba(var(--zeile-rgb),.22);background:rgba(var(--zeile-rgb),.075);
     box-shadow:0 0 12px -8px rgba(var(--zeile-rgb),.72)}
-  .nf-sam-m{padding:6px 13px;font-size:10px;color:var(--faint);
-    border-top:1px solid var(--line)}
+  /* Die Zahl der uebrigen Zeilen ist der Weg ins Blatt, also muss man sie
+     lesen koennen. Mit 6 px Luft und `--faint` endete sie gerendert 1 px
+     ueber der Kartenkante, und die Ecke von 14 px schnitt sie an: „und 13
+     weitere" sah aus wie ein Darstellungsfehler. */
+  .nf-sam-m{padding:8px 13px 12px;font-size:10.5px;color:var(--muted);
+    border-top:1px solid var(--line);letter-spacing:.02em}
 
   /* Sorte 6 Duo: zwei Wappen nebeneinander, kein Rang [§C27]. */
   .nf-duo{gap:0}
@@ -882,7 +1041,7 @@
   .nf-bd{display:flex;align-items:center;gap:10px;padding:9px 13px;border-top:1px solid var(--line)}
   .nf-bd-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
     background:var(--surface2);color:var(--ink2)}
-  .nf-bd-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;
+  .nf-bd-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   .nf-bd-legendary{background:rgba(247,207,74,.14);color:var(--gold)}
   .nf-bd-rare{background:rgba(86,180,232,.12);color:var(--blue)}
@@ -927,7 +1086,7 @@
   .nf-motiv{position:absolute;right:9px;top:50%;width:96px;height:96px;
     transform:translateY(-50%) rotate(-9deg);pointer-events:none;z-index:0;
     opacity:.08;color:var(--story,var(--ink2))}
-  .nf-motiv svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.4;
+  .nf-motiv svg{width:100%;height:100%;fill:none;stroke:currentColor;--strich:1.4;
     stroke-linecap:round;stroke-linejoin:round}
   /* Ein weicher Schein hinter dem Zeichen. Als reine Kontur bei sechs Prozent
      war das Motiv auf dem Telefon kaum von einem Kratzer zu unterscheiden. */
@@ -948,7 +1107,7 @@
   .nf-card > *:not(.nf-motiv){position:relative;z-index:1}
   .nf-chev{align-self:center;flex:0 0 auto;color:var(--faint);display:flex;
     margin-left:2px}
-  .nf-chev svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;
+  .nf-chev svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   .nf-card:active .nf-chev{color:var(--ink2)}
   /* Der Winkel ist die dritte Spalte des Rasters — ohne sie stuende er unter
@@ -958,7 +1117,7 @@
   /* Betont wird das Ergebnis, die Zahl und der Name — mehr waere wieder
      gleich laut. */
   .nf-d b{color:var(--ink);font-weight:700}
-  .nf-when svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2;
+  .nf-when svg{width:10px;height:10px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round;opacity:.55}
   /* Die Zone links ist abgetrennt: Wappen, Ergebnis oder Wert stehen fuer
      sich, der Satz beginnt dahinter. */
@@ -990,6 +1149,141 @@
   /* Rechts steht, was die Punkte zaehlen — sonst war die halbe Bandbreite leer. */
   .nf-ser span{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:9.5px;
     letter-spacing:.05em;color:var(--muted);white-space:nowrap}
+  /* Die naechste Marke als leere Felder: man sieht, wie weit es noch ist.
+     Leer heisst Metall, nicht Gruen — noch ist nichts gewonnen [§C25]. */
+  .nf-ser i.x{background:var(--surface3);box-shadow:inset 0 0 0 1px var(--line2)}
+
+  /* ── Bogen und Elo einer Partie [§C33] ──────────────────────────────
+     Die Siegchance als Halbkreis mit der Mitte: „30 %" liest man erst,
+     wenn man es einordnet, der Bogen zeigt es. Daneben der Gewinn je
+     Sieger mit Gesicht, weil er einem gehoert und nicht der Partie. */
+  .nf-spf{display:flex;align-items:center;gap:10px;padding:9px 13px;
+    border-top:1px solid var(--line);min-width:0}
+  .nf-bogen{display:flex;align-items:center;gap:8px;min-width:0}
+  .nf-bogen svg{width:52px;height:30px;flex:0 0 auto;overflow:visible}
+  .nf-bogen path{fill:none;stroke-linecap:round}
+  .nf-bogen .b{stroke:var(--surface3);stroke-width:5}
+  .nf-bogen .v{stroke:var(--acid);stroke-width:5}
+  .nf-bogen .m{stroke:var(--faint);stroke-width:1.5}
+  /* Unter der Linie der Ueberraschung stand die Rechnung dagegen: der Bogen
+     bleibt gruen (die Sieger haben gewonnen), bekommt aber Licht. */
+  .nf-bogen.u .v{filter:drop-shadow(0 0 4px rgba(190,242,100,.55))}
+  .nf-bogen span{font-size:10px;line-height:1.3;color:var(--muted);white-space:nowrap}
+  .nf-bogen span b{display:block;font-family:'Sometype Mono',monospace;font-size:13px;
+    font-weight:700;color:var(--ink)}
+  .nf-elocs{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto;min-width:0}
+  .nf-eloc{display:inline-flex;align-items:center;gap:5px;padding:2px 7px 2px 2px;
+    border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line);
+    font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;white-space:nowrap}
+  .nf-eloc .av{--av:18px;width:18px;height:18px;font-size:7px;box-shadow:none}
+  .nf-eloc b.g{color:var(--acid)} .nf-eloc b.r{color:var(--red)}
+
+  /* ── Die Elo-Waage ────────────────────────────────────────────────
+     Vier Spieler um eine Null: die Verlierer wachsen nach links, die Sieger
+     nach rechts. Gleich breite Hälften (minmax(0,1fr)), damit dieselbe Zahl
+     links und rechts gleich lang ist. */
+  .nf-waage{display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);
+    gap:0 8px;align-items:center;padding:9px 13px;border-top:1px solid var(--line)}
+  .nf-wg-null{align-self:stretch;background:var(--line2)}
+  .nf-wg-s{display:flex;flex-direction:column;gap:5px;min-width:0}
+  .nf-wg-z{display:flex;align-items:center;gap:6px;min-width:0}
+  .nf-wg-s.l .nf-wg-z{flex-direction:row-reverse}
+  .nf-wg-z .av{--av:18px;width:18px;height:18px;font-size:7px;box-shadow:none;flex:0 0 auto}
+  .nf-wg-z b{font-family:'Sometype Mono',monospace;font-size:10.5px;font-weight:700;
+    flex:0 0 auto;min-width:26px}
+  .nf-wg-s.l .nf-wg-z b{text-align:right}
+  .nf-wg-z b.g{color:var(--acid)} .nf-wg-z b.r{color:var(--red)}
+  .nf-wg-z i{display:block;height:6px;border-radius:3px;min-width:3px;flex:0 1 auto;
+    transform-origin:left center;animation:nd-balken .5s ease-out both}
+  .nf-wg-s.r .nf-wg-z i{order:-1;background:linear-gradient(90deg,rgba(190,242,100,.35),var(--acid))}
+  .nf-wg-s.r .nf-wg-z{justify-content:flex-start}
+  .nf-wg-s.l .nf-wg-z i{order:-1;transform-origin:right center;
+    background:linear-gradient(270deg,rgba(240,86,106,.35),var(--red))}
+  /* Der Balken steht an der Null, dahinter Zahl und Gesicht: so beginnen
+     alle vier an derselben Linie, und die Länge ist vergleichbar. */
+  .nf-wg-s.r .nf-wg-z{flex-direction:row}
+  .nf-wg-s.r .nf-wg-z i{order:0} .nf-wg-s.r .nf-wg-z b{order:1} .nf-wg-s.r .nf-wg-z .av{order:2}
+  .nf-wg-s.l .nf-wg-z{flex-direction:row-reverse}
+  .nf-wg-s.l .nf-wg-z i{order:0} .nf-wg-s.l .nf-wg-z b{order:1} .nf-wg-s.l .nf-wg-z .av{order:2}
+  @media(prefers-reduced-motion:reduce){.nf-wg-z i{animation:none}}
+
+  /* ── Die neue Spitze ──────────────────────────────────────────────── */
+  .nf-spitze{display:flex;align-items:center;gap:9px;padding:9px 13px;
+    border-top:1px solid var(--line);min-width:0;font-size:11px;color:var(--muted)}
+  .nf-sp-n{display:flex;align-items:center;gap:6px;min-width:0}
+  .nf-sp-n b{color:var(--ink);font-size:12.5px;white-space:nowrap}
+  .nf-sp-n em{font-style:normal;font-family:'Sometype Mono',monospace;font-size:10.5px;
+    color:var(--gold);white-space:nowrap}
+  .nf-sp-a{margin-left:auto;display:flex;align-items:center;gap:5px;white-space:nowrap;min-width:0}
+  .nf-sp-a b{color:var(--ink);font-family:'Sometype Mono',monospace}
+  .nf-sp-a .av{opacity:.6}
+  .nf-spitze .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:none;flex:0 0 auto}
+
+  /* ── Die gerissene Serie und das Gesicht vor einem Lauf ──────────── */
+  .nf-ser .av{--av:18px;width:18px;height:18px;font-size:7px;box-shadow:none;flex:0 0 auto}
+  .nf-ser-av{display:flex;margin-right:4px}
+  .nf-ser-av .av+.av{margin-left:-6px}
+  .nf-riss > .av{margin-right:4px}
+  /* Das letzte Feld ist die Partie, in der die Serie riss: ein Spalt in
+     Rot, nicht ein weiteres grünes Feld. */
+  .nf-ser i.bruch{background:none;box-shadow:inset 0 0 0 1.5px var(--red);position:relative}
+  .nf-ser i.bruch::before{content:"";position:absolute;left:50%;top:1px;bottom:1px;width:1.5px;
+    background:var(--red);transform:translateX(-50%) rotate(28deg)}
+
+  /* Die Wende: rote Felder für die Pleiten davor, ein grünes für diesen
+     Sieg — die Richtung wechselt in der Reihe [§C25]. */
+  .nf-ser i.p{background:linear-gradient(158deg,#f0566a,#8d2f3a);opacity:.75}
+  .nf-ser i.w{box-shadow:0 0 0 2px rgba(190,242,100,.28),inset 0 0 0 1px rgba(255,255,255,.14)}
+  .nf-wende > .av{margin-right:4px}
+
+  /* ── Die Torleiste ────────────────────────────────────────────────
+     Zehn Felder je Seite: die Sieger voll in Grün, die Verlierer leise. */
+  .nf-tor{display:flex;align-items:center;gap:12px;padding:9px 13px;border-top:1px solid var(--line)}
+  .nf-tor-r{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}
+  .nf-tor-r > span{display:flex;gap:2px}
+  .nf-tor-r i{width:8px;height:8px;border-radius:2px;background:var(--surface3)}
+  .nf-tor-r i.w{background:linear-gradient(158deg,var(--acid),#6d9a26)}
+  .nf-tor-r i.v{background:var(--faint)}
+  .nf-tor-s{margin-left:auto;font-size:10.5px;color:var(--muted);text-align:right;line-height:1.3}
+
+  /* ── Der Sprung in der Monatstabelle ─────────────────────────────── */
+  .nf-rgs{display:flex;flex-wrap:wrap;gap:6px 14px;padding:9px 13px;border-top:1px solid var(--line)}
+  .nf-rg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);white-space:nowrap}
+  .nf-rg .av{--av:18px;width:18px;height:18px;font-size:7px;box-shadow:none}
+  .nf-rg b{color:var(--ink);font-size:11.5px}
+  .nf-rg .num.g{color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace}
+  .nf-rg i{width:14px;height:8px;background:var(--acid);opacity:.8;
+    clip-path:polygon(0 35%,60% 35%,60% 0,100% 50%,60% 100%,60% 65%,0 65%)}
+
+  /* ── Die Auszeichnung einer Partie ───────────────────────────────── */
+  .nf-meds{display:flex;flex-wrap:wrap;gap:6px 12px;padding:9px 13px;border-top:1px solid var(--line)}
+  .nf-med{display:flex;align-items:center;gap:7px;min-width:0}
+  .nf-med > span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+  .nf-med b{font-size:11.5px;color:var(--ink);white-space:nowrap}
+  .nf-med i{font-style:normal;font-size:10px;color:var(--muted);white-space:nowrap}
+
+  /* ── Der Faden [§C33] ──────────────────────────────────────────────
+     Eine Zeile unter der Karte, wenn sie eine frühere fortsetzt. Gestrichelt
+     abgesetzt, weil sie nicht zur Nachricht gehört, sondern zu der davor;
+     in der Farbe der Sorte, weil sie deren Geschichte weitererzählt. Ein
+     Knopf und kein Text: sie öffnet die frühere Karte. */
+  .nf-faden{display:flex;align-items:center;gap:8px;width:100%;min-width:0;
+    padding:8px 13px 9px;border:0;border-top:1px dashed var(--line2);background:none;
+    font:inherit;font-size:11px;color:var(--muted);text-align:left;cursor:pointer}
+  .nf-faden .ic{flex:0 0 auto;width:14px;height:14px;color:rgb(var(--story-rgb,185,196,189))}
+  .nf-faden .ic svg{width:14px;height:14px;fill:none;stroke:currentColor}
+  .nf-faden span{flex:1;min-width:0;overflow:hidden;line-height:1.35;
+    display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+  .nf-faden span i{font-style:normal;font-family:'Sometype Mono',monospace;font-size:10px}
+  .nf-faden b{color:var(--ink2);font-weight:600}
+  .nf-faden em{flex:0 0 auto;font-style:normal;font-family:'Sometype Mono',monospace;
+    font-size:9px;font-weight:700;letter-spacing:.08em;color:rgb(var(--story-rgb,185,196,189))}
+  .nf-faden:active{background:rgba(255,255,255,.03)}
+  /* Im Blatt stehen die Fäden als eigener Block über dem Schließen, mit
+     ganzem Rahmen statt Strichlinie: dort ist keine Karte, unter der sie
+     hängen könnten. */
+  .nd-faeden{display:flex;flex-direction:column;gap:6px;margin:14px 0 4px}
+  .nd-faeden .nf-faden{border:1px dashed var(--line2);border-radius:12px;padding:9px 11px}
 
   /* ── Breaking bricht die Spalte ───────────────────────────────────
      Es ist das Seltenste im Feed, also darf es das Lauteste sein. Vorher
@@ -1024,7 +1318,7 @@
   /* Die Filterchips tragen dasselbe Zeichen wie das Rubrikband der Karten,
      zu denen sie filtern [§C27]. */
   .nf-chip-f svg{width:12px;height:12px;margin-right:6px;vertical-align:-2px;
-    fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
 
   /* ── Das Blatt: die Zeilen der Wochen- und Sammelkarte ────────────
      Der Kopf fasst zusammen; alle Einzelereignisse stehen gleichrangig
@@ -1032,9 +1326,25 @@
   .nw-liste{display:flex;flex-direction:column;gap:1px;background:var(--line);
     border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:10px}
   .nw-zeile{background:var(--bg2);padding:10px 13px}
-  .nw-zeile .nw-zeile-kopf{display:flex;align-items:baseline;gap:10px}
-  .nw-label{font-family:'Archivo Black',sans-serif;font-size:12px;letter-spacing:-.01em;
-    color:var(--ink);line-height:1.2}
+  .nw-zeile .nw-zeile-kopf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  /* Das Zeichen der Zeile. In einer Liste von zweiundzwanzig Eintraegen ist es
+     das Erste, was man sieht: es sagt vor dem ersten Wort, ob dort eine
+     Bestmarke, eine Chronik oder ein Insignium steht [§C27]. */
+  .nw-ic{flex:0 0 18px;width:18px;height:18px;display:grid;place-items:center;
+    color:var(--muted)}
+  .nw-ic svg{width:15px;height:15px;display:block}
+  .nw-label{flex:1 1 auto;min-width:0;font-family:'Archivo Black',sans-serif;
+    font-size:12px;letter-spacing:-.01em;color:var(--ink);line-height:1.25}
+  /* Die Klasse einer seltenen Auszeichnung und die Marke der Chronik: beide
+     stehen NEBEN dem Text, nicht darin — er kuerzt sich, und eine Marke im
+     abgeschnittenen Teil waere gar nicht da [§C32]. */
+  .nw-kl{flex:0 0 auto;padding:1px 6px;border-radius:5px;
+    background:rgba(167,139,250,.14);border:1px solid rgba(167,139,250,.38);
+    color:var(--purple);font-size:8.5px;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;white-space:nowrap}
+  .nw-mk{flex:0 0 auto;padding:1px 6px;border-radius:5px;background:var(--surface2);
+    border:1px solid var(--line);color:var(--muted);font-size:8.5px;font-weight:600;
+    letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
   .nw-wert{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:12px;
     color:var(--gold);white-space:nowrap}
   .nw-satz{font-size:11.5px;line-height:1.45;color:var(--ink2);margin-top:5px}
@@ -1049,8 +1359,13 @@
      einem Pfeil, und „4 Siege · 57 %" las sich wie eine Karriere-Siegquote. */
   .nd-held{display:flex;align-items:center;gap:13px;padding:2px 0 4px;cursor:pointer}
   .nd-held-duo{cursor:default}
-  .nd-held-av{display:flex}
-  .nd-held-av > *:nth-child(2){margin-left:-12px}
+  .nd-held-av{display:flex;align-items:center}
+  /* Der Kopf zeigt so viele Wappen, wie die Zeile daneben Namen nennt — bis
+     zu drei, danach einen Chip mit dem Rest. `nth-child(2)` ueberlappte nur
+     das zweite, das dritte stand damit mit einer Luecke daneben. */
+  .nd-held-av > *:nth-child(n+2){margin-left:-12px}
+  .nd-held-mehr{width:48px;height:48px;border-radius:50%;display:grid;
+    place-items:center;font-size:13px;border:2px solid var(--surface)}
   /* Das Ergebnis der Partie ueber dem Kopf. Vorher stand es je nach Typ mal
      als Block, mal gar nicht. */
   .nd-erg{border:1px solid var(--line);border-radius:12px;background:var(--bg2);
@@ -1087,7 +1402,7 @@
     background:radial-gradient(150px 110px at 14% 0%,rgba(255,255,255,.05),transparent 70%),var(--bg2)}
   .nd-med-r{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
     background:var(--surface);box-shadow:inset 0 0 0 2px var(--line2)}
-  .nd-med-r svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;
+  .nd-med-r svg{width:30px;height:30px;fill:none;stroke:currentColor;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round;color:var(--ink2)}
   .nd-med-n{font-family:'Archivo Black',sans-serif;font-size:16px;line-height:1.15;
     letter-spacing:-.02em}
@@ -1155,13 +1470,22 @@
      Ein Rekord ohne Verfolger ist eine Zahl ohne Massstab. */
   .nd-vf{display:flex;flex-direction:column;gap:1px;background:var(--line);
     border:1px solid var(--line);border-radius:12px;overflow:hidden}
-  .nd-vf-z{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);
-    cursor:pointer}
+  .nd-vf-z{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:8px 12px;
+    background:var(--bg2);cursor:pointer}
   .nd-vf-z.hat{background:linear-gradient(96deg,rgba(247,207,74,.1),var(--bg2) 70%)}
   .nd-vf-n{width:16px;flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:11px;
     color:var(--muted)}
   .nd-vf-nm{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
     font-size:12.5px;color:var(--ink)}
+  /* Wie weit dahinter, sieht man. Die Liste nannte Rang, Name und Wert; ob der
+     Zweite knapp dran ist oder weit weg, musste man daraus ausrechnen. */
+  /* Volle Zeilenbreite: sonst ist die Bahn in jeder Zeile anders lang, weil
+     der Wert daneben verschieden breit ist — und dann sagt derselbe Anteil
+     zwei verschiedene Laengen. */
+  .nd-vf-b{flex:0 0 100%;display:block;height:4px;border-radius:999px;margin-top:1px;
+    background:var(--surface3);overflow:hidden}
+  .nd-vf-b i{display:block;height:100%;border-radius:999px;background:var(--silber);
+    opacity:.6}
   .nd-vf-z b{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink2)}
   /* Eine Wertung ist ein Name, keine Zahl: sie darf kuerzen statt zu sprengen. */
   .nd-vf-z b.nd-vf-t{font-family:inherit;font-size:11px;font-weight:600;color:var(--gold);
@@ -1178,7 +1502,7 @@
   .nd-desc b{color:var(--ink);font-weight:700}
   .nd-satz b{color:var(--ink);font-weight:700}
   .nd-when{display:flex;align-items:center;gap:6px}
-  .nd-when svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2;
+  .nd-when svg{width:10px;height:10px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round;opacity:.6}
   /* Breaking bleibt auch im Blatt Breaking: derselbe Balken, derselbe Puls. */
   .nd.nd-brk{border-color:rgba(240,86,106,.5);
@@ -1189,9 +1513,13 @@
   .nf-v-streak .n{font-family:'Sometype Mono',monospace;font-weight:700;font-size:17px;margin-left:5px;color:var(--story,var(--ink2))}
   .nf-v-crown .rk{font-family:'Archivo Black',sans-serif;font-size:15px}
   /* Story-Detail-Popover (Layer auf z-index 140, ÜBER Mini-Popup 130) */
+  /* Nur die Deckkraft wechselt, also wird nur sie genannt: `transition:.2s`
+     stellte jede Eigenschaft zur Animation, auch den `backdrop-filter`.
+     Hinter diesem Vorhang liegt der News-Feed, die schwerste Flaeche der
+     App — jedes Bild einer Blur-Animation rechnet sie neu. */
   .nd-bg{position:fixed;inset:0;z-index:140;background:rgba(0,0,0,.65);
     backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
-    opacity:0;pointer-events:none;transition:.2s;
+    opacity:0;pointer-events:none;transition:opacity .2s;will-change:opacity;
     display:flex;align-items:center;justify-content:center;padding:24px}
   .nd-bg.show{opacity:1;pointer-events:auto}
   .nd{background:radial-gradient(260px 180px at 96% 0%,
@@ -1214,7 +1542,7 @@
     border-radius:18px 18px 0 0;
     background:linear-gradient(90deg,var(--story,var(--line2)),transparent 78%)}
   .nd-brk::before{background:linear-gradient(90deg,var(--red),transparent 70%)}
-  .nd-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .nd-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .nd-title-wrap{flex:1;min-width:0}
   .nd-cat{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;
     font-family:'Sometype Mono',monospace;color:var(--story,var(--muted));margin-bottom:3px}
@@ -1235,6 +1563,128 @@
   .nd-stat-val.acid{color:var(--acid)}
   .nd-stat-val.red{color:var(--red)}
   .nd-stat-val.gold{color:var(--gold)}
+  /* ── Ein Balken wächst, er erscheint nicht ──────────────────────────
+     Eine Zahl, die man gezeichnet sieht, versteht man schneller; eine
+     Zeichnung, die aufgeht, sieht man überhaupt. Bewegt wird nur Deckkraft
+     und Höhe: die BREITE ist die Aussage, und wer sie animiert, misst
+     während der Bewegung eine falsche Länge. Sie ruht bei
+     `prefers-reduced-motion` — dieselbe Regel wie beim Puls von Breaking
+     und beim Schimmer der Karte des Tages [§C27]. */
+  @keyframes nd-balken{from{opacity:0;transform:scaleY(.2)}to{opacity:1;transform:none}}
+  .nd-chance-b i, .nd-elo-b i, .nd-wk-b i, .nd-wk-b em, .nd-vf-b i, .nd-ins-b i{
+    animation:nd-balken .42s cubic-bezier(.2,.75,.3,1) both}
+  /* Und die Bahn läuft von links nach rechts auf, in Spielreihenfolge: so
+     liest man den Tag in der Richtung, in der er passiert ist. */
+  @keyframes nd-bahn-ein{from{opacity:0}to{opacity:1}}
+  .nd-bahn i{animation:nd-bahn-ein .3s ease-out both}
+  .nd-bahn i:nth-child(2){animation-delay:.04s}
+  .nd-bahn i:nth-child(3){animation-delay:.08s}
+  .nd-bahn i:nth-child(4){animation-delay:.12s}
+  .nd-bahn i:nth-child(5){animation-delay:.16s}
+  .nd-bahn i:nth-child(6){animation-delay:.2s}
+  .nd-bahn i:nth-child(7){animation-delay:.24s}
+  .nd-bahn i:nth-child(8){animation-delay:.28s}
+  .nd-bahn i:nth-child(9){animation-delay:.32s}
+  .nd-bahn i:nth-child(n+10){animation-delay:.36s}
+  @media(prefers-reduced-motion:reduce){
+    .nd-chance-b i, .nd-elo-b i, .nd-wk-b i, .nd-wk-b em, .nd-vf-b i,
+    .nd-ins-b i, .nd-bahn i{animation:none}
+  }
+
+  /* ── Der Spieltag als Bahn ──────────────────────────────────────────
+     Zehn Partien als zehn Vs-Bloecke sind vierzig Wappen und eine Wand. Die
+     Bahn zeigt den Tag in einer Zeile: ein Feld je Partie, gruen fuer einen
+     Sieg, rot fuer eine Niederlage, in Spielreihenfolge. */
+  .nd-bahn{display:flex;flex-wrap:wrap;gap:4px;margin-top:12px}
+  .nd-bahn i{flex:0 0 auto;min-width:40px;padding:6px 7px;border-radius:8px;
+    font-family:'Sometype Mono',monospace;font-size:10.5px;font-style:normal;
+    text-align:center;letter-spacing:.02em}
+  .nd-bahn i.w{background:rgba(190,242,100,.14);border:1px solid rgba(190,242,100,.34);
+    color:var(--acid)}
+  .nd-bahn i.l{background:rgba(240,86,106,.12);border:1px solid rgba(240,86,106,.3);
+    color:var(--red)}
+  /* Und darunter jede Partie kurz: Uhrzeit, Stand, Gegner. Das ist der Beleg
+     zur Bahn, ohne vier Wappen je Zeile. */
+  .nd-tml{display:flex;flex-direction:column;gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:9px}
+  .nd-tm{display:flex;align-items:baseline;gap:9px;padding:8px 12px;background:var(--bg2);
+    cursor:pointer}
+  .nd-tm-u{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9.5px;
+    color:var(--muted);letter-spacing:.04em}
+  .nd-tm-s{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:12.5px}
+  .nd-tm.w .nd-tm-s{color:var(--acid)}
+  .nd-tm.l .nd-tm-s{color:var(--red)}
+  .nd-tm-g{flex:1 1 auto;min-width:0;font-size:11px;color:var(--ink2);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* ── Die Wirkung auf die Laufbahn ───────────────────────────────────
+     Sie stand als Zeile „1205 → 1240 Prestige": zwei Zahlen, die man erst
+     verrechnen muss. Der Balken zeigt die Strecke von dieser Schwelle zur
+     naechsten, darin heller, was der Spieltag dazugelegt hat. */
+  .nd-wk{display:flex;align-items:center;gap:10px;padding:10px 12px;
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:10px;margin-bottom:6px}
+  /* 48 px ist die Untergrenze fuer ein Wappen [§6]: bei 34 blieb vom Zeichen
+     ein dunkler Fleck, und auf dem Telefon war es von einem Kratzer nicht zu
+     unterscheiden. */
+  .nd-wk-z{flex:0 0 48px;width:48px;height:48px;display:block}
+  .nd-wk-z svg{width:100%;height:100%;display:block}
+  .nd-wk-t{flex:1 1 auto;min-width:0;display:block}
+  .nd-wk-n{display:flex;align-items:baseline;gap:6px;min-width:0;
+    font-family:'Archivo Black',sans-serif;font-size:12.5px;color:var(--ink)}
+  .nd-wk-n b{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;font-weight:inherit;font-family:inherit}
+  .nd-wk-n em{flex:1 1 auto;min-width:0;font-family:'Sometype Mono',monospace;
+    font-size:9px;font-style:normal;color:var(--muted);letter-spacing:.06em;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nd-wk-b{display:flex;height:7px;border-radius:999px;overflow:hidden;
+    background:var(--surface3);border:1px solid var(--line);margin:6px 0 4px}
+  /* Der Teil, der schon da war, und der von heute. Der erste war
+     Silber auf var(--surface3). Es stand var(--metal) da, und dieses Token gibt
+     es nicht: der Balken hatte gar keine Fuellung. */
+  .nd-wk-b i{display:block;height:100%;background:var(--silber);opacity:.5}
+  .nd-wk-b em{display:block;height:100%;background:var(--gold)}
+  /* Die Zeile darf umbrechen: „noch 1615 bis zum Ordensstern" endete auf dem
+     Telefon als „noch 1615 bis zum Ord…" und nannte damit die Stufe nicht. */
+  .nd-wk-r{display:block;font-family:'Sometype Mono',monospace;font-size:9px;
+    color:var(--muted);letter-spacing:.04em;line-height:1.35}
+  .nd-wk-d{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:15px;
+    color:var(--muted)}
+  .nd-wk-d.g{color:var(--gold)}
+  /* ── Die Siegchance als Skala ───────────────────────────────────────
+     „57 %" ist eine Zahl, die man erst einordnen muss. Der Balken zeigt, wo
+     die Partie zwischen Sensation und Pflichtsieg lag; die drei Striche sind
+     die Linien der Elo-Rechnung [§5.2]. */
+  .nd-chance{background:var(--surface);border:1px solid var(--line);
+    border-radius:10px;padding:11px 13px 12px;margin-bottom:6px}
+  .nd-chance-b{position:relative;height:8px;border-radius:999px;overflow:hidden;
+    background:var(--surface3);border:1px solid var(--line)}
+  .nd-chance-b i{display:block;height:100%;border-radius:999px;
+    background:linear-gradient(90deg,rgba(194,201,208,.35),var(--silber))}
+  .nd-chance.g .nd-chance-b i{background:linear-gradient(90deg,rgba(190,242,100,.35),var(--acid))}
+  .nd-chance.r .nd-chance-b i{background:linear-gradient(90deg,rgba(240,86,106,.35),var(--red))}
+  .nd-chance-b u{position:absolute;top:0;bottom:0;width:1px;
+    background:var(--line2);z-index:1}
+  .nd-chance-z{display:flex;justify-content:space-between;gap:10px;margin-top:8px;
+    font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)}
+  .nd-chance-z b{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink)}
+  /* ── Die Elo-Wirkung je Spieler ─────────────────────────────────────
+     Vier Zahlen untereinander sagen nicht, wer am meisten gewonnen hat. Der
+     Balken zeigt den Ausschlag, der Rang dahinter, was er bewegt hat. */
+  .nd-elo{display:flex;align-items:center;gap:9px;padding:8px 12px;
+    background:var(--surface);border:1px solid var(--line);
+    border-radius:10px;margin-bottom:6px}
+  .nd-elo-n{flex:0 0 74px;font-family:'Archivo Black',sans-serif;font-size:12px;
+    color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .nd-elo-b{flex:1 1 auto;min-width:0;height:6px;border-radius:999px;
+    background:var(--surface3);overflow:hidden}
+  .nd-elo-b i{display:block;height:100%;border-radius:999px}
+  .nd-elo-b i.p{background:var(--acid)}
+  .nd-elo-b i.n{background:var(--red)}
+  .nd-elo-v{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:12px}
+  .nd-elo-v.g{color:var(--acid)}
+  .nd-elo-v.r{color:var(--red)}
+  .nd-elo em{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9px;
+    color:var(--muted);font-style:normal;letter-spacing:.04em}
   /* Versus-Block (für Rivalität/Endspurt-Stories) */
   .nd-vs{display:flex;align-items:center;gap:12px;background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:14px 12px;margin-bottom:10px}
@@ -1299,7 +1749,7 @@
     margin:0 auto 10px;background:rgba(247,207,74,.15);color:var(--gold);filter:none}
   .pp-tr.team .ic.svg-ic{background:rgba(86,180,232,.15);color:var(--blue);filter:none}
   .pp-tr .ic.svg-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-tr .ti{font-size:11px;font-weight:700;line-height:1.25;margin-bottom:4px;color:var(--ink)}
   .pp-tr .su{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace}
 
@@ -1311,7 +1761,7 @@
   .pp-aw .ic.svg-ic{width:32px;height:32px;border-radius:10px;background:var(--surface3);
     color:var(--ink2);display:grid;place-items:center;margin:0 auto 8px}
   .pp-aw .ic.svg-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-aw .nm{font-size:9.5px;line-height:1.25;color:var(--ink2);margin-bottom:6px}
   .pp-aw .num{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--acid);line-height:1}
   .pp-aw.empty .num{color:var(--muted)}
@@ -1340,7 +1790,7 @@
     font-size:10px;color:var(--muted);margin-bottom:10px;font-family:'Sometype Mono',monospace}
   .pp-posprof .pph .lf,.pp-posprof .pph .rt{display:inline-flex;align-items:center;gap:4px}
   .pp-posprof .pph svg{width:11px;height:11px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-posprof .pph .pct{color:var(--ink);font-weight:700}
   .pp-posprof .pp-slider{position:relative;height:6px;background:var(--surface3);border-radius:3px}
   /* Der Strahl gehoert der Seite, die ueberwiegt, und laeuft von dort zur
@@ -1373,7 +1823,7 @@
     color:var(--red);padding:12px;border-radius:13px;font-family:inherit;font-size:12px;
     font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
   .pp-del button svg{width:13px;height:13px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   /* ─── ENDE PLAYER PROFILE V3 OVERHAUL ─── */
 
 

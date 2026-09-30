@@ -345,7 +345,7 @@ function showSeasonRecap(season, opts){
       const p = pmap()[e.id];
       const titelBis = seasons.filter(x => x.id <= sid && seasonChampion(x.id) === e.id).length;
       const av = avHtml(p, '', {ins:true, band:true, pos:platz, titel:titelBis, feuer:0,
-                                px:platz===1?92:78, klasse:'pod-av'});
+                                px:platz===1?88:70, klasse:'pod-av'});
       // Ohne Titel steht dort die Spielzahl — ein Strich sieht aus, als
       // fehlte die Zahl, statt zu sagen: dieser Spieler hat noch keinen.
       const sub = titelBis
@@ -380,7 +380,7 @@ function showSeasonRecap(season, opts){
       <div class="rcp-tos-info">
         <div class="rcp-tos-label">Team der Saison</div>
         <div class="rcp-tos-name">${esc(pname(a)+' & '+pname(b))}</div>
-        <div class="rcp-tos-detail num">${tg?tg+' Spiele · '+Math.round(tw/tg*100)+'% Siegrate':'–'}</div>
+        <div class="rcp-tos-detail num">${tg?tg+' Spiele · '+Math.round(tw/tg*100)+'% Siegquote':'–'}</div>
       </div>
     </div>`;
   }
@@ -460,37 +460,23 @@ function showSeasonRecap(season, opts){
   awSeasonId = sid;
   const R = awardRankings('season');
   awSeasonId = vorherAw;
-  const eins = (x)=> x && x[0];
   const kacheln = [];
-  const scorer=eins(R.scorer), wall=eins(R.wall), streak=eins(R.streaks), upset=eins(R.upsets);
-  const grinder=eins(R.grinder), perfect=eins(R.perfect);
-  const weekKing=eins(R.weekKingList), dayKing=eins(R.dayKingList);
-  const worstWr=eins(R.worstWr), pechvogel=eins(R.pechvogelList);
+  // Name, Zahl und Einheit aus AW_WERT [§5.3d], wie im Awards-Reiter — hier
+  // stand eine fünfte Schreibweise („8 in Folge", „30% Chance"), und bei
+  // Gleichstand nannte der Rückblick nur den ersten.
   // Metall, nicht Gold. Gold gehört den Titeln [§C25] — und wenn acht
   // Kacheln golden umrandet sind, sagt Gold nichts mehr. Auf dieser Seite
-  // trägt es das Podest, sonst nichts.
-  const kachel=(ic,label,name,wert,key)=>kacheln.push(rcpKachelHtml({
-    ic, label, name, wert, ton:'metall', attr:`data-award="${key}"`}));
-  if(scorer)  kachel('ball','Torjäger',pname(scorer.id),'Ø '+scorer.avg.toFixed(1)+' Tore','scorer');
-  if(wall)    kachel('shieldCheck','Eiserne Abwehr',pname(wall.id),(wall.v/wall.g).toFixed(1)+' Gegen/Sp.','wall');
-  if(streak)  kachel('flame','Heißeste Serie',pname(streak.id),streak.v+' in Folge','streaks');
-  if(perfect) kachel('star','Beste Bilanz',pname(perfect.id),Math.round(perfect.wr*100)+'% Siegrate','perfect');
-  if(weekKing)kachel('crown','Wochenkönig',pname(weekKing.id),weekKing.v+'× POTW','weekKing');
-  if(dayKing) kachel('crown','Tageskönig',pname(dayKing.id),dayKing.v+'× POTD','dayKing');
-  if(grinder) kachel('gamepad','Vielspieler',pname(grinder.id),grinder.v+' Spiele','grinder');
-  if(upset){
-    const sieger = upset.m.winner==='A'?[upset.m.a1,upset.m.a2]:[upset.m.b1,upset.m.b2];
-    kachel('bolt','Größter Upset',pname(sieger[0])+' & '+pname(sieger[1]),
-           Math.round((1-upset.sp)*100)+'% Chance','upset');
-  }
-  // Die Schattenseiten stehen hinten und in Rot — Rot sagt hier die
-  // Richtung, nicht die Wichtigkeit [§C25].
-  if(worstWr) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Schlechtester',
-    name:pname(worstWr.id),wert:Math.round(worstWr.wr*100)+'% Siegrate',ton:'red',
-    attr:'data-award="worstWr"'}));
-  if(pechvogel) kacheln.push(rcpKachelHtml({ic:'ghost',label:'Pechvogel',
-    name:pname(pechvogel.id),wert:Math.round(pechvogel.pct*100)+'% knapp verloren',ton:'red',
-    attr:'data-award="pechvogel"'}));
+  // trägt es das Podest, sonst nichts. Die Schattenseiten stehen hinten und
+  // in Rot — Rot sagt hier die Richtung, nicht die Wichtigkeit.
+  const kachel = (key, ton) => {
+    const top = awTop(key, R); if(!top.length) return;
+    const t = awText(key, top[0]);
+    kacheln.push(rcpKachelHtml({ic:AW_IC[key], label:AWARD_META[key].title,
+      name:awIds(key, top[0]).map(pname).join(' & ') + (top.length > 1 ? ' +'+(top.length-1) : ''),
+      wert:t.e ? t.z+' '+t.e : t.z, ton, attr:`data-award="${key}"`}));
+  };
+  ['scorer','wall','streaks','perfect','weekKing','dayKing','grinder','upset'].forEach(k => kachel(k, 'metall'));
+  ['worstWr','pechvogel'].forEach(k => kachel(k, 'red'));
   // Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen.
   const awardsHtml = kacheln.length
     ? rcpAbschnitt('Auszeichnungen', kacheln.length)
@@ -562,8 +548,10 @@ function _potwLastWeekRange(){
   const end=new Date(monday); end.setDate(end.getDate()+7); end.setMilliseconds(-1);
   return {start:monday, end};
 }
+// Der Montag benennt die Woche. Die Schreibweise des Tages steht an EINER
+// Stelle [§C27]; hier stand sie ausgeschrieben ein zweites Mal.
 function _potwKeyOf(monday){
-  return monday.getFullYear()+'-'+String(monday.getMonth()+1).padStart(2,'0')+'-'+String(monday.getDate()).padStart(2,'0');
+  return tagKey(monday);
 }
 function _potwMatchesInRange(start,end){
   return matches.filter(m=>{const d=new Date(m.created_at); return d>=start && d<=end;});

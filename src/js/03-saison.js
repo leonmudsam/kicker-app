@@ -73,6 +73,54 @@ function mdayKey(m){
   }
   return d;
 }
+// ─── Der Kalendertag in Ortszeit ─────────────────────────────────────
+// „Welcher Tag ist das?" stand fuenfmal ausgeschrieben im Code, und in zwei
+// verschiedenen Schreibweisen: einmal mit fuehrender Null („2026-08-06"),
+// einmal ohne („2026-7-6"). Zwei Schreibweisen fuer denselben Tag sind eine
+// Falle — ein Satz von Schluesseln, der mit der einen gebaut und mit der
+// anderen abgefragt wird, trifft nie. Gekreuzt hat es sich noch nicht, aber
+// die naechste Stelle, die einen Tagesschluessel braucht, waehlt sonst wieder
+// selbst [§C27].
+//
+// Ortszeit, nicht UTC: der Feed gruppiert nach Kalendertagen, wie sie auf der
+// Uhr des Lesers stehen. `matchesByDay` schluesselt bewusst nach UTC und ist
+// deshalb etwas anderes.
+function tagKey(when){
+  const d = new Date(when);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+       + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// ─── Ein Zeitschnitt, der nichts abschneidet ─────────────────────────
+// Der Feed vergleicht „vor dem letzten Spieltag" mit „heute", und „heute"
+// schrieb er als den Zeitstempel der letzten Partie. Fuer jede geschnittene
+// Rechnung ist das aber ein eigener Schluessel: gemessen rechnete ein
+// Generatorlauf `prestigeTabelle` damit zweimal, einmal ungeschnitten fuer
+// 17 ms und einmal als Schnitt fuer 59 ms — dieselbe Tabelle, zwei Toepfe.
+//
+// Der Schnitt verhaelt sich ausserdem anders: `seasonTitles` liest einen
+// abgeschlossenen Monat nur OHNE Schnitt aus dem eingefrorenen Datensatz und
+// rechnet ihn mit Schnitt frisch nach. Derselbe Monat kann damit unter zwei
+// Namen erscheinen, je nachdem ob ein Schnitt mitgegeben wurde — und
+// eingefroren ist das, was die App ueberall sonst zeigt [§10.2].
+//
+// Ein Schnitt hinter der letzten Partie ist deshalb kein Schnitt. `matches`
+// ist aufsteigend sortiert, also ist die letzte auch die neueste.
+function _schnitt(bisMs){
+  if(!bisMs || !matches.length) return undefined;
+  return bisMs >= mts(matches[matches.length - 1]) ? undefined : bisMs;
+}
+
+// Dasselbe je Monat: ein Schnitt hinter dem Monatsende schneidet von DIESEM
+// Monat nichts ab. `prestigeTabelle(bisMs)` fragt die Chronik jedes Monats
+// bis zum Schnitt, und gemessen rechnete ein Generatorlauf Juni und Juli in
+// sechs Schnittfassungen nach, obwohl beide Monate laengst zu sind.
+function _schnittSaison(seasonId, bisMs){
+  const b = _schnitt(bisMs);
+  if(!b || !seasonId) return b;
+  return b >= seasonEnd(seasonId).getTime() ? undefined : b;
+}
+
 function seasonStart(seasonId){
   if(!seasonId) seasonId=currentSeason().id;
   const [y,m]=seasonId.split('-').map(Number);
@@ -98,7 +146,7 @@ function matchesInSeason(seasonId){
   if(!_cache._mseason) _cache._mseason={};
   if(_cache._mseason[key]) return _cache._mseason[key];
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
-  if(Object.keys(_cache._mseason).length > 40) _cache._mseason={};
+  _topfDeckel(_cache._mseason, 40);
   const start=seasonStart(seasonId),end=seasonEnd(seasonId);
   const result=matches.filter(m=>{const d=new Date(m.created_at);return d>=start&&d<=end;});
   _cache._mseason[key]=result;

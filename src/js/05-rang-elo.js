@@ -64,8 +64,12 @@ function rankBadgeHtml(id, size='sm'){
 // Elo heißt dabei im Zeitraum der Zuwachs, in Saison und Gesamt der Stand —
 // beides ist „die Elo dieses Zeitraums", nur einmal als Strecke und einmal
 // als Punkt.
-const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegrate',
-  goaldiff:'Tordiff',prestige:'Prestige',games:'Spiele'};
+const METRIC_LABEL={elo:'Elo',wins:'Siege',winrate:'Siegquote',
+  goaldiff:'Torbilanz',prestige:'Prestige',games:'Spiele'};
+// Fünf Reiter teilen sich 328 px: „Siegquote" stand dort als „Siegq…".
+// Im Reiter reicht das Wort, das die Spalte meint; unter der Zahl steht
+// weiter der volle Name.
+const METRIC_REITER={winrate:'Quote'};
 // Die LIGA-Rangliste ist die Elo-Rangliste — in Saison, Woche und Tag gibt
 // es dort nichts zu sortieren. Wer nach Siegrate oder Tordiff schaut, sucht
 // keine Rangliste, sondern eine Bestenliste, und die steht im Awards-Tab.
@@ -103,7 +107,7 @@ function metrikLeisteHtml(per){
   if(liste.length < 2) return '';
   const jetzt = metrikFuer(per);
   return `<div class="ui-tabs">${liste.map(k =>
-    `<button data-metric="${k}" class="${jetzt===k?'on':''}">${METRIC_LABEL[k]}</button>`
+    `<button data-metric="${k}" class="${jetzt===k?'on':''}">${METRIC_REITER[k]||METRIC_LABEL[k]}</button>`
   ).join('')}</div>`;
 }
 
@@ -113,6 +117,33 @@ function metrikLeisteHtml(per){
 // Bestehende DB-Felder bleiben gleich. Neu: dynamischer K + Margin-of-Victory,
 // rein clientseitig berechnet (kein Schema-Umbau nötig).
 function expected(a,b){ return 1/(1+Math.pow(10,(b-a)/400)); }
+
+// ─── Wo die Elo-Rechnung ihre Grenzen zieht ──────────────────────────
+// Drei Linien, und jede stand als blanke Zahl an mehreren Stellen: Favorit ab
+// 55 Prozent Siegchance, auf Augenhoehe von 45 bis 55, Aussenseiter-Sieg
+// unter 35. Die 0,35 stand in der Auszeichnung „Upset King" und in BEIDEN
+// Chronik-Durchlaeufen — drei Stellen, die dasselbe Ereignis zaehlen und
+// deshalb gleich zaehlen muessen [§10.2]. Die Formel selbst stand zweimal da:
+// `expected` hier und ein wortgleiches `localExp` in der Elo-Engine.
+const CHANCE_FAVORIT = 0.55;
+const CHANCE_OFFEN = 0.45;
+const CHANCE_UPSET = 0.35;
+// Und darunter die Sensation. Die Linie trennt zwei Kartensorten des Feeds,
+// die sich sonst doppeln wuerden: unter 20 Prozent erzaehlt der Favoritensturz
+// („Der Gigantentoeter"), von 20 bis 35 die Ergebniskarte. Beide Zahlen
+// standen blank da, und damit war ihre Zusammengehoerigkeit nicht zu sehen.
+const CHANCE_SENSATION = 0.20;
+// Ob die Linie selbst noch dazugehoert, ist je Wertung kalibriert: „Der
+// Favoritenschreck" verlangt „mindestens 65 Prozent fuer die Gegenseite" und
+// zaehlt deshalb `<= CHANCE_UPSET`, der Aussenseiter-Sieg zaehlt `<`. Die
+// Grenze ist dieselbe, die Randbedingung nicht — und sie wird nicht
+// stillschweigend vereinheitlicht, weil die Schwellen daran geeicht sind.
+// Das Wort zu einer Siegchance, an EINER Stelle: die Skala im Blatt einer
+// Partie und der Bogen auf ihrer Karte sagen sonst zu 30 % zwei Dinge.
+function chanceWort(c){
+  return c < CHANCE_SENSATION ? 'Sensation' : c < CHANCE_UPSET ? 'Außenseiter'
+       : c < CHANCE_FAVORIT ? 'Augenhöhe' : 'Favorit';
+}
 function posFactor(ps,sw){ return 1+sw*(0.5-ps)*2; }
 function riskWeights(hi,lo,rs){ const gap=Math.min(Math.abs(hi-lo)/400,1); const s=rs*gap; return {strong:1-s,weak:1+s}; }
 
@@ -172,14 +203,25 @@ function posPerfFrom(id, matchSubset){
 // die Positions-Rangliste und der Liga-Rekord darauf [§13.1]. Zwei getrennte
 // Rechnungen über dieselbe Frage driften auseinander, und dann stünde in der
 // Chronik ein anderer Bester als in der Liste.
-function posWert(pos, g, w, goalsAvg, perfAvg){
+//
+// ZWEI Verwendungen, EINE Formel, ein Unterschied: die Rangliste wiegt die
+// ERFAHRUNG mit, der Liga-Rekord darf das nicht. Eine Mindestzahl entscheidet
+// dort nur über die Teilnahme; wer sie erfüllt hat, soll seinen Wert nicht
+// mehr durch weitere Partien steigern können — sonst gehört der Rekord wieder
+// dem Vielspieler [§C35]. `posLeistung` ist deshalb der gemeinsame Kern, und
+// `posWert` ist derselbe Kern mal Erfahrung. Zwei getrennte Formeln nebeneinander
+// wären die Doppelung, die diese Stelle gerade verhindert [§C27].
+function posLeistung(pos, g, w, goalsAvg, perfAvg){
   if(!g) return 0;
-  const expWeight = 1 - Math.exp(-g/5);
   const perfBonus = (perfAvg || 0) * 0.25;
   const roleBonus = pos === 'atk'
     ? Math.max(0, Math.min(1, goalsAvg/10)) * 0.2
     : Math.max(0, Math.min(1, (10-goalsAvg)/10)) * 0.2;
-  return (w/g + perfBonus + roleBonus) * expWeight;
+  return w/g + perfBonus + roleBonus;
+}
+function posWert(pos, g, w, goalsAvg, perfAvg){
+  if(!g) return 0;
+  return posLeistung(pos, g, w, goalsAvg, perfAvg) * (1 - Math.exp(-g/5));
 }
 
 // Ein gemeinsamer Positionswert fuer Profil, Chronik und alle Ableitungen.

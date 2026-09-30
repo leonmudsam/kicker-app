@@ -3,7 +3,7 @@
   .rcp-label{display:inline-flex;align-items:center;gap:6px;font-family:'Sometype Mono',monospace;
     font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
     padding:5px 12px;background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.3);border-radius:99px}
-  .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .rcp-month{font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-.03em;margin-top:10px;line-height:1}
   .rcp-meta{font-size:11.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:6px;letter-spacing:.04em}
   /* Der Monatsstreifen steht mittig wie alles andere im Kopf; im Liga-Tab
@@ -48,7 +48,7 @@
   .rcp-aw.gold::before{background:var(--gold)}
   .rcp-aw.metall::before{background:var(--line2)}
   .rcp-aw-ic{width:32px;height:32px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;flex-shrink:0}
-  .rcp-aw-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-aw-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .rcp-aw.orange .rcp-aw-ic{color:var(--orange)}
   .rcp-aw.purple .rcp-aw-ic{color:var(--purple)}
   .rcp-aw.acid .rcp-aw-ic{color:var(--acid)}
@@ -116,10 +116,14 @@
 
   /* Die Zahlenleiste. In der Heldenkarte durch eine Goldlinie abgesetzt,
      außerhalb als eigene Reihe. */
-  .rcp-z{display:flex;gap:8px;margin:0 0 16px}
+  /* Fuenf Zellen passen auf dem Telefon nicht in eine Zeile: gemessen war die
+     Zelle 62 px breit und „BESTMARKEN" 75 px, und `overflow:hidden` schnitt es
+     ab. Die Reihe darf deshalb umbrechen, und die Aufschrift darf zwei Zeilen
+     nehmen — abgeschnitten sagt sie nichts. */
+  .rcp-z{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
   .rcp-held .rcp-z{justify-content:center;gap:16px;margin:14px 0 0;padding-top:13px;
     border-top:1px solid var(--line)}
-  .rcp-z-s{flex:1;min-width:0;text-align:center;background:var(--surface);
+  .rcp-z-s{flex:1 1 78px;min-width:78px;text-align:center;background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:10px 6px}
   .rcp-held .rcp-z-s{background:none;border:none;padding:0}
   .rcp-z-v{font-family:'Archivo Black',sans-serif;font-size:18px;line-height:1;
@@ -133,7 +137,8 @@
   .rcp-z-v.sehrlang{font-size:11.5px;letter-spacing:-.03em;line-height:1.15}
   .rcp-z-s{overflow:hidden}
   .rcp-z-l{font-family:'Sometype Mono',monospace;font-size:8.5px;font-weight:700;
-    color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-top:5px}
+    color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:5px;
+    white-space:normal;overflow-wrap:anywhere;line-height:1.25}
 
   /* Avatare ohne Wappen (unter 48 px) und Paare. */
   .rcp-av{position:relative;flex-shrink:0;width:var(--rav);height:var(--rav);
@@ -171,7 +176,7 @@
   .rcp-notiz.klick:active{background:var(--surface2)}
   .rcp-notiz-ic{flex:0 0 auto;display:grid;place-items:center;color:var(--acid)}
   .rcp-notiz-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rcp-notiz-tx{flex:1;min-width:0;font-size:11.5px;color:var(--ink2);line-height:1.4}
   .rcp-notiz-tx b{color:var(--acid);font-weight:700}
 
@@ -188,7 +193,7 @@
     display:grid;place-items:center;color:var(--tt,var(--muted));
     background:var(--surface2)}
   .rcp-zeile-ic svg{width:15px;height:15px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rcp-zeile-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
   .rcp-zeile-n{font-size:13px;font-weight:700;letter-spacing:-.01em;color:var(--ink);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -212,3 +217,77 @@
     border-top:2px solid currentColor;transform:rotate(45deg);border-radius:1px}
   /* Eine ungerade Kachel nimmt die ganze Reihe, statt ein Loch zu lassen. */
   .rcp-awards.ungerade > :last-child{grid-column:1 / -1}
+
+  /* ── Der Beleg [§C27] ─────────────────────────────────────────────
+     Vier Formen in einem ruhigen Kasten. Gold trägt nur der Halter [§C25],
+     alles andere ist Metall; die Zellen sind Richtung (grün und rot). */
+  .bl-box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+  .bl-satz{font-size:12px;color:var(--ink2);line-height:1.45;margin-top:8px}
+  .bl-satz b{color:var(--ink);font-weight:700}
+  .bl-zellen{display:grid;grid-template-columns:repeat(25,minmax(0,1fr));gap:2px}
+  .bl-zellen i{aspect-ratio:1;border-radius:2px;background:rgba(240,86,106,.4)}
+  .bl-zellen i.j{background:var(--acid)}
+  .bl-feld{position:relative;height:20px}
+  .bl-feld-bahn{position:absolute;left:0;right:0;top:9px;height:2px;border-radius:1px;background:var(--surface3)}
+  .bl-feld-mitte{position:absolute;top:3px;width:1px;height:14px;background:var(--muted)}
+  /* Leise und ohne Rand: zehn Punkte auf zwei Zentimetern überlappen, und
+     jeder Rand zeichnete dort eine Klammer. */
+  .bl-feld i{position:absolute;top:7px;width:6px;height:6px;margin-left:-3px;border-radius:50%;
+    background:rgba(185,196,189,.4)}
+  .bl-feld i.er{top:4px;width:12px;height:12px;margin-left:-6px;background:var(--gold);
+    box-shadow:0 0 0 2px var(--surface),0 0 10px rgba(247,207,74,.6)}
+  .bl-feld-l{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:var(--faint);margin-top:2px}
+  .bl-spanne{position:relative;height:24px}
+  .bl-spanne-bahn{position:absolute;left:0;right:0;top:11px;height:2px;background:var(--surface3)}
+  .bl-spanne-ber{position:absolute;top:7px;height:10px;border-radius:5px;background:rgba(247,207,74,.18);
+    box-shadow:inset 0 0 0 1px rgba(247,207,74,.42)}
+  .bl-spanne-pkt{position:absolute;top:5px;width:14px;height:14px;margin-left:-7px;border-radius:50%;
+    background:var(--gold);box-shadow:0 0 0 2px var(--surface)}
+  .bl-ref{position:absolute;top:1px;width:2px;height:22px;margin-left:-1px;border-radius:1px;background:var(--silber);opacity:.8}
+  .bl-verlauf{display:block;width:100%;height:84px;overflow:visible}
+  .bl-verlauf polyline{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+  .bl-verlauf .bl-v-a{stroke:var(--gold);stroke-width:2.2}
+  .bl-verlauf .bl-v-b{stroke:var(--muted);stroke-width:1.6}
+  .bl-verlauf circle.bl-v-a{fill:var(--gold);stroke:none}
+  .bl-verlauf circle.bl-v-b{fill:var(--muted);stroke:none}
+  .bl-verlauf .bl-v-seit{fill:var(--gold);stroke:var(--surface);stroke-width:2}
+  .bl-verlauf text{font-family:'Sometype Mono',monospace;font-size:9px;fill:var(--faint)}
+  .bl-legende{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:'Sometype Mono',monospace;font-size:10.5px;color:var(--muted);margin-top:6px}
+  .bl-legende span::before{content:"";display:inline-block;width:10px;height:2px;border-radius:1px;margin-right:6px;vertical-align:3px;background:var(--muted)}
+  .bl-legende .a::before{background:var(--gold)}
+  .bl-legende .seit{margin-left:auto;color:var(--ink2)}
+  .bl-legende .seit::before{width:7px;height:7px;border-radius:50%;background:var(--gold);vertical-align:1px}
+  /* Bis der Verlauf gerechnet ist, steht ein Schimmer in seiner Höhe: ein
+     leerer Kasten liest sich als Fehler, ein springender als Ruckeln. */
+  .bl-lade{height:84px;border-radius:8px;
+    background:linear-gradient(100deg,var(--surface2) 30%,var(--surface3) 50%,var(--surface2) 70%) 0 0/300% 100%;
+    animation:bl-schimmer 1.3s linear infinite}
+  @keyframes bl-schimmer{from{background-position:100% 0}to{background-position:0 0}}
+  @media (prefers-reduced-motion:reduce){.bl-lade{animation:none}}
+
+  /* ── Die Kennzahlen des Duo-Blatts [§C27] ──────────────────────────
+     Vier Kacheln, jede mit ihrer Zeichnung. Grün und Rot sind hier
+     Richtung [§C25]: über oder unter der Hälfte, über oder unter null. */
+  .duo-kz{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0 4px}
+  .duo-kz-k{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:11px 11px 10px;
+    display:flex;flex-direction:column;gap:8px;min-width:0}
+  .duo-kz-w{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px}
+  .duo-kz-w b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;line-height:1;letter-spacing:-.02em;color:var(--ink)}
+  .duo-kz-w b.auf{color:var(--acid)}
+  .duo-kz-w b.ab{color:var(--red)}
+  .duo-kz-w span{font-size:11px;font-weight:600;color:var(--ink2)}
+  .duo-kz-s{font-size:10px;color:var(--muted);line-height:1.35}
+  .duo-kz-zellen{display:grid;grid-template-columns:repeat(25,minmax(0,1fr));gap:1.5px}
+  .duo-kz-zellen i{aspect-ratio:1;border-radius:1.5px;background:rgba(240,86,106,.55)}
+  .duo-kz-zellen i.j{background:var(--acid)}
+  .duo-kz-skala{position:relative;height:8px;border-radius:4px;background:var(--surface3)}
+  .duo-kz-skala::after{content:"";position:absolute;left:50%;top:-3px;width:1px;height:14px;background:var(--muted)}
+  .duo-kz-skala i{position:absolute;top:0;bottom:0;border-radius:4px}
+  .duo-kz-skala i.auf{background:var(--acid)}
+  .duo-kz-skala i.ab{background:var(--red)}
+  .duo-kz-linie{display:block;width:100%;height:26px}
+  .duo-kz-linie polyline{fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+  .duo-kz-linie.auf polyline{stroke:var(--acid)}
+  .duo-kz-linie.ab polyline{stroke:var(--red)}
+  .duo-kz-lauf.auf i{background:var(--acid)}
+  .duo-kz-lauf.ab i{background:var(--red)}

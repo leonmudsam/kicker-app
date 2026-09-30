@@ -14,17 +14,84 @@ function dateStr(ts){
   }
   return v;
 }
-function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
+// ── Eine Dezimalzahl trägt hier ein Komma ───────────────────────────
+// Die Oberfläche schreibt „6,9 Gegentore", die Fun Facts schrieben „6.9" —
+// acht Stellen mit `toFixed(1)` und ein Punkt mitten im deutschen Satz.
+// Eine Stelle für alle, damit es nicht wieder auseinanderläuft [§C27].
+function komma(v, n){
+  const z = Number(v);
+  return (isFinite(z) ? z : 0).toFixed(n == null ? 1 : n).replace('.', ',');
+}
+// Der Stand aus Sicht einer Seite: ihre Tore zuerst. Ohne zweites Argument
+// die der Sieger. Gespeichert ist er in der Reihenfolge der Eingabe (Team A
+// zuerst), und neun Stellen schrieben ihn so ab, während zwei andere ihn
+// selbst umdrehten [§C27]: „Stefan & Martin 8:10" in der Liste der
+// Überraschungen, und im Duo-Blatt stand neben einem roten Kreuz „10 : 8".
+function standFuer(m, gewonnen = true){
+  const s = m.winner === 'B' ? [m.score_b, m.score_a] : [m.score_a, m.score_b];
+  return gewonnen ? s[0] + ':' + s[1] : s[1] + ':' + s[0];
+}
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen
   const inner = ICONS[e] ? `<div class="ee svg-ic">${svgI(e)}</div>` : `<div class="ee">${e}</div>`;
   return `<div class="empty">${inner}${t}</div>`;
 }
+// ── Der Hinweis [§C27] ───────────────────────────────────────────────
+// Ein Balken in voller Farbe mit einem Satz: grün hieß „gespeichert", rot
+// „Fehler", und alles andere stand weiß da — auch „Berechne neu…", das
+// gerade noch läuft. Jetzt trägt er seine Rolle als Zeichenkachel [§C25],
+// eine zweite Zeile mit der Wirkung und, wo es eine gibt, eine Aktion.
+//   kind   'ok' | true (Fehler) | 'info' | nichts (läuft noch)
+//   o.sub  die zweite Zeile, o.aktion {label, fn}, o.ms die Standzeit
 let tt;
-function toast(msg,kind){let t=document.querySelector('.toast');
-  if(!t){t=document.createElement('div');t.className='toast';document.body.appendChild(t);}
-  t.textContent=msg;t.className='toast '+(kind===true?'err':kind||'');void t.offsetWidth;t.classList.add('show');
-  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2400);}
+const TOAST_ROLLE = {ok:['check','gruen'], err:['x','rot'], info:['info',''], lauf:['hourglass','']};
+function toast(msg, kind, o){
+  o = o || {};
+  const rolle = kind === true ? 'err' : (TOAST_ROLLE[kind] ? kind : 'lauf');
+  let t = document.querySelector('.toast');
+  if(!t){ t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+  const [ic, ton] = TOAST_ROLLE[rolle];
+  t.innerHTML = zkHtml(ic, 'k', ton) + '<span class="toast-tx"><b></b><span></span></span>';
+  t.querySelector('b').textContent = msg;
+  const sub = t.querySelector('.toast-tx span');
+  if(o.sub) sub.textContent = o.sub; else sub.remove();
+  if(o.aktion){
+    const k = document.createElement('button');
+    k.className = 'toast-akt'; k.type = 'button'; k.textContent = o.aktion.label;
+    k.onclick = () => { t.classList.remove('show'); clearTimeout(tt); o.aktion.fn(); };
+    t.appendChild(k);
+  }
+  t.className = 'toast ' + rolle + (o.aktion ? ' mit-akt' : '');
+  void t.offsetWidth; t.classList.add('show');
+  clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), o.ms || (o.aktion ? 6000 : 2400));
+}
+
+// ── Die Bestätigung [§C27] ───────────────────────────────────────────
+// Vier Stellen fragten mit `confirm()` — einem Fenster des Browsers, das
+// die App nicht gestalten kann, das auf dem Telefon „Seite sagt" darüber
+// schreibt und bei dem der zerstörende Knopf „OK" heißt. Der Dialog nennt,
+// was verloren geht, der sichere Knopf steht links, der zerstörende rechts
+// und rot. Er liegt über einem offenen Blatt und nicht darin.
+function bestaetigen(o){
+  return new Promise(fertig => {
+    const bg = document.createElement('div');
+    bg.className = 'dlg-bg';
+    bg.innerHTML = `<div class="dlg" role="alertdialog" aria-modal="true">
+      ${zkHtml(o.ic || 'alert', 'g', o.gefahr ? 'rot' : '')}
+      <h4></h4><p></p>
+      <div class="blatt-fuss"><button type="button" class="btn ghost" data-dlg="0"></button>
+        <button type="button" class="btn ${o.gefahr ? 'gefahr' : ''}" data-dlg="1"></button></div></div>`;
+    bg.querySelector('h4').textContent = o.titel;
+    bg.querySelector('p').textContent = o.text || '';
+    bg.querySelector('[data-dlg="0"]').textContent = o.nein || 'Abbrechen';
+    bg.querySelector('[data-dlg="1"]').textContent = o.ja || 'Bestätigen';
+    const zu = ja => { bg.classList.remove('show'); setTimeout(() => bg.remove(), 200); fertig(ja); };
+    bg.onclick = e => { if(e.target === bg) zu(false); };
+    bg.querySelectorAll('[data-dlg]').forEach(b => b.onclick = () => zu(b.dataset.dlg === '1'));
+    document.body.appendChild(bg);
+    void bg.offsetWidth; bg.classList.add('show');
+  });
+}
 
 // ─── Achievement-Toast: gestapelte Anzeige für neue Badges nach Match-Eingabe ───
 // Sequenzielle Queue verhindert, dass mehrere Achievements einander überschreiben.

@@ -12,6 +12,7 @@
 // tun [§C33]. Ohne den Schnitt gibt es keinen „Stand von gestern", und eine
 // Chronik, die im laufenden Monat den Halter wechselt, waere keine Nachricht.
 function _seasonTitleCtx(sid, bisMs){
+  bisMs = _schnittSaison(sid, bisMs);
   const ck = sid + '_' + matches.length + '_' + _cache.version
            + (bisMs ? '_' + bisMs : '');
   if(!_cache._stCtx) _cache._stCtx = {};
@@ -19,8 +20,10 @@ function _seasonTitleCtx(sid, bisMs){
   if(hit) return hit;
   const res = _seasonTitleCtxRechnen(sid, bisMs);
   // Nur die letzten Monate behalten — sonst wächst der Topf mit jeder
-  // Saison, die jemand im Wähler durchklickt.
-  if(Object.keys(_cache._stCtx).length > 8) _cache._stCtx = {};
+  // Saison, die jemand im Wähler durchklickt. Sechzehn, nicht acht: der
+  // News-Generator allein fragt sieben verschiedene Schnitte ab, und ein
+  // Deckel knapp über der Arbeitsmenge kippt mit dem nächsten Monat.
+  _topfDeckel(_cache._stCtx, 16);
   _cache._stCtx[ck] = res;
   return res;
 }
@@ -296,14 +299,14 @@ function _seasonTitleCtxRechnen(sid, bisMs){
       if(w && gf===10 && ga===0)  p.perfect++;
       if(!w && gf===0 && ga===10) p.debacle++;
       const exp = myExp(id, m);
-      if(w && exp < 0.35) p.upsets++;
+      if(w && exp < CHANCE_UPSET) p.upsets++;
       // Außenseiter-Partien: alles, wo die Rechnung gegen ihn stand. Nicht nur
       // die krassen Fälle (das ist `upsets`), sondern jede Partie, in die er
       // als der Schwächere ging.
       if(exp < 0.50){ p.favG++; p.favExp += exp; if(w) p.favW++; }
       p.expSum += exp;
       if(exp >= 0.60){ p.favoritG++; if(w) p.favoritW++; }
-      if(exp >= 0.45 && exp <= 0.55){ p.gleichG++; if(w) p.gleichW++; }
+      if(_stAugenhoehe({exp})){ p.gleichG++; if(w) p.gleichW++; }
       if(mitteTag){ if(day < mitteTag){ p.h1G++; if(w) p.h1W++; }
                     else { p.h2G++; if(w) p.h2W++; } }
       if(w && gf - ga >= 7) p.blowouts++;
@@ -680,11 +683,12 @@ function _freezeSeasonTitles(sid){
 // Memoisiert pro Saison — der Kontext-Pass läuft nur einmal je Cache-Stand.
 function seasonTitles(sid, bisMs){
   if(!sid) sid = currentSeason().id;
+  bisMs = _schnittSaison(sid, bisMs);
   const key = sid + '_' + matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
   if(!_cache._seasonTitles) _cache._seasonTitles = {};
   const hit = _cache._seasonTitles[key];
   if(hit) return hit;
-  if(Object.keys(_cache._seasonTitles).length > 60) _cache._seasonTitles = {};
+  _topfDeckel(_cache._seasonTitles, 60);
 
   // Eingefrorene Saison → gelesen statt gerechnet. Die laufende Saison ist
   // ausgenommen: sie ändert sich bis zum Monatsende bei jedem Match.
@@ -769,11 +773,26 @@ function allSeasonTitles(){
 // letzten Spieltag mit dem von heute und meldet, was gewechselt hat.
 // `seasonTitles` taugt dafuer nicht — es ist auf HEUTE gemerkt und friert
 // abgeschlossene Monate ein.
+//
+// Ein Monat unter CHRONIK_MIN_TAGE Spieltagen bekommt GAR KEINE Chronik
+// [§C32] — dieselbe Grenze, die `seasonTitles` zieht. Sie fehlte hier, und
+// damit meldete der Feed Chroniken, die es nicht gab: gemessen nannte diese
+// Funktion am 04.08. acht, am 06.08. zehn und am 07.08. dreizehn Halter,
+// waehrend die Monatstafel null Eintraege zeigte. „Leon holt ‚Auf
+// Augenhoehe'" stand im Feed, im Chronik-Tab stand nichts, und `seasonTitleOf`
+// fand folgerichtig keinen Eintrag — die Karte schrieb deshalb „kein Prestige
+// hinzu" unter eine Chronik, die sie selbst gerade verkuendet hatte.
+//
+// `null` statt `{}`: ein ungewerteter Monat und ein gewerteter ohne Halter
+// sind zwei verschiedene Antworten. Der Feed braucht den Unterschied, sonst
+// liest er das Aufgehen der Tafel als vierzehn Neuvergaben.
 function seasonTitleHalter(sid, bisMs){
+  bisMs = _schnittSaison(sid, bisMs);
   const out = {};
   let C = null;
   try { C = _seasonTitleCtx(sid, bisMs); } catch(e){ return out; }
   if(!C) return out;
+  if(!Object.keys(C.P).length || C.days < CHRONIK_MIN_TAGE) return null;
   SEASON_TITLES.forEach(t => {
     let r = null;
     try { r = t.pick(C, new Set()); } catch(e){ r = null; }
@@ -795,11 +814,12 @@ function seasonTitleOf(pid, sid, bisMs){
 // Chronik = ein Eintrag je Saison, in der der Spieler gespielt hat.
 // `title` ist null, wenn er leer ausging — die Lücke gehört dazu.
 function seasonTitleHistory(pid, bisMs){
+  bisMs = _schnitt(bisMs);
   const key = pid + '_' + matches.length + '_' + _cache.version + (bisMs ? '_' + bisMs : '');
   if(!_cache._chronicle) _cache._chronicle = {};
   const hit = _cache._chronicle[key];
   if(hit) return hit;
-  if(Object.keys(_cache._chronicle).length > 80) _cache._chronicle = {};
+  _topfDeckel(_cache._chronicle, 80);
 
   const cur = currentSeason().id;
   const quelle = bisMs ? matches.filter(m => mts(m) <= bisMs) : matches;

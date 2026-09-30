@@ -1,0 +1,357 @@
+<!doctype html><meta charset="utf-8">
+<title>Schandrekorde und Schandchroniken — Vorschlag</title>
+<style>
+ body{background:#0c0e0d;color:#d7dbd8;font:14px/1.5 system-ui,sans-serif;margin:0;padding:22px;
+   max-width:1080px}
+ h1{font-size:21px;margin:0 0 4px} h2{font-size:16px;margin:30px 0 4px;color:#e8ecea}
+ p{margin:6px 0;color:#9fa8a3;max-width:70ch}
+ code{background:#181c1a;padding:1px 4px;border-radius:3px;font-size:12px}
+ .warn{border-left:3px solid #f0566a;background:#1a1112;padding:10px 14px;margin:16px 0}
+ .warn b{color:#f0566a}
+ table{border-collapse:collapse;margin:8px 0;font-size:13px}
+ td,th{padding:3px 12px 3px 0;text-align:left;vertical-align:top}
+ th{color:#7d8781;font-weight:600}
+ .grp{color:#7d8781;margin:26px 0 8px;font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+ .kand{background:#131614;border:1px solid #232825;border-radius:8px;padding:12px 14px;margin:8px 0}
+ .kopf{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+ .kopf b{font-size:15px;color:#fff}
+ .sh,.bn,.neu{font-size:11px;padding:1px 6px;border-radius:4px;background:#1d2220;color:#8b948f}
+ .neu{background:#22201a;color:#c8a24a}
+ .cond{margin:6px 0 2px;color:#e2e6e3;font-size:13px}
+ .wie{color:#858e89;font-size:12px;max-width:80ch}
+ .axe{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+ .ax{flex:1 1 300px;background:#0f1211;border:1px solid #1f2422;border-radius:6px;padding:8px 10px}
+ .axk{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6f7873}
+ .halt{font-size:15px;color:#fff;margin:2px 0}
+ .ev{font-size:12px;color:#9aa39e}
+ .tore{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+ .t{font-size:11px;padding:1px 6px;border-radius:4px}
+ .t.j{background:#14231a;color:#7fc99a} .t.n{background:#25151a;color:#f0566a}
+ .liste{margin-top:6px;font-size:11px;color:#6f7873;display:flex;gap:9px;flex-wrap:wrap}
+</style>
+<h1>Schandrekorde und Schandchroniken — was möglich ist</h1>
+<p>Gerechnet an den echten 466 Partien der Liga, 12 Spieler,
+ 4 Monate (davon 3 mit mindestens
+ 5 Spieltagen und damit gewertet).
+ <code>node mockup/schande-lauf.js</code></p>
+
+<h2>Wo die Tafel heute steht</h2>
+<table>
+ <tr><th></th><th>gesamt</th><th>davon Schande</th></tr>
+ <tr><td>Liga-Rekorde</td><td>46</td><td>5 &nbsp;<span style="color:#7d8781">(Durststrecke, Fass ohne Boden, Pechvogel, Sturzflug, Scheunentor)</span></td></tr>
+ <tr><td>Monatschroniken</td><td>53</td><td>3 &nbsp;<span style="color:#7d8781">(Durststrecke, Angstgegner, Untersoll)</span></td></tr>
+</table>
+<p>Eine Schande zählt nicht fürs Insignium und nicht als Rekord: <code>art:'schatten'</code>
+ setzt <code>neg</code>, und daran hängen <code>PRESTIGE_CHRONIK.schatten = 0</code>,
+ der übersprungene Rekord in der Prestige-Rechnung, die Zahl im Profil und in der
+ Rangliste sowie die rote Farbe [§C25]. Das gilt für jeden neuen Eintrag
+ unverändert mit — es ist nichts nachzubauen.</p>
+
+<h2>Die sechs Tore</h2>
+<p>Dieselben fünf wie für jeden anderen Eintrag [§C35, §C39] — und ein sechstes,
+ das nur für die Schande gilt.</p>
+<table>
+ <tr><td>1</td><td>Der Wert hängt nicht an der Spielzahl</td><td>|r| ≤ 0,35</td></tr>
+ <tr><td>2</td><td>Die halbe Liga steht im Rennen</td><td>≥ 6 von 12</td></tr>
+ <tr><td>3</td><td>Er ist vergeben</td><td>eine leere Tafel sagt nichts</td></tr>
+ <tr><td>4</td><td>Die Schwelle schlägt weit aus</td><td>≥ 1,5 σ</td></tr>
+ <tr><td>5</td><td>Eine Chronik findet höchstens einen Halter je Monat</td><td>Rate ≤ 1</td></tr>
+ <tr><td>6</td><td><b>Sie sammelt sich nicht beim Schwächsten</b></td><td>kein Halter über ein Viertel</td></tr>
+</table>
+
+<div class="warn">
+ <b>Das sechste Tor ist das eigentliche Problem — und es steht heute schon offen.</b>
+ <p style="color:#c9b0b4">Wer schlechter spielt, verliert jede Quote. Eine Schande, die
+ das NIVEAU misst, gehört damit immer demselben Spieler, und dann ist die Tafel keine
+ Tafel, sondern eine Rangliste von hinten. Gemessen über Bestand und Vorschlag zusammen
+ (11 Haltungen):</p>
+ <table><tr><td><b>Stefan</b></td>
+   <td>6 Haltungen</td><td style="color:#f0566a">55 %</td>
+   <td style="color:#7d8781">Platz 10 der Siegquote</td>
+   <td style="color:#7d8781">Die Durststrecke, Das Fass ohne Boden, Das Untersoll, Die Ladehemmung, Der Fehltag, Der Klotz am Bein</td></tr><tr><td><b>Johannes</b></td>
+   <td>2 Haltungen</td><td style="color:#7fc99a">18 %</td>
+   <td style="color:#7d8781">Platz 9 der Siegquote</td>
+   <td style="color:#7d8781">Der Angstgegner, Die stumme Antwort</td></tr><tr><td><b>Jane</b></td>
+   <td>1 Haltungen</td><td style="color:#7fc99a">9 %</td>
+   <td style="color:#7d8781">Platz 4 der Siegquote</td>
+   <td style="color:#7d8781">Der Pechvogel</td></tr><tr><td><b>Alex</b></td>
+   <td>1 Haltungen</td><td style="color:#7fc99a">9 %</td>
+   <td style="color:#7d8781">Platz 11 der Siegquote</td>
+   <td style="color:#7d8781">Das Scheunentor</td></tr><tr><td><b>Leo</b></td>
+   <td>1 Haltungen</td><td style="color:#7fc99a">9 %</td>
+   <td style="color:#7d8781">Platz 7 der Siegquote</td>
+   <td style="color:#7d8781">Der Wackelkandidat</td></tr></table>
+ <p style="color:#c9b0b4">Schon heute hält Stefan zwei der vier nachrechenbaren
+ bestehenden. Der Ausweg steht in den Daten: die Einträge, die NICHT an ihn gehen,
+ fragen nach dem Abstand zum Eigenen oder nach einer Fügung — der Pechvogel geht an
+ Jane (Platz 4), der Wackelkandidat an Leo (Platz 7), die stumme Antwort an Johannes.
+ Die, die das Niveau messen, gehen alle an denselben. Zwei Kandidaten haben genau
+ dadurch ihr Tor bestanden: „Die Ladehemmung“ ging von r = −0,35 auf +0,14 und
+ „Die stumme Antwort“ von −0,40 auf +0,06, nachdem sie nach dem Abstand zum
+ eigenen Mittel fragen statt nach der reinen Zahl.</p>
+</div>
+
+<div class="grp">Bestand bekommt seine fehlende Achse</div>
+  <p>Dieselbe Frage auf zwei Zeitachsen gehört in EINE Disziplin [§13.1] — so wie <code>spotless</code>, <code>evenkeel</code> und <code>drought</code> es schon tun. Fünf Schand-Disziplinen tragen heute nur eine der beiden.</p>
+  <div class="kand">
+    <div class="kopf"><b>Das Scheunentor</b>
+      <span class="sh">Sieb</span>
+      <span class="bn">Beiname: Der Durchlässige</span>
+      <span class="neu">Chronik neu</span></div>
+    <div class="cond">Meiste Gegentore je Abwehrspiel im Monat, ab 8 Abwehrspielen</div>
+    <div class="wie">Gezählt werden die Tore, die das eigene Team kassiert hat, während dieser Spieler hinten stand, geteilt durch die Zahl dieser Partien.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandchronik · Monat</div>
+      <div class="halt">Stefan (2026-06), Alex (2026-06), Jannik (2026-07)</div>
+      <div class="ev">9,8 Gegentore je Abwehrspiel · 12 Spiele</div>
+      <div class="tore">
+        <span class="t j">3 Halter in 3 Monaten</span>
+        <span class="t j">Rate 1,00 je Monat</span>
+        <span class="t j">Spielzahl r = −0,14</span>
+        <span class="t n">Ausschlag 1,37 σ</span>
+      </div></div></div></div><div class="kand">
+    <div class="kopf"><b>Das Fass ohne Boden</b>
+      <span class="sh">Debakel</span>
+      <span class="bn">Beiname: Der Eingebrochene</span>
+      <span class="neu">Chronik neu</span></div>
+    <div class="cond">Höchster Anteil 0:10-Niederlagen an den Pleiten des Monats, ab 6 Pleiten</div>
+    <div class="wie">Ein 0:10 ist die höchstmögliche Niederlage. Der Nenner sind die eigenen Pleiten des Monats und nicht alle Partien: gefragt ist, WIE jemand verliert.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandchronik · Monat</div>
+      <div class="halt">Stefan (2026-06), Stefan (2026-07), Johannes (2026-07)</div>
+      <div class="ev">6 % aller 31 Pleiten endeten 0:10 · 2 Debakel</div>
+      <div class="tore">
+        <span class="t j">3 Halter in 3 Monaten</span>
+        <span class="t j">Rate 1,00 je Monat</span>
+        <span class="t j">Spielzahl r = −0,09</span>
+        <span class="t n">Ausschlag 1,49 σ</span>
+      </div></div></div></div><div class="kand">
+    <div class="kopf"><b>Der Pechvogel</b>
+      <span class="sh">Pechvogel</span>
+      <span class="bn">Beiname: Der Unglückliche</span>
+      <span class="neu">Chronik neu</span></div>
+    <div class="cond">Höchster Anteil 9:10-Niederlagen an den Pleiten des Monats, ab 6 Pleiten</div>
+    <div class="wie">Ein 9:10 ist die knappste mögliche Niederlage. Der Nenner sind die eigenen Pleiten und nicht die engen Partien: gefragt ist, wie jemand verliert, nicht wie eng es zuging.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandchronik · Monat</div>
+      <div class="halt">Jane (2026-07), Henry (2026-08), Martin (2026-08)</div>
+      <div class="ev">36 % aller 11 Pleiten endeten 9:10 · 4 davon</div>
+      <div class="tore">
+        <span class="t j">3 Halter in 3 Monaten</span>
+        <span class="t j">Rate 1,00 je Monat</span>
+        <span class="t j">Spielzahl r = −0,09</span>
+        <span class="t j">Ausschlag 2,20 σ</span>
+      </div></div></div></div><div class="kand">
+    <div class="kopf"><b>Der Angstgegner</b>
+      <span class="sh">Angst</span>
+      
+      <span class="neu">Rekord neu</span></div>
+    <div class="cond">Niedrigste Siegquote gegen EINEN Gegner, ab 20 Duellen gegen ihn</div>
+    <div class="wie">Gesucht wird der Gegner, gegen den am wenigsten zu holen war. Der Nenner sind die Duelle gegen genau diesen Gegner; zwanzig davon, damit es keine Serie ist.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandrekord · Laufbahn</div>
+      <div class="halt">Johannes</div>
+      <div class="ev">91 % verloren gegen Leon · 2 von 23</div>
+      <div class="tore">
+        <span class="t j">vergeben</span>
+        <span class="t j">im Rennen 10 von 12</span>
+        <span class="t j">Spielzahl r = −0,29</span>
+        <span class="t j">Ausschlag 1,88 σ</span>
+      </div>
+      <div class="liste"><span>1. Johannes</span><span>2. Stefan</span><span>3. Henry</span><span>4. Leo</span><span>5. Maxi</span></div>
+    </div></div></div><div class="kand">
+    <div class="kopf"><b>Das Untersoll</b>
+      <span class="sh">Untersoll</span>
+      
+      <span class="neu">Rekord neu</span></div>
+    <div class="cond">Größter Abstand der Siegquote unter die eigene Elo-Erwartung, ab 40 Partien</div>
+    <div class="wie">Die Elo-Rechnung gibt jeder Partie eine Siegchance. Über die Laufbahn gemittelt ergibt das die erwartete Quote; gewertet wird, wie weit die tatsächliche darunter liegt, in Prozentpunkten.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandrekord · Laufbahn</div>
+      <div class="halt">Stefan</div>
+      <div class="ev">−15 Punkte unter der Rechnung · 27 % statt 42 % in 81 Partien</div>
+      <div class="tore">
+        <span class="t j">vergeben</span>
+        <span class="t j">im Rennen 10 von 12</span>
+        <span class="t j">Spielzahl r = −0,28</span>
+        <span class="t j">Ausschlag 2,43 σ</span>
+      </div>
+      <div class="liste"><span>1. Stefan</span><span>2. Johannes</span><span>3. Leo</span><span>4. Henry</span><span>5. Maxi</span></div>
+    </div></div></div><div class="grp">Neu, mit beiden Achsen</div>
+  <p>Drei Fragen, die es noch gar nicht gibt — jede als Gegenstück zu einem bestehenden positiven Eintrag, und jede auf Laufbahn UND Monat.</p>
+  <div class="kand">
+    <div class="kopf"><b>Die Ladehemmung</b>
+      <span class="sh">Torarm</span>
+      <span class="bn">Beiname: Der Harmlose</span>
+      <span class="neu">Rekord + Chronik</span></div>
+    <div class="cond">Größter Rückstand der eigenen Tore im Sturm auf das eigene Mittel, ab 30 Sturmspielen (Monat: 8)</div>
+    <div class="wie">Verglichen werden die Tore des eigenen Teams je Sturmspiel mit denen je Partie über alles. Gefragt ist nicht, wer wenig Tore sieht, sondern wer vorne WENIGER beiträgt als hinten — die reine Zahl gehört sonst dem, der selten gewinnt.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandrekord · Laufbahn</div>
+      <div class="halt">Stefan</div>
+      <div class="ev">0,4 Tore weniger im Sturm · 6,1 statt 6,5 in 54 Sturmspielen</div>
+      <div class="tore">
+        <span class="t j">vergeben</span>
+        <span class="t j">im Rennen 8 von 12</span>
+        <span class="t j">Spielzahl r = 0,14</span>
+        <span class="t j">Ausschlag 1,52 σ</span>
+      </div>
+      <div class="liste"><span>1. Stefan</span><span>2. Leo</span><span>3. Martin</span><span>4. Maxi</span><span>5. Julian</span></div>
+    </div><div class="ax"><div class="axk">Schandchronik · Monat</div>
+      <div class="halt">Jane (2026-06), Leo (2026-07), Martin (2026-08)</div>
+      <div class="ev">0,9 Tore weniger im Sturm · 7,9 statt 8,8 in 16 Sturmspielen</div>
+      <div class="tore">
+        <span class="t j">3 Halter in 3 Monaten</span>
+        <span class="t j">Rate 1,00 je Monat</span>
+        <span class="t j">Spielzahl r = 0,01</span>
+        <span class="t n">Ausschlag 1,43 σ</span>
+      </div></div></div></div><div class="kand">
+    <div class="kopf"><b>Der Fehltag</b>
+      <span class="sh">Fehltag</span>
+      <span class="bn">Beiname: Der Sieglose</span>
+      <span class="neu">Rekord + Chronik</span></div>
+    <div class="cond">Höchster Anteil eigener Spieltage ohne einen Sieg, ab 10 Spieltagen mit je 3 Partien (Monat: 3)</div>
+    <div class="wie">Gezählt werden die eigenen Spieltage mit mindestens drei Partien, an denen kein einziger Sieg heraussprang. Der Nenner sind genau diese Spieltage, nicht die Partien — mit zwei Partien ist ein sieglose Tag ein Wurf, mit drei eine Aussage.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandrekord · Laufbahn</div>
+      <div class="halt">Stefan</div>
+      <div class="ev">25 % der Spieltage ohne Sieg · 4 von 16</div>
+      <div class="tore">
+        <span class="t j">vergeben</span>
+        <span class="t j">im Rennen 10 von 12</span>
+        <span class="t n">Spielzahl r = −0,54</span>
+        <span class="t j">Ausschlag 2,95 σ</span>
+      </div>
+      <div class="liste"><span>1. Stefan</span><span>2. Johannes</span><span>3. Henry</span><span>4. Jane</span><span>5. Jannik</span></div>
+    </div><div class="ax"><div class="axk">Schandchronik · Monat</div>
+      <div class="halt">Stefan (2026-06), Alex (2026-06), Alex (2026-07)</div>
+      <div class="ev">38 % der Spieltage ohne Sieg · 3 von 8</div>
+      <div class="tore">
+        <span class="t j">3 Halter in 3 Monaten</span>
+        <span class="t j">Rate 1,00 je Monat</span>
+        <span class="t n">Spielzahl r = −0,44</span>
+        <span class="t j">Ausschlag 1,69 σ</span>
+      </div></div></div></div><div class="kand">
+    <div class="kopf"><b>Die stumme Antwort</b>
+      <span class="sh">Stumm</span>
+      <span class="bn">Beiname: Der Geknickte</span>
+      <span class="neu">Rekord + Chronik</span></div>
+    <div class="cond">Größter Einbruch der Siegquote direkt nach einer eigenen Pleite, ab 25 Gelegenheiten (Monat: 6)</div>
+    <div class="wie">Der Nenner sind die Partien, die direkt auf eine eigene Niederlage folgen — die Gelegenheiten zu antworten. Verglichen wird die Quote dort mit der eigenen Quote über alles, in Prozentpunkten: die reine Quote gehört sonst dem, der ohnehin selten gewinnt. Das Gegenstück zum Stehaufmann.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandrekord · Laufbahn</div>
+      <div class="halt">Johannes</div>
+      <div class="ev">−3 Punkte nach einer Pleite · 29 % statt 32 % in 51 Gelegenheiten</div>
+      <div class="tore">
+        <span class="t j">vergeben</span>
+        <span class="t j">im Rennen 11 von 12</span>
+        <span class="t j">Spielzahl r = 0,06</span>
+        <span class="t n">Ausschlag 1,28 σ</span>
+      </div>
+      <div class="liste"><span>1. Johannes</span><span>2. Henry</span><span>3. Leo</span><span>4. Alex</span><span>5. Leon</span></div>
+    </div><div class="ax"><div class="axk">Schandchronik · Monat</div>
+      <div class="halt">Johannes (2026-07), Alex (2026-07), Leon (2026-08)</div>
+      <div class="ev">−8 Punkte nach einer Pleite · 36 % statt 44 % in 14 Gelegenheiten</div>
+      <div class="tore">
+        <span class="t j">3 Halter in 3 Monaten</span>
+        <span class="t j">Rate 1,00 je Monat</span>
+        <span class="t j">Spielzahl r = 0,03</span>
+        <span class="t n">Ausschlag 1,19 σ</span>
+      </div></div></div></div><div class="grp">Neu, nur Rekord</div>
+  <p>Eine Laufbahn-Frage, die ein Monat nicht trägt: vier Wochen sind zu kurz, um sie zu messen.</p>
+  <div class="kand">
+    <div class="kopf"><b>Der Wackelkandidat</b>
+      <span class="sh">Wackel</span>
+      
+      <span class="neu">Rekord neu</span></div>
+    <div class="cond">Höchster Anteil Niederlagen als Favorit, ab 20 Partien als Favorit</div>
+    <div class="wie">Favorit ist, wem die Elo-Rechnung vor der Partie über 60 Prozent Siegchance gab. Der Nenner sind genau diese Partien. Das Gegenstück zum Souverän.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandrekord · Laufbahn</div>
+      <div class="halt">Leo</div>
+      <div class="ev">34 % als Favorit verloren · 12 von 35</div>
+      <div class="tore">
+        <span class="t j">vergeben</span>
+        <span class="t n">im Rennen 5 von 12</span>
+        <span class="t j">Spielzahl r = 0,27</span>
+        <span class="t j">Ausschlag 2,17 σ</span>
+      </div>
+      <div class="liste"><span>1. Leo</span><span>2. Leon</span><span>3. Maxi</span><span>4. Julian</span><span>5. Martin</span></div>
+    </div></div></div><div class="kand">
+    <div class="kopf"><b>Der Klotz am Bein</b>
+      <span class="sh">Klotz</span>
+      
+      <span class="neu">Rekord neu</span></div>
+    <div class="cond">Größter Abstand der Mitspieler zu ihrer eigenen Quote, ab 3 Partnern mit je 10 gemeinsamen Spielen</div>
+    <div class="wie">Für jeden Partner wird die Quote an dieser Seite mit seiner Quote ohne diesen Partner verglichen. Gewertet wird der Mittelwert über alle Partner, in Prozentpunkten.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandrekord · Laufbahn</div>
+      <div class="halt">Stefan</div>
+      <div class="ev">−30 Punkte für die Mitspieler · 3 Partner</div>
+      <div class="tore">
+        <span class="t j">vergeben</span>
+        <span class="t j">im Rennen 9 von 12</span>
+        <span class="t j">Spielzahl r = −0,25</span>
+        <span class="t j">Ausschlag 2,42 σ</span>
+      </div>
+      <div class="liste"><span>1. Stefan</span><span>2. Leo</span><span>3. Maxi</span><span>4. Henry</span><span>5. Jannik</span></div>
+    </div></div></div><div class="grp">Neu, nur Chronik</div>
+  <p>Eine Monatsfrage. Über eine ganze Laufbahn mitteln sich diese Werte weg.</p>
+  <div class="kand">
+    <div class="kopf"><b>Der Rückfall</b>
+      <span class="sh">Rückfall</span>
+      <span class="bn">Beiname: Der Nachlassende</span>
+      <span class="neu">Chronik neu</span></div>
+    <div class="cond">Zweite Hälfte der eigenen Spieltage mindestens 30 Prozentpunkte unter der ersten, ab 4 Spieltagen</div>
+    <div class="wie">Die eigenen Spieltage des Monats werden halbiert und die Siegquote beider Hälften verglichen, in Prozentpunkten. Das Gegenstück zur Steigerung.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandchronik · Monat</div>
+      <div class="halt">Alex (2026-06), Alex (2026-07), Maxi (2026-07)</div>
+      <div class="ev">−35 Punkte zum Schluss · 57 % in den ersten 7, 22 % in den letzten 9 Partien</div>
+      <div class="tore">
+        <span class="t j">3 Halter in 3 Monaten</span>
+        <span class="t j">Rate 1,00 je Monat</span>
+        <span class="t j">Spielzahl r = −0,09</span>
+        <span class="t n">Ausschlag 0,99 σ</span>
+      </div></div></div></div><div class="kand">
+    <div class="kopf"><b>Die verschenkte Pflicht</b>
+      <span class="sh">Pflicht</span>
+      <span class="bn">Beiname: Der Fehlbare</span>
+      <span class="neu">Chronik neu</span></div>
+    <div class="cond">Als Favorit mindestens 30 Prozentpunkte unter der Erwartung, ab 6 Partien als Favorit</div>
+    <div class="wie">Favorit ist, wem die Rechnung über 60 Prozent Siegchance gab. Verglichen wird die tatsächliche Quote in genau diesen Partien mit der dort erwarteten, in Prozentpunkten.</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandchronik · Monat</div>
+      <div class="halt">Alex (2026-06), Henry (2026-06), Johannes (2026-08)</div>
+      <div class="ev">−35 Punkte unter der Pflicht · 33 % statt 69 % in 6 Partien als Favorit</div>
+      <div class="tore">
+        <span class="t j">3 Halter in 3 Monaten</span>
+        <span class="t j">Rate 1,00 je Monat</span>
+        <span class="t n">Spielzahl r = −0,43</span>
+        <span class="t n">Ausschlag 0,89 σ</span>
+      </div></div></div></div><div class="kand">
+    <div class="kopf"><b>Die Fehlwoche</b>
+      <span class="sh">Fehlwoche</span>
+      <span class="bn">Beiname: Der Wackelige</span>
+      <span class="neu">Chronik neu</span></div>
+    <div class="cond">Schwächste eigene Woche mindestens 35 Prozentpunkte unter dem eigenen Monat, ab 2 Wochen mit je 3 Partien</div>
+    <div class="wie">Gesucht wird die eigene Woche mit der schlechtesten Quote und der Abstand zur eigenen Quote des ganzen Monats, in Prozentpunkten. Das Gegenstück zu „Ohne schwache Woche".</div>
+    <div class="axe"><div class="ax"><div class="axk">Schandchronik · Monat</div>
+      <div class="halt">Stefan (2026-07), Jannik (2026-07), Jane (2026-08)</div>
+      <div class="ev">−33 Punkte in der schwächsten Woche · 0 % statt 33 % im Monat</div>
+      <div class="tore">
+        <span class="t j">3 Halter in 3 Monaten</span>
+        <span class="t j">Rate 1,00 je Monat</span>
+        <span class="t j">Spielzahl r = −0,29</span>
+        <span class="t n">Ausschlag 1,21 σ</span>
+      </div></div></div></div>
+
+<h2>Was noch nicht trägt</h2>
+<table>
+ <tr><td><b>Der Fehltag</b></td><td>r = −0,54 auf der Laufbahn, −0,44 im Monat.
+   Wer wenig spielt, hat wenige Spieltage, und ein einziger sieglose Tag wiegt
+   dort schwer. Das Tor hält ihn zurück; in dieser Form nicht einbaubar.</td></tr>
+ <tr><td><b>Die Talfahrt</b><br><span style="color:#7d8781">Der Abstürzende</span></td>
+   <td>Größter Elo-Einbruch innerhalb des Monats. Nicht gerechnet: der Wert steht als
+   <code>maxDD</code> schon in <code>_seasonTitleCtx</code>, dieser Lauf baut die
+   Elo-Bahn nicht nach. Als Idee vollständig, als Zahl offen.</td></tr>
+ <tr><td><b>Das Kellerkind</b><br><span style="color:#7d8781">Der Abgehängte</span></td>
+   <td>Schlechtester Tabellenplatz an jedem Tagesende, das Gegenstück zu „Auf dem
+   Thron“. Liest <code>thronRang</code>, dieselbe Quelle. Verdacht: misst reines
+   Niveau und landet damit auf Tor 6.</td></tr>
+ <tr><td><b>Der Rückfall</b>, <b>Die verschenkte Pflicht</b>, <b>Die Fehlwoche</b></td>
+   <td>Ausschlag unter 1,5 σ — aber gemessen an nur 3 gewerteten
+   Monaten. Diese Zahl ist zu dünn für ein Urteil; sie braucht die Kalibrierung an
+   mehr Monaten, so wie der Monatskatalog sie bekommen hat.</td></tr>
+</table>
+<p style="margin-top:18px">Vorschlag zur Reihenfolge: Gruppe A zuerst — fünf fehlende
+ Achsen, kein neuer Gedanke, jede Zahl steht schon in einer Engine. Dann Gruppe B und C,
+ soweit die Tore halten. Gruppe D erst nach einer Kalibrierung über mehr Monate.</p>

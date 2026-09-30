@@ -19,7 +19,10 @@ function _seasonToolsHtml(){
   // Der Verlauf braucht Partien — in einer Saison ohne eine einzige gäbe es
   // nichts zu zeichnen.
   const hasPos = matchesInSeason(sid).length > 0;
-  const past = seasons.filter(s => s.id !== cur.id);
+  // Die jüngste abgeschlossene zuerst, egal in welcher Reihenfolge die
+  // Saisons geladen wurden: aufsteigend sortiert stand hier der Mai.
+  const past = seasons.filter(s => s.id !== cur.id)
+    .sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)));
   // Zurückblicken lässt sich nur auf eine abgeschlossene Saison. Steht die
   // laufende oben, bleibt es beim letzten abgeschlossenen Monat.
   const recapS = laeuft ? past[0] : seasons.find(s => s.id === sid);
@@ -33,7 +36,7 @@ function _seasonToolsHtml(){
   if(hasRecap){
     cards += `<button type="button" class="st-card recap" data-seasontool="recap"
       data-sid="${esc(recapS.id)}">
-      <span class="st-ic">${recapIc}</span><span class="st-tt">Saison-Recap</span>
+      <span class="st-ic">${recapIc}</span><span class="st-tt">Saison-Rückblick</span>
       <span class="st-su">${esc(seasonLabel(recapS.id))} ansehen</span></button>`;
   }
   if(hasPos){
@@ -43,7 +46,7 @@ function _seasonToolsHtml(){
       <span class="st-su">${esc(seasonLabel(sid))}</span></button>`;
   }
   const one = (hasRecap && hasPos) ? '' : ' one';
-  return `<div class="seasontools"><div class="st-sec">Saison-Tools</div><div class="st-grid${one}">${cards}</div></div>`;
+  return `<div class="seasontools"><div class="st-sec">Mehr zur Saison</div><div class="st-grid${one}">${cards}</div></div>`;
 }
 // ── Die Form der letzten fuenf [§C26] ───────────────────────────────
 // Die Punkte einer laufenden Siegesserie brennen mit — dieselbe Aussage wie
@@ -67,8 +70,11 @@ function _vRankingCore(){
   // keine Saison.
   const sid = ligaSaisonId(), laeuft = ligaSaisonLaeuft();
   const saisonArg = period==='season' ? sid : undefined;
+  // Der Zeitraum ist die erste Wahl dieser Seite, also der äußere Wähler
+  // [§C27] — wie „Awards · Rekorde · Chronik" im Awards-Reiter. Als innere
+  // Ebene stand er gleichrangig über „Spieler · Teams" und der Metrik.
   const periodBar=`
-    <div class="ui-tabs">
+    <div class="ui-switch">
       <button data-period="season" class="${period==='season'?'on':''}">Saison</button>
       <button data-period="week" class="${period==='week'?'on':''}">Woche</button>
       <button data-period="day" class="${period==='day'?'on':''}">Tag</button>
@@ -159,7 +165,7 @@ function _vRankingCore(){
       const wr=x.games?Math.round(x.wins/x.games*100):0;
       if(metrik==='wins')     return {big:x.wins, small:'Siege'};
       if(metrik==='winrate')  return {big:wr+'%', small:x.wins+'–'+x.losses};
-      if(metrik==='goaldiff') return {big:(x.gd>=0?'+':'')+x.gd, small:'Tordiff'};
+      if(metrik==='goaldiff') return {big:(x.gd>=0?'+':'')+x.gd, small:'Torbilanz'};
       if(metrik==='streak')   return {big:x.curStreak>0?x.curStreak+'W':x.curStreak<0?(-x.curStreak)+'L':'–',
                                       small:x.curStreak>0?'Siege':x.curStreak<0?'Niederlagen':'neutral'};
       if(metrik==='games')    return {big:x.games, small:'Spiele'};
@@ -243,8 +249,8 @@ function _vRankingCore(){
       // Spieler gross genug steht, um es zu tragen; in der Tabelle darunter
       // bleibt es beim Reif, weil eine Zeile die Hoehe nicht hat.
       const titelTxt   = period==='day' ? 'Player of the Day' : 'Player of the Week';
-      const regelTxt   = period==='day' ? 'min. 3 Siege · meiste Siege'
-                                        : 'min. 5 Siege · beste Quote';
+      const regelTxt   = period==='day' ? 'ab 3 Siegen · die meisten Siege'
+                                        : 'ab 5 Siegen · die beste Quote';
       const eloLabel   = period==='day' ? 'Elo Tag' : 'Elo Woche';
       if(winner){
         const wp=pmap()[winner.id];
@@ -285,6 +291,12 @@ function _vRankingCore(){
       // Das Symbol steht IN der Kopfzeile, nicht in der Ecke: bei einem
       // Drittel der Breite bliebe für die Beschriftung sonst nicht genug
       // Platz, und „Heißeste Serie" bräche mitten im Wort ab.
+      // Die Serie heißt hier „Siegesserie" und die Überraschung
+      // „Überraschung", die Kurzformen der Award-Namen („Größte Überra…"):
+      // „Heißeste Serie" war ein dritter Name für dieselbe Liste, „Längste
+      // Siegesserie" passt nicht in ein Drittel. Aus demselben Grund steht
+      // unter dem König die Zahl der Wochen- oder Tagessiege und nicht
+      // „4× Player of the Day" — das endete als „4× Player of t…".
       const renderHl=(cls,labelTxt,iconKey,nameTxt,detailTxt,clickAttr='')=>{
         const kopf=`<div class="wk-hl-kopf"><span class="wk-hl-ic">${svgI(iconKey)}</span>`
           + `<span class="wk-hl-label">${labelTxt}</span></div>`;
@@ -309,17 +321,17 @@ function _vRankingCore(){
       const _kingList=period==='week'?(_allRanks.weekKingList||[]):(_allRanks.dayKingList||[]);
       const topKing=_kingList[0]||null;
       const mitte = period==='week'
-        ? renderHl('streak','Heißeste Serie','flame', topStreak?pname(topStreak.id):null,
+        ? renderHl('streak','Siegesserie',AW_IC.streaks, topStreak?pname(topStreak.id):null,
             topStreak?`${topStreak.v} in Folge`:'', topStreak?'data-toplist="periodStreak"':'')
-        : renderHl('upset','Größter Upset','bolt', upsetName,
+        : renderHl('upset','Überraschung',AW_IC.upset, upsetName,
             topUpset?`${topUpset.winPct}% Chance`:'', topUpset?'data-toplist="periodUpset"':'');
       nebenHtml+=`
         <div class="wk-highlights">
-          ${renderHl('team','Bestes Team','handshake', teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', bestTeam?'data-toplist="periodTeam"':'')}
+          ${renderHl('team','Bestes Team',AW_IC.mvt, teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', bestTeam?'data-toplist="periodTeam"':'')}
           ${mitte}
           ${renderHl('king', period==='week'?'Wochenkönig':'Tageskönig', period==='week'?'weekKing':'dayKing',
               topKing?pname(topKing.id):null,
-              topKing?`${topKing.v}× ${period==='week'?'Player of Week':'Player of Day'}`:'',
+              topKing?(period==='week'?`${topKing.v} ${topKing.v===1?'Wochensieg':'Wochensiege'}`:`${topKing.v} ${topKing.v===1?'Tagessieg':'Tagessiege'}`):'',
               topKing?'data-toplist="periodKing"':'')}
         </div>`;
 
@@ -350,12 +362,31 @@ function _vRankingCore(){
     // Monat ist, liest man im Vorbeigehen. Die Überschrift ist entfallen:
     // „Tag 12 von 31" unter einer Seite, die „August 2026" heißt, braucht
     // keine Erklärung, dass es um die Saison geht.
-    const fortschritt=(jetzt,gesamt,einheit)=>{
-      const pct=Math.max(0,Math.min(100,Math.round(jetzt/gesamt*100)));
+    // Der Zeitraum als Reihe aus Zellen, eine je Tag (oder Stunde): hell,
+    // wo gespielt wurde, leise, wo nicht, gerahmt der heutige. Ein Balken
+    // zeigte nur, wie viel Kalender vergangen ist — ob noch fünf Spieltage
+    // kommen oder einer, stand nirgends.
+    const fortschritt=(jetzt,gesamt,einheit,gespielt)=>{
+      let zellen='';
+      for(let i=1;i<=gesamt;i++){
+        const cls=i>jetzt?'':(gespielt.has(i)?'s':'v')+(i===jetzt?' h':'');
+        zellen+=`<i${cls?` class="${cls}"`:''}></i>`;
+      }
       return `<div class="lauf">
           <span class="lauf-t">${einheit} <b class="num">${jetzt}</b> von <b class="num">${gesamt}</b></span>
-          <span class="lauf-s"><i style="width:${pct}%"></i></span>
+          <span class="lauf-z" style="--g:${gesamt}">${zellen}</span>
         </div>`;
+    };
+    // Welche Tage (1-basiert ab `start`) eine Partie hatten — nach dem
+    // Kalendertag der Uhr, wie der Feed [tagKey]. Über Millisekunden
+    // gezählt verrutscht ein Tag an der Zeitumstellung um eine Stunde.
+    const spieltage=(start, anzahl)=>{
+      const keys=new Set(periodMs.map(m=>tagKey(m.created_at))), s=new Set();
+      for(let i=1;i<=anzahl;i++){
+        const d=new Date(start); d.setDate(d.getDate()+i-1);
+        if(keys.has(tagKey(d))) s.add(i);
+      }
+      return s;
     };
     let kontextHtml='';
     if(period==='season'){
@@ -365,7 +396,7 @@ function _vRankingCore(){
         const elapsedMs=Math.max(0,Math.min(totalMs,Date.now()-sStart));
         kontextHtml=fortschritt(
           Math.max(1,Math.ceil(elapsedMs/86400000)),
-          Math.ceil(totalMs/86400000), 'Tag');
+          Math.ceil(totalMs/86400000), 'Tag', spieltage(sStart, Math.ceil(totalMs/86400000)));
       } else {
         // Eine abgeschlossene Saison hat keinen Fortschritt. Der Balken
         // stünde voll da und behauptete, es ginge noch weiter. Statt seiner
@@ -382,13 +413,14 @@ function _vRankingCore(){
       const wkEnd=new Date(wkStart); wkEnd.setDate(wkEnd.getDate()+7);
       const el=Math.max(0,Math.min(wkEnd-wkStart,Date.now()-wkStart));
       kontextHtml=fortschritt(
-        Math.max(1,Math.min(7,Math.ceil(el/86400000))), 7, 'Tag');
+        Math.max(1,Math.min(7,Math.ceil(el/86400000))), 7, 'Tag', spieltage(wkStart, 7));
     } else if(period==='day'){
       const dyStart=periodStart('day');
       const dyEnd=new Date(dyStart); dyEnd.setDate(dyEnd.getDate()+1);
       const el=Math.max(0,Math.min(dyEnd-dyStart,Date.now()-dyStart));
       kontextHtml=fortschritt(
-        Math.max(1,Math.min(24,Math.ceil(el/3600000))), 24, 'Stunde');
+        Math.max(1,Math.min(24,Math.ceil(el/3600000))), 24, 'Stunde',
+        new Set(periodMs.map(m=>new Date(m.created_at).getHours()+1)));
     }
 
     // ── Zwei Ranglisten über denselben Zeitraum [§C29] ───────────────
@@ -399,8 +431,8 @@ function _vRankingCore(){
     // einen Reiter gewechselt, nicht über eine zweite Seite.
     const sichtBar = period==='season' ? `
       <div class="ui-tabs">
-        <button data-ligasicht="spieler" class="${ligaSicht==='spieler'?'on':''}">Spieler der Saison</button>
-        <button data-ligasicht="duos" class="${ligaSicht==='duos'?'on':''}">Teams der Saison</button>
+        <button data-ligasicht="spieler" class="${ligaSicht==='spieler'?'on':''}">${svgI('user')}Spieler</button>
+        <button data-ligasicht="duos" class="${ligaSicht==='duos'?'on':''}">${svgI('users')}Teams</button>
       </div>` : '';
 
     if(period==='season' && ligaSicht==='duos'){
@@ -521,7 +553,7 @@ function _vRankingCore(){
       // Die Zahl im Schild ist der Podestplatz, nicht die Position der
       // laufenden Saison: auf dieser Karte gilt die Karriere.
       const avWappen = avHtml(pp, '', {ins:true, band:true, pos:platz,
-                                        px:platz===1?92:78, klasse:'pod-av'});
+                                        px:platz===1?88:70, klasse:'pod-av'});
       // Ein Ligatitel ist Player of the Season, sonst nichts — dieselbe Zahl,
       // die auch die Sterne unter dem Avatar und die Schwingen des Wappens
       // sagen [§C26]. Hier wurde Team of the Season mitgezählt: auf der Karte
@@ -537,8 +569,10 @@ function _vRankingCore(){
       // längste Niederlagenserie der Liga ist kein Verdienst — die bitterste
       // Pleite auch nicht.
       const rek = chroniclesOfPlayer(pp.id).filter(x => !x.neg).length;
-      const sub = [t ? t + ' Titel' : '', entry.s.games + ' Sp.',
-                   rek ? rek + ' Rek.' : '']
+      // Ausgeschrieben: „90 Sp." und „10 Rek." waren die letzten Kürzel
+      // der Tafel, und jede Zeile steht auf einer eigenen Linie.
+      const sub = [t ? t + ' Titel' : '', entry.s.games + ' Spiele',
+                   rek ? rek + (rek === 1 ? ' Rekord' : ' Rekorde') : '']
         .filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
       return `
         <div class="pod-karte ${METALL[platz-1]}${platz===1?' erster':''}" data-detail="${pp.id}">
@@ -596,7 +630,7 @@ function rrow(p, s, i, metric, globalElo, letzte){
   }
 
   else if(metric==='winrate'){big=Math.round(s.wr*100)+'%'; small=s.wins+'–'+s.losses;}
-  else if(metric==='goaldiff'){big=(s.gd>=0?'+':'')+s.gd; small='Tordiff';}
+  else if(metric==='goaldiff'){big=(s.gd>=0?'+':'')+s.gd; small='Torbilanz';}
   else if(metric==='prestige'){
     // Die Zahl groß, die Stufe klein. Das Zeichen trägt der Avatar links
     // schon — aber in 52 px erkennt man den Schildring nicht vom

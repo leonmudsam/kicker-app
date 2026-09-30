@@ -1,0 +1,685 @@
+<!doctype html><meta charset="utf-8">
+<title>Anteil je Gelegenheit und die schwächste Stelle — Vorschlag</title>
+<style>
+ body{background:#0c0e0d;color:#d7dbd8;font:14px/1.5 system-ui,sans-serif;margin:0;padding:22px;
+   max-width:1080px}
+ h1{font-size:21px;margin:0 0 4px} h2{font-size:16px;margin:30px 0 4px;color:#e8ecea}
+ p{margin:6px 0;color:#9fa8a3;max-width:72ch}
+ code{background:#181c1a;padding:1px 4px;border-radius:3px;font-size:12px}
+ table{border-collapse:collapse;margin:8px 0;font-size:13px}
+ td,th{padding:3px 12px 3px 0;text-align:left;vertical-align:top}
+ th{color:#7d8781;font-weight:600}
+ tr.plus td{color:#7fc99a}
+ .warn{border-left:3px solid #c8a24a;background:#17150f;padding:10px 14px;margin:16px 0}
+ .warn b{color:#c8a24a}
+ .kam{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 4px}
+ .kand{background:#131614;border:1px solid #232825;border-left-width:3px;
+   border-radius:8px;padding:12px 14px;margin:8px 0}
+ .kand.ok{border-left-color:#7fc99a} .kand.rot{border-left-color:#f0566a}
+ .kopf{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+ .kopf b{font-size:15px;color:#fff}
+ .sh,.art,.ur,.fam{font-size:11px;padding:1px 6px;border-radius:4px;background:#1d2220;color:#8b948f}
+ .art.neu{background:#1b1622;color:#b49ad6}
+ .art.laufbahn{background:#22201a;color:#c8a24a}
+ .ur{margin-left:auto;background:#14231a;color:#7fc99a}
+ .kand.rot .ur{background:#25151a;color:#f0566a}
+ .frage{margin:7px 0 0;color:#fff;font-size:14px}
+ .cond{margin:3px 0 2px;color:#e2e6e3;font-size:13px}
+ .wie,.quelle,.nachbar{color:#858e89;font-size:12px;max-width:86ch}
+ .quelle,.nachbar{margin-top:5px}
+ .quelle i,.nachbar i{color:#6f7873;font-style:normal}
+ .nachbar b{color:#a9b2ad;font-weight:600}
+ .fallt{margin-top:5px;font-size:12px;color:#f0566a}
+ .axe{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+ .ax{flex:1 1 320px;background:#0f1211;border:1px solid #1e2321;border-radius:6px;padding:9px 11px}
+ .axk{font-size:11px;color:#6f7873;text-transform:uppercase;letter-spacing:.05em}
+ .halt{color:#fff;font-size:14px;margin:3px 0}
+ .kk{font-size:11px;color:#8b948f;background:#1d2220;padding:1px 6px;border-radius:4px}
+ .ev{color:#9fa8a3;font-size:12px}
+ .liste{display:flex;gap:9px;flex-wrap:wrap;margin-top:6px;font-size:11px;color:#7d8781}
+ .liste i{color:#5f6864;font-style:normal}
+ .tore{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+ .t{font-size:11px;padding:2px 7px;border-radius:4px}
+ .t.j{background:#101d16;color:#7fc99a} .t.n{background:#25151a;color:#f0566a}
+ .t.i{background:#16191c;color:#8fa8c4}
+</style>
+<h1>Anteil je Gelegenheit und die schwächste Stelle</h1>
+<p>Gerechnet an den <b>466 echten Partien</b> der Liga, 11
+gewertete Spieler, 3 gewertete Monate. Gebaut von
+<code>mockup/staerken-lauf.js</code>. Die Herleitung steht in
+<code>mockup/README-staerken.md</code>.</p>
+<div class="warn"><b>Zwei Fragen, eine Antwort.</b> „Der Platzhirsch" und „Der
+Wochenherr" sind die einzigen zwei Rekorde, die eine Errungenschaft je
+Gelegenheit messen. Und Julian steht auf Platz 1
+der Siegquote, hält aber nur 7 von
+49
+Haltungen; Jane 7,
+Jannik 3. Beides hat denselben Grund:
+17 der 57 Rekorde verlangen eine Mindestzahl von
+vierzig Partien oder mehr, und wer weniger spielt, kommt dort nicht vor. In diesem
+Feld hängen Siegquote und Spielzahl mit r = 0,49 zusammen.</div>
+<p>Der Katalog hat die Antwort schon: 47 Monatschroniken tragen nur die
+Monatsachse, und ein Dutzend davon fragt genau nach einem Anteil je Gelegenheit.
+Dieselbe Frage auf zwei Zeitachsen bleibt EINE Disziplin [§13.1] — ein solcher
+Rekord kostet keinen neuen Namen, kein Icon und keinen Beinamen, nur eine zweite
+Achse. Nur ein Eintrag ist wirklich neu: <b>Das Übersoll</b>, das der Code in
+<code>untersoll.monat.wie</code> schon als Bezug nennt.</p>
+<h2>Kammer I — der Anteil an den eigenen Gelegenheiten</h2>
+    <div class="kam">
+      <span class="t j">5 von
+        7 tragen</span>
+      <span class="t i">größter Halter Julian
+        mit 3 von 5</span>
+      <span class="t i">alle Einträge gehen an die drei Besten der Siegquote</span>
+      <span class="t i">erreicht: Julian</span>
+    </div>
+    <div class="kand ok">
+    <div class="kopf"><b>Der Tagesabschluss</b>
+      <span class="sh">Tagesende</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">der eigene Spieltag</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie viele der eigenen Spieltage endeten nicht im Minus?</div>
+    <div class="cond">Höchster Anteil eigener Spieltage mit ausgeglichener oder positiver Bilanz, ab 15 eigenen Spieltagen</div>
+    <div class="wie">Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen. Der Nenner sind alle eigenen Spieltage, nicht die Partien und nicht der Kalender: wer an zwanzig Tagen dabei war, wird an zwanzig gemessen.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      An mindestens 100 % der eigenen Spieltage eine ausgeglichene oder positive Bilanz, ab 3 Spieltagen</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der makellose Tag</b>
+      verlangt einen Tag OHNE jede Niederlage und zählt nur volle Spieltage ab drei Partien. Ein Tag mit 2:1 ist dort keiner, hier schon.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Julian
+          <span class="kk">Siegquote Platz 1 · 171 Partien</span></div>
+        <div class="ev">91 % der Spieltage nicht im Minus · 21 von 23</div>
+        <div class="liste"><span>1. Julian <i>q1</i></span><span>2. Martin <i>q2</i></span><span>3. Leon <i>q3</i></span><span>4. Jane <i>q4</i></span><span>5. Maxi <i>q6</i></span><span>6. Leo <i>q7</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,29 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 14 % der Spannweite</span>
+          <span class="t i">im Rennen 9 von 11</span>
+          <span class="t i">r mit der Siegquote 0,98</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Gegen jeden bestanden</b>
+      <span class="sh">Gegen alle</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">der Gegnerkreis</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Gegen wie viele der regelmäßigen Gegner steht die Bilanz im Plus?</div>
+    <div class="cond">Höchster Anteil regelmäßiger Gegner mit positiver Bilanz, ab 4 Gegnern mit je 15 Duellen</div>
+    <div class="wie">Regelmäßig heißt mindestens fünfzehn Duelle über die Laufbahn. Der Nenner sind diese Gegner, nicht alle elf: wer gegen jemanden dreimal gespielt hat, weiß nichts über eine Bilanz.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Gegen JEDEN regelmäßigen Gegner mehr Siege als Niederlagen, ab 4 solchen Gegnern</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der Angstgegner</b>
+      ist die Schattenseite und nennt EINEN Gegner. Hier zählt die Breite, und ein einziges schlechtes Duell kostet nur einen Anteilsschritt.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Julian
+          <span class="kk">Siegquote Platz 1 · 171 Partien</span></div>
+        <div class="ev">100 % der regelmäßigen Gegner im Plus · 7 von 7</div>
+        <div class="liste"><span>1. Julian <i>q1</i></span><span>2. Leon <i>q3</i></span><span>3. Martin <i>q2</i></span><span>4. Jane <i>q4</i></span><span>5. Jannik <i>q5</i></span><span>6. Maxi <i>q6</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,37 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 22 % der Spannweite</span>
+          <span class="t i">im Rennen 10 von 11</span>
+          <span class="t i">r mit der Siegquote 0,96</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Die Auferstehung</b>
+      <span class="sh">Rückkehr</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">die Reihenfolge</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wie oft folgt auf zwei Pleiten am Stück ein Sieg?</div>
+    <div class="cond">Höchster Anteil gewonnener Partien direkt nach zwei Pleiten am Stück, ab 15 solchen Gelegenheiten</div>
+    <div class="wie">Gezählt wird die Partie nach der zweiten Pleite in Folge, nicht die nach jeder Pleite. Der Nenner sind alle diese Gelegenheiten, also hat der Vielspieler keinen Vorteil: er hat mehr davon, aber der Anteil bleibt derselbe.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Jede Partie nach zwei Pleiten am Stück gewonnen, ab 5 solchen Gelegenheiten</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der Stehaufmann</b>
+      misst den Abstand zur eigenen Quote nach EINER Pleite. Zwei am Stück sind die Stelle, an der ein Tag kippt, und das Niveau steht hier für sich.</div>
+    <div class="fallt">fällt: dieselbe Familie (die Reihenfolge) und derselbe Halter wie „Der Serienbrecher", und der Wert haengt staerker an der Siegquote</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Julian
+          <span class="kk">Siegquote Platz 1 · 171 Partien</span></div>
+        <div class="ev">80 % nach zwei Pleiten am Stück · 16 von 20</div>
+        <div class="liste"><span>1. Julian <i>q1</i></span><span>2. Leon <i>q3</i></span><span>3. Jannik <i>q5</i></span><span>4. Jane <i>q4</i></span><span>5. Martin <i>q2</i></span><span>6. Leo <i>q7</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,32 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 39</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t n">Familie doppelt besetzt</span>
+          <span class="t i">Abstand zum Zweiten 4 % der Spannweite</span>
+          <span class="t i">im Rennen 11 von 11</span>
+          <span class="t i">r mit der Siegquote 0,94</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Der Serienbrecher</b>
+      <span class="sh">Brecher</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">die Reihenfolge</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie oft endet eine laufende Serie an einem selbst?</div>
+    <div class="cond">Höchster Anteil gewonnener Partien gegen einen Gegner mit drei Siegen am Stück, ab 20 solchen Partien</div>
+    <div class="wie">Die Serie des Gegners wird für jede Partie neu nachgezählt, mit dem Stand vor dem Anpfiff. Der Nenner sind alle Partien gegen einen Serienträger, auch die verlorenen.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Mindestens 70 % gegen Gegner, die zum Zeitpunkt der Partie drei Siege am Stück tragen, ab 5 solchen Partien</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der Gigantentöter</b>
+      fragt nach der Elo-Rechnung, nicht nach der Form. Ein Gegner mit drei Siegen am Stück kann der Schwächere sein, und dann zählt er dort gar nicht.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Julian
+          <span class="kk">Siegquote Platz 1 · 171 Partien</span></div>
+        <div class="ev">67 % gegen eine laufende Serie · 26 von 39</div>
+        <div class="liste"><span>1. Julian <i>q1</i></span><span>2. Martin <i>q2</i></span><span>3. Leon <i>q3</i></span><span>4. Jane <i>q4</i></span><span>5. Maxi <i>q6</i></span><span>6. Leo <i>q7</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,24 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 18 % der Spannweite</span>
+          <span class="t i">im Rennen 8 von 11</span>
+          <span class="t i">r mit der Siegquote 0,91</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Die Nulldiät</b>
+      <span class="sh">Nulldiät</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">die Tore</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wie oft bleibt eine ganze Partie geschlossen?</div>
+    <div class="cond">Höchster Anteil eigener Partien mit höchstens drei Gegentoren, ab 40 Partien</div>
+    <div class="wie">Ein Spiel geht auf zehn, drei Gegentore sind eine geschlossene Partie. Der Nenner sind alle Partien, auch die vorne gespielten: eine Partie ist zu zweit geschlossen worden oder nicht.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Mindestens 20 % der Partien mit höchstens drei Gegentoren</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der Fels</b>
+      rechnet Gegentore je Partie und nur in der Abwehr, ab fünfzig Abwehrspielen. Ein Mittelwert verdeckt, ob viele mittlere oder wenige hohe Partien dahinterstehen.</div>
+    <div class="fallt">fällt: dieselbe Familie (die Tore) und derselbe Halter wie „Die weiße Weste", und der Wert haengt staerker an der Siegquote</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Martin
+          <span class="kk">Siegquote Platz 2 · 211 Partien</span></div>
+        <div class="ev">15 % der Partien mit höchstens 3 Gegentoren · 32 von 211</div>
+        <div class="liste"><span>1. Martin <i>q2</i></span><span>2. Jannik <i>q5</i></span><span>3. Julian <i>q1</i></span><span>4. Leon <i>q3</i></span><span>5. Jane <i>q4</i></span><span>6. Henry <i>q8</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,08 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t n">Familie doppelt besetzt</span>
+          <span class="t i">Abstand zum Zweiten 26 % der Spannweite</span>
+          <span class="t i">im Rennen 10 von 11</span>
+          <span class="t i">r mit der Siegquote 0,81</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Die weiße Weste</b>
+      <span class="sh">Weste</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">die Tore</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie oft gelingt der Sieg, ohne den Gegner ins Spiel zu lassen?</div>
+    <div class="cond">Höchster Anteil eigener Siege mit höchstens einem Gegentor, ab 20 Siegen</div>
+    <div class="wie">Der Nenner sind alle eigenen Siege, nicht alle Partien: gefragt ist die ART zu gewinnen und nicht, wie oft gewonnen wird.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Mindestens 10 % der eigenen Siege mit höchstens einem Gegentor, ab 5 Siegen</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der Zerstörer</b>
+      zählt Kantersiege ab fünf Toren Unterschied. Ein 10:4 ist dort ein Kantersieg und hier keine weiße Weste.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Martin
+          <span class="kk">Siegquote Platz 2 · 211 Partien</span></div>
+        <div class="ev">8 % der Siege mit höchstens einem Gegentor · 11 von 134</div>
+        <div class="liste"><span>1. Martin <i>q2</i></span><span>2. Julian <i>q1</i></span><span>3. Jannik <i>q5</i></span><span>4. Maxi <i>q6</i></span><span>5. Henry <i>q8</i></span><span>6. Leon <i>q3</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,40 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 34 % der Spannweite</span>
+          <span class="t i">im Rennen 10 von 11</span>
+          <span class="t i">r mit der Siegquote 0,60</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Der Kaltstart</b>
+      <span class="sh">Kaltstart</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">der eigene Spieltag</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie oft steht der Auftakt eines Spieltags am Ende auf der eigenen Seite?</div>
+    <div class="cond">Höchster Anteil gewonnener Auftaktpartien eines eigenen Spieltags, ab 15 eigenen Spieltagen</div>
+    <div class="wie">Die jeweils erste eigene Partie jedes eigenen Spieltags, ohne Aufwärmen. Der Nenner sind die Spieltage, also zählt jeder Tag genau einmal.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Mindestens 85 % der ersten Partien eines Spieltags gewonnen, ab 5 Spieltagen</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der letzte Ball</b>
+      misst den Abstand des Schlussspiels zu den übrigen Partien desselben Tages. Der Auftakt ist die andere Kante des Tages und hängt an keiner Vorgeschichte.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Martin
+          <span class="kk">Siegquote Platz 2 · 211 Partien</span></div>
+        <div class="ev">71 % der Auftaktpartien gewonnen · 27 von 38</div>
+        <div class="liste"><span>1. Martin <i>q2</i></span><span>2. Julian <i>q1</i></span><span>3. Jane <i>q4</i></span><span>4. Leon <i>q3</i></span><span>5. Maxi <i>q6</i></span><span>6. Leo <i>q7</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,37 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 3 % der Spannweite</span>
+          <span class="t i">im Rennen 9 von 11</span>
+          <span class="t i">r mit der Siegquote 0,96</span>
+        </div>
+      </div>
+    </div></div>
+<h2>Kammer II — die schwächste Stelle</h2>
+    <div class="kam">
+      <span class="t j">7 von
+        8 tragen</span>
+      <span class="t i">größter Halter Julian
+        mit 3 von 7</span>
+      <span class="t i">nicht nur die drei Besten der Siegquote</span>
+      <span class="t i">erreicht: Julian, Jane, Jannik</span>
+    </div>
+    <div class="kand ok">
+    <div class="kopf"><b>Das Übersoll</b>
+      <span class="sh">Übersoll</span>
+      <span class="art neu">neue Disziplin</span>
+      <span class="fam">die Elo-Rechnung</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie weit liegt die Siegquote über dem, was die Elo-Rechnung erwartet hat?</div>
+    <div class="cond">Größter Abstand der Siegquote über die eigene Elo-Erwartung, ab 40 Partien</div>
+    <div class="wie">Die Elo-Rechnung gibt jeder Partie eine Siegchance. Über die Laufbahn gemittelt ergibt das die erwartete Quote; gewertet wird, wie weit die tatsächliche darüber liegt, in Prozentpunkten. Die Erwartung wächst mit jedem Sieg mit, also ist der Abstand kein Niveau: wer stark ist, muss dafür immer stärker spielen.</div>
+    
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Das Untersoll</b>
+      ist dieselbe Rechnung andersherum und die einzige Schattenseite ohne Vorderseite. Ihr Erklärtext nennt das Übersoll bereits als Bezug, und den gab es nicht.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Julian
+          <span class="kk">Siegquote Platz 1 · 171 Partien</span></div>
+        <div class="ev">+9 Punkte über der Rechnung · 65 % statt 56 % in 171 Partien</div>
+        <div class="liste"><span>1. Julian <i>q1</i></span><span>2. Martin <i>q2</i></span><span>3. Jane <i>q4</i></span><span>4. Leon <i>q3</i></span><span>5. Jannik <i>q5</i></span><span>6. Maxi <i>q6</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,28 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 3 % der Spannweite</span>
+          <span class="t i">im Rennen 10 von 11</span>
+          <span class="t i">r mit der Siegquote 0,98</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Ohne Schwachstelle</b>
+      <span class="sh">Lückenlos</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">die fünf Lagen</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie gut läuft es in der schwächsten von fünf Lagen?</div>
+    <div class="cond">Höchste Siegquote in der schwächsten von fünf Lagen: vorne, hinten, gegen die Stärkeren, in engen Partien und nach einer Niederlage, ab 15 Partien je Lage</div>
+    <div class="wie">Fünf Teilquoten derselben Laufbahn, und gewertet wird die schwächste davon. Der Katalog belohnt sonst überall einen Ausschlag; hier zählt, dass es nirgends einen Einbruch gibt. Eine hohe Quote in vier Lagen hilft nicht, wenn die fünfte durchhängt.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      In allen fünf Lagen mindestens 50 %, ab 5 Partien je Lage</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der Wandler</b>
+      misst die Verteilung auf Sturm und Abwehr, nicht die Leistung darin. Wer beide Positionen gleich oft spielt und nur auf einer gewinnt, hält den Wandler und hier nichts.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Julian
+          <span class="kk">Siegquote Platz 1 · 171 Partien</span></div>
+        <div class="ev">50 % in der schwächsten Lage · vorne 67 %, hinten 60 %, gegen oben 50 %, eng 52 %, nach Pleite 67 %</div>
+        <div class="liste"><span>1. Julian <i>q1</i></span><span>2. Martin <i>q2</i></span><span>3. Leon <i>q3</i></span><span>4. Jane <i>q4</i></span><span>5. Maxi <i>q6</i></span><span>6. Leo <i>q7</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = −0,23 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 97</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 21 % der Spannweite</span>
+          <span class="t i">im Rennen 6 von 11</span>
+          <span class="t i">r mit der Siegquote 0,87</span>
+        </div>
+      </div>
+    </div></div><div class="kand rot">
+    <div class="kopf"><b>Ohne Angstgegner</b>
+      <span class="sh">Angstfrei</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">der Gegnerkreis</span>
+      <span class="ur">trägt nicht</span></div>
+    <div class="frage">Wie gut läuft es gegen den unangenehmsten Gegner?</div>
+    <div class="cond">Höchste Siegquote gegen den schwächsten eigenen Gegnerwert, ab 4 Gegnern mit je 15 Duellen</div>
+    <div class="wie">Nicht der Lieblingsgegner zählt, sondern der unangenehmste. Gegen wen läuft es am schlechtesten, und wie schlecht ist das noch. Regelmäßig heißt fünfzehn Duelle: gegen drei Gegner zu verlieren ist kein Muster.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Gegen JEDEN regelmäßigen Gegner mindestens 75 %, ab 5 Gegnern mit je 4 Duellen</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Gegen jeden bestanden</b>
+      zählt, gegen wie viele Gegner die Bilanz im Plus steht. Eine Untergrenze ist strenger als ein Anteil: sie fällt mit einem einzigen schlechten Duell.</div>
+    <div class="fallt">fällt: dieselbe Familie (der Gegnerkreis) und derselbe Halter wie „Gegen jeden bestanden", und der Wert haengt staerker an der Siegquote</div>
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Julian
+          <span class="kk">Siegquote Platz 1 · 171 Partien</span></div>
+        <div class="ev">55 % gegen den unangenehmsten Gegner · 7 regelmäßige Gegner, gegen keinen weniger</div>
+        <div class="liste"><span>1. Julian <i>q1</i></span><span>2. Leon <i>q3</i></span><span>3. Jane <i>q4</i></span><span>4. Martin <i>q2</i></span><span>5. Maxi <i>q6</i></span><span>6. Jannik <i>q5</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,37 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t n">Familie doppelt besetzt</span>
+          <span class="t i">Abstand zum Zweiten 19 % der Spannweite</span>
+          <span class="t i">im Rennen 10 von 11</span>
+          <span class="t i">r mit der Siegquote 0,98</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Der Ausgleicher</b>
+      <span class="sh">Ausgleich</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">der Partnerkreis</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie gut läuft es neben dem schwächsten Partner?</div>
+    <div class="cond">Höchste Siegquote neben dem schwächsten eigenen Partner, ab 3 Partnern mit je 15 gemeinsamen Partien</div>
+    <div class="wie">Nicht der beste Partner zählt, sondern der schlechteste. Es geht darum, mit wem auch immer zu bestehen. Der Nenner ist je Partner die Zahl der gemeinsamen Partien, also hilft es nicht, mit einem starken Partner besonders oft gespielt zu haben.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Neben JEDEM Partner mindestens 60 %, ab 3 Partnern mit je 5 Partien</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der Katalysator</b>
+      misst, wie viel die Partner NEBEN diesem Spieler gewinnen, verglichen mit ohne. Hier geht es um die eigene Quote, und der Vergleich läuft zwischen den Partnern statt gegen deren Laufbahn.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Julian
+          <span class="kk">Siegquote Platz 1 · 171 Partien</span></div>
+        <div class="ev">60 % neben dem schwächsten Partner · 3 Partner ab 15 gemeinsamen Partien</div>
+        <div class="liste"><span>1. Julian <i>q1</i></span><span>2. Jane <i>q4</i></span><span>3. Martin <i>q2</i></span><span>4. Leon <i>q3</i></span><span>5. Maxi <i>q6</i></span><span>6. Stefan <i>q10</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = −0,10 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 81</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 36 % der Spannweite</span>
+          <span class="t i">im Rennen 8 von 11</span>
+          <span class="t i">r mit der Siegquote 0,89</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Das Metronom</b>
+      <span class="sh">Metronom</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">der eigene Spieltag</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie weit streuen die Tagesquoten um die eigene Quote?</div>
+    <div class="cond">Geringste Streuung der eigenen Tagesquoten, ab 15 eigenen Spieltagen mit je 3 Partien</div>
+    <div class="wie">Für jeden vollen eigenen Spieltag steht eine Tagesquote. Über eine ganze Laufbahn liegt zwischen bestem und schwächstem Tag fast immer die volle Spanne, also wird nicht die Spanne gemessen, sondern die Streuung: wie weit ein durchschnittlicher Tag von der eigenen Quote abweicht.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Zwischen bestem und schwächstem Spieltag höchstens 15 Prozentpunkte, ab 3 Spieltagen mit je 3 Partien</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Die Handschrift</b>
+      misst die Streuung der Tordifferenz je Partie im Sturm. Eine ruhige Tordifferenz ist kein ruhiger Spieltag: vier knappe Niederlagen an einem Abend streuen dort gar nicht und hier maximal.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Jane
+          <span class="kk">Siegquote Platz 4 · 97 Partien</span></div>
+        <div class="ev">15,7 Punkte Streuung der Tagesquoten · 16 volle Spieltage</div>
+        <div class="liste"><span>1. Jane <i>q4</i></span><span>2. Julian <i>q1</i></span><span>3. Maxi <i>q6</i></span><span>4. Leon <i>q3</i></span><span>5. Stefan <i>q10</i></span><span>6. Martin <i>q2</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = −0,08 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 81</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 2 % der Spannweite</span>
+          <span class="t i">im Rennen 8 von 11</span>
+          <span class="t i">r mit der Siegquote 0,54</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Die zweite Luft</b>
+      <span class="sh">Luft</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">der eigene Spieltag</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie viel besser läuft es später an einem langen Spieltag?</div>
+    <div class="cond">Größter Abstand der Siegquote ab der vierten Partie eines Spieltags zu den ersten drei, ab 15 Partien in jedem Block</div>
+    <div class="wie">Der Vergleich läuft innerhalb der eigenen Spieltage: dieselben Gegner, dieselbe Woche, nur später am Tag. Gezählt werden nur Tage mit mindestens fünf eigenen Partien, sonst gibt es keinen späten Block.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Ab der vierten Partie eines Spieltags mindestens 40 Prozentpunkte stärker als in den ersten drei, ab 5 Partien in jedem Block</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der letzte Ball</b>
+      nimmt die eine Schlusspartie jedes Tages. Hier geht es um den ganzen späten Block, und der hängt an der Ausdauer statt am einzelnen Moment.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Jannik
+          <span class="kk">Siegquote Platz 5 · 78 Partien</span></div>
+        <div class="ev">+11 Punkte stärker ab der vierten Partie · 54 % gegen 43 %</div>
+        <div class="liste"><span>1. Jannik <i>q5</i></span><span>2. Jane <i>q4</i></span><span>3. Henry <i>q8</i></span><span>4. Maxi <i>q6</i></span><span>5. Julian <i>q1</i></span><span>6. Johannes <i>q9</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = −0,23 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 23 % der Spannweite</span>
+          <span class="t i">im Rennen 10 von 11</span>
+          <span class="t i">r mit der Siegquote 0,29</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Auf Augenhöhe</b>
+      <span class="sh">Auf Höhe</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">die Elo-Rechnung</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie viel besser läuft es, wenn die Rechnung nichts vorgibt?</div>
+    <div class="cond">Größter Abstand der Siegquote in offenen Partien zur eigenen Gesamtquote, ab 20 offenen Partien</div>
+    <div class="wie">Offen heißt: die Rechnung gab beiden Teams zwischen 45 und 55 Prozent. Verglichen wird die Quote darin mit der eigenen Gesamtquote, also messen alle gegen ihr eigenes Niveau und nicht gegeneinander.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      In offenen Partien mindestens 20 Prozentpunkte stärker als sonst, ab 5 offenen Partien</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Die ruhige Hand</b>
+      nimmt die engen Partien, also die nach dem ERGEBNIS knappen. Offen ist eine Aussage über den Anpfiff, eng eine über den Abpfiff.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Johannes
+          <span class="kk">Siegquote Platz 9 · 77 Partien</span></div>
+        <div class="ev">+15 Punkte besser in offenen Partien · 10 von 21, sonst 32 %</div>
+        <div class="liste"><span>1. Johannes <i>q9</i></span><span>2. Henry <i>q8</i></span><span>3. Stefan <i>q10</i></span><span>4. Leo <i>q7</i></span><span>5. Maxi <i>q6</i></span><span>6. Leon <i>q3</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = −0,08 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 6 % der Spannweite</span>
+          <span class="t i">im Rennen 10 von 11</span>
+          <span class="t i">r mit der Siegquote −0,74</span>
+        </div>
+      </div>
+    </div></div><div class="kand ok">
+    <div class="kopf"><b>Der Beidfüßige</b>
+      <span class="sh">Beidfüßig</span>
+      <span class="art laufbahn">zweite Achse</span>
+      <span class="fam">die fünf Lagen</span>
+      <span class="ur">trägt</span></div>
+    <div class="frage">Wie weit liegt die schwächere der beiden Positionen von der eigenen Quote entfernt?</div>
+    <div class="cond">Geringster Abstand beider Positionsquoten zur eigenen Gesamtquote, ab 25 Partien je Position</div>
+    <div class="wie">Die Quote im Sturm und die in der Abwehr, beide gegen die eigene Gesamtquote. Gewertet wird der größere der beiden Abstände, also hilft eine passende Position nicht, wenn die andere abfällt.</div>
+    <div class="quelle"><i>Monatschronik heute:</i>
+      Auf beiden Positionen höchstens 1 Prozentpunkt neben der eigenen Gesamtquote, ab 5 Partien je Position</div>
+    <div class="nachbar"><i>nächster Nachbar:</i> <b>Der Wandler</b>
+      fragt nach der Verteilung der Einsätze, nicht nach der Leistung. Beides zusammen wäre erst die ganze Aussage, und der Wandler kennt nur die eine Hälfte.</div>
+    
+    <div class="axe">
+      <div class="ax"><div class="axk">Halter heute</div>
+        <div class="halt">Maxi
+          <span class="kk">Siegquote Platz 6 · 348 Partien</span></div>
+        <div class="ev">1,1 Punkte Abstand zur eigenen Quote · 43 % vorne, 45 % hinten, 44 % gesamt</div>
+        <div class="liste"><span>1. Maxi <i>q6</i></span><span>2. Martin <i>q2</i></span><span>3. Jannik <i>q5</i></span><span>4. Julian <i>q1</i></span><span>5. Johannes <i>q9</i></span><span>6. Leo <i>q7</i></span></div>
+      </div>
+      <div class="ax"><div class="axk">Die Tore</div>
+        <div class="tore">
+          <span class="t j">Spielzahl r = 0,31 (Siegquote 0,49)</span>
+          <span class="t j">ein Bestwert, keine Decke</span>
+          <span class="t j">vergeben</span>
+          <span class="t j">kleinste Spielzahl im Rennen: 77</span>
+          <span class="t j">jede Zahl auf einem 5er-Schritt</span>
+          <span class="t j">Nachbar benannt</span>
+          <span class="t j">einzige seiner Familie bei diesem Halter</span>
+          <span class="t i">Abstand zum Zweiten 11 % der Spannweite</span>
+          <span class="t i">im Rennen 9 von 11</span>
+          <span class="t i">r mit der Siegquote −0,07</span>
+        </div>
+      </div>
+    </div></div>
+<h2>Die Monatsachse des neuen Eintrags</h2>
+<p><b>Das Übersoll</b> · Schwelle +15 Prozentpunkte,
+  Ausschlag <b>1,71 σ</b>, 1 Halter in
+  3 gewerteten Monaten
+  (Martin 2026-08).
+  Beiname „Der Übertreffer", Art koennen.</p>
+  <div class="kam"><span class="t j">Ausschlag
+    1,71 σ, verlangt sind 1,5 [§C39]</span>
+    <span class="t j">höchstens ein Halter je gewerteten
+    Monat [§C32]</span></div>
+<h2>Die Tafel davor und danach</h2>
+<table><tr><th>Spieler</th><th>Siegquote</th><th>Partien</th><th>Rekorde heute</th>
+<th>danach</th><th></th></tr><tr class="plus"><td>Julian</td>
+    <td>Platz 1</td>
+    <td>171</td>
+    <td>7</td><td><b>13</b></td>
+    <td>+6</td></tr><tr class="plus"><td>Martin</td>
+    <td>Platz 2</td>
+    <td>211</td>
+    <td>10</td><td><b>12</b></td>
+    <td>+2</td></tr><tr class="plus"><td>Jane</td>
+    <td>Platz 4</td>
+    <td>97</td>
+    <td>7</td><td><b>8</b></td>
+    <td>+1</td></tr><tr class=""><td>Leon</td>
+    <td>Platz 3</td>
+    <td>355</td>
+    <td>8</td><td><b>8</b></td>
+    <td></td></tr><tr class="plus"><td>Maxi</td>
+    <td>Platz 6</td>
+    <td>348</td>
+    <td>5</td><td><b>6</b></td>
+    <td>+1</td></tr><tr class=""><td>Henry</td>
+    <td>Platz 8</td>
+    <td>152</td>
+    <td>4</td><td><b>4</b></td>
+    <td></td></tr><tr class="plus"><td>Jannik</td>
+    <td>Platz 5</td>
+    <td>78</td>
+    <td>3</td><td><b>4</b></td>
+    <td>+1</td></tr><tr class=""><td>Stefan</td>
+    <td>Platz 10</td>
+    <td>81</td>
+    <td>3</td><td><b>3</b></td>
+    <td></td></tr><tr class="plus"><td>Johannes</td>
+    <td>Platz 9</td>
+    <td>77</td>
+    <td>1</td><td><b>2</b></td>
+    <td>+1</td></tr><tr class=""><td>Leo</td>
+    <td>Platz 7</td>
+    <td>246</td>
+    <td>1</td><td><b>1</b></td>
+    <td></td></tr><tr class=""><td>Alex</td>
+    <td>Platz 11</td>
+    <td>39</td>
+    <td>0</td><td><b>0</b></td>
+    <td></td></tr><tr class=""><td>Anton</td>
+    <td>Platz —</td>
+    <td>9</td>
+    <td>0</td><td><b>0</b></td>
+    <td></td></tr></table>
+<div class="kam">
+  <span class="t j">Tor 8: alle drei von Julian, Jane und Jannik
+    bekommen einen Eintrag</span>
+  <span class="t j">größter Halter der Tafel danach:
+    Julian mit 13 von 61
+    (21 %, erlaubt 25 %)</span>
+  <span class="t j">
+    4
+    Einträge gehen nicht an die drei Besten der Siegquote</span>
+</div>
+<p>Die Verteilung IN diesem Stapel ist bewusst schief: Julian bekommt die meisten
+Einträge, und genau darum ging es. Das Viertel-Tor aus §C35 ist eine Aussage über
+den Bestand, nicht über einen Stapel neuer Einträge, und der Bestand bleibt
+darunter.</p>

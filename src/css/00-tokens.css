@@ -35,7 +35,12 @@
        Rangliste, Podeste, Medaillen, Recap. Vorher stand Silber an fünf
        Stellen in vier Tönen und --bronze war gar nicht erst definiert. */
     --silber:#C2C9D0; --bronze:#C08457;
-    --r:18px; --r-sm:12px; --r-lg:24px;
+    --r:18px; --r-sm:12px;
+    /* Die Strichstärke der Zeichen [§C27]. Sie stand an 78 Stellen und in
+       13 Werten zwischen 1 und 3,4 — dieselbe Krone war in der Liga dünner
+       als im Blatt. Zeichen ab 18 px setzen --strich:1.75, das Motiv der
+       Stories 1.4, sonst gilt dieser Wert. */
+    --strich:2;
     --safe-top:env(safe-area-inset-top,0px);
     --safe-bot:env(safe-area-inset-bottom,0px);
     --shadow:0 12px 40px -8px rgba(0,0,0,.6);

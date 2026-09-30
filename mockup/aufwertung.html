@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Visuelle Aufwertung</title>
+<!--
+  Entwurf für den nächsten Auftrag: Reiter, Zeichen, Kacheln, Belege,
+  Stories und Blätter. Eigenständige Seite ohne Bauablauf, kein Teil der
+  App [CLAUDE.md §2]. Die Werte sind der Stand der Liga aus dem Rundgang;
+  sie stehen hier als Anschauung und nicht als Logik.
+  Tokens, Schriften und Farbrollen sind die aus src/css/00-tokens.css und
+  §C25 — die Designsprache des Hauptzweigs bleibt, nur die Bauteile werden
+  aufgeräumt. Das Wappen (Insignium, Schwinge, Sterne, Feuer) ist hier nur
+  angedeutet: es bleibt, wie es ist.
+-->
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sometype+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c0b; --bg2:#0f1311; --surface:#141a16; --surface2:#1a221d;
+  --surface3:#222b25; --line:#28332b; --line2:#34423a;
+  --ink:#eef3ef; --ink2:#b9c4bd; --muted:#717f76; --faint:#4a554e;
+  --acid:#BEF264; --acid2:#A3E635; --acid-deep:#1A2E08;
+  --orange:#ff7849; --blue:#56b4e8; --red:#f0566a; --gold:#f7cf4a; --purple:#a78bfa;
+  --silber:#C2C9D0; --bronze:#C08457;
+  --r:18px; --r-sm:12px;
+  --mono:'Sometype Mono',ui-monospace,monospace;
+  --disp:'Archivo Black',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--ink);
+  line-height:1.45;-webkit-font-smoothing:antialiased;padding-bottom:80px;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(700px circle at 85% -5%,rgba(190,242,100,.07),transparent 55%),
+             radial-gradient(600px circle at 10% 105%,rgba(255,120,73,.055),transparent 55%)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.disp{font-family:var(--disp);letter-spacing:-.02em}
+svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;
+  stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;display:block}
+svg.i.s{width:14px;height:14px;stroke-width:2}
+svg.i.l{width:22px;height:22px}
+
+/* ── Seitenrahmen ─────────────────────────────────────────────── */
+header.kopf{max-width:1240px;margin:0 auto;padding:36px 16px 10px}
+header.kopf h1{font-family:var(--disp);font-size:clamp(26px,4vw,40px);letter-spacing:-.03em;line-height:1.02}
+header.kopf h1 small{display:block;font-family:'Space Grotesk',system-ui,sans-serif;font-size:14px;font-weight:600;
+  color:var(--acid);letter-spacing:0;margin-top:8px}
+header.kopf p{color:var(--muted);font-size:14px;max-width:78ch;margin-top:12px}
+header.kopf p b{color:var(--ink2);font-weight:600}
+.merk{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.merk span{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);font-weight:700;border:1px solid var(--line);
+  border-radius:999px;padding:5px 11px}
+.merk span i{width:7px;height:7px;border-radius:50%;background:var(--acid)}
+
+nav.leiste{position:sticky;top:0;z-index:40;background:rgba(10,12,11,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);margin:20px 0 30px}
+nav.leiste .in{max-width:1240px;margin:0 auto;padding:10px 16px;display:flex;gap:6px;
+  overflow-x:auto;scrollbar-width:none;align-items:center}
+nav.leiste .in::-webkit-scrollbar{display:none}
+nav.leiste a{flex-shrink:0;color:var(--muted);text-decoration:none;font-size:12.5px;font-weight:600;
+  padding:6px 11px;border-radius:9px;border:1px solid transparent}
+nav.leiste a:hover{color:var(--ink);border-color:var(--line)}
+nav.leiste label{margin-left:auto;flex-shrink:0;display:flex;gap:7px;align-items:center;
+  font-size:11.5px;color:var(--muted);cursor:pointer;padding-left:12px}
+nav.leiste input{accent-color:var(--acid)}
+
+section.abs{max-width:1240px;margin:0 auto 64px;padding:0 16px;scroll-margin-top:70px}
+section.abs>h2{font-family:var(--disp);font-size:22px;letter-spacing:-.02em;display:flex;
+  align-items:baseline;gap:12px;flex-wrap:wrap}
+section.abs>h2 .nr{font-family:var(--mono);font-size:12px;color:var(--acid);letter-spacing:.06em}
+section.abs>.lead{color:var(--muted);font-size:14px;max-width:80ch;margin:8px 0 22px}
+section.abs>.lead b{color:var(--ink2);font-weight:600}
+
+.reihe{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:28px;align-items:start}
+.notiz{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 8px}
+.notiz h3{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:12px}
+.notiz ol{list-style:none;counter-reset:n}
+.notiz li{counter-increment:n;position:relative;padding:0 0 14px 34px;font-size:13.5px;color:var(--ink2)}
+.notiz li::before{content:counter(n);position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;
+  background:var(--gold);color:#221a02;font:700 11px/22px var(--mono);text-align:center}
+.notiz li b{color:var(--ink);font-weight:600}
+.notiz li code,.befund code{font-family:var(--mono);font-size:11.5px;color:var(--acid);background:rgba(190,242,100,.07);
+  padding:1px 5px;border-radius:5px}
+.notiz .regel{border-top:1px dashed var(--line2);margin-top:4px;padding:12px 0 10px;font-size:12.5px;color:var(--muted)}
+.notiz .regel b{color:var(--ink2)}
+
+/* Markierungen: eine Zahl am Bauteil, dieselbe in der Notiz */
+[data-m]{position:relative}
+[data-m]::after{content:attr(data-m);position:absolute;top:-9px;right:-9px;z-index:5;width:20px;height:20px;
+  border-radius:50%;background:var(--gold);color:#221a02;font:700 10.5px/20px var(--mono);text-align:center;
+  box-shadow:0 0 0 3px var(--bg);pointer-events:none}
+body.ohne-m [data-m]::after{display:none}
+.abschn[data-m]::after,.faden[data-m]::after{right:auto;left:-26px;top:-3px}
+
+/* ── Telefon ─────────────────────────────────────────────────── */
+.tel{width:100%;max-width:360px;margin:0 auto;background:var(--bg);border:1px solid var(--line2);
+  border-radius:34px;padding:14px 12px 16px;position:relative;
+  box-shadow:0 30px 70px -20px rgba(0,0,0,.8),inset 0 0 0 5px #070908}
+.tel>.cap{font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);
+  text-align:center;margin:-2px 0 10px}
+.tel.blatt{background:rgba(0,0,0,.6);padding-top:40px}
+
+/* ════════════════════════════════════════════════════════════════
+   BAUTEILE DES VORSCHLAGS
+   ════════════════════════════════════════════════════════════════ */
+
+/* Zeichenkachel — EIN Bauteil für jedes Zeichen mit Fläche.
+   Drei Größen, vier Rollen [§C25]. */
+.zk{--z:36px;--t:var(--ink2);--tr:185,196,189;width:var(--z);height:var(--z);flex-shrink:0;
+  border-radius:calc(var(--z)*.3);display:grid;place-items:center;color:var(--t);
+  background:linear-gradient(160deg,rgba(var(--tr),.16),rgba(var(--tr),.06));
+  box-shadow:inset 0 0 0 1px rgba(var(--tr),.22),inset 0 1px 0 rgba(255,255,255,.05)}
+.zk.k{--z:28px}.zk.k svg.i{width:15px;height:15px;stroke-width:2}
+.zk.g{--z:48px}.zk.g svg.i{width:24px;height:24px;stroke-width:1.6}
+.zk.xl{--z:64px}.zk.xl svg.i{width:30px;height:30px;stroke-width:1.5}
+.zk.gold{--t:var(--gold);--tr:247,207,74}
+.zk.rot{--t:var(--red);--tr:240,86,106}
+.zk.gruen{--t:var(--acid);--tr:190,242,100}
+.zk.blau{--t:var(--blue);--tr:86,180,232}
+.zk.viol{--t:var(--purple);--tr:167,139,250}
+.zk.bronze{--t:var(--bronze);--tr:192,132,87}
+
+/* Gesicht (.av) — Wappen bleibt wie heute, hier als Ring angedeutet */
+.av{--s:40px;width:var(--s);height:var(--s);border-radius:50%;display:grid;place-items:center;flex-shrink:0;
+  font:700 calc(var(--s)*.34)/1 'Space Grotesk',system-ui,sans-serif,system-ui,sans-serif;color:rgba(0,0,0,.72);background:var(--c,#888);
+  box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px rgba(194,201,208,.55)}
+.av.w{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--ringc,rgba(194,201,208,.7)),0 0 16px -2px var(--ringc,rgba(194,201,208,.3))}
+.paar{display:flex}.paar .av+.av{margin-left:calc(var(--s)*-.3)}
+.c-martin{--c:#4ade80}.c-leon{--c:#f0566a}.c-maxi{--c:#fcd34d}.c-julian{--c:#fb923c}
+.c-johannes{--c:#e879f9}.c-anton{--c:#facc15}.c-leo{--c:#22d3ee}.c-jane{--c:#86efac}
+.c-henry{--c:#93c5fd}.c-stefan{--c:#c4b5fd}.c-alex{--c:#fda4af}
+
+/* Kopf der Ansicht */
+.vk h2{font:24px/1 var(--disp);letter-spacing:-.03em}
+.vk p{font-size:12.5px;color:var(--muted);margin-top:6px}
+
+/* Kennzahlstreifen unter dem Kopf */
+.kz{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:12px 0 14px}
+.kz div{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 8px 7px}
+.kz b{display:block;font:600 16px/1.1 var(--mono);color:var(--ink)}
+.kz span{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.kz .gold b{color:var(--gold)}
+
+/* Segmentwähler, äußere Ebene: gleitender Schlitten */
+.sw{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));background:var(--bg2);
+  border:1px solid var(--line);border-radius:14px;padding:4px}
+.sw .schl{position:absolute;top:4px;bottom:4px;left:4px;width:calc((100% - 8px)/var(--n));border-radius:10px;
+  background:linear-gradient(180deg,var(--surface3),var(--surface2));box-shadow:inset 0 0 0 1px var(--line2),0 4px 14px -6px rgba(0,0,0,.8);
+  transform:translateX(calc(var(--i,0)*100%));transition:transform .28s cubic-bezier(.3,.7,.2,1)}
+.sw button{position:relative;z-index:1;background:none;border:0;font:600 13px 'Space Grotesk',system-ui,sans-serif,system-ui,sans-serif;color:var(--muted);
+  padding:9px 2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:color .2s}
+.sw button.on{color:var(--ink)}
+.sw button .zl{font:600 10px var(--mono);color:var(--faint);background:rgba(255,255,255,.04);border-radius:6px;padding:1px 5px}
+.sw button.on .zl{color:var(--acid);background:rgba(190,242,100,.1)}
+@media (prefers-reduced-motion:reduce){.sw .schl{transition:none}}
+
+/* Innere Ebene: rahmenlos, Strich wandert */
+.tb{position:relative;display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:12px}
+.tb button{flex:1;background:none;border:0;font:600 12.5px 'Space Grotesk',system-ui,sans-serif,system-ui,sans-serif;color:var(--muted);padding:9px 0 10px;cursor:pointer;
+  display:flex;gap:6px;align-items:center;justify-content:center}
+.tb button.on{color:var(--ink)}
+.tb button svg.i{width:15px;height:15px}
+.tb .strich{position:absolute;bottom:-1px;height:2px;border-radius:2px;background:var(--acid);
+  box-shadow:0 0 10px rgba(190,242,100,.6);transition:left .28s cubic-bezier(.3,.7,.2,1),width .28s}
+
+/* Monatsleiste: Tage als Zellen statt Balken */
+.monat{display:flex;align-items:center;gap:10px;margin:14px 0 4px}
+.monat .lbl{font:600 10px var(--mono);letter-spacing:.08em;color:var(--muted);white-space:nowrap}
+.monat .lbl b{color:var(--ink)}
+.tage{flex:1;display:grid;grid-template-columns:repeat(31,1fr);gap:2px;height:12px}
+.tage i{border-radius:2px;background:var(--surface3)}
+.tage i.v{background:rgba(190,242,100,.28)}
+.tage i.s{background:var(--acid)}
+.tage i.h{background:var(--acid);box-shadow:0 0 0 1.5px var(--bg),0 0 0 3px var(--acid)}
+
+.chips{display:flex;gap:6px;margin:10px 0 12px;overflow:hidden}
+.chips span{flex-shrink:0;font:600 10.5px var(--mono);letter-spacing:.06em;color:var(--muted);padding:6px 10px;border-radius:9px;border:1px solid transparent}
+.chips span.on{color:var(--ink);border-color:var(--line2);background:var(--surface)}
+.chips span.on::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--acid);margin-right:6px;vertical-align:1px}
+
+/* Ranglistenzeile */
+.rr{display:grid;grid-template-columns:20px 44px minmax(0,1fr) auto;gap:10px;align-items:center;
+  background:linear-gradient(180deg,var(--surface),var(--bg2));border:1px solid var(--line);border-radius:16px;
+  padding:10px 12px 10px 10px;margin-bottom:8px;position:relative;overflow:hidden}
+.rr::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:0 3px 3px 0;background:var(--kante,transparent)}
+.rr.p1{--kante:var(--gold);border-color:rgba(247,207,74,.35);background:linear-gradient(100deg,rgba(247,207,74,.07),var(--bg2) 60%)}
+.rr.p2{--kante:var(--silber)}.rr.p3{--kante:var(--bronze)}
+.rr .pl{font:600 13px var(--mono);color:var(--muted);text-align:center}
+.rr.p1 .pl{color:var(--gold)}
+.rr .nm{display:flex;align-items:center;gap:6px;font-weight:700;font-size:15.5px;white-space:nowrap}
+.rr .ti{font:700 8.5px var(--mono);letter-spacing:.14em;color:var(--gold);text-transform:uppercase;margin-bottom:1px}
+.rr .zeile{display:flex;align-items:center;gap:7px;margin-top:4px;font:500 11px var(--mono);color:var(--muted);white-space:nowrap}
+.rr .zeile b{color:var(--ink2);font-weight:600}
+.quote{width:44px;height:4px;border-radius:2px;background:var(--surface3);overflow:hidden}
+.quote i{display:block;height:100%;background:var(--acid);border-radius:2px}
+.dots{display:flex;gap:3px;margin-top:5px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--acid)}
+.dots i.l{background:var(--red)}
+.rr .elo{text-align:right}
+.rr .elo b{display:block;font:600 21px/1 var(--mono)}
+.rr.p1 .elo b{color:var(--gold)}
+.rr .elo svg{display:block;margin:5px 0 3px auto}
+.delta{display:inline-flex;align-items:center;gap:2px;font:600 10.5px var(--mono);padding:1px 5px;border-radius:6px}
+.delta.auf{color:var(--acid);background:rgba(190,242,100,.1)}
+.delta.ab{color:var(--red);background:rgba(240,86,106,.1)}
+.delta.gl{color:var(--muted);background:rgba(255,255,255,.04)}
+
+/* Untere Leiste */
+.botnav{display:grid;grid-template-columns:repeat(5,1fr);margin:14px -12px -16px;padding:8px 6px 10px;
+  border-top:1px solid var(--line);background:rgba(10,12,11,.94);border-radius:0 0 33px 33px}
+.botnav div{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--muted)}
+.botnav .pille{width:52px;height:28px;border-radius:14px;display:grid;place-items:center}
+.botnav .on{color:var(--ink)}
+.botnav .on .pille{background:rgba(190,242,100,.12);color:var(--acid);box-shadow:inset 0 0 0 1px rgba(190,242,100,.25)}
+.botnav .on span{color:var(--acid)}
+
+/* ── Award-Kachel ──────────────────────────────────────────────── */
+.kr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ak{--ton:185,196,189;position:relative;border-radius:16px;padding:11px 11px 10px;
+  background:radial-gradient(120% 80% at 0% 0%,rgba(var(--ton),.1),transparent 60%),linear-gradient(180deg,var(--surface),var(--bg2));
+  border:1px solid rgba(var(--ton),.2)}
+.ak.pos{--ton:247,207,74}.ak.team{--ton:86,180,232}.ak.neg{--ton:240,86,106}
+.ak .kopf{display:flex;align-items:center;gap:8px}
+.ak .kopf h4{font-size:11.5px;font-weight:700;line-height:1.2;color:var(--ink2)}
+.ak .held{display:flex;align-items:center;gap:8px;margin-top:11px}
+.ak .held .wer{min-width:0}
+.ak .held .wer b{display:block;font-size:13.5px;font-weight:700;line-height:1.2}
+.ak .held .wer span{font-size:10.5px;color:var(--muted)}
+.ak .wert{display:flex;align-items:baseline;gap:5px;margin-top:10px}
+.ak .wert b{font:600 22px/1 var(--mono);color:rgb(var(--ton));white-space:nowrap}
+.kr>.ak:not(.breit) .wert{flex-wrap:wrap;row-gap:3px}
+.ak.pos .wert b{color:var(--gold)}
+.ak .wert span{font-size:11px;color:var(--ink2);font-weight:600}
+.ak .beleg{margin-top:7px}
+.ak .gleich{position:absolute;top:10px;right:10px;font:600 10px var(--mono);color:var(--muted);background:rgba(255,255,255,.05);border-radius:6px;padding:2px 6px}
+.ak.leer{border-style:dashed;border-color:var(--line2);background:transparent}
+.ak.leer .held{color:var(--faint);font-size:12px;font-style:italic}
+.ak.breit{grid-column:1/-1}
+
+/* ── Beleg: Lage im Feld ───────────────────────────────────────── */
+.feld{position:relative;height:20px}
+.feld .bahn{position:absolute;left:0;right:0;top:9px;height:2px;border-radius:1px;background:var(--surface3)}
+.feld .mitte{position:absolute;top:3px;width:1px;height:14px;background:var(--muted)}
+.feld i{position:absolute;top:6px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:var(--faint);box-shadow:0 0 0 1.5px var(--bg)}
+.feld i.er{width:12px;height:12px;top:4px;margin-left:-6px;background:var(--gold);box-shadow:0 0 0 2px var(--bg),0 0 10px rgba(247,207,74,.6)}
+.feld.neg i.er{background:var(--red);box-shadow:0 0 0 2px var(--bg),0 0 10px rgba(240,86,106,.6)}
+.feld.team i.er{background:var(--blue);box-shadow:0 0 0 2px var(--bg),0 0 10px rgba(86,180,232,.6)}
+.feld-l{display:flex;justify-content:space-between;font:500 9.5px var(--mono);color:var(--faint);margin-top:2px}
+
+/* Anteil mit Stichprobe: Zellen */
+.zellen{display:grid;grid-template-columns:repeat(25,1fr);gap:2px}
+.zellen i{aspect-ratio:1;border-radius:2px;background:var(--surface3)}
+.zellen i.j{background:var(--acid)}
+.zellen i.n{background:rgba(240,86,106,.55)}
+
+/* Spanne (Unsicherheit) */
+.spanne{position:relative;height:26px;margin-top:4px}
+.spanne .bahn{position:absolute;left:0;right:0;top:12px;height:2px;background:var(--surface3)}
+.spanne .ber{position:absolute;top:8px;height:10px;border-radius:5px;background:rgba(247,207,74,.18);box-shadow:inset 0 0 0 1px rgba(247,207,74,.4)}
+.spanne .pkt{position:absolute;top:6px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 2px var(--bg)}
+.spanne .ref{position:absolute;top:2px;width:1px;height:22px;background:var(--muted)}
+
+/* Verlauf mit Moment */
+.verl{display:block;width:100%;height:auto}
+
+/* ── Blatt ─────────────────────────────────────────────────────── */
+.sheet{background:linear-gradient(180deg,#111713,var(--bg) 40%);border:1px solid var(--line2);border-bottom:0;
+  border-radius:26px 26px 0 0;margin:0 -12px -16px;padding:8px 16px 18px;position:relative;
+  box-shadow:0 -20px 60px -20px rgba(0,0,0,.9)}
+.sheet .griff{width:40px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 14px}
+.sk{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.sk h3{font:19px/1.12 var(--disp);letter-spacing:-.02em}
+.sk .unt{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.zu{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;color:var(--muted);background:var(--surface);border:1px solid var(--line)}
+.abschn{display:flex;align-items:center;gap:8px;margin:18px 0 9px;font:700 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.abschn svg.i{width:13px;height:13px;color:var(--faint)}
+.abschn em{font-style:normal;margin-left:auto;color:var(--faint);letter-spacing:.04em}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px}
+.fuss{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.knopf{display:flex;align-items:center;justify-content:center;gap:7px;font:600 13px 'Space Grotesk',system-ui,sans-serif,system-ui,sans-serif;padding:11px 10px;border-radius:12px;
+  color:var(--ink);background:var(--surface2);border:1px solid var(--line2)}
+.knopf.prim{background:var(--acid);color:var(--acid-deep);border-color:transparent}
+
+/* Partie als Bühne */
+.buehne{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;padding:14px 10px 12px;
+  border-radius:16px;background:radial-gradient(90% 120% at 20% 0%,rgba(190,242,100,.08),transparent 60%),var(--surface);border:1px solid var(--line)}
+.buehne .seite{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;min-width:0}
+.buehne .seite .n{font-size:12px;font-weight:600;color:var(--ink2);line-height:1.25}
+.buehne .seite.sieg .n{color:var(--ink)}
+.buehne .seite.nied{opacity:.62}
+.buehne .marke{font:700 8.5px var(--mono);letter-spacing:.16em;color:var(--acid);text-transform:uppercase;height:10px}
+.buehne .stand{font:600 40px/1 var(--mono);letter-spacing:-.04em;white-space:nowrap}
+.buehne .stand i{font-style:normal;color:var(--faint)}
+.buehne .zeit{grid-column:1/-1;text-align:center;font:500 10.5px var(--mono);color:var(--muted);margin-top:4px}
+
+/* Top-Liste im Blatt */
+.tl{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line)}
+.tl:last-child{border-bottom:0}
+.tl .p{font:600 12px var(--mono);color:var(--muted);text-align:center}
+.tl .p.g{color:var(--gold)}
+.tl .w{display:flex;align-items:center;gap:8px;min-width:0;font-size:13px;font-weight:600}
+.tl .w .paar .av{--s:24px}
+.tl .v{font:600 13px var(--mono);text-align:right}
+.tl .v small{display:block;font:500 9.5px var(--mono);color:var(--muted)}
+
+/* ── Story-Karte ───────────────────────────────────────────────── */
+.tag{display:flex;align-items:baseline;gap:8px;margin:6px 2px 10px}
+.tag b{font:15px var(--disp);letter-spacing:-.01em}
+.tag span{font:500 11px var(--mono);color:var(--muted)}
+.tag em{margin-left:auto;font:600 10px var(--mono);color:var(--faint);font-style:normal;letter-spacing:.06em}
+.sc{--story:190,242,100;position:relative;border-radius:18px;padding:11px 12px 12px;margin-bottom:10px;
+  background:radial-gradient(90% 70% at 100% 0%,rgba(var(--story),.09),transparent 60%),linear-gradient(180deg,var(--surface),var(--bg2));
+  border:1px solid rgba(var(--story),.18)}
+.sc::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:0 3px 3px 0;background:rgba(var(--story),.8)}
+.sc.gold{--story:247,207,74}.sc.silber{--story:194,201,208}.sc.viol{--story:167,139,250}.sc.bronze{--story:192,132,87}.sc.rot{--story:240,86,106}
+.sc .band{display:flex;align-items:center;gap:7px;font:700 9.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:rgb(var(--story))}
+.sc .band .zk{--z:22px;border-radius:7px}.sc .band .zk svg.i{width:12px;height:12px;stroke-width:2.1}
+.sc .band time{margin-left:auto;color:var(--muted);letter-spacing:.04em;font-weight:500}
+.sc h4{font-size:15.5px;font-weight:700;line-height:1.28;margin-top:9px;letter-spacing:-.01em}
+.sc p{font-size:12.5px;color:var(--ink2);margin-top:5px;line-height:1.45}
+.sc p b{color:var(--ink);font-weight:600}
+.sc .chev{position:absolute;right:12px;bottom:12px;color:var(--faint)}
+/* Ergebnisband: Sieger hell, Verlierer leise */
+.eb{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center;margin-top:10px;
+  padding:8px 10px;border-radius:12px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+.eb .s{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0;font-size:11px;font-weight:600;line-height:1.2}
+.eb .s.r{align-items:flex-end;text-align:right}
+.eb .s .paar .av{--s:24px;box-shadow:0 0 0 2px var(--bg2)}
+.eb .s.nied{opacity:.55}
+.eb .st{font:600 18px var(--mono);white-space:nowrap}
+.eb .st i{font-style:normal;color:var(--faint)}
+/* Chancenbogen */
+.bogen{display:flex;align-items:center;gap:10px;margin-top:10px}
+.bogen .txt{font-size:11px;color:var(--muted);line-height:1.35}
+.bogen .txt b{display:block;font:600 13px var(--mono);color:var(--ink)}
+.eloz{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.eloz span{display:inline-flex;align-items:center;gap:5px;font:600 10.5px var(--mono);padding:3px 7px 3px 3px;border-radius:999px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.eloz .av{--s:16px;box-shadow:none;font-size:7px}
+.eloz .auf{color:var(--acid)}.eloz .ab{color:var(--red)}
+/* Serienlauf */
+.lauf{display:flex;gap:3px;margin-top:10px;align-items:center}
+.lauf i{flex:1;height:8px;border-radius:3px;background:var(--acid)}
+.lauf i.x{background:var(--surface3)}
+.lauf span{font:600 10px var(--mono);color:var(--muted);margin-left:6px;white-space:nowrap}
+/* Faden: Anbindung an frühere Story */
+.faden{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:9px;border-top:1px dashed var(--line2);font-size:11.5px;color:var(--muted)}
+.faden svg.i{color:rgb(var(--story))}
+.faden b{color:var(--ink2);font-weight:600}
+.faden .kap{margin-left:auto;font:600 9.5px var(--mono);letter-spacing:.08em;color:rgb(var(--story));white-space:nowrap}
+/* Karte des Tages */
+.sc.kdt{border-color:rgba(247,207,74,.4);box-shadow:0 0 0 1px rgba(247,207,74,.12),0 12px 40px -14px rgba(247,207,74,.35)}
+.kdt-band{display:flex;align-items:center;gap:6px;font:700 9px var(--mono);letter-spacing:.16em;color:var(--gold);text-transform:uppercase;
+  margin:-11px -12px 10px;padding:7px 12px;border-radius:17px 17px 0 0;background:linear-gradient(90deg,rgba(247,207,74,.14),transparent)}
+/* Breaking */
+.sc.brk{--story:240,86,106;margin-left:-4px;margin-right:-4px;border-color:rgba(240,86,106,.5);
+  background:radial-gradient(80% 90% at 0% 100%,rgba(240,86,106,.16),transparent 60%),linear-gradient(180deg,var(--surface),var(--bg2))}
+.brk-band{display:flex;align-items:center;gap:7px;font:700 9.5px var(--mono);letter-spacing:.16em;color:#fff;text-transform:uppercase;
+  margin:-11px -12px 10px;padding:7px 12px;border-radius:17px 17px 0 0;background:linear-gradient(90deg,rgba(240,86,106,.85),rgba(240,86,106,.35))}
+.brk-band .puls{width:7px;height:7px;border-radius:50%;background:#fff;animation:puls 1.4s infinite}
+.brk-band em{margin-left:auto;font-style:normal;opacity:.85}
+@keyframes puls{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.brk-band .puls{animation:none}}
+/* Sammelband */
+.sam{margin-top:10px;display:grid;gap:5px}
+.sam div{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--ink2)}
+.sam div .zk{--z:20px;border-radius:6px}.sam div .zk svg.i{width:11px;height:11px;stroke-width:2.2}
+.sam div b{color:var(--ink);font-weight:600}
+.sam .mehr{color:var(--muted);font:600 10.5px var(--mono);padding-left:28px}
+
+/* ── Toast & Dialog ────────────────────────────────────────────── */
+.toast{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:rgba(26,34,29,.96);
+  border:1px solid var(--line2);box-shadow:0 14px 40px -10px rgba(0,0,0,.9);font-size:13px}
+.dlg{background:var(--surface);border:1px solid var(--line2);border-radius:22px;padding:18px;text-align:center;box-shadow:0 30px 60px -20px #000}
+.dlg h4{font:18px var(--disp);margin-top:12px}
+.dlg p{font-size:13px;color:var(--ink2);margin-top:6px}
+.dlg .fuss{margin-top:16px}
+.knopf.rot{background:rgba(240,86,106,.14);color:var(--red);border-color:rgba(240,86,106,.35)}
+
+/* ── Vorher/Nachher der Befunde ─────────────────────────────────── */
+.befunde{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px}
+.befund{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.befund h3{font-size:14.5px;font-weight:700;display:flex;gap:9px;align-items:center}
+.befund p{font-size:12.5px;color:var(--muted);margin-top:6px}
+.vn{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.vn>div{border-radius:12px;padding:10px;background:var(--surface);border:1px solid var(--line);min-height:84px;display:flex;flex-direction:column;gap:6px}
+.vn>div>small{font:700 9px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.vn>div.heute>small{color:var(--red)}
+.vn>div.so>small{color:var(--acid)}
+.balkenav{display:block;width:100%;text-align:center;font:600 10px/16px 'Space Grotesk',system-ui,sans-serif,system-ui,sans-serif;color:#111}
+
+/* ── Zeichenkatalog ─────────────────────────────────────────────── */
+.zgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.zgrid div{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 6px 10px;border-radius:14px;background:var(--bg2);border:1px solid var(--line)}
+.zgrid div span{font:500 10px var(--mono);color:var(--muted);text-align:center}
+.rollen{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.rollen>div{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:6px 10px 6px 6px}
+.strichvgl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.strichvgl>div{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:12px}
+.strichvgl small{font:700 9px var(--mono);letter-spacing:.14em;text-transform:uppercase}
+.strichvgl .zeichen{display:flex;gap:14px;margin-top:10px;color:var(--ink2);flex-wrap:wrap}
+
+/* Plan */
+.plan{counter-reset:p;display:grid;gap:10px}
+.plan>div{counter-increment:p;display:grid;grid-template-columns:38px minmax(0,1fr);gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:16px;padding:14px}
+.plan>div::before{content:counter(p,decimal-leading-zero);font:600 15px var(--mono);color:var(--acid)}
+.plan h4{font-size:14px;font-weight:700}
+.plan p{font-size:12.5px;color:var(--muted);margin-top:4px}
+.plan p code{font-family:var(--mono);font-size:11px;color:var(--ink2)}
+.plan .test{display:inline-flex;gap:6px;align-items:center;margin-top:8px;font:600 10.5px var(--mono);color:var(--acid);background:rgba(190,242,100,.07);border-radius:7px;padding:3px 8px}
+.bleibt{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.bleibt span{font-size:12px;color:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--bg2)}
+</style>
+</head>
+<body>
+
+<!-- ═══ Zeichenvorrat: ein Raster, ein Strich ═══════════════════════ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="liga" viewBox="0 0 24 24"><path d="M5 20V11M10 20V5M15 20v-7M20 20V8"/></symbol>
+    <symbol id="pos" viewBox="0 0 24 24"><circle cx="12" cy="7.5" r="3.5"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/></symbol>
+    <symbol id="pokal" viewBox="0 0 24 24"><path d="M8 4h8v5.5a4 4 0 01-8 0z"/><path d="M8 6H5.5a.5.5 0 00-.5.5V8a3 3 0 003 3M16 6h2.5a.5.5 0 01.5.5V8a3 3 0 01-3 3"/><path d="M12 13.5V17M8.5 20h7M10 17h4"/></symbol>
+    <symbol id="teams" viewBox="0 0 24 24"><circle cx="8.5" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M3 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M14.5 14.2c.5-.1 1-.2 1.5-.2 2.3 0 4.2 1.6 4.8 4.5"/></symbol>
+    <symbol id="verlauf" viewBox="0 0 24 24"><path d="M4 12a8 8 0 102.3-5.6"/><path d="M4 5v3.5h3.5"/><path d="M12 8v4l2.5 2"/></symbol>
+    <symbol id="krone" viewBox="0 0 24 24"><path d="M4 8.5l3.8 3.2L12 6l4.2 5.7L20 8.5l-1.6 9.5H5.6z"/><path d="M6 21h12"/></symbol>
+    <symbol id="stern" viewBox="0 0 24 24"><path d="M12 3.8l2.4 5 5.4.7-4 3.7 1 5.4-4.8-2.7-4.8 2.7 1-5.4-4-3.7 5.4-.7z"/></symbol>
+    <symbol id="medaille" viewBox="0 0 24 24"><circle cx="12" cy="14.5" r="5.5"/><path d="M9 9.5L6.5 3.5h3.5l2 4 2-4h3.5L15 9.5"/><path d="M12 12v5"/></symbol>
+    <symbol id="flamme" viewBox="0 0 24 24"><path d="M12 21a6 6 0 006-6c0-4-3-6.2-4.2-9.8-.2-.6-.9-.8-1.3-.3C11 7 11.3 9.3 9.7 10.6 9 9.8 8.4 9.4 7.8 9.4 6.8 10.9 6 12.6 6 15a6 6 0 006 6z"/><path d="M12 21a2.5 2.5 0 002.5-2.5c0-1.7-1.4-2.6-2.5-4-1.1 1.4-2.5 2.3-2.5 4A2.5 2.5 0 0012 21z"/></symbol>
+    <symbol id="blitz" viewBox="0 0 24 24"><path d="M13.2 3L5.5 13.2h6l-1.2 7.8 8.2-10.6h-6.1z"/></symbol>
+    <symbol id="schild" viewBox="0 0 24 24"><path d="M12 3.2l7 2.8v5.4c0 4.5-2.9 8-7 9.4-4.1-1.4-7-4.9-7-9.4V6z"/></symbol>
+    <symbol id="ziel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4.2"/><circle cx="12" cy="12" r=".6" fill="currentColor"/></symbol>
+    <symbol id="ball" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5l3.4 2.5-1.3 4h-4.2l-1.3-4z"/><path d="M12 3.5v4M15.4 10l4-1.2M14.1 14l2.4 3.6M9.9 14l-2.4 3.6M8.6 10l-4-1.2"/></symbol>
+    <symbol id="auf" viewBox="0 0 24 24"><path d="M4 16.5l5.2-5.2 3.6 3.6L20 7.7"/><path d="M14.5 7.5H20V13"/></symbol>
+    <symbol id="ab" viewBox="0 0 24 24"><path d="M4 7.5l5.2 5.2 3.6-3.6L20 16.3"/><path d="M14.5 16.5H20V11"/></symbol>
+    <symbol id="balken" viewBox="0 0 24 24"><path d="M4 4v16h16"/><path d="M8.5 16v-3.5M12.5 16V9M16.5 16v-6"/></symbol>
+    <symbol id="klingen" viewBox="0 0 24 24"><path d="M4.5 4.5L15 15M19.5 4.5L9 15"/><path d="M12.5 17.5l5-5M6.5 12.5l5 5"/><path d="M15 15l4 4M9 15l-4 4"/></symbol>
+    <symbol id="waage" viewBox="0 0 24 24"><path d="M12 4v16M8 20h8M5 7h14"/><path d="M5 7l-2.5 6a2.5 2.5 0 005 0zM19 7l-2.5 6a2.5 2.5 0 005 0z"/></symbol>
+    <symbol id="wuerfel" viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="15" height="15" rx="3.5"/><circle cx="9" cy="9" r=".9" fill="currentColor"/><circle cx="15" cy="15" r=".9" fill="currentColor"/><circle cx="12" cy="12" r=".9" fill="currentColor"/></symbol>
+    <symbol id="riss" viewBox="0 0 24 24"><path d="M12 3.2l7 2.8v5.4c0 4.5-2.9 8-7 9.4-4.1-1.4-7-4.9-7-9.4V6z"/><path d="M12.5 7l-2 3.5 3 2-2 4"/></symbol>
+    <symbol id="kalender" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="3"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></symbol>
+    <symbol id="uhr" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".6" fill="currentColor"/></symbol>
+    <symbol id="rechts" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+    <symbol id="x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="zahnrad" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M20.5 12h-2.2M5.7 12H3.5M18 6l-1.6 1.6M7.6 16.4L6 18M18 18l-1.6-1.6M7.6 7.6L6 6"/></symbol>
+    <symbol id="haken" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="faden" viewBox="0 0 24 24"><path d="M9.5 14.5l5-5"/><path d="M11 6.5l1.4-1.4a4 4 0 015.6 5.6L16.5 12M13 17.5l-1.4 1.4a4 4 0 01-5.6-5.6L7.5 12"/></symbol>
+    <symbol id="haende" viewBox="0 0 24 24"><circle cx="9" cy="12" r="5.5"/><path d="M13.6 8.2A5.5 5.5 0 1115 17.5"/></symbol>
+    <symbol id="sanduhr" viewBox="0 0 24 24"><path d="M7 3.5h10M7 20.5h10M8 3.5c0 4.5 4 5.5 4 8.5s-4 4-4 8.5M16 3.5c0 4.5-4 5.5-4 8.5s4 4 4 8.5"/></symbol>
+    <symbol id="mauer" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="14" rx="2"/><path d="M3.5 9.7h17M3.5 14.3h17M9 5v4.7M15 5v4.7M12 9.7v4.6M6.5 14.3V19M17.5 14.3V19"/></symbol>
+    <symbol id="tropfen" viewBox="0 0 24 24"><path d="M12 3.5c3 4 6 7.2 6 10.5a6 6 0 01-12 0c0-3.3 3-6.5 6-10.5z"/></symbol>
+  </defs>
+</svg>
+
+<header class="kopf">
+  <h1>Visuelle Aufwertung<small>Mockup für den nächsten Auftrag · Reiter, Zeichen, Kacheln, Belege, Stories, Blätter</small></h1>
+  <p>Ein Entwurf, <b>kein Umbau der Designsprache</b>. Farben, Schriften, Wappen, Feuer, Sterne und das Farbgesetz [§C25] bleiben, wie sie auf dem Hauptzweig stehen. Aufgeräumt werden die Bauteile dazwischen: ein Zeichenraster statt dreizehn Strichstärken, Kacheln mit ausgeschriebener Einheit, Zahlen mit sichtbarer Stichprobe, Stories mit Ergebnis und Richtung auf einen Blick, Blätter mit demselben Kopf und Fuß. Jede gelbe Zahl am Telefon gehört zur gleichnamigen Zeile daneben.</p>
+  <div class="merk"><span><i></i>360 px zuerst</span><span><i></i>ein Bauteil je Aussage [§C27]</span><span><i></i>Gold nur für Titel und Rekorde</span><span><i></i>keine Anrede, kein Kürzel</span><span><i></i>jede Regel mit Test</span></div>
+</header>
+
+<nav class="leiste"><div class="in">
+  <a href="#befunde">Befunde</a><a href="#zeichen">Zeichen</a><a href="#reiter">Reiter</a><a href="#kacheln">Kacheln</a>
+  <a href="#belege">Belege</a><a href="#stories">Stories</a><a href="#blaetter">Blätter</a><a href="#plan">Reihenfolge</a>
+  <label><input type="checkbox" id="mk" checked> Markierungen</label>
+</div></nav>
+
+<!-- ═══ 0 BEFUNDE ═══════════════════════════════════════════════════ -->
+<section class="abs" id="befunde">
+  <h2><span class="nr">00</span>Was heute schief steht</h2>
+  <p class="lead">Aus dem Rundgang bei 360 px, jeweils an der Quelle nachgesehen. Diese Punkte sind <b>Fehler</b> und kommen vor jeder Verschönerung.</p>
+  <div class="befunde">
+    <div class="befund">
+      <h3><span class="zk k rot"><svg class="i"><use href="#x"/></svg></span>Gesichter als Farbbalken</h3>
+      <p>Im Award-Blatt „Höchster Sieg" stehen die Teams als volle Farbstreifen mit Initialen. <code>.aw-mini-av</code> und <code>.aw-mini-pair</code> haben keine einzige CSS-Regel: das Gesicht ist ein Blockelement in voller Breite.</p>
+      <div class="vn">
+        <div class="heute"><small>heute</small>
+          <span class="balkenav" style="background:#f0566a">LE</span><span class="balkenav" style="background:#4ade80">MA</span>
+          <span style="font-size:11px;text-align:center;color:var(--ink2)">Leon &amp; Martin</span></div>
+        <div class="so"><small>so</small>
+          <div class="paar" style="justify-content:center;margin-top:4px"><span class="av c-leon" style="--s:30px">LE</span><span class="av c-martin" style="--s:30px">MA</span></div>
+          <span style="font-size:11px;text-align:center;color:var(--ink2)">Leon &amp; Martin</span></div>
+      </div>
+    </div>
+    <div class="befund">
+      <h3><span class="zk k rot"><svg class="i"><use href="#x"/></svg></span>Kürzel auf sieben Kacheln</h3>
+      <p>„Gegentore/Sp." und „Tore/Sp." stehen noch in sieben Award-Kacheln (<code>13-view-awards.js</code>), „5 Niederl." als aktuelle Serie im Duo-Blatt (<code>22-team-profil.js</code>). Das Blatt schreibt die Einheit seit dem letzten Durchgang aus, die Kachel nicht.</p>
+      <div class="vn">
+        <div class="heute"><small>heute</small><b class="num" style="font-size:18px">6,9</b><span style="font-size:11px;color:var(--muted)">Gegentore/Sp.</span></div>
+        <div class="so"><small>so</small><b class="num" style="font-size:18px">Ø 6,9</b><span style="font-size:11px;color:var(--ink2)">Gegentore je Partie</span></div>
+      </div>
+    </div>
+    <div class="befund">
+      <h3><span class="zk k rot"><svg class="i"><use href="#x"/></svg></span>„16er" ohne Sache</h3>
+      <p>Serienwerte stehen als „8er" und „16er" auf Kachel und Profil (<code>08-stats.js</code>, <code>18-profil.js</code>). Unter „Baustelle" liest sich „16er" wie eine Größe. Die Zahl bleibt groß, die Sache steht daneben.</p>
+      <div class="vn">
+        <div class="heute"><small>heute</small><b class="num" style="font-size:18px;color:var(--red)">16er</b><span style="font-size:11px;color:var(--muted)">Baustelle</span></div>
+        <div class="so"><small>so</small><div><b class="num" style="font-size:18px;color:var(--red)">16</b> <span style="font-size:11px;color:var(--ink2)">Niederlagen in Folge</span></div></div>
+      </div>
+    </div>
+    <div class="befund">
+      <h3><span class="zk k rot"><svg class="i"><use href="#x"/></svg></span>Dreizehn Strichstärken</h3>
+      <p>Die 144 Zeichen aus <code>ICONS</code> sind sauber auf 24 × 24 gezeichnet, aber das CSS setzt ihren Strich an 78 Stellen neu: 1, 1,4, 1,5, 1,7, 1,8, 2, 2,1, 2,2, 2,5, 2,6, 3,2, 3,4. Dazu stehen Stern und Krone mit spitzen Ecken neben runden Zeichen.</p>
+      <div class="vn">
+        <div class="heute"><small>heute</small><div style="display:flex;gap:12px;color:var(--ink2)">
+          <svg class="i" style="stroke-width:1.4;stroke-linejoin:miter"><use href="#stern"/></svg><svg class="i" style="stroke-width:2.5"><use href="#pokal"/></svg><svg class="i" style="stroke-width:3.2"><use href="#schild"/></svg></div></div>
+        <div class="so"><small>so</small><div style="display:flex;gap:12px;color:var(--ink2)">
+          <svg class="i"><use href="#stern"/></svg><svg class="i"><use href="#pokal"/></svg><svg class="i"><use href="#schild"/></svg></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 1 ZEICHEN ════════════════════════════════════════════════════ -->
+<section class="abs" id="zeichen">
+  <h2><span class="nr">01</span>Zeichen: ein Raster, ein Strich, eine Kachel</h2>
+  <p class="lead">Jedes Zeichen sitzt auf <b>24 × 24 mit 2 px Rand</b>, Strich <b>1,75</b> ab 18 px und <b>2</b> darunter, runde Enden, keine Füllfläche außer einem Punkt. Das CSS setzt die Strichstärke <b>an einer Stelle</b> (<code>.svg-ic svg</code>) und nirgends sonst. Wo ein Zeichen eine Fläche braucht, steht es in der <b>Zeichenkachel</b>: drei Größen, getönt nach der Rolle aus §C25.</p>
+  <div class="zgrid">
+    <div><svg class="i l"><use href="#liga"/></svg><span>liga</span></div>
+    <div><svg class="i l"><use href="#pos"/></svg><span>positionen</span></div>
+    <div><svg class="i l"><use href="#pokal"/></svg><span>awards</span></div>
+    <div><svg class="i l"><use href="#teams"/></svg><span>teams</span></div>
+    <div><svg class="i l"><use href="#verlauf"/></svg><span>verlauf</span></div>
+    <div><svg class="i l"><use href="#krone"/></svg><span>krone</span></div>
+    <div><svg class="i l"><use href="#stern"/></svg><span>stern</span></div>
+    <div><svg class="i l"><use href="#medaille"/></svg><span>medaille</span></div>
+    <div><svg class="i l"><use href="#flamme"/></svg><span>flamme</span></div>
+    <div><svg class="i l"><use href="#blitz"/></svg><span>blitz</span></div>
+    <div><svg class="i l"><use href="#schild"/></svg><span>schild</span></div>
+    <div><svg class="i l"><use href="#mauer"/></svg><span>mauer</span></div>
+    <div><svg class="i l"><use href="#ziel"/></svg><span>ziel</span></div>
+    <div><svg class="i l"><use href="#ball"/></svg><span>ball</span></div>
+    <div><svg class="i l"><use href="#auf"/></svg><span>aufwärts</span></div>
+    <div><svg class="i l"><use href="#ab"/></svg><span>abwärts</span></div>
+    <div><svg class="i l"><use href="#klingen"/></svg><span>duell</span></div>
+    <div><svg class="i l"><use href="#waage"/></svg><span>ausgleich</span></div>
+    <div><svg class="i l"><use href="#wuerfel"/></svg><span>fügung</span></div>
+    <div><svg class="i l"><use href="#riss"/></svg><span>schande</span></div>
+    <div><svg class="i l"><use href="#sanduhr"/></svg><span>pause</span></div>
+    <div><svg class="i l"><use href="#tropfen"/></svg><span>pleitenserie</span></div>
+    <div><svg class="i l"><use href="#haende"/></svg><span>duo</span></div>
+    <div><svg class="i l"><use href="#faden"/></svg><span>fortsetzung</span></div>
+  </div>
+  <div class="rollen">
+    <div><span class="zk gold"><svg class="i"><use href="#krone"/></svg></span>Gold · Titel, gehaltener Rekord</div>
+    <div><span class="zk"><svg class="i"><use href="#balken"/></svg></span>Metall · alles Übrige</div>
+    <div><span class="zk gruen"><svg class="i"><use href="#auf"/></svg></span>Grün · Richtung aufwärts</div>
+    <div><span class="zk rot"><svg class="i"><use href="#riss"/></svg></span>Rot · Richtung abwärts, Schande</div>
+    <div><span class="zk viol"><svg class="i"><use href="#medaille"/></svg></span>Violett · Auszeichnung im Feed</div>
+    <div><span class="zk blau"><svg class="i"><use href="#haende"/></svg></span>Blau · zu zweit geholt</div>
+  </div>
+  <div class="rollen">
+    <div><span class="zk k gold"><svg class="i"><use href="#pokal"/></svg></span>28 · Zeile, Band</div>
+    <div><span class="zk gold"><svg class="i"><use href="#pokal"/></svg></span>36 · Kachel, Karte</div>
+    <div><span class="zk g gold"><svg class="i"><use href="#pokal"/></svg></span>48 · Blattkopf</div>
+    <div><span class="zk xl gold"><svg class="i"><use href="#pokal"/></svg></span>64 · Medaillon</div>
+  </div>
+</section>
+
+<!-- ═══ 2 REITER ═════════════════════════════════════════════════════ -->
+<section class="abs" id="reiter">
+  <h2><span class="nr">02</span>Reiter, Kopf und Rangliste</h2>
+  <p class="lead">Die Liga-Ansicht als Beispiel für alle fünf Reiter. Der Aufbau bleibt: Kopf, Zeitraum, Saison, Rangliste. Neu sind der <b>Schlitten</b> im Segmentwähler, ein <b>Kennzahlstreifen</b> statt der grauen Unterzeile und in der Zeile die <b>Richtung seit dem letzten Spieltag</b>.</p>
+  <div class="reihe">
+    <div class="tel"><div class="cap">Liga · Saison</div>
+      <div class="vk" data-m="1"><h2>Liga</h2><p>August 2026 · Tag 26 von 31</p></div>
+      <div class="kz" data-m="2">
+        <div><b>107</b><span>Partien</span></div>
+        <div><b>11</b><span>aktiv</span></div>
+        <div class="gold"><b>+11</b><span>Vorsprung</span></div>
+        <div><b>5</b><span>Tage offen</span></div>
+      </div>
+      <div class="sw" style="--n:4" data-sw data-m="3"><span class="schl"></span>
+        <button class="on">Saison</button><button>Woche</button><button>Tag</button><button>Gesamt</button></div>
+      <div class="monat" data-m="4"><span class="lbl">TAG <b>26</b>/31</span>
+        <div class="tage" id="tage"></div></div>
+      <div class="chips"><span class="on">AUG 26</span><span>JUL 26</span><span>JUN 26</span><span>MAI 26</span></div>
+      <div class="tb" data-tb data-m="5"><span class="strich"></span>
+        <button class="on"><svg class="i"><use href="#pos"/></svg>Spieler</button><button><svg class="i"><use href="#teams"/></svg>Teams</button></div>
+      <div style="height:12px"></div>
+      <div class="rr p1" data-m="6"><span class="pl">1</span><span class="av w c-martin" style="--s:40px;--ringc:rgba(194,201,208,.8)">MA</span>
+        <div style="min-width:0"><div class="ti">Player of the Season</div><div class="nm">Martin <span class="zk k gold" style="--z:20px;border-radius:6px"><svg class="i" style="width:11px;height:11px"><use href="#pokal"/></svg></span></div>
+          <div class="zeile"><b>36–14</b><span class="quote"><i style="width:72%"></i></span>72 %</div>
+          <div class="dots"><i></i><i></i><i></i><i></i><i class="l"></i></div></div>
+        <div class="elo"><b>390</b><svg width="54" height="14" viewBox="0 0 54 14"><polyline points="0,11 7,10 14,12 21,8 28,9 35,6 42,7 49,3 54,2" fill="none" stroke="#f7cf4a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="delta auf" data-m="7">▲ 14</span></div></div>
+      <div class="rr p2"><span class="pl">2</span><span class="av w c-leon" style="--s:40px">LE</span>
+        <div style="min-width:0"><div class="nm">Leon</div>
+          <div class="zeile"><b>56–34</b><span class="quote"><i style="width:62%"></i></span>62 %</div>
+          <div class="dots"><i></i><i></i><i class="l"></i><i class="l"></i><i></i></div></div>
+        <div class="elo"><b>379</b><svg width="54" height="14" viewBox="0 0 54 14"><polyline points="0,4 7,5 14,3 21,6 28,5 35,8 42,7 49,9 54,9" fill="none" stroke="#b9c4bd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="delta ab">▼ 9</span></div></div>
+      <div class="rr p3"><span class="pl">3</span><span class="av w c-maxi" style="--s:40px">MA</span>
+        <div style="min-width:0"><div class="nm">Maxi</div>
+          <div class="zeile"><b>42–41</b><span class="quote"><i style="width:51%"></i></span>51 %</div>
+          <div class="dots"><i class="l"></i><i></i><i></i><i class="l"></i><i></i></div></div>
+        <div class="elo"><b>308</b><svg width="54" height="14" viewBox="0 0 54 14"><polyline points="0,8 7,7 14,8 21,7 28,8 35,7 42,8 49,7 54,7" fill="none" stroke="#b9c4bd" stroke-width="1.5" stroke-linecap="round"/></svg><span class="delta gl">± 0</span></div></div>
+      <div class="rr"><span class="pl">4</span><span class="av w c-julian" style="--s:40px">JU</span>
+        <div style="min-width:0"><div class="nm">Julian</div>
+          <div class="zeile"><b>22–18</b><span class="quote"><i style="width:55%"></i></span>55 %</div>
+          <div class="dots"><i></i><i></i><i class="l"></i><i></i><i class="l"></i></div></div>
+        <div class="elo"><b>301</b><svg width="54" height="14" viewBox="0 0 54 14"><polyline points="0,12 7,11 14,9 21,10 28,7 35,8 42,6 49,5 54,5" fill="none" stroke="#b9c4bd" stroke-width="1.5" stroke-linecap="round"/></svg><span class="delta auf">▲ 6</span></div></div>
+      <div class="botnav" data-m="8">
+        <div class="on"><span class="pille"><svg class="i"><use href="#liga"/></svg></span><span>Liga</span></div>
+        <div><span class="pille"><svg class="i"><use href="#pos"/></svg></span>Positionen</div>
+        <div><span class="pille"><svg class="i"><use href="#pokal"/></svg></span>Awards</div>
+        <div><span class="pille"><svg class="i"><use href="#teams"/></svg></span>Teams</div>
+        <div><span class="pille"><svg class="i"><use href="#verlauf"/></svg></span>Verlauf</div>
+      </div>
+    </div>
+    <div class="notiz"><h3>Was sich ändert</h3><ol>
+      <li><b>Kopf nennt den Stand, nicht die Menge.</b> „Tag 26 von 31" statt „11 aktiv · 107 Matches" — die Mengen wandern in den Streifen darunter, und „Matches" heißt dort wie überall „Partien".</li>
+      <li><b>Kennzahlstreifen.</b> Vier Zahlen, die die Tabelle nicht selbst zeigt: Partien, aktive Spieler, Elo-Vorsprung der Spitze (Gold, weil es um den Titel geht), offene Tage. Keine davon steht in einer Zeile darunter [Nichts sagt zweimal dasselbe].</li>
+      <li><b>Der Schlitten gleitet.</b> <code>.ui-switch</code> bekommt eine eigene Fläche, die zur Wahl fährt, statt dass der Knopf die Farbe wechselt. Ruht bei <code>prefers-reduced-motion</code>. Zum Ausprobieren antippen.</li>
+      <li><b>Der Monat als Tage.</b> Der Fortschrittsbalken wird eine Reihe aus 31 Zellen: gespielte Tage hell, der heutige gerahmt, spielfreie leise. Man sieht, wie viele Spieltage noch kommen, nicht nur wie viel Kalender.</li>
+      <li><b>Innere Ebene mit Zeichen.</b> <code>.ui-tabs</code> bleibt rahmenlos, der Strich fährt mit. Ein Zeichen vor dem Wort unterscheidet sie vom äußeren Wähler, ohne einen zweiten Rahmen [§C27].</li>
+      <li><b>Zeile mit Luft.</b> Rang, Wappen, Name und Bilanz bleiben. Die Titelzeile steht klein über dem Namen, das Titelzeichen in einer 20-px-Kachel statt als lose Linie.</li>
+      <li><b>Richtung seit dem letzten Spieltag.</b> Unter der Elo eine Linie über die letzten zehn Partien und der Unterschied zum Stand vor dem Spieltag. Grün und Rot nur hier, denn sie sind Richtung [§C25]. Der Platz 1 trägt Gold, weil die Linie seinem Titel gehört.</li>
+      <li><b>Untere Leiste mit Pille.</b> Der gewählte Reiter bekommt eine getönte Pille hinter dem Zeichen. Heute unterscheidet ihn nur die Farbe des Worts.</li>
+    </ol>
+    <div class="regel"><b>Gemessen in <code>tests/blatt</code>:</b> Schlitten und Wahl decken sich nach jedem Wechsel, kein Reiter läuft bei 360 px über, die Linie fehlt unter fünf Partien, die Richtung steht nie ohne Vorzeichen.</div></div>
+  </div>
+</section>
+
+<!-- ═══ 3 KACHELN ════════════════════════════════════════════════════ -->
+<section class="abs" id="kacheln">
+  <h2><span class="nr">03</span>Kacheln: Wer, wie viel, woraus</h2>
+  <p class="lead">Die Award-Kachel (<code>.aw-trophy</code>) liest sich heute von oben nach unten als Zeichen, Name, Wert und Halter, und der Wert steht ohne Stichprobe da. Der Vorschlag ordnet sie nach der Frage, die man stellt: <b>Wer hat es? Wie viel? Woraus?</b> Die Tonfamilie bleibt bei drei [§C25].</p>
+  <div class="reihe">
+    <div class="tel"><div class="cap">Awards · Saison</div>
+      <div class="sw" style="--n:3" data-sw><span class="schl"></span>
+        <button class="on">Saison <span class="zl">36</span></button><button>Woche <span class="zl">36</span></button><button>Positionen</button></div>
+      <div class="tb" data-tb><span class="strich"></span>
+        <button class="on"><svg class="i"><use href="#stern"/></svg>Einzeln</button><button><svg class="i"><use href="#haende"/></svg>Duos</button><button><svg class="i"><use href="#riss"/></svg>Kehrseite</button></div>
+      <div style="height:12px"></div>
+      <div class="kr">
+        <div class="ak pos breit" data-m="1">
+          <div class="kopf"><span class="zk gold"><svg class="i"><use href="#krone"/></svg></span><h4>Beste Bilanz</h4></div>
+          <div class="held"><span class="av w c-martin" style="--s:44px">MA</span><div class="wer"><b>Martin</b><span>36 von 50 Partien gewonnen</span></div>
+            <div style="margin-left:auto;text-align:right"><div class="wert" style="margin-top:0;justify-content:flex-end"><b>72</b><span>%</span></div></div></div>
+          <div class="beleg" data-m="2"><div class="feld"><span class="bahn"></span><span class="mitte" style="left:51%"></span>
+            <i style="left:28%"></i><i style="left:39%"></i><i style="left:44%"></i><i style="left:47%"></i><i style="left:51%"></i><i style="left:55%"></i><i style="left:58%"></i><i style="left:62%"></i><i class="er" style="left:72%"></i></div>
+            <div class="feld-l"><span>28 %</span><span>Liga Ø 51 %</span><span>72 %</span></div></div>
+        </div>
+        <div class="ak pos" data-m="3">
+          <div class="kopf"><span class="zk k gold"><svg class="i"><use href="#flamme"/></svg></span><h4>Längste Siegesserie</h4></div>
+          <div class="held"><span class="av w c-leon" style="--s:34px">LE</span><div class="wer"><b>Leon</b><span>am 12.08.</span></div></div>
+          <div class="wert"><b>9</b><span>Siege in Folge</span></div>
+          <div class="lauf" style="margin-top:8px"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        </div>
+        <div class="ak pos">
+          <span class="gleich" data-m="4">+2</span>
+          <div class="kopf"><span class="zk k gold"><svg class="i"><use href="#ball"/></svg></span><h4>Torjäger</h4></div>
+          <div class="held"><span class="av w c-julian" style="--s:34px">JU</span><div class="wer"><b>Julian</b><span>aus 40 Partien</span></div></div>
+          <div class="wert" data-m="5"><b>Ø 8,9</b><span>Tore je Partie</span></div>
+          <div class="beleg"><div class="feld"><span class="bahn"></span><span class="mitte" style="left:50%"></span><i style="left:22%"></i><i style="left:40%"></i><i style="left:55%"></i><i style="left:70%"></i><i class="er" style="left:88%"></i></div></div>
+        </div>
+        <div class="ak team">
+          <div class="kopf"><span class="zk k blau"><svg class="i"><use href="#mauer"/></svg></span><h4>Betonmauer</h4></div>
+          <div class="held"><div class="paar"><span class="av c-henry" style="--s:30px">HE</span><span class="av c-leo" style="--s:30px">LE</span></div><div class="wer"><b>Henry &amp; Leo</b><span>7 Partien</span></div></div>
+          <div class="wert"><b style="color:var(--blue)">Ø 4,1</b><span>Gegentore je Partie</span></div>
+        </div>
+        <div class="ak neg" data-m="6">
+          <div class="kopf"><span class="zk k rot"><svg class="i"><use href="#tropfen"/></svg></span><h4>Baustelle</h4></div>
+          <div class="held"><div class="paar"><span class="av c-leo" style="--s:30px">LE</span><span class="av c-maxi" style="--s:30px">MA</span></div><div class="wer"><b>Leo &amp; Maxi</b><span>seit 03.08.</span></div></div>
+          <div class="wert"><b>16</b><span>Niederlagen in Folge</span></div>
+        </div>
+        <div class="ak leer breit" data-m="7">
+          <div class="kopf"><span class="zk k"><svg class="i"><use href="#ziel"/></svg></span><h4>Showmaster</h4></div>
+          <div class="held">Noch kein 10:0 in dieser Saison</div>
+        </div>
+      </div>
+      <div style="height:16px"></div>
+      <div class="cap" style="font:600 10px var(--mono);letter-spacing:.12em;color:var(--faint);text-align:center;margin-bottom:10px">DUO-BLATT · KENNZAHLEN</div>
+      <div class="kr" data-m="8">
+        <div class="ak" style="padding:10px"><div class="wert" style="margin-top:0"><b style="color:var(--ink)">62</b><span>Partien</span></div>
+          <svg class="verl" viewBox="0 0 120 22" style="margin-top:8px"><polyline points="0,18 10,17 20,15 30,16 40,13 50,14 60,11 70,12 80,9 90,10 100,7 110,8 120,6" fill="none" stroke="#717f76" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+        <div class="ak" style="padding:10px"><div class="wert" style="margin-top:0"><b style="color:var(--red)">26</b><span>% Siegquote</span></div>
+          <div class="zellen" style="margin-top:9px;grid-template-columns:repeat(31,1fr)" id="duoz"></div></div>
+        <div class="ak" style="padding:10px"><div class="wert" style="margin-top:0"><b style="color:var(--red)">5</b><span>Niederlagen in Folge</span></div>
+          <div class="lauf" style="margin-top:9px"><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i class="x"></i><i class="x"></i><i class="x"></i></div></div>
+        <div class="ak" style="padding:10px"><div class="wert" style="margin-top:0"><b style="color:var(--red)">−153</b><span>Torbilanz</span></div>
+          <div class="feld" style="margin-top:4px"><span class="bahn"></span><span class="mitte" style="left:50%"></span><i class="er" style="left:8%;background:var(--red);box-shadow:0 0 0 2px var(--bg)"></i></div></div>
+      </div>
+    </div>
+    <div class="notiz"><h3>Was sich ändert</h3><ol>
+      <li><b>Die erste Kachel ist breit.</b> Ein Award je Reiter steht über die volle Breite, mit Gesicht, Wert und der Lage im Feld. Heute sind alle Kacheln gleich groß, und die wichtigste fällt nicht auf.</li>
+      <li><b>Lage im Feld.</b> Ein Strich mit einem Punkt je Spieler, der Halter golden, der Ligaschnitt als Marke. Ob 72 % knapp vorn oder weit weg sind, sieht man, ohne die Liste zu öffnen [siehe Belege].</li>
+      <li><b>Serie als Lauf.</b> Eine Serie zeigt ihre Länge als Reihe aus Feldern (<code>_newsSerienBand</code> gibt es schon) und nennt den Tag, an dem sie stand.</li>
+      <li><b>Geteilt steht oben rechts.</b> „+2" wie bisher, aber als eigene Marke an der Kante und nicht im Namen.</li>
+      <li><b>Wert mit Sache.</b> „Ø 8,9 Tore je Partie", „16 Niederlagen in Folge", „Ø 4,1 Gegentore je Partie". Kein „/Sp.", kein „16er", keine Legende über der Zahl.</li>
+      <li><b>Kehrseite in Rot, Duo in Blau, Können in Gold.</b> Der Ton sitzt an Kante, Kachel und Wert, die Fläche bleibt dunkel [§C25].</li>
+      <li><b>Leeres Feld sagt warum.</b> Gestrichelt wie heute, aber mit einem Satz statt eines Strichs: „Noch kein 10:0 in dieser Saison". Eine ungerade Kachel nimmt die ganze Reihe.</li>
+      <li><b>Duo-Kennzahlen gezeichnet.</b> Die vier Kästen im Duo-Blatt bekommen je eine kleine Zeichnung: Verlauf der Partien, die Siegquote als Zellen, die Serie als Lauf, die Torbilanz auf ihrer Skala. Heute stehen dort vier Zahlen in vier Farben.</li>
+    </ol>
+    <div class="regel"><b>Gemessen:</b> jede Kachel nennt ihre Einheit ohne Kürzel (<code>tests/blatt</code> liest den Text), keine Kachel läuft bei 360 px über, der goldene Punkt der Lage im Feld liegt beim Wert der Kachel.</div></div>
+  </div>
+</section>
+
+<!-- ═══ 4 BELEGE ═════════════════════════════════════════════════════ -->
+<section class="abs" id="belege">
+  <h2><span class="nr">04</span>Statistische Belege: ein Bauteil in vier Formen</h2>
+  <p class="lead">Ein Rekord oder Award ist eine Behauptung, und die App belegt sie heute mit einem Satz. Vorgeschlagen ist ein Bauteil <b><code>belegHtml</code></b> neben den Rückblick-Teilen (<code>05b-recap-teile.js</code>) mit vier Formen, jede für eine Frage. Die Zahlen kommen aus den Rechnungen, die es gibt (<code>chronicleRang</code>, <code>AW_MIN</code>, Elo-Bahn), ohne zweite Rechnung.</p>
+  <div class="reihe">
+    <div class="tel blatt"><div class="sheet">
+      <div class="griff"></div>
+      <div class="sk"><span class="zk g gold"><svg class="i"><use href="#krone"/></svg></span>
+        <div><h3>Der Maßstab</h3><div class="unt">Liga-Rekord · Können</div></div>
+        <span class="zu"><svg class="i s"><use href="#x"/></svg></span></div>
+      <div class="buehne" style="margin-top:14px;grid-template-columns:auto minmax(0,1fr)">
+        <span class="av w c-martin" style="--s:52px;--ringc:rgba(247,207,74,.8)">MA</span>
+        <div><div style="font-weight:700;font-size:16px">Martin</div><div style="font:600 28px/1.05 var(--mono);color:var(--gold)">72 %</div><div style="font-size:11px;color:var(--muted)">Siegquote ab 50 Partien, seit 21.09.</div></div>
+      </div>
+
+      <div class="abschn" data-m="1"><svg class="i"><use href="#balken"/></svg>Woraus<em>50 Partien</em></div>
+      <div class="box"><div class="zellen" id="zellen"></div>
+        <div style="display:flex;justify-content:space-between;font:500 10.5px var(--mono);color:var(--muted);margin-top:8px"><span><b style="color:var(--acid)">36</b> Siege</span><span><b style="color:var(--red)">14</b> Niederlagen</span></div></div>
+
+      <div class="abschn" data-m="2"><svg class="i"><use href="#pos"/></svg>Wo im Feld<em>11 im Rennen</em></div>
+      <div class="box"><div class="feld" style="height:24px"><span class="bahn" style="top:11px"></span><span class="mitte" style="left:51%;top:4px;height:16px"></span>
+        <i style="left:28%;top:8px"></i><i style="left:36%;top:8px"></i><i style="left:39%;top:8px"></i><i style="left:44%;top:8px"></i><i style="left:47%;top:8px"></i><i style="left:51%;top:8px"></i><i style="left:55%;top:8px"></i><i style="left:58%;top:8px"></i><i style="left:62%;top:8px"></i><i style="left:66%;top:8px"></i><i class="er" style="left:72%;top:6px"></i></div>
+        <div class="feld-l"><span>28 %</span><span>Mitte 51 %</span><span>72 %</span></div>
+        <div style="font-size:12px;color:var(--ink2);margin-top:8px"><b>6 Prozentpunkte</b> vor Leon auf Platz 2.</div></div>
+
+      <div class="abschn" data-m="3"><svg class="i"><use href="#ziel"/></svg>Wie sicher</div>
+      <div class="box"><div class="spanne"><span class="bahn"></span><span class="ber" style="left:58%;width:25%"></span><span class="ref" style="left:66%"></span><span class="pkt" style="left:72%"></span></div>
+        <div class="feld-l" style="margin-top:0"><span>50 %</span><span style="color:var(--ink2)">Leon 66 %</span><span>100 %</span></div>
+        <div style="font-size:12px;color:var(--ink2);margin-top:8px">Aus 50 Partien liegt der wahre Wert gut zwischen <b>58 und 82 %</b>. Leon liegt innerhalb der Spanne: der Vorsprung ist noch keine Sache der Stärke allein.</div></div>
+
+      <div class="abschn" data-m="4"><svg class="i"><use href="#auf"/></svg>Wie es dazu kam</div>
+      <div class="box"><svg class="verl" viewBox="0 0 300 80">
+        <line x1="0" y1="60" x2="300" y2="60" stroke="#28332b" stroke-dasharray="3 4"/>
+        <polyline points="0,58 25,52 50,55 75,46 100,40 125,43 150,34 175,30 200,26 225,24 250,22 275,20 300,18" fill="none" stroke="#f7cf4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="0,40 25,38 50,33 75,30 100,29 125,28 150,30 175,29 200,31 225,30 250,33 275,34 300,32" fill="none" stroke="#717f76" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="160" cy="31.5" r="4.5" fill="#f7cf4a" stroke="#141a16" stroke-width="2"/>
+        <text x="166" y="48" fill="#b9c4bd" font-size="10" font-family="Sometype Mono">21.09. übernommen</text>
+        <text x="4" y="74" fill="#4a554e" font-size="9" font-family="Sometype Mono">Juni</text><text x="266" y="74" fill="#4a554e" font-size="9" font-family="Sometype Mono">heute</text>
+      </svg><div style="display:flex;gap:14px;font:500 10.5px var(--mono);color:var(--muted);margin-top:4px"><span><i style="display:inline-block;width:10px;height:2px;background:var(--gold);vertical-align:3px"></i> Martin</span><span><i style="display:inline-block;width:10px;height:2px;background:var(--muted);vertical-align:3px"></i> Leon</span></div></div>
+
+      <div class="fuss"><span class="knopf"><svg class="i s"><use href="#pos"/></svg>Profil</span><span class="knopf prim"><svg class="i s"><use href="#klingen"/></svg>Direkter Vergleich</span></div>
+    </div></div>
+    <div class="notiz"><h3>Die vier Formen</h3><ol>
+      <li><b>Woraus.</b> Ein Anteil zeigt seine Stichprobe als Zellen, eine je Partie. „72 %" aus 50 und aus 500 Partien sind zwei verschiedene Aussagen, und heute steht beides gleich da. Ab 100 Partien fasst eine Zelle zwei.</li>
+      <li><b>Wo im Feld.</b> Jeder im Rennen als Punkt, der Halter golden, die Mitte als Strich, dahinter der Abstand zum Zweiten in einem Satz. Das ersetzt nicht die Verfolger (<code>_newsVerfolger</code>), es steht darüber.</li>
+      <li><b>Wie sicher.</b> Die Spanne, in der der Wert bei dieser Stichprobe liegt (Wilson-Intervall, 90 %), und der Zweite als Strich darin. Nur bei Anteilen, nur im Blatt, nie auf der Karte. Der Satz sagt, was die Spanne bedeutet, und nennt kein Fachwort.</li>
+      <li><b>Wie es dazu kam.</b> Der Verlauf des Werts über die Laufbahn, der Zweite daneben, der Tag der Übernahme als Punkt. Aus der Elo-Bahn und dem Zeitschnitt, den es gibt (<code>_schnitt</code>), also ohne zweite Rechnung.</li>
+    </ol>
+    <div class="regel"><b>Wo es steht:</b> Rekord-Blatt, Award-Blatt, Chronik-Blatt und die Story-Blätter der Ewigen Tafel, immer in dieser Reihenfolge und nur die Formen, die für die Größe Sinn ergeben: eine Serie hat keine Spanne, ein Einzelereignis keinen Verlauf.<br><br><b>Gemessen:</b> <code>tests/tafel</code> rechnet die Zahl der Zellen gegen den Nenner des Belegs, den goldenen Punkt gegen den Sortierwert und die Spanne gegen eine unabhängige Rechnung. <code>tests/blatt</code> misst, dass nichts bei 360 px über den Innenrand läuft.</div></div>
+  </div>
+</section>
+
+<!-- ═══ 5 STORIES ════════════════════════════════════════════════════ -->
+<section class="abs" id="stories">
+  <h2><span class="nr">05</span>Stories: Ergebnis, Richtung, Faden</h2>
+  <p class="lead">Der Feed hat seine Regeln (§C33) und bleibt dabei: chronologisch, vier Karten je Tag, Rubrikband, Bildzone, Breaking und Karte des Tages. Aufgewertet werden die <b>Bildzone</b> und die <b>Anbindung</b>: jede Karte sagt, wer gewonnen hat, wohin es ging, und ob sie eine frühere Geschichte fortsetzt.</p>
+  <div class="reihe">
+    <div class="tel"><div class="cap">News · Heute</div>
+      <div class="tag"><b>Mittwoch</b><span>26.08.</span><em>5 KARTEN</em></div>
+
+      <div class="sc brk" data-m="1">
+        <div class="brk-band"><span class="puls"></span>Breaking<em>2 Meldungen</em></div>
+        <div class="band"><span class="zk k gold"><svg class="i"><use href="#krone"/></svg></span>Titelrennen<time>14:32</time></div>
+        <h4>Martin übernimmt die Tabellenspitze</h4>
+        <div class="eb"><div class="s"><span class="paar"><span class="av c-martin">MA</span><span class="av c-stefan">ST</span></span><span>Martin &amp; Stefan</span></div>
+          <div class="st">10<i>:</i>7</div>
+          <div class="s r nied"><span class="paar"><span class="av c-leon">LE</span><span class="av c-maxi">MA</span></span><span>Leon &amp; Maxi</span></div></div>
+        <p><b>390 Elo</b>, <b>11</b> vor Leon. Zweiter Wechsel an der Spitze heute.</p>
+      </div>
+
+      <div class="sc kdt" data-m="2">
+        <div class="kdt-band"><svg class="i s"><use href="#stern"/></svg>Karte des Tages</div>
+        <div class="band"><span class="zk k gruen"><svg class="i"><use href="#blitz"/></svg></span>Am Spieltag<time>14:09</time></div>
+        <h4>Johannes und Anton stürzen die Favoriten</h4>
+        <div class="eb"><div class="s"><span class="paar"><span class="av c-johannes">JO</span><span class="av c-anton">AN</span></span><span>Johannes &amp; Anton</span></div>
+          <div class="st">10<i>:</i>8</div>
+          <div class="s r nied"><span class="paar"><span class="av c-leo">LE</span><span class="av c-maxi">MA</span></span><span>Leo &amp; Maxi</span></div></div>
+        <div class="bogen">
+          <svg width="64" height="36" viewBox="0 0 64 36"><path d="M6 32a26 26 0 0152 0" fill="none" stroke="#222b25" stroke-width="6" stroke-linecap="round"/>
+            <path d="M6 32a26 26 0 0115.9-24" fill="none" stroke="#BEF264" stroke-width="6" stroke-linecap="round"/>
+            <line x1="32" y1="6" x2="32" y2="12" stroke="#717f76" stroke-width="1.5"/></svg>
+          <div class="txt" data-m="3"><b>30 %</b>Siegchance vor dem Anstoß</div>
+          <div class="eloz" style="margin:0 0 0 auto;flex-direction:column;align-items:flex-end;gap:4px" data-m="4">
+            <span><span class="av c-johannes">JO</span><b class="auf">+39</b></span><span><span class="av c-anton">AN</span><b class="auf">+34</b></span></div>
+        </div>
+        <div class="faden" data-m="5"><svg class="i s"><use href="#faden"/></svg><span>Setzt fort: <b>Zusammen alles verloren</b> · 24.08.</span><span class="kap">WENDE</span></div>
+      </div>
+
+      <div class="sc" data-m="6">
+        <div class="band"><span class="zk k gruen"><svg class="i"><use href="#flamme"/></svg></span>Serie<time>13:50</time></div>
+        <h4>Leon zündet die 8er-Serie</h4>
+        <div class="lauf"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="x"></i><i class="x"></i><span>Marke 10</span></div>
+        <p>Seit dem <b>24.08.</b> ohne Niederlage, Rekord der Liga sind <b>11</b>.</p>
+      </div>
+
+      <div class="sc silber" data-m="7">
+        <div class="band"><span class="zk k"><svg class="i"><use href="#medaille"/></svg></span>Ewige Tafel<time>11:02</time></div>
+        <h4>Julian, Leo und Leon bewegen die Ewige Tafel</h4>
+        <div class="sam">
+          <div><span class="zk gold"><svg class="i"><use href="#krone"/></svg></span><span><b>Julian</b> übernimmt „Der Höhenflug"</span></div>
+          <div><span class="zk"><svg class="i"><use href="#kalender"/></svg></span><span><b>Leo</b> holt „Auf Augenhöhe"</span></div>
+          <div><span class="zk viol"><svg class="i"><use href="#schild"/></svg></span><span><b>Leon</b> trägt den Volutenkranz</span></div>
+          <div class="mehr">und 3 Ausbauten im Blatt</div>
+        </div>
+      </div>
+
+      <div class="sc rot" data-m="8">
+        <div class="band"><span class="zk k rot"><svg class="i"><use href="#tropfen"/></svg></span>Durststrecke<time>10:44</time></div>
+        <h4>Henry wartet seit sechs Partien auf einen Sieg</h4>
+        <div class="lauf"><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i style="background:var(--red)"></i><i style="background:var(--red)"></i><span>seit 21.08.</span></div>
+      </div>
+    </div>
+    <div class="notiz"><h3>Was sich ändert</h3><ol>
+      <li><b>Breaking mit Balken und Zahl.</b> Wie heute voller Rahmen und Puls, dazu die Zahl der gebündelten Meldungen im Balken (<code>.nf-brk-n</code>). Das Ergebnisband zeigt die Sieger hell und die Verlierer gedämpft.</li>
+      <li><b>Karte des Tages mit eigenem Band.</b> Ein goldener Streifen über der Karte statt nur eines Schimmers. Die Familie der Karte bleibt an Kante, Rubrik und Zeichen sichtbar.</li>
+      <li><b>Siegchance als Bogen.</b> Ein Halbkreis mit der 50-%-Marke. „30 %" wird damit ohne Satz lesbar. Dieselbe Quelle wie im Blatt (<code>_ndChanceSkala</code>).</li>
+      <li><b>Elo je Spieler als Chip.</b> Der Gewinn gehört einem und nicht der Partie (<code>eloPid</code>): zwei Chips mit Gesicht statt „Der Sieg bringt +39 Elo".</li>
+      <li><b>Der Faden.</b> Eine Zeile, wenn die Karte eine frühere fortsetzt: dieselben Beteiligten, derselbe Rekord oder dieselbe Serie innerhalb des Fensters. Rechts steht, was es ist: <em>Wende</em>, <em>Fortsetzung</em>, <em>Revanche</em>, <em>Rückkehr</em>. Antippen öffnet die frühere Karte. Die Verknüpfung ist eine Ableitung wie <code>_isBreaking</code> und wird nicht gespeichert.</li>
+      <li><b>Serie mit Ziel.</b> Der Lauf zeigt die nächste Marke als leere Felder. Man sieht, wie weit es noch ist.</li>
+      <li><b>Sammelkarte mit Zeichen je Zeile.</b> Gold für den übernommenen Rekord, Metall für die Chronik, Violett für das Insignium. Ausbauten stehen nur im Blatt, wie heute.</li>
+      <li><b>Negativ bleibt Rot.</b> Durststrecke und Pleitenserie tragen Rot an Kante, Zeichen und Lauf [§C25], und der Satz nennt den letzten Sieg.</li>
+    </ol>
+    <div class="regel"><b>Wann Geschichten zusammengehen:</b> in einer Karte, wenn sie aus <b>derselben Partie</b> stammen (Sammelkarte, wie heute). Als Faden verbunden, wenn sie über Tage <b>dieselbe Sache</b> erzählen: Serie und ihr Riss, Übernahme und Rückeroberung, Niederlage und Revanche derselben Paarung, Pause und Rückkehr. Der Faden verbindet höchstens zwei Karten und nie über das Vierzehn-Tage-Fenster hinaus.<br><br><b>Gemessen:</b> <code>tests/ambient</code> spielt das Fenster nach und prüft, dass jeder Faden auf eine Karte im Feed zeigt, die älter ist. <code>tests/blatt</code> misst Bogen, Chips und Band bei 360 px.</div></div>
+  </div>
+</section>
+
+<!-- ═══ 6 BLÄTTER ════════════════════════════════════════════════════ -->
+<section class="abs" id="blaetter">
+  <h2><span class="nr">06</span>Blätter und Hinweise: ein Kopf, ein Fuß</h2>
+  <p class="lead">Award-Blatt, Rekord-Blatt, Duo-Blatt, Profil und Story-Blatt haben heute je einen eigenen Kopf: mal ein Zeichen in der Mitte, mal ein Wappen, mal die Rubrik, mal gar nichts. Der Vorschlag gibt jedem Blatt <b>denselben Kopf</b> (Zeichenkachel, Titel, Unterzeile, Schließen), <b>dieselben Abschnittsköpfe</b> und <b>denselben Fuß</b> mit dem Weg weiter.</p>
+  <div class="reihe">
+    <div class="tel blatt"><div class="sheet">
+      <div class="griff"></div>
+      <div class="sk" data-m="1"><span class="zk g gold"><svg class="i"><use href="#blitz"/></svg></span>
+        <div><h3>Höchster Sieg</h3><div class="unt">August 2026 · Award</div></div>
+        <span class="zu"><svg class="i s"><use href="#x"/></svg></span></div>
+      <div class="buehne" style="margin-top:14px" data-m="2">
+        <div class="seite sieg"><span class="marke">Sieger</span><span class="paar"><span class="av w c-leon" style="--s:40px">LE</span><span class="av w c-martin" style="--s:40px">MA</span></span><span class="n">Leon<br>Martin</span></div>
+        <div class="stand">10<i>:</i>0</div>
+        <div class="seite nied"><span class="marke"></span><span class="paar"><span class="av c-maxi" style="--s:40px">MA</span><span class="av c-leo" style="--s:40px">LE</span></span><span class="n">Maxi<br>Leo</span></div>
+        <div class="zeit">10.08., 11:08 · 10 Tore Unterschied · Siegchance 58 %</div>
+      </div>
+      <div class="abschn" data-m="3"><svg class="i"><use href="#balken"/></svg>Die fünf höchsten<em>Saison</em></div>
+      <div class="box" style="padding:4px 12px">
+        <div class="tl"><span class="p g">1</span><span class="w"><span class="paar"><span class="av c-leon">LE</span><span class="av c-martin">MA</span></span>Leon &amp; Martin</span><span class="v">10:0<small>10.08.</small></span></div>
+        <div class="tl"><span class="p">2</span><span class="w"><span class="paar"><span class="av c-jane">JA</span><span class="av c-julian">JU</span></span>Jane &amp; Julian</span><span class="v">10:1<small>18.08.</small></span></div>
+        <div class="tl"><span class="p">2</span><span class="w"><span class="paar"><span class="av c-martin">MA</span><span class="av c-henry">HE</span></span>Martin &amp; Henry</span><span class="v">10:1<small>21.08.</small></span></div>
+        <div class="tl"><span class="p">4</span><span class="w"><span class="paar"><span class="av c-alex">AL</span><span class="av c-leon">LE</span></span>Alex &amp; Leon</span><span class="v">10:2<small>05.08.</small></span></div>
+      </div>
+      <div class="abschn" data-m="4"><svg class="i"><use href="#info"/></svg>So wird gewertet</div>
+      <div style="font-size:12.5px;color:var(--ink2);padding:0 2px">Die Partie mit dem größten Torabstand im Zeitraum. Bei gleichem Abstand zählt die frühere.</div>
+      <div class="fuss" data-m="5"><span class="knopf"><svg class="i s"><use href="#teams"/></svg>Zum Duo</span><span class="knopf prim"><svg class="i s"><use href="#verlauf"/></svg>Zur Partie</span></div>
+    </div></div>
+
+    <div style="display:grid;gap:18px">
+      <div class="tel" style="padding-bottom:18px"><div class="cap">Hinweise</div>
+        <div class="toast" data-m="6"><span class="zk k gruen"><svg class="i"><use href="#haken"/></svg></span><div><b style="font-size:13px">Partie gespeichert</b><div style="font-size:11.5px;color:var(--muted)">Martin &amp; Stefan 10:7 · Martin +14 Elo</div></div><span class="knopf" style="margin-left:auto;padding:6px 10px;font-size:12px">Rückgängig</span></div>
+        <div style="height:12px"></div>
+        <div class="toast"><span class="zk k viol"><svg class="i"><use href="#medaille"/></svg></span><div><b style="font-size:13px">Nerven aus Stahl</b><div style="font-size:11.5px;color:var(--muted)">Johannes · selten · drei Zittersiege in Folge</div></div></div>
+        <div style="height:18px"></div>
+        <div class="dlg" data-m="7"><span class="zk g rot" style="margin:0 auto"><svg class="i"><use href="#x"/></svg></span>
+          <h4>Partie löschen?</h4><p>Leon &amp; Maxi gegen Leo &amp; Anton, 10:8 vom 26.08., 13:12. Elo, Serien und Rekorde werden neu gerechnet.</p>
+          <div class="fuss"><span class="knopf">Behalten</span><span class="knopf rot">Löschen</span></div></div>
+      </div>
+      <div class="notiz"><h3>Was sich ändert</h3><ol>
+        <li><b>Ein Kopf.</b> Zeichenkachel in 48 px links, Titel in Archivo, Unterzeile in Mono mit Zeitraum und Art, Schließen rechts. Heute schließt ein Blatt per Geste, ein anderes per Knopf, eines gar nicht sichtbar.</li>
+        <li><b>Die Partie als Bühne.</b> Sieger links und hell, Verlierer rechts und gedämpft, der Stand groß in der Mitte, darunter Zeit, Abstand und Siegchance. Ein Bauteil für Award-Blatt, Partie-Blatt und Story-Kopf [§C27]. Der Farbbalken-Fehler aus den Befunden fällt dabei weg.</li>
+        <li><b>Abschnittskopf mit Zeichen und Zähler.</b> Mono, Großbuchstaben, ein leises Zeichen davor und rechts, worauf sich die Liste bezieht. Punktgleiche tragen denselben Platz.</li>
+        <li><b>„So wird gewertet" ans Ende.</b> Die Regel steht hinter dem Ergebnis, nicht darüber. Heute steht sie teils vor der Liste.</li>
+        <li><b>Der Weg weiter.</b> Zwei Knöpfe im Fuß, der wichtigere gefüllt. Heute führen Namen irgendwo im Blatt weiter, und nicht jedes Blatt hat einen Weg zurück in die Partie.</li>
+        <li><b>Hinweis mit Rolle.</b> Der Toast bekommt eine Zeichenkachel in der Farbe seiner Rolle und eine zweite Zeile mit der Wirkung. Beim Speichern einer Partie steht „Rückgängig" als Knopf daneben.</li>
+        <li><b>Bestätigung nennt, was verloren geht.</b> Die Partie mit Stand und Zeit und was neu gerechnet wird. Der zerstörende Knopf steht rechts und rot, der sichere links.</li>
+      </ol>
+      <div class="regel"><b>Gemessen:</b> <code>tests/blatt</code> öffnet jedes Blatt und verlangt Kachel, Titel und Schließen im Kopf, genau einen gefüllten Knopf im Fuß und keinen Überlauf bei 360 px.</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ 7 REIHENFOLGE ════════════════════════════════════════════════ -->
+<section class="abs" id="plan">
+  <h2><span class="nr">07</span>Reihenfolge für den Auftrag</h2>
+  <p class="lead">Jeder Schritt ist ein eigener Commit mit Zusicherung, die einmal rot war (§5). Die Reihenfolge folgt den Abhängigkeiten: erst die Fehler, dann die Bauteile, zuletzt die Stellen, die sie benutzen.</p>
+  <div class="plan">
+    <div><div><h4>Befunde beheben</h4><p>Regeln für <code>.aw-mini-av</code>/<code>.aw-mini-pair</code>, „/Sp." und „Niederl." ausschreiben, Serienwerte mit Sache. Dateien: <code>04-awards.css</code>, <code>13-view-awards.js</code>, <code>22-team-profil.js</code>, <code>08-stats.js</code>, <code>18-profil.js</code>.</p><span class="test">tests/blatt · Kürzel-Liste erweitern, Gesicht mit Größe im Award-Blatt</span></div></div>
+    <div><div><h4>Ein Strich für alle Zeichen</h4><p>Strichstärke nur noch in <code>.svg-ic svg</code>, Stern und Krone mit runden Ecken nachzeichnen, die 78 Einzelregeln fallen weg. Bauteil <code>.zk</code> für die Zeichenkachel in drei Größen und sechs Tönen.</p><span class="test">tests/tafel · genau eine stroke-width-Regel für .svg-ic</span></div></div>
+    <div><div><h4>Segmentwähler und Monatsleiste</h4><p>Schlitten in <code>.ui-switch</code>, Strich in <code>.ui-tabs</code>, Tageszellen statt Balken, Pille in der unteren Leiste. Dateien: <code>02-ranking.css</code>, <code>05-nav-sheet.css</code>, <code>11-view-ranking.js</code>.</p><span class="test">tests/blatt · Schlitten deckt die Wahl, ruht bei reduzierter Bewegung</span></div></div>
+    <div><div><h4>Kopf und Ranglistenzeile</h4><p>Kennzahlstreifen, Richtung seit dem letzten Spieltag aus der Elo-Bahn, kleine Linie über zehn Partien.</p><span class="test">tests/tafel · Richtung gegen die Elo-Bahn nachgerechnet</span></div></div>
+    <div><div><h4>Bauteil Beleg</h4><p><code>belegHtml</code> in <code>05b-recap-teile.js</code> mit den vier Formen, zuerst im Rekord-Blatt. Neue Bezeichner auf oberster Ebene, also Wächter 4 und §2 nachziehen.</p><span class="test">tests/tafel · Zellen = Nenner, Punkt = Sortierwert, Spanne unabhängig gerechnet</span></div></div>
+    <div><div><h4>Award-Kachel</h4><p>Wer, wie viel, woraus. Breite erste Kachel, Lage im Feld, Serie als Lauf, leeres Feld mit Satz. Duo-Kennzahlen gezeichnet.</p><span class="test">tests/blatt · Einheit ohne Kürzel, kein Überlauf, Punkt beim Wert</span></div></div>
+    <div><div><h4>Blattkopf und -fuß</h4><p>Ein Kopf, ein Fuß, Bühne für die Partie. Alle Blätter aus <code>16-sheet-infra.js</code> ziehen nach.</p><span class="test">tests/blatt · jedes Blatt mit Kachel, Titel, Schließen, einem gefüllten Knopf</span></div></div>
+    <div><div><h4>Stories: Bogen, Chips, Faden</h4><p>Chancenbogen, Elo-Chips, Lauf mit Ziel, Band der Karte des Tages. Der Faden als Ableitung in <code>30-news-ui.js</code>, ohne neues Feld in der Datenbank.</p><span class="test">tests/ambient · jeder Faden zeigt auf eine ältere Karte im Feed</span></div></div>
+  </div>
+  <p class="lead" style="margin-top:22px"><b>Was bleibt, wie es ist:</b></p>
+  <div class="bleibt"><span>Farben und Tokens aus 00-tokens</span><span>Archivo Black, Space Grotesk, Sometype Mono</span><span>Insignium, Schwinge, Sterne, Feuer</span><span>Farbgesetz mit vier Rollen</span><span>Formpunkte</span><span>Rubrikband und zwölf Kartensorten</span><span>Chronologischer Feed und Tagesdeckel</span><span>Keine Datenbankänderung</span></div>
+</section>
+
+<script>
+// Segmentwähler: der Schlitten fährt zur Wahl
+document.querySelectorAll('[data-sw]').forEach(sw=>{
+  const b=[...sw.querySelectorAll('button')];
+  b.forEach((x,i)=>x.onclick=()=>{b.forEach(y=>y.classList.remove('on'));x.classList.add('on');sw.style.setProperty('--i',i)});
+});
+// Innere Ebene: der Strich fährt unter das Wort
+function strich(tb){const on=tb.querySelector('button.on'),s=tb.querySelector('.strich');
+  const w=on.offsetWidth*.42;s.style.width=w+'px';s.style.left=(on.offsetLeft+(on.offsetWidth-w)/2)+'px'}
+document.querySelectorAll('[data-tb]').forEach(tb=>{
+  const b=[...tb.querySelectorAll('button')];
+  b.forEach(x=>x.onclick=()=>{b.forEach(y=>y.classList.remove('on'));x.classList.add('on');strich(tb)});
+  requestAnimationFrame(()=>strich(tb));
+});
+addEventListener('resize',()=>document.querySelectorAll('[data-tb]').forEach(strich));
+document.fonts&&document.fonts.ready.then(()=>document.querySelectorAll('[data-tb]').forEach(strich));
+// Monatsleiste: 31 Tage, gespielt, spielfrei, heute
+const gespielt=[1,2,4,5,6,7,8,11,12,13,14,15,18,19,20,21,22,24,25,26];
+document.getElementById('tage').innerHTML=Array.from({length:31},(_,i)=>{const d=i+1;
+  return '<i class="'+(d===26?'h':d<26?(gespielt.includes(d)?'s':'v'):'')+'"></i>'}).join('');
+// Zellen: 36 Siege, 14 Niederlagen in Spielreihenfolge
+const folge='jjnjjnnjjjjnjjnjjjjnjjjnjjjjjnjjnjjjnjjjjnjnjjjjnn';
+document.getElementById('zellen').innerHTML=[...folge].map(c=>'<i class="'+c+'"></i>').join('');
+// Duo: 16 Siege aus 62 Partien, als Anteil in 31 Zellen
+document.getElementById('duoz').innerHTML=Array.from({length:31},(_,i)=>'<i class="'+(i<8?'j':'n')+'"></i>').join('');
+// Markierungen ein- und ausblenden
+document.getElementById('mk').onchange=e=>document.body.classList.toggle('ohne-m',!e.target.checked);
+</script>
+</body>
+</html>

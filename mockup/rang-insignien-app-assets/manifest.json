@@ -1,0 +1,158 @@
+{
+  "name": "Rang-Insignien App Asset Kit",
+  "version": "1.0.0",
+  "format": "SVG",
+  "transparentBackground": true,
+  "provenance": "Newly drawn vector approximations based on the supplied reference image; not extracted image crops and not a pixel-perfect vector conversion.",
+  "placementSlot": {
+    "selector": "#placement-slot",
+    "center": [
+      128,
+      201
+    ],
+    "recommendedContentSize": [
+      24,
+      24
+    ]
+  },
+  "assets": [
+    {
+      "filename": "reif-1.svg",
+      "family": "reif",
+      "level": 1,
+      "title": "Reif 1"
+    },
+    {
+      "filename": "schildring-1.svg",
+      "family": "schildring",
+      "level": 1,
+      "title": "Schildring 1"
+    },
+    {
+      "filename": "volutenkranz-1.svg",
+      "family": "volutenkranz",
+      "level": 1,
+      "title": "Volutenkranz 1"
+    },
+    {
+      "filename": "zierkranz-1.svg",
+      "family": "zierkranz",
+      "level": 1,
+      "title": "Zierkranz 1"
+    },
+    {
+      "filename": "lorbeerreif-1.svg",
+      "family": "lorbeerreif",
+      "level": 1,
+      "title": "Lorbeerreif 1"
+    },
+    {
+      "filename": "kronenreif-1.svg",
+      "family": "kronenreif",
+      "level": 1,
+      "title": "Kronenreif 1"
+    },
+    {
+      "filename": "reif-2.svg",
+      "family": "reif",
+      "level": 2,
+      "title": "Reif 2"
+    },
+    {
+      "filename": "schildring-2.svg",
+      "family": "schildring",
+      "level": 2,
+      "title": "Schildring 2"
+    },
+    {
+      "filename": "volutenkranz-2.svg",
+      "family": "volutenkranz",
+      "level": 2,
+      "title": "Volutenkranz 2"
+    },
+    {
+      "filename": "zierkranz-2.svg",
+      "family": "zierkranz",
+      "level": 2,
+      "title": "Zierkranz 2"
+    },
+    {
+      "filename": "lorbeerreif-2.svg",
+      "family": "lorbeerreif",
+      "level": 2,
+      "title": "Lorbeerreif 2"
+    },
+    {
+      "filename": "kronenreif-2.svg",
+      "family": "kronenreif",
+      "level": 2,
+      "title": "Kronenreif 2"
+    },
+    {
+      "filename": "reif-3.svg",
+      "family": "reif",
+      "level": 3,
+      "title": "Reif 3"
+    },
+    {
+      "filename": "schildring-3.svg",
+      "family": "schildring",
+      "level": 3,
+      "title": "Schildring 3"
+    },
+    {
+      "filename": "volutenkranz-3.svg",
+      "family": "volutenkranz",
+      "level": 3,
+      "title": "Volutenkranz 3"
+    },
+    {
+      "filename": "zierkranz-3.svg",
+      "family": "zierkranz",
+      "level": 3,
+      "title": "Zierkranz 3"
+    },
+    {
+      "filename": "lorbeerreif-3.svg",
+      "family": "lorbeerreif",
+      "level": 3,
+      "title": "Lorbeerreif 3"
+    },
+    {
+      "filename": "kronenreif-3.svg",
+      "family": "kronenreif",
+      "level": 3,
+      "title": "Kronenreif 3"
+    },
+    {
+      "filename": "ordenstern-1.svg",
+      "family": "ordenstern",
+      "level": 1,
+      "title": "Ordenstern 1"
+    },
+    {
+      "filename": "ordenstern-2.svg",
+      "family": "ordenstern",
+      "level": 2,
+      "title": "Ordenstern 2"
+    },
+    {
+      "filename": "ordenstern-3.svg",
+      "family": "ordenstern",
+      "level": 3,
+      "title": "Ordenstern 3"
+    },
+    {
+      "filename": "ordenstern-4.svg",
+      "family": "ordenstern",
+      "level": 4,
+      "title": "Ordenstern 4"
+    },
+    {
+      "filename": "ordenstern-5.svg",
+      "family": "ordenstern",
+      "level": 5,
+      "title": "Ordenstern 5"
+    }
+  ]
+}

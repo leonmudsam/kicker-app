@@ -84,7 +84,7 @@
   .aw-shame-divider .line.r{background:linear-gradient(to left,transparent,rgba(240,86,106,.4))}
   .aw-shame-divider .lbl{display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
     font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--red)}
-  .aw-shame-divider .lbl svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;
+  .aw-shame-divider .lbl svg{width:14px;height:14px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
 
   /* ════════════════════════════════════════════════════════════════
@@ -129,119 +129,105 @@
   .aw-trophy.ton-team{--awc:var(--blue); --awc-rgb:86,180,232}
   .aw-trophy.ton-neg {--awc:var(--red);  --awc-rgb:240,86,106}
   /* ── Die Kachel [§C8] ────────────────────────────────────────────
-     Reihenfolge auf der Kachel: was es ist, wer es hat, wie viel.
-     Vorher stand der Träger als 18px-Chip ganz unten und das Symbol war
-     mit 50 px das Größte auf der Karte — die Auszeichnung sah wichtiger
-     aus als der, der sie geholt hat. Jetzt ist er das Motiv, mit Sternen
-     und Feuer wie in jeder Ranglistenzeile.
-     Mit Wappen, wie in jeder Ranglistenzeile [§C27] — die Kachel misst
-     dafür am Reif und nicht mehr am Gesicht. */
+     Drei Fragen, in dieser Reihenfolge: wer hat es, wie viel, woraus.
+     Vorher stand die Zahl ohne Einheit („6,90", „+10", „8er") und ohne
+     Stichprobe in der Mitte; ob 72 % aus fünf oder aus fünfzig Partien
+     kamen, stand erst im Blatt. Der Träger trägt dasselbe Wappen wie in der
+     Ranglistenzeile [§C27], die Kachel misst am Reif (52 px). */
   .aw-trophy{background-color:var(--bg2);
-    background-image:radial-gradient(circle at 50% 22%,rgba(var(--awc-rgb),.11),transparent 62%);
-    border:1px solid var(--line2);border-radius:14px;padding:11px 10px 13px;
-    text-align:center;position:relative;cursor:pointer;transition:.15s;
-    min-width:0;
-    display:flex;flex-direction:column;align-items:center;gap:7px}
+    background-image:radial-gradient(120% 80% at 0% 0%,rgba(var(--awc-rgb),.10),transparent 60%);
+    border:1px solid rgba(var(--awc-rgb),.20);border-radius:16px;padding:11px 11px 12px;
+    position:relative;cursor:pointer;transition:transform .15s;min-width:0;
+    display:flex;flex-direction:column;gap:9px;text-align:left}
   .aw-trophy:active{transform:translateY(-2px)}
-  /* Der Farbstreifen oben statt der grauen Linie unten: er nennt den
-     Abschnitt, dem die Kachel gehört, und liegt dort, wo das Auge anfängt. */
+  /* Die Kante oben nennt die Rolle, dort fängt das Auge an. */
   .aw-trophy::before{content:"";position:absolute;left:14px;right:14px;top:0;height:2px;
     border-radius:0 0 2px 2px;
     background:linear-gradient(90deg,transparent,rgba(var(--awc-rgb),.75),transparent)}
 
-  /* Kopfzeile: Symbol und Name der Auszeichnung in einer Zeile. Das Symbol
-     ist klein geworden — es sagt nur noch, WELCHE Auszeichnung das ist,
-     und muss dafür nicht so groß sein wie ein Gesicht. */
-  .aw-t-kopf{display:flex;align-items:center;justify-content:center;gap:5px;
-    max-width:100%;min-width:0}
-  .aw-t-ic{flex:0 0 auto;display:flex;color:var(--awc)}
-  .aw-t-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;
-    stroke-linecap:round;stroke-linejoin:round}
-  .aw-t-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.09em;
-    font-family:'Sometype Mono',monospace;color:var(--muted);font-weight:700;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  /* Kopf: Zeichenkachel und Name. Der Name bricht um statt abzubrechen —
+     „Längste Siegesser…" stand gekürzt da. */
+  .aw-t-kopf{display:flex;align-items:center;gap:8px;min-width:0}
+  .aw-t-lbl{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.2;min-width:0;letter-spacing:-.005em;
+    overflow-wrap:break-word;hyphens:auto}
+  /* Gleichauf oder ein Platz unter der Spitze: eine Marke AUF der oberen
+     Kante, nicht im Namen. Im Kopf nahm sie dem Namen ein Drittel der
+     Breite, und „Tageskönig" brach mitten im Wort. */
+  .aw-t-gleich{position:absolute;top:-8px;right:10px;z-index:1;font-family:'Sometype Mono',monospace;
+    font-size:9.5px;font-weight:700;color:var(--ink2);background:var(--surface2);
+    border:1px solid rgba(var(--awc-rgb),.35);border-radius:7px;padding:1px 6px;white-space:nowrap;line-height:1.4}
 
-  /* Der Träger. Die feste Höhe hält die Zahlen aller Kacheln einer Reihe
-     auf einer Linie — ein Avatar mit Feuer ist sonst höher als einer ohne. */
-  /* Feste Hoehe, damit die Zahlen aller Kacheln einer Reihe auf einer Linie
-     stehen — und hoch genug fuer die Sterne, die unter dem Avatar haengen.
-     Ohne die Zugabe stiessen sie an den Kartenrand. */
-  .aw-t-held{height:64px;display:grid;place-items:center}
-  .aw-trophy.gross .aw-t-held{height:78px}
-  /* Der eigene Schlagschatten am Gesicht ist entfallen: es sitzt jetzt IM
-     Reif, und der bringt seinen mit. Zwei Schatten ineinander machen aus
-     dem Sitz einen dunklen Ring. */
-  .aw-t-leer{width:var(--awp);height:var(--awp);border-radius:50%;
+  /* Der Träger mit Name und Stichprobe daneben. */
+  .aw-t-held{display:flex;align-items:center;gap:9px;min-height:52px;min-width:0}
+  .aw-t-held > .rav, .aw-t-held > .av, .aw-t-held > .aw-t-paar, .aw-t-held > .aw-t-vier,
+  .aw-t-held > .aw-t-leer{flex-shrink:0}
+  .aw-t-held > .av{--av:40px}
+  .aw-t-wer{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px}
+  .aw-t-name{font-size:13px;font-weight:700;color:var(--ink);line-height:1.2;overflow-wrap:break-word;hyphens:auto}
+  .aw-t-beleg{font-size:10.5px;color:var(--muted);line-height:1.3}
+  .aw-t-leer{width:40px;height:40px;border-radius:50%;
     border:1px dashed var(--line2);display:grid;place-items:center;
     color:var(--faint);font-family:'Sometype Mono',monospace;font-size:15px}
-  /* Zwei Chips für ein Duo: sie überlappen, damit sie als EIN Ding lesen.
-     Ein Duo hat keinen Rang, also auch kein Wappen [§C27]. */
+  /* Zwei Gesichter für ein Duo: sie überlappen, damit sie als EIN Ding
+     lesen. Ein Duo hat keinen Rang, also auch kein Wappen [§C27]. */
   .aw-t-paar{display:inline-flex;align-items:center}
-  .aw-t-chip{width:calc(var(--awp) * .82);height:calc(var(--awp) * .82);
-    border-radius:50%;flex-shrink:0;display:grid;place-items:center;
-    font-style:normal;font-size:calc(var(--awp) * .30);
-    font-family:'Archivo Black',sans-serif;color:#0a0c0b;
-    border:2px solid var(--bg2)}
-  /* Sie ueberlappen, damit sie als EIN Ding lesen — aber nur so weit, dass
-     die Kuerzel beider Seiten lesbar bleiben. */
-  .aw-t-chip+.aw-t-chip{margin-left:calc(var(--awp) * -.20)}
+  .aw-t-paar .av{--av:32px;box-shadow:0 0 0 2px var(--bg2)}
+  .aw-t-paar .av + .av{margin-left:-9px}
   /* Erzfeinde: vier Spieler. Vier Gesichter passen nicht auf eine halbe
      Kachel, und drei davon wären dann zu klein, um jemanden zu erkennen. */
-  .aw-t-vier{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+  .aw-t-vier{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
     color:var(--awc);background:rgba(var(--awc-rgb),.10);
     box-shadow:inset 0 0 0 1px rgba(var(--awc-rgb),.30)}
-  .aw-t-vier svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .aw-t-vier svg{width:20px;height:20px}
 
-  .aw-t-val{font-family:'Archivo Black',sans-serif;font-size:23px;line-height:1;
-    color:var(--awc);text-shadow:0 0 14px rgba(var(--awc-rgb),.40);letter-spacing:-.02em}
-  .aw-t-name{font-size:11px;font-weight:700;color:var(--ink2);max-width:100%;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.2}
-  .aw-t-name .leer{color:var(--faint);font-weight:500;font-style:italic}
-  /* Gleichstand: ein Name plus Zähler. Alle Namen nebeneinander waren eine
-     Zeile, die niemand zu Ende las und die die Kachel auseinanderzog. */
-  .aw-t-mehr{font-family:'Sometype Mono',monospace;font-size:9.5px;
-    font-weight:700;color:var(--muted);margin-left:5px;vertical-align:1px}
+  /* Die Zahl mit ihrer Sache. Sie steht unten, damit die Zahlen einer
+     Reihe auf einer Linie liegen, egal wie lang die Namen darüber sind. */
+  .aw-t-val{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 6px;margin-top:auto}
+  .aw-t-val b{font-family:'Archivo Black',sans-serif;font-size:22px;font-weight:400;line-height:1;
+    color:var(--awc);text-shadow:0 0 14px rgba(var(--awc-rgb),.35);letter-spacing:-.02em;white-space:nowrap}
+  .aw-t-val span{font-size:11px;font-weight:600;color:var(--ink2);line-height:1.25}
 
-  /* Der Aufmacher: quer über beide Spalten, waagerecht gesetzt. Der Träger
-     links, die Zahl rechts — so fängt der Abschnitt mit einem Gesicht an
-     und hört mit dem Ergebnis auf. */
-  .aw-trophy.gross{grid-column:1 / -1;flex-direction:row;align-items:center;
-    gap:13px;text-align:left;padding:13px 15px;
-    background-image:radial-gradient(circle at 14% 50%,rgba(var(--awc-rgb),.15),transparent 64%)}
-  .aw-trophy.gross .aw-t-held{flex:0 0 auto}
-  .aw-trophy.gross .aw-t-mitte{flex:1;min-width:0;display:flex;
-    flex-direction:column;gap:4px;align-items:flex-start}
-  .aw-trophy.gross .aw-t-kopf{justify-content:flex-start}
-  .aw-trophy.gross .aw-t-ic svg{width:15px;height:15px}
-  .aw-trophy.gross .aw-t-name{font-size:14px;color:var(--ink)}
-  .aw-trophy.gross .aw-t-val{flex:0 0 auto;font-size:30px}
+  /* Der Aufmacher: quer über beide Spalten, der Träger links, die Zahl
+     rechts, darunter die Lage im Feld mit ihrer Skala. */
+  .aw-trophy.gross{grid-column:1 / -1;padding:13px 14px;
+    background-image:radial-gradient(90% 120% at 0% 0%,rgba(var(--awc-rgb),.15),transparent 62%)}
+  .aw-t-zeile{display:flex;align-items:center;gap:12px;min-width:0}
+  .aw-t-zeile .aw-t-held{flex:1}
+  .aw-trophy.gross .aw-t-name{font-size:15px}
+  .aw-trophy.gross .aw-t-val{flex-direction:column;align-items:flex-end;text-align:right;margin-top:0;flex:0 0 auto;max-width:42%}
+  .aw-trophy.gross .aw-t-val b{font-size:30px}
 
   /* Eine ungerade Kachel nimmt die ganze Reihe, statt unten rechts ein Loch
-     zu lassen — ein leeres Feld liest sich als Fehler, nicht als Ende.
-     Sie bleibt dabei die Hochkant-Kachel und wird nur breiter; als zweiter
-     Aufmacher gelesen zu werden wäre falsch, denn sie ist nur die letzte. */
+     zu lassen — ein leeres Feld liest sich als Fehler, nicht als Ende. */
   .aw-trophy.allein{grid-column:1 / -1}
+  /* Im Blatt ist das Blatt der Behälter: ein zweiter Kasten darin nahm
+     jeder Kachel 28 px Breite, und die Namen brachen einmal mehr um. */
+  #sheet .aw-vitrine{background:none;border:0;padding:0;gap:12px 8px}
 
-  /* Nicht vergeben: gestrichelt, nicht halbdurchsichtig. Eine blasse Kachel
-     liest sich als Ladefehler, eine gestrichelte als „hier ist noch frei". */
+  /* Nicht vergeben: gestrichelt, nicht halbdurchsichtig, und mit einem
+     Satz, was noch fehlt. Eine blasse Kachel liest sich als Ladefehler. */
   .aw-trophy.empty{background-image:none;background-color:transparent;
-    border-style:dashed;border-color:var(--line)}
+    border-style:dashed;border-color:var(--line2)}
   .aw-trophy.empty::before{background:none}
-  .aw-trophy.empty .aw-t-ic{color:var(--faint)}
-  .aw-trophy.empty .aw-t-val{color:var(--muted);text-shadow:none;font-size:19px}
+  .aw-trophy.empty .aw-t-lbl{color:var(--muted)}
+  .aw-trophy.empty .aw-t-beleg{font-style:italic;color:var(--faint);font-size:11px}
 
-  /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============ */
-  .aw-hero-icon{display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
-  .aw-hero-icon-glow{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;position:relative}
-  .aw-hero-icon-glow svg{width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .aw-hero-icon-glow.gold  {background:rgba(247,207,74,.12); color:var(--gold);  box-shadow:0 0 60px rgba(247,207,74,.18)}
-  .aw-hero-icon-glow.acid  {background:rgba(190,242,100,.12); color:var(--acid);  box-shadow:0 0 60px rgba(190,242,100,.18)}
-  .aw-hero-icon-glow.blue  {background:rgba(86,180,232,.12); color:var(--blue);  box-shadow:0 0 60px rgba(86,180,232,.18)}
-  .aw-hero-icon-glow.red   {background:rgba(240,86,106,.12); color:var(--red);   box-shadow:0 0 60px rgba(240,86,106,.18)}
-  .aw-hero-icon-glow.orange{background:rgba(255,120,73,.12); color:var(--orange);box-shadow:0 0 60px rgba(255,120,73,.18)}
-  .aw-hero-icon-glow.purple{background:rgba(167,139,250,.12);color:var(--purple);box-shadow:0 0 60px rgba(167,139,250,.18)}
-  .aw-hero-title{font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;margin:14px 0 0;text-align:center}
-  .aw-hero-sub{color:var(--muted);font-size:11px;margin-top:4px;font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.16em;text-align:center}
+  /* Die Lage im Feld ist der Beleg (.bl-feld); auf der Kachel tragen die
+     Halter die Farbe ihrer Rolle statt Gold, und der Rand die der Kachel. */
+  .aw-trophy .bl-feld{height:14px}
+  .aw-trophy .bl-feld-bahn{top:6px}
+  .aw-trophy .bl-feld-mitte{top:1px;height:12px}
+  .aw-trophy .bl-feld i{top:4px}
+  .aw-trophy .bl-feld i.er{top:1px;background:var(--awc);
+    box-shadow:0 0 0 2px var(--bg2),0 0 10px rgba(var(--awc-rgb),.6)}
+  .aw-trophy .bl-feld-l{margin-top:-4px}
+  /* Eine Serie als Lauf aus Feldern, in der Farbe der Kachel. */
+  .aw-lauf{display:flex;gap:3px}
+  .aw-lauf i{flex:1;max-width:16px;height:7px;border-radius:3px;background:var(--awc);opacity:.85}
+
+  /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============
+     Kopf, Bühne und Fuß des Award-Blatts sind die gemeinsamen Bauteile des
+     Blatts (05-nav-sheet); hier steht nur, was das Award-Blatt allein hat. */
   .aw-pod.first .aw-pod-av{width:64px;height:64px;font-size:30px;border-color:var(--gold);box-shadow:0 0 20px rgba(247,207,74,.4)}
   .aw-pod.second .aw-pod-av{border-color:var(--silber)}
   .aw-pod.first .aw-pod-pair .aw-pod-av{width:48px;height:48px;font-size:20px;box-shadow:0 0 20px rgba(247,207,74,.4)}
@@ -260,29 +246,6 @@
 
   /* Empty-Slot dezenter „—" Hinweis */
   .aw-pod.empty .aw-pod-empty-hint{font-family:'Sometype Mono',monospace;font-size:14px;color:var(--faint);margin-bottom:6px}
-
-  /* Match-Award detail (Upset / Höchster Sieg) */
-  .aw-match{margin-top:18px;background:linear-gradient(135deg,rgba(247,207,74,.06),var(--surface) 55%);
-    border:1px solid rgba(247,207,74,.3);border-radius:18px;padding:18px 16px}
-  .aw-match.upset{background:linear-gradient(135deg,rgba(255,120,73,.06),var(--surface) 55%);border-color:rgba(255,120,73,.3)}
-  .aw-match-score{font-family:'Archivo Black',sans-serif;font-size:36px;letter-spacing:-.02em;text-align:center;line-height:1}
-  .aw-match-meta{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);text-align:center;margin-top:6px}
-  .aw-match-teams{display:flex;align-items:flex-start;justify-content:space-between;margin-top:18px;gap:10px}
-  .aw-match-team{flex:1;text-align:center;font-size:12px;min-width:0}
-  .aw-match-team .aw-mini-pair{justify-content:center;margin-bottom:6px}
-  .aw-match-team-name{font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:-.01em;line-height:1.2;color:var(--ink);
-    overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .aw-match-vs{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--muted);align-self:center;flex-shrink:0;padding-top:18px}
-  .aw-match-winner{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--acid);font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px}
-
-  /* Why card */
-  .aw-why{margin-top:18px;background:linear-gradient(135deg,rgba(190,242,100,.04),var(--surface) 55%);
-    border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start}
-  .aw-why-ic{color:var(--acid);flex-shrink:0;margin-top:1px}
-  .aw-why-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-  .aw-why-content{flex:1;min-width:0}
-  .aw-why-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace;margin-bottom:5px}
-  .aw-why-body{font-size:12.5px;color:var(--ink2);line-height:1.55}
 
 
   /* Die Reiter des Awards-Tabs benutzen .ui-switch und .ui-tabs aus
@@ -320,14 +283,25 @@
 
   /* Der Kammerfilter ist die INNERE Ebene [§C27]: rahmenlos unter dem
      gerahmten `.ui-switch` des Reiters. */
-  .ui-tabs.rek-kammern{margin-bottom:2px}
-  .ui-tabs.rek-kammern button{font-size:11.5px;padding-left:2px;padding-right:2px}
+  /* Sechs Chips statt fuenf: „Aktuelle Form" ist dazugekommen. Auf 430
+     Pixeln reicht die Breite nicht mehr, also scrollt die Leiste waagerecht.
+     Umgebrochen standen Fuegungen und Schatten in einer zweiten Zeile, und
+     die sah nicht mehr wie ein Reiterstreifen aus. */
+  .ui-tabs.rek-kammern{margin-bottom:2px;overflow-x:auto;scrollbar-width:none}
+  .ui-tabs.rek-kammern::-webkit-scrollbar{display:none}
+  .ui-tabs.rek-kammern button{font-size:11.5px;padding-left:6px;padding-right:6px;
+    flex:0 0 auto;display:inline-flex;align-items:center;gap:4px}
+  /* Die Zahl sagt, wie viele Rekorde in der Kammer stehen. Ohne sie war
+     nicht zu sehen, ob eine Kammer gefuellt ist. */
+  .ui-tabs.rek-kammern button .n{font-size:9.5px;color:var(--faint)}
+  .ui-tabs.rek-kammern button.on .n{color:var(--ink2)}
 
   .rek-gruppe{display:flex;align-items:center;gap:8px;color:var(--gold);
     margin:22px 4px 10px;font-family:'Sometype Mono',monospace;
     font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.18em}
   .rek-gruppe:first-child{margin-top:6px}
-  /* Vier Kammern, vier Toene. Gold gehoert dem Koennen und der Bestmarke,
+  /* Fuenf Kammern, drei Toene. Gold gehoert dem Koennen, der Form und der
+     Bestmarke,
      Metall der Fuegung [§C35] — sie zeichnet niemanden aus —, Rot der
      Richtung [§C25]. Als alle fuenfunddreissig Karten golden waren, sagte
      Gold nichts mehr. */
@@ -335,7 +309,7 @@
   .rek-gruppe.shame{color:var(--red)}
   .rek-g-ic{display:grid;place-items:center;flex-shrink:0}
   .rek-g-ic svg{width:13px;height:13px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rek-g-line{flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent)}
   .rek-g-z{font-size:11px;color:var(--muted)}
 
@@ -361,7 +335,7 @@
   .rek.offen .rek-ic{background:transparent;border-style:dashed;
     border-color:var(--line2);color:var(--faint)}
   .rek-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   /* Kein Flex-Container: ein Flex-Kind wird BLOCKIFIZIERT, und damit ist
      `display:-webkit-box` am Beleg wirkungslos — die Klammer auf zwei Zeilen
      griff nie, und ein einzelnes „%" stand auf einer dritten Zeile. */
@@ -384,12 +358,31 @@
   .rek-ev{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:3px}
   .rek-w{font-size:13px;font-weight:700;color:var(--ink)}
   .rek.offen .rek-ev{font-style:italic}
-  /* Die Pille umschliesst ihren Inhalt — als Blockkind lief sie ueber die
-     ganze Kartenbreite. */
-  .rek-zeit{display:inline-block;margin-top:5px;
-    font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
+  /* Zeitpunkt, Zeitraum, Grundwert und Stand als Pillenzeile. Sie umbricht,
+     weil „Ganze Laufbahn, alle Sturmspiele" und „100 P Basis" auf 430 Pixeln
+     nicht nebeneinander passen; als eine Zeile mit `nowrap` lief die letzte
+     Pille aus der Karte. */
+  .rek-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  .rek-p{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
     letter-spacing:.06em;color:var(--muted);background:var(--bg2);
-    border:1px solid var(--line);border-radius:99px;padding:1.5px 7px;white-space:nowrap}
+    border:1px solid var(--line);border-radius:8px;padding:1.5px 7px;line-height:1.45;
+    max-width:100%}
+  /* Nicht `nowrap`: „Ganze Laufbahn, ausgeglichen angesetzte Partien" ist bei
+     360 px breiter als die Karte und lief rechts aus dem Bildschirm. Abkürzen
+     wäre schlimmer — die Pille ist die einzige Stelle, die den Zeitraum nennt. */
+  .rek-p.zeit{color:var(--ink2)}
+
+  /* Die Faktenzeilen im Rekord-Blatt: Zeitraum, Mindestbasis und die
+     Rechnung fuer die Laufbahn. Saetze und keine Werte — in der Zahlenreihe
+     darueber liefen sie in die Nachbarzelle. */
+  .rek-def{margin-top:12px;display:flex;flex-direction:column;gap:1px;
+    background:var(--line);border:1px solid var(--line);
+    border-radius:var(--r-sm);overflow:hidden}
+  .rek-df{background:var(--surface);display:grid;grid-template-columns:96px 1fr;
+    gap:10px;padding:9px 11px}
+  .rek-df .l{font-family:'Sometype Mono',monospace;font-size:9.5px;font-weight:700;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding-top:2px}
+  .rek-df .v{font-size:11.5px;color:var(--ink2);line-height:1.45}
 
   /* Verfolger unter dem Podest im Rekord-Blatt. */
   .rek-verfolger{margin-top:12px;display:flex;flex-direction:column;gap:1px;

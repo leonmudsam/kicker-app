@@ -3,6 +3,39 @@
   .empty .ee{font-size:34px;margin-bottom:12px;opacity:.5}
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
+  /* ── Der Glanz [§C25] ──────────────────────────────────────────────
+     Breaking glimmt und die Karte des Tages trägt ein Lauflicht. Dasselbe
+     Licht liegt jetzt dort, wo Gold einen Titel bedeutet und EINER ihn
+     trägt: der Erste auf jedem Podest, der Spieler des Tages und der Woche
+     im Feed samt ihrem Blatt, der Held der Rückblicke. Nirgends sonst — ein
+     Licht auf jeder goldenen Zahl wäre eine Kirmes, und das Farbgesetz
+     sagt, dass Gold nur trägt, was selten ist.
+     Ein eigenes Pseudo-Element und nicht der Hintergrund: die Fläche der
+     Karte bleibt dunkel und unberührt. Es liegt genau über der Box und
+     braucht kein `overflow:hidden` — die Schwinge des Ersten ragt aus dem
+     Podest heraus und wäre sonst abgeschnitten. Die Strecke läuft in
+     anderthalb Sekunden, danach ruht sie gut sechs: ein Signal, kein
+     Flackern. Bei reduzierter Bewegung steht nichts still da, es fehlt ganz. */
+  @keyframes glanzLauf{0%,78%{background-position:140% 0}100%{background-position:-40% 0}}
+  .pod-karte.erster.gold::after,
+  .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
+  .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
+  .rcp-held::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(105deg,transparent 42%,rgba(247,207,74,.18) 50%,transparent 58%)
+      no-repeat;background-size:250% 100%;background-position:140% 0;
+    animation:glanzLauf 8s ease-in-out infinite}
+  /* Zwei Lichter nebeneinander laufen versetzt: die Wochenkarte beginnt
+     später als der Spieler des Tages, der Rückblick später als das Podest. */
+  .nf-s-woche:not(.read)::after,.nd-s-woche .nd-head::after{animation-delay:-3s}
+  .rcp-held::after{animation-delay:-5s}
+  .nd-s-held .nd-head,.nd-s-woche .nd-head{position:relative;border-radius:14px}
+  @media(prefers-reduced-motion:reduce){
+    .pod-karte.erster.gold::after,
+    .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
+    .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
+    .rcp-held::after{animation:none;background:none}}
+
   .mini-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);
     margin:0 2px 8px;font-weight:600}
 
@@ -41,25 +74,24 @@
     --pp-tier-glow:rgba(167,139,250,.35);
     --pp-tier-bg:rgba(167,139,250,.14);
     --pp-tier-bg2:rgba(167,139,250,.06);
-    --pp-tier-border:rgba(167,139,250,.32);
   }
   .pp-header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
     background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent)}
   .pp-tier-legende{--pp-tier-1:var(--gold);--pp-tier-2:#ffd96b;
     --pp-tier-glow:rgba(247,207,74,.4);--pp-tier-bg:rgba(247,207,74,.14);
-    --pp-tier-bg2:rgba(247,207,74,.06);--pp-tier-border:rgba(247,207,74,.34)}
+    --pp-tier-bg2:rgba(247,207,74,.06);}
   .pp-tier-elite{--pp-tier-1:var(--purple);--pp-tier-2:#9d80ff;
     --pp-tier-glow:rgba(167,139,250,.38);--pp-tier-bg:rgba(167,139,250,.14);
-    --pp-tier-bg2:rgba(167,139,250,.06);--pp-tier-border:rgba(167,139,250,.32)}
+    --pp-tier-bg2:rgba(167,139,250,.06);}
   .pp-tier-stark{--pp-tier-1:var(--acid);--pp-tier-2:var(--acid2);
     --pp-tier-glow:rgba(190,242,100,.35);--pp-tier-bg:rgba(190,242,100,.12);
-    --pp-tier-bg2:rgba(190,242,100,.06);--pp-tier-border:rgba(190,242,100,.3)}
+    --pp-tier-bg2:rgba(190,242,100,.06);}
   .pp-tier-solide{--pp-tier-1:var(--blue);--pp-tier-2:#7fc4ee;
     --pp-tier-glow:rgba(86,180,232,.3);--pp-tier-bg:rgba(86,180,232,.12);
-    --pp-tier-bg2:rgba(86,180,232,.06);--pp-tier-border:rgba(86,180,232,.3)}
+    --pp-tier-bg2:rgba(86,180,232,.06);}
   .pp-tier-einsteiger{--pp-tier-1:var(--orange);--pp-tier-2:#ffa078;
     --pp-tier-glow:rgba(255,120,73,.3);--pp-tier-bg:rgba(255,120,73,.12);
-    --pp-tier-bg2:rgba(255,120,73,.06);--pp-tier-border:rgba(255,120,73,.3)}
+    --pp-tier-bg2:rgba(255,120,73,.06);}
 
   /* Edit-Button im Header oben rechts */
   .pp-edit-btn{position:absolute;top:14px;right:14px;width:34px;height:34px;
@@ -123,7 +155,7 @@
   .pp-pos-c.atk .bar > i{background:linear-gradient(90deg,var(--orange),#ffb47e)}
   .pp-pos-c.def .bar > i{background:linear-gradient(90deg,var(--blue),#9bd6f5)}
 
-  .pp-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .pp-kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
   .pp-k{padding:15px 10px;text-align:center;background:var(--surface);
     border:1px solid rgba(255,255,255,.05);border-radius:var(--r);
     box-shadow:0 6px 16px -10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.03);
@@ -180,7 +212,7 @@
     animation:ppSlideThumb 1.2s cubic-bezier(.2,.8,.2,1) .3s both}
   .pp-posprof .ppf{margin-top:10px;text-align:center;font-family:'Sometype Mono',monospace;
     font-size:11px;color:var(--muted);letter-spacing:.02em}
-  .pp-posprof .ppf .lab{color:var(--ink);font-weight:700;font-family:'Space Grotesk';margin-left:4px}
+  .pp-posprof .ppf .lab{color:var(--ink);font-weight:700;font-family:'Space Grotesk',system-ui,sans-serif;margin-left:4px}
 
   .pp-trophies{display:flex;gap:11px;overflow-x:auto;margin:0 -16px;padding:4px 16px 4px;
     scroll-snap-type:x mandatory;scrollbar-width:none}
@@ -235,19 +267,6 @@
   .pp-sn .el.pos{color:var(--acid)} .pp-sn .el.neg{color:var(--red)}
   .pp-sn .rc{margin-top:9px;text-align:center;font-family:'Sometype Mono',monospace;font-size:10.5px;
     color:var(--ink2);padding-top:7px;border-top:1px solid rgba(255,255,255,.05)}
-  .pp-rk.active{background:linear-gradient(180deg,var(--pp-tier-bg) 0%,transparent 70%);
-    border-color:var(--pp-tier-border);
-    box-shadow:0 0 24px -8px var(--pp-tier-glow),inset 0 1px 0 rgba(255,255,255,.05);
-    animation:ppRankPulse 2.8s ease-in-out infinite}
-  .pp-rk .ic{font-size:18px;line-height:1;display:block;margin-bottom:4px}
-  .pp-rk.active .ic{filter:drop-shadow(0 0 7px var(--pp-tier-glow))}
-  .pp-rk .nm{font-size:10px;font-weight:700;color:var(--ink2);letter-spacing:.02em}
-  .pp-rk.active .nm{color:var(--pp-tier-1)}
-  .pp-rk .rg{margin-top:3px;font-family:'Sometype Mono',monospace;font-size:9px;color:var(--muted)}
-  .pp-rk.active::after{content:"";position:absolute;top:-3px;left:50%;transform:translateX(-50%);
-    width:22px;height:3px;border-radius:2px;
-    background:linear-gradient(90deg,var(--pp-tier-2),var(--pp-tier-1));
-    box-shadow:0 0 7px var(--pp-tier-glow)}
   .pp-percentile-bar > .marker{position:absolute;top:-3px;width:2px;height:12px;
     background:var(--ink);border-radius:1px;opacity:.6;
     box-shadow:0 0 4px rgba(255,255,255,.4)}
@@ -285,7 +304,7 @@
   .pp-pos-side .ic{position:absolute;top:5px;opacity:.55}
   .pp-pos-side.atk .ic{left:8px}
   .pp-pos-side.def .ic{right:8px}
-  .pp-pos-side .ic svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2}
+  .pp-pos-side .ic svg{width:11px;height:11px;stroke:currentColor;fill:none;}
   .pp-pos-side .v{font-size:18px;line-height:1}
   .pp-pos-side .v small{font-size:11px;font-weight:400;opacity:.7}
   .pp-pos-side .lbl{font-size:8px;letter-spacing:.16em;text-transform:uppercase;font-family:'Sometype Mono',monospace;font-weight:700;margin-top:3px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -309,7 +328,7 @@
     font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.14em;
     font-weight:700;line-height:1}
   .pp-rd-lbl .ic{display:grid;place-items:center;width:13px;height:13px}
-  .pp-rd-lbl .ic svg{width:13px;height:13px;stroke-width:2;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .pp-rd-lbl .ic svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .pp-rd.atk .pp-rd-lbl{color:var(--orange)}
   .pp-rd.def .pp-rd-lbl{color:var(--blue)}
   .pp-rd-meta{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.45;
@@ -331,8 +350,8 @@
   .pp-r-rich .av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:16px;flex-shrink:0;border:1.5px solid var(--surface);font-family:'Archivo Black',sans-serif;color:#0a0c0b}
   .pp-r-rich .av.empty{background:var(--surface3);color:var(--muted);font-size:14px}
   .pp-r-rich .info{flex:1;min-width:0}
-  .pp-r-rich .l{font-size:8.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:'Sometype Mono',monospace;display:flex;align-items:center;gap:4px;line-height:1}
-  .pp-r-rich .l svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
+  .pp-r-rich .l{font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-family:'Sometype Mono',monospace;display:flex;align-items:center;gap:4px;line-height:1}
+  .pp-r-rich .l svg{width:10px;height:10px;stroke:currentColor;fill:none;}
   .pp-r-rich .name{font-family:'Archivo Black',sans-serif;font-size:12.5px;letter-spacing:-.01em;margin-top:4px;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pp-r-rich .stat{font-family:'Sometype Mono',monospace;font-size:10.5px;margin-top:3px;font-weight:600}
   .pp-r-rich.good .stat .v{color:var(--acid)}
@@ -356,7 +375,7 @@
     background:linear-gradient(135deg,var(--pp-tier-1,var(--acid)),var(--pp-tier-2,var(--acid2)));
     display:grid;place-items:center;flex-shrink:0;
     box-shadow:0 0 14px var(--pp-tier-glow,rgba(190,242,100,.3))}
-  .pp-rank-icon svg{width:20px;height:20px;stroke:#0a0c0b;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .pp-rank-icon svg{width:20px;height:20px;stroke:#0a0c0b;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-rank-tier-text{min-width:0}
   .pp-rank-label{font-family:'Archivo Black',sans-serif;font-size:17px;letter-spacing:-.01em;
     color:var(--pp-tier-1,var(--ink));line-height:1;
@@ -401,7 +420,7 @@
 
   .pp-del{margin-top:18px;text-align:center}
   .pp-del button{background:transparent;border:1px solid rgba(240,86,106,.2);color:var(--red);
-    font-family:'Space Grotesk';font-size:11px;font-weight:600;padding:8px 16px;border-radius:10px;
+    font-family:'Space Grotesk',system-ui,sans-serif;font-size:11px;font-weight:600;padding:8px 16px;border-radius:10px;
     letter-spacing:.04em;cursor:pointer}
 
   /* Avatar-Picker im Edit-Sheet */
@@ -430,8 +449,6 @@
   @keyframes ppFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   @keyframes ppFadeScale{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
   @keyframes ppPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
-  @keyframes ppRankPulse{0%,100%{box-shadow:0 0 24px -8px var(--pp-tier-glow),inset 0 1px 0 rgba(255,255,255,.05)}
-    50%{box-shadow:0 0 32px -6px var(--pp-tier-glow),inset 0 1px 0 rgba(255,255,255,.05)}}
   @keyframes ppFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-2deg)}
     50%{transform:translateX(-50%) translateY(-3px) rotate(-2deg)}}
   @keyframes ppBarIn{from{width:0 !important}}

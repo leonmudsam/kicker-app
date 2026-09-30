@@ -548,9 +548,9 @@ async function exportSavepoint(){
     const json = JSON.stringify(_buildSavepoint(), null, 1);
     const blob = new Blob([json], {type:'application/json'});
     await _saveFile(blob, 'kicker-savepoint_' + _backupStamp() + '.json');
-    toast('Savepoint gesichert · ' + matches.length + ' Matches','ok');
+    toast('Sicherung gespeichert · ' + matches.length + ' Matches','ok');
   }catch(e){
-    toast('Savepoint fehlgeschlagen: ' + e.message, true);
+    toast('Sicherung fehlgeschlagen: ' + e.message, true);
   }
 }
 
@@ -562,7 +562,7 @@ async function _readBackupFile(file){
   if(lower.endsWith('.json')){
     const sp = JSON.parse(await file.text());
     if(!sp || sp.kind !== 'savepoint' || !Array.isArray(sp.matches)){
-      throw new Error('Die JSON-Datei ist kein Savepoint dieser App.');
+      throw new Error('Die JSON-Datei ist keine Sicherung dieser Liga.');
     }
     return {savepoint: sp};
   }
@@ -764,7 +764,7 @@ function _showImportPreview(filename){
     const sp = p.savepoint;
     canApply = (p.neuM.length + p.neuP.length + p.neuS.length) > 0;
     body = `
-      <div class="nd-section">Savepoint</div>
+      <div class="nd-section">Sicherung</div>
       ${line('Erstellt', new Date(sp.createdAt).toLocaleString('de-DE'))}
       ${line('App-Version', sp.build || '—')}
       ${line('Enthält', `${(sp.players||[]).length} Spieler · ${sp.matches.length} Matches`)}
@@ -794,8 +794,7 @@ function _showImportPreview(filename){
   }
 
   openSheet(`
-    <h3>Wiederherstellen</h3>
-    <div class="sheet-sub">${esc(filename)}</div>
+    ${blattKopfHtml({ic:'hochladen', titel:'Wiederherstellen', unter:filename})}
     <div style="margin-top:14px">${body}</div>
     <p style="font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:14px">
       Es wird nichts gelöscht und nichts überschrieben — nur fehlende Einträge werden ergänzt.

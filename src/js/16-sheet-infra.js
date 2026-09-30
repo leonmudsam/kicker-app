@@ -24,6 +24,29 @@ function _pushCurrentSheet(){
 // normalen Öffnen/Schließen (kein hartes Aufpoppen). swapFn ersetzt den Inhalt
 // (ruft intern openSheet + ggf. Scroll-Restore).
 let _sheetAnimating = false;
+// Einmal auf das ENDE einer Transition warten, mit Timer als Rückfall.
+// Ein reiner `setTimeout(200)` ist nicht dasselbe wie „die Animation ist
+// fertig": der Timer läuft ab dem Aufruf, die CSS-Transition erst ab dem
+// nächsten Style-Flush. Der Rückstand ist klein, aber er reicht — der
+// Inhaltstausch fiel damit zuverlässig in die letzten Bilder des
+// Zuschiebens und fror sie ein. Gemessen kostet der Umbau des Feeds 86 ms
+// Hauptthread; mitten in einer laufenden Transition sind das rund fünf
+// verlorene Bilder, und genau das sieht man als Hänger.
+// Der Timer bleibt als Rückfall: `transitionend` kommt nicht, wenn die
+// Transition gar nicht startet (gleicher Wert, `prefers-reduced-motion`,
+// Element im Hintergrund-Tab), und dann dürfte das Sheet nie mehr zurück.
+function _afterTransition(el, prop, ms, fn){
+  let fertig = false;
+  const los = (e) => {
+    if(e && e.target !== el) return;              // Kinder animieren mit
+    if(e && e.propertyName && e.propertyName !== prop) return;
+    if(fertig) return; fertig = true;
+    el.removeEventListener('transitionend', los);
+    fn();
+  };
+  el.addEventListener('transitionend', los);
+  setTimeout(los, ms + 60);
+}
 function _animateSheetSwap(swapFn){
   const sheet = document.getElementById('sheet');
   const bg = document.getElementById('sheetBg');
@@ -35,17 +58,23 @@ function _animateSheetSwap(swapFn){
   // 1) aktuelles Sheet nach unten (schließen)
   sheet.style.transition = 'transform .2s cubic-bezier(.4,0,1,1)';
   sheet.style.transform = 'translateY(100%)';
-  setTimeout(() => {
-    // 2) Inhalt tauschen, unsichtbar unten halten
+  _afterTransition(sheet, 'transform', 200, () => {
+    // 2) Der geparkte Zustand wird ZUERST gezeichnet, dann getauscht. Ohne
+    //    das eigene Bild liegt der Block des Umbaus noch im Bild, in dem das
+    //    Sheet unten ankommt, und der Sprung nach unten ruckelt am Ende.
     sheet.style.transition = 'none';
-    try { swapFn(); } catch(e){}
-    sheet.style.transform = 'translateY(100%)';
-    void sheet.offsetWidth; // Reflow, damit die Aufwärts-Transition greift
-    // 3) hochschieben (öffnen)
-    sheet.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)';
-    sheet.style.transform = 'translateY(0)';
-    setTimeout(() => { sheet.style.transition=''; sheet.style.transform=''; _sheetAnimating=false; }, 300);
-  }, 200);
+    requestAnimationFrame(() => {
+      try { swapFn(); } catch(e){}
+      sheet.style.transform = 'translateY(100%)';
+      void sheet.offsetWidth; // Reflow, damit die Aufwärts-Transition greift
+      // 3) hochschieben (öffnen)
+      sheet.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)';
+      sheet.style.transform = 'translateY(0)';
+      _afterTransition(sheet, 'transform', 300, () => {
+        sheet.style.transition=''; sheet.style.transform=''; _sheetAnimating=false;
+      });
+    });
+  });
 }
 // Vorwärts-Navigation: aktuelles Sheet stapeln, dann Kind sauber „öffnen".
 // Ersetzt das frühere Schließen-und-neu-öffnen-Muster bei Navigationen.
@@ -61,6 +90,64 @@ function sheetNav(openChild){
 }
 window.sheetNav = sheetNav;
 
+// Der Kopf eines Abschnitts im Blatt [§C27]: ein leises Zeichen, der Name
+// in Großbuchstaben, rechts worauf er sich bezieht. Jedes Blatt baute ihn
+// selbst — als Inline-Style im Duo-Blatt, als `.pp-sec-title` im
+// Rekord-Blatt, als `.aw-list-label` im Award-Blatt — und kein zweites sah
+// aus wie das erste.
+function blattAbschnittHtml(ic, titel, rechts){
+  return `<div class="blatt-abschn">${ic ? svgI(ic) : ''}<span>${esc(titel)}</span>${
+    rechts ? `<em class="num">${esc(String(rechts))}</em>` : ''}</div>`;
+}
+
+// Der Kopf eines Blatts [§C27]: die Zeichenkachel in der Farbe der Rolle,
+// der Titel, darunter Zeitraum und Art. Blätter hatten fünf Köpfe — ein
+// leuchtender Kreis über der Mitte im Award-Blatt, ein nackter Titel im
+// Rekord-Blatt, ein Kasten mit Zeichen darunter im Chronik-Blatt, ein
+// 48-px-Gesicht neben „Awards" im Profil, und im Partie-Blatt der Stand als
+// Überschrift. Wer zwei nacheinander öffnete, fand nichts an derselben
+// Stelle. Ein Blatt über einen Menschen (Profil, Duo, Rückblick, Story)
+// behält seinen Heldenkopf: dort ist das Gesicht die Überschrift.
+function blattKopfHtml(o){
+  return `<div class="blatt-kopf">${o.ic ? zkHtml(o.ic, 'g', o.ton || '') : ''}
+    <div class="blatt-kopf-t"><h3>${esc(o.titel)}</h3>${
+      o.unter ? `<div class="sheet-sub">${esc(o.unter)}</div>` : ''}</div></div>`;
+}
+// Der Fuß: der Weg weiter, höchstens zwei Knöpfe, der wichtigere gefüllt.
+// Vorher führten Namen irgendwo im Blatt weiter, und nicht jedes Blatt
+// hatte einen Weg in die Partie oder das Profil, von dem es handelt.
+//   knoepfe  [{label, ic, attr, prim}]
+function blattFussHtml(knoepfe){
+  const k = (knoepfe || []).filter(Boolean).slice(0, 2);
+  if(!k.length) return '';
+  return `<div class="blatt-fuss${k.length === 1 ? ' eins' : ''}">${k.map(b =>
+    `<button type="button" class="btn${b.prim ? '' : ' ghost'}" ${b.attr || ''}>${
+      b.ic ? svgI(b.ic) : ''}${esc(b.label)}</button>`).join('')}</div>`;
+}
+// Die Partie als Bühne [§C27]: die Sieger links und hell, die Verlierer
+// rechts und leiser, der Stand groß in der Mitte, darunter Zeit, Abstand
+// und Siegchance. Ein Bauteil für das Award-Blatt einer Partie und das
+// Blatt der Partie selbst. Im Award-Blatt standen die Teams als volle
+// Farbbalken mit Initialen — `.aw-mini-av` hatte keine einzige Regel —,
+// im Partie-Blatt als zwei graue Kästen neben einem Stand als Überschrift.
+//   m        die Partie, o.zeile der Satz darunter, o.marke das Wort über den
+//            Siegern (Standard „Sieger"), o.gleich keiner liegt vorn
+function buehneHtml(m, o){
+  o = o || {};
+  // `gleich`: keiner liegt vorn (Erzfeinde mit gleich vielen Siegen) — dann
+  // steht keine Seite zurück und keine trägt eine Marke.
+  const siegA = m.winner === 'A';
+  const marke = o.gleich ? '' : (o.marke != null ? o.marke : 'Sieger');
+  const seite = (ids, sieg) => `<div class="buehne-s${sieg || o.gleich ? ' sieg' : ' nied'}" data-team="${esc(ids.slice().sort().join('|'))}">
+      <span class="buehne-marke">${sieg ? esc(marke) : ''}</span>
+      <span class="buehne-paar">${ids.map(id => { const p = pmap()[id]; return p ? avHtml(p, '', {}) : ''; }).join('')}</span>
+      <span class="buehne-n">${ids.map(id => esc(pname(id))).join('<br>')}</span></div>`;
+  const a = seite([m.a1, m.a2], siegA), b = seite([m.b1, m.b2], !siegA);
+  // Der Stand steht in der Reihenfolge der Seiten: links A, rechts B.
+  return `<div class="buehne">${a}<div class="buehne-stand num">${m.score_a}<i>:</i>${m.score_b}</div>${b}${
+    o.zeile ? `<div class="buehne-zeile num">${esc(o.zeile)}</div>` : ''}</div>`;
+}
+
 function openSheet(html, opts){
   opts = opts || {};
   const sheet=document.getElementById('sheet');
@@ -72,11 +159,18 @@ function openSheet(html, opts){
   // closeSheet dazwischen), zuerst dessen Swipe-Listener aufräumen — sonst
   // stapeln sich window-mousemove/mouseup-Listener und lecken.
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
-  sheet.innerHTML=`<div class="sheet-grab" id="sheetGrab"></div>${html}`;
+  // Griff und Schließen stehen in einer Leiste, die beim Scrollen oben
+  // bleibt. Geschlossen wurde bisher nur durch Wischen, einen Tipp neben
+  // das Blatt oder einen Knopf, den jedes Blatt selbst baute oder nicht —
+  // am Ende eines langen Blatts war kein Weg hinaus zu sehen [§C27].
+  sheet.innerHTML=`<div class="sheet-leiste"><div class="sheet-grab" id="sheetGrab"></div>`
+    + `<button type="button" class="sheet-zu" id="sheetZu" aria-label="Schließen">${svgI('x')}</button></div>${html}`;
+  document.getElementById('sheetZu').onclick = () => closeSheet(true);
   // Scroll-Position zurücksetzen — sonst landet man im neuen Sheet dort, wo
   // im vorigen Sheet (oder bei vorigem Öffnen desselben Sheets) gescrollt war.
   // Muss nach innerHTML kommen, damit das Layout schon steht.
   sheet.scrollTop = 0;
+  schlittenFahren(sheet);
   bg.classList.add('show');
   sheet.classList.add('show');
   // ⚠ Schutz-Phase: für auto-getriggerte Pop-Ups (Saison-/POTW-/POTD-Recap)
@@ -271,20 +365,22 @@ function bindSheetSwipe(){
       sheet.style.transform='translateY(100%)';
       bg.style.transition='opacity .28s';
       bg.style.opacity='0';
-      setTimeout(()=>{
+      // Am Ende der Transition, nicht auf Zuruf eines Timers: `closeSheet`
+      // räumt auf und kann dabei einen Umbau auslösen [§C27].
+      _afterTransition(sheet,'transform',280,()=>{
         closeSheet();
         sheet.style.transition='';
         bg.style.transition='';
-      },280);
+      });
     } else {
       sheet.style.transition='transform .32s cubic-bezier(.2,.8,.2,1)';
       sheet.style.transform='translateY(0)';
       bg.style.transition='opacity .32s';
       bg.style.opacity='1';
-      setTimeout(()=>{
+      _afterTransition(sheet,'transform',320,()=>{
         sheet.style.transition='';
         bg.style.transition='';
-      },320);
+      });
     }
   }
 

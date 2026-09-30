@@ -29,7 +29,7 @@ const FINGER_ACHSEN = [
    zeig: v => Math.round(v * 100) + '%'},
   {id:'tore',   name:'Tore',
    roh: d => d.st.games ? d.st.gd / d.st.games : 0,
-   zeig: v => (v < 0 ? '−' : '+') + Math.abs(v).toFixed(1).replace('.', ',')},
+   zeig: v => (v < 0 ? '−' : '+') + komma(Math.abs(v))},
   {id:'pensum', name:'Pensum',
    roh: d => d.st.games,
    zeig: v => String(Math.round(v))},

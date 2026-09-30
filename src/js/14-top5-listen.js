@@ -73,23 +73,12 @@ function showTopList(c){
     </div>`;
   }).join('');
   openSheet(`
-    <div class="aw-hero-icon">
-      <div class="aw-hero-icon-glow ${c.cls||'gold'}">
-        <svg viewBox="0 0 24 24">${ICONS[c.ic||'trophy']||''}</svg>
-      </div>
-      <div class="aw-hero-title">${esc(c.title||'')}</div>
-      <div class="aw-hero-sub">${esc(c.sub||'')}</div>
-    </div>
-    ${items?`<div class="aw-list-label">${esc(c.listLabel||('Top '+rows.length))}</div>
+    ${blattKopfHtml({ic:c.ic || 'trophy', ton:c.cls === 'blue' ? 'blau' : c.cls === 'red' ? 'rot' : 'gold',
+      titel:c.title || '', unter:c.sub || ''})}
+    ${items?`${blattAbschnittHtml('medal', c.listLabel || ('Top ' + rows.length))}
       <div class="aw-list">${items}</div>`
      :`<div class="empty" style="margin-top:24px">Noch keine Daten</div>`}
-    ${c.why?`<div class="aw-why">
-      <div class="aw-why-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg></div>
-      <div class="aw-why-content">
-        <div class="aw-why-label">So wird gewertet</div>
-        <div class="aw-why-body">${esc(c.why)}</div>
-      </div>
-    </div>`:''}`);
+    ${c.why?`${blattAbschnittHtml('info', 'So wird gewertet')}<div class="blatt-text">${esc(c.why)}</div>`:''}`);
   // Zeilen weiterverlinken — gleiche Ziele wie vorher die Karte selbst.
   document.querySelectorAll('.aw-li[data-li-player]').forEach(el=>{
     el.onclick=()=>{ sheetNav(()=>showPlayer(el.dataset.liPlayer)); };
@@ -113,35 +102,35 @@ function openTopList(kind){
     val:(t.elo>=0?'+':'')+Math.round(t.elo)+' Elo', detail:t.w+'/'+t.g+' Siege'});
   if(kind==='periodTeam'){
     return showTopList({title:'Bestes Team', sub:periodLabel(period),
-      ic:'handshake', cls:'blue', rows:_teamEloRanking(matchesInPeriod(period),1).filter(t=>t.elo>0).map(teamRow),
-      why:'Duo mit dem höchsten gemeinsamen Elo-Zuwachs in diesem Zeitraum.'});
+      ic:AW_IC.mvt, cls:'blue', rows:_teamEloRanking(matchesInPeriod(period),1).filter(t=>t.elo>0).map(teamRow),
+      why:'Das Duo mit dem höchsten gemeinsamen Elo-Zuwachs in diesem Zeitraum.'});
   }
   if(kind==='periodStreak'){
-    return showTopList({title:'Heißeste Serie', sub:periodLabel(period),
-      ic:'flame', cls:'acid',
+    return showTopList({title:AWARD_META.streaks.title, sub:periodLabel(period),
+      ic:AW_IC.streaks, cls:'acid',
       rows:longestStreaks(matchesInPeriod(period)).map(s=>({ids:[s.id], name:pname(s.id), val:s.v+'×', detail:'Siege in Folge'})),
-      why:'Längste Siegesserie innerhalb dieses Zeitraums. Min. 2 Siege in Folge.'});
+      why:'Die längste Siegesserie innerhalb dieses Zeitraums, ab 2 Siegen in Folge.'});
   }
   if(kind==='periodUpset'){
-    return showTopList({title:'Größter Upset', sub:periodLabel(period),
-      ic:'bolt', cls:'blue',
+    return showTopList({title:'Größte Überraschung', sub:periodLabel(period),
+      ic:AW_IC.upset, cls:'blue',
       rows:_upsetRanking(matchesInPeriod(period)).map(u=>{
         const w=u.m.winner==='A'?[u.m.a1,u.m.a2]:[u.m.b1,u.m.b2];
         return {ids:w, matchId:u.m.id, name:w.map(pname).join(' & '),
-          val:u.winPct+'%', detail:u.m.score_a+':'+u.m.score_b+' · '+dateStr(u.m.created_at)};
+          val:u.winPct+'%', detail:standFuer(u.m)+' · '+dateStr(u.m.created_at)};
       }),
-      why:'Sieg mit der niedrigsten Siegerwartung. Je kleiner die Chance, desto größer der Upset.'});
+      why:'Der Sieg mit der niedrigsten Siegchance vor dem Anpfiff.'});
   }
   if(kind==='periodKing'){
     const isWeek=period==='week';
     const list=(getCachedAwardRankings('all')[isWeek?'weekKingList':'dayKingList'])||[];
-    return showTopList({title:isWeek?'Wochenkönig':'Tageskönig', sub:'All-Time',
+    return showTopList({title:isWeek?'Wochenkönig':'Tageskönig', sub:'Alle Saisons',
       ic:isWeek?'weekKing':'dayKing', cls:'gold',
       rows:list.map(k=>({ids:[k.id], name:pname(k.id), val:k.v+'×',
         detail:isWeek?'Player of the Week':'Player of the Day'})),
       why:isWeek
-        ? 'Wie oft ein Spieler eine abgeschlossene Woche als Bester beendet hat (min. 5 Siege).'
-        : 'Wie oft ein Spieler einen Spieltag als Bester beendet hat (min. 3 Siege).'});
+        ? 'Wie oft ein Spieler eine abgeschlossene Woche als Bester beendet hat, mit mindestens 5 Siegen.'
+        : 'Wie oft ein Spieler einen Spieltag als Bester beendet hat, mit mindestens 3 Siegen.'});
   }
 }
 
@@ -149,41 +138,16 @@ function showAward(key){
   const R=awardRankings(awPeriod); const pl=awPeriodLabel(); const meta=AWARD_META[key]; if(!meta)return;
   _sheetSetReopen(()=>showAward(key));
   const tn=ids=>ids.map(pname).join(' & ');
-  // ⚑ HOTSPOT — Spiegel von AW_IC aus §5.3 (vAwards). Bei neuen Awards HIER
-  //  und in den anderen 2 AW_IC-Definitionen gleichzeitig erweitern.
-  const AW_IC = {
-    wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
-    showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
-    wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
-    carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
-    grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
-    formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
-    weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
-  };
 
   // ── NEUE TEAM-AWARDS v4 ──
   // favoritenschreck verhält sich wie ein Match-Award (zeigt ein konkretes Spiel),
   // gewinner/verlierer sind aber TEAMS — daher haben wir ein eigenes Layout unten.
   // rivalry ist ein 4-Spieler-Award mit Sonderlayout (Team A vs Team B).
   const MATCH_AWARDS = new Set(['upset','biggest']);
-  const TEAM_AWARDS = new Set([
-    'mvt','bestDuo','endgegner','worstTeam','zirkus','baustelle',
-    'unstoppable','concreteWall','luckyCharm','giantSlayer',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    'cheesePlatter'
-  ]);
   const RIVALRY_AWARDS = new Set(['rivalry']);
   const FAVS_AWARDS = new Set(['favoritenschreck']);
-  const NEG_KEYS = new Set(['worstWr','worstAtk','worstDef','worstTeam','formtief','coldStreak','lossStreaks','zirkus','baustelle','pechvogel','favoritenschreck','cheesePlatter','favoriteLoser']);
 
-  let bodyHtml='';
+  let bodyHtml='', fuss='', arrTop=null, topGleich=0;
 
   if(MATCH_AWARDS.has(key)){
     const arr = key==='upset' ? R.upsets : R.biggest;
@@ -191,27 +155,14 @@ function showAward(key){
       const top = arr[0];
       const m = top.m;
       const winnerSide = m.winner;
-      const isUpsetVariant = key==='upset';
-      const upsetWinPct = isUpsetVariant ? Math.round((1-top.sp)*100) : null;
-      const diffStr = key==='biggest' ? '+'+top.diff+' Tore' : 'Siegchance nur '+upsetWinPct+'%';
-      bodyHtml = `
-        <div class="aw-match${isUpsetVariant?' upset':''}">
-          <div class="aw-match-score">${m.score_a} : ${m.score_b}</div>
-          <div class="aw-match-meta">${dateStr(m.created_at)} · ${diffStr}</div>
-          <div class="aw-match-teams">
-            <div class="aw-match-team">
-              ${winnerSide==='A'?'<div class="aw-match-winner">Gewinner</div>':''}
-              ${awMiniPair(m.a1,m.a2)}
-              <div class="aw-match-team-name">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
-            </div>
-            <div class="aw-match-vs">vs</div>
-            <div class="aw-match-team">
-              ${winnerSide==='B'?'<div class="aw-match-winner">Gewinner</div>':''}
-              ${awMiniPair(m.b1,m.b2)}
-              <div class="aw-match-team-name">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
-            </div>
-          </div>
-        </div>`;
+      // Die Partie als Bühne [§C27] — dieselbe wie im Blatt der Partie.
+      const zeile = key === 'biggest'
+        ? dateStr(m.created_at) + ' · ' + top.diff + ' Tore Unterschied'
+        : dateStr(m.created_at) + ' · Siegchance ' + Math.round((1 - top.sp) * 100) + ' %';
+      bodyHtml = buehneHtml(m, {zeile});
+      fuss = blattFussHtml([
+        {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
+        {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(_awSieger(top).slice().sort().join('|'))}"`}]);
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     }
@@ -223,25 +174,10 @@ function showAward(key){
     if(arr && arr.length){
       const top = arr[0];
       const m = top.m;
-      const winnerSide = m.winner;
-      bodyHtml = `
-        <div class="aw-match upset">
-          <div class="aw-match-score">${m.score_a} : ${m.score_b}</div>
-          <div class="aw-match-meta">${dateStr(m.created_at)} · ${top.v} Elo überwunden</div>
-          <div class="aw-match-teams">
-            <div class="aw-match-team">
-              ${winnerSide==='A'?'<div class="aw-match-winner">Sieger</div>':''}
-              ${awMiniPair(m.a1,m.a2)}
-              <div class="aw-match-team-name">${esc(pname(m.a1)+' & '+pname(m.a2))}</div>
-            </div>
-            <div class="aw-match-vs">vs</div>
-            <div class="aw-match-team">
-              ${winnerSide==='B'?'<div class="aw-match-winner">Sieger</div>':''}
-              ${awMiniPair(m.b1,m.b2)}
-              <div class="aw-match-team-name">${esc(pname(m.b1)+' & '+pname(m.b2))}</div>
-            </div>
-          </div>
-        </div>`;
+      bodyHtml = buehneHtml(m, {zeile: dateStr(m.created_at) + ' · ' + top.v + ' Elo überwunden'});
+      fuss = blattFussHtml([
+        {label:'Zur Partie', ic:'clock', prim:true, attr:`data-li-match="${esc(m.id)}"`},
+        {label:'Zum Duo', ic:'users', attr:`data-li-team="${esc(top.ids.slice().sort().join('|'))}"`}]);
       // Weitere Plätze als kompakte Liste — andere Teams mit ihren best-Coups
       if(arr.length > 1){
         const rest = arr.slice(1, 7);
@@ -254,7 +190,7 @@ function showAward(key){
             <div class="aw-li-val">${e.v} Elo</div>
           </div>`;
         }).join('');
-        bodyHtml += `<div class="aw-list-label">Weitere Coups</div><div class="aw-list">${items}</div>`;
+        bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Coups')}<div class="aw-list">${items}</div>`;
       }
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
@@ -266,36 +202,25 @@ function showAward(key){
       const top = arr[0];
       const teamAName = pname(top.idsA[0]) + ' & ' + pname(top.idsA[1]);
       const teamBName = pname(top.idsB[0]) + ' & ' + pname(top.idsB[1]);
-      const aLeading = top.wA > top.wB;
-      const bLeading = top.wB > top.wA;
-      bodyHtml = `
-        <div class="aw-match">
-          <div class="aw-match-score">${Math.round(top.pct*100)}%</div>
-          <div class="aw-match-meta">${top.g} direkte Duelle · ${top.gfA}:${top.gfB} Tore gesamt</div>
-          <div class="aw-match-teams">
-            <div class="aw-match-team" data-li-team="${esc(top.idsA.slice().sort().join('|'))}" style="cursor:pointer">
-              ${aLeading?'<div class="aw-match-winner">Führt</div>':''}
-              ${awMiniPair(top.idsA[0],top.idsA[1])}
-              <div class="aw-match-team-name">${esc(teamAName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wA} S · ${top.gA} Sp.</div>
-            </div>
-            <div class="aw-match-vs">vs</div>
-            <div class="aw-match-team" data-li-team="${esc(top.idsB.slice().sort().join('|'))}" style="cursor:pointer">
-              ${bLeading?'<div class="aw-match-winner">Führt</div>':''}
-              ${awMiniPair(top.idsB[0],top.idsB[1])}
-              <div class="aw-match-team-name">${esc(teamBName)}</div>
-              <div class="aw-match-team-name" style="margin-top:4px;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--muted)">${top.wB} S · ${top.gB} Sp.</div>
-            </div>
-          </div>
-        </div>`;
+      // Zwei Duos auf der Bühne [§C27]; in der Mitte stehen die Siege
+      // gegeneinander, und „führt" steht über dem, der vorn liegt.
+      bodyHtml = buehneHtml({a1:top.idsA[0], a2:top.idsA[1], b1:top.idsB[0], b2:top.idsB[1],
+          score_a:top.wA, score_b:top.wB, winner: top.wA > top.wB ? 'A' : top.wB > top.wA ? 'B' : ''},
+        {marke:'Führt', gleich: top.wA === top.wB,
+         zeile: Math.round(top.pct*100) + ' % als Gegner · ' + top.g + ' Duelle · ' + top.gfA + ':' + top.gfB + ' Tore'});
       // Weitere Rivalitäten
       if(arr.length > 1){
         const rest = arr.slice(1, 7);
+        // Der Platz zählt, wer eine höhere Quote hat: gleichauf mit der
+        // Spitze heißt Platz 1, nicht 2., 3. und 4. — das Profil und der
+        // Award-Sammler zählen diese Rivalitäten längst als geteilte Spitze.
+        const q = x => Math.round(x.pct*1000);
         const items = rest.map((e, idx) => {
+          const platz = arr.filter(x => q(x) > q(e)).length + 1;
           const aN = pname(e.idsA[0]) + ' & ' + pname(e.idsA[1]);
           const bN = pname(e.idsB[0]) + ' & ' + pname(e.idsB[1]);
           return `<div class="aw-li">
-            <div class="aw-li-rank">${idx+2}.</div>
+            <div class="aw-li-rank">${platz}.</div>
             <div class="aw-li-info" style="min-width:0">
               <div class="aw-li-name" style="font-size:12px">${esc(aN)}</div>
               <div class="aw-li-name" style="font-size:9.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px">vs ${esc(bN)}</div>
@@ -303,77 +228,39 @@ function showAward(key){
             <div class="aw-li-val">${Math.round(e.pct*100)}% · ${e.g}×</div>
           </div>`;
         }).join('');
-        bodyHtml += `<div class="aw-list-label">Weitere Rivalitäten</div><div class="aw-list">${items}</div>`;
+        bodyHtml += `${blattAbschnittHtml('medal', 'Weitere Rivalitäten')}<div class="aw-list">${items}</div>`;
       }
     } else {
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     }
   } else {
-    const arr = (() => {
-      switch(key){
-        case 'wins':       return R.winsList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Siege',sort:x.v}));
-        case 'mvt':        return R.mvt.map(x=>({ids:x.ids,name:tn(x.ids),val:(x.v>=0?'+':'')+Math.round(x.v)+' Elo',sort:Math.round(x.v)}));
-        case 'streaks':    return R.streaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'scorer':     return R.scorer.map(x=>({ids:[x.id],name:pname(x.id),val:'Ø '+x.avg.toFixed(1)+' Tore',sort:Math.round(x.avg*10)}));
-        case 'wall':       return R.wall.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' /Sp.',sort:-Math.round(x.v/x.g*10)}));
-        case 'perfect':    return R.perfect.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'grinder':    return R.grinder.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Spiele',sort:x.v}));
-        case 'worstWr':    return R.worstWr.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:-Math.round(x.wr*100)}));
-        case 'worstAtk':   return R.worstAtk.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Tore/Sp.',sort:-Math.round(x.v/x.g*10)}));
-        case 'worstDef':   return R.worstDef.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v/x.g).toFixed(1)+' Gegen/Sp.',sort:Math.round(x.v/x.g*10)}));
-        case 'endgegner':  return R.endgegner.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.g+'×)',sort:Math.round(x.pct*1000)}));
-        case 'clutch':     return R.clutchList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'ice':        return R.iceList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Zu-Null',sort:x.v}));
-        case 'worstTeam':  return R.worstTeam.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.w/x.g*100)+'%',sort:-Math.round(x.w/x.g*100)}));
-        case 'bestDuo':    return R.bestDuo.map(x=>({ids:x.ids,name:tn(x.ids),val:x.g+' Spiele',sort:x.g}));
-        case 'onFire':     return R.onFire.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'coldStreak': return R.coldStreak.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Niederlagen',sort:x.v}));
-        case 'lossStreaks':return R.lossStreaks.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'er Serie',sort:x.v}));
-        case 'carryKing':  return R.carryList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Carries',sort:x.v}));
-        case 'showmaster': return R.showmasterList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× 10:0',sort:x.v}));
-        case 'solo':       return R.soloList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.wr*100)+'%',sort:Math.round(x.wr*100)}));
-        case 'formtief':   return R.formtief.map(x=>({ids:[x.id],name:pname(x.id),val:'-'+Math.round(x.drop)+' Elo',sort:Math.round(x.drop)}));
-        case 'zirkus':     return R.zirkusList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.pct*100)+'% ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
-        case 'baustelle':  return R.baustelleList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.best+'er Serie',sort:x.best}));
-        case 'peakElo':    return (R.peakEloList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+' Elo',sort:x.v}));
-        case 'weekKing':   return (R.weekKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTW',sort:x.v}));
-        case 'dayKing':    return (R.dayKingList||[]).map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× POTD',sort:x.v}));
-        // ── NEUE AWARDS v3 ──
-        case 'plusMinus':  return R.plusMinusList.map(x=>({ids:[x.id],name:pname(x.id),val:(x.v>=0?'+':'')+x.v.toFixed(1)+' /Sp.',sort:Math.round(x.v*10)}));
-        case 'underdog':   return R.underdogList.map(x=>({ids:[x.id],name:pname(x.id),val:x.v+'× Underdog-Sieg',sort:x.v}));
-        case 'pechvogel':  return R.pechvogelList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.pct*100)+'% knapp verloren ('+x.v+'/'+x.g+')',sort:Math.round(x.pct*1000)}));
-        // ── NEUE TEAM-AWARDS v4 ──
-        case 'unstoppable':  return R.unstoppableList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v+' Siege in Folge',sort:x.v}));
-        case 'concreteWall': return R.concreteWallList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:-Math.round(x.v*100)}));
-        case 'luckyCharm':   return R.luckyCharmList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
-        case 'giantSlayer':  return R.giantSlayerList.map(x=>({ids:x.ids,name:tn(x.ids),val:Math.round(x.v*100)+'% ('+x.wins+'/'+x.games+')',sort:Math.round(x.v*1000)}));
-        // ── NEUE NEGATIV-AWARDS v6 ──
-        case 'cheesePlatter': return R.cheesePlatterList.map(x=>({ids:x.ids,name:tn(x.ids),val:x.v.toFixed(2)+' Gegentore/Sp.',sort:Math.round(x.v*100)}));
-        case 'favoriteLoser': return R.favoriteLoserList.map(x=>({ids:[x.id],name:pname(x.id),val:Math.round(x.v*100)+'% ('+x.losses+'/'+x.games+')',sort:Math.round(x.v*1000)}));
-        default: return [];
-      }
-    })();
+    // Liste, Sortierung, Zahl, Einheit und Stichprobe kommen aus AW_WERT
+    // [§5.3d] — dieselbe Zeile, aus der Kachel, Profil und Duo-Blatt lesen.
+    // Hier stand eine eigene Kopie aller neununddreißig Formate, und sie
+    // sagte zu derselben Serie „8er Serie", während die Kachel „8er" trug.
+    const arr = awListe(key, R).map(x => {
+      const t = awText(key, x);
+      return {x, ids:awIds(key, x), name:awIds(key, x).map(pname).join(' & '),
+        z:t.z, e:t.e, val:t.e ? t.z+' '+t.e : t.z, detail:t.b, sort:AW_WERT[key].s(x)};
+    });
 
     // Hero (#1) + Liste der weiteren Plätze
     if(!arr.length){
       bodyHtml = `<div class="empty" style="margin-top:24px">Keine Daten</div>`;
     } else {
-      const isTeamAward = TEAM_AWARDS.has(key);
-      const isNeg = NEG_KEYS.has(key);
-      // meta.cls → RGB für Hero-Akzentfarbe
-      const CLS_RGB = {gold:'247,207,74',acid:'190,242,100',blue:'86,180,232',orange:'255,120,73',purple:'167,139,250',red:'240,86,106'};
-      const heroRgb = CLS_RGB[meta.cls] || CLS_RGB.gold;
+      const isTeamAward = arr[0].ids.length === 2;
+      const isNeg = awNeg(key);
+      // Der Held trägt die Farbe seiner Rolle [§C25] — Gold, Blau für ein
+      // Duo, Rot für die Kehrseite —, nicht einen der sechs Katalogtöne.
+      const heroRgb = isNeg ? '240,86,106' : isTeamAward ? '86,180,232' : '247,207,74';
 
       // ─── Hero (#1) – alle bei sort=arr[0].sort sind geteilte #1 ───
       const topGroup = arr.filter(x => x.sort === arr[0].sort);
       const isShared = topGroup.length > 1;
       const top = arr[0];
+      arrTop = top; topGleich = topGroup.length;
       // Wert (für Hero – alle teilen denselben Wert)
-      const heroVal = (() => {
-        const v = top.val;
-        const m = v.match(/^([+\-]?\d+(?:[.,]\d+)?)/);
-        return m ? `<b>${esc(m[1])}</b>${esc(v.slice(m[1].length))}` : esc(v);
-      })();
+      const heroVal = `<b>${esc(top.z)}</b>${top.e ? ' '+esc(top.e) : ''}`;
 
       let heroHtml;
       if(!isShared){
@@ -387,7 +274,7 @@ function showAward(key){
           : `<div class="aw-winner-crown">${svgI('crown')}</div>`;
         const heroBadge = isNeg
           ? `<span class="aw-winner-badge">Schandfleck · #1</span>`
-          : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Best · #1</span>`;
+          : `<span class="aw-winner-badge"><svg viewBox="0 0 24 24"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg> Spitze · #1</span>`;
 
         heroHtml = `
           <div class="aw-winner ${isNeg?'shame':''}" style="--c:${heroRgb}" ${heroClick}>
@@ -463,8 +350,9 @@ function showAward(key){
               ${avHtml}
               <div class="aw-li-info">
                 <div class="aw-li-name">${esc(e.name)}</div>
+                ${e.detail ? `<div class="aw-li-detail">${esc(e.detail)}</div>` : ''}
               </div>
-              <div class="aw-li-val">${esc(e.val)}</div>
+              <div class="aw-li-val">${esc(e.z)}</div>
             </div>
           `);
         } else {
@@ -488,62 +376,62 @@ function showAward(key){
                 ${tiedRows}
                 <span class="aw-li-tie-badge">Geteilt · ${entries.length} ${isTeamAward?'Teams':'Spieler'}</span>
               </div>
-              <div class="aw-li-val">${esc(entries[0].val)}</div>
+              <div class="aw-li-val">${esc(entries[0].z)}</div>
             </div>`);
         }
       }
 
+      // Der Beleg [§C27]: woraus der Wert besteht, wo er im Feld liegt und
+      // wie sicher der Abstand zum Nächsten ist — aus derselben Liste.
+      const w = AW_WERT[key];
+      const zweitE = arr.find(e => e.sort !== top.sort) || null;
+      const zA = zweitE ? belegAnteil(zweitE.detail) : null;
+      const belegAw = belegHtml({
+        ev: top.z + ' ' + (top.detail || ''),
+        feld: w.f ? arr.map(e => ({v:w.f(e.x), t:e.z, er:e.sort === top.sort})) : null,
+        dahinter: zweitE ? `Dahinter: <b>${esc(zweitE.name)}</b> mit ${esc(zweitE.z)}.` : '',
+        zweiter: zA && _belegIstQuote(zweitE.z + ' ' + zweitE.detail, zA) ? {name:zweitE.name, q:zA.k / zA.n} : null
+      });
       const listLabel = isNeg ? 'Weitere Sünder' : 'Weitere Plätze';
-      bodyHtml = heroHtml + (listItems.length
-        ? `<div class="aw-list-label">${listLabel}</div><div class="aw-list">${listItems.join('')}</div>`
+      bodyHtml = heroHtml + belegAw + (listItems.length
+        ? `${blattAbschnittHtml('medal', listLabel)}<div class="aw-list">${listItems.join('')}</div>`
         : '');
     }
   }
 
-  const heroCls = meta.cls || 'gold';
-
+  // Kopf, Beleg, Liste, Regel, Weg weiter — in jedem Blatt dieselbe
+  // Reihenfolge [§C27]. Der Ton ist die Rolle [§C25], nicht einer von sechs
+  // Katalogtönen: der leuchtende Kreis trug Orange, Violett und Acid.
+  const kopfIds = (awTop(key, R)[0] ? awIds(key, awTop(key, R)[0]) : []);
+  const kopfTon = awNeg(key) ? 'rot' : kopfIds.length >= 2 ? 'blau' : 'gold';
+  if(!fuss && arrTop && arrTop.ids.length && topGleich === 1)
+    fuss = blattFussHtml([arrTop.ids.length === 2
+      ? {label:'Zum Duo', ic:'users', prim:true, attr:`data-li-team="${esc(arrTop.ids.slice().sort().join('|'))}"`}
+      : {label:'Zum Profil', ic:'user', prim:true, attr:`data-li-player="${esc(arrTop.ids[0])}"`}]);
   openSheet(`
-    <div class="aw-hero-icon">
-      <div class="aw-hero-icon-glow ${heroCls}">
-        <svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>
-      </div>
-      <div class="aw-hero-title">${meta.title}</div>
-      <div class="aw-hero-sub">${pl}</div>
-    </div>
+    ${blattKopfHtml({ic:AW_IC[key] || 'trophy', ton:kopfTon, titel:meta.title, unter:pl + ' · Award'})}
     ${bodyHtml}
-    <div class="aw-why">
-      <div class="aw-why-ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16v.5"/></svg></div>
-      <div class="aw-why-content">
-        <div class="aw-why-label">So wird gewertet</div>
-        <div class="aw-why-body">${meta.why}</div>
-      </div>
-    </div>`);
+    ${blattAbschnittHtml('info', 'So wird gewertet')}
+    <div class="blatt-text">${meta.why}</div>
+    ${fuss}`);
 
-  // Match-Card klickbar
-  if(MATCH_AWARDS.has(key)){
-    const arr = key==='upset' ? R.upsets : R.biggest;
-    if(arr&&arr.length){
-      const el = document.querySelector('.aw-match');
-      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ sheetNav(()=>showMatchDetail(arr[0].m.id)); }; }
-    }
-  }
-  // Favoritenschreck: Hauptkarte führt zum Match-Detail
-  if(FAVS_AWARDS.has(key)){
-    const arr = R.favoritenschreckList;
-    if(arr && arr.length){
-      const el = document.querySelector('.aw-match');
-      if(el){ el.style.cursor='pointer'; el.onclick=()=>{ sheetNav(()=>showMatchDetail(arr[0].m.id)); }; }
-    }
-  }
-  // Erzfeinde: die zwei Team-Boxen tragen data-li-team und werden durch den
-  // generischen Team-Handler unten (querySelectorAll[data-li-team]) klickbar.
-
+  // Die Bühne und der Fuß führen, wohin sie zeigen: eine Seite ins Duo, der
+  // Knopf in die Partie, das Profil oder das Duo.
+  document.querySelectorAll('#sheet .buehne-s[data-team], #sheet .blatt-fuss [data-li-team]').forEach(el=>{
+    el.onclick=()=>{ const [a,b]=(el.dataset.team||el.dataset.liTeam).split('|'); if(a&&b) sheetNav(()=>showTeam(a,b)); };
+  });
+  document.querySelectorAll('#sheet .blatt-fuss [data-li-player]').forEach(el=>{
+    el.onclick=()=>{ sheetNav(()=>showPlayer(el.dataset.liPlayer)); };
+  });
+  document.querySelectorAll('#sheet .blatt-fuss [data-li-match]').forEach(el=>{
+    el.onclick=()=>{ sheetNav(()=>showMatchDetail(el.dataset.liMatch)); };
+  });
   // Listen-Einträge klickbar
   document.querySelectorAll('.aw-li[data-li-player], .aw-li-tied-row[data-li-player], .aw-winner[data-li-player], .aw-winner-tied-entry[data-li-player]').forEach(el=>{
     el.style.cursor='pointer';
     el.onclick=()=>{ const pid=el.dataset.liPlayer; sheetNav(()=>showPlayer(pid)); };
   });
-  document.querySelectorAll('.aw-li[data-li-team], .aw-li-tied-row[data-li-team], .aw-winner[data-li-team], .aw-winner-tied-entry[data-li-team], .aw-match-team[data-li-team]').forEach(el=>{
+  document.querySelectorAll('.aw-li[data-li-team], .aw-li-tied-row[data-li-team], .aw-winner[data-li-team], .aw-winner-tied-entry[data-li-team]').forEach(el=>{
     el.style.cursor='pointer';
     el.onclick=(ev)=>{ ev.stopPropagation(); const [a,b]=el.dataset.liTeam.split('|'); sheetNav(()=>showTeam(a,b)); };
   });

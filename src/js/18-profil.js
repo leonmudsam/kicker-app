@@ -15,179 +15,27 @@ function playerAwards(id){
   if(!_cache._playerAwards) _cache._playerAwards = {};
   if(_cache._playerAwards[_pawKey]) return _cache._playerAwards[_pawKey];
   const R=awardRankings('season', _pawSid);
+  // Platz und Wert kommen aus AW_WERT [§5.3d]: dieselbe Sortierung wie
+  // Kachel und Blatt, gleichauf heißt geteilt. Hier standen drei eigene
+  // Tabellen (Einzel, Duo, Partie) mit eigenen Sortier- und Anzeigeregeln,
+  // und dieselbe Serie hieß im Profil „8er" und im Blatt „8er Serie".
+  // Ein Award einer Partie gilt nur für die Sieger (awIds), nicht für alle
+  // vier auf dem Platz.
   const found=[];
-
-  // Hilfsfunktion: Rang eines Spielers in einem Array berechnen
-  // berücksichtigt geteilte Plätze
-  const getRank=(arr,valFn,checkFn)=>{
-    if(!arr||!arr.length) return -1;
-    const topVal=valFn(arr[0]);
-    let rank=1;
-    for(let i=0;i<Math.min(arr.length,10);i++){
-      const val=valFn(arr[i]);
-      if(i>0 && val!==valFn(arr[i-1])) rank=i+1;
-      if(rank>3) break;
-      if(checkFn(arr[i])) return rank-1; // 0-basiert für Kompatibilität
+  Object.keys(AW_WERT).forEach(key=>{
+    const r=awRang(key, R, x=>awIds(key, x).includes(id));
+    if(!r) return;
+    const ids=awIds(key, r.x);
+    const eintrag={key, rank:r.rang, x:r.x, val:awText(key, r.x).z,
+      mehr:r.rang===0 ? awTop(key, R).length-1 : 0};
+    if(key==='rivalry'){
+      const gegner=r.x.idsA.includes(id) ? r.x.idsB : r.x.idsA;
+      eintrag.partner=null;
+      eintrag.partnerLabel='vs '+gegner.map(pname).join(' & ');
+    } else if(ids.length===2 && !AW_WERT[key].einzeln && !AW_WERT[key].gegner){
+      eintrag.partner=ids.find(x=>x!==id)||null;
     }
-    return -1;
-  };
-
-  // Einzel-Awards
-  const singleKeys={
-    wins:R.winsList, streaks:R.streaks, scorer:R.scorer, wall:R.wall,
-    perfect:R.perfect, grinder:R.grinder, worstWr:R.worstWr,
-    worstAtk:R.worstAtk, worstDef:R.worstDef,
-    clutch:R.clutchList, carryKing:R.carryList,
-    onFire:R.onFire, coldStreak:R.coldStreak, lossStreaks:R.lossStreaks,
-    solo:R.soloList, formtief:R.formtief, showmaster:R.showmasterList,
-    ice:R.iceList, peakElo:R.peakEloList,
-    weekKing:R.weekKingList, dayKing:R.dayKingList,
-    // ── NEUE AWARDS v3 ──
-    plusMinus:R.plusMinusList, underdog:R.underdogList, pechvogel:R.pechvogelList,
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    favoriteLoser:R.favoriteLoserList
-  };
-  const singleValFns={
-    wins:x=>x.v, streaks:x=>x.v, scorer:x=>Math.round(x.avg*10),
-    wall:x=>-Math.round(x.v/x.g*10), // weniger = besser → negieren
-    perfect:x=>Math.round(x.wr*100), grinder:x=>x.v,
-    worstWr:x=>-Math.round(x.wr*100), // weniger = "besser" für Schandtafel → negieren
-    worstAtk:x=>-Math.round(x.v/x.g*10),
-    worstDef:x=>Math.round(x.v/x.g*10),
-    clutch:x=>Math.round(x.wr*100),
-    carryKing:x=>x.v, onFire:x=>x.v, coldStreak:x=>x.v,
-    lossStreaks:x=>x.v, solo:x=>Math.round(x.wr*100),
-    formtief:x=>Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
-    peakElo:x=>x.v,
-    weekKing:x=>x.v, dayKing:x=>x.v,
-    // ── NEUE AWARDS v3 ──
-    plusMinus:x=>Math.round(x.v*10), // höchster Tor-Saldo gewinnt
-    underdog:x=>x.v,                  // meiste Underdog-Siege gewinnt
-    pechvogel:x=>Math.round(x.pct*1000),  // höchstes Pct an knappen Niederlagen = Top-1
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    favoriteLoser:x=>Math.round(x.v*1000) // rate-basiert (v = Quote)
-  };
-
-  // Display-Werte für die Trophäen-Anzeige im Spieler-Awards-Sheet.
-  // Format ist konsistent mit den Card-Aufrufen in vAwards (Awards-Tab).
-  const singleDisplayFns={
-    wins:x=>x.v, streaks:x=>x.v+'er', scorer:x=>x.avg.toFixed(1),
-    wall:x=>(x.v/x.g).toFixed(1), perfect:x=>Math.round(x.wr*100)+'%', grinder:x=>x.v,
-    worstWr:x=>Math.round(x.wr*100)+'%',
-    worstAtk:x=>(x.v/x.g).toFixed(1), worstDef:x=>(x.v/x.g).toFixed(1),
-    clutch:x=>Math.round(x.wr*100)+'%',
-    carryKing:x=>x.v, onFire:x=>x.v+'er', coldStreak:x=>x.v+'er',
-    lossStreaks:x=>x.v+'er', solo:x=>Math.round(x.wr*100)+'%',
-    formtief:x=>'-'+Math.round(x.drop), showmaster:x=>x.v, ice:x=>x.v,
-    peakElo:x=>x.v, weekKing:x=>x.v, dayKing:x=>x.v,
-    plusMinus:x=>(x.v>=0?'+':'')+x.v.toFixed(1), underdog:x=>x.v,
-    pechvogel:x=>Math.round(x.pct*100)+'%',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    favoriteLoser:x=>Math.round(x.v*100)+'%'
-  };
-
-  Object.entries(singleKeys).forEach(([key,arr])=>{
-    if(!arr||!arr.length) return;
-    const valFn=singleValFns[key]||(x=>x.v);
-    const rank=getRank(arr,valFn,x=>x.id===id);
-    if(rank>=0 && rank<=2){
-      const entry=arr.find(x=>x.id===id);
-      const dispFn=singleDisplayFns[key]||(x=>x.v);
-      found.push({key,rank,val:entry?String(dispFn(entry)):''});
-    }
-  });
-
-  // Team-Awards (2 Spieler)
-  const teamKeys={
-    mvt:R.mvt, bestDuo:R.bestDuo, worstTeam:R.worstTeam,
-    endgegner:R.endgegner,
-    zirkus:R.zirkusList, baustelle:R.baustelleList,
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:R.unstoppableList, concreteWall:R.concreteWallList,
-    luckyCharm:R.luckyCharmList, giantSlayer:R.giantSlayerList,
-    favoritenschreck:R.favoritenschreckList,
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:R.cheesePlatterList
-  };
-  const teamValFns={
-    mvt:x=>Math.round(x.v), bestDuo:x=>x.g,
-    worstTeam:x=>-Math.round(x.w/x.g*100),
-    endgegner:x=>Math.round(x.pct*1000),       // rate-basiert
-    zirkus:x=>Math.round(x.pct*1000),          // rate-basiert
-    baustelle:x=>x.best,
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:x=>x.v,
-    concreteWall:x=>-Math.round(x.v*100),      // niedriger = besser → negieren
-    luckyCharm:x=>Math.round(x.v*1000),        // rate-basiert (v = Quote)
-    giantSlayer:x=>Math.round(x.v*1000),       // rate-basiert (v = Quote)
-    favoritenschreck:x=>x.v,
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:x=>Math.round(x.v*100)       // höher = schlechter, direkt sortieren
-  };
-  const teamDisplayFns={
-    mvt:x=>(x.v>=0?'+':'')+Math.round(x.v), bestDuo:x=>x.g+' Sp.',
-    worstTeam:x=>Math.round(x.w/x.g*100)+'%',
-    endgegner:x=>Math.round(x.pct*100)+'%',
-    zirkus:x=>Math.round(x.pct*100)+'%',
-    baustelle:x=>x.best+'er',
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:x=>x.v+'er',
-    concreteWall:x=>x.v.toFixed(2),
-    luckyCharm:x=>Math.round(x.v*100)+'%',
-    giantSlayer:x=>Math.round(x.v*100)+'%',
-    favoritenschreck:x=>x.v+' Elo',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:x=>x.v.toFixed(2)
-  };
-  Object.entries(teamKeys).forEach(([key,arr])=>{
-    if(!arr||!arr.length) return;
-    const valFn=teamValFns[key]||(x=>x.v);
-    const rank=getRank(arr,valFn,x=>x.ids&&x.ids.includes(id));
-    if(rank>=0 && rank<=2){
-      const entry=arr.find(x=>x.ids&&x.ids.includes(id));
-      const partner=entry?entry.ids.find(x=>x!==id):null;
-      const dispFn=teamDisplayFns[key]||(x=>x.v);
-      found.push({key,rank,partner,val:entry?String(dispFn(entry)):''});
-    }
-  });
-
-  // Rivalry-Award (4 Spieler) — alle 4 erhalten den Award.
-  // Partner-Anzeige: das jeweils andere Team ("vs X & Y")
-  if(R.rivalryList && R.rivalryList.length){
-    const rArr = R.rivalryList;
-    const valFn = x => Math.round(x.pct*1000); // rate-basiert
-    const rank = getRank(rArr, valFn, x => [...x.idsA, ...x.idsB].includes(id));
-    if(rank>=0 && rank<=2){
-      const entry = rArr.find(x => [...x.idsA, ...x.idsB].includes(id));
-      if(entry){
-        const onA = entry.idsA.includes(id);
-        const opponentIds = onA ? entry.idsB : entry.idsA;
-        const partnerLabel = pname(opponentIds[0])+' & '+pname(opponentIds[1]);
-        // partner=null signalisiert dem Renderer "Spezial-Label statt Avatar-Plaque"
-        found.push({key:'rivalry', rank, partner:null, partnerLabel:'vs '+partnerLabel, val:Math.round(entry.pct*100)+'%'});
-      }
-    }
-  }
-
-  // Match-Awards
-  // ⚠ BUG-FIX: Match-Awards (upset/biggest) gelten NUR für das Gewinner-Team.
-  // Vorher hat .includes(id) ALLE 4 Spieler des Matches erkannt — auch die
-  // Verlierer haben "Größte Überraschung" als positiven Award bekommen.
-  // Konsistent mit vAwards()/_addColl und showAward(), die jeweils die
-  // Avatare des Gewinner-Teams (m.winner) zeigen.
-  const matchKeys={upset:R.upsets, biggest:R.biggest};
-  const matchValFns={upset:x=>Math.round(x.sp*100), biggest:x=>x.diff};
-  const matchDisplayFns={upset:x=>Math.round(x.sp*100)+'%', biggest:x=>x.diff+' Tore'};
-  const winnerIds = x => x.m.winner === 'A' ? [x.m.a1, x.m.a2] : [x.m.b1, x.m.b2];
-  Object.entries(matchKeys).forEach(([key,arr])=>{
-    if(!arr||!arr.length) return;
-    const valFn=matchValFns[key];
-    const rank=getRank(arr,valFn,x=>winnerIds(x).includes(id));
-    if(rank>=0 && rank<=2){
-      const entry=arr.find(x=>winnerIds(x).includes(id));
-      const dispFn=matchDisplayFns[key];
-      found.push({key,rank,val:entry?String(dispFn(entry)):''});
-    }
+    found.push(eintrag);
   });
 
   _cache._playerAwards[_pawKey] = found;
@@ -359,44 +207,17 @@ function showPlayer(id){
   const awards=playerAwards(id).filter(a=>a.rank===0);
   const awardCount=awards.length;
 
-  // Awards-Kategorisierung: jede Award gehört zu GENAU EINER Kategorie (exklusiv).
-  // Aufteilung in 3 thematische Cluster für klare Übersicht.
-  // Positive: rein individuelle Leistung + (positive) Rollen-Awards (Torjäger, Abwehr, Eiskalt).
-  // Team:     alle Awards, die ein DUO/Team ausmachen (mvt, bestDuo, endgegner, neue Team-Awards
-  //           inkl. Erzfeinde/Rivalry).
-  // Negative: Schandtafel + negative Rollen-Awards (Zahnloser Stürmer, Löchrigste Abwehr).
-  const POSITIVE_KEYS = new Set([
-    'wins','perfect','clutch','carryKing','solo',
-    'grinder','showmaster','onFire','streaks','peakElo',
-    'weekKing','dayKing',
-    // Rollen-Awards (positiv)
-    'scorer','wall','ice',
-    // ── NEUE AWARDS v3 ──
-    'plusMinus','underdog'
-  ]);
-  const TEAM_KEYS = new Set([
-    'mvt','bestDuo','endgegner',
-    // Match-Awards sind Team-Leistungen — Sieg/Coup eines konkreten Duos.
-    'upset','biggest',
-    // ── NEUE TEAM-AWARDS v4 ──
-    'unstoppable','concreteWall','luckyCharm','giantSlayer','rivalry'
-  ]);
-  const NEGATIVE_KEYS = new Set([
-    'worstWr','coldStreak','lossStreaks','formtief','worstTeam','zirkus','baustelle',
-    'worstAtk','worstDef',
-    // ── NEUE AWARDS v3 ──
-    'pechvogel',
-    // ── NEUE TEAM-AWARDS v4 ──
-    'favoritenschreck',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    'cheesePlatter','favoriteLoser'
-  ]);
-
-  const cnt = (set) => awards.filter(a => set.has(a.key)).length;
+  // Jede Auszeichnung gehört zu GENAU EINER von drei Gruppen, und die Gruppe
+  // ist dieselbe Rolle, die ihre Kachel färbt [§C25]: rot ist die
+  // Kehrseite, wer sie zu zweit oder zu viert trägt, gehört zum Team, der
+  // Rest ist eigene Leistung. Hier standen drei feste Schlüssellisten, die
+  // bei jeder neuen Auszeichnung von Hand nachgezogen werden mussten.
+  const awArt = a => awNeg(a.key) ? 'neg' : awIds(a.key, a.x).length >= 2 ? 'team' : 'pos';
+  const cnt = art => awards.filter(a => awArt(a) === art).length;
   const awCats = [
-    {ic:'star',      nm:'Positive<br>Awards', n: cnt(POSITIVE_KEYS)},
-    {ic:'handshake', nm:'Team<br>Awards',     n: cnt(TEAM_KEYS)},
-    {ic:'skull',     nm:'Negative<br>Awards', n: cnt(NEGATIVE_KEYS)},
+    {ic:'star',      nm:'Positive<br>Awards', n: cnt('pos')},
+    {ic:'handshake', nm:'Team<br>Awards',     n: cnt('team')},
+    {ic:'skull',     nm:'Negative<br>Awards', n: cnt('neg')},
   ];
 
   const badges=getCachedBadges(id);
@@ -625,7 +446,7 @@ const rankProgHtml = rInfo ? `
             <div class="sub">Saison</div>
           </div>
           <div class="pp-et-col peak">
-            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Peak</div>
+            <div class="label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS['peak']||''}</svg> Spitze</div>
             <div class="val">${ps}</div>
             <div class="sub">diese Saison</div>
           </div>
@@ -652,7 +473,7 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.3s">
       ${(()=>{
-        // Rollen-Performance: zwei Donut-Diagramme (orange = Sturm, blau = Abwehr).
+        // Sturm und Abwehr: zwei Donut-Diagramme (orange = Sturm, blau = Abwehr).
         // Ring zeigt die Win-Rate visuell, Zahl in der Mitte konkret. Subtext zeigt
         // Tor/Gegentor-Schnitt — passt zu den Awards Torjäger / Eiserne Abwehr
         // und zum Positionen-Tab. Werte kommen aus playerStats: s.atkGoals und
@@ -660,7 +481,7 @@ const rankProgHtml = rInfo ? `
         const tot = s.atkG + s.defG;
         if(tot === 0){
           return `<div class="pp-pos-combined">
-            <div class="head"><div class="t">Rollen-Performance</div></div>
+            <div class="head"><div class="t">Sturm und Abwehr</div></div>
             <div class="pp-roles-empty">Keine Spiele</div>
           </div>`;
         }
@@ -689,16 +510,16 @@ const rankProgHtml = rInfo ? `
                 <div class="pp-rd-inner"><div class="pp-rd-wr">${wr}<small>%</small></div></div>
               </div>
               <div class="pp-rd-lbl"><span class="ic">${svgI(icon)}</span>${lbl}</div>
-              <div class="pp-rd-meta"><b>${w}</b>/<b>${g}</b> Spiele<br>Ø <b>${valNum}</b> ${valLbl}</div>
+              <div class="pp-rd-meta"><b>${w}</b> von <b>${g}</b> gewonnen<br>Ø <b>${valNum}</b> ${valLbl}</div>
             </div>`;
         };
-        const atkAvg = s.atkG ? (s.atkGoals/s.atkG).toFixed(1) : '–';
-        const defAvg = s.defG ? (s.defConceded/s.defG).toFixed(1) : '–';
+        const atkAvg = s.atkG ? komma((s.atkGoals/s.atkG),1) : '–';
+        const defAvg = s.defG ? komma((s.defConceded/s.defG),1) : '–';
         return `<div class="pp-pos-combined">
-          <div class="head"><div class="t">Rollen-Performance</div></div>
+          <div class="head"><div class="t">Sturm und Abwehr</div></div>
           <div class="pp-roles-donuts">
-            ${donut('atk','Sturm','bolt',atkWr,s.atkW,s.atkG,'Tore/Sp.',atkAvg,'var(--orange)')}
-            ${donut('def','Abwehr','shield',defWr,s.defW,s.defG,'Gegentore/Sp.',defAvg,'var(--blue)')}
+            ${donut('atk','Sturm','bolt',atkWr,s.atkW,s.atkG,'Tore',atkAvg,'var(--orange)')}
+            ${donut('def','Abwehr','shield',defWr,s.defW,s.defG,'Gegentore',defAvg,'var(--blue)')}
           </div>
         </div>`;
       })()}
@@ -706,13 +527,13 @@ const rankProgHtml = rInfo ? `
 
     <div class="pp-sec" style="animation-delay:.35s">
       <div class="pp-sec-title">
-        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamt-Stats</h4></div>
+        <div class="l"><span class="ic svg-ic">${svgI('chartBar')}</span><h4>Gesamtbilanz</h4></div>
         <div class="m">${s.games} Spiele</div>
       </div>
       <div class="pp-kpi">
         <div class="pp-k"><div class="v">${s.wins}</div><div class="l">Siege</div></div>
-        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegrate</div></div>
-        <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Tordiff</div></div>
+        <div class="pp-k f"><div class="v">${wr}%</div><div class="l">Siegquote</div></div>
+        <div class="pp-k ${s.gd>=0?'pos':'neg'}"><div class="v">${s.gd>=0?'+':''}${s.gd}</div><div class="l">Torbilanz</div></div>
       </div>
     </div>
 
@@ -723,7 +544,7 @@ const rankProgHtml = rInfo ? `
       <div class="pp-streaks">
         <div class="pp-st">
           <div class="l">Aktuelle Serie</div>
-          <div class="v ${streak===0?'empty':''}">${streak>0?streak+' Siege':streak<0?(-streak)+' Niederlagen':'–'}</div>
+          <div class="v ${streak===0?'empty':''}">${streak===1?'1 Sieg':streak>0?streak+' Siege':streak===-1?'1 Niederlage':streak<0?(-streak)+' Niederlagen':'–'}</div>
           ${_last15.length?`<div class="dots mixed">${last15DotsHtml}</div>`:''}
         </div>
         <div class="pp-st">
@@ -819,13 +640,13 @@ const rankProgHtml = rInfo ? `
           // Bester Mate
           const bestAttr  = best?` data-team="${esc([id,best.mid].sort().join('|'))}"`:'';
           const bestCard  = best
-            ? card('good', bestAttr, 'handshake', 'Bester Mate', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
-            : card('good', '', 'handshake', 'Bester Mate', null);
+            ? card('good', bestAttr, 'handshake', 'Bester Partner', {id:best.mid,label:pname(best.mid)}, best.wr, Math.round(best.wr*best.g), best.g)
+            : card('good', '', 'handshake', 'Bester Partner', null);
           // Schlechtester Mate (nur wenn ≠ Bester)
           const worstAttr = worst&&best&&worst.mid!==best.mid?` data-team="${esc([id,worst.mid].sort().join('|'))}"`:'';
           const worstCard = worst&&best&&worst.mid!==best.mid
-            ? card('bad', worstAttr, 'chartDown', 'Schlecht. Mate', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
-            : card('bad', '', 'chartDown', 'Schlecht. Mate', null);
+            ? card('bad', worstAttr, 'chartDown', 'Schwächster Partner', {id:worst.mid,label:pname(worst.mid)}, worst.wr, Math.round(worst.wr*worst.g), worst.g)
+            : card('bad', '', 'chartDown', 'Schwächster Partner', null);
           // Lieblingsgegner → klickbar zum Gegnerprofil
           const favAttr  = fav?` data-detail="${esc(fav.oid)}"`:'';
           const favCard  = fav
@@ -994,8 +815,7 @@ const rankProgHtml = rInfo ? `
     if(inMatches){
       _pushCurrentSheet(); // Spielerprofil stapeln → „Zurück" möglich
       openSheet(`
-        <h3>Spieler entfernen</h3>
-        <div class="sheet-sub">${esc(p.name)} · ${gamesPlayed(id)} Matches</div>
+        ${blattKopfHtml({ic:'trash', ton:'rot', titel:'Spieler entfernen', unter:p.name + ' · ' + gamesPlayed(id) + ' Matches'})}
         <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
           <button class="btn ghost" id="hidePlayerBtn" style="text-align:left;padding:16px">
             <div style="font-weight:700">Aus Rangliste ausblenden</div>
@@ -1016,10 +836,13 @@ const rankProgHtml = rInfo ? `
       `);
       document.getElementById('hidePlayerBtn').onclick=async()=>{
         await sb.from('players').update({hidden:true}).eq('id',id);
-        closeSheet(true); toast(esc(p.name)+' ausgeblendet'); await loadAll();
+        // textContent, nicht HTML: esc() stand hier und zeigte „&amp;".
+        closeSheet(true); toast(p.name+' ausgeblendet','ok'); await loadAll();
       };
       document.getElementById('deletePlayerBtn').onclick=async()=>{
-        if(!confirm('Wirklich komplett löschen? Namen erscheinen dann als "?" in allen Matches.')) return;
+        if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
+          titel:p.name+' löschen?',
+          text:'In allen Partien erscheint danach ein Fragezeichen statt des Namens. Das lässt sich nicht rückgängig machen.'}))) return;
         await sb.from('players').delete().eq('id',id);
         closeSheet(true); toast('Gelöscht'); await loadAll();
       };
@@ -1027,7 +850,8 @@ const rankProgHtml = rInfo ? `
         closeSheet(); // zurück zum Spielerprofil (Stack-Pop)
       };
     } else {
-      if(!confirm(`Spieler "${p.name}" löschen?`)) return;
+      if(!(await bestaetigen({ic:'trash', gefahr:true, ja:'Löschen', nein:'Behalten',
+        titel:p.name+' löschen?', text:'Der Spieler hat noch keine Partie.'}))) return;
       await sb.from('players').delete().eq('id',id);
       closeSheet(true); toast('Gelöscht'); await loadAll();
     }
@@ -1052,8 +876,7 @@ function showEditPlayer(id){
     </div>`;
 
   openSheet(`
-    <h3>Profil bearbeiten</h3>
-    <div class="sheet-sub">${esc(p.name)}</div>
+    ${blattKopfHtml({ic:'edit', titel:'Profil bearbeiten', unter:p.name})}
 
     <div class="field-label">Profilbild</div>
     ${avPickerHtml}
@@ -1178,97 +1001,40 @@ function showRangSystem(){
       </div>`:''}    </div>`;
   }).join('');
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      <span class="emoji svg-ic" style="width:48px;height:48px;border-radius:14px;display:grid;place-items:center;background:var(--surface2);color:var(--ink2)"><svg viewBox="0 0 24 24" style="width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">${ICONS['crown']||''}</svg></span>
-      <div><h3>Rang-System</h3><div class="sheet-sub">Basiert auf Ø Saison-Elo</div></div>
-    </div>
+    ${blattKopfHtml({ic:'crown', titel:'Rang-System', unter:'Nach Ø Saison-Elo'})}
+    <div style="height:12px"></div>
     ${rows}
   `);
 }
 function showPlayerAwards(playerId, awards){
   const p=pmap()[playerId]; if(!p)return;
   _sheetSetReopen(()=>showPlayerAwards(playerId, awards));
-  // Mapping wie in vAwards/AW_IC für konsistente Icons
-  // ⚑ HOTSPOT — Spiegel von AW_IC aus §5.3 (vAwards). Bei neuen Awards HIER
-  //  und in den anderen 2 AW_IC-Definitionen gleichzeitig erweitern.
-  const AW_IC = {
-    wins:'trophyStar',     onFire:'flame',       perfect:'star',          streaks:'flameTriple',
-    showmaster:'award',    mvt:'handshake',      bestDuo:'duo',           scorer:'ball',
-    wall:'shieldCheck',    ice:'snowflake',      endgegner:'skull',       clutch:'target',
-    carryKing:'weight',    solo:'lonewolf',      upset:'surprise',        biggest:'explosion',
-    grinder:'gamepad',     worstWr:'ghost',      coldStreak:'iceCube',    lossStreaks:'trendCrash',
-    formtief:'meltDown',   worstAtk:'blockedShot',worstDef:'hole',        worstTeam:'brokenHeart',
-    zirkus:'circus',       baustelle:'cone',     peakElo:'peak',
-    weekKing:'weekKing',   dayKing:'dayKing',
-    plusMinus:'plusMinus', underdog:'underdog',  pechvogel:'rainCloud',
-    // ── NEUE TEAM-AWARDS v4 ──
-    unstoppable:'unstoppable', concreteWall:'concreteWall', luckyCharm:'clover',
-    giantSlayer:'giantSlayer', favoritenschreck:'devilMask', rivalry:'crossedSwords',
-    // ── NEUE NEGATIV-AWARDS v6 ──
-    cheesePlatter:'cheese', favoriteLoser:'crownFallen'
-  };
-  const ic = key => `<svg viewBox="0 0 24 24">${ICONS[AW_IC[key]||'trophy']||''}</svg>`;
-
-  // Award-Trophäe für das Sheet: gleiche Optik wie im Awards-Tab.
-  // Plakette: bei Team-Awards zeigen wir den Partner-NAMEN als reinen Text
-  // (kein Profilbild) — konsistent zum Wunsch des Users und sauber für den
-  // 4-Spieler-Award "Erzfeinde" (a.partnerLabel statt a.partner).
-  const trophy = (a) => {
-    const m = AWARD_META[a.key]; if(!m) return '';
-    const valDisplay = a.val ? esc(a.val) : '#1';
-    let plaqueContent;
-    if(a.partnerLabel){
-      // Rivalry / 4-Spieler: keine Partner-Plaque, sondern Beschriftung "vs X & Y"
-      plaqueContent = `<span class="aw-trophy-plaque-name" style="font-size:10px">${esc(a.partnerLabel)}</span>`;
-    } else if(a.partner){
-      // Team-Award (2 Spieler): Partner-Name ohne Avatar/Initial-Bubble
-      plaqueContent = `<span class="aw-trophy-plaque-name" style="font-size:10.5px">mit ${esc(pname(a.partner))}</span>`;
-    } else {
-      plaqueContent = `<span class="aw-trophy-plaque-name" style="color:var(--muted);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase">Top-1</span>`;
-    }
-    // Dieselbe Kachel wie im Awards-Reiter [§C27]. Sie baute hier noch die
-    // ALTE: `aw-trophy-cup`, `-lbl`, `-val`, `-plaque` — Klassennamen, zu
-    // denen es seit dem Umbau der Vitrine keine Regel mehr gibt. Uebrig
-    // blieb der Kasten und darin unformatierter Text; das Sheet hatte seine
-    // Farbe nicht verloren, es hatte sein Bauteil verloren.
-    //
-    // Der Farbstich kommt aus DREI Rollen und nicht aus sechs Katalogtoenen
-    // [§C25]: Gold fuer das Koennen, Blau fuer das, was zu zweit geholt
-    // wurde, Rot fuer die Kehrseite. Sechs Toene nebeneinander waren ein
-    // Farbverlauf ohne Aussage — derselbe Fehler wie die elf
-    // Kategoriefarben im Feed.
-    const ton = m.cls === 'red' ? 'ton-neg'
-              : (a.partner || a.partnerLabel) ? 'ton-team' : 'ton-pos';
-    const kopf = `<div class="aw-t-kopf"><span class="aw-t-ic">${ic(a.key)}</span>`
-      + `<span class="aw-t-lbl">${esc(m.title)}</span></div>`;
-    return `<div class="aw-trophy ${ton}" data-paward2="${esc(a.key)}">
-      ${kopf}
-      <div class="aw-t-held">${avHtml(p, '', {ins:true, px:60})}</div>
-      <div class="aw-t-val">${valDisplay}</div>
-      <div class="aw-t-name">${plaqueContent}</div>
-    </div>`;
-  };
+  // Dieselbe Kachel wie im Awards-Reiter [§C27] — mit Wert, Einheit und
+  // Stichprobe aus AW_WERT. Hier stand eine eigene Fassung: Wert ohne
+  // Einheit, der Partner als Text auf einer Plakette, „Top-1" als Marke.
+  // Die Lage im Feld braucht die Liste des Monats, aus der der Platz kommt.
+  const R = awardRankings('season', currentSeason().id);
+  const trophy = a => awKachelHtml(a.key, [a.x],
+    {mehr:a.mehr, liste:awListe(a.key, R), attr:`data-paward2="${esc(a.key)}"`});
 
   const body = awards.length
-    ? `<div class="aw-vitrine" style="margin-top:16px">${awards.map(trophy).join('')}</div>`
+    ? `<div style="margin-top:16px">${awVitrineHtml(awards.map(trophy))}</div>`
     : `<div class="empty" style="margin-top:24px;text-align:center;color:var(--muted)">
         <div class="ee svg-ic" style="color:var(--faint);margin-bottom:6px">${svgI('trophy')}</div>
-        Noch keine Top-1-Auszeichnungen
+        Noch kein Award auf Platz 1
        </div>`;
 
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div>
-        <h3>Awards</h3>
-        <div class="sheet-sub">${esc(p.name)} · ${awards.length} Top-1-Auszeichnung${awards.length===1?'':'en'}</div>
-      </div>
-    </div>
+    ${blattKopfHtml({ic:'trophy', ton:'gold', titel:'Awards',
+      unter:p.name + ' · ' + awards.length + (awards.length === 1 ? ' Award' : ' Awards') + ' auf Platz 1'})}
     ${body}
-    <button class="btn ghost sm" id="backToPlayer" style="margin-top:14px;width:100%">← Zurück zum Profil</button>
+    ${blattFussHtml([{label:'Zurück zum Profil', ic:'user', attr:'id="backToPlayer"'}])}
   `);
+  // Das Blatt zeigt den Zeitraum, aus dem der Platz kommt: den laufenden
+  // Monat. Ohne das öffnete es, was der Awards-Reiter zuletzt eingestellt
+  // hatte — eine Woche oder einen anderen Monat.
   document.querySelectorAll('[data-paward2]').forEach(el=>el.onclick=()=>{
-    sheetNav(()=>showAward(el.dataset.paward2));
+    sheetNav(()=>{ awPeriod='season'; awSeasonId=null; showAward(el.dataset.paward2); });
   });
   const back=document.getElementById('backToPlayer');
   if(back) back.onclick=()=>closeSheet();
@@ -1361,17 +1127,13 @@ function showPlayerBadges(playerId){
     <div class="bsh-grid">${negativeCards}</div>` : '';
 
   openSheet(`
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      ${avHtml(p,"width:48px;height:48px;border-radius:14px;font-size:18px")}
-      <div>
-        <h3>Auszeichnungen</h3>
-        <div class="sheet-sub">${esc(p.name)} · <b style="color:var(--acid)">${haveTotal}</b> von ${BADGES.length} · ${trigCount}× ausgelöst</div>
-      </div>
-    </div>
+    ${blattKopfHtml({ic:'medal', ton:'viol', titel:'Auszeichnungen',
+      unter:p.name + ' · ' + haveTotal + ' von ' + BADGES.length + ' · ' + trigCount + '× geholt'})}
+    <div style="height:12px"></div>
     ${counterHtml}
     <div class="bsh-grid">${positiveCards}</div>
     ${negativeBlock}
-    <button class="btn ghost sm" id="backToPlayer2" style="margin-top:18px">← Zurück zum Profil</button>
+    ${blattFussHtml([{label:'Zurück zum Profil', ic:'user', attr:'id="backToPlayer2"'}])}
   `);
   const back = document.getElementById('backToPlayer2');
   if(back) back.onclick = () => closeSheet();
@@ -1478,7 +1240,7 @@ function _badgeProgress(badgeId, playerId){
       const stats = playerStats(playerId);
       const atkW = stats.atkW || 0, defW = stats.defW || 0;
       const cur = Math.min(atkW, defW, 20);
-      return {cur, tgt: 20, label: 'min. Sturm- & Abwehr-Siege'};
+      return {cur, tgt: 20, label: 'Siege auf der schwächeren Position'};
     }
     case 'mr_disaster': {
       // Aktuelle Saison: wie viele 0:10-Niederlagen hat der Spieler bereits?
@@ -1515,7 +1277,7 @@ function _badgeStreakState(badgeId, playerId){
     let res = _cache._awColl[key];
     if(!res){
       // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
-      if(Object.keys(_cache._awColl).length > 60) _cache._awColl = {};
+      _topfDeckel(_cache._awColl, 60);
       const seasonMs = matchesInSeason(sid);
       res = { potd: countDayWins(playerId, seasonMs), potw: countPeriodWins(playerId, seasonMs, 'week') };
       _cache._awColl[key] = res;
@@ -1579,7 +1341,7 @@ function _badgeStreakState(badgeId, playerId){
       ordered.forEach(m => {
         cur = Math.abs(m.score_a-m.score_b) <= 2 ? cur+1 : 0;
       });
-      return {cur, tgt:5, label:'Krimis in Folge (Tordiff ≤ 2)', hint:'Setzt bei klarem Ergebnis (Tordiff > 2) zurück'};
+      return {cur, tgt:5, label:'Krimis in Folge (höchstens 2 Tore Unterschied)', hint:'Setzt bei klarem Ergebnis (mehr als 2 Tore Unterschied) zurück'};
     }
     case 'repeat_score': {
       // Siege mit identischem Endstand in Folge — Niederlage oder anderer Score bricht.

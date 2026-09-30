@@ -62,20 +62,9 @@ function avHtml(player, extraStyle, opts){
 function initials(n){return n.trim().slice(0,2).toUpperCase();}
 
 // ╔═══ §4.2 ─── AWARD AVATAR HELPER (Hero/Mini/Li) ─────────────────────╗
-//     awHeroAv, awMiniAv etc. — einheitliche Avatar-Rendering-Funktionen für
+//     awHeroAv, awLiAv etc. — einheitliche Avatar-Rendering-Funktionen für
 //     Award-Details, Pair-Avatare für Team-Awards.
 // ╚═════════════════════════════════════════════════════════════════════════╝
-// Kleines Avatar (22px) für Award-Cards.
-function awMiniAv(pid){
-  const p=pmap()[pid];
-  if(!p) return '<div class="aw-mini-av" style="background:var(--surface3);color:var(--muted)">?</div>';
-  const em=p.avatar_id?avatarEmoji(p.avatar_id):null;
-  if(em) return `<div class="aw-mini-av" style="background:var(--surface3);color:var(--ink);font-size:13px">${em}</div>`;
-  return `<div class="aw-mini-av" style="background:${avColor(p.id)}">${esc(initials(p.name))}</div>`;
-}
-function awMiniPair(p1,p2){
-  return `<div class="aw-mini-pair">${awMiniAv(p1)}${awMiniAv(p2)}</div>`;
-}
 // Neue Avatar-Hilfsfunktionen für Award-Listen
 // aw-li-av ist 34px, in tied-rows ist sie 30px.
 // Für ein Wappen ist das zu klein — bei 34px bliebe vom Gesicht ein Punkt
@@ -125,17 +114,20 @@ function awHeroPair(p1,p2){
 //     setTab() ist die zentrale Wechsel-Funktion. tab + period + filterPos +
 //     filterPlayer steuern, was render() zeichnet.
 // ╚═════════════════════════════════════════════════════════════════════════╝
+// Dieselbe Zeichensprache wie der Katalog [§C27]: Linien mit Rand im
+// 24er-Raster, keine gefüllten Kästen. Die Liga war drei Rechtecke, der
+// Verlauf lief bis an den Rand der Fläche.
 const NAV=[
-  ['ranking','Liga',`<path d="M3 13h4v7H3zM10 4h4v16h-4zM17 9h4v11h-4z"/>`],
-  ['positions','Positionen',`<circle cx="12" cy="8" r="4"/><path d="M5 21v-1a7 7 0 0114 0v1"/>`],
-  ['awards','Awards',`<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0zM5 9a2 2 0 01-2-2V5h4M19 9a2 2 0 002-2V5h-4"/>`],
-  ['teams','Teams',`<circle cx="9" cy="7" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20v-1a6 6 0 0112 0v1M15 20v-1a5 5 0 015-1"/>`],
-  ['history','Verlauf',`<path d="M3 3v6h6M3 9a9 9 0 109-6"/><path d="M12 7v5l3 2"/>`]
+  ['ranking','Liga',`<path d="M5 20V11M10 20V5M15 20v-7M20 20V8"/>`],
+  ['positions','Positionen',`<circle cx="12" cy="7.5" r="3.5"/><path d="M5 20c.8-3.8 3.6-6 7-6s6.2 2.2 7 6"/>`],
+  ['awards','Awards',`<path d="M8 4h8v5.5a4 4 0 01-8 0z"/><path d="M8 6H5.5a.5.5 0 00-.5.5V8a3 3 0 003 3M16 6h2.5a.5.5 0 01.5.5V8a3 3 0 01-3 3"/><path d="M12 13.5V17M8.5 20h7M10 17h4"/>`],
+  ['teams','Teams',`<circle cx="8.5" cy="8" r="3"/><circle cx="16" cy="9" r="2.5"/><path d="M3 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5M14.5 14.2c.5-.1 1-.2 1.5-.2 2.3 0 4.2 1.6 4.8 4.5"/>`],
+  ['history','Verlauf',`<path d="M4 12a8 8 0 102.3-5.6"/><path d="M4 5v3.5h3.5"/><path d="M12 8v4l2.5 2"/>`]
 ];
 function renderNav(){
   document.getElementById('botnav').innerHTML=NAV.map(([id,lb,ic])=>
     `<button data-nav="${id}" class="${tab===id?'on':''}">
-      <span class="ic"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg></span>
+      <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">${ic}</svg></span>
       <span class="lb">${lb}</span></button>`).join('');
   // Beim Tabwechsel zurück auf heute: wer den Liga-Tab neu betritt, will den
   // aktuellen Stand sehen und nicht den Juni, den er vor zehn Minuten
@@ -149,8 +141,9 @@ function renderNav(){
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
     awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';
     window.scrollTo(0,0);render();});
-  // FAB nur außerhalb des Match-Tabs sinnvoll
-  document.getElementById('fab').style.display = 'grid';
+  // FAB nur außerhalb des Match-Tabs sinnvoll: dort führt er auf die Seite,
+  // auf der man schon ist, und lag über dem Knopf „Mischen".
+  document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
 }
 
 function render(){
@@ -158,6 +151,39 @@ function render(){
   const v={ranking:vRanking,positions:vPositions,awards:vAwards,teams:vTeams,history:vHistory,match:vMatch,settings:vSettings}[tab];
   document.getElementById('main').innerHTML=`<section class="view active">${v()}</section>`;
   bind();
+  schlittenFahren(document.getElementById('main'));
+}
+
+// ── Der Schlitten fährt [§C27] ──────────────────────────────────────
+// Wo die Wahl eines Segmentwählers steht, rechnet das CSS aus Zahl und
+// Lage der Knöpfe (:has). Nur fahren kann es nicht: jeder Wechsel zeichnet
+// die Ansicht neu, und ein neues Element hat keine alte Lage, von der aus
+// es gleiten könnte. Deshalb merkt sich der Druck auf einen Knopf, wo der
+// Schlitten stand, und nach dem Neuzeichnen startet er dort — dann ändert
+// sich `--i` einmal, und die Transition im CSS trägt ihn hinüber.
+// Zugeordnet wird über die Beschriftung der Knöpfe: zwei Wähler mit
+// denselben Wörtern sind derselbe Wähler.
+let _schlittenVorher = null;
+function _schlittenSig(w){ return [...w.children].map(b => b.textContent.trim()).join('|'); }
+function _schlittenLage(w){ return [...w.children].findIndex(b => b.classList && b.classList.contains('on')); }
+document.addEventListener('pointerdown', e => {
+  const b = e.target && e.target.closest && e.target.closest('.ui-switch > button, .ui-tabs > button');
+  _schlittenVorher = null;
+  if(!b || b.parentElement.classList.contains('roll')) return;
+  const w = b.parentElement, alt = _schlittenLage(w);
+  if(alt >= 0) _schlittenVorher = {sig:_schlittenSig(w), alt};
+}, true);
+function schlittenFahren(root){
+  const v = _schlittenVorher; _schlittenVorher = null;
+  if(!v || !root) return;
+  root.querySelectorAll('.ui-switch:not(.roll), .ui-tabs:not(.roll)').forEach(w => {
+    if(_schlittenSig(w) !== v.sig) return;
+    const neu = _schlittenLage(w);
+    if(neu < 0 || neu === v.alt) return;
+    w.style.setProperty('--i', v.alt);
+    void w.offsetWidth;
+    w.style.removeProperty('--i');
+  });
 }
 
 // ╔═══ §4.4 ─── ZEITRÄUME (Saison/Woche/Gesamt) ────────────────────────╗
@@ -183,7 +209,7 @@ function matchesInPeriod(period, seasonId){
   if(!_cache._mperiod) _cache._mperiod={};
   if(_cache._mperiod[key]) return _cache._mperiod[key];
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
-  if(Object.keys(_cache._mperiod).length > 40) _cache._mperiod={};
+  _topfDeckel(_cache._mperiod, 40);
   let result;
   if(period==='season') result=matchesInSeason(sid);
   else{

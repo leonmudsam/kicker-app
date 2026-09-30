@@ -212,8 +212,14 @@ SIDS.forEach(sid => {
       case 'giant_slayer': expect = p.ups; break;
       case 'marathon':     expect = p.maxDay; break;
       case 'omnipresent':  expect = p.days.size; break;
-      case 'abyss':        expect = p.debacle; break;
-      case 'hardluck':     expect = p.bitter; break;
+      // Diese beiden tragen seit dem Umbau eine MONATSACHSE, und die
+      // sortiert nach dem Anteil an den eigenen Pleiten, nicht nach der
+      // Anzahl [§C35]. Der Beleg beginnt deshalb mit dem Anteil, und die
+      // Gegenrechnung rechnet denselben Anteil nach: Zaehler UND Nenner
+      // kommen dafuer aus den Rohpartien, ein Fehler in §13 fliegt also
+      // weiter auf.
+      case 'abyss':        expect = p.l ? Math.round(p.debacle / p.l * 100) : 0; break;
+      case 'hardluck':     expect = p.l ? Math.round(p.bitter / p.l * 100) : 0; break;
       case 'wall':         expect = p.defG; break;
     }
     if(expect !== null){
@@ -547,8 +553,8 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
   const koepfe = (rek.match(/class="rek-g-n">([^<]+)</g)||[])
     .map(x => x.replace(/.*>/, ''));
   ok(koepfe.length >= 2, 'die Rekorde stehen in Gruppen', koepfe.join(' · '));
-  // Vier Kammern in der Reihenfolge des Katalogs.
-  const erwartet = ['Können', 'Bestmarken', 'Fügungen', 'Schattenseiten'];
+  // Fuenf Kammern in der Reihenfolge des Katalogs.
+  const erwartet = ['Können', 'Aktuelle Form', 'Bestmarken', 'Fügungen', 'Schattenseiten'];
   const rang = koepfe.map(k => erwartet.findIndex(e => k.indexOf(e) === 0));
   ok(rang.every((r, i) => r > -1 && (i === 0 || r > rang[i-1])),
      'Leistung vor Ereignis vor Schatten', koepfe.join(' · '));
@@ -558,7 +564,7 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
   // Ein Zeitpunkt steht nur dort, wo der Katalog einen liefert — und dort
   // wirklich. Eine erfundene Jahreszahl unter jedem Rekord wäre schlechter
   // als keine, eine nirgends sichtbare aber auch.
-  const mitZeit = (rek.match(/class="rek-zeit"/g)||[]).length;
+  const mitZeit = (rek.match(/class="rek-p zeit"/g)||[]).length;
   const kannZeit = K.eval(`CHRONICLES.filter(c=>c.zeit).length`);
   ok(kannZeit > 0 && mitZeit > 0 && mitZeit <= kannZeit,
      'der Zeitpunkt steht dort, wo es einen gibt — und nur dort',
@@ -592,7 +598,14 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
      vf + ' von ' + Math.max(0, feld - 3));
   // Was die Zahl bedeutet, steht dabei — sonst liest sich „27 %" wie eine
   // Siegquote.
-  ok(blatt.includes('Elo-Erwartungswert'), 'das Blatt erklärt, was der Wert ist');
+  const wie = K.eval(`CHRONICLE_BY_ID['hardnight'].wie`);
+  ok(wie.length > 40 && blatt.includes(wie.slice(0, 60)),
+     'das Blatt erklärt, was der Wert ist');
+  // Und es nennt Mindestbasis, Zeitraum und Grundwert — die Angaben, die
+  // vorher nur im Bedingungssatz steckten.
+  ok(blatt.includes('Mindestbasis') && blatt.includes('Zeitraum')
+     && blatt.includes('Grundwert'),
+     'das Blatt nennt Mindestbasis, Zeitraum und Grundwert');
 }
 // Die Vitrine ist zweispaltig. Bei ungerader Kachelzahl blieb unten rechts
 // ein Loch, und ein leeres Feld liest sich als Fehler, nicht als Ende.
@@ -780,14 +793,39 @@ const _kose = JSON.parse(K.eval(`JSON.stringify((function(){
   SEASON_TITLES.forEach(t => {
     let out=''; const echt=openSheet; openSheet=(h)=>{out=h;};
     try { showDisziplin(t.id, '2026-08'); } catch(e){ out=''; } finally { openSheet=echt; }
-    if(out.indexOf('chron-kose') < 0 || out.indexOf(t.beiname) < 0) fehlt.push(t.id);
+    // Heisst die Wertung schon wie ihr Halter, steht der Name nicht zweimal
+    // im Kopf: neun Blaetter trugen „Der Beidfuessige" als Titel und darunter
+    // „Beiname im Profil: Der Beidfuessige".
+    const gleich = t.beiname === t.name;
+    if(gleich ? out.indexOf('chron-kose') >= 0
+              : (out.indexOf('chron-kose') < 0 || out.indexOf(t.beiname) < 0)) fehlt.push(t.id);
   });
   return {fehlt, n: SEASON_TITLES.length};
 })())`));
 ok(_kose.fehlt.length === 0,
-   'jedes Chronik-Blatt nennt den Beinamen seines Halters',
+   'jedes Chronik-Blatt nennt den Beinamen seines Halters, wenn er anders heisst als die Wertung',
    _kose.fehlt.join(', ') || _kose.n + ' Blaetter');
 K.eval('closeSheet(true)');
+// Wer einen Rekord punktgleich haelt, steht auf dem Podest auf Platz 1:
+// „Der Unaufhaltsame" gehoert Martin und Julian mit 13, das Blatt sagte es
+// in einer Notiz, und das Podest zeigte Julian als 02.
+const _podGleich = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch = []; const H = chronicleHolders(); let geteilt = 0;
+  CHRONICLES.forEach(c => {
+    const h = H[c.id]; if(!h) return;
+    const n = Math.min(3, (h.pids || [h.pid]).length);
+    if(n > 1) geteilt++;
+    let out=''; const echt=openSheet; openSheet=(x)=>{out=x;};
+    try { showChronicle(c.id); } catch(e){ out=''; } finally { openSheet=echt; }
+    const erste = (out.match(/pod-platz num">01</g) || []).length;
+    if(erste !== n) falsch.push(c.id + ': ' + erste + ' statt ' + n);
+  });
+  return {falsch, geteilt};
+})())`));
+ok(_podGleich.falsch.length === 0 && _podGleich.geteilt > 0,
+   'wer einen Rekord punktgleich haelt, steht auf dem Podest auf Platz 1',
+   _podGleich.falsch.slice(0, 4).join(', ') || _podGleich.geteilt + ' geteilte Rekorde');
+
 // Die Erklaerung sagt, was die Zahl daneben bedeutet — „+15 Punkte" las sich
 // wie Elo. Wo eine Groesse nicht selbsterklaerend ist, steht sie im Blatt.
 ok(K.eval(`(function(){
@@ -902,12 +940,196 @@ const _deckel = (function(){
   const re = /_cache\.(_[A-Za-z0-9_]+)\s*\[\s*key\s*\]\s*=(?!=)/g;
   let m;
   while((m = re.exec(quelle))) toepfe.add(m[1]);
-  const re2 = /Object\.keys\(_cache\.(_[A-Za-z0-9_]+)\)\.length\s*>/g;
+  const re2 = /_topfDeckel\(\s*_cache\.(_[A-Za-z0-9_]+)\s*,/g;
   while((m = re2.exec(quelle))) mit.add(m[1]);
   return [...toepfe].filter(t => !mit.has(t));
 })();
 ok(_deckel.length === 0, 'jeder Topf mit Schluesseln hat einen Deckel',
    _deckel.join(' · ') || 'alle');
+
+// ─── Ein voller Topf verliert den aeltesten, nicht alle ──────────────
+// Jeder Topf leerte sich beim Ueberlauf VOLLSTAENDIG, und oberhalb des
+// Deckels ist das Memo damit nicht beschnitten, es ist AUS. Gemessen an
+// `_seasonTitleCtx`: bei sechs und acht Zeitschnitten kostete ein zweiter
+// Blick null Rechnungen, bei zwoelf und zwanzig jeweils ALLE noch einmal.
+// Ein Deckel steht nie weit ueber der Arbeitsmenge — der News-Generator
+// allein fragt sieben verschiedene Schnitte ab.
+const _raeumen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const f = _seasonTitleCtxRechnen;
+  let n = 0;
+  _seasonTitleCtxRechnen = function(){ n++; return f.apply(this, arguments); };
+  const sid = currentSeason().id;
+  const basis = mts(matches[0]);
+  const lauf = k => {
+    invalidateCache(); n = 0;
+    const s = []; for(let i = 1; i <= k; i++) s.push(basis + i * 1000);
+    s.forEach(b => _seasonTitleCtx(sid, b));
+    const erst = n;
+    s.forEach(b => _seasonTitleCtx(sid, b));
+    return {k, erst, nochmal: n - erst};
+  };
+  // Und der entscheidende Fall: der Topf ist voll, EIN Eintrag kommt dazu.
+  // Vollstaendiges Leeren kostet dabei alle sechzehn, aelteste-zuerst genau
+  // einen — und danach ist der zweite Blick auf die jungen wieder gratis.
+  // Der Deckel wird VOR dem Einfuegen geprueft, also loest erst der Eintrag
+  // nach dem Ueberschreiten das Raeumen aus.
+  const DECKEL = 16;
+  invalidateCache(); n = 0;
+  const s = []; for(let i = 1; i <= DECKEL + 2; i++) s.push(basis + i * 1000);
+  s.slice(0, DECKEL + 1).forEach(b => _seasonTitleCtx(sid, b));  // einer drueber
+  _seasonTitleCtx(sid, s[DECKEL + 1]);                           // loest das Raeumen aus
+  n = 0;
+  s.slice(2, DECKEL + 2).forEach(b => _seasonTitleCtx(sid, b));  // die jungen
+  const nachUeberlauf = n;
+  const r = [lauf(6), {k:DECKEL, nachUeberlauf}];
+  _seasonTitleCtxRechnen = f;
+  invalidateCache();
+  return r;
+})())`));
+ok(_raeumen[0].erst === 6 && _raeumen[0].nochmal === 0,
+   'unter dem Deckel kostet der zweite Blick nichts',
+   _raeumen[0].erst + ' + ' + _raeumen[0].nochmal + ' Rechnungen');
+ok(_raeumen[1].nachUeberlauf === 0,
+   'ein Eintrag zu viel kostet einen Eintrag, nicht den ganzen Topf',
+   _raeumen[1].nachUeberlauf + ' von ' + _raeumen[1].k + ' noch einmal');
+
+// ─── Ein Schnitt, der nichts abschneidet, ist kein Schnitt ───────────
+// Der Feed vergleicht „vor dem letzten Spieltag" mit „heute" und schrieb
+// „heute" als den Zeitstempel der letzten Partie. Fuer jede geschnittene
+// Rechnung ist das aber ein eigener Schluessel: gemessen rechnete ein
+// Generatorlauf `prestigeTabelle` zweimal, einmal ungeschnitten fuer 17 ms
+// und einmal als Schnitt fuer 59 ms. Und der Schnitt verhaelt sich anders —
+// `seasonTitles` liest einen abgeschlossenen Monat nur OHNE Schnitt aus dem
+// eingefrorenen Datensatz [§10.2]. Gemessen sank der Generator dadurch von
+// 253 auf 149 ms kalt.
+//
+// Geprueft wird die IDENTITAET, nicht die Gleichheit: nur dieselbe Referenz
+// beweist, dass beide Fragen denselben Topf treffen.
+const _schnitte = JSON.parse(K.eval(`JSON.stringify((function(){
+  const letzte = mts(matches[matches.length - 1]);
+  const sid = currentSeason().id;
+  const alt = allPastSeasons()[0];
+  const nachMonat = seasonEnd(alt).getTime() + 1;
+  const gleich = [];
+  const pruef = (name, a, b) => { if(a !== b) gleich.push(name); };
+  pruef('prestigeTabelle', prestigeTabelle(letzte), prestigeTabelle());
+  pruef('prestigeTabelle(spaeter)', prestigeTabelle(letzte + 86400000), prestigeTabelle());
+  pruef('allChronicles', allChronicles(letzte), allChronicles());
+  pruef('_chronicleCtx', _chronicleCtx(letzte), _chronicleCtx());
+  pruef('seasonTitles', seasonTitles(sid, letzte), seasonTitles(sid));
+  pruef('_seasonTitleCtx', _seasonTitleCtx(sid, letzte), _seasonTitleCtx(sid));
+  pruef('seasonTitleHistory', seasonTitleHistory(players[0].id, letzte),
+        seasonTitleHistory(players[0].id));
+  // Und je Monat: ein Schnitt hinter dem Monatsende schneidet von DIESEM
+  // Monat nichts ab, auch wenn danach noch gespielt wurde.
+  pruef('_seasonTitleCtx (Monatsende)', _seasonTitleCtx(alt, nachMonat), _seasonTitleCtx(alt));
+  pruef('seasonTitles (Monatsende)', seasonTitles(alt, nachMonat), seasonTitles(alt));
+  // Ein Schnitt MITTEN in der Historie muss dagegen schneiden, sonst haette
+  // die Zusicherung nur das Memo geprueft.
+  const mitte = mts(matches[Math.floor(matches.length / 2)]);
+  const schneidet = _chronicleCtx(mitte) !== _chronicleCtx()
+    && prestigeTabelle(mitte) !== prestigeTabelle();
+  return {gleich, schneidet, alt, monate: allPastSeasons().length};
+})())`));
+ok(_schnitte.monate > 0, 'es gibt einen abgeschlossenen Monat zum Vergleichen',
+   _schnitte.alt);
+ok(_schnitte.schneidet, 'ein Schnitt mitten in der Historie schneidet wirklich');
+ok(_schnitte.gleich.length === 0,
+   'ein Schnitt hinter der letzten Partie trifft denselben Topf',
+   _schnitte.gleich.join(' · ') || 'alle neun');
+
+// ─── Ein Kalendertag hat eine Schreibweise ───────────────────────────
+// „Welcher Tag ist das?" stand neunmal ausgeschrieben in der Auslieferung,
+// und in zwei Schreibweisen: mit fuehrender Null („2026-08-06") und ohne
+// („2026-7-6"). Einmal hat sich das schon gekreuzt — ein Deckel-Schluessel
+// wurde mit der kurzen Fassung gebaut und mit der langen abgefragt, fand nie
+// eine Partie, und die Regel „kein Spieltag bleibt ohne Karte" griff nie.
+// Der Ausweg war damals ein zweiter Aufruf daneben statt einer Schreibweise
+// [§C27]. Gezaehlt wird im GEBAUTEN Stand, weil sich jede neue Stelle sonst
+// wieder selbst eine aussucht.
+const _tagSchreib = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  // Beide Formen, mit und ohne Auffuellen, mit und ohne Leerzeichen.
+  const re = /getMonth\(\)\s*\+\s*1\s*\)\s*\.padStart\(\s*2[^)]*\)\s*\+\s*['"]-['"]|['"]-['"]\s*\+\s*[A-Za-z_$][\w$]*\.getMonth\(\)\s*\+\s*['"]-['"]/g;
+  return (quelle.match(re) || []).length;
+})();
+ok(_tagSchreib === 1, 'der Kalendertag wird an genau einer Stelle gebildet',
+   _tagSchreib + ' Stellen');
+
+// ─── Kein Gestaltungswert ohne Leser ────────────────────────────────
+// Der Bau haengt sechzehn Stylesheets aneinander, und eine Variable, die
+// niemand mehr liest, faellt danach niemandem auf: `--r-lg` stand als
+// dritter Radius neben `--r` und `--r-sm` in den Tokens und wurde nirgends
+// abgefragt. Dieselbe Regel wie bei den toten Klassen, eine Ebene tiefer.
+const _totVar = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const def = new Set(), gelesen = new Set();
+  (quelle.match(/--[a-zA-Z0-9-]+\s*:/g) || [])
+    .forEach(x => def.add(x.replace(/\s*:$/, '')));
+  (quelle.match(/var\(\s*--[a-zA-Z0-9-]+/g) || [])
+    .forEach(x => gelesen.add(x.replace(/var\(\s*/, '')));
+  return {n: def.size, tot: [...def].filter(d => !gelesen.has(d))};
+})();
+ok(_totVar.n > 40, 'die Tokens werden gefunden', _totVar.n + ' Variablen');
+ok(_totVar.tot.length === 0, 'jede CSS-Variable wird auch gelesen',
+   _totVar.tot.join(', ') || 'alle ' + _totVar.n);
+
+// ─── Eine Schrift hat einen Rückfall ────────────────────────────────
+// Die Schriften kommen aus dem Netz, und eine App, die offline startet, hat
+// sie nicht. Drei Angaben nannten nur „'Space Grotesk'" ohne Familie
+// dahinter, und dort fiel der Browser auf eine Serifenschrift zurück: im
+// Positions-Profil stand „Verteidiger" in Times neben lauter Grotesk.
+const _schriftOhne = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  return (quelle.match(/font-family:\s*[^;}"`]*/g) || [])
+    .map(x => x.trim())
+    .filter(x => !/(monospace|sans-serif|serif|inherit|system-ui)\s*$/.test(x));
+})();
+ok(_schriftOhne.length === 0, 'jede Schriftangabe endet auf einer Schriftfamilie',
+   [...new Set(_schriftOhne)].join(' | ') || 'alle');
+
+// ─── Und die Elo-Rechnung zieht ihre Grenzen an einer Stelle ─────────
+// Die Erwartungsformel stand zweimal in der Auslieferung: `expected` und ein
+// wortgleiches `localExp` in der Elo-Engine. Die drei Chancen-Linien standen
+// als blanke Zahl an acht Stellen, und die 0,35 in der Auszeichnung „Upset
+// King" wie in BEIDEN Chronik-Durchlaeufen — drei Stellen, die dasselbe
+// Ereignis zaehlen [§10.2]. Eine zweite Rechnung ueber dieselbe Frage nennt
+// irgendwann einen anderen Besten.
+const _eloEinmal = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const formel = (quelle.match(/1\s*\/\s*\(\s*1\s*\+\s*Math\.pow\(\s*10\s*,/g) || []).length;
+  // Eine blanke Chancen-Zahl im Vergleich mit einer Erwartung.
+  const roh = (quelle.match(/\b(?:exp|myExp|chance|winSp|winnerChance)\s*[<>]=?\s*0\.(?:35|45|55)\b/g) || []).length;
+  return {formel, roh};
+})();
+ok(_eloEinmal.formel === 1, 'die Erwartungsformel steht genau einmal da',
+   _eloEinmal.formel + ' Stellen');
+ok(_eloEinmal.roh === 0, 'die Chancen-Linien stehen als Begriff, nicht als Zahl',
+   _eloEinmal.roh + ' blanke Zahlen');
+
+// ─── Zwei Rechnungen ueber die laengste Serie zaehlen gleich ─────────
+// `longestStreaks` traegt die Bestenliste des Awards-Tabs, `longestPlayerStreak`
+// den Wert einer Auszeichnung — zwei Durchlaeufe ueber dieselbe Frage. Sie
+// zusammenzulegen kostet mehr, als es bringt: die Liste rechnet alle Spieler
+// auf einmal, das Badge fragt je Spieler, und das waere in der Badge-Schleife
+// quadratisch. Also bleiben beide, und der Test haelt sie aneinander [§C27].
+const _serien = JSON.parse(K.eval(`JSON.stringify((function(){
+  const liste = {};
+  longestStreaks(matches).forEach(x => { liste[x.id] = x.v; });
+  const ab = [];
+  let gemessen = 0;
+  players.forEach(p => {
+    const a = liste[p.id] || 0;
+    const b = longestPlayerStreak(p.id, matches);
+    // Die Liste schneidet bei zwei ab, das Badge nicht.
+    if(b >= 2){ gemessen++; if(a !== b) ab.push(pname(p.id) + ': ' + a + ' gegen ' + b); }
+  });
+  return {gemessen, ab};
+})())`));
+ok(_serien.gemessen >= 10, 'genug Spieler haben eine Serie zum Vergleichen',
+   _serien.gemessen + ' Spieler');
+ok(_serien.ab.length === 0, 'Awards und Auszeichnung zaehlen dieselbe laengste Serie',
+   _serien.ab.join(' · ') || 'alle gleich');
 
 // Der Bau haengt sechzehn Stylesheets aneinander, und eine Regel fuer eine
 // Ansicht, die es nicht mehr gibt, faellt danach niemandem mehr auf: die
@@ -932,7 +1154,11 @@ const _toteRegeln = (function(){
   // Ohne die Kommentare: sie sind auf Deutsch, und ein Wort wie „Karte"
   // machte jede Klasse, die mit ihm anfaengt, still zu einer benutzten.
   const js = (skripte.join('\n') + ohneKomm.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' '))
-    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ');
+    .replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/^[ \t]*\/\/.*$/gm, ' ')
+    // Ohne eingebettete Bilder: ihr Base64 ist Buchstabensalat, und darin
+    // stand zufaellig „rg" als eigenes Stueck — die tote Regel `.pp-rk .rg`
+    // galt damit als benutzt, bis ein neues Bild das Stueck nicht mehr trug.
+    .replace(/data:[a-z]+\/[-+.\w]+;base64,[A-Za-z0-9+\/=]+/g, ' ');
   const stuecke = new Set(js.match(/[-A-Za-z0-9_]+/g) || []);
   const benutzt = n => {
     if(stuecke.has(n)) return true;
@@ -977,6 +1203,32 @@ const _toteIcons = (function(){
 ok(_toteIcons.length === 0, 'kein Zeichen im Katalog ohne Aufrufer',
    _toteIcons.join(' · ') || 'alle');
 
+// Und jedes Award-Zeichen steht im Katalog. Die Tabelle stand viermal da,
+// und die Kopie im Duo-Blatt nannte zwei Namen, die es nicht gibt: dort
+// standen „Schlechtestes Team" und „Baustelle" ohne Zeichen. Ein fehlendes
+// Zeichen wirft keinen Fehler, die Kachel bleibt einfach leer.
+const _awZeichen = JSON.parse(K.eval(`JSON.stringify({
+  fehlt: Object.entries(AW_IC).filter(([k, v]) => !ICONS[v]).map(([k, v]) => k + '→' + v),
+  ohne: Object.keys(AWARD_META).filter(k => !AW_IC[k])})`));
+ok(_awZeichen.fehlt.length === 0 && _awZeichen.ohne.length === 0,
+   'jede Auszeichnung hat ein Zeichen, und jedes steht im Katalog',
+   [..._awZeichen.fehlt, ..._awZeichen.ohne.map(k => k + ' ohne Zeichen')].join(' · ') || 'alle');
+
+// Und ein Name gehoert einer Frage. Der Award „Einzelkaempfer" wertete die
+// Siegquote als Staerkster der vier, der Liga-Rekord „Der Einzelkaempfer"
+// den Rueckgang der Mitspielerstaerke — zwei Fragen unter einem Namen.
+// Erlaubt sind nur die drei Paare, die dieselbe Idee auf zwei Zeitachsen
+// messen: Torjaeger, Pechvogel und Favoritenschreck.
+const _awNamen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const n = s => String(s).replace(/^(Der|Die|Das) /, '').toLowerCase();
+  const ch = new Map(DISZIPLINEN.map(d => [n(d.name), d.id]));
+  const erlaubt = new Set(['scorer|sniper', 'pechvogel|hardluck', 'favoritenschreck|favschreck']);
+  return Object.entries(AWARD_META).filter(([k, m]) => ch.has(n(m.title)) && !erlaubt.has(k + '|' + ch.get(n(m.title))))
+    .map(([k, m]) => k + ' und ' + ch.get(n(m.title)) + ': ' + m.title);
+})())`));
+ok(_awNamen.length === 0, 'kein Award heisst wie eine Chronik, die etwas anderes misst',
+   _awNamen.join(' · ') || 'keiner');
+
 // ── Die Awards: jede Kachel muss in einer Woche erreichbar sein ─────
 // Die Schwellen stammen aus der Zeit, in der es den Zeitraum „Gesamt" gab.
 // Gemessen spielt ein Duo in einer Woche im Mittel DREI Partien, und sieben
@@ -1007,6 +1259,86 @@ ok(_awSchwelle.zu_hoch.length === 0, 'keine Mindestzahl ueber fuenf',
 ok(_awSchwelle.leer.length <= 2,
    'nach einer vollen Woche steht fast jede Award-Kachel',
    _awSchwelle.leer.length + ' leer: ' + _awSchwelle.leer.join(' '));
+
+// ── Ein Wert je Auszeichnung [§5.3d] ────────────────────────────────
+// Kachel, Blatt, Profil und Duo-Blatt formatierten jeden Award selbst:
+// dieselbe Serie hieß „8", „8er", „8er Serie" und „8 Siege in Folge", die
+// Kachel trug ihre Zahl ohne Einheit („6,90", „+10"), und die Stichprobe
+// wurde gebaut und nie gezeigt. Jetzt liest jede Stelle aus AW_WERT — und
+// jede Kachel trägt die Zahl MIT ihrer Sache.
+const _awEin = JSON.parse(K.eval(`JSON.stringify((function(){
+  const f = [];
+  Object.keys(AWARD_META).forEach(k => { if(!AW_WERT[k]) f.push('ohne Wert: ' + k); });
+  Object.keys(AW_WERT).forEach(k => {
+    if(!AWARD_META[k]) f.push('ohne Titel: ' + k);
+    if(!AW_IC[k]) f.push('ohne Zeichen: ' + k);
+  });
+  let kacheln = 0;
+  for(const per of ['season', 'week']){
+    awPeriod = per; awSeasonId = null; awView = 'awards';
+    const R = awardRankings(per);
+    const teile = String(_vAwardsCore()).split('data-award="');
+    for(let i = 1; i < teile.length; i++){
+      const key = teile[i].slice(0, teile[i].indexOf('"'));
+      const nx = teile[i].indexOf('data-award="');
+      const block = nx < 0 ? teile[i] : teile[i].slice(0, nx);
+      if(/aw-t-leer/.test(block)) continue;
+      kacheln++;
+      const t = awText(key, awTop(key, R)[0]);
+      const b = block.match(/class="aw-t-val"><b>([^<]*)<\\/b>(?:<span>([^<]*)<\\/span>)?/) || [];
+      if(b[1] !== esc(t.z)) f.push(per + ' ' + key + ': Kachel ' + b[1] + ' statt ' + t.z);
+      if(!b[2]) f.push(per + ' ' + key + ': Zahl ohne Einheit (' + b[1] + ')');
+      const text = block.replace(/<[^>]+>/g, ' ');
+      if(/\\d+er\\b|\\/Sp\\.|Niederl\\.|\\bSp\\./.test(text)) f.push(per + ' ' + key + ': Kürzel in „' + text.replace(/\\s+/g, ' ').trim().slice(0, 60) + '"');
+    }
+  }
+  // Profil und Duo-Blatt nennen dieselbe Zahl wie die Kachel desselben
+  // Eintrags — gleicher Platz aus derselben Zählung.
+  awPeriod = 'season'; awSeasonId = null;
+  activePlayers().forEach(p => playerAwards(p.id).forEach(a => {
+    if(a.val !== awText(a.key, a.x).z) f.push('Profil ' + p.name + ' ' + a.key + ': ' + a.val);
+    if(a.rank === 0 && !awTop(a.key, awardRankings('season', currentSeason().id)).includes(a.x))
+      f.push('Profil ' + p.name + ' ' + a.key + ': Platz 1, aber nicht an der Spitze');
+  }));
+  return {f, kacheln};
+})())`));
+ok(_awEin.f.length === 0 && _awEin.kacheln > 50,
+   'jede Award-Kachel nennt Zahl und Einheit aus derselben Quelle wie Blatt und Profil',
+   _awEin.f.slice(0, 6).join(' · ') || _awEin.kacheln + ' Kacheln');
+
+// ── Die Erklärung einer Kachel nennt die Schwelle, die gilt ─────────
+// „So wird gewertet" stand als fester Text da und war den Schwellen nicht
+// gefolgt: die Betonmauer verlangte laut Text zehn gemeinsame Spiele und
+// in der Rechnung drei, der Carry-King nannte „einen der drei schwächsten"
+// Mitspieler und zählte den schwächsten der vier. Wo eine Schwelle aus
+// AW_MIN kommt, steht ihre Zahl im Text — und die Liste hält sie ein.
+const _awWhy = JSON.parse(K.eval(`JSON.stringify((function(){
+  const soll = {scorer:'position', wall:'position', worstAtk:'position', worstDef:'position',
+    worstWr:'spieler', clutch:'enge', pechvogel:'enge', concreteWall:'teamSpiele',
+    cheesePlatter:'teamSpiele', luckyCharm:'teamEnge', giantSlayer:'teamUnter',
+    zirkus:'teamPleiten', plusMinus:'spielerSaldo', underdog:'unter', favoriteLoser:'favorit'};
+  const falsch = [];
+  Object.keys(soll).forEach(k => {
+    const w = (AWARD_META[k] || {}).why || '';
+    const zahlen = (w.match(/\\d+/g) || []).map(Number);
+    const n = AW_MIN[soll[k]];
+    const fremd = zahlen.filter(z => z > 1 && z < 30 && z !== n && z !== 2 && z !== 5);
+    if(!zahlen.includes(n) || fremd.length) falsch.push(k + ': ' + w);
+  });
+  Object.keys(AWARD_META).forEach(k => {
+    if(/\\bMin\\./.test(AWARD_META[k].why)) falsch.push(k + ' kürzt ab');
+  });
+  // Eine Woche, weil dort Spieler mit einer einzigen Sturmpartie vorkommen.
+  const R = awardRankings('week');
+  const unter = [];
+  [['scorer','position'],['wall','position'],['worstAtk','position'],['worstDef','position'],['worstWr','spieler']]
+    .forEach(([k, f]) => (R[k] || []).forEach(x => { if(x.g < AW_MIN[f]) unter.push(k + ' ' + x.g); }));
+  return {falsch, unter};
+})())`));
+ok(_awWhy.falsch.length === 0, 'jede Erklärung einer Kachel nennt die Schwelle, die gilt',
+   _awWhy.falsch.join(' | ') || 'alle');
+ok(_awWhy.unter.length === 0, 'und jede Liste hält diese Schwelle ein',
+   _awWhy.unter.join(', ') || 'alle');
 
 // ── Der Nenner ist die Teilmenge, um die es geht ────────────────────
 // „Pechvogel" zaehlte knappe Niederlagen gegen ALLE Partien und kuerte
@@ -1074,6 +1406,104 @@ ok(_awNenner.udEcht === true,
 ok(_awNenner.zkNenner && _awNenner.zkNenner.gemeldet === _awNenner.zkNenner.gezaehlt,
    'der Zirkus misst an den Pleiten des Duos, nicht an allen Partien',
    JSON.stringify(_awNenner.zkNenner));
+
+// ── Der Beleg [§C27] ────────────────────────────────────────────────
+// Ein Rekord belegte seinen Bestwert mit einem Satz. „72 %" aus fünfzig und
+// aus fünfhundert Partien sind zwei Aussagen, und ob der Zweite knapp
+// dahinter liegt, stand nur in der Liste. Der Beleg zeigt die Stichprobe als
+// Zellen, die Halter im Feld, die Spanne um einen Anteil und den Verlauf —
+// und jede dieser Zahlen muss stimmen, sonst ist die Zeichnung eine
+// Behauptung mehr.
+const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
+  const f = []; let zellen = 0, felder = 0, spannen = 0, verlaeufe = 0;
+  const H = chronicleHolders();
+  const st = globalThis.setTimeout;
+  globalThis.setTimeout = fn => fn();
+  try {
+    CHRONICLES.forEach(c => {
+      const h = H[c.id]; if(!h) return;
+      let out = ''; const echt = openSheet; openSheet = x => { out = x; };
+      try { showChronicle(c.id); } catch(e){ f.push(c.id + ': ' + e.message); } finally { openSheet = echt; }
+      const a = belegAnteil(h.ev);
+      const z = out.match(/<div class="bl-zellen">([\\s\\S]*?)<\\/div>/);
+      if(a){
+        if(!z) f.push(c.id + ': ohne Zellen');
+        else {
+          zellen++;
+          const je = Math.max(1, Math.ceil(a.n / 100));
+          const n = (z[1].match(/<i/g) || []).length, k = (z[1].match(/class="j"/g) || []).length;
+          if(n !== Math.ceil(a.n / je) || k !== Math.round(a.k / je))
+            f.push(c.id + ': ' + k + '/' + n + ' Zellen statt ' + a.k + '/' + a.n);
+        }
+      } else if(z) f.push(c.id + ': Zellen ohne Stichprobe');
+      const feld = out.match(/<div class="bl-feld"[\\s\\S]*?<\\/div>/);
+      if(feld){
+        felder++;
+        const er = (feld[0].match(/class="er"/g) || []).length, soll = (h.pids || [h.pid]).length;
+        if(er !== soll) f.push(c.id + ': ' + er + ' Halter im Feld statt ' + soll);
+      }
+      // Der Knopf sagt, wohin er führt: ins Profil des Halters, mit Namen.
+      // Dort stand „Direkter Vergleich" ohne zu sagen, wer mit wem — und
+      // die Bilanz von Halter und Zweitem hat mit dem Rekord nichts zu tun.
+      if(/data-vergleich/.test(out)) f.push(c.id + ': Knopf ohne Bezug zum Rekord');
+      const nm = (pmap()[h.pid] || {}).name;
+      if(nm && out.indexOf('Profil von ' + esc(nm)) < 0) f.push(c.id + ': Knopf ohne den Namen des Halters');
+      // Der Satz der Spanne kommt ohne Statistik aus: „mehr als Zufall"
+      // war richtig gerechnet und von niemandem zu verstehen.
+      if(/Zufall|Wahrscheinlichkeit/.test(out)) f.push(c.id + ': Spanne in Statistiksprache');
+      const sp = out.match(/zwischen <b>(\\d+) und (\\d+) %/);
+      if(sp){
+        spannen++;
+        // Unabhängig nachgerechnet: Wilson, 90 %.
+        const p = a.k / a.n, n = a.n, z2 = 1.645 * 1.645, d = 1 + z2 / n;
+        const m = (p + z2 / (2 * n)) / d, w = 1.645 * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / d;
+        if(Math.round(Math.max(0, m - w) * 100) !== +sp[1] || Math.round(Math.min(1, m + w) * 100) !== +sp[2])
+          f.push(c.id + ': Spanne ' + sp[1] + '–' + sp[2]);
+        if(!_belegIstQuote(h.ev, a)) f.push(c.id + ': Spanne um etwas, das kein Anteil ist');
+      }
+      // Der Verlauf endet heute beim Bestwert, und „vorn seit" zeigt auf
+      // einen Monat, in dem der Halter wirklich vorn lag.
+      rekordVerlauf(c.id, v => {
+        if(!v) return;
+        verlaeufe++;
+        const r = chronicleRang(c.id);
+        if(Math.abs(v.a[v.a.length - 1] - r[0].wert) > 1e-9) f.push(c.id + ': Verlauf endet bei ' + v.a[v.a.length - 1] + ' statt ' + r[0].wert);
+        if(v.seit == null || v.a[v.seit] == null) f.push(c.id + ': vorn seit einem Monat ohne Wert');
+      });
+    });
+  } finally { globalThis.setTimeout = st; }
+  return {f, zellen, felder, spannen, verlaeufe};
+})())`));
+ok(_beleg.f.length === 0 && _beleg.zellen > 5 && _beleg.felder > 30 && _beleg.spannen > 3 && _beleg.verlaeufe > 30,
+   'der Beleg zählt seine Stichprobe, zeigt die Halter im Feld, rechnet die Spanne und endet beim Bestwert',
+   _beleg.f.slice(0, 5).join(' · ') || _beleg.zellen + ' Zellenreihen · ' + _beleg.felder + ' Felder · '
+     + _beleg.spannen + ' Spannen · ' + _beleg.verlaeufe + ' Verläufe');
+
+// ── Ein Strich für jedes Zeichen [§C27] ─────────────────────────────
+// Die Strichstärke stand an 78 Stellen in 13 Werten: dieselbe Krone war in
+// der Liga dünner als im Blatt, und ein stroke-width am <svg> im Markup
+// setzte 2,5 neben 2. Jetzt gibt es EINE Regel; ein Behälter setzt
+// höchstens --strich, und davon gibt es drei Werte.
+const _strich = (function(){
+  const html = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const css = (html.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || [])
+    .join('\n').replace(/<\/?style[^>]*>/gi, '').replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const eigene = [], werte = new Set();
+  let global = 0;
+  for(const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
+    const sel = m[1].trim(), body = m[2];
+    if(/url\(/.test(body)) continue;
+    if(sel === 'svg[viewBox="0 0 24 24"]' && /stroke-width:var\(--strich\)/.test(body)) global++;
+    else if(/\bsvg\b/.test(sel) && /(^|;)\s*stroke-width:/.test(body)) eigene.push(sel.replace(/\s+/g, ' ').slice(-40));
+    (body.match(/--strich:([\d.]+)/g) || []).forEach(v => werte.add(v.split(':')[1]));
+  }
+  return {eigene, global, werte:[...werte].sort()};
+})();
+ok(_strich.global === 1 && _strich.eigene.length === 0,
+   'jedes Zeichen zieht seinen Strich aus einer Regel',
+   _strich.eigene.join(' · ') || 'eine Regel');
+ok(_strich.werte.every(v => ['1.4', '1.75', '2'].includes(v)),
+   'die Strichstärke kennt drei Werte', _strich.werte.join(', '));
 
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);

@@ -65,7 +65,12 @@ function _buildPositionChartSvg(data){
   } else {
     tickDays.push(1);
     for(let d=5; d<=D; d+=5) tickDays.push(d);
-    if(tickDays[tickDays.length-1] !== D) tickDays.push(D); // Endpunkt immer
+    // Endpunkt immer — und der Fünferschritt davor fällt weg, wenn er zu
+    // nah daran liegt: am 26. standen „25" und „26" als „2526" übereinander.
+    if(tickDays[tickDays.length-1] !== D){
+      if(D - tickDays[tickDays.length-1] < 3) tickDays.pop();
+      tickDays.push(D);
+    }
   }
   // Dedup
   const seenTicks = new Set();
@@ -151,7 +156,7 @@ function _renderPosvDetail(el, data, hlId){
   const stats = getSeasonPlayerStats(data.seasonId);
   if(!hlId){
     el.classList.add('empty');
-    el.innerHTML = `<div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>`;
+    el.innerHTML = `<div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>`;
     return;
   }
   el.classList.remove('empty');
@@ -260,7 +265,7 @@ function showPositionHistory(seasonId){
     openSheet(`
       <div class="posv-empty">
         <div class="posv-empty-title">Noch kein Verlauf</div>
-        <div>Sobald in dieser Saison die ersten Matches gespielt sind,<br>siehst du hier die Entwicklung der Tabellenpositionen.</div>
+        <div>Sobald in dieser Saison die ersten Matches gespielt sind,<br>steht hier die Entwicklung der Tabellenplätze.</div>
       </div>
     `);
     return;
@@ -272,9 +277,9 @@ function showPositionHistory(seasonId){
     : `${sLabel} · Saison abgeschlossen`;
 
   openSheet(`
-    <div style="padding:6px 4px 8px">
-      <h2 style="font-family:'Archivo Black',sans-serif;font-size:22px;letter-spacing:-.02em;margin-bottom:4px">Saison-Positionsverlauf</h2>
-      <div style="color:var(--muted);font-size:12px;margin-bottom:14px">Entwicklung der Tabellenplatzierungen während der Saison</div>
+    <div style="padding:0 0 8px">
+      ${blattKopfHtml({ic:'chartUp', titel:'Positionsverlauf', unter:'Tabellenplätze während der Saison'})}
+      <div style="height:12px"></div>
 
       <div class="posv-info-pill">
         <div class="posv-info-ic">
@@ -291,14 +296,14 @@ function showPositionHistory(seasonId){
         ${_buildPositionChartSvg(data)}
       </div>
 
-      <div class="posv-hint">Tippe auf einen Spieler, um ihn hervorzuheben</div>
+      <div class="posv-hint">Linie oder Gesicht antippen, um einen Spieler hervorzuheben</div>
 
       <div class="posv-detail empty" id="posvDetail">
-        <div class="posv-detail-empty-text">Tippe auf eine Linie oder einen Avatar,<br>um Details zu sehen.</div>
+        <div class="posv-detail-empty-text">Hier stehen die Einzelheiten,<br>sobald ein Spieler gewählt ist.</div>
       </div>
 
       <div class="posv-update">
-        <span>Letztes Update: Heute, ${headerDate}</span>
+        <span>Stand: heute, ${headerDate}</span>
         <button class="posv-refresh" id="posvRefreshBtn" title="Aktualisieren">
           <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15.5-6.3L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.3L3 16M3 21v-5h5"/></svg>
         </button>
@@ -458,12 +463,12 @@ function showPotwRecap(opts){
       potwWinners = candidates.filter(c => Math.abs(c[2] - topWr) < 0.001);
     }
     
-    if (!potwWinners.length) { toast('Kein POTW in Vorwoche', 'info'); return; }
+    if (!potwWinners.length) { toast('Die Vorwoche hat keinen Player of the Week', 'info'); return; }
 
     const mainPotwPlayerId = potwWinners[0][0];
     const mainPotwStats = potwWinners[0][1];
     const mainPotwPlayer = pm[mainPotwPlayerId];
-    if (!mainPotwPlayer) { toast('Kein POTW in Vorwoche', 'info'); return; }
+    if (!mainPotwPlayer) { toast('Die Vorwoche hat keinen Player of the Week', 'info'); return; }
 
     const weekLabel='KW '+isoWeek(weekStart);
     const sundayDate=new Date(weekEnd);
@@ -518,7 +523,7 @@ function showPotwRecap(opts){
     for(const m of ms){
       const sp=m.exp_a==null?0.5:m.exp_a;
       const winSp=m.winner==='A'?sp:(1-sp);
-      if(winSp<0.45 && (!topUpset || winSp<topUpset.sp)) topUpset={m,sp:winSp};
+      if(winSp<CHANCE_OFFEN && (!topUpset || winSp<topUpset.sp)) topUpset={m,sp:winSp};
     }
     const upsetNames=topUpset?
       (topUpset.m.winner==='A'?[pname(topUpset.m.a1),pname(topUpset.m.a2)]:[pname(topUpset.m.b1),pname(topUpset.m.b2)])
@@ -551,17 +556,17 @@ function showPotwRecap(opts){
        teamOfTheWeek ? teamOfTheWeek.games+' Spiele · '
          +Math.round(teamOfTheWeek.wins/teamOfTheWeek.games*100)+'%' : null,
        `data-potw-award="mvt" data-potw-week="${wkStartMs}"`);
-    hl('chartUp', 'Elo-Aufstieg',
+    hl('chartUp', 'Größter Aufwind',
        biggestEloGain ? pname(biggestEloGain[0]) : null,
        biggestEloGain ? '+'+Math.round(biggestEloGain[1].eloDelta)+' Elo' : null,
        biggestEloGain ? `data-potw-player="${esc(biggestEloGain[0])}"` : '');
-    hl('ball', 'Top-Tor', topScorer ? pname(topScorer.id) : null,
-       topScorer ? 'Ø '+topScorer.avg.toFixed(1)+' Tore' : null,
+    hl('ball', 'Torjäger', topScorer ? pname(topScorer.id) : null,
+       topScorer ? 'Ø '+komma(topScorer.avg,1)+' Tore' : null,
        `data-potw-award="scorer" data-potw-week="${wkStartMs}"`);
     hl('shieldCheck', 'Eiserne Abwehr', bestDefender ? pname(bestDefender.id) : null,
-       bestDefender ? 'Ø '+bestDefender.avg.toFixed(1)+' Gegentore' : null,
+       bestDefender ? 'Ø '+komma(bestDefender.avg,1)+' Gegentore' : null,
        `data-potw-award="wall" data-potw-week="${wkStartMs}"`);
-    hl('bolt', 'Größter Upset', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
+    hl('bolt', 'Größte Überraschung', (topUpset && upsetNames) ? upsetNames.join(' & ') : null,
        (topUpset && upsetNames) ? Math.round(topUpset.sp*100)+'% Chance' : null,
        `data-potw-award="upset" data-potw-week="${wkStartMs}"`);
 
@@ -672,7 +677,7 @@ function _potdLastDayData(){
   for(const m of matches){
     const d=new Date(m.created_at);
     if(laeuftNoch && d>=todayStart) continue;
-    const dk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    const dk=tagKey(d);
     if(!byDay[dk]) byDay[dk]=[];
     byDay[dk].push(m);
   }
@@ -708,7 +713,7 @@ function showPotdRecap(opts){
   _sheetSetReopen(()=>showPotdRecap());
   try{
     const now=new Date();
-    if(!matches.length){ if(opts.force) toast('Keine Matches vorhanden','info'); return; }
+    if(!matches.length){ if(opts.force) toast('Noch keine Partien','info'); return; }
 
     // v9.15 BUGFIX: Der "gesehen"-Guard hing am HEUTIGEN Datum statt am
     // recappten Spieltag. Folge: Gab es dazwischen spielfreie Tage, bekam
@@ -719,7 +724,7 @@ function showPotdRecap(opts){
     // Tage folgen. Dafür muss der letzte Spieltag VOR dem Guard ermittelt
     // werden (zentral via _potdLastDayData, identisch zum Auto-Trigger).
     const _guardDay=_potdLastDayData();
-    if(!_guardDay){ if(opts.force) toast('Kein qualifizierter Spieltag','info'); return; }
+    if(!_guardDay){ if(opts.force) toast('Noch kein gewerteter Spieltag','info'); return; }
     if(!opts.force && _recapSeen('potd_shown_'+_guardDay.dayKey, 'potd:'+_guardDay.dayKey)) return;
 
     // Konflikte vermeiden: nicht zeigen wenn ein Sheet offen ist
@@ -823,7 +828,7 @@ function showPotdRecap(opts){
     for(const m of dayMatches){
       const sp = m.exp_a == null ? 0.5 : m.exp_a;
       const chance = m.winner === 'A' ? sp : (1 - sp);
-      if(chance < 0.45 && (!tagUpset || chance < tagUpset.chance)) tagUpset = {m, chance};
+      if(chance < CHANCE_OFFEN && (!tagUpset || chance < tagUpset.chance)) tagUpset = {m, chance};
     }
     const upsetSieger = tagUpset
       ? (tagUpset.m.winner === 'A' ? [tagUpset.m.a1, tagUpset.m.a2] : [tagUpset.m.b1, tagUpset.m.b2])
@@ -832,13 +837,13 @@ function showPotdRecap(opts){
     const tagKacheln = [];
     const tagHl = (ic, label, name, wert, attr) => tagKacheln.push(rcpKachelHtml(
       name ? {ic, label, name, wert, ton:'metall', attr} : {ic, label, leer:true}));
-    tagHl('ball', 'Top-Tor', tagScorer ? pname(tagScorer.id) : null,
-          tagScorer ? 'Ø '+tagScorer.avg.toFixed(1)+' Tore' : null,
+    tagHl('ball', 'Torjäger', tagScorer ? pname(tagScorer.id) : null,
+          tagScorer ? 'Ø '+komma(tagScorer.avg,1)+' Tore' : null,
           tagScorer ? `data-potd-player="${esc(tagScorer.id)}"` : '');
-    tagHl('chartUp', 'Elo-Aufstieg', tagAufstieg ? pname(tagAufstieg.id) : null,
+    tagHl('chartUp', 'Größter Aufwind', tagAufstieg ? pname(tagAufstieg.id) : null,
           tagAufstieg ? '+'+tagAufstieg.d+' Elo' : null,
           tagAufstieg ? `data-potd-player="${esc(tagAufstieg.id)}"` : '');
-    tagHl('bolt', 'Größter Upset', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
+    tagHl('bolt', 'Größte Überraschung', upsetSieger ? pname(upsetSieger[0])+' & '+pname(upsetSieger[1]) : null,
           tagUpset ? Math.round(tagUpset.chance*100)+'% Chance' : null,
           upsetSieger ? `data-potd-team="${esc(upsetSieger.slice().sort().join('|'))}"` : '');
 

@@ -1,6 +1,6 @@
 // ╔═══ §1.1 ─── ICON LIBRARY (SVG line-icons) ──────────────────────────╗
 //     ⚑ HOTSPOT — Wer hier ein Icon hinzufügt, sollte es ggf. auch im
-//     AW_IC-Mapping (§5.3, §8.3, §8.4) und/oder im BADGES-Array (§7.1)
+//     AW_IC-Mapping (§5.3) und/oder im BADGES-Array (§7.1)
 //     referenzieren.
 //     Konvention: Path-Strings ohne viewBox/svg-Wrapper. Wrapper kommt
 //     von svgI() / ic() Helper-Funktionen.
@@ -126,7 +126,10 @@ const ICONS = {
   // Nadelöhr — jede Partie ging durch eine Öse von einem Tor.
   needleEye:     `<ellipse cx="12" cy="6" rx="3" ry="4"/><path d="M12 10v11"/><path d="M9.6 20.5h4.8"/>`,
   // Brausekopf — auf ein 10:0 folgt unmittelbar ein 0:10.
-  showerHead:    `<path d="M6 3h6a5 5 0 015 5v1"/><path d="M13 9h9"/><path d="M15 13v2M17.5 13v3M20 13v2"/>`,
+  // Seitenwechsler: zwei Pfeile, die die Seiten tauschen — Sturm und Abwehr
+  // im Wechsel. `refresh` ist der Kreis ohne Richtung, hier geht es hin und
+  // zurueck zwischen zwei festen Plaetzen.
+  sideSwap:      `<path d="M4 8h13l-3-3M20 16H7l3 3"/><path d="M4 8v-3M20 16v3"/>`,
   rainCloud:     `<path d="M6 14a4 4 0 010-8 5 5 0 019 0 4 4 0 010 8z"/><path d="M9 17l-1 3M13 17l-1 3M17 17l-1 3"/>`,
   // ── NEUE TEAM-AWARDS v4 ──
   // Unaufhaltsam: Loderndes Feuer mit Aufwärts-Pfeil — Team-Siegesserie
@@ -204,12 +207,135 @@ const ICONS = {
   // Der Winkel sagt „hier geht es weiter". Ohne ihn sah eine Feed-Karte wie
   // ein Aushang aus, und die Haelfte wurde nie angetippt.
   chevron:       `<path d="M9 5l7 7-7 7"/>`,
+  // ── LIGA-REKORDE DER ZWEI KAMMERN [§C35] ──
+  // Acht Zeichen, die es sonst nirgends gibt. Ein Rekord zeigt in der Zelle
+  // zuerst seine Zeichnung, und zwei gleiche sind dort nicht zu
+  // unterscheiden — deshalb nimmt kein neuer Eintrag ein vorhandenes Zeichen.
+  // Hochform: drei Balken, die steigen, mit einer Welle darüber — der
+  // laufende Abschnitt, nicht die ganze Laufbahn.
+  formPeak:      `<path d="M4 20v-5M9 20v-8M14 20v-11M19 20v-6"/><path d="M4 11l5-4 5-3 5 4"/>`,
+  // Höhenflug: eine flache Linie, aus der am RECHTEN Ende eine Spitze
+  // ausbricht — der laufende Abschnitt gegen alles davor. Bewusst anders als
+  // `climb` (Treppe mit Pfeil) und `stepsUp` (Stufen): dort geht es stetig
+  // nach oben, hier bricht es an einer Stelle aus.
+  hochSpitze:    `<path d="M3 19h9"/><path d="M12 19l4-13 4 13"/><circle cx="16" cy="5" r="1.3"/>`,
+  // Der letzte Ball: eine Pfeife mit Schallbogen — der Schlusspfiff eines
+  // Spieltags. Die Partie, an die man sich erinnert.
+  whistle:       `<path d="M3 10h9l1-2h3a3 3 0 010 6h-3l-1 2H6a3 3 0 01-3-3z"/><circle cx="7" cy="13" r="1.4"/><path d="M17 5c2 1 3 2.5 3 4.5"/>`,
+  // Rückenwind: zwei Böen, die von hinten schieben, mit einer Spitze voran.
+  // Wen die Auslosung zuteilt, entscheidet niemand selbst [§C35].
+  windBack:      `<path d="M3 9h10a3 3 0 10-3-3"/><path d="M3 15h7a2.5 2.5 0 11-2.5 2.5"/><path d="M15 12h6l-3-3M18 15l3-3"/>`,
+  // Einzelkämpfer: eine Figur, neben der zwei leere Plätze gestrichelt
+  // stehen — die Seite, auf der niemand mitträgt.
+  soloPath:      `<circle cx="8" cy="7" r="3"/><path d="M3 20v-2a4 4 0 014-4h2a4 4 0 014 4v2"/><path d="M17 8v3M17 14v3" stroke-dasharray="2 2"/><circle cx="17" cy="20" r="1.2"/>`,
+  // ── FUENF REKORDE MEHR: DER EIGENE SCHNITT UND DAS FENSTER ──
+  // Uebersoll: eine gestrichelte Erwartungslinie und eine Bahn, die darueber
+  // laeuft. Bewusst anders als `chartUp` (nur die Bahn) und `chartDown` (das
+  // Untersoll, dieselbe Frage andersherum) — hier ist die LINIE die Aussage.
+  sollPlus:      `<path d="M3 18h18" stroke-dasharray="3 3"/><path d="M4 15l4-4 4 2 4-7 4 3"/>`,
+  // Stammplatz: eine Figur auf einem festen Platz, mit Lehne. Anders als
+  // `soloPath` (Figur mit leeren Plaetzen daneben) und `refresh` (der
+  // Wandler, der die Rolle tauscht): hier bewegt sich nichts.
+  roleFix:       `<circle cx="12" cy="6" r="2.6"/><path d="M7 20v-5a3 3 0 013-3h4a3 3 0 013 3v5"/><path d="M4 20h16"/>`,
+  // Torrausch: ein Ball mit Fahrtlinien dahinter — Tore in Folge, nicht ein
+  // einzelner Treffer. `ball` ist der ruhende Ball, `strikeBoot` der Schuss.
+  goalRush:      `<circle cx="16" cy="12" r="5"/><path d="M2 8h7M1 12h6M2 16h7"/>`,
+  // Allrounder: zwei Haelften, beide gefuellt — vorne wie hinten ueber der
+  // Erwartung. `switcher` fragt nach dem Gleichmass der Aufstellung, dieses
+  // Zeichen nach der Leistung auf beiden Seiten.
+  bothSides:     `<path d="M12 3v18"/><path d="M4 7h5M4 12h5M4 17h5"/><path d="M15 7h5M15 12h5M15 17h5"/>`,
+  // Dichtes Tor: ein geschlossenes Gitter im Rahmen — nichts geht durch.
+  gateShut:      `<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M12 5v14M17 5v14M3 12h18"/>`,
+  // Abwehrchef: Schild mit Rangwinkeln darin — die Ansage in der Abwehr.
+  shieldRank:    `<path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6z"/><path d="M9 10l3-2 3 2M9 14l3-2 3 2"/>`,
+  // Laufstopper: eine Flamme hinter einer Sperre — die Serie des Gegners
+  // endet hier. `flameBreak` gehoert dem Serienbrecher des Monats; dieses
+  // Zeichen steht fuer den Anteil der Gelegenheiten, nicht fuer den Bruch.
+  streakStop:    `<path d="M9 20c-3 0-5-2-5-5 0-4 4-5 4-10 3 2 4 5 4 7 1-1 1-2 1-3 2 2 3 4 3 6"/><path d="M3 4l18 16"/>`,
+  // Auftrieb: eine Treppe mit Pfeil — zwei Abschnitte, der zweite höher.
+  stepsUp:       `<path d="M3 20h5v-5h5v-5h5V5"/><path d="M16 8l3-3 3 3"/>`,
+  // Angreifer: ein Schuh am Ball — die eigenen Tore, nicht das Ergebnis.
+  strikeBoot:    `<path d="M4 8h7l3 4h4a2 2 0 012 2v3H6a2 2 0 01-2-2z"/><path d="M4 20h16"/><circle cx="8" cy="5" r="2"/>`,
+  // Handschrift: ein Federstrich, der in einer Schlaufe ausläuft — dieselbe
+  // Linie in jeder Partie.
+  penLine:       `<path d="M3 17c4-9 7-13 9-13s1 4-1 8-4 6-2 6 4-3 6-6"/><path d="M3 21h18"/>`,
+  // Fundament: zwei Lagen auf einer Grundlinie — das Gegenstück zur
+  // Handschrift, und es liegt unten.
+  baseLine:      `<path d="M3 21h18"/><rect x="5" y="13" width="14" height="5" rx="1"/><rect x="8" y="7" width="8" height="5" rx="1"/>`,
+  // Souverän: eine breite Krone auf einer Grundlinie — der Favorit, der auch
+  // klar gewinnt. Kein Häkchen: das trägt schon `trophyCheck`.
+  crownWide:     `<path d="M2 9l3.5 4L12 6l6.5 7L22 9v8H2z"/><path d="M5 20h14"/>`,
+  // Unaufgeregt: eine Linie, die kaum ausschlägt, zwischen zwei Marken —
+  // Gleichmäßigkeit als Bild, nicht als Zahl.
+  flatWave:      `<path d="M3 12h3l2-2 2 4 2-3 2 2 2-2h3"/><path d="M3 6v12M21 6v12"/>`,
+  // ── Die vier neuen Schanden [§C35] ──────────────────────────────
+  // Ladehemmung: ein Ball vor dem Tor und ein Strich davor — er kommt
+  // nicht durch. Nicht `strikeBoot` gespiegelt: zwei Rubriken tragen nie
+  // dieselbe Zeichnung [§C27].
+  misfireBall:   `<circle cx="9" cy="14" r="4"/><path d="M16 5v14"/><path d="M4 21h16"/><path d="M13 9l6 6M19 9l-6 6"/>`,
+  // Stumme Antwort: eine Sprechblase, durchgestrichen — es kommt nichts
+  // zurück.
+  mutedReply:    `<path d="M4 5h16v10H12l-5 4v-4H4z"/><path d="M8 3l12 14"/>`,
+  // Wackelkandidat: eine Stufe, die unter dem Fuß nachgibt — der Favorit,
+  // der einbricht.
+  wobbleStep:    `<path d="M3 8h7v5h7v5h4"/><path d="M6 18l3 3M10 18l3 3"/>`,
+  // Klotz am Bein: ein Gewicht an einer Kette — was die Mitspieler
+  // mitziehen.
+  dragWeight:    `<path d="M12 3v6"/><path d="M9 9h6l2 12H7z"/><path d="M10 6h4"/>`,
+  // ── Sechs Zeichen fuer sechs neue Liga-Rekorde [§C35] ──────────────
+  // Jedes muss sich von jedem anderen unterscheiden: in einer Zelle von 62
+  // Pixeln ist die Zeichnung das Erste, was man sieht, und zwei gleiche sind
+  // dort nicht auseinanderzuhalten.
+  //
+  // Entscheider: eine Muenze auf der Kante, darueber der Bogen des Wurfs.
+  // Die knappe Partie ist der Wurf, den er gewinnt.
+  coinFlip:      `<circle cx="12" cy="16" r="5"/><path d="M12 13v6"/><path d="M4 9a9 9 0 0116-1"/><polyline points="17 4 20 8 16 9"/>`,
+  // Retourkutsche: ein Bumerang als geschlossene Klinge — zwei gebogene
+  // Kanten, die sich an den Enden treffen. Zwei einzelne Striche im Winkel
+  // waren bei 62 px nicht von einem Knick zu unterscheiden, und die Kontur
+  // allein sah aus wie ein Telefonhoerer.
+  boomerang:     `<path d="M4 4c1 6 5 12 11 15l2-4c-4-2-7-6-8-11z"/>`,
+  // Unbeugsame: ein Amboss. Platte mit Horn, schmale Taille, breiter Fuss —
+  // was nicht nachgibt.
+  anvil:         `<path d="M4 8h10l4 2-4 2H4z"/><path d="M8 12l-1 4h8l-1-4"/><path d="M5 19h12"/>`,
+  // Rollencoup: zwei Felder und ein Pfeil, der von einem ins andere fuehrt —
+  // Sturm und Abwehr, und die Seite, auf der es geklappt hat.
+  posSwap:       `<rect x="3" y="4" width="7" height="7" rx="1"/><rect x="14" y="13" width="7" height="7" rx="1"/><path d="M10 7h7v6"/><polyline points="14 10 17 13 20 10"/>`,
+  // Rueckschlag: ein Zug nach unten auf den Boden und von dort ein Pfeil nach
+  // oben — der Absprung nach zwei Niederlagen. Zwei getrennte Pfeile ueber
+  // und unter einer Linie kreuzten sich bei 62 px zu einem Knaeuel; die
+  // Linie liegt jetzt am Fuss, und beide Arme stehen darueber.
+  reboundArrow:  `<path d="M3 21h18"/><path d="M7 4v9l5 7 5-9V6"/><polyline points="14 9 17 6 20 9"/>`,
+  // Wiedereinstieg: eine Tuer und ein Pfeil hinein — die erste Partie nach
+  // der Pause.
+  doorReturn:    `<path d="M4 3h9v18H4z"/><circle cx="10" cy="12" r="1"/><path d="M21 12h-5"/><polyline points="19 9 16 12 19 15"/>`,
+  // Bedienung: Schließen, Warten, Warnen, Löschen — der Hinweis und die
+  // Bestätigung tragen ihre Rolle als Zeichen [§C27].
+  x:             `<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>`,
+  hourglass:     `<path d="M7 3.5h10M7 20.5h10M8 3.5c0 4.5 4 5.5 4 8.5s-4 4-4 8.5M16 3.5c0 4.5-4 5.5-4 8.5s4 4 4 8.5"/>`,
+  alert:         `<path d="M12 4.2l8.6 15a1 1 0 01-.9 1.5H4.3a1 1 0 01-.9-1.5z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.4" r=".6" fill="currentColor"/>`,
+  trash:         `<path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13"/><path d="M10 11v5.5M14 11v5.5"/>`,
+  hochladen:     `<path d="M4 14v4a2 2 0 002 2h12a2 2 0 002-2v-4"/><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/>`,
+  // Zwei Kettenglieder: der Faden einer Karte zu der, die sie fortsetzt [§C33].
+  faden:         `<path d="M9.5 14.5l5-5"/><path d="M11 6.5l1.4-1.4a4 4 0 015.6 5.6L16.5 12M13 17.5l-1.4 1.4a4 4 0 01-5.6-5.6L7.5 12"/>`,
 };
 function svgI(name, opts){
   const o = opts || {};
   const cls = o.cls ? ' '+o.cls : '';
   const path = ICONS[name] || '';
   return `<span class="ic svg-ic${cls}"><svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg></span>`;
+}
+// Die Zeichenkachel [§C27]. Ein Zeichen, das eine Fläche braucht, steht in
+// DIESER Kachel: drei Größen (k 28 px für Zeile und Band, ohne Zusatz 36 px
+// für Kachel und Karte, g 48 px für den Blattkopf) und sechs Töne nach den
+// Rollen des Farbgesetzes [§C25] — ohne Ton ist sie Metall. Vorher baute
+// jede Ansicht ihren eigenen Kasten: die Award-Kachel ein nacktes Zeichen
+// von 14 px, das Award-Blatt einen leuchtenden Kreis, der Rückblick ein
+// Quadrat mit 11 px Rundung, das Rubrikband der Stories ein viertes.
+const ZK_TON = {gold:1, rot:1, gruen:1, blau:1, viol:1, bronze:1};
+function zkHtml(name, groesse, ton){
+  return `<span class="zk${groesse ? ' '+groesse : ''}${ZK_TON[ton] ? ' '+ton : ''}">`
+    + `<svg viewBox="0 0 24 24" aria-hidden="true">${ICONS[name] || ICONS.trophy}</svg></span>`;
 }
 // Medaillen-Badge (1/2/3) statt 🥇🥈🥉
 function medalB(i){

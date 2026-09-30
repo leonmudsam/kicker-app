@@ -3,13 +3,13 @@
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function vTeams(){
   const T=teamStats().filter(t=>t.g>=4);
-  if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Min. 4 gemeinsame Spiele</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
+  if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
   const showBest=teamView!=='worst';
   
   // ═══ SORTIERUNG BASIEREND AUF teamSort VARIABLE ═══
   let sorted;
   if(teamSort==='wr'){
-    // Standard: Nach Winrate
+    // Standard: nach Siegquote
     sorted=[...T].sort((a,b)=>(b.w/b.g)-(a.w/a.g)||(b.gf-b.ga)-(a.gf-a.ga)||b.g-a.g);
   } else if(teamSort==='gd'){
     // Nach Tordifferenz
@@ -55,7 +55,6 @@ function vTeams(){
   };
 
   const gSim=getGlobalSim();
-  const seasonTeamMap=gSim.seasonTeamElo[currentSeason().id]||{};
 
   // Dezente Team-/Spieler-Suche: filtert das aktuelle (sortierte) Feld nach
   // Spielername ODER kombiniertem Team-Namen. Beim Suchen keine Top-3-Medaillen.
@@ -75,25 +74,21 @@ function vTeams(){
     const wr=Math.round(t.w/t.g*100);
     const gd=t.gf-t.ga;
     const keyTeam=[t.ids[0],t.ids[1]].sort().join('|');
-    const eloGain=Math.round(seasonTeamMap[keyTeam]||0);
     
     // ═══ DYNAMISCHE HAUPTMETRIK BASIEREND AUF teamSort ═══
     // Grün und Rot heißen Richtung [§C25]: Tordifferenz und Elo-Zuwachs haben
     // eine, eine Siegrate hat keine. Die trägt deshalb Tinte — und Gold, wenn
     // sie dem ersten Platz gehört (weiter unten über TOP[]).
-    let mainValue, mainLabel, mainColor;
+    let mainValue, mainColor;
     if(teamSort==='wr'){
       mainValue=wr+'%';
-      mainLabel='WR';
       mainColor='var(--ink)';
     } else if(teamSort==='gd'){
       mainValue=(gd>=0?'+':'')+gd;
-      mainLabel='TD';
       mainColor=gd>=0?'var(--acid)':'var(--red)';
     } else if(teamSort==='elo'){
       const eloGainTotal=Math.round(gSim.teamElo[keyTeam]||0);
       mainValue=(eloGainTotal>=0?'+':'')+eloGainTotal;
-      mainLabel='Elo';
       mainColor=eloGainTotal>=0?'var(--acid)':'var(--red)';
     }
 
@@ -111,7 +106,7 @@ function vTeams(){
         ${avPair(t.ids[0],t.ids[1])}
         <div style="flex:1;min-width:0">
           <div style="font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em;line-height:1.1">${esc(t.ids.map(pname).join(' & '))}</div>
-          <div class="num" style="margin-top:4px;font-size:10.5px;color:var(--muted)">${t.w}–${t.g-t.w} · TD ${gd>=0?'+':''}${gd}</div>
+          <div class="num" style="margin-top:4px;font-size:10.5px;color:var(--muted)">${t.w}–${t.g-t.w} · ${gd>=0?'+':''}${gd} Tore</div>
         </div>
         <div style="font-family:'Archivo Black',sans-serif;font-size:20px;color:${i===0&&isTop&&teamSort==='wr'?'var(--gold)':mainColor};line-height:1;flex-shrink:0">${mainValue}</div>
       </div>
@@ -120,7 +115,7 @@ function vTeams(){
 
 
   return `
-    <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' mit min. 4 gemeinsamen Spielen'}</p></div>
+    <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}</p></div>
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
@@ -128,12 +123,12 @@ function vTeams(){
       <input type="text" id="teamSearch" placeholder="Spieler oder Team suchen…" value="${esc(teamSearch)}">
     </div>
     <div class="ui-switch">
-      <button data-teamtoggle="best" class="${showBest?'on':''}">▲ Beste</button>
-      <button data-teamtoggle="worst" class="${!showBest?'on':''}">▼ Schlechteste</button>
+      <button data-teamtoggle="best" class="${showBest?'on':''}">${svgI('chartUp')}Beste</button>
+      <button data-teamtoggle="worst" class="${!showBest?'on':''}">${svgI('chartDown')}Schlechteste</button>
     </div>
     <div class="ui-tabs">
-      <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Winrate</button>
-      <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Tordiff</button>
+      <button data-teamsort="wr" class="${teamSort==='wr'?'on':''}">Siegquote</button>
+      <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Torbilanz</button>
       <button data-teamsort="elo" class="${teamSort==='elo'?'on':''}">Elo-Zuwachs</button>
     </div>
     ${arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden')}`;
@@ -232,12 +227,12 @@ function vMatch(){
         <div class="stepper"><button data-step="sb,-1">−</button><span class="sval num" id="svB" data-scoreedit="sb">${M.sb}</span><button data-step="sb,1">+</button></div></div>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 0 10px">
-      <span style="font-size:10.5px;color:var(--muted)">Tipp: auf die Zahl tippen (0–10)</span>
-      <button class="btn ghost" id="shuffleBtn" style="padding:8px 14px;font-size:11px;border-radius:10px">Mischen</button>
+      <span style="font-size:10.5px;color:var(--muted)">Zahl antippen, um sie direkt einzugeben</span>
+      <button class="btn ghost" id="shuffleBtn" style="width:auto;flex-shrink:0;padding:8px 14px;font-size:11px;border-radius:10px">Mischen</button>
     </div>
     <div id="previewSlot"></div>
     <div class="btn-row" style="margin-top:4px">
-      <button class="btn ghost sm" id="clearM" style="flex:0 0 38%">Reset</button>
+      <button class="btn ghost sm" id="clearM" style="flex:0 0 38%">Leeren</button>
       <button class="btn" id="saveM" disabled>Speichern</button>
     </div>`;
 }
@@ -256,7 +251,7 @@ function vSettings(){
     pos:        Math.round((cfg.pos_swing ?? 0.45)*100),
     winBoost:   Math.round((cfg.win_boost ?? 1.12)*100),
     movDamp:    Math.round((cfg.mov_loss_damp ?? 0.5)*100),
-    bonus:      ((cfg.match_bonus ?? 1.5)).toFixed(1),
+    bonus:      komma(cfg.match_bonus ?? 1.5, 1),
     startElo:   Math.round(cfg.start_elo ?? 0),
     posMin:     Math.round(cfg.pos_min_games ?? 3),
     expW:       Math.round((cfg.exp_weight ?? 0.5)*100),
@@ -280,10 +275,10 @@ function vSettings(){
 
     <div class="cfg-section-title">Spielerlast & Position</div>
     <div class="card">
-      ${sl('cfgRisk','Risiko-Split (schwacher Mate)',c.risk,0,100,'%')}
+      ${sl('cfgRisk','Risiko-Split (schwacher Partner)',c.risk,0,100,'%')}
       ${sl('cfgPos','Positions-Swing',c.pos,0,100,'%')}
       ${sl('cfgExpW','Positions-Erfahrungs-Gewicht',c.expW,0,100,'%')}
-      ${sl('cfgPosMin','Min. Spiele für Positions-Wertung',c.posMin,1,10,'')}
+      ${sl('cfgPosMin','Mindestspiele je Position',c.posMin,1,10,'')}
     </div>
 
     <div class="cfg-section-title">Sieg & Niederlage</div>
@@ -314,10 +309,10 @@ function vSettings(){
       <div style="font-size:12px;color:var(--ink2);line-height:1.8">
         <b style="color:var(--acid)">K-Faktor</b> — Wie stark einzelne Matches die Elo verändern. Hoch = schnelle Änderungen, niedrig = stabile Elo.<br>
         <b style="color:var(--acid)">Start-Elo</b> — Der Wert auf den jeder Spieler zu Saisonbeginn zurückgesetzt wird. Höhere Werte machen Verluste in den ersten Matches "weniger schmerzhaft".<br>
-        <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk}% verlierst du weniger Elo wenn dein Mate deutlich schlechter ist.<br>
+        <b style="color:var(--acid)">Risiko-Split</b> — Wie viel Last der schwächere Mitspieler trägt. Bei ${c.risk} % verliert weniger Elo, wer mit einem deutlich schwächeren Partner spielt.<br>
         <b style="color:var(--acid)">Positions-Swing</b> — Bonus für Siege auf der schwachen Position. Ein Abwehr-Spieler der im Sturm gewinnt bekommt extra Elo.<br>
-        <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Performance. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur Über-Erwartungs-Performance zählt.<br>
-        <b style="color:var(--acid)">Min. Spiele Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
+        <b style="color:var(--acid)">Positions-Erfahrungs-Gewicht</b> — Mischverhältnis bei der automatischen Positions-Erkennung. ${c.expW}% bedeutet: ${c.expW}% Häufigkeit der Position, ${100-c.expW}% Leistung. Hoch = wer oft Abwehr spielt gilt als Verteidiger, egal wie gut. Niedrig = nur die Leistung über der Erwartung zählt.<br>
+        <b style="color:var(--acid)">Mindestspiele je Position</b> — Erst ab ${c.posMin} Spielen auf einer Position fließt sie in die Positions-Wertung ein. Schützt vor Zufalls-Einstufung nach 1 Spiel.<br>
         <b style="color:var(--acid)">Sieg-Boost</b> — Siege bringen ${c.winBoost-100}% mehr als Niederlagen kosten. Sorgt für langfristigen Aufwärtstrend.<br>
         <b style="color:var(--acid)">MoV-Dämpfung</b> — Tordifferenz bei Niederlagen nur ${c.movDamp}% so stark wie bei Siegen. Eine 0:10 Niederlage bestraft so nicht 3× so hart wie 5:10.<br>
         <b style="color:var(--acid)">MoV-Max-Boost</b> — Maximaler Multiplikator durch Tordifferenz bei einem Kantersieg. ${c.movMax}% heißt: ein 10:0 zählt bis zu ${(100+c.movMax)}% des normalen Werts.<br>
@@ -333,53 +328,53 @@ function vSettings(){
       </div>
     </div>
     <div class="card" style="margin-top:14px;border:1px solid rgba(190,242,100,.18);background:linear-gradient(155deg,rgba(190,242,100,.06),var(--surface) 80%)">
-      <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Slider-Verhalten</div>
+      <div class="mini-label" style="color:var(--acid);display:flex;align-items:center;gap:6px">${svgI('info')}Wirkung der Regler</div>
       <p style="font-size:12px;color:var(--ink2);line-height:1.55;margin-top:8px">
-        Slider-Änderungen wirken <b style="color:var(--acid)">nur auf neue Matches</b>.
+        Änderungen an den Reglern wirken <b style="color:var(--acid)">nur auf neue Matches</b>.
         Vergangene Matches behalten ihre damaligen Elo-Werte — abgeschlossene Saisons bleiben stabil,
         Awards &amp; Achievements ändern sich nicht.
       </p>
       <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:6px">
-        Falls du die Slider <b>rückwirkend</b> auf die gesamte Historie anwenden willst, kannst du alle
-        Matches neu berechnen lassen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
+        Sollen die Regler <b>rückwirkend</b> für die gesamte Historie gelten, lassen sich alle
+        Matches neu berechnen. <b style="color:var(--red)">Achtung:</b> dabei werden alle bisher
         gespeicherten Match-Deltas überschrieben.
       </p>
       <button class="btn" id="recalcBtn" style="margin-top:14px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('cycle')} Alle Matches rückwirkend neu berechnen</button>
     </div>
 
     <div class="card" style="margin-top:14px">
-      <div class="mini-label">Backup &amp; Export</div>
+      <div class="mini-label">Sicherung und Export</div>
       <p style="font-size:11.5px;color:var(--ink2);line-height:1.6;margin-top:10px">
         Die Liga lebt in einer Datenbank in der Cloud. Damit sie auch dann nicht verloren geht,
-        wenn dort etwas passiert, kannst du hier jederzeit eine eigene Kopie ziehen.
+        wenn dort etwas passiert, lässt sich hier jederzeit eine eigene Kopie ziehen.
       </p>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
         <button class="btn ghost" id="expXlsxBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('scroll')} Matches als Excel (.xlsx)</button>
-        <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('shieldCheck')} Savepoint sichern (.json)</button>
+        <button class="btn ghost" id="expSaveBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('shieldCheck')} Sicherung speichern (.json)</button>
         <button class="btn ghost sm" id="expCsvBtn" style="width:100%;font-size:11px">Stattdessen als CSV</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px">
-        <b style="color:var(--acid)">Excel</b> — alle ${matches.length} Matches mit Namen, Positionen und Ergebnissen,
+        <b style="color:var(--acid)">Excel</b>: alle ${matches.length} Matches mit Namen, Positionen und Ergebnissen,
         dazu je ein Blatt für Spieler und Saisons. Zum Anschauen, Auswerten und Weitergeben.<br>
-        <b style="color:var(--acid)">Savepoint</b> — die vollständige Kopie inklusive Elo-Deltas und Formel-Einstellungen.
-        Das ist die Datei, mit der sich die Liga im Ernstfall wieder aufbauen lässt.
+        <b style="color:var(--acid)">Sicherung</b>: die vollständige Kopie mit allen Elo-Werten und den
+        Einstellungen der Elo-Rechnung. Das ist die Datei, mit der sich die Liga im Ernstfall wieder aufbauen lässt.
       </p>
       <div style="height:1px;background:var(--line);margin:14px 0"></div>
       <button class="btn" id="impBackupBtn" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px">${svgI('refresh')} Datei einspielen</button>
       <p style="font-size:11px;color:var(--muted);line-height:1.6;margin-top:10px">
-        Nimmt .xlsx, .csv und .json. Vor dem Schreiben siehst du eine Vorschau, was ergänzt würde.
-        <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b> — nur fehlende Matches kommen dazu.
+        Nimmt .xlsx, .csv und .json. Vor dem Schreiben erscheint eine Vorschau, was ergänzt würde.
+        <b style="color:var(--acid)">Es wird nie etwas gelöscht oder überschrieben</b>, nur fehlende Matches kommen dazu.
       </p>
     </div>
 
     <div class="card" style="margin-top:14px">
-      <div class="mini-label">App-Version</div>
+      <div class="mini-label">Stand der App</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;gap:10px">
         <div style="font-size:12px;color:var(--ink2);font-family:'Sometype Mono',monospace">${BUILD_VERSION}</div>
-        <button class="btn ghost sm" id="forceReloadBtn" style="padding:7px 12px;font-size:11px;flex-shrink:0">Cache leeren &amp; neu laden</button>
+        <button class="btn ghost sm" id="forceReloadBtn" style="width:auto;padding:7px 12px;font-size:11px;flex-shrink:0">Neu laden</button>
       </div>
       <p style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:10px">
-        Falls neue Features nicht erscheinen, ist meist der iOS-PWA-/Browser-Cache schuld. Der Button erzwingt einen Frischen Load. Außerdem checkt die App im Hintergrund auf neue Versionen und blendet oben einen Banner ein.
+        Wenn eine Neuerung nicht auftaucht, hält das Telefon meist noch den alten Stand fest. Der Knopf holt ihn frisch. Sonst meldet sich ein neuer Stand von selbst mit einem Hinweis oben.
       </p>
     </div>
     ${players.filter(p=>p.hidden).length?`
@@ -392,7 +387,7 @@ function vSettings(){
               ${avHtml(p,'width:32px;height:32px;border-radius:9px;font-size:11px')}
               <span style="font-weight:600">${esc(p.name)}</span>
             </div>
-            <button data-unhide="${p.id}" class="btn ghost sm" style="padding:7px 12px;font-size:11px">Einblenden</button>
+            <button data-unhide="${p.id}" class="btn ghost sm" style="width:auto;padding:7px 12px;font-size:11px">Einblenden</button>
           </div>`).join('')}
       </div>
     </div>`:''}
@@ -459,7 +454,7 @@ function updatePreview(){
       <div class="pb" style="width:${pB}%">${pB}%</div>
     </div>
     <div class="prob-cap">Siegchance (Saison-Elo) · Team ${winner} gewinnt ${M.sa}:${M.sb}
-      ${c.mov>1.08?' · Kantersieg ×'+c.mov.toFixed(2):''}
+      ${c.mov>1.08?' · Kantersieg ×'+komma(c.mov,2):''}
     </div>
     <div class="delta-list">
       ${line(teamA[0])}${line(teamA[1])}
@@ -514,7 +509,13 @@ async function doSaveMatch(){
   if(toastWorthy.length){
     toastWorthy.forEach(e => showAchievementToast(pname(e.playerId), e.badge));
   } else {
-    toast('Match gespeichert', 'ok');
+    // Die Wirkung in der zweiten Zeile, und ein Weg zurück: wer sich beim
+    // Stand vertippt hat, musste bisher die Partie suchen, öffnen und
+    // löschen.
+    const sieger = winner === 'A' ? [M.A1, M.A2] : [M.B1, M.B2];
+    toast('Match gespeichert', 'ok', {
+      sub: sieger.map(pname).join(' & ') + ' gewinnen ' + standFuer(savedRow),
+      aktion: {label:'Rückgängig', fn: () => partieLoeschen(savedRow.id)}});
   }
   M = {A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
   tab = 'ranking'; await loadAll();

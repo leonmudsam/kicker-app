@@ -24,14 +24,38 @@ function _newsMarkSeen(ids){
   list.forEach(id => seen.add(id));
   _newsSaveSeen(seen);
 }
+// Der Lesestand: der Zeitpunkt der neuesten Karte, die beim letzten
+// „Alles gelesen" im Feed stand [§11.3].
+function _newsLesestand(){
+  try { return Number(localStorage.getItem(NEWS_LS_STAND)) || 0; } catch(e){ return 0; }
+}
+// Eine Karte gilt als gelesen, wenn ihre ID in der Liste steht ODER ihr
+// Zeitpunkt vor dem Lesestand liegt. Beides ist noetig: die Liste kennt nur,
+// was auf dem Bildschirm stand, und der Feed zeigt nicht jeden Tag dieselbe
+// Auswahl — ein Deckel, eine gleichlautende Schlagzeile oder eine ablaufende
+// Sperrfrist schieben eine Karte spaeter doch noch herein. Sie stand dann
+// unter einem Tag, den der Leser schon gelesen hat, und war trotzdem als neu
+// markiert.
+function _newsGelesen(s, seen, stand){
+  if(!s) return true;
+  if(seen && seen.has(s.id)) return true;
+  return !!stand && new Date(s.when).getTime() <= stand;
+}
 function _newsMarkAllSeen(){
   const stories = getStoriesCache();
   _newsMarkSeen(stories.map(s => s.id));
+  // Der Lesestand wandert auf die neueste Karte des Feeds. Alles, was
+  // danach kommt, ist neu; alles davor ist gelesen, auch wenn es erst
+  // spaeter im Feed erscheint.
+  const neuste = stories.reduce((mx, s) =>
+    Math.max(mx, new Date(s.when).getTime() || 0), 0);
+  if(neuste) try { localStorage.setItem(NEWS_LS_STAND, String(neuste)); } catch(e){}
 }
 function newsUnreadCount(){
   const stories = getStoriesCache();
   const seen = _newsLoadSeen();
-  return stories.filter(s => !seen.has(s.id)).length;
+  const stand = _newsLesestand();
+  return stories.filter(s => !_newsGelesen(s, seen, stand)).length;
 }
 
 // ─── §11.4 — Header-Badge-Refresh ────────────────────────────────────
@@ -236,10 +260,9 @@ function _newsWhenLabel(when){
   // Datumskeys in LOKALER Zeit bilden (nicht via toISOString → UTC): sonst zeigt
   // eine Story mit when=heute 00:00 Lokalzeit in Zonen mit positivem UTC-Offset
   // fälschlich „Gestern", obwohl die Uhrzeit lokal (toLocaleTimeString) heute ist.
-  const _lkey = x => x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
-  const todayKey = _lkey(now);
-  const yest = _lkey(new Date(now.getTime() - 86400000));
-  const dKey = _lkey(d);
+  const todayKey = tagKey(now);
+  const yest = tagKey(now.getTime() - 86400000);
+  const dKey = tagKey(d);
   const hhmm = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
   if(dKey === todayKey) return 'Heute, '+hhmm;
   if(dKey === yest) return 'Gestern, '+hhmm;
@@ -254,9 +277,8 @@ function _newsWhenLabel(when){
 // behalten ihr Wort, weil man an ihnen kein Datum nachschlagen will.
 function _newsDayLabel(when){
   const d = new Date(when), now = new Date();
-  const k = x => x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
-  if(k(d) === k(now)) return 'HEUTE';
-  if(k(d) === k(new Date(now.getTime() - 86400000))) return 'GESTERN';
+  if(tagKey(d) === tagKey(now)) return 'HEUTE';
+  if(tagKey(d) === tagKey(now.getTime() - 86400000)) return 'GESTERN';
   return d.toLocaleDateString('de-DE',{weekday:'long'}).toUpperCase();
 }
 // Das Datum unter dem Wochentag. Bei „Heute" und „Gestern" steht es trotzdem
@@ -264,10 +286,6 @@ function _newsDayLabel(when){
 function _newsDayDate(when){
   const d = new Date(when);
   return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
-}
-function _newsDayKey(when){
-  const d = new Date(when);
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 
 // ─── §11.6 — Voller Feed (im Sheet) mit Filter-Pills ─────────────────
@@ -290,20 +308,33 @@ function _isBreaking(s){
   // ausschließlich extrem seltene Auszeichnungen und echte EREIGNISSE —
   // etwas, das vorher noch nie da war oder die Spitze der Liga verschiebt.
   // Gefallen sind `top_clash` (Platz 1 schlägt Platz 2 — kam allein in einem
-  // Fenster von 33 Stories vor), `giant_slayer` (dafür gibt es die
-  // Highlight-Karte) und `season_endgame`: „Noch 5 Tage" ist ein Countdown,
-  // kein Ereignis, und es stand als einzige Breaking-Karte im Feed.
+  // Fenster von 33 Stories vor) und `giant_slayer` (dafür gibt es die
+  // Highlight-Karte).
   switch(d.type){
-    case 'lead_change':      // neuer Spitzenreiter der Liga
-    case 'elo_record':       // neuer Allzeit-Elo-Rekord
+    case 'lead_change':      // der Tabellenführer eines belastbaren Spieltags
     case 'streak_record':    // längste Siegesserie aller Zeiten
     case 'season_recap':     // der Meister steht fest
-    case 'rekord_erstmals':  // ein Liga-Rekord wird zum ersten Mal vergeben
+    case 'season_endgame':   // der Schlusssprint, und nur bei offener Lage
       return true;
     case 'badge_unlocked':   // nur legendäre Auszeichnungen
       return d.rarity === 'legendary';
-    case 'insignium_stufe':  // nur Lorbeerreif und Ordensstern [§C30]
-      return !!d.oben;
+    // ── Nur der ERSTE Aufstieg in die oberen zwei Stufen ────────────
+    // Prestige aus Liga-Rekorden wird geteilt und fällt mit einem verlorenen
+    // Bestwert wieder [§C34]: dieselbe Stufe kann mehrmals erreicht werden,
+    // und beim zweiten Mal ist sie keine Nachricht mehr, die die Spalte
+    // bricht. Ob es das erste Mal ist, sagt `wieder` [§C33].
+    case 'insignium_stufe':  // nur Kronenreif und Ordensstern [§C30]
+      return !!d.oben && !d.wieder;
+    // ── Ein erstmals vergebener Liga-Rekord ist kein Breaking ───────
+    // Er stand auf der Liste, und in der Füllphase der Ewigen Tafel wird
+    // JEDER Rekord zum ersten Mal vergeben: gemessen über die 18 Spieltage
+    // des Juni 2026 trugen elf von ihnen eine Breaking-Karte, immer dieselbe
+    // — der Tafel-Moment des Tages, der es von einer seiner Zeilen erbte.
+    // Damit war Breaking in dieser Phase die Regel und nicht die Ausnahme.
+    // Dasselbe gilt für `elo_record`: die Karte bildet der Generator nicht
+    // mehr (der Bestwert steht als „Der höchste Gipfel" in der Tafel), aber
+    // persistierte Zeilen aus älteren Läufen tragen den Typ weiter und waren
+    // damit dieselbe Meldung zweimal, einmal laut.
     default:
       return false;
   }
@@ -369,7 +400,15 @@ function _newsUhrzeit(when){
 // grünen Schimmer einer positiven Serie annimmt.
 function _newsIstNegativ(s){
   const d = (s && s.dataRef) || {};
-  return /loss|dry_spell/.test(d.type || '') || d.rarity === 'negative';
+  // ── Eine Gruppe ist so negativ wie ihre Mitglieder ─────────────────
+  // Mehrere Pleitenserien derselben Partie werden EINE Zeile („2 Pechvögel:
+  // Anton & Maxi"), und die trägt `type:'group'` mit `loss_streak` in `sub`.
+  // Geprüft wurde nur `type`, also galt die Gruppe als positiv: gemessen
+  // stand sie als Zeile auf der Karte „Teamserie in einer Partie", die
+  // Johannes und Martins Sieg feiert — Rot ist die Richtung, und eine Karte
+  // hat eine [§C25].
+  const typ = (d.type === 'group' ? (d.sub || '') : (d.type || ''));
+  return /loss|dry_spell/.test(typ) || d.rarity === 'negative';
 }
 
 // Die Ewige Tafel hat mehrere Kammern. Ein einziger silberner Ton machte
@@ -398,7 +437,7 @@ function _newsTafelTon(s){
   return arten.length === 1 ? arten[0] : (arten.length > 1 ? 'mix' : 'rekord');
 }
 
-function _newsCardHtmlM2(s, isRead, istTagesKarte){
+function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
@@ -415,28 +454,63 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // Breaking sprang bisher als Hero an den Kopf des Feeds und damit aus der
   // Chronologie. Es bleibt jetzt an seinem Platz und trägt stattdessen einen
   // roten Kopfbalken mit Punkt und Zeitstempel [§11.6b].
+  // ── Eine gebuendelte Breaking-Karte sagt, wie viel sie traegt ────
+  // Sie sah aus wie jede andere Breaking-Karte: derselbe Balken, dasselbe
+  // Wort. Dass unter der Schlagzeile noch fuenf weitere Meldungen desselben
+  // Moments stehen, stand nur im Sammelband darunter — und wer die Karte
+  // ueberflog, las „BREAKING" und hielt sie fuer eine einzelne Nachricht.
+  // Die Zahl steht deshalb im Balken, neben dem Wort, das sie erklaert.
+  const brkTeile = (brk && d.type === 'sammel' && Array.isArray(d.teile))
+    ? d.teile.length : 0;
   const balken = brk
     ? `<div class="nf-brk-band"><span class="nf-brk-punkt"></span>BREAKING`
+      + (brkTeile > 1
+          ? `<span class="nf-brk-n">${brkTeile} Meldungen</span>` : '')
       + `<span class="nf-brk-zeit">${esc(_newsWhenLabel(s.when))}</span></div>`
     : '';
   // Eine Sammelkarte hat einen eigenen Gruppenkopf. Darunter stehen ALLE
   // verbundenen Einzelereignisse im Band; keines wird zum heimlichen Kopf
   // und keines hinter „weitere" versteckt [§C33].
+  // ── Das Ergebnis steht nicht als Zeile unter seinem eigenen Band ──
+  // Die Zeile hiess „Leon und Maxi setzen sich gegen Leo und Anton durch" und
+  // stand unmittelbar unter dem Ergebnisband, das dieselben vier Namen mit
+  // Wappen und Stand zeigt — gemessen brach sie dabei mit Auslassungspunkten
+  // ab. Ihr Anlass steht ausserdem in der Schlagzeile („… in einer Partie")
+  // und ihre beiden Zahlen im Satz darunter. Sie bleibt Teil des Buendels,
+  // damit die Karte ihr Band und ihre Siegchance behaelt [§C33], und
+  // verschwindet nur aus dem Band, wo sie nichts hinzufuegt.
+  // Nur auf der Achse der PARTIE: eine Karte über zwei Ergebnisse desselben
+  // Tages (`quelle:'ergebnis'`) besteht aus lauter Ergebnis-Zeilen, und die
+  // sind dort die Aussage — gemessen blieben sonst elf Karten ohne Band.
+  const sammelTeile = (d.type === 'sammel' && d.quelle === 'spiel'
+                       && d.matchId && !d.bandFremd)
+    ? (d.teile || []).filter(t => String((t && (t.typ || t.type)) || '') !== 'spiel')
+    : d.teile;
   const sammelBand = (d.type === 'sammel')
-    ? _newsSammelBand(d.teile, [s.title], true) : '';
+    ? _newsSammelBand(sammelTeile, [s.title], true) : '';
 
   // ── Je Sorte ein eigener Kopf und ein eigener Fuß ──────────────────
   // Vorher unterschied die Sorten nur eine Randfarbe, und zehn Karten
   // untereinander sahen alle gleich aus.
   let kopf = '', fuss = '', gesicht = '';
+  // Der Satz unter der Schlagzeile. Nur die Partie-Karte kürzt ihn: was ihr
+  // Fuß als Bogen und Chips zeigt, sagt er nicht noch einmal (_newsSpielSatz).
+  let satz = s.desc;
   const pm = pmap();
   // 48 px ist die Untergrenze fuer ein Wappen [§6]; darunter gibt `insAvWrap`
   // nur den Avatar zurueck, und die Karte verloere ihr Gesicht [§C33].
   const av = (pid, px) => (pm[pid] ? avHtml(pm[pid], '', {ins:true, px:px||48, feuer:0}) : '');
 
   if(sorte === 'spiel'){
-    kopf = _newsErgebnisBand(d.matchId);
-    fuss = _newsZahlband(_newsSpielZahlen(s));
+    kopf = d.bandFremd ? '' : _newsErgebnisBand(d.matchId);
+    const spf = _newsSpielFuss(s);
+    satz = _newsSpielSatz(s.desc, spf);
+    fuss = spf + _newsZahlband(_newsSpielZahlen(s));
+    // Die Ergebnis-Sammelkarte hat ZWEI Partien und deshalb keine, die sie
+    // als Band zeigen könnte: acht Wappen übereinander machten sie höher als
+    // ihr Text [§C27]. Die Stände stehen im Sammelband, die Sieger als Chips
+    // — im Feed hat jeder ein Gesicht [§C33].
+    if(!kopf) gesicht = _newsGesichtHtml(s);
   } else if(sorte === 'tafel'){
     const w = _newsTafelWert(s);
     // Ein Tafel-Bundle zeigt Wert UND Beteiligte. Der große Zähler erklärte
@@ -485,8 +559,18 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     // sie ueberflog, sah die Ueberraschung, den Krimi und das Team der Woche
     // gar nicht, obwohl die Karte fuer nichts anderes da ist.
     const teile = Array.isArray(d.teile) ? d.teile : [];
+    // Der Sieger der Woche steht mit seinem Wappen da. Die Karte trug sechs
+    // Zeilen Text und kein einziges Gesicht — im Feed hat jeder eins [§C33],
+    // und diese Karte gibt es einmal je Woche.
+    const held = (teile.find(t => t.held) || teile[0] || {});
+    const hpid = (held.pids || [])[0];
+    if(hpid) gesicht = `<div class="nf-gr-l">${av(hpid, 48)}</div>`;
+    // Und jede Wertung trägt ihr Zeichen: sechs Zeilen Text untereinander
+    // sagen vor dem Lesen nicht, welche davon der Spieler der Woche ist.
     fuss = `<div class="nf-wl">${teile.map(t =>
-      `<div class="nf-wl-z"><span>${esc(t.label || '')}</span>`
+      `<div class="nf-wl-z${t.held ? ' held' : ''}">`
+      + (t.ic ? `<em class="nf-wl-i">${svgI(t.ic)}</em>` : '')
+      + `<span>${esc(t.label || '')}</span>`
       + `<i>${esc(_namenKurz((t.pids || []).map(p => (pm[p] || {}).name || '').filter(Boolean), 2))}</i>`
       + `<b>${esc(t.wert || '')}</b></div>`).join('')}</div>`;
   } else if(sorte === 'duell'){
@@ -508,7 +592,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     gesicht = d.a && d.b
       ? `<div class="nf-gr-l nf-duo">${av(d.a, 38)}${av(d.b, 38)}</div>`
       : `<div class="nf-gr-l">${av(d.pid || d.playerId, 48)}</div>`;
-    fuss = _newsSerienBand(d.streak, verloren);
+    fuss = _newsSerienBand(d.streak, verloren, true);
   } else if(sorte === 'badge'){
     gesicht = `<div class="nf-gr-l">${av(d.playerId, 48)}</div>`;
     // Der Name der Auszeichnung steht schon in der Schlagzeile. Im Fuss stand
@@ -531,12 +615,16 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     // Fun Fact: die Zahl links, der Satz rechts. Bewusst der leiseste Bau.
     if(d.vv != null && d.vv !== '') gesicht = `<div class="nf-gr-l">${_newsWertBlock(d.vv, d.vl, 'metall')}</div>`;
     else gesicht = `<div class="nf-gr-l">${_newsGesichtHtml(s)}</div>`;
+    // Die Leiter der Liga zeigt ihre Stufen, darunter die Zahl der Träger.
+    if(d.leiter) fuss = _newsLigaLeiter(d.leiter);
   }
   // Jede Geschichte, die durch eine konkrete Partie ausgeloest wurde,
   // zeigt diese Partie. Das gilt auch fuer Auszeichnungen, Serien und
   // Tafelwechsel: Der Typ bestimmt weiter Farbe und Aufbau, aber Ergebnis,
   // Teams und Ausloeser verschwinden nicht mehr hinter der Rubrik.
-  if(d.matchId && (sorte === 'duell' || !kopf)){
+  // Das Band gehoert der Partie, nicht jeder Karte, die sie nennt: steht schon
+  // eine andere Karte derselben Partie im Feed, zeigt sie es [§C33].
+  if(d.matchId && !d.bandFremd && (sorte === 'duell' || !kopf)){
     kopf = _newsErgebnisBand(d.matchId) || kopf;
   }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
@@ -553,6 +641,17 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
   // einer Schande erzaehlt, traegt es in Rubrik und Motiv. Die Durststrecke
   // stand vorher im selben Gruen wie die Siegesserie.
   const negativ = _newsIstNegativ(s);
+  // ── Was oben steht, steht unten nicht noch einmal ──────────────────
+  // `_breakingHeroText` hat nur fuer sieben Typen einen eigenen Satz und
+  // faellt sonst auf `s.desc` zurueck. Gemessen stand der Teaser damit auf
+  // jeder anderen Breaking-Karte zweimal untereinander — auf der
+  // gebuendelten „Neue Tabellenspitze und Auszeichnung in einer Partie" und
+  // auf jeder legendaeren Auszeichnung [§C33].
+  let brkSub = '';
+  if(brk){
+    const h = _breakingHeroText(s);
+    if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
+  }
   return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
@@ -564,12 +663,13 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte){
     ${kopf}
     <div class="nf-gr${gesicht?' mit-l':''}">
       ${gesicht}
-      <div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc)}</div></div>
+      <div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div>${satz ? `<div class="nf-d">${_newsBetont(satz)}</div>` : ''}</div>
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
     ${sammelBand}
     ${fuss}
-    ${brk ? `<div class="nf-brk-sub">${esc(_breakingHeroText(s))}</div>` : ''}
+    ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
+    ${fadenHtml || ''}
   </div>`;
 }
 
@@ -689,17 +789,27 @@ function _newsBilanzBalken(aPid, bPid, aW, bW){
 // Die Partien einer Serie als Punkte. „7 Siege" ist eine Zahl, die Reihe
 // zeigt, wie lang sieben sind. Ab zwölf Punkten steht der Rest als Ziffer:
 // eine Reihe, die über die Karte hinausläuft, sagt nichts mehr.
-function _newsSerienBand(laenge, verloren){
+function _newsSerienBand(laenge, verloren, mitZiel, wer){
   const n = Math.max(0, Number(laenge) || 0);
   if(!n) return '';
   const zeige = Math.min(n, 12);
+  // Die Karte einer Siegesserie zeigt die nächste Marke als leere Felder:
+  // man sieht, wie weit es noch ist. Eine Pleitenserie hat kein Ziel —
+  // eine Marke, auf die man zuläuft, wäre dort ein Wunsch [§C25].
+  const ziel = mitZiel && !verloren ? naechsteSerienMarke(n) : 0;
+  const leer = ziel && ziel <= 12 ? ziel - zeige : 0;
   // Rechts steht, was die Punkte zaehlen. Ohne die Angabe war die halbe
   // Bandbreite leer, und die Reihe sagte nicht, ob sie Siege oder Pleiten
   // meint.
-  return `<div class="nf-ser${verloren ? ' r' : ''}">`
+  // Auf der Karte einer Partie steht die Serie unter vier Wappen, und dort
+  // sagt ein kleines Gesicht davor, WESSEN Serie es ist [§C33].
+  const pmS = wer ? pmap() : null;
+  const gesicht = wer ? [].concat(wer).map(p => pmS[p] ? avHtml(pmS[p], '', {}) : '').join('') : '';
+  return `<div class="nf-ser${verloren ? ' r' : ''}">${gesicht ? `<span class="nf-ser-av">${gesicht}</span>` : ''}`
     + Array.from({length: zeige}, () => '<i></i>').join('')
+    + Array.from({length: leer}, () => '<i class="x"></i>').join('')
     + (n > zeige ? `<em>+${n - zeige}</em>` : '')
-    + `<span>${n} ${verloren ? 'Pleiten' : 'Siege'} nacheinander</span></div>`;
+    + `<span>${n} ${verloren ? 'Pleiten' : 'Siege'} nacheinander${ziel ? ` · Marke ${ziel}` : ''}</span></div>`;
 }
 
 // ── Das Sammelband ──────────────────────────────────────────────────
@@ -719,10 +829,27 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     .map(x => String(x || '').trim()).filter(Boolean);
   const rest = alle.filter(t => kt.indexOf(String(t.titel || '').trim()) < 0);
   if(!rest.length) return '';
-  // Drei Zeilen und dahinter die Zahl — ausser auf den beiden Karten, die
-  // eine Sache vollstaendig zeigen sollen: dort waere „und 2 weitere" genau
-  // das Verstecken, gegen das die Buendelung gebaut ist.
-  const grenze = vollstaendig ? rest.length : 3;
+  // Drei Zeilen und dahinter die Zahl. Eine Sammelkarte zeigt mehr, aber
+  // nicht alles: gemessen trug ein Tafel-Moment neunzehn Zeilen, und die
+  // Karte bedeckte damit den ganzen Bildschirm — die vollstaendige Liste
+  // versteckte alles andere. Gezeigt werden die staerksten
+  // `NEWS_LIMITS.sammelZeilen`; `rest` steht nach `prio` sortiert, also
+  // Bestmarke vor Monatschronik vor Insignium. Das Blatt zeigt jede Zeile.
+  const grenze = vollstaendig
+    ? Math.min(rest.length, NEWS_LIMITS.sammelZeilen || rest.length) : 3;
+  // ── Ein Ausbau steht nicht auf der Karte ──────────────────────────
+  // „Wichtig ist, was wirklich in der Chronik steht und welcher Rekord
+  // wirklich uebernommen wurde" — ein Ausbau ist keins von beidem: derselbe
+  // Halter, ein besserer Wert, kein Wechsel. Gemessen trug ein Tafel-Moment
+  // achtzehn Zeilen, elf davon Ausbauten, und bei vier Plaetzen standen zwei
+  // Wechsel und zwei Ausbauten auf der Karte. Sie zaehlen jetzt in die Zahl
+  // dahinter; das Blatt zeigt jede Zeile [§C33].
+  //
+  // Gibt es NUR Ausbauten, bleibt die staerkste stehen: eine Karte mit einem
+  // leeren Band ist schlimmer als eine, die einen Ausbau nennt.
+  const wechsel = rest.filter(t => String((t && (t.typ || t.type)) || '') !== 'rekord_gesteigert');
+  const zeige = (wechsel.length ? wechsel : rest).slice(0, grenze);
+  const uebrig = rest.length - zeige.length;
   // In einer gemischten Tafel-Karte bekommt jede Spur den Ton ihrer Kammer.
   // Der Kartenkopf bleibt eine gemeinsame Geschichte, die Zeilen verraten
   // aber sofort, ob darunter Rekord, Bestmarke, Chronik, Fügung, Schatten
@@ -739,14 +866,28 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
   };
   // Die Marke sagt in zwei Worten, welche Zeile in der Monatstafel landet
   // [§C32] — Metall, sie zeichnet niemanden aus [§C25].
-  return `<div class="nf-sam">${rest.slice(0, grenze).map(t => {
+  return `<div class="nf-sam">${zeige.map(t => {
     const ton = tafelTon(t);
-    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
+    // ── Der Anlass des Breaking traegt eine Marke ─────────────────
+    // Die Karte bricht die Spalte, weil EINE ihrer Zeilen Breaking ist. Sie
+    // stand zuletzt und ohne jedes Zeichen: die lauteste Karte des Feeds
+    // behauptete eine Dringlichkeit, die sie selbst nicht belegte. Sie
+    // steht jetzt zuerst [§C33] und sagt es auch — Rot, weil das die
+    // Richtung von Breaking ist [§C25].
+    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}${t.brk ? ' brk' : ''}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
     + `<span>${_newsBetont(t.titel || '')}</span>`
+    + (t.brk ? `<b class="nf-sam-brk">Der Anlass</b>` : '')
     + (t.marke ? `<b class="nf-sam-k">${esc(t.marke)}</b>` : '')
+    // Die Klasse einer seltenen Auszeichnung: Violett, die Familie der
+    // Auszeichnungen [§C25] — Gold waere ein Titel, Rot eine Richtung.
+    + (t.klasse ? `<b class="nf-sam-kl">${esc(t.klasse)}</b>` : '')
+    // Auf der Ergebnis-Karte ist der Stand die Aussage. „Ben und Jonas
+    // gewinnen ohne Gegentor" ohne die 10:0 daneben ist die halbe Nachricht,
+    // und in den Satz gehört sie nicht: die Zeile kürzt sich [§C32].
+    + (t.wert ? `<b class="nf-sam-w">${esc(t.wert)}</b>` : '')
     + `</div>`;
   }).join('')}`
-    + (rest.length > grenze ? `<div class="nf-sam-m">und ${rest.length - grenze} weitere</div>` : '')
+    + (uebrig > 0 ? `<div class="nf-sam-m">und ${uebrig} weitere</div>` : '')
     + `</div>`;
 }
 
@@ -757,11 +898,435 @@ function _newsSpielZahlen(s){
   const out = [];
   if(d.streak) out.push({v: d.streak, l:'Siege, jetzt beendet', f:'g'});
   if(d.gap) out.push({v: 'Platz ' + (d.winnerRank || d.gap), l:'schlägt Platz ' + (d.loserRank || '')});
-  if(d.chance != null) out.push({v: Math.max(1, Math.round(d.chance*100)) + ' %', l:'Siegchance vorher'});
-  // Die Tordifferenz steht NICHT im Band: das Ergebnisband darüber zeigt
-  // beide Zahlen, und „4 Tore Unterschied" unter einem 6:10 rechnet dem
-  // Leser vor, was er gerade gelesen hat.
+  // Die Siegchance steht nicht mehr als Zahl im Band, sondern als Bogen
+  // darüber (_newsSpielFuss). Die Tordifferenz steht gar nicht darin: das
+  // Ergebnisband zeigt beide Zahlen, und „4 Tore Unterschied" unter einem
+  // 6:10 rechnet dem Leser vor, was er gerade gelesen hat.
   return out;
+}
+
+// ── Bogen und Elo einer Partie [§C33] ────────────────────────────────
+// „30 %" muss man erst einordnen; der Halbkreis mit der Mitte zeigt, wie
+// weit die Rechnung dagegen stand, und das Wort daneben sagt es
+// (chanceWort, dieselbe Quelle wie die Skala im Blatt). Der Elo-Gewinn
+// gehört einem und nicht der Partie (`eloPid`): der Satz nennt den Besten,
+// die Chips nennen beide Sieger mit Gesicht. Die Chance ist die der Sieger
+// aus der Elo-Bahn, wie im Blatt der Partie.
+// ── Die Bildzone einer Partie folgt ihrem Anlass [§C33] ─────────────
+// Jede Partie-Karte trug denselben Fuß: Bogen der Siegchance und zwei
+// Elo-Chips. Im Feed standen damit dreißig Karten mit derselben Zeichnung
+// untereinander, und der Bogen sagte bei einem 81-%-Favoritensieg nichts,
+// was eine Karte besonders macht. Jetzt zeigt der Fuß, WOVON die Partie
+// erzählt — in fester Rangfolge, das erste, was zutrifft:
+//   Spitzenwechsel   die neue Spitze und ihr Abstand          _newsSpitzeBild
+//   Serienbruch      die Serie, die hier gerissen ist         _newsRissBild
+//   Serie            der Lauf und die nächste Marke           _newsSerienBand
+//   Außenseitersieg  der Bogen der Siegchance und die Chips   _newsChanceBogen
+//   Rivalitätsmarke  die Bilanz der beiden bis zu dieser Partie
+//   Auszeichnung     das Zeichen der Auszeichnung             _newsMedailleBild
+//   Ein-Tor-Krimi    der Bogen: wie offen es vorher stand
+//   sonst            die Elo-Waage aller vier Spieler         _newsEloWaage
+// Der Fakt kommt aus den ungebündelten Meldungen der Karte
+// (`_newsRohIndex`), weil eine Sammelzeile nur Titel und Zeichen trägt.
+function _newsRohIndex(){
+  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  let m = _newsRohMemo.get(roh);
+  if(!m){ m = new Map(roh.map(x => [x.id, x])); _newsRohMemo.set(roh, m); }
+  return m;
+}
+const _newsRohMemo = new WeakMap();
+function _newsSpielFakten(s){
+  const d = s.dataRef || {};
+  if(d.type !== 'sammel' || !Array.isArray(d.teile)) return [d];
+  const idx = _newsRohIndex();
+  return d.teile.map(t => ((idx.get(t && t.id) || {}).dataRef) || {type: t && (t.typ || t.type)});
+}
+function _newsSpielFuss(s){
+  const d = s.dataRef || {};
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  if(!m) return '';
+  let c = d.quote != null ? d.quote / 100 : null;
+  const fakten = _newsSpielFakten(s);
+  const sp = fakten.find(f => f.type === 'spiel');
+  if(c == null && sp && sp.quote != null) c = sp.quote / 100;
+  if(c == null){
+    const h = getHistoryByMatchId().get(m.id);
+    const e = h && h.expA != null ? h.expA : m.exp_a;
+    if(e != null) c = m.winner === 'A' ? e : 1 - e;
+  }
+  const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+  const f = t => fakten.find(x => x.type === t);
+  const bogenMitChips = () => {
+    const bogen = (c != null && c > 0 && c < 1) ? _newsChanceBogen(c) : '';
+    const chips = _newsEloChips(m);
+    return (bogen || chips) ? `<div class="nf-spf">${bogen}${chips}</div>` : '';
+  };
+  let x;
+  if((x = f('lead_change')) && x.newLeader) return _newsSpitzeBild(x);
+  if((x = f('streak_killer')) && x.victimPid) return _newsRissBild(x.victimPid, x.streak);
+  if((x = f('win_streak')) && x.streak) return _newsSerienBand(x.streak, false, true, x.pid);
+  if((x = f('team_streak')) && x.streak) return _newsSerienBand(x.streak, false, true, [x.a, x.b]);
+  if(c != null && c < CHANCE_UPSET) return bogenMitChips();
+  const sieger = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+  const wende = sieger.map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
+    .filter(w => w.n >= 3).sort((a, b) => b.n - a.n)[0];
+  if(wende) return _newsWendeBild(wende.pid, wende.n);
+  if((x = f('rivalry_milestone')) && x.a && x.b){
+    const b = _newsDuellBis(x.a, x.b, m.id);
+    if(b.a + b.b) return _newsBilanzBalken(x.a, x.b, b.a, b.b);
+  }
+  if((x = f('badge_unlocked')) && x.badgeId) return _newsMedailleBild([{pid:x.playerId, badgeId:x.badgeId}]);
+  if((x = f('badge_marken')) && Array.isArray(x.marken) && x.marken.length) return _newsMedailleBild(x.marken);
+  const sprung = sieger.map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
+    .filter(w => w.r && w.r.pre - w.r.post >= 2);
+  if(sprung.length) return _newsRangBild(sprung);
+  if(hoch - tief === 1) return bogenMitChips();
+  if(hoch - tief >= 6) return _newsTorleiste(m, hoch, tief);
+  return _newsEloWaage(m);
+}
+function _newsEloChips(m){
+  const pm = pmap();
+  const chips = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).map(pid => {
+    const v = _newsEloDelta(pid, m.id);
+    if(v == null || !pm[pid]) return '';
+    return `<span class="nf-eloc">${avHtml(pm[pid], '', {})}<b class="${v >= 0 ? 'g' : 'r'}">${v >= 0 ? '+' : ''}${v}</b></span>`;
+  }).join('');
+  return chips ? `<div class="nf-elocs">${chips}</div>` : '';
+}
+// Die Elo-Waage: alle vier Spieler um die Null, Verlierer links in Rot,
+// Sieger rechts in Grün [§C25]. Die Chips zeigten nur die Sieger, und wer
+// wie viel abgegeben hat, stand nirgends auf der Karte. Die Länge ist der
+// Betrag im Verhältnis zum größten der vier — die Zahl steht daneben.
+function _newsEloWaage(m){
+  const pm = pmap();
+  const w = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+  const l = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+  const v = pid => _newsEloDelta(pid, m.id);
+  const alle = w.concat(l).map(v).filter(x => x != null);
+  if(!alle.length) return '';
+  const max = Math.max(8, ...alle.map(Math.abs));
+  const zeile = (pid, seite) => {
+    const x = v(pid);
+    if(x == null || !pm[pid]) return '';
+    const b = (Math.abs(x) / max * 100).toFixed(0);
+    return `<span class="nf-wg-z">${avHtml(pm[pid], '', {})}<b class="${x >= 0 ? 'g' : 'r'} num">${x >= 0 ? '+' : ''}${x}</b>`
+      + `<i style="width:${b}%"></i></span>`;
+  };
+  return `<div class="nf-waage" title="Elo je Spieler">`
+    + `<div class="nf-wg-s l">${l.map(p => zeile(p, 'l')).join('')}</div>`
+    + `<span class="nf-wg-null"></span>`
+    + `<div class="nf-wg-s r">${w.map(p => zeile(p, 'r')).join('')}</div></div>`;
+}
+// Der Spitzenwechsel: wer oben steht, mit welchem Stand, und wie weit davor.
+// Die Krone ist Gold, weil die Tabellenspitze ein Titel auf Zeit ist [§C25];
+// der Vorgänger steht leiser daneben.
+function _newsSpitzeBild(x){
+  const pm = pmap(), neu = pm[x.newLeader], alt = pm[x.prevLeader];
+  if(!neu) return '';
+  return `<div class="nf-spitze">${zkHtml('crown', 'k', 'gold')}`
+    + `<span class="nf-sp-n">${avHtml(neu, '', {})}<b>${esc(neu.name)}</b>${x.elo != null ? `<em class="num">${x.elo} Elo</em>` : ''}</span>`
+    + (alt ? `<span class="nf-sp-a">${x.gap != null ? `<b class="num">${x.gap}</b> vor ` : 'vor '}${avHtml(alt, '', {})}${esc(alt.name)}</span>` : '')
+    + `</div>`;
+}
+// Der Serienbruch zeigt die Serie, die hier endet: ihre Länge in Feldern und
+// ein letztes, gerissenes. „Leon und Maxi brechen Martins 8er-Serie" nennt
+// eine Zahl; die Reihe zeigt, wie lang acht sind.
+function _newsRissBild(pid, laenge){
+  const n = Math.max(0, Number(laenge) || 0), p = pmap()[pid];
+  if(!n || !p) return '';
+  const zeige = Math.min(n, 12);
+  return `<div class="nf-ser nf-riss">${avHtml(p, '', {})}`
+    + Array.from({length: zeige}, () => '<i></i>').join('')
+    + (n > zeige ? `<em>+${n - zeige}</em>` : '')
+    + `<i class="bruch"></i><span>${n} Siege von ${esc(p.name)}, dann Schluss</span></div>`;
+}
+// Die Torleiste eines deutlichen Siegs: zehn Felder je Seite, und daneben,
+// wann die Liga zuletzt so deutlich gespielt hat. Der Stand steht im Band
+// darüber; „7 Tore Unterschied" darunter rechnete ihn nur vor [§C33] — wie
+// selten er ist, sagt keine andere Stelle der Karte.
+function _newsTorleiste(m, hoch, tief){
+  const diff = hoch - tief, t = mts(m);
+  let zuletzt = null;
+  (matches || []).forEach(x => {
+    const xt = mts(x);
+    if(xt >= t || Math.abs(x.score_a - x.score_b) < diff) return;
+    if(!zuletzt || xt > mts(zuletzt)) zuletzt = x;
+  });
+  const reihe = (k, cls) => Array.from({length:10}, (_, i) => `<i${i < k ? ` class="${cls}"` : ''}></i>`).join('');
+  const satz = zuletzt
+    ? `So deutlich zuletzt am ${new Date(mts(zuletzt)).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}`
+    : 'So deutlich noch nie in der Liga';
+  return `<div class="nf-tor"><div class="nf-tor-r"><span class="w">${reihe(hoch, 'w')}</span>`
+    + `<span class="v">${reihe(tief, 'v')}</span></div><span class="nf-tor-s">${esc(satz)}</span></div>`;
+}
+// Die Wende: wie viele Partien in Folge ein Sieger vor dieser verloren hat.
+// Gezählt wird rückwärts ab der Partie, nicht ab heute [§C33].
+function _newsPleitenVor(pid, m){
+  const eig = matchesOfPlayer(pid, matches);
+  let i = eig.indexOf(m), n = 0;
+  if(i < 0) return 0;
+  for(i--; i >= 0; i--){
+    const x = eig[i];
+    const aSeite = x.a1 === pid || x.a2 === pid;
+    if((aSeite && x.winner === 'A') || (!aSeite && x.winner === 'B')) break;
+    n++;
+  }
+  return n;
+}
+function _newsWendeBild(pid, n){
+  const p = pmap()[pid];
+  if(!p) return '';
+  const zeige = Math.min(n, 12);
+  return `<div class="nf-ser nf-wende">${avHtml(p, '', {})}`
+    + `${n > zeige ? `<em>+${n - zeige}</em>` : ''}`
+    + Array.from({length: zeige}, () => '<i class="p"></i>').join('')
+    + `<i class="w"></i><span>${n} Pleiten, dann dieser Sieg</span></div>`;
+}
+// Der Sprung in der Monatstabelle: vorher, nachher, und ein Pfeil in Grün —
+// Grün ist die Richtung [§C25]. Ab zwei Plätzen; ein Platz ist an jedem
+// Spieltag irgendwem passiert.
+function _newsRangBild(liste){
+  const pm = pmap();
+  const z = liste.map(w => pm[w.pid] ? `<span class="nf-rg">${avHtml(pm[w.pid], '', {})}`
+    + `<b>${esc(pm[w.pid].name)}</b><span class="num">Platz ${w.r.pre}</span>`
+    + `<i aria-hidden="true"></i><span class="num g">${w.r.post}</span></span>` : '').join('');
+  return z ? `<div class="nf-rgs" title="Platz in der Monatstabelle">${z}</div>` : '';
+}
+// Die Bilanz zweier Spieler gegeneinander bis zu dieser Partie — die Marke
+// steht an ihrer Partie, und der Stand von heute gehört nicht auf sie.
+function _newsDuellBis(a, b, matchId){
+  const r = {a:0, b:0};
+  const bis = (matches || []).find(x => x.id === matchId);
+  const grenze = bis ? mts(bis) : Infinity;
+  (matches || []).forEach(m => {
+    if(mts(m) > grenze) return;
+    const A = [m.a1, m.a2], B = [m.b1, m.b2];
+    const aIn = A.includes(a) ? 'A' : B.includes(a) ? 'B' : null;
+    const bIn = A.includes(b) ? 'A' : B.includes(b) ? 'B' : null;
+    if(!aIn || !bIn || aIn === bIn) return;
+    if(m.winner === aIn) r.a++; else r.b++;
+  });
+  return r;
+}
+// Die Auszeichnung zeigt ihr Zeichen in der Farbe ihrer Klasse: Violett für
+// Auszeichnungen [§C25], Gold nur für eine legendäre. Mehrere Marken einer
+// Partie stehen als Reihe, jede mit dem Namen dessen, der sie trägt.
+function _newsMedailleBild(liste){
+  const pm = pmap();
+  const z = (liste || []).slice(0, 3).map(e => {
+    const b = (typeof BADGES !== 'undefined' ? BADGES : []).find(x => x.id === e.badgeId);
+    if(!b) return '';
+    const kl = rarityOf(b.id);
+    const ton = kl === 'legendary' ? 'gold' : 'viol';
+    const wer = pm[e.pid] ? pm[e.pid].name : '';
+    return `<span class="nf-med">${zkHtml(b.ic, 'k', ton)}<span><b>${esc(b.name)}</b>`
+      + `<i>${esc(wer)}${e.rang > 1 ? ` · zum ${e.rang}. Mal` : ''}</i></span></span>`;
+  }).join('');
+  return z ? `<div class="nf-meds">${z}</div>` : '';
+}
+// ── Was der Fuß zeigt, sagt der Satz nicht [§C33] ────────────────────
+// „Vor dem Anstoß lag die Siegchance bei 81 %. Für Maxi bringt der Sieg +7
+// Elo." stand über einem Bogen mit 81 % und einem Chip mit Maxis +7 —
+// dieselben zwei Zahlen zweimal in einer Karte. Wie `_ndLead` im Blatt eine
+// Ableitung aus dem Text, also gilt sie auch für gespeicherte Karten; der
+// Text selbst bleibt, das Blatt und die Datenbank tragen ihn weiter.
+// Gestrichen werden nur Sätze, die NICHTS als diese Zahlen sagen: „Nur 30 %
+// Siegchance vor dem Anstoß. Trotzdem …" ist die Geschichte eines
+// Außenseitersiegs und bleibt stehen.
+function _newsSpielSatz(desc, fussHtml){
+  const t = String(desc || '');
+  if(!fussHtml) return t;
+  // Die Elo steht als Chip ODER als Waage im Fuß; beide nennen den Gewinn
+  // jedes Siegers. Steht nur die Waage da, bleibt die Siegchance im Satz —
+  // sie ist dann die einzige Stelle, an der sie steht.
+  const bogen = fussHtml.includes('nf-bogen');
+  const elo = fussHtml.includes('nf-eloc') || fussHtml.includes('nf-waage');
+  return t.split(/(?<=\.)\s+/).map(x => {
+    const z = x.match(/^Die Siegchance lag vor dem Anstoß bei (\d+) %(, für .+ bringt der Sieg \+\d+ Elo)?\.$/);
+    if(z){
+      if(bogen && (elo || !z[2])) return '';
+      if(elo && z[2]) return `Die Siegchance lag vor dem Anstoß bei ${z[1]} %.`;
+      return x;
+    }
+    if(bogen && /^Vor dem Anstoß lag die Siegchance bei \d+ %\.$/.test(x)) return '';
+    if(elo && /^Für .+ bringt der Sieg \+\d+ Elo\.$/.test(x)) return '';
+    return x;
+  }).filter(Boolean).join(' ');
+}
+function _newsChanceBogen(c){
+  const pct = Math.max(1, Math.round(c * 100));
+  const f = Math.min(.995, Math.max(.005, c));
+  const a = Math.PI * (1 - f);
+  const x = (29 + 24 * Math.cos(a)).toFixed(1), y = (30 - 24 * Math.sin(a)).toFixed(1);
+  // Unter der Linie der Überraschung hebt sich der Bogen ab: dort stand die
+  // Rechnung dagegen [CHANCE_UPSET].
+  return `<div class="nf-bogen${c < CHANCE_UPSET ? ' u' : ''}">`
+    + `<svg viewBox="0 0 58 34" aria-hidden="true"><path class="b" d="M5 30A24 24 0 0 1 53 30"/>`
+    + `<path class="v" d="M5 30A24 24 0 0 1 ${x} ${y}"/><path class="m" d="M29 3.5v5"/></svg>`
+    + `<span><b class="num">${pct} %</b>${esc(chanceWort(c))}</span></div>`;
+}
+
+// ── Der Faden [§C33] ────────────────────────────────────────────────
+// Eine Karte, die eine frühere fortsetzt, sagt es. Im Feed standen „Anton
+// und Johannes verlieren zusammen alles" am 24.08. und „Johannes und Anton
+// stürzen die Favoriten" am 26.08. als zwei Fremde — dass die zweite die
+// erste beendet, musste der Leser selbst finden. Der Faden ist eine
+// ABLEITUNG wie `_isBreaking`: nichts davon wird gespeichert, und er zeigt
+// nur auf eine Karte, die im Feed steht und älter ist.
+//
+// Gefragt wird nach dem Fakt, nicht nach der Karte: eine Sammelkarte trägt
+// ihre Zeilen, und die Serie, die sie beendet, kann in einer anderen
+// Sammelkarte stecken. Deshalb läuft die Suche über die ungebündelten
+// Meldungen (`_newsTexteAuffrischen`, dieselbe Referenz wie in
+// `getStoriesCache`) und bildet sie auf die Karte ab, in der sie stehen.
+//
+// Jede Beziehung wird an den Partien nachgeprüft, nicht am Wortlaut: eine
+// Pleitenserie ist erst mit dem ERSTEN Sieg danach gewendet, eine Revanche
+// nur die nächste Begegnung derselben zwei Duos, und eine Serie endet nur,
+// wenn dazwischen keine Niederlage lag. Ohne diese Prüfung zeigte jede
+// spätere Partie derselben Leute auf dieselbe alte Karte.
+//
+// Die „Rückkehr" aus dem Entwurf gibt es nicht: die Karte der Pause fällt
+// mit der nächsten Partie weg (`_consolidateStories` prüft `lastMatchId`),
+// also steht nie eine im Feed, auf die eine Rückkehr zeigen könnte.
+const NEWS_FADEN_ART = {
+  ende:     {kap:'ENDE',          vor:'Beendet'},
+  wende:    {kap:'WENDE',         vor:'Beendet'},
+  revanche: {kap:'REVANCHE',      vor:'Antwort auf'},
+  zurueck:  {kap:'RÜCKEROBERUNG', vor:'Folgt auf'},
+  weiter:   {kap:'FORTSETZUNG',   vor:'Setzt fort'},
+  spitze:   {kap:'WECHSEL',       vor:'Folgt auf'},
+};
+const _newsFadenMemo = new WeakMap();
+function _newsFaeden(cards){
+  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  const alt = _newsFadenMemo.get(roh);
+  if(alt && alt.m === matches && alt.n === cards.length) return alt.map;
+  const map = new Map();
+  _newsFadenMemo.set(roh, {m: matches, n: cards.length, map});
+  const rohId = new Map(roh.map(x => [x.id, x]));
+  // Jede Meldung → die Karte, in der sie steht.
+  const karteVon = new Map();
+  const glieder = new Map();
+  cards.forEach(c => {
+    const d = c.dataRef || {};
+    const ids = d.type === 'sammel' && Array.isArray(d.teile)
+      ? d.teile.map(t => t && t.id).filter(Boolean) : [c.id];
+    const g = ids.map(id => rohId.get(id) || (id === c.id ? c : null)).filter(Boolean);
+    g.forEach(x => karteVon.set(x.id, c));
+    glieder.set(c.id, g);
+  });
+  const idx = new Map();
+  const reihe = [...(matches || [])].sort((a, b) => mts(a) - mts(b));
+  reihe.forEach((m, i) => idx.set(m.id, i));
+  const sieger = m => m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+  const verlierer = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
+  const gleich = (x, y) => x.length === y.length && x.every(v => y.includes(v));
+  // Lag zwischen zwei Partien (beide ausgeschlossen) eine, auf die `f` passt?
+  const dazwischen = (vonId, bisId, f) => {
+    const a = idx.get(vonId), b = idx.get(bisId);
+    if(a == null || b == null || a >= b) return true;
+    for(let i = a + 1; i < b; i++) if(f(reihe[i])) return true;
+    return false;
+  };
+  // Alle Meldungen, zeitlich von neu nach alt — die jüngste passende ältere
+  // Karte gewinnt.
+  const alle = [];
+  cards.forEach(c => (glieder.get(c.id) || []).forEach(x => alle.push({x, c})));
+  alle.sort((p, q) => new Date(q.c.when) - new Date(p.c.when));
+  const suche = (c, f) => {
+    const t = new Date(c.when).getTime();
+    for(const {x, c: k} of alle){
+      if(k === c || new Date(k.when).getTime() >= t) continue;
+      if(f(x.dataRef || {}, x)) return k;
+    }
+    return null;
+  };
+  const RANG = ['ende', 'wende', 'revanche', 'zurueck', 'spitze', 'weiter'];
+  cards.forEach(c => {
+    let best = null;
+    const nimm = (art, ziel) => {
+      if(!ziel) return;
+      if(!best || RANG.indexOf(art) < RANG.indexOf(best.art)) best = {art, ziel: ziel.id};
+    };
+    (glieder.get(c.id) || []).forEach(x => {
+      const d = x.dataRef || {};
+      const t = d.type || '';
+      if(t === 'streak_killer' && d.victimPid && d.matchId){
+        const v = d.victimPid;
+        nimm('ende', suche(c, e => e.type === 'win_streak' && e.pid === v && e.matchId
+          && !dazwischen(e.matchId, d.matchId, m => verlierer(m).includes(v))));
+      }
+      if(t === 'spiel' && d.matchId){
+        const m = reihe[idx.get(d.matchId)];
+        if(!m) return;
+        const w = sieger(m), l = verlierer(m);
+        // Die Wende: der erste gemeinsame Sieg nach der Pleitenserie des Duos,
+        // oder der erste eigene nach einer Pleitenserie.
+        nimm('wende', suche(c, e => e.type === 'team_loss_streak' && e.matchId
+          && gleich([e.a, e.b], w)
+          && !dazwischen(e.matchId, d.matchId, n => gleich(sieger(n), w))));
+        nimm('wende', suche(c, e => e.type === 'loss_streak' && e.matchId && w.includes(e.pid)
+          && !dazwischen(e.matchId, d.matchId, n => sieger(n).includes(e.pid))));
+        // Die Revanche: die vorige Begegnung genau dieser zwei Duos ging an
+        // die andere Seite.
+        let vor = null;
+        for(let i = idx.get(m.id) - 1; i >= 0; i--){
+          const n = reihe[i];
+          const seiten = [[n.a1, n.a2], [n.b1, n.b2]];
+          if(seiten.some(sd => gleich(sd, w)) && seiten.some(sd => gleich(sd, l))){ vor = n; break; }
+        }
+        // Nur über Tage: das Rückspiel direkt danach ist am Kicker der Normalfall
+        // und keine Geschichte — gemessen waren es sieben von zehn Fäden, und
+        // jede zweite Partie eines Spieltags zeigte auf die davor.
+        if(vor && gleich(sieger(vor), l) && tagKey(mts(vor)) !== tagKey(mts(m))){
+          const k = karteVon.get('spiel_' + vor.id);
+          if(k && k !== c && new Date(k.when) < new Date(c.when)) nimm('revanche', k);
+        }
+      }
+      // Dieselbe Serie über mehrere Tage: derselbe Lauf, eine frühere Marke.
+      if(/^(win_streak|loss_streak|team_streak|team_loss_streak)$/.test(t) && d.lauf){
+        nimm('weiter', suche(c, e => e.type === t && e.lauf === d.lauf
+          && (e.pid || '') === (d.pid || '') && (e.a || '') === (d.a || '') && (e.b || '') === (d.b || '')));
+      }
+      // Derselbe Rekord, dieselbe Monatschronik: wer ihn vor der früheren
+      // Karte hielt und ihn jetzt wieder hat, holt ihn zurück.
+      if((/^rekord_/.test(t) && d.rekordId) || (t === 'chronik_geholt' && d.titleId)){
+        const zielK = suche(c, e => t === 'chronik_geholt'
+          ? e.type === 'chronik_geholt' && e.titleId === d.titleId && e.sid === d.sid
+          : /^rekord_/.test(e.type || '') && e.rekordId === d.rekordId);
+        if(zielK){
+          const ze = (glieder.get(zielK.id) || []).map(y => y.dataRef || {})
+            .find(e => t === 'chronik_geholt' ? e.titleId === d.titleId : e.rekordId === d.rekordId) || {};
+          const jetzt = d.halter || d.playerIds || [];
+          const damalsWeg = ze.vorher || [];
+          const damalsNeu = ze.halter || ze.playerIds || [];
+          const zurueck = jetzt.some(p => damalsWeg.includes(p)) && !jetzt.some(p => damalsNeu.includes(p));
+          nimm(zurueck ? 'zurueck' : 'weiter', zielK);
+        }
+      }
+      if(t === 'lead_change' && d.sid){
+        nimm('spitze', suche(c, e => e.type === 'lead_change' && e.sid === d.sid));
+      }
+    });
+    if(best) map.set(c.id, best);
+  });
+  return map;
+}
+// `nach` ist die Gegenrichtung für das Blatt: dort steht auch, welche
+// spätere Karte diese fortsetzt — sonst endet die Geschichte an der Stelle,
+// an der man sie gerade liest.
+function _newsFadenHtml(faden, stories, nach){
+  if(!faden) return '';
+  const ziel = (stories || []).find(x => x.id === (nach ? faden.von : faden.ziel));
+  const art = NEWS_FADEN_ART[faden.art];
+  if(!ziel || !art) return '';
+  const tag = new Date(ziel.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+  return `<button class="nf-faden" type="button" data-ziel="${esc(ziel.id)}">`
+    // Tag vor Titel: der Titel kürzt sich, und in einer Zeile ging dabei das
+    // Datum verloren — gerade das sagt, wie weit die Geschichte zurückreicht.
+    + `${svgI('faden')}<span><i>${nach ? 'Geht weiter' : esc(art.vor)} · ${esc(tag)}</i> <b>${esc(ziel.title)}</b></span>`
+    + `<em>${esc(art.kap)}</em></button>`;
 }
 
 // Eine einzige Quelle für den Chronik-Beitrag in Karte und Detailblatt.
@@ -805,10 +1370,18 @@ function _newsTafelWert(s){
     // Neue Karten tragen die echte Differenz der Monats-Summe je Spieler.
     // Alte persistierte Karten fallen auf `zeigt` zurueck: Eine Chronik, die
     // gar nicht in der Monatstafel steht, darf auch dort kein +X behaupten.
+    // ── Eine Null ist kein grosser Wert ─────────────────────────────
+    // Auf der Karte stand „0 ZUSAETZLICH", und daneben ein Satz, der den
+    // Grund nur andeutete. Eine Null im groessten Schriftgrad der Karte
+    // liest sich wie ein Fehler: sie behauptet, der Erfolg sei nichts wert,
+    // obwohl er eine legendaere Chronik sein kann. Er zaehlt nur nicht
+    // ZUSAETZLICH, weil je Monat ein Eintrag in der Tafel steht [§C32] und
+    // ein staerkerer den Platz haelt. Dann faellt der Wert weg, und den
+    // Grund nennt der Satz mit Namen.
     const beitrag = _newsChronikPrestige(d);
     if(beitrag.modus === 'zuwachs'){
       const plus = Object.values(beitrag.werte).filter(x => x > 0);
-      if(!plus.length) return {v:'0', l:'zusätzlich'};
+      if(!plus.length) return null;
       const gleich = plus.every(x => x === plus[0]);
       if(plus.length > 1 && gleich) return {v:'+' + plus[0], l:'je Spieler'};
       if(plus.length > 1) return {v:'+' + plus.reduce((a, x) => a + x, 0), l:'zusammen'};
@@ -821,15 +1394,23 @@ function _newsTafelWert(s){
     // dieser Beitrag null.
     const aktuell = Object.values(beitrag.werte).filter(x => x > 0);
     if((d.playerIds || []).length){
-      if(!aktuell.length) return {v:'0', l:'zusätzlich'};
+      if(!aktuell.length) return null;
       const wert = Math.round(aktuell.reduce((a, x) => a + x, 0) * 10) / 10;
       return {v:String(wert).replace('.', ','), l:'zählt aktuell'};
     }
-    if(d.zeigt === false) return {v:'0', l:'zusätzlich'};
-    return {v:'+' + (d.punkte || 0), l:'Prestige'};
+    if(d.zeigt === false) return null;
+    return (d.punkte | 0) > 0 ? {v:'+' + d.punkte, l:'Prestige'} : null;
   }
   if(d.eintraege != null) return {v: d.eintraege, l:'Einträge'};
-  if(d.teile && d.teile.length) return {v: d.teile.length, l:'Wechsel'};
+  // ── „Wechsel" zaehlt nur, was gewechselt hat ─────────────────────
+  // Gezaehlt waren alle Zeilen, und damit stand „18 WECHSEL" ueber einem
+  // Moment, in dem elf davon Ausbauten waren: derselbe Halter, ein besserer
+  // Wert, kein Wechsel [§C33]. Die Aufschrift sagt, was die Zahl zaehlt.
+  if(d.teile && d.teile.length){
+    const w = d.teile.filter(t => t && t.typ !== 'rekord_gesteigert').length;
+    if(w) return {v: w, l: w === 1 ? 'Wechsel' : 'Wechsel'};
+    return {v: d.teile.length, l: d.teile.length === 1 ? 'Ausbau' : 'Ausbauten'};
+  }
   // „Bestwert" war geraten. Die Zahl kommt aus einem Regex ueber den
   // Fliesstext, und bei „Der Wandler" stand damit „0 %" unter der
   // Aufschrift BESTWERT — der Wert ist dort ein UNTERSCHIED zwischen zwei
@@ -839,7 +1420,21 @@ function _newsTafelWert(s){
   // Wie die Zahl heisst, weiss der Katalog: die Kammer sagt, was ein
   // Eintrag ueberhaupt ist [§C35]. Ein Liga-Rekord ist ein Bestwert, eine
   // Fuegung nicht, und eine Schattenseite schon gar nicht.
-  const m = String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
+  // ── Und der Wert wird nicht mehr geraten ─────────────────────────
+  // Gelesen wurde die erste Zahl des FLIESSTEXTS, ohne Vorzeichen und ohne
+  // Einheit: unter „Maxi, Julian, Jane und Johannes uebernehmen ‚Der
+  // Hoehenflug'" stand damit „10 %", waehrend der Satz darunter „+10
+  // %-Punkte, 70 % in den letzten 10 statt 60 %" nennt — ein Unterschied
+  // liest sich als Anteil, und das Plus fehlt. Der Beleg beginnt garantiert
+  // mit dem Sortierwert [§C35], also steht er dort und muss nicht gesucht
+  // werden; nur alte Karten ohne `ev` fallen auf den Satz zurueck.
+  // Ohne „-Punkte": der grosse Wert bleibt kurz, sonst brach „+10 %-Punkte"
+  // in zwei Zeilen und drueckte die Schlagzeile daneben auf drei [§C27]. Das
+  // Vorzeichen sagt, dass es ein Unterschied ist; die Einheit nennt der Satz.
+  const zahl = /^\s*([+−-]?\d+(?:[.,]\d+)?\s?(?:%|Elo|Tore)?)/;
+  const m = String(d.ev || '').match(zahl)
+         || String(s.desc || '').match(zahl)
+         || String(s.desc || '').match(/(\d+[.,]?\d*\s?%|\d+)/);
   if(!m) return null;
   let label = 'Bestwert';
   try {
@@ -907,6 +1502,10 @@ function _newsSorte(s){
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
+  // Die gesammelten runden Marken eines Tages sind dieselbe Sache in der
+  // Mehrzahl und tragen deshalb dieselbe Form [§C27]. Ohne diese Zeile fiele
+  // sie auf „fakt" und waere die leiseste Karte des Feeds.
+  if(t === 'badge_marken') return 'badge';
   if(t === 'sammel'){
     // Zwei eigene Formen fuer die beiden zusammenfuehrenden Karten. Sie sahen
     // als Tafel- oder Spieltagskarte aus wie die Meldung, von der sie eine
@@ -914,7 +1513,8 @@ function _newsSorte(s){
     // andere von EINEM Erfolg. Das ist vor dem ersten Satz zu sehen [§C27].
     if(d.quelle === 'spieler') return 'spieler';
     if(d.quelle === 'erfolg')  return 'erfolg';
-    return d.quelle === 'tafel' ? 'tafel' : 'spiel';
+    // Die kurze Strecke ist dieselbe Kammer und damit dieselbe Form [§C25].
+    return (d.quelle === 'tafel' || d.quelle === 'form') ? 'tafel' : 'spiel';
   }
   if((s && s.cat) === 'tafel' || t.indexOf('rekord_') === 0 || t.indexOf('chronik_') === 0) return 'tafel';
   // Rivalitaet, Serie und Duo sind drei verschiedene Aussagen und sahen als
@@ -954,11 +1554,17 @@ function _newsErgebnisBand(matchId){
 // die Hauptsache, nicht der Satz darüber.
 function _newsWertBlock(wert, label, farbe){
   if(!wert) return '';
-  return `<div class="nf-wert ${farbe || ''}"><b>${esc(String(wert))}</b>`
+  // Ein langer Wert wird kleiner, nicht zweizeilig: „+10 %" brach zu „+10"
+  // und „%" untereinander und drueckte die Schlagzeile auf drei Zeilen. Die
+  // Stufe steht hier, weil nur hier die Laenge bekannt ist [§C27].
+  const n = String(wert).length;
+  const lang = n > 8 ? 2 : (n > 5 ? 1 : 0);
+  return `<div class="nf-wert ${farbe || ''}"${lang ? ` data-lang="${lang}"` : ''}>`
+       + `<b>${esc(String(wert))}</b>`
        + (label ? `<span>${esc(label)}</span>` : '') + `</div>`;
 }
 
-// Die Insignium-Leiter: fünf Punkte, die erreichten hell, der neue umrandet.
+// Die Insignium-Leiter: sieben Zeichen, die erreichten hell, das eigene umrandet.
 // Damit sieht man auf einen Blick, wo jemand steht und wie weit es noch ist.
 // Das Zeichen, um das eine Erfolgs-Karte geht. Nur dort, wo der Erfolg
 // ueberhaupt eines HAT: eine Insignium-Stufe hat eins, ein Jubilaeum nicht.
@@ -980,11 +1586,10 @@ function _newsLeiter(pid){
     const P = prestigeOf(pid);
     if(!P) return '';
     const stufe = P.stufe || 0;
-    // Die ECHTEN fünf Zeichen, nicht fünf gefärbte Punkte. Vorher stand hier
-    // ein CSS-Kreis je Stufe (`repeating-conic-gradient`), und der hatte mit
-    // dem Zeichen, das ein Spieler trägt, nichts zu tun: fünf Rosetten in
-    // fünf Farben, wo Reif, Schildring, Volutenkranz, Lorbeerreif und
-    // Ordensstern stehen müssten. `insigniumStufeSvg` trägt seine Verläufe
+    // Die ECHTEN Zeichen, nicht gefärbte Punkte. Vorher stand hier ein
+    // CSS-Kreis je Stufe (`repeating-conic-gradient`), und der hatte mit dem
+    // Zeichen, das ein Spieler trägt, nichts zu tun: Rosetten in fünf
+    // Farben, wo Reif, Schildring und Volutenkranz stehen müssten. `insigniumStufeSvg` trägt seine Verläufe
     // selbst [§C30] und funktioniert deshalb auch im Blatt.
     // Der Grad ist der eigene nur an der eigenen Stufe; die übrigen stehen
     // im ersten Grad, sonst behauptete die Leiter einen Ausbau, den es an
@@ -999,6 +1604,24 @@ function _newsLeiter(pid){
     }).join('');
     const rest = P.naechste ? `${P.punkte} / ${P.naechste.min}` : `${P.punkte}`;
     return `<div class="nf-leiter">${punkte}<span class="nf-lt-t">${esc(rest)}</span></div>`;
+  } catch(e){ return ''; }
+}
+
+// Die Leiter der ganzen Liga [§C30]: jede Stufe im ersten Grad, darunter,
+// wie viele sie tragen. Gezeichnet im Violett der Vorlage — die Karte gehört
+// keinem Spieler, also auch keinem Rang. Eine Stufe ohne Träger steht leise
+// da, aber sie steht da: sie ist der Grund der Karte.
+function _newsLigaLeiter(L){
+  try {
+    const je = Array.isArray(L && L.je) ? L.je : [];
+    const f = INSIGNIEN.map((ins, i) => {
+      const n = je[i] | 0;
+      let z = '';
+      try { z = insigniumStufeSvg(ins.key, INS_BILD_RANG, 0, 0) || ''; } catch(e){ z = ''; }
+      return `<span class="nf-ll-f"><span class="nf-lt-p${n ? ' hat' : ''}">${z}</span>`
+        + `<span class="nf-ll-n num${n ? '' : ' leer'}">${n || '–'}</span></span>`;
+    }).join('');
+    return `<div class="nf-leiter nf-ll">${f}<span class="nf-lt-t">Träger je Stufe</span></div>`;
   } catch(e){ return ''; }
 }
 
@@ -1032,8 +1655,23 @@ function _breakingHeroText(s){
           + (runner ? `. Vor ${runner}.` : '.')
           + ` Wer stürzt ${champ} in der neuen Saison vom Thron?`;
       }
-      case 'lead_change':
-        return `Machtwechsel an der Tabellenspitze: ${nm(d.newLeader)} verdrängt ${nm(d.prevLeader)} und übernimmt die Führung. Das Titelrennen ist wieder völlig offen.`;
+      // ── Der Nachsatz nennt eine Zahl ────────────────────────────
+      // „Machtwechsel an der Tabellenspitze: X verdraengt Y und uebernimmt
+      // die Fuehrung. Das Titelrennen ist wieder voellig offen." war ein
+      // Etikett mit Doppelpunkt am Satzanfang [§C33], nannte keine einzige
+      // Zahl und behauptete eine offene Lage, die bei 91 Elo Vorsprung
+      // nicht stimmt. Und es stand „X verdraengt X", wenn X die Spitze am
+      // selben Tag abgab und zurueckholte.
+      case 'lead_change': {
+        const wv = Number(d.wechsel) || 1;
+        const holt = d.zurueck
+          ? `${nm(d.newLeader)} holt sich die Spitze von ${nm(d.prevLeader)} zurück`
+          : `${nm(d.newLeader)} verdrängt ${nm(d.prevLeader)} von der Spitze`;
+        return holt
+          + (d.elo != null ? ` und steht bei ${d.elo} Elo.` : '.')
+          + (d.gap != null ? ` ${d.gap} Elo Vorsprung auf den Zweiten.` : '')
+          + (wv > 1 ? ` ${wv} Wechsel an einem Tag.` : '');
+      }
       case 'top_clash': {
         // p1/p2 (v9.3): Platz-1- bzw. Platz-2-Spieler namentlich. Fallback auf
         // Sieger-Team für alte, vor v9.3 persistierte Stories.
@@ -1043,14 +1681,14 @@ function _breakingHeroText(s){
           ? `Gipfeltreffen an der Spitze: Tabellenführer ${a} bezwingt Verfolger ${b} im direkten Duell und baut den Vorsprung an der Spitze aus.`
           : `Gipfeltreffen an der Spitze: ${a} setzt sich im Spitzenspiel durch und zieht weiter davon.`;
       }
-      case 'season_endgame': {
-        const leader = d.leader && d.leader.pid ? nm(d.leader.pid) : '';
-        const dl = d.daysLeft;
-        const dtxt = dl != null ? `Nur noch ${dl} ${dl === 1 ? 'Tag' : 'Tage'} bis zum Saisonende` : 'Der Saison-Endspurt läuft';
-        return `${dtxt}: ${leader} führt`
-          + (d.gap != null ? `, doch der Vorsprung von ${d.gap} Elo ist alles andere als sicher.` : '.')
-          + ' Jetzt zählt jedes Spiel.';
-      }
+      // Der Countdown hat keinen Nachsatz. Er hiess „Nur noch 6 Tage bis zum
+      // Saisonende: Martin führt, doch der Vorsprung von 11 Elo ist alles
+      // andere als sicher. Jetzt zählt jedes Spiel." Drei Fehler: ein Etikett
+      // mit Doppelpunkt am Satzanfang, jede Zahl darin stand in der
+      // Schlagzeile („Noch 6 Tage um den Monat") und im Text („Martin führt
+      // mit 390 Elo, Leon liegt 11 dahinter") schon, und der Schlusssatz
+      // nennt keine [§C33]. Wo es nichts Neues zu sagen gibt, gibt es keinen
+      // dritten Satz: der Aufrufer unterdrueckt den Rueckfall auf `desc`.
       case 'badge_unlocked':
         return `${nm(d.playerId)} schnappt sich mit „${d.badgeName || s.title}" eine der seltensten Auszeichnungen der Liga. Das gelingt fast niemandem.`;
       case 'elo_record':
@@ -1063,6 +1701,19 @@ function _breakingHeroText(s){
         const pct = d.chance!=null ? Math.max(1, Math.round(d.chance*100)) : null;
         return `Die Sensation des Spieltags: Mit nur ${pct!=null?pct+'%':'minimaler'} Siegchance bezwingt ${w} das Favoriten-Team ${l}. So einen Coup sieht man in der Liga fast nie.`;
       }
+      // ── Eine gebuendelte Karte erbt ihr Breaking von einer Zeile ──
+      // Der Schalter kennt sieben Typen und fiel sonst auf `desc` zurueck;
+      // weil der Nachsatz bei Gleichheit unterdrueckt wird, blieb er auf
+      // jeder gebuendelten Breaking-Karte ganz leer. Gezeigt wird deshalb
+      // der lange Satz DES ANLASSES: die Zeile im Sammelband nennt ihn
+      // kurz, der Nachsatz erzaehlt ihn aus [§C33].
+      case 'sammel': {
+        const teile = Array.isArray(d.teile) ? d.teile : [];
+        const anlass = teile.find(t => t && t.brk) || null;
+        const lang = anlass && String(anlass.text || '').trim();
+        if(lang) return lang;
+        break;
+      }
     }
   } catch(e){}
   return s.desc || '';
@@ -1073,12 +1724,12 @@ function _breakingHeroText(s){
 // Das steht sonst nirgends im Feed und wiederholt keine Karte.
 // Die Partien eines Kalendertags. Bewusst nicht `matchesByDay`: das
 // schluesselt nach `toISOString()` und damit nach UTC, der Feed gruppiert
-// aber nach Ortszeit (`_newsDayKey`) — an einer Tagesgrenze fielen beide
+// aber nach Ortszeit (`tagKey`) — an einer Tagesgrenze fielen beide
 // auseinander und die Karte des Tages haenge am falschen Tag.
 function _newsTagMs(dayKey){
   try {
     const out = [];
-    (matches || []).forEach(m => { if(_newsDayKey(m.created_at) === dayKey) out.push(m); });
+    (matches || []).forEach(m => { if(tagKey(m.created_at) === dayKey) out.push(m); });
     return out;
   } catch(e){ return []; }
 }
@@ -1122,6 +1773,27 @@ function _newsTagSpannung(s){
 // passiert, was ein Tag von einem anderen unterscheidet: dort standen sonst
 // ein Fun Fact oder eine Zufallsstatistik groß im Bild, die mit diesem Tag
 // nichts zu tun haben und gestern genauso dagestanden hätten.
+// ── Wer kann das Band tragen? [§C33] ────────────────────────────────
+// Drei Sorten nicht, und jede aus ihrem eigenen Grund.
+// **Breaking** nicht: die Karte ist im Feed ohnehin die lauteste — voller
+// Rahmen, pulsierender Balken, Schein hinter der ganzen Flaeche. Das Band
+// darueber sagt dasselbe ein zweites Mal [§C27] und nimmt es genau der
+// Karte, die sonst keine Moeglichkeit hat, herauszustehen.
+// **Der Spieler des Tages** nicht: er ist eine Pflichtkarte und steht an
+// jedem gewerteten Spieltag da. Er traegt seine Goldkante schon und haette
+// das Band an jedem ruhigen Tag von selbst — dann zeichnet es nichts aus.
+// **Ein Rueckblick** nicht: Woche, Monat und Saison erzaehlen von einem
+// Zeitraum, das Band gehoert dem TAG.
+// Die Liste steht hier und nicht im Aufruf, weil `tests/ambient` und
+// `tests/blatt` dieselbe Frage stellen und sie sich vorher jeder selbst
+// beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
+const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
+  'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
+  'season_recap']);
+function _newsTagKarteWuerdig(st){
+  if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
+  return !_isBreaking(st);
+}
 function _newsTagKarte(items, dayKey){
   if(!Array.isArray(items) || !items.length) return null;
   const tagMs = _newsTagMs(dayKey);
@@ -1135,28 +1807,41 @@ function _newsTagKarte(items, dayKey){
   // Spieltag noch lief und der Spieler des Tages noch gar nicht feststand.
   // Danach stand sie erst um 23:59 und damit einen halben Tag, nachdem die
   // letzte Partie gelaufen war [§C33].
-  if(tagMs.length < NEWS_LIMITS.tagKartePartien){
+  // Ein Spiel ist kein Spieltag: bei genau einer Partie gibt es kein Band.
+  if(tagMs.length < NEWS_LIMITS.tagKarteMin) return null;
+  if(tagMs.length >= NEWS_LIMITS.tagKartePartien){
+    // Nicht ab der Zahl allein, sondern ab dem MOMENT, in dem sie erreicht
+    // ist: sonst stuende das Band am Morgen des naechsten Tages rueckwirkend
+    // auch ueber einer Karte, die vor der fuenften Partie entstanden ist.
+    const zeiten = tagMs.map(m => mts(m)).sort((a, b) => a - b);
+    if(Date.now() < zeiten[NEWS_LIMITS.tagKartePartien - 1]) return null;
+  } else {
     const frei = new Date(dayKey + 'T00:00:00');
     frei.setHours(NEWS_LIMITS.tagKarteStunde, 0, 0, 0);
     if(Date.now() < frei.getTime()) return null;
   }
-  const OHNE = new Set(['ambient', 'dry_spell', 'season_endgame', 'quiet_week', 'season_start']);
-  const kandidaten = items.filter(x => !OHNE.has((x.dataRef || {}).type));
+  const kandidaten = items.filter(_newsTagKarteWuerdig);
   if(!kandidaten.length) return null;
   const beste = kandidaten.slice().sort((a, b) =>
     (_newsTagSpannung(b) - _newsTagSpannung(a))
       || ((b.prio || 0) - (a.prio || 0))
       || String(a.id || '').localeCompare(String(b.id || '')))[0];
-  return beste ? beste.id : null;
+  if(!beste) return null;
+  // Staerker als eine Tagesbilanz, sonst kein Band [§C33].
+  if(_newsTagSpannung(beste) < (NEWS_LIMITS.tagKarteSpannung || 0)) return null;
+  return beste.id;
 }
 function _renderNewsFeed(){
   _sheetSetReopen(()=>_renderNewsFeed());
   const stories = getStoriesCache();
   const seen = _newsLoadSeen();
+  const stand = _newsLesestand();
+  const gelesen = s => _newsGelesen(s, seen, stand);
   // Vier Chips, nicht elf. Elf Rubriken sind eine Sortierhilfe für den, der
   // sie gebaut hat, nicht für den, der liest. Jeder Chip trägt seine Anzahl,
   // damit man vorher sieht, ob sich das Tippen lohnt.
-  const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel';
+  const _istTafel   = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel'
+    || (s.dataRef||{}).quelle === 'form';
   const _istSpieltag = s => {
     const d = s.dataRef || {};
     // Die Filter sind redaktionelle Seiten, keine sich überschneidenden
@@ -1194,18 +1879,21 @@ function _renderNewsFeed(){
   if(!cards.length){
     listHtml = '<div class="nf-empty">Keine Stories in dieser Auswahl.</div>';
   } else {
+    // Über alle Karten des Feeds, nicht nur die des Filters: der Faden
+    // gehört der Geschichte und nicht der Auswahl.
+    const faeden = _newsFaeden(stories);
     const gruppen = [];
     cards.forEach(st => {
-      const k = _newsDayKey(st.when);
+      const k = tagKey(st.when);
       const g = gruppen[gruppen.length-1];
       if(g && g.k === k) g.items.push(st);
       else gruppen.push({k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
     });
     listHtml = gruppen.map(g => {
-      const neu = g.items.filter(st => !seen.has(st.id)).length;
+      const neu = g.items.filter(st => !gelesen(st)).length;
       // Die Wahl gehoert dem ganzen Tag, nicht dem aktiven Filter. Sonst
       // koennte dieselbe Tafel je Reiter eine andere „Karte des Tages" haben.
-      const alleDesTages = stories.filter(st => _newsDayKey(st.when) === g.k);
+      const alleDesTages = stories.filter(st => tagKey(st.when) === g.k);
       const tagesKarte = _newsTagKarte(alleDesTages, g.k);
       // Der Kopf traegt Wochentag, Datum und die Zahl der Karten — sonst
       // nichts. Die Bilanz („3 Partien · 4 Spieler") und die Gesichter standen
@@ -1221,7 +1909,8 @@ function _renderNewsFeed(){
         + `<span class="nf-tag-n${neu?' neu':''}">${neu ? neu + ' NEU' : g.items.length + (g.items.length===1?' KARTE':' KARTEN')}</span></div>`
         + `</div>
         <div class="nf-feed">${g.items.map(st =>
-            _newsCardHtmlM2(st, seen.has(st.id), st.id === tagesKarte)).join('')}</div>`;
+            _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte,
+              _newsFadenHtml(faeden.get(st.id), stories))).join('')}</div>`;
     }).join('');
   }
 
@@ -1229,7 +1918,7 @@ function _renderNewsFeed(){
     {weekday:'long', day:'numeric', month:'long', year:'numeric'});
   // Der Gelesen-Knopf steht dort, wo auch die Zahl steht, die ihn erklärt.
   // Ohne offene Stories fällt beides weg.
-  const offen = stories.filter(x => !seen.has(x.id)).length;
+  const offen = stories.filter(x => !gelesen(x)).length;
   const gelesenKnopf = offen
     ? `<button class="nf-gelesen" id="nvMarkAllBtn" type="button">ALLES GELESEN <b>${offen}</b></button>`
     : '';
@@ -1265,6 +1954,10 @@ function _renderNewsFeed(){
       _renderNewsFeed();
     };
   }
+  // Der Faden öffnet die frühere Karte, nicht die, in der er steht.
+  sheet.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
+    el.onclick = ev => { ev.stopPropagation(); openNewsDetail(el.dataset.ziel); };
+  });
   // Karten + Hero klickbar → Detail.
   sheet.querySelectorAll('[data-sid]').forEach(el => {
     el.onclick = () => {

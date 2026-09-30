@@ -7,6 +7,20 @@
 // Invalidiert bei: loadAll, Match-Add/Edit/Delete, Recalc, Config-Änderung
 let _cache={version:0};
 
+// ─── Ein voller Topf verliert seinen aeltesten Eintrag, nicht alle ───
+// Jeder Topf leerte sich beim Ueberlauf VOLLSTAENDIG. Oberhalb des Deckels
+// ist das Memo damit nicht beschnitten, es ist AUS: gemessen an
+// `_seasonTitleCtx` mit Deckel 8 rechnete ein zweiter Blick auf zwoelf
+// Zeitschnitte alle zwoelf noch einmal, bei sechs und acht keinen einzigen.
+// Und ein Deckel steht nie weit ueber der Arbeitsmenge — der News-Generator
+// allein braucht sieben der acht Plaetze, ein Monat mehr in der Liga kippt
+// ihn also. Ein Objekt behaelt seine Einfuegereihenfolge, der erste
+// Schluessel ist deshalb der aelteste.
+function _topfDeckel(topf, max){
+  const k = Object.keys(topf);
+  for(let i = 0; k.length - i > max; i++) delete topf[k[i]];
+}
+
 function invalidateCache(keys=null){
   _cache.version++;
   // Nur spezifische Caches löschen, nicht alles
@@ -415,7 +429,7 @@ function getCachedAwardRankings(period, sid){
   if(!_cache._awards) _cache._awards={};
   if(_cache._awards[key]) return _cache._awards[key];
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
-  if(Object.keys(_cache._awards).length > 40) _cache._awards={};
+  _topfDeckel(_cache._awards, 40);
   const r=_awardRankingsUncached(period, sid);
   _cache._awards[key]=r;
   return r;

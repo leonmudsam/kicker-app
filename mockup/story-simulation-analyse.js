@@ -62,7 +62,7 @@
     else gruppen.push({k:k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
   });
   var tafel = gruppen.map(function(g){
-    var tk = _newsTagKarte(g.items, _newsDayKey(g.items[0].when));
+    var tk = _newsTagKarte(g.items, tagKey(g.items[0].when));
     return '<div class="nf-tag" data-tag="'+g.k+'"><div class="nf-tag-z1">'
       + '<span class="nf-tag-wt">'+g.label+'</span>'
       + '<span class="nf-tag-dt">'+g.datum+'</span>'

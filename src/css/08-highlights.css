@@ -14,7 +14,7 @@
      der Breite nahm es der Beschriftung den Platz, den sie braucht. */
   .wk-hl-kopf{display:flex;align-items:center;gap:4px;min-width:0}
   .wk-hl-ic{flex:0 0 auto;display:flex;color:var(--faint);opacity:.65}
-  .wk-hl-ic svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .wk-hl-ic svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .wk-hl-label{font-size:7.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
     font-family:'Sometype Mono',monospace;font-weight:700;
     min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -103,7 +103,7 @@
   /* Tier Pill in Liga-Liste (Gesamt-Ansicht) */
   .tier-pill{display:inline-flex;align-items:center;gap:4px;font-family:'Sometype Mono',monospace;
     font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.02em}
-  .tier-pill svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .tier-pill svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .tier-pill.t-legende    {color:var(--gold);background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.22)}
   .tier-pill.t-elite      {color:var(--purple);background:rgba(167,139,250,.10);border:1px solid rgba(167,139,250,.22)}
   .tier-pill.t-stark      {color:var(--acid);background:rgba(190,242,100,.10);border:1px solid rgba(190,242,100,.22)}
