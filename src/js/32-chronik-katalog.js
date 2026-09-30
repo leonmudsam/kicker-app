@@ -2082,7 +2082,7 @@ const DISZIPLINEN = [
       art:'fuegung',
       klasse:'besonders', aus:2.54,
       wie:'Der Torschnitt der eigenen Partien gegen den aller Partien desselben Monats.',
-      cond:'In den eigenen Partien fallen mindestens 1 Tore mehr als im Ligaschnitt des Monats',
+      cond:'In den eigenen Partien fällt mindestens 1 Tor je Partie mehr als im Ligaschnitt des Monats',
       ...(_stWertung(
         p=>p.games>=8,
         (p,c)=>(p.gf+p.ga)/p.games-c.L.torSchnitt,

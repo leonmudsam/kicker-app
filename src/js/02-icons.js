@@ -1,6 +1,6 @@
 // ╔═══ §1.1 ─── ICON LIBRARY (SVG line-icons) ──────────────────────────╗
 //     ⚑ HOTSPOT — Wer hier ein Icon hinzufügt, sollte es ggf. auch im
-//     AW_IC-Mapping (§5.3, §8.3, §8.4) und/oder im BADGES-Array (§7.1)
+//     AW_IC-Mapping (§5.3) und/oder im BADGES-Array (§7.1)
 //     referenzieren.
 //     Konvention: Path-Strings ohne viewBox/svg-Wrapper. Wrapper kommt
 //     von svgI() / ic() Helper-Funktionen.

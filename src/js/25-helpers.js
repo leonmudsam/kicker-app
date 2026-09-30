@@ -22,6 +22,15 @@ function komma(v, n){
   const z = Number(v);
   return (isFinite(z) ? z : 0).toFixed(n == null ? 1 : n).replace('.', ',');
 }
+// Der Stand aus Sicht einer Seite: ihre Tore zuerst. Ohne zweites Argument
+// die der Sieger. Gespeichert ist er in der Reihenfolge der Eingabe (Team A
+// zuerst), und neun Stellen schrieben ihn so ab, während zwei andere ihn
+// selbst umdrehten [§C27]: „Stefan & Martin 8:10" in der Liste der
+// Überraschungen, und im Duo-Blatt stand neben einem roten Kreuz „10 : 8".
+function standFuer(m, gewonnen = true){
+  const s = m.winner === 'B' ? [m.score_b, m.score_a] : [m.score_a, m.score_b];
+  return gewonnen ? s[0] + ':' + s[1] : s[1] + ':' + s[0];
+}
 function mlabel(m){return pname(m.a1)+'&'+pname(m.a2)+' vs '+pname(m.b1)+'&'+pname(m.b2);}
 function emptyState(e,t){
   // Wenn 'e' ein Icon-Name aus ICONS ist → SVG rendern; sonst als Text/Emoji belassen

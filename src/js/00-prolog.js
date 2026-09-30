@@ -71,8 +71,7 @@
  *    NEUES AWARD
  *      1. ICONS — neues SVG-Icon hinzufügen (falls nötig)         [§1.1]
  *      2. awardRankings — Berechnung + Hidden-Filter + Return     [§3.2]
- *      3. AW_IC — Icon-Mapping (3×! in vAwards/showAward/         [§5.3, §8.3,
- *         showPlayerAwards)                                        §8.4]
+ *      3. AW_IC — Icon-Mapping, eine Tabelle für alle Ansichten   [§5.3]
  *      4. AWARD_META — Titel + Klasse + Erklärung                 [§5.3]
  *      5. vAwards — Card im richtigen Section-Block               [§5.3]
  *      6. showAward — TEAM_AWARDS/MATCH_AWARDS-Set + switch-case  [§8.3]

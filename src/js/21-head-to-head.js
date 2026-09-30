@@ -120,7 +120,7 @@ function showH2H(idA, idB){
     const m = enc.m;
     const won = enc.wonForA;
     const isTeam = enc.type === 'team';
-    const score = m.score_a + ':' + m.score_b;
+    const score = standFuer(m, won);
     const typeChip = isTeam
       ? `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(86,180,232,.12);color:var(--blue);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:6px;font-family:'Sometype Mono',monospace">Team</span>`
       : `<span style="display:inline-flex;align-items:center;gap:3px;background:rgba(167,139,250,.12);color:var(--purple);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;padding:2px 6px;border-radius:6px;font-family:'Sometype Mono',monospace">Gegner</span>`;

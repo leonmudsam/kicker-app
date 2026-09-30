@@ -999,8 +999,7 @@ function _newsDetailMitte(s){
           if(!t.matchId || t.matchId === d.matchId) return '';
           const m = (matches || []).find(x => x.id === t.matchId);
           if(!m) return '';
-          return m.winner === 'A' ? m.score_a + ':' + m.score_b
-                                  : m.score_b + ':' + m.score_a;
+          return standFuer(m);
         };
         const _zeile = t => {
           const uhr = t.ms ? _newsUhrzeit(t.ms) : '';

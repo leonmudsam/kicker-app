@@ -19,7 +19,10 @@ function _seasonToolsHtml(){
   // Der Verlauf braucht Partien — in einer Saison ohne eine einzige gäbe es
   // nichts zu zeichnen.
   const hasPos = matchesInSeason(sid).length > 0;
-  const past = seasons.filter(s => s.id !== cur.id);
+  // Die jüngste abgeschlossene zuerst, egal in welcher Reihenfolge die
+  // Saisons geladen wurden: aufsteigend sortiert stand hier der Mai.
+  const past = seasons.filter(s => s.id !== cur.id)
+    .sort((a, b) => String(b.start_date).localeCompare(String(a.start_date)));
   // Zurückblicken lässt sich nur auf eine abgeschlossene Saison. Steht die
   // laufende oben, bleibt es beim letzten abgeschlossenen Monat.
   const recapS = laeuft ? past[0] : seasons.find(s => s.id === sid);
@@ -33,7 +36,7 @@ function _seasonToolsHtml(){
   if(hasRecap){
     cards += `<button type="button" class="st-card recap" data-seasontool="recap"
       data-sid="${esc(recapS.id)}">
-      <span class="st-ic">${recapIc}</span><span class="st-tt">Saison-Recap</span>
+      <span class="st-ic">${recapIc}</span><span class="st-tt">Saison-Rückblick</span>
       <span class="st-su">${esc(seasonLabel(recapS.id))} ansehen</span></button>`;
   }
   if(hasPos){
@@ -43,7 +46,7 @@ function _seasonToolsHtml(){
       <span class="st-su">${esc(seasonLabel(sid))}</span></button>`;
   }
   const one = (hasRecap && hasPos) ? '' : ' one';
-  return `<div class="seasontools"><div class="st-sec">Saison-Tools</div><div class="st-grid${one}">${cards}</div></div>`;
+  return `<div class="seasontools"><div class="st-sec">Mehr zur Saison</div><div class="st-grid${one}">${cards}</div></div>`;
 }
 // ── Die Form der letzten fuenf [§C26] ───────────────────────────────
 // Die Punkte einer laufenden Siegesserie brennen mit — dieselbe Aussage wie
@@ -285,6 +288,12 @@ function _vRankingCore(){
       // Das Symbol steht IN der Kopfzeile, nicht in der Ecke: bei einem
       // Drittel der Breite bliebe für die Beschriftung sonst nicht genug
       // Platz, und „Heißeste Serie" bräche mitten im Wort ab.
+      // Die Serie heißt hier „Siegesserie" und die Überraschung
+      // „Überraschung", die Kurzformen der Award-Namen („Größte Überra…"):
+      // „Heißeste Serie" war ein dritter Name für dieselbe Liste, „Längste
+      // Siegesserie" passt nicht in ein Drittel. Aus demselben Grund steht
+      // unter dem König die Zahl der Wochen oder Spieltage und nicht
+      // „4× Player of the Day" — das endete als „4× Player of t…".
       const renderHl=(cls,labelTxt,iconKey,nameTxt,detailTxt,clickAttr='')=>{
         const kopf=`<div class="wk-hl-kopf"><span class="wk-hl-ic">${svgI(iconKey)}</span>`
           + `<span class="wk-hl-label">${labelTxt}</span></div>`;
@@ -309,17 +318,17 @@ function _vRankingCore(){
       const _kingList=period==='week'?(_allRanks.weekKingList||[]):(_allRanks.dayKingList||[]);
       const topKing=_kingList[0]||null;
       const mitte = period==='week'
-        ? renderHl('streak','Heißeste Serie','flame', topStreak?pname(topStreak.id):null,
+        ? renderHl('streak','Siegesserie',AW_IC.streaks, topStreak?pname(topStreak.id):null,
             topStreak?`${topStreak.v} in Folge`:'', topStreak?'data-toplist="periodStreak"':'')
-        : renderHl('upset','Größte Überraschung','bolt', upsetName,
+        : renderHl('upset','Überraschung',AW_IC.upset, upsetName,
             topUpset?`${topUpset.winPct}% Chance`:'', topUpset?'data-toplist="periodUpset"':'');
       nebenHtml+=`
         <div class="wk-highlights">
-          ${renderHl('team','Bestes Team','handshake', teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', bestTeam?'data-toplist="periodTeam"':'')}
+          ${renderHl('team','Bestes Team',AW_IC.mvt, teamName, bestTeam?`+${Math.round(bestTeam.elo)} Elo`:'', bestTeam?'data-toplist="periodTeam"':'')}
           ${mitte}
           ${renderHl('king', period==='week'?'Wochenkönig':'Tageskönig', period==='week'?'weekKing':'dayKing',
               topKing?pname(topKing.id):null,
-              topKing?`${topKing.v}× ${period==='week'?'Player of Week':'Player of Day'}`:'',
+              topKing?(period==='week'?`${topKing.v} ${topKing.v===1?'Woche':'Wochen'}`:`${topKing.v} ${topKing.v===1?'Spieltag':'Spieltage'}`):'',
               topKing?'data-toplist="periodKing"':'')}
         </div>`;
 
@@ -537,8 +546,10 @@ function _vRankingCore(){
       // längste Niederlagenserie der Liga ist kein Verdienst — die bitterste
       // Pleite auch nicht.
       const rek = chroniclesOfPlayer(pp.id).filter(x => !x.neg).length;
-      const sub = [t ? t + ' Titel' : '', entry.s.games + ' Sp.',
-                   rek ? rek + ' Rek.' : '']
+      // Ausgeschrieben: „90 Sp." und „10 Rek." waren die letzten Kürzel
+      // der Tafel, und jede Zeile steht auf einer eigenen Linie.
+      const sub = [t ? t + ' Titel' : '', entry.s.games + ' Spiele',
+                   rek ? rek + (rek === 1 ? ' Rekord' : ' Rekorde') : '']
         .filter(Boolean).map(x => `<span>${esc(x)}</span>`).join('');
       return `
         <div class="pod-karte ${METALL[platz-1]}${platz===1?' erster':''}" data-detail="${pp.id}">

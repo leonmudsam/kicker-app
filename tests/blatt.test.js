@@ -2292,6 +2292,7 @@ const ok = (c, msg, det) => {
     const K = window.__k.eval.bind(window.__k);
     const sichten = [
       ['Liga', "tab='ranking';period='season'"], ['Liga gesamt', "period='all'"],
+      ['Liga Woche', "period='week'"], ['Liga Tag', "period='day'"],
       ['Positionen Sturm', "period='season';tab='positions';rankMetric='atk'"],
       ['Positionen Abwehr', "rankMetric='def'"],
       ['Awards', "tab='awards';awView='awards';awPeriod='season'"], ['Awards Woche', "awPeriod='week'"],
@@ -2343,6 +2344,9 @@ const ok = (c, msg, det) => {
       // Ebenso der Name einer Award-Kachel: „Längste Siegesser…".
       [...document.querySelectorAll('#main .aw-t-lbl')]
         .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Kachel ' + e.textContent.trim()));
+      // Und die Nebenwertungen der Liga: „Längste Siege…", „4× Player of t…".
+      [...document.querySelectorAll('#main .wk-hl-label, #main .wk-hl-detail')]
+        .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Nebenwertung ' + e.textContent.trim()));
       out.push({name, bruch:bruch.slice(0,3), punkt:punkt.slice(0,3), raus:[...new Set(raus)].slice(0,4), schief:schief.slice(0,4),
         fab: fab ? getComputedStyle(fab).display : ''});
     }
@@ -2365,6 +2369,8 @@ const ok = (c, msg, det) => {
     const P = n => JSON.stringify(K('(players.find(p=>p.name===' + JSON.stringify(n) + ')||{}).id'));
     const blaetter = [['Profil', 'showPlayer(' + P('Leon') + ')'],
       ['Duo', 'showTeam(' + P('Leon') + ',' + P('Maxi') + ')'],
+      // Leo und Maxi haben zwei Aufstellungen, die nebeneinander stehen.
+      ['Duo mit zwei Aufstellungen', 'showTeam(' + P('Leo') + ',' + P('Maxi') + ')'],
       ['Partie', 'showMatchDetail(matches[matches.length-1].id)'],
       ['Vergleich', 'showH2H(' + P('Leon') + ',' + P('Martin') + ')'],
       ['Torjäger', "showAward('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
@@ -2391,7 +2397,7 @@ const ok = (c, msg, det) => {
     // und „zu 3. gehalten".
     // Groß und klein: `innerText` liefert die Schreibweise nach
     // `text-transform`, und „Bester Mate" steht dort als „BESTER MATE".
-    const WORT = /\b(Mate|Siegrate|Winrate|Tordiff|Head-to-Head|Sheet|Upset|All-Time|Tippe|Tap|Update|Highlights|Stats|Win-Rate)\b|(?<![A-Za-zÄÖÜäöüß])(min|mind|max)\.\s|zu \d+\. gehalten|\b(?:du|dein\w*)\b(?=\s[a-zäöü])/gi;
+    const WORT = /\b(Mate|Siegrate|Winrate|Tordiff|Head-to-Head|Sheet|Upset|All-Time|Tippe|Tap|Update|Highlights|Stats|Win-Rate|Performance|Peak|Savepoint|Backup)\b|\bSp\.|(?<![A-Za-zÄÖÜäöüß])[TG] = als|(?<![\d,])1 (?:Niederlagen|Siege)\b|(?<![A-Za-zÄÖÜäöüß])(min|mind|max)\.\s|zu \d+\. gehalten|\b(?:du|dein\w*)\b(?=\s[a-zäöü])/gi;
     for(const [name, auf] of blaetter){
       try{ K('closeSheet(true)'); K(auf); }catch(e){ out.push(name + ': ' + e.message); continue; }
       await new Promise(r => requestAnimationFrame(r));
@@ -2449,6 +2455,83 @@ const ok = (c, msg, det) => {
   blattPunkt = blattPunkt.out;
   ok(blattWort.length === 0, 'dieselbe Sache heißt überall gleich, und niemand wird geduzt',
      [...new Set(blattWort)].join(' | ') || 'keine Abweichung');
+  // Jedes Award-Blatt, beide Zeiträume: ein Wert trägt seine Einheit
+  // ausgeschrieben („6,5 /Sp.", „9,7 Gegen/Sp.", „4× POTD", „0 S · 3 Sp."),
+  // eine Serie beginnt beim zweiten Ergebnis („1er Serie", „1er
+  // Niederlagen"), eins steht in der Einzahl („1 Carries"), und die Spitze
+  // heißt nicht „Best". Dazu dieselbe Zahl für dieselbe Überraschung: die
+  // Kachel zeigte 71 %, die Chance der Gegenseite, Blatt und Liga 30 %. Und
+  // die Liste des Underdog-Helden war nach Quote sortiert und zeigte die
+  // Anzahl: Platz 5 stand mit 2× hinter Platz 2 mit 1×.
+  const awBlatt = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    const fehler = [];
+    const KURZ = /\/Sp\.|Gegen\/|\bPOT[WD]\b|(^|\s)1 Carries\b|(^|\s)1er\b|\d S · |\bSp\.|\bBest ·/i;
+    for(const p of ['season', 'week']){
+      K("tab='awards';awView='awards';awPeriod='" + p + "';render()");
+      for(const k of K('Object.keys(AWARD_META)')){
+        K('closeSheet(true)'); K('showAward(' + JSON.stringify(k) + ')');
+        const zeilen = document.getElementById('sheet').innerText.split('\n');
+        zeilen.filter(z => KURZ.test(z)).forEach(z => fehler.push(p + ' ' + k + ': ' + z.trim()));
+      }
+      K('closeSheet(true)');
+      const kachel = (document.querySelector('[data-award="upset"] .aw-t-val') || {}).textContent;
+      K("showAward('upset')");
+      const blatt = (document.getElementById('sheet').innerText.match(/Siegchance nur (\d+)/) || [])[1];
+      if(kachel && kachel !== blatt + '%') fehler.push(p + ' Überraschung: Kachel ' + kachel + ', Blatt ' + blatt + '%');
+      K('closeSheet(true)');
+      const ud = K("(awardRankings(awPeriod, awSeasonId).underdogList||[]).map(x=>x.pct)");
+      if(ud.some((v, i) => i && v > ud[i-1])) fehler.push(p + ' Underdog-Held nicht nach Quote');
+      K("showAward('underdog')");
+      const udW = [...document.querySelectorAll('#sheet .aw-winner-val, #sheet .aw-li-val')].map(e => e.textContent.trim());
+      if(ud.length && !udW.every(w => /^\d+%/.test(w))) fehler.push(p + ' Underdog-Held zeigt ' + udW.slice(0, 3).join(', '));
+      K('closeSheet(true)');
+    }
+    // Neben den Siegern steht ihr Stand zuerst: „Stefan & Martin 8:10".
+    K("period='season'; openTopList('periodUpset')");
+    [...document.querySelectorAll('#sheet .aw-li-detail')].forEach(d => {
+      const m = d.textContent.match(/^(\d+):(\d+)/);
+      if(m && +m[1] < +m[2]) fehler.push('Überraschung: ' + d.textContent.trim());
+    });
+    // Wer im Profil einen Award auf Platz 1 trägt, steht auch im Blatt oben:
+    // der Underdog-Held wertete im Profil die Anzahl, im Blatt die Quote,
+    // und die Erzfeinde nannten im Blatt eine Rivalität, im Profil neun
+    // Spieler aus vier gleichauf liegenden.
+    K("awPeriod='season';awSeasonId=null;tab='awards';awView='awards';render()");
+    const prof = K("(function(){ const o={}; activePlayers().forEach(p=>playerAwards(p.id).filter(a=>a.rank===0).forEach(a=>{ (o[a.key]=o[a.key]||[]).push(p.name); })); return o; })()");
+    for(const k of K('Object.keys(AWARD_META)')){
+      K('closeSheet(true)'); K('showAward(' + JSON.stringify(k) + ')');
+      const sh = document.getElementById('sheet');
+      let namen = [...sh.querySelectorAll('.aw-winner-name, .aw-winner-tied-name')].map(e => e.textContent.trim())
+        .concat([...sh.querySelectorAll('.aw-match-team')].map(t => t.querySelector('.aw-match-team-name').textContent.trim()));
+      if(k === 'rivalry') [...sh.querySelectorAll('.aw-li')].filter(r => r.querySelector('.aw-li-rank').textContent.trim() === '1.')
+        .forEach(r => r.querySelectorAll('.aw-li-name').forEach(n => namen.push(n.textContent.replace(/^vs /i, '').trim())));
+      if(k === 'upset' || k === 'biggest' || k === 'favoritenschreck')
+        namen = [...sh.querySelectorAll('.aw-match-team')].filter(t => t.querySelector('.aw-match-winner')).map(t => t.querySelector('.aw-match-team-name').textContent.trim());
+      const blatt = [...new Set(namen.flatMap(n => n.split(' & ')).map(n => n.trim().toLowerCase()))].sort().join(',');
+      const profil = [...new Set((prof[k] || []).map(n => n.toLowerCase()))].sort().join(',');
+      if(blatt !== profil) fehler.push(k + ': Blatt ' + blatt + ' · Profil ' + profil);
+    }
+    K('closeSheet(true)');
+    // Und in den letzten Spielen eines Duos und im Direkten Vergleich steht
+    // der eigene Stand zuerst: neben dem roten Kreuz stand „10 : 8".
+    const P = n => JSON.stringify(K('(players.find(p=>p.name===' + JSON.stringify(n) + ')||{}).id'));
+    for(const auf of ['showTeam(' + P('Leo') + ',' + P('Maxi') + ')', 'showH2H(' + P('Leon') + ',' + P('Martin') + ')']){
+      K('closeSheet(true)'); K(auf);
+      document.querySelectorAll('#sheet .rrow[data-match]').forEach(r => {
+        const m = r.textContent.match(/(\d+)\s*:\s*(\d+)\s*$/);
+        // Nur die Zeilen mit Haken oder Kreuz; die Höhepunkte darüber tragen
+        // ein eigenes Zeichen und ihren Stand ohnehin aus eigener Sicht.
+        if(!m || !r.querySelector('polyline, path[d^="M6 6L18"]')) return;
+        const sieg = !!r.querySelector('polyline');
+        if(sieg !== (+m[1] > +m[2])) fehler.push(auf.slice(0, 8) + ': ' + (sieg ? 'Sieg ' : 'Niederlage ') + m[1] + ':' + m[2]);
+      });
+    }
+    K("closeSheet(true); tab='ranking'; render()");
+    return fehler;
+  });
+  ok(awBlatt.length === 0, 'jedes Award-Blatt nennt seine Einheit ganz, die Überraschung mit einer Zahl, den eigenen Stand zuerst und dieselbe Spitze wie das Profil',
+     [...new Set(awBlatt)].slice(0, 6).join(' | ') || 'alle');
   // Der Feed legt nur, was zu sehen ist: rund siebzig Karten und 4600
   // Knoten kosteten beim Öffnen und bei jedem Zurück aus einem Story-Blatt
   // 110 bis 140 ms Layout. Breaking und die Karte des Tages sind
