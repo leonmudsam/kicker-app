@@ -7,10 +7,11 @@
 <!--
   Entwurf für den nächsten Auftrag: die Insignium-Leiter mit sieben Stufen in
   zwei Richtungen, dazu Bewegung und neue grafische Ansichten. Eigenständige
-  Seite ohne Bauablauf, kein Teil der App [CLAUDE.md §2]. Die Zeichnungen
-  entstehen hier mit derselben Bauweise wie in 35b-prestige.js (Röhrenband,
-  zweiflächige Körper, Rangfarbe als Stein), damit das Mockup so aussieht wie
-  das, was eingebaut würde. Namen und Zahlen der Liga stehen als Anschauung.
+  Seite ohne Bauablauf, kein Teil der App [CLAUDE.md §2]. Die Leiter folgt
+  Richtung B aus der ersten Fassung (sieben Gegenstände, eine Bauweise),
+  neu gezeichnet: klare Silhouetten, ein Metallverlauf über das ganze
+  Zeichen, Kränze, die mit der Stufe wachsen, Krone und Band als Krönung.
+  Namen und Zahlen der Liga stehen als Anschauung.
 -->
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sometype+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -130,22 +131,6 @@ section.abs>.lead b{color:var(--ink2);font-weight:600}
 .karte .rub{font:700 9.5px var(--mono);letter-spacing:.14em;color:var(--purple);text-transform:uppercase}
 .karte h4{font-size:15px;margin-top:6px}
 
-/* ── Der Aufstieg ────────────────────────────────────────────── */
-.aufstieg{position:relative;display:grid;place-items:center;height:260px;border-radius:22px;overflow:hidden;
-  background:radial-gradient(60% 60% at 50% 45%,rgba(167,139,250,.14),transparent 70%),var(--surface);border:1px solid var(--line)}
-.aufstieg .bild{width:190px;height:190px}
-.aufstieg .bild svg{width:100%;height:100%;overflow:visible}
-.aufstieg .txt{position:absolute;bottom:14px;left:0;right:0;text-align:center}
-.aufstieg .txt b{display:block;font-size:17px}
-.aufstieg .txt span{font:600 11px var(--mono);color:var(--muted)}
-.aufstieg .schein{position:absolute;inset:-20%;background:conic-gradient(from 0deg,transparent,rgba(247,207,74,.10),transparent 30%);
-  opacity:0;pointer-events:none}
-.aufstieg.laeuft .schein{animation:aufSchein 2.4s ease-out both}
-@keyframes aufSchein{0%{opacity:0;transform:rotate(0)}30%{opacity:1}100%{opacity:0;transform:rotate(120deg)}}
-.lage-neu{transform-origin:50px 50px;animation:lageEin .9s cubic-bezier(.2,.9,.25,1.2) both}
-@keyframes lageEin{from{opacity:0;transform:scale(.72) rotate(-8deg)}to{opacity:1;transform:none}}
-.lage-neu-b{animation:lageB 1s ease-out both}
-@keyframes lageB{from{opacity:0}to{opacity:1}}
 .knopfreihe{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .knopf{display:inline-flex;align-items:center;gap:7px;font-weight:600;font-size:12.5px;padding:9px 13px;border-radius:12px;
   background:var(--surface2);border:1px solid var(--line2)}
@@ -223,110 +208,130 @@ svg.graf{width:100%;height:auto;display:block;overflow:visible}
 
 body.ruhig *,body.ruhig *::before,body.ruhig *::after{animation:none!important;transition:none!important}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ── Größen und Rangliste ───────────────────────────────────────── */
+.groessen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:end}
+.groessen > div{display:flex;flex-direction:column;align-items:center;gap:6px}
+.groessen .b{width:100%;aspect-ratio:1}
+.groessen .b svg{width:100%;height:100%;overflow:visible}
+.groessen span{font:600 9px var(--mono);color:var(--muted);text-align:center;max-width:100%;white-space:nowrap}
+.tel .rzeile{grid-template-columns:22px 52px minmax(0,1fr) auto}
+/* ── Die Bühne ─────────────────────────────────────────────────── */
+.buehne{position:relative;height:430px;border-radius:26px;overflow:hidden;border:1px solid var(--line2);
+  background:
+    repeating-linear-gradient(90deg,rgba(255,255,255,.018) 0 14px,rgba(0,0,0,.08) 14px 30px),
+    radial-gradient(120% 80% at 50% 0%,#1a2230,#0b0f14 70%)}
+.buehne .licht{position:absolute;left:50%;top:-40px;width:420px;height:470px;margin-left:-210px;pointer-events:none;
+  background:conic-gradient(from 180deg at 50% 0%,transparent 160deg,rgba(255,255,255,.10) 172deg,rgba(255,255,255,.16) 180deg,rgba(255,255,255,.10) 188deg,transparent 200deg);
+  filter:blur(6px)}
+.buehne .podest{position:absolute;left:50%;bottom:34px;width:230px;margin-left:-115px}
+.buehne .podest i{display:block;margin:0 auto;border-radius:50%;
+  background:linear-gradient(180deg,#e9eef3,#7c8590 55%,#2a3038);box-shadow:0 10px 24px rgba(0,0,0,.6)}
+.buehne .podest i:nth-child(1){width:150px;height:22px;margin-bottom:-8px}
+.buehne .podest i:nth-child(2){width:190px;height:26px;margin-bottom:-8px;filter:brightness(.8)}
+.buehne .podest i:nth-child(3){width:230px;height:30px;filter:brightness(.62)}
+.buehne .emblem{position:absolute;left:50%;top:40px;width:230px;height:230px;margin-left:-115px;
+  filter:drop-shadow(0 18px 24px rgba(0,0,0,.55));animation:schweben 5s ease-in-out infinite}
+.buehne .emblem svg{width:100%;height:100%;overflow:visible}
+@keyframes schweben{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.buehne .emblem::after{content:"";position:absolute;inset:18%;border-radius:50%;pointer-events:none;
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%) no-repeat;
+  background-size:250% 100%;background-position:140% 0;mix-blend-mode:screen;animation:glanz 6s ease-in-out infinite}
+@keyframes glanz{0%,70%{background-position:140% 0}100%{background-position:-40% 0}}
+.buehne .titel{position:absolute;left:0;right:0;bottom:6px;text-align:center}
+.buehne .titel b{font:400 19px var(--disp);letter-spacing:-.01em}
+.buehne .titel span{display:block;font:600 10.5px var(--mono);color:var(--muted)}
+.buehne.an .emblem svg{animation:ankommen 1.1s cubic-bezier(.2,.9,.25,1.15) both}
+@keyframes ankommen{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:none}}
+.buehne.an .licht{animation:lichtAn 1.4s ease-out both}
+@keyframes lichtAn{from{opacity:0}to{opacity:1}}
+.vergleich{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.vergleich img{width:100%;border-radius:12px;border:1px solid var(--line)}
 </style>
 </head>
 <body>
 
 <header class="kopf">
-  <h1>Sieben Insignien<small>Mockup · zwei Richtungen für die Leiter, dazu Bewegung und neue Ansichten</small></h1>
-  <p>Die Leiter bekommt zwei Stufen mehr, damit zwischen <b>Volutenkranz (1200)</b> und <b>Lorbeerreif (2800)</b> und zwischen Lorbeerreif und <b>Ordensstern</b> keine langen Strecken ohne neues Zeichen liegen. Der erste Versuch setzte zwei weitere fremde Gegenstände zwischen die fünf alten, und die Leiter las sich als Flickwerk. Hier stehen deshalb <b>zwei vollständige Leitern</b> mit je 21 Zeichnungen, jede nach einer einzigen Idee gebaut. Beide nutzen dieselben Schwellen, dieselbe Machart und dieselbe Rangfarbe als Stein. Die Rangwahl über jeder Leiter zeigt das Metall der vier Ränge.</p>
+  <h1>Sieben Insignien<small>Mockup · Richtung B, neu gezeichnet · dazu Bewegung und neue Ansichten</small></h1>
+  <p>Die Leiter bekommt zwei Stufen mehr, damit zwischen den oberen Schwellen keine langen Strecken ohne neues Zeichen liegen. Gewählt ist <b>Richtung B</b>: sieben eigene Gegenstände, eine Bauweise. Neu gezeichnet nach den Vorlagen: <b>eine Medaille auf einem Kranz</b>. Der Reif liegt vorn, der Kranz dahinter, und jedes Teil ist geprägt statt umrandet, mit einer hellen und einer dunklen Hälfte und einer Fuge zum Nachbarn. Die Kränze wachsen von Stufe zu Stufe, oben kommen <b>Krone und Lilie</b>, unten <b>das Band</b>, ganz oben <b>der Stern</b>. Die Rangfarbe steht nur noch auf Steinen, Kronjuwelen und dem Band.</p>
 </header>
 
 <nav class="leiste"><div class="in">
-  <a href="#schwellen">Schwellen</a><a href="#a">A · Schicht für Schicht</a><a href="#b">B · Eine Bauweise</a>
-  <a href="#alltag">Im Alltag</a><a href="#aufstieg">Der Aufstieg</a><a href="#bewegung">Bewegung</a><a href="#ideen">Neue Ansichten</a><a href="#plan">Reihenfolge</a>
+  <a href="#schwellen">Schwellen</a><a href="#leiter-abs">Die Leiter</a><a href="#alltag">Im Alltag</a><a href="#buehne-abs">Die Bühne</a>
+  <a href="#bewegung">Bewegung</a><a href="#ideen">Neue Ansichten</a><a href="#plan">Reihenfolge</a>
   <label><input type="checkbox" id="ruhig"> Bewegung reduzieren</label>
 </div></nav>
 
-<!-- ═══ SCHWELLEN ═══════════════════════════════════════════════════ -->
 <section class="abs" id="schwellen">
   <h2><span class="nr">01</span>Sieben Stufen, eine steigende Leiter</h2>
-  <p class="lead">Die Schwellen gelten für beide Richtungen. Jede Spanne ist teurer als die vorige, der <b>Lorbeerreif beginnt weiter bei 2800</b> und niemand verliert durch den Umbau seine Stufe. Der Ordensstern rückt von 4500 auf 4700, damit die Spannen weiter wachsen. Die drei Grade bleiben bei 0, 16 und 40 % der Spanne.</p>
+  <p class="lead">Jede Spanne ist teurer als die vorige. Der Ordensstern rückt von 4500 auf 4700, damit die Spannen weiter wachsen. Die drei Grade bleiben bei 0, 16 und 40 % der Spanne und bauen den Gegenstand ihrer Stufe aus: <b>längere Zweige, mehr Blätter, eine größere Krone</b>.</p>
   <div class="reihe">
     <table class="tab">
-      <thead><tr><th>Stufe</th><th>A</th><th>B</th><th class="num">ab</th><th class="num">Spanne</th></tr></thead>
+      <thead><tr><th>Stufe</th><th>Gegenstand</th><th>heute</th><th class="num">ab</th><th class="num">Spanne</th></tr></thead>
       <tbody>
         <tr><td>1</td><td>Reif</td><td>Reif</td><td class="num">0</td><td class="num">500</td></tr>
-        <tr><td>2</td><td>Schildring</td><td>Schildring</td><td class="num">500</td><td class="num">700</td></tr>
-        <tr><td>3</td><td>Volutenkranz</td><td>Volutenkranz</td><td class="num">1200</td><td class="num">750</td></tr>
-        <tr class="neu"><td>4</td><td>Juwelenkranz</td><td>Kleinod</td><td class="num">1950</td><td class="num">850</td></tr>
-        <tr><td>5</td><td>Lorbeerreif</td><td>Lorbeerreif</td><td class="num">2800</td><td class="num">900</td></tr>
-        <tr class="neu"><td>6</td><td>Kronreif</td><td>Kronreif</td><td class="num">3700</td><td class="num">1000</td></tr>
+        <tr><td>2</td><td>Zweigreif</td><td>Schildring</td><td class="num">500</td><td class="num">700</td></tr>
+        <tr><td>3</td><td>Eichenkranz</td><td>Volutenkranz</td><td class="num">1200</td><td class="num">750</td></tr>
+        <tr class="neu"><td>4</td><td>Lorbeerkranz</td><td>—</td><td class="num">1950</td><td class="num">850</td></tr>
+        <tr class="neu"><td>5</td><td>Kronenkranz</td><td>Lorbeerreif</td><td class="num">2800</td><td class="num">900</td></tr>
+        <tr class="neu"><td>6</td><td>Ehrenkranz</td><td>—</td><td class="num">3700</td><td class="num">1000</td></tr>
         <tr><td>7</td><td>Ordensstern</td><td>Ordensstern</td><td class="num">4700</td><td class="num">Zacken</td></tr>
       </tbody>
     </table>
     <div class="notiz"><h3>Wo die Liga dann steht</h3><ol>
-      <li><b>Die Spitze im Juwelenkranz bzw. Kleinod.</b> Leon (2377), Julian (2239) und Martin (2230) stehen in den Fixtures in Stufe 4, alle drei in Grad II oder III. Heute tragen sie Volutenkranz III.</li>
-      <li><b>Martin mit 2875 (Stand der Datenbank) bleibt Lorbeerreif I.</b> Die Schwelle bewegt sich nicht.</li>
-      <li><b>Nach oben bleiben zwei Stufen offen.</b> Kronreif bei 3700 und der Ordensstern bei 4700 sind für die heutige Spitze noch über 1300 Punkte entfernt.</li>
-      <li><b>Breaking</b> bleibt der erste Aufstieg in die beiden obersten Stufen, also Kronreif und Ordensstern.</li>
+      <li><b>Die Spitze im Lorbeerkranz.</b> Leon (2377), Julian (2239) und Martin (2230) stehen in den Fixtures in Stufe 4.</li>
+      <li><b>Martin mit 2875 (Stand der Datenbank) trägt den Kronenkranz I.</b> Die Schwelle 2800 bleibt, nur der Gegenstand heißt anders.</li>
+      <li><b>Nach oben bleiben zwei Stufen offen.</b> Ehrenkranz und Ordensstern sind für die Spitze über 800 Punkte entfernt.</li>
+      <li><b>Breaking</b> bleibt der erste Aufstieg in die beiden obersten Stufen, also Ehrenkranz und Ordensstern.</li>
     </ol></div>
   </div>
 </section>
 
-<!-- ═══ A ═══════════════════════════════════════════════════════════ -->
-<section class="abs" id="a">
-  <h2><span class="nr">02</span>A · Schicht für Schicht</h2>
-  <p class="lead">Jede Stufe behält, was die vorige hatte, und legt <b>genau eine Schicht</b> dazu: Nieten → Kartuschen → Voluten → Juwelen → Lorbeer → Krone → Strahlen. Die Schichten liegen auf festen Ringen um den Reif, deshalb stören sie sich nicht. Ab dem Lorbeerreif wachsen die Zweige von unten, und die Voluten bleiben nur oben neben dem Kopf. Man sieht auf einen Blick, <b>wie weit</b> jemand ist, weil jede spätere Stufe die frühere enthält.</p>
-  <div class="leiter-kopf"><span class="t">Metall des Rangs</span><div class="rangwahl" data-fuer="A"></div></div>
-  <div class="leiter" id="leiterA"></div>
+<section class="abs" id="leiter-abs">
+  <h2><span class="nr">02</span>Die Leiter</h2>
+  <p class="lead">Jede Stufe ist ein eigener Gegenstand, und alle folgen denselben Regeln. Der Kranz liegt hinter dem Reif auf demselben Bogen; die Zweige kreuzen sich am Fuß, wo die Raute in der Rangfarbe sitzt, und wachsen nach oben. Jedes Blatt hat eine helle und eine dunkle Hälfte und eine feine Rippe, zwischen zwei Blättern liegt eine Fuge. Ein Metallverlauf liegt über dem ganzen Zeichen, die Rangfarbe nur auf Raute, Steinen und dem Band. Oben bleibt der Scheitel frei für Stein, Krone und Lilie.</p>
+  <div class="leiter-kopf"><span class="t">Metall des Rangs</span><div class="rangwahl"></div></div>
+  <div class="leiter" id="leiter"></div>
 </section>
 
-<!-- ═══ B ═══════════════════════════════════════════════════════════ -->
-<section class="abs" id="b">
-  <h2><span class="nr">03</span>B · Sieben Gegenstände, eine Bauweise</h2>
-  <p class="lead">Jede Stufe bleibt ein <b>eigener Gegenstand</b> wie heute, aber alle folgen denselben Regeln. Der Schmuck steht auf einem Kranz, der mit jeder Stufe ein Stück weiter ausgreift. Alle Körper sind massiv gezeichnet, keiner als Draht. Und die drei Grade bedeuten überall dasselbe: <b>I der Gegenstand, II mit Perlen, III mit Steinen</b> in der Rangfarbe. Der Kopf wächst mit: Stein → Lilie → Lilie auf Stein → Krone.</p>
-  <div class="leiter-kopf"><span class="t">Metall des Rangs</span><div class="rangwahl" data-fuer="B"></div></div>
-  <div class="leiter" id="leiterB"></div>
-</section>
-
-<!-- ═══ ALLTAG ═══════════════════════════════════════════════════════ -->
 <section class="abs" id="alltag">
-  <h2><span class="nr">04</span>Im Alltag: 52 Pixel und die Leiter im Feed</h2>
-  <p class="lead">Die Zeichnung wirkt nicht auf 128 px, sondern in der <b>Ranglistenzeile</b>: dort ist der Reif 52 px groß, und das Gesicht liegt in der Mitte. Beide Richtungen stehen hier nebeneinander, dieselben Spieler auf derselben Stufe. Darunter steht die Leiter einer Insignium-Karte im Feed: <b>sieben Felder</b> passen bei 360 px nur, wenn die Felder schmaler werden und die Zahl in eine eigene Zeile rückt.</p>
+  <h2><span class="nr">03</span>Im Alltag: 52 Pixel und die Leiter im Feed</h2>
+  <p class="lead">Wirken muss das Zeichen in der <b>Ranglistenzeile</b>. Dort ist es 52 px groß und trägt das Gesicht in der Mitte. Die Silhouetten sind deshalb so gewählt, dass man die Stufe schon am Umriss liest: Ring, Zweige am Fuß, Eichenlaub bis über die Mitte, voller Lorbeer, Lorbeer mit Krone, Krone mit Lilie und Band, Stern dahinter.</p>
   <div class="reihe">
-    <div class="tel"><div class="cap">Liga · Rangliste bei 360 px</div>
-      <div class="zwei"><div><div class="t">A</div><div id="zeilenA"></div></div><div><div class="t">B</div><div id="zeilenB"></div></div></div>
+    <div class="tel"><div class="cap">Liga · Rangliste bei 360 px</div><div id="zeilen"></div></div>
+    <div>
+      <div class="tel"><div class="cap">News · Insignium-Karte</div>
+        <div class="karte"><div class="rub">Das Zeichen</div><h4>Leon trägt den Lorbeerkranz III</h4>
+          <div class="lt" id="lt"></div><div class="lt-t"><span>Lorbeerkranz III</span><span><b>2377</b> / 2800 bis Kronenkranz</span></div></div>
+      </div>
+      <div class="notiz" style="margin-top:18px"><h3>Größen</h3><div class="groessen" id="gross"></div>
+        <p style="margin-top:12px">Die Feed-Leiter bekommt flexible Felder (<code>flex:1 1 0; max-width:40px</code>) und die Zahl eine eigene Zeile. Mit sieben festen 40-px-Feldern liefe sie bei 360 px über den Rand.</p></div>
     </div>
-    <div class="tel"><div class="cap">News · Insignium-Karte</div>
-      <div class="karte"><div class="rub">Das Zeichen</div><h4>Leon erreicht den Juwelenkranz</h4>
-        <div class="lt" id="ltA"></div><div class="lt-t"><span>Leiter A</span><span><b>2377</b> / 2800 bis Lorbeerreif</span></div></div>
-      <div class="karte"><div class="rub">Das Zeichen</div><h4>Leon erreicht das Kleinod</h4>
-        <div class="lt" id="ltB"></div><div class="lt-t"><span>Leiter B</span><span><b>2377</b> / 2800 bis Lorbeerreif</span></div></div>
-    </div>
-    <div class="notiz"><h3>Was sich daraus ergibt</h3><ol>
-      <li><b>A lebt vom Umriss.</b> In der Zeile sieht man, wie viele Schichten jemand trägt, auch ohne das Zeichen zu kennen. Ab Stufe 5 wird das Zeichen dicht, der Ordensstern ist ein volles Ordenszeichen.</li>
-      <li><b>B lebt vom Gegenstand.</b> Jede Stufe hat eine eigene Silhouette, und wer die Leiter kennt, liest die Stufe am Gegenstand. Die Grade sind überall gleich: Perlen und Steine.</li>
-      <li><b>Die Feed-Leiter</b> bekommt flexible Felder (<code>flex:1 1 0; max-width:40px</code>) und die Zahl in eine eigene Zeile. Mit sieben festen 40-px-Feldern liefe sie bei 360 px über den Rand.</li>
-      <li><b>Die Laufbahn-Vitrine</b> zeigt dann sieben statt fünf Karten, die Wischgeste bleibt.</li>
-    </ol></div>
   </div>
 </section>
 
-<!-- ═══ AUFSTIEG ════════════════════════════════════════════════════ -->
-<section class="abs" id="aufstieg">
-  <h2><span class="nr">05</span>Der Aufstieg: eine Stufe, die man ankommen sieht</h2>
-  <p class="lead">Heute wechselt das Zeichen still, und der Feed meldet es als Text. Neu wäre ein <b>Blatt beim ersten Öffnen nach dem Aufstieg</b>: das alte Zeichen steht da, und die neue Schicht (A) oder der neue Gegenstand (B) wächst hinein. Dahinter läuft einmal ein goldener Lichtkegel. Bewegt werden nur <code>transform</code> und <code>opacity</code>, und das einmal, nicht in Schleife.</p>
+<section class="abs" id="buehne-abs">
+  <h2><span class="nr">04</span>Die Bühne: der Aufstieg</h2>
+  <p class="lead">Beim ersten Öffnen nach einem Aufstieg steht das neue Zeichen einmal auf einer Bühne: ein Lichtkegel, ein Podest, das Zeichen schwebt darüber und fängt einen Glanz. Das passiert <b>einmal je Stufe und Gerät</b>. Bewegt werden nur <code>transform</code> und <code>opacity</code>, und ohne Bewegung steht es still da. Dasselbe Bild trägt die Laufbahn als Kopf.</p>
   <div class="reihe">
     <div>
-      <div class="aufstieg" id="aufA"><div class="schein"></div><div class="bild"></div><div class="txt"><b>Juwelenkranz</b><span>A · ab 1950 Prestige</span></div></div>
-      <div class="knopfreihe"><button class="knopf prim" data-auf="A">Aufstieg A abspielen</button><button class="knopf" data-auf-weiter="A">Nächste Stufe</button></div>
+      <div class="buehne" id="buehne"><div class="licht"></div><div class="podest"><i></i><i></i><i></i></div><div class="emblem"></div>
+        <div class="titel"><b>Kronenkranz</b><span>ab 2800 Prestige</span></div></div>
+      <div class="knopfreihe"><button class="knopf prim" id="buehneLos">Aufstieg abspielen</button><button class="knopf" id="buehneWeiter">Nächste Stufe</button></div>
     </div>
-    <div>
-      <div class="aufstieg" id="aufB"><div class="schein"></div><div class="bild"></div><div class="txt"><b>Kleinod</b><span>B · ab 1950 Prestige</span></div></div>
-      <div class="knopfreihe"><button class="knopf prim" data-auf="B">Aufstieg B abspielen</button><button class="knopf" data-auf-weiter="B">Nächste Stufe</button></div>
-    </div>
-    <div class="notiz"><h3>Regeln für den Aufstieg</h3><ol>
-      <li><b>Einmal je Stufe und Gerät.</b> Der Lesestand merkt sich die letzte gesehene Stufe; wer sie schon kennt, sieht das Blatt nicht noch einmal.</li>
-      <li><b>Bei A wächst die neue Schicht,</b> bei B blendet der neue Gegenstand über den alten. Das Gesicht bleibt stehen.</li>
-      <li><b>Ohne Bewegung</b> steht das neue Zeichen sofort da, der Lichtkegel fällt weg.</li>
+    <div class="notiz"><h3>Bauregeln der Leiter</h3><ol>
+      <li><b>Ein Verlauf für das ganze Zeichen.</b> Reif, Blätter, Krone und Perlen liegen im selben Licht. Vorher hatte jedes Teil seinen eigenen Verlauf, und das Zeichen sah zusammengesetzt aus.</li>
+      <li><b>Fuge statt Haarlinie.</b> Zwischen zwei Teilen liegt ein schmaler Streifen in der Farbe des Grunds. Haarlinien über überlappenden Blättern ergaben ein Netz aus Strichen; die Fuge trennt Blatt von Blatt wie ein Prägestempel.</li><li><b>Der Kranz liegt hinter dem Reif.</b> Das Zeichen ist eine Medaille auf einem Kranz. Die inneren Blätter tauchen unter den Reif, sichtbar bleibt ein geschlossenes Laubband.</li>
+      <li><b>Die Stufe wechselt den Gegenstand, der Grad baut ihn aus.</b> Längere Zweige, dann Früchte, dann ein Stein. Eine Krone wächst von drei auf fünf Zacken.</li>
+      <li><b>Rangfarbe sparsam:</b> die Raute am Fuß, Steine, Kronjuwelen und das Band. Das Metall bleibt das des Rangs.</li>
+      <li><b>Das Band trägt künftig die Ligaposition,</b> die heute in der Raute am Fuß steht.</li>
+      <li><b>Die Schwinge</b> für Meistertitel wird im selben Stil nachgezogen: zwei Palmzweige hinter dem Kranz statt der Ranken.</li>
     </ol></div>
   </div>
 </section>
-
 <!-- ═══ BEWEGUNG ════════════════════════════════════════════════════ -->
 <section class="abs" id="bewegung">
-  <h2><span class="nr">06</span>Bewegung, die etwas erklärt</h2>
+  <h2><span class="nr">05</span>Bewegung, die etwas erklärt</h2>
   <p class="lead">Jede Bewegung hier beantwortet eine Frage: <b>Wer ist an wem vorbei?</b> <b>Wie groß ist die Zahl?</b> <b>Was war heute los?</b> Alle laufen auf der Grafikkarte (<code>transform</code>, <code>opacity</code>), keine misst während der Bewegung eine Breite, und alle ruhen bei reduzierter Bewegung. Die Schalter oben rechts und in den Systemeinstellungen stellen sie ab.</p>
   <div class="reihe">
     <div class="demo">
@@ -360,7 +365,7 @@ body.ruhig *,body.ruhig *::before,body.ruhig *::after{animation:none!important;t
 
 <!-- ═══ NEUE ANSICHTEN ══════════════════════════════════════════════ -->
 <section class="abs" id="ideen">
-  <h2><span class="nr">07</span>Neue Ansichten, gezeichnet statt gezählt</h2>
+  <h2><span class="nr">06</span>Neue Ansichten, gezeichnet statt gezählt</h2>
   <p class="lead">Vier Stellen, an denen die App heute Listen zeigt und eine Zeichnung mehr sagen würde. Alle rechnen aus Daten, die es schon gibt (Partien, Elo-Bahn, Spieltagssieger), und brauchen keinen neuen Topf außer einem je Ansicht mit Version im Schlüssel.</p>
   <div class="reihe">
     <div class="demo">
@@ -388,29 +393,34 @@ body.ruhig *,body.ruhig *::before,body.ruhig *::after{animation:none!important;t
   </div>
 </section>
 
-<!-- ═══ PLAN ════════════════════════════════════════════════════════ -->
 <section class="abs" id="plan">
-  <h2><span class="nr">08</span>Reihenfolge nach der Wahl</h2>
+  <h2><span class="nr">07</span>Reihenfolge nach der Freigabe</h2>
   <div class="plan">
-    <div><span class="n">1</span><div><h4>Die gewählte Leiter einbauen</h4><p>INSIGNIEN mit sieben Einträgen und den Schwellen aus Abschnitt 01, die Zeichnungen in 35b-prestige.js, INSIGNIUM_OBEN für Breaking. tests/zeichen misst den Schmuck über alle 21 Felder, tests/disziplinen die neue Kalibrierung.</p></div></div>
-    <div><span class="n">2</span><div><h4>Leiter im Feed, Laufbahn-Vitrine, Insignium-Block</h4><p>Flexible Felder, Zahl in eigener Zeile, sieben Karten in der Vitrine. tests/blatt misst jedes Blatt bei 360 px.</p></div></div>
-    <div><span class="n">3</span><div><h4>Der Aufstieg als Blatt</h4><p>Einmal je Stufe und Gerät, gemerkt neben dem Lesestand. Ohne Bewegung ohne Animation.</p></div></div>
-    <div><span class="n">4</span><div><h4>Bewegung</h4><p>FLIP in der Rangliste, Zahlen zählen hoch, Neu laden durch Ziehen, Platzhalter beim Laden, der Spieltag als Stories.</p></div></div>
-    <div><span class="n">5</span><div><h4>Neue Ansichten</h4><p>Kalender, Rennen um die Spitze, Duo-Netz, Bergkette. Je Ansicht ein Topf mit Version und Deckel.</p></div></div>
+    <div><span class="n">1</span><div><h4>Die Leiter einbauen</h4><p>INSIGNIEN mit sieben Einträgen und den Schwellen aus Abschnitt 01, die Zeichnungen in 35b-prestige.js mit einem Verlauf je Zeichen. Dazu INSIGNIUM_OBEN für Breaking, das Band mit der Ligaposition statt der Raute. tests/zeichen misst den Schmuck über alle 21 Felder, tests/disziplinen die neue Kalibrierung.</p></div></div>
+    <div><span class="n">2</span><div><h4>Schwinge im selben Stil</h4><p>Palmzweige statt Ranken, damit Insignium und Schwinge dieselbe Sprache sprechen.</p></div></div>
+    <div><span class="n">3</span><div><h4>Leiter im Feed, Laufbahn-Vitrine, Insignium-Block</h4><p>Flexible Felder, Zahl in eigener Zeile, sieben Karten in der Vitrine. tests/blatt misst jedes Blatt bei 360 px.</p></div></div>
+    <div><span class="n">4</span><div><h4>Die Bühne</h4><p>Einmal je Stufe und Gerät, gemerkt neben dem Lesestand. Ohne Bewegung ohne Animation.</p></div></div>
+    <div><span class="n">5</span><div><h4>Bewegung und neue Ansichten</h4><p>FLIP in der Rangliste, Zahlen zählen hoch, Neu laden durch Ziehen, der Spieltag als Stories. Dazu Kalender, Rennen um die Spitze, Duo-Netz und Bergkette, je Ansicht ein Topf mit Version und Deckel.</p></div></div>
   </div>
 </section>
 
 <script>
 /* ════════════════════════════════════════════════════════════════════
-   Die Zeichnung. Dieselbe Bauweise wie 35b-prestige.js: der Reif als
-   Röhre, jeder Körper mit heller und dunkler Hälfte an einer harten Kante,
-   keine Spitzen, die Rangfarbe als geschliffener Stein.
+   Die Zeichnung. Gebaut wie ein geprägtes Abzeichen: jede Fläche hat eine
+   helle und eine dunkle Hälfte an einer harten Kante, und zwischen zwei
+   Teilen liegt eine FUGE in der Farbe des Grunds statt einer Haarlinie.
+   Haarlinien über überlappenden Blättern ergaben ein Netz aus Strichen;
+   die Fuge trennt Blatt von Blatt wie in einem Prägestempel.
+   Ein Metallverlauf liegt über dem ganzen Zeichen (userSpaceOnUse), das
+   Licht kommt für jedes Teil von oben links. Die Rangfarbe steht nur auf
+   Steinen, Kronjuwelen und dem Band.
    ════════════════════════════════════════════════════════════════════ */
-const R = 40, BR = 5, RA = R + BR / 2, BOX = '-22 -22 144 144';
+const C = 50, RING = 40, BOX = '-22 -22 144 144';
 const n1 = v => Math.round(v * 10) / 10;
-const pt = (a, r) => [50 + Math.cos(a) * r, 50 + Math.sin(a) * r];
+const rad = g => g * Math.PI / 180;
+const pt = (a, r) => [C + Math.cos(a) * r, C + Math.sin(a) * r];
 const K = ([x, y]) => n1(x) + ' ' + n1(y);
-const ang = (i, n) => -Math.PI/2 + (i + (n % 2 ? 0 : .5)) / n * Math.PI * 2;
+const LICHT = [-.6, -.8];
 function mix(hex, ziel, f){
   const a = hex.slice(1), b = ziel.slice(1); let s = '#';
   for(let i = 0; i < 3; i++){ const p = parseInt(a.substr(i*2,2),16), q = parseInt(b.substr(i*2,2),16);
@@ -419,384 +429,288 @@ function mix(hex, ziel, f){
 }
 const METALL = {Solide:'#7D858D', Stark:'#9AA2AA', Elite:'#C2C9D0', Legende:'#EEF3F8'};
 const RANGF  = {Solide:'#56b4e8', Stark:'#BEF264', Elite:'#a78bfa', Legende:'#f7cf4a'};
+const FUGE = '#080b0f';
 function satz(rang){
-  const m = rang === 'Legende' ? METALL[rang] : mix(METALL[rang], RANGF[rang], .26);
-  return {m, rf:RANGF[rang], hell:mix(m,'#FFFFFF',.70), tief:mix(m,'#05080B',.48),
-    glanz:mix(m,'#FFFFFF',.96), kante:mix(m,'#05080B',.78), unter:'#04070A'};
+  const m = rang === 'Legende' ? METALL[rang] : mix(METALL[rang], RANGF[rang], .16);
+  return {m, rf:RANGF[rang], hell:mix(m,'#FFFFFF',.55), glanz:mix(m,'#FFFFFF',.9),
+    tief:mix(m,'#05080B',.5), kante:mix(m,'#05080B',.78)};
 }
 function defs(id, c){
   const st = (o, col, op) => `<stop offset="${o}" stop-color="${col}"${op !== undefined ? ` stop-opacity="${op}"` : ''}/>`;
-  const lin = (nm, x2, y2, s) => `<linearGradient id="${id}${nm}" x1="0" y1="0" x2="${x2}" y2="${y2}">${s}</linearGradient>`;
+  const rf = c.rf;
   return `<defs>`
-    + lin('mt', '.30', 1, st(0,c.glanz)+st('.22',c.hell)+st('.52',c.m)+st('.80',c.tief)+st(1,c.kante))
-    + lin('kp', '.35', 1, st(0,c.glanz)+st('.40',c.hell)+st(1,c.m))
-    + lin('kt', '.35', 1, st(0,c.m)+st('.45',c.tief)+st(1,c.kante))
-    + lin('bl', 1, '.30', st(0,mix(c.hell,'#FFFFFF',.35))+st('.50',c.hell)+st(1,c.m))
-    + lin('bt', 1, '.30', st(0,c.m)+st('.52',c.tief)+st(1,c.kante))
-    + lin('rg', '.25', 1, st(0,mix(c.rf,'#FFFFFF',.62))+st('.34',mix(c.rf,'#FFFFFF',.15))+st('.72',c.rf)+st(1,mix(c.rf,'#000000',.52)))
-    + lin('rt', '.25', 1, st(0,mix(c.rf,'#000000',.24))+st('.55',mix(c.rf,'#000000',.52))+st(1,mix(c.rf,'#000000',.76)))
-    + `<radialGradient id="${id}pl" cx=".38" cy=".32" r=".85">${st(0,'#1e242b')+st('.55','#141920')+st(1,'#090d11')}</radialGradient>`
+    // Poliertes Metall: ein breites Glanzband oben links, eines schmal in
+    // der Mitte, zur Ecke unten rechts hin dunkel.
+    + `<linearGradient id="${id}m" gradientUnits="userSpaceOnUse" x1="4" y1="-14" x2="96" y2="116">`
+      + st(0,c.glanz)+st('.2',c.hell)+st('.38',c.m)+st('.5',c.hell)+st('.58',c.m)+st('.8',c.tief)+st(1,c.kante)
+    + `</linearGradient>`
+    + `<linearGradient id="${id}ring" gradientUnits="userSpaceOnUse" x1="18" y1="10" x2="82" y2="90">`
+      + st(0,c.glanz)+st('.3',c.hell)+st('.55',c.m)+st('.8',c.tief)+st(1,c.kante)
+    + `</linearGradient>`
+    + `<radialGradient id="${id}g" cx=".35" cy=".3" r=".85">`
+      + st(0,mix(rf,'#FFFFFF',.75))+st('.3',mix(rf,'#FFFFFF',.2))+st('.7',rf)+st(1,mix(rf,'#000000',.6))
+    + `</radialGradient>`
+    + `<linearGradient id="${id}band" gradientUnits="userSpaceOnUse" x1="0" y1="86" x2="0" y2="101">`
+      + st(0,mix(rf,'#FFFFFF',.3))+st('.5',rf)+st(1,mix(rf,'#000000',.5))
+    + `</linearGradient>`
+    + `<radialGradient id="${id}f" cx=".4" cy=".3" r=".9">`+st(0,'#1d232b')+st('.6','#12171d')+st(1,'#080b0f')+`</radialGradient>`
+    + `<radialGradient id="${id}schein">`+st(0,c.glanz,'.32')+st('.5',c.hell,'.1')+st(1,c.hell,'0')+`</radialGradient>`
     + `</defs>`;
 }
-const punkte = (l, r) => l.map(([x, y]) => `M${n1(x-r)} ${n1(y)}a${r} ${r} 0 1 0 ${r*2} 0a${r} ${r} 0 1 0 ${-r*2} 0Z`).join('');
-function bogen(r, a0, a1){
-  const [x0,y0] = pt(a0, r), [x1,y1] = pt(a1, r);
-  return `M${n1(x0)} ${n1(y0)}A${n1(r)} ${n1(r)} 0 ${(a1-a0) > Math.PI ? 1 : 0} 1 ${n1(x1)} ${n1(y1)}`;
+
+/* ── Bausteine ───────────────────────────────────────────────────── */
+// Eine Fläche aus zwei Hälften: die ganze Form in Metall mit Fuge, darüber
+// die Hälfte, die vom Licht weg zeigt, dunkel.
+const flaeche = (voll, dunkel, id, fuge = .7, rippe = '') =>
+  `<path d="${voll}" fill="url(#${id}m)" stroke="${FUGE}" stroke-width="${fuge}" stroke-linejoin="round"/>`
+  + `<path d="${dunkel}" fill="${FUGE}" opacity=".42"/>`
+  + (rippe ? `<path d="${rippe}" fill="none" stroke="${FUGE}" stroke-width=".4" stroke-linecap="round" opacity=".35"/>` : '');
+
+// Ein Blatt als Umriss aus Stützpunkten entlang einer leicht gebogenen
+// Mittellinie. Lorbeer ist schlank mit der breitesten Stelle vor der Mitte,
+// Eiche hat drei runde Lappen je Seite.
+function blatt(bx, by, dx, dy, L, W, form, bieg){
+  const nx = -dy, ny = dx, N = form === 'eiche' ? 26 : 12;
+  const mitte = t => { const o = bieg * L * Math.sin(Math.PI * t); return [bx + dx*L*t + nx*o, by + dy*L*t + ny*o]; };
+  const breite = t => form === 'eiche'
+    ? W * Math.pow(Math.sin(Math.PI * Math.pow(t, 1.1)), .55) * (.6 + .4 * Math.pow(Math.abs(Math.sin(Math.PI * (t * 3.6 + .1))), .8))
+    : W * Math.pow(Math.sin(Math.PI * Math.pow(t, .78)), .9);
+  const l = [], r = [], m = [];
+  for(let i = 0; i <= N; i++){ const t = i / N, [x, y] = mitte(t), w = breite(t);
+    l.push([x + nx*w, y + ny*w]); r.push([x - nx*w, y - ny*w]); m.push([x, y]); }
+  const voll = 'M' + l.map(K).join('L') + 'L' + r.slice(0, -1).reverse().map(K).join('L') + 'Z';
+  // Die Hälfte, deren Normale vom Licht weg zeigt, liegt im Schatten.
+  const seite = (nx*LICHT[0] + ny*LICHT[1]) > 0 ? r : l;
+  const dunkel = 'M' + seite.map(K).join('L') + 'L' + m.slice(0, -1).reverse().map(K).join('L') + 'Z';
+  const rippe = 'M' + m.slice(1, N - 2).map(K).join('L');
+  return {voll, dunkel, rippe};
 }
-const perlen = (l, r, c) => l.length ? `<path d="${punkte(l, r)}" fill="${c.m}" stroke="${c.kante}" stroke-width=".55"/>`
-  + `<path d="${punkte(l.map(([x,y]) => [x - r*.3, y - r*.3]), r*.42)}" fill="${c.glanz}" opacity=".72"/>` : '';
-function schildchen(a, aus, ein, hw, ch){
-  const [cx,cy] = pt(a, R), ux = Math.cos(a), uy = Math.sin(a), vx = -uy, vy = ux;
-  const P = (r,t) => [cx + ux*r + vx*t, cy + uy*r + vy*t];
-  const seite = sp => 'M'+K(P(aus,0))+'L'+K(P(aus,sp*(hw-ch)))+'L'+K(P(aus-ch,sp*hw))
-    +'L'+K(P(-ein+ch*.7,sp*hw))+'L'+K(P(-ein,sp*(hw-ch*.7)))+'L'+K(P(-ein,0))+'Z';
-  return {h:seite(-1), d:seite(1), g:'M'+K(P(aus-ch*.8,-hw*.26))+'L'+K(P(aus-ch*.8,-hw*.68))+'L'+K(P(-ein+ch,-hw*.56))+'L'+K(P(-ein+ch,-hw*.22))+'Z'};
+const kreis = (x, y, r) => `M${n1(x - r)} ${n1(y)}a${r} ${r} 0 1 0 ${n1(r*2)} 0a${r} ${r} 0 1 0 ${n1(-r*2)} 0Z`;
+function perle(x, y, r, id){
+  return `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r)}" fill="url(#${id}m)" stroke="${FUGE}" stroke-width=".55"/>`
+    + `<circle cx="${n1(x - r*.3)}" cy="${n1(y - r*.34)}" r="${n1(r*.36)}" fill="#fff" opacity=".75"/>`;
 }
-function spiral(sx, sy, th0, L, dreh, N, spitz){
-  const ds = L/N, b = []; let x = sx, y = sy, th = th0;
-  for(let i = 0; i <= N; i++){ b.push([x,y,th]); th += dreh*(0.16 + 3.9*Math.pow(i/N, spitz||2.1))/N; x += Math.cos(th)*ds; y += Math.sin(th)*ds; }
-  return b;
+function stein(x, y, r, id){
+  return `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r + .9)}" fill="url(#${id}m)" stroke="${FUGE}" stroke-width=".55"/>`
+    + `<circle cx="${n1(x)}" cy="${n1(y)}" r="${n1(r)}" fill="url(#${id}g)"/>`
+    + `<circle cx="${n1(x - r*.32)}" cy="${n1(y - r*.36)}" r="${n1(r*.3)}" fill="#fff" opacity=".8"/>`;
 }
-function bandHalb(bahn, w0, w1){
-  const N = bahn.length - 1, m = [], o = [], u = [];
-  bahn.forEach(([px,py,pth], i) => { const w = w0 + (w1-w0)*(i/N), nx = -Math.sin(pth)*w, ny = Math.cos(pth)*w;
-    m.push(n1(px)+' '+n1(py)); o.push(n1(px+nx)+' '+n1(py+ny)); u.push(n1(px-nx)+' '+n1(py-ny)); });
-  return {h:'M'+o.join('L')+'L'+m.slice().reverse().join('L')+'Z', d:'M'+m.join('L')+'L'+u.slice().reverse().join('L')+'Z', g:''};
-}
-function strahl(a, r0, L, w){
-  return 'M'+K(pt(a-w,r0))+'L'+K(pt(a-w*.22,r0+L))+'L'+K(pt(a+w*.22,r0+L))+'L'+K(pt(a+w,r0))+'Z';
-}
-function laub(x, y, dreh, L, W){
-  const c = Math.cos(dreh), s = Math.sin(dreh);
-  const P = (t, o) => [x + o*c + L*t*s, y + o*s - L*t*c];
-  const seite = sp => 'M'+K(P(1,0))+'C'+K(P(.62,sp*W*.82))+' '+K(P(.06,sp*W))+' '+K(P(-.42,sp*W*.56))
-    +'C'+K(P(-.76,sp*W*.28))+' '+K(P(-.94,sp*W*.10))+' '+K(P(-1,0))+'Z';
-  return {h:seite(-1), d:seite(1), g:'M'+K(P(.86,0))+'C'+K(P(.52,-W*.52))+' '+K(P(.02,-W*.62))+' '+K(P(-.34,-W*.34))
-    +'C'+K(P(-.04,-W*.14))+' '+K(P(.44,-W*.10))+' '+K(P(.86,0))+'Z'};
-}
-function raute(cx, cy, h, w, f){
-  const T = [cx,cy-h], B = [cx,cy+h], L = [cx-w,cy], Rr = [cx+w,cy], M = [cx,cy];
-  const p = (a,b) => 'M'+K(a)+'L'+K(b)+'L'+K(M)+'Z';
-  return `<path d="${p(T,L)}" fill="${f.hell}"/><path d="${p(T,Rr)}" fill="${f.mitt}"/><path d="${p(L,B)}" fill="${f.mitt2}"/><path d="${p(Rr,B)}" fill="${f.tief}"/>`
-    + `<path d="M${K(T)}L${K(L)}L${K(B)}L${K(Rr)}Z" fill="none" stroke="${f.kante}" stroke-width=".5" stroke-linejoin="round"/>`;
-}
-function cabochon(x, y, rx, ry, dreh, id, c){
-  const t = `transform="rotate(${n1(dreh*180/Math.PI)} ${n1(x)} ${n1(y)})"`;
-  return `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="${n1(rx+.9)}" ry="${n1(ry+.9)}" ${t} fill="url(#${id}kp)" stroke="${c.kante}" stroke-width=".45"/>`
-    + `<ellipse cx="${n1(x)}" cy="${n1(y)}" rx="${n1(rx)}" ry="${n1(ry)}" ${t} fill="url(#${id}rg)" stroke="${mix(c.rf,'#000000',.72)}" stroke-width=".4"/>`
-    + `<ellipse cx="${n1(x - rx*.28)}" cy="${n1(y - ry*.34)}" rx="${n1(Math.max(rx,ry)*.30)}" ry="${n1(Math.min(rx,ry)*.22)}" fill="#fff" opacity=".55"/>`;
-}
-function lilie(r0, gr, akz, drehGrad){
-  const [cx,cy] = pt(-Math.PI/2, r0), w = 5*gr, h = 8.6*gr;
-  const P = (x,y) => n1(cx + x*w) + ' ' + n1(cy - y*h);
-  const mitte = 'M'+P(0,1)+'C'+P(.40,.56)+' '+P(.30,.24)+' '+P(.26,.02)+'L'+P(-.26,.02)+'C'+P(-.30,.24)+' '+P(-.40,.56)+' '+P(0,1)+'Z';
-  const seite = sp => 'M'+P(sp*.24,.30)+'C'+P(sp*.86,.44)+' '+P(sp*1.02,.04)+' '+P(sp*.66,-.34)+'C'+P(sp*.92,.02)+' '+P(sp*.62,.10)+' '+P(sp*.24,.04)+'Z';
-  const fuss = 'M'+P(-.20,-.18)+'C'+P(-.30,-.46)+' '+P(-.16,-.66)+' '+P(0,-.72)+'C'+P(.16,-.66)+' '+P(.30,-.46)+' '+P(.20,-.18)+'Z';
-  const g = `<path d="${mitte+seite(1)+seite(-1)+fuss}" fill="${akz.fill}" stroke="${akz.kante}" stroke-width=".45" stroke-linejoin="round"/>`
-    + `<path d="M${P(-.54,.06)}L${P(.54,.06)}L${P(.54,-.16)}L${P(-.54,-.16)}Z" fill="${akz.tief}" stroke="${akz.kante}" stroke-width=".4"/>`;
-  return drehGrad ? `<g transform="rotate(${n1(drehGrad)} 50 50)">${g}</g>` : g;
-}
-function krone(r0, gr, zacken, id, c, akz){
-  const [cx,cy] = pt(-Math.PI/2, r0), b = 8.6*gr, h = 8.4*gr, sb = 2.6*gr;
-  const X = t => cx + t*b, Y = t => cy - t*h;
-  const zack = Array.from({length:zacken}, (_, i) => { const t = zacken === 1 ? 0 : -.86 + 1.72*i/(zacken-1);
-    return [t, .52 + .48*Math.cos(t*Math.PI/1.9)]; });
-  let d = 'M'+n1(X(-1))+' '+n1(cy);
-  zack.forEach(([t,hh], i) => { if(i) d += 'L'+n1(X((zack[i-1][0]+t)/2))+' '+n1(Y(hh*.16)); d += 'L'+n1(X(t))+' '+n1(Y(hh)); });
-  d += 'L'+n1(X(1))+' '+n1(cy)+'Z';
-  return `<path d="${d}" fill="${akz.fill}" stroke="${akz.kante}" stroke-width=".45" stroke-linejoin="round"/>`
-    + `<path d="M${n1(X(-1.06))} ${n1(cy)}H${n1(X(1.06))}V${n1(cy+sb)}H${n1(X(-1.06))}Z" fill="${akz.tief}" stroke="${akz.kante}" stroke-width=".45"/>`
-    + perlen(zack.map(([t,hh]) => [X(t), Y(hh) - .3*gr]), 1.5*gr, c)
-    + raute(cx, cy + sb*.5, 2.2*gr, 1.6*gr, c.stahl);
-}
-function koerper(k, c, id){
-  if(!k.h && !k.d) return '';
-  return `<path d="${k.h}" fill="url(#${id}kp)" stroke="${c.kante}" stroke-width=".4" stroke-linejoin="round"/>`
-    + `<path d="${k.d}" fill="url(#${id}kt)" stroke="${c.kante}" stroke-width=".4" stroke-linejoin="round"/>`
-    + (k.g ? `<path d="${k.g}" fill="${c.glanz}" opacity=".55"/>` : '');
-}
-function reif(id, c){
-  return `<circle cx="50" cy="50" r="${n1(RA+.5)}" fill="none" stroke="${c.unter}" stroke-width="1"/>`
-    + `<circle cx="50" cy="50" r="${R}" fill="none" stroke="url(#${id}mt)" stroke-width="${BR}"/>`
-    + `<path d="${bogen(R - BR*.24, -2.95, -1.15)}" fill="none" stroke="${c.glanz}" stroke-width="${n1(BR*.30)}" stroke-linecap="round" opacity=".92"/>`
-    + `<path d="${bogen(R + BR*.30, .30, 1.85)}" fill="none" stroke="${c.hell}" stroke-width="${n1(BR*.16)}" stroke-linecap="round" opacity=".45"/>`
-    + `<circle cx="50" cy="50" r="${n1(R - BR/2 - .45)}" fill="none" stroke="${c.unter}" stroke-width=".9"/>`;
+// Die Raute am Fuß, in der Rangfarbe: der Knoten, an dem sich die Zweige
+// kreuzen. Heute steht dort die Ligaposition, und dort bleibt sie.
+function raute(y, s, id){
+  const d = `M${C} ${n1(y - s*1.3)}L${n1(C + s)} ${n1(y)}L${C} ${n1(y + s*1.3)}L${n1(C - s)} ${n1(y)}Z`;
+  const halb = `M${C} ${n1(y - s*1.3)}L${n1(C + s)} ${n1(y)}L${C} ${n1(y + s*1.3)}Z`;
+  return `<path d="${d}" fill="url(#${id}g)" stroke="${FUGE}" stroke-width=".7" stroke-linejoin="round"/>`
+    + `<path d="${halb}" fill="${FUGE}" opacity=".3"/>`;
 }
 
-/* ── Die Schichten ─────────────────────────────────────────────────
-   Jede Schicht schreibt in feste Lagen: `strahl` ganz hinten, `hinten`
-   (Lorbeer, Fries), `hk` (Körper hinter dem Band: Voluten), dann der Reif,
-   `band` (Stege, Perlen auf dem Band), `bk` (Körper auf dem Band:
-   Kartuschen), `vorn` (Steine, Kopf). */
-const neu = () => ({strahl:'', hinten:'', hk:{h:'',d:'',g:''}, band:'', bk:{h:'',d:'',g:''}, vorn:''});
-const nimm = (ziel, f) => { ziel.h += f.h; ziel.d += f.d; ziel.g += (f.g || ''); };
-function lKartuschen(L, n, id, c, gross){
-  const hw = gross ? 4.6 : 5.0; let stege = '';
-  for(let i = 0; i < n; i++){ const a = ang(i, n);
-    nimm(L.bk, schildchen(a, gross ? 4.8 : 4.4, 3.1, hw, 1.8));
-    stege += bogen(R, a + hw/R*1.25, ang(i+1, n) - hw/R*1.25); }
-  L.band += `<path d="${stege}" fill="none" stroke="${c.kante}" stroke-width="2" stroke-linecap="round"/>`
-    + `<path d="${stege}" fill="none" stroke="url(#${id}kp)" stroke-width="1.4" stroke-linecap="round"/>`
-    + `<path d="${stege}" fill="none" stroke="${c.glanz}" stroke-width=".8" stroke-linecap="round" opacity=".55"/>`;
-}
-function lVoluten(L, winkel, lang, dick, c, augen, konsole, id){
-  const aug = [];
-  winkel.forEach(a => {
-    [1,-1].forEach(sp => {
-      const [sx,sy] = pt(a, RA - .6);
-      const bahn = spiral(sx, sy, a + sp*(Math.PI/2 - .30), lang, -sp*1.9, 20, 3.4);
-      const v = bandHalb(bahn, dick, dick*.26);
-      nimm(L.hk, sp > 0 ? v : {h:v.d, d:v.h, g:''});
-      aug.push([bahn[20][0], bahn[20][1]]);
-    });
-    if(konsole === 'stein'){ const [x,y] = pt(a, R); L.vorn += cabochon(x, y, 2.2, 2.2, 0, id, c); }
-    else { const [x,y] = pt(a, R); L.vorn += raute(x, y, konsole, konsole*.7, c.akz); }
+// Ein Kranz: zwei Zweige, die sich am Fuß kreuzen und auf einem Bogen um den
+// Reif nach oben wachsen. Blätter wechselnd außen und innen, zur Spitze hin
+// kleiner, am Ende ein einzelnes Blatt in Wuchsrichtung. Gezeichnet vom
+// Fuß zur Spitze, damit jedes Blatt den Ansatz des vorigen deckt.
+function kranz(o, id){
+  let stiel = '', teile = '', beeren = '';
+  [1, -1].forEach(sp => {
+    const a0 = 90 - sp*o.ab, a1 = 90 - sp*(o.ab + o.span), aK = 90 + sp*o.kreuz;
+    const [xs, ys] = pt(rad(aK), o.r), [xe, ye] = pt(rad(a1), o.r);
+    stiel += `M${n1(xs)} ${n1(ys)}A${o.r} ${o.r} 0 0 ${sp > 0 ? 0 : 1} ${n1(xe)} ${n1(ye)}`;
+    const setze = (t, aussen, gr) => {
+      const a = rad(a0 + (a1 - a0) * t), [px, py] = pt(a, o.r);
+      const tx = sp*Math.sin(a), ty = -sp*Math.cos(a), ox = Math.cos(a), oy = Math.sin(a);
+      const k = Math.cos(rad(o.winkel)), s = Math.sin(rad(o.winkel)) * (aussen ? 1 : -1);
+      let dx = tx*k + ox*s, dy = ty*k + oy*s; const l = Math.hypot(dx, dy); dx /= l; dy /= l;
+      const f = (1 - o.verj * t) * gr;
+      const b = blatt(px, py, dx, dy, o.L * f, o.W * f, o.form, (aussen ? -1 : 1) * sp * .06);
+      teile += flaeche(b.voll, b.dunkel, id, .7, b.rippe);
+    };
+    for(let i = 0; i < o.n; i++){
+      const t = i / o.n;
+      setze(t, true, 1);
+      setze(t + .5 / o.n, false, .86);
+      if(o.beeren && i % 2 === 1){ const a = rad(a0 + (a1 - a0) * (t + .3 / o.n)); const [bx, by] = pt(a, o.r + 3.4); beeren += perle(bx, by, 1.35, id); }
+      if(o.eicheln && i % 2 === 0 && i < o.n - 1){ const a = rad(a0 + (a1 - a0) * (t + .3 / o.n)); beeren += eichel(a, o.r + 5.5, id); }
+    }
+    const a = rad(a1), [px, py] = pt(a, o.r);
+    const b = blatt(px, py, sp*Math.sin(a), -sp*Math.cos(a), o.L*(1 - o.verj)*1.1, o.W*(1 - o.verj), o.form, 0);
+    teile += flaeche(b.voll, b.dunkel, id, .7, b.rippe);
   });
-  if(augen) L.vorn += perlen(aug, 1.4, c);
+  return `<path d="${stiel}" fill="none" stroke="${FUGE}" stroke-width="2.4" stroke-linecap="round"/>`
+    + `<path d="${stiel}" fill="none" stroke="url(#${id}m)" stroke-width="1.2" stroke-linecap="round"/>`
+    + teile + beeren;
 }
-function lLorbeer(L, blatt, gr, beeren, id, c){
-  let bH = '', bD = '', bG = '', zweig = ''; const be = []; const rB = RA + .4;
-  [1,-1].forEach(sp => {
-    const a0 = Math.PI/2 - sp*0.44, a1 = Math.PI/2 - sp*2.58;
-    zweig += 'M'+K(pt(a0,rB))+'A'+n1(rB)+' '+n1(rB)+' 0 0 '+(sp > 0 ? 0 : 1)+' '+K(pt(a1,rB));
-    for(let i = 0; i < blatt; i++){
-      const t = (i + .5)/blatt, g = (0.74 + 0.32*Math.sin(Math.PI*Math.min(1, t*1.04)))*gr;
-      const a = a0 + (a1 - a0)*t, Ln = 8.6*g, W = Ln*.34;
-      const [x,y] = pt(a, rB + Ln*.80), b = laub(x, y, a + Math.PI/2 - sp*0.72, Ln, W);
-      if(sp > 0){ bH += b.h; bD += b.d; bG += b.g; } else { bH += b.d; bD += b.h; }
-      if(beeren && i % 3 === 1) be.push(pt(a - sp*.04, rB + 2.0));
-    }
-  });
-  L.hinten += `<path d="${zweig}" fill="none" stroke="${mix(c.m,'#05080B',.46)}" stroke-width="1.7" stroke-linecap="round"/>`
-    + `<path d="${bH}" fill="url(#${id}bl)" stroke="${c.kante}" stroke-width=".42" stroke-linejoin="round"/>`
-    + `<path d="${bD}" fill="url(#${id}bt)" stroke="${c.kante}" stroke-width=".42" stroke-linejoin="round"/>`
-    + `<path d="${bG}" fill="${c.glanz}" opacity=".38"/>`
-    + (be.length ? `<path d="${punkte(be, 1.6)}" fill="${c.hell}" stroke="${c.kante}" stroke-width=".42"/>` : '');
+function eichel(a, r, id){
+  const [x, y] = pt(a, r), rot = n1(a*180/Math.PI + 90);
+  return `<g transform="rotate(${rot} ${n1(x)} ${n1(y)})">`
+    + `<ellipse cx="${n1(x)}" cy="${n1(y - 1.5)}" rx="2.1" ry="2.8" fill="url(#${id}m)" stroke="${FUGE}" stroke-width=".55"/>`
+    + `<ellipse cx="${n1(x - .5)}" cy="${n1(y - 1.7)}" rx=".5" ry=".9" fill="#fff" opacity=".6"/>`
+    + `<path d="M${n1(x - 2.5)} ${n1(y + .2)}a2.5 2 0 0 1 5 0Z" fill="${FUGE}" opacity=".85"/></g>`;
 }
-function lStrahlen(L, dichte, laenge, id, c){
-  const glorie = 4 * dichte; let kurz = '', hell = ''; const r0 = RA + .4;
-  for(let i = 0; i < glorie; i++){ const a = ang(i, glorie), ab = Math.abs(((a*180/Math.PI + 405) % 90) - 45);
-    if(ab > 34) continue; kurz += strahl(a, r0, (19 + laenge) * (1.30 - .55*(ab/34)) * (i % 2 ? .64 : 1), .042); }
-  [28,22,15,11,8].forEach((Lg, k) => { const w = .022 - k*.002;
-    for(let i = 0; i < 4; i++){ const a0 = -Math.PI/4 + i*Math.PI/2;
-      if(k === 0) hell += strahl(a0, r0, Lg + laenge, w); else [1,-1].forEach(sp => hell += strahl(a0 + sp*k*.115, r0, Lg + laenge*.6, w)); } });
-  L.strahl += `<path d="${kurz}" fill="url(#${id}kp)" opacity=".78"/><path d="${hell}" fill="url(#${id}kp)"/>`
-    + `<circle cx="50" cy="50" r="${n1(r0)}" fill="none" stroke="url(#${id}mt)" stroke-width="5.2"/>`;
+
+// Die Lilie, die Mitte der großen Krone. Ein Blatt nach oben, zwei nach
+// außen eingerollt, ein Bund darüber.
+function lilie(x, y, s, id){
+  const P = (dx, dy) => n1(x + dx*s) + ' ' + n1(y + dy*s);
+  const mitte = `M${P(0,-1.6)}C${P(-2.3,-4.2)} ${P(-1.7,-7.6)} ${P(0,-10)}C${P(1.7,-7.6)} ${P(2.3,-4.2)} ${P(0,-1.6)}Z`;
+  const flanke = sp => `M${P(sp*.7,-2.2)}C${P(sp*2.6,-6.6)} ${P(sp*6.4,-6.8)} ${P(sp*6,-3.4)}C${P(sp*5.8,-1.8)} ${P(sp*4.2,-1.7)} ${P(sp*3.8,-2.8)}`
+    + `C${P(sp*4.9,-3.1)} ${P(sp*4.8,-4.6)} ${P(sp*3.9,-4.6)}C${P(sp*2.8,-4.6)} ${P(sp*2,-3.4)} ${P(sp*1.5,-1.2)}Z`;
+  const bund = `M${P(-3.2,-2.6)}H${n1(x + 3.2*s)}V${n1(y - 1.1*s)}H${n1(x - 3.2*s)}Z`;
+  const fuss = `M${P(-1.3,-1.1)}L${P(0,1)}L${P(1.3,-1.1)}Z`;
+  return flaeche(flanke(-1) + flanke(1), flanke(1), id, .6)
+    + flaeche(mitte, `M${P(0,-1.6)}C${P(1.7,-4.2)} ${P(1.4,-7.6)} ${P(0,-10)}Z`, id, .6)
+    + flaeche(bund + fuss, `M${P(-3.2,-1.85)}H${n1(x + 3.2*s)}V${n1(y - 1.1*s)}H${n1(x - 3.2*s)}Z`, id, .6);
 }
-// Der Bogenfries (B · Kleinod): massive Bögen, jeder an seiner Achse in
-// Licht und Schatten geteilt — kein Draht.
-function lFries(L, n, kranz, dick, id, c){
-  const rK = RA + kranz, knoten = [], scheitel = [];
-  for(let i = 0; i < n; i++){
-    const a0 = ang(i, n), a1 = ang(i+1, n), m = (a0 + a1)/2;
-    if(Math.abs(Math.cos(m)) < .16) continue;          // oben und unten frei
-    const P0 = pt(a0, RA - .4), P1 = pt(a1, RA - .4), hoch = kranz;
-    const bahn = [];
-    for(let k = 0; k <= 16; k++){
-      const t = k/16, s = Math.sin(t*Math.PI);
-      const a = a0 + (a1 - a0)*t, r = RA - .4 + hoch*s;
-      const [x,y] = pt(a, r); bahn.push([x, y, 0]);
-    }
-    for(let k = 0; k < bahn.length; k++){
-      const p = bahn[Math.max(0,k-1)], q = bahn[Math.min(bahn.length-1,k+1)];
-      bahn[k][2] = Math.atan2(q[1]-p[1], q[0]-p[0]);
-    }
-    nimm(L.hk, bandHalb(bahn, dick, dick));
-    knoten.push(P0, P1); scheitel.push(pt(m, rK - .3));
+// Die Krone sitzt auf dem Scheitel des Reifs: ein Reifband mit Steinen,
+// darüber Zacken mit Perlen und eingezogenen Bögen dazwischen.
+function krone(o, id){
+  const B = o.B, by = C - RING + 2, bh = 4.6, top = by - bh;
+  const z = o.zacken, xs = Array.from({length:z}, (_, i) => -1 + 2*i/(z - 1));
+  const hoehe = x => o.H * (.72 + .28*Math.cos(x * Math.PI / 2.1));
+  // Die Zacken als ein Umriss. Die Mitte bleibt bei der Lilie frei.
+  // Der Umriss von Zacke i bis j; die rechte Hälfte liegt im Schatten.
+  const umriss = (i0, i1) => {
+    let d = `M${n1(C + xs[i0]*B)} ${n1(top)}L${n1(C + xs[i0]*B)} ${n1(top - hoehe(xs[i0]))}`;
+    for(let i = i0 + 1; i <= i1; i++){ const m = (xs[i-1] + xs[i]) / 2;
+      d += `Q${n1(C + m*B)} ${n1(top - o.H*.06)} ${n1(C + xs[i]*B)} ${n1(top - hoehe(xs[i]))}`; }
+    return d + `L${n1(C + xs[i1]*B)} ${n1(top)}Z`;
+  };
+  const d = umriss(0, z - 1), dunkel = umriss((z - 1) / 2, z - 1);
+  const band = `M${n1(C - B - .6)} ${n1(top)}H${n1(C + B + .6)}L${n1(C + B)} ${n1(by)}Q${C} ${n1(by + 1.6)} ${n1(C - B)} ${n1(by)}Z`;
+  let s = flaeche(d, dunkel, id)
+    + flaeche(band, `M${n1(C - B - .6)} ${n1(top + bh*.55)}H${n1(C + B + .6)}L${n1(C + B)} ${n1(by)}Q${C} ${n1(by + 1.6)} ${n1(C - B)} ${n1(by)}Z`, id);
+  xs.forEach(x => { if(o.lilie && Math.abs(x) < .01) return; s += perle(C + x*B, top - hoehe(x) - .6, 1.7, id); });
+  if(o.lilie) s += lilie(C, top - o.H*.2, o.lilie, id);
+  if(o.juwelen) [-1, 0, 1].forEach(k => { if(o.juwelen < 2 && k) return; s += stein(C + k*B*.55, top + bh*.5, k ? 1.15 : 1.45, id); });
+  return s;
+}
+// Das Band am Fuß in der Rangfarbe: ein Mittelteil, das sich nach oben
+// wölbt, dahinter zwei Enden mit Kerbe und ein dunkler Umschlag.
+function band(o, id, c){
+  const w = o.w, y = C + RING + 3.2, h = 8, sag = 2.4;
+  const tief = mix(c.rf, '#000000', .3), fuge = FUGE;
+  const ende = sp => { const x = C + sp*w;
+    return `M${n1(x - sp*3)} ${n1(y + 3)}L${n1(x + sp*8)} ${n1(y + 4)}L${n1(x + sp*5.4)} ${n1(y + 4 + h*.5)}L${n1(x + sp*8.4)} ${n1(y + 4 + h)}L${n1(x - sp*3)} ${n1(y + 3 + h)}Z`; };
+  const umschlag = sp => { const x = C + sp*w;
+    return `M${n1(x)} ${n1(y + sag*.2)}L${n1(x + sp*3)} ${n1(y + 3)}L${n1(x + sp*3)} ${n1(y + 3 + h)}L${n1(x)} ${n1(y + h + sag*.2)}Z`; };
+  const mitte = `M${n1(C - w)} ${n1(y)}Q${C} ${n1(y + sag*2)} ${n1(C + w)} ${n1(y)}L${n1(C + w)} ${n1(y + h)}Q${C} ${n1(y + h + sag*2)} ${n1(C - w)} ${n1(y + h)}Z`;
+  let s = `<path d="${ende(-1) + ende(1)}" fill="${tief}" stroke="${fuge}" stroke-width=".7" stroke-linejoin="round"/>`
+    + `<path d="${umschlag(-1) + umschlag(1)}" fill="${mix(c.rf,'#000000',.6)}"/>`
+    + `<path d="${mitte}" fill="url(#${id}band)" stroke="${fuge}" stroke-width=".7" stroke-linejoin="round"/>`;
+  if(o.linien) s += `<path d="M${n1(C - w + 1.6)} ${n1(y + 1.4)}Q${C} ${n1(y + sag*2 + 1.4)} ${n1(C + w - 1.6)} ${n1(y + 1.4)}M${n1(C - w + 1.6)} ${n1(y + h - 1.4)}Q${C} ${n1(y + h + sag*2 - 1.4)} ${n1(C + w - 1.6)} ${n1(y + h - 1.4)}" fill="none" stroke="${mix(c.rf,'#FFFFFF',.6)}" stroke-width=".5" opacity=".85"/>`;
+  if(o.stein) s += stein(C, y + h/2 + sag, 2.1, id);
+  return s;
+}
+// Der Stern hinter dem Kranz: jede Zacke hat einen Grat, eine helle und
+// eine dunkle Flanke. Lange Zacken auf den Achsen und Diagonalen, kurze
+// dazwischen — so bleibt die Silhouette auch bei 52 px ein Stern.
+function stern(o, id){
+  let hell = '', dunkel = '', strahl = '';
+  const zacke = (a, R, w) => {
+    const sp = pt(a, R), l = pt(a - w, RING + 2), r = pt(a + w, RING + 2), m = pt(a, RING - 8);
+    const zl = `M${K(m)}L${K(l)}L${K(sp)}Z`, zr = `M${K(m)}L${K(r)}L${K(sp)}Z`;
+    // Die Flanke, deren Außenseite zum Licht zeigt, bleibt hell.
+    const nl = [Math.cos(a - Math.PI/2), Math.sin(a - Math.PI/2)];
+    hell += zl + zr; dunkel += (nl[0]*LICHT[0] + nl[1]*LICHT[1] > 0) ? zr : zl;
+  };
+  // Zwischen den Zacken ein Strahlenkranz, feine Grate mit Fuge.
+  for(let i = 0; i < o.strahlen; i++){ const a = -Math.PI/2 + (i + .5) * 2*Math.PI/o.strahlen;
+    const R = o.kurz - 3, w = .035; strahl += `M${K(pt(a - w, RING))}L${K(pt(a, R))}L${K(pt(a + w, RING))}Z`; }
+  for(let i = 0; i < o.n; i++){ const a = -Math.PI/2 + i*2*Math.PI/o.n; zacke(a, i % 2 ? o.lang : o.kurz, o.w * (i % 2 ? 1 : .85)); }
+  let s = `<circle cx="${C}" cy="${C}" r="${o.lang}" fill="url(#${id}schein)"/>`;
+  if(strahl) s += `<path d="${strahl}" fill="url(#${id}m)" stroke="${FUGE}" stroke-width=".5" opacity=".9"/>`;
+  s += flaeche(hell, dunkel, id, .9);
+  if(o.perlen) for(let i = 1; i < o.n; i += 2){ const [x, y] = pt(-Math.PI/2 + i*2*Math.PI/o.n, o.lang + 1.2); s += perle(x, y, 1.7, id); }
+  return s;
+}
+function reif(id, o){
+  let s = `<circle cx="${C}" cy="${C}" r="${RING}" fill="none" stroke="${FUGE}" stroke-width="5.6"/>`
+    + `<circle cx="${C}" cy="${C}" r="${RING}" fill="none" stroke="url(#${id}ring)" stroke-width="3.8"/>`
+    + `<circle cx="${C}" cy="${C}" r="${RING - 1.2}" fill="none" stroke="#fff" stroke-width=".45" opacity=".45"/>`;
+  if(o.aussen) s += `<circle cx="${C}" cy="${C}" r="${RING + 4.6}" fill="none" stroke="${FUGE}" stroke-width="2.2"/>`
+    + `<circle cx="${C}" cy="${C}" r="${RING + 4.6}" fill="none" stroke="url(#${id}ring)" stroke-width="1.1"/>`;
+  if(o.perlen) for(let i = 0; i < o.perlen; i++){ const [x, y] = pt(-Math.PI/2 + (i + .5)*2*Math.PI/o.perlen, RING + 4.6); s += perle(x, y, 1.5, id); }
+  return s;
+}
+
+/* ── Die sieben Stufen ───────────────────────────────────────────────
+   Alle Kränze stehen auf demselben Bogen, mit derselben Blattform und
+   derselben Fuge. Die Stufe wechselt den Gegenstand, der Grad baut ihn
+   aus: längere Zweige, dann Früchte, dann ein Stein. */
+const STUFEN = [
+  {name:'Reif', ab:0, satz:'Der blanke Reif. II: ein feiner zweiter Ring. III: ein Perlkreis darauf.'},
+  {name:'Zweigreif', ab:500, satz:'Zwei Lorbeerzweige kreuzen sich am Fuß. Mit jedem Grad wachsen sie ein Stück höher, im dritten mit Beeren.'},
+  {name:'Eichenkranz', ab:1200, satz:'Breites Eichenlaub bis über die Mitte des Reifs. II: Eicheln. III: der Kranz reicht bis kurz unter den Scheitel.'},
+  {name:'Lorbeerkranz', ab:1950, neu:true, satz:'Der volle Kranz, oben offen. II: Beeren. III: ein Stein in der Rangfarbe auf dem Scheitel.'},
+  {name:'Kronenkranz', ab:2800, neu:true, satz:'Auf dem Scheitel sitzt eine Krone. Sie wächst mit dem Grad von drei auf fünf Zacken und bekommt Steine.'},
+  {name:'Ehrenkranz', ab:3700, neu:true, satz:'Die Krone trägt die Lilie, am Fuß liegt ein Band in der Rangfarbe. II: Zierlinien. III: ein Stein im Band.'},
+  {name:'Ordensstern', ab:4700, satz:'Hinter dem Ehrenkranz steht ein Stern. Er bekommt mit jeder Zacke Strahlen dazu und hört nicht auf.'},
+];
+// Der Kranz liegt HINTER dem Reif: das Zeichen ist eine Medaille auf einem
+// Kranz, nicht ein Reif mit Stacheln. Die inneren Blätter tauchen unter den
+// Reif, sichtbar bleibt ein breites, geschlossenes Laubband.
+const LORBEER = {r:50.5, ab:3, kreuz:14, L:15.5, W:4.3, verj:.3, winkel:24, form:'lorbeer'};
+function bau(s, g, id, c){
+  let hinten = '', kr = '', oben = '', unten = '';
+  const ring = s === 0 ? [{}, {aussen:true}, {aussen:true, perlen:20}][g] : {};
+  if(s === 1) kr = kranz({...LORBEER, span:[44,60,76][g], n:[3,4,5][g], beeren:g === 2}, id);
+  if(s === 2) kr = kranz({...LORBEER, form:'eiche', L:17, W:4.4, verj:.24, winkel:26, span:[100,118,134][g], n:[5,6,7][g], eicheln:g >= 1}, id);
+  if(s === 3) kr = kranz({...LORBEER, span:[146,152,156][g], n:[10,11,11][g], beeren:g >= 1}, id);
+  if(s >= 4) kr = kranz({...LORBEER, span:156, n:11, beeren:true}, id);
+  if(s >= 1 && s <= 4) unten += raute(C + RING + 7.4, 3.2, id);
+  if(s === 3 && g === 2) oben += stein(C, C - RING - 1.4, 2.8, id);
+  if(s === 4) oben += krone({B:[14,17,18][g], H:[13,15,16][g], zacken:[3,5,5][g], juwelen:[0,1,2][g]}, id);
+  if(s >= 5){
+    oben += krone({B:19, H:18, zacken:5, lilie:1.7, juwelen:2}, id);
+    unten += band({w:[16,17,18][s === 6 ? 2 : g], linien:s === 6 || g >= 1, stein:s === 6 || g === 2}, id, c);
   }
-  return {knoten, scheitel, rK};
+  if(s === 6) hinten += stern({n:[8,8,8][g], lang:[70,72,74][g], kurz:[60,62,62][g], w:.3, strahlen:g >= 1 ? 16 : 0, perlen:g === 2}, id);
+  return hinten + kr + `<circle cx="${C}" cy="${C}" r="${RING - 1.8}" fill="url(#${id}f)"/>`
+    + reif(id, ring) + unten + oben;
 }
-// Der Fleuronkranz (B · Kronreif): Lilien stehen rundum auf dem Band.
-function lFleurons(L, n, gr, akz, r0){
-  for(let i = 0; i < n; i++){ const a = ang(i, n); if(Math.abs(Math.cos(a)) < .2) continue;
-    L.hinten += lilie((r0 || RA) + 5.2*gr, gr, akz, (a + Math.PI/2)*180/Math.PI); }
-}
-
-function zeichnen(fn, stufe, grad, rang){
+function zeichnen(s, g, rang, klasse){
   const id = 'z' + (++zeichnen.n) + '_', c = satz(rang);
-  c.akz = {fill:`url(#${id}rg)`, tief:`url(#${id}rt)`, hell:mix(c.rf,'#FFFFFF',.52), mitt:c.rf, mitt2:mix(c.rf,'#000000',.42), kante:mix(c.rf,'#000000',.72)};
-  c.stahl = {fill:`url(#${id}kp)`, tief:`url(#${id}kt)`, hell:mix(c.m,'#FFFFFF',.72), mitt:c.hell, mitt2:c.m, kante:c.kante};
-  const L = neu(); const extra = fn(L, stufe, grad, id, c) || {};
-  const lagen = (x, k) => `<g class="${extra.neu === k ? extra.neuKlasse : ''}">${x}</g>`;
-  return `<svg viewBox="${BOX}" aria-hidden="true">${defs(id, c)}`
-    + `<circle cx="50" cy="50" r="${n1(RA + .4)}" fill="url(#${id}pl)"/>`
-    + lagen(L.strahl, 'strahl') + lagen(L.hinten, 'hinten') + lagen(koerper(L.hk, c, id), 'hk')
-    + reif(id, c) + lagen(L.band, 'band') + lagen(koerper(L.bk, c, id), 'bk') + lagen(L.vorn, 'vorn') + `</svg>`;
+  return `<svg viewBox="${BOX}" aria-hidden="true"${klasse ? ` class="${klasse}"` : ''}>${defs(id, c)}${bau(s, g, id, c)}</svg>`;
 }
 zeichnen.n = 0;
 
-/* ── Richtung A: Schicht für Schicht ─────────────────────────────── */
-const STUFEN_A = [
-  {name:'Reif', ab:0, satz:'Das blanke Band. Grad II mit Nieten, Grad III mit einem zweiten Ring nach innen.'},
-  {name:'Schildring', ab:500, satz:'Kartuschen legen sich auf das Band und werden durch Stege zu einer Kette.'},
-  {name:'Volutenkranz', ab:1200, satz:'Aus der Kette wachsen Schneckenpaare nach außen, oben die Lilie.'},
-  {name:'Juwelenkranz', ab:1950, neu:true, satz:'Die Kartuschen werden zu Fassungen: Steine in der Rangfarbe, dazwischen Perlen. Die Lilie steht auf einem Stein.'},
-  {name:'Lorbeerreif', ab:2800, satz:'Zwei Zweige wachsen von unten um alles herum; die Voluten bleiben oben neben dem Kopf.'},
-  {name:'Kronreif', ab:3700, neu:true, satz:'Der Kopf wird zur Krone. Grad für Grad kommen Zacken und Steine dazu.'},
-  {name:'Ordensstern', ab:4700, satz:'Hinter allem steht die Glorie. Sie wird mit jeder Zacke dichter und endet nie.'},
-];
-function bauA(L, s, g, id, c){
-  // Schicht 0: der Reif. Nur auf der ersten Stufe trägt er Nieten — danach
-  // liegt dort die Kette.
-  if(s === 0){
-    if(g >= 1) L.hinten += `<circle cx="50" cy="50" r="${R - 8.5}" fill="none" stroke="${c.hell}" stroke-width="${g === 2 ? 1.1 : .7}" opacity=".72"/>`;
-    if(g >= 1) L.band += perlen(Array.from({length: g === 2 ? 12 : 8}, (_, i) => pt(ang(i, g === 2 ? 12 : 8), R)), 2.1*(g === 2 ? 1.25 : 1), c);
-    return {neu:'band'};
-  }
-  // Schicht 1: die Kette.
-  lKartuschen(L, s === 1 ? [4,6,8][g] : 8, id, c, s >= 3);
-  if(s === 1){ if(g === 2){ const [x,y] = pt(-Math.PI/2, RA + 4.4); L.vorn += raute(x, y, 4.4, 3.0, c.akz); } return {neu:'bk'}; }
-  // Schicht 2: Voluten. Auf ihrer Stufe rundum, danach die vier großen, ab
-  // dem Lorbeer nur noch die beiden oben neben dem Kopf.
-  // Auf der Juwelen-Stufe bleiben alle acht Paare stehen — sonst wirkte sie
-  // ärmer als der Volutenkranz III darunter. Ab dem Lorbeer bleiben die oben.
-  const volA = s === 2 ? [4,6,8][g] : 8;
-  let winkel = Array.from({length: volA}, (_, i) => ang(i, volA));
-  if(s >= 4) winkel = winkel.filter(a => Math.sin(a) < 0);
-  lVoluten(L, winkel, 24, s === 2 ? [3.1,2.35,2.05][g] : (s >= 4 ? 2.6 : 2.05), c, true, 2.6, id);
-  // Der Kopf wächst mit: Lilie, Lilie auf Stein, Krone.
-  if(s === 2){ L.vorn += lilie(RA + 2.6 + g*.3, 1.02 + g*.06, c.akz); return {neu:'hk'}; }
-  // Schicht 3: Steine in den Kartuschen, Perlen dazwischen.
-  const steine = s === 3 ? [4,8,8][g] : 8;
-  for(let i = 0; i < 8; i++){ if(steine === 4 && i % 2) continue; const a = ang(i, 8), [x,y] = pt(a, R);
-    L.vorn += cabochon(x, y, 3.8, 2.9, a + Math.PI/2, id, c); }
-  if(s > 3 || g === 2) L.vorn += perlen(Array.from({length:8}, (_, i) => pt(ang(i,8) + Math.PI/8, R)), 1.3, c);
-  const lilieAufStein = gr => { const [x,y] = pt(-Math.PI/2, RA + .6); return cabochon(x, y, 3.2, 2.5, 0, id, c) + lilie(RA + 5.4, gr, c.akz); };
-  if(s === 3){ L.vorn += lilieAufStein(1.14 + g*.05); return {neu:'vorn'}; }
-  // Schicht 4: Lorbeer.
-  lLorbeer(L, s === 4 ? [8,9,11][g] : 11, s === 4 ? [1.16,1.21,1.27][g] : 1.27, s > 4 || g >= 1, id, c);
-  if(s === 4){ L.vorn += lilieAufStein(1.28 + g*.04); return {neu:'hinten'}; }
-  // Schicht 5: die Krone.
-  if(s === 5){ L.vorn += krone(RA + 4.6, [1.34,1.44,1.54][g], [5,5,7][g], id, c, c.akz);
-    if(g >= 1) [-1,1].forEach(sp => { const [x,y] = pt(-Math.PI/2 + sp*.50, RA + 3.0); L.vorn += cabochon(x, y, 2.2, 2.2, 0, id, c); });
-    if(g === 2) [-1,1].forEach(sp => { const [x,y] = pt(-Math.PI/2 + sp*.78, RA + 2.6); L.vorn += cabochon(x, y, 1.8, 1.8, 0, id, c); });
-    return {neu:'vorn'}; }
-  // Schicht 6: die Glorie.
-  lStrahlen(L, [6,7,8][g], [0,1.2,2.4][g], id, c);
-  L.vorn += krone(RA + 4.8, 1.6, 7, id, c, c.akz);
-  [-1,1].forEach(sp => { const [x,y] = pt(-Math.PI/2 + sp*.50, RA + 3.0); L.vorn += cabochon(x, y, 2.2, 2.2, 0, id, c); });
-  return {neu:'strahl'};
-}
-
-/* ── Richtung B: sieben Gegenstände, eine Bauweise ───────────────── */
-const STUFEN_B = [
-  {name:'Reif', ab:0, satz:'Das Band. II: Perlen auf dem Band. III: dazu vier Steine auf den Diagonalen.'},
-  {name:'Schildring', ab:500, satz:'Eine Kette aus acht Kartuschen. II: Perlen zwischen den Gliedern. III: ein Stein in jeder Kartusche.'},
-  {name:'Volutenkranz', ab:1200, satz:'Sechs Schneckenpaare rundum. II: Perlen im Auge. III: Steine in den Konsolen.'},
-  {name:'Kleinod', ab:1950, neu:true, satz:'Ein massiver Bogenfries um das Band. II: Perlen an den Knoten. III: ein Stein in jedem Bogen.'},
-  {name:'Lorbeerreif', ab:2800, satz:'Der geschlossene Kranz aus zwei Zweigen. II: Beeren. III: Steine am Ansatz und auf dem Band.'},
-  {name:'Kronreif', ab:3700, neu:true, satz:'Lilien stehen rundum auf dem Band wie auf einer Krone. II: Perlen dazwischen. III: Steine am Fuß jeder Lilie.'},
-  {name:'Ordensstern', ab:4700, satz:'Die Glorie und die Krone. II: ein Perlenkranz. III: Steine auf den Diagonalen, dichter mit jeder Zacke.'},
-];
-function bauB(L, s, g, id, c){
-  const kopfLilie = gr => { L.vorn += lilie(RA + 3 + gr, gr, c.akz); };
-  if(s === 0){
-    if(g >= 1) L.band += perlen(Array.from({length:8}, (_, i) => pt(ang(i, 8), R)), 2.0, c);
-    if(g === 2) for(let i = 0; i < 4; i++){ const a = -Math.PI/4 + i*Math.PI/2, [x,y] = pt(a, R); L.vorn += cabochon(x, y, 2.8, 2.2, a + Math.PI/2, id, c); }
-    return {neu:'band'};
-  }
-  if(s === 1){
-    lKartuschen(L, 8, id, c);
-    if(g >= 1) L.vorn += perlen(Array.from({length:8}, (_, i) => pt(ang(i,8) + Math.PI/8, R)), 1.25, c);
-    if(g === 2) for(let i = 0; i < 8; i++){ const a = ang(i,8), [x,y] = pt(a, R + .6); L.vorn += raute(x, y, 2.2, 1.6, c.akz); }
-    const [x,y] = pt(-Math.PI/2, RA + 3.6); L.vorn += raute(x, y, 3.6 + g*.4, 2.5 + g*.3, c.akz);
-    return {neu:'bk'};
-  }
-  if(s === 2){
-    lVoluten(L, Array.from({length:6}, (_, i) => ang(i, 6)), 26, 2.9, c, g >= 1, g === 2 ? 'stein' : 2.4, id);
-    kopfLilie(1.04 + g*.05);
-    return {neu:'hk'};
-  }
-  if(s === 3){
-    const f = lFries(L, 10, 12, 2.5, id, c);
-    if(g >= 1) L.vorn += perlen(f.knoten, 1.9, c);
-    if(g === 2) f.scheitel.forEach(([x,y], i) => { const a = Math.atan2(y - 50, x - 50), [px,py] = pt(a, RA + 6.2); L.vorn += cabochon(px, py, 2.6, 2.0, a + Math.PI/2, id, c); });
-    const [x,y] = pt(-Math.PI/2, RA + .8); L.vorn += cabochon(x, y, 3.2, 2.5, 0, id, c) + lilie(RA + 5.6, 1.16 + g*.05, c.akz);
-    return {neu:'hk'};
-  }
-  if(s === 4){
-    lLorbeer(L, 10, 1.24, g >= 1, id, c);
-    if(g === 2){ [-1,1].forEach(sp => { const [x,y] = pt(Math.PI/2 - sp*0.40, RA + 4.6); L.vorn += raute(x, y, 3.6, 2.5, c.akz); });
-      for(let i = 0; i < 4; i++){ const a = -Math.PI/4 + i*Math.PI/2, [x,y] = pt(a, R); L.vorn += cabochon(x, y, 2.6, 2.0, a + Math.PI/2, id, c); } }
-    kopfLilie(1.26 + g*.05);
-    return {neu:'hinten'};
-  }
-  if(s === 5){
-    // Der Kronreif hat ein zweites Band, aus dem die Lilien wachsen: der
-    // Reif einer Krone, ganz herum.
-    const rk = RA + 3.2;
-    L.hinten += `<circle cx="50" cy="50" r="${rk}" fill="none" stroke="${c.kante}" stroke-width="4.2"/>`
-      + `<circle cx="50" cy="50" r="${rk}" fill="none" stroke="url(#${id}mt)" stroke-width="3.2"/>`;
-    lFleurons(L, 8, 1.34, c.akz, rk + .6);
-    // Zwischen den Lilien Perlenzinken: kurze Stiele mit einer Perle, wie
-    // auf dem Reif einer Krone. Ohne sie standen acht Lilien einzeln da und
-    // lasen sich als Pfeilspitzen.
-    const zinken = [];
-    for(let i = 0; i < 8; i++){ const a = ang(i, 8) + Math.PI/8; if(Math.abs(Math.cos(a)) < .2) continue;
-      L.hinten += `<path d="M${K(pt(a, rk))}L${K(pt(a, rk + 7))}" stroke="${c.kante}" stroke-width="2.2" stroke-linecap="round"/>`
-        + `<path d="M${K(pt(a, rk))}L${K(pt(a, rk + 7))}" stroke="url(#${id}kp)" stroke-width="1.3" stroke-linecap="round"/>`;
-      zinken.push(pt(a, rk + 8.2)); }
-    L.hinten += perlen(zinken, 2.0, c);
-    if(g >= 1) L.band += perlen(Array.from({length:16}, (_, i) => pt(ang(i,16), rk)), 1.3, c);
-    if(g === 2) for(let i = 0; i < 8; i++){ const a = ang(i,8); if(Math.abs(Math.cos(a)) < .2) continue; const [x,y] = pt(a, rk); L.band += cabochon(x, y, 2.4, 1.9, a + Math.PI/2, id, c); }
-    const [x,y] = pt(-Math.PI/2, rk); L.vorn += cabochon(x, y, 3.4, 2.6, 0, id, c) + lilie(rk + 7.4, 1.42 + g*.05, c.akz);
-    return {neu:'hinten'};
-  }
-  lStrahlen(L, [8,9,10][g], [0,1,2][g], id, c);
-  if(g >= 1) L.band += perlen(Array.from({length:16}, (_, i) => pt(ang(i,16), R)), 1.4, c);
-  if(g === 2){ for(let i = 0; i < 4; i++){ const a = -Math.PI/4 + i*Math.PI/2, [x,y] = pt(a, R); L.vorn += raute(x, y, 3.2, 2.2, c.akz); }
-    for(let i = 0; i < 8; i++){ const [x,y] = pt(ang(i,8), R); L.vorn += raute(x, y, 2.0, 1.4, c.akz); } }
-  L.vorn += krone(RA + 4.4, 1.15, 5, id, c, c.akz);
-  return {neu:'strahl'};
-}
-
 /* ── Die Seite ───────────────────────────────────────────────────── */
 const RANGE = ['Solide','Stark','Elite','Legende'];
-const rangLeiter = {A:'Elite', B:'Elite'};
-function leiter(v){
-  const S = v === 'A' ? STUFEN_A : STUFEN_B, fn = v === 'A' ? bauA : bauB;
-  document.getElementById('leiter' + v).innerHTML = S.map((st, s) => `<div class="stufe">
+let rangLeiter = 'Legende';
+function leiter(){
+  document.getElementById('leiter').innerHTML = STUFEN.map((st, s) => `<div class="stufe">
     <div class="name"><b>${st.name}</b><span>ab ${st.ab}</span>${st.neu ? '<span class="neu">NEU</span>' : ''}<em>${st.satz}</em></div>
-    ${[0,1,2].map(g => `<div class="feld"><div class="bild">${zeichnen(fn, s, g, rangLeiter[v])}</div><span>${['I','II','III'][g]}</span></div>`).join('')}
+    ${[0,1,2].map(g => `<div class="feld"><div class="bild">${zeichnen(s, g, rangLeiter)}</div><span>${['I','II','III'][g]}</span></div>`).join('')}
   </div>`).join('');
 }
-document.querySelectorAll('.rangwahl').forEach(w => {
-  const v = w.dataset.fuer;
-  w.innerHTML = RANGE.map(r => `<button data-r="${r}" class="${r === rangLeiter[v] ? 'an' : ''}"><i style="background:${RANGF[r]}"></i>${r}</button>`).join('');
-  w.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return;
-    rangLeiter[v] = b.dataset.r; w.querySelectorAll('button').forEach(x => x.classList.toggle('an', x === b)); leiter(v); });
-});
-leiter('A'); leiter('B');
+const rw = document.querySelector('.rangwahl');
+rw.innerHTML = RANGE.map(r => `<button data-r="${r}" class="${r === rangLeiter ? 'an' : ''}"><i style="background:${RANGF[r]}"></i>${r}</button>`).join('');
+rw.addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return;
+  rangLeiter = b.dataset.r; rw.querySelectorAll('button').forEach(x => x.classList.toggle('an', x === b)); leiter(); });
+leiter();
 
-// Rangliste und Feed-Leiter
+// Rangliste, Feed-Leiter
 const SPIELER = [
-  {n:'Leon', f:'#f0566a', s:3, g:1, r:'Legende'}, {n:'Julian', f:'#ff9f43', s:3, g:1, r:'Elite'},
-  {n:'Martin', f:'#56b4e8', s:4, g:0, r:'Elite'}, {n:'Jane', f:'#f78fb3', s:2, g:0, r:'Stark'},
-  {n:'Maxi', f:'#f7cf4a', s:1, g:2, r:'Stark'}, {n:'Leo', f:'#4ecdc4', s:1, g:0, r:'Solide'},
-  {n:'Henry', f:'#a78bfa', s:0, g:2, r:'Solide'}];
-['A','B'].forEach(v => {
-  const fn = v === 'A' ? bauA : bauB, S = v === 'A' ? STUFEN_A : STUFEN_B;
-  document.getElementById('zeilen' + v).innerHTML = SPIELER.map(p => `<div class="rzeile">
-    <div class="w">${zeichnen(fn, p.s, p.g, p.r)}<span class="av" style="background:${p.f}">${p.n.slice(0,2).toUpperCase()}</span></div>
-    <div class="n"><b>${p.n}</b><span>${S[p.s].name} ${['I','II','III'][p.g]}</span></div></div>`).join('');
-  document.getElementById('lt' + v).innerHTML = S.map((st, s) => `<i class="${s <= 3 ? 'hat' : ''}${s === 3 ? ' jetzt' : ''}">${zeichnen(fn, s, s === 3 ? 1 : 0, 'Legende')}</i>`).join('');
-});
+  {n:'Martin', f:'#56b4e8', s:4, g:0, r:'Legende'}, {n:'Leon', f:'#f0566a', s:3, g:2, r:'Elite'},
+  {n:'Julian', f:'#ff9f43', s:3, g:1, r:'Elite'}, {n:'Jane', f:'#f78fb3', s:2, g:0, r:'Stark'},
+  {n:'Maxi', f:'#f7cf4a', s:1, g:2, r:'Stark'}, {n:'Leo', f:'#4ecdc4', s:1, g:1, r:'Solide'},
+  {n:'Henry', f:'#a78bfa', s:1, g:0, r:'Solide'}, {n:'Anton', f:'#e07cf0', s:0, g:0, r:'Solide'}];
+document.getElementById('zeilen').innerHTML = SPIELER.map((p, i) => `<div class="rzeile"><span class="p">${i+1}</span>
+  <div class="w">${zeichnen(p.s, p.g, p.r)}<span class="av" style="background:${p.f}">${p.n.slice(0,2).toUpperCase()}</span></div>
+  <div class="n"><b>${p.n}</b><span>${STUFEN[p.s].name} ${['I','II','III'][p.g]}</span></div><span class="e">${[412,398,391,352,344,301,288,240][i]}</span></div>`).join('');
+document.getElementById('lt').innerHTML = STUFEN.map((st, s) => `<i class="${s <= 3 ? 'hat' : ''}${s === 3 ? ' jetzt' : ''}">${zeichnen(s, s === 3 ? 2 : 0, 'Elite')}</i>`).join('');
+document.getElementById('gross').innerHTML = [0,3,4,6].map(s => `<div><div class="b">${zeichnen(s, 2, 'Legende')}</div><span>${STUFEN[s].name}</span></div>`).join('');
 
-// Der Aufstieg
-const aufStand = {A:3, B:3};
-function aufZeigen(v, spielen){
-  const fn = v === 'A' ? bauA : bauB, S = v === 'A' ? STUFEN_A : STUFEN_B, s = aufStand[v];
-  const box = document.getElementById('auf' + v);
-  let svg = zeichnen((L, st, g, id, c) => { const r = fn(L, st, g, id, c); r.neuKlasse = spielen ? (v === 'A' ? 'lage-neu' : 'lage-neu-b') : ''; return r; }, s, 0, 'Legende');
-  box.querySelector('.bild').innerHTML = svg;
-  box.querySelector('.txt b').textContent = S[s].name;
-  box.querySelector('.txt span').textContent = v + ' · ab ' + S[s].ab + ' Prestige';
-  if(spielen){ box.classList.remove('laeuft'); void box.offsetWidth; box.classList.add('laeuft'); }
+// Die Bühne
+let buehneS = 4;
+function buehne(spielen){
+  const b = document.getElementById('buehne');
+  b.querySelector('.emblem').innerHTML = zeichnen(buehneS, 0, 'Legende');
+  b.querySelector('.titel b').textContent = STUFEN[buehneS].name;
+  b.querySelector('.titel span').textContent = 'ab ' + STUFEN[buehneS].ab + ' Prestige';
+  if(spielen){ b.classList.remove('an'); void b.offsetWidth; b.classList.add('an'); }
 }
-document.querySelectorAll('[data-auf]').forEach(b => b.onclick = () => aufZeigen(b.dataset.auf, true));
-document.querySelectorAll('[data-auf-weiter]').forEach(b => b.onclick = () => { const v = b.dataset.aufWeiter;
-  aufStand[v] = (aufStand[v] + 1) % 7; aufZeigen(v, true); });
-aufZeigen('A', false); aufZeigen('B', false);
+document.getElementById('buehneLos').onclick = () => buehne(true);
+document.getElementById('buehneWeiter').onclick = () => { buehneS = (buehneS + 1) % 7; buehne(true); };
+buehne(false);
 
 /* ── Bewegung ─────────────────────────────────────────────────────── */
 document.getElementById('ruhig').onchange = e => document.body.classList.toggle('ruhig', e.target.checked);
