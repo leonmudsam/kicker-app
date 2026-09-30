@@ -902,10 +902,16 @@ ok(_sprachTreffer.voll.length === 0, 'und alles heisst jedes, nicht mindestens 1
 // Matches", „mind. einen Gegner aus den Bottom-2", „als Mate". Sie steht im
 // Blatt und als Text der Karte im Feed.
 const _badgeKuerzel = JSON.parse(K.eval(`JSON.stringify(BADGES
-  .filter(b => /(^|[^A-Za-zÄÖÜäöüß])(min|max|mind)\\.|[≤≥<>]|Underdog|\\bMate\\b|Bottom-|Top-1/.test(b.desc))
+  .filter(b => /(^|[^A-Za-zÄÖÜäöüß])(min|max|mind)\\.|[≤≥<>]|Underdog|\\bMate\\b|Bottom-|Top-1|\\d\\+|\\d:\\d+ (Sieg|Niederlage)|^Match gespielt/.test(b.desc))
   .map(b => b.id + ': ' + b.desc))`));
 ok(_badgeKuerzel.length === 0, 'die Beschreibung einer Auszeichnung ist ein Satz ohne Kürzel',
    _badgeKuerzel.slice(0, 3).join(' | ') || 'alle');
+// Und keine Auszeichnung heisst wie eine Stufe des Karriere-Rangs: die fuer
+// 150 Partien hiess „Legende", und im Profil stand dasselbe Wort als Rang.
+const _badgeRang = JSON.parse(K.eval(`JSON.stringify(BADGES
+  .filter(b => RANKS.some(r => r.label === b.name)).map(b => b.id + ': ' + b.name))`));
+ok(_badgeRang.length === 0, 'keine Auszeichnung heisst wie eine Rangstufe',
+   _badgeRang.join(' | ') || 'keine');
 
 // ── Die Chronik gehoert nicht nur den besten Drei ───────────────────
 // Wer eine Quote gewinnt, gewinnt fast jede: gemessen gingen sechzig Prozent

@@ -474,7 +474,7 @@ const NEWS_BADGE_WHITELIST = new Set([
   'untouchable','mr_perfect','allwetter','godly_streak',
   // Rare — kuratierte Auswahl: nur die mit besonderer Story
   'wall_badge','upset_king','unbeatable','streak10','vice_champion','potw','krimi',
-  'games150', // "Legende" (150 Matches) — Karriere-Meilenstein, v8.6 ergänzt
+  'games150', // "Dauerbrenner" (150 Matches) — Karriere-Meilenstein, v8.6 ergänzt
   // Negative — nur die seltenen, "krassen" Niederlagen
   'mr_disaster','nemesis','perfect_loss',
   // v9.5: explizit als News gewünscht (negativ, aber „immer newsworthy")
