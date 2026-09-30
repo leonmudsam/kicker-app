@@ -87,6 +87,11 @@
        Stellen in vier Tönen und --bronze war gar nicht erst definiert. */
     --silber:#C2C9D0; --bronze:#C08457;
     --r:18px; --r-sm:12px;
+    /* Die Strichstärke der Zeichen [§C27]. Sie stand an 78 Stellen und in
+       13 Werten zwischen 1 und 3,4 — dieselbe Krone war in der Liga dünner
+       als im Blatt. Zeichen ab 18 px setzen --strich:1.75, das Motiv der
+       Stories 1.4, sonst gilt dieser Wert. */
+    --strich:2;
     --safe-top:env(safe-area-inset-top,0px);
     --safe-bot:env(safe-area-inset-bottom,0px);
     --shadow:0 12px 40px -8px rgba(0,0,0,.6);
@@ -510,7 +515,7 @@
   .nw-recap .ic{flex-shrink:0;width:36px;height:36px;border-radius:11px;
     background:rgba(190,242,100,.12);display:grid;place-items:center;color:var(--acid)}
   .nw-recap .ic svg{width:18px;height:18px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .nw-recap .tx{flex:1;min-width:0}
   .nw-recap .tx b{display:block;font-size:13px;font-weight:700;letter-spacing:-.01em}
   .nw-recap .tx i{display:block;font-style:normal;font-size:10px;color:var(--muted);
@@ -614,7 +619,7 @@
     background:var(--surface2);border:1px solid var(--line2);border-radius:20px;
     padding:3px 10px;font-size:10px;font-weight:700;color:var(--rc,var(--ink))}
   .rangab svg{width:11px;height:11px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rangab.gross{padding:6px 14px;font-size:13px}
   .rangab.gross svg{width:14px;height:14px}
   /* ============ [§C7] MATCH BUILDER ============ */
@@ -795,7 +800,7 @@
   .aw-shame-divider .line.r{background:linear-gradient(to left,transparent,rgba(240,86,106,.4))}
   .aw-shame-divider .lbl{display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
     font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--red)}
-  .aw-shame-divider .lbl svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;
+  .aw-shame-divider .lbl svg{width:14px;height:14px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
 
   /* ════════════════════════════════════════════════════════════════
@@ -942,7 +947,7 @@
   /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============ */
   .aw-hero-icon{display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
   .aw-hero-icon-glow{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;position:relative}
-  .aw-hero-icon-glow svg{width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .aw-hero-icon-glow svg{width:32px;height:32px;stroke:currentColor;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .aw-hero-icon-glow.gold  {background:rgba(247,207,74,.12); color:var(--gold);  box-shadow:0 0 60px rgba(247,207,74,.18)}
   .aw-hero-icon-glow.acid  {background:rgba(190,242,100,.12); color:var(--acid);  box-shadow:0 0 60px rgba(190,242,100,.18)}
   .aw-hero-icon-glow.blue  {background:rgba(86,180,232,.12); color:var(--blue);  box-shadow:0 0 60px rgba(86,180,232,.18)}
@@ -988,7 +993,7 @@
   .aw-why{margin-top:18px;background:linear-gradient(135deg,rgba(190,242,100,.04),var(--surface) 55%);
     border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start}
   .aw-why-ic{color:var(--acid);flex-shrink:0;margin-top:1px}
-  .aw-why-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .aw-why-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .aw-why-content{flex:1;min-width:0}
   .aw-why-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace;margin-bottom:5px}
   .aw-why-body{font-size:12.5px;color:var(--ink2);line-height:1.55}
@@ -1055,7 +1060,7 @@
   .rek-gruppe.shame{color:var(--red)}
   .rek-g-ic{display:grid;place-items:center;flex-shrink:0}
   .rek-g-ic svg{width:13px;height:13px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rek-g-line{flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent)}
   .rek-g-z{font-size:11px;color:var(--muted)}
 
@@ -1081,7 +1086,7 @@
   .rek.offen .rek-ic{background:transparent;border-style:dashed;
     border-color:var(--line2);color:var(--faint)}
   .rek-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   /* Kein Flex-Container: ein Flex-Kind wird BLOCKIFIZIERT, und damit ist
      `display:-webkit-box` am Beleg wirkungslos — die Klammer auf zwei Zeilen
      griff nie, und ein einzelnes „%" stand auf einer dritten Zeile. */
@@ -1247,7 +1252,7 @@
     background:rgba(190,242,100,.16);display:grid;place-items:center;
     color:var(--acid);flex-shrink:0;font-size:22px;line-height:1;
     filter:drop-shadow(0 2px 4px rgba(190,242,100,.3))}
-  .ach-toast-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ach-toast-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .ach-toast-text{flex:1;min-width:0}
   .ach-toast-cat{font-size:9px;text-transform:uppercase;letter-spacing:.14em;
     color:var(--acid);font-family:'Sometype Mono',monospace;font-weight:700;line-height:1}
@@ -1543,7 +1548,7 @@
   .pp-pos-side .ic{position:absolute;top:5px;opacity:.55}
   .pp-pos-side.atk .ic{left:8px}
   .pp-pos-side.def .ic{right:8px}
-  .pp-pos-side .ic svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.2}
+  .pp-pos-side .ic svg{width:11px;height:11px;stroke:currentColor;fill:none;}
   .pp-pos-side .v{font-size:18px;line-height:1}
   .pp-pos-side .v small{font-size:11px;font-weight:400;opacity:.7}
   .pp-pos-side .lbl{font-size:8px;letter-spacing:.16em;text-transform:uppercase;font-family:'Sometype Mono',monospace;font-weight:700;margin-top:3px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -1567,7 +1572,7 @@
     font-family:'Sometype Mono',monospace;text-transform:uppercase;letter-spacing:.14em;
     font-weight:700;line-height:1}
   .pp-rd-lbl .ic{display:grid;place-items:center;width:13px;height:13px}
-  .pp-rd-lbl .ic svg{width:13px;height:13px;stroke-width:2;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+  .pp-rd-lbl .ic svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .pp-rd.atk .pp-rd-lbl{color:var(--orange)}
   .pp-rd.def .pp-rd-lbl{color:var(--blue)}
   .pp-rd-meta{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.45;
@@ -1590,7 +1595,7 @@
   .pp-r-rich .av.empty{background:var(--surface3);color:var(--muted);font-size:14px}
   .pp-r-rich .info{flex:1;min-width:0}
   .pp-r-rich .l{font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);font-family:'Sometype Mono',monospace;display:flex;align-items:center;gap:4px;line-height:1}
-  .pp-r-rich .l svg{width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:2}
+  .pp-r-rich .l svg{width:10px;height:10px;stroke:currentColor;fill:none;}
   .pp-r-rich .name{font-family:'Archivo Black',sans-serif;font-size:12.5px;letter-spacing:-.01em;margin-top:4px;line-height:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .pp-r-rich .stat{font-family:'Sometype Mono',monospace;font-size:10.5px;margin-top:3px;font-weight:600}
   .pp-r-rich.good .stat .v{color:var(--acid)}
@@ -1614,7 +1619,7 @@
     background:linear-gradient(135deg,var(--pp-tier-1,var(--acid)),var(--pp-tier-2,var(--acid2)));
     display:grid;place-items:center;flex-shrink:0;
     box-shadow:0 0 14px var(--pp-tier-glow,rgba(190,242,100,.3))}
-  .pp-rank-icon svg{width:20px;height:20px;stroke:#0a0c0b;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .pp-rank-icon svg{width:20px;height:20px;stroke:#0a0c0b;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-rank-tier-text{min-width:0}
   .pp-rank-label{font-family:'Archivo Black',sans-serif;font-size:17px;letter-spacing:-.01em;
     color:var(--pp-tier-1,var(--ink));line-height:1;
@@ -1702,8 +1707,14 @@
 
   /* ============ [§C16] ICON SYSTEM ============ */
   .ic{display:inline-grid;place-items:center;vertical-align:middle;line-height:1}
+  /* Ein Strich für jedes Zeichen des Katalogs (24er-Raster). Die Regel steht
+     HIER und nirgends sonst; ein Behälter setzt höchstens --strich. Sie
+     überschreibt auch ein stroke-width am <svg> im Markup: dort standen
+     2,2 und 2,5 neben 2, und Stern und Krone liefen mit spitzen Ecken neben
+     runden Zeichen. */
+  svg[viewBox="0 0 24 24"]{stroke-width:var(--strich);stroke-linecap:round;stroke-linejoin:round}
   .ic svg{display:block;width:1em;height:1em;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Die Zeichenkachel [§C27] (zkHtml). Drei Größen, sechs Töne nach den
      Rollen des Farbgesetzes [§C25]; ohne Ton Metall. Getönt ist nur die
@@ -1713,11 +1724,11 @@
     background:linear-gradient(160deg,rgba(var(--ztr),.16),rgba(var(--ztr),.06));
     box-shadow:inset 0 0 0 1px rgba(var(--ztr),.22),inset 0 1px 0 rgba(255,255,255,.05)}
   .zk svg{display:block;width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .zk.k{--z:28px}
-  .zk.k svg{width:15px;height:15px;stroke-width:2}
+  .zk.k svg{width:15px;height:15px;}
   .zk.g{--z:48px}
-  .zk.g svg{width:24px;height:24px;stroke-width:1.6}
+  .zk.g svg{width:24px;height:24px;--strich:1.75;}
   .zk.gold  {--zt:var(--gold);  --ztr:247,207,74}
   .zk.rot   {--zt:var(--red);   --ztr:240,86,106}
   .zk.gruen {--zt:var(--acid);  --ztr:190,242,100}
@@ -1755,70 +1766,70 @@
   /* Rang-Tier Icon-Container (👑🥇🥈🥉 -> SVG) */
   .tier-ic{display:inline-grid;place-items:center;width:18px;height:18px;color:inherit}
   .tier-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Lock/Settings-Button – Inhalt jetzt SVG */
   .lock-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Award-Empty-State Icon-Wrapper */
   .ee.svg-ic{display:grid;place-items:center;color:var(--faint)}
   .ee.svg-ic svg{width:48px;height:48px;stroke:currentColor;fill:none;
-    stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Award-Card mit SVG-Icon (override emoji font-size) */
   .award .emoji.svg-ic{color:inherit}
   .award .emoji.svg-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Trophäen-Karten im Profil – kleinere SVGs statt 34px Emoji */
   .pp-tr .ic.svg-ic{display:grid;place-items:center;width:38px;height:38px;margin:0 auto 7px;
     color:var(--gold);filter:drop-shadow(0 4px 9px rgba(247,207,74,.35))}
   .pp-tr.team .ic.svg-ic{color:var(--blue);filter:drop-shadow(0 4px 9px rgba(86,180,232,.35))}
   .pp-tr .ic.svg-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
 
   /* Award-Slots im Profil */
   .pp-aw .ic.svg-ic{display:grid;place-items:center;width:24px;height:24px;margin:0 auto 3px;color:var(--ink2)}
   .pp-aw .ic.svg-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-aw.empty .ic.svg-ic{color:var(--faint);opacity:.5}
 
   /* Rang-Steps */
   .pp-rk .ic.svg-ic{display:grid;place-items:center;width:22px;height:22px;margin:0 auto 4px;color:var(--ink2)}
   .pp-rk .ic.svg-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-rk.active .ic.svg-ic{color:var(--pp-tier-1);filter:drop-shadow(0 0 7px var(--pp-tier-glow))}
 
   /* Position-Header im Profil (Sturm/Abwehr) */
   .pp-pos-c .h .ic.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px}
   .pp-pos-c .h .ic.svg-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;
-    stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Inline-Icon im Profil-Header Section-Title */
   .pp-sec-title .l .ic.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px;color:var(--ink2)}
   .pp-sec-title .l .ic.svg-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Mate/Fav-Row Icons */
   .pp-r .l .ic.svg-ic{display:inline-grid;place-items:center;width:13px;height:13px;color:var(--ink2);margin-right:4px;vertical-align:-2px}
   .pp-r .l .ic.svg-ic svg{width:13px;height:13px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Inline-Position-Tag */
   .lf .ic.svg-ic, .rt .ic.svg-ic{display:inline-grid;place-items:center;width:11px;height:11px;vertical-align:-1px}
   .lf .ic.svg-ic svg, .rt .ic.svg-ic svg{width:11px;height:11px;stroke:currentColor;fill:none;
-    stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* Match-Highlight im Verlauf */
   .match-trophy.svg-ic{display:inline-grid;place-items:center;width:22px;height:22px;color:var(--gold)}
   .match-trophy.svg-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .match-small.svg-ic{display:inline-grid;place-items:center;width:14px;height:14px;vertical-align:-2px}
   .match-small.svg-ic.win{color:var(--gold)}
   .match-small.svg-ic.tie{color:var(--ink2)}
   .match-small.svg-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
 
   /* ════════════════════════════════════════════════════════════
      ─── PLAYER PROFILE — V3 OVERHAUL ───
@@ -1832,7 +1843,7 @@
     background:var(--surface);border:1px solid var(--line);
     font-size:11px;color:var(--ink2);font-weight:500;line-height:1}
   .pp-pill svg{width:12px;height:12px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-tier-legende    .pp-pill.tier{background:linear-gradient(180deg,rgba(247,207,74,.16),rgba(247,207,74,.06));border-color:rgba(247,207,74,.4);color:var(--gold)}
   .pp-tier-elite      .pp-pill.tier{background:linear-gradient(180deg,rgba(167,139,250,.16),rgba(167,139,250,.06));border-color:rgba(167,139,250,.4);color:var(--purple)}
   .pp-tier-stark      .pp-pill.tier{background:linear-gradient(180deg,rgba(190,242,100,.16),rgba(190,242,100,.06));border-color:rgba(190,242,100,.4);color:var(--acid)}
@@ -1856,7 +1867,7 @@
     display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:6px;line-height:1;
   }
   .pp-et-col .label svg{width:10px;height:10px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-et-col .val{font-family:'Archivo Black',sans-serif;font-size:24px;
     letter-spacing:-.02em;line-height:1;color:var(--ink)}
   .pp-et-col.now .val{color:var(--acid)}
@@ -1908,9 +1919,9 @@
   .pp-badges-card:active{transform:scale(.985)}
   .pp-badges-strip{display:flex;gap:7px;flex-wrap:wrap;color:var(--ink2);flex:1;min-width:0}
   .pp-badges-strip svg{width:20px;height:20px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .pp-badges-card .chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
-  .pp-badges-card .chev svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;
+  .pp-badges-card .chev svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-linecap:round;stroke-linejoin:round}
 
   /* ════════════════════════════════════════════════════════════════
@@ -1923,7 +1934,7 @@
   .pp-bcard-strip{flex:1;min-width:0;display:flex;gap:6px;align-items:center}
   .pp-bmini{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
     border:1px solid var(--line2);background:var(--bg2);flex-shrink:0;color:var(--ink2)}
-  .pp-bmini svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;
+  .pp-bmini svg{width:15px;height:15px;stroke:currentColor;fill:none;
     stroke-linecap:round;stroke-linejoin:round}
   .pp-bmini.legendary{color:var(--gold);border-color:rgba(247,207,74,.4)}
   .pp-bmini.rare{color:var(--purple);border-color:rgba(167,139,250,.38)}
@@ -1932,7 +1943,7 @@
   .pp-bcard-rest{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace;
     font-weight:700;margin-left:3px}
   .pp-bcard-chev{color:var(--muted);flex-shrink:0;display:grid;place-items:center}
-  .pp-bcard-chev svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;
+  .pp-bcard-chev svg{width:14px;height:14px;stroke:currentColor;fill:none;
     stroke-linecap:round}
   .pp-bcard-bar{height:3px;background:var(--bg2);border-radius:99px;display:flex;
     overflow:hidden;gap:2px;margin-top:10px}
@@ -1973,7 +1984,7 @@
     padding:14px;padding-top:18px;text-align:center;position:relative;overflow:hidden;transition:.15s}
   .bsh-card-ic{font-size:30px;margin-bottom:10px;display:flex;justify-content:center;
     align-items:center;min-height:32px}
-  .bsh-card-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:2;
+  .bsh-card-ic svg{width:30px;height:30px;stroke:currentColor;fill:none;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round}
   .bsh-card-name{font-weight:700;font-size:13px;margin-bottom:4px;letter-spacing:-.005em}
   .bsh-card-desc{font-size:10.5px;color:var(--muted);line-height:1.4;margin-bottom:8px}
@@ -2040,7 +2051,7 @@
   .bp-ic.common{background:rgba(190,242,100,.12);color:var(--acid)}
   .bp-ic.negative{background:rgba(240,86,106,.12);color:var(--red)}
   .bp-ic.locked{background:var(--surface3);color:var(--muted)}
-  .bp-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;
+  .bp-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round}
   .bp-title{font-family:'Archivo Black',sans-serif;font-size:17px;line-height:1.1;letter-spacing:-.01em}
   .bp-desc{color:var(--ink2);font-size:11.5px;margin-top:5px;line-height:1.45}
@@ -2131,7 +2142,7 @@
   .st-card .st-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;margin-bottom:10px}
   .st-card.recap .st-ic{background:rgba(247,207,74,.14);color:var(--gold)}
   .st-card.pos .st-ic{background:rgba(86,180,232,.14);color:var(--blue)}
-  .st-card .st-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .st-card .st-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .st-card .st-tt{display:block;font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1.1;letter-spacing:-.01em}
   .st-card .st-su{display:block;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:4px}
   /* Das Mini-Popup ist entfallen [§11.5]; mit ihm die .nv-* Karte, ihre
@@ -2328,7 +2339,7 @@
     .nf-gross-band::after{animation:none;opacity:0}
     .nf-gross-band svg{animation:none;opacity:1}}
   .nf-gross-band svg{width:12px;height:12px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round;color:var(--gold);
+    stroke-linecap:round;stroke-linejoin:round;color:var(--gold);
     filter:drop-shadow(0 0 5px rgba(247,207,74,.38))}
   .nf-gross .nf-h{font-size:19px;line-height:1.1;-webkit-line-clamp:5}
   .nf-gross .nf-d{font-size:12.5px;-webkit-line-clamp:6}
@@ -2427,7 +2438,7 @@
     place-items:center;background:rgba(var(--story-rgb,185,196,189),.09);
     box-shadow:inset 0 0 0 1px rgba(var(--story-rgb,185,196,189),.17)}
   .nf-rub svg{width:11px;height:11px;flex-shrink:0;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .nf-rub b{font-size:9px;font-weight:700;overflow:hidden;text-overflow:ellipsis;
     white-space:nowrap;letter-spacing:.17em}
   .nf-gr{display:grid;grid-template-columns:1fr;gap:12px;padding:11px 13px 12px;align-items:start}
@@ -2635,7 +2646,7 @@
   .nf-sam-i{width:20px;height:20px;flex:0 0 auto;border-radius:6px;
     display:grid;place-items:center;background:var(--surface2);
     border:1px solid var(--line);color:var(--muted)}
-  .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2}
+  .nf-sam-i svg{width:12px;height:12px;fill:none;stroke:currentColor;}
   /* Gemischte Tafel-Momente bleiben eine Karte, aber nicht eine graue Liste:
      jede Zeile trägt den dezenten Farbton ihres Inhalts. */
   .nf-s-tafel .nf-sam-z{--zeile-rgb:135,168,178;border-left:2px solid
@@ -2711,7 +2722,7 @@
   .nf-bd{display:flex;align-items:center;gap:10px;padding:9px 13px;border-top:1px solid var(--line)}
   .nf-bd-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;flex:0 0 auto;
     background:var(--surface2);color:var(--ink2)}
-  .nf-bd-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;
+  .nf-bd-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   .nf-bd-legendary{background:rgba(247,207,74,.14);color:var(--gold)}
   .nf-bd-rare{background:rgba(86,180,232,.12);color:var(--blue)}
@@ -2756,7 +2767,7 @@
   .nf-motiv{position:absolute;right:9px;top:50%;width:96px;height:96px;
     transform:translateY(-50%) rotate(-9deg);pointer-events:none;z-index:0;
     opacity:.08;color:var(--story,var(--ink2))}
-  .nf-motiv svg{width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.4;
+  .nf-motiv svg{width:100%;height:100%;fill:none;stroke:currentColor;--strich:1.4;
     stroke-linecap:round;stroke-linejoin:round}
   /* Ein weicher Schein hinter dem Zeichen. Als reine Kontur bei sechs Prozent
      war das Motiv auf dem Telefon kaum von einem Kratzer zu unterscheiden. */
@@ -2777,7 +2788,7 @@
   .nf-card > *:not(.nf-motiv){position:relative;z-index:1}
   .nf-chev{align-self:center;flex:0 0 auto;color:var(--faint);display:flex;
     margin-left:2px}
-  .nf-chev svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:2.2;
+  .nf-chev svg{width:15px;height:15px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
   .nf-card:active .nf-chev{color:var(--ink2)}
   /* Der Winkel ist die dritte Spalte des Rasters — ohne sie stuende er unter
@@ -2787,7 +2798,7 @@
   /* Betont wird das Ergebnis, die Zahl und der Name — mehr waere wieder
      gleich laut. */
   .nf-d b{color:var(--ink);font-weight:700}
-  .nf-when svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2;
+  .nf-when svg{width:10px;height:10px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round;opacity:.55}
   /* Die Zone links ist abgetrennt: Wappen, Ergebnis oder Wert stehen fuer
      sich, der Satz beginnt dahinter. */
@@ -2853,7 +2864,7 @@
   /* Die Filterchips tragen dasselbe Zeichen wie das Rubrikband der Karten,
      zu denen sie filtern [§C27]. */
   .nf-chip-f svg{width:12px;height:12px;margin-right:6px;vertical-align:-2px;
-    fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
 
   /* ── Das Blatt: die Zeilen der Wochen- und Sammelkarte ────────────
      Der Kopf fasst zusammen; alle Einzelereignisse stehen gleichrangig
@@ -2937,7 +2948,7 @@
     background:radial-gradient(150px 110px at 14% 0%,rgba(255,255,255,.05),transparent 70%),var(--bg2)}
   .nd-med-r{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;
     background:var(--surface);box-shadow:inset 0 0 0 2px var(--line2)}
-  .nd-med-r svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;
+  .nd-med-r svg{width:30px;height:30px;fill:none;stroke:currentColor;--strich:1.75;
     stroke-linecap:round;stroke-linejoin:round;color:var(--ink2)}
   .nd-med-n{font-family:'Archivo Black',sans-serif;font-size:16px;line-height:1.15;
     letter-spacing:-.02em}
@@ -3037,7 +3048,7 @@
   .nd-desc b{color:var(--ink);font-weight:700}
   .nd-satz b{color:var(--ink);font-weight:700}
   .nd-when{display:flex;align-items:center;gap:6px}
-  .nd-when svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:2;
+  .nd-when svg{width:10px;height:10px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round;opacity:.6}
   /* Breaking bleibt auch im Blatt Breaking: derselbe Balken, derselbe Puls. */
   .nd.nd-brk{border-color:rgba(240,86,106,.5);
@@ -3077,7 +3088,7 @@
     border-radius:18px 18px 0 0;
     background:linear-gradient(90deg,var(--story,var(--line2)),transparent 78%)}
   .nd-brk::before{background:linear-gradient(90deg,var(--red),transparent 70%)}
-  .nd-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .nd-ic svg{width:24px;height:24px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .nd-title-wrap{flex:1;min-width:0}
   .nd-cat{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.13em;
     font-family:'Sometype Mono',monospace;color:var(--story,var(--muted));margin-bottom:3px}
@@ -3284,7 +3295,7 @@
     margin:0 auto 10px;background:rgba(247,207,74,.15);color:var(--gold);filter:none}
   .pp-tr.team .ic.svg-ic{background:rgba(86,180,232,.15);color:var(--blue);filter:none}
   .pp-tr .ic.svg-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-tr .ti{font-size:11px;font-weight:700;line-height:1.25;margin-bottom:4px;color:var(--ink)}
   .pp-tr .su{font-size:10px;color:var(--muted);font-family:'Sometype Mono',monospace}
 
@@ -3296,7 +3307,7 @@
   .pp-aw .ic.svg-ic{width:32px;height:32px;border-radius:10px;background:var(--surface3);
     color:var(--ink2);display:grid;place-items:center;margin:0 auto 8px}
   .pp-aw .ic.svg-ic svg{width:16px;height:16px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-aw .nm{font-size:9.5px;line-height:1.25;color:var(--ink2);margin-bottom:6px}
   .pp-aw .num{font-family:'Archivo Black',sans-serif;font-size:18px;color:var(--acid);line-height:1}
   .pp-aw.empty .num{color:var(--muted)}
@@ -3325,7 +3336,7 @@
     font-size:10px;color:var(--muted);margin-bottom:10px;font-family:'Sometype Mono',monospace}
   .pp-posprof .pph .lf,.pp-posprof .pph .rt{display:inline-flex;align-items:center;gap:4px}
   .pp-posprof .pph svg{width:11px;height:11px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-posprof .pph .pct{color:var(--ink);font-weight:700}
   .pp-posprof .pp-slider{position:relative;height:6px;background:var(--surface3);border-radius:3px}
   /* Der Strahl gehoert der Seite, die ueberwiegt, und laeuft von dort zur
@@ -3358,7 +3369,7 @@
     color:var(--red);padding:12px;border-radius:13px;font-family:inherit;font-size:12px;
     font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
   .pp-del button svg{width:13px;height:13px;stroke:currentColor;fill:none;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   /* ─── ENDE PLAYER PROFILE V3 OVERHAUL ─── */
 
 
@@ -3378,7 +3389,7 @@
      der Breite nahm es der Beschriftung den Platz, den sie braucht. */
   .wk-hl-kopf{display:flex;align-items:center;gap:4px;min-width:0}
   .wk-hl-ic{flex:0 0 auto;display:flex;color:var(--faint);opacity:.65}
-  .wk-hl-ic svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  .wk-hl-ic svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .wk-hl-label{font-size:7.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
     font-family:'Sometype Mono',monospace;font-weight:700;
     min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3467,7 +3478,7 @@
   /* Tier Pill in Liga-Liste (Gesamt-Ansicht) */
   .tier-pill{display:inline-flex;align-items:center;gap:4px;font-family:'Sometype Mono',monospace;
     font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.02em}
-  .tier-pill svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .tier-pill svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .tier-pill.t-legende    {color:var(--gold);background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.22)}
   .tier-pill.t-elite      {color:var(--purple);background:rgba(167,139,250,.10);border:1px solid rgba(167,139,250,.22)}
   .tier-pill.t-stark      {color:var(--acid);background:rgba(190,242,100,.10);border:1px solid rgba(190,242,100,.22)}
@@ -3479,7 +3490,7 @@
   .rcp-label{display:inline-flex;align-items:center;gap:6px;font-family:'Sometype Mono',monospace;
     font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
     padding:5px 12px;background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.3);border-radius:99px}
-  .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .rcp-month{font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-.03em;margin-top:10px;line-height:1}
   .rcp-meta{font-size:11.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:6px;letter-spacing:.04em}
   /* Der Monatsstreifen steht mittig wie alles andere im Kopf; im Liga-Tab
@@ -3524,7 +3535,7 @@
   .rcp-aw.gold::before{background:var(--gold)}
   .rcp-aw.metall::before{background:var(--line2)}
   .rcp-aw-ic{width:32px;height:32px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;flex-shrink:0}
-  .rcp-aw-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-aw-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .rcp-aw.orange .rcp-aw-ic{color:var(--orange)}
   .rcp-aw.purple .rcp-aw-ic{color:var(--purple)}
   .rcp-aw.acid .rcp-aw-ic{color:var(--acid)}
@@ -3652,7 +3663,7 @@
   .rcp-notiz.klick:active{background:var(--surface2)}
   .rcp-notiz-ic{flex:0 0 auto;display:grid;place-items:center;color:var(--acid)}
   .rcp-notiz-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rcp-notiz-tx{flex:1;min-width:0;font-size:11.5px;color:var(--ink2);line-height:1.4}
   .rcp-notiz-tx b{color:var(--acid);font-weight:700}
 
@@ -3669,7 +3680,7 @@
     display:grid;place-items:center;color:var(--tt,var(--muted));
     background:var(--surface2)}
   .rcp-zeile-ic svg{width:15px;height:15px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rcp-zeile-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
   .rcp-zeile-n{font-size:13px;font-weight:700;letter-spacing:-.01em;color:var(--ink);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3767,7 +3778,7 @@
     border:1px solid rgba(var(--c,247,207,74),.3);border-radius:99px;
     position:relative;z-index:1}
   .aw-winner-badge svg{width:11px;height:11px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   /* Eigene Zeile, mittig: als inline-block stellte sich das Wappen neben
      die Aufschrift, sobald beide zusammen in die Breite passten. */
   .aw-winner-av-wrap{position:relative;display:block;width:fit-content;
@@ -3791,7 +3802,7 @@
   /* SVG-Krone: kleiner, in den Avatar-Rand integriert, Farbe matcht das Award (--c).
      Doppel-Filter: dunkler Drop-Shadow für Tiefe, plus Award-Color-Glow für Branding. */
   .aw-winner-crown svg{width:20px;height:20px;stroke:rgb(var(--c,247,207,74));fill:none;
-    stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;display:block;
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round;display:block;
     filter:drop-shadow(0 2px 4px rgba(0,0,0,.6)) drop-shadow(0 0 6px rgba(var(--c,247,207,74),.7))}
   .aw-winner-marker{position:absolute;top:-10px;right:-6px;width:28px;height:28px;border-radius:50%;
     background:#dc2626;border:2px solid var(--surface);display:grid;place-items:center;
@@ -3816,7 +3827,7 @@
     margin:14px 0 4px;z-index:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.35))}
   /* SVG-Krone für Shared Hero: Farbe matcht das Award (--c), kleiner als vorher (24px statt 30px) */
   .aw-winner-shared-marker svg{width:24px;height:24px;stroke:rgb(var(--c,247,207,74));fill:none;
-    stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round;
     filter:drop-shadow(0 4px 8px rgba(var(--c,247,207,74),.55))}
   .aw-winner-shared-marker.shame{filter:drop-shadow(0 2px 8px rgba(220,38,38,.5))}
   .aw-winner-shared-grid{display:flex;flex-direction:column;gap:8px;margin:12px 0 10px;position:relative;z-index:1}
@@ -3848,12 +3859,12 @@
     background:radial-gradient(circle,rgba(247,207,74,.13),transparent 65%);pointer-events:none}
   .potw-recap-ic{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
     background:rgba(247,207,74,.16);color:var(--gold);flex-shrink:0;position:relative;z-index:1}
-  .potw-recap-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .potw-recap-ic svg{width:18px;height:18px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .potw-recap-text{flex:1;min-width:0;position:relative;z-index:1}
   .potw-recap-label{font-family:'Archivo Black',sans-serif;font-size:13.5px;letter-spacing:-.01em;line-height:1.1}
   .potw-recap-sub{font-size:10px;color:var(--muted);margin-top:3px;font-family:'Sometype Mono',monospace;letter-spacing:.04em}
   .potw-recap-arrow{color:var(--muted);flex-shrink:0;display:grid;place-items:center;position:relative;z-index:1}
-  .potw-recap-arrow svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .potw-recap-arrow svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
 
   /* ============ [§C21] SAISON-POSITIONSVERLAUF ============ */
   /* Bottom-Sheet mit Liniendiagramm: Tabellenposition jedes Saison-Spielers
@@ -3863,7 +3874,7 @@
     background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:14px}
   .posv-info-ic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
     background:var(--acid-deep);color:var(--acid);flex-shrink:0;font-size:16px}
-  .posv-info-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .posv-info-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .posv-info-text{flex:1;min-width:0}
   .posv-info-title{font-family:'Archivo Black',sans-serif;font-size:13px;line-height:1.1}
   .posv-info-sub{font-size:11px;color:var(--muted);margin-top:2px;font-family:'Sometype Mono',monospace;letter-spacing:.04em}
@@ -3935,7 +3946,7 @@
     display:grid;place-items:center}
   .posv-refresh:active{color:var(--acid)}
   .posv-refresh.spin{transform:rotate(360deg)}
-  .posv-refresh svg{width:13px;height:13px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .posv-refresh svg{width:13px;height:13px;display:block;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
 
   .posv-empty{padding:32px 20px;text-align:center;color:var(--muted);
     background:var(--surface);border:1px solid var(--line);border-radius:14px;
@@ -4170,7 +4181,7 @@
     vertical-align:-2px;color:var(--tt);pointer-events:none;flex:0 0 auto;
     filter:drop-shadow(0 0 5px rgba(var(--ttr),.4))}
   .tmark svg{width:14px;height:14px;display:block;fill:none;stroke:currentColor;
-    stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .tmark i{font-family:'Sometype Mono',monospace;font-size:9px;font-style:normal;
     line-height:1;opacity:.85;letter-spacing:-.02em}
   .tmark.lg{vertical-align:-3px}
@@ -4181,7 +4192,7 @@
   /* Laufende Saison: gestrichelter Ring — dieser Eintrag kann noch kippen. */
   .tmark.live{border:1px dashed rgba(var(--ttr),.42);border-radius:50%;
     padding:1.5px;margin-left:5px;filter:none;opacity:.72}
-  .tmark.live svg{width:11px;height:11px;stroke-width:2}
+  .tmark.live svg{width:11px;height:11px;}
   .tmark.live.lg svg{width:12px;height:12px}
 
   /* ── Der eine Liga-Rekord: eine Karte, keine Liste ────────────────── */
@@ -4196,7 +4207,7 @@
     display:grid;place-items:center;color:var(--tt);
     background:rgba(var(--ttr),.13);box-shadow:inset 0 0 0 1px rgba(var(--ttr),.18)}
   .chron-one .ic svg{width:19px;height:19px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .chron-one .ic.av{background:none;box-shadow:none}
   .chron-one .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
   .chron-one .tx .n{font-family:'Archivo Black',sans-serif;font-size:14px;
@@ -4229,7 +4240,7 @@
   .chline:active{background:var(--surface2)}
   .chline .ic{width:20px;height:20px;flex:0 0 auto;color:var(--tt);display:grid;place-items:center}
   .chline .ic svg{width:15px;height:15px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .chline .n{flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--ink);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .chline .hd{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:10.5px;
@@ -4242,7 +4253,7 @@
   .chron-hero .ic{width:40px;height:40px;flex:0 0 auto;border-radius:13px;
     display:grid;place-items:center;color:var(--tt);background:rgba(var(--ttr),.14)}
   .chron-hero .ic svg{width:21px;height:21px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    --strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .chron-hero .c{font-size:11.5px;color:var(--ink2);line-height:1.5}
 
   /* ── Avatar-Status-Ring (§13.7) ───────────────────────────────────── */
@@ -4267,13 +4278,13 @@
     background:var(--bg);color:var(--tt);
     box-shadow:0 0 0 2px rgba(var(--ttr),.55),0 0 14px rgba(var(--ttr),.5)}
   .pp-av-mark svg{width:15px;height:15px;fill:none;stroke:currentColor;
-    stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-ring-chip{display:inline-flex;align-items:center;gap:7px;margin:8px auto 0;
     padding:5px 11px 5px 8px;border-radius:999px;
     background:rgba(var(--ttr),.10);border:1px solid rgba(var(--ttr),.28)}
   .pp-ring-chip .i{display:grid;place-items:center;color:var(--tt)}
   .pp-ring-chip .i svg{width:14px;height:14px;fill:none;stroke:currentColor;
-    stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .pp-ring-chip b{font-size:11.5px;font-weight:700;color:var(--tt)}
   .pp-ring-chip .s{font-size:10px;color:var(--ink2)}
 
@@ -5198,7 +5209,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.efb80bf8';
+const BUILD_VERSION='2026.09.30.1fe967ef';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());

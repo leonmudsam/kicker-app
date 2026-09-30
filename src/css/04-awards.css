@@ -84,7 +84,7 @@
   .aw-shame-divider .line.r{background:linear-gradient(to left,transparent,rgba(240,86,106,.4))}
   .aw-shame-divider .lbl{display:flex;align-items:center;gap:7px;font-family:'Sometype Mono',monospace;
     font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--red)}
-  .aw-shame-divider .lbl svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;
+  .aw-shame-divider .lbl svg{width:14px;height:14px;fill:none;stroke:currentColor;
     stroke-linecap:round;stroke-linejoin:round}
 
   /* ════════════════════════════════════════════════════════════════
@@ -231,7 +231,7 @@
   /* ============ [§C9] AWARDS V2 — DETAIL SHEET ============ */
   .aw-hero-icon{display:flex;flex-direction:column;align-items:center;padding:4px 0 6px}
   .aw-hero-icon-glow{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;position:relative}
-  .aw-hero-icon-glow svg{width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .aw-hero-icon-glow svg{width:32px;height:32px;stroke:currentColor;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .aw-hero-icon-glow.gold  {background:rgba(247,207,74,.12); color:var(--gold);  box-shadow:0 0 60px rgba(247,207,74,.18)}
   .aw-hero-icon-glow.acid  {background:rgba(190,242,100,.12); color:var(--acid);  box-shadow:0 0 60px rgba(190,242,100,.18)}
   .aw-hero-icon-glow.blue  {background:rgba(86,180,232,.12); color:var(--blue);  box-shadow:0 0 60px rgba(86,180,232,.18)}
@@ -277,7 +277,7 @@
   .aw-why{margin-top:18px;background:linear-gradient(135deg,rgba(190,242,100,.04),var(--surface) 55%);
     border:1px solid var(--line);border-radius:14px;padding:13px 14px;display:flex;gap:11px;align-items:flex-start}
   .aw-why-ic{color:var(--acid);flex-shrink:0;margin-top:1px}
-  .aw-why-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .aw-why-ic svg{width:18px;height:18px;stroke:currentColor;fill:none;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .aw-why-content{flex:1;min-width:0}
   .aw-why-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--acid);font-weight:700;font-family:'Sometype Mono',monospace;margin-bottom:5px}
   .aw-why-body{font-size:12.5px;color:var(--ink2);line-height:1.55}
@@ -344,7 +344,7 @@
   .rek-gruppe.shame{color:var(--red)}
   .rek-g-ic{display:grid;place-items:center;flex-shrink:0}
   .rek-g-ic svg{width:13px;height:13px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rek-g-line{flex:1;height:1px;background:linear-gradient(to right,var(--line),transparent)}
   .rek-g-z{font-size:11px;color:var(--muted)}
 
@@ -370,7 +370,7 @@
   .rek.offen .rek-ic{background:transparent;border-style:dashed;
     border-color:var(--line2);color:var(--faint)}
   .rek-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   /* Kein Flex-Container: ein Flex-Kind wird BLOCKIFIZIERT, und damit ist
      `display:-webkit-box` am Beleg wirkungslos — die Klammer auf zwei Zeilen
      griff nie, und ein einzelnes „%" stand auf einer dritten Zeile. */

@@ -3,7 +3,7 @@
   .rcp-label{display:inline-flex;align-items:center;gap:6px;font-family:'Sometype Mono',monospace;
     font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
     padding:5px 12px;background:rgba(247,207,74,.10);border:1px solid rgba(247,207,74,.3);border-radius:99px}
-  .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-label svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .rcp-month{font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-.03em;margin-top:10px;line-height:1}
   .rcp-meta{font-size:11.5px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:6px;letter-spacing:.04em}
   /* Der Monatsstreifen steht mittig wie alles andere im Kopf; im Liga-Tab
@@ -48,7 +48,7 @@
   .rcp-aw.gold::before{background:var(--gold)}
   .rcp-aw.metall::before{background:var(--line2)}
   .rcp-aw-ic{width:32px;height:32px;border-radius:10px;background:var(--surface2);display:grid;place-items:center;flex-shrink:0}
-  .rcp-aw-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .rcp-aw-ic svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
   .rcp-aw.orange .rcp-aw-ic{color:var(--orange)}
   .rcp-aw.purple .rcp-aw-ic{color:var(--purple)}
   .rcp-aw.acid .rcp-aw-ic{color:var(--acid)}
@@ -176,7 +176,7 @@
   .rcp-notiz.klick:active{background:var(--surface2)}
   .rcp-notiz-ic{flex:0 0 auto;display:grid;place-items:center;color:var(--acid)}
   .rcp-notiz-ic svg{width:17px;height:17px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rcp-notiz-tx{flex:1;min-width:0;font-size:11.5px;color:var(--ink2);line-height:1.4}
   .rcp-notiz-tx b{color:var(--acid);font-weight:700}
 
@@ -193,7 +193,7 @@
     display:grid;place-items:center;color:var(--tt,var(--muted));
     background:var(--surface2)}
   .rcp-zeile-ic svg{width:15px;height:15px;fill:none;stroke:currentColor;
-    stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    stroke-linecap:round;stroke-linejoin:round}
   .rcp-zeile-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
   .rcp-zeile-n{font-size:13px;font-weight:700;letter-spacing:-.01em;color:var(--ink);
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

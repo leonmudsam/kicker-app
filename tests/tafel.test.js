@@ -1403,6 +1403,32 @@ ok(_awNenner.zkNenner && _awNenner.zkNenner.gemeldet === _awNenner.zkNenner.geza
    'der Zirkus misst an den Pleiten des Duos, nicht an allen Partien',
    JSON.stringify(_awNenner.zkNenner));
 
+// ── Ein Strich für jedes Zeichen [§C27] ─────────────────────────────
+// Die Strichstärke stand an 78 Stellen in 13 Werten: dieselbe Krone war in
+// der Liga dünner als im Blatt, und ein stroke-width am <svg> im Markup
+// setzte 2,5 neben 2. Jetzt gibt es EINE Regel; ein Behälter setzt
+// höchstens --strich, und davon gibt es drei Werte.
+const _strich = (function(){
+  const html = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const css = (html.match(/<style[^>]*>[\s\S]*?<\/style>/gi) || [])
+    .join('\n').replace(/<\/?style[^>]*>/gi, '').replace(/\/\*[\s\S]*?\*\//g, ' ');
+  const eigene = [], werte = new Set();
+  let global = 0;
+  for(const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
+    const sel = m[1].trim(), body = m[2];
+    if(/url\(/.test(body)) continue;
+    if(sel === 'svg[viewBox="0 0 24 24"]' && /stroke-width:var\(--strich\)/.test(body)) global++;
+    else if(/\bsvg\b/.test(sel) && /(^|;)\s*stroke-width:/.test(body)) eigene.push(sel.replace(/\s+/g, ' ').slice(-40));
+    (body.match(/--strich:([\d.]+)/g) || []).forEach(v => werte.add(v.split(':')[1]));
+  }
+  return {eigene, global, werte:[...werte].sort()};
+})();
+ok(_strich.global === 1 && _strich.eigene.length === 0,
+   'jedes Zeichen zieht seinen Strich aus einer Regel',
+   _strich.eigene.join(' · ') || 'eine Regel');
+ok(_strich.werte.every(v => ['1.4', '1.75', '2'].includes(v)),
+   'die Strichstärke kennt drei Werte', _strich.werte.join(', '));
+
 console.log('\n' + '═'.repeat(60));
 console.log(fails === 0 ? `ALLE ${checks} CHECKS BESTANDEN` : `${fails} von ${checks} CHECKS FEHLGESCHLAGEN`);
 process.exit(fails === 0 ? 0 : 1);

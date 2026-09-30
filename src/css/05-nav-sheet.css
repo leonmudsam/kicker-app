@@ -104,7 +104,7 @@
     background:rgba(190,242,100,.16);display:grid;place-items:center;
     color:var(--acid);flex-shrink:0;font-size:22px;line-height:1;
     filter:drop-shadow(0 2px 4px rgba(190,242,100,.3))}
-  .ach-toast-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .ach-toast-ic svg{width:20px;height:20px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .ach-toast-text{flex:1;min-width:0}
   .ach-toast-cat{font-size:9px;text-transform:uppercase;letter-spacing:.14em;
     color:var(--acid);font-family:'Sometype Mono',monospace;font-weight:700;line-height:1}
