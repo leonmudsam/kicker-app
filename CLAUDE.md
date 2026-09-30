@@ -121,7 +121,15 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       die Leiter in der Machart von 35b-prestige.js [§C30],
                       vom Entwurf kommt der Schimmer —, dazu
                       Bewegung, die etwas erklärt, und neue gezeichnete
-                      Ansichten (aufwertung-2.html)
+                      Ansichten (aufwertung-2.html), und der Entwurf nur
+                      der Insignium-Leiter: die 23 Zeichen sind die
+                      Bilder der Vorlage, ausgeschnitten und freigestellt,
+                      je Rang werden nur die violetten Bildpunkte
+                      umgefärbt, dazu Glut, Hof, Glanz und die Zahl in der
+                      Raute, Schwellen 0 bis 4.500 und danach alle 500 eine
+                      Zacke, die Verwandlung als Bühne, die ganze Leiter
+                      in der Laufbahn, der Fun Fact dazu und 52 px
+                      (insignium.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
