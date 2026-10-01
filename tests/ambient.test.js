@@ -3185,7 +3185,7 @@ ok(_achsen.e.length === 0, 'ein einzelner Erfolg bleibt eine eigene Karte',
 // immer eine Partie samt allem, was aus ihr folgte — und genau das gehoert in
 // die Zeile [§C33].
 ok(_achsen.g[0] && _achsen.g[0].ti
-   === 'Durststrecke und gemeinsame Durststrecke in einer Partie für '
+   === 'Durststrecke für ' + _achsen.n0 + ' und gemeinsame Durststrecke für '
        + _achsen.n0 + ' und ' + _achsen.n1,
    'verknuepfte Spielstories nennen ihre Anlaesse in der Schlagzeile',
    (_achsen.g[0]||{}).ti);
@@ -4411,6 +4411,35 @@ const _brk = JSON.parse(K.eval(`JSON.stringify((function(){
   };
   return {gleich: bau(p[0].id), fremd: bau(p[1].id), mid: p[0].id};
 })())`));
+// ── Jeder Anlass nennt die, denen er gehört ─────────────────────────
+//    „Seltene Auszeichnung in einer Partie für Julian und Leo" stand über
+//    einer Auszeichnung, die nur Julian geholt hat, und „Enges Spiel und
+//    Rivalitätsmarke … für Martin, Jane und Maxi" warf Sieger und Rivalen in
+//    einen Topf [§C33].
+const _wem = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
+  const m = _newsTagMs(tage[tage.length - 1])[0];
+  const P = players.map(p => p.id), nm = i => pmap()[P[i]].name;
+  const w = new Date(mts(m));
+  const l = [
+    {id:'spiel_' + m.id, cat:'highlight', ic:'ball', when:w, prio:40, title:'Ein enges Spiel', desc:'10:8.',
+     dataRef:{type:'spiel', resultKind:'eng', matchId:m.id, playerIds:[P[2], P[3]], winners:[P[2], P[3]], losers:[P[0], P[4]]}},
+    {id:'wem-b', cat:'team', ic:'medal', when:w, prio:60, title:nm(2) + ': Mauer', desc:'Selten.',
+     dataRef:{type:'badge_unlocked', badgeId:'wall_badge', rarity:'rare', matchId:m.id, playerId:P[2], playerIds:[P[2]]}},
+    {id:'wem-r', cat:'duell', ic:'swords', when:w, prio:50, title:'50. Duell', desc:'50 Begegnungen.',
+     dataRef:{type:'rivalry_milestone', a:P[0], b:P[1], n:50, matchId:m.id}},
+    {id:'wem-k', cat:'highlight', ic:'flameBreak', when:w, prio:55, title:'Serie gerissen', desc:'Acht Siege.',
+     dataRef:{type:'streak_killer', matchId:m.id, streak:8, victimPid:P[4], breakerIds:[P[2], P[3]], playerIds:[P[2], P[3], P[4]]}}
+  ];
+  _cache._consolFrom = null;
+  const sam = _consolidateStories(l).filter(x => (x.dataRef||{}).type === 'sammel');
+  return {titel: sam.length ? sam[0].title : '', n: [0,1,2,3,4].map(nm)};
+})())`));
+ok(/Auszeichnung „[^“]+“ für /.test(_wem.titel) && _wem.titel.indexOf('“ für ' + _wem.n[2] + ' ') >= 0
+   && _wem.titel.indexOf('Serienbruch gegen ' + _wem.n[4]) >= 0
+   && / im engen Spiel$/.test(_wem.titel) && _wem.titel.indexOf(_wem.n[3]) < 0,
+   'eine Bündel-Schlagzeile nennt je Anlass, wem er gehört, die Auszeichnung mit Namen und das Ergebnis als Ort',
+   _wem.titel);
 ok(_brk.gleich.sammel === 1 && _brk.gleich.karten === 1,
    'zwei Breaking-Meldungen einer Partie werden EINE Karte',
    _brk.gleich.karten + ' Karten');

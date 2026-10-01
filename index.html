@@ -4573,7 +4573,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.01.338d8a66';
+const BUILD_VERSION='2026.10.01.22198fe3';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19202,10 +19202,56 @@ function _consolidateStories(list){
         brkBundle = (typeof _isBreaking === 'function')
           && teile.some(t => _isBreaking(t));
       } catch(e){}
-      if(motive.length){
-        const bild = _namenListe(motive);
-        neuTitel = `${bild.charAt(0).toUpperCase() + bild.slice(1)} in einer Partie`
-          + (namen.length && namen.length <= 3 ? ` für ${_namenListe(namen)}` : '');
+      const ERGEBNIS_ORT = {zu_null:'mit einem Sieg ohne Gegentor', upset:'im Favoritensturz',
+                            krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'im engen Spiel'};
+      const _eigene = t => {
+        const dt = (t && t.dataRef) || {};
+        if(dt.type === 'streak_killer' && dt.victimPid) return {wort:'gegen', pids:[dt.victimPid]};
+        if(dt.type === 'rivalry_milestone' && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
+        if(dt.type === 'top_clash' && dt.p1 && dt.p2) return {wort:'zwischen', pids:[dt.p1, dt.p2]};
+        if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
+        if(dt.type === 'badge_unlocked' && dt.playerId) return {wort:'für', pids:[dt.playerId]};
+        if(dt.type === 'win_streak' && dt.pid) return {wort:'für', pids:[dt.pid]};
+        if((dt.type === 'team_streak' || dt.type === 'team_loss_streak') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
+        return {wort:'für', pids:(t.playerIds || dt.playerIds || []).filter(Boolean)};
+      };
+      const phrasen = [], ortTeil = teile.find(t => { const dt = t.dataRef || {};
+        return (dt.type === 'spiel' || dt.type === 'match_result') && _motivVon(t); });
+      teile.forEach(t => {
+        if(t === ortTeil) return;
+        let mv = _motivVon(t);
+        if(!mv) return;
+        const bd = (t.dataRef || {}).type === 'badge_unlocked' && typeof BADGES !== 'undefined'
+          ? BADGES.find(b => b.id === (t.dataRef || {}).badgeId) : null;
+        const mk = (t.dataRef || {}).type === 'badge_marken' && ((t.dataRef || {}).marken || []).length === 1
+          ? t.dataRef.marken[0] : null;
+        if(bd && bd.name) mv += ` „${bd.name}“`;
+        else if(mk && mk.name) mv += ` „${mk.name}“`;
+        const e = _eigene(t), key = e.wort + '|' + [...new Set(e.pids)].sort().join();
+        const da = phrasen.find(x => x.key === key);
+        if(da){ if(da.motive.indexOf(mv) < 0) da.motive.push(mv); return; }
+        if(phrasen.some(x => x.motive.indexOf(mv) >= 0 && x.key !== key)){
+          const x = phrasen.find(y => y.motive.indexOf(mv) >= 0);
+          x.pids = [...new Set(x.pids.concat(e.pids))];
+          x.key = x.wort + '|' + [...x.pids].sort().join();
+          return;
+        }
+        phrasen.push({key, wort:e.wort, pids:[...new Set(e.pids)], motive:[mv]});
+      });
+      const _phrase = x => {
+        const was = _namenListe(x.motive);
+        return x.pids.length && x.pids.length <= 3 ? `${was} ${x.wort} ${_namenListe(x.pids.map(nameOf))}` : was;
+      };
+      if(phrasen.length || ortTeil){
+        const ort = ortTeil ? (ERGEBNIS_ORT[(ortTeil.dataRef || {}).resultKind] || '') : '';
+        let bild;
+        if(phrasen.length){
+          bild = phrasen.slice(0, 2).map(_phrase).join(' und ') + (ort ? ` ${ort}` : '');
+        } else {
+          const w = ((ortTeil.dataRef || {}).winners || ortTeil.playerIds || []).map(nameOf);
+          bild = _motivVon(ortTeil) + (w.length && w.length <= 3 ? ` für ${_namenListe(w)}` : '');
+        }
+        neuTitel = bild.charAt(0).toUpperCase() + bild.slice(1);
       } else {
         neuTitel = `Ein Spiel, ${_zahlwortDe(teile.length)} Geschichten${beteiligte}`;
       }
