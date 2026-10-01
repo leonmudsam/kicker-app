@@ -4303,15 +4303,24 @@
 .sp-sl-ms span::before{content:"";display:inline-block;width:2px;height:9px;margin-right:5px;vertical-align:-1px;background:currentColor}
 .sp-sl-ms .liga{color:var(--muted)}
 
-.sp-rk{padding:9px 13px 10px;border-top:1px solid var(--line)}
-.sp-rk svg{display:block;width:100%;height:auto;overflow:visible}
-.sp-rk-g{fill:none;stroke:var(--acid);stroke-width:2.2;opacity:.75}
-.sp-rk-g.q{opacity:.45}
-.sp-rk-x{fill:none;stroke:var(--red);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.sp-rk-u{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:6px}
-.sp-rk-o{display:flex;align-items:center;gap:6px;min-width:0;font-size:11.5px}
-.sp-rk-o em{flex:0 0 auto;font:700 11px 'Sometype Mono',monospace;font-style:normal;color:var(--ink2)}
-.sp-rk-b{display:flex;align-items:center;gap:6px}
+.sp-rk{padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-rk-k{display:flex;align-items:center;gap:10px;min-width:0}
+.sp-rk-z{position:relative;flex:0 0 auto;padding:0 3px}
+.sp-rk-z b{display:block;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:30px;line-height:1;
+  color:var(--acid);opacity:.55;letter-spacing:-.02em}
+.sp-rk-z s{position:absolute;left:-2px;right:-2px;top:50%;height:3px;margin-top:-1px;border-radius:2px;
+  background:var(--red);transform:rotate(-14deg);box-shadow:0 0 10px rgba(240,86,106,.55)}
+.sp-rk-t{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.sp-rk-t > span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.sp-rk-t em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sp-rk-t small,.sp-rk-b small{font-size:9.5px;color:var(--muted)}
+.sp-rk-b{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:0 0 auto}
+.sp-rk-r{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr)) 22px;gap:3px;margin-top:9px;height:14px}
+.sp-rk-r i{display:block;min-width:0;height:14px;border-radius:3px}
+.sp-rk-r i.w{background:rgba(190,242,100,.55)}
+.sp-rk-r i.x{display:flex;align-items:center;justify-content:center;background:var(--red);
+  box-shadow:0 0 12px rgba(240,86,106,.5)}
+.sp-rk-r i.x svg{width:11px;height:11px;color:#1a0b0b}
 
 .sp-duo{display:grid;grid-template-columns:56px minmax(0,1fr);gap:11px;align-items:center;padding:9px 13px 10px;border-top:1px solid var(--line)}
 .sp-duo svg{width:56px;height:56px;display:block}
@@ -4402,9 +4411,12 @@
   .sp-f-sp,.sp-rd-sp,.sp-tb-e{animation:spDa .45s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
   .sp-vt-s i,.sp-tg-b i,.sp-duo-l i{transform-origin:bottom;animation:spY .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-sl-r i.w,.sp-sl-voll{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
-  .sp-bg rect,.sp-rk-g{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .sp-bg rect{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .sp-rk-r i.w{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
+  .sp-rk-r i.x{animation:spBruch .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 30ms + 120ms)}
+  .sp-rk-z s{transform-origin:left;animation:spStrich .4s ease-out both;animation-delay:.35s}
   .sp-ku-l,.sp-tg-l{animation:spZieh 1s ease-out both}
-  .sp-wp-bahn,.sp-wp-ls,.sp-rk-x{animation:spDa .5s ease-out both}
+  .sp-wp-bahn,.sp-wp-ls{animation:spDa .5s ease-out both}
   .sp-duo-w{animation:spDa .6s ease-out both}
   .sp-rd-p{animation:spDa .4s ease-out both;animation-delay:calc(var(--i,0) * 50ms + 150ms)}
   .sp-at-t > b{animation:spKlapp .5s cubic-bezier(.3,.8,.3,1) both}
@@ -4412,6 +4424,8 @@
 @keyframes spDa{from{opacity:0}}
 @keyframes spY{from{transform:scaleY(0)}}
 @keyframes spX{from{transform:scaleX(0)}}
+@keyframes spBruch{from{transform:scale(.2) rotate(-25deg);opacity:0}}
+@keyframes spStrich{from{transform:rotate(-14deg) scaleX(0)}}
 @keyframes spZieh{from{stroke-dashoffset:1}}
 @keyframes spKlapp{from{transform:perspective(200px) rotateX(-70deg);opacity:0}}
 
@@ -4531,7 +4545,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.01.f72a1063';
+const BUILD_VERSION='2026.10.01.6913c749';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21060,18 +21074,21 @@ function _spSerieBild(d){
     <div class="sp-sl-ms">${legende}</div></div>`;
 }
 
-function _spRissDaten(a){ return {opfer:a.x.victimPid, laenge:a.x.streak, brecher:_spSieger(a.m)}; }
+function _spRissDaten(a){
+  const v = _spBasis().vor.get(a.m.id) || {best:{}};
+  return {opfer:a.x.victimPid, laenge:a.x.streak, brecher:_spSieger(a.m), eig:v.best[a.x.victimPid] || 0};
+}
 function _spRissBild(d){
   const n = Math.max(1, d.laenge), einzeln = n <= 20;
-  const breite = 228, w = einzeln ? breite / n : breite;
-  const glieder = einzeln
-    ? Array.from({length:n}, (_, i) => `<rect class="sp-rk-g${i % 2 ? ' q' : ''}" x="${(i * w + 1.5).toFixed(1)}" y="${i % 2 ? 19 : 13}" `
-        + `width="${Math.max(2, w + 3).toFixed(1)}" height="${i % 2 ? 8 : 20}" rx="${i % 2 ? 4 : 7}" style="--i:${i}"/>`).join('')
-    : `<rect class="sp-rk-g" x="1.5" y="13" width="${breite}" height="20" rx="10"/>`;
-  return `<div class="sp-rk"><svg viewBox="0 0 300 46" aria-hidden="true">${glieder}`
-    + `<path class="sp-rk-x" d="M${breite + 12} 9l7 9-6 3 8 14M${breite + 22} 8l-3 10 6 2-4 15"/></svg>`
-    + `<div class="sp-rk-u"><span class="sp-rk-o">${_spChip(d.opfer)}<em class="num">${_spZahl(n)} Siege</em></span>`
-    + `<span class="sp-rk-b">${_spChips(d.brecher)}</span></div>`
+  const lauf = einzeln
+    ? Array.from({length:n}, (_, i) => `<i class="w" style="--i:${i}"></i>`).join('')
+    : `<i class="w sp-rk-voll" style="--i:0"></i>`;
+  const best = d.eig > n ? `eigener Bestwert ${_spZahl(d.eig)}` : d.eig === n ? 'der eigene Bestwert' : '';
+  return `<div class="sp-rk"><div class="sp-rk-k">`
+    + `<span class="sp-rk-z"><b class="num">${_spZahl(n)}</b><s></s></span>`
+    + `<span class="sp-rk-t">${_spChip(d.opfer)}<span><em>Siege in Folge</em>${best ? `<small>${best}</small>` : ''}</span></span>`
+    + `<span class="sp-rk-b"><small>beendet</small>${_spChips(d.brecher)}</span></div>`
+    + `<div class="sp-rk-r${einzeln ? '' : ' balken'}" style="--n:${einzeln ? n : 1}">${lauf}<i class="x" style="--i:${einzeln ? n : 1}">${svgI('x')}</i></div>`
     + _spUnter(`${_spZahl(n)} Siege in Folge von ${_spNb(d.opfer)}, beendet von ${_spUnd(d.brecher)}.`) + `</div>`;
 }
 

@@ -12,7 +12,7 @@
 //   Spitzenwechsel,      die Monatstabelle vor und nach der Partie
 //   Rangsprung
 //   Serie                der Lauf gegen den eigenen Bestwert und die Liga
-//   Serienbruch          die gerissene Kette und wer sie gerissen hat
+//   Serienbruch          der gerissene Lauf und wer ihn beendet hat
 //   Teamserie            der Lauf des Duos und seine Bilanz als Ring
 //   Wende                die Elo-Kurve der letzten zwölf Partien
 //   Rivalität            jede Begegnung der beiden als Balken
@@ -428,22 +428,30 @@ function _spSerieBild(d){
     <div class="sp-sl-ms">${legende}</div></div>`;
 }
 
-// ── Die gerissene Kette: der Serienbruch ─────────────────────────────
-// Die Serie war die Leistung des anderen, also steht sie als Kette aus
-// Siegen da und an ihrem Ende der Riss in Rot [§C25]; hinter dem Riss die,
-// die ihn gesetzt haben. Bis zwanzig Glieder einzeln, darüber geschlossen.
-function _spRissDaten(a){ return {opfer:a.x.victimPid, laenge:a.x.streak, brecher:_spSieger(a.m)}; }
+// ── Der gerissene Lauf: der Serienbruch ──────────────────────────────
+// Die Serie war die Leistung des anderen, also steht sie groß da: die Zahl,
+// rot durchgestrichen [§C25], daneben wer sie getragen hat und ob sie sein
+// Bestwert war, und darunter derselbe Lauf wie bei einer laufenden Serie
+// [§C27] — ein Feld je Sieg, am Ende das rote Feld der Partie, die ihn
+// beendet hat. Es war eine Kette aus Gliedern mit einem gezackten Strich am
+// Ende: eine eigene Bildsprache für dieselbe Serie, die eine Karte weiter
+// als Lauf steht, und der Strich las sich als Kratzer. Bis zwanzig Felder
+// einzeln, darüber ein Balken.
+function _spRissDaten(a){
+  const v = _spBasis().vor.get(a.m.id) || {best:{}};
+  return {opfer:a.x.victimPid, laenge:a.x.streak, brecher:_spSieger(a.m), eig:v.best[a.x.victimPid] || 0};
+}
 function _spRissBild(d){
   const n = Math.max(1, d.laenge), einzeln = n <= 20;
-  const breite = 228, w = einzeln ? breite / n : breite;
-  const glieder = einzeln
-    ? Array.from({length:n}, (_, i) => `<rect class="sp-rk-g${i % 2 ? ' q' : ''}" x="${(i * w + 1.5).toFixed(1)}" y="${i % 2 ? 19 : 13}" `
-        + `width="${Math.max(2, w + 3).toFixed(1)}" height="${i % 2 ? 8 : 20}" rx="${i % 2 ? 4 : 7}" style="--i:${i}"/>`).join('')
-    : `<rect class="sp-rk-g" x="1.5" y="13" width="${breite}" height="20" rx="10"/>`;
-  return `<div class="sp-rk"><svg viewBox="0 0 300 46" aria-hidden="true">${glieder}`
-    + `<path class="sp-rk-x" d="M${breite + 12} 9l7 9-6 3 8 14M${breite + 22} 8l-3 10 6 2-4 15"/></svg>`
-    + `<div class="sp-rk-u"><span class="sp-rk-o">${_spChip(d.opfer)}<em class="num">${_spZahl(n)} Siege</em></span>`
-    + `<span class="sp-rk-b">${_spChips(d.brecher)}</span></div>`
+  const lauf = einzeln
+    ? Array.from({length:n}, (_, i) => `<i class="w" style="--i:${i}"></i>`).join('')
+    : `<i class="w sp-rk-voll" style="--i:0"></i>`;
+  const best = d.eig > n ? `eigener Bestwert ${_spZahl(d.eig)}` : d.eig === n ? 'der eigene Bestwert' : '';
+  return `<div class="sp-rk"><div class="sp-rk-k">`
+    + `<span class="sp-rk-z"><b class="num">${_spZahl(n)}</b><s></s></span>`
+    + `<span class="sp-rk-t">${_spChip(d.opfer)}<span><em>Siege in Folge</em>${best ? `<small>${best}</small>` : ''}</span></span>`
+    + `<span class="sp-rk-b"><small>beendet</small>${_spChips(d.brecher)}</span></div>`
+    + `<div class="sp-rk-r${einzeln ? '' : ' balken'}" style="--n:${einzeln ? n : 1}">${lauf}<i class="x" style="--i:${einzeln ? n : 1}">${svgI('x')}</i></div>`
     + _spUnter(`${_spZahl(n)} Siege in Folge von ${_spNb(d.opfer)}, beendet von ${_spUnd(d.brecher)}.`) + `</div>`;
 }
 

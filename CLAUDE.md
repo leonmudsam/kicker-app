@@ -1234,7 +1234,9 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Rangsprung** ab zwei Plätzen (die Monatstabelle vor und nach der Partie als
   Linien, die neue Spitze in Gold), eine **seltene oder legendäre
   Auszeichnung** (die Medaille und wer sie in der Liga trägt), der
-  **Serienbruch** (die gerissene Kette und wer sie gerissen hat), die **Serie**
+  **Serienbruch** (die Zahl rot durchgestrichen, der Lauf mit dem roten Feld
+  der Partie, die ihn beendet hat, und wer das war — derselbe Lauf wie bei der
+  Serie, eine Kette aus Gliedern war eine zweite Bildsprache), die **Serie**
   (der Lauf gegen den eigenen Bestwert und den Liga-Rekord VOR dieser Partie),
   die **Teamserie** (der Lauf des Duos und seine Bilanz als Ring), der
   **Außenseitersieg** (die Wippe: das Elo-Gewicht beider Teams), die
@@ -1264,8 +1266,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   (`.sp-lg`), ein Name je Zeile. Dieselbe Regel gilt seitdem für das
   Ergebnisband (ein Name je Zeile), die Zeile einer Sammelkarte und den
   Faden: sie brechen um, statt mit „…" zu enden. Was wächst, hat einen Deckel
-  und sagt, was dahinter liegt: die Serie wird über sechzehn ein Balken, die
-  Kette über zwanzig Glieder geschlossen, die Rivalität zeigt die letzten
+  und sagt, was dahinter liegt: die Serie wird über sechzehn ein Balken, der
+  gerissene Lauf über zwanzig Siege ein Balken, die Rivalität zeigt die letzten
   dreißig Begegnungen, die Tabelle neun Plätze um die Bewegung, die Medaille
   ab sechzehn Spielern Punkte statt Gesichter. Gerechnet wird einmal je
   Datenstand (`_spBasis`: Spielreihenfolge, Ergebnisverteilung als
@@ -1291,7 +1293,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   sich 29 Runden. **Jede Partie behält ihre Karte und ihr Bild.** Die Runde
   war zuerst eine Ableitung bei der Anzeige, die die Karten ihrer Partien
   aufnahm, und bei vier Spielern stand danach nur noch sie da: Spielfeld,
-  Anzeigetafel, Wippe und Kette jeder einzelnen Partie gingen verloren. Jetzt
+  Anzeigetafel, Wippe und Lauf jeder einzelnen Partie gingen verloren. Jetzt
   ist sie eine Story wie jede andere, die **dazukommt**: dreißig Minuten nach
   der letzten Partie, wenn feststeht, dass keine mehr folgt, und dieser
   Zeitpunkt ist ihr Zeitstempel. Vorher weiß niemand, ob noch eine Partie

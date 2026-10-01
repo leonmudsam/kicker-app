@@ -6298,6 +6298,18 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
         lauf = gew(pid, x) ? lauf + 1 : 0; best = Math.max(best, lauf); });
       if(best && t.indexOf('eigener Bestwert ' + best) < 0) falsch.push(s.id + ' Bestwert ' + best);
     }
+    // Der gerissene Lauf: ein Feld je Sieg und das rote Feld der Partie,
+    // die ihn beendet hat, und der Bestwert des Trägers VOR dieser Partie.
+    if(a.key === 'riss'){
+      const r = (html.match(/class="sp-rk-r[^"]*"[^>]*>([\\s\\S]*?)<\\/div>/) || [,''])[1];
+      const w = (r.match(/<i class="w"/g) || []).length, x = (r.match(/<i class="x"/g) || []).length;
+      if(x !== 1 || (a.x.streak <= 20 && w !== a.x.streak)) falsch.push(s.id + ' Lauf ' + w + '+' + x + ' statt ' + a.x.streak);
+      const pid = a.x.victimPid; let lauf = 0, best = 0;
+      vor.slice(0, -1).forEach(y => { if(![y.a1,y.a2,y.b1,y.b2].includes(pid)) return;
+        lauf = gew(pid, y) ? lauf + 1 : 0; best = Math.max(best, lauf); });
+      const soll = best > a.x.streak ? 'eigener Bestwert ' + best : 'der eigene Bestwert';
+      if(t.indexOf(soll) < 0) falsch.push(s.id + ' Bruch nennt nicht ' + soll);
+    }
     // Die Rivalität zählt jede Begegnung bis zu dieser.
     if(a.key === 'duell'){
       const g = vor.filter(x => { const A = [x.a1,x.a2], B = [x.b1,x.b2];
