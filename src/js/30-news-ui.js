@@ -1866,7 +1866,7 @@ function _newsTagSpannung(s){
 // ein Fun Fact oder eine Zufallsstatistik groß im Bild, die mit diesem Tag
 // nichts zu tun haben und gestern genauso dagestanden hätten.
 // ── Wer kann das Band tragen? [§C33] ────────────────────────────────
-// Drei Sorten nicht, und jede aus ihrem eigenen Grund.
+// Vier Sorten nicht, und jede aus ihrem eigenen Grund.
 // **Breaking** nicht: die Karte ist im Feed ohnehin die lauteste — voller
 // Rahmen, pulsierender Balken, Schein hinter der ganzen Flaeche. Das Band
 // darueber sagt dasselbe ein zweites Mal [§C27] und nimmt es genau der
@@ -1876,6 +1876,10 @@ function _newsTagSpannung(s){
 // das Band an jedem ruhigen Tag von selbst — dann zeichnet es nichts aus.
 // **Ein Rueckblick** nicht: Woche, Monat und Saison erzaehlen von einem
 // Zeitraum, das Band gehoert dem TAG.
+// **Eine Karte mit negativer Richtung** nicht: das Band ist golden, und Gold
+// gehoert dem Titel [§C25]. Gemessen trug „Anton: Die Talfahrt" — fuenf
+// Niederlagen in Folge, eine Schande — an einem Spieltag das Band und damit
+// den goldenen Auswahlschimmer, als waere die Pleite die Geschichte des Tages.
 // Die Liste steht hier und nicht im Aufruf, weil `tests/ambient` und
 // `tests/blatt` dieselbe Frage stellen und sie sich vorher jeder selbst
 // beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
@@ -1884,6 +1888,7 @@ const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
   'season_recap']);
 function _newsTagKarteWuerdig(st){
   if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
+  if(_newsIstNegativ(st)) return false;
   return !_isBreaking(st);
 }
 function _newsTagKarte(items, dayKey){

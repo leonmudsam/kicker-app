@@ -3900,6 +3900,8 @@ const _tk = JSON.parse(K.eval(`JSON.stringify((function(){
     breaking: _newsTagKarteWuerdig({dataRef:{type:'lead_change'}}),
     potd: _newsTagKarteWuerdig({dataRef:{type:'potd'}}),
     rueckblick: _newsTagKarteWuerdig({dataRef:{type:'woche'}}),
+    negativ: _newsTagKarteWuerdig({cat:'badges', dataRef:{type:'badge_unlocked', rarity:'negative'}}),
+    pleite: _newsTagKarteWuerdig({dataRef:{type:'loss_streak'}}),
     stunde: NEWS_LIMITS.tagKarteStunde, partien: NEWS_LIMITS.tagKartePartien,
     mind: NEWS_LIMITS.tagKarteMin};
 })())`));
@@ -3924,6 +3926,10 @@ ok(_tk.leer === null, 'ein Tag ohne Partie bekommt keine Karte des Tages',
 ok(!_tk.breaking && !_tk.potd && !_tk.rueckblick,
    'Breaking, der Spieler des Tages und ein Rueckblick tragen das Band nie',
    JSON.stringify({breaking:_tk.breaking, potd:_tk.potd, rueckblick:_tk.rueckblick}));
+// Und keine Schande und keine Pleitenserie: das Band ist golden, und Gold
+// gehoert dem Titel [§C25]. Gemessen trug „Anton: Die Talfahrt" das Band.
+ok(!_tk.negativ && !_tk.pleite, 'eine Karte mit negativer Richtung traegt das Band nie',
+   JSON.stringify({negativ:_tk.negativ, pleite:_tk.pleite}));
 
 // ── Die Wochenkarte zeigt alle sechs Wertungen ──────────────────────
 // Sie zeigte drei und darunter „und 3 weitere Wertungen": die Ueberraschung,
