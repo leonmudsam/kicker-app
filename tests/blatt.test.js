@@ -254,6 +254,12 @@ const ok = (c, msg, det) => {
        JSON.stringify(gesten[k]));
   });
 
+  // Die beiden senkrechten Wische haben das Blatt geschlossen, und ein
+  // geschlossenes Blatt wird am Ende des Zuschiebens geleert. Vorher blieb
+  // sein Inhalt stehen, und die Vitrine darunter wurde in einem Blatt
+  // gemessen, das gar nicht mehr offen war.
+  await K(`closeSheet(true);showLaufbahn(${JSON.stringify(IDS[8])})`);
+  await page.waitForTimeout(400);
   console.log('\n═══ 2. DIE VITRINE IST EIN ZIEL ═══');
   // Fünf Stufen, und jede muss man ansehen können. Wischen allein hat die
   // letzte nicht erreicht — die Geste gehörte dem Blatt. Antippen ist der
@@ -3070,14 +3076,17 @@ return JSON.stringify(funde,null,1);
     const profil = kopf ? bildIn(kopf) : -1;
     const vektor = kopf ? kopf.querySelectorAll('use[href^="#izg"]').length : 0;
     K('closeSheet(true)'); K('showLaufbahn(' + JSON.stringify(pid) + ')'); await w(300);
-    const lb = bildIn(document.getElementById('sheet'));
+    // Die Vitrine ist groß und Vektor; die Felder der ganzen Leiter sind
+    // rund 40 px und Bild — dieselbe Grenze wie beim Wappen.
+    const lb = bildIn(document.getElementById('lbLeiter'));
+    const lbFelder = bildIn(document.getElementById('lbAlle'));
     K('closeSheet(true)');
-    return {zeile, profil, vektor, lb};
+    return {zeile, profil, vektor, lb, lbFelder};
   });
   ok(_vektor.profil === 0 && _vektor.vektor > 0 && _vektor.lb === 0,
      'groß ist jedes Insignium eine Vektorzeichnung, kein eingebettetes Bild',
      JSON.stringify(_vektor));
-  ok(_vektor.zeile > 0, 'klein bleibt es ein Bild, damit Liste und Feed schnell bleiben',
+  ok(_vektor.zeile > 0 && _vektor.lbFelder === 21, 'klein bleibt es ein Bild, damit Liste, Feed und die ganze Leiter schnell bleiben',
      JSON.stringify(_vektor));
   // Und das Bild steht im Dokument unter einer kurzen Adresse. Als Daten-URL
   // trug jedes Bild rund 190 Kilobyte, und jedes der rund 240 `<use>` im

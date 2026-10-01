@@ -163,6 +163,10 @@ function openSheet(html, opts){
   // bleibt. Geschlossen wurde bisher nur durch Wischen, einen Tipp neben
   // das Blatt oder einen Knopf, den jedes Blatt selbst baute oder nicht —
   // am Ende eines langen Blatts war kein Weg hinaus zu sehen [§C27].
+  // Jedes Öffnen bekommt eine Nummer. Was beim Schließen später erledigt
+  // wird — das Leeren, das Zuziehen per Wisch —, prüft sie und lässt ein
+  // Blatt in Ruhe, das inzwischen neu aufgegangen ist.
+  sheet._auf = (sheet._auf || 0) + 1;
   sheet.innerHTML=`<div class="sheet-leiste"><div class="sheet-grab" id="sheetGrab"></div>`
     + `<button type="button" class="sheet-zu" id="sheetZu" aria-label="Schließen">${svgI('x')}</button></div>${html}`;
   document.getElementById('sheetZu').onclick = () => closeSheet(true);
@@ -215,7 +219,18 @@ function _sheetForceClose(sheet,bg){
   _sheetStack.length = 0; _sheetReopen = null;
   // Swipe-Listener aufräumen
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
+  const warOffen = sheet.classList.contains('show');
   sheet.classList.remove('show','is-dragging');
+  // Ist es unten, wird es geleert. Ein geschlossenes Blatt liegt nur unter
+  // dem Bildschirmrand, in einer eigenen Schicht — und behielt seinen
+  // Inhalt: nach dem Feed 5400 Knoten, die jede Stilberechnung der Seite
+  // mitlief, bis das nächste Blatt sie ersetzte. Geleert wird erst am Ende
+  // des Zuschiebens, sonst führe es leer hinunter, und nur, wenn in der
+  // Zwischenzeit kein neues Blatt aufgegangen ist.
+  const auf = sheet._auf;
+  if(warOffen) _afterTransition(sheet, 'transform', 340, () => {
+    if(sheet._auf === auf && !sheet.classList.contains('show')) sheet.innerHTML = '';
+  });
   sheet.style.transform='';
   bg.style.opacity='';
   bg.classList.remove('show');
@@ -277,7 +292,18 @@ function bindSheetSwipe(){
     startScrollTop = sheet.scrollTop;
     lastY=startY; lastT=Date.now();
     dragging=false;
+    // Der Zug-Lauscher kommt nur, wenn diese Geste das Blatt überhaupt
+    // schließen kann: oben, ohne gescrollten Inhalt. Er ist nicht passiv,
+    // weil er beim Ziehen `preventDefault` ruft, und ein nicht passiver
+    // `touchmove` lässt den Browser vor JEDEM Scrollbild auf JavaScript
+    // warten. Er hing dauerhaft am Blatt — auch wer weit unten in einem
+    // langen Blatt scrollte, scrollte damit über den Hauptthread, und wenn
+    // dort gerade ein Verlauf nachgerechnet wurde, stand das Blatt still.
+    if(startScrollTop <= 0 && sheet._innerScrollTopStart <= 0) zugAn();
   };
+  let zugHaengt = false;
+  const zugAn = () => { if(!zugHaengt){ sheet.addEventListener('touchmove',onTouchMove,{passive:false}); zugHaengt = true; } };
+  const zugAb = () => { if(zugHaengt){ sheet.removeEventListener('touchmove',onTouchMove); zugHaengt = false; } };
 
   const onTouchMove=(e)=>{
     const touch=e.touches[0];
@@ -309,12 +335,13 @@ function bindSheetSwipe(){
     if(dy<0) return;
     if(dy<DRAG_INTENT_THRESHOLD) return;
     if(!dragging){ dragging=true; sheet.classList.add('is-dragging'); }
-    e.preventDefault();
+    if(e.cancelable) e.preventDefault();
     sheet.style.transform=`translateY(${dy*0.88}px)`;
     bg.style.opacity=1-Math.min(dy*0.88/300,1)*0.6;
   };
 
   const onTouchEnd=(e)=>{
+    zugAb();
     if(!dragging){ sheet.classList.remove('is-dragging'); return; }
     dragging=false;
     sheet.classList.remove('is-dragging');
@@ -366,9 +393,11 @@ function bindSheetSwipe(){
       bg.style.transition='opacity .28s';
       bg.style.opacity='0';
       // Am Ende der Transition, nicht auf Zuruf eines Timers: `closeSheet`
-      // räumt auf und kann dabei einen Umbau auslösen [§C27].
+      // räumt auf und kann dabei einen Umbau auslösen [§C27]. Ist in der
+      // Zwischenzeit ein neues Blatt aufgegangen, gehört es nicht dazu.
+      const auf = sheet._auf;
       _afterTransition(sheet,'transform',280,()=>{
-        closeSheet();
+        if(sheet._auf === auf) closeSheet();
         sheet.style.transition='';
         bg.style.transition='';
       });
@@ -386,8 +415,8 @@ function bindSheetSwipe(){
 
   // Events registrieren
   sheet.addEventListener('touchstart',onTouchStart,{passive:true});
-  sheet.addEventListener('touchmove',onTouchMove,{passive:false});
   sheet.addEventListener('touchend',onTouchEnd,{passive:true});
+  sheet.addEventListener('touchcancel',onTouchEnd,{passive:true});
 
   // Mouse nur auf dem Grab-Handle
   sheet.addEventListener('mousedown',onMouseDown);
@@ -397,8 +426,9 @@ function bindSheetSwipe(){
   // Cleanup wenn Sheet geschlossen wird
   const cleanup=()=>{
     sheet.removeEventListener('touchstart',onTouchStart);
-    sheet.removeEventListener('touchmove',onTouchMove);
+    zugAb();
     sheet.removeEventListener('touchend',onTouchEnd);
+    sheet.removeEventListener('touchcancel',onTouchEnd);
     sheet.removeEventListener('mousedown',onMouseDown);
     window.removeEventListener('mousemove',onMouseMove);
     window.removeEventListener('mouseup',onMouseUp);

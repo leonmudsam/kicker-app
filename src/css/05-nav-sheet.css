@@ -78,8 +78,8 @@
   /* ============ [§C12] BOTTOM NAV ============ */
   .botnav{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:520px;margin:0 auto;
     padding:8px 10px calc(8px + var(--safe-bot));
-    background:linear-gradient(0deg,var(--bg) 70%,rgba(10,12,11,.9) 90%,transparent);
-    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    /* Ohne `backdrop-filter`, aus demselben Grund wie die Kopfleiste. */
+    background:linear-gradient(0deg,var(--bg) 70%,rgba(10,12,11,.94) 90%,rgba(10,12,11,.6));
     display:flex;gap:2px;border-top:1px solid var(--line)}
   .botnav button{flex:1;background:none;border:none;cursor:pointer;padding:7px 2px;border-radius:13px;
     display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);transition:.18s;position:relative}

@@ -1137,14 +1137,21 @@ function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
   const topf = (opt && opt.eigen) ? null : _insTopfHolen();
   if(topf){
     if(topf !== _insStufeTopf){ _insStufeTopf = topf; _insStufeDrin.clear(); }
-    const schl = c.rang + '|' + key + '|' + _insBildNr(key, zacken, grad);
+    // Klein (`{bild:true}`) steht die Zeichnung als Bild in der Gruppe, groß
+    // als Vektor — dieselbe Grenze wie beim Wappen [§C30]. Die ganze Leiter
+    // der Laufbahn zeigt einundzwanzig Felder von rund 40 px, und jedes
+    // klonte über `<use>` eine Vektorzeichnung von bis zu 70 Kilobyte: der
+    // Topf trug danach 1,7 Megabyte und 7400 Knoten, und das Öffnen der
+    // Laufbahn kostete gemessen auch warm 92 ms Skript und 185 ms dahinter.
+    const bild = !!(opt && opt.bild);
+    const schl = c.rang + '|' + key + '|' + _insBildNr(key, zacken, grad) + (bild ? '|b' : '');
     let sid = _insStufeSym.get(schl);
     if(!sid){ sid = 'inst' + _insStufeSym.size; _insStufeSym.set(schl, sid); }
     if(!_insStufeDrin.has(sid)){
       const ref = _insDefsRef(rangLabel, .3);
       topf.insertAdjacentHTML('beforeend', `<defs><g id="${sid}">`
         + `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${ref.id}pl)"/>`
-        + _insStufe(key, c, zacken || 0, ref.id, grad || 0) + `</g></defs>`);
+        + _insStufe(key, c, zacken || 0, ref.id, grad || 0, false, bild) + `</g></defs>`);
       _insStufeDrin.add(sid);
     }
     return `<svg viewBox="${INS_BOX}" class="ins" aria-hidden="true"><use href="#${sid}"/></svg>`;
@@ -1444,8 +1451,8 @@ function showLaufbahn(pid){
   const _da = (i, g) => i < P.stufe || (i === P.stufe && _eigen >= g);
   const _feldName = (i, g) => i === _letzteI ? (ORDENSSTERN_START + g) + ' Zacken'
                                              : INSIGNIUM_GRAD_NAME[g];
-  const _zeichen = (i, g) => insigniumStufeSvg(INSIGNIEN[i].key, _rangL,
-    i === _letzteI ? ORDENSSTERN_START + g : 0, g);
+  const _zeichen = (i, g, klein) => insigniumStufeSvg(INSIGNIEN[i].key, _rangL,
+    i === _letzteI ? ORDENSSTERN_START + g : 0, g, klein ? {bild:true} : undefined);
   const karten = INSIGNIEN.map((ins, i) => {
     const zustand = i < P.stufe ? 'erreicht' : i === P.stufe ? 'jetzt' : 'offen';
     // Eine durchlaufene Stufe hat man ganz durchlaufen — sie steht im
@@ -1487,7 +1494,7 @@ function showLaufbahn(pid){
       <div class="lb-alle-n"><b>${esc(ins.name)}</b><span class="num">${i === 0 ? 'Start' : 'ab ' + ins.min}</span></div>
       <div class="lb-alle-f">${Array.from({length:_felder(i)}, (_, g) =>
         `<button type="button" class="lb-feld${_da(i, g) ? ' da' : ''}${i === P.stufe && g === _eigen ? ' jetzt' : ''}"`
-        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}">${_zeichen(i, g)}</button>`).join('')}</div>
+        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}">${_zeichen(i, g, true)}</button>`).join('')}</div>
     </div>`).join('');
   let _alleN = 0, _alleDa = 0;
   INSIGNIEN.forEach((ins, i) => { for(let g = 0; g < _felder(i); g++){ _alleN++; if(_da(i, g)) _alleDa++; } });

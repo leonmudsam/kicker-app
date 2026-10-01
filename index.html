@@ -125,7 +125,10 @@
     position:sticky;top:0;z-index:40;
     padding:calc(var(--safe-top) + 14px) 18px 14px;
     background:linear-gradient(180deg,var(--bg) 60%,rgba(10,12,11,.85) 85%,transparent);
-    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    /* Kein `backdrop-filter`: die Leiste steht beim Scrollen still, und eine
+       Unschärfe dahinter rechnet in jedem Bild alles unter ihr neu — auf
+       einem Mittelklasse-Telefon der teuerste Teil des Scrollens. Sie war
+       ohnehin kaum zu sehen, die Fläche ist bis auf ihren Saum deckend. */
   }
   /* News-Toast: kleine acid-grüne Pille mit Pfeil zum News-Button (v8.1).
      display:none Default → JS schaltet .visible + .show in zwei Stufen für
@@ -1264,8 +1267,8 @@
   /* ============ [§C12] BOTTOM NAV ============ */
   .botnav{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:520px;margin:0 auto;
     padding:8px 10px calc(8px + var(--safe-bot));
-    background:linear-gradient(0deg,var(--bg) 70%,rgba(10,12,11,.9) 90%,transparent);
-    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    /* Ohne `backdrop-filter`, aus demselben Grund wie die Kopfleiste. */
+    background:linear-gradient(0deg,var(--bg) 70%,rgba(10,12,11,.94) 90%,rgba(10,12,11,.6));
     display:flex;gap:2px;border-top:1px solid var(--line)}
   .botnav button{flex:1;background:none;border:none;cursor:pointer;padding:7px 2px;border-radius:13px;
     display:flex;flex-direction:column;align-items:center;gap:4px;color:var(--muted);transition:.18s;position:relative}
@@ -5763,7 +5766,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.10.01.d485abea';
+const BUILD_VERSION='2026.10.01.07506b98';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -14164,6 +14167,10 @@ function openSheet(html, opts){
   // bleibt. Geschlossen wurde bisher nur durch Wischen, einen Tipp neben
   // das Blatt oder einen Knopf, den jedes Blatt selbst baute oder nicht —
   // am Ende eines langen Blatts war kein Weg hinaus zu sehen [§C27].
+  // Jedes Öffnen bekommt eine Nummer. Was beim Schließen später erledigt
+  // wird — das Leeren, das Zuziehen per Wisch —, prüft sie und lässt ein
+  // Blatt in Ruhe, das inzwischen neu aufgegangen ist.
+  sheet._auf = (sheet._auf || 0) + 1;
   sheet.innerHTML=`<div class="sheet-leiste"><div class="sheet-grab" id="sheetGrab"></div>`
     + `<button type="button" class="sheet-zu" id="sheetZu" aria-label="Schließen">${svgI('x')}</button></div>${html}`;
   document.getElementById('sheetZu').onclick = () => closeSheet(true);
@@ -14216,7 +14223,18 @@ function _sheetForceClose(sheet,bg){
   _sheetStack.length = 0; _sheetReopen = null;
   // Swipe-Listener aufräumen
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
+  const warOffen = sheet.classList.contains('show');
   sheet.classList.remove('show','is-dragging');
+  // Ist es unten, wird es geleert. Ein geschlossenes Blatt liegt nur unter
+  // dem Bildschirmrand, in einer eigenen Schicht — und behielt seinen
+  // Inhalt: nach dem Feed 5400 Knoten, die jede Stilberechnung der Seite
+  // mitlief, bis das nächste Blatt sie ersetzte. Geleert wird erst am Ende
+  // des Zuschiebens, sonst führe es leer hinunter, und nur, wenn in der
+  // Zwischenzeit kein neues Blatt aufgegangen ist.
+  const auf = sheet._auf;
+  if(warOffen) _afterTransition(sheet, 'transform', 340, () => {
+    if(sheet._auf === auf && !sheet.classList.contains('show')) sheet.innerHTML = '';
+  });
   sheet.style.transform='';
   bg.style.opacity='';
   bg.classList.remove('show');
@@ -14278,7 +14296,18 @@ function bindSheetSwipe(){
     startScrollTop = sheet.scrollTop;
     lastY=startY; lastT=Date.now();
     dragging=false;
+    // Der Zug-Lauscher kommt nur, wenn diese Geste das Blatt überhaupt
+    // schließen kann: oben, ohne gescrollten Inhalt. Er ist nicht passiv,
+    // weil er beim Ziehen `preventDefault` ruft, und ein nicht passiver
+    // `touchmove` lässt den Browser vor JEDEM Scrollbild auf JavaScript
+    // warten. Er hing dauerhaft am Blatt — auch wer weit unten in einem
+    // langen Blatt scrollte, scrollte damit über den Hauptthread, und wenn
+    // dort gerade ein Verlauf nachgerechnet wurde, stand das Blatt still.
+    if(startScrollTop <= 0 && sheet._innerScrollTopStart <= 0) zugAn();
   };
+  let zugHaengt = false;
+  const zugAn = () => { if(!zugHaengt){ sheet.addEventListener('touchmove',onTouchMove,{passive:false}); zugHaengt = true; } };
+  const zugAb = () => { if(zugHaengt){ sheet.removeEventListener('touchmove',onTouchMove); zugHaengt = false; } };
 
   const onTouchMove=(e)=>{
     const touch=e.touches[0];
@@ -14310,12 +14339,13 @@ function bindSheetSwipe(){
     if(dy<0) return;
     if(dy<DRAG_INTENT_THRESHOLD) return;
     if(!dragging){ dragging=true; sheet.classList.add('is-dragging'); }
-    e.preventDefault();
+    if(e.cancelable) e.preventDefault();
     sheet.style.transform=`translateY(${dy*0.88}px)`;
     bg.style.opacity=1-Math.min(dy*0.88/300,1)*0.6;
   };
 
   const onTouchEnd=(e)=>{
+    zugAb();
     if(!dragging){ sheet.classList.remove('is-dragging'); return; }
     dragging=false;
     sheet.classList.remove('is-dragging');
@@ -14367,9 +14397,11 @@ function bindSheetSwipe(){
       bg.style.transition='opacity .28s';
       bg.style.opacity='0';
       // Am Ende der Transition, nicht auf Zuruf eines Timers: `closeSheet`
-      // räumt auf und kann dabei einen Umbau auslösen [§C27].
+      // räumt auf und kann dabei einen Umbau auslösen [§C27]. Ist in der
+      // Zwischenzeit ein neues Blatt aufgegangen, gehört es nicht dazu.
+      const auf = sheet._auf;
       _afterTransition(sheet,'transform',280,()=>{
-        closeSheet();
+        if(sheet._auf === auf) closeSheet();
         sheet.style.transition='';
         bg.style.transition='';
       });
@@ -14387,8 +14419,8 @@ function bindSheetSwipe(){
 
   // Events registrieren
   sheet.addEventListener('touchstart',onTouchStart,{passive:true});
-  sheet.addEventListener('touchmove',onTouchMove,{passive:false});
   sheet.addEventListener('touchend',onTouchEnd,{passive:true});
+  sheet.addEventListener('touchcancel',onTouchEnd,{passive:true});
 
   // Mouse nur auf dem Grab-Handle
   sheet.addEventListener('mousedown',onMouseDown);
@@ -14398,8 +14430,9 @@ function bindSheetSwipe(){
   // Cleanup wenn Sheet geschlossen wird
   const cleanup=()=>{
     sheet.removeEventListener('touchstart',onTouchStart);
-    sheet.removeEventListener('touchmove',onTouchMove);
+    zugAb();
     sheet.removeEventListener('touchend',onTouchEnd);
+    sheet.removeEventListener('touchcancel',onTouchEnd);
     sheet.removeEventListener('mousedown',onMouseDown);
     window.removeEventListener('mousemove',onMouseMove);
     window.removeEventListener('mouseup',onMouseUp);
@@ -38158,14 +38191,21 @@ function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
   const topf = (opt && opt.eigen) ? null : _insTopfHolen();
   if(topf){
     if(topf !== _insStufeTopf){ _insStufeTopf = topf; _insStufeDrin.clear(); }
-    const schl = c.rang + '|' + key + '|' + _insBildNr(key, zacken, grad);
+    // Klein (`{bild:true}`) steht die Zeichnung als Bild in der Gruppe, groß
+    // als Vektor — dieselbe Grenze wie beim Wappen [§C30]. Die ganze Leiter
+    // der Laufbahn zeigt einundzwanzig Felder von rund 40 px, und jedes
+    // klonte über `<use>` eine Vektorzeichnung von bis zu 70 Kilobyte: der
+    // Topf trug danach 1,7 Megabyte und 7400 Knoten, und das Öffnen der
+    // Laufbahn kostete gemessen auch warm 92 ms Skript und 185 ms dahinter.
+    const bild = !!(opt && opt.bild);
+    const schl = c.rang + '|' + key + '|' + _insBildNr(key, zacken, grad) + (bild ? '|b' : '');
     let sid = _insStufeSym.get(schl);
     if(!sid){ sid = 'inst' + _insStufeSym.size; _insStufeSym.set(schl, sid); }
     if(!_insStufeDrin.has(sid)){
       const ref = _insDefsRef(rangLabel, .3);
       topf.insertAdjacentHTML('beforeend', `<defs><g id="${sid}">`
         + `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${ref.id}pl)"/>`
-        + _insStufe(key, c, zacken || 0, ref.id, grad || 0) + `</g></defs>`);
+        + _insStufe(key, c, zacken || 0, ref.id, grad || 0, false, bild) + `</g></defs>`);
       _insStufeDrin.add(sid);
     }
     return `<svg viewBox="${INS_BOX}" class="ins" aria-hidden="true"><use href="#${sid}"/></svg>`;
@@ -38465,8 +38505,8 @@ function showLaufbahn(pid){
   const _da = (i, g) => i < P.stufe || (i === P.stufe && _eigen >= g);
   const _feldName = (i, g) => i === _letzteI ? (ORDENSSTERN_START + g) + ' Zacken'
                                              : INSIGNIUM_GRAD_NAME[g];
-  const _zeichen = (i, g) => insigniumStufeSvg(INSIGNIEN[i].key, _rangL,
-    i === _letzteI ? ORDENSSTERN_START + g : 0, g);
+  const _zeichen = (i, g, klein) => insigniumStufeSvg(INSIGNIEN[i].key, _rangL,
+    i === _letzteI ? ORDENSSTERN_START + g : 0, g, klein ? {bild:true} : undefined);
   const karten = INSIGNIEN.map((ins, i) => {
     const zustand = i < P.stufe ? 'erreicht' : i === P.stufe ? 'jetzt' : 'offen';
     // Eine durchlaufene Stufe hat man ganz durchlaufen — sie steht im
@@ -38508,7 +38548,7 @@ function showLaufbahn(pid){
       <div class="lb-alle-n"><b>${esc(ins.name)}</b><span class="num">${i === 0 ? 'Start' : 'ab ' + ins.min}</span></div>
       <div class="lb-alle-f">${Array.from({length:_felder(i)}, (_, g) =>
         `<button type="button" class="lb-feld${_da(i, g) ? ' da' : ''}${i === P.stufe && g === _eigen ? ' jetzt' : ''}"`
-        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}">${_zeichen(i, g)}</button>`).join('')}</div>
+        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}">${_zeichen(i, g, true)}</button>`).join('')}</div>
     </div>`).join('');
   let _alleN = 0, _alleDa = 0;
   INSIGNIEN.forEach((ins, i) => { for(let g = 0; g < _felder(i); g++){ _alleN++; if(_da(i, g)) _alleDa++; } });
