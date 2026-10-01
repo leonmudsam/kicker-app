@@ -1105,8 +1105,6 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
       const genannt = new Set();
       sichtbar.forEach(s => { const d = s.dataRef || {};
         if(d.matchId) genannt.add(d.matchId);
-        // Die Runde nennt jede ihrer Partien als Zeile [§11.6c].
-        if(d.type === 'runde') d.partien.forEach(p => genannt.add(p.id));
         (d.teile || []).forEach(t => { if(t.matchId) genannt.add(t.matchId); }); });
       return matches.filter(m => mts(m) >= seit && !genannt.has(m.id)).length;
     })(),
@@ -3299,10 +3297,8 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
     const spiel=rest.filter(s=>{const d=s.dataRef||{}; return d.type!=='ambient' &&
       !!(d.matchId||d.type==='potd'||d.type==='woche'||d.type==='runde'||
          (d.type==='sammel'&&d.quelle==='spiel'));});
-    // Die Runde zaehlt ihre Partien, wie die Sammelkarte ihre Zeilen.
     const gewicht=s=>(s.dataRef||{}).type==='sammel'
-      ? Math.max(1,((s.dataRef||{}).teile||[]).length)
-      : (s.dataRef||{}).type==='runde' ? (s.dataRef||{}).partien.length : 1;
+      ? Math.max(1,((s.dataRef||{}).teile||[]).length) : 1;
     const tw=tafel.reduce((n,s)=>n+gewicht(s),0);
     const sw=spiel.reduce((n,s)=>n+gewicht(s),0);
     const zaehlTypen = liste => liste.reduce((o,s)=>{ const d=s.dataRef||{};
@@ -4286,14 +4282,9 @@ const _ergSam = JSON.parse(K.eval(`JSON.stringify((function(){
   _cache._consolFrom = null;
   const out = _consolidateStories(l);
   const amTag = out.filter(s => tagKey(s.when) === tag);
-  // Eine Runde nimmt Partie-Karten auf und zeigt jede als Zeile [§11.6c].
-  const inKarte = new Set();
-  out.forEach(s => { const d = s.dataRef || {};
-    if(d.type === 'spiel') inKarte.add(d.matchId);
-    if(d.type === 'runde') (d.glieder || []).forEach(g => inKarte.add(g.dataRef.matchId)); });
   return {partien: partien.length,
-          durch: partien.filter(m => inKarte.has(m.id)).length,
-          deckelbar: amTag.filter(s => (s.dataRef||{}).type !== 'spiel' && (s.dataRef||{}).type !== 'runde').length,
+          durch: out.filter(s => (s.dataRef||{}).type === 'spiel').length,
+          deckelbar: amTag.filter(s => (s.dataRef||{}).type !== 'spiel').length,
           deckel: NEWS_LIMITS.proTag,
           karten: amTag.length};
 })())`));
@@ -5613,6 +5604,14 @@ ok(_vband.h.indexOf(_vband.a) >= 0 && _vband.h.indexOf('−80') >= 0
    && _vband.h.indexOf(_vband.stufe) >= 0 && _vband.h.indexOf(_vband.b) < 0 && _vband.ohne === '',
    'die Tafel-Karte nennt, wer Prestige verliert, und nur den',
    _vband.h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+// Und Name, Betrag und Stufe stehen in EINEM Chip. Als Reihe aus Text
+// brachen sie bei drei Namen um, und der Betrag stand in der zweiten Zeile
+// neben dem falschen Namen.
+const _vchips = (_vband.h.match(/<b class="nf-vl">[\s\S]*?<\/b>/g) || []);
+ok(_vchips.length === 1 && _vchips[0].indexOf(_vband.a) >= 0 && _vchips[0].indexOf('−80') >= 0
+   && _vchips[0].indexOf(_vband.stufe) >= 0 && /class="(rcp-av|av)/.test(_vchips[0]),
+   'je Verlierer ein Chip mit Gesicht, Name, Betrag und Stufe',
+   _vchips.length + ' Chips');
 
 // Und der Satz der Rekordkarte nennt, wer dabei verliert: die Karte erzaehlte
 // nur von Jane, und dass Leon den Rekord jetzt teilt und Prestige verliert,
@@ -6039,11 +6038,8 @@ const _faden = JSON.parse(K.eval(`JSON.stringify((function(){
   const nochmal = _newsFaeden(getStoriesCache()) === fd;
   const by = new Map(alle.map(x => [x.id, x]));
   const rohBy = new Map(_newsTexteAuffrischen(_cache._stories).map(x => [x.id, x]));
-  // Eine Runde traegt die Meldungen ihrer Partien wie eine Sammelkarte
-  // [§11.6c]; der Faden gehoert dann EINER davon, also genuegt eine.
   const glied = c => { const d = c.dataRef || {};
-    return (d.type === 'sammel' || d.type === 'runde')
-      ? (d.teile||[]).map(t => rohBy.get(t.id)).filter(Boolean) : [c]; };
+    return d.type === 'sammel' ? (d.teile||[]).map(t => rohBy.get(t.id)).filter(Boolean) : [c]; };
   const reihe = [...matches].sort((a,b) => mts(a) - mts(b));
   const ix = new Map(reihe.map((m, i) => [m.id, i]));
   const sieger = m => m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
@@ -6169,15 +6165,9 @@ ok(_faden.endeOk && _faden.wendeOk,
 // Fuß. Geprüft wird dreierlei, jeweils gegen die rohen Partien
 // nachgerechnet: dass jede Zeichnung stimmt, dass es Vielfalt gibt (keine
 // Form trägt die Hälfte der Karten), und dass der Satz darüber nicht
-// wiederholt, was die Zeichnung zeigt. Die Partien einer Runde zählen mit:
-// ihre Karten stehen im Blatt der Runde.
+// wiederholt, was die Zeichnung zeigt.
 const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
-  const karten = [];
-  getStoriesCache().forEach(s => {
-    const d = s.dataRef || {};
-    if(d.type === 'runde') (d.glieder || []).forEach(g => karten.push(g));
-    else if(_newsSorte(s) === 'spiel' && d.matchId) karten.push(s);
-  });
+  const karten = getStoriesCache().filter(s => _newsSorte(s) === 'spiel' && (s.dataRef||{}).matchId);
   const falsch = [], formen = {}; let n = 0;
   const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
   const gew = (pid, m) => (m.winner === 'A') === (m.a1 === pid || m.a2 === pid);
@@ -6308,164 +6298,75 @@ ok(_bogen.ser.join() === '15,210,0-,0-',
    _bogen.ser.join(' · '));
 
 // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
-// Dieselben vier am Tisch, Partie auf Partie, standen als zwei bis sechs
-// Karten untereinander, mit denselben vier Wappen in jedem Band. Die Runde
-// ist eine Ableitung bei der Anzeige und die Karte ihrer ERSTEN Partie:
-// dieselbe ID, derselbe Zeitpunkt — so verschwindet keine Karte, sie wächst.
-// Nachgerechnet wird an den rohen Partien: eine Runde sind direkt
-// aufeinanderfolgende Partien derselben vier am selben Tag, höchstens eine
-// Stunde auseinander.
+// Eine Runde ist ein Block von Partien ohne Pause über dreißig Minuten, in
+// dem nur dieselben vier gespielt haben, mindestens dreimal. Sie ist eine
+// eigene Story, die dreißig Minuten nach der letzten Partie entsteht — die
+// Karten ihrer Partien bleiben daneben stehen, mit ihrem eigenen Bild.
+// Nachgerechnet an den rohen Partien.
 const _runde = JSON.parse(K.eval(`JSON.stringify((function(){
   const roh = _buildStories();
   _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
   _cache._consolFrom = null; _cache._frischVon = null;
-  const orig = _newsRunden;
-  _newsRunden = l => l;
-  const ohne = getStoriesCache();
-  _newsRunden = orig;
-  _cache._consolFrom = null;
-  const mit = getStoriesCache();
+  const feed = getStoriesCache();
   const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
   const vier = m => [m.a1, m.a2, m.b1, m.b2].sort().join();
-  // Die Runden aus den rohen Partien, unabhängig von der App gerechnet.
-  const rr = []; let r = null;
+  const bl = []; let r = null;
   reihe.forEach(m => {
-    if(r && vier(m) === r.vier && tagKey(mts(m)) === r.tag && mts(m) - r.t <= 3600000){ r.ms.push(m.id); r.t = mts(m); }
-    else { r = {vier:vier(m), tag:tagKey(mts(m)), t:mts(m), ms:[m.id]}; rr.push(r); }
+    if(r && mts(m) - r.t <= 1800000){ r.ms.push(m); r.t = mts(m); }
+    else { r = {ms:[m], t:mts(m)}; bl.push(r); }
   });
-  const partie = s => { const d = s.dataRef || {}; return !!d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && d.quelle === 'spiel')); };
+  const seit = Date.now() - NEWS_FENSTER_TAGE * 86400000;
+  const soll = bl.filter(x => x.ms.length >= 3 && new Set(x.ms.map(vier)).size === 1
+    && x.t + 1800000 <= Date.now() && x.t >= seit);
+  const ohne = bl.filter(x => x.t >= seit && (x.ms.length < 3 || new Set(x.ms.map(vier)).size > 1));
+  const ist = roh.filter(s => (s.dataRef||{}).type === 'runde');
   const falsch = [];
-  let erwartet = 0;
-  rr.filter(x => x.ms.length > 1).forEach(x => {
-    const k = ohne.filter(s => partie(s) && x.ms.includes(s.dataRef.matchId) && !_isBreaking(s))
-      .sort((a, b) => x.ms.indexOf(a.dataRef.matchId) - x.ms.indexOf(b.dataRef.matchId));
-    if(k.length < 2) return;
-    erwartet++;
-    const karte = mit.find(s => s.id === k[0].id);
-    if(!karte || (karte.dataRef||{}).type !== 'runde'){ falsch.push(k[0].id + ' ist keine Runde'); return; }
-    const d = karte.dataRef;
-    if(new Date(karte.when).getTime() !== new Date(k[0].when).getTime()) falsch.push(karte.id + ' wandert');
-    if(d.partien.map(p => p.id).join() !== x.ms.join()) falsch.push(karte.id + ' Partien ' + d.partien.length + ' statt ' + x.ms.length);
-    if(d.glieder.map(g => g.id).join() !== k.map(g => g.id).join()) falsch.push(karte.id + ' Glieder');
-    k.slice(1).forEach(g => { if(mit.some(s => s.id === g.id)) falsch.push(g.id + ' steht doppelt'); });
-    // Die Uhrzeiten stehen im Satz, jede Partie hat ihre Zeile mit Uhrzeit.
-    const html = _newsCardHtmlM2(karte, false, false);
-    const erste = reihe.find(m => m.id === x.ms[0]), letzte = reihe.find(m => m.id === x.ms[x.ms.length - 1]);
-    if(karte.desc.indexOf(datumFmt(mts(erste), 'uhr')) < 0 || karte.desc.indexOf(datumFmt(mts(letzte), 'uhr')) < 0)
-      falsch.push(karte.id + ' ohne Uhrzeiten im Satz');
-    const zeilen = (html.match(/class="sp-rd-p[ "]/g) || []).length;
-    if(zeilen !== Math.min(8, x.ms.length)) falsch.push(karte.id + ' ' + zeilen + ' Zeilen');
-    const blatt = _newsRundeBlatt(karte);
-    if((blatt.match(/data-glied="/g) || []).length !== x.ms.length) falsch.push(karte.id + ' Blatt öffnet nicht jede Partie');
-    // Wer die Runde gewonnen hat, rechnet die Tabelle aus den Partien.
-    const ids = x.vier.split(',');
-    ids.forEach(id => {
-      const w = x.ms.map(mid => reihe.find(m => m.id === mid))
-        .filter(m => (m.winner === 'A') === (m.a1 === id || m.a2 === id)).length;
+  soll.forEach(x => {
+    const st = ist.find(s => s.id === 'runde_' + x.ms[0].id);
+    if(!st){ falsch.push(x.ms[0].id + ' ohne Runde'); return; }
+    const d = st.dataRef;
+    if(new Date(st.when).getTime() !== x.t + 1800000) falsch.push(st.id + ' Zeitpunkt');
+    if(d.matchIds.join() !== x.ms.map(m => m.id).join()) falsch.push(st.id + ' Partien');
+    if(st.desc.indexOf(datumFmt(mts(x.ms[0]), 'uhr')) < 0 || st.desc.indexOf(datumFmt(x.t, 'uhr')) < 0) falsch.push(st.id + ' ohne Uhrzeiten');
+    vier(x.ms[0]).split(',').forEach(id => {
+      const w = x.ms.filter(m => (m.winner === 'A') === (m.a1 === id || m.a2 === id)).length;
       const z = d.spieler.find(y => y.id === id);
-      if(!z || z.w !== w || z.l !== x.ms.length - w) falsch.push(karte.id + ' Bilanz ' + id);
+      if(!z || z.w !== w || z.l !== x.ms.length - w) falsch.push(st.id + ' Bilanz');
     });
+    if(!feed.some(s => s.id === st.id)) falsch.push(st.id + ' fehlt im Feed');
+    // Jede Partie der Runde behält ihre eigene Karte.
+    x.ms.forEach(m => { if(!feed.some(s => (s.dataRef||{}).matchId === m.id)) falsch.push(m.id + ' ohne eigene Karte'); });
+    const html = _newsCardHtmlM2(feed.find(s => s.id === st.id) || st, false, false);
+    if((html.match(/class="sp-rd-p[ "]/g) || []).length !== Math.min(8, x.ms.length)) falsch.push(st.id + ' Zeilen');
+    if((_newsRundeBlatt(st).match(/data-mid="/g) || []).length !== x.ms.length) falsch.push(st.id + ' Blatt');
   });
-  const runden = mit.filter(s => (s.dataRef||{}).type === 'runde');
-  // Gelesen ist die Runde erst, wenn jede ihrer Partien gelesen ist — der
-  // Lesestand am Zeitpunkt der ersten schluckte sonst jede weitere.
-  const rd = runden[0];
-  const g = rd ? rd.dataRef.glieder : [];
-  const lese = rd ? [
-    _newsGelesen(rd, new Set([g[0].id]), 0),
-    _newsGelesen(rd, new Set(g.map(x => x.id)), 0),
-    _newsGelesen(rd, new Set(), new Date(rd.when).getTime()),
-    _newsGelesen(rd, new Set(), new Date(g[g.length - 1].when).getTime())] : [];
-  let markiert = false;
-  if(rd){
-    const alt = localStorage.getItem(NEWS_LS_SEEN);
-    localStorage.removeItem(NEWS_LS_SEEN);
-    _newsMarkSeen(rd.id);
-    const seen = _newsLoadSeen();
-    markiert = g.every(x => seen.has(x.id));
-    if(alt == null) localStorage.removeItem(NEWS_LS_SEEN); else localStorage.setItem(NEWS_LS_SEEN, alt);
-  }
-  // Gestellt: eine Breaking-Partie mitten in der Runde bleibt eine eigene
-  // Karte, die Runde nennt sie als Zeile mit Marke.
-  const rl = rr.find(x => x.ms.length >= 3);
-  const gest = rl.ms.slice(0, 3).map((mid, i) => {
-    const m = reihe.find(x => x.id === mid);
-    return i === 1
-      ? {id:'brk_' + mid, when:new Date(mts(m)).toISOString(), title:'Breaking ' + i, desc:'Satz ' + i, cat:'highlight', prio:95,
-         dataRef:{type:'sammel', quelle:'spiel', matchId:mid, breaking:true, teile:[]}}
-      : {id:'sp_' + mid, when:new Date(mts(m)).toISOString(), title:'Partie ' + i, desc:'Satz ' + i, cat:'highlight', prio:40,
-         dataRef:{type:'spiel', matchId:mid}};
-  }).reverse();
-  const aus = _newsRunden(gest);
-  const brkRunde = aus.find(s => (s.dataRef||{}).type === 'runde');
-  const brk = {karten:aus.length, eigen:aus.some(s => s.id.indexOf('brk_') === 0),
-    glieder:brkRunde ? brkRunde.dataRef.glieder.length : 0,
-    zeile:brkRunde ? (brkRunde.dataRef.partien.filter(p => p.brk).length === 1
-      && _newsCardHtmlM2(brkRunde, false, false).indexOf('sp-rd-p brk') >= 0) : false};
-  return {erwartet, runden:runden.length, falsch, lese, markiert, brk};
+  ohne.forEach(x => { if(ist.some(s => s.id === 'runde_' + x.ms[0].id)) falsch.push(x.ms[0].id + ' ist keine Runde'); });
+  // Gestellt an echten Partien: drei Partien derselben vier, dann eine
+  // fremde zehn Minuten danach, dann zwei Partien, dann eine Runde, die erst
+  // vor zwanzig Minuten endete.
+  const echt = reihe.slice(-60);
+  const [p, q] = [echt[0], echt.find(m => vier(m) !== vier(echt[0]))];
+  const zeit = Date.now() - 6 * 3600000;
+  const mk = (vor, i, min) => Object.assign({}, vor, {id:'tr' + i, created_at:new Date(zeit + min * 60000).toISOString()});
+  const fall = (liste, jetzt) => { const alt = matches;
+    try { matches = liste; return _newsRundenStories(jetzt).map(s => s.id + '@' + new Date(s.when).getTime()); }
+    finally { matches = alt; } };
+  const drei = fall([mk(p, 1, 0), mk(p, 2, 12), mk(p, 3, 25)], zeit + 3 * 3600000);
+  const fremd = fall([mk(p, 1, 0), mk(p, 2, 12), mk(p, 3, 25), mk(q, 4, 35)], zeit + 3 * 3600000);
+  const zwei = fall([mk(p, 1, 0), mk(p, 2, 12)], zeit + 3 * 3600000);
+  const offen = fall([mk(p, 1, 0), mk(p, 2, 12), mk(p, 3, 25)], zeit + 45 * 60000);
+  const zu = fall([mk(p, 1, 0), mk(p, 2, 12), mk(p, 3, 25)], zeit + 56 * 60000);
+  return {soll: soll.length, ist: ist.length, falsch, ohne: ohne.length,
+    gestellt: {drei, fremd, zwei, offen, zu}, ende: zeit + 55 * 60000};
 })())`));
-ok(_runde.erwartet >= 3 && _runde.runden === _runde.erwartet && _runde.falsch.length === 0,
-   'jede Runde der Vier ist eine Karte: die ihrer ersten Partie, mit jeder Partie, ihrer Uhrzeit und der Bilanz aus den Partien',
-   _runde.falsch.slice(0, 3).join(' | ') || _runde.runden + ' Runden');
-ok(_runde.lese.join() === 'false,true,false,true' && _runde.markiert,
-   'eine Runde ist neu, solange eine ihrer Partien neu ist, und wer sie liest, hat jede gelesen',
-   _runde.lese.join() + ' · markiert ' + _runde.markiert);
-ok(_runde.brk.eigen && _runde.brk.karten === 2 && _runde.brk.glieder === 2 && _runde.brk.zeile,
-   'eine Breaking-Partie bleibt in der Runde eine eigene Karte und steht dort als Zeile mit Marke',
-   JSON.stringify(_runde.brk));
-// Beim Nachspielen bleibt die Runde die Karte ihrer ersten Partie: jede
-// gespielte Partie steht in einer Karte, und die Karte, in der sie steht,
-// wechselt nur, wenn die Partie-Karte darunter selbst ihre ID gewechselt hat
-// (ein Bündel derselben Partie, das enger oder weiter wird [§C33]) — die
-// Runde bringt keinen Wechsel dazu.
-const _rundeStabil = JSON.parse(K.eval(`JSON.stringify((function(){
-  const alle = matches;
-  const falsch = [];
-  let runden = 0;
-  try {
-    const tage = {};
-    alle.forEach(m => { (tage[tagKey(mts(m))] = tage[tagKey(mts(m))] || []).push(m); });
-    const ziele = Object.keys(tage).sort().slice(-3);
-    const orig = _newsRunden;
-    ziele.forEach(ziel => {
-      const bis = alle.indexOf(tage[ziel][0]);
-      const db = new Map();
-      let vorher = null;
-      for(let k = 1; k <= tage[ziel].length; k++){
-        matches = alle.slice(0, bis + k);
-        invalidateCache();
-        _cache._stories = null; _cache._consolFrom = null; _cache._frischVon = null;
-        _buildStories().forEach(s => { if(!db.has(s.id)) db.set(s.id, s); });
-        _cache._stories = [...db.values()].sort((a,b) => new Date(b.when) - new Date(a.when));
-        _cache._consolFrom = null; _cache._frischVon = null;
-        _newsRunden = l => l;
-        const vorIds = new Set(getStoriesCache().map(s => s.id));
-        _newsRunden = orig;
-        _cache._consolFrom = null;
-        const sicht = getStoriesCache();
-        const zeigt = new Map();
-        sicht.forEach(s => { const d = s.dataRef || {};
-          if(d.type === 'runde'){ runden++; d.partien.forEach(p => zeigt.set(p.id, s.id));
-            if(s.id !== d.glieder[0].id) falsch.push(ziel + ' P' + k + ' ' + s.id + ' ist nicht die erste Partie'); }
-          else if(d.matchId && (d.type === 'spiel' || d.quelle === 'spiel') && !zeigt.has(d.matchId)) zeigt.set(d.matchId, s.id); });
-        matches.filter(m => tagKey(mts(m)) === ziel).forEach(m => {
-          if(!zeigt.has(m.id)) falsch.push(ziel + ' P' + k + ' ' + m.id + ' ohne Karte');
-        });
-        if(vorher) vorher.forEach((id, mid) => {
-          if(zeigt.get(mid) !== id && vorIds.has(id)) falsch.push(ziel + ' P' + k + ' ' + mid + ': ' + id + ' → ' + zeigt.get(mid));
-        });
-        vorher = zeigt;
-      }
-    });
-    _newsRunden = orig;
-  } finally {
-    matches = alle; invalidateCache(); _cache._stories = null; _cache._consolFrom = null; _cache._frischVon = null;
-  }
-  return {falsch, runden};
-})())`));
-ok(_rundeStabil.runden > 0 && _rundeStabil.falsch.length === 0,
-   'Partie für Partie nachgespielt verschwindet keine Partie-Karte: sie wächst in ihre Runde',
-   _rundeStabil.falsch.slice(0, 3).join(' | ') || 'drei Spieltage, ' + _rundeStabil.runden + ' Runden je Schritt gezählt');
+ok(_runde.soll >= 3 && _runde.ist === _runde.soll && _runde.falsch.length === 0,
+   'jede abgeschlossene Runde der Vier ist eine eigene Story mit Uhrzeiten und Bilanz, und jede ihrer Partien behält ihre Karte',
+   _runde.falsch.slice(0, 3).join(' | ') || _runde.ist + ' Runden, ' + _runde.ohne + ' Blöcke ohne Runde');
+const _rg = _runde.gestellt;
+ok(_rg.drei.length === 1 && _rg.drei[0] === 'runde_tr1@' + _runde.ende && !_rg.fremd.length && !_rg.zwei.length
+   && !_rg.offen.length && _rg.zu.length === 1,
+   'eine Runde braucht drei Partien derselben vier ohne einen Fünften und entsteht dreißig Minuten nach der letzten',
+   JSON.stringify(_rg));
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

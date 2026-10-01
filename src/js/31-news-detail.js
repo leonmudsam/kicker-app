@@ -19,21 +19,9 @@ function _ndLead(desc, body){
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : lead;
 }
 
-function openNewsDetail(sid, glied){
+function openNewsDetail(sid){
   const stories = getStoriesCache();
-  // Eine Partie der Runde hat keine eigene Karte im Feed, aber ein eigenes
-  // Blatt: sie steht als Glied in ihrer Runde [§11.6c]. Die erste Partie
-  // teilt ihre ID mit der Runde, deshalb fragt das Blatt der Runde ausdrücklich
-  // nach dem Glied.
-  let s = glied ? null : stories.find(x => x.id === sid);
-  if(!s){
-    stories.some(x => {
-      const g = (((x.dataRef || {}).type === 'runde') && x.dataRef.glieder) || [];
-      s = g.find(y => y.id === sid) || null;
-      return !!s;
-    });
-  }
-  if(!s) s = stories.find(x => x.id === sid);
+  const s = stories.find(x => x.id === sid);
   if(!s) return;
   // ── Read-State (Bugfix v8.1) ──
   // Story IMMER hier markieren — egal über welchen Pfad geöffnet wurde
@@ -98,6 +86,7 @@ function openNewsDetail(sid, glied){
     <div class="nd-desc">${_newsBetont(lead)}</div>
     ${body}
     ${fadenHtml ? `<div class="nd-faeden">${fadenHtml}</div>` : ''}
+    ${_newsRueckblickKnopf(s)}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
   document.getElementById('ndCloseBtn').onclick = closeNewsDetail;
@@ -105,8 +94,12 @@ function openNewsDetail(sid, glied){
   nd.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
     el.onclick = () => openNewsDetail(el.dataset.ziel);
   });
-  nd.querySelectorAll('[data-glied]').forEach(el => {
-    el.onclick = () => openNewsDetail(el.dataset.glied, true);
+  nd.querySelectorAll('[data-rueckblick]').forEach(el => {
+    el.onclick = () => {
+      const [art, k] = String(el.dataset.rueckblick).split('|');
+      closeNewsDetail();
+      sheetNav(() => { try { art === 'tag' ? showPotdRecap({force:true, tag:k}) : showPotwRecap({woche:k}); } catch(e){} });
+    };
   });
   // Match-Refs: bei Klick zum Match-Detail springen
   nd.querySelectorAll('[data-mid]').forEach(el => {
@@ -146,6 +139,20 @@ function openNewsDetail(sid, glied){
       sheetNav(() => { try { showChronicle(cid); } catch(e){} });
     };
   });
+}
+// ── Der Rückblick zur Story ──────────────────────────────────────────
+// Spieler des Tages und die Woche haben einen eigenen Rückblick, und der war
+// nur über den Liga-Reiter zu erreichen — und dort nur für den LETZTEN Tag
+// und die LETZTE Woche. Wer die Karte drei Tage später las, kam an die
+// Auswertung nicht mehr heran. Der Knopf öffnet den Rückblick IHRES Tages
+// oder IHRER Woche.
+function _newsRueckblickKnopf(s){
+  const d = (s && s.dataRef) || {};
+  const ziel = d.type === 'potd' && d.dayKey ? 'tag|' + d.dayKey
+    : (d.type === 'woche' || d.type === 'potw') && d.woche ? 'woche|' + d.woche : '';
+  if(!ziel) return '';
+  return `<button class="btn nd-rueck" type="button" data-rueckblick="${esc(ziel)}">${svgI(ziel.indexOf('tag|') === 0 ? 'dayKing' : 'weekKing')}`
+    + `${ziel.indexOf('tag|') === 0 ? 'Rückblick auf den Tag' : 'Rückblick auf die Woche'}</button>`;
 }
 function closeNewsDetail(){
   const bg = document.getElementById('ndBg');
@@ -512,7 +519,7 @@ function _newsDetailBody(s){
 // Feld je Partie, gruen fuer einen Sieg, rot fuer eine Niederlage, in
 // Spielreihenfolge. Darunter steht jede Partie kurz mit Uhrzeit, Stand und
 // Gegner — das ist der Beleg, ohne die Wand.
-function _ndTagesbahn(pid, liste){
+function _ndTagesbahn(pid, liste, nurBahn){
   try {
     const ids = (Array.isArray(pid) ? pid : [pid]).filter(Boolean);
     if(!ids.length || !liste || !liste.length) return '';
@@ -547,6 +554,9 @@ function _ndTagesbahn(pid, liste){
           esc(geg.map(nm).join(' & '))}</span>
       </div>`;
     }).join('');
+    // Der Rückblick des Tages zeigt nur die Bahn: die Partien stehen dort
+    // schon in den Höhepunkten.
+    if(nurBahn) return `<div class="nd-bahn">${felder}</div>`;
     return `<div class="nd-bahn">${felder}</div><div class="nd-tml">${zeilen}</div>`;
   } catch(e){ return ''; }
 }

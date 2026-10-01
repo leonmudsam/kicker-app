@@ -139,7 +139,7 @@ function renderNav(){
   // Reiter sähe eingeschaltet aus.
   document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
-    awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';
+    awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
     window.scrollTo(0,0);render();});
   // FAB nur außerhalb des Match-Tabs sinnvoll: dort führt er auf die Seite,
   // auf der man schon ist, und lag über dem Knopf „Mischen".

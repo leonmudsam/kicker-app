@@ -86,13 +86,19 @@ function _spStand(d){
 }
 
 // ── Ein Durchlauf je Datenstand ──────────────────────────────────────
-// Eine Runde: dieselben vier am Tisch, Partie auf Partie, höchstens eine
-// Stunde zwischen zwei Partien und keine fremde dazwischen [§C33]. Gemessen
-// an den 466 Partien der Liga liegen die Abstände innerhalb einer Runde bei
-// 11 Minuten im Median und unter 17 Minuten in neun von zehn Fällen, die
-// zwischen zwei Runden derselben vier bei mindestens 84 Minuten — zwischen
-// 40 und 84 liegt gar keiner, die Grenze ist also keine Frage des Geschmacks.
-const RUNDE_LUECKE_MS = 60 * 60 * 1000;
+// Eine Runde: ein Block von Partien ohne eine Pause über dreißig Minuten
+// (`RUNDE_PAUSE_MS`), in dem nur dieselben vier gespielt haben, und das
+// mindestens dreimal [§C33]. Spielt im Block ein Fünfter, ist es keine
+// Runde; zwei Partien sind ein Rückspiel und keine Runde. Gemessen an den
+// 466 Partien der Liga liegen die Abstände innerhalb einer Runde bei 11
+// Minuten im Median und unter 17 Minuten in neun von zehn Fällen; so
+// ergeben sich 29 Runden aus 115 Partien.
+const RUNDE_PAUSE_MS = 30 * 60 * 1000;
+// Drei Partien und nicht zwei: zwei sind ein Rückspiel. Die Zahl steht an
+// einer Stelle, weil sie an zwei gefragt wird — beim Bilden der Runden und
+// beim Bauen der Story —, und eine Grenze, die zweimal blank dasteht, ändert
+// man einmal und hat dann zwei.
+const RUNDE_MIN = 3;
 const _spBasisMemo = new WeakMap();
 function _spBasis(){
   let b = _spBasisMemo.get(matches);
@@ -103,7 +109,7 @@ function _spBasis(){
   const kum = Array.from({length:11}, () => new Int32Array(chrono.length + 1));
   const lauf = {}, best = {}, vor = new Map();
   let liga = 0, ligaWer = null;
-  const runde = new Map();
+  const bloecke = [];
   let r = null;
   chrono.forEach((m, i) => {
     const d = Math.min(10, Math.abs(m.score_a - m.score_b));
@@ -115,19 +121,18 @@ function _spBasis(){
       if(lauf[id] > (best[id] || 0)) best[id] = lauf[id];
       if(lauf[id] > liga){ liga = lauf[id]; ligaWer = id; }
     });
-    // Die Runde wächst nur mit der DIREKT folgenden Partie: spielt jemand
-    // anderes dazwischen, ist sie zu. Und nur am selben Kalendertag — die
-    // Karte steht unter einem Tageskopf.
+    // Ein Block endet mit der ersten Pause über dreißig Minuten.
     const set = ids.slice().sort().join(',');
-    const t = mts(m), tag = tagKey(t);
-    if(r && r.set === set && r.tag === tag && t - r.t <= RUNDE_LUECKE_MS){
-      r.ids.push(m.id); r.t = t;
+    const t = mts(m);
+    if(r && t - r.t <= RUNDE_PAUSE_MS){
+      r.ids.push(m.id); r.t = t; if(r.set !== set) r.set = null;
     } else {
-      r = {set, tag, t, ids:[m.id]};
+      r = {set, t, ids:[m.id]};
+      bloecke.push(r);
     }
-    runde.set(m.id, r);
   });
-  b = {chrono, idx, kum, vor, runde, byId:new Map(chrono.map(m => [m.id, m]))};
+  const runden = bloecke.filter(x => x.set && x.ids.length >= RUNDE_MIN);
+  b = {chrono, idx, kum, vor, runden, byId:new Map(chrono.map(m => [m.id, m]))};
   _spBasisMemo.set(matches, b);
   return b;
 }
@@ -614,68 +619,32 @@ function _spBild(s){
 }
 
 // ── Die Runde der Vier [§C33] ────────────────────────────────────────
-// 182 der 466 Partien liegen in Runden: dieselben vier, Partie auf Partie,
-// meist mit wechselnden Paarungen (48 von 57 Runden). Im Feed standen sie
-// als zwei bis sechs Karten untereinander, mit denselben vier Wappen in
-// jedem Band. Eine Runde ist ein Tag am Tisch und eine Karte.
+// Dieselben vier, Partie auf Partie, standen als Karten untereinander, und
+// dass es eine Runde war, sah man nur an den Wappen. Die Runde ist deshalb
+// eine eigene Story — ZUSÄTZLICH zu den Karten ihrer Partien, die einzeln
+// bleiben, mit ihrem eigenen Bild [§C33]. Sie entsteht, wenn die Runde zu
+// ist: dreißig Minuten nach der letzten Partie, und dieser Zeitpunkt ist ihr
+// Zeitstempel. Vorher weiß niemand, ob noch eine Partie kommt.
 //
-// WAS EINMAL DASTEHT, BLEIBT STEHEN. Die Runde ist eine Ableitung bei der
-// Anzeige wie die Sammelkarte; im Bestand behält jede Partie ihre Karte.
-// Und sie ist die Karte der ERSTEN Partie: dieselbe ID, derselbe Platz,
-// derselbe Zeitpunkt. Nach Partie 1 steht die Partie-Karte da, mit Partie 2
-// wird genau diese Karte zur Runde, jede weitere kommt als Zeile dazu. Eine
-// zweite Partie-Karte steht dadurch nie allein im Feed, also kann auch keine
-// verschwinden — dieselbe Regel wie beim Tafel-Moment, der beim Dazukommen
-// einer Zeile dieselbe Karte bleibt. Erst ab der dritten Partie
-// zusammenzulegen hieße: nach der zweiten stehen zwei Karten da, und mit der
-// dritten verschwindet eine davon.
-//
-// Breaking bleibt eine eigene Karte: es darf an nichts scheitern, auch
-// nicht an einer Runde. Die Partie steht in der Runde dann als Zeile mit
-// Marke, und Antippen öffnet die Breaking-Karte. Gebildet wird die Runde aus
-// den PARTIEN (`_spBasis().runde`), nicht aus den Karten, die im Feed
-// zufällig nebeneinanderstehen: eine Tafel-Karte dazwischen zerlegte sie
-// sonst in zwei, und dieselbe Runde sähe je nach Feed anders aus.
-const RUNDE_ZEILEN = 8;
-function _newsIstPartieKarte(s){
-  const d = (s && s.dataRef) || {};
-  if(!d.matchId) return false;
-  return d.type === 'spiel' || (d.type === 'sammel' && d.quelle === 'spiel');
-}
-function _newsRunden(list){
-  if(!Array.isArray(list) || list.length < 2) return list;
-  const b = _spBasis();
-  const proRunde = new Map();
-  list.forEach(s => {
-    if(!_newsIstPartieKarte(s)) return;
-    const r = b.runde.get(s.dataRef.matchId);
-    if(!r || r.ids.length < 2) return;
-    let g = proRunde.get(r);
-    if(!g){ g = {r, karten:[], brk:[]}; proRunde.set(r, g); }
-    (_isBreaking(s) ? g.brk : g.karten).push(s);
+// Die Runde war zuerst eine Ableitung bei der Anzeige, die die Karten ihrer
+// Partien aufnahm. Damit stand bei vier Spielern nur noch die Runde da, und
+// die Bilder der einzelnen Partien — Spielfeld, Anzeigetafel, Wippe — gingen
+// verloren. Jetzt ist sie eine Story wie jede andere: die ID trägt die erste
+// Partie, gespeichert wird sie einmal, und was einmal dasteht, bleibt.
+function _newsRundenStories(nowMs){
+  const out = [];
+  const seit = nowMs - NEWS_FENSTER_TAGE * 86400000;
+  _spBasis().runden.forEach(r => {
+    const ende = r.t + RUNDE_PAUSE_MS;
+    if(ende > nowMs || r.t < seit) return;
+    const st = _newsRundeStory(r, ende);
+    if(st) out.push(st);
   });
-  if(!proRunde.size) return list;
-  const ersetzt = new Map(), weg = new Set();
-  proRunde.forEach(g => {
-    if(g.karten.length < 2) return;
-    const glieder = g.karten.slice().sort((x, y) => mts(_spMatch(x.dataRef.matchId)) - mts(_spMatch(y.dataRef.matchId)));
-    const erste = glieder[0];
-    const runde = _newsRundeKarte(erste, glieder, g.brk, g.r);
-    if(!runde) return;
-    ersetzt.set(erste.id, runde);
-    glieder.slice(1).forEach(x => weg.add(x.id));
-  });
-  if(!ersetzt.size) return list;
-  return list.filter(s => !weg.has(s.id)).map(s => ersetzt.get(s.id) || s);
+  return out;
 }
-// Die Karte der Runde trägt die ID und den Zeitpunkt ihrer ersten Partie.
-// `glieder` sind die Karten, die sie aufnimmt — mit ihnen öffnet das Blatt
-// jede Partie einzeln, und an ihnen hängt der Lesestand: die Runde ist neu,
-// solange eine ihrer Partien neu ist (`_newsGelesen`). Sonst schluckte der
-// Lesestand, der am Zeitpunkt der ersten Partie hängt, jede weitere.
-function _newsRundeKarte(erste, glieder, brk, r){
+function _newsRundeStory(r, ende){
   const ms = r.ids.map(_spMatch).filter(Boolean);
-  if(ms.length < 2) return null;
+  if(ms.length < RUNDE_MIN) return null;
   const ids = [ms[0].a1, ms[0].a2, ms[0].b1, ms[0].b2];
   const z = {};
   ids.forEach(id => { z[id] = {id, w:0, l:0, e:0}; });
@@ -684,18 +653,17 @@ function _newsRundeKarte(erste, glieder, brk, r){
   const top = spieler[0];
   const vorn = spieler.filter(x => x.w === top.w).map(x => x.id);
   const n = ms.length;
+  const paarungen = new Set(ms.map(m => [[m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')].sort().join('|'))).size;
   // Die Schlagzeile nennt, wer die Runde gewonnen hat. Spielen immer
   // dieselben zwei Teams, ist es ein Duell und kein Turnier: dann gewinnt
   // ein Team oder beide trennen sich. Wechseln die Paarungen und steht
   // niemand allein vorn, teilen sie sich die Runde — alle vier hieße, jeder
   // hat gleich oft gewonnen.
-  const paarungen = new Set(ms.map(m => [[m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')].sort().join('|'))).size;
-  const ein = ms[0], teamA = [ein.a1, ein.a2], teamB = [ein.b1, ein.b2];
-  const seiteGew = t => ms.filter(m => _spGew(m, t[0])).length;
+  const teamA = [ms[0].a1, ms[0].a2], teamB = [ms[0].b1, ms[0].b2];
   const zwei = t => _namenListe(t.map(_spName));
   let title;
   if(paarungen === 1){
-    const wa = seiteGew(teamA), wb = n - wa;
+    const wa = ms.filter(m => _spGew(m, teamA[0])).length, wb = n - wa;
     title = wa === wb
       ? `${zwei(teamA)} trennen sich von ${zwei(teamB)} ${wa}:${wb}`
       : `${zwei(wa > wb ? teamA : teamB)} gewinnen die Runde gegen ${zwei(wa > wb ? teamB : teamA)} ${Math.max(wa, wb)}:${Math.min(wa, wb)}`;
@@ -706,44 +674,34 @@ function _newsRundeKarte(erste, glieder, brk, r){
   } else {
     title = `${_namenListe(vorn.map(_spName))} teilen sich die Runde`;
   }
-  // Die Uhrzeiten stehen im Satz: an ihnen lässt sich die Runde nachlesen,
-  // und zwei Runden mit gleich vielen Partien trugen sonst denselben Satz.
+  // Die Uhrzeiten stehen im Satz: an ihnen lässt sich die Runde nachlesen.
   const desc = `${n} Partien zwischen ${datumFmt(mts(ms[0]), 'uhr')} und ${datumFmt(mts(ms[n - 1]), 'uhr')} Uhr`
     + (paarungen === 3 ? ', jede Paarung mindestens einmal.' : paarungen > 1 ? `, ${paarungen} verschiedene Paarungen.` : ', immer dieselben Teams.');
-  // Die Karte jeder Partie, auch einer Breaking-Partie: daran öffnet das
-  // Blatt sie. Die Teile tragen die Meldungen ihrer Partie-Karten, damit
-  // der Faden eine Meldung in der Runde wiederfindet [§C33].
-  const karteVon = {};
-  glieder.concat(brk).forEach(k => { karteVon[k.dataRef.matchId] = k.id; });
-  const brkIds = new Set(brk.map(k => k.dataRef.matchId));
-  const teile = [];
-  glieder.forEach(k => {
-    const d = k.dataRef || {};
-    if(d.type === 'sammel' && Array.isArray(d.teile)) d.teile.forEach(t => teile.push(t));
-    else teile.push({id:k.id, typ:d.type});
-  });
-  const letzte = glieder[glieder.length - 1];
   return {
-    id:erste.id, when:erste.when, cat:erste.cat, ic:'users',
-    prio:Math.max(...glieder.map(k => k.prio || 0)),
-    title, desc,
-    dataRef:{
-      type:'runde', playerIds:ids, teile, glieder,
-      partien:ms.map(m => ({id:m.id, karte:karteVon[m.id] || null, brk:brkIds.has(m.id)})),
-      spieler, paarungen, bis:letzte.when
-    }
+    id:'runde_' + ms[0].id, cat:'highlight', ic:'users', when:new Date(ende),
+    prio:STORY_PRIO.runde, title, desc,
+    dataRef:{type:'runde', matchIds:ms.map(m => m.id), playerIds:ids, spieler, paarungen}
   };
 }
-// Der Anlass einer Partie in der Runde: aus ihrer Karte, falls sie eine hat.
-function _spRundeAnlass(d, mid){
-  const k = (d.glieder || []).find(x => x.dataRef.matchId === mid);
-  if(!k) return '';
-  try { return _spAnlass(k).key; } catch(e){ return ''; }
+// Der Anlass einer Partie der Runde: aus ihrer Karte im Feed, damit die Zeile
+// dasselbe Zeichen trägt wie die Karte darüber [§C27].
+const _spKarteMemo = new WeakMap();
+function _spKarteDerPartie(mid){
+  const l = getStoriesCache();
+  let m = _spKarteMemo.get(l);
+  if(!m){
+    m = new Map();
+    l.forEach(s => { const d = s.dataRef || {};
+      if(d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && d.quelle === 'spiel'))) m.set(d.matchId, s); });
+    _spKarteMemo.set(l, m);
+  }
+  return m.get(mid) || null;
 }
 // Die Tafel der Runde ist eine Tabelle: eine Zeile je Spieler, der Name in
 // der breiten Spalte. In vier Spalten nebeneinander hatte jeder Name ein
 // Viertel der Karte.
 function _spRundeTafel(sp){
+  if(!sp || sp.length < 2) return '';
   const allein = sp[0].w > sp[1].w;
   const maxE = Math.max(8, ...sp.map(x => Math.abs(x.e)));
   return `<div class="sp-rd-tafel">${sp.map((x, i) => `<div class="sp-rd-sp${i === 0 && allein ? ' erst' : ''}" style="--i:${i}">${_spChip(x.id)}`
@@ -753,50 +711,46 @@ function _spRundeTafel(sp){
     + `<em class="num ${x.e >= 0 ? 'g' : 'r'}">${_spVz(x.e)}</em></div>`).join('')}</div>`;
 }
 // Eine Partie der Runde in einer Zeile: Uhrzeit, Paarung, Stand und ihr
-// Anlass. Die Uhrzeit steht in jeder Zeile — an ihr lässt sich die Runde
-// nachvollziehen, Partie für Partie.
-function _spRundeZeile(d, p, i, mitGlied){
-  const m = _spMatch(p.id);
+// Anlass. Im Blatt öffnet die Zeile das Blatt der Partie.
+function _spRundeZeile(mid, i, imBlatt){
+  const m = _spMatch(mid);
   if(!m) return '';
   const aw = m.winner === 'A';
   const t = (ids, w) => `<span class="sp-rd-t${w ? ' w' : ''}">${_spChips(ids)}</span>`;
-  const an = p.brk ? 'brk' : _spRundeAnlass(d, p.id);
-  const a = an === 'brk' ? {kurz:'Breaking', ic:'bolt'} : SP_ANLASS[an];
-  const ziel = mitGlied && p.karte ? ` data-glied="${esc(p.karte)}"` : '';
-  return `<div class="sp-rd-p${p.brk ? ' brk' : ''}" style="--i:${i}"${ziel}><span class="sp-rd-u num">${datumFmt(mts(m), 'uhr')}</span>${t(_spTeam(m, 'A'), aw)}`
+  let an = '';
+  try { const k = _spKarteDerPartie(mid); an = k ? _spAnlass(k).key : ''; } catch(e){ an = ''; }
+  const a = SP_ANLASS[an];
+  return `<div class="sp-rd-p" style="--i:${i}"${imBlatt ? ` data-mid="${esc(mid)}"` : ''}><span class="sp-rd-u num">${datumFmt(mts(m), 'uhr')}</span>${t(_spTeam(m, 'A'), aw)}`
     + `<b class="num">${_spStand({sa:m.score_a, sb:m.score_b, aw})}</b>${t(_spTeam(m, 'B'), !aw)}`
     + (a && a.kurz ? `<span class="sp-rd-a">${svgI(a.ic)}<span>${esc(a.kurz)}</span></span>` : '<span></span>')
     + `</div>`;
 }
 // Die Karte: oben die Tabelle der Runde, darunter die Schlagzeile und jede
-// Partie in einer Zeile. Höchstens acht Partien stehen als Zeile, der Rest
-// als Zahl darunter — keine wird versteckt: das Blatt zeigt alle.
-function _newsRundeHtml(s, isRead, gross, fadenHtml){
+// Partie kurz in einer Zeile. Höchstens acht Partien stehen als Zeile, der
+// Rest als Zahl darunter — keine wird versteckt: das Blatt zeigt alle.
+const RUNDE_ZEILEN = 8;
+function _newsRundeHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
-  const ps = d.partien || [];
+  const ps = d.matchIds || [];
   const zeig = ps.slice(0, RUNDE_ZEILEN);
-  // Die Karte des Tages darf die Runde tragen: sie nimmt die Karten ihrer
-  // Partien auf, und mit ihnen das Band, das eine davon trug.
-  return `<div class="nf-card nf-s-spiel nf-runde nfc-${esc(s.cat || 'fun')}${gross ? ' nf-gross' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
+  return `<div class="nf-card nf-s-spiel nf-runde nfc-${esc(s.cat || 'fun')}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('spiel', s)}
-    ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('users')}</i><b>DIE RUNDE</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
     ${_spRundeTafel(d.spieler || [])}
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
-    <div class="sp-rd-ps">${zeig.map((p, i) => _spRundeZeile(d, p, i, false)).join('')}`
+    <div class="sp-rd-ps">${zeig.map((mid, i) => _spRundeZeile(mid, i, false)).join('')}`
     + (ps.length > zeig.length ? `<div class="sp-rd-mehr">und ${_spZahl(ps.length - zeig.length)} weitere Partien im Blatt</div>` : '')
     + `</div>${fadenHtml || ''}</div>`;
 }
 // Das Blatt der Runde: die Tabelle, wer mit wem an welcher Stange stand, und
-// jede Partie mit ihrer Uhrzeit. Antippen öffnet die Karte der Partie.
-// Die Aufstellung ist eine Matrix — eine Spalte je Partie, eine Zeile je
-// Spieler —, in Blöcken zu acht: dreiundzwanzig Spalten wären auf einem
-// Telefon Striche.
+// jede Partie mit ihrer Uhrzeit. Die Aufstellung ist eine Matrix — eine
+// Spalte je Partie, eine Zeile je Spieler —, in Blöcken zu acht:
+// dreiundzwanzig Spalten wären auf einem Telefon Striche.
 function _newsRundeBlatt(s){
   const d = s.dataRef || {};
-  const ps = (d.partien || []).map(p => _spMatch(p.id)).filter(Boolean);
+  const ps = (d.matchIds || []).map(_spMatch).filter(Boolean);
   const ids = (d.spieler || []).map(x => x.id);
   if(!ps.length || !ids.length) return '';
   const rolle = (m, id) => m[(m.a1 === id ? 'a1' : m.a2 === id ? 'a2' : m.b1 === id ? 'b1' : 'b2') + '_pos'];
@@ -812,5 +766,5 @@ function _newsRundeBlatt(s){
   const legende = _spUnter(`Von oben nach unten: ${_spUnd(ids)}. S steht für Sturm, A für Abwehr, grün für gewonnen, rot für verloren.`);
   return `<div class="nd-section">Die Tabelle der Runde</div>${_spRundeTafel(d.spieler)}`
     + `<div class="nd-section">Wer mit wem</div><div class="sp-rms">${matrix}</div>${legende}`
-    + `<div class="nd-section">Die Partien</div><div class="sp-rd-ps nd-rd">${(d.partien || []).map((p, i) => _spRundeZeile(d, p, i, true)).join('')}</div>`;
+    + `<div class="nd-section">Die Partien</div><div class="sp-rd-ps nd-rd">${(d.matchIds || []).map((mid, i) => _spRundeZeile(mid, i, true)).join('')}</div>`;
 }

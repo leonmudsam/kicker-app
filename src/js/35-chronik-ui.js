@@ -618,7 +618,7 @@ function ligaRekordeHtml(weit){
       return `<span class="rek-sl${z.n ? '' : ' null'}" data-tplayer="${esc(z.pid)}">
         <span class="z num">${z.n}</span>
         <span class="b" style="height:${z.n ? (4 + z.n / maxN * 34).toFixed(1) : 3}px"></span>
-        ${p ? avHtml(p, 'width:15px;height:15px;font-size:7px;border-radius:5px') : ''}
+        ${p ? avHtml(p, '') : ''}
       </span>`;
     }).join('')}</div>
   </div>` : '';
@@ -627,20 +627,16 @@ function ligaRekordeHtml(weit){
     .sort((a, b) => CHRON_KINDS[a].ord - CHRON_KINDS[b].ord)
     .map(k => ({k, def:CHRON_KINDS[k], liste:CHRONICLES.filter(d => d.kind === k)}))
     .filter(g => g.liste.length);
-  // Der Kammerfilter ist `.ui-tabs` — die innere Ebene unter dem gerahmten
-  // `.ui-switch` des Reiters [§C27]. Ein drittes Bauteil für dieselbe
-  // Aussage wäre eines zu viel.
-  // Jeder Chip nennt seine Zahl. Ohne sie war nicht zu sehen, ob eine Kammer
+  // Jedes Feld nennt seine Zahl. Ohne sie war nicht zu sehen, ob eine Kammer
   // ueberhaupt gefuellt ist, und „Alle" sagte nicht, wie viele Rekorde es
-  // gibt — die Frage, mit der jeder auf diesen Reiter kommt. Fuenf Kammern
-  // und „Alle" sind sechs Chips: auf 430 Pixeln laeuft die Leiste deshalb
-  // waagerecht, statt Fuegungen und Schatten in eine zweite Zeile zu
-  // schieben, die man nicht als Reiter erkennt.
+  // gibt — die Frage, mit der jeder auf diesen Reiter kommt.
   const chip = (k, lab, n, an) => `<button data-rekkammer="${esc(k)}"
       class="${an ? 'on' : ''}">${esc(lab)}<span class="n num">${n}</span></button>`;
-  // `roll`: die Kammern sind verschieden breit, darunter kann kein
-  // Schlitten gleiten [§C27].
-  const filter = `<div class="ui-tabs roll rek-kammern">
+  // Sechs Felder in zwei Reihen statt einer gescrollten Leiste: dort standen
+  // sechs Wörter in 11,5 px eng aneinander, und „Fügungen" und „Schatten"
+  // lagen halb hinter dem Rand. Ein Feld je Kammer ist ein Ziel, das man
+  // trifft, und alle sechs sind ohne Wischen zu sehen.
+  const filter = `<div class="rek-kammern">
     ${chip('', 'Alle', CHRONICLES.length, !rekKammer)}
     ${gruppen.map(g => chip(g.k, g.def.kurz, g.liste.length, rekKammer === g.k)).join('')}
   </div>`;

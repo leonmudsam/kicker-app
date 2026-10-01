@@ -511,7 +511,15 @@ const ok = (c, msg, det) => {
       // Und jede Kammer muss anklickbar sein: eine Leiste, die auf 430
       // Pixeln nicht zu erreichen ist, versteckt ihre Rekorde.
       leiste: (() => { const e = document.querySelector('#app .rek-kammern');
-        return e ? {scroll: e.scrollWidth, sicht: e.clientWidth} : null; })()
+        return e ? {scroll: e.scrollWidth, sicht: e.clientWidth,
+          schrift: Math.min(...[...e.querySelectorAll('button')].map(b => parseFloat(getComputedStyle(b).fontSize))),
+          hoehe: Math.min(...[...e.querySelectorAll('button')].map(b => b.getBoundingClientRect().height))} : null; })(),
+      // Die Besitzleiste trägt Zahl, Säule und Gesicht — und das Gesicht lief
+      // unten aus der Karte.
+      besitz: (() => { const k = document.querySelector('#app .rek-besitz');
+        if(!k) return null; const r = k.getBoundingClientRect();
+        return [...k.querySelectorAll('.rek-sl > *')].filter(x => { const q = x.getBoundingClientRect();
+          return q.bottom > r.bottom - 1 || q.top < r.top; }).length; })()
     };
   });
   ok(rek.kammern.length === 5, 'der Reiter zeigt fuenf Kammern', rek.kammern.join(' · '));
@@ -524,11 +532,14 @@ const ok = (c, msg, det) => {
   ok(rek.chips.length === 6 && chipFehler.length === 0,
      'jeder Kammer-Chip nennt seine Zahl, „Alle" den ganzen Katalog',
      rek.chips.map(c => (c.k || 'alle') + ':' + c.n).join(' · '));
-  // Die Leiste ist erreichbar: entweder passt sie, oder sie scrollt.
-  ok(rek.leiste && (rek.leiste.scroll <= rek.leiste.sicht + 1
-      || rek.leiste.scroll > rek.leiste.sicht),
-     'die Kammerleiste ist auf dem Telefon vollstaendig erreichbar',
+  // Die Kammern stehen ohne Wischen da, in lesbarer Größe und als Ziel,
+  // das man trifft: als scrollende Leiste standen sechs Wörter in 11,5 px
+  // eng aneinander, und die letzten beiden lagen hinter dem Rand.
+  ok(rek.leiste && rek.leiste.scroll <= rek.leiste.sicht + 1 && rek.leiste.schrift >= 12.5 && rek.leiste.hoehe >= 34,
+     'die Kammerfelder stehen auf dem Telefon vollstaendig und gross genug da',
      JSON.stringify(rek.leiste));
+  ok(rek.besitz === 0, 'die Besitzleiste traegt Zahl, Säule und Gesicht innerhalb ihrer Karte',
+     rek.besitz + ' Teile ragen hinaus');
   ok(rek.karten === CHRONICLES_N, 'jeder Rekord des Katalogs hat eine Karte',
      rek.karten + ' von ' + CHRONICLES_N);
   // Die Besitzleiste zählt dieselben Haltungen, die die Karten zeigen — und
@@ -2128,9 +2139,9 @@ const ok = (c, msg, det) => {
         const runde = {id:'probe', when:new Date(d0).toISOString(), cat:'highlight',
           title:'Jean-Baptiste von Hohenstein gewinnt die Runde mit 12 von 23 Partien',
           desc:'23 Partien zwischen 10:00 und 13:40 Uhr, jede Paarung mindestens einmal.',
-          dataRef:{type:'runde', glieder:[], partien:ms.map(m => ({id:m.id, karte:null, brk:false})),
+          dataRef:{type:'runde', matchIds:ms.map(m => m.id),
             spieler:[{id:a, w:12, l:11, e:12345}, {id:b, w:11, l:12, e:-9999}, {id:c, w:10, l:13, e:0}, {id:e, w:9, l:14, e:-12345}]}};
-        teile.push(_newsRundeHtml(runde, false, false, ''));
+        teile.push(_newsRundeHtml(runde, false, ''));
         teile.push('<div class="nf-card">' + _newsRundeBlatt(runde) + '</div>');
         return teile.join('');
       } finally { alt.forEach(([p, n]) => { p.name = n; }); }
@@ -3283,6 +3294,206 @@ return JSON.stringify(funde,null,1);
   ok(_bildAdr.n > 0 && _bildAdr.lang === 0,
      'jedes Wappenbild im Dokument steht unter einer kurzen Adresse',
      _bildAdr.n + ' Bilder, ' + _bildAdr.lang + ' lang, längste ' + _bildAdr.max + ' Zeichen');
+
+  console.log('\n═══ EINBLICKE, SIEGCHANCE, VERGLEICH UND RÜCKBLICKE ═══');
+  await page.setViewportSize({width:360, height:780});
+  // ── Der Einblick ist eine Zeile, die aufklappt ────────────────────
+  //    Rollen-Landkarte und Netz der Duos nahmen als volle
+  //    Karte den halben Bildschirm über der Rangliste. Zu ist der Einblick
+  //    eine Zeile ohne Inhalt — gezeichnet wird erst beim Aufklappen —, auf
+  //    bleibt er beim Neuzeichnen im selben Reiter, und ein neuer Reiter
+  //    beginnt geschlossen. Offen liegt kein Text auf einem anderen.
+  const einblick = await page.evaluate((pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    const out = {};
+    // Im Liga-Reiter gibt es keinen: das Titelrennen war dieselbe Frage wie
+    // der Positionsverlauf darunter.
+    K(`closeSheet(true); tab='ranking'; period='season'; render(); 'x'`);
+    out.liga = document.querySelectorAll('#main [data-einblick]').length;
+    [['positions', 'rollen'], ['teams', 'netz']].forEach(([t, key]) => {
+      K(`closeSheet(true); tab='${t}'; period='season'; einblickOffen=''; render(); 'x'`);
+      const box = document.querySelector('#main [data-einblick="' + key + '"]');
+      if(!box){ out[key] = {fehlt:true}; return; }
+      const zu = {h: box.getBoundingClientRect().height, leer: !box.querySelector('.einblick-i').innerHTML.trim()};
+      box.querySelector('.einblick-k').click();
+      document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+      const i = box.querySelector('.einblick-i');
+      const auf = {h: i.getBoundingClientRect().height, bild: !!i.querySelector('svg'),
+                   aria: box.querySelector('.einblick-k').getAttribute('aria-expanded'), fehler: pruefen(box).fehler};
+      K('render(); "x"');
+      const nachRender = !!document.querySelector('#main [data-einblick="' + key + '"].auf svg');
+      document.querySelector('.bnav [data-nav="history"], [data-nav="history"]').click();
+      document.querySelector('[data-nav="' + t + '"]').click();
+      const nachTab = !document.querySelector('#main [data-einblick="' + key + '"].auf');
+      out[key] = {zu, auf, nachRender, nachTab};
+    });
+    return out;
+  }, PRUEFEN.toString());
+  const _eb = [einblick.rollen, einblick.netz];
+  ok(einblick.liga === 0 && _eb.every(x => x && !x.fehlt && x.zu.h <= 46 && x.zu.leer),
+     'Rollen-Landkarte und Netz der Duos stehen zu als schmale Zeile ohne Inhalt, der Liga-Reiter trägt keinen',
+     JSON.stringify(Object.fromEntries(Object.entries(einblick).map(([k, v]) => [k, v.zu]))));
+  ok(_eb.every(x => x.auf && x.auf.bild && x.auf.h > 120 && x.auf.aria === 'true' && x.auf.fehler.length === 0),
+     'aufgeklappt zeigen sie ihre Grafik, und kein Text liegt auf einem anderen oder ragt hinaus',
+     _eb.map(x => x.auf ? x.auf.fehler.slice(0, 2).join(' | ') || Math.round(x.auf.h) + ' px' : 'fehlt').join(' · '));
+  ok(_eb.every(x => x.nachRender && x.nachTab),
+     'ein Neuzeichnen im selben Reiter klappt sie nicht zu, ein Reiterwechsel schon',
+     JSON.stringify(_eb.map(x => [x.nachRender, x.nachTab])));
+
+  // ── Der Positionsverlauf trägt das Titelrennen ───────────────────
+  //    Das Titelrennen stand einmal als eigener Einblick über der
+  //    Rangliste und war dieselbe Frage wie der Positionsverlauf darunter.
+  //    Jetzt zeigt dessen Karte unter „Mehr zur Saison" das Rennen der
+  //    ersten drei und öffnet beim Tippen den ganzen Verlauf. Sie steht
+  //    UNTER der Rangliste, ganz im Bild, und kein Text liegt auf einem
+  //    anderen.
+  const posKarte = await page.evaluate((pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    K(`closeSheet(true); tab='ranking'; period='season'; ligaSeasonId=''; render(); 'x'`);
+    const karte = document.querySelector('#main .seasontools .st-card.pos');
+    const liste = document.querySelector('#main .rlist');
+    if(!karte || !liste) return {fehlt:true};
+    const r = karte.getBoundingClientRect();
+    const out = {
+      gross: karte.classList.contains('gross'),
+      rennen: !!karte.querySelector('.srn-l'),
+      unterListe: r.top >= liste.getBoundingClientRect().bottom - 1,
+      erste: karte === document.querySelector('#main .seasontools .st-card'),
+      imBild: r.left >= 0 && r.right <= window.innerWidth + .5,
+      fehler: pruefen(karte).fehler
+    };
+    karte.click();
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    out.oeffnet = document.getElementById('sheetBg').classList.contains('show') && !!document.querySelector('#sheet svg');
+    K(`closeSheet(true); 'x'`);
+    return out;
+  }, PRUEFEN.toString());
+  ok(!posKarte.fehlt && posKarte.gross && posKarte.rennen && posKarte.unterListe && posKarte.erste
+     && posKarte.imBild && posKarte.fehler.length === 0 && posKarte.oeffnet,
+     'der Positionsverlauf steht unter der Rangliste als erste Karte, zeigt das Titelrennen und öffnet den Verlauf',
+     JSON.stringify(Object.assign({}, posKarte, {fehler: (posKarte.fehler || []).slice(0, 2)})));
+
+  // ── Die Siegchance steht beim Aufstellen unter der Score-Karte ────
+  //    Ohne Erklärsatz, aus derselben Rechnung, mit der die Partie danach
+  //    gewertet wird, und in der Vorschau nach dem Stand nicht noch einmal.
+  const chance = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`tab='match'; M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0}; render(); updatePreview(); 'x'`);
+    const leer = !document.querySelector('#chanceSlot .prob');
+    K(`M.A1=players[8].id; M.A2=players[10].id; M.B1=players[3].id; M.B2=players[1].id; updatePreview(); 'x'`);
+    const box = document.querySelector('#chanceSlot .m-chance');
+    const soll = Math.round(K('computeMatch(teamsFromM().teamA, teamsFromM().teamB, "A", 10, 0).expA') * 100);
+    const pa = box ? parseInt(box.querySelector('.pa').textContent, 10) : null;
+    const pb = box ? parseInt(box.querySelector('.pb').textContent, 10) : null;
+    const unter = box ? box.getBoundingClientRect().top >= document.querySelector('.score-board').getBoundingClientRect().bottom - 1 : false;
+    const text = box ? box.textContent : '';
+    K(`M.sa=10; M.sb=7; updatePreview(); 'x'`);
+    const doppelt = document.querySelectorAll('#main .prob').length;
+    K(`M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0}; tab='ranking'; render(); 'x'`);
+    return {leer, da:!!box, pa, pb, soll, unter, erklaert:/Elo beider|Rechnung|aus der Elo/i.test(text), doppelt};
+  });
+  ok(chance.leer && chance.da && chance.pa === chance.soll && chance.pa + chance.pb === 100 && chance.unter
+     && !chance.erklaert && chance.doppelt === 1,
+     'die Siegchance steht beim Aufstellen unter der Score-Karte, ohne Erklärsatz und nur einmal',
+     JSON.stringify(chance));
+
+  // ── Jede Begegnung im Direkten Vergleich ──────────────────────────
+  //    Ein Balken je Begegnung als Gegner, höchstens die letzten vierzig,
+  //    und die Zahlen daneben zählen die gezeigten Siege — nachgerechnet
+  //    an den rohen Partien.
+  const vergleich = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const a = K('players.find(p=>p.name==="Leon").id'), b = K('players.find(p=>p.name==="Martin").id');
+    K(`showH2H(${JSON.stringify(a)}, ${JSON.stringify(b)}); 'x'`);
+    const ms = K(`matches.filter(m => [m.a1,m.a2,m.b1,m.b2].includes(${JSON.stringify(a)}) && [m.a1,m.a2,m.b1,m.b2].includes(${JSON.stringify(b)})
+      && ((m.a1===${JSON.stringify(a)}||m.a2===${JSON.stringify(a)}) !== (m.a1===${JSON.stringify(b)}||m.a2===${JSON.stringify(b)})))
+      .sort((x,y)=>mts(x)-mts(y)).slice(-40).map(m => (m.a1===${JSON.stringify(a)}||m.a2===${JSON.stringify(a)}) ? m.winner==='A' : m.winner==='B')`);
+    const box = document.querySelector('#sheet .h2h-bg');
+    const res = {n: box ? box.querySelectorAll('rect').length : 0, soll: ms.length,
+      aw: box ? +box.querySelectorAll('.h2h-bg-n b')[0].textContent : null, aSoll: ms.filter(Boolean).length,
+      gruen: box ? box.querySelectorAll('rect.w').length : 0};
+    K('closeSheet(true)');
+    return res;
+  });
+  ok(vergleich.n === vergleich.soll && vergleich.n > 10 && vergleich.aw === vergleich.aSoll && vergleich.gruen === vergleich.aSoll,
+     'der Direkte Vergleich zeigt jede der letzten Begegnungen als Balken und zählt die Siege wie die Partien',
+     JSON.stringify(vergleich));
+
+  // ── Die Rückblicke zeigen, wie es dazu kam ───────────────────────
+  //    Woche: sieben Tage des Helden und das Feld; Tag: Bahn, Elo und
+  //    Feld; Saison: Rangliste zuerst, darunter Titelrennen, Tage an der
+  //    Spitze und die Saison des Meisters.
+  const rueck = await page.evaluate(async (pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    const warte = () => new Promise(r => setTimeout(r, 450));
+    const fehler = h => { document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} }); return pruefen(h).fehler; };
+    const out = {};
+    K(`closeSheet(true); showPotwRecap({woche:'2026-08-17'}); 'x'`); await warte();
+    let sh = document.getElementById('sheet');
+    const wochenMs = K(`matches.filter(m => tagKey(mts(m)) >= '2026-08-17' && tagKey(mts(m)) <= '2026-08-23')`);
+    const imFeld = new Set(); wochenMs.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(x => imFeld.add(x)));
+    out.woche = {titel: /KW 34/.test(sh.textContent) ? 'KW 34' : '', tage: sh.querySelectorAll('.rcp-wo-t').length,
+      feld: sh.querySelectorAll('.rcp-feld-z').length, soll: imFeld.size, held: sh.querySelectorAll('.rcp-feld-z.held').length,
+      fehler: [...sh.querySelectorAll('.rcp-feld, .rcp-woche')].flatMap(fehler)};
+    K(`closeSheet(true); showPotdRecap({force:true, tag:'2026-08-24'}); 'x'`); await warte();
+    sh = document.getElementById('sheet');
+    const tagMs = K(`matches.filter(m => tagKey(mts(m)) === '2026-08-24').length`);
+    out.tag = {bahn: !!sh.querySelector('.nd-bahn'), zeilen: sh.querySelectorAll('.nd-tml').length, elo: !!sh.querySelector('.rcp-elo svg'),
+      feld: sh.querySelectorAll('.rcp-feld-z').length, partien: tagMs, datum: /24\. August/.test(sh.textContent),
+      fehler: [...sh.querySelectorAll('.rcp-feld, .rcp-elo')].flatMap(fehler)};
+    K(`closeSheet(true); showSeasonRecap(seasons.find(s=>s.id==='2026-07')); 'x'`); await warte();
+    sh = document.getElementById('sheet');
+    const kopf = [...sh.querySelectorAll('.rcp-section')].map(x => x.textContent.replace(/\d+/g, '').trim());
+    out.saison = {rang: kopf.indexOf('Rangliste'), rennen: kopf.indexOf('Das Titelrennen'),
+      spitze: kopf.indexOf('Tage an der Spitze'), meister: kopf.findIndex(x => /^Die Saison des Meisters/.test(x)),
+      fehler: [...sh.querySelectorAll('.rcp-block')].flatMap(fehler)};
+    K('closeSheet(true)');
+    return out;
+  }, PRUEFEN.toString());
+  ok(rueck.woche.tage === 7 && rueck.woche.feld === rueck.woche.soll && rueck.woche.held === 1 && /KW 34/.test(rueck.woche.titel)
+     && rueck.woche.fehler.length === 0,
+     'der Wochenrückblick zeigt die gewählte Woche, die sieben Tage des Helden und jeden Spieler im Feld',
+     JSON.stringify(rueck.woche).slice(0, 200));
+  ok(rueck.tag.bahn && rueck.tag.zeilen === 0 && rueck.tag.elo && rueck.tag.feld > 3 && rueck.tag.datum && rueck.tag.fehler.length === 0,
+     'der Tagesrückblick zeigt den gewählten Tag als Bahn, die Elo über den Tag und das Feld',
+     JSON.stringify(rueck.tag).slice(0, 200));
+  ok(rueck.saison.rang >= 0 && rueck.saison.rennen > rueck.saison.rang && rueck.saison.spitze > rueck.saison.rennen
+     && rueck.saison.meister > rueck.saison.spitze && rueck.saison.fehler.length === 0,
+     'der Saison-Rückblick zeigt die Rangliste zuerst, darunter Titelrennen, Tage an der Spitze und die Saison des Meisters',
+     JSON.stringify(rueck.saison).slice(0, 200));
+
+  // ── Aus der Story in ihren Rückblick ──────────────────────────────
+  //    Spieler des Tages und die Woche öffnen den Rückblick IHRES Tages und
+  //    IHRER Woche, nicht den letzten.
+  const knopf = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`_cache._stories=_buildStories().sort((a,b)=>new Date(b.when)-new Date(a.when));_cache._consolFrom=null;_cache._frischVon=null;'x'`);
+    const potd = K(`JSON.stringify(getStoriesCache().filter(s=>(s.dataRef||{}).type==='potd').map(s=>({id:s.id, tag:s.dataRef.dayKey})))`);
+    const woche = K(`JSON.stringify(getStoriesCache().filter(s=>(s.dataRef||{}).type==='woche').map(s=>({id:s.id, woche:s.dataRef.woche})))`);
+    const res = [];
+    for(const x of JSON.parse(potd).slice(-2).concat(JSON.parse(woche).slice(-1))){
+      K(`closeSheet(true); openNewsFeed(); openNewsDetail(${JSON.stringify(x.id)}); 'x'`);
+      const b = document.querySelector('#nd [data-rueckblick]');
+      if(!b){ res.push({id:x.id, knopf:false}); continue; }
+      b.click();
+      await new Promise(r => setTimeout(r, 500));
+      const sh = document.getElementById('sheet');
+      const k = x.tag || x.woche;
+      const [y, m, d] = k.split('-').map(Number);
+      // Die Wochenkarte trägt ihre ISO-Woche („2026-W34"), der Rückblick nennt sie „KW 34".
+      const soll = x.tag ? new Date(y, m - 1, d).toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'})
+                         : 'KW ' + Number(k.split('-W')[1]);
+      res.push({id:x.id, knopf:true, auf: sh.textContent.indexOf(soll) >= 0, soll});
+    }
+    K('closeSheet(true)');
+    return res;
+  });
+  ok(knopf.length >= 2 && knopf.every(x => x.knopf && x.auf),
+     'die Story des Spielers des Tages und der Woche öffnet per Knopf den Rückblick ihres Tages und ihrer Woche',
+     JSON.stringify(knopf).slice(0, 240));
 
   await page.setViewportSize({width:430, height:932});
 

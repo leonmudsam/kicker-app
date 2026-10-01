@@ -333,7 +333,11 @@ function _buildStories(){
   // und bricht den Memo-Key, sonst erschiene die Karte erst nach dem nächsten
   // Match oder Reload.
   const _weekSlotSig = _wocheDue ? 1 : 0;
-  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig;
+  // Die Runde der Vier entsteht dreißig Minuten nach ihrer letzten Partie,
+  // auch ohne neue Partie: die Zahl der geschlossenen Runden bricht den Key.
+  let _rundenSig = 0;
+  try { const _rn = now.getTime(); _rundenSig = _spBasis().runden.filter(r => r.t + RUNDE_PAUSE_MS <= _rn).length; } catch(e){}
+  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig + '_' + _rundenSig;
   if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
     return _cache._buildStoriesResult;
   }
@@ -2047,6 +2051,12 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
+  // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
+  // Eine eigene Story je abgeschlossener Runde, dreißig Minuten nach ihrer
+  // letzten Partie. Die Karten der Partien bleiben daneben stehen.
+  try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }
+  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] runde', e); }
+
   // Hinweis (v8.6): Die Konsolidierung gegen Match-Event-Spam (mehrere fast
   // identische Karten pro Match) passiert bewusst NICHT hier im Generator,
   // sondern beim Anzeigen (_consolidateStories, §11.2) — siehe Begründung dort.
@@ -2968,7 +2978,9 @@ function _buildStories(){
     // Formkarte, jede Serienmarke und jeder Meilenstein desselben Tages weg:
     // von fuenf gebildeten Formkarten kam keine einzige durch. Sie zaehlt
     // deshalb nicht mit und wird nie verworfen.
-    if(d.type === 'spiel'){ deduped.push(s); continue; }
+    // Dasselbe gilt für die Runde der Vier: sie fasst Partien zusammen und
+    // nahm mit ihren vier Gesichtern sonst anderen Karten den Platz weg.
+    if(d.type === 'spiel' || d.type === 'runde'){ deduped.push(s); continue; }
     const pid = d.pid || d.playerId || d.newLeader || null;
     // Wer sonst noch auf der Karte steht. `_newsPids` ist die einzige Stelle,
     // die weiß, in welchem Feld die Ids je Typ liegen [§C33].

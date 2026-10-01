@@ -121,6 +121,11 @@
   .view-head{margin:8px 2px 18px}
   .view-head h2{font-family:'Archivo Black',sans-serif;font-size:27px;letter-spacing:-.03em;line-height:1}
   .view-head p{color:var(--muted);font-size:12.5px;margin-top:6px}
+  .kopf-info{display:inline-grid;place-items:center;width:26px;height:26px;margin-left:6px;vertical-align:4px;
+    border:1px solid var(--line2);border-radius:50%;background:none;color:var(--muted);cursor:pointer}
+  .kopf-info .ic,.kopf-info svg{width:14px;height:14px}
+  .pos-info p{font-size:13px;line-height:1.5;color:var(--ink2);margin:0 0 10px}
+  .pos-info b{color:var(--ink)}
 
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:14px}
   .card.flush{padding:6px}
@@ -508,6 +513,9 @@
   .btn.sm{padding:12px;font-size:13px}
   .btn-row{display:flex;gap:10px}
 
+  .m-chance{margin:-2px 0 12px}
+  .m-ch-r{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .m-ch-w{flex:1;text-align:center;font-size:10.5px;color:var(--muted);letter-spacing:.04em}
   .award-grid{display:flex;flex-direction:column;gap:10px}
   .award-section{margin-top:20px}
   .award-section:first-child{margin-top:0}
@@ -701,8 +709,8 @@
   .rek-bk .l{font-family:'Sometype Mono',monospace;font-size:10px;font-weight:700;
     letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
   .rek-bk .r{font-size:9.5px;color:var(--muted)}
-  .rek-saeulen{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;
-    align-items:end;height:62px}
+  .rek-saeulen{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;
+    align-items:end;height:84px}
   .rek-sl{display:flex;flex-direction:column;align-items:center;gap:4px;
     justify-content:flex-end;height:100%;cursor:pointer;min-width:0}
   .rek-sl .z{font-size:9px;font-weight:700;color:var(--ink2)}
@@ -711,13 +719,16 @@
   .rek-sl.null .b{background:none;border:1px dashed var(--line2);height:3px}
   .rek-sl.null .z{color:var(--faint)}
   .rek-sl .rav,.rek-sl .av{flex:0 0 auto}
+  .rek-sl .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:none}
 
-  .ui-tabs.rek-kammern{margin-bottom:2px;overflow-x:auto;scrollbar-width:none}
-  .ui-tabs.rek-kammern::-webkit-scrollbar{display:none}
-  .ui-tabs.rek-kammern button{font-size:11.5px;padding-left:6px;padding-right:6px;
-    flex:0 0 auto;display:inline-flex;align-items:center;gap:4px}
-  .ui-tabs.rek-kammern button .n{font-size:9.5px;color:var(--faint)}
-  .ui-tabs.rek-kammern button.on .n{color:var(--ink2)}
+  .rek-kammern{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 4px}
+  .rek-kammern button{display:flex;align-items:baseline;justify-content:space-between;gap:6px;min-width:0;
+    padding:9px 11px;border:1px solid var(--line);border-radius:12px;background:var(--surface);
+    font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;text-align:left}
+  .rek-kammern button.on{color:var(--ink);background:var(--surface2);border-color:var(--line2);
+    box-shadow:inset 0 -2px 0 var(--acid)}
+  .rek-kammern button .n{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--faint)}
+  .rek-kammern button.on .n{color:var(--ink2)}
 
   .rek-gruppe{display:flex;align-items:center;gap:8px;color:var(--gold);
     margin:22px 4px 10px;font-family:'Sometype Mono',monospace;
@@ -1399,6 +1410,46 @@
     color:var(--ink);padding:14px;border-radius:13px;outline:none;transition:.18s}
   .text-in:focus{border-color:var(--acid2)}
 
+
+  .einblick{margin:0 0 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+  .einblick-k{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:0;background:none;
+    font:inherit;font-size:12.5px;font-weight:600;color:var(--ink2);text-align:left;cursor:pointer}
+  .einblick-k > .ic{flex:0 0 auto;width:16px;height:16px;color:var(--muted)}
+  .einblick-k > span{flex:1;min-width:0}
+  .einblick-k em{flex:0 0 auto;font-style:normal;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--faint)}
+  .einblick-pf{flex:0 0 auto;display:grid;place-items:center;width:16px;height:16px;color:var(--muted);transition:transform .2s ease}
+  .einblick-pf .ic{width:14px;height:14px}
+  .einblick.auf .einblick-pf{transform:rotate(90deg)}
+  .einblick-i{display:none;padding:2px 12px 12px}
+  .einblick.auf .einblick-i{display:block}
+  .rk{position:relative;aspect-ratio:300/230}
+  .rk svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .rk-q{fill:rgba(190,242,100,.05)}
+  .rk-m{stroke:var(--line2);stroke-dasharray:3 4}
+  .rk-a{stroke:var(--line2)}
+  .rk-p{position:absolute;transform:translate(-50%,-50%);line-height:0;cursor:pointer}
+  .rk-p .rcp-av,.netz-p .rcp-av{box-shadow:0 0 0 2px var(--surface);border-radius:50%}
+  .rk-ax{display:flex;justify-content:space-between;font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--faint);margin-top:2px}
+  .rk-l{display:flex;flex-direction:column;gap:3px;margin-top:8px;font-size:11px;line-height:1.4;color:var(--muted)}
+  .rk-l b{font-weight:600;color:var(--ink2)}
+  .rk-l i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:var(--line2)}
+  .rk-l i.f-vh{background:rgba(190,242,100,.45)}
+  .netz{position:relative;aspect-ratio:300/280}
+  .netz svg{position:absolute;inset:0;width:100%;height:100%}
+  .netz-l{stroke-linecap:round;opacity:.55}
+  .netz-l.w{stroke:var(--acid)}.netz-l.l{stroke:var(--red)}.netz-l.m{stroke:var(--ink2);opacity:.28}
+  .netz-p{position:absolute;transform:translate(-50%,-50%);line-height:0;cursor:pointer}
+  .netz-leg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:10.5px;color:var(--muted)}
+  .netz-leg span::before{content:"";display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle;background:var(--line2)}
+  .netz-leg .w::before{background:var(--acid)}.netz-leg .l::before{background:var(--red)}
+  .netz-leg .m::before{background:var(--ink2);opacity:.45}.netz-leg .d::before{height:8px;width:3px;background:var(--muted)}
+  @media (prefers-reduced-motion:no-preference){
+    .rk-p,.netz-p{animation:einblickDa .45s ease-out both;animation-delay:calc(var(--i,0) * 40ms)}
+    .netz-l{animation:einblickL .6s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  }
+  @media (prefers-reduced-motion:reduce){ .einblick-pf{transition:none} }
+  @keyframes einblickDa{from{opacity:0}}
+  @keyframes einblickL{from{opacity:0}}
   .ic{display:inline-grid;place-items:center;vertical-align:middle;line-height:1}
   svg[viewBox="0 0 24 24"]{stroke-width:var(--strich);stroke-linecap:round;stroke-linejoin:round}
   .ic svg{display:block;width:1em;height:1em;stroke:currentColor;fill:none;
@@ -1756,6 +1807,14 @@
   .st-card .st-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .st-card .st-tt{display:block;font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1.1;letter-spacing:-.01em}
   .st-card .st-su{display:block;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:4px}
+  .st-card .st-k{display:flex;align-items:center;gap:11px}
+  .st-card .st-k .st-ic{margin-bottom:0;flex:0 0 auto}
+  .st-card .st-kt{flex:1;min-width:0}
+  .st-card .st-pf{flex:0 0 auto;display:grid;place-items:center;width:18px;height:18px;color:var(--muted)}
+  .st-card .st-pf .ic,.st-card .st-pf svg{width:15px;height:15px}
+  .st-card.gross .srn{margin-top:12px}
+  .st-card.zeile{padding:11px 14px}
+  .st-card.zeile .st-ic{width:32px;height:32px;border-radius:10px}
   .nf-empty{padding:32px 20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.5}
   .nd-ic.nv-cat-breaking{background:rgba(255,90,77,.14);color:#ff5a4d}
 
@@ -2040,18 +2099,22 @@
   .nf-wl-z b{margin-left:auto;font-family:'Sometype Mono',monospace;color:var(--gold);flex:0 0 auto}
 
   .nf-sam{border-top:1px solid var(--line);display:flex;flex-direction:column}
-  .nf-verlust{display:flex;align-items:center;gap:8px;padding:7px 13px;min-width:0;
-    border-top:1px solid rgba(240,86,106,.22);
-    background:linear-gradient(90deg,rgba(240,86,106,.08),transparent 70%)}
-  .nf-verlust-i{flex:0 0 18px;width:18px;height:18px;border-radius:5px;display:grid;
-    place-items:center;color:var(--red);background:rgba(240,86,106,.12)}
-  .nf-verlust-i svg{width:12px;height:12px}
-  .nf-verlust-l{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9px;
-    letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
-  .nf-verlust-w{display:flex;flex-wrap:wrap;gap:4px 10px;min-width:0}
-  .nf-verlust-w b{font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap}
-  .nf-verlust-w em{font-style:normal;color:var(--red);font-weight:700}
-  .nf-verlust-w u{text-decoration:none;color:var(--muted);font-weight:500;margin-left:4px}
+  .nf-verlust{display:flex;align-items:center;gap:8px;padding:6px 13px 7px;min-width:0;
+    border-top:1px solid rgba(240,86,106,.18)}
+  .nf-verlust-l{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;
+    font-family:'Sometype Mono',monospace;font-size:9px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--red)}
+  .nf-verlust-l svg{width:12px;height:12px}
+  .nf-verlust-w{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+  .nf-vl{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;
+    padding:2px 8px 2px 2px;border-radius:999px;background:rgba(240,86,106,.08);
+    border:1px solid rgba(240,86,106,.16);font-size:11px;font-weight:600;
+    color:var(--ink2);white-space:nowrap}
+  .nf-vl.mehr{padding:2px 8px;color:var(--muted)}
+  .nf-vl .rcp-av{flex:0 0 auto}
+  .nf-vl i{font-style:normal}
+  .nf-vl em{font-style:normal;color:var(--red);font-weight:700}
+  .nf-vl u{text-decoration:none;color:var(--muted);font-weight:500;font-size:10px}
   .nf-sam-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px;color:var(--ink2);
     min-width:0}
@@ -2482,8 +2545,7 @@
   .nd-tm-s{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:12.5px}
   .nd-tm.w .nd-tm-s{color:var(--acid)}
   .nd-tm.l .nd-tm-s{color:var(--red)}
-  .nd-tm-g{flex:1 1 auto;min-width:0;font-size:11px;color:var(--ink2);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nd-tm-g{flex:1 1 auto;min-width:0;font-size:11px;line-height:1.35;color:var(--ink2)}
   .nd-wk{display:flex;align-items:center;gap:10px;padding:10px 12px;
     background:var(--surface);border:1px solid var(--line);
     border-radius:10px;margin-bottom:6px}
@@ -2596,6 +2658,8 @@
     color:var(--ink);font-size:13px;cursor:pointer;font-weight:700;
     font-family:'Archivo Black',sans-serif;letter-spacing:-.005em;text-transform:uppercase}
   .nd-close:active{transform:scale(.985);background:var(--surface2)}
+  .nd-rueck{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
+  .nd-rueck .ic,.nd-rueck svg{width:18px;height:18px}
   .nd-x{background:none;border:0;color:var(--muted);font-size:26px;line-height:1;
     cursor:pointer;padding:0 6px;border-radius:8px;flex-shrink:0;transition:.15s;
     align-self:flex-start;margin-top:-2px}
@@ -3105,6 +3169,59 @@
     .srn-p,.srn-p.gold,.srn-fl{animation:none;opacity:1}
     .srn-t .b i{animation:none}
   }
+
+.rcp-feld{display:flex;flex-direction:column;gap:6px;margin:0 0 16px}
+.rcp-feld-z{display:grid;grid-template-columns:minmax(0,30%) minmax(0,1fr) auto;align-items:center;gap:8px}
+.rcp-feld-n{font-size:12px;line-height:1.25;color:var(--ink2);overflow-wrap:break-word}
+.rcp-feld-z.held .rcp-feld-n{color:var(--gold);font-weight:700}
+.rcp-feld-b{position:relative;display:grid;grid-template-columns:1fr 1fr;height:10px}
+.rcp-feld-b i{display:block;height:100%}
+.rcp-feld-b i.l{background:var(--red);opacity:.8;border-radius:3px 0 0 3px;justify-self:end;grid-column:1}
+.rcp-feld-b i.w{background:var(--acid);border-radius:0 3px 3px 0;justify-self:start;grid-column:2}
+.rcp-feld-b u{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line2)}
+.rcp-feld-z.held .rcp-feld-b i.w{background:var(--gold)}
+.rcp-feld-v{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap}
+.rcp-woche{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:4px 0 16px}
+.rcp-wo-t{display:flex;flex-direction:column;align-items:center;gap:2px}
+.rcp-wo-o,.rcp-wo-u{display:flex;width:100%;max-width:26px;height:46px;border-radius:5px;background:var(--surface2);overflow:hidden}
+.rcp-wo-o{align-items:flex-end}.rcp-wo-u{align-items:flex-start;height:28px}
+.rcp-wo-o i{display:block;width:100%;background:var(--acid);border-radius:4px 4px 0 0}
+.rcp-wo-u i{display:block;width:100%;background:var(--red);border-radius:0 0 4px 4px;opacity:.85}
+.rcp-wo-t.leer .rcp-wo-o,.rcp-wo-t.leer .rcp-wo-u{opacity:.4}
+.rcp-wo-l{font-size:10px;color:var(--muted);margin-top:2px}
+.rcp-wo-v{font-size:10px;color:var(--ink2);white-space:nowrap}
+.rcp-elo{margin:0 0 16px}
+.rcp-elo svg{display:block;width:100%;height:auto;margin-top:6px}
+.rcp-elo-0{stroke:var(--line2);stroke-dasharray:3 4}
+.rcp-elo-l{fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.rcp-elo-fl{fill:rgba(247,207,74,.12)}
+.rcp-elo circle.w{fill:var(--acid)}.rcp-elo circle.l{fill:var(--red)}
+.rcp-elo-z{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:2px}
+.rcp-elo-z .pos{color:var(--acid)}.rcp-elo-z .neg{color:var(--red)}
+@media (prefers-reduced-motion:no-preference){
+  .rcp-feld-b i{transform-origin:left;animation:rcpWachs .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .rcp-feld-b i.l{transform-origin:right}
+  .rcp-wo-o i{transform-origin:bottom;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .rcp-wo-u i{transform-origin:top;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .rcp-elo-l{stroke-dasharray:1;animation:rcpZieh 1.2s ease-out both}
+}
+@keyframes rcpWachs{from{transform:scaleX(0)}}
+@keyframes rcpWachsY{from{transform:scaleY(0)}}
+@keyframes rcpZieh{from{stroke-dashoffset:1}}
+
+.h2h-bg{margin:0 0 14px}
+.h2h-bg svg{display:block;width:100%;height:auto}
+.h2h-bg-0{stroke:var(--line2)}
+.h2h-bg rect.w{fill:var(--acid)}.h2h-bg rect.l{fill:var(--red)}
+.h2h-bg-n{display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--muted);margin:2px 0}
+.h2h-bg-n span{min-width:0;overflow-wrap:break-word}
+.h2h-bg-n b{margin-left:auto;font-size:12px;color:var(--ink2)}
+@media (prefers-reduced-motion:no-preference){
+  .h2h-bg rect{transform-box:fill-box;transform-origin:bottom;animation:rcpWachsY .5s ease-out both;animation-delay:calc(var(--i,0) * 25ms)}
+  .h2h-bg rect.l{transform-origin:top}
+}
+
+.rcp-block{margin:0 0 18px}
   .aw-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
   .aw-li{display:flex;align-items:center;gap:12px;background:var(--surface);
     border:1px solid var(--line);border-radius:14px;padding:10px 14px;position:relative;overflow:hidden;
@@ -3622,14 +3739,18 @@
   .rav.zn-l1 .zn-fx{opacity:.82}
   .rav.zn-l2 .zn-fx{opacity:.92}
   .rav.zn-l3 .zn-fx{opacity:1}
+  .rav.zn-l1 .zn-fx .zf{filter:drop-shadow(0 0 3px rgba(var(--zn-rgb,255,143,74),.6))}
+  .rav.zn-l2 .zn-fx .zf{filter:drop-shadow(0 0 4px rgba(var(--zn-rgb,255,143,74),.7))}
+  .rav.zn-l3 .zn-fx .zf{filter:drop-shadow(0 0 5px rgba(var(--zn-rgb,255,143,74),.8))}
+  .rav .zn-fx .zk{fill:#fff;opacity:.38;filter:none}
   .rav.zn::after{content:"";position:absolute;left:50%;top:45%;
     width:88%;height:88%;transform:translate(-50%,-50%);
     border-radius:50%;z-index:-1;pointer-events:none;opacity:0;
     background:radial-gradient(closest-side,
-      var(--zn-c,#ff8f4a) 0,rgba(255,143,74,0) 66%)}
-  .rav.zn-l1::after{opacity:.13}
-  .rav.zn-l2::after{opacity:.19}
-  .rav.zn-l3::after{opacity:.26}
+      var(--zn-c,#ff8f4a) 0,transparent 66%)}
+  .rav.zn-l1::after{opacity:.18}
+  .rav.zn-l2::after{opacity:.25}
+  .rav.zn-l3::after{opacity:.33}
   .rav .zn-ti{bottom:auto;top:calc(var(--rav) * .95);
     transform:translate(-50%,-50%)}
 
@@ -4388,7 +4509,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.01.c341951b';
+const BUILD_VERSION='2026.10.01.1d837ff8';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -4428,6 +4549,7 @@ let period='season';
 let ligaSeasonId=null;
 let ligaSicht='spieler';
 let awView='awards';
+let einblickOffen='';
 let rekKammer='';
 let awPeriod='season';
 let awSeasonId=null;
@@ -5753,6 +5875,58 @@ function saisonZellenHtml(sid, pid){
   const sieg = m => ((m.a1 === pid || m.a2 === pid) ? m.winner === 'A' : m.winner === 'B');
   return `<div class="srn-z">${ms.map(m => `<i class="${sieg(m) ? 'w' : 'l'}"></i>`).join('')}</div>`;
 }
+
+function rcpFeldHtml(ms, held){
+  const z = {};
+  ms.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+    if(!id) return;
+    z[id] = z[id] || {w:0, l:0};
+    ((m.a1 === id || m.a2 === id) ? m.winner === 'A' : m.winner === 'B') ? z[id].w++ : z[id].l++;
+  }));
+  const ids = Object.keys(z).sort((a, b) => (z[b].w - z[b].l) - (z[a].w - z[a].l) || z[b].w - z[a].w);
+  if(!ids.length) return '';
+  const max = Math.max(1, ...ids.map(id => Math.max(z[id].w, z[id].l)));
+  return `<div class="rcp-feld">${ids.map((id, i) => `<div class="rcp-feld-z${id === held ? ' held' : ''}" style="--i:${i}">
+    <span class="rcp-feld-n">${esc(pname(id))}</span>
+    <span class="rcp-feld-b"><i class="l" style="width:${(z[id].l / max * 50).toFixed(1)}%"></i><u></u><i class="w" style="width:${(z[id].w / max * 50).toFixed(1)}%"></i></span>
+    <span class="rcp-feld-v num">${z[id].w}:${z[id].l}</span></div>`).join('')}</div>`;
+}
+
+function rcpWocheHtml(ms, pid, start){
+  const WT = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  const je = Array.from({length:7}, (_, i) => {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const k = tagKey(d);
+    const e = ms.filter(m => tagKey(mts(m)) === k && [m.a1, m.a2, m.b1, m.b2].includes(pid));
+    const w = e.filter(m => (m.a1 === pid || m.a2 === pid) ? m.winner === 'A' : m.winner === 'B').length;
+    return {d, w, l:e.length - w};
+  });
+  const max = Math.max(1, ...je.map(x => Math.max(x.w, x.l)));
+  return `<div class="rcp-woche">${je.map((x, i) => `<div class="rcp-wo-t${x.w + x.l ? '' : ' leer'}" style="--i:${i}">
+    <span class="rcp-wo-o"><i style="height:${(x.w / max * 100).toFixed(0)}%"></i></span>
+    <span class="rcp-wo-u"><i style="height:${(x.l / max * 100).toFixed(0)}%"></i></span>
+    <span class="rcp-wo-l">${WT[x.d.getDay()]}</span>
+    <span class="rcp-wo-v num">${x.w + x.l ? x.w + ':' + x.l : '–'}</span></div>`).join('')}</div>`;
+}
+
+function rcpEloBahnHtml(ms, pid){
+  const e = ms.filter(m => [m.a1, m.a2, m.b1, m.b2].includes(pid)).sort((a, b) => mts(a) - mts(b));
+  if(e.length < 2) return '';
+  let s = 0;
+  const pts = [0];
+  e.forEach(m => { s += Math.round((m.deltas || {})[pid] || 0); pts.push(s); });
+  const W = 320, H = 70, lo = Math.min(...pts), hi = Math.max(...pts), sp = hi - lo || 1;
+  const x = i => (8 + i * (W - 16) / (pts.length - 1)).toFixed(1);
+  const y = v => (H - 10 - (v - lo) / sp * (H - 22)).toFixed(1);
+  const d = 'M' + pts.map((v, i) => x(i) + ',' + y(v)).join('L');
+  const null0 = y(0);
+  return `<div class="rcp-elo"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+    <line class="rcp-elo-0" x1="0" x2="${W}" y1="${null0}" y2="${null0}"/>
+    <path class="rcp-elo-fl" d="${d}L${x(pts.length - 1)},${null0}L${x(0)},${null0}Z"/>
+    <path class="rcp-elo-l" pathLength="1" d="${d}"/>
+    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
+  </svg><div class="rcp-elo-z num"><span>Erste Partie</span><b class="${s >= 0 ? 'pos' : 'neg'}">${s >= 0 ? '+' : ''}${s} Elo</b></div></div>`;
+}
 function pmap(){
   const key='pmap_'+players.length+'_'+_cache.version;
   if(_cache._pmapKey===key) return _cache._pmapData;
@@ -6018,6 +6192,17 @@ function showSeasonRecap(season, opts){
       }).join('')}</div>`;
   }
 
+  let rennenHtml='';
+  try {
+    const drei = rang.slice(0, 3).map(e => e.id);
+    if(drei.length >= 2){
+      const rn = saisonRennenHtml(sid, drei), sp = saisonSpitzeHtml(sid, drei), zl = saisonZellenHtml(sid, drei[0]);
+      rennenHtml = (rn ? rcpAbschnitt('Das Titelrennen') + `<div class="rcp-block">${rn}</div>` : '')
+        + (sp ? rcpAbschnitt('Tage an der Spitze') + `<div class="rcp-block">${sp}</div>` : '')
+        + (zl ? rcpAbschnitt('Die Saison des Meisters', pname(drei[0])) + `<div class="rcp-block">${zl}</div>` : '');
+    }
+  } catch(err){}
+
   let verlaufHtml='';
   try {
     const mini = _recapPosMiniSVG(getSeasonPositionHistory(sid));
@@ -6083,7 +6268,7 @@ function showSeasonRecap(season, opts){
         {v:ms.length, l:'Matches'}, {v:tage, l:'Spieltage'},
         {v:spielerImMonat.size, l:'Spieler'}, {v:tore, l:'Tore'}])
     + rcpAbschnitt('Podest') + podestHtml + teamHtml
-    + listeHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
+    + listeHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
     + `<button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>`,
     {protectMs: opts.auto ? 2500 : 0});
 
@@ -6125,6 +6310,20 @@ function _potwLastWeekRange(){
   if(now.getTime() < abschluss.getTime()) monday.setDate(monday.getDate()-7);
   const end=new Date(monday); end.setDate(end.getDate()+7); end.setMilliseconds(-1);
   return {start:monday, end};
+}
+function _potwWocheVon(key){
+  const k = String(key);
+  let start;
+  const iso = k.match(/^(\d{4})-W(\d{1,2})$/);
+  if(iso){
+    const jan4 = new Date(+iso[1], 0, 4);
+    start = new Date(+iso[1], 0, 4 - ((jan4.getDay() + 6) % 7) + (+iso[2] - 1) * 7);
+  } else {
+    const [y, m, d] = k.split('-').map(Number);
+    start = new Date(y, m - 1, d);
+  }
+  const end = new Date(start); end.setDate(end.getDate() + 7); end.setMilliseconds(-1);
+  return {start, end};
 }
 function _potwKeyOf(monday){
   return tagKey(monday);
@@ -6427,9 +6626,9 @@ function showPositionHistory(seasonId){
 
 function showPotwRecap(opts){
   opts = opts || {};
-  _sheetSetReopen(()=>showPotwRecap());
+  _sheetSetReopen(()=>showPotwRecap(opts.woche ? {woche:opts.woche} : undefined));
   try{
-    const {start:weekStart, end:weekEnd}=_potwLastWeekRange();
+    const {start:weekStart, end:weekEnd}=opts.woche ? _potwWocheVon(opts.woche) : _potwLastWeekRange();
     const ms=_potwMatchesInRange(weekStart,weekEnd);
     const wkKey=_potwKeyOf(weekStart);
     if(!ms.length){ toast('Letzte Woche keine Spiele','info'); return; }
@@ -6661,6 +6860,9 @@ function showPotwRecap(opts){
             {v:eloDeltaStr,          l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
+      + (geteilt ? '' : rcpAbschnitt('Die Woche von ' + pname(mainPotwPlayerId))
+          + rcpWocheHtml(ms, mainPotwPlayerId, weekStart))
+      + rcpAbschnitt('Das Feld der Woche') + rcpFeldHtml(ms, mainPotwPlayerId)
       + rcpAbschnitt('Höhepunkte der Woche')
       + `<div class="rcp-awards${hlKacheln.length%2 ? ' ungerade' : ''}">${hlKacheln.join('')}</div>`
       + `<button id="closePotwBtn" class="recap-done-btn">Verstanden</button>`,
@@ -6744,16 +6946,20 @@ function _potdLastDayData(){
   return null;
 }
 
+function _potdTagData(dk){
+  const dms=matches.filter(m=>tagKey(m.created_at)===dk);
+  return dms.length ? {dayKey:dk, dayMatches:dms} : null;
+}
 function potdHasData(){ return _potdLastDayData()!==null; }
 
 function showPotdRecap(opts){
   opts = opts || {};
-  _sheetSetReopen(()=>showPotdRecap());
+  _sheetSetReopen(()=>showPotdRecap(opts.tag ? {force:true, tag:opts.tag} : undefined));
   try{
     const now=new Date();
     if(!matches.length){ if(opts.force) toast('Noch keine Partien','info'); return; }
 
-    const _guardDay=_potdLastDayData();
+    const _guardDay=opts.tag ? _potdTagData(opts.tag) : _potdLastDayData();
     if(!_guardDay){ if(opts.force) toast('Noch kein gewerteter Spieltag','info'); return; }
     if(!opts.force && _recapSeen('potd_shown_'+_guardDay.dayKey, 'potd:'+_guardDay.dayKey)) return;
 
@@ -6880,6 +7086,9 @@ function showPotdRecap(opts){
             {v:eloDeltaStr, l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
+      + rcpAbschnitt('Der Tag von ' + pname(potdId))
+      + _ndTagesbahn(potdId, dayMatches, true) + rcpEloBahnHtml(dayMatches, potdId)
+      + rcpAbschnitt('Das Feld des Tages') + rcpFeldHtml(dayMatches, potdId)
       + rcpAbschnitt('Höhepunkte des Tages')
       + `<div class="rcp-awards${tagKacheln.length%2 ? ' ungerade' : ''}">${tagKacheln.join('')}</div>`
       + `<button id="closePotdBtn" class="recap-done-btn">Verstanden</button>`,
@@ -7474,7 +7683,7 @@ function renderNav(){
       <span class="lb">${lb}</span></button>`).join('');
   document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
-    awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';
+    awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
     window.scrollTo(0,0);render();});
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
 }
@@ -7725,7 +7934,9 @@ function insAvWrap(pid, innerHtml, opts){
     ? {band:true, pos:opts.pos, titel:opts.titel, px} : {band:false, px});
   const cls = 'rav zn' + (band ? ' rav-band' : '') + (f ? ' zn-l'+f : '')
             + (opts.klasse ? ' '+opts.klasse : '');
-  return `<span class="${cls}" style="--rav:${px}px"`
+  let ton = '';
+  if(f){ try { const t = rangTon(pid); ton = `;--zn-c:${t.c};--zn-rgb:${t.rgb}`; } catch(e){ ton = ''; } }
+  return `<span class="${cls}" style="--rav:${px}px${ton}"`
     + ` title="${esc(_znTitelTxt(t, f, pid))}">`
     + (f ? ZN_FEUER[f] : '') + ins + innerHtml + (band ? '' : _znSterneSvg(t)) + '</span>';
 }
@@ -8223,20 +8434,25 @@ function _seasonToolsHtml(){
   const recapIc = `<svg viewBox="0 0 24 24"><path d="M7 4v6a5 5 0 0010 0V4H7zM7 4H4v2a3 3 0 003 3M17 4h3v2a3 3 0 01-3 3M12 15v3M9 21h6"/></svg>`;
   const posIc   = `<svg viewBox="0 0 24 24"><path d="M5 21V11M12 21V7M19 21V3M3 21h18"/></svg>`;
   let cards = '';
-  if(hasRecap){
-    cards += `<button type="button" class="st-card recap" data-seasontool="recap"
-      data-sid="${esc(recapS.id)}">
-      <span class="st-ic">${recapIc}</span><span class="st-tt">Saison-Rückblick</span>
-      <span class="st-su">${esc(seasonLabel(recapS.id))} ansehen</span></button>`;
-  }
   if(hasPos){
-    cards += `<button type="button" class="st-card pos" data-seasontool="pos"
+    let bild = '';
+    try {
+      const drei = saisonRang(sid).slice(0, 3).map(e => e.id);
+      if(drei.length >= 2) bild = saisonRennenHtml(sid, drei);
+    } catch(e){ bild = ''; }
+    cards += `<button type="button" class="st-card pos${bild ? ' gross' : ''}" data-seasontool="pos"
       data-sid="${esc(sid)}">
-      <span class="st-ic">${posIc}</span><span class="st-tt">Positionsverlauf</span>
-      <span class="st-su">${esc(seasonLabel(sid))}</span></button>`;
+      <span class="st-k"><span class="st-ic">${posIc}</span><span class="st-kt"><span class="st-tt">Positionsverlauf</span>
+      <span class="st-su">${esc(seasonLabel(sid))}${bild ? ' · Elo der ersten drei' : ''}</span></span>${bild ? `<i class="st-pf">${svgI('chevron')}</i>` : ''}</span>
+      ${bild}</button>`;
   }
-  const one = (hasRecap && hasPos) ? '' : ' one';
-  return `<div class="seasontools"><div class="st-sec">Mehr zur Saison</div><div class="st-grid${one}">${cards}</div></div>`;
+  if(hasRecap){
+    cards += `<button type="button" class="st-card recap zeile" data-seasontool="recap"
+      data-sid="${esc(recapS.id)}">
+      <span class="st-k"><span class="st-ic">${recapIc}</span><span class="st-kt"><span class="st-tt">Saison-Rückblick</span>
+      <span class="st-su">${esc(seasonLabel(recapS.id))} ansehen</span></span><i class="st-pf">${svgI('chevron')}</i></span></button>`;
+  }
+  return `<div class="seasontools"><div class="st-sec">Mehr zur Saison</div><div class="st-grid one">${cards}</div></div>`;
 }
 function formDotsHtml(erg, curStreak){
   let glut = 0;
@@ -8659,25 +8875,25 @@ function rrow(p, s, i, metric, globalElo, letzte){
   </div>`;
 }
 
-function vPositions(){
-  function posList(pos){
-    const statsMap = allPlayerStats();
-    return activePlayers().map(p=>{
-      const s = statsMap[p.id] || playerStats(p.id);
-      const g  = pos==='atk' ? s.atkG       : s.defG;
-      const w  = pos==='atk' ? s.atkW       : s.defW;
-      const goalsSum = pos==='atk' ? (s.atkGoals||0)  : (s.defConceded||0);
-      const goalsAvg = g ? goalsSum/g : 0;
-      const perf=posPerfFrom(p.id,matches);
-      const pAvg=pos==='atk'?perf.aPerfAvg:perf.dPerfAvg;
-      const wr=g?w/g:0;
-      const score=posWert(pos,g,w,goalsAvg,pAvg);
-      return {p,g,w,wr,pAvg:pAvg||0,goalsAvg,score};
-    }).filter(x=>x.g>0)
-      .sort((a,b)=> b.score-a.score || b.pAvg-a.pAvg || b.wr-a.wr);
-  }
+function positionsListe(pos){
+  const statsMap = allPlayerStats();
+  return activePlayers().map(p=>{
+    const s = statsMap[p.id] || playerStats(p.id);
+    const g  = pos==='atk' ? s.atkG       : s.defG;
+    const w  = pos==='atk' ? s.atkW       : s.defW;
+    const goalsSum = pos==='atk' ? (s.atkGoals||0)  : (s.defConceded||0);
+    const goalsAvg = g ? goalsSum/g : 0;
+    const perf=posPerfFrom(p.id,matches);
+    const pAvg=pos==='atk'?perf.aPerfAvg:perf.dPerfAvg;
+    const wr=g?w/g:0;
+    const score=posWert(pos,g,w,goalsAvg,pAvg);
+    return {p,g,w,wr,pAvg:pAvg||0,goalsAvg,score};
+  }).filter(x=>x.g>0)
+    .sort((a,b)=> b.score-a.score || b.pAvg-a.pAvg || b.wr-a.wr);
+}
 
-  const atk=posList('atk'), def=posList('def');
+function vPositions(){
+  const atk=positionsListe('atk'), def=positionsListe('def');
   const block=(arr,pos)=>{
     if(!arr.length)return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
     const valLbl = pos==='atk' ? 'Tore je Spiel' : 'Gegentore je Spiel';
@@ -8702,7 +8918,8 @@ function vPositions(){
   };
   const which = rankMetric==='def'?'def':'atk';
   return `
-    <div class="view-head"><h2>Positionen</h2><p>Wer vorn und hinten am stärksten ist, über alle Partien. Der Wert verbindet Siegquote, Leistung gegen die Erwartung und Erfahrung.</p></div>
+    <div class="view-head"><h2>Positionen <button class="kopf-info" type="button" data-info="positionen" aria-label="So entsteht der Wert">${svgI('info')}</button></h2><p>Sturm und Abwehr, über alle Partien</p></div>
+    ${einblickHtml('rollen')}
     <div class="ui-switch">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('bolt')}Sturm</span></button>
       <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('shield')}Abwehr</span></button>
@@ -8711,6 +8928,13 @@ function vPositions(){
     ${which==='atk'?block(atk,'atk'):block(def,'def')}`;
 }
 
+
+function zeigePositionsInfo(){
+  openSheet(blattKopfHtml({ic:'info', titel:'So entsteht der Wert', unter:'Positionen'})
+    + `<div class="pos-info">
+      <p>Der Wert verbindet drei Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung — gemessen an Partner und Gegnern — und die Erfahrung, also wie oft jemand dort gespielt hat.</p>
+      <p><b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.</p></div>`);
+}
 const AW_MIN = {
   teamSpiele: 3,
   teamEnge: 2,
@@ -10210,6 +10434,7 @@ function vTeams(){
 
   return `
     <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}</p></div>
+    ${einblickHtml('netz', 'ab 4 Partien')}
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
@@ -10311,6 +10536,7 @@ function vMatch(){
       <div class="score-col B"><div class="cl">Team B</div>
         <div class="stepper"><button data-step="sb,-1">−</button><span class="sval num" id="svB" data-scoreedit="sb">${M.sb}</span><button data-step="sb,1">+</button></div></div>
     </div>
+    <div id="chanceSlot"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 0 10px">
       <span style="font-size:10.5px;color:var(--muted)">Zahl antippen, um sie direkt einzugeben</span>
       <button class="btn ghost" id="shuffleBtn" style="width:auto;flex-shrink:0;padding:8px 14px;font-size:11px;border-radius:10px">Mischen</button>
@@ -10500,6 +10726,9 @@ function updatePreview(){
   setAvg('avgA', M.A1, M.A2); setAvg('avgB', M.B1, M.B2);
 
   const ids = [M.A1,M.A2,M.B1,M.B2].filter(Boolean);
+  const chanceSlot = document.getElementById('chanceSlot');
+  if(chanceSlot) chanceSlot.innerHTML = (ids.length === 4 && new Set(ids).size === 4
+    && M.pA1 !== M.pA2 && M.pB1 !== M.pB2) ? _matchChanceHtml() : '';
   if(new Set(ids).size !== ids.length){
     slot.innerHTML = `<div class="preview" style="color:var(--red);font-size:12px;text-align:center">Ein Spieler steht doppelt.</div>`;
     save.disabled = true; return;
@@ -10514,7 +10743,6 @@ function updatePreview(){
   const winner = M.sa > M.sb ? 'A' : 'B';
   const{teamA, teamB} = teamsFromM();
   const c = computeMatch(teamA, teamB, winner, M.sa, M.sb);
-  const pA = Math.round(c.expA*100), pB = 100-pA;
   const line = s => {
     const d = c.res[s.id];
     return `<div class="delta-row">
@@ -10525,11 +10753,7 @@ function updatePreview(){
     </div>`;
   };
   slot.innerHTML = `<div class="preview">
-    <div class="prob">
-      <div class="pa" style="width:${pA}%">${pA}%</div>
-      <div class="pb" style="width:${pB}%">${pB}%</div>
-    </div>
-    <div class="prob-cap">Siegchance (Saison-Elo) · Team ${winner} gewinnt ${M.sa}:${M.sb}
+    <div class="prob-cap">Team ${winner} gewinnt ${M.sa}:${M.sb}
       ${c.mov>1.08?' · Kantersieg ×'+komma(c.mov,2):''}
     </div>
     <div class="delta-list">
@@ -10539,6 +10763,21 @@ function updatePreview(){
     </div>
   </div>`;
   save.disabled = false;
+}
+
+function _matchChanceHtml(){
+  let c;
+  try {
+    const {teamA, teamB} = teamsFromM();
+    c = computeMatch(teamA, teamB, 'A', 10, 0).expA;
+  } catch(e){ return ''; }
+  if(c == null || !isFinite(c)) return '';
+  const pA = Math.round(c * 100), pB = 100 - pA;
+  const wort = chanceWort(Math.max(c, 1 - c));
+  const mitte = wort === 'Favorit' ? (c >= .5 ? '← Favorit' : 'Favorit →') : wort;
+  return `<div class="m-chance"><div class="m-ch-r">${rcpPaarHtml([M.A1, M.A2], 26)}`
+    + `<span class="m-ch-w">${esc(mitte)}</span>${rcpPaarHtml([M.B1, M.B2], 26)}</div>`
+    + `<div class="prob"><div class="pa" style="width:${pA}%">${pA}%</div><div class="pb" style="width:${pB}%">${pB}%</div></div></div>`;
 }
 
 async function doSaveMatch(){
@@ -10576,6 +10815,109 @@ async function doSaveMatch(){
   tab = 'ranking'; await loadAll();
 }
 
+const EINBLICK = {
+  rollen:{titel:'Die Rollen-Landkarte', ic:'sideSwap', inhalt:() => _einblickRollen()},
+  netz:{titel:'Das Netz der Duos', ic:'duo', inhalt:() => _einblickNetz()}
+};
+function einblickHtml(key, rechts){
+  const e = EINBLICK[key];
+  if(!e) return '';
+  const auf = einblickOffen === key;
+  let inhalt = '';
+  if(auf){ try { inhalt = e.inhalt() || ''; } catch(err){ inhalt = ''; } }
+  return `<div class="einblick${auf ? ' auf' : ''}" data-einblick="${key}">
+    <button class="einblick-k" type="button" aria-expanded="${auf}">${svgI(e.ic)}<span>${esc(e.titel)}</span>`
+    + `${rechts ? `<em>${esc(rechts)}</em>` : ''}<i class="einblick-pf">${svgI('chevron')}</i></button>
+    <div class="einblick-i">${inhalt}</div></div>`;
+}
+function einblickBinden(wurzel){
+  (wurzel || document).querySelectorAll('[data-einblick] > .einblick-k').forEach(k => {
+    k.onclick = () => {
+      const box = k.parentElement, key = box.dataset.einblick;
+      const auf = einblickOffen !== key;
+      einblickOffen = auf ? key : '';
+      const i = box.querySelector('.einblick-i');
+      if(auf && !i.innerHTML.trim()){
+        try { i.innerHTML = EINBLICK[key].inhalt() || ''; } catch(err){ i.innerHTML = ''; }
+        bindDetailLinks(i);
+      }
+      box.classList.toggle('auf', auf);
+      k.setAttribute('aria-expanded', String(auf));
+    };
+  });
+}
+function bindDetailLinks(el){
+  el.querySelectorAll('[data-detail]').forEach(x => {
+    x.onclick = () => sheetNav(() => showPlayer(x.dataset.detail));
+  });
+}
+
+function _einblickRollen(){
+  const atk = {}, def = {};
+  positionsListe('atk').forEach(x => { atk[x.p.id] = x.score; });
+  positionsListe('def').forEach(x => { def[x.p.id] = x.score; });
+  const pkt = Object.keys(atk).filter(id => def[id] != null).map(id => ({id, a:atk[id], d:def[id]}));
+  if(pkt.length < 3) return '';
+  const W = 300, H = 230, R = 13;
+  const span = (arr) => { const lo = Math.min(...arr), hi = Math.max(...arr); return {lo, hi, d:(hi - lo) || 1}; };
+  const sa = span(pkt.map(x => x.a)), sd = span(pkt.map(x => x.d));
+  const med = arr => { const s = arr.slice().sort((a, b) => a - b); return s[s.length >> 1]; };
+  const ma = med(pkt.map(x => x.a)), md = med(pkt.map(x => x.d));
+  const X = v => 30 + (v - sa.lo) / sa.d * (W - 50), Y = v => H - 28 - (v - sd.lo) / sd.d * (H - 50);
+  const lage = pkt.map(x => ({id:x.id, x:X(x.a), y:Y(x.d)}));
+  for(let n = 0; n < 40; n++){
+    for(let i = 0; i < lage.length; i++) for(let j = i + 1; j < lage.length; j++){
+      const p = lage[i], q = lage[j], dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy) || .01;
+      if(d < 2 * R + 2){
+        const k = (2 * R + 2 - d) / 2, ux = dx / d, uy = dy / d;
+        p.x -= ux * k; p.y -= uy * k; q.x += ux * k; q.y += uy * k;
+      }
+    }
+    lage.forEach(p => { p.x = Math.max(R + 2, Math.min(W - R - 2, p.x)); p.y = Math.max(R + 2, Math.min(H - R - 2, p.y)); });
+  }
+  const feld = (x) => (x.a >= ma ? 'v' : '') + (x.d >= md ? 'h' : '');
+  const gruppen = {vh:[], v:[], h:[], '':[]};
+  pkt.slice().sort((p, q) => (q.a + q.d) - (p.a + p.d)).forEach(x => gruppen[feld(x)].push(x.id));
+  const NAME = {vh:'Vorn und hinten stark', v:'Stärker im Sturm', h:'Stärker in der Abwehr', '':'Auf beiden unter der Mitte'};
+  const liste = ['vh', 'v', 'h', ''].filter(k => gruppen[k].length)
+    .map(k => `<span><i class="f-${k || 'n'}"></i><b>${esc(NAME[k])}:</b> ${esc(_namenListe(gruppen[k].map(pname)))}</span>`).join('');
+  return `<div class="rk"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+      <rect class="rk-q" x="${X(ma)}" y="0" width="${W - X(ma)}" height="${Y(md)}"/>
+      <line class="rk-m" x1="${X(ma)}" x2="${X(ma)}" y1="0" y2="${H - 20}"/>
+      <line class="rk-m" x1="20" x2="${W}" y1="${Y(md)}" y2="${Y(md)}"/>
+      <line class="rk-a" x1="20" x2="${W}" y1="${H - 20}" y2="${H - 20}"/>
+      <line class="rk-a" x1="20" x2="20" y1="0" y2="${H - 20}"/>
+    </svg>${lage.map((p, i) => `<span class="rk-p" data-detail="${esc(p.id)}" style="left:${(p.x / W * 100).toFixed(1)}%;top:${(p.y / H * 100).toFixed(1)}%;--i:${i}">${rcpAvHtml(p.id, 26, {})}</span>`).join('')}</div>
+    <div class="rk-ax"><span>↑ Abwehr</span><span>Sturm →</span></div>
+    <div class="rk-l">${liste}</div>`;
+}
+
+function _einblickNetz(){
+  const ids = activePlayers().map(p => p.id);
+  const n = ids.length;
+  if(n < 3) return '';
+  const W = 300, H = 280, R = 112, cx = 150, cy = 140;
+  const lage = {};
+  ids.forEach((id, i) => { const a = -Math.PI / 2 + i / n * Math.PI * 2; lage[id] = [cx + Math.cos(a) * R, cy + Math.sin(a) * R]; });
+  const duo = {};
+  matches.forEach(m => [[m.a1, m.a2, m.winner === 'A'], [m.b1, m.b2, m.winner === 'B']].forEach(([x, y, w]) => {
+    if(!lage[x] || !lage[y]) return;
+    const k = [x, y].sort().join('|');
+    duo[k] = duo[k] || {g:0, w:0}; duo[k].g++; if(w) duo[k].w++;
+  }));
+  const ks = Object.keys(duo).filter(k => duo[k].g >= 4).sort((a, b) => duo[b].g - duo[a].g).slice(0, 18).reverse();
+  if(!ks.length) return '';
+  const gmax = Math.max(1, ...ks.map(k => duo[k].g));
+  const linien = ks.map((k, i) => {
+    const [x, y] = k.split('|'), q = duo[k].w / duo[k].g;
+    const cls = q >= .6 ? 'w' : q <= .4 ? 'l' : 'm';
+    return `<line class="netz-l ${cls}" style="--i:${i}" x1="${lage[x][0].toFixed(1)}" y1="${lage[x][1].toFixed(1)}" x2="${lage[y][0].toFixed(1)}" y2="${lage[y][1].toFixed(1)}" stroke-width="${(1 + duo[k].g / gmax * 7).toFixed(1)}"/>`;
+  }).join('');
+  const gesichter = ids.map(id => `<span class="netz-p" data-detail="${esc(id)}" style="left:${(lage[id][0] / W * 100).toFixed(1)}%;top:${(lage[id][1] / H * 100).toFixed(1)}%">${rcpAvHtml(id, 30, {})}</span>`).join('');
+  return `<div class="netz"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">${linien}</svg>${gesichter}</div>
+    <div class="rk-l"><span>Im Uhrzeigersinn ab oben: ${esc(_namenListe(ids.map(pname)))}.</span></div>
+    <div class="netz-leg"><span class="w">gewinnt öfter</span><span class="m">ausgeglichen</span><span class="l">verliert öfter</span><span class="d">Dicke: Zahl der Partien</span></div>`;
+}
 let _sheetStack = [];
 let _sheetReopen = null;
 let _sheetPopping = false;
@@ -13647,6 +13989,9 @@ function showAddPlayer(){
 }
 
 function bind(){
+  document.querySelectorAll('[data-info="positionen"]').forEach(b => b.onclick = zeigePositionsInfo);
+  einblickBinden(document.getElementById('main'));
+  document.querySelectorAll('#main .einblick.auf .einblick-i').forEach(bindDetailLinks);
 
   const ts=document.getElementById('teamSearch');
   if(ts){
@@ -14067,6 +14412,7 @@ function showH2H(idA, idB){
 
     ${teamBlock}
     ${oppBlock}
+    ${h2hBegegnungenHtml(idA, idB)}
     ${lastBlock}
   `);
 
@@ -14084,6 +14430,27 @@ function showH2H(idA, idB){
   }
 }
 
+
+function h2hBegegnungenHtml(a, b){
+  const alle = matchesOfPlayer(a, matches).filter(m => [m.a1, m.a2, m.b1, m.b2].includes(b)
+    && ((m.a1 === a || m.a2 === a) !== (m.a1 === b || m.a2 === b)));
+  if(alle.length < 2) return '';
+  const ms = alle.slice(-40);
+  const W = 320, H = 110, mitte = 55, n = ms.length;
+  const bw = Math.min(14, (W - 16) / n - 2);
+  const sieg = m => (m.a1 === a || m.a2 === a) ? m.winner === 'A' : m.winner === 'B';
+  const balken = ms.map((m, i) => {
+    const w = sieg(m), h = 8 + Math.abs(m.score_a - m.score_b) * 4.2;
+    const x = 8 + i * (W - 16) / n;
+    return `<rect class="${w ? 'w' : 'l'}" style="--i:${i}" x="${x.toFixed(1)}" y="${(w ? mitte - h : mitte).toFixed(1)}" width="${Math.max(1, bw).toFixed(1)}" height="${h.toFixed(1)}" rx="2"/>`;
+  }).join('');
+  const aw = ms.filter(sieg).length;
+  return `<div class="h2h-bg">${rcpAbschnitt(alle.length > n ? 'Die letzten ' + n + ' Begegnungen' : 'Jede Begegnung',
+      alle.length > n ? alle.length + ' insgesamt' : '')}
+    <div class="h2h-bg-n"><span>${esc(pname(a))}</span><b class="num">${aw}</b></div>
+    <svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><line class="h2h-bg-0" x1="0" x2="${W}" y1="${mitte}" y2="${mitte}"/>${balken}</svg>
+    <div class="h2h-bg-n re"><span>${esc(pname(b))}</span><b class="num">${n - aw}</b></div></div>`;
+}
 function showTeam(p1Id,p2Id){
   const pm=pmap();
   const pA=pm[p1Id], pB=pm[p2Id];
@@ -14692,7 +15059,7 @@ document.getElementById('settingsBtn').onclick=openSettingsLock;
   };
   btn.onclick = () => showPositionHistory();
 })();
-document.getElementById('logoHome').onclick=()=>{tab='ranking';period='season';ligaSeasonId=null;ligaSicht='spieler';rekKammer='';closeSheet(true);render();window.scrollTo(0,0);};
+document.getElementById('logoHome').onclick=()=>{tab='ranking';period='season';ligaSeasonId=null;ligaSicht='spieler';rekKammer='';einblickOffen='';closeSheet(true);render();window.scrollTo(0,0);};
 document.getElementById('fab').onclick=()=>{tab='match';render();window.scrollTo(0,0);};
 
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -14905,6 +15272,7 @@ const STORY_PRIO = {
   loss_streak:       66,
   top_form:          64,
   spiel:             41,
+  runde:             40,
   match_result:      63,
   chronik_geholt:    62,
   team_streak:       60,
@@ -15278,7 +15646,9 @@ function _buildStories(){
     ? AMBIENT_SLOTS.filter(h => now.getHours() >= h).length : 0) + 'v' + _ambientBestand;
   const _morningSlotSig = (now.getHours() * 60 + now.getMinutes()) >= (23 * 60 + 59) ? 1 : 0;
   const _weekSlotSig = _wocheDue ? 1 : 0;
-  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig;
+  let _rundenSig = 0;
+  try { const _rn = now.getTime(); _rundenSig = _spBasis().runden.filter(r => r.t + RUNDE_PAUSE_MS <= _rn).length; } catch(e){}
+  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig + '_' + _rundenSig;
   if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
     return _cache._buildStoriesResult;
   }
@@ -16508,6 +16878,9 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
+  try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }
+  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] runde', e); }
+
 
   try {
     {
@@ -16980,7 +17353,7 @@ function _buildStories(){
   const deduped = [];
   for(const s of stories){
     const d = s.dataRef || {};
-    if(d.type === 'spiel'){ deduped.push(s); continue; }
+    if(d.type === 'spiel' || d.type === 'runde'){ deduped.push(s); continue; }
     const pid = d.pid || d.playerId || d.newLeader || null;
     let gesichter = [];
     try { gesichter = (typeof _newsPids === 'function') ? _newsPids(s) : []; } catch(e){ gesichter = []; }
@@ -18292,7 +18665,7 @@ function _consolidateStories(list){
   const seenTitel = new Set();
   const _sperreMs = (NEWS_LIMITS.sperreTage || 0) * 86400000;
   const _OHNE_SPERRE = new Set(['ambient', 'sammel', 'season_endgame', 'spiel',
-                                'potd', 'woche', 'chronik_monat', 'season_recap']);
+                                'potd', 'woche', 'chronik_monat', 'season_recap', 'runde']);
   const _aussage = st => {
     const d = (st && st.dataRef) || {};
     const typ = d.type || '';
@@ -18841,7 +19214,7 @@ function _consolidateStories(list){
   });
 
   const OHNE_DECKEL = new Set(['lead_change','elo_record','streak_record',
-                               'season_endgame','ambient','group']);
+                               'season_endgame','ambient','group','runde']);
   const NF_DECKEL = 2;
   const _deckelSorte = s => {
     const d = (s && s.dataRef) || {};
@@ -18897,7 +19270,7 @@ function _consolidateStories(list){
   const _istTafelKarte = s => !!s && (s.cat === 'tafel'
     || (s.dataRef || {}).quelle === 'tafel' || (s.dataRef || {}).quelle === 'form');
   const _behalten = new Set();
-  const TAG_SUMME = new Set(['elo_swing']);
+  const TAG_SUMME = new Set(['elo_swing', 'runde']);
   const _zaehltGegenDeckel = s => {
     const t = (s && s.dataRef || {}).type;
     if(TAG_PFLICHT.has(t) || TAG_SUMME.has(t)) return false;
@@ -18962,7 +19335,6 @@ function _consolidateStories(list){
       return Object.assign({}, s, {dataRef: Object.assign({}, d, {bandFremd:true})});
     });
   }
-  ausbalanciert = _newsRunden(ausbalanciert);
   _cache._consolFrom = list;
   _cache._consolList = ausbalanciert;
   return ausbalanciert;
@@ -19166,9 +19538,7 @@ function _newsSaveSeen(set){
 function _newsMarkSeen(ids){
   const seen = _newsLoadSeen();
   const list = Array.isArray(ids) ? ids : [ids];
-  const runden = new Map();
-  try { getStoriesCache().forEach(x => { if((x.dataRef || {}).type === 'runde') runden.set(x.id, x.dataRef.glieder || []); }); } catch(e){}
-  list.forEach(id => { seen.add(id); (runden.get(id) || []).forEach(g => seen.add(g.id)); });
+  list.forEach(id => seen.add(id));
   _newsSaveSeen(seen);
 }
 function _newsLesestand(){
@@ -19176,8 +19546,6 @@ function _newsLesestand(){
 }
 function _newsGelesen(s, seen, stand){
   if(!s) return true;
-  const d = s.dataRef || {};
-  if(d.type === 'runde' && Array.isArray(d.glieder)) return d.glieder.every(g => _newsGelesen(g, seen, stand));
   if(seen && seen.has(s.id)) return true;
   return !!stand && new Date(s.when).getTime() <= stand;
 }
@@ -19185,7 +19553,7 @@ function _newsMarkAllSeen(){
   const stories = getStoriesCache();
   _newsMarkSeen(stories.map(s => s.id));
   const neuste = stories.reduce((mx, s) =>
-    Math.max(mx, new Date(s.when).getTime() || 0, new Date((s.dataRef || {}).bis || 0).getTime() || 0), 0);
+    Math.max(mx, new Date(s.when).getTime() || 0), 0);
   if(neuste) try { localStorage.setItem(NEWS_LS_STAND, String(neuste)); } catch(e){}
 }
 function newsUnreadCount(){
@@ -19431,7 +19799,7 @@ function _newsTafelTon(s){
 }
 
 function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
-  if(((s && s.dataRef) || {}).type === 'runde') return _newsRundeHtml(s, isRead, istTagesKarte, fadenHtml);
+  if(((s && s.dataRef) || {}).type === 'runde') return _newsRundeHtml(s, isRead, fadenHtml);
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
@@ -19713,11 +20081,11 @@ function _newsVerlustBand(s){
       ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
   }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
   if(!weg.length) return '';
-  return `<div class="nf-verlust"><i class="nf-verlust-i">${svgI('trendDown')}</i>`
-    + `<span class="nf-verlust-l">Verliert</span><span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
-      `<b>${esc(pm[x.pid].name)} <em class="num">−${-x.d}</em>${x.ab
-        ? `<u>auf ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
-      ? `<b>+${weg.length - 3}</b>` : ''}</span></div>`;
+  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
+    + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
+      `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
+      + `<em class="num">−${-x.d}</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      ? `<b class="nf-vl mehr">+${weg.length - 3}</b>` : ''}</span></div>`;
 }
 
 function _newsSpielZahlen(s, anlass){
@@ -19792,7 +20160,7 @@ function _newsFaeden(cards){
   const glieder = new Map();
   cards.forEach(c => {
     const d = c.dataRef || {};
-    const ids = (d.type === 'sammel' || d.type === 'runde') && Array.isArray(d.teile)
+    const ids = d.type === 'sammel' && Array.isArray(d.teile)
       ? d.teile.map(t => t && t.id).filter(Boolean) : [c.id];
     const g = ids.map(id => rohId.get(id) || (id === c.id ? c : null)).filter(Boolean);
     g.forEach(x => karteVon.set(x.id, c));
@@ -20195,7 +20563,6 @@ function _newsTagSpannung(s){
   const d = (s && s.dataRef) || {};
   const t = d.type || '';
   if(_isBreaking(s)) return 1200 + (s.prio || 0);
-  if(t === 'runde') return Math.max(0, ...(d.glieder || []).filter(_newsTagKarteWuerdig).map(_newsTagSpannung));
   const basis = {
     giant_slayer:980, top_clash:940, rekord_geholt:900,
     rekord_erstmals:920, rekord_gesteigert:870, chronik_geholt:850,
@@ -20221,11 +20588,9 @@ function _newsTagSpannung(s){
 
 const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
   'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
-  'season_recap']);
+  'season_recap', 'runde']);
 function _newsTagKarteWuerdig(st){
-  const dr = (st && st.dataRef) || {};
-  if(dr.type === 'runde') return (dr.glieder || []).some(_newsTagKarteWuerdig);
-  if(NEWS_TAGKARTE_OHNE.has(dr.type || '')) return false;
+  if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
   if(_newsIstNegativ(st)) return false;
   return !_isBreaking(st);
 }
@@ -20394,7 +20759,8 @@ function _spStand(d){
   return `<em class="${d.aw ? 'w' : ''}">${d.sa}</em><i>:</i><em class="${d.aw ? '' : 'w'}">${d.sb}</em>`;
 }
 
-const RUNDE_LUECKE_MS = 60 * 60 * 1000;
+const RUNDE_PAUSE_MS = 30 * 60 * 1000;
+const RUNDE_MIN = 3;
 const _spBasisMemo = new WeakMap();
 function _spBasis(){
   let b = _spBasisMemo.get(matches);
@@ -20404,7 +20770,7 @@ function _spBasis(){
   const kum = Array.from({length:11}, () => new Int32Array(chrono.length + 1));
   const lauf = {}, best = {}, vor = new Map();
   let liga = 0, ligaWer = null;
-  const runde = new Map();
+  const bloecke = [];
   let r = null;
   chrono.forEach((m, i) => {
     const d = Math.min(10, Math.abs(m.score_a - m.score_b));
@@ -20417,15 +20783,16 @@ function _spBasis(){
       if(lauf[id] > liga){ liga = lauf[id]; ligaWer = id; }
     });
     const set = ids.slice().sort().join(',');
-    const t = mts(m), tag = tagKey(t);
-    if(r && r.set === set && r.tag === tag && t - r.t <= RUNDE_LUECKE_MS){
-      r.ids.push(m.id); r.t = t;
+    const t = mts(m);
+    if(r && t - r.t <= RUNDE_PAUSE_MS){
+      r.ids.push(m.id); r.t = t; if(r.set !== set) r.set = null;
     } else {
-      r = {set, tag, t, ids:[m.id]};
+      r = {set, t, ids:[m.id]};
+      bloecke.push(r);
     }
-    runde.set(m.id, r);
   });
-  b = {chrono, idx, kum, vor, runde, byId:new Map(chrono.map(m => [m.id, m]))};
+  const runden = bloecke.filter(x => x.set && x.ids.length >= RUNDE_MIN);
+  b = {chrono, idx, kum, vor, runden, byId:new Map(chrono.map(m => [m.id, m]))};
   _spBasisMemo.set(matches, b);
   return b;
 }
@@ -20818,41 +21185,20 @@ function _spBild(s){
   return r;
 }
 
-const RUNDE_ZEILEN = 8;
-function _newsIstPartieKarte(s){
-  const d = (s && s.dataRef) || {};
-  if(!d.matchId) return false;
-  return d.type === 'spiel' || (d.type === 'sammel' && d.quelle === 'spiel');
-}
-function _newsRunden(list){
-  if(!Array.isArray(list) || list.length < 2) return list;
-  const b = _spBasis();
-  const proRunde = new Map();
-  list.forEach(s => {
-    if(!_newsIstPartieKarte(s)) return;
-    const r = b.runde.get(s.dataRef.matchId);
-    if(!r || r.ids.length < 2) return;
-    let g = proRunde.get(r);
-    if(!g){ g = {r, karten:[], brk:[]}; proRunde.set(r, g); }
-    (_isBreaking(s) ? g.brk : g.karten).push(s);
+function _newsRundenStories(nowMs){
+  const out = [];
+  const seit = nowMs - NEWS_FENSTER_TAGE * 86400000;
+  _spBasis().runden.forEach(r => {
+    const ende = r.t + RUNDE_PAUSE_MS;
+    if(ende > nowMs || r.t < seit) return;
+    const st = _newsRundeStory(r, ende);
+    if(st) out.push(st);
   });
-  if(!proRunde.size) return list;
-  const ersetzt = new Map(), weg = new Set();
-  proRunde.forEach(g => {
-    if(g.karten.length < 2) return;
-    const glieder = g.karten.slice().sort((x, y) => mts(_spMatch(x.dataRef.matchId)) - mts(_spMatch(y.dataRef.matchId)));
-    const erste = glieder[0];
-    const runde = _newsRundeKarte(erste, glieder, g.brk, g.r);
-    if(!runde) return;
-    ersetzt.set(erste.id, runde);
-    glieder.slice(1).forEach(x => weg.add(x.id));
-  });
-  if(!ersetzt.size) return list;
-  return list.filter(s => !weg.has(s.id)).map(s => ersetzt.get(s.id) || s);
+  return out;
 }
-function _newsRundeKarte(erste, glieder, brk, r){
+function _newsRundeStory(r, ende){
   const ms = r.ids.map(_spMatch).filter(Boolean);
-  if(ms.length < 2) return null;
+  if(ms.length < RUNDE_MIN) return null;
   const ids = [ms[0].a1, ms[0].a2, ms[0].b1, ms[0].b2];
   const z = {};
   ids.forEach(id => { z[id] = {id, w:0, l:0, e:0}; });
@@ -20862,12 +21208,11 @@ function _newsRundeKarte(erste, glieder, brk, r){
   const vorn = spieler.filter(x => x.w === top.w).map(x => x.id);
   const n = ms.length;
   const paarungen = new Set(ms.map(m => [[m.a1, m.a2].sort().join('+'), [m.b1, m.b2].sort().join('+')].sort().join('|'))).size;
-  const ein = ms[0], teamA = [ein.a1, ein.a2], teamB = [ein.b1, ein.b2];
-  const seiteGew = t => ms.filter(m => _spGew(m, t[0])).length;
+  const teamA = [ms[0].a1, ms[0].a2], teamB = [ms[0].b1, ms[0].b2];
   const zwei = t => _namenListe(t.map(_spName));
   let title;
   if(paarungen === 1){
-    const wa = seiteGew(teamA), wb = n - wa;
+    const wa = ms.filter(m => _spGew(m, teamA[0])).length, wb = n - wa;
     title = wa === wb
       ? `${zwei(teamA)} trennen sich von ${zwei(teamB)} ${wa}:${wb}`
       : `${zwei(wa > wb ? teamA : teamB)} gewinnen die Runde gegen ${zwei(wa > wb ? teamB : teamA)} ${Math.max(wa, wb)}:${Math.min(wa, wb)}`;
@@ -20880,33 +21225,26 @@ function _newsRundeKarte(erste, glieder, brk, r){
   }
   const desc = `${n} Partien zwischen ${datumFmt(mts(ms[0]), 'uhr')} und ${datumFmt(mts(ms[n - 1]), 'uhr')} Uhr`
     + (paarungen === 3 ? ', jede Paarung mindestens einmal.' : paarungen > 1 ? `, ${paarungen} verschiedene Paarungen.` : ', immer dieselben Teams.');
-  const karteVon = {};
-  glieder.concat(brk).forEach(k => { karteVon[k.dataRef.matchId] = k.id; });
-  const brkIds = new Set(brk.map(k => k.dataRef.matchId));
-  const teile = [];
-  glieder.forEach(k => {
-    const d = k.dataRef || {};
-    if(d.type === 'sammel' && Array.isArray(d.teile)) d.teile.forEach(t => teile.push(t));
-    else teile.push({id:k.id, typ:d.type});
-  });
-  const letzte = glieder[glieder.length - 1];
   return {
-    id:erste.id, when:erste.when, cat:erste.cat, ic:'users',
-    prio:Math.max(...glieder.map(k => k.prio || 0)),
-    title, desc,
-    dataRef:{
-      type:'runde', playerIds:ids, teile, glieder,
-      partien:ms.map(m => ({id:m.id, karte:karteVon[m.id] || null, brk:brkIds.has(m.id)})),
-      spieler, paarungen, bis:letzte.when
-    }
+    id:'runde_' + ms[0].id, cat:'highlight', ic:'users', when:new Date(ende),
+    prio:STORY_PRIO.runde, title, desc,
+    dataRef:{type:'runde', matchIds:ms.map(m => m.id), playerIds:ids, spieler, paarungen}
   };
 }
-function _spRundeAnlass(d, mid){
-  const k = (d.glieder || []).find(x => x.dataRef.matchId === mid);
-  if(!k) return '';
-  try { return _spAnlass(k).key; } catch(e){ return ''; }
+const _spKarteMemo = new WeakMap();
+function _spKarteDerPartie(mid){
+  const l = getStoriesCache();
+  let m = _spKarteMemo.get(l);
+  if(!m){
+    m = new Map();
+    l.forEach(s => { const d = s.dataRef || {};
+      if(d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && d.quelle === 'spiel'))) m.set(d.matchId, s); });
+    _spKarteMemo.set(l, m);
+  }
+  return m.get(mid) || null;
 }
 function _spRundeTafel(sp){
+  if(!sp || sp.length < 2) return '';
   const allein = sp[0].w > sp[1].w;
   const maxE = Math.max(8, ...sp.map(x => Math.abs(x.e)));
   return `<div class="sp-rd-tafel">${sp.map((x, i) => `<div class="sp-rd-sp${i === 0 && allein ? ' erst' : ''}" style="--i:${i}">${_spChip(x.id)}`
@@ -20915,38 +21253,38 @@ function _spRundeTafel(sp){
     + `<span class="sp-rd-wl num">${_spZahl(x.w)}:${_spZahl(x.l)}</span>`
     + `<em class="num ${x.e >= 0 ? 'g' : 'r'}">${_spVz(x.e)}</em></div>`).join('')}</div>`;
 }
-function _spRundeZeile(d, p, i, mitGlied){
-  const m = _spMatch(p.id);
+function _spRundeZeile(mid, i, imBlatt){
+  const m = _spMatch(mid);
   if(!m) return '';
   const aw = m.winner === 'A';
   const t = (ids, w) => `<span class="sp-rd-t${w ? ' w' : ''}">${_spChips(ids)}</span>`;
-  const an = p.brk ? 'brk' : _spRundeAnlass(d, p.id);
-  const a = an === 'brk' ? {kurz:'Breaking', ic:'bolt'} : SP_ANLASS[an];
-  const ziel = mitGlied && p.karte ? ` data-glied="${esc(p.karte)}"` : '';
-  return `<div class="sp-rd-p${p.brk ? ' brk' : ''}" style="--i:${i}"${ziel}><span class="sp-rd-u num">${datumFmt(mts(m), 'uhr')}</span>${t(_spTeam(m, 'A'), aw)}`
+  let an = '';
+  try { const k = _spKarteDerPartie(mid); an = k ? _spAnlass(k).key : ''; } catch(e){ an = ''; }
+  const a = SP_ANLASS[an];
+  return `<div class="sp-rd-p" style="--i:${i}"${imBlatt ? ` data-mid="${esc(mid)}"` : ''}><span class="sp-rd-u num">${datumFmt(mts(m), 'uhr')}</span>${t(_spTeam(m, 'A'), aw)}`
     + `<b class="num">${_spStand({sa:m.score_a, sb:m.score_b, aw})}</b>${t(_spTeam(m, 'B'), !aw)}`
     + (a && a.kurz ? `<span class="sp-rd-a">${svgI(a.ic)}<span>${esc(a.kurz)}</span></span>` : '<span></span>')
     + `</div>`;
 }
-function _newsRundeHtml(s, isRead, gross, fadenHtml){
+const RUNDE_ZEILEN = 8;
+function _newsRundeHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
-  const ps = d.partien || [];
+  const ps = d.matchIds || [];
   const zeig = ps.slice(0, RUNDE_ZEILEN);
-  return `<div class="nf-card nf-s-spiel nf-runde nfc-${esc(s.cat || 'fun')}${gross ? ' nf-gross' : ''}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
+  return `<div class="nf-card nf-s-spiel nf-runde nfc-${esc(s.cat || 'fun')}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('spiel', s)}
-    ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('users')}</i><b>DIE RUNDE</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
     ${_spRundeTafel(d.spieler || [])}
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
-    <div class="sp-rd-ps">${zeig.map((p, i) => _spRundeZeile(d, p, i, false)).join('')}`
+    <div class="sp-rd-ps">${zeig.map((mid, i) => _spRundeZeile(mid, i, false)).join('')}`
     + (ps.length > zeig.length ? `<div class="sp-rd-mehr">und ${_spZahl(ps.length - zeig.length)} weitere Partien im Blatt</div>` : '')
     + `</div>${fadenHtml || ''}</div>`;
 }
 function _newsRundeBlatt(s){
   const d = s.dataRef || {};
-  const ps = (d.partien || []).map(p => _spMatch(p.id)).filter(Boolean);
+  const ps = (d.matchIds || []).map(_spMatch).filter(Boolean);
   const ids = (d.spieler || []).map(x => x.id);
   if(!ps.length || !ids.length) return '';
   const rolle = (m, id) => m[(m.a1 === id ? 'a1' : m.a2 === id ? 'a2' : m.b1 === id ? 'b1' : 'b2') + '_pos'];
@@ -20961,7 +21299,7 @@ function _newsRundeBlatt(s){
   const legende = _spUnter(`Von oben nach unten: ${_spUnd(ids)}. S steht für Sturm, A für Abwehr, grün für gewonnen, rot für verloren.`);
   return `<div class="nd-section">Die Tabelle der Runde</div>${_spRundeTafel(d.spieler)}`
     + `<div class="nd-section">Wer mit wem</div><div class="sp-rms">${matrix}</div>${legende}`
-    + `<div class="nd-section">Die Partien</div><div class="sp-rd-ps nd-rd">${(d.partien || []).map((p, i) => _spRundeZeile(d, p, i, true)).join('')}</div>`;
+    + `<div class="nd-section">Die Partien</div><div class="sp-rd-ps nd-rd">${(d.matchIds || []).map((mid, i) => _spRundeZeile(mid, i, true)).join('')}</div>`;
 }
 function _ndLead(desc, body){
   const lead = String(desc || '');
@@ -20970,17 +21308,9 @@ function _ndLead(desc, body){
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : lead;
 }
 
-function openNewsDetail(sid, glied){
+function openNewsDetail(sid){
   const stories = getStoriesCache();
-  let s = glied ? null : stories.find(x => x.id === sid);
-  if(!s){
-    stories.some(x => {
-      const g = (((x.dataRef || {}).type === 'runde') && x.dataRef.glieder) || [];
-      s = g.find(y => y.id === sid) || null;
-      return !!s;
-    });
-  }
-  if(!s) s = stories.find(x => x.id === sid);
+  const s = stories.find(x => x.id === sid);
   if(!s) return;
   try {
     _newsMarkSeen(sid);
@@ -21030,6 +21360,7 @@ function openNewsDetail(sid, glied){
     <div class="nd-desc">${_newsBetont(lead)}</div>
     ${body}
     ${fadenHtml ? `<div class="nd-faeden">${fadenHtml}</div>` : ''}
+    ${_newsRueckblickKnopf(s)}
     <button class="nd-close" id="ndCloseBtn">Schließen</button>`;
   bg.classList.add('show');
   document.getElementById('ndCloseBtn').onclick = closeNewsDetail;
@@ -21037,8 +21368,12 @@ function openNewsDetail(sid, glied){
   nd.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
     el.onclick = () => openNewsDetail(el.dataset.ziel);
   });
-  nd.querySelectorAll('[data-glied]').forEach(el => {
-    el.onclick = () => openNewsDetail(el.dataset.glied, true);
+  nd.querySelectorAll('[data-rueckblick]').forEach(el => {
+    el.onclick = () => {
+      const [art, k] = String(el.dataset.rueckblick).split('|');
+      closeNewsDetail();
+      sheetNav(() => { try { art === 'tag' ? showPotdRecap({force:true, tag:k}) : showPotwRecap({woche:k}); } catch(e){} });
+    };
   });
   nd.querySelectorAll('[data-mid]').forEach(el => {
     el.onclick = () => {
@@ -21075,6 +21410,14 @@ function openNewsDetail(sid, glied){
       sheetNav(() => { try { showChronicle(cid); } catch(e){} });
     };
   });
+}
+function _newsRueckblickKnopf(s){
+  const d = (s && s.dataRef) || {};
+  const ziel = d.type === 'potd' && d.dayKey ? 'tag|' + d.dayKey
+    : (d.type === 'woche' || d.type === 'potw') && d.woche ? 'woche|' + d.woche : '';
+  if(!ziel) return '';
+  return `<button class="btn nd-rueck" type="button" data-rueckblick="${esc(ziel)}">${svgI(ziel.indexOf('tag|') === 0 ? 'dayKing' : 'weekKing')}`
+    + `${ziel.indexOf('tag|') === 0 ? 'Rückblick auf den Tag' : 'Rückblick auf die Woche'}</button>`;
 }
 function closeNewsDetail(){
   const bg = document.getElementById('ndBg');
@@ -21306,7 +21649,7 @@ function _newsDetailBody(s){
   return kopf + mitte;
 }
 
-function _ndTagesbahn(pid, liste){
+function _ndTagesbahn(pid, liste, nurBahn){
   try {
     const ids = (Array.isArray(pid) ? pid : [pid]).filter(Boolean);
     if(!ids.length || !liste || !liste.length) return '';
@@ -21341,6 +21684,7 @@ function _ndTagesbahn(pid, liste){
           esc(geg.map(nm).join(' & '))}</span>
       </div>`;
     }).join('');
+    if(nurBahn) return `<div class="nd-bahn">${felder}</div>`;
     return `<div class="nd-bahn">${felder}</div><div class="nd-tml">${zeilen}</div>`;
   } catch(e){ return ''; }
 }
@@ -22477,10 +22821,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:150,
       zeitraum:'Ein einzelner Monat',
-      mind:'15 Partien im Monat und 60 % Siegquote',
+      mind:'15 Partien im Monat',
       wie:'Gewertet wird der beste einzelne Monat einer Laufbahn und nicht der Schnitt über alle Monate. Monate mit weniger als fünfzehn eigenen Partien bleiben außen vor.',
-      cond:'Höchste Siegquote in einem einzelnen Monat, ab 15 Partien in diesem Monat und mindestens 60 %',
-      val:p => (p.bestMonth && p.bestMonth.q >= 0.60) ? p.bestMonth.q : null,
+      cond:'Höchste Siegquote in einem einzelnen Monat, ab 15 Partien in diesem Monat',
+      val:p => p.bestMonth ? p.bestMonth.q : null,
       ev:(p,v) => `${Math.round(v*100)} % aus ${p.bestMonth.g} Spielen`,
       zeit:p => p.bestMonth ? seasonLabel(p.bestMonth.sid) : ''
     }},
@@ -22489,10 +22833,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
-      mind:'12 eigene Spieltage und 25 %',
+      mind:'12 eigene Spieltage',
       wie:'Player of the Day ist, wer an einem Spieltag die beste Siegquote hat; bei Gleichstand entscheidet der Elo-Gewinn des Tages. Der Nenner sind die Spieltage, an denen der Spieler selbst angetreten ist, und nicht alle Spieltage der Liga.',
-      cond:'Höchster Anteil eigener Spieltage als Player of the Day, ab 12 Spieltagen und mindestens 25 %',
-      val:p => (p.days >= 12 && p.potd/p.days >= 0.25) ? p.potd/p.days : null,
+      cond:'Höchster Anteil eigener Spieltage als Player of the Day, ab 12 Spieltagen',
+      val:p => p.days >= 12 ? p.potd/p.days : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.days} Spieltage beherrscht · ${p.potd}× Player of the Day`
     }},
 
@@ -22500,10 +22844,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:150,
       zeitraum:'Ganze Laufbahn, je Woche',
-      mind:'10 eigene Wochen und 25 %',
+      mind:'10 eigene Wochen',
       wie:'Player of the Week ist, wer eine Woche mit der besten Bilanz abschließt. Der Nenner sind die abgeschlossenen Wochen, in denen der Spieler selbst angetreten ist.',
-      cond:'Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen und mindestens 25 %',
-      val:p => (p.weeks >= 10 && p.potw/p.weeks >= 0.25) ? p.potw/p.weeks : null,
+      cond:'Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen',
+      val:p => p.weeks >= 10 ? p.potw/p.weeks : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.weeks} Wochen gewonnen · ${p.potw}× Player of the Week`
     }},
 
@@ -23115,13 +23459,12 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
-      mind:'40 Partien und ein Sturmanteil zwischen 43 und 57 %',
+      mind:'40 Partien',
       wie:'Gerechnet wird mit demselben Sturmanteil, den das Positionsprofil im Profil zeigt. Gewertet wird der Abstand zu einer Verteilung von fünfzig zu fünfzig; bei genau fünfzig zu fünfzig stünde der Wert bei 100 Prozent.',
-      cond:'Ausgeglichenste Verteilung auf Sturm und Abwehr, ab 40 Partien und einem Sturmanteil zwischen 43 und 57 %',
+      cond:'Ausgeglichenste Verteilung auf Sturm und Abwehr, ab 40 Partien',
       val:p => {
         if(p.games < 40) return null;
-        const s = positionsProfilWert(p);
-        return (s >= 0.43 && s <= 0.57) ? 1 - Math.abs(s - 0.5) * 2 : null;
+        return 1 - Math.abs(positionsProfilWert(p) - 0.5) * 2;
       },
       ev:(p,v) => `${Math.round((1-v)*100)} %-Punkte Unterschied im Positionsprofil · ${Math.round(positionsProfilWert(p)*100)} % Sturm, ${Math.round((1-positionsProfilWert(p))*100)} % Abwehr`
     }},
@@ -23176,10 +23519,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ein einzelner Spieltag',
-      mind:'4 Partien am Tag und höchstens 45 % mittlere Siegchance',
+      mind:'4 Partien am Tag',
       wie:'Gemittelt wird die Siegchance vor dem Anpfiff über alle eigenen Partien dieses Tages. Gewertet wird ab vier eigenen Partien an einem Tag, und zwar der schwerste solche Tag einer Laufbahn.',
-      cond:'Niedrigste mittlere Siegchance an einem ganzen Spieltag, ab 4 Partien und höchstens 45 %',
-      val:p => (p.hartTag != null && p.hartTag <= 0.45) ? -p.hartTag : null,
+      cond:'Niedrigste mittlere Siegchance an einem ganzen Spieltag, ab 4 Partien',
+      val:p => p.hartTag != null ? -p.hartTag : null,
       ev:p => `${Math.round(p.hartTag*100)} % mittlere Siegchance über einen ganzen Spieltag`,
       zeit:p => p.hartTagLabel || ''
     }},
@@ -23187,12 +23530,12 @@ const DISZIPLINEN = [
   {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'dramaTear', tone:'purple',
     art:'ereignis', zufall:'quote', negativ:true,
     allzeit:{
-      kammer:'fuegung', basis:75, offen:true, paar:'fluke',
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Eine einzelne Partie',
-      mind:'Mindestens 65 % Siegchance',
+      mind:'Eine verlorene Partie',
       wie:'Das Gegenstück zum Sonntagsschuss mit derselben Rechnung: die verlorene Partie mit der höchsten Siegchance vor dem Anpfiff. Eine einzige Partie, kein Durchschnitt.',
-      cond:'Verlorene Partie mit der höchsten vorherigen Siegchance, mindestens 65 %',
-      val:p => (p.pechExp != null && p.pechExp >= 1 - CHANCE_UPSET) ? p.pechExp : null,
+      cond:'Verlorene Partie mit der höchsten vorherigen Siegchance',
+      val:p => p.pechExp != null ? p.pechExp : null,
       ev:p => `${Math.round(p.pechExp*100)} % Siegchance und trotzdem verloren`,
       zeit:p => p.pechLabel || ''
     }},
@@ -23215,10 +23558,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
-      mind:'40 Partien und 8 % enge Ergebnisse',
+      mind:'40 Partien',
       wie:'Gezählt werden die eigenen Partien, die mit genau einem Tor Unterschied endeten, also 10:9 und 9:10 aus eigener Sicht. Der Nenner sind alle eigenen Partien. Wer knapp gewinnt oder knapp verliert, zählt hier gleich: gefragt ist das Ergebnis, nicht der Sieger.',
-      cond:'Höchster Anteil an Partien mit genau einem Tor Unterschied, ab 40 Partien und mindestens 8 %',
-      val:p => (p.games >= 40 && (p.nail + p.bitter)/p.games >= 0.08) ? (p.nail + p.bitter)/p.games : null,
+      cond:'Höchster Anteil an Partien mit genau einem Tor Unterschied, ab 40 Partien',
+      val:p => p.games >= 40 ? (p.nail + p.bitter)/p.games : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien mit einem Tor entschieden · ${p.nail + p.bitter} Stück`
     }},
 
@@ -23261,12 +23604,12 @@ const DISZIPLINEN = [
 
   {id:'fluke', name:'Der Sonntagsschuss', short:'Coup', ic:'surprise', tone:'orange', art:'ereignis', zufall:'quote',
     allzeit:{
-      kammer:'fuegung', basis:75, offen:true, paar:'bitterloss',
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Eine einzelne Partie',
-      mind:'Höchstens 35 % Siegchance',
+      mind:'Eine gewonnene Partie',
       wie:'Die Elo-Rechnung gibt jeder Partie vor dem Anpfiff eine Siegchance. Gewertet wird der gewonnene Auftritt mit der niedrigsten davon. Eine einzige Partie genügt, und die Rechnung stand dagegen.',
-      cond:'Gewonnene Partie mit der niedrigsten vorherigen Siegchance, höchstens 35 %',
-      val:p => (p.flukeExp != null && p.flukeExp <= CHANCE_UPSET) ? -p.flukeExp : null,
+      cond:'Gewonnene Partie mit der niedrigsten vorherigen Siegchance',
+      val:p => p.flukeExp != null ? -p.flukeExp : null,
       ev:p => `${Math.round(p.flukeExp*100)} % Siegchance und trotzdem gewonnen`,
       zeit:p => p.flukeLabel || ''
     }},
@@ -23369,10 +23712,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Ganze Laufbahn, alle Niederlagen',
-      mind:'25 Niederlagen und 3 % Nullnummern',
+      mind:'25 Niederlagen',
       wie:'Gezählt werden die Niederlagen mit 0:10, geteilt durch alle eigenen Niederlagen. Der Nenner sind die Niederlagen und nicht die Partien: gefragt ist, wie hoch verloren wird, und nicht wie oft.',
-      cond:'Höchster Anteil an 0:10-Niederlagen unter allen eigenen Niederlagen, ab 25 Niederlagen und mindestens 3 %',
-      val:p => (p.losses >= 25 && p.debacle/p.losses >= 0.03) ? p.debacle/p.losses : null,
+      cond:'Höchster Anteil an 0:10-Niederlagen unter allen eigenen Niederlagen, ab 25 Niederlagen',
+      val:p => p.losses >= 25 ? p.debacle/p.losses : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 0:10 · ${p.debacle} Stück`
     }},
 
@@ -23391,10 +23734,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Ganze Laufbahn, alle Niederlagen',
-      mind:'25 Niederlagen und 8 % Ein-Tor-Pleiten',
+      mind:'25 Niederlagen',
       wie:'Gezählt werden die Niederlagen mit 9:10, geteilt durch alle eigenen Niederlagen.',
-      cond:'Höchster Anteil an 9:10-Niederlagen unter allen eigenen Niederlagen, ab 25 Niederlagen und mindestens 8 %',
-      val:p => (p.losses >= 25 && p.bitter/p.losses >= 0.08) ? p.bitter/p.losses : null,
+      cond:'Höchster Anteil an 9:10-Niederlagen unter allen eigenen Niederlagen, ab 25 Niederlagen',
+      val:p => p.losses >= 25 ? p.bitter/p.losses : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 9:10 · ${p.bitter} Stück`
     }},
 
@@ -25988,7 +26331,7 @@ function ligaRekordeHtml(weit){
       return `<span class="rek-sl${z.n ? '' : ' null'}" data-tplayer="${esc(z.pid)}">
         <span class="z num">${z.n}</span>
         <span class="b" style="height:${z.n ? (4 + z.n / maxN * 34).toFixed(1) : 3}px"></span>
-        ${p ? avHtml(p, 'width:15px;height:15px;font-size:7px;border-radius:5px') : ''}
+        ${p ? avHtml(p, '') : ''}
       </span>`;
     }).join('')}</div>
   </div>` : '';
@@ -25999,7 +26342,7 @@ function ligaRekordeHtml(weit){
     .filter(g => g.liste.length);
   const chip = (k, lab, n, an) => `<button data-rekkammer="${esc(k)}"
       class="${an ? 'on' : ''}">${esc(lab)}<span class="n num">${n}</span></button>`;
-  const filter = `<div class="ui-tabs roll rek-kammern">
+  const filter = `<div class="rek-kammern">
     ${chip('', 'Alle', CHRONICLES.length, !rekKammer)}
     ${gruppen.map(g => chip(g.k, g.def.kurz, g.liste.length, rekKammer === g.k)).join('')}
   </div>`;
@@ -27152,7 +27495,7 @@ function _chronikMonat(titleId){
   return (d && d.monat) || null;
 }
 
-const PRESTIGE_SOCKEL = 40;
+const PRESTIGE_SOCKEL = 55;
 const PRESTIGE_CHRONIK = {koennen:30, konstanz:24, fuegung:15, schatten:0};
 const PRESTIGE_SELTEN  = {legendaer:15, selten:8, besonders:0};
 
