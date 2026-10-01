@@ -131,7 +131,12 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       nach der die Zeichnungen entstanden sind
                       (insignium-vorlage.webp), und ein Satz derselben
                       Stufen als SVG, der nicht eingebaut ist
-                      (rang-insignien-app-assets/)
+                      (rang-insignien-app-assets/), und der Entwurf des
+                      Lorbeerreifs als Rankenlorbeer: eine Reihe Laub an
+                      einem sichtbaren Stiel, der oben und am Fuß einrollt,
+                      und Ranken, die mit jedem Grad mehr werden — heute
+                      und Entwurf nebeneinander, gezeichnet mit dem
+                      Zeichencode der App (lorbeer.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
