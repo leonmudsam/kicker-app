@@ -2338,6 +2338,26 @@ function _buildStories(){
           // Meldung gibt es nur, wenn der Wert besser geworden ist [§C33].
           desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
         }
+        // ── Wer verliert, steht im Satz ───────────────────────────────
+        // Jane zog bei „Der Lauf" mit Leon gleich, und die Karte erzaehlte
+        // nur von Jane: dass Leon den Rekord jetzt teilt und dabei Prestige
+        // verliert, stand nirgends. Genannt wird der Spieltag als Ganzes —
+        // beide Staende gehoeren ihm [§11.0e] —, und faellt das Zeichen unter
+        // eine Schwelle, steht auch das da. Die Zeile im Buendel bleibt ohne
+        // diesen Satz: dort steht der Verlust einmal in der eigenen Zeile der
+        // Karte und nicht in jeder Meldung (`_newsVerlustBand`).
+        const _verlierer = (fall === 'dazu'
+            ? altPids.filter(id => n.pids.indexOf(id) >= 0)
+            : fall === 'uebernommen' ? altPids.filter(id => n.pids.indexOf(id) < 0) : [])
+          .map(pid => ({pid, w:_tafelWirkung(pid)})).filter(x => x.w.delta < 0).slice(0, 2);
+        if(_verlierer.length){
+          if(!zeileText) zeileText = desc;
+          desc += _verlierer.map(x => {
+            const sv = insigniumStufeVon(x.w.vor), sn = insigniumStufeVon(x.w.nach);
+            return ` Für ${nameOf(x.pid)} heißt der Spieltag ${-x.w.delta} Prestige weniger`
+              + (sn < sv ? `, und das Zeichen fällt auf den ${INSIGNIEN[sn].name}.` : '.');
+          }).join('');
+        }
         stories.push({
           // ── Die ID ist das Ereignis, nicht der Stand des Augenblicks ──
           // Sie trug den angezeigten Wert und die sortierten Halter. Beides

@@ -5586,6 +5586,32 @@ ok(_vband.h.indexOf(_vband.a) >= 0 && _vband.h.indexOf('−80') >= 0
    'die Tafel-Karte nennt, wer Prestige verliert, und nur den',
    _vband.h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
 
+// Und der Satz der Rekordkarte nennt, wer dabei verliert: die Karte erzaehlte
+// nur von Jane, und dass Leon den Rekord jetzt teilt und Prestige verliert,
+// stand nirgends. Geprueft an jeder Karte, deren bisheriger Halter in der
+// Wirkung mit einem Minus steht.
+const _vsatz = JSON.parse(K.eval(`JSON.stringify((function(){
+  let n = 0; const fehlt = [];
+  (_buildStories() || []).forEach(s => {
+    const d = s.dataRef || {};
+    if(!/^rekord_/.test(d.type || '') || !d.laufbahn) return;
+    // Nur wo jemand teilt oder abgibt: beim Ausbauen ist der Vorgaenger der
+    // Halter selbst, und sein Minus kommt von anderswo.
+    if(['dazu', 'uebernommen'].indexOf(d.fall) < 0) return;
+    (d.vorher || []).forEach(pid => {
+      const w = d.laufbahn[pid];
+      if(!w || !(w.nach < w.vor)) return;
+      n++;
+      if(String(s.desc).indexOf(pmap()[pid].name) < 0 || !/Prestige weniger/.test(s.desc))
+        fehlt.push(s.title);
+    });
+  });
+  return {n, fehlt};
+})())`));
+ok(_vsatz.n > 0 && _vsatz.fehlt.length === 0,
+   'die Rekordkarte nennt im Satz, wer an diesem Spieltag Prestige verliert',
+   _vsatz.fehlt.slice(0, 2).join(' · ') || _vsatz.n + ' Verluste');
+
 console.log('=== DAS AUFGEHEN DER TAFEL IST EINE NACHRICHT ===');
 // Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik, und
 // gemeldet wird erst, was sich von der ersten gewerteten Lage an aendert
