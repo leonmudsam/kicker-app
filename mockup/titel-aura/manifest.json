@@ -1,0 +1,220 @@
+{
+  "viewBox": "0 0 1000 1000",
+  "anchor": {
+    "x": 500,
+    "y": 500
+  },
+  "insignium": {
+    "x": 150,
+    "y": 150,
+    "width": 700,
+    "height": 700
+  },
+  "avatarDiameter": 308,
+  "families": [
+    {
+      "key": "korona",
+      "name": "Korona",
+      "subtitle": "Warmes, aufgefächertes Licht",
+      "description": "Ein weicher Goldschein mit unterschiedlich langen Lichtstrahlen. Ab den mittleren Stufen schimmern einzelne Goldpartikel im äußeren Licht.",
+      "stages": [
+        {
+          "titles": 1,
+          "name": "Funke",
+          "detail": "Ein bereits sichtbarer, warmer Lichthof tritt hinter dem gesamten Insignium hervor.",
+          "file": "assets/korona/aura-01.svg"
+        },
+        {
+          "titles": 2,
+          "name": "Glut",
+          "detail": "Der Lichtsaum wird breiter. Ein heller Kern gibt dem Schein mehr Tiefe.",
+          "file": "assets/korona/aura-02.svg"
+        },
+        {
+          "titles": 3,
+          "name": "Schimmer",
+          "detail": "Erste feinere Lichtstrukturen treten aus dem weichen Hintergrund hervor.",
+          "file": "assets/korona/aura-03.svg"
+        },
+        {
+          "titles": 4,
+          "name": "Lichthof",
+          "detail": "Feinere Lichtstrukturen und erste, ruhig schimmernde Goldpartikel kommen hinzu.",
+          "file": "assets/korona/aura-04.svg"
+        },
+        {
+          "titles": 5,
+          "name": "Resonanz",
+          "detail": "Eine zweite Lichtschicht füllt die Außenkontur und verstärkt den Schimmer.",
+          "file": "assets/korona/aura-05.svg"
+        },
+        {
+          "titles": 6,
+          "name": "Strahlkraft",
+          "detail": "Längere Lichtbahnen und sichtbar mehr Goldstaub erweitern die Auszeichnung.",
+          "file": "assets/korona/aura-06.svg"
+        },
+        {
+          "titles": 7,
+          "name": "Glorie",
+          "detail": "Ein zusätzlicher Lichtimpuls läuft sehr langsam durch den äußeren Schein.",
+          "file": "assets/korona/aura-07.svg"
+        },
+        {
+          "titles": 8,
+          "name": "Sonnenwind",
+          "detail": "Breitere Lichtstrukturen, gegenläufige Bewegung und dichterer Goldstaub erzeugen räumliche Tiefe.",
+          "file": "assets/korona/aura-08.svg"
+        },
+        {
+          "titles": 9,
+          "name": "Zenit",
+          "detail": "Der große äußere Lichthof gewinnt klare Akzente und einzelne helle Lichtsterne.",
+          "file": "assets/korona/aura-09.svg"
+        },
+        {
+          "titles": 10,
+          "name": "Unvergänglich",
+          "detail": "Die volle Lichtkomposition: weite Strahlung, zwei bewegte Tiefenebenen und sparsame brillante Reflexe.",
+          "file": "assets/korona/aura-10.svg"
+        }
+      ]
+    },
+    {
+      "key": "halo",
+      "name": "Halo",
+      "subtitle": "Feine, schwebende Lichtkreise",
+      "description": "Ein diffuser Lichthof, durchzogen von offenen, leuchtenden Bögen. Wenige Lichtpunkte bewegen sich langsam auf ihren Bahnen.",
+      "stages": [
+        {
+          "titles": 1,
+          "name": "Funke",
+          "detail": "Ein bereits sichtbarer, warmer Lichthof tritt hinter dem gesamten Insignium hervor.",
+          "file": "assets/halo/aura-01.svg"
+        },
+        {
+          "titles": 2,
+          "name": "Glut",
+          "detail": "Der Lichtsaum wird breiter. Ein heller Kern gibt dem Schein mehr Tiefe.",
+          "file": "assets/halo/aura-02.svg"
+        },
+        {
+          "titles": 3,
+          "name": "Schimmer",
+          "detail": "Erste feinere Lichtstrukturen treten aus dem weichen Hintergrund hervor.",
+          "file": "assets/halo/aura-03.svg"
+        },
+        {
+          "titles": 4,
+          "name": "Lichthof",
+          "detail": "Feinere Lichtstrukturen und erste, ruhig schimmernde Goldpartikel kommen hinzu.",
+          "file": "assets/halo/aura-04.svg"
+        },
+        {
+          "titles": 5,
+          "name": "Resonanz",
+          "detail": "Eine zweite Lichtschicht füllt die Außenkontur und verstärkt den Schimmer.",
+          "file": "assets/halo/aura-05.svg"
+        },
+        {
+          "titles": 6,
+          "name": "Strahlkraft",
+          "detail": "Längere Lichtbahnen und sichtbar mehr Goldstaub erweitern die Auszeichnung.",
+          "file": "assets/halo/aura-06.svg"
+        },
+        {
+          "titles": 7,
+          "name": "Glorie",
+          "detail": "Ein zusätzlicher Lichtimpuls läuft sehr langsam durch den äußeren Schein.",
+          "file": "assets/halo/aura-07.svg"
+        },
+        {
+          "titles": 8,
+          "name": "Sonnenwind",
+          "detail": "Breitere Lichtstrukturen, gegenläufige Bewegung und dichterer Goldstaub erzeugen räumliche Tiefe.",
+          "file": "assets/halo/aura-08.svg"
+        },
+        {
+          "titles": 9,
+          "name": "Zenit",
+          "detail": "Der große äußere Lichthof gewinnt klare Akzente und einzelne helle Lichtsterne.",
+          "file": "assets/halo/aura-09.svg"
+        },
+        {
+          "titles": 10,
+          "name": "Unvergänglich",
+          "detail": "Die volle Lichtkomposition: weite Strahlung, zwei bewegte Tiefenebenen und sparsame brillante Reflexe.",
+          "file": "assets/halo/aura-10.svg"
+        }
+      ]
+    },
+    {
+      "key": "aurora",
+      "name": "Aurora",
+      "subtitle": "Fließende Schleier aus Licht",
+      "description": "Sanfte Lichtschleier lösen sich hinter dem Reif. Ihre hellen Kanten fließen langsam um die Mitte, begleitet von fein verteiltem Goldstaub.",
+      "stages": [
+        {
+          "titles": 1,
+          "name": "Funke",
+          "detail": "Ein bereits sichtbarer, warmer Lichthof tritt hinter dem gesamten Insignium hervor.",
+          "file": "assets/aurora/aura-01.svg"
+        },
+        {
+          "titles": 2,
+          "name": "Glut",
+          "detail": "Der Lichtsaum wird breiter. Ein heller Kern gibt dem Schein mehr Tiefe.",
+          "file": "assets/aurora/aura-02.svg"
+        },
+        {
+          "titles": 3,
+          "name": "Schimmer",
+          "detail": "Erste feinere Lichtstrukturen treten aus dem weichen Hintergrund hervor.",
+          "file": "assets/aurora/aura-03.svg"
+        },
+        {
+          "titles": 4,
+          "name": "Lichthof",
+          "detail": "Feinere Lichtstrukturen und erste, ruhig schimmernde Goldpartikel kommen hinzu.",
+          "file": "assets/aurora/aura-04.svg"
+        },
+        {
+          "titles": 5,
+          "name": "Resonanz",
+          "detail": "Eine zweite Lichtschicht füllt die Außenkontur und verstärkt den Schimmer.",
+          "file": "assets/aurora/aura-05.svg"
+        },
+        {
+          "titles": 6,
+          "name": "Strahlkraft",
+          "detail": "Längere Lichtbahnen und sichtbar mehr Goldstaub erweitern die Auszeichnung.",
+          "file": "assets/aurora/aura-06.svg"
+        },
+        {
+          "titles": 7,
+          "name": "Glorie",
+          "detail": "Ein zusätzlicher Lichtimpuls läuft sehr langsam durch den äußeren Schein.",
+          "file": "assets/aurora/aura-07.svg"
+        },
+        {
+          "titles": 8,
+          "name": "Sonnenwind",
+          "detail": "Breitere Lichtstrukturen, gegenläufige Bewegung und dichterer Goldstaub erzeugen räumliche Tiefe.",
+          "file": "assets/aurora/aura-08.svg"
+        },
+        {
+          "titles": 9,
+          "name": "Zenit",
+          "detail": "Der große äußere Lichthof gewinnt klare Akzente und einzelne helle Lichtsterne.",
+          "file": "assets/aurora/aura-09.svg"
+        },
+        {
+          "titles": 10,
+          "name": "Unvergänglich",
+          "detail": "Die volle Lichtkomposition: weite Strahlung, zwei bewegte Tiefenebenen und sparsame brillante Reflexe.",
+          "file": "assets/aurora/aura-10.svg"
+        }
+      ]
+    }
+  ]
+}
