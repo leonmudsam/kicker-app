@@ -5756,7 +5756,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.10.01.8a507c3f';
+const BUILD_VERSION='2026.10.01.431041e7';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -36411,15 +36411,15 @@ const INS_ZEICHEN = {
     {reif:{metall:'platin', profil:'rand', kanal:'flieder', nieten:{n:18, gr:4.4, m:'platin'}}, zier:{m:'platin', gr:2}},
     {reif:{metall:'platin', profil:'rand', kanal:'flieder', nieten:{n:22, gr:4.6, m:'platin'}}, zier:{m:'platin', gr:3}},
   ],
-  // Der Lorbeer steht zwischen Zier- und Kronenreif: zwei Reihen Laub von
-  // Anfang an, dazu das erste Gold als Akzent.
+  // Der Lorbeer steht zwischen Zier- und Kronenreif: Laub in Blattpaaren,
+  // darüber je Grad eine Linie mehr, dazu das erste Gold als Akzent.
   lorbeer: [
     {reif:{metall:'platin', profil:'rand', kanal:'flieder', wulst:9, nieten:{n:24, gr:4.4, m:'gold'}},
-     lorbeer:{m:'platin', n:10, doppel:1, aussen:1, beeren:1, gross:1}, lilie:'gold'},
+     lorbeer:{m:'platin', gr:1, n:8}, lilie:'gold'},
     {reif:{metall:'platin', profil:'rand', kanal:'flieder', nieten:{n:26, gr:4.6, m:'gold'}, steine:8},
-     lorbeer:{m:'platin', n:11, doppel:1, aussen:1, beeren:1, gross:1}, lilie:'gold', raute:'gold'},
+     lorbeer:{m:'platin', gr:2, n:9, gross:1.04}, lilie:'gold', raute:'gold'},
     {reif:{metall:'platin', profil:'rand', kanal:'gold', nieten:{n:24, gr:4.8, m:'gold'}, steine:8},
-     lorbeer:{m:'platin', n:12, doppel:1, aussen:1, beeren:1, gross:1, bis:-34}, krone:{m:'gold', klein:1}, raute:'gold'},
+     lorbeer:{m:'platin', gr:3, n:10, gross:1.08}, krone:{m:'gold', klein:1}, raute:'gold'},
   ],
   krone: [
     {reif:{metall:'platin', profil:'rand', kanal:'gold', nieten:{n:22, gr:4.6, m:'gold'}, steine:8}, eiche:{m:'platin', gr:1}, krone:{m:'gold'}, raute:'gold'},
@@ -36726,48 +36726,85 @@ function _izEichenkranz(o, st){
     + vorn + eicheln;
 }
 
-// Der Lorbeer: ein Zweig je Seite, vom Stein bis hinauf unter den Kopf.
-// Die Blätter legen sich dem Zweig nach oben an — daran erkennt man einen
-// Lorbeer und keinen Igel —, sind in der Mitte des Zweigs am größten und
-// laufen zu beiden Enden kleiner aus, statt abzubrechen.
+// Der Lorbeer: vorn ein klassischer Zweig in Blattpaaren, darüber Linien,
+// die am Reif entlang zum Kopf aufsteigen und einrollen. Die Linien stehen
+// dort, wo kein Laub ist — über dem Kranz und nicht auf ihm. Lagen sie
+// darauf, las sich der Lorbeer wie mehrere Schichten übereinander; und
+// zwei Reihen Laub ohne Linien waren von Grad zu Grad kaum zu unterscheiden.
 function _izLorbeer(o){
-  const n = o.n, B = [], g = o.gross ? 1.1 : 1, rz = IZ_RA + 10;
-  const a0 = -158, a1 = o.bis || -38;
-  for(let i = 0; i < n; i++){
-    const t = (i + .5) / n;
-    const gr = (.74 + .34 * Math.sin(Math.PI * Math.min(1, t * 1.04))) * g;
-    const a = a0 + (a1 - a0) * t;
-    // Außen am Zweig, nach oben gerichtet und um 40 Grad nach außen gedreht.
-    const [x, y] = _izPol(rz, a);
-    B.push([x, y, a - 40, 128 * gr, 24 * gr, .1]);
-    // Innen ein kleineres Blatt, das sich an den Reif legt.
-    if(o.doppel && i % 2 === 0){
-      const [xi, yi] = _izPol(rz - 4, a + 6);
-      B.push([xi, yi, a - 14, 96 * gr, 17 * gr, .05]);
-    }
+  const g = o.gr, m = o.m, st = o.st, G = o.gross || 1;
+  const farbe = g === 1 ? .12 : g === 2 ? .18 : .24;
+  const kurs = (p, j) => {
+    const [x, y] = p[j], [xv, yv] = p[Math.max(0, j - 1)];
+    return Math.atan2(y - yv, x - xv) * 180 / Math.PI;
+  };
+  // Der Zweig: vom Stein bis etwa zehn Uhr, außen am Reif. Die Blattpaare
+  // legen sich ihm nach oben an — daran erkennt man einen Lorbeer und keinen
+  // Igel —, außen ein langes, innen ein kürzeres, in der Mitte am größten.
+  const rz = IZ_RA + 22, a0 = -168, aE = -72;
+  const zweig = _izBahn(t => _izPol(rz + 6 * t, a0 + (aE - a0) * t), 40);
+  const B = [], I = [];
+  for(let i = 0; i < o.n; i++){
+    const t = .03 + .94 * (i / (o.n - 1));
+    const j = Math.max(1, Math.round(t * 40)), k = kurs(zweig, j);
+    const gr = (.72 + .36 * Math.sin(Math.PI * Math.min(1, t * 1.05))) * G;
+    B.push([zweig[j][0], zweig[j][1], k - 34, 130 * gr, 29 * gr, .12]);
+    I.push([zweig[j][0], zweig[j][1], k + 30, 100 * gr, 23 * gr, -.1]);
   }
-  // Die äußere Reihe legt sich zwischen die vorderen Blätter, weiter
-  // draußen und flacher: aus einem Zweig wird ein voller Kranz, und der
-  // Lorbeer steht damit sichtbar über dem Zierkranz.
-  const aussen = [];
-  if(o.aussen) for(let i = 0; i < n - 1; i++){
-    const t = (i + 1) / n, a = a0 + (a1 - a0) * t;
-    const gr = (.62 + .3 * Math.sin(Math.PI * t)) * g;
-    const [x, y] = _izPol(rz + 20, a);
-    aussen.push([x, y, a - 58, 112 * gr, 20 * gr, .12]);
-  }
-  const zweig = _izBogen(rz, a0 - 4, a1 + 4);
-  // Beeren in der Rangfarbe zwischen den Blättern, ab dem zweiten Grad.
+  // Das Endblatt: der Zweig schließt mit einem Blatt in seiner Richtung.
+  const kE = kurs(zweig, 40);
+  B.push([zweig[40][0], zweig[40][1], kE - 8, 104 * G, 24 * G, 0]);
+  // Beeren in der Rangfarbe, paarweise in den Achseln außen: drei, vier und
+  // fünf Gruppen.
   let beeren = '';
-  if(o.beeren) for(let i = 1; i < n; i += 2){
-    const a = a0 + (a1 - a0) * (i / n);
-    const [x, y] = _izPol(rz + 16, a + 3);
-    beeren += _izJe(_izKreis(x, y, 8.5), d => `<path d="${d}" fill="url(#sk)" stroke="${o.st[4]}" stroke-width="1.4"/>`)
-      + _izJe(_izKreis(x - 2.6, y - 2.8, 2.6), d => `<path d="${d}" fill="#fff" opacity=".85"/>`);
+  const gruppen = g + 2;
+  for(let q = 0; q < gruppen; q++){
+    const t = .16 + .66 * (q / Math.max(1, gruppen - 1));
+    const j = Math.round(t * 40), kr = (kurs(zweig, j) - 64) * Math.PI / 180;
+    [[30, 0, 8], [24, 12, 6.5]].forEach(([d1, d2, r]) => {
+      const bx = zweig[j][0] + Math.cos(kr) * d1 - Math.sin(kr) * d2 * .4;
+      const by = zweig[j][1] + Math.sin(kr) * d1 + Math.cos(kr) * d2 * .4;
+      beeren += _izJe(_izKreis(bx, by, r), d => `<path d="${d}" fill="url(#sk)" stroke="${st[4]}" stroke-width="1.3"/>`)
+        + _izJe(_izKreis(bx - r * .3, by - r * .32, r * .3), d => `<path d="${d}" fill="#fff" opacity=".85"/>`);
+    });
   }
-  return (aussen.length ? _izBlaetter(aussen, o.m, .22) : '')
-    + _izJe(zweig, d => `<path d="${d}" fill="none" stroke="${IZ_METALL[o.m][3]}" stroke-width="7" stroke-linecap="round"/>`)
-    + _izBlaetter(B, o.m, o.farbe || .12) + beeren;
+  // Die Hauptlinie: vom Ende des Zweigs am Reif entlang bis neben den Kopf,
+  // dort nach außen eingerollt. Ihr Auge trägt schon in Grad I einen Stein
+  // in der Rangfarbe — der Zierkranz III davor hat ihn, und ohne ihn ginge
+  // die Farbe beim Aufstieg einen Grad lang verloren.
+  const hE = -34, haupt = _izRollbahn(rz + 2, aE + 2, hE, 150, -430, 1.9, IZ_RA + 44);
+  let linien = _izRolle(haupt, 8, 11, 13, m, true, st);
+  // Ab Grad II löst sich kurz vor der Schnecke eine Gegenlinie, die nach
+  // innen zum Kopf einrollt und mit der anderen Seite Lilie oder Krone rahmt.
+  if(g >= 2){
+    const j = Math.round(haupt.length * .36);
+    linien += _izRolle(_izSpirale(haupt[j][0], haupt[j][1], kurs(haupt, j) + 18, 110, 360, 2.2), 6, 8, 9, m, true, st);
+  }
+  // Grad III: ein S, das am Ende des Laubs nach außen schwingt.
+  let aussen = '', s3 = null;
+  if(g >= 3){
+    const [sx, sy] = _izPol(rz + 8, aE + 4);
+    s3 = _izSpirale(sx, sy, aE - 120, 128, 330, 2.2);
+    aussen = _izRolle(s3, 7, 9, 10, m, true, st);
+  }
+  // Blätter an den Linien, nach außen und zum Kopf hin kleiner. Nur am
+  // Bogen und nicht in der Schnecke: dort verdeckten sie Auge und Stein.
+  // Nach innen wächst keins, dort lägen sie auf dem Band und vor der Lilie.
+  const LB = [];
+  const blattAn = (p, u, f, seite) => {
+    const j = Math.max(1, Math.round((p.length - 1) * u)), k = kurs(p, j);
+    LB.push([p[j][0], p[j][1], k + seite, 90 * f * G, 21 * f * G, seite < 0 ? .14 : -.14]);
+  };
+  const bogen = haupt.slice(0, Math.max(8, Math.round(Math.abs(hE - (aE + 2)) / 3)) + 1);
+  const anBogen = g === 1 ? [.12, .34, .56, .76] : g === 2 ? [.1, .28, .46, .64, .8] : [.08, .24, .4, .56, .7, .84];
+  anBogen.forEach((u, i) => blattAn(bogen, u, 1 - .45 * u, i % 2 ? -64 : -30));
+  if(s3) [.12, .3].forEach(u => blattAn(s3, u, .66, 40));
+  // Am Fuß endet der Zweig unter dem Stein in einer kleinen Rolle nach innen.
+  const fuss = _izRollbahn(rz, -172, -178, 60, 300, 2, rz - 4);
+  return linien + _izBlaetter(LB, m, farbe)
+    + _izJe(_izGlatt(zweig), d => `<path d="${d}" fill="none" stroke="${IZ_METALL[m][3]}" stroke-width="8" stroke-linecap="round"/>`)
+    + _izRolle(fuss, 6, 7, 8, m, false, st)
+    + _izBlaetter(I, m, farbe * .8) + _izBlaetter(B, m, farbe) + aussen + beeren;
 }
 
 // Die Krone: fünf Zacken auf einem Reif, die mittlere trägt den Kristall in
