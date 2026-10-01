@@ -156,7 +156,14 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       entwurf.css hinein und fotografiert beide Stände) —
                       Titelrennen, Rollen-Landkarte, Netz der Duos, Verlauf
                       nach Tagen, Siegchance beim Aufstellen, Spielkalender,
-                      jede Begegnung, Woche und Feld (aufwertung-3/)
+                      jede Begegnung, Woche und Feld (aufwertung-3/), und
+                      die vierte: die Karten „Am Spieltag", deren Kopf dem
+                      Anlass folgt — Spielfeld mit Rollen, Anzeigetafel samt
+                      Bilanz in engen Partien, Ergebnisverteilung, Wippe des
+                      Elo-Gefälles, Tabelle vorher und nachher, Lauf gegen
+                      den eigenen Bestwert, Elo-Kurve, jede Begegnung — und
+                      die Runde der Vier als eine Karte, auf dieselbe Weise
+                      in der App gebaut und fotografiert (aufwertung-4/)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
