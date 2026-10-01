@@ -46,14 +46,14 @@
 <body>
 <main>
   <h1>Lorbeerreif, Entwurf</h1>
-  <p class="unter">Die drei Grade des Lorbeerreifs, heute und als Entwurf: der Lorbeer bleibt vorn, und über ihm steigen geschwungene Linien zum Kopf auf. Der Rest der Leiter bleibt, wie er ist.</p>
+  <p class="unter">Die drei Grade des Lorbeerreifs, vorher und als Entwurf, der inzwischen eingebaut ist: der Lorbeer bleibt vorn, und über ihm steigen geschwungene Linien zum Kopf auf. Der Rest der Leiter bleibt, wie er ist.</p>
 
   <div class="rang" id="rang"></div>
 
   <h2>Entwurf: Lorbeer mit Schnörkeln</h2>
   <div class="reihe" id="neu"></div>
 
-  <h2>Heute</h2>
+  <h2>Vorher</h2>
   <div class="reihe" id="alt"></div>
 
   <h2>In der Leiter</h2>
@@ -1205,7 +1205,7 @@ window.TEILE = function(key, nr, farbe){
       .map(([k, n, l]) => `<div>${svg(k, n)}<span>${l}</span></div>`).join('');
     const z = (k, n, l) => `<div class="z"><div class="w"><img alt="" src="${bild(k, n)}"></div>${l}</div>`;
     document.getElementById('klein').innerHTML = z('zier', 2, 'Zier III')
-      + '<span class="trenn"></span>' + [0, 1, 2].map(i => z('lorbeer', i, 'heute ' + GRADE[i])).join('')
+      + '<span class="trenn"></span>' + [0, 1, 2].map(i => z('lorbeer', i, 'vorher ' + GRADE[i])).join('')
       + '<span class="trenn"></span>' + [0, 1, 2].map(i => z('lbC', i, 'neu ' + GRADE[i])).join('')
       + '<span class="trenn"></span>' + z('krone', 0, 'Krone I');
     document.getElementById('rang').innerHTML = RAENGE.map(r =>

@@ -1788,6 +1788,22 @@ ok(_steigt.fehler.length === 0, 'der dritte Grad trägt nie mehr Steine oder Gol
    _steigt.fehler.join(' · ') || 'jede Stufe');
 ok(!_steigt.ganz, 'die Zeichnung trägt keinen Filter', String(_steigt.ganz));
 
+// Und die Rangfarbe im Auge einer Schnecke geht vom Zierkranz zum
+// Lorbeerreif nicht verloren: der Zierkranz III trägt sie in seinen
+// Schnecken, und der erste Entwurf des Lorbeerreifs setzte sie erst ab
+// Grad II — einen Grad lang war der Stein weg und kam dann wieder. Gezählt
+// wird das Auge (`_izRolle`), nicht die Beeren: die sind etwas anderes und
+// hätten die Lücke verdeckt. Kronenreif und Ordensstern tragen keine
+// Schnecken mehr, ihre Rangfarbe sitzt in Eicheln und Kristallen.
+const _auge = JSON.parse(K.eval(`JSON.stringify((() => {
+  const augen = (key, nr) => (_izTeile(key, nr, INS_RANGFARBE.Elite).bild
+    .match(/fill="url\\(#sk\\)" stroke="[^"]+" stroke-width="1\\.6"/g) || []).length;
+  return {zier: augen('zier', 2), lorbeer: [0, 1, 2].map(g => augen('lorbeer', g))};
+})())`));
+ok(_auge.zier > 0 && _auge.lorbeer.every(n => n > 0),
+   'die Rangfarbe im Auge der Schnecke bleibt vom Zierkranz III an in jedem Grad des Lorbeerreifs',
+   `Zierkranz III ${_auge.zier}, Lorbeerreif ${_auge.lorbeer.join(' · ')}`);
+
 
 // ══════════════════════════════════════════════════════════════════════
 console.log('\n═══ REKORDE ZUM STAND EINES MONATS ═══');
