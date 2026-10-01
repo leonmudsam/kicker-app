@@ -85,6 +85,19 @@ const ANLAESSE = [
   {key:'serie', titel:'Die Serie', kopf:'Der Lauf gegen den eigenen Bestwert',
    punkte:['Der Lauf misst sich am eigenen Bestwert und am Rekord der Liga, beide als Marke über der Reihe. Drei Siege in Folge sind für den einen Alltag und für den anderen die beste Zeit seiner Laufbahn.',
            'Die nächste runde Marke steht weiter im Blatt.']},
+  {key:'riss', titel:'Der Serienbruch', kopf:'Die gerissene Kette',
+   punkte:['Die Serie war die Leistung des anderen: sie steht als Kette aus Siegen da, am Ende der Riss in Rot, dahinter die, die ihn gesetzt haben.',
+           'Bis zwanzig Glieder einzeln, darüber eine geschlossene Kette — wie lang die Serie war, sagt die Zahl daneben und der Satz darunter.']},
+  {key:'teamserie', titel:'Die Duo-Serie', kopf:'Der Lauf und der Ring',
+   punkte:['Der Lauf des Duos und daneben seine ganze gemeinsame Bilanz als Ring: grün die Siege, rot die Niederlagen, in der Mitte die Quote.',
+           'Die Bilanz selbst steht in der Textstelle darunter — im Ring stehen nie mehr als vier Zeichen, egal wie viele Partien es werden.']},
+  {key:'medaille', titel:'Die Auszeichnung', kopf:'Die Medaille und wer sie trägt',
+   punkte:['„Selten" ist ein Wort; wie selten, zeigt die Liga: jeder Spieler ein Platz, wer die Auszeichnung trägt, mit Gesicht, wer sie in dieser Partie geholt hat, gerahmt.',
+           'Violett ist die Familie der Auszeichnungen, Gold nur die legendäre [§C25]. Ab sechzehn Spielern werden die Plätze zu Punkten.',
+           'Was die Schlagzeile als Anlass nennt, wählt auch das Bild: „Auszeichnung in einer Partie für …" stand bisher über dem Bild einer Wende, von der die Karte nicht erzählt. Eine seltene oder legendäre Auszeichnung steht sogar vor allem außer der Tabellenspitze.']},
+  {key:'tag', titel:'Der Spieler des Tages', kopf:'Die Tagesbahn',
+   punkte:['Die Karte nannte Quote, Bilanz und Platz als drei Zahlen. Jetzt steht der Tag als Bahn — ein Feld je Partie, wie im Blatt [§C27] — und darüber die Elo über den Tag als goldene Linie: Gold, weil er den Titel des Tages trägt.',
+           'Man sieht, ob der Tag stark angefangen oder stark geendet hat.']},
   {key:'wende', titel:'Die Wende', kopf:'Die Elo-Kurve',
    punkte:['Die letzten zwölf Partien des Siegers als Linie aus der Elo jeder Partie: die Pleiten davor als rote Punkte, dieser Sieg groß und grün.',
            'Man sieht, wie tief es vorher ging und wie viel der eine Sieg zurückholt.']},
@@ -102,7 +115,7 @@ fs.mkdirSync(OUT, {recursive:true});
   // Die Eindämmung des Feeds legt Karten außerhalb des Bildes erst beim
   // Hineinscrollen [§C30] — für die Aufnahmen wird jede sofort gelegt.
   await page.setContent('<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-    + styles + '<style>.nf-card{content-visibility:visible!important}' + fs.readFileSync(path.join(HIER, 'entwurf.css'), 'utf8') + '</style></head>' + bodyHtml + '</body></html>');
+    + styles + '<style id="efCv">.nf-card{content-visibility:visible!important}</style><style>' + fs.readFileSync(path.join(HIER, 'entwurf.css'), 'utf8') + '</style></head>' + bodyHtml + '</body></html>');
   await page.addScriptTag({content: BOOT});
   await page.addScriptTag({content: code});
   const K = src => page.evaluate(s => window.__k.eval(s), src);
@@ -124,6 +137,7 @@ fs.mkdirSync(OUT, {recursive:true});
   arten.forEach(([sid, k]) => { if(!wahl[k] && !inRunde.has(sid)) wahl[k] = sid; });
   arten.forEach(([sid, k]) => { if(!wahl[k]) wahl[k] = sid; });
   const rundeBsp = runden.slice().sort((a, b) => b.length - a.length)[0];
+  wahl.tag = await K(`([...document.querySelectorAll('#sheet .nf-card.nf-s-held')].find(k => ((__F.st[k.dataset.sid] || {}).dataRef || {}).type === 'potd') || {}).dataset?.sid || null`);
   const shot = async (sid, datei) => {
     const el = page.locator(`#sheet [data-sid="${sid}"]`).first();
     await el.scrollIntoViewIfNeeded(); await page.waitForTimeout(250);
@@ -136,6 +150,28 @@ fs.mkdirSync(OUT, {recursive:true});
     await page.screenshot({path: path.join(OUT, datei), type:'jpeg', quality:76});
     await page.setViewportSize({width:360, height:900});
   };
+  // Wie lange das Öffnen des Feeds rechnet und zeichnet, heute und im
+  // Entwurf: Median aus sieben Läufen, warm, einmal ungebremst und einmal
+  // mit vierfach gedrosselter CPU wie ein Mittelklasse-Telefon.
+  const cdp = await page.context().newCDPSession(page);
+  const zeit = async () => {
+    const r = {};
+    // Gemessen mit der echten Eindämmung des Feeds [§C30]: die Regel, die für
+    // die Aufnahmen jede Karte sofort legt, ist dabei aus.
+    await K(`document.getElementById('efCv').disabled = true`);
+    for(const rate of [1, 4]){
+      await cdp.send('Emulation.setCPUThrottlingRate', {rate});
+      const t = [];
+      for(let i = 0; i < 7; i++) t.push(await K(`(() => { closeSheet(true); const t0 = performance.now(); openNewsFeed();
+        document.getElementById('sheet').getBoundingClientRect(); return performance.now() - t0; })()`));
+      t.sort((a, b) => a - b); r[rate] = Math.round(t[3]);
+    }
+    await cdp.send('Emulation.setCPUThrottlingRate', {rate:1});
+    await K(`document.getElementById('efCv').disabled = false`);
+    await feed();
+    return r;
+  };
+  const zeitHeute = await zeit();
   await ueberblick('feed-heute.jpg');
   for(const a of ANLAESSE){ if(wahl[a.key]) await shot(wahl[a.key], a.key + '-heute.jpg'); else console.log('kein Beispiel für ' + a.key); }
   // Die Runde heute: ihre Karten untereinander, als ein Bild.
@@ -157,6 +193,8 @@ fs.mkdirSync(OUT, {recursive:true});
   // Der Entwurf
   await K('__F.anwenden()');
   await feed();
+  const zeitEntwurf = await zeit();
+  console.log('Feed öffnen in ms (ungebremst / 4x):', zeitHeute, zeitEntwurf);
   for(const a of ANLAESSE){ if(wahl[a.key]) await shot(wahl[a.key], a.key + '-entwurf.jpg'); }
   const rd = await K('__F.runden()');
   const rdId = rundeBsp && (rd.find(r => r.von[0] === rundeBsp[0]) || {}).id;
@@ -168,14 +206,14 @@ fs.mkdirSync(OUT, {recursive:true});
   // dem Ende der Animationen.
   await K(`document.getAnimations().forEach(a => { try { a.finish() } catch(e){} })`);
   const feedFehler = await K(`[...document.querySelectorAll('#sheet .nf-card.nf-s-spiel')]
-    .map(k => __F.pruefen(k).map(f => k.dataset.sid + ': ' + f)).flat()`);
+    .map(k => __F.pruefen(k).fehler.map(f => k.dataset.sid + ': ' + f)).flat()`);
   const feedKarten = await K(`document.querySelectorAll('#sheet .nf-card.nf-s-spiel').length`);
   const breite = await K(`Math.round(document.querySelector('#sheet .nf-card.nf-s-spiel').getBoundingClientRect().width)`);
   const probeKarten = await K(`__F.probe(${breite})`);
   await page.waitForTimeout(300);
   await K(`document.getAnimations().forEach(a => { try { a.finish() } catch(e){} })`);
   const probeFehler = await K(`[...document.querySelectorAll('#efProbe .nf-card')]
-    .map((k, i) => __F.pruefen(k).map(f => k.previousElementSibling.textContent + ': ' + f)).flat()`);
+    .map((k, i) => __F.pruefen(k).fehler.map(f => k.previousElementSibling.textContent + ': ' + f)).flat()`);
   const hoch = await K(`Math.ceil(document.getElementById('efProbe').getBoundingClientRect().height)`);
   await page.setViewportSize({width:breite + 24, height:Math.min(hoch + 4, 16000)});
   await page.locator('#efProbe').screenshot({path: path.join(OUT, 'probe.jpg'), type:'jpeg', quality:78});
@@ -183,7 +221,7 @@ fs.mkdirSync(OUT, {recursive:true});
   feedFehler.concat(probeFehler).forEach(f => console.log('  ' + f));
   await browser.close();
   if(fehler.length) console.log('FEHLER\n' + [...new Set(fehler)].join('\n'));
-  const info = {zaehl, runden: runden.length, rundeLaenge: rundeBsp ? rundeBsp.length : 0, karten: arten.length, feedKarten, probeKarten, befunde: feedFehler.length + probeFehler.length};
+  const info = {da: Object.keys(wahl).filter(k => wahl[k]), zaehl, runden: runden.length, rundeLaenge: rundeBsp ? rundeBsp.length : 0, karten: arten.length, feedKarten, probeKarten, befunde: feedFehler.length + probeFehler.length, zeitHeute, zeitEntwurf};
   fs.writeFileSync(path.join(HIER, 'index.html'), seite(info));
   console.log('index.html geschrieben');
 })();
@@ -242,11 +280,13 @@ figure img{display:block;width:100%;height:auto;border-radius:16px}
 <p class="unter">Von ${info.karten} Partie-Karten im Feed der letzten vierzehn Tage beginnt heute jede mit demselben Ergebnisband: vier Wappen, der Stand, zwei Namen. Der Entwurf lässt den Kopf dem Anlass folgen und zeigt in jedem Anlass eine Zahl, die auf der Karte bisher fehlte. Gebaut ist er in der echten App mit den echten Partien und ihren Bauteilen, bei 360 px — eingebaut ist davon noch nichts.</p>
 <div class="regeln">
   <div><b>Der Kopf folgt dem Anlass</b>Spielfeld, Anzeigetafel, Wippe und Ergebniszeile statt immer desselben Bands. Wo die Grafik die Aussage trägt, schrumpft der Kopf auf eine Zeile.</div>
-  <div><b>Neue Zahlen statt neuer Wörter</b>Rollen, Bilanz in engen Partien, Ergebnisverteilung, Elo-Gefälle, Tabellenbewegung, eigener Bestwert, Elo-Kurve, jede Begegnung — alles gerechnet aus den Partien bis zu dieser.</div>
+  <div><b>Neue Zahlen statt neuer Wörter</b>Rollen, Bilanz in engen Partien, Ergebnisverteilung, Elo-Gefälle, Tabellenbewegung, eigener Bestwert, gerissene Kette, Duo-Bilanz, wer eine Auszeichnung trägt, Tagesbahn, Elo-Kurve, jede Begegnung — alles gerechnet aus den Partien bis zu dieser.</div>
+  <div><b>Nichts wird gekürzt oder geschrumpft</b>Ein Name steht in der Grafik, wo sie Platz hat — unter seinem Wappen auf dem Spielfeld, an seiner Linie in der Tabelle. Wo es eng ist, steht er in einer Textstelle darunter, einer je Zeile, und bricht wie ein Satz um. Kein „…", keine verkleinerte Schrift.</div>
+  <div><b>Schnell bleibt schnell</b>Jede Rechnung läuft einmal je Datenstand: Spielreihenfolge, Ergebnisverteilung als Präfixsumme und Serienstand vor jeder Partie hängen an den Partien selbst. Eine Karte liest daraus, statt die Liga noch einmal abzulaufen. Feed öffnen heute ${info.zeitHeute[1]} ms, im Entwurf ${info.zeitEntwurf[1]} ms; auf einem gedrosselten Telefon ${info.zeitHeute[4]} und ${info.zeitEntwurf[4]} ms.</div>
   <div><b>Farbe sagt etwas</b>Grün und Rot nur für die Richtung, Gold nur für die neue Spitze, alles Übrige Metall [§C25]. Keine neue Farbe.</div>
   <div><b>Eine Runde, eine Karte</b>${info.runden} Runden im Fenster: dieselben vier am Tisch, Partie auf Partie. Sie werden eine Karte mit der Tabelle der Runde.</div>
 </div>
-<nav><a href="#feed">Der Feed</a><a href="#runde">Die Runde</a><a href="#probe">Grenzwerte</a>${ANLAESSE.map(a => `<a href="#${a.key}">${esc(a.titel)}</a>`).join('')}</nav>
+<nav><a href="#feed">Der Feed</a><a href="#runde">Die Runde</a><a href="#probe">Grenzwerte</a>${ANLAESSE.filter(a => info.da.includes(a.key)).map(a => `<a href="#${a.key}">${esc(a.titel)}</a>`).join('')}</nav>
 <h2>Der Feed als Ganzes</h2>
 ${paar('feed', 'Die ersten Karten', 'Heute und im Entwurf', ['Dieselben Partien, dieselbe Reihenfolge. Links beginnt jede Karte mit demselben Band, rechts sieht jede Karte nach dem aus, wovon sie erzählt.'])}
 <h2>Zusammenführen</h2>
@@ -255,7 +295,7 @@ ${paar('runde', 'Die Runde der Vier', 'Eine Karte statt ' + info.rundeLaenge, [
   'Die Runde wird eine Karte: oben die Tabelle der Runde — jeder mit Siegen, Niederlagen und der Elo, die er in der Runde gewonnen oder abgegeben hat —, darunter jede Partie in einer Zeile mit Uhrzeit, Paarung, Stand und ihrem Anlass.',
   'Die Schlagzeile sagt, wer die Runde gewonnen hat; der Satz, wie lange sie ging und wie oft die Paarung wechselte. Im Blatt stehen die Einzelkarten weiter vollständig.'])}
 <h2>Je Anlass</h2>
-${ANLAESSE.map(a => paar(a.key, a.titel, a.kopf, a.punkte)).join('')}
+${ANLAESSE.filter(a => info.da.includes(a.key)).map(a => paar(a.key, a.titel, a.kopf, a.punkte)).join('')}
 <h2>Mit Grenzwerten</h2>
 <section class="ans" id="probe">
   <h3>Was in einigen Jahren dasteht <span>${info.befunde} Überlappungen</span></h3>
@@ -263,15 +303,16 @@ ${ANLAESSE.map(a => paar(a.key, a.titel, a.kopf, a.punkte)).join('')}
   <ul>
     <li>Jedes Bauteil hat zwei Hälften: eine rechnet aus den Partien, die andere zeichnet nur, was sie bekommt. Deshalb lässt sich jedes Bild auch mit Zahlen zeichnen, die die Liga heute noch nicht hat.</li>
     <li>Links steht jedes Bauteil mit Grenzwerten: 45.495 Partien, eine Bilanz von 12.345:9.876, 98.765 Begegnungen, eine Elo von −12.345, eine Serie von 57 gegen einen Bestwert von 120 und einen Liga-Rekord von 340, eine Runde aus 23 Partien, Platz 118 bis 126 der Tabelle — und Namen wie „Jean-Baptiste von Hohenstein".</li>
-    <li>Was wächst, hat einen Deckel und sagt, was dahinter liegt: die Serie wird über sechzehn ein Balken statt Zellen, die Rivalität zeigt die letzten dreißig Begegnungen, die Runde acht Partien und „und 15 weitere", die Tabelle neun Plätze um die Bewegung.</li>
-    <li>Ein Name steht in einer eigenen Zeile und endet mit „…", eine Zahl ab 1.000 trägt den Tausenderpunkt, und eine Zahl in einer festen Zelle wird kleiner statt breiter.</li>
-    <li>Gemessen im Browser: ${info.feedKarten} Karten des Feeds und ${info.probeKarten} Proben, jeder Text gegen jeden Text und jedes Gesicht, jeder Text gegen den Rand der Karte und gegen ein Abschneiden ohne „…" — ${info.befunde} Befunde.</li>
+    <li>Was wächst, hat einen Deckel und sagt, was dahinter liegt: die Serie wird über sechzehn ein Balken statt Zellen, die Kette über zwanzig Glieder eine geschlossene, die Rivalität zeigt die letzten dreißig Begegnungen, die Runde acht Partien und „und 15 weitere", die Tabelle neun Plätze um die Bewegung, die Medaille ab sechzehn Spielern Punkte statt Gesichter.</li>
+    <li>Ein Name steht in der Grafik nur, wo sie Platz hat, und ob er passt, sagt eine feste Regel: kein Wort länger als die Spalte fasst, gerechnet für das schmalste Telefon. Passt er nicht — „Maximilian-Alexander" unter einer Stange —, steht die Aufstellung in zwei Spalten unter dem Feld, und in der Tabelle stehen Gesichter statt Namen und darunter ein Satz, wer sich bewegt hat. Eine Zahl ab 1.000 trägt den Tausenderpunkt.</li>
+    <li>Gemessen im Browser: ${info.feedKarten} Karten des Feeds und ${info.probeKarten} Proben, jeder Text gegen jeden Text und jedes Gesicht, jeder Text gegen den Rand der Karte, jedes Abschneiden — auch mit „…" — und jede Schrift unter 8 px. ${info.befunde} Befunde. Auch die Zeilen, die die App heute mit „…" kürzt (Bündel, Faden, Ergebnisband), brechen im Entwurf um.</li>
   </ul></div>
 </section>
 <div class="offen"><b>Beim Einbau zu klären:</b><ul>
 <li>Die Runde ändert, was eine Karte ist: bisher hat jede Partie ihre eigene [§C33]. Sie bliebe es im Bestand und im Blatt; zusammengeführt würde nur in der Anzeige, wie bei der Sammelkarte.</li>
 <li>Spielfeld und Wippe zeigen Siegchance und Elo im Kopf — der Satz darunter streicht sie dann wie heute bei Bogen und Chips (_newsSpielSatz).</li>
-<li>Alle Grafiken rechnen aus den Partien bis zu ihrer eigenen, nicht bis heute — eine Karte von vorletzter Woche erzählt vom Stand von damals.</li>
+<li>Alle Grafiken rechnen aus den Partien bis zu ihrer eigenen, nicht bis heute — eine Karte von vorletzter Woche erzählt vom Stand von damals. Ausgenommen ist die Medaille: wer sie trägt, ist der Stand von heute; beim Einbau zählt sie bis zur Partie.</li>
+<li>Die Rechnungen hängen als WeakMap an den Partien wie matchesOfPlayer [§3 Caching]; ein neuer Datenstand ist ein neues Array und verwirft sie von selbst.</li>
 </ul></div>
 </main></body></html>`;
 }
