@@ -224,7 +224,7 @@ function periodLabel(period, seasonId){
   const now=new Date();
   if(period==='season'){ return seasonLabel(seasonId||currentSeason().id); }
   if(period==='week'){ const s=periodStart('week');
-    return 'KW '+isoWeek(now)+' · ab '+s.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}); }
+    return 'KW '+isoWeek(now)+' · ab '+datumFmt(s, 'tm'); }
   if(period==='day'){ const s=periodStart('day');
     return s.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'}); }
   return 'Gesamte Liga';

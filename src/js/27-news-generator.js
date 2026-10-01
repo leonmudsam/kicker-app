@@ -670,7 +670,7 @@ function _buildStories(){
         // zweimal im Feed. Die Namen stehen schon in der Schlagzeile; hier
         // steht, seit wann und wie oft.
         desc: `Seit dem `
-            + `${new Date(t.firstT || t.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
+            + `${datumFmt(t.firstT || t.when, 'tm')} `
             + `gehen ${_zahlwortDe(t.streak)} gemeinsame Spiele in Folge verloren.`,
         when: t.when,
         prio: STORY_PRIO.team_loss_streak + (t.streak >= 7 ? 4 : 0),
@@ -798,8 +798,7 @@ function _buildStories(){
         // es seit jeher so.
         desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück.`
             // Kein Punkt dahinter: „25.08." traegt seinen eigenen schon.
-            + (c.seit ? ` Der letzte Sieg liegt vor dem ${new Date(c.seit)
-                .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}` : ''),
+            + (c.seit ? ` Der letzte Sieg liegt vor dem ${datumFmt(c.seit, 'tm')}` : ''),
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
@@ -2854,8 +2853,7 @@ function _buildStories(){
             ic: 'award',
             title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`
                  + (_frueher ? ' wieder' : ''),
-            desc: (_frueher ? `Zuletzt stand die Stufe am ${new Date(_frueher + 'T12:00:00')
-                    .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}. ` : '')
+            desc: (_frueher ? `Zuletzt stand die Stufe am ${datumFmt(_frueher + 'T12:00:00', 'tm')}. ` : '')
                 + `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
                 + `${stand.teile.monat} aus Monatschroniken und ${stand.teile.rekord} aus Rekorden.`
                 + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),

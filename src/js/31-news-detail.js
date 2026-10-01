@@ -264,7 +264,7 @@ function _newsBlattErgebnis(matchId){
   const aWin = m.winner === 'A';
   const dt = new Date(m.created_at).toLocaleDateString('de-DE',
     {weekday:'long', day:'2-digit', month:'2-digit'});
-  const uhr = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const uhr = datumFmt(m.created_at, 'uhr');
   return `<div class="nd-erg">
     <div class="nd-erg-z">${esc(dt)} um ${esc(uhr)}</div>
     <div class="nd-erg-r">
@@ -1670,7 +1670,7 @@ function _newsSerienLauf(pid, matchId, laenge){
     }
     if(!eigene.length) return {};
     const erste = eigene[eigene.length - 1];
-    const fmt = m => new Date(m.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    const fmt = m => datumFmt(m.created_at, 'tm');
     const tage = Math.max(1, Math.round(
       (new Date(matches[idx].created_at) - new Date(erste.created_at)) / 86400000));
     return {von: fmt(erste), bis: fmt(matches[idx]), tage};
@@ -1694,7 +1694,7 @@ function _newsMatchVsBlock(matchId){
     const nm = pid => (pm[pid] && pm[pid].name) || '?';
     const aWon = m.winner === 'A';
     const dt = new Date(m.created_at);
-    const dStr = dt.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    const dStr = datumFmt(dt, 'tmj');
     return `<div class="nd-match" data-mid="${esc(m.id)}">
       <div class="nd-match-side ${aWon?'won':'lost'}">
         <div class="nd-match-avs">${av(m.a1)}${av(m.a2)}</div>

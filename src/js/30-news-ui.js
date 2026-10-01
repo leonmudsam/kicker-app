@@ -263,10 +263,10 @@ function _newsWhenLabel(when){
   const todayKey = tagKey(now);
   const yest = tagKey(now.getTime() - 86400000);
   const dKey = tagKey(d);
-  const hhmm = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const hhmm = datumFmt(d, 'uhr');
   if(dKey === todayKey) return 'Heute, '+hhmm;
   if(dKey === yest) return 'Gestern, '+hhmm;
-  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+', '+hhmm;
+  return datumFmt(d, 'tm')+', '+hhmm;
 }
 
 // Der Kalendertag einer Story, als Überschrift für eine Feed-Gruppe.
@@ -279,13 +279,13 @@ function _newsDayLabel(when){
   const d = new Date(when), now = new Date();
   if(tagKey(d) === tagKey(now)) return 'HEUTE';
   if(tagKey(d) === tagKey(now.getTime() - 86400000)) return 'GESTERN';
-  return d.toLocaleDateString('de-DE',{weekday:'long'}).toUpperCase();
+  return datumFmt(d, 'wt').toUpperCase();
 }
 // Das Datum unter dem Wochentag. Bei „Heute" und „Gestern" steht es trotzdem
 // da: sonst weiß man beim Zurückblättern nicht, wo man ist.
 function _newsDayDate(when){
   const d = new Date(when);
-  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+  return datumFmt(d, 'tmj');
 }
 
 // ─── §11.6 — Voller Feed (im Sheet) mit Filter-Pills ─────────────────
@@ -392,7 +392,7 @@ function _newsGesichtHtml(s){
 // Bauformen: das Ergebnisband, der große Wert, die Leiter, das Zahlenband.
 
 function _newsUhrzeit(when){
-  return new Date(when).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  return datumFmt(when, 'uhr');
 }
 
 // Rot ist eine Richtung, keine Rubrik [§C25]. Karte und Detailblatt nutzen
@@ -1063,7 +1063,7 @@ function _newsTorleiste(m, hoch, tief){
   });
   const reihe = (k, cls) => Array.from({length:10}, (_, i) => `<i${i < k ? ` class="${cls}"` : ''}></i>`).join('');
   const satz = zuletzt
-    ? `So deutlich zuletzt am ${new Date(mts(zuletzt)).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}`
+    ? `So deutlich zuletzt am ${datumFmt(mts(zuletzt), 'tm')}`
     : 'So deutlich noch nie in der Liga';
   return `<div class="nf-tor"><div class="nf-tor-r"><span class="w">${reihe(hoch, 'w')}</span>`
     + `<span class="v">${reihe(tief, 'v')}</span></div><span class="nf-tor-s">${esc(satz)}</span></div>`;
@@ -1330,7 +1330,7 @@ function _newsFadenHtml(faden, stories, nach){
   const ziel = (stories || []).find(x => x.id === (nach ? faden.von : faden.ziel));
   const art = NEWS_FADEN_ART[faden.art];
   if(!ziel || !art) return '';
-  const tag = new Date(ziel.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+  const tag = datumFmt(ziel.when, 'tm');
   return `<button class="nf-faden" type="button" data-ziel="${esc(ziel.id)}">`
     // Tag vor Titel: der Titel kürzt sich, und in einer Zeile ging dabei das
     // Datum verloren — gerade das sagt, wie weit die Geschichte zurückreicht.
