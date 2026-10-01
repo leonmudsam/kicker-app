@@ -57,20 +57,36 @@
     background:linear-gradient(180deg,var(--bg) 60%,rgba(10,12,11,.85) 85%,transparent);
   }
   .news-toast{position:absolute;right:60px;top:calc(var(--safe-top) + 56px);
-    z-index:45;background:var(--acid);color:#000;
-    padding:8px 13px;border-radius:12px;
-    font-family:'Archivo Black',sans-serif;font-size:11.5px;letter-spacing:-.005em;
-    box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 0 1px rgba(190,242,100,.25),
-      0 2px 12px rgba(190,242,100,.35);
-    opacity:0;transform:translateY(-8px) scale(.94);pointer-events:none;
-    transition:opacity .25s ease, transform .3s cubic-bezier(.2,.8,.2,1);
-    white-space:nowrap;display:none;cursor:pointer;user-select:none}
+    z-index:45;color:var(--ink);padding:6px 13px 6px 7px;border-radius:14px;
+    background:linear-gradient(180deg,#22301a,#141a10);
+    border:1px solid rgba(190,242,100,.55);
+    box-shadow:0 10px 28px rgba(0,0,0,.5),0 0 0 3px rgba(190,242,100,.08),0 0 22px rgba(190,242,100,.28);
+    opacity:0;transform:translateY(-10px) scale(.86);pointer-events:none;
+    transition:opacity .25s ease, transform .45s cubic-bezier(.3,1.5,.5,1);
+    white-space:nowrap;display:none;cursor:pointer;user-select:none;overflow:visible}
   .news-toast.visible{display:block}
   .news-toast.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
-  .news-toast::before{content:'';position:absolute;top:-5px;right:var(--nt-arrow,18px);
-    width:10px;height:10px;background:var(--acid);
-    transform:rotate(45deg);border-radius:2px;z-index:-1}
+  .news-toast::before{content:'';position:absolute;top:-6px;right:var(--nt-arrow,18px);
+    width:10px;height:10px;background:#22301a;border:1px solid rgba(190,242,100,.55);
+    border-right:0;border-bottom:0;transform:rotate(45deg);border-radius:2px 0 0 0}
   .news-toast:active{transform:translateY(0) scale(.97)}
+  #newsToastTxt{position:relative;display:flex;align-items:center;gap:7px;border-radius:inherit;overflow:hidden}
+  .nt-ic{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;
+    background:var(--acid);color:#10140c;flex:0 0 auto}
+  .nt-ic svg{width:14px;height:14px}
+  .nt-n{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;line-height:1;color:var(--acid);
+    text-shadow:0 0 12px rgba(190,242,100,.45)}
+  .nt-w{font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:-.005em;color:var(--ink)}
+  @media(prefers-reduced-motion:no-preference){
+    .news-toast.show::after{content:'';position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+      background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%) no-repeat;
+      background-size:250% 100%;animation:ntGlanz 2.2s .15s ease-out infinite}
+    .news-toast.show .nt-ic{animation:ntPop .55s .1s cubic-bezier(.3,1.6,.5,1) both,ntRing 1.6s .25s ease-out 2}
+    .news-toast.show .nt-n{animation:ntPop .5s .2s cubic-bezier(.3,1.6,.5,1) both}
+  }
+  @keyframes ntGlanz{0%{background-position:140% 0}55%,100%{background-position:-40% 0}}
+  @keyframes ntPop{from{transform:scale(.3);opacity:0}}
+  @keyframes ntRing{0%{box-shadow:0 0 0 0 rgba(190,242,100,.6)}100%{box-shadow:0 0 0 12px rgba(190,242,100,0)}}
   .appbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .logo{display:flex;align-items:center;gap:10px;min-width:0}
 .logo-mark{
@@ -998,8 +1014,14 @@
     animation:glanzLauf 8s ease-in-out infinite}
   .nf-s-woche:not(.read)::after,.nd-s-woche .nd-head::after{animation-delay:-3s}
   .rcp-held::after{animation-delay:-5s}
+  .nf-glanz::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(105deg,transparent 40%,rgba(var(--story-rgb,185,196,189),.13) 50%,transparent 60%)
+      no-repeat;background-size:250% 100%;background-position:140% 0;
+    animation:glanzLauf 11s ease-in-out infinite;animation-delay:var(--gv,0s)}
   .nd-s-held .nd-head,.nd-s-woche .nd-head{position:relative;border-radius:14px}
   @media(prefers-reduced-motion:reduce){
+    .nf-glanz::after,
     .pod-karte.erster.gold::after,
     .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
     .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
@@ -4439,6 +4461,7 @@
   .sp-vt-s i,.sp-tg-b i,.sp-duo-l i{transform-origin:bottom;animation:spY .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-sl-r i.w,.sp-sl-voll{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-bg rect{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .sp-band-g i{transform-origin:bottom;animation:spY .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
   .sp-pm-r i,.sp-ro-s i.atk{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
   .sp-rk-r i.w{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
   .sp-rk-r i.x{animation:spBruch .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 30ms + 120ms)}
@@ -4465,8 +4488,15 @@
 .sp-band-avs .rav+.rav{margin-left:-11px}
 .sp-band-s:not(.w) .sp-band-avs{opacity:.55}
 .sp-band-s.w .sp-z-n b{color:var(--ink)}
-.sp-band-sc{align-self:center;font-family:'Archivo Black',sans-serif;font-size:19px;letter-spacing:-.03em;color:var(--faint)}
-.sp-band-sc b{font-weight:400}.sp-band-sc b.w{color:var(--ink)}.sp-band-sc i{font-style:normal;font-size:15px}
+.sp-band-m{align-self:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.sp-band-sc{font-family:'Archivo Black',sans-serif;font-size:24px;line-height:1;letter-spacing:-.02em;color:var(--faint)}
+.sp-band-sc em{font-style:normal}.sp-band-sc em.w{color:var(--acid);text-shadow:0 0 14px rgba(190,242,100,.35)}
+.sp-band-sc i{font-style:normal;font-size:16px;margin:0 2px;vertical-align:3px}
+.sp-band-g{display:flex;gap:2px}
+.sp-band-g i{display:block;width:5px;height:9px;border-radius:1.5px;background:rgba(255,255,255,.14)}
+.sp-band-g i.a{background:var(--acid)}
+.sp-band-d{font:700 9.5px 'Sometype Mono',monospace;color:var(--acid);letter-spacing:.04em;padding:1px 6px;border-radius:6px;
+  background:rgba(190,242,100,.1)}
 
 .nd-rd{border-top:0}
 .nd-rd .sp-rd-p{cursor:pointer;border-radius:8px}
@@ -4573,7 +4603,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.01.22198fe3';
+const BUILD_VERSION='2026.10.01.da7841f8';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19731,6 +19761,10 @@ function _isSheetActive(){
   } catch(e){}
   return false;
 }
+function _newsToastFuellen(txt, n){
+  txt.innerHTML = `<i class="nt-ic">${svgI('newspaper')}</i><b class="nt-n num">${n}</b>`
+    + `<span class="nt-w">${n === 1 ? 'neue Story' : 'neue Stories'}</span>`;
+}
 function _maybeShowNewsToast(unreadCount){
   const toast = document.getElementById('newsToast');
   const txt = document.getElementById('newsToastTxt');
@@ -19744,7 +19778,7 @@ function _maybeShowNewsToast(unreadCount){
     _newsToastDeferredCount = unreadCount;
     return;
   }
-  txt.textContent = unreadCount + (unreadCount === 1 ? ' neue Story' : ' neue Stories');
+  _newsToastFuellen(txt, unreadCount);
   _positionNewsToast();
   toast.classList.add('visible');
   void toast.offsetWidth;
@@ -19793,7 +19827,7 @@ function _processDeferredNewsToast(){
     const toast = document.getElementById('newsToast');
     const txt = document.getElementById('newsToastTxt');
     if(!toast || !txt) return;
-    txt.textContent = n + (n === 1 ? ' neue Story' : ' neue Stories');
+    _newsToastFuellen(txt, n);
     _positionNewsToast();
     toast.classList.add('visible');
     void toast.offsetWidth;
@@ -19917,6 +19951,26 @@ function _newsTafelTon(s){
   return arten.length === 1 ? arten[0] : (arten.length > 1 ? 'mix' : 'rekord');
 }
 
+const NEWS_GLANZ_TYP = new Set(['lead_change', 'rekord_geholt', 'insignium_stufe', 'chronik_erstling', 'streak_record', 'season_champion']);
+const NEWS_GLANZ_ANLASS = new Set(['spitze', 'medaille', 'aussenseiter', 'premiere', 'riss']);
+function _newsGlanz(s, sorte, anlass){
+  const d = s.dataRef || {};
+  if(sorte === 'held' || sorte === 'woche') return false;
+  if(NEWS_GLANZ_TYP.has(d.type) || NEWS_GLANZ_ANLASS.has(anlass)) return true;
+  if(d.type === 'badge_unlocked' && (d.rarity === 'rare' || d.rarity === 'legendary')) return true;
+  if((d.type === 'win_streak' || d.type === 'team_streak') && Number(d.streak) >= 5) return true;
+  if(anlass === 'serie' || anlass === 'teamserie'){
+    const f = (typeof _newsSpielFakten === 'function' ? _newsSpielFakten(s) : [])
+      .find(x => x.type === 'win_streak' || x.type === 'team_streak');
+    if(f && Number(f.streak) >= 5) return true;
+  }
+  return (d.teile || []).some(t => t.klasse || NEWS_GLANZ_TYP.has(t.typ));
+}
+function _newsGlanzVersatz(id){
+  let h = 0; const t = String(id || '');
+  for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+  return -(h % 110) / 10;
+}
 function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   if(((s && s.dataRef) || {}).type === 'runde') return _newsRundeHtml(s, isRead, fadenHtml);
   const dcat = _displayCat(s);
@@ -20041,7 +20095,8 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const h = _breakingHeroText(s);
     if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
   }
-  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
+  const glanz = !negativ && !brk && !gross && _newsGlanz(s, sorte, sorte === 'spiel' && d.matchId ? _spBild(s).key : '');
+  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
@@ -20987,7 +21042,11 @@ function _spZeileBild(d){
 function _spBandBild(d){
   const s = (ids, w, re) => `<div class="sp-band-s${w ? ' w' : ''}${re ? ' re' : ''}"><span class="sp-band-avs">`
     + `${ids.map(id => _spWappen(id, 48)).join('')}</span><span class="sp-z-n">${_spStapel(ids)}</span></div>`;
-  return `<div class="sp-band">${s(d.A, d.aw)}<div class="sp-band-sc num">${_spStand(d)}</div>${s(d.B, !d.aw, true)}</div>`;
+  const hoch = Math.max(d.sa, d.sb), tief = Math.min(d.sa, d.sb);
+  const felder = hoch <= 20 ? Array.from({length:hoch}, (_, i) => `<i class="${i < tief ? '' : 'a'}" style="--i:${i}"></i>`).join('') : '';
+  return `<div class="sp-band">${s(d.A, d.aw)}<div class="sp-band-m"><div class="sp-band-sc num">${_spStand(d)}</div>`
+    + (felder ? `<span class="sp-band-g">${felder}</span>` : '')
+    + `<span class="sp-band-d num">+${_spZahl(hoch - tief)}</span></div>${s(d.B, !d.aw, true)}</div>`;
 }
 
 function _spFeldDaten(a){

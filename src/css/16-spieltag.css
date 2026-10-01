@@ -324,6 +324,7 @@
   .sp-vt-s i,.sp-tg-b i,.sp-duo-l i{transform-origin:bottom;animation:spY .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-sl-r i.w,.sp-sl-voll{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-bg rect{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .sp-band-g i{transform-origin:bottom;animation:spY .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
   .sp-pm-r i,.sp-ro-s i.atk{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
   .sp-rk-r i.w{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
   .sp-rk-r i.x{animation:spBruch .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 30ms + 120ms)}
@@ -351,8 +352,15 @@
 .sp-band-avs .rav+.rav{margin-left:-11px}
 .sp-band-s:not(.w) .sp-band-avs{opacity:.55}
 .sp-band-s.w .sp-z-n b{color:var(--ink)}
-.sp-band-sc{align-self:center;font-family:'Archivo Black',sans-serif;font-size:19px;letter-spacing:-.03em;color:var(--faint)}
-.sp-band-sc b{font-weight:400}.sp-band-sc b.w{color:var(--ink)}.sp-band-sc i{font-style:normal;font-size:15px}
+.sp-band-m{align-self:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.sp-band-sc{font-family:'Archivo Black',sans-serif;font-size:24px;line-height:1;letter-spacing:-.02em;color:var(--faint)}
+.sp-band-sc em{font-style:normal}.sp-band-sc em.w{color:var(--acid);text-shadow:0 0 14px rgba(190,242,100,.35)}
+.sp-band-sc i{font-style:normal;font-size:16px;margin:0 2px;vertical-align:3px}
+.sp-band-g{display:flex;gap:2px}
+.sp-band-g i{display:block;width:5px;height:9px;border-radius:1.5px;background:rgba(255,255,255,.14)}
+.sp-band-g i.a{background:var(--acid)}
+.sp-band-d{font:700 9.5px 'Sometype Mono',monospace;color:var(--acid);letter-spacing:.04em;padding:1px 6px;border-radius:6px;
+  background:rgba(190,242,100,.1)}
 
 /* ── Die Runde im Blatt ──
    Antippen öffnet die Karte der Partie; eine Breaking-Partie trägt ihre

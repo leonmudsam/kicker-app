@@ -12,24 +12,43 @@
        einem Mittelklasse-Telefon der teuerste Teil des Scrollens. Sie war
        ohnehin kaum zu sehen, die Fläche ist bis auf ihren Saum deckend. */
   }
-  /* News-Toast: kleine acid-grüne Pille mit Pfeil zum News-Button (v8.1).
-     display:none Default → JS schaltet .visible + .show in zwei Stufen für
-     saubere fade-in/slide-up Animationen. */
+  /* Der Hinweis „x neue Stories" [§C33]: eine dunkle Pille mit Kante in Acid,
+     die Zahl groß, ein Lichtlauf beim Erscheinen und ein Ring, der aufgeht.
+     display:none als Grundstand → JS schaltet .visible und .show in zwei
+     Stufen, damit die Transition anläuft. */
   .news-toast{position:absolute;right:60px;top:calc(var(--safe-top) + 56px);
-    z-index:45;background:var(--acid);color:#000;
-    padding:8px 13px;border-radius:12px;
-    font-family:'Archivo Black',sans-serif;font-size:11.5px;letter-spacing:-.005em;
-    box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 0 1px rgba(190,242,100,.25),
-      0 2px 12px rgba(190,242,100,.35);
-    opacity:0;transform:translateY(-8px) scale(.94);pointer-events:none;
-    transition:opacity .25s ease, transform .3s cubic-bezier(.2,.8,.2,1);
-    white-space:nowrap;display:none;cursor:pointer;user-select:none}
+    z-index:45;color:var(--ink);padding:6px 13px 6px 7px;border-radius:14px;
+    background:linear-gradient(180deg,#22301a,#141a10);
+    border:1px solid rgba(190,242,100,.55);
+    box-shadow:0 10px 28px rgba(0,0,0,.5),0 0 0 3px rgba(190,242,100,.08),0 0 22px rgba(190,242,100,.28);
+    opacity:0;transform:translateY(-10px) scale(.86);pointer-events:none;
+    transition:opacity .25s ease, transform .45s cubic-bezier(.3,1.5,.5,1);
+    white-space:nowrap;display:none;cursor:pointer;user-select:none;overflow:visible}
   .news-toast.visible{display:block}
   .news-toast.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
-  .news-toast::before{content:'';position:absolute;top:-5px;right:var(--nt-arrow,18px);
-    width:10px;height:10px;background:var(--acid);
-    transform:rotate(45deg);border-radius:2px;z-index:-1}
+  .news-toast::before{content:'';position:absolute;top:-6px;right:var(--nt-arrow,18px);
+    width:10px;height:10px;background:#22301a;border:1px solid rgba(190,242,100,.55);
+    border-right:0;border-bottom:0;transform:rotate(45deg);border-radius:2px 0 0 0}
   .news-toast:active{transform:translateY(0) scale(.97)}
+  #newsToastTxt{position:relative;display:flex;align-items:center;gap:7px;border-radius:inherit;overflow:hidden}
+  .nt-ic{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;
+    background:var(--acid);color:#10140c;flex:0 0 auto}
+  .nt-ic svg{width:14px;height:14px}
+  .nt-n{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;line-height:1;color:var(--acid);
+    text-shadow:0 0 12px rgba(190,242,100,.45)}
+  .nt-w{font-family:'Archivo Black',sans-serif;font-size:11px;letter-spacing:-.005em;color:var(--ink)}
+  @media(prefers-reduced-motion:no-preference){
+    /* Der Lichtlauf: einmal beim Erscheinen, dann alle vier Sekunden. */
+    .news-toast.show::after{content:'';position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;
+      background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.28) 50%,transparent 65%) no-repeat;
+      background-size:250% 100%;animation:ntGlanz 2.2s .15s ease-out infinite}
+    /* Der Ring geht einmal auf, wie ein Signal. */
+    .news-toast.show .nt-ic{animation:ntPop .55s .1s cubic-bezier(.3,1.6,.5,1) both,ntRing 1.6s .25s ease-out 2}
+    .news-toast.show .nt-n{animation:ntPop .5s .2s cubic-bezier(.3,1.6,.5,1) both}
+  }
+  @keyframes ntGlanz{0%{background-position:140% 0}55%,100%{background-position:-40% 0}}
+  @keyframes ntPop{from{transform:scale(.3);opacity:0}}
+  @keyframes ntRing{0%{box-shadow:0 0 0 0 rgba(190,242,100,.6)}100%{box-shadow:0 0 0 12px rgba(190,242,100,0)}}
   .appbar-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
   .logo{display:flex;align-items:center;gap:10px;min-width:0}
 .logo-mark{

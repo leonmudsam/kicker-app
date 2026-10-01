@@ -239,7 +239,16 @@ function _spZeileBild(d){
 function _spBandBild(d){
   const s = (ids, w, re) => `<div class="sp-band-s${w ? ' w' : ''}${re ? ' re' : ''}"><span class="sp-band-avs">`
     + `${ids.map(id => _spWappen(id, 48)).join('')}</span><span class="sp-z-n">${_spStapel(ids)}</span></div>`;
-  return `<div class="sp-band">${s(d.A, d.aw)}<div class="sp-band-sc num">${_spStand(d)}</div>${s(d.B, !d.aw, true)}</div>`;
+  // Die Mitte zeigt den Abstand, denn um ihn geht es: der Stand groß, der
+  // Sieger hell, darunter je Tor des Siegers ein Feld — so viele, wie die
+  // Gegenseite auch geschossen hat, leise, und der Abstand hell. Der Stand
+  // stand allein und kursiv da: `_spStand` baut ihn aus `<em>`, und hier
+  // fehlte die Regel, die das aufhebt.
+  const hoch = Math.max(d.sa, d.sb), tief = Math.min(d.sa, d.sb);
+  const felder = hoch <= 20 ? Array.from({length:hoch}, (_, i) => `<i class="${i < tief ? '' : 'a'}" style="--i:${i}"></i>`).join('') : '';
+  return `<div class="sp-band">${s(d.A, d.aw)}<div class="sp-band-m"><div class="sp-band-sc num">${_spStand(d)}</div>`
+    + (felder ? `<span class="sp-band-g">${felder}</span>` : '')
+    + `<span class="sp-band-d num">+${_spZahl(hoch - tief)}</span></div>${s(d.B, !d.aw, true)}</div>`;
 }
 
 // ── Das Spielfeld: die gewöhnliche Partie ────────────────────────────

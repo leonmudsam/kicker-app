@@ -1970,11 +1970,12 @@ const ok = (c, msg, det) => {
       + '<div class="pod-karte silber erster" id="g2"></div></div>'
       + '<div class="nf-card nf-s-held" id="g3"></div><div class="nf-card nf-s-held read" id="g4"></div>'
       + '<div class="nf-card nf-s-spiel" id="g5"></div><div class="rcp-held" id="g6"></div>'
-      + '<div class="nd nd-s-held"><div class="nd-head" id="g7"></div></div>';
+      + '<div class="nd nd-s-held"><div class="nd-head" id="g7"></div></div>'
+      + '<div class="nf-card nf-s-spiel nf-glanz" id="g8"></div>';
     document.body.appendChild(host);
     const a = id => getComputedStyle(host.querySelector('#' + id), '::after').animationName;
     const out = {gold:a('g1'), silber:a('g2'), held:a('g3'), gelesen:a('g4'),
-                 spiel:a('g5'), rueckblick:a('g6'), blatt:a('g7')};
+                 spiel:a('g5'), rueckblick:a('g6'), blatt:a('g7'), selten:a('g8')};
     host.remove(); return out;
   });
   const gl = await glanz();
@@ -1985,7 +1986,37 @@ const ok = (c, msg, det) => {
   ok(gl.silber !== 'glanzLauf' && gl.gelesen !== 'glanzLauf' && gl.spiel !== 'glanzLauf',
      'ein silberner Erster, eine gelesene und eine gewoehnliche Karte nicht',
      JSON.stringify(gl));
+  // Das Seltene im Feed trägt einen leisen Lichtlauf in der Farbe seiner
+  // Familie: nie in Gold, nie auf einer negativen Karte, nie doppelt auf
+  // Breaking oder der Karte des Tages.
+  const glFeed = await page.evaluate(() => {
+    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); _cache._consolFrom = null; openNewsFeed()');
+    const ks = [...document.querySelectorAll('#sheet .nf-card.nf-glanz')];
+    return {n: ks.length, alle: document.querySelectorAll('#sheet .nf-card').length,
+      falsch: ks.filter(k => k.matches('.nf-neg,.nf-brk,.nf-gross,.nf-s-held,.nf-s-woche')
+        || /247,\s*207,\s*74/.test(getComputedStyle(k, '::after').backgroundImage)).map(k => k.dataset.sid)};
+  });
+  ok(gl.selten === 'glanzLauf' && glFeed.n >= 3 && glFeed.n <= glFeed.alle / 3 && !glFeed.falsch.length,
+     'das Seltene im Feed traegt einen Lichtlauf in seiner Familienfarbe, nicht in Gold und nicht auf einer negativen Karte',
+     glFeed.n + ' von ' + glFeed.alle + ' Karten, falsch: ' + glFeed.falsch.slice(0, 3));
+  // Der Hinweis „x neue Stories" ist ein Ereignis: die Zahl groß neben
+  // einem Zeichen, ein Lichtlauf und ein Ring beim Erscheinen — und bei
+  // Bewegungsruhe nichts davon.
+  const toastLauf = async () => page.evaluate(() => {
+    const t = document.getElementById('newsToast'), x = document.getElementById('newsToastTxt');
+    window.__k.eval('_newsToastFuellen')(x, 59);
+    t.classList.add('visible', 'show');
+    const out = {n:(x.querySelector('.nt-n') || {}).textContent, ic:!!x.querySelector('.nt-ic svg'),
+      glanz:getComputedStyle(t, '::after').animationName, ring:getComputedStyle(x.querySelector('.nt-ic')).animationName};
+    t.classList.remove('visible', 'show');
+    return out;
+  });
+  const ntLebt = await toastLauf();
+  ok(ntLebt.n === '59' && ntLebt.ic && ntLebt.glanz === 'ntGlanz' && /ntRing/.test(ntLebt.ring),
+     'der Hinweis auf neue Stories zeigt die Zahl gross mit Zeichen, Lichtlauf und Ring', JSON.stringify(ntLebt));
   await page.emulateMedia({reducedMotion: 'reduce'});
+  const ntRuhig = await toastLauf();
+  ok(ntRuhig.glanz === 'none' && ntRuhig.ring === 'none', 'und bei Bewegungsruhe steht er still', JSON.stringify(ntRuhig));
   const glRuhig = await glanz();
   await page.emulateMedia({reducedMotion: 'no-preference'});
   ok(Object.values(glRuhig).every(v => v !== 'glanzLauf'),
