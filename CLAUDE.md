@@ -163,7 +163,12 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Elo-Gefälles, Tabelle vorher und nachher, Lauf gegen
                       den eigenen Bestwert, Elo-Kurve, jede Begegnung — und
                       die Runde der Vier als eine Karte, auf dieselbe Weise
-                      in der App gebaut und fotografiert (aufwertung-4/)
+                      in der App gebaut und fotografiert. Jedes Bauteil
+                      trennt Rechnen und Zeichnen, damit bau.js es auch mit
+                      Grenzwerten zeichnen kann (45.495 Partien, lange Namen)
+                      und im Browser misst, dass kein Text auf einem anderen
+                      liegt und keiner ohne „…" abgeschnitten wird
+                      (aufwertung-4/)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen

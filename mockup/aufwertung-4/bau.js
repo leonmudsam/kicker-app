@@ -162,9 +162,28 @@ fs.mkdirSync(OUT, {recursive:true});
   const rdId = rundeBsp && (rd.find(r => r.von[0] === rundeBsp[0]) || {}).id;
   if(rdId) await shot(rdId, 'runde-entwurf.jpg');
   await ueberblick('feed-entwurf.jpg');
+  // ── Die Messung: jede Karte des Feeds und jede Grenzwert-Probe ──────────
+  // Text auf Text, Text auf einem Gesicht, ein Text, der aus der Karte ragt,
+  // und ein abgeschnittener Text ohne „…" sind Fehler. Gemessen wird nach
+  // dem Ende der Animationen.
+  await K(`document.getAnimations().forEach(a => { try { a.finish() } catch(e){} })`);
+  const feedFehler = await K(`[...document.querySelectorAll('#sheet .nf-card.nf-s-spiel')]
+    .map(k => __F.pruefen(k).map(f => k.dataset.sid + ': ' + f)).flat()`);
+  const feedKarten = await K(`document.querySelectorAll('#sheet .nf-card.nf-s-spiel').length`);
+  const breite = await K(`Math.round(document.querySelector('#sheet .nf-card.nf-s-spiel').getBoundingClientRect().width)`);
+  const probeKarten = await K(`__F.probe(${breite})`);
+  await page.waitForTimeout(300);
+  await K(`document.getAnimations().forEach(a => { try { a.finish() } catch(e){} })`);
+  const probeFehler = await K(`[...document.querySelectorAll('#efProbe .nf-card')]
+    .map((k, i) => __F.pruefen(k).map(f => k.previousElementSibling.textContent + ': ' + f)).flat()`);
+  const hoch = await K(`Math.ceil(document.getElementById('efProbe').getBoundingClientRect().height)`);
+  await page.setViewportSize({width:breite + 24, height:Math.min(hoch + 4, 16000)});
+  await page.locator('#efProbe').screenshot({path: path.join(OUT, 'probe.jpg'), type:'jpeg', quality:78});
+  console.log(`Messung: ${feedKarten} Karten im Feed, ${feedFehler.length} Befunde; ${probeKarten} Proben mit Grenzwerten, ${probeFehler.length} Befunde`);
+  feedFehler.concat(probeFehler).forEach(f => console.log('  ' + f));
   await browser.close();
   if(fehler.length) console.log('FEHLER\n' + [...new Set(fehler)].join('\n'));
-  const info = {zaehl, runden: runden.length, rundeLaenge: rundeBsp ? rundeBsp.length : 0, karten: arten.length};
+  const info = {zaehl, runden: runden.length, rundeLaenge: rundeBsp ? rundeBsp.length : 0, karten: arten.length, feedKarten, probeKarten, befunde: feedFehler.length + probeFehler.length};
   fs.writeFileSync(path.join(HIER, 'index.html'), seite(info));
   console.log('index.html geschrieben');
 })();
@@ -212,6 +231,11 @@ figure img{display:block;width:100%;height:auto;border-radius:16px}
 .ans li{margin:4px 0}
 .offen{margin-top:40px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;color:var(--ink2);font-size:14px}
 .offen b{color:var(--ink)} .offen li{margin:4px 0 4px 18px}
+.probe{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:20px;align-items:start}
+.probe img{display:block;width:100%;height:auto;border-radius:12px}
+.probe ul{margin:0 0 0 18px;color:var(--ink2);font-size:14px}
+.probe li{margin:6px 0}
+@media(max-width:700px){.probe{grid-template-columns:1fr}}
 @media(max-width:560px){.paar{gap:8px}figure img{border-radius:12px}}
 </style></head><body><main>
 <h1>Vierte Aufwertung: Am Spieltag</h1>
@@ -222,7 +246,7 @@ figure img{display:block;width:100%;height:auto;border-radius:16px}
   <div><b>Farbe sagt etwas</b>Grün und Rot nur für die Richtung, Gold nur für die neue Spitze, alles Übrige Metall [§C25]. Keine neue Farbe.</div>
   <div><b>Eine Runde, eine Karte</b>${info.runden} Runden im Fenster: dieselben vier am Tisch, Partie auf Partie. Sie werden eine Karte mit der Tabelle der Runde.</div>
 </div>
-<nav><a href="#feed">Der Feed</a><a href="#runde">Die Runde</a>${ANLAESSE.map(a => `<a href="#${a.key}">${esc(a.titel)}</a>`).join('')}</nav>
+<nav><a href="#feed">Der Feed</a><a href="#runde">Die Runde</a><a href="#probe">Grenzwerte</a>${ANLAESSE.map(a => `<a href="#${a.key}">${esc(a.titel)}</a>`).join('')}</nav>
 <h2>Der Feed als Ganzes</h2>
 ${paar('feed', 'Die ersten Karten', 'Heute und im Entwurf', ['Dieselben Partien, dieselbe Reihenfolge. Links beginnt jede Karte mit demselben Band, rechts sieht jede Karte nach dem aus, wovon sie erzählt.'])}
 <h2>Zusammenführen</h2>
@@ -232,6 +256,18 @@ ${paar('runde', 'Die Runde der Vier', 'Eine Karte statt ' + info.rundeLaenge, [
   'Die Schlagzeile sagt, wer die Runde gewonnen hat; der Satz, wie lange sie ging und wie oft die Paarung wechselte. Im Blatt stehen die Einzelkarten weiter vollständig.'])}
 <h2>Je Anlass</h2>
 ${ANLAESSE.map(a => paar(a.key, a.titel, a.kopf, a.punkte)).join('')}
+<h2>Mit Grenzwerten</h2>
+<section class="ans" id="probe">
+  <h3>Was in einigen Jahren dasteht <span>${info.befunde} Überlappungen</span></h3>
+  <div class="probe"><img src="bilder/probe.jpg" alt="Jedes Bauteil mit Grenzwerten" loading="lazy">
+  <ul>
+    <li>Jedes Bauteil hat zwei Hälften: eine rechnet aus den Partien, die andere zeichnet nur, was sie bekommt. Deshalb lässt sich jedes Bild auch mit Zahlen zeichnen, die die Liga heute noch nicht hat.</li>
+    <li>Links steht jedes Bauteil mit Grenzwerten: 45.495 Partien, eine Bilanz von 12.345:9.876, 98.765 Begegnungen, eine Elo von −12.345, eine Serie von 57 gegen einen Bestwert von 120 und einen Liga-Rekord von 340, eine Runde aus 23 Partien, Platz 118 bis 126 der Tabelle — und Namen wie „Jean-Baptiste von Hohenstein".</li>
+    <li>Was wächst, hat einen Deckel und sagt, was dahinter liegt: die Serie wird über sechzehn ein Balken statt Zellen, die Rivalität zeigt die letzten dreißig Begegnungen, die Runde acht Partien und „und 15 weitere", die Tabelle neun Plätze um die Bewegung.</li>
+    <li>Ein Name steht in einer eigenen Zeile und endet mit „…", eine Zahl ab 1.000 trägt den Tausenderpunkt, und eine Zahl in einer festen Zelle wird kleiner statt breiter.</li>
+    <li>Gemessen im Browser: ${info.feedKarten} Karten des Feeds und ${info.probeKarten} Proben, jeder Text gegen jeden Text und jedes Gesicht, jeder Text gegen den Rand der Karte und gegen ein Abschneiden ohne „…" — ${info.befunde} Befunde.</li>
+  </ul></div>
+</section>
 <div class="offen"><b>Beim Einbau zu klären:</b><ul>
 <li>Die Runde ändert, was eine Karte ist: bisher hat jede Partie ihre eigene [§C33]. Sie bliebe es im Bestand und im Blatt; zusammengeführt würde nur in der Anzeige, wie bei der Sammelkarte.</li>
 <li>Spielfeld und Wippe zeigen Siegchance und Elo im Kopf — der Satz darunter streicht sie dann wie heute bei Bogen und Chips (_newsSpielSatz).</li>
