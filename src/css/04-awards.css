@@ -150,6 +150,8 @@
   .aw-t-kopf{display:flex;align-items:center;gap:8px;min-width:0}
   .aw-t-lbl{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.2;min-width:0;letter-spacing:-.005em;
     overflow-wrap:break-word;hyphens:auto}
+  .aw-t-lbl.lang{font-size:10px;letter-spacing:-.02em}
+  .aw-t-lbl.sehrlang{font-size:9px;letter-spacing:-.025em}
   /* Gleichauf oder ein Platz unter der Spitze: eine Marke AUF der oberen
      Kante, nicht im Namen. Im Kopf nahm sie dem Namen ein Drittel der
      Breite, und „Tageskönig" brach mitten im Wort. */

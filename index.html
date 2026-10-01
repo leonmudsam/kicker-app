@@ -908,6 +908,8 @@
   .aw-t-kopf{display:flex;align-items:center;gap:8px;min-width:0}
   .aw-t-lbl{font-size:11px;font-weight:700;color:var(--ink2);line-height:1.2;min-width:0;letter-spacing:-.005em;
     overflow-wrap:break-word;hyphens:auto}
+  .aw-t-lbl.lang{font-size:10px;letter-spacing:-.02em}
+  .aw-t-lbl.sehrlang{font-size:9px;letter-spacing:-.025em}
   /* Gleichauf oder ein Platz unter der Spitze: eine Marke AUF der oberen
      Kante, nicht im Namen. Im Kopf nahm sie dem Namen ein Drittel der
      Breite, und „Tageskönig" brach mitten im Wort. */
@@ -1372,8 +1374,13 @@
   /* Fließtext eines Abschnitts, etwa „So wird gewertet". */
   .blatt-text{font-size:12.5px;color:var(--ink2);line-height:1.55;padding:0 2px}
   /* ============ [§C15] MISC ============ */
-  .empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
-  .empty .ee{font-size:34px;margin-bottom:12px;opacity:.5}
+  /* Der leere Zustand einer ganzen Ansicht — und nur der: `class="empty"`
+     allein. Als `.empty` traf die Regel jeden Baustein, der „leer" als
+     Zusatz trägt, und eine nicht vergebene Award-Kachel bekam 48 px Polster
+     oben und unten und 20 px an den Seiten: ihr Name stand in 66 statt 84 px
+     und brach mitten im Wort. */
+  [class="empty"]{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
+  [class="empty"] .ee{font-size:34px;margin-bottom:12px;opacity:.5}
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
   /* ── Der Glanz [§C25] ──────────────────────────────────────────────
@@ -5756,7 +5763,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.10.01.431041e7';
+const BUILD_VERSION='2026.10.01.d485abea';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -12956,6 +12963,14 @@ function _awNameVon(key, x){
 //   o.liste die ganze Liste für die Lage im Feld
 //   o.rang  Platz 2 oder 3, wo die Kachel keinen Platz 1 zeigt (Duo-Blatt)
 //   o.attr  was ein Tippen öffnet; ohne Angabe das Award-Blatt
+// Ein langes Wort im Kachelnamen wird kleiner, nicht gebrochen [§C27].
+// `overflow-wrap` hielt den Namen in der Kachel und brach ihn dafür mitten
+// im Wort: „Unaufhaltsa|m", „Showmaste|r" — ohne Trennstrich, weil nicht
+// jedes Telefon Deutsch trennt und die Schrift offline breiter fällt.
+function _awLblLang(t){
+  const n = Math.max(...String(t).split(/[\s-]/).map(w => w.length));
+  return n >= 14 ? ' sehrlang' : n >= 10 ? ' lang' : '';
+}
 function awKachelHtml(key, top, o){
   o = o || {};
   const meta = AWARD_META[key] || {title:key};
@@ -12970,7 +12985,7 @@ function awKachelHtml(key, top, o){
   const gross = !!o.gross && !leer;
   const attr = o.attr != null ? o.attr : `data-award="${esc(key)}"`;
   const kopf = `<div class="aw-t-kopf">${zkHtml(AW_IC[key] || 'trophy', 'k', leer ? '' : zkTon)}`
-    + `<span class="aw-t-lbl">${esc(meta.title)}</span></div>`;
+    + `<span class="aw-t-lbl${_awLblLang(meta.title)}">${esc(meta.title)}</span></div>`;
   if(leer) return `<div class="aw-trophy ${ton} empty" ${attr}>${kopf}
       <div class="aw-t-held"><span class="aw-t-leer">—</span>
         <div class="aw-t-wer"><span class="aw-t-beleg">${esc(AW_LEER[key] || 'Noch nicht vergeben')}</span></div></div>
