@@ -1221,6 +1221,19 @@ const _toteRegeln = (function(){
 ok(_toteRegeln.length === 0, 'keine CSS-Regel fuer eine Ansicht, die es nicht gibt',
    _toteRegeln.length + ': ' + _toteRegeln.slice(0, 4).join(' · '));
 
+// Die Kommentare bleiben in src/ und gehen nicht mit aus. Sie waren 38 % des
+// JavaScripts, und jedes Telefon lud und parste sie bei jedem Start. Gezaehlt
+// werden Zeilen, die mit einem Kommentar BEGINNEN, und jedes `/*` im CSS —
+// ein `//` mitten in einer Zeile steht auch in jeder Adresse.
+{
+  const skript = html.slice(html.lastIndexOf('<script>') + 8, html.lastIndexOf('</script>'));
+  const stil = html.slice(html.indexOf('<style>') + 7, html.indexOf('</style>'));
+  const geruest = html.slice(0, html.indexOf('<style>')) + html.slice(html.indexOf('</style>'), html.lastIndexOf('<script>'));
+  const reste = (skript.match(/^[ \t]*(\/\/|\/\*).*$/gm) || []).length
+    + (stil.match(/\/\*/g) || []).length + (geruest.match(/<!--/g) || []).length;
+  ok(reste === 0, 'die Auslieferung traegt keine Kommentare', reste + ' Kommentare');
+}
+
 // Dasselbe fuer den Zeichen-Katalog. Der Kommentar ueber `ICONS` warnt seit
 // jeher vor der toten Definition; nachgezaehlt hat es nie jemand, und zwei
 // Zeichnungen standen ohne einen einzigen Aufrufer in der Auslieferung.

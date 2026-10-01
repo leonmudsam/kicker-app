@@ -116,17 +116,6 @@
   .team-season-card::before{content:"";position:absolute;right:-10px;top:50%;width:88px;height:88px;
     transform:translateY(-50%);opacity:.08;
     background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2356b4e8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><circle cx='9' cy='7' r='3'/><circle cx='17' cy='9' r='2.5'/><path d='M3 20v-1a6 6 0 0112 0v1M15 20v-1a5 5 0 015-1'/></svg>") center/contain no-repeat}
-  /* Titelverteidiger und Team der Saison gehören zum Goldfaden [§C25] — sie
-     nennen Titel. Sie tragen ihn aber nur in der Beschriftung: sonst stünden
-     drei kräftig goldene Karten übereinander und der Held ginge unter. */
-  .defender-card{background:var(--surface);
-    border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:10px;text-align:center;position:relative;overflow:hidden}
-  .defender-card::before{content:"";position:absolute;right:-10px;top:50%;width:88px;height:88px;
-    transform:translateY(-50%);opacity:.10;
-    background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23f7cf4a' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z'/><path d='M9 12l2 2 4-4'/></svg>") center/contain no-repeat}
-  .defender-card .label{font-size:10px;text-transform:uppercase;letter-spacing:.18em;color:var(--gold);font-weight:700}
-  .defender-card .name{font-family:'Archivo Black',sans-serif;font-size:15px;margin-top:4px}
-  .defender-card .sub{font-size:11px;color:var(--ink2);font-family:'Sometype Mono',monospace;margin-top:3px}
   .season-countdown{text-align:center;font-size:11px;color:var(--muted);padding:6px 0 10px;font-family:'Sometype Mono',monospace}
 
   /* === [§C6] SAISON-ÜBERSICHT REDESIGN === */
