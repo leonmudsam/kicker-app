@@ -5563,6 +5563,23 @@ ok(_wkVor.fehlt.length === 0,
    'wer einen Rekord abgibt oder teilt, steht in der Wirkung der Karte',
    _wkVor.fehlt.slice(0, 3).join(', ') || _wkVor.n + ' Vorgaenger');
 
+// Und auf der Karte selbst steht, wer verliert: die Schlagzeile feiert die
+// Neuen, und wer seinen Anteil abgeben musste, erfuhr es erst im Blatt. Die
+// Zeile nennt den Betrag und die Stufe, auf die jemand faellt.
+const _vband = JSON.parse(K.eval(`JSON.stringify((function(){
+  const a = players[0].id, b = players[1].id, lb = {};
+  const lo = INSIGNIEN[3].min;
+  lb[a] = {vor:lo + 50, nach:lo - 30};
+  lb[b] = {vor:400, nach:460};
+  const h = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
+  const ohne = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:{[b]:lb[b]}}});
+  return {h, ohne, a:pmap()[a].name, b:pmap()[b].name, stufe:INSIGNIEN[2].name};
+})())`));
+ok(_vband.h.indexOf(_vband.a) >= 0 && _vband.h.indexOf('−80') >= 0
+   && _vband.h.indexOf(_vband.stufe) >= 0 && _vband.h.indexOf(_vband.b) < 0 && _vband.ohne === '',
+   'die Tafel-Karte nennt, wer Prestige verliert, und nur den',
+   _vband.h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+
 console.log('=== DAS AUFGEHEN DER TAFEL IST EINE NACHRICHT ===');
 // Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik, und
 // gemeldet wird erst, was sich von der ersten gewerteten Lage an aendert

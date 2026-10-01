@@ -907,6 +907,22 @@
      zweiten Meldung nichts [§C33]. Leiser als die Schlagzeile, aber mit
      Zeichen — sonst waeren es drei graue Zeilen. */
   .nf-sam{border-top:1px solid var(--line);display:flex;flex-direction:column}
+  /* Wer an diesem Moment Prestige verliert: eine leise rote Zeile unter dem
+     Band, Zeichen und Wort links, je Verlierer der Betrag. Rot ist die
+     Richtung [§C25]; die Fläche bleibt dunkel, damit die Karte die der
+     Gewinner bleibt. */
+  .nf-verlust{display:flex;align-items:center;gap:8px;padding:7px 13px;min-width:0;
+    border-top:1px solid rgba(240,86,106,.22);
+    background:linear-gradient(90deg,rgba(240,86,106,.08),transparent 70%)}
+  .nf-verlust-i{flex:0 0 18px;width:18px;height:18px;border-radius:5px;display:grid;
+    place-items:center;color:var(--red);background:rgba(240,86,106,.12)}
+  .nf-verlust-i svg{width:12px;height:12px}
+  .nf-verlust-l{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+  .nf-verlust-w{display:flex;flex-wrap:wrap;gap:4px 10px;min-width:0}
+  .nf-verlust-w b{font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap}
+  .nf-verlust-w em{font-style:normal;color:var(--red);font-weight:700}
+  .nf-verlust-w u{text-decoration:none;color:var(--muted);font-weight:500;margin-left:4px}
   .nf-sam-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px;color:var(--ink2);
     min-width:0}

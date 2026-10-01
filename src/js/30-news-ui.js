@@ -676,6 +676,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
     ${sammelBand}
+    ${sorte === 'tafel' ? _newsVerlustBand(s) : ''}
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}
@@ -898,6 +899,35 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
   }).join('')}`
     + (uebrig > 0 ? `<div class="nf-sam-m">und ${uebrig} weitere</div>` : '')
     + `</div>`;
+}
+
+// ── Wer verliert, steht auf der Karte ─────────────────────────────────
+// Ein Rekord, den jemand übernimmt oder mit einem anderen teilt, kostet den
+// bisherigen Halter Prestige, und davon stand auf der Karte nichts: die
+// Schlagzeile feiert die Neuen, und wer seinen Anteil abgeben musste, erfuhr
+// es erst im Blatt — oder gar nicht, solange es dort „±0" hieß. Die Zeile
+// nennt je Verlierer den Verlust und, wenn er eine Schwelle unterschreitet,
+// die Stufe, auf die er fällt. Rot ist die Richtung [§C25]; die Karte bleibt
+// die der Gewinner, deshalb steht der Verlust unter dem Band und nicht im
+// Kopf. Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
+function _newsVerlustBand(s){
+  const d = (s && s.dataRef) || {};
+  const je = {};
+  const nimm = lb => { if(lb) Object.keys(lb).forEach(pid => { if(!je[pid]) je[pid] = lb[pid]; }); };
+  if(d.type === 'sammel') (d.teile || []).forEach(t => nimm(t.lb));
+  else nimm(d.laufbahn);
+  const pm = pmap();
+  const weg = Object.keys(je).filter(pid => pm[pid]).map(pid => {
+    const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
+    return {pid, d: nach - vor, ab: insigniumStufeVon(nach) < insigniumStufeVon(vor)
+      ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
+  }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
+  if(!weg.length) return '';
+  return `<div class="nf-verlust"><i class="nf-verlust-i">${svgI('trendDown')}</i>`
+    + `<span class="nf-verlust-l">Verliert</span><span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
+      `<b>${esc(pm[x.pid].name)} <em class="num">−${-x.d}</em>${x.ab
+        ? `<u>auf ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      ? `<b>+${weg.length - 3}</b>` : ''}</span></div>`;
 }
 
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie
