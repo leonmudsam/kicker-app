@@ -1350,15 +1350,17 @@ const _prModell = JSON.parse(K.eval(`JSON.stringify((function(){
     negativ:BADGES.filter(b=>rarityOf(b.id)==='negative')
       .filter(b=>auszeichnungsPunkte(b.id,10)!==0).map(b=>b.id)};
 })())`));
-ok(_prModell.dom[0] === 50 && _prModell.dom[1] === 100
-   && Math.abs(_prModell.dom[2] - 145) < 1e-9,
-   'Dominator wächst paarweise mit 50 + 50 + 45', _prModell.dom.join(' / '));
-ok(_prModell.meister[0] === 75 && _prModell.meister[1] === 150
+ok(_prModell.dom[0] === 70 && _prModell.dom[1] === 140
+   && Math.abs(_prModell.dom[2] - 203) < 1e-9,
+   'Dominator wächst paarweise mit 70 + 70 + 63', _prModell.dom.join(' / '));
+// Dominator und Team der Saison starten gleich hoch: beide sind die
+// Saisonspitze hinter dem Meister, einer allein, einer zu zweit.
+ok(_prModell.meister[0] === 100 && _prModell.meister[1] === 200
    && _prModell.meister[2] > _prModell.dom[2]
-   && _prModell.dom[2] > _prModell.team[2],
-   'Meister, Dominator und Team der Saison bleiben in dieser Reihenfolge',
-   [_prModell.meister[2],_prModell.dom[2],_prModell.team[2]].join(' > '));
-ok(_prModell.potw[0] === 30 && _prModell.potw.every((v,i)=>v>_prModell.potd[i]),
+   && _prModell.dom.every((v,i) => v === _prModell.team[i]),
+   'der Meister vor Dominator und Team der Saison, die gleichauf liegen',
+   [_prModell.meister[2],_prModell.dom[2],_prModell.team[2]].join(' / '));
+ok(_prModell.potw[0] === 50 && _prModell.potw.every((v,i)=>v>_prModell.potd[i]),
    'Player of the Week ist bei jeder gleichen Anzahl mehr wert als Player of the Day',
    _prModell.potw.join(' / ') + ' > ' + _prModell.potd.join(' / '));
 ok(_prModell.potd[0] === 10,
@@ -1383,6 +1385,22 @@ ok(_prModell.steht.length === 0,
 ok(_prModell.negativ.length === 0,
    'Schanden sind weder Prestige-Belohnung noch zusätzliche Strafe',
    _prModell.negativ.join(', ') || 'alle bei null');
+
+// Das Regelblatt liest die Startwerte aus der Tabelle und ordnet sie nach
+// Gewicht: es stand eine feste Liste aus sechs Zeilen da, und eine neue
+// Auszeichnung waere gar nicht oder hinten angehaengt erschienen. Jede
+// legendaere Auszeichnung steht darin, und die Startwerte fallen nach unten.
+const _prListe = JSON.parse(K.eval(`JSON.stringify((function(){
+  const h = _prestigeRegelListe();
+  const ids = (h.match(/data-id="[a-z0-9_]+"/g) || []).map(x => x.slice(9, -1));
+  return {ids, werte: ids.map(id => _auszeichnungsRegel(id).basis),
+    fehlt: BADGES.filter(b => rarityOf(b.id) === 'legendary' && ids.indexOf(b.id) < 0)
+      .map(b => b.id)};
+})())`));
+ok(_prListe.fehlt.length === 0 && _prListe.werte.length > 0
+   && _prListe.werte.every((v, i, a) => i === 0 || a[i - 1] >= v),
+   'das Regelblatt nennt jede legendaere Auszeichnung, nach Startwert geordnet',
+   _prListe.werte.join(' ') + (_prListe.fehlt.length ? ' · fehlt ' + _prListe.fehlt.join(', ') : ''));
 
 const _prTausch = JSON.parse(K.eval(`JSON.stringify({
   sieger:rarityOf('perfect_win'), allwetter:rarityOf('allwetter'),
@@ -1595,9 +1613,9 @@ console.log('  Getragen:  ' + _lb.namen.map((n,i)=>n+' '+_lb.stufen[i]).join(' �
 console.log('  Bester Stand: ' + _lb.hoechste);
 console.log('  Spitze: ' + _lb.werte.slice(0,3).map(x=>x.name+' '+x.punkte+' / '+x.stufe+'.'+x.grad).join(' · '));
 
-// Die Schwellen sind vorgegeben, nicht kalibriert [§C30]: 0, 500, 1000,
-// 1800, 2600, 3600, 4500, danach alle 500 Prestige eine Zacke.
-ok(_lb.min.join(',') === '0,500,1000,1800,2600,3600,4500',
+// Die Schwellen sind vorgegeben, nicht kalibriert [§C30]: 0, 600, 1200,
+// 2100, 3100, 4300, 5600, danach alle 500 Prestige eine Zacke.
+ok(_lb.min.join(',') === '0,600,1200,2100,3100,4300,5600',
    'die sieben Insignien beginnen an den festgelegten Schwellen',
    _lb.min.join(' · '));
 const _sternI = _lb.min.length - 1;
@@ -2786,27 +2804,27 @@ ok(_rkIntern.length === 0, 'kein interner Begriff in einem sichtbaren Text',
    _rkIntern.join(', ') || 'keiner');
 
 // Die Grundwerte je Kammer [§C34]. Koennen und die leistungsbezogene Form
-// wiegen 100, eine Rolle und eine Fuegung 50, eine Schattenseite null.
+// wiegen 150, eine Rolle und eine Fuegung 75, eine Schattenseite null.
 const _rolle = ['dauersturm','abwehrmauer','tailwind','solorun',
                 'wall','sturmtreue','switcher'];
 const _basisFehler = _rk.filter(c => {
   const soll = c.kind === 'shame' ? 0
-    : c.kind === 'fuegung' ? 50
-    : _rolle.indexOf(c.id) >= 0 ? 50 : 100;
+    : c.kind === 'fuegung' ? 75
+    : _rolle.indexOf(c.id) >= 0 ? 75 : 150;
   return c.basis !== soll;
 }).map(c => c.id + ' ' + c.basis);
 ok(_basisFehler.length === 0, 'jede Kammer traegt ihren Grundwert',
-   _basisFehler.join(', ') || '100 / 50 / 0');
-ok(_rk.filter(c => c.kind === 'koennen').every(c => c.basis === 100),
-   'Koennen gibt 100 Punkte Grundwert');
+   _basisFehler.join(', ') || '150 / 75 / 0');
+ok(_rk.filter(c => c.kind === 'koennen').every(c => c.basis === 150),
+   'Koennen gibt 150 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) < 0)
-     .every(c => c.basis === 100),
-   'leistungsbezogene Form gibt 100 Punkte Grundwert');
+     .every(c => c.basis === 150),
+   'leistungsbezogene Form gibt 150 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) >= 0)
-     .every(c => c.basis === 50),
-   'rollenbezogene Form gibt 50 Punkte Grundwert');
-ok(_rk.filter(c => c.kind === 'fuegung').every(c => c.basis === 50),
-   'eine Fuegung gibt 50 Punkte Grundwert');
+     .every(c => c.basis === 75),
+   'rollenbezogene Form gibt 75 Punkte Grundwert');
+ok(_rk.filter(c => c.kind === 'fuegung').every(c => c.basis === 75),
+   'eine Fuegung gibt 75 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'shame').every(c => c.basis === 0),
    'eine Schattenseite gibt null Punkte');
 // Und keine Schattenseite bringt Prestige.
@@ -3195,8 +3213,8 @@ console.log('\n═══ KONSTANT SCHLECHT GEWINNT NICHTS ═══');
 // 0:10 verliert, ist gleichmaessig. Dasselbe gilt fuer die ROLLENWERTE: „Der
 // Wandler" misst eine Aufstellung von fuenfzig zu fuenfzig, und wo jemand
 // steht, entscheidet die Auslosung. Beide zeichnen niemanden aus, sie
-// gehoeren jemandem [§C35] — deshalb wiegen sie 50 und nicht 100. Geprueft
-// wird also genau das, was 100 Punkte wert ist.
+// gehoeren jemandem [§C35] — deshalb wiegen sie 75 und nicht 150. Geprueft
+// wird also genau das, was 150 Punkte wert ist.
 const _nullLauf = {
   id:'probe', games:60, wins:0, losses:60, gf:0, ga:600, gd:-600,
   atkG:30, atkW:0, defG:30, defW:0, atkGoals:0, defConceded:600,
@@ -3227,7 +3245,7 @@ const _nullTreffer = JSON.parse(K.eval(`JSON.stringify((function(){
   const out = {gewinnt:[], dabei:[]};
   CHRONICLES.forEach(c => {
     if(c.kind === 'shame' || c.kind === 'fuegung') return;
-    if(c.basis !== 100) return;
+    if(c.basis !== 150) return;
     let v = null;
     try { v = c.val(probe, C); } catch(e){ return; }
     if(v == null || !isFinite(v)) return;

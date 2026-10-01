@@ -543,22 +543,38 @@ function _ndTagesbahn(pid, liste){
 //
 // Gerechnet wird mit den GESPEICHERTEN Staenden und nicht mit `prestigeOf`:
 // eine Karte von vorletzter Woche erzaehlt vom Stand von damals [§C31].
-function _ndWirkungBlock(je){
+//
+// ── Und sie zeigt, was verloren ging ──────────────────────────────────
+// Jane zog bei „Der Lauf" mit Leon gleich, und Leon teilt den Rekord
+// seitdem: sein Anteil halbiert sich, sein Prestige sinkt. Im Blatt stand
+// bei ihm „±0" — ein Minus wurde als Null gezeigt, und der Balken kannte nur
+// den Zuwachs. Ein Verlust steht jetzt rot da [§C25]: die Zahl mit Minus,
+// das verlorene Stück als eigener Abschnitt im Balken, und fällt jemand
+// unter eine Schwelle, sagt die Zeile „fällt auf …". Darunter steht, warum:
+// welcher Rekord geteilt, verloren oder geholt wurde (`gruende`).
+//
+// Die Stufe kommt aus den Punkten und nicht aus der gespeicherten Zahl
+// (`insigniumStufeVon`): die gespeicherte gehörte einer älteren Leiter.
+function _ndWirkungBlock(je, gruende){
   const ids = Object.keys(je || {});
   if(!ids.length) return '';
   const pm = pmap();
-  // Der groesste Zuwachs zuerst: er ist das, was den Tag ausmacht.
-  return ids.sort((a, b) => (je[b].nach - je[b].vor) - (je[a].nach - je[a].vor))
+  const hat = typeof INSIGNIEN !== 'undefined' && typeof insigniumStufeVon === 'function';
+  const dl = pid => Math.round(Number(je[pid].nach) || 0) - Math.round(Number(je[pid].vor) || 0);
+  // Der groesste Zuwachs zuerst: er ist das, was den Tag ausmacht. Wer
+  // verloren hat, steht darunter.
+  return ids.sort((a, b) => dl(b) - dl(a))
     .map(pid => {
       const w = je[pid];
       const nach = Math.round(Number(w.nach) || 0);
       const vor = Math.round(Number(w.vor) || 0);
       const delta = nach - vor;
-      const si = (w.stufeNach != null && typeof INSIGNIEN !== 'undefined'
-                  && INSIGNIEN[w.stufeNach]) ? w.stufeNach : null;
-      const ins = si != null ? INSIGNIEN[si] : null;
-      const next = (si != null && typeof INSIGNIEN !== 'undefined') ? INSIGNIEN[si + 1] : null;
-      const auf = (w.stufeNach != null && w.stufeVor != null && w.stufeNach > w.stufeVor);
+      const sn = hat ? insigniumStufeVon(nach) : null;
+      const sv = hat ? insigniumStufeVon(vor) : null;
+      const ins = sn != null ? INSIGNIEN[sn] : null;
+      const next = sn != null ? INSIGNIEN[sn + 1] : null;
+      const auf = sn != null && sn > sv;
+      const ab = sn != null && sn < sv;
       let zeichen = '';
       try {
         if(ins && typeof insigniumStufeSvg === 'function')
@@ -569,29 +585,72 @@ function _ndWirkungBlock(je){
       let balken = '', rest = '';
       if(ins && next){
         const spanne = Math.max(1, next.min - ins.min);
-        const bis = Math.max(0, Math.min(100, (nach - ins.min) / spanne * 100));
-        // Beim Stufenaufstieg liegt der alte Stand unter dieser Schwelle: dann
-        // ist die ganze Strecke der Zuwachs.
-        const abVor = auf ? 0 : Math.max(0, Math.min(bis, (vor - ins.min) / spanne * 100));
-        balken = `<span class="nd-wk-b"><i style="width:${abVor.toFixed(1)}%"></i>`
-          + `<em style="width:${Math.max(0, bis - abVor).toFixed(1)}%"></em></span>`;
-        rest = `${nach} Prestige · noch ${Math.max(0, next.min - nach)} bis zum ${esc(next.name)}`;
+        const lage = x => Math.max(0, Math.min(100, (x - ins.min) / spanne * 100));
+        const bis = lage(nach);
+        // Beim Aufstieg liegt der alte Stand unter dieser Schwelle, beim Fall
+        // darüber: dann ist die ganze Strecke Zuwachs bzw. Verlust.
+        const war = auf ? 0 : ab ? 100 : lage(vor);
+        const fest = Math.min(bis, war);
+        balken = `<span class="nd-wk-b"><i style="width:${fest.toFixed(1)}%"></i>`
+          + (delta >= 0
+              ? `<em style="width:${Math.max(0, bis - fest).toFixed(1)}%"></em>`
+              : `<u style="width:${Math.max(0, war - fest).toFixed(1)}%"></u>`)
+          + `</span>`;
+        rest = ab
+          ? `${nach} Prestige · noch ${Math.max(0, INSIGNIEN[sv].min - nach)} zurück zum ${esc(INSIGNIEN[sv].name)}`
+          : `${nach} Prestige · noch ${Math.max(0, next.min - nach)} bis zum ${esc(next.name)}`;
       } else if(ins){
         rest = `${nach} Prestige · die letzte Stufe`;
       } else {
         rest = `${nach} Prestige`;
       }
-      return `<div class="nd-wk" data-pid="${esc(pid)}" style="cursor:pointer">
-        ${zeichen ? `<span class="nd-wk-z">${zeichen}</span>` : ''}
+      const marke = !ins ? ''
+        : auf ? `<em>${esc('neu: ' + ins.name)}</em>`
+        : ab ? `<em class="r">${esc('fällt auf ' + ins.name)}</em>`
+        : `<em>${esc(ins.name)}</em>`;
+      const gr = ((gruende && gruende[pid]) || []);
+      const chips = gr.slice(0, 3).map(g => `<span class="nd-wk-g ${g.neg ? 'r' : 'g'}">${
+        esc(g.verb)} <b>${esc(g.name)}</b></span>`).join('')
+        + (gr.length > 3 ? `<span class="nd-wk-g">+${gr.length - 3}</span>` : '');
+      const dz = delta > 0 ? '+' + delta : delta < 0 ? '−' + Math.abs(delta) : '±0';
+      return `<div class="nd-wk${delta < 0 ? ' neg' : ''}${ab ? ' fall' : ''}" data-pid="${esc(pid)}" style="cursor:pointer">
+        ${zeichen ? `<span class="nd-wk-z">${zeichen}${ab
+          ? `<i class="nd-wk-ab">${svgI('trendDown')}</i>` : auf
+          ? `<i class="nd-wk-auf">${svgI('trendUp')}</i>` : ''}</span>` : ''}
         <span class="nd-wk-t">
-          <span class="nd-wk-n"><b>${esc((pm[pid] && pm[pid].name) || '?')}</b>${ins
-            ? `<em>${esc(auf ? 'neu: ' + ins.name : ins.name)}</em>` : ''}</span>
+          <span class="nd-wk-n"><b>${esc((pm[pid] && pm[pid].name) || '?')}</b>${marke}</span>
           ${balken}
           <span class="nd-wk-r">${rest}</span>
+          ${chips ? `<span class="nd-wk-gs">${chips}</span>` : ''}
         </span>
-        <span class="nd-wk-d ${delta > 0 ? 'g' : ''}">${delta > 0 ? '+' + delta : '±0'}</span>
+        <span class="nd-wk-d ${delta > 0 ? 'g' : delta < 0 ? 'r' : ''}">${dz}</span>
       </div>`;
     }).join('');
+}
+
+// Warum sich die Laufbahn eines Spielers an diesem Tag bewegt hat, aus den
+// Zeilen eines Tafel-Moments: wer einen Rekord oder eine Chronik geholt,
+// geteilt oder verloren hat. Die Zeilen tragen dafür die Halter vor und nach
+// dem Tag; ohne sie (ältere Läufe) bleibt die Liste leer.
+function _ndWirkungsGruende(teile){
+  const out = {};
+  const dazu = (pid, g) => { (out[pid] = out[pid] || []).push(g); };
+  (teile || []).forEach(t => {
+    const nach = t.halter || [], vor = t.vorher || [];
+    const name = t.rname || '';
+    if(!name || (!nach.length && !vor.length)) return;
+    nach.forEach(pid => {
+      if(vor.indexOf(pid) < 0) dazu(pid, {verb: vor.length ? 'übernimmt' : 'holt', name, neg:false});
+      else if(nach.length < vor.length) dazu(pid, {verb:'hält allein', name, neg:false});
+    });
+    vor.forEach(pid => {
+      if(nach.indexOf(pid) < 0) dazu(pid, {verb:'verliert', name, neg:true});
+      else if(nach.length > vor.length) dazu(pid, {verb:'teilt', name, neg:true});
+    });
+  });
+  // Ein Verlust zuerst: er erklärt das Minus daneben.
+  Object.keys(out).forEach(pid => out[pid].sort((a, b) => b.neg - a.neg));
+  return out;
 }
 
 // ── Die Siegchance als Skala ─────────────────────────────────────────
@@ -1108,7 +1167,7 @@ function _newsDetailMitte(s){
           const ids = Object.keys(je);
           if(!ids.length) return '';
           return `<div class="nd-section">Wirkung auf die Laufbahn</div>`
-            + _ndWirkungBlock(je);
+            + _ndWirkungBlock(je, _ndWirkungsGruende(teile));
         })();
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand
@@ -1130,18 +1189,22 @@ function _newsDetailMitte(s){
           const aus = teile.filter(t => typ(t) === 'rekord_gesteigert').length;
           const chr = teile.filter(t => typ(t).indexOf('chronik_') === 0).length;
           const insz = teile.filter(t => typ(t) === 'insignium_stufe').length;
-          let plus = 0;
+          let plus = 0, minus = 0;
           const gez = {};
           teile.forEach(t => { const lb = t.lb; if(!lb) return;
             Object.keys(lb).forEach(pid => { if(gez[pid]) return; gez[pid] = 1;
-              plus += Math.max(0, Math.round(Number(lb[pid].nach) || 0)
-                                 - Math.round(Number(lb[pid].vor) || 0)); }); });
+              const dd = Math.round(Number(lb[pid].nach) || 0) - Math.round(Number(lb[pid].vor) || 0);
+              if(dd > 0) plus += dd; else minus -= dd; }); });
           const z = [
             wech ? {v: wech, l: wech === 1 ? 'Bestmarke' : 'Bestmarken', ton:'gold'} : null,
             aus ? {v: aus, l: aus === 1 ? 'Ausbau' : 'Ausbauten'} : null,
             chr ? {v: chr, l: chr === 1 ? 'Chronik' : 'Chroniken'} : null,
             insz ? {v: insz, l: insz === 1 ? 'Insignium' : 'Insignien'} : null,
-            plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null
+            plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null,
+            // Was andere dabei verloren haben, steht daneben und nicht darin:
+            // ein Minus in derselben Summe hiesse, der Tag haette weniger
+            // gebracht, und er hat zwei Dinge getan [§C25].
+            minus ? {v: '−' + minus, l:'verloren', ton:'rot'} : null
           ].filter(Boolean);
           return z.length > 1 ? rcpZahlenHtml(z) : '';
         })();

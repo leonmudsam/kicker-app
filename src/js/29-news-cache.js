@@ -1562,6 +1562,14 @@ function _consolidateStories(list){
                                          // sie kommt — das Blatt zeigt sie
                                          // deshalb EINMAL je Spieler.
                                         lb: (t.dataRef||{}).laufbahn || null,
+                                         // Halter vor und nach dem Tag: daran
+                                         // liest das Blatt, wer einen Rekord
+                                         // geteilt oder verloren hat.
+                                        halter: Array.isArray((t.dataRef||{}).halter)
+                                                ? t.dataRef.halter : ((t.dataRef||{}).alle || []),
+                                        vorher: (t.dataRef||{}).vorher || [],
+                                        rname: (t.dataRef||{}).rekordName
+                                               || (t.dataRef||{}).chronName || '',
                                          // Ein Spieler zeigt je Monat nur EINE
                                          // Chronik [§C32]. Auch in einer großen
                                          // Tafel muss sichtbar bleiben, welche

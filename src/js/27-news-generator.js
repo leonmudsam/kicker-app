@@ -2150,7 +2150,7 @@ function _buildStories(){
   const _tafelWirkung = pid => _prestigeWirkung(pid, _tafelVor, _tafelNach);
   // Was ein Rekord der Laufbahn WIRKLICH bringt [§C34]. Gespeichert werden
   // die beiden Stände und die Rechnung der Quelle, nie der Grundwert: ein
-  // zehnter Rekord gibt nicht 100 Prestige, er wird durch die Zahl seiner
+  // zehnter Rekord gibt nicht 150 Prestige, er wird durch die Zahl seiner
   // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
   // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
   // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.
@@ -2161,9 +2161,17 @@ function _buildStories(){
   // Prestige fuer die Laufbahn" nennt — und die Summe in der Zahlenreihe
   // stand auf +196, dem Zuwachs eines einzigen Spielers. Wer genannt wird,
   // kommt vor.
+  // Die Genannten zuerst, dahinter die bisherigen Halter, die nicht mehr
+  // allein halten. Vier statt drei, damit ein Vorgaenger neben drei neuen
+  // Haltern noch Platz hat.
+  const _mitVorgaengern = (wer, vorher) => {
+    const o = (wer || []).slice(0, 3);
+    (vorher || []).forEach(pid => { if(o.indexOf(pid) < 0) o.push(pid); });
+    return o.slice(0, 4);
+  };
   const _tafelLaufbahn = pids => {
     const o = {};
-    (pids || []).slice(0, 3).forEach(pid => {
+    (pids || []).slice(0, 4).forEach(pid => {
       const w = _tafelWirkung(pid);
       o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
                 stufeVor:w.stufeVor, stufeNach:w.stufeNach};
@@ -2172,7 +2180,7 @@ function _buildStories(){
   };
   const _rekordWirkung = (pids, rid) => {
     const o = {};
-    (pids || []).slice(0, 3).forEach(pid => {
+    (pids || []).slice(0, 4).forEach(pid => {
       const w = _tafelWirkung(pid);
       const q = w.quellen['rekord:' + rid] || null;
       o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
@@ -2402,7 +2410,10 @@ function _buildStories(){
                     // zweite Rechnung im Blatt: sie gilt fuer DIESEN
                     // Tagesabschluss, und morgen sagt dieselbe Rechnung eine
                     // andere Zahl [§C34].
-                    laufbahn:_rekordWirkung(wer, def.id), art:def.art,
+                    // Wer den Rekord abgeben oder teilen musste, steht in der
+                    // Wirkung mit: Jane zog bei „Der Lauf" mit Leon gleich,
+                    // und Leons Minus stand nirgends [§C25].
+                    laufbahn:_rekordWirkung(_mitVorgaengern(wer, a && a.pids), def.id), art:def.art,
                     kammerLabel:_kammer(def.kind)}
         });
       });
@@ -2755,7 +2766,12 @@ function _buildStories(){
                     // erzaehlen. Wer schon Halter war, hat an diesem Tag
                     // nichts getan [§C33].
                     playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
-                    laufbahn:_tafelLaufbahn(m.wer),
+                    // Alle neuen Halter und der Name: daran liest das Blatt,
+                    // wer die Chronik geteilt oder verloren hat.
+                    alle:m.n.pids.slice(), chronName:m.t.name,
+                    // Wer sie abgeben oder teilen musste, steht in der
+                    // Wirkung mit — sein Minus gehoert zu diesem Tag.
+                    laufbahn:_tafelLaufbahn(_mitVorgaengern(m.wer, m.a && m.a.pids)),
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
                     zeileText:m.zeileText,
                     chronArt:m.t.kunst, aus:m.t.aus,

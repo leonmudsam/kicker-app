@@ -93,7 +93,7 @@ function _storyTagGrenzen(ms){
 
 // ─── Was eine Änderung wirklich gebracht hat ─────────────────────────
 // Nie den rohen Grundwert als erhaltene Punkte zeigen. Ein zehnter Rekord
-// gibt nicht 100 Prestige: er wird durch die Zahl seiner Halter geteilt,
+// gibt nicht 150 Prestige: er wird durch die Zahl seiner Halter geteilt,
 // landet auf einem Rang im Rekordstapel und wird dort durch die Wurzel
 // seiner Staffel geteilt — und weil er die anderen Rekorde mit verschiebt,
 // ist der Nettozuwachs am Ende noch eine dritte Zahl. Gemessen stand auf

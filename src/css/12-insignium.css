@@ -169,7 +169,7 @@
   /* Nur die getragene Stufe steht in der Rangfarbe [§C25]. */
   .lb-k.jetzt .lb-k-n{color:var(--ak)}
   .lb-k-p{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);
-    height:12px}
+    height:25px;line-height:12.5px;text-align:center;white-space:nowrap}
 
   /* Die drei Grade einer Stufe. Sie sind das, was zwischen zwei Schwellen
      passiert — ohne sie stünde das Zeichen hunderte Punkte lang still. */
@@ -295,18 +295,31 @@
   .lb-regeln .common b{color:var(--acid)}
   .lb-regelblatt .pp-sec-title{margin-top:18px}
   .lb-regel-liste{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
-  .lb-regel-z{display:grid;grid-template-columns:minmax(0,1fr) auto;
+  /* Die rechte Spalte hat eine feste Breite: mit `auto` war sie je Zeile so
+     breit wie ihr längster Text, und die Startwerte standen untereinander
+     versetzt — die Liste ist nach ihnen geordnet, also müssen sie fluchten. */
+  .lb-regel-z{display:grid;grid-template-columns:minmax(0,1fr) 96px;
     gap:3px 12px;padding:11px 12px;background:var(--surface)}
   .lb-regel-z+.lb-regel-z{border-top:1px solid var(--line)}
   .lb-regel-z>span{grid-row:1/3;display:flex;flex-direction:column;gap:2px;min-width:0}
   .lb-regel-z b{font-size:12px;color:var(--ink)}
   .lb-regel-z em{font-size:9.5px;line-height:1.35;font-style:normal;color:var(--muted)}
-  .lb-regel-z strong{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink2)}
+  .lb-regel-z strong{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink2);
+    text-align:right}
   .lb-regel-z strong i{font-family:'Sometype Mono',monospace;font-size:8px;
     text-transform:uppercase;font-style:normal;color:var(--muted)}
   .lb-regel-z small{font-family:'Sometype Mono',monospace;font-size:9px;
     text-align:right;color:var(--muted)}
   .lb-regel-note{margin-top:10px;line-height:1.5}
+  /* Der Startwert als Balken gegen den höchsten: die Gewichtung der Liste
+     auf einen Blick, in der Farbe der Klasse wie die Karten darüber. */
+  .lb-regel-z{position:relative}
+  .lb-regel-b{grid-column:1/-1;display:block;height:3px;border-radius:2px;
+    background:var(--line);overflow:hidden;margin-top:5px}
+  .lb-regel-b::before{content:'';display:block;height:100%;width:var(--w);
+    border-radius:inherit;background:var(--muted)}
+  .lb-regel-z[data-kl="legendary"] .lb-regel-b::before{background:var(--gold)}
+  .lb-regel-z[data-kl="rare"] .lb-regel-b::before{background:var(--purple)}
 
   .lb-q{display:flex;align-items:baseline;gap:10px;padding:8px 13px;
     background:var(--surface);border-top:1px solid var(--line)}

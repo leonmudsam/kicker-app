@@ -1051,7 +1051,8 @@ const ok = (c, msg, det) => {
       return !seg.length || seg[0].getBoundingClientRect().width <= 0;
     }).length;
     const out = {zellen, reihen: reihen.length, raus, ohneZuwachs,
-      zeichen: host.querySelectorAll('.nd-wk-z svg').length,
+      // Nur das Zeichen der Stufe, nicht der Pfeil eines Auf- oder Abstiegs.
+      zeichen: host.querySelectorAll('.nd-wk-z > svg').length,
       werte: [...host.querySelectorAll('.nd-wk-d')].map(x => x.textContent.trim()).join(' ')};
     host.remove(); return out;
   });
@@ -1073,6 +1074,53 @@ const ok = (c, msg, det) => {
   ok(tafelBlatt.zeichen === 2,
      'jede Zeile zeigt das Zeichen ihrer Stufe',
      tafelBlatt.zeichen + ' Zeichen');
+
+  // ── Ein Verlust ist zu sehen ───────────────────────────────────────
+  //    Jane zog bei „Der Lauf" mit Leon gleich, und Leon stand im Blatt mit
+  //    „±0": ein Minus wurde als Null gezeigt, und der Balken kannte nur den
+  //    Zuwachs. Gemessen wird am gezeichneten Balken, ob das verlorene Stück
+  //    Breite hat und in der Bahn bleibt, ob die Zahl rot ist und ob die
+  //    Zeile den Grund und den Fall unter die Schwelle nennt.
+  const verlust = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const a = players[0].id, b = players[1].id;
+      const lo = INSIGNIEN[3].min;
+      const je = {};
+      je[a] = {vor:lo + 150, nach:lo + 300};
+      je[b] = {vor:lo + 50, nach:lo - 60};
+      return _ndWirkungBlock(je, _ndWirkungsGruende([
+        {rname:'Der Lauf', halter:[a, b], vorher:[b]}]));
+    })()`);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = markup;
+    document.body.appendChild(host);
+    const r = host.querySelector('.nd-wk.neg');
+    const out = {da: !!r};
+    if(r){
+      const bahn = r.querySelector('.nd-wk-b').getBoundingClientRect();
+      const weg = r.querySelector('.nd-wk-b u');
+      const wr = weg ? weg.getBoundingClientRect() : null;
+      out.weg = wr ? wr.width : 0;
+      out.drin = wr ? (wr.right <= bahn.right + 0.5) : false;
+      out.zahl = r.querySelector('.nd-wk-d').textContent.trim();
+      out.rot = getComputedStyle(r.querySelector('.nd-wk-d')).color;
+      out.fall = (r.querySelector('.nd-wk-n em.r') || {}).textContent || '';
+      out.grund = (r.querySelector('.nd-wk-g.r') || {}).textContent || '';
+      out.pfeil = !!r.querySelector('.nd-wk-ab svg');
+      out.rand = r.getBoundingClientRect().right <= host.getBoundingClientRect().right + 0.5;
+    }
+    host.remove(); return out;
+  });
+  ok(verlust.da && verlust.weg > 0 && verlust.drin && verlust.rand,
+     'ein Verlust steht als eigenes Stück im Balken und bleibt in der Bahn',
+     JSON.stringify(verlust));
+  ok(/^−110$/.test(verlust.zahl || '') && /240, 86, 106/.test(verlust.rot || ''),
+     'und die Zahl trägt ihr Minus in Rot', verlust.zahl + ' ' + verlust.rot);
+  ok(/fällt auf/.test(verlust.fall) && verlust.pfeil && /teilt/.test(verlust.grund),
+     'die Zeile nennt den Fall unter die Schwelle und den geteilten Rekord',
+     verlust.fall + ' · ' + verlust.grund);
 
   // ── Und jede KARTE passt auch ────────────────────────────────────
   //    Dasselbe fuer den Feed selbst: eine Karte, die bei 360 px aus ihrem
