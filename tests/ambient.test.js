@@ -1860,6 +1860,54 @@ ok(_feed.kleinsteMoeglich === true,
 ok(_feed.partienImFenster > 20 && _feed.partienOhneKarte === 0,
    'jede Partie des Fensters steht in einer sichtbaren Karte',
    _feed.partienImFenster + ' Partien, ' + _feed.partienOhneKarte + ' ohne Karte');
+// Und auch dann, wenn ihre Karte mit einer Meldung OHNE Partie bündelt. Eine
+// Rivalität oder der Countdown traegt keine `matchId`, das Bündel nach Minute
+// damit auch nicht, und es zaehlte gegen den Deckel je Sorte, der je Tag nur
+// die ersten zwei behaelt. Gemessen am 01.10.: die fuenfte Partie des Tages
+// um 15:08 lag in der Datenbank und stand nirgends im Feed. Gestellt an fuenf
+// echten Partien eines Tages, jede mit einer solchen Begleitmeldung.
+const _buendelPartie = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories().filter(s => (s.dataRef||{}).type === 'spiel');
+  const tage = {}; roh.forEach(s => { (tage[tagKey(s.when)] = tage[tagKey(s.when)] || []).push(s); });
+  const tag = Object.keys(tage).filter(k => tage[k].length >= 5).sort().pop();
+  const spiele = tage[tag].slice(0, 5);
+  const begleit = spiele.map((s, i) => ({id:'rv_' + i, cat:'highlight', ic:'swords', prio:45,
+    title:'Begleitung ' + i, desc:'Eine Meldung mit ' + (i + 2) + ' Zahlen.', when:s.when,
+    dataRef:{type:'rivalry', playerIds:s.dataRef.winners.slice()}}));
+  _cache._consolFrom = null;
+  const feed = _consolidateStories(spiele.concat(begleit)
+    .sort((a, b) => new Date(b.when) - new Date(a.when)));
+  const drin = new Set();
+  feed.forEach(s => { drin.add(s.id); ((s.dataRef||{}).teile||[]).forEach(t => t.id && drin.add(t.id)); });
+  return {n:spiele.length, fehlt:spiele.filter(s => !drin.has(s.id)).map(s => datumFmt(s.when, 'uhr'))};
+})())`));
+ok(_buendelPartie.n === 5 && _buendelPartie.fehlt.length === 0,
+   'auch eine Partie, die mit einer Meldung ohne Partie buendelt, steht im Feed',
+   _buendelPartie.fehlt.join(', ') || _buendelPartie.n + ' Partien');
+// Den Zeitpunkt einer Partie setzt der Server, `now` das Telefon. Geht dessen
+// Uhr zwei Sekunden nach, gilt die gerade gespeicherte Partie im ersten Lauf
+// als kuenftig — und der Memo des Generators hielt genau dieses Ergebnis
+// fest, bis die naechste Partie kam. Gestellt: die Uhr zwei Sekunden vor der
+// letzten Partie, dann eine Minute danach, ohne neue Partie dazwischen.
+const _uhrVersatz = (() => {
+  const Echt = globalThis.Date;
+  const letzte = K.eval('mts(matches[matches.length - 1])');
+  const lid = K.eval('matches[matches.length - 1].id');
+  const stellen = ms => { globalThis.Date = class extends Echt {
+    constructor(...a){ if(a.length===0) super(ms); else super(...a); }
+    static now(){ return ms; } }; };
+  try {
+    K.eval('invalidateCache(); 0');
+    stellen(letzte - 2000);
+    const vorher = K.eval(`_buildStories().some(s => s.id === 'spiel_${lid}')`);
+    stellen(letzte + 60000);
+    const nachher = K.eval(`_buildStories().some(s => s.id === 'spiel_${lid}')`);
+    return {vorher, nachher};
+  } finally { globalThis.Date = Echt; K.eval('invalidateCache(); 0'); }
+})();
+ok(!_uhrVersatz.vorher && _uhrVersatz.nachher,
+   'eine Partie, die fuer die Uhr des Telefons noch kuenftig war, kommt nach, sobald die Uhr sie einholt',
+   JSON.stringify(_uhrVersatz));
 ok(_feed.matchKarten >= 3 && _feed.matchResult > 0,
    'der Feed erzaehlt regelmaessig von konkreten und besonderen Partien',
    _feed.matchKarten + ' Karten mit Matchbezug, ' + _feed.matchResult + ' Ergebnisgeschichte');
@@ -3192,7 +3240,8 @@ const _wenig = JSON.parse(K.eval(`JSON.stringify((function(){
   // Die Runde der Vier nimmt Partie-Karten auf und ist selbst eine [§11.6c].
   const prt = s => { const d = (s&&s.dataRef)||{};
     return d.type === 'spiel' || d.type === 'runde'
-        || (d.type === 'sammel' && d.quelle === 'spiel' && !!d.matchId); };
+        || (d.type === 'sammel' && d.quelle === 'spiel' && (!!d.matchId
+            || (d.teile||[]).some(x => String((x&&x.id)||'').indexOf('spiel_') === 0))); };
   const zaehlbar = {};
   // Die erste Tafel-Karte eines Tages hat ihren eigenen Platz [§C33].
   const _tfl = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel'
@@ -4111,7 +4160,8 @@ const _tagmix = JSON.parse(K.eval(`JSON.stringify((function(){
   // Die Runde der Vier nimmt Partie-Karten auf und ist selbst eine [§11.6c].
   const prt = s => { const d = (s&&s.dataRef)||{};
     return d.type === 'spiel' || d.type === 'runde'
-        || (d.type === 'sammel' && d.quelle === 'spiel' && !!d.matchId); };
+        || (d.type === 'sammel' && d.quelle === 'spiel' && (!!d.matchId
+            || (d.teile||[]).some(x => String((x&&x.id)||'').indexOf('spiel_') === 0))); };
   // Die erste Tafel-Karte eines Tages zaehlt nicht mit: sie hat ihren eigenen
   // Platz, damit sie keiner Karte den ihren nimmt, die schon dastand [§C33].
   const ueber = Object.keys(proTag).filter(k => {

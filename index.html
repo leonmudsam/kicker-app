@@ -4509,7 +4509,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.01.747a9a89';
+const BUILD_VERSION='2026.10.01.8d15f402';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -15648,7 +15648,9 @@ function _buildStories(){
   const _weekSlotSig = _wocheDue ? 1 : 0;
   let _rundenSig = 0;
   try { const _rn = now.getTime(); _rundenSig = _spBasis().runden.filter(r => r.t + RUNDE_PAUSE_MS <= _rn).length; } catch(e){}
-  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig + '_' + _rundenSig;
+  let _zukunft = 0;
+  for(let i = matches.length - 1; i >= 0 && mts(matches[i]) > now.getTime(); i--) _zukunft++;
+  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig + '_' + _rundenSig + '_' + _zukunft;
   if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
     return _cache._buildStoriesResult;
   }
@@ -17346,6 +17348,7 @@ function _buildStories(){
   const GEN_PFLICHT = new Set(['lead_change', 'season_endgame', 'season_recap',
     'potd', 'potw', 'woche', 'chronik_monat', 'chronik_erstling',
     'insignium_stufe', 'streak_record']);
+  const GEN_PARTIE = new Set(['win_streak', 'team_streak']);
   const PER_PLAYER_LIMIT = 3;
   const NEBENROLLEN_LIMIT = 5;
   const perPlayer = {};
@@ -17357,7 +17360,7 @@ function _buildStories(){
     const pid = d.pid || d.playerId || d.newLeader || null;
     let gesichter = [];
     try { gesichter = (typeof _newsPids === 'function') ? _newsPids(s) : []; } catch(e){ gesichter = []; }
-    const pflicht = GEN_PFLICHT.has(d.type);
+    const pflicht = GEN_PFLICHT.has(d.type) || (GEN_PARTIE.has(d.type) && !!d.matchId);
     if(pid && !pflicht && d.rarity !== 'legendary' && gesichter.length
        && gesichter.every(id => (imBild[id] || 0) >= NEBENROLLEN_LIMIT)) continue;
     if(!pid || pflicht || d.rarity === 'legendary'){
@@ -18659,7 +18662,9 @@ function _consolidateStories(list){
   const _istPartie = st => {
     const d = (st && st.dataRef) || {};
     if(d.type === 'spiel') return true;
-    return d.type === 'sammel' && d.quelle === 'spiel' && !!d.matchId;
+    if(d.type !== 'sammel' || d.quelle !== 'spiel') return false;
+    return !!d.matchId || (d.teile || []).some(t =>
+      String((t && t.id) || '').indexOf('spiel_') === 0);
   };
   const seenContent = new Set();
   const seenTitel = new Set();
@@ -19179,7 +19184,11 @@ function _consolidateStories(list){
                 matchId: (function(){
                   const ids = teile.map(t => (t.dataRef || {}).matchId || '');
                   const erste = ids[0];
-                  return (erste && ids.every(x => x === erste)) ? erste : null;
+                  if(erste && ids.every(x => x === erste)) return erste;
+                  if(art !== 'spiel') return null;
+                  const spiele = teile.filter(t => (t.dataRef || {}).type === 'spiel');
+                  const mid = spiele.length === 1 ? (spiele[0].dataRef || {}).matchId : '';
+                  return (mid && ids.every(x => !x || x === mid)) ? mid : null;
                 })(), playerIds: pids,
                 kopfTyp: (kopf.dataRef||{}).type || '',
                 breaking: teile.some(t => { try { return _isBreaking(t); } catch(e){ return false; } }),

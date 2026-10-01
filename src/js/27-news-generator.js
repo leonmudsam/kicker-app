@@ -337,7 +337,16 @@ function _buildStories(){
   // auch ohne neue Partie: die Zahl der geschlossenen Runden bricht den Key.
   let _rundenSig = 0;
   try { const _rn = now.getTime(); _rundenSig = _spBasis().runden.filter(r => r.t + RUNDE_PAUSE_MS <= _rn).length; } catch(e){}
-  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig + '_' + _rundenSig;
+  // Und die Partien, die für diese Uhr noch in der Zukunft liegen. Den
+  // Zeitpunkt einer Partie setzt der Server, `now` das Telefon: geht dessen
+  // Uhr zwei Sekunden nach, gilt die gerade gespeicherte Partie im ersten
+  // Lauf als künftig, ihre Karten fehlen — und der Memo hielt genau dieses
+  // Ergebnis fest, bis eine neue Partie kam. Gemessen fehlte so die
+  // Siegesserie der vorletzten Partie eines Spieltags dauerhaft. Holt die
+  // Uhr die Partie ein, ändert sich die Zahl und der Lauf wiederholt sich.
+  let _zukunft = 0;
+  for(let i = matches.length - 1; i >= 0 && mts(matches[i]) > now.getTime(); i--) _zukunft++;
+  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig + '_' + _rundenSig + '_' + _zukunft;
   if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
     return _cache._buildStoriesResult;
   }
@@ -2962,6 +2971,14 @@ function _buildStories(){
   const GEN_PFLICHT = new Set(['lead_change', 'season_endgame', 'season_recap',
     'potd', 'potw', 'woche', 'chronik_monat', 'chronik_erstling',
     'insignium_stufe', 'streak_record']);
+  // Dazu die Marke einer laufenden Serie: sie haengt an ihrer Partie und geht
+  // in deren Buendel auf [§C33], ist also keine eigene Karte, die jemanden
+  // haeufiger zeigt. Gezaehlt wurde sie trotzdem, und der LETZTE Lauf eines
+  // Spieltags — der mit allen Tafel- und Insignium-Karten des Tages —
+  // verwarf sie: gemessen hielt nur die Datenbank Leons 3er-Serie vom 01.10.
+  // fest, und ging die Uhr des Telefons zwei Sekunden nach, war sie nie
+  // gebildet worden.
+  const GEN_PARTIE = new Set(['win_streak', 'team_streak']);
   const PER_PLAYER_LIMIT = 3;
   const NEBENROLLEN_LIMIT = 5;   // dazu höchstens so oft im Bild
   const perPlayer = {};
@@ -2986,7 +3003,7 @@ function _buildStories(){
     // die weiß, in welchem Feld die Ids je Typ liegen [§C33].
     let gesichter = [];
     try { gesichter = (typeof _newsPids === 'function') ? _newsPids(s) : []; } catch(e){ gesichter = []; }
-    const pflicht = GEN_PFLICHT.has(d.type);
+    const pflicht = GEN_PFLICHT.has(d.type) || (GEN_PARTIE.has(d.type) && !!d.matchId);
     if(pid && !pflicht && d.rarity !== 'legendary' && gesichter.length
        && gesichter.every(id => (imBild[id] || 0) >= NEBENROLLEN_LIMIT)) continue;
     // v9.17: Goldene (legendary) Auszeichnungen sind vom Limit ausgenommen. Sonst
