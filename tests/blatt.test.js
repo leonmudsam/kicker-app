@@ -3008,7 +3008,7 @@ const warte=ms=>new Promise(r=>setTimeout(r,ms));
 const funde={};
 const pruef=(wo)=>{
   // Bilder direkt und über <use> verwiesene Gruppen: gezählt wird das Element, das sichtbar zeichnet
-  const ziele=[...document.querySelectorAll('image, use')].filter(e=>{const h=e.getAttribute('href')||'';return e.tagName==='image'?h.startsWith('data:image/svg'):/^#ins/.test(h);});
+  const ziele=[...document.querySelectorAll('image, use')].filter(e=>{const h=e.getAttribute('href')||'';return e.tagName==='image'?(h.startsWith('data:image/svg')||h.startsWith('blob:')):/^#ins/.test(h);});
   ziele.forEach(im=>{let e=im.parentElement;const k=[];while(e&&e!==document.documentElement){const cs=getComputedStyle(e);
     const f=e.getAttribute&&e.getAttribute('filter');
     if(cs.filter&&cs.filter!=='none'&&!/grayscale/.test(cs.filter))k.push((e.className.baseVal??e.className)+':'+cs.filter.slice(0,30));
@@ -3044,8 +3044,8 @@ return JSON.stringify(funde,null,1);
     K("tab='ranking'; render()");
     const bildIn = el => { let n = 0; el.querySelectorAll('use').forEach(u => {
       const z = document.querySelector(u.getAttribute('href'));
-      if(z && z.querySelector('image[href^="data:image/svg"]')) n++; });
-      return n + el.querySelectorAll('image[href^="data:image/svg"]').length; };
+      if(z && z.querySelector('image[href^="data:image/svg"], image[href^="blob:"]')) n++; });
+      return n + el.querySelectorAll('image[href^="data:image/svg"], image[href^="blob:"]').length; };
     const zeile = bildIn(document.querySelector('#app .rrow') || document.body);
     const pid = K("players.find(p=>p.name==='Martin').id");
     K('showPlayer(' + JSON.stringify(pid) + ')'); await w(300);
@@ -3062,6 +3062,22 @@ return JSON.stringify(funde,null,1);
      JSON.stringify(_vektor));
   ok(_vektor.zeile > 0, 'klein bleibt es ein Bild, damit Liste und Feed schnell bleiben',
      JSON.stringify(_vektor));
+  // Und das Bild steht im Dokument unter einer kurzen Adresse. Als Daten-URL
+  // trug jedes Bild rund 190 Kilobyte, und jedes der rund 240 `<use>` im
+  // Feed klonte sie mit: gemessen brauchte das Öffnen des Feeds im Median
+  // 150 ms statt 46. Geprüft wird jedes Bild im Topf nach dem Öffnen.
+  const _bildAdr = await page.evaluate(async () => {
+    const K = window.__k.eval;
+    K('closeSheet(true); openNewsFeed()');
+    await new Promise(r => setTimeout(r, 300));
+    const l = [...document.querySelectorAll('#insDefs image, #sheet image, #app image')]
+      .map(b => (b.getAttribute('href') || '').length);
+    K('closeSheet(true)');
+    return {n: l.length, lang: l.filter(x => x > 300).length, max: Math.max(0, ...l)};
+  });
+  ok(_bildAdr.n > 0 && _bildAdr.lang === 0,
+     'jedes Wappenbild im Dokument steht unter einer kurzen Adresse',
+     _bildAdr.n + ' Bilder, ' + _bildAdr.lang + ' lang, längste ' + _bildAdr.max + ' Zeichen');
 
   await page.setViewportSize({width:430, height:932});
 

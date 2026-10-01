@@ -5508,6 +5508,23 @@ ok(_wirk.balken === _wirk.reihen && _wirk.zuwachs === _wirk.reihen,
    'und jede Zeile zeigt den Weg zur naechsten Schwelle und den Zuwachs',
    _wirk.balken + ' Balken, ' + _wirk.zuwachs + ' Zuwaechse');
 
+console.log('=== ERST ZEICHNEN, DANN RECHNEN ===');
+// `loadAll` ruft den Abgleich direkt nach `render()`. Lief der Generator
+// darin sofort, stand die neue Rangliste erst nach seinen rund 370 ms auf dem
+// Bildschirm. Gefragt wird, ob er im selben Aufruf schon gelaufen ist.
+const _sofort = K.eval(`(function(){
+  let n = 0; const alt = _buildStories;
+  _buildStories = function(){ n++; return alt.apply(this, arguments); };
+  const vorher = _cache._stories;
+  _cache._stories = [{id:'probe', when:new Date(), dataRef:{}}];
+  const p = syncStoriesViaDb(); if(p && p.catch) p.catch(() => {});
+  const sofort = n;
+  _buildStories = alt; _cache._stories = vorher;
+  return sofort;
+})()`);
+ok(_sofort === 0, 'der News-Generator wartet auf einen ruhigen Moment nach dem Zeichnen',
+   _sofort + ' Laeufe im selben Aufruf');
+
 console.log('=== DIE STUFE KOMMT AUS DEN PUNKTEN ===');
 // Leon stand im Blatt mit 2687 Prestige als Volutenkranz und „noch 0 bis
 // zum Zierkranz": die Stufe kam als Zahl aus der Datenbank und gehoerte einer

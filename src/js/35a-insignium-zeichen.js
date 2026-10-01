@@ -963,6 +963,31 @@ function insBild(key, nr, rang){
   }
   return u;
 }
+// ── Im Dokument eine kurze Adresse statt der Datei ──────────────────
+// `insBild` liefert die Zeichnung als Daten-URL, rund 190 Kilobyte je Bild.
+// Im Wappen steht sie in einer Gruppe, auf die jedes Wappen mit `<use>`
+// verweist, und ein `<use>` klont, was es verweist — samt dieser Adresse.
+// Der Feed trägt rund 240 Verweise auf sieben Gruppen, und jede Kopie liess
+// den Browser eine Adresse von 190 Kilobyte nachschlagen: gemessen fiel die
+// Stilberechnung beim Öffnen des Feeds auf die Hälfte, als die Wappen fehlten.
+// Eine Blob-Adresse ist sechzig Zeichen lang und zeigt auf dieselbe Datei.
+// Ausserhalb eines Dokuments (Tests, Rastern als eigenes Bild) bleibt es bei
+// der Daten-URL: ein Blob gilt nur in der Seite, die ihn angelegt hat.
+const _IZ_BLOB = new Map();
+function insBildHref(key, nr, rang){
+  if(typeof Blob !== 'function' || typeof URL === 'undefined' || !URL.createObjectURL)
+    return insBild(key, nr, rang);
+  const schl = rang + '|' + key + '|' + nr;
+  let u = _IZ_BLOB.get(schl);
+  if(!u){
+    const t = _izTeile(key, nr, INS_RANGFARBE[rang] || INS_RANGFARBE.Solide);
+    u = URL.createObjectURL(new Blob(
+      [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">${t.defs}${t.bild}</svg>`],
+      {type:'image/svg+xml'}));
+    _IZ_BLOB.set(schl, u);
+  }
+  return u;
+}
 // Die Kennungen einer Zeichnung mit einem Präfix: im Dokument stehen viele
 // Zeichnungen nebeneinander, und jede hat einen Verlauf namens „bsilber".
 function _izPraefix(s, p){

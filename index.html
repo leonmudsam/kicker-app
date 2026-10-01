@@ -5740,7 +5740,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.10.01.cf11fc5c';
+const BUILD_VERSION='2026.10.01.d381ee0e';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -26337,6 +26337,12 @@ function _consolidateStories(list){
 
 // Wird in loadAll() aufgerufen. Generator → DB-Upsert → DB-Read → Cache.
 // Vollständig in try/catch gewrappt — Failures degradieren auf Fallback.
+function _leerlauf(ms){
+  return new Promise(fertig => {
+    if(typeof requestIdleCallback === 'function') requestIdleCallback(() => fertig(), {timeout: ms});
+    else setTimeout(fertig, 0);
+  });
+}
 async function syncStoriesViaDb(){
   // ── Erst den Bestand kennen, dann ziehen ──────────────────────────
   // Der Generator lief zuerst, und der Upload danach: die Ziehung des
@@ -26355,6 +26361,13 @@ async function syncStoriesViaDb(){
       if(Array.isArray(vorher)) _cache._stories = vorher;
     } catch(e){}
   }
+  // ── Erst zeichnen, dann rechnen ───────────────────────────────────
+  // Der Generator kostet kalt rund 370 ms am Stück. `loadAll` ruft diese
+  // Funktion direkt nach `render()`, und ohne Pause dazwischen lief beides in
+  // derselben Aufgabe: die neue Rangliste stand erst nach dem Generator auf
+  // dem Bildschirm, und ein Tippen in dieser Zeit blieb liegen. Gewartet wird
+  // auf einen ruhigen Moment, höchstens anderthalb Sekunden.
+  await _leerlauf(1500);
   let generated = [];
   try { generated = _buildStories() || []; }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] generator failed', e); }
@@ -36841,6 +36854,31 @@ function insBild(key, nr, rang){
   }
   return u;
 }
+// ── Im Dokument eine kurze Adresse statt der Datei ──────────────────
+// `insBild` liefert die Zeichnung als Daten-URL, rund 190 Kilobyte je Bild.
+// Im Wappen steht sie in einer Gruppe, auf die jedes Wappen mit `<use>`
+// verweist, und ein `<use>` klont, was es verweist — samt dieser Adresse.
+// Der Feed trägt rund 240 Verweise auf sieben Gruppen, und jede Kopie liess
+// den Browser eine Adresse von 190 Kilobyte nachschlagen: gemessen fiel die
+// Stilberechnung beim Öffnen des Feeds auf die Hälfte, als die Wappen fehlten.
+// Eine Blob-Adresse ist sechzig Zeichen lang und zeigt auf dieselbe Datei.
+// Ausserhalb eines Dokuments (Tests, Rastern als eigenes Bild) bleibt es bei
+// der Daten-URL: ein Blob gilt nur in der Seite, die ihn angelegt hat.
+const _IZ_BLOB = new Map();
+function insBildHref(key, nr, rang){
+  if(typeof Blob !== 'function' || typeof URL === 'undefined' || !URL.createObjectURL)
+    return insBild(key, nr, rang);
+  const schl = rang + '|' + key + '|' + nr;
+  let u = _IZ_BLOB.get(schl);
+  if(!u){
+    const t = _izTeile(key, nr, INS_RANGFARBE[rang] || INS_RANGFARBE.Solide);
+    u = URL.createObjectURL(new Blob(
+      [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">${t.defs}${t.bild}</svg>`],
+      {type:'image/svg+xml'}));
+    _IZ_BLOB.set(schl, u);
+  }
+  return u;
+}
 // Die Kennungen einer Zeichnung mit einem Präfix: im Dokument stehen viele
 // Zeichnungen nebeneinander, und jede hat einen Verlauf namens „bsilber".
 function _izPraefix(s, p){
@@ -37608,7 +37646,7 @@ function _insStufe(key, c, zacken, id, grad, eigen, bild){
       opacity="${_n(Math.min(1, .22 + (feld - INSIGNIUM_GRADE) * .045))}"/>` : '';
   const kk = INS_ZEICHEN[key] ? key : 'reif';
   if(bild && !eigen) return hof + glut
-    + `<image href="${insBild(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
+    + `<image href="${insBildHref(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
   return hof + glut + _insZeichnung(kk, nr, c.rang, o, k, eigen);
 }
 

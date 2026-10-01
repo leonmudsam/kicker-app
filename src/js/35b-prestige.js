@@ -758,7 +758,7 @@ function _insStufe(key, c, zacken, id, grad, eigen, bild){
       opacity="${_n(Math.min(1, .22 + (feld - INSIGNIUM_GRADE) * .045))}"/>` : '';
   const kk = INS_ZEICHEN[key] ? key : 'reif';
   if(bild && !eigen) return hof + glut
-    + `<image href="${insBild(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
+    + `<image href="${insBildHref(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
   return hof + glut + _insZeichnung(kk, nr, c.rang, o, k, eigen);
 }
 
