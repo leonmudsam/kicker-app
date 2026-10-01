@@ -1562,6 +1562,14 @@ function _consolidateStories(list){
                                          // sie kommt — das Blatt zeigt sie
                                          // deshalb EINMAL je Spieler.
                                         lb: (t.dataRef||{}).laufbahn || null,
+                                         // Halter vor und nach dem Tag: daran
+                                         // liest das Blatt, wer einen Rekord
+                                         // geteilt oder verloren hat.
+                                        halter: Array.isArray((t.dataRef||{}).halter)
+                                                ? t.dataRef.halter : ((t.dataRef||{}).alle || []),
+                                        vorher: (t.dataRef||{}).vorher || [],
+                                        rname: (t.dataRef||{}).rekordName
+                                               || (t.dataRef||{}).chronName || '',
                                          // Ein Spieler zeigt je Monat nur EINE
                                          // Chronik [§C32]. Auch in einer großen
                                          // Tafel muss sichtbar bleiben, welche
@@ -1876,6 +1884,12 @@ function _consolidateStories(list){
 
 // Wird in loadAll() aufgerufen. Generator → DB-Upsert → DB-Read → Cache.
 // Vollständig in try/catch gewrappt — Failures degradieren auf Fallback.
+function _leerlauf(ms){
+  return new Promise(fertig => {
+    if(typeof requestIdleCallback === 'function') requestIdleCallback(() => fertig(), {timeout: ms});
+    else setTimeout(fertig, 0);
+  });
+}
 async function syncStoriesViaDb(){
   // ── Erst den Bestand kennen, dann ziehen ──────────────────────────
   // Der Generator lief zuerst, und der Upload danach: die Ziehung des
@@ -1894,6 +1908,13 @@ async function syncStoriesViaDb(){
       if(Array.isArray(vorher)) _cache._stories = vorher;
     } catch(e){}
   }
+  // ── Erst zeichnen, dann rechnen ───────────────────────────────────
+  // Der Generator kostet kalt rund 370 ms am Stück. `loadAll` ruft diese
+  // Funktion direkt nach `render()`, und ohne Pause dazwischen lief beides in
+  // derselben Aufgabe: die neue Rangliste stand erst nach dem Generator auf
+  // dem Bildschirm, und ein Tippen in dieser Zeit blieb liegen. Gewartet wird
+  // auf einen ruhigen Moment, höchstens anderthalb Sekunden.
+  await _leerlauf(1500);
   let generated = [];
   try { generated = _buildStories() || []; }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] generator failed', e); }

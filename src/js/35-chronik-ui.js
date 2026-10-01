@@ -371,7 +371,7 @@ function showChronicle(cid){
   // wer ein Blatt oeffnete, sah die Bedingung und sonst nichts. Die
   // Zahlenreihe ist `rcpZahlenHtml`, das Bauteil der Rueckblicke [§C27].
   //
-  // Der BEITRAG ist nicht der Grundwert. Ein zehnter Rekord gibt nicht 100
+  // Der BEITRAG ist nicht der Grundwert. Ein zehnter Rekord gibt nicht 150
   // Prestige: er wird durch die Zahl seiner Halter geteilt, landet auf einem
   // Rang im Rekordstapel und wird dort durch die Wurzel seiner Staffel
   // geteilt [§C34]. Gezeigt wird deshalb der Stand des ersten Halters aus

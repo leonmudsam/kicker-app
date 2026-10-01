@@ -1454,7 +1454,7 @@ function showBadgePopover(badgeId, playerId){
       const shown = hits.slice(0, maxShow);
       const rowsHtml = shown.map(m => {
         const date = new Date(m.created_at);
-        const dateStr = date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+        const dateStr = datumFmt(date, 'tmj');
         const onA = (playerId===m.a1||playerId===m.a2);
         const myGf = onA?m.score_a:m.score_b;
         const myGa = onA?m.score_b:m.score_a;

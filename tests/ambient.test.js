@@ -1374,7 +1374,7 @@ const _tmoment = JSON.parse(K.eval(`JSON.stringify((function(){
   // sonst prueft der Test die Implementierung gegen sich selbst und bleibt
   // gruen, gerade wenn eine Zeile ihre Angabe nicht mitbringt.
   const genannt = (d.playerIds || []).filter(x => pmap()[x]);
-  const inWirkung = (html.match(/class="nd-wk" data-pid="([0-9a-f-]+)"/g) || [])
+  const inWirkung = (html.match(/class="nd-wk[^"]*" data-pid="([0-9a-f-]+)"/g) || [])
     .map(x => x.slice(x.indexOf('data-pid="') + 10, -1));
   // Und die Prestige-Zelle wird gegen das gezaehlt, was der Bereich darunter
   // ZEIGT — zwei Stellen im Markup, nicht zweimal dieselbe Rechnung.
@@ -3900,6 +3900,8 @@ const _tk = JSON.parse(K.eval(`JSON.stringify((function(){
     breaking: _newsTagKarteWuerdig({dataRef:{type:'lead_change'}}),
     potd: _newsTagKarteWuerdig({dataRef:{type:'potd'}}),
     rueckblick: _newsTagKarteWuerdig({dataRef:{type:'woche'}}),
+    negativ: _newsTagKarteWuerdig({cat:'badges', dataRef:{type:'badge_unlocked', rarity:'negative'}}),
+    pleite: _newsTagKarteWuerdig({dataRef:{type:'loss_streak'}}),
     stunde: NEWS_LIMITS.tagKarteStunde, partien: NEWS_LIMITS.tagKartePartien,
     mind: NEWS_LIMITS.tagKarteMin};
 })())`));
@@ -3924,6 +3926,10 @@ ok(_tk.leer === null, 'ein Tag ohne Partie bekommt keine Karte des Tages',
 ok(!_tk.breaking && !_tk.potd && !_tk.rueckblick,
    'Breaking, der Spieler des Tages und ein Rueckblick tragen das Band nie',
    JSON.stringify({breaking:_tk.breaking, potd:_tk.potd, rueckblick:_tk.rueckblick}));
+// Und keine Schande und keine Pleitenserie: das Band ist golden, und Gold
+// gehoert dem Titel [§C25]. Gemessen trug „Anton: Die Talfahrt" das Band.
+ok(!_tk.negativ && !_tk.pleite, 'eine Karte mit negativer Richtung traegt das Band nie',
+   JSON.stringify({negativ:_tk.negativ, pleite:_tk.pleite}));
 
 // ── Die Wochenkarte zeigt alle sechs Wertungen ──────────────────────
 // Sie zeigte drei und darunter „und 3 weitere Wertungen": die Ueberraschung,
@@ -5484,7 +5490,7 @@ const _wirk = JSON.parse(K.eval(`JSON.stringify((function(){
     eigene:eigene.length,
     staende:eigene.filter(t => { const v = standVon(t); return v && m.indexOf(v) >= 0; }).length,
     abschnitte:(m.match(/Wirkung auf die Laufbahn/g) || []).length,
-    reihen: (m.match(/class="nd-wk"/g) || []).length,
+    reihen: (m.match(/class="nd-wk( [^"]*)?"/g) || []).length,
     // Der Balken zeigt die Strecke zur naechsten Schwelle, und darin heller,
     // was der Spieltag dazugelegt hat: zwei Segmente je Zeile.
     balken: (m.match(/class="nd-wk-b"/g) || []).length,
@@ -5507,6 +5513,104 @@ ok(_wirk.abschnitte === 1 && _wirk.reihen === _wirk.spieler && _wirk.spieler > 0
 ok(_wirk.balken === _wirk.reihen && _wirk.zuwachs === _wirk.reihen,
    'und jede Zeile zeigt den Weg zur naechsten Schwelle und den Zuwachs',
    _wirk.balken + ' Balken, ' + _wirk.zuwachs + ' Zuwaechse');
+
+console.log('=== ERST ZEICHNEN, DANN RECHNEN ===');
+// `loadAll` ruft den Abgleich direkt nach `render()`. Lief der Generator
+// darin sofort, stand die neue Rangliste erst nach seinen rund 370 ms auf dem
+// Bildschirm. Gefragt wird, ob er im selben Aufruf schon gelaufen ist.
+const _sofort = K.eval(`(function(){
+  let n = 0; const alt = _buildStories;
+  _buildStories = function(){ n++; return alt.apply(this, arguments); };
+  const vorher = _cache._stories;
+  _cache._stories = [{id:'probe', when:new Date(), dataRef:{}}];
+  const p = syncStoriesViaDb(); if(p && p.catch) p.catch(() => {});
+  const sofort = n;
+  _buildStories = alt; _cache._stories = vorher;
+  return sofort;
+})()`);
+ok(_sofort === 0, 'der News-Generator wartet auf einen ruhigen Moment nach dem Zeichnen',
+   _sofort + ' Laeufe im selben Aufruf');
+
+console.log('=== DIE STUFE KOMMT AUS DEN PUNKTEN ===');
+// Leon stand im Blatt mit 2687 Prestige als Volutenkranz und „noch 0 bis
+// zum Zierkranz": die Stufe kam als Zahl aus der Datenbank und gehoerte einer
+// aelteren Leiter. Die Punkte sind die Beobachtung, die Stufe eine Ableitung.
+// Gespeichert wird hier absichtlich die falsche Stufe.
+const _wkStufe = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pid = players[0].id, je = {};
+  const p = INSIGNIEN[3].min + 120;
+  je[pid] = {vor:p - 40, nach:p, stufeVor:1, stufeNach:1};
+  const h = _ndWirkungBlock(je);
+  return {h, name:INSIGNIEN[3].name, next:INSIGNIEN[4].name,
+          rest:INSIGNIEN[4].min - p, falsch:INSIGNIEN[1].name};
+})())`));
+ok(_wkStufe.h.indexOf('<em>' + _wkStufe.name + '</em>') >= 0
+   && _wkStufe.h.indexOf('noch ' + _wkStufe.rest + ' bis zum ' + _wkStufe.next) >= 0
+   && _wkStufe.h.indexOf('<em>' + _wkStufe.falsch + '</em>') < 0,
+   'die Wirkung nennt die Stufe, die zu den Punkten gehoert',
+   _wkStufe.name + ' / noch ' + _wkStufe.rest);
+// Und wer einen Rekord abgeben oder teilen muss, steht in der Wirkung mit:
+// sein Minus gehoert zu diesem Tag. Die Rekord-Karte traegt dafuer die
+// bisherigen Halter, die nicht mehr allein halten.
+const _wkVor = JSON.parse(K.eval(`JSON.stringify((function(){
+  const fehlt = [];
+  let n = 0;
+  (_buildStories() || []).forEach(s => {
+    const d = s.dataRef || {};
+    if(!/^rekord_(geholt|uebernommen|geteilt|allein)/.test(d.type || '')) return;
+    if(!d.laufbahn || !Array.isArray(d.vorher)) return;
+    const neu = d.halter || [];
+    d.vorher.filter(pid => neu.indexOf(pid) < 0 || neu.length > d.vorher.length)
+      .forEach(pid => { n++; if(!d.laufbahn[pid]) fehlt.push(s.id + ' ' + pid); });
+  });
+  return {n, fehlt};
+})())`));
+ok(_wkVor.fehlt.length === 0,
+   'wer einen Rekord abgibt oder teilt, steht in der Wirkung der Karte',
+   _wkVor.fehlt.slice(0, 3).join(', ') || _wkVor.n + ' Vorgaenger');
+
+// Und auf der Karte selbst steht, wer verliert: die Schlagzeile feiert die
+// Neuen, und wer seinen Anteil abgeben musste, erfuhr es erst im Blatt. Die
+// Zeile nennt den Betrag und die Stufe, auf die jemand faellt.
+const _vband = JSON.parse(K.eval(`JSON.stringify((function(){
+  const a = players[0].id, b = players[1].id, lb = {};
+  const lo = INSIGNIEN[3].min;
+  lb[a] = {vor:lo + 50, nach:lo - 30};
+  lb[b] = {vor:400, nach:460};
+  const h = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
+  const ohne = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:{[b]:lb[b]}}});
+  return {h, ohne, a:pmap()[a].name, b:pmap()[b].name, stufe:INSIGNIEN[2].name};
+})())`));
+ok(_vband.h.indexOf(_vband.a) >= 0 && _vband.h.indexOf('−80') >= 0
+   && _vband.h.indexOf(_vband.stufe) >= 0 && _vband.h.indexOf(_vband.b) < 0 && _vband.ohne === '',
+   'die Tafel-Karte nennt, wer Prestige verliert, und nur den',
+   _vband.h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+
+// Und der Satz der Rekordkarte nennt, wer dabei verliert: die Karte erzaehlte
+// nur von Jane, und dass Leon den Rekord jetzt teilt und Prestige verliert,
+// stand nirgends. Geprueft an jeder Karte, deren bisheriger Halter in der
+// Wirkung mit einem Minus steht.
+const _vsatz = JSON.parse(K.eval(`JSON.stringify((function(){
+  let n = 0; const fehlt = [];
+  (_buildStories() || []).forEach(s => {
+    const d = s.dataRef || {};
+    if(!/^rekord_/.test(d.type || '') || !d.laufbahn) return;
+    // Nur wo jemand teilt oder abgibt: beim Ausbauen ist der Vorgaenger der
+    // Halter selbst, und sein Minus kommt von anderswo.
+    if(['dazu', 'uebernommen'].indexOf(d.fall) < 0) return;
+    (d.vorher || []).forEach(pid => {
+      const w = d.laufbahn[pid];
+      if(!w || !(w.nach < w.vor)) return;
+      n++;
+      if(String(s.desc).indexOf(pmap()[pid].name) < 0 || !/Prestige weniger/.test(s.desc))
+        fehlt.push(s.title);
+    });
+  });
+  return {n, fehlt};
+})())`));
+ok(_vsatz.n > 0 && _vsatz.fehlt.length === 0,
+   'die Rekordkarte nennt im Satz, wer an diesem Spieltag Prestige verliert',
+   _vsatz.fehlt.slice(0, 2).join(' · ') || _vsatz.n + ' Verluste');
 
 console.log('=== DAS AUFGEHEN DER TAFEL IST EINE NACHRICHT ===');
 // Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik, und

@@ -1078,6 +1078,19 @@ const _tagSchreib = (function(){
 ok(_tagSchreib === 1, 'der Kalendertag wird an genau einer Stelle gebildet',
    _tagSchreib + ' Stellen');
 
+// ─── Ein Datum, ein Formatierer ─────────────────────────────────────
+// `toLocaleDateString` mit Optionen baut bei jedem Aufruf einen neuen
+// Formatierer, und im Feed lief das je Karte mehrmals: gemessen 16 ms fuer
+// die Uhrzeit allein beim Oeffnen. Uhrzeit, Tag und Monat und das kurze
+// Datum gehen deshalb durch `datumFmt`; gezaehlt wird im gebauten Stand.
+const _fmtStellen = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const re = /toLocale(Date|Time)String\('de-DE',\s*\{(hour:'2-digit',\s*minute:'2-digit'|day:'2-digit',\s*month:'2-digit'(,\s*year:'2-digit')?)\}\)/g;
+  return (quelle.match(re) || []).length;
+})();
+ok(_fmtStellen === 0, 'Uhrzeit und kurzes Datum gehen durch einen gemerkten Formatierer',
+   _fmtStellen + ' Stellen bauen ihn selbst');
+
 // ─── Kein Gestaltungswert ohne Leser ────────────────────────────────
 // Der Bau haengt sechzehn Stylesheets aneinander, und eine Variable, die
 // niemand mehr liest, faellt danach niemandem auf: `--r-lg` stand als

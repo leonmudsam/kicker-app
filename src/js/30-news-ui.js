@@ -263,10 +263,10 @@ function _newsWhenLabel(when){
   const todayKey = tagKey(now);
   const yest = tagKey(now.getTime() - 86400000);
   const dKey = tagKey(d);
-  const hhmm = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const hhmm = datumFmt(d, 'uhr');
   if(dKey === todayKey) return 'Heute, '+hhmm;
   if(dKey === yest) return 'Gestern, '+hhmm;
-  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+', '+hhmm;
+  return datumFmt(d, 'tm')+', '+hhmm;
 }
 
 // Der Kalendertag einer Story, als Überschrift für eine Feed-Gruppe.
@@ -279,13 +279,13 @@ function _newsDayLabel(when){
   const d = new Date(when), now = new Date();
   if(tagKey(d) === tagKey(now)) return 'HEUTE';
   if(tagKey(d) === tagKey(now.getTime() - 86400000)) return 'GESTERN';
-  return d.toLocaleDateString('de-DE',{weekday:'long'}).toUpperCase();
+  return datumFmt(d, 'wt').toUpperCase();
 }
 // Das Datum unter dem Wochentag. Bei „Heute" und „Gestern" steht es trotzdem
 // da: sonst weiß man beim Zurückblättern nicht, wo man ist.
 function _newsDayDate(when){
   const d = new Date(when);
-  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+  return datumFmt(d, 'tmj');
 }
 
 // ─── §11.6 — Voller Feed (im Sheet) mit Filter-Pills ─────────────────
@@ -392,7 +392,7 @@ function _newsGesichtHtml(s){
 // Bauformen: das Ergebnisband, der große Wert, die Leiter, das Zahlenband.
 
 function _newsUhrzeit(when){
-  return new Date(when).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  return datumFmt(when, 'uhr');
 }
 
 // Rot ist eine Richtung, keine Rubrik [§C25]. Karte und Detailblatt nutzen
@@ -676,6 +676,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
     ${sammelBand}
+    ${sorte === 'tafel' ? _newsVerlustBand(s) : ''}
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}
@@ -900,6 +901,35 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     + `</div>`;
 }
 
+// ── Wer verliert, steht auf der Karte ─────────────────────────────────
+// Ein Rekord, den jemand übernimmt oder mit einem anderen teilt, kostet den
+// bisherigen Halter Prestige, und davon stand auf der Karte nichts: die
+// Schlagzeile feiert die Neuen, und wer seinen Anteil abgeben musste, erfuhr
+// es erst im Blatt — oder gar nicht, solange es dort „±0" hieß. Die Zeile
+// nennt je Verlierer den Verlust und, wenn er eine Schwelle unterschreitet,
+// die Stufe, auf die er fällt. Rot ist die Richtung [§C25]; die Karte bleibt
+// die der Gewinner, deshalb steht der Verlust unter dem Band und nicht im
+// Kopf. Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
+function _newsVerlustBand(s){
+  const d = (s && s.dataRef) || {};
+  const je = {};
+  const nimm = lb => { if(lb) Object.keys(lb).forEach(pid => { if(!je[pid]) je[pid] = lb[pid]; }); };
+  if(d.type === 'sammel') (d.teile || []).forEach(t => nimm(t.lb));
+  else nimm(d.laufbahn);
+  const pm = pmap();
+  const weg = Object.keys(je).filter(pid => pm[pid]).map(pid => {
+    const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
+    return {pid, d: nach - vor, ab: insigniumStufeVon(nach) < insigniumStufeVon(vor)
+      ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
+  }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
+  if(!weg.length) return '';
+  return `<div class="nf-verlust"><i class="nf-verlust-i">${svgI('trendDown')}</i>`
+    + `<span class="nf-verlust-l">Verliert</span><span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
+      `<b>${esc(pm[x.pid].name)} <em class="num">−${-x.d}</em>${x.ab
+        ? `<u>auf ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      ? `<b>+${weg.length - 3}</b>` : ''}</span></div>`;
+}
+
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie
 // nicht wiederholen muss.
 function _newsSpielZahlen(s){
@@ -1063,7 +1093,7 @@ function _newsTorleiste(m, hoch, tief){
   });
   const reihe = (k, cls) => Array.from({length:10}, (_, i) => `<i${i < k ? ` class="${cls}"` : ''}></i>`).join('');
   const satz = zuletzt
-    ? `So deutlich zuletzt am ${new Date(mts(zuletzt)).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}`
+    ? `So deutlich zuletzt am ${datumFmt(mts(zuletzt), 'tm')}`
     : 'So deutlich noch nie in der Liga';
   return `<div class="nf-tor"><div class="nf-tor-r"><span class="w">${reihe(hoch, 'w')}</span>`
     + `<span class="v">${reihe(tief, 'v')}</span></div><span class="nf-tor-s">${esc(satz)}</span></div>`;
@@ -1330,7 +1360,7 @@ function _newsFadenHtml(faden, stories, nach){
   const ziel = (stories || []).find(x => x.id === (nach ? faden.von : faden.ziel));
   const art = NEWS_FADEN_ART[faden.art];
   if(!ziel || !art) return '';
-  const tag = new Date(ziel.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+  const tag = datumFmt(ziel.when, 'tm');
   return `<button class="nf-faden" type="button" data-ziel="${esc(ziel.id)}">`
     // Tag vor Titel: der Titel kürzt sich, und in einer Zeile ging dabei das
     // Datum verloren — gerade das sagt, wie weit die Geschichte zurückreicht.
@@ -1836,7 +1866,7 @@ function _newsTagSpannung(s){
 // ein Fun Fact oder eine Zufallsstatistik groß im Bild, die mit diesem Tag
 // nichts zu tun haben und gestern genauso dagestanden hätten.
 // ── Wer kann das Band tragen? [§C33] ────────────────────────────────
-// Drei Sorten nicht, und jede aus ihrem eigenen Grund.
+// Vier Sorten nicht, und jede aus ihrem eigenen Grund.
 // **Breaking** nicht: die Karte ist im Feed ohnehin die lauteste — voller
 // Rahmen, pulsierender Balken, Schein hinter der ganzen Flaeche. Das Band
 // darueber sagt dasselbe ein zweites Mal [§C27] und nimmt es genau der
@@ -1846,6 +1876,10 @@ function _newsTagSpannung(s){
 // das Band an jedem ruhigen Tag von selbst — dann zeichnet es nichts aus.
 // **Ein Rueckblick** nicht: Woche, Monat und Saison erzaehlen von einem
 // Zeitraum, das Band gehoert dem TAG.
+// **Eine Karte mit negativer Richtung** nicht: das Band ist golden, und Gold
+// gehoert dem Titel [§C25]. Gemessen trug „Anton: Die Talfahrt" — fuenf
+// Niederlagen in Folge, eine Schande — an einem Spieltag das Band und damit
+// den goldenen Auswahlschimmer, als waere die Pleite die Geschichte des Tages.
 // Die Liste steht hier und nicht im Aufruf, weil `tests/ambient` und
 // `tests/blatt` dieselbe Frage stellen und sie sich vorher jeder selbst
 // beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
@@ -1854,6 +1888,7 @@ const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
   'season_recap']);
 function _newsTagKarteWuerdig(st){
   if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
+  if(_newsIstNegativ(st)) return false;
   return !_isBreaking(st);
 }
 function _newsTagKarte(items, dayKey){

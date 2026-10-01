@@ -360,7 +360,7 @@ function awPeriodLabel(){
     if(awWeekStart){
       const start=new Date(awWeekStart); start.setHours(0,0,0,0);
       const end=new Date(start); end.setDate(end.getDate()+6);
-      return 'KW '+isoWeek(start)+' · '+start.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'–'+end.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+      return 'KW '+isoWeek(start)+' · '+datumFmt(start, 'tm')+'–'+datumFmt(end, 'tm');
     }
     return periodLabel('week');
   }

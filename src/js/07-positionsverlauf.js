@@ -472,8 +472,8 @@ function showPotwRecap(opts){
 
     const weekLabel='KW '+isoWeek(weekStart);
     const sundayDate=new Date(weekEnd);
-    const dateRange=weekStart.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})
-      +'–'+sundayDate.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    const dateRange=datumFmt(weekStart, 'tm')
+      +'–'+datumFmt(sundayDate, 'tm');
     const games=mainPotwStats.wins+mainPotwStats.losses;
     const winrate=games?Math.round((mainPotwStats.wins/games)*100):0;
     const eloDelta=Math.round(mainPotwStats.eloDelta);

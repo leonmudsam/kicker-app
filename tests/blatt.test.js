@@ -1051,7 +1051,8 @@ const ok = (c, msg, det) => {
       return !seg.length || seg[0].getBoundingClientRect().width <= 0;
     }).length;
     const out = {zellen, reihen: reihen.length, raus, ohneZuwachs,
-      zeichen: host.querySelectorAll('.nd-wk-z svg').length,
+      // Nur das Zeichen der Stufe, nicht der Pfeil eines Auf- oder Abstiegs.
+      zeichen: host.querySelectorAll('.nd-wk-z > svg').length,
       werte: [...host.querySelectorAll('.nd-wk-d')].map(x => x.textContent.trim()).join(' ')};
     host.remove(); return out;
   });
@@ -1073,6 +1074,53 @@ const ok = (c, msg, det) => {
   ok(tafelBlatt.zeichen === 2,
      'jede Zeile zeigt das Zeichen ihrer Stufe',
      tafelBlatt.zeichen + ' Zeichen');
+
+  // ── Ein Verlust ist zu sehen ───────────────────────────────────────
+  //    Jane zog bei „Der Lauf" mit Leon gleich, und Leon stand im Blatt mit
+  //    „±0": ein Minus wurde als Null gezeigt, und der Balken kannte nur den
+  //    Zuwachs. Gemessen wird am gezeichneten Balken, ob das verlorene Stück
+  //    Breite hat und in der Bahn bleibt, ob die Zahl rot ist und ob die
+  //    Zeile den Grund und den Fall unter die Schwelle nennt.
+  const verlust = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const a = players[0].id, b = players[1].id;
+      const lo = INSIGNIEN[3].min;
+      const je = {};
+      je[a] = {vor:lo + 150, nach:lo + 300};
+      je[b] = {vor:lo + 50, nach:lo - 60};
+      return _ndWirkungBlock(je, _ndWirkungsGruende([
+        {rname:'Der Lauf', halter:[a, b], vorher:[b]}]));
+    })()`);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = markup;
+    document.body.appendChild(host);
+    const r = host.querySelector('.nd-wk.neg');
+    const out = {da: !!r};
+    if(r){
+      const bahn = r.querySelector('.nd-wk-b').getBoundingClientRect();
+      const weg = r.querySelector('.nd-wk-b u');
+      const wr = weg ? weg.getBoundingClientRect() : null;
+      out.weg = wr ? wr.width : 0;
+      out.drin = wr ? (wr.right <= bahn.right + 0.5) : false;
+      out.zahl = r.querySelector('.nd-wk-d').textContent.trim();
+      out.rot = getComputedStyle(r.querySelector('.nd-wk-d')).color;
+      out.fall = (r.querySelector('.nd-wk-n em.r') || {}).textContent || '';
+      out.grund = (r.querySelector('.nd-wk-g.r') || {}).textContent || '';
+      out.pfeil = !!r.querySelector('.nd-wk-ab svg');
+      out.rand = r.getBoundingClientRect().right <= host.getBoundingClientRect().right + 0.5;
+    }
+    host.remove(); return out;
+  });
+  ok(verlust.da && verlust.weg > 0 && verlust.drin && verlust.rand,
+     'ein Verlust steht als eigenes Stück im Balken und bleibt in der Bahn',
+     JSON.stringify(verlust));
+  ok(/^−110$/.test(verlust.zahl || '') && /240, 86, 106/.test(verlust.rot || ''),
+     'und die Zahl trägt ihr Minus in Rot', verlust.zahl + ' ' + verlust.rot);
+  ok(/fällt auf/.test(verlust.fall) && verlust.pfeil && /teilt/.test(verlust.grund),
+     'die Zeile nennt den Fall unter die Schwelle und den geteilten Rekord',
+     verlust.fall + ' · ' + verlust.grund);
 
   // ── Und jede KARTE passt auch ────────────────────────────────────
   //    Dasselbe fuer den Feed selbst: eine Karte, die bei 360 px aus ihrem
@@ -2960,7 +3008,7 @@ const warte=ms=>new Promise(r=>setTimeout(r,ms));
 const funde={};
 const pruef=(wo)=>{
   // Bilder direkt und über <use> verwiesene Gruppen: gezählt wird das Element, das sichtbar zeichnet
-  const ziele=[...document.querySelectorAll('image, use')].filter(e=>{const h=e.getAttribute('href')||'';return e.tagName==='image'?h.startsWith('data:image/svg'):/^#ins/.test(h);});
+  const ziele=[...document.querySelectorAll('image, use')].filter(e=>{const h=e.getAttribute('href')||'';return e.tagName==='image'?(h.startsWith('data:image/svg')||h.startsWith('blob:')):/^#ins/.test(h);});
   ziele.forEach(im=>{let e=im.parentElement;const k=[];while(e&&e!==document.documentElement){const cs=getComputedStyle(e);
     const f=e.getAttribute&&e.getAttribute('filter');
     if(cs.filter&&cs.filter!=='none'&&!/grayscale/.test(cs.filter))k.push((e.className.baseVal??e.className)+':'+cs.filter.slice(0,30));
@@ -2996,8 +3044,8 @@ return JSON.stringify(funde,null,1);
     K("tab='ranking'; render()");
     const bildIn = el => { let n = 0; el.querySelectorAll('use').forEach(u => {
       const z = document.querySelector(u.getAttribute('href'));
-      if(z && z.querySelector('image[href^="data:image/svg"]')) n++; });
-      return n + el.querySelectorAll('image[href^="data:image/svg"]').length; };
+      if(z && z.querySelector('image[href^="data:image/svg"], image[href^="blob:"]')) n++; });
+      return n + el.querySelectorAll('image[href^="data:image/svg"], image[href^="blob:"]').length; };
     const zeile = bildIn(document.querySelector('#app .rrow') || document.body);
     const pid = K("players.find(p=>p.name==='Martin').id");
     K('showPlayer(' + JSON.stringify(pid) + ')'); await w(300);
@@ -3014,6 +3062,22 @@ return JSON.stringify(funde,null,1);
      JSON.stringify(_vektor));
   ok(_vektor.zeile > 0, 'klein bleibt es ein Bild, damit Liste und Feed schnell bleiben',
      JSON.stringify(_vektor));
+  // Und das Bild steht im Dokument unter einer kurzen Adresse. Als Daten-URL
+  // trug jedes Bild rund 190 Kilobyte, und jedes der rund 240 `<use>` im
+  // Feed klonte sie mit: gemessen brauchte das Öffnen des Feeds im Median
+  // 150 ms statt 46. Geprüft wird jedes Bild im Topf nach dem Öffnen.
+  const _bildAdr = await page.evaluate(async () => {
+    const K = window.__k.eval;
+    K('closeSheet(true); openNewsFeed()');
+    await new Promise(r => setTimeout(r, 300));
+    const l = [...document.querySelectorAll('#insDefs image, #sheet image, #app image')]
+      .map(b => (b.getAttribute('href') || '').length);
+    K('closeSheet(true)');
+    return {n: l.length, lang: l.filter(x => x > 300).length, max: Math.max(0, ...l)};
+  });
+  ok(_bildAdr.n > 0 && _bildAdr.lang === 0,
+     'jedes Wappenbild im Dokument steht unter einer kurzen Adresse',
+     _bildAdr.n + ' Bilder, ' + _bildAdr.lang + ' lang, längste ' + _bildAdr.max + ' Zeichen');
 
   await page.setViewportSize({width:430, height:932});
 

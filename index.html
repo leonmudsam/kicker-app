@@ -2744,6 +2744,22 @@
      zweiten Meldung nichts [§C33]. Leiser als die Schlagzeile, aber mit
      Zeichen — sonst waeren es drei graue Zeilen. */
   .nf-sam{border-top:1px solid var(--line);display:flex;flex-direction:column}
+  /* Wer an diesem Moment Prestige verliert: eine leise rote Zeile unter dem
+     Band, Zeichen und Wort links, je Verlierer der Betrag. Rot ist die
+     Richtung [§C25]; die Fläche bleibt dunkel, damit die Karte die der
+     Gewinner bleibt. */
+  .nf-verlust{display:flex;align-items:center;gap:8px;padding:7px 13px;min-width:0;
+    border-top:1px solid rgba(240,86,106,.22);
+    background:linear-gradient(90deg,rgba(240,86,106,.08),transparent 70%)}
+  .nf-verlust-i{flex:0 0 18px;width:18px;height:18px;border-radius:5px;display:grid;
+    place-items:center;color:var(--red);background:rgba(240,86,106,.12)}
+  .nf-verlust-i svg{width:12px;height:12px}
+  .nf-verlust-l{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9px;
+    letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+  .nf-verlust-w{display:flex;flex-wrap:wrap;gap:4px 10px;min-width:0}
+  .nf-verlust-w b{font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap}
+  .nf-verlust-w em{font-style:normal;color:var(--red);font-weight:700}
+  .nf-verlust-w u{text-decoration:none;color:var(--muted);font-weight:500;margin-left:4px}
   .nf-sam-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px;color:var(--ink2);
     min-width:0}
@@ -3408,7 +3424,7 @@
      `prefers-reduced-motion` — dieselbe Regel wie beim Puls von Breaking
      und beim Schimmer der Karte des Tages [§C27]. */
   @keyframes nd-balken{from{opacity:0;transform:scaleY(.2)}to{opacity:1;transform:none}}
-  .nd-chance-b i, .nd-elo-b i, .nd-wk-b i, .nd-wk-b em, .nd-vf-b i, .nd-ins-b i{
+  .nd-chance-b i, .nd-elo-b i, .nd-wk-b i, .nd-wk-b em, .nd-wk-b u, .nd-vf-b i, .nd-ins-b i{
     animation:nd-balken .42s cubic-bezier(.2,.75,.3,1) both}
   /* Und die Bahn läuft von links nach rechts auf, in Spielreihenfolge: so
      liest man den Tag in der Richtung, in der er passiert ist. */
@@ -3424,7 +3440,7 @@
   .nd-bahn i:nth-child(9){animation-delay:.32s}
   .nd-bahn i:nth-child(n+10){animation-delay:.36s}
   @media(prefers-reduced-motion:reduce){
-    .nd-chance-b i, .nd-elo-b i, .nd-wk-b i, .nd-wk-b em, .nd-vf-b i,
+    .nd-chance-b i, .nd-elo-b i, .nd-wk-b i, .nd-wk-b em, .nd-wk-b u, .nd-vf-b i,
     .nd-ins-b i, .nd-bahn i{animation:none}
   }
 
@@ -3487,6 +3503,34 @@
   .nd-wk-d{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:15px;
     color:var(--muted)}
   .nd-wk-d.g{color:var(--gold)}
+  /* ── Ein Verlust steht rot da ─────────────────────────────────────────
+     Ein Minus wurde als „±0" gezeigt, und der Balken kannte nur den
+     Zuwachs: wer einen Rekord teilen musste, sah keinen Unterschied zu dem,
+     den der Tag nicht berührt hat. Rot ist die Richtung [§C25]: die Zahl,
+     das verlorene Stück im Balken (gestreift, damit es auch ohne Farbe als
+     „weg" lesbar ist), die Marke „fällt auf …" und der Pfeil am Zeichen. */
+  .nd-wk-d.r{color:var(--red)}
+  .nd-wk.neg{border-color:rgba(240,86,106,.28);
+    background:linear-gradient(90deg,rgba(240,86,106,.07),transparent 60%),var(--surface)}
+  .nd-wk-b u{display:block;height:100%;text-decoration:none;
+    background:repeating-linear-gradient(135deg,rgba(240,86,106,.85) 0 3px,rgba(240,86,106,.38) 3px 6px)}
+  .nd-wk-n em.r{color:var(--red)}
+  .nd-wk-z{position:relative}
+  .nd-wk-ab, .nd-wk-auf{position:absolute;right:-3px;bottom:-2px;width:18px;height:18px;
+    border-radius:50%;display:grid;place-items:center;font-style:normal;
+    border:1.5px solid var(--surface)}
+  .nd-wk-ab{background:var(--red);color:#fff}
+  .nd-wk-auf{background:var(--gold);color:#1a1405}
+  .nd-wk-ab svg, .nd-wk-auf svg{width:11px;height:11px;--strich:2}
+  /* Warum: welcher Rekord geholt, geteilt oder verloren wurde. */
+  .nd-wk-gs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  .nd-wk-g{display:inline-flex;align-items:baseline;gap:4px;max-width:100%;
+    padding:2px 7px;border-radius:999px;font-size:10px;line-height:1.4;
+    color:var(--ink2);background:var(--surface2);border:1px solid var(--line);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nd-wk-g b{font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
+  .nd-wk-g.r{color:var(--red);border-color:rgba(240,86,106,.3);background:rgba(240,86,106,.07)}
+  .nd-wk-g.g{border-color:rgba(247,207,74,.28)}
   /* ── Die Siegchance als Skala ───────────────────────────────────────
      „57 %" ist eine Zahl, die man erst einordnen muss. Der Balken zeigt, wo
      die Partie zwischen Sensation und Pflichtsieg lag; die drei Striche sind
@@ -4924,7 +4968,7 @@
   /* Nur die getragene Stufe steht in der Rangfarbe [§C25]. */
   .lb-k.jetzt .lb-k-n{color:var(--ak)}
   .lb-k-p{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);
-    height:12px}
+    height:25px;line-height:12.5px;text-align:center;white-space:nowrap}
 
   /* Die drei Grade einer Stufe. Sie sind das, was zwischen zwei Schwellen
      passiert — ohne sie stünde das Zeichen hunderte Punkte lang still. */
@@ -5050,18 +5094,31 @@
   .lb-regeln .common b{color:var(--acid)}
   .lb-regelblatt .pp-sec-title{margin-top:18px}
   .lb-regel-liste{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
-  .lb-regel-z{display:grid;grid-template-columns:minmax(0,1fr) auto;
+  /* Die rechte Spalte hat eine feste Breite: mit `auto` war sie je Zeile so
+     breit wie ihr längster Text, und die Startwerte standen untereinander
+     versetzt — die Liste ist nach ihnen geordnet, also müssen sie fluchten. */
+  .lb-regel-z{display:grid;grid-template-columns:minmax(0,1fr) 96px;
     gap:3px 12px;padding:11px 12px;background:var(--surface)}
   .lb-regel-z+.lb-regel-z{border-top:1px solid var(--line)}
   .lb-regel-z>span{grid-row:1/3;display:flex;flex-direction:column;gap:2px;min-width:0}
   .lb-regel-z b{font-size:12px;color:var(--ink)}
   .lb-regel-z em{font-size:9.5px;line-height:1.35;font-style:normal;color:var(--muted)}
-  .lb-regel-z strong{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink2)}
+  .lb-regel-z strong{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink2);
+    text-align:right}
   .lb-regel-z strong i{font-family:'Sometype Mono',monospace;font-size:8px;
     text-transform:uppercase;font-style:normal;color:var(--muted)}
   .lb-regel-z small{font-family:'Sometype Mono',monospace;font-size:9px;
     text-align:right;color:var(--muted)}
   .lb-regel-note{margin-top:10px;line-height:1.5}
+  /* Der Startwert als Balken gegen den höchsten: die Gewichtung der Liste
+     auf einen Blick, in der Farbe der Klasse wie die Karten darüber. */
+  .lb-regel-z{position:relative}
+  .lb-regel-b{grid-column:1/-1;display:block;height:3px;border-radius:2px;
+    background:var(--line);overflow:hidden;margin-top:5px}
+  .lb-regel-b::before{content:'';display:block;height:100%;width:var(--w);
+    border-radius:inherit;background:var(--muted)}
+  .lb-regel-z[data-kl="legendary"] .lb-regel-b::before{background:var(--gold)}
+  .lb-regel-z[data-kl="rare"] .lb-regel-b::before{background:var(--purple)}
 
   .lb-q{display:flex;align-items:baseline;gap:10px;padding:8px 13px;
     background:var(--surface);border-top:1px solid var(--line)}
@@ -5699,7 +5756,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 // Bei jedem Deploy diesen String bumpen (Datum + laufender Zähler).
 // Der Hintergrund-Check fetched die index.html mit Cache-Bust und vergleicht.
 // Bei neuerer Version: Banner oben → Force-Reload bricht iOS-PWA-/Browser-Cache.
-const BUILD_VERSION='2026.09.30.8f53a258';
+const BUILD_VERSION='2026.10.01.8a507c3f';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -6130,7 +6187,7 @@ function awPeriodLabel(){
     if(awWeekStart){
       const start=new Date(awWeekStart); start.setHours(0,0,0,0);
       const end=new Date(start); end.setDate(end.getDate()+6);
-      return 'KW '+isoWeek(start)+' · '+start.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+'–'+end.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+      return 'KW '+isoWeek(start)+' · '+datumFmt(start, 'tm')+'–'+datumFmt(end, 'tm');
     }
     return periodLabel('week');
   }
@@ -6282,7 +6339,7 @@ function seasonEnd(seasonId){
 function seasonLabel(seasonId){
   if(!seasonId) return '';
   const [y,m]=seasonId.split('-').map(Number);
-  return new Date(y,m-1).toLocaleDateString('de-DE',{month:'long',year:'numeric'});
+  return _seasonLabelOf(y, m - 1);
 }
 function seasonDaysLeft(){
   const end=seasonEnd();const now=new Date();
@@ -8719,8 +8776,8 @@ function showPotwRecap(opts){
 
     const weekLabel='KW '+isoWeek(weekStart);
     const sundayDate=new Date(weekEnd);
-    const dateRange=weekStart.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})
-      +'–'+sundayDate.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    const dateRange=datumFmt(weekStart, 'tm')
+      +'–'+datumFmt(sundayDate, 'tm');
     const games=mainPotwStats.wins+mainPotwStats.losses;
     const winrate=games?Math.round((mainPotwStats.wins/games)*100):0;
     const eloDelta=Math.round(mainPotwStats.eloDelta);
@@ -9932,7 +9989,7 @@ function periodLabel(period, seasonId){
   const now=new Date();
   if(period==='season'){ return seasonLabel(seasonId||currentSeason().id); }
   if(period==='week'){ const s=periodStart('week');
-    return 'KW '+isoWeek(now)+' · ab '+s.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}); }
+    return 'KW '+isoWeek(now)+' · ab '+datumFmt(s, 'tm'); }
   if(period==='day'){ const s=periodStart('day');
     return s.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'}); }
   return 'Gesamte Liga';
@@ -17659,7 +17716,7 @@ function showBadgePopover(badgeId, playerId){
       const shown = hits.slice(0, maxShow);
       const rowsHtml = shown.map(m => {
         const date = new Date(m.created_at);
-        const dateStr = date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+        const dateStr = datumFmt(date, 'tmj');
         const onA = (playerId===m.a1||playerId===m.a2);
         const myGf = onA?m.score_a:m.score_b;
         const myGa = onA?m.score_b:m.score_a;
@@ -19140,6 +19197,18 @@ function dateStr(ts){
   }
   return v;
 }
+// ── Ein Datum, ein Formatierer ──────────────────────────────────────
+// `toLocaleDateString` mit Optionen baut bei jedem Aufruf einen neuen
+// Formatierer. Im Feed läuft das je Karte mehrmals (Uhrzeit, Tageskopf,
+// Datum im Satz): gemessen 16 ms für die Uhrzeit allein beim Öffnen. Dieselbe
+// Ausgabe, einmal gebaut.
+const _FMT_ARTEN = {uhr:{hour:'2-digit', minute:'2-digit'}, tm:{day:'2-digit', month:'2-digit'},
+  tmj:{day:'2-digit', month:'2-digit', year:'2-digit'}, wt:{weekday:'long'}};
+const _FMT = {};
+function datumFmt(when, art){
+  const f = _FMT[art] || (_FMT[art] = new Intl.DateTimeFormat('de-DE', _FMT_ARTEN[art]));
+  return f.format(when instanceof Date ? when : new Date(when));
+}
 // ── Eine Dezimalzahl trägt hier ein Komma ───────────────────────────
 // Die Oberfläche schreibt „6,9 Gegentore", die Fun Facts schrieben „6.9" —
 // acht Stellen mit `toFixed(1)` und ein Punkt mitten im deutschen Satz.
@@ -19850,7 +19919,7 @@ function _storyTagGrenzen(ms){
 
 // ─── Was eine Änderung wirklich gebracht hat ─────────────────────────
 // Nie den rohen Grundwert als erhaltene Punkte zeigen. Ein zehnter Rekord
-// gibt nicht 100 Prestige: er wird durch die Zahl seiner Halter geteilt,
+// gibt nicht 150 Prestige: er wird durch die Zahl seiner Halter geteilt,
 // landet auf einem Rang im Rekordstapel und wird dort durch die Wurzel
 // seiner Staffel geteilt — und weil er die anderen Rekorde mit verschiebt,
 // ist der Nettozuwachs am Ende noch eine dritte Zahl. Gemessen stand auf
@@ -20636,7 +20705,7 @@ function _buildStories(){
         // zweimal im Feed. Die Namen stehen schon in der Schlagzeile; hier
         // steht, seit wann und wie oft.
         desc: `Seit dem `
-            + `${new Date(t.firstT || t.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
+            + `${datumFmt(t.firstT || t.when, 'tm')} `
             + `gehen ${_zahlwortDe(t.streak)} gemeinsame Spiele in Folge verloren.`,
         when: t.when,
         prio: STORY_PRIO.team_loss_streak + (t.streak >= 7 ? 4 : 0),
@@ -20764,8 +20833,7 @@ function _buildStories(){
         // es seit jeher so.
         desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück.`
             // Kein Punkt dahinter: „25.08." traegt seinen eigenen schon.
-            + (c.seit ? ` Der letzte Sieg liegt vor dem ${new Date(c.seit)
-                .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}` : ''),
+            + (c.seit ? ` Der letzte Sieg liegt vor dem ${datumFmt(c.seit, 'tm')}` : ''),
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
@@ -22116,7 +22184,7 @@ function _buildStories(){
   const _tafelWirkung = pid => _prestigeWirkung(pid, _tafelVor, _tafelNach);
   // Was ein Rekord der Laufbahn WIRKLICH bringt [§C34]. Gespeichert werden
   // die beiden Stände und die Rechnung der Quelle, nie der Grundwert: ein
-  // zehnter Rekord gibt nicht 100 Prestige, er wird durch die Zahl seiner
+  // zehnter Rekord gibt nicht 150 Prestige, er wird durch die Zahl seiner
   // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
   // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
   // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.
@@ -22127,9 +22195,17 @@ function _buildStories(){
   // Prestige fuer die Laufbahn" nennt — und die Summe in der Zahlenreihe
   // stand auf +196, dem Zuwachs eines einzigen Spielers. Wer genannt wird,
   // kommt vor.
+  // Die Genannten zuerst, dahinter die bisherigen Halter, die nicht mehr
+  // allein halten. Vier statt drei, damit ein Vorgaenger neben drei neuen
+  // Haltern noch Platz hat.
+  const _mitVorgaengern = (wer, vorher) => {
+    const o = (wer || []).slice(0, 3);
+    (vorher || []).forEach(pid => { if(o.indexOf(pid) < 0) o.push(pid); });
+    return o.slice(0, 4);
+  };
   const _tafelLaufbahn = pids => {
     const o = {};
-    (pids || []).slice(0, 3).forEach(pid => {
+    (pids || []).slice(0, 4).forEach(pid => {
       const w = _tafelWirkung(pid);
       o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
                 stufeVor:w.stufeVor, stufeNach:w.stufeNach};
@@ -22138,7 +22214,7 @@ function _buildStories(){
   };
   const _rekordWirkung = (pids, rid) => {
     const o = {};
-    (pids || []).slice(0, 3).forEach(pid => {
+    (pids || []).slice(0, 4).forEach(pid => {
       const w = _tafelWirkung(pid);
       const q = w.quellen['rekord:' + rid] || null;
       o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
@@ -22297,6 +22373,26 @@ function _buildStories(){
           // Meldung gibt es nur, wenn der Wert besser geworden ist [§C33].
           desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
         }
+        // ── Wer verliert, steht im Satz ───────────────────────────────
+        // Jane zog bei „Der Lauf" mit Leon gleich, und die Karte erzaehlte
+        // nur von Jane: dass Leon den Rekord jetzt teilt und dabei Prestige
+        // verliert, stand nirgends. Genannt wird der Spieltag als Ganzes —
+        // beide Staende gehoeren ihm [§11.0e] —, und faellt das Zeichen unter
+        // eine Schwelle, steht auch das da. Die Zeile im Buendel bleibt ohne
+        // diesen Satz: dort steht der Verlust einmal in der eigenen Zeile der
+        // Karte und nicht in jeder Meldung (`_newsVerlustBand`).
+        const _verlierer = (fall === 'dazu'
+            ? altPids.filter(id => n.pids.indexOf(id) >= 0)
+            : fall === 'uebernommen' ? altPids.filter(id => n.pids.indexOf(id) < 0) : [])
+          .map(pid => ({pid, w:_tafelWirkung(pid)})).filter(x => x.w.delta < 0).slice(0, 2);
+        if(_verlierer.length){
+          if(!zeileText) zeileText = desc;
+          desc += _verlierer.map(x => {
+            const sv = insigniumStufeVon(x.w.vor), sn = insigniumStufeVon(x.w.nach);
+            return ` Für ${nameOf(x.pid)} heißt der Spieltag ${-x.w.delta} Prestige weniger`
+              + (sn < sv ? `, und das Zeichen fällt auf den ${INSIGNIEN[sn].name}.` : '.');
+          }).join('');
+        }
         stories.push({
           // ── Die ID ist das Ereignis, nicht der Stand des Augenblicks ──
           // Sie trug den angezeigten Wert und die sortierten Halter. Beides
@@ -22368,7 +22464,10 @@ function _buildStories(){
                     // zweite Rechnung im Blatt: sie gilt fuer DIESEN
                     // Tagesabschluss, und morgen sagt dieselbe Rechnung eine
                     // andere Zahl [§C34].
-                    laufbahn:_rekordWirkung(wer, def.id), art:def.art,
+                    // Wer den Rekord abgeben oder teilen musste, steht in der
+                    // Wirkung mit: Jane zog bei „Der Lauf" mit Leon gleich,
+                    // und Leons Minus stand nirgends [§C25].
+                    laufbahn:_rekordWirkung(_mitVorgaengern(wer, a && a.pids), def.id), art:def.art,
                     kammerLabel:_kammer(def.kind)}
         });
       });
@@ -22721,7 +22820,12 @@ function _buildStories(){
                     // erzaehlen. Wer schon Halter war, hat an diesem Tag
                     // nichts getan [§C33].
                     playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
-                    laufbahn:_tafelLaufbahn(m.wer),
+                    // Alle neuen Halter und der Name: daran liest das Blatt,
+                    // wer die Chronik geteilt oder verloren hat.
+                    alle:m.n.pids.slice(), chronName:m.t.name,
+                    // Wer sie abgeben oder teilen musste, steht in der
+                    // Wirkung mit — sein Minus gehoert zu diesem Tag.
+                    laufbahn:_tafelLaufbahn(_mitVorgaengern(m.wer, m.a && m.a.pids)),
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
                     zeileText:m.zeileText,
                     chronArt:m.t.kunst, aus:m.t.aus,
@@ -22804,8 +22908,7 @@ function _buildStories(){
             ic: 'award',
             title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`
                  + (_frueher ? ' wieder' : ''),
-            desc: (_frueher ? `Zuletzt stand die Stufe am ${new Date(_frueher + 'T12:00:00')
-                    .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}. ` : '')
+            desc: (_frueher ? `Zuletzt stand die Stufe am ${datumFmt(_frueher + 'T12:00:00', 'tm')}. ` : '')
                 + `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
                 + `${stand.teile.monat} aus Monatschroniken und ${stand.teile.rekord} aus Rekorden.`
                 + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
@@ -25958,6 +26061,14 @@ function _consolidateStories(list){
                                          // sie kommt — das Blatt zeigt sie
                                          // deshalb EINMAL je Spieler.
                                         lb: (t.dataRef||{}).laufbahn || null,
+                                         // Halter vor und nach dem Tag: daran
+                                         // liest das Blatt, wer einen Rekord
+                                         // geteilt oder verloren hat.
+                                        halter: Array.isArray((t.dataRef||{}).halter)
+                                                ? t.dataRef.halter : ((t.dataRef||{}).alle || []),
+                                        vorher: (t.dataRef||{}).vorher || [],
+                                        rname: (t.dataRef||{}).rekordName
+                                               || (t.dataRef||{}).chronName || '',
                                          // Ein Spieler zeigt je Monat nur EINE
                                          // Chronik [§C32]. Auch in einer großen
                                          // Tafel muss sichtbar bleiben, welche
@@ -26272,6 +26383,12 @@ function _consolidateStories(list){
 
 // Wird in loadAll() aufgerufen. Generator → DB-Upsert → DB-Read → Cache.
 // Vollständig in try/catch gewrappt — Failures degradieren auf Fallback.
+function _leerlauf(ms){
+  return new Promise(fertig => {
+    if(typeof requestIdleCallback === 'function') requestIdleCallback(() => fertig(), {timeout: ms});
+    else setTimeout(fertig, 0);
+  });
+}
 async function syncStoriesViaDb(){
   // ── Erst den Bestand kennen, dann ziehen ──────────────────────────
   // Der Generator lief zuerst, und der Upload danach: die Ziehung des
@@ -26290,6 +26407,13 @@ async function syncStoriesViaDb(){
       if(Array.isArray(vorher)) _cache._stories = vorher;
     } catch(e){}
   }
+  // ── Erst zeichnen, dann rechnen ───────────────────────────────────
+  // Der Generator kostet kalt rund 370 ms am Stück. `loadAll` ruft diese
+  // Funktion direkt nach `render()`, und ohne Pause dazwischen lief beides in
+  // derselben Aufgabe: die neue Rangliste stand erst nach dem Generator auf
+  // dem Bildschirm, und ein Tippen in dieser Zeit blieb liegen. Gewartet wird
+  // auf einen ruhigen Moment, höchstens anderthalb Sekunden.
+  await _leerlauf(1500);
   let generated = [];
   try { generated = _buildStories() || []; }
   catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] generator failed', e); }
@@ -26783,10 +26907,10 @@ function _newsWhenLabel(when){
   const todayKey = tagKey(now);
   const yest = tagKey(now.getTime() - 86400000);
   const dKey = tagKey(d);
-  const hhmm = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const hhmm = datumFmt(d, 'uhr');
   if(dKey === todayKey) return 'Heute, '+hhmm;
   if(dKey === yest) return 'Gestern, '+hhmm;
-  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+', '+hhmm;
+  return datumFmt(d, 'tm')+', '+hhmm;
 }
 
 // Der Kalendertag einer Story, als Überschrift für eine Feed-Gruppe.
@@ -26799,13 +26923,13 @@ function _newsDayLabel(when){
   const d = new Date(when), now = new Date();
   if(tagKey(d) === tagKey(now)) return 'HEUTE';
   if(tagKey(d) === tagKey(now.getTime() - 86400000)) return 'GESTERN';
-  return d.toLocaleDateString('de-DE',{weekday:'long'}).toUpperCase();
+  return datumFmt(d, 'wt').toUpperCase();
 }
 // Das Datum unter dem Wochentag. Bei „Heute" und „Gestern" steht es trotzdem
 // da: sonst weiß man beim Zurückblättern nicht, wo man ist.
 function _newsDayDate(when){
   const d = new Date(when);
-  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+  return datumFmt(d, 'tmj');
 }
 
 // ─── §11.6 — Voller Feed (im Sheet) mit Filter-Pills ─────────────────
@@ -26912,7 +27036,7 @@ function _newsGesichtHtml(s){
 // Bauformen: das Ergebnisband, der große Wert, die Leiter, das Zahlenband.
 
 function _newsUhrzeit(when){
-  return new Date(when).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  return datumFmt(when, 'uhr');
 }
 
 // Rot ist eine Richtung, keine Rubrik [§C25]. Karte und Detailblatt nutzen
@@ -27196,6 +27320,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
     ${sammelBand}
+    ${sorte === 'tafel' ? _newsVerlustBand(s) : ''}
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}
@@ -27420,6 +27545,35 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     + `</div>`;
 }
 
+// ── Wer verliert, steht auf der Karte ─────────────────────────────────
+// Ein Rekord, den jemand übernimmt oder mit einem anderen teilt, kostet den
+// bisherigen Halter Prestige, und davon stand auf der Karte nichts: die
+// Schlagzeile feiert die Neuen, und wer seinen Anteil abgeben musste, erfuhr
+// es erst im Blatt — oder gar nicht, solange es dort „±0" hieß. Die Zeile
+// nennt je Verlierer den Verlust und, wenn er eine Schwelle unterschreitet,
+// die Stufe, auf die er fällt. Rot ist die Richtung [§C25]; die Karte bleibt
+// die der Gewinner, deshalb steht der Verlust unter dem Band und nicht im
+// Kopf. Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
+function _newsVerlustBand(s){
+  const d = (s && s.dataRef) || {};
+  const je = {};
+  const nimm = lb => { if(lb) Object.keys(lb).forEach(pid => { if(!je[pid]) je[pid] = lb[pid]; }); };
+  if(d.type === 'sammel') (d.teile || []).forEach(t => nimm(t.lb));
+  else nimm(d.laufbahn);
+  const pm = pmap();
+  const weg = Object.keys(je).filter(pid => pm[pid]).map(pid => {
+    const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
+    return {pid, d: nach - vor, ab: insigniumStufeVon(nach) < insigniumStufeVon(vor)
+      ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
+  }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
+  if(!weg.length) return '';
+  return `<div class="nf-verlust"><i class="nf-verlust-i">${svgI('trendDown')}</i>`
+    + `<span class="nf-verlust-l">Verliert</span><span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
+      `<b>${esc(pm[x.pid].name)} <em class="num">−${-x.d}</em>${x.ab
+        ? `<u>auf ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      ? `<b>+${weg.length - 3}</b>` : ''}</span></div>`;
+}
+
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie
 // nicht wiederholen muss.
 function _newsSpielZahlen(s){
@@ -27583,7 +27737,7 @@ function _newsTorleiste(m, hoch, tief){
   });
   const reihe = (k, cls) => Array.from({length:10}, (_, i) => `<i${i < k ? ` class="${cls}"` : ''}></i>`).join('');
   const satz = zuletzt
-    ? `So deutlich zuletzt am ${new Date(mts(zuletzt)).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}`
+    ? `So deutlich zuletzt am ${datumFmt(mts(zuletzt), 'tm')}`
     : 'So deutlich noch nie in der Liga';
   return `<div class="nf-tor"><div class="nf-tor-r"><span class="w">${reihe(hoch, 'w')}</span>`
     + `<span class="v">${reihe(tief, 'v')}</span></div><span class="nf-tor-s">${esc(satz)}</span></div>`;
@@ -27850,7 +28004,7 @@ function _newsFadenHtml(faden, stories, nach){
   const ziel = (stories || []).find(x => x.id === (nach ? faden.von : faden.ziel));
   const art = NEWS_FADEN_ART[faden.art];
   if(!ziel || !art) return '';
-  const tag = new Date(ziel.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+  const tag = datumFmt(ziel.when, 'tm');
   return `<button class="nf-faden" type="button" data-ziel="${esc(ziel.id)}">`
     // Tag vor Titel: der Titel kürzt sich, und in einer Zeile ging dabei das
     // Datum verloren — gerade das sagt, wie weit die Geschichte zurückreicht.
@@ -28356,7 +28510,7 @@ function _newsTagSpannung(s){
 // ein Fun Fact oder eine Zufallsstatistik groß im Bild, die mit diesem Tag
 // nichts zu tun haben und gestern genauso dagestanden hätten.
 // ── Wer kann das Band tragen? [§C33] ────────────────────────────────
-// Drei Sorten nicht, und jede aus ihrem eigenen Grund.
+// Vier Sorten nicht, und jede aus ihrem eigenen Grund.
 // **Breaking** nicht: die Karte ist im Feed ohnehin die lauteste — voller
 // Rahmen, pulsierender Balken, Schein hinter der ganzen Flaeche. Das Band
 // darueber sagt dasselbe ein zweites Mal [§C27] und nimmt es genau der
@@ -28366,6 +28520,10 @@ function _newsTagSpannung(s){
 // das Band an jedem ruhigen Tag von selbst — dann zeichnet es nichts aus.
 // **Ein Rueckblick** nicht: Woche, Monat und Saison erzaehlen von einem
 // Zeitraum, das Band gehoert dem TAG.
+// **Eine Karte mit negativer Richtung** nicht: das Band ist golden, und Gold
+// gehoert dem Titel [§C25]. Gemessen trug „Anton: Die Talfahrt" — fuenf
+// Niederlagen in Folge, eine Schande — an einem Spieltag das Band und damit
+// den goldenen Auswahlschimmer, als waere die Pleite die Geschichte des Tages.
 // Die Liste steht hier und nicht im Aufruf, weil `tests/ambient` und
 // `tests/blatt` dieselbe Frage stellen und sie sich vorher jeder selbst
 // beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
@@ -28374,6 +28532,7 @@ const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
   'season_recap']);
 function _newsTagKarteWuerdig(st){
   if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
+  if(_newsIstNegativ(st)) return false;
   return !_isBreaking(st);
 }
 function _newsTagKarte(items, dayKey){
@@ -28819,7 +28978,7 @@ function _newsBlattErgebnis(matchId){
   const aWin = m.winner === 'A';
   const dt = new Date(m.created_at).toLocaleDateString('de-DE',
     {weekday:'long', day:'2-digit', month:'2-digit'});
-  const uhr = new Date(m.created_at).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const uhr = datumFmt(m.created_at, 'uhr');
   return `<div class="nd-erg">
     <div class="nd-erg-z">${esc(dt)} um ${esc(uhr)}</div>
     <div class="nd-erg-r">
@@ -29098,22 +29257,38 @@ function _ndTagesbahn(pid, liste){
 //
 // Gerechnet wird mit den GESPEICHERTEN Staenden und nicht mit `prestigeOf`:
 // eine Karte von vorletzter Woche erzaehlt vom Stand von damals [§C31].
-function _ndWirkungBlock(je){
+//
+// ── Und sie zeigt, was verloren ging ──────────────────────────────────
+// Jane zog bei „Der Lauf" mit Leon gleich, und Leon teilt den Rekord
+// seitdem: sein Anteil halbiert sich, sein Prestige sinkt. Im Blatt stand
+// bei ihm „±0" — ein Minus wurde als Null gezeigt, und der Balken kannte nur
+// den Zuwachs. Ein Verlust steht jetzt rot da [§C25]: die Zahl mit Minus,
+// das verlorene Stück als eigener Abschnitt im Balken, und fällt jemand
+// unter eine Schwelle, sagt die Zeile „fällt auf …". Darunter steht, warum:
+// welcher Rekord geteilt, verloren oder geholt wurde (`gruende`).
+//
+// Die Stufe kommt aus den Punkten und nicht aus der gespeicherten Zahl
+// (`insigniumStufeVon`): die gespeicherte gehörte einer älteren Leiter.
+function _ndWirkungBlock(je, gruende){
   const ids = Object.keys(je || {});
   if(!ids.length) return '';
   const pm = pmap();
-  // Der groesste Zuwachs zuerst: er ist das, was den Tag ausmacht.
-  return ids.sort((a, b) => (je[b].nach - je[b].vor) - (je[a].nach - je[a].vor))
+  const hat = typeof INSIGNIEN !== 'undefined' && typeof insigniumStufeVon === 'function';
+  const dl = pid => Math.round(Number(je[pid].nach) || 0) - Math.round(Number(je[pid].vor) || 0);
+  // Der groesste Zuwachs zuerst: er ist das, was den Tag ausmacht. Wer
+  // verloren hat, steht darunter.
+  return ids.sort((a, b) => dl(b) - dl(a))
     .map(pid => {
       const w = je[pid];
       const nach = Math.round(Number(w.nach) || 0);
       const vor = Math.round(Number(w.vor) || 0);
       const delta = nach - vor;
-      const si = (w.stufeNach != null && typeof INSIGNIEN !== 'undefined'
-                  && INSIGNIEN[w.stufeNach]) ? w.stufeNach : null;
-      const ins = si != null ? INSIGNIEN[si] : null;
-      const next = (si != null && typeof INSIGNIEN !== 'undefined') ? INSIGNIEN[si + 1] : null;
-      const auf = (w.stufeNach != null && w.stufeVor != null && w.stufeNach > w.stufeVor);
+      const sn = hat ? insigniumStufeVon(nach) : null;
+      const sv = hat ? insigniumStufeVon(vor) : null;
+      const ins = sn != null ? INSIGNIEN[sn] : null;
+      const next = sn != null ? INSIGNIEN[sn + 1] : null;
+      const auf = sn != null && sn > sv;
+      const ab = sn != null && sn < sv;
       let zeichen = '';
       try {
         if(ins && typeof insigniumStufeSvg === 'function')
@@ -29124,29 +29299,72 @@ function _ndWirkungBlock(je){
       let balken = '', rest = '';
       if(ins && next){
         const spanne = Math.max(1, next.min - ins.min);
-        const bis = Math.max(0, Math.min(100, (nach - ins.min) / spanne * 100));
-        // Beim Stufenaufstieg liegt der alte Stand unter dieser Schwelle: dann
-        // ist die ganze Strecke der Zuwachs.
-        const abVor = auf ? 0 : Math.max(0, Math.min(bis, (vor - ins.min) / spanne * 100));
-        balken = `<span class="nd-wk-b"><i style="width:${abVor.toFixed(1)}%"></i>`
-          + `<em style="width:${Math.max(0, bis - abVor).toFixed(1)}%"></em></span>`;
-        rest = `${nach} Prestige · noch ${Math.max(0, next.min - nach)} bis zum ${esc(next.name)}`;
+        const lage = x => Math.max(0, Math.min(100, (x - ins.min) / spanne * 100));
+        const bis = lage(nach);
+        // Beim Aufstieg liegt der alte Stand unter dieser Schwelle, beim Fall
+        // darüber: dann ist die ganze Strecke Zuwachs bzw. Verlust.
+        const war = auf ? 0 : ab ? 100 : lage(vor);
+        const fest = Math.min(bis, war);
+        balken = `<span class="nd-wk-b"><i style="width:${fest.toFixed(1)}%"></i>`
+          + (delta >= 0
+              ? `<em style="width:${Math.max(0, bis - fest).toFixed(1)}%"></em>`
+              : `<u style="width:${Math.max(0, war - fest).toFixed(1)}%"></u>`)
+          + `</span>`;
+        rest = ab
+          ? `${nach} Prestige · noch ${Math.max(0, INSIGNIEN[sv].min - nach)} zurück zum ${esc(INSIGNIEN[sv].name)}`
+          : `${nach} Prestige · noch ${Math.max(0, next.min - nach)} bis zum ${esc(next.name)}`;
       } else if(ins){
         rest = `${nach} Prestige · die letzte Stufe`;
       } else {
         rest = `${nach} Prestige`;
       }
-      return `<div class="nd-wk" data-pid="${esc(pid)}" style="cursor:pointer">
-        ${zeichen ? `<span class="nd-wk-z">${zeichen}</span>` : ''}
+      const marke = !ins ? ''
+        : auf ? `<em>${esc('neu: ' + ins.name)}</em>`
+        : ab ? `<em class="r">${esc('fällt auf ' + ins.name)}</em>`
+        : `<em>${esc(ins.name)}</em>`;
+      const gr = ((gruende && gruende[pid]) || []);
+      const chips = gr.slice(0, 3).map(g => `<span class="nd-wk-g ${g.neg ? 'r' : 'g'}">${
+        esc(g.verb)} <b>${esc(g.name)}</b></span>`).join('')
+        + (gr.length > 3 ? `<span class="nd-wk-g">+${gr.length - 3}</span>` : '');
+      const dz = delta > 0 ? '+' + delta : delta < 0 ? '−' + Math.abs(delta) : '±0';
+      return `<div class="nd-wk${delta < 0 ? ' neg' : ''}${ab ? ' fall' : ''}" data-pid="${esc(pid)}" style="cursor:pointer">
+        ${zeichen ? `<span class="nd-wk-z">${zeichen}${ab
+          ? `<i class="nd-wk-ab">${svgI('trendDown')}</i>` : auf
+          ? `<i class="nd-wk-auf">${svgI('trendUp')}</i>` : ''}</span>` : ''}
         <span class="nd-wk-t">
-          <span class="nd-wk-n"><b>${esc((pm[pid] && pm[pid].name) || '?')}</b>${ins
-            ? `<em>${esc(auf ? 'neu: ' + ins.name : ins.name)}</em>` : ''}</span>
+          <span class="nd-wk-n"><b>${esc((pm[pid] && pm[pid].name) || '?')}</b>${marke}</span>
           ${balken}
           <span class="nd-wk-r">${rest}</span>
+          ${chips ? `<span class="nd-wk-gs">${chips}</span>` : ''}
         </span>
-        <span class="nd-wk-d ${delta > 0 ? 'g' : ''}">${delta > 0 ? '+' + delta : '±0'}</span>
+        <span class="nd-wk-d ${delta > 0 ? 'g' : delta < 0 ? 'r' : ''}">${dz}</span>
       </div>`;
     }).join('');
+}
+
+// Warum sich die Laufbahn eines Spielers an diesem Tag bewegt hat, aus den
+// Zeilen eines Tafel-Moments: wer einen Rekord oder eine Chronik geholt,
+// geteilt oder verloren hat. Die Zeilen tragen dafür die Halter vor und nach
+// dem Tag; ohne sie (ältere Läufe) bleibt die Liste leer.
+function _ndWirkungsGruende(teile){
+  const out = {};
+  const dazu = (pid, g) => { (out[pid] = out[pid] || []).push(g); };
+  (teile || []).forEach(t => {
+    const nach = t.halter || [], vor = t.vorher || [];
+    const name = t.rname || '';
+    if(!name || (!nach.length && !vor.length)) return;
+    nach.forEach(pid => {
+      if(vor.indexOf(pid) < 0) dazu(pid, {verb: vor.length ? 'übernimmt' : 'holt', name, neg:false});
+      else if(nach.length < vor.length) dazu(pid, {verb:'hält allein', name, neg:false});
+    });
+    vor.forEach(pid => {
+      if(nach.indexOf(pid) < 0) dazu(pid, {verb:'verliert', name, neg:true});
+      else if(nach.length > vor.length) dazu(pid, {verb:'teilt', name, neg:true});
+    });
+  });
+  // Ein Verlust zuerst: er erklärt das Minus daneben.
+  Object.keys(out).forEach(pid => out[pid].sort((a, b) => b.neg - a.neg));
+  return out;
 }
 
 // ── Die Siegchance als Skala ─────────────────────────────────────────
@@ -29663,7 +29881,7 @@ function _newsDetailMitte(s){
           const ids = Object.keys(je);
           if(!ids.length) return '';
           return `<div class="nd-section">Wirkung auf die Laufbahn</div>`
-            + _ndWirkungBlock(je);
+            + _ndWirkungBlock(je, _ndWirkungsGruende(teile));
         })();
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand
@@ -29685,18 +29903,22 @@ function _newsDetailMitte(s){
           const aus = teile.filter(t => typ(t) === 'rekord_gesteigert').length;
           const chr = teile.filter(t => typ(t).indexOf('chronik_') === 0).length;
           const insz = teile.filter(t => typ(t) === 'insignium_stufe').length;
-          let plus = 0;
+          let plus = 0, minus = 0;
           const gez = {};
           teile.forEach(t => { const lb = t.lb; if(!lb) return;
             Object.keys(lb).forEach(pid => { if(gez[pid]) return; gez[pid] = 1;
-              plus += Math.max(0, Math.round(Number(lb[pid].nach) || 0)
-                                 - Math.round(Number(lb[pid].vor) || 0)); }); });
+              const dd = Math.round(Number(lb[pid].nach) || 0) - Math.round(Number(lb[pid].vor) || 0);
+              if(dd > 0) plus += dd; else minus -= dd; }); });
           const z = [
             wech ? {v: wech, l: wech === 1 ? 'Bestmarke' : 'Bestmarken', ton:'gold'} : null,
             aus ? {v: aus, l: aus === 1 ? 'Ausbau' : 'Ausbauten'} : null,
             chr ? {v: chr, l: chr === 1 ? 'Chronik' : 'Chroniken'} : null,
             insz ? {v: insz, l: insz === 1 ? 'Insignium' : 'Insignien'} : null,
-            plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null
+            plus ? {v: '+' + plus, l:'Prestige', ton:'gold'} : null,
+            // Was andere dabei verloren haben, steht daneben und nicht darin:
+            // ein Minus in derselben Summe hiesse, der Tag haette weniger
+            // gebracht, und er hat zwei Dinge getan [§C25].
+            minus ? {v: '−' + minus, l:'verloren', ton:'rot'} : null
           ].filter(Boolean);
           return z.length > 1 ? rcpZahlenHtml(z) : '';
         })();
@@ -30162,7 +30384,7 @@ function _newsSerienLauf(pid, matchId, laenge){
     }
     if(!eigene.length) return {};
     const erste = eigene[eigene.length - 1];
-    const fmt = m => new Date(m.created_at).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    const fmt = m => datumFmt(m.created_at, 'tm');
     const tage = Math.max(1, Math.round(
       (new Date(matches[idx].created_at) - new Date(erste.created_at)) / 86400000));
     return {von: fmt(erste), bis: fmt(matches[idx]), tage};
@@ -30186,7 +30408,7 @@ function _newsMatchVsBlock(matchId){
     const nm = pid => (pm[pid] && pm[pid].name) || '?';
     const aWon = m.winner === 'A';
     const dt = new Date(m.created_at);
-    const dStr = dt.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+    const dStr = datumFmt(dt, 'tmj');
     return `<div class="nd-match" data-mid="${esc(m.id)}">
       <div class="nd-match-side ${aWon?'won':'lost'}">
         <div class="nd-match-avs">${av(m.a1)}${av(m.a2)}</div>
@@ -30663,7 +30885,7 @@ const DISZIPLINEN = [
 
   {id:'best_record', name:'Der Maßstab', short:'Maßstab', ic:'medal2', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'mark', basis:100,
+      kammer:'mark', basis:150,
       zeitraum:'Ein einzelner Monat',
       mind:'15 Partien im Monat und 60 % Siegquote',
       wie:'Gewertet wird der beste einzelne Monat einer Laufbahn und nicht der Schnitt über alle Monate. Monate mit weniger als fünfzehn eigenen Partien bleiben außen vor.',
@@ -30675,7 +30897,7 @@ const DISZIPLINEN = [
 
   {id:'daylord', name:'Der Platzhirsch', short:'Revier', ic:'dayKing', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'mark', basis:100, offen:true,
+      kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
       mind:'12 eigene Spieltage und 25 %',
       wie:'Player of the Day ist, wer an einem Spieltag die beste Siegquote hat; bei Gleichstand entscheidet der Elo-Gewinn des Tages. Der Nenner sind die Spieltage, an denen der Spieler selbst angetreten ist, und nicht alle Spieltage der Liga.',
@@ -30690,7 +30912,7 @@ const DISZIPLINEN = [
   // hat vier Wochen, und ein Anteil aus vier Werten misst nichts [§10.2].
   {id:'weeklord', name:'Der Wochenherr', short:'Wochenherr', ic:'weekKing', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'mark', basis:100,
+      kammer:'mark', basis:150,
       zeitraum:'Ganze Laufbahn, je Woche',
       mind:'10 eigene Wochen und 25 %',
       wie:'Player of the Week ist, wer eine Woche mit der besten Bilanz abschließt. Der Nenner sind die abgeschlossenen Wochen, in denen der Spieler selbst angetreten ist.',
@@ -30714,7 +30936,7 @@ const DISZIPLINEN = [
         p=>{const t=Object.values(p.tagGrp).filter(a=>a.length>=3);
       return `${t.filter(a=>a.every(s=>s.win)).length} von ${t.length} Spieltagen ohne Niederlage`;}))},
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je voller Spieltag',
       mind:'8 volle Spieltage',
       wie:'Ein voller Spieltag sind vier oder mehr eigene Partien an einem Tag. Der Nenner sind alle vollen Spieltage, der Zähler die darunter, an denen keine Partie verloren ging.',
@@ -30730,7 +30952,7 @@ const DISZIPLINEN = [
     // keiner und hier schon. Der Anteil kennt die Spielzahl nicht: wer an
     // zwanzig Tagen dabei war, wird an zwanzig gemessen [§C35].
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
       mind:'15 eigene Spieltage',
       wie:'Ein Tag zählt, wenn am Ende mindestens so viele Siege wie Niederlagen stehen. Der Nenner sind alle eigenen Spieltage, nicht die Partien und nicht der Kalender.',
@@ -30752,7 +30974,7 @@ const DISZIPLINEN = [
 
   {id:'catalyst', name:'Der Katalysator', short:'Katalyse', ic:'handshake', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100,
+      kammer:'koennen', basis:150,
       zeitraum:'Ganze Laufbahn, je Partner',
       mind:'3 Partner mit je 15 gemeinsamen Partien',
       wie:'Für jeden Partner werden zwei Siegquoten gerechnet: die aus den gemeinsamen Partien und die aus allen übrigen Partien dieses Partners. Die Differenzen werden nach der Zahl gemeinsamer Partien gewichtet gemittelt. Wer fast alles mitspielt, ist selbst der Vergleichswert und kommt damit nicht nach vorne.',
@@ -30769,7 +30991,7 @@ const DISZIPLINEN = [
     // Beleg: das Podest zeigt den Halter, und ein fremder Name daneben liest
     // sich wie dessen Rekord.
     allzeit:{
-      kammer:'koennen', basis:100,
+      kammer:'koennen', basis:150,
       zeitraum:'Ganze Laufbahn, je Partner',
       mind:'3 Partner mit je 15 gemeinsamen Partien',
       wie:'Für jeden Partner mit mindestens fünfzehn gemeinsamen Partien wird die gemeinsame Siegquote gerechnet. Gewertet wird die niedrigste davon. Nicht der beste Partner zählt, sondern der schwierigste.',
@@ -30794,7 +31016,7 @@ const DISZIPLINEN = [
 
   {id:'clutch', name:'Die ruhige Hand', short:'Nerven', ic:'nerves', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle engen Partien',
       mind:'15 enge Partien',
       wie:'Eng ist eine Partie mit höchstens zwei Toren Unterschied. Verglichen wird die Siegquote dieser Partien mit der Siegquote in allen übrigen eigenen Partien, in Prozentpunkten.',
@@ -30817,7 +31039,7 @@ const DISZIPLINEN = [
   // Sprung noch keine gute Quote. Zwei Namen fuer zwei Aussagen.
   {id:'entscheider', name:'Der Entscheider', short:'Entscheid', ic:'coinFlip', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle engen Partien',
       mind:'15 enge Partien',
       wie:'Eng ist eine Partie mit höchstens zwei Toren Unterschied. Der Nenner sind genau diese Partien und nicht alle: wie viele enge Partien jemand hatte, ändert den Wert nicht.',
@@ -30833,7 +31055,7 @@ const DISZIPLINEN = [
     // wird gegen die eigene Gesamtquote, also messen alle gegen ihr eigenes
     // Niveau und nicht gegeneinander [§C38].
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle offenen Partien',
       mind:'20 ausgeglichen erwartete Partien',
       wie:'Ausgeglichen heißt: die Elo-Rechnung gab beiden Teams zwischen 45 und 55 Prozent Siegchance. Verglichen wird die Siegquote in diesen Partien mit der Siegquote in allen übrigen eigenen Partien, in Prozentpunkten.',
@@ -30856,7 +31078,7 @@ const DISZIPLINEN = [
 
   {id:'gegenwind', name:'Gegen den Wind', short:'Gegenwind', ic:'tornado', tone:'acid', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'20 Partien als Außenseiter',
       wie:'Außenseiter heißt: die Elo-Rechnung gab dem eigenen Team vor dem Anpfiff weniger als 45 Prozent Siegchance. Der Nenner sind genau diese Partien und nicht die ganze Laufbahn.',
@@ -30867,7 +31089,7 @@ const DISZIPLINEN = [
 
   {id:'destroyer', name:'Der Zerstörer', short:'Zerstörer', ic:'explosion', tone:'orange', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Siege',
       mind:'20 Siege',
       wie:'Ein Kantersieg ist ein Sieg mit sieben oder mehr Toren Vorsprung. Der Nenner sind die eigenen Siege und nicht alle Partien.',
@@ -30900,7 +31122,7 @@ const DISZIPLINEN = [
     // kommen drei Duelle gegen einen Gegner zusammen, und ein Minimum aus
     // drei Partien ist ein Wurf und kein Muster.
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'4 Gegner mit je 6 Duellen',
       wie:'Ein Gegner zählt ab sechs gemeinsamen Duellen. Für jeden dieser Gegner steht eine eigene Siegquote, und gewertet wird die niedrigste davon. Der Nenner ist jeweils die Zahl der Duelle gegen genau diesen Gegner und nicht die Zahl aller Partien.',
@@ -30916,7 +31138,7 @@ const DISZIPLINEN = [
   // die Bilanz einer Aufstellung.
   {id:'retourkutsche', name:'Die Retourkutsche', short:'Retour', ic:'boomerang', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, jedes Wiedersehen',
       mind:'10 Wiedersehen',
       wie:'Ein Wiedersehen ist die nächste eigene Partie gegen genau dasselbe Gegnerduo, nachdem das vorige Duell gegen dieses Duo verloren ging. Der eigene Partner darf wechseln. Der Nenner sind diese Wiedersehen und nicht alle Partien.',
@@ -30938,7 +31160,7 @@ const DISZIPLINEN = [
         2,
         (p,v)=>`${v<0?'−':'+'}${komma(Math.abs(v))} Tore je Partie · ${p.gf}:${p.ga}`))},
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'30 Partien',
       wie:'Eigene Tore minus Gegentore, geteilt durch alle eigenen Partien. Gewertet wird der Schnitt, nicht die Summe.',
@@ -30960,7 +31182,7 @@ const DISZIPLINEN = [
   // zu wenig. Über vier Wochen entschiede die Spielzahl statt der Leistung.
   {id:'atk_ace', name:'Der komplette Stürmer', short:'Sturm', ic:'bolt', tone:'orange', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100,
+      kammer:'koennen', basis:150,
       zeitraum:'Ganze Laufbahn, alle Sturmspiele',
       mind:'25 Sturmspiele',
       wie:'Drei Teile: die Siegquote im Sturm, dazu ein Viertel des Abstands zur Elo-Erwartung und ein Fünftel des Rollenbeitrags. Der Rollenbeitrag sind die Tore des eigenen Teams je Sturmspiel. Die Zahl der Sturmspiele geht nicht in den Wert ein, sie entscheidet nur über die Teilnahme.',
@@ -30972,7 +31194,7 @@ const DISZIPLINEN = [
 
   {id:'def_ace', name:'Der komplette Verteidiger', short:'Abwehr', ic:'shield', tone:'blue', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100,
+      kammer:'koennen', basis:150,
       zeitraum:'Ganze Laufbahn, alle Abwehrspiele',
       mind:'25 Abwehrspiele',
       wie:'Dieselbe Rechnung wie beim kompletten Stürmer, gespiegelt: die Siegquote in der Abwehr, ein Viertel des Abstands zur Elo-Erwartung und ein Fünftel des Rollenbeitrags. Der Rollenbeitrag sind hier die wenigen Gegentore je Abwehrspiel. Die Zahl der Abwehrspiele geht nicht in den Wert ein.',
@@ -30993,7 +31215,7 @@ const DISZIPLINEN = [
   // Frage nennt irgendwann eine andere Zahl [§C27].
   {id:'rollencoup', name:'Der Rollencoup', short:'Rollencoup', ic:'posSwap', tone:'orange', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Position',
       mind:'20 Außenseiterpartien auf einer Position',
       wie:'Sturm und Abwehr werden getrennt gerechnet. Je Position zählen nur die Partien, in denen die Elo-Rechnung dem eigenen Team unter 45 Prozent Siegchance gab. Vom Anteil der gewonnenen Partien wird die mittlere Siegchance dieser Partien abgezogen; der bessere der beiden Positionswerte gilt. Die Zahl der Partien geht nicht in den Wert ein.',
@@ -31004,7 +31226,7 @@ const DISZIPLINEN = [
 
   {id:'rock', name:'Der Fels', short:'Fels', ic:'brick', tone:'blue', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Abwehrspiele',
       mind:'20 Abwehrspiele',
       wie:'Das Gegenstück zum Torjäger: die Tore, die das eigene Team in den Partien kassiert hat, in denen dieser Spieler hinten stand, geteilt durch die Zahl dieser Partien.',
@@ -31015,7 +31237,7 @@ const DISZIPLINEN = [
 
   {id:'sniper', name:'Der Torjäger', short:'Torjäger', ic:'ball', tone:'orange', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Sturmspiele',
       mind:'20 Sturmspiele',
       wie:'Gezählt werden die Tore, die das eigene Team in den Partien erzielt hat, in denen dieser Spieler vorne stand, geteilt durch die Zahl dieser Partien. Gezählt werden die Tore des ganzen Teams: erfasst wird nur der Endstand, nicht wer getroffen hat.',
@@ -31026,7 +31248,7 @@ const DISZIPLINEN = [
 
   {id:'comeback_king', name:'Der Stehaufmann', short:'Comeback', ic:'comeback', tone:'acid', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'25 Partien direkt nach einer Niederlage',
       wie:'Eine Gelegenheit ist jede Partie, die in Spielreihenfolge direkt auf eine eigene Niederlage folgt. Verglichen wird die Siegquote dort mit der Siegquote in allen übrigen eigenen Partien, in Prozentpunkten. Das Gegenstück zur stummen Antwort.',
@@ -31051,7 +31273,7 @@ const DISZIPLINEN = [
   // reisst, stellt die Frage jedes Mal neu.
   {id:'rueckschlag', name:'Der Rückschlag', short:'Rückschlag', ic:'reboundArrow', tone:'acid', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'10 Gelegenheiten',
       wie:'Eine Gelegenheit ist jede Partie, vor der in Spielreihenfolge mindestens zwei eigene Niederlagen in Folge standen. Nach der dritten und jeder weiteren Niederlage entsteht für die nächste Partie erneut eine Gelegenheit. Der Nenner sind diese Gelegenheiten und nicht alle Partien.',
@@ -31067,7 +31289,7 @@ const DISZIPLINEN = [
     // stand dort bei null Prozent und damit an der Spitze. Der mittlere
     // Rueckstand beantwortet die Frage, die der Name stellt.
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Niederlagen',
       mind:'20 Niederlagen',
       wie:'Gemessen wird der Torrückstand jeder einzelnen Niederlage, gemittelt über alle. Der Nenner sind die eigenen Niederlagen: gewertet wird, wie hoch verloren wird, und nicht wie oft.',
@@ -31085,7 +31307,7 @@ const DISZIPLINEN = [
     // Partie: vier knappe Niederlagen an einem Abend streuen dort gar nicht
     // und hier maximal.
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
       mind:'12 Spieltage mit je 3 Partien',
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien steht eine Tagesquote. Gewertet wird die mittlere Tagesquote minus die Hälfte der mittleren Abweichung dieser Quoten. Hohe Tagesquoten zählen, gleichmäßig schwache nicht.',
@@ -31117,7 +31339,7 @@ const DISZIPLINEN = [
   // ein Versehen.
   {id:'lauf', name:'Der Lauf', short:'Lauf', ic:'formPeak', tone:'orange', art:'leistung',
     allzeit:{
-      kammer:'form', basis:100, offen:true, fenster:true,
+      kammer:'form', basis:150, offen:true, fenster:true,
       zeitraum:'Die letzten 20 Partien',
       mind:'20 Partien',
       wie:'Gezählt werden genau die letzten zwanzig eigenen Partien, ohne Rücksicht darauf, wann sie gespielt wurden. Das Fenster liegt fest am Ende der Laufbahn.',
@@ -31128,7 +31350,7 @@ const DISZIPLINEN = [
 
   {id:'densephase', name:'Die dichte Phase', short:'Dichte', ic:'gateShut', tone:'blue', art:'leistung',
     allzeit:{
-      kammer:'form', basis:100, offen:true, fenster:true,
+      kammer:'form', basis:150, offen:true, fenster:true,
       zeitraum:'Die letzten 30 Partien',
       mind:'30 Partien',
       wie:'Dasselbe Fenster wie beim Torrausch, von der anderen Seite: die Gegentore der letzten dreißig Partien, geteilt durch diese dreißig. Wenig ist besser.',
@@ -31144,7 +31366,7 @@ const DISZIPLINEN = [
   // eine Formphase im Sturm ist kuerzer als eine in der Abwehr.
   {id:'torrausch', name:'Der Torrausch', short:'Torrausch', ic:'goalRush', tone:'orange', art:'leistung',
     allzeit:{
-      kammer:'form', basis:100, offen:true, fenster:true,
+      kammer:'form', basis:150, offen:true, fenster:true,
       zeitraum:'Die letzten 30 Partien',
       mind:'30 Partien',
       wie:'Die Tore des eigenen Teams in den letzten dreißig Partien, geteilt durch diese dreißig. Gewertet wird der Schnitt, nicht die Summe.',
@@ -31155,7 +31377,7 @@ const DISZIPLINEN = [
 
   {id:'allrounder', name:'Der Allrounder', short:'Allround', ic:'bothSides', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100,
+      kammer:'koennen', basis:150,
       zeitraum:'Ganze Laufbahn, beide Positionen',
       mind:'20 Sturmspiele und 20 Abwehrspiele',
       wie:'Der Erwartungsabstand wird getrennt für Sturm und Abwehr gerechnet, mit derselben Rechnung wie beim Sturmführer und beim Abwehrchef. Gewertet wird die schwächere der beiden Zahlen. Wer nur auf einer Position über der Rechnung liegt, steht damit nicht vorne.',
@@ -31170,7 +31392,7 @@ const DISZIPLINEN = [
 
   {id:'sovereign', name:'Der Souverän', short:'Souverän', ic:'crownWide', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Favoritenspiele',
       mind:'20 Partien als Favorit',
       wie:'Favorit heißt: die Elo-Rechnung gab dem eigenen Team vor dem Anpfiff mehr als 55 Prozent Siegchance. Der Nenner sind genau diese Partien.',
@@ -31181,7 +31403,7 @@ const DISZIPLINEN = [
 
   {id:'sturmfuehrer', name:'Der Sturmführer', short:'Sturmchef', ic:'stepsUp', tone:'orange', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Sturmspiele',
       mind:'20 Sturmspiele',
       wie:'Die Elo-Rechnung gibt jeder Partie vor dem Anpfiff eine Siegchance. Über alle Sturmspiele gemittelt ergibt das die dort erwartete Siegquote. Gewertet wird, wie weit die tatsächliche darüber liegt, in Prozentpunkten.',
@@ -31197,7 +31419,7 @@ const DISZIPLINEN = [
   // waere es wieder ein Rekord fuer den, der am meisten spielt.
   {id:'defchief', name:'Der Abwehrchef', short:'Kommando', ic:'shieldRank', tone:'blue', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, alle Abwehrspiele',
       mind:'20 Abwehrspiele',
       wie:'Dieselbe Rechnung wie beim Sturmführer, gespiegelt: die Elo-Erwartung über alle Abwehrspiele gegen die tatsächliche Siegquote dort, in Prozentpunkten.',
@@ -31208,7 +31430,7 @@ const DISZIPLINEN = [
 
   {id:'laufstopper', name:'Der Laufstopper', short:'Laufstopp', ic:'streakStop', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'10 Gelegenheiten',
       wie:'Eine Gelegenheit zählt, wenn mindestens ein Gegner unmittelbar vor dem Anpfiff drei oder mehr eigene Siege in Folge hatte. Gezählt wird der Serienstand von damals und nicht die Serie, die daraus später wurde. Der Nenner sind alle eigenen Gelegenheiten.',
@@ -31232,7 +31454,7 @@ const DISZIPLINEN = [
   // das Uebertreffen der eigenen Erwartung ueberhaupt keinen Eintrag.
   {id:'uebersoll', name:'Das Übersoll', short:'Übersoll', ic:'sollPlus', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'40 Partien',
       wie:'Die Elo-Rechnung gibt jeder Partie vor dem Anpfiff eine Siegchance. Über die Laufbahn gemittelt ergibt das die erwartete Quote; gewertet wird, wie weit die tatsächliche darüber liegt, in Prozentpunkten. Die Erwartung wächst mit jedem Sieg mit, der Abstand ist also kein Niveau.',
@@ -31284,7 +31506,7 @@ const DISZIPLINEN = [
         0.30,
         p=>{const f=_stLetzteZehn(p);return `${pct(f.drin)} % in den letzten 10, ${pct(f.raus)} % in den ${f.vor} davor`;}))},
     allzeit:{
-      kammer:'form', basis:100, offen:true, fenster:true,
+      kammer:'form', basis:150, offen:true, fenster:true,
       zeitraum:'Die letzten 10 gegen die 10 davor',
       mind:'20 Partien',
       wie:'Die letzten zehn Partien gegen die zehn unmittelbar davor. Zwei gleich große Fenster, damit die Frage für jeden dieselbe ist.',
@@ -31306,7 +31528,7 @@ const DISZIPLINEN = [
         0.85,
         p=>{const l=Object.values(p.tagGrp).map(a=>a[0]);return `${l.filter(s=>s.win).length} von ${l.length} Auftaktpartien gewonnen`;}))},
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
       mind:'10 Spieltage mit je 3 eigenen Partien',
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die zeitlich erste Partie gegen alle übrigen dieses Tages gestellt. Der Vergleich läuft innerhalb desselben Tages. Das Gegenstück zum letzten Ball, mit demselben Fenster und derselben Mindestbasis.',
@@ -31323,7 +31545,7 @@ const DISZIPLINEN = [
   // Tage Pause.
   {id:'wiedereinstieg', name:'Der Wiedereinstieg', short:'Rückkehr', ic:'doorReturn', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, jede Rückkehr',
       mind:'8 Rückkehrspiele',
       wie:'Ein Rückkehrspiel ist die erste eigene Partie nach 72 vollständigen Stunden ohne eigenes Match. Gerechnet wird mit dem Abstand der Zeitpunkte und nicht mit der Differenz der Kalendertage. Die allererste Partie einer Laufbahn zählt nicht mit. Der Nenner sind diese Rückkehrspiele und nicht alle Partien.',
@@ -31345,7 +31567,7 @@ const DISZIPLINEN = [
         0.35,
         p=>{const s=_stSchlussBall(p,3);return `${pct(s.drin)} % in ${s.n} Schlussspielen, ${pct(s.raus)} % davor`;}))},
     allzeit:{
-      kammer:'koennen', basis:100, offen:true,
+      kammer:'koennen', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
       mind:'10 Spieltage mit je 3 eigenen Partien',
       wie:'Für jeden eigenen Spieltag mit mindestens drei Partien wird die zeitlich letzte Partie gegen alle übrigen dieses Tages gestellt. Der Vergleich läuft innerhalb desselben Tages.',
@@ -31356,7 +31578,7 @@ const DISZIPLINEN = [
 
   {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flame', tone:'orange', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:100,
+      kammer:'mark', basis:150,
       zeitraum:'Ganze Ligageschichte',
       mind:'8 Siege in Folge',
       wie:'Gezählt werden Siege, die ohne Niederlage dazwischen aufeinanderfolgen, über Spieltage und Saisons hinweg. Eine Niederlage setzt die Zählung auf null.',
@@ -31376,7 +31598,7 @@ const DISZIPLINEN = [
   // absteigend sortiert und ein kleinerer Wert hier der bessere ist.
   {id:'unbeugsam', name:'Der Unbeugsame', short:'Unbeugsam', ic:'anvil', tone:'gold', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:100, offen:true,
+      kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'50 Partien',
       wie:'Gezählt werden Niederlagen, die ohne Sieg dazwischen aufeinanderfolgen, über Spieltage und Saisons hinweg. Von jedem Spieler steht die längste dieser Serien, und gewertet wird die niedrigste dieser Höchstmarken.',
@@ -31390,7 +31612,7 @@ const DISZIPLINEN = [
   // er unter EREIGNIS und nicht unter LEISTUNG.
   {id:'peak', name:'Der höchste Gipfel', short:'Gipfel', ic:'peak', tone:'gold', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:100,
+      kammer:'mark', basis:150,
       zeitraum:'Ganze Ligageschichte',
       mind:'350 Elo',
       wie:'Die Elo beginnt jeden Monat neu, der Gipfel ist also der höchste Stand, den je jemand innerhalb eines Monats erreicht hat. Es ist dieselbe Elo, die auch die Liga-Rangliste zeigt.',
@@ -31401,7 +31623,7 @@ const DISZIPLINEN = [
 
   {id:'eloday', name:'Der große Sprung', short:'Sprung', ic:'bolt2', tone:'acid', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:100, offen:true,
+      kammer:'mark', basis:150, offen:true,
       zeitraum:'Ein einzelner Spieltag',
       mind:'100 Elo Gewinn an einem Tag',
       wie:'Addiert werden alle Elo-Veränderungen der eigenen Partien dieses Tages, Gewinne und Verluste. Gewertet wird der beste einzelne Tag einer Laufbahn.',
@@ -31413,7 +31635,7 @@ const DISZIPLINEN = [
 
   {id:'wall', name:'Die Mauer', short:'Mauer', ic:'shieldStar', tone:'blue', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:50, offen:true,
+      kammer:'mark', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'40 Partien',
       wie:'Gezählt wird, wie oft jemand hinten stand, geteilt durch alle eigenen Partien. Die Zahl sagt, wie festgelegt eine Rolle ist, und nichts darüber, wie gut sie gespielt wurde.',
@@ -31424,7 +31646,7 @@ const DISZIPLINEN = [
 
   {id:'sturmtreue', name:'Der Sturmtreue', short:'Sturmtreu', ic:'strikeBoot', tone:'orange', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:50, offen:true,
+      kammer:'mark', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'40 Partien',
       wie:'Dieselbe Rechnung wie bei der Mauer, nur vorne: die Sturmspiele geteilt durch alle eigenen Partien. Beide Hälften haben dieselbe Mindestbasis.',
@@ -31435,7 +31657,7 @@ const DISZIPLINEN = [
 
   {id:'switcher', name:'Der Wandler', short:'Wandler', ic:'refresh', tone:'purple', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:50, offen:true,
+      kammer:'mark', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'40 Partien und ein Sturmanteil zwischen 43 und 57 %',
       wie:'Gerechnet wird mit demselben Sturmanteil, den das Positionsprofil im Profil zeigt. Gewertet wird der Abstand zu einer Verteilung von fünfzig zu fünfzig; bei genau fünfzig zu fünfzig stünde der Wert bei 100 Prozent.',
@@ -31461,7 +31683,7 @@ const DISZIPLINEN = [
   // jede Rolle heraus.
   {id:'dauersturm', name:'Der Dauerstürmer', short:'Vorne', ic:'roleFix', tone:'orange', art:'ereignis',
     allzeit:{
-      kammer:'form', basis:50, offen:true, fenster:true,
+      kammer:'form', basis:75, offen:true, fenster:true,
       zeitraum:'Die letzten 50 Partien',
       mind:'50 Partien',
       wie:'Die Partien im Sturm unter den letzten fünfzig eigenen Partien, geteilt durch diese fünfzig. Gemessen wird die Aufstellung und keine Torgefahr: wo jemand steht, entscheidet die Auslosung.',
@@ -31472,7 +31694,7 @@ const DISZIPLINEN = [
 
   {id:'abwehrmauer', name:'Die Abwehrmauer', short:'Abwehrwand', ic:'concreteWall', tone:'blue', art:'ereignis',
     allzeit:{
-      kammer:'form', basis:50, offen:true, fenster:true,
+      kammer:'form', basis:75, offen:true, fenster:true,
       zeitraum:'Die letzten 50 Partien',
       mind:'50 Partien',
       wie:'Dieselbe Zahl wie beim Dauerstürmer, von der anderen Seite gelesen: die Partien in der Abwehr unter den letzten fünfzig, geteilt durch diese fünfzig.',
@@ -31483,7 +31705,7 @@ const DISZIPLINEN = [
 
   {id:'seitenwechsler', name:'Der Seitenwechsler', short:'Wechsler', ic:'sideSwap', tone:'purple', art:'ereignis', zufall:'quote',
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true,
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'40 Partien',
       wie:'Geprüft wird jedes Paar aufeinanderfolgender eigener Partien: wurde zwischen Sturm und Abwehr gewechselt? Der Nenner sind die Übergänge und nicht die Partien, bei vierzig Partien also neununddreißig Gelegenheiten zu wechseln. Wo jemand steht, entscheidet die Aufstellung.',
@@ -31494,7 +31716,7 @@ const DISZIPLINEN = [
 
   {id:'seesaw', name:'Das Wechselbad', short:'Wechsel', ic:'cycle', tone:'purple', art:'ereignis', zufall:'quote',
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true,
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Ligageschichte',
       mind:'7 Partien im Wechsel',
       wie:'Sieg, Niederlage, Sieg, Niederlage und so weiter. Die Folge bricht, sobald zweimal dasselbe passiert. Das misst kein Können, nur einen unentschlossenen Tag.',
@@ -31507,7 +31729,7 @@ const DISZIPLINEN = [
   {id:'hardnight', name:'Der schwerste Tag', short:'Losglück', ic:'rainCloud', tone:'blue',
     art:'ereignis', zufall:'quote',
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true,
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ein einzelner Spieltag',
       mind:'4 Partien am Tag und höchstens 45 % mittlere Siegchance',
       wie:'Gemittelt wird die Siegchance vor dem Anpfiff über alle eigenen Partien dieses Tages. Gewertet wird ab vier eigenen Partien an einem Tag, und zwar der schwerste solche Tag einer Laufbahn.',
@@ -31523,7 +31745,7 @@ const DISZIPLINEN = [
   {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'dramaTear', tone:'purple',
     art:'ereignis', zufall:'quote', negativ:true,
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true, paar:'fluke',
+      kammer:'fuegung', basis:75, offen:true, paar:'fluke',
       zeitraum:'Eine einzelne Partie',
       mind:'Mindestens 65 % Siegchance',
       wie:'Das Gegenstück zum Sonntagsschuss mit derselben Rechnung: die verlorene Partie mit der höchsten Siegchance vor dem Anpfiff. Eine einzige Partie, kein Durchschnitt.',
@@ -31536,7 +31758,7 @@ const DISZIPLINEN = [
   {id:'mirrorday', name:'Der Wiedergänger', short:'Déjà-vu', ic:'duplicate', tone:'blue',
     art:'ereignis', zufall:'quote',
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true,
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ein einzelner Spieltag',
       mind:'3 gleiche Ergebnisse an einem Tag',
       wie:'Gezählt wird, wie oft dasselbe Ergebnis an einem Spieltag aus eigener Sicht und in derselben Richtung vorkam. Ein 10:8 und ein 8:10 sind damit zwei verschiedene Ergebnisse.',
@@ -31549,7 +31771,7 @@ const DISZIPLINEN = [
   {id:'needleeye', name:'Das Nadelöhr', short:'Nadelöhr', ic:'needleEye', tone:'acid',
     art:'ereignis', zufall:'quote',
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true,
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
       mind:'40 Partien und 8 % enge Ergebnisse',
       wie:'Gezählt werden die eigenen Partien, die mit genau einem Tor Unterschied endeten, also 10:9 und 9:10 aus eigener Sicht. Der Nenner sind alle eigenen Partien. Wer knapp gewinnt oder knapp verliert, zählt hier gleich: gefragt ist das Ergebnis, nicht der Sieger.',
@@ -31572,7 +31794,7 @@ const DISZIPLINEN = [
         -0.3010299956639812,
         p=>`${p.gf}:${p.ga} nach ${p.games} Partien`))},
     allzeit:{
-      kammer:'fuegung', basis:50,
+      kammer:'fuegung', basis:75,
       zeitraum:'Ein einzelner Spieltag',
       mind:'4 Partien am Tag',
       wie:'Am Ende des Spieltags stehen eigene Tore und Gegentore exakt gleich. Je mehr Partien an diesem Tag, desto unwahrscheinlicher: gewertet wird der größte solche Tag, nicht die Zahl solcher Tage.',
@@ -31585,7 +31807,7 @@ const DISZIPLINEN = [
   {id:'rollercoaster', name:'Die Achterbahn', short:'Achterbahn', ic:'coasterDip', tone:'orange',
     art:'ereignis', zufall:'fund',
     allzeit:{
-      kammer:'fuegung', basis:50,
+      kammer:'fuegung', basis:75,
       zeitraum:'Ein einzelner Spieltag',
       mind:'Beide Ergebnisse am selben Tag',
       wie:'Ein 10:0 und ein 0:10 am selben Spieltag. Gezählt wird, an wie vielen Tagen das zusammenkam. Beides braucht den passenden Gegner, nicht die passende Form.',
@@ -31601,7 +31823,7 @@ const DISZIPLINEN = [
     // sieben und Platz zehn der Siegquote — an Leute, die von den Eintraegen,
     // die am Koennen haengen, keinen bekommen.
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true, paar:'bitterloss',
+      kammer:'fuegung', basis:75, offen:true, paar:'bitterloss',
       zeitraum:'Eine einzelne Partie',
       mind:'Höchstens 35 % Siegchance',
       wie:'Die Elo-Rechnung gibt jeder Partie vor dem Anpfiff eine Siegchance. Gewertet wird der gewonnene Auftritt mit der niedrigsten davon. Eine einzige Partie genügt, und die Rechnung stand dagegen.',
@@ -31627,7 +31849,7 @@ const DISZIPLINEN = [
   {id:'handwriting', name:'Die Handschrift', short:'Schrift', ic:'penLine', tone:'purple',
     art:'ereignis', zufall:'quote',
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true,
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn, alle Sturmspiele',
       mind:'40 Sturmspiele',
       wie:'Dieselbe Rechnung wie beim Fundament, nur vorne: die Streuung der eigenen Tordifferenz über alle Sturmspiele. Niedrig ist besser.',
@@ -31639,7 +31861,7 @@ const DISZIPLINEN = [
   {id:'bedrock', name:'Das Fundament', short:'Statik', ic:'baseLine', tone:'blue',
     art:'ereignis', zufall:'quote',
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true,
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn, alle Abwehrspiele',
       mind:'40 Abwehrspiele',
       wie:'Für jedes Abwehrspiel steht die eigene Tordifferenz. Gewertet wird deren Streuung, also wie weit die einzelnen Ergebnisse vom eigenen Schnitt abweichen. Niedrig ist besser. Über die Höhe der Differenz sagt die Zahl nichts.',
@@ -31651,7 +31873,7 @@ const DISZIPLINEN = [
   {id:'unruffled', name:'Der Unaufgeregte', short:'Ruhe', ic:'flatWave', tone:'acid',
     art:'ereignis', zufall:'quote',
     allzeit:{
-      kammer:'fuegung', basis:50, offen:true,
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn, ausgeglichen angesetzte Partien',
       mind:'40 Partien mit 35 bis 65 % Siegchance',
       wie:'Ausgeglichen angesetzt heißt: die Elo-Rechnung gab dem eigenen Team vor dem Anpfiff zwischen 35 und 65 Prozent. Gewertet wird die Streuung der Tordifferenzen in genau diesen Partien, niedrig ist besser. Über das Niveau sagt die Zahl nichts.',
@@ -31685,7 +31907,7 @@ const DISZIPLINEN = [
   {id:'tailwind', name:'Der Rückenwind', short:'Rückenwind', ic:'windBack', tone:'acid',
     art:'ereignis', zufall:'quote', paar:'solorun',
     allzeit:{
-      kammer:'form', basis:50, fenster:true,
+      kammer:'form', basis:75, fenster:true,
       zeitraum:'Die letzten 25 gegen die 25 davor',
       mind:'50 Partien',
       wie:'Für jede Partie zählt die Elo des Mitspielers, wie sie unmittelbar vor dem Anpfiff stand. Gemittelt über die letzten 25 Partien und über die 25 davor; gewertet wird der Anstieg. Über die eigene Leistung sagt die Zahl nichts.',
@@ -31697,7 +31919,7 @@ const DISZIPLINEN = [
   {id:'solorun', name:'Der Einzelkämpfer', short:'Alleingang', ic:'soloPath', tone:'blue',
     art:'ereignis', zufall:'quote', paar:'tailwind',
     allzeit:{
-      kammer:'form', basis:50, fenster:true,
+      kammer:'form', basis:75, fenster:true,
       zeitraum:'Die letzten 25 gegen die 25 davor',
       mind:'50 Partien',
       wie:'Dieselben zwei Fenster und dieselbe Mitspieler-Elo wie beim Rückenwind, nur in die andere Richtung gelesen. Wer mit den Schwächeren antritt, hat nichts falsch gemacht.',
@@ -33586,10 +33808,10 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   // keiner sie vergisst, zaehlt `tests/disziplinen` nach.
   kind: d.allzeit.kammer || (d.zufall ? 'fuegung' : d.art === 'schatten' ? 'shame'
       : d.art === 'ereignis' ? 'mark' : 'koennen'),
-  // Der Grundwert des Rekords fuers Prestige [§C34]: 100 fuer eine Leistung,
-  // 50 fuer eine Rolle oder eine Fuegung, 0 fuer eine Schattenseite. Er stand
+  // Der Grundwert des Rekords fuers Prestige [§C34]: 150 fuer eine Leistung,
+  // 75 fuer eine Rolle oder eine Fuegung, 0 fuer eine Schattenseite. Er stand
   // vorher allein in `PRESTIGE_ART[art]`, und damit konnte eine Bestmarke wie
-  // die laengste Siegesserie nicht 100 wiegen, ohne gleichzeitig ihren Platz
+  // die laengste Siegesserie nicht 150 wiegen, ohne gleichzeitig ihren Platz
   // in der Katalogreihenfolge und in der Monatstafel zu verschieben — `art`
   // ordnet den Katalog, der Grundwert wiegt.
   // Er steht hier nur als Zahl und wird nicht hier gerechnet: die
@@ -35134,7 +35356,7 @@ function showChronicle(cid){
   // wer ein Blatt oeffnete, sah die Bedingung und sonst nichts. Die
   // Zahlenreihe ist `rcpZahlenHtml`, das Bauteil der Rueckblicke [§C27].
   //
-  // Der BEITRAG ist nicht der Grundwert. Ein zehnter Rekord gibt nicht 100
+  // Der BEITRAG ist nicht der Grundwert. Ein zehnter Rekord gibt nicht 150
   // Prestige: er wird durch die Zahl seiner Halter geteilt, landet auf einem
   // Rang im Rekordstapel und wird dort durch die Wurzel seiner Staffel
   // geteilt [§C34]. Gezeigt wird deshalb der Stand des ersten Halters aus
@@ -36713,6 +36935,31 @@ function insBild(key, nr, rang){
   }
   return u;
 }
+// ── Im Dokument eine kurze Adresse statt der Datei ──────────────────
+// `insBild` liefert die Zeichnung als Daten-URL, rund 190 Kilobyte je Bild.
+// Im Wappen steht sie in einer Gruppe, auf die jedes Wappen mit `<use>`
+// verweist, und ein `<use>` klont, was es verweist — samt dieser Adresse.
+// Der Feed trägt rund 240 Verweise auf sieben Gruppen, und jede Kopie liess
+// den Browser eine Adresse von 190 Kilobyte nachschlagen: gemessen fiel die
+// Stilberechnung beim Öffnen des Feeds auf die Hälfte, als die Wappen fehlten.
+// Eine Blob-Adresse ist sechzig Zeichen lang und zeigt auf dieselbe Datei.
+// Ausserhalb eines Dokuments (Tests, Rastern als eigenes Bild) bleibt es bei
+// der Daten-URL: ein Blob gilt nur in der Seite, die ihn angelegt hat.
+const _IZ_BLOB = new Map();
+function insBildHref(key, nr, rang){
+  if(typeof Blob !== 'function' || typeof URL === 'undefined' || !URL.createObjectURL)
+    return insBild(key, nr, rang);
+  const schl = rang + '|' + key + '|' + nr;
+  let u = _IZ_BLOB.get(schl);
+  if(!u){
+    const t = _izTeile(key, nr, INS_RANGFARBE[rang] || INS_RANGFARBE.Solide);
+    u = URL.createObjectURL(new Blob(
+      [`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000">${t.defs}${t.bild}</svg>`],
+      {type:'image/svg+xml'}));
+    _IZ_BLOB.set(schl, u);
+  }
+  return u;
+}
 // Die Kennungen einer Zeichnung mit einem Präfix: im Dokument stehen viele
 // Zeichnungen nebeneinander, und jede hat einen Verlauf namens „bsilber".
 function _izPraefix(s, p){
@@ -36791,44 +37038,56 @@ const PRESTIGE_ART_NAME = {leistung:'Leistung', ereignis:'Ereignis',
 
 // Startwert und Abnahme der nächsten Zweiergruppe. Die Klasse setzt den
 // Standard: je wertvoller, desto höher der Start und desto langsamer die
-// Abnahme. Sechs fachlich begründete Leistungen überschreiben diesen
-// Standard sichtbar. Die harmonische Folge darunter flacht ab, bleibt aber
-// bei jedem endlichen Rang positiv und besitzt keine feste Obergrenze.
-// Negative Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
+// Abnahme. Die harmonische Folge darunter flacht ab, bleibt aber bei jedem
+// endlichen Rang positiv und besitzt keine feste Obergrenze. Negative
+// Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
+// Der Standard der Klasse Legendary greift nur für eine NEUE legendäre
+// Auszeichnung, die unten noch keinen eigenen Wert hat; jede bestehende
+// steht dort mit ihrem.
 const PRESTIGE_AUSZEICHNUNG = {
-  legendary:{basis:40, abnahme:0.10},
-  rare:     {basis:20, abnahme:0.18},
+  legendary:{basis:70, abnahme:0.10},
+  rare:     {basis:25, abnahme:0.18},
   common:   {basis:3,  abnahme:0.25},
   negative: {basis:0,  abnahme:1}
 };
-// Nur diese sechs Abweichungen sind fachliche Rangfolgen, keine versteckten
-// Multiplikatoren. Sie stehen deshalb auch lesbar in der Aufschlüsselung.
-// Meister wächst mit der sanftesten Kurve. Dominator und Team der Saison
-// teilen die 10-%-Kurve, damit Dominator bei jeder gleichen Anzahl davor
-// bleibt. POTD fällt schneller, weil es stark von der Zahl der eigenen
-// Spieltage abhängt; POTW bleibt wertvoller. Der makellose 10:0-Sieg bleibt
-// Legendary, verliert bei Wiederholungen aber etwas schneller an Neuigkeitswert.
+// Jede legendäre Auszeichnung trägt ihren eigenen Startwert, dazu die zwei
+// Wochen- und Tageswertungen. Ein Wert für die ganze Klasse stellte die 20er
+// Serie neben den 10:0-Sieg und die Dynastie neben den Dominator, und beides
+// sind verschiedene Höhen: die Dynastie verlangt 600 Elo in einer Saison, der
+// Dominator 400. Die Reihenfolge der Tabelle ist die Gewichtung und die
+// Reihenfolge im Regelblatt (`showPrestigeRegeln`) — wer eine Auszeichnung
+// dazunimmt, ordnet sie hier nach ihrem Wert ein.
+// Meister wächst mit der sanftesten Kurve. POTD fällt schneller, weil es
+// stark von der Zahl der eigenen Spieltage abhängt; POTW bleibt wertvoller.
+// Der makellose 10:0-Sieg bleibt Legendary, verliert bei Wiederholungen aber
+// etwas schneller an Neuigkeitswert.
 const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
-  champion:       {basis:75, abnahme:0.05, hinweis:'Saisonspitze: Meister'},
-  dominator_400:  {basis:50, abnahme:0.10, hinweis:'Saisonspitze: Dominator'},
-  team_of_season: {basis:45, abnahme:0.10, hinweis:'Saisonspitze: Team der Saison'},
-  potw:           {basis:30, abnahme:0.12, hinweis:'Wochensieg'},
-  potd:           {basis:10, abnahme:0.25, hinweis:'Tagessieg'},
-  perfect_win:    {basis:40, abnahme:0.15, hinweis:'Makelloser 10:0-Sieg'},
+  streak20:       {basis:120, abnahme:0.10},
+  dynasty_600:    {basis:120, abnahme:0.10},
+  champion:       {basis:100, abnahme:0.05},
+  streak15:       {basis:75,  abnahme:0.10},
+  dominator_400:  {basis:70,  abnahme:0.10},
+  team_of_season: {basis:70,  abnahme:0.10},
+  award_collector:{basis:70,  abnahme:0.10},
+  untouchable:    {basis:70,  abnahme:0.10},
+  potw:           {basis:50,  abnahme:0.12},
+  mr_perfect:     {basis:50,  abnahme:0.10},
+  perfect_win:    {basis:40,  abnahme:0.15},
+  potd:           {basis:10,  abnahme:0.25},
 };
 
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
 // Ein heute gehaltener Liga-Rekord wiegt deutlich schwerer als eine
 // Auszeichnung — es gibt ihn nur einmal in der Liga.
 //
-// Fuenfzig und nicht achtundvierzig: mit `PRESTIGE_ART` ergibt das 100 fuer
-// einen Leistungsrekord und 50 fuer ein Ereignis, und eine runde Zahl ist im
-// Blatt nachrechenbar. „96 Punkte, geteilt durch zwei Halter, dann durch
-// Wurzel zwei" liest niemand nach; 100 schon.
-const PRESTIGE_REKORD = 50;
+// Mit `PRESTIGE_ART` ergibt das 150 fuer einen Leistungsrekord und 75 fuer
+// ein Ereignis, dieselben Grundwerte wie im Katalog. Eine runde Zahl ist im
+// Blatt nachrechenbar: „144 Punkte, geteilt durch zwei Halter, dann durch
+// Wurzel zwei" liest niemand nach, 150 schon.
+const PRESTIGE_REKORD = 75;
 // Der Grundwert eines Rekords steht am Katalogeintrag [§C34]. Er stand allein
 // in `PRESTIGE_ART[art]`, und damit konnte eine Bestmarke wie die laengste
-// Siegesserie nicht 100 wiegen, ohne gleichzeitig ihren Platz in der
+// Siegesserie nicht 150 wiegen, ohne gleichzeitig ihren Platz in der
 // Katalogreihenfolge und in der Monatstafel zu verschieben: `art` ordnet den
 // Katalog, der Grundwert wiegt. Der Rueckfall bleibt fuer einen Eintrag, der
 // ihn nicht setzt.
@@ -36911,21 +37170,24 @@ const PRESTIGE_REICHWEITE = 0.5;
 
 // Die sieben Stufen. `min` ist die Schwelle, ab der die Stufe getragen wird.
 //
-// 0, 500, 1000, 1800, 2600, 3600, 4500 — vorgegeben, nicht gerechnet. Jede
-// Spanne ist mindestens so teuer wie die vorige (500, 500, 800, 800, 1000,
-// 900), und die letzte führt zum Ordensstern, der danach alle 500 Prestige
-// eine Zacke dazubekommt und damit nie aufhört.
+// 0, 600, 1200, 2100, 3100, 4300, 5600 — vorgegeben, nicht gerechnet. Jede
+// Spanne ist mindestens so teuer wie die vorige (600, 600, 900, 1000, 1200,
+// 1300), und die letzte führt zum Ordensstern, der danach alle 500 Prestige
+// eine Zacke dazubekommt und damit nie aufhört. Sie lagen bei 500 bis 4500;
+// mit den höheren Startwerten der Auszeichnungen und Rekorde [§C34] stieg
+// das Prestige der Spitze um gut ein Viertel, und ohne neue Schwellen wäre
+// sie über Nacht eine Stufe höher gestanden, ohne etwas dafür getan zu haben.
 //
-// Der Reif beginnt sofort. Der Schildring markiert ab 500 den ersten großen
+// Der Reif beginnt sofort. Der Schildring markiert ab 600 den ersten großen
 // Laufbahnschritt.
 const INSIGNIEN = [
   {key:'reif',    name:'Reif',          min:0},
-  {key:'schild',  name:'Schildring',    min:500},
-  {key:'volute',  name:'Volutenkranz',  min:1000},
-  {key:'zier',    name:'Zierkranz',     min:1800},
-  {key:'lorbeer', name:'Lorbeerreif',   min:2600},
-  {key:'krone',   name:'Kronenreif',    min:3600},
-  {key:'stern',   name:'Ordensstern',   min:4500},
+  {key:'schild',  name:'Schildring',    min:600},
+  {key:'volute',  name:'Volutenkranz',  min:1200},
+  {key:'zier',    name:'Zierkranz',     min:2100},
+  {key:'lorbeer', name:'Lorbeerreif',   min:3100},
+  {key:'krone',   name:'Kronenreif',    min:4300},
+  {key:'stern',   name:'Ordensstern',   min:5600},
 ];
 // Die beiden obersten Stufen. Ihr ERSTER Aufstieg ist Breaking [§C33] —
 // als Zahl im Generator („stufe >= 3") wäre die Grenze beim Einfügen einer
@@ -36938,10 +37200,29 @@ const INSIGNIUM_OBEN = INSIGNIEN.length - 2;
 // ob jemand gerade angekommen ist oder kurz vor der nächsten Stufe steht.
 const INSIGNIUM_GRADE = 3;
 const INSIGNIUM_GRAD_NAME = ['I', 'II', 'III'];
-// Die Grade liegen bewusst nicht bei exakten Dritteln. Der Einstieg in eine
-// Stufe soll schnell sichtbar werden, Grad III aber schon deutlich vor der
-// naechsten, viel anspruchsvolleren Form beginnen.
-const INSIGNIUM_GRAD_SCHWELLEN = [0, 0.16, 0.40];
+// Die Grade teilen die Spanne bis zur nächsten Stufe in Drittel, abgerundet
+// auf volle Hundert: der Zierkranz (2100 bis 3099) hat Grad II ab 2400 und
+// Grad III ab 2700. Sie lagen bei 16 und 40 % der Spanne, und damit waren
+// Grad I und II kurz und Grad III über die halbe Stufe lang: wer Grad III
+// erreichte, trug ihn länger als die beiden davor zusammen. Eine runde
+// Schwelle kann man sich merken und im Laufbahnblatt nachprüfen.
+// Die Stufe zu einer Punktzahl. Sie steht an EINER Stelle: das Blatt einer
+// Karte von vorletzter Woche las die Stufe als Zahl aus der Datenbank, und
+// diese Zahl stammte aus einer Leiter mit anderen Stufen — Leon stand dort
+// mit 2687 Prestige als Volutenkranz und „noch 0 bis zum Zierkranz". Der
+// gespeicherte Punktestand ist die Beobachtung, die Stufe eine Ableitung.
+function insigniumStufeVon(punkte){
+  let i = 0;
+  while(i + 1 < INSIGNIEN.length && punkte >= INSIGNIEN[i + 1].min) i++;
+  return i;
+}
+function insigniumGradSchwellen(i){
+  const st = INSIGNIEN[i], nx = INSIGNIEN[i + 1];
+  if(!st || !nx) return [st ? st.min : 0];
+  const drittel = (nx.min - st.min) / 3;
+  return [st.min, st.min + Math.floor(drittel / 100) * 100,
+          st.min + Math.floor(2 * drittel / 100) * 100];
+}
 // Der Ordensstern hat keine Grade, er zählt Zacken: acht beim Erreichen,
 // dann alle 500 Prestige eine mehr. Die ersten drei haben je ein eigenes
 // Bild, danach bleibt das größte und die Zahl wächst weiter.
@@ -37065,7 +37346,7 @@ function prestigeTabelle(bisMs){
       if(w <= 0) return;
       az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl,
                mal:b.n, abnahme:_auszeichnungsAbnahme(b.id),
-               hinweis:regel.hinweis || '', basis:regel.basis, voll:w});
+               basis:regel.basis, voll:w});
     });
     const pb = az.reduce((sum, q) => sum + q.p, 0);
 
@@ -37133,19 +37414,17 @@ function prestigeOf(pid, bisMs){
                  fehlt:INSIGNIEN[1].min, zacken:0, grad:0,
                  teile:{auszeichnung:0,monat:0,rekord:0},
                  zahlen:{auszeichnung:0,monat:0,rekord:0}, quellen:[], platz:0, von:T.gesamt};
-  let i = 0;
-  while(i + 1 < INSIGNIEN.length && e.punkte >= INSIGNIEN[i + 1].min) i++;
+  const i = insigniumStufeVon(e.punkte);
   const letzte = i === INSIGNIEN.length - 1;
-  // Der Grad folgt den relativen Schwellen oben. Die letzte Stufe hat kein
-  // Ende; dort zaehlen statt Graden die Zacken.
-  const spanne = letzte ? 0 : INSIGNIEN[i + 1].min - INSIGNIEN[i].min;
+  // Der Grad folgt den Schwellen oben. Die letzte Stufe hat kein Ende;
+  // dort zaehlen statt Graden die Zacken.
+  const gs = insigniumGradSchwellen(i);
   return Object.assign({}, e, {
     stufe:i,
     insignie:INSIGNIEN[i],
     naechste: letzte ? null : INSIGNIEN[i + 1],
     fehlt: letzte ? 0 : INSIGNIEN[i + 1].min - e.punkte,
-    grad: letzte ? 0 : Math.max(0, INSIGNIUM_GRAD_SCHWELLEN.reduce((g, schwelle, gi) =>
-      ((e.punkte - INSIGNIEN[i].min) / Math.max(1, spanne)) >= schwelle ? gi : g, 0)),
+    grad: letzte ? 0 : gs.reduce((g, schwelle, gi) => e.punkte >= schwelle ? gi : g, 0),
     // Auf der letzten Stufe wächst der Stern weiter, statt stehenzubleiben.
     zacken: letzte ? ORDENSSTERN_START + Math.floor((e.punkte - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
     naechsteZacke: letzte
@@ -37448,7 +37727,7 @@ function _insStufe(key, c, zacken, id, grad, eigen, bild){
       opacity="${_n(Math.min(1, .22 + (feld - INSIGNIUM_GRADE) * .045))}"/>` : '';
   const kk = INS_ZEICHEN[key] ? key : 'reif';
   if(bild && !eigen) return hof + glut
-    + `<image href="${insBild(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
+    + `<image href="${insBildHref(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
   return hof + glut + _insZeichnung(kk, nr, c.rang, o, k, eigen);
 }
 
@@ -37992,46 +38271,60 @@ function prestigeSchritte(pid, n){
 // Die drei Klassen bleiben als schneller Vergleich nebeneinander. Die
 // vollstaendige Rechnung lebt aber in einem eigenen Blatt: Im Laufbahnbuch
 // muss man die einzelnen Posten lesen koennen, ohne zuerst drei eng gesetzte
-// Regelkarten zu entziffern.
+// Regelkarten zu entziffern. Legendary nennt die Spanne seiner Startwerte:
+// jede legendäre Auszeichnung hat ihren eigenen, und ein einzelner Wert in
+// der Karte stimmte für keine davon.
 function _prestigeRegelKarten(){
-  const karte = (klasse, titel, regel) => `<span class="${klasse}">
-      <b>${titel}</b><strong>${regel.basis} P Start</strong>
-      <em>1. und 2. Mal je ${regel.basis} P.<br>
+  const leg = BADGES.filter(b => rarityOf(b.id) === 'legendary')
+    .map(b => _auszeichnungsRegel(b.id).basis);
+  const karte = (klasse, titel, start, regel) => `<span class="${klasse}">
+      <b>${titel}</b><strong>${start} P Start</strong>
+      <em>1. und 2. Mal voll.<br>
       3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
   return `<div class="lb-regeln">
-    ${karte('legendary', 'Legendary', PRESTIGE_AUSZEICHNUNG.legendary)}
-    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare)}
-    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common)}
+    ${karte('legendary', 'Legendary', leg.length
+      ? Math.min(...leg) + '–' + Math.max(...leg) : PRESTIGE_AUSZEICHNUNG.legendary.basis,
+      PRESTIGE_AUSZEICHNUNG.legendary)}
+    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare.basis, PRESTIGE_AUSZEICHNUNG.rare)}
+    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common.basis, PRESTIGE_AUSZEICHNUNG.common)}
   </div>`;
+}
+
+// Jede Auszeichnung mit eigenem Startwert, nach ihrem Gewicht geordnet: der
+// Startwert zuerst, bei Gleichstand die langsamere Kurve, dann der Name. Die
+// Liste stand fest im Blatt, sechs Zeilen in einer Reihenfolge, die jemand
+// einmal gewählt hatte — eine neue Auszeichnung wäre entweder gar nicht
+// erschienen oder hinten angehängt worden, egal was sie wiegt. Der Balken
+// zeigt den Startwert gegen den höchsten: ob eine Auszeichnung ein Drittel
+// oder fast so viel wie die stärkste wiegt, liest man dort, ohne zu rechnen.
+function _prestigeRegelListe(){
+  const zeilen = Object.keys(PRESTIGE_AUSZEICHNUNG_SPEZIAL)
+    .map(id => ({id, b:BADGES.find(x => x.id === id), r:_auszeichnungsRegel(id)}))
+    .filter(x => x.b)
+    .sort((x, y) => y.r.basis - x.r.basis || x.r.abnahme - y.r.abnahme
+      || x.b.name.localeCompare(y.b.name, 'de'));
+  const max = Math.max(1, ...zeilen.map(x => x.r.basis));
+  return zeilen.map(({id, b, r}) => `<div class="lb-regel-z" data-id="${id}" data-kl="${r.klasse}">
+      <span><b>${esc(b.name)}</b><em>${esc(b.desc || '')}</em></span>
+      <strong>${r.basis} P <i>Start</i></strong>
+      <small>3. + 4. Mal −${Math.round(r.abnahme * 100)} %</small>
+      <i class="lb-regel-b" style="--w:${Math.round(r.basis / max * 1000) / 10}%"></i>
+    </div>`).join('');
 }
 
 function showPrestigeRegeln(pid){
   const p = (pmap() || {})[pid];
   _sheetSetReopen(() => showPrestigeRegeln(pid));
-  const speziell = [
-    ['Meister der Saison', 'champion'],
-    ['Dominator', 'dominator_400'],
-    ['Team der Saison', 'team_of_season'],
-    ['Player of the Week', 'potw'],
-    ['Player of the Day', 'potd'],
-    ['Absoluter Sieger', 'perfect_win']
-  ];
-  const zeilen = speziell.map(([name, id]) => {
-    const r = _auszeichnungsRegel(id);
-    return `<div class="lb-regel-z">
-      <span><b>${esc(name)}</b><em>${esc(r.hinweis || '')}</em></span>
-      <strong>${r.basis} P <i>Start</i></strong>
-      <small>3. + 4. Mal −${Math.round(r.abnahme * 100)} %</small>
-    </div>`;
-  }).join('');
+  const bsp = _auszeichnungsRegel('dominator_400');
+  const bsp3 = Math.round(auszeichnungsTeilwert('dominator_400', 3) * 10) / 10;
   openSheet(`<div class="pp-root lb-regelblatt">
     ${blattKopfHtml({ic:'info', titel:'Wert der Auszeichnungen',
       unter:((p && p.name) || '') + ' · dieselbe Auszeichnung wächst immer weiter'})}
     <p class="lb-regel-intro">Jede Auszeichnung beginnt mit ihrem Startwert. Die ersten beiden Erfolge zählen voll, danach sinkt ihr Wert in Zweiergruppen. Je seltener und bedeutender die Leistung, desto langsamer fällt ihre Kurve.</p>
     ${_prestigeRegelKarten()}
-    <div class="pp-sec-title"><div class="l"><h4>Besondere Wertung</h4></div></div>
-    <div class="lb-regel-liste">${zeilen}</div>
-    <div class="tnote lb-regel-note">Beispiel: Dominator bringt beim ersten und zweiten Mal je 50 Punkte. Das dritte und vierte Mal zählen je 45, danach wird die Kurve paarweise sanfter. Die Summe wächst ohne festes Limit.</div>
+    <div class="pp-sec-title"><div class="l"><h4>Eigener Startwert</h4></div><div class="m">nach Gewicht</div></div>
+    <div class="lb-regel-liste">${_prestigeRegelListe()}</div>
+    <div class="tnote lb-regel-note">Beispiel: Dominator bringt beim ersten und zweiten Mal je ${bsp.basis} Punkte. Das dritte und vierte Mal zählen je ${Number.isInteger(bsp3) ? bsp3 : komma(bsp3)}, danach wird die Kurve paarweise sanfter. Die Summe wächst ohne festes Limit.</div>
   </div>`);
 }
 
@@ -38059,7 +38352,7 @@ function _prestigeQuellSatz(q, ohneKopf){
   if(q.q === 'rekord'){
     // Die KAMMER und nicht die Art der Disziplin: seit der Grundwert am
     // Eintrag steht [§C34], sagt `art` ueber den Wert nichts mehr — „Der
-    // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 100. Die Zeile
+    // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 150. Die Zeile
     // nannte damit eine Einordnung, die den Wert daneben nicht erklaerte.
     if(!ohneKopf) teile.push((CHRON_KINDS[q.kind] || {}).label
       || PRESTIGE_ART_NAME[q.art] || 'Ereignis');
@@ -38070,7 +38363,6 @@ function _prestigeQuellSatz(q, ohneKopf){
   }
   else if(q.q === 'auszeichnung'){
     teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
-    if(q.hinweis) teile.push(q.hinweis);
     teile.push(`${q.mal}× erreicht`);
     teile.push(q.mal > 1
       ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
@@ -38145,7 +38437,11 @@ function showLaufbahn(pid){
     return `<div class="lb-k ${zustand}" data-lbstufe="${i}">
       <span class="lb-k-ins">${_zeichen(i, zeigt)}</span>
       <span class="lb-k-n">${esc(ins.name)}</span>
-      <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}</span>
+      <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}${
+        // Wo ein Grad anfängt, steht neben ihm: die Grade sind runde
+        // Schwellen [§C30], und man soll sie nachprüfen können.
+        i < _letzteI ? '<br>' + insigniumGradSchwellen(i).slice(1)
+          .map((x, g) => INSIGNIUM_GRAD_NAME[g + 1] + ' ' + x).join(' · ') : ''}</span>
       ${unten}
     </div>`;
   }).join('');

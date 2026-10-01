@@ -93,10 +93,10 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   // keiner sie vergisst, zaehlt `tests/disziplinen` nach.
   kind: d.allzeit.kammer || (d.zufall ? 'fuegung' : d.art === 'schatten' ? 'shame'
       : d.art === 'ereignis' ? 'mark' : 'koennen'),
-  // Der Grundwert des Rekords fuers Prestige [§C34]: 100 fuer eine Leistung,
-  // 50 fuer eine Rolle oder eine Fuegung, 0 fuer eine Schattenseite. Er stand
+  // Der Grundwert des Rekords fuers Prestige [§C34]: 150 fuer eine Leistung,
+  // 75 fuer eine Rolle oder eine Fuegung, 0 fuer eine Schattenseite. Er stand
   // vorher allein in `PRESTIGE_ART[art]`, und damit konnte eine Bestmarke wie
-  // die laengste Siegesserie nicht 100 wiegen, ohne gleichzeitig ihren Platz
+  // die laengste Siegesserie nicht 150 wiegen, ohne gleichzeitig ihren Platz
   // in der Katalogreihenfolge und in der Monatstafel zu verschieben — `art`
   // ordnet den Katalog, der Grundwert wiegt.
   // Er steht hier nur als Zahl und wird nicht hier gerechnet: die

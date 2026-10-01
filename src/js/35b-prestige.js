@@ -69,44 +69,56 @@ const PRESTIGE_ART_NAME = {leistung:'Leistung', ereignis:'Ereignis',
 
 // Startwert und Abnahme der nächsten Zweiergruppe. Die Klasse setzt den
 // Standard: je wertvoller, desto höher der Start und desto langsamer die
-// Abnahme. Sechs fachlich begründete Leistungen überschreiben diesen
-// Standard sichtbar. Die harmonische Folge darunter flacht ab, bleibt aber
-// bei jedem endlichen Rang positiv und besitzt keine feste Obergrenze.
-// Negative Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
+// Abnahme. Die harmonische Folge darunter flacht ab, bleibt aber bei jedem
+// endlichen Rang positiv und besitzt keine feste Obergrenze. Negative
+// Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
+// Der Standard der Klasse Legendary greift nur für eine NEUE legendäre
+// Auszeichnung, die unten noch keinen eigenen Wert hat; jede bestehende
+// steht dort mit ihrem.
 const PRESTIGE_AUSZEICHNUNG = {
-  legendary:{basis:40, abnahme:0.10},
-  rare:     {basis:20, abnahme:0.18},
+  legendary:{basis:70, abnahme:0.10},
+  rare:     {basis:25, abnahme:0.18},
   common:   {basis:3,  abnahme:0.25},
   negative: {basis:0,  abnahme:1}
 };
-// Nur diese sechs Abweichungen sind fachliche Rangfolgen, keine versteckten
-// Multiplikatoren. Sie stehen deshalb auch lesbar in der Aufschlüsselung.
-// Meister wächst mit der sanftesten Kurve. Dominator und Team der Saison
-// teilen die 10-%-Kurve, damit Dominator bei jeder gleichen Anzahl davor
-// bleibt. POTD fällt schneller, weil es stark von der Zahl der eigenen
-// Spieltage abhängt; POTW bleibt wertvoller. Der makellose 10:0-Sieg bleibt
-// Legendary, verliert bei Wiederholungen aber etwas schneller an Neuigkeitswert.
+// Jede legendäre Auszeichnung trägt ihren eigenen Startwert, dazu die zwei
+// Wochen- und Tageswertungen. Ein Wert für die ganze Klasse stellte die 20er
+// Serie neben den 10:0-Sieg und die Dynastie neben den Dominator, und beides
+// sind verschiedene Höhen: die Dynastie verlangt 600 Elo in einer Saison, der
+// Dominator 400. Die Reihenfolge der Tabelle ist die Gewichtung und die
+// Reihenfolge im Regelblatt (`showPrestigeRegeln`) — wer eine Auszeichnung
+// dazunimmt, ordnet sie hier nach ihrem Wert ein.
+// Meister wächst mit der sanftesten Kurve. POTD fällt schneller, weil es
+// stark von der Zahl der eigenen Spieltage abhängt; POTW bleibt wertvoller.
+// Der makellose 10:0-Sieg bleibt Legendary, verliert bei Wiederholungen aber
+// etwas schneller an Neuigkeitswert.
 const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
-  champion:       {basis:75, abnahme:0.05, hinweis:'Saisonspitze: Meister'},
-  dominator_400:  {basis:50, abnahme:0.10, hinweis:'Saisonspitze: Dominator'},
-  team_of_season: {basis:45, abnahme:0.10, hinweis:'Saisonspitze: Team der Saison'},
-  potw:           {basis:30, abnahme:0.12, hinweis:'Wochensieg'},
-  potd:           {basis:10, abnahme:0.25, hinweis:'Tagessieg'},
-  perfect_win:    {basis:40, abnahme:0.15, hinweis:'Makelloser 10:0-Sieg'},
+  streak20:       {basis:120, abnahme:0.10},
+  dynasty_600:    {basis:120, abnahme:0.10},
+  champion:       {basis:100, abnahme:0.05},
+  streak15:       {basis:75,  abnahme:0.10},
+  dominator_400:  {basis:70,  abnahme:0.10},
+  team_of_season: {basis:70,  abnahme:0.10},
+  award_collector:{basis:70,  abnahme:0.10},
+  untouchable:    {basis:70,  abnahme:0.10},
+  potw:           {basis:50,  abnahme:0.12},
+  mr_perfect:     {basis:50,  abnahme:0.10},
+  perfect_win:    {basis:40,  abnahme:0.15},
+  potd:           {basis:10,  abnahme:0.25},
 };
 
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
 // Ein heute gehaltener Liga-Rekord wiegt deutlich schwerer als eine
 // Auszeichnung — es gibt ihn nur einmal in der Liga.
 //
-// Fuenfzig und nicht achtundvierzig: mit `PRESTIGE_ART` ergibt das 100 fuer
-// einen Leistungsrekord und 50 fuer ein Ereignis, und eine runde Zahl ist im
-// Blatt nachrechenbar. „96 Punkte, geteilt durch zwei Halter, dann durch
-// Wurzel zwei" liest niemand nach; 100 schon.
-const PRESTIGE_REKORD = 50;
+// Mit `PRESTIGE_ART` ergibt das 150 fuer einen Leistungsrekord und 75 fuer
+// ein Ereignis, dieselben Grundwerte wie im Katalog. Eine runde Zahl ist im
+// Blatt nachrechenbar: „144 Punkte, geteilt durch zwei Halter, dann durch
+// Wurzel zwei" liest niemand nach, 150 schon.
+const PRESTIGE_REKORD = 75;
 // Der Grundwert eines Rekords steht am Katalogeintrag [§C34]. Er stand allein
 // in `PRESTIGE_ART[art]`, und damit konnte eine Bestmarke wie die laengste
-// Siegesserie nicht 100 wiegen, ohne gleichzeitig ihren Platz in der
+// Siegesserie nicht 150 wiegen, ohne gleichzeitig ihren Platz in der
 // Katalogreihenfolge und in der Monatstafel zu verschieben: `art` ordnet den
 // Katalog, der Grundwert wiegt. Der Rueckfall bleibt fuer einen Eintrag, der
 // ihn nicht setzt.
@@ -189,21 +201,24 @@ const PRESTIGE_REICHWEITE = 0.5;
 
 // Die sieben Stufen. `min` ist die Schwelle, ab der die Stufe getragen wird.
 //
-// 0, 500, 1000, 1800, 2600, 3600, 4500 — vorgegeben, nicht gerechnet. Jede
-// Spanne ist mindestens so teuer wie die vorige (500, 500, 800, 800, 1000,
-// 900), und die letzte führt zum Ordensstern, der danach alle 500 Prestige
-// eine Zacke dazubekommt und damit nie aufhört.
+// 0, 600, 1200, 2100, 3100, 4300, 5600 — vorgegeben, nicht gerechnet. Jede
+// Spanne ist mindestens so teuer wie die vorige (600, 600, 900, 1000, 1200,
+// 1300), und die letzte führt zum Ordensstern, der danach alle 500 Prestige
+// eine Zacke dazubekommt und damit nie aufhört. Sie lagen bei 500 bis 4500;
+// mit den höheren Startwerten der Auszeichnungen und Rekorde [§C34] stieg
+// das Prestige der Spitze um gut ein Viertel, und ohne neue Schwellen wäre
+// sie über Nacht eine Stufe höher gestanden, ohne etwas dafür getan zu haben.
 //
-// Der Reif beginnt sofort. Der Schildring markiert ab 500 den ersten großen
+// Der Reif beginnt sofort. Der Schildring markiert ab 600 den ersten großen
 // Laufbahnschritt.
 const INSIGNIEN = [
   {key:'reif',    name:'Reif',          min:0},
-  {key:'schild',  name:'Schildring',    min:500},
-  {key:'volute',  name:'Volutenkranz',  min:1000},
-  {key:'zier',    name:'Zierkranz',     min:1800},
-  {key:'lorbeer', name:'Lorbeerreif',   min:2600},
-  {key:'krone',   name:'Kronenreif',    min:3600},
-  {key:'stern',   name:'Ordensstern',   min:4500},
+  {key:'schild',  name:'Schildring',    min:600},
+  {key:'volute',  name:'Volutenkranz',  min:1200},
+  {key:'zier',    name:'Zierkranz',     min:2100},
+  {key:'lorbeer', name:'Lorbeerreif',   min:3100},
+  {key:'krone',   name:'Kronenreif',    min:4300},
+  {key:'stern',   name:'Ordensstern',   min:5600},
 ];
 // Die beiden obersten Stufen. Ihr ERSTER Aufstieg ist Breaking [§C33] —
 // als Zahl im Generator („stufe >= 3") wäre die Grenze beim Einfügen einer
@@ -216,10 +231,29 @@ const INSIGNIUM_OBEN = INSIGNIEN.length - 2;
 // ob jemand gerade angekommen ist oder kurz vor der nächsten Stufe steht.
 const INSIGNIUM_GRADE = 3;
 const INSIGNIUM_GRAD_NAME = ['I', 'II', 'III'];
-// Die Grade liegen bewusst nicht bei exakten Dritteln. Der Einstieg in eine
-// Stufe soll schnell sichtbar werden, Grad III aber schon deutlich vor der
-// naechsten, viel anspruchsvolleren Form beginnen.
-const INSIGNIUM_GRAD_SCHWELLEN = [0, 0.16, 0.40];
+// Die Grade teilen die Spanne bis zur nächsten Stufe in Drittel, abgerundet
+// auf volle Hundert: der Zierkranz (2100 bis 3099) hat Grad II ab 2400 und
+// Grad III ab 2700. Sie lagen bei 16 und 40 % der Spanne, und damit waren
+// Grad I und II kurz und Grad III über die halbe Stufe lang: wer Grad III
+// erreichte, trug ihn länger als die beiden davor zusammen. Eine runde
+// Schwelle kann man sich merken und im Laufbahnblatt nachprüfen.
+// Die Stufe zu einer Punktzahl. Sie steht an EINER Stelle: das Blatt einer
+// Karte von vorletzter Woche las die Stufe als Zahl aus der Datenbank, und
+// diese Zahl stammte aus einer Leiter mit anderen Stufen — Leon stand dort
+// mit 2687 Prestige als Volutenkranz und „noch 0 bis zum Zierkranz". Der
+// gespeicherte Punktestand ist die Beobachtung, die Stufe eine Ableitung.
+function insigniumStufeVon(punkte){
+  let i = 0;
+  while(i + 1 < INSIGNIEN.length && punkte >= INSIGNIEN[i + 1].min) i++;
+  return i;
+}
+function insigniumGradSchwellen(i){
+  const st = INSIGNIEN[i], nx = INSIGNIEN[i + 1];
+  if(!st || !nx) return [st ? st.min : 0];
+  const drittel = (nx.min - st.min) / 3;
+  return [st.min, st.min + Math.floor(drittel / 100) * 100,
+          st.min + Math.floor(2 * drittel / 100) * 100];
+}
 // Der Ordensstern hat keine Grade, er zählt Zacken: acht beim Erreichen,
 // dann alle 500 Prestige eine mehr. Die ersten drei haben je ein eigenes
 // Bild, danach bleibt das größte und die Zahl wächst weiter.
@@ -343,7 +377,7 @@ function prestigeTabelle(bisMs){
       if(w <= 0) return;
       az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl,
                mal:b.n, abnahme:_auszeichnungsAbnahme(b.id),
-               hinweis:regel.hinweis || '', basis:regel.basis, voll:w});
+               basis:regel.basis, voll:w});
     });
     const pb = az.reduce((sum, q) => sum + q.p, 0);
 
@@ -411,19 +445,17 @@ function prestigeOf(pid, bisMs){
                  fehlt:INSIGNIEN[1].min, zacken:0, grad:0,
                  teile:{auszeichnung:0,monat:0,rekord:0},
                  zahlen:{auszeichnung:0,monat:0,rekord:0}, quellen:[], platz:0, von:T.gesamt};
-  let i = 0;
-  while(i + 1 < INSIGNIEN.length && e.punkte >= INSIGNIEN[i + 1].min) i++;
+  const i = insigniumStufeVon(e.punkte);
   const letzte = i === INSIGNIEN.length - 1;
-  // Der Grad folgt den relativen Schwellen oben. Die letzte Stufe hat kein
-  // Ende; dort zaehlen statt Graden die Zacken.
-  const spanne = letzte ? 0 : INSIGNIEN[i + 1].min - INSIGNIEN[i].min;
+  // Der Grad folgt den Schwellen oben. Die letzte Stufe hat kein Ende;
+  // dort zaehlen statt Graden die Zacken.
+  const gs = insigniumGradSchwellen(i);
   return Object.assign({}, e, {
     stufe:i,
     insignie:INSIGNIEN[i],
     naechste: letzte ? null : INSIGNIEN[i + 1],
     fehlt: letzte ? 0 : INSIGNIEN[i + 1].min - e.punkte,
-    grad: letzte ? 0 : Math.max(0, INSIGNIUM_GRAD_SCHWELLEN.reduce((g, schwelle, gi) =>
-      ((e.punkte - INSIGNIEN[i].min) / Math.max(1, spanne)) >= schwelle ? gi : g, 0)),
+    grad: letzte ? 0 : gs.reduce((g, schwelle, gi) => e.punkte >= schwelle ? gi : g, 0),
     // Auf der letzten Stufe wächst der Stern weiter, statt stehenzubleiben.
     zacken: letzte ? ORDENSSTERN_START + Math.floor((e.punkte - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
     naechsteZacke: letzte
@@ -726,7 +758,7 @@ function _insStufe(key, c, zacken, id, grad, eigen, bild){
       opacity="${_n(Math.min(1, .22 + (feld - INSIGNIUM_GRADE) * .045))}"/>` : '';
   const kk = INS_ZEICHEN[key] ? key : 'reif';
   if(bild && !eigen) return hof + glut
-    + `<image href="${insBild(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
+    + `<image href="${insBildHref(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
   return hof + glut + _insZeichnung(kk, nr, c.rang, o, k, eigen);
 }
 
@@ -1270,46 +1302,60 @@ function prestigeSchritte(pid, n){
 // Die drei Klassen bleiben als schneller Vergleich nebeneinander. Die
 // vollstaendige Rechnung lebt aber in einem eigenen Blatt: Im Laufbahnbuch
 // muss man die einzelnen Posten lesen koennen, ohne zuerst drei eng gesetzte
-// Regelkarten zu entziffern.
+// Regelkarten zu entziffern. Legendary nennt die Spanne seiner Startwerte:
+// jede legendäre Auszeichnung hat ihren eigenen, und ein einzelner Wert in
+// der Karte stimmte für keine davon.
 function _prestigeRegelKarten(){
-  const karte = (klasse, titel, regel) => `<span class="${klasse}">
-      <b>${titel}</b><strong>${regel.basis} P Start</strong>
-      <em>1. und 2. Mal je ${regel.basis} P.<br>
+  const leg = BADGES.filter(b => rarityOf(b.id) === 'legendary')
+    .map(b => _auszeichnungsRegel(b.id).basis);
+  const karte = (klasse, titel, start, regel) => `<span class="${klasse}">
+      <b>${titel}</b><strong>${start} P Start</strong>
+      <em>1. und 2. Mal voll.<br>
       3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
   return `<div class="lb-regeln">
-    ${karte('legendary', 'Legendary', PRESTIGE_AUSZEICHNUNG.legendary)}
-    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare)}
-    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common)}
+    ${karte('legendary', 'Legendary', leg.length
+      ? Math.min(...leg) + '–' + Math.max(...leg) : PRESTIGE_AUSZEICHNUNG.legendary.basis,
+      PRESTIGE_AUSZEICHNUNG.legendary)}
+    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare.basis, PRESTIGE_AUSZEICHNUNG.rare)}
+    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common.basis, PRESTIGE_AUSZEICHNUNG.common)}
   </div>`;
+}
+
+// Jede Auszeichnung mit eigenem Startwert, nach ihrem Gewicht geordnet: der
+// Startwert zuerst, bei Gleichstand die langsamere Kurve, dann der Name. Die
+// Liste stand fest im Blatt, sechs Zeilen in einer Reihenfolge, die jemand
+// einmal gewählt hatte — eine neue Auszeichnung wäre entweder gar nicht
+// erschienen oder hinten angehängt worden, egal was sie wiegt. Der Balken
+// zeigt den Startwert gegen den höchsten: ob eine Auszeichnung ein Drittel
+// oder fast so viel wie die stärkste wiegt, liest man dort, ohne zu rechnen.
+function _prestigeRegelListe(){
+  const zeilen = Object.keys(PRESTIGE_AUSZEICHNUNG_SPEZIAL)
+    .map(id => ({id, b:BADGES.find(x => x.id === id), r:_auszeichnungsRegel(id)}))
+    .filter(x => x.b)
+    .sort((x, y) => y.r.basis - x.r.basis || x.r.abnahme - y.r.abnahme
+      || x.b.name.localeCompare(y.b.name, 'de'));
+  const max = Math.max(1, ...zeilen.map(x => x.r.basis));
+  return zeilen.map(({id, b, r}) => `<div class="lb-regel-z" data-id="${id}" data-kl="${r.klasse}">
+      <span><b>${esc(b.name)}</b><em>${esc(b.desc || '')}</em></span>
+      <strong>${r.basis} P <i>Start</i></strong>
+      <small>3. + 4. Mal −${Math.round(r.abnahme * 100)} %</small>
+      <i class="lb-regel-b" style="--w:${Math.round(r.basis / max * 1000) / 10}%"></i>
+    </div>`).join('');
 }
 
 function showPrestigeRegeln(pid){
   const p = (pmap() || {})[pid];
   _sheetSetReopen(() => showPrestigeRegeln(pid));
-  const speziell = [
-    ['Meister der Saison', 'champion'],
-    ['Dominator', 'dominator_400'],
-    ['Team der Saison', 'team_of_season'],
-    ['Player of the Week', 'potw'],
-    ['Player of the Day', 'potd'],
-    ['Absoluter Sieger', 'perfect_win']
-  ];
-  const zeilen = speziell.map(([name, id]) => {
-    const r = _auszeichnungsRegel(id);
-    return `<div class="lb-regel-z">
-      <span><b>${esc(name)}</b><em>${esc(r.hinweis || '')}</em></span>
-      <strong>${r.basis} P <i>Start</i></strong>
-      <small>3. + 4. Mal −${Math.round(r.abnahme * 100)} %</small>
-    </div>`;
-  }).join('');
+  const bsp = _auszeichnungsRegel('dominator_400');
+  const bsp3 = Math.round(auszeichnungsTeilwert('dominator_400', 3) * 10) / 10;
   openSheet(`<div class="pp-root lb-regelblatt">
     ${blattKopfHtml({ic:'info', titel:'Wert der Auszeichnungen',
       unter:((p && p.name) || '') + ' · dieselbe Auszeichnung wächst immer weiter'})}
     <p class="lb-regel-intro">Jede Auszeichnung beginnt mit ihrem Startwert. Die ersten beiden Erfolge zählen voll, danach sinkt ihr Wert in Zweiergruppen. Je seltener und bedeutender die Leistung, desto langsamer fällt ihre Kurve.</p>
     ${_prestigeRegelKarten()}
-    <div class="pp-sec-title"><div class="l"><h4>Besondere Wertung</h4></div></div>
-    <div class="lb-regel-liste">${zeilen}</div>
-    <div class="tnote lb-regel-note">Beispiel: Dominator bringt beim ersten und zweiten Mal je 50 Punkte. Das dritte und vierte Mal zählen je 45, danach wird die Kurve paarweise sanfter. Die Summe wächst ohne festes Limit.</div>
+    <div class="pp-sec-title"><div class="l"><h4>Eigener Startwert</h4></div><div class="m">nach Gewicht</div></div>
+    <div class="lb-regel-liste">${_prestigeRegelListe()}</div>
+    <div class="tnote lb-regel-note">Beispiel: Dominator bringt beim ersten und zweiten Mal je ${bsp.basis} Punkte. Das dritte und vierte Mal zählen je ${Number.isInteger(bsp3) ? bsp3 : komma(bsp3)}, danach wird die Kurve paarweise sanfter. Die Summe wächst ohne festes Limit.</div>
   </div>`);
 }
 
@@ -1337,7 +1383,7 @@ function _prestigeQuellSatz(q, ohneKopf){
   if(q.q === 'rekord'){
     // Die KAMMER und nicht die Art der Disziplin: seit der Grundwert am
     // Eintrag steht [§C34], sagt `art` ueber den Wert nichts mehr — „Der
-    // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 100. Die Zeile
+    // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 150. Die Zeile
     // nannte damit eine Einordnung, die den Wert daneben nicht erklaerte.
     if(!ohneKopf) teile.push((CHRON_KINDS[q.kind] || {}).label
       || PRESTIGE_ART_NAME[q.art] || 'Ereignis');
@@ -1348,7 +1394,6 @@ function _prestigeQuellSatz(q, ohneKopf){
   }
   else if(q.q === 'auszeichnung'){
     teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
-    if(q.hinweis) teile.push(q.hinweis);
     teile.push(`${q.mal}× erreicht`);
     teile.push(q.mal > 1
       ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
@@ -1423,7 +1468,11 @@ function showLaufbahn(pid){
     return `<div class="lb-k ${zustand}" data-lbstufe="${i}">
       <span class="lb-k-ins">${_zeichen(i, zeigt)}</span>
       <span class="lb-k-n">${esc(ins.name)}</span>
-      <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}</span>
+      <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}${
+        // Wo ein Grad anfängt, steht neben ihm: die Grade sind runde
+        // Schwellen [§C30], und man soll sie nachprüfen können.
+        i < _letzteI ? '<br>' + insigniumGradSchwellen(i).slice(1)
+          .map((x, g) => INSIGNIUM_GRAD_NAME[g + 1] + ' ' + x).join(' · ') : ''}</span>
       ${unten}
     </div>`;
   }).join('');
