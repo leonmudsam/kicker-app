@@ -3088,6 +3088,36 @@ return JSON.stringify(funde,null,1);
      JSON.stringify(_vektor));
   ok(_vektor.zeile > 0 && _vektor.lbFelder === 21, 'klein bleibt es ein Bild, damit Liste, Feed und die ganze Leiter schnell bleiben',
      JSON.stringify(_vektor));
+  // Die Aura [§C36]: im Profilkopf bewegt, und zwar so, dass nur die
+  // Grafikkarte arbeitet — höchstens drei Ebenen, jede ein Bild, und ihre
+  // Bewegung ändert nur `transform` und Deckkraft. Ein Filter oder eine
+  // Bewegung INNERHALB des SVG hiesse, die Unschärfe der Strahlen in jedem
+  // Bild neu zu rechnen. Und sie steht dort genau einmal: nicht noch ein
+  // zweites Mal still im Zeichen dahinter.
+  const _aura = await page.evaluate(async () => {
+    const K = window.__k.eval;
+    const w = ms => new Promise(r => setTimeout(r, ms));
+    const pid = K("(players.slice().sort((a,b)=>meisterTitel(b.id)-meisterTitel(a.id))[0]||{}).id");
+    K('closeSheet(true); showPlayer(' + JSON.stringify(pid) + ')'); await w(300);
+    const kopf = document.querySelector('#sheet .pp-av-wrap');
+    const aura = kopf ? kopf.querySelectorAll('.aura') : [];
+    const ebenen = aura[0] ? [...aura[0].children] : [];
+    const imZeichen = kopf ? kopf.querySelectorAll('svg.ins image.aura-b').length : -1;
+    const namen = ebenen.map(e => getComputedStyle(e).animationName).filter(n => n && n !== 'none');
+    const fremd = [];
+    for(const sh of document.styleSheets){ let r; try { r = sh.cssRules; } catch(e){ continue; }
+      for(const k of r) if(k.type === CSSRule.KEYFRAMES_RULE && namen.includes(k.name))
+        for(const f of k.cssRules) for(const prop of f.style)
+          if(!/^(transform|opacity)$/.test(prop)) fremd.push(k.name + ':' + prop); }
+    const filter = ebenen.filter(e => getComputedStyle(e).filter !== 'none').length;
+    K('closeSheet(true)');
+    return {titel:K('meisterTitel(' + JSON.stringify(pid) + ')'), auren:aura.length, ebenen:ebenen.length,
+            bilder:ebenen.every(e => e.tagName === 'IMG'), imZeichen, namen, fremd, filter};
+  });
+  ok(_aura.titel > 0 && _aura.auren === 1 && _aura.ebenen >= 2 && _aura.ebenen <= 3 && _aura.bilder
+     && _aura.imZeichen === 0 && _aura.namen.length >= 2 && _aura.fremd.length === 0 && _aura.filter === 0,
+     'die Aura im Profilkopf steht einmal, in höchstens drei Bildebenen, und bewegt nur transform und Deckkraft',
+     JSON.stringify(_aura));
   // Und das Bild steht im Dokument unter einer kurzen Adresse. Als Daten-URL
   // trug jedes Bild rund 190 Kilobyte, und jedes der rund 240 `<use>` im
   // Feed klonte sie mit: gemessen brauchte das Öffnen des Feeds im Median

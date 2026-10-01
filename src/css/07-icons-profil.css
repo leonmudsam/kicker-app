@@ -1525,9 +1525,6 @@
     background:radial-gradient(240px 150px at 6% 0%,rgba(240,86,106,.13),transparent 70%),var(--bg2)}
   .nd-brk .nf-brk-band{margin:-18px -20px 14px;border-radius:18px 18px 0 0}
   .nd-brk .nf-motiv{color:var(--red);opacity:.11}
-  .nf-v-streak .fl{color:#ff7849}.nf-v-streak .fl:nth-child(2){color:#ff5a4d}.nf-v-streak .fl:nth-child(3){color:var(--red)}
-  .nf-v-streak .n{font-family:'Sometype Mono',monospace;font-weight:700;font-size:17px;margin-left:5px;color:var(--story,var(--ink2))}
-  .nf-v-crown .rk{font-family:'Archivo Black',sans-serif;font-size:15px}
   /* Story-Detail-Popover (Layer auf z-index 140, ÜBER Mini-Popup 130) */
   /* Nur die Deckkraft wechselt, also wird nur sie genannt: `transition:.2s`
      stellte jede Eigenschaft zur Animation, auch den `backdrop-filter`.

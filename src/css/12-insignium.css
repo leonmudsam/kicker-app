@@ -209,26 +209,47 @@
   .lb-feld.da svg.ins{opacity:1}
   .lb-feld.jetzt{border-color:rgba(var(--ak-rgb),.6);background:rgba(var(--ak-rgb),.10)}
 
-  /* ── Die zweite Leiter: die Schwinge [§C36] ────────────────────────
-     Sechs Ränge nebeneinander, jeder in derselben Zeichenfläche: nur so
-     sieht man, dass die Schwinge wächst und nicht der Kasten. Sie ist
-     bewusst klein — die Vitrine darüber ist die Hauptsache, und zwei
-     gleich große Leitern auf einer Seite sagen beide nichts. */
-  .lb-schwingen{display:flex;gap:5px;margin-top:9px}
-  .lb-sw{flex:1 1 0;min-width:0;display:flex;flex-direction:column;
-    align-items:center;gap:3px}
-  .lb-sw-b{display:block;width:100%;line-height:0}
-  /* Entfärbt statt ausgeblendet, wie in der Vitrine: man soll sehen, dass
-     es die Stufe gibt — und dass man sie nicht hat. */
-  .lb-sw-b svg.ins{width:100%;height:auto;filter:grayscale(1);opacity:.24}
-  .lb-sw.erreicht .lb-sw-b svg.ins{filter:none;opacity:.5}
-  .lb-sw.jetzt .lb-sw-b svg.ins{filter:none;opacity:1}
-  .lb-sw-p{font-family:'Sometype Mono',monospace;font-size:8.5px;
-    color:var(--faint)}
-  .lb-sw.erreicht .lb-sw-p{color:var(--muted)}
-  .lb-sw.jetzt .lb-sw-p{color:var(--ak)}
-  .lb-sw-fuss{margin-top:5px;padding:0 2px;font-size:11px;color:var(--muted);
+  /* ── Die zweite Leiter: die Aura [§C36] ───────────────────────────
+     Zehn Stufen in zwei Reihen zu fünf, jede in derselben Fläche: nur so
+     sieht man, dass das Licht wächst und nicht der Kasten. Bewusst klein —
+     die Vitrine darüber ist die Hauptsache. Was noch nicht erreicht ist,
+     steht leise und nicht entfärbt: ein Filter über einem Zeichen kostet
+     in jedem Bild [§C30]. */
+  .lb-auren{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px 5px;margin-top:9px}
+  .lb-au{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+  .lb-au-b{position:relative;display:block;width:100%;aspect-ratio:1;line-height:0}
+  .lb-au-b img{position:absolute;inset:0;width:100%;height:100%}
+  /* Das Zeichen nimmt in der Aura 70 % der Fläche ein, wie im Wappen. */
+  .lb-au-b .lb-au-i{inset:15%;width:70%;height:70%}
+  .lb-au.offen .lb-au-b{opacity:.22}
+  .lb-au.erreicht .lb-au-b{opacity:.6}
+  .lb-au-p{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--faint)}
+  .lb-au.erreicht .lb-au-p{color:var(--muted)}
+  .lb-au.jetzt .lb-au-p{color:var(--gold)}
+  .lb-au-fuss{margin-top:6px;padding:0 2px;font-size:11px;color:var(--muted);
     text-align:right}
+
+  /* ── Die Aura im Wappen [§C36] ─────────────────────────────────────
+     Sie ist größer als die Bandbox und darf über sie hinausleuchten. Die
+     Box bleibt, wie sie ist — sonst rückte jede Stelle, an der das Banner
+     steht, und das Gesicht säße nicht mehr in seiner Fassung. */
+  .rav.rav-band > svg.ins,.pp-av-wrap svg.ins{overflow:visible}
+
+  /* Im Profilkopf bewegt: drei Bilder übereinander, gemessen am Zeichen —
+     die Aura ist 1/0,7 so breit wie das Zeichen, und das Zeichen ist
+     170,45 der 180 Einheiten der Bandbox breit. Bewegt werden nur
+     `transform` und Deckkraft, beides rechnet die Grafikkarte; die
+     Unschärfe in den Strahlen wird nie neu gemalt. */
+  .pp-av-wrap .aura{position:absolute;left:50%;top:50%;z-index:0;pointer-events:none;
+    width:calc(var(--ins-w) * 1.3528);aspect-ratio:1;transform:translate(-50%,-50%)}
+  .aura img{position:absolute;inset:0;width:100%;height:100%;display:block}
+  @media (prefers-reduced-motion:no-preference){
+    .aura .a-schein{animation:auraAtem 7.5s ease-in-out infinite}
+    .aura .a-strahl{animation:auraKreis 80s linear infinite;will-change:transform}
+    .aura .a-gegen{animation:auraKreis 62s linear infinite reverse;will-change:transform}
+  }
+  @keyframes auraKreis{to{transform:rotate(360deg)}}
+  @keyframes auraAtem{0%,100%{opacity:.77}50%{opacity:1}}
 
   /* Wie weit man in der getragenen Stufe ist. Ein Strich, keine Zahl: die
      Zahl steht schon in der Zeile darüber [§C-Doppelung]. */
@@ -338,4 +359,3 @@
     padding:11px 13px;border-top:1px solid var(--line2);
     background:var(--surface2);font-size:12px;color:var(--ink2)}
   .lb-summe .num{font-family:'Archivo Black',sans-serif;font-size:19px;color:var(--ink)}
-  .nf-v-ins svg.ins{width:52px;height:52px;opacity:.95}
