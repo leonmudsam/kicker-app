@@ -539,10 +539,21 @@ function _consolidateStories(list){
   // vier Leute, dieselbe Siegchance, zwei Spiele —, und die zweite fiel am
   // Vergleich der Schlagzeilen weg. Von 52 Partien des Fensters standen
   // dadurch 24 in einer sichtbaren Karte.
+  // Eine Sammelkarte ist eine Partie, sobald die Karte einer Partie darin
+  // steckt — nicht erst, wenn das ganze Bündel eine `matchId` trägt. Bündelt
+  // die Partie mit einer Meldung ohne Partie (eine Rivalität, der Countdown),
+  // entsteht ein Bündel nach Minute ohne `matchId`; es zählte dann gegen den
+  // Deckel je Sorte, der je Tag nur die ersten zwei behält, und die Partie
+  // darin verschwand mit. Gemessen am 01.10.: fünf Partien von Leon, Leo,
+  // Maxi und Jannik, und die um 15:08 stand nirgends im Feed, obwohl ihre
+  // Karte in der Datenbank lag. Eine Partie hört nicht auf, gespielt worden
+  // zu sein [§C33].
   const _istPartie = st => {
     const d = (st && st.dataRef) || {};
     if(d.type === 'spiel') return true;
-    return d.type === 'sammel' && d.quelle === 'spiel' && !!d.matchId;
+    if(d.type !== 'sammel' || d.quelle !== 'spiel') return false;
+    return !!d.matchId || (d.teile || []).some(t =>
+      String((t && t.id) || '').indexOf('spiel_') === 0);
   };
   const seenContent = new Set();
   const seenTitel = new Set();
@@ -1505,10 +1516,20 @@ function _consolidateStories(list){
                 // einer der beiden beteiligt war. Ein Band gibt es deshalb
                 // nur, wenn alle Teile dieselbe Partie nennen — dann ist
                 // es wirklich eine Partie, ein Moment [§C33].
+                // Auf der Achse der Partie zählt dazu die Karte der Partie
+                // selbst: steckt genau eine darin und nennt kein Teil eine
+                // ANDERE Partie, ist es ihr Bündel, auch wenn eine Rivalität
+                // oder der Countdown gar keine Partie nennt. Ohne das bekam
+                // das Bündel keine `matchId`, fiel unter den Deckel je Sorte
+                // und nahm die Partie mit [§C33].
                 matchId: (function(){
                   const ids = teile.map(t => (t.dataRef || {}).matchId || '');
                   const erste = ids[0];
-                  return (erste && ids.every(x => x === erste)) ? erste : null;
+                  if(erste && ids.every(x => x === erste)) return erste;
+                  if(art !== 'spiel') return null;
+                  const spiele = teile.filter(t => (t.dataRef || {}).type === 'spiel');
+                  const mid = spiele.length === 1 ? (spiele[0].dataRef || {}).matchId : '';
+                  return (mid && ids.every(x => !x || x === mid)) ? mid : null;
                 })(), playerIds: pids,
                 kopfTyp: (kopf.dataRef||{}).type || '',
                 breaking: teile.some(t => { try { return _isBreaking(t); } catch(e){ return false; } }),

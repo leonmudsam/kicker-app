@@ -3149,18 +3149,17 @@ ok(_paarFehlt.length === 0, 'jedes Gegenpaar steht im Katalog',
 // Wortlaut darf abweichen — „20 Sturmspiele" und „20 Abwehrspiele" sind
 // dieselbe Huerde.
 const _zahlen = t => (String(t).match(/\d+/g) || []).join('/');
-// Ein Paar ist je Seite geeicht und muss es sein: eine Siegesserie ab acht
-// und eine Pleitenserie ab sieben sind nicht dieselbe Haeufigkeit.
-// Sonntagsschuss und bitterste Pleite sind es nicht mehr: beide verlangen
-// nur noch eine einzige Partie, und die Mindestbasis ist auf beiden Seiten
-// dieselbe.
-const GEEICHT = {'unstoppable|drought':1};
+// Kein Paar ist mehr je Seite geeicht. Siegesserie ab acht und
+// Pleitenserie ab sieben waren es, weil beide nicht dieselbe Häufigkeit
+// haben; seit kein Rekord eine Wertlatte trägt, verlangen beide nur ihr
+// erstes Glied.
+const GEEICHT = {};
 const _paarMind = PAARE.filter(([a, b]) => _byId[a] && _byId[b]
     && !GEEICHT[a + '|' + b]
     && _zahlen(_byId[a].mind) !== _zahlen(_byId[b].mind))
   .map(([a, b]) => a + ' „' + _byId[a].mind + '" vs ' + b + ' „' + _byId[b].mind + '"');
 ok(_paarMind.length === 0, 'jedes Gegenpaar hat dieselbe Mindestbasis',
-   _paarMind.join(' · ') || (PAARE.length - 1) + ' Paare');
+   _paarMind.join(' · ') || PAARE.length + ' Paare');
 // Ein Rekord hat keine Untergrenze in Prozent. Wer 20 % seiner Wochen
 // gewinnt und damit vorn liegt, haelt „Der Wochenherr" — eine Latte bei
 // 25 % liess den Rekord sonst leer oder strich den Besten aus dem Rennen.
@@ -3179,6 +3178,21 @@ const _prozentLatte = K.eval(`JSON.stringify(CHRONICLES.filter(c => {
 }).map(c => c.name))`);
 ok(JSON.parse(_prozentLatte).length === 0, 'kein Liga-Rekord verlangt einen Mindestwert in Prozent',
    JSON.parse(_prozentLatte).join(', ') || _rk.length + ' Rekorde');
+// Und auch keinen in Elo oder Serienlänge: „ab 8 Siegen in Folge", „ab 350
+// Elo", „ab 150 Elo Verlust" waren dieselbe Latte in einer anderen Einheit.
+// Eine Serie braucht ihr erstes Glied und ein Wechsel zwei Partien — mehr
+// ist eine Latte. Elo-Werte stehen als ganze Zahl im Code, Stichproben
+// heißen dort `games`, `losses`, `N` und so weiter.
+const _wertLatte = K.eval(`JSON.stringify(CHRONICLES.filter(c => {
+  const d = DISZIPLINEN.find(x => x.id === c.id), a = d && d.allzeit;
+  if(!a) return false;
+  const txt = String(a.cond || '') + ' ' + String(a.mind || '');
+  return (a.min || 0) > 2
+      || /[<>]=?\\s*-\\d{2,}/.test(String(a.val || ''))
+      || /ab \\d+ (Elo|Siegen in Folge|Niederlagen in Folge|Partien im Wechsel)|\\d+ Elo Verlust/.test(txt);
+}).map(c => c.name))`);
+ok(JSON.parse(_wertLatte).length === 0, 'kein Liga-Rekord verlangt einen Mindestwert in Elo oder Serienlänge',
+   JSON.parse(_wertLatte).join(', ') || _rk.length + ' Rekorde');
 // Angriff und Abwehr werden gleich behandelt: die vier Rollenpaare tragen
 // denselben Zeitraum und denselben Grundwert.
 const ROLLENPAARE = [['atk_ace','def_ace'], ['sturmfuehrer','defchief'],

@@ -4509,7 +4509,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.01.1d837ff8';
+const BUILD_VERSION='2026.10.01.8d15f402';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -15648,7 +15648,9 @@ function _buildStories(){
   const _weekSlotSig = _wocheDue ? 1 : 0;
   let _rundenSig = 0;
   try { const _rn = now.getTime(); _rundenSig = _spBasis().runden.filter(r => r.t + RUNDE_PAUSE_MS <= _rn).length; } catch(e){}
-  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig + '_' + _rundenSig;
+  let _zukunft = 0;
+  for(let i = matches.length - 1; i >= 0 && mts(matches[i]) > now.getTime(); i--) _zukunft++;
+  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig + '_' + _rundenSig + '_' + _zukunft;
   if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
     return _cache._buildStoriesResult;
   }
@@ -17346,6 +17348,7 @@ function _buildStories(){
   const GEN_PFLICHT = new Set(['lead_change', 'season_endgame', 'season_recap',
     'potd', 'potw', 'woche', 'chronik_monat', 'chronik_erstling',
     'insignium_stufe', 'streak_record']);
+  const GEN_PARTIE = new Set(['win_streak', 'team_streak']);
   const PER_PLAYER_LIMIT = 3;
   const NEBENROLLEN_LIMIT = 5;
   const perPlayer = {};
@@ -17357,7 +17360,7 @@ function _buildStories(){
     const pid = d.pid || d.playerId || d.newLeader || null;
     let gesichter = [];
     try { gesichter = (typeof _newsPids === 'function') ? _newsPids(s) : []; } catch(e){ gesichter = []; }
-    const pflicht = GEN_PFLICHT.has(d.type);
+    const pflicht = GEN_PFLICHT.has(d.type) || (GEN_PARTIE.has(d.type) && !!d.matchId);
     if(pid && !pflicht && d.rarity !== 'legendary' && gesichter.length
        && gesichter.every(id => (imBild[id] || 0) >= NEBENROLLEN_LIMIT)) continue;
     if(!pid || pflicht || d.rarity === 'legendary'){
@@ -18659,7 +18662,9 @@ function _consolidateStories(list){
   const _istPartie = st => {
     const d = (st && st.dataRef) || {};
     if(d.type === 'spiel') return true;
-    return d.type === 'sammel' && d.quelle === 'spiel' && !!d.matchId;
+    if(d.type !== 'sammel' || d.quelle !== 'spiel') return false;
+    return !!d.matchId || (d.teile || []).some(t =>
+      String((t && t.id) || '').indexOf('spiel_') === 0);
   };
   const seenContent = new Set();
   const seenTitel = new Set();
@@ -19179,7 +19184,11 @@ function _consolidateStories(list){
                 matchId: (function(){
                   const ids = teile.map(t => (t.dataRef || {}).matchId || '');
                   const erste = ids[0];
-                  return (erste && ids.every(x => x === erste)) ? erste : null;
+                  if(erste && ids.every(x => x === erste)) return erste;
+                  if(art !== 'spiel') return null;
+                  const spiele = teile.filter(t => (t.dataRef || {}).type === 'spiel');
+                  const mid = spiele.length === 1 ? (spiele[0].dataRef || {}).matchId : '';
+                  return (mid && ids.every(x => !x || x === mid)) ? mid : null;
                 })(), playerIds: pids,
                 kopfTyp: (kopf.dataRef||{}).type || '',
                 breaking: teile.some(t => { try { return _isBreaking(t); } catch(e){ return false; } }),
@@ -22819,7 +22828,7 @@ const DISZIPLINEN = [
 
   {id:'best_record', name:'Der Maßstab', short:'Maßstab', ic:'medal2', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'mark', basis:150,
+      kammer:'mark', basis:150, offen:true,
       zeitraum:'Ein einzelner Monat',
       mind:'15 Partien im Monat',
       wie:'Gewertet wird der beste einzelne Monat einer Laufbahn und nicht der Schnitt über alle Monate. Monate mit weniger als fünfzehn eigenen Partien bleiben außen vor.',
@@ -23389,12 +23398,12 @@ const DISZIPLINEN = [
 
   {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flame', tone:'orange', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:150,
+      kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Ligageschichte',
-      mind:'8 Siege in Folge',
+      mind:'Ein Sieg',
       wie:'Gezählt werden Siege, die ohne Niederlage dazwischen aufeinanderfolgen, über Spieltage und Saisons hinweg. Eine Niederlage setzt die Zählung auf null.',
-      cond:'Längste Siegesserie der Ligageschichte, ab 8 Siegen in Folge',
-      unit:'Siege in Folge', min:8, raw:p => p.winStreak,
+      cond:'Längste Siegesserie der Ligageschichte',
+      unit:'Siege in Folge', min:1, raw:p => p.winStreak,
       ev:(p,v) => `${v} Siege in Folge`,
       zeit:p => p.winSpan || ''
     }},
@@ -23412,12 +23421,12 @@ const DISZIPLINEN = [
 
   {id:'peak', name:'Der höchste Gipfel', short:'Gipfel', ic:'peak', tone:'gold', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:150,
+      kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Ligageschichte',
-      mind:'350 Elo',
+      mind:'Eine Partie',
       wie:'Die Elo beginnt jeden Monat neu, der Gipfel ist also der höchste Stand, den je jemand innerhalb eines Monats erreicht hat. Es ist dieselbe Elo, die auch die Liga-Rangliste zeigt.',
-      cond:'Höchster Elo-Stand der Ligageschichte, ab 350 Elo',
-      unit:'Elo', min:350, raw:p => p.peak,
+      cond:'Höchster Elo-Stand der Ligageschichte',
+      unit:'Elo', raw:p => p.peak,
       ev:(p,v) => `${Math.round(v)} Elo, nie stand jemand höher`
     }},
 
@@ -23425,10 +23434,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:150, offen:true,
       zeitraum:'Ein einzelner Spieltag',
-      mind:'100 Elo Gewinn an einem Tag',
+      mind:'Ein Spieltag mit Elo-Gewinn',
       wie:'Addiert werden alle Elo-Veränderungen der eigenen Partien dieses Tages, Gewinne und Verluste. Gewertet wird der beste einzelne Tag einer Laufbahn.',
-      cond:'Größter Elo-Gewinn an einem einzigen Spieltag, ab 100 Elo',
-      unit:'Elo an einem Tag', min:100, raw:p => p.dayElo == null ? null : Math.round(p.dayElo),
+      cond:'Größter Elo-Gewinn an einem einzigen Spieltag',
+      unit:'Elo an einem Tag', min:1, raw:p => p.dayElo == null ? null : Math.round(p.dayElo),
       ev:(p,v) => `+${v} Elo an einem Tag`,
       zeit:p => p.dayEloLabel || ''
     }},
@@ -23506,10 +23515,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Ligageschichte',
-      mind:'7 Partien im Wechsel',
+      mind:'2 Partien im Wechsel',
       wie:'Sieg, Niederlage, Sieg, Niederlage und so weiter. Die Folge bricht, sobald zweimal dasselbe passiert. Das misst kein Können, nur einen unentschlossenen Tag.',
-      cond:'Längste Folge aus abwechselnd Sieg und Niederlage, ab 7 Partien im Wechsel',
-      unit:'Partien im Wechsel', min:7, raw:p => p.alt,
+      cond:'Längste Folge aus abwechselnd Sieg und Niederlage',
+      unit:'Partien im Wechsel', min:2, raw:p => p.alt,
       ev:(p,v) => `${v} Partien im ständigen Wechsel`,
       zeit:p => p.altSpan || ''
     }},
@@ -23545,10 +23554,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ein einzelner Spieltag',
-      mind:'3 gleiche Ergebnisse an einem Tag',
+      mind:'2 gleiche Ergebnisse an einem Tag',
       wie:'Gezählt wird, wie oft dasselbe Ergebnis an einem Spieltag aus eigener Sicht und in derselben Richtung vorkam. Ein 10:8 und ein 8:10 sind damit zwei verschiedene Ergebnisse.',
-      cond:'Häufigste Wiederholung desselben Ergebnisses an einem Spieltag, ab 3 gleichen Ergebnissen',
-      val:p => p.wiederTag >= 3 ? p.wiederTag : null,
+      cond:'Häufigste Wiederholung desselben Ergebnisses an einem Spieltag',
+      val:p => p.wiederTag >= 2 ? p.wiederTag : null,
       ev:p => `${p.wiederTag}× dasselbe Ergebnis ${p.wiederErg} an einem Tag`,
       zeit:p => p.wiederLabel || ''
     }},
@@ -23689,10 +23698,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Ganze Ligageschichte',
-      mind:'7 Niederlagen in Folge',
+      mind:'Eine Niederlage',
       wie:'Das Gegenstück zum Unaufhaltsamen mit derselben Zählung: Niederlagen, die ohne Sieg dazwischen aufeinanderfolgen. Ein Sieg setzt die Zählung auf null.',
-      cond:'Längste Niederlagenserie der Ligageschichte, ab 7 Niederlagen in Folge',
-      min:7, raw:p => p.lossStreak,
+      cond:'Längste Niederlagenserie der Ligageschichte',
+      min:1, raw:p => p.lossStreak,
       ev:(p,v) => `${v} Niederlagen in Folge`,
       zeit:p => p.lossSpan || ''
     }},
@@ -23745,10 +23754,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Von einem Saisonende zum nächsten',
-      mind:'10 Partien in beiden Saisons und 150 Elo Verlust',
+      mind:'10 Partien in beiden Saisons',
       wie:'Verglichen werden die Elo-Endstände zweier aufeinanderfolgender Saisons, in denen jeweils mindestens zehn Partien gespielt wurden. Gewertet wird der größte Rückgang.',
-      cond:'Größter Elo-Verlust von einem Saisonende zum nächsten, ab 10 Partien in beiden Saisons und 150 Elo',
-      val:p => (p.fall && p.fall.d <= -150) ? -p.fall.d : null,
+      cond:'Größter Elo-Verlust von einem Saisonende zum nächsten, ab 10 Partien in beiden Saisons',
+      val:p => (p.fall && p.fall.d < 0) ? -p.fall.d : null,
       ev:p => `${Math.round(p.fall.d)} Elo von ${p.fall.from} auf ${p.fall.to}`,
       zeit:p => p.fall ? p.fall.to : ''
     }},

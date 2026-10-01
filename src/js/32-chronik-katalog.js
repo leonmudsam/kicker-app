@@ -303,7 +303,7 @@ const DISZIPLINEN = [
 
   {id:'best_record', name:'Der Maßstab', short:'Maßstab', ic:'medal2', tone:'gold', art:'leistung',
     allzeit:{
-      kammer:'mark', basis:150,
+      kammer:'mark', basis:150, offen:true,
       zeitraum:'Ein einzelner Monat',
       mind:'15 Partien im Monat',
       wie:'Gewertet wird der beste einzelne Monat einer Laufbahn und nicht der Schnitt über alle Monate. Monate mit weniger als fünfzehn eigenen Partien bleiben außen vor.',
@@ -996,12 +996,12 @@ const DISZIPLINEN = [
 
   {id:'unstoppable', name:'Der Unaufhaltsame', short:'Serie', ic:'flame', tone:'orange', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:150,
+      kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Ligageschichte',
-      mind:'8 Siege in Folge',
+      mind:'Ein Sieg',
       wie:'Gezählt werden Siege, die ohne Niederlage dazwischen aufeinanderfolgen, über Spieltage und Saisons hinweg. Eine Niederlage setzt die Zählung auf null.',
-      cond:'Längste Siegesserie der Ligageschichte, ab 8 Siegen in Folge',
-      unit:'Siege in Folge', min:8, raw:p => p.winStreak,
+      cond:'Längste Siegesserie der Ligageschichte',
+      unit:'Siege in Folge', min:1, raw:p => p.winStreak,
       ev:(p,v) => `${v} Siege in Folge`,
       zeit:p => p.winSpan || ''
     }},
@@ -1030,12 +1030,12 @@ const DISZIPLINEN = [
   // er unter EREIGNIS und nicht unter LEISTUNG.
   {id:'peak', name:'Der höchste Gipfel', short:'Gipfel', ic:'peak', tone:'gold', art:'ereignis',
     allzeit:{
-      kammer:'mark', basis:150,
+      kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Ligageschichte',
-      mind:'350 Elo',
+      mind:'Eine Partie',
       wie:'Die Elo beginnt jeden Monat neu, der Gipfel ist also der höchste Stand, den je jemand innerhalb eines Monats erreicht hat. Es ist dieselbe Elo, die auch die Liga-Rangliste zeigt.',
-      cond:'Höchster Elo-Stand der Ligageschichte, ab 350 Elo',
-      unit:'Elo', min:350, raw:p => p.peak,
+      cond:'Höchster Elo-Stand der Ligageschichte',
+      unit:'Elo', raw:p => p.peak,
       ev:(p,v) => `${Math.round(v)} Elo, nie stand jemand höher`
     }},
 
@@ -1043,10 +1043,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:150, offen:true,
       zeitraum:'Ein einzelner Spieltag',
-      mind:'100 Elo Gewinn an einem Tag',
+      mind:'Ein Spieltag mit Elo-Gewinn',
       wie:'Addiert werden alle Elo-Veränderungen der eigenen Partien dieses Tages, Gewinne und Verluste. Gewertet wird der beste einzelne Tag einer Laufbahn.',
-      cond:'Größter Elo-Gewinn an einem einzigen Spieltag, ab 100 Elo',
-      unit:'Elo an einem Tag', min:100, raw:p => p.dayElo == null ? null : Math.round(p.dayElo),
+      cond:'Größter Elo-Gewinn an einem einzigen Spieltag',
+      unit:'Elo an einem Tag', min:1, raw:p => p.dayElo == null ? null : Math.round(p.dayElo),
       ev:(p,v) => `+${v} Elo an einem Tag`,
       zeit:p => p.dayEloLabel || ''
     }},
@@ -1135,10 +1135,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Ligageschichte',
-      mind:'7 Partien im Wechsel',
+      mind:'2 Partien im Wechsel',
       wie:'Sieg, Niederlage, Sieg, Niederlage und so weiter. Die Folge bricht, sobald zweimal dasselbe passiert. Das misst kein Können, nur einen unentschlossenen Tag.',
-      cond:'Längste Folge aus abwechselnd Sieg und Niederlage, ab 7 Partien im Wechsel',
-      unit:'Partien im Wechsel', min:7, raw:p => p.alt,
+      cond:'Längste Folge aus abwechselnd Sieg und Niederlage',
+      unit:'Partien im Wechsel', min:2, raw:p => p.alt,
       ev:(p,v) => `${v} Partien im ständigen Wechsel`,
       zeit:p => p.altSpan || ''
     }},
@@ -1177,10 +1177,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ein einzelner Spieltag',
-      mind:'3 gleiche Ergebnisse an einem Tag',
+      mind:'2 gleiche Ergebnisse an einem Tag',
       wie:'Gezählt wird, wie oft dasselbe Ergebnis an einem Spieltag aus eigener Sicht und in derselben Richtung vorkam. Ein 10:8 und ein 8:10 sind damit zwei verschiedene Ergebnisse.',
-      cond:'Häufigste Wiederholung desselben Ergebnisses an einem Spieltag, ab 3 gleichen Ergebnissen',
-      val:p => p.wiederTag >= 3 ? p.wiederTag : null,
+      cond:'Häufigste Wiederholung desselben Ergebnisses an einem Spieltag',
+      val:p => p.wiederTag >= 2 ? p.wiederTag : null,
       ev:p => `${p.wiederTag}× dasselbe Ergebnis ${p.wiederErg} an einem Tag`,
       zeit:p => p.wiederLabel || ''
     }},
@@ -1360,10 +1360,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Ganze Ligageschichte',
-      mind:'7 Niederlagen in Folge',
+      mind:'Eine Niederlage',
       wie:'Das Gegenstück zum Unaufhaltsamen mit derselben Zählung: Niederlagen, die ohne Sieg dazwischen aufeinanderfolgen. Ein Sieg setzt die Zählung auf null.',
-      cond:'Längste Niederlagenserie der Ligageschichte, ab 7 Niederlagen in Folge',
-      min:7, raw:p => p.lossStreak,
+      cond:'Längste Niederlagenserie der Ligageschichte',
+      min:1, raw:p => p.lossStreak,
       ev:(p,v) => `${v} Niederlagen in Folge`,
       zeit:p => p.lossSpan || ''
     }},
@@ -1418,10 +1418,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Von einem Saisonende zum nächsten',
-      mind:'10 Partien in beiden Saisons und 150 Elo Verlust',
+      mind:'10 Partien in beiden Saisons',
       wie:'Verglichen werden die Elo-Endstände zweier aufeinanderfolgender Saisons, in denen jeweils mindestens zehn Partien gespielt wurden. Gewertet wird der größte Rückgang.',
-      cond:'Größter Elo-Verlust von einem Saisonende zum nächsten, ab 10 Partien in beiden Saisons und 150 Elo',
-      val:p => (p.fall && p.fall.d <= -150) ? -p.fall.d : null,
+      cond:'Größter Elo-Verlust von einem Saisonende zum nächsten, ab 10 Partien in beiden Saisons',
+      val:p => (p.fall && p.fall.d < 0) ? -p.fall.d : null,
       ev:p => `${Math.round(p.fall.d)} Elo von ${p.fall.from} auf ${p.fall.to}`,
       zeit:p => p.fall ? p.fall.to : ''
     }},
