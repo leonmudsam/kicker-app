@@ -1161,8 +1161,11 @@ const ok = (c, msg, det) => {
     // Ergebnisband, grosser Wert, Leiter, Bilanzbalken, Serienlauf,
     // Sammelband, Zahlenband, Wochenliste, Duellband, Auszeichnungsfuss oder
     // das Gesicht selbst.
+    // Die Karte am Spieltag traegt ihren Kopf nach dem Anlass [§11.6c], die
+    // Runde ihre Tabelle.
     const BILD = ['nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
-                  'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face'];
+                  'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face',
+                  'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');
@@ -1526,7 +1529,8 @@ const ok = (c, msg, det) => {
     const rest = zl.filter(x => !x.classList.contains('brk'))[0] || null;
     const out = {fehlt:false,
       brk: !!(karte && karte.classList.contains('nf-brk')),
-      band: karte ? karte.querySelectorAll('.nf-erg').length : 0,
+      // Das Ergebnis steht im Kopf der Partie, der ihrem Anlass folgt [§11.6c].
+      band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band').length : 0,
       zeilen: zl.length,
       anlassKante: anl ? getComputedStyle(anl).boxShadow : '',
       // Eine eigene Flaeche heisst: nicht durchsichtig. Ein Vergleich mit der
@@ -1976,39 +1980,184 @@ const ok = (c, msg, det) => {
   ok(Object.values(glRuhig).every(v => v !== 'glanzLauf'),
      'bei prefers-reduced-motion ruht der Glanz', JSON.stringify(glRuhig));
 
-  console.log('\n═══ BOGEN, CHIPS UND FADEN BEI 360 PX ═══');
-  // Der Fuss einer Partie traegt die Siegchance als Bogen und den Gewinn je
-  // Sieger als Chip, und der Faden fuehrt zur frueheren Karte [§C33]. Alles
-  // muss in der Karte bleiben, und der Faden muss oeffnen, wohin er zeigt.
-  const fuss = await page.evaluate(() => {
+  console.log('\n═══ DIE KARTEN AM SPIELTAG ═══');
+  // Kopf und Fuß einer Partie folgen ihrem Anlass, und dieselben vier am
+  // Tisch sind eine Runde [§11.6c]. Drei Dinge dürfen dabei nie passieren:
+  // ein Text liegt auf einem anderen Text oder auf einem Gesicht, ein Text
+  // ragt aus der Karte, und ein Text wird abgeschnitten — auch nicht mit
+  // „…". Und nichts wird unter 8 px geschrumpft. Gemessen wird je
+  // Zeilenkasten: ein umbrechender Satz ist als ein Rechteck so breit wie
+  // die Karte und läge damit über jedem Wort neben ihm. Erst im Feed, dann
+  // mit Grenzwerten, die die Liga in Jahren haben kann — und mit Namen, die
+  // keiner hat.
+  const PRUEFEN = function(wurzel){
+    const fehler = [];
+    const box = wurzel.getBoundingClientRect();
+    const clip = el => {
+      let r = null;
+      for(let p = el.parentElement; p && p !== wurzel.parentElement; p = p.parentElement){
+        const cs = getComputedStyle(p);
+        if(cs.overflowX !== 'visible' || cs.overflowY !== 'visible'){
+          const q = p.getBoundingClientRect();
+          r = r ? {l:Math.max(r.l, q.left), t:Math.max(r.t, q.top), r:Math.min(r.r, q.right), b:Math.min(r.b, q.bottom)}
+                : {l:q.left, t:q.top, r:q.right, b:q.bottom};
+        }
+      }
+      return r;
+    };
+    const teile = [];
+    let kleinste = 99;
+    const tw = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
+    for(let n = tw.nextNode(); n; n = tw.nextNode()){
+      if(!n.textContent.trim()) continue;
+      const el = n.parentElement;
+      // Die Initialen im Gesicht gehören zum Gesicht; das Motiv ist Zierde.
+      if(el.closest('[hidden],svg,.av,.rav,.nf-motiv')) continue;
+      const cs = getComputedStyle(el);
+      if(cs.visibility === 'hidden' || !el.getClientRects().length) continue;
+      const txt = n.textContent.trim().slice(0, 28);
+      if(n.textContent.includes('…') && !el.closest('.nf-d,.nf-h')) fehler.push('gekürzt: „' + txt + '"');
+      if(cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) fehler.push('mit „…" abgeschnitten: „' + txt + '"');
+      kleinste = Math.min(kleinste, parseFloat(cs.fontSize));
+      const rg = document.createRange(); rg.selectNodeContents(n);
+      const c = clip(n);
+      [...rg.getClientRects()].forEach(roh => {
+        if(roh.width < 1) return;
+        if(c && (roh.right > c.r + 1 || roh.left < c.l - 1 || roh.bottom > c.b + 1 || roh.top < c.t - 1)) fehler.push('abgeschnitten: „' + txt + '"');
+        const sicht = c ? {l:Math.max(roh.left, c.l), t:Math.max(roh.top, c.t), r:Math.min(roh.right, c.r), b:Math.min(roh.bottom, c.b)}
+                        : {l:roh.left, t:roh.top, r:roh.right, b:roh.bottom};
+        teile.push({art:'text', txt, r:sicht, n});
+      });
+    }
+    wurzel.querySelectorAll('svg text').forEach(t => {
+      if(t.closest('.rav,.av')) return;
+      const q = t.getBoundingClientRect();
+      kleinste = Math.min(kleinste, parseFloat(getComputedStyle(t).fontSize));
+      teile.push({art:'text', txt:t.textContent.slice(0, 28), r:{l:q.left, t:q.top, r:q.right, b:q.bottom}, n:t});
+    });
+    wurzel.querySelectorAll('.av, .rav').forEach(a => {
+      if(a.closest('.rav') && !a.classList.contains('rav')) return;
+      const q = a.getBoundingClientRect(), c = clip(a);
+      const r = {l:q.left, t:q.top, r:q.right, b:q.bottom};
+      if(c){ r.l = Math.max(r.l, c.l); r.t = Math.max(r.t, c.t); r.r = Math.min(r.r, c.r); r.b = Math.min(r.b, c.b); }
+      if(r.r > r.l && r.b > r.t) teile.push({art:'gesicht', txt:'Gesicht', r});
+    });
+    teile.forEach(t => {
+      if(t.r.r - t.r.l < 1) return;
+      if(t.r.l < box.left - 1 || t.r.r > box.right + 1) fehler.push('ragt aus der Karte: „' + t.txt + '"');
+    });
+    for(let i = 0; i < teile.length; i++) for(let j = i + 1; j < teile.length; j++){
+      const u = teile[i], v = teile[j];
+      if(u.art === 'gesicht' && v.art === 'gesicht') continue;
+      if(u.n && u.n === v.n) continue;
+      const w = Math.min(u.r.r, v.r.r) - Math.max(u.r.l, v.r.l), h = Math.min(u.r.b, v.r.b) - Math.max(u.r.t, v.r.t);
+      if(w > 1.5 && h > 1.5) fehler.push('liegt übereinander: „' + u.txt + '" und „' + v.txt + '"');
+    }
+    if(kleinste < 8) fehler.push('Schrift unter 8 px: ' + kleinste);
+    return {fehler:[...new Set(fehler)], kleinste};
+  };
+  const spieltag = await page.evaluate((pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
     const sheet = document.getElementById('sheet');
     sheet.querySelectorAll('.nf-card').forEach(c => { c.style.contentVisibility = 'visible'; });
-    const raus = [];
-    const drin = (el, card, was) => {
-      const r = el.getBoundingClientRect(), k = card.getBoundingClientRect();
-      if(r.left < k.left - .5 || r.right > k.right + .5) raus.push(was + ' ' + Math.round(r.right - k.right) + ' px');
-    };
-    const spf = [...sheet.querySelectorAll('.nf-spf')];
-    spf.forEach(f => {
-      const card = f.closest('.nf-card');
-      f.querySelectorAll('.nf-bogen, .nf-eloc').forEach(el => drin(el, card, 'Fuss'));
-    });
-    // Jede Bildzone einer Partie-Karte [§C33], mit jedem Kind: ein Name, der
-    // über die Karte läuft, ist so falsch wie ein Balken.
-    const zonen = [...sheet.querySelectorAll('.nf-s-spiel :is(.nf-waage,.nf-tor,.nf-rgs,.nf-meds,.nf-spitze,.nf-ser,.nf-bil)')];
-    zonen.forEach(z => {
-      const card = z.closest('.nf-card');
-      drin(z, card, z.className.split(' ').pop());
-      z.querySelectorAll('*').forEach(el => { if(el.getClientRects().length) drin(el, card, z.className.split(' ').pop() + ' ' + el.tagName); });
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    const karten = [...sheet.querySelectorAll('.nf-card.nf-s-spiel')];
+    const fehler = [], formen = {};
+    let kleinste = 99;
+    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tb','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel'];
+    karten.forEach(k => {
+      const r = pruefen(k);
+      r.fehler.forEach(f => fehler.push(k.dataset.sid + ': ' + f));
+      kleinste = Math.min(kleinste, r.kleinste);
+      FORM.forEach(c => { if(k.querySelector('.' + c)) formen[c] = (formen[c] || 0) + 1; });
     });
     const fd = [...sheet.querySelectorAll('.nf-faden')];
-    fd.forEach(f => drin(f, f.closest('.nf-card'), 'Faden'));
-    const bogenOhneWert = spf.filter(f => f.querySelector('.nf-bogen') && !f.querySelector('.nf-bogen .v')).length;
-    return {spf: spf.length, faeden: fd.length, raus, bogenOhneWert, zonen: zonen.length};
-  });
-  ok(fuss.spf > 0 && fuss.faeden > 0 && fuss.zonen > 20 && fuss.raus.length === 0 && fuss.bogenOhneWert === 0,
-     'Bogen, Chips, Faden und jede andere Bildzone bleiben in ihrer Karte',
-     fuss.raus.slice(0, 3).join(' | ') || fuss.spf + ' Bögen, ' + fuss.zonen + ' Bildzonen, ' + fuss.faeden + ' Faeden');
+    fd.forEach(f => { const k = f.closest('.nf-card').getBoundingClientRect(), r = f.getBoundingClientRect();
+      if(r.left < k.left - .5 || r.right > k.right + .5) fehler.push('Faden ragt aus der Karte'); });
+    return {karten:karten.length, runden:sheet.querySelectorAll('.nf-runde').length, fehler, formen, kleinste, faeden:fd.length};
+  }, PRUEFEN.toString());
+  ok(spieltag.karten > 20 && spieltag.runden > 0 && Object.keys(spieltag.formen).length >= 8 && spieltag.faeden > 0
+     && spieltag.fehler.length === 0,
+     'im Feed liegt auf keiner Karte am Spieltag ein Text auf einem anderen oder einem Gesicht, keiner ragt hinaus oder ist abgeschnitten',
+     spieltag.fehler.slice(0, 3).join(' | ') || spieltag.karten + ' Karten, ' + spieltag.runden + ' Runden, '
+       + Object.keys(spieltag.formen).length + ' Formen, kleinste Schrift ' + spieltag.kleinste + ' px');
+  // Die Grenzwerte: 45.495 Partien, eine Bilanz von 12.345:9.876, 98.765
+  // Begegnungen, eine Elo von −12.345, eine Serie von 57 gegen einen
+  // Bestwert von 120, eine Runde aus 23 Partien, Platz 118 bis 126 der
+  // Tabelle — und Namen wie „Jean-Baptiste von Hohenstein". Die Spieler
+  // bleiben echte Spieler, ihre Wappen hängen an ihrer Laufbahn; nur die
+  // Namen werden für die Probe ersetzt und danach zurückgestellt. Gemessen
+  // in der Breite einer Karte auf dem schmalsten Telefon und auf einem
+  // gewöhnlichen.
+  const grenz = await page.evaluate((pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    const html = K(`(function(){
+      const LANG = ['Maximilian-Alexander', 'Bartholomäus', 'Jean-Baptiste von Hohenstein', 'Konstantinopel',
+        'Anneliese-Charlotte', 'Wolfgang Amadeus', 'Christophorus', 'Friederike-Sophie', 'Leopoldine', 'Ottokar', 'Kunigunde', 'Ferdinand'];
+      const alt = players.map(p => [p, p.name]);
+      players.forEach((p, i) => { p.name = LANG[i % LANG.length]; });
+      try {
+        const alle = players.map(p => p.id);
+        const [a, b, c, e] = alle;
+        const [k1, k2, k3, k4] = [alle[5], alle[9], alle[10], alle[11]];
+        const d0 = Date.now();
+        const zellen = Array.from({length:8}, (_, i) => i % 3 ? 'w' : 'l'); zellen[7] = 'W';
+        const spiele = Array.from({length:30}, (_, i) => ({a:i % 2 === 0, diff:(i * 7) % 10 + 1, jetzt:i === 29}));
+        const ms = matches.slice(-23);
+        const teile = [
+          _spBandBild({A:[a, b], B:[c, e], sa:10, sb:2, aw:true}),
+          _spZeileBild({A:[a, b], B:[c, e], sa:9, sb:10, aw:false}),
+          _spFeldBild({slots:[{id:k1, r:'Abwehr', w:true, d:1234}, {id:k2, r:'Sturm', w:false, d:-1234}, {id:k3, r:'Sturm', w:true, d:999}, {id:k4, r:'Abwehr', w:false, d:-9999}], sa:10, sb:9, aw:true, c:.5}),
+          _spFeldBild({slots:[{id:a, r:'Abwehr', w:true, d:1234}, {id:b, r:'Sturm', w:false, d:-1234}, {id:c, r:'Sturm', w:true, d:999}, {id:e, r:'Abwehr', w:false, d:-99999}], sa:10, sb:9, aw:true, c:.03}),
+          _spTafelBild({A:[a, b], B:[c, e], sa:10, sb:9, aw:true, c:.5}) + _spNervenBild({zeilen:[{id:a, w:12345, l:9876, zellen}, {id:b, w:999, l:1000, zellen}]}),
+          _spVerteilungBild({n:[0, 9000, 8500, 8000, 7000, 6000, 4000, 2000, 900, 90, 9], diff:8, gesamt:45495, so:999, zuletzt:d0}),
+          _spWippeBild({fav:[a, b], dog:[c, e], eloFav:12345, eloDog:-9876, pct:1, sa:10, sb:9, aw:true}),
+          _spTabelleBild({von:1, bis:9, spitze:true, zeilen:[{id:k2, p:2, q:1, k:'g'}, {id:k3, p:1, q:2, k:'r'}, {id:alle[8], p:3, q:3, k:'m'}, {id:k4, p:9, q:9, k:'m'}]}),
+          _spTabelleBild({von:118, bis:126, spitze:false, zeilen:[{id:a, p:118, q:126, k:'r'}, {id:b, p:126, q:118, k:'g'}, {id:c, p:121, q:121, k:'m'}, {id:e, p:122, q:123, k:'m'}]}),
+          _spSerieBild({pid:a, laenge:57, eig:120, liga:340, ligaWer:b}),
+          _spSerieBild({pid:a, laenge:15, eig:15, liga:16, ligaWer:b}),
+          _spRissBild({opfer:a, laenge:240, brecher:[c, e]}) + _spRissBild({opfer:b, laenge:19, brecher:[a, c]}),
+          _spDuoBild({A:a, B:c, laenge:44, w:12345, l:9876}),
+          _spKurveBild({pid:a, n:999, d:12345, werte:Array.from({length:12}, (_, i) => ({v:i < 11 ? -i * 900 : 4000, w:i === 11, jetzt:i === 11}))}),
+          _spDuellBild({A:a, B:b, gesamt:98765, aw:45678, spiele}),
+          _spMedailleBild({name:'Unüberwindliche Betonmauer der Liga', ic:'shield', klasse:'legendary', wer:a, rang:1234, ids:alle, traeger:alle.slice(0, 7)})
+            + _spMedailleBild({name:'Mauer', ic:'shield', klasse:'rare', wer:a, rang:2, ids:Array.from({length:40}, (_, i) => alle[i % alle.length]), traeger:[]}),
+          _spTagBild({pid:a, elo:-12345, partien:Array.from({length:31}, (_, i) => ({w:i % 3 > 0, e:(i % 5 - 2) * 1000}))})
+        ].map(h => '<div class="nf-card nf-s-spiel">' + h + '</div>');
+        const runde = {id:'probe', when:new Date(d0).toISOString(), cat:'highlight',
+          title:'Jean-Baptiste von Hohenstein gewinnt die Runde mit 12 von 23 Partien',
+          desc:'23 Partien zwischen 10:00 und 13:40 Uhr, jede Paarung mindestens einmal.',
+          dataRef:{type:'runde', glieder:[], partien:ms.map(m => ({id:m.id, karte:null, brk:false})),
+            spieler:[{id:a, w:12, l:11, e:12345}, {id:b, w:11, l:12, e:-9999}, {id:c, w:10, l:13, e:0}, {id:e, w:9, l:14, e:-12345}]}};
+        teile.push(_newsRundeHtml(runde, false, false, ''));
+        teile.push('<div class="nf-card">' + _newsRundeBlatt(runde) + '</div>');
+        return teile.join('');
+      } finally { alt.forEach(([p, n]) => { p.name = n; }); }
+    })()`);
+    const out = {};
+    [288, 360].forEach(breite => {
+      const host = document.createElement('div');
+      host.style.cssText = 'position:absolute;left:0;top:0;width:' + breite + 'px';
+      host.innerHTML = html;
+      document.body.appendChild(host);
+      document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+      const fehler = [];
+      let kleinste = 99;
+      host.querySelectorAll(':scope > .nf-card').forEach((k, i) => {
+        const r = pruefen(k);
+        r.fehler.forEach(f => fehler.push('Teil ' + i + ': ' + f));
+        kleinste = Math.min(kleinste, r.kleinste);
+      });
+      out[breite] = {n:host.children.length, fehler:[...new Set(fehler)], kleinste};
+      host.remove();
+    });
+    return out;
+  }, PRUEFEN.toString());
+  ok(grenz[288].n >= 18 && grenz[288].fehler.length === 0 && grenz[360].fehler.length === 0,
+     'und mit Grenzwerten und langen Namen auch nicht, auf dem schmalsten Telefon wie auf einem gewöhnlichen',
+     grenz[288].fehler.concat(grenz[360].fehler).slice(0, 3).join(' | ')
+       || grenz[288].n + ' Teile, kleinste Schrift ' + Math.min(grenz[288].kleinste, grenz[360].kleinste) + ' px');
   const fadenAuf = await page.evaluate(() => {
     const sheet = document.getElementById('sheet');
     const f = sheet.querySelector('.nf-faden');
