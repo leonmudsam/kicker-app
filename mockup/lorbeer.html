@@ -65,7 +65,7 @@
   <h2>Was sich ändert</h2>
   <ul>
     <li><b>Der Lorbeer bleibt vorn</b>, als klassischer Zweig mit Blattpaaren: außen ein langes Blatt, innen ein kürzeres, beide wachsen mit dem Zweig nach oben, in der Mitte am größten. Der Zweig schließt mit einem Endblatt. Heute liegen zwei Reihen Laub übereinander, und die Grade sind darin kaum zu unterscheiden.</li>
-    <li><b>Die Verzierung steigt nach oben</b>, dorthin, wo kein Laub ist. Wo der Zweig endet, läuft eine Linie am Reif entlang hinauf bis neben den Kopf und rollt dort nach außen ein, mit Laub an ihrem Ansatz. Nichts liegt auf dem Kranz.</li>
+    <li><b>Die Verzierung steigt nach oben</b>, dorthin, wo kein Laub ist. Wo der Zweig endet, läuft eine Linie am Reif entlang hinauf bis neben den Kopf und rollt dort nach außen ein, mit Blättern entlang ihres Bogens, die nach außen wachsen und zum Kopf hin kleiner werden; mit jedem Grad kommt eins dazu. Die Schnecke selbst bleibt frei. Nichts liegt auf dem Kranz.</li>
     <li><b>Mit jedem Grad kommt eine Linie dazu.</b> Grad II: eine Gegenlinie, die sich kurz vor der Schnecke löst und zum Kopf hin einrollt. Die beiden rahmen Lilie und Krone ein. Grad III: ein S, das am Ende des Laubs nach außen ausschwingt.</li>
     <li><b>Beeren in der Rangfarbe</b> sitzen paarweise außen in den Achseln, drei, vier und fünf Gruppen. <b>Die Augen der Schnecken tragen ab Grad I einen Stein</b> in der Rangfarbe, wie im Zierkranz III davor; ab Grad II kommen Steine im Reif dazu.</li>
     <li><b>Gold bleibt, wo es war</b>: Nieten und Lilie ab Grad I, die Raute ab II, Kehle und kleine Krone in III. Der dritte Grad trägt damit nicht mehr Gold als der erste Kronenreif.</li>
@@ -1137,12 +1137,23 @@ function _lbKranz(o, st){
     const s3 = _izSpirale(sx, sy, aE - 120, 128, 330, 2.2);
     aussen += _izRolle(s3, 7, 9, 10, m, true, st);
   }
-  // Blätter an der Hauptlinie: das Laub läuft in die Linie hinein.
+  // Blätter an den Linien: das Laub läuft in die Linien hinein und wird zum
+  // Kopf hin kleiner. Sie wachsen nur nach außen, vom Reif weg — nach innen
+  // lägen sie auf dem Band und vor der Lilie.
   const LB = [];
-  [[.3, 1], [.5, .8]].slice(0, g >= 2 ? 2 : 1).forEach(([u, f]) => {
-    const j = Math.round(haupt.length * u), k = _lbK(haupt, j);
-    LB.push([haupt[j][0], haupt[j][1], k - 150, 80 * f * G, 18 * f * G, -.2]);
-  });
+  const blattAn = (p, u, f, seite) => {
+    const j = Math.max(1, Math.round((p.length - 1) * u)), k = _lbK(p, j);
+    LB.push([p[j][0], p[j][1], k + seite, 90 * f * G, 21 * f * G, seite < 0 ? .14 : -.14]);
+  };
+  // Nur am Bogen, nicht in der Schnecke: dort verdeckten sie Auge und Stein.
+  const nBogen = Math.max(8, Math.round(Math.abs((o.hE || -34) - (aE + 2)) / 3));
+  const bogen = haupt.slice(0, nBogen + 1);
+  const anHaupt = g === 1 ? [.12, .34, .56, .76] : g === 2 ? [.1, .28, .46, .64, .8] : [.08, .24, .4, .56, .7, .84];
+  anHaupt.forEach((u, i) => blattAn(bogen, u, 1 - .45 * u, i % 2 ? -64 : -30));
+  if(g >= 3){
+    const [sx, sy] = _izPol(rz + 8, aE + 4), s3 = _izSpirale(sx, sy, aE - 120, 128, 330, 2.2);
+    [.12, .3].forEach(u => blattAn(s3, u, .66, 40));
+  }
   // Am Fuß: der Zweig endet unter dem Stein in einer kleinen Rolle nach innen.
   const fuss = _izRollbahn(rz, -172, -178, 60, 300, 2, rz - 4);
   return linien + _izBlaetter(LB, m, farbe)
@@ -1179,7 +1190,7 @@ window.TEILE = function(key, nr, farbe){
       + '<circle cx="500" cy="500" r="200" fill="#2b3a33"/>' + t.defs + t.bild + '</svg>');
   };
   const GRADE = ['I', 'II', 'III'];
-  const TEXT_NEU = ['Lorbeer in Blattpaaren, oben je Seite eine Linie, die nach außen einrollt, mit einem Stein im Auge',
+  const TEXT_NEU = ['Lorbeer in Blattpaaren, oben je Seite eine belaubte Linie, die nach außen einrollt, mit einem Stein im Auge',
     'Dazu eine Gegenlinie zum Kopf hin und Steine im Reif',
     'Dazu ein S am Ende des Laubs, mehr Blattpaare, goldene Kehle und kleine Krone'];
   const TEXT_ALT = ['Zwei Reihen Laub, zehn Blätter je Seite', 'Elf Blätter, Steine im Reif', 'Zwölf Blätter, goldene Kehle und kleine Krone'];
