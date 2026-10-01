@@ -2022,6 +2022,33 @@ const ok = (c, msg, det) => {
   ok(Object.values(glRuhig).every(v => v !== 'glanzLauf'),
      'bei prefers-reduced-motion ruht der Glanz', JSON.stringify(glRuhig));
 
+  // Im Verlauf steht der Sieger hell und der Verlierer leise, der Stand
+  // ist nicht kursiv, die Partien stehen unter ihrem Tag; ein Duo zeigt
+  // seine Bilanz als Balken.
+  const listen = await page.evaluate(() => {
+    // In einem eigenen Behälter gezeichnet: das offene Blatt gehört den
+    // Prüfungen danach.
+    const K = window.__k.eval, host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0;width:360px';
+    document.body.appendChild(host);
+    host.innerHTML = K('vHistory()');
+    const won = host.querySelector('.mteam.won'), lost = host.querySelector('.mteam.lost');
+    const em = host.querySelector('.mscore em.w');
+    const out = {farbe: won && lost ? getComputedStyle(won).color !== getComputedStyle(lost).color : false,
+      kursiv: em ? getComputedStyle(em).fontStyle : 'fehlt', tage: host.querySelectorAll('.mtag').length,
+      gesichter: host.querySelectorAll('.mrow .mteam-av .av').length};
+    host.innerHTML = K('vTeams()');
+    const r = host.querySelector('.tm-row'), bar = r && r.querySelector('.tm-bar i');
+    const wl = r ? (r.querySelector('.tm-bil').textContent.match(/(\d+)–(\d+)/) || []) : [];
+    out.balken = bar && wl.length ? Math.abs(bar.getBoundingClientRect().width / bar.parentElement.getBoundingClientRect().width
+      - (+wl[1]) / ((+wl[1]) + (+wl[2]))) < 0.02 : false;
+    host.remove();
+    return out;
+  });
+  ok(listen.farbe && listen.kursiv === 'normal' && listen.tage >= 2 && listen.gesichter >= 40 && listen.balken,
+     'im Verlauf steht der Sieger hell unter seinem Tag mit Gesichtern, und ein Duo zeigt seine Bilanz als Balken',
+     JSON.stringify(listen));
+
   console.log('\n═══ DIE KARTEN AM SPIELTAG ═══');
   // Kopf und Fuß einer Partie folgen ihrem Anlass, und dieselben vier am
   // Tisch sind eine Runde [§11.6c]. Drei Dinge dürfen dabei nie passieren:
