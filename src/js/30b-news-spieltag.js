@@ -16,7 +16,9 @@
 //   Teamserie            der Lauf des Duos und seine Bilanz als Ring
 //   Wende                die Elo-Kurve der letzten zwölf Partien
 //   Rivalität            jede Begegnung der beiden als Balken
-//   Auszeichnung         die Medaille und wer sie in der Liga trägt
+//   seltene Auszeichnung die Medaille und wer sie in der Liga trägt
+//   Premiere             der erste gemeinsame Sieg eines Duos und der Versuch
+//   Rollentausch         ein Sieg auf der ungewohnten Seite und ihr Anteil
 //   Spieler des Tages    die Tagesbahn und die Elo über den Tag
 //   dieselben Vier       eine Karte für die ganze Runde
 //
@@ -156,6 +158,20 @@ function _spChance(m){
 // Bild einer Wende, von der die Karte gar nicht erzählt. Eine seltene oder
 // legendäre Auszeichnung steht vor allem außer der Tabellenspitze: die
 // Schlagzeile nennt sie zuerst.
+//
+// DIE MEDAILLE GEHÖRT DEM SELTENEN. Sie stand auch für jede gewöhnliche
+// Auszeichnung und jede runde Marke, und gemessen trug damit jede dritte
+// Partie-Karte eines Spieltags dieselbe Medaille — auf einem 10:9 der
+// „Zittersieg", obwohl die Anzeigetafel genau das zeigt. Eine gewöhnliche
+// Auszeichnung steht als Zeile im Sammelband; und was eine Auszeichnung nur
+// als Ergebnis erzählt (`SP_ERGEBNIS_BADGE`, dieselbe Liste wie
+// `BADGE_DECKT`), zeigt das Bild des Ergebnisses.
+//
+// DER RANGSPRUNG BRAUCHT EINE TABELLE. Am Monatsanfang springt jeder Sieger
+// zwei Plätze, weil die Tabelle aus drei Leuten besteht — gemessen trug am
+// ersten Spieltag eines Monats jede zweite Karte die Tabelle. Er zählt erst,
+// wenn die Rangliste belastbar ist (`_storyRangFrei`), wie der Spitzenwechsel.
+const SP_ERGEBNIS_BADGE = new Set(['perfect_win', 'upset_king', 'krimi', 'nerves_of_steel', 'nail_biter']);
 function _spAnlass(s){
   const d = s.dataRef || {};
   const m = d.matchId ? _spMatch(d.matchId) : null;
@@ -166,21 +182,24 @@ function _spAnlass(s){
   const diff = Math.abs(m.score_a - m.score_b);
   let x;
   if((x = f('lead_change')) && x.newLeader) return {key:'spitze', m, x};
-  if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary'))) && x.badgeId)
+  if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary')
+      && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
     return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
   if((x = f('streak_killer')) && x.victimPid) return {key:'riss', m, x};
   if((x = f('win_streak')) && x.streak) return {key:'serie', m, x};
   if((x = f('team_streak')) && x.streak && x.a && x.b) return {key:'teamserie', m, x};
   if(c != null && c < CHANCE_UPSET) return {key:'aussenseiter', m, c};
   if((x = f('rivalry_milestone')) && x.a && x.b) return {key:'duell', m, x};
-  if((x = f('badge_unlocked')) && x.badgeId) return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
-  if((x = f('badge_marken')) && Array.isArray(x.marken) && x.marken.length) return {key:'medaille', m, x:x.marken[0]};
+  if((x = _spPremiereDaten(m))) return {key:'premiere', m, x};
   const wende = _spSieger(m).map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
     .filter(w => w.n >= 3).sort((a, b) => b.n - a.n)[0];
   if(wende) return {key:'wende', m, x:wende};
-  const sprung = _spSieger(m).map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
-    .filter(w => w.r && w.r.pre - w.r.post >= 2);
+  let frei = false;
+  try { frei = _storyRangFrei(seasonOf(m.created_at).id, mts(m)).frei; } catch(e){}
+  const sprung = frei ? _spSieger(m).map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
+    .filter(w => w.r && w.r.pre - w.r.post >= 2) : [];
   if(sprung.length) return {key:'rang', m, x:sprung};
+  if((x = _spRolleDaten(m))) return {key:'rolle', m, x};
   if(diff === 1) return {key:'krimi', m, c};
   if(diff >= 6) return {key:'deutlich', m};
   return {key:'feld', m, c};
@@ -195,6 +214,8 @@ const SP_ANLASS = {
   duell:       {name:'Rivalität',       kurz:'Rivalität',   ic:'crossedSwords'},
   medaille:    {name:'Auszeichnung',    kurz:'Marke',       ic:'medal'},
   rang:        {name:'Rangsprung',      kurz:'Sprung',      ic:'stepsUp'},
+  premiere:    {name:'Premiere',        kurz:'Premiere',    ic:'handshake'},
+  rolle:       {name:'Rollentausch',    kurz:'Rolle',       ic:'posSwap'},
   krimi:       {name:'Ein-Tor-Krimi',   kurz:'Krimi',       ic:'thriller'},
   deutlich:    {name:'Klarer Sieg',     kurz:'Klar',        ic:'target'},
   feld:        {name:'Ergebnis',        kurz:'',            ic:'ball'}
@@ -455,6 +476,69 @@ function _spRissBild(d){
     + _spUnter(`${_spZahl(n)} Siege in Folge von ${_spNb(d.opfer)}, beendet von ${_spUnd(d.brecher)}.`) + `</div>`;
 }
 
+// ── Die Premiere: zwei, die zum ersten Mal zusammen gewinnen ─────────
+// Ein Duo, das zum ersten Mal zusammen spielt und gewinnt, oder eins, das
+// nach mehreren Versuchen den ersten gemeinsamen Sieg holt. Die Zahl ist der
+// Versuch: wie viele gemeinsame Partien es dafür gebraucht hat, als Lauf aus
+// roten Feldern und dem grünen am Ende — derselbe Lauf wie bei Serie und
+// Serienbruch [§C27]. Gezählt wird erst ab dem dritten Versuch: ein Sieg im
+// zweiten ist keine Geschichte.
+function _spPremiereDaten(m){
+  const [A, B] = _spSieger(m);
+  if(!A || !B) return null;
+  const zusammen = _spEigene(A, m).filter(x => x !== m && [x.a1, x.a2, x.b1, x.b2].includes(B)
+    && _spSeite(x, A) === _spSeite(x, B));
+  if(zusammen.some(x => _spGew(x, A))) return null;
+  if(zusammen.length && zusammen.length < 2) return null;
+  return {A, B, versuch:zusammen.length + 1};
+}
+function _spPremiereBild(d){
+  const n = d.versuch, lauf = n <= 20
+    ? Array.from({length:n - 1}, (_, i) => `<i class="l" style="--i:${i}"></i>`).join('') + `<i class="w" style="--i:${n - 1}"></i>`
+    : `<i class="l sp-pm-voll" style="--i:0"></i><i class="w" style="--i:1"></i>`;
+  const was = n === 1 ? `<b class="num">1.</b><span><em>gemeinsame Partie</em><small>und gleich gewonnen</small></span>`
+    : `<b class="num">${_spZahl(n)}.</b><span><em>Versuch</em><small>der erste gemeinsame Sieg</small></span>`;
+  return `<div class="sp-pm"><div class="sp-pm-k"><span class="sp-pm-d">${_spChip(d.A)}<i>${svgI('handshake')}</i>${_spChip(d.B)}</span>`
+    + `<span class="sp-pm-t">${was}</span></div>`
+    + (n > 1 ? `<div class="sp-pm-r" style="--n:${n <= 20 ? n : 2}">${lauf}</div>` : '')
+    + _spUnter(n === 1 ? `${_spUnd([d.A, d.B])} spielen zum ersten Mal zusammen.`
+      : `${_spUnd([d.A, d.B])} gewinnen zum ersten Mal zusammen, nach ${_spZahl(n - 1)} Niederlagen zu zweit.`) + `</div>`;
+}
+
+// ── Der Rollentausch: ein Sieg auf der ungewohnten Seite ──────────────
+// Wer fast immer hinten steht und vorn gewinnt, hat etwas anderes gezeigt
+// als sonst. Die Zahl ist der Anteil der Rolle an der eigenen Laufbahn bis
+// zu dieser Partie, gezeichnet wie der Strahl im Positions-Profil [§C27]:
+// Sturm von links, Abwehr von rechts, und die heutige Seite trägt die Marke.
+// Erst ab zwanzig Partien und unter einem Viertel — vorher ist keine Seite
+// gewohnt.
+function _spRolleDaten(m){
+  let best = null;
+  _spSieger(m).forEach(pid => {
+    const r = m[(m.a1 === pid ? 'a1' : m.a2 === pid ? 'a2' : m.b1 === pid ? 'b1' : 'b2') + '_pos'];
+    const vor = _spEigene(pid, m).filter(x => x !== m);
+    if(vor.length < 20) return;
+    const rolle = x => x[(x.a1 === pid ? 'a1' : x.a2 === pid ? 'a2' : x.b1 === pid ? 'b1' : 'b2') + '_pos'];
+    const dort = vor.filter(x => rolle(x) === r);
+    const anteil = dort.length / vor.length;
+    if(anteil >= 0.25 || (best && best.anteil <= anteil)) return;
+    best = {pid, r, anteil, dort:dort.length, alle:vor.length, w:dort.filter(x => _spGew(x, pid)).length};
+  });
+  return best;
+}
+function _spRolleBild(d){
+  const sturm = d.r === 'atk' ? d.anteil : 1 - d.anteil;
+  const pct = v => Math.round(v * 100);
+  const name = d.r === 'atk' ? 'Sturm' : 'Abwehr';
+  return `<div class="sp-ro"><div class="sp-ro-k">${_spChip(d.pid)}<span><em>heute im ${name}</em>`
+    + `<small>${_spZahl(d.dort)} von ${_spZahl(d.alle)} Partien vorher dort</small></span>`
+    + `<b class="num">${_spZahl(pct(d.anteil))} %</b></div>`
+    + `<div class="sp-ro-s"><i class="atk${d.r === 'atk' ? ' heute' : ''}" style="width:${(sturm * 100).toFixed(1)}%"></i>`
+    + `<i class="def${d.r === 'def' ? ' heute' : ''}"></i></div>`
+    + `<div class="sp-ro-l"><span>Sturm ${_spZahl(pct(sturm))} %</span><span>Abwehr ${_spZahl(100 - pct(sturm))} %</span></div>`
+    + _spUnter(`${_spNb(d.pid)} steht sonst selten im ${name} und gewinnt dort. Bilanz dort vorher ${_spZahl(d.w)}:${_spZahl(d.dort - d.w)}.`) + `</div>`;
+}
+
 // ── Das Duo: der Lauf zu zweit und die gemeinsame Bilanz als Ring ─────
 // Im Ring steht die Siegquote — drei Zeichen, egal wie viele Partien es
 // werden; die Bilanz selbst steht in der Textstelle darunter.
@@ -589,14 +673,15 @@ const SP_KOPF = {
   feld:a => _spFeldBild(_spFeldDaten(a)), krimi:a => _spTafelBild(_spTafelDaten(a)),
   aussenseiter:a => _spWippeBild(_spWippeDaten(a)), deutlich:a => _spBandBild(_spZeileDaten(a.m)),
   spitze:_spZeile, rang:_spZeile, serie:_spZeile, wende:_spZeile, duell:_spZeile,
-  riss:_spZeile, teamserie:_spZeile, medaille:_spZeile
+  riss:_spZeile, teamserie:_spZeile, medaille:_spZeile, premiere:_spZeile, rolle:_spZeile
 };
 const SP_FUSS = {
   krimi:a => _spNervenBild(_spNervenDaten(a)), deutlich:a => _spVerteilungBild(_spVerteilungDaten(a)),
   spitze:a => _spTabelleBild(_spTabelleDaten(a, true)), rang:a => _spTabelleBild(_spTabelleDaten(a, false)),
   serie:a => _spSerieBild(_spSerieDaten(a)), wende:a => _spKurveBild(_spKurveDaten(a)),
   duell:a => _spDuellBild(_spDuellDaten(a)), riss:a => _spRissBild(_spRissDaten(a)),
-  teamserie:a => _spDuoBild(_spDuoDaten(a)), medaille:a => _spMedailleBild(_spMedailleDaten(a))
+  teamserie:a => _spDuoBild(_spDuoDaten(a)), medaille:a => _spMedailleBild(_spMedailleDaten(a)),
+  premiere:a => _spPremiereBild(a.x), rolle:a => _spRolleBild(a.x)
 };
 const SP_ZEIGT = {feld:{chance:true, elo:true}, krimi:{chance:true}, aussenseiter:{chance:true}};
 // Gemerkt je Datenstand und Karte: der Feed zeichnet sich bei jedem Filter,
@@ -611,13 +696,20 @@ function _spBild(s){
   if(alt && alt.pl === players) return alt;
   let r = {kopf:'', fuss:'', zeigt:{}, key:'', pl:players};
   try {
-    const a = _spAnlass(s);
+    let a = _spAnlass(s);
     if(a.key){
-      r = {key:a.key, kopf:SP_KOPF[a.key](a) || _newsErgebnisBand(a.m.id),
-           fuss:(SP_FUSS[a.key] ? SP_FUSS[a.key](a) : '') || '', zeigt:SP_ZEIGT[a.key] || {}, pl:players};
-      if(a.key === 'feld' || a.key === 'krimi' || a.key === 'aussenseiter'){
-        if(a.c == null) r.zeigt = Object.assign({}, r.zeigt, {chance:false});
+      // Die Ergebniszeile über einer Grafik wechselt sich mit dem Spielfeld
+      // ab, Partie um Partie in Spielreihenfolge: elf Anlässe trugen alle
+      // dieselbe Zeile als Kopf, und das Spielfeld stand nur, wo sonst
+      // nichts war — an einem Spieltag mit lauter Anlässen gar nicht.
+      let kopf = SP_KOPF[a.key], zeigt = SP_ZEIGT[a.key] || {};
+      if(kopf === _spZeile && _spBasis().idx.get(a.m.id) % 2 === 0){
+        kopf = SP_KOPF.feld; zeigt = SP_ZEIGT.feld;
+        a = Object.assign({}, a, {c:a.c != null ? a.c : _spChance(a.m)});
       }
+      r = {key:a.key, kopf:kopf(a) || _newsErgebnisBand(a.m.id),
+           fuss:(SP_FUSS[a.key] ? SP_FUSS[a.key](a) : '') || '', zeigt, pl:players};
+      if(zeigt.chance && a.c == null) r.zeigt = Object.assign({}, r.zeigt, {chance:false});
     }
   } catch(e){
     r = {kopf:'', fuss:'', zeigt:{}, key:'', pl:players};

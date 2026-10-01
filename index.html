@@ -4157,7 +4157,7 @@
 .sp-chips{display:flex;flex:0 0 auto}
 .sp-chips .av+.av{margin-left:-6px}
 .nf-runde .av,.sp-rd-tafel .av,.sp-zeile .av,.sp-at .av,.sp-nv .av,.sp-wp .av,.sp-sl .av,.sp-ku .av,.sp-bg .av,.sp-rd-p .av,.sp-tb .av,
-.sp-rk .av,.sp-duo .av,.sp-md .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+.sp-rk .av,.sp-duo .av,.sp-md .av,.sp-pm .av,.sp-ro .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
 .nf-card .num,.nd .num{white-space:nowrap}
 
 .sp-zeile{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;
@@ -4321,6 +4321,33 @@
 .sp-rk-r i.x{display:flex;align-items:center;justify-content:center;background:var(--red);
   box-shadow:0 0 12px rgba(240,86,106,.5)}
 .sp-rk-r i.x svg{width:11px;height:11px;color:#1a0b0b}
+.sp-pm{padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-pm-k{display:flex;align-items:center;gap:12px;min-width:0}
+.sp-pm-d{display:flex;align-items:center;gap:4px;flex:0 0 auto}
+.sp-pm-d .av{--av:26px;width:26px;height:26px;font-size:9px}
+.sp-pm-d i{display:flex;width:18px;height:18px;align-items:center;justify-content:center;border-radius:50%;
+  color:var(--acid);background:rgba(190,242,100,.1)}
+.sp-pm-d i svg{width:12px;height:12px}
+.sp-pm-t{display:flex;align-items:center;gap:8px;min-width:0}
+.sp-pm-t b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1;color:var(--acid)}
+.sp-pm-t > span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.sp-pm-t em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sp-pm-t small{font-size:9.5px;color:var(--muted)}
+.sp-pm-r{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:3px;margin-top:9px;height:12px}
+.sp-pm-r i{display:block;min-width:0;height:12px;border-radius:3px}
+.sp-pm-r i.l{background:rgba(240,86,106,.4)}
+.sp-pm-r i.w{background:var(--acid);box-shadow:0 0 10px rgba(190,242,100,.35)}
+.sp-ro{padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-ro-k{display:flex;align-items:center;gap:8px;min-width:0}
+.sp-ro-k > span{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}
+.sp-ro-k em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sp-ro-k small{font-size:9.5px;color:var(--muted)}
+.sp-ro-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:20px;line-height:1;color:var(--acid);flex:0 0 auto}
+.sp-ro-s{display:flex;height:10px;margin-top:9px;border-radius:5px;overflow:hidden;background:var(--surface3)}
+.sp-ro-s i{display:block;height:100%;background:rgba(255,255,255,.12)}
+.sp-ro-s i.def{flex:1}
+.sp-ro-s i.heute{background:var(--acid);box-shadow:0 0 10px rgba(190,242,100,.4)}
+.sp-ro-l{display:flex;justify-content:space-between;margin-top:4px;font-size:9.5px;color:var(--muted)}
 
 .sp-duo{display:grid;grid-template-columns:56px minmax(0,1fr);gap:11px;align-items:center;padding:9px 13px 10px;border-top:1px solid var(--line)}
 .sp-duo svg{width:56px;height:56px;display:block}
@@ -4412,6 +4439,7 @@
   .sp-vt-s i,.sp-tg-b i,.sp-duo-l i{transform-origin:bottom;animation:spY .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-sl-r i.w,.sp-sl-voll{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-bg rect{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .sp-pm-r i,.sp-ro-s i.atk{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
   .sp-rk-r i.w{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
   .sp-rk-r i.x{animation:spBruch .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 30ms + 120ms)}
   .sp-rk-z s{transform-origin:left;animation:spStrich .4s ease-out both;animation-delay:.35s}
@@ -4545,7 +4573,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.01.6913c749';
+const BUILD_VERSION='2026.10.01.338d8a66';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -20852,6 +20880,7 @@ function _spChance(m){
   return e == null ? null : (m.winner === 'A' ? e : 1 - e);
 }
 
+const SP_ERGEBNIS_BADGE = new Set(['perfect_win', 'upset_king', 'krimi', 'nerves_of_steel', 'nail_biter']);
 function _spAnlass(s){
   const d = s.dataRef || {};
   const m = d.matchId ? _spMatch(d.matchId) : null;
@@ -20862,21 +20891,24 @@ function _spAnlass(s){
   const diff = Math.abs(m.score_a - m.score_b);
   let x;
   if((x = f('lead_change')) && x.newLeader) return {key:'spitze', m, x};
-  if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary'))) && x.badgeId)
+  if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary')
+      && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
     return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
   if((x = f('streak_killer')) && x.victimPid) return {key:'riss', m, x};
   if((x = f('win_streak')) && x.streak) return {key:'serie', m, x};
   if((x = f('team_streak')) && x.streak && x.a && x.b) return {key:'teamserie', m, x};
   if(c != null && c < CHANCE_UPSET) return {key:'aussenseiter', m, c};
   if((x = f('rivalry_milestone')) && x.a && x.b) return {key:'duell', m, x};
-  if((x = f('badge_unlocked')) && x.badgeId) return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
-  if((x = f('badge_marken')) && Array.isArray(x.marken) && x.marken.length) return {key:'medaille', m, x:x.marken[0]};
+  if((x = _spPremiereDaten(m))) return {key:'premiere', m, x};
   const wende = _spSieger(m).map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
     .filter(w => w.n >= 3).sort((a, b) => b.n - a.n)[0];
   if(wende) return {key:'wende', m, x:wende};
-  const sprung = _spSieger(m).map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
-    .filter(w => w.r && w.r.pre - w.r.post >= 2);
+  let frei = false;
+  try { frei = _storyRangFrei(seasonOf(m.created_at).id, mts(m)).frei; } catch(e){}
+  const sprung = frei ? _spSieger(m).map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
+    .filter(w => w.r && w.r.pre - w.r.post >= 2) : [];
   if(sprung.length) return {key:'rang', m, x:sprung};
+  if((x = _spRolleDaten(m))) return {key:'rolle', m, x};
   if(diff === 1) return {key:'krimi', m, c};
   if(diff >= 6) return {key:'deutlich', m};
   return {key:'feld', m, c};
@@ -20891,6 +20923,8 @@ const SP_ANLASS = {
   duell:       {name:'Rivalität',       kurz:'Rivalität',   ic:'crossedSwords'},
   medaille:    {name:'Auszeichnung',    kurz:'Marke',       ic:'medal'},
   rang:        {name:'Rangsprung',      kurz:'Sprung',      ic:'stepsUp'},
+  premiere:    {name:'Premiere',        kurz:'Premiere',    ic:'handshake'},
+  rolle:       {name:'Rollentausch',    kurz:'Rolle',       ic:'posSwap'},
   krimi:       {name:'Ein-Tor-Krimi',   kurz:'Krimi',       ic:'thriller'},
   deutlich:    {name:'Klarer Sieg',     kurz:'Klar',        ic:'target'},
   feld:        {name:'Ergebnis',        kurz:'',            ic:'ball'}
@@ -21092,6 +21126,55 @@ function _spRissBild(d){
     + _spUnter(`${_spZahl(n)} Siege in Folge von ${_spNb(d.opfer)}, beendet von ${_spUnd(d.brecher)}.`) + `</div>`;
 }
 
+function _spPremiereDaten(m){
+  const [A, B] = _spSieger(m);
+  if(!A || !B) return null;
+  const zusammen = _spEigene(A, m).filter(x => x !== m && [x.a1, x.a2, x.b1, x.b2].includes(B)
+    && _spSeite(x, A) === _spSeite(x, B));
+  if(zusammen.some(x => _spGew(x, A))) return null;
+  if(zusammen.length && zusammen.length < 2) return null;
+  return {A, B, versuch:zusammen.length + 1};
+}
+function _spPremiereBild(d){
+  const n = d.versuch, lauf = n <= 20
+    ? Array.from({length:n - 1}, (_, i) => `<i class="l" style="--i:${i}"></i>`).join('') + `<i class="w" style="--i:${n - 1}"></i>`
+    : `<i class="l sp-pm-voll" style="--i:0"></i><i class="w" style="--i:1"></i>`;
+  const was = n === 1 ? `<b class="num">1.</b><span><em>gemeinsame Partie</em><small>und gleich gewonnen</small></span>`
+    : `<b class="num">${_spZahl(n)}.</b><span><em>Versuch</em><small>der erste gemeinsame Sieg</small></span>`;
+  return `<div class="sp-pm"><div class="sp-pm-k"><span class="sp-pm-d">${_spChip(d.A)}<i>${svgI('handshake')}</i>${_spChip(d.B)}</span>`
+    + `<span class="sp-pm-t">${was}</span></div>`
+    + (n > 1 ? `<div class="sp-pm-r" style="--n:${n <= 20 ? n : 2}">${lauf}</div>` : '')
+    + _spUnter(n === 1 ? `${_spUnd([d.A, d.B])} spielen zum ersten Mal zusammen.`
+      : `${_spUnd([d.A, d.B])} gewinnen zum ersten Mal zusammen, nach ${_spZahl(n - 1)} Niederlagen zu zweit.`) + `</div>`;
+}
+
+function _spRolleDaten(m){
+  let best = null;
+  _spSieger(m).forEach(pid => {
+    const r = m[(m.a1 === pid ? 'a1' : m.a2 === pid ? 'a2' : m.b1 === pid ? 'b1' : 'b2') + '_pos'];
+    const vor = _spEigene(pid, m).filter(x => x !== m);
+    if(vor.length < 20) return;
+    const rolle = x => x[(x.a1 === pid ? 'a1' : x.a2 === pid ? 'a2' : x.b1 === pid ? 'b1' : 'b2') + '_pos'];
+    const dort = vor.filter(x => rolle(x) === r);
+    const anteil = dort.length / vor.length;
+    if(anteil >= 0.25 || (best && best.anteil <= anteil)) return;
+    best = {pid, r, anteil, dort:dort.length, alle:vor.length, w:dort.filter(x => _spGew(x, pid)).length};
+  });
+  return best;
+}
+function _spRolleBild(d){
+  const sturm = d.r === 'atk' ? d.anteil : 1 - d.anteil;
+  const pct = v => Math.round(v * 100);
+  const name = d.r === 'atk' ? 'Sturm' : 'Abwehr';
+  return `<div class="sp-ro"><div class="sp-ro-k">${_spChip(d.pid)}<span><em>heute im ${name}</em>`
+    + `<small>${_spZahl(d.dort)} von ${_spZahl(d.alle)} Partien vorher dort</small></span>`
+    + `<b class="num">${_spZahl(pct(d.anteil))} %</b></div>`
+    + `<div class="sp-ro-s"><i class="atk${d.r === 'atk' ? ' heute' : ''}" style="width:${(sturm * 100).toFixed(1)}%"></i>`
+    + `<i class="def${d.r === 'def' ? ' heute' : ''}"></i></div>`
+    + `<div class="sp-ro-l"><span>Sturm ${_spZahl(pct(sturm))} %</span><span>Abwehr ${_spZahl(100 - pct(sturm))} %</span></div>`
+    + _spUnter(`${_spNb(d.pid)} steht sonst selten im ${name} und gewinnt dort. Bilanz dort vorher ${_spZahl(d.w)}:${_spZahl(d.dort - d.w)}.`) + `</div>`;
+}
+
 function _spDuoDaten(a){
   const m = a.m, A = a.x.a, B = a.x.b;
   const zusammen = _spEigene(A, m).filter(x => [x.a1, x.a2, x.b1, x.b2].includes(B) && _spSeite(x, A) === _spSeite(x, B));
@@ -21200,14 +21283,15 @@ const SP_KOPF = {
   feld:a => _spFeldBild(_spFeldDaten(a)), krimi:a => _spTafelBild(_spTafelDaten(a)),
   aussenseiter:a => _spWippeBild(_spWippeDaten(a)), deutlich:a => _spBandBild(_spZeileDaten(a.m)),
   spitze:_spZeile, rang:_spZeile, serie:_spZeile, wende:_spZeile, duell:_spZeile,
-  riss:_spZeile, teamserie:_spZeile, medaille:_spZeile
+  riss:_spZeile, teamserie:_spZeile, medaille:_spZeile, premiere:_spZeile, rolle:_spZeile
 };
 const SP_FUSS = {
   krimi:a => _spNervenBild(_spNervenDaten(a)), deutlich:a => _spVerteilungBild(_spVerteilungDaten(a)),
   spitze:a => _spTabelleBild(_spTabelleDaten(a, true)), rang:a => _spTabelleBild(_spTabelleDaten(a, false)),
   serie:a => _spSerieBild(_spSerieDaten(a)), wende:a => _spKurveBild(_spKurveDaten(a)),
   duell:a => _spDuellBild(_spDuellDaten(a)), riss:a => _spRissBild(_spRissDaten(a)),
-  teamserie:a => _spDuoBild(_spDuoDaten(a)), medaille:a => _spMedailleBild(_spMedailleDaten(a))
+  teamserie:a => _spDuoBild(_spDuoDaten(a)), medaille:a => _spMedailleBild(_spMedailleDaten(a)),
+  premiere:a => _spPremiereBild(a.x), rolle:a => _spRolleBild(a.x)
 };
 const SP_ZEIGT = {feld:{chance:true, elo:true}, krimi:{chance:true}, aussenseiter:{chance:true}};
 const _spBildMemo = new WeakMap();
@@ -21218,13 +21302,16 @@ function _spBild(s){
   if(alt && alt.pl === players) return alt;
   let r = {kopf:'', fuss:'', zeigt:{}, key:'', pl:players};
   try {
-    const a = _spAnlass(s);
+    let a = _spAnlass(s);
     if(a.key){
-      r = {key:a.key, kopf:SP_KOPF[a.key](a) || _newsErgebnisBand(a.m.id),
-           fuss:(SP_FUSS[a.key] ? SP_FUSS[a.key](a) : '') || '', zeigt:SP_ZEIGT[a.key] || {}, pl:players};
-      if(a.key === 'feld' || a.key === 'krimi' || a.key === 'aussenseiter'){
-        if(a.c == null) r.zeigt = Object.assign({}, r.zeigt, {chance:false});
+      let kopf = SP_KOPF[a.key], zeigt = SP_ZEIGT[a.key] || {};
+      if(kopf === _spZeile && _spBasis().idx.get(a.m.id) % 2 === 0){
+        kopf = SP_KOPF.feld; zeigt = SP_ZEIGT.feld;
+        a = Object.assign({}, a, {c:a.c != null ? a.c : _spChance(a.m)});
       }
+      r = {key:a.key, kopf:kopf(a) || _newsErgebnisBand(a.m.id),
+           fuss:(SP_FUSS[a.key] ? SP_FUSS[a.key](a) : '') || '', zeigt, pl:players};
+      if(zeigt.chance && a.c == null) r.zeigt = Object.assign({}, r.zeigt, {chance:false});
     }
   } catch(e){
     r = {kopf:'', fuss:'', zeigt:{}, key:'', pl:players};

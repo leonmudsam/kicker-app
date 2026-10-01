@@ -2075,7 +2075,7 @@ const ok = (c, msg, det) => {
     const karten = [...sheet.querySelectorAll('.nf-card.nf-s-spiel')];
     const fehler = [], formen = {};
     let kleinste = 99;
-    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tb','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel'];
+    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tb','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel','sp-pm','sp-ro','sp-rq'];
     karten.forEach(k => {
       const r = pruefen(k);
       r.fehler.forEach(f => fehler.push(k.dataset.sid + ': ' + f));
@@ -2128,7 +2128,9 @@ const ok = (c, msg, det) => {
           _spTabelleBild({von:118, bis:126, spitze:false, zeilen:[{id:a, p:118, q:126, k:'r'}, {id:b, p:126, q:118, k:'g'}, {id:c, p:121, q:121, k:'m'}, {id:e, p:122, q:123, k:'m'}]}),
           _spSerieBild({pid:a, laenge:57, eig:120, liga:340, ligaWer:b}),
           _spSerieBild({pid:a, laenge:15, eig:15, liga:16, ligaWer:b}),
-          _spRissBild({opfer:a, laenge:240, brecher:[c, e]}) + _spRissBild({opfer:b, laenge:19, brecher:[a, c]}),
+          _spRissBild({opfer:a, laenge:240, brecher:[c, e], eig:999}) + _spRissBild({opfer:b, laenge:19, brecher:[a, c], eig:19}),
+          _spPremiereBild({A:a, B:b, versuch:1}) + _spPremiereBild({A:c, B:e, versuch:12345}) + _spPremiereBild({A:a, B:c, versuch:14}),
+          _spRolleBild({pid:a, r:'atk', anteil:.0012, dort:12, alle:9876, w:12345}) + _spRolleBild({pid:b, r:'def', anteil:.249, dort:2490, alle:9999, w:1}),
           _spDuoBild({A:a, B:c, laenge:44, w:12345, l:9876}),
           _spKurveBild({pid:a, n:999, d:12345, werte:Array.from({length:12}, (_, i) => ({v:i < 11 ? -i * 900 : 4000, w:i === 11, jetzt:i === 11}))}),
           _spDuellBild({A:a, B:b, gesamt:98765, aw:45678, spiele}),
