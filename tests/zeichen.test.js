@@ -745,38 +745,57 @@ const ok = (c, msg, det) => {
      'Insignium: die Lilie ist Metall und nicht in voller Rangfarbe',
      Li && (Li.n + ' von ' + Li.alle + ' Punkten farbig'));
 
-  // 5. Dasselbe für die UNTERLAGE im vollen Zeichen. Sie setzt den Reif auf
-  //    die Schwinge und muss dabei über den ganzen Schmuck reichen — die
-  //    Bandbox reicht aber nur 58 Einheiten unter die Reifmitte. Als sie ein
-  //    Kreis mit Radius 72,5 war, schnitt der Browser ihr unteres Viertel ab,
-  //    und im Profilkopf stand quer unter dem Zeichen eine gerade Kante.
-  //    Gemessen in Zeichen-Einheiten, nicht in Pixeln: die Box ist die Box.
-  const _unterlage = await page.evaluate(() => {
+  // 5. Die AURA im vollen Zeichen [§C36]. Sie ersetzt die Schwinge und liegt
+  //    ganz hinten, als ein Bild um die Reifmitte. Ihre Mitte ist bis Radius
+  //    184 von 1000 ausgespart, und das Insignium nimmt 70 % ihrer Fläche
+  //    ein: nur dann beginnt das Licht am Reif und fällt nicht durch das
+  //    Gesicht. Gemessen am gerenderten Bild, in Zeichen-Einheiten, und
+  //    dazu, dass die Aura mit jedem Titel bis zehn heller wird.
+  const _aura = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const h = document.createElement('div');
     h.style.cssText = 'position:absolute;left:0;top:0;width:300px';
-    h.innerHTML = K('insigniumSvg("zn-test", {band:true, pos:1, titel:12})');
-    document.body.appendChild(h);
-    const svg = h.querySelector('svg.ins');
-    const vb = svg.getAttribute('viewBox').split(/\s+/).map(Number);
-    const el = [...svg.querySelectorAll('ellipse,circle')]
-      .find(e => /sd\)/.test(e.getAttribute('fill') || ''));
-    if(!el){ h.remove(); return null; }
-    const b = el.getBBox();
-    const out = {vb, oben:+(b.y - vb[1]).toFixed(1),
-                 unten:+((vb[1] + vb[3]) - (b.y + b.height)).toFixed(1),
-                 links:+(b.x - vb[0]).toFixed(1),
-                 rechts:+((vb[0] + vb[2]) - (b.x + b.width)).toFixed(1)};
+    const out = {};
+    for(const t of [0, 1, 3, 10, 14]){
+      h.innerHTML = K('insigniumSvg("zn-test", {band:true, pos:1, titel:' + t + '})');
+      document.body.appendChild(h);
+      const im = h.querySelector('svg.ins image.aura-b');
+      out[t] = im ? {x:+im.getAttribute('x'), y:+im.getAttribute('y'), w:+im.getAttribute('width'),
+                     erstes:h.querySelector('svg.ins').firstElementChild === im || null,
+                     href:im.getAttribute('href')} : null;
+    }
     h.remove();
+    // Die Helligkeit: mittlere Deckkraft des Lichts außerhalb des Lochs.
+    const hell = async st => {
+      const b = new Image(); b.src = K('auraHref(' + st + ')'); await b.decode();
+      const c = document.createElement('canvas'); c.width = c.height = 200;
+      const x = c.getContext('2d', {willReadFrequently:true}); x.drawImage(b, 0, 0, 200, 200);
+      const d = x.getImageData(0, 0, 200, 200).data;
+      let s = 0, loch = 0;
+      for(let i = 0; i < 200 * 200; i++){
+        const px = i % 200 - 100, py = Math.floor(i / 200) - 100;
+        if(px * px + py * py < 34 * 34){ loch = Math.max(loch, d[i * 4 + 3]); continue; }
+        s += d[i * 4 + 3];
+      }
+      return {mittel:+(s / (200 * 200)).toFixed(2), loch};
+    };
+    out.hell = [];
+    for(const st of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) out.hell.push(await hell(st));
+    out.seite = K('AURA_SEITE'); out.kante = K('INS_BILD_KANTE');
     return out;
   });
-  console.log('  Unterlage: oben ' + (_unterlage ? _unterlage.oben : '?')
-    + ' · unten ' + (_unterlage ? _unterlage.unten : '?') + ' Einheiten Luft');
-  ok(_unterlage && _unterlage.oben >= 0 && _unterlage.unten >= 0,
-     'Insignium: die Unterlage wird von der Bandbox nicht abgeschnitten',
-     _unterlage ? 'oben ' + _unterlage.oben + ', unten ' + _unterlage.unten
-                + ', links ' + _unterlage.links + ', rechts ' + _unterlage.rechts
-                : 'keine Unterlage gefunden');
+  const _au = _aura[3];
+  ok(!_aura[0] && _au && Math.abs(_au.w - _aura.kante / .7) < .05
+     && Math.abs(_au.x + _au.w / 2 - 50) < .05 && Math.abs(_au.y + _au.w / 2 - 50) < .05 && _au.erstes,
+     'Aura: kein Titel, keine Aura; sonst ganz hinten, mittig und 1/0,7 so groß wie das Zeichen',
+     JSON.stringify({ohne:_aura[0], drei:_au, seite:_aura.seite}));
+  ok(_aura[10] && _aura[14] && _aura[10].href === _aura[14].href && _aura[1].href !== _aura[3].href,
+     'Aura: zehn Stufen, je Titel eine, danach bleibt sie stehen',
+     JSON.stringify({eins:!!_aura[1], zehn:!!_aura[10], vierzehn:!!_aura[14]}));
+  const _steigt = _aura.hell.every((h, i, a) => i === 0 || h.mittel > a[i - 1].mittel);
+  ok(_steigt && _aura.hell.every(h => h.loch === 0),
+     'Aura: mit jedem Titel heller, und durch das Gesicht fällt kein Licht',
+     _aura.hell.map((h, i) => (i + 1) + ':' + h.mittel + (h.loch ? ' Loch ' + h.loch : '')).join(' · '));
 
   // ════════════════════════════════════════════════════════════════════
   console.log('\n═══ 8. DIE TITELSTERNE STEHEN FREI ═══');
@@ -812,8 +831,8 @@ const ok = (c, msg, det) => {
       for(let i = 0; i < B*H; i++) a[i] = d[i*4+3] > 40 ? 1 : 0;
       return a;
     };
-    // Das Zeichen: die größte Schwinge, damit auch ihre Spitzen mitgemessen
-    // sind, dazu die Stufe und die Raute.
+    // Das Zeichen: die Stufe und die Raute. Die Aura zählt nicht dazu — sie
+    // ist Licht hinter dem Zeichen, und die Sterne dürfen darauf stehen.
     const stufen = K('INSIGNIEN.map(x => x.key)');
     const sterne = {};
     for(const t of [1, 3, 5, 8, 12, 20])
@@ -821,8 +840,7 @@ const ok = (c, msg, det) => {
     const treffer = [], leer = [];
     for(const k of stufen) for(const g of [0,1,2]){
       const z = await raster(
-        K('_insBandGruppe(_insSchwingen(5, "' + id + '"))')
-        + K('_insStufe("' + k + '", __c, ' + (8 + g) + ', "' + id + '", ' + g + ', true)')
+        K('_insStufe("' + k + '", __c, ' + (8 + g) + ', "' + id + '", ' + g + ', true)')
             .replace(/<circle data-schein[^>]*\/>/g, '')
         + K('_insFuss(3)'));
       for(const t of [1, 3, 5, 8, 12, 20]){
@@ -893,10 +911,10 @@ const ok = (c, msg, det) => {
      sternMess.raus.length ? 'ragen heraus bei ' + sternMess.raus.join(', ') + ' Titeln'
                            : sternMess.luft + ' Einheiten Luft nach oben');
 
-  // 4. Im fertigen Zeichen stehen sie unverändert da. Die Schwinge wird auf
-  //    INS_SCHWINGE_SKALA verkleinert; wer die Sterne wieder in ihre Gruppe
-  //    legt, zieht sie damit auf den Kopf des Insigniums, und die drei
-  //    Messungen oben sähen davon nichts.
+  // 4. Im fertigen Zeichen stehen sie unverändert da. Sie lagen einmal im
+  //    verkleinerten Kasten der Schwinge und standen damit auf dem Kopf des
+  //    Insigniums; wer sie wieder in eine skalierte Gruppe legt, zieht sie
+  //    dorthin, und die drei Messungen oben sähen davon nichts.
   ok(sternMess.versatz < 1,
      'Sterne: im ganzen Zeichen sitzen sie, wo sie einzeln sitzen',
      sternMess.versatz + ' px Versatz bei 400 px Zeichenbreite');
