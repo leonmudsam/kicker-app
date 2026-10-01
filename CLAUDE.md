@@ -161,14 +161,18 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       Anlass folgt — Spielfeld mit Rollen, Anzeigetafel samt
                       Bilanz in engen Partien, Ergebnisverteilung, Wippe des
                       Elo-Gefälles, Tabelle vorher und nachher, Lauf gegen
-                      den eigenen Bestwert, Elo-Kurve, jede Begegnung — und
-                      die Runde der Vier als eine Karte, auf dieselbe Weise
-                      in der App gebaut und fotografiert. Jedes Bauteil
-                      trennt Rechnen und Zeichnen, damit bau.js es auch mit
-                      Grenzwerten zeichnen kann (45.495 Partien, lange Namen)
-                      und im Browser misst, dass kein Text auf einem anderen
-                      liegt und keiner ohne „…" abgeschnitten wird
-                      (aufwertung-4/)
+                      den eigenen Bestwert, gerissene Kette, Duo-Ring,
+                      Medaille mit ihren Trägern, Tagesbahn des Spielers des
+                      Tages, Elo-Kurve, jede Begegnung — und die Runde der
+                      Vier als eine Karte, auf dieselbe Weise in der App
+                      gebaut und fotografiert. Jedes Bauteil trennt Rechnen
+                      und Zeichnen, damit bau.js es auch mit Grenzwerten
+                      zeichnen kann (45.495 Partien, lange Namen), und misst
+                      im Browser, dass kein Text auf einem anderen liegt,
+                      keiner abgeschnitten wird — auch nicht mit „…" — und
+                      keiner geschrumpft ist: ein Name steht in der Grafik
+                      nur, wo sie Platz hat, sonst in einer Textstelle
+                      darunter (aufwertung-4/)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
