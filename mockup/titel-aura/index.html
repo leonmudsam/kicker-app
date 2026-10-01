@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Titelschein · Korona, Halo & Aurora</title>
+  <link rel="stylesheet" href="aura.css"><link rel="stylesheet" href="preview.css">
+  <script src="aura-design.js" defer></script><script src="preview.js" defer></script>
+</head>
+<body>
+<div class="shell">
+  <header><a class="brand" href="#top"><span aria-hidden="true">✧</span> KICKER <i>DESIGNSTUDIE / 03</i></a><a class="small-link" href="README.md">Einbau &amp; Ebenen ↗</a></header>
+  <main id="top">
+    <section class="intro"><div><p class="eyebrow">Die Titel werden zu Licht</p><h1>Ein Schein.<br><em>Mit jeder Auszeichnung mehr.</em></h1></div><p class="lead">Licht, das hinter dem Insignium entsteht. Goldene Strahlung, langsamer Schimmer und einzelne Lichtpunkte – von der ersten Glut bis zur vollen Aura.</p></section>
+    <section class="workbench" aria-label="Animierte Aura-Vorschau">
+      <div class="scene">
+        <div class="scene-top"><span class="eyebrow">Hinter Avatar &amp; Insignium</span><span id="sceneCode">KORONA / 06</span></div>
+        <div class="main-emblem ta-emblem ta-animated" id="mainEmblem" role="img" aria-label="Korona für sechs Titel hinter dem Zierkranz">
+          <div class="ta-aura" id="mainAura" aria-hidden="true"></div>
+          <div class="ta-avatar" aria-hidden="true"><span>LM</span></div>
+          <img class="ta-insignium" id="mainCrest" src="insignien/zier.svg" alt="" width="1000" height="1000">
+        </div>
+        <div class="identity"><strong>Leon</strong><span>LEGENDE <b>·</b> <span id="identityTitles">6 TITEL</span></span></div>
+        <div class="scene-tools"><label for="crest">Insignium<select id="crest"><option value="zier">Zierkranz</option><option value="reif">Reif</option><option value="lorbeer">Lorbeerreif</option><option value="krone">Kronenreif</option><option value="stern">Ordensstern</option></select></label><div><button id="solo" type="button" aria-pressed="false">Nur Licht</button><button id="motion" type="button" aria-pressed="true"><span aria-hidden="true">Ⅱ</span> Bewegung</button></div></div>
+      </div>
+      <aside class="controls">
+        <p class="eyebrow">Die Lichtform</p>
+        <div class="style-picker" id="styles" aria-label="Lichtform auswählen"></div>
+        <div class="level-heading"><span id="levelNumber">06</span><div><p class="eyebrow" id="levelThreshold">6 TITEL</p><h2 id="levelName">Strahlkraft</h2></div></div>
+        <p class="description" id="levelDescription"></p>
+        <fieldset><legend>Titelanzahl</legend><div class="level-picker" id="levels"></div></fieldset>
+        <div class="motion-note"><span class="live-dot" aria-hidden="true"></span><span id="motionStatus">Licht bewegt sich · Insignium bleibt ruhig</span></div>
+        <a class="download" id="download" href="assets/korona/aura-06.svg" download="korona-aura-06.svg">Statisches SVG <span aria-hidden="true">↗</span></a>
+        <p class="fineprint">Transparente Vektoren + animierbare Ebenen</p>
+      </aside>
+    </section>
+    <section class="progression" aria-labelledby="progressionTitle"><div class="section-heading"><div><p class="eyebrow">Ein Titel nach dem anderen</p><h2 id="progressionTitle">Der Schein wird zur Aura.</h2></div><p>Gleiches Insignium. Gleiche Größe.<br>Nur das Licht entwickelt sich weiter.</p></div><div class="progression-grid" id="progression"></div></section>
+    <section class="directions" aria-labelledby="directionsTitle"><div class="section-heading"><div><p class="eyebrow">Drei Handschriften</p><h2 id="directionsTitle">Welche Art von Strahlkraft?</h2></div><p>Alle drei Varianten mit deiner aktuellen Titelstufe.</p></div><div class="direction-grid" id="directions"></div></section>
+    <section class="layer-note"><div><p class="eyebrow">Die Mitte bleibt deine</p><h2>Das Licht trägt das Insignium.</h2><p>Der Schein sitzt in der hintersten Ebene. Avatar, Reif und Rangsteine bleiben scharf und werden weder eingefärbt noch bewegt.</p></div><ol><li><b>01</b><span>Schein<small>Weiche Strahlung · ruhige Bewegung</small></span></li><li><b>02</b><span>Avatar<small>Deckende Mitte · unveränderte Farbe</small></span></li><li><b>03</b><span>Insignium<small>Originale Form · scharfe Metallkanten</small></span></li></ol></section>
+    <section class="handoff"><div><h2>30 Lichtstudien. Direkt verwendbar.</h2><p>3 Lichtformen × 10 Titelstufen · SVG, CSS und kleine Vorschaukomponente</p></div><a href="../titel-aura-assets.zip" download>Alle Dateien als ZIP ↗</a></section>
+  </main>
+  <footer><span>KICKER / TITELSCHEIN</span><span>Design-Mockup · ohne Änderungen an der App</span></footer>
+</div>
+<div class="sr-only" id="status" role="status" aria-live="polite"></div>
+</body>
+</html>
