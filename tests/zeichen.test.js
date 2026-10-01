@@ -318,6 +318,47 @@ const ok = (c, msg, det) => {
      'jede Stufe greift mindestens so weit um den Reif wie die davor',
      JSON.stringify(mass.map(x => x.griff)));
 
+  // Das Feuer in der Zeile ist das des Profils: dieselbe Rangfarbe, derselbe
+  // helle Kern. Es brannte in der Rangliste orange mit warmem Kern und im
+  // Profilkopf desselben Spielers in seiner Rangfarbe — zwei Bildsprachen
+  // für dieselbe Serie [§C27]. Verglichen wird die gerechnete Füllung am
+  // Knoten, nicht die Klasse.
+  const feuerFarbe = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const box = document.createElement('div');
+    // Ohne Partien hat niemand einen Rang: je Rangstufe ein Spieler, dessen
+    // Rang die Stufe selbst ist, und danach wieder die echte Funktion.
+    const pids = ['Legende', 'Elite', 'Stark', 'Solide', 'Einsteiger'];
+    K('window.__gprAlt = getPlayerRank; getPlayerRank = pid => ({label: pid}); 0');
+    const av = '<span class="av" style="background:#56b4e8">AB</span>';
+    box.innerHTML = pids.map(pid => {
+      const t = JSON.parse(K('JSON.stringify(rangTon(' + JSON.stringify(pid) + '))'));
+      return '<div class="rrow" data-pid="' + pid + '">'
+        + K('insAvWrap(' + JSON.stringify(pid) + ', ' + JSON.stringify(av) + ', {px:52, feuer:2})')
+        + '</div><div class="pp-root" data-pid="' + pid + '" style="--ak:' + t.c + ';--ak-rgb:' + t.rgb + '">'
+        + '<div class="pp-av-wrap zn-rang zn-l2">' + K('ZN_FEUER_GROSS[2]') + '</div></div>';
+    }).join('');
+    document.body.appendChild(box);
+    const out = pids.map(pid => {
+      const zeile = box.querySelector('.rrow[data-pid="' + pid + '"] .zn-fx .zf:not(.zk)');
+      const kopf = box.querySelector('.pp-root[data-pid="' + pid + '"] .zn-fx .zf:not(.zk)');
+      const kern = box.querySelector('.rrow[data-pid="' + pid + '"] .zn-fx .zk');
+      return {pid, zeile: zeile && getComputedStyle(zeile).fill,
+              kopf: kopf && getComputedStyle(kopf).fill,
+              kern: kern && getComputedStyle(kern).fill};
+    });
+    box.remove();
+    K('getPlayerRank = window.__gprAlt; 0');
+    return out;
+  });
+  const anders = feuerFarbe.filter(x => !x.zeile || x.zeile !== x.kopf);
+  ok(feuerFarbe.length > 0 && anders.length === 0,
+     'das Feuer der Ranglistenzeile trägt dieselbe Rangfarbe wie im Profil',
+     JSON.stringify(anders.length ? anders.slice(0, 3) : feuerFarbe.map(x => x.zeile)));
+  ok(feuerFarbe.every(x => x.zeile !== 'rgb(255, 143, 74)' && x.kern === 'rgb(255, 255, 255)'),
+     'kein oranges Feuer und ein heller Kern wie im Profil',
+     JSON.stringify(feuerFarbe.slice(0, 2)));
+
   console.log('\n═══ 4. DAS TITELBAND ═══');
   ok(mass[0].sterne === 1 && mass[1].sterne === 2 && mass[2].sterne === 3,
      'ein Stern je Titel', JSON.stringify(mass.map(x => x.sterne)));

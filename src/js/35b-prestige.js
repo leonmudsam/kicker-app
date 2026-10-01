@@ -280,7 +280,11 @@ function _chronikMonat(titleId){
 //
 // Den SOCKEL bekommt jede Chronik ausser einer Schattenseite: einen
 // Monatseintrag zu halten ist an sich etwas Besonderes, und keine Chronik
-// soll sich wie ein Trostpreis anfuehlen.
+// soll sich wie ein Trostpreis anfuehlen. Er lag bei 40, und eine Chronik
+// stand damit im Laufbahnblatt hinter einer einzigen seltenen Auszeichnung
+// zurueck, obwohl sie einen ganzen Monat braucht: mit 55 bringt etwa „Die
+// Nulldiaet" 130 statt 115. Die Daempfung ab der dritten Chronik bleibt, wie
+// sie ist — sie steht in der Zusammenrechnung und nicht hier.
 //
 // Der Zuschlag der Seltenheit ist klein mit Absicht. Selten heisst nicht
 // wertvoll: „Der Kontrast" ist die seltenste Sache im Katalog und trotzdem
@@ -293,7 +297,7 @@ function _chronikMonat(titleId){
 // Werts gehoert einem einzelnen Halter und wanderte, sobald neue Monate die
 // Verteilung verschieben. Dann saenke das Prestige aller bisherigen Halter,
 // und genau dieser Fehler steckte schon einmal in den Auszeichnungen [§C34].
-const PRESTIGE_SOCKEL = 40;
+const PRESTIGE_SOCKEL = 55;
 const PRESTIGE_CHRONIK = {koennen:30, konstanz:24, fuegung:15, schatten:0};
 const PRESTIGE_SELTEN  = {legendaer:15, selten:8, besonders:0};
 

@@ -501,3 +501,69 @@ function saisonZellenHtml(sid, pid){
   const sieg = m => ((m.a1 === pid || m.a2 === pid) ? m.winner === 'A' : m.winner === 'B');
   return `<div class="srn-z">${ms.map(m => `<i class="${sieg(m) ? 'w' : 'l'}"></i>`).join('')}</div>`;
 }
+
+// ── Das Feld eines Zeitraums [§C31] ──────────────────────────────────
+// Der Rückblick von Woche und Tag nannte den Helden und seine Zahlen, aber
+// nicht, gegen wen er sie geholt hat: ob 5:1 viel war, sah man erst im
+// Vergleich mit den anderen. Jeder Spieler steht als Zeile, Siege nach
+// rechts, Niederlagen nach links, um eine gemeinsame Null; der Held in Gold
+// [§C25]. Der Name bricht um, statt mit „…" zu enden.
+function rcpFeldHtml(ms, held){
+  const z = {};
+  ms.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(id => {
+    if(!id) return;
+    z[id] = z[id] || {w:0, l:0};
+    ((m.a1 === id || m.a2 === id) ? m.winner === 'A' : m.winner === 'B') ? z[id].w++ : z[id].l++;
+  }));
+  const ids = Object.keys(z).sort((a, b) => (z[b].w - z[b].l) - (z[a].w - z[a].l) || z[b].w - z[a].w);
+  if(!ids.length) return '';
+  const max = Math.max(1, ...ids.map(id => Math.max(z[id].w, z[id].l)));
+  return `<div class="rcp-feld">${ids.map((id, i) => `<div class="rcp-feld-z${id === held ? ' held' : ''}" style="--i:${i}">
+    <span class="rcp-feld-n">${esc(pname(id))}</span>
+    <span class="rcp-feld-b"><i class="l" style="width:${(z[id].l / max * 50).toFixed(1)}%"></i><u></u><i class="w" style="width:${(z[id].w / max * 50).toFixed(1)}%"></i></span>
+    <span class="rcp-feld-v num">${z[id].w}:${z[id].l}</span></div>`).join('')}</div>`;
+}
+
+// ── Die Woche eines Spielers ─────────────────────────────────────────
+// Sieben Spalten, oben die Siege, unten die Niederlagen. „5 Siege, 1
+// Niederlage" sagte nicht, ob das an einem Tag war oder über die ganze Woche.
+// Ein Tag ohne Partie ist ein Strich, kein Loch.
+function rcpWocheHtml(ms, pid, start){
+  const WT = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  const je = Array.from({length:7}, (_, i) => {
+    const d = new Date(start); d.setDate(d.getDate() + i);
+    const k = tagKey(d);
+    const e = ms.filter(m => tagKey(mts(m)) === k && [m.a1, m.a2, m.b1, m.b2].includes(pid));
+    const w = e.filter(m => (m.a1 === pid || m.a2 === pid) ? m.winner === 'A' : m.winner === 'B').length;
+    return {d, w, l:e.length - w};
+  });
+  const max = Math.max(1, ...je.map(x => Math.max(x.w, x.l)));
+  return `<div class="rcp-woche">${je.map((x, i) => `<div class="rcp-wo-t${x.w + x.l ? '' : ' leer'}" style="--i:${i}">
+    <span class="rcp-wo-o"><i style="height:${(x.w / max * 100).toFixed(0)}%"></i></span>
+    <span class="rcp-wo-u"><i style="height:${(x.l / max * 100).toFixed(0)}%"></i></span>
+    <span class="rcp-wo-l">${WT[x.d.getDay()]}</span>
+    <span class="rcp-wo-v num">${x.w + x.l ? x.w + ':' + x.l : '–'}</span></div>`).join('')}</div>`;
+}
+
+// ── Die Elo eines Tages als Linie ────────────────────────────────────
+// Gerechnet wird nichts: die Deltas stehen an jeder Partie. Die Linie zeigt,
+// wie der Tag zustande kam — zwei Pleiten am Anfang und danach fünf Siege
+// sind dieselbe Bilanz wie umgekehrt, aber ein anderer Tag.
+function rcpEloBahnHtml(ms, pid){
+  const e = ms.filter(m => [m.a1, m.a2, m.b1, m.b2].includes(pid)).sort((a, b) => mts(a) - mts(b));
+  if(e.length < 2) return '';
+  let s = 0;
+  const pts = [0];
+  e.forEach(m => { s += Math.round((m.deltas || {})[pid] || 0); pts.push(s); });
+  const W = 320, H = 70, lo = Math.min(...pts), hi = Math.max(...pts), sp = hi - lo || 1;
+  const x = i => (8 + i * (W - 16) / (pts.length - 1)).toFixed(1);
+  const y = v => (H - 10 - (v - lo) / sp * (H - 22)).toFixed(1);
+  const d = 'M' + pts.map((v, i) => x(i) + ',' + y(v)).join('L');
+  const null0 = y(0);
+  return `<div class="rcp-elo"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true">
+    <line class="rcp-elo-0" x1="0" x2="${W}" y1="${null0}" y2="${null0}"/>
+    <path class="rcp-elo-fl" d="${d}L${x(pts.length - 1)},${null0}L${x(0)},${null0}Z"/>
+    <path class="rcp-elo-l" pathLength="1" d="${d}"/>
+    ${pts.map((v, i) => i ? `<circle class="${v >= pts[i - 1] ? 'w' : 'l'}" cx="${x(i)}" cy="${y(v)}" r="3"/>` : '').join('')}
+  </svg><div class="rcp-elo-z num"><span>Erste Partie</span><b class="${s >= 0 ? 'pos' : 'neg'}">${s >= 0 ? '+' : ''}${s} Elo</b></div></div>`;
+}

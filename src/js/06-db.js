@@ -360,6 +360,23 @@ function showSeasonRecap(season, opts){
       }).join('')}</div>`;
   }
 
+  // ─── Wie es zum Titel kam [§C31] ───────────────────────────────────
+  // Die Rangliste sagt, wer am Ende wo stand, nicht wie es dazu kam. Unter
+  // ihr stehen deshalb das Titelrennen der ersten drei, die Tage an der
+  // Spitze und die Saison des Meisters als Zellen — dieselben Bauteile wie
+  // im Blatt der Meister-Story [§C27]. Die Rangliste bleibt oben: sie ist
+  // die Antwort, das hier die Herleitung.
+  let rennenHtml='';
+  try {
+    const drei = rang.slice(0, 3).map(e => e.id);
+    if(drei.length >= 2){
+      const rn = saisonRennenHtml(sid, drei), sp = saisonSpitzeHtml(sid, drei), zl = saisonZellenHtml(sid, drei[0]);
+      rennenHtml = (rn ? rcpAbschnitt('Das Titelrennen') + `<div class="rcp-block">${rn}</div>` : '')
+        + (sp ? rcpAbschnitt('Tage an der Spitze') + `<div class="rcp-block">${sp}</div>` : '')
+        + (zl ? rcpAbschnitt('Die Saison des Meisters', pname(drei[0])) + `<div class="rcp-block">${zl}</div>` : '');
+    }
+  } catch(err){}
+
   // ─── Positionsverlauf ──────────────────────────────────────────────
   let verlaufHtml='';
   try {
@@ -447,7 +464,7 @@ function showSeasonRecap(season, opts){
         {v:ms.length, l:'Matches'}, {v:tage, l:'Spieltage'},
         {v:spielerImMonat.size, l:'Spieler'}, {v:tore, l:'Tore'}])
     + rcpAbschnitt('Podest') + podestHtml + teamHtml
-    + listeHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
+    + listeHtml + rennenHtml + verlaufHtml + chronikHtml + rekordHtml + awardsHtml
     + `<button class="recap-done-btn" id="closeRecapBtn">Verstanden</button>`,
     {protectMs: opts.auto ? 2500 : 0});
 
@@ -497,6 +514,23 @@ function _potwLastWeekRange(){
   if(now.getTime() < abschluss.getTime()) monday.setDate(monday.getDate()-7);
   const end=new Date(monday); end.setDate(end.getDate()+7); end.setMilliseconds(-1);
   return {start:monday, end};
+}
+// Eine bestimmte Woche: nach ihrem Montag (`_potwKeyOf`, „2026-08-17") oder
+// als ISO-Woche, wie die Wochenkarte sie trägt („2026-W34"). Der Montag der
+// ISO-Woche 1 ist der Montag der Woche, in der der 4. Januar liegt.
+function _potwWocheVon(key){
+  const k = String(key);
+  let start;
+  const iso = k.match(/^(\d{4})-W(\d{1,2})$/);
+  if(iso){
+    const jan4 = new Date(+iso[1], 0, 4);
+    start = new Date(+iso[1], 0, 4 - ((jan4.getDay() + 6) % 7) + (+iso[2] - 1) * 7);
+  } else {
+    const [y, m, d] = k.split('-').map(Number);
+    start = new Date(y, m - 1, d);
+  }
+  const end = new Date(start); end.setDate(end.getDate() + 7); end.setMilliseconds(-1);
+  return {start, end};
 }
 // Der Montag benennt die Woche. Die Schreibweise des Tages steht an EINER
 // Stelle [§C27]; hier stand sie ausgeschrieben ein zweites Mal.

@@ -51,6 +51,15 @@
   .rav.zn-l1 .zn-fx{opacity:.82}
   .rav.zn-l2 .zn-fx{opacity:.92}
   .rav.zn-l3 .zn-fx{opacity:1}
+  /* Wie im Profilkopf: die Hülle in der Rangfarbe (`--zn-c` setzt
+     `insAvWrap`), ein Schein in derselben Farbe und ein heller Kern. Orange
+     mit warmem Kern war in der Zeile ein zweites Feuer neben dem des
+     Profils. Der Schein ist kräftiger als dort, weil vom Feuer in einer
+     Zeile nur der Streifen über dem Reif zu sehen ist. */
+  .rav.zn-l1 .zn-fx .zf{filter:drop-shadow(0 0 3px rgba(var(--zn-rgb,255,143,74),.6))}
+  .rav.zn-l2 .zn-fx .zf{filter:drop-shadow(0 0 4px rgba(var(--zn-rgb,255,143,74),.7))}
+  .rav.zn-l3 .zn-fx .zf{filter:drop-shadow(0 0 5px rgba(var(--zn-rgb,255,143,74),.8))}
+  .rav .zn-fx .zk{fill:#fff;opacity:.38;filter:none}
   /* Der Hof. In einer Zeile ist vom Feuer nur ein schmaler Streifen über
      dem Reif zu sehen — zu wenig, um „der brennt gerade" auf einen Blick zu
      sagen. Der Hof trägt diese Aussage: er hat keine Kante, kann also nicht
@@ -63,14 +72,14 @@
     width:88%;height:88%;transform:translate(-50%,-50%);
     border-radius:50%;z-index:-1;pointer-events:none;opacity:0;
     background:radial-gradient(closest-side,
-      var(--zn-c,#ff8f4a) 0,rgba(255,143,74,0) 66%)}
+      var(--zn-c,#ff8f4a) 0,transparent 66%)}
   /* Beide Maße hängen am REIF, nicht an der Kachel: er misst jetzt 59,0 %
      der Kantenlänge statt 62,9 %, also rücken Glut und Hof um denselben
      Faktor 0,93 zusammen. Ohne das stand die Flamme seitlich über ihn
      hinaus und in der Ranglistenzeile als Kragen um das ganze Zeichen. */
-  .rav.zn-l1::after{opacity:.13}
-  .rav.zn-l2::after{opacity:.19}
-  .rav.zn-l3::after{opacity:.26}
+  .rav.zn-l1::after{opacity:.18}
+  .rav.zn-l2::after{opacity:.25}
+  .rav.zn-l3::after{opacity:.33}
   /* Die Sterne sitzen UNTER DER RAUTE. Auf dem Band lagen sie bei 77,8 %
      der Höhe, und dort steht jetzt in jedem Zeichen die Raute des Bildes
      [§C30]: die Titel lagen als goldener Fleck auf dem Stein. Die Spitze der

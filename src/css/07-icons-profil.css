@@ -432,6 +432,17 @@
   .st-card .st-ic svg{width:19px;height:19px;fill:none;stroke:currentColor;--strich:1.75;stroke-linecap:round;stroke-linejoin:round}
   .st-card .st-tt{display:block;font-family:'Archivo Black',sans-serif;font-size:13.5px;line-height:1.1;letter-spacing:-.01em}
   .st-card .st-su{display:block;font-size:11px;color:var(--muted);font-family:'Sometype Mono',monospace;margin-top:4px}
+  /* Kopf einer Werkzeugkarte als Zeile: Zeichen, Titel, Pfeil. Der
+     Positionsverlauf trägt darunter das Titelrennen [§C27], der Rückblick
+     steht als schmale Zeile darunter. */
+  .st-card .st-k{display:flex;align-items:center;gap:11px}
+  .st-card .st-k .st-ic{margin-bottom:0;flex:0 0 auto}
+  .st-card .st-kt{flex:1;min-width:0}
+  .st-card .st-pf{flex:0 0 auto;display:grid;place-items:center;width:18px;height:18px;color:var(--muted)}
+  .st-card .st-pf .ic,.st-card .st-pf svg{width:15px;height:15px}
+  .st-card.gross .srn{margin-top:12px}
+  .st-card.zeile{padding:11px 14px}
+  .st-card.zeile .st-ic{width:32px;height:32px;border-radius:10px}
   /* Das Mini-Popup ist entfallen [§11.5]; mit ihm die .nv-* Karte, ihre
      Kategorie-Pille und der Popover-Layer. Geblieben ist, was der Feed
      wirklich benutzt. */
@@ -906,22 +917,26 @@
      zweiten Meldung nichts [§C33]. Leiser als die Schlagzeile, aber mit
      Zeichen — sonst waeren es drei graue Zeilen. */
   .nf-sam{border-top:1px solid var(--line);display:flex;flex-direction:column}
-  /* Wer an diesem Moment Prestige verliert: eine leise rote Zeile unter dem
-     Band, Zeichen und Wort links, je Verlierer der Betrag. Rot ist die
-     Richtung [§C25]; die Fläche bleibt dunkel, damit die Karte die der
-     Gewinner bleibt. */
-  .nf-verlust{display:flex;align-items:center;gap:8px;padding:7px 13px;min-width:0;
-    border-top:1px solid rgba(240,86,106,.22);
-    background:linear-gradient(90deg,rgba(240,86,106,.08),transparent 70%)}
-  .nf-verlust-i{flex:0 0 18px;width:18px;height:18px;border-radius:5px;display:grid;
-    place-items:center;color:var(--red);background:rgba(240,86,106,.12)}
-  .nf-verlust-i svg{width:12px;height:12px}
-  .nf-verlust-l{flex:0 0 auto;font-family:'Sometype Mono',monospace;font-size:9px;
-    letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
-  .nf-verlust-w{display:flex;flex-wrap:wrap;gap:4px 10px;min-width:0}
-  .nf-verlust-w b{font-size:11px;font-weight:600;color:var(--ink2);white-space:nowrap}
-  .nf-verlust-w em{font-style:normal;color:var(--red);font-weight:700}
-  .nf-verlust-w u{text-decoration:none;color:var(--muted);font-weight:500;margin-left:4px}
+  /* Wer an diesem Moment Prestige verliert: eine leise Zeile unter dem
+     Band, je Verlierer ein Chip aus Gesicht, Name und Betrag. Rot ist die
+     Richtung [§C25] und sitzt nur am Betrag und am Wort; die Fläche bleibt
+     dunkel, damit die Karte die der Gewinner bleibt. */
+  .nf-verlust{display:flex;align-items:center;gap:8px;padding:6px 13px 7px;min-width:0;
+    border-top:1px solid rgba(240,86,106,.18)}
+  .nf-verlust-l{flex:0 0 auto;display:inline-flex;align-items:center;gap:4px;
+    font-family:'Sometype Mono',monospace;font-size:9px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--red)}
+  .nf-verlust-l svg{width:12px;height:12px}
+  .nf-verlust-w{display:flex;flex-wrap:wrap;gap:4px;min-width:0}
+  .nf-vl{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%;
+    padding:2px 8px 2px 2px;border-radius:999px;background:rgba(240,86,106,.08);
+    border:1px solid rgba(240,86,106,.16);font-size:11px;font-weight:600;
+    color:var(--ink2);white-space:nowrap}
+  .nf-vl.mehr{padding:2px 8px;color:var(--muted)}
+  .nf-vl .rcp-av{flex:0 0 auto}
+  .nf-vl i{font-style:normal}
+  .nf-vl em{font-style:normal;color:var(--red);font-weight:700}
+  .nf-vl u{text-decoration:none;color:var(--muted);font-weight:500;font-size:10px}
   .nf-sam-z{display:flex;align-items:center;gap:9px;padding:7px 13px;
     border-bottom:1px solid var(--line);font-size:11px;color:var(--ink2);
     min-width:0}
@@ -1520,8 +1535,8 @@
   .nd-tm-s{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:12.5px}
   .nd-tm.w .nd-tm-s{color:var(--acid)}
   .nd-tm.l .nd-tm-s{color:var(--red)}
-  .nd-tm-g{flex:1 1 auto;min-width:0;font-size:11px;color:var(--ink2);
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* Bricht um, statt mit „…" zu enden: gekürzt fehlte der zweite Gegner. */
+  .nd-tm-g{flex:1 1 auto;min-width:0;font-size:11px;line-height:1.35;color:var(--ink2)}
   /* ── Die Wirkung auf die Laufbahn ───────────────────────────────────
      Sie stand als Zeile „1205 → 1240 Prestige": zwei Zahlen, die man erst
      verrechnen muss. Der Balken zeigt die Strecke von dieser Schwelle zur
@@ -1664,6 +1679,9 @@
     color:var(--ink);font-size:13px;cursor:pointer;font-weight:700;
     font-family:'Archivo Black',sans-serif;letter-spacing:-.005em;text-transform:uppercase}
   .nd-close:active{transform:scale(.985);background:var(--surface2)}
+  /* Der Weg in den Rückblick der Story: der eine gefüllte Knopf des Blatts. */
+  .nd-rueck{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px}
+  .nd-rueck .ic,.nd-rueck svg{width:18px;height:18px}
   /* X-Button oben rechts (v8.1 — bewusstes Schließen) */
   .nd-x{background:none;border:0;color:var(--muted);font-size:26px;line-height:1;
     cursor:pointer;padding:0 6px;border-radius:8px;flex-shrink:0;transition:.15s;

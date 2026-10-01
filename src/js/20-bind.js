@@ -2,6 +2,10 @@
 //     Zentrale Stelle, die data-* Attribute auf Click-Handler mappt.
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function bind(){
+  document.querySelectorAll('[data-info="positionen"]').forEach(b => b.onclick = zeigePositionsInfo);
+  // Die Einblicke über den Ranglisten klappen auf, ohne neu zu zeichnen.
+  einblickBinden(document.getElementById('main'));
+  document.querySelectorAll('#main .einblick.auf .einblick-i').forEach(bindDetailLinks);
   // Die Spielersuche in der Ewigen Tafel ist entfallen. Ihr
   // Schnell-Neuzeichnen hat .rlist ohnehin selbst neu aufgebaut und kannte
   // weder das Podest noch die Heldenzeile — nach dem ersten Tastendruck

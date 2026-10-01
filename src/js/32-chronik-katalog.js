@@ -305,10 +305,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:150,
       zeitraum:'Ein einzelner Monat',
-      mind:'15 Partien im Monat und 60 % Siegquote',
+      mind:'15 Partien im Monat',
       wie:'Gewertet wird der beste einzelne Monat einer Laufbahn und nicht der Schnitt über alle Monate. Monate mit weniger als fünfzehn eigenen Partien bleiben außen vor.',
-      cond:'Höchste Siegquote in einem einzelnen Monat, ab 15 Partien in diesem Monat und mindestens 60 %',
-      val:p => (p.bestMonth && p.bestMonth.q >= 0.60) ? p.bestMonth.q : null,
+      cond:'Höchste Siegquote in einem einzelnen Monat, ab 15 Partien in diesem Monat',
+      val:p => p.bestMonth ? p.bestMonth.q : null,
       ev:(p,v) => `${Math.round(v*100)} % aus ${p.bestMonth.g} Spielen`,
       zeit:p => p.bestMonth ? seasonLabel(p.bestMonth.sid) : ''
     }},
@@ -317,10 +317,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:150, offen:true,
       zeitraum:'Ganze Laufbahn, je Spieltag',
-      mind:'12 eigene Spieltage und 25 %',
+      mind:'12 eigene Spieltage',
       wie:'Player of the Day ist, wer an einem Spieltag die beste Siegquote hat; bei Gleichstand entscheidet der Elo-Gewinn des Tages. Der Nenner sind die Spieltage, an denen der Spieler selbst angetreten ist, und nicht alle Spieltage der Liga.',
-      cond:'Höchster Anteil eigener Spieltage als Player of the Day, ab 12 Spieltagen und mindestens 25 %',
-      val:p => (p.days >= 12 && p.potd/p.days >= 0.25) ? p.potd/p.days : null,
+      cond:'Höchster Anteil eigener Spieltage als Player of the Day, ab 12 Spieltagen',
+      val:p => p.days >= 12 ? p.potd/p.days : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.days} Spieltage beherrscht · ${p.potd}× Player of the Day`
     }},
 
@@ -332,10 +332,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:150,
       zeitraum:'Ganze Laufbahn, je Woche',
-      mind:'10 eigene Wochen und 25 %',
+      mind:'10 eigene Wochen',
       wie:'Player of the Week ist, wer eine Woche mit der besten Bilanz abschließt. Der Nenner sind die abgeschlossenen Wochen, in denen der Spieler selbst angetreten ist.',
-      cond:'Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen und mindestens 25 %',
-      val:p => (p.weeks >= 10 && p.potw/p.weeks >= 0.25) ? p.potw/p.weeks : null,
+      cond:'Höchster Anteil eigener Wochen als Player of the Week, ab 10 Wochen',
+      val:p => p.weeks >= 10 ? p.potw/p.weeks : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.weeks} Wochen gewonnen · ${p.potw}× Player of the Week`
     }},
 
@@ -1077,13 +1077,12 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'mark', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
-      mind:'40 Partien und ein Sturmanteil zwischen 43 und 57 %',
+      mind:'40 Partien',
       wie:'Gerechnet wird mit demselben Sturmanteil, den das Positionsprofil im Profil zeigt. Gewertet wird der Abstand zu einer Verteilung von fünfzig zu fünfzig; bei genau fünfzig zu fünfzig stünde der Wert bei 100 Prozent.',
-      cond:'Ausgeglichenste Verteilung auf Sturm und Abwehr, ab 40 Partien und einem Sturmanteil zwischen 43 und 57 %',
+      cond:'Ausgeglichenste Verteilung auf Sturm und Abwehr, ab 40 Partien',
       val:p => {
         if(p.games < 40) return null;
-        const s = positionsProfilWert(p);
-        return (s >= 0.43 && s <= 0.57) ? 1 - Math.abs(s - 0.5) * 2 : null;
+        return 1 - Math.abs(positionsProfilWert(p) - 0.5) * 2;
       },
       ev:(p,v) => `${Math.round((1-v)*100)} %-Punkte Unterschied im Positionsprofil · ${Math.round(positionsProfilWert(p)*100)} % Sturm, ${Math.round((1-positionsProfilWert(p))*100)} % Abwehr`
     }},
@@ -1149,10 +1148,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ein einzelner Spieltag',
-      mind:'4 Partien am Tag und höchstens 45 % mittlere Siegchance',
+      mind:'4 Partien am Tag',
       wie:'Gemittelt wird die Siegchance vor dem Anpfiff über alle eigenen Partien dieses Tages. Gewertet wird ab vier eigenen Partien an einem Tag, und zwar der schwerste solche Tag einer Laufbahn.',
-      cond:'Niedrigste mittlere Siegchance an einem ganzen Spieltag, ab 4 Partien und höchstens 45 %',
-      val:p => (p.hartTag != null && p.hartTag <= 0.45) ? -p.hartTag : null,
+      cond:'Niedrigste mittlere Siegchance an einem ganzen Spieltag, ab 4 Partien',
+      val:p => p.hartTag != null ? -p.hartTag : null,
       ev:p => `${Math.round(p.hartTag*100)} % mittlere Siegchance über einen ganzen Spieltag`,
       zeit:p => p.hartTagLabel || ''
     }},
@@ -1163,12 +1162,12 @@ const DISZIPLINEN = [
   {id:'bitterloss', name:'Die bitterste Pleite', short:'Bitter', ic:'dramaTear', tone:'purple',
     art:'ereignis', zufall:'quote', negativ:true,
     allzeit:{
-      kammer:'fuegung', basis:75, offen:true, paar:'fluke',
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Eine einzelne Partie',
-      mind:'Mindestens 65 % Siegchance',
+      mind:'Eine verlorene Partie',
       wie:'Das Gegenstück zum Sonntagsschuss mit derselben Rechnung: die verlorene Partie mit der höchsten Siegchance vor dem Anpfiff. Eine einzige Partie, kein Durchschnitt.',
-      cond:'Verlorene Partie mit der höchsten vorherigen Siegchance, mindestens 65 %',
-      val:p => (p.pechExp != null && p.pechExp >= 1 - CHANCE_UPSET) ? p.pechExp : null,
+      cond:'Verlorene Partie mit der höchsten vorherigen Siegchance',
+      val:p => p.pechExp != null ? p.pechExp : null,
       ev:p => `${Math.round(p.pechExp*100)} % Siegchance und trotzdem verloren`,
       zeit:p => p.pechLabel || ''
     }},
@@ -1191,10 +1190,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Ganze Laufbahn',
-      mind:'40 Partien und 8 % enge Ergebnisse',
+      mind:'40 Partien',
       wie:'Gezählt werden die eigenen Partien, die mit genau einem Tor Unterschied endeten, also 10:9 und 9:10 aus eigener Sicht. Der Nenner sind alle eigenen Partien. Wer knapp gewinnt oder knapp verliert, zählt hier gleich: gefragt ist das Ergebnis, nicht der Sieger.',
-      cond:'Höchster Anteil an Partien mit genau einem Tor Unterschied, ab 40 Partien und mindestens 8 %',
-      val:p => (p.games >= 40 && (p.nail + p.bitter)/p.games >= 0.08) ? (p.nail + p.bitter)/p.games : null,
+      cond:'Höchster Anteil an Partien mit genau einem Tor Unterschied, ab 40 Partien',
+      val:p => p.games >= 40 ? (p.nail + p.bitter)/p.games : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.games} Partien mit einem Tor entschieden · ${p.nail + p.bitter} Stück`
     }},
 
@@ -1241,12 +1240,12 @@ const DISZIPLINEN = [
     // sieben und Platz zehn der Siegquote — an Leute, die von den Eintraegen,
     // die am Koennen haengen, keinen bekommen.
     allzeit:{
-      kammer:'fuegung', basis:75, offen:true, paar:'bitterloss',
+      kammer:'fuegung', basis:75, offen:true,
       zeitraum:'Eine einzelne Partie',
-      mind:'Höchstens 35 % Siegchance',
+      mind:'Eine gewonnene Partie',
       wie:'Die Elo-Rechnung gibt jeder Partie vor dem Anpfiff eine Siegchance. Gewertet wird der gewonnene Auftritt mit der niedrigsten davon. Eine einzige Partie genügt, und die Rechnung stand dagegen.',
-      cond:'Gewonnene Partie mit der niedrigsten vorherigen Siegchance, höchstens 35 %',
-      val:p => (p.flukeExp != null && p.flukeExp <= CHANCE_UPSET) ? -p.flukeExp : null,
+      cond:'Gewonnene Partie mit der niedrigsten vorherigen Siegchance',
+      val:p => p.flukeExp != null ? -p.flukeExp : null,
       ev:p => `${Math.round(p.flukeExp*100)} % Siegchance und trotzdem gewonnen`,
       zeit:p => p.flukeLabel || ''
     }},
@@ -1385,10 +1384,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Ganze Laufbahn, alle Niederlagen',
-      mind:'25 Niederlagen und 3 % Nullnummern',
+      mind:'25 Niederlagen',
       wie:'Gezählt werden die Niederlagen mit 0:10, geteilt durch alle eigenen Niederlagen. Der Nenner sind die Niederlagen und nicht die Partien: gefragt ist, wie hoch verloren wird, und nicht wie oft.',
-      cond:'Höchster Anteil an 0:10-Niederlagen unter allen eigenen Niederlagen, ab 25 Niederlagen und mindestens 3 %',
-      val:p => (p.losses >= 25 && p.debacle/p.losses >= 0.03) ? p.debacle/p.losses : null,
+      cond:'Höchster Anteil an 0:10-Niederlagen unter allen eigenen Niederlagen, ab 25 Niederlagen',
+      val:p => p.losses >= 25 ? p.debacle/p.losses : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 0:10 · ${p.debacle} Stück`
     }},
 
@@ -1408,10 +1407,10 @@ const DISZIPLINEN = [
     allzeit:{
       kammer:'shame', basis:0,
       zeitraum:'Ganze Laufbahn, alle Niederlagen',
-      mind:'25 Niederlagen und 8 % Ein-Tor-Pleiten',
+      mind:'25 Niederlagen',
       wie:'Gezählt werden die Niederlagen mit 9:10, geteilt durch alle eigenen Niederlagen.',
-      cond:'Höchster Anteil an 9:10-Niederlagen unter allen eigenen Niederlagen, ab 25 Niederlagen und mindestens 8 %',
-      val:p => (p.losses >= 25 && p.bitter/p.losses >= 0.08) ? p.bitter/p.losses : null,
+      cond:'Höchster Anteil an 9:10-Niederlagen unter allen eigenen Niederlagen, ab 25 Niederlagen',
+      val:p => p.losses >= 25 ? p.bitter/p.losses : null,
       ev:(p,v) => `${Math.round(v*100)} % aller ${p.losses} Niederlagen endeten 9:10 · ${p.bitter} Stück`
     }},
 

@@ -394,3 +394,65 @@
     .srn-p,.srn-p.gold,.srn-fl{animation:none;opacity:1}
     .srn-t .b i{animation:none}
   }
+
+/* ── Das Feld, die Woche und die Elo eines Tages [§C31] ──────────────
+   Nur Tokens der App [§C25]: Grün und Rot sind die Richtung, Gold gehört
+   dem Helden. Bewegt wird nur transform und Deckkraft; bei Bewegungsruhe
+   steht alles. Der Name im Feld bricht um, statt mit „…" zu enden. */
+.rcp-feld{display:flex;flex-direction:column;gap:6px;margin:0 0 16px}
+.rcp-feld-z{display:grid;grid-template-columns:minmax(0,30%) minmax(0,1fr) auto;align-items:center;gap:8px}
+.rcp-feld-n{font-size:12px;line-height:1.25;color:var(--ink2);overflow-wrap:break-word}
+.rcp-feld-z.held .rcp-feld-n{color:var(--gold);font-weight:700}
+.rcp-feld-b{position:relative;display:grid;grid-template-columns:1fr 1fr;height:10px}
+.rcp-feld-b i{display:block;height:100%}
+.rcp-feld-b i.l{background:var(--red);opacity:.8;border-radius:3px 0 0 3px;justify-self:end;grid-column:1}
+.rcp-feld-b i.w{background:var(--acid);border-radius:0 3px 3px 0;justify-self:start;grid-column:2}
+.rcp-feld-b u{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line2)}
+.rcp-feld-z.held .rcp-feld-b i.w{background:var(--gold)}
+.rcp-feld-v{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap}
+.rcp-woche{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:4px 0 16px}
+.rcp-wo-t{display:flex;flex-direction:column;align-items:center;gap:2px}
+.rcp-wo-o,.rcp-wo-u{display:flex;width:100%;max-width:26px;height:46px;border-radius:5px;background:var(--surface2);overflow:hidden}
+.rcp-wo-o{align-items:flex-end}.rcp-wo-u{align-items:flex-start;height:28px}
+.rcp-wo-o i{display:block;width:100%;background:var(--acid);border-radius:4px 4px 0 0}
+.rcp-wo-u i{display:block;width:100%;background:var(--red);border-radius:0 0 4px 4px;opacity:.85}
+.rcp-wo-t.leer .rcp-wo-o,.rcp-wo-t.leer .rcp-wo-u{opacity:.4}
+.rcp-wo-l{font-size:10px;color:var(--muted);margin-top:2px}
+.rcp-wo-v{font-size:10px;color:var(--ink2);white-space:nowrap}
+.rcp-elo{margin:0 0 16px}
+.rcp-elo svg{display:block;width:100%;height:auto;margin-top:6px}
+.rcp-elo-0{stroke:var(--line2);stroke-dasharray:3 4}
+.rcp-elo-l{fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.rcp-elo-fl{fill:rgba(247,207,74,.12)}
+.rcp-elo circle.w{fill:var(--acid)}.rcp-elo circle.l{fill:var(--red)}
+.rcp-elo-z{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:2px}
+.rcp-elo-z .pos{color:var(--acid)}.rcp-elo-z .neg{color:var(--red)}
+@media (prefers-reduced-motion:no-preference){
+  .rcp-feld-b i{transform-origin:left;animation:rcpWachs .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .rcp-feld-b i.l{transform-origin:right}
+  .rcp-wo-o i{transform-origin:bottom;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .rcp-wo-u i{transform-origin:top;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .rcp-elo-l{stroke-dasharray:1;animation:rcpZieh 1.2s ease-out both}
+}
+@keyframes rcpWachs{from{transform:scaleX(0)}}
+@keyframes rcpWachsY{from{transform:scaleY(0)}}
+@keyframes rcpZieh{from{stroke-dashoffset:1}}
+
+/* ── Jede Begegnung im Direkten Vergleich ────────────────────────────
+   Nach oben die Siege von A, nach unten die von B, so hoch wie das Ergebnis
+   deutlich war. Die Namen stehen über und unter der Zeichnung und brechen
+   um; die Zahl daneben zählt die gezeigten Balken. */
+.h2h-bg{margin:0 0 14px}
+.h2h-bg svg{display:block;width:100%;height:auto}
+.h2h-bg-0{stroke:var(--line2)}
+.h2h-bg rect.w{fill:var(--acid)}.h2h-bg rect.l{fill:var(--red)}
+.h2h-bg-n{display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--muted);margin:2px 0}
+.h2h-bg-n span{min-width:0;overflow-wrap:break-word}
+.h2h-bg-n b{margin-left:auto;font-size:12px;color:var(--ink2)}
+@media (prefers-reduced-motion:no-preference){
+  .h2h-bg rect{transform-box:fill-box;transform-origin:bottom;animation:rcpWachsY .5s ease-out both;animation-delay:calc(var(--i,0) * 25ms)}
+  .h2h-bg rect.l{transform-origin:top}
+}
+
+/* Eine Grafik im Rückblick hält Abstand zur nächsten Überschrift. */
+.rcp-block{margin:0 0 18px}

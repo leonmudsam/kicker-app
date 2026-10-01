@@ -763,7 +763,7 @@ const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
   const bad=[]; let max=0, min=1e9;
   SEASON_TITLES.forEach(t=>{
     const d=DISZIPLINEN.find(x=>x.id===t.id), m=d.monat;
-    const soll=G[m.art] ? Math.round((40 + G[m.art]*m.aus + B[m.klasse])/5)*5 : 0;
+    const soll=G[m.art] ? Math.round((55 + G[m.art]*m.aus + B[m.klasse])/5)*5 : 0;
     if(chronikPunkte(t.id) !== soll) bad.push(t.id);
     if(soll>0){ max=Math.max(max,soll); min=Math.min(min,soll); }
   });
@@ -3149,21 +3149,36 @@ ok(_paarFehlt.length === 0, 'jedes Gegenpaar steht im Katalog',
 // Wortlaut darf abweichen — „20 Sturmspiele" und „20 Abwehrspiele" sind
 // dieselbe Huerde.
 const _zahlen = t => (String(t).match(/\d+/g) || []).join('/');
-// Zwei Paare sind je Seite geeicht und muessen es sein: eine Siegesserie ab
-// acht und eine Pleitenserie ab sieben sind nicht dieselbe Haeufigkeit, und
-// die 35 % des Sonntagsschusses spiegeln sich als 65 % der bittersten Pleite
-// — dasselbe Mass von der anderen Seite, nicht dieselbe Zahl.
-const GEEICHT = {'unstoppable|drought':1, 'fluke|bitterloss':1};
+// Ein Paar ist je Seite geeicht und muss es sein: eine Siegesserie ab acht
+// und eine Pleitenserie ab sieben sind nicht dieselbe Haeufigkeit.
+// Sonntagsschuss und bitterste Pleite sind es nicht mehr: beide verlangen
+// nur noch eine einzige Partie, und die Mindestbasis ist auf beiden Seiten
+// dieselbe.
+const GEEICHT = {'unstoppable|drought':1};
 const _paarMind = PAARE.filter(([a, b]) => _byId[a] && _byId[b]
     && !GEEICHT[a + '|' + b]
     && _zahlen(_byId[a].mind) !== _zahlen(_byId[b].mind))
   .map(([a, b]) => a + ' „' + _byId[a].mind + '" vs ' + b + ' „' + _byId[b].mind + '"');
 ok(_paarMind.length === 0, 'jedes Gegenpaar hat dieselbe Mindestbasis',
-   _paarMind.join(' · ') || (PAARE.length - 2) + ' Paare');
-// Und die beiden geeichten spiegeln sich wirklich: 35 % gegen 65 %.
-ok(_zahlen(_byId.fluke.mind) === '35' && _zahlen(_byId.bitterloss.mind) === '65',
-   'Sonntagsschuss und bitterste Pleite spiegeln ihre Schwelle',
-   _byId.fluke.mind + ' / ' + _byId.bitterloss.mind);
+   _paarMind.join(' · ') || (PAARE.length - 1) + ' Paare');
+// Ein Rekord hat keine Untergrenze in Prozent. Wer 20 % seiner Wochen
+// gewinnt und damit vorn liegt, haelt „Der Wochenherr" — eine Latte bei
+// 25 % liess den Rekord sonst leer oder strich den Besten aus dem Rennen.
+// Verlangt werden darf nur eine Stichprobe: Partien, Spieltage, Wochen,
+// Niederlagen. Gelesen wird Bedingung, Mindestbasis UND die Wertfunktion:
+// ein Text ohne Prozent ueber einer Rechnung mit `>= 0.25` waere gelogen.
+const _prozentLatte = K.eval(`JSON.stringify(CHRONICLES.filter(c => {
+  const d = DISZIPLINEN.find(x => x.id === c.id), a = d && d.allzeit;
+  if(!a) return false;
+  const txt = String(a.cond || '') + ' ' + String(a.mind || '');
+  const code = String(a.val || '');
+  // „mit 35 bis 65 % Siegchance" beschreibt die Teilmenge (welche Partien
+  // zaehlen), keine Latte fuer den Wert — das bleibt erlaubt.
+  return /(mindestens|höchstens|zwischen)\\s+\\d+(\\s*und\\s*\\d+)?\\s*(%|Prozent)/i.test(txt)
+      || /[<>]=?\\s*(1\\s*-\\s*)?(0?\\.\\d|CHANCE_)/.test(code);
+}).map(c => c.name))`);
+ok(JSON.parse(_prozentLatte).length === 0, 'kein Liga-Rekord verlangt einen Mindestwert in Prozent',
+   JSON.parse(_prozentLatte).join(', ') || _rk.length + ' Rekorde');
 // Angriff und Abwehr werden gleich behandelt: die vier Rollenpaare tragen
 // denselben Zeitraum und denselben Grundwert.
 const ROLLENPAARE = [['atk_ace','def_ace'], ['sturmfuehrer','defchief'],

@@ -116,6 +116,7 @@ function vTeams(){
 
   return `
     <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}</p></div>
+    ${einblickHtml('netz', 'ab 4 Partien')}
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
@@ -226,6 +227,7 @@ function vMatch(){
       <div class="score-col B"><div class="cl">Team B</div>
         <div class="stepper"><button data-step="sb,-1">−</button><span class="sval num" id="svB" data-scoreedit="sb">${M.sb}</span><button data-step="sb,1">+</button></div></div>
     </div>
+    <div id="chanceSlot"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 0 10px">
       <span style="font-size:10.5px;color:var(--muted)">Zahl antippen, um sie direkt einzugeben</span>
       <button class="btn ghost" id="shuffleBtn" style="width:auto;flex-shrink:0;padding:8px 14px;font-size:11px;border-radius:10px">Mischen</button>
@@ -423,6 +425,12 @@ function updatePreview(){
   setAvg('avgA', M.A1, M.A2); setAvg('avgB', M.B1, M.B2);
 
   const ids = [M.A1,M.A2,M.B1,M.B2].filter(Boolean);
+  // Die Siegchance steht, sobald vier verschiedene Spieler auf ihren Rollen
+  // stehen — nicht erst, wenn der Stand eingetragen ist: beim Aufstellen ist
+  // sie die Frage, nach dem Spiel nur noch eine Zahl.
+  const chanceSlot = document.getElementById('chanceSlot');
+  if(chanceSlot) chanceSlot.innerHTML = (ids.length === 4 && new Set(ids).size === 4
+    && M.pA1 !== M.pA2 && M.pB1 !== M.pB2) ? _matchChanceHtml() : '';
   if(new Set(ids).size !== ids.length){
     slot.innerHTML = `<div class="preview" style="color:var(--red);font-size:12px;text-align:center">Ein Spieler steht doppelt.</div>`;
     save.disabled = true; return;
@@ -438,7 +446,6 @@ function updatePreview(){
   const winner = M.sa > M.sb ? 'A' : 'B';
   const{teamA, teamB} = teamsFromM();
   const c = computeMatch(teamA, teamB, winner, M.sa, M.sb);
-  const pA = Math.round(c.expA*100), pB = 100-pA;
   const line = s => {
     const d = c.res[s.id];
     return `<div class="delta-row">
@@ -448,12 +455,10 @@ function updatePreview(){
       <span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span>
     </div>`;
   };
+  // Die Siegchance steht schon unter dem Stand (_matchChanceHtml); hier
+  // stand derselbe Balken ein zweites Mal.
   slot.innerHTML = `<div class="preview">
-    <div class="prob">
-      <div class="pa" style="width:${pA}%">${pA}%</div>
-      <div class="pb" style="width:${pB}%">${pB}%</div>
-    </div>
-    <div class="prob-cap">Siegchance (Saison-Elo) · Team ${winner} gewinnt ${M.sa}:${M.sb}
+    <div class="prob-cap">Team ${winner} gewinnt ${M.sa}:${M.sb}
       ${c.mov>1.08?' · Kantersieg ×'+komma(c.mov,2):''}
     </div>
     <div class="delta-list">
@@ -463,6 +468,26 @@ function updatePreview(){
     </div>
   </div>`;
   save.disabled = false;
+}
+
+// ── Die Siegchance beim Aufstellen [§C27] ────────────────────────────
+// Unter der Score-Karte, sobald die vier stehen: die beiden Paare, das Wort
+// dazu und der Balken der Vorschau, aus derselben Rechnung, mit der die
+// Partie danach gewertet wird (`computeMatch`). Ohne Erklärsatz — die Zahl
+// über zwei Teams erklärt sich selbst. Das Wort zeigt zum Favoriten.
+function _matchChanceHtml(){
+  let c;
+  try {
+    const {teamA, teamB} = teamsFromM();
+    c = computeMatch(teamA, teamB, 'A', 10, 0).expA;
+  } catch(e){ return ''; }
+  if(c == null || !isFinite(c)) return '';
+  const pA = Math.round(c * 100), pB = 100 - pA;
+  const wort = chanceWort(Math.max(c, 1 - c));
+  const mitte = wort === 'Favorit' ? (c >= .5 ? '← Favorit' : 'Favorit →') : wort;
+  return `<div class="m-chance"><div class="m-ch-r">${rcpPaarHtml([M.A1, M.A2], 26)}`
+    + `<span class="m-ch-w">${esc(mitte)}</span>${rcpPaarHtml([M.B1, M.B2], 26)}</div>`
+    + `<div class="prob"><div class="pa" style="width:${pA}%">${pA}%</div><div class="pb" style="width:${pB}%">${pB}%</div></div></div>`;
 }
 
 async function doSaveMatch(){

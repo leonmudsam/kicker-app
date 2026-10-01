@@ -467,3 +467,48 @@
     color:var(--ink);padding:14px;border-radius:13px;outline:none;transition:.18s}
   .text-in:focus{border-color:var(--acid2)}
 
+
+  /* ── Der Einblick über einer Rangliste [§C27] ────────────────────────
+     Eine schmale Zeile, die aufklappt. Zu ist sie so hoch wie eine
+     Zeile Text: die Rangliste darunter ist der Grund für den Reiter. */
+  .einblick{margin:0 0 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+  .einblick-k{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:0;background:none;
+    font:inherit;font-size:12.5px;font-weight:600;color:var(--ink2);text-align:left;cursor:pointer}
+  .einblick-k > .ic{flex:0 0 auto;width:16px;height:16px;color:var(--muted)}
+  .einblick-k > span{flex:1;min-width:0}
+  .einblick-k em{flex:0 0 auto;font-style:normal;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--faint)}
+  .einblick-pf{flex:0 0 auto;display:grid;place-items:center;width:16px;height:16px;color:var(--muted);transition:transform .2s ease}
+  .einblick-pf .ic{width:14px;height:14px}
+  .einblick.auf .einblick-pf{transform:rotate(90deg)}
+  .einblick-i{display:none;padding:2px 12px 12px}
+  .einblick.auf .einblick-i{display:block}
+  /* Die Rollen-Landkarte */
+  .rk{position:relative;aspect-ratio:300/230}
+  .rk svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .rk-q{fill:rgba(190,242,100,.05)}
+  .rk-m{stroke:var(--line2);stroke-dasharray:3 4}
+  .rk-a{stroke:var(--line2)}
+  .rk-p{position:absolute;transform:translate(-50%,-50%);line-height:0;cursor:pointer}
+  .rk-p .rcp-av,.netz-p .rcp-av{box-shadow:0 0 0 2px var(--surface);border-radius:50%}
+  .rk-ax{display:flex;justify-content:space-between;font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--faint);margin-top:2px}
+  .rk-l{display:flex;flex-direction:column;gap:3px;margin-top:8px;font-size:11px;line-height:1.4;color:var(--muted)}
+  .rk-l b{font-weight:600;color:var(--ink2)}
+  .rk-l i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:var(--line2)}
+  .rk-l i.f-vh{background:rgba(190,242,100,.45)}
+  /* Das Netz der Duos */
+  .netz{position:relative;aspect-ratio:300/280}
+  .netz svg{position:absolute;inset:0;width:100%;height:100%}
+  .netz-l{stroke-linecap:round;opacity:.55}
+  .netz-l.w{stroke:var(--acid)}.netz-l.l{stroke:var(--red)}.netz-l.m{stroke:var(--ink2);opacity:.28}
+  .netz-p{position:absolute;transform:translate(-50%,-50%);line-height:0;cursor:pointer}
+  .netz-leg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:10.5px;color:var(--muted)}
+  .netz-leg span::before{content:"";display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle;background:var(--line2)}
+  .netz-leg .w::before{background:var(--acid)}.netz-leg .l::before{background:var(--red)}
+  .netz-leg .m::before{background:var(--ink2);opacity:.45}.netz-leg .d::before{height:8px;width:3px;background:var(--muted)}
+  @media (prefers-reduced-motion:no-preference){
+    .rk-p,.netz-p{animation:einblickDa .45s ease-out both;animation-delay:calc(var(--i,0) * 40ms)}
+    .netz-l{animation:einblickL .6s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  }
+  @media (prefers-reduced-motion:reduce){ .einblick-pf{transition:none} }
+  @keyframes einblickDa{from{opacity:0}}
+  @keyframes einblickL{from{opacity:0}}

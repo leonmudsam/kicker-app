@@ -21,10 +21,7 @@ function _newsSaveSeen(set){
 function _newsMarkSeen(ids){
   const seen = _newsLoadSeen();
   const list = Array.isArray(ids) ? ids : [ids];
-  // Wer die Runde liest, hat jede ihrer Partien gelesen.
-  const runden = new Map();
-  try { getStoriesCache().forEach(x => { if((x.dataRef || {}).type === 'runde') runden.set(x.id, x.dataRef.glieder || []); }); } catch(e){}
-  list.forEach(id => { seen.add(id); (runden.get(id) || []).forEach(g => seen.add(g.id)); });
+  list.forEach(id => seen.add(id));
   _newsSaveSeen(seen);
 }
 // Der Lesestand: der Zeitpunkt der neuesten Karte, die beim letzten
@@ -41,12 +38,6 @@ function _newsLesestand(){
 // markiert.
 function _newsGelesen(s, seen, stand){
   if(!s) return true;
-  // Die Runde ist neu, solange eine ihrer Partien neu ist [§C33]. Sie traegt
-  // ID und Zeitpunkt ihrer ersten Partie; nach beidem allein galt sie als
-  // gelesen, sobald die erste gelesen war, und jede weitere Partie der Runde
-  // kam ohne Marke dazu.
-  const d = s.dataRef || {};
-  if(d.type === 'runde' && Array.isArray(d.glieder)) return d.glieder.every(g => _newsGelesen(g, seen, stand));
   if(seen && seen.has(s.id)) return true;
   return !!stand && new Date(s.when).getTime() <= stand;
 }
@@ -55,10 +46,9 @@ function _newsMarkAllSeen(){
   _newsMarkSeen(stories.map(s => s.id));
   // Der Lesestand wandert auf die neueste Karte des Feeds. Alles, was
   // danach kommt, ist neu; alles davor ist gelesen, auch wenn es erst
-  // spaeter im Feed erscheint. Eine Runde steht an ihrer ersten Partie,
-  // gelesen ist sie aber bis zu ihrer letzten (`bis`).
+  // spaeter im Feed erscheint.
   const neuste = stories.reduce((mx, s) =>
-    Math.max(mx, new Date(s.when).getTime() || 0, new Date((s.dataRef || {}).bis || 0).getTime() || 0), 0);
+    Math.max(mx, new Date(s.when).getTime() || 0), 0);
   if(neuste) try { localStorage.setItem(NEWS_LS_STAND, String(neuste)); } catch(e){}
 }
 function newsUnreadCount(){
@@ -448,7 +438,7 @@ function _newsTafelTon(s){
 }
 
 function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
-  if(((s && s.dataRef) || {}).type === 'runde') return _newsRundeHtml(s, isRead, istTagesKarte, fadenHtml);
+  if(((s && s.dataRef) || {}).type === 'runde') return _newsRundeHtml(s, isRead, fadenHtml);
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
@@ -923,6 +913,13 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
 // die Stufe, auf die er fällt. Rot ist die Richtung [§C25]; die Karte bleibt
 // die der Gewinner, deshalb steht der Verlust unter dem Band und nicht im
 // Kopf. Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
+//
+// Je Verlierer ein Chip: Gesicht, Name, Betrag — und nur, wenn die Stufe
+// fällt, ein Pfeil mit ihr. Vorher stand „VERLIERT" als Wort vor einer
+// Reihe aus „Leon −77 auf Volutenkranz", und bei drei Namen brach das in
+// eine zweite Zeile, in der Betrag und Stufe nicht mehr zu ihrem Namen
+// gehörten. Der Chip hält zusammen, was zusammengehört, und das Wort davor
+// sagt, wovon der Betrag abgeht: Prestige.
 function _newsVerlustBand(s){
   const d = (s && s.dataRef) || {};
   const je = {};
@@ -936,11 +933,11 @@ function _newsVerlustBand(s){
       ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
   }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
   if(!weg.length) return '';
-  return `<div class="nf-verlust"><i class="nf-verlust-i">${svgI('trendDown')}</i>`
-    + `<span class="nf-verlust-l">Verliert</span><span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
-      `<b>${esc(pm[x.pid].name)} <em class="num">−${-x.d}</em>${x.ab
-        ? `<u>auf ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
-      ? `<b>+${weg.length - 3}</b>` : ''}</span></div>`;
+  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
+    + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
+      `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
+      + `<em class="num">−${-x.d}</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      ? `<b class="nf-vl mehr">+${weg.length - 3}</b>` : ''}</span></div>`;
 }
 
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie
@@ -1060,8 +1057,7 @@ function _newsFaeden(cards){
   const glieder = new Map();
   cards.forEach(c => {
     const d = c.dataRef || {};
-    // Die Runde traegt die Meldungen ihrer Partie-Karten wie eine Sammelkarte.
-    const ids = (d.type === 'sammel' || d.type === 'runde') && Array.isArray(d.teile)
+    const ids = d.type === 'sammel' && Array.isArray(d.teile)
       ? d.teile.map(t => t && t.id).filter(Boolean) : [c.id];
     const g = ids.map(id => rohId.get(id) || (id === c.id ? c : null)).filter(Boolean);
     g.forEach(x => karteVon.set(x.id, c));
@@ -1650,9 +1646,6 @@ function _newsTagSpannung(s){
   const d = (s && s.dataRef) || {};
   const t = d.type || '';
   if(_isBreaking(s)) return 1200 + (s.prio || 0);
-  // Die Runde wiegt so viel wie ihre stärkste Partie: sie nimmt ihre Karten
-  // auf, und das Band des Tages soll mit ihnen nicht verschwinden.
-  if(t === 'runde') return Math.max(0, ...(d.glieder || []).filter(_newsTagKarteWuerdig).map(_newsTagSpannung));
   const basis = {
     giant_slayer:980, top_clash:940, rekord_geholt:900,
     rekord_erstmals:920, rekord_gesteigert:870, chronik_geholt:850,
@@ -1703,11 +1696,9 @@ function _newsTagSpannung(s){
 // beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
 const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
   'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
-  'season_recap']);
+  'season_recap', 'runde']);
 function _newsTagKarteWuerdig(st){
-  const dr = (st && st.dataRef) || {};
-  if(dr.type === 'runde') return (dr.glieder || []).some(_newsTagKarteWuerdig);
-  if(NEWS_TAGKARTE_OHNE.has(dr.type || '')) return false;
+  if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
   if(_newsIstNegativ(st)) return false;
   return !_isBreaking(st);
 }

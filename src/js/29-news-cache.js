@@ -572,8 +572,10 @@ function _consolidateStories(list){
   // ambienten Karten hängen ohnehin an ihrem Slot.
   // `spiel` gehoert dazu: eine Partie ist kein Satz, den man schon gelesen
   // hat, sondern ein Ereignis mit eigener Uhrzeit.
+  // Die Runde fasst ihre Partien zusammen wie der Spieler des Tages seinen
+  // Tag: es gibt sie je Runde genau einmal, also wiederholt sie nichts.
   const _OHNE_SPERRE = new Set(['ambient', 'sammel', 'season_endgame', 'spiel',
-                                'potd', 'woche', 'chronik_monat', 'season_recap']);
+                                'potd', 'woche', 'chronik_monat', 'season_recap', 'runde']);
   const _aussage = st => {
     const d = (st && st.dataRef) || {};
     const typ = d.type || '';
@@ -1613,7 +1615,7 @@ function _consolidateStories(list){
   // derselben Woche zu unterschlagen wäre genau der Fehler, den die Regel
   // verhindern soll. Und `ambient`/`group` sind ohnehin je Slot einzeln.
   const OHNE_DECKEL = new Set(['lead_change','elo_record','streak_record',
-                               'season_endgame','ambient','group']);
+                               'season_endgame','ambient','group','runde']);
   const NF_DECKEL = 2;
   // Eine Sammelkarte zaehlt nach ihrer ACHSE mit, nicht als „sammel". Sie war
   // ganz ausgenommen, und gemessen standen am 26.08. vier Karten „Ein Spiel,
@@ -1766,7 +1768,9 @@ function _consolidateStories(list){
   // 26.08. im Feed und fiel nach der fuenften heraus, weil inzwischen vier
   // Karten mit frueherer Uhrzeit dazugekommen waren. Eine Wiederholung kann
   // sie nicht sein, also nimmt sie niemandem etwas weg.
-  const TAG_SUMME = new Set(['elo_swing']);
+  // Die Runde der Vier steht am Ende ihrer Runde und fasst sie zusammen
+  // [§11.6c]: dieselbe Lage, und sie nimmt dem Tag keinen Platz.
+  const TAG_SUMME = new Set(['elo_swing', 'runde']);
   const _zaehltGegenDeckel = s => {
     const t = (s && s.dataRef || {}).type;
     if(TAG_PFLICHT.has(t) || TAG_SUMME.has(t)) return false;
@@ -1877,11 +1881,6 @@ function _consolidateStories(list){
       return Object.assign({}, s, {dataRef: Object.assign({}, d, {bandFremd:true})});
     });
   }
-  // ── Dieselben Vier am Tisch sind eine Karte [§C33, §11.6c] ──────────
-  // Zuletzt, weil die Runde nur Partie-Karten aufnimmt und keine davon an
-  // einem Deckel haengt: sie aendert, wie viele Karten dastehen, aber nicht,
-  // welche Nachricht es gibt. Die Runde traegt die ID ihrer ersten Partie.
-  ausbalanciert = _newsRunden(ausbalanciert);
   _cache._consolFrom = list;
   _cache._consolList = ausbalanciert;
   return ausbalanciert;
