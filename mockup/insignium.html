@@ -322,10 +322,10 @@ body.ohne-licht .ins-w .glanz{display:none}
   <h2><span class="nr">06</span>Für die App</h2>
   <div class="liste">
     <div><h3>Schwellen</h3>
-      <p>Reif ab 0, Schildring ab 500, Volutenkranz ab 1.000, Zierkranz ab 1.800,
-      Lorbeerreif ab 2.600, Kronenreif ab 3.600, Ordensstern ab 4.500 und danach alle
-      500 Prestige eine Zacke. Die Grade liegen wie bisher bei 0, 16 und 40 % der
-      Spanne.</p></div>
+      <p>Reif ab 0, Schildring ab 600, Volutenkranz ab 1.200, Zierkranz ab 2.100,
+      Lorbeerreif ab 3.100, Kronenreif ab 4.300, Ordensstern ab 5.600 und danach alle
+      500 Prestige eine Zacke. Die Grade teilen jede Spanne in Drittel, abgerundet
+      auf volle Hundert.</p></div>
     <div><h3>Auflösung</h3>
       <p>Jedes Zeichen ist eine Vektorzeichnung auf einer Fläche von 1000 × 1000
       Einheiten mit dem Reif mittig und bei allen gleich groß. In der Rangliste wie
@@ -344,14 +344,15 @@ body.ohne-licht .ins-w .glanz{display:none}
 <script>
 const INSIGNIEN = [
   {key:'reif',    name:'Reif',          min:0},
-  {key:'schild',  name:'Schildring',    min:500},
-  {key:'volute',  name:'Volutenkranz',  min:1000},
-  {key:'zier',    name:'Zierkranz',     min:1800},
-  {key:'lorbeer', name:'Lorbeerreif',   min:2600},
-  {key:'krone',   name:'Kronenreif',    min:3600},
-  {key:'stern',   name:'Ordensstern',   min:4500},
+  {key:'schild',  name:'Schildring',    min:600},
+  {key:'volute',  name:'Volutenkranz',  min:1200},
+  {key:'zier',    name:'Zierkranz',     min:2100},
+  {key:'lorbeer', name:'Lorbeerreif',   min:3100},
+  {key:'krone',   name:'Kronenreif',    min:4300},
+  {key:'stern',   name:'Ordensstern',   min:5600},
 ];
-const INSIGNIUM_GRAD_SCHWELLEN = [0, 0.16, 0.40];
+// Drittel der Spanne, abgerundet auf volle Hundert — wie in der App.
+const INSIGNIUM_GRAD_SCHWELLEN = [0, 1/3, 2/3];
 const ORDENSSTERN_SCHRITT = 500;
 // Je Rang dieselben Zeichnungen wie in der App (insBild in
 // 35a-insignium-zeichen.js): die Rangfarbe ist dort gezeichnet, nicht
@@ -1387,7 +1388,7 @@ const gradName = (s, g) => ['I','II','III'][g];
 const ab = (si, g) => {
   const s = INSIGNIEN[si], n = INSIGNIEN[si + 1];
   if(!n) return s.min + g * ORDENSSTERN_SCHRITT;
-  return Math.round(s.min + (n.min - s.min) * INSIGNIUM_GRAD_SCHWELLEN[g]);
+  return s.min + Math.floor((n.min - s.min) * INSIGNIUM_GRAD_SCHWELLEN[g] / 100) * 100;
 };
 const zahl = v => v.toLocaleString('de-DE');
 
