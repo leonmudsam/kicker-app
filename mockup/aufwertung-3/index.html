@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dritte Aufwertung</title>
+<!-- Gebaut von bau.js aus der ausgelieferten App und entwurf.js/entwurf.css.
+     Eigenständige Seite ohne Bauablauf, kein Teil der App [CLAUDE.md §2]. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sometype+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c0b;--bg2:#0f1311;--surface:#141a16;--line:#28332b;--ink:#eef3ef;--ink2:#b9c4bd;--muted:#717f76;--faint:#4a554e;--acid:#BEF264;--gold:#f7cf4a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;padding:28px 16px 60px}
+main{max-width:1000px;margin:0 auto}
+h1{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:clamp(26px,5vw,40px);letter-spacing:-.02em}
+.unter{color:var(--ink2);max-width:720px;margin-top:8px}
+.regeln{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:22px 0 10px}
+.regeln div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13px;color:var(--ink2)}
+.regeln b{display:block;color:var(--ink);margin-bottom:3px}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 6px}
+nav a{font:600 11px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 10px}
+nav a:hover{color:var(--ink);border-color:var(--muted)}
+h2{font:600 12px 'Sometype Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:40px 0 4px}
+.ans{border-top:1px solid var(--line);padding:22px 0 8px}
+.ans h3{font-size:20px;margin-bottom:12px}
+.paar{display:grid;grid-template-columns:repeat(2,minmax(0,360px));gap:14px}
+figure{margin:0}
+figcaption{font:600 10.5px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+figure.neu figcaption{color:var(--acid)}
+figure img{display:block;width:100%;height:auto;border-radius:20px;border:1px solid var(--line)}
+figure.neu img{border-color:rgba(190,242,100,.35)}
+.ans ul{margin:14px 0 0 18px;max-width:760px;color:var(--ink2);font-size:14px}
+.ans li{margin:4px 0}
+.offen{margin-top:40px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;color:var(--ink2);font-size:14px}
+.offen b{color:var(--ink)}
+@media(max-width:560px){.paar{gap:8px}figure img{border-radius:14px}}
+</style></head><body><main>
+<h1>Dritte Aufwertung</h1>
+<p class="unter">Jede Ansicht zweimal, bei 360 px: links, wie sie heute aussieht, rechts der Entwurf. Gebaut ist der Entwurf in der echten App mit den echten Partien der Liga und ihren eigenen Bauteilen — eingebaut ist davon noch nichts.</p>
+<div class="regeln">
+  <div><b>Ein Bauteil, überall dasselbe</b>Das Titelrennen, die Tagesbahn, die runden Chips und die Abschnittsköpfe sind die, die die App schon hat. Neu sind das Feld, die Woche, der Kalender, die Landkarte und das Netz — und jedes davon steht an mehr als einer Stelle.</div>
+  <div><b>Farbe sagt etwas</b>Grün und Rot nur für gewonnen und verloren, Gold nur für den, der einen Titel trägt, alles Übrige Metall. Keine neue Farbe.</div>
+  <div><b>Bewegung, die erklärt</b>Balken wachsen auf, Linien zeichnen sich in Spielreihenfolge, Gesichter kommen nacheinander. Nur Transform und Deckkraft, bei Bewegungsruhe steht alles.</div>
+  <div><b>Telefon zuerst</b>Alles ist bei 360 px gebaut und gemessen, jede Grafik skaliert mit der Breite und läuft nicht über den Rand.</div>
+</div>
+<nav><a href="#liga">Liga</a><a href="#positionen">Positionen</a><a href="#teams">Teams</a><a href="#verlauf">Verlauf</a><a href="#match">Match eintragen</a><a href="#profil">Profil</a><a href="#h2h">Direkter Vergleich</a><a href="#saison">Saison-Rückblick</a><a href="#woche">Spieler der Woche</a><a href="#tag">Spieler des Tages</a></nav>
+<h2>Reiter</h2><section class="ans" id="liga">
+    <h3>Liga</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/liga-heute.jpg" alt="Liga heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/liga-entwurf.jpg" alt="Liga im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Das Titelrennen steht über der Rangliste: die Saison-Elo der ersten drei an jedem Spieltag, der Erste golden, darunter das Band, wer an welchem Tag vorn lag.</li><li>Es ist dasselbe Bauteil wie in der Meister-Karte und im Saison-Rückblick (saisonRennenHtml) — die Liga zeigt den laufenden Monat damit so, wie der Rückblick ihn später zeigt.</li><li>Die Linien zeichnen sich von links nach rechts auf, bei Bewegungsruhe stehen sie.</li></ul>
+  </section><section class="ans" id="positionen">
+    <h3>Positionen</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/positionen-heute.jpg" alt="Positionen heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/positionen-entwurf.jpg" alt="Positionen im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Die Rollen-Landkarte: jeder Spieler steht dort, wo sich sein Sturm- und sein Abwehrwert kreuzen — dieselben Werte wie in der Liste darunter (posWert).</li><li>Oben rechts liegt das Feld der Allrounder, leise hinterlegt. Wer stärker stürmt, steht unten rechts, wer stärker verteidigt, oben links.</li><li>Die Gesichter kommen nacheinander, gestaffelt — nur Deckkraft und Größe bewegen sich.</li></ul>
+  </section><section class="ans" id="teams">
+    <h3>Teams</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/teams-heute.jpg" alt="Teams heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/teams-entwurf.jpg" alt="Teams im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Das Netz der Duos: jeder Spieler sitzt auf einem Kreis, jede Linie ist ein Duo ab vier gemeinsamen Partien.</li><li>Die Dicke zählt die Partien, die Farbe sagt die Richtung: Grün gewinnt öfter, Rot verliert öfter, Metall liegt dazwischen [§C25].</li><li>Man sieht auf einen Blick, wer mit wem spielt und welche Paare tragen — die Liste darunter bleibt die Rangfolge.</li></ul>
+  </section><section class="ans" id="verlauf">
+    <h3>Verlauf</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/verlauf-heute.jpg" alt="Verlauf heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/verlauf-entwurf.jpg" alt="Verlauf im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Der Verlauf ist nach Spieltagen gegliedert: Wochentag, Datum, Zahl der Partien, darunter der Tag als Bahn — ein Strich je Partie, so hoch, wie klar das Ergebnis war.</li><li>Jede Partie zeigt ihre Gesichter: die Sieger links und hell, die Verlierer rechts und leiser, der Stand in der Mitte mit seiner Uhrzeit — wie die Bühne einer Partie [§C27].</li><li>Die Elo je Spieler steht im Fuß, die Auszeichnungen als Zeichen statt als Wolke aus Namen.</li></ul>
+  </section><section class="ans" id="match">
+    <h3>Match eintragen</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/match-heute.jpg" alt="Match eintragen heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/match-entwurf.jpg" alt="Match eintragen im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Sobald vier Spieler stehen, zeigt die Eingabe die Siegchance aus der Elo — mit dem Wort dazu (chanceWort), wie im Blatt einer Partie.</li><li>Darunter, was ein Sieg je Spieler ungefähr bringt: wer gegen Favoriten antritt, sieht vor dem Anpfiff, worum es geht.</li></ul>
+  </section><h2>Blätter</h2><section class="ans" id="profil">
+    <h3>Profil</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/profil-heute.jpg" alt="Profil heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/profil-entwurf.jpg" alt="Profil im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Der Spielkalender: die letzten zwölf Wochen als Raster, eine Zelle je Tag. Grün, wo mehr gewonnen als verloren wurde, Rot umgekehrt, kräftiger mit mehr Partien.</li><li>Er beantwortet, was die Zahlen darüber nicht sagen: wann jemand spielt, wie regelmäßig, und ob ein schwacher Monat an wenigen schlechten Tagen hängt.</li></ul>
+  </section><section class="ans" id="h2h">
+    <h3>Direkter Vergleich</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/h2h-heute.jpg" alt="Direkter Vergleich heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/h2h-entwurf.jpg" alt="Direkter Vergleich im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Jede Begegnung als Balken: nach oben, wer links steht, nach unten der andere, so hoch, wie deutlich es ausging.</li><li>Von links nach rechts in der Reihenfolge der Partien — Serien und Wenden der Rivalität sind zu sehen, ohne eine Zahl zu lesen.</li></ul>
+  </section><h2>Rückblicke</h2><section class="ans" id="saison">
+    <h3>Saison-Rückblick</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/saison-heute.jpg" alt="Saison-Rückblick heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/saison-entwurf.jpg" alt="Saison-Rückblick im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Unter dem Podest steht das Titelrennen des Monats, die Tage an der Spitze und die Saison des Meisters als Zellen — dieselben drei Bauteile wie im Blatt der Meister-Karte.</li><li>Der Rückblick erzählt damit, wie der Titel zustande kam, nicht nur, wer ihn hat.</li></ul>
+  </section><section class="ans" id="woche">
+    <h3>Spieler der Woche</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/woche-heute.jpg" alt="Spieler der Woche heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/woche-entwurf.jpg" alt="Spieler der Woche im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Die Woche des Helden als sieben Spalten: oben die Siege, unten die Niederlagen, ein Tag ohne Partie bleibt leise stehen.</li><li>Darunter das Feld der Woche: jeder Spieler mit Siegen nach rechts und Niederlagen nach links um eine gemeinsame Null — der Held in Gold, weil er den Titel trägt [§C25].</li><li>Die Balken wachsen nacheinander auf, bei Bewegungsruhe stehen sie.</li></ul>
+  </section><section class="ans" id="tag">
+    <h3>Spieler des Tages</h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/tag-heute.jpg" alt="Spieler des Tages heute" loading="lazy" width="360" height="900"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/tag-entwurf.jpg" alt="Spieler des Tages im Entwurf" loading="lazy" width="360" height="900"></figure>
+    </div>
+    <ul><li>Der Tag des Helden als Bahn — ein Feld je Partie, wie im Story-Blatt (_ndTagesbahn) —, darunter seine Elo über den Tag als Linie.</li><li>Und das Feld des Tages, dasselbe Bauteil wie in der Woche: wer an diesem Tag wie oft gewonnen und verloren hat.</li></ul>
+  </section>
+<div class="offen"><b>Was hier nicht steht:</b> Awards, Rekorde, Chronik, Feed, Laufbahn, Duo-Blatt und das Blatt einer Partie sind in den letzten Runden schon gezeichnet worden — Kacheln mit Feld und Lauf, Belege, Bühne, Bildzonen je Kartensorte, die Leiter und jetzt die Aura. Dort gibt es nichts nachzuholen, nur die neuen Bausteine wiederzuverwenden: das Feld passt ins Award-Blatt, der Kalender ins Duo-Blatt.</div>
+</main></body></html>

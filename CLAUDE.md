@@ -138,7 +138,14 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       eingebaut [§C30]; die Seite zeigt ihn neben der
                       Fassung davor (lorbeer.html), und die Titel-Aura in
                       drei Lichtformen zu je zehn Stufen, deren Korona statt
-                      der Schwinge eingebaut ist [§C36] (titel-aura/)
+                      der Schwinge eingebaut ist [§C36] (titel-aura/), und
+                      die dritte Aufwertung: zehn Reiter und Blätter heute
+                      und als Entwurf, gebaut in der ausgelieferten App mit
+                      den echten Partien (bau.js legt entwurf.js und
+                      entwurf.css hinein und fotografiert beide Stände) —
+                      Titelrennen, Rollen-Landkarte, Netz der Duos, Verlauf
+                      nach Tagen, Siegchance beim Aufstellen, Spielkalender,
+                      jede Begegnung, Woche und Feld (aufwertung-3/)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen

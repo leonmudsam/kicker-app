@@ -1,0 +1,140 @@
+/* Entwurf der dritten Aufwertung. Nur Tokens der App (--acid, --red, --gold,
+   --line, --surface …) — keine neue Farbe [§C25]. Bewegt wird nur transform
+   und Deckkraft, und alles steht bei Bewegungsruhe. */
+
+/* Die Karte in einem Reiter: so gebaut wie „Mehr zur Saison". */
+.e-karte{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+  padding:12px 14px 14px;margin:0 0 14px}
+.e-sec{display:flex;align-items:baseline;gap:8px;margin:0 0 10px}
+.e-sec em{margin-left:auto;font-style:normal;letter-spacing:.04em;color:var(--faint);font-size:10px}
+.e-hinweis{margin-top:8px;font-size:11px;line-height:1.4;color:var(--muted)}
+.e-leg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:8px;font-size:10.5px;color:var(--muted)}
+.e-leg span::before{content:"";display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle;background:var(--line2)}
+.e-leg .w::before{background:var(--acid)}.e-leg .l::before{background:var(--red)}
+.e-leg .m::before{background:var(--ink2);opacity:.45}.e-leg .d::before{height:8px;width:3px;background:var(--muted)}
+
+/* ── Die Rollen-Landkarte ── */
+.e-rk{position:relative;aspect-ratio:300/240}
+.e-rk svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.e-rk-q{fill:rgba(190,242,100,.05)}
+.e-rk-m{stroke:var(--line2);stroke-dasharray:3 4}
+.e-rk-a{stroke:var(--line2)}
+.e-rk text{font:600 9px 'Sometype Mono',monospace;fill:var(--faint);letter-spacing:.06em}
+.e-rk text.q{fill:var(--muted);font-size:8.5px;text-transform:uppercase}
+.e-rk-p{position:absolute;transform:translate(-50%,-50%);line-height:0}
+.e-rk-p .av{box-shadow:0 0 0 2px var(--surface)}
+
+/* ── Das Netz der Duos ── */
+.e-netz{position:relative;aspect-ratio:300/280}
+.e-netz svg{position:absolute;inset:0;width:100%;height:100%}
+.e-netz-l{stroke-linecap:round;opacity:.55}
+.e-netz-l.w{stroke:var(--acid)}.e-netz-l.l{stroke:var(--red)}.e-netz-l.m{stroke:var(--ink2);opacity:.28}
+.e-netz-p{position:absolute;transform:translate(-50%,-50%);line-height:0}
+.e-netz-p .av{box-shadow:0 0 0 3px var(--surface)}
+
+/* ── Der Verlauf nach Tagen ── */
+.e-vlist{display:flex;flex-direction:column;gap:8px}
+.e-vtag{margin:12px 2px 2px}
+.e-vtag:first-child{margin-top:0}
+.e-vtag-k{display:flex;align-items:baseline;gap:8px;font-size:13px}
+.e-vtag-k b{font-weight:700;color:var(--ink)}
+.e-vtag-k span{color:var(--muted);font-size:11px}
+.e-vtag-k em{margin-left:auto;font-style:normal;color:var(--faint);font-size:10px;letter-spacing:.04em}
+/* Der Tag als Bahn: ein Strich je Partie, so hoch wie das Ergebnis klar war. */
+.e-vtag-bahn{display:flex;align-items:flex-end;gap:3px;height:22px;margin-top:6px}
+.e-vtag-bahn i{flex:1;max-width:16px;height:var(--h);border-radius:2px;background:var(--line2)}
+.e-vtag-bahn i.eng{background:var(--ink2);opacity:.6}
+.e-vtag-bahn i.klar{background:var(--acid);opacity:.7}
+.e-partie{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:6px 8px;align-items:center;
+  background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 12px}
+.e-p-seite{display:flex;align-items:center;gap:7px;min-width:0}
+.e-p-seite.l{justify-content:flex-end;text-align:right;opacity:.62}
+.e-p-n{font-size:12px;font-weight:600;line-height:1.25;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.e-p-seite.w .e-p-n{color:var(--ink)}
+.e-p-mitte{display:flex;flex-direction:column;align-items:center;gap:1px}
+.e-p-mitte b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:19px;letter-spacing:-.02em;
+  padding:3px 9px;border-radius:10px;background:var(--surface2);border:1px solid var(--line2)}
+.e-p-mitte span{font-size:9.5px;color:var(--faint)}
+.e-p-fuss{grid-column:1 / -1;display:flex;align-items:center;gap:8px;font-size:10.5px;border-top:1px solid var(--line);padding-top:7px}
+.e-p-d .pos{color:var(--acid)}.e-p-d .neg{color:var(--red)}
+.e-p-d.r{margin-left:auto}
+.e-p-a{display:inline-flex;gap:4px;align-items:center;color:var(--ink2)}
+.e-p-a em{font-style:normal;color:var(--faint)}
+
+/* ── Die Siegchance beim Aufstellen ── */
+.e-ch-reihe{display:flex;align-items:center;gap:8px}
+.e-ch-reihe .a,.e-ch-reihe .b{display:flex;align-items:center;gap:7px}
+.e-ch-reihe .b{margin-left:auto}
+.e-ch-reihe b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:20px}
+.e-ch-reihe .a b{color:var(--acid)}
+.e-ch-wort{flex:1;text-align:center;font-size:10.5px;color:var(--muted);letter-spacing:.04em}
+.e-ch-bahn{position:relative;display:flex;height:8px;border-radius:4px;overflow:hidden;margin-top:10px;background:var(--surface2)}
+.e-ch-bahn i{display:block;height:100%}
+.e-ch-bahn .a{background:linear-gradient(90deg,rgba(190,242,100,.35),var(--acid))}
+.e-ch-bahn .b{background:linear-gradient(90deg,var(--orange),rgba(255,120,73,.35))}
+.e-ch-bahn u{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--bg)}
+
+/* ── Der Spielkalender ── */
+.e-kal{display:flex;gap:6px;margin-top:8px}
+.e-kal-wt{display:grid;grid-template-rows:repeat(7,1fr);gap:3px;font-size:8.5px;color:var(--faint);line-height:1}
+.e-kal-wt span{display:flex;align-items:center}
+.e-kal-g{flex:1;display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;gap:3px}
+.e-kal-g i{aspect-ratio:1;border-radius:3px;background:var(--surface2)}
+.e-kal-g i.w{background:var(--acid);opacity:var(--s)}
+.e-kal-g i.l{background:var(--red);opacity:var(--s)}
+.e-kal-g i.m{background:var(--ink2);opacity:calc(var(--s) * .6)}
+
+/* ── Jede Begegnung ── */
+.e-h2h svg{display:block;width:100%;height:auto}
+.e-h2h-0{stroke:var(--line2)}
+.e-h2h rect.w{fill:var(--acid)}.e-h2h rect.l{fill:var(--red)}
+.e-h2h-n{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:4px}
+
+/* ── Die Woche und das Feld ── */
+.e-woche{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:4px 0 6px}
+.e-wo-t{display:flex;flex-direction:column;align-items:center;gap:2px}
+.e-wo-o,.e-wo-u{display:flex;width:100%;max-width:26px;height:46px;border-radius:5px;background:var(--surface2);overflow:hidden}
+.e-wo-o{align-items:flex-end}.e-wo-u{align-items:flex-start;height:28px}
+.e-wo-o i{display:block;width:100%;background:var(--acid);border-radius:4px 4px 0 0}
+.e-wo-u i{display:block;width:100%;background:var(--red);border-radius:0 0 4px 4px;opacity:.85}
+.e-wo-t.leer .e-wo-o,.e-wo-t.leer .e-wo-u{opacity:.4}
+.e-wo-l{font-size:10px;color:var(--muted);margin-top:2px}
+.e-wo-v{font-size:10px;color:var(--ink2)}
+.e-feld{display:flex;flex-direction:column;gap:5px}
+.e-feld-z{display:grid;grid-template-columns:72px minmax(0,1fr) 38px;align-items:center;gap:8px}
+.e-feld-n{font-size:12px;color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.e-feld-z.held .e-feld-n{color:var(--gold);font-weight:700}
+.e-feld-b{position:relative;display:grid;grid-template-columns:1fr 1fr;height:10px}
+.e-feld-b i{display:block;height:100%}
+.e-feld-b i.l{background:var(--red);opacity:.8;border-radius:3px 0 0 3px;justify-self:end;grid-column:1}
+.e-feld-b i.w{background:var(--acid);border-radius:0 3px 3px 0;justify-self:start;grid-column:2}
+.e-feld-b u{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line2)}
+.e-feld-z.held .e-feld-b i.w{background:var(--gold)}
+.e-feld-v{font-size:11px;color:var(--muted);text-align:right}
+
+/* ── Die Elo eines Tages ── */
+.e-elo svg{display:block;width:100%;height:auto;margin-top:6px}
+.e-elo-0{stroke:var(--line2);stroke-dasharray:3 4}
+.e-elo-l{fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.e-elo-fl{fill:rgba(247,207,74,.12)}
+.e-elo circle.w{fill:var(--acid)}.e-elo circle.l{fill:var(--red)}
+.e-elo-z{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:2px}
+.e-elo-z .pos{color:var(--acid)}.e-elo-z .neg{color:var(--red)}
+
+/* ── Bewegung: ein Balken wächst, ein Punkt kommt, eine Linie zeichnet sich ── */
+@media (prefers-reduced-motion:no-preference){
+  .e-feld-b i,.e-wo-o i,.e-wo-u i,.e-vtag-bahn i{transform-origin:left;animation:eWachs .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .e-feld-b i.l{transform-origin:right}
+  .e-wo-o i,.e-vtag-bahn i{transform-origin:bottom;animation-name:eWachsY}
+  .e-wo-u i{transform-origin:top;animation-name:eWachsY}
+  .e-rk-p,.e-netz-p{animation:eDa .5s ease-out both;animation-delay:calc(var(--i,0) * 50ms)}
+  .e-netz-l{animation:eDaL .6s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .e-elo-l{stroke-dasharray:1;animation:eZieh 1.2s ease-out both}
+  .e-h2h rect{transform-box:fill-box;transform-origin:bottom;animation:eWachsY .5s ease-out both;animation-delay:calc(var(--i,0) * 25ms)}
+}
+@keyframes eWachs{from{transform:scaleX(0)}}
+@keyframes eWachsY{from{transform:scaleY(0)}}
+@keyframes eDa{from{opacity:0;transform:translate(-50%,-50%) scale(.6)}}
+@keyframes eDaL{from{opacity:0}}
+@keyframes eZieh{from{stroke-dashoffset:1}}
+.e-h2h-box{margin:14px 0}
