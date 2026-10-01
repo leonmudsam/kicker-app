@@ -67,7 +67,7 @@
     <li><b>Der Lorbeer bleibt vorn</b>, als klassischer Zweig mit Blattpaaren: außen ein langes Blatt, innen ein kürzeres, beide wachsen mit dem Zweig nach oben, in der Mitte am größten. Der Zweig schließt mit einem Endblatt. Heute liegen zwei Reihen Laub übereinander, und die Grade sind darin kaum zu unterscheiden.</li>
     <li><b>Die Verzierung steigt nach oben</b>, dorthin, wo kein Laub ist. Wo der Zweig endet, läuft eine Linie am Reif entlang hinauf bis neben den Kopf und rollt dort nach außen ein, mit Laub an ihrem Ansatz. Nichts liegt auf dem Kranz.</li>
     <li><b>Mit jedem Grad kommt eine Linie dazu.</b> Grad II: eine Gegenlinie, die sich kurz vor der Schnecke löst und zum Kopf hin einrollt. Die beiden rahmen Lilie und Krone ein. Grad III: ein S, das am Ende des Laubs nach außen ausschwingt.</li>
-    <li><b>Beeren in der Rangfarbe</b> sitzen paarweise außen in den Achseln, drei, vier und fünf Gruppen. <b>Ab Grad II sitzen Steine</b> in den Augen der Schnecken.</li>
+    <li><b>Beeren in der Rangfarbe</b> sitzen paarweise außen in den Achseln, drei, vier und fünf Gruppen. <b>Die Augen der Schnecken tragen ab Grad I einen Stein</b> in der Rangfarbe, wie im Zierkranz III davor; ab Grad II kommen Steine im Reif dazu.</li>
     <li><b>Gold bleibt, wo es war</b>: Nieten und Lilie ab Grad I, die Raute ab II, Kehle und kleine Krone in III. Der dritte Grad trägt damit nicht mehr Gold als der erste Kronenreif.</li>
   </ul>
 </main>
@@ -1116,7 +1116,7 @@ function _lbKranz(o, st){
   // ihm eine Gegenlinie, die nach innen zum Kopf einrollt, im dritten eine
   // dritte, die außen in einem S ausschwingt. Sie stehen dort, wo kein Laub
   // ist — über dem Kranz, nicht auf ihm.
-  const stein = g >= 2;
+  const stein = true; // die Kugel im Auge trägt schon in Grad I die Rangfarbe: Zierkranz III hat sie, sonst ginge sie verloren
   let linien = '';
   // Die Hauptlinie: vom Ende des Zweigs am Reif entlang hinauf bis neben
   // den Kopf, dort nach außen und unten eingerollt.
@@ -1179,8 +1179,8 @@ window.TEILE = function(key, nr, farbe){
       + '<circle cx="500" cy="500" r="200" fill="#2b3a33"/>' + t.defs + t.bild + '</svg>');
   };
   const GRADE = ['I', 'II', 'III'];
-  const TEXT_NEU = ['Lorbeer in Blattpaaren, oben je Seite eine Linie, die nach außen einrollt',
-    'Dazu eine Gegenlinie zum Kopf hin, Steine in den Augen und im Reif',
+  const TEXT_NEU = ['Lorbeer in Blattpaaren, oben je Seite eine Linie, die nach außen einrollt, mit einem Stein im Auge',
+    'Dazu eine Gegenlinie zum Kopf hin und Steine im Reif',
     'Dazu ein S am Ende des Laubs, mehr Blattpaare, goldene Kehle und kleine Krone'];
   const TEXT_ALT = ['Zwei Reihen Laub, zehn Blätter je Seite', 'Elf Blätter, Steine im Reif', 'Zwölf Blätter, goldene Kehle und kleine Krone'];
   function zeichne(){
