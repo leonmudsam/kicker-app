@@ -206,7 +206,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **964**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **965**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -1296,13 +1296,17 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   der letzten Partie, wenn feststeht, dass keine mehr folgt, und dieser
   Zeitpunkt ist ihr Zeitstempel. Vorher weiß niemand, ob noch eine Partie
   kommt — und was einmal dasteht, bleibt stehen: die ID trägt die erste
-  Partie, gespeichert wird sie einmal. Die Karte trägt die Tabelle der Runde
-  (Siege, Niederlagen und Elo je Spieler), die Schlagzeile nennt, wer sie
+  Partie, gespeichert wird sie einmal. Die Schlagzeile nennt, wer sie
   gewonnen hat — bei immer denselben Teams ist es ein Duell („gewinnen die
   Runde gegen … 3:1", „trennen sich 1:1") —, der Satz die **Uhrzeiten** der
-  ersten und letzten Partie, und darunter steht jede Partie kurz in einer
-  Zeile mit Uhrzeit, Paarung, Stand und Anlass, höchstens acht und dahinter
-  die Zahl der übrigen. Das Blatt zeigt die Tabelle, wer mit wem an welcher
+  ersten und letzten Partie. **Die Karte fasst zusammen und sagt es**: eine
+  Kennzeile („Zusammenfassung von 5 Partien am Stück, nur …"), die Tabelle
+  als Reihe aus vier Feldern (Siege, Niederlagen, Elo) und die Partien als
+  Streifen aus Uhrzeit und Stand. Sie trug darunter jede Partie als Zeile mit
+  vier Wappen und ihrem Anlass — und genau diese Partien stehen direkt
+  daneben als eigene Karten: wer scrollte, las jedes Spiel zweimal, und was
+  die Runde ist, stand nirgends. Die Fläche ist leiser (gestrichelte Kante,
+  kein Schein). Das Blatt zeigt die Tabelle, wer mit wem an welcher
   Stange stand (eine Spalte je Partie, in Blöcken zu acht) und jede Partie;
   jede Zeile öffnet die Karte ihrer Partie. Sie zählt gegen keinen Deckel,
   fällt an keiner Sperre und verbraucht im Generator kein Budget eines

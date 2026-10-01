@@ -6387,7 +6387,12 @@ const _runde = JSON.parse(K.eval(`JSON.stringify((function(){
     // Jede Partie der Runde behält ihre eigene Karte.
     x.ms.forEach(m => { if(!feed.some(s => (s.dataRef||{}).matchId === m.id)) falsch.push(m.id + ' ohne eigene Karte'); });
     const html = _newsCardHtmlM2(feed.find(s => s.id === st.id) || st, false, false);
-    if((html.match(/class="sp-rd-p[ "]/g) || []).length !== Math.min(8, x.ms.length)) falsch.push(st.id + ' Zeilen');
+    // Die Karte fasst zusammen und sagt es: eine Kennzeile, je Partie ein
+    // Feld aus Uhrzeit und Stand, und keine Partie mit ihren Wappen — die
+    // steht direkt darunter auf ihrer eigenen Karte.
+    if((html.match(/class="sp-rs-z"/g) || []).length !== x.ms.length) falsch.push(st.id + ' Streifen');
+    if(html.indexOf('class="sp-rd-was"') < 0) falsch.push(st.id + ' ohne Kennzeile');
+    if(/class="sp-rd-p[ "]/.test(html)) falsch.push(st.id + ' wiederholt die Partien');
     if((_newsRundeBlatt(st).match(/data-mid="/g) || []).length !== x.ms.length) falsch.push(st.id + ' Blatt');
   });
   ohne.forEach(x => { if(ist.some(s => s.id === 'runde_' + x.ms[0].id)) falsch.push(x.ms[0].id + ' ist keine Runde'); });
@@ -6410,7 +6415,7 @@ const _runde = JSON.parse(K.eval(`JSON.stringify((function(){
     gestellt: {drei, fremd, zwei, offen, zu}, ende: zeit + 55 * 60000};
 })())`));
 ok(_runde.soll >= 3 && _runde.ist === _runde.soll && _runde.falsch.length === 0,
-   'jede abgeschlossene Runde der Vier ist eine eigene Story mit Uhrzeiten und Bilanz, und jede ihrer Partien behält ihre Karte',
+   'jede abgeschlossene Runde der Vier ist eine eigene Story mit Uhrzeiten und Bilanz, fasst ihre Partien zusammen statt sie zu wiederholen, und jede Partie behält ihre Karte',
    _runde.falsch.slice(0, 3).join(' | ') || _runde.ist + ' Runden, ' + _runde.ohne + ' Blöcke ohne Runde');
 const _rg = _runde.gestellt;
 ok(_rg.drei.length === 1 && _rg.drei[0] === 'runde_tr1@' + _runde.ende && !_rg.fremd.length && !_rg.zwei.length

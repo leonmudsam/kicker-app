@@ -1176,7 +1176,7 @@ const ok = (c, msg, det) => {
     // Runde ihre Tabelle.
     const BILD = ['nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
                   'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face',
-                  'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg'];
+                  'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg','sp-rq'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');

@@ -725,24 +725,48 @@ function _spRundeZeile(mid, i, imBlatt){
     + (a && a.kurz ? `<span class="sp-rd-a">${svgI(a.ic)}<span>${esc(a.kurz)}</span></span>` : '<span></span>')
     + `</div>`;
 }
-// Die Karte: oben die Tabelle der Runde, darunter die Schlagzeile und jede
-// Partie kurz in einer Zeile. Höchstens acht Partien stehen als Zeile, der
-// Rest als Zahl darunter — keine wird versteckt: das Blatt zeigt alle.
-const RUNDE_ZEILEN = 8;
+// Die Karte ist eine ZUSAMMENFASSUNG, und sie sagt es. Sie trug die Tabelle,
+// die Schlagzeile und darunter jede Partie als Zeile mit vier Wappen — und
+// genau diese Partien stehen direkt darunter als eigene Karten: wer scrollte,
+// las jedes Spiel zweimal, und was die Runde ist, stand nirgends. Jetzt nennt
+// eine Kennzeile, was hier zusammengefasst wird, die Tabelle steht als eine
+// Reihe aus vier Feldern, und die Partien nur noch als Streifen aus Uhrzeit und
+// Stand — die Wappen und den Anlass trägt jede Partie auf ihrer eigenen Karte.
+// Die Fläche ist leiser und ohne Schein: die Karte erzählt nichts Neues,
+// sie bündelt. Das Motiv bleibt — jede Karte trägt ihres [§C27]. Das Blatt
+// zeigt alles.
+// Die Tabelle der Runde in einer Reihe: vier Felder, der Sieger vorn. Ein
+// Name steht nur, wenn er in ein Viertel der Breite passt [§C33]; sonst
+// nennt die Kennzeile darüber alle vier.
+function _spRundeKurz(sp){
+  if(!sp || sp.length < 2) return '';
+  const allein = sp[0].w > sp[1].w;
+  const namen = _spPasst(sp.map(x => x.id), 9);
+  return `<div class="sp-rq">${sp.map((x, i) => `<div class="sp-rq-f${i === 0 && allein ? ' erst' : ''}" style="--i:${i}">`
+    + `${_spChip(x.id)}${namen ? `<span class="sp-rq-n">${esc(_spName(x.id))}</span>` : ''}`
+    + `<span class="sp-rq-wl num">${_spZahl(x.w)}:${_spZahl(x.l)}</span>`
+    + `<em class="num ${x.e >= 0 ? 'g' : 'r'}">${_spVz(x.e)}</em></div>`).join('')}</div>`;
+}
+function _spRundeStreifen(ids){
+  return `<div class="sp-rs">${ids.map((mid, i) => {
+    const m = _spMatch(mid);
+    if(!m) return '';
+    const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+    return `<span class="sp-rs-z" style="--i:${i}"><i class="num">${datumFmt(mts(m), 'uhr')}</i><b class="num">${_spZahl(hoch)}:${_spZahl(tief)}</b></span>`;
+  }).join('')}</div>`;
+}
 function _newsRundeHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const ps = d.matchIds || [];
-  const zeig = ps.slice(0, RUNDE_ZEILEN);
+  const ids = (d.spieler || []).map(x => x.id);
   return `<div class="nf-card nf-s-spiel nf-runde nfc-${esc(s.cat || 'fun')}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('spiel', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('users')}</i><b>DIE RUNDE</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
-    ${_spRundeTafel(d.spieler || [])}
+    <div class="sp-rd-was">Zusammenfassung von ${_spZahl(ps.length)} Partien am Stück, nur ${esc(_namenListe(ids.map(_spName)))}</div>
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
-    <div class="sp-rd-ps">${zeig.map((mid, i) => _spRundeZeile(mid, i, false)).join('')}`
-    + (ps.length > zeig.length ? `<div class="sp-rd-mehr">und ${_spZahl(ps.length - zeig.length)} weitere Partien im Blatt</div>` : '')
-    + `</div>${fadenHtml || ''}</div>`;
+    ${_spRundeKurz(d.spieler || [])}${_spRundeStreifen(ps)}${fadenHtml || ''}</div>`;
 }
 // Das Blatt der Runde: die Tabelle, wer mit wem an welcher Stange stand, und
 // jede Partie mit ihrer Uhrzeit. Die Aufstellung ist eine Matrix — eine

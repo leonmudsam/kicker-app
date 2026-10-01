@@ -4438,6 +4438,28 @@
   font:700 9px 'Sometype Mono',monospace;color:var(--bg)}
 .sp-rm-z.w{background:var(--acid);opacity:.85}
 .sp-rm-z.l{background:var(--red);opacity:.7}
+
+.nf-runde{--tint:0;border-style:dashed;background:var(--surface)}
+.sp-rd-was{padding:0 13px 2px;font:600 9.5px 'Sometype Mono',monospace;letter-spacing:.04em;
+  color:var(--muted);line-height:1.4}
+.sp-rq{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:2px 13px 8px}
+.sp-rq-f{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 3px 6px;min-width:0;
+  border-radius:10px;background:rgba(255,255,255,.025);border:1px solid var(--line)}
+.sp-rq-f.erst{border-color:rgba(var(--story-rgb,190,242,100),.45);background:rgba(var(--story-rgb,190,242,100),.07)}
+.sp-rq-f .av{width:22px;height:22px;font-size:8px}
+.sp-rq-n{font-size:11px;font-weight:600;color:var(--ink2);line-height:1.25;text-align:center;
+  overflow-wrap:anywhere;max-width:100%}
+.sp-rq-wl{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink);line-height:1}
+.sp-rq-f > em{font:700 9.5px 'Sometype Mono',monospace;font-style:normal}
+.sp-rq-f > em.g{color:var(--acid)}.sp-rq-f > em.r{color:var(--red)}
+.sp-rs{display:flex;flex-wrap:wrap;gap:4px;padding:8px 13px 10px;border-top:1px solid var(--line)}
+.sp-rs-z{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:44px;padding:4px 6px;
+  border-radius:7px;background:rgba(255,255,255,.03)}
+.sp-rs-z i{font-style:normal;font-size:9px;color:var(--faint)}
+.sp-rs-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:12px;color:var(--ink2)}
+@media (prefers-reduced-motion: no-preference){
+  .sp-rq-f{animation:spDa .4s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
+}
 </style>
 </head>
 <body>
@@ -4509,7 +4531,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.01.8d15f402';
+const BUILD_VERSION='2026.10.01.f72a1063';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21275,21 +21297,35 @@ function _spRundeZeile(mid, i, imBlatt){
     + (a && a.kurz ? `<span class="sp-rd-a">${svgI(a.ic)}<span>${esc(a.kurz)}</span></span>` : '<span></span>')
     + `</div>`;
 }
-const RUNDE_ZEILEN = 8;
+function _spRundeKurz(sp){
+  if(!sp || sp.length < 2) return '';
+  const allein = sp[0].w > sp[1].w;
+  const namen = _spPasst(sp.map(x => x.id), 9);
+  return `<div class="sp-rq">${sp.map((x, i) => `<div class="sp-rq-f${i === 0 && allein ? ' erst' : ''}" style="--i:${i}">`
+    + `${_spChip(x.id)}${namen ? `<span class="sp-rq-n">${esc(_spName(x.id))}</span>` : ''}`
+    + `<span class="sp-rq-wl num">${_spZahl(x.w)}:${_spZahl(x.l)}</span>`
+    + `<em class="num ${x.e >= 0 ? 'g' : 'r'}">${_spVz(x.e)}</em></div>`).join('')}</div>`;
+}
+function _spRundeStreifen(ids){
+  return `<div class="sp-rs">${ids.map((mid, i) => {
+    const m = _spMatch(mid);
+    if(!m) return '';
+    const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+    return `<span class="sp-rs-z" style="--i:${i}"><i class="num">${datumFmt(mts(m), 'uhr')}</i><b class="num">${_spZahl(hoch)}:${_spZahl(tief)}</b></span>`;
+  }).join('')}</div>`;
+}
 function _newsRundeHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const ps = d.matchIds || [];
-  const zeig = ps.slice(0, RUNDE_ZEILEN);
+  const ids = (d.spieler || []).map(x => x.id);
   return `<div class="nf-card nf-s-spiel nf-runde nfc-${esc(s.cat || 'fun')}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('spiel', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('users')}</i><b>DIE RUNDE</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
-    ${_spRundeTafel(d.spieler || [])}
+    <div class="sp-rd-was">Zusammenfassung von ${_spZahl(ps.length)} Partien am Stück, nur ${esc(_namenListe(ids.map(_spName)))}</div>
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
-    <div class="sp-rd-ps">${zeig.map((mid, i) => _spRundeZeile(mid, i, false)).join('')}`
-    + (ps.length > zeig.length ? `<div class="sp-rd-mehr">und ${_spZahl(ps.length - zeig.length)} weitere Partien im Blatt</div>` : '')
-    + `</div>${fadenHtml || ''}</div>`;
+    ${_spRundeKurz(d.spieler || [])}${_spRundeStreifen(ps)}${fadenHtml || ''}</div>`;
 }
 function _newsRundeBlatt(s){
   const d = s.dataRef || {};
