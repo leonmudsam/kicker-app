@@ -19,9 +19,21 @@ function _ndLead(desc, body){
   return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : lead;
 }
 
-function openNewsDetail(sid){
+function openNewsDetail(sid, glied){
   const stories = getStoriesCache();
-  const s = stories.find(x => x.id === sid);
+  // Eine Partie der Runde hat keine eigene Karte im Feed, aber ein eigenes
+  // Blatt: sie steht als Glied in ihrer Runde [§11.6c]. Die erste Partie
+  // teilt ihre ID mit der Runde, deshalb fragt das Blatt der Runde ausdrücklich
+  // nach dem Glied.
+  let s = glied ? null : stories.find(x => x.id === sid);
+  if(!s){
+    stories.some(x => {
+      const g = (((x.dataRef || {}).type === 'runde') && x.dataRef.glieder) || [];
+      s = g.find(y => y.id === sid) || null;
+      return !!s;
+    });
+  }
+  if(!s) s = stories.find(x => x.id === sid);
   if(!s) return;
   // ── Read-State (Bugfix v8.1) ──
   // Story IMMER hier markieren — egal über welchen Pfad geöffnet wurde
@@ -92,6 +104,9 @@ function openNewsDetail(sid){
   document.getElementById('ndXBtn').onclick = closeNewsDetail;
   nd.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
     el.onclick = () => openNewsDetail(el.dataset.ziel);
+  });
+  nd.querySelectorAll('[data-glied]').forEach(el => {
+    el.onclick = () => openNewsDetail(el.dataset.glied, true);
   });
   // Match-Refs: bei Klick zum Match-Detail springen
   nd.querySelectorAll('[data-mid]').forEach(el => {
@@ -224,6 +239,8 @@ function _newsBlattKopf(s){
   // Die Meisterbühne IST der Kopf: das Podest darunter zeigt den Meister
   // groß, ein Wappen darüber sagte dasselbe ein zweites Mal [§C27].
   if(d.type === 'season_recap') return erg;
+  // Die Runde hat ihre Tabelle als Kopf; vier Wappen darüber sagten dasselbe.
+  if(d.type === 'runde') return '';
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
@@ -797,6 +814,9 @@ function _newsDetailMitte(s){
 
   try {
     switch(d.type){
+      // Die Runde der Vier [§11.6c]: Tabelle, Aufstellung je Partie und jede
+      // Partie mit ihrer Uhrzeit.
+      case 'runde': return _newsRundeBlatt(s);
       // ── Die Ewige Tafel ─────────────────────────────────────────
       // Der ganze Awards-Reiter hatte im Blatt gar keinen Fall: wer eine
       // Rekord-Karte oeffnete, sah den Kopf und den Satz, den er auf der

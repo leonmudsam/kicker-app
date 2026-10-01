@@ -1877,6 +1877,11 @@ function _consolidateStories(list){
       return Object.assign({}, s, {dataRef: Object.assign({}, d, {bandFremd:true})});
     });
   }
+  // ── Dieselben Vier am Tisch sind eine Karte [§C33, §11.6c] ──────────
+  // Zuletzt, weil die Runde nur Partie-Karten aufnimmt und keine davon an
+  // einem Deckel haengt: sie aendert, wie viele Karten dastehen, aber nicht,
+  // welche Nachricht es gibt. Die Runde traegt die ID ihrer ersten Partie.
+  ausbalanciert = _newsRunden(ausbalanciert);
   _cache._consolFrom = list;
   _cache._consolList = ausbalanciert;
   return ausbalanciert;
