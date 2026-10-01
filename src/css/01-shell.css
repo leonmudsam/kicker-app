@@ -7,7 +7,10 @@
     position:sticky;top:0;z-index:40;
     padding:calc(var(--safe-top) + 14px) 18px 14px;
     background:linear-gradient(180deg,var(--bg) 60%,rgba(10,12,11,.85) 85%,transparent);
-    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+    /* Kein `backdrop-filter`: die Leiste steht beim Scrollen still, und eine
+       Unschärfe dahinter rechnet in jedem Bild alles unter ihr neu — auf
+       einem Mittelklasse-Telefon der teuerste Teil des Scrollens. Sie war
+       ohnehin kaum zu sehen, die Fläche ist bis auf ihren Saum deckend. */
   }
   /* News-Toast: kleine acid-grüne Pille mit Pfeil zum News-Button (v8.1).
      display:none Default → JS schaltet .visible + .show in zwei Stufen für

@@ -1,6 +1,11 @@
   /* ============ [§C15] MISC ============ */
-  .empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
-  .empty .ee{font-size:34px;margin-bottom:12px;opacity:.5}
+  /* Der leere Zustand einer ganzen Ansicht — und nur der: `class="empty"`
+     allein. Als `.empty` traf die Regel jeden Baustein, der „leer" als
+     Zusatz trägt, und eine nicht vergebene Award-Kachel bekam 48 px Polster
+     oben und unten und 20 px an den Seiten: ihr Name stand in 66 statt 84 px
+     und brach mitten im Wort. */
+  [class="empty"]{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
+  [class="empty"] .ee{font-size:34px;margin-bottom:12px;opacity:.5}
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
   /* ── Der Glanz [§C25] ──────────────────────────────────────────────
