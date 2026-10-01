@@ -46,7 +46,7 @@
 <body>
 <main>
   <h1>Lorbeerreif, Entwurf</h1>
-  <p class="unter">Die drei Grade des Lorbeerreifs, heute und als Rankenlorbeer. Der Rest der Leiter bleibt, wie er ist.</p>
+  <p class="unter">Die drei Grade des Lorbeerreifs, heute und als Rankenlorbeer: ein Zweig je Seite, aus dem alles Weitere wächst. Der Rest der Leiter bleibt, wie er ist.</p>
 
   <div class="rang" id="rang"></div>
 
@@ -64,11 +64,11 @@
 
   <h2>Was sich ändert</h2>
   <ul>
-    <li><b>Eine Reihe Laub an einem sichtbaren Stiel</b> statt zwei Reihen übereinander. Die zwei Lagen machten den Kranz zu einem dichten Fächer, in dem die drei Grade kaum zu unterscheiden waren. Jetzt trägt die Linie das Laub, wie beim Zierkranz.</li>
-    <li><b>Oben rollt der Stiel zu einer Schnecke ein</b>, unter dem Kopf nach außen. Am Fuß springen zwei Schnecken vom Stein nach außen, mit einem Blatt darauf.</li>
-    <li><b>Feine Ranken zweigen vom Stiel ab und rollen ein</b>: eine je Seite im ersten Grad, zwei im zweiten, drei im dritten. Das ist der Schnörkel, der den Grad sichtbar macht.</li>
-    <li><b>Beeren in der Rangfarbe stehen in Dreiergruppen</b> zwischen Stiel und Reif: drei, vier und fünf Gruppen.</li>
-    <li><b>Ab Grad II sitzen Steine in den Augen</b> der Schnecken und Ranken, dazu die Steine im Reif wie bisher.</li>
+    <li><b>Ein Zweig je Seite, aus einem Stück.</b> Er beginnt unter dem Stein mit einer Schnecke, läuft außen am Reif hinauf und rollt unter dem Kopf nach außen ein. Unter dem Stein treffen sich beide Zweige wie bei einem gebundenen Kranz. Heute liegen zwei Reihen Laub übereinander, und die drei Grade sind darin kaum zu unterscheiden.</li>
+    <li><b>Alles Weitere wächst aus dem Zweig.</b> Ranken zweigen an einem Knoten ab, tragen eigenes Laub und rollen ein: eine je Seite in Grad I, zwei in II, drei in III. Nichts liegt als weitere Lage obenauf.</li>
+    <li><b>Das Laub wächst in die Kopfschnecke hinein</b>, zwei, drei und vier Blätter, die zur Spitze kleiner werden. Am Fuß sitzt ein Blattpaar dort, wo der Zweig unter den Stein biegt.</li>
+    <li><b>Im dritten Grad ist das Laub voller</b>: innen trägt jeder Knoten ein Blatt, nicht nur jeder zweite.</li>
+    <li><b>Beeren in der Rangfarbe</b> stehen in Dreiergruppen in den Achseln, drei, vier und fünf Gruppen. <b>Ab Grad II sitzen Steine</b> in allen Augen der Schnecken und Ranken.</li>
     <li><b>Gold bleibt, wo es war</b>: Nieten und Lilie ab Grad I, die Raute ab II, Kehle und kleine Krone in III. Der dritte Grad trägt damit nicht mehr Gold als der erste Kronenreif.</li>
   </ul>
 </main>
@@ -1076,68 +1076,96 @@ function _izPraefix(s, p){
 }
 
 // Entwurf: der Lorbeer an einer sichtbaren Ranke.
+// Der Rankenlorbeer: EIN Zweig je Seite, von der Schnecke unter dem Stein
+// bis zur Schnecke unter dem Kopf. Alles, was dazukommt, wächst aus ihm
+// heraus — Ranken mit eigenem Laub, Blätter an den Schnecken —, statt als
+// weitere Lage darüberzuliegen.
+const _lbKurs = (p, j) => {
+  const [x, y] = p[j], [xv, yv] = p[Math.max(0, j - 1)];
+  return Math.atan2(y - yv, x - xv) * 180 / Math.PI;
+};
 function _lbRanke(o, st){
   const g = o.gr, m = o.m, farbe = g === 1 ? .12 : g === 2 ? .18 : .24, G = o.gross || 1;
-  let fuss = '', laub = '', beeren = '';
-  // Die Ranke: vom Stein aus außen am Reif nach oben, unter dem Kopf nach außen eingerollt.
-  const r0 = IZ_RA + 22, r1 = IZ_RA + 40;
-  const a0 = -166, a1 = o.bis || -44;
+  // Der Zweig: vom Fuß außen am Reif nach oben, unter dem Kopf nach außen
+  // eingerollt.
+  const r0 = IZ_RA + 24, r1 = IZ_RA + 40;
+  const a0 = -162, a1 = o.bis || -44;
   const p = _izRollbahn(r0, a0, a1, o.roll || 190, -560, 1.7, r1);
   const nBogen = Math.max(8, Math.round(Math.abs(a1 - a0) / 3));
-  const n = o.n, B = [], H = [];
-  for(let i = 0; i < n; i++){
-    const t = .04 + .92 * (i / (n - 1));
-    const j = Math.min(nBogen - 1, Math.max(1, Math.round(t * nBogen)));
-    const [x, y] = p[j], [xv, yv] = p[j - 1];
-    const kurs = Math.atan2(y - yv, x - xv) * 180 / Math.PI;
-    const gr = (.74 + .34 * Math.sin(Math.PI * t)) * G;
-    // Außen ein langes Blatt, nach oben-außen; dahinter versetzt ein zweites,
-    // das flacher am Zweig liegt — zwei Reihen, aber an EINEM Stiel.
-    // Eine Reihe Laub, paarweise am Stiel: außen ein langes Blatt nach oben
-    // und außen, innen versetzt ein kürzeres, das sich zum Reif neigt. So
-    // bleibt der Stiel zu sehen, und die Linie trägt das Laub [§C30].
-    B.push([x, y, kurs - 46, 128 * gr, 29 * gr, .14]);
-    if(i % 2 === 1) H.push([x, y, kurs + 10, 92 * gr, 21 * gr, -.08]);
-  }
-  // Beeren in Dreiergruppen in der Rangfarbe, zwischen Stiel und Reif.
-  const gruppen = g === 1 ? 3 : g === 2 ? 4 : 5;
-  for(let k = 0; k < gruppen; k++){
-    const t = .14 + .72 * (k / Math.max(1, gruppen - 1));
+  // Der Fuß: derselbe Zweig läuft vom Ansatz weiter zur Mitte, unter den
+  // Stein, und rollt dort nach unten ein — beide Zweige treffen sich unter
+  // dem Stein wie bei einem gebundenen Kranz. Eine Linie, kein Anbau.
+  const k0 = _lbKurs(p, 1) + 180;
+  const fuss = _izSpirale(p[0][0], p[0][1], k0 + 12, o.fuss || 170, 400, 2.2);
+  const tendrils = [], tLaub = [], knoten = [];
+  // Ranken: zweigen zwischen den Blättern nach außen ab, tragen selbst zwei
+  // kleine Blätter und rollen ein. Grad I eine je Seite, II zwei, III drei.
+  const ranken = g === 1 ? [.5] : g === 2 ? [.34, .66] : [.24, .5, .76];
+  ranken.forEach(t => {
     const j = Math.round(t * nBogen);
-    const [x, y] = p[j], [xv, yv] = p[j - 1];
-    const kurs = Math.atan2(y - yv, x - xv);
-    const nx = -Math.sin(kurs), ny = Math.cos(kurs); // nach innen
-    [[0, 14], [-9, 6], [9, 7]].forEach(([u, v], q) => {
-      const bx = x + nx * v + Math.cos(kurs) * u, by = y + ny * v + Math.sin(kurs) * u;
-      const r = q === 0 ? 8 : 6.5;
+    const q = _izSpirale(p[j][0], p[j][1], _lbKurs(p, j) - 58, 165, -500, 2.8);
+    tendrils.push(q);
+    knoten.push(p[j]);
+    [[.2, 1], [.42, .78]].forEach(([u, f]) => {
+      const i = Math.round(u * (q.length - 1)), k = _lbKurs(q, i);
+      tLaub.push([q[i][0], q[i][1], k + 118, 66 * f * G, 16 * f * G, .18]);
+    });
+  });
+  // Das Laub am Zweig: außen ein langes Blatt nach oben, innen an jedem
+  // zweiten Knoten ein kürzeres zum Reif.
+  const B = [], H = [];
+  for(let i = 0; i < o.n; i++){
+    const t = .05 + .9 * (i / (o.n - 1));
+    const j = Math.min(nBogen - 1, Math.max(1, Math.round(t * nBogen)));
+    const k = _lbKurs(p, j), gr = (.74 + .34 * Math.sin(Math.PI * t)) * G;
+    B.push([p[j][0], p[j][1], k - 46, 126 * gr, 28 * gr, .14]);
+    if(i % 2 === 1 || g >= 3) H.push([p[j][0], p[j][1], k + 10, 90 * gr, 21 * gr, -.08]);
+  }
+  // Das Laub wächst in die Kopfschnecke hinein: an ihrem Rücken sitzen
+  // Blätter, die nach hinten wehen und zur Spitze kleiner werden — wie der
+  // Wedel des Zierkranzes, nur im Laub des Lorbeers.
+  const N = p.length - 1, S = [];
+  const kopfBl = g === 1 ? 2 : g === 2 ? 3 : 4;
+  for(let i = 0; i < kopfBl; i++){
+    const j = Math.min(N - 4, nBogen + 3 + i * 6), k = _lbKurs(p, j);
+    const f = 1 - i * .18;
+    S.push([p[j][0], p[j][1], k - 140, 84 * f * G, 20 * f * G, -.22]);
+  }
+  // Am Fuß ein Blattpaar dort, wo der Zweig unter den Stein biegt.
+  {
+    const j = Math.round(fuss.length * .3), k = _lbKurs(fuss, j);
+    S.push([fuss[j][0], fuss[j][1], k + 150, 80 * G, 19 * G, .2]);
+    if(g >= 2) S.push([fuss[j][0], fuss[j][1], k - 160, 64 * G, 15 * G, -.2]);
+  }
+  // Beeren in Dreiergruppen in der Rangfarbe, in den Achseln innen.
+  let beeren = '';
+  const gruppen = g === 1 ? 3 : g === 2 ? 4 : 5;
+  for(let q = 0; q < gruppen; q++){
+    const t = .14 + .72 * (q / Math.max(1, gruppen - 1));
+    const j = Math.round(t * nBogen), kr = _lbKurs(p, j) * Math.PI / 180;
+    const nx = -Math.sin(kr), ny = Math.cos(kr);
+    [[0, 14], [-9, 6], [9, 7]].forEach(([u, v], z) => {
+      const bx = p[j][0] + nx * v + Math.cos(kr) * u, by = p[j][1] + ny * v + Math.sin(kr) * u;
+      const r = z === 0 ? 8 : 6.5;
       beeren += _izJe(_izKreis(bx, by, r), d => `<path d="${d}" fill="url(#sk)" stroke="${st[4]}" stroke-width="1.3"/>`)
         + _izJe(_izKreis(bx - r * .3, by - r * .32, r * .3), d => `<path d="${d}" fill="#fff" opacity=".85"/>`);
     });
   }
-  // Der Fuß: am Stein springt je Seite eine Schnecke weit nach außen und
-  // rollt nach unten ein (ab Grad II), mit einem Blatt darauf. Im dritten
-  // Grad stehen neben dem Kopf zwei kleine Gegenrollen mit Stein.
-  {
-    const q = _izRollbahn(IZ_RA + 30, -176, -152, 140, -470, 1.7, IZ_RA + 70);
-    fuss += _izRolle(q, 4, 13, 13, m, g >= 2, st);
-    const [fx, fy] = q[6], [gx, gy] = q[5];
-    const k = Math.atan2(fy - gy, fx - gx) * 180 / Math.PI;
-    fuss += _izBlaetter([[fx, fy, k - 150, 78, 19, -.2]], m, farbe);
-  }
-  // Feine Ranken, die vom Stiel nach innen abzweigen und einrollen: sie
-  // füllen die Lücke zum Reif und bringen das Geschnörkelte des Zierkranzes
-  // in den Lorbeer. Grad II eine, Grad III drei je Seite.
-  const ranken = g === 1 ? [.52] : g === 2 ? [.36, .68] : [.28, .52, .76];
-  let fein = '';
-  ranken.forEach((t, k) => {
-    const j = Math.round(t * nBogen);
-    const [x, y] = p[j], [xv, yv] = p[j - 1];
-    const kurs = Math.atan2(y - yv, x - xv) * 180 / Math.PI;
-    const q = _izSpirale(x, y, kurs - 70, 128, -430, 2.6);
-    fein += _izRolle(q, 6, 7, 6.5, m, g >= 2, st);
-  });
-  laub = _izBlaetter(H, m, farbe * .8) + _izBlaetter(B, m, farbe);
-  return laub + fein + _izRolle(p, 5, 11, 13, m, g >= 2, st) + beeren + fuss;
+  const stein = g >= 2;
+  // Reihenfolge: Ranken und ihr Laub hinten, dann das Laub des Zweigs, dann
+  // der Zweig selbst darüber — so sitzt jedes Blatt AM Zweig.
+  return _izBlaetter(H, m, farbe * .8) + _izBlaetter(B, m, farbe) + _izBlaetter(S, m, farbe)
+    + tendrils.map(q => _izRolle(q, 6, 7.5, 7, m, stein, st)).join('')
+    + _izBlaetter(tLaub, m, farbe)
+    + _izRolle(fuss, 10, 11, 12, m, stein, st)
+    + _izRolle(p, 10, 12, 13, m, stein, st)
+    // Wo eine Ranke abzweigt, sitzt ein Knoten: eine kleine Wulst um den
+    // Zweig, wie an einem gewachsenen Ast. Sie macht aus Zweig und Ranke
+    // EIN Stück.
+    + knoten.map(([x, y]) => _izJe(_izKreis(x + 2, y + 3, 11), d => `<path d="${d}" fill="#000" opacity=".3"/>`)
+        + _izJe(_izKreis(x, y, 10), d => _izForm(d, `url(#n${m})`, m, 1.6))
+        + _izJe(_izKreis(x - 3, y - 3.4, 3), d => `<path d="${d}" fill="#fff" opacity=".8"/>`)).join('')
+    + beeren;
 }
 const _altTeile = _izTeile;
 window.TEILE = function(key, nr, farbe){
@@ -1169,9 +1197,9 @@ window.TEILE = function(key, nr, farbe){
       + '<circle cx="500" cy="500" r="200" fill="#2b3a33"/>' + t.defs + t.bild + '</svg>');
   };
   const GRADE = ['I', 'II', 'III'];
-  const TEXT_NEU = ['Ranke mit Schnecke oben und am Fuß, eine Ranke je Seite, drei Beerengruppen',
-    'Steine in allen Augen, zwei Ranken je Seite, vier Beerengruppen, Steine im Reif',
-    'Drei Ranken je Seite, fünf Beerengruppen, goldene Kehle und kleine Krone'];
+  const TEXT_NEU = ['Ein Zweig vom Fuß bis zum Kopf, eine Ranke je Seite, drei Beerengruppen',
+    'Zwei Ranken je Seite, Steine in allen Augen und im Reif, vier Beerengruppen',
+    'Drei Ranken, volleres Laub, fünf Beerengruppen, goldene Kehle und kleine Krone'];
   const TEXT_ALT = ['Zwei Reihen Laub, zehn Blätter je Seite', 'Elf Blätter, Steine im Reif', 'Zwölf Blätter, goldene Kehle und kleine Krone'];
   function zeichne(){
     lauf = 0;

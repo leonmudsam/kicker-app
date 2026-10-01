@@ -132,9 +132,10 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       (insignium-vorlage.webp), und ein Satz derselben
                       Stufen als SVG, der nicht eingebaut ist
                       (rang-insignien-app-assets/), und der Entwurf des
-                      Lorbeerreifs als Rankenlorbeer: eine Reihe Laub an
-                      einem sichtbaren Stiel, der oben und am Fuß einrollt,
-                      und Ranken, die mit jedem Grad mehr werden — heute
+                      Lorbeerreifs als Rankenlorbeer: ein Zweig je Seite aus
+                      einem Stück, der unter dem Stein und unter dem Kopf
+                      einrollt, und Ranken mit eigenem Laub, die an Knoten
+                      aus ihm wachsen und mit jedem Grad mehr werden — heute
                       und Entwurf nebeneinander, gezeichnet mit dem
                       Zeichencode der App (lorbeer.html)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
