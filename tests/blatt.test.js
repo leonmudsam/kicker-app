@@ -3296,17 +3296,20 @@ return JSON.stringify(funde,null,1);
     const profil = kopf ? bildIn(kopf) : -1;
     const vektor = kopf ? kopf.querySelectorAll('use[href^="#izg"]').length : 0;
     K('closeSheet(true)'); K('showLaufbahn(' + JSON.stringify(pid) + ')'); await w(300);
-    // Die Vitrine ist groß und Vektor; die Felder der ganzen Leiter sind
-    // rund 40 px und Bild — dieselbe Grenze wie beim Wappen.
-    const lb = bildIn(document.getElementById('lbLeiter'));
+    // Die Karte in der Mitte der Vitrine ist groß und Vektor, die am Rand
+    // stehen klein und als Bild; die Felder der ganzen Leiter sind rund 40 px
+    // und Bild — dieselbe Grenze wie beim Wappen.
+    const fk = document.querySelector('#lbLeiter .lb-k.fokus');
+    const lb = fk ? bildIn(fk) : -1;
+    const lbRand = bildIn(document.getElementById('lbLeiter'));
     const lbFelder = bildIn(document.getElementById('lbAlle'));
     K('closeSheet(true)');
-    return {zeile, profil, vektor, lb, lbFelder};
+    return {zeile, profil, vektor, lb, lbRand, lbFelder};
   });
   ok(_vektor.profil === 0 && _vektor.vektor > 0 && _vektor.lb === 0,
      'groß ist jedes Insignium eine Vektorzeichnung, kein eingebettetes Bild',
      JSON.stringify(_vektor));
-  ok(_vektor.zeile > 0 && _vektor.lbFelder === 21, 'klein bleibt es ein Bild, damit Liste, Feed und die ganze Leiter schnell bleiben',
+  ok(_vektor.zeile > 0 && _vektor.lbFelder === 21 && _vektor.lbRand >= 5, 'klein bleibt es ein Bild, damit Liste, Feed, der Rand der Vitrine und die ganze Leiter schnell bleiben',
      JSON.stringify(_vektor));
   // Die Aura [§C36]: im Profilkopf bewegt, und zwar so, dass nur die
   // Grafikkarte arbeitet — höchstens drei Ebenen, jede ein Bild, und ihre

@@ -3212,7 +3212,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Nutzereinheiten (170) und nicht in der, in der es erscheint: im
   Profilkopf wurden sie auf 270 px gezogen, und das Zeichen stand mit
   Treppenkanten da wie ausgeschnitten. Ab 64 px Wappengröße, im Profilkopf
-  und in der Vitrine der Laufbahn steht sie deshalb als Vektorgruppe im Topf, einmal je
+  und auf der Karte in der Mitte der Vitrine der Laufbahn steht sie deshalb
+  als Vektorgruppe im Topf — die Karten am Rand der Vitrine stehen als Bild
+  und bekommen ihre Vektorzeichnung, wenn sie in die Mitte rücken: sieben
+  Vektorzeichnungen kosteten beim Öffnen 60 ms Stilberechnung von 122 —, einmal je
   Rang, Stufe und Grad, die Verläufe neben der Gruppe und jede Kennung mit
   eigenem Präfix (`_izPraefix`), und das Wappen verweist darauf. Darunter
   bleibt es beim Bild: ein Verweis klont die ganze Zeichnung, und der Feed

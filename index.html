@@ -4626,7 +4626,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.01.0b00071b';
+const BUILD_VERSION='2026.10.02.26866616';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -28419,8 +28419,8 @@ function showLaufbahn(pid){
       + (i === _letzteI ? `<span class="lb-k-z num">${i === P.stufe
             ? P.zacken + ' Zacken'
             : 'je ' + ORDENSSTERN_SCHRITT + ' eine Zacke'}</span>` : '');
-    return `<div class="lb-k ${zustand}" data-lbstufe="${i}">
-      <span class="lb-k-ins">${_zeichen(i, zeigt)}</span>
+    return `<div class="lb-k ${zustand}" data-lbstufe="${i}" data-lbg="${zeigt}"${i === P.stufe ? ' data-vek="1"' : ''}>
+      <span class="lb-k-ins">${_zeichen(i, zeigt, i !== P.stufe)}</span>
       <span class="lb-k-n">${esc(ins.name)}</span>
       <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}${
         i < _letzteI ? '<br>' + insigniumGradSchwellen(i).slice(1)
@@ -28572,6 +28572,12 @@ function showLaufbahn(pid){
         if(d < bd){ bd = d; best = i; }
       });
       _lk.forEach((k, i) => k.classList.toggle('fokus', i === best));
+      const k = _lk[best];
+      if(k && !k.hasAttribute('data-vek')){
+        const z = k.querySelector('.lb-k-ins');
+        if(z) z.innerHTML = _zeichen(best, +k.getAttribute('data-lbg') || 0);
+        k.setAttribute('data-vek', '1');
+      }
     };
     let _wart = 0;
     _ld.addEventListener('scroll', () => {
@@ -28591,6 +28597,7 @@ function showLaufbahn(pid){
       if(!k) return;
       const z = k.querySelector('.lb-k-ins');
       if(z) z.innerHTML = _zeichen(i, g);
+      k.setAttribute('data-lbg', g); k.setAttribute('data-vek', '1');
       k.querySelectorAll('[data-lbgrad]').forEach(b =>
         b.classList.toggle('zeigt', +b.getAttribute('data-lbgrad') === g));
     };
