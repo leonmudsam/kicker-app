@@ -1436,6 +1436,51 @@ const ok = (c, msg, det) => {
     };
     host.remove(); return out;
   });
+  // ── Das Blatt einer Partie aus dem Feed [§C33] ─────────────────────
+  // Es zeigte einen nackten Stand und zwei Wappen mit „gewinnen diese
+  // Partie", während die Karte darüber ihre Zeichnung trug. Jetzt steht die
+  // Zeichnung der Karte als Bühne darüber, und darunter nur, was die Bühne
+  // nicht schon zeigt: kein zweiter Stand, keine zweite Siegchance, keine
+  // zweite Elo je Spieler, kein Satz, der eine Grafik erklärt. Die Bilanz
+  // der direkten Duelle wird aus den rohen Partien nachgerechnet.
+  const partieBlatt = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    return JSON.parse(K(`JSON.stringify((function(){
+      const pm = pmap(), name2id = {}; Object.keys(pm).forEach(id => { name2id[pm[id].name] = id; });
+      const karten = getStoriesCache().filter(s => (s.dataRef||{}).type === 'spiel' && (s.dataRef||{}).matchId);
+      const falsch = []; let n = 0, duelle = 0;
+      const host = document.createElement('div'); host.style.width = '360px'; document.body.appendChild(host);
+      karten.forEach(s => {
+        const m = matches.find(x => x.id === s.dataRef.matchId); if(!m) return;
+        const kopf = _spBild(s).kopf, html = _newsDetailBody(s);
+        host.innerHTML = html; n++;
+        const b = host.querySelector('.nd-buehne');
+        if(!b || html.indexOf(kopf) < 0) falsch.push(s.id + ' ohne Bühne');
+        if(host.querySelector('.nd-erg, .nd-held')) falsch.push(s.id + ' Stand oder Wappen doppelt');
+        if(/besonders macht|gewinnen diese Partie/.test(host.textContent)) falsch.push(s.id + ' erklärt');
+        const chanceOben = /class="(sp-fk )?(sp-feld|sp-ta|sp-sd|sp-wp)/.test(kopf);
+        if(chanceOben && host.querySelector('.nd-chance')) falsch.push(s.id + ' Siegchance doppelt');
+        if(/class="(sp-fk )?sp-et/.test(kopf) && host.querySelector('.nd-elo')) falsch.push(s.id + ' Elo doppelt');
+        if(/class="sp-feld/.test(kopf) && [...host.querySelectorAll('.nd-elo')].some(z => !z.querySelector('em'))) falsch.push(s.id + ' Elo neben dem Spielfeld');
+        const fd = host.querySelector('.nd-feld');
+        if(fd && (fd.querySelector('em.g, em.r') || getComputedStyle(fd.querySelector('.sp-f-sc')).display !== 'none')) falsch.push(s.id + ' Feld mit Stand oder Elo');
+        const reihe = [...matches].sort((a, c) => mts(a) - mts(c)), vor = reihe.slice(0, reihe.indexOf(m) + 1);
+        host.querySelectorAll('.nd-dd-z').forEach(z => {
+          duelle++;
+          const w = z.dataset.pid, l = name2id[z.querySelector('.nd-dd-n').lastChild.textContent];
+          const geg = vor.filter(y => { const A = [y.a1, y.a2], B = [y.b1, y.b2];
+            return (A.includes(w) && B.includes(l)) || (B.includes(w) && A.includes(l)); });
+          const sw = geg.filter(y => (y.winner === 'A') === [y.a1, y.a2].includes(w)).length;
+          if(z.querySelector('b').textContent !== sw + ':' + (geg.length - sw)) falsch.push(s.id + ' Duell ' + z.querySelector('b').textContent + ' statt ' + sw + ':' + (geg.length - sw));
+        });
+      });
+      host.remove();
+      return {n, duelle, falsch};
+    })())`));
+  });
+  ok(partieBlatt.n > 20 && partieBlatt.duelle > 40 && partieBlatt.falsch.length === 0,
+     'das Blatt einer Partie trägt die Zeichnung ihrer Karte als Bühne und darunter nichts, was die Bühne schon zeigt, die Duelle aus den rohen Partien',
+     partieBlatt.falsch.slice(0, 3).join(' | ') || partieBlatt.n + ' Blätter, ' + partieBlatt.duelle + ' Duelle');
   ok(spielBlatt.skala, 'das Blatt einer Partie zeigt die Siegchance als Skala');
   ok(spielBlatt.fuellDrin,
      'ihr Balken bleibt in seiner Bahn',
