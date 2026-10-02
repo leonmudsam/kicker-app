@@ -641,7 +641,7 @@
     filter:drop-shadow(0 0 5px rgba(247,207,74,.38))}
   .nf-gross .nf-h{font-size:19px;line-height:1.1;-webkit-line-clamp:5}
   .nf-gross .nf-d{font-size:12.5px;-webkit-line-clamp:6}
-  .nf-gross .nf-erg-sc{font-size:26px}
+  .nf-gross .nf-erg-sc{font-size:34px}
   .nf-gross .nf-wert b{font-size:34px}
   .nf-gross .nf-zb b{font-size:17px}
   /* Die Karte des Tages trägt Gold nicht nur im Band, sondern als echten
@@ -799,8 +799,9 @@
      dieselbe Deckkraft, und wer gewonnen hat, stand nur in der Farbe der
      Zahl. Gedaempft wird das Gesicht, der Name bleibt lesbar. */
   .nf-erg-s:not(.w) .nf-erg-avs{opacity:.55}
-  .nf-erg-sc{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:19px;
-    letter-spacing:-.03em;display:flex;align-items:baseline;gap:1px}
+  .nf-erg-sc{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:27px;
+    line-height:1;letter-spacing:-.035em;display:flex;align-items:baseline;gap:2px;
+    text-shadow:0 0 14px rgba(255,255,255,.08)}
   .nf-erg-sc b.w{color:var(--ink)} .nf-erg-sc b.v{color:var(--faint)}
   .nf-erg-sc i{font-style:normal;color:var(--faint);font-size:15px}
 

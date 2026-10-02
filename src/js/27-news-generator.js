@@ -313,8 +313,8 @@ function _buildStories(){
   // davor belegt haben — und der steht beim Kaltstart leer, weil `loadAll`
   // zeichnet, bevor `syncStoriesViaDb` gelaufen ist. Ohne diese Signatur blieb
   // das kalt gezogene Ergebnis die ganze Sitzung im Memo stehen, obwohl der
-  // Bestand inzwischen da war. Zweimal am Tag kommt ein Fun Fact dazu, also
-  // bricht sie den Schlüssel zweimal am Tag — nicht bei jedem Aufruf.
+  // Bestand inzwischen da war. Einmal am Tag kommt ein Fun Fact dazu, also
+  // bricht sie den Schlüssel am 15-Uhr-Slot — nicht bei jedem Aufruf.
   const _ambientBestand = (Array.isArray(_cache._stories) ? _cache._stories : [])
     .reduce((n, s) => n + ((s && typeof s.id === 'string'
                             && s.id.indexOf('ambient_') === 0) ? 1 : 0), 0);
@@ -1854,8 +1854,8 @@ function _buildStories(){
         title: `${nameOf(e.pid)} knackt ${e.mark} Elo`,
         // „X knackt 300 Elo" und darunter „300 Elo zum ersten Mal
         // ueberschritten" ist dieselbe Zeile zweimal.
-        desc: `Zum ersten Mal über dieser Marke, und damit auf dem höchsten `
-            + `Stand der ganzen Laufbahn.`,
+        desc: `Der Sprung liegt ${e.mark - (cfg.start_elo ?? 1000)} Elo über dem `
+            + `Startwert und markiert den höchsten Stand der ganzen Laufbahn.`,
         when: new Date(e.when),
         prio: STORY_PRIO.milestone_elo + (e.mark >= (cfg.start_elo ?? 1000) + 500 ? 4 : 0),
         dataRef: {type:'milestone_elo', pid: e.pid, milestone: e.mark+' Elo', mark: e.mark, matchId: e.matchId}
@@ -2938,9 +2938,49 @@ function _buildStories(){
   // Zeitlich verteilte Fun Facts / Nuggets, damit der Feed auch ohne neue
   // Matches lebt. Tages-deterministisch → kein Cross-Device-Spam.
   try {
-    const amb = _buildAmbientStories(now, pm, nameOf);
+    const amb = _buildAmbientStories(now, pm, nameOf, stories);
     for(const a of amb) stories.push(a);
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ambient build failed', e); }
+
+  // ── Das Kartendesign gehoert zur Publikation ──────────────────────
+  // Welche der vielen Spieltags-Grafiken eine Partie bekommt, wird einmal
+  // aus genau den Fakten dieses Generatorlaufs gewaehlt und im Ergebnis-
+  // Snapshot gespeichert. Spaetere Matches oder eine andere Reihenfolge im
+  // Katalog duerfen aus einer Revanche nicht wieder den Standard-Score machen.
+  try {
+    const jeMatch = new Map();
+    stories.forEach(s => {
+      const d = (s && s.dataRef) || {};
+      if(!d.matchId) return;
+      const l = jeMatch.get(d.matchId) || [];
+      l.push(d); jeMatch.set(d.matchId, l);
+    });
+    stories.forEach(s => {
+      const d = (s && s.dataRef) || {};
+      if(d.type !== 'spiel' || !d.matchId || d.visualKey) return;
+      const m = matches.find(x => x.id === d.matchId);
+      if(!m) return;
+      const fakten = jeMatch.get(d.matchId) || [d];
+      const f = t => fakten.find(x => x.type === t);
+      const c = _spChance(m);
+      let key = '', x = null;
+      if((x = f('lead_change')) && x.newLeader) key = 'spitze';
+      else if((x = fakten.find(y => y.type === 'badge_unlocked'
+          && (y.rarity === 'rare' || y.rarity === 'legendary')
+          && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId) key = 'medaille';
+      else if((x = f('streak_killer')) && x.victimPid) key = 'riss';
+      else if((x = f('win_streak')) && x.streak) key = 'serie';
+      else if((x = f('team_streak')) && x.streak && x.a && x.b) key = 'teamserie';
+      else if(c != null && c < CHANCE_UPSET) key = 'aussenseiter';
+      else if((x = f('rivalry_milestone')) && x.a && x.b) key = 'duell';
+      else key = _spAnlassDaten(m, c).key;
+      d.visualKey = key || 'feld';
+      if(d.visualKey === 'feld'){
+        const w = _spForm(m);
+        d.visualForm = w && w.key ? w.key : 'feld';
+      }
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] visual freeze failed', e); }
 
   // ── Final-Sort + Limit ──
   // v8.2: PURE Chronologie (User-Wunsch). Neueste Story zuerst, älteste
@@ -2954,87 +2994,16 @@ function _buildStories(){
     return b.prio - a.prio;
   });
 
-  // ── Anti-Spam: Per-Player-Limit (v8.1) ──
-  // Verhindert, dass ein einzelner Spieler den Feed dominiert. Nach dem
-  // Sort sind die wichtigsten Stories pro Spieler bereits zuerst — wir nehmen
-  // also die ersten N und kappen den Rest. Stories ohne Spieler-Bezug
-  // (saison_endgame, season_recap, quiet_week, biggest_blowout, anniversary)
-  // sind nicht limitiert.
-  // v9.24: Gezählt wird JEDES Gesicht, nicht nur die Hauptfigur. Vorher stand
-  // hier `d.pid || d.playerId` — wer als Partner, Gegner oder Serienbrecher
-  // genannt wurde, tauchte daneben beliebig oft auf. Gemessen stand Maxi auf
-  // neun von einunddreißig Karten und Stefan auf einer, obwohl der Deckel
-  // formal bei drei lag.
-  // ── Was es je Tag genau einmal gibt, faellt hier nicht weg ────────
-  // Der Deckel zaehlt Karten je Spieler, und die Sortierung davor ist die
-  // Zeit: wer am Nachmittag noch drei Karten bekommt, hat sein Budget
-  // aufgebraucht, bevor der Deckel die Karte vom Mittag ansieht. Gemessen
-  // kostete das den einzigen Spitzenwechsel des Augusts — am 11.08. gab Leon
-  // die Tabelle an Martin ab, und die Titelrennen-Karte des Tages fiel aus,
-  // weil Martin an diesem Tag schon auf drei Karten stand. Dieselbe Falle
-  // stand vor jeder Insignium-Stufe (`d.pid`) und vor dem Spieler des Tages.
-  //
-  // Diese Karten gibt es je Tag, Woche oder Monat genau einmal, oder sie sind
-  // ein Breaking-Anlass [§C33]: sie sind nicht das Rauschen, gegen das der
-  // Deckel geschrieben ist. Sie zaehlen weiter in `imBild` mit, damit die
-  // uebrigen Karten zurueckstehen — verworfen werden sie nie. Dieselbe Regel
-  // wie `TAG_PFLICHT` in der Anzeige, nur eine Stufe frueher: was der
-  // Generator hier wegwirft, fehlt danach auch in seinem Buendel.
-  const GEN_PFLICHT = new Set(['lead_change', 'season_endgame', 'season_recap',
-    'potd', 'potw', 'woche', 'chronik_monat', 'chronik_erstling',
-    'insignium_stufe', 'streak_record']);
-  // Dazu die Marke einer laufenden Serie: sie haengt an ihrer Partie und geht
-  // in deren Buendel auf [§C33], ist also keine eigene Karte, die jemanden
-  // haeufiger zeigt. Gezaehlt wurde sie trotzdem, und der LETZTE Lauf eines
-  // Spieltags — der mit allen Tafel- und Insignium-Karten des Tages —
-  // verwarf sie: gemessen hielt nur die Datenbank Leons 3er-Serie vom 01.10.
-  // fest, und ging die Uhr des Telefons zwei Sekunden nach, war sie nie
-  // gebildet worden.
-  const GEN_PARTIE = new Set(['win_streak', 'team_streak']);
-  const PER_PLAYER_LIMIT = 3;
-  const NEBENROLLEN_LIMIT = 5;   // dazu höchstens so oft im Bild
-  const perPlayer = {};
-  const imBild = {};
-  const deduped = [];
-  for(const s of stories){
-    const d = s.dataRef || {};
-    // ── Eine Partie ist keine Auswahl ───────────────────────────────
-    // Der Deckel ist gegen das Rauschen geschrieben: ein Spieler soll den
-    // Feed nicht beherrschen. Die Karte einer Partie ist aber kein Rauschen,
-    // sie ist der Anker ihres Spiels — und sie nennt zwangslaeufig die, die
-    // gespielt haben. Gezaehlt stand ein Vielspieler nach den ersten Partien
-    // eines Tages bei fuenf Nebenrollen, und danach fiel gemessen jede
-    // Formkarte, jede Serienmarke und jeder Meilenstein desselben Tages weg:
-    // von fuenf gebildeten Formkarten kam keine einzige durch. Sie zaehlt
-    // deshalb nicht mit und wird nie verworfen.
-    // Dasselbe gilt für die Runde der Vier: sie fasst Partien zusammen und
-    // nahm mit ihren vier Gesichtern sonst anderen Karten den Platz weg.
-    if(d.type === 'spiel' || d.type === 'runde'){ deduped.push(s); continue; }
-    const pid = d.pid || d.playerId || d.newLeader || null;
-    // Wer sonst noch auf der Karte steht. `_newsPids` ist die einzige Stelle,
-    // die weiß, in welchem Feld die Ids je Typ liegen [§C33].
-    let gesichter = [];
-    try { gesichter = (typeof _newsPids === 'function') ? _newsPids(s) : []; } catch(e){ gesichter = []; }
-    const pflicht = GEN_PFLICHT.has(d.type) || (GEN_PARTIE.has(d.type) && !!d.matchId);
-    if(pid && !pflicht && d.rarity !== 'legendary' && gesichter.length
-       && gesichter.every(id => (imBild[id] || 0) >= NEBENROLLEN_LIMIT)) continue;
-    // v9.17: Goldene (legendary) Auszeichnungen sind vom Limit ausgenommen. Sonst
-    // konnte ein aktiver Spieler sein Budget mit Alltags-Stories aufbrauchen und
-    // ausgerechnet das Karriere-Highlight fiel raus — und bei Team-Badges (10:0)
-    // fehlte dann einer der beiden Namen in der zusammengefassten Karte.
-    if(!pid || pflicht || d.rarity === 'legendary'){
-      gesichter.forEach(id => { imBild[id] = (imBild[id] || 0) + 1; });
-      deduped.push(s);
-      continue;
-    }
-    if(!perPlayer[pid]) perPlayer[pid] = 0;
-    if(perPlayer[pid] >= PER_PLAYER_LIMIT) continue;
-    perPlayer[pid]++;
-    gesichter.forEach(id => { imBild[id] = (imBild[id] || 0) + 1; });
-    deduped.push(s);
-  }
   // Ergebnis memoisieren (v8.4) — siehe Memoization-Guard oben.
-  const _result = deduped.slice(0, NEWS_LIMITS.total);
+  // Der Generator liefert alle redaktionell ausgewaehlten Kandidaten. Eine
+  // globale Mengengrenze machte seine Ausgabe vom aktuellen Fuellstand
+  // abhaengig: fiel etwa ein schon gespeicherter Fun Fact aus dem Lauf, rueckte
+  // eine zuvor abgeschnittene Badge-Story nach und erschien erst beim naechsten
+  // Oeffnen. Das DB-Datumsfenster ist die einzige technische Obergrenze.
+  // Der Snapshot umfasst alle fachlich erzeugten Stories. Spieler- und
+  // Nebenrollen-Budgets duerfen keine Publikation entfernen; die lesbare
+  // Dichte entsteht ausschliesslich durch semantische Buendelung je Partie.
+  const _result = stories;
   _cache._buildStoriesKey = _buildStoriesKey;
   _cache._buildStoriesResult = _result;
   return _result;

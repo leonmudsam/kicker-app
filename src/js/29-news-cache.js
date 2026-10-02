@@ -19,136 +19,20 @@
 // Netzwerk down etc.), läuft _buildStories als rein in-memory Generator
 // weiter. Die App ist somit auch OHNE Migration sofort funktional.
 function getStoriesCache(){
-  // v8.4: _cache._stories hält bis zu 100 Stories (DB-Load + Realtime-Reserve,
-  // §11.8). v8.6: vor dem UI-Limit (NEWS_LIMITS.total) werden Match-Event-
-  // Doppel zusammengefasst (_consolidateStories). Cache ist newest-first.
+  // Eine publizierte Story ist ein Ereignis, keine aktuelle Abfrage. Deshalb
+  // wird hier ausschliesslich der persistierte Snapshot konsolidiert. Der
+  // Generator darf beim Rendern weder Text noch dataRef noch Kartendesign
+  // nachtraeglich austauschen. Einzige Ausnahme sind die Tafel-Zeilen des
+  // laufenden Tages; sie werden kontrolliert beim DB-Sync aktualisiert.
   const base = Array.isArray(_cache._stories) ? _cache._stories : [];
-  return _consolidateStories(_newsTexteAuffrischen(base)).slice(0, NEWS_LIMITS.total);
+  // Die DB-Abfrage ist bereits auf das Datumsfenster und ein grosszuegiges
+  // Sicherheitslimit begrenzt. Eine zweite Mengen-Grenze hier wuerde mitten
+  // im Fenster alte Publikationen verschwinden lassen, sobald neue dazukommen.
+  return _consolidateStories(base);
 }
 
-// ── Der Text kommt aus dem Generator, nicht aus der Datenbank ────────
-// Stories werden persistiert, damit alle Geräte dieselbe Karte zur selben
-// Zeit sehen. Titel und Text wurden damit aber eingefroren: eine überarbeitete
-// Formulierung erschien nur an Karten, die es noch nicht gab. Nach dem Umbau
-// stand „dieses Duo harmoniert gerade perfekt" weiter im Feed, obwohl der
-// Satz längst durch die Zahl ersetzt war, und der Gedankenstrich blieb in
-// jeder alten Zeile stehen.
-//
-// Erzeugt der Generator zu einer persistierten ID dieselbe Story noch einmal,
-// gewinnt deshalb sein Wortlaut. Zeitpunkt und ID bleiben, was die Datenbank
-// sagt — sonst spränge eine Karte im Feed. Alles andere (Text, Symbol,
-// dataRef) ist eine Ableitung aus den Daten und darf sich verbessern; genau
-// so arbeiten `_isBreaking` und `_displayCat` seit jeher.
-//
-// Und eine Karte, deren Wahrheit ABLÄUFT, lebt nur so lange, wie der Generator
-// sie noch bildet. „Noch 5 Tage" ist ein Countdown: die ID gilt für eine ganze
-// Saison, der Zeitstempel stammt aus dem ersten Insert, und wenn die Saison
-// vorbei ist, hört der Generator auf. Die Karte stand danach für immer im
-// Feed und zählte Tage herunter, die es nicht mehr gab.
-const STORY_LAEUFT_AB = new Set(['season_endgame']);
-
-// Das Ergebnis wird auf die EINGABE gemerkt. Ohne das lieferte die Funktion
-// bei jedem Aufruf ein frisches Array, und der Referenz-Memo in
-// `_consolidateStories` — der genau dafür gebaut ist — schlug nie an:
-// gemessen null Treffer in fünf Aufrufen. `getStoriesCache` läuft nach jedem
-// `loadAll` und bei jedem Zeichnen des Feeds.
-// ── Der Rang kommt aus dem Generator, nicht aus der Datenbank ────────
-// `prio` ist eine Ableitung aus den Daten wie `_isBreaking` und `_displayCat`
-// [§C33] — sie stand aber als Zahl mit in der Zeile. Als die Skala auf EIN
-// Band umgestellt wurde (§11.0a), blieb jede längst gespeicherte Karte auf
-// ihrer alten Zahl stehen: gemessen trugen 113 der 153 Zeilen im
-// Vierzehn-Tage-Fenster noch einen Wert von höchstens zehn, und von den
-// fünfundzwanzig, die der Generator heute noch bildet, wichen
-// vierundzwanzig ab. „Die Woche gehört Martin" stand mit 9 neben einer
-// frischen Sammelkarte mit 80, „Martin schlägt Leo im Spitzenspiel" mit 9.
-// Damit war die zweite Skala wieder da, die §11.0a gerade abgeschafft hatte
-// — diesmal zwischen Datenbank und Generator, und der Tagesdeckel
-// entschied zwischen beiden. Überlebt haben die alten Karten nur, wo eine
-// Ausnahme sie trug: Breaking und die Pflichtkarten zählen nicht gegen den
-// Deckel.
-// Gerechnet wird deshalb immer neu: die Zahl des Generators, wenn er
-// dieselbe ID noch bildet, sonst das Band des Typs. Die gespeicherte Zahl
-// ist damit ein Hinweis und keine Entscheidung mehr.
-function _newsPrio(s, frisch){
-  if(frisch && typeof frisch.prio === 'number') return frisch.prio;
-  const band = STORY_PRIO[(s && s.dataRef || {}).type];
-  return (typeof band === 'number') ? band : ((s && s.prio) | 0);
-}
-
-// Der Zeitpunkt eines Fun Facts steht in seiner ID: `ambient_2026-08-27_10`
-// gehoert zu 10 Uhr am 27.08. Er ist damit keine Beobachtung, sondern eine
-// ABLEITUNG — und fuer eine Ableitung gewinnt der Code, nicht die Datenbank
-// [§C33]. Dort stand einmal `now`, und weil `event_at` beim ersten Insert
-// gewinnt und `ignoreDuplicates` eine bestehende Zeile nie umschreibt, trugen
-// die gespeicherten Karten die Uhrzeit ihres ersten Lesers: gemessen „20:17"
-// ueber dem 19-Uhr-Slot und „10:30" ueber dem von 10 Uhr.
-// Gelesen wird die ID und nicht der Generator: ein Slot, der schon in der
-// Datenbank steht, wird gar nicht mehr gebildet [§11.1b], und damit haette
-// eine Auffrischung ueber den Generator genau die Karten nicht erreicht, um
-// die es geht. Gebaut wird eine LOKALE Zeit, weil der Tagesschluessel der
-// Karte auch lokal gebildet wird.
-function _ambientSlotWhen(id){
-  const m = /^ambient_(\d{4})-(\d{2})-(\d{2})_(\d{1,2})$/.exec(String(id || ''));
-  if(!m) return null;
-  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], 0, 0, 0);
-}
-
-function _newsTexteAuffrischen(list){
-  list = Array.isArray(list) ? list : [];
-  let frisch = null;
-  try { frisch = _buildStories(); } catch(e){ return list; }
-  if(!Array.isArray(frisch) || !frisch.length) return list;
-  if(_cache._frischVon === list && _cache._frischRoh === frisch) return _cache._frischAus;
-  const nach = new Map();
-  frisch.forEach(s => { if(s && s.id) nach.set(s.id, s); });
-  let geaendert = false;
-  const aus = [];
-  const vorhanden = new Set();
-  list.forEach(s => {
-    if(s && s.id) vorhanden.add(s.id);
-    // Die Slot-Stunde zuerst, und fuer BEIDE Zweige: ein Fun Fact, der schon in
-    // der Datenbank steht, wird vom Generator gar nicht mehr gebildet, also
-    // gibt es fuer ihn kein `n`.
-    const slot = s ? _ambientSlotWhen(s.id) : null;
-    if(slot && new Date(s.when).getTime() !== slot.getTime()){
-      geaendert = true;
-      s = Object.assign({}, s, {when: slot});
-    }
-    const n = s && s.id ? nach.get(s.id) : null;
-    const p = _newsPrio(s, n);
-    if(!n){
-      if(s && STORY_LAEUFT_AB.has((s.dataRef || {}).type)){ geaendert = true; return; }
-      if(p === s.prio){ aus.push(s); return; }
-      geaendert = true;
-      aus.push(Object.assign({}, s, {prio: p}));
-      return;
-    }
-    const refGleich = JSON.stringify(n.dataRef || {}) === JSON.stringify(s.dataRef || {});
-    if(n.title === s.title && n.desc === s.desc && p === s.prio
-       && (n.ic || s.ic) === s.ic && (n.cat || s.cat) === s.cat && refGleich){ aus.push(s); return; }
-    geaendert = true;
-    aus.push(Object.assign({}, s, {title: n.title, desc: n.desc, ic: n.ic || s.ic,
-                                   cat:n.cat || s.cat, prio: p,
-                                   dataRef: n.dataRef || s.dataRef}));
-  });
-  // Der Datenbankbestand hält Historie und Zeitstempel stabil. Frisch
-  // ableitbare, dort aber noch fehlende Ereignisse werden sofort ergänzt:
-  // ein alter oder verzögerter DB-Stand darf neue Serien, Serienbrüche,
-  // Upsets oder Auszeichnungen nicht bis zum nächsten Sync verschlucken.
-  // Die deterministische ID verhindert Doppelungen; beim nächsten Upsert
-  // wird dieselbe Story regulär persistiert.
-  const ab = Date.now() - NEWS_FENSTER_TAGE * 86400000;
-  frisch.forEach(s => {
-    if(!s || !s.id || vorhanden.has(s.id) || new Date(s.when).getTime() < ab) return;
-    vorhanden.add(s.id); aus.push(s); geaendert = true;
-  });
-  if(geaendert) aus.sort((a, b) => new Date(b.when) - new Date(a.when));
-  // Hat sich nichts geändert, gewinnt die alte Referenz — dann greift der
-  // Memo eine Ebene weiter oben.
-  const ergebnis = geaendert ? aus : list;
-  _cache._frischVon = list; _cache._frischRoh = frisch; _cache._frischAus = ergebnis;
-  return ergebnis;
-}
+// Der gespeicherte Snapshot ist die Publikation. Es gibt hier bewusst keinen
+// Render-Pfad mehr, der den Generator erneut aufruft und alte Inhalte ersetzt.
 
 // ── Was der Generator nicht mehr erzeugt, verschwindet auch ──────────
 // Der Wochenrückblick war einmal SECHS eigene Karten, über den Montag
@@ -245,89 +129,9 @@ function _consolidateStories(list){
   const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap',
     'chronik_frei']);
 
-  // v9.6: Veraltete „loss_streak"-Stories rausfiltern, BEVOR gruppiert/suppress-
-  // iert wird. Eine Story bleibt nur, wenn die AKTUELLE Niederlagenserie des
-  // Spielers die genannte Länge noch erreicht. Hat er die Serie durch einen Sieg
-  // gebrochen (live=0) oder eine neue, kürzere Serie begonnen, ist die alte Story
-  // stale → raus. Sonst zeigt „N Pechvögel" Spieler, die längst nicht mehr in
-  // Serie verlieren (z.B. jemand mit 1-0-Bilanz als angeblicher 6er-Pechvogel).
-  // Eine Sieges-Serien-MARKE ist dagegen ein historisches Match-Ereignis.
-  // Sie bleibt nach dem späteren Serienbruch wahr und wird nicht gegen den
-  // heutigen Live-Streak gefiltert.
-  // v9.17: dieselbe Stale-Logik für „X Tage ohne Spiel". Die Story wird pro Pause
-  // EINMAL persistiert (ID = letztes Match vor der Pause) und blieb danach für
-  // immer im Feed stehen — auch wenn längst wieder gespielt wurde. Zwei alte
-  // Pausen-Karten nebeneinander („6 Tage ohne Spiel", „4 Tage ohne Spiel") sind
-  // dann nicht nur Spam, sondern schlicht falsch. Sie bleibt jetzt nur, solange
-  // ihr Referenz-Match noch das jüngste der Liga ist.
-  const _lastMatchId = matches.length ? matches[matches.length-1].id : null;
-  // Wer haelt einen Liga-Rekord HEUTE? Einmal je Lauf und nur, wenn eine
-  // Rekord-Karte im Stapel liegt — `allChronicles` kostet den ersten Aufruf
-  // rund 18 ms und liegt danach im Cache.
-  let _rekJetzt = null;
-  const _rekHalter = id => {
-    if(_rekJetzt === null){ try { _rekJetzt = allChronicles().byId || {}; } catch(e){ _rekJetzt = {}; } }
-    const r = _rekJetzt[id];
-    return (r && Array.isArray(r.pids)) ? r.pids : null;
-  };
-  // Wer haelt eine Monatschronik HEUTE? Dieselbe Frage wie beim Rekord, nur
-  // auf der laufenden Saison — auch ein Chronik-Feld wird im Lauf eines Tages
-  // enger und weiter.
-  let _chrJetzt = null;
-  const _chrHalter = tid => {
-    if(_chrJetzt === null){
-      _chrJetzt = {};
-      try {
-        const h = seasonTitleHalter(currentSeason().id) || {};
-        Object.keys(h).forEach(id => { _chrJetzt[id] = (h[id].pids || []).slice(); });
-      } catch(e){}
-    }
-    return _chrJetzt[tid] || null;
-  };
-  // Je Rekord und je Chronik die juengste Karte DESSELBEN TAGES suchen. Alles
-  // davor, dessen Halter heute keiner mehr ist, steht im Widerspruch zu ihr
-  // und faellt weg.
-  //
-  // Der Vergleich lief einmal ueber das ganze Fenster, und damit loeschte
-  // jeder Weiterwechsel die Meldung von vorgestern: „Leo uebernimmt ‚Der
-  // Nervenkitzler'" verschwand, weil der Rekord eine Woche spaeter noch
-  // zweimal weiterwanderte, und der 19.08. hatte danach keine einzige Karte
-  // mehr. Gemessen fielen so zwei von sieben Spieltagen im Fenster ganz aus.
-  // Eine Uebernahme erzaehlt von IHREM Tag, nicht von heute [§C33] — und
-  // beide Faelle, die die Regel ueberhaupt gebraucht haben, lagen an einem
-  // Tag: „Der Zerstoerer" wechselte zweimal am 10.09., und beim
-  // „Gigantentoeter" stand „Henry und Jannik uebernehmen" acht Minuten vor
-  // „Henry uebernimmt". Innerhalb eines Tages widersprechen sich zwei Karten,
-  // ueber Tage hinweg erzaehlen sie eine Geschichte.
-  const _rekUeberholt = new Set();
-  {
-    const SORTEN = {rekord_geholt:'rekordId', rekord_erstmals:'rekordId',
-                    rekord_gesteigert:'rekordId', chronik_geholt:'titleId'};
-    const _uTag = w => tagKey(w);
-    const proSache = new Map();
-    list.forEach(s => {
-      const d = (s && s.dataRef) || {};
-      const feld = SORTEN[d.type];
-      if(!feld || !d[feld]) return;
-      const k = feld + ':' + d[feld] + '@' + _uTag(s.when);
-      const arr = proSache.get(k) || [];
-      arr.push(s); proSache.set(k, arr);
-    });
-    proSache.forEach((arr, k) => {
-      if(arr.length < 2) return;
-      const ohneTag = k.slice(0, k.lastIndexOf('@'));
-      const [feld, id] = [ohneTag.slice(0, ohneTag.indexOf(':')), ohneTag.slice(ohneTag.indexOf(':') + 1)];
-      const jetzt = feld === 'rekordId' ? _rekHalter(id) : _chrHalter(id);
-      if(!jetzt) return;
-      const hat = new Set(jetzt);
-      const neuste = arr.reduce((a, b) => new Date(b.when) > new Date(a.when) ? b : a);
-      arr.forEach(s => {
-        if(s === neuste) return;
-        const genannt = (s.dataRef || {}).playerIds || [];
-        if(genannt.length && !genannt.every(p => hat.has(p))) _rekUeberholt.add(s.id);
-      });
-    });
-  }
+  // Historische Zustandskarten werden nicht gegen den heutigen Stand
+  // nachgerechnet. Das spart die teure Rekord-/Chronik-Neuberechnung beim
+  // Rendern und verhindert, dass spaetere Matches alte Meldungen entfernen.
   // ── Was eine Auszeichnung erzaehlt, erzaehlt das Ergebnis nicht ──
   // Der Generator laesst die Ergebnis-Karte weg, wenn eine Auszeichnung aus
   // genau dieser Partie denselben Fakt schon traegt: „Absoluter Sieger" IST
@@ -381,22 +185,12 @@ function _consolidateStories(list){
     const set = _badgeJeMatch.get(d.matchId);
     return !!set && liste.some(b => set.has(b));
   };
-  // Der Fun Fact ist die Füllung eines stillen Tages, nicht die Zugabe zu einem
-  // lauten. „Leon führt das Prestige an" gilt seit Wochen und stand neben dem
-  // Spieltag, an dem gerade etwas passierte. Der Abend-Slot schweigt an
-  // Spieltagen seit jeher; der Vormittags-Slot konnte es nicht wissen, weil er
-  // vor der ersten Partie entsteht. Entschieden wird deshalb hier: hat der Tag
-  // eine echte Nachricht, fällt sein Fun Fact weg.
-  const _tageMitNachricht = new Set();
-  // Der Countdown zählt nicht als Nachricht: „Noch fünf Tage" steht an jedem
-  // Tag der Saison und würde damit jeden Fun Fact verdrängen.
-  list.forEach(s => { const d = (s && s.dataRef) || {};
-    if(d.type !== 'ambient' && d.type !== 'season_endgame' && !_storyAbgemeldet(s && s.id))
-      _tageMitNachricht.add(tagKey(s.when)); });
+  // Ob ein Fun Fact um 15 Uhr veroeffentlicht werden darf, wird genau einmal
+  // beim Erzeugen entschieden. Kommt spaeter am Tag eine Partie hinzu, bleibt
+  // die bereits publizierte Karte unveraendert im Feed.
   const src = list.filter(s => {
     const d = (s && s.dataRef) || {};
     if(_storyAbgemeldet(s && s.id)) return false;
-    if(d.type === 'ambient') return !_tageMitNachricht.has(tagKey(s.when));
     // ── Eine Serie, die riss, ist nicht falsch geworden ─────────────
     // Hier standen vier Filter: die Niederlagenserie, der Formlauf und die
     // beiden Duo-Serien verschwanden, sobald ihr LEBENDER Wert die genannte
@@ -408,28 +202,20 @@ function _consolidateStories(list){
     // dieser Marken haengt jetzt an der Partie, die sie ausgeloest hat, und
     // bleibt damit wahr [§C33]. Die Pause ist etwas anderes: sie behauptet
     // gerade, dass seit ihrer Partie nichts mehr passiert ist.
-    if(d.type === 'dry_spell' && d.lastMatchId) return d.lastMatchId === _lastMatchId;
+    // Zustandskarten bleiben historische Aussagen ueber ihren
+    // Veroeffentlichungszeitpunkt. Ein spaeteres Spiel macht sie nicht
+    // nachtraeglich ungeschehen.
     // Ein Elo-Rekord, den es nicht mehr gibt, ist keine Nachricht mehr,
     // sondern eine falsche. Gemessen standen neun Karten „Neuer Elo-Rekord:
     // Martin" nebeneinander — mit 128, 183, 214 Elo, und acht davon
     // behaupteten eine Bestmarke, die längst überboten war. Dieselbe Regel
     // wie bei der überholten Serie: es bleibt die, die noch gilt.
-    if(d.type === 'elo_record' && d.elo != null){
-      let jetzt = null;
-      try { jetzt = (_allTimeRecords().eloRec || {}).val; } catch(e){}
-      return jetzt == null || d.elo >= jetzt;
-    }
     // Eine Uebernahme, bei der Halter und Vorgaenger dieselben sind, hat es
     // nie gegeben. Der Vergleich lief einmal ueber die REIHENFOLGE der Halter,
     // und daraus wurde „Maxi, Leo und Julian uebernehmen" mit „Vorher gehoerte
     // der Rekord Maxi, Julian und Leo" darunter. Der Generator bildet diese
     // ID nicht mehr, also kann `_newsTexteAuffrischen` sie auch nicht
     // umschreiben — die persistierte Karte bliebe fuer immer stehen.
-    if(d.type === 'rekord_geholt'){
-      const a = (d.playerIds || []).slice().sort().join(',');
-      const b = (d.vorher || []).slice().sort().join(',');
-      if(b && a === b) return false;
-    }
     // Eine Rekord-Karte, die von einer juengeren ueberholt wurde UND deren
     // Halter keiner mehr ist, widerspricht der Karte neben sich. Gemessen am
     // 10.09.: „Der Zerstoerer" wechselte zweimal an einem Tag, und „Martin
@@ -441,64 +227,12 @@ function _consolidateStories(list){
     // Nur BEIDES zusammen zaehlt. Eine Uebernahme, der nichts widerspricht,
     // bleibt eine Nachricht, auch wenn der Rekord Wochen spaeter weiterwandert
     // — sie erzaehlt von ihrem Tag, nicht von heute [§C33].
-    if(_rekUeberholt.has(s.id)) return false;
     return true;
   });
 
-  // Regel-Tabelle (v8.7): Highlights, die einen Badge inhaltlich ABDECKEN →
-  // der Badge entfällt, sonst stünde dasselbe Ereignis doppelt im Feed.
-  const HL_COVERS = {
-    // v9.9: streak5 ergänzt — die „ungeschlagen"-Story startet bei ≥5, deckt
-    // also das 5er-Serie-Badge inhaltlich ab (sonst dieselbe Aussage doppelt:
-    // „2 ungeschlagene Spieler: Leon (5)" + Badge „Leon: 5er Serie").
-    win_streak:      { badges:['streak5','streak10','streak15','streak20'], by:'matchId' },
-    // v9.5: die „Losing Streak"-Badge (losing5) beschreibt exakt dasselbe
-    // Ereignis wie die individuelle Niederlagenserie-Story (5 Pleiten in Folge)
-    // → Badge entfällt, die reichere „Pechvögel"-Story bleibt.
-    loss_streak:     { badges:['losing5'],                        by:'pid'     },
-  };
-  const suppressMatch = new Set();  // 'badgeId|matchId'
-  const suppressPlayer = new Set(); // 'badgeId|playerId'
-  // v9.4: Paare, die schon eine „N. Aufeinandertreffen"-Meilenstein-Story haben
-  // → die allgemeine „rivalry"-Story (gleiche Paarung) entfällt (sonst doppelt).
-  const rivalryMsPairs = new Set();
-  const giantSlayerMatches = new Set(); // matchIds mit Giant-Slayer-Breaking
-  // v9.5: Spieler mit laufender „Siege in Folge"-Story → deren Top-Form-Story
-  // (≥8/10) beschreibt dieselbe heiße Phase und entfällt (kein Doppel).
-  const winStreakPids = new Set();
-  // ── Eine Serie je Spieler und Tag, die laengste ────────────────────
-  // Der Generator bildet nur noch die hoechste Marke je Spieler und Tag,
-  // aber persistierte Zeilen aus aelteren Laeufen tragen die kuerzeren
-  // weiter. Gemessen stand „Johannes zuendet die 7er-Serie" neben „2 Serien
-  // im Gleichschritt: Jane & Johannes" und darunter noch „Jane zuendet die
-  // 5er-Serie": dieselbe laufende Serie in drei Zeilen. Die Gruppe entsteht
-  // aus den Mitgliedern, also raeumt eine Grenze VOR der Gruppierung beides
-  // zugleich auf [§C33].
-  const _serieMax = new Map();
-  for(const s of src){
-    const d = s.dataRef || {};
-    if(d.type !== 'win_streak' || !d.pid) continue;
-    // Der Lauf ist die Einheit, nicht der Tag: die 5er-Marke von gestern
-    // steckt in der 8er von heute, und beide standen unter zwei Tageskoepfen
-    // als zwei Nachrichten. Zeilen aus aelteren Laeufen tragen den Lauf noch
-    // nicht und finden weiter ueber ihren Tag zusammen.
-    const k = d.pid + '|' + (d.lauf || tagKey(s.when));
-    const n = Number(d.streak) || 0;
-    if(!(_serieMax.get(k) >= n)) _serieMax.set(k, n);
-  }
-  for(const s of src){
-    const d = s.dataRef || {};
-    if(d.type === 'rivalry_milestone' && d.a && d.b) rivalryMsPairs.add([d.a, d.b].sort().join('|'));
-    if(d.type === 'giant_slayer' && d.matchId) giantSlayerMatches.add(d.matchId);
-    if(d.type === 'win_streak' && d.pid) winStreakPids.add(d.pid + '|' + tagKey(s.when));
-    const rule = HL_COVERS[d.type];
-    if(!rule) continue;
-    const keyVal = rule.by === 'matchId' ? d.matchId : d.pid;
-    if(!keyVal) continue;
-    for(const b of rule.badges){
-      (rule.by === 'matchId' ? suppressMatch : suppressPlayer).add(b + '|' + keyVal);
-    }
-  }
+  // Ueberschneidungen werden ab hier gebuendelt. Sie werden nicht mehr vor
+  // der Buendelung unterdrueckt, denn auch ein inhaltlich naher Fakt muss in
+  // der einmal publizierten Matchkarte nachlesbar bleiben.
 
   // Gruppierbare Typen (v8.8): mehrere gleichartige Per-Spieler-Stories werden
   // zu EINER Karte zusammengefasst ("3 Pechvögel: Maxi, Alex & Tom") statt
@@ -577,7 +311,9 @@ function _consolidateStories(list){
   // Entschieden wird deshalb in der Reihenfolge, in der die Nachrichten
   // entstanden sind — die erste bleibt, die spaetere Wiederholung faellt —,
   // und am Ende steht die Liste wieder von neu nach alt.
-  const _sperreMs = (NEWS_LIMITS.sperreTage || 0) * 86400000;
+  // Eine Sperrfrist darf nur die Erzeugung kuenftiger Wiederholungen steuern.
+  // Auf dem Anzeigeweg wuerde sie bereits publizierte Karten entfernen.
+  const _sperreMs = 0;
   // Was es je Tag, Woche oder Monat genau einmal gibt, kann sich gar nicht
   // wiederholen — und Breaking darf an keiner Sperre scheitern [§C33]. Die
   // ambienten Karten hängen ohnehin an ihrem Slot.
@@ -622,22 +358,7 @@ function _consolidateStories(list){
   const _srcAlt = src;
   for(const s of _srcAlt){
     const d = s.dataRef || {};
-    // v9.4: allgemeine Rivalitäts-Story entfällt, wenn dasselbe Paar bereits
-    // eine (spezifischere) Meilenstein-Story hat.
-    if(d.type === 'rivalry' && d.a && d.b && rivalryMsPairs.has([d.a, d.b].sort().join('|'))) continue;
-    // v9.5: Top-Form-Story entfällt für Spieler, die ohnehin schon eine
-    // (konkretere) „Siege in Folge"-Story haben — sonst steht dieselbe heiße
-    // Phase doppelt im Feed.
-    if(d.type === 'top_form' && d.pid && winStreakPids.has(d.pid + '|' + tagKey(s.when))) continue;
-    // Nur die laengste Marke des Tages: die kuerzere ist in ihr enthalten,
-    // und die Gruppe „Serien im Gleichschritt" entsteht aus genau diesen
-    // Mitgliedern — eine Grenze hier raeumt Einzelkarte und Gruppe zugleich.
-    if(d.type === 'win_streak' && d.pid
-       && (Number(d.streak) || 0)
-          < (_serieMax.get(d.pid + '|' + (d.lauf || tagKey(s.when))) || 0)) continue;
     if(d.type === 'badge_unlocked' && d.badgeId){
-      if(d.matchId && suppressMatch.has(d.badgeId + '|' + d.matchId)) continue;
-      if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
       const gk = d.badgeId + '|' + (d.matchId || '');
       let g = badgeGroups.get(gk);
       if(!g){ g = { rep: s, pids: [], seen: new Set() }; badgeGroups.set(gk, g); slots.push({ b: gk }); }
@@ -655,13 +376,18 @@ function _consolidateStories(list){
       // der erste Stand — dieselbe Regel wie fuer die drei Sperren darunter:
       // was einmal dastand, bleibt stehen. Verhindert Duplikate wie
       // „Maxi, Maxi, Alex … Alex".
-      if(!g.seen.has(d.pid)){ g.seen.add(d.pid); g.members.push(s); }
+      // Unterschiedliche Story-IDs bleiben als Mitglieder erhalten. Die
+      // Gruppe reduziert die Kartenzahl, nicht die Zahl der Publikationen.
+      g.seen.add(d.pid);
+      g.members.push(s);
     } else {
       // Breaking scheitert an keiner Sperre [§C33] — auch nicht am
       // Doublettenfilter. Zwei Wechsel der Tabellenspitze sind zwei
       // Ereignisse, selbst wenn der Text derselbe waere.
-      let _brkFrei = false;
-      try { _brkFrei = typeof _isBreaking === 'function' && _isBreaking(s); } catch(e){}
+      // Publizierte Karten werden nicht nachtraeglich von einer spaeteren
+      // aehnlichen Schlagzeile verdraengt. Redundanzen desselben Matches
+      // gehen weiter unten in dessen Sammelkarte auf.
+      let _brkFrei = true;
       if(_istPartie(s)) _brkFrei = true;
       const ck = (s.title || '') + '\u0000' + (s.desc || '');
       if(!_brkFrei && seenContent.has(ck)){ verworfen.push(s); continue; }
@@ -898,7 +624,6 @@ function _consolidateStories(list){
   // den Moment zusammenfassen, nicht dieselbe Meldung vervierfachen.
   const _sammelZeile = (g, st) => {
     const tk = String(st.title || '').trim();
-    if(tk && g.titel.has(tk)) return;
     if(tk) g.titel.add(tk);
     // Vollständigkeit ist die Aussage des Bundles. Eine fünfte Spur zu
     // verschweigen hieße, dieselbe Partie wieder auf zwei Karten zu zerlegen.
@@ -965,11 +690,12 @@ function _consolidateStories(list){
     // Minute zusammen.
     const jeMinute = new Map(), jeMatch = new Map(), jeGrund = new Map();
     _tafelKandidaten.forEach((x, i) => {
-      if(x.d.causalKey){
-        if(jeGrund.has(x.d.causalKey)) vereinige(i, jeGrund.get(x.d.causalKey));
-        else jeGrund.set(x.d.causalKey, i);
-        return;
-      }
+      // Eine Tageszeitung hat genau eine Ewige Tafel. Fachachse, Partie und
+      // Minute werden als Zeilen behalten, teilen aber dieselbe Tageskarte.
+      const tag = 'tag:' + tagKey(x.st.when);
+      if(jeGrund.has(tag)) vereinige(i, jeGrund.get(tag));
+      else jeGrund.set(tag, i);
+      if(x.d.causalKey) return;
       const mk = _minKey(x.st.when);
       if(jeMinute.has(mk)) vereinige(i, jeMinute.get(mk)); else jeMinute.set(mk, i);
       if(x.d.matchId){
@@ -992,10 +718,7 @@ function _consolidateStories(list){
       // Gemessen am 28.09. ergaben drei Partien drei verschiedene
       // Tafel-Karten. Der Grund (`causalKey`) gilt fuer den ganzen Spieltag
       // [§11.0e]; nur Zeilen aus aelteren Laeufen haben keinen.
-      const gruende = [...new Set(l.map(x => String(x.d.causalKey || '')))];
-      const ident = (gruende.length === 1 && gruende[0])
-        ? gruende[0] : l.map(x => String(x.st.id || '')).sort()[0];
-      const key = 'tafel|moment|' + ident;
+      const key = 'tafel|tag|' + tagKey(l[0].st.when);
       // ── Die dauerhafte Tafel und die kurze Strecke sind zwei Karten ──
       // Ein Rekord auf einem gleitenden Fenster erzaehlt etwas anderes als
       // eine Laufbahn: sein Wert bewegt sich auch, wenn hinten ein schwaches
@@ -1004,8 +727,7 @@ function _consolidateStories(list){
       // dieser Unterschied. Welche Achse eine Gruppe traegt, sagt ihr Grund;
       // eine Gruppe ohne Grund (Zeilen aus aelteren Laeufen) bleibt die
       // dauerhafte Tafel.
-      const istFormGruppe = l.every(x => String(x.d.causalKey || '').indexOf('form:') === 0);
-      const g = {key, art: istFormGruppe ? 'form' : 'tafel',
+      const g = {key, art:'tafel',
                  teile:[], titel:new Set(), max:Infinity,
                  erster:l.reduce((n, x) => Math.min(n, x.idx), l[0].idx)};
       sammelGruppen.set(key, g);
@@ -1545,11 +1267,9 @@ function _consolidateStories(list){
       // frueheste Zeile, die auch auf der Karte stehen kann: sie bleibt
       // stehen, weil eine frueher gespielte Partie nicht nachtraeglich
       // dazukommt, und ein Ausbau wird nie ein Wechsel.
-      when: (function(){
-        const zeigt = teile.filter(t => ((t.dataRef || {}).type || '') !== 'rekord_gesteigert');
-        const l = zeigt.length ? zeigt : teile;
-        return l.reduce((mn, t) => (new Date(t.when) < new Date(mn) ? t.when : mn), l[0].when);
-      })(),
+      // Die eine Tageskarte folgt der neuesten Tafelbewegung und bleibt damit
+      // beim Match, das ihren aktuellen Stand ausgeloest hat.
+      when: teile.reduce((mx, t) => (new Date(t.when) > new Date(mx) ? t.when : mx), teile[0].when),
       // Die Sammelkarte trägt, was sie zusammenfasst: den stärksten Teil und
       // einen Schritt je weiterem. Mit `+1` wog eine Karte, die drei
       // Insignium-Stufen bündelt, kaum mehr als eine einzelne davon — und
@@ -1700,7 +1420,9 @@ function _consolidateStories(list){
   // verhindern soll. Und `ambient`/`group` sind ohnehin je Slot einzeln.
   const OHNE_DECKEL = new Set(['lead_change','elo_record','streak_record',
                                'season_endgame','ambient','group','runde']);
-  const NF_DECKEL = 2;
+  // Kein Anzeige-Deckel darf eine bereits publizierte Story entfernen.
+  // Die Kartenzahl sinkt durch semantische Buendelung, nicht durch Verwerfen.
+  const NF_DECKEL = Number.POSITIVE_INFINITY;
   // Eine Sammelkarte zaehlt nach ihrer ACHSE mit, nicht als „sammel". Sie war
   // ganz ausgenommen, und gemessen standen am 26.08. vier Karten „Ein Spiel,
   // N Geschichten fuer …" untereinander — vier Partien desselben Tages, aber
@@ -1888,7 +1610,6 @@ function _consolidateStories(list){
     let belegt = 0;
     rang.filter(_zaehltGegenDeckel).forEach(s => {
       if(frei.has(s.id)) return;
-      if(belegt >= NEWS_LIMITS.proTag) return;
       belegt++;
       _behalten.add(s.id);
     });
@@ -2024,8 +1745,10 @@ async function syncStoriesViaDb(){
     if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] DB sync failed, falling back to in-memory', e?.message || e);
   }
 
-  // Versuch 2: in-memory Fallback (alter Zustand)
-  _cache._stories = generated;
+  // Versuch 2: in-memory Fallback. Auch ohne DB bleiben bereits publizierte
+  // Stories erhalten; nur die Tafel-Zeilen des aktuellen Tags duerfen ihren
+  // Snapshot und Zeitpunkt fortschreiben.
+  _cache._stories = _mergeStorySnapshots(_cache._stories, generated);
 }
 window.syncStoriesViaDb = syncStoriesViaDb;
 
@@ -2058,29 +1781,65 @@ function _rowToStory(r){
   };
 }
 
+// Nur diese Rohereignisse bilden gemeinsam die eine, lebende
+// Ewige-Tafel-Karte des Tages. Alle anderen Story-IDs sind write-once.
+const STORY_TAFEL_UPDATE = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
+  'insignium_stufe','chronik_erstling','chronik_geholt']);
+function _storyIstTafelUpdate(s, jetzt){
+  if(!STORY_TAFEL_UPDATE.has(String((s && s.dataRef && s.dataRef.type) || ''))) return false;
+  const wann = new Date(s && s.when).getTime();
+  if(!Number.isFinite(wann)) return false;
+  const heute = jetzt == null ? Date.now() : new Date(jetzt).getTime();
+  return tagKey(wann) === tagKey(heute);
+}
+function _mergeStorySnapshots(vorher, neu){
+  const map = new Map();
+  (Array.isArray(vorher) ? vorher : []).forEach(s => { if(s && s.id) map.set(s.id, s); });
+  (Array.isArray(neu) ? neu : []).forEach(s => {
+    if(!s || !s.id) return;
+    if(!map.has(s.id) || _storyIstTafelUpdate(s)) map.set(s.id, s);
+  });
+  return [...map.values()].sort((a, b) => new Date(b.when) - new Date(a.when))
+    .slice(0, NEWS_DB_ZEILEN);
+}
+
 // Batch-INSERT mit ON CONFLICT DO NOTHING. PostgREST/Supabase macht das per
 // `upsert(...,{ignoreDuplicates:true})` — der spannende Teil ist: WIR verändern
 // vorhandene Zeilen nicht (kein UPDATE), damit `event_at`/`created_at` der
 // ersten Generation erhalten bleiben.
 async function _uploadNewStoriesToDb(stories){
   if(!stories || !stories.length) return;
-  const rows = stories.map(_storyToRow);
+  const fest = stories.filter(s => !_storyIstTafelUpdate(s)).map(_storyToRow);
+  const tafel = stories.filter(_storyIstTafelUpdate).map(_storyToRow);
   // In Batches → schützt vor Payload-Limits bei großen Datensätzen. (v8.4)
   // Realistisch sind ~30 Stories pro Sync → ein einziger Batch. 200 deckt auch
   // den Erststart nach langer Pause ab (Postgres erlaubt 1000+ Rows/INSERT).
   const BATCH_SIZE = 200;
-  for(let i = 0; i < rows.length; i += BATCH_SIZE){
-    const chunk = rows.slice(i, i + BATCH_SIZE);
+  for(let i = 0; i < fest.length; i += BATCH_SIZE){
+    const chunk = fest.slice(i, i + BATCH_SIZE);
     const { error } = await sb.from('stories').upsert(chunk, {
       onConflict: 'id',
       ignoreDuplicates: true,
     });
     if(error) throw error;
   }
+  // Die eine Tafelkarte eines Tages ist die einzige lebende Publikation: ihre
+  // Rohzeilen bekommen beim neuesten Wechsel Inhalt UND event_at des neuesten
+  // ausloesenden Matches. Fruehere Tage werden vom Generator nicht mehr
+  // geliefert und bleiben dadurch exakt stehen.
+  for(let i = 0; i < tafel.length; i += BATCH_SIZE){
+    const chunk = tafel.slice(i, i + BATCH_SIZE);
+    const { error } = await sb.from('stories').upsert(chunk, {
+      onConflict: 'id',
+      ignoreDuplicates: false,
+    });
+    if(error) throw error;
+  }
 }
 
-// Read: neueste 100 nicht-abgelaufene Stories, sortiert nach event_at desc.
-// Die Anzeige-Limits (NEWS_LIMITS.total = 50) werden weiterhin im UI greifen.
+// Read: alle nicht-abgelaufenen Stories des Datumsfensters, sortiert nach
+// event_at desc. Das Zeilenlimit ist nur eine grosszuegige DB-Sicherung; im UI
+// gibt es keinen zweiten Deckel, der innerhalb des Fensters Karten entfernt.
 async function _loadStoriesFromDb(){
   // Geschnitten wird am DATUM [§11.0d]. Mit `.limit(100)` hing die
   // Fensterbreite daran, wie viel gerade los war: an einem starken Spieltag
@@ -2137,6 +1896,10 @@ function _ensureStoriesRealtime(){
           (payload) => { try { _onStoryRealtimeInsert(payload.new); }
                          catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] realtime insert failed', e); } })
       .on('postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'stories' },
+          (payload) => { try { _onStoryRealtimeUpdate(payload.new); }
+                         catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] realtime update failed', e); } })
+      .on('postgres_changes',
           { event: 'DELETE', schema: 'public', table: 'stories' },
           (payload) => { try { _onStoryRealtimeDelete(payload.old); }
                          catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] realtime delete failed', e); } })
@@ -2161,12 +1924,27 @@ function _onStoryRealtimeInsert(row){
   // Eigener Insert / Duplikat → ignorieren.
   if(_cache._stories.some(s => s.id === row.id)) return;
   const story = _rowToStory(row);
-  // Einsortieren (newest-first nach event_at) + auf 100 kürzen (Reserve, §11.2).
+  // Einsortieren (newest-first nach event_at) + auf das DB-Schutzlimit kuerzen.
   // NEUE Array-Referenz → Konsolidierungs-Memo (§11.2) bricht sauber.
   const next = _cache._stories.concat([story]);
   next.sort((a, b) => b.when - a.when);
-  _cache._stories = next.slice(0, 100);
+  _cache._stories = next.slice(0, NEWS_DB_ZEILEN);
   // Badge + Toast + offene Views aktualisieren (Story-Detail #ndBg bleibt unberührt).
+  _refreshOpenNewsViews();
+}
+
+// UPDATE gibt es absichtlich nur fuer die lebende Ewige-Tafel-Tageskarte.
+function _onStoryRealtimeUpdate(row){
+  if(!row || !row.id) return;
+  if(!Array.isArray(_cache._stories)) _cache._stories = [];
+  const story = _rowToStory(row);
+  // Ausserhalb der heutigen Ewigen Tafel ist UPDATE kein gueltiger
+  // Lebenszyklus. So kann auch ein fremder/veralteter Client keine bereits
+  // publizierte Karte auf diesem Geraet nachtraeglich umschreiben.
+  if(!_storyIstTafelUpdate(story)) return;
+  const next = _cache._stories.filter(s => s.id !== row.id).concat([story]);
+  next.sort((a, b) => b.when - a.when);
+  _cache._stories = next.slice(0, NEWS_DB_ZEILEN);
   _refreshOpenNewsViews();
 }
 
