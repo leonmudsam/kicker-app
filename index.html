@@ -4839,7 +4839,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.02.2b3301ff';
+const BUILD_VERSION='2026.10.02.82fa1337';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -19455,6 +19455,7 @@ function _consolidateStories(list){
         badge_marken:'Auszeichnung',
         milestone_goals:'Tormarke', milestone_elo:'Elo-Sprung',
         jubilee:'Jubiläum', rivalry_milestone:'Rivalitätsmarke',
+        rivalry:'Rivalität',
         lead_change:'neue Tabellenspitze', elo_record:'Elo-Rekord',
         streak_record:'Rekordserie'
       };
@@ -19487,7 +19488,7 @@ function _consolidateStories(list){
       const _eigene = t => {
         const dt = (t && t.dataRef) || {};
         if(dt.type === 'streak_killer' && dt.victimPid) return {wort:'gegen', pids:[dt.victimPid]};
-        if(dt.type === 'rivalry_milestone' && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
+        if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
         if(dt.type === 'top_clash' && dt.p1 && dt.p2) return {wort:'zwischen', pids:[dt.p1, dt.p2]};
         if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
         if(dt.type === 'badge_unlocked' && dt.playerId) return {wort:'für', pids:[dt.playerId]};
@@ -19535,16 +19536,14 @@ function _consolidateStories(list){
       } else {
         neuTitel = `Ein Spiel, ${_zahlwortDe(teile.length)} Geschichten${beteiligte}`;
       }
-      const ds = (teile.find(t => (t.dataRef || {}).type === 'spiel') || {}).dataRef || {};
-      const nf = Math.max(1, teile.length - (ds.type === 'spiel' ? 1 : 0));
+      const spTeil = teile.find(t => (t.dataRef || {}).type === 'spiel');
+      const ds = (spTeil || {}).dataRef || {};
+      const nf = Math.max(1, teile.length - (spTeil ? 1 : 0));
       const folge = nf === 1
         ? 'Eine Meldung hängt daran'
         : `${(x => x.charAt(0).toUpperCase() + x.slice(1))(_zahlwortDe(nf))} Meldungen hängen daran`;
       if(ds.quote != null){
-        const eloNm = ds.eloPid ? nameOf(ds.eloPid) : '';
-        neuText = `Die Siegchance lag vor dem Anstoß bei ${ds.quote} %`
-          + (ds.elo && eloNm ? `, für ${eloNm} bringt der Sieg +${ds.elo} Elo` : '') + '.'
-          + (motive.length ? '' : ` ${folge}.`);
+        neuText = spTeil.desc || '';
       } else if(brkBundle){
         neuText = `${folge}, und jede davon kommt nur wenige Male je Saison.`;
       } else {
@@ -22241,7 +22240,8 @@ function openNewsDetail(sid){
   const dcat = _displayCat(s);
   const cat = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const body = _newsDetailBody(s);
-  const lead = _ndLead(s.desc, body);
+  let lead = _ndLead(s.desc, body);
+  try { if(_newsSorte(s) === 'spiel') lead = _newsSpielSatz(lead, SP_ZEIGT_ALLES); } catch(e){}
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
   if(!nd || !bg) return;
@@ -22274,7 +22274,7 @@ function openNewsDetail(sid){
       </div>
       <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>
     </div>
-    <div class="nd-desc">${_newsBetont(lead)}</div>
+    ${lead ? `<div class="nd-desc">${_newsBetont(lead)}</div>` : ''}
     ${body}
     ${fadenHtml ? `<div class="nd-faeden">${fadenHtml}</div>` : ''}
     ${_newsRueckblickKnopf(s)}
@@ -22385,7 +22385,7 @@ function _newsBlattKopf(s){
   const erg = d.matchId ? _newsBlattErgebnis(d.matchId) : '';
   if(d.type === 'season_recap') return erg;
   if(d.type === 'runde') return '';
-  if(d.type === 'spiel' && d.matchId){ const b = _ndBuehne(s); if(b) return b; }
+  if(d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && _newsSorte(s) === 'spiel'))){ const b = _ndBuehne(s); if(b) return b; }
   if(!ids.length) return erg;
   if(ids.length > 1){
     const zeig = ids.slice(0, 3);
@@ -22762,6 +22762,30 @@ function _ndEloWirkung(matchId, pids){
   } catch(e){ return ''; }
 }
 
+function _ndPartieAbschnitte(s){
+  const d = s.dataRef || {};
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  if(!m) return '';
+  let bild = '';
+  try { bild = _spBild(s).kopf || ''; } catch(e){ bild = ''; }
+  const zeigt = kl => bild.indexOf('class="' + kl) >= 0 || bild.indexOf('class="sp-fk ' + kl) >= 0;
+  const beteiligt = _spSieger(m).concat(_spVerlierer(m));
+  const buehneFeld = zeigt('sp-feld');
+  const c = d.chance != null ? d.chance : (d.quote != null ? d.quote / 100 : _spChance(m));
+  const skala = buehneFeld || zeigt('sp-ta') || zeigt('sp-sd') || zeigt('sp-wp') ? '' : _ndChanceSkala(c);
+  const mitRang = buehneFeld ? beteiligt.filter(pid => { const r = _newsRankChange(pid, m.id); return r && r.pre !== r.post; }) : beteiligt;
+  const elo = !zeigt('sp-et') && mitRang.length ? _ndEloWirkung(m.id, mitRang) : '';
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  let feld = '', duelle = '', tag = '', vert = '';
+  try { feld = buehneFeld ? '' : `<div class="nd-feld">${_spFeldBild(Object.assign(_spFeldDaten({m, c:null}), {ohneElo:true}))}</div>`; } catch(e){}
+  try { duelle = _ndDuelle(m); } catch(e){}
+  try { tag = _ndTagLeiste(m); } catch(e){}
+  try { vert = zeigt('sp-mo') || zeigt('sp-vt') ? '' : _ndVerteilung(m); } catch(e){}
+  return ab('Wer wo stand', feld) + ab('Wie erwartbar war das', skala)
+    + ab(buehneFeld ? 'In der Tabelle' : 'Was die Partie bewegt hat', elo)
+    + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
+}
+
 function _newsDetailMitte(s){
   const d = s.dataRef || {};
   const pm = pmap();
@@ -22955,29 +22979,7 @@ function _newsDetailMitte(s){
         const matchHtml = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         return `<div class="nd-section">Die Sensation</div>${pct}` + (matchHtml ? matchHtml : '');
       }
-      case 'spiel': {
-        const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
-        let bild = '';
-        try { bild = m ? (_spBild(s).kopf || '') : ''; } catch(e){ bild = ''; }
-        const zeigt = kl => bild.indexOf('class="' + kl) >= 0 || bild.indexOf('class="sp-fk ' + kl) >= 0;
-        const beteiligt = (Array.isArray(d.winners) ? d.winners : [])
-          .concat(Array.isArray(d.losers) ? d.losers : []);
-        const buehneFeld = zeigt('sp-feld');
-        const skala = buehneFeld || zeigt('sp-ta') || zeigt('sp-sd') || zeigt('sp-wp') ? ''
-          : _ndChanceSkala(d.chance != null ? d.chance : (d.quote != null ? d.quote / 100 : null));
-        const mitRang = buehneFeld ? beteiligt.filter(pid => { const r = _newsRankChange(pid, d.matchId); return r && r.pre !== r.post; }) : beteiligt;
-        const elo = d.matchId && !zeigt('sp-et') && mitRang.length ? _ndEloWirkung(d.matchId, mitRang) : '';
-        const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
-        let feld = '', duelle = '', tag = '', vert = '';
-        if(m){
-          try { feld = buehneFeld ? '' : `<div class="nd-feld">${_spFeldBild(Object.assign(_spFeldDaten({m, c:null}), {ohneElo:true}))}</div>`; } catch(e){}
-          try { duelle = _ndDuelle(m); } catch(e){}
-          try { tag = _ndTagLeiste(m); } catch(e){}
-          try { vert = zeigt('sp-mo') || zeigt('sp-vt') ? '' : _ndVerteilung(m); } catch(e){}
-        }
-        return ab('Wer wo stand', feld) + ab('Wie erwartbar war das', skala) + ab(buehneFeld ? 'In der Tabelle' : 'Was die Partie bewegt hat', elo)
-          + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
-      }
+      case 'spiel': return _ndPartieAbschnitte(s);
       case 'match_result': {
         const fakten = {
           zu_null: ['Ohne Gegentor', 'Kein Treffer für die Gegenseite'],
@@ -23111,6 +23113,12 @@ function _newsDetailMitte(s){
           return `<div class="nd-section">Wirkung auf die Laufbahn</div>`
             + _ndWirkungBlock(je, _ndWirkungsGruende(teile));
         })();
+        if(d.matchId && _newsSorte(s) === 'spiel'){
+          const eigen = teile.filter(t => String(t.typ || t.type || '') !== 'spiel');
+          const zl = eigen.map(t => _zeile(Object.assign({}, t, {ms:t.matchId && t.matchId !== d.matchId ? t.ms : null}))).join('');
+          return (zl ? `<div class="nd-section">Was dazu gehört</div><div class="nw-liste">${zl}</div>` : '')
+            + _ndPartieAbschnitte(s) + wirkung;
+        }
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         const uebersicht = (function(){
           if(d.quelle !== 'tafel' && d.quelle !== 'form') return '';

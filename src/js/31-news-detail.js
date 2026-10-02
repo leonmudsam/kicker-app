@@ -44,7 +44,10 @@ function openNewsDetail(sid){
   const cat = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   // Body-HTML dynamisch je Typ — nutzt vorhandene Avatar/Stat-Helper
   const body = _newsDetailBody(s);
-  const lead = _ndLead(s.desc, body);
+  // Der Kopf einer Partie trägt den Satz ohne Siegchance und Elo, wie die
+  // Karte: die Bühne darunter zeigt beides [§C33].
+  let lead = _ndLead(s.desc, body);
+  try { if(_newsSorte(s) === 'spiel') lead = _newsSpielSatz(lead, SP_ZEIGT_ALLES); } catch(e){}
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
   if(!nd || !bg) return;
@@ -83,7 +86,7 @@ function openNewsDetail(sid){
       </div>
       <button class="nd-x" id="ndXBtn" aria-label="Schließen">×</button>
     </div>
-    <div class="nd-desc">${_newsBetont(lead)}</div>
+    ${lead ? `<div class="nd-desc">${_newsBetont(lead)}</div>` : ''}
     ${body}
     ${fadenHtml ? `<div class="nd-faeden">${fadenHtml}</div>` : ''}
     ${_newsRueckblickKnopf(s)}
@@ -252,7 +255,7 @@ function _newsBlattKopf(s){
   // zeigte einen nackten Stand und darunter zwei Wappen mit „gewinnen diese
   // Partie", während die Karte darüber Spielfeld, Mosaik oder Revanche trug:
   // wer sie öffnete, verlor das Bild, wegen dem er getippt hatte.
-  if(d.type === 'spiel' && d.matchId){ const b = _ndBuehne(s); if(b) return b; }
+  if(d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && _newsSorte(s) === 'spiel'))){ const b = _ndBuehne(s); if(b) return b; }
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
@@ -776,6 +779,42 @@ function _ndEloWirkung(matchId, pids){
   } catch(e){ return ''; }
 }
 
+// ── Was unter der Bühne einer Partie steht [§C33] ──────────────────
+// Zeichnungen in fester Folge, jede nur, wo die Bühne sie nicht schon zeigt:
+// die Aufstellung, die Siegchance auf ihrer Skala, die Elo-Wirkung je
+// Spieler, die direkten Duelle, der Tag und wie oft die Liga so ausgeht. Ein
+// Abschnitt „Was dieses Spiel besonders macht" stand dort als Wort und Satz
+// („Außenseiter-Sieg · Die Rechnung stand dagegen") über einer Skala, die
+// genau das zeigt. Dieselbe Folge trägt das Blatt einer Partie und das
+// ihres Bündels.
+function _ndPartieAbschnitte(s){
+  const d = s.dataRef || {};
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  if(!m) return '';
+  let bild = '';
+  try { bild = _spBild(s).kopf || ''; } catch(e){ bild = ''; }
+  const zeigt = kl => bild.indexOf('class="' + kl) >= 0 || bild.indexOf('class="sp-fk ' + kl) >= 0;
+  const beteiligt = _spSieger(m).concat(_spVerlierer(m));
+  // Steht das Spielfeld schon auf der Bühne, trägt es Siegchance und Elo
+  // je Spieler; die Abschnitte darunter nennen dann nur noch, was es nicht
+  // zeigt — wer in der Tabelle den Platz gewechselt hat. Steht es als
+  // Abschnitt, zeigt es nur die Aufstellung.
+  const buehneFeld = zeigt('sp-feld');
+  const c = d.chance != null ? d.chance : (d.quote != null ? d.quote / 100 : _spChance(m));
+  const skala = buehneFeld || zeigt('sp-ta') || zeigt('sp-sd') || zeigt('sp-wp') ? '' : _ndChanceSkala(c);
+  const mitRang = buehneFeld ? beteiligt.filter(pid => { const r = _newsRankChange(pid, m.id); return r && r.pre !== r.post; }) : beteiligt;
+  const elo = !zeigt('sp-et') && mitRang.length ? _ndEloWirkung(m.id, mitRang) : '';
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  let feld = '', duelle = '', tag = '', vert = '';
+  try { feld = buehneFeld ? '' : `<div class="nd-feld">${_spFeldBild(Object.assign(_spFeldDaten({m, c:null}), {ohneElo:true}))}</div>`; } catch(e){}
+  try { duelle = _ndDuelle(m); } catch(e){}
+  try { tag = _ndTagLeiste(m); } catch(e){}
+  try { vert = zeigt('sp-mo') || zeigt('sp-vt') ? '' : _ndVerteilung(m); } catch(e){}
+  return ab('Wer wo stand', feld) + ab('Wie erwartbar war das', skala)
+    + ab(buehneFeld ? 'In der Tabelle' : 'Was die Partie bewegt hat', elo)
+    + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
+}
+
 function _newsDetailMitte(s){
   const d = s.dataRef || {};
   const pm = pmap();
@@ -1041,33 +1080,7 @@ function _newsDetailMitte(s){
       // Tag und wie oft die Liga so ausgeht. Ein Abschnitt „Was dieses Spiel
       // besonders macht" stand dort als Wort und Satz („Außenseiter-Sieg ·
       // Die Rechnung stand dagegen") über einer Skala, die genau das zeigt.
-      case 'spiel': {
-        const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
-        let bild = '';
-        try { bild = m ? (_spBild(s).kopf || '') : ''; } catch(e){ bild = ''; }
-        const zeigt = kl => bild.indexOf('class="' + kl) >= 0 || bild.indexOf('class="sp-fk ' + kl) >= 0;
-        const beteiligt = (Array.isArray(d.winners) ? d.winners : [])
-          .concat(Array.isArray(d.losers) ? d.losers : []);
-        // Steht das Spielfeld schon auf der Bühne, trägt es Siegchance und Elo
-        // je Spieler; die Abschnitte darunter nennen dann nur noch, was es
-        // nicht zeigt — wer in der Tabelle den Platz gewechselt hat. Steht es
-        // als Abschnitt, zeigt es nur die Aufstellung.
-        const buehneFeld = zeigt('sp-feld');
-        const skala = buehneFeld || zeigt('sp-ta') || zeigt('sp-sd') || zeigt('sp-wp') ? ''
-          : _ndChanceSkala(d.chance != null ? d.chance : (d.quote != null ? d.quote / 100 : null));
-        const mitRang = buehneFeld ? beteiligt.filter(pid => { const r = _newsRankChange(pid, d.matchId); return r && r.pre !== r.post; }) : beteiligt;
-        const elo = d.matchId && !zeigt('sp-et') && mitRang.length ? _ndEloWirkung(d.matchId, mitRang) : '';
-        const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
-        let feld = '', duelle = '', tag = '', vert = '';
-        if(m){
-          try { feld = buehneFeld ? '' : `<div class="nd-feld">${_spFeldBild(Object.assign(_spFeldDaten({m, c:null}), {ohneElo:true}))}</div>`; } catch(e){}
-          try { duelle = _ndDuelle(m); } catch(e){}
-          try { tag = _ndTagLeiste(m); } catch(e){}
-          try { vert = zeigt('sp-mo') || zeigt('sp-vt') ? '' : _ndVerteilung(m); } catch(e){}
-        }
-        return ab('Wer wo stand', feld) + ab('Wie erwartbar war das', skala) + ab(buehneFeld ? 'In der Tabelle' : 'Was die Partie bewegt hat', elo)
-          + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
-      }
+      case 'spiel': return _ndPartieAbschnitte(s);
       // Zeilen aus aelteren Laeufen: der Generator bildet den Typ nicht mehr.
       case 'match_result': {
         const fakten = {
@@ -1254,6 +1267,19 @@ function _newsDetailMitte(s){
           return `<div class="nd-section">Wirkung auf die Laufbahn</div>`
             + _ndWirkungBlock(je, _ndWirkungsGruende(teile));
         })();
+        // ── Das Bündel einer Partie ──────────────────────────────────
+        // Es trägt die Zeichnung seiner Karte als Bühne [§C33], darunter, was
+        // an der Partie hängt, und dann dieselben Abschnitte wie das Blatt
+        // der Partie. Die Zeile der Partie selbst fällt weg: sie IST die
+        // Bühne, und ihr Satz stand wortgleich ein zweites Mal darunter. Die
+        // Uhrzeit fällt in jeder Zeile weg, die zu dieser Partie gehört —
+        // neunmal „14:32" untereinander sagt nichts.
+        if(d.matchId && _newsSorte(s) === 'spiel'){
+          const eigen = teile.filter(t => String(t.typ || t.type || '') !== 'spiel');
+          const zl = eigen.map(t => _zeile(Object.assign({}, t, {ms:t.matchId && t.matchId !== d.matchId ? t.ms : null}))).join('');
+          return (zl ? `<div class="nd-section">Was dazu gehört</div><div class="nw-liste">${zl}</div>` : '')
+            + _ndPartieAbschnitte(s) + wirkung;
+        }
         const mv = d.matchId ? _newsMatchVsBlock(d.matchId) : '';
         // Die Ueberschrift sagt, was die Liste ist. „In dieser Partie" stand
         // auch ueber der Karte, auf der drei Spieler dieselbe Stufe
