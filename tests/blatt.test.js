@@ -2485,6 +2485,9 @@ const ok = (c, msg, det) => {
     const roh = window.__k.eval('_buildStories()');
     const body = window.__k.eval('_newsDetailBody');
     const sorte = window.__k.eval('_newsSorte');
+    const rang = window.__k.eval('chronicleRang');
+    const dahinter = d => { const h = (d.halter && d.halter.length) ? d.halter : (d.playerIds || []);
+      try { return (rang(d.rekordId) || []).some(r => h.indexOf(r.pid || r.id) < 0); } catch(e){ return false; } };
     const box = document.createElement('div');
     document.body.appendChild(box);
     let medaille = 0, badges = 0, namenDoppelt = 0, rekorde = 0, mitVerfolger = 0,
@@ -2504,7 +2507,9 @@ const ok = (c, msg, det) => {
           if(treffer > 1) namenDoppelt++;
         }
       }
-      if(t === 'rekord_geholt'){
+      // Verlangt nur, wo jemand dahinter liegt: halten alle im Rennen den
+      // Rekord, füllte vorher der vierte Halter die Liste unter sich selbst.
+      if(t === 'rekord_geholt' && dahinter(s.dataRef || {})){
         rekorde++;
         if(box.querySelector('.nd-vf')) mitVerfolger++;
       }

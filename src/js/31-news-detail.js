@@ -47,6 +47,10 @@ function openNewsDetail(sid){
   // Der Kopf einer Partie trägt den Satz ohne Siegchance und Elo, wie die
   // Karte: die Bühne darunter zeigt beides [§C33].
   let lead = _ndLead(s.desc, body);
+  // Auf der Bühne eines Rekords stehen Vorgänger und Wirkung gezeichnet; die
+  // Sätze dazu standen im Kopf ein zweites Mal [§C33 `_ndNeu`].
+  if(body.indexOf('nd-rk') >= 0) lead = lead.split(/(?<=\.)\s+/)
+    .filter(x => !/^(Vorher (gehörte|hielt|hielten)|Für .+ heißt der Spieltag)/.test(x)).join(' ');
   try { if(_newsSorte(s) === 'spiel') lead = _newsSpielSatz(lead, SP_ZEIGT_ALLES); } catch(e){}
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
@@ -940,11 +944,65 @@ function _ndBadgeBlatt(s){
     + ab(traeger === 1 ? 'Nur einer trägt sie' : traeger + ' von ' + alle.length + ' tragen sie', traeger ? feld : '')};
 }
 
-// Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
+// ── Das Blatt eines Liga-Rekords [§C33] ─────────────────────────────
+// Es zeigte den Wert groß, darunter „Vorher gehalten von Leon ›" als Zeile
+// und unter „Für die Laufbahn" je Halter einen Rechentext („Aktuelle Form ·
+// Grundwert 150 ÷ 4 Halter · 18. Rekord ÷ √7 · 20 Rekorde: 1450 → 1465").
+// Die Bühne zeigt jetzt den Wechsel als Bild — wer ihn vorher hielt, wer
+// jetzt — und den Wert, beim Ausbau den alten durchgestrichen davor. Die
+// Wirkung steht gezeichnet wie an der Tafel: Stufe, Zuwachs oder Verlust
+// und der Weg zur nächsten Schwelle. Die Rechnung der Quelle steht im
+// Laufbahn-Blatt, wohin jede Zeile führt.
+function _ndRekordBlatt(s){
+  const d = s.dataRef || {}, pm = pmap();
+  const neu = ((Array.isArray(d.halter) && d.halter.length) ? d.halter : (d.playerIds || [])).filter(id => pm[id]);
+  if(!neu.length) return null;
+  const vorRoh = (Array.isArray(d.vorher) ? d.vorher : []).filter(id => pm[id]);
+  // Als Vorgänger steht nur, wer wirklich weg ist [§C33].
+  const weg = vorRoh.filter(id => neu.indexOf(id) < 0);
+  const def = (typeof CHRONICLE_BY_ID !== 'undefined') ? CHRONICLE_BY_ID[d.rekordId] : null;
+  const wert = _chronKurz(d.ev);
+  const alt = d.type === 'rekord_gesteigert' && d.evVorher ? _chronKurz(d.evVorher) : '';
+  const wap = (id, px) => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px, feuer:0})}</span>`;
+  const zeig = neu.slice(0, 4), rest = neu.length - zeig.length;
+  const kopf = `<div class="nd-buehne nd-rk${d.zufall ? ' metall' : ''}"><div class="nd-rk-w">`
+    + (weg.length ? `<div class="nd-rk-alt">${weg.slice(0, 3).map(id => wap(id, 48)).join('')}<small>vorher</small></div>`
+      + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` : '')
+    + `<div class="nd-rk-neu">${zeig.map(id => wap(id, weg.length ? 52 : 60)).join('')}${rest > 0 ? `<span class="av nf-face-mehr">+${rest}</span>` : ''}`
+    + `<small>${weg.length ? 'jetzt' : (neu.length > 1 ? 'halten ihn' : 'hält ihn')}</small></div></div>`
+    + `<em class="nd-rk-h">${esc(_namenListe(neu.map(_spName)))}</em>`
+    + `<div class="nd-rk-v">${alt ? `<s class="num">${esc(alt)}</s>` : ''}<b class="num">${esc(wert)}</b><span>${esc(d.kammerLabel || 'Bestmarke')}</span></div>`
+    + `<div class="nd-rk-n">${esc(d.rekordName || (def && def.name) || '')}</div></div>`;
+  // Die Wirkung aus den gespeicherten Ständen: eine Karte von vorletzter
+  // Woche erzählt vom Stand von damals [§C31]. Ohne Stände (ältere Läufe)
+  // steht, was der Rekord heute bringt, und kein Zuwachs.
+  const lb = d.laufbahn || {}, je = {};
+  Object.keys(lb).forEach(id => { if(pm[id] && lb[id] && lb[id].vor != null && lb[id].nach != null) je[id] = lb[id]; });
+  let wirkung = '';
+  if(Object.keys(je).length){
+    wirkung = _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vorRoh, rname:d.rekordName || (def && def.name) || ''}]));
+  } else {
+    wirkung = neu.map(id => { let q = null;
+      try { q = ((prestigeTabelle().byPid[id] || {}).quellen || []).find(x => x.q === 'rekord' && x.id === d.rekordId) || null; } catch(e){}
+      return q ? `<div class="nd-stat-row" data-pid="${esc(id)}" style="cursor:pointer"><div class="nd-stat-label">${esc(_spName(id))}</div>`
+        + `<div class="nd-stat-val acid">${esc(komma(q.p).replace(',0', ''))} Prestige aus diesem Rekord ›</div></div>` : ''; }).join('');
+  }
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  return {kopf, mitte:(_ndNeu(d.cond) ? `<div class="tnote nd-rk-c">${esc(d.cond)}</div>` : '')
+    // Alle Halter, nicht `playerIds`: die nennen höchstens drei, und der
+    // vierte stand dann als Verfolger unter seinem eigenen Rekord.
+    + _newsVerfolger(d.rekordId, neu, d.wert)
+    + belegHtml({ev:d.ev})
+    + ab('Wirkung auf die Laufbahn', wirkung)
+    + (def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : '')};
+}
+
+// Welche Story ein eigenes Blatt mit Bühne hat.// Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
 // demselben Aufruf, gemerkt je Story, damit nichts doppelt gerechnet wird.
 const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_streak:_ndSerieBlatt,
   team_loss_streak:_ndSerieBlatt, streak_killer:_ndSerieBlatt, rivalry:_ndRivalBlatt,
-  rivalry_milestone:_ndRivalBlatt, badge_unlocked:_ndBadgeBlatt};
+  rivalry_milestone:_ndRivalBlatt, badge_unlocked:_ndBadgeBlatt,
+  rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt};
 // Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
 // hängend hielte es nach einer neuen Partie den alten Stand fest.
 let _ndBlattJetzt = null;

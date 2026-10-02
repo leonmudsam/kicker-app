@@ -5914,15 +5914,41 @@ const _rekBlatt = JSON.parse(K.eval(`JSON.stringify((function(){
     standStimmt: w ? w.nach === Math.round(P.punkte || 0) : false,
     quelleStimmt: (w && q) ? (w.basis === Math.round(q.basis)
       && w.halter === q.halter && w.staffel === q.staffel) : false,
-    zeigtStaende: m0.indexOf(String(w ? w.vor : -1) + ' → ' + String(w ? w.nach : -1)) >= 0,
+    // Die Wirkung steht gezeichnet wie an der Tafel: Stand nachher, Zuwachs
+    // oder Verlust. Der Rechentext der Quelle stand je Halter in einer Zeile
+    // und gehört ins Laufbahn-Blatt [§C33].
+    zeigtStaende: !!w && m0.indexOf('>' + w.nach + ' Prestige') >= 0
+      && (w.nach === w.vor || m0.indexOf((w.nach > w.vor ? '+' : '−') + Math.abs(w.nach - w.vor)) >= 0),
     zeigtRechnung: m0.indexOf('Grundwert') >= 0,
     rohWert: w ? (m0.indexOf('+' + w.basis + ' Prestige') >= 0
                   || m0.indexOf(w.basis + ' Prestige ›') >= 0) : false,
     altRechnung: mAlt.indexOf('Grundwert') >= 0,
-    // Gemessen wird die ZEILE, nicht das ganze Blatt: der Pfeil steht auch im
-    // Kopf einer anderen Zeile, und ein ODER darauf ist immer wahr.
-    altOhneZuwachs: mAlt.slice(mAlt.indexOf('Für die Laufbahn')).indexOf('→') < 0};
+    altHeute: mAlt.indexOf('Prestige aus diesem Rekord') >= 0,
+    // Gemessen wird der Abschnitt, nicht das ganze Blatt: der Pfeil steht auch
+    // im Kopf einer anderen Zeile, und ein ODER darauf ist immer wahr.
+    altOhneZuwachs: mAlt.slice(mAlt.indexOf('Wirkung auf die Laufbahn')).indexOf('→') < 0};
 })())`));
+// Die Bühne des Rekords: alle Halter genannt, unter „vorher" nur, wer
+// wirklich weg ist, und kein Halter unter den Verfolgern — die Liste bekam
+// nur `playerIds`, und die nennen höchstens drei.
+const _rekBuehne = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch = []; let n = 0;
+  _buildStories().filter(s => /^rekord_/.test((s.dataRef || {}).type || '')).forEach(s => {
+    const d = s.dataRef, pm = pmap(), b = _newsDetailBody(s); n++;
+    const h = ((d.halter && d.halter.length) ? d.halter : d.playerIds || []).filter(id => pm[id]);
+    const weg = (d.vorher || []).filter(id => pm[id] && h.indexOf(id) < 0);
+    const kopf = b.slice(0, b.indexOf('nd-rk-h') + 400);
+    if(h.some(id => kopf.indexOf(esc(pm[id].name)) < 0)) falsch.push(s.id + ' Halter fehlt');
+    const alt = (b.match(/class="nd-rk-alt">([\\s\\S]*?)<small>/) || [, ''])[1];
+    if((alt.match(/data-pid=/g) || []).length !== Math.min(3, weg.length)) falsch.push(s.id + ' vorher');
+    const vf = [...b.matchAll(/class="nd-vf-nm">([^<]*)</g)].map(x => x[1]);
+    if(vf.some(nm => h.some(id => esc(pm[id].name) === nm))) falsch.push(s.id + ' Halter als Verfolger');
+  });
+  return {n, falsch};
+})())`));
+ok(_rekBuehne.n > 0 && _rekBuehne.falsch.length === 0,
+   'die Bühne eines Rekords nennt alle Halter, zeigt nur echte Vorgänger, und kein Halter steht unter den Verfolgern',
+   _rekBuehne.falsch.slice(0, 3).join(' | ') || _rekBuehne.n + ' Rekord-Blätter');
 ok(_rekBlatt.n > 0, 'der Generator bildet Rekord-Karten',
    (_rekBlatt.typen || []).join(', '));
 ok(_rekBlatt.laengen && _rekBlatt.laengen.every(x => x > 400),
@@ -5934,14 +5960,14 @@ ok(_rekBlatt.hatWirkung && _rekBlatt.standStimmt,
 ok(_rekBlatt.quelleStimmt,
    'und Grundwert, Halterzahl und Wurzelstaffel ihrer Quelle',
    String(_rekBlatt.quelleStimmt));
-ok(_rekBlatt.zeigtStaende && _rekBlatt.zeigtRechnung,
-   'das Blatt zeigt beide Staende und die Rechnung dahinter',
+ok(_rekBlatt.zeigtStaende && !_rekBlatt.zeigtRechnung,
+   'das Blatt zeigt die Wirkung aus den gespeicherten Staenden gezeichnet und keinen Rechentext',
    'Staende ' + _rekBlatt.zeigtStaende + ', Rechnung ' + _rekBlatt.zeigtRechnung);
 ok(_rekBlatt.rohWert === false,
    'und nennt den rohen Grundwert nie als erhaltene Punkte');
-ok(_rekBlatt.altRechnung && _rekBlatt.altOhneZuwachs,
-   'eine Karte ohne gespeicherte Staende zeigt die Rechnung und keinen Zuwachs',
-   'Rechnung ' + _rekBlatt.altRechnung + ', ohne Zuwachs ' + _rekBlatt.altOhneZuwachs);
+ok(_rekBlatt.altHeute && !_rekBlatt.altRechnung && _rekBlatt.altOhneZuwachs,
+   'eine Karte ohne gespeicherte Staende zeigt, was der Rekord heute bringt, und keinen Zuwachs',
+   'heute ' + _rekBlatt.altHeute + ', Rechnung ' + _rekBlatt.altRechnung + ', ohne Zuwachs ' + _rekBlatt.altOhneZuwachs);
 
 console.log('=== DER ANLASS STEHT ZUERST ===');
 // Eine Sammelkarte erbt ihr Breaking von einer ihrer Zeilen [§C33]. Welche

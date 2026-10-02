@@ -4847,6 +4847,24 @@
   .nd-tg > span:not(.hat){animation-name:spDaLeise}
 }
 @keyframes spDaLeise{from{opacity:0}to{opacity:.38}}
+
+.nd-rk{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.nd-rk-w{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.nd-rk-alt,.nd-rk-neu{display:flex;align-items:center;gap:2px;position:relative;padding-bottom:13px}
+.nd-rk-alt > span{opacity:.45;filter:none}
+.nd-rk-alt small,.nd-rk-neu small{position:absolute;left:0;right:0;bottom:0;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.nd-rk-neu .nf-face-mehr{--av:30px;width:30px;height:30px;font-size:10px}
+.nd-rk-pf{width:34px;height:14px;flex:0 0 auto;margin-bottom:13px}
+.nd-rk-pf path{fill:none;stroke:var(--gold);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nd-rk.metall .nd-rk-pf path{stroke:var(--ink2)}
+.nd-rk-h{font-style:normal;font-size:13px;font-weight:600;color:var(--ink)}
+.nd-rk-v{display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap}
+.nd-rk-v b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:32px;line-height:1;color:var(--gold)}
+.nd-rk.metall .nd-rk-v b{color:var(--ink)}
+.nd-rk-v s{font-size:15px;color:var(--muted)}
+.nd-rk-v span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.nd-rk-n{font-size:12px;color:var(--ink2)}
+.nd-rk-c{margin:0 0 6px}
 </style>
 </head>
 <body>
@@ -4918,7 +4936,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.02.ef3800c6';
+const BUILD_VERSION='2026.10.02.897c1646';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22320,6 +22338,8 @@ function openNewsDetail(sid){
   const cat = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const body = _newsDetailBody(s);
   let lead = _ndLead(s.desc, body);
+  if(body.indexOf('nd-rk') >= 0) lead = lead.split(/(?<=\.)\s+/)
+    .filter(x => !/^(Vorher (gehörte|hielt|hielten)|Für .+ heißt der Spieltag)/.test(x)).join(' ');
   try { if(_newsSorte(s) === 'spiel') lead = _newsSpielSatz(lead, SP_ZEIGT_ALLES); } catch(e){}
   const nd = document.getElementById('nd');
   const bg = document.getElementById('ndBg');
@@ -22972,9 +22992,48 @@ function _ndBadgeBlatt(s){
     + ab(traeger === 1 ? 'Nur einer trägt sie' : traeger + ' von ' + alle.length + ' tragen sie', traeger ? feld : '')};
 }
 
+function _ndRekordBlatt(s){
+  const d = s.dataRef || {}, pm = pmap();
+  const neu = ((Array.isArray(d.halter) && d.halter.length) ? d.halter : (d.playerIds || [])).filter(id => pm[id]);
+  if(!neu.length) return null;
+  const vorRoh = (Array.isArray(d.vorher) ? d.vorher : []).filter(id => pm[id]);
+  const weg = vorRoh.filter(id => neu.indexOf(id) < 0);
+  const def = (typeof CHRONICLE_BY_ID !== 'undefined') ? CHRONICLE_BY_ID[d.rekordId] : null;
+  const wert = _chronKurz(d.ev);
+  const alt = d.type === 'rekord_gesteigert' && d.evVorher ? _chronKurz(d.evVorher) : '';
+  const wap = (id, px) => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px, feuer:0})}</span>`;
+  const zeig = neu.slice(0, 4), rest = neu.length - zeig.length;
+  const kopf = `<div class="nd-buehne nd-rk${d.zufall ? ' metall' : ''}"><div class="nd-rk-w">`
+    + (weg.length ? `<div class="nd-rk-alt">${weg.slice(0, 3).map(id => wap(id, 48)).join('')}<small>vorher</small></div>`
+      + `<svg class="nd-rk-pf" viewBox="0 0 40 16" aria-hidden="true"><path d="M2 8H34"/><path d="M28 3L35 8L28 13"/></svg>` : '')
+    + `<div class="nd-rk-neu">${zeig.map(id => wap(id, weg.length ? 52 : 60)).join('')}${rest > 0 ? `<span class="av nf-face-mehr">+${rest}</span>` : ''}`
+    + `<small>${weg.length ? 'jetzt' : (neu.length > 1 ? 'halten ihn' : 'hält ihn')}</small></div></div>`
+    + `<em class="nd-rk-h">${esc(_namenListe(neu.map(_spName)))}</em>`
+    + `<div class="nd-rk-v">${alt ? `<s class="num">${esc(alt)}</s>` : ''}<b class="num">${esc(wert)}</b><span>${esc(d.kammerLabel || 'Bestmarke')}</span></div>`
+    + `<div class="nd-rk-n">${esc(d.rekordName || (def && def.name) || '')}</div></div>`;
+  const lb = d.laufbahn || {}, je = {};
+  Object.keys(lb).forEach(id => { if(pm[id] && lb[id] && lb[id].vor != null && lb[id].nach != null) je[id] = lb[id]; });
+  let wirkung = '';
+  if(Object.keys(je).length){
+    wirkung = _ndWirkungBlock(je, _ndWirkungsGruende([{halter:neu, vorher:vorRoh, rname:d.rekordName || (def && def.name) || ''}]));
+  } else {
+    wirkung = neu.map(id => { let q = null;
+      try { q = ((prestigeTabelle().byPid[id] || {}).quellen || []).find(x => x.q === 'rekord' && x.id === d.rekordId) || null; } catch(e){}
+      return q ? `<div class="nd-stat-row" data-pid="${esc(id)}" style="cursor:pointer"><div class="nd-stat-label">${esc(_spName(id))}</div>`
+        + `<div class="nd-stat-val acid">${esc(komma(q.p).replace(',0', ''))} Prestige aus diesem Rekord ›</div></div>` : ''; }).join('');
+  }
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  return {kopf, mitte:(_ndNeu(d.cond) ? `<div class="tnote nd-rk-c">${esc(d.cond)}</div>` : '')
+    + _newsVerfolger(d.rekordId, neu, d.wert)
+    + belegHtml({ev:d.ev})
+    + ab('Wirkung auf die Laufbahn', wirkung)
+    + (def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : '')};
+}
+
 const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_streak:_ndSerieBlatt,
   team_loss_streak:_ndSerieBlatt, streak_killer:_ndSerieBlatt, rivalry:_ndRivalBlatt,
-  rivalry_milestone:_ndRivalBlatt, badge_unlocked:_ndBadgeBlatt};
+  rivalry_milestone:_ndRivalBlatt, badge_unlocked:_ndBadgeBlatt,
+  rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt};
 let _ndBlattJetzt = null;
 function _ndEigenesBlatt(s){
   const f = _ND_BLATT[(s.dataRef || {}).type];
