@@ -977,7 +977,7 @@ function _newsVerlustBand(s){
       ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
   }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
   if(!weg.length) return '';
-  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige-Saldo des Spieltags</span>`
+  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
     + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
       `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
       + `<em class="num">−${-x.d} P</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3

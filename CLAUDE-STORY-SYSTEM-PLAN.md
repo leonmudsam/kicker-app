@@ -228,7 +228,7 @@ Ein negativer Wert in einer Tafel-Karte ist kein Elo-Verlust, sondern kann ein P
 
 Verbindliche Anzeige:
 
-- Beschriftung `Prestige-Saldo des Spieltags`
+- Beschriftung `Prestige`
 - Einheit `P`
 - rote negative Werte
 - optionaler Hinweis auf den Verlust einer Insignium-Stufe
