@@ -4767,7 +4767,51 @@
   .nd-buehne{animation:spBuehne .45s cubic-bezier(.2,.9,.3,1) both}
   .nd-dd-z,.nd-tl-z,.nd-vt span{animation:spDa .35s ease-out both;animation-delay:calc(.15s + var(--k,0) * 40ms)}
 }
-@keyframes spBuehne{from{opacity:0;transform:translateY(10px) scale(.97)}}
+@keyframes spBuehne{from{opacity:0;transform:translateY(10px)}}
+
+.nd-sr-k{display:flex;align-items:center;gap:12px}
+.nd-sr-z{display:flex;flex-direction:column;min-width:0}
+.nd-sr-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:40px;line-height:1;color:var(--acid)}
+.nd-sr.neg .nd-sr-z b{color:var(--red)}
+.nd-sr-z span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.nd-sr-z em{font-style:normal;font-size:13px;font-weight:600;color:var(--ink);margin-top:3px}
+.nd-sr-duo{display:flex;flex:0 0 auto}
+.nd-sr-duo .av{--av:46px;width:46px;height:46px;font-size:14px;box-shadow:0 0 0 2px var(--surface)}
+.nd-sr-duo .av+.av{margin-left:-12px}
+.nd-sr .nf-ser{margin-top:12px}
+.nd-sr-d{display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:var(--muted)}
+.nd-pzl{display:flex;flex-direction:column;gap:5px;margin-bottom:6px}
+.nd-pz{display:grid;grid-template-columns:44px auto auto auto minmax(0,1fr);align-items:center;gap:7px;padding:6px 9px;border-radius:9px;
+  background:var(--surface);box-shadow:inset 3px 0 0 rgba(190,242,100,.6);cursor:pointer}
+.nd-pz.l{box-shadow:inset 3px 0 0 rgba(240,86,106,.6)}
+.nd-pz-t{font-size:9.5px;color:var(--muted)}
+.nd-pz .sp-chips .av,.nd-bk-z > .av,.nd-zg-n .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+.nd-pz > b{font-size:12.5px;color:var(--ink)}
+.nd-pz.l > b{color:var(--ink2)}
+.nd-pz-gg{font-size:9.5px;color:var(--muted)}
+.nd-pz > .sp-chips:last-child{justify-self:start}
+.nd-bk{display:flex;flex-direction:column;gap:7px;margin-bottom:6px}
+.nd-bk-z{display:grid;grid-template-columns:auto 76px minmax(0,1fr) auto;gap:8px;align-items:center;cursor:pointer}
+.nd-bk-n{font-size:11.5px;font-weight:600;color:var(--ink2);overflow-wrap:anywhere}
+.nd-bk-b{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.nd-bk-b i{display:block;height:100%;border-radius:4px;background:rgba(var(--story-rgb,190,242,100),.75)}
+.nd-bk-z > b{font-size:11.5px;color:var(--ink)}
+.nd-zg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:6px}
+.nd-zg-p{padding:9px;border-radius:11px;background:var(--surface);display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.nd-zg-n{display:flex;align-items:center;gap:6px;font-size:12px;min-width:0}
+.nd-zg-n b{font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.nd-zg-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 6px;align-items:center}
+.nd-zg-r span:first-child{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.nd-zg-b{grid-column:1 / -1;grid-row:2;height:7px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.nd-zg-b i{display:block;height:100%;border-radius:4px;background:rgba(194,201,208,.55)}
+.nd-zg-b i.g{background:var(--acid)}.nd-zg-b i.r{background:var(--red)}
+.nd-zg-r b{font-size:11px;color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){
+  .nd-pz,.nd-bk-z,.nd-zg-p{animation:spDa .35s ease-out both;animation-delay:calc(.15s + var(--k,0) * 40ms)}
+}
+.nd-sr .nf-ser > span{display:none}
+.nd-pz-t{display:flex;flex-direction:column;line-height:1.2}
+.nd-pz-t small{font-size:8.5px;color:var(--ink2)}
 </style>
 </head>
 <body>
@@ -4839,7 +4883,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.02.82fa1337';
+const BUILD_VERSION='2026.10.02.90265b26';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -22386,6 +22430,7 @@ function _newsBlattKopf(s){
   if(d.type === 'season_recap') return erg;
   if(d.type === 'runde') return '';
   if(d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && _newsSorte(s) === 'spiel'))){ const b = _ndBuehne(s); if(b) return b; }
+  if(_ND_SERIE[d.type]){ try { const x = _ndSerieBlatt(s); if(x) return x.kopf; } catch(e){} }
   if(!ids.length) return erg;
   if(ids.length > 1){
     const zeig = ids.slice(0, 3);
@@ -22410,9 +22455,10 @@ function _ndBuehne(s){
     return b && b.kopf ? `<div class="nd-buehne">${b.kopf}${b.fuss || ''}</div>` : '';
   } catch(e){ return ''; }
 }
-function _ndDuelle(m){
-  const F = _spFakten(m);
-  return `<div class="nd-dd">${F.gegner.slice().sort((a, b) => b.n - a.n).map((g, k) => {
+function _ndDuelle(m, nur){
+  const F = _spFakten(m), l = F.gegner.filter(g => !nur || nur(g));
+  if(!l.length) return '';
+  return `<div class="nd-dd">${l.sort((a, b) => b.n - a.n).map((g, k) => {
     const f = g.folge.slice(-12);
     return `<div class="nd-dd-z" data-pid="${esc(g.w)}" style="--k:${k}">${_spChip(g.w)}`
       + `<span class="nd-dd-n">${esc(_spName(g.w))}<i>gegen</i>${esc(_spName(g.l))}</span>`
@@ -22762,6 +22808,81 @@ function _ndEloWirkung(matchId, pids){
   } catch(e){ return ''; }
 }
 
+function _ndLauf(pid, partner, bis, n){
+  let l = _spEigene(pid, bis);
+  if(partner) l = l.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(partner) && _spSeite(y, pid) === _spSeite(y, partner));
+  return l.slice(-Math.max(1, n));
+}
+function _ndPartieListe(l, fuer){
+  return `<div class="nd-pzl">${l.map((y, k) => _ndPartieZeile(y, fuer, k, !k || tagKey(l[k - 1].created_at) !== tagKey(y.created_at))).join('')}</div>`;
+}
+function _ndPartieZeile(y, fuer, k, tagNeu){
+  const w = _spGew(y, fuer), eig = _spTeam(y, _spSeite(y, fuer)), geg = _spTeam(y, _spSeite(y, fuer) === 'A' ? 'B' : 'A');
+  const t = _spSeite(y, fuer) === 'A' ? [y.score_a, y.score_b] : [y.score_b, y.score_a];
+  return `<div class="nd-pz ${w ? 'w' : 'l'}" data-mid="${esc(y.id)}" style="--k:${k || 0}">`
+    + `<span class="nd-pz-t num">${tagNeu !== false ? `<small>${esc(datumFmt(y.created_at, 'tm'))}</small>` : ''}${esc(datumFmt(y.created_at, 'uhr'))}</span>${_spChips(eig)}`
+    + `<b class="num">${t[0]}:${t[1]}</b><span class="nd-pz-gg">gegen</span>${_spChips(geg)}</div>`;
+}
+function _ndSerieBuehne(ids, n, neg, lauf, duo){
+  const pm = pmap();
+  const gesicht = duo ? `<span class="nd-sr-duo">${ids.map(_spChip).join('')}</span>`
+    : (pm[ids[0]] ? avHtml(pm[ids[0]], '', {ins:true, px:64, feuer:0}) : '');
+  const von = lauf.length ? datumFmt(lauf[0].created_at, 'tm') : '', bis = lauf.length ? datumFmt(lauf[lauf.length - 1].created_at, 'tm') : '';
+  return `<div class="nd-buehne nd-sr${neg ? ' neg' : ''}"><div class="nd-sr-k">${gesicht}`
+    + `<div class="nd-sr-z"><b class="num">${_spZahl(n)}</b><span>${neg ? (n === 1 ? 'Niederlage' : 'Niederlagen') : (n === 1 ? 'Sieg' : 'Siege')} in Folge</span>`
+    + `<em>${esc(_namenListe(ids.map(_spName)))}</em></div></div>`
+    + _newsSerienBand(n, neg, !neg)
+    + (von ? `<div class="nd-sr-d num"><span>${esc(von)}</span><span>${esc(bis)}</span></div>` : '') + `</div>`;
+}
+function _ndPartnerBalken(pid, lauf){
+  const z = {};
+  lauf.forEach(y => { const p = _spTeam(y, _spSeite(y, pid)).find(id => id !== pid); if(p) z[p] = (z[p] || 0) + 1; });
+  const ids = Object.keys(z).sort((a, b) => z[b] - z[a]);
+  if(ids.length < 2 || z[ids[0]] < 2) return '';
+  const max = z[ids[0]];
+  return `<div class="nd-bk">${ids.map((id, k) => `<div class="nd-bk-z" data-pid="${esc(id)}" style="--k:${k}">${_spChip(id)}`
+    + `<span class="nd-bk-n">${esc(_spName(id))}</span><span class="nd-bk-b"><i style="width:${Math.round(z[id] / max * 100)}%"></i></span>`
+    + `<b class="num">${z[id]}×</b></div>`).join('')}</div>`;
+}
+function _ndZusammenGetrennt(a, b, bis){
+  const q = (pid, mit) => { const l = _spEigene(pid, bis), z = l.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(mit) && _spSeite(y, pid) === _spSeite(y, mit));
+    const o = l.filter(y => z.indexOf(y) < 0);
+    return {mit:Math.round(z.filter(y => _spGew(y, pid)).length / Math.max(1, z.length) * 100), ohne:Math.round(o.filter(y => _spGew(y, pid)).length / Math.max(1, o.length) * 100)}; };
+  const zeile = (wort, v, kl) => `<div class="nd-zg-r"><span>${wort}</span><span class="nd-zg-b"><i class="${kl}" style="width:${v}%"></i></span><b class="num">${v} %</b></div>`;
+  return `<div class="nd-zg">${[[a, b], [b, a]].map(([p, o], k) => { const x = q(p, o);
+    return `<div class="nd-zg-p" data-pid="${esc(p)}" style="--k:${k}"><div class="nd-zg-n">${_spChip(p)}<b>${esc(_spName(p))}</b></div>`
+      + zeile('zusammen', x.mit, x.mit < x.ohne ? 'r' : 'g') + zeile('mit anderen', x.ohne, '') + `</div>`; }).join('')}</div>`;
+}
+function _ndWieWeiter(pid, partner, m){
+  const l = matchesOfPlayer(pid, matches);
+  const nach = l.slice(l.indexOf(m) + 1).find(y => !partner || ([y.a1, y.a2, y.b1, y.b2].includes(partner) && _spSeite(y, pid) === _spSeite(y, partner)));
+  return nach ? _ndPartieZeile(nach, pid) : '';
+}
+function _ndSerieBlatt(s){
+  const d = s.dataRef || {}, t = d.type;
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  if(!m) return null;
+  const ab = (ti, html) => html ? `<div class="nd-section">${esc(ti)}</div>${html}` : '';
+  if(t === 'streak_killer'){
+    const lauf = _ndLauf(d.victimPid, null, m, d.streak + 1);
+    return {kopf:`<div class="nd-buehne">${_spRissBild(_spRissDaten({m, x:{victimPid:d.victimPid, streak:d.streak}}))}</div>`,
+      mitte:ab('Die Serie, die riss', _ndPartieListe(lauf, d.victimPid))
+        + ab('Die Brecher gegen ' + _spName(d.victimPid), _ndDuelle(m, g => g.l === d.victimPid))};
+  }
+  const duo = t === 'team_streak' || t === 'team_loss_streak';
+  const neg = t === 'loss_streak' || t === 'team_loss_streak';
+  const pid = duo ? d.a : d.pid, partner = duo ? d.b : null;
+  if(!pid || !d.streak) return null;
+  const lauf = _ndLauf(pid, partner, m, d.streak);
+  let marken = '';
+  if(t === 'win_streak'){ try { marken = _spSerieBild(_spSerieDaten({m:lauf[0], x:{pid, streak:d.streak}})); } catch(e){} }
+  return {kopf:_ndSerieBuehne(duo ? [d.a, d.b] : [pid], d.streak, neg, lauf, duo),
+    mitte:ab('Gegen die Bestmarken', marken)
+      + ab(neg ? 'Niederlage für Niederlage' : 'Sieg für Sieg', _ndPartieListe(lauf, pid))
+      + (duo ? ab('Zusammen und getrennt', _ndZusammenGetrennt(d.a, d.b, m)) : ab('Mit wem', _ndPartnerBalken(pid, lauf)))
+      + ab('Die nächste Partie', _ndWieWeiter(pid, partner, m))};
+}
+
 function _ndPartieAbschnitte(s){
   const d = s.dataRef || {};
   const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
@@ -22786,8 +22907,10 @@ function _ndPartieAbschnitte(s){
     + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
 }
 
+const _ND_SERIE = {win_streak:1, loss_streak:1, team_streak:1, team_loss_streak:1, streak_killer:1};
 function _newsDetailMitte(s){
   const d = s.dataRef || {};
+  if(_ND_SERIE[d.type]){ try { const x = _ndSerieBlatt(s); if(x) return x.mitte; } catch(e){} }
   const pm = pmap();
   const avM = (pid) => (typeof avHtml === 'function' && pm[pid]) ? avHtml(pm[pid]) : '';
   const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';

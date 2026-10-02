@@ -848,7 +848,9 @@ const ok = (c, msg, det) => {
       if(!x.html.trim()){ leer++; return; }
       box.innerHTML = x.html;
       // Ein Blatt ueber einen Spieler traegt sein Wappen im Kopf.
-      if(x.pids === 1 && !box.querySelector('.nd-held')) ohneKopf++;
+      // Die Bühne einer Serie oder Partie ist der Kopf, wenn sie sein
+      // Gesicht trägt [§C33].
+      if(x.pids === 1 && !box.querySelector('.nd-held') && !box.querySelector('.nd-buehne .rav, .nd-buehne .av')) ohneKopf++;
       // Und die Partie steht hoechstens einmal darin.
       const erg = box.querySelectorAll('.nd-erg').length;
       const vs  = box.querySelectorAll('.nd-match').length;
@@ -3625,13 +3627,15 @@ return JSON.stringify(funde,null,1);
       const b = document.querySelector('#nd [data-rueckblick]');
       if(!b){ res.push({id:x.id, knopf:false}); continue; }
       b.click();
-      await new Promise(r => setTimeout(r, 500));
       const sh = document.getElementById('sheet');
       const k = x.tag || x.woche;
       const [y, m, d] = k.split('-').map(Number);
       // Die Wochenkarte trägt ihre ISO-Woche („2026-W34"), der Rückblick nennt sie „KW 34".
       const soll = x.tag ? new Date(y, m - 1, d).toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'})
                          : 'KW ' + Number(k.split('-W')[1]);
+      // Das Blatt kommt nach dem Zuschieben des vorigen. Fest 500 ms zu warten
+      // war unter Last im Gesamtlauf zu kurz; gewartet wird auf den Inhalt.
+      for(let t = 0; t < 30 && sh.textContent.indexOf(soll) < 0; t++) await new Promise(r => setTimeout(r, 100));
       res.push({id:x.id, knopf:true, auf: sh.textContent.indexOf(soll) >= 0, soll});
     }
     K('closeSheet(true)');

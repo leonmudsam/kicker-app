@@ -6538,6 +6538,43 @@ ok(_bogen.ser.join() === '15,210,0-,0-',
    'der Lauf zeigt die nächste Marke als leere Felder, eine Pleitenserie hat keine',
    _bogen.ser.join(' · '));
 
+// ── Das Blatt einer Serie [§C33] ────────────────────────────────────
+// Es zeigte die Serie als Punktreihe und darunter Zahlen in Zeilen, und
+// welche Partien die Serie waren, stand nirgends. Jetzt steht jede Partie
+// des Laufs darin. Nachgerechnet an jeder Serienmarke der Ligageschichte:
+// genau so viele Zeilen, wie die Serie lang ist, jede mit dem richtigen
+// Ausgang aus Sicht des Trägers, ohne Lücke, und davor war die Serie nicht
+// schon länger. Beim Serienbruch kommt die Partie dazu, die sie beendet.
+const _serBlatt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories(), falsch = [], typen = {};
+  let n = 0;
+  const TYP = {win_streak:1, loss_streak:1, team_streak:1, team_loss_streak:1, streak_killer:1};
+  roh.filter(s => TYP[(s.dataRef||{}).type] && (s.dataRef||{}).matchId).forEach(s => {
+    const d = s.dataRef, t = d.type, m = matches.find(x => x.id === d.matchId);
+    if(!m) return;
+    n++; typen[t] = 1;
+    const html = _newsDetailBody(s);
+    const zeilen = [...html.matchAll(/class="nd-pz (w|l)" data-mid="([^"]+)"/g)].map(x => ({w:x[1] === 'w', id:x[2]}));
+    const pid = t === 'streak_killer' ? d.victimPid : (d.pid || d.a), partner = t === 'team_streak' || t === 'team_loss_streak' ? d.b : null;
+    const sieg = t === 'win_streak' || t === 'team_streak' || t === 'streak_killer';
+    const gew = y => (y.winner === 'A') === [y.a1, y.a2].includes(pid);
+    const reihe = [...matches].sort((a, b) => mts(a) - mts(b)).filter(y => [y.a1, y.a2, y.b1, y.b2].includes(pid)
+      && (!partner || ([y.a1, y.a2].includes(pid) && [y.a1, y.a2].includes(partner)) || ([y.b1, y.b2].includes(pid) && [y.b1, y.b2].includes(partner))));
+    const bis = reihe.findIndex(y => y.id === m.id);
+    const lauf = t === 'streak_killer' ? reihe.slice(bis - d.streak, bis) : reihe.slice(bis - d.streak + 1, bis + 1);
+    const soll = (t === 'streak_killer' ? lauf.concat([m]) : lauf).map(y => ({w:gew(y), id:y.id}));
+    if(JSON.stringify(zeilen.slice(0, soll.length)) !== JSON.stringify(soll) || lauf.some(y => gew(y) !== sieg))
+      falsch.push(s.id + ' Lauf');
+    const davor = reihe[reihe.indexOf(lauf[0]) - 1];
+    if(davor && gew(davor) === sieg) falsch.push(s.id + ' beginnt mitten in der Serie');
+    if(t !== 'streak_killer' && html.indexOf('<b class="num">' + d.streak + '</b><span>') < 0) falsch.push(s.id + ' ohne Zahl');
+  });
+  return {n, falsch, typen:Object.keys(typen).length};
+})())`));
+ok(_serBlatt.n >= 10 && _serBlatt.typen === 5 && _serBlatt.falsch.length === 0,
+   'das Blatt einer Serie zeigt jede Partie des Laufs, aus den rohen Partien nachgerechnet',
+   _serBlatt.falsch.slice(0, 3).join(' | ') || _serBlatt.n + ' Serienblätter aus ' + _serBlatt.typen + ' Typen');
+
 // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
 // Eine Runde ist ein Block von Partien ohne Pause über dreißig Minuten, in
 // dem nur dieselben vier gespielt haben, mindestens dreimal. Sie ist eine

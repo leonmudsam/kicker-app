@@ -640,4 +640,51 @@
   .nd-buehne{animation:spBuehne .45s cubic-bezier(.2,.9,.3,1) both}
   .nd-dd-z,.nd-tl-z,.nd-vt span{animation:spDa .35s ease-out both;animation-delay:calc(.15s + var(--k,0) * 40ms)}
 }
-@keyframes spBuehne{from{opacity:0;transform:translateY(10px) scale(.97)}}
+@keyframes spBuehne{from{opacity:0;transform:translateY(10px)}}
+
+/* ── Das Blatt einer Serie ─────────────────────────────────────────── */
+.nd-sr-k{display:flex;align-items:center;gap:12px}
+.nd-sr-z{display:flex;flex-direction:column;min-width:0}
+.nd-sr-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:40px;line-height:1;color:var(--acid)}
+.nd-sr.neg .nd-sr-z b{color:var(--red)}
+.nd-sr-z span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.nd-sr-z em{font-style:normal;font-size:13px;font-weight:600;color:var(--ink);margin-top:3px}
+.nd-sr-duo{display:flex;flex:0 0 auto}
+.nd-sr-duo .av{--av:46px;width:46px;height:46px;font-size:14px;box-shadow:0 0 0 2px var(--surface)}
+.nd-sr-duo .av+.av{margin-left:-12px}
+.nd-sr .nf-ser{margin-top:12px}
+.nd-sr-d{display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:var(--muted)}
+.nd-pzl{display:flex;flex-direction:column;gap:5px;margin-bottom:6px}
+.nd-pz{display:grid;grid-template-columns:44px auto auto auto minmax(0,1fr);align-items:center;gap:7px;padding:6px 9px;border-radius:9px;
+  background:var(--surface);box-shadow:inset 3px 0 0 rgba(190,242,100,.6);cursor:pointer}
+.nd-pz.l{box-shadow:inset 3px 0 0 rgba(240,86,106,.6)}
+.nd-pz-t{font-size:9.5px;color:var(--muted)}
+.nd-pz .sp-chips .av,.nd-bk-z > .av,.nd-zg-n .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+.nd-pz > b{font-size:12.5px;color:var(--ink)}
+.nd-pz.l > b{color:var(--ink2)}
+.nd-pz-gg{font-size:9.5px;color:var(--muted)}
+.nd-pz > .sp-chips:last-child{justify-self:start}
+.nd-bk{display:flex;flex-direction:column;gap:7px;margin-bottom:6px}
+.nd-bk-z{display:grid;grid-template-columns:auto 76px minmax(0,1fr) auto;gap:8px;align-items:center;cursor:pointer}
+.nd-bk-n{font-size:11.5px;font-weight:600;color:var(--ink2);overflow-wrap:anywhere}
+.nd-bk-b{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.nd-bk-b i{display:block;height:100%;border-radius:4px;background:rgba(var(--story-rgb,190,242,100),.75)}
+.nd-bk-z > b{font-size:11.5px;color:var(--ink)}
+.nd-zg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:6px}
+.nd-zg-p{padding:9px;border-radius:11px;background:var(--surface);display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.nd-zg-n{display:flex;align-items:center;gap:6px;font-size:12px;min-width:0}
+.nd-zg-n b{font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.nd-zg-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 6px;align-items:center}
+.nd-zg-r span:first-child{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.nd-zg-b{grid-column:1 / -1;grid-row:2;height:7px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.nd-zg-b i{display:block;height:100%;border-radius:4px;background:rgba(194,201,208,.55)}
+.nd-zg-b i.g{background:var(--acid)}.nd-zg-b i.r{background:var(--red)}
+.nd-zg-r b{font-size:11px;color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){
+  .nd-pz,.nd-bk-z,.nd-zg-p{animation:spDa .35s ease-out both;animation-delay:calc(.15s + var(--k,0) * 40ms)}
+}
+/* Die Zahl steht groß darüber; die Aufschrift des Bands sagte sie ein
+   zweites Mal. */
+.nd-sr .nf-ser > span{display:none}
+.nd-pz-t{display:flex;flex-direction:column;line-height:1.2}
+.nd-pz-t small{font-size:8.5px;color:var(--ink2)}

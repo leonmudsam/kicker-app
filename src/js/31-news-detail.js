@@ -256,6 +256,7 @@ function _newsBlattKopf(s){
   // Partie", während die Karte darüber Spielfeld, Mosaik oder Revanche trug:
   // wer sie öffnete, verlor das Bild, wegen dem er getippt hatte.
   if(d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && _newsSorte(s) === 'spiel'))){ const b = _ndBuehne(s); if(b) return b; }
+  if(_ND_SERIE[d.type]){ try { const x = _ndSerieBlatt(s); if(x) return x.kopf; } catch(e){} }
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
@@ -299,9 +300,10 @@ function _ndBuehne(s){
 // Jede Partie aus Sicht ihrer Teilnehmer: wie oft sich Sieger und
 // Verlierer als Gegner trafen, die Bilanz und die letzten zwölf, diese
 // Partie zuletzt.
-function _ndDuelle(m){
-  const F = _spFakten(m);
-  return `<div class="nd-dd">${F.gegner.slice().sort((a, b) => b.n - a.n).map((g, k) => {
+function _ndDuelle(m, nur){
+  const F = _spFakten(m), l = F.gegner.filter(g => !nur || nur(g));
+  if(!l.length) return '';
+  return `<div class="nd-dd">${l.sort((a, b) => b.n - a.n).map((g, k) => {
     const f = g.folge.slice(-12);
     return `<div class="nd-dd-z" data-pid="${esc(g.w)}" style="--k:${k}">${_spChip(g.w)}`
       + `<span class="nd-dd-n">${esc(_spName(g.w))}<i>gegen</i>${esc(_spName(g.l))}</span>`
@@ -779,6 +781,97 @@ function _ndEloWirkung(matchId, pids){
   } catch(e){ return ''; }
 }
 
+// ── Die Blätter einer Serie [§C33] ──────────────────────────────────
+// Sie zeigten die Serie als Reihe von Punkten und darunter Zahlen in
+// Zeilen („Gemeinsame Bilanz bis hierher", „Tore 411:564"), und welche
+// Partien die Serie waren, stand nirgends. Jetzt trägt die Bühne Gesicht,
+// Zahl, Lauf und Zeitraum, und darunter steht jede Partie der Serie.
+// Die Partien eines Laufs: die letzten n eigenen bis zu dieser, bei einem
+// Duo nur die gemeinsamen auf derselben Seite.
+function _ndLauf(pid, partner, bis, n){
+  let l = _spEigene(pid, bis);
+  if(partner) l = l.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(partner) && _spSeite(y, pid) === _spSeite(y, partner));
+  return l.slice(-Math.max(1, n));
+}
+// Eine Liste solcher Zeilen: der Tag steht nur an der ersten Partie des
+// Tages, zehnmal „25.08." untereinander sagt nichts.
+function _ndPartieListe(l, fuer){
+  return `<div class="nd-pzl">${l.map((y, k) => _ndPartieZeile(y, fuer, k, !k || tagKey(l[k - 1].created_at) !== tagKey(y.created_at))).join('')}</div>`;
+}
+// Eine Partie in einer Zeile aus Sicht dessen, um den es geht: Tag, die
+// eigene Seite, der Stand mit den eigenen Toren zuerst, die Gegner.
+function _ndPartieZeile(y, fuer, k, tagNeu){
+  const w = _spGew(y, fuer), eig = _spTeam(y, _spSeite(y, fuer)), geg = _spTeam(y, _spSeite(y, fuer) === 'A' ? 'B' : 'A');
+  const t = _spSeite(y, fuer) === 'A' ? [y.score_a, y.score_b] : [y.score_b, y.score_a];
+  return `<div class="nd-pz ${w ? 'w' : 'l'}" data-mid="${esc(y.id)}" style="--k:${k || 0}">`
+    + `<span class="nd-pz-t num">${tagNeu !== false ? `<small>${esc(datumFmt(y.created_at, 'tm'))}</small>` : ''}${esc(datumFmt(y.created_at, 'uhr'))}</span>${_spChips(eig)}`
+    + `<b class="num">${t[0]}:${t[1]}</b><span class="nd-pz-gg">gegen</span>${_spChips(geg)}</div>`;
+}
+function _ndSerieBuehne(ids, n, neg, lauf, duo){
+  const pm = pmap();
+  const gesicht = duo ? `<span class="nd-sr-duo">${ids.map(_spChip).join('')}</span>`
+    : (pm[ids[0]] ? avHtml(pm[ids[0]], '', {ins:true, px:64, feuer:0}) : '');
+  const von = lauf.length ? datumFmt(lauf[0].created_at, 'tm') : '', bis = lauf.length ? datumFmt(lauf[lauf.length - 1].created_at, 'tm') : '';
+  return `<div class="nd-buehne nd-sr${neg ? ' neg' : ''}"><div class="nd-sr-k">${gesicht}`
+    + `<div class="nd-sr-z"><b class="num">${_spZahl(n)}</b><span>${neg ? (n === 1 ? 'Niederlage' : 'Niederlagen') : (n === 1 ? 'Sieg' : 'Siege')} in Folge</span>`
+    + `<em>${esc(_namenListe(ids.map(_spName)))}</em></div></div>`
+    + _newsSerienBand(n, neg, !neg)
+    + (von ? `<div class="nd-sr-d num"><span>${esc(von)}</span><span>${esc(bis)}</span></div>` : '') + `</div>`;
+}
+// Wie oft jeder Partner dabei war, als Balken.
+function _ndPartnerBalken(pid, lauf){
+  const z = {};
+  lauf.forEach(y => { const p = _spTeam(y, _spSeite(y, pid)).find(id => id !== pid); if(p) z[p] = (z[p] || 0) + 1; });
+  const ids = Object.keys(z).sort((a, b) => z[b] - z[a]);
+  // Lauter „1×" sagen nichts: die Zeile kommt erst, wenn einer öfter dabei war.
+  if(ids.length < 2 || z[ids[0]] < 2) return '';
+  const max = z[ids[0]];
+  return `<div class="nd-bk">${ids.map((id, k) => `<div class="nd-bk-z" data-pid="${esc(id)}" style="--k:${k}">${_spChip(id)}`
+    + `<span class="nd-bk-n">${esc(_spName(id))}</span><span class="nd-bk-b"><i style="width:${Math.round(z[id] / max * 100)}%"></i></span>`
+    + `<b class="num">${z[id]}×</b></div>`).join('')}</div>`;
+}
+// Die Siegquote jedes der beiden mit dem anderen und mit allen übrigen
+// Partnern, bis zu dieser Partie.
+function _ndZusammenGetrennt(a, b, bis){
+  const q = (pid, mit) => { const l = _spEigene(pid, bis), z = l.filter(y => [y.a1, y.a2, y.b1, y.b2].includes(mit) && _spSeite(y, pid) === _spSeite(y, mit));
+    const o = l.filter(y => z.indexOf(y) < 0);
+    return {mit:Math.round(z.filter(y => _spGew(y, pid)).length / Math.max(1, z.length) * 100), ohne:Math.round(o.filter(y => _spGew(y, pid)).length / Math.max(1, o.length) * 100)}; };
+  const zeile = (wort, v, kl) => `<div class="nd-zg-r"><span>${wort}</span><span class="nd-zg-b"><i class="${kl}" style="width:${v}%"></i></span><b class="num">${v} %</b></div>`;
+  return `<div class="nd-zg">${[[a, b], [b, a]].map(([p, o], k) => { const x = q(p, o);
+    return `<div class="nd-zg-p" data-pid="${esc(p)}" style="--k:${k}"><div class="nd-zg-n">${_spChip(p)}<b>${esc(_spName(p))}</b></div>`
+      + zeile('zusammen', x.mit, x.mit < x.ohne ? 'r' : 'g') + zeile('mit anderen', x.ohne, '') + `</div>`; }).join('')}</div>`;
+}
+// Was nach der letzten Partie des Laufs kam: die nächste eigene Partie.
+function _ndWieWeiter(pid, partner, m){
+  const l = matchesOfPlayer(pid, matches);
+  const nach = l.slice(l.indexOf(m) + 1).find(y => !partner || ([y.a1, y.a2, y.b1, y.b2].includes(partner) && _spSeite(y, pid) === _spSeite(y, partner)));
+  return nach ? _ndPartieZeile(nach, pid) : '';
+}
+function _ndSerieBlatt(s){
+  const d = s.dataRef || {}, t = d.type;
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  if(!m) return null;
+  const ab = (ti, html) => html ? `<div class="nd-section">${esc(ti)}</div>${html}` : '';
+  if(t === 'streak_killer'){
+    const lauf = _ndLauf(d.victimPid, null, m, d.streak + 1);
+    return {kopf:`<div class="nd-buehne">${_spRissBild(_spRissDaten({m, x:{victimPid:d.victimPid, streak:d.streak}}))}</div>`,
+      mitte:ab('Die Serie, die riss', _ndPartieListe(lauf, d.victimPid))
+        + ab('Die Brecher gegen ' + _spName(d.victimPid), _ndDuelle(m, g => g.l === d.victimPid))};
+  }
+  const duo = t === 'team_streak' || t === 'team_loss_streak';
+  const neg = t === 'loss_streak' || t === 'team_loss_streak';
+  const pid = duo ? d.a : d.pid, partner = duo ? d.b : null;
+  if(!pid || !d.streak) return null;
+  const lauf = _ndLauf(pid, partner, m, d.streak);
+  let marken = '';
+  if(t === 'win_streak'){ try { marken = _spSerieBild(_spSerieDaten({m:lauf[0], x:{pid, streak:d.streak}})); } catch(e){} }
+  return {kopf:_ndSerieBuehne(duo ? [d.a, d.b] : [pid], d.streak, neg, lauf, duo),
+    mitte:ab('Gegen die Bestmarken', marken)
+      + ab(neg ? 'Niederlage für Niederlage' : 'Sieg für Sieg', _ndPartieListe(lauf, pid))
+      + (duo ? ab('Zusammen und getrennt', _ndZusammenGetrennt(d.a, d.b, m)) : ab('Mit wem', _ndPartnerBalken(pid, lauf)))
+      + ab('Die nächste Partie', _ndWieWeiter(pid, partner, m))};
+}
+
 // ── Was unter der Bühne einer Partie steht [§C33] ──────────────────
 // Zeichnungen in fester Folge, jede nur, wo die Bühne sie nicht schon zeigt:
 // die Aufstellung, die Siegchance auf ihrer Skala, die Elo-Wirkung je
@@ -815,8 +908,10 @@ function _ndPartieAbschnitte(s){
     + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
 }
 
+const _ND_SERIE = {win_streak:1, loss_streak:1, team_streak:1, team_loss_streak:1, streak_killer:1};
 function _newsDetailMitte(s){
   const d = s.dataRef || {};
+  if(_ND_SERIE[d.type]){ try { const x = _ndSerieBlatt(s); if(x) return x.mitte; } catch(e){} }
   const pm = pmap();
   const avM = (pid) => (typeof avHtml === 'function' && pm[pid]) ? avHtml(pm[pid]) : '';
   const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';
