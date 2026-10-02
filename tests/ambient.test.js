@@ -1675,6 +1675,13 @@ const _kopfN = JSON.parse(K.eval(`JSON.stringify((function(){
       return;
     }
     const kopf = _newsBlattKopf(s);
+    // Eine Partie trägt ihre Bühne als Kopf [§C33]: dort steht jeder
+    // Genannte mit Namen, in der Zeichnung oder darunter.
+    if(kopf.indexOf('nd-buehne') >= 0){
+      const fehlt = ids.filter(x => kopf.indexOf(esc(pmap()[x].name)) < 0);
+      if(fehlt.length) falsch.push(s.title + ' → Bühne ohne ' + fehlt.map(x => pmap()[x].name).join(', '));
+      return;
+    }
     // Gezaehlt wird am Markup: wie viele Gesichter stehen da, und steht der
     // Chip mit dem Rest daneben?
     const nAv = (kopf.match(/class="rav zn"/g) || []).length;
@@ -2621,7 +2628,9 @@ const _sam = JSON.parse(K.eval(`JSON.stringify((function(){
     teile.forEach(t => {
       if(obenTitel === norm(t.titel) || obenText === norm(t.text)) kopfKopie++;
     });
-    if(labels.length !== teile.length) unvollstaendig++;
+    // Im Bündel einer Partie ist die Partie die Bühne und keine Zeile.
+    const buehne = b.indexOf('nd-buehne') >= 0 ? teile.filter(t => (t.typ || t.type) === 'spiel').length : 0;
+    if(labels.length !== teile.length - buehne) unvollstaendig++;
     if(b.indexOf('nw-zeile-kopf-teil') >= 0) markiert++;
     // Der Text der Karte darf nicht die Schlagzeilen aller Zeilen sein.
     const alle = (x.dataRef.teile||[]).map(t => norm(t.titel));

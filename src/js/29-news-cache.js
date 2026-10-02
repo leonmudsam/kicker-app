@@ -1346,6 +1346,10 @@ function _consolidateStories(list){
         badge_marken:'Auszeichnung',
         milestone_goals:'Tormarke', milestone_elo:'Elo-Sprung',
         jubilee:'Jubiläum', rivalry_milestone:'Rivalitätsmarke',
+        // Ohne Namen hiess ein Bündel aus Partie und Rivalität „Ein Spiel,
+        // zwei Geschichten für Leon, Leo und Maxi" — die Schlagzeile, die
+        // für jeden Spieltag gilt.
+        rivalry:'Rivalität',
         // Die drei seltenen Wechsel tragen ihren eigenen Namen. Ohne sie
         // hiess eine Breaking-Karte „Ein Spiel, zwei Geschichten" und
         // verschwieg genau das, was sie besonders macht.
@@ -1425,7 +1429,7 @@ function _consolidateStories(list){
       const _eigene = t => {
         const dt = (t && t.dataRef) || {};
         if(dt.type === 'streak_killer' && dt.victimPid) return {wort:'gegen', pids:[dt.victimPid]};
-        if(dt.type === 'rivalry_milestone' && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
+        if((dt.type === 'rivalry_milestone' || dt.type === 'rivalry') && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
         if(dt.type === 'top_clash' && dt.p1 && dt.p2) return {wort:'zwischen', pids:[dt.p1, dt.p2]};
         if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
         if(dt.type === 'badge_unlocked' && dt.playerId) return {wort:'für', pids:[dt.playerId]};
@@ -1485,25 +1489,20 @@ function _consolidateStories(list){
       // Feeds und nennt keine Zahl aus dem Spiel. Der Stand steht im Band
       // darueber, die Siegchance und die Elo-Wirkung nirgends sonst — sie
       // sagen, wie erwartbar das Ergebnis war und was es bewegt hat.
-      const ds = (teile.find(t => (t.dataRef || {}).type === 'spiel') || {}).dataRef || {};
-      const nf = Math.max(1, teile.length - (ds.type === 'spiel' ? 1 : 0));
+      // ── Der Text ist der Satz der Partie ────────────────────────────
+      // Er hiess „Die Siegchance lag vor dem Anstoß bei 50 %, für Leo bringt
+      // der Sieg +31 Elo. Eine Meldung hängt daran." — unter jedem Bündel
+      // dieselben zwei Zahlen, die die Zeichnung darüber zeigt, und ein Satz
+      // über den Bau der Karte. Die Partie-Karte hat ihren eigenen Satz aus
+      // ihrer Form oder ihrem Anlass [§C33], und der gehört auch dem Bündel.
+      const spTeil = teile.find(t => (t.dataRef || {}).type === 'spiel');
+      const ds = (spTeil || {}).dataRef || {};
+      const nf = Math.max(1, teile.length - (spTeil ? 1 : 0));
       const folge = nf === 1
         ? 'Eine Meldung hängt daran'
         : `${(x => x.charAt(0).toUpperCase() + x.slice(1))(_zahlwortDe(nf))} Meldungen hängen daran`;
       if(ds.quote != null){
-        // Die Anlaesse stehen schon in der Schlagzeile, also zaehlt der Satz
-        // sie nicht noch einmal. Er nennt die zwei Zahlen, die jede Partie
-        // hat und die sonst nirgends stehen: wie erwartbar der Sieg war und
-        // was er bewegt hat.
-        // Der Elo-Gewinn gehoert EINEM der beiden Sieger und nicht der
-        // Partie: gemessen tragen nur 24 der 466 Partien fuer beide dieselbe
-        // Zahl, und der Abstand geht bis 38 Elo. Kennt eine aeltere Zeile den
-        // Traeger nicht, bleibt die Zahl weg — eine Behauptung ueber zwei
-        // Leute ist schlimmer als eine Zahl weniger.
-        const eloNm = ds.eloPid ? nameOf(ds.eloPid) : '';
-        neuText = `Die Siegchance lag vor dem Anstoß bei ${ds.quote} %`
-          + (ds.elo && eloNm ? `, für ${eloNm} bringt der Sieg +${ds.elo} Elo` : '') + '.'
-          + (motive.length ? '' : ` ${folge}.`);
+        neuText = spTeil.desc || '';
       } else if(brkBundle){
         neuText = `${folge}, und jede davon kommt nur wenige Male je Saison.`;
       } else {

@@ -1447,8 +1447,9 @@ const ok = (c, msg, det) => {
     const K = window.__k.eval.bind(window.__k);
     return JSON.parse(K(`JSON.stringify((function(){
       const pm = pmap(), name2id = {}; Object.keys(pm).forEach(id => { name2id[pm[id].name] = id; });
-      const karten = getStoriesCache().filter(s => (s.dataRef||{}).type === 'spiel' && (s.dataRef||{}).matchId);
-      const falsch = []; let n = 0, duelle = 0;
+      const karten = getStoriesCache().filter(s => (s.dataRef||{}).matchId
+        && ((s.dataRef||{}).type === 'spiel' || ((s.dataRef||{}).type === 'sammel' && _newsSorte(s) === 'spiel')));
+      const falsch = []; let n = 0, duelle = 0, buendel = 0;
       const host = document.createElement('div'); host.style.width = '360px'; document.body.appendChild(host);
       karten.forEach(s => {
         const m = matches.find(x => x.id === s.dataRef.matchId); if(!m) return;
@@ -1457,7 +1458,9 @@ const ok = (c, msg, det) => {
         const b = host.querySelector('.nd-buehne');
         if(!b || html.indexOf(kopf) < 0) falsch.push(s.id + ' ohne Bühne');
         if(host.querySelector('.nd-erg, .nd-held')) falsch.push(s.id + ' Stand oder Wappen doppelt');
-        if(/besonders macht|gewinnen diese Partie/.test(host.textContent)) falsch.push(s.id + ' erklärt');
+        if(/besonders macht|gewinnen diese Partie|Siegchance lag|hängt daran|hängen daran/.test(host.textContent + ' ' + s.desc)) falsch.push(s.id + ' erklärt');
+        if(s.dataRef.type === 'sammel'){ buendel++;
+          if(s.dataRef.teile.filter(t => (t.typ || t.type) !== 'spiel').length !== host.querySelectorAll('.nw-zeile').length) falsch.push(s.id + ' Bündelzeilen'); }
         const chanceOben = /class="(sp-fk )?(sp-feld|sp-ta|sp-sd|sp-wp)/.test(kopf);
         if(chanceOben && host.querySelector('.nd-chance')) falsch.push(s.id + ' Siegchance doppelt');
         if(/class="(sp-fk )?sp-et/.test(kopf) && host.querySelector('.nd-elo')) falsch.push(s.id + ' Elo doppelt');
@@ -1475,12 +1478,12 @@ const ok = (c, msg, det) => {
         });
       });
       host.remove();
-      return {n, duelle, falsch};
+      return {n, duelle, falsch, buendel};
     })())`));
   });
-  ok(partieBlatt.n > 20 && partieBlatt.duelle > 40 && partieBlatt.falsch.length === 0,
-     'das Blatt einer Partie trägt die Zeichnung ihrer Karte als Bühne und darunter nichts, was die Bühne schon zeigt, die Duelle aus den rohen Partien',
-     partieBlatt.falsch.slice(0, 3).join(' | ') || partieBlatt.n + ' Blätter, ' + partieBlatt.duelle + ' Duelle');
+  ok(partieBlatt.n > 20 && partieBlatt.buendel > 5 && partieBlatt.duelle > 40 && partieBlatt.falsch.length === 0,
+     'das Blatt einer Partie und ihres Bündels trägt die Zeichnung der Karte als Bühne, darunter was daran hängt und nichts, was die Bühne schon zeigt, die Duelle aus den rohen Partien',
+     partieBlatt.falsch.slice(0, 3).join(' | ') || partieBlatt.n + ' Blätter, davon ' + partieBlatt.buendel + ' Bündel, ' + partieBlatt.duelle + ' Duelle');
   ok(spielBlatt.skala, 'das Blatt einer Partie zeigt die Siegchance als Skala');
   ok(spielBlatt.fuellDrin,
      'ihr Balken bleibt in seiner Bahn',
