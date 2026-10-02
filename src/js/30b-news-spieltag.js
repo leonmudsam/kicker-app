@@ -12,11 +12,13 @@
 //   Spitzenwechsel,      die Monatstabelle vor und nach der Partie
 //   Rangsprung
 //   Serie                der Lauf gegen den eigenen Bestwert und die Liga
-//   Serienbruch          die gerissene Kette und wer sie gerissen hat
+//   Serienbruch          der gerissene Lauf und wer ihn beendet hat
 //   Teamserie            der Lauf des Duos und seine Bilanz als Ring
 //   Wende                die Elo-Kurve der letzten zwölf Partien
 //   Rivalität            jede Begegnung der beiden als Balken
-//   Auszeichnung         die Medaille und wer sie in der Liga trägt
+//   seltene Auszeichnung die Medaille und wer sie in der Liga trägt
+//   Premiere             der erste gemeinsame Sieg eines Duos und der Versuch
+//   Rollentausch         ein Sieg auf der ungewohnten Seite und ihr Anteil
 //   Spieler des Tages    die Tagesbahn und die Elo über den Tag
 //   dieselben Vier       eine Karte für die ganze Runde
 //
@@ -156,6 +158,20 @@ function _spChance(m){
 // Bild einer Wende, von der die Karte gar nicht erzählt. Eine seltene oder
 // legendäre Auszeichnung steht vor allem außer der Tabellenspitze: die
 // Schlagzeile nennt sie zuerst.
+//
+// DIE MEDAILLE GEHÖRT DEM SELTENEN. Sie stand auch für jede gewöhnliche
+// Auszeichnung und jede runde Marke, und gemessen trug damit jede dritte
+// Partie-Karte eines Spieltags dieselbe Medaille — auf einem 10:9 der
+// „Zittersieg", obwohl die Anzeigetafel genau das zeigt. Eine gewöhnliche
+// Auszeichnung steht als Zeile im Sammelband; und was eine Auszeichnung nur
+// als Ergebnis erzählt (`SP_ERGEBNIS_BADGE`, dieselbe Liste wie
+// `BADGE_DECKT`), zeigt das Bild des Ergebnisses.
+//
+// DER RANGSPRUNG BRAUCHT EINE TABELLE. Am Monatsanfang springt jeder Sieger
+// zwei Plätze, weil die Tabelle aus drei Leuten besteht — gemessen trug am
+// ersten Spieltag eines Monats jede zweite Karte die Tabelle. Er zählt erst,
+// wenn die Rangliste belastbar ist (`_storyRangFrei`), wie der Spitzenwechsel.
+const SP_ERGEBNIS_BADGE = new Set(['perfect_win', 'upset_king', 'krimi', 'nerves_of_steel', 'nail_biter']);
 function _spAnlass(s){
   const d = s.dataRef || {};
   const m = d.matchId ? _spMatch(d.matchId) : null;
@@ -166,21 +182,24 @@ function _spAnlass(s){
   const diff = Math.abs(m.score_a - m.score_b);
   let x;
   if((x = f('lead_change')) && x.newLeader) return {key:'spitze', m, x};
-  if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary'))) && x.badgeId)
+  if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary')
+      && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
     return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
   if((x = f('streak_killer')) && x.victimPid) return {key:'riss', m, x};
   if((x = f('win_streak')) && x.streak) return {key:'serie', m, x};
   if((x = f('team_streak')) && x.streak && x.a && x.b) return {key:'teamserie', m, x};
   if(c != null && c < CHANCE_UPSET) return {key:'aussenseiter', m, c};
   if((x = f('rivalry_milestone')) && x.a && x.b) return {key:'duell', m, x};
-  if((x = f('badge_unlocked')) && x.badgeId) return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
-  if((x = f('badge_marken')) && Array.isArray(x.marken) && x.marken.length) return {key:'medaille', m, x:x.marken[0]};
+  if((x = _spPremiereDaten(m))) return {key:'premiere', m, x};
   const wende = _spSieger(m).map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
     .filter(w => w.n >= 3).sort((a, b) => b.n - a.n)[0];
   if(wende) return {key:'wende', m, x:wende};
-  const sprung = _spSieger(m).map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
-    .filter(w => w.r && w.r.pre - w.r.post >= 2);
+  let frei = false;
+  try { frei = _storyRangFrei(seasonOf(m.created_at).id, mts(m)).frei; } catch(e){}
+  const sprung = frei ? _spSieger(m).map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
+    .filter(w => w.r && w.r.pre - w.r.post >= 2) : [];
   if(sprung.length) return {key:'rang', m, x:sprung};
+  if((x = _spRolleDaten(m))) return {key:'rolle', m, x};
   if(diff === 1) return {key:'krimi', m, c};
   if(diff >= 6) return {key:'deutlich', m};
   return {key:'feld', m, c};
@@ -195,6 +214,8 @@ const SP_ANLASS = {
   duell:       {name:'Rivalität',       kurz:'Rivalität',   ic:'crossedSwords'},
   medaille:    {name:'Auszeichnung',    kurz:'Marke',       ic:'medal'},
   rang:        {name:'Rangsprung',      kurz:'Sprung',      ic:'stepsUp'},
+  premiere:    {name:'Premiere',        kurz:'Premiere',    ic:'handshake'},
+  rolle:       {name:'Rollentausch',    kurz:'Rolle',       ic:'posSwap'},
   krimi:       {name:'Ein-Tor-Krimi',   kurz:'Krimi',       ic:'thriller'},
   deutlich:    {name:'Klarer Sieg',     kurz:'Klar',        ic:'target'},
   feld:        {name:'Ergebnis',        kurz:'',            ic:'ball'}
@@ -218,7 +239,16 @@ function _spZeileBild(d){
 function _spBandBild(d){
   const s = (ids, w, re) => `<div class="sp-band-s${w ? ' w' : ''}${re ? ' re' : ''}"><span class="sp-band-avs">`
     + `${ids.map(id => _spWappen(id, 48)).join('')}</span><span class="sp-z-n">${_spStapel(ids)}</span></div>`;
-  return `<div class="sp-band">${s(d.A, d.aw)}<div class="sp-band-sc num">${_spStand(d)}</div>${s(d.B, !d.aw, true)}</div>`;
+  // Die Mitte zeigt den Abstand, denn um ihn geht es: der Stand groß, der
+  // Sieger hell, darunter je Tor des Siegers ein Feld — so viele, wie die
+  // Gegenseite auch geschossen hat, leise, und der Abstand hell. Der Stand
+  // stand allein und kursiv da: `_spStand` baut ihn aus `<em>`, und hier
+  // fehlte die Regel, die das aufhebt.
+  const hoch = Math.max(d.sa, d.sb), tief = Math.min(d.sa, d.sb);
+  const felder = hoch <= 20 ? Array.from({length:hoch}, (_, i) => `<i class="${i < tief ? '' : 'a'}" style="--i:${i}"></i>`).join('') : '';
+  return `<div class="sp-band">${s(d.A, d.aw)}<div class="sp-band-m"><div class="sp-band-sc num">${_spStand(d)}</div>`
+    + (felder ? `<span class="sp-band-g">${felder}</span>` : '')
+    + `<span class="sp-band-d num">+${_spZahl(hoch - tief)}</span></div>${s(d.B, !d.aw, true)}</div>`;
 }
 
 // ── Das Spielfeld: die gewöhnliche Partie ────────────────────────────
@@ -428,23 +458,94 @@ function _spSerieBild(d){
     <div class="sp-sl-ms">${legende}</div></div>`;
 }
 
-// ── Die gerissene Kette: der Serienbruch ─────────────────────────────
-// Die Serie war die Leistung des anderen, also steht sie als Kette aus
-// Siegen da und an ihrem Ende der Riss in Rot [§C25]; hinter dem Riss die,
-// die ihn gesetzt haben. Bis zwanzig Glieder einzeln, darüber geschlossen.
-function _spRissDaten(a){ return {opfer:a.x.victimPid, laenge:a.x.streak, brecher:_spSieger(a.m)}; }
+// ── Der gerissene Lauf: der Serienbruch ──────────────────────────────
+// Die Serie war die Leistung des anderen, also steht sie groß da: die Zahl,
+// rot durchgestrichen [§C25], daneben wer sie getragen hat und ob sie sein
+// Bestwert war, und darunter derselbe Lauf wie bei einer laufenden Serie
+// [§C27] — ein Feld je Sieg, am Ende das rote Feld der Partie, die ihn
+// beendet hat. Es war eine Kette aus Gliedern mit einem gezackten Strich am
+// Ende: eine eigene Bildsprache für dieselbe Serie, die eine Karte weiter
+// als Lauf steht, und der Strich las sich als Kratzer. Bis zwanzig Felder
+// einzeln, darüber ein Balken.
+function _spRissDaten(a){
+  const v = _spBasis().vor.get(a.m.id) || {best:{}};
+  return {opfer:a.x.victimPid, laenge:a.x.streak, brecher:_spSieger(a.m), eig:v.best[a.x.victimPid] || 0};
+}
 function _spRissBild(d){
   const n = Math.max(1, d.laenge), einzeln = n <= 20;
-  const breite = 228, w = einzeln ? breite / n : breite;
-  const glieder = einzeln
-    ? Array.from({length:n}, (_, i) => `<rect class="sp-rk-g${i % 2 ? ' q' : ''}" x="${(i * w + 1.5).toFixed(1)}" y="${i % 2 ? 19 : 13}" `
-        + `width="${Math.max(2, w + 3).toFixed(1)}" height="${i % 2 ? 8 : 20}" rx="${i % 2 ? 4 : 7}" style="--i:${i}"/>`).join('')
-    : `<rect class="sp-rk-g" x="1.5" y="13" width="${breite}" height="20" rx="10"/>`;
-  return `<div class="sp-rk"><svg viewBox="0 0 300 46" aria-hidden="true">${glieder}`
-    + `<path class="sp-rk-x" d="M${breite + 12} 9l7 9-6 3 8 14M${breite + 22} 8l-3 10 6 2-4 15"/></svg>`
-    + `<div class="sp-rk-u"><span class="sp-rk-o">${_spChip(d.opfer)}<em class="num">${_spZahl(n)} Siege</em></span>`
-    + `<span class="sp-rk-b">${_spChips(d.brecher)}</span></div>`
+  const lauf = einzeln
+    ? Array.from({length:n}, (_, i) => `<i class="w" style="--i:${i}"></i>`).join('')
+    : `<i class="w sp-rk-voll" style="--i:0"></i>`;
+  const best = d.eig > n ? `eigener Bestwert ${_spZahl(d.eig)}` : d.eig === n ? 'der eigene Bestwert' : '';
+  return `<div class="sp-rk"><div class="sp-rk-k">`
+    + `<span class="sp-rk-z"><b class="num">${_spZahl(n)}</b><s></s></span>`
+    + `<span class="sp-rk-t">${_spChip(d.opfer)}<span><em>Siege in Folge</em>${best ? `<small>${best}</small>` : ''}</span></span>`
+    + `<span class="sp-rk-b"><small>beendet</small>${_spChips(d.brecher)}</span></div>`
+    + `<div class="sp-rk-r${einzeln ? '' : ' balken'}" style="--n:${einzeln ? n : 1}">${lauf}<i class="x" style="--i:${einzeln ? n : 1}">${svgI('x')}</i></div>`
     + _spUnter(`${_spZahl(n)} Siege in Folge von ${_spNb(d.opfer)}, beendet von ${_spUnd(d.brecher)}.`) + `</div>`;
+}
+
+// ── Die Premiere: zwei, die zum ersten Mal zusammen gewinnen ─────────
+// Ein Duo, das zum ersten Mal zusammen spielt und gewinnt, oder eins, das
+// nach mehreren Versuchen den ersten gemeinsamen Sieg holt. Die Zahl ist der
+// Versuch: wie viele gemeinsame Partien es dafür gebraucht hat, als Lauf aus
+// roten Feldern und dem grünen am Ende — derselbe Lauf wie bei Serie und
+// Serienbruch [§C27]. Gezählt wird erst ab dem dritten Versuch: ein Sieg im
+// zweiten ist keine Geschichte.
+function _spPremiereDaten(m){
+  const [A, B] = _spSieger(m);
+  if(!A || !B) return null;
+  const zusammen = _spEigene(A, m).filter(x => x !== m && [x.a1, x.a2, x.b1, x.b2].includes(B)
+    && _spSeite(x, A) === _spSeite(x, B));
+  if(zusammen.some(x => _spGew(x, A))) return null;
+  if(zusammen.length && zusammen.length < 2) return null;
+  return {A, B, versuch:zusammen.length + 1};
+}
+function _spPremiereBild(d){
+  const n = d.versuch, lauf = n <= 20
+    ? Array.from({length:n - 1}, (_, i) => `<i class="l" style="--i:${i}"></i>`).join('') + `<i class="w" style="--i:${n - 1}"></i>`
+    : `<i class="l sp-pm-voll" style="--i:0"></i><i class="w" style="--i:1"></i>`;
+  const was = n === 1 ? `<b class="num">1.</b><span><em>gemeinsame Partie</em><small>und gleich gewonnen</small></span>`
+    : `<b class="num">${_spZahl(n)}.</b><span><em>Versuch</em><small>der erste gemeinsame Sieg</small></span>`;
+  return `<div class="sp-pm"><div class="sp-pm-k"><span class="sp-pm-d">${_spChip(d.A)}<i>${svgI('handshake')}</i>${_spChip(d.B)}</span>`
+    + `<span class="sp-pm-t">${was}</span></div>`
+    + (n > 1 ? `<div class="sp-pm-r" style="--n:${n <= 20 ? n : 2}">${lauf}</div>` : '')
+    + _spUnter(n === 1 ? `${_spUnd([d.A, d.B])} spielen zum ersten Mal zusammen.`
+      : `${_spUnd([d.A, d.B])} gewinnen zum ersten Mal zusammen, nach ${_spZahl(n - 1)} Niederlagen zu zweit.`) + `</div>`;
+}
+
+// ── Der Rollentausch: ein Sieg auf der ungewohnten Seite ──────────────
+// Wer fast immer hinten steht und vorn gewinnt, hat etwas anderes gezeigt
+// als sonst. Die Zahl ist der Anteil der Rolle an der eigenen Laufbahn bis
+// zu dieser Partie, gezeichnet wie der Strahl im Positions-Profil [§C27]:
+// Sturm von links, Abwehr von rechts, und die heutige Seite trägt die Marke.
+// Erst ab zwanzig Partien und unter einem Viertel — vorher ist keine Seite
+// gewohnt.
+function _spRolleDaten(m){
+  let best = null;
+  _spSieger(m).forEach(pid => {
+    const r = m[(m.a1 === pid ? 'a1' : m.a2 === pid ? 'a2' : m.b1 === pid ? 'b1' : 'b2') + '_pos'];
+    const vor = _spEigene(pid, m).filter(x => x !== m);
+    if(vor.length < 20) return;
+    const rolle = x => x[(x.a1 === pid ? 'a1' : x.a2 === pid ? 'a2' : x.b1 === pid ? 'b1' : 'b2') + '_pos'];
+    const dort = vor.filter(x => rolle(x) === r);
+    const anteil = dort.length / vor.length;
+    if(anteil >= 0.25 || (best && best.anteil <= anteil)) return;
+    best = {pid, r, anteil, dort:dort.length, alle:vor.length, w:dort.filter(x => _spGew(x, pid)).length};
+  });
+  return best;
+}
+function _spRolleBild(d){
+  const sturm = d.r === 'atk' ? d.anteil : 1 - d.anteil;
+  const pct = v => Math.round(v * 100);
+  const name = d.r === 'atk' ? 'Sturm' : 'Abwehr';
+  return `<div class="sp-ro"><div class="sp-ro-k">${_spChip(d.pid)}<span><em>heute im ${name}</em>`
+    + `<small>${_spZahl(d.dort)} von ${_spZahl(d.alle)} Partien vorher dort</small></span>`
+    + `<b class="num">${_spZahl(pct(d.anteil))} %</b></div>`
+    + `<div class="sp-ro-s"><i class="atk${d.r === 'atk' ? ' heute' : ''}" style="width:${(sturm * 100).toFixed(1)}%"></i>`
+    + `<i class="def${d.r === 'def' ? ' heute' : ''}"></i></div>`
+    + `<div class="sp-ro-l"><span>Sturm ${_spZahl(pct(sturm))} %</span><span>Abwehr ${_spZahl(100 - pct(sturm))} %</span></div>`
+    + _spUnter(`${_spNb(d.pid)} steht sonst selten im ${name} und gewinnt dort. Bilanz dort vorher ${_spZahl(d.w)}:${_spZahl(d.dort - d.w)}.`) + `</div>`;
 }
 
 // ── Das Duo: der Lauf zu zweit und die gemeinsame Bilanz als Ring ─────
@@ -581,14 +682,15 @@ const SP_KOPF = {
   feld:a => _spFeldBild(_spFeldDaten(a)), krimi:a => _spTafelBild(_spTafelDaten(a)),
   aussenseiter:a => _spWippeBild(_spWippeDaten(a)), deutlich:a => _spBandBild(_spZeileDaten(a.m)),
   spitze:_spZeile, rang:_spZeile, serie:_spZeile, wende:_spZeile, duell:_spZeile,
-  riss:_spZeile, teamserie:_spZeile, medaille:_spZeile
+  riss:_spZeile, teamserie:_spZeile, medaille:_spZeile, premiere:_spZeile, rolle:_spZeile
 };
 const SP_FUSS = {
   krimi:a => _spNervenBild(_spNervenDaten(a)), deutlich:a => _spVerteilungBild(_spVerteilungDaten(a)),
   spitze:a => _spTabelleBild(_spTabelleDaten(a, true)), rang:a => _spTabelleBild(_spTabelleDaten(a, false)),
   serie:a => _spSerieBild(_spSerieDaten(a)), wende:a => _spKurveBild(_spKurveDaten(a)),
   duell:a => _spDuellBild(_spDuellDaten(a)), riss:a => _spRissBild(_spRissDaten(a)),
-  teamserie:a => _spDuoBild(_spDuoDaten(a)), medaille:a => _spMedailleBild(_spMedailleDaten(a))
+  teamserie:a => _spDuoBild(_spDuoDaten(a)), medaille:a => _spMedailleBild(_spMedailleDaten(a)),
+  premiere:a => _spPremiereBild(a.x), rolle:a => _spRolleBild(a.x)
 };
 const SP_ZEIGT = {feld:{chance:true, elo:true}, krimi:{chance:true}, aussenseiter:{chance:true}};
 // Gemerkt je Datenstand und Karte: der Feed zeichnet sich bei jedem Filter,
@@ -603,13 +705,20 @@ function _spBild(s){
   if(alt && alt.pl === players) return alt;
   let r = {kopf:'', fuss:'', zeigt:{}, key:'', pl:players};
   try {
-    const a = _spAnlass(s);
+    let a = _spAnlass(s);
     if(a.key){
-      r = {key:a.key, kopf:SP_KOPF[a.key](a) || _newsErgebnisBand(a.m.id),
-           fuss:(SP_FUSS[a.key] ? SP_FUSS[a.key](a) : '') || '', zeigt:SP_ZEIGT[a.key] || {}, pl:players};
-      if(a.key === 'feld' || a.key === 'krimi' || a.key === 'aussenseiter'){
-        if(a.c == null) r.zeigt = Object.assign({}, r.zeigt, {chance:false});
+      // Die Ergebniszeile über einer Grafik wechselt sich mit dem Spielfeld
+      // ab, Partie um Partie in Spielreihenfolge: elf Anlässe trugen alle
+      // dieselbe Zeile als Kopf, und das Spielfeld stand nur, wo sonst
+      // nichts war — an einem Spieltag mit lauter Anlässen gar nicht.
+      let kopf = SP_KOPF[a.key], zeigt = SP_ZEIGT[a.key] || {};
+      if(kopf === _spZeile && _spBasis().idx.get(a.m.id) % 2 === 0){
+        kopf = SP_KOPF.feld; zeigt = SP_ZEIGT.feld;
+        a = Object.assign({}, a, {c:a.c != null ? a.c : _spChance(a.m)});
       }
+      r = {key:a.key, kopf:kopf(a) || _newsErgebnisBand(a.m.id),
+           fuss:(SP_FUSS[a.key] ? SP_FUSS[a.key](a) : '') || '', zeigt, pl:players};
+      if(zeigt.chance && a.c == null) r.zeigt = Object.assign({}, r.zeigt, {chance:false});
     }
   } catch(e){
     r = {kopf:'', fuss:'', zeigt:{}, key:'', pl:players};
@@ -725,24 +834,48 @@ function _spRundeZeile(mid, i, imBlatt){
     + (a && a.kurz ? `<span class="sp-rd-a">${svgI(a.ic)}<span>${esc(a.kurz)}</span></span>` : '<span></span>')
     + `</div>`;
 }
-// Die Karte: oben die Tabelle der Runde, darunter die Schlagzeile und jede
-// Partie kurz in einer Zeile. Höchstens acht Partien stehen als Zeile, der
-// Rest als Zahl darunter — keine wird versteckt: das Blatt zeigt alle.
-const RUNDE_ZEILEN = 8;
+// Die Karte ist eine ZUSAMMENFASSUNG, und sie sagt es. Sie trug die Tabelle,
+// die Schlagzeile und darunter jede Partie als Zeile mit vier Wappen — und
+// genau diese Partien stehen direkt darunter als eigene Karten: wer scrollte,
+// las jedes Spiel zweimal, und was die Runde ist, stand nirgends. Jetzt nennt
+// eine Kennzeile, was hier zusammengefasst wird, die Tabelle steht als eine
+// Reihe aus vier Feldern, und die Partien nur noch als Streifen aus Uhrzeit und
+// Stand — die Wappen und den Anlass trägt jede Partie auf ihrer eigenen Karte.
+// Die Fläche ist leiser und ohne Schein: die Karte erzählt nichts Neues,
+// sie bündelt. Das Motiv bleibt — jede Karte trägt ihres [§C27]. Das Blatt
+// zeigt alles.
+// Die Tabelle der Runde in einer Reihe: vier Felder, der Sieger vorn. Ein
+// Name steht nur, wenn er in ein Viertel der Breite passt [§C33]; sonst
+// nennt die Kennzeile darüber alle vier.
+function _spRundeKurz(sp){
+  if(!sp || sp.length < 2) return '';
+  const allein = sp[0].w > sp[1].w;
+  const namen = _spPasst(sp.map(x => x.id), 9);
+  return `<div class="sp-rq">${sp.map((x, i) => `<div class="sp-rq-f${i === 0 && allein ? ' erst' : ''}" style="--i:${i}">`
+    + `${_spChip(x.id)}${namen ? `<span class="sp-rq-n">${esc(_spName(x.id))}</span>` : ''}`
+    + `<span class="sp-rq-wl num">${_spZahl(x.w)}:${_spZahl(x.l)}</span>`
+    + `<em class="num ${x.e >= 0 ? 'g' : 'r'}">${_spVz(x.e)}</em></div>`).join('')}</div>`;
+}
+function _spRundeStreifen(ids){
+  return `<div class="sp-rs">${ids.map((mid, i) => {
+    const m = _spMatch(mid);
+    if(!m) return '';
+    const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+    return `<span class="sp-rs-z" style="--i:${i}"><i class="num">${datumFmt(mts(m), 'uhr')}</i><b class="num">${_spZahl(hoch)}:${_spZahl(tief)}</b></span>`;
+  }).join('')}</div>`;
+}
 function _newsRundeHtml(s, isRead, fadenHtml){
   const d = s.dataRef || {};
   const ps = d.matchIds || [];
-  const zeig = ps.slice(0, RUNDE_ZEILEN);
+  const ids = (d.spieler || []).map(x => x.id);
   return `<div class="nf-card nf-s-spiel nf-runde nfc-${esc(s.cat || 'fun')}${isRead ? ' read' : ''}" data-sid="${esc(s.id)}">
     ${_newsMotiv('spiel', s)}
     <div class="nf-top"><span class="nf-rub"><i>${svgI('users')}</i><b>DIE RUNDE</b></span>
       <span class="nf-when">${svgI('clock')}${esc(_newsUhrzeit(s.when))}${isRead ? '' : '<span class="nf-dot"></span>'}</span></div>
-    ${_spRundeTafel(d.spieler || [])}
+    <div class="sp-rd-was">Zusammenfassung von ${_spZahl(ps.length)} Partien am Stück, nur ${esc(_namenListe(ids.map(_spName)))}</div>
     <div class="nf-gr"><div class="nf-gr-r"><div class="nf-h">${esc(s.title)}</div><div class="nf-d">${_newsBetont(s.desc || '')}</div></div>
       <span class="nf-chev">${svgI('chevron')}</span></div>
-    <div class="sp-rd-ps">${zeig.map((mid, i) => _spRundeZeile(mid, i, false)).join('')}`
-    + (ps.length > zeig.length ? `<div class="sp-rd-mehr">und ${_spZahl(ps.length - zeig.length)} weitere Partien im Blatt</div>` : '')
-    + `</div>${fadenHtml || ''}</div>`;
+    ${_spRundeKurz(d.spieler || [])}${_spRundeStreifen(ps)}${fadenHtml || ''}</div>`;
 }
 // Das Blatt der Runde: die Tabelle, wer mit wem an welcher Stange stand, und
 // jede Partie mit ihrer Uhrzeit. Die Aufstellung ist eine Matrix — eine

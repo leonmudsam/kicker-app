@@ -662,7 +662,7 @@ const ok = (c, msg, det) => {
   const feedOffen = await page.evaluate(() => {
     const K = s => window.__k.eval(s);
     K('_cache._stories = _buildStories(); _cache._consolFrom = null; _cache._frischVon = null;');
-    K('openNewsFeed()');
+    K('openNewsFeed(); _newsFeedRest()');
     const offen = K('_isNewsFeedOpen()');
     const karten = document.querySelectorAll('#sheet .nf-card').length;
     // Und die Auffrischung zeichnet wirklich NEU. Gezaehlt reicht nicht:
@@ -670,13 +670,33 @@ const ok = (c, msg, det) => {
     // an einer Karte ueberlebt nur, wenn niemand neu zeichnet.
     const erste = document.querySelector('#sheet .nf-card');
     if(erste) erste.dataset.marke = 'alt';
-    K('_refreshOpenNewsViews()');
+    K('_refreshOpenNewsViews(); _newsFeedRest()');
     const nachher = document.querySelectorAll('#sheet .nf-card').length;
     const markeWeg = !document.querySelector('#sheet .nf-card[data-marke="alt"]');
     K('closeSheet && closeSheet()');
     const zu = K('_isNewsFeedOpen()');
     return {offen, karten, nachher, zu, markeWeg};
   });
+  // Zuerst, was man sieht: die ersten Tage sofort, der Rest nach dem ersten
+  // Bild — und dann alle Karten. Ein Klick auf eine nachgereichte Karte
+  // öffnet ihr Blatt.
+  const feedTeil = await page.evaluate(async () => {
+    const K = s => window.__k.eval(s), w = ms => new Promise(r => setTimeout(r, ms));
+    K('closeSheet(true); openNewsFeed()');
+    const sofort = document.querySelectorAll('#sheet .nf-card').length;
+    await w(250);
+    const danach = document.querySelectorAll('#sheet .nf-card').length;
+    const letzte = [...document.querySelectorAll('#sheet .nf-liste .nf-card')].pop();
+    const titel = letzte ? (letzte.querySelector('.nf-h') || {}).textContent : '';
+    if(letzte) letzte.click();
+    await w(400);
+    const blatt = !!titel && ((document.getElementById('nd') || {}).innerText || '').indexOf(titel.trim().slice(0, 20)) >= 0;
+    K('closeNewsDetail(); closeSheet(true)');
+    return {sofort, danach, blatt};
+  });
+  ok(feedTeil.sofort >= 8 && feedTeil.sofort <= 24 && feedTeil.danach > feedTeil.sofort * 2 && feedTeil.blatt,
+     'der Feed zeichnet zuerst die oberen Tage und reicht den Rest nach dem ersten Bild nach',
+     JSON.stringify(feedTeil));
   ok(feedOffen.offen === true, 'der offene News-Feed wird als offen erkannt',
      JSON.stringify(feedOffen));
   ok(feedOffen.karten > 0 && feedOffen.nachher === feedOffen.karten
@@ -695,7 +715,7 @@ const ok = (c, msg, det) => {
   const tafel = await page.evaluate(() => {
     // Der Cache wird sonst aus der DB gefuellt; im Harness gibt es keine.
     // Der Generator liefert dieselben Stories, die die App persistiert haette.
-    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); openNewsFeed()');
+    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); openNewsFeed(); _newsFeedRest()');
     const sheet = document.getElementById('sheet');
     const koepfe = sheet ? [...sheet.querySelectorAll('.nf-tag')] : [];
     const gruppen = sheet ? [...sheet.querySelectorAll('.nf-feed')] : [];
@@ -1176,7 +1196,7 @@ const ok = (c, msg, det) => {
     // Runde ihre Tabelle.
     const BILD = ['nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
                   'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face',
-                  'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg'];
+                  'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg','sp-rq'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');
@@ -1970,11 +1990,12 @@ const ok = (c, msg, det) => {
       + '<div class="pod-karte silber erster" id="g2"></div></div>'
       + '<div class="nf-card nf-s-held" id="g3"></div><div class="nf-card nf-s-held read" id="g4"></div>'
       + '<div class="nf-card nf-s-spiel" id="g5"></div><div class="rcp-held" id="g6"></div>'
-      + '<div class="nd nd-s-held"><div class="nd-head" id="g7"></div></div>';
+      + '<div class="nd nd-s-held"><div class="nd-head" id="g7"></div></div>'
+      + '<div class="nf-card nf-s-spiel nf-glanz" id="g8"></div>';
     document.body.appendChild(host);
     const a = id => getComputedStyle(host.querySelector('#' + id), '::after').animationName;
     const out = {gold:a('g1'), silber:a('g2'), held:a('g3'), gelesen:a('g4'),
-                 spiel:a('g5'), rueckblick:a('g6'), blatt:a('g7')};
+                 spiel:a('g5'), rueckblick:a('g6'), blatt:a('g7'), selten:a('g8')};
     host.remove(); return out;
   });
   const gl = await glanz();
@@ -1985,11 +2006,68 @@ const ok = (c, msg, det) => {
   ok(gl.silber !== 'glanzLauf' && gl.gelesen !== 'glanzLauf' && gl.spiel !== 'glanzLauf',
      'ein silberner Erster, eine gelesene und eine gewoehnliche Karte nicht',
      JSON.stringify(gl));
+  // Das Seltene im Feed trägt einen leisen Lichtlauf in der Farbe seiner
+  // Familie: nie in Gold, nie auf einer negativen Karte, nie doppelt auf
+  // Breaking oder der Karte des Tages.
+  const glFeed = await page.evaluate(() => {
+    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); _cache._consolFrom = null; openNewsFeed(); _newsFeedRest()');
+    const ks = [...document.querySelectorAll('#sheet .nf-card.nf-glanz')];
+    return {n: ks.length, alle: document.querySelectorAll('#sheet .nf-card').length,
+      falsch: ks.filter(k => k.matches('.nf-neg,.nf-brk,.nf-gross,.nf-s-held,.nf-s-woche')
+        || /247,\s*207,\s*74/.test(getComputedStyle(k, '::after').backgroundImage)).map(k => k.dataset.sid)};
+  });
+  ok(gl.selten === 'glanzLauf' && glFeed.n >= 3 && glFeed.n <= glFeed.alle / 3 && !glFeed.falsch.length,
+     'das Seltene im Feed traegt einen Lichtlauf in seiner Familienfarbe, nicht in Gold und nicht auf einer negativen Karte',
+     glFeed.n + ' von ' + glFeed.alle + ' Karten, falsch: ' + glFeed.falsch.slice(0, 3));
+  // Der Hinweis „x neue Stories" ist ein Ereignis: die Zahl groß neben
+  // einem Zeichen, ein Lichtlauf und ein Ring beim Erscheinen — und bei
+  // Bewegungsruhe nichts davon.
+  const toastLauf = async () => page.evaluate(() => {
+    const t = document.getElementById('newsToast'), x = document.getElementById('newsToastTxt');
+    window.__k.eval('_newsToastFuellen')(x, 59);
+    t.classList.add('visible', 'show');
+    const out = {n:(x.querySelector('.nt-n') || {}).textContent, ic:!!x.querySelector('.nt-ic svg'),
+      glanz:getComputedStyle(t, '::after').animationName, ring:getComputedStyle(x.querySelector('.nt-ic')).animationName};
+    t.classList.remove('visible', 'show');
+    return out;
+  });
+  const ntLebt = await toastLauf();
+  ok(ntLebt.n === '59' && ntLebt.ic && ntLebt.glanz === 'ntGlanz' && /ntRing/.test(ntLebt.ring),
+     'der Hinweis auf neue Stories zeigt die Zahl gross mit Zeichen, Lichtlauf und Ring', JSON.stringify(ntLebt));
   await page.emulateMedia({reducedMotion: 'reduce'});
+  const ntRuhig = await toastLauf();
+  ok(ntRuhig.glanz === 'none' && ntRuhig.ring === 'none', 'und bei Bewegungsruhe steht er still', JSON.stringify(ntRuhig));
   const glRuhig = await glanz();
   await page.emulateMedia({reducedMotion: 'no-preference'});
   ok(Object.values(glRuhig).every(v => v !== 'glanzLauf'),
      'bei prefers-reduced-motion ruht der Glanz', JSON.stringify(glRuhig));
+
+  // Im Verlauf steht der Sieger hell und der Verlierer leise, der Stand
+  // ist nicht kursiv, die Partien stehen unter ihrem Tag; ein Duo zeigt
+  // seine Bilanz als Balken.
+  const listen = await page.evaluate(() => {
+    // In einem eigenen Behälter gezeichnet: das offene Blatt gehört den
+    // Prüfungen danach.
+    const K = window.__k.eval, host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0;width:360px';
+    document.body.appendChild(host);
+    host.innerHTML = K('vHistory()');
+    const won = host.querySelector('.mteam.won'), lost = host.querySelector('.mteam.lost');
+    const em = host.querySelector('.mscore em.w');
+    const out = {farbe: won && lost ? getComputedStyle(won).color !== getComputedStyle(lost).color : false,
+      kursiv: em ? getComputedStyle(em).fontStyle : 'fehlt', tage: host.querySelectorAll('.mtag').length,
+      gesichter: host.querySelectorAll('.mrow .mteam-av .av').length};
+    host.innerHTML = K('vTeams()');
+    const r = host.querySelector('.tm-row'), bar = r && r.querySelector('.tm-bar i');
+    const wl = r ? (r.querySelector('.tm-bil').textContent.match(/(\d+)–(\d+)/) || []) : [];
+    out.balken = bar && wl.length ? Math.abs(bar.getBoundingClientRect().width / bar.parentElement.getBoundingClientRect().width
+      - (+wl[1]) / ((+wl[1]) + (+wl[2]))) < 0.02 : false;
+    host.remove();
+    return out;
+  });
+  ok(listen.farbe && listen.kursiv === 'normal' && listen.tage >= 2 && listen.gesichter >= 40 && listen.balken,
+     'im Verlauf steht der Sieger hell unter seinem Tag mit Gesichtern, und ein Duo zeigt seine Bilanz als Balken',
+     JSON.stringify(listen));
 
   console.log('\n═══ DIE KARTEN AM SPIELTAG ═══');
   // Kopf und Fuß einer Partie folgen ihrem Anlass, und dieselben vier am
@@ -2075,7 +2153,7 @@ const ok = (c, msg, det) => {
     const karten = [...sheet.querySelectorAll('.nf-card.nf-s-spiel')];
     const fehler = [], formen = {};
     let kleinste = 99;
-    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tb','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel'];
+    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tb','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel','sp-pm','sp-ro','sp-rq'];
     karten.forEach(k => {
       const r = pruefen(k);
       r.fehler.forEach(f => fehler.push(k.dataset.sid + ': ' + f));
@@ -2128,7 +2206,9 @@ const ok = (c, msg, det) => {
           _spTabelleBild({von:118, bis:126, spitze:false, zeilen:[{id:a, p:118, q:126, k:'r'}, {id:b, p:126, q:118, k:'g'}, {id:c, p:121, q:121, k:'m'}, {id:e, p:122, q:123, k:'m'}]}),
           _spSerieBild({pid:a, laenge:57, eig:120, liga:340, ligaWer:b}),
           _spSerieBild({pid:a, laenge:15, eig:15, liga:16, ligaWer:b}),
-          _spRissBild({opfer:a, laenge:240, brecher:[c, e]}) + _spRissBild({opfer:b, laenge:19, brecher:[a, c]}),
+          _spRissBild({opfer:a, laenge:240, brecher:[c, e], eig:999}) + _spRissBild({opfer:b, laenge:19, brecher:[a, c], eig:19}),
+          _spPremiereBild({A:a, B:b, versuch:1}) + _spPremiereBild({A:c, B:e, versuch:12345}) + _spPremiereBild({A:a, B:c, versuch:14}),
+          _spRolleBild({pid:a, r:'atk', anteil:.0012, dort:12, alle:9876, w:12345}) + _spRolleBild({pid:b, r:'def', anteil:.249, dort:2490, alle:9999, w:1}),
           _spDuoBild({A:a, B:c, laenge:44, w:12345, l:9876}),
           _spKurveBild({pid:a, n:999, d:12345, werte:Array.from({length:12}, (_, i) => ({v:i < 11 ? -i * 900 : 4000, w:i === 11, jetzt:i === 11}))}),
           _spDuellBild({A:a, B:b, gesamt:98765, aw:45678, spiele}),
@@ -2806,7 +2886,7 @@ const ok = (c, msg, det) => {
       ['Torjäger', "showAward('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
       ['Wochenkönig', "period='week';openTopList('periodKing')"],
       ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])'],
-      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed()'],
+      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed(); _newsFeedRest()'],
       ['Positionsverlauf', 'showPositionHistory(seasons[3].id)'],
       ['Liga-Chronik', 'showLigaChronik()'], ['Rangsystem', 'showRangSystem()'],
       ['Bilanzen', 'showPlayerH2HList(' + P('Leon') + ')'],
@@ -3032,7 +3112,7 @@ const ok = (c, msg, det) => {
   // ausgenommen — ihr Schein liegt außerhalb der Fläche.
   const cv = await page.evaluate(async () => {
     const aus = document.getElementById('cv-aus'); if(aus) aus.disabled = true;
-    window.__k.eval('closeSheet(true); openNewsFeed()');
+    window.__k.eval('closeSheet(true); openNewsFeed(); _newsFeedRest()');
     await new Promise(r => requestAnimationFrame(r));
     const karten = [...document.querySelectorAll('#sheet .nf-card')];
     const falsch = karten.filter(k => {
@@ -3207,7 +3287,7 @@ const pid=players.find(p=>p.name==='Martin').id;
 showPlayer(pid); await warte(900); pruef('profil');
 try{ showLaufbahn&&showLaufbahn(pid);}catch(e){}
 await warte(600); pruef('laufbahn');
-closeSheet(true); openNewsFeed(); await warte(600); pruef('feed');
+closeSheet(true); openNewsFeed(); _newsFeedRest(); await warte(600); pruef('feed');
 return JSON.stringify(funde,null,1);
 })()
 `));
@@ -3236,17 +3316,20 @@ return JSON.stringify(funde,null,1);
     const profil = kopf ? bildIn(kopf) : -1;
     const vektor = kopf ? kopf.querySelectorAll('use[href^="#izg"]').length : 0;
     K('closeSheet(true)'); K('showLaufbahn(' + JSON.stringify(pid) + ')'); await w(300);
-    // Die Vitrine ist groß und Vektor; die Felder der ganzen Leiter sind
-    // rund 40 px und Bild — dieselbe Grenze wie beim Wappen.
-    const lb = bildIn(document.getElementById('lbLeiter'));
+    // Die Karte in der Mitte der Vitrine ist groß und Vektor, die am Rand
+    // stehen klein und als Bild; die Felder der ganzen Leiter sind rund 40 px
+    // und Bild — dieselbe Grenze wie beim Wappen.
+    const fk = document.querySelector('#lbLeiter .lb-k.fokus');
+    const lb = fk ? bildIn(fk) : -1;
+    const lbRand = bildIn(document.getElementById('lbLeiter'));
     const lbFelder = bildIn(document.getElementById('lbAlle'));
     K('closeSheet(true)');
-    return {zeile, profil, vektor, lb, lbFelder};
+    return {zeile, profil, vektor, lb, lbRand, lbFelder};
   });
   ok(_vektor.profil === 0 && _vektor.vektor > 0 && _vektor.lb === 0,
      'groß ist jedes Insignium eine Vektorzeichnung, kein eingebettetes Bild',
      JSON.stringify(_vektor));
-  ok(_vektor.zeile > 0 && _vektor.lbFelder === 21, 'klein bleibt es ein Bild, damit Liste, Feed und die ganze Leiter schnell bleiben',
+  ok(_vektor.zeile > 0 && _vektor.lbFelder === 21 && _vektor.lbRand >= 5, 'klein bleibt es ein Bild, damit Liste, Feed, der Rand der Vitrine und die ganze Leiter schnell bleiben',
      JSON.stringify(_vektor));
   // Die Aura [§C36]: im Profilkopf bewegt, und zwar so, dass nur die
   // Grafikkarte arbeitet — höchstens drei Ebenen, jede ein Bild, und ihre
@@ -3284,7 +3367,7 @@ return JSON.stringify(funde,null,1);
   // 150 ms statt 46. Geprüft wird jedes Bild im Topf nach dem Öffnen.
   const _bildAdr = await page.evaluate(async () => {
     const K = window.__k.eval;
-    K('closeSheet(true); openNewsFeed()');
+    K('closeSheet(true); openNewsFeed(); _newsFeedRest()');
     await new Promise(r => setTimeout(r, 300));
     const l = [...document.querySelectorAll('#insDefs image, #sheet image, #app image')]
       .map(b => (b.getAttribute('href') || '').length);

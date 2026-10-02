@@ -19,7 +19,7 @@
 .sp-chips{display:flex;flex:0 0 auto}
 .sp-chips .av+.av{margin-left:-6px}
 .nf-runde .av,.sp-rd-tafel .av,.sp-zeile .av,.sp-at .av,.sp-nv .av,.sp-wp .av,.sp-sl .av,.sp-ku .av,.sp-bg .av,.sp-rd-p .av,.sp-tb .av,
-.sp-rk .av,.sp-duo .av,.sp-md .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+.sp-rk .av,.sp-duo .av,.sp-md .av,.sp-pm .av,.sp-ro .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
 /* Eine Zahl bricht nicht um, aus 12.345 würde sonst „12." über „345". */
 .nf-card .num,.nd .num{white-space:nowrap}
 
@@ -179,15 +179,53 @@
 .sp-sl-ms .liga{color:var(--muted)}
 
 /* ── Die gerissene Kette ── */
-.sp-rk{padding:9px 13px 10px;border-top:1px solid var(--line)}
-.sp-rk svg{display:block;width:100%;height:auto;overflow:visible}
-.sp-rk-g{fill:none;stroke:var(--acid);stroke-width:2.2;opacity:.75}
-.sp-rk-g.q{opacity:.45}
-.sp-rk-x{fill:none;stroke:var(--red);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-.sp-rk-u{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:6px}
-.sp-rk-o{display:flex;align-items:center;gap:6px;min-width:0;font-size:11.5px}
-.sp-rk-o em{flex:0 0 auto;font:700 11px 'Sometype Mono',monospace;font-style:normal;color:var(--ink2)}
-.sp-rk-b{display:flex;align-items:center;gap:6px}
+.sp-rk{padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-rk-k{display:flex;align-items:center;gap:10px;min-width:0}
+.sp-rk-z{position:relative;flex:0 0 auto;padding:0 3px}
+.sp-rk-z b{display:block;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:30px;line-height:1;
+  color:var(--acid);opacity:.55;letter-spacing:-.02em}
+.sp-rk-z s{position:absolute;left:-2px;right:-2px;top:50%;height:3px;margin-top:-1px;border-radius:2px;
+  background:var(--red);transform:rotate(-14deg);box-shadow:0 0 10px rgba(240,86,106,.55)}
+.sp-rk-t{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.sp-rk-t > span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.sp-rk-t em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sp-rk-t small,.sp-rk-b small{font-size:9.5px;color:var(--muted)}
+.sp-rk-b{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:0 0 auto}
+.sp-rk-r{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr)) 22px;gap:3px;margin-top:9px;height:14px}
+.sp-rk-r i{display:block;min-width:0;height:14px;border-radius:3px}
+.sp-rk-r i.w{background:rgba(190,242,100,.55)}
+.sp-rk-r i.x{display:flex;align-items:center;justify-content:center;background:var(--red);
+  box-shadow:0 0 12px rgba(240,86,106,.5)}
+.sp-rk-r i.x svg{width:11px;height:11px;color:#1a0b0b}
+/* Die Premiere: zwei Gesichter, verbunden, und der Versuch als Lauf. */
+.sp-pm{padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-pm-k{display:flex;align-items:center;gap:12px;min-width:0}
+.sp-pm-d{display:flex;align-items:center;gap:4px;flex:0 0 auto}
+.sp-pm-d .av{--av:26px;width:26px;height:26px;font-size:9px}
+.sp-pm-d i{display:flex;width:18px;height:18px;align-items:center;justify-content:center;border-radius:50%;
+  color:var(--acid);background:rgba(190,242,100,.1)}
+.sp-pm-d i svg{width:12px;height:12px}
+.sp-pm-t{display:flex;align-items:center;gap:8px;min-width:0}
+.sp-pm-t b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1;color:var(--acid)}
+.sp-pm-t > span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.sp-pm-t em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sp-pm-t small{font-size:9.5px;color:var(--muted)}
+.sp-pm-r{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:3px;margin-top:9px;height:12px}
+.sp-pm-r i{display:block;min-width:0;height:12px;border-radius:3px}
+.sp-pm-r i.l{background:rgba(240,86,106,.4)}
+.sp-pm-r i.w{background:var(--acid);box-shadow:0 0 10px rgba(190,242,100,.35)}
+/* Der Rollentausch: der Anteil der Seite als Strahl, die heutige markiert. */
+.sp-ro{padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-ro-k{display:flex;align-items:center;gap:8px;min-width:0}
+.sp-ro-k > span{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}
+.sp-ro-k em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sp-ro-k small{font-size:9.5px;color:var(--muted)}
+.sp-ro-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:20px;line-height:1;color:var(--acid);flex:0 0 auto}
+.sp-ro-s{display:flex;height:10px;margin-top:9px;border-radius:5px;overflow:hidden;background:var(--surface3)}
+.sp-ro-s i{display:block;height:100%;background:rgba(255,255,255,.12)}
+.sp-ro-s i.def{flex:1}
+.sp-ro-s i.heute{background:var(--acid);box-shadow:0 0 10px rgba(190,242,100,.4)}
+.sp-ro-l{display:flex;justify-content:space-between;margin-top:4px;font-size:9.5px;color:var(--muted)}
 
 /* ── Das Duo ── */
 .sp-duo{display:grid;grid-template-columns:56px minmax(0,1fr);gap:11px;align-items:center;padding:9px 13px 10px;border-top:1px solid var(--line)}
@@ -285,9 +323,14 @@
   .sp-f-sp,.sp-rd-sp,.sp-tb-e{animation:spDa .45s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
   .sp-vt-s i,.sp-tg-b i,.sp-duo-l i{transform-origin:bottom;animation:spY .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
   .sp-sl-r i.w,.sp-sl-voll{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
-  .sp-bg rect,.sp-rk-g{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .sp-bg rect{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .sp-band-g i{transform-origin:bottom;animation:spY .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
+  .sp-pm-r i,.sp-ro-s i.atk{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .sp-rk-r i.w{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
+  .sp-rk-r i.x{animation:spBruch .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 30ms + 120ms)}
+  .sp-rk-z s{transform-origin:left;animation:spStrich .4s ease-out both;animation-delay:.35s}
   .sp-ku-l,.sp-tg-l{animation:spZieh 1s ease-out both}
-  .sp-wp-bahn,.sp-wp-ls,.sp-rk-x{animation:spDa .5s ease-out both}
+  .sp-wp-bahn,.sp-wp-ls{animation:spDa .5s ease-out both}
   .sp-duo-w{animation:spDa .6s ease-out both}
   .sp-rd-p{animation:spDa .4s ease-out both;animation-delay:calc(var(--i,0) * 50ms + 150ms)}
   .sp-at-t > b{animation:spKlapp .5s cubic-bezier(.3,.8,.3,1) both}
@@ -295,6 +338,8 @@
 @keyframes spDa{from{opacity:0}}
 @keyframes spY{from{transform:scaleY(0)}}
 @keyframes spX{from{transform:scaleX(0)}}
+@keyframes spBruch{from{transform:scale(.2) rotate(-25deg);opacity:0}}
+@keyframes spStrich{from{transform:rotate(-14deg) scaleX(0)}}
 @keyframes spZieh{from{stroke-dashoffset:1}}
 @keyframes spKlapp{from{transform:perspective(200px) rotateX(-70deg);opacity:0}}
 
@@ -307,8 +352,15 @@
 .sp-band-avs .rav+.rav{margin-left:-11px}
 .sp-band-s:not(.w) .sp-band-avs{opacity:.55}
 .sp-band-s.w .sp-z-n b{color:var(--ink)}
-.sp-band-sc{align-self:center;font-family:'Archivo Black',sans-serif;font-size:19px;letter-spacing:-.03em;color:var(--faint)}
-.sp-band-sc b{font-weight:400}.sp-band-sc b.w{color:var(--ink)}.sp-band-sc i{font-style:normal;font-size:15px}
+.sp-band-m{align-self:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.sp-band-sc{font-family:'Archivo Black',sans-serif;font-size:24px;line-height:1;letter-spacing:-.02em;color:var(--faint)}
+.sp-band-sc em{font-style:normal}.sp-band-sc em.w{color:var(--acid);text-shadow:0 0 14px rgba(190,242,100,.35)}
+.sp-band-sc i{font-style:normal;font-size:16px;margin:0 2px;vertical-align:3px}
+.sp-band-g{display:flex;gap:2px}
+.sp-band-g i{display:block;width:5px;height:9px;border-radius:1.5px;background:rgba(255,255,255,.14)}
+.sp-band-g i.a{background:var(--acid)}
+.sp-band-d{font:700 9.5px 'Sometype Mono',monospace;color:var(--acid);letter-spacing:.04em;padding:1px 6px;border-radius:6px;
+  background:rgba(190,242,100,.1)}
 
 /* ── Die Runde im Blatt ──
    Antippen öffnet die Karte der Partie; eine Breaking-Partie trägt ihre
@@ -327,3 +379,29 @@
   font:700 9px 'Sometype Mono',monospace;color:var(--bg)}
 .sp-rm-z.w{background:var(--acid);opacity:.85}
 .sp-rm-z.l{background:var(--red);opacity:.7}
+
+/* Die Runde als Zusammenfassung [§C33]: eine Kennzeile, die sagt, was die
+   Karte ist, die Tabelle als eine Reihe aus vier Feldern und die Partien als
+   Streifen aus Uhrzeit und Stand. Leiser als eine Partie-Karte: gestrichelte
+   Kante und kein Schein — sie bündelt, was darunter schon steht. */
+.nf-runde{--tint:0;border-style:dashed;background:var(--surface)}
+.sp-rd-was{padding:0 13px 2px;font:600 9.5px 'Sometype Mono',monospace;letter-spacing:.04em;
+  color:var(--muted);line-height:1.4}
+.sp-rq{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:2px 13px 8px}
+.sp-rq-f{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 3px 6px;min-width:0;
+  border-radius:10px;background:rgba(255,255,255,.025);border:1px solid var(--line)}
+.sp-rq-f.erst{border-color:rgba(var(--story-rgb,190,242,100),.45);background:rgba(var(--story-rgb,190,242,100),.07)}
+.sp-rq-f .av{width:22px;height:22px;font-size:8px}
+.sp-rq-n{font-size:11px;font-weight:600;color:var(--ink2);line-height:1.25;text-align:center;
+  overflow-wrap:anywhere;max-width:100%}
+.sp-rq-wl{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink);line-height:1}
+.sp-rq-f > em{font:700 9.5px 'Sometype Mono',monospace;font-style:normal}
+.sp-rq-f > em.g{color:var(--acid)}.sp-rq-f > em.r{color:var(--red)}
+.sp-rs{display:flex;flex-wrap:wrap;gap:4px;padding:8px 13px 10px;border-top:1px solid var(--line)}
+.sp-rs-z{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:44px;padding:4px 6px;
+  border-radius:7px;background:rgba(255,255,255,.03)}
+.sp-rs-z i{font-style:normal;font-size:9px;color:var(--faint)}
+.sp-rs-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:12px;color:var(--ink2)}
+@media (prefers-reduced-motion: no-preference){
+  .sp-rq-f{animation:spDa .4s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
+}

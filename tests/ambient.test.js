@@ -3185,7 +3185,7 @@ ok(_achsen.e.length === 0, 'ein einzelner Erfolg bleibt eine eigene Karte',
 // immer eine Partie samt allem, was aus ihr folgte — und genau das gehoert in
 // die Zeile [§C33].
 ok(_achsen.g[0] && _achsen.g[0].ti
-   === 'Durststrecke und gemeinsame Durststrecke in einer Partie für '
+   === 'Durststrecke für ' + _achsen.n0 + ' und gemeinsame Durststrecke für '
        + _achsen.n0 + ' und ' + _achsen.n1,
    'verknuepfte Spielstories nennen ihre Anlaesse in der Schlagzeile',
    (_achsen.g[0]||{}).ti);
@@ -4411,6 +4411,35 @@ const _brk = JSON.parse(K.eval(`JSON.stringify((function(){
   };
   return {gleich: bau(p[0].id), fremd: bau(p[1].id), mid: p[0].id};
 })())`));
+// ── Jeder Anlass nennt die, denen er gehört ─────────────────────────
+//    „Seltene Auszeichnung in einer Partie für Julian und Leo" stand über
+//    einer Auszeichnung, die nur Julian geholt hat, und „Enges Spiel und
+//    Rivalitätsmarke … für Martin, Jane und Maxi" warf Sieger und Rivalen in
+//    einen Topf [§C33].
+const _wem = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
+  const m = _newsTagMs(tage[tage.length - 1])[0];
+  const P = players.map(p => p.id), nm = i => pmap()[P[i]].name;
+  const w = new Date(mts(m));
+  const l = [
+    {id:'spiel_' + m.id, cat:'highlight', ic:'ball', when:w, prio:40, title:'Ein enges Spiel', desc:'10:8.',
+     dataRef:{type:'spiel', resultKind:'eng', matchId:m.id, playerIds:[P[2], P[3]], winners:[P[2], P[3]], losers:[P[0], P[4]]}},
+    {id:'wem-b', cat:'team', ic:'medal', when:w, prio:60, title:nm(2) + ': Mauer', desc:'Selten.',
+     dataRef:{type:'badge_unlocked', badgeId:'wall_badge', rarity:'rare', matchId:m.id, playerId:P[2], playerIds:[P[2]]}},
+    {id:'wem-r', cat:'duell', ic:'swords', when:w, prio:50, title:'50. Duell', desc:'50 Begegnungen.',
+     dataRef:{type:'rivalry_milestone', a:P[0], b:P[1], n:50, matchId:m.id}},
+    {id:'wem-k', cat:'highlight', ic:'flameBreak', when:w, prio:55, title:'Serie gerissen', desc:'Acht Siege.',
+     dataRef:{type:'streak_killer', matchId:m.id, streak:8, victimPid:P[4], breakerIds:[P[2], P[3]], playerIds:[P[2], P[3], P[4]]}}
+  ];
+  _cache._consolFrom = null;
+  const sam = _consolidateStories(l).filter(x => (x.dataRef||{}).type === 'sammel');
+  return {titel: sam.length ? sam[0].title : '', n: [0,1,2,3,4].map(nm)};
+})())`));
+ok(/Auszeichnung „[^“]+“ für /.test(_wem.titel) && _wem.titel.indexOf('“ für ' + _wem.n[2] + ' ') >= 0
+   && _wem.titel.indexOf('Serienbruch gegen ' + _wem.n[4]) >= 0
+   && / im engen Spiel$/.test(_wem.titel) && _wem.titel.indexOf(_wem.n[3]) < 0,
+   'eine Bündel-Schlagzeile nennt je Anlass, wem er gehört, die Auszeichnung mit Namen und das Ergebnis als Ort',
+   _wem.titel);
 ok(_brk.gleich.sammel === 1 && _brk.gleich.karten === 1,
    'zwei Breaking-Meldungen einer Partie werden EINE Karte',
    _brk.gleich.karten + ' Karten');
@@ -6218,12 +6247,13 @@ ok(_faden.endeOk && _faden.wendeOk,
 // wiederholt, was die Zeichnung zeigt.
 const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
   const karten = getStoriesCache().filter(s => _newsSorte(s) === 'spiel' && (s.dataRef||{}).matchId);
-  const falsch = [], formen = {}; let n = 0;
+  const falsch = [], formen = {}; let n = 0, feldN = 0;
   const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
   const gew = (pid, m) => (m.winner === 'A') === (m.a1 === pid || m.a2 === pid);
   const text = h => String(h).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
   const FORM = {feld:'sp-feld', krimi:'sp-at', aussenseiter:'sp-wp', deutlich:'sp-vt', spitze:'sp-tb', rang:'sp-tb',
-    serie:'sp-sl', riss:'sp-rk', teamserie:'sp-duo', wende:'sp-ku', duell:'sp-bg', medaille:'sp-md'};
+    serie:'sp-sl', riss:'sp-rk', teamserie:'sp-duo', wende:'sp-ku', duell:'sp-bg', medaille:'sp-md',
+    premiere:'sp-pm', rolle:'sp-ro'};
   karten.forEach(s => {
     const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
     if(!m) return;
@@ -6231,6 +6261,9 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     const html = _newsCardHtmlM2(s, false, false);
     if(!a.key || html.indexOf('class="' + FORM[a.key]) < 0){ falsch.push(s.id + ' ohne Bild für ' + a.key); return; }
     n++; formen[a.key] = (formen[a.key] || 0) + 1;
+    if(html.indexOf('class="sp-feld') >= 0) feldN++;
+    if(a.key === 'medaille' && !/rare|legendary/.test(String((_newsSpielFakten(s).find(y => y.badgeId === a.x.badgeId) || {}).rarity)))
+      falsch.push(s.id + ' Medaille für eine gewöhnliche Auszeichnung');
     const w = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
     const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
     const vor = reihe.slice(0, reihe.indexOf(m) + 1);
@@ -6298,6 +6331,34 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
         lauf = gew(pid, x) ? lauf + 1 : 0; best = Math.max(best, lauf); });
       if(best && t.indexOf('eigener Bestwert ' + best) < 0) falsch.push(s.id + ' Bestwert ' + best);
     }
+    // Der gerissene Lauf: ein Feld je Sieg und das rote Feld der Partie,
+    // die ihn beendet hat, und der Bestwert des Trägers VOR dieser Partie.
+    if(a.key === 'riss'){
+      const r = (html.match(/class="sp-rk-r[^"]*"[^>]*>([\\s\\S]*?)<\\/div>/) || [,''])[1];
+      const w = (r.match(/<i class="w"/g) || []).length, x = (r.match(/<i class="x"/g) || []).length;
+      if(x !== 1 || (a.x.streak <= 20 && w !== a.x.streak)) falsch.push(s.id + ' Lauf ' + w + '+' + x + ' statt ' + a.x.streak);
+      const pid = a.x.victimPid; let lauf = 0, best = 0;
+      vor.slice(0, -1).forEach(y => { if(![y.a1,y.a2,y.b1,y.b2].includes(pid)) return;
+        lauf = gew(pid, y) ? lauf + 1 : 0; best = Math.max(best, lauf); });
+      const soll = best > a.x.streak ? 'eigener Bestwert ' + best : 'der eigene Bestwert';
+      if(t.indexOf(soll) < 0) falsch.push(s.id + ' Bruch nennt nicht ' + soll);
+    }
+    // Die Premiere: der erste gemeinsame Sieg der beiden Sieger, beim
+    // ersten Mal oder ab dem dritten Versuch.
+    if(a.key === 'premiere'){
+      const zus = vor.slice(0, -1).filter(y => { const A = [y.a1,y.a2], B = [y.b1,y.b2];
+        return (A.includes(w[0]) && A.includes(w[1])) || (B.includes(w[0]) && B.includes(w[1])); });
+      if(zus.some(y => gew(w[0], y)) || zus.length === 1) falsch.push(s.id + ' keine Premiere');
+      if(zus.length && t.indexOf('nach ' + zus.length + ' Niederlagen zu zweit') < 0) falsch.push(s.id + ' Premiere zählt nicht ' + zus.length);
+    }
+    // Der Rollentausch: unter einem Viertel der eigenen Partien vorher auf
+    // dieser Seite, ab zwanzig.
+    if(a.key === 'rolle'){
+      const pid = a.x.pid, r = m[['a1','a2','b1','b2'].find(k => m[k] === pid) + '_pos'];
+      const ei = vor.slice(0, -1).filter(y => [y.a1,y.a2,y.b1,y.b2].includes(pid));
+      const dort = ei.filter(y => y[['a1','a2','b1','b2'].find(k => y[k] === pid) + '_pos'] === r).length;
+      if(ei.length < 20 || dort / ei.length >= 0.25 || t.indexOf(dort + ' von ' + ei.length + ' Partien') < 0) falsch.push(s.id + ' Rolle');
+    }
     // Die Rivalität zählt jede Begegnung bis zu dieser.
     if(a.key === 'duell'){
       const g = vor.filter(x => { const A = [x.a1,x.a2], B = [x.b1,x.b2];
@@ -6328,7 +6389,17 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
   const ser = [_newsSerienBand(4, false, true), _newsSerienBand(8, false, true),
                _newsSerienBand(6, true, true), _newsSerienBand(5, false, false)];
   const leer = h => (h.match(/<i class="x">/g) || []).length;
-  return {n, falsch, formen, spitze,
+  // Der Rollentausch kommt im Fenster nicht vor; gestellt an der ganzen
+  // Ligageschichte, jede Fundstelle aus den rohen Partien nachgerechnet.
+  const ro = reihe.map(m => [m, _spRolleDaten(m)]).filter(x => x[1]);
+  const roFalsch = ro.filter(([m, d]) => {
+    const vorher = reihe.slice(0, reihe.indexOf(m)).filter(y => [y.a1,y.a2,y.b1,y.b2].includes(d.pid));
+    const pos = y => y[['a1','a2','b1','b2'].find(k => y[k] === d.pid) + '_pos'];
+    const dort = vorher.filter(y => pos(y) === pos(m)).length;
+    return !gew(d.pid, m) || vorher.length < 20 || dort !== d.dort || dort / vorher.length >= 0.25
+      || text(_spRolleBild(d)).indexOf(dort + ' von ' + vorher.length + ' Partien') < 0;
+  }).map(x => x[0].id);
+  return {n, falsch, formen, spitze, feldN, rolle:{n:ro.length, falsch:roFalsch},
     gestellt: med.indexOf(esc(BADGES[0].name)) >= 0 && /zum 5\\. Mal/.test(text(med)),
     ser: ser.map(h => leer(h) + (/Marke (\\d+)/.exec(h) || [,'-'])[1])};
 })())`));
@@ -6340,6 +6411,15 @@ ok(_bogen.n > 0 && _bogen.falsch.length === 0,
 ok(_formZahl >= 6 && _formMax <= _bogen.n * 0.45,
    'die Bilder der Partie-Karten sind verschieden: keine Form trägt die Hälfte',
    JSON.stringify(_bogen.formen));
+// Das Spielfeld steht nicht nur, wo sonst nichts ist: über einer Grafik
+// wechselt es sich mit der Ergebniszeile ab. Vorher trug ein Spieltag voller
+// Anlässe kein einziges.
+ok(_bogen.feldN >= _bogen.n * 0.4 && _bogen.feldN <= _bogen.n * 0.8,
+   'das Spielfeld steht auf mindestens zwei von fünf Partie-Karten, auch über einer Grafik',
+   _bogen.feldN + ' von ' + _bogen.n);
+ok(_bogen.rolle.n >= 3 && !_bogen.rolle.falsch.length,
+   'der Rollentausch ist ein Sieg auf einer Seite, die vorher unter einem Viertel der eigenen Partien lag',
+   _bogen.rolle.n + ' Fundstellen, falsch: ' + _bogen.rolle.falsch.slice(0, 3));
 ok(_bogen.spitze === 'ok' && _bogen.gestellt,
    'der Spitzenwechsel zeigt die Tabelle vorher und nachher, die Auszeichnung ihre Träger und die Zahl',
    String(_bogen.spitze).slice(0, 120));
@@ -6387,7 +6467,12 @@ const _runde = JSON.parse(K.eval(`JSON.stringify((function(){
     // Jede Partie der Runde behält ihre eigene Karte.
     x.ms.forEach(m => { if(!feed.some(s => (s.dataRef||{}).matchId === m.id)) falsch.push(m.id + ' ohne eigene Karte'); });
     const html = _newsCardHtmlM2(feed.find(s => s.id === st.id) || st, false, false);
-    if((html.match(/class="sp-rd-p[ "]/g) || []).length !== Math.min(8, x.ms.length)) falsch.push(st.id + ' Zeilen');
+    // Die Karte fasst zusammen und sagt es: eine Kennzeile, je Partie ein
+    // Feld aus Uhrzeit und Stand, und keine Partie mit ihren Wappen — die
+    // steht direkt darunter auf ihrer eigenen Karte.
+    if((html.match(/class="sp-rs-z"/g) || []).length !== x.ms.length) falsch.push(st.id + ' Streifen');
+    if(html.indexOf('class="sp-rd-was"') < 0) falsch.push(st.id + ' ohne Kennzeile');
+    if(/class="sp-rd-p[ "]/.test(html)) falsch.push(st.id + ' wiederholt die Partien');
     if((_newsRundeBlatt(st).match(/data-mid="/g) || []).length !== x.ms.length) falsch.push(st.id + ' Blatt');
   });
   ohne.forEach(x => { if(ist.some(s => s.id === 'runde_' + x.ms[0].id)) falsch.push(x.ms[0].id + ' ist keine Runde'); });
@@ -6410,7 +6495,7 @@ const _runde = JSON.parse(K.eval(`JSON.stringify((function(){
     gestellt: {drei, fremd, zwei, offen, zu}, ende: zeit + 55 * 60000};
 })())`));
 ok(_runde.soll >= 3 && _runde.ist === _runde.soll && _runde.falsch.length === 0,
-   'jede abgeschlossene Runde der Vier ist eine eigene Story mit Uhrzeiten und Bilanz, und jede ihrer Partien behält ihre Karte',
+   'jede abgeschlossene Runde der Vier ist eine eigene Story mit Uhrzeiten und Bilanz, fasst ihre Partien zusammen statt sie zu wiederholen, und jede Partie behält ihre Karte',
    _runde.falsch.slice(0, 3).join(' | ') || _runde.ist + ' Runden, ' + _runde.ohne + ' Blöcke ohne Runde');
 const _rg = _runde.gestellt;
 ok(_rg.drei.length === 1 && _rg.drei[0] === 'runde_tr1@' + _runde.ende && !_rg.fremd.length && !_rg.zwei.length

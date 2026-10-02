@@ -206,7 +206,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **964**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **978**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -416,9 +416,9 @@ globalem Zustand ist.
 |---|---|--:|
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird, den Katalog der fünfundsechzig samt seinen fünf Kammern, Grundwerten, eindeutigen Zeichen und vollständigen Angaben, die festen Endfenster, den Serienstand vor der Partie, die Rekordlage ohne spätere Partien, die Gegenpaare mit derselben Mindestbasis, den Rekord ohne Wertlatte in Prozent, Elo oder Serienlänge, die gestrichenen Rekorde samt ihrer alten Karten und die Laufbahn aus lauter Niederlagen, die nichts gewinnt, den sichtbaren Text, der die App nicht erklärt, und die acht Rekorde aus engen Partien, Gegnerkreis, Niederlagen, Wiedersehen, Pleitenserie, Serienantwort, Pause und Rolle, jeder ein zweites Mal aus den rohen Partien nachgerechnet, die Beschreibung jeder Auszeichnung als Satz ohne Kürzel, die Einzahl, wo eins steht, „jeder" statt „mindestens 100 %" und keine Auszeichnung, die wie eine Rangstufe heißt, die Breaking-Grenze der beiden obersten Insignium-Stufen und den Schimmer, der mit der Leiter wächst, die Schwellen im Schritt von mindestens 500, drei verschiedene Zeichnungen je Stufe und die Rangfarbe, die in jedem Rang gezeichnet ist statt gefiltert, den dritten Grad, der nie mehr Steine oder Gold trägt als der erste der nächsten Stufe, und die Zeichnung, die keinen Filter trägt, und die Rangfarbe im Auge der Schnecke, die vom Zierkranz zum Lorbeerreif nicht verloren geht, und das Regelblatt, das jede legendäre Auszeichnung nach ihrem Startwert ordnet | 1456 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie, jede CSS-Variable, die auch gelesen wird, die Erklärung jeder Award-Kachel, die die Schwelle nennt, die gilt, und jede Schriftangabe mit einer Schriftfamilie dahinter, jedes Award-Zeichen, das im Katalog steht, das Podest, auf dem punktgleiche Halter denselben Platz tragen, und keinen Award, der wie eine Chronik heißt, die etwas anderes misst, und jede Award-Kachel, die Zahl und Einheit aus derselben Tabelle nennt wie Blatt und Profil, und jedes Zeichen, das seinen Strich aus einer Regel zieht, und den Beleg, der seine Stichprobe zählt, die Halter im Feld zeigt, den Vorsprung in Ergebnissen richtig zählt, ohne Statistiksprache auskommt und beim Bestwert endet, und den Knopf des Rekord-Blatts, der den Halter nennt, und die Meisterbühne, deren Tage an der Spitze und deren Titelrennen aus den rohen Partien nachgerechnet werden, samt Karte und Blatt des Meisters ohne Saison-ID und ohne Satzfragment, und jede Rekordkarte, deren Feldstreifen den Halter am Ende und den Ersten dahinter aus derselben Reihenfolge zeigt wie das Blatt, und die Auslieferung ohne Kommentare | 223 |
-| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die Karte, die jede Partie des Fensters bekommt, samt ihren Anlässen in der Schlagzeile, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die Angaben, die eine Rekordkarte ans Storysystem weitergibt, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse, die These, die nicht vor dreissig Tagen wiederkommt, den Schlusssprint bei offener Lage, den Spitzenwechsel, der keinem Deckel zum Opfer faellt, die kurze Strecke als eigene Karte und den Saison-Rueckblick, der seinen Monat abschliesst, den zweiten Lauf, der dieselben IDs, Zeitpunkte, Gruppen und Texte ergibt, und jeden Wechsel eines Tages im Blatt des Titelrennens den rohen Grundwert, der nie als erhaltene Punkte dasteht, die drei Ebenen aus Tafelplatz, Profileintrag und Prestigequelle den Tag, an dem die Monatstafel aufgeht, und die Zeile, die ihre eigene Uhrzeit nennt, neben der Wirkung, die einmal dasteht, den Anlass eines Breaking, der als erste Zeile steht, gekennzeichnet ist und den Nachsatz der Karte trägt, die neuen Liga-Rekorde, die im Feed vorkommen, und den Fun Fact, der seine Slot-Stunde trägt und nicht die Uhrzeit seines Lesers, die Breaking-Karte, die die übrigen Meldungen ihrer Partie mitnimmt und die seltene Auszeichnung dabei stehen lässt, das Ergebnis, das eine Auszeichnung derselben Partie schon erzählt, und den Spitzenwechsel, der seinen direkten Vorgänger nennt statt das Ergebnis seines Bandes, den Tagesdeckel, der nur zählt, was er wegnehmen kann, und den Tafel-Moment, der zuerst zeigt, was Wirkung hat, seinen Rang nicht aus der Anzeigereihenfolge zieht, im Band des Spieltags bleibt, beim Dazukommen einer Zeile dieselbe Karte bleibt und seine Ausbauten erst im Blatt zeigt, die Serienmarke, die an ihrer Partie hängt und nach dem Riss nicht verschwindet, und den Spieler des Tages an jedem Spieltag des Fensters, die seltene Auszeichnung, die in der Karte ihrer Partie steht und dort gekennzeichnet ist, die Karte, die stehen bleibt, wenn eine weitere Partie dazukommt, samt ihrem Zeitpunkt und der einen Karte je Rekord und Spieltag, die spätere von zwei gleichen Aussagen, die beiden Deckel, die ihre Plätze in der Reihenfolge der Zeit vergeben, und die Zahl der gebündelten Meldungen im Breaking-Balken, jeden Genannten einer Tafel-Karte samt der Prestige-Zelle, die ihre Summe ist, die Zeile, die ihren Namen und den Kartentext nicht wiederholt, den Zeitpunkt, der einer gezeigten Zeile gehört, die negative Gruppe, die nicht mitreist, und die Fenster-Bestmarke, die sich nicht mit dem Wert ihres Vorgängers vergleicht, den großen Wert, der der Sortierwert seines Belegs ist, das Band, das die Partie über ihm nicht wiederholt, die Pleitenserie, die den Tag ihres letzten Siegs nennt, die Aufzählung, die nur in der Zahlenreihe steht, den Blattkopf, der so viele Wappen zeigt, wie seine Zeile Namen nennt, den Schlusssprint, der keinen Nachsatz bekommt, den Satz, der nicht auf zwei Punkten endet, die gewöhnliche Auszeichnung, die das Ergebnis ihrer Partie deckt, den Elo-Gewinn, der den Spieler nennt, dem er gehört, das Blatt eines Jubiläums, das bis zu seiner Partie rechnet, die Tabelle des Monats, die den Stand ihres Tages nennt, und die Serienmarke, die die Laufbahn bis zu ihrer Partie zählt, den Faden, der auf eine ältere Karte im Feed zeigt und an den Partien stimmt, die Bildzone einer Partie, die ihrem Anlass folgt, mit den Partien stimmt, verschieden ausfällt und vom Satz nicht wiederholt wird, und den Lauf mit seiner nächsten Marke, und die Leiter der Liga als Fun Fact, deren Zeichnung zu ihren Zahlen passt, die Stufe der Wirkung, die aus den Punkten kommt, und den bisherigen Halter, der in der Wirkung seiner Karte steht, und den Generator, der erst nach dem Zeichnen rechnet, und die Tafel-Karte, die nennt, wer verliert, und die Karte des Tages, die keine negative Richtung trägt, und den Satz, der den Verlust nennt, und die Runde der Vier als eigene Story: dreißig Minuten nach ihrer letzten Partie, ab drei Partien derselben vier und ohne einen Fünften, mit jeder Partie, ihrer Uhrzeit und der Bilanz aus den rohen Partien, während jede Partie ihre eigene Karte behält, und je Verlierer ein Chip mit Gesicht, Name, Betrag und Stufe, die Partie, die in einem Bündel ohne eigene `matchId` steckt, und die Partie, die für die Uhr des Telefons noch künftig war | 538 |
+| `ambient` | die 10-/19-Uhr-Slots, Rubrikrotation und kleine Template-Pools, Rückblicke, Breaking, die Ewige Tafel im Feed, echte Insignium-Übergänge samt Ereigniszeit und Idempotenz, Feed und Tagesplan, vollständige Sammelkarten mit gleichrangigen Ereignissen, lebendige verknüpfte Texte, konkrete Ergebnisbänder, Auffrischung und historische Ergänzung, Countdown, Serien, Memo, Sprache, Rekordrichtung, Meilensteine, Tagesdeckel, Namen, Sperrfrist, Wochenkarte, Chronik im laufenden Monat samt tatsächlichem Prestige-Zuwachs, konsistenten Alt-Karten und allen Mithaltern, Zusammenführungsachsen, die spannendste Karte des Tages ab acht Partien oder 19 Uhr, die Tagesmischung aus Tafel und Spieltag, der Spieltag in der Tafel-ID, der Lesestand, die Sprache jeder Karte, die Partie hinter den Namen, die Karte, die jede Partie des Fensters bekommt, samt ihren Anlässen in der Schlagzeile, die längste Serie eines Tages der gemeinsame Breaking-Moment einer Partie, der Rundlauf über jede Ambient-Vorlage an jedem Spieltagsvormittag die drei Befunde aus dem Nachlauf der echten Liga und das Ausbauen, das ein gleitendes Fenster nicht meldet der Halter hinter jeder ausgerufenen Bestmarke, die Schandtafel, die im Feed nicht vorkommt, die gemeinsame Grenze von Halterstand und Monatstafel, den Vorgänger, der nicht der Halter ist, die Zeile einer Sammelkarte, die kein Absatz wird, den Fun Fact, der heute entsteht und morgen derselbe ist, den großen Wert, der sich mit seinem Titel bewegt, und das Rampenlicht, das keine Schattenseite zeigt, den Spieltag als ein Paar von Staenden, die Angaben, die eine Rekordkarte ans Storysystem weitergibt, die eine Tafel-Karte, deren Grund in ihr steht, die Stufe, die wieder getragen wird, das Band, das ab der fuenften Partie steht, den Takt einer Auszeichnung samt der gemeinsamen Karte ihrer kleinen Marken die Leiter der Serienmarken samt dem Lauf als Einheit, die geschlossene Liste der Breaking-Anlaesse, die These, die nicht vor dreissig Tagen wiederkommt, den Schlusssprint bei offener Lage, den Spitzenwechsel, der keinem Deckel zum Opfer faellt, die kurze Strecke als eigene Karte und den Saison-Rueckblick, der seinen Monat abschliesst, den zweiten Lauf, der dieselben IDs, Zeitpunkte, Gruppen und Texte ergibt, und jeden Wechsel eines Tages im Blatt des Titelrennens den rohen Grundwert, der nie als erhaltene Punkte dasteht, die drei Ebenen aus Tafelplatz, Profileintrag und Prestigequelle den Tag, an dem die Monatstafel aufgeht, und die Zeile, die ihre eigene Uhrzeit nennt, neben der Wirkung, die einmal dasteht, den Anlass eines Breaking, der als erste Zeile steht, gekennzeichnet ist und den Nachsatz der Karte trägt, die neuen Liga-Rekorde, die im Feed vorkommen, und den Fun Fact, der seine Slot-Stunde trägt und nicht die Uhrzeit seines Lesers, die Breaking-Karte, die die übrigen Meldungen ihrer Partie mitnimmt und die seltene Auszeichnung dabei stehen lässt, das Ergebnis, das eine Auszeichnung derselben Partie schon erzählt, und den Spitzenwechsel, der seinen direkten Vorgänger nennt statt das Ergebnis seines Bandes, den Tagesdeckel, der nur zählt, was er wegnehmen kann, und den Tafel-Moment, der zuerst zeigt, was Wirkung hat, seinen Rang nicht aus der Anzeigereihenfolge zieht, im Band des Spieltags bleibt, beim Dazukommen einer Zeile dieselbe Karte bleibt und seine Ausbauten erst im Blatt zeigt, die Serienmarke, die an ihrer Partie hängt und nach dem Riss nicht verschwindet, und den Spieler des Tages an jedem Spieltag des Fensters, die seltene Auszeichnung, die in der Karte ihrer Partie steht und dort gekennzeichnet ist, die Karte, die stehen bleibt, wenn eine weitere Partie dazukommt, samt ihrem Zeitpunkt und der einen Karte je Rekord und Spieltag, die spätere von zwei gleichen Aussagen, die beiden Deckel, die ihre Plätze in der Reihenfolge der Zeit vergeben, und die Zahl der gebündelten Meldungen im Breaking-Balken, jeden Genannten einer Tafel-Karte samt der Prestige-Zelle, die ihre Summe ist, die Zeile, die ihren Namen und den Kartentext nicht wiederholt, den Zeitpunkt, der einer gezeigten Zeile gehört, die negative Gruppe, die nicht mitreist, und die Fenster-Bestmarke, die sich nicht mit dem Wert ihres Vorgängers vergleicht, den großen Wert, der der Sortierwert seines Belegs ist, das Band, das die Partie über ihm nicht wiederholt, die Pleitenserie, die den Tag ihres letzten Siegs nennt, die Aufzählung, die nur in der Zahlenreihe steht, den Blattkopf, der so viele Wappen zeigt, wie seine Zeile Namen nennt, den Schlusssprint, der keinen Nachsatz bekommt, den Satz, der nicht auf zwei Punkten endet, die gewöhnliche Auszeichnung, die das Ergebnis ihrer Partie deckt, den Elo-Gewinn, der den Spieler nennt, dem er gehört, das Blatt eines Jubiläums, das bis zu seiner Partie rechnet, die Tabelle des Monats, die den Stand ihres Tages nennt, und die Serienmarke, die die Laufbahn bis zu ihrer Partie zählt, den Faden, der auf eine ältere Karte im Feed zeigt und an den Partien stimmt, die Bildzone einer Partie, die ihrem Anlass folgt, mit den Partien stimmt, verschieden ausfällt und vom Satz nicht wiederholt wird, und den Lauf mit seiner nächsten Marke, und die Leiter der Liga als Fun Fact, deren Zeichnung zu ihren Zahlen passt, die Stufe der Wirkung, die aus den Punkten kommt, und den bisherigen Halter, der in der Wirkung seiner Karte steht, und den Generator, der erst nach dem Zeichnen rechnet, und die Tafel-Karte, die nennt, wer verliert, und die Karte des Tages, die keine negative Richtung trägt, und den Satz, der den Verlust nennt, und die Runde der Vier als eigene Story: dreißig Minuten nach ihrer letzten Partie, ab drei Partien derselben vier und ohne einen Fünften, mit jeder Partie, ihrer Uhrzeit und der Bilanz aus den rohen Partien, während jede Partie ihre eigene Karte behält, und je Verlierer ein Chip mit Gesicht, Name, Betrag und Stufe, die Partie, die in einem Bündel ohne eigene `matchId` steckt, und die Partie, die für die Uhr des Telefons noch künftig war, und die Medaille nur für das Seltene, das Spielfeld auf mindestens zwei von fünf Partie-Karten, die Premiere und den Rollentausch, den gerissenen Lauf und die Runde, die zusammenfasst, statt jede Partie zu wiederholen, jeweils aus den rohen Partien nachgerechnet, und die Bündel-Schlagzeile, die je Anlass nennt, wem er gehört, und die Auszeichnung beim Namen | 541 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, die Aura der Meistertitel — mittig, ganz hinten, mit jedem Titel heller und ohne Licht im Gesicht —, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung, die 21 Zeichnungen der Leiter: mittig, spiegelgleich, mit freiem Loch, dem Reif auf derselben Höhe und nichts am Rand der Zeichenfläche, die Rangfarbe im Stein und die Lilie aus Metall, das Feuer der Ranglistenzeile in derselben Rangfarbe und mit demselben hellen Kern wie im Profil — **im echten Browser gemessen** | 89 |
-| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest, die fünf Kammern samt ihren Zählern und die Kammerleiste, die auf dem Telefon erreichbar bleibt, und die Bildzone jeder der zwölf Kartensorten, die der Schlagzeile nicht den Platz nimmt und ihr eigenes Bild nicht abschneidet, die Siegchance einer Partie auf ihrer Skala, die Elo-Wirkung je Spieler, das Blatt eines Tafel-Moments samt seiner Zahlenreihe und dem Weg zur nächsten Insignium-Schwelle, den Balken hinter jedem Verfolger, den Spieltag als Bahn, die Bildzone jeder Karte, den Balken, der aufwächst und bei Bewegungsruhe stillsteht, die Anlass-Zeile eines gebündelten Breaking samt ihrer eigenen Kante und Fläche, und jedes Story-Blatt und jede Karte bei 360 px, jeden Reiter bei 360 px ohne Überlauf, jedes Gesicht mit mittigen Initialen, das Komma jeder Dezimalzahl in Reitern und Blättern, die Bilanz einer Ranglistenzeile und jeden Reiter, die nicht umbrechen oder abgeschnitten werden, jedes Blatt, das nicht über seinen Innenrand läuft und keine Achsenbeschriftung übereinanderlegt, jedes Gesicht in einem Blatt mit Größe, das Blatt einer Partie mit Siegern, Siegchance, einer Zeile je Spieler und Namen, die ins Profil führen, die Beziehung unter den Wappen eines Story-Blatts, die etwas sagt, das Blatt einer Serie am Stand ihrer Partie, jeden Kachelnamen ungekürzt und ohne ein Wort, das mitten durch bricht, den Feed, der Karten außerhalb des Bildschirms erst beim Hineinscrollen legt, dieselbe Sache unter demselben deutschen Namen ohne Anrede, den Knopf „Match eintragen", der auf der Match-Seite fehlt, jedes Award-Blatt mit ausgeschriebener Einheit, einer Serie ab dem zweiten Ergebnis, dem eigenen Stand zuerst, derselben Zahl für dieselbe Überraschung und derselben Spitze wie im Profil, und die Nebenwertungen der Liga und die zwei Aufstellungen eines Duos, die nicht abgeschnitten werden oder über den Rand laufen, den Schlitten jedes Segmentwählers unter seiner Wahl, der nach dem Neuzeichnen gleitet und bei Bewegungsruhe springt, und den Monat als Zellen, und jedes Blatt mit demselben Kopf, Schließen und höchstens einem gefüllten Knopf, die Bühne mit Gesichtern, den Hinweis mit Rolle und Rückgängig und die Bestätigung mit dem sicheren Knopf links, den Glanz, der nur dem Titel gehört und bei Bewegungsruhe ruht, und den Faden, der in seiner Karte bleibt, und den Faden, der öffnet, wohin er zeigt — **im echten Browser gemessen**, und die ganze Leiter in der Laufbahn, deren Felder die Vitrine auf ihre Stufe stellen, und die Meisterbühne bei 360 px, deren Strahlenkranz hinter dem Podest liegt und bei Bewegungsruhe mit den Linien stillsteht, und jedes Insignium in Liga, Positionen, Awards, Rekorden, Profil, Laufbahn und Feed, das unter keinem Filter und keiner Skalierung liegt und groß als Vektor, klein als Bild steht — auch die einundzwanzig Felder der ganzen Leiter —, und den Verlust in der Wirkung auf die Laufbahn: ein rotes Stück im Balken, ein Minus, der Fall unter die Schwelle und der geteilte Rekord, und jedes Wappenbild unter einer kurzen Adresse, und die Aura im Profilkopf, die einmal steht und nur transform und Deckkraft bewegt, und jede Karte am Spieltag und jede Runde, auf der kein Text auf einem anderen oder einem Gesicht liegt, keiner hinausragt, abgeschnitten, mit „…" gekürzt oder unter 8 px geschrumpft ist — im Feed und mit Grenzwerten und langen Namen bei 288 und 360 px, und die Einblicke als Zeile, die erst beim Aufklappen zeichnet, die Siegchance unter der Score-Karte, jede Begegnung im Direkten Vergleich, Woche und Tag im Rückblick samt dem Knopf der Story, die Kammerfelder und die Besitzleiste in ihrer Karte und den Positionsverlauf mit dem Titelrennen unter der Rangliste | 220 |
+| `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest, die fünf Kammern samt ihren Zählern und die Kammerleiste, die auf dem Telefon erreichbar bleibt, und die Bildzone jeder der zwölf Kartensorten, die der Schlagzeile nicht den Platz nimmt und ihr eigenes Bild nicht abschneidet, die Siegchance einer Partie auf ihrer Skala, die Elo-Wirkung je Spieler, das Blatt eines Tafel-Moments samt seiner Zahlenreihe und dem Weg zur nächsten Insignium-Schwelle, den Balken hinter jedem Verfolger, den Spieltag als Bahn, die Bildzone jeder Karte, den Balken, der aufwächst und bei Bewegungsruhe stillsteht, den Lichtlauf des Seltenen in seiner Familienfarbe, den Hinweis auf neue Stories mit Zahl, Lichtlauf und Ring, den Sieger im Verlauf hell unter seinem Tag und die Bilanz eines Duos als Balken, den Feed, der zuerst die oberen Tage zeichnet und den Rest nach dem ersten Bild nachreicht, die Anlass-Zeile eines gebündelten Breaking samt ihrer eigenen Kante und Fläche, und jedes Story-Blatt und jede Karte bei 360 px, jeden Reiter bei 360 px ohne Überlauf, jedes Gesicht mit mittigen Initialen, das Komma jeder Dezimalzahl in Reitern und Blättern, die Bilanz einer Ranglistenzeile und jeden Reiter, die nicht umbrechen oder abgeschnitten werden, jedes Blatt, das nicht über seinen Innenrand läuft und keine Achsenbeschriftung übereinanderlegt, jedes Gesicht in einem Blatt mit Größe, das Blatt einer Partie mit Siegern, Siegchance, einer Zeile je Spieler und Namen, die ins Profil führen, die Beziehung unter den Wappen eines Story-Blatts, die etwas sagt, das Blatt einer Serie am Stand ihrer Partie, jeden Kachelnamen ungekürzt und ohne ein Wort, das mitten durch bricht, den Feed, der Karten außerhalb des Bildschirms erst beim Hineinscrollen legt, dieselbe Sache unter demselben deutschen Namen ohne Anrede, den Knopf „Match eintragen", der auf der Match-Seite fehlt, jedes Award-Blatt mit ausgeschriebener Einheit, einer Serie ab dem zweiten Ergebnis, dem eigenen Stand zuerst, derselben Zahl für dieselbe Überraschung und derselben Spitze wie im Profil, und die Nebenwertungen der Liga und die zwei Aufstellungen eines Duos, die nicht abgeschnitten werden oder über den Rand laufen, den Schlitten jedes Segmentwählers unter seiner Wahl, der nach dem Neuzeichnen gleitet und bei Bewegungsruhe springt, und den Monat als Zellen, und jedes Blatt mit demselben Kopf, Schließen und höchstens einem gefüllten Knopf, die Bühne mit Gesichtern, den Hinweis mit Rolle und Rückgängig und die Bestätigung mit dem sicheren Knopf links, den Glanz, der nur dem Titel gehört und bei Bewegungsruhe ruht, und den Faden, der in seiner Karte bleibt, und den Faden, der öffnet, wohin er zeigt — **im echten Browser gemessen**, und die ganze Leiter in der Laufbahn, deren Felder die Vitrine auf ihre Stufe stellen, und die Meisterbühne bei 360 px, deren Strahlenkranz hinter dem Podest liegt und bei Bewegungsruhe mit den Linien stillsteht, und jedes Insignium in Liga, Positionen, Awards, Rekorden, Profil, Laufbahn und Feed, das unter keinem Filter und keiner Skalierung liegt und groß als Vektor, klein als Bild steht — auch die einundzwanzig Felder der ganzen Leiter —, und den Verlust in der Wirkung auf die Laufbahn: ein rotes Stück im Balken, ein Minus, der Fall unter die Schwelle und der geteilte Rekord, und jedes Wappenbild unter einer kurzen Adresse, und die Aura im Profilkopf, die einmal steht und nur transform und Deckkraft bewegt, und jede Karte am Spieltag und jede Runde, auf der kein Text auf einem anderen oder einem Gesicht liegt, keiner hinausragt, abgeschnitten, mit „…" gekürzt oder unter 8 px geschrumpft ist — im Feed und mit Grenzwerten und langen Namen bei 288 und 360 px, und die Einblicke als Zeile, die erst beim Aufklappen zeichnet, die Siegchance unter der Score-Karte, jede Begegnung im Direkten Vergleich, Woche und Tag im Rückblick samt dem Knopf der Story, die Kammerfelder und die Besitzleiste in ihrer Karte und den Positionsverlauf mit dem Titelrennen unter der Rangliste | 225 |
 | `archiv` | Einfrieren abgeschlossener Monate und den Profileintrag, der daraus gelesen wird | 9 |
 | `backup` | Export und Wiederherstellung, braucht Chromium | — |
 
@@ -674,6 +674,23 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   die Aura des Ersten leuchtet über das Podest hinaus und wäre sonst abgeschnitten.
   Anderthalb Sekunden Lauf, gut sechs Ruhe; bei Bewegungsruhe fehlt es ganz.
   `tests/blatt` misst, wer es trägt, wer nicht, und dass es ruht.
+  **Das Seltene im Feed trägt einen leiseren Lauf in der Farbe seiner
+  Familie** (`_newsGlanz`, `.nf-glanz`): Spitzenwechsel, übernommener Rekord,
+  Insignium-Stufe, erster Chronik-Eintrag, seltene und legendäre
+  Auszeichnung, eine Serie ab fünf und die Partie-Köpfe Medaille, Wippe,
+  Premiere und Serienbruch. Bewegung hatten vorher nur Breaking, die Karte
+  des Tages und die Sieger des Tages und der Woche; alles dazwischen stand
+  still, und ein Spitzenwechsel sah aus wie ein gewöhnliches 10:7. Nicht in
+  Gold — Gold gehört dem Titel —, nicht auf einer negativen Karte und nicht
+  doppelt auf Breaking oder der Karte des Tages; alle elf Sekunden, versetzt
+  nach der ID, damit nicht alle Lichter im selben Takt laufen. Gemessen
+  tragen ihn zehn von 77 Karten des Fensters.
+  **Der Hinweis „x neue Stories" ist ein Ereignis** (`_newsToastFuellen`):
+  eine dunkle Pille mit Kante in Acid, die Zahl groß neben dem Zeichen der
+  Nachrichten, ein Lichtlauf und ein Ring, der beim Erscheinen aufgeht. Er
+  war eine flache grüne Pille in der Schrift jedes Knopfs, und in seinen vier
+  Sekunden bemerkte ihn nicht, wer gerade woanders hinsah. Bei Bewegungsruhe
+  steht er still.
   **Der Rand sagt, wie schwer eine Karte wiegt** (`--kante`, `--rahmen`): Nur
   Tages- und Wochensieger tragen die starke Goldkante; die Karte des Tages
   bekommt unabhängig von ihrer Sorte einen feineren Goldrahmen samt äußerem
@@ -996,6 +1013,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   vierzehn in 9. Dazu trug die nicht vergebene Kachel das Polster des leeren
   Zustands einer ganzen Ansicht: die Regel hieß `.empty` und traf jeden
   Baustein mit dem Zusatz „leer". Sie heißt jetzt `[class="empty"]`.
+  **Eine Partie im Verlauf zeigt, wer gewonnen hat** (`vHistory`): Gesichter
+  vor den Namen, der Sieger hell, der Verlierer leise, im Stand die Zahl des
+  Siegers in Acid, und die Partien eines Tages unter einem Tageskopf mit
+  ihrer Zahl, wie im Feed. Beide Teams standen weiß und fett nebeneinander:
+  die Regel `.mteam .won` suchte ein Kind und traf nie, die Klasse sitzt an
+  `.mteam` selbst. **Und ein Duo zeigt seine Bilanz als Balken** (`.tm-bar`),
+  wie die Ranglistenzeile eines Spielers; „26–4" als Zahl allein ließ
+  ausrechnen, ob ein Duo knapp oder klar vorn liegt.
   **Eine Bilanz ist eine Zahl und bricht nicht um.** In der Gesamtansicht
   der Liga stand „221–" über „134", in der Positionsliste „81–" über „40",
   und dahinter endete „Ø 8.8 T…" mitten im Wort. Die Tore je Spiel stehen
@@ -1230,24 +1255,45 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   `30b-news-spieltag.js`). Jede Partie-Karte begann mit demselben
   Ergebnisband, und darunter wechselte nur eine Zeile: dreißig Karten sahen im
   Feed gleich aus. Der Anlass wählt jetzt beides, in fester Rangfolge, das
-  erste, was zutrifft (`_spAnlass`): der **Spitzenwechsel** und der
-  **Rangsprung** ab zwei Plätzen (die Monatstabelle vor und nach der Partie als
-  Linien, die neue Spitze in Gold), eine **seltene oder legendäre
-  Auszeichnung** (die Medaille und wer sie in der Liga trägt), der
-  **Serienbruch** (die gerissene Kette und wer sie gerissen hat), die **Serie**
-  (der Lauf gegen den eigenen Bestwert und den Liga-Rekord VOR dieser Partie),
-  die **Teamserie** (der Lauf des Duos und seine Bilanz als Ring), der
+  erste, was zutrifft (`_spAnlass`): der **Spitzenwechsel**, eine **seltene
+  oder legendäre Auszeichnung** (die Medaille und wer sie in der Liga trägt),
+  der **Serienbruch** (die Zahl rot durchgestrichen, der Lauf mit dem roten
+  Feld der Partie, die ihn beendet hat, und wer das war — derselbe Lauf wie bei
+  der Serie, eine Kette aus Gliedern war eine zweite Bildsprache), die
+  **Serie** (der Lauf gegen den eigenen Bestwert und den Liga-Rekord VOR dieser
+  Partie), die **Teamserie** (der Lauf des Duos und seine Bilanz als Ring), der
   **Außenseitersieg** (die Wippe: das Elo-Gewicht beider Teams), die
   **Rivalitätsmarke** (jede Begegnung der beiden als Balken bis zu dieser
-  Partie), jede andere **Auszeichnung**, die **Wende** (die Elo-Kurve der
-  letzten zwölf Partien, ab drei Pleiten), der **Ein-Tor-Krimi** (die
-  Anzeigetafel und die Bilanz der Sieger in engen Partien), der **deutliche
-  Sieg** ab sechs Toren (alle Partien der Liga nach Gegentoren und wie viele so
-  deutlich waren) und sonst das **Spielfeld** (wer an welcher Stange stand und
-  die Elo je Spieler). Die Ergebniszeile darüber zeigt Stand und Gesichter;
+  Partie), die **Premiere** (der erste gemeinsame Sieg eines Duos, beim ersten
+  Mal oder ab dem dritten Versuch, und die Versuche als Lauf), die **Wende**
+  (die Elo-Kurve der letzten zwölf Partien, ab drei Pleiten), der
+  **Rangsprung** ab zwei Plätzen (die Monatstabelle vor und nach der Partie als
+  Linien, die neue Spitze in Gold), der **Rollentausch** (ein Sieg auf der
+  Seite, die vorher unter einem Viertel der eigenen Partien lag, ab zwanzig,
+  und ihr Anteil als Strahl), der **Ein-Tor-Krimi** (die Anzeigetafel und die
+  Bilanz der Sieger in engen Partien), der **deutliche Sieg** ab sechs Toren
+  (alle Partien der Liga nach Gegentoren und wie viele so deutlich waren; im
+  Kopf der Stand groß, der Sieger hell, und je Tor des Siegers ein Feld,
+  davon der Abstand hell — der Stand stand dort allein und kursiv, weil
+  `_spStand` ihn aus `<em>` baut und die Regel fehlte) und
+  sonst das **Spielfeld** (wer an welcher Stange stand und die Elo je
+  Spieler).
+  **Die Medaille gehört dem Seltenen.** Sie stand auch für jede gewöhnliche
+  Auszeichnung und jede runde Marke, und an einem Spieltag trug damit jede
+  dritte Partie-Karte dieselbe Medaille — auf einem 10:9 der „Zittersieg",
+  obwohl die Anzeigetafel genau das zeigt. Eine gewöhnliche Auszeichnung steht
+  als Zeile im Sammelband, und was eine seltene nur als Ergebnis erzählt
+  (`SP_ERGEBNIS_BADGE`, dieselbe Liste wie `BADGE_DECKT`), zeigt das Bild des
+  Ergebnisses. **Der Rangsprung braucht eine Tabelle**: am Monatsanfang
+  springt jeder Sieger zwei Plätze, weil die Tabelle aus drei Leuten besteht;
+  er zählt erst, wenn die Rangliste belastbar ist (`_storyRangFrei`).
+  **Das Spielfeld steht nicht nur, wo sonst nichts ist.** Die Ergebniszeile
+  über einer Grafik wechselt sich mit ihm ab, Partie um Partie in
+  Spielreihenfolge; vorher trug ein Spieltag voller Anlässe kein einziges.
   Spielfeld, Anzeigetafel, Wippe und Band tragen den Stand selbst. Gemessen
-  über das Fenster: elf Formen, die häufigste — das Spielfeld — auf einem
-  Drittel der Karten. Die Fakten
+  über das Fenster: zwölf Anlässe, die häufigste Form — das Spielfeld — auf
+  gut der Hälfte der Karten, davon die Hälfte als Kopf über einer Grafik.
+  Die Fakten
   kommen aus den ungebündelten Meldungen (`_newsRohIndex`), weil eine
   Sammelzeile nur Titel und Zeichen trägt. Der **Spieler des Tages** zeigt
   seinen Tag als Bahn und die Elo darüber (`_spTagBild`) statt dreier Zahlen.
@@ -1264,8 +1310,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   (`.sp-lg`), ein Name je Zeile. Dieselbe Regel gilt seitdem für das
   Ergebnisband (ein Name je Zeile), die Zeile einer Sammelkarte und den
   Faden: sie brechen um, statt mit „…" zu enden. Was wächst, hat einen Deckel
-  und sagt, was dahinter liegt: die Serie wird über sechzehn ein Balken, die
-  Kette über zwanzig Glieder geschlossen, die Rivalität zeigt die letzten
+  und sagt, was dahinter liegt: die Serie wird über sechzehn ein Balken, der
+  gerissene Lauf über zwanzig Siege ein Balken, die Rivalität zeigt die letzten
   dreißig Begegnungen, die Tabelle neun Plätze um die Bewegung, die Medaille
   ab sechzehn Spielern Punkte statt Gesichter. Gerechnet wird einmal je
   Datenstand (`_spBasis`: Spielreihenfolge, Ergebnisverteilung als
@@ -1291,18 +1337,22 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   sich 29 Runden. **Jede Partie behält ihre Karte und ihr Bild.** Die Runde
   war zuerst eine Ableitung bei der Anzeige, die die Karten ihrer Partien
   aufnahm, und bei vier Spielern stand danach nur noch sie da: Spielfeld,
-  Anzeigetafel, Wippe und Kette jeder einzelnen Partie gingen verloren. Jetzt
+  Anzeigetafel, Wippe und Lauf jeder einzelnen Partie gingen verloren. Jetzt
   ist sie eine Story wie jede andere, die **dazukommt**: dreißig Minuten nach
   der letzten Partie, wenn feststeht, dass keine mehr folgt, und dieser
   Zeitpunkt ist ihr Zeitstempel. Vorher weiß niemand, ob noch eine Partie
   kommt — und was einmal dasteht, bleibt stehen: die ID trägt die erste
-  Partie, gespeichert wird sie einmal. Die Karte trägt die Tabelle der Runde
-  (Siege, Niederlagen und Elo je Spieler), die Schlagzeile nennt, wer sie
+  Partie, gespeichert wird sie einmal. Die Schlagzeile nennt, wer sie
   gewonnen hat — bei immer denselben Teams ist es ein Duell („gewinnen die
   Runde gegen … 3:1", „trennen sich 1:1") —, der Satz die **Uhrzeiten** der
-  ersten und letzten Partie, und darunter steht jede Partie kurz in einer
-  Zeile mit Uhrzeit, Paarung, Stand und Anlass, höchstens acht und dahinter
-  die Zahl der übrigen. Das Blatt zeigt die Tabelle, wer mit wem an welcher
+  ersten und letzten Partie. **Die Karte fasst zusammen und sagt es**: eine
+  Kennzeile („Zusammenfassung von 5 Partien am Stück, nur …"), die Tabelle
+  als Reihe aus vier Feldern (Siege, Niederlagen, Elo) und die Partien als
+  Streifen aus Uhrzeit und Stand. Sie trug darunter jede Partie als Zeile mit
+  vier Wappen und ihrem Anlass — und genau diese Partien stehen direkt
+  daneben als eigene Karten: wer scrollte, las jedes Spiel zweimal, und was
+  die Runde ist, stand nirgends. Die Fläche ist leiser (gestrichelte Kante,
+  kein Schein). Das Blatt zeigt die Tabelle, wer mit wem an welcher
   Stange stand (eine Spalte je Partie, in Blöcken zu acht) und jede Partie;
   jede Zeile öffnet die Karte ihrer Partie. Sie zählt gegen keinen Deckel,
   fällt an keiner Sperre und verbraucht im Generator kein Budget eines
@@ -1331,8 +1381,20 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   **Und ihre Schlagzeile nennt, was in der Partie passiert ist.** Ein Bündel
   hieß „Ein Spiel, zwei Geschichten für Maxi und Henry" — das gilt für jeden
   Spieltag und sagt von keinem der beiden Anlässe etwas. Es nennt jetzt die
-  Anlässe („Serienbruch und Ein-Tor-Krimi in einer Partie für …"), und der Satz
-  darunter nennt die Siegchance und die Elo-Wirkung, die sonst nirgends stehen.
+  Anlässe, und der Satz darunter nennt die Siegchance und die Elo-Wirkung, die
+  sonst nirgends stehen. **Jeder Anlass nennt die, denen er gehört**: die
+  Namen standen einmal hinter allen Anlässen zusammen — „Seltene Auszeichnung
+  in einer Partie für Julian und Leo", obwohl nur Julian sie geholt hat, und
+  „Enges Spiel und Rivalitätsmarke … für Martin, Jane und Maxi", Sieger und
+  Rivalen in einem Topf. Jetzt trägt jeder Anlass seine Leute mit dem Wort,
+  das ihre Rolle sagt — der Serienbruch GEGEN den, der die Serie trug, die
+  Rivalität ZWISCHEN zweien, alles andere FÜR den, dem es zählt —, und das
+  Ergebnis hängt sich als Ort dahinter, weil es allen vier gehört:
+  „Seltene Auszeichnung „Mauer" für Henry und Serienbruch gegen Jannik im
+  engen Spiel". Eine Auszeichnung nennt ihren Namen, ohne Ergebnis steht der
+  Anlass allein („Teamserie für Leon und Maxi" — „in einer Partie" sagte
+  nichts, was das Band nicht zeigt). Zwei Anlässe stehen in der Zeile, der
+  Rest im Sammelband.
   Das Ergebnis selbst ist dabei ein Anlass wie jeder andere — außer wenn eine
   Auszeichnung derselben Partie es schon erzählt (`BADGE_DECKT`): „Absoluter
   Sieger" IST das 10:0, und beides in einer Zeile nennt dasselbe zweimal.
@@ -1944,7 +2006,7 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   dasselbe Spiel, dieselben Wappen, derselbe Stand, zweimal gelesen. Sie
   werden eine Karte, die Breaking bleibt, das Ergebnis der Partie als Band
   trägt und in der Schlagzeile **beide Anlässe nennt** („Neue Tabellenspitze
-  und Auszeichnung in einer Partie für Maxi und Henry") — „Ein Spiel, zwei
+  für Maxi und legendäre Auszeichnung „Absoluter Sieger" für Maxi und Henry") — „Ein Spiel, zwei
   Geschichten" gilt für jeden Spieltag und verschweigt genau das, was diese
   Karte besonders macht. Zusammengelegt wird nur über die **Partie**, nie über
   die Minute: eine gemeinsame Minute ohne gemeinsames Spiel sagt nichts.
@@ -1965,8 +2027,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Ergebnis heißt dort, was es war (`ERGEBNIS_MOTIV`: Sieg ohne Gegentor,
   Favoritensturz, Ein-Tor-Krimi, klarer Sieg, enges Spiel) — „besonderes
   Ergebnis" stand neben „neue Tabellenspitze" und sagte von den zwei Anlässen
-  gerade den nicht, der die Partie ausmacht. Ab dem vierten Namen bleibt die
-  Zeile ohne sie: „für Martin, Maxi und zwei weitere" nennt keinen davon
+  gerade den nicht, der die Partie ausmacht. Ab dem vierten Namen bleibt ein
+  Anlass ohne sie: „für Martin, Maxi und zwei weitere" nennt keinen davon
   vollständig, und wer gemeint ist, sagen Band und Sammelband darunter.
   **Was eine Auszeichnung derselben Partie erzählt, erzählt das Ergebnis
   nicht noch einmal** (`BADGE_DECKT`). „Absoluter Sieger" IST das 10:0, „Upset
@@ -3150,7 +3212,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Nutzereinheiten (170) und nicht in der, in der es erscheint: im
   Profilkopf wurden sie auf 270 px gezogen, und das Zeichen stand mit
   Treppenkanten da wie ausgeschnitten. Ab 64 px Wappengröße, im Profilkopf
-  und in der Vitrine der Laufbahn steht sie deshalb als Vektorgruppe im Topf, einmal je
+  und auf der Karte in der Mitte der Vitrine der Laufbahn steht sie deshalb
+  als Vektorgruppe im Topf — die Karten am Rand der Vitrine stehen als Bild
+  und bekommen ihre Vektorzeichnung, wenn sie in die Mitte rücken: sieben
+  Vektorzeichnungen kosteten beim Öffnen 60 ms Stilberechnung von 122 —, einmal je
   Rang, Stufe und Grad, die Verläufe neben der Gruppe und jede Kennung mit
   eigenem Präfix (`_izPraefix`), und das Wappen verweist darauf. Darunter
   bleibt es beim Bild: ein Verweis klont die ganze Zeichnung, und der Feed
@@ -3274,6 +3339,15 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   außerhalb der Fläche, und die Eindämmung schnitte ihn ab. `tests/blatt`
   misst die Geometrie der Karten deshalb mit abgeschalteter Regel — so, wie
   eine Karte auf dem Bildschirm liegt — und prüft die Regel selbst getrennt.
+  **Und er zeichnet zuerst, was man sieht** (`NEWS_FEED_SOFORT`,
+  `_newsFeedRest`). Auch mit `content-visibility` rechnete der Browser beim
+  Öffnen Stil und Layout aller rund 3400 Knoten: gemessen 350 ms mit
+  gedrosselter CPU, und das Skript selbst war davon kein Zehntel. Gezeichnet
+  werden zuerst die Tage, die die ersten zwölf Karten tragen, der Rest kommt
+  nach dem ersten Bild dazu — bevor man so weit scrollen kann; warm öffnet
+  der Feed damit in 195 statt 350 ms. Die Klicks hängen deshalb an der Liste
+  und nicht an jeder Karte, und steht die Liste nicht mehr im Dokument,
+  fällt der Rest weg, statt im nächsten Blatt zu landen.
   **Ein geschlossenes Blatt ist leer** (`_sheetForceClose`). Es liegt
   unter dem Bildschirmrand in einer eigenen Schicht und behielt seinen
   Inhalt, nach dem Feed 5400 Knoten, die jede Stilberechnung der Seite

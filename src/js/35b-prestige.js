@@ -1302,8 +1302,13 @@ function showLaufbahn(pid){
       + (i === _letzteI ? `<span class="lb-k-z num">${i === P.stufe
             ? P.zacken + ' Zacken'
             : 'je ' + ORDENSSTERN_SCHRITT + ' eine Zacke'}</span>` : '');
-    return `<div class="lb-k ${zustand}" data-lbstufe="${i}">
-      <span class="lb-k-ins">${_zeichen(i, zeigt)}</span>
+    // Groß und scharf muss nur die Karte in der Mitte sein. Jede Vektorzeichnung
+    // klont über `<use>` ihren ganzen Baum, und sieben davon kosteten beim
+    // Öffnen gemessen 60 ms Stilberechnung von 122 — für Karten, die am Rand
+    // klein und angeschnitten stehen. Sie stehen als Bild da, und die Karte,
+    // die in die Mitte rückt, bekommt ihre Vektorzeichnung (`_fokus`).
+    return `<div class="lb-k ${zustand}" data-lbstufe="${i}" data-lbg="${zeigt}"${i === P.stufe ? ' data-vek="1"' : ''}>
+      <span class="lb-k-ins">${_zeichen(i, zeigt, i !== P.stufe)}</span>
       <span class="lb-k-n">${esc(ins.name)}</span>
       <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}${
         // Wo ein Grad anfängt, steht neben ihm: die Grade sind runde
@@ -1491,6 +1496,12 @@ function showLaufbahn(pid){
         if(d < bd){ bd = d; best = i; }
       });
       _lk.forEach((k, i) => k.classList.toggle('fokus', i === best));
+      const k = _lk[best];
+      if(k && !k.hasAttribute('data-vek')){
+        const z = k.querySelector('.lb-k-ins');
+        if(z) z.innerHTML = _zeichen(best, +k.getAttribute('data-lbg') || 0);
+        k.setAttribute('data-vek', '1');
+      }
     };
     // Bei jedem Pixel neu rechnen wäre Arbeit ohne Wirkung — ein Bild reicht,
     // und genau ein Bild ist requestAnimationFrame.
@@ -1517,6 +1528,7 @@ function showLaufbahn(pid){
       if(!k) return;
       const z = k.querySelector('.lb-k-ins');
       if(z) z.innerHTML = _zeichen(i, g);
+      k.setAttribute('data-lbg', g); k.setAttribute('data-vek', '1');
       k.querySelectorAll('[data-lbgrad]').forEach(b =>
         b.classList.toggle('zeigt', +b.getAttribute('data-lbgrad') === g));
     };

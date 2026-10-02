@@ -1409,10 +1409,74 @@ function _consolidateStories(list){
       // vierten Namen bleibt sie ohne sie: „fuer Martin, Maxi und zwei
       // weitere" nennt keinen davon vollstaendig, und wer gemeint ist, sagen
       // Band und Sammelband darunter genauer.
-      if(motive.length){
-        const bild = _namenListe(motive);
-        neuTitel = `${bild.charAt(0).toUpperCase() + bild.slice(1)} in einer Partie`
-          + (namen.length && namen.length <= 3 ? ` für ${_namenListe(namen)}` : '');
+      // ── Jeder Anlass nennt die, denen er gehört ──────────────────
+      // Die Namen standen einmal hinter allen Anlässen zusammen: „Seltene
+      // Auszeichnung in einer Partie für Julian und Leo", obwohl nur Julian
+      // sie geholt hat, und „Enges Spiel und Rivalitätsmarke in einer Partie
+      // für Martin, Jane und Maxi" — Martin hat gewonnen, Jane und Maxi sind
+      // die Rivalen. Jetzt trägt jeder Anlass seine eigenen Leute samt dem
+      // Wort, das ihre Rolle sagt: die Serie bricht GEGEN den, der sie trug,
+      // die Rivalität steht ZWISCHEN zweien, alles andere gehört dem, FÜR den
+      // es zählt. Das Ergebnis der Partie hängt sich als Ort dahinter („im
+      // Ein-Tor-Krimi"): es gehört allen vier. Zwei Anlässe stehen in der
+      // Zeile, der Rest im Sammelband darunter.
+      const ERGEBNIS_ORT = {zu_null:'mit einem Sieg ohne Gegentor', upset:'im Favoritensturz',
+                            krimi:'im Ein-Tor-Krimi', kanter:'mit einem klaren Sieg', eng:'im engen Spiel'};
+      const _eigene = t => {
+        const dt = (t && t.dataRef) || {};
+        if(dt.type === 'streak_killer' && dt.victimPid) return {wort:'gegen', pids:[dt.victimPid]};
+        if(dt.type === 'rivalry_milestone' && dt.a && dt.b) return {wort:'zwischen', pids:[dt.a, dt.b]};
+        if(dt.type === 'top_clash' && dt.p1 && dt.p2) return {wort:'zwischen', pids:[dt.p1, dt.p2]};
+        if(dt.type === 'lead_change' && dt.newLeader) return {wort:'für', pids:[dt.newLeader]};
+        if(dt.type === 'badge_unlocked' && dt.playerId) return {wort:'für', pids:[dt.playerId]};
+        if(dt.type === 'win_streak' && dt.pid) return {wort:'für', pids:[dt.pid]};
+        if((dt.type === 'team_streak' || dt.type === 'team_loss_streak') && dt.a && dt.b) return {wort:'für', pids:[dt.a, dt.b]};
+        return {wort:'für', pids:(t.playerIds || dt.playerIds || []).filter(Boolean)};
+      };
+      const phrasen = [], ortTeil = teile.find(t => { const dt = t.dataRef || {};
+        return (dt.type === 'spiel' || dt.type === 'match_result') && _motivVon(t); });
+      teile.forEach(t => {
+        if(t === ortTeil) return;
+        let mv = _motivVon(t);
+        if(!mv) return;
+        // Die Auszeichnung nennt ihren Namen: „Auszeichnung für Johannes"
+        // sagte nicht, welche.
+        const bd = (t.dataRef || {}).type === 'badge_unlocked' && typeof BADGES !== 'undefined'
+          ? BADGES.find(b => b.id === (t.dataRef || {}).badgeId) : null;
+        const mk = (t.dataRef || {}).type === 'badge_marken' && ((t.dataRef || {}).marken || []).length === 1
+          ? t.dataRef.marken[0] : null;
+        if(bd && bd.name) mv += ` „${bd.name}“`;
+        else if(mk && mk.name) mv += ` „${mk.name}“`;
+        const e = _eigene(t), key = e.wort + '|' + [...new Set(e.pids)].sort().join();
+        const da = phrasen.find(x => x.key === key);
+        if(da){ if(da.motive.indexOf(mv) < 0) da.motive.push(mv); return; }
+        if(phrasen.some(x => x.motive.indexOf(mv) >= 0 && x.key !== key)){
+          // Derselbe Anlass für andere Leute: zwei Pleitenserien derselben
+          // Partie sind EIN Anlass mit zwei Namen.
+          const x = phrasen.find(y => y.motive.indexOf(mv) >= 0);
+          x.pids = [...new Set(x.pids.concat(e.pids))];
+          x.key = x.wort + '|' + [...x.pids].sort().join();
+          return;
+        }
+        phrasen.push({key, wort:e.wort, pids:[...new Set(e.pids)], motive:[mv]});
+      });
+      const _phrase = x => {
+        const was = _namenListe(x.motive);
+        return x.pids.length && x.pids.length <= 3 ? `${was} ${x.wort} ${_namenListe(x.pids.map(nameOf))}` : was;
+      };
+      if(phrasen.length || ortTeil){
+        const ort = ortTeil ? (ERGEBNIS_ORT[(ortTeil.dataRef || {}).resultKind] || '') : '';
+        let bild;
+        if(phrasen.length){
+          // Ohne Ergebnis als Ort steht der Anlass allein: „in einer Partie"
+          // sagte nichts, was das Band darüber nicht zeigt.
+          bild = phrasen.slice(0, 2).map(_phrase).join(' und ') + (ort ? ` ${ort}` : '');
+        } else {
+          // Nur das Ergebnis: es gehört den Siegern.
+          const w = ((ortTeil.dataRef || {}).winners || ortTeil.playerIds || []).map(nameOf);
+          bild = _motivVon(ortTeil) + (w.length && w.length <= 3 ? ` für ${_namenListe(w)}` : '');
+        }
+        neuTitel = bild.charAt(0).toUpperCase() + bild.slice(1);
       } else {
         neuTitel = `Ein Spiel, ${_zahlwortDe(teile.length)} Geschichten${beteiligte}`;
       }

@@ -146,6 +146,17 @@ function _isSheetActive(){
   } catch(e){}
   return false;
 }
+// ── Der Hinweis ist ein Ereignis ──────────────────────────────────────
+// Er war eine flache grüne Pille mit „59 neue Stories" in einer Zeile: dieselbe
+// Schrift und Fläche wie jeder Knopf, und wer gerade woanders hinsah, bemerkte
+// ihn in seinen vier Sekunden nicht. Jetzt steht die Zahl groß neben einem
+// Zeichen, ein Lichtlauf zieht beim Erscheinen darüber, und ein Ring geht auf
+// wie ein Signal. Alles nur über transform und Deckkraft, und bei
+// Bewegungsruhe steht er still da.
+function _newsToastFuellen(txt, n){
+  txt.innerHTML = `<i class="nt-ic">${svgI('newspaper')}</i><b class="nt-n num">${n}</b>`
+    + `<span class="nt-w">${n === 1 ? 'neue Story' : 'neue Stories'}</span>`;
+}
 function _maybeShowNewsToast(unreadCount){
   const toast = document.getElementById('newsToast');
   const txt = document.getElementById('newsToastTxt');
@@ -161,7 +172,7 @@ function _maybeShowNewsToast(unreadCount){
     return;
   }
   // Anzeigen
-  txt.textContent = unreadCount + (unreadCount === 1 ? ' neue Story' : ' neue Stories');
+  _newsToastFuellen(txt, unreadCount);
   _positionNewsToast();
   toast.classList.add('visible');
   // Reflow erzwingen für CSS-Animation
@@ -229,7 +240,7 @@ function _processDeferredNewsToast(){
     const toast = document.getElementById('newsToast');
     const txt = document.getElementById('newsToastTxt');
     if(!toast || !txt) return;
-    txt.textContent = n + (n === 1 ? ' neue Story' : ' neue Stories');
+    _newsToastFuellen(txt, n);
     _positionNewsToast();
     toast.classList.add('visible');
     void toast.offsetWidth;
@@ -437,6 +448,36 @@ function _newsTafelTon(s){
   return arten.length === 1 ? arten[0] : (arten.length > 1 ? 'mix' : 'rekord');
 }
 
+// ── Ein Schimmer für das, was selten ist [§C25] ───────────────────────
+// Bewegung hatten im Feed nur drei Karten: Breaking, die Karte des Tages und
+// der Spieler des Tages und der Woche, die beiden letzten in Gold. Alles
+// dazwischen stand still, auch ein Spitzenwechsel, eine seltene
+// Auszeichnung oder eine Fünfer-Serie, und man scrollte darüber hinweg wie
+// über ein gewöhnliches 10:7. Diese Karten tragen jetzt einen leisen
+// Lichtlauf in der Farbe IHRER Familie (`--story-rgb`), nicht in Gold — Gold
+// gehört dem Titel. Was ohnehin leuchtet, bekommt keinen zweiten, und eine
+// negative Richtung auch nicht. Der Versatz kommt aus der ID, damit nicht
+// alle Lichter im selben Takt laufen.
+const NEWS_GLANZ_TYP = new Set(['lead_change', 'rekord_geholt', 'insignium_stufe', 'chronik_erstling', 'streak_record', 'season_champion']);
+const NEWS_GLANZ_ANLASS = new Set(['spitze', 'medaille', 'aussenseiter', 'premiere', 'riss']);
+function _newsGlanz(s, sorte, anlass){
+  const d = s.dataRef || {};
+  if(sorte === 'held' || sorte === 'woche') return false;
+  if(NEWS_GLANZ_TYP.has(d.type) || NEWS_GLANZ_ANLASS.has(anlass)) return true;
+  if(d.type === 'badge_unlocked' && (d.rarity === 'rare' || d.rarity === 'legendary')) return true;
+  if((d.type === 'win_streak' || d.type === 'team_streak') && Number(d.streak) >= 5) return true;
+  if(anlass === 'serie' || anlass === 'teamserie'){
+    const f = (typeof _newsSpielFakten === 'function' ? _newsSpielFakten(s) : [])
+      .find(x => x.type === 'win_streak' || x.type === 'team_streak');
+    if(f && Number(f.streak) >= 5) return true;
+  }
+  return (d.teile || []).some(t => t.klasse || NEWS_GLANZ_TYP.has(t.typ));
+}
+function _newsGlanzVersatz(id){
+  let h = 0; const t = String(id || '');
+  for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+  return -(h % 110) / 10;
+}
 function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   if(((s && s.dataRef) || {}).type === 'runde') return _newsRundeHtml(s, isRead, fadenHtml);
   const dcat = _displayCat(s);
@@ -667,7 +708,8 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const h = _breakingHeroText(s);
     if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
   }
-  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
+  const glanz = !negativ && !brk && !gross && _newsGlanz(s, sorte, sorte === 'spiel' && d.matchId ? _spBild(s).key : '');
+  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
@@ -1783,7 +1825,7 @@ function _renderNewsFeed(){
   // Die Tafel: ein Tageskopf, darunter alle Karten dieses Tages. Breaking
   // bleibt an seinem Platz in der Chronologie und wird nicht nach oben
   // gezogen — es trägt stattdessen einen roten Kopfbalken.
-  let listHtml;
+  let listHtml, teileHtml = [], sofort = 0;
   if(!cards.length){
     listHtml = '<div class="nf-empty">Keine Stories in dieser Auswahl.</div>';
   } else {
@@ -1797,7 +1839,7 @@ function _renderNewsFeed(){
       if(g && g.k === k) g.items.push(st);
       else gruppen.push({k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
     });
-    listHtml = gruppen.map(g => {
+    teileHtml = gruppen.map(g => {
       const neu = g.items.filter(st => !gelesen(st)).length;
       // Die Wahl gehoert dem ganzen Tag, nicht dem aktiven Filter. Sonst
       // koennte dieselbe Tafel je Reiter eine andere „Karte des Tages" haben.
@@ -1819,7 +1861,17 @@ function _renderNewsFeed(){
         <div class="nf-feed">${g.items.map(st =>
             _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte,
               _newsFadenHtml(faeden.get(st.id), stories))).join('')}</div>`;
-    }).join('');
+    });
+    // ── Zuerst, was man sieht ─────────────────────────────────────────
+    // Der Feed trägt rund siebzig Karten und 3400 Knoten, und beim Öffnen
+    // rechnete der Browser Stil und Layout für alle auf einmal: gemessen
+    // 75 ms ohne und 350 ms mit gedrosselter CPU, und das Skript selbst war
+    // davon nicht einmal ein Zehntel. Gezeichnet werden zuerst die Tage, die
+    // die ersten Karten tragen (`NEWS_FEED_SOFORT`), der Rest kommt nach dem
+    // ersten Bild dazu (`_newsFeedRest`) — bevor man so weit scrollen kann.
+    let n = 0;
+    while(sofort < teileHtml.length && n < NEWS_FEED_SOFORT){ n += gruppen[sofort].items.length; sofort++; }
+    listHtml = teileHtml.slice(0, sofort).join('');
   }
 
   const datum = new Date().toLocaleDateString('de-DE',
@@ -1839,8 +1891,13 @@ function _renderNewsFeed(){
       </div>
       ${filterBar}
     </div>
-    <div class="nf-wrap" style="padding-top:0">${listHtml}</div>
+    <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
   `);
+  const sheetEl = document.getElementById('sheet');
+  const liste = sheetEl.querySelector('.nf-liste');
+  const rest = teileHtml.slice(sofort).join('');
+  _newsFeedOffen = rest && liste ? {liste, html:rest} : null;
+  if(_newsFeedOffen) requestAnimationFrame(() => setTimeout(_newsFeedRest, 0));
 
   // Filter-Click → re-render (billig, Daten aus Cache).
   const sheet = document.getElementById('sheet');
@@ -1862,20 +1919,31 @@ function _renderNewsFeed(){
       _renderNewsFeed();
     };
   }
-  // Der Faden öffnet die frühere Karte, nicht die, in der er steht.
-  sheet.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
-    el.onclick = ev => { ev.stopPropagation(); openNewsDetail(el.dataset.ziel); };
-  });
-  // Karten + Hero klickbar → Detail.
-  sheet.querySelectorAll('[data-sid]').forEach(el => {
-    el.onclick = () => {
-      const sid = el.dataset.sid;
-      _newsMarkSeen(sid);
-      el.classList.add('read'); el.classList.remove('important');
-      el.querySelector('.nf-dot')?.remove();
-      newsBadgeRefresh();
-      openNewsDetail(sid);
-    };
-  });
+  // Ein Lauscher an der Liste statt einer an jeder Karte: die Karten, die
+  // erst nach dem ersten Bild dazukommen, sind beim Binden noch nicht da.
+  if(liste) liste.onclick = ev => {
+    // Der Faden öffnet die frühere Karte, nicht die, in der er steht.
+    const f = ev.target.closest && ev.target.closest('.nf-faden[data-ziel]');
+    if(f){ ev.stopPropagation(); openNewsDetail(f.dataset.ziel); return; }
+    // Karten + Hero klickbar → Detail.
+    const el = ev.target.closest && ev.target.closest('[data-sid]');
+    if(!el || !liste.contains(el)) return;
+    const sid = el.dataset.sid;
+    _newsMarkSeen(sid);
+    el.classList.add('read'); el.classList.remove('important');
+    el.querySelector('.nf-dot')?.remove();
+    newsBadgeRefresh();
+    openNewsDetail(sid);
+  };
+}
+// Der Rest des Feeds, nach dem ersten Bild. Steht die Liste nicht mehr im
+// Dokument — eine Karte wurde schon geöffnet, das Blatt geschlossen —,
+// fällt er weg: angehängt landete er sonst im nächsten Blatt.
+let _newsFeedOffen = null;
+const NEWS_FEED_SOFORT = 12;
+function _newsFeedRest(){
+  const o = _newsFeedOffen;
+  _newsFeedOffen = null;
+  if(o && o.liste.isConnected) o.liste.insertAdjacentHTML('beforeend', o.html);
 }
 
