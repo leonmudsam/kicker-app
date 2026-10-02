@@ -179,7 +179,21 @@ mockup/               Entwürfe. Eigenständige HTML-Seiten ohne Bauablauf,
                       nur, wo sie Platz hat, sonst in einer Textstelle
                       darunter. Eingebaut ist sie samt der Runde in
                       `30b-news-spieltag.js` [§C33]; die Seite bleibt als
-                      Herleitung (aufwertung-4/)
+                      Herleitung (aufwertung-4/), und die fünfte: vierzehn
+                      neue Köpfe für die gewöhnliche Partie, jeder mit einer
+                      Regel aus den Partien bis zu dieser und einem Gewicht
+                      (Tauziehen, Pflicht erfüllt, Erwartung gegen Ergebnis,
+                      Elo-Transfer, Eingespielt, Lieblingsgegner und
+                      gebrochener Fluch, Revanche, Tagesring, Zählwerk,
+                      Anpfiff und Schlusspfiff, Mosaik, Gipfeltreffen, Zwei
+                      Welten, Zurück am Tisch), eine Regel für Abwechslung,
+                      drei Formen für Partien mit mehreren Anlässen
+                      (Stempel, halb und halb, Leiste) und dreizehn Blätter
+                      in einem Bau aus Bühne, Kernsatz und Abschnitten, je
+                      neben dem heutigen. Anders als die vierte keine
+                      Fotos: bau.js legt die Karten und Blätter als
+                      lebendiges Markup samt Animation in die Seite, die
+                      Bildadressen der Wappen als Daten (aufwertung-5/)
 ARCHITEKTUR.md        ausführliche Herleitung, dort steht das Warum
 .github/workflows/    pages.yml — Prüf-Job, Veröffentlichung schaltbar
 kicker-app-main/      alter Abzug, liegt bewusst brach — nicht anfassen
