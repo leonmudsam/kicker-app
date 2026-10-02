@@ -179,24 +179,17 @@ function _spAnlass(s){
   const fakten = _newsSpielFakten(s);
   const f = t => fakten.find(x => x.type === t);
   const c = _spChance(m);
-  const basis = f('spiel') || d;
-  const fest = basis.visualKey || '';
   let x;
-  if((x = f('lead_change')) && x.newLeader && (!fest || fest === 'spitze')) return {key:'spitze', m, x};
+  if((x = f('lead_change')) && x.newLeader) return {key:'spitze', m, x};
   if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary')
       && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
-    if(!fest || fest === 'medaille') return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
-  if((x = f('streak_killer')) && x.victimPid && (!fest || fest === 'riss')) return {key:'riss', m, x};
-  if((x = f('win_streak')) && x.streak && (!fest || fest === 'serie')) return {key:'serie', m, x};
-  if((x = f('team_streak')) && x.streak && x.a && x.b && (!fest || fest === 'teamserie')) return {key:'teamserie', m, x};
-  if(c != null && c < CHANCE_UPSET && (!fest || fest === 'aussenseiter')) return {key:'aussenseiter', m, c};
-  if((x = f('rivalry_milestone')) && x.a && x.b && (!fest || fest === 'duell')) return {key:'duell', m, x};
-  const basisAnlass = _spAnlassDaten(m, c);
-  // Fuer bestehende Alt-Stories ohne gespeicherte Wahl gilt die bisherige
-  // deterministische Logik. Neue Stories tragen ihre Form im Snapshot.
-  return fest && fest === 'feld'
-    ? {key:'feld', m, c, form:basis.visualForm || 'feld'}
-    : basisAnlass;
+    return {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
+  if((x = f('streak_killer')) && x.victimPid) return {key:'riss', m, x};
+  if((x = f('win_streak')) && x.streak) return {key:'serie', m, x};
+  if((x = f('team_streak')) && x.streak && x.a && x.b) return {key:'teamserie', m, x};
+  if(c != null && c < CHANCE_UPSET) return {key:'aussenseiter', m, c};
+  if((x = f('rivalry_milestone')) && x.a && x.b) return {key:'duell', m, x};
+  return _spAnlassDaten(m, c);
 }
 // Der Teil des Anlasses, der allein aus den Partien kommt. Der Generator
 // fragt ihn, um zu wissen, ob eine Partie gewöhnlich ist und eine Form
@@ -1044,9 +1037,8 @@ function _spFormText(m){
   const w = _spForm(m);
   return SP_FORM[w.key].text(_spFakten(m), w.x);
 }
-function _spFormBild(m, fest){
-  const w = (fest && _spFormKand(m).find(x => x.key === fest)) || _spForm(m);
-  const f = SP_FORM[w.key];
+function _spFormBild(m){
+  const w = _spForm(m), f = SP_FORM[w.key];
   return {key:w.key, glanz:w.key === 'zaehlwerk' || w.key === 'rueckkehr' || w.key === 'transfer' || (w.key === 'gegner' && w.x.fluch),
     html:SP_FORM_BILD[w.key](f.daten(_spFakten(m), w.x))};
 }
@@ -1211,7 +1203,7 @@ function _spBild(s){
   try {
     const a = _spAnlass(s);
     if(a.key === 'feld'){
-      const f = _spFormBild(a.m, a.form);
+      const f = _spFormBild(a.m);
       r = {key:'feld', form:f.key, glanz:f.glanz, kopf:f.html, fuss:'', zeigt:SP_ZEIGT_ALLES, pl:players};
     } else if(a.key){
       r = {key:a.key, form:'', glanz:false, kopf:SP_KOPF[a.key](a) || _newsErgebnisBand(a.m.id),

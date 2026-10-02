@@ -220,7 +220,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1027**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1028**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -1138,20 +1138,19 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   sichtbare Kartenform über die ruhige Farbfamilie [§C25]. Die Kategorie ist
   nur noch ein Rückfallwert; Karte und Detailblatt leiten Kante, Rubrik,
   Zeichen und Schimmer gemeinsam aus `--story` ab.
-  Gegen Rauschen gilt **Bündeln statt Verwerfen**: Ereignisse derselben Partie
-  werden in einer Matchkarte mit vollständigem Sammelband verbunden; was
-  semantisch nicht dazugehört, bleibt eine eigene Karte. Weder ein Tagesdeckel
-  noch eine spätere ähnliche Schlagzeile darf eine bereits publizierte Story
-  entfernen. So bleibt das 7:10 samt Revanche sichtbar, auch wenn eine spätere
-  Rivalitätsmeldung dazukommt. Die Obergrenze des Feeds schützt nur die
-  Fensterbreite; innerhalb des Fensters ist jede Publikation nachlesbar.
-  Titel, Text, Zeitpunkt, Kartenform und Grafik sind dabei ein persistierter
-  **Publikations-Snapshot**. Ein späteres Match darf keinen dieser Werte neu
-  auswählen oder umschreiben. Die einzige veränderliche Publikation ist die
-  eine Karte der **Ewigen Tafel des laufenden Tages**: Sie bündelt alle
-  Tafelwechsel dieses Tages, ersetzt ihre frühere Tagesfassung und trägt stets
-  den Zeitpunkt des jüngsten Wechsels. Tafel-Karten früherer Tage sind wie alle
-  anderen Stories unveränderlich.
+  Drei Regeln gegen Rauschen: **kein Story-Typ steht an einem Tag mehr als zweimal im
+  Feed** (`_consolidateStories`, ausgenommen die seltenen Ereignisse, die
+  Sammelkarte — und alles, was es je Tag, Woche oder Monat genau EINMAL
+  gibt (`TAG_PFLICHT`). Das kann sich nicht wiederholen: seit der Feed
+  vierzehn Tage zurückreicht, liegen sechs bis sieben Spieltage darin, und
+  von ihren Siegern standen gemessen zwei im Feed — vier Spieltage
+  verloren genau die Karte, die ihre Schlagzeile ist. „Leo ist Spieler des
+  Tages" und „Alex ist Spieler des Tages" sind keine Wiederholung
+  voneinander, sie gehören zwei verschiedenen Tagen. Bei sieben Tagen
+  Fenster fiel es nicht auf, da passten zwei Sieger hinein), **keine zwei
+  Karten tragen dieselbe
+  Schlagzeile** oder **denselben Text** („Eine große Rivalität, die Liga
+  liebt's" stand wortgleich unter zwei Karten und nannte keine einzige Zahl).
   **`prio` steht auf EINER Skala** (`STORY_PRIO`, §11.0a). Der Tagesdeckel und
   das Gewicht einer Sammelkarte sind Vergleiche, und ein Vergleich braucht eine
   Skala. Es waren zwei: die Spieltags-Karten standen auf 1 bis 10, die Karten
@@ -1177,14 +1176,25 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   zusammen, sie sind eine eigene Nachricht und haben einen eigenen Rang.
   **Text und Titel fassen immer die Gruppe zusammen**; kein Einzelereignis
   wird in den Kopf kopiert oder dadurch wichtiger gemacht.
-  **Die Ewige Tafel steht an ihrem jüngsten Wechsel.** Sie ist die einzige
-  Tageskarte, die bis zum Tagesende fortgeschrieben wird: Neue Wechsel gehen
-  in dasselbe Bündel ein, ersetzen die bisherige Fassung dieses Tages und
-  setzen den Kartenzeitpunkt auf die jüngste enthaltene Partie. So steht die
-  aktuelle Tafel-Karte beim aktuellen Geschehen statt mit einem alten
-  Zeitstempel unten im Feed. Jede Zeile behält zusätzlich ihre eigene Uhrzeit
-  und ihre Quell-ID. Mit dem Tageswechsel wird auch diese Karte zum
-  unveränderlichen Publikations-Snapshot.
+  **Und sie steht an der Uhrzeit einer Zeile, die sie ZEIGT.** Sie trug die
+  des jüngsten Teils, und ein Tafel-Moment umfasst den ganzen Spieltag: die
+  Karte stand nach der zweiten Partie um 10:44 im Feed und wanderte mit jeder
+  weiteren nach unten, bis sie um 14:32 unter allen Partien lag. Wer sie
+  mittags gelesen hatte, fand sie abends an einer anderen Stelle — und eine
+  Karte, die ihren Zeitpunkt wechselt, ist im Feed eine andere. Die älteste
+  Zeile zu nehmen ist aber auch falsch: die ist bei einem Tafel-Moment fast
+  immer ein **Ausbau**, und ein Ausbau steht gar nicht auf der Karte. Gemessen
+  stand darüber „Heute, 15:19" und darunter, in jeder einzelnen Zeile und im
+  Ergebnisband, „15:37" — eine Uhrzeit, zu der nichts von dem passiert ist,
+  was die Karte zeigt. Den jüngsten Teil zu nehmen löst das und kostet die
+  Karte ihren Platz: der Tagesdeckel vergibt chronologisch, und der
+  reservierte Platz der Ewigen Tafel geht an die FRÜHESTE Tafel-Karte des
+  Tages — gemessen fiel der ganze Tafel-Moment damit aus dem Feed. Es ist
+  deshalb die früheste Zeile, die auch auf der Karte stehen kann: sie bleibt
+  stehen, weil keine früher gespielte Partie nachträglich dazukommt und ein
+  Ausbau nie ein Wechsel wird. Jede Zeile nennt ohnehin ihre eigene Uhrzeit,
+  und jede trägt die ID der Karte, aus der sie kommt, damit nachzumessen ist,
+  dass eine Karte im Bündel aufgeht und nicht verschwindet.
   **Der Satz zählt nicht dreimal und behauptet keinen Moment.** Er hieß „Ein
   Moment, 8 Spuren: 5 Ausbauten und drei Monatschroniken ordnen die Ewige
   Tafel neu." Drei Fehler in einer Zeile: „Ein Moment" gilt nicht für einen
@@ -1199,10 +1209,9 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Beide kosteten Chronologie, ohne eine einzige Karte zu sparen, und der Feed
   ist nach Tagen gegliedert: eine Karte, die dabei den Tag wechselt, steht
   unter dem falschen Kopf. Gemessen ergab das acht Tagesköpfe für sieben Tage.
-  Eine Spieler- oder Nebenrollenquote darf keine erzeugte Story verwerfen.
-  Verteilung entsteht durch die Themenrotation der Fun Facts und lesbare
-  Dichte durch semantische Bündel; jede Publikation bleibt vollständig
-  nachlesbar.
+  Die Verteilung trägt jetzt allein der Generator (`PER_PLAYER_LIMIT`,
+  `NEBENROLLEN_LIMIT`); gemessen steht danach kein Spieler auf mehr als einem
+  Drittel der Karten, und jeder gewertete Spieler kommt vor.
   **Was es je Tag genau einmal gibt, fällt dort nicht weg** (`GEN_PFLICHT`).
   Der Deckel zählt Karten je Spieler, und sortiert ist davor nach Zeit: wer am
   Nachmittag noch drei Karten bekommt, hat sein Budget aufgebraucht, bevor der
@@ -1227,13 +1236,22 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Uhr noch in der Zukunft liegen; holt die Uhr sie ein, läuft er neu.
 
   **Was einmal dasteht, bleibt stehen.** Jede Entscheidung zwischen zwei
-  Karten fällt bei ihrer ersten Publikation. Über eine Karte entscheidet nur,
-  was bis dahin bekannt war; eine spätere Partie darf sie nicht aus dem Feed
-  nehmen und weder Titel noch Text, Zeitpunkt, Anlass oder Grafik neu ziehen.
-  Gleiche Titel, ähnliche Inhalte und viele Meldungen desselben Spielers sind
-  kein Löschgrund. Zusammengeführt wird nur, wenn Ereignisse fachlich zu
-  derselben Partie oder zur Ewigen Tafel desselben Tages gehören; andernfalls
-  bleiben sie getrennte Publikationen.
+  Karten fällt in der Reihenfolge, in der die Nachrichten entstanden sind:
+  über eine Karte entscheidet nur, was VOR ihr dastand, und eine spätere
+  Partie kann sie nicht mehr aus dem Feed nehmen. Vorher wählten beide Deckel
+  nach `prio` aus dem ganzen Tag: gemessen schrieb ein Spieltag damit nach fast
+  jeder Partie einen Teil seiner Tafel um — nach der ersten Partie standen vier
+  Karten, nach der zweiten war eine davon weg, nach der vierten die nächste.
+  Wer mittags gelesen hatte, fand abends etwas anderes vor. Der **Deckel je
+  Sorte** behält deshalb die ersten zwei und der **Tagesdeckel** vergibt seine
+  Plätze von vorn. Gelesen wird weiter von neu nach alt, also steht die
+  Reihenfolge am Ende einmal und nur nach dem Zeitpunkt.
+  **Dieselbe Aussage ist die Ausnahme, und dort gilt die spätere.** Die drei
+  Sperren (`seenContent`, `seenTitel`, die Sperrfrist) lesen `src` von neu nach
+  alt, also bleibt die jüngste Karte stehen: „Der größte Ausschlag des Tages"
+  gehörte gestern jemand anderem, und die zweite Karte trägt den Stand, der
+  jetzt gilt. Es ist keine neue Nachricht, es ist dieselbe mit einer neuen
+  Zahl — sie steht mit ihrem eigenen Zeitpunkt da, und die erste fällt.
   **Eine Karte, die den ganzen Tag zusammenfasst, zählt nicht gegen den
   Deckel** (`TAG_SUMME`). „Harter Tag für X" ist der Gegenpart zum Sieger des
   Tages: es gibt sie je Tag einmal, und sie trägt 23:58 — die Uhrzeit, zu der
@@ -1261,51 +1279,32 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Auszeichnung, ein Meilenstein, ein Spitzenwechsel — hängt sich beim Bündeln
   an sie. Ohne einen einzigen Fakt bleibt sie das Ergebnis mit den beiden
   Zahlen, die jede Partie hat: die Siegchance vor dem Anstoß und die Elo danach.
-  **Scoregrafik und Anlassgrafik sind zwei unabhängige Achsen** (`_spBild`,
-  `30b-news-spieltag.js`). Die bisherige gemeinsame Wahl über `visualKey`
-  vermischt beides: Sobald eine Serie, Auszeichnung oder ein Spitzenwechsel
-  vorliegt, verdrängt der Anlass die abwechslungsreiche Matchgrafik und oben
-  bleibt immer dieselbe Ergebniszeile. Diese Kopplung ist zu ersetzen durch
-  einen dauerhaften `scoreVisualKey` und einen optionalen
-  `occasionVisualKey`.
-
-  Jede Karte mit **genau einer Partie** trägt immer eine eigenständige
-  Scoregrafik. Sie wird ausschließlich aus Ergebnis, Teams, Vorabchance,
-  Elo-Bewegung und den bis zu dieser Partie bekannten Vergleichswerten
-  gewählt. Der Spielstand ist darin groß, eindeutig und auf den ersten Blick
-  als Ergebnis erkennbar. Spielfeld, Mosaik, Tacho, Streudiagramm,
-  Elo-Transfer, Gefälle sowie die besonderen Scoreformen für Ein-Tor-Krimi und
-  klaren Sieg sind Varianten dieser ersten Achse. Eine Serie, ein Rekord oder
-  eine Auszeichnung darf diese Scoregrafik nicht auf die schlichte
-  Ergebniszeile zurücksetzen.
-
-  Darunter darf **höchstens eine Anlassgrafik** stehen. Sie erklärt, weshalb
-  die Partie Nachricht ist: Spitzenwechsel als Tabellenbewegung, Serie als
-  Lauf, Teamserie als Duo-Ring, Serienbruch als gerissener Lauf,
-  Außenseitersieg als Kräfteverhältnis, Rivalität als direkte Bilanz,
-  Revanche als vorheriges gegen heutiges Ergebnis, Auszeichnung als
-  Medaillon oder Markenlauf, Premiere als gemeinsame Versuche, Wende als
-  Formkurve, Rangsprung als Tabelle, Rollentausch als Positionsstrahl,
-  Rückkehr als Pausenstrecke, Zählwerk als Jubiläum und Tageslauf als Ring.
-  Weitere Anlässe derselben Partie bleiben als vollständige Zeilen im
-  Sammelband und im Blatt; sie erzeugen weder eine dritte Grafik noch werden
-  sie verworfen.
-
-  Eine **Sammelkarte mit genau einer Partie** erbt beide eingefrorenen
-  Entscheidungen von ihrer Partie und zeichnet Score- und Anlassgrafik ebenso
-  wie eine einzelne Matchkarte. Eine Sammelkarte über mehrere verschiedene
-  Partien darf keinen einzelnen Stand als ihren eigenen ausgeben; dort ersetzt
-  eine kompakte Ergebnisfolge oder Zeitlinie die Scoregrafik. Die Ewige Tafel
-  folgt weiterhin ihrer eigenen Tagesregel.
-
-  `scoreVisualKey` und `occasionVisualKey` gehören mit ihren benötigten
-  Snapshot-Daten in die persistierte Story. Ein späteres Match, ein neuer
-  Bündelteil oder eine andere Katalogreihenfolge darf keine der beiden
-  Entscheidungen verändern. Alte Stories ohne die neuen Felder dürfen die
-  bisherige deterministische Ableitung als Rückfall benutzen, werden aber
-  nicht nachträglich umgeschrieben. Score- und Anlassgrafik dürfen dieselbe
-  Kennzahl nicht doppelt erzählen; was die Scoregrafik bereits zeigt, fällt
-  aus Anlassgrafik und Satz heraus.
+  **Kopf und Fuß zeigen, wovon die Partie erzählt** (`_spBild`,
+  `30b-news-spieltag.js`). Jede Partie-Karte begann mit demselben
+  Ergebnisband, und darunter wechselte nur eine Zeile: dreißig Karten sahen im
+  Feed gleich aus. Der Anlass wählt jetzt beides, in fester Rangfolge, das
+  erste, was zutrifft (`_spAnlass`): der **Spitzenwechsel**, eine **seltene
+  oder legendäre Auszeichnung** (die Medaille und wer sie in der Liga trägt),
+  der **Serienbruch** (die Zahl rot durchgestrichen, der Lauf mit dem roten
+  Feld der Partie, die ihn beendet hat, und wer das war — derselbe Lauf wie bei
+  der Serie, eine Kette aus Gliedern war eine zweite Bildsprache), die
+  **Serie** (der Lauf gegen den eigenen Bestwert und den Liga-Rekord VOR dieser
+  Partie), die **Teamserie** (der Lauf des Duos und seine Bilanz als Ring), der
+  **Außenseitersieg** (die Wippe: das Elo-Gewicht beider Teams), die
+  **Rivalitätsmarke** (jede Begegnung der beiden als Balken bis zu dieser
+  Partie), die **Premiere** (der erste gemeinsame Sieg eines Duos, beim ersten
+  Mal oder ab dem dritten Versuch, und die Versuche als Lauf), die **Wende**
+  (die Elo-Kurve der letzten zwölf Partien, ab drei Pleiten), der
+  **Rangsprung** ab zwei Plätzen (die Monatstabelle vor und nach der Partie als
+  Linien, die neue Spitze in Gold), der **Rollentausch** (ein Sieg auf der
+  Seite, die vorher unter einem Viertel der eigenen Partien lag, ab zwanzig,
+  und ihr Anteil als Strahl), der **Ein-Tor-Krimi** (die Anzeigetafel und die
+  Bilanz der Sieger in engen Partien), der **deutliche Sieg** ab sechs Toren
+  (alle Partien der Liga nach Gegentoren und wie viele so deutlich waren; im
+  Kopf der Stand groß, der Sieger hell, und je Tor des Siegers ein Feld,
+  davon der Abstand hell — der Stand stand dort allein und kursiv, weil
+  `_spStand` ihn aus `<em>` baut und die Regel fehlte) und
+  sonst eine der **dreizehn Formen der gewöhnlichen Partie** (unten).
   **Die Medaille gehört dem Seltenen.** Sie stand auch für jede gewöhnliche
   Auszeichnung und jede runde Marke, und an einem Spieltag trug damit jede
   dritte Partie-Karte dieselbe Medaille — auf einem 10:9 der „Zittersieg",
@@ -1578,12 +1577,13 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   unter der Duo-Pleitenserie, mit der Begründung, Team-News sollten „auch mal
   oben stehen" — was seit dem chronologischen Feed niemand mehr entscheidet.
 
-  **Der Fun Fact wird einmal um 15:00 publiziert.** Er entsteht nur, wenn vor
-  15 Uhr weder eine Partie noch ein Saisonabschluss stattgefunden hat. Beginnt
-  die erste Partie erst um 15:20, bleibt der Fun Fact neben ihr bestehen; eine
-  spätere Partie darf ihn nicht ausblenden oder neu ziehen. Seine Themen
-  rotieren über Form, Rang, Rekorde, Chronik, Insignium, Saisonphase und den
-  Rhythmus der Liga statt über beliebige Füllzahlen.
+  **Der Fun Fact füllt einen stillen Tag, er ergänzt keinen lauten.** „Leon
+  führt das Prestige an" gilt seit Wochen und stand neben dem Spieltag, an dem
+  gerade etwas passierte. Der Abend-Slot schweigt an Spieltagen seit jeher; der
+  Vormittags-Slot kann es nicht wissen, weil er vor der ersten Partie entsteht.
+  Entschieden wird es deshalb bei der Anzeige: trägt der Tag eine echte
+  Nachricht, fällt sein Fun Fact weg. Der Countdown zählt dabei nicht als
+  Nachricht — „Noch fünf Tage" steht an jedem Tag der Saison.
 
   **Gebildet wird nur, was auch erscheinen kann.** Über die ganze
   Ligageschichte reißen viele Paare eine Duell-Schwelle: gemessen sechzehn, von
@@ -1852,9 +1852,8 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   neben dem Gewonnenen und nicht darin: ein Minus in derselben Summe hieße,
   der Tag hätte weniger gebracht. `tests/blatt` misst das Stück im Balken.
   **Und schon auf der Karte** (`_newsVerlustBand`): unter dem Sammelband
-  einer Tafel-Karte steht eine leise Zeile „Prestige-Saldo des Spieltags" und
-  je Verlierer ein **Chip** aus Gesicht, Name und Betrag mit der Einheit `P`,
-  und nur wenn die Stufe fällt, dahinter
+  einer Tafel-Karte steht eine leise Zeile „Prestige" und je Verlierer ein
+  **Chip** aus Gesicht, Name und Betrag, und nur wenn die Stufe fällt, dahinter
   „↓" und die Stufe. Vorher stand „Verliert" vor einer Reihe aus Text, und
   bei drei Namen brach sie um: Betrag und Stufe standen dann in der zweiten
   Zeile neben dem falschen Namen. Der Chip hält zusammen, was zusammengehört. Die Schlagzeile feiert die Neuen, und wer seinen Anteil abgeben
@@ -2001,10 +2000,9 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Karten je Spieltag reichte das rund acht Tage weit. Eine Zeilenzahl ist
   keine Fensterbreite — sie hängt daran, wie viel gerade los war, und wer
   nach einer Woche Pause hineinsah, fand seinen eigenen Spieltag nicht mehr.
-  Innerhalb dieses Datumsfensters gibt es keine zweite Mengenbegrenzung:
-  `NEWS_DB_ZEILEN` schützt nur den Datenbankabruf vor einer unbegrenzten
-  Antwort. `NEWS_LIMITS.total` bleibt ausschließlich für ältere
-  Diagnose-Mockups bestehen und kappt keine produktive Anzeige.
+  `NEWS_LIMITS.total` ist entsprechend auf 120 gesetzt: vierzehn Tage mal
+  vier Karten sind sechsundfünfzig, der Rest ist Luft für Breaking und die
+  Pflichtkarten, die nicht gegen den Tagesdeckel zählen.
   **Dieselbe Auszeichnung ist einmal Nachricht, dann an runden Marken**
   (`NEWS_BADGE_MARKEN`: 1, 5, 10, 25, 50, 100). Die Karte entstand jedes Mal
   neu, wenn jemand ein Badge wieder holte: gemessen stand „Martin: Mauer"
@@ -2326,15 +2324,20 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Zwischenstand von damals — „Das 50. Aufeinandertreffen dieser beiden" stand
   sonst wortgleich unter zwei Karten und nannte keine einzige Zahl.
 
-  **Der publizierte Snapshot kommt aus der Datenbank.** ID, Zeitpunkt, Titel,
-  Text, `dataRef`, Priorität und die gewählte Matchgrafik werden nach dem ersten
-  Insert nicht mehr aus dem aktuellen Generator überschrieben. Codeänderungen
-  gelten für neue Karten; alte Karten bleiben das, was die Liga zu ihrem
-  Zeitpunkt veröffentlicht hat. Einzige Ausnahme ist die **eine Ewige-Tafel-
-  Karte des laufenden Tages**: ihre Tafel-Rohzeilen werden beim neuesten
-  Wechsel aktualisiert, die Karte übernimmt dessen Match-Zeitstempel und fasst
-  alle Tafelbewegungen dieses Tages zusammen. Karten früherer Tage bleiben
-  unverändert.
+  **Der Text kommt aus dem Generator, nicht aus der Datenbank.** Stories
+  werden persistiert, damit alle Geräte dieselbe Karte zur selben Zeit sehen —
+  Titel und Text waren damit aber eingefroren: eine überarbeitete Formulierung
+  erschien nur an Karten, die es noch nicht gab. Nach dem Umbau stand „dieses
+  Duo harmoniert gerade perfekt" weiter im Feed, obwohl der Satz längst durch
+  die Zahl ersetzt war. `_newsTexteAuffrischen` lässt deshalb den Wortlaut des
+  Generators gewinnen, wenn er dieselbe ID noch einmal erzeugt. ID und
+  Zeitpunkt bleiben, was die Datenbank sagt, sonst spränge eine Karte im Feed;
+  alles andere ist eine Ableitung aus den Daten und darf sich verbessern —
+  genau so arbeiten `_isBreaking` und `_displayCat` seit jeher.
+  Außerdem ergänzt die Auffrischung ableitbare Generator-Ereignisse, die im
+  Vierzehn-Tage-Fenster in einer älteren Datenbank noch fehlen. Die stabile
+  fachliche ID entdoppelt diesen Backfill; es braucht weder Migration noch
+  pauschale Neuberechnung historischer Daten.
 
   **Derselbe Datenstand ergibt dieselbe Karte.** Eine Story wird persistiert,
   damit alle Geräte dieselbe Karte zur selben Zeit sehen — das hält nur,
@@ -2347,14 +2350,14 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   fertigen Gruppierung, und ein dritter Lauf findet den Bestand des ersten
   vor: er darf keine einzige ID hinzufügen.
 
-  **Der Rang gehört zum Snapshot.** Eine neue Karte wird auf der gemeinsamen
-  `STORY_PRIO`-Skala gespeichert und danach nicht neu einsortiert. Damit kann
-  eine spätere Generatorfassung weder ihren Inhalt noch ihren Rang ändern.
-  Die Skala bleibt trotzdem gemeinsam: früher trugen 113 der 153
+  **Der Rang gehört dazu** (`_newsPrio`). `prio` stand als Zahl mit in der
+  Zeile, und als die Skala auf EIN Band umgestellt wurde, blieb jede längst
+  gespeicherte Karte auf ihrer alten stehen: gemessen trugen 113 der 153
   Zeilen im Vierzehn-Tage-Fenster noch einen Wert von höchstens zehn, und von
-  den fünfundzwanzig, die der Generator bildete, wichen vierundzwanzig ab —
-  „Die Woche gehört Martin" stand mit 9 neben einer frischen Sammelkarte mit
-  80. Damit waren die zwei Skalen wieder da, damals zwischen Datenbank und Generator, und der Tagesdeckel entschied zwischen
+  den fünfundzwanzig, die der Generator heute noch bildet, wichen
+  vierundzwanzig ab — „Die Woche gehört Martin" stand mit 9 neben einer
+  frischen Sammelkarte mit 80. Damit waren die zwei Skalen wieder da, diesmal
+  zwischen Datenbank und Generator, und der Tagesdeckel entschied zwischen
   ihnen. Überlebt haben die alten Karten nur dort, wo eine Ausnahme sie trug:
   Breaking und die Pflichtkarten zählen nicht gegen den Deckel. Gerechnet
   wird deshalb immer neu — die Zahl des Generators, sonst das Band des Typs
@@ -2464,10 +2467,10 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Stand, den es an jenem Tag nicht gab; gemessen zog derselbe Slot damit zwei
   verschiedene Karten, je nachdem wann gefragt wurde. Nachgetragen wird
   deshalb nur der Slot von heute.
-  **Sein Zeitstempel ist 15:00** (`_ambientSlotWhen`). Er war `now`,
+  **Sein Zeitstempel ist die Slot-Stunde** (`_ambientSlotWhen`). Er war `now`,
   und damit nannte die Karte die Uhrzeit ihres LESERS: über dem Fun Fact des
-  damaligen 19-Uhr-Slot stand „20:17", wenn die App um 20:17 geöffnet wurde.
-  Schlimmer als die falsche Zahl ist, dass
+  19-Uhr-Slots stand „20:17", wenn die App um 20:17 geöffnet wurde, über dem
+  des 10-Uhr-Slots „10:30". Schlimmer als die falsche Zahl ist, dass
   `event_at` beim ersten Insert gewinnt und dann für alle Geräte gilt: die
   Stelle der Karte im Feed hing daran, wer die App zuerst geöffnet hat. Die
   Slot-Stunde steht dagegen in der ID (`ambient_<Tag>_<Stunde>`) und ist
@@ -2478,17 +2481,18 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Datenbank steht, wird gar nicht mehr gebildet, und `ignoreDuplicates`
   schreibt eine bestehende Zeile nie um — eine Auffrischung über den Generator
   hätte damit genau die Karten nicht erreicht, um die es geht.
-  Alte Slots werden beim Laden einmal aus ihrer ID gelesen; der Generator
-  schreibt sie nicht um. Jede andere Karte behält ihren Zeitpunkt, sonst
-  spränge sie im Feed. Die ID trägt weiter Datum und
+  `_newsTexteAuffrischen` zieht den Zeitpunkt deshalb aus der ID, wie es den
+  Wortlaut aus dem Generator zieht: für eine **Ableitung** gewinnt der Code,
+  für eine Beobachtung die Datenbank. Jede andere Karte behält ihren
+  Zeitpunkt, sonst spränge sie im Feed. Die ID trägt weiter Datum und
   Slot-Stunde, also entsteht die Karte genau einmal.
   **Der Tagesplan.** `07:00` gab es nicht mehr: der Spieler des Tages steht um
   **23:59 an seinem eigenen Spieltag**, wenn keine Partie mehr dazukommen kann
   (die späteste der Liga hat um 18 Uhr angefangen). Vorher erschien er am
   Morgen danach und stand in der Tafel unter einem Datum, an dem gar nicht
-  gespielt wurde. Der Fun Fact kommt einmal um **15:00**, sofern davor weder
-  Partie noch Saisonabschluss lagen; ein späterer Spielbeginn entfernt ihn
-  nicht. Die Chronik des Vormonats steht am
+  gespielt wurde. Der Fun Fact um **10:00** kommt täglich — keine der 466
+  Partien hat vor 10 Uhr angefangen, er steht also immer vor dem Spieltag; der
+  um **19:00** nur an Tagen **ohne Partie**. Die Chronik des Vormonats steht am
   **1. um 00:00** statt am Vormittag danach. Der **Saison-Rückblick** steht
   dagegen am **letzten Kalendertag um 23:50** und damit unter dem Kopf des
   Monats, den er beschließt: er hing am Saisonstart, also am 1. um 00:00, und

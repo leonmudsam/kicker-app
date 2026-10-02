@@ -666,9 +666,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const wert = d.delta != null ? (d.delta > 0 ? '+' + d.delta : String(d.delta))
                : (d.streak != null ? String(d.streak) : (d.milestone || null));
     const label = d.delta != null ? 'Elo' : (d.streak != null ? 'in Folge' : 'erreicht');
-    // Wappen und Messwert stehen gestapelt. 40 px halten diese Bildzone
-    // niedriger als den Nachrichtentext, ohne das Gesicht unlesbar zu machen.
-    gesicht = `<div class="nf-gr-l">${av(d.pid, 40)}`
+    gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}`
       + (wert ? _newsWertBlock(wert, label, d.delta < 0 ? 'rot' : 'metall') : '') + `</div>`;
   } else {
     // Fun Fact: die Zahl links, der Satz rechts. Bewusst der leiseste Bau.
@@ -979,10 +977,10 @@ function _newsVerlustBand(s){
       ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
   }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
   if(!weg.length) return '';
-  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige-Saldo des Spieltags</span>`
+  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
     + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
       `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
-      + `<em class="num">−${-x.d} P</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      + `<em class="num">−${-x.d}</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
       ? `<b class="nf-vl mehr">+${weg.length - 3}</b>` : ''}</span></div>`;
 }
 
@@ -1005,10 +1003,7 @@ function _newsSpielZahlen(s, anlass){
 // (`_newsRohIndex`), weil eine Sammelzeile nur Titel und Zeichen trägt.
 // Kopf und Fuß, die daraus entstehen, stehen in `30b-news-spieltag.js`.
 function _newsRohIndex(){
-  // Dieselben unveraenderlichen Snapshots wie im Feed verwenden. Sonst kann
-  // allein das Oeffnen/Neuzeichnen einer Karte ihre Fakten und damit ihr
-  // grafisches Design gegen den aktuellen Generatorstand austauschen.
-  const roh = Array.isArray(_cache._stories) ? _cache._stories : [];
+  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
   let m = _newsRohMemo.get(roh);
   if(!m){ m = new Map(roh.map(x => [x.id, x])); _newsRohMemo.set(roh, m); }
   return m;
@@ -1095,7 +1090,7 @@ const NEWS_FADEN_ART = {
 };
 const _newsFadenMemo = new WeakMap();
 function _newsFaeden(cards){
-  const roh = Array.isArray(_cache._stories) ? _cache._stories : [];
+  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
   const alt = _newsFadenMemo.get(roh);
   if(alt && alt.m === matches && alt.n === cards.length) return alt.map;
   const map = new Map();

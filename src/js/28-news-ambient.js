@@ -3,8 +3,8 @@
 // Feed auch OHNE neue Matches lebendig wirkt.
 //
 // KERNPRINZIP (kein Spam, Cross-Device-konsistent):
-//   - RHYTHMUS: ein Fun Fact pro Tag um 15:00, sofern vorher noch kein Match
-//     und kein Saisonabschluss stattgefunden hat.
+//   - RHYTHMUS (v9.7): zwei Fun Facts pro TAG, um 10:00 und 19:00. _isAmbientDay
+//     ist immer true; ein Slot entsteht erst ab seiner Uhrzeit.
 //   - Story-ID ist tages+stunden-deterministisch: `ambient_<datum>_<stunde>`.
 //     → ON CONFLICT DO NOTHING beim Upload: der erste Insert gewinnt den
 //       Timestamp, alle Geräte sehen exakt dieselbe Story.
@@ -16,18 +16,18 @@
 //   - Die Inhalte stammen aus echten Daten (allPlayerStats, H2H-Map, Scores) —
 //     nichts wird erfunden. Liefert ein Template kein Ergebnis (zu wenig Daten),
 //     wird deterministisch das nächste genommen.
-function _buildAmbientStories(now, pm, nameOf, tagesStories){
+function _buildAmbientStories(now, pm, nameOf){
   const out = [];
   if(!Array.isArray(AMBIENT_SLOTS) || !AMBIENT_SLOTS.length) return out;
-  // Taeglich ein fester Slot. _isAmbientDay bleibt fuer alte Konfigurationen.
+  // v9.7: täglich, mehrere Slots (10:00 & 19:00). _isAmbientDay ist immer true.
   if(!_isAmbientDay(now)) return out;
 
   const templates = _ambientTemplatePool(now, pm, nameOf);
   if(!templates.length) return out;
 
   // ── Ein Slot entsteht HEUTE oder gar nicht ───────────────────────────
-  // Der Slot entsteht, wenn jemand die App nach 15 Uhr öffnet. Wer an diesem
-  // Tag nicht hineinsieht, bekommt ihn nicht rückwirkend — einmal wurden
+  // Ein Slot entsteht, wenn jemand die App nach seiner Uhrzeit öffnet. Wer
+  // abends nicht hineinsieht, verpasst den 19-Uhr-Slot — und einmal wurden
   // deshalb die letzten drei Tage nachgetragen. Das war falsch: der Inhalt
   // entstand aus den HEUTIGEN Zahlen und aus der Rotation, wie sie heute
   // aussieht, und behauptete damit einen Stand, den es an jenem Tag nicht gab.
@@ -53,25 +53,22 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
   const _dayMs = 86400000;
   const dueSlots = [];
   const slotHours = AMBIENT_SLOTS.slice().sort((a, b) => a - b);
-  // Ausschlaggebend ist nur, was VOR dem Slot passiert ist. Beginnt die erste
-  // Partie um 15:20, gehoert die um 15:00 publizierte Karte weiterhin in den
-  // Feed und wird spaeter weder geloescht noch neu gezogen.
-  const _tagesBestand = (Array.isArray(_cache._stories) ? _cache._stories : [])
-    .concat(Array.isArray(tagesStories) ? tagesStories : []);
+  // An welchen Tagen wurde gespielt? Der Abend-Slot schweigt dann.
+  // Keine der Partien hat je vor 10 Uhr angefangen, der Vormittags-Slot steht
+  // also immer vor dem Spieltag. Die letzte hat um 18 Uhr angefangen: um 19 Uhr
+  // ist der Spieltag vorbei, und dann ist alles von diesem Tag interessanter
+  // als eine Zahl, die seit Wochen gilt.
+  const _spieltage = new Set();
+  (matches || []).forEach(m => {
+    _spieltage.add(tagKey(m.created_at));
+  });
   {
     const dk = tagKey(now);
     for(const slotHour of slotHours){
       const faellig = new Date(now.getFullYear(), now.getMonth(), now.getDate(),
                                slotHour, 0, 0, 0);
       if(faellig.getTime() > now.getTime()) continue;   // Slot ist noch nicht fällig
-      const matchDavor = (matches || []).some(m => tagKey(m.created_at) === dk
-        && mts(m) <= faellig.getTime());
-      const abschluss = _tagesBestand.some(s => {
-        const d = (s && s.dataRef) || {};
-        return d.type === 'season_recap' && tagKey(s.when) === dk
-          && new Date(s.when).getTime() <= now.getTime();
-      });
-      if(matchDavor || abschluss) continue;
+      if(slotHour >= AMBIENT_ABEND_AB && _spieltage.has(dk)) continue;
       dueSlots.push({dateKey: dk, slotHour, when: faellig});
     }
   }
@@ -95,7 +92,7 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     if(/^rivalry_/.test(key)) return 'duell';
     if(/^personal_/.test(key)) return 'persoenlich';
     if(/^(insignium_|titelband_)/.test(key)) return 'laufbahn';
-    if(/^(chronicle_|record_|season_|history_)/.test(key)) return 'chronik';
+    if(/^(chronicle_|season_|history_)/.test(key)) return 'chronik';
     if(/^(form_|fun_streak|fun_comeback)/.test(key)) return 'form';
     return 'liga';
   };
@@ -231,8 +228,9 @@ function _buildAmbientStories(now, pm, nameOf, tagesStories){
     }
     if(chosenPflicht){ chosen = chosenPflicht; chosenKey = chosenPflichtKey; }
     if(!chosen) continue;
-    // Sofort in die Historie eintragen, damit spätere Kandidaten und der
-    // nächste Tageslauf Typ, Rubrik und Gesichter rotieren können.
+    // Sofort in die Historie eintragen: der zweite fällige Slot desselben Tages
+    // sieht diesen Eintrag und meidet Typ und Kopf — sonst zeigten 10 und 19 Uhr
+    // dieselbe Zahl.
     history.push({day: slot.dateKey, ts: refMs, sub: chosenKey,
                   rubrik:rubrikVon(chosenKey), pids: pidsOf(chosen.dataRef)});
 
@@ -1003,8 +1001,8 @@ function _ambientTemplatePool(now, pm, nameOf){
         if(!pm[ev.playerId] || pm[ev.playerId].hidden) continue;
         // ── Ein Fun Fact weiss nichts von einer spaeteren Partie ──
         // `now` ist die Uhrzeit des Slots, `matches` aber die ganze Liste.
-        // Die Karte des Slots darf keine Auszeichnung aus einer späteren
-        // Partie sehen und dabei etwa „vor -1 Tagen" rechnen.
+        // Die Karte von 10 Uhr sah damit eine Auszeichnung aus einer Partie
+        // um 11:39 und rechnete „vor -1 Tagen".
         if(t > now.getTime()) continue;
         if(!latest || t > latest.t) latest = { t, pid: ev.playerId, badge: ev.badge, mid };
       }
@@ -1351,52 +1349,6 @@ function _ambientTemplatePool(now, pm, nameOf){
         + (top.n >= 5 ? ` Ab fünf Titeln sitzt die Krone obenauf. Die hat er.` : ''),
       vv:String(top.n), vl:'Titel',
       dataRef:{ ambientPid:top.pid, prestige:true } };
-  }});
-
-  // Die Liga als Rhythmus: spielreichste und ruhigste ABGESCHLOSSENE Woche.
-  // Eine laufende Woche wird nie mit einer vollen verglichen; dadurch bleibt
-  // die Aussage nach ihrer Publikation wahr.
-  T.push({ key:'history_week_volume', weight:2, make: () => {
-    if(matches.length < 12) return null;
-    const montag = t => {
-      const d = new Date(t), wd = (d.getDay() + 6) % 7;
-      return new Date(d.getFullYear(), d.getMonth(), d.getDate() - wd, 0, 0, 0, 0);
-    };
-    const diese = montag(now).getTime(), wochen = new Map();
-    matches.forEach(m => {
-      const t = mts(m), w = montag(t);
-      if(w.getTime() >= diese) return;
-      const k = tagKey(w), z = wochen.get(k) || {von:w, n:0};
-      z.n++; wochen.set(k, z);
-    });
-    const l = [...wochen.values()].filter(x => x.n > 0)
-      .sort((a, b) => b.n - a.n || a.von - b.von);
-    if(l.length < 3) return null;
-    const voll = l[0], ruhig = l.slice().sort((a, b) => a.n - b.n || a.von - b.von)[0];
-    const bis = w => new Date(w.getFullYear(), w.getMonth(), w.getDate() + 6);
-    const zeitraum = x => `${datumFmt(x.von, 'tm')} bis ${datumFmt(bis(x.von), 'tm')}`;
-    return {cat:'history', ic:'calendar', prio:4,
-      title:`Die vollste Woche hatte ${voll.n} Partien`,
-      desc:`${zeitraum(voll)}. Die ruhigste abgeschlossene Spielwoche kam auf ${ruhig.n} Partien (${zeitraum(ruhig)}).`,
-      vv:String(voll.n), vl:'Partien', dataRef:{ambientPids:[]}};
-  }});
-
-  // Ein wechselnder Blick in den Rekordkatalog. Der Fakt nennt nicht bloss
-  // einen Spitzenreiter, sondern erklaert zugleich, was dieser Rekord misst.
-  T.push({ key:'record_spotlight', weight:2, make: rng => {
-    if(typeof allChronicles !== 'function' || typeof CHRONICLES === 'undefined') return null;
-    let by = {}; try { by = allChronicles().byId || {}; } catch(e){ return null; }
-    const c = CHRONICLES.filter(def => def.kind !== 'shame' && by[def.id]
-      && Array.isArray(by[def.id].pids) && by[def.id].pids.some(pid => pm[pid]));
-    if(!c.length) return null;
-    const def = c[Math.floor(rng() * c.length)] || c[0], r = by[def.id];
-    const pids = r.pids.filter(pid => pm[pid]), namen = pids.map(nameOf);
-    const wert = typeof _chronKurz === 'function' ? _chronKurz(r.ev) : String(r.val ?? '');
-    return {cat:'history', ic:def.ic || 'trophy', prio:5,
-      title:`„${def.name}“ gehört ${_namenListe(namen)}`,
-      desc:`${wert ? wert + '. ' : ''}${def.cond}. Dieser Wert steht in der Ewigen Tafel und bleibt offen für jede neue Bestmarke.`,
-      vv:wert || String(pids.length), vl:wert ? 'Bestwert' : 'Halter',
-      dataRef:{ambientPids:pids.slice(0, 3), rekordId:def.id}};
   }});
 
 
