@@ -1182,6 +1182,96 @@ const SP_FUSS = {
   teamserie:a => _spDuoBild(_spDuoDaten(a)), medaille:a => _spMedailleBild(_spMedailleDaten(a)),
   premiere:a => _spPremiereBild(a.x), rolle:a => _spRolleBild(a.x)
 };
+
+// ── Zwei unabhängige Bildebenen je Partie ────────────────────────────
+// Die obere Ebene erklärt immer sofort Paarung und Endstand. Die optionale
+// untere Ebene erklärt den Anlass. Beide werden samt Zeichnungsdaten beim
+// Publizieren gespeichert und danach nie aus neueren Partien rekonstruiert.
+const SP_SCORE_FORMEN = new Set(['mosaik','tacho','streu','transfer','gefaelle','feld']);
+const SP_ANLASS_FORMEN = new Set(['chemie','gegner','revanche','gipfel','rueckkehr','tagesring','zaehlwerk']);
+function _spVisualHash(v){
+  let h = 2166136261 >>> 0, s = String(v || '');
+  for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function _spScoreSnapshot(m){
+  const c = _spChance(m), diff = Math.abs(m.score_a - m.score_b);
+  if(c != null && c < CHANCE_UPSET)
+    return {key:'aussenseiter', data:_spWippeDaten({m, c})};
+  if(diff === 1) return {key:'krimi', data:_spTafelDaten({m, c})};
+  if(diff >= 6) return {key:'deutlich', data:_spZeileDaten(m)};
+
+  const F = _spFakten(m);
+  let kand = _spFormKand(m).filter(x => SP_SCORE_FORMEN.has(x.key) && x.key !== 'feld');
+  // Das Mosaik ist eine echte Ergebnisgrafik und funktioniert für jedes
+  // reguläre 10:x. Dadurch bleibt nicht fast jede normale Partie am
+  // Standard-Spielfeld hängen.
+  if(F.hoch === 10 && diff > 1 && diff < 6 && !kand.some(x => x.key === 'mosaik'))
+    kand.push({key:'mosaik', x:{}, rang:12});
+  kand.sort((a, b) => b.rang - a.rang || a.key.localeCompare(b.key));
+  let w = kand[0] || {key:'feld', x:{}};
+  if(kand.length > 1) w = kand[_spVisualHash(m.id) % Math.min(3, kand.length)];
+  else if(w.key === 'mosaik' && _spVisualHash(m.id) % 3 === 0) w = {key:'feld', x:{}};
+  return {key:w.key, data:SP_FORM[w.key].daten(F, w.x)};
+}
+function _spAnlassSnapshot(m, fakten, scoreKey){
+  const f = t => fakten.find(x => x.type === t), c = _spChance(m);
+  let a = null, x;
+  if((x = f('lead_change')) && x.newLeader) a = {key:'spitze', m, x};
+  else if((x = fakten.find(y => y.type === 'badge_unlocked'
+      && (y.rarity === 'rare' || y.rarity === 'legendary')
+      && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
+    a = {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
+  else if((x = f('streak_killer')) && x.victimPid) a = {key:'riss', m, x};
+  else if((x = f('win_streak')) && x.streak) a = {key:'serie', m, x};
+  else if((x = f('team_streak')) && x.streak && x.a && x.b) a = {key:'teamserie', m, x};
+  else if((x = f('rivalry_milestone')) && x.a && x.b) a = {key:'duell', m, x};
+  if(!a){
+    const d = _spAnlassDaten(m, c);
+    if(['premiere','wende','rang','rolle'].includes(d.key)) a = d;
+  }
+  if(a){
+    const daten = {
+      spitze:() => _spTabelleDaten(a, true), rang:() => _spTabelleDaten(a, false),
+      serie:() => _spSerieDaten(a), wende:() => _spKurveDaten(a),
+      duell:() => _spDuellDaten(a), riss:() => _spRissDaten(a),
+      teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a),
+      premiere:() => a.x, rolle:() => a.x
+    };
+    if(daten[a.key]) return {key:a.key, data:daten[a.key]()};
+  }
+
+  const F = _spFakten(m);
+  const form = _spFormKand(m).find(k => SP_ANLASS_FORMEN.has(k.key));
+  if(form) return {key:form.key, data:SP_FORM[form.key].daten(F, form.x)};
+  // Knappheit und Klarheit besitzen jeweils eine zweite, vom Score getrennte
+  // Erklärgrafik. Sie wird nur ergänzt, wenn kein stärkerer Anlass vorliegt.
+  if(scoreKey === 'krimi') return {key:'nerven', data:_spNervenDaten({m, c})};
+  if(scoreKey === 'deutlich') return {key:'verteilung', data:_spVerteilungDaten({m})};
+  return null;
+}
+function _spVisualSnapshot(m, fakten){
+  const score = _spScoreSnapshot(m);
+  return {version:2, score, occasion:_spAnlassSnapshot(m, fakten || [], score.key)};
+}
+function _spScoreBild(v){
+  if(!v || !v.key) return '';
+  const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild};
+  if(spezial[v.key]) return spezial[v.key](v.data);
+  return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](v.data) : '';
+}
+function _spOccasionBild(v){
+  if(!v || !v.key) return '';
+  const bild = {
+    spitze:_spTabelleBild, rang:_spTabelleBild, serie:_spSerieBild,
+    wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,
+    teamserie:_spDuoBild, medaille:_spMedailleBild,
+    premiere:_spPremiereBild, rolle:_spRolleBild,
+    nerven:_spNervenBild, verteilung:_spVerteilungBild
+  };
+  if(bild[v.key]) return bild[v.key](v.data);
+  return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](v.data) : '';
+}
 // Der Satz einer Partie nannte überall dieselben zwei Zahlen — „Die
 // Siegchance lag vor dem Anstoß bei 73 %, für Maxi bringt der Sieg +13
 // Elo" —, und an keiner Stelle sagten sie etwas über DIESE Partie. Er
@@ -1201,6 +1291,17 @@ function _spBild(s){
   if(alt && alt.pl === players) return alt;
   let r = {kopf:'', fuss:'', zeigt:{}, key:'', form:'', glanz:false, pl:players};
   try {
+    const basis = _newsSpielFakten(s).find(x => x.type === 'spiel') || s.dataRef || {};
+    const v = basis.visual;
+    if(v && v.version === 2 && v.score){
+      const ok = v.occasion && v.occasion.key;
+      r = {key:ok || v.score.key, form:v.score.key,
+        glanz:['zaehlwerk','rueckkehr','transfer'].includes(ok || v.score.key),
+        kopf:_spScoreBild(v.score), fuss:_spOccasionBild(v.occasion),
+        zeigt:SP_ZEIGT_ALLES, pl:players};
+      proStand.set(s, r);
+      return r;
+    }
     const a = _spAnlass(s);
     if(a.key === 'feld'){
       const f = _spFormBild(a.m);

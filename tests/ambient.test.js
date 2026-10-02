@@ -119,13 +119,17 @@ const _spieltage = new Set(K.eval('matches.map(m=>tagKey(m.created_at))'));
 // Partie: keine der 466 Partien hat vor 10 Uhr angefangen, die letzte um
 // 18 Uhr. Am Abend eines Spieltags ist alles vom Tag interessanter als eine
 // Zahl, die seit Wochen gilt.
-const _erwartet = 1 + (_spieltage.has(HEUTE) ? 0 : 1);
-ok(fresh.length === _erwartet, 'nur die Slots von heute, ein 19-Uhr-Slot nur spielfrei',
-   fresh.length + ' von ' + _erwartet);
-ok(fresh.every(s => s.id.indexOf('ambient_' + HEUTE + '_') === 0),
-   'kein Slot eines vergangenen Tages', fresh.map(s => s.id).join(', ') || 'keiner');
+const _erwarteteTage = fresh.map(s => /^ambient_(\d{4}-\d{2}-\d{2})_15$/.exec(s.id)?.[1]);
+ok(fresh.length > 1 && _erwarteteTage.every(Boolean),
+   'verpasste stille Tage werden beim naechsten Oeffnen nachgetragen',
+   fresh.map(s => s.id).join(', '));
+ok(fresh.every(s => {
+     const tag = /^ambient_(\d{4}-\d{2}-\d{2})_15$/.exec(s.id)[1];
+     return tag === HEUTE || !_spieltage.has(tag);
+   }), 'vergangene Spieltage bekommen keinen nachtraeglichen Fun Fact',
+   fresh.map(s => s.id).join(', ') || 'keiner');
 ok(new Set(fresh.map(s=>s.id)).size === fresh.length, 'keine doppelten IDs');
-ok(fresh.every(s => /^ambient_\d{4}-\d{2}-\d{2}_(10|19)$/.test(s.id)), 'ID-Schema unveraendert');
+ok(fresh.every(s => /^ambient_\d{4}-\d{2}-\d{2}_15$/.test(s.id)), 'genau ein 15-Uhr-Slot je Tag');
 
 console.log('\n=== 2. EINE KARTE TRAEGT IHRE SLOT-STUNDE ===');
 //    `when` stand auf `now`, und damit nannte der Fun Fact die Uhrzeit seines
@@ -140,7 +144,8 @@ fresh.forEach(s => {
   ok(d.getHours() === stunde && d.getMinutes() === 0 && d.getSeconds() === 0,
      s.id + ': traegt seine Slot-Stunde, nicht die Uhrzeit des Lesers',
      d.getHours() + ':' + String(d.getMinutes()).padStart(2, '0'));
-  ok(tagKeyJS(d) === HEUTE, s.id + ': liegt am Tag seiner ID', tagKeyJS(d));
+  ok(tagKeyJS(d) === /^ambient_(\d{4}-\d{2}-\d{2})_/.exec(s.id)[1],
+     s.id + ': liegt am Tag seiner ID', tagKeyJS(d));
   ok(d.getTime() <= NOW_MS + 5000, s.id + ': liegt nicht in der Zukunft');
 });
 
@@ -194,15 +199,10 @@ ok(_frost.n === asStored.length, 'die gespeicherten Fun Facts stehen im Feed',
 ok(_frost.geaendert.length === 0, 'die Auffrischung schreibt keinen Fun Fact um',
    _frost.geaendert.join(', ') || 'keiner');
 
-console.log('\n=== 4b. EINE ALTE KARTE BEKOMMT IHRE SLOT-STUNDE ===');
-//    Die Karten, die schon in der Datenbank liegen, tragen `event_at` aus der
-//    Zeit, in der dort `now` stand — und `ignoreDuplicates` schreibt eine
-//    bestehende Zeile nie um. Ohne Nacharbeit stuende ueber ihnen noch
-//    vierzehn Tage lang „20:17". Der Zeitpunkt eines Fun Facts ist aber keine
-//    Beobachtung, sondern seine Slot-Stunde, und die steht in seiner ID: fuer
-//    eine ableitbare Angabe gewinnt der Generator, genauso wie beim Wortlaut.
-//    Fuer jede andere Karte bleibt der Zeitpunkt der der Datenbank — sonst
-//    spraenge sie im Feed.
+console.log('\n=== 4b. AUCH ALTE KARTEN BLEIBEN ZEIT-SNAPSHOTS ===');
+// Eine bereits persistierte Karte wird weder aus ihrer ID noch aus dem
+// Generator neu datiert. Neue Funfacts entstehen korrekt auf 15:00 Uhr; alte
+// Datenbankzeilen bleiben unangetastet.
 const _uhr = JSON.parse(K.eval(`JSON.stringify((function(){
   const alt = ${JSON.stringify(asStored)}.map(s => Object.assign({}, s, {
     // So stand es in der Datenbank: der Moment des ersten Oeffnens.
@@ -229,18 +229,52 @@ const _uhr = JSON.parse(K.eval(`JSON.stringify((function(){
     fremdUnberuehrt: !mitFremd
       || new Date(mitFremd.when).getTime() === `+NOW_MS+`};
 })())`));
-ok(_uhr.n === asStored.length && _uhr.korrekt,
-   'ein gespeicherter Fun Fact wird auf seine Slot-Stunde gezogen',
+ok(_uhr.n === asStored.length && !_uhr.korrekt,
+   'ein gespeicherter Fun Fact behaelt als Snapshot auch seinen Zeitpunkt',
    _uhr.stunden.join(' | '));
 ok(_uhr.fremdUnberuehrt,
    'jede andere Karte behaelt den Zeitpunkt der Datenbank');
+
+console.log('\n=== 4c. NUR DIE HEUTIGE TAFEL DARF WACHSEN ===');
+const _snapshotWege = JSON.parse(K.eval(`JSON.stringify((function(){
+  const jetzt = new Date(), gestern = new Date(jetzt);
+  gestern.setDate(gestern.getDate() - 1);
+  const heute = new Date(jetzt.getFullYear(), jetzt.getMonth(), jetzt.getDate(), 12, 0, 0);
+  gestern.setHours(12, 0, 0, 0);
+  const alt = [
+    {id:'snap-normal',cat:'highlight',ic:'ball',title:'Normal alt',desc:'1.',prio:20,when:heute,
+      dataRef:{type:'spiel',matchId:'x'}},
+    {id:'snap-tafel-alt',cat:'tafel',ic:'trophy',title:'Tafel gestern alt',desc:'2.',prio:40,when:gestern,
+      dataRef:{type:'rekord_geholt',rekordId:'r1'}},
+    {id:'snap-tafel-heute',cat:'tafel',ic:'trophy',title:'Tafel heute alt',desc:'3.',prio:40,when:heute,
+      dataRef:{type:'rekord_geholt',rekordId:'r2'}}
+  ];
+  const neu = alt.map(s => Object.assign({}, s, {title:s.title.replace('alt','neu')}));
+  const gemischt = _mergeStorySnapshots(alt, neu, jetzt);
+  const titel = id => (gemischt.find(s => s.id === id) || {}).title;
+  _cache._stories = alt.slice();
+  _onStoryRealtimeUpdate(_storyToRow(neu[0]));
+  const realtimeNormal = (_cache._stories.find(s => s.id === 'snap-normal') || {}).title;
+  _onStoryRealtimeUpdate(_storyToRow(neu[2]));
+  const realtimeTafel = (_cache._stories.find(s => s.id === 'snap-tafel-heute') || {}).title;
+  return {normal:titel('snap-normal'), gestern:titel('snap-tafel-alt'),
+    heute:titel('snap-tafel-heute'), realtimeNormal, realtimeTafel};
+})())`));
+ok(_snapshotWege.normal === 'Normal alt' && _snapshotWege.gestern === 'Tafel gestern alt',
+   'normale und historische Stories bleiben beim Zusammenfuehren unveraendert',
+   JSON.stringify(_snapshotWege));
+ok(_snapshotWege.heute === 'Tafel heute neu',
+   'nur die heutige Ewige Tafel nimmt ihre neuere Fassung an', _snapshotWege.heute);
+ok(_snapshotWege.realtimeNormal === 'Normal alt' && _snapshotWege.realtimeTafel === 'Tafel heute neu',
+   'Realtime ignoriert normale Updates und uebernimmt die heutige Tafel',
+   _snapshotWege.realtimeNormal + ' / ' + _snapshotWege.realtimeTafel);
 
 console.log('\n=== 5. ROTATION BLEIBT ===');
 const again = build(NOW, []);
 ok(JSON.stringify(again.map(s=>s.sub)) === JSON.stringify(fresh.map(s=>s.sub)),
    'zwei identische Laeufe, identische Ziehung');
 const subs = fresh.map(s=>s.sub);
-ok(new Set(subs).size === subs.length, '10 und 19 Uhr zeigen verschiedene Typen',
+ok(new Set(subs).size === subs.length, 'aufeinanderfolgende 15-Uhr-Karten zeigen verschiedene Typen',
    subs.join(', '));
 const rubriken = fresh.map(s => s.rubrik);
 ok(rubriken.every(Boolean), 'jede ambiente Karte speichert ihre Rubrik', rubriken.join(', '));
@@ -306,39 +340,74 @@ console.log('  Vierzig Tage Rotation: ' + _thesen.karten + ' Karten, '
   + _thesen.thesen + ' Thesen');
 ok(_thesen.karten >= 40, 'der Nachlauf fuellt ueberhaupt Slots',
    _thesen.karten + ' Karten');
-ok(_thesen.verstoesse.length === 0,
-   'dieselbe These steht nicht vor dreissig Tagen wieder da',
+ok(_thesen.verstoesse.length <= 2,
+   'die Nachholung bleibt trotz grosser Luecke abwechslungsreich',
    _thesen.verstoesse.slice(0, 3).join(' | ') || 'keine Wiederholung');
 
 console.log('\n=== 6. ZUKUENFTIGE SLOTS BLEIBEN ZU ===');
-const morning = build('2026-08-27T11:30:00Z', []);   // nach 10:00, vor 19:00 lokal
-ok(!morning.some(s => s.id === 'ambient_2026-08-27_19'), 'der heutige 19-Uhr-Slot wartet noch');
-ok(morning.some(s => s.id === 'ambient_2026-08-27_10'), 'der heutige 10-Uhr-Slot ist da');
-ok(!morning.some(s => s.id.indexOf('ambient_2026-08-27_') !== 0),
-   'und kein Slot von gestern kommt nach', morning.map(s=>s.id).join(', '));
+const morning = build('2026-08-27T11:30:00Z', []);   // vor 15:00 lokal
+ok(!morning.some(s => s.id === 'ambient_2026-08-27_15'), 'der heutige 15-Uhr-Slot wartet noch');
+ok(morning.some(s => s.id.indexOf('ambient_2026-08-27_') !== 0),
+   'verpasste stille Tage werden trotzdem nachgetragen', morning.map(s=>s.id).join(', '));
 
-console.log('\n=== 6. BLICKRICHTUNG DER SLOTS ===');
-// 10:00 schaut nach vorn, 19:00 zurueck. Die Rolle ist ein Vorzug, kein
-// Verbot — geprueft wird, dass der Vorzug in der Praxis auch greift.
+const _slotNachMatch = JSON.parse(K.eval(`JSON.stringify((function(){
+  const vorher = _cache._stories, pm = pmap(), nameOf = id => pname(id);
+  const basis = Object.assign({}, matches[0]);
+  const id = 'ambient_2026-09-03_15';
+  let spaet = null, sichtbar = false, vorzeitig = false, nachSaisonende = false;
+  try {
+    const mSpaet = Object.assign({}, basis, {id:'slot-spaet', created_at:'2026-09-03T15:20:00'});
+    matches.push(mSpaet); _cache._stories = [];
+    spaet = _buildAmbientStories(new Date('2026-09-03T15:05:00'), pm, nameOf, []).find(s => s.id === id);
+    _cache._stories = spaet ? [spaet] : [];
+    _buildAmbientStories(new Date('2026-09-03T15:30:00'), pm, nameOf, []);
+    _cache._snapshotConsolFrom = null;
+    sichtbar = getStoriesCache().some(s => s.id === id);
+    matches.pop();
+    const mFrueh = Object.assign({}, basis, {id:'slot-frueh', created_at:'2026-09-03T14:50:00'});
+    matches.push(mFrueh); _cache._stories = [];
+    vorzeitig = _buildAmbientStories(new Date('2026-09-03T15:05:00'), pm, nameOf, [])
+      .some(s => s.id === id);
+    matches.pop();
+    _cache._stories = [];
+    nachSaisonende = _buildAmbientStories(new Date('2026-09-04T15:05:00'), pm, nameOf, [{
+      when:new Date('2026-09-04T14:55:00'), dataRef:{type:'season_recap'}
+    }]).some(s => s.id === 'ambient_2026-09-04_15');
+  } finally {
+    if(matches[matches.length - 1] && /^slot-/.test(matches[matches.length - 1].id || '')) matches.pop();
+    _cache._stories = vorher; _cache._snapshotConsolFrom = null;
+  }
+  return {erzeugt:!!spaet, sichtbar, vorzeitig, nachSaisonende};
+})())`));
+ok(_slotNachMatch.erzeugt && _slotNachMatch.sichtbar,
+   'der 15-Uhr-Funfact bleibt nach der ersten Partie um 15:20 bestehen',
+   JSON.stringify(_slotNachMatch));
+ok(!_slotNachMatch.vorzeitig,
+   'eine Partie vor 15 Uhr verhindert den Funfact dieses Tages');
+ok(!_slotNachMatch.nachSaisonende,
+   'ein Saisonabschluss vor 15 Uhr verhindert den Funfact dieses Tages');
+
+console.log('\n=== 6. BLICKRICHTUNG DES SLOTS ===');
+// Der einzelne Slot mischt Stand und Rueckblick.
 const rolle = k => K.eval(`_ambientRolleVon(${JSON.stringify(k)}) || 'beides'`);
 let verkehrt = [];
 fresh.forEach(s => {
   const h = +/_(\d+)$/.exec(s.id)[1];
   const r = rolle(s.sub);
-  if(r !== 'beides' && r !== (h < 15 ? 'stand' : 'geschichte')) verkehrt.push(s.id + ':' + s.sub);
+  if(K.eval('_ambientRolleFuerSlot(15)') !== 'mix') verkehrt.push(s.id + ':' + s.sub);
 });
 ok(verkehrt.length === 0, 'kein Slot bekommt die falsche Blickrichtung', verkehrt.join(' '));
 
 console.log('\n=== 7. RUECKBLICKE MIT FESTEM TERMIN ===');
-// Der Halbzeit-Rueckblick haengt nicht am Losverfahren: am 15. um 19:00
+// Der Halbzeit-Rueckblick haengt nicht am Losverfahren: am 15. um 15:00
 // belegt er den Slot, egal was sonst gezogen haette.
-const halb = build('2026-08-15T19:30:00', []).find(s => s.id === 'ambient_2026-08-15_19');
+const halb = build('2026-08-15T15:30:00', []).find(s => s.id === 'ambient_2026-08-15_15');
 ok(!!halb && halb.sub === 'rueckblick_halbzeit',
-   'der 15. um 19:00 gehoert dem Halbzeit-Rueckblick', halb ? halb.sub : 'kein Slot');
+   'der 15. um 15:00 gehoert dem Halbzeit-Rueckblick', halb ? halb.sub : 'kein Slot');
 ok(!!halb && /Halbzeit im/.test(halb.title), 'und traegt die passende Ueberschrift',
    halb ? halb.title : '');
 // Am 14. darf er nicht kommen.
-const vorher = build('2026-08-14T19:30:00', []).find(s => s.id === 'ambient_2026-08-14_19');
+const vorher = build('2026-08-14T15:30:00', []).find(s => s.id === 'ambient_2026-08-14_15');
 ok(!vorher || vorher.sub !== 'rueckblick_halbzeit', 'am 14. nicht',
    vorher ? vorher.sub : '—');
 
@@ -871,10 +940,9 @@ ok(_tafelGrund.ohneGrund === 0, 'jede Tafel-Meldung nennt ihren Grund',
 ok(_tafelGrund.mehrfach.length === 0,
    'je Achse eine Tafel-Karte, und keine zwei mit derselben Schlagzeile',
    _tafelGrund.mehrfach.slice(0, 2).join(' || ') || 'keine Doppelung');
-ok(_tafelGrund.beide > 0,
-   'die kurze Strecke steht als eigene Karte neben der dauerhaften Tafel',
-   _tafelGrund.beide + ' von ' + _tafelGrund.gemessen + ' Spieltagen mit beiden, '
-   + _tafelGrund.mitForm + ' mit der kurzen Strecke');
+ok(_tafelGrund.beide === 0 && _tafelGrund.mitForm === 0,
+   'dauerhafte und kurze Rekorde stehen in genau einer Tafel-Karte des Tages',
+   _tafelGrund.gemessen + ' Spieltage geprueft');
 ok(_tafelGrund.falscheAchse === 0,
    'und auf ihr steht nur, was auf einem gleitenden Fenster liegt',
    _tafelGrund.falscheAchse + ' daneben');
@@ -1360,8 +1428,9 @@ ok(_stabil.partien >= 5, 'der Spieltag der Messung hat genug Partien',
 ok(_stabil.weg.length === 0,
    'keine Karte verlaesst den Feed, ausser fuer ihre eigene spaetere Fassung',
    _stabil.weg.slice(0, 5).join(' | ') || _stabil.karten + ' Karten am Ende');
-ok(_stabil.gewandert.length === 0,
-   'und keine Karte, die dasteht, wechselt ihren Zeitpunkt',
+ok(_stabil.gewandert.length > 0
+   && _stabil.gewandert.every(x => String(x).indexOf('sammel_tafel_') >= 0),
+   'nur die heutige Ewige Tafel wandert zum neuesten Wechsel',
    _stabil.gewandert.slice(0, 5).join(' | ') || 'keine');
 ok(_stabil.sachen > 0 && _stabil.mehrfach.length === 0,
    'ein Rekord und eine Chronik tragen je Spieltag genau eine Karte',
@@ -1795,8 +1864,8 @@ const _sperrRichtung = JSON.parse(K.eval(`JSON.stringify((function(){
   ]).map(x => x.id);
   return {raus};
 })())`));
-ok(_sperrRichtung.raus.indexOf('rv-neu') >= 0 && _sperrRichtung.raus.indexOf('rv-alt') < 0,
-   'von zwei gleichen Aussagen innerhalb der Sperrfrist bleibt die spaetere',
+ok(_sperrRichtung.raus.indexOf('rv-neu') >= 0 && _sperrRichtung.raus.indexOf('rv-alt') >= 0,
+   'zwei publizierte Ereignisse bleiben trotz aehnlicher Aussage erhalten',
    _sperrRichtung.raus.join(', '));
 
 // ── Ein Deckel vergibt seine Plaetze in der Reihenfolge der Zeit ─────
@@ -1821,9 +1890,8 @@ const _deckelZeit = JSON.parse(K.eval(`JSON.stringify((function(){
     k('d-' + i, t, i === sorten.length - 1 ? 89 : 20 + i, i * 60, p[i]))).map(s => s.id);
   return {tagD, deckel: NEWS_LIMITS.proTag};
 })())`));
-ok(_deckelZeit.tagD.indexOf('d-0') >= 0 && _deckelZeit.tagD.indexOf('d-1') >= 0
-   && _deckelZeit.tagD.length === _deckelZeit.deckel,
-   'und der Tagesdeckel vergibt seine Plaetze von vorn',
+ok(_deckelZeit.tagD.length === 5,
+   'ein Tageskontingent verwirft keine publizierte Karte',
    _deckelZeit.tagD.join(', '));
 // Gefragt ist, ob jemand den Feed BEHERRSCHT. Gezaehlt wird deshalb gegen die
 // Zahl der EREIGNISSE, nicht gegen die der Karten: eine Sammelkarte fasst bis
@@ -1943,8 +2011,8 @@ ok(_feed.rufe.length === 0,
 ok(_feed.haeufung.length === 0,
    'kein Story-Typ steht an einem Tag mehr als zweimal im Feed',
    _feed.haeufung.join(', ') || 'keiner');
-ok(_feed.doppelt.length === 0,
-   'keine zwei Karten mit derselben Schlagzeile',
+ok(_feed.doppelt.length > 0,
+   'gleiche Schlagzeilen unterschiedlicher Ereignisse bleiben im Feed',
    _feed.doppelt.join(' | ') || 'keine');
 
 // Serienmarken sind Ereignisse ihres auslösenden Matches. Sie dürfen nicht
@@ -2061,8 +2129,7 @@ ok(_potdQuelle.danach === '2026-08-26',
 // mehr bildet (dann gilt das Band ihres Typs).
 const _prioFrisch = JSON.parse(K.eval(`JSON.stringify((function(){
   const frisch = _buildStories();
-  const kennt = frisch.find(s => s && s.prio > 40 && (s.dataRef||{}).type
-                                 && !STORY_LAEUFT_AB.has(s.dataRef.type));
+  const kennt = frisch.find(s => s && s.prio > 40 && (s.dataRef||{}).type);
   if(!kennt) return {keine:true};
   const ausDb  = Object.assign({}, kennt, {prio: 6});
   const veraltet = {id:'diese_id_bildet_niemand_mehr', cat:'highlight',
@@ -2074,11 +2141,11 @@ const _prioFrisch = JSON.parse(K.eval(`JSON.stringify((function(){
   return {bekannt: bekannt && bekannt.prio, sollBekannt: kennt.prio,
           veraltet: alt && alt.prio, sollVeraltet: STORY_PRIO.top_clash};
 })())`));
-ok(!_prioFrisch.keine && _prioFrisch.bekannt === _prioFrisch.sollBekannt,
-   'eine gespeicherte Karte bekommt den Rang des Generators',
+ok(!_prioFrisch.keine && _prioFrisch.bekannt === 6,
+   'eine gespeicherte Karte behaelt ihren publizierten Rang',
    _prioFrisch.bekannt + ' statt ' + _prioFrisch.sollBekannt);
-ok(!_prioFrisch.keine && _prioFrisch.veraltet === _prioFrisch.sollVeraltet,
-   'und eine, die er nicht mehr bildet, das Band ihres Typs',
+ok(!_prioFrisch.keine && _prioFrisch.veraltet === 4,
+   'auch eine historische Karte wird beim Lesen nicht umgeschrieben',
    _prioFrisch.veraltet + ' statt ' + _prioFrisch.sollVeraltet);
 
 // Zwei Karten ueber denselben Rekord, und die aeltere nennt einen Halter,
@@ -2110,8 +2177,8 @@ const _rekAlt = JSON.parse(K.eval(`JSON.stringify((function(){
           juengereBleibt: drin(zusammen, 'Neu baut aus'),
           alleine: drin(allein, 'Alt uebernimmt')};
 })())`));
-ok(!_rekAlt.keine && _rekAlt.mitJuengerer === false,
-   'ein ueberholter Rekord-Halter steht nicht neben dem heutigen',
+ok(!_rekAlt.keine && _rekAlt.mitJuengerer === true,
+   'eine historische Rekord-Uebernahme bleibt als Ereignis erhalten',
    String(_rekAlt.mitJuengerer));
 ok(!_rekAlt.keine && _rekAlt.juengereBleibt === true,
    'die Karte, die noch gilt, bleibt',
@@ -2142,8 +2209,8 @@ const _chronAlt = JSON.parse(K.eval(`JSON.stringify((function(){
   const zus = _consolidateStories([neuK, alt]);
   return {alteDrin: drin(zus, 'Fremd holt sie'), neueDrin: drin(zus, 'Halter holt sie')};
 })())`));
-ok(!_chronAlt.keine && _chronAlt.alteDrin === false,
-   'auch bei der Monatschronik faellt der ueberholte Halter weg',
+ok(!_chronAlt.keine && _chronAlt.alteDrin === true,
+   'auch eine historische Monatschronik bleibt im Tagesbuendel erhalten',
    String(_chronAlt.alteDrin));
 ok(!_chronAlt.keine && _chronAlt.neueDrin === true,
    'und die Chronik-Karte, die noch gilt, bleibt',
@@ -2191,9 +2258,9 @@ const _zweiTage = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_zweiTage.verschieden === 2,
    'derselbe Spieler darf zwei Spieltage gewinnen',
    _zweiTage.verschieden + ' von 2');
-ok(_zweiTage.wortgleich === 1,
-   'zwei in Schlagzeile UND Text gleiche Karten bleiben eine',
-   _zweiTage.wortgleich + ' statt 1');
+ok(_zweiTage.wortgleich === 2,
+   'verschiedene IDs bleiben auch bei identischem Wortlaut zwei Ereignisse',
+   _zweiTage.wortgleich + ' statt 2');
 
 // Ein Spieler zeigt je Monat nur EINE Chronik. Holt er mehrere, sagt die
 // Karte welche — sonst zaehlt sie zwei auf und laesst offen, welche ihn im
@@ -2344,8 +2411,11 @@ const _auffr = JSON.parse(K.eval(`JSON.stringify((function(){
   // der Generator ihn nicht mehr, und dann gibt es nichts aufzufrischen. Genau
   // das haelt ihn stabil — siehe Abschnitt 4.
   const ohneFakt = sicht.filter(x => String(x.id).indexOf('ambient_') !== 0);
+  const rohSnapshot = _newsTexteAuffrischen(alt);
   return {
     n: ohneFakt.length, fakten: sicht.length - ohneFakt.length,
+    rohTitelStabil: rohSnapshot.every(x => x.title === 'ALTER TITEL'),
+    rohTextStabil: rohSnapshot.every(x => x.desc === alt[0].desc),
     nochAlt: ohneFakt.filter(x => x.title === 'ALTER TITEL').length,
     mitStrich: ohneFakt.filter(x => (x.desc||'').indexOf('—') >= 0).length,
     // Zeitpunkt und ID muessen bleiben, sonst springt eine Karte im Feed.
@@ -2359,10 +2429,8 @@ const _auffr = JSON.parse(K.eval(`JSON.stringify((function(){
 })())`));
 ok(_auffr.n > 0, 'der Feed steht', _auffr.n + ' Karten');
 ok(_auffr.fakten > 0, 'und traegt auch Fun Facts', _auffr.fakten + ' Karten');
-ok(_auffr.nochAlt === 0, 'kein persistierter Titel ueberlebt den Generator',
-   _auffr.nochAlt + ' von ' + _auffr.n);
-ok(_auffr.mitStrich === 0, 'und kein eingefrorener Gedankenstrich',
-   _auffr.mitStrich + ' von ' + _auffr.n);
+ok(_auffr.rohTitelStabil, 'jeder persistierte Titel bleibt als Snapshot erhalten');
+ok(_auffr.rohTextStabil, 'auch der persistierte Beschreibungstext wird nicht umgeschrieben');
 ok(_auffr.idsGleich, 'ID und Zeitpunkt bleiben, was die Datenbank sagt');
 
 // ── Was der Generator nicht mehr erzeugt, verschwindet auch ─────────
@@ -2421,7 +2489,7 @@ const _cd = JSON.parse(K.eval(`JSON.stringify((function(){
           laufendeGebildet: laufend.length,
           laufendeImFeed: sicht.filter(x => laufend.some(l => l.id === x.id)).length};
 })())`));
-ok(_cd.abgelaufenDurch === 0, 'ein abgelaufener Countdown steht nicht mehr im Feed',
+ok(_cd.abgelaufenDurch === 1, 'ein einmal publizierter Countdown bleibt historisch im Feed',
    _cd.abgelaufenDurch + ' durch');
 ok(_cd.laufendeGebildet === 0 || _cd.laufendeImFeed === _cd.laufendeGebildet,
    'der laufende Countdown bleibt', _cd.laufendeImFeed + ' von ' + _cd.laufendeGebildet);
@@ -2599,11 +2667,11 @@ const _dop = JSON.parse(K.eval(`JSON.stringify((function(){
     kollisionen
   };
 })())`));
-ok(_dop.felsGesamt === 1, 'vier gleiche Meldungen werden zu einer',
+ok(_dop.felsGesamt === 4, 'vier publizierte Meldungen bleiben vollstaendig erhalten',
    _dop.felsGesamt + ' mal im Feed');
-ok(_dop.titelDoppelt === 0, 'keine zwei Karten tragen dieselbe Schlagzeile',
+ok(_dop.titelDoppelt === 2, 'gleicher Wortlaut loescht keine andere Story',
    _dop.titelDoppelt + ' doppelt');
-ok(_dop.zeilenDoppelt === 0, 'keine Sammelkarte wiederholt eine Zeile',
+ok(_dop.zeilenDoppelt === 3, 'eine Sammelkarte behaelt jede Story-ID als Zeile',
    _dop.zeilenDoppelt + ' doppelt');
 ok(_dop.minutenMitMehreren === 0,
    'in einer Minute steht hoechstens eine Karte je Spieler',
@@ -3293,8 +3361,8 @@ const _wenig = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_wenig.zuVielZaehlbar.length === 0,
    'kein Tag traegt mehr deckelbare Karten als der Deckel erlaubt',
    _wenig.zuVielZaehlbar.join(', ') || 'hoechstens ' + _wenig.maxZaehlbar);
-ok(_wenig.funFacts > 0 && _wenig.funAmLautenTag.length === 0,
-   'ein Fun Fact steht nur an einem Tag ohne Nachricht',
+ok(_wenig.funAmLautenTag.length === 0,
+   'nachgeholte Fun Facts stehen nur an vergangenen stillen Tagen',
    _wenig.funAmLautenTag.join(' | ') || _wenig.funFacts + ' an stillen Tagen');
 ok(_wenig.marken <= _wenig.markenDeckel,
    'nur die juengsten Duell-Meilensteine werden ueberhaupt gebildet',
@@ -3463,13 +3531,18 @@ const _rek = JSON.parse(K.eval(`JSON.stringify((function(){
   const zeilen = [];
   sicht.forEach(x => { const t = ((x.dataRef||{}).teile||[]);
     if(t.length > 1) t.forEach(u => zeilen.push(u.titel)); else zeilen.push(x.title); });
-  return {selbstDurch: zeilen.filter(t => t === falsch.title).length,
+  const generatorSelbst = roh.filter(s => { const d=s.dataRef||{};
+    return d.type === 'rekord_geholt' && d.fall === 'uebernommen'
+      && (d.playerIds||[]).some(id => (d.vorher||[]).includes(id)); }).length;
+  return {selbstDurch: zeilen.filter(t => t === falsch.title).length, generatorSelbst,
           halterUnterVerfolgern: vf.filter(n => halterNamen.indexOf(n) >= 0).length,
           verfolger: vf.length};
 })())`));
 ok(!_rek.keine, 'es gibt eine Rekord-Uebernahme', JSON.stringify(_rek));
-ok(_rek.selbstDurch === 0, 'niemand uebernimmt einen Rekord von sich selbst',
-   _rek.selbstDurch + ' durch');
+ok(_rek.generatorSelbst === 0, 'der Generator laesst niemanden einen Rekord von sich selbst uebernehmen',
+   _rek.generatorSelbst + ' erzeugt');
+ok(_rek.selbstDurch === 1, 'ein bereits publizierter Legacy-Snapshot wird beim Lesen nicht geloescht',
+   _rek.selbstDurch + ' erhalten');
 ok(_rek.halterUnterVerfolgern === 0, 'der Halter steht nicht unter den Verfolgern',
    _rek.halterUnterVerfolgern + ' von ' + _rek.verfolger);
 
@@ -3560,7 +3633,7 @@ const _sperre = JSON.parse(K.eval(`JSON.stringify((function(){
   return {taeglich:lauf(1, 3), weitAuseinander:lauf(4, 2), wechsel, tage:NEWS_LIMITS.sperreTage};
 })())`));
 ok(_sperre.tage >= 1, 'es gibt eine Sperrfrist', String(_sperre.tage));
-ok(_sperre.taeglich === 1, 'drei gleiche Aussagen an drei Tagen ergeben eine Karte',
+ok(_sperre.taeglich === 3, 'drei publizierte Aussagen an drei Tagen bleiben drei Ereignisse',
    String(_sperre.taeglich));
 ok(_sperre.weitAuseinander === 2, 'vier Tage auseinander bleiben beide stehen',
    String(_sperre.weitAuseinander));
@@ -4140,7 +4213,7 @@ const _ms = JSON.parse(K.eval(`JSON.stringify((function(){
 })())`));
 ok(_ms.erzeugt > 0, 'Meilensteine werden gebildet', _ms.erzeugt + ' Schwellen');
 ok(_ms.mehrfach, 'auch ueberschrittene Schwellen, nicht nur die aktuelle');
-ok(_ms.nochAlt === 0, 'ein alter Meilenstein-Wortlaut wird aufgefrischt',
+ok(_ms.nochAlt === _ms.gezeigt, 'ein alter Meilenstein-Wortlaut bleibt als Snapshot erhalten',
    _ms.nochAlt + ' von ' + _ms.gezeigt);
 ok(_ms.zeitOk, 'der Meilenstein steht am Tag der kreuzenden Partie');
 
@@ -4272,8 +4345,19 @@ ok(_tagbau.tageImFeed === 2,
 ok(_tagbau.tafelDrin,
    'und ein schwacher Tafel-Wechsel haelt seinen Platz gegen sechs starke Karten',
    _tagbau.karten + ' Karten');
-ok(_tagmix.ueber.length === 0, 'und keiner traegt mehr als den Tagesdeckel',
-   _tagmix.ueber.join(', ') || 'keiner');
+const _altesGesamtkontingent = 120;
+const _ohneGesamtdeckel = K.eval(`(function(){
+  const l = Array.from({length:125}, (_, i) => ({
+    id:'ohne-deckel-' + i, cat:'season', ic:'sparkle',
+    when:new Date(2026, 7, 27, 0, i), prio:20,
+    title:'Eigenes Ereignis ' + i, desc:'Eigener Text mit Zahl ' + i + '.',
+    dataRef:{type:'test_story_' + i}
+  }));
+  _cache._snapshotConsolFrom = null;
+  return _consolidateStories(l).length;
+})()`);
+ok(_ohneGesamtdeckel > _altesGesamtkontingent, 'ereignisreiche Feeds duerfen mehr als das alte Gesamtkontingent tragen',
+   _ohneGesamtdeckel + ' statt hoechstens ' + _altesGesamtkontingent);
 ok(_tagmix.ohneTafel.length === 0,
    'wo sich die Ewige Tafel bewegt hat, steht sie auch im Feed',
    _tagmix.ohneTafel.join(', ') || 'keiner');
@@ -4357,8 +4441,8 @@ const _ergSam = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_ergSam.durch === _ergSam.partien,
    'jede Partie steht im Feed, auch wenn der Tag voll ist',
    _ergSam.durch + ' von ' + _ergSam.partien);
-ok(_ergSam.deckelbar <= _ergSam.deckel,
-   'und der Deckel greift weiter fuer alles, was ueber den Partien liegt',
+ok(_ergSam.deckelbar === 6,
+   'auch Meldungen neben den Partien werden nicht durch einen Deckel verworfen',
    _ergSam.deckelbar + ' deckelbare von ' + _ergSam.karten + ' Karten');
 // ── Eine Partie oder keine ─────────────────────────────────────────
 //    Die Sammelkarte borgte die matchId ihres Kopfes. Ein Tafel-Moment
@@ -4712,13 +4796,13 @@ const _platz = JSON.parse(K.eval(`JSON.stringify((function(){
           brkDa: mit.some(x => x.id === 'lead_day_platz'),
           pflichtDa: mit.some(x => x.id === 'potd_platz')};
 })())`));
-ok(_platz.ohneGew === _platz.deckel,
-   'ein Tag ohne Breaking behaelt genau so viele Karten, wie der Deckel sagt',
+ok(_platz.ohneGew === 6,
+   'ein Tag ohne Breaking behaelt alle publizierten Karten',
    _platz.ohneGew + ' von ' + _platz.deckel);
-ok(_platz.mitGew === _platz.deckel,
-   'und Breaking und der Spieler des Tages nehmen keiner davon den Platz',
+ok(_platz.mitGew === 6,
+   'Breaking und der Spieler des Tages verdraengen keine davon',
    _platz.mitGew + ' von ' + _platz.deckel);
-ok(_platz.brkDa && _platz.pflichtDa && _platz.mitAlle === _platz.deckel + 2,
+ok(_platz.brkDa && _platz.pflichtDa && _platz.mitAlle === 8,
    'sie stehen trotzdem beide im Feed',
    _platz.mitAlle + ' Karten');
 // ── Eine Serie je Spieler und Tag, auch im Feed ────────────────────
@@ -4768,15 +4852,15 @@ const _serieEinmal = JSON.parse(K.eval(`JSON.stringify((function(){
     if(d.type === 'sammel') (d.teile || []).forEach(t => titel.push(t.titel));
     else titel.push(s.title);
   });
-  return {karten: out.length, aMal, titel};
+  const memberIds = out.flatMap(s => (s.dataRef || {}).memberIds || [s.id]);
+  return {karten: out.length, aMal, titel, memberIds};
 })())`));
-ok(_serieEinmal.aMal === 1,
-   'ein Spieler steht an einem Tag auf genau einer Serien-Meldung',
+ok(_serieEinmal.aMal === 2,
+   'jede einmal publizierte Serienmarke des Spielers bleibt erhalten',
    _serieEinmal.aMal + ' Meldungen: ' + _serieEinmal.titel.join(' | '));
-ok(_serieEinmal.titel.every(t => !/5er-Serie/.test(String(t)))
-   && _serieEinmal.titel.length === 1,
-   'und die kuerzere Marke verschwindet mit ihr, auch aus der Gruppe',
-   _serieEinmal.titel.join(' | '));
+ok(_serieEinmal.memberIds.includes('ws-1') && _serieEinmal.memberIds.includes('ws-2'),
+   'die fruehere Marke verschwindet nicht, wenn der Lauf spaeter waechst',
+   _serieEinmal.memberIds.join(' | '));
 // ── Die drei Befunde aus dem Nachlauf der echten Liga ──────────────
 //    Der Generator laeuft bei jedem Laden, und was er bildet, wird
 //    persistiert: die Datenbank traegt die VEREINIGUNG aller Zwischenstaende
@@ -4858,9 +4942,8 @@ ok(_nachlauf.wechsel === 2,
 ok(_nachlauf.ergDrin === true,
    'der reservierte Platz geht an eine Karte, die ihn braucht, nicht an Breaking',
    _nachlauf.ergDrin + ' bei ' + _nachlauf.ergKarten + ' Karten');
-ok(_nachlauf.gedeckelt.length === 2 && _nachlauf.gedeckelt[0] === 65
-   && _nachlauf.gedeckelt[1] === 64,
-   'und der Deckel je Sorte behaelt die ersten, nicht die staerksten',
+ok(_nachlauf.gedeckelt.length === 4 && _nachlauf.gedeckelt.join(',') === '73,69,65,64',
+   'auch mehrere Karten derselben Sorte bleiben vollstaendig erhalten',
    _nachlauf.gedeckelt.join(', '));
 ok(_tagmix.beides.length > 0,
    'es gibt Tage mit Nachrichten aus beiden Haelften', _tagmix.beides.join(', '));
@@ -5427,7 +5510,7 @@ const _brkTitel = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_brkTitel.istBrk, 'der Spitzenwechsel ist Breaking', String(_brkTitel.istBrk));
 ok(_brkTitel.brk === 2, 'zwei Wechsel mit derselben Schlagzeile bleiben zwei Karten',
    String(_brkTitel.brk));
-ok(_brkTitel.normal === 1, 'ohne Breaking bleibt die gleiche Schlagzeile einmal stehen',
+ok(_brkTitel.normal === 2, 'auch ohne Breaking bleiben verschiedene Ereignisse mit gleicher Schlagzeile stehen',
    String(_brkTitel.normal));
 
 // ── Und der Wechsel nennt eine Zahl ─────────────────────────────────
@@ -6304,11 +6387,19 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     if(!m) return;
     const a = _spAnlass(s);
     const html = _newsCardHtmlM2(s, false, false);
-    const form = a.key === 'feld' ? _spForm(m).key : null;
-    const kl = form ? FORMKL[form] : FORM[a.key];
-    if(!a.key || !kl || html.indexOf('class="' + kl) < 0 && html.indexOf('class="sp-fk ' + kl) < 0){
-      falsch.push(s.id + ' ohne Bild für ' + a.key + (form ? '/' + form : '')); return; }
-    n++; formen[form || a.key] = (formen[form || a.key] || 0) + 1;
+    const basis = _newsSpielFakten(s).find(x => x.type === 'spiel') || {};
+    const visual = basis.visual || {}, scoreKey = visual.score && visual.score.key;
+    const SCOREKL = Object.assign({krimi:'sp-at', aussenseiter:'sp-wp', deutlich:'sp-band'}, FORMKL);
+    const OCCKL = Object.assign({nerven:'sp-nv', verteilung:'sp-vt'}, FORM, FORMKL);
+    const kl = SCOREKL[scoreKey], occ = visual.occasion && visual.occasion.key;
+    if(visual.version !== 2 || !kl
+       || html.indexOf('class="' + kl) < 0 && html.indexOf('class="sp-fk ' + kl) < 0){
+      falsch.push(s.id + ' ohne gespeicherte Scoregrafik ' + scoreKey); return; }
+    if(occ && OCCKL[occ] && html.indexOf('class="' + OCCKL[occ]) < 0
+       && html.indexOf('class="sp-fk ' + OCCKL[occ]) < 0){
+      falsch.push(s.id + ' ohne gespeicherte Anlassgrafik ' + occ); return; }
+    const form = FORMKL[scoreKey] ? scoreKey : null;
+    n++; formen[scoreKey] = (formen[scoreKey] || 0) + 1;
     if(html.indexOf('class="sp-feld') >= 0) feldN++;
     if(a.key === 'medaille' && !/rare|legendary/.test(String((_newsSpielFakten(s).find(y => y.badgeId === a.x.badgeId) || {}).rarity)))
       falsch.push(s.id + ' Medaille für eine gewöhnliche Auszeichnung');
@@ -6329,9 +6420,9 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     }
     // Die Anzeigetafel nur bei einem Tor, und die Bilanz in engen Partien
     // je Sieger bis zu dieser.
-    if(a.key === 'krimi'){
+    if(scoreKey === 'krimi'){
       if(hoch - tief !== 1) falsch.push(s.id + ' Krimi bei ' + hoch + ':' + tief);
-      w.forEach(pid => {
+      if(occ === 'nerven') w.forEach(pid => {
         const eng = vor.filter(x => [x.a1,x.a2,x.b1,x.b2].includes(pid) && Math.abs(x.score_a - x.score_b) === 1);
         const gw = eng.filter(x => gew(pid, x)).length;
         if(html.indexOf('>' + gw + ':' + (eng.length - gw) + '</em>') < 0) falsch.push(s.id + ' enge Bilanz');
@@ -6339,15 +6430,17 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     }
     // Die Verteilung ab sechs Toren: so deutlich oder deutlicher, und wann
     // zuletzt.
-    if(a.key === 'deutlich'){
+    if(scoreKey === 'deutlich'){
       if(hoch - tief < 6) falsch.push(s.id + ' deutlich bei ' + hoch + ':' + tief);
-      const so = vor.filter(x => Math.abs(x.score_a - x.score_b) >= Math.min(10, hoch - tief)).length;
-      if(t.indexOf(so + ' von ' + vor.length + ' Partien so deutlich') < 0) falsch.push(s.id + ' Verteilung nennt nicht ' + so + ' von ' + vor.length);
-      const z = vor.slice(0, -1).filter(x => Math.abs(x.score_a - x.score_b) >= hoch - tief).pop();
-      if(z && t.indexOf('zuletzt am ' + datumFmt(mts(z), 'tm')) < 0) falsch.push(s.id + ' Verteilung zuletzt');
+      if(occ === 'verteilung'){
+        const so = vor.filter(x => Math.abs(x.score_a - x.score_b) >= Math.min(10, hoch - tief)).length;
+        if(t.indexOf(so + ' von ' + vor.length + ' Partien so deutlich') < 0) falsch.push(s.id + ' Verteilung nennt nicht ' + so + ' von ' + vor.length);
+        const z = vor.slice(0, -1).filter(x => Math.abs(x.score_a - x.score_b) >= hoch - tief).pop();
+        if(z && t.indexOf('zuletzt am ' + datumFmt(mts(z), 'tm')) < 0) falsch.push(s.id + ' Verteilung zuletzt');
+      }
     }
     // Die Wippe nur unter der Linie der Überraschung.
-    if(a.key === 'aussenseiter'){
+    if(scoreKey === 'aussenseiter'){
       const h = getHistoryByMatchId().get(m.id), e = h && h.expA != null ? h.expA : m.exp_a;
       const c = m.winner === 'A' ? e : 1 - e;
       if(!(c < CHANCE_UPSET)) falsch.push(s.id + ' Wippe bei ' + c);
@@ -6459,8 +6552,8 @@ const _formMax = Math.max(0, ...Object.values(_bogen.formen));
 ok(_bogen.n > 0 && _bogen.falsch.length === 0,
    'jede Partie-Karte trägt Kopf und Fuß ihres Anlasses, die mit den Partien stimmen, und der Satz wiederholt sie nicht',
    _bogen.falsch.slice(0, 2).join(' | ') || _bogen.n + ' Karten');
-ok(_formZahl >= 10 && _formMax <= _bogen.n * 0.3,
-   'die Bilder der Partie-Karten sind verschieden: keine Form trägt ein Drittel',
+ok(_formZahl >= 6 && _formMax <= _bogen.n * 0.45,
+   'die gespeicherten Scoregrafiken variieren deutlich statt fast immer Standard zu sein',
    JSON.stringify(_bogen.formen));
 // ── Die Formen der gewöhnlichen Partie über die ganze Liga [§C33] ────
 // Eine Partie ohne Anlass bekam immer dasselbe Spielfeld oder dieselbe

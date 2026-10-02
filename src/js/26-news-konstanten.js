@@ -164,12 +164,6 @@ const NEWS_LIMITS = {
   // Liga an zwei bis drei Tagen der Woche spielt und die Meldung damit
   // höchstens einmal je Spielwoche wiederkommt.
   sperreTage: 3,
-  // Die Obergrenze des Feeds. Sie war die eigentliche Fensterbreite: bei
-  // fünf Karten je Tag reichten 50 Karten gerade zehn Tage weit, und der
-  // Feed hoerte mitten in der Woche davor auf. Vierzehn Tage mal fünf sind
-  // siebzig; der Rest ist Luft fuer Breaking und die Pflichtkarten,
-  // die nicht gegen den Tagesdeckel zaehlen [§C33].
-  total: 120,
 };
 
 // ─── §11.0d — Wie weit der Feed zurueckreicht ────────────────────────
@@ -180,11 +174,10 @@ const NEWS_LIMITS = {
 // mehr. Eine Zeilenzahl ist keine Fensterbreite: sie haengt daran, wie viel
 // gerade los war.
 //
-// Der Schnitt liegt jetzt am DATUM und nicht an der Zeilenzahl. Die Grenze
-// darueber ist nur noch ein Schutz gegen eine Antwort ohne Ende — an den
-// echten Zahlen sind vierzehn Tage rund 250 Zeilen.
+// Der Schnitt liegt jetzt am DATUM und nicht an der Zeilenzahl. Gelesen wird
+// in Seiten, bis das komplette Fenster im Speicher steht.
 const NEWS_FENSTER_TAGE = 14;
-const NEWS_DB_ZEILEN = 500;
+const NEWS_DB_SEITENGROESSE = 500;
 
 // ─── §11.0c — Wie oft dieselbe Auszeichnung Nachricht ist ────────────
 // Die Karte entstand jedes Mal neu, wenn jemand ein Badge wieder holte.
@@ -404,7 +397,7 @@ const AMBIENT_PRIO_SPANNE = 7;
 //   RHYTHMUS (v9.7): TÄGLICH zwei Fun Facts — um 10:00 (Vormittag) und um
 //                    19:00 (Feierabend). Früher (v9.6) nur abends einer.
 //                    _isAmbientDay ist immer true → jeder Tag hat die Slots.
-//   AMBIENT_SLOTS  = die Slot-Stunden; je Slot erscheint eine eigene Story,
+//   AMBIENT_SLOTS  = die eine Slot-Stunde; je Tag erscheint hoechstens eine Story,
 //                    jeweils erst ab dieser Uhrzeit.
 //   Anti-Spam:     IDs sind tages+stunden-deterministisch (`ambient_<datum>_<stunde>`)
 //                  → ON CONFLICT DO NOTHING → keine Doppel über Geräte/Syncs.
@@ -413,15 +406,9 @@ const AMBIENT_PRIO_SPANNE = 7;
 //                  COOLDOWN: zuletzt (letzte AMBIENT_COOLDOWN_DAYS Tage)
 //                  verwendete Fun-Fact-Typen werden gesperrt → Rotation statt
 //                  vorhersehbarer Reihenfolge, keine schnellen Wiederholungen.
-const AMBIENT_SLOTS = [10, 19];
-// Ab dieser Stunde gilt ein Slot als Abend-Slot und fällt an Spieltagen aus.
-// Der Vormittags-Slot bleibt täglich: keine der Partien hat vor 10 Uhr
-// angefangen, er steht also immer vor dem Spieltag statt mittendrin.
-const AMBIENT_ABEND_AB = 19;
-
-// Die zwei Slots haben verschiedene Blickrichtungen. Vorher zogen beide aus
-// demselben Topf und der Feed las sich morgens wie abends — dieselbe Sorte
-// Zahl, nur ein anderer Kopf.
+const AMBIENT_SLOTS = [15];
+// Der einzelne 15-Uhr-Slot mischt Stand und Geschichte. Die Rotation darunter
+// sorgt fuer den Themenwechsel zwischen Form, Laufbahn, Rekorden und Liga.
 //
 //   10:00 „Der Stand"      — nach vorn: was gerade offen ist, wer wie weit
 //                            weg ist, was man heute noch holen kann.
@@ -450,10 +437,9 @@ const AMBIENT_SLOT_ROLLE = {
   personal_grinder:'geschichte', insignium_stand:'geschichte', titelband_stand:'geschichte',
 };
 function _ambientRolleVon(key){ return AMBIENT_SLOT_ROLLE[key] || null; }
-function _ambientRolleFuerSlot(stunde){ return stunde < 15 ? 'stand' : 'geschichte'; }
+function _ambientRolleFuerSlot(){ return 'mix'; }
 // Cooldown-Fenster (Tage): so lange wird ein bereits gezeigter Fun-Fact-Typ
-// nicht erneut gewählt. Bei 2 Fun Facts / Tag sperrt das die letzten ~14 Typen
-// (der Pool hat 18) → genug Rotation, keine schnellen Wiederholungen.
+// nicht erneut gewählt.
 const AMBIENT_COOLDOWN_DAYS = 7;
 // Auch verschiedene Templates koennen dieselbe Erzaehlrichtung haben. Diese
 // Rubriken-Sperre mischt Fuehrung, Form, Duelle, Laufbahn und Geschichte, ohne

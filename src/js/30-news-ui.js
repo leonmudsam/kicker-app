@@ -977,10 +977,10 @@ function _newsVerlustBand(s){
       ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
   }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
   if(!weg.length) return '';
-  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
+  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige-Saldo des Spieltags</span>`
     + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
       `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
-      + `<em class="num">−${-x.d}</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      + `<em class="num">−${-x.d} P</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
       ? `<b class="nf-vl mehr">+${weg.length - 3}</b>` : ''}</span></div>`;
 }
 
@@ -1003,7 +1003,7 @@ function _newsSpielZahlen(s, anlass){
 // (`_newsRohIndex`), weil eine Sammelzeile nur Titel und Zeichen trägt.
 // Kopf und Fuß, die daraus entstehen, stehen in `30b-news-spieltag.js`.
 function _newsRohIndex(){
-  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  const roh = Array.isArray(_cache._stories) ? _cache._stories : [];
   let m = _newsRohMemo.get(roh);
   if(!m){ m = new Map(roh.map(x => [x.id, x])); _newsRohMemo.set(roh, m); }
   return m;
@@ -1090,7 +1090,7 @@ const NEWS_FADEN_ART = {
 };
 const _newsFadenMemo = new WeakMap();
 function _newsFaeden(cards){
-  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  const roh = Array.isArray(_cache._stories) ? _cache._stories : [];
   const alt = _newsFadenMemo.get(roh);
   if(alt && alt.m === matches && alt.n === cards.length) return alt.map;
   const map = new Map();
