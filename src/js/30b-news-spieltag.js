@@ -290,7 +290,7 @@ function _spFeldBild(d){
     <div class="sp-f-reihe">${d.slots.map((s, i) => `<div class="sp-f-sp${s.w ? ' w' : ''}" style="--i:${i}">`
       + `<span class="sp-f-rolle">${s.r}</span>${_spWappen(s.id, 48)}`
       + (innen ? `<span class="sp-f-n">${esc(_spName(s.id))}</span>` : '')
-      + `<em class="${(s.d || 0) >= 0 ? 'g' : 'r'} num">${_spVz(s.d)}</em></div>`).join('')}</div>
+      + (d.ohneElo ? '' : `<em class="${(s.d || 0) >= 0 ? 'g' : 'r'} num">${_spVz(s.d)}</em>`) + `</div>`).join('')}</div>
   </div>${innen ? '' : `<div class="sp-aufst"><div class="w">${aufst(true)}</div><div class="re">${aufst(false)}</div></div>`}`;
 }
 

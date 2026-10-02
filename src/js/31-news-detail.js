@@ -248,6 +248,11 @@ function _newsBlattKopf(s){
   if(d.type === 'season_recap') return erg;
   // Die Runde hat ihre Tabelle als Kopf; vier Wappen darüber sagten dasselbe.
   if(d.type === 'runde') return '';
+  // Das Blatt einer Partie trägt die Zeichnung ihrer Karte als Bühne. Es
+  // zeigte einen nackten Stand und darunter zwei Wappen mit „gewinnen diese
+  // Partie", während die Karte darüber Spielfeld, Mosaik oder Revanche trug:
+  // wer sie öffnete, verlor das Bild, wegen dem er getippt hatte.
+  if(d.type === 'spiel' && d.matchId){ const b = _ndBuehne(s); if(b) return b; }
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
@@ -275,6 +280,48 @@ function _newsBlattKopf(s){
     ${avHtml(pm[pid], '', {ins:true, px:54, feuer:0})}
     <div><div class="nd-held-nm">${esc(nm(pid))}</div>
     <div class="nd-held-un">${ab}<span>${esc(_newsRangZeile(pid))}</span></div></div></div>`;
+}
+
+// Kopf und Fuß der Karte, groß. Beide tragen den Stand und die Namen.
+function _ndBuehne(s){
+  try {
+    const b = _spBild(s);
+    return b && b.kopf ? `<div class="nd-buehne">${b.kopf}${b.fuss || ''}</div>` : '';
+  } catch(e){ return ''; }
+}
+// ── Was unter der Bühne einer Partie steht ───────────────────────────
+// Nur Zeichnungen und keine Sätze darüber, was sie zeigen: die Blätter
+// trugen unter jedem Abschnitt eine Zeile Kleingedrucktes, die erklärte,
+// was die Grafik ohnehin zeigt. Und nur, was die Bühne nicht schon zeigt.
+// Jede Partie aus Sicht ihrer Teilnehmer: wie oft sich Sieger und
+// Verlierer als Gegner trafen, die Bilanz und die letzten zwölf, diese
+// Partie zuletzt.
+function _ndDuelle(m){
+  const F = _spFakten(m);
+  return `<div class="nd-dd">${F.gegner.slice().sort((a, b) => b.n - a.n).map((g, k) => {
+    const f = g.folge.slice(-12);
+    return `<div class="nd-dd-z" data-pid="${esc(g.w)}" style="--k:${k}">${_spChip(g.w)}`
+      + `<span class="nd-dd-n">${esc(_spName(g.w))}<i>gegen</i>${esc(_spName(g.l))}</span>`
+      + `<b class="num">${_spZahl(g.s)}:${_spZahl(g.n - g.s)}</b>`
+      + `<span class="nd-lf">${f.map((w, j) => `<i class="${w ? 'w' : 'l'}${j === f.length - 1 ? ' dies' : ''}"></i>`).join('')}</span></div>`;
+  }).join('')}</div>`;
+}
+// Der Tag als Leiste: jede Partie mit Stand und Uhrzeit, diese gerahmt.
+function _ndTagLeiste(m){
+  const tag = _spFormBasis().tage.get(tagKey(m.created_at)) || [];
+  if(tag.length < 2) return '';
+  return `<div class="nd-tl">${tag.map((y, k) => `<span class="nd-tl-z${y === m ? ' dies' : ''}" style="--k:${k}">`
+    + `<b class="num">${Math.max(y.score_a, y.score_b)}:${Math.min(y.score_a, y.score_b)}</b>`
+    + `<small class="num">${esc(datumFmt(y.created_at, 'uhr'))}</small></span>`).join('')}</div>`;
+}
+// Wie oft die Liga bis hier mit diesem Abstand endete: eine Säule je
+// Abstand, diese hell und mit ihrem Anteil.
+function _ndVerteilung(m){
+  const F = _spFakten(m), v = F.vert.slice(1), sum = v.reduce((a, b) => a + b, 0) || 1, max = Math.max(1, ...v);
+  return `<div class="nd-vt">${v.map((n, k) => `<span class="${k + 1 === F.diff ? 'dies' : ''}" style="--k:${k}">`
+    + (k + 1 === F.diff ? `<em class="num">${_spZahl(Math.round(n / sum * 100))} %</em>` : '')
+    + `<i style="height:${Math.max(3, Math.round(n / max * 100))}%"></i><b class="num">${k + 1}</b></span>`).join('')}</div>`
+    + `<div class="nd-vt-l"><span>1 Tor Abstand</span><span>10 Tore</span></div>`;
 }
 
 // Das Ergebnis der Partie, aus der die Story stammt. Vorher stand es je nach
@@ -988,30 +1035,38 @@ function _newsDetailMitte(s){
         return `<div class="nd-section">Die Sensation</div>${pct}` + (matchHtml ? matchHtml : '');
       }
       // ── Das Blatt einer Partie ───────────────────────────────────
-      // Jede Partie hat eine Karte, und ihr Blatt hatte keinen Fall: wer sie
-      // oeffnete, sah den Satz, den er auf der Karte schon gelesen hatte.
-      // Es zeigt deshalb, was in dieser Partie zu sehen war — die Siegchance
-      // auf ihrer Skala, die Elo-Wirkung je Spieler und, wo es eines gibt,
-      // das Wort fuer das Muster des Ergebnisses.
+      // Unter der Bühne stehen Zeichnungen in fester Folge, jede nur, wo die
+      // Bühne sie nicht schon zeigt: die Aufstellung, die Siegchance auf
+      // ihrer Skala, die Elo-Wirkung je Spieler, die direkten Duelle, der
+      // Tag und wie oft die Liga so ausgeht. Ein Abschnitt „Was dieses Spiel
+      // besonders macht" stand dort als Wort und Satz („Außenseiter-Sieg ·
+      // Die Rechnung stand dagegen") über einer Skala, die genau das zeigt.
       case 'spiel': {
+        const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+        let bild = '';
+        try { bild = m ? (_spBild(s).kopf || '') : ''; } catch(e){ bild = ''; }
+        const zeigt = kl => bild.indexOf('class="' + kl) >= 0 || bild.indexOf('class="sp-fk ' + kl) >= 0;
         const beteiligt = (Array.isArray(d.winners) ? d.winners : [])
           .concat(Array.isArray(d.losers) ? d.losers : []);
-        const skala = _ndChanceSkala(d.chance != null ? d.chance
-          : (d.quote != null ? d.quote / 100 : null));
-        const elo = d.matchId ? _ndEloWirkung(d.matchId, beteiligt) : '';
-        const wort = {
-          zu_null: ['Ohne Gegentor', 'Kein Treffer für die Gegenseite'],
-          upset:   ['Außenseiter-Sieg', 'Die Rechnung stand dagegen'],
-          krimi:   ['Entscheidung', '1 Tor Unterschied'],
-          kanter:  ['Entscheidung', (d.margin || 0) + ' Tore Unterschied'],
-          eng:     ['Entscheidung', (d.margin || 2) + ' Tore Unterschied']
-        }[d.resultKind];
-        const muster = wort ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">${esc(wort[0])}</div>
-            <div class="nd-stat-val acid">${esc(wort[1])}</div></div>` : '';
-        return (muster ? `<div class="nd-section">Was dieses Spiel besonders macht</div>${muster}` : '')
-          + (skala ? `<div class="nd-section">Wie erwartbar war das</div>${skala}` : '')
-          + (elo ? `<div class="nd-section">Was die Partie bewegt hat</div>${elo}` : '');
+        // Steht das Spielfeld schon auf der Bühne, trägt es Siegchance und Elo
+        // je Spieler; die Abschnitte darunter nennen dann nur noch, was es
+        // nicht zeigt — wer in der Tabelle den Platz gewechselt hat. Steht es
+        // als Abschnitt, zeigt es nur die Aufstellung.
+        const buehneFeld = zeigt('sp-feld');
+        const skala = buehneFeld || zeigt('sp-ta') || zeigt('sp-sd') || zeigt('sp-wp') ? ''
+          : _ndChanceSkala(d.chance != null ? d.chance : (d.quote != null ? d.quote / 100 : null));
+        const mitRang = buehneFeld ? beteiligt.filter(pid => { const r = _newsRankChange(pid, d.matchId); return r && r.pre !== r.post; }) : beteiligt;
+        const elo = d.matchId && !zeigt('sp-et') && mitRang.length ? _ndEloWirkung(d.matchId, mitRang) : '';
+        const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+        let feld = '', duelle = '', tag = '', vert = '';
+        if(m){
+          try { feld = buehneFeld ? '' : `<div class="nd-feld">${_spFeldBild(Object.assign(_spFeldDaten({m, c:null}), {ohneElo:true}))}</div>`; } catch(e){}
+          try { duelle = _ndDuelle(m); } catch(e){}
+          try { tag = _ndTagLeiste(m); } catch(e){}
+          try { vert = zeigt('sp-mo') || zeigt('sp-vt') ? '' : _ndVerteilung(m); } catch(e){}
+        }
+        return ab('Wer wo stand', feld) + ab('Wie erwartbar war das', skala) + ab(buehneFeld ? 'In der Tabelle' : 'Was die Partie bewegt hat', elo)
+          + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
       }
       // Zeilen aus aelteren Laeufen: der Generator bildet den Typ nicht mehr.
       case 'match_result': {

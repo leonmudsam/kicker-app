@@ -4730,6 +4730,44 @@
 @keyframes spPuls{0%{transform:scale(.6);opacity:.8}100%{transform:scale(2.2);opacity:0}}
 @keyframes spFluss{0%{transform:translateX(0);opacity:0}15%,85%{opacity:1}100%{transform:translateX(150px);opacity:0}}
 @keyframes spRolle{from{transform:translateY(0)}97%{opacity:1}to{transform:translateY(calc(var(--z) * -36px));opacity:0}}
+
+.nd-buehne{position:relative;margin:4px 0 16px;padding:12px 10px;border-radius:18px;overflow:hidden;
+  background:radial-gradient(90% 80% at 50% 0%,rgba(var(--story-rgb,190,242,100),.12),transparent 70%),var(--surface);
+  box-shadow:inset 0 0 0 1px rgba(var(--story-rgb,190,242,100),.18),0 18px 40px -24px rgba(var(--story-rgb,190,242,100),.6)}
+.nd-buehne > .sp-fk{background:transparent;box-shadow:none}
+.nd-feld{margin-bottom:6px}
+.nd-feld .sp-f-sc{display:none}
+.nd-feld .sp-feld{margin:0;padding-top:12px}
+.nd-dd{display:flex;flex-direction:column;gap:9px;margin-bottom:6px}
+.nd-dd-z{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 8px;align-items:center;cursor:pointer}
+.nd-dd-z .nd-lf{grid-column:2 / span 2}
+.nd-dd-n{font-size:11.5px;font-weight:600;color:var(--ink2);display:flex;gap:5px;flex-wrap:wrap}
+.nd-dd-n i{font-style:normal;font-weight:400;color:var(--muted)}
+.nd-dd-z > b{font-size:12px;color:var(--ink)}
+.nd-dd-z > .av{--av:22px;width:22px;height:22px;font-size:8.5px;flex:0 0 auto}
+.nd-lf{display:flex;flex-wrap:wrap;gap:3px}
+.nd-lf i{width:9px;height:14px;border-radius:2.5px;background:rgba(240,86,106,.6)}
+.nd-lf i.w{background:rgba(190,242,100,.7)}
+.nd-lf i.dies{box-shadow:0 0 0 1.5px var(--bg),0 0 0 2.5px var(--ink)}
+.nd-tl{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.nd-tl-z{display:flex;flex-direction:column;align-items:center;padding:4px 5px;border-radius:7px;background:var(--surface2);min-width:40px}
+.nd-tl-z b{font-size:11px;color:var(--ink2)}
+.nd-tl-z small{font-size:8.5px;color:var(--muted)}
+.nd-tl-z.dies{box-shadow:inset 0 0 0 1.5px var(--story,var(--acid))}
+.nd-tl-z.dies b{color:var(--ink)}
+.nd-vt{display:flex;align-items:flex-end;gap:4px;height:84px}
+.nd-vt span{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;min-width:0}
+.nd-vt i{display:block;width:100%;border-radius:3px 3px 1px 1px;background:rgba(194,201,208,.3)}
+.nd-vt span.dies i{background:var(--story,var(--acid));box-shadow:0 0 12px -2px rgba(var(--story-rgb,190,242,100),.7)}
+.nd-vt b{font-size:8.5px;color:var(--muted)}
+.nd-vt em{font-style:normal;font-size:9px;font-weight:700;color:var(--ink)}
+.nd-vt span.dies b{color:var(--ink)}
+.nd-vt-l{display:flex;justify-content:space-between;margin:3px 0 6px;font:600 8px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+  .nd-buehne{animation:spBuehne .45s cubic-bezier(.2,.9,.3,1) both}
+  .nd-dd-z,.nd-tl-z,.nd-vt span{animation:spDa .35s ease-out both;animation-delay:calc(.15s + var(--k,0) * 40ms)}
+}
+@keyframes spBuehne{from{opacity:0;transform:translateY(10px) scale(.97)}}
 </style>
 </head>
 <body>
@@ -4801,7 +4839,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.02.a6e31529';
+const BUILD_VERSION='2026.10.02.2b3301ff';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -21300,7 +21338,7 @@ function _spFeldBild(d){
     <div class="sp-f-reihe">${d.slots.map((s, i) => `<div class="sp-f-sp${s.w ? ' w' : ''}" style="--i:${i}">`
       + `<span class="sp-f-rolle">${s.r}</span>${_spWappen(s.id, 48)}`
       + (innen ? `<span class="sp-f-n">${esc(_spName(s.id))}</span>` : '')
-      + `<em class="${(s.d || 0) >= 0 ? 'g' : 'r'} num">${_spVz(s.d)}</em></div>`).join('')}</div>
+      + (d.ohneElo ? '' : `<em class="${(s.d || 0) >= 0 ? 'g' : 'r'} num">${_spVz(s.d)}</em>`) + `</div>`).join('')}</div>
   </div>${innen ? '' : `<div class="sp-aufst"><div class="w">${aufst(true)}</div><div class="re">${aufst(false)}</div></div>`}`;
 }
 
@@ -22347,6 +22385,7 @@ function _newsBlattKopf(s){
   const erg = d.matchId ? _newsBlattErgebnis(d.matchId) : '';
   if(d.type === 'season_recap') return erg;
   if(d.type === 'runde') return '';
+  if(d.type === 'spiel' && d.matchId){ const b = _ndBuehne(s); if(b) return b; }
   if(!ids.length) return erg;
   if(ids.length > 1){
     const zeig = ids.slice(0, 3);
@@ -22363,6 +22402,37 @@ function _newsBlattKopf(s){
     ${avHtml(pm[pid], '', {ins:true, px:54, feuer:0})}
     <div><div class="nd-held-nm">${esc(nm(pid))}</div>
     <div class="nd-held-un">${ab}<span>${esc(_newsRangZeile(pid))}</span></div></div></div>`;
+}
+
+function _ndBuehne(s){
+  try {
+    const b = _spBild(s);
+    return b && b.kopf ? `<div class="nd-buehne">${b.kopf}${b.fuss || ''}</div>` : '';
+  } catch(e){ return ''; }
+}
+function _ndDuelle(m){
+  const F = _spFakten(m);
+  return `<div class="nd-dd">${F.gegner.slice().sort((a, b) => b.n - a.n).map((g, k) => {
+    const f = g.folge.slice(-12);
+    return `<div class="nd-dd-z" data-pid="${esc(g.w)}" style="--k:${k}">${_spChip(g.w)}`
+      + `<span class="nd-dd-n">${esc(_spName(g.w))}<i>gegen</i>${esc(_spName(g.l))}</span>`
+      + `<b class="num">${_spZahl(g.s)}:${_spZahl(g.n - g.s)}</b>`
+      + `<span class="nd-lf">${f.map((w, j) => `<i class="${w ? 'w' : 'l'}${j === f.length - 1 ? ' dies' : ''}"></i>`).join('')}</span></div>`;
+  }).join('')}</div>`;
+}
+function _ndTagLeiste(m){
+  const tag = _spFormBasis().tage.get(tagKey(m.created_at)) || [];
+  if(tag.length < 2) return '';
+  return `<div class="nd-tl">${tag.map((y, k) => `<span class="nd-tl-z${y === m ? ' dies' : ''}" style="--k:${k}">`
+    + `<b class="num">${Math.max(y.score_a, y.score_b)}:${Math.min(y.score_a, y.score_b)}</b>`
+    + `<small class="num">${esc(datumFmt(y.created_at, 'uhr'))}</small></span>`).join('')}</div>`;
+}
+function _ndVerteilung(m){
+  const F = _spFakten(m), v = F.vert.slice(1), sum = v.reduce((a, b) => a + b, 0) || 1, max = Math.max(1, ...v);
+  return `<div class="nd-vt">${v.map((n, k) => `<span class="${k + 1 === F.diff ? 'dies' : ''}" style="--k:${k}">`
+    + (k + 1 === F.diff ? `<em class="num">${_spZahl(Math.round(n / sum * 100))} %</em>` : '')
+    + `<i style="height:${Math.max(3, Math.round(n / max * 100))}%"></i><b class="num">${k + 1}</b></span>`).join('')}</div>`
+    + `<div class="nd-vt-l"><span>1 Tor Abstand</span><span>10 Tore</span></div>`;
 }
 
 function _newsBlattErgebnis(matchId){
@@ -22886,24 +22956,27 @@ function _newsDetailMitte(s){
         return `<div class="nd-section">Die Sensation</div>${pct}` + (matchHtml ? matchHtml : '');
       }
       case 'spiel': {
+        const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+        let bild = '';
+        try { bild = m ? (_spBild(s).kopf || '') : ''; } catch(e){ bild = ''; }
+        const zeigt = kl => bild.indexOf('class="' + kl) >= 0 || bild.indexOf('class="sp-fk ' + kl) >= 0;
         const beteiligt = (Array.isArray(d.winners) ? d.winners : [])
           .concat(Array.isArray(d.losers) ? d.losers : []);
-        const skala = _ndChanceSkala(d.chance != null ? d.chance
-          : (d.quote != null ? d.quote / 100 : null));
-        const elo = d.matchId ? _ndEloWirkung(d.matchId, beteiligt) : '';
-        const wort = {
-          zu_null: ['Ohne Gegentor', 'Kein Treffer für die Gegenseite'],
-          upset:   ['Außenseiter-Sieg', 'Die Rechnung stand dagegen'],
-          krimi:   ['Entscheidung', '1 Tor Unterschied'],
-          kanter:  ['Entscheidung', (d.margin || 0) + ' Tore Unterschied'],
-          eng:     ['Entscheidung', (d.margin || 2) + ' Tore Unterschied']
-        }[d.resultKind];
-        const muster = wort ? `<div class="nd-stat-row">
-            <div class="nd-stat-label">${esc(wort[0])}</div>
-            <div class="nd-stat-val acid">${esc(wort[1])}</div></div>` : '';
-        return (muster ? `<div class="nd-section">Was dieses Spiel besonders macht</div>${muster}` : '')
-          + (skala ? `<div class="nd-section">Wie erwartbar war das</div>${skala}` : '')
-          + (elo ? `<div class="nd-section">Was die Partie bewegt hat</div>${elo}` : '');
+        const buehneFeld = zeigt('sp-feld');
+        const skala = buehneFeld || zeigt('sp-ta') || zeigt('sp-sd') || zeigt('sp-wp') ? ''
+          : _ndChanceSkala(d.chance != null ? d.chance : (d.quote != null ? d.quote / 100 : null));
+        const mitRang = buehneFeld ? beteiligt.filter(pid => { const r = _newsRankChange(pid, d.matchId); return r && r.pre !== r.post; }) : beteiligt;
+        const elo = d.matchId && !zeigt('sp-et') && mitRang.length ? _ndEloWirkung(d.matchId, mitRang) : '';
+        const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+        let feld = '', duelle = '', tag = '', vert = '';
+        if(m){
+          try { feld = buehneFeld ? '' : `<div class="nd-feld">${_spFeldBild(Object.assign(_spFeldDaten({m, c:null}), {ohneElo:true}))}</div>`; } catch(e){}
+          try { duelle = _ndDuelle(m); } catch(e){}
+          try { tag = _ndTagLeiste(m); } catch(e){}
+          try { vert = zeigt('sp-mo') || zeigt('sp-vt') ? '' : _ndVerteilung(m); } catch(e){}
+        }
+        return ab('Wer wo stand', feld) + ab('Wie erwartbar war das', skala) + ab(buehneFeld ? 'In der Tabelle' : 'Was die Partie bewegt hat', elo)
+          + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
       }
       case 'match_result': {
         const fakten = {
