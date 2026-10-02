@@ -1825,7 +1825,7 @@ function _renderNewsFeed(){
   // Die Tafel: ein Tageskopf, darunter alle Karten dieses Tages. Breaking
   // bleibt an seinem Platz in der Chronologie und wird nicht nach oben
   // gezogen — es trägt stattdessen einen roten Kopfbalken.
-  let listHtml;
+  let listHtml, teileHtml = [], sofort = 0;
   if(!cards.length){
     listHtml = '<div class="nf-empty">Keine Stories in dieser Auswahl.</div>';
   } else {
@@ -1839,7 +1839,7 @@ function _renderNewsFeed(){
       if(g && g.k === k) g.items.push(st);
       else gruppen.push({k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
     });
-    listHtml = gruppen.map(g => {
+    teileHtml = gruppen.map(g => {
       const neu = g.items.filter(st => !gelesen(st)).length;
       // Die Wahl gehoert dem ganzen Tag, nicht dem aktiven Filter. Sonst
       // koennte dieselbe Tafel je Reiter eine andere „Karte des Tages" haben.
@@ -1861,7 +1861,17 @@ function _renderNewsFeed(){
         <div class="nf-feed">${g.items.map(st =>
             _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte,
               _newsFadenHtml(faeden.get(st.id), stories))).join('')}</div>`;
-    }).join('');
+    });
+    // ── Zuerst, was man sieht ─────────────────────────────────────────
+    // Der Feed trägt rund siebzig Karten und 3400 Knoten, und beim Öffnen
+    // rechnete der Browser Stil und Layout für alle auf einmal: gemessen
+    // 75 ms ohne und 350 ms mit gedrosselter CPU, und das Skript selbst war
+    // davon nicht einmal ein Zehntel. Gezeichnet werden zuerst die Tage, die
+    // die ersten Karten tragen (`NEWS_FEED_SOFORT`), der Rest kommt nach dem
+    // ersten Bild dazu (`_newsFeedRest`) — bevor man so weit scrollen kann.
+    let n = 0;
+    while(sofort < teileHtml.length && n < NEWS_FEED_SOFORT){ n += gruppen[sofort].items.length; sofort++; }
+    listHtml = teileHtml.slice(0, sofort).join('');
   }
 
   const datum = new Date().toLocaleDateString('de-DE',
@@ -1881,8 +1891,13 @@ function _renderNewsFeed(){
       </div>
       ${filterBar}
     </div>
-    <div class="nf-wrap" style="padding-top:0">${listHtml}</div>
+    <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
   `);
+  const sheetEl = document.getElementById('sheet');
+  const liste = sheetEl.querySelector('.nf-liste');
+  const rest = teileHtml.slice(sofort).join('');
+  _newsFeedOffen = rest && liste ? {liste, html:rest} : null;
+  if(_newsFeedOffen) requestAnimationFrame(() => setTimeout(_newsFeedRest, 0));
 
   // Filter-Click → re-render (billig, Daten aus Cache).
   const sheet = document.getElementById('sheet');
@@ -1904,20 +1919,31 @@ function _renderNewsFeed(){
       _renderNewsFeed();
     };
   }
-  // Der Faden öffnet die frühere Karte, nicht die, in der er steht.
-  sheet.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
-    el.onclick = ev => { ev.stopPropagation(); openNewsDetail(el.dataset.ziel); };
-  });
-  // Karten + Hero klickbar → Detail.
-  sheet.querySelectorAll('[data-sid]').forEach(el => {
-    el.onclick = () => {
-      const sid = el.dataset.sid;
-      _newsMarkSeen(sid);
-      el.classList.add('read'); el.classList.remove('important');
-      el.querySelector('.nf-dot')?.remove();
-      newsBadgeRefresh();
-      openNewsDetail(sid);
-    };
-  });
+  // Ein Lauscher an der Liste statt einer an jeder Karte: die Karten, die
+  // erst nach dem ersten Bild dazukommen, sind beim Binden noch nicht da.
+  if(liste) liste.onclick = ev => {
+    // Der Faden öffnet die frühere Karte, nicht die, in der er steht.
+    const f = ev.target.closest && ev.target.closest('.nf-faden[data-ziel]');
+    if(f){ ev.stopPropagation(); openNewsDetail(f.dataset.ziel); return; }
+    // Karten + Hero klickbar → Detail.
+    const el = ev.target.closest && ev.target.closest('[data-sid]');
+    if(!el || !liste.contains(el)) return;
+    const sid = el.dataset.sid;
+    _newsMarkSeen(sid);
+    el.classList.add('read'); el.classList.remove('important');
+    el.querySelector('.nf-dot')?.remove();
+    newsBadgeRefresh();
+    openNewsDetail(sid);
+  };
+}
+// Der Rest des Feeds, nach dem ersten Bild. Steht die Liste nicht mehr im
+// Dokument — eine Karte wurde schon geöffnet, das Blatt geschlossen —,
+// fällt er weg: angehängt landete er sonst im nächsten Blatt.
+let _newsFeedOffen = null;
+const NEWS_FEED_SOFORT = 12;
+function _newsFeedRest(){
+  const o = _newsFeedOffen;
+  _newsFeedOffen = null;
+  if(o && o.liste.isConnected) o.liste.insertAdjacentHTML('beforeend', o.html);
 }
 

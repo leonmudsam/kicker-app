@@ -4626,7 +4626,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.02.26866616';
+const BUILD_VERSION='2026.10.02.6d7bbb48';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -20855,7 +20855,7 @@ function _renderNewsFeed(){
     }).join('')}
   </div>`;
 
-  let listHtml;
+  let listHtml, teileHtml = [], sofort = 0;
   if(!cards.length){
     listHtml = '<div class="nf-empty">Keine Stories in dieser Auswahl.</div>';
   } else {
@@ -20867,7 +20867,7 @@ function _renderNewsFeed(){
       if(g && g.k === k) g.items.push(st);
       else gruppen.push({k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
     });
-    listHtml = gruppen.map(g => {
+    teileHtml = gruppen.map(g => {
       const neu = g.items.filter(st => !gelesen(st)).length;
       const alleDesTages = stories.filter(st => tagKey(st.when) === g.k);
       const tagesKarte = _newsTagKarte(alleDesTages, g.k);
@@ -20879,7 +20879,10 @@ function _renderNewsFeed(){
         <div class="nf-feed">${g.items.map(st =>
             _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte,
               _newsFadenHtml(faeden.get(st.id), stories))).join('')}</div>`;
-    }).join('');
+    });
+    let n = 0;
+    while(sofort < teileHtml.length && n < NEWS_FEED_SOFORT){ n += gruppen[sofort].items.length; sofort++; }
+    listHtml = teileHtml.slice(0, sofort).join('');
   }
 
   const datum = new Date().toLocaleDateString('de-DE',
@@ -20897,8 +20900,13 @@ function _renderNewsFeed(){
       </div>
       ${filterBar}
     </div>
-    <div class="nf-wrap" style="padding-top:0">${listHtml}</div>
+    <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
   `);
+  const sheetEl = document.getElementById('sheet');
+  const liste = sheetEl.querySelector('.nf-liste');
+  const rest = teileHtml.slice(sofort).join('');
+  _newsFeedOffen = rest && liste ? {liste, html:rest} : null;
+  if(_newsFeedOffen) requestAnimationFrame(() => setTimeout(_newsFeedRest, 0));
 
   const sheet = document.getElementById('sheet');
   sheet.querySelectorAll('.nf-chips button[data-f]').forEach(el => {
@@ -20916,19 +20924,25 @@ function _renderNewsFeed(){
       _renderNewsFeed();
     };
   }
-  sheet.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
-    el.onclick = ev => { ev.stopPropagation(); openNewsDetail(el.dataset.ziel); };
-  });
-  sheet.querySelectorAll('[data-sid]').forEach(el => {
-    el.onclick = () => {
-      const sid = el.dataset.sid;
-      _newsMarkSeen(sid);
-      el.classList.add('read'); el.classList.remove('important');
-      el.querySelector('.nf-dot')?.remove();
-      newsBadgeRefresh();
-      openNewsDetail(sid);
-    };
-  });
+  if(liste) liste.onclick = ev => {
+    const f = ev.target.closest && ev.target.closest('.nf-faden[data-ziel]');
+    if(f){ ev.stopPropagation(); openNewsDetail(f.dataset.ziel); return; }
+    const el = ev.target.closest && ev.target.closest('[data-sid]');
+    if(!el || !liste.contains(el)) return;
+    const sid = el.dataset.sid;
+    _newsMarkSeen(sid);
+    el.classList.add('read'); el.classList.remove('important');
+    el.querySelector('.nf-dot')?.remove();
+    newsBadgeRefresh();
+    openNewsDetail(sid);
+  };
+}
+let _newsFeedOffen = null;
+const NEWS_FEED_SOFORT = 12;
+function _newsFeedRest(){
+  const o = _newsFeedOffen;
+  _newsFeedOffen = null;
+  if(o && o.liste.isConnected) o.liste.insertAdjacentHTML('beforeend', o.html);
 }
 
 

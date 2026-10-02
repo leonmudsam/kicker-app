@@ -662,7 +662,7 @@ const ok = (c, msg, det) => {
   const feedOffen = await page.evaluate(() => {
     const K = s => window.__k.eval(s);
     K('_cache._stories = _buildStories(); _cache._consolFrom = null; _cache._frischVon = null;');
-    K('openNewsFeed()');
+    K('openNewsFeed(); _newsFeedRest()');
     const offen = K('_isNewsFeedOpen()');
     const karten = document.querySelectorAll('#sheet .nf-card').length;
     // Und die Auffrischung zeichnet wirklich NEU. Gezaehlt reicht nicht:
@@ -670,13 +670,33 @@ const ok = (c, msg, det) => {
     // an einer Karte ueberlebt nur, wenn niemand neu zeichnet.
     const erste = document.querySelector('#sheet .nf-card');
     if(erste) erste.dataset.marke = 'alt';
-    K('_refreshOpenNewsViews()');
+    K('_refreshOpenNewsViews(); _newsFeedRest()');
     const nachher = document.querySelectorAll('#sheet .nf-card').length;
     const markeWeg = !document.querySelector('#sheet .nf-card[data-marke="alt"]');
     K('closeSheet && closeSheet()');
     const zu = K('_isNewsFeedOpen()');
     return {offen, karten, nachher, zu, markeWeg};
   });
+  // Zuerst, was man sieht: die ersten Tage sofort, der Rest nach dem ersten
+  // Bild — und dann alle Karten. Ein Klick auf eine nachgereichte Karte
+  // öffnet ihr Blatt.
+  const feedTeil = await page.evaluate(async () => {
+    const K = s => window.__k.eval(s), w = ms => new Promise(r => setTimeout(r, ms));
+    K('closeSheet(true); openNewsFeed()');
+    const sofort = document.querySelectorAll('#sheet .nf-card').length;
+    await w(250);
+    const danach = document.querySelectorAll('#sheet .nf-card').length;
+    const letzte = [...document.querySelectorAll('#sheet .nf-liste .nf-card')].pop();
+    const titel = letzte ? (letzte.querySelector('.nf-h') || {}).textContent : '';
+    if(letzte) letzte.click();
+    await w(400);
+    const blatt = !!titel && ((document.getElementById('nd') || {}).innerText || '').indexOf(titel.trim().slice(0, 20)) >= 0;
+    K('closeNewsDetail(); closeSheet(true)');
+    return {sofort, danach, blatt};
+  });
+  ok(feedTeil.sofort >= 8 && feedTeil.sofort <= 24 && feedTeil.danach > feedTeil.sofort * 2 && feedTeil.blatt,
+     'der Feed zeichnet zuerst die oberen Tage und reicht den Rest nach dem ersten Bild nach',
+     JSON.stringify(feedTeil));
   ok(feedOffen.offen === true, 'der offene News-Feed wird als offen erkannt',
      JSON.stringify(feedOffen));
   ok(feedOffen.karten > 0 && feedOffen.nachher === feedOffen.karten
@@ -695,7 +715,7 @@ const ok = (c, msg, det) => {
   const tafel = await page.evaluate(() => {
     // Der Cache wird sonst aus der DB gefuellt; im Harness gibt es keine.
     // Der Generator liefert dieselben Stories, die die App persistiert haette.
-    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); openNewsFeed()');
+    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); openNewsFeed(); _newsFeedRest()');
     const sheet = document.getElementById('sheet');
     const koepfe = sheet ? [...sheet.querySelectorAll('.nf-tag')] : [];
     const gruppen = sheet ? [...sheet.querySelectorAll('.nf-feed')] : [];
@@ -1990,7 +2010,7 @@ const ok = (c, msg, det) => {
   // Familie: nie in Gold, nie auf einer negativen Karte, nie doppelt auf
   // Breaking oder der Karte des Tages.
   const glFeed = await page.evaluate(() => {
-    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); _cache._consolFrom = null; openNewsFeed()');
+    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); _cache._consolFrom = null; openNewsFeed(); _newsFeedRest()');
     const ks = [...document.querySelectorAll('#sheet .nf-card.nf-glanz')];
     return {n: ks.length, alle: document.querySelectorAll('#sheet .nf-card').length,
       falsch: ks.filter(k => k.matches('.nf-neg,.nf-brk,.nf-gross,.nf-s-held,.nf-s-woche')
@@ -2866,7 +2886,7 @@ const ok = (c, msg, det) => {
       ['Torjäger', "showAward('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
       ['Wochenkönig', "period='week';openTopList('periodKing')"],
       ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])'],
-      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed()'],
+      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed(); _newsFeedRest()'],
       ['Positionsverlauf', 'showPositionHistory(seasons[3].id)'],
       ['Liga-Chronik', 'showLigaChronik()'], ['Rangsystem', 'showRangSystem()'],
       ['Bilanzen', 'showPlayerH2HList(' + P('Leon') + ')'],
@@ -3092,7 +3112,7 @@ const ok = (c, msg, det) => {
   // ausgenommen — ihr Schein liegt außerhalb der Fläche.
   const cv = await page.evaluate(async () => {
     const aus = document.getElementById('cv-aus'); if(aus) aus.disabled = true;
-    window.__k.eval('closeSheet(true); openNewsFeed()');
+    window.__k.eval('closeSheet(true); openNewsFeed(); _newsFeedRest()');
     await new Promise(r => requestAnimationFrame(r));
     const karten = [...document.querySelectorAll('#sheet .nf-card')];
     const falsch = karten.filter(k => {
@@ -3267,7 +3287,7 @@ const pid=players.find(p=>p.name==='Martin').id;
 showPlayer(pid); await warte(900); pruef('profil');
 try{ showLaufbahn&&showLaufbahn(pid);}catch(e){}
 await warte(600); pruef('laufbahn');
-closeSheet(true); openNewsFeed(); await warte(600); pruef('feed');
+closeSheet(true); openNewsFeed(); _newsFeedRest(); await warte(600); pruef('feed');
 return JSON.stringify(funde,null,1);
 })()
 `));
@@ -3347,7 +3367,7 @@ return JSON.stringify(funde,null,1);
   // 150 ms statt 46. Geprüft wird jedes Bild im Topf nach dem Öffnen.
   const _bildAdr = await page.evaluate(async () => {
     const K = window.__k.eval;
-    K('closeSheet(true); openNewsFeed()');
+    K('closeSheet(true); openNewsFeed(); _newsFeedRest()');
     await new Promise(r => setTimeout(r, 300));
     const l = [...document.querySelectorAll('#insDefs image, #sheet image, #app image')]
       .map(b => (b.getAttribute('href') || '').length);
