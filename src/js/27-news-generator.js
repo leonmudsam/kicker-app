@@ -1627,6 +1627,18 @@ function _buildStories(){
         desc = `Vor dem Anstoß lag die Siegchance bei ${pct} %.`
              + (plus ? ` Für ${nameOf(_best.id)} bringt der Sieg +${plus} Elo.` : '');
       }
+      // ── Die gewöhnliche Partie erzählt ihre Form [§C33] ────────────
+      // Sie hieß an jedem Spieltag „X setzen sich gegen Y durch", mit
+      // denselben zwei Zahlen darunter, die das Bild ohnehin zeigt. Ihre
+      // Form (`_spForm`) findet, was nur diese Partie hat — eine runde
+      // Zahl, eine Revanche, einen Lieblingsgegner —, und Schlagzeile und
+      // Satz kommen aus derselben Wahl wie der Kopf der Karte. Die Wahl
+      // sieht nur Partien bis zu dieser: der Wortlaut bleibt stehen.
+      if(art === 'normal' || art === 'eng'){
+        let tx = null;
+        try { tx = _spFormText(m); } catch(e){ tx = null; }
+        if(tx){ title = tx.t; desc = tx.d; }
+      }
       stories.push({
         id: 'spiel_' + m.id,
         cat: 'highlight', ic, title, desc,

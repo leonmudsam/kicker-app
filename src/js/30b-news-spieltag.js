@@ -179,7 +179,6 @@ function _spAnlass(s){
   const fakten = _newsSpielFakten(s);
   const f = t => fakten.find(x => x.type === t);
   const c = _spChance(m);
-  const diff = Math.abs(m.score_a - m.score_b);
   let x;
   if((x = f('lead_change')) && x.newLeader) return {key:'spitze', m, x};
   if((x = fakten.find(y => y.type === 'badge_unlocked' && (y.rarity === 'rare' || y.rarity === 'legendary')
@@ -190,6 +189,16 @@ function _spAnlass(s){
   if((x = f('team_streak')) && x.streak && x.a && x.b) return {key:'teamserie', m, x};
   if(c != null && c < CHANCE_UPSET) return {key:'aussenseiter', m, c};
   if((x = f('rivalry_milestone')) && x.a && x.b) return {key:'duell', m, x};
+  return _spAnlassDaten(m, c);
+}
+// Der Teil des Anlasses, der allein aus den Partien kommt. Der Generator
+// fragt ihn, um zu wissen, ob eine Partie gewöhnlich ist und eine Form
+// bekommt [§C33] — die übrigen Anlässe kommen aus den Meldungen derselben
+// Partie und machen sie ohnehin zu einem Bündel mit eigener Schlagzeile.
+function _spAnlassDaten(m, c){
+  if(c === undefined) c = _spChance(m);
+  const diff = Math.abs(m.score_a - m.score_b);
+  let x;
   if((x = _spPremiereDaten(m))) return {key:'premiere', m, x};
   const wende = _spSieger(m).map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
     .filter(w => w.n >= 3).sort((a, b) => b.n - a.n)[0];
@@ -672,14 +681,495 @@ function _spTagBild(d){
     + `<span><b class="num ${d.elo >= 0 ? 'g' : 'r'}">${_spVz(d.elo)}</b> Elo</span></div></div>`;
 }
 
+// ── Die gewöhnliche Partie hat dreizehn Gesichter [§C33] ─────────────
+// Gut die Hälfte aller Partie-Karten hatte keinen Anlass, und jede davon
+// trug dasselbe Spielfeld: gemessen 31 von 59 Partie-Karten im Fenster, und
+// der Feed sah dadurch an jedem Spieltag gleich aus. Jede gewöhnliche Partie
+// hat aber etwas, das nur sie hat — eine runde Zahl, einen Gegner, gegen
+// den es immer klappt, eine Revanche, einen Tag, an dem nichts danebengeht.
+// Dreizehn Formen fragen danach, jede mit einer Regel (`wann`), einem
+// Gewicht (`rang`: je seltener und erzählender, desto höher), einer
+// Schlagzeile samt Satz (`text`) und einem Bild. Das Spielfeld bleibt eine
+// davon.
+//
+// IN JEDER FORM STEHT DER STAND (`_spSt`), und zwar dort, wo er zur
+// Zeichnung gehört — im Feld des Mosaiks, unter der Nadel, als Ende des
+// Kalenders. Wer den Feed überfliegt, will wissen, welche Partie es war;
+// beim Tagesring stand er zuerst nur im Satz.
+//
+// ALLES RECHNET BIS ZU DIESER PARTIE, und die Wahl auch (`_spForm`): sie
+// sieht nur die Partien davor. Eine Karte behält damit ihre Form, ihre
+// Schlagzeile und ihren Satz, wenn später gespielt wird — was einmal
+// dasteht, bleibt stehen [§C33]. Deshalb entscheidet sie der Generator und
+// nicht die Anzeige: Kopf, Schlagzeile und Satz kommen aus derselben Wahl.
+
+// Der Stand gehört dem Sieger: seine Zahl zuerst und hell [§C33].
+function _spSt(d){ return `<b class="sp-st num"><em>${_spZahl(d.hoch)}</em>:${_spZahl(d.tief)}</b>`; }
+// Die Namen beider Teams als Textstelle unter der Zeichnung, je einer in
+// seiner Zeile [§11.6c].
+function _spNz(W, L, wort){
+  return `<div class="sp-nz"><span class="w">${_spStapel(W)}</span><span class="sp-nz-gg">${wort || 'gegen'}</span>`
+    + `<span class="re">${_spStapel(L)}</span></div>`;
+}
+// Wie lange etwas her ist, in der Einheit, die man sagen würde.
+function _spSeit(ms){
+  const min = Math.max(1, Math.round(ms / 60000));
+  if(min < 60) return {n:min, e:min === 1 ? 'Minute' : 'Minuten'};
+  const h = Math.round(min / 60);
+  if(h < 24) return {n:h, e:h === 1 ? 'Stunde' : 'Stunden'};
+  const t = Math.round(h / 24);
+  if(t < 14) return {n:t, e:t === 1 ? 'Tag' : 'Tagen'};
+  const w = Math.round(t / 7);
+  return {n:w, e:'Wochen'};
+}
+
+// Die Partien je Kalendertag und je Partie Siegchance, Abstand und Gewinn
+// der Sieger: einmal je Datenstand, wie `_spBasis`.
+const _spFormBasisMemo = new WeakMap();
+function _spFormBasis(){
+  let b = _spFormBasisMemo.get(matches);
+  if(b) return b;
+  const chrono = _spBasis().chrono, tage = new Map();
+  chrono.forEach(m => { const k = tagKey(m.created_at); if(!tage.has(k)) tage.set(k, []); tage.get(k).push(m); });
+  const punkte = chrono.map(m => ({c:_spChance(m), d:Math.abs(m.score_a - m.score_b),
+    g:_spSieger(m).reduce((s, id) => s + (_newsEloDelta(id, m.id) || 0), 0)}));
+  b = {tage, punkte, fakten:new Map(), kand:new Map(), wahl:new Map()};
+  _spFormBasisMemo.set(matches, b);
+  return b;
+}
+
+// Die Fakten einer Partie, alle bis einschließlich dieser.
+function _spFakten(m){
+  const FB = _spFormBasis();
+  let F = FB.fakten.get(m.id);
+  if(F) return F;
+  const B = _spBasis(), i = B.idx.get(m.id);
+  const W = _spSieger(m), L = _spVerlierer(m), alle = W.concat(L);
+  const h = getHistoryByMatchId().get(m.id) || {};
+  F = {m, i, W, L, c:_spChance(m), diff:Math.abs(m.score_a - m.score_b),
+    hoch:Math.max(m.score_a, m.score_b), tief:Math.min(m.score_a, m.score_b), delta:{}, elo:{}, zahl:{}};
+  alle.forEach(id => {
+    F.delta[id] = _newsEloDelta(id, m.id) || 0;
+    F.elo[id] = Math.round((h.eloBefore || {})[id] != null ? h.eloBefore[id] : cfg.start_elo);
+    const eig = _spEigene(id, m);
+    F.zahl[id] = {p:eig.length, s:eig.filter(x => _spGew(x, id)).length};
+  });
+  F.gewinn = W.reduce((s, id) => s + F.delta[id], 0);
+  const mit = (x, id) => x.a1 === id || x.a2 === id || x.b1 === id || x.b2 === id;
+  const duo = _spEigene(W[0], m).filter(x => mit(x, W[1]) && _spSeite(x, W[0]) === _spSeite(x, W[1]));
+  F.duo = {p:duo.length, s:duo.filter(x => _spGew(x, W[0])).length, folge:duo.map(x => _spGew(x, W[0]))};
+  // Spieler gegen Spieler: wie oft sich ein Sieger und ein Verlierer als
+  // Gegner trafen und wie viele Niederlagen gegen ihn direkt davor lagen.
+  F.gegner = [];
+  W.forEach(w => L.forEach(l => {
+    const folge = _spEigene(w, m).filter(x => mit(x, l) && _spSeite(x, w) !== _spSeite(x, l)).map(x => _spGew(x, w));
+    let fluch = 0;
+    for(let k = folge.length - 2; k >= 0 && !folge[k]; k--) fluch++;
+    F.gegner.push({w, l, n:folge.length, s:folge.filter(Boolean).length, folge, fluch});
+  }));
+  const tag = FB.tage.get(tagKey(m.created_at)) || [m];
+  F.tag = tag.slice(0, tag.indexOf(m) + 1);
+  // Die Revanche: dieselben zwei Duos haben sich vorher getroffen, und
+  // damals gewann die andere Seite.
+  const wSet = W.slice().sort().join(), lSet = L.slice().sort().join();
+  const team = (x, s) => _spTeam(x, s).slice().sort().join();
+  const vorher = _spEigene(W[0], m).slice(0, -1).reverse().find(x => {
+    const a = team(x, 'A'), b = team(x, 'B');
+    return (a === wSet && b === lSet) || (a === lSet && b === wSet);
+  });
+  if(vorher && _spSieger(vorher).slice().sort().join() === lSet) F.revanche = {vorher, ms:mts(m) - mts(vorher)};
+  F.treffen = _spEigene(W[0], m).filter(x => { const a = team(x, 'A'), b = team(x, 'B');
+    return (a === wSet && b === lSet) || (a === lSet && b === wSet); });
+  F.pause = W.map(id => { const eig = _spEigene(id, m), v = eig[eig.length - 2];
+    return {id, tage:v ? Math.floor((mts(m) - mts(v)) / 86400000) : null, vorher:v}; });
+  let frei = false;
+  try { frei = _storyRangFrei(seasonOf(m.created_at).id, mts(m)).frei; } catch(e){}
+  F.rang = {};
+  alle.forEach(id => { F.rang[id] = frei ? _newsRankChange(id, m.id) : null; });
+  F.vert = B.kum.map(k => k[i + 1]);
+  FB.fakten.set(m.id, F);
+  return F;
+}
+
+const SP_RUND = new Set([5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 150, 200]);
+const _spMarke = n => n >= 50 && n % 50 === 0;
+const _spNl = ids => _namenListe(ids.map(_spName));
+
+// ── Die Formen: Regel, Daten, Bild und Text ──────────────────────────
+// `wann` gibt die Daten der Regel oder null, `daten` macht daraus, was das
+// Bild braucht — nur Zahlen und IDs, damit `tests/blatt` jedes Bild auch
+// mit Grenzwerten zeichnen kann [§11.6c].
+const SP_FORM = {
+  // Das Mosaik: wie gewöhnlich dieses Ergebnis ist. Zehn Felder von 10:0
+  // bis 10:9, jedes so hell, wie oft die Liga bis hier so endete.
+  mosaik:{rang:12, ic:'chartBar',
+    wann:F => F.diff >= 2 && F.diff <= 3 && F.hoch === 10 ? {} : null,
+    daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, diff:F.diff, n:F.vert.slice(), mal:F.vert[F.diff]}),
+    text:F => {
+      const eig = _spEigene(F.W[0], F.m).filter(x => _spGew(x, F.W[0]) && Math.abs(x.score_a - x.score_b) === F.diff).length;
+      return {t:`${_spNl(F.W)} gewinnen das ${F.vert[F.diff]}. ${F.hoch}:${F.tief} der Liga`,
+        d:`Für ${_spName(F.W[0])} ist es der ${eig}. Sieg mit diesem Ergebnis.`};
+    }},
+  // Pflicht erfüllt: der Favorit gewinnt, und die Nadel zeigt, wie sicher
+  // es vorher aussah.
+  tacho:{rang:20, ic:'target',
+    wann:F => F.c != null && F.c >= 0.62 && F.diff < 6 ? {} : null,
+    daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, pct:Math.round(F.c * 100), klar:F.diff >= 4}),
+    text:F => {
+      const w = F.W[0], als = _spEigene(w, F.m).slice(0, -1).filter(x => { const c = _spChance(x);
+        return c != null && (_spGew(x, w) ? c : 1 - c) >= 0.62; });
+      const g = als.filter(x => _spGew(x, w)).length;
+      return {t:`${_spNl(F.W)} lösen die Favoritenrolle ein`,
+        d:als.length >= 5 ? `${_spName(w)} gewinnt als Favorit ${Math.round(g / als.length * 100)} % aller Partien.`
+          : `${_spName(w)} geht zum ${als.length + 1}. Mal als Favorit in eine Partie.`};
+    }},
+  // Erwartung gegen Ergebnis: das Ergebnis weicht deutlich von der Rechnung
+  // ab. Die Liga bis hier als Wolke, die Erwartung als Linie, diese Partie
+  // als Punkt.
+  streu:{rang:34, ic:'chartUp',
+    wann:F => F.i >= 50 && F.c != null && ((F.c >= 0.7 && F.diff <= 2) || (F.c < 0.5 && F.diff >= 5)) ? {knapp:F.c >= 0.7} : null,
+    daten:(F, x) => {
+      const pk = _spFormBasis().punkte.slice(0, F.i).filter(p => p.c != null);
+      const bins = {};
+      pk.forEach(p => { const k = Math.min(19, Math.floor(p.c * 20)) + '_' + Math.min(10, p.d); bins[k] = (bins[k] || 0) + 1; });
+      const erw = [];
+      for(let k = 0; k < 10; k++){ const z = pk.filter(p => p.c >= k / 10 && p.c < (k + 1) / 10);
+        if(z.length >= 4) erw.push([k / 10 + 0.05, z.reduce((s, p) => s + p.d, 0) / z.length]); }
+      const so = pk.filter(p => x.knapp ? (p.c >= 0.7 && p.d <= F.diff) : (p.c < 0.5 && p.d >= F.diff)).length;
+      return {W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, c:F.c, diff:F.diff, knapp:x.knapp,
+        bins:Object.keys(bins).map(k => { const [a, b] = k.split('_').map(Number); return {c:(a + 0.5) / 20, d:b, n:bins[k]}; }),
+        erw, so, gesamt:pk.length};
+    },
+    text:(F, x) => {
+      const pk = _spFormBasis().punkte.slice(0, F.i).filter(p => p.c != null && Math.abs(p.c - F.c) < 0.05);
+      const soll = pk.length >= 4 ? pk.reduce((s, p) => s + p.d, 0) / pk.length : null;
+      return {t:`${_spNl(F.W)} gewinnen ${x.knapp ? 'knapper' : 'klarer'} als gedacht`,
+        // Die Siegchance steht in der Zeichnung, der Satz nennt den Schnitt,
+        // den die Linie nur zeigt.
+        d:soll != null ? `So eine Ausgangslage endet im Schnitt mit ${komma(soll)} Toren Abstand.`
+          : `In dieser Lage ist es erst die ${pk.length + 1}. Partie der Liga.`};
+    }},
+  // Der Elo-Transfer: so viel Elo wie nur jede achte Partie bis hier.
+  transfer:{rang:30, ic:'boomerang',
+    wann:F => {
+      if(F.i < 50) return null;
+      const g = _spFormBasis().punkte.slice(0, F.i).map(p => p.g).sort((a, b) => b - a);
+      return F.gewinn >= g[Math.floor(g.length * 0.12)] ? {} : null;
+    },
+    daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, delta:Object.assign({}, F.delta), gewinn:F.gewinn}),
+    text:F => {
+      const pk = _spFormBasis().punkte, B = _spBasis();
+      let z = null;
+      for(let j = F.i - 1; j >= 0; j--) if(pk[j].g >= F.gewinn){ z = B.chrono[j]; break; }
+      return {t:`${_spZahl(F.gewinn)} Elo wechseln die Seite`,
+        d:z ? `So viel brachte zuletzt eine Partie am ${datumFmt(mts(z), 'tm')}` : 'So viel brachte bis hier keine Partie der Liga.'};
+    }},
+  // Eingespielt: ein Duo, das zusammen fast immer gewinnt, oder eine runde
+  // Zahl gemeinsamer Siege.
+  chemie:{rang:26, ic:'handshake',
+    wann:F => (F.duo.p >= 12 && F.duo.s / F.duo.p >= 0.75) || (SP_RUND.has(F.duo.s) && F.duo.p >= 5) ? {rund:SP_RUND.has(F.duo.s)} : null,
+    gewicht:x => x.rund ? 38 : 0,
+    daten:F => ({A:F.W[0], B:F.W[1], L:F.L, hoch:F.hoch, tief:F.tief, s:F.duo.s, p:F.duo.p, folge:F.duo.folge.slice(-30)}),
+    text:(F, x) => {
+      const q = id => { const p = F.W.find(o => o !== id);
+        const ohne = _spEigene(id, F.m).filter(y => !(_spTeam(y, _spSeite(y, id)).includes(p)));
+        return Math.round(ohne.filter(y => _spGew(y, id)).length / Math.max(1, ohne.length) * 100); };
+      return {t:x.rund ? `${_spNl(F.W)} feiern den ${F.duo.s}. gemeinsamen Sieg` : `${_spNl(F.W)} sind eingespielt`,
+        d:`Mit anderen Partnern gewinnt ${_spName(F.W[0])} ${q(F.W[0])} % und ${_spName(F.W[1])} ${q(F.W[1])} %.`};
+    }},
+  // Der Lieblingsgegner und der gebrochene Fluch: Spieler gegen Spieler.
+  gegner:{rang:24, ic:'crossedSwords',
+    wann:F => {
+      const fluch = F.gegner.filter(g => g.fluch >= 5).sort((a, b) => b.fluch - a.fluch)[0];
+      if(fluch) return {g:fluch, fluch:true};
+      const lieb = F.gegner.filter(g => g.n >= 6 && g.s / g.n >= 0.75 && g.s % 5 === 0).sort((a, b) => b.s / b.n - a.s / a.n || b.n - a.n)[0];
+      return lieb ? {g:lieb, fluch:false} : null;
+    },
+    gewicht:x => x.fluch ? 42 : 0,
+    daten:(F, x) => ({w:x.g.w, l:x.g.l, W:F.W, L:F.L, s:x.g.s, n:x.g.n, folge:x.g.folge.slice(-24), fluch:x.fluch ? x.g.fluch : 0, hoch:F.hoch, tief:F.tief}),
+    text:(F, x) => {
+      const g = x.g, eig = _spEigene(g.w, F.m).slice(0, -1).filter(y => [y.a1, y.a2, y.b1, y.b2].includes(g.l) && _spSeite(y, g.w) !== _spSeite(y, g.l));
+      if(x.fluch){
+        const s = eig.filter(y => _spGew(y, g.w)).pop();
+        return {t:`${_spName(g.w)} schlägt ${_spName(g.l)} wieder`,
+          d:s ? `Der letzte Sieg gegen ${_spName(g.l)} war am ${datumFmt(mts(s), 'tm')}` : `Es ist der erste Sieg gegen ${_spName(g.l)} nach ${g.fluch} Niederlagen.`};
+      }
+      let k = 0; for(let j = eig.length - 1; j >= 0 && _spGew(eig[j], g.w); j--) k++;
+      return {t:`${_spName(g.w)} schlägt ${_spName(g.l)} zum ${g.s}. Mal`,
+        d:k ? `Das ist der ${k + 1}. Sieg in Folge gegen ${_spName(g.l)}.`
+          : `Die letzte Niederlage gegen ${_spName(g.l)} war am ${datumFmt(mts(eig[eig.length - 1]), 'tm')}`};
+    }},
+  // Die Revanche: dieselben zwei Duos, und diesmal gewinnt die andere Seite.
+  revanche:{rang:28, ic:'rematch',
+    wann:F => F.revanche || null,
+    daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, vHoch:Math.max(F.revanche.vorher.score_a, F.revanche.vorher.score_b),
+      vTief:Math.min(F.revanche.vorher.score_a, F.revanche.vorher.score_b), seit:_spSeit(F.revanche.ms)}),
+    text:F => {
+      const s = F.treffen.filter(y => _spGew(y, F.W[0])).length, n = F.treffen.length;
+      return {t:F.revanche.ms <= 1800000 ? `${_spNl(F.W)} antworten sofort` : `${_spNl(F.W)} holen sich die Revanche`,
+        // Die Bilanz steht als Satz und nicht als „x:y": ein zweiter Stand im Text
+        // neben dem der Partie liest sich als ihr Ergebnis.
+        d:n <= 2 ? `Es ist das ${n}. Treffen dieser beiden Duos.`
+          : s === n - s ? `Von ${n} Treffen dieser beiden Duos gingen je ${s} an jede Seite.`
+          : `Von ${n} Treffen dieser beiden Duos gingen ${Math.max(s, n - s)} an ${_spNl(s > n - s ? F.W : F.L)}.`};
+    }},
+  // Gipfeltreffen: der Erste und der Zweite der Monatstabelle am selben Tisch.
+  gipfel:{rang:26, ic:'peak',
+    wann:F => { const r = F.W.concat(F.L).map(id => F.rang[id] && F.rang[id].pre);
+      return r.includes(1) && r.includes(2) ? {} : null; },
+    daten:F => ({hoch:F.hoch, tief:F.tief, zeilen:F.W.concat(F.L).map(id => ({id, pre:F.rang[id] ? F.rang[id].pre : null,
+      post:F.rang[id] ? F.rang[id].post : null, w:F.W.includes(id)})).sort((a, b) => (a.pre || 999) - (b.pre || 999))}),
+    text:F => {
+      const ids = F.W.concat(F.L), eins = ids.find(id => F.rang[id] && F.rang[id].pre === 1), zwei = ids.find(id => F.rang[id] && F.rang[id].pre === 2);
+      const gleich = F.W.includes(eins) === F.W.includes(zwei);
+      const t = gleich ? (F.W.includes(eins) ? `Die beiden Ersten gewinnen zusammen` : `${_spNl(F.W)} schlagen die beiden Ersten`)
+        : `${_spName(F.W.includes(eins) ? eins : zwei)} gewinnt das Gipfeltreffen`;
+      const neu = ids.find(id => F.rang[id] && F.rang[id].post === 1);
+      return {t, d:neu ? `Nach der Partie führt ${_spName(neu)} die Monatstabelle.` : `${_spName(eins)} war vorher Erster.`};
+    }},
+  // Zurück am Tisch: ein Sieg nach mindestens zehn Tagen ohne Partie.
+  rueckkehr:{rang:32, ic:'doorReturn',
+    wann:F => F.pause.filter(p => p.tage != null && p.tage >= 10).sort((a, b) => b.tage - a.tage)[0] || null,
+    daten:(F, x) => ({id:x.id, mit:F.W.find(o => o !== x.id), tage:x.tage, L:F.L, hoch:F.hoch, tief:F.tief}),
+    text:(F, x) => ({t:`${_spName(x.id)} ist zurück`, d:`Die letzte Partie davor war am ${datumFmt(mts(x.vorher), 'tm')}`}),
+  },
+  // Zwei Welten: im Sieger-Duo liegen mindestens 220 Elo zwischen beiden.
+  gefaelle:{rang:16, ic:'weight',
+    wann:F => Math.abs(F.elo[F.W[0]] - F.elo[F.W[1]]) >= 220 ? {} : null,
+    daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, elo:Object.assign({}, F.elo)}),
+    text:F => ({t:`${_spNl(F.W)} gewinnen als ungleiches Paar`,
+      d:`Für ${_spName(F.W[0])} bringt der Sieg ${_spVz(F.delta[F.W[0]])} Elo, für ${_spName(F.W[1])} ${_spVz(F.delta[F.W[1]])}.`})},
+  // Der Tagesring: ein Sieger hat heute mindestens vier Partien gespielt und
+  // drei von vier gewonnen.
+  tagesring:{rang:22, ic:'sunrise',
+    wann:F => {
+      const t = F.W.map(id => ({id, ms:F.tag.filter(x => [x.a1, x.a2, x.b1, x.b2].includes(id))}))
+        .map(t => Object.assign(t, {s:t.ms.filter(x => _spGew(x, t.id)).length}))
+        .filter(t => t.ms.length >= 4 && t.s / t.ms.length >= 0.75).sort((a, b) => b.s - a.s)[0];
+      return t || null;
+    },
+    daten:(F, x) => ({id:x.id, mit:F.W.find(o => o !== x.id), L:F.L, hoch:F.hoch, tief:F.tief, folge:x.ms.slice(-24).map(y => _spGew(y, x.id))}),
+    text:(F, x) => ({t:`${_spName(x.id)} ist heute nicht zu stoppen`,
+      d:`Der Tag bringt bisher ${_spVz(x.ms.reduce((s, y) => s + (_newsEloDelta(x.id, y.id) || 0), 0))} Elo.`})},
+  // Das Zählwerk: eine runde Zahl fällt in dieser Partie.
+  zaehlwerk:{rang:44, ic:'hundred',
+    wann:F => {
+      for(const id of F.W) if(_spMarke(F.zahl[id].s)) return {wert:F.zahl[id].s, sieg:true, wer:id};
+      for(const id of F.W.concat(F.L)) if(_spMarke(F.zahl[id].p)) return {wert:F.zahl[id].p, sieg:false, wer:id};
+      return (F.i + 1) % 100 === 0 ? {wert:F.i + 1, sieg:false, wer:null} : null;
+    },
+    daten:(F, x) => ({wer:x.wer, wert:x.wert, sieg:x.sieg, W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}),
+    text:(F, x) => {
+      if(!x.wer) return {t:`Die Liga spielt ihre ${x.wert}. Partie`, d:`Die erste war am ${datumFmt(mts(_spBasis().chrono[0]), 'tmj')}.`};
+      const eig = _spEigene(x.wer, F.m);
+      if(x.sieg) return {t:`${_spName(x.wer)} feiert den ${x.wert}. Sieg`, d:`Dafür brauchte es ${eig.length} Partien.`};
+      const s = F.zahl[x.wer].s;
+      return {t:`${_spName(x.wer)} bestreitet die ${x.wert}. Partie`, d:`${s} davon endeten mit einem Sieg.`};
+    }},
+  // Das Spielfeld: wer an welcher Stange stand. Es bleibt der Rückfall und
+  // erzählt dann, wie oft sich genau diese beiden Duos schon trafen.
+  feld:{rang:8, ic:'ball',
+    wann:() => ({}),
+    daten:F => _spFeldDaten({m:F.m, c:F.c}),
+    text:F => {
+      const n = F.treffen.length;
+      return {t:`${_spNl(F.W)} setzen sich gegen ${_spNl(F.L)} durch`,
+        d:n > 1 ? `Diese beiden Duos treffen sich zum ${n}. Mal.` : `Diese beiden Duos spielen zum 1. Mal gegeneinander.`};
+    }}
+};
+
+// Die Kandidaten einer Partie, schwerste zuerst.
+function _spFormKand(m){
+  const FB = _spFormBasis();
+  let k = FB.kand.get(m.id);
+  if(k) return k;
+  const F = _spFakten(m);
+  k = Object.keys(SP_FORM).map(key => { const f = SP_FORM[key]; let x = null;
+    try { x = f.wann(F); } catch(e){ x = null; }
+    return x ? {key, x, rang:Math.max(f.rang, f.gewicht ? f.gewicht(x) : 0)} : null; })
+    .filter(Boolean).sort((a, b) => b.rang - a.rang);
+  FB.kand.set(m.id, k);
+  return k;
+}
+// Ist die Partie eine gewöhnliche, also ohne Anlass aus den Partien selbst?
+function _spIstFeld(m){
+  const c = _spChance(m);
+  return !(c != null && c < CHANCE_UPSET) && _spAnlassDaten(m).key === 'feld';
+}
+// ── Die Wahl: abwechslungsreich und trotzdem fest ────────────────────
+// Die schwerste zutreffende Form, die in den beiden gewöhnlichen Partien
+// davor nicht stand; was in den zehn davor schon stand, wiegt sieben Punkte
+// weniger, und das Spielfeld kommt höchstens einmal je fünf. „Davor" ist
+// die Form, die dort WIRKLICH steht: die Kette läuft einmal je Datenstand
+// von der ersten Partie an. Ein Fenster, das für jede Karte zwölf Partien
+// zurück neu anfing, nahm für die Partie davor gemessen fünfmal eine andere
+// Form an als die, die dort stand, und dann standen zwei gleiche
+// hintereinander. Die Kette sieht nur Partien vor der Karte, also bleibt
+// eine Form stehen, wenn später gespielt wird [§C33].
+function _spForm(m){
+  const FB = _spFormBasis();
+  let w = FB.wahl.get(m.id);
+  if(w) return w;
+  const B = _spBasis(), bis = B.idx.get(m.id);
+  if(!FB.spur){ FB.spur = []; FB.spurBis = -1; }
+  for(let j = FB.spurBis + 1; j <= bis; j++){
+    const x = B.chrono[j], spur = FB.spur;
+    FB.spurBis = j;
+    if(!_spIstFeld(x)) continue;
+    const k = _spFormKand(x), zuletzt = spur[spur.length - 1];
+    const oft = key => spur.slice(-10).filter(s => s === key).length;
+    const frei = k.filter(c => !spur.slice(-2).includes(c.key) && (c.key !== 'feld' || !spur.slice(-4).includes('feld')))
+      .map(c => Object.assign({}, c, {eff:c.rang - 7 * oft(c.key)})).sort((a, b) => b.eff - a.eff);
+    // Ist alles Zutreffende gerade erst dagewesen, kommt das Spielfeld: es
+    // passt immer, und zweimal dieselbe Form hintereinander liest sich wie
+    // eine Wiederholung.
+    const c = frei[0] || k.find(c => c.key === 'feld' && zuletzt !== 'feld') || k.find(c => c.key !== zuletzt) || k[0];
+    FB.wahl.set(x.id, c);
+    spur.push(c.key);
+  }
+  // Eine Partie mit Anlass ist nicht Teil der Kette; fragt doch jemand,
+  // bekommt sie die schwerste Form, ohne die Kette zu verschieben.
+  return FB.wahl.get(m.id) || _spFormKand(m)[0];
+}
+// Schlagzeile und Satz einer gewöhnlichen Partie, oder null.
+function _spFormText(m){
+  if(!_spIstFeld(m)) return null;
+  const w = _spForm(m);
+  return SP_FORM[w.key].text(_spFakten(m), w.x);
+}
+function _spFormBild(m){
+  const w = _spForm(m), f = SP_FORM[w.key];
+  return {key:w.key, glanz:w.key === 'zaehlwerk' || w.key === 'rueckkehr' || w.key === 'transfer' || (w.key === 'gegner' && w.x.fluch),
+    html:SP_FORM_BILD[w.key](f.daten(_spFakten(m), w.x))};
+}
+
+// ── Die Bilder der Formen ────────────────────────────────────────────
+// Jedes zeichnet nur, was `daten` ihm gibt [§11.6c].
+function _spMosaikBild(d){
+  const sum = d.n.reduce((s, v) => s + v, 0) || 1, max = Math.max(1, ...d.n.slice(1));
+  const feld = k => `<div class="sp-mo-k${k === d.diff ? ' jetzt' : ''}" style="--a:${(d.n[k] / max).toFixed(2)};--i:${10 - k}">`
+    + (k === d.diff ? _spSt(d) : `<b class="num">10:${10 - k}</b>`) + `<span class="num">${_spZahl(Math.round(d.n[k] / sum * 100))} %</span></div>`;
+  return `<div class="sp-fk sp-mo"><div class="sp-mo-g">${Array.from({length:10}, (_, i) => feld(10 - i)).join('')}</div>`
+    + _spNz(d.W, d.L) + `</div>`;
+}
+function _spTachoBild(d){
+  const a = p => { const w = (p / 100 * 180 - 180) * Math.PI / 180; return [50 + 40 * Math.cos(w), 50 + 40 * Math.sin(w)]; };
+  const [x1, y1] = a(d.pct);
+  const ticks = [0, 25, 50, 75, 100].map(t => { const w = (t / 100 * 180 - 180) * Math.PI / 180;
+    return `<line x1="${(50 + 33 * Math.cos(w)).toFixed(1)}" y1="${(50 + 33 * Math.sin(w)).toFixed(1)}" x2="${(50 + 29 * Math.cos(w)).toFixed(1)}" y2="${(50 + 29 * Math.sin(w)).toFixed(1)}"/>`; }).join('');
+  return `<div class="sp-fk sp-ta"><div class="sp-ta-u"><svg viewBox="0 0 100 56" aria-hidden="true">
+      <path class="sp-ta-g" d="M10 50A40 40 0 0 1 90 50"/><path class="sp-ta-f" d="M10 50A40 40 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}"/>
+      <g class="sp-ta-t">${ticks}</g><g class="sp-ta-n" style="--w:${(d.pct / 100 * 180 - 90).toFixed(1)}deg"><line x1="50" y1="50" x2="50" y2="17"/><circle cx="50" cy="50" r="3.2"/></g></svg>
+      <b class="num">${_spZahl(d.pct)} %</b><span>Siegchance vorher</span></div>
+    <div class="sp-ta-r">${_spChips(d.W)}${_spSt(d)}<em>${d.klar ? 'so klar wie erwartet' : 'knapper als die Rechnung'}</em></div></div>`
+    + _spNz(d.W, d.L);
+}
+function _spStreuBild(d){
+  const X = c => 6 + c * 88, Y = v => 52 - Math.min(10, v) * 4.4;
+  const max = Math.max(1, ...d.bins.map(b => b.n));
+  const wolke = d.bins.map(b => `<rect x="${(X(b.c) - 2.1).toFixed(1)}" y="${(Y(b.d) - 2.1).toFixed(1)}" width="4.2" height="4.2" rx="1" style="opacity:${(0.15 + b.n / max * 0.6).toFixed(2)}"/>`).join('');
+  const erw = d.erw.map(p => X(p[0]).toFixed(1) + ',' + Y(p[1]).toFixed(1)).join(' ');
+  return `<div class="sp-fk sp-sd"><svg viewBox="0 0 100 56" aria-hidden="true">
+      <line class="sp-sd-ax" x1="6" y1="54" x2="96" y2="54"/><line class="sp-sd-ax" x1="6" y1="4" x2="6" y2="54"/>
+      <g class="sp-sd-w">${wolke}</g>${erw ? `<polyline class="sp-sd-e" points="${erw}"/>` : ''}
+      <circle class="sp-sd-r" cx="${X(d.c).toFixed(1)}" cy="${Y(d.diff).toFixed(1)}" r="4.6"/><circle class="sp-sd-p" cx="${X(d.c).toFixed(1)}" cy="${Y(d.diff).toFixed(1)}" r="2.2"/></svg>
+    <div class="sp-sd-t">${_spSt(d)}<em>${d.knapp ? 'knapper als erwartet' : 'deutlicher als erwartet'}</em>
+      <span>bei <b class="num">${_spZahl(Math.round(d.c * 100))} %</b> Siegchance so ${d.knapp ? 'eng' : 'klar'} nur <b class="num">${_spZahl(d.so)}</b> von <b class="num">${_spZahl(d.gesamt)}</b></span></div>
+    <div class="sp-sd-a"><span>↑ Tore Abstand</span><span>Siegchance →</span></div></div>`
+    + _spNz(d.W, d.L);
+}
+function _spTransferBild(d){
+  const seite = (ids, w) => `<div class="sp-et-s${w ? ' w' : ''}">${ids.map(id => `<div class="sp-et-p">${_spWappen(id, 48)}`
+    + `<em class="num ${d.delta[id] >= 0 ? 'g' : 'r'}">${_spVz(d.delta[id])}</em></div>`).join('')}</div>`;
+  const punkte = Array.from({length:12}, (_, k) => `<i style="--i:${k};top:${(8 + (k * 37) % 84)}%"></i>`).join('');
+  return `<div class="sp-fk sp-et">${seite(d.L, false)}<div class="sp-et-m">${punkte}`
+    + `<b class="num">${_spVz(d.gewinn)}</b><span>Elo</span>${_spSt(d)}</div>${seite(d.W, true)}</div>`
+    + _spNz(d.L, d.W, 'an');
+}
+function _spChemieBild(d){
+  const n = d.folge.length, r = 21, U = 2 * Math.PI * r, l = U / Math.max(1, n);
+  const seg = d.folge.map((w, k) => `<circle r="${r}" cx="28" cy="28" class="${w ? 'w' : 'l'}${k === n - 1 ? ' jetzt' : ''}" `
+    + `style="stroke-dasharray:${Math.max(0.5, l - 1.2).toFixed(2)} ${(U - l + 1.2).toFixed(2)};stroke-dashoffset:${(-l * k).toFixed(2)};--i:${k}"/>`).join('');
+  return `<div class="sp-fk sp-ch"><div class="sp-ch-d">${_spWappen(d.A, 48)}<div class="sp-ch-r"><svg viewBox="0 0 56 56" aria-hidden="true">${seg}</svg>`
+    + `<span><b class="num">${_spZahl(d.s)}.</b><i>Sieg zu zweit</i></span></div>${_spWappen(d.B, 48)}</div>`
+    + `<div class="sp-ch-u">${_spSt(d)}<span><b class="num">${_spZahl(d.s)}</b> von <b class="num">${_spZahl(d.p)}</b> zusammen gewonnen</span></div></div>`
+    + _spNz([d.A, d.B], d.L);
+}
+function _spGegnerBild(d){
+  return `<div class="sp-fk sp-gg"><div class="sp-gg-p w">${_spWappen(d.w, 48)}</div>
+    <div class="sp-gg-m"><em>${d.fluch ? 'Fluch gebrochen' : 'Lieblingsgegner'}</em>
+      <span class="sp-gg-b num"><b>${_spZahl(d.s)}</b>:${_spZahl(d.n - d.s)}</span>
+      <span class="sp-gg-r">${d.folge.map((w, k) => `<i class="${w ? 'w' : 'l'}${k === d.folge.length - 1 ? ' jetzt' : ''}" style="--i:${k}"></i>`).join('')}</span>
+      <span class="sp-gg-h">heute ${_spSt(d)}</span></div>
+    <div class="sp-gg-p">${_spWappen(d.l, 48)}</div></div>`
+    + _spNz(d.W, d.L);
+}
+function _spRevancheBild(d){
+  return `<div class="sp-fk sp-rv"><span class="sp-rv-c">${_spChips(d.W)}</span>
+    <div class="sp-rv-m"><span class="sp-rv-t alt"><i>vorher</i><b class="num">${_spZahl(d.vTief)}:${_spZahl(d.vHoch)}</b></span>
+      <span class="sp-rv-p"><svg viewBox="0 0 60 24" aria-hidden="true"><path d="M4 18C18 2 42 2 56 16"/><path class="k" d="M50 15L56 16L55 10"/></svg>
+        <i>nach ${_spZahl(d.seit.n)} ${d.seit.e}</i></span>
+      <span class="sp-rv-t neu"><i>jetzt</i>${_spSt(d)}</span></div>
+    <span class="sp-rv-c re">${_spChips(d.L)}</span></div>`
+    + _spNz(d.W, d.L);
+}
+function _spGipfelBild(d){
+  return `<div class="sp-fk sp-gp">${d.zeilen.map((z, k) => `<div class="sp-gp-z${z.w ? ' w' : ''}" style="--i:${k}">`
+    + `<span class="num">${z.pre ? _spZahl(z.pre) + '.' : '–'}</span>${_spChip(z.id)}<span class="sp-gp-n">${esc(_spName(z.id))}</span>`
+    + `<em class="num ${z.post && z.pre && z.post < z.pre ? 'g' : z.post && z.pre && z.post > z.pre ? 'r' : ''}">${z.post && z.post !== z.pre ? '→ ' + _spZahl(z.post) + '.' : '='}</em></div>`).join('')}
+    <div class="sp-gp-f">${_spSt(d)}<span>Platz 1 und 2 am Tisch</span></div></div>`;
+}
+function _spRueckkehrBild(d){
+  const n = Math.min(28, d.tage + 1);
+  return `<div class="sp-fk sp-zu">${_spWappen(d.id, 48)}<div class="sp-zu-m">
+      <span class="sp-zu-z"><b class="num">${_spZahl(d.tage)}</b> Tage ohne Partie</span>
+      <span class="sp-zu-k">${Array.from({length:n}, (_, k) => `<i class="${k === 0 ? 'alt' : ''}" style="--i:${k}"></i>`).join('')}${_spSt(d)}</span></div></div>`
+    + _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`);
+}
+function _spGefaelleBild(d){
+  const ids = d.W.concat(d.L), lo = Math.min(...ids.map(id => d.elo[id])), hi = Math.max(...ids.map(id => d.elo[id]));
+  const h = id => 20 + Math.round((d.elo[id] - lo) / Math.max(1, hi - lo) * 60);
+  const s = (id, w, k) => `<span class="sp-gf-s${w ? ' w' : ''}" style="--i:${k}"><b class="num">${(d.elo[id] < 0 ? '−' : '') + _spZahl(d.elo[id])}</b>`
+    + `<i style="height:${h(id)}%"></i>${_spChip(id)}</span>`;
+  const team = (t, w, k) => `<div class="sp-gf-t${w ? ' w' : ''}"><div class="sp-gf-ss">${t.map((id, j) => s(id, w, k + j)).join('')}</div>`
+    + `<small class="num">${_spZahl(Math.abs(d.elo[t[0]] - d.elo[t[1]]))} Elo dazwischen</small></div>`;
+  return `<div class="sp-fk sp-gf">${team(d.W, true, 0)}${_spSt(d)}${team(d.L, false, 2)}</div>` + _spNz(d.W, d.L);
+}
+function _spTagesringBild(d){
+  const n = d.folge.length, r = 30, U = 2 * Math.PI * r, l = U / n, s = d.folge.filter(Boolean).length;
+  const seg = d.folge.map((w, k) => `<circle r="${r}" cx="38" cy="38" class="${w ? 'w' : 'l'}${k === n - 1 ? ' jetzt' : ''}" `
+    + `style="stroke-dasharray:${Math.max(0.5, l - 2.4).toFixed(2)} ${(U - l + 2.4).toFixed(2)};stroke-dashoffset:${(-l * k).toFixed(2)};--i:${k}"/>`).join('');
+  return `<div class="sp-fk sp-tr"><div class="sp-tr-r"><svg viewBox="0 0 76 76" aria-hidden="true">${seg}</svg><span>${_spWappen(d.id, 48)}</span></div>
+    <div class="sp-tr-t"><em>heute</em><span class="sp-tr-z"><b class="num">${_spZahl(s)}</b> von ${_spZahl(n)}</span>
+      <span class="sp-tr-j">Partie ${_spZahl(n)} ${_spSt(d)}</span></div></div>`
+    + _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`);
+}
+function _spZaehlwerkBild(d){
+  const z = String(d.wert).padStart(3, '0').split('');
+  // Die Ziffer steht als Text da, das Rollband ist ein Pseudo-Element: ein Band aus
+  // zehn Ziffern hinter overflow:hidden ist für jede Messung abgeschnittener Text,
+  // und ohne Bewegung braucht es niemand.
+  const rolle = c => `<span class="sp-zw-r" style="--z:${c}"><b>${c}</b></span>`;
+  return `<div class="sp-fk sp-zw">${d.wer ? _spWappen(d.wer, 48) : `<span class="sp-zw-l">${svgI('ball')}</span>`}
+    <div class="sp-zw-m"><span class="sp-zw-w num">${z.map(rolle).join('')}<b>.</b></span>
+      <span class="sp-zw-u">${d.wer ? (d.sieg ? 'Sieg' : 'Partie') + (_spPasst([d.wer], 12, true) ? ` von ${esc(_spName(d.wer))}` : '') : 'Partie der Liga'}</span></div>
+    <div class="sp-zw-s">${_spSt(d)}</div></div>`
+    + _spNz(d.W, d.L);
+}
+const SP_FORM_BILD = {mosaik:_spMosaikBild, tacho:_spTachoBild, streu:_spStreuBild, transfer:_spTransferBild,
+  chemie:_spChemieBild, gegner:_spGegnerBild, revanche:_spRevancheBild, gipfel:_spGipfelBild,
+  rueckkehr:_spRueckkehrBild, gefaelle:_spGefaelleBild, tagesring:_spTagesringBild, zaehlwerk:_spZaehlwerkBild,
+  feld:_spFeldBild};
+
 // ── Kopf und Fuß je Anlass ───────────────────────────────────────────
-// Spielfeld und Wippe zeigen Siegchance UND Elo je Spieler im Kopf, die
-// Anzeigetafel die Siegchance; der Satz streicht dann, was dort steht
-// (`_newsSpielSatz`). Die Wippe zeigt die Elo VOR dem Anstoß und nicht den
-// Gewinn, also bleibt der Gewinn im Satz.
+// Ein Anlass trägt die Ergebniszeile als Kopf und seine Grafik als Fuß; die
+// gewöhnliche Partie trägt ihre Form. Die Ergebniszeile wechselte sich
+// einmal mit dem Spielfeld ab, damit es überhaupt vorkam — seit es eine
+// von dreizehn Formen ist, stand es damit auf gut der Hälfte der Karten,
+// und der Feed sah an jedem Spieltag gleich aus.
 const _spZeile = a => _spZeileBild(_spZeileDaten(a.m));
 const SP_KOPF = {
-  feld:a => _spFeldBild(_spFeldDaten(a)), krimi:a => _spTafelBild(_spTafelDaten(a)),
+  krimi:a => _spTafelBild(_spTafelDaten(a)),
   aussenseiter:a => _spWippeBild(_spWippeDaten(a)), deutlich:a => _spBandBild(_spZeileDaten(a.m)),
   spitze:_spZeile, rang:_spZeile, serie:_spZeile, wende:_spZeile, duell:_spZeile,
   riss:_spZeile, teamserie:_spZeile, medaille:_spZeile, premiere:_spZeile, rolle:_spZeile
@@ -692,7 +1182,13 @@ const SP_FUSS = {
   teamserie:a => _spDuoBild(_spDuoDaten(a)), medaille:a => _spMedailleBild(_spMedailleDaten(a)),
   premiere:a => _spPremiereBild(a.x), rolle:a => _spRolleBild(a.x)
 };
-const SP_ZEIGT = {feld:{chance:true, elo:true}, krimi:{chance:true}, aussenseiter:{chance:true}};
+// Der Satz einer Partie nannte überall dieselben zwei Zahlen — „Die
+// Siegchance lag vor dem Anstoß bei 73 %, für Maxi bringt der Sieg +13
+// Elo" —, und an keiner Stelle sagten sie etwas über DIESE Partie. Er
+// verliert sie deshalb überall (`_newsSpielSatz`); die gewöhnliche Partie
+// bekommt ihren Satz aus ihrer Form, und das Blatt zeigt beide Zahlen
+// gezeichnet.
+const SP_ZEIGT_ALLES = {chance:true, elo:true};
 // Gemerkt je Datenstand und Karte: der Feed zeichnet sich bei jedem Filter,
 // jedem Zurück aus einem Blatt und jeder neuen Story neu, und die Bilder
 // hängen nur an den Partien und den Namen. `matches` und `players` werden
@@ -703,25 +1199,18 @@ function _spBild(s){
   if(!proStand){ proStand = new WeakMap(); _spBildMemo.set(matches, proStand); }
   const alt = proStand.get(s);
   if(alt && alt.pl === players) return alt;
-  let r = {kopf:'', fuss:'', zeigt:{}, key:'', pl:players};
+  let r = {kopf:'', fuss:'', zeigt:{}, key:'', form:'', glanz:false, pl:players};
   try {
-    let a = _spAnlass(s);
-    if(a.key){
-      // Die Ergebniszeile über einer Grafik wechselt sich mit dem Spielfeld
-      // ab, Partie um Partie in Spielreihenfolge: elf Anlässe trugen alle
-      // dieselbe Zeile als Kopf, und das Spielfeld stand nur, wo sonst
-      // nichts war — an einem Spieltag mit lauter Anlässen gar nicht.
-      let kopf = SP_KOPF[a.key], zeigt = SP_ZEIGT[a.key] || {};
-      if(kopf === _spZeile && _spBasis().idx.get(a.m.id) % 2 === 0){
-        kopf = SP_KOPF.feld; zeigt = SP_ZEIGT.feld;
-        a = Object.assign({}, a, {c:a.c != null ? a.c : _spChance(a.m)});
-      }
-      r = {key:a.key, kopf:kopf(a) || _newsErgebnisBand(a.m.id),
-           fuss:(SP_FUSS[a.key] ? SP_FUSS[a.key](a) : '') || '', zeigt, pl:players};
-      if(zeigt.chance && a.c == null) r.zeigt = Object.assign({}, r.zeigt, {chance:false});
+    const a = _spAnlass(s);
+    if(a.key === 'feld'){
+      const f = _spFormBild(a.m);
+      r = {key:'feld', form:f.key, glanz:f.glanz, kopf:f.html, fuss:'', zeigt:SP_ZEIGT_ALLES, pl:players};
+    } else if(a.key){
+      r = {key:a.key, form:'', glanz:false, kopf:SP_KOPF[a.key](a) || _newsErgebnisBand(a.m.id),
+           fuss:(SP_FUSS[a.key] ? SP_FUSS[a.key](a) : '') || '', zeigt:SP_ZEIGT_ALLES, pl:players};
     }
   } catch(e){
-    r = {kopf:'', fuss:'', zeigt:{}, key:'', pl:players};
+    r = {kopf:'', fuss:'', zeigt:{}, key:'', form:'', glanz:false, pl:players};
   }
   proStand.set(s, r);
   return r;
