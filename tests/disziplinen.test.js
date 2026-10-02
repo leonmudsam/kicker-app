@@ -763,7 +763,7 @@ const _pkt = JSON.parse(K.eval(`JSON.stringify((function(){
   const bad=[]; let max=0, min=1e9;
   SEASON_TITLES.forEach(t=>{
     const d=DISZIPLINEN.find(x=>x.id===t.id), m=d.monat;
-    const soll=G[m.art] ? Math.round((40 + G[m.art]*m.aus + B[m.klasse])/5)*5 : 0;
+    const soll=G[m.art] ? Math.round((55 + G[m.art]*m.aus + B[m.klasse])/5)*5 : 0;
     if(chronikPunkte(t.id) !== soll) bad.push(t.id);
     if(soll>0){ max=Math.max(max,soll); min=Math.min(min,soll); }
   });
@@ -1350,15 +1350,17 @@ const _prModell = JSON.parse(K.eval(`JSON.stringify((function(){
     negativ:BADGES.filter(b=>rarityOf(b.id)==='negative')
       .filter(b=>auszeichnungsPunkte(b.id,10)!==0).map(b=>b.id)};
 })())`));
-ok(_prModell.dom[0] === 50 && _prModell.dom[1] === 100
-   && Math.abs(_prModell.dom[2] - 145) < 1e-9,
-   'Dominator wächst paarweise mit 50 + 50 + 45', _prModell.dom.join(' / '));
-ok(_prModell.meister[0] === 75 && _prModell.meister[1] === 150
+ok(_prModell.dom[0] === 70 && _prModell.dom[1] === 140
+   && Math.abs(_prModell.dom[2] - 203) < 1e-9,
+   'Dominator wächst paarweise mit 70 + 70 + 63', _prModell.dom.join(' / '));
+// Dominator und Team der Saison starten gleich hoch: beide sind die
+// Saisonspitze hinter dem Meister, einer allein, einer zu zweit.
+ok(_prModell.meister[0] === 100 && _prModell.meister[1] === 200
    && _prModell.meister[2] > _prModell.dom[2]
-   && _prModell.dom[2] > _prModell.team[2],
-   'Meister, Dominator und Team der Saison bleiben in dieser Reihenfolge',
-   [_prModell.meister[2],_prModell.dom[2],_prModell.team[2]].join(' > '));
-ok(_prModell.potw[0] === 30 && _prModell.potw.every((v,i)=>v>_prModell.potd[i]),
+   && _prModell.dom.every((v,i) => v === _prModell.team[i]),
+   'der Meister vor Dominator und Team der Saison, die gleichauf liegen',
+   [_prModell.meister[2],_prModell.dom[2],_prModell.team[2]].join(' / '));
+ok(_prModell.potw[0] === 50 && _prModell.potw.every((v,i)=>v>_prModell.potd[i]),
    'Player of the Week ist bei jeder gleichen Anzahl mehr wert als Player of the Day',
    _prModell.potw.join(' / ') + ' > ' + _prModell.potd.join(' / '));
 ok(_prModell.potd[0] === 10,
@@ -1383,6 +1385,22 @@ ok(_prModell.steht.length === 0,
 ok(_prModell.negativ.length === 0,
    'Schanden sind weder Prestige-Belohnung noch zusätzliche Strafe',
    _prModell.negativ.join(', ') || 'alle bei null');
+
+// Das Regelblatt liest die Startwerte aus der Tabelle und ordnet sie nach
+// Gewicht: es stand eine feste Liste aus sechs Zeilen da, und eine neue
+// Auszeichnung waere gar nicht oder hinten angehaengt erschienen. Jede
+// legendaere Auszeichnung steht darin, und die Startwerte fallen nach unten.
+const _prListe = JSON.parse(K.eval(`JSON.stringify((function(){
+  const h = _prestigeRegelListe();
+  const ids = (h.match(/data-id="[a-z0-9_]+"/g) || []).map(x => x.slice(9, -1));
+  return {ids, werte: ids.map(id => _auszeichnungsRegel(id).basis),
+    fehlt: BADGES.filter(b => rarityOf(b.id) === 'legendary' && ids.indexOf(b.id) < 0)
+      .map(b => b.id)};
+})())`));
+ok(_prListe.fehlt.length === 0 && _prListe.werte.length > 0
+   && _prListe.werte.every((v, i, a) => i === 0 || a[i - 1] >= v),
+   'das Regelblatt nennt jede legendaere Auszeichnung, nach Startwert geordnet',
+   _prListe.werte.join(' ') + (_prListe.fehlt.length ? ' · fehlt ' + _prListe.fehlt.join(', ') : ''));
 
 const _prTausch = JSON.parse(K.eval(`JSON.stringify({
   sieger:rarityOf('perfect_win'), allwetter:rarityOf('allwetter'),
@@ -1584,7 +1602,7 @@ const _lb = JSON.parse(K.eval(`JSON.stringify((function(){
     formen: INSIGNIEN.map(x=>({key:x.key, n:INS_ZEICHEN[x.key].length,
       bilder: INS_ZEICHEN[x.key].map((b, g) => {
         const s = insigniumStufeSvg(x.key, m, x.key==='stern' ? ORDENSSTERN_START+g : 0, g, {eigen:true})
-          .match(/href="([^"]+)"/)[1];
+          .replace(/(ize|e)[0-9]+_/g, '');
         let h = 0; for(let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
         return h; })})),
     schritt: ORDENSSTERN_SCHRITT
@@ -1595,9 +1613,9 @@ console.log('  Getragen:  ' + _lb.namen.map((n,i)=>n+' '+_lb.stufen[i]).join(' �
 console.log('  Bester Stand: ' + _lb.hoechste);
 console.log('  Spitze: ' + _lb.werte.slice(0,3).map(x=>x.name+' '+x.punkte+' / '+x.stufe+'.'+x.grad).join(' · '));
 
-// Die Schwellen sind vorgegeben, nicht kalibriert [§C30]: 0, 500, 1000,
-// 1800, 2600, 3600, 4500, danach alle 500 Prestige eine Zacke.
-ok(_lb.min.join(',') === '0,500,1000,1800,2600,3600,4500',
+// Die Schwellen sind vorgegeben, nicht kalibriert [§C30]: 0, 600, 1200,
+// 2100, 3100, 4300, 5600, danach alle 500 Prestige eine Zacke.
+ok(_lb.min.join(',') === '0,600,1200,2100,3100,4300,5600',
    'die sieben Insignien beginnen an den festgelegten Schwellen',
    _lb.min.join(' · '));
 const _sternI = _lb.min.length - 1;
@@ -1721,9 +1739,10 @@ const _schein = JSON.parse(K.eval(`JSON.stringify((function(){
   // dem Bild. Geprüft wird die Mitte des Steinsatzes im Bild jedes Rangs.
   const naeher = Object.keys(INS_RANGFARBE).map(r => {
     const s = insigniumStufeSvg('reif', r, 0, 0, {eigen:true});
-    const bildGefiltert = /<image[^>]*filter=/.test(s);
-    const href = (s.split("base64,")[1] || "").split(String.fromCharCode(34))[0];
-    const svg = href ? atob(href) : '';
+    // Die Zeichnung steht als Vektor im Markup [§C30]; ein Filter darin
+    // oder darüber wäre auf dem Telefon unscharf.
+    const bildGefiltert = /filter=/.test(s);
+    const svg = s;
     const passt = svg.indexOf(_izStein(INS_RANGFARBE[r])[2]) >= 0;
     return {r, bildGefiltert, passt};
   });
@@ -1741,6 +1760,49 @@ ok(_hofSteigt, 'der Hof kommt ab dem Zierkranz und wird mit jeder Stufe kräftig
 ok(_schein.naeher.every(x => !x.bildGefiltert && x.passt),
    'das Zeichen trägt in jedem Rang die Rangfarbe, gezeichnet und ohne Filter',
    _schein.naeher.map(x => x.r + ' ' + (x.bildGefiltert ? 'Filter' : 'ohne') + (x.passt ? ' passt' : '')).join(' · '));
+
+// Die Leiter steigt, sie springt nicht zurück [§C30]: der dritte Grad einer
+// Stufe trägt nie mehr Steine und nie mehr Gold als der erste der nächsten.
+// Zierkranz III hatte Steine im Reif und rotgoldenes Laub, Lorbeerreif I
+// keins von beidem — und sah damit wertvoller aus als die Stufe darüber.
+// Und die Zeichnung liegt nicht als Ganzes unter einem Filter: WebKit
+// rechnet Filter in Bildern ohne die Pixeldichte des Geräts, und das ganze
+// Zeichen war auf dem Telefon unscharf.
+const _steigt = JSON.parse(K.eval(`JSON.stringify((() => {
+  const gold = z => { let n = 0; const r = z.reif || {};
+    [r.metall, r.kanal, r.nieten && r.nieten.m, z.lilie, z.raute,
+     (z.sichel||z.volute||z.zier||z.lorbeer||z.eiche||z.strahlen||{}).m].forEach(m => { if(m === 'gold') n++; });
+    return n; };
+  const fehler = [];
+  for(let i = 1; i < INSIGNIEN.length; i++){
+    const a = INS_ZEICHEN[INSIGNIEN[i-1].key][2], b = INS_ZEICHEN[INSIGNIEN[i].key][0];
+    const sa = (a.reif||{}).steine || 0, sb = (b.reif||{}).steine || 0;
+    if(sa > sb) fehler.push(INSIGNIEN[i-1].name + ' III ' + sa + ' Steine > ' + INSIGNIEN[i].name + ' I ' + sb);
+    if(gold(a) > gold(b)) fehler.push(INSIGNIEN[i-1].name + ' III Gold ' + gold(a) + ' > ' + INSIGNIEN[i].name + ' I ' + gold(b));
+  }
+  const t = _izTeile('krone', 2, INS_RANGFARBE.Elite);
+  const ganz = /filter/.test(t.defs + t.bild);
+  return {fehler, ganz};
+})())`));
+ok(_steigt.fehler.length === 0, 'der dritte Grad trägt nie mehr Steine oder Gold als der erste der nächsten Stufe',
+   _steigt.fehler.join(' · ') || 'jede Stufe');
+ok(!_steigt.ganz, 'die Zeichnung trägt keinen Filter', String(_steigt.ganz));
+
+// Und die Rangfarbe im Auge einer Schnecke geht vom Zierkranz zum
+// Lorbeerreif nicht verloren: der Zierkranz III trägt sie in seinen
+// Schnecken, und der erste Entwurf des Lorbeerreifs setzte sie erst ab
+// Grad II — einen Grad lang war der Stein weg und kam dann wieder. Gezählt
+// wird das Auge (`_izRolle`), nicht die Beeren: die sind etwas anderes und
+// hätten die Lücke verdeckt. Kronenreif und Ordensstern tragen keine
+// Schnecken mehr, ihre Rangfarbe sitzt in Eicheln und Kristallen.
+const _auge = JSON.parse(K.eval(`JSON.stringify((() => {
+  const augen = (key, nr) => (_izTeile(key, nr, INS_RANGFARBE.Elite).bild
+    .match(/fill="url\\(#sk\\)" stroke="[^"]+" stroke-width="1\\.6"/g) || []).length;
+  return {zier: augen('zier', 2), lorbeer: [0, 1, 2].map(g => augen('lorbeer', g))};
+})())`));
+ok(_auge.zier > 0 && _auge.lorbeer.every(n => n > 0),
+   'die Rangfarbe im Auge der Schnecke bleibt vom Zierkranz III an in jedem Grad des Lorbeerreifs',
+   `Zierkranz III ${_auge.zier}, Lorbeerreif ${_auge.lorbeer.join(' · ')}`);
 
 
 // ══════════════════════════════════════════════════════════════════════
@@ -2758,27 +2820,27 @@ ok(_rkIntern.length === 0, 'kein interner Begriff in einem sichtbaren Text',
    _rkIntern.join(', ') || 'keiner');
 
 // Die Grundwerte je Kammer [§C34]. Koennen und die leistungsbezogene Form
-// wiegen 100, eine Rolle und eine Fuegung 50, eine Schattenseite null.
+// wiegen 150, eine Rolle und eine Fuegung 75, eine Schattenseite null.
 const _rolle = ['dauersturm','abwehrmauer','tailwind','solorun',
                 'wall','sturmtreue','switcher'];
 const _basisFehler = _rk.filter(c => {
   const soll = c.kind === 'shame' ? 0
-    : c.kind === 'fuegung' ? 50
-    : _rolle.indexOf(c.id) >= 0 ? 50 : 100;
+    : c.kind === 'fuegung' ? 75
+    : _rolle.indexOf(c.id) >= 0 ? 75 : 150;
   return c.basis !== soll;
 }).map(c => c.id + ' ' + c.basis);
 ok(_basisFehler.length === 0, 'jede Kammer traegt ihren Grundwert',
-   _basisFehler.join(', ') || '100 / 50 / 0');
-ok(_rk.filter(c => c.kind === 'koennen').every(c => c.basis === 100),
-   'Koennen gibt 100 Punkte Grundwert');
+   _basisFehler.join(', ') || '150 / 75 / 0');
+ok(_rk.filter(c => c.kind === 'koennen').every(c => c.basis === 150),
+   'Koennen gibt 150 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) < 0)
-     .every(c => c.basis === 100),
-   'leistungsbezogene Form gibt 100 Punkte Grundwert');
+     .every(c => c.basis === 150),
+   'leistungsbezogene Form gibt 150 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'form' && _rolle.indexOf(c.id) >= 0)
-     .every(c => c.basis === 50),
-   'rollenbezogene Form gibt 50 Punkte Grundwert');
-ok(_rk.filter(c => c.kind === 'fuegung').every(c => c.basis === 50),
-   'eine Fuegung gibt 50 Punkte Grundwert');
+     .every(c => c.basis === 75),
+   'rollenbezogene Form gibt 75 Punkte Grundwert');
+ok(_rk.filter(c => c.kind === 'fuegung').every(c => c.basis === 75),
+   'eine Fuegung gibt 75 Punkte Grundwert');
 ok(_rk.filter(c => c.kind === 'shame').every(c => c.basis === 0),
    'eine Schattenseite gibt null Punkte');
 // Und keine Schattenseite bringt Prestige.
@@ -3087,21 +3149,50 @@ ok(_paarFehlt.length === 0, 'jedes Gegenpaar steht im Katalog',
 // Wortlaut darf abweichen — „20 Sturmspiele" und „20 Abwehrspiele" sind
 // dieselbe Huerde.
 const _zahlen = t => (String(t).match(/\d+/g) || []).join('/');
-// Zwei Paare sind je Seite geeicht und muessen es sein: eine Siegesserie ab
-// acht und eine Pleitenserie ab sieben sind nicht dieselbe Haeufigkeit, und
-// die 35 % des Sonntagsschusses spiegeln sich als 65 % der bittersten Pleite
-// — dasselbe Mass von der anderen Seite, nicht dieselbe Zahl.
-const GEEICHT = {'unstoppable|drought':1, 'fluke|bitterloss':1};
+// Kein Paar ist mehr je Seite geeicht. Siegesserie ab acht und
+// Pleitenserie ab sieben waren es, weil beide nicht dieselbe Häufigkeit
+// haben; seit kein Rekord eine Wertlatte trägt, verlangen beide nur ihr
+// erstes Glied.
+const GEEICHT = {};
 const _paarMind = PAARE.filter(([a, b]) => _byId[a] && _byId[b]
     && !GEEICHT[a + '|' + b]
     && _zahlen(_byId[a].mind) !== _zahlen(_byId[b].mind))
   .map(([a, b]) => a + ' „' + _byId[a].mind + '" vs ' + b + ' „' + _byId[b].mind + '"');
 ok(_paarMind.length === 0, 'jedes Gegenpaar hat dieselbe Mindestbasis',
-   _paarMind.join(' · ') || (PAARE.length - 2) + ' Paare');
-// Und die beiden geeichten spiegeln sich wirklich: 35 % gegen 65 %.
-ok(_zahlen(_byId.fluke.mind) === '35' && _zahlen(_byId.bitterloss.mind) === '65',
-   'Sonntagsschuss und bitterste Pleite spiegeln ihre Schwelle',
-   _byId.fluke.mind + ' / ' + _byId.bitterloss.mind);
+   _paarMind.join(' · ') || PAARE.length + ' Paare');
+// Ein Rekord hat keine Untergrenze in Prozent. Wer 20 % seiner Wochen
+// gewinnt und damit vorn liegt, haelt „Der Wochenherr" — eine Latte bei
+// 25 % liess den Rekord sonst leer oder strich den Besten aus dem Rennen.
+// Verlangt werden darf nur eine Stichprobe: Partien, Spieltage, Wochen,
+// Niederlagen. Gelesen wird Bedingung, Mindestbasis UND die Wertfunktion:
+// ein Text ohne Prozent ueber einer Rechnung mit `>= 0.25` waere gelogen.
+const _prozentLatte = K.eval(`JSON.stringify(CHRONICLES.filter(c => {
+  const d = DISZIPLINEN.find(x => x.id === c.id), a = d && d.allzeit;
+  if(!a) return false;
+  const txt = String(a.cond || '') + ' ' + String(a.mind || '');
+  const code = String(a.val || '');
+  // „mit 35 bis 65 % Siegchance" beschreibt die Teilmenge (welche Partien
+  // zaehlen), keine Latte fuer den Wert — das bleibt erlaubt.
+  return /(mindestens|höchstens|zwischen)\\s+\\d+(\\s*und\\s*\\d+)?\\s*(%|Prozent)/i.test(txt)
+      || /[<>]=?\\s*(1\\s*-\\s*)?(0?\\.\\d|CHANCE_)/.test(code);
+}).map(c => c.name))`);
+ok(JSON.parse(_prozentLatte).length === 0, 'kein Liga-Rekord verlangt einen Mindestwert in Prozent',
+   JSON.parse(_prozentLatte).join(', ') || _rk.length + ' Rekorde');
+// Und auch keinen in Elo oder Serienlänge: „ab 8 Siegen in Folge", „ab 350
+// Elo", „ab 150 Elo Verlust" waren dieselbe Latte in einer anderen Einheit.
+// Eine Serie braucht ihr erstes Glied und ein Wechsel zwei Partien — mehr
+// ist eine Latte. Elo-Werte stehen als ganze Zahl im Code, Stichproben
+// heißen dort `games`, `losses`, `N` und so weiter.
+const _wertLatte = K.eval(`JSON.stringify(CHRONICLES.filter(c => {
+  const d = DISZIPLINEN.find(x => x.id === c.id), a = d && d.allzeit;
+  if(!a) return false;
+  const txt = String(a.cond || '') + ' ' + String(a.mind || '');
+  return (a.min || 0) > 2
+      || /[<>]=?\\s*-\\d{2,}/.test(String(a.val || ''))
+      || /ab \\d+ (Elo|Siegen in Folge|Niederlagen in Folge|Partien im Wechsel)|\\d+ Elo Verlust/.test(txt);
+}).map(c => c.name))`);
+ok(JSON.parse(_wertLatte).length === 0, 'kein Liga-Rekord verlangt einen Mindestwert in Elo oder Serienlänge',
+   JSON.parse(_wertLatte).join(', ') || _rk.length + ' Rekorde');
 // Angriff und Abwehr werden gleich behandelt: die vier Rollenpaare tragen
 // denselben Zeitraum und denselben Grundwert.
 const ROLLENPAARE = [['atk_ace','def_ace'], ['sturmfuehrer','defchief'],
@@ -3167,8 +3258,8 @@ console.log('\n═══ KONSTANT SCHLECHT GEWINNT NICHTS ═══');
 // 0:10 verliert, ist gleichmaessig. Dasselbe gilt fuer die ROLLENWERTE: „Der
 // Wandler" misst eine Aufstellung von fuenfzig zu fuenfzig, und wo jemand
 // steht, entscheidet die Auslosung. Beide zeichnen niemanden aus, sie
-// gehoeren jemandem [§C35] — deshalb wiegen sie 50 und nicht 100. Geprueft
-// wird also genau das, was 100 Punkte wert ist.
+// gehoeren jemandem [§C35] — deshalb wiegen sie 75 und nicht 150. Geprueft
+// wird also genau das, was 150 Punkte wert ist.
 const _nullLauf = {
   id:'probe', games:60, wins:0, losses:60, gf:0, ga:600, gd:-600,
   atkG:30, atkW:0, defG:30, defW:0, atkGoals:0, defConceded:600,
@@ -3199,7 +3290,7 @@ const _nullTreffer = JSON.parse(K.eval(`JSON.stringify((function(){
   const out = {gewinnt:[], dabei:[]};
   CHRONICLES.forEach(c => {
     if(c.kind === 'shame' || c.kind === 'fuegung') return;
-    if(c.basis !== 100) return;
+    if(c.basis !== 150) return;
     let v = null;
     try { v = c.val(probe, C); } catch(e){ return; }
     if(v == null || !isFinite(v)) return;

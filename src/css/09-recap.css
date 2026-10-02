@@ -237,13 +237,29 @@
   .bl-feld i.er{top:4px;width:12px;height:12px;margin-left:-6px;background:var(--gold);
     box-shadow:0 0 0 2px var(--surface),0 0 10px rgba(247,207,74,.6)}
   .bl-feld-l{display:flex;justify-content:space-between;gap:6px;font-size:9.5px;color:var(--faint);margin-top:2px}
-  .bl-spanne{position:relative;height:24px}
-  .bl-spanne-bahn{position:absolute;left:0;right:0;top:11px;height:2px;background:var(--surface3)}
-  .bl-spanne-ber{position:absolute;top:7px;height:10px;border-radius:5px;background:rgba(247,207,74,.18);
-    box-shadow:inset 0 0 0 1px rgba(247,207,74,.42)}
-  .bl-spanne-pkt{position:absolute;top:5px;width:14px;height:14px;margin-left:-7px;border-radius:50%;
-    background:var(--gold);box-shadow:0 0 0 2px var(--surface)}
-  .bl-ref{position:absolute;top:1px;width:2px;height:22px;margin-left:-1px;border-radius:1px;background:var(--silber);opacity:.8}
+  /* Wie knapp: die Luft als Zahl, als Zellen und als zwei Balken. Die Farbe
+     des Worts folgt dem Abstand — eng rot getönt wäre eine Richtung
+     [§C25], also bleibt es Gold für den Halter und Metall für den Rest. */
+  .bl-luft{display:grid;gap:8px}
+  .bl-lz-kopf{display:flex;align-items:baseline;gap:8px}
+  .bl-lz-zahl{font-family:'Archivo Black',sans-serif;font-size:30px;line-height:1;color:var(--gold);
+    text-shadow:0 0 18px rgba(247,207,74,.35)}
+  .bl-lz-was{font-size:12px;color:var(--ink2)}
+  .bl-lz-wort{margin-left:auto;font-family:'Sometype Mono',monospace;font-size:10px;letter-spacing:.08em;
+    text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--line2);color:var(--ink2)}
+  .bl-luft[data-ton="eng"] .bl-lz-wort{border-color:rgba(247,207,74,.45);color:var(--gold)}
+  .bl-luft[data-ton="weit"] .bl-lz-wort{background:rgba(247,207,74,.12);border-color:rgba(247,207,74,.55);color:var(--gold)}
+  .bl-lz-zellen{display:flex;flex-wrap:wrap;gap:3px;align-items:center}
+  .bl-lz-zellen i{width:14px;height:14px;border-radius:3px;background:linear-gradient(160deg,var(--gold),#b8871f);
+    box-shadow:0 0 8px rgba(247,207,74,.35)}
+  .bl-lz-zellen b{font-family:'Sometype Mono',monospace;font-size:11px;color:var(--gold);margin-left:4px}
+  .bl-lz-z{display:grid;grid-template-columns:minmax(0,72px) minmax(0,1fr) 38px;gap:8px;align-items:center;font-size:11.5px}
+  .bl-lz-z .n{color:var(--ink2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .bl-lz-z .b{height:8px;border-radius:4px;background:var(--surface3);overflow:hidden}
+  .bl-lz-z .b i{display:block;height:100%;border-radius:4px;background:var(--muted)}
+  .bl-lz-z.a .b i{background:linear-gradient(90deg,#b8871f,var(--gold));box-shadow:0 0 10px rgba(247,207,74,.45)}
+  .bl-lz-z.a .n,.bl-lz-z.a .v{color:var(--gold)}
+  .bl-lz-z .v{text-align:right;color:var(--ink2)}
   .bl-verlauf{display:block;width:100%;height:84px;overflow:visible}
   .bl-verlauf polyline{fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
   .bl-verlauf .bl-v-a{stroke:var(--gold);stroke-width:2.2}
@@ -291,3 +307,152 @@
   .duo-kz-linie.ab polyline{stroke:var(--red)}
   .duo-kz-lauf.auf i{background:var(--acid)}
   .duo-kz-lauf.ab i{background:var(--red)}
+
+  /* ============ DIE MEISTERBÜHNE [§C31] ============
+     Podest unter einem Strahlenkranz, das Rennen um die Spitze als Linien,
+     die Tage vorn als Balken, die Saison des Meisters als Zellen. Gold nur
+     für den Meister [§C25]; Silber und Bronze sind die Metalle des Podests,
+     wer nicht darauf steht, bleibt Metall. Der Kranz ist Licht und keine
+     Form: er dreht sich langsam und steht bei Bewegungsruhe still. */
+  .nf-meister{position:relative;isolation:isolate;margin:2px 0 10px;padding-top:4px}
+  .nf-ms-strahl{position:absolute;left:50%;top:46%;width:250px;height:250px;margin:-125px 0 0 -125px;
+    z-index:-1;pointer-events:none;border-radius:50%;
+    background:repeating-conic-gradient(from 0deg,rgba(247,207,74,.17) 0 5deg,transparent 5deg 15deg);
+    -webkit-mask:radial-gradient(circle,#000 0 16%,transparent 64%);
+            mask:radial-gradient(circle,#000 0 16%,transparent 64%);
+    animation:msDreh 48s linear infinite}
+  .nf-ms-strahl::after{content:"";position:absolute;inset:28%;border-radius:50%;
+    background:radial-gradient(circle,rgba(247,207,74,.28),transparent 70%)}
+  .nf-meister.gross .nf-ms-strahl{width:360px;height:360px;margin:-180px 0 0 -180px}
+  @keyframes msDreh{to{transform:rotate(360deg)}}
+  .nf-podest{gap:6px;align-items:end}
+  .nf-podest .pod-karte{padding:8px 4px 9px}
+  .nf-podest .pod-karte.erster{padding:10px 4px 10px}
+  .nf-podest .pod-name{font-size:12.5px}
+  .nf-podest .pod-karte.erster .pod-name{font-size:14px}
+  .nf-podest .pod-wert{font-size:17px}
+  .nf-podest .pod-karte.erster .pod-wert{font-size:22px}
+  .nf-podest .pod-platz{font-size:10px}
+
+  .nd-meister{position:relative;margin:2px 0 4px}
+  .nd-ms-band{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;
+    font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--gold)}
+  .nd-ms-band svg{width:16px;height:16px;filter:drop-shadow(0 0 6px rgba(247,207,74,.6))}
+  .nd-ms-band i{font-style:normal;color:var(--ink2);letter-spacing:.12em}
+
+  .srn{margin:8px 0 2px}
+  .srn.klein{margin:2px 0 6px}
+  .srn-svg{display:block;width:100%;height:auto;overflow:visible}
+  .srn-g{stroke:var(--line);stroke-width:1;stroke-dasharray:2 5}
+  .srn-l{fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:1;stroke-dashoffset:1;animation:srnZieh 1.6s cubic-bezier(.3,.7,.2,1) .15s forwards}
+  .srn-l.gold{stroke:var(--gold);stroke-width:2.6;filter:drop-shadow(0 0 4px rgba(247,207,74,.55))}
+  .srn-l.silber{stroke:var(--silber);opacity:.75}
+  .srn-l.bronze{stroke:var(--bronze);opacity:.75}
+  .srn-p{opacity:0;transform-box:fill-box;transform-origin:center;animation:srnDa .35s 1.6s forwards}
+  .srn-p.gold{fill:var(--gold);animation:srnDa .35s 1.6s forwards,srnPuls 2.6s 2.2s ease-in-out infinite}
+  .srn-p.silber{fill:var(--silber)} .srn-p.bronze{fill:var(--bronze)}
+  .srn-fl{opacity:0;animation:srnDa .9s .8s forwards}
+  @keyframes srnZieh{to{stroke-dashoffset:0}}
+  @keyframes srnDa{to{opacity:1}}
+  @keyframes srnPuls{0%,100%{transform:scale(1)}50%{transform:scale(1.5)}}
+  .srn-band{display:flex;gap:1px;height:7px;margin-top:6px;border-radius:3px;overflow:hidden}
+  .srn-band i{flex:1;background:rgba(255,255,255,.05)}
+  .srn-band i.gold{background:var(--gold)} .srn-band i.silber{background:var(--silber)}
+  .srn-band i.bronze{background:var(--bronze)} .srn-band i.rest{background:var(--faint)}
+  .srn-band i.still{opacity:.4}
+  .srn-achse{display:flex;justify-content:space-between;margin-top:3px;font-size:10px;color:var(--muted)}
+  .srn-leg{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px;font-size:12px;color:var(--ink2)}
+  .srn-leg span{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .srn-leg u{display:inline-block;width:14px;height:3px;border-radius:2px;background:var(--faint)}
+  .srn-leg .gold u{background:var(--gold);box-shadow:0 0 6px rgba(247,207,74,.6)}
+  .srn-leg .silber u{background:var(--silber)} .srn-leg .bronze u{background:var(--bronze)}
+  .srn-leg b{color:var(--ink);font-weight:700}
+  .srn-leg .gold b{color:var(--gold)}
+
+  .srn-tage{display:grid;gap:7px;margin:6px 0 2px}
+  .srn-t{display:grid;grid-template-columns:minmax(0,76px) minmax(0,1fr) 26px;align-items:center;gap:8px;
+    font-size:12.5px;color:var(--ink2);cursor:pointer}
+  .srn-t .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .srn-t .b{height:8px;border-radius:4px;background:rgba(255,255,255,.05);overflow:hidden}
+  .srn-t .b i{display:block;height:100%;border-radius:4px;background:var(--faint);
+    transform-origin:left center;animation:srnWachs .8s cubic-bezier(.3,.7,.2,1) both}
+  .srn-t.gold .b i{background:linear-gradient(90deg,rgba(247,207,74,.55),var(--gold));
+    box-shadow:0 0 10px rgba(247,207,74,.4)}
+  .srn-t.silber .b i{background:var(--silber)} .srn-t.bronze .b i{background:var(--bronze)}
+  .srn-t.gold .n,.srn-t.gold .v{color:var(--gold)}
+  .srn-t .v{text-align:right;font-weight:700;color:var(--ink)}
+  @keyframes srnWachs{from{opacity:0;transform:scaleY(.2)}to{opacity:1;transform:none}}
+
+  .srn-z{display:flex;flex-wrap:wrap;gap:3px;margin:10px 0 2px}
+  .srn-z i{width:10px;height:10px;border-radius:2px;background:rgba(240,86,106,.5)}
+  .srn-z i.w{background:var(--acid)}
+
+  @media (prefers-reduced-motion:reduce){
+    .nf-ms-strahl{animation:none}
+    .srn-l{animation:none;stroke-dashoffset:0}
+    .srn-p,.srn-p.gold,.srn-fl{animation:none;opacity:1}
+    .srn-t .b i{animation:none}
+  }
+
+/* ── Das Feld, die Woche und die Elo eines Tages [§C31] ──────────────
+   Nur Tokens der App [§C25]: Grün und Rot sind die Richtung, Gold gehört
+   dem Helden. Bewegt wird nur transform und Deckkraft; bei Bewegungsruhe
+   steht alles. Der Name im Feld bricht um, statt mit „…" zu enden. */
+.rcp-feld{display:flex;flex-direction:column;gap:6px;margin:0 0 16px}
+.rcp-feld-z{display:grid;grid-template-columns:minmax(0,30%) minmax(0,1fr) auto;align-items:center;gap:8px}
+.rcp-feld-n{font-size:12px;line-height:1.25;color:var(--ink2);overflow-wrap:break-word}
+.rcp-feld-z.held .rcp-feld-n{color:var(--gold);font-weight:700}
+.rcp-feld-b{position:relative;display:grid;grid-template-columns:1fr 1fr;height:10px}
+.rcp-feld-b i{display:block;height:100%}
+.rcp-feld-b i.l{background:var(--red);opacity:.8;border-radius:3px 0 0 3px;justify-self:end;grid-column:1}
+.rcp-feld-b i.w{background:var(--acid);border-radius:0 3px 3px 0;justify-self:start;grid-column:2}
+.rcp-feld-b u{position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--line2)}
+.rcp-feld-z.held .rcp-feld-b i.w{background:var(--gold)}
+.rcp-feld-v{font-size:11px;color:var(--muted);text-align:right;white-space:nowrap}
+.rcp-woche{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin:4px 0 16px}
+.rcp-wo-t{display:flex;flex-direction:column;align-items:center;gap:2px}
+.rcp-wo-o,.rcp-wo-u{display:flex;width:100%;max-width:26px;height:46px;border-radius:5px;background:var(--surface2);overflow:hidden}
+.rcp-wo-o{align-items:flex-end}.rcp-wo-u{align-items:flex-start;height:28px}
+.rcp-wo-o i{display:block;width:100%;background:var(--acid);border-radius:4px 4px 0 0}
+.rcp-wo-u i{display:block;width:100%;background:var(--red);border-radius:0 0 4px 4px;opacity:.85}
+.rcp-wo-t.leer .rcp-wo-o,.rcp-wo-t.leer .rcp-wo-u{opacity:.4}
+.rcp-wo-l{font-size:10px;color:var(--muted);margin-top:2px}
+.rcp-wo-v{font-size:10px;color:var(--ink2);white-space:nowrap}
+.rcp-elo{margin:0 0 16px}
+.rcp-elo svg{display:block;width:100%;height:auto;margin-top:6px}
+.rcp-elo-0{stroke:var(--line2);stroke-dasharray:3 4}
+.rcp-elo-l{fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linejoin:round;stroke-linecap:round}
+.rcp-elo-fl{fill:rgba(247,207,74,.12)}
+.rcp-elo circle.w{fill:var(--acid)}.rcp-elo circle.l{fill:var(--red)}
+.rcp-elo-z{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-top:2px}
+.rcp-elo-z .pos{color:var(--acid)}.rcp-elo-z .neg{color:var(--red)}
+@media (prefers-reduced-motion:no-preference){
+  .rcp-feld-b i{transform-origin:left;animation:rcpWachs .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .rcp-feld-b i.l{transform-origin:right}
+  .rcp-wo-o i{transform-origin:bottom;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .rcp-wo-u i{transform-origin:top;animation:rcpWachsY .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .rcp-elo-l{stroke-dasharray:1;animation:rcpZieh 1.2s ease-out both}
+}
+@keyframes rcpWachs{from{transform:scaleX(0)}}
+@keyframes rcpWachsY{from{transform:scaleY(0)}}
+@keyframes rcpZieh{from{stroke-dashoffset:1}}
+
+/* ── Jede Begegnung im Direkten Vergleich ────────────────────────────
+   Nach oben die Siege von A, nach unten die von B, so hoch wie das Ergebnis
+   deutlich war. Die Namen stehen über und unter der Zeichnung und brechen
+   um; die Zahl daneben zählt die gezeigten Balken. */
+.h2h-bg{margin:0 0 14px}
+.h2h-bg svg{display:block;width:100%;height:auto}
+.h2h-bg-0{stroke:var(--line2)}
+.h2h-bg rect.w{fill:var(--acid)}.h2h-bg rect.l{fill:var(--red)}
+.h2h-bg-n{display:flex;align-items:baseline;gap:8px;font-size:11px;color:var(--muted);margin:2px 0}
+.h2h-bg-n span{min-width:0;overflow-wrap:break-word}
+.h2h-bg-n b{margin-left:auto;font-size:12px;color:var(--ink2)}
+@media (prefers-reduced-motion:no-preference){
+  .h2h-bg rect{transform-box:fill-box;transform-origin:bottom;animation:rcpWachsY .5s ease-out both;animation-delay:calc(var(--i,0) * 25ms)}
+  .h2h-bg rect.l{transform-origin:top}
+}
+
+/* Eine Grafik im Rückblick hält Abstand zur nächsten Überschrift. */
+.rcp-block{margin:0 0 18px}

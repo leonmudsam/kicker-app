@@ -1273,6 +1273,14 @@ function _awNameVon(key, x){
 //   o.liste die ganze Liste für die Lage im Feld
 //   o.rang  Platz 2 oder 3, wo die Kachel keinen Platz 1 zeigt (Duo-Blatt)
 //   o.attr  was ein Tippen öffnet; ohne Angabe das Award-Blatt
+// Ein langes Wort im Kachelnamen wird kleiner, nicht gebrochen [§C27].
+// `overflow-wrap` hielt den Namen in der Kachel und brach ihn dafür mitten
+// im Wort: „Unaufhaltsa|m", „Showmaste|r" — ohne Trennstrich, weil nicht
+// jedes Telefon Deutsch trennt und die Schrift offline breiter fällt.
+function _awLblLang(t){
+  const n = Math.max(...String(t).split(/[\s-]/).map(w => w.length));
+  return n >= 14 ? ' sehrlang' : n >= 10 ? ' lang' : '';
+}
 function awKachelHtml(key, top, o){
   o = o || {};
   const meta = AWARD_META[key] || {title:key};
@@ -1287,7 +1295,7 @@ function awKachelHtml(key, top, o){
   const gross = !!o.gross && !leer;
   const attr = o.attr != null ? o.attr : `data-award="${esc(key)}"`;
   const kopf = `<div class="aw-t-kopf">${zkHtml(AW_IC[key] || 'trophy', 'k', leer ? '' : zkTon)}`
-    + `<span class="aw-t-lbl">${esc(meta.title)}</span></div>`;
+    + `<span class="aw-t-lbl${_awLblLang(meta.title)}">${esc(meta.title)}</span></div>`;
   if(leer) return `<div class="aw-trophy ${ton} empty" ${attr}>${kopf}
       <div class="aw-t-held"><span class="aw-t-leer">—</span>
         <div class="aw-t-wer"><span class="aw-t-beleg">${esc(AW_LEER[key] || 'Noch nicht vergeben')}</span></div></div>

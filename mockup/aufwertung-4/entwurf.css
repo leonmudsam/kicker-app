@@ -1,0 +1,320 @@
+/* Entwurf der vierten Aufwertung: die Karten „Am Spieltag". Nur Tokens der
+   App (--acid, --red, --gold, --line …) — keine neue Farbe [§C25]. Bewegt
+   wird nur transform und Deckkraft, und alles steht bei Bewegungsruhe.
+
+   Gebaut für Werte, die es heute noch nicht gibt. NICHTS WIRD GEKÜRZT
+   ODER GESCHRUMPFT: in einer Grafik stehen nur Dinge fester Breite —
+   Gesichter, Zeichen, Zahlen, kurze Aufschriften aus festem Wortschatz.
+   Ein Name steht in einer Textstelle (.ef-lg, .ef-z-n, .ef-aufst …), die
+   mindestens eine halbe Karte breit ist und wie ein Satz umbricht. Jede
+   Spalte eines Rasters ist minmax(0,…) statt so breit wie ihr Inhalt.
+   bau.js misst das mit Grenzwerten nach. */
+
+.ef-k{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);line-height:1.4}
+/* Die Textstelle unter einer Grafik: so breit wie die Karte, Namen fett. */
+.ef-lg{margin-top:6px;font-size:10.5px;line-height:1.45;color:var(--muted)}
+.ef-lg b,.ef-z-n b,.ef-aufst b,.ef-at-n b,.ef-nv-n b,.ef-wp-n b,.ef-sl-n b,.ef-rd-n b{font-weight:600;color:var(--ink2)}
+.ef-chips{display:flex;flex:0 0 auto}
+.ef-chips .av+.av{margin-left:-6px}
+.ef-runde .av,.ef-zeile .av,.ef-at .av,.ef-nv .av,.ef-wp .av,.ef-sl .av,.ef-ku .av,.ef-bg .av,.ef-rd-p .av,.ef-tb .av,
+.ef-rk .av,.ef-duo .av,.ef-md .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+.num{white-space:nowrap}
+
+/* ── Die Ergebniszeile ── */
+.ef-zeile{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;
+  padding:9px 13px;background:linear-gradient(96deg,rgba(190,242,100,.06),transparent 70%);border-bottom:1px solid var(--line)}
+.ef-zeile{align-items:start}
+.ef-z-s{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;opacity:.6}
+.ef-z-s.w{opacity:1}
+.ef-z-s.re{align-items:flex-end;text-align:right}
+.ef-z-n{display:flex;flex-direction:column;font-size:10.5px;line-height:1.3;color:var(--muted)}
+.ef-z-s.w .ef-z-n b{color:var(--ink)}
+.ef-z-sc{align-self:center}
+.ef-z-sc{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;letter-spacing:-.02em;color:var(--faint)}
+.ef-z-sc em{font-style:normal}.ef-z-sc em.w{color:var(--ink)}
+.ef-z-sc i{font-style:normal;margin:0 1px}
+
+/* ── Das Spielfeld ── */
+.ef-feld{position:relative;margin:2px 10px 0;padding:8px 0 10px;border-radius:12px;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.035),transparent 70%),var(--surface2);
+  box-shadow:inset 0 0 0 1px var(--line2)}
+.ef-f-mitte{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line2)}
+.ef-f-mitte::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;
+  border-radius:50%;box-shadow:inset 0 0 0 1px var(--line2)}
+.ef-f-tor{position:absolute;top:50%;width:10px;height:56px;margin-top:-28px;box-shadow:inset 0 0 0 1px var(--line2)}
+.ef-f-tor.l{left:0;border-radius:0 6px 6px 0}.ef-f-tor.r{right:0;border-radius:6px 0 0 6px}
+.ef-f-stange{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:linear-gradient(180deg,transparent,rgba(185,196,189,.16) 20%,rgba(185,196,189,.16) 80%,transparent)}
+.ef-f-sc{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;margin-bottom:6px}
+.ef-f-sc b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:16px;color:var(--faint);padding:2px 9px;border-radius:9px;
+  background:var(--surface);box-shadow:0 0 0 1px var(--line2)}
+.ef-f-sc b em{font-style:normal}.ef-f-sc b em.w{color:var(--ink)}.ef-f-sc b i{font-style:normal;margin:0 1px}
+.ef-f-sc span{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.ef-f-reihe{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.ef-f-sp{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:0 2px;text-align:center}
+.ef-f-rolle{font:600 8px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.ef-f-sp .rav{opacity:.5}
+.ef-f-sp.w .rav{opacity:1}
+.ef-f-n{font-size:10.5px;font-weight:600;line-height:1.25;color:var(--muted)}
+.ef-f-sp.w .ef-f-n{color:var(--ink)}
+.ef-f-sp em{font:700 10px 'Sometype Mono',monospace;font-style:normal;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.04)}
+.ef-f-sp em.g{color:var(--acid)}.ef-f-sp em.r{color:var(--red)}
+
+/* Die Aufstellung unter dem Feld: eine Spalte je Team, Rolle und Name. */
+.ef-aufst{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 14px;padding:7px 13px 2px;font-size:10.5px;line-height:1.35}
+.ef-aufst > div{display:flex;flex-direction:column;gap:2px;min-width:0;opacity:.7}
+.ef-aufst > div.w{opacity:1}
+.ef-aufst > div.re{text-align:right}
+.ef-aufst i{font:600 8px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-right:6px}
+.ef-aufst > div.w b{color:var(--ink)}
+
+/* ── Die Anzeigetafel ── */
+.ef-at{padding:12px 13px 10px;border-bottom:1px solid var(--line)}
+.ef-at-g{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:start}
+.ef-at-n{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:7px;font-size:10.5px;line-height:1.35;color:var(--muted)}
+.ef-at-n > span{display:flex;flex-direction:column}
+.ef-at-n .re{text-align:right}
+.ef-at-n .w b{color:var(--ink)}
+.ef-at-t{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;opacity:.6}
+.ef-at-t.w{opacity:1}
+.ef-at-t > b{position:relative;display:block;width:100%;max-width:92px;text-align:center;font-family:'Archivo Black',sans-serif;
+  font-weight:400;font-size:40px;line-height:1;padding:9px 0 7px;border-radius:10px;color:var(--ink2);
+  background:linear-gradient(180deg,var(--surface3) 0 50%,var(--surface2) 50% 100%);box-shadow:inset 0 0 0 1px var(--line2)}
+.ef-at-t > b::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.45)}
+.ef-at-t.w > b{color:var(--ink);box-shadow:inset 0 0 0 1px rgba(190,242,100,.35),0 0 18px rgba(190,242,100,.08)}
+.ef-at-m{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:58px;padding-top:12px}
+.ef-at-m span{font:700 9px 'Sometype Mono',monospace;letter-spacing:.16em;color:var(--acid);padding:3px 7px;border-radius:999px;
+  background:rgba(190,242,100,.08);box-shadow:inset 0 0 0 1px rgba(190,242,100,.25);white-space:nowrap}
+.ef-at-m em{font:700 12px 'Sometype Mono',monospace;font-style:normal;color:var(--ink);margin-top:5px;white-space:nowrap}
+.ef-at-m i{font-size:9px;font-style:normal;color:var(--faint);white-space:nowrap}
+.ef-nv{padding:9px 13px 10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+/* Die Bilanz steht in einer Spalte so breit wie sie selbst (auto): aus
+   21:27 wird mit den Jahren 2.100:2.700. Die Zellen nehmen, was übrig ist. */
+.ef-nv-z{display:grid;grid-template-columns:20px minmax(0,1fr) auto;align-items:end;gap:8px}
+.ef-nv-m{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ef-nv-n{font-size:11px;line-height:1.3}
+.ef-nv-c{display:flex;gap:3px;min-width:0}
+.ef-nv-c i{flex:1;max-width:16px;min-width:3px;height:12px;border-radius:3px;background:var(--surface3)}
+.ef-nv-c i.w{background:var(--acid);opacity:.75}.ef-nv-c i.l{background:var(--red);opacity:.7}
+.ef-nv-c i.jetzt{opacity:1;box-shadow:0 0 0 1.5px var(--surface),0 0 0 2.5px var(--acid)}
+.ef-nv-z em{font:700 11px 'Sometype Mono',monospace;font-style:normal;text-align:right;color:var(--ink2)}
+
+/* ── Die Verteilung ── */
+.ef-vt{padding:9px 13px 10px;border-top:1px solid var(--line)}
+.ef-vt-g{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;height:62px;margin:7px 0 4px;align-items:end}
+.ef-vt-s{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;min-width:0}
+.ef-vt-s i{display:block;width:100%;min-height:2px;border-radius:3px 3px 1px 1px;background:var(--surface3)}
+.ef-vt-s.mehr i{background:rgba(185,196,189,.32)}
+.ef-vt-s.jetzt i{background:var(--acid);box-shadow:0 0 12px rgba(190,242,100,.25)}
+.ef-vt-s em{font:600 8.5px 'Sometype Mono',monospace;font-style:normal;color:var(--faint);line-height:1}
+.ef-vt-s.jetzt em{color:var(--acid)}
+.ef-vt-f{font-size:11px;color:var(--muted)}
+.ef-vt-f b{color:var(--ink);font-family:'Sometype Mono',monospace}
+
+/* ── Die Wippe ──
+   Drei Ebenen untereinander: die Zahl, die Bahn mit dem Balken, die beiden
+   Schilder in zwei Spalten. Nichts davon steht auf dem anderen. */
+.ef-wp{padding:8px 13px 10px;border-bottom:1px solid var(--line)}
+.ef-wp-gap{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:0 5px}
+.ef-wp-gap b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:15px;color:var(--ink2)}
+.ef-wp-gap span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.ef-wp-bahn{position:relative;aspect-ratio:300/120;margin-top:-14px}
+.ef-wp-bahn svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ef-wp-dr{fill:var(--surface3);stroke:var(--line2)}
+.ef-wp-bk{stroke:var(--ink2);stroke-width:4;stroke-linecap:round;opacity:.55}
+.ef-wp-ax{fill:var(--surface);stroke:var(--ink2);stroke-width:1.5}
+.ef-wp-t{position:absolute;transform:translate(-50%,-100%)}
+.ef-wp-t .av{--av:26px;width:26px;height:26px;font-size:10px}
+.ef-wp-t .av+.av{margin-left:-7px}
+.ef-wp-t:not(.w){opacity:.6}
+.ef-wp-t.w .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px rgba(190,242,100,.55)}
+.ef-wp-ls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:-6px}
+.ef-wp-l{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.ef-wp-l.w{text-align:right}
+.ef-wp-n{display:flex;flex-direction:column;font-size:10.5px;line-height:1.3;color:var(--muted)}
+.ef-wp-l.w .ef-wp-n b{color:var(--ink)}
+.ef-wp-z{font:600 9.5px 'Sometype Mono',monospace;color:var(--faint);margin-top:1px}
+.ef-wp-l.w .ef-wp-z{color:var(--acid)}
+
+/* ── Die Tabelle vorher und nachher ── */
+.ef-tb{padding:9px 13px 8px;border-top:1px solid var(--line)}
+.ef-tb-k{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:10px;color:var(--muted)}
+.ef-tb-k .ef-k{text-align:center}
+.ef-tb-f{position:relative;margin-top:6px}
+.ef-tb-f svg{position:absolute;inset:0;width:100%;height:100%}
+.ef-tb-l{fill:none;stroke-width:1.6;stroke:var(--line2);vector-effect:non-scaling-stroke}
+.ef-tb-l.g{stroke:var(--acid);stroke-width:2.4}.ef-tb-l.r{stroke:var(--red);stroke-width:2;opacity:.8}
+.ef-tb-e{position:absolute;right:68%;transform:translateY(-50%);display:flex;align-items:center;gap:5px;opacity:.55}
+.ef-tb-e.re{right:auto;left:68%}
+.ef-tb-e.g,.ef-tb-e.r{opacity:1}
+.ef-tb-e i{font-size:10px;font-style:normal;font-weight:600;color:var(--muted);white-space:nowrap}
+.ef-tb-e.g i,.ef-tb-e.r i{color:var(--ink)}
+.ef-tb-e.gold i{color:var(--gold)}
+.ef-tb-e b{font:700 10px 'Sometype Mono',monospace;color:var(--muted);min-width:14px;text-align:right}
+.ef-tb-e.re b{text-align:left}
+.ef-tb-e.g b{color:var(--ink)}
+.ef-tb-e.gold b{color:var(--gold)}
+.ef-tb-e.gold .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--gold)}
+
+/* ── Die Serienleiter ── */
+.ef-sl{padding:9px 13px 10px;border-top:1px solid var(--line)}
+.ef-sl-k{display:flex;align-items:center;gap:7px;font-size:11.5px;min-width:0}
+.ef-sl-k em{flex:0 0 auto;font:700 11px 'Sometype Mono',monospace;font-style:normal;color:var(--acid)}
+.ef-sl-n{min-width:0;margin-left:auto;text-align:right;font-size:10.5px;color:var(--muted)}
+.ef-sl-r{position:relative;display:flex;gap:3px;margin-top:8px;height:14px}
+.ef-sl-r i{flex:1;min-width:0;height:14px;border-radius:3px;background:var(--surface3)}
+.ef-sl-r i.w{background:var(--acid);box-shadow:0 0 8px rgba(190,242,100,.18)}
+.ef-sl-r.balken{border-radius:4px;background:var(--surface3)}
+.ef-sl-r.balken .ef-sl-voll{flex:none;border-radius:4px;background:var(--acid)}
+.ef-sl-r u{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:1px;background:var(--ink2)}
+.ef-sl-r u.liga{background:var(--muted)}
+.ef-sl-ms{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:6px;font-size:10px;line-height:1.4;color:var(--ink2)}
+.ef-sl-ms span::before{content:"";display:inline-block;width:2px;height:9px;margin-right:5px;vertical-align:-1px;background:currentColor}
+.ef-sl-ms .liga{color:var(--muted)}
+
+/* ── Die gerissene Kette ── */
+.ef-rk{padding:9px 13px 10px;border-top:1px solid var(--line)}
+.ef-rk svg{display:block;width:100%;height:auto;overflow:visible}
+.ef-rk-g{fill:none;stroke:var(--acid);stroke-width:2.2;opacity:.75}
+.ef-rk-g.q{opacity:.45}
+.ef-rk-x{fill:none;stroke:var(--red);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.ef-rk-u{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:6px}
+.ef-rk-o{display:flex;align-items:center;gap:6px;min-width:0;font-size:11.5px}
+.ef-rk-o em{flex:0 0 auto;font:700 11px 'Sometype Mono',monospace;font-style:normal;color:var(--ink2)}
+.ef-rk-b{display:flex;align-items:center;gap:6px}
+
+/* ── Das Duo ── */
+.ef-duo{display:grid;grid-template-columns:56px minmax(0,1fr);gap:11px;align-items:center;padding:9px 13px 10px;border-top:1px solid var(--line)}
+.ef-duo svg{width:56px;height:56px;display:block}
+.ef-duo-b{fill:none;stroke:rgba(240,86,106,.55);stroke-width:6}
+.ef-duo-w{fill:none;stroke:var(--acid);stroke-width:6;stroke-linecap:butt}
+.ef-duo text{font-family:'Sometype Mono',monospace;font-weight:700;font-size:11px;fill:var(--ink)}
+.ef-duo + .ef-lg{margin:-4px 13px 0;padding-bottom:9px}
+.ef-duo-r{min-width:0}
+.ef-duo-k{display:flex;align-items:center;gap:7px;font-size:11px;min-width:0}
+.ef-duo-k em{flex:0 0 auto;font:700 11px 'Sometype Mono',monospace;font-style:normal;color:var(--acid)}
+.ef-duo-l{display:flex;gap:3px;height:10px;margin:7px 0 5px}
+.ef-duo-l i{flex:1;max-width:16px;min-width:2px;border-radius:3px;background:var(--acid)}
+.ef-duo-l.balken i{max-width:none}
+
+/* ── Die Medaille ── */
+.ef-md{display:grid;grid-template-columns:48px minmax(0,1fr);gap:11px;align-items:start;padding:10px 13px 10px;border-top:1px solid var(--line)}
+.ef-md-r{min-width:0}
+.ef-md-k{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px}
+.ef-md-k b{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.3}
+.ef-md-k em{font:700 8.5px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.ef-md-k em.viol{color:#b9a3ff}.ef-md-k em.gold{color:var(--gold)}
+.ef-md-p{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0 5px}
+.ef-md-p > span{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line2)}
+.ef-md-p > span.hat{box-shadow:none}
+.ef-md-p > span.neu .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px #b9a3ff}
+.ef-md-p.punkte{gap:3px}
+.ef-md-p.punkte i{width:7px;height:7px;border-radius:50%;background:var(--surface3)}
+.ef-md-p.punkte i.hat{background:#b9a3ff}
+.ef-md-p.punkte i.neu{box-shadow:0 0 0 1.5px var(--ink)}
+
+/* ── Der Spieler des Tages ── */
+.ef-tg{padding:9px 13px 10px;border-top:1px solid var(--line)}
+.ef-tg svg{display:block;width:100%;height:auto;overflow:visible}
+.ef-tg-f{fill:rgba(247,207,74,.10)}
+.ef-tg-l{fill:none;stroke:var(--gold);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:1}
+.ef-tg-b{display:flex;gap:3px;height:12px;margin:6px 0 6px}
+.ef-tg-b i{flex:1;min-width:2px;max-width:22px;border-radius:3px}
+.ef-tg-b.eng{gap:1px}
+.ef-tg-b i.w{background:var(--acid)}.ef-tg-b i.l{background:var(--red);opacity:.8}
+.ef-tg-z{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;font-size:10.5px;color:var(--muted)}
+.ef-tg-z b{font-family:'Sometype Mono',monospace;color:var(--ink)}
+.ef-tg-z b.g{color:var(--acid)}.ef-tg-z b.r{color:var(--red)}
+
+/* ── Die Elo-Kurve ── */
+.ef-ku{padding:9px 13px 9px;border-top:1px solid var(--line)}
+.ef-ku-k{display:flex;align-items:center;gap:7px;font-size:11.5px;min-width:0}
+.ef-ku-s{flex:1 1 auto;min-width:0;text-align:right;color:var(--muted);font-size:11px}
+.ef-ku-s em.g{font:700 11px 'Sometype Mono',monospace;font-style:normal;color:var(--acid)}
+.ef-ku svg{display:block;width:100%;height:auto;margin:6px 0 2px;overflow:visible}
+.ef-ku-0{stroke:var(--line2);stroke-dasharray:3 4}
+.ef-ku-l{fill:none;stroke:var(--ink2);stroke-width:1.8;stroke-linejoin:round;opacity:.7;stroke-dasharray:1}
+.ef-ku circle.w{fill:var(--acid)}.ef-ku circle.l{fill:var(--red)}
+.ef-ku circle.jetzt{stroke:var(--surface);stroke-width:2;filter:drop-shadow(0 0 5px rgba(190,242,100,.6))}
+
+/* ── Jede Begegnung ── */
+.ef-bg{padding:9px 13px 9px;border-top:1px solid var(--line)}
+.ef-bg-k{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}
+.ef-bg-k > span{display:flex;align-items:center;gap:6px;min-width:0;font-size:11.5px}
+.ef-bg-k > span.re{justify-content:flex-end}
+.ef-bg-k em{flex:0 0 auto;font:700 13px 'Sometype Mono',monospace;font-style:normal;color:var(--ink)}
+.ef-bg svg{display:block;width:100%;height:60px;margin:6px 0 3px}
+.ef-bg-0{stroke:var(--line2)}
+.ef-bg rect.a{fill:var(--ink2);opacity:.55}.ef-bg rect.b{fill:var(--muted);opacity:.4}
+.ef-bg rect.jetzt{opacity:1;fill:var(--acid)}
+
+/* ── Die Runde der Vier ── */
+.ef-rd-tafel{display:flex;flex-direction:column;gap:6px;padding:10px 13px 10px;
+  border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent)}
+.ef-rd-sp{display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;align-items:center;gap:10px}
+.ef-rd-m{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ef-rd-n{font-size:12px;line-height:1.3;color:var(--muted)}
+.ef-rd-sp.erst .ef-rd-n b{color:var(--ink)}
+.ef-rd-wl{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink)}
+.ef-rd-e{display:block;width:100%;max-width:120px;height:5px;border-radius:3px;background:var(--surface3);overflow:hidden}
+.ef-rd-e u{display:block;height:100%;border-radius:3px}
+.ef-rd-e.g u{background:var(--acid)}.ef-rd-e.r u{background:var(--red);margin-left:auto}
+.ef-rd-sp > em{font:700 10px 'Sometype Mono',monospace;font-style:normal;text-align:right;min-width:30px}
+.ef-rd-sp > em.g{color:var(--acid)}.ef-rd-sp > em.r{color:var(--red)}
+.ef-rd-ps{border-top:1px solid var(--line);display:flex;flex-direction:column}
+.ef-rd-p{display:grid;grid-template-columns:34px auto 44px auto minmax(0,1fr);align-items:center;gap:7px;padding:6px 13px;
+  border-top:1px solid rgba(255,255,255,.035)}
+.ef-rd-p:first-child{border-top:0}
+.ef-rd-u{font-size:9.5px;color:var(--faint)}
+.ef-rd-t{display:flex;opacity:.5}.ef-rd-t.w{opacity:1}
+.ef-rd-p > b{text-align:center;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:13px;color:var(--faint)}
+.ef-rd-p > b em{font-style:normal}.ef-rd-p > b em.w{color:var(--ink)}
+.ef-rd-a{display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;color:var(--ink2);text-align:right}
+.ef-rd-a > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.04em;line-height:1.3}
+.ef-rd-a svg{width:12px;height:12px;flex:0 0 auto;opacity:.8}
+.ef-rd-mehr{padding:6px 13px 9px;font-size:10.5px;color:var(--muted);border-top:1px solid rgba(255,255,255,.035)}
+
+/* ── Die Probe mit Grenzwerten (nur bau.js) ── */
+#efProbe{position:absolute;left:0;top:0;padding:12px;background:var(--bg);z-index:9999;box-sizing:content-box}
+.ef-probe-t{font:600 10px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:14px 2px 6px}
+.ef-probe-t:first-child{margin-top:0}
+#efProbe .nf-card{margin:0 0 8px}
+
+/* ── Bewegung ── */
+@media (prefers-reduced-motion:no-preference){
+  .ef-f-sp,.ef-rd-sp,.ef-tb-e{animation:efDa .45s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
+  .ef-vt-s i,.ef-tg-b i,.ef-duo-l i{transform-origin:bottom;animation:efY .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
+  .ef-sl-r i.w,.ef-sl-voll{transform-origin:left;animation:efX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
+  .ef-bg rect,.ef-rk-g{transform-box:fill-box;transform-origin:center;animation:efY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .ef-ku-l,.ef-tg-l{animation:efZieh 1s ease-out both}
+  .ef-wp-bahn,.ef-wp-ls,.ef-rk-x{animation:efDa .5s ease-out both}
+  .ef-duo-w{animation:efDa .6s ease-out both}
+  .ef-rd-p{animation:efDa .4s ease-out both;animation-delay:calc(var(--i,0) * 50ms + 150ms)}
+  .ef-at-t > b{animation:efKlapp .5s cubic-bezier(.3,.8,.3,1) both}
+}
+@keyframes efDa{from{opacity:0}}
+@keyframes efY{from{transform:scaleY(0)}}
+@keyframes efX{from{transform:scaleX(0)}}
+@keyframes efZieh{from{stroke-dashoffset:1}}
+@keyframes efKlapp{from{transform:perspective(200px) rotateX(-70deg);opacity:0}}
+
+/* ── Das Band des klaren Siegs ── */
+.ef-band{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:start;padding:11px 13px 10px;
+  background:linear-gradient(96deg,rgba(190,242,100,.07),transparent 72%)}
+.ef-band-s{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.ef-band-s.re{align-items:flex-end;text-align:right}
+.ef-band-avs{display:flex;min-height:48px}
+.ef-band-avs .rav+.rav{margin-left:-11px}
+.ef-band-s:not(.w) .ef-band-avs{opacity:.55}
+.ef-band-s.w .ef-z-n b{color:var(--ink)}
+.ef-band-sc{align-self:center;font-family:'Archivo Black',sans-serif;font-size:19px;letter-spacing:-.03em;color:var(--faint)}
+.ef-band-sc b{font-weight:400}.ef-band-sc b.w{color:var(--ink)}.ef-band-sc i{font-style:normal;font-size:15px}
+
+/* ── Was die App bisher mit „…" kürzt ──
+   Der Entwurf lässt auch die bestehenden Zeilen umbrechen statt zu kürzen:
+   die Zeile eines Bündels, den Faden und den Teamnamen im Ergebnisband.
+   Ein „…" im Bündel versteckte gerade den Teil, der die Zeile ausmacht
+   („Leon und Maxi brechen Martins …"). */
+.nf-sam-z{align-items:flex-start}
+.nf-sam-z span{white-space:normal;overflow:visible;text-overflow:clip}
+.nf-faden span{display:block;overflow:visible;-webkit-line-clamp:none}
+.nf-erg-team{white-space:normal;overflow:visible;text-overflow:clip}

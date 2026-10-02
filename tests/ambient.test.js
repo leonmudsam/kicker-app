@@ -1123,10 +1123,26 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
       const html=_newsCardHtmlM2(s, false, false);
       const ids=m ? [m.a1,m.a2,m.b1,m.b2].filter(Boolean) : [];
       const pm=pmap();
-      return !m || html.indexOf('class="nf-erg"') < 0
+      if(!m || ids.some(id=>!pm[id] || html.indexOf(esc(pm[id].name))<0)) return true;
+      // Die Partie-Karte traegt einen Kopf nach ihrem Anlass [§11.6c]:
+      // Spielfeld, Anzeigetafel, Wippe, Band oder Ergebniszeile. Jeder davon
+      // zeigt alle vier mit Gesicht und den Stand.
+      if(_newsSorte(s) === 'spiel'){
+        // Die Köpfe der gewöhnlichen Partie (.sp-fk) zeigen nicht immer vier
+        // Gesichter, die Namen stehen dann darunter (oben geprüft). Der Stand
+        // gehört aber in JEDE Grafik, als Paar aus Sieger- und Verlierertoren.
+        if(html.indexOf('class="sp-fk ') >= 0){
+          const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+          return html.indexOf('<em>' + hoch + '</em>:' + tief + '</b>') < 0;
+        }
+        const gesichter = (html.match(/class="(rav zn|av)[ "]/g)||[]).length;
+        const stand = html.indexOf('>' + m.score_a + '</em>') >= 0 && html.indexOf('>' + m.score_b + '</em>') >= 0
+          || html.indexOf('>' + m.score_a + '</b>') >= 0 && html.indexOf('>' + m.score_b + '</b>') >= 0;
+        return gesichter < 4 || !stand;
+      }
+      return html.indexOf('class="nf-erg"') < 0
         || (html.match(/class="nf-erg-team/g)||[]).length < 2
-        || (html.match(/class="rav zn/g)||[]).length < 4
-        || ids.some(id=>!pm[id] || html.indexOf(esc(pm[id].name))<0);
+        || (html.match(/class="rav zn/g)||[]).length < 4;
     }).map(s => (s.dataRef||{}).type),
     // Keine Ausrufezeichen [CLAUDE.md §7].
     rufe: roh.filter(s => /!/.test(s.title||'') || /!/.test(s.desc||''))
@@ -1374,7 +1390,7 @@ const _tmoment = JSON.parse(K.eval(`JSON.stringify((function(){
   // sonst prueft der Test die Implementierung gegen sich selbst und bleibt
   // gruen, gerade wenn eine Zeile ihre Angabe nicht mitbringt.
   const genannt = (d.playerIds || []).filter(x => pmap()[x]);
-  const inWirkung = (html.match(/class="nd-wk" data-pid="([0-9a-f-]+)"/g) || [])
+  const inWirkung = (html.match(/class="nd-wk[^"]*" data-pid="([0-9a-f-]+)"/g) || [])
     .map(x => x.slice(x.indexOf('data-pid="') + 10, -1));
   // Und die Prestige-Zelle wird gegen das gezaehlt, was der Bereich darunter
   // ZEIGT — zwei Stellen im Markup, nicht zweimal dieselbe Rechnung.
@@ -1652,7 +1668,20 @@ const _kopfN = JSON.parse(K.eval(`JSON.stringify((function(){
     try { ids = (_newsPids(s)||[]).filter(x => pmap()[x]); } catch(e){}
     if(ids.length < 3) return;
     n++;
+    // Die Runde hat ihre Tabelle als Kopf: eine Zeile je Spieler mit Gesicht.
+    if((s.dataRef||{}).type === 'runde'){
+      const z = (_newsRundeBlatt(s).match(/class="sp-rd-sp/g) || []).length;
+      if(z !== ids.length) falsch.push(s.title + ' → ' + z + ' Zeilen von ' + ids.length);
+      return;
+    }
     const kopf = _newsBlattKopf(s);
+    // Eine Partie trägt ihre Bühne als Kopf [§C33]: dort steht jeder
+    // Genannte mit Namen, in der Zeichnung oder darunter.
+    if(kopf.indexOf('nd-buehne') >= 0){
+      const fehlt = ids.filter(x => kopf.indexOf(esc(pmap()[x].name)) < 0);
+      if(fehlt.length) falsch.push(s.title + ' → Bühne ohne ' + fehlt.map(x => pmap()[x].name).join(', '));
+      return;
+    }
     // Gezaehlt wird am Markup: wie viele Gesichter stehen da, und steht der
     // Chip mit dem Rest daneben?
     const nAv = (kopf.match(/class="rav zn"/g) || []).length;
@@ -1845,6 +1874,54 @@ ok(_feed.kleinsteMoeglich === true,
 ok(_feed.partienImFenster > 20 && _feed.partienOhneKarte === 0,
    'jede Partie des Fensters steht in einer sichtbaren Karte',
    _feed.partienImFenster + ' Partien, ' + _feed.partienOhneKarte + ' ohne Karte');
+// Und auch dann, wenn ihre Karte mit einer Meldung OHNE Partie bündelt. Eine
+// Rivalität oder der Countdown traegt keine `matchId`, das Bündel nach Minute
+// damit auch nicht, und es zaehlte gegen den Deckel je Sorte, der je Tag nur
+// die ersten zwei behaelt. Gemessen am 01.10.: die fuenfte Partie des Tages
+// um 15:08 lag in der Datenbank und stand nirgends im Feed. Gestellt an fuenf
+// echten Partien eines Tages, jede mit einer solchen Begleitmeldung.
+const _buendelPartie = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories().filter(s => (s.dataRef||{}).type === 'spiel');
+  const tage = {}; roh.forEach(s => { (tage[tagKey(s.when)] = tage[tagKey(s.when)] || []).push(s); });
+  const tag = Object.keys(tage).filter(k => tage[k].length >= 5).sort().pop();
+  const spiele = tage[tag].slice(0, 5);
+  const begleit = spiele.map((s, i) => ({id:'rv_' + i, cat:'highlight', ic:'swords', prio:45,
+    title:'Begleitung ' + i, desc:'Eine Meldung mit ' + (i + 2) + ' Zahlen.', when:s.when,
+    dataRef:{type:'rivalry', playerIds:s.dataRef.winners.slice()}}));
+  _cache._consolFrom = null;
+  const feed = _consolidateStories(spiele.concat(begleit)
+    .sort((a, b) => new Date(b.when) - new Date(a.when)));
+  const drin = new Set();
+  feed.forEach(s => { drin.add(s.id); ((s.dataRef||{}).teile||[]).forEach(t => t.id && drin.add(t.id)); });
+  return {n:spiele.length, fehlt:spiele.filter(s => !drin.has(s.id)).map(s => datumFmt(s.when, 'uhr'))};
+})())`));
+ok(_buendelPartie.n === 5 && _buendelPartie.fehlt.length === 0,
+   'auch eine Partie, die mit einer Meldung ohne Partie buendelt, steht im Feed',
+   _buendelPartie.fehlt.join(', ') || _buendelPartie.n + ' Partien');
+// Den Zeitpunkt einer Partie setzt der Server, `now` das Telefon. Geht dessen
+// Uhr zwei Sekunden nach, gilt die gerade gespeicherte Partie im ersten Lauf
+// als kuenftig — und der Memo des Generators hielt genau dieses Ergebnis
+// fest, bis die naechste Partie kam. Gestellt: die Uhr zwei Sekunden vor der
+// letzten Partie, dann eine Minute danach, ohne neue Partie dazwischen.
+const _uhrVersatz = (() => {
+  const Echt = globalThis.Date;
+  const letzte = K.eval('mts(matches[matches.length - 1])');
+  const lid = K.eval('matches[matches.length - 1].id');
+  const stellen = ms => { globalThis.Date = class extends Echt {
+    constructor(...a){ if(a.length===0) super(ms); else super(...a); }
+    static now(){ return ms; } }; };
+  try {
+    K.eval('invalidateCache(); 0');
+    stellen(letzte - 2000);
+    const vorher = K.eval(`_buildStories().some(s => s.id === 'spiel_${lid}')`);
+    stellen(letzte + 60000);
+    const nachher = K.eval(`_buildStories().some(s => s.id === 'spiel_${lid}')`);
+    return {vorher, nachher};
+  } finally { globalThis.Date = Echt; K.eval('invalidateCache(); 0'); }
+})();
+ok(!_uhrVersatz.vorher && _uhrVersatz.nachher,
+   'eine Partie, die fuer die Uhr des Telefons noch kuenftig war, kommt nach, sobald die Uhr sie einholt',
+   JSON.stringify(_uhrVersatz));
 ok(_feed.matchKarten >= 3 && _feed.matchResult > 0,
    'der Feed erzaehlt regelmaessig von konkreten und besonderen Partien',
    _feed.matchKarten + ' Karten mit Matchbezug, ' + _feed.matchResult + ' Ergebnisgeschichte');
@@ -2551,7 +2628,9 @@ const _sam = JSON.parse(K.eval(`JSON.stringify((function(){
     teile.forEach(t => {
       if(obenTitel === norm(t.titel) || obenText === norm(t.text)) kopfKopie++;
     });
-    if(labels.length !== teile.length) unvollstaendig++;
+    // Im Bündel einer Partie ist die Partie die Bühne und keine Zeile.
+    const buehne = b.indexOf('nd-buehne') >= 0 ? teile.filter(t => (t.typ || t.type) === 'spiel').length : 0;
+    if(labels.length !== teile.length - buehne) unvollstaendig++;
     if(b.indexOf('nw-zeile-kopf-teil') >= 0) markiert++;
     // Der Text der Karte darf nicht die Schlagzeilen aller Zeilen sein.
     const alle = (x.dataRef.teile||[]).map(t => norm(t.titel));
@@ -3122,7 +3201,7 @@ ok(_achsen.e.length === 0, 'ein einzelner Erfolg bleibt eine eigene Karte',
 // immer eine Partie samt allem, was aus ihr folgte — und genau das gehoert in
 // die Zeile [§C33].
 ok(_achsen.g[0] && _achsen.g[0].ti
-   === 'Durststrecke und gemeinsame Durststrecke in einer Partie für '
+   === 'Durststrecke für ' + _achsen.n0 + ' und gemeinsame Durststrecke für '
        + _achsen.n0 + ' und ' + _achsen.n1,
    'verknuepfte Spielstories nennen ihre Anlaesse in der Schlagzeile',
    (_achsen.g[0]||{}).ti);
@@ -3174,9 +3253,11 @@ const _wenig = JSON.parse(K.eval(`JSON.stringify((function(){
   // wurde gespielt. Gemessen kamen von 52 Partien des Fensters 18 in einer
   // sichtbaren Karte vor, weil der Deckel die uebrigen wegnahm [§C33].
   const PFLICHT = new Set(['potd','woche','chronik_monat','season_recap','chronik_frei']);
+  // Die Runde der Vier nimmt Partie-Karten auf und ist selbst eine [§11.6c].
   const prt = s => { const d = (s&&s.dataRef)||{};
-    return d.type === 'spiel'
-        || (d.type === 'sammel' && d.quelle === 'spiel' && !!d.matchId); };
+    return d.type === 'spiel' || d.type === 'runde'
+        || (d.type === 'sammel' && d.quelle === 'spiel' && (!!d.matchId
+            || (d.teile||[]).some(x => String((x&&x.id)||'').indexOf('spiel_') === 0))); };
   const zaehlbar = {};
   // Die erste Tafel-Karte eines Tages hat ihren eigenen Platz [§C33].
   const _tfl = s => s.cat === 'tafel' || (s.dataRef||{}).quelle === 'tafel'
@@ -3279,7 +3360,7 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
     const tafel=sicht.filter(istTafel), rest=sicht.filter(s=>!istTafel(s));
     const fun=rest.filter(s=>(s.dataRef||{}).type==='ambient');
     const spiel=rest.filter(s=>{const d=s.dataRef||{}; return d.type!=='ambient' &&
-      !!(d.matchId||d.type==='potd'||d.type==='woche'||
+      !!(d.matchId||d.type==='potd'||d.type==='woche'||d.type==='runde'||
          (d.type==='sammel'&&d.quelle==='spiel'));});
     const gewicht=s=>(s.dataRef||{}).type==='sammel'
       ? Math.max(1,((s.dataRef||{}).teile||[]).length) : 1;
@@ -3297,6 +3378,7 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
       const kandidaten=items.filter(_newsTagKarteWuerdig);
       const max=kandidaten.length?Math.max.apply(null,kandidaten.map(_newsTagSpannung)):0;
       return {id,type:karte&&(karte.dataRef||{}).type,
+        wuerdig:karte?_newsTagKarteWuerdig(karte):true,
         score:karte?_newsTagSpannung(karte):0,max,kand:kandidaten.length};
     });
     aus={tafel:tw,spiel:sw,fun:fun.length,quote:tw/(tw+sw+fun.length),
@@ -3311,8 +3393,9 @@ const _mix = JSON.parse(K.eval(`JSON.stringify((function(){
       karten, falsch:karten.filter(x=>x.kand && x.max >= NEWS_LIMITS.tagKarteSpannung
         ? (!x.id||Math.abs(x.score-x.max)>1e-8) : !!x.id).length,
       ohneBand:karten.filter(x=>!x.id).length,
-      bandUnwuerdig:karten.filter(x=>x.type
-        && !_newsTagKarteWuerdig({dataRef:{type:x.type}})).length};
+      // Gefragt wird die Karte selbst: die Runde ist wuerdig, wenn eine
+      // ihrer Partien es ist [§11.6c], und das sagt der Typ allein nicht.
+      bandUnwuerdig:karten.filter(x=>x.type && !x.wuerdig).length};
   } finally {
     matches=alle; Date=AlteDate; invalidateCache(); _cache._stories=alteStories;
     _cache._consolFrom=null; _cache._frischVon=null;
@@ -3900,6 +3983,8 @@ const _tk = JSON.parse(K.eval(`JSON.stringify((function(){
     breaking: _newsTagKarteWuerdig({dataRef:{type:'lead_change'}}),
     potd: _newsTagKarteWuerdig({dataRef:{type:'potd'}}),
     rueckblick: _newsTagKarteWuerdig({dataRef:{type:'woche'}}),
+    negativ: _newsTagKarteWuerdig({cat:'badges', dataRef:{type:'badge_unlocked', rarity:'negative'}}),
+    pleite: _newsTagKarteWuerdig({dataRef:{type:'loss_streak'}}),
     stunde: NEWS_LIMITS.tagKarteStunde, partien: NEWS_LIMITS.tagKartePartien,
     mind: NEWS_LIMITS.tagKarteMin};
 })())`));
@@ -3924,6 +4009,10 @@ ok(_tk.leer === null, 'ein Tag ohne Partie bekommt keine Karte des Tages',
 ok(!_tk.breaking && !_tk.potd && !_tk.rueckblick,
    'Breaking, der Spieler des Tages und ein Rueckblick tragen das Band nie',
    JSON.stringify({breaking:_tk.breaking, potd:_tk.potd, rueckblick:_tk.rueckblick}));
+// Und keine Schande und keine Pleitenserie: das Band ist golden, und Gold
+// gehoert dem Titel [§C25]. Gemessen trug „Anton: Die Talfahrt" das Band.
+ok(!_tk.negativ && !_tk.pleite, 'eine Karte mit negativer Richtung traegt das Band nie',
+   JSON.stringify({negativ:_tk.negativ, pleite:_tk.pleite}));
 
 // ── Die Wochenkarte zeigt alle sechs Wertungen ──────────────────────
 // Sie zeigte drei und darunter „und 3 weitere Wertungen": die Ueberraschung,
@@ -4084,9 +4173,11 @@ const _tagmix = JSON.parse(K.eval(`JSON.stringify((function(){
   const pflicht = new Set(['potd','woche','chronik_monat','season_recap','elo_swing']);
   // Eine Partie-Karte zaehlt nicht mit: sie ist keine Auswahl, sie wurde
   // gespielt. Neun Partien an einem Tag sind neun Ereignisse [§C33].
+  // Die Runde der Vier nimmt Partie-Karten auf und ist selbst eine [§11.6c].
   const prt = s => { const d = (s&&s.dataRef)||{};
-    return d.type === 'spiel'
-        || (d.type === 'sammel' && d.quelle === 'spiel' && !!d.matchId); };
+    return d.type === 'spiel' || d.type === 'runde'
+        || (d.type === 'sammel' && d.quelle === 'spiel' && (!!d.matchId
+            || (d.teile||[]).some(x => String((x&&x.id)||'').indexOf('spiel_') === 0))); };
   // Die erste Tafel-Karte eines Tages zaehlt nicht mit: sie hat ihren eigenen
   // Platz, damit sie keiner Karte den ihren nimmt, die schon dastand [§C33].
   const ueber = Object.keys(proTag).filter(k => {
@@ -4336,6 +4427,35 @@ const _brk = JSON.parse(K.eval(`JSON.stringify((function(){
   };
   return {gleich: bau(p[0].id), fremd: bau(p[1].id), mid: p[0].id};
 })())`));
+// ── Jeder Anlass nennt die, denen er gehört ─────────────────────────
+//    „Seltene Auszeichnung in einer Partie für Julian und Leo" stand über
+//    einer Auszeichnung, die nur Julian geholt hat, und „Enges Spiel und
+//    Rivalitätsmarke … für Martin, Jane und Maxi" warf Sieger und Rivalen in
+//    einen Topf [§C33].
+const _wem = JSON.parse(K.eval(`JSON.stringify((function(){
+  const tage = [...new Set(matches.map(m => tagKey(mts(m))))].sort();
+  const m = _newsTagMs(tage[tage.length - 1])[0];
+  const P = players.map(p => p.id), nm = i => pmap()[P[i]].name;
+  const w = new Date(mts(m));
+  const l = [
+    {id:'spiel_' + m.id, cat:'highlight', ic:'ball', when:w, prio:40, title:'Ein enges Spiel', desc:'10:8.',
+     dataRef:{type:'spiel', resultKind:'eng', matchId:m.id, playerIds:[P[2], P[3]], winners:[P[2], P[3]], losers:[P[0], P[4]]}},
+    {id:'wem-b', cat:'team', ic:'medal', when:w, prio:60, title:nm(2) + ': Mauer', desc:'Selten.',
+     dataRef:{type:'badge_unlocked', badgeId:'wall_badge', rarity:'rare', matchId:m.id, playerId:P[2], playerIds:[P[2]]}},
+    {id:'wem-r', cat:'duell', ic:'swords', when:w, prio:50, title:'50. Duell', desc:'50 Begegnungen.',
+     dataRef:{type:'rivalry_milestone', a:P[0], b:P[1], n:50, matchId:m.id}},
+    {id:'wem-k', cat:'highlight', ic:'flameBreak', when:w, prio:55, title:'Serie gerissen', desc:'Acht Siege.',
+     dataRef:{type:'streak_killer', matchId:m.id, streak:8, victimPid:P[4], breakerIds:[P[2], P[3]], playerIds:[P[2], P[3], P[4]]}}
+  ];
+  _cache._consolFrom = null;
+  const sam = _consolidateStories(l).filter(x => (x.dataRef||{}).type === 'sammel');
+  return {titel: sam.length ? sam[0].title : '', n: [0,1,2,3,4].map(nm)};
+})())`));
+ok(/Auszeichnung „[^“]+“ für /.test(_wem.titel) && _wem.titel.indexOf('“ für ' + _wem.n[2] + ' ') >= 0
+   && _wem.titel.indexOf('Serienbruch gegen ' + _wem.n[4]) >= 0
+   && / im engen Spiel$/.test(_wem.titel) && _wem.titel.indexOf(_wem.n[3]) < 0,
+   'eine Bündel-Schlagzeile nennt je Anlass, wem er gehört, die Auszeichnung mit Namen und das Ergebnis als Ort',
+   _wem.titel);
 ok(_brk.gleich.sammel === 1 && _brk.gleich.karten === 1,
    'zwei Breaking-Meldungen einer Partie werden EINE Karte',
    _brk.gleich.karten + ' Karten');
@@ -5484,7 +5604,7 @@ const _wirk = JSON.parse(K.eval(`JSON.stringify((function(){
     eigene:eigene.length,
     staende:eigene.filter(t => { const v = standVon(t); return v && m.indexOf(v) >= 0; }).length,
     abschnitte:(m.match(/Wirkung auf die Laufbahn/g) || []).length,
-    reihen: (m.match(/class="nd-wk"/g) || []).length,
+    reihen: (m.match(/class="nd-wk( [^"]*)?"/g) || []).length,
     // Der Balken zeigt die Strecke zur naechsten Schwelle, und darin heller,
     // was der Spieltag dazugelegt hat: zwei Segmente je Zeile.
     balken: (m.match(/class="nd-wk-b"/g) || []).length,
@@ -5507,6 +5627,112 @@ ok(_wirk.abschnitte === 1 && _wirk.reihen === _wirk.spieler && _wirk.spieler > 0
 ok(_wirk.balken === _wirk.reihen && _wirk.zuwachs === _wirk.reihen,
    'und jede Zeile zeigt den Weg zur naechsten Schwelle und den Zuwachs',
    _wirk.balken + ' Balken, ' + _wirk.zuwachs + ' Zuwaechse');
+
+console.log('=== ERST ZEICHNEN, DANN RECHNEN ===');
+// `loadAll` ruft den Abgleich direkt nach `render()`. Lief der Generator
+// darin sofort, stand die neue Rangliste erst nach seinen rund 370 ms auf dem
+// Bildschirm. Gefragt wird, ob er im selben Aufruf schon gelaufen ist.
+const _sofort = K.eval(`(function(){
+  let n = 0; const alt = _buildStories;
+  _buildStories = function(){ n++; return alt.apply(this, arguments); };
+  const vorher = _cache._stories;
+  _cache._stories = [{id:'probe', when:new Date(), dataRef:{}}];
+  const p = syncStoriesViaDb(); if(p && p.catch) p.catch(() => {});
+  const sofort = n;
+  _buildStories = alt; _cache._stories = vorher;
+  return sofort;
+})()`);
+ok(_sofort === 0, 'der News-Generator wartet auf einen ruhigen Moment nach dem Zeichnen',
+   _sofort + ' Laeufe im selben Aufruf');
+
+console.log('=== DIE STUFE KOMMT AUS DEN PUNKTEN ===');
+// Leon stand im Blatt mit 2687 Prestige als Volutenkranz und „noch 0 bis
+// zum Zierkranz": die Stufe kam als Zahl aus der Datenbank und gehoerte einer
+// aelteren Leiter. Die Punkte sind die Beobachtung, die Stufe eine Ableitung.
+// Gespeichert wird hier absichtlich die falsche Stufe.
+const _wkStufe = JSON.parse(K.eval(`JSON.stringify((function(){
+  const pid = players[0].id, je = {};
+  const p = INSIGNIEN[3].min + 120;
+  je[pid] = {vor:p - 40, nach:p, stufeVor:1, stufeNach:1};
+  const h = _ndWirkungBlock(je);
+  return {h, name:INSIGNIEN[3].name, next:INSIGNIEN[4].name,
+          rest:INSIGNIEN[4].min - p, falsch:INSIGNIEN[1].name};
+})())`));
+ok(_wkStufe.h.indexOf('<em>' + _wkStufe.name + '</em>') >= 0
+   && _wkStufe.h.indexOf('noch ' + _wkStufe.rest + ' bis zum ' + _wkStufe.next) >= 0
+   && _wkStufe.h.indexOf('<em>' + _wkStufe.falsch + '</em>') < 0,
+   'die Wirkung nennt die Stufe, die zu den Punkten gehoert',
+   _wkStufe.name + ' / noch ' + _wkStufe.rest);
+// Und wer einen Rekord abgeben oder teilen muss, steht in der Wirkung mit:
+// sein Minus gehoert zu diesem Tag. Die Rekord-Karte traegt dafuer die
+// bisherigen Halter, die nicht mehr allein halten.
+const _wkVor = JSON.parse(K.eval(`JSON.stringify((function(){
+  const fehlt = [];
+  let n = 0;
+  (_buildStories() || []).forEach(s => {
+    const d = s.dataRef || {};
+    if(!/^rekord_(geholt|uebernommen|geteilt|allein)/.test(d.type || '')) return;
+    if(!d.laufbahn || !Array.isArray(d.vorher)) return;
+    const neu = d.halter || [];
+    d.vorher.filter(pid => neu.indexOf(pid) < 0 || neu.length > d.vorher.length)
+      .forEach(pid => { n++; if(!d.laufbahn[pid]) fehlt.push(s.id + ' ' + pid); });
+  });
+  return {n, fehlt};
+})())`));
+ok(_wkVor.fehlt.length === 0,
+   'wer einen Rekord abgibt oder teilt, steht in der Wirkung der Karte',
+   _wkVor.fehlt.slice(0, 3).join(', ') || _wkVor.n + ' Vorgaenger');
+
+// Und auf der Karte selbst steht, wer verliert: die Schlagzeile feiert die
+// Neuen, und wer seinen Anteil abgeben musste, erfuhr es erst im Blatt. Die
+// Zeile nennt den Betrag und die Stufe, auf die jemand faellt.
+const _vband = JSON.parse(K.eval(`JSON.stringify((function(){
+  const a = players[0].id, b = players[1].id, lb = {};
+  const lo = INSIGNIEN[3].min;
+  lb[a] = {vor:lo + 50, nach:lo - 30};
+  lb[b] = {vor:400, nach:460};
+  const h = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:lb}});
+  const ohne = _newsVerlustBand({dataRef:{type:'rekord_geholt', laufbahn:{[b]:lb[b]}}});
+  return {h, ohne, a:pmap()[a].name, b:pmap()[b].name, stufe:INSIGNIEN[2].name};
+})())`));
+ok(_vband.h.indexOf(_vband.a) >= 0 && _vband.h.indexOf('−80') >= 0
+   && _vband.h.indexOf(_vband.stufe) >= 0 && _vband.h.indexOf(_vband.b) < 0 && _vband.ohne === '',
+   'die Tafel-Karte nennt, wer Prestige verliert, und nur den',
+   _vband.h.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+// Und Name, Betrag und Stufe stehen in EINEM Chip. Als Reihe aus Text
+// brachen sie bei drei Namen um, und der Betrag stand in der zweiten Zeile
+// neben dem falschen Namen.
+const _vchips = (_vband.h.match(/<b class="nf-vl">[\s\S]*?<\/b>/g) || []);
+ok(_vchips.length === 1 && _vchips[0].indexOf(_vband.a) >= 0 && _vchips[0].indexOf('−80') >= 0
+   && _vchips[0].indexOf(_vband.stufe) >= 0 && /class="(rcp-av|av)/.test(_vchips[0]),
+   'je Verlierer ein Chip mit Gesicht, Name, Betrag und Stufe',
+   _vchips.length + ' Chips');
+
+// Und der Satz der Rekordkarte nennt, wer dabei verliert: die Karte erzaehlte
+// nur von Jane, und dass Leon den Rekord jetzt teilt und Prestige verliert,
+// stand nirgends. Geprueft an jeder Karte, deren bisheriger Halter in der
+// Wirkung mit einem Minus steht.
+const _vsatz = JSON.parse(K.eval(`JSON.stringify((function(){
+  let n = 0; const fehlt = [];
+  (_buildStories() || []).forEach(s => {
+    const d = s.dataRef || {};
+    if(!/^rekord_/.test(d.type || '') || !d.laufbahn) return;
+    // Nur wo jemand teilt oder abgibt: beim Ausbauen ist der Vorgaenger der
+    // Halter selbst, und sein Minus kommt von anderswo.
+    if(['dazu', 'uebernommen'].indexOf(d.fall) < 0) return;
+    (d.vorher || []).forEach(pid => {
+      const w = d.laufbahn[pid];
+      if(!w || !(w.nach < w.vor)) return;
+      n++;
+      if(String(s.desc).indexOf(pmap()[pid].name) < 0 || !/Prestige weniger/.test(s.desc))
+        fehlt.push(s.title);
+    });
+  });
+  return {n, fehlt};
+})())`));
+ok(_vsatz.n > 0 && _vsatz.fehlt.length === 0,
+   'die Rekordkarte nennt im Satz, wer an diesem Spieltag Prestige verliert',
+   _vsatz.fehlt.slice(0, 2).join(' · ') || _vsatz.n + ' Verluste');
 
 console.log('=== DAS AUFGEHEN DER TAFEL IST EINE NACHRICHT ===');
 // Ein Monat unter CHRONIK_MIN_TAGE Spieltagen hat keine Chronik, und
@@ -5688,15 +5914,41 @@ const _rekBlatt = JSON.parse(K.eval(`JSON.stringify((function(){
     standStimmt: w ? w.nach === Math.round(P.punkte || 0) : false,
     quelleStimmt: (w && q) ? (w.basis === Math.round(q.basis)
       && w.halter === q.halter && w.staffel === q.staffel) : false,
-    zeigtStaende: m0.indexOf(String(w ? w.vor : -1) + ' → ' + String(w ? w.nach : -1)) >= 0,
+    // Die Wirkung steht gezeichnet wie an der Tafel: Stand nachher, Zuwachs
+    // oder Verlust. Der Rechentext der Quelle stand je Halter in einer Zeile
+    // und gehört ins Laufbahn-Blatt [§C33].
+    zeigtStaende: !!w && m0.indexOf('>' + w.nach + ' Prestige') >= 0
+      && (w.nach === w.vor || m0.indexOf((w.nach > w.vor ? '+' : '−') + Math.abs(w.nach - w.vor)) >= 0),
     zeigtRechnung: m0.indexOf('Grundwert') >= 0,
     rohWert: w ? (m0.indexOf('+' + w.basis + ' Prestige') >= 0
                   || m0.indexOf(w.basis + ' Prestige ›') >= 0) : false,
     altRechnung: mAlt.indexOf('Grundwert') >= 0,
-    // Gemessen wird die ZEILE, nicht das ganze Blatt: der Pfeil steht auch im
-    // Kopf einer anderen Zeile, und ein ODER darauf ist immer wahr.
-    altOhneZuwachs: mAlt.slice(mAlt.indexOf('Für die Laufbahn')).indexOf('→') < 0};
+    altHeute: mAlt.indexOf('Prestige aus diesem Rekord') >= 0,
+    // Gemessen wird der Abschnitt, nicht das ganze Blatt: der Pfeil steht auch
+    // im Kopf einer anderen Zeile, und ein ODER darauf ist immer wahr.
+    altOhneZuwachs: mAlt.slice(mAlt.indexOf('Wirkung auf die Laufbahn')).indexOf('→') < 0};
 })())`));
+// Die Bühne des Rekords: alle Halter genannt, unter „vorher" nur, wer
+// wirklich weg ist, und kein Halter unter den Verfolgern — die Liste bekam
+// nur `playerIds`, und die nennen höchstens drei.
+const _rekBuehne = JSON.parse(K.eval(`JSON.stringify((function(){
+  const falsch = []; let n = 0;
+  _buildStories().filter(s => /^rekord_/.test((s.dataRef || {}).type || '')).forEach(s => {
+    const d = s.dataRef, pm = pmap(), b = _newsDetailBody(s); n++;
+    const h = ((d.halter && d.halter.length) ? d.halter : d.playerIds || []).filter(id => pm[id]);
+    const weg = (d.vorher || []).filter(id => pm[id] && h.indexOf(id) < 0);
+    const kopf = b.slice(0, b.indexOf('nd-rk-h') + 400);
+    if(h.some(id => kopf.indexOf(esc(pm[id].name)) < 0)) falsch.push(s.id + ' Halter fehlt');
+    const alt = (b.match(/class="nd-rk-alt">([\\s\\S]*?)<small>/) || [, ''])[1];
+    if((alt.match(/data-pid=/g) || []).length !== Math.min(3, weg.length)) falsch.push(s.id + ' vorher');
+    const vf = [...b.matchAll(/class="nd-vf-nm">([^<]*)</g)].map(x => x[1]);
+    if(vf.some(nm => h.some(id => esc(pm[id].name) === nm))) falsch.push(s.id + ' Halter als Verfolger');
+  });
+  return {n, falsch};
+})())`));
+ok(_rekBuehne.n > 0 && _rekBuehne.falsch.length === 0,
+   'die Bühne eines Rekords nennt alle Halter, zeigt nur echte Vorgänger, und kein Halter steht unter den Verfolgern',
+   _rekBuehne.falsch.slice(0, 3).join(' | ') || _rekBuehne.n + ' Rekord-Blätter');
 ok(_rekBlatt.n > 0, 'der Generator bildet Rekord-Karten',
    (_rekBlatt.typen || []).join(', '));
 ok(_rekBlatt.laengen && _rekBlatt.laengen.every(x => x > 400),
@@ -5708,14 +5960,14 @@ ok(_rekBlatt.hatWirkung && _rekBlatt.standStimmt,
 ok(_rekBlatt.quelleStimmt,
    'und Grundwert, Halterzahl und Wurzelstaffel ihrer Quelle',
    String(_rekBlatt.quelleStimmt));
-ok(_rekBlatt.zeigtStaende && _rekBlatt.zeigtRechnung,
-   'das Blatt zeigt beide Staende und die Rechnung dahinter',
+ok(_rekBlatt.zeigtStaende && !_rekBlatt.zeigtRechnung,
+   'das Blatt zeigt die Wirkung aus den gespeicherten Staenden gezeichnet und keinen Rechentext',
    'Staende ' + _rekBlatt.zeigtStaende + ', Rechnung ' + _rekBlatt.zeigtRechnung);
 ok(_rekBlatt.rohWert === false,
    'und nennt den rohen Grundwert nie als erhaltene Punkte');
-ok(_rekBlatt.altRechnung && _rekBlatt.altOhneZuwachs,
-   'eine Karte ohne gespeicherte Staende zeigt die Rechnung und keinen Zuwachs',
-   'Rechnung ' + _rekBlatt.altRechnung + ', ohne Zuwachs ' + _rekBlatt.altOhneZuwachs);
+ok(_rekBlatt.altHeute && !_rekBlatt.altRechnung && _rekBlatt.altOhneZuwachs,
+   'eine Karte ohne gespeicherte Staende zeigt, was der Rekord heute bringt, und keinen Zuwachs',
+   'heute ' + _rekBlatt.altHeute + ', Rechnung ' + _rekBlatt.altRechnung + ', ohne Zuwachs ' + _rekBlatt.altOhneZuwachs);
 
 console.log('=== DER ANLASS STEHT ZUERST ===');
 // Eine Sammelkarte erbt ihr Breaking von einer ihrer Zeilen [§C33]. Welche
@@ -5915,6 +6167,44 @@ const _faden = JSON.parse(K.eval(`JSON.stringify((function(){
   const verl = m => m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
   const gl = (x, y) => x.length === y.length && x.every(v => y.includes(v));
   const falsch = [], arten = {};
+  // Die Wende: ein Sieg nach der Pleitenserie, und kein früherer dazwischen.
+  const wendeFehler = (sp, ls) => {
+    const m = reihe[ix.get(sp.matchId)];
+    if(!m || !((ls.type === 'team_loss_streak' && gl([ls.a, ls.b], sieger(m)))
+            || (ls.type === 'loss_streak' && sieger(m).includes(ls.pid)))) return 'Wende ohne Serie';
+    const wer = ls.type === 'loss_streak' ? [ls.pid] : [ls.a, ls.b];
+    for(let i = ix.get(ls.matchId) + 1; i < ix.get(m.id); i++)
+      if(wer.every(p => sieger(reihe[i]).includes(p))) return 'Wende nach einem früheren Sieg';
+    return '';
+  };
+  // Die Revanche: dieselben zwei Duos, andersherum, an einem anderen Tag,
+  // und keine Begegnung dazwischen.
+  const revancheFehler = (sp, vz) => {
+    const m = reihe[ix.get(sp.matchId)], v = reihe[ix.get(vz.matchId)];
+    if(!m || !v || !gl(sieger(v), verl(m)) || !gl(verl(v), sieger(m))) return 'Revanche ohne Paarung';
+    if(tagKey(mts(v)) === tagKey(mts(m))) return 'Revanche am selben Tag';
+    for(let i = ix.get(v.id) + 1; i < ix.get(m.id); i++){
+      const n = reihe[i], sd = [[n.a1,n.a2],[n.b1,n.b2]];
+      if(sd.some(x => gl(x, sieger(m))) && sd.some(x => gl(x, verl(m)))) return 'Revanche überspringt eine Begegnung';
+    }
+    return '';
+  };
+  // Das Ende: die Serie riss genau hier, nicht schon vorher.
+  const endeFehler = (k, w) => {
+    if(w.pid !== k.victimPid) return 'Ende ohne Serie';
+    for(let i = ix.get(w.matchId) + 1; i < ix.get(k.matchId); i++)
+      if(verl(reihe[i]).includes(k.victimPid)) return 'Ende einer schon gerissenen Serie';
+    return '';
+  };
+  // Unter allen Paaren aus Quelle und Ziel muss eines stimmen; sonst nennt
+  // der Fehler das erste.
+  const paar = (cs, zs, ct, zt, f, leer) => {
+    let erst = '';
+    for(const c of cs.filter(d => ct(d.type))) for(const z of zs.filter(d => zt(d.type))){
+      const e = f(c, z); if(!e) return ''; erst = erst || e;
+    }
+    return erst || leer;
+  };
   fd.forEach((f, id) => {
     arten[f.art] = (arten[f.art] || 0) + 1;
     const c = by.get(id), z = by.get(f.ziel);
@@ -5922,34 +6212,11 @@ const _faden = JSON.parse(K.eval(`JSON.stringify((function(){
     if(!(new Date(z.when) < new Date(c.when))) falsch.push(id + ' zeigt nicht zurück');
     if(!NEWS_FADEN_ART[f.art]) falsch.push(id + ' ohne Art');
     const cs = glied(c).map(x => x.dataRef || {}), zs = glied(z).map(x => x.dataRef || {});
-    if(f.art === 'wende'){
-      const sp = cs.find(d => d.type === 'spiel'); const m = sp && reihe[ix.get(sp.matchId)];
-      const ls = zs.find(d => (d.type === 'team_loss_streak' && m && gl([d.a, d.b], sieger(m)))
-                            || (d.type === 'loss_streak' && m && sieger(m).includes(d.pid)));
-      if(!m || !ls){ falsch.push(id + ' Wende ohne Serie'); return; }
-      const wer = ls.type === 'loss_streak' ? [ls.pid] : [ls.a, ls.b];
-      for(let i = ix.get(ls.matchId) + 1; i < ix.get(m.id); i++){
-        const w = sieger(reihe[i]);
-        if(wer.every(p => w.includes(p))){ falsch.push(id + ' Wende nach einem früheren Sieg'); break; }
-      }
-    }
-    if(f.art === 'revanche'){
-      const sp = cs.find(d => d.type === 'spiel'); const m = sp && reihe[ix.get(sp.matchId)];
-      const vz = zs.find(d => d.type === 'spiel'); const v = vz && reihe[ix.get(vz.matchId)];
-      if(!m || !v || !gl(sieger(v), verl(m)) || !gl(verl(v), sieger(m))){ falsch.push(id + ' Revanche ohne Paarung'); return; }
-      if(tagKey(mts(v)) === tagKey(mts(m))) falsch.push(id + ' Revanche am selben Tag');
-      for(let i = ix.get(v.id) + 1; i < ix.get(m.id); i++){
-        const n = reihe[i], sd = [[n.a1,n.a2],[n.b1,n.b2]];
-        if(sd.some(x => gl(x, sieger(m))) && sd.some(x => gl(x, verl(m)))){ falsch.push(id + ' Revanche überspringt eine Begegnung'); break; }
-      }
-    }
-    if(f.art === 'ende'){
-      const k = cs.find(d => d.type === 'streak_killer');
-      const w = k && zs.find(d => d.type === 'win_streak' && d.pid === k.victimPid);
-      if(!w){ falsch.push(id + ' Ende ohne Serie'); return; }
-      for(let i = ix.get(w.matchId) + 1; i < ix.get(k.matchId); i++)
-        if(verl(reihe[i]).includes(k.victimPid)){ falsch.push(id + ' Ende einer schon gerissenen Serie'); break; }
-    }
+    let e = '';
+    if(f.art === 'wende') e = paar(cs, zs, t => t === 'spiel', t => t === 'loss_streak' || t === 'team_loss_streak', wendeFehler, 'Wende ohne Serie');
+    if(f.art === 'revanche') e = paar(cs, zs, t => t === 'spiel', t => t === 'spiel', revancheFehler, 'Revanche ohne Paarung');
+    if(f.art === 'ende') e = paar(cs, zs, t => t === 'streak_killer', t => t === 'win_streak', endeFehler, 'Ende ohne Serie');
+    if(e) falsch.push(id + ' ' + e);
   });
   // Gestellt: derselbe Rekord zweimal. Wer ihn vor der früheren Karte hielt
   // und jetzt wieder hat, holt ihn zurück — wer ihn nur ausbaut, setzt fort.
@@ -5999,8 +6266,12 @@ const _faden = JSON.parse(K.eval(`JSON.stringify((function(){
 ok(_faden.n > 0 && _faden.falsch.length === 0,
    'jeder Faden zeigt auf eine ältere Karte im Feed und stimmt mit den Partien',
    _faden.falsch.slice(0, 2).join(' | ') || JSON.stringify(_faden.arten));
-ok(_faden.arten.wende > 0 && _faden.arten.ende > 0 && _faden.arten.revanche > 0,
-   'Wende, Ende und Revanche kommen im Fenster vor', JSON.stringify(_faden.arten));
+// Das Ende im Fenster liegt in einer Runde: die Serie und ihr Bruch stehen
+// auf derselben Karte, und ein Faden von einer Karte zu sich selbst sagt
+// nichts [§11.6c]. Ob ein Ende richtig gezogen wird, misst der gestellte
+// Fall darunter (`endeOk`).
+ok(_faden.arten.wende > 0 && _faden.arten.revanche > 0,
+   'Wende und Revanche kommen im Fenster vor', JSON.stringify(_faden.arten));
 ok(_faden.zurueck === 'zurueck→r1' && _faden.weiter === 'weiter→r2' && !_faden.erste,
    'ein Rekord kommt zurück oder wird fortgesetzt, die erste Karte hat keinen Faden',
    _faden.zurueck + ' · ' + _faden.weiter);
@@ -6009,43 +6280,82 @@ ok(_faden.endeOk && _faden.wendeOk,
    'nur der erste Riss beendet eine Serie, nur der erste Sieg wendet eine Pleitenserie',
    'Ende ' + _faden.endeOk + ', Wende ' + _faden.wendeOk);
 
-// ── Die Bildzone einer Partie folgt ihrem Anlass [§C33] ─────────────
-// Jede Partie-Karte trug denselben Fuß, Bogen und Chips, und dreißig Karten
-// sahen im Feed gleich aus. Jetzt wählt der Anlass die Zeichnung. Geprüft
-// wird dreierlei, jeweils gegen die rohen Partien nachgerechnet: dass jede
-// Zeichnung stimmt, dass es Vielfalt gibt (keine Form trägt die Hälfte der
-// Karten), und dass der Satz darüber nicht wiederholt, was der Fuß zeigt.
+// ── Kopf und Fuß einer Partie folgen ihrem Anlass [§C33, §11.6c] ─────
+// Jede Partie-Karte trug dasselbe Ergebnisband und darunter eine Zeile, und
+// dreißig Karten sahen im Feed gleich aus. Jetzt wählt der Anlass Kopf und
+// Fuß. Geprüft wird dreierlei, jeweils gegen die rohen Partien
+// nachgerechnet: dass jede Zeichnung stimmt, dass es Vielfalt gibt (keine
+// Form trägt die Hälfte der Karten), und dass der Satz darüber nicht
+// wiederholt, was die Zeichnung zeigt.
 const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
-  const alle = getStoriesCache().filter(s => _newsSorte(s) === 'spiel' && (s.dataRef||{}).matchId);
-  const falsch = [], formen = {}; let n = 0;
+  const karten = getStoriesCache().filter(s => _newsSorte(s) === 'spiel' && (s.dataRef||{}).matchId);
+  const falsch = [], formen = {}; let n = 0, feldN = 0;
   const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
   const gew = (pid, m) => (m.winner === 'A') === (m.a1 === pid || m.a2 === pid);
-  alle.forEach(s => {
+  const text = h => String(h).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
+  const FORM = {feld:'sp-feld', krimi:'sp-at', aussenseiter:'sp-wp', deutlich:'sp-vt', spitze:'sp-tb', rang:'sp-tb',
+    serie:'sp-sl', riss:'sp-rk', teamserie:'sp-duo', wende:'sp-ku', duell:'sp-bg', medaille:'sp-md',
+    premiere:'sp-pm', rolle:'sp-ro'};
+  // Die gewöhnliche Partie trägt eine der Formen [§C33]: die Klasse folgt der Wahl.
+  const FORMKL = {mosaik:'sp-mo', tacho:'sp-ta', streu:'sp-sd', transfer:'sp-et', chemie:'sp-ch', gegner:'sp-gg',
+    revanche:'sp-rv', gipfel:'sp-gp', rueckkehr:'sp-zu', gefaelle:'sp-gf', tagesring:'sp-tr', zaehlwerk:'sp-zw', feld:'sp-feld'};
+  karten.forEach(s => {
     const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
     if(!m) return;
+    const a = _spAnlass(s);
     const html = _newsCardHtmlM2(s, false, false);
-    const form = ['nf-spitze','nf-riss','nf-wende','nf-ser','nf-spf','nf-bil','nf-meds','nf-rgs','nf-tor','nf-waage']
-      .find(k => html.indexOf('class="' + k) >= 0 || html.indexOf(' ' + k + '"') >= 0);
-    if(!form){ falsch.push(s.id + ' ohne Bildzone'); return; }
-    n++; formen[form] = (formen[form] || 0) + 1;
+    const form = a.key === 'feld' ? _spForm(m).key : null;
+    const kl = form ? FORMKL[form] : FORM[a.key];
+    if(!a.key || !kl || html.indexOf('class="' + kl) < 0 && html.indexOf('class="sp-fk ' + kl) < 0){
+      falsch.push(s.id + ' ohne Bild für ' + a.key + (form ? '/' + form : '')); return; }
+    n++; formen[form || a.key] = (formen[form || a.key] || 0) + 1;
+    if(html.indexOf('class="sp-feld') >= 0) feldN++;
+    if(a.key === 'medaille' && !/rare|legendary/.test(String((_newsSpielFakten(s).find(y => y.badgeId === a.x.badgeId) || {}).rarity)))
+      falsch.push(s.id + ' Medaille für eine gewöhnliche Auszeichnung');
     const w = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
-    const l = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
     const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
-    // Der Bogen trägt die Siegchance der Sieger, die Chips den Gewinn je Sieger.
-    const b = html.match(/nf-bogen[^>]*>[\\s\\S]*?<b class="num">(\\d+) %<\\/b>/);
-    if(b && d.quote != null && +b[1] !== Math.max(1, d.quote)) falsch.push(s.id + ' Bogen ' + b[1] + ' statt ' + d.quote);
-    const chips = [...html.matchAll(/nf-eloc[\\s\\S]*?<b class="[gr]">([+-]?\\d+)<\\/b>/g)].map(x => +x[1]);
-    if(chips.length && chips.join() !== w.map(p => _newsEloDelta(p, m.id)).filter(v => v != null).join())
-      falsch.push(s.id + ' Chips ' + chips);
-    // Die Waage trägt alle vier, die Verlierer links.
-    if(form === 'nf-waage'){
-      const z = [...html.matchAll(/<b class="[gr] num">([+-]?\\d+)<\\/b>/g)].map(x => +x[1]);
-      const soll = l.concat(w).map(p => _newsEloDelta(p, m.id)).filter(v => v != null);
-      if(z.join() !== soll.join()) falsch.push(s.id + ' Waage ' + z + ' statt ' + soll);
+    const vor = reihe.slice(0, reihe.indexOf(m) + 1);
+    const t = text(html);
+    // Das Spielfeld: Abwehr A, Sturm B, Sturm A, Abwehr B, und je Stange
+    // die Elo der Partie.
+    if(form === 'feld'){
+      const rolle = (id) => m[(m.a1 === id ? 'a1' : m.a2 === id ? 'a2' : m.b1 === id ? 'b1' : 'b2') + '_pos'];
+      const def = ids => ids.find(id => rolle(id) === 'def') || ids[0];
+      const atk = ids => ids.find(id => id !== def(ids));
+      const soll = [def([m.a1,m.a2]), atk([m.b1,m.b2]), atk([m.a1,m.a2]), def([m.b1,m.b2])]
+        .map(id => _newsEloDelta(id, m.id)).map(v => (v > 0 ? '+' : v < 0 ? '−' : '±') + Math.abs(v));
+      const ist = [...html.matchAll(/<em class="[gr] num">([^<]+)<\\/em><\\/div>/g)].map(x => x[1]);
+      if(ist.join() !== soll.join()) falsch.push(s.id + ' Feld ' + ist + ' statt ' + soll);
+    }
+    // Die Anzeigetafel nur bei einem Tor, und die Bilanz in engen Partien
+    // je Sieger bis zu dieser.
+    if(a.key === 'krimi'){
+      if(hoch - tief !== 1) falsch.push(s.id + ' Krimi bei ' + hoch + ':' + tief);
+      w.forEach(pid => {
+        const eng = vor.filter(x => [x.a1,x.a2,x.b1,x.b2].includes(pid) && Math.abs(x.score_a - x.score_b) === 1);
+        const gw = eng.filter(x => gew(pid, x)).length;
+        if(html.indexOf('>' + gw + ':' + (eng.length - gw) + '</em>') < 0) falsch.push(s.id + ' enge Bilanz');
+      });
+    }
+    // Die Verteilung ab sechs Toren: so deutlich oder deutlicher, und wann
+    // zuletzt.
+    if(a.key === 'deutlich'){
+      if(hoch - tief < 6) falsch.push(s.id + ' deutlich bei ' + hoch + ':' + tief);
+      const so = vor.filter(x => Math.abs(x.score_a - x.score_b) >= Math.min(10, hoch - tief)).length;
+      if(t.indexOf(so + ' von ' + vor.length + ' Partien so deutlich') < 0) falsch.push(s.id + ' Verteilung nennt nicht ' + so + ' von ' + vor.length);
+      const z = vor.slice(0, -1).filter(x => Math.abs(x.score_a - x.score_b) >= hoch - tief).pop();
+      if(z && t.indexOf('zuletzt am ' + datumFmt(mts(z), 'tm')) < 0) falsch.push(s.id + ' Verteilung zuletzt');
+    }
+    // Die Wippe nur unter der Linie der Überraschung.
+    if(a.key === 'aussenseiter'){
+      const h = getHistoryByMatchId().get(m.id), e = h && h.expA != null ? h.expA : m.exp_a;
+      const c = m.winner === 'A' ? e : 1 - e;
+      if(!(c < CHANCE_UPSET)) falsch.push(s.id + ' Wippe bei ' + c);
+      if(t.indexOf(Math.max(1, Math.round(c * 100)) + ' %') < 0) falsch.push(s.id + ' Wippe ohne Chance');
     }
     // Die Wende ist der erste Sieg nach mindestens drei Pleiten in Folge.
-    if(form === 'nf-wende'){
-      const k = +(html.match(/(\\d+) Pleiten, dann dieser Sieg/) || [,0])[1];
+    if(a.key === 'wende'){
+      const k = +(t.match(/(\\d+) Pleiten, dann/) || [,0])[1];
       const ok = w.some(pid => {
         const eig = reihe.filter(x => [x.a1,x.a2,x.b1,x.b2].includes(pid));
         let i = eig.indexOf(m) - 1, c = 0;
@@ -6054,49 +6364,385 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
       });
       if(k < 3 || !ok) falsch.push(s.id + ' Wende nach ' + k);
     }
-    // Die Torleiste nur ab sechs Toren, und „zuletzt am" ist wirklich der
-    // letzte Tag mit mindestens diesem Abstand.
-    if(form === 'nf-tor'){
-      if(hoch - tief < 6) falsch.push(s.id + ' Torleiste bei ' + hoch + ':' + tief);
-      const vor = reihe.filter(x => mts(x) < mts(m) && Math.abs(x.score_a - x.score_b) >= hoch - tief);
-      const soll = vor.length ? new Date(mts(vor[vor.length - 1])).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'}) : null;
-      if(soll && html.indexOf('zuletzt am ' + soll) < 0) falsch.push(s.id + ' Torleiste nennt nicht ' + soll);
-    }
     // Der Rangsprung: mindestens zwei Plätze, so wie die Rangtabelle es sagt.
-    if(form === 'nf-rgs'){
-      [...html.matchAll(/Platz (\\d+)<\\/span><i aria-hidden="true"><\\/i><span class="num g">(\\d+)/g)].forEach(x => {
-        if(+x[1] - +x[2] < 2) falsch.push(s.id + ' Sprung ' + x[1] + '→' + x[2]);
+    if(a.key === 'rang'){
+      [...t.matchAll(/steigt von (\\d+) auf (\\d+)/g)].forEach(x => {
+        if(+x[1] - +x[2] < 1) falsch.push(s.id + ' Sprung ' + x[1] + '→' + x[2]);
       });
+      if(!a.x.some(v => v.r.pre - v.r.post >= 2)) falsch.push(s.id + ' Sprung unter zwei Plätzen');
     }
+    // Die Serie gegen den eigenen Bestwert VOR dieser Partie.
+    if(a.key === 'serie'){
+      const pid = a.x.pid;
+      let lauf = 0, best = 0;
+      vor.slice(0, -1).forEach(x => { if(![x.a1,x.a2,x.b1,x.b2].includes(pid)) return;
+        lauf = gew(pid, x) ? lauf + 1 : 0; best = Math.max(best, lauf); });
+      if(best && t.indexOf('eigener Bestwert ' + best) < 0) falsch.push(s.id + ' Bestwert ' + best);
+    }
+    // Der gerissene Lauf: ein Feld je Sieg und das rote Feld der Partie,
+    // die ihn beendet hat, und der Bestwert des Trägers VOR dieser Partie.
+    if(a.key === 'riss'){
+      const r = (html.match(/class="sp-rk-r[^"]*"[^>]*>([\\s\\S]*?)<\\/div>/) || [,''])[1];
+      const w = (r.match(/<i class="w"/g) || []).length, x = (r.match(/<i class="x"/g) || []).length;
+      if(x !== 1 || (a.x.streak <= 20 && w !== a.x.streak)) falsch.push(s.id + ' Lauf ' + w + '+' + x + ' statt ' + a.x.streak);
+      const pid = a.x.victimPid; let lauf = 0, best = 0;
+      vor.slice(0, -1).forEach(y => { if(![y.a1,y.a2,y.b1,y.b2].includes(pid)) return;
+        lauf = gew(pid, y) ? lauf + 1 : 0; best = Math.max(best, lauf); });
+      const soll = best > a.x.streak ? 'eigener Bestwert ' + best : 'der eigene Bestwert';
+      if(t.indexOf(soll) < 0) falsch.push(s.id + ' Bruch nennt nicht ' + soll);
+    }
+    // Die Premiere: der erste gemeinsame Sieg der beiden Sieger, beim
+    // ersten Mal oder ab dem dritten Versuch.
+    if(a.key === 'premiere'){
+      const zus = vor.slice(0, -1).filter(y => { const A = [y.a1,y.a2], B = [y.b1,y.b2];
+        return (A.includes(w[0]) && A.includes(w[1])) || (B.includes(w[0]) && B.includes(w[1])); });
+      if(zus.some(y => gew(w[0], y)) || zus.length === 1) falsch.push(s.id + ' keine Premiere');
+      if(zus.length && t.indexOf('nach ' + zus.length + ' Niederlagen zu zweit') < 0) falsch.push(s.id + ' Premiere zählt nicht ' + zus.length);
+    }
+    // Der Rollentausch: unter einem Viertel der eigenen Partien vorher auf
+    // dieser Seite, ab zwanzig.
+    if(a.key === 'rolle'){
+      const pid = a.x.pid, r = m[['a1','a2','b1','b2'].find(k => m[k] === pid) + '_pos'];
+      const ei = vor.slice(0, -1).filter(y => [y.a1,y.a2,y.b1,y.b2].includes(pid));
+      const dort = ei.filter(y => y[['a1','a2','b1','b2'].find(k => y[k] === pid) + '_pos'] === r).length;
+      if(ei.length < 20 || dort / ei.length >= 0.25 || t.indexOf(dort + ' von ' + ei.length + ' Partien') < 0) falsch.push(s.id + ' Rolle');
+    }
+    // Die Rivalität zählt jede Begegnung bis zu dieser.
+    if(a.key === 'duell'){
+      const g = vor.filter(x => { const A = [x.a1,x.a2], B = [x.b1,x.b2];
+        return (A.includes(a.x.a) && B.includes(a.x.b)) || (B.includes(a.x.a) && A.includes(a.x.b)); }).length;
+      if(t.indexOf(': ' + g + ' Begegnung') < 0) falsch.push(s.id + ' Rivalität nennt nicht ' + g);
+    }
+    // Was die Zeichnung zeigt, sagt der Satz nicht.
     const satz = (html.match(/class="nf-d">([\\s\\S]*?)<\\/div>/) || [,''])[1].replace(/<[^>]+>/g, '');
-    if((b || form === 'nf-waage' || chips.length) && /bringt der Sieg/.test(satz)) falsch.push(s.id + ' Satz wiederholt die Elo');
-    if(b && /Siegchance lag/.test(satz)) falsch.push(s.id + ' Satz wiederholt die Siegchance');
+    // Der allgemeine Satz aus Siegchance und Elo-Gewinn steht unter keiner
+    // Partie-Karte mehr: die Zeichnung zeigt das eine oder das andere, und
+    // derselbe Satz unter dreißig Karten sagt nichts [§C33]. Nur „Zwei Welten"
+    // nennt den Gewinn beider Sieger, weil seine Zeichnung die Elo VORHER zeigt.
+    if(/Siegchance lag/.test(satz)) falsch.push(s.id + ' Satz wiederholt die Siegchance');
+    if(form !== 'gefaelle' && /bringt der Sieg/.test(satz)) falsch.push(s.id + ' Satz wiederholt die Elo');
   });
   // Gestellt, weil das Fenster sie nicht trägt: der Spitzenwechsel und die
   // Auszeichnung einer Partie.
-  const [A, B] = players.map(p => p.id);
-  const sp = _newsSpitzeBild({newLeader:A, prevLeader:B, elo:390, gap:11});
-  const med = _newsMedailleBild([{pid:A, badgeId:BADGES[0].id, rang:5}]);
+  const sp = reihe.find(m => { const r = getRankSnapshots()[m.id];
+    return r && w1(m, r); });
+  function w1(m, r){ const w = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
+    return w.some(p => r.postRank[p] === 1 && r.preRank[p] > 1); }
+  let spitze = '';
+  if(sp){
+    const r = getRankSnapshots()[sp.id];
+    const neu = Object.keys(r.postRank).find(p => r.postRank[p] === 1);
+    const alt = Object.keys(r.preRank).find(p => r.preRank[p] === 1);
+    spitze = text(_spTabelleBild(_spTabelleDaten({m:sp, x:{newLeader:neu, prevLeader:alt}}, true)));
+    spitze = spitze.indexOf(pmap()[neu].name + ' steigt von ' + r.preRank[neu] + ' auf 1 und führt') >= 0 ? 'ok' : spitze;
+  }
+  const med = _spMedailleBild(_spMedailleDaten({x:{pid:players[0].id, badgeId:BADGES[0].id, rang:5}}));
   const ser = [_newsSerienBand(4, false, true), _newsSerienBand(8, false, true),
                _newsSerienBand(6, true, true), _newsSerienBand(5, false, false)];
   const leer = h => (h.match(/<i class="x">/g) || []).length;
-  return {n, falsch, formen,
-    gestellt: /390 Elo/.test(sp) && /<b class="num">11<\\/b> vor/.test(sp)
-      && med.indexOf(esc(BADGES[0].name)) >= 0 && /zum 5\\. Mal/.test(med),
+  // Der Rollentausch kommt im Fenster nicht vor; gestellt an der ganzen
+  // Ligageschichte, jede Fundstelle aus den rohen Partien nachgerechnet.
+  const ro = reihe.map(m => [m, _spRolleDaten(m)]).filter(x => x[1]);
+  const roFalsch = ro.filter(([m, d]) => {
+    const vorher = reihe.slice(0, reihe.indexOf(m)).filter(y => [y.a1,y.a2,y.b1,y.b2].includes(d.pid));
+    const pos = y => y[['a1','a2','b1','b2'].find(k => y[k] === d.pid) + '_pos'];
+    const dort = vorher.filter(y => pos(y) === pos(m)).length;
+    return !gew(d.pid, m) || vorher.length < 20 || dort !== d.dort || dort / vorher.length >= 0.25
+      || text(_spRolleBild(d)).indexOf(dort + ' von ' + vorher.length + ' Partien') < 0;
+  }).map(x => x[0].id);
+  return {n, falsch, formen, spitze, feldN, rolle:{n:ro.length, falsch:roFalsch},
+    gestellt: med.indexOf(esc(BADGES[0].name)) >= 0 && /zum 5\\. Mal/.test(text(med)),
     ser: ser.map(h => leer(h) + (/Marke (\\d+)/.exec(h) || [,'-'])[1])};
 })())`));
 const _formZahl = Object.keys(_bogen.formen).length;
 const _formMax = Math.max(0, ...Object.values(_bogen.formen));
 ok(_bogen.n > 0 && _bogen.falsch.length === 0,
-   'jede Partie-Karte trägt eine Bildzone, die mit den Partien stimmt, und der Satz wiederholt sie nicht',
+   'jede Partie-Karte trägt Kopf und Fuß ihres Anlasses, die mit den Partien stimmen, und der Satz wiederholt sie nicht',
    _bogen.falsch.slice(0, 2).join(' | ') || _bogen.n + ' Karten');
-ok(_formZahl >= 6 && _formMax <= _bogen.n * 0.45,
-   'die Bildzonen der Partie-Karten sind verschieden: keine Form trägt die Hälfte',
+ok(_formZahl >= 10 && _formMax <= _bogen.n * 0.3,
+   'die Bilder der Partie-Karten sind verschieden: keine Form trägt ein Drittel',
    JSON.stringify(_bogen.formen));
-ok(_bogen.gestellt, 'Spitzenwechsel und Auszeichnung einer Partie zeigen Stand, Abstand und Zahl');
+// ── Die Formen der gewöhnlichen Partie über die ganze Liga [§C33] ────
+// Eine Partie ohne Anlass bekam immer dasselbe Spielfeld oder dieselbe
+// Ergebniszeile. Jetzt wählt `_spForm` aus dreizehn Formen. Geprüft wird
+// an jeder gewöhnlichen Partie der Ligageschichte: dass die Regel jeder
+// Form aus den rohen Partien stimmt, dass jede Zeichnung den Stand trägt,
+// dass die Formen wechseln und dass eine Karte ihre Form behält, wenn
+// danach weitergespielt wird.
+const _formen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
+  const gew = (pid, m) => (m.winner === 'A') === (m.a1 === pid || m.a2 === pid);
+  const dabei = (pid, m) => [m.a1, m.a2, m.b1, m.b2].includes(pid);
+  const sieger = m => (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).slice().sort().join();
+  const verlierer = m => (m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2]).slice().sort().join();
+  const feld = reihe.filter(m => _spIstFeld(m));
+  const zahl = {}, falsch = [], ohneStand = [];
+  let folgeGleich = 0;
+  const spur = [];
+  feld.forEach(m => {
+    const w = _spForm(m), x = w.x, i = reihe.indexOf(m), vor = reihe.slice(0, i + 1);
+    const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+    zahl[w.key] = (zahl[w.key] || 0) + 1;
+    // Zweimal hintereinander darf nur das Spielfeld stehen, und nur, wenn
+    // sonst keine Form auf die Partie passt.
+    if(spur.length && spur[spur.length - 1] === w.key && _spFormKand(m).length > 1) folgeGleich++;
+    spur.push(w.key);
+    const html = _spFormBild(m).html;
+    // Das Spielfeld zeigt den Stand in Spielrichtung, den Sieger hell (_spStand).
+    const stand = w.key === 'feld' ? _spStand({sa:m.score_a, sb:m.score_b, aw:m.winner === 'A'}) : '<em>' + hoch + '</em>:' + tief + '</b>';
+    if(html.indexOf(stand) < 0) ohneStand.push(m.id + '/' + w.key);
+    // Alle vier Namen stehen da, in der Zeichnung oder darunter.
+    const pm = pmap();
+    if([m.a1, m.a2, m.b1, m.b2].some(id => html.indexOf(esc(pm[id].name)) < 0)) ohneStand.push(m.id + '/' + w.key + ' ohne alle Namen');
+    // Der Satz wiederholt nicht, was die Zeichnung zeigt: keine Siegchance
+    // vor dem Anstoß, kein Elo-Gewinn — außer bei Zwei Welten, deren
+    // Zeichnung die Elo VORHER zeigt.
+    const satz = (_spFormText(m) || {}).d || '';
+    if(/Siegchance/.test(satz) || (w.key !== 'gefaelle' && /bringt der Sieg/.test(satz))) falsch.push(m.id + ' Satz wiederholt ' + w.key);
+    if(w.key === 'mosaik' && !(hoch === 10 && hoch - tief >= 2 && hoch - tief <= 3)) falsch.push(m.id + ' Mosaik ' + hoch + ':' + tief);
+    if(w.key === 'tacho' && !(_spChance(m) >= 0.62 && hoch - tief < 6)) falsch.push(m.id + ' Tacho');
+    if(w.key === 'zaehlwerk'){
+      if(!x.wer){ if(x.wert !== i + 1 || x.wert % 100) falsch.push(m.id + ' Zählwerk Liga ' + x.wert); }
+      else {
+        const eig = vor.filter(y => dabei(x.wer, y)), n = x.sieg ? eig.filter(y => gew(x.wer, y)).length : eig.length;
+        if(n !== x.wert || x.wert % 50 || (x.sieg && !gew(x.wer, m))) falsch.push(m.id + ' Zählwerk ' + n + ' statt ' + x.wert);
+      }
+    }
+    if(w.key === 'revanche'){
+      const z = vor.slice(0, -1).filter(y => [sieger(y), verlierer(y)].sort().join('|') === [sieger(m), verlierer(m)].sort().join('|')).pop();
+      if(!z || sieger(z) !== verlierer(m)) falsch.push(m.id + ' Revanche');
+      const seit = _spSeit(mts(m) - mts(z || m));
+      if(z && _spRevancheBild(SP_FORM.revanche.daten(_spFakten(m), x)).indexOf('nach ' + seit.n + ' ' + seit.e) < 0) falsch.push(m.id + ' Revanche ohne Abstand');
+    }
+    if(w.key === 'gipfel'){
+      const r = getRankSnapshots()[m.id], pre = [m.a1, m.a2, m.b1, m.b2].map(id => r && r.preRank[id]);
+      if(!pre.includes(1) || !pre.includes(2)) falsch.push(m.id + ' Gipfel ohne 1 und 2');
+    }
+    if(w.key === 'rueckkehr'){
+      const eig = vor.filter(y => dabei(x.id, y)), v = eig[eig.length - 2];
+      if(!gew(x.id, m) || !v || (mts(m) - mts(v)) / 86400000 < 10) falsch.push(m.id + ' Rückkehr');
+    }
+    if(w.key === 'tagesring'){
+      const tag = vor.filter(y => tagKey(y.created_at) === tagKey(m.created_at) && dabei(x.id, y));
+      if(tag.length < 4 || tag.filter(y => gew(x.id, y)).length / tag.length < 0.75 || !gew(x.id, m)) falsch.push(m.id + ' Tagesring');
+    }
+  });
+  // Was einmal dasteht, bleibt stehen: dieselbe Partie, nur ohne alles,
+  // was danach gespielt wurde, ergibt dieselbe Form und dieselbe Zeile.
+  const alle = matches, stich = feld.filter((m, k) => k % Math.max(1, Math.floor(feld.length / 10)) === 3).slice(0, 10);
+  const wackelt = [];
+  const voll = stich.map(m => ({id:m.id, k:_spForm(m).key, t:(_spFormText(m) || {}).t}));
+  stich.forEach((m, k) => {
+    matches = alle.filter(y => mts(y) <= mts(m)); invalidateCache();
+    const mm = matches.find(y => y.id === m.id), jetzt = {k:_spForm(mm).key, t:(_spFormText(mm) || {}).t};
+    if(jetzt.k !== voll[k].k || jetzt.t !== voll[k].t) wackelt.push(m.id + ' ' + voll[k].k + '→' + jetzt.k);
+  });
+  matches = alle; invalidateCache();
+  return {n:feld.length, zahl, falsch, ohneStand, folgeGleich, wackelt, stich:stich.length};
+})())`));
+const _formWerte = Object.values(_formen.zahl);
+ok(_formen.n > 50 && !_formen.falsch.length,
+   'jede Form der gewöhnlichen Partie stimmt mit den rohen Partien, und ihr Satz wiederholt nicht die Zeichnung',
+   _formen.falsch.slice(0, 3).join(' | ') || _formen.n + ' Partien');
+ok(_formen.ohneStand.length === 0,
+   'jede Form trägt den Stand der Partie und alle vier Namen, den Sieger zuerst',
+   _formen.ohneStand.slice(0, 4).join(', ') || 'alle');
+ok(Object.keys(_formen.zahl).length === 13 && Math.max(..._formWerte) <= _formen.n * 0.25
+   && (_formen.zahl.feld || 0) <= _formen.n * 0.15 && _formen.folgeGleich === 0,
+   'die Formen wechseln: alle dreizehn kommen vor, keine trägt ein Viertel, das Spielfeld ist selten, keine zweimal hintereinander, wo eine andere passt',
+   JSON.stringify(_formen.zahl) + ' · gleich hintereinander ' + _formen.folgeGleich);
+ok(_formen.stich >= 8 && !_formen.wackelt.length,
+   'eine Partie behält Form und Schlagzeile, wenn danach weitergespielt wird',
+   _formen.wackelt.join(', ') || _formen.stich + ' Stichproben');
+ok(_bogen.rolle.n >= 3 && !_bogen.rolle.falsch.length,
+   'der Rollentausch ist ein Sieg auf einer Seite, die vorher unter einem Viertel der eigenen Partien lag',
+   _bogen.rolle.n + ' Fundstellen, falsch: ' + _bogen.rolle.falsch.slice(0, 3));
+ok(_bogen.spitze === 'ok' && _bogen.gestellt,
+   'der Spitzenwechsel zeigt die Tabelle vorher und nachher, die Auszeichnung ihre Träger und die Zahl',
+   String(_bogen.spitze).slice(0, 120));
 ok(_bogen.ser.join() === '15,210,0-,0-',
    'der Lauf zeigt die nächste Marke als leere Felder, eine Pleitenserie hat keine',
    _bogen.ser.join(' · '));
+
+// ── Das Blatt einer Serie [§C33] ────────────────────────────────────
+// Es zeigte die Serie als Punktreihe und darunter Zahlen in Zeilen, und
+// welche Partien die Serie waren, stand nirgends. Jetzt steht jede Partie
+// des Laufs darin. Nachgerechnet an jeder Serienmarke der Ligageschichte:
+// genau so viele Zeilen, wie die Serie lang ist, jede mit dem richtigen
+// Ausgang aus Sicht des Trägers, ohne Lücke, und davor war die Serie nicht
+// schon länger. Beim Serienbruch kommt die Partie dazu, die sie beendet.
+const _serBlatt = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories(), falsch = [], typen = {};
+  let n = 0;
+  const TYP = {win_streak:1, loss_streak:1, team_streak:1, team_loss_streak:1, streak_killer:1};
+  roh.filter(s => TYP[(s.dataRef||{}).type] && (s.dataRef||{}).matchId).forEach(s => {
+    const d = s.dataRef, t = d.type, m = matches.find(x => x.id === d.matchId);
+    if(!m) return;
+    n++; typen[t] = 1;
+    const html = _newsDetailBody(s);
+    const zeilen = [...html.matchAll(/class="nd-pz (w|l)" data-mid="([^"]+)"/g)].map(x => ({w:x[1] === 'w', id:x[2]}));
+    const pid = t === 'streak_killer' ? d.victimPid : (d.pid || d.a), partner = t === 'team_streak' || t === 'team_loss_streak' ? d.b : null;
+    const sieg = t === 'win_streak' || t === 'team_streak' || t === 'streak_killer';
+    const gew = y => (y.winner === 'A') === [y.a1, y.a2].includes(pid);
+    const reihe = [...matches].sort((a, b) => mts(a) - mts(b)).filter(y => [y.a1, y.a2, y.b1, y.b2].includes(pid)
+      && (!partner || ([y.a1, y.a2].includes(pid) && [y.a1, y.a2].includes(partner)) || ([y.b1, y.b2].includes(pid) && [y.b1, y.b2].includes(partner))));
+    const bis = reihe.findIndex(y => y.id === m.id);
+    const lauf = t === 'streak_killer' ? reihe.slice(bis - d.streak, bis) : reihe.slice(bis - d.streak + 1, bis + 1);
+    const soll = (t === 'streak_killer' ? lauf.concat([m]) : lauf).map(y => ({w:gew(y), id:y.id}));
+    if(JSON.stringify(zeilen.slice(0, soll.length)) !== JSON.stringify(soll) || lauf.some(y => gew(y) !== sieg))
+      falsch.push(s.id + ' Lauf');
+    const davor = reihe[reihe.indexOf(lauf[0]) - 1];
+    if(davor && gew(davor) === sieg) falsch.push(s.id + ' beginnt mitten in der Serie');
+    if(t !== 'streak_killer' && html.indexOf('<b class="num">' + d.streak + '</b><span>') < 0) falsch.push(s.id + ' ohne Zahl');
+  });
+  return {n, falsch, typen:Object.keys(typen).length};
+})())`));
+ok(_serBlatt.n >= 10 && _serBlatt.typen === 5 && _serBlatt.falsch.length === 0,
+   'das Blatt einer Serie zeigt jede Partie des Laufs, aus den rohen Partien nachgerechnet',
+   _serBlatt.falsch.slice(0, 3).join(' | ') || _serBlatt.n + ' Serienblätter aus ' + _serBlatt.typen + ' Typen');
+
+// ── Das Blatt einer Rivalität und einer Auszeichnung [§C33] ─────────
+// Die Rivalität zählt ihre Duelle und die Bilanz bis zur Partie der Karte,
+// nachgerechnet aus den rohen Partien; die Auszeichnung zeigt jeden Spieler
+// der Liga als Feld, hell, wer sie trägt, und gerahmt, wer sie hier geholt hat.
+const _rvBd = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories(), falsch = [];
+  let rv = 0, bd = 0;
+  roh.filter(s => /^rivalry/.test((s.dataRef||{}).type || '')).forEach(s => {
+    const d = s.dataRef, m = d.matchId ? matches.find(x => x.id === d.matchId) : null;
+    const html = _newsDetailBody(s); rv++;
+    const l = [...matches].sort((x, y) => mts(x) - mts(y)).filter(y => (!m || mts(y) <= mts(m))
+      && (([y.a1, y.a2].includes(d.a) && [y.b1, y.b2].includes(d.b)) || ([y.b1, y.b2].includes(d.a) && [y.a1, y.a2].includes(d.b))));
+    const sa = l.filter(y => (y.winner === 'A') === [y.a1, y.a2].includes(d.a)).length;
+    const tau = (html.match(/class="nd-rv-tau"><b class="num">(\\d+)<\\/b>[\\s\\S]*?<b class="num">(\\d+)<\\/b>/) || []).slice(1).map(Number);
+    const n = +(html.match(/class="nd-rv-m"><b class="num">(\\d+)</) || [])[1];
+    if(n !== l.length || tau[0] !== sa || tau[1] !== l.length - sa) falsch.push(s.id + ' ' + n + ' ' + tau + ' statt ' + l.length + ' ' + sa);
+  });
+  roh.filter(s => (s.dataRef||{}).type === 'badge_unlocked').forEach(s => {
+    const d = s.dataRef, html = _newsDetailBody(s); bd++;
+    const ids = Object.keys(pmap()).filter(id => !pmap()[id].hidden);
+    const hat = ids.filter(id => (getCachedBadges(id) || []).some(b => b.id === d.badgeId));
+    const felder = [...html.matchAll(/<span class="(hat)?( dies)?" data-pid="([^"]+)"/g)];
+    const pids = (d.playerIds && d.playerIds.length) ? d.playerIds : [d.playerId];
+    if(felder.length !== ids.length || felder.filter(f => f[1]).length !== hat.length
+      || felder.some(f => !!f[1] !== hat.includes(f[3]) || !!f[2] !== pids.includes(f[3])) || html.indexOf('Elo aus dieser Partie') >= 0)
+      falsch.push(s.id + ' Träger');
+  });
+  return {rv, bd, falsch};
+})())`));
+ok(_rvBd.rv > 0 && _rvBd.bd > 0 && _rvBd.falsch.length === 0,
+   'das Blatt einer Rivalität zählt Duelle und Bilanz bis zu ihrer Partie, das einer Auszeichnung zeigt jeden Träger der Liga',
+   _rvBd.falsch.slice(0, 3).join(' | ') || _rvBd.rv + ' Rivalitäten, ' + _rvBd.bd + ' Auszeichnungen');
+
+// ── Spieler des Tages, Woche, Endspurt, Runde [§C33] ────────────────
+// Das Feld des Tages aus den rohen Partien: jeder, der an dem Tag spielte,
+// mit Siegen von Partien. Die Woche zeigt jede Wertung mit Gesicht und Zahl,
+// ohne den Satz darunter; der Endspurt seine Tage und den Abstand; die Runde
+// keine Legende, die ihre Zeichnung erklärt.
+const _blk5 = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories(), falsch = [], n = {potd:0, woche:0, end:0, runde:0};
+  roh.filter(s => (s.dataRef||{}).type === 'potd').forEach(s => {
+    const d = s.dataRef, b = _newsDetailBody(s); n.potd++;
+    const tag = matches.filter(y => tagKey(y.created_at) === d.dayKey), z = {};
+    tag.forEach(y => [y.a1, y.a2, y.b1, y.b2].forEach(id => { z[id] = z[id] || [0, 0]; z[id][1]++;
+      if((y.winner === 'A') === [y.a1, y.a2].includes(id)) z[id][0]++; }));
+    const ist = [...b.matchAll(/class="nd-bk-z[^"]*" data-pid="([^"]+)"[\\s\\S]*?<b class="num">(\\d+) von (\\d+)<\\/b>/g)];
+    if(ist.length !== Object.keys(z).length || ist.some(x => !z[x[1]] || z[x[1]][0] !== +x[2] || z[x[1]][1] !== +x[3])) falsch.push(s.id + ' Feld');
+    if(b.indexOf('nd-buehne') < 0 || b.indexOf('Siegquote</span>') >= 0) falsch.push(s.id + ' Bühne');
+  });
+  roh.filter(s => (s.dataRef||{}).type === 'woche').forEach(s => {
+    const d = s.dataRef, b = _newsDetailBody(s); n.woche++;
+    const z = (b.match(/class="nd-wo-z/g) || []).length;
+    if(z !== (d.teile || []).length || b.indexOf('nw-satz') >= 0) falsch.push(s.id + ' Woche');
+    (d.teile || []).forEach(t => { if(t.wert && b.indexOf(esc(t.wert)) < 0) falsch.push(s.id + ' ohne ' + t.label); });
+  });
+  roh.filter(s => (s.dataRef||{}).type === 'season_endgame').forEach(s => {
+    const d = s.dataRef, b = _newsDetailBody(s); n.end++;
+    if(b.indexOf('<b class="num">' + d.daysLeft + '</b>') < 0 || b.indexOf(d.gap + ' Elo') < 0) falsch.push(s.id + ' Endspurt');
+  });
+  roh.filter(s => (s.dataRef||{}).type === 'runde').forEach(s => { n.runde++;
+    if(_newsRundeBlatt(s).indexOf('steht für') >= 0) falsch.push(s.id + ' Legende'); });
+  return {n, falsch};
+})())`));
+ok(_blk5.n.potd > 0 && _blk5.n.woche > 0 && _blk5.n.end > 0 && _blk5.n.runde > 0 && _blk5.falsch.length === 0,
+   'Spieler des Tages mit dem Feld des Tages aus den rohen Partien, die Woche mit Gesichtern ohne Satz, der Endspurt mit Tagen und Abstand, die Runde ohne Legende',
+   _blk5.falsch.slice(0, 3).join(' | ') || JSON.stringify(_blk5.n));
+
+// ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
+// Eine Runde ist ein Block von Partien ohne Pause über dreißig Minuten, in
+// dem nur dieselben vier gespielt haben, mindestens dreimal. Sie ist eine
+// eigene Story, die dreißig Minuten nach der letzten Partie entsteht — die
+// Karten ihrer Partien bleiben daneben stehen, mit ihrem eigenen Bild.
+// Nachgerechnet an den rohen Partien.
+const _runde = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories();
+  _cache._stories = roh.slice().sort((a,b)=>new Date(b.when)-new Date(a.when));
+  _cache._consolFrom = null; _cache._frischVon = null;
+  const feed = getStoriesCache();
+  const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
+  const vier = m => [m.a1, m.a2, m.b1, m.b2].sort().join();
+  const bl = []; let r = null;
+  reihe.forEach(m => {
+    if(r && mts(m) - r.t <= 1800000){ r.ms.push(m); r.t = mts(m); }
+    else { r = {ms:[m], t:mts(m)}; bl.push(r); }
+  });
+  const seit = Date.now() - NEWS_FENSTER_TAGE * 86400000;
+  const soll = bl.filter(x => x.ms.length >= 3 && new Set(x.ms.map(vier)).size === 1
+    && x.t + 1800000 <= Date.now() && x.t >= seit);
+  const ohne = bl.filter(x => x.t >= seit && (x.ms.length < 3 || new Set(x.ms.map(vier)).size > 1));
+  const ist = roh.filter(s => (s.dataRef||{}).type === 'runde');
+  const falsch = [];
+  soll.forEach(x => {
+    const st = ist.find(s => s.id === 'runde_' + x.ms[0].id);
+    if(!st){ falsch.push(x.ms[0].id + ' ohne Runde'); return; }
+    const d = st.dataRef;
+    if(new Date(st.when).getTime() !== x.t + 1800000) falsch.push(st.id + ' Zeitpunkt');
+    if(d.matchIds.join() !== x.ms.map(m => m.id).join()) falsch.push(st.id + ' Partien');
+    if(st.desc.indexOf(datumFmt(mts(x.ms[0]), 'uhr')) < 0 || st.desc.indexOf(datumFmt(x.t, 'uhr')) < 0) falsch.push(st.id + ' ohne Uhrzeiten');
+    vier(x.ms[0]).split(',').forEach(id => {
+      const w = x.ms.filter(m => (m.winner === 'A') === (m.a1 === id || m.a2 === id)).length;
+      const z = d.spieler.find(y => y.id === id);
+      if(!z || z.w !== w || z.l !== x.ms.length - w) falsch.push(st.id + ' Bilanz');
+    });
+    if(!feed.some(s => s.id === st.id)) falsch.push(st.id + ' fehlt im Feed');
+    // Jede Partie der Runde behält ihre eigene Karte.
+    x.ms.forEach(m => { if(!feed.some(s => (s.dataRef||{}).matchId === m.id)) falsch.push(m.id + ' ohne eigene Karte'); });
+    const html = _newsCardHtmlM2(feed.find(s => s.id === st.id) || st, false, false);
+    // Die Karte fasst zusammen und sagt es: eine Kennzeile, je Partie ein
+    // Feld aus Uhrzeit und Stand, und keine Partie mit ihren Wappen — die
+    // steht direkt darunter auf ihrer eigenen Karte.
+    if((html.match(/class="sp-rs-z"/g) || []).length !== x.ms.length) falsch.push(st.id + ' Streifen');
+    if(html.indexOf('class="sp-rd-was"') < 0) falsch.push(st.id + ' ohne Kennzeile');
+    if(/class="sp-rd-p[ "]/.test(html)) falsch.push(st.id + ' wiederholt die Partien');
+    if((_newsRundeBlatt(st).match(/data-mid="/g) || []).length !== x.ms.length) falsch.push(st.id + ' Blatt');
+  });
+  ohne.forEach(x => { if(ist.some(s => s.id === 'runde_' + x.ms[0].id)) falsch.push(x.ms[0].id + ' ist keine Runde'); });
+  // Gestellt an echten Partien: drei Partien derselben vier, dann eine
+  // fremde zehn Minuten danach, dann zwei Partien, dann eine Runde, die erst
+  // vor zwanzig Minuten endete.
+  const echt = reihe.slice(-60);
+  const [p, q] = [echt[0], echt.find(m => vier(m) !== vier(echt[0]))];
+  const zeit = Date.now() - 6 * 3600000;
+  const mk = (vor, i, min) => Object.assign({}, vor, {id:'tr' + i, created_at:new Date(zeit + min * 60000).toISOString()});
+  const fall = (liste, jetzt) => { const alt = matches;
+    try { matches = liste; return _newsRundenStories(jetzt).map(s => s.id + '@' + new Date(s.when).getTime()); }
+    finally { matches = alt; } };
+  const drei = fall([mk(p, 1, 0), mk(p, 2, 12), mk(p, 3, 25)], zeit + 3 * 3600000);
+  const fremd = fall([mk(p, 1, 0), mk(p, 2, 12), mk(p, 3, 25), mk(q, 4, 35)], zeit + 3 * 3600000);
+  const zwei = fall([mk(p, 1, 0), mk(p, 2, 12)], zeit + 3 * 3600000);
+  const offen = fall([mk(p, 1, 0), mk(p, 2, 12), mk(p, 3, 25)], zeit + 45 * 60000);
+  const zu = fall([mk(p, 1, 0), mk(p, 2, 12), mk(p, 3, 25)], zeit + 56 * 60000);
+  return {soll: soll.length, ist: ist.length, falsch, ohne: ohne.length,
+    gestellt: {drei, fremd, zwei, offen, zu}, ende: zeit + 55 * 60000};
+})())`));
+ok(_runde.soll >= 3 && _runde.ist === _runde.soll && _runde.falsch.length === 0,
+   'jede abgeschlossene Runde der Vier ist eine eigene Story mit Uhrzeiten und Bilanz, fasst ihre Partien zusammen statt sie zu wiederholen, und jede Partie behält ihre Karte',
+   _runde.falsch.slice(0, 3).join(' | ') || _runde.ist + ' Runden, ' + _runde.ohne + ' Blöcke ohne Runde');
+const _rg = _runde.gestellt;
+ok(_rg.drei.length === 1 && _rg.drei[0] === 'runde_tr1@' + _runde.ende && !_rg.fremd.length && !_rg.zwei.length
+   && !_rg.offen.length && _rg.zu.length === 1,
+   'eine Runde braucht drei Partien derselben vier ohne einen Fünften und entsteht dreißig Minuten nach der letzten',
+   JSON.stringify(_rg));
 
 console.log('\n' + (fails ? '✗ ' + fails + ' von ' + checks + ' CHECKS FEHLGESCHLAGEN' : '✓ ALLE ' + checks + ' CHECKS BESTANDEN'));
 process.exit(fails ? 1 : 0);

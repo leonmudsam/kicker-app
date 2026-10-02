@@ -14,6 +14,18 @@ function dateStr(ts){
   }
   return v;
 }
+// ── Ein Datum, ein Formatierer ──────────────────────────────────────
+// `toLocaleDateString` mit Optionen baut bei jedem Aufruf einen neuen
+// Formatierer. Im Feed läuft das je Karte mehrmals (Uhrzeit, Tageskopf,
+// Datum im Satz): gemessen 16 ms für die Uhrzeit allein beim Öffnen. Dieselbe
+// Ausgabe, einmal gebaut.
+const _FMT_ARTEN = {uhr:{hour:'2-digit', minute:'2-digit'}, tm:{day:'2-digit', month:'2-digit'},
+  tmj:{day:'2-digit', month:'2-digit', year:'2-digit'}, wt:{weekday:'long'}};
+const _FMT = {};
+function datumFmt(when, art){
+  const f = _FMT[art] || (_FMT[art] = new Intl.DateTimeFormat('de-DE', _FMT_ARTEN[art]));
+  return f.format(when instanceof Date ? when : new Date(when));
+}
 // ── Eine Dezimalzahl trägt hier ein Komma ───────────────────────────
 // Die Oberfläche schreibt „6,9 Gegentore", die Fun Facts schrieben „6.9" —
 // acht Stellen mit `toFixed(1)` und ein Punkt mitten im deutschen Satz.

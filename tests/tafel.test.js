@@ -495,7 +495,7 @@ console.log('\n═══ 7c. DER LIGA-TAB ZEIGT EINE GEWÄHLTE SAISON ═══'
   // Die Verlaufs-ids im Wappen sind ein Zähler, der bei jedem Zeichnen
   // hochläuft ('i17_'). Sie gehören nicht zum Inhalt — sonst wäre kein
   // zweiter Aufruf je gleich. Vor dem Vergleich also wegnormieren.
-  const ohneIds = h => h.replace(/\bi\d+_/g, 'i_');
+  const ohneIds = h => h.replace(/\b(i|ize)\d+_/g, 'i_');
   const awJetzt = ohneIds(K.eval(`ligaSeasonId=null;  awView='awards'; awPeriod='season'; awSeasonId=null; vAwards()`));
   const awJuni  = ohneIds(K.eval(`ligaSeasonId=${JSON.stringify(alt)}; awView='awards'; awPeriod='season'; awSeasonId=null; vAwards()`));
   ok(awJetzt === awJuni,
@@ -571,6 +571,28 @@ console.log('\n═══ 7e. DIE REKORDE SIND SORTIERT, DIE VITRINE HAT KEINE L�
      'gezeigt ' + mitZeit + ' von ' + kannZeit + ' möglichen');
   ok(!rek.includes('rek-kopf'),
      'keine zweite Überschrift über der ersten Gruppe');
+  // Der Feldstreifen jeder Karte liest dieselbe Reihenfolge wie Podest und
+  // Verfolger des Blatts: der Halter steht am rechten Ende, daneben der
+  // Erste, der ihn nicht hält, mit seinem Wert.
+  const feldFehler = JSON.parse(K.eval(`(()=>{
+    const H = chronicleHolders(), f = [];
+    let n = 0;
+    CHRONICLES.forEach(d => {
+      const h = H[d.id]; if(!h) return;
+      const html = _rekFeldHtml(d, h), rang = chronicleRang(d.id);
+      if(rang.length < 3 || !(rang[0].wert > rang[rang.length-1].wert)){ if(html) f.push(d.id + ': Streifen ohne Feld'); return; }
+      n++;
+      const halter = new Set(h.pids || [h.pid]);
+      const z = rang.find(r => !halter.has(r.pid));
+      const er = (html.match(/class="er" style="left:([0-9.]+)%/) || [])[1];
+      if(!html || +er < 95) f.push(d.id + ': Halter nicht am Ende ' + er);
+      if(z && html.indexOf('vor ' + pname(z.pid) + ' ') < 0) f.push(d.id + ': Zweiter fehlt');
+    });
+    return JSON.stringify({f, n});
+  })()`));
+  ok(feldFehler.n > 40 && feldFehler.f.length === 0,
+     'jede Rekordkarte zeigt den Halter vorn im Feld und den Ersten dahinter',
+     feldFehler.f.slice(0, 3).join(' | ') || feldFehler.n + ' Karten');
 
   // Ein Tipp auf einen Rekord öffnet den REKORD, nicht das Spielerprofil —
   // und zeigt dort ein Podest, weil ein Rekord ein Wettstreit ist [§C27].
@@ -1056,6 +1078,19 @@ const _tagSchreib = (function(){
 ok(_tagSchreib === 1, 'der Kalendertag wird an genau einer Stelle gebildet',
    _tagSchreib + ' Stellen');
 
+// ─── Ein Datum, ein Formatierer ─────────────────────────────────────
+// `toLocaleDateString` mit Optionen baut bei jedem Aufruf einen neuen
+// Formatierer, und im Feed lief das je Karte mehrmals: gemessen 16 ms fuer
+// die Uhrzeit allein beim Oeffnen. Uhrzeit, Tag und Monat und das kurze
+// Datum gehen deshalb durch `datumFmt`; gezaehlt wird im gebauten Stand.
+const _fmtStellen = (function(){
+  const quelle = fs.readFileSync(require('./ziel.js'), 'utf8');
+  const re = /toLocale(Date|Time)String\('de-DE',\s*\{(hour:'2-digit',\s*minute:'2-digit'|day:'2-digit',\s*month:'2-digit'(,\s*year:'2-digit')?)\}\)/g;
+  return (quelle.match(re) || []).length;
+})();
+ok(_fmtStellen === 0, 'Uhrzeit und kurzes Datum gehen durch einen gemerkten Formatierer',
+   _fmtStellen + ' Stellen bauen ihn selbst');
+
 // ─── Kein Gestaltungswert ohne Leser ────────────────────────────────
 // Der Bau haengt sechzehn Stylesheets aneinander, und eine Variable, die
 // niemand mehr liest, faellt danach niemandem auf: `--r-lg` stand als
@@ -1185,6 +1220,19 @@ const _toteRegeln = (function(){
 })();
 ok(_toteRegeln.length === 0, 'keine CSS-Regel fuer eine Ansicht, die es nicht gibt',
    _toteRegeln.length + ': ' + _toteRegeln.slice(0, 4).join(' · '));
+
+// Die Kommentare bleiben in src/ und gehen nicht mit aus. Sie waren 38 % des
+// JavaScripts, und jedes Telefon lud und parste sie bei jedem Start. Gezaehlt
+// werden Zeilen, die mit einem Kommentar BEGINNEN, und jedes `/*` im CSS —
+// ein `//` mitten in einer Zeile steht auch in jeder Adresse.
+{
+  const skript = html.slice(html.lastIndexOf('<script>') + 8, html.lastIndexOf('</script>'));
+  const stil = html.slice(html.indexOf('<style>') + 7, html.indexOf('</style>'));
+  const geruest = html.slice(0, html.indexOf('<style>')) + html.slice(html.indexOf('</style>'), html.lastIndexOf('<script>'));
+  const reste = (skript.match(/^[ \t]*(\/\/|\/\*).*$/gm) || []).length
+    + (stil.match(/\/\*/g) || []).length + (geruest.match(/<!--/g) || []).length;
+  ok(reste === 0, 'die Auslieferung traegt keine Kommentare', reste + ' Kommentare');
+}
 
 // Dasselbe fuer den Zeichen-Katalog. Der Kommentar ueber `ICONS` warnt seit
 // jeher vor der toten Definition; nachgezaehlt hat es nie jemand, und zwei
@@ -1411,7 +1459,7 @@ ok(_awNenner.zkNenner && _awNenner.zkNenner.gemeldet === _awNenner.zkNenner.geza
 // Ein Rekord belegte seinen Bestwert mit einem Satz. „72 %" aus fünfzig und
 // aus fünfhundert Partien sind zwei Aussagen, und ob der Zweite knapp
 // dahinter liegt, stand nur in der Liste. Der Beleg zeigt die Stichprobe als
-// Zellen, die Halter im Feld, die Spanne um einen Anteil und den Verlauf —
+// Zellen, die Halter im Feld, den Vorsprung in Ergebnissen und den Verlauf —
 // und jede dieser Zahlen muss stimmen, sonst ist die Zeichnung eine
 // Behauptung mehr.
 const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
@@ -1448,18 +1496,20 @@ const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
       if(/data-vergleich/.test(out)) f.push(c.id + ': Knopf ohne Bezug zum Rekord');
       const nm = (pmap()[h.pid] || {}).name;
       if(nm && out.indexOf('Profil von ' + esc(nm)) < 0) f.push(c.id + ': Knopf ohne den Namen des Halters');
-      // Der Satz der Spanne kommt ohne Statistik aus: „mehr als Zufall"
-      // war richtig gerechnet und von niemandem zu verstehen.
-      if(/Zufall|Wahrscheinlichkeit/.test(out)) f.push(c.id + ': Spanne in Statistiksprache');
-      const sp = out.match(/zwischen <b>(\\d+) und (\\d+) %/);
-      if(sp){
+      // Wie knapp: so viele der eigenen Gelegenheiten hätten anders
+      // ausgehen müssen, damit der Zweite gleichauf läge — unabhängig
+      // nachgerechnet aus dem Beleg des Zweiten. Die Spanne davor war
+      // richtig gerechnet und nicht zu lesen.
+      if(/Zufall|Wahrscheinlichkeit|irgendwo zwischen/.test(out)) f.push(c.id + ': Statistiksprache');
+      const lz = out.match(/data-luft="(\\d+)"/);
+      if(lz){
         spannen++;
-        // Unabhängig nachgerechnet: Wilson, 90 %.
-        const p = a.k / a.n, n = a.n, z2 = 1.645 * 1.645, d = 1 + z2 / n;
-        const m = (p + z2 / (2 * n)) / d, w = 1.645 * Math.sqrt(p * (1 - p) / n + z2 / (4 * n * n)) / d;
-        if(Math.round(Math.max(0, m - w) * 100) !== +sp[1] || Math.round(Math.min(1, m + w) * 100) !== +sp[2])
-          f.push(c.id + ': Spanne ' + sp[1] + '–' + sp[2]);
-        if(!_belegIstQuote(h.ev, a)) f.push(c.id + ': Spanne um etwas, das kein Anteil ist');
+        const halter = new Set(h.pids || [h.pid]);
+        const zw = chronicleRang(c.id).find(r => !halter.has(r.pid));
+        const za = zw && belegAnteil(zw.ev);
+        const soll = za ? Math.max(0, Math.ceil(a.k - za.k / za.n * a.n - 1e-9)) : null;
+        if(soll !== +lz[1]) f.push(c.id + ': ' + lz[1] + ' Ergebnisse Vorsprung statt ' + soll);
+        if(!_belegIstQuote(h.ev, a)) f.push(c.id + ': Vorsprung um etwas, das kein Anteil ist');
       }
       // Der Verlauf endet heute beim Bestwert, und „vorn seit" zeigt auf
       // einen Monat, in dem der Halter wirklich vorn lag.
@@ -1475,9 +1525,75 @@ const _beleg = JSON.parse(K.eval(`JSON.stringify((function(){
   return {f, zellen, felder, spannen, verlaeufe};
 })())`));
 ok(_beleg.f.length === 0 && _beleg.zellen > 5 && _beleg.felder > 30 && _beleg.spannen > 3 && _beleg.verlaeufe > 30,
-   'der Beleg zählt seine Stichprobe, zeigt die Halter im Feld, rechnet die Spanne und endet beim Bestwert',
+   'der Beleg zählt seine Stichprobe, zeigt die Halter im Feld, zählt den Vorsprung und endet beim Bestwert',
    _beleg.f.slice(0, 5).join(' · ') || _beleg.zellen + ' Zellenreihen · ' + _beleg.felder + ' Felder · '
-     + _beleg.spannen + ' Spannen · ' + _beleg.verlaeufe + ' Verläufe');
+     + _beleg.spannen + ' Vorsprünge · ' + _beleg.verlaeufe + ' Verläufe');
+
+// ── Die Meisterbühne [§C31] ─────────────────────────────────────────
+// Der Meister stand im Feed als Karte ohne ein einziges Bild, und sein Blatt
+// nannte drei Elo-Zahlen und die Saison-ID. Jetzt zeichnen Karte und Blatt
+// Podest, Titelrennen und Tage vorn — und jede dieser Zahlen muss zu der
+// Rechnung passen, aus der Liga-Tab und Rückblick sie auch nehmen.
+console.log('\n═══ 6b. DIE MEISTERBÜHNE ═══');
+['2026-05', '2026-06', '2026-07'].forEach(sid => {
+  const r = JSON.parse(K.eval(`(()=>{
+    const sid = ${JSON.stringify(sid)};
+    const ph = getSeasonPositionHistory(sid), sp = saisonSpitze(sid), rang = saisonRang(sid);
+    // Unabhängig nachgerechnet: die Saison-Elo aus den Deltas der Partien,
+    // Tag für Tag, und wer am Ende jedes Spieltags vorn lag.
+    const ms = matchesInSeason(sid).slice().sort((a,b)=>mts(a)-mts(b));
+    const elo = {}, vorn = {};
+    let tag = null;
+    const zu = () => { if(tag == null) return;
+      const b = Object.keys(elo).sort((a,c)=>elo[c]-elo[a] || a.localeCompare(c))[0];
+      if(b) vorn[b] = (vorn[b]||0) + 1; };
+    ms.forEach(m => {
+      const d = new Date(m.created_at).getDate();
+      if(d !== tag){ zu(); tag = d; }
+      [m.a1,m.a2,m.b1,m.b2].forEach(id => { if(elo[id] == null) elo[id] = cfg.start_elo ?? 0; });
+      Object.keys(m.deltas||{}).forEach(id => { if(elo[id] != null) elo[id] += m.deltas[id]; });
+    });
+    zu();
+    const tage = new Set(ms.map(m => new Date(m.created_at).getDate())).size;
+    const abw = rang.map(e => Math.abs((ph.eloByDay[e.id]||[])[ph.lastDay-1] - e.elo)).reduce((a,b)=>Math.max(a,b),0);
+    return JSON.stringify({sp, vorn, tage, abw, champ:rang[0] && rang[0].id,
+      summe:Object.values(sp.tage).reduce((a,b)=>a+b,0)});
+  })()`));
+  ok(r.sp.spieltage === r.tage && r.summe === r.tage,
+     `${sid}: jeder Spieltag hat genau einen, der vorn lag (${r.tage})`, JSON.stringify([r.sp.spieltage, r.summe, r.tage]));
+  ok(JSON.stringify(Object.entries(r.sp.tage).sort()) === JSON.stringify(Object.entries(r.vorn).sort()),
+     `${sid}: die Tage an der Spitze stimmen mit den Partien überein`, JSON.stringify([r.sp.tage, r.vorn]));
+  ok(r.abw <= 1, `${sid}: das Titelrennen endet auf der Elo der Rangliste`, 'Abweichung ' + r.abw);
+});
+// Die echte Karte, so wie der Generator sie am 1. August bildet.
+NOW = new RealDate(2026, 7, 1, 9, 0, 0).getTime();
+const mst = JSON.parse(K.eval(`(()=>{ invalidateCache();
+  const s = _buildStories().find(x => (x.dataRef||{}).type === 'season_recap');
+  if(!s) return 'null';
+  const d = s.dataRef, karte = _newsCardHtmlM2(s, false, false, ''), blatt = _newsDetailBody(s);
+  const ph = getSeasonPositionHistory(d.sid);
+  return JSON.stringify({sorte:_newsSorte(s), held:_breakingHeroText(s), karte, blatt,
+    champ:d.championId, label:seasonLabel(d.sid), tage:ph.lastDay});
+})()`));
+NOW = new RealDate(2026, 7, 26, 21, 0, 0).getTime();
+K.eval('invalidateCache()');
+ok(mst && mst.sorte === 'held', 'der Meister trägt die Form des Helden, nicht die eines Fun Facts', mst && mst.sorte);
+if(mst){
+  console.log(`     Nachsatz: ${mst.held}`);
+  ok(!/\d{4}-\d{2}/.test(mst.held) && mst.held.indexOf(mst.label) === 0,
+     'der Nachsatz nennt den Monat beim Namen, nicht die Saison-ID', mst.held);
+  ok(!/(^|\.\s)Vor \S+\.(\s|$)/.test(mst.held), 'der Nachsatz hat kein Satzfragment', mst.held);
+  const erster = (mst.karte.match(/pod-karte gold erster" data-mpid="([^"]+)"/) || [])[1];
+  ok(erster === mst.champ, 'die Karte zeigt das Podest mit dem Meister in der Mitte', erster);
+  ok(/class="srn klein"/.test(mst.karte) && /srn-l gold/.test(mst.karte),
+     'die Karte zeigt das Titelrennen, der Meister golden');
+  const felder = ((mst.blatt.match(/<div class="srn-band"[^>]*>([\s\S]*?)<\/div>/) || [])[1] || '').match(/<i /g) || [];
+  ok(felder.length === mst.tage, 'das Band der Spitze hat ein Feld je Tag', felder.length + ' von ' + mst.tage);
+  ok(new RegExp('srn-t gold" data-pid="' + mst.champ).test(mst.blatt),
+     'bei den Tagen vorn steht der Meister golden');
+  ok(/class="srn-z"/.test(mst.blatt) && !/2026-\d\d/.test(mst.blatt.replace(/data-[a-z]+="[^"]*"/g, '')),
+     'das Blatt zeigt die Saison des Meisters als Zellen und keine Saison-ID');
+}
 
 // ── Ein Strich für jedes Zeichen [§C27] ─────────────────────────────
 // Die Strichstärke stand an 78 Stellen in 13 Werten: dieselbe Krone war in

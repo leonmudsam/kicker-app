@@ -158,6 +158,7 @@ function showH2H(idA, idB){
 
     ${teamBlock}
     ${oppBlock}
+    ${h2hBegegnungenHtml(idA, idB)}
     ${lastBlock}
   `);
 
@@ -176,3 +177,32 @@ function showH2H(idA, idB){
   }
 }
 
+
+// ── Jede Begegnung als Balken [§C27] ─────────────────────────────────
+// Die Bilanz gegeneinander war zwei Zahlen und eine Liste der letzten
+// Spiele. Ob einer früher klar vorn lag und der andere aufgeholt hat, sah
+// man nicht. Jede Begegnung als Gegner steht als Balken, nach oben für A,
+// nach unten für B, so hoch wie das Ergebnis deutlich war, in der
+// Reihenfolge, in der gespielt wurde. Höchstens die letzten vierzig: bei
+// hundertzehn Begegnungen wäre ein Balken schmaler als ein Pixel. Die
+// Namen stehen über und unter der Zeichnung und brechen um.
+function h2hBegegnungenHtml(a, b){
+  const alle = matchesOfPlayer(a, matches).filter(m => [m.a1, m.a2, m.b1, m.b2].includes(b)
+    && ((m.a1 === a || m.a2 === a) !== (m.a1 === b || m.a2 === b)));
+  if(alle.length < 2) return '';
+  const ms = alle.slice(-40);
+  const W = 320, H = 110, mitte = 55, n = ms.length;
+  const bw = Math.min(14, (W - 16) / n - 2);
+  const sieg = m => (m.a1 === a || m.a2 === a) ? m.winner === 'A' : m.winner === 'B';
+  const balken = ms.map((m, i) => {
+    const w = sieg(m), h = 8 + Math.abs(m.score_a - m.score_b) * 4.2;
+    const x = 8 + i * (W - 16) / n;
+    return `<rect class="${w ? 'w' : 'l'}" style="--i:${i}" x="${x.toFixed(1)}" y="${(w ? mitte - h : mitte).toFixed(1)}" width="${Math.max(1, bw).toFixed(1)}" height="${h.toFixed(1)}" rx="2"/>`;
+  }).join('');
+  const aw = ms.filter(sieg).length;
+  return `<div class="h2h-bg">${rcpAbschnitt(alle.length > n ? 'Die letzten ' + n + ' Begegnungen' : 'Jede Begegnung',
+      alle.length > n ? alle.length + ' insgesamt' : '')}
+    <div class="h2h-bg-n"><span>${esc(pname(a))}</span><b class="num">${aw}</b></div>
+    <svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><line class="h2h-bg-0" x1="0" x2="${W}" y1="${mitte}" y2="${mitte}"/>${balken}</svg>
+    <div class="h2h-bg-n re"><span>${esc(pname(b))}</span><b class="num">${n - aw}</b></div></div>`;
+}

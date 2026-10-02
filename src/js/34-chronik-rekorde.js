@@ -52,12 +52,21 @@
 // Partien" neben „Beste Siegquote als Außenseiter über die ganze Laufbahn":
 // zwei verschiedene Zeitachsen in einer Kammer. Wer die Tafel liest, kann so
 // nicht sehen, was gerade gilt und was für immer.
+// `satz` steht unter der Überschrift der Kammer im Rekorde-Reiter: was die
+// Rekorde darin gemeinsam haben. Ohne ihn stand „Fügungen" über zwölf
+// Karten, und warum „Der Rückenwind" dort steht und nicht im Können, sagte
+// erst das Blatt.
 const CHRON_KINDS = {
-  koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:0},
-  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'chartUp',    ord:1},
-  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:2},
-  fuegung: {label:'Fügung',        pl:'Fügungen',       kurz:'Fügungen', ic:'weatherMix', ord:3},
-  shame:   {label:'Schattenseite', pl:'Schattenseiten', kurz:'Schatten', ic:'ghost',      ord:4},
+  koennen: {label:'Können',        pl:'Können',         kurz:'Können',   ic:'trophyStar', ord:0,
+            satz:'Schnitt und Quote über die ganze Laufbahn'},
+  form:    {label:'Aktuelle Form', pl:'Aktuelle Form',  kurz:'Form',     ic:'chartUp',    ord:1,
+            satz:'Gerechnet über die letzten eigenen Partien'},
+  mark:    {label:'Bestmarke',     pl:'Bestmarken',     kurz:'Marken',   ic:'target',     ord:2,
+            satz:'Einzelne Bestleistungen, jede an einem Tag erreicht'},
+  fuegung: {label:'Fügung',        pl:'Fügungen',       kurz:'Fügungen', ic:'weatherMix', ord:3,
+            satz:'Was Auslosung und letzter Ball entscheiden'},
+  shame:   {label:'Schattenseite', pl:'Schattenseiten', kurz:'Schatten', ic:'ghost',      ord:4,
+            satz:'Die Kehrseite. Sie bringt kein Prestige'},
 };
 // Unter dieser Spielzahl bekommt niemand eine Chronik. Eine Laufbahn braucht
 // eine Laufbahn — sonst trägt ein Gast nach zwölf Spielen einen Liga-Rekord.
@@ -84,10 +93,10 @@ const _chronRoh = DISZIPLINEN.filter(d => d.allzeit).map(d => ({
   // keiner sie vergisst, zaehlt `tests/disziplinen` nach.
   kind: d.allzeit.kammer || (d.zufall ? 'fuegung' : d.art === 'schatten' ? 'shame'
       : d.art === 'ereignis' ? 'mark' : 'koennen'),
-  // Der Grundwert des Rekords fuers Prestige [§C34]: 100 fuer eine Leistung,
-  // 50 fuer eine Rolle oder eine Fuegung, 0 fuer eine Schattenseite. Er stand
+  // Der Grundwert des Rekords fuers Prestige [§C34]: 150 fuer eine Leistung,
+  // 75 fuer eine Rolle oder eine Fuegung, 0 fuer eine Schattenseite. Er stand
   // vorher allein in `PRESTIGE_ART[art]`, und damit konnte eine Bestmarke wie
-  // die laengste Siegesserie nicht 100 wiegen, ohne gleichzeitig ihren Platz
+  // die laengste Siegesserie nicht 150 wiegen, ohne gleichzeitig ihren Platz
   // in der Katalogreihenfolge und in der Monatstafel zu verschieben — `art`
   // ordnet den Katalog, der Grundwert wiegt.
   // Er steht hier nur als Zahl und wird nicht hier gerechnet: die
@@ -1126,7 +1135,10 @@ function chronicleRang(cid){
     || C.P[b.pid].wins - C.P[a.pid].wins
     || C.P[b.pid].gd - C.P[a.pid].gd
     || (a.pid < b.pid ? -1 : 1));
-  _topfDeckel(_cache._chronRang, 12);
+  // Der Rekorde-Reiter fragt jede Reihenfolge des Katalogs auf einmal ab
+  // (der Feldstreifen jeder Karte). Mit zwölf räumte er bei jedem Zeichnen
+  // die Einträge, die Blatt und Feed gerade brauchten [§3].
+  _topfDeckel(_cache._chronRang, CHRONICLES.length + 12);
   _cache._chronRang[key] = reihe;
   return reihe;
 }

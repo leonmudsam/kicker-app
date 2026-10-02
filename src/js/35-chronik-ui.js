@@ -371,7 +371,7 @@ function showChronicle(cid){
   // wer ein Blatt oeffnete, sah die Bedingung und sonst nichts. Die
   // Zahlenreihe ist `rcpZahlenHtml`, das Bauteil der Rueckblicke [§C27].
   //
-  // Der BEITRAG ist nicht der Grundwert. Ein zehnter Rekord gibt nicht 100
+  // Der BEITRAG ist nicht der Grundwert. Ein zehnter Rekord gibt nicht 150
   // Prestige: er wird durch die Zahl seiner Halter geteilt, landet auf einem
   // Rang im Rekordstapel und wird dort durch die Wurzel seiner Staffel
   // geteilt [§C34]. Gezeigt wird deshalb der Stand des ersten Halters aus
@@ -397,7 +397,7 @@ function showChronicle(cid){
       : ['Für die Laufbahn', 'Eine Schattenseite zählt nichts und zieht nichts ab']
   ].filter(Boolean);
   // Der Beleg [§C27]: woraus der Bestwert besteht, wo er im Feld liegt, wie
-  // sicher der Abstand ist und wie es dazu kam — aus chronicleRang und dem
+  // knapp der Abstand ist und wie es dazu kam — aus chronicleRang und dem
   // Beleg des Katalogs, ohne zweite Rechnung.
   const halterSet = new Set(h ? (h.pids || [h.pid]) : []);
   const zweit = rang.find(r => !halterSet.has(r.pid)) || null;
@@ -579,7 +579,10 @@ function ligaRekordeHtml(weit){
     // was man liest. Jetzt trägt sie die Karte, der Rest bleibt Metall.
     const ev = String(h.ev || '');
     const m = ev.match(/^([+\u2212-]?\d[^\s]*(?:\s?%)?)\s+(.*)$/);
-    const beleg = m ? `<span class="rek-w">${esc(m[1])}</span> ${esc(m[2])}` : esc(ev);
+    // Der Wert steht groß und links, der Rest des Belegs daneben: „6 %"
+    // war fett in 13 px und damit nicht größer als der Name darüber.
+    const beleg = m ? `<span class="rek-w num">${esc(m[1])}</span><span class="rek-ev">${esc(m[2])}</span>`
+                    : `<span class="rek-ev">${esc(ev)}</span>`;
     // Die Kammer steht als Datum an der Karte, nicht als Farbklasse: eine
     // Fuegung, die von einer Niederlage erzaehlt, traegt Rot und bleibt
     // trotzdem eine Fuegung. Ueber die Klasse waeren Kammer und Farbe
@@ -593,7 +596,8 @@ function ligaRekordeHtml(weit){
               return p ? avHtml(p, 'width:21px;height:21px;font-size:9px;border-radius:7px') : ''; }).join('')}
             <span class="rek-hn">${esc(_chronHolderNames(h))}</span>
           </span></div>
-        <div class="rek-ev num">${beleg}</div>
+        <div class="rek-wz">${beleg}</div>
+        ${_rekFeldHtml(d, h)}
         ${meta}
       </div>
     </div>`;
@@ -614,7 +618,7 @@ function ligaRekordeHtml(weit){
       return `<span class="rek-sl${z.n ? '' : ' null'}" data-tplayer="${esc(z.pid)}">
         <span class="z num">${z.n}</span>
         <span class="b" style="height:${z.n ? (4 + z.n / maxN * 34).toFixed(1) : 3}px"></span>
-        ${p ? avHtml(p, 'width:15px;height:15px;font-size:7px;border-radius:5px') : ''}
+        ${p ? avHtml(p, '') : ''}
       </span>`;
     }).join('')}</div>
   </div>` : '';
@@ -623,32 +627,68 @@ function ligaRekordeHtml(weit){
     .sort((a, b) => CHRON_KINDS[a].ord - CHRON_KINDS[b].ord)
     .map(k => ({k, def:CHRON_KINDS[k], liste:CHRONICLES.filter(d => d.kind === k)}))
     .filter(g => g.liste.length);
-  // Der Kammerfilter ist `.ui-tabs` — die innere Ebene unter dem gerahmten
-  // `.ui-switch` des Reiters [§C27]. Ein drittes Bauteil für dieselbe
-  // Aussage wäre eines zu viel.
-  // Jeder Chip nennt seine Zahl. Ohne sie war nicht zu sehen, ob eine Kammer
+  // Jedes Feld nennt seine Zahl. Ohne sie war nicht zu sehen, ob eine Kammer
   // ueberhaupt gefuellt ist, und „Alle" sagte nicht, wie viele Rekorde es
-  // gibt — die Frage, mit der jeder auf diesen Reiter kommt. Fuenf Kammern
-  // und „Alle" sind sechs Chips: auf 430 Pixeln laeuft die Leiste deshalb
-  // waagerecht, statt Fuegungen und Schatten in eine zweite Zeile zu
-  // schieben, die man nicht als Reiter erkennt.
+  // gibt — die Frage, mit der jeder auf diesen Reiter kommt.
   const chip = (k, lab, n, an) => `<button data-rekkammer="${esc(k)}"
       class="${an ? 'on' : ''}">${esc(lab)}<span class="n num">${n}</span></button>`;
-  // `roll`: die Kammern sind verschieden breit, darunter kann kein
-  // Schlitten gleiten [§C27].
-  const filter = `<div class="ui-tabs roll rek-kammern">
+  // Sechs Felder in zwei Reihen statt einer gescrollten Leiste: dort standen
+  // sechs Wörter in 11,5 px eng aneinander, und „Fügungen" und „Schatten"
+  // lagen halb hinter dem Rand. Ein Feld je Kammer ist ein Ziel, das man
+  // trifft, und alle sechs sind ohne Wischen zu sehen.
+  const filter = `<div class="rek-kammern">
     ${chip('', 'Alle', CHRONICLES.length, !rekKammer)}
     ${gruppen.map(g => chip(g.k, g.def.kurz, g.liste.length, rekKammer === g.k)).join('')}
   </div>`;
   const sicht = gruppen.filter(g => !rekKammer || g.k === rekKammer);
-  return leiste + filter + sicht.map(g => `
-    <div class="rek-gruppe ${esc(g.k)}">
+  // ── Der Kopf einer Kammer sagt, was sie misst und wem sie gehört ──
+  // „Fügungen" stand über zwölf Karten, und warum „Der Rückenwind" dort
+  // steht und nicht im Können, sagte erst das Blatt. Darunter die drei, die
+  // in der Kammer am meisten halten: die Säulen oben zählen die ganze Tafel,
+  // und wer die Form hält, ist nicht zwingend der, der das Können hält.
+  const kopfVon = g => {
+    const n = {};
+    g.liste.forEach(d => { const h = holders[d.id];
+      if(h) (h.pids || [h.pid]).forEach(pid => { n[pid] = (n[pid] || 0) + 1; }); });
+    const vorn = Object.keys(n).filter(pid => pmap()[pid])
+      .sort((a, b) => n[b] - n[a] || pname(a).localeCompare(pname(b))).slice(0, 3);
+    const vergeben = g.liste.filter(d => holders[d.id]).length;
+    return `<div class="rek-gruppe ${esc(g.k)}">
       <span class="rek-g-ic">${svgI(g.def.ic)}</span>
       <span class="rek-g-n">${esc(g.def.pl)}</span>
       <span class="rek-g-line"></span>
       <span class="rek-g-z num">${g.liste.length}</span>
     </div>
-    <div class="rek-liste">${g.liste.map(karte).join('')}</div>`).join('');
+    <div class="rek-g-sub ${esc(g.k)}">
+      <span class="rek-g-satz">${esc(g.def.satz || '')}${vergeben < g.liste.length
+        ? ` · ${g.liste.length - vergeben} offen` : ''}</span>
+      ${vorn.length ? `<span class="rek-g-vorn">${vorn.map(pid =>
+        `<span data-tplayer="${esc(pid)}">${avHtml(pmap()[pid], 'width:16px;height:16px;font-size:7px;border-radius:5px')}<b class="num">${n[pid]}</b></span>`).join('')}</span>` : ''}
+    </div>`;
+  };
+  return leiste + filter + sicht.map(g => kopfVon(g)
+    + `<div class="rek-liste">${g.liste.map(karte).join('')}</div>`).join('');
+}
+
+// ── Wo der Halter im Feld steht ─────────────────────────────────────
+// Eine Karte nannte den Wert des Halters und sonst nichts: ob der Zweite
+// knapp dahinter liegt oder weit weg, stand erst im Blatt. Der Streifen ist
+// das Bauteil „Wo im Feld" des Belegs [§C27] — jeder im Rennen ein Punkt,
+// der Halter groß am rechten Ende —, daneben der Erste, der ihn nicht hält,
+// mit seinem Wert. Gelesen wird dieselbe Reihenfolge, aus der Podest und
+// Verfolger des Blatts kommen (`chronicleRang`); keine zweite Rechnung.
+function _rekFeldHtml(d, h){
+  try {
+    const rang = chronicleRang(d.id);
+    if(!Array.isArray(rang) || rang.length < 3) return '';
+    const halter = new Set(h.pids || [h.pid]);
+    const feld = belegFeldHtml(rang.map(r => ({v:r.wert, t:'', er:halter.has(r.pid)})));
+    if(!feld) return '';
+    const z = rang.find(r => !halter.has(r.pid));
+    const p = z && pmap()[z.pid];
+    return `<div class="rek-feld">${feld}${p
+      ? `<span class="rek-zw">vor ${esc(p.name)} <b class="num">${esc(_chronKurz(z.ev))}</b></span>` : ''}</div>`;
+  } catch(e){ return ''; }
 }
 
 // Die Saison-Matrix: Zeilen sind Spieler, Spalten Monate, Zellen Titel.

@@ -1,0 +1,791 @@
+/* ── Die Karten „Am Spieltag" [§C33, §11.6c] ─────────────────────────
+   Der Kopf folgt dem Anlass, und jeder Anlass zeigt eine Zahl, die es auf
+   der Karte vorher nicht gab. Nur Tokens der App (--acid, --red, --gold,
+   --line …), keine neue Farbe [§C25]. Bewegt wird nur transform und
+   Deckkraft, und alles steht bei Bewegungsruhe.
+
+   Gebaut für Werte, die es heute noch nicht gibt. NICHTS WIRD GEKÜRZT
+   ODER GESCHRUMPFT: in einer Grafik stehen nur Dinge fester Breite —
+   Gesichter, Zeichen, Zahlen, kurze Aufschriften aus festem Wortschatz.
+   Ein Name steht in einer Textstelle (.sp-lg, .sp-z-n, .sp-aufst …), die
+   mindestens eine halbe Karte breit ist und wie ein Satz umbricht. Jede
+   Spalte eines Rasters ist minmax(0,…) statt so breit wie ihr Inhalt.
+   `tests/blatt` misst das mit Grenzwerten nach. */
+
+.sp-k{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);line-height:1.4}
+/* Die Textstelle unter einer Grafik: so breit wie die Karte, Namen fett. */
+.sp-lg{margin-top:6px;font-size:10.5px;line-height:1.45;color:var(--muted)}
+.sp-lg b,.sp-z-n b,.sp-aufst b,.sp-at-n b,.sp-nv-n b,.sp-wp-n b,.sp-sl-n b,.sp-rd-n b{font-weight:600;color:var(--ink2)}
+.sp-chips{display:flex;flex:0 0 auto}
+.sp-chips .av+.av{margin-left:-6px}
+.nf-runde .av,.sp-rd-tafel .av,.sp-zeile .av,.sp-at .av,.sp-nv .av,.sp-wp .av,.sp-sl .av,.sp-ku .av,.sp-bg .av,.sp-rd-p .av,.sp-tb .av,
+.sp-rk .av,.sp-duo .av,.sp-md .av,.sp-pm .av,.sp-ro .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+/* Eine Zahl bricht nicht um, aus 12.345 würde sonst „12." über „345". */
+.nf-card .num,.nd .num{white-space:nowrap}
+
+/* ── Die Ergebniszeile ── */
+.sp-zeile{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;
+  padding:9px 13px;background:linear-gradient(96deg,rgba(190,242,100,.06),transparent 70%);border-bottom:1px solid var(--line)}
+.sp-zeile{align-items:start}
+.sp-z-s{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;opacity:.6}
+.sp-z-s.w{opacity:1}
+.sp-z-s.re{align-items:flex-end;text-align:right}
+.sp-z-n{display:flex;flex-direction:column;font-size:10.5px;line-height:1.3;color:var(--muted)}
+.sp-z-s.w .sp-z-n b{color:var(--ink)}
+.sp-z-sc{align-self:center}
+.sp-z-sc{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;letter-spacing:-.02em;color:var(--faint)}
+.sp-z-sc em{font-style:normal}.sp-z-sc em.w{color:var(--ink)}
+.sp-z-sc i{font-style:normal;margin:0 1px}
+
+/* ── Das Spielfeld ── */
+.sp-feld{position:relative;margin:2px 10px 0;padding:8px 0 10px;border-radius:12px;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.035),transparent 70%),var(--surface2);
+  box-shadow:inset 0 0 0 1px var(--line2)}
+.sp-f-mitte{position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--line2)}
+.sp-f-mitte::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;margin:-22px 0 0 -22px;
+  border-radius:50%;box-shadow:inset 0 0 0 1px var(--line2)}
+.sp-f-tor{position:absolute;top:50%;width:10px;height:56px;margin-top:-28px;box-shadow:inset 0 0 0 1px var(--line2)}
+.sp-f-tor.l{left:0;border-radius:0 6px 6px 0}.sp-f-tor.r{right:0;border-radius:6px 0 0 6px}
+.sp-f-stange{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:linear-gradient(180deg,transparent,rgba(185,196,189,.16) 20%,rgba(185,196,189,.16) 80%,transparent)}
+.sp-f-sc{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;margin-bottom:6px}
+.sp-f-sc b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:16px;color:var(--faint);padding:2px 9px;border-radius:9px;
+  background:var(--surface);box-shadow:0 0 0 1px var(--line2)}
+.sp-f-sc b em{font-style:normal}.sp-f-sc b em.w{color:var(--ink)}.sp-f-sc b i{font-style:normal;margin:0 1px}
+.sp-f-sc span{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
+.sp-f-reihe{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.sp-f-sp{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:0 2px;text-align:center}
+.sp-f-rolle{font:600 8px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.sp-f-sp .rav{opacity:.5}
+.sp-f-sp.w .rav{opacity:1}
+.sp-f-n{font-size:10.5px;font-weight:600;line-height:1.25;color:var(--muted)}
+.sp-f-sp.w .sp-f-n{color:var(--ink)}
+.sp-f-sp em{font:700 10px 'Sometype Mono',monospace;font-style:normal;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.04)}
+.sp-f-sp em.g{color:var(--acid)}.sp-f-sp em.r{color:var(--red)}
+
+/* Die Aufstellung unter dem Feld: eine Spalte je Team, Rolle und Name. */
+.sp-aufst{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:4px 14px;padding:7px 13px 2px;font-size:10.5px;line-height:1.35}
+.sp-aufst > div{display:flex;flex-direction:column;gap:2px;min-width:0;opacity:.7}
+.sp-aufst > div.w{opacity:1}
+.sp-aufst > div.re{text-align:right}
+.sp-aufst i{font:600 8px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-right:6px}
+.sp-aufst > div.w b{color:var(--ink)}
+
+/* ── Die Anzeigetafel ── */
+.sp-at{padding:12px 13px 10px;border-bottom:1px solid var(--line)}
+.sp-at-g{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:start}
+.sp-at-n{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:7px;font-size:10.5px;line-height:1.35;color:var(--muted)}
+.sp-at-n > span{display:flex;flex-direction:column}
+.sp-at-n .re{text-align:right}
+.sp-at-n .w b{color:var(--ink)}
+.sp-at-t{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;opacity:.6}
+.sp-at-t.w{opacity:1}
+.sp-at-t > b{position:relative;display:block;width:100%;max-width:92px;text-align:center;font-family:'Archivo Black',sans-serif;
+  font-weight:400;font-size:40px;line-height:1;padding:9px 0 7px;border-radius:10px;color:var(--ink2);
+  background:linear-gradient(180deg,var(--surface3) 0 50%,var(--surface2) 50% 100%);box-shadow:inset 0 0 0 1px var(--line2)}
+.sp-at-t > b::after{content:"";position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(0,0,0,.45)}
+.sp-at-t.w > b{color:var(--ink);box-shadow:inset 0 0 0 1px rgba(190,242,100,.35),0 0 18px rgba(190,242,100,.08)}
+.sp-at-m{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:58px;padding-top:12px}
+.sp-at-m span{font:700 9px 'Sometype Mono',monospace;letter-spacing:.16em;color:var(--acid);padding:3px 7px;border-radius:999px;
+  background:rgba(190,242,100,.08);box-shadow:inset 0 0 0 1px rgba(190,242,100,.25);white-space:nowrap}
+.sp-at-m em{font:700 12px 'Sometype Mono',monospace;font-style:normal;color:var(--ink);margin-top:5px;white-space:nowrap}
+.sp-at-m i{font-size:9px;font-style:normal;color:var(--faint);white-space:nowrap}
+.sp-nv{padding:9px 13px 10px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
+/* Die Bilanz steht in einer Spalte so breit wie sie selbst (auto): aus
+   21:27 wird mit den Jahren 2.100:2.700. Die Zellen nehmen, was übrig ist. */
+.sp-nv-z{display:grid;grid-template-columns:20px minmax(0,1fr) auto;align-items:end;gap:8px}
+.sp-nv-m{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sp-nv-n{font-size:11px;line-height:1.3}
+.sp-nv-c{display:flex;gap:3px;min-width:0}
+.sp-nv-c i{flex:1;max-width:16px;min-width:3px;height:12px;border-radius:3px;background:var(--surface3)}
+.sp-nv-c i.w{background:var(--acid);opacity:.75}.sp-nv-c i.l{background:var(--red);opacity:.7}
+.sp-nv-c i.jetzt{opacity:1;box-shadow:0 0 0 1.5px var(--surface),0 0 0 2.5px var(--acid)}
+.sp-nv-z em{font:700 11px 'Sometype Mono',monospace;font-style:normal;text-align:right;color:var(--ink2)}
+
+/* ── Die Verteilung ── */
+.sp-vt{padding:9px 13px 10px;border-top:1px solid var(--line)}
+.sp-vt-g{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;height:62px;margin:7px 0 4px;align-items:end}
+.sp-vt-s{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;min-width:0}
+.sp-vt-s i{display:block;width:100%;min-height:2px;border-radius:3px 3px 1px 1px;background:var(--surface3)}
+.sp-vt-s.mehr i{background:rgba(185,196,189,.32)}
+.sp-vt-s.jetzt i{background:var(--acid);box-shadow:0 0 12px rgba(190,242,100,.25)}
+.sp-vt-s em{font:600 8.5px 'Sometype Mono',monospace;font-style:normal;color:var(--faint);line-height:1}
+.sp-vt-s.jetzt em{color:var(--acid)}
+.sp-vt-f{font-size:11px;color:var(--muted)}
+.sp-vt-f b{color:var(--ink);font-family:'Sometype Mono',monospace}
+
+/* ── Die Wippe ──
+   Drei Ebenen untereinander: die Zahl, die Bahn mit dem Balken, die beiden
+   Schilder in zwei Spalten. Nichts davon steht auf dem anderen. */
+.sp-wp{padding:8px 13px 10px;border-bottom:1px solid var(--line)}
+.sp-wp-kopf{display:flex;flex-direction:column;align-items:center;gap:1px}
+.sp-wp-st{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:16px;color:var(--faint);padding:2px 9px;border-radius:9px;
+  background:var(--surface);box-shadow:0 0 0 1px var(--line2)}
+.sp-wp-st em{font-style:normal}.sp-wp-st em.w{color:var(--ink)}.sp-wp-st i{font-style:normal;margin:0 1px}
+.sp-wp-gap{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:0 5px}
+.sp-wp-gap b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:15px;color:var(--ink2)}
+.sp-wp-gap span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);white-space:nowrap}
+.sp-wp-bahn{position:relative;aspect-ratio:300/120;margin-top:-14px}
+.sp-wp-bahn svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.sp-wp-dr{fill:var(--surface3);stroke:var(--line2)}
+.sp-wp-bk{stroke:var(--ink2);stroke-width:4;stroke-linecap:round;opacity:.55}
+.sp-wp-ax{fill:var(--surface);stroke:var(--ink2);stroke-width:1.5}
+.sp-wp-t{position:absolute;transform:translate(-50%,-100%)}
+.sp-wp-t .av{--av:26px;width:26px;height:26px;font-size:10px}
+.sp-wp-t .av+.av{margin-left:-7px}
+.sp-wp-t:not(.w){opacity:.6}
+.sp-wp-t.w .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px rgba(190,242,100,.55)}
+.sp-wp-ls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:-6px}
+.sp-wp-l{display:flex;flex-direction:column;min-width:0;line-height:1.3}
+.sp-wp-l.w{text-align:right}
+.sp-wp-n{display:flex;flex-direction:column;font-size:10.5px;line-height:1.3;color:var(--muted)}
+.sp-wp-l.w .sp-wp-n b{color:var(--ink)}
+.sp-wp-z{font:600 9.5px 'Sometype Mono',monospace;color:var(--faint);margin-top:1px}
+.sp-wp-l.w .sp-wp-z{color:var(--acid)}
+
+/* ── Die Tabelle vorher und nachher ── */
+.sp-tb{padding:9px 13px 8px;border-top:1px solid var(--line)}
+.sp-tb-k{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:baseline;font-size:10px;color:var(--muted)}
+.sp-tb-k .sp-k{text-align:center}
+.sp-tb-f{position:relative;margin-top:6px}
+.sp-tb-f svg{position:absolute;inset:0;width:100%;height:100%}
+.sp-tb-l{fill:none;stroke-width:1.6;stroke:var(--line2);vector-effect:non-scaling-stroke}
+.sp-tb-l.g{stroke:var(--acid);stroke-width:2.4}.sp-tb-l.r{stroke:var(--red);stroke-width:2;opacity:.8}
+.sp-tb-e{position:absolute;right:68%;transform:translateY(-50%);display:flex;align-items:center;gap:5px;opacity:.55}
+.sp-tb-e.re{right:auto;left:68%}
+.sp-tb-e.g,.sp-tb-e.r{opacity:1}
+.sp-tb-e i{font-size:10px;font-style:normal;font-weight:600;color:var(--muted);white-space:nowrap}
+.sp-tb-e.g i,.sp-tb-e.r i{color:var(--ink)}
+.sp-tb-e.gold i{color:var(--gold)}
+.sp-tb-e b{font:700 10px 'Sometype Mono',monospace;color:var(--muted);min-width:14px;text-align:right}
+.sp-tb-e.re b{text-align:left}
+.sp-tb-e.g b{color:var(--ink)}
+.sp-tb-e.gold b{color:var(--gold)}
+.sp-tb-e.gold .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3px var(--gold)}
+
+/* ── Die Serienleiter ── */
+.sp-sl{padding:9px 13px 10px;border-top:1px solid var(--line)}
+.sp-sl-k{display:flex;align-items:center;gap:7px;font-size:11.5px;min-width:0}
+.sp-sl-k em{flex:0 0 auto;font:700 11px 'Sometype Mono',monospace;font-style:normal;color:var(--acid)}
+.sp-sl-n{min-width:0;margin-left:auto;text-align:right;font-size:10.5px;color:var(--muted)}
+.sp-sl-r{position:relative;display:flex;gap:3px;margin-top:8px;height:14px}
+.sp-sl-r i{flex:1;min-width:0;height:14px;border-radius:3px;background:var(--surface3)}
+.sp-sl-r i.w{background:var(--acid);box-shadow:0 0 8px rgba(190,242,100,.18)}
+.sp-sl-r.balken{border-radius:4px;background:var(--surface3)}
+.sp-sl-r.balken .sp-sl-voll{flex:none;border-radius:4px;background:var(--acid)}
+.sp-sl-r u{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;border-radius:1px;background:var(--ink2)}
+.sp-sl-r u.liga{background:var(--muted)}
+.sp-sl-ms{display:flex;flex-wrap:wrap;gap:2px 12px;margin-top:6px;font-size:10px;line-height:1.4;color:var(--ink2)}
+.sp-sl-ms span::before{content:"";display:inline-block;width:2px;height:9px;margin-right:5px;vertical-align:-1px;background:currentColor}
+.sp-sl-ms .liga{color:var(--muted)}
+
+/* ── Die gerissene Kette ── */
+.sp-rk{padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-rk-k{display:flex;align-items:center;gap:10px;min-width:0}
+.sp-rk-z{position:relative;flex:0 0 auto;padding:0 3px}
+.sp-rk-z b{display:block;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:30px;line-height:1;
+  color:var(--acid);opacity:.55;letter-spacing:-.02em}
+.sp-rk-z s{position:absolute;left:-2px;right:-2px;top:50%;height:3px;margin-top:-1px;border-radius:2px;
+  background:var(--red);transform:rotate(-14deg);box-shadow:0 0 10px rgba(240,86,106,.55)}
+.sp-rk-t{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.sp-rk-t > span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.sp-rk-t em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sp-rk-t small,.sp-rk-b small{font-size:9.5px;color:var(--muted)}
+.sp-rk-b{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:0 0 auto}
+.sp-rk-r{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr)) 22px;gap:3px;margin-top:9px;height:14px}
+.sp-rk-r i{display:block;min-width:0;height:14px;border-radius:3px}
+.sp-rk-r i.w{background:rgba(190,242,100,.55)}
+.sp-rk-r i.x{display:flex;align-items:center;justify-content:center;background:var(--red);
+  box-shadow:0 0 12px rgba(240,86,106,.5)}
+.sp-rk-r i.x svg{width:11px;height:11px;color:#1a0b0b}
+/* Die Premiere: zwei Gesichter, verbunden, und der Versuch als Lauf. */
+.sp-pm{padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-pm-k{display:flex;align-items:center;gap:12px;min-width:0}
+.sp-pm-d{display:flex;align-items:center;gap:4px;flex:0 0 auto}
+.sp-pm-d .av{--av:26px;width:26px;height:26px;font-size:9px}
+.sp-pm-d i{display:flex;width:18px;height:18px;align-items:center;justify-content:center;border-radius:50%;
+  color:var(--acid);background:rgba(190,242,100,.1)}
+.sp-pm-d i svg{width:12px;height:12px}
+.sp-pm-t{display:flex;align-items:center;gap:8px;min-width:0}
+.sp-pm-t b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1;color:var(--acid)}
+.sp-pm-t > span{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.sp-pm-t em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sp-pm-t small{font-size:9.5px;color:var(--muted)}
+.sp-pm-r{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:3px;margin-top:9px;height:12px}
+.sp-pm-r i{display:block;min-width:0;height:12px;border-radius:3px}
+.sp-pm-r i.l{background:rgba(240,86,106,.4)}
+.sp-pm-r i.w{background:var(--acid);box-shadow:0 0 10px rgba(190,242,100,.35)}
+/* Der Rollentausch: der Anteil der Seite als Strahl, die heutige markiert. */
+.sp-ro{padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-ro-k{display:flex;align-items:center;gap:8px;min-width:0}
+.sp-ro-k > span{display:flex;flex-direction:column;min-width:0;flex:1;line-height:1.25}
+.sp-ro-k em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ink2)}
+.sp-ro-k small{font-size:9.5px;color:var(--muted)}
+.sp-ro-k > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:20px;line-height:1;color:var(--acid);flex:0 0 auto}
+.sp-ro-s{display:flex;height:10px;margin-top:9px;border-radius:5px;overflow:hidden;background:var(--surface3)}
+.sp-ro-s i{display:block;height:100%;background:rgba(255,255,255,.12)}
+.sp-ro-s i.def{flex:1}
+.sp-ro-s i.heute{background:var(--acid);box-shadow:0 0 10px rgba(190,242,100,.4)}
+.sp-ro-l{display:flex;justify-content:space-between;margin-top:4px;font-size:9.5px;color:var(--muted)}
+
+/* ── Das Duo ── */
+.sp-duo{display:grid;grid-template-columns:56px minmax(0,1fr);gap:11px;align-items:center;padding:9px 13px 10px;border-top:1px solid var(--line)}
+.sp-duo svg{width:56px;height:56px;display:block}
+.sp-duo-b{fill:none;stroke:rgba(240,86,106,.55);stroke-width:6}
+.sp-duo-w{fill:none;stroke:var(--acid);stroke-width:6;stroke-linecap:butt}
+.sp-duo text{font-family:'Sometype Mono',monospace;font-weight:700;font-size:11px;fill:var(--ink)}
+.sp-duo + .sp-lg{margin:-4px 13px 0;padding-bottom:9px}
+.sp-duo-r{min-width:0}
+.sp-duo-k{display:flex;align-items:center;gap:7px;font-size:11px;min-width:0}
+.sp-duo-k em{flex:0 0 auto;font:700 11px 'Sometype Mono',monospace;font-style:normal;color:var(--acid)}
+.sp-duo-l{display:flex;gap:3px;height:10px;margin:7px 0 5px}
+.sp-duo-l i{flex:1;max-width:16px;min-width:2px;border-radius:3px;background:var(--acid)}
+.sp-duo-l.balken i{max-width:none}
+
+/* ── Die Medaille ── */
+.sp-md{display:grid;grid-template-columns:48px minmax(0,1fr);gap:11px;align-items:start;padding:10px 13px 10px;border-top:1px solid var(--line)}
+.sp-md-r{min-width:0}
+.sp-md-k{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px}
+.sp-md-k b{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.3}
+.sp-md-k em{font:700 8.5px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}
+.sp-md-k em.viol{color:#b9a3ff}.sp-md-k em.gold{color:var(--gold)}
+.sp-md-p{display:flex;flex-wrap:wrap;gap:4px;margin:7px 0 5px}
+.sp-md-p > span{width:20px;height:20px;border-radius:50%;box-shadow:inset 0 0 0 1px var(--line2)}
+.sp-md-p > span.hat{box-shadow:none}
+.sp-md-p > span.neu .av{box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px #b9a3ff}
+.sp-md-p.punkte{gap:3px}
+.sp-md-p.punkte i{width:7px;height:7px;border-radius:50%;background:var(--surface3)}
+.sp-md-p.punkte i.hat{background:#b9a3ff}
+.sp-md-p.punkte i.neu{box-shadow:0 0 0 1.5px var(--ink)}
+
+/* ── Der Spieler des Tages ── */
+.sp-tg{padding:9px 13px 10px;border-top:1px solid var(--line)}
+.sp-tg svg{display:block;width:100%;height:auto;overflow:visible}
+.sp-tg-f{fill:rgba(247,207,74,.10)}
+.sp-tg-l{fill:none;stroke:var(--gold);stroke-width:2;stroke-linejoin:round;stroke-linecap:round;stroke-dasharray:1}
+.sp-tg-b{display:flex;gap:3px;height:12px;margin:6px 0 6px}
+.sp-tg-b i{flex:1;min-width:2px;max-width:22px;border-radius:3px}
+.sp-tg-b.eng{gap:1px}
+.sp-tg-b i.w{background:var(--acid)}.sp-tg-b i.l{background:var(--red);opacity:.8}
+.sp-tg-z{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 12px;font-size:10.5px;color:var(--muted)}
+.sp-tg-z b{font-family:'Sometype Mono',monospace;color:var(--ink)}
+.sp-tg-z b.g{color:var(--acid)}.sp-tg-z b.r{color:var(--red)}
+
+/* ── Die Elo-Kurve ── */
+.sp-ku{padding:9px 13px 9px;border-top:1px solid var(--line)}
+.sp-ku-k{display:flex;align-items:center;gap:7px;font-size:11.5px;min-width:0}
+.sp-ku-s{flex:1 1 auto;min-width:0;text-align:right;color:var(--muted);font-size:11px}
+.sp-ku-s em.g{font:700 11px 'Sometype Mono',monospace;font-style:normal;color:var(--acid)}
+.sp-ku svg{display:block;width:100%;height:auto;margin:6px 0 2px;overflow:visible}
+.sp-ku-0{stroke:var(--line2);stroke-dasharray:3 4}
+.sp-ku-l{fill:none;stroke:var(--ink2);stroke-width:1.8;stroke-linejoin:round;opacity:.7;stroke-dasharray:1}
+.sp-ku circle.w{fill:var(--acid)}.sp-ku circle.l{fill:var(--red)}
+.sp-ku circle.jetzt{stroke:var(--surface);stroke-width:2;filter:drop-shadow(0 0 5px rgba(190,242,100,.6))}
+
+/* ── Jede Begegnung ── */
+.sp-bg{padding:9px 13px 9px;border-top:1px solid var(--line)}
+.sp-bg-k{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:12px}
+.sp-bg-k > span{display:flex;align-items:center;gap:6px;min-width:0;font-size:11.5px}
+.sp-bg-k > span.re{justify-content:flex-end}
+.sp-bg-k em{flex:0 0 auto;font:700 13px 'Sometype Mono',monospace;font-style:normal;color:var(--ink)}
+.sp-bg svg{display:block;width:100%;height:60px;margin:6px 0 3px}
+.sp-bg-0{stroke:var(--line2)}
+.sp-bg rect.a{fill:var(--ink2);opacity:.55}.sp-bg rect.b{fill:var(--muted);opacity:.4}
+.sp-bg rect.jetzt{opacity:1;fill:var(--acid)}
+
+/* ── Die Runde der Vier ── */
+.sp-rd-tafel{display:flex;flex-direction:column;gap:6px;padding:10px 13px 10px;
+  border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.025),transparent)}
+.sp-rd-sp{display:grid;grid-template-columns:20px minmax(0,1fr) auto auto;align-items:center;gap:10px}
+.sp-rd-m{display:flex;flex-direction:column;gap:4px;min-width:0}
+.sp-rd-n{font-size:12px;line-height:1.3;color:var(--muted)}
+.sp-rd-sp.erst .sp-rd-n b{color:var(--ink)}
+.sp-rd-wl{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink)}
+.sp-rd-e{display:block;width:100%;max-width:120px;height:5px;border-radius:3px;background:var(--surface3);overflow:hidden}
+.sp-rd-e u{display:block;height:100%;border-radius:3px}
+.sp-rd-e.g u{background:var(--acid)}.sp-rd-e.r u{background:var(--red);margin-left:auto}
+.sp-rd-sp > em{font:700 10px 'Sometype Mono',monospace;font-style:normal;text-align:right;min-width:30px}
+.sp-rd-sp > em.g{color:var(--acid)}.sp-rd-sp > em.r{color:var(--red)}
+.sp-rd-ps{border-top:1px solid var(--line);display:flex;flex-direction:column}
+.sp-rd-p{display:grid;grid-template-columns:34px auto 44px auto minmax(0,1fr);align-items:center;gap:7px;padding:6px 13px;
+  border-top:1px solid rgba(255,255,255,.035)}
+.sp-rd-p:first-child{border-top:0}
+.sp-rd-u{font-size:9.5px;color:var(--faint)}
+.sp-rd-t{display:flex;opacity:.5}.sp-rd-t.w{opacity:1}
+.sp-rd-p > b{text-align:center;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:13px;color:var(--faint)}
+.sp-rd-p > b em{font-style:normal}.sp-rd-p > b em.w{color:var(--ink)}
+.sp-rd-a{display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;color:var(--ink2);text-align:right}
+.sp-rd-a > span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.04em;line-height:1.3}
+.sp-rd-a svg{width:12px;height:12px;flex:0 0 auto;opacity:.8}
+.sp-rd-mehr{padding:6px 13px 9px;font-size:10.5px;color:var(--muted);border-top:1px solid rgba(255,255,255,.035)}
+
+/* ── Bewegung ── */
+@media (prefers-reduced-motion:no-preference){
+  .sp-f-sp,.sp-rd-sp,.sp-tb-e{animation:spDa .45s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
+  .sp-vt-s i,.sp-tg-b i,.sp-duo-l i{transform-origin:bottom;animation:spY .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
+  .sp-sl-r i.w,.sp-sl-voll{transform-origin:left;animation:spX .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms)}
+  .sp-bg rect{transform-box:fill-box;transform-origin:center;animation:spY .4s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  .sp-band-g i{transform-origin:bottom;animation:spY .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
+  .sp-pm-r i,.sp-ro-s i.atk{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 40ms)}
+  .sp-rk-r i.w{transform-origin:left;animation:spX .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 30ms)}
+  .sp-rk-r i.x{animation:spBruch .5s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--i,0) * 30ms + 120ms)}
+  .sp-rk-z s{transform-origin:left;animation:spStrich .4s ease-out both;animation-delay:.35s}
+  .sp-ku-l,.sp-tg-l{animation:spZieh 1s ease-out both}
+  .sp-wp-bahn,.sp-wp-ls{animation:spDa .5s ease-out both}
+  .sp-duo-w{animation:spDa .6s ease-out both}
+  .sp-rd-p{animation:spDa .4s ease-out both;animation-delay:calc(var(--i,0) * 50ms + 150ms)}
+  .sp-at-t > b{animation:spKlapp .5s cubic-bezier(.3,.8,.3,1) both}
+}
+@keyframes spDa{from{opacity:0}}
+@keyframes spY{from{transform:scaleY(0)}}
+@keyframes spX{from{transform:scaleX(0)}}
+@keyframes spBruch{from{transform:scale(.2) rotate(-25deg);opacity:0}}
+@keyframes spStrich{from{transform:rotate(-14deg) scaleX(0)}}
+@keyframes spZieh{from{stroke-dashoffset:1}}
+@keyframes spKlapp{from{transform:perspective(200px) rotateX(-70deg);opacity:0}}
+
+/* ── Das Band des klaren Siegs ── */
+.sp-band{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:start;padding:11px 13px 10px;
+  background:linear-gradient(96deg,rgba(190,242,100,.07),transparent 72%)}
+.sp-band-s{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.sp-band-s.re{align-items:flex-end;text-align:right}
+.sp-band-avs{display:flex;min-height:48px}
+.sp-band-avs .rav+.rav{margin-left:-11px}
+.sp-band-s:not(.w) .sp-band-avs{opacity:.55}
+.sp-band-s.w .sp-z-n b{color:var(--ink)}
+.sp-band-m{align-self:center;display:flex;flex-direction:column;align-items:center;gap:5px}
+.sp-band-sc{font-family:'Archivo Black',sans-serif;font-size:24px;line-height:1;letter-spacing:-.02em;color:var(--faint)}
+.sp-band-sc em{font-style:normal}.sp-band-sc em.w{color:var(--acid);text-shadow:0 0 14px rgba(190,242,100,.35)}
+.sp-band-sc i{font-style:normal;font-size:16px;margin:0 2px;vertical-align:3px}
+.sp-band-g{display:flex;gap:2px}
+.sp-band-g i{display:block;width:5px;height:9px;border-radius:1.5px;background:rgba(255,255,255,.14)}
+.sp-band-g i.a{background:var(--acid)}
+.sp-band-d{font:700 9.5px 'Sometype Mono',monospace;color:var(--acid);letter-spacing:.04em;padding:1px 6px;border-radius:6px;
+  background:rgba(190,242,100,.1)}
+
+/* ── Die Runde im Blatt ──
+   Antippen öffnet die Karte der Partie; eine Breaking-Partie trägt ihre
+   Marke in Rot [§C25]. */
+.nd-rd{border-top:0}
+.nd-rd .sp-rd-p{cursor:pointer;border-radius:8px}
+.nd-rd .sp-rd-p:active{background:rgba(255,255,255,.04)}
+.sp-rd-p.brk .sp-rd-a{color:var(--red)}
+/* Wer mit wem: eine Spalte je Partie, eine Zeile je Spieler, in Blöcken zu
+   acht. Die Zelle trägt die Rolle (S oder A) und die Richtung. */
+.sp-rms{display:flex;flex-direction:column;gap:10px}
+.sp-rm{display:grid;grid-template-columns:20px repeat(var(--n),minmax(0,30px));gap:4px;align-items:center}
+.sp-rm .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+.sp-rm-u{font-size:8.5px;color:var(--faint);text-align:center;line-height:1}
+.sp-rm-z{display:flex;align-items:center;justify-content:center;height:20px;border-radius:5px;
+  font:700 9px 'Sometype Mono',monospace;color:var(--bg)}
+.sp-rm-z.w{background:var(--acid);opacity:.85}
+.sp-rm-z.l{background:var(--red);opacity:.7}
+
+/* Die Runde als Zusammenfassung [§C33]: eine Kennzeile, die sagt, was die
+   Karte ist, die Tabelle als eine Reihe aus vier Feldern und die Partien als
+   Streifen aus Uhrzeit und Stand. Leiser als eine Partie-Karte: gestrichelte
+   Kante und kein Schein — sie bündelt, was darunter schon steht. */
+.nf-runde{--tint:0;border-style:dashed;background:var(--surface)}
+.sp-rd-was{padding:0 13px 2px;font:600 9.5px 'Sometype Mono',monospace;letter-spacing:.04em;
+  color:var(--muted);line-height:1.4}
+.sp-rq{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;padding:2px 13px 8px}
+.sp-rq-f{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 3px 6px;min-width:0;
+  border-radius:10px;background:rgba(255,255,255,.025);border:1px solid var(--line)}
+.sp-rq-f.erst{border-color:rgba(var(--story-rgb,190,242,100),.45);background:rgba(var(--story-rgb,190,242,100),.07)}
+.sp-rq-f .av{width:22px;height:22px;font-size:8px}
+.sp-rq-n{font-size:11px;font-weight:600;color:var(--ink2);line-height:1.25;text-align:center;
+  overflow-wrap:anywhere;max-width:100%}
+.sp-rq-wl{font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--ink);line-height:1}
+.sp-rq-f > em{font:700 9.5px 'Sometype Mono',monospace;font-style:normal}
+.sp-rq-f > em.g{color:var(--acid)}.sp-rq-f > em.r{color:var(--red)}
+.sp-rs{display:flex;flex-wrap:wrap;gap:4px;padding:8px 13px 10px;border-top:1px solid var(--line)}
+.sp-rs-z{display:inline-flex;flex-direction:column;align-items:center;gap:1px;min-width:44px;padding:4px 6px;
+  border-radius:7px;background:rgba(255,255,255,.03)}
+.sp-rs-z i{font-style:normal;font-size:9px;color:var(--faint)}
+.sp-rs-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:12px;color:var(--ink2)}
+@media (prefers-reduced-motion: no-preference){
+  .sp-rq-f{animation:spDa .4s ease-out both;animation-delay:calc(var(--i,0) * 60ms)}
+}
+
+/* ── Die Formen der gewöhnlichen Partie [§C33] ───────────────────────
+   Dreizehn Köpfe statt eines Spielfelds auf jeder zweiten Karte. Jeder
+   trägt den Stand (.sp-st) in seiner Zeichnung, der Sieger zuerst und hell,
+   und die Namen in einer Textstelle darunter (.sp-nz), je einer in seiner
+   Zeile. Dieselbe Fläche wie das Spielfeld, damit die Karten eine Familie
+   bleiben. */
+.sp-fk{position:relative;margin:2px 10px 0;padding:10px 10px 9px;border-radius:12px;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.035),transparent 70%),var(--surface2);
+  box-shadow:inset 0 0 0 1px var(--line2)}
+.sp-fk .av,.sp-nz .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface2);flex:0 0 auto}
+.sp-st{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;letter-spacing:-.02em;line-height:1;color:var(--faint);white-space:nowrap}
+.sp-st em{font-style:normal;color:var(--ink)}
+.sp-nz{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:6px 10px 0;font-size:10.5px;line-height:1.3;color:var(--muted)}
+.sp-nz > span{display:flex;flex-direction:column;min-width:0}
+.sp-nz > span.re{text-align:right;align-items:flex-end}
+.sp-nz b{font-weight:600;color:var(--ink2)}
+.sp-nz .w b{color:var(--ink)}
+.sp-nz-gg{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);align-self:center}
+.sp-fk + .sp-lg{padding:0 13px}
+
+/* Das Mosaik: das Feld dieses Ergebnisses trägt den Stand. */
+.sp-mo-g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.sp-mo-k{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:38px;padding:4px 0;border-radius:7px;
+  background:rgba(194,201,208,calc(.04 + var(--a) * .16));box-shadow:inset 0 0 0 1px rgba(194,201,208,calc(.06 + var(--a) * .2))}
+.sp-mo-k > b{font:700 11px 'Sometype Mono',monospace;color:var(--ink2)}
+.sp-mo-k > span{font:600 8.5px 'Sometype Mono',monospace;color:var(--muted)}
+.sp-mo-k.jetzt{background:rgba(190,242,100,.14);box-shadow:inset 0 0 0 1.5px var(--acid)}
+.sp-mo-k.jetzt .sp-st{font-size:14px}
+.sp-mo-k.jetzt .sp-st em{color:var(--acid)}
+
+/* Pflicht erfüllt: der Tacho und daneben der Stand. */
+.sp-ta{display:grid;grid-template-columns:128px minmax(0,1fr);gap:10px;align-items:center}
+.sp-ta-u{display:flex;flex-direction:column;align-items:center}
+.sp-ta-u svg{display:block;width:100%;overflow:visible}
+.sp-ta-g,.sp-ta-f{fill:none;stroke-width:7;stroke-linecap:round}
+.sp-ta-g{stroke:var(--line2)}.sp-ta-f{stroke:var(--acid);opacity:.85}
+.sp-ta-t line{stroke:var(--faint);stroke-width:1}
+.sp-ta-n{transform-origin:50px 50px;transform:rotate(var(--w))}
+.sp-ta-n line{stroke:var(--ink);stroke-width:2;stroke-linecap:round}
+.sp-ta-n circle{fill:var(--ink)}
+.sp-ta-u > b{margin-top:-2px;font-size:16px;color:var(--ink)}
+.sp-ta-u > span{font:600 8px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.sp-ta-r{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-width:0}
+.sp-ta-r .sp-st{font-size:26px}
+.sp-ta-r > em{font-style:normal;font-size:11px;color:var(--ink2)}
+
+/* Erwartung gegen Ergebnis: die Liga als Wolke, diese Partie als Punkt. */
+.sp-sd{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:4px 10px;align-items:center}
+.sp-sd > svg{display:block;width:100%;overflow:visible}
+.sp-sd-ax{stroke:var(--line2);stroke-width:.5}
+.sp-sd-w rect{fill:var(--silber)}
+.sp-sd-e{fill:none;stroke:var(--silber);stroke-width:.7;stroke-dasharray:2 1.5;opacity:.75}
+.sp-sd-p{fill:var(--acid)}
+.sp-sd-r{fill:none;stroke:var(--acid);stroke-width:.8;opacity:.55;transform-box:fill-box;transform-origin:center}
+.sp-sd-t{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sp-sd-t .sp-st{font-size:24px}
+.sp-sd-t > em{font-style:normal;font-size:12px;font-weight:600;color:var(--ink)}
+.sp-sd-t > span{font-size:10px;line-height:1.35;color:var(--muted)}
+.sp-sd-t b{color:var(--ink2);font-weight:600}
+.sp-sd-a{display:flex;justify-content:space-between;gap:6px;font:600 8px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--faint)}
+
+/* Der Elo-Transfer: Punkte fließen von den Verlierern zu den Siegern. */
+.sp-et{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px}
+.sp-et-s{display:flex;flex-direction:column;gap:4px;opacity:.6}
+.sp-et-s.w{opacity:1}
+.sp-et-p{display:flex;flex-direction:column;align-items:center}
+.sp-et-p > em{font:700 10px 'Sometype Mono',monospace;font-style:normal;margin-top:2px}
+.sp-et-p > em.g{color:var(--acid)}.sp-et-p > em.r{color:var(--red)}
+.sp-et-m{position:relative;align-self:stretch;min-height:112px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;overflow:hidden;
+  border-radius:9px;background:linear-gradient(90deg,rgba(240,86,106,.07),transparent 40%,transparent 60%,rgba(190,242,100,.09))}
+.sp-et-m > i{position:absolute;left:0;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:var(--acid);opacity:0}
+.sp-et-m > b{position:relative;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1;color:var(--acid)}
+.sp-et-m > span{position:relative;font:600 8px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sp-et-m .sp-st{position:relative;font-size:14px;margin-top:3px}
+
+/* Eingespielt: jede gemeinsame Partie ein Stück im Ring. */
+.sp-ch-d{display:grid;grid-template-columns:auto 96px auto;justify-content:center;align-items:center;gap:6px}
+.sp-ch-r{position:relative;width:96px;height:96px}
+.sp-ch-r svg{width:100%;height:100%;transform:rotate(-90deg)}
+.sp-ch-r circle{fill:none;stroke-width:6}
+.sp-ch-r circle.w{stroke:var(--acid)}.sp-ch-r circle.l{stroke:rgba(240,86,106,.75)}
+.sp-ch-r circle.jetzt{stroke-width:9}
+.sp-ch-r > span{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.sp-ch-r > span b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;line-height:1;color:var(--ink)}
+.sp-ch-r > span i{font:600 8px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sp-ch-u{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px 10px;margin-top:6px;font-size:10.5px;color:var(--muted)}
+.sp-ch-u b{color:var(--ink2);font-weight:600}
+
+/* Lieblingsgegner und gebrochener Fluch. */
+.sp-gg{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:8px}
+.sp-gg-p{opacity:.55}.sp-gg-p.w{opacity:1}
+.sp-gg-m{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-width:0}
+.sp-gg-m > em{font:600 8.5px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.16em;text-transform:uppercase;color:var(--bronze)}
+.sp-gg-b{font-family:'Archivo Black',sans-serif;font-size:20px;line-height:1;color:var(--faint)}
+.sp-gg-b b{font-weight:400;color:var(--ink)}
+.sp-gg-r{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:100%}
+.sp-gg-r i{width:7px;height:12px;border-radius:2px;background:rgba(240,86,106,.55)}
+.sp-gg-r i.w{background:rgba(190,242,100,.65)}
+.sp-gg-r i.jetzt{background:var(--acid);box-shadow:0 0 0 1.5px var(--surface2),0 0 0 2.5px var(--acid)}
+.sp-gg-h{display:flex;align-items:baseline;gap:5px;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.sp-gg-h .sp-st{font-size:14px}
+
+/* Die Revanche: der Stand von damals, der Pfeil, der von heute. */
+.sp-rv{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px}
+.sp-rv-c.re{opacity:.55}
+.sp-rv-m{display:grid;grid-template-columns:auto minmax(30px,1fr) auto;align-items:center;gap:2px}
+.sp-rv-t{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 8px;border-radius:9px;background:var(--surface);box-shadow:0 0 0 1px var(--line2)}
+.sp-rv-t > i{font:600 8px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.sp-rv-t.alt > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:15px;color:var(--red);opacity:.85}
+.sp-rv-t.neu{box-shadow:0 0 0 1px rgba(190,242,100,.5)}
+.sp-rv-t.neu .sp-st{font-size:15px}
+.sp-rv-t.neu .sp-st em{color:var(--acid)}
+.sp-rv-p{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
+.sp-rv-p svg{width:100%;max-width:60px;overflow:visible}
+.sp-rv-p path{fill:none;stroke:var(--acid);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sp-rv-p > i{font:600 8px 'Sometype Mono',monospace;font-style:normal;color:var(--muted);text-align:center;line-height:1.3}
+
+/* Gipfeltreffen: die vier in Tabellenreihenfolge, Sieger hell. */
+.sp-gp{display:flex;flex-direction:column;gap:3px}
+.sp-gp-z{display:grid;grid-template-columns:22px auto minmax(0,1fr) auto;gap:7px;align-items:center;padding:4px 8px;border-radius:8px;background:rgba(255,255,255,.02);opacity:.65}
+.sp-gp-z.w{opacity:1;background:rgba(190,242,100,.06);box-shadow:inset 2px 0 0 var(--acid)}
+.sp-gp-z > span:first-child{font-size:11px;color:var(--muted)}
+.sp-gp-n{font-size:11.5px;font-weight:600;color:var(--ink2);overflow-wrap:anywhere}
+.sp-gp-z > em{font:700 10px 'Sometype Mono',monospace;font-style:normal;color:var(--faint)}
+.sp-gp-z > em.g{color:var(--acid)}.sp-gp-z > em.r{color:var(--red)}
+.sp-gp-f{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:5px}
+.sp-gp-f > span{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+
+/* Zurück am Tisch: die Tage der Pause, am Ende diese Partie. */
+.sp-zu{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center}
+.sp-zu-m{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sp-zu-z{font-size:11px;color:var(--muted)}
+.sp-zu-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:24px;color:var(--ink);margin-right:3px}
+.sp-zu-k{display:flex;flex-wrap:wrap;align-items:center;gap:2px}
+.sp-zu-k i{width:8px;height:8px;border-radius:2px;background:var(--line2)}
+.sp-zu-k i.alt{background:var(--silber)}
+.sp-zu-k .sp-st{margin-left:4px;padding:2px 6px;border-radius:6px;font-size:13px;background:rgba(190,242,100,.12);box-shadow:inset 0 0 0 1px rgba(190,242,100,.4)}
+.sp-zu-k .sp-st em{color:var(--acid)}
+
+/* Zwei Welten: die Elo vor dem Anstoß als Säulen, je Team geklammert. */
+.sp-gf{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:end}
+.sp-gf > .sp-st{align-self:center;font-size:20px}
+.sp-gf-t{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.6;min-width:0}
+.sp-gf-t.w{opacity:1}
+.sp-gf-ss{display:flex;justify-content:center;align-items:flex-end;gap:10px;height:96px}
+.sp-gf-s{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px}
+.sp-gf-s > b{font:700 9px 'Sometype Mono',monospace;color:var(--ink2)}
+.sp-gf-s > i{display:block;width:16px;border-radius:4px 4px 1px 1px;background:var(--silber);opacity:.7;transform-origin:bottom}
+.sp-gf-t.w .sp-gf-s > i{background:var(--acid);opacity:1}
+.sp-gf-t > small{font:600 8px 'Sometype Mono',monospace;color:var(--faint);text-align:center;border-top:1px solid var(--line2);padding-top:2px;width:100%}
+
+/* Der Tagesring: der Tag um das Wappen, rechts der Stand dieser Partie. */
+.sp-tr{display:grid;grid-template-columns:88px minmax(0,1fr);gap:12px;align-items:center}
+.sp-tr-r{position:relative;width:88px;height:88px}
+.sp-tr-r svg{width:100%;height:100%;transform:rotate(-90deg)}
+.sp-tr-r circle{fill:none;stroke-width:6}
+.sp-tr-r circle.w{stroke:var(--acid)}.sp-tr-r circle.l{stroke:rgba(240,86,106,.75)}
+.sp-tr-r circle.jetzt{stroke-width:9}
+.sp-tr-r > span{position:absolute;inset:0;display:grid;place-items:center}
+.sp-tr-t{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sp-tr-t > em{font:600 8.5px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+.sp-tr-z{font-size:12px;color:var(--muted)}
+.sp-tr-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;color:var(--acid);margin-right:3px}
+.sp-tr-j{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:var(--muted)}
+.sp-tr-j .sp-st{font-size:16px}
+
+/* Das Zählwerk: die Ziffern rollen auf die neue Zahl. */
+.sp-zw{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
+.sp-zw-l{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:var(--ink2);background:var(--surface);box-shadow:0 0 0 1px var(--line2)}
+.sp-zw-m{display:flex;flex-direction:column;gap:4px;min-width:0}
+.sp-zw-w{display:flex;align-items:flex-end;gap:3px}
+.sp-zw-w > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;color:var(--ink2);line-height:1}
+.sp-zw-r{position:relative;display:block;width:24px;height:36px;overflow:hidden;border-radius:6px;background:var(--bg);box-shadow:inset 0 0 0 1px var(--line2)}
+.sp-zw-r > b,.sp-zw-r::before{display:block;line-height:36px;text-align:center;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;color:var(--ink)}
+.sp-zw-u{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.sp-zw-s{display:flex;flex-direction:column;align-items:center;padding:6px 8px;border-radius:9px;background:var(--surface);box-shadow:0 0 0 1px var(--line2)}
+
+/* Bewegung: jede erklärt etwas, und nur transform und Deckkraft. */
+@media (prefers-reduced-motion:no-preference){
+  .sp-mo-k,.sp-gp-z,.sp-gg-r i,.sp-zu-k i,.sp-ch-r circle,.sp-tr-r circle{animation:spDa .35s ease-out both;animation-delay:calc(var(--i,0) * 40ms)}
+  .sp-ta-n{animation:spNadel 1.1s cubic-bezier(.3,1.4,.5,1) .15s both}
+  .sp-sd-r{animation:spPuls 2.6s ease-out .6s infinite}
+  .sp-et-m > i{animation:spFluss 1.8s cubic-bezier(.5,0,.5,1) infinite;animation-delay:calc(var(--i,0) * 150ms)}
+  .sp-gf-s > i{animation:spY .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 80ms)}
+  .sp-zw-r::before{content:"0\A 1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9";white-space:pre;position:absolute;inset:0 0 auto;
+    animation:spRolle 1.5s cubic-bezier(.2,.9,.25,1) .1s both}
+  .sp-zw-r > b{animation:spDa .15s linear 1.55s both}
+  .sp-rv-t.neu{animation:spBruch .5s cubic-bezier(.3,1.6,.5,1) .5s both}
+}
+@keyframes spNadel{from{transform:rotate(-90deg)}}
+@keyframes spPuls{0%{transform:scale(.6);opacity:.8}100%{transform:scale(2.2);opacity:0}}
+@keyframes spFluss{0%{transform:translateX(0);opacity:0}15%,85%{opacity:1}100%{transform:translateX(150px);opacity:0}}
+@keyframes spRolle{from{transform:translateY(0)}97%{opacity:1}to{transform:translateY(calc(var(--z) * -36px));opacity:0}}
+
+/* ── Das Blatt einer Partie [§C33] ──────────────────────────────────── */
+/* Die Bühne: die Zeichnung der Karte, in einer Fläche, die in der Farbe der
+   Sorte schimmert. Darunter nur Zeichnungen, ohne Sätze darüber. */
+.nd-buehne{position:relative;margin:4px 0 16px;padding:12px 10px;border-radius:18px;overflow:hidden;
+  background:radial-gradient(90% 80% at 50% 0%,rgba(var(--story-rgb,190,242,100),.12),transparent 70%),var(--surface);
+  box-shadow:inset 0 0 0 1px rgba(var(--story-rgb,190,242,100),.18),0 18px 40px -24px rgba(var(--story-rgb,190,242,100),.6)}
+.nd-buehne > .sp-fk{background:transparent;box-shadow:none}
+.nd-feld{margin-bottom:6px}
+/* Der Stand steht auf der Bühne darüber; hier zählt nur die Aufstellung. */
+.nd-feld .sp-f-sc{display:none}
+.nd-feld .sp-feld{margin:0;padding-top:12px}
+.nd-dd{display:flex;flex-direction:column;gap:9px;margin-bottom:6px}
+.nd-dd-z{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 8px;align-items:center;cursor:pointer}
+.nd-dd-z .nd-lf{grid-column:2 / span 2}
+.nd-dd-n{font-size:11.5px;font-weight:600;color:var(--ink2);display:flex;gap:5px;flex-wrap:wrap}
+.nd-dd-n i{font-style:normal;font-weight:400;color:var(--muted)}
+.nd-dd-z > b{font-size:12px;color:var(--ink)}
+.nd-dd-z > .av{--av:22px;width:22px;height:22px;font-size:8.5px;flex:0 0 auto}
+.nd-lf{display:flex;flex-wrap:wrap;gap:3px}
+.nd-lf i{width:9px;height:14px;border-radius:2.5px;background:rgba(240,86,106,.6)}
+.nd-lf i.w{background:rgba(190,242,100,.7)}
+.nd-lf i.dies{box-shadow:0 0 0 1.5px var(--bg),0 0 0 2.5px var(--ink)}
+.nd-tl{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.nd-tl-z{display:flex;flex-direction:column;align-items:center;padding:4px 5px;border-radius:7px;background:var(--surface2);min-width:40px}
+.nd-tl-z b{font-size:11px;color:var(--ink2)}
+.nd-tl-z small{font-size:8.5px;color:var(--muted)}
+.nd-tl-z.dies{box-shadow:inset 0 0 0 1.5px var(--story,var(--acid))}
+.nd-tl-z.dies b{color:var(--ink)}
+.nd-vt{display:flex;align-items:flex-end;gap:4px;height:84px}
+.nd-vt span{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;min-width:0}
+.nd-vt i{display:block;width:100%;border-radius:3px 3px 1px 1px;background:rgba(194,201,208,.3)}
+.nd-vt span.dies i{background:var(--story,var(--acid));box-shadow:0 0 12px -2px rgba(var(--story-rgb,190,242,100),.7)}
+.nd-vt b{font-size:8.5px;color:var(--muted)}
+.nd-vt em{font-style:normal;font-size:9px;font-weight:700;color:var(--ink)}
+.nd-vt span.dies b{color:var(--ink)}
+.nd-vt-l{display:flex;justify-content:space-between;margin:3px 0 6px;font:600 8px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){
+  .nd-buehne{animation:spBuehne .45s cubic-bezier(.2,.9,.3,1) both}
+  .nd-dd-z,.nd-tl-z,.nd-vt span{animation:spDa .35s ease-out both;animation-delay:calc(.15s + var(--k,0) * 40ms)}
+}
+@keyframes spBuehne{from{opacity:0;transform:translateY(10px)}}
+
+/* ── Das Blatt einer Serie ─────────────────────────────────────────── */
+.nd-sr-k{display:flex;align-items:center;gap:12px}
+.nd-sr-z{display:flex;flex-direction:column;min-width:0}
+.nd-sr-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:40px;line-height:1;color:var(--acid)}
+.nd-sr.neg .nd-sr-z b{color:var(--red)}
+.nd-sr-z span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.nd-sr-z em{font-style:normal;font-size:13px;font-weight:600;color:var(--ink);margin-top:3px}
+.nd-sr-duo{display:flex;flex:0 0 auto}
+.nd-sr-duo .av{--av:46px;width:46px;height:46px;font-size:14px;box-shadow:0 0 0 2px var(--surface)}
+.nd-sr-duo .av+.av{margin-left:-12px}
+.nd-sr .nf-ser{margin-top:12px}
+.nd-sr-d{display:flex;justify-content:space-between;margin-top:6px;font-size:9px;color:var(--muted)}
+.nd-pzl{display:flex;flex-direction:column;gap:5px;margin-bottom:6px}
+.nd-pz{display:grid;grid-template-columns:44px auto auto auto minmax(0,1fr);align-items:center;gap:7px;padding:6px 9px;border-radius:9px;
+  background:var(--surface);box-shadow:inset 3px 0 0 rgba(190,242,100,.6);cursor:pointer}
+.nd-pz.l{box-shadow:inset 3px 0 0 rgba(240,86,106,.6)}
+.nd-pz-t{font-size:9.5px;color:var(--muted)}
+.nd-pz .sp-chips .av,.nd-bk-z > .av,.nd-zg-n .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface);flex:0 0 auto}
+.nd-pz > b{font-size:12.5px;color:var(--ink)}
+.nd-pz.l > b{color:var(--ink2)}
+.nd-pz-gg{font-size:9.5px;color:var(--muted)}
+.nd-pz > .sp-chips:last-child{justify-self:start}
+.nd-bk{display:flex;flex-direction:column;gap:7px;margin-bottom:6px}
+.nd-bk-z{display:grid;grid-template-columns:auto 76px minmax(0,1fr) auto;gap:8px;align-items:center;cursor:pointer}
+.nd-bk-n{font-size:11.5px;font-weight:600;color:var(--ink2);overflow-wrap:anywhere}
+.nd-bk-b{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.nd-bk-b i{display:block;height:100%;border-radius:4px;background:rgba(var(--story-rgb,190,242,100),.75)}
+.nd-bk-z > b{font-size:11.5px;color:var(--ink)}
+.nd-zg{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-bottom:6px}
+.nd-zg-p{padding:9px;border-radius:11px;background:var(--surface);display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.nd-zg-n{display:flex;align-items:center;gap:6px;font-size:12px;min-width:0}
+.nd-zg-n b{font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.nd-zg-r{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 6px;align-items:center}
+.nd-zg-r span:first-child{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.nd-zg-b{grid-column:1 / -1;grid-row:2;height:7px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.nd-zg-b i{display:block;height:100%;border-radius:4px;background:rgba(194,201,208,.55)}
+.nd-zg-b i.g{background:var(--acid)}.nd-zg-b i.r{background:var(--red)}
+.nd-zg-r b{font-size:11px;color:var(--ink)}
+@media (prefers-reduced-motion:no-preference){
+  .nd-pz,.nd-bk-z,.nd-zg-p{animation:spDa .35s ease-out both;animation-delay:calc(.15s + var(--k,0) * 40ms)}
+}
+/* Die Zahl steht groß darüber; die Aufschrift des Bands sagte sie ein
+   zweites Mal. */
+.nd-sr .nf-ser > span{display:none}
+.nd-pz-t{display:flex;flex-direction:column;line-height:1.2}
+.nd-pz-t small{font-size:8.5px;color:var(--ink2)}
+
+/* ── Das Blatt einer Rivalität ─────────────────────────────────────── */
+.nd-rv{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px}
+.nd-rv-p{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;cursor:pointer}
+.nd-rv-p b{font-size:13px;font-weight:600;color:var(--ink);text-align:center;overflow-wrap:anywhere}
+.nd-rv-m{display:flex;flex-direction:column;align-items:center}
+.nd-rv-m b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:36px;line-height:1;color:var(--story,var(--ink))}
+.nd-rv-m span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.nd-rv-tau{grid-column:1 / -1;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:10px}
+.nd-rv-tau b{font-size:14px;color:var(--ink)}
+.nd-rv-tb{height:10px;border-radius:5px;background:rgba(194,201,208,.28);overflow:hidden}
+.nd-rv-tb i{display:block;height:100%;background:var(--story,var(--acid))}
+.nd-li{position:relative;margin-bottom:6px;padding:6px 0;border-radius:11px;background:var(--surface)}
+.nd-li svg{display:block;width:100%;height:auto}
+.nd-li polyline{fill:none;stroke:var(--story,var(--acid));stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+.nd-li circle{fill:var(--story,var(--acid))}
+.nd-li-0{stroke:var(--line2);stroke-dasharray:3 3}
+.nd-li-o,.nd-li-u{position:absolute;left:8px;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.nd-li-o{top:4px}.nd-li-u{bottom:4px}
+.nd-lf.gross{gap:4px;margin-bottom:6px}
+.nd-lf.gross i{width:13px;height:20px;border-radius:3.5px}
+/* ── Das Blatt einer Auszeichnung ──────────────────────────────────── */
+.nd-bd .nd-med{margin:0;background:transparent;box-shadow:none;border:0}
+.nd-bd-w{display:flex;justify-content:center;gap:14px;margin-top:8px;flex-wrap:wrap}
+.nd-bd-w > span{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+.nd-bd-w b{font-size:12px;font-weight:600;color:var(--ink)}
+.nd-tg{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px;margin-bottom:6px}
+.nd-tg > span{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:9px;background:var(--surface);opacity:.38;cursor:pointer}
+.nd-tg > span.hat{opacity:1}
+.nd-tg > span.dies{box-shadow:inset 0 0 0 1.5px var(--story,var(--purple))}
+.nd-tg .av{--av:24px;width:24px;height:24px;font-size:9px}
+.nd-tg small{font-size:10px;color:var(--ink2);text-align:center;overflow-wrap:anywhere}
+@media (prefers-reduced-motion:no-preference){
+  .nd-tg > span{animation:spDa .3s ease-out both;animation-delay:calc(.15s + var(--k,0) * 30ms)}
+  .nd-tg > span:not(.hat){animation-name:spDaLeise}
+}
+@keyframes spDaLeise{from{opacity:0}to{opacity:.38}}
+
+/* ── Das Blatt eines Liga-Rekords ──────────────────────────────────── */
+.nd-rk{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.nd-rk-w{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.nd-rk-alt,.nd-rk-neu{display:flex;align-items:center;gap:2px;position:relative;padding-bottom:13px}
+.nd-rk-alt > span{opacity:.45;filter:none}
+.nd-rk-alt small,.nd-rk-neu small{position:absolute;left:0;right:0;bottom:0;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.nd-rk-neu .nf-face-mehr{--av:30px;width:30px;height:30px;font-size:10px}
+.nd-rk-pf{width:34px;height:14px;flex:0 0 auto;margin-bottom:13px}
+.nd-rk-pf path{fill:none;stroke:var(--gold);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.nd-rk.metall .nd-rk-pf path{stroke:var(--ink2)}
+.nd-rk-h{font-style:normal;font-size:13px;font-weight:600;color:var(--ink)}
+.nd-rk-v{display:flex;align-items:baseline;justify-content:center;gap:8px;flex-wrap:wrap}
+.nd-rk-v b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:32px;line-height:1;color:var(--gold)}
+.nd-rk.metall .nd-rk-v b{color:var(--ink)}
+.nd-rk-v s{font-size:15px;color:var(--muted)}
+.nd-rk-v span{font:600 9px 'Sometype Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.nd-rk-n{font-size:12px;color:var(--ink2)}
+.nd-rk-c{margin:0 0 6px}
+
+/* ── Spieler des Tages ─────────────────────────────────────────────── */
+.nd-pt{display:flex;flex-direction:column;align-items:center;gap:6px}
+.nd-pt-k{position:relative;display:flex;justify-content:center;gap:6px;padding-top:12px}
+.nd-pt-kr{position:absolute;top:-4px;left:50%;transform:translateX(-50%);color:var(--gold)}
+.nd-pt-kr svg{width:20px;height:20px}
+.nd-pt-n{font-size:15px;font-weight:600;color:var(--ink)}
+.nd-pt .sp-tg{align-self:stretch}
+.nd-ft .nd-bk-b i{position:relative;background:rgba(194,201,208,.28)}
+.nd-ft .nd-bk-b u{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:rgba(194,201,208,.6)}
+.nd-ft .nd-bk-z.hell .nd-bk-b u{background:var(--gold)}
+.nd-ft .nd-bk-z.hell .nd-bk-n{color:var(--gold)}
+/* ── Endspurt ──────────────────────────────────────────────────────── */
+.nd-es{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:center}
+.nd-es-ring{position:relative;width:86px;height:86px;display:grid;place-items:center}
+.nd-es-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.nd-es-ring circle{fill:none;stroke-width:7}
+.nd-es-ring .g{stroke:var(--surface2)}.nd-es-ring .f{stroke:var(--story,var(--ink2));stroke-linecap:round}
+.nd-es-ring b{position:relative;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:28px;line-height:1;color:var(--ink)}
+.nd-es-ring span{position:absolute;bottom:20px;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.nd-es-r2{display:flex;flex-direction:column;gap:6px;min-width:0}
+.nd-es-z{display:grid;grid-template-columns:auto auto minmax(0,1fr) auto;gap:6px;align-items:center;cursor:pointer}
+.nd-es-r{font-size:11px;color:var(--muted)}
+.nd-es-z b{font-size:13px;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.nd-es-z span.num{font-size:11px;color:var(--ink2)}
+.nd-es-gap{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:center;padding-left:26px}
+.nd-es-gap span{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden}
+.nd-es-gap i{display:block;height:100%;background:var(--story,var(--ink2))}
+.nd-es-gap b{font-size:11px;color:var(--ink)}
+/* ── Die Woche ─────────────────────────────────────────────────────── */
+.nd-wo{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.nd-wo-z{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px 10px;border-radius:10px;background:var(--surface);cursor:pointer}
+.nd-wo-z .sp-chips .av{--av:26px;width:26px;height:26px;font-size:9.5px;box-shadow:0 0 0 2px var(--surface)}
+.nd-wo-t{display:flex;flex-direction:column;min-width:0}
+.nd-wo-t b{font-size:12.5px;font-weight:600;color:var(--ink);overflow-wrap:anywhere}
+.nd-wo-t small{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.nd-wo-w{font-size:13px;color:var(--ink)}
+.nd-wo-z.gold{box-shadow:inset 0 0 0 1px rgba(247,207,74,.4)}
+.nd-wo-z.gold .nd-wo-w,.nd-wo-z.gold .nd-wo-t b{color:var(--gold)}
+/* Die Bahn mit den Ständen steht im Abschnitt darunter, die Bilanz im Satz
+   darüber; die Bühne trägt nur die Elo des Tages. */
+.nd-pt .sp-tg-b,.nd-pt .sp-tg-z span:first-child{display:none}
+.nd-pt .sp-tg-z{justify-content:flex-end}
+/* Das Wappen samt Raute ist höher als ein Gesicht; der Name lag darauf. */
+.nd-vs-p > .rav{margin-bottom:10px}

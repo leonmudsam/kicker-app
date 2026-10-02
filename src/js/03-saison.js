@@ -134,7 +134,7 @@ function seasonEnd(seasonId){
 function seasonLabel(seasonId){
   if(!seasonId) return '';
   const [y,m]=seasonId.split('-').map(Number);
-  return new Date(y,m-1).toLocaleDateString('de-DE',{month:'long',year:'numeric'});
+  return _seasonLabelOf(y, m - 1);
 }
 function seasonDaysLeft(){
   const end=seasonEnd();const now=new Date();

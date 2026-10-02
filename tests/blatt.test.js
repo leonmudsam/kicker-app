@@ -254,6 +254,12 @@ const ok = (c, msg, det) => {
        JSON.stringify(gesten[k]));
   });
 
+  // Die beiden senkrechten Wische haben das Blatt geschlossen, und ein
+  // geschlossenes Blatt wird am Ende des Zuschiebens geleert. Vorher blieb
+  // sein Inhalt stehen, und die Vitrine darunter wurde in einem Blatt
+  // gemessen, das gar nicht mehr offen war.
+  await K(`closeSheet(true);showLaufbahn(${JSON.stringify(IDS[8])})`);
+  await page.waitForTimeout(400);
   console.log('\n═══ 2. DIE VITRINE IST EIN ZIEL ═══');
   // Fünf Stufen, und jede muss man ansehen können. Wischen allein hat die
   // letzte nicht erreicht — die Geste gehörte dem Blatt. Antippen ist der
@@ -505,7 +511,15 @@ const ok = (c, msg, det) => {
       // Und jede Kammer muss anklickbar sein: eine Leiste, die auf 430
       // Pixeln nicht zu erreichen ist, versteckt ihre Rekorde.
       leiste: (() => { const e = document.querySelector('#app .rek-kammern');
-        return e ? {scroll: e.scrollWidth, sicht: e.clientWidth} : null; })()
+        return e ? {scroll: e.scrollWidth, sicht: e.clientWidth,
+          schrift: Math.min(...[...e.querySelectorAll('button')].map(b => parseFloat(getComputedStyle(b).fontSize))),
+          hoehe: Math.min(...[...e.querySelectorAll('button')].map(b => b.getBoundingClientRect().height))} : null; })(),
+      // Die Besitzleiste trägt Zahl, Säule und Gesicht — und das Gesicht lief
+      // unten aus der Karte.
+      besitz: (() => { const k = document.querySelector('#app .rek-besitz');
+        if(!k) return null; const r = k.getBoundingClientRect();
+        return [...k.querySelectorAll('.rek-sl > *')].filter(x => { const q = x.getBoundingClientRect();
+          return q.bottom > r.bottom - 1 || q.top < r.top; }).length; })()
     };
   });
   ok(rek.kammern.length === 5, 'der Reiter zeigt fuenf Kammern', rek.kammern.join(' · '));
@@ -518,11 +532,14 @@ const ok = (c, msg, det) => {
   ok(rek.chips.length === 6 && chipFehler.length === 0,
      'jeder Kammer-Chip nennt seine Zahl, „Alle" den ganzen Katalog',
      rek.chips.map(c => (c.k || 'alle') + ':' + c.n).join(' · '));
-  // Die Leiste ist erreichbar: entweder passt sie, oder sie scrollt.
-  ok(rek.leiste && (rek.leiste.scroll <= rek.leiste.sicht + 1
-      || rek.leiste.scroll > rek.leiste.sicht),
-     'die Kammerleiste ist auf dem Telefon vollstaendig erreichbar',
+  // Die Kammern stehen ohne Wischen da, in lesbarer Größe und als Ziel,
+  // das man trifft: als scrollende Leiste standen sechs Wörter in 11,5 px
+  // eng aneinander, und die letzten beiden lagen hinter dem Rand.
+  ok(rek.leiste && rek.leiste.scroll <= rek.leiste.sicht + 1 && rek.leiste.schrift >= 12.5 && rek.leiste.hoehe >= 34,
+     'die Kammerfelder stehen auf dem Telefon vollstaendig und gross genug da',
      JSON.stringify(rek.leiste));
+  ok(rek.besitz === 0, 'die Besitzleiste traegt Zahl, Säule und Gesicht innerhalb ihrer Karte',
+     rek.besitz + ' Teile ragen hinaus');
   ok(rek.karten === CHRONICLES_N, 'jeder Rekord des Katalogs hat eine Karte',
      rek.karten + ' von ' + CHRONICLES_N);
   // Die Besitzleiste zählt dieselben Haltungen, die die Karten zeigen — und
@@ -645,7 +662,7 @@ const ok = (c, msg, det) => {
   const feedOffen = await page.evaluate(() => {
     const K = s => window.__k.eval(s);
     K('_cache._stories = _buildStories(); _cache._consolFrom = null; _cache._frischVon = null;');
-    K('openNewsFeed()');
+    K('openNewsFeed(); _newsFeedRest()');
     const offen = K('_isNewsFeedOpen()');
     const karten = document.querySelectorAll('#sheet .nf-card').length;
     // Und die Auffrischung zeichnet wirklich NEU. Gezaehlt reicht nicht:
@@ -653,13 +670,33 @@ const ok = (c, msg, det) => {
     // an einer Karte ueberlebt nur, wenn niemand neu zeichnet.
     const erste = document.querySelector('#sheet .nf-card');
     if(erste) erste.dataset.marke = 'alt';
-    K('_refreshOpenNewsViews()');
+    K('_refreshOpenNewsViews(); _newsFeedRest()');
     const nachher = document.querySelectorAll('#sheet .nf-card').length;
     const markeWeg = !document.querySelector('#sheet .nf-card[data-marke="alt"]');
     K('closeSheet && closeSheet()');
     const zu = K('_isNewsFeedOpen()');
     return {offen, karten, nachher, zu, markeWeg};
   });
+  // Zuerst, was man sieht: die ersten Tage sofort, der Rest nach dem ersten
+  // Bild — und dann alle Karten. Ein Klick auf eine nachgereichte Karte
+  // öffnet ihr Blatt.
+  const feedTeil = await page.evaluate(async () => {
+    const K = s => window.__k.eval(s), w = ms => new Promise(r => setTimeout(r, ms));
+    K('closeSheet(true); openNewsFeed()');
+    const sofort = document.querySelectorAll('#sheet .nf-card').length;
+    await w(250);
+    const danach = document.querySelectorAll('#sheet .nf-card').length;
+    const letzte = [...document.querySelectorAll('#sheet .nf-liste .nf-card')].pop();
+    const titel = letzte ? (letzte.querySelector('.nf-h') || {}).textContent : '';
+    if(letzte) letzte.click();
+    await w(400);
+    const blatt = !!titel && ((document.getElementById('nd') || {}).innerText || '').indexOf(titel.trim().slice(0, 20)) >= 0;
+    K('closeNewsDetail(); closeSheet(true)');
+    return {sofort, danach, blatt};
+  });
+  ok(feedTeil.sofort >= 8 && feedTeil.sofort <= 24 && feedTeil.danach > feedTeil.sofort * 2 && feedTeil.blatt,
+     'der Feed zeichnet zuerst die oberen Tage und reicht den Rest nach dem ersten Bild nach',
+     JSON.stringify(feedTeil));
   ok(feedOffen.offen === true, 'der offene News-Feed wird als offen erkannt',
      JSON.stringify(feedOffen));
   ok(feedOffen.karten > 0 && feedOffen.nachher === feedOffen.karten
@@ -678,7 +715,7 @@ const ok = (c, msg, det) => {
   const tafel = await page.evaluate(() => {
     // Der Cache wird sonst aus der DB gefuellt; im Harness gibt es keine.
     // Der Generator liefert dieselben Stories, die die App persistiert haette.
-    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); openNewsFeed()');
+    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); openNewsFeed(); _newsFeedRest()');
     const sheet = document.getElementById('sheet');
     const koepfe = sheet ? [...sheet.querySelectorAll('.nf-tag')] : [];
     const gruppen = sheet ? [...sheet.querySelectorAll('.nf-feed')] : [];
@@ -811,7 +848,9 @@ const ok = (c, msg, det) => {
       if(!x.html.trim()){ leer++; return; }
       box.innerHTML = x.html;
       // Ein Blatt ueber einen Spieler traegt sein Wappen im Kopf.
-      if(x.pids === 1 && !box.querySelector('.nd-held')) ohneKopf++;
+      // Die Bühne einer Serie oder Partie ist der Kopf, wenn sie sein
+      // Gesicht trägt [§C33].
+      if(x.pids === 1 && !box.querySelector('.nd-held') && !box.querySelector('.nd-buehne .rav, .nd-buehne .av')) ohneKopf++;
       // Und die Partie steht hoechstens einmal darin.
       const erg = box.querySelectorAll('.nd-erg').length;
       const vs  = box.querySelectorAll('.nd-match').length;
@@ -1051,7 +1090,8 @@ const ok = (c, msg, det) => {
       return !seg.length || seg[0].getBoundingClientRect().width <= 0;
     }).length;
     const out = {zellen, reihen: reihen.length, raus, ohneZuwachs,
-      zeichen: host.querySelectorAll('.nd-wk-z svg').length,
+      // Nur das Zeichen der Stufe, nicht der Pfeil eines Auf- oder Abstiegs.
+      zeichen: host.querySelectorAll('.nd-wk-z > svg').length,
       werte: [...host.querySelectorAll('.nd-wk-d')].map(x => x.textContent.trim()).join(' ')};
     host.remove(); return out;
   });
@@ -1073,6 +1113,53 @@ const ok = (c, msg, det) => {
   ok(tafelBlatt.zeichen === 2,
      'jede Zeile zeigt das Zeichen ihrer Stufe',
      tafelBlatt.zeichen + ' Zeichen');
+
+  // ── Ein Verlust ist zu sehen ───────────────────────────────────────
+  //    Jane zog bei „Der Lauf" mit Leon gleich, und Leon stand im Blatt mit
+  //    „±0": ein Minus wurde als Null gezeigt, und der Balken kannte nur den
+  //    Zuwachs. Gemessen wird am gezeichneten Balken, ob das verlorene Stück
+  //    Breite hat und in der Bahn bleibt, ob die Zahl rot ist und ob die
+  //    Zeile den Grund und den Fall unter die Schwelle nennt.
+  const verlust = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const markup = K(`(function(){
+      const a = players[0].id, b = players[1].id;
+      const lo = INSIGNIEN[3].min;
+      const je = {};
+      je[a] = {vor:lo + 150, nach:lo + 300};
+      je[b] = {vor:lo + 50, nach:lo - 60};
+      return _ndWirkungBlock(je, _ndWirkungsGruende([
+        {rname:'Der Lauf', halter:[a, b], vorher:[b]}]));
+    })()`);
+    const host = document.createElement('div');
+    host.style.width = '360px';
+    host.innerHTML = markup;
+    document.body.appendChild(host);
+    const r = host.querySelector('.nd-wk.neg');
+    const out = {da: !!r};
+    if(r){
+      const bahn = r.querySelector('.nd-wk-b').getBoundingClientRect();
+      const weg = r.querySelector('.nd-wk-b u');
+      const wr = weg ? weg.getBoundingClientRect() : null;
+      out.weg = wr ? wr.width : 0;
+      out.drin = wr ? (wr.right <= bahn.right + 0.5) : false;
+      out.zahl = r.querySelector('.nd-wk-d').textContent.trim();
+      out.rot = getComputedStyle(r.querySelector('.nd-wk-d')).color;
+      out.fall = (r.querySelector('.nd-wk-n em.r') || {}).textContent || '';
+      out.grund = (r.querySelector('.nd-wk-g.r') || {}).textContent || '';
+      out.pfeil = !!r.querySelector('.nd-wk-ab svg');
+      out.rand = r.getBoundingClientRect().right <= host.getBoundingClientRect().right + 0.5;
+    }
+    host.remove(); return out;
+  });
+  ok(verlust.da && verlust.weg > 0 && verlust.drin && verlust.rand,
+     'ein Verlust steht als eigenes Stück im Balken und bleibt in der Bahn',
+     JSON.stringify(verlust));
+  ok(/^−110$/.test(verlust.zahl || '') && /240, 86, 106/.test(verlust.rot || ''),
+     'und die Zahl trägt ihr Minus in Rot', verlust.zahl + ' ' + verlust.rot);
+  ok(/fällt auf/.test(verlust.fall) && verlust.pfeil && /teilt/.test(verlust.grund),
+     'die Zeile nennt den Fall unter die Schwelle und den geteilten Rekord',
+     verlust.fall + ' · ' + verlust.grund);
 
   // ── Und jede KARTE passt auch ────────────────────────────────────
   //    Dasselbe fuer den Feed selbst: eine Karte, die bei 360 px aus ihrem
@@ -1107,8 +1194,11 @@ const ok = (c, msg, det) => {
     // Ergebnisband, grosser Wert, Leiter, Bilanzbalken, Serienlauf,
     // Sammelband, Zahlenband, Wochenliste, Duellband, Auszeichnungsfuss oder
     // das Gesicht selbst.
+    // Die Karte am Spieltag traegt ihren Kopf nach dem Anlass [§11.6c], die
+    // Runde ihre Tabelle.
     const BILD = ['nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
-                  'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face'];
+                  'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face',
+                  'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg','sp-rq'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');
@@ -1348,6 +1438,54 @@ const ok = (c, msg, det) => {
     };
     host.remove(); return out;
   });
+  // ── Das Blatt einer Partie aus dem Feed [§C33] ─────────────────────
+  // Es zeigte einen nackten Stand und zwei Wappen mit „gewinnen diese
+  // Partie", während die Karte darüber ihre Zeichnung trug. Jetzt steht die
+  // Zeichnung der Karte als Bühne darüber, und darunter nur, was die Bühne
+  // nicht schon zeigt: kein zweiter Stand, keine zweite Siegchance, keine
+  // zweite Elo je Spieler, kein Satz, der eine Grafik erklärt. Die Bilanz
+  // der direkten Duelle wird aus den rohen Partien nachgerechnet.
+  const partieBlatt = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    return JSON.parse(K(`JSON.stringify((function(){
+      const pm = pmap(), name2id = {}; Object.keys(pm).forEach(id => { name2id[pm[id].name] = id; });
+      const karten = getStoriesCache().filter(s => (s.dataRef||{}).matchId
+        && ((s.dataRef||{}).type === 'spiel' || ((s.dataRef||{}).type === 'sammel' && _newsSorte(s) === 'spiel')));
+      const falsch = []; let n = 0, duelle = 0, buendel = 0;
+      const host = document.createElement('div'); host.style.width = '360px'; document.body.appendChild(host);
+      karten.forEach(s => {
+        const m = matches.find(x => x.id === s.dataRef.matchId); if(!m) return;
+        const kopf = _spBild(s).kopf, html = _newsDetailBody(s);
+        host.innerHTML = html; n++;
+        const b = host.querySelector('.nd-buehne');
+        if(!b || html.indexOf(kopf) < 0) falsch.push(s.id + ' ohne Bühne');
+        if(host.querySelector('.nd-erg, .nd-held')) falsch.push(s.id + ' Stand oder Wappen doppelt');
+        if(/besonders macht|gewinnen diese Partie|Siegchance lag|hängt daran|hängen daran/.test(host.textContent + ' ' + s.desc)) falsch.push(s.id + ' erklärt');
+        if(s.dataRef.type === 'sammel'){ buendel++;
+          if(s.dataRef.teile.filter(t => (t.typ || t.type) !== 'spiel').length !== host.querySelectorAll('.nw-zeile').length) falsch.push(s.id + ' Bündelzeilen'); }
+        const chanceOben = /class="(sp-fk )?(sp-feld|sp-ta|sp-sd|sp-wp)/.test(kopf);
+        if(chanceOben && host.querySelector('.nd-chance')) falsch.push(s.id + ' Siegchance doppelt');
+        if(/class="(sp-fk )?sp-et/.test(kopf) && host.querySelector('.nd-elo')) falsch.push(s.id + ' Elo doppelt');
+        if(/class="sp-feld/.test(kopf) && [...host.querySelectorAll('.nd-elo')].some(z => !z.querySelector('em'))) falsch.push(s.id + ' Elo neben dem Spielfeld');
+        const fd = host.querySelector('.nd-feld');
+        if(fd && (fd.querySelector('em.g, em.r') || getComputedStyle(fd.querySelector('.sp-f-sc')).display !== 'none')) falsch.push(s.id + ' Feld mit Stand oder Elo');
+        const reihe = [...matches].sort((a, c) => mts(a) - mts(c)), vor = reihe.slice(0, reihe.indexOf(m) + 1);
+        host.querySelectorAll('.nd-dd-z').forEach(z => {
+          duelle++;
+          const w = z.dataset.pid, l = name2id[z.querySelector('.nd-dd-n').lastChild.textContent];
+          const geg = vor.filter(y => { const A = [y.a1, y.a2], B = [y.b1, y.b2];
+            return (A.includes(w) && B.includes(l)) || (B.includes(w) && A.includes(l)); });
+          const sw = geg.filter(y => (y.winner === 'A') === [y.a1, y.a2].includes(w)).length;
+          if(z.querySelector('b').textContent !== sw + ':' + (geg.length - sw)) falsch.push(s.id + ' Duell ' + z.querySelector('b').textContent + ' statt ' + sw + ':' + (geg.length - sw));
+        });
+      });
+      host.remove();
+      return {n, duelle, falsch, buendel};
+    })())`));
+  });
+  ok(partieBlatt.n > 20 && partieBlatt.buendel > 5 && partieBlatt.duelle > 40 && partieBlatt.falsch.length === 0,
+     'das Blatt einer Partie und ihres Bündels trägt die Zeichnung der Karte als Bühne, darunter was daran hängt und nichts, was die Bühne schon zeigt, die Duelle aus den rohen Partien',
+     partieBlatt.falsch.slice(0, 3).join(' | ') || partieBlatt.n + ' Blätter, davon ' + partieBlatt.buendel + ' Bündel, ' + partieBlatt.duelle + ' Duelle');
   ok(spielBlatt.skala, 'das Blatt einer Partie zeigt die Siegchance als Skala');
   ok(spielBlatt.fuellDrin,
      'ihr Balken bleibt in seiner Bahn',
@@ -1472,7 +1610,8 @@ const ok = (c, msg, det) => {
     const rest = zl.filter(x => !x.classList.contains('brk'))[0] || null;
     const out = {fehlt:false,
       brk: !!(karte && karte.classList.contains('nf-brk')),
-      band: karte ? karte.querySelectorAll('.nf-erg').length : 0,
+      // Das Ergebnis steht im Kopf der Partie, der ihrem Anlass folgt [§11.6c].
+      band: karte ? karte.querySelectorAll('.nf-erg, .sp-zeile, .sp-feld, .sp-at, .sp-wp, .sp-band').length : 0,
       zeilen: zl.length,
       anlassKante: anl ? getComputedStyle(anl).boxShadow : '',
       // Eine eigene Flaeche heisst: nicht durchsichtig. Ein Vergleich mit der
@@ -1901,11 +2040,12 @@ const ok = (c, msg, det) => {
       + '<div class="pod-karte silber erster" id="g2"></div></div>'
       + '<div class="nf-card nf-s-held" id="g3"></div><div class="nf-card nf-s-held read" id="g4"></div>'
       + '<div class="nf-card nf-s-spiel" id="g5"></div><div class="rcp-held" id="g6"></div>'
-      + '<div class="nd nd-s-held"><div class="nd-head" id="g7"></div></div>';
+      + '<div class="nd nd-s-held"><div class="nd-head" id="g7"></div></div>'
+      + '<div class="nf-card nf-s-spiel nf-glanz" id="g8"></div>';
     document.body.appendChild(host);
     const a = id => getComputedStyle(host.querySelector('#' + id), '::after').animationName;
     const out = {gold:a('g1'), silber:a('g2'), held:a('g3'), gelesen:a('g4'),
-                 spiel:a('g5'), rueckblick:a('g6'), blatt:a('g7')};
+                 spiel:a('g5'), rueckblick:a('g6'), blatt:a('g7'), selten:a('g8')};
     host.remove(); return out;
   });
   const gl = await glanz();
@@ -1916,45 +2056,264 @@ const ok = (c, msg, det) => {
   ok(gl.silber !== 'glanzLauf' && gl.gelesen !== 'glanzLauf' && gl.spiel !== 'glanzLauf',
      'ein silberner Erster, eine gelesene und eine gewoehnliche Karte nicht',
      JSON.stringify(gl));
+  // Das Seltene im Feed trägt einen leisen Lichtlauf in der Farbe seiner
+  // Familie: nie in Gold, nie auf einer negativen Karte, nie doppelt auf
+  // Breaking oder der Karte des Tages.
+  const glFeed = await page.evaluate(() => {
+    window.__k.eval('_cache._stories = _buildStories().slice().sort((a,b)=>new Date(b.when)-new Date(a.when)); _cache._consolFrom = null; openNewsFeed(); _newsFeedRest()');
+    const ks = [...document.querySelectorAll('#sheet .nf-card.nf-glanz')];
+    return {n: ks.length, alle: document.querySelectorAll('#sheet .nf-card').length,
+      falsch: ks.filter(k => k.matches('.nf-neg,.nf-brk,.nf-gross,.nf-s-held,.nf-s-woche')
+        || /247,\s*207,\s*74/.test(getComputedStyle(k, '::after').backgroundImage)).map(k => k.dataset.sid)};
+  });
+  ok(gl.selten === 'glanzLauf' && glFeed.n >= 3 && glFeed.n <= glFeed.alle / 3 && !glFeed.falsch.length,
+     'das Seltene im Feed traegt einen Lichtlauf in seiner Familienfarbe, nicht in Gold und nicht auf einer negativen Karte',
+     glFeed.n + ' von ' + glFeed.alle + ' Karten, falsch: ' + glFeed.falsch.slice(0, 3));
+  // Der Hinweis „x neue Stories" ist ein Ereignis: die Zahl groß neben
+  // einem Zeichen, ein Lichtlauf und ein Ring beim Erscheinen — und bei
+  // Bewegungsruhe nichts davon.
+  const toastLauf = async () => page.evaluate(() => {
+    const t = document.getElementById('newsToast'), x = document.getElementById('newsToastTxt');
+    window.__k.eval('_newsToastFuellen')(x, 59);
+    t.classList.add('visible', 'show');
+    const out = {n:(x.querySelector('.nt-n') || {}).textContent, ic:!!x.querySelector('.nt-ic svg'),
+      glanz:getComputedStyle(t, '::after').animationName, ring:getComputedStyle(x.querySelector('.nt-ic')).animationName};
+    t.classList.remove('visible', 'show');
+    return out;
+  });
+  const ntLebt = await toastLauf();
+  ok(ntLebt.n === '59' && ntLebt.ic && ntLebt.glanz === 'ntGlanz' && /ntRing/.test(ntLebt.ring),
+     'der Hinweis auf neue Stories zeigt die Zahl gross mit Zeichen, Lichtlauf und Ring', JSON.stringify(ntLebt));
   await page.emulateMedia({reducedMotion: 'reduce'});
+  const ntRuhig = await toastLauf();
+  ok(ntRuhig.glanz === 'none' && ntRuhig.ring === 'none', 'und bei Bewegungsruhe steht er still', JSON.stringify(ntRuhig));
   const glRuhig = await glanz();
   await page.emulateMedia({reducedMotion: 'no-preference'});
   ok(Object.values(glRuhig).every(v => v !== 'glanzLauf'),
      'bei prefers-reduced-motion ruht der Glanz', JSON.stringify(glRuhig));
 
-  console.log('\n═══ BOGEN, CHIPS UND FADEN BEI 360 PX ═══');
-  // Der Fuss einer Partie traegt die Siegchance als Bogen und den Gewinn je
-  // Sieger als Chip, und der Faden fuehrt zur frueheren Karte [§C33]. Alles
-  // muss in der Karte bleiben, und der Faden muss oeffnen, wohin er zeigt.
-  const fuss = await page.evaluate(() => {
+  // Im Verlauf steht der Sieger hell und der Verlierer leise, der Stand
+  // ist nicht kursiv, die Partien stehen unter ihrem Tag; ein Duo zeigt
+  // seine Bilanz als Balken.
+  const listen = await page.evaluate(() => {
+    // In einem eigenen Behälter gezeichnet: das offene Blatt gehört den
+    // Prüfungen danach.
+    const K = window.__k.eval, host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0;width:360px';
+    document.body.appendChild(host);
+    host.innerHTML = K('vHistory()');
+    const won = host.querySelector('.mteam.won'), lost = host.querySelector('.mteam.lost');
+    const em = host.querySelector('.mscore em.w');
+    const out = {farbe: won && lost ? getComputedStyle(won).color !== getComputedStyle(lost).color : false,
+      kursiv: em ? getComputedStyle(em).fontStyle : 'fehlt', tage: host.querySelectorAll('.mtag').length,
+      gesichter: host.querySelectorAll('.mrow .mteam-av .av').length};
+    host.innerHTML = K('vTeams()');
+    const r = host.querySelector('.tm-row'), bar = r && r.querySelector('.tm-bar i');
+    const wl = r ? (r.querySelector('.tm-bil').textContent.match(/(\d+)–(\d+)/) || []) : [];
+    out.balken = bar && wl.length ? Math.abs(bar.getBoundingClientRect().width / bar.parentElement.getBoundingClientRect().width
+      - (+wl[1]) / ((+wl[1]) + (+wl[2]))) < 0.02 : false;
+    host.remove();
+    return out;
+  });
+  ok(listen.farbe && listen.kursiv === 'normal' && listen.tage >= 2 && listen.gesichter >= 40 && listen.balken,
+     'im Verlauf steht der Sieger hell unter seinem Tag mit Gesichtern, und ein Duo zeigt seine Bilanz als Balken',
+     JSON.stringify(listen));
+
+  console.log('\n═══ DIE KARTEN AM SPIELTAG ═══');
+  // Kopf und Fuß einer Partie folgen ihrem Anlass, und dieselben vier am
+  // Tisch sind eine Runde [§11.6c]. Drei Dinge dürfen dabei nie passieren:
+  // ein Text liegt auf einem anderen Text oder auf einem Gesicht, ein Text
+  // ragt aus der Karte, und ein Text wird abgeschnitten — auch nicht mit
+  // „…". Und nichts wird unter 8 px geschrumpft. Gemessen wird je
+  // Zeilenkasten: ein umbrechender Satz ist als ein Rechteck so breit wie
+  // die Karte und läge damit über jedem Wort neben ihm. Erst im Feed, dann
+  // mit Grenzwerten, die die Liga in Jahren haben kann — und mit Namen, die
+  // keiner hat.
+  const PRUEFEN = function(wurzel){
+    const fehler = [];
+    const box = wurzel.getBoundingClientRect();
+    const clip = el => {
+      let r = null;
+      for(let p = el.parentElement; p && p !== wurzel.parentElement; p = p.parentElement){
+        const cs = getComputedStyle(p);
+        if(cs.overflowX !== 'visible' || cs.overflowY !== 'visible'){
+          const q = p.getBoundingClientRect();
+          r = r ? {l:Math.max(r.l, q.left), t:Math.max(r.t, q.top), r:Math.min(r.r, q.right), b:Math.min(r.b, q.bottom)}
+                : {l:q.left, t:q.top, r:q.right, b:q.bottom};
+        }
+      }
+      return r;
+    };
+    const teile = [];
+    let kleinste = 99;
+    const tw = document.createTreeWalker(wurzel, NodeFilter.SHOW_TEXT);
+    for(let n = tw.nextNode(); n; n = tw.nextNode()){
+      if(!n.textContent.trim()) continue;
+      const el = n.parentElement;
+      // Die Initialen im Gesicht gehören zum Gesicht; das Motiv ist Zierde.
+      if(el.closest('[hidden],svg,.av,.rav,.nf-motiv')) continue;
+      const cs = getComputedStyle(el);
+      if(cs.visibility === 'hidden' || !el.getClientRects().length) continue;
+      const txt = n.textContent.trim().slice(0, 28);
+      if(n.textContent.includes('…') && !el.closest('.nf-d,.nf-h')) fehler.push('gekürzt: „' + txt + '"');
+      if(cs.textOverflow === 'ellipsis' && el.scrollWidth > el.clientWidth + 1) fehler.push('mit „…" abgeschnitten: „' + txt + '"');
+      kleinste = Math.min(kleinste, parseFloat(cs.fontSize));
+      const rg = document.createRange(); rg.selectNodeContents(n);
+      const c = clip(n);
+      [...rg.getClientRects()].forEach(roh => {
+        if(roh.width < 1) return;
+        if(c && (roh.right > c.r + 1 || roh.left < c.l - 1 || roh.bottom > c.b + 1 || roh.top < c.t - 1)) fehler.push('abgeschnitten: „' + txt + '"');
+        const sicht = c ? {l:Math.max(roh.left, c.l), t:Math.max(roh.top, c.t), r:Math.min(roh.right, c.r), b:Math.min(roh.bottom, c.b)}
+                        : {l:roh.left, t:roh.top, r:roh.right, b:roh.bottom};
+        teile.push({art:'text', txt, r:sicht, n});
+      });
+    }
+    wurzel.querySelectorAll('svg text').forEach(t => {
+      if(t.closest('.rav,.av')) return;
+      const q = t.getBoundingClientRect();
+      kleinste = Math.min(kleinste, parseFloat(getComputedStyle(t).fontSize));
+      teile.push({art:'text', txt:t.textContent.slice(0, 28), r:{l:q.left, t:q.top, r:q.right, b:q.bottom}, n:t});
+    });
+    wurzel.querySelectorAll('.av, .rav').forEach(a => {
+      if(a.closest('.rav') && !a.classList.contains('rav')) return;
+      const q = a.getBoundingClientRect(), c = clip(a);
+      const r = {l:q.left, t:q.top, r:q.right, b:q.bottom};
+      if(c){ r.l = Math.max(r.l, c.l); r.t = Math.max(r.t, c.t); r.r = Math.min(r.r, c.r); r.b = Math.min(r.b, c.b); }
+      if(r.r > r.l && r.b > r.t) teile.push({art:'gesicht', txt:'Gesicht', r});
+    });
+    teile.forEach(t => {
+      if(t.r.r - t.r.l < 1) return;
+      if(t.r.l < box.left - 1 || t.r.r > box.right + 1) fehler.push('ragt aus der Karte: „' + t.txt + '"');
+    });
+    for(let i = 0; i < teile.length; i++) for(let j = i + 1; j < teile.length; j++){
+      const u = teile[i], v = teile[j];
+      if(u.art === 'gesicht' && v.art === 'gesicht') continue;
+      if(u.n && u.n === v.n) continue;
+      const w = Math.min(u.r.r, v.r.r) - Math.max(u.r.l, v.r.l), h = Math.min(u.r.b, v.r.b) - Math.max(u.r.t, v.r.t);
+      if(w > 1.5 && h > 1.5) fehler.push('liegt übereinander: „' + u.txt + '" und „' + v.txt + '"');
+    }
+    if(kleinste < 8) fehler.push('Schrift unter 8 px: ' + kleinste);
+    return {fehler:[...new Set(fehler)], kleinste};
+  };
+  const spieltag = await page.evaluate((pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
     const sheet = document.getElementById('sheet');
     sheet.querySelectorAll('.nf-card').forEach(c => { c.style.contentVisibility = 'visible'; });
-    const raus = [];
-    const drin = (el, card, was) => {
-      const r = el.getBoundingClientRect(), k = card.getBoundingClientRect();
-      if(r.left < k.left - .5 || r.right > k.right + .5) raus.push(was + ' ' + Math.round(r.right - k.right) + ' px');
-    };
-    const spf = [...sheet.querySelectorAll('.nf-spf')];
-    spf.forEach(f => {
-      const card = f.closest('.nf-card');
-      f.querySelectorAll('.nf-bogen, .nf-eloc').forEach(el => drin(el, card, 'Fuss'));
-    });
-    // Jede Bildzone einer Partie-Karte [§C33], mit jedem Kind: ein Name, der
-    // über die Karte läuft, ist so falsch wie ein Balken.
-    const zonen = [...sheet.querySelectorAll('.nf-s-spiel :is(.nf-waage,.nf-tor,.nf-rgs,.nf-meds,.nf-spitze,.nf-ser,.nf-bil)')];
-    zonen.forEach(z => {
-      const card = z.closest('.nf-card');
-      drin(z, card, z.className.split(' ').pop());
-      z.querySelectorAll('*').forEach(el => { if(el.getClientRects().length) drin(el, card, z.className.split(' ').pop() + ' ' + el.tagName); });
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    const karten = [...sheet.querySelectorAll('.nf-card.nf-s-spiel')];
+    const fehler = [], formen = {};
+    let kleinste = 99;
+    const FORM = ['sp-feld','sp-at','sp-wp','sp-band','sp-zeile','sp-vt','sp-nv','sp-tb','sp-sl','sp-rk','sp-duo','sp-ku','sp-bg','sp-md','sp-rd-tafel','sp-pm','sp-ro','sp-rq'];
+    karten.forEach(k => {
+      const r = pruefen(k);
+      r.fehler.forEach(f => fehler.push(k.dataset.sid + ': ' + f));
+      kleinste = Math.min(kleinste, r.kleinste);
+      FORM.forEach(c => { if(k.querySelector('.' + c)) formen[c] = (formen[c] || 0) + 1; });
     });
     const fd = [...sheet.querySelectorAll('.nf-faden')];
-    fd.forEach(f => drin(f, f.closest('.nf-card'), 'Faden'));
-    const bogenOhneWert = spf.filter(f => f.querySelector('.nf-bogen') && !f.querySelector('.nf-bogen .v')).length;
-    return {spf: spf.length, faeden: fd.length, raus, bogenOhneWert, zonen: zonen.length};
-  });
-  ok(fuss.spf > 0 && fuss.faeden > 0 && fuss.zonen > 20 && fuss.raus.length === 0 && fuss.bogenOhneWert === 0,
-     'Bogen, Chips, Faden und jede andere Bildzone bleiben in ihrer Karte',
-     fuss.raus.slice(0, 3).join(' | ') || fuss.spf + ' Bögen, ' + fuss.zonen + ' Bildzonen, ' + fuss.faeden + ' Faeden');
+    fd.forEach(f => { const k = f.closest('.nf-card').getBoundingClientRect(), r = f.getBoundingClientRect();
+      if(r.left < k.left - .5 || r.right > k.right + .5) fehler.push('Faden ragt aus der Karte'); });
+    return {karten:karten.length, runden:sheet.querySelectorAll('.nf-runde').length, fehler, formen, kleinste, faeden:fd.length};
+  }, PRUEFEN.toString());
+  ok(spieltag.karten > 20 && spieltag.runden > 0 && Object.keys(spieltag.formen).length >= 8 && spieltag.faeden > 0
+     && spieltag.fehler.length === 0,
+     'im Feed liegt auf keiner Karte am Spieltag ein Text auf einem anderen oder einem Gesicht, keiner ragt hinaus oder ist abgeschnitten',
+     spieltag.fehler.slice(0, 3).join(' | ') || spieltag.karten + ' Karten, ' + spieltag.runden + ' Runden, '
+       + Object.keys(spieltag.formen).length + ' Formen, kleinste Schrift ' + spieltag.kleinste + ' px');
+  // Die Grenzwerte: 45.495 Partien, eine Bilanz von 12.345:9.876, 98.765
+  // Begegnungen, eine Elo von −12.345, eine Serie von 57 gegen einen
+  // Bestwert von 120, eine Runde aus 23 Partien, Platz 118 bis 126 der
+  // Tabelle — und Namen wie „Jean-Baptiste von Hohenstein". Die Spieler
+  // bleiben echte Spieler, ihre Wappen hängen an ihrer Laufbahn; nur die
+  // Namen werden für die Probe ersetzt und danach zurückgestellt. Gemessen
+  // in der Breite einer Karte auf dem schmalsten Telefon und auf einem
+  // gewöhnlichen.
+  const grenz = await page.evaluate((pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    const html = K(`(function(){
+      const LANG = ['Maximilian-Alexander', 'Bartholomäus', 'Jean-Baptiste von Hohenstein', 'Konstantinopel',
+        'Anneliese-Charlotte', 'Wolfgang Amadeus', 'Christophorus', 'Friederike-Sophie', 'Leopoldine', 'Ottokar', 'Kunigunde', 'Ferdinand'];
+      const alt = players.map(p => [p, p.name]);
+      players.forEach((p, i) => { p.name = LANG[i % LANG.length]; });
+      try {
+        const alle = players.map(p => p.id);
+        const [a, b, c, e] = alle;
+        const [k1, k2, k3, k4] = [alle[5], alle[9], alle[10], alle[11]];
+        const d0 = Date.now();
+        const zellen = Array.from({length:8}, (_, i) => i % 3 ? 'w' : 'l'); zellen[7] = 'W';
+        const spiele = Array.from({length:30}, (_, i) => ({a:i % 2 === 0, diff:(i * 7) % 10 + 1, jetzt:i === 29}));
+        const ms = matches.slice(-23);
+        const teile = [
+          _spBandBild({A:[a, b], B:[c, e], sa:10, sb:2, aw:true}),
+          _spZeileBild({A:[a, b], B:[c, e], sa:9, sb:10, aw:false}),
+          _spFeldBild({slots:[{id:k1, r:'Abwehr', w:true, d:1234}, {id:k2, r:'Sturm', w:false, d:-1234}, {id:k3, r:'Sturm', w:true, d:999}, {id:k4, r:'Abwehr', w:false, d:-9999}], sa:10, sb:9, aw:true, c:.5}),
+          _spFeldBild({slots:[{id:a, r:'Abwehr', w:true, d:1234}, {id:b, r:'Sturm', w:false, d:-1234}, {id:c, r:'Sturm', w:true, d:999}, {id:e, r:'Abwehr', w:false, d:-99999}], sa:10, sb:9, aw:true, c:.03}),
+          _spTafelBild({A:[a, b], B:[c, e], sa:10, sb:9, aw:true, c:.5}) + _spNervenBild({zeilen:[{id:a, w:12345, l:9876, zellen}, {id:b, w:999, l:1000, zellen}]}),
+          _spVerteilungBild({n:[0, 9000, 8500, 8000, 7000, 6000, 4000, 2000, 900, 90, 9], diff:8, gesamt:45495, so:999, zuletzt:d0}),
+          _spWippeBild({fav:[a, b], dog:[c, e], eloFav:12345, eloDog:-9876, pct:1, sa:10, sb:9, aw:true}),
+          _spTabelleBild({von:1, bis:9, spitze:true, zeilen:[{id:k2, p:2, q:1, k:'g'}, {id:k3, p:1, q:2, k:'r'}, {id:alle[8], p:3, q:3, k:'m'}, {id:k4, p:9, q:9, k:'m'}]}),
+          _spTabelleBild({von:118, bis:126, spitze:false, zeilen:[{id:a, p:118, q:126, k:'r'}, {id:b, p:126, q:118, k:'g'}, {id:c, p:121, q:121, k:'m'}, {id:e, p:122, q:123, k:'m'}]}),
+          _spSerieBild({pid:a, laenge:57, eig:120, liga:340, ligaWer:b}),
+          _spSerieBild({pid:a, laenge:15, eig:15, liga:16, ligaWer:b}),
+          _spRissBild({opfer:a, laenge:240, brecher:[c, e], eig:999}) + _spRissBild({opfer:b, laenge:19, brecher:[a, c], eig:19}),
+          _spPremiereBild({A:a, B:b, versuch:1}) + _spPremiereBild({A:c, B:e, versuch:12345}) + _spPremiereBild({A:a, B:c, versuch:14}),
+          _spRolleBild({pid:a, r:'atk', anteil:.0012, dort:12, alle:9876, w:12345}) + _spRolleBild({pid:b, r:'def', anteil:.249, dort:2490, alle:9999, w:1}),
+          _spDuoBild({A:a, B:c, laenge:44, w:12345, l:9876}),
+          _spKurveBild({pid:a, n:999, d:12345, werte:Array.from({length:12}, (_, i) => ({v:i < 11 ? -i * 900 : 4000, w:i === 11, jetzt:i === 11}))}),
+          _spDuellBild({A:a, B:b, gesamt:98765, aw:45678, spiele}),
+          _spMedailleBild({name:'Unüberwindliche Betonmauer der Liga', ic:'shield', klasse:'legendary', wer:a, rang:1234, ids:alle, traeger:alle.slice(0, 7)})
+            + _spMedailleBild({name:'Mauer', ic:'shield', klasse:'rare', wer:a, rang:2, ids:Array.from({length:40}, (_, i) => alle[i % alle.length]), traeger:[]}),
+          _spTagBild({pid:a, elo:-12345, partien:Array.from({length:31}, (_, i) => ({w:i % 3 > 0, e:(i % 5 - 2) * 1000}))}),
+          // Die Formen der gewöhnlichen Partie [§C33], jede mit ihren Grenzwerten.
+          _spMosaikBild({W:[a, b], L:[c, e], hoch:10, tief:8, diff:2, n:[0, 9000, 45495, 8000, 7000, 6000, 4000, 2000, 900, 90, 9], mal:45495}),
+          _spTachoBild({W:[a, b], L:[c, e], hoch:10, tief:9, pct:99, klar:false}),
+          _spStreuBild({W:[a, b], L:[c, e], hoch:10, tief:9, c:.99, diff:1, knapp:true, so:45495, gesamt:45495,
+            bins:[{c:.5, d:3, n:9999}, {c:.97, d:10, n:1}, {c:.02, d:0, n:5}], erw:[[.05, 9], [.95, 1]]}),
+          _spTransferBild({W:[a, b], L:[c, e], hoch:10, tief:0, delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}, gewinn:13344}),
+          _spChemieBild({A:a, B:b, L:[c, e], hoch:10, tief:9, s:12345, p:45495, folge:Array.from({length:30}, (_, i) => i % 4 > 0)}),
+          _spGegnerBild({w:a, l:c, W:[a, b], L:[c, e], s:12345, n:45495, fluch:999, hoch:10, tief:9, folge:Array.from({length:24}, (_, i) => i > 22)}),
+          _spRevancheBild({W:[a, b], L:[c, e], hoch:10, tief:9, vHoch:10, vTief:9, seit:{n:999, e:'Wochen'}}),
+          _spGipfelBild({hoch:10, tief:9, zeilen:[{id:a, pre:1, post:126, w:true}, {id:b, pre:2, post:1, w:true}, {id:c, pre:118, post:2, w:false}, {id:e, pre:null, post:null, w:false}]}),
+          _spRueckkehrBild({id:a, mit:b, tage:12345, L:[c, e], hoch:10, tief:9}),
+          _spGefaelleBild({W:[a, b], L:[c, e], hoch:10, tief:9, elo:{[a]:12345, [b]:-12345, [c]:999, [e]:-999}}),
+          _spTagesringBild({id:a, mit:b, L:[c, e], hoch:10, tief:9, folge:Array.from({length:24}, (_, i) => i % 5 > 0)}),
+          _spZaehlwerkBild({wer:a, wert:45000, sieg:true, W:[a, b], L:[c, e], hoch:10, tief:9})
+            + _spZaehlwerkBild({wer:null, wert:45400, sieg:false, W:[a, b], L:[c, e], hoch:10, tief:0})
+        ].map(h => '<div class="nf-card nf-s-spiel">' + h + '</div>');
+        const runde = {id:'probe', when:new Date(d0).toISOString(), cat:'highlight',
+          title:'Jean-Baptiste von Hohenstein gewinnt die Runde mit 12 von 23 Partien',
+          desc:'23 Partien zwischen 10:00 und 13:40 Uhr, jede Paarung mindestens einmal.',
+          dataRef:{type:'runde', matchIds:ms.map(m => m.id),
+            spieler:[{id:a, w:12, l:11, e:12345}, {id:b, w:11, l:12, e:-9999}, {id:c, w:10, l:13, e:0}, {id:e, w:9, l:14, e:-12345}]}};
+        teile.push(_newsRundeHtml(runde, false, ''));
+        teile.push('<div class="nf-card">' + _newsRundeBlatt(runde) + '</div>');
+        return teile.join('');
+      } finally { alt.forEach(([p, n]) => { p.name = n; }); }
+    })()`);
+    const out = {};
+    [288, 360].forEach(breite => {
+      const host = document.createElement('div');
+      host.style.cssText = 'position:absolute;left:0;top:0;width:' + breite + 'px';
+      host.innerHTML = html;
+      document.body.appendChild(host);
+      document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+      const fehler = [];
+      let kleinste = 99;
+      host.querySelectorAll(':scope > .nf-card').forEach((k, i) => {
+        const r = pruefen(k);
+        r.fehler.forEach(f => fehler.push('Teil ' + i + ': ' + f));
+        kleinste = Math.min(kleinste, r.kleinste);
+      });
+      out[breite] = {n:host.children.length, fehler:[...new Set(fehler)], kleinste};
+      host.remove();
+    });
+    return out;
+  }, PRUEFEN.toString());
+  ok(grenz[288].n >= 30 && grenz[288].fehler.length === 0 && grenz[360].fehler.length === 0,
+     'und mit Grenzwerten und langen Namen auch nicht, auf dem schmalsten Telefon wie auf einem gewöhnlichen',
+     grenz[288].fehler.concat(grenz[360].fehler).slice(0, 3).join(' | ')
+       || grenz[288].n + ' Teile, kleinste Schrift ' + Math.min(grenz[288].kleinste, grenz[360].kleinste) + ' px');
   const fadenAuf = await page.evaluate(() => {
     const sheet = document.getElementById('sheet');
     const f = sheet.querySelector('.nf-faden');
@@ -2126,6 +2485,9 @@ const ok = (c, msg, det) => {
     const roh = window.__k.eval('_buildStories()');
     const body = window.__k.eval('_newsDetailBody');
     const sorte = window.__k.eval('_newsSorte');
+    const rang = window.__k.eval('chronicleRang');
+    const dahinter = d => { const h = (d.halter && d.halter.length) ? d.halter : (d.playerIds || []);
+      try { return (rang(d.rekordId) || []).some(r => h.indexOf(r.pid || r.id) < 0); } catch(e){ return false; } };
     const box = document.createElement('div');
     document.body.appendChild(box);
     let medaille = 0, badges = 0, namenDoppelt = 0, rekorde = 0, mitVerfolger = 0,
@@ -2145,7 +2507,9 @@ const ok = (c, msg, det) => {
           if(treffer > 1) namenDoppelt++;
         }
       }
-      if(t === 'rekord_geholt'){
+      // Verlangt nur, wo jemand dahinter liegt: halten alle im Rennen den
+      // Rekord, füllte vorher der vierte Halter die Liste unter sich selbst.
+      if(t === 'rekord_geholt' && dahinter(s.dataRef || {})){
         rekorde++;
         if(box.querySelector('.nd-vf')) mitVerfolger++;
       }
@@ -2487,6 +2851,9 @@ const ok = (c, msg, det) => {
   // Initialen oben links. Hier wird jeder Reiter einmal ganz gezeichnet.
   console.log('\n═══ JEDER REITER BEI 360 PX ═══');
   await page.setViewportSize({width:360, height:780});
+  // Gemessen bei 360 px, der schmalsten verbreiteten Breite: bei 390 passte
+  // „Unaufhaltsam" gerade noch, bei 360 brach es mitten im Wort.
+  await page.setViewportSize({width: 360, height: 780});
   const reiter = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const sichten = [
@@ -2543,6 +2910,19 @@ const ok = (c, msg, det) => {
       // Ebenso der Name einer Award-Kachel: „Längste Siegesser…".
       [...document.querySelectorAll('#main .aw-t-lbl')]
         .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Kachel ' + e.textContent.trim()));
+      // Und kein Wort darin bricht mitten durch: `overflow-wrap` verhindert
+      // den Überlauf, den die Zeile darüber misst, und brach dafür
+      // „Unaufhaltsa|m" und „Unzertren|nlich" — ohne Trennstrich, weil das
+      // Telefon nicht jede Sprache trennen kann.
+      [...document.querySelectorAll('#main .aw-t-lbl')].forEach(e => {
+        const t = e.firstChild; if(!t || t.nodeType !== 3) return;
+        // Nach einem Bindestrich darf die Zeile umbrechen: „Underdog-|Held".
+        let i = 0;
+        t.textContent.split(/[ -]/).forEach(w => {
+          const rg = document.createRange(); rg.setStart(t, i); rg.setEnd(t, i + w.length); i += w.length + 1;
+          if(w && new Set([...rg.getClientRects()].map(r => Math.round(r.top))).size > 1) bruch.push('Kachel ' + w + ' bricht');
+        });
+      });
       // Und die Nebenwertungen der Liga: „Längste Siege…", „4× Player of t…".
       [...document.querySelectorAll('#main .wk-hl-label, #main .wk-hl-detail')]
         .filter(e => e.scrollWidth > e.clientWidth + 1).forEach(e => bruch.push('Nebenwertung ' + e.textContent.trim()));
@@ -2552,6 +2932,7 @@ const ok = (c, msg, det) => {
     K("tab='ranking';period='season';rankMetric='elo';awView='awards';render()");
     return out;
   });
+  await page.setViewportSize({width: 390, height: 844});
   const reiterRaus = reiter.filter(r => r.raus.length);
   ok(reiterRaus.length === 0, 'kein Reiter läuft bei 360 px aus dem Bildschirm',
      reiterRaus.map(r => r.name + ': ' + r.raus.join(', ')).join(' | ') || reiter.length + ' Reiter');
@@ -2575,7 +2956,7 @@ const ok = (c, msg, det) => {
       ['Torjäger', "showAward('scorer')"], ['Betonmauer', "showAward('concreteWall')"],
       ['Wochenkönig', "period='week';openTopList('periodKing')"],
       ['Woche', 'showPotwRecap({force:true})'], ['Saison', 'showSeasonRecap(seasons[2])'],
-      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed()'],
+      ['Laufbahn', 'showLaufbahn(' + P('Maxi') + ')'], ['Feed', 'openNewsFeed(); _newsFeedRest()'],
       ['Positionsverlauf', 'showPositionHistory(seasons[3].id)'],
       ['Liga-Chronik', 'showLigaChronik()'], ['Rangsystem', 'showRangSystem()'],
       ['Bilanzen', 'showPlayerH2HList(' + P('Leon') + ')'],
@@ -2801,7 +3182,7 @@ const ok = (c, msg, det) => {
   // ausgenommen — ihr Schein liegt außerhalb der Fläche.
   const cv = await page.evaluate(async () => {
     const aus = document.getElementById('cv-aus'); if(aus) aus.disabled = true;
-    window.__k.eval('closeSheet(true); openNewsFeed()');
+    window.__k.eval('closeSheet(true); openNewsFeed(); _newsFeedRest()');
     await new Promise(r => requestAnimationFrame(r));
     const karten = [...document.querySelectorAll('#sheet .nf-card')];
     const falsch = karten.filter(k => {
@@ -2905,6 +3286,370 @@ const ok = (c, msg, det) => {
      && reiter.find(r => r.name === 'Liga').fab !== 'none',
      'der Knopf „Match eintragen" fehlt nur auf der Match-Seite',
      reiter.map(r => r.name + ':' + r.fab).join(' '));
+  // ── Die Meisterbühne [§C31] bei 360 px ─────────────────────────────
+  // Podest, Titelrennen und Tage vorn stehen auf Karte und Blatt. Gemessen
+  // wird, dass nichts davon über den Innenrand läuft, dass der Strahlenkranz
+  // hinter dem Podest liegt und nicht davor, und dass Kranz und Linien bei
+  // Bewegungsruhe stillstehen.
+  await page.setViewportSize({width:360, height:780});
+  const meisterMess = async () => page.evaluate(() => window.__k.eval(`(()=>{
+    const sid = '2026-07', se = seasons.find(x => x.id === sid), top = JSON.parse(se.top_elo);
+    const s = {id:'season_recap_' + sid, cat:'season', ic:'crown', title:'x', desc:'x',
+      when:new Date(2026, 6, 31, 23, 50).getTime(), prio:92,
+      dataRef:{type:'season_recap', sid, championId:top[0].id, championElo:top[0].elo, topElo:top, fakten:{}}};
+    const host = document.createElement('div');
+    host.style.cssText = 'position:absolute;left:0;top:0;width:328px';
+    host.innerHTML = '<div class="nf-wrap">' + _newsCardHtmlM2(s, false, false, '') + '</div>'
+      + '<div class="nd" style="position:static;transform:none;max-height:none">' + _newsDetailBody(s) + '</div>';
+    document.body.appendChild(host);
+    const raus = [];
+    [host.querySelector('.nf-card'), host.querySelector('.nd')].forEach(box => {
+      if(!box) { raus.push('fehlt'); return; }
+      const b = box.getBoundingClientRect();
+      box.querySelectorAll('.pod-karte, .srn-svg, .srn-band, .srn-leg, .srn-t, .srn-z, .nf-zb').forEach(e => {
+        const r = e.getBoundingClientRect();
+        if(r.left < b.left - 0.5 || r.right > b.right + 0.5) raus.push(e.className.baseVal || e.className);
+      });
+    });
+    const kranz = host.querySelector('.nf-ms-strahl'), linie = host.querySelector('.srn-l.gold');
+    const tage = host.querySelector('.srn-t .b i');
+    const out = {raus, kranz:kranz ? getComputedStyle(kranz).animationName : 'fehlt',
+      hinten:kranz ? getComputedStyle(kranz).zIndex : 'fehlt',
+      linie:linie ? getComputedStyle(linie).animationName : 'fehlt',
+      tage:tage ? getComputedStyle(tage).animationName : 'fehlt'};
+    host.remove(); return out;
+  })()`));
+  const mb = await meisterMess();
+  ok(mb.raus.length === 0, 'die Meisterbühne bleibt bei 360 px in Karte und Blatt', mb.raus.join(', '));
+  ok(mb.hinten === '-1' && mb.kranz !== 'none' && mb.linie !== 'none' && mb.tage !== 'none',
+     'der Strahlenkranz liegt hinter dem Podest, Kranz und Linien bewegen sich', JSON.stringify(mb));
+  await page.emulateMedia({reducedMotion: 'reduce'});
+  const mbRuhig = await meisterMess();
+  await page.emulateMedia({reducedMotion: 'no-preference'});
+  ok(mbRuhig.kranz === 'none' && mbRuhig.linie === 'none' && mbRuhig.tage === 'none',
+     'bei prefers-reduced-motion steht die Meisterbühne still', JSON.stringify(mbRuhig));
+
+  // ── Kein Filter über dem Zeichen [§C30] ─────────────────────────────
+  // Jedes Wappen trug `filter: drop-shadow(…)` am ganzen `svg.ins`, und
+  // Safari rechnet ein SVG unter einem CSS-Filter in CSS-Pixeln und zieht
+  // es hoch: auf dem Telefon standen alle Insignien mit Treppenkanten da,
+  // wie ausgeschnitten. Dasselbe gilt für eine Ebene, die skaliert. Gesucht
+  // wird über Liga, Positionen, Awards, Rekorde, Profil, Laufbahn und Feed;
+  // ausgenommen ist nur das Entfärben einer Stufe, die niemand trägt.
+  const _filterFunde = JSON.parse(await K(`(async()=>{
+const warte=ms=>new Promise(r=>setTimeout(r,ms));
+const funde={};
+const pruef=(wo)=>{
+  // Bilder direkt und über <use> verwiesene Gruppen: gezählt wird das Element, das sichtbar zeichnet
+  const ziele=[...document.querySelectorAll('image, use')].filter(e=>{const h=e.getAttribute('href')||'';return e.tagName==='image'?(h.startsWith('data:image/svg')||h.startsWith('blob:')):/^#ins/.test(h);});
+  ziele.forEach(im=>{let e=im.parentElement;const k=[];while(e&&e!==document.documentElement){const cs=getComputedStyle(e);
+    const f=e.getAttribute&&e.getAttribute('filter');
+    if(cs.filter&&cs.filter!=='none'&&!/grayscale/.test(cs.filter))k.push((e.className.baseVal??e.className)+':'+cs.filter.slice(0,30));
+    if(f)k.push((e.className.baseVal??e.className)+':attr '+f);
+    const m=cs.transform; if(m&&m.startsWith('matrix(')){const a=parseFloat(m.slice(7)); if(Math.abs(a-1)>.01&&!/nd-bg|nd |sheet/.test(e.className))k.push((e.className.baseVal??e.className)+':scale '+a);}
+    e=e.parentElement;}
+    if(k.length){const key=wo+' | '+k.join(' < ');funde[key]=(funde[key]||0)+1;}});
+};
+tab='ranking'; render(); await warte(50); pruef('liga'); tab='positions'; render(); await warte(50); pruef('positionen');
+tab='awards'; awView='awards'; render(); await warte(50); pruef('awards');
+awView='rekorde'; render(); await warte(50); pruef('rekorde');
+const pid=players.find(p=>p.name==='Martin').id;
+showPlayer(pid); await warte(900); pruef('profil');
+try{ showLaufbahn&&showLaufbahn(pid);}catch(e){}
+await warte(600); pruef('laufbahn');
+closeSheet(true); openNewsFeed(); _newsFeedRest(); await warte(600); pruef('feed');
+return JSON.stringify(funde,null,1);
+})()
+`));
+  ok(Object.keys(_filterFunde).length === 0,
+     'kein Insignium liegt unter einem Filter oder einer Skalierung',
+     Object.keys(_filterFunde).slice(0, 4).join(' · '));
+  await page.evaluate(() => { try { window.__k.eval('closeSheet(true)'); } catch(e){} });
+  // Und groß ist die Zeichnung Vektor, kein Bild: ein `<image>` mit einer
+  // SVG-Datei rastert Safari in seinen 170 Einheiten, und im Profilkopf
+  // wurden sie auf 270 px gezogen [§C30]. Klein bleibt sie Bild — ein
+  // Verweis klont die ganze Zeichnung, und der Feed öffnete damit doppelt
+  // so langsam. Gemessen wird beides: der Profilkopf und die Laufbahn ohne
+  // Bild, die Ranglistenzeile mit.
+  const _vektor = await page.evaluate(async () => {
+    const K = window.__k.eval;
+    const w = ms => new Promise(r => setTimeout(r, ms));
+    K("tab='ranking'; render()");
+    const bildIn = el => { let n = 0; el.querySelectorAll('use').forEach(u => {
+      const z = document.querySelector(u.getAttribute('href'));
+      if(z && z.querySelector('image[href^="data:image/svg"], image[href^="blob:"]')) n++; });
+      return n + el.querySelectorAll('image[href^="data:image/svg"], image[href^="blob:"]').length; };
+    const zeile = bildIn(document.querySelector('#app .rrow') || document.body);
+    const pid = K("players.find(p=>p.name==='Martin').id");
+    K('showPlayer(' + JSON.stringify(pid) + ')'); await w(300);
+    const kopf = document.querySelector('#sheet .pp-av-wrap');
+    const profil = kopf ? bildIn(kopf) : -1;
+    const vektor = kopf ? kopf.querySelectorAll('use[href^="#izg"]').length : 0;
+    K('closeSheet(true)'); K('showLaufbahn(' + JSON.stringify(pid) + ')'); await w(300);
+    // Die Karte in der Mitte der Vitrine ist groß und Vektor, die am Rand
+    // stehen klein und als Bild; die Felder der ganzen Leiter sind rund 40 px
+    // und Bild — dieselbe Grenze wie beim Wappen.
+    const fk = document.querySelector('#lbLeiter .lb-k.fokus');
+    const lb = fk ? bildIn(fk) : -1;
+    const lbRand = bildIn(document.getElementById('lbLeiter'));
+    const lbFelder = bildIn(document.getElementById('lbAlle'));
+    K('closeSheet(true)');
+    return {zeile, profil, vektor, lb, lbRand, lbFelder};
+  });
+  ok(_vektor.profil === 0 && _vektor.vektor > 0 && _vektor.lb === 0,
+     'groß ist jedes Insignium eine Vektorzeichnung, kein eingebettetes Bild',
+     JSON.stringify(_vektor));
+  ok(_vektor.zeile > 0 && _vektor.lbFelder === 21 && _vektor.lbRand >= 5, 'klein bleibt es ein Bild, damit Liste, Feed, der Rand der Vitrine und die ganze Leiter schnell bleiben',
+     JSON.stringify(_vektor));
+  // Die Aura [§C36]: im Profilkopf bewegt, und zwar so, dass nur die
+  // Grafikkarte arbeitet — höchstens drei Ebenen, jede ein Bild, und ihre
+  // Bewegung ändert nur `transform` und Deckkraft. Ein Filter oder eine
+  // Bewegung INNERHALB des SVG hiesse, die Unschärfe der Strahlen in jedem
+  // Bild neu zu rechnen. Und sie steht dort genau einmal: nicht noch ein
+  // zweites Mal still im Zeichen dahinter.
+  const _aura = await page.evaluate(async () => {
+    const K = window.__k.eval;
+    const w = ms => new Promise(r => setTimeout(r, ms));
+    const pid = K("(players.slice().sort((a,b)=>meisterTitel(b.id)-meisterTitel(a.id))[0]||{}).id");
+    K('closeSheet(true); showPlayer(' + JSON.stringify(pid) + ')'); await w(300);
+    const kopf = document.querySelector('#sheet .pp-av-wrap');
+    const aura = kopf ? kopf.querySelectorAll('.aura') : [];
+    const ebenen = aura[0] ? [...aura[0].children] : [];
+    const imZeichen = kopf ? kopf.querySelectorAll('svg.ins image.aura-b').length : -1;
+    const namen = ebenen.map(e => getComputedStyle(e).animationName).filter(n => n && n !== 'none');
+    const fremd = [];
+    for(const sh of document.styleSheets){ let r; try { r = sh.cssRules; } catch(e){ continue; }
+      for(const k of r) if(k.type === CSSRule.KEYFRAMES_RULE && namen.includes(k.name))
+        for(const f of k.cssRules) for(const prop of f.style)
+          if(!/^(transform|opacity)$/.test(prop)) fremd.push(k.name + ':' + prop); }
+    const filter = ebenen.filter(e => getComputedStyle(e).filter !== 'none').length;
+    K('closeSheet(true)');
+    return {titel:K('meisterTitel(' + JSON.stringify(pid) + ')'), auren:aura.length, ebenen:ebenen.length,
+            bilder:ebenen.every(e => e.tagName === 'IMG'), imZeichen, namen, fremd, filter};
+  });
+  ok(_aura.titel > 0 && _aura.auren === 1 && _aura.ebenen >= 2 && _aura.ebenen <= 3 && _aura.bilder
+     && _aura.imZeichen === 0 && _aura.namen.length >= 2 && _aura.fremd.length === 0 && _aura.filter === 0,
+     'die Aura im Profilkopf steht einmal, in höchstens drei Bildebenen, und bewegt nur transform und Deckkraft',
+     JSON.stringify(_aura));
+  // Und das Bild steht im Dokument unter einer kurzen Adresse. Als Daten-URL
+  // trug jedes Bild rund 190 Kilobyte, und jedes der rund 240 `<use>` im
+  // Feed klonte sie mit: gemessen brauchte das Öffnen des Feeds im Median
+  // 150 ms statt 46. Geprüft wird jedes Bild im Topf nach dem Öffnen.
+  const _bildAdr = await page.evaluate(async () => {
+    const K = window.__k.eval;
+    K('closeSheet(true); openNewsFeed(); _newsFeedRest()');
+    await new Promise(r => setTimeout(r, 300));
+    const l = [...document.querySelectorAll('#insDefs image, #sheet image, #app image')]
+      .map(b => (b.getAttribute('href') || '').length);
+    K('closeSheet(true)');
+    return {n: l.length, lang: l.filter(x => x > 300).length, max: Math.max(0, ...l)};
+  });
+  ok(_bildAdr.n > 0 && _bildAdr.lang === 0,
+     'jedes Wappenbild im Dokument steht unter einer kurzen Adresse',
+     _bildAdr.n + ' Bilder, ' + _bildAdr.lang + ' lang, längste ' + _bildAdr.max + ' Zeichen');
+
+  console.log('\n═══ EINBLICKE, SIEGCHANCE, VERGLEICH UND RÜCKBLICKE ═══');
+  await page.setViewportSize({width:360, height:780});
+  // ── Der Einblick ist eine Zeile, die aufklappt ────────────────────
+  //    Rollen-Landkarte und Netz der Duos nahmen als volle
+  //    Karte den halben Bildschirm über der Rangliste. Zu ist der Einblick
+  //    eine Zeile ohne Inhalt — gezeichnet wird erst beim Aufklappen —, auf
+  //    bleibt er beim Neuzeichnen im selben Reiter, und ein neuer Reiter
+  //    beginnt geschlossen. Offen liegt kein Text auf einem anderen.
+  const einblick = await page.evaluate((pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    const out = {};
+    // Im Liga-Reiter gibt es keinen: das Titelrennen war dieselbe Frage wie
+    // der Positionsverlauf darunter.
+    K(`closeSheet(true); tab='ranking'; period='season'; render(); 'x'`);
+    out.liga = document.querySelectorAll('#main [data-einblick]').length;
+    [['positions', 'rollen'], ['teams', 'netz']].forEach(([t, key]) => {
+      K(`closeSheet(true); tab='${t}'; period='season'; einblickOffen=''; render(); 'x'`);
+      const box = document.querySelector('#main [data-einblick="' + key + '"]');
+      if(!box){ out[key] = {fehlt:true}; return; }
+      const zu = {h: box.getBoundingClientRect().height, leer: !box.querySelector('.einblick-i').innerHTML.trim()};
+      box.querySelector('.einblick-k').click();
+      document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+      const i = box.querySelector('.einblick-i');
+      const auf = {h: i.getBoundingClientRect().height, bild: !!i.querySelector('svg'),
+                   aria: box.querySelector('.einblick-k').getAttribute('aria-expanded'), fehler: pruefen(box).fehler};
+      K('render(); "x"');
+      const nachRender = !!document.querySelector('#main [data-einblick="' + key + '"].auf svg');
+      document.querySelector('.bnav [data-nav="history"], [data-nav="history"]').click();
+      document.querySelector('[data-nav="' + t + '"]').click();
+      const nachTab = !document.querySelector('#main [data-einblick="' + key + '"].auf');
+      out[key] = {zu, auf, nachRender, nachTab};
+    });
+    return out;
+  }, PRUEFEN.toString());
+  const _eb = [einblick.rollen, einblick.netz];
+  ok(einblick.liga === 0 && _eb.every(x => x && !x.fehlt && x.zu.h <= 46 && x.zu.leer),
+     'Rollen-Landkarte und Netz der Duos stehen zu als schmale Zeile ohne Inhalt, der Liga-Reiter trägt keinen',
+     JSON.stringify(Object.fromEntries(Object.entries(einblick).map(([k, v]) => [k, v.zu]))));
+  ok(_eb.every(x => x.auf && x.auf.bild && x.auf.h > 120 && x.auf.aria === 'true' && x.auf.fehler.length === 0),
+     'aufgeklappt zeigen sie ihre Grafik, und kein Text liegt auf einem anderen oder ragt hinaus',
+     _eb.map(x => x.auf ? x.auf.fehler.slice(0, 2).join(' | ') || Math.round(x.auf.h) + ' px' : 'fehlt').join(' · '));
+  ok(_eb.every(x => x.nachRender && x.nachTab),
+     'ein Neuzeichnen im selben Reiter klappt sie nicht zu, ein Reiterwechsel schon',
+     JSON.stringify(_eb.map(x => [x.nachRender, x.nachTab])));
+
+  // ── Der Positionsverlauf trägt das Titelrennen ───────────────────
+  //    Das Titelrennen stand einmal als eigener Einblick über der
+  //    Rangliste und war dieselbe Frage wie der Positionsverlauf darunter.
+  //    Jetzt zeigt dessen Karte unter „Mehr zur Saison" das Rennen der
+  //    ersten drei und öffnet beim Tippen den ganzen Verlauf. Sie steht
+  //    UNTER der Rangliste, ganz im Bild, und kein Text liegt auf einem
+  //    anderen.
+  const posKarte = await page.evaluate((pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    K(`closeSheet(true); tab='ranking'; period='season'; ligaSeasonId=''; render(); 'x'`);
+    const karte = document.querySelector('#main .seasontools .st-card.pos');
+    const liste = document.querySelector('#main .rlist');
+    if(!karte || !liste) return {fehlt:true};
+    const r = karte.getBoundingClientRect();
+    const out = {
+      gross: karte.classList.contains('gross'),
+      rennen: !!karte.querySelector('.srn-l'),
+      unterListe: r.top >= liste.getBoundingClientRect().bottom - 1,
+      erste: karte === document.querySelector('#main .seasontools .st-card'),
+      imBild: r.left >= 0 && r.right <= window.innerWidth + .5,
+      fehler: pruefen(karte).fehler
+    };
+    karte.click();
+    document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
+    out.oeffnet = document.getElementById('sheetBg').classList.contains('show') && !!document.querySelector('#sheet svg');
+    K(`closeSheet(true); 'x'`);
+    return out;
+  }, PRUEFEN.toString());
+  ok(!posKarte.fehlt && posKarte.gross && posKarte.rennen && posKarte.unterListe && posKarte.erste
+     && posKarte.imBild && posKarte.fehler.length === 0 && posKarte.oeffnet,
+     'der Positionsverlauf steht unter der Rangliste als erste Karte, zeigt das Titelrennen und öffnet den Verlauf',
+     JSON.stringify(Object.assign({}, posKarte, {fehler: (posKarte.fehler || []).slice(0, 2)})));
+
+  // ── Die Siegchance steht beim Aufstellen unter der Score-Karte ────
+  //    Ohne Erklärsatz, aus derselben Rechnung, mit der die Partie danach
+  //    gewertet wird, und in der Vorschau nach dem Stand nicht noch einmal.
+  const chance = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`tab='match'; M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0}; render(); updatePreview(); 'x'`);
+    const leer = !document.querySelector('#chanceSlot .prob');
+    K(`M.A1=players[8].id; M.A2=players[10].id; M.B1=players[3].id; M.B2=players[1].id; updatePreview(); 'x'`);
+    const box = document.querySelector('#chanceSlot .m-chance');
+    const soll = Math.round(K('computeMatch(teamsFromM().teamA, teamsFromM().teamB, "A", 10, 0).expA') * 100);
+    const pa = box ? parseInt(box.querySelector('.pa').textContent, 10) : null;
+    const pb = box ? parseInt(box.querySelector('.pb').textContent, 10) : null;
+    const unter = box ? box.getBoundingClientRect().top >= document.querySelector('.score-board').getBoundingClientRect().bottom - 1 : false;
+    const text = box ? box.textContent : '';
+    K(`M.sa=10; M.sb=7; updatePreview(); 'x'`);
+    const doppelt = document.querySelectorAll('#main .prob').length;
+    K(`M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0}; tab='ranking'; render(); 'x'`);
+    return {leer, da:!!box, pa, pb, soll, unter, erklaert:/Elo beider|Rechnung|aus der Elo/i.test(text), doppelt};
+  });
+  ok(chance.leer && chance.da && chance.pa === chance.soll && chance.pa + chance.pb === 100 && chance.unter
+     && !chance.erklaert && chance.doppelt === 1,
+     'die Siegchance steht beim Aufstellen unter der Score-Karte, ohne Erklärsatz und nur einmal',
+     JSON.stringify(chance));
+
+  // ── Jede Begegnung im Direkten Vergleich ──────────────────────────
+  //    Ein Balken je Begegnung als Gegner, höchstens die letzten vierzig,
+  //    und die Zahlen daneben zählen die gezeigten Siege — nachgerechnet
+  //    an den rohen Partien.
+  const vergleich = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const a = K('players.find(p=>p.name==="Leon").id'), b = K('players.find(p=>p.name==="Martin").id');
+    K(`showH2H(${JSON.stringify(a)}, ${JSON.stringify(b)}); 'x'`);
+    const ms = K(`matches.filter(m => [m.a1,m.a2,m.b1,m.b2].includes(${JSON.stringify(a)}) && [m.a1,m.a2,m.b1,m.b2].includes(${JSON.stringify(b)})
+      && ((m.a1===${JSON.stringify(a)}||m.a2===${JSON.stringify(a)}) !== (m.a1===${JSON.stringify(b)}||m.a2===${JSON.stringify(b)})))
+      .sort((x,y)=>mts(x)-mts(y)).slice(-40).map(m => (m.a1===${JSON.stringify(a)}||m.a2===${JSON.stringify(a)}) ? m.winner==='A' : m.winner==='B')`);
+    const box = document.querySelector('#sheet .h2h-bg');
+    const res = {n: box ? box.querySelectorAll('rect').length : 0, soll: ms.length,
+      aw: box ? +box.querySelectorAll('.h2h-bg-n b')[0].textContent : null, aSoll: ms.filter(Boolean).length,
+      gruen: box ? box.querySelectorAll('rect.w').length : 0};
+    K('closeSheet(true)');
+    return res;
+  });
+  ok(vergleich.n === vergleich.soll && vergleich.n > 10 && vergleich.aw === vergleich.aSoll && vergleich.gruen === vergleich.aSoll,
+     'der Direkte Vergleich zeigt jede der letzten Begegnungen als Balken und zählt die Siege wie die Partien',
+     JSON.stringify(vergleich));
+
+  // ── Die Rückblicke zeigen, wie es dazu kam ───────────────────────
+  //    Woche: sieben Tage des Helden und das Feld; Tag: Bahn, Elo und
+  //    Feld; Saison: Rangliste zuerst, darunter Titelrennen, Tage an der
+  //    Spitze und die Saison des Meisters.
+  const rueck = await page.evaluate(async (pruefenSrc) => {
+    const pruefen = eval('(' + pruefenSrc + ')');
+    const K = window.__k.eval.bind(window.__k);
+    const warte = () => new Promise(r => setTimeout(r, 450));
+    const fehler = h => { document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} }); return pruefen(h).fehler; };
+    const out = {};
+    K(`closeSheet(true); showPotwRecap({woche:'2026-08-17'}); 'x'`); await warte();
+    let sh = document.getElementById('sheet');
+    const wochenMs = K(`matches.filter(m => tagKey(mts(m)) >= '2026-08-17' && tagKey(mts(m)) <= '2026-08-23')`);
+    const imFeld = new Set(); wochenMs.forEach(m => [m.a1, m.a2, m.b1, m.b2].forEach(x => imFeld.add(x)));
+    out.woche = {titel: /KW 34/.test(sh.textContent) ? 'KW 34' : '', tage: sh.querySelectorAll('.rcp-wo-t').length,
+      feld: sh.querySelectorAll('.rcp-feld-z').length, soll: imFeld.size, held: sh.querySelectorAll('.rcp-feld-z.held').length,
+      fehler: [...sh.querySelectorAll('.rcp-feld, .rcp-woche')].flatMap(fehler)};
+    K(`closeSheet(true); showPotdRecap({force:true, tag:'2026-08-24'}); 'x'`); await warte();
+    sh = document.getElementById('sheet');
+    const tagMs = K(`matches.filter(m => tagKey(mts(m)) === '2026-08-24').length`);
+    out.tag = {bahn: !!sh.querySelector('.nd-bahn'), zeilen: sh.querySelectorAll('.nd-tml').length, elo: !!sh.querySelector('.rcp-elo svg'),
+      feld: sh.querySelectorAll('.rcp-feld-z').length, partien: tagMs, datum: /24\. August/.test(sh.textContent),
+      fehler: [...sh.querySelectorAll('.rcp-feld, .rcp-elo')].flatMap(fehler)};
+    K(`closeSheet(true); showSeasonRecap(seasons.find(s=>s.id==='2026-07')); 'x'`); await warte();
+    sh = document.getElementById('sheet');
+    const kopf = [...sh.querySelectorAll('.rcp-section')].map(x => x.textContent.replace(/\d+/g, '').trim());
+    out.saison = {rang: kopf.indexOf('Rangliste'), rennen: kopf.indexOf('Das Titelrennen'),
+      spitze: kopf.indexOf('Tage an der Spitze'), meister: kopf.findIndex(x => /^Die Saison des Meisters/.test(x)),
+      fehler: [...sh.querySelectorAll('.rcp-block')].flatMap(fehler)};
+    K('closeSheet(true)');
+    return out;
+  }, PRUEFEN.toString());
+  ok(rueck.woche.tage === 7 && rueck.woche.feld === rueck.woche.soll && rueck.woche.held === 1 && /KW 34/.test(rueck.woche.titel)
+     && rueck.woche.fehler.length === 0,
+     'der Wochenrückblick zeigt die gewählte Woche, die sieben Tage des Helden und jeden Spieler im Feld',
+     JSON.stringify(rueck.woche).slice(0, 200));
+  ok(rueck.tag.bahn && rueck.tag.zeilen === 0 && rueck.tag.elo && rueck.tag.feld > 3 && rueck.tag.datum && rueck.tag.fehler.length === 0,
+     'der Tagesrückblick zeigt den gewählten Tag als Bahn, die Elo über den Tag und das Feld',
+     JSON.stringify(rueck.tag).slice(0, 200));
+  ok(rueck.saison.rang >= 0 && rueck.saison.rennen > rueck.saison.rang && rueck.saison.spitze > rueck.saison.rennen
+     && rueck.saison.meister > rueck.saison.spitze && rueck.saison.fehler.length === 0,
+     'der Saison-Rückblick zeigt die Rangliste zuerst, darunter Titelrennen, Tage an der Spitze und die Saison des Meisters',
+     JSON.stringify(rueck.saison).slice(0, 200));
+
+  // ── Aus der Story in ihren Rückblick ──────────────────────────────
+  //    Spieler des Tages und die Woche öffnen den Rückblick IHRES Tages und
+  //    IHRER Woche, nicht den letzten.
+  const knopf = await page.evaluate(async () => {
+    const K = window.__k.eval.bind(window.__k);
+    K(`_cache._stories=_buildStories().sort((a,b)=>new Date(b.when)-new Date(a.when));_cache._consolFrom=null;_cache._frischVon=null;'x'`);
+    const potd = K(`JSON.stringify(getStoriesCache().filter(s=>(s.dataRef||{}).type==='potd').map(s=>({id:s.id, tag:s.dataRef.dayKey})))`);
+    const woche = K(`JSON.stringify(getStoriesCache().filter(s=>(s.dataRef||{}).type==='woche').map(s=>({id:s.id, woche:s.dataRef.woche})))`);
+    const res = [];
+    for(const x of JSON.parse(potd).slice(-2).concat(JSON.parse(woche).slice(-1))){
+      K(`closeSheet(true); openNewsFeed(); openNewsDetail(${JSON.stringify(x.id)}); 'x'`);
+      const b = document.querySelector('#nd [data-rueckblick]');
+      if(!b){ res.push({id:x.id, knopf:false}); continue; }
+      b.click();
+      const sh = document.getElementById('sheet');
+      const k = x.tag || x.woche;
+      const [y, m, d] = k.split('-').map(Number);
+      // Die Wochenkarte trägt ihre ISO-Woche („2026-W34"), der Rückblick nennt sie „KW 34".
+      const soll = x.tag ? new Date(y, m - 1, d).toLocaleDateString('de-DE', {weekday:'long', day:'numeric', month:'long'})
+                         : 'KW ' + Number(k.split('-W')[1]);
+      // Das Blatt kommt nach dem Zuschieben des vorigen. Fest 500 ms zu warten
+      // war unter Last im Gesamtlauf zu kurz; gewartet wird auf den Inhalt.
+      for(let t = 0; t < 30 && sh.textContent.indexOf(soll) < 0; t++) await new Promise(r => setTimeout(r, 100));
+      res.push({id:x.id, knopf:true, auf: sh.textContent.indexOf(soll) >= 0, soll});
+    }
+    K('closeSheet(true)');
+    return res;
+  });
+  ok(knopf.length >= 2 && knopf.every(x => x.knopf && x.auf),
+     'die Story des Spielers des Tages und der Woche öffnet per Knopf den Rückblick ihres Tages und ihrer Woche',
+     JSON.stringify(knopf).slice(0, 240));
+
   await page.setViewportSize({width:430, height:932});
 
   console.log('\n' + '═'.repeat(60));

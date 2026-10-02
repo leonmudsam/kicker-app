@@ -100,15 +100,20 @@ function vTeams(){
       ? `<div style="width:24px;height:24px;border-radius:8px;background:${top.bg};color:${top.fg};display:grid;place-items:center;font-family:'Archivo Black',sans-serif;font-size:12px;flex-shrink:0">${i+1}</div>`
       : `<div style="width:24px;text-align:center;font-family:'Archivo Black',sans-serif;font-size:14px;color:var(--faint);flex-shrink:0">${i+1}</div>`;
     
-    return `<div class="rrow" data-team="${esc(t.ids.join('|'))}" style="background:var(--surface);border:1px solid ${borderColor};border-radius:18px;padding:13px 15px;display:block">
-      <div style="display:flex;align-items:center;gap:12px">
+    // Die Bilanz als Balken: Siege links in Grün, Niederlagen rechts in Rot
+    // [§C25]. Die Zeile nannte „26–4" als Zahl, und ob ein Duo knapp oder
+    // klar vorn liegt, musste man ausrechnen — die Ranglistenzeile der
+    // Spieler zeigt dasselbe seit jeher als Balken [§C27].
+    return `<div class="rrow tm-row${top ? ' tm-top' : ''}" data-team="${esc(t.ids.join('|'))}" style="--tm-rand:${borderColor}">
+      <div class="tm-zeile">
         ${rankBlock}
         ${avPair(t.ids[0],t.ids[1])}
-        <div style="flex:1;min-width:0">
-          <div style="font-family:'Archivo Black',sans-serif;font-size:14px;letter-spacing:-.01em;line-height:1.1">${esc(t.ids.map(pname).join(' & '))}</div>
-          <div class="num" style="margin-top:4px;font-size:10.5px;color:var(--muted)">${t.w}–${t.g-t.w} · ${gd>=0?'+':''}${gd} Tore</div>
+        <div class="tm-mitte">
+          <div class="tm-name">${esc(t.ids.map(pname).join(' & '))}</div>
+          <div class="tm-bil num">${t.w}–${t.g-t.w} · ${gd>=0?'+':''}${gd} Tore</div>
+          <div class="tm-bar"><i style="width:${(t.w/t.g*100).toFixed(1)}%"></i></div>
         </div>
-        <div style="font-family:'Archivo Black',sans-serif;font-size:20px;color:${i===0&&isTop&&teamSort==='wr'?'var(--gold)':mainColor};line-height:1;flex-shrink:0">${mainValue}</div>
+        <div class="tm-wert" style="color:${i===0&&isTop&&teamSort==='wr'?'var(--gold)':mainColor}">${mainValue}</div>
       </div>
     </div>`;
   }).join('');
@@ -116,6 +121,7 @@ function vTeams(){
 
   return `
     <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}</p></div>
+    ${einblickHtml('netz', 'ab 4 Partien')}
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/>
@@ -153,26 +159,43 @@ function vHistory(){
   const opts=`<option value="all">Alle Spieler</option>`+
     [...players].sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${p.id}" ${histFilter===p.id?'selected':''}>${esc(p.name)}</option>`).join('');
   
+  // ── Die Partie im Verlauf [§C27] ─────────────────────────────────
+  // Beide Teams standen weiß und fett nebeneinander, der Stand grau in der
+  // Mitte: wer gewonnen hat, sah man erst an den Zahlen darunter. Die Regel
+  // `.mteam .won` suchte ein Kind und traf nie — die Klasse sitzt an
+  // `.mteam` selbst. Jetzt stehen Gesichter vor den Namen, der Sieger hell,
+  // der Verlierer leise, und im Stand leuchtet die Zahl des Siegers. Die
+  // Partien eines Tages stehen unter einem Tageskopf mit ihrer Zahl, wie im
+  // Feed, und die Zeile nennt nur noch die Uhrzeit. Die Gestaltung liegt im
+  // CSS; im Markup standen die Marken der Auszeichnungen als Inline-Stil
+  // [§C31].
+  const proTag={};
+  list.forEach(m=>{const k=tagKey(mts(m));proTag[k]=(proTag[k]||0)+1;});
+  let tagVorher=null;
   const rows=paginatedList.map(m=>{
     const aWon=m.winner==='A';
-    const tA=`${pname(m.a1)} & ${pname(m.a2)}`, tB=`${pname(m.b1)} & ${pname(m.b2)}`;
+    const team=(ids,w,r)=>`<div class="mteam${r?' r':''} ${w?'won':'lost'}"><span class="mteam-av">${ids.map(id=>{const p=pmap()[id];return p?avHtml(p,'',{}):'';}).join('')}</span>`
+      +`<span class="mteam-n">${esc(pname(ids[0]))} & ${esc(pname(ids[1]))}</span></div>`;
     const dl=ids=>ids.map(id=>{const d=(m.deltas||{})[id]||0;
-      return `<span><b>${esc(pname(id))}</b> <span class="${d>=0?'delta-v pos':'delta-v neg'}" style="font-size:11px">${d>=0?'+':''}${Math.round(d)}</span></span>`;}).join('');
-    // Kompakte Badge-Icons für errungene Auszeichnungen
+      return `<span><b>${esc(pname(id))}</b> <span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span></span>`;}).join('');
     const earned=badgesEarnedInMatch(m.id);
-    const badgeChips=earned.length?`<div style="display:flex;gap:3px;align-items:center;margin-top:4px;flex-wrap:wrap">${earned.map(e=>
-      `<span style="font-size:11px;background:var(--surface3);padding:2px 6px;border-radius:7px;display:inline-flex;align-items:center;gap:4px;color:var(--ink2)">${badgeIc(e.badge,'12px')}<span style="font-size:10px">${esc(pname(e.playerId).split(' ')[0])}</span></span>`
+    const badgeChips=earned.length?`<div class="mrow-bd">${earned.map(e=>
+      `<span>${badgeIc(e.badge,'12px')}<span>${esc(pname(e.playerId).split(' ')[0])}</span></span>`
     ).join('')}</div>`:'';
-    return `<div class="mrow" data-match="${m.id}">
+    const k=tagKey(mts(m));
+    const kopf=k!==tagVorher?`<div class="mtag"><b>${esc(datumFmt(mts(m),'wt'))}</b><span>${esc(datumFmt(mts(m),'tm'))}</span>`
+      +`<em class="num">${proTag[k]} ${proTag[k]===1?'Partie':'Partien'}</em></div>`:'';
+    tagVorher=k;
+    return `${kopf}<div class="mrow" data-match="${m.id}">
       <div class="mrow-top">
-        <div class="mteam ${aWon?'won':'lost'}">${esc(tA)}</div>
-        <div class="mscore num">${m.score_a}:${m.score_b}</div>
-        <div class="mteam r ${!aWon?'won':'lost'}">${esc(tB)}</div>
+        ${team([m.a1,m.a2],aWon,false)}
+        <div class="mscore num"><em class="${aWon?'w':''}">${m.score_a}</em><i>:</i><em class="${aWon?'':'w'}">${m.score_b}</em></div>
+        ${team([m.b1,m.b2],!aWon,true)}
       </div>
       <div class="mrow-bot"><div class="mdeltas">${dl([m.a1,m.a2,m.b1,m.b2])}</div></div>
       ${badgeChips}
-      <div class="mrow-bot" style="margin-top:6px"><span>${dateStr(m.created_at)}</span>
-        <span data-delmatch="${m.id}" style="color:var(--acid2);display:inline-flex;align-items:center;gap:5px">${svgI('edit')} bearbeiten</span></div>
+      <div class="mrow-bot mrow-fuss"><span>${datumFmt(mts(m),'uhr')}</span>
+        <span data-delmatch="${m.id}" class="mrow-edit">${svgI('edit')} bearbeiten</span></div>
     </div>`;
   }).join('');
 
@@ -226,6 +249,7 @@ function vMatch(){
       <div class="score-col B"><div class="cl">Team B</div>
         <div class="stepper"><button data-step="sb,-1">−</button><span class="sval num" id="svB" data-scoreedit="sb">${M.sb}</span><button data-step="sb,1">+</button></div></div>
     </div>
+    <div id="chanceSlot"></div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin:-4px 0 10px">
       <span style="font-size:10.5px;color:var(--muted)">Zahl antippen, um sie direkt einzugeben</span>
       <button class="btn ghost" id="shuffleBtn" style="width:auto;flex-shrink:0;padding:8px 14px;font-size:11px;border-radius:10px">Mischen</button>
@@ -423,6 +447,12 @@ function updatePreview(){
   setAvg('avgA', M.A1, M.A2); setAvg('avgB', M.B1, M.B2);
 
   const ids = [M.A1,M.A2,M.B1,M.B2].filter(Boolean);
+  // Die Siegchance steht, sobald vier verschiedene Spieler auf ihren Rollen
+  // stehen — nicht erst, wenn der Stand eingetragen ist: beim Aufstellen ist
+  // sie die Frage, nach dem Spiel nur noch eine Zahl.
+  const chanceSlot = document.getElementById('chanceSlot');
+  if(chanceSlot) chanceSlot.innerHTML = (ids.length === 4 && new Set(ids).size === 4
+    && M.pA1 !== M.pA2 && M.pB1 !== M.pB2) ? _matchChanceHtml() : '';
   if(new Set(ids).size !== ids.length){
     slot.innerHTML = `<div class="preview" style="color:var(--red);font-size:12px;text-align:center">Ein Spieler steht doppelt.</div>`;
     save.disabled = true; return;
@@ -438,7 +468,6 @@ function updatePreview(){
   const winner = M.sa > M.sb ? 'A' : 'B';
   const{teamA, teamB} = teamsFromM();
   const c = computeMatch(teamA, teamB, winner, M.sa, M.sb);
-  const pA = Math.round(c.expA*100), pB = 100-pA;
   const line = s => {
     const d = c.res[s.id];
     return `<div class="delta-row">
@@ -448,12 +477,10 @@ function updatePreview(){
       <span class="delta-v ${d>=0?'pos':'neg'}">${d>=0?'+':''}${Math.round(d)}</span>
     </div>`;
   };
+  // Die Siegchance steht schon unter dem Stand (_matchChanceHtml); hier
+  // stand derselbe Balken ein zweites Mal.
   slot.innerHTML = `<div class="preview">
-    <div class="prob">
-      <div class="pa" style="width:${pA}%">${pA}%</div>
-      <div class="pb" style="width:${pB}%">${pB}%</div>
-    </div>
-    <div class="prob-cap">Siegchance (Saison-Elo) · Team ${winner} gewinnt ${M.sa}:${M.sb}
+    <div class="prob-cap">Team ${winner} gewinnt ${M.sa}:${M.sb}
       ${c.mov>1.08?' · Kantersieg ×'+komma(c.mov,2):''}
     </div>
     <div class="delta-list">
@@ -463,6 +490,26 @@ function updatePreview(){
     </div>
   </div>`;
   save.disabled = false;
+}
+
+// ── Die Siegchance beim Aufstellen [§C27] ────────────────────────────
+// Unter der Score-Karte, sobald die vier stehen: die beiden Paare, das Wort
+// dazu und der Balken der Vorschau, aus derselben Rechnung, mit der die
+// Partie danach gewertet wird (`computeMatch`). Ohne Erklärsatz — die Zahl
+// über zwei Teams erklärt sich selbst. Das Wort zeigt zum Favoriten.
+function _matchChanceHtml(){
+  let c;
+  try {
+    const {teamA, teamB} = teamsFromM();
+    c = computeMatch(teamA, teamB, 'A', 10, 0).expA;
+  } catch(e){ return ''; }
+  if(c == null || !isFinite(c)) return '';
+  const pA = Math.round(c * 100), pB = 100 - pA;
+  const wort = chanceWort(Math.max(c, 1 - c));
+  const mitte = wort === 'Favorit' ? (c >= .5 ? '← Favorit' : 'Favorit →') : wort;
+  return `<div class="m-chance"><div class="m-ch-r">${rcpPaarHtml([M.A1, M.A2], 26)}`
+    + `<span class="m-ch-w">${esc(mitte)}</span>${rcpPaarHtml([M.B1, M.B2], 26)}</div>`
+    + `<div class="prob"><div class="pa" style="width:${pA}%">${pA}%</div><div class="pb" style="width:${pB}%">${pB}%</div></div></div>`;
 }
 
 async function doSaveMatch(){

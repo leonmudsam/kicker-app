@@ -357,6 +357,9 @@ const STORY_PRIO = {
   // danach den Rang seines staerksten Teils [§C33]. Allein steht sie fuer
   // das Ergebnis, und das ist die leiseste Nachricht des Spieltagsbandes.
   spiel:             41,
+  // Die Runde der Vier fasst Partien zusammen, die jede schon ihre Karte
+  // haben [§11.6c]: sie steht knapp unter der einzelnen Partie.
+  runde:             40,
   match_result:      63,   // ein außergewöhnliches, exakt belegtes Ergebnis
   chronik_geholt:    62,
   team_streak:       60,

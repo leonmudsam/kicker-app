@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vierte Aufwertung</title>
+<!-- Gebaut von bau.js aus der ausgelieferten App und entwurf.js/entwurf.css.
+     Eigenständige Seite ohne Bauablauf, kein Teil der App [CLAUDE.md §2]. -->
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Sometype+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0c0b;--surface:#141a16;--line:#28332b;--ink:#eef3ef;--ink2:#b9c4bd;--muted:#717f76;--acid:#BEF264;--gold:#f7cf4a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;padding:28px 16px 60px}
+main{max-width:1000px;margin:0 auto}
+h1{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:clamp(26px,5vw,40px);letter-spacing:-.02em}
+.unter{color:var(--ink2);max-width:720px;margin-top:8px}
+.regeln{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:22px 0 10px}
+.regeln div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13px;color:var(--ink2)}
+.regeln b{display:block;color:var(--ink);margin-bottom:3px}
+nav{display:flex;flex-wrap:wrap;gap:6px;margin:18px 0 6px}
+nav a{font:600 11px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:5px 10px}
+nav a:hover{color:var(--ink);border-color:var(--muted)}
+h2{font:600 12px 'Sometype Mono',monospace;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin:40px 0 4px}
+.ans{border-top:1px solid var(--line);padding:22px 0 8px}
+.ans h3{font-size:20px;margin-bottom:12px}
+.ans h3 span{font:600 11px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--acid);margin-left:8px}
+.paar{display:grid;grid-template-columns:repeat(2,minmax(0,360px));gap:14px;align-items:start}
+figure{margin:0}
+figcaption{font:600 10.5px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+figure.neu figcaption{color:var(--acid)}
+figure img{display:block;width:100%;height:auto;border-radius:16px}
+.ans ul{margin:14px 0 0 18px;max-width:760px;color:var(--ink2);font-size:14px}
+.ans li{margin:4px 0}
+.offen{margin-top:40px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;color:var(--ink2);font-size:14px}
+.offen b{color:var(--ink)} .offen li{margin:4px 0 4px 18px}
+.probe{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:20px;align-items:start}
+.probe img{display:block;width:100%;height:auto;border-radius:12px}
+.probe ul{margin:0 0 0 18px;color:var(--ink2);font-size:14px}
+.probe li{margin:6px 0}
+@media(max-width:700px){.probe{grid-template-columns:1fr}}
+@media(max-width:560px){.paar{gap:8px}figure img{border-radius:12px}}
+</style></head><body><main>
+<h1>Vierte Aufwertung: Am Spieltag</h1>
+<p class="unter">Von 55 Partie-Karten im Feed der letzten vierzehn Tage beginnt heute jede mit demselben Ergebnisband: vier Wappen, der Stand, zwei Namen. Der Entwurf lässt den Kopf dem Anlass folgen und zeigt in jedem Anlass eine Zahl, die auf der Karte bisher fehlte. Gebaut ist er in der echten App mit den echten Partien und ihren Bauteilen, bei 360 px — eingebaut ist davon noch nichts.</p>
+<div class="regeln">
+  <div><b>Der Kopf folgt dem Anlass</b>Spielfeld, Anzeigetafel, Wippe und Ergebniszeile statt immer desselben Bands. Wo die Grafik die Aussage trägt, schrumpft der Kopf auf eine Zeile.</div>
+  <div><b>Neue Zahlen statt neuer Wörter</b>Rollen, Bilanz in engen Partien, Ergebnisverteilung, Elo-Gefälle, Tabellenbewegung, eigener Bestwert, gerissene Kette, Duo-Bilanz, wer eine Auszeichnung trägt, Tagesbahn, Elo-Kurve, jede Begegnung — alles gerechnet aus den Partien bis zu dieser.</div>
+  <div><b>Nichts wird gekürzt oder geschrumpft</b>Ein Name steht in der Grafik, wo sie Platz hat — unter seinem Wappen auf dem Spielfeld, an seiner Linie in der Tabelle. Wo es eng ist, steht er in einer Textstelle darunter, einer je Zeile, und bricht wie ein Satz um. Kein „…", keine verkleinerte Schrift.</div>
+  <div><b>Schnell bleibt schnell</b>Jede Rechnung läuft einmal je Datenstand: Spielreihenfolge, Ergebnisverteilung als Präfixsumme und Serienstand vor jeder Partie hängen an den Partien selbst. Eine Karte liest daraus, statt die Liga noch einmal abzulaufen. Feed öffnen heute 45 ms, im Entwurf 51 ms; auf einem gedrosselten Telefon 214 und 297 ms.</div>
+  <div><b>Farbe sagt etwas</b>Grün und Rot nur für die Richtung, Gold nur für die neue Spitze, alles Übrige Metall [§C25]. Keine neue Farbe.</div>
+  <div><b>Eine Runde, eine Karte</b>10 Runden im Fenster: dieselben vier am Tisch, Partie auf Partie. Sie werden eine Karte mit der Tabelle der Runde.</div>
+</div>
+<nav><a href="#feed">Der Feed</a><a href="#runde">Die Runde</a><a href="#probe">Grenzwerte</a><a href="#feld">Die gewöhnliche Partie</a><a href="#krimi">Der Ein-Tor-Krimi</a><a href="#deutlich">Der klare Sieg</a><a href="#aussenseiter">Der Außenseitersieg</a><a href="#rang">Rangsprung und Spitzenwechsel</a><a href="#serie">Die Serie</a><a href="#riss">Der Serienbruch</a><a href="#teamserie">Die Duo-Serie</a><a href="#medaille">Die Auszeichnung</a><a href="#tag">Der Spieler des Tages</a><a href="#wende">Die Wende</a><a href="#duell">Die Rivalitätsmarke</a></nav>
+<h2>Der Feed als Ganzes</h2>
+<section class="ans" id="feed">
+    <h3>Die ersten Karten <span>Heute und im Entwurf</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/feed-heute.jpg" alt="Die ersten Karten heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/feed-entwurf.jpg" alt="Die ersten Karten im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Dieselben Partien, dieselbe Reihenfolge. Links beginnt jede Karte mit demselben Band, rechts sieht jede Karte nach dem aus, wovon sie erzählt.</li></ul>
+  </section>
+<h2>Zusammenführen</h2>
+<section class="ans" id="runde">
+    <h3>Die Runde der Vier <span>Eine Karte statt 5</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/runde-heute.jpg" alt="Die Runde der Vier heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/runde-entwurf.jpg" alt="Die Runde der Vier im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>182 der 466 Partien der Liga liegen in Runden: dieselben vier am Tisch, keine Stunde zwischen zwei Partien, und in 48 von 57 Runden wechseln die Paarungen. Im Feed standen sie als Karten untereinander, mit denselben vier Wappen in jedem Band.</li><li>Die Runde wird eine Karte: oben die Tabelle der Runde — jeder mit Siegen, Niederlagen und der Elo, die er in der Runde gewonnen oder abgegeben hat —, darunter jede Partie in einer Zeile mit Uhrzeit, Paarung, Stand und ihrem Anlass.</li><li>Die Schlagzeile sagt, wer die Runde gewonnen hat; der Satz, wie lange sie ging und wie oft die Paarung wechselte. Im Blatt stehen die Einzelkarten weiter vollständig.</li></ul>
+  </section>
+<h2>Je Anlass</h2>
+<section class="ans" id="feld">
+    <h3>Die gewöhnliche Partie <span>Das Spielfeld</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/feld-heute.jpg" alt="Die gewöhnliche Partie heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/feld-entwurf.jpg" alt="Die gewöhnliche Partie im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Die häufigste Karte des Feeds. Statt Ergebnisband und Elo-Waage steht die Partie auf dem Tisch: Abwehr, Sturm, Sturm, Abwehr — in der Reihenfolge der Stangen.</li><li>Neu ist die Rolle: wer hinten und wer vorne stand, zeigte bisher keine Karte. Unter jedem Wappen die Elo dieser Partie, in der Mitte Stand und Siegchance.</li><li>Die Sieger hell, die Verlierer leiser — wie im Band, nur dass man jetzt sieht, gegen wen jemand direkt gespielt hat.</li></ul>
+  </section><section class="ans" id="krimi">
+    <h3>Der Ein-Tor-Krimi <span>Die Anzeigetafel</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/krimi-heute.jpg" alt="Der Ein-Tor-Krimi heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/krimi-entwurf.jpg" alt="Der Ein-Tor-Krimi im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Der Kopf wird zur Anzeigetafel mit Klappziffern, die Mitte sagt „EIN TOR" und wie die Chancen vorher standen.</li><li>Darunter, was nur hier interessiert: wie die Sieger in engen Partien dastehen — die letzten acht als Zellen, diese markiert, dahinter die Bilanz aller.</li></ul>
+  </section><section class="ans" id="deutlich">
+    <h3>Der klare Sieg <span>Das Band und die Verteilung</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/deutlich-heute.jpg" alt="Der klare Sieg heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/deutlich-entwurf.jpg" alt="Der klare Sieg im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>„So deutlich zuletzt am …" sagte, wann. Die Säulen sagen, wie selten: jedes Ergebnis von 10:9 bis 10:0, gezählt über die ganze Liga bis zu dieser Partie.</li><li>Dieses Ergebnis grün, die noch deutlicheren dahinter heller — darunter die Zahl in einem Satz.</li></ul>
+  </section><section class="ans" id="aussenseiter">
+    <h3>Der Außenseitersieg <span>Die Wippe</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/aussenseiter-heute.jpg" alt="Der Außenseitersieg heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/aussenseiter-entwurf.jpg" alt="Der Außenseitersieg im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Das Gewicht ist die Elo vor dem Anstoß: der Favorit sitzt unten, wie die Rechnung es erwartet hat, und gewonnen hat die leichte Seite.</li><li>Die Neigung folgt dem Elo-Gefälle, die Zahl steht darüber; Siegchance und Elo-Schnitt beider Teams stehen an ihren Enden. Bogen und Chips entfallen.</li></ul>
+  </section><section class="ans" id="rang">
+    <h3>Rangsprung und Spitzenwechsel <span>Die Tabelle vorher und nachher</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/rang-heute.jpg" alt="Rangsprung und Spitzenwechsel heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/rang-entwurf.jpg" alt="Rangsprung und Spitzenwechsel im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Eine Linie je Spieler vom Platz vor der Partie zum Platz danach: wer durch diese Partie steigt, grün, wer dadurch fällt, rot, alle übrigen Metall [§C25].</li><li>Man sieht nicht nur „Platz 7 → 5", sondern an wem jemand vorbeigezogen ist. Der Kopf schrumpft auf die Ergebniszeile, die Grafik bekommt den Platz.</li><li>Beim Spitzenwechsel dasselbe Bauteil, und die neue Spitze trägt Gold — die Tabellenführung ist ein Titel auf Zeit. Im Fenster dieser Aufnahmen wechselte die Spitze nicht, deshalb ohne eigenes Bild.</li></ul>
+  </section><section class="ans" id="serie">
+    <h3>Die Serie <span>Der Lauf gegen den eigenen Bestwert</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/serie-heute.jpg" alt="Die Serie heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/serie-entwurf.jpg" alt="Die Serie im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Der Lauf misst sich am eigenen Bestwert und am Rekord der Liga, beide als Marke über der Reihe. Drei Siege in Folge sind für den einen Alltag und für den anderen die beste Zeit seiner Laufbahn.</li><li>Die nächste runde Marke steht weiter im Blatt.</li></ul>
+  </section><section class="ans" id="riss">
+    <h3>Der Serienbruch <span>Die gerissene Kette</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/riss-heute.jpg" alt="Der Serienbruch heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/riss-entwurf.jpg" alt="Der Serienbruch im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Die Serie war die Leistung des anderen: sie steht als Kette aus Siegen da, am Ende der Riss in Rot, dahinter die, die ihn gesetzt haben.</li><li>Bis zwanzig Glieder einzeln, darüber eine geschlossene Kette — wie lang die Serie war, sagt die Zahl daneben und der Satz darunter.</li></ul>
+  </section><section class="ans" id="teamserie">
+    <h3>Die Duo-Serie <span>Der Lauf und der Ring</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/teamserie-heute.jpg" alt="Die Duo-Serie heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/teamserie-entwurf.jpg" alt="Die Duo-Serie im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Der Lauf des Duos und daneben seine ganze gemeinsame Bilanz als Ring: grün die Siege, rot die Niederlagen, in der Mitte die Quote.</li><li>Die Bilanz selbst steht in der Textstelle darunter — im Ring stehen nie mehr als vier Zeichen, egal wie viele Partien es werden.</li></ul>
+  </section><section class="ans" id="medaille">
+    <h3>Die Auszeichnung <span>Die Medaille und wer sie trägt</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/medaille-heute.jpg" alt="Die Auszeichnung heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/medaille-entwurf.jpg" alt="Die Auszeichnung im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>„Selten" ist ein Wort; wie selten, zeigt die Liga: jeder Spieler ein Platz, wer die Auszeichnung trägt, mit Gesicht, wer sie in dieser Partie geholt hat, gerahmt.</li><li>Violett ist die Familie der Auszeichnungen, Gold nur die legendäre [§C25]. Ab sechzehn Spielern werden die Plätze zu Punkten.</li><li>Was die Schlagzeile als Anlass nennt, wählt auch das Bild: „Auszeichnung in einer Partie für …" stand bisher über dem Bild einer Wende, von der die Karte nicht erzählt. Eine seltene oder legendäre Auszeichnung steht sogar vor allem außer der Tabellenspitze.</li></ul>
+  </section><section class="ans" id="tag">
+    <h3>Der Spieler des Tages <span>Die Tagesbahn</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/tag-heute.jpg" alt="Der Spieler des Tages heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/tag-entwurf.jpg" alt="Der Spieler des Tages im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Die Karte nannte Quote, Bilanz und Platz als drei Zahlen. Jetzt steht der Tag als Bahn — ein Feld je Partie, wie im Blatt [§C27] — und darüber die Elo über den Tag als goldene Linie: Gold, weil er den Titel des Tages trägt.</li><li>Man sieht, ob der Tag stark angefangen oder stark geendet hat.</li></ul>
+  </section><section class="ans" id="wende">
+    <h3>Die Wende <span>Die Elo-Kurve</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/wende-heute.jpg" alt="Die Wende heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/wende-entwurf.jpg" alt="Die Wende im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Die letzten zwölf Partien des Siegers als Linie aus der Elo jeder Partie: die Pleiten davor als rote Punkte, dieser Sieg groß und grün.</li><li>Man sieht, wie tief es vorher ging und wie viel der eine Sieg zurückholt.</li></ul>
+  </section><section class="ans" id="duell">
+    <h3>Die Rivalitätsmarke <span>Jede Begegnung</span></h3>
+    <div class="paar">
+      <figure><figcaption>Heute</figcaption><img src="bilder/duell-heute.jpg" alt="Die Rivalitätsmarke heute" loading="lazy"></figure>
+      <figure class="neu"><figcaption>Entwurf</figcaption><img src="bilder/duell-entwurf.jpg" alt="Die Rivalitätsmarke im Entwurf" loading="lazy"></figure>
+    </div>
+    <ul><li>Jede Partie der beiden gegeneinander als Balken: nach oben für den einen, nach unten für den anderen, so hoch, wie deutlich es ausging; diese grün.</li><li>Serien und Wenden der Rivalität stehen da, ohne dass man eine Zahl liest.</li></ul>
+  </section>
+<h2>Mit Grenzwerten</h2>
+<section class="ans" id="probe">
+  <h3>Was in einigen Jahren dasteht <span>0 Überlappungen</span></h3>
+  <div class="probe"><img src="bilder/probe.jpg" alt="Jedes Bauteil mit Grenzwerten" loading="lazy">
+  <ul>
+    <li>Jedes Bauteil hat zwei Hälften: eine rechnet aus den Partien, die andere zeichnet nur, was sie bekommt. Deshalb lässt sich jedes Bild auch mit Zahlen zeichnen, die die Liga heute noch nicht hat.</li>
+    <li>Links steht jedes Bauteil mit Grenzwerten: 45.495 Partien, eine Bilanz von 12.345:9.876, 98.765 Begegnungen, eine Elo von −12.345, eine Serie von 57 gegen einen Bestwert von 120 und einen Liga-Rekord von 340, eine Runde aus 23 Partien, Platz 118 bis 126 der Tabelle — und Namen wie „Jean-Baptiste von Hohenstein".</li>
+    <li>Was wächst, hat einen Deckel und sagt, was dahinter liegt: die Serie wird über sechzehn ein Balken statt Zellen, die Kette über zwanzig Glieder eine geschlossene, die Rivalität zeigt die letzten dreißig Begegnungen, die Runde acht Partien und „und 15 weitere", die Tabelle neun Plätze um die Bewegung, die Medaille ab sechzehn Spielern Punkte statt Gesichter.</li>
+    <li>Ein Name steht in der Grafik nur, wo sie Platz hat, und ob er passt, sagt eine feste Regel: kein Wort länger als die Spalte fasst, gerechnet für das schmalste Telefon. Passt er nicht — „Maximilian-Alexander" unter einer Stange —, steht die Aufstellung in zwei Spalten unter dem Feld, und in der Tabelle stehen Gesichter statt Namen und darunter ein Satz, wer sich bewegt hat. Eine Zahl ab 1.000 trägt den Tausenderpunkt.</li>
+    <li>Gemessen im Browser: 38 Karten des Feeds und 18 Proben, jeder Text gegen jeden Text und jedes Gesicht, jeder Text gegen den Rand der Karte, jedes Abschneiden — auch mit „…" — und jede Schrift unter 8 px. 0 Befunde. Auch die Zeilen, die die App heute mit „…" kürzt (Bündel, Faden, Ergebnisband), brechen im Entwurf um.</li>
+  </ul></div>
+</section>
+<div class="offen"><b>Beim Einbau zu klären:</b><ul>
+<li>Die Runde ändert, was eine Karte ist: bisher hat jede Partie ihre eigene [§C33]. Sie bliebe es im Bestand und im Blatt; zusammengeführt würde nur in der Anzeige, wie bei der Sammelkarte.</li>
+<li>Spielfeld und Wippe zeigen Siegchance und Elo im Kopf — der Satz darunter streicht sie dann wie heute bei Bogen und Chips (_newsSpielSatz).</li>
+<li>Alle Grafiken rechnen aus den Partien bis zu ihrer eigenen, nicht bis heute — eine Karte von vorletzter Woche erzählt vom Stand von damals. Ausgenommen ist die Medaille: wer sie trägt, ist der Stand von heute; beim Einbau zählt sie bis zur Partie.</li>
+<li>Die Rechnungen hängen als WeakMap an den Partien wie matchesOfPlayer [§3 Caching]; ein neuer Datenstand ist ein neues Array und verwirft sie von selbst.</li>
+</ul></div>
+</main></body></html>

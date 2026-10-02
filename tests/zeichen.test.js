@@ -128,10 +128,12 @@ const ok = (c, msg, det) => {
     // mittig, und misst 2 · INS_R von INS_BILD_KANTE seiner Kante. Daraus folgt, wo er
     // gezeichnet ist — gemessen am gerenderten <image>.
     let echt = null;
-    const img = voll.querySelector('svg.ins image');
-    if(img){
-      const r = img.getBoundingClientRect(), k = K('INS_BILD_KANTE'), w = r.width * 80 / k;
-      echt = {left: r.left + (r.width - w) / 2, top: r.top + (r.height - w) / 2, width: w};
+    // Die Zeichnung ist eine Vektorgruppe auf 1000 × 1000, verschoben und
+    // verkleinert [§C30]. Ihre Bildschirmmatrix sagt, wo der Reif landet.
+    const g = voll.querySelector('svg.ins g[transform]');
+    if(g){
+      const m = g.getScreenCTM(), k = K('INS_BILD_KANTE'), halb = 40 * 1000 / k;
+      echt = {left: m.a * (500 - halb) + m.e, top: m.d * (500 - halb) + m.f, width: m.a * 2 * halb};
     }
     const b = window._reifBox(voll);
     return {a, echt: echt && {left:echt.left, top:echt.top, width:echt.width}, b,
@@ -315,6 +317,47 @@ const ok = (c, msg, det) => {
   ok(mass[0].griff <= mass[1].griff && mass[1].griff <= mass[2].griff,
      'jede Stufe greift mindestens so weit um den Reif wie die davor',
      JSON.stringify(mass.map(x => x.griff)));
+
+  // Das Feuer in der Zeile ist das des Profils: dieselbe Rangfarbe, derselbe
+  // helle Kern. Es brannte in der Rangliste orange mit warmem Kern und im
+  // Profilkopf desselben Spielers in seiner Rangfarbe — zwei Bildsprachen
+  // für dieselbe Serie [§C27]. Verglichen wird die gerechnete Füllung am
+  // Knoten, nicht die Klasse.
+  const feuerFarbe = await page.evaluate(() => {
+    const K = window.__k.eval.bind(window.__k);
+    const box = document.createElement('div');
+    // Ohne Partien hat niemand einen Rang: je Rangstufe ein Spieler, dessen
+    // Rang die Stufe selbst ist, und danach wieder die echte Funktion.
+    const pids = ['Legende', 'Elite', 'Stark', 'Solide', 'Einsteiger'];
+    K('window.__gprAlt = getPlayerRank; getPlayerRank = pid => ({label: pid}); 0');
+    const av = '<span class="av" style="background:#56b4e8">AB</span>';
+    box.innerHTML = pids.map(pid => {
+      const t = JSON.parse(K('JSON.stringify(rangTon(' + JSON.stringify(pid) + '))'));
+      return '<div class="rrow" data-pid="' + pid + '">'
+        + K('insAvWrap(' + JSON.stringify(pid) + ', ' + JSON.stringify(av) + ', {px:52, feuer:2})')
+        + '</div><div class="pp-root" data-pid="' + pid + '" style="--ak:' + t.c + ';--ak-rgb:' + t.rgb + '">'
+        + '<div class="pp-av-wrap zn-rang zn-l2">' + K('ZN_FEUER_GROSS[2]') + '</div></div>';
+    }).join('');
+    document.body.appendChild(box);
+    const out = pids.map(pid => {
+      const zeile = box.querySelector('.rrow[data-pid="' + pid + '"] .zn-fx .zf:not(.zk)');
+      const kopf = box.querySelector('.pp-root[data-pid="' + pid + '"] .zn-fx .zf:not(.zk)');
+      const kern = box.querySelector('.rrow[data-pid="' + pid + '"] .zn-fx .zk');
+      return {pid, zeile: zeile && getComputedStyle(zeile).fill,
+              kopf: kopf && getComputedStyle(kopf).fill,
+              kern: kern && getComputedStyle(kern).fill};
+    });
+    box.remove();
+    K('getPlayerRank = window.__gprAlt; 0');
+    return out;
+  });
+  const anders = feuerFarbe.filter(x => !x.zeile || x.zeile !== x.kopf);
+  ok(feuerFarbe.length > 0 && anders.length === 0,
+     'das Feuer der Ranglistenzeile trägt dieselbe Rangfarbe wie im Profil',
+     JSON.stringify(anders.length ? anders.slice(0, 3) : feuerFarbe.map(x => x.zeile)));
+  ok(feuerFarbe.every(x => x.zeile !== 'rgb(255, 143, 74)' && x.kern === 'rgb(255, 255, 255)'),
+     'kein oranges Feuer und ein heller Kern wie im Profil',
+     JSON.stringify(feuerFarbe.slice(0, 2)));
 
   console.log('\n═══ 4. DAS TITELBAND ═══');
   ok(mass[0].sterne === 1 && mass[1].sterne === 2 && mass[2].sterne === 3,
@@ -623,6 +666,10 @@ const ok = (c, msg, det) => {
       x.drawImage(b, 0, 0, G, G);
       return x.getImageData(0, 0, G, G).data;
     };
+    // Die Zeichnung als eigenständige Datei, zum Rastern: die App stellt sie
+    // als Vektor ins Dokument [§C30], gemessen wird sie für sich.
+    K("window.izDatei = (k, g) => 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent("
+      + "'<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 1000 1000\">' + (t => t.defs + t.bild)(_izTeile(k, g, INS_RANGFARBE[INS_BILD_RANG])) + '</svg>')))");
     const svgBild = (k, g, rang) => 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(
       K('insigniumStufeSvg(' + JSON.stringify(k) + ', ' + JSON.stringify(rang || 'Elite') + ', '
         + (k === 'stern' ? 'ORDENSSTERN_START + ' + g : 0) + ', ' + g + ', {eigen:true})')
@@ -631,7 +678,7 @@ const ok = (c, msg, det) => {
     const G = 160, out = [], urls = new Set();
     let n = 0;
     for(const k of stufen){
-      const liste = K('INS_ZEICHEN[' + JSON.stringify(k) + '].map((_, g) => insBild(' + JSON.stringify(k) + ', g, INS_BILD_RANG))');
+      const liste = K('INS_ZEICHEN[' + JSON.stringify(k) + '].map((_, g) => izDatei(' + JSON.stringify(k) + ', g))');
       for(let g = 0; g < liste.length; g++){
         n++; urls.add(liste[g]);
         const d = await bild(liste[g], G);
@@ -667,7 +714,7 @@ const ok = (c, msg, det) => {
     const klein = {};
     for(const k of stufen){
       klein[k] = [];
-      for(const u of K('INS_ZEICHEN[' + JSON.stringify(k) + '].map((_, g) => insBild(' + JSON.stringify(k) + ', g, INS_BILD_RANG))')) klein[k].push(await bild(u, 52));
+      for(const u of K('INS_ZEICHEN[' + JSON.stringify(k) + '].map((_, g) => izDatei(' + JSON.stringify(k) + ', g))')) klein[k].push(await bild(u, 52));
     }
     const unterschied = (a, b) => {
       let d = 0, n = 0;
@@ -679,21 +726,25 @@ const ok = (c, msg, det) => {
       return n ? Math.round(d / n * 1000) / 10 : 0;
     };
     const grade = stufen.map(k => ({k, d: klein[k].slice(1).map((b, i) => unterschied(klein[k][i], b))}));
-    // Die Rangfarbe: gezeichnet ist Violett. Der Kopf des Reifs I (die Lilie)
-    // muss für die Elite violett und für die Legende golden sein.
-    const farbe = async (rang) => {
+    // Die Rangfarbe ist ein Akzent: sie sitzt im Stein der Raute und muss
+    // dort für die Elite violett und für die Legende golden sein. Die Lilie
+    // ist Metall mit einem Schimmer — in voller Rangfarbe war sie der
+    // lauteste Fleck des Zeichens.
+    const farbe = async (rang, y0, y1) => {
       const z = await bild(svgBild('reif', 0, rang), 144);
-      let r = 0, g = 0, b = 0, n = 0;
-      for(let y = 0; y < 40; y++) for(let x = 60; x < 84; x++){
+      let r = 0, g = 0, b = 0, n = 0, alle = 0;
+      for(let y = y0; y < y1; y++) for(let x = 64; x < 80; x++){
         const o = (y*144 + x)*4; if(z[o+3] < 160) continue;
+        alle++;
         const s = Math.max(z[o], z[o+1], z[o+2]) - Math.min(z[o], z[o+1], z[o+2]);
         if(s < 60) continue;                 // nur die Farbe, nicht das Metall
         r += z[o]; g += z[o+1]; b += z[o+2]; n++;
       }
-      return n ? {r: r/n, g: g/n, b: b/n, n} : null;
+      return n ? {r: r/n, g: g/n, b: b/n, n, alle} : (alle ? {r:0, g:0, b:0, n:0, alle} : null);
     };
     return {out, n, verschieden: urls.size, grade,
-            elite: await farbe('Elite'), legende: await farbe('Legende')};
+            elite: await farbe('Elite', 104, 120), legende: await farbe('Legende', 104, 120),
+            lilie: await farbe('Elite', 4, 30)};
   });
   const NAMEN = {reif:'Reif', schild:'Schildring', volute:'Volutenkranz',
                  zier:'Zierkranz', lorbeer:'Lorbeerreif', krone:'Kronenreif',
@@ -725,42 +776,67 @@ const ok = (c, msg, det) => {
      _stumm.map(x => x.k + ' ' + x.d.join('/') + ' %').join(', ')
      || leiter.grade.map(x => x.k + ' ' + x.d.join('/')).join(' · ') + ' %');
   const E = leiter.elite, L = leiter.legende;
-  ok(E && L && E.b > E.g + 40 && L.r > L.b + 40 && L.g > L.b,
-     'Insignium: die Lilie ist für die Elite violett und für die Legende golden',
+  ok(E && L && E.b > E.g + 25 && L.r > L.b + 25 && L.g > L.b,
+     'Insignium: der Stein ist für die Elite violett und für die Legende golden',
      JSON.stringify({elite: E && [E.r, E.g, E.b].map(Math.round), legende: L && [L.r, L.g, L.b].map(Math.round)}));
+  const Li = leiter.lilie;
+  // Gezählt wird der Anteil farbiger Punkte an der ganzen Lilie: die Steine
+  // in ihr tragen die Rangfarbe voll und sollen das auch, die Blätter nicht.
+  ok(Li && Li.alle > 20 && Li.n / Li.alle < .3,
+     'Insignium: die Lilie ist Metall und nicht in voller Rangfarbe',
+     Li && (Li.n + ' von ' + Li.alle + ' Punkten farbig'));
 
-  // 5. Dasselbe für die UNTERLAGE im vollen Zeichen. Sie setzt den Reif auf
-  //    die Schwinge und muss dabei über den ganzen Schmuck reichen — die
-  //    Bandbox reicht aber nur 58 Einheiten unter die Reifmitte. Als sie ein
-  //    Kreis mit Radius 72,5 war, schnitt der Browser ihr unteres Viertel ab,
-  //    und im Profilkopf stand quer unter dem Zeichen eine gerade Kante.
-  //    Gemessen in Zeichen-Einheiten, nicht in Pixeln: die Box ist die Box.
-  const _unterlage = await page.evaluate(() => {
+  // 5. Die AURA im vollen Zeichen [§C36]. Sie ersetzt die Schwinge und liegt
+  //    ganz hinten, als ein Bild um die Reifmitte. Ihre Mitte ist bis Radius
+  //    184 von 1000 ausgespart, und das Insignium nimmt 70 % ihrer Fläche
+  //    ein: nur dann beginnt das Licht am Reif und fällt nicht durch das
+  //    Gesicht. Gemessen am gerenderten Bild, in Zeichen-Einheiten, und
+  //    dazu, dass die Aura mit jedem Titel bis zehn heller wird.
+  const _aura = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const h = document.createElement('div');
     h.style.cssText = 'position:absolute;left:0;top:0;width:300px';
-    h.innerHTML = K('insigniumSvg("zn-test", {band:true, pos:1, titel:12})');
-    document.body.appendChild(h);
-    const svg = h.querySelector('svg.ins');
-    const vb = svg.getAttribute('viewBox').split(/\s+/).map(Number);
-    const el = [...svg.querySelectorAll('ellipse,circle')]
-      .find(e => /sd\)/.test(e.getAttribute('fill') || ''));
-    if(!el){ h.remove(); return null; }
-    const b = el.getBBox();
-    const out = {vb, oben:+(b.y - vb[1]).toFixed(1),
-                 unten:+((vb[1] + vb[3]) - (b.y + b.height)).toFixed(1),
-                 links:+(b.x - vb[0]).toFixed(1),
-                 rechts:+((vb[0] + vb[2]) - (b.x + b.width)).toFixed(1)};
+    const out = {};
+    for(const t of [0, 1, 3, 10, 14]){
+      h.innerHTML = K('insigniumSvg("zn-test", {band:true, pos:1, titel:' + t + '})');
+      document.body.appendChild(h);
+      const im = h.querySelector('svg.ins image.aura-b');
+      out[t] = im ? {x:+im.getAttribute('x'), y:+im.getAttribute('y'), w:+im.getAttribute('width'),
+                     erstes:h.querySelector('svg.ins').firstElementChild === im || null,
+                     href:im.getAttribute('href')} : null;
+    }
     h.remove();
+    // Die Helligkeit: mittlere Deckkraft des Lichts außerhalb des Lochs.
+    const hell = async st => {
+      const b = new Image(); b.src = K('auraHref(' + st + ')'); await b.decode();
+      const c = document.createElement('canvas'); c.width = c.height = 200;
+      const x = c.getContext('2d', {willReadFrequently:true}); x.drawImage(b, 0, 0, 200, 200);
+      const d = x.getImageData(0, 0, 200, 200).data;
+      let s = 0, loch = 0;
+      for(let i = 0; i < 200 * 200; i++){
+        const px = i % 200 - 100, py = Math.floor(i / 200) - 100;
+        if(px * px + py * py < 34 * 34){ loch = Math.max(loch, d[i * 4 + 3]); continue; }
+        s += d[i * 4 + 3];
+      }
+      return {mittel:+(s / (200 * 200)).toFixed(2), loch};
+    };
+    out.hell = [];
+    for(const st of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) out.hell.push(await hell(st));
+    out.seite = K('AURA_SEITE'); out.kante = K('INS_BILD_KANTE');
     return out;
   });
-  console.log('  Unterlage: oben ' + (_unterlage ? _unterlage.oben : '?')
-    + ' · unten ' + (_unterlage ? _unterlage.unten : '?') + ' Einheiten Luft');
-  ok(_unterlage && _unterlage.oben >= 0 && _unterlage.unten >= 0,
-     'Insignium: die Unterlage wird von der Bandbox nicht abgeschnitten',
-     _unterlage ? 'oben ' + _unterlage.oben + ', unten ' + _unterlage.unten
-                + ', links ' + _unterlage.links + ', rechts ' + _unterlage.rechts
-                : 'keine Unterlage gefunden');
+  const _au = _aura[3];
+  ok(!_aura[0] && _au && Math.abs(_au.w - _aura.kante / .7) < .05
+     && Math.abs(_au.x + _au.w / 2 - 50) < .05 && Math.abs(_au.y + _au.w / 2 - 50) < .05 && _au.erstes,
+     'Aura: kein Titel, keine Aura; sonst ganz hinten, mittig und 1/0,7 so groß wie das Zeichen',
+     JSON.stringify({ohne:_aura[0], drei:_au, seite:_aura.seite}));
+  ok(_aura[10] && _aura[14] && _aura[10].href === _aura[14].href && _aura[1].href !== _aura[3].href,
+     'Aura: zehn Stufen, je Titel eine, danach bleibt sie stehen',
+     JSON.stringify({eins:!!_aura[1], zehn:!!_aura[10], vierzehn:!!_aura[14]}));
+  const _steigt = _aura.hell.every((h, i, a) => i === 0 || h.mittel > a[i - 1].mittel);
+  ok(_steigt && _aura.hell.every(h => h.loch === 0),
+     'Aura: mit jedem Titel heller, und durch das Gesicht fällt kein Licht',
+     _aura.hell.map((h, i) => (i + 1) + ':' + h.mittel + (h.loch ? ' Loch ' + h.loch : '')).join(' · '));
 
   // ════════════════════════════════════════════════════════════════════
   console.log('\n═══ 8. DIE TITELSTERNE STEHEN FREI ═══');
@@ -796,8 +872,8 @@ const ok = (c, msg, det) => {
       for(let i = 0; i < B*H; i++) a[i] = d[i*4+3] > 40 ? 1 : 0;
       return a;
     };
-    // Das Zeichen: die größte Schwinge, damit auch ihre Spitzen mitgemessen
-    // sind, dazu die Stufe und die Raute.
+    // Das Zeichen: die Stufe und die Raute. Die Aura zählt nicht dazu — sie
+    // ist Licht hinter dem Zeichen, und die Sterne dürfen darauf stehen.
     const stufen = K('INSIGNIEN.map(x => x.key)');
     const sterne = {};
     for(const t of [1, 3, 5, 8, 12, 20])
@@ -805,8 +881,7 @@ const ok = (c, msg, det) => {
     const treffer = [], leer = [];
     for(const k of stufen) for(const g of [0,1,2]){
       const z = await raster(
-        K('_insBandGruppe(_insSchwingen(5, "' + id + '"))')
-        + K('_insStufe("' + k + '", __c, ' + (8 + g) + ', "' + id + '", ' + g + ')')
+        K('_insStufe("' + k + '", __c, ' + (8 + g) + ', "' + id + '", ' + g + ', true)')
             .replace(/<circle data-schein[^>]*\/>/g, '')
         + K('_insFuss(3)'));
       for(const t of [1, 3, 5, 8, 12, 20]){
@@ -877,10 +952,10 @@ const ok = (c, msg, det) => {
      sternMess.raus.length ? 'ragen heraus bei ' + sternMess.raus.join(', ') + ' Titeln'
                            : sternMess.luft + ' Einheiten Luft nach oben');
 
-  // 4. Im fertigen Zeichen stehen sie unverändert da. Die Schwinge wird auf
-  //    INS_SCHWINGE_SKALA verkleinert; wer die Sterne wieder in ihre Gruppe
-  //    legt, zieht sie damit auf den Kopf des Insigniums, und die drei
-  //    Messungen oben sähen davon nichts.
+  // 4. Im fertigen Zeichen stehen sie unverändert da. Sie lagen einmal im
+  //    verkleinerten Kasten der Schwinge und standen damit auf dem Kopf des
+  //    Insigniums; wer sie wieder in eine skalierte Gruppe legt, zieht sie
+  //    dorthin, und die drei Messungen oben sähen davon nichts.
   ok(sternMess.versatz < 1,
      'Sterne: im ganzen Zeichen sitzen sie, wo sie einzeln sitzen',
      sternMess.versatz + ' px Versatz bei 400 px Zeichenbreite');

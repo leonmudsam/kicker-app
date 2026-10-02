@@ -307,11 +307,20 @@ function insAvWrap(pid, innerHtml, opts){
   const f = opts.feuer !== undefined ? opts.feuer : znFeuer(pid);
   // Ein Verweis statt der ganzen Zeichnung: in einer Liste steht dasselbe
   // Wappen vielfach, und die Zeichnung ist dieselbe [§C30].
+  // Die Größe bestimmt, ob die Zeichnung als Bild oder als Vektor kommt
+  // [§C30]: kleine Wappen stehen zu Dutzenden, große müssen scharf sein.
   const ins = insigniumRef(pid, band
-    ? {band:true, pos:opts.pos, titel:opts.titel} : {band:false});
+    ? {band:true, pos:opts.pos, titel:opts.titel, px} : {band:false, px});
   const cls = 'rav zn' + (band ? ' rav-band' : '') + (f ? ' zn-l'+f : '')
             + (opts.klasse ? ' '+opts.klasse : '');
-  return `<span class="${cls}" style="--rav:${px}px"`
+  // Das Feuer trägt die Rangfarbe, wie im Profilkopf. In der Rangliste
+  // brannte es orange und durchscheinend, im Profil desselben Spielers in
+  // seiner Rangfarbe und mit Schein — zwei Bildsprachen für dieselbe Serie
+  // [§C27]. Die Farbe kommt nur dorthin, wo ein Feuer brennt: in einer Liste
+  // sind das zwei, drei Zeilen, und nur für sie wird der Rang gefragt.
+  let ton = '';
+  if(f){ try { const t = rangTon(pid); ton = `;--zn-c:${t.c};--zn-rgb:${t.rgb}`; } catch(e){ ton = ''; } }
+  return `<span class="${cls}" style="--rav:${px}px${ton}"`
     + ` title="${esc(_znTitelTxt(t, f, pid))}">`
     + (f ? ZN_FEUER[f] : '') + ins + innerHtml + (band ? '' : _znSterneSvg(t)) + '</span>';
 }

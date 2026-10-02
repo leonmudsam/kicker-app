@@ -69,44 +69,56 @@ const PRESTIGE_ART_NAME = {leistung:'Leistung', ereignis:'Ereignis',
 
 // Startwert und Abnahme der nächsten Zweiergruppe. Die Klasse setzt den
 // Standard: je wertvoller, desto höher der Start und desto langsamer die
-// Abnahme. Sechs fachlich begründete Leistungen überschreiben diesen
-// Standard sichtbar. Die harmonische Folge darunter flacht ab, bleibt aber
-// bei jedem endlichen Rang positiv und besitzt keine feste Obergrenze.
-// Negative Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
+// Abnahme. Die harmonische Folge darunter flacht ab, bleibt aber bei jedem
+// endlichen Rang positiv und besitzt keine feste Obergrenze. Negative
+// Auszeichnungen bleiben Erinnerungen, aber weder Strafe noch Lohn.
+// Der Standard der Klasse Legendary greift nur für eine NEUE legendäre
+// Auszeichnung, die unten noch keinen eigenen Wert hat; jede bestehende
+// steht dort mit ihrem.
 const PRESTIGE_AUSZEICHNUNG = {
-  legendary:{basis:40, abnahme:0.10},
-  rare:     {basis:20, abnahme:0.18},
+  legendary:{basis:70, abnahme:0.10},
+  rare:     {basis:25, abnahme:0.18},
   common:   {basis:3,  abnahme:0.25},
   negative: {basis:0,  abnahme:1}
 };
-// Nur diese sechs Abweichungen sind fachliche Rangfolgen, keine versteckten
-// Multiplikatoren. Sie stehen deshalb auch lesbar in der Aufschlüsselung.
-// Meister wächst mit der sanftesten Kurve. Dominator und Team der Saison
-// teilen die 10-%-Kurve, damit Dominator bei jeder gleichen Anzahl davor
-// bleibt. POTD fällt schneller, weil es stark von der Zahl der eigenen
-// Spieltage abhängt; POTW bleibt wertvoller. Der makellose 10:0-Sieg bleibt
-// Legendary, verliert bei Wiederholungen aber etwas schneller an Neuigkeitswert.
+// Jede legendäre Auszeichnung trägt ihren eigenen Startwert, dazu die zwei
+// Wochen- und Tageswertungen. Ein Wert für die ganze Klasse stellte die 20er
+// Serie neben den 10:0-Sieg und die Dynastie neben den Dominator, und beides
+// sind verschiedene Höhen: die Dynastie verlangt 600 Elo in einer Saison, der
+// Dominator 400. Die Reihenfolge der Tabelle ist die Gewichtung und die
+// Reihenfolge im Regelblatt (`showPrestigeRegeln`) — wer eine Auszeichnung
+// dazunimmt, ordnet sie hier nach ihrem Wert ein.
+// Meister wächst mit der sanftesten Kurve. POTD fällt schneller, weil es
+// stark von der Zahl der eigenen Spieltage abhängt; POTW bleibt wertvoller.
+// Der makellose 10:0-Sieg bleibt Legendary, verliert bei Wiederholungen aber
+// etwas schneller an Neuigkeitswert.
 const PRESTIGE_AUSZEICHNUNG_SPEZIAL = {
-  champion:       {basis:75, abnahme:0.05, hinweis:'Saisonspitze: Meister'},
-  dominator_400:  {basis:50, abnahme:0.10, hinweis:'Saisonspitze: Dominator'},
-  team_of_season: {basis:45, abnahme:0.10, hinweis:'Saisonspitze: Team der Saison'},
-  potw:           {basis:30, abnahme:0.12, hinweis:'Wochensieg'},
-  potd:           {basis:10, abnahme:0.25, hinweis:'Tagessieg'},
-  perfect_win:    {basis:40, abnahme:0.15, hinweis:'Makelloser 10:0-Sieg'},
+  streak20:       {basis:120, abnahme:0.10},
+  dynasty_600:    {basis:120, abnahme:0.10},
+  champion:       {basis:100, abnahme:0.05},
+  streak15:       {basis:75,  abnahme:0.10},
+  dominator_400:  {basis:70,  abnahme:0.10},
+  team_of_season: {basis:70,  abnahme:0.10},
+  award_collector:{basis:70,  abnahme:0.10},
+  untouchable:    {basis:70,  abnahme:0.10},
+  potw:           {basis:50,  abnahme:0.12},
+  mr_perfect:     {basis:50,  abnahme:0.10},
+  perfect_win:    {basis:40,  abnahme:0.15},
+  potd:           {basis:10,  abnahme:0.25},
 };
 
 // Grundwert einer Allzeitwertung, bevor Art und Halterzahl darauf wirken.
 // Ein heute gehaltener Liga-Rekord wiegt deutlich schwerer als eine
 // Auszeichnung — es gibt ihn nur einmal in der Liga.
 //
-// Fuenfzig und nicht achtundvierzig: mit `PRESTIGE_ART` ergibt das 100 fuer
-// einen Leistungsrekord und 50 fuer ein Ereignis, und eine runde Zahl ist im
-// Blatt nachrechenbar. „96 Punkte, geteilt durch zwei Halter, dann durch
-// Wurzel zwei" liest niemand nach; 100 schon.
-const PRESTIGE_REKORD = 50;
+// Mit `PRESTIGE_ART` ergibt das 150 fuer einen Leistungsrekord und 75 fuer
+// ein Ereignis, dieselben Grundwerte wie im Katalog. Eine runde Zahl ist im
+// Blatt nachrechenbar: „144 Punkte, geteilt durch zwei Halter, dann durch
+// Wurzel zwei" liest niemand nach, 150 schon.
+const PRESTIGE_REKORD = 75;
 // Der Grundwert eines Rekords steht am Katalogeintrag [§C34]. Er stand allein
 // in `PRESTIGE_ART[art]`, und damit konnte eine Bestmarke wie die laengste
-// Siegesserie nicht 100 wiegen, ohne gleichzeitig ihren Platz in der
+// Siegesserie nicht 150 wiegen, ohne gleichzeitig ihren Platz in der
 // Katalogreihenfolge und in der Monatstafel zu verschieben: `art` ordnet den
 // Katalog, der Grundwert wiegt. Der Rueckfall bleibt fuer einen Eintrag, der
 // ihn nicht setzt.
@@ -189,21 +201,24 @@ const PRESTIGE_REICHWEITE = 0.5;
 
 // Die sieben Stufen. `min` ist die Schwelle, ab der die Stufe getragen wird.
 //
-// 0, 500, 1000, 1800, 2600, 3600, 4500 — vorgegeben, nicht gerechnet. Jede
-// Spanne ist mindestens so teuer wie die vorige (500, 500, 800, 800, 1000,
-// 900), und die letzte führt zum Ordensstern, der danach alle 500 Prestige
-// eine Zacke dazubekommt und damit nie aufhört.
+// 0, 600, 1200, 2100, 3100, 4300, 5600 — vorgegeben, nicht gerechnet. Jede
+// Spanne ist mindestens so teuer wie die vorige (600, 600, 900, 1000, 1200,
+// 1300), und die letzte führt zum Ordensstern, der danach alle 500 Prestige
+// eine Zacke dazubekommt und damit nie aufhört. Sie lagen bei 500 bis 4500;
+// mit den höheren Startwerten der Auszeichnungen und Rekorde [§C34] stieg
+// das Prestige der Spitze um gut ein Viertel, und ohne neue Schwellen wäre
+// sie über Nacht eine Stufe höher gestanden, ohne etwas dafür getan zu haben.
 //
-// Der Reif beginnt sofort. Der Schildring markiert ab 500 den ersten großen
+// Der Reif beginnt sofort. Der Schildring markiert ab 600 den ersten großen
 // Laufbahnschritt.
 const INSIGNIEN = [
   {key:'reif',    name:'Reif',          min:0},
-  {key:'schild',  name:'Schildring',    min:500},
-  {key:'volute',  name:'Volutenkranz',  min:1000},
-  {key:'zier',    name:'Zierkranz',     min:1800},
-  {key:'lorbeer', name:'Lorbeerreif',   min:2600},
-  {key:'krone',   name:'Kronenreif',    min:3600},
-  {key:'stern',   name:'Ordensstern',   min:4500},
+  {key:'schild',  name:'Schildring',    min:600},
+  {key:'volute',  name:'Volutenkranz',  min:1200},
+  {key:'zier',    name:'Zierkranz',     min:2100},
+  {key:'lorbeer', name:'Lorbeerreif',   min:3100},
+  {key:'krone',   name:'Kronenreif',    min:4300},
+  {key:'stern',   name:'Ordensstern',   min:5600},
 ];
 // Die beiden obersten Stufen. Ihr ERSTER Aufstieg ist Breaking [§C33] —
 // als Zahl im Generator („stufe >= 3") wäre die Grenze beim Einfügen einer
@@ -216,10 +231,29 @@ const INSIGNIUM_OBEN = INSIGNIEN.length - 2;
 // ob jemand gerade angekommen ist oder kurz vor der nächsten Stufe steht.
 const INSIGNIUM_GRADE = 3;
 const INSIGNIUM_GRAD_NAME = ['I', 'II', 'III'];
-// Die Grade liegen bewusst nicht bei exakten Dritteln. Der Einstieg in eine
-// Stufe soll schnell sichtbar werden, Grad III aber schon deutlich vor der
-// naechsten, viel anspruchsvolleren Form beginnen.
-const INSIGNIUM_GRAD_SCHWELLEN = [0, 0.16, 0.40];
+// Die Grade teilen die Spanne bis zur nächsten Stufe in Drittel, abgerundet
+// auf volle Hundert: der Zierkranz (2100 bis 3099) hat Grad II ab 2400 und
+// Grad III ab 2700. Sie lagen bei 16 und 40 % der Spanne, und damit waren
+// Grad I und II kurz und Grad III über die halbe Stufe lang: wer Grad III
+// erreichte, trug ihn länger als die beiden davor zusammen. Eine runde
+// Schwelle kann man sich merken und im Laufbahnblatt nachprüfen.
+// Die Stufe zu einer Punktzahl. Sie steht an EINER Stelle: das Blatt einer
+// Karte von vorletzter Woche las die Stufe als Zahl aus der Datenbank, und
+// diese Zahl stammte aus einer Leiter mit anderen Stufen — Leon stand dort
+// mit 2687 Prestige als Volutenkranz und „noch 0 bis zum Zierkranz". Der
+// gespeicherte Punktestand ist die Beobachtung, die Stufe eine Ableitung.
+function insigniumStufeVon(punkte){
+  let i = 0;
+  while(i + 1 < INSIGNIEN.length && punkte >= INSIGNIEN[i + 1].min) i++;
+  return i;
+}
+function insigniumGradSchwellen(i){
+  const st = INSIGNIEN[i], nx = INSIGNIEN[i + 1];
+  if(!st || !nx) return [st ? st.min : 0];
+  const drittel = (nx.min - st.min) / 3;
+  return [st.min, st.min + Math.floor(drittel / 100) * 100,
+          st.min + Math.floor(2 * drittel / 100) * 100];
+}
 // Der Ordensstern hat keine Grade, er zählt Zacken: acht beim Erreichen,
 // dann alle 500 Prestige eine mehr. Die ersten drei haben je ein eigenes
 // Bild, danach bleibt das größte und die Zahl wächst weiter.
@@ -246,7 +280,11 @@ function _chronikMonat(titleId){
 //
 // Den SOCKEL bekommt jede Chronik ausser einer Schattenseite: einen
 // Monatseintrag zu halten ist an sich etwas Besonderes, und keine Chronik
-// soll sich wie ein Trostpreis anfuehlen.
+// soll sich wie ein Trostpreis anfuehlen. Er lag bei 40, und eine Chronik
+// stand damit im Laufbahnblatt hinter einer einzigen seltenen Auszeichnung
+// zurueck, obwohl sie einen ganzen Monat braucht: mit 55 bringt etwa „Die
+// Nulldiaet" 130 statt 115. Die Daempfung ab der dritten Chronik bleibt, wie
+// sie ist — sie steht in der Zusammenrechnung und nicht hier.
 //
 // Der Zuschlag der Seltenheit ist klein mit Absicht. Selten heisst nicht
 // wertvoll: „Der Kontrast" ist die seltenste Sache im Katalog und trotzdem
@@ -259,7 +297,7 @@ function _chronikMonat(titleId){
 // Werts gehoert einem einzelnen Halter und wanderte, sobald neue Monate die
 // Verteilung verschieben. Dann saenke das Prestige aller bisherigen Halter,
 // und genau dieser Fehler steckte schon einmal in den Auszeichnungen [§C34].
-const PRESTIGE_SOCKEL = 40;
+const PRESTIGE_SOCKEL = 55;
 const PRESTIGE_CHRONIK = {koennen:30, konstanz:24, fuegung:15, schatten:0};
 const PRESTIGE_SELTEN  = {legendaer:15, selten:8, besonders:0};
 
@@ -343,7 +381,7 @@ function prestigeTabelle(bisMs){
       if(w <= 0) return;
       az.push({q:'auszeichnung', id:b.id, name:b.name, p:w, klasse:kl,
                mal:b.n, abnahme:_auszeichnungsAbnahme(b.id),
-               hinweis:regel.hinweis || '', basis:regel.basis, voll:w});
+               basis:regel.basis, voll:w});
     });
     const pb = az.reduce((sum, q) => sum + q.p, 0);
 
@@ -411,19 +449,17 @@ function prestigeOf(pid, bisMs){
                  fehlt:INSIGNIEN[1].min, zacken:0, grad:0,
                  teile:{auszeichnung:0,monat:0,rekord:0},
                  zahlen:{auszeichnung:0,monat:0,rekord:0}, quellen:[], platz:0, von:T.gesamt};
-  let i = 0;
-  while(i + 1 < INSIGNIEN.length && e.punkte >= INSIGNIEN[i + 1].min) i++;
+  const i = insigniumStufeVon(e.punkte);
   const letzte = i === INSIGNIEN.length - 1;
-  // Der Grad folgt den relativen Schwellen oben. Die letzte Stufe hat kein
-  // Ende; dort zaehlen statt Graden die Zacken.
-  const spanne = letzte ? 0 : INSIGNIEN[i + 1].min - INSIGNIEN[i].min;
+  // Der Grad folgt den Schwellen oben. Die letzte Stufe hat kein Ende;
+  // dort zaehlen statt Graden die Zacken.
+  const gs = insigniumGradSchwellen(i);
   return Object.assign({}, e, {
     stufe:i,
     insignie:INSIGNIEN[i],
     naechste: letzte ? null : INSIGNIEN[i + 1],
     fehlt: letzte ? 0 : INSIGNIEN[i + 1].min - e.punkte,
-    grad: letzte ? 0 : Math.max(0, INSIGNIUM_GRAD_SCHWELLEN.reduce((g, schwelle, gi) =>
-      ((e.punkte - INSIGNIEN[i].min) / Math.max(1, spanne)) >= schwelle ? gi : g, 0)),
+    grad: letzte ? 0 : gs.reduce((g, schwelle, gi) => e.punkte >= schwelle ? gi : g, 0),
     // Auf der letzten Stufe wächst der Stern weiter, statt stehenzubleiben.
     zacken: letzte ? ORDENSSTERN_START + Math.floor((e.punkte - INSIGNIEN[i].min) / ORDENSSTERN_SCHRITT) : 0,
     naechsteZacke: letzte
@@ -440,8 +476,8 @@ function prestigeOf(pid, bisMs){
 //     eigene Form, je drei Grade [§C30].
 //     DER SCHIMMER des Zeichens ist der Rang: Steine, Lilie und Kristall
 //     tragen die Rangfarbe.
-//     DAS TITELBAND ist die dritte Achse: die Schwinge geht mit jedem
-//     Meistertitel weiter auf, die Sterne zählen die Titel. Die Raute am
+//     DAS TITELBAND ist die dritte Achse: die Aura hinter dem Zeichen wird
+//     mit jedem Meistertitel heller [§C36], die Sterne zählen die Titel. Die Raute am
 //     Fuß trägt die Liga-Position — die Zahl, die sich jede Woche ändert,
 //     gegenüber den Titeln, die bleiben.
 
@@ -482,10 +518,10 @@ function ligaPosition(pid){
 //     Zeichnungen nach der Vorlage (35a-insignium-zeichen.js). Die Stufe wechselt
 //     den Gegenstand, der Grad baut ihn aus [§C30]. Oben trägt jedes Zeichen
 //     seinen Kopf (Lilie oder Krone), unten die Raute mit der Ligaposition.
-//     Gezeichnet werden hier nur noch Schwinge, Sterne, Lichter und die
-//     Ziffer in der Raute.
+//     Gezeichnet werden hier nur noch Sterne, Lichter und die Ziffer in der
+//     Raute; die Aura kommt aus 35c-titel-aura.js.
 
-// Zwei Farben mischen — für den Goldverlauf der Schwinge.
+// Zwei Farben mischen — für den Goldverlauf der Sterne.
 function _insMix(hex, ziel, f){
   const a = hex.replace('#',''), b = ziel.replace('#','');
   let s = '#';
@@ -498,7 +534,7 @@ function _insMix(hex, ziel, f){
 const _n = v => (Math.round(v * 10) / 10);
 
 // Die Verläufe eines Zeichens hängen an ZWEI Dingen: am Metall des Rangs und
-// am Glanz der Schwinge. Nicht am Spieler, nicht an der Stufe, nicht an der
+// am Glanz der Sterne. Nicht am Spieler, nicht an der Stufe, nicht an der
 // Größe. Sie stehen deshalb einmal im Dokument, in einem eigenen unsichtbaren
 // <svg>, und jedes Wappen verweist nur darauf.
 //
@@ -558,15 +594,6 @@ const INS_R = 40;                    // Radius des Reifs
 const INS_BREIT = 5.0;               // Breite des Bands
 const INS_RA = INS_R + INS_BREIT / 2;  // Außenkante
 
-const _insK = ([x, y]) => _n(x) + ' ' + _n(y);
-
-// Viele kleine Kreise in EINEM Pfad — die Beeren und Knöpfe der Schwinge.
-function _insPunkte(liste, r){
-  return liste.map(([x, y]) =>
-    'M' + _n(x - r) + ' ' + _n(y) + 'a' + r + ' ' + r + ' 0 1 0 ' + (r*2) + ' 0'
-    + 'a' + r + ' ' + r + ' 0 1 0 ' + (-r*2) + ' 0Z').join('');
-}
-
 // Die Rangfarbe. Sie ist der Schimmer des Zeichens [§C30]: Lilie, Steine
 // und Kristalle der Leiter tragen sie in jedem Rang an denselben Stellen —
 // Violett, Gold, Grün, Blau, Orange.
@@ -590,7 +617,7 @@ const INS_GOLD = '#E8C25E';
 const INS_GOLD_TIEF = '#6E4A0E';     // die Trennkante zwischen zwei Blättern
 
 // Der Farbsatz eines Zeichens: die Rangfarbe und der dunkle Grund, auf dem
-// Schwinge und Zeichen liegen. Mehr hängt am Rang nicht mehr — Metall,
+// das Zeichen liegt. Mehr hängt am Rang nicht mehr — Metall,
 // Steine und Lichter trägt die Zeichnung selbst.
 function _insSatz(rang){
   const l = INS_RANGFARBE[rang] ? rang : 'Solide';
@@ -608,15 +635,6 @@ function _insDefs(id, c, glanzGold){
     `<linearGradient id="${id}${nm}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}">${stops}</linearGradient>`;
   return `<defs>`
     + lin('gd', 0,0,'.2',1, st(0,gHell) + st('.28',_insMix(gHell,gMitt,.45)) + st('.62',gMitt) + st(1,gTief))
-    + lin('gt', 0,0,'.2',1, st(0,_insMix(gMitt,gHell,.30)) + st('.48',gMitt) + st(1,_insMix(gTief,'#000000',.28)))
-    // Der Schatten setzt das Zeichen AUF die Schwinge. Er muss über den
-    // ganzen Schmuck reichen, nicht nur über den Reif: sonst laufen goldene
-    // Ranken und das Metall des Zeichens ineinander.
-    // Er fängt aber früher an auszulaufen, als er es tat: mit einem harten
-    // Kern über vier Fünfteln seiner Fläche stand im Profilkopf eine dunkle
-    // Scheibe hinter dem Zeichen, und die war größer als das Zeichen selbst.
-    + `<radialGradient id="${id}sd">`
-      + st('.44','#000000','.58') + st('.74','#000000','.24') + st(1,'#000000','0') + `</radialGradient>`
     // Der Hof in der Rangfarbe ab dem Zierkranz: der Schimmer braucht Luft um
     // sich. Ein Kreis mit einem Verlauf aus dem gemeinsamen Topf, kein
     // Filter — ein blur() auf zwölf Wappen einer Rangliste kostete in jedem
@@ -630,41 +648,9 @@ function _insDefs(id, c, glanzGold){
     + `<radialGradient id="${id}glut">`
       + st(0,c.rf,'0') + st('.8',c.rf,'0') + st('.95',c.rf,'.5') + st(1,c.rf,'.7')
       + `</radialGradient>`
-    + `<radialGradient id="${id}gg">`
-      + st(0,'#FFE9A8','.24') + st('.45','#E8C25E','.09') + st(1,'#E8C25E','0') + `</radialGradient>`
     + `<radialGradient id="${id}pl" cx=".38" cy=".32" r=".85">`
       + st(0,'#1e242b') + st('.55','#141920') + st(1,'#090d11') + `</radialGradient>`
     + `</defs>`;
-}
-
-// Eine Bahn, deren Krümmung nach außen zunimmt: am Ansatz fast gerade, am
-// Ende eine enge Schnecke. Aus ihr sind die Ranken der Schwinge gemacht.
-//
-// Mit den Kontrollpunkten einer Bézier ging das nicht: entweder wurde der
-// Ansatz krumm oder die Schnecke ein Bogen. `spitz` sagt, WIE SPÄT die
-// Bahn einbiegt — hoch heißt lange fast gerade, dann ein enger Haken.
-function _insSpiral(sx, sy, th0, L, dreh, N, spitz){
-  const ds = L/N, bahn = [], e = spitz || 2.1;
-  let x = sx, y = sy, th = th0;
-  for(let i = 0; i <= N; i++){
-    bahn.push([x, y, th]);
-    th += dreh * (0.16 + 3.9 * Math.pow(i/N, e)) / N;
-    x += Math.cos(th)*ds; y += Math.sin(th)*ds;
-  }
-  return bahn;
-}
-// Aus der Bahn ein Band, das sich verjüngt. Als Strich gezeichnet war der
-// Stiel überall gleich dick und sah aus wie Draht.
-function _insBand(bahn, w0, w1){
-  const N = bahn.length - 1;
-  let vor = ''; const zur = [];
-  bahn.forEach(([px,py,pth], i) => {
-    const w = w0 + (w1 - w0) * (i/N);
-    const nx = -Math.sin(pth)*w, ny = Math.cos(pth)*w;
-    vor += (i ? 'L' : 'M') + _n(px+nx) + ' ' + _n(py+ny);
-    zur.push(_n(px-nx) + ' ' + _n(py-ny));
-  });
-  return vor + 'L' + zur.reverse().join('L') + 'Z';
 }
 
 /* ── Die sieben Stufen ───────────────────────────────────────────────
@@ -708,7 +694,7 @@ function _insBildNr(key, zacken, grad){
 
 // Das Zeichen einer Stufe: das Bild, darunter die Lichter. `zacken` zählt
 // nur beim Ordensstern, `grad` bei allen anderen.
-function _insStufe(key, c, zacken, id, grad){
+function _insStufe(key, c, zacken, id, grad, eigen, bild){
   const nr = _insBildNr(key, zacken, grad);
   const k = INS_BILD_KANTE, o = 50 - k / 2;
   // Der Hof in der Rangfarbe, ab dem Zierkranz und mit jeder Stufe kräftiger:
@@ -724,9 +710,48 @@ function _insStufe(key, c, zacken, id, grad){
   const glut = feld >= INSIGNIUM_GRADE ? `<circle data-schein="1" cx="50" cy="50"
       r="${_n(INS_R - INS_BREIT/2)}" fill="url(#${id}glut)"
       opacity="${_n(Math.min(1, .22 + (feld - INSIGNIUM_GRADE) * .045))}"/>` : '';
-  return hof + glut
-    + `<image href="${insBild(INS_ZEICHEN[key] ? key : 'reif', nr, c.rang)}" x="${_n(o)}" y="${_n(o)}"`
-    + ` width="${_n(k)}" height="${_n(k)}"/>`;
+  const kk = INS_ZEICHEN[key] ? key : 'reif';
+  if(bild && !eigen) return hof + glut
+    + `<image href="${insBildHref(kk, nr, c.rang)}" x="${_n(o)}" y="${_n(o)}" width="${_n(k)}" height="${_n(k)}"/>`;
+  return hof + glut + _insZeichnung(kk, nr, c.rang, o, k, eigen);
+}
+
+// ── Die Zeichnung als Vektor im Dokument [§C30] ──────────────────────
+// Sie stand als `<image>` mit einer SVG-Datei darin. Safari rastert ein
+// solches Bild in der Größe seiner Nutzereinheiten und nicht in der, in der
+// es erscheint: im Profilkopf wurden 170 Einheiten auf 270 px gezogen, und
+// jedes Insignium stand mit Treppenkanten da wie ausgeschnitten. Als Vektor
+// zeichnet der Browser es in jeder Größe neu. Es steht einmal je Rang, Stufe
+// und Grad im Topf, die Verläufe NEBEN der Gruppe — ein `<use>` klont nur,
+// was es verweist, und die Verläufe braucht es nicht je Wappen. Ohne Topf
+// (`eigen`, Tests, Rastern außerhalb des Dokuments) steht die Zeichnung
+// vollständig im Markup.
+// Das gilt ab einer Wappengröße von `INS_VEKTOR_PX`: darunter bleibt es beim
+// Bild (`insBild`), weil ein Verweis die ganze Zeichnung klont und der Feed
+// mit siebzig Wappen damit doppelt so lange zum Öffnen brauchte.
+const INS_VEKTOR_PX = 64;
+const _insZIds = new Map();          // Rang|Stufe|Bild → id der Gruppe
+const _insZDrin = new Set();
+let _insZTopf = null, _insZLauf = 0;
+function _insZeichnung(key, nr, rang, o, k, eigen){
+  const hin = inner => `<g transform="translate(${_n(o)} ${_n(o)}) scale(${(k / 1000).toFixed(5)})">${inner}</g>`;
+  const farbe = INS_RANGFARBE[rang] || INS_RANGFARBE.Solide;
+  const topf = eigen ? null : _insTopfHolen();
+  if(!topf){
+    const t = _izTeile(key, nr, farbe), p = 'ize' + (++_insZLauf) + '_';
+    return hin(_izPraefix(t.defs + t.bild, p));
+  }
+  if(topf !== _insZTopf){ _insZTopf = topf; _insZDrin.clear(); }
+  const schl = rang + '|' + key + '|' + nr;
+  let id = _insZIds.get(schl);
+  if(!id){ id = 'izg' + _insZIds.size; _insZIds.set(schl, id); }
+  if(!_insZDrin.has(id)){
+    const t = _izTeile(key, nr, farbe);
+    topf.insertAdjacentHTML('beforeend',
+      _izPraefix(t.defs, id + '_') + `<defs><g id="${id}">${_izPraefix(t.bild, id + '_')}</g></defs>`);
+    _insZDrin.add(id);
+  }
+  return hin(`<use href="#${id}"/>`);
 }
 
 // Die Raute am Fuß gehört zum Bild. Mit Band trägt sie die Ligaposition: ein
@@ -741,116 +766,9 @@ function _insFuss(pos){
       font-family="'Archivo Black',sans-serif" font-weight="700" fill="#EEF2F5">${pos}</text>`;
 }
 
-/* ── Die Schwinge ────────────────────────────────────────────────────
-   Die Rankenschwinge, und nur sie: jeder Stiel rollt sich am Ende zu einer
-   Volute ein und trägt einen Knopf im Auge — dieselbe Linie wie im
-   Volutenkranz der dritten Stufe, nur golden und länger. Damit sprechen
-   Insignium und Schwinge dieselbe Sprache und sind trotzdem am Werkstoff
-   zu unterscheiden.
-
-   Sechs Ränge, der letzte ab ZEHN Titeln. Danach wächst die Schwinge
-   nicht weiter, nur die Sterne werden mehr: eine Schwinge, die immer
-   weiter wächst, sprengt irgendwann jede Zeile; die Sterne kosten nichts. */
-const INS_SCHWINGE = [
-  {ab:1,  n:5,  L:66,  hub:.15, glanz:.36},
-  {ab:2,  n:6,  L:74,  hub:.30, glanz:.50},
-  {ab:3,  n:7,  L:82,  hub:.45, glanz:.64},
-  {ab:5,  n:8,  L:89,  hub:.62, glanz:.78},
-  {ab:8,  n:9,  L:95,  hub:.82, glanz:.91},
-  {ab:10, n:11, L:102, hub:1,   glanz:1},
-];
-// Die Schwinge des Entwurfs greift zweieinhalb Reifradien weit aus. Das
-// ist die Spannweite einer Studie bei 400 px; in einer Ranglistenzeile
-// misst der Reif 52 px, und ein Zeichen, das dann dreimal so breit ist wie
-// die Zeile hoch, schiebt sich in die Nachbarspalten. Der Bau bleibt, das
-// Maß wird zurückgenommen — EIN Faktor, damit die Form nicht verzerrt.
-const INS_SCHWINGE_SKALA = .78;
-// Die Schwinge allein, ohne Zeichen — für die Vorschau in der Laufbahn.
-// Gemessen an der GRÖSSTEN: sie reicht nach dem Verkleinern von -37 bis 137
-// waagerecht und von -13 bis 91 senkrecht. Ein fester Kasten für alle sechs
-// Ränge, sonst wüchse in der Vorschau nur der Kasten mit und nicht die
-// Schwinge, und die Leiter wäre keine.
-const INS_SCHWINGE_BOX = '-40 -16 180 110';
-function _insSchwingenRang(titel){
-  let r = -1;
-  INS_SCHWINGE.forEach((s, i) => { if(titel >= s.ab) r = i; });
-  return r;
-}
-// Wo die Schwinge ansetzt. Ein Flügel hat einen ARM, keinen Mittelpunkt:
-// die Ansätze sitzen auf einer Strecke, sonst ist es ein Fächer.
-const INS_SCHULTER = {x:45, y:49};
-
-// Eine Blattklinge: lanzettlich wie das Lorbeerblatt, nur länger.
-function _insRankenblatt(sx, sy, a, L, w){
-  const dx = -Math.cos(a), dy = -Math.sin(a), nx = -dy, ny = dx;
-  const P = (t, o) => [sx + dx*L*t + nx*o, sy + dy*L*t + ny*o];
-  return 'M' + _insK(P(0,0))
-    + 'C' + _insK(P(.24, w*.90)) + ' ' + _insK(P(.66, w*.72)) + ' ' + _insK(P(1,0))
-    + 'C' + _insK(P(.66, -w*.72)) + ' ' + _insK(P(.24, -w*.90)) + ' ' + _insK(P(0,0)) + 'Z';
-}
-
-// Eine Ranke: ein Stiel, dessen Krümmung nach außen zunimmt und der in
-// einer Volute ausrollt; die Blätter sitzen abwechselnd links und rechts
-// und werden zur Spitze hin kleiner.
-//
-// Vorher war die Schwinge ein Fächer aus Federn. Eine Ranke ROLLT SICH
-// EIN; daran erkennt man sie auf einen Blick.
-function _insRanke(sx, sy, th0, L, dreh, w0, blattL, anzB, mitBeeren){
-  const N = 24;
-  const bahn = _insSpiral(sx, sy, th0, L, dreh, N);
-  let blatt = '';
-  const beeren = [];
-  for(let j = 0; j < anzB; j++){
-    const u = .12 + .74 * (anzB > 1 ? j/(anzB-1) : .5);
-    const [px,py,pth] = bahn[Math.round(u*N)];
-    const sp = j % 2 ? 1 : -1, Ln = blattL * (1 - .46*u);
-    blatt += _insRankenblatt(px, py, pth + sp*0.95 + Math.PI, Ln, Ln*.40);
-    if(mitBeeren && j % 2 === 0)
-      beeren.push([px + Math.sin(pth)*sp*w0*2.2, py - Math.cos(pth)*sp*w0*2.2]);
-  }
-  // Der Knopf im Auge der Volute. Ohne ihn lief die Spirale dünner und
-  // dünner ins Nichts aus, statt einen Abschluss zu haben.
-  beeren.push([bahn[N][0], bahn[N][1]]);
-  return {stiel:_insBand(bahn, w0, w0*.14), blatt, beere:_insPunkte(beeren, 2.0)};
-}
-
-function _insSchwingen(rang, id){
-  if(rang < 0) return '';
-  const S = INS_SCHWINGE[rang], G = Math.PI / 180;
-  // Weit aufgefächert statt aufrecht: aufrecht standen zwei goldene Kränze
-  // neben dem silbernen, und drei Kränze auf einem Zeichen sind zwei zuviel.
-  const auf = 16 + 10*S.hub, sp = 66 + 20*S.hub;
-  const armA = (auf - sp*.40) * G, armL = .40 * S.L;
-  const anz = Math.max(3, Math.round(S.n * .68));
-  let st = '', bl = '', be = '';
-  for(let i = 0; i < anz; i++){
-    const u = anz > 1 ? i/(anz-1) : 0, t = 1 - u;
-    const r = _insRanke(INS_SCHULTER.x - Math.cos(armA)*armL*t,
-                        INS_SCHULTER.y - Math.sin(armA)*armL*t,
-                        (auf - u*sp) * G + Math.PI,
-                        S.L * (1.12 - .22*Math.pow(u, 1.2)),
-                        1.55 + .55*S.hub, 4.6 + 1.4*S.hub, 17 + 6*S.hub,
-                        3 + Math.round(2*S.hub), rang >= 2);
-    st += r.stiel; bl += r.blatt; be += r.beere;
-  }
-  const fl = `<path d="${st}" fill="url(#${id}gt)" stroke="${INS_GOLD_TIEF}"
-      stroke-width=".5" stroke-linejoin="round"/>`
-    + `<path d="${bl}" fill="url(#${id}gd)" stroke="${INS_GOLD_TIEF}"
-      stroke-width=".5" stroke-linejoin="round"/>`
-    + `<path d="${be}" fill="#FFF1C4" stroke="${INS_GOLD_TIEF}" stroke-width=".45"/>`;
-  return `<g>${fl}</g><g transform="translate(100,0) scale(-1,1)">${fl}</g>`;
-}
-// Schwinge und Sterne gehören zusammen und werden gemeinsam verkleinert:
-// Sterne in Originalgröße auf einer zurückgenommenen Schwinge säßen zu
-// weit außen und rissen die Zeichenfläche wieder auf.
-function _insBandGruppe(inhalt){
-  return `<g transform="translate(50,50) scale(${INS_SCHWINGE_SKALA}) translate(-50,-50)">`
-    + inhalt + `</g>`;
-}
-
-// Die Titel als Sterne über dem Reif — die Schwinge zeigt, DASS da etwas
+// Die Titel als Sterne über dem Reif — die Aura zeigt, DASS da etwas
 // ist, die Sterne sagen, wie viel. Sie hören nicht auf zu zählen, auch wenn
-// die Schwinge bei zehn Titeln stehen bleibt: ab sechs stehen fünf Sterne
+// die Aura bei zehn Titeln stehen bleibt: ab sechs stehen fünf Sterne
 // und daneben die Zahl [§C26]. Zwölf nebeneinander sind keine Zahl mehr,
 // die man auf einen Blick liest.
 function _insSternPfad(cx, cy, r){
@@ -865,7 +783,7 @@ function _insSternPfad(cx, cy, r){
 // ─── Die Titelsterne über dem Zeichen [§C26] ──────────────────────
 // Sie stehen in einem eigenen Streifen ÜBER dem ganzen Zeichen, auf einem
 // festen Radius um die Reifmitte — und ausdrücklich nicht im verkleinerten
-// Kasten der Schwinge. Dort lagen sie vorher, und INS_SCHWINGE_SKALA zog sie
+// Kasten der früheren Schwinge. Dort lagen sie, und ihr Maßstab zog sie
 // von 68 Einheiten über der Reifmitte auf 53 herunter, also genau auf den
 // KOPF des Insigniums: bei neun der fünfzehn Zeichnungen standen sie Gold
 // auf Gold und waren nicht mehr zu zählen.
@@ -909,14 +827,15 @@ function _insSterne(n, id){
   return s;
 }
 
-// Die Zeichenfläche ohne Schwinge ist QUADRATISCH und auf den
+// Die Zeichenfläche ohne Band ist QUADRATISCH und auf den
 // Reifmittelpunkt zentriert: das SVG wird mit translate(-50%,-50%)
 // gesetzt, also muss der Reifmittelpunkt der Boxmittelpunkt sein. Sonst
 // sitzt der Avatar höher als seine Fassung. Sie ist so eng gelegt, dass
 // der Avatar den Reif innen fast füllt und nur ein schmaler dunkler Sitz
 // bleibt.
 const INS_BOX = '-22 -22 144 144';
-// Mit Schwinge: dieselbe Reifgröße, aber Platz für Ranken und Sterne. Die
+// Mit Band: dieselbe Reifgröße, aber Platz für Raute und Sterne. Die Aura
+// leuchtet darüber hinaus (`overflow:visible`), sie zählt nicht zur Box. Die
 // Box ist waagerecht auf den Reif zentriert, damit translate(-50%) stimmt;
 // senkrecht liegen 83 der 155 Einheiten über der Reifmitte und 72 darunter.
 // Oben ist der STREIFEN DER STERNE: der Bogen liegt auf 78 Einheiten, ein
@@ -925,7 +844,7 @@ const INS_BOX = '-22 -22 144 144';
 // des Ordenssterns bis 72 unter die Mitte; bei 58 schnitt die Box sie ab.
 const INS_BAND_BOX = '-40 -33 180 155';
 
-// Das ganze Zeichen. `band:false` lässt Schwinge und Sterne weg (Listen,
+// Das ganze Zeichen. `band:false` lässt Aura, Raute und Sterne weg (Listen,
 // Feed). Der Avatar liegt DAVOR, nicht darin — `insAvWrap` legt ihn als
 // eigenes Element über das SVG. `pos` überschreibt die Zahl in der Raute — auf dem Podest der
 // Ewigen Tafel wäre die Ligaposition eine zweite Rangfolge auf derselben
@@ -943,20 +862,33 @@ const INS_BAND_BOX = '-40 -33 180 155';
 // Kilobyte. Eine App, die auf einem Telefon tagelang offen steht, sammelte
 // darin irgendwann mehr als sie anzeigt.
 const _INS_MEMO = new Map();
-let _insMemoStand = -1;
+let _insMemoStand = -1, _insMemoTopf = null;
 function insigniumSvg(pid, opt){
   opt = opt || {};
   if(_insMemoStand !== _cache.version){ _INS_MEMO.clear(); _insMemoStand = _cache.version; }
+  // Ein gemerktes Wappen verweist auf Zeichnung und Verläufe im Topf. Ist der
+  // Topf ein neuer (der Rumpf wurde ersetzt), stünden die Verweise ins Leere,
+  // und ein Verweis ins Leere zeichnet nichts.
+  const _topfJetzt = _insTopfHolen();
+  if(_topfJetzt !== _insMemoTopf){ _INS_MEMO.clear(); _insMemoTopf = _topfJetzt; }
   const P = prestigeOf(pid);
   const rangLabel = (getPlayerRank(pid) || {}).label;
   const band = opt.band !== false;
   const titel = band ? (opt.titel !== undefined ? opt.titel : meisterTitel(pid)) : 0;
-  const rang = band ? _insSchwingenRang(titel) : -1;
+  const aura = band ? auraStufe(titel) : 0;
+  // Im Profilkopf bewegt sich die Aura in eigenen Ebenen hinter dem SVG
+  // (`auraLebendHtml`); dort steht sie nicht noch einmal im Zeichen.
+  const auraHier = aura && !opt.lebendig;
   const pos = band ? (opt.pos !== undefined ? opt.pos : ligaPosition(pid)) : 0;
-  const glanz = rang >= 0 ? INS_SCHWINGE[rang].glanz : .3;
+  // Die Sterne tragen den vollen Goldglanz, sobald es Titel gibt. Er stieg
+  // mit dem Rang der Schwinge; ein Verlaufssatz je Stufe hätte zehn Sätze
+  // im Topf bedeutet für dieselben fünf Sterne.
+  const glanz = aura ? 1 : .3;
   // Der Schlüssel nennt alles, was die Zeichnung bestimmt, und sonst nichts.
+  // Ohne Größe ist das Zeichen groß (Profilkopf) und wird Vektor.
+  const bild = opt.px != null && opt.px < INS_VEKTOR_PX;
   const schl = [rangLabel, P.insignie.key, P.grad, P.zacken, band ? 1 : 0,
-                titel, pos].join('|');
+                titel, pos, bild ? 1 : 0, auraHier ? 1 : 0].join('|');
   const fertig = _INS_MEMO.get(schl);
   if(fertig !== undefined) return fertig;
   const ref = _insDefsRef(rangLabel, glanz);
@@ -964,27 +896,16 @@ function insigniumSvg(pid, opt){
   const c = _insSatzCache(rangLabel);
   let s = `<svg viewBox="${band ? INS_BAND_BOX : INS_BOX}" class="ins" aria-hidden="true">`
     + (ref.inline ? _insDefs(id, c, glanz) : '');
-  if(rang >= 0){
-    // Der goldene Hof beim höchsten Rang. Er liegt UNTER der Schwinge und
-    // wird mit ihr verkleinert, sonst stünde ein Schein um ein Zeichen, das
-    // ihn gar nicht mehr ausfüllt.
-    if(rang === INS_SCHWINGE.length - 1)
-      s += _insBandGruppe(`<ellipse cx="50" cy="55" rx="122" ry="52" fill="url(#${id}gg)"/>`);
-    // Eine ELLIPSE, kein Kreis: die Bandbox reicht 58 Einheiten unter die
-    // Reifmitte, ein Kreis mit dem nötigen Radius 72,5 aber 72,5 — sein
-    // unteres Viertel schnitt der Browser lautlos ab, und im Profilkopf
-    // stand quer unter dem Zeichen eine gerade Kante. Waagerecht darf er
-    // weit ausgreifen, dort ist Platz, senkrecht bleibt er in der Box.
-    s += _insBandGruppe(_insSchwingen(rang, id))
-      + `<ellipse cx="50" cy="50" rx="${_n(INS_RA + 30)}" ry="${_n(INS_RA + 13.5)}"
-         fill="url(#${id}sd)"/>`;
-  }
+  // Die Aura liegt ganz hinten. Die dunkle Unterlage, die den Reif auf die
+  // Schwinge setzte, fällt mit ihr weg: unter Licht wäre sie ein Schatten
+  // genau dort, wo der Schein am hellsten ist.
+  if(auraHier) s += auraBildIns(aura);
   // Ein dunkler Sitz unter dem Bildrand: der Avatar soll IN der Fassung
   // liegen, nicht davor.
   s += `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${id}pl)"/>`
     + `<circle cx="50" cy="50" r="${_n(INS_R - INS_BREIT/2 - 1.6)}" fill="none"
        stroke="#000000" stroke-width="2.4" opacity=".38"/>`
-    + _insStufe(P.insignie.key, c, P.zacken, id, P.grad)
+    + _insStufe(P.insignie.key, c, P.zacken, id, P.grad, ref.inline, bild)
     + (band ? _insFuss(pos) : '')
     + (band ? _insSterne(titel, id) : '')
     + `</svg>`;
@@ -1040,7 +961,7 @@ function insigniumRef(pid, opt){
   return `<svg viewBox="${vb}" class="ins" aria-hidden="true"><use href="#${sid}"/></svg>`;
 }
 
-// Ein Insignium OHNE Spieler: nur die Form EINER Stufe, ohne Schwinge und
+// Ein Insignium OHNE Spieler: nur die Form EINER Stufe, ohne Aura und
 // ohne Sterne. Die Laufbahn stellt alle Stufen und Grade nebeneinander, und
 // dort geht es um die Stufe selbst — nicht darum, wer sie gerade trägt. Der
 // Rang kommt trotzdem vom Spieler: er soll sehen, wie das Zeichen bei IHM
@@ -1059,14 +980,21 @@ function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
   const topf = (opt && opt.eigen) ? null : _insTopfHolen();
   if(topf){
     if(topf !== _insStufeTopf){ _insStufeTopf = topf; _insStufeDrin.clear(); }
-    const schl = c.rang + '|' + key + '|' + _insBildNr(key, zacken, grad);
+    // Klein (`{bild:true}`) steht die Zeichnung als Bild in der Gruppe, groß
+    // als Vektor — dieselbe Grenze wie beim Wappen [§C30]. Die ganze Leiter
+    // der Laufbahn zeigt einundzwanzig Felder von rund 40 px, und jedes
+    // klonte über `<use>` eine Vektorzeichnung von bis zu 70 Kilobyte: der
+    // Topf trug danach 1,7 Megabyte und 7400 Knoten, und das Öffnen der
+    // Laufbahn kostete gemessen auch warm 92 ms Skript und 185 ms dahinter.
+    const bild = !!(opt && opt.bild);
+    const schl = c.rang + '|' + key + '|' + _insBildNr(key, zacken, grad) + (bild ? '|b' : '');
     let sid = _insStufeSym.get(schl);
     if(!sid){ sid = 'inst' + _insStufeSym.size; _insStufeSym.set(schl, sid); }
     if(!_insStufeDrin.has(sid)){
       const ref = _insDefsRef(rangLabel, .3);
       topf.insertAdjacentHTML('beforeend', `<defs><g id="${sid}">`
         + `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${ref.id}pl)"/>`
-        + _insStufe(key, c, zacken || 0, ref.id, grad || 0) + `</g></defs>`);
+        + _insStufe(key, c, zacken || 0, ref.id, grad || 0, false, bild) + `</g></defs>`);
       _insStufeDrin.add(sid);
     }
     return `<svg viewBox="${INS_BOX}" class="ins" aria-hidden="true"><use href="#${sid}"/></svg>`;
@@ -1075,20 +1003,7 @@ function insigniumStufeSvg(key, rangLabel, zacken, grad, opt){
   return `<svg viewBox="${INS_BOX}" class="ins" aria-hidden="true">`
     + _insDefs(id, c)
     + `<circle cx="50" cy="50" r="${_n(INS_RA + .4)}" fill="url(#${id}pl)"/>`
-    + _insStufe(key, c, zacken || 0, id, grad || 0)
-    + `</svg>`;
-}
-
-// Nur die Schwinge, ohne Reif und ohne Sterne. Die Laufbahn zeigt damit die
-// ZWEITE Leiter [§C36]: sie hängt nicht am Prestige, sondern an den
-// Meistertiteln — man erarbeitet sie nicht, man gewinnt sie. Deshalb steht
-// sie neben der Vitrine und nicht darin.
-function schwingeStufeSvg(rang, rangLabel){
-  const id = 'e' + (++_insEigenLauf) + '_';
-  const c = _insSatzCache(rangLabel);
-  return `<svg viewBox="${INS_SCHWINGE_BOX}" class="ins" aria-hidden="true">`
-    + _insDefs(id, c, INS_SCHWINGE[rang].glanz)
-    + _insBandGruppe(_insSchwingen(rang, id))
+    + _insStufe(key, c, zacken || 0, id, grad || 0, true)
     + `</svg>`;
 }
 
@@ -1224,46 +1139,60 @@ function prestigeSchritte(pid, n){
 // Die drei Klassen bleiben als schneller Vergleich nebeneinander. Die
 // vollstaendige Rechnung lebt aber in einem eigenen Blatt: Im Laufbahnbuch
 // muss man die einzelnen Posten lesen koennen, ohne zuerst drei eng gesetzte
-// Regelkarten zu entziffern.
+// Regelkarten zu entziffern. Legendary nennt die Spanne seiner Startwerte:
+// jede legendäre Auszeichnung hat ihren eigenen, und ein einzelner Wert in
+// der Karte stimmte für keine davon.
 function _prestigeRegelKarten(){
-  const karte = (klasse, titel, regel) => `<span class="${klasse}">
-      <b>${titel}</b><strong>${regel.basis} P Start</strong>
-      <em>1. und 2. Mal je ${regel.basis} P.<br>
+  const leg = BADGES.filter(b => rarityOf(b.id) === 'legendary')
+    .map(b => _auszeichnungsRegel(b.id).basis);
+  const karte = (klasse, titel, start, regel) => `<span class="${klasse}">
+      <b>${titel}</b><strong>${start} P Start</strong>
+      <em>1. und 2. Mal voll.<br>
       3. und 4. Mal ${Math.round(regel.abnahme * 100)} % weniger; danach paarweise flacher, nie 0.</em></span>`;
   return `<div class="lb-regeln">
-    ${karte('legendary', 'Legendary', PRESTIGE_AUSZEICHNUNG.legendary)}
-    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare)}
-    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common)}
+    ${karte('legendary', 'Legendary', leg.length
+      ? Math.min(...leg) + '–' + Math.max(...leg) : PRESTIGE_AUSZEICHNUNG.legendary.basis,
+      PRESTIGE_AUSZEICHNUNG.legendary)}
+    ${karte('rare', 'Rare', PRESTIGE_AUSZEICHNUNG.rare.basis, PRESTIGE_AUSZEICHNUNG.rare)}
+    ${karte('common', 'Common', PRESTIGE_AUSZEICHNUNG.common.basis, PRESTIGE_AUSZEICHNUNG.common)}
   </div>`;
+}
+
+// Jede Auszeichnung mit eigenem Startwert, nach ihrem Gewicht geordnet: der
+// Startwert zuerst, bei Gleichstand die langsamere Kurve, dann der Name. Die
+// Liste stand fest im Blatt, sechs Zeilen in einer Reihenfolge, die jemand
+// einmal gewählt hatte — eine neue Auszeichnung wäre entweder gar nicht
+// erschienen oder hinten angehängt worden, egal was sie wiegt. Der Balken
+// zeigt den Startwert gegen den höchsten: ob eine Auszeichnung ein Drittel
+// oder fast so viel wie die stärkste wiegt, liest man dort, ohne zu rechnen.
+function _prestigeRegelListe(){
+  const zeilen = Object.keys(PRESTIGE_AUSZEICHNUNG_SPEZIAL)
+    .map(id => ({id, b:BADGES.find(x => x.id === id), r:_auszeichnungsRegel(id)}))
+    .filter(x => x.b)
+    .sort((x, y) => y.r.basis - x.r.basis || x.r.abnahme - y.r.abnahme
+      || x.b.name.localeCompare(y.b.name, 'de'));
+  const max = Math.max(1, ...zeilen.map(x => x.r.basis));
+  return zeilen.map(({id, b, r}) => `<div class="lb-regel-z" data-id="${id}" data-kl="${r.klasse}">
+      <span><b>${esc(b.name)}</b><em>${esc(b.desc || '')}</em></span>
+      <strong>${r.basis} P <i>Start</i></strong>
+      <small>3. + 4. Mal −${Math.round(r.abnahme * 100)} %</small>
+      <i class="lb-regel-b" style="--w:${Math.round(r.basis / max * 1000) / 10}%"></i>
+    </div>`).join('');
 }
 
 function showPrestigeRegeln(pid){
   const p = (pmap() || {})[pid];
   _sheetSetReopen(() => showPrestigeRegeln(pid));
-  const speziell = [
-    ['Meister der Saison', 'champion'],
-    ['Dominator', 'dominator_400'],
-    ['Team der Saison', 'team_of_season'],
-    ['Player of the Week', 'potw'],
-    ['Player of the Day', 'potd'],
-    ['Absoluter Sieger', 'perfect_win']
-  ];
-  const zeilen = speziell.map(([name, id]) => {
-    const r = _auszeichnungsRegel(id);
-    return `<div class="lb-regel-z">
-      <span><b>${esc(name)}</b><em>${esc(r.hinweis || '')}</em></span>
-      <strong>${r.basis} P <i>Start</i></strong>
-      <small>3. + 4. Mal −${Math.round(r.abnahme * 100)} %</small>
-    </div>`;
-  }).join('');
+  const bsp = _auszeichnungsRegel('dominator_400');
+  const bsp3 = Math.round(auszeichnungsTeilwert('dominator_400', 3) * 10) / 10;
   openSheet(`<div class="pp-root lb-regelblatt">
     ${blattKopfHtml({ic:'info', titel:'Wert der Auszeichnungen',
       unter:((p && p.name) || '') + ' · dieselbe Auszeichnung wächst immer weiter'})}
     <p class="lb-regel-intro">Jede Auszeichnung beginnt mit ihrem Startwert. Die ersten beiden Erfolge zählen voll, danach sinkt ihr Wert in Zweiergruppen. Je seltener und bedeutender die Leistung, desto langsamer fällt ihre Kurve.</p>
     ${_prestigeRegelKarten()}
-    <div class="pp-sec-title"><div class="l"><h4>Besondere Wertung</h4></div></div>
-    <div class="lb-regel-liste">${zeilen}</div>
-    <div class="tnote lb-regel-note">Beispiel: Dominator bringt beim ersten und zweiten Mal je 50 Punkte. Das dritte und vierte Mal zählen je 45, danach wird die Kurve paarweise sanfter. Die Summe wächst ohne festes Limit.</div>
+    <div class="pp-sec-title"><div class="l"><h4>Eigener Startwert</h4></div><div class="m">nach Gewicht</div></div>
+    <div class="lb-regel-liste">${_prestigeRegelListe()}</div>
+    <div class="tnote lb-regel-note">Beispiel: Dominator bringt beim ersten und zweiten Mal je ${bsp.basis} Punkte. Das dritte und vierte Mal zählen je ${Number.isInteger(bsp3) ? bsp3 : komma(bsp3)}, danach wird die Kurve paarweise sanfter. Die Summe wächst ohne festes Limit.</div>
   </div>`);
 }
 
@@ -1291,7 +1220,7 @@ function _prestigeQuellSatz(q, ohneKopf){
   if(q.q === 'rekord'){
     // Die KAMMER und nicht die Art der Disziplin: seit der Grundwert am
     // Eintrag steht [§C34], sagt `art` ueber den Wert nichts mehr — „Der
-    // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 100. Die Zeile
+    // Unaufhaltsame" ist ein Ereignis und wiegt trotzdem 150. Die Zeile
     // nannte damit eine Einordnung, die den Wert daneben nicht erklaerte.
     if(!ohneKopf) teile.push((CHRON_KINDS[q.kind] || {}).label
       || PRESTIGE_ART_NAME[q.art] || 'Ereignis');
@@ -1302,7 +1231,6 @@ function _prestigeQuellSatz(q, ohneKopf){
   }
   else if(q.q === 'auszeichnung'){
     teile.push((RARITY_META[q.klasse] || {}).label || 'Common');
-    if(q.hinweis) teile.push(q.hinweis);
     teile.push(`${q.mal}× erreicht`);
     teile.push(q.mal > 1
       ? `zuletzt ${zahl(auszeichnungsTeilwert(q.id, q.mal))} P`
@@ -1353,8 +1281,8 @@ function showLaufbahn(pid){
   const _da = (i, g) => i < P.stufe || (i === P.stufe && _eigen >= g);
   const _feldName = (i, g) => i === _letzteI ? (ORDENSSTERN_START + g) + ' Zacken'
                                              : INSIGNIUM_GRAD_NAME[g];
-  const _zeichen = (i, g) => insigniumStufeSvg(INSIGNIEN[i].key, _rangL,
-    i === _letzteI ? ORDENSSTERN_START + g : 0, g);
+  const _zeichen = (i, g, klein) => insigniumStufeSvg(INSIGNIEN[i].key, _rangL,
+    i === _letzteI ? ORDENSSTERN_START + g : 0, g, klein ? {bild:true} : undefined);
   const karten = INSIGNIEN.map((ins, i) => {
     const zustand = i < P.stufe ? 'erreicht' : i === P.stufe ? 'jetzt' : 'offen';
     // Eine durchlaufene Stufe hat man ganz durchlaufen — sie steht im
@@ -1374,10 +1302,19 @@ function showLaufbahn(pid){
       + (i === _letzteI ? `<span class="lb-k-z num">${i === P.stufe
             ? P.zacken + ' Zacken'
             : 'je ' + ORDENSSTERN_SCHRITT + ' eine Zacke'}</span>` : '');
-    return `<div class="lb-k ${zustand}" data-lbstufe="${i}">
-      <span class="lb-k-ins">${_zeichen(i, zeigt)}</span>
+    // Groß und scharf muss nur die Karte in der Mitte sein. Jede Vektorzeichnung
+    // klont über `<use>` ihren ganzen Baum, und sieben davon kosteten beim
+    // Öffnen gemessen 60 ms Stilberechnung von 122 — für Karten, die am Rand
+    // klein und angeschnitten stehen. Sie stehen als Bild da, und die Karte,
+    // die in die Mitte rückt, bekommt ihre Vektorzeichnung (`_fokus`).
+    return `<div class="lb-k ${zustand}" data-lbstufe="${i}" data-lbg="${zeigt}"${i === P.stufe ? ' data-vek="1"' : ''}>
+      <span class="lb-k-ins">${_zeichen(i, zeigt, i !== P.stufe)}</span>
       <span class="lb-k-n">${esc(ins.name)}</span>
-      <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}</span>
+      <span class="lb-k-p num">${i === 0 ? 'Start' : 'ab ' + ins.min}${
+        // Wo ein Grad anfängt, steht neben ihm: die Grade sind runde
+        // Schwellen [§C30], und man soll sie nachprüfen können.
+        i < _letzteI ? '<br>' + insigniumGradSchwellen(i).slice(1)
+          .map((x, g) => INSIGNIUM_GRAD_NAME[g + 1] + ' ' + x).join(' · ') : ''}</span>
       ${unten}
     </div>`;
   }).join('');
@@ -1392,31 +1329,35 @@ function showLaufbahn(pid){
       <div class="lb-alle-n"><b>${esc(ins.name)}</b><span class="num">${i === 0 ? 'Start' : 'ab ' + ins.min}</span></div>
       <div class="lb-alle-f">${Array.from({length:_felder(i)}, (_, g) =>
         `<button type="button" class="lb-feld${_da(i, g) ? ' da' : ''}${i === P.stufe && g === _eigen ? ' jetzt' : ''}"`
-        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}">${_zeichen(i, g)}</button>`).join('')}</div>
+        + ` data-lbfeld="${i},${g}" aria-label="${esc(ins.name + ' ' + _feldName(i, g))}">${_zeichen(i, g, true)}</button>`).join('')}</div>
     </div>`).join('');
   let _alleN = 0, _alleDa = 0;
   INSIGNIEN.forEach((ins, i) => { for(let g = 0; g < _felder(i); g++){ _alleN++; if(_da(i, g)) _alleDa++; } });
 
-  // ── Die zweite Leiter: die Schwinge [§C36] ────────────────────────
-  //     Sechs Ränge in einer Zeile, klein und ohne Karüssell. Sie gehört
+  // ── Die zweite Leiter: die Aura [§C36] ───────────────────────────
+  //     Zehn Stufen in zwei Reihen, klein und ohne Karussell. Sie gehört
   //     hierher, weil sie zur Laufbahn gehört — aber sie darf die Vitrine
   //     nicht überreden: die eine sammelt man Punkt für Punkt, die andere
-  //     gewinnt man. Zwei gleich laute Vitrinen wären keine Vitrine mehr.
+  //     gewinnt man. In der Mitte jedes Felds steht das eigene Zeichen, als
+  //     Bild aus demselben Topf wie die ganze Leiter: so sieht man, wie das
+  //     Licht bei IHM aussähe, und es kostet keine zweite Zeichnung.
   const _titel = meisterTitel(pid);
-  const _swRang = _insSchwingenRang(_titel);
-  const _swLetzter = INS_SCHWINGE.length - 1;
-  const schwingen = INS_SCHWINGE.map((sw, i) => {
-    const zustand = i < _swRang ? 'erreicht' : i === _swRang ? 'jetzt' : 'offen';
-    return `<div class="lb-sw ${zustand}">
-      <span class="lb-sw-b">${schwingeStufeSvg(i, _rangL)}</span>
-      <span class="lb-sw-p num">${sw.ab}</span>
+  const _auraJetzt = auraStufe(_titel);
+  const _eigenBild = insBildHref(P.insignie.key,
+    _insBildNr(P.insignie.key, P.zacken, P.grad), _insSatzCache(_rangL).rang);
+  const auren = AURA_STUFEN.map((name, i) => {
+    const st = i + 1;
+    const zustand = st < _auraJetzt ? 'erreicht' : st === _auraJetzt ? 'jetzt' : 'offen';
+    return `<div class="lb-au ${zustand}" title="${esc(name)}">
+      <span class="lb-au-b"><img src="${auraHref(st)}" alt="" loading="lazy"><img class="lb-au-i" src="${_eigenBild}" alt="" loading="lazy"></span>
+      <span class="lb-au-p num">${st}</span>
     </div>`;
   }).join('');
-  const swFuss = _swRang < 0
+  const auFuss = !_auraJetzt
     ? 'ab dem ersten Meistertitel'
-    : _swRang === _swLetzter
-      ? 'gewachsen ist sie fertig, weiter zählen die Sterne'
-      : 'noch ' + (INS_SCHWINGE[_swRang + 1].ab - _titel) + ' bis zur nächsten';
+    : _auraJetzt === AURA_STUFEN.length
+      ? AURA_STUFEN[_auraJetzt - 1] + ', weiter zählen die Sterne'
+      : AURA_STUFEN[_auraJetzt - 1] + ', mit dem nächsten Titel ' + AURA_STUFEN[_auraJetzt];
 
   const teil = (lab, n, pt, sub) => `<div class="lb-teil">
       <div class="lb-t-n num">${pt}</div>
@@ -1508,10 +1449,10 @@ function showLaufbahn(pid){
     <div class="lb-alle" id="lbAlle">${_alle}</div>
 
     <div class="pp-sec-title" style="margin-top:16px">
-      <div class="l"><h4>Die Schwinge</h4></div>
+      <div class="l"><h4>Die Aura</h4></div>
       <div class="m num">${_titel} Titel</div></div>
-    <div class="lb-schwingen">${schwingen}</div>
-    <div class="lb-sw-fuss">${esc(swFuss)}</div>
+    <div class="lb-auren">${auren}</div>
+    <div class="lb-au-fuss">${esc(auFuss)}</div>
 
     ${_fa ? `<div class="pp-sec-title" style="margin-top:18px">
       <div class="l"><h4>Der Fingerabdruck</h4></div>
@@ -1555,6 +1496,12 @@ function showLaufbahn(pid){
         if(d < bd){ bd = d; best = i; }
       });
       _lk.forEach((k, i) => k.classList.toggle('fokus', i === best));
+      const k = _lk[best];
+      if(k && !k.hasAttribute('data-vek')){
+        const z = k.querySelector('.lb-k-ins');
+        if(z) z.innerHTML = _zeichen(best, +k.getAttribute('data-lbg') || 0);
+        k.setAttribute('data-vek', '1');
+      }
     };
     // Bei jedem Pixel neu rechnen wäre Arbeit ohne Wirkung — ein Bild reicht,
     // und genau ein Bild ist requestAnimationFrame.
@@ -1581,6 +1528,7 @@ function showLaufbahn(pid){
       if(!k) return;
       const z = k.querySelector('.lb-k-ins');
       if(z) z.innerHTML = _zeichen(i, g);
+      k.setAttribute('data-lbg', g); k.setAttribute('data-vek', '1');
       k.querySelectorAll('[data-lbgrad]').forEach(b =>
         b.classList.toggle('zeigt', +b.getAttribute('data-lbgrad') === g));
     };

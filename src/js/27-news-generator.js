@@ -333,7 +333,20 @@ function _buildStories(){
   // und bricht den Memo-Key, sonst erschiene die Karte erst nach dem nächsten
   // Match oder Reload.
   const _weekSlotSig = _wocheDue ? 1 : 0;
-  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig;
+  // Die Runde der Vier entsteht dreißig Minuten nach ihrer letzten Partie,
+  // auch ohne neue Partie: die Zahl der geschlossenen Runden bricht den Key.
+  let _rundenSig = 0;
+  try { const _rn = now.getTime(); _rundenSig = _spBasis().runden.filter(r => r.t + RUNDE_PAUSE_MS <= _rn).length; } catch(e){}
+  // Und die Partien, die für diese Uhr noch in der Zukunft liegen. Den
+  // Zeitpunkt einer Partie setzt der Server, `now` das Telefon: geht dessen
+  // Uhr zwei Sekunden nach, gilt die gerade gespeicherte Partie im ersten
+  // Lauf als künftig, ihre Karten fehlen — und der Memo hielt genau dieses
+  // Ergebnis fest, bis eine neue Partie kam. Gemessen fehlte so die
+  // Siegesserie der vorletzten Partie eines Spieltags dauerhaft. Holt die
+  // Uhr die Partie ein, ändert sich die Zahl und der Lauf wiederholt sich.
+  let _zukunft = 0;
+  for(let i = matches.length - 1; i >= 0 && mts(matches[i]) > now.getTime(); i--) _zukunft++;
+  const _buildStoriesKey = matches.length + '_' + _cache.version + '_' + weekKey + '_' + todayKey + '_' + _ambientSlotSig + '_' + _morningSlotSig + '_' + _weekSlotSig + '_' + _rundenSig + '_' + _zukunft;
   if(_cache._buildStoriesKey === _buildStoriesKey && Array.isArray(_cache._buildStoriesResult)){
     return _cache._buildStoriesResult;
   }
@@ -670,7 +683,7 @@ function _buildStories(){
         // zweimal im Feed. Die Namen stehen schon in der Schlagzeile; hier
         // steht, seit wann und wie oft.
         desc: `Seit dem `
-            + `${new Date(t.firstT || t.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})} `
+            + `${datumFmt(t.firstT || t.when, 'tm')} `
             + `gehen ${_zahlwortDe(t.streak)} gemeinsame Spiele in Folge verloren.`,
         when: t.when,
         prio: STORY_PRIO.team_loss_streak + (t.streak >= 7 ? 4 : 0),
@@ -798,8 +811,7 @@ function _buildStories(){
         // es seit jeher so.
         desc: `${_zahlwortDe(c.streak)} Niederlagen am Stück.`
             // Kein Punkt dahinter: „25.08." traegt seinen eigenen schon.
-            + (c.seit ? ` Der letzte Sieg liegt vor dem ${new Date(c.seit)
-                .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}` : ''),
+            + (c.seit ? ` Der letzte Sieg liegt vor dem ${datumFmt(c.seit, 'tm')}` : ''),
         when: c.when,
         prio: STORY_PRIO.loss_streak + (c.streak >= 8 ? 4 : 0),
         dataRef: {type:'loss_streak', pid: c.pid, streak: c.streak,
@@ -1615,6 +1627,18 @@ function _buildStories(){
         desc = `Vor dem Anstoß lag die Siegchance bei ${pct} %.`
              + (plus ? ` Für ${nameOf(_best.id)} bringt der Sieg +${plus} Elo.` : '');
       }
+      // ── Die gewöhnliche Partie erzählt ihre Form [§C33] ────────────
+      // Sie hieß an jedem Spieltag „X setzen sich gegen Y durch", mit
+      // denselben zwei Zahlen darunter, die das Bild ohnehin zeigt. Ihre
+      // Form (`_spForm`) findet, was nur diese Partie hat — eine runde
+      // Zahl, eine Revanche, einen Lieblingsgegner —, und Schlagzeile und
+      // Satz kommen aus derselben Wahl wie der Kopf der Karte. Die Wahl
+      // sieht nur Partien bis zu dieser: der Wortlaut bleibt stehen.
+      if(art === 'normal' || art === 'eng'){
+        let tx = null;
+        try { tx = _spFormText(m); } catch(e){ tx = null; }
+        if(tx){ title = tx.t; desc = tx.d; }
+      }
       stories.push({
         id: 'spiel_' + m.id,
         cat: 'highlight', ic, title, desc,
@@ -2048,6 +2072,12 @@ function _buildStories(){
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] potd', e); }
 
+  // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
+  // Eine eigene Story je abgeschlossener Runde, dreißig Minuten nach ihrer
+  // letzten Partie. Die Karten der Partien bleiben daneben stehen.
+  try { _newsRundenStories(now.getTime()).forEach(st => stories.push(st)); }
+  catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] runde', e); }
+
   // Hinweis (v8.6): Die Konsolidierung gegen Match-Event-Spam (mehrere fast
   // identische Karten pro Match) passiert bewusst NICHT hier im Generator,
   // sondern beim Anzeigen (_consolidateStories, §11.2) — siehe Begründung dort.
@@ -2150,7 +2180,7 @@ function _buildStories(){
   const _tafelWirkung = pid => _prestigeWirkung(pid, _tafelVor, _tafelNach);
   // Was ein Rekord der Laufbahn WIRKLICH bringt [§C34]. Gespeichert werden
   // die beiden Stände und die Rechnung der Quelle, nie der Grundwert: ein
-  // zehnter Rekord gibt nicht 100 Prestige, er wird durch die Zahl seiner
+  // zehnter Rekord gibt nicht 150 Prestige, er wird durch die Zahl seiner
   // Halter geteilt, landet auf einem Rang im Stapel und wird dort durch die
   // Wurzel seiner Staffel geteilt — und weil er die anderen Rekorde mit
   // verschiebt, ist der Nettozuwachs am Ende noch eine dritte Zahl.
@@ -2161,9 +2191,17 @@ function _buildStories(){
   // Prestige fuer die Laufbahn" nennt — und die Summe in der Zahlenreihe
   // stand auf +196, dem Zuwachs eines einzigen Spielers. Wer genannt wird,
   // kommt vor.
+  // Die Genannten zuerst, dahinter die bisherigen Halter, die nicht mehr
+  // allein halten. Vier statt drei, damit ein Vorgaenger neben drei neuen
+  // Haltern noch Platz hat.
+  const _mitVorgaengern = (wer, vorher) => {
+    const o = (wer || []).slice(0, 3);
+    (vorher || []).forEach(pid => { if(o.indexOf(pid) < 0) o.push(pid); });
+    return o.slice(0, 4);
+  };
   const _tafelLaufbahn = pids => {
     const o = {};
-    (pids || []).slice(0, 3).forEach(pid => {
+    (pids || []).slice(0, 4).forEach(pid => {
       const w = _tafelWirkung(pid);
       o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
                 stufeVor:w.stufeVor, stufeNach:w.stufeNach};
@@ -2172,7 +2210,7 @@ function _buildStories(){
   };
   const _rekordWirkung = (pids, rid) => {
     const o = {};
-    (pids || []).slice(0, 3).forEach(pid => {
+    (pids || []).slice(0, 4).forEach(pid => {
       const w = _tafelWirkung(pid);
       const q = w.quellen['rekord:' + rid] || null;
       o[pid] = {vor:w.vor, nach:w.nach, delta:w.delta,
@@ -2331,6 +2369,26 @@ function _buildStories(){
           // Meldung gibt es nur, wenn der Wert besser geworden ist [§C33].
           desc = `${belegSatz}. Vorher waren es ${wertAlt}.`;
         }
+        // ── Wer verliert, steht im Satz ───────────────────────────────
+        // Jane zog bei „Der Lauf" mit Leon gleich, und die Karte erzaehlte
+        // nur von Jane: dass Leon den Rekord jetzt teilt und dabei Prestige
+        // verliert, stand nirgends. Genannt wird der Spieltag als Ganzes —
+        // beide Staende gehoeren ihm [§11.0e] —, und faellt das Zeichen unter
+        // eine Schwelle, steht auch das da. Die Zeile im Buendel bleibt ohne
+        // diesen Satz: dort steht der Verlust einmal in der eigenen Zeile der
+        // Karte und nicht in jeder Meldung (`_newsVerlustBand`).
+        const _verlierer = (fall === 'dazu'
+            ? altPids.filter(id => n.pids.indexOf(id) >= 0)
+            : fall === 'uebernommen' ? altPids.filter(id => n.pids.indexOf(id) < 0) : [])
+          .map(pid => ({pid, w:_tafelWirkung(pid)})).filter(x => x.w.delta < 0).slice(0, 2);
+        if(_verlierer.length){
+          if(!zeileText) zeileText = desc;
+          desc += _verlierer.map(x => {
+            const sv = insigniumStufeVon(x.w.vor), sn = insigniumStufeVon(x.w.nach);
+            return ` Für ${nameOf(x.pid)} heißt der Spieltag ${-x.w.delta} Prestige weniger`
+              + (sn < sv ? `, und das Zeichen fällt auf den ${INSIGNIEN[sn].name}.` : '.');
+          }).join('');
+        }
         stories.push({
           // ── Die ID ist das Ereignis, nicht der Stand des Augenblicks ──
           // Sie trug den angezeigten Wert und die sortierten Halter. Beides
@@ -2402,7 +2460,10 @@ function _buildStories(){
                     // zweite Rechnung im Blatt: sie gilt fuer DIESEN
                     // Tagesabschluss, und morgen sagt dieselbe Rechnung eine
                     // andere Zahl [§C34].
-                    laufbahn:_rekordWirkung(wer, def.id), art:def.art,
+                    // Wer den Rekord abgeben oder teilen musste, steht in der
+                    // Wirkung mit: Jane zog bei „Der Lauf" mit Leon gleich,
+                    // und Leons Minus stand nirgends [§C25].
+                    laufbahn:_rekordWirkung(_mitVorgaengern(wer, a && a.pids), def.id), art:def.art,
                     kammerLabel:_kammer(def.kind)}
         });
       });
@@ -2755,7 +2816,12 @@ function _buildStories(){
                     // erzaehlen. Wer schon Halter war, hat an diesem Tag
                     // nichts getan [§C33].
                     playerIds:m.wer.slice(), vorher:(m.a && m.a.pids) || [],
-                    laufbahn:_tafelLaufbahn(m.wer),
+                    // Alle neuen Halter und der Name: daran liest das Blatt,
+                    // wer die Chronik geteilt oder verloren hat.
+                    alle:m.n.pids.slice(), chronName:m.t.name,
+                    // Wer sie abgeben oder teilen musste, steht in der
+                    // Wirkung mit — sein Minus gehoert zu diesem Tag.
+                    laufbahn:_tafelLaufbahn(_mitVorgaengern(m.wer, m.a && m.a.pids)),
                     ev:m.n.ev, cond:m.t.cond, chronKlasse:m.klasse, chronWie:m.art,
                     zeileText:m.zeileText,
                     chronArt:m.t.kunst, aus:m.t.aus,
@@ -2838,8 +2904,7 @@ function _buildStories(){
             ic: 'award',
             title: `${p.name} trägt den ${INSIGNIEN[stufe].name}`
                  + (_frueher ? ' wieder' : ''),
-            desc: (_frueher ? `Zuletzt stand die Stufe am ${new Date(_frueher + 'T12:00:00')
-                    .toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}. ` : '')
+            desc: (_frueher ? `Zuletzt stand die Stufe am ${datumFmt(_frueher + 'T12:00:00', 'tm')}. ` : '')
                 + `${stand.punkte} Prestige zusammen: ${stand.teile.auszeichnung} aus Auszeichnungen, `
                 + `${stand.teile.monat} aus Monatschroniken und ${stand.teile.rekord} aus Rekorden.`
                 + (stand.naechste ? ` Bis zum ${stand.naechste.name} fehlen ${stand.fehlt}.` : ''),
@@ -2918,6 +2983,14 @@ function _buildStories(){
   const GEN_PFLICHT = new Set(['lead_change', 'season_endgame', 'season_recap',
     'potd', 'potw', 'woche', 'chronik_monat', 'chronik_erstling',
     'insignium_stufe', 'streak_record']);
+  // Dazu die Marke einer laufenden Serie: sie haengt an ihrer Partie und geht
+  // in deren Buendel auf [§C33], ist also keine eigene Karte, die jemanden
+  // haeufiger zeigt. Gezaehlt wurde sie trotzdem, und der LETZTE Lauf eines
+  // Spieltags — der mit allen Tafel- und Insignium-Karten des Tages —
+  // verwarf sie: gemessen hielt nur die Datenbank Leons 3er-Serie vom 01.10.
+  // fest, und ging die Uhr des Telefons zwei Sekunden nach, war sie nie
+  // gebildet worden.
+  const GEN_PARTIE = new Set(['win_streak', 'team_streak']);
   const PER_PLAYER_LIMIT = 3;
   const NEBENROLLEN_LIMIT = 5;   // dazu höchstens so oft im Bild
   const perPlayer = {};
@@ -2934,13 +3007,15 @@ function _buildStories(){
     // Formkarte, jede Serienmarke und jeder Meilenstein desselben Tages weg:
     // von fuenf gebildeten Formkarten kam keine einzige durch. Sie zaehlt
     // deshalb nicht mit und wird nie verworfen.
-    if(d.type === 'spiel'){ deduped.push(s); continue; }
+    // Dasselbe gilt für die Runde der Vier: sie fasst Partien zusammen und
+    // nahm mit ihren vier Gesichtern sonst anderen Karten den Platz weg.
+    if(d.type === 'spiel' || d.type === 'runde'){ deduped.push(s); continue; }
     const pid = d.pid || d.playerId || d.newLeader || null;
     // Wer sonst noch auf der Karte steht. `_newsPids` ist die einzige Stelle,
     // die weiß, in welchem Feld die Ids je Typ liegen [§C33].
     let gesichter = [];
     try { gesichter = (typeof _newsPids === 'function') ? _newsPids(s) : []; } catch(e){ gesichter = []; }
-    const pflicht = GEN_PFLICHT.has(d.type);
+    const pflicht = GEN_PFLICHT.has(d.type) || (GEN_PARTIE.has(d.type) && !!d.matchId);
     if(pid && !pflicht && d.rarity !== 'legendary' && gesichter.length
        && gesichter.every(id => (imBild[id] || 0) >= NEBENROLLEN_LIMIT)) continue;
     // v9.17: Goldene (legendary) Auszeichnungen sind vom Limit ausgenommen. Sonst

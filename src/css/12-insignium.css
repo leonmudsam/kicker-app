@@ -29,10 +29,13 @@
   .rav{--rav:52px;position:relative;flex-shrink:0;
     width:var(--rav);height:var(--rav);
     display:inline-grid;place-items:center;isolation:isolate}
+  /* Kein CSS-Filter auf dem Zeichen. Safari rechnet ein SVG unter
+     `filter` in CSS-Pixeln und skaliert das Ergebnis hoch: auf dem Telefon
+     stand jedes Wappen mit Treppenkanten da, als wäre es ausgeschnitten. Den
+     Schatten bringt die Zeichnung selbst mit (die Kopie unter ihr) [§C30]. */
   .rav > svg.ins{position:absolute;left:50%;top:50%;
     width:100%;height:auto;transform:translate(-50%,-50%);
-    z-index:0;pointer-events:none;
-    filter:drop-shadow(0 3px 9px rgba(0,0,0,.5))}
+    z-index:0;pointer-events:none}
   .rav > .av,.rav > .rav-av{position:relative;z-index:1;
     width:calc(var(--rav) * .46);height:calc(var(--rav) * .46);
     border-radius:50%;display:grid;place-items:center;overflow:hidden;
@@ -48,6 +51,15 @@
   .rav.zn-l1 .zn-fx{opacity:.82}
   .rav.zn-l2 .zn-fx{opacity:.92}
   .rav.zn-l3 .zn-fx{opacity:1}
+  /* Wie im Profilkopf: die Hülle in der Rangfarbe (`--zn-c` setzt
+     `insAvWrap`), ein Schein in derselben Farbe und ein heller Kern. Orange
+     mit warmem Kern war in der Zeile ein zweites Feuer neben dem des
+     Profils. Der Schein ist kräftiger als dort, weil vom Feuer in einer
+     Zeile nur der Streifen über dem Reif zu sehen ist. */
+  .rav.zn-l1 .zn-fx .zf{filter:drop-shadow(0 0 3px rgba(var(--zn-rgb,255,143,74),.6))}
+  .rav.zn-l2 .zn-fx .zf{filter:drop-shadow(0 0 4px rgba(var(--zn-rgb,255,143,74),.7))}
+  .rav.zn-l3 .zn-fx .zf{filter:drop-shadow(0 0 5px rgba(var(--zn-rgb,255,143,74),.8))}
+  .rav .zn-fx .zk{fill:#fff;opacity:.38;filter:none}
   /* Der Hof. In einer Zeile ist vom Feuer nur ein schmaler Streifen über
      dem Reif zu sehen — zu wenig, um „der brennt gerade" auf einen Blick zu
      sagen. Der Hof trägt diese Aussage: er hat keine Kante, kann also nicht
@@ -60,14 +72,14 @@
     width:88%;height:88%;transform:translate(-50%,-50%);
     border-radius:50%;z-index:-1;pointer-events:none;opacity:0;
     background:radial-gradient(closest-side,
-      var(--zn-c,#ff8f4a) 0,rgba(255,143,74,0) 66%)}
+      var(--zn-c,#ff8f4a) 0,transparent 66%)}
   /* Beide Maße hängen am REIF, nicht an der Kachel: er misst jetzt 59,0 %
      der Kantenlänge statt 62,9 %, also rücken Glut und Hof um denselben
      Faktor 0,93 zusammen. Ohne das stand die Flamme seitlich über ihn
      hinaus und in der Ranglistenzeile als Kragen um das ganze Zeichen. */
-  .rav.zn-l1::after{opacity:.13}
-  .rav.zn-l2::after{opacity:.19}
-  .rav.zn-l3::after{opacity:.26}
+  .rav.zn-l1::after{opacity:.18}
+  .rav.zn-l2::after{opacity:.25}
+  .rav.zn-l3::after{opacity:.33}
   /* Die Sterne sitzen UNTER DER RAUTE. Auf dem Band lagen sie bei 77,8 %
      der Höhe, und dort steht jetzt in jedem Zeichen die Raute des Bildes
      [§C30]: die Titel lagen als goldener Fleck auf dem Stein. Die Spitze der
@@ -112,11 +124,9 @@
     margin-bottom:calc(var(--ins-w) * .400 - 40px)}
   .pp-av-wrap .ins{position:absolute;left:50%;top:50%;
     width:var(--ins-w);height:auto;z-index:0;pointer-events:none;
-    transform:translate(-50%,-50%) translateY(-3.548%);
-    /* Zurückgenommen: das Zeichen bringt seine eigene Unterlage mit, und
-       zwei Schatten übereinander machten aus dem Profilkopf einen dunklen
-       Fleck. Hier bleibt nur, was das Zeichen von der Karte abhebt. */
-    filter:drop-shadow(0 4px 13px rgba(0,0,0,.42))}
+    transform:translate(-50%,-50%) translateY(-3.548%)}
+  /* Auch hier kein Filter: der Profilkopf ist die größte Stelle, an der das
+     Zeichen steht, und dort sah man die Treppenkanten am deutlichsten. */
   .pp-av-wrap .pp-av-ring{z-index:1}
 
   /* ── Laufbahn-Sheet [§13.10] ───────────────────────────────────────
@@ -151,13 +161,11 @@
   /* Die Karte in der Mitte ist die, die man ansieht — sie bekommt den Platz.
      Getragen oder nicht entscheidet die FARBE, nicht die Größe: sonst wären
      zwei Aussagen auf derselben Achse. */
-  .lb-k.fokus .lb-k-ins svg.ins{width:130px;height:130px;opacity:1;
-    filter:drop-shadow(0 4px 14px rgba(0,0,0,.6))}
+  .lb-k.fokus .lb-k-ins svg.ins{width:130px;height:130px;opacity:1;filter:none}
   /* In der Mitte zeigt auch eine offene Stufe ihre Farbe, etwas leiser: man
      soll sehen können, worauf man zuläuft [§C30]. Entfärbt bleiben nur die
      Nachbarn am Rand. */
-  .lb-k.fokus.offen .lb-k-ins svg.ins{filter:drop-shadow(0 4px 14px rgba(0,0,0,.6));
-    opacity:.72}
+  .lb-k.fokus.offen .lb-k-ins svg.ins{filter:none;opacity:.72}
   /* Beschriftet wird nur die Karte in der Mitte. Die Nachbarn ragen absichtlich
      halb ins Bild — mit Text hieß das ein abgeschnittenes „erbring" am Rand,
      und ein halbes Wort liest sich als Fehler, nicht als Andeutung. Der Platz
@@ -170,7 +178,7 @@
   /* Nur die getragene Stufe steht in der Rangfarbe [§C25]. */
   .lb-k.jetzt .lb-k-n{color:var(--ak)}
   .lb-k-p{font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--muted);
-    height:12px}
+    height:25px;line-height:12.5px;text-align:center;white-space:nowrap}
 
   /* Die drei Grade einer Stufe. Sie sind das, was zwischen zwei Schwellen
      passiert — ohne sie stünde das Zeichen hunderte Punkte lang still. */
@@ -210,27 +218,47 @@
   .lb-feld.da svg.ins{opacity:1}
   .lb-feld.jetzt{border-color:rgba(var(--ak-rgb),.6);background:rgba(var(--ak-rgb),.10)}
 
-  /* ── Die zweite Leiter: die Schwinge [§C36] ────────────────────────
-     Sechs Ränge nebeneinander, jeder in derselben Zeichenfläche: nur so
-     sieht man, dass die Schwinge wächst und nicht der Kasten. Sie ist
-     bewusst klein — die Vitrine darüber ist die Hauptsache, und zwei
-     gleich große Leitern auf einer Seite sagen beide nichts. */
-  .lb-schwingen{display:flex;gap:5px;margin-top:9px}
-  .lb-sw{flex:1 1 0;min-width:0;display:flex;flex-direction:column;
-    align-items:center;gap:3px}
-  .lb-sw-b{display:block;width:100%;line-height:0}
-  /* Entfärbt statt ausgeblendet, wie in der Vitrine: man soll sehen, dass
-     es die Stufe gibt — und dass man sie nicht hat. */
-  .lb-sw-b svg.ins{width:100%;height:auto;filter:grayscale(1);opacity:.24}
-  .lb-sw.erreicht .lb-sw-b svg.ins{filter:none;opacity:.5}
-  .lb-sw.jetzt .lb-sw-b svg.ins{filter:none;opacity:1;
-    filter:drop-shadow(0 2px 7px rgba(0,0,0,.5))}
-  .lb-sw-p{font-family:'Sometype Mono',monospace;font-size:8.5px;
-    color:var(--faint)}
-  .lb-sw.erreicht .lb-sw-p{color:var(--muted)}
-  .lb-sw.jetzt .lb-sw-p{color:var(--ak)}
-  .lb-sw-fuss{margin-top:5px;padding:0 2px;font-size:11px;color:var(--muted);
+  /* ── Die zweite Leiter: die Aura [§C36] ───────────────────────────
+     Zehn Stufen in zwei Reihen zu fünf, jede in derselben Fläche: nur so
+     sieht man, dass das Licht wächst und nicht der Kasten. Bewusst klein —
+     die Vitrine darüber ist die Hauptsache. Was noch nicht erreicht ist,
+     steht leise und nicht entfärbt: ein Filter über einem Zeichen kostet
+     in jedem Bild [§C30]. */
+  .lb-auren{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px 5px;margin-top:9px}
+  .lb-au{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+  .lb-au-b{position:relative;display:block;width:100%;aspect-ratio:1;line-height:0}
+  .lb-au-b img{position:absolute;inset:0;width:100%;height:100%}
+  /* Das Zeichen nimmt in der Aura 70 % der Fläche ein, wie im Wappen. */
+  .lb-au-b .lb-au-i{inset:15%;width:70%;height:70%}
+  .lb-au.offen .lb-au-b{opacity:.22}
+  .lb-au.erreicht .lb-au-b{opacity:.6}
+  .lb-au-p{font-family:'Sometype Mono',monospace;font-size:9px;color:var(--faint)}
+  .lb-au.erreicht .lb-au-p{color:var(--muted)}
+  .lb-au.jetzt .lb-au-p{color:var(--gold)}
+  .lb-au-fuss{margin-top:6px;padding:0 2px;font-size:11px;color:var(--muted);
     text-align:right}
+
+  /* ── Die Aura im Wappen [§C36] ─────────────────────────────────────
+     Sie ist größer als die Bandbox und darf über sie hinausleuchten. Die
+     Box bleibt, wie sie ist — sonst rückte jede Stelle, an der das Banner
+     steht, und das Gesicht säße nicht mehr in seiner Fassung. */
+  .rav.rav-band > svg.ins,.pp-av-wrap svg.ins{overflow:visible}
+
+  /* Im Profilkopf bewegt: drei Bilder übereinander, gemessen am Zeichen —
+     die Aura ist 1/0,7 so breit wie das Zeichen, und das Zeichen ist
+     170,45 der 180 Einheiten der Bandbox breit. Bewegt werden nur
+     `transform` und Deckkraft, beides rechnet die Grafikkarte; die
+     Unschärfe in den Strahlen wird nie neu gemalt. */
+  .pp-av-wrap .aura{position:absolute;left:50%;top:50%;z-index:0;pointer-events:none;
+    width:calc(var(--ins-w) * 1.3528);aspect-ratio:1;transform:translate(-50%,-50%)}
+  .aura img{position:absolute;inset:0;width:100%;height:100%;display:block}
+  @media (prefers-reduced-motion:no-preference){
+    .aura .a-schein{animation:auraAtem 7.5s ease-in-out infinite}
+    .aura .a-strahl{animation:auraKreis 80s linear infinite;will-change:transform}
+    .aura .a-gegen{animation:auraKreis 62s linear infinite reverse;will-change:transform}
+  }
+  @keyframes auraKreis{to{transform:rotate(360deg)}}
+  @keyframes auraAtem{0%,100%{opacity:.77}50%{opacity:1}}
 
   /* Wie weit man in der getragenen Stufe ist. Ein Strich, keine Zahl: die
      Zahl steht schon in der Zeile darüber [§C-Doppelung]. */
@@ -297,18 +325,31 @@
   .lb-regeln .common b{color:var(--acid)}
   .lb-regelblatt .pp-sec-title{margin-top:18px}
   .lb-regel-liste{border:1px solid var(--line);border-radius:var(--r-sm);overflow:hidden}
-  .lb-regel-z{display:grid;grid-template-columns:minmax(0,1fr) auto;
+  /* Die rechte Spalte hat eine feste Breite: mit `auto` war sie je Zeile so
+     breit wie ihr längster Text, und die Startwerte standen untereinander
+     versetzt — die Liste ist nach ihnen geordnet, also müssen sie fluchten. */
+  .lb-regel-z{display:grid;grid-template-columns:minmax(0,1fr) 96px;
     gap:3px 12px;padding:11px 12px;background:var(--surface)}
   .lb-regel-z+.lb-regel-z{border-top:1px solid var(--line)}
   .lb-regel-z>span{grid-row:1/3;display:flex;flex-direction:column;gap:2px;min-width:0}
   .lb-regel-z b{font-size:12px;color:var(--ink)}
   .lb-regel-z em{font-size:9.5px;line-height:1.35;font-style:normal;color:var(--muted)}
-  .lb-regel-z strong{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink2)}
+  .lb-regel-z strong{font-family:'Archivo Black',sans-serif;font-size:12px;color:var(--ink2);
+    text-align:right}
   .lb-regel-z strong i{font-family:'Sometype Mono',monospace;font-size:8px;
     text-transform:uppercase;font-style:normal;color:var(--muted)}
   .lb-regel-z small{font-family:'Sometype Mono',monospace;font-size:9px;
     text-align:right;color:var(--muted)}
   .lb-regel-note{margin-top:10px;line-height:1.5}
+  /* Der Startwert als Balken gegen den höchsten: die Gewichtung der Liste
+     auf einen Blick, in der Farbe der Klasse wie die Karten darüber. */
+  .lb-regel-z{position:relative}
+  .lb-regel-b{grid-column:1/-1;display:block;height:3px;border-radius:2px;
+    background:var(--line);overflow:hidden;margin-top:5px}
+  .lb-regel-b::before{content:'';display:block;height:100%;width:var(--w);
+    border-radius:inherit;background:var(--muted)}
+  .lb-regel-z[data-kl="legendary"] .lb-regel-b::before{background:var(--gold)}
+  .lb-regel-z[data-kl="rare"] .lb-regel-b::before{background:var(--purple)}
 
   .lb-q{display:flex;align-items:baseline;gap:10px;padding:8px 13px;
     background:var(--surface);border-top:1px solid var(--line)}
@@ -327,4 +368,3 @@
     padding:11px 13px;border-top:1px solid var(--line2);
     background:var(--surface2);font-size:12px;color:var(--ink2)}
   .lb-summe .num{font-family:'Archivo Black',sans-serif;font-size:19px;color:var(--ink)}
-  .nf-v-ins svg.ins{width:52px;height:52px;opacity:.95}

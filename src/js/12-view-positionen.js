@@ -1,30 +1,33 @@
 // ╔═══ §5.2 ─── VIEW: POSITIONS-RANGLISTE ──────────────────────────────╗
 //     Spezial-View für Sturm/Abwehr-Rangliste.
 // ╚═════════════════════════════════════════════════════════════════════════╝
-function vPositions(){
-  function posList(pos){
-    const statsMap = allPlayerStats();
-    return activePlayers().map(p=>{
-      const s = statsMap[p.id] || playerStats(p.id);
-      const g  = pos==='atk' ? s.atkG       : s.defG;
-      const w  = pos==='atk' ? s.atkW       : s.defW;
-      // Positionsspezifische Tor-Stats — kommen aus playerStats (atkGoals, defConceded)
-      const goalsSum = pos==='atk' ? (s.atkGoals||0)  : (s.defConceded||0);
-      const goalsAvg = g ? goalsSum/g : 0;
-      const perf=posPerfFrom(p.id,matches);
-      const pAvg=pos==='atk'?perf.aPerfAvg:perf.dPerfAvg;
-      const wr=g?w/g:0;
-      // Die Rechnung steht in posWert [§5.2] — sie gehoert nicht in eine
-      // Ansicht, weil der Liga-Rekord auf dieser Position dieselbe Zahl
-      // braucht [§13.1]. Zwei Rechnungen, zwei Beste.
-      const score=posWert(pos,g,w,goalsAvg,pAvg);
-      return {p,g,w,wr,pAvg:pAvg||0,goalsAvg,score};
-    }).filter(x=>x.g>0)
-      // Sortierung: Positions-Score (kombiniert WR, Performance, Tor-Bilanz, Erfahrung)
-      .sort((a,b)=> b.score-a.score || b.pAvg-a.pAvg || b.wr-a.wr);
-  }
+// Die Rangliste einer Position: eine Rechnung für die Liste und die
+// Rollen-Landkarte darüber — zwei Rechnungen über dieselbe Frage nennten
+// irgendwann zwei Beste [§C27].
+function positionsListe(pos){
+  const statsMap = allPlayerStats();
+  return activePlayers().map(p=>{
+    const s = statsMap[p.id] || playerStats(p.id);
+    const g  = pos==='atk' ? s.atkG       : s.defG;
+    const w  = pos==='atk' ? s.atkW       : s.defW;
+    // Positionsspezifische Tor-Stats — kommen aus playerStats (atkGoals, defConceded)
+    const goalsSum = pos==='atk' ? (s.atkGoals||0)  : (s.defConceded||0);
+    const goalsAvg = g ? goalsSum/g : 0;
+    const perf=posPerfFrom(p.id,matches);
+    const pAvg=pos==='atk'?perf.aPerfAvg:perf.dPerfAvg;
+    const wr=g?w/g:0;
+    // Die Rechnung steht in posWert [§5.2] — sie gehoert nicht in eine
+    // Ansicht, weil der Liga-Rekord auf dieser Position dieselbe Zahl
+    // braucht [§13.1]. Zwei Rechnungen, zwei Beste.
+    const score=posWert(pos,g,w,goalsAvg,pAvg);
+    return {p,g,w,wr,pAvg:pAvg||0,goalsAvg,score};
+  }).filter(x=>x.g>0)
+    // Sortierung: Positions-Score (kombiniert WR, Performance, Tor-Bilanz, Erfahrung)
+    .sort((a,b)=> b.score-a.score || b.pAvg-a.pAvg || b.wr-a.wr);
+}
 
-  const atk=posList('atk'), def=posList('def');
+function vPositions(){
+  const atk=positionsListe('atk'), def=positionsListe('def');
   const block=(arr,pos)=>{
     if(!arr.length)return emptyState(pos==='atk'?'bolt':'shield','Noch keine Spiele auf dieser Position');
     // Die Tore stehen in einer eigenen Zeile. Hinter Bilanz, Balken und
@@ -56,7 +59,8 @@ function vPositions(){
   };
   const which = rankMetric==='def'?'def':'atk';
   return `
-    <div class="view-head"><h2>Positionen</h2><p>Wer vorn und hinten am stärksten ist, über alle Partien. Der Wert verbindet Siegquote, Leistung gegen die Erwartung und Erfahrung.</p></div>
+    <div class="view-head"><h2>Positionen <button class="kopf-info" type="button" data-info="positionen" aria-label="So entsteht der Wert">${svgI('info')}</button></h2><p>Sturm und Abwehr, über alle Partien</p></div>
+    ${einblickHtml('rollen')}
     <div class="ui-switch">
       <button data-postoggle="atk" class="${which==='atk'?'on':''}"><span class="pos-chip atk">${svgI('bolt')}Sturm</span></button>
       <button data-postoggle="def" class="${which==='def'?'on':''}"><span class="pos-chip def">${svgI('shield')}Abwehr</span></button>
@@ -65,3 +69,14 @@ function vPositions(){
     ${which==='atk'?block(atk,'atk'):block(def,'def')}`;
 }
 
+
+// ── Wie der Wert entsteht ────────────────────────────────────────────
+// Die Erklärung stand als zwei Zeilen unter der Überschrift und nahm der
+// Liste bei jedem Öffnen den Platz. Sie steht jetzt hinter dem kleinen Knopf
+// neben dem Wort — wer sie braucht, tippt, alle anderen sehen die Liste.
+function zeigePositionsInfo(){
+  openSheet(blattKopfHtml({ic:'info', titel:'So entsteht der Wert', unter:'Positionen'})
+    + `<div class="pos-info">
+      <p>Der Wert verbindet drei Dinge: die Siegquote auf dieser Position, die Leistung gegen die Erwartung — gemessen an Partner und Gegnern — und die Erfahrung, also wie oft jemand dort gespielt hat.</p>
+      <p><b>▲</b> heißt über, <b>▼</b> unter der Erwartung. Gerechnet wird über alle Partien.</p></div>`);
+}

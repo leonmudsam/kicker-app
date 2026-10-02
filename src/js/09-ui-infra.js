@@ -139,7 +139,7 @@ function renderNav(){
   // Reiter sähe eingeschaltet aus.
   document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
-    awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';
+    awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
     window.scrollTo(0,0);render();});
   // FAB nur außerhalb des Match-Tabs sinnvoll: dort führt er auf die Seite,
   // auf der man schon ist, und lag über dem Knopf „Mischen".
@@ -224,7 +224,7 @@ function periodLabel(period, seasonId){
   const now=new Date();
   if(period==='season'){ return seasonLabel(seasonId||currentSeason().id); }
   if(period==='week'){ const s=periodStart('week');
-    return 'KW '+isoWeek(now)+' · ab '+s.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'}); }
+    return 'KW '+isoWeek(now)+' · ab '+datumFmt(s, 'tm'); }
   if(period==='day'){ const s=periodStart('day');
     return s.toLocaleDateString('de-DE',{weekday:'long',day:'2-digit',month:'2-digit'}); }
   return 'Gesamte Liga';

@@ -337,9 +337,11 @@ function showPositionHistory(seasonId){
 // bleibt opts.auto leer → keine Schutz-Phase, sofort schließbar.
 function showPotwRecap(opts){
   opts = opts || {};
-  _sheetSetReopen(()=>showPotwRecap());
+  // opts.woche (der Montag als Tagesschlüssel) zeigt eine bestimmte Woche:
+  // die Story „Die Woche gehört …" öffnet IHRE Woche, nicht die letzte.
+  _sheetSetReopen(()=>showPotwRecap(opts.woche ? {woche:opts.woche} : undefined));
   try{
-    const {start:weekStart, end:weekEnd}=_potwLastWeekRange();
+    const {start:weekStart, end:weekEnd}=opts.woche ? _potwWocheVon(opts.woche) : _potwLastWeekRange();
     const ms=_potwMatchesInRange(weekStart,weekEnd);
     const wkKey=_potwKeyOf(weekStart);
     if(!ms.length){ toast('Letzte Woche keine Spiele','info'); return; }
@@ -472,8 +474,8 @@ function showPotwRecap(opts){
 
     const weekLabel='KW '+isoWeek(weekStart);
     const sundayDate=new Date(weekEnd);
-    const dateRange=weekStart.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})
-      +'–'+sundayDate.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'});
+    const dateRange=datumFmt(weekStart, 'tm')
+      +'–'+datumFmt(sundayDate, 'tm');
     const games=mainPotwStats.wins+mainPotwStats.losses;
     const winrate=games?Math.round((mainPotwStats.wins/games)*100):0;
     const eloDelta=Math.round(mainPotwStats.eloDelta);
@@ -596,6 +598,11 @@ function showPotwRecap(opts){
             {v:eloDeltaStr,          l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
+      // Wann die Woche gewonnen wurde und gegen wen [§C31]: die Bilanz
+      // allein sagte nicht, ob sie an einem Tag fiel oder über sieben.
+      + (geteilt ? '' : rcpAbschnitt('Die Woche von ' + pname(mainPotwPlayerId))
+          + rcpWocheHtml(ms, mainPotwPlayerId, weekStart))
+      + rcpAbschnitt('Das Feld der Woche') + rcpFeldHtml(ms, mainPotwPlayerId)
       + rcpAbschnitt('Höhepunkte der Woche')
       + `<div class="rcp-awards${hlKacheln.length%2 ? ' ungerade' : ''}">${hlKacheln.join('')}</div>`
       + `<button id="closePotwBtn" class="recap-done-btn">Verstanden</button>`,
@@ -700,6 +707,11 @@ function _potdLastDayData(){
   return null;
 }
 
+// Die Partien eines bestimmten Spieltags, in derselben Form wie der letzte.
+function _potdTagData(dk){
+  const dms=matches.filter(m=>tagKey(m.created_at)===dk);
+  return dms.length ? {dayKey:dk, dayMatches:dms} : null;
+}
 // True wenn es einen abgeschlossenen Spieltag mit ≥3-Siegen-Kandidat gibt (für Button-Sichtbarkeit)
 function potdHasData(){ return _potdLastDayData()!==null; }
 
@@ -710,7 +722,10 @@ function potdHasData(){ return _potdLastDayData()!==null; }
 // (protectMs) deaktiviert → manueller Aufruf ist sofort per Backdrop-Klick schließbar.
 function showPotdRecap(opts){
   opts = opts || {};
-  _sheetSetReopen(()=>showPotdRecap());
+  // opts.tag zeigt einen bestimmten Spieltag: die Story „X ist Spieler des
+  // Tages" öffnet IHREN Tag. Ohne ihn war nur der letzte zu erreichen, über
+  // den Knopf im Liga-Reiter.
+  _sheetSetReopen(()=>showPotdRecap(opts.tag ? {force:true, tag:opts.tag} : undefined));
   try{
     const now=new Date();
     if(!matches.length){ if(opts.force) toast('Noch keine Partien','info'); return; }
@@ -723,7 +738,7 @@ function showPotdRecap(opts){
     // Woche keyed) → einmal gesehen = nie wieder, egal wie viele spielfreie
     // Tage folgen. Dafür muss der letzte Spieltag VOR dem Guard ermittelt
     // werden (zentral via _potdLastDayData, identisch zum Auto-Trigger).
-    const _guardDay=_potdLastDayData();
+    const _guardDay=opts.tag ? _potdTagData(opts.tag) : _potdLastDayData();
     if(!_guardDay){ if(opts.force) toast('Noch kein gewerteter Spieltag','info'); return; }
     if(!opts.force && _recapSeen('potd_shown_'+_guardDay.dayKey, 'potd:'+_guardDay.dayKey)) return;
 
@@ -863,6 +878,11 @@ function showPotdRecap(opts){
             {v:eloDeltaStr, l:'Elo', ton:eloDelta>=0 ? 'gruen' : 'rot'}
           ])})
       + serieHtml
+      // Wie der Tag zustande kam und gegen wen [§C31]: die Bahn ist
+      // dasselbe Bild wie im Blatt der Story [§C27].
+      + rcpAbschnitt('Der Tag von ' + pname(potdId))
+      + _ndTagesbahn(potdId, dayMatches, true) + rcpEloBahnHtml(dayMatches, potdId)
+      + rcpAbschnitt('Das Feld des Tages') + rcpFeldHtml(dayMatches, potdId)
       + rcpAbschnitt('Höhepunkte des Tages')
       + `<div class="rcp-awards${tagKacheln.length%2 ? ' ungerade' : ''}">${tagKacheln.join('')}</div>`
       + `<button id="closePotdBtn" class="recap-done-btn">Verstanden</button>`,

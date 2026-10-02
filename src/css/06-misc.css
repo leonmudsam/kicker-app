@@ -1,6 +1,11 @@
   /* ============ [§C15] MISC ============ */
-  .empty{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
-  .empty .ee{font-size:34px;margin-bottom:12px;opacity:.5}
+  /* Der leere Zustand einer ganzen Ansicht — und nur der: `class="empty"`
+     allein. Als `.empty` traf die Regel jeden Baustein, der „leer" als
+     Zusatz trägt, und eine nicht vergebene Award-Kachel bekam 48 px Polster
+     oben und unten und 20 px an den Seiten: ihr Name stand in 66 statt 84 px
+     und brach mitten im Wort. */
+  [class="empty"]{text-align:center;color:var(--muted);padding:48px 20px;font-size:13px}
+  [class="empty"] .ee{font-size:34px;margin-bottom:12px;opacity:.5}
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
   /* ── Der Glanz [§C25] ──────────────────────────────────────────────
@@ -29,8 +34,16 @@
      später als der Spieler des Tages, der Rückblick später als das Podest. */
   .nf-s-woche:not(.read)::after,.nd-s-woche .nd-head::after{animation-delay:-3s}
   .rcp-held::after{animation-delay:-5s}
+  /* Der Schimmer des Seltenen im Feed: dieselbe Bahn, die Farbe der Familie
+     und leiser, alle elf Sekunden statt alle acht [§C25]. */
+  .nf-glanz::after{
+    content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(105deg,transparent 40%,rgba(var(--story-rgb,185,196,189),.13) 50%,transparent 60%)
+      no-repeat;background-size:250% 100%;background-position:140% 0;
+    animation:glanzLauf 11s ease-in-out infinite;animation-delay:var(--gv,0s)}
   .nd-s-held .nd-head,.nd-s-woche .nd-head{position:relative;border-radius:14px}
   @media(prefers-reduced-motion:reduce){
+    .nf-glanz::after,
     .pod-karte.erster.gold::after,
     .nf-s-held:not(.read)::after,.nf-s-woche:not(.read)::after,
     .nd-s-held .nd-head::after,.nd-s-woche .nd-head::after,
@@ -447,7 +460,10 @@
     color:var(--muted);font-weight:700;margin:18px 0 8px}
 
   @keyframes ppFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  @keyframes ppFadeScale{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+  /* Ohne Skalierung: eine Ebene, die skaliert ein- und ausläuft, rechnet
+     Safari in der Anfangsgröße und zieht sie hoch — das Zeichen im
+     Profilkopf stand dabei unscharf da. */
+  @keyframes ppFadeScale{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   @keyframes ppPulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.05)}}
   @keyframes ppFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-2deg)}
     50%{transform:translateX(-50%) translateY(-3px) rotate(-2deg)}}
@@ -459,3 +475,48 @@
     color:var(--ink);padding:14px;border-radius:13px;outline:none;transition:.18s}
   .text-in:focus{border-color:var(--acid2)}
 
+
+  /* ── Der Einblick über einer Rangliste [§C27] ────────────────────────
+     Eine schmale Zeile, die aufklappt. Zu ist sie so hoch wie eine
+     Zeile Text: die Rangliste darunter ist der Grund für den Reiter. */
+  .einblick{margin:0 0 12px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+  .einblick-k{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:0;background:none;
+    font:inherit;font-size:12.5px;font-weight:600;color:var(--ink2);text-align:left;cursor:pointer}
+  .einblick-k > .ic{flex:0 0 auto;width:16px;height:16px;color:var(--muted)}
+  .einblick-k > span{flex:1;min-width:0}
+  .einblick-k em{flex:0 0 auto;font-style:normal;font-family:'Sometype Mono',monospace;font-size:10px;color:var(--faint)}
+  .einblick-pf{flex:0 0 auto;display:grid;place-items:center;width:16px;height:16px;color:var(--muted);transition:transform .2s ease}
+  .einblick-pf .ic{width:14px;height:14px}
+  .einblick.auf .einblick-pf{transform:rotate(90deg)}
+  .einblick-i{display:none;padding:2px 12px 12px}
+  .einblick.auf .einblick-i{display:block}
+  /* Die Rollen-Landkarte */
+  .rk{position:relative;aspect-ratio:300/230}
+  .rk svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .rk-q{fill:rgba(190,242,100,.05)}
+  .rk-m{stroke:var(--line2);stroke-dasharray:3 4}
+  .rk-a{stroke:var(--line2)}
+  .rk-p{position:absolute;transform:translate(-50%,-50%);line-height:0;cursor:pointer}
+  .rk-p .rcp-av,.netz-p .rcp-av{box-shadow:0 0 0 2px var(--surface);border-radius:50%}
+  .rk-ax{display:flex;justify-content:space-between;font-family:'Sometype Mono',monospace;font-size:9.5px;color:var(--faint);margin-top:2px}
+  .rk-l{display:flex;flex-direction:column;gap:3px;margin-top:8px;font-size:11px;line-height:1.4;color:var(--muted)}
+  .rk-l b{font-weight:600;color:var(--ink2)}
+  .rk-l i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;background:var(--line2)}
+  .rk-l i.f-vh{background:rgba(190,242,100,.45)}
+  /* Das Netz der Duos */
+  .netz{position:relative;aspect-ratio:300/280}
+  .netz svg{position:absolute;inset:0;width:100%;height:100%}
+  .netz-l{stroke-linecap:round;opacity:.55}
+  .netz-l.w{stroke:var(--acid)}.netz-l.l{stroke:var(--red)}.netz-l.m{stroke:var(--ink2);opacity:.28}
+  .netz-p{position:absolute;transform:translate(-50%,-50%);line-height:0;cursor:pointer}
+  .netz-leg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:10.5px;color:var(--muted)}
+  .netz-leg span::before{content:"";display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle;background:var(--line2)}
+  .netz-leg .w::before{background:var(--acid)}.netz-leg .l::before{background:var(--red)}
+  .netz-leg .m::before{background:var(--ink2);opacity:.45}.netz-leg .d::before{height:8px;width:3px;background:var(--muted)}
+  @media (prefers-reduced-motion:no-preference){
+    .rk-p,.netz-p{animation:einblickDa .45s ease-out both;animation-delay:calc(var(--i,0) * 40ms)}
+    .netz-l{animation:einblickL .6s ease-out both;animation-delay:calc(var(--i,0) * 18ms)}
+  }
+  @media (prefers-reduced-motion:reduce){ .einblick-pf{transition:none} }
+  @keyframes einblickDa{from{opacity:0}}
+  @keyframes einblickL{from{opacity:0}}

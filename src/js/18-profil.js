@@ -402,7 +402,8 @@ const rankProgHtml = rInfo ? `
         const _r = (_rRoh && (_rRoh.kind === 'blaze' || _rRoh.kind === 'hot')) ? null : _rRoh;
         const _rt = _r ? titleTone(_r.tone) : null;
         // Das Insignium [§13.9] liegt HINTER dem Avatar: Stufe als Form,
-        // Rang als Material, Meistertitel als Schwinge. Die Liga-Position
+        // Rang als Material, Meistertitel als Aura dahinter [§C36] — hier
+        // bewegt, überall sonst als stilles Bild. Die Liga-Position
         // steht im Schild — die alte Ecken-Zahl und die Legenden-Krone
         // sind damit doppelt und fallen weg.
         // Die Siegesserie brennt auch hier [§C26] — aber in der Rangfarbe
@@ -412,7 +413,8 @@ const rankProgHtml = rInfo ? `
         return `<div class="pp-av-wrap${_r ? ' has-ring' : ''}${_fu ? ' zn-rang zn-l'+_fu : ''}"${_rt ? ` style="--tt:${_rt.c};--ttr:${_rt.rgb}"` : ''}
           data-prestige="${esc(id)}" title="${esc(prestigeOf(id).insignie.name + ' · ' + prestigeOf(id).punkte + ' Prestige')}">
         ${_fu ? ZN_FEUER_GROSS[_fu] : ''}
-        ${insigniumSvg(id)}
+        ${auraLebendHtml(meisterTitel(id))}
+        ${insigniumSvg(id, {lebendig:true})}
         <div class="pp-av-ring">
           <div class="${avClass}" ${avBg}>${avInner}</div>
         </div>
@@ -1454,7 +1456,7 @@ function showBadgePopover(badgeId, playerId){
       const shown = hits.slice(0, maxShow);
       const rowsHtml = shown.map(m => {
         const date = new Date(m.created_at);
-        const dateStr = date.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+        const dateStr = datumFmt(date, 'tmj');
         const onA = (playerId===m.a1||playerId===m.a2);
         const myGf = onA?m.score_a:m.score_b;
         const myGa = onA?m.score_b:m.score_a;

@@ -146,6 +146,17 @@ function _isSheetActive(){
   } catch(e){}
   return false;
 }
+// ── Der Hinweis ist ein Ereignis ──────────────────────────────────────
+// Er war eine flache grüne Pille mit „59 neue Stories" in einer Zeile: dieselbe
+// Schrift und Fläche wie jeder Knopf, und wer gerade woanders hinsah, bemerkte
+// ihn in seinen vier Sekunden nicht. Jetzt steht die Zahl groß neben einem
+// Zeichen, ein Lichtlauf zieht beim Erscheinen darüber, und ein Ring geht auf
+// wie ein Signal. Alles nur über transform und Deckkraft, und bei
+// Bewegungsruhe steht er still da.
+function _newsToastFuellen(txt, n){
+  txt.innerHTML = `<i class="nt-ic">${svgI('newspaper')}</i><b class="nt-n num">${n}</b>`
+    + `<span class="nt-w">${n === 1 ? 'neue Story' : 'neue Stories'}</span>`;
+}
 function _maybeShowNewsToast(unreadCount){
   const toast = document.getElementById('newsToast');
   const txt = document.getElementById('newsToastTxt');
@@ -161,7 +172,7 @@ function _maybeShowNewsToast(unreadCount){
     return;
   }
   // Anzeigen
-  txt.textContent = unreadCount + (unreadCount === 1 ? ' neue Story' : ' neue Stories');
+  _newsToastFuellen(txt, unreadCount);
   _positionNewsToast();
   toast.classList.add('visible');
   // Reflow erzwingen für CSS-Animation
@@ -229,7 +240,7 @@ function _processDeferredNewsToast(){
     const toast = document.getElementById('newsToast');
     const txt = document.getElementById('newsToastTxt');
     if(!toast || !txt) return;
-    txt.textContent = n + (n === 1 ? ' neue Story' : ' neue Stories');
+    _newsToastFuellen(txt, n);
     _positionNewsToast();
     toast.classList.add('visible');
     void toast.offsetWidth;
@@ -263,10 +274,10 @@ function _newsWhenLabel(when){
   const todayKey = tagKey(now);
   const yest = tagKey(now.getTime() - 86400000);
   const dKey = tagKey(d);
-  const hhmm = d.toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  const hhmm = datumFmt(d, 'uhr');
   if(dKey === todayKey) return 'Heute, '+hhmm;
   if(dKey === yest) return 'Gestern, '+hhmm;
-  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit'})+', '+hhmm;
+  return datumFmt(d, 'tm')+', '+hhmm;
 }
 
 // Der Kalendertag einer Story, als Überschrift für eine Feed-Gruppe.
@@ -279,13 +290,13 @@ function _newsDayLabel(when){
   const d = new Date(when), now = new Date();
   if(tagKey(d) === tagKey(now)) return 'HEUTE';
   if(tagKey(d) === tagKey(now.getTime() - 86400000)) return 'GESTERN';
-  return d.toLocaleDateString('de-DE',{weekday:'long'}).toUpperCase();
+  return datumFmt(d, 'wt').toUpperCase();
 }
 // Das Datum unter dem Wochentag. Bei „Heute" und „Gestern" steht es trotzdem
 // da: sonst weiß man beim Zurückblättern nicht, wo man ist.
 function _newsDayDate(when){
   const d = new Date(when);
-  return d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
+  return datumFmt(d, 'tmj');
 }
 
 // ─── §11.6 — Voller Feed (im Sheet) mit Filter-Pills ─────────────────
@@ -392,7 +403,7 @@ function _newsGesichtHtml(s){
 // Bauformen: das Ergebnisband, der große Wert, die Leiter, das Zahlenband.
 
 function _newsUhrzeit(when){
-  return new Date(when).toLocaleTimeString('de-DE',{hour:'2-digit',minute:'2-digit'});
+  return datumFmt(when, 'uhr');
 }
 
 // Rot ist eine Richtung, keine Rubrik [§C25]. Karte und Detailblatt nutzen
@@ -437,7 +448,40 @@ function _newsTafelTon(s){
   return arten.length === 1 ? arten[0] : (arten.length > 1 ? 'mix' : 'rekord');
 }
 
+// ── Ein Schimmer für das, was selten ist [§C25] ───────────────────────
+// Bewegung hatten im Feed nur drei Karten: Breaking, die Karte des Tages und
+// der Spieler des Tages und der Woche, die beiden letzten in Gold. Alles
+// dazwischen stand still, auch ein Spitzenwechsel, eine seltene
+// Auszeichnung oder eine Fünfer-Serie, und man scrollte darüber hinweg wie
+// über ein gewöhnliches 10:7. Diese Karten tragen jetzt einen leisen
+// Lichtlauf in der Farbe IHRER Familie (`--story-rgb`), nicht in Gold — Gold
+// gehört dem Titel. Was ohnehin leuchtet, bekommt keinen zweiten, und eine
+// negative Richtung auch nicht. Der Versatz kommt aus der ID, damit nicht
+// alle Lichter im selben Takt laufen.
+const NEWS_GLANZ_TYP = new Set(['lead_change', 'rekord_geholt', 'insignium_stufe', 'chronik_erstling', 'streak_record', 'season_champion']);
+// Die seltenen Formen der gewöhnlichen Partie (`glanz` aus `_spBild`):
+// Zählwerk, Rückkehr, Elo-Transfer und der gebrochene Fluch [§C33].
+const NEWS_GLANZ_ANLASS = new Set(['spitze', 'medaille', 'aussenseiter', 'premiere', 'riss', 'form']);
+function _newsGlanz(s, sorte, anlass){
+  const d = s.dataRef || {};
+  if(sorte === 'held' || sorte === 'woche') return false;
+  if(NEWS_GLANZ_TYP.has(d.type) || NEWS_GLANZ_ANLASS.has(anlass)) return true;
+  if(d.type === 'badge_unlocked' && (d.rarity === 'rare' || d.rarity === 'legendary')) return true;
+  if((d.type === 'win_streak' || d.type === 'team_streak') && Number(d.streak) >= 5) return true;
+  if(anlass === 'serie' || anlass === 'teamserie'){
+    const f = (typeof _newsSpielFakten === 'function' ? _newsSpielFakten(s) : [])
+      .find(x => x.type === 'win_streak' || x.type === 'team_streak');
+    if(f && Number(f.streak) >= 5) return true;
+  }
+  return (d.teile || []).some(t => t.klasse || NEWS_GLANZ_TYP.has(t.typ));
+}
+function _newsGlanzVersatz(id){
+  let h = 0; const t = String(id || '');
+  for(let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) >>> 0;
+  return -(h % 110) / 10;
+}
 function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
+  if(((s && s.dataRef) || {}).type === 'runde') return _newsRundeHtml(s, isRead, fadenHtml);
   const dcat = _displayCat(s);
   const meta = NEWS_CATEGORIES[dcat] || NEWS_CATEGORIES.fun;
   const d = s.dataRef || {};
@@ -502,10 +546,11 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   const av = (pid, px) => (pm[pid] ? avHtml(pm[pid], '', {ins:true, px:px||48, feuer:0}) : '');
 
   if(sorte === 'spiel'){
-    kopf = d.bandFremd ? '' : _newsErgebnisBand(d.matchId);
-    const spf = _newsSpielFuss(s);
-    satz = _newsSpielSatz(s.desc, spf);
-    fuss = spf + _newsZahlband(_newsSpielZahlen(s));
+    // Kopf und Fuß folgen dem Anlass der Partie [§C33, §11.6c].
+    const bild = _spBild(s);
+    kopf = d.bandFremd ? '' : bild.kopf;
+    satz = _newsSpielSatz(s.desc, bild.zeigt);
+    fuss = bild.fuss + _newsZahlband(_newsSpielZahlen(s, bild.key));
     // Die Ergebnis-Sammelkarte hat ZWEI Partien und deshalb keine, die sie
     // als Band zeigen könnte: acht Wappen übereinander machten sie höher als
     // ihr Text [§C27]. Die Stände stehen im Sammelband, die Sieger als Chips
@@ -521,10 +566,22 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   } else if(sorte === 'ins'){
     gesicht = `<div class="nf-gr-l">${av(d.pid, 48)}</div>`;
     fuss = _newsLeiter(d.pid);
+  } else if(sorte === 'held' && d.type === 'season_recap'){
+    // ── Die Meisterbühne [§C31] ────────────────────────────────────
+    // Zwei Sätze und kein Bild: so stand der Meister im Feed, die seltenste
+    // Karte des Monats. Jetzt steht das Podest über dem Satz — dasselbe
+    // Bauteil wie im Saison-Rückblick [§C27] —, und im Fuß das Rennen um die
+    // Spitze, klein, samt der Tage vorn und dem Vorsprung.
+    kopf = _newsMeisterKopf(d);
+    fuss = _newsMeisterFuss(d);
   } else if(sorte === 'held'){
     const pid = d.playerId || (Array.isArray(d.playerIds) ? d.playerIds[0] : null);
     gesicht = `<div class="nf-gr-l">${av(pid, 52)}</div>`;
-    fuss = _newsZahlband([
+    // Der Spieler des Tages zeigt seinen Tag als Bahn und die Elo darüber:
+    // dass er mit zwei Pleiten anfing und mit fünf Siegen endete, sagten
+    // drei Zahlen nicht [§11.6c].
+    if(d.type === 'potd') fuss = _spTagBild(_spTagDaten(s));
+    if(!fuss) fuss = _newsZahlband([
       {v: d.wr != null ? Math.round(d.wr * 100) + ' %' : null, l:'Siegquote', f:'g'},
       {v: (d.wins != null && d.games != null) ? d.wins + ' : ' + (d.games - d.wins) : null,
        l:'Siege zu Niederlagen'},
@@ -629,7 +686,8 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
   }
   // Das Duell traegt seine Wappen im Band ueber dem Text; die Ersatzgesichter
   // haetten sie ein zweites Mal daneben gestellt.
-  if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'){
+  if(!gesicht && sorte !== 'spiel' && sorte !== 'woche' && sorte !== 'duell'
+     && d.type !== 'season_recap'){
     const g = _newsGesichtHtml(s);
     if(g) gesicht = `<div class="nf-gr-l">${g}</div>`;
   }
@@ -652,7 +710,8 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
     const h = _breakingHeroText(s);
     if(String(h || '').trim() !== String(s.desc || '').trim()) brkSub = h;
   }
-  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}">
+  const glanz = !negativ && !brk && !gross && _newsGlanz(s, sorte, sorte === 'spiel' && d.matchId ? (_spBild(s).glanz ? 'form' : _spBild(s).key) : '');
+  return `<div class="nf-card nf-s-${sorte} nfc-${dcat}${tafelTon?' nf-tafel-'+tafelTon:''}${faktStil?' nf-fakt-'+faktStil.ton:''}${negativ?' nf-neg':''}${brk?' nf-brk':''}${gross?' nf-gross':''}${glanz?' nf-glanz':''}${isRead?' read':''}${imp}" data-sid="${esc(s.id)}"${glanz ? ` style="--gv:${_newsGlanzVersatz(s.id)}s"` : ''}>
     ${_newsMotiv(sorte, s)}
     ${gross ? '<div class="nf-gross-band">' + svgI('star') + 'DIE KARTE DES TAGES</div>' : ''}
     ${balken}
@@ -667,6 +726,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
       <span class="nf-chev">${svgI('chevron')}</span>
     </div>
     ${sammelBand}
+    ${sorte === 'tafel' ? _newsVerlustBand(s) : ''}
     ${fuss}
     ${brkSub ? `<div class="nf-brk-sub">${esc(brkSub)}</div>` : ''}
     ${fadenHtml || ''}
@@ -680,6 +740,7 @@ function _newsCardHtmlM2(s, isRead, istTagesKarte, fadenHtml){
 function _newsRubrik(sorte, s){
   const d = (s && s.dataRef) || {};
   if(_isBreaking(s)) return 'BREAKING';
+  if(d.type === 'runde') return 'DIE RUNDE';
   switch(sorte){
     case 'spiel':  return 'AM SPIELTAG';
     case 'tafel':  return 'EWIGE TAFEL';
@@ -789,7 +850,7 @@ function _newsBilanzBalken(aPid, bPid, aW, bW){
 // Die Partien einer Serie als Punkte. „7 Siege" ist eine Zahl, die Reihe
 // zeigt, wie lang sieben sind. Ab zwölf Punkten steht der Rest als Ziffer:
 // eine Reihe, die über die Karte hinausläuft, sagt nichts mehr.
-function _newsSerienBand(laenge, verloren, mitZiel, wer){
+function _newsSerienBand(laenge, verloren, mitZiel){
   const n = Math.max(0, Number(laenge) || 0);
   if(!n) return '';
   const zeige = Math.min(n, 12);
@@ -801,11 +862,7 @@ function _newsSerienBand(laenge, verloren, mitZiel, wer){
   // Rechts steht, was die Punkte zaehlen. Ohne die Angabe war die halbe
   // Bandbreite leer, und die Reihe sagte nicht, ob sie Siege oder Pleiten
   // meint.
-  // Auf der Karte einer Partie steht die Serie unter vier Wappen, und dort
-  // sagt ein kleines Gesicht davor, WESSEN Serie es ist [§C33].
-  const pmS = wer ? pmap() : null;
-  const gesicht = wer ? [].concat(wer).map(p => pmS[p] ? avHtml(pmS[p], '', {}) : '').join('') : '';
-  return `<div class="nf-ser${verloren ? ' r' : ''}">${gesicht ? `<span class="nf-ser-av">${gesicht}</span>` : ''}`
+  return `<div class="nf-ser${verloren ? ' r' : ''}">`
     + Array.from({length: zeige}, () => '<i></i>').join('')
     + Array.from({length: leer}, () => '<i class="x"></i>').join('')
     + (n > zeige ? `<em>+${n - zeige}</em>` : '')
@@ -891,43 +948,60 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     + `</div>`;
 }
 
+// ── Wer verliert, steht auf der Karte ─────────────────────────────────
+// Ein Rekord, den jemand übernimmt oder mit einem anderen teilt, kostet den
+// bisherigen Halter Prestige, und davon stand auf der Karte nichts: die
+// Schlagzeile feiert die Neuen, und wer seinen Anteil abgeben musste, erfuhr
+// es erst im Blatt — oder gar nicht, solange es dort „±0" hieß. Die Zeile
+// nennt je Verlierer den Verlust und, wenn er eine Schwelle unterschreitet,
+// die Stufe, auf die er fällt. Rot ist die Richtung [§C25]; die Karte bleibt
+// die der Gewinner, deshalb steht der Verlust unter dem Band und nicht im
+// Kopf. Gelesen wird die gespeicherte Wirkung der Karte, wie im Blatt.
+//
+// Je Verlierer ein Chip: Gesicht, Name, Betrag — und nur, wenn die Stufe
+// fällt, ein Pfeil mit ihr. Vorher stand „VERLIERT" als Wort vor einer
+// Reihe aus „Leon −77 auf Volutenkranz", und bei drei Namen brach das in
+// eine zweite Zeile, in der Betrag und Stufe nicht mehr zu ihrem Namen
+// gehörten. Der Chip hält zusammen, was zusammengehört, und das Wort davor
+// sagt, wovon der Betrag abgeht: Prestige.
+function _newsVerlustBand(s){
+  const d = (s && s.dataRef) || {};
+  const je = {};
+  const nimm = lb => { if(lb) Object.keys(lb).forEach(pid => { if(!je[pid]) je[pid] = lb[pid]; }); };
+  if(d.type === 'sammel') (d.teile || []).forEach(t => nimm(t.lb));
+  else nimm(d.laufbahn);
+  const pm = pmap();
+  const weg = Object.keys(je).filter(pid => pm[pid]).map(pid => {
+    const vor = Math.round(Number(je[pid].vor) || 0), nach = Math.round(Number(je[pid].nach) || 0);
+    return {pid, d: nach - vor, ab: insigniumStufeVon(nach) < insigniumStufeVon(vor)
+      ? INSIGNIEN[insigniumStufeVon(nach)].name : ''};
+  }).filter(x => x.d < 0).sort((a, b) => a.d - b.d);
+  if(!weg.length) return '';
+  return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
+    + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
+      `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
+      + `<em class="num">−${-x.d}</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      ? `<b class="nf-vl mehr">+${weg.length - 3}</b>` : ''}</span></div>`;
+}
+
 // Die Zahlen einer Spieltags-Karte. Sie stehen im Fuß, damit der Satz sie
-// nicht wiederholen muss.
-function _newsSpielZahlen(s){
+// nicht wiederholen muss — und nur, wo die Zeichnung sie nicht schon zeigt:
+// die gerissene Kette zählt die Serie, die Tabelle die Plätze.
+function _newsSpielZahlen(s, anlass){
   const d = s.dataRef || {};
   const out = [];
-  if(d.streak) out.push({v: d.streak, l:'Siege, jetzt beendet', f:'g'});
-  if(d.gap) out.push({v: 'Platz ' + (d.winnerRank || d.gap), l:'schlägt Platz ' + (d.loserRank || '')});
-  // Die Siegchance steht nicht mehr als Zahl im Band, sondern als Bogen
-  // darüber (_newsSpielFuss). Die Tordifferenz steht gar nicht darin: das
-  // Ergebnisband zeigt beide Zahlen, und „4 Tore Unterschied" unter einem
-  // 6:10 rechnet dem Leser vor, was er gerade gelesen hat.
+  if(d.streak && anlass !== 'riss') out.push({v: d.streak, l:'Siege, jetzt beendet', f:'g'});
+  if(d.gap && anlass !== 'spitze' && anlass !== 'rang')
+    out.push({v: 'Platz ' + (d.winnerRank || d.gap), l:'schlägt Platz ' + (d.loserRank || '')});
+  // Die Tordifferenz steht nicht darin: der Kopf zeigt beide Zahlen, und
+  // „4 Tore Unterschied" unter einem 6:10 rechnet dem Leser vor, was er
+  // gerade gelesen hat.
   return out;
 }
 
-// ── Bogen und Elo einer Partie [§C33] ────────────────────────────────
-// „30 %" muss man erst einordnen; der Halbkreis mit der Mitte zeigt, wie
-// weit die Rechnung dagegen stand, und das Wort daneben sagt es
-// (chanceWort, dieselbe Quelle wie die Skala im Blatt). Der Elo-Gewinn
-// gehört einem und nicht der Partie (`eloPid`): der Satz nennt den Besten,
-// die Chips nennen beide Sieger mit Gesicht. Die Chance ist die der Sieger
-// aus der Elo-Bahn, wie im Blatt der Partie.
-// ── Die Bildzone einer Partie folgt ihrem Anlass [§C33] ─────────────
-// Jede Partie-Karte trug denselben Fuß: Bogen der Siegchance und zwei
-// Elo-Chips. Im Feed standen damit dreißig Karten mit derselben Zeichnung
-// untereinander, und der Bogen sagte bei einem 81-%-Favoritensieg nichts,
-// was eine Karte besonders macht. Jetzt zeigt der Fuß, WOVON die Partie
-// erzählt — in fester Rangfolge, das erste, was zutrifft:
-//   Spitzenwechsel   die neue Spitze und ihr Abstand          _newsSpitzeBild
-//   Serienbruch      die Serie, die hier gerissen ist         _newsRissBild
-//   Serie            der Lauf und die nächste Marke           _newsSerienBand
-//   Außenseitersieg  der Bogen der Siegchance und die Chips   _newsChanceBogen
-//   Rivalitätsmarke  die Bilanz der beiden bis zu dieser Partie
-//   Auszeichnung     das Zeichen der Auszeichnung             _newsMedailleBild
-//   Ein-Tor-Krimi    der Bogen: wie offen es vorher stand
-//   sonst            die Elo-Waage aller vier Spieler         _newsEloWaage
-// Der Fakt kommt aus den ungebündelten Meldungen der Karte
+// Die Fakten einer Partie-Karte kommen aus den ungebündelten Meldungen
 // (`_newsRohIndex`), weil eine Sammelzeile nur Titel und Zeichen trägt.
+// Kopf und Fuß, die daraus entstehen, stehen in `30b-news-spieltag.js`.
 function _newsRohIndex(){
   const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
   let m = _newsRohMemo.get(roh);
@@ -940,124 +1014,6 @@ function _newsSpielFakten(s){
   if(d.type !== 'sammel' || !Array.isArray(d.teile)) return [d];
   const idx = _newsRohIndex();
   return d.teile.map(t => ((idx.get(t && t.id) || {}).dataRef) || {type: t && (t.typ || t.type)});
-}
-function _newsSpielFuss(s){
-  const d = s.dataRef || {};
-  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
-  if(!m) return '';
-  let c = d.quote != null ? d.quote / 100 : null;
-  const fakten = _newsSpielFakten(s);
-  const sp = fakten.find(f => f.type === 'spiel');
-  if(c == null && sp && sp.quote != null) c = sp.quote / 100;
-  if(c == null){
-    const h = getHistoryByMatchId().get(m.id);
-    const e = h && h.expA != null ? h.expA : m.exp_a;
-    if(e != null) c = m.winner === 'A' ? e : 1 - e;
-  }
-  const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
-  const f = t => fakten.find(x => x.type === t);
-  const bogenMitChips = () => {
-    const bogen = (c != null && c > 0 && c < 1) ? _newsChanceBogen(c) : '';
-    const chips = _newsEloChips(m);
-    return (bogen || chips) ? `<div class="nf-spf">${bogen}${chips}</div>` : '';
-  };
-  let x;
-  if((x = f('lead_change')) && x.newLeader) return _newsSpitzeBild(x);
-  if((x = f('streak_killer')) && x.victimPid) return _newsRissBild(x.victimPid, x.streak);
-  if((x = f('win_streak')) && x.streak) return _newsSerienBand(x.streak, false, true, x.pid);
-  if((x = f('team_streak')) && x.streak) return _newsSerienBand(x.streak, false, true, [x.a, x.b]);
-  if(c != null && c < CHANCE_UPSET) return bogenMitChips();
-  const sieger = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
-  const wende = sieger.map(pid => ({pid, n:_newsPleitenVor(pid, m)}))
-    .filter(w => w.n >= 3).sort((a, b) => b.n - a.n)[0];
-  if(wende) return _newsWendeBild(wende.pid, wende.n);
-  if((x = f('rivalry_milestone')) && x.a && x.b){
-    const b = _newsDuellBis(x.a, x.b, m.id);
-    if(b.a + b.b) return _newsBilanzBalken(x.a, x.b, b.a, b.b);
-  }
-  if((x = f('badge_unlocked')) && x.badgeId) return _newsMedailleBild([{pid:x.playerId, badgeId:x.badgeId}]);
-  if((x = f('badge_marken')) && Array.isArray(x.marken) && x.marken.length) return _newsMedailleBild(x.marken);
-  const sprung = sieger.map(pid => ({pid, r:_newsRankChange(pid, m.id)}))
-    .filter(w => w.r && w.r.pre - w.r.post >= 2);
-  if(sprung.length) return _newsRangBild(sprung);
-  if(hoch - tief === 1) return bogenMitChips();
-  if(hoch - tief >= 6) return _newsTorleiste(m, hoch, tief);
-  return _newsEloWaage(m);
-}
-function _newsEloChips(m){
-  const pm = pmap();
-  const chips = (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).map(pid => {
-    const v = _newsEloDelta(pid, m.id);
-    if(v == null || !pm[pid]) return '';
-    return `<span class="nf-eloc">${avHtml(pm[pid], '', {})}<b class="${v >= 0 ? 'g' : 'r'}">${v >= 0 ? '+' : ''}${v}</b></span>`;
-  }).join('');
-  return chips ? `<div class="nf-elocs">${chips}</div>` : '';
-}
-// Die Elo-Waage: alle vier Spieler um die Null, Verlierer links in Rot,
-// Sieger rechts in Grün [§C25]. Die Chips zeigten nur die Sieger, und wer
-// wie viel abgegeben hat, stand nirgends auf der Karte. Die Länge ist der
-// Betrag im Verhältnis zum größten der vier — die Zahl steht daneben.
-function _newsEloWaage(m){
-  const pm = pmap();
-  const w = m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2];
-  const l = m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2];
-  const v = pid => _newsEloDelta(pid, m.id);
-  const alle = w.concat(l).map(v).filter(x => x != null);
-  if(!alle.length) return '';
-  const max = Math.max(8, ...alle.map(Math.abs));
-  const zeile = (pid, seite) => {
-    const x = v(pid);
-    if(x == null || !pm[pid]) return '';
-    const b = (Math.abs(x) / max * 100).toFixed(0);
-    return `<span class="nf-wg-z">${avHtml(pm[pid], '', {})}<b class="${x >= 0 ? 'g' : 'r'} num">${x >= 0 ? '+' : ''}${x}</b>`
-      + `<i style="width:${b}%"></i></span>`;
-  };
-  return `<div class="nf-waage" title="Elo je Spieler">`
-    + `<div class="nf-wg-s l">${l.map(p => zeile(p, 'l')).join('')}</div>`
-    + `<span class="nf-wg-null"></span>`
-    + `<div class="nf-wg-s r">${w.map(p => zeile(p, 'r')).join('')}</div></div>`;
-}
-// Der Spitzenwechsel: wer oben steht, mit welchem Stand, und wie weit davor.
-// Die Krone ist Gold, weil die Tabellenspitze ein Titel auf Zeit ist [§C25];
-// der Vorgänger steht leiser daneben.
-function _newsSpitzeBild(x){
-  const pm = pmap(), neu = pm[x.newLeader], alt = pm[x.prevLeader];
-  if(!neu) return '';
-  return `<div class="nf-spitze">${zkHtml('crown', 'k', 'gold')}`
-    + `<span class="nf-sp-n">${avHtml(neu, '', {})}<b>${esc(neu.name)}</b>${x.elo != null ? `<em class="num">${x.elo} Elo</em>` : ''}</span>`
-    + (alt ? `<span class="nf-sp-a">${x.gap != null ? `<b class="num">${x.gap}</b> vor ` : 'vor '}${avHtml(alt, '', {})}${esc(alt.name)}</span>` : '')
-    + `</div>`;
-}
-// Der Serienbruch zeigt die Serie, die hier endet: ihre Länge in Feldern und
-// ein letztes, gerissenes. „Leon und Maxi brechen Martins 8er-Serie" nennt
-// eine Zahl; die Reihe zeigt, wie lang acht sind.
-function _newsRissBild(pid, laenge){
-  const n = Math.max(0, Number(laenge) || 0), p = pmap()[pid];
-  if(!n || !p) return '';
-  const zeige = Math.min(n, 12);
-  return `<div class="nf-ser nf-riss">${avHtml(p, '', {})}`
-    + Array.from({length: zeige}, () => '<i></i>').join('')
-    + (n > zeige ? `<em>+${n - zeige}</em>` : '')
-    + `<i class="bruch"></i><span>${n} Siege von ${esc(p.name)}, dann Schluss</span></div>`;
-}
-// Die Torleiste eines deutlichen Siegs: zehn Felder je Seite, und daneben,
-// wann die Liga zuletzt so deutlich gespielt hat. Der Stand steht im Band
-// darüber; „7 Tore Unterschied" darunter rechnete ihn nur vor [§C33] — wie
-// selten er ist, sagt keine andere Stelle der Karte.
-function _newsTorleiste(m, hoch, tief){
-  const diff = hoch - tief, t = mts(m);
-  let zuletzt = null;
-  (matches || []).forEach(x => {
-    const xt = mts(x);
-    if(xt >= t || Math.abs(x.score_a - x.score_b) < diff) return;
-    if(!zuletzt || xt > mts(zuletzt)) zuletzt = x;
-  });
-  const reihe = (k, cls) => Array.from({length:10}, (_, i) => `<i${i < k ? ` class="${cls}"` : ''}></i>`).join('');
-  const satz = zuletzt
-    ? `So deutlich zuletzt am ${new Date(mts(zuletzt)).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'})}`
-    : 'So deutlich noch nie in der Liga';
-  return `<div class="nf-tor"><div class="nf-tor-r"><span class="w">${reihe(hoch, 'w')}</span>`
-    + `<span class="v">${reihe(tief, 'v')}</span></div><span class="nf-tor-s">${esc(satz)}</span></div>`;
 }
 // Die Wende: wie viele Partien in Folge ein Sieger vor dieser verloren hat.
 // Gezählt wird rückwärts ab der Partie, nicht ab heute [§C33].
@@ -1073,97 +1029,32 @@ function _newsPleitenVor(pid, m){
   }
   return n;
 }
-function _newsWendeBild(pid, n){
-  const p = pmap()[pid];
-  if(!p) return '';
-  const zeige = Math.min(n, 12);
-  return `<div class="nf-ser nf-wende">${avHtml(p, '', {})}`
-    + `${n > zeige ? `<em>+${n - zeige}</em>` : ''}`
-    + Array.from({length: zeige}, () => '<i class="p"></i>').join('')
-    + `<i class="w"></i><span>${n} Pleiten, dann dieser Sieg</span></div>`;
-}
-// Der Sprung in der Monatstabelle: vorher, nachher, und ein Pfeil in Grün —
-// Grün ist die Richtung [§C25]. Ab zwei Plätzen; ein Platz ist an jedem
-// Spieltag irgendwem passiert.
-function _newsRangBild(liste){
-  const pm = pmap();
-  const z = liste.map(w => pm[w.pid] ? `<span class="nf-rg">${avHtml(pm[w.pid], '', {})}`
-    + `<b>${esc(pm[w.pid].name)}</b><span class="num">Platz ${w.r.pre}</span>`
-    + `<i aria-hidden="true"></i><span class="num g">${w.r.post}</span></span>` : '').join('');
-  return z ? `<div class="nf-rgs" title="Platz in der Monatstabelle">${z}</div>` : '';
-}
-// Die Bilanz zweier Spieler gegeneinander bis zu dieser Partie — die Marke
-// steht an ihrer Partie, und der Stand von heute gehört nicht auf sie.
-function _newsDuellBis(a, b, matchId){
-  const r = {a:0, b:0};
-  const bis = (matches || []).find(x => x.id === matchId);
-  const grenze = bis ? mts(bis) : Infinity;
-  (matches || []).forEach(m => {
-    if(mts(m) > grenze) return;
-    const A = [m.a1, m.a2], B = [m.b1, m.b2];
-    const aIn = A.includes(a) ? 'A' : B.includes(a) ? 'B' : null;
-    const bIn = A.includes(b) ? 'A' : B.includes(b) ? 'B' : null;
-    if(!aIn || !bIn || aIn === bIn) return;
-    if(m.winner === aIn) r.a++; else r.b++;
-  });
-  return r;
-}
-// Die Auszeichnung zeigt ihr Zeichen in der Farbe ihrer Klasse: Violett für
-// Auszeichnungen [§C25], Gold nur für eine legendäre. Mehrere Marken einer
-// Partie stehen als Reihe, jede mit dem Namen dessen, der sie trägt.
-function _newsMedailleBild(liste){
-  const pm = pmap();
-  const z = (liste || []).slice(0, 3).map(e => {
-    const b = (typeof BADGES !== 'undefined' ? BADGES : []).find(x => x.id === e.badgeId);
-    if(!b) return '';
-    const kl = rarityOf(b.id);
-    const ton = kl === 'legendary' ? 'gold' : 'viol';
-    const wer = pm[e.pid] ? pm[e.pid].name : '';
-    return `<span class="nf-med">${zkHtml(b.ic, 'k', ton)}<span><b>${esc(b.name)}</b>`
-      + `<i>${esc(wer)}${e.rang > 1 ? ` · zum ${e.rang}. Mal` : ''}</i></span></span>`;
-  }).join('');
-  return z ? `<div class="nf-meds">${z}</div>` : '';
-}
-// ── Was der Fuß zeigt, sagt der Satz nicht [§C33] ────────────────────
+// ── Was die Zeichnung zeigt, sagt der Satz nicht [§C33] ──────────────
 // „Vor dem Anstoß lag die Siegchance bei 81 %. Für Maxi bringt der Sieg +7
-// Elo." stand über einem Bogen mit 81 % und einem Chip mit Maxis +7 —
+// Elo." stand über einem Spielfeld, das 81 % und Maxis +7 schon zeigt —
 // dieselben zwei Zahlen zweimal in einer Karte. Wie `_ndLead` im Blatt eine
 // Ableitung aus dem Text, also gilt sie auch für gespeicherte Karten; der
 // Text selbst bleibt, das Blatt und die Datenbank tragen ihn weiter.
 // Gestrichen werden nur Sätze, die NICHTS als diese Zahlen sagen: „Nur 30 %
 // Siegchance vor dem Anstoß. Trotzdem …" ist die Geschichte eines
-// Außenseitersiegs und bleibt stehen.
-function _newsSpielSatz(desc, fussHtml){
+// Außenseitersiegs und bleibt stehen. Was die Zeichnung zeigt, sagt sie
+// selbst (`zeigt`), statt dass hier in ihrem Markup gesucht wird.
+function _newsSpielSatz(desc, zeigt){
   const t = String(desc || '');
-  if(!fussHtml) return t;
-  // Die Elo steht als Chip ODER als Waage im Fuß; beide nennen den Gewinn
-  // jedes Siegers. Steht nur die Waage da, bleibt die Siegchance im Satz —
-  // sie ist dann die einzige Stelle, an der sie steht.
-  const bogen = fussHtml.includes('nf-bogen');
-  const elo = fussHtml.includes('nf-eloc') || fussHtml.includes('nf-waage');
+  const chance = !!(zeigt && zeigt.chance), elo = !!(zeigt && zeigt.elo);
+  if(!chance && !elo) return t;
   return t.split(/(?<=\.)\s+/).map(x => {
-    const z = x.match(/^Die Siegchance lag vor dem Anstoß bei (\d+) %(, für .+ bringt der Sieg \+\d+ Elo)?\.$/);
+    const z = x.match(/^Die Siegchance lag vor dem Anstoß bei (\d+) %(?:, für (.+) bringt der Sieg (\+\d+) Elo)?\.$/);
     if(z){
-      if(bogen && (elo || !z[2])) return '';
+      if(chance && (elo || !z[2])) return '';
+      if(chance) return `Für ${z[2]} bringt der Sieg ${z[3]} Elo.`;
       if(elo && z[2]) return `Die Siegchance lag vor dem Anstoß bei ${z[1]} %.`;
       return x;
     }
-    if(bogen && /^Vor dem Anstoß lag die Siegchance bei \d+ %\.$/.test(x)) return '';
+    if(chance && /^Vor dem Anstoß lag die Siegchance bei \d+ %\.$/.test(x)) return '';
     if(elo && /^Für .+ bringt der Sieg \+\d+ Elo\.$/.test(x)) return '';
     return x;
   }).filter(Boolean).join(' ');
-}
-function _newsChanceBogen(c){
-  const pct = Math.max(1, Math.round(c * 100));
-  const f = Math.min(.995, Math.max(.005, c));
-  const a = Math.PI * (1 - f);
-  const x = (29 + 24 * Math.cos(a)).toFixed(1), y = (30 - 24 * Math.sin(a)).toFixed(1);
-  // Unter der Linie der Überraschung hebt sich der Bogen ab: dort stand die
-  // Rechnung dagegen [CHANCE_UPSET].
-  return `<div class="nf-bogen${c < CHANCE_UPSET ? ' u' : ''}">`
-    + `<svg viewBox="0 0 58 34" aria-hidden="true"><path class="b" d="M5 30A24 24 0 0 1 53 30"/>`
-    + `<path class="v" d="M5 30A24 24 0 0 1 ${x} ${y}"/><path class="m" d="M29 3.5v5"/></svg>`
-    + `<span><b class="num">${pct} %</b>${esc(chanceWort(c))}</span></div>`;
 }
 
 // ── Der Faden [§C33] ────────────────────────────────────────────────
@@ -1321,7 +1212,7 @@ function _newsFadenHtml(faden, stories, nach){
   const ziel = (stories || []).find(x => x.id === (nach ? faden.von : faden.ziel));
   const art = NEWS_FADEN_ART[faden.art];
   if(!ziel || !art) return '';
-  const tag = new Date(ziel.when).toLocaleDateString('de-DE', {day:'2-digit', month:'2-digit'});
+  const tag = datumFmt(ziel.when, 'tm');
   return `<button class="nf-faden" type="button" data-ziel="${esc(ziel.id)}">`
     // Tag vor Titel: der Titel kürzt sich, und in einer Zeile ging dabei das
     // Datum verloren — gerade das sagt, wie weit die Geschichte zurückreicht.
@@ -1498,9 +1389,14 @@ function _newsSorte(s){
   const d = (s && s.dataRef) || {};
   const t = d.type || '';
   if(t === 'woche') return 'woche';                       // Zeilen der Wertungen
+  if(t === 'runde') return 'spiel';                       // die Runde der Vier [§11.6c]
   if(t === 'insignium_stufe') return 'ins';               // die Leiter
   if(t === 'ambient') return 'fakt';                      // leise, eine Zahl
   if(t === 'potd' || t === 'potw') return 'held';         // Wappen groß, Zahlenband
+  // Der Meister ist der Held schlechthin. Ohne diese Zeile fiel er auf
+  // „fakt" — die leiseste Karte des Feeds trug die Nachricht, die es je
+  // Monat genau einmal gibt, und Gold gehört den Titeln [§C25].
+  if(t === 'season_recap') return 'held';
   if(t === 'badge_unlocked') return 'badge';              // das Zeichen der Auszeichnung
   // Die gesammelten runden Marken eines Tages sind dieselbe Sache in der
   // Mehrzahl und tragen deshalb dieselbe Form [§C27]. Ohne diese Zeile fiele
@@ -1539,7 +1435,9 @@ function _newsErgebnisBand(matchId){
     const echt = ids.filter(id => pm[id]);
     return `<span class="nf-erg-avs">${echt
       .map(id => avHtml(pm[id], '', {ins:true, px:48, feuer:0})).join('')}</span>`
-      + `<span class="nf-erg-team">${esc(echt.map(id => pm[id].name).join(' & '))}</span>`;
+      // Ein Name je Zeile: „Johannes & Jannik" in einer Zeile wurde mit „…"
+      // gekürzt, und gerade der zweite Name fehlte [§11.6c].
+      + `<span class="nf-erg-team">${echt.map(id => `<span>${esc(pm[id].name)}</span>`).join('')}</span>`;
   };
   const aWin = m.winner === 'A';
   return `<div class="nf-erg">
@@ -1635,6 +1533,38 @@ function _newsZahlband(werte){
     `<div><b class="${x.f || ''}">${esc(String(x.v))}</b><span>${esc(x.l || '')}</span></div>`).join('')}</div>`;
 }
 
+// ── Die Meisterbühne im Feed [§C31] ─────────────────────────────────
+// Das Podest kommt aus derselben Rangliste wie im Saison-Rückblick
+// (`saisonRang`); die Karte nennt aber, was bei ihrer Entstehung galt, also
+// steht der Meister aus dem `dataRef` in der Mitte. Kleiner als im Blatt:
+// 64 und 52 px, darunter bliebe vom Wappen nichts [§6]. Hinter dem Ersten
+// liegt ein Strahlenkranz in Gold — er ist Licht und keine Form, und bei
+// Bewegungsruhe steht er still.
+function _newsMeisterKopf(d){
+  try {
+    const rang = saisonRang(d.sid);
+    if(!rang.length) return '';
+    return `<div class="nf-meister"><span class="nf-ms-strahl" aria-hidden="true"></span>${
+      saisonPodestHtml(d.sid, rang, {px1:64, px:52, klasse:'nf-podest', attr:'data-mpid'})}</div>`;
+  } catch(e){ return ''; }
+}
+function _newsMeisterFuss(d){
+  try {
+    const te = Array.isArray(d.topElo) ? d.topElo : [];
+    const ids = te.map(x => x && x.id).filter(Boolean);
+    const sp = saisonSpitze(d.sid);
+    const n = sp.tage[d.championId] || 0;
+    const vorsprung = te[0] && te[1] ? Math.max(0, te[0].elo - te[1].elo) : null;
+    const r = saisonRang(d.sid).find(x => x.id === d.championId);
+    const sp2 = r ? r.wins + r.losses : 0;
+    return saisonRennenHtml(d.sid, ids, {klein:true}) + _newsZahlband([
+      {v: sp.spieltage ? n + ' von ' + sp.spieltage : null, l:'Spieltage vorn', f:'g'},
+      {v: vorsprung != null ? '+' + vorsprung : null, l:'Elo vor Platz 2'},
+      {v: sp2 ? Math.round(r.wins / sp2 * 100) + ' %' : null, l:'Siegquote'}
+    ]);
+  } catch(e){ return ''; }
+}
+
 // Breaking-Hero — das Herzstück oben im Sheet, bewusst dramatisch.
 // v9.1: etwas längerer, spannenderer Hero-Text je Breaking-Typ — display-seitig
 // aus dataRef gebaut (wirkt auch auf bereits persistierte Rows). Bewusst 1–2
@@ -1646,14 +1576,31 @@ function _breakingHeroText(s){
   const nm = id => (pm[id] && pm[id].name) || '?';
   try {
     switch(d.type){
+      // ── Der Monat heißt, wie er heißt ────────────────────────────
+      // „Die Saison 2026-08 ist Geschichte" nannte die Saison-ID, eine
+      // Zeichenkette, die niemanden interessiert, und „Vor Johannes." war ein
+      // Satz ohne Verb [§C33]. Elo, Vorsprung und Tage vorn stehen auf der
+      // Karte im Podest und im Zahlenband; der Nachsatz erzählt, was dort
+      // nicht steht: wann der Titel entschieden war.
       case 'season_recap': {
         const te = Array.isArray(d.topElo) ? d.topElo : [];
-        const champ = nm(d.championId || (te[0] && te[0].id));
-        const runner = te[1] && te[1].id ? nm(te[1].id) : null;
-        const elo = d.championElo != null ? d.championElo : (te[0] && te[0].elo);
-        return `Die Saison ${d.sid || ''} ist Geschichte: ${champ} krönt sich mit ${elo} Elo zum Champion`
-          + (runner ? `. Vor ${runner}.` : '.')
-          + ` Wer stürzt ${champ} in der neuen Saison vom Thron?`;
+        const cid = d.championId || (te[0] && te[0].id);
+        const champ = nm(cid);
+        const monat = d.sid && typeof seasonLabel === 'function' ? seasonLabel(d.sid) : 'Die Saison';
+        let lauf = '';
+        try {
+          const sp = saisonSpitze(d.sid), f = sp.folge;
+          const mm = String(d.sid || '').slice(5, 7);
+          let i = f.length - 1;
+          while(i > 0 && f[i - 1].pid === cid) i--;
+          if(f.length && f[f.length - 1].pid === cid){
+            lauf = i === 0
+              ? ` ${champ} lag vom ersten Spieltag an vorn und gab die Spitze nie ab.`
+              : ` Die Spitze wechselte ${sp.wechsel === 1 ? 'einmal' : (_BELEG_ZAHL[sp.wechsel] ? _BELEG_ZAHL[sp.wechsel] + 'mal' : sp.wechsel + '-mal')}, `
+                + `und vom ${String(f[i].day).padStart(2, '0')}.${mm}. an blieb ${champ} vorn.`;
+          }
+        } catch(e){}
+        return `${monat} ist entschieden: ${champ} holt den Titel.` + lauf;
       }
       // ── Der Nachsatz nennt eine Zahl ────────────────────────────
       // „Machtwechsel an der Tabellenspitze: X verdraengt Y und uebernimmt
@@ -1774,7 +1721,7 @@ function _newsTagSpannung(s){
 // ein Fun Fact oder eine Zufallsstatistik groß im Bild, die mit diesem Tag
 // nichts zu tun haben und gestern genauso dagestanden hätten.
 // ── Wer kann das Band tragen? [§C33] ────────────────────────────────
-// Drei Sorten nicht, und jede aus ihrem eigenen Grund.
+// Vier Sorten nicht, und jede aus ihrem eigenen Grund.
 // **Breaking** nicht: die Karte ist im Feed ohnehin die lauteste — voller
 // Rahmen, pulsierender Balken, Schein hinter der ganzen Flaeche. Das Band
 // darueber sagt dasselbe ein zweites Mal [§C27] und nimmt es genau der
@@ -1784,14 +1731,19 @@ function _newsTagSpannung(s){
 // das Band an jedem ruhigen Tag von selbst — dann zeichnet es nichts aus.
 // **Ein Rueckblick** nicht: Woche, Monat und Saison erzaehlen von einem
 // Zeitraum, das Band gehoert dem TAG.
+// **Eine Karte mit negativer Richtung** nicht: das Band ist golden, und Gold
+// gehoert dem Titel [§C25]. Gemessen trug „Anton: Die Talfahrt" — fuenf
+// Niederlagen in Folge, eine Schande — an einem Spieltag das Band und damit
+// den goldenen Auswahlschimmer, als waere die Pleite die Geschichte des Tages.
 // Die Liste steht hier und nicht im Aufruf, weil `tests/ambient` und
 // `tests/blatt` dieselbe Frage stellen und sie sich vorher jeder selbst
 // beantwortet haben — zwei Listen fuer dieselbe Aussage waere eine zu viel.
 const NEWS_TAGKARTE_OHNE = new Set(['ambient', 'dry_spell', 'season_endgame',
   'quiet_week', 'season_start', 'potd', 'potw', 'woche', 'chronik_monat',
-  'season_recap']);
+  'season_recap', 'runde']);
 function _newsTagKarteWuerdig(st){
   if(NEWS_TAGKARTE_OHNE.has(((st && st.dataRef) || {}).type || '')) return false;
+  if(_newsIstNegativ(st)) return false;
   return !_isBreaking(st);
 }
 function _newsTagKarte(items, dayKey){
@@ -1849,7 +1801,7 @@ function _renderNewsFeed(){
     // ohne deshalb zugleich im Spieltag-Chip zu erscheinen.
     if(_istTafel(s)) return false;
     if(d.type === 'ambient') return false;
-    return !!(d.matchId || d.type === 'potd' || d.type === 'woche' ||
+    return !!(d.matchId || d.type === 'potd' || d.type === 'woche' || d.type === 'runde' ||
               (d.type === 'sammel' && d.quelle === 'spiel'));
   };
   // Jeder Chip traegt sein Zeichen — dasselbe wie im Rubrikband der Karten,
@@ -1875,7 +1827,7 @@ function _renderNewsFeed(){
   // Die Tafel: ein Tageskopf, darunter alle Karten dieses Tages. Breaking
   // bleibt an seinem Platz in der Chronologie und wird nicht nach oben
   // gezogen — es trägt stattdessen einen roten Kopfbalken.
-  let listHtml;
+  let listHtml, teileHtml = [], sofort = 0;
   if(!cards.length){
     listHtml = '<div class="nf-empty">Keine Stories in dieser Auswahl.</div>';
   } else {
@@ -1889,7 +1841,7 @@ function _renderNewsFeed(){
       if(g && g.k === k) g.items.push(st);
       else gruppen.push({k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
     });
-    listHtml = gruppen.map(g => {
+    teileHtml = gruppen.map(g => {
       const neu = g.items.filter(st => !gelesen(st)).length;
       // Die Wahl gehoert dem ganzen Tag, nicht dem aktiven Filter. Sonst
       // koennte dieselbe Tafel je Reiter eine andere „Karte des Tages" haben.
@@ -1911,7 +1863,17 @@ function _renderNewsFeed(){
         <div class="nf-feed">${g.items.map(st =>
             _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte,
               _newsFadenHtml(faeden.get(st.id), stories))).join('')}</div>`;
-    }).join('');
+    });
+    // ── Zuerst, was man sieht ─────────────────────────────────────────
+    // Der Feed trägt rund siebzig Karten und 3400 Knoten, und beim Öffnen
+    // rechnete der Browser Stil und Layout für alle auf einmal: gemessen
+    // 75 ms ohne und 350 ms mit gedrosselter CPU, und das Skript selbst war
+    // davon nicht einmal ein Zehntel. Gezeichnet werden zuerst die Tage, die
+    // die ersten Karten tragen (`NEWS_FEED_SOFORT`), der Rest kommt nach dem
+    // ersten Bild dazu (`_newsFeedRest`) — bevor man so weit scrollen kann.
+    let n = 0;
+    while(sofort < teileHtml.length && n < NEWS_FEED_SOFORT){ n += gruppen[sofort].items.length; sofort++; }
+    listHtml = teileHtml.slice(0, sofort).join('');
   }
 
   const datum = new Date().toLocaleDateString('de-DE',
@@ -1931,8 +1893,13 @@ function _renderNewsFeed(){
       </div>
       ${filterBar}
     </div>
-    <div class="nf-wrap" style="padding-top:0">${listHtml}</div>
+    <div class="nf-wrap nf-liste" style="padding-top:0">${listHtml}</div>
   `);
+  const sheetEl = document.getElementById('sheet');
+  const liste = sheetEl.querySelector('.nf-liste');
+  const rest = teileHtml.slice(sofort).join('');
+  _newsFeedOffen = rest && liste ? {liste, html:rest} : null;
+  if(_newsFeedOffen) requestAnimationFrame(() => setTimeout(_newsFeedRest, 0));
 
   // Filter-Click → re-render (billig, Daten aus Cache).
   const sheet = document.getElementById('sheet');
@@ -1954,20 +1921,31 @@ function _renderNewsFeed(){
       _renderNewsFeed();
     };
   }
-  // Der Faden öffnet die frühere Karte, nicht die, in der er steht.
-  sheet.querySelectorAll('.nf-faden[data-ziel]').forEach(el => {
-    el.onclick = ev => { ev.stopPropagation(); openNewsDetail(el.dataset.ziel); };
-  });
-  // Karten + Hero klickbar → Detail.
-  sheet.querySelectorAll('[data-sid]').forEach(el => {
-    el.onclick = () => {
-      const sid = el.dataset.sid;
-      _newsMarkSeen(sid);
-      el.classList.add('read'); el.classList.remove('important');
-      el.querySelector('.nf-dot')?.remove();
-      newsBadgeRefresh();
-      openNewsDetail(sid);
-    };
-  });
+  // Ein Lauscher an der Liste statt einer an jeder Karte: die Karten, die
+  // erst nach dem ersten Bild dazukommen, sind beim Binden noch nicht da.
+  if(liste) liste.onclick = ev => {
+    // Der Faden öffnet die frühere Karte, nicht die, in der er steht.
+    const f = ev.target.closest && ev.target.closest('.nf-faden[data-ziel]');
+    if(f){ ev.stopPropagation(); openNewsDetail(f.dataset.ziel); return; }
+    // Karten + Hero klickbar → Detail.
+    const el = ev.target.closest && ev.target.closest('[data-sid]');
+    if(!el || !liste.contains(el)) return;
+    const sid = el.dataset.sid;
+    _newsMarkSeen(sid);
+    el.classList.add('read'); el.classList.remove('important');
+    el.querySelector('.nf-dot')?.remove();
+    newsBadgeRefresh();
+    openNewsDetail(sid);
+  };
+}
+// Der Rest des Feeds, nach dem ersten Bild. Steht die Liste nicht mehr im
+// Dokument — eine Karte wurde schon geöffnet, das Blatt geschlossen —,
+// fällt er weg: angehängt landete er sonst im nächsten Blatt.
+let _newsFeedOffen = null;
+const NEWS_FEED_SOFORT = 12;
+function _newsFeedRest(){
+  const o = _newsFeedOffen;
+  _newsFeedOffen = null;
+  if(o && o.liste.isConnected) o.liste.insertAdjacentHTML('beforeend', o.html);
 }
 
