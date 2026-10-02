@@ -2214,7 +2214,22 @@ const ok = (c, msg, det) => {
           _spDuellBild({A:a, B:b, gesamt:98765, aw:45678, spiele}),
           _spMedailleBild({name:'Unüberwindliche Betonmauer der Liga', ic:'shield', klasse:'legendary', wer:a, rang:1234, ids:alle, traeger:alle.slice(0, 7)})
             + _spMedailleBild({name:'Mauer', ic:'shield', klasse:'rare', wer:a, rang:2, ids:Array.from({length:40}, (_, i) => alle[i % alle.length]), traeger:[]}),
-          _spTagBild({pid:a, elo:-12345, partien:Array.from({length:31}, (_, i) => ({w:i % 3 > 0, e:(i % 5 - 2) * 1000}))})
+          _spTagBild({pid:a, elo:-12345, partien:Array.from({length:31}, (_, i) => ({w:i % 3 > 0, e:(i % 5 - 2) * 1000}))}),
+          // Die Formen der gewöhnlichen Partie [§C33], jede mit ihren Grenzwerten.
+          _spMosaikBild({W:[a, b], L:[c, e], hoch:10, tief:8, diff:2, n:[0, 9000, 45495, 8000, 7000, 6000, 4000, 2000, 900, 90, 9], mal:45495}),
+          _spTachoBild({W:[a, b], L:[c, e], hoch:10, tief:9, pct:99, klar:false}),
+          _spStreuBild({W:[a, b], L:[c, e], hoch:10, tief:9, c:.99, diff:1, knapp:true, so:45495, gesamt:45495,
+            bins:[{c:.5, d:3, n:9999}, {c:.97, d:10, n:1}, {c:.02, d:0, n:5}], erw:[[.05, 9], [.95, 1]]}),
+          _spTransferBild({W:[a, b], L:[c, e], hoch:10, tief:0, delta:{[a]:12345, [b]:999, [c]:-12345, [e]:-999}, gewinn:13344}),
+          _spChemieBild({A:a, B:b, L:[c, e], hoch:10, tief:9, s:12345, p:45495, folge:Array.from({length:30}, (_, i) => i % 4 > 0)}),
+          _spGegnerBild({w:a, l:c, W:[a, b], L:[c, e], s:12345, n:45495, fluch:999, hoch:10, tief:9, folge:Array.from({length:24}, (_, i) => i > 22)}),
+          _spRevancheBild({W:[a, b], L:[c, e], hoch:10, tief:9, vHoch:10, vTief:9, seit:{n:999, e:'Wochen'}}),
+          _spGipfelBild({hoch:10, tief:9, zeilen:[{id:a, pre:1, post:126, w:true}, {id:b, pre:2, post:1, w:true}, {id:c, pre:118, post:2, w:false}, {id:e, pre:null, post:null, w:false}]}),
+          _spRueckkehrBild({id:a, mit:b, tage:12345, L:[c, e], hoch:10, tief:9}),
+          _spGefaelleBild({W:[a, b], L:[c, e], hoch:10, tief:9, elo:{[a]:12345, [b]:-12345, [c]:999, [e]:-999}}),
+          _spTagesringBild({id:a, mit:b, L:[c, e], hoch:10, tief:9, folge:Array.from({length:24}, (_, i) => i % 5 > 0)}),
+          _spZaehlwerkBild({wer:a, wert:45000, sieg:true, W:[a, b], L:[c, e], hoch:10, tief:9})
+            + _spZaehlwerkBild({wer:null, wert:45400, sieg:false, W:[a, b], L:[c, e], hoch:10, tief:0})
         ].map(h => '<div class="nf-card nf-s-spiel">' + h + '</div>');
         const runde = {id:'probe', when:new Date(d0).toISOString(), cat:'highlight',
           title:'Jean-Baptiste von Hohenstein gewinnt die Runde mit 12 von 23 Partien',
@@ -2245,7 +2260,7 @@ const ok = (c, msg, det) => {
     });
     return out;
   }, PRUEFEN.toString());
-  ok(grenz[288].n >= 18 && grenz[288].fehler.length === 0 && grenz[360].fehler.length === 0,
+  ok(grenz[288].n >= 30 && grenz[288].fehler.length === 0 && grenz[360].fehler.length === 0,
      'und mit Grenzwerten und langen Namen auch nicht, auf dem schmalsten Telefon wie auf einem gewöhnlichen',
      grenz[288].fehler.concat(grenz[360].fehler).slice(0, 3).join(' | ')
        || grenz[288].n + ' Teile, kleinste Schrift ' + Math.min(grenz[288].kleinste, grenz[360].kleinste) + ' px');

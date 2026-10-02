@@ -1128,6 +1128,13 @@ const _feed = JSON.parse(K.eval(`JSON.stringify((function(){
       // Spielfeld, Anzeigetafel, Wippe, Band oder Ergebniszeile. Jeder davon
       // zeigt alle vier mit Gesicht und den Stand.
       if(_newsSorte(s) === 'spiel'){
+        // Die Köpfe der gewöhnlichen Partie (.sp-fk) zeigen nicht immer vier
+        // Gesichter, die Namen stehen dann darunter (oben geprüft). Der Stand
+        // gehört aber in JEDE Grafik, als Paar aus Sieger- und Verlierertoren.
+        if(html.indexOf('class="sp-fk ') >= 0){
+          const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+          return html.indexOf('<em>' + hoch + '</em>:' + tief + '</b>') < 0;
+        }
         const gesichter = (html.match(/class="(rav zn|av)[ "]/g)||[]).length;
         const stand = html.indexOf('>' + m.score_a + '</em>') >= 0 && html.indexOf('>' + m.score_b + '</em>') >= 0
           || html.indexOf('>' + m.score_a + '</b>') >= 0 && html.indexOf('>' + m.score_b + '</b>') >= 0;
@@ -6254,13 +6261,19 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
   const FORM = {feld:'sp-feld', krimi:'sp-at', aussenseiter:'sp-wp', deutlich:'sp-vt', spitze:'sp-tb', rang:'sp-tb',
     serie:'sp-sl', riss:'sp-rk', teamserie:'sp-duo', wende:'sp-ku', duell:'sp-bg', medaille:'sp-md',
     premiere:'sp-pm', rolle:'sp-ro'};
+  // Die gewöhnliche Partie trägt eine der Formen [§C33]: die Klasse folgt der Wahl.
+  const FORMKL = {mosaik:'sp-mo', tacho:'sp-ta', streu:'sp-sd', transfer:'sp-et', chemie:'sp-ch', gegner:'sp-gg',
+    revanche:'sp-rv', gipfel:'sp-gp', rueckkehr:'sp-zu', gefaelle:'sp-gf', tagesring:'sp-tr', zaehlwerk:'sp-zw', feld:'sp-feld'};
   karten.forEach(s => {
     const d = s.dataRef, m = matches.find(x => x.id === d.matchId);
     if(!m) return;
     const a = _spAnlass(s);
     const html = _newsCardHtmlM2(s, false, false);
-    if(!a.key || html.indexOf('class="' + FORM[a.key]) < 0){ falsch.push(s.id + ' ohne Bild für ' + a.key); return; }
-    n++; formen[a.key] = (formen[a.key] || 0) + 1;
+    const form = a.key === 'feld' ? _spForm(m).key : null;
+    const kl = form ? FORMKL[form] : FORM[a.key];
+    if(!a.key || !kl || html.indexOf('class="' + kl) < 0 && html.indexOf('class="sp-fk ' + kl) < 0){
+      falsch.push(s.id + ' ohne Bild für ' + a.key + (form ? '/' + form : '')); return; }
+    n++; formen[form || a.key] = (formen[form || a.key] || 0) + 1;
     if(html.indexOf('class="sp-feld') >= 0) feldN++;
     if(a.key === 'medaille' && !/rare|legendary/.test(String((_newsSpielFakten(s).find(y => y.badgeId === a.x.badgeId) || {}).rarity)))
       falsch.push(s.id + ' Medaille für eine gewöhnliche Auszeichnung');
@@ -6270,7 +6283,7 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     const t = text(html);
     // Das Spielfeld: Abwehr A, Sturm B, Sturm A, Abwehr B, und je Stange
     // die Elo der Partie.
-    if(a.key === 'feld'){
+    if(form === 'feld'){
       const rolle = (id) => m[(m.a1 === id ? 'a1' : m.a2 === id ? 'a2' : m.b1 === id ? 'b1' : 'b2') + '_pos'];
       const def = ids => ids.find(id => rolle(id) === 'def') || ids[0];
       const atk = ids => ids.find(id => id !== def(ids));
@@ -6367,9 +6380,12 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     }
     // Was die Zeichnung zeigt, sagt der Satz nicht.
     const satz = (html.match(/class="nf-d">([\\s\\S]*?)<\\/div>/) || [,''])[1].replace(/<[^>]+>/g, '');
-    if((a.key === 'feld' || a.key === 'krimi' || a.key === 'aussenseiter') && /Siegchance lag/.test(satz))
-      falsch.push(s.id + ' Satz wiederholt die Siegchance');
-    if(a.key === 'feld' && /bringt der Sieg/.test(satz)) falsch.push(s.id + ' Satz wiederholt die Elo');
+    // Der allgemeine Satz aus Siegchance und Elo-Gewinn steht unter keiner
+    // Partie-Karte mehr: die Zeichnung zeigt das eine oder das andere, und
+    // derselbe Satz unter dreißig Karten sagt nichts [§C33]. Nur „Zwei Welten"
+    // nennt den Gewinn beider Sieger, weil seine Zeichnung die Elo VORHER zeigt.
+    if(/Siegchance lag/.test(satz)) falsch.push(s.id + ' Satz wiederholt die Siegchance');
+    if(form !== 'gefaelle' && /bringt der Sieg/.test(satz)) falsch.push(s.id + ' Satz wiederholt die Elo');
   });
   // Gestellt, weil das Fenster sie nicht trägt: der Spitzenwechsel und die
   // Auszeichnung einer Partie.
@@ -6408,15 +6424,101 @@ const _formMax = Math.max(0, ...Object.values(_bogen.formen));
 ok(_bogen.n > 0 && _bogen.falsch.length === 0,
    'jede Partie-Karte trägt Kopf und Fuß ihres Anlasses, die mit den Partien stimmen, und der Satz wiederholt sie nicht',
    _bogen.falsch.slice(0, 2).join(' | ') || _bogen.n + ' Karten');
-ok(_formZahl >= 6 && _formMax <= _bogen.n * 0.45,
-   'die Bilder der Partie-Karten sind verschieden: keine Form trägt die Hälfte',
+ok(_formZahl >= 10 && _formMax <= _bogen.n * 0.3,
+   'die Bilder der Partie-Karten sind verschieden: keine Form trägt ein Drittel',
    JSON.stringify(_bogen.formen));
-// Das Spielfeld steht nicht nur, wo sonst nichts ist: über einer Grafik
-// wechselt es sich mit der Ergebniszeile ab. Vorher trug ein Spieltag voller
-// Anlässe kein einziges.
-ok(_bogen.feldN >= _bogen.n * 0.4 && _bogen.feldN <= _bogen.n * 0.8,
-   'das Spielfeld steht auf mindestens zwei von fünf Partie-Karten, auch über einer Grafik',
-   _bogen.feldN + ' von ' + _bogen.n);
+// ── Die Formen der gewöhnlichen Partie über die ganze Liga [§C33] ────
+// Eine Partie ohne Anlass bekam immer dasselbe Spielfeld oder dieselbe
+// Ergebniszeile. Jetzt wählt `_spForm` aus dreizehn Formen. Geprüft wird
+// an jeder gewöhnlichen Partie der Ligageschichte: dass die Regel jeder
+// Form aus den rohen Partien stimmt, dass jede Zeichnung den Stand trägt,
+// dass die Formen wechseln und dass eine Karte ihre Form behält, wenn
+// danach weitergespielt wird.
+const _formen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
+  const gew = (pid, m) => (m.winner === 'A') === (m.a1 === pid || m.a2 === pid);
+  const dabei = (pid, m) => [m.a1, m.a2, m.b1, m.b2].includes(pid);
+  const sieger = m => (m.winner === 'A' ? [m.a1, m.a2] : [m.b1, m.b2]).slice().sort().join();
+  const verlierer = m => (m.winner === 'A' ? [m.b1, m.b2] : [m.a1, m.a2]).slice().sort().join();
+  const feld = reihe.filter(m => _spIstFeld(m));
+  const zahl = {}, falsch = [], ohneStand = [];
+  let folgeGleich = 0;
+  const spur = [];
+  feld.forEach(m => {
+    const w = _spForm(m), x = w.x, i = reihe.indexOf(m), vor = reihe.slice(0, i + 1);
+    const hoch = Math.max(m.score_a, m.score_b), tief = Math.min(m.score_a, m.score_b);
+    zahl[w.key] = (zahl[w.key] || 0) + 1;
+    // Zweimal hintereinander darf nur das Spielfeld stehen, und nur, wenn
+    // sonst keine Form auf die Partie passt.
+    if(spur.length && spur[spur.length - 1] === w.key && _spFormKand(m).length > 1) folgeGleich++;
+    spur.push(w.key);
+    const html = _spFormBild(m).html;
+    // Das Spielfeld zeigt den Stand in Spielrichtung, den Sieger hell (_spStand).
+    const stand = w.key === 'feld' ? _spStand({sa:m.score_a, sb:m.score_b, aw:m.winner === 'A'}) : '<em>' + hoch + '</em>:' + tief + '</b>';
+    if(html.indexOf(stand) < 0) ohneStand.push(m.id + '/' + w.key);
+    // Alle vier Namen stehen da, in der Zeichnung oder darunter.
+    const pm = pmap();
+    if([m.a1, m.a2, m.b1, m.b2].some(id => html.indexOf(esc(pm[id].name)) < 0)) ohneStand.push(m.id + '/' + w.key + ' ohne alle Namen');
+    // Der Satz wiederholt nicht, was die Zeichnung zeigt: keine Siegchance
+    // vor dem Anstoß, kein Elo-Gewinn — außer bei Zwei Welten, deren
+    // Zeichnung die Elo VORHER zeigt.
+    const satz = (_spFormText(m) || {}).d || '';
+    if(/Siegchance/.test(satz) || (w.key !== 'gefaelle' && /bringt der Sieg/.test(satz))) falsch.push(m.id + ' Satz wiederholt ' + w.key);
+    if(w.key === 'mosaik' && !(hoch === 10 && hoch - tief >= 2 && hoch - tief <= 3)) falsch.push(m.id + ' Mosaik ' + hoch + ':' + tief);
+    if(w.key === 'tacho' && !(_spChance(m) >= 0.62 && hoch - tief < 6)) falsch.push(m.id + ' Tacho');
+    if(w.key === 'zaehlwerk'){
+      if(!x.wer){ if(x.wert !== i + 1 || x.wert % 100) falsch.push(m.id + ' Zählwerk Liga ' + x.wert); }
+      else {
+        const eig = vor.filter(y => dabei(x.wer, y)), n = x.sieg ? eig.filter(y => gew(x.wer, y)).length : eig.length;
+        if(n !== x.wert || x.wert % 50 || (x.sieg && !gew(x.wer, m))) falsch.push(m.id + ' Zählwerk ' + n + ' statt ' + x.wert);
+      }
+    }
+    if(w.key === 'revanche'){
+      const z = vor.slice(0, -1).filter(y => [sieger(y), verlierer(y)].sort().join('|') === [sieger(m), verlierer(m)].sort().join('|')).pop();
+      if(!z || sieger(z) !== verlierer(m)) falsch.push(m.id + ' Revanche');
+      const seit = _spSeit(mts(m) - mts(z || m));
+      if(z && _spRevancheBild(SP_FORM.revanche.daten(_spFakten(m), x)).indexOf('nach ' + seit.n + ' ' + seit.e) < 0) falsch.push(m.id + ' Revanche ohne Abstand');
+    }
+    if(w.key === 'gipfel'){
+      const r = getRankSnapshots()[m.id], pre = [m.a1, m.a2, m.b1, m.b2].map(id => r && r.preRank[id]);
+      if(!pre.includes(1) || !pre.includes(2)) falsch.push(m.id + ' Gipfel ohne 1 und 2');
+    }
+    if(w.key === 'rueckkehr'){
+      const eig = vor.filter(y => dabei(x.id, y)), v = eig[eig.length - 2];
+      if(!gew(x.id, m) || !v || (mts(m) - mts(v)) / 86400000 < 10) falsch.push(m.id + ' Rückkehr');
+    }
+    if(w.key === 'tagesring'){
+      const tag = vor.filter(y => tagKey(y.created_at) === tagKey(m.created_at) && dabei(x.id, y));
+      if(tag.length < 4 || tag.filter(y => gew(x.id, y)).length / tag.length < 0.75 || !gew(x.id, m)) falsch.push(m.id + ' Tagesring');
+    }
+  });
+  // Was einmal dasteht, bleibt stehen: dieselbe Partie, nur ohne alles,
+  // was danach gespielt wurde, ergibt dieselbe Form und dieselbe Zeile.
+  const alle = matches, stich = feld.filter((m, k) => k % Math.max(1, Math.floor(feld.length / 10)) === 3).slice(0, 10);
+  const wackelt = [];
+  const voll = stich.map(m => ({id:m.id, k:_spForm(m).key, t:(_spFormText(m) || {}).t}));
+  stich.forEach((m, k) => {
+    matches = alle.filter(y => mts(y) <= mts(m)); invalidateCache();
+    const mm = matches.find(y => y.id === m.id), jetzt = {k:_spForm(mm).key, t:(_spFormText(mm) || {}).t};
+    if(jetzt.k !== voll[k].k || jetzt.t !== voll[k].t) wackelt.push(m.id + ' ' + voll[k].k + '→' + jetzt.k);
+  });
+  matches = alle; invalidateCache();
+  return {n:feld.length, zahl, falsch, ohneStand, folgeGleich, wackelt, stich:stich.length};
+})())`));
+const _formWerte = Object.values(_formen.zahl);
+ok(_formen.n > 50 && !_formen.falsch.length,
+   'jede Form der gewöhnlichen Partie stimmt mit den rohen Partien, und ihr Satz wiederholt nicht die Zeichnung',
+   _formen.falsch.slice(0, 3).join(' | ') || _formen.n + ' Partien');
+ok(_formen.ohneStand.length === 0,
+   'jede Form trägt den Stand der Partie und alle vier Namen, den Sieger zuerst',
+   _formen.ohneStand.slice(0, 4).join(', ') || 'alle');
+ok(Object.keys(_formen.zahl).length === 13 && Math.max(..._formWerte) <= _formen.n * 0.25
+   && (_formen.zahl.feld || 0) <= _formen.n * 0.15 && _formen.folgeGleich === 0,
+   'die Formen wechseln: alle dreizehn kommen vor, keine trägt ein Viertel, das Spielfeld ist selten, keine zweimal hintereinander, wo eine andere passt',
+   JSON.stringify(_formen.zahl) + ' · gleich hintereinander ' + _formen.folgeGleich);
+ok(_formen.stich >= 8 && !_formen.wackelt.length,
+   'eine Partie behält Form und Schlagzeile, wenn danach weitergespielt wird',
+   _formen.wackelt.join(', ') || _formen.stich + ' Stichproben');
 ok(_bogen.rolle.n >= 3 && !_bogen.rolle.falsch.length,
    'der Rollentausch ist ein Sieg auf einer Seite, die vorher unter einem Viertel der eigenen Partien lag',
    _bogen.rolle.n + ' Fundstellen, falsch: ' + _bogen.rolle.falsch.slice(0, 3));
