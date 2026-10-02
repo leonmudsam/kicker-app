@@ -6634,6 +6634,40 @@ ok(_rvBd.rv > 0 && _rvBd.bd > 0 && _rvBd.falsch.length === 0,
    'das Blatt einer Rivalität zählt Duelle und Bilanz bis zu ihrer Partie, das einer Auszeichnung zeigt jeden Träger der Liga',
    _rvBd.falsch.slice(0, 3).join(' | ') || _rvBd.rv + ' Rivalitäten, ' + _rvBd.bd + ' Auszeichnungen');
 
+// ── Spieler des Tages, Woche, Endspurt, Runde [§C33] ────────────────
+// Das Feld des Tages aus den rohen Partien: jeder, der an dem Tag spielte,
+// mit Siegen von Partien. Die Woche zeigt jede Wertung mit Gesicht und Zahl,
+// ohne den Satz darunter; der Endspurt seine Tage und den Abstand; die Runde
+// keine Legende, die ihre Zeichnung erklärt.
+const _blk5 = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories(), falsch = [], n = {potd:0, woche:0, end:0, runde:0};
+  roh.filter(s => (s.dataRef||{}).type === 'potd').forEach(s => {
+    const d = s.dataRef, b = _newsDetailBody(s); n.potd++;
+    const tag = matches.filter(y => tagKey(y.created_at) === d.dayKey), z = {};
+    tag.forEach(y => [y.a1, y.a2, y.b1, y.b2].forEach(id => { z[id] = z[id] || [0, 0]; z[id][1]++;
+      if((y.winner === 'A') === [y.a1, y.a2].includes(id)) z[id][0]++; }));
+    const ist = [...b.matchAll(/class="nd-bk-z[^"]*" data-pid="([^"]+)"[\\s\\S]*?<b class="num">(\\d+) von (\\d+)<\\/b>/g)];
+    if(ist.length !== Object.keys(z).length || ist.some(x => !z[x[1]] || z[x[1]][0] !== +x[2] || z[x[1]][1] !== +x[3])) falsch.push(s.id + ' Feld');
+    if(b.indexOf('nd-buehne') < 0 || b.indexOf('Siegquote</span>') >= 0) falsch.push(s.id + ' Bühne');
+  });
+  roh.filter(s => (s.dataRef||{}).type === 'woche').forEach(s => {
+    const d = s.dataRef, b = _newsDetailBody(s); n.woche++;
+    const z = (b.match(/class="nd-wo-z/g) || []).length;
+    if(z !== (d.teile || []).length || b.indexOf('nw-satz') >= 0) falsch.push(s.id + ' Woche');
+    (d.teile || []).forEach(t => { if(t.wert && b.indexOf(esc(t.wert)) < 0) falsch.push(s.id + ' ohne ' + t.label); });
+  });
+  roh.filter(s => (s.dataRef||{}).type === 'season_endgame').forEach(s => {
+    const d = s.dataRef, b = _newsDetailBody(s); n.end++;
+    if(b.indexOf('<b class="num">' + d.daysLeft + '</b>') < 0 || b.indexOf(d.gap + ' Elo') < 0) falsch.push(s.id + ' Endspurt');
+  });
+  roh.filter(s => (s.dataRef||{}).type === 'runde').forEach(s => { n.runde++;
+    if(_newsRundeBlatt(s).indexOf('steht für') >= 0) falsch.push(s.id + ' Legende'); });
+  return {n, falsch};
+})())`));
+ok(_blk5.n.potd > 0 && _blk5.n.woche > 0 && _blk5.n.end > 0 && _blk5.n.runde > 0 && _blk5.falsch.length === 0,
+   'Spieler des Tages mit dem Feld des Tages aus den rohen Partien, die Woche mit Gesichtern ohne Satz, der Endspurt mit Tagen und Abstand, die Runde ohne Legende',
+   _blk5.falsch.slice(0, 3).join(' | ') || JSON.stringify(_blk5.n));
+
 // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
 // Eine Runde ist ein Block von Partien ohne Pause über dreißig Minuten, in
 // dem nur dieselben vier gespielt haben, mindestens dreimal. Sie ist eine
