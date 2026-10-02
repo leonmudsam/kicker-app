@@ -1384,9 +1384,10 @@ function _newsRundeBlatt(s){
         const w = _spGew(m, id), r = rolle(m, id);
         return `<span class="sp-rm-z ${w ? 'w' : 'l'}">${r === 'def' ? 'A' : r === 'atk' ? 'S' : ''}</span>`;
       }).join('')}`).join('') + `</div>`).join('');
-  // Die Zeilen tragen Gesichter; wer welches ist, sagt die Textstelle darunter.
-  const legende = _spUnter(`Von oben nach unten: ${_spUnd(ids)}. S steht für Sturm, A für Abwehr, grün für gewonnen, rot für verloren.`);
+  // Die Zeilen stehen in derselben Folge wie die Tabelle darüber, mit
+  // Gesicht. Eine Legende („Von oben nach unten: … S steht für Sturm, A für
+  // Abwehr, grün für gewonnen …") erklärte die Zeichnung, statt sie zu zeigen.
   return `<div class="nd-section">Die Tabelle der Runde</div>${_spRundeTafel(d.spieler)}`
-    + `<div class="nd-section">Wer mit wem</div><div class="sp-rms">${matrix}</div>${legende}`
+    + `<div class="nd-section">Wer mit wem</div><div class="sp-rms">${matrix}</div>`
     + `<div class="nd-section">Die Partien</div><div class="sp-rd-ps nd-rd">${(d.matchIds || []).map((mid, i) => _spRundeZeile(mid, i, true)).join('')}</div>`;
 }

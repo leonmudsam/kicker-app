@@ -997,12 +997,73 @@ function _ndRekordBlatt(s){
     + (def ? `<button class="btn ghost sm" data-chron="${esc(def.id)}" style="margin-top:12px;width:100%">Rekord öffnen</button>` : '')};
 }
 
-// Welche Story ein eigenes Blatt mit Bühne hat.// Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
+// ── Der Spieler des Tages [§C33] ────────────────────────────────────
+// Unter dem Wappen standen zwei Kacheln „67 %" und „6 : 3", die der Satz
+// darüber schon nennt. Die Bühne trägt jetzt Krone, Wappen und die Elo des
+// Tages als Kurve über der Bahn; darunter das Feld des Tages — jeder, der
+// gespielt hat, nach Siegen — und seine Partien.
+function _ndPotdBlatt(s){
+  const d = s.dataRef || {}, pm = pmap();
+  const pids = ((Array.isArray(d.playerIds) && d.playerIds.length) ? d.playerIds : [d.playerId]).filter(id => pm[id]);
+  if(!pids.length || !d.dayKey) return null;
+  const pid = pids[0];
+  let kurve = '';
+  try { kurve = _spTagBild(_spTagDaten(Object.assign({}, s, {dataRef:Object.assign({}, d, {playerId:pid})}))); } catch(e){}
+  const kopf = `<div class="nd-buehne nd-pt"><div class="nd-pt-k"><span class="nd-pt-kr">${svgI('crown')}</span>`
+    + pids.slice(0, 3).map(id => `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:72, feuer:0})}</span>`).join('')
+    + `</div><b class="nd-pt-n">${esc(_namenListe(pids.map(_spName)))}</b>${kurve}</div>`;
+  const tag = (_spFormBasis().tage.get(d.dayKey) || []);
+  const feld = {};
+  tag.forEach(y => [y.a1, y.a2, y.b1, y.b2].forEach(id => { if(!pm[id]) return; feld[id] = feld[id] || {s:0, n:0}; feld[id].n++; if(_spGew(y, id)) feld[id].s++; }));
+  const ids = Object.keys(feld).sort((a, b) => feld[b].s - feld[a].s || feld[b].s / feld[b].n - feld[a].s / feld[a].n);
+  const max = Math.max(1, ...ids.map(id => feld[id].n));
+  const balken = ids.length > 1 ? `<div class="nd-bk nd-ft">${ids.map((id, k) => `<div class="nd-bk-z${pids.includes(id) ? ' hell' : ''}" data-pid="${esc(id)}" style="--k:${k}">${_spChip(id)}`
+    + `<span class="nd-bk-n">${esc(_spName(id))}</span><span class="nd-bk-b"><i style="width:${Math.round(feld[id].n / max * 100)}%"><u style="width:${Math.round(feld[id].s / feld[id].n * 100)}%"></u></i></span>`
+    + `<b class="num">${feld[id].s} von ${feld[id].n}</b></div>`).join('')}</div>` : '';
+  const liste = _newsTagPartien(d.dayKey, pids);
+  const bahn = _ndTagesbahn(pids, liste);
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  return {kopf, mitte:ab('Das Feld des Tages', balken) + ab(pids.length > 1 ? 'Der Tag der Tagessieger' : 'Der Tag in Partien', bahn)};
+}
+
+// ── Der Endspurt der Saison [§C33] ──────────────────────────────────
+// Zwei Buchstaben-Kreise mit „11 Elo Diff" dazwischen und darunter
+// „Verbleibend 6 Tage" als Zeile. Die Bühne zeigt die verbleibenden Tage als
+// Ring, die beiden mit Wappen und Elo und den Abstand als Balken; darunter
+// der Abstand Tag für Tag.
+function _ndEndspurtBlatt(s){
+  const d = s.dataRef || {}, pm = pmap(), a = d.leader, b = d.second;
+  if(!a || !b || !pm[a.pid] || !pm[b.pid]) return null;
+  let h = null; try { h = getSeasonPositionHistory(d.sid); } catch(e){}
+  const tage = (h && (h.totalDays || (h.eloByDay && h.eloByDay[a.pid] || []).length)) || 31;
+  const zeile = (x, k) => `<div class="nd-es-z" data-pid="${esc(x.pid)}"><span class="nd-es-r num">${k}.</span>${avHtml(pm[x.pid], '', {ins:true, px:48, feuer:0})}`
+    + `<b>${esc(_spName(x.pid))}</b><span class="num">${_spZahl(x.elo)} Elo</span></div>`;
+  const kopf = `<div class="nd-buehne nd-es"><div class="nd-es-ring"><svg viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34" class="g"/>`
+    + `<circle cx="40" cy="40" r="34" class="f" pathLength="1" style="stroke-dasharray:${Math.max(0, Math.min(1, 1 - d.daysLeft / tage)).toFixed(3)} 1"/></svg>`
+    + `<b class="num">${d.daysLeft}</b><span>${d.daysLeft === 1 ? 'Tag' : 'Tage'}</span></div>`
+    + `<div class="nd-es-r2">${zeile(a, 1)}<div class="nd-es-gap"><span><i style="width:${Math.min(100, d.gap / 100 * 100).toFixed(0)}%"></i></span><b class="num">${_spZahl(d.gap)} Elo</b></div>${zeile(b, 2)}</div></div>`;
+  let linie = '';
+  try {
+    const ea = (h.eloByDay || {})[a.pid] || [], eb = (h.eloByDay || {})[b.pid] || [];
+    const v = ea.map((x, i) => x != null && eb[i] != null ? x - eb[i] : null).filter(x => x != null);
+    if(v.length >= 3){
+      const lo = Math.min(...v, 0), hi = Math.max(...v, 0), W = 300, H = 90;
+      const X = i => 4 + i / Math.max(1, v.length - 1) * (W - 8), Y = x => 8 + (1 - (x - lo) / Math.max(1, hi - lo)) * (H - 16);
+      linie = `<div class="nd-li"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><line class="nd-li-0" x1="0" x2="${W}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}"/>`
+        + `<polyline points="${v.map((x, i) => X(i).toFixed(1) + ',' + Y(x).toFixed(1)).join(' ')}"/><circle cx="${X(v.length - 1).toFixed(1)}" cy="${Y(v[v.length - 1]).toFixed(1)}" r="3.5"/></svg>`
+        + `<span class="nd-li-o">${esc(_spName(a.pid))} vorn</span><span class="nd-li-u">${esc(_spName(b.pid))} vorn</span></div>`;
+    }
+  } catch(e){}
+  return {kopf, mitte:linie ? `<div class="nd-section">Der Abstand Tag für Tag</div>${linie}` : ''};
+}
+
+// Welche Story ein eigenes Blatt mit Bühne hat.// Welche Story ein eigenes Blatt mit Bühne hat.// Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
 // demselben Aufruf, gemerkt je Story, damit nichts doppelt gerechnet wird.
 const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_streak:_ndSerieBlatt,
   team_loss_streak:_ndSerieBlatt, streak_killer:_ndSerieBlatt, rivalry:_ndRivalBlatt,
   rivalry_milestone:_ndRivalBlatt, badge_unlocked:_ndBadgeBlatt,
-  rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt};
+  rekord_erstmals:_ndRekordBlatt, rekord_gesteigert:_ndRekordBlatt, rekord_geholt:_ndRekordBlatt,
+  potd:_ndPotdBlatt, season_endgame:_ndEndspurtBlatt};
 // Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
 // hängend hielte es nach einer neuen Partie den alten Stand fest.
 let _ndBlattJetzt = null;
@@ -1401,21 +1462,19 @@ function _newsDetailMitte(s){
         const kopf = nennt ? '' : `<div class="nd-stat-row">
             <div class="nd-stat-label">Partien in dieser Woche</div>
             <div class="nd-stat-val acid">${esc(kopfWert)}</div></div>`;
+        // Jede Wertung als Zeile: Gesicht, Name, Wertung und Zahl. Darunter
+        // stand je ein Satz („Julian hat in dieser Woche 101 Elo gutgemacht.
+        // Das ist der größte Anstieg der Liga."), der Zahl und Wertung daneben
+        // ein zweites Mal sagte, und die Namen standen als Pillen ohne Gesicht.
         const zeilen = teile.map(t => {
-          const ids = Array.isArray(t.pids) ? t.pids : [];
-          const chips = ids.slice(0, 2).map(pid =>
-            `<span class="nw-chip" data-pid="${esc(pid)}">${esc(nameOf(pid))}</span>`).join('');
-          return `<div class="nw-zeile">
-              <div class="nw-zeile-kopf">
-                <span class="nw-label">${esc(t.label || '')}</span>
-                <span class="nw-wert">${esc(t.wert || '')}</span>
-              </div>
-              ${_ndNeu(t.satz) ? `<div class="nw-satz">${esc(t.satz)}</div>` : ''}
-              <div class="nw-chips">${chips}</div>
-            </div>`;
+          const ids = (Array.isArray(t.pids) ? t.pids : []).filter(pid => pm[pid]).slice(0, 2);
+          return `<div class="nd-wo-z${t.held ? ' gold' : ''}"${ids[0] ? ` data-pid="${esc(ids[0])}"` : ''}>
+              <span class="sp-chips">${ids.map(_spChip).join('')}</span>
+              <span class="nd-wo-t"><b>${esc(_namenListe(ids.map(nameOf)))}</b><small>${esc(t.label || '')}</small></span>
+              <b class="nd-wo-w num">${esc(t.wert || '')}</b></div>`;
         }).join('');
         return `<div class="nd-section">Die Woche</div>${kopf}
-          <div class="nw-liste">${zeilen}</div>`;
+          <div class="nd-wo">${zeilen}</div>`;
       }
       // ── Die Sammelkarte: was im selben Moment passiert ist ───────────
       // Der Kopf fasst zusammen. Darunter stehen alle Teile gleichrangig;
@@ -1894,15 +1953,17 @@ function _newsDetailMitte(s){
       // sind die Bauteile, die die App dafuer schon hat [§C27].
       case 'season_start': {
         const pA = d.leader, pB = d.second;
+        // Wappen wie überall [§C27]: dort standen zwei Buchstaben-Kreise.
+        const avW = pid => pm[pid] ? avHtml(pm[pid], '', {ins:true, px:56, feuer:0}) : '';
         const vs = (pA && pB) ? `<div class="nd-vs">
             <div class="nd-vs-p" data-pid="${esc(pA.pid)}">
-              ${avM(pA.pid)}
+              ${avW(pA.pid)}
               <div class="nd-vs-name">${esc(nameOf(pA.pid))}</div>
               <div class="nd-vs-elo">${pA.elo} Elo</div>
             </div>
             <div class="nd-vs-mid">${d.gap}<div class="nd-vs-mid-sub">Elo Diff</div></div>
             <div class="nd-vs-p" data-pid="${esc(pB.pid)}">
-              ${avM(pB.pid)}
+              ${avW(pB.pid)}
               <div class="nd-vs-name">${esc(nameOf(pB.pid))}</div>
               <div class="nd-vs-elo">${pB.elo} Elo</div>
             </div>
