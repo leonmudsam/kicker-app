@@ -256,7 +256,7 @@ function _newsBlattKopf(s){
   // Partie", während die Karte darüber Spielfeld, Mosaik oder Revanche trug:
   // wer sie öffnete, verlor das Bild, wegen dem er getippt hatte.
   if(d.matchId && (d.type === 'spiel' || (d.type === 'sammel' && _newsSorte(s) === 'spiel'))){ const b = _ndBuehne(s); if(b) return b; }
-  if(_ND_SERIE[d.type]){ try { const x = _ndSerieBlatt(s); if(x) return x.kopf; } catch(e){} }
+  { const x = _ndEigenesBlatt(s); if(x) return x.kopf; }
   if(!ids.length) return erg;
   // Ein Duo hat keinen Rang [§C27] — zwei Wappen, zwei Namen, keine Zeile
   // darunter, die es fuer beide gaebe.
@@ -552,6 +552,7 @@ function _newsDetailBody(s){
   // unten steht: sonst nannte er „Reif · 168 Prestige" und der Block darunter
   // sagte dasselbe noch einmal, mit Bild.
   _ndKopfMatch = d.matchId || null;
+  _ndBlattJetzt = null;
   _ndOben = _ndNormal((s.title || '') + ' ' + (s.desc || ''));
   let mitte = '';
   try { mitte = _newsDetailMitte(s) || ''; } catch(e){ mitte = ''; }
@@ -872,6 +873,91 @@ function _ndSerieBlatt(s){
       + ab('Die nächste Partie', _ndWieWeiter(pid, partner, m))};
 }
 
+// ── Das Blatt einer Rivalität [§C33] ────────────────────────────────
+// Es zeigte zwei Gesichter mit „55 Siege" darunter und das Jubiläumsduell
+// als Band; wie es zu der Bilanz kam, stand nirgends. Die Bühne trägt jetzt
+// beide und die Zahl der Duelle, darunter das Tauziehen der Bilanz, dann
+// den Verlauf, die letzten dreißig und die deutlichsten auf jeder Seite.
+// Gezählt wird bis zur Partie der Karte.
+function _ndRivalBlatt(s){
+  const d = s.dataRef || {}, a = d.a, b = d.b, pm = pmap();
+  if(!a || !b || !pm[a] || !pm[b]) return null;
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  let l = _spEigene(a, m || undefined).filter(y => [y.a1, y.a2, y.b1, y.b2].includes(b) && _spSeite(y, a) !== _spSeite(y, b));
+  if(!m) l = matchesOfPlayer(a, matches).filter(y => [y.a1, y.a2, y.b1, y.b2].includes(b) && _spSeite(y, a) !== _spSeite(y, b));
+  if(!l.length) return null;
+  const f = l.map(y => _spGew(y, a)), sa = f.filter(Boolean).length, n = l.length;
+  const seite = id => `<div class="nd-rv-p" data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:64, feuer:0})}<b>${esc(_spName(id))}</b></div>`;
+  const kopf = `<div class="nd-buehne nd-rv">${seite(a)}<div class="nd-rv-m"><b class="num">${_spZahl(n)}</b><span>Duelle</span></div>${seite(b)}`
+    + `<div class="nd-rv-tau"><b class="num">${_spZahl(sa)}</b><span class="nd-rv-tb"><i style="width:${(sa / n * 100).toFixed(1)}%"></i></span><b class="num">${_spZahl(n - sa)}</b></div></div>`;
+  // Der Verlauf: jede Begegnung schiebt die Linie, über der Null führt a.
+  let k = 0;
+  const v = [0].concat(f.map(w => (k += w ? 1 : -1)));
+  const lo = Math.min(...v, 0), hi = Math.max(...v, 0), W = 300, H = 96;
+  const X = i => 4 + i / Math.max(1, v.length - 1) * (W - 8), Y = x => 8 + (1 - (x - lo) / Math.max(1, hi - lo)) * (H - 16);
+  const linie = `<div class="nd-li"><svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><line class="nd-li-0" x1="0" x2="${W}" y1="${Y(0).toFixed(1)}" y2="${Y(0).toFixed(1)}"/>`
+    + `<polyline points="${v.map((x, i) => X(i).toFixed(1) + ',' + Y(x).toFixed(1)).join(' ')}"/>`
+    + `<circle cx="${X(v.length - 1).toFixed(1)}" cy="${Y(v[v.length - 1]).toFixed(1)}" r="3.5"/></svg>`
+    + `<span class="nd-li-o">${esc(_spName(a))} vorn</span><span class="nd-li-u">${esc(_spName(b))} vorn</span></div>`;
+  const letzte = f.slice(-30);
+  const lauf = `<div class="nd-lf gross">${letzte.map((w, j) => `<i class="${w ? 'w' : 'l'}${j === letzte.length - 1 && m ? ' dies' : ''}"></i>`).join('')}</div>`;
+  const deutlich = w => l.filter(y => _spGew(y, a) === w).sort((p, q) => Math.abs(q.score_a - q.score_b) - Math.abs(p.score_a - p.score_b))[0];
+  const dl = [deutlich(true), deutlich(false)].filter(Boolean);
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  return {kopf, mitte:(m ? ab('Das ' + n + '. Duell', _ndPartieListe([m], a)) : '')
+    + ab('Wer wann vorn lag', n >= 3 ? linie : '')
+    + ab(letzte.length < n ? 'Die letzten ' + letzte.length : 'Jedes Duell', lauf)
+    + ab('Die deutlichsten', dl.length ? _ndPartieListe(dl, a) : '')};
+}
+
+// ── Das Blatt einer Auszeichnung [§C33] ─────────────────────────────
+// Das Medaillon stand unter einem Band der Partie und dem Wappen, darunter
+// „Elo aus dieser Partie" — eine Zahl, die mit der Auszeichnung nichts zu tun
+// hat. Jetzt steht das Medaillon mit den Gesichtern als Bühne, darunter die
+// Partie, in der sie geholt wurde, und jeder Spieler der Liga als Feld: hell,
+// wer sie trägt. Die Zahl der Halter steht damit gezeichnet und nicht
+// zusätzlich als Satz im Medaillon.
+function _ndBadgeBlatt(s){
+  const d = s.dataRef || {}, pm = pmap();
+  const pids = ((Array.isArray(d.playerIds) && d.playerIds.length) ? d.playerIds : [d.playerId]).filter(id => pm[id]);
+  if(!pids.length || !d.badgeId) return null;
+  const bdef = (typeof BADGES !== 'undefined') ? BADGES.find(b => b.id === d.badgeId) : null;
+  const medaille = _newsMedaillon(s.ic || (bdef && bdef.ic) || 'medal', d.rarity,
+    d.badgeName || (bdef && bdef.name) || '', bdef ? bdef.desc : '', null);
+  const kopf = `<div class="nd-buehne nd-bd">${medaille}<div class="nd-bd-w">${pids.slice(0, 4).map(id =>
+    `<span data-pid="${esc(id)}">${avHtml(pm[id], '', {ins:true, px:52, feuer:0})}<b>${esc(_spName(id))}</b></span>`).join('')}</div></div>`;
+  const m = d.matchId ? (matches || []).find(x => x.id === d.matchId) : null;
+  const alle = Object.keys(pm).filter(id => !pm[id].hidden);
+  const hat = id => (getCachedBadges(id) || []).some(b => b.id === d.badgeId);
+  const traeger = alle.filter(hat).length;
+  const feld = `<div class="nd-tg">${alle.sort((x, y) => hat(y) - hat(x)).map((id, k) => `<span class="${hat(id) ? 'hat' : ''}${pids.includes(id) ? ' dies' : ''}" data-pid="${esc(id)}" style="--k:${k}">`
+    + `${_spChip(id)}<small>${esc(_spName(id))}</small></span>`).join('')}</div>`;
+  const nem = d.nemesisOppId && pm[d.nemesisOppId] && _ndNormal(_ndOben).indexOf(_ndNormal(_spName(d.nemesisOppId))) < 0
+    ? `<div class="nd-stat-row" data-pid="${esc(d.nemesisOppId)}" style="cursor:pointer"><div class="nd-stat-label">Gegen wen</div>`
+      + `<div class="nd-stat-val neg">${esc(_spName(d.nemesisOppId))} ›</div></div>` : '';
+  const ab = (t, html) => html ? `<div class="nd-section">${esc(t)}</div>${html}` : '';
+  return {kopf, mitte:ab('Geholt in dieser Partie', m ? _ndPartieListe([m], pids[0]) : '') + nem
+    + ab(traeger === 1 ? 'Nur einer trägt sie' : traeger + ' von ' + alle.length + ' tragen sie', traeger ? feld : '')};
+}
+
+// Welche Story ein eigenes Blatt mit Bühne hat. Kopf und Mitte kommen aus
+// demselben Aufruf, gemerkt je Story, damit nichts doppelt gerechnet wird.
+const _ND_BLATT = {win_streak:_ndSerieBlatt, loss_streak:_ndSerieBlatt, team_streak:_ndSerieBlatt,
+  team_loss_streak:_ndSerieBlatt, streak_killer:_ndSerieBlatt, rivalry:_ndRivalBlatt,
+  rivalry_milestone:_ndRivalBlatt, badge_unlocked:_ndBadgeBlatt};
+// Gemerkt nur für einen Aufbau (`_newsDetailBody` leert es): an der Story
+// hängend hielte es nach einer neuen Partie den alten Stand fest.
+let _ndBlattJetzt = null;
+function _ndEigenesBlatt(s){
+  const f = _ND_BLATT[(s.dataRef || {}).type];
+  if(!f) return null;
+  if(_ndBlattJetzt && _ndBlattJetzt.s === s) return _ndBlattJetzt.x;
+  let x = null;
+  try { x = f(s); } catch(e){ x = null; }
+  _ndBlattJetzt = {s, x};
+  return x;
+}
+
 // ── Was unter der Bühne einer Partie steht [§C33] ──────────────────
 // Zeichnungen in fester Folge, jede nur, wo die Bühne sie nicht schon zeigt:
 // die Aufstellung, die Siegchance auf ihrer Skala, die Elo-Wirkung je
@@ -908,10 +994,9 @@ function _ndPartieAbschnitte(s){
     + ab('Die direkten Duelle', duelle) + ab('Der Tag', tag) + ab('Wie oft es so ausgeht', vert);
 }
 
-const _ND_SERIE = {win_streak:1, loss_streak:1, team_streak:1, team_loss_streak:1, streak_killer:1};
 function _newsDetailMitte(s){
   const d = s.dataRef || {};
-  if(_ND_SERIE[d.type]){ try { const x = _ndSerieBlatt(s); if(x) return x.mitte; } catch(e){} }
+  { const x = _ndEigenesBlatt(s); if(x) return x.mitte; }
   const pm = pmap();
   const avM = (pid) => (typeof avHtml === 'function' && pm[pid]) ? avHtml(pm[pid]) : '';
   const nameOf = (pid) => (pm[pid] && pm[pid].name) || '?';

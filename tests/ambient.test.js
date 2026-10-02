@@ -6575,6 +6575,39 @@ ok(_serBlatt.n >= 10 && _serBlatt.typen === 5 && _serBlatt.falsch.length === 0,
    'das Blatt einer Serie zeigt jede Partie des Laufs, aus den rohen Partien nachgerechnet',
    _serBlatt.falsch.slice(0, 3).join(' | ') || _serBlatt.n + ' Serienblätter aus ' + _serBlatt.typen + ' Typen');
 
+// ── Das Blatt einer Rivalität und einer Auszeichnung [§C33] ─────────
+// Die Rivalität zählt ihre Duelle und die Bilanz bis zur Partie der Karte,
+// nachgerechnet aus den rohen Partien; die Auszeichnung zeigt jeden Spieler
+// der Liga als Feld, hell, wer sie trägt, und gerahmt, wer sie hier geholt hat.
+const _rvBd = JSON.parse(K.eval(`JSON.stringify((function(){
+  const roh = _buildStories(), falsch = [];
+  let rv = 0, bd = 0;
+  roh.filter(s => /^rivalry/.test((s.dataRef||{}).type || '')).forEach(s => {
+    const d = s.dataRef, m = d.matchId ? matches.find(x => x.id === d.matchId) : null;
+    const html = _newsDetailBody(s); rv++;
+    const l = [...matches].sort((x, y) => mts(x) - mts(y)).filter(y => (!m || mts(y) <= mts(m))
+      && (([y.a1, y.a2].includes(d.a) && [y.b1, y.b2].includes(d.b)) || ([y.b1, y.b2].includes(d.a) && [y.a1, y.a2].includes(d.b))));
+    const sa = l.filter(y => (y.winner === 'A') === [y.a1, y.a2].includes(d.a)).length;
+    const tau = (html.match(/class="nd-rv-tau"><b class="num">(\\d+)<\\/b>[\\s\\S]*?<b class="num">(\\d+)<\\/b>/) || []).slice(1).map(Number);
+    const n = +(html.match(/class="nd-rv-m"><b class="num">(\\d+)</) || [])[1];
+    if(n !== l.length || tau[0] !== sa || tau[1] !== l.length - sa) falsch.push(s.id + ' ' + n + ' ' + tau + ' statt ' + l.length + ' ' + sa);
+  });
+  roh.filter(s => (s.dataRef||{}).type === 'badge_unlocked').forEach(s => {
+    const d = s.dataRef, html = _newsDetailBody(s); bd++;
+    const ids = Object.keys(pmap()).filter(id => !pmap()[id].hidden);
+    const hat = ids.filter(id => (getCachedBadges(id) || []).some(b => b.id === d.badgeId));
+    const felder = [...html.matchAll(/<span class="(hat)?( dies)?" data-pid="([^"]+)"/g)];
+    const pids = (d.playerIds && d.playerIds.length) ? d.playerIds : [d.playerId];
+    if(felder.length !== ids.length || felder.filter(f => f[1]).length !== hat.length
+      || felder.some(f => !!f[1] !== hat.includes(f[3]) || !!f[2] !== pids.includes(f[3])) || html.indexOf('Elo aus dieser Partie') >= 0)
+      falsch.push(s.id + ' Träger');
+  });
+  return {rv, bd, falsch};
+})())`));
+ok(_rvBd.rv > 0 && _rvBd.bd > 0 && _rvBd.falsch.length === 0,
+   'das Blatt einer Rivalität zählt Duelle und Bilanz bis zu ihrer Partie, das einer Auszeichnung zeigt jeden Träger der Liga',
+   _rvBd.falsch.slice(0, 3).join(' | ') || _rvBd.rv + ' Rivalitäten, ' + _rvBd.bd + ' Auszeichnungen');
+
 // ── Die Runde der Vier [§C33, §11.6c] ────────────────────────────────
 // Eine Runde ist ein Block von Partien ohne Pause über dreißig Minuten, in
 // dem nur dieselben vier gespielt haben, mindestens dreimal. Sie ist eine
