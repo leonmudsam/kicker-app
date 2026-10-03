@@ -2187,6 +2187,10 @@
     box-shadow:inset 3px 0 0 var(--red)}
   .nf-sam-z.brk .nf-sam-i{color:var(--red);background:rgba(240,86,106,.12);
     border-color:rgba(240,86,106,.4)}
+  .nf-sam-z.neg:not(.brk){color:var(--ink2);background:rgba(240,86,106,.045);
+    box-shadow:inset 2px 0 0 rgba(240,86,106,.58)}
+  .nf-sam-z.neg:not(.brk) .nf-sam-i{color:var(--red);
+    background:rgba(240,86,106,.09);border-color:rgba(240,86,106,.28)}
   .nf-s-tafel .nf-sam-z.brk{--zeile-rgb:240,86,106}
   .nf-sam-z b.nf-sam-w{flex:0 0 auto;margin-left:auto;padding:1px 6px;
     border-radius:5px;background:var(--surface2);border:1px solid var(--line);
@@ -2367,6 +2371,9 @@
   .nw-liste{display:flex;flex-direction:column;gap:1px;background:var(--line);
     border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:10px}
   .nw-zeile{background:var(--bg2);padding:10px 13px}
+  .nw-zeile.neg{background:linear-gradient(90deg,rgba(240,86,106,.065),var(--bg2) 62%);
+    box-shadow:inset 2px 0 0 rgba(240,86,106,.58)}
+  .nw-zeile.neg .nw-ic{color:var(--red)}
   .nw-zeile .nw-zeile-kopf{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   .nw-ic{flex:0 0 18px;width:18px;height:18px;display:grid;place-items:center;
     color:var(--muted)}
@@ -4224,9 +4231,9 @@
 .sp-f-tor.l{left:0;border-radius:0 6px 6px 0}.sp-f-tor.r{right:0;border-radius:6px 0 0 6px}
 .sp-f-stange{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:linear-gradient(180deg,transparent,rgba(185,196,189,.16) 20%,rgba(185,196,189,.16) 80%,transparent)}
 .sp-f-sc{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;margin-bottom:6px}
-.sp-f-sc b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:16px;color:var(--faint);padding:2px 9px;border-radius:9px;
+.sp-f-sc b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1.1;color:var(--muted);padding:4px 12px;border-radius:9px;
   background:var(--surface);box-shadow:0 0 0 1px var(--line2)}
-.sp-f-sc b em{font-style:normal}.sp-f-sc b em.w{color:var(--ink)}.sp-f-sc b i{font-style:normal;margin:0 1px}
+.sp-f-sc b em{font-style:normal}.sp-f-sc b em.w{color:var(--acid);text-shadow:0 0 14px rgba(190,242,100,.2)}.sp-f-sc b i{font-style:normal;margin:0 1px}
 .sp-f-sc span{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
 .sp-f-reihe{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 .sp-f-sp{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:0 2px;text-align:center}
@@ -4975,7 +4982,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.03.ae645d14';
+const BUILD_VERSION='2026.10.03.4073b78c';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -16457,11 +16464,12 @@ function _buildStories(){
   try {
     const cutoff = now.getTime() - 7*86400000;
     const bMap = getBadgeEarnedCache();
+    const badgeMatches = new Map(matches.map(m => [m.id,m]));
     const events = [];
     for(const mid in bMap){
       const arr = bMap[mid];
       if(!arr || !arr.length) continue;
-      const matchObj = matches.find(m => m.id === mid);
+      const matchObj = badgeMatches.get(mid);
       if(!matchObj) continue;
       const t = mts(matchObj);
       if(t < cutoff) continue;
@@ -16469,28 +16477,27 @@ function _buildStories(){
     }
     const dedupe = {};
     events.forEach(ev => {
-      const k = ev.playerId+'|'+ev.badge.id;
-      if(!dedupe[k] || dedupe[k].when < ev.when) dedupe[k] = ev;
+      const k = ev.playerId+'|'+ev.badge.id+'|'+ev.matchId;
+      if(!dedupe[k]) dedupe[k] = ev;
     });
     const _bZeiten = {};
     for(const mid in bMap){
       const arr = bMap[mid];
       if(!arr || !arr.length) continue;
-      const mo = matches.find(m => m.id === mid);
+      const mo = badgeMatches.get(mid);
       if(!mo) continue;
       const t = mts(mo);
       arr.forEach(e => {
         const k = e.playerId+'|'+e.badge.id;
-        (_bZeiten[k] = _bZeiten[k] || []).push(t);
+        (_bZeiten[k] = _bZeiten[k] || []).push({t,mid});
       });
     }
-    for(const k in _bZeiten) _bZeiten[k].sort((a,b) => a - b);
+    for(const k in _bZeiten) _bZeiten[k].sort((a,b) => a.t - b.t);
     const _bRang = ev => {
       const l = _bZeiten[ev.playerId+'|'+ev.badge.id] || [];
-      const i = l.indexOf(ev.when.getTime());
+      const i = l.findIndex(x => x.mid === ev.matchId);
       return i < 0 ? l.length : i + 1;
     };
-    const _rarRank = {legendary:4, rare:3, negative:2, common:1};
     const whitelisted = Object.values(dedupe)
       .filter(ev => {
         if(!pm[ev.playerId]) return false;
@@ -16499,28 +16506,7 @@ function _buildStories(){
         if(!wuerde && !_badgeTakt(rar, _bRang(ev))) return false;
         return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
       });
-    const _perMatch = {};
-    whitelisted.forEach(ev => {
-      const mid = ev.matchId;
-      const r = _rarRank[(typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common'] || 1;
-      const cur = _perMatch[mid];
-      if(!cur || r > cur._r || (r === cur._r && ev.when > cur.when)){
-        _perMatch[mid] = {badgeId: ev.badge.id, _r: r, when: ev.when};
-      }
-    });
-    const list = [];
-    const _budget = new Set();
-    whitelisted
-      .filter(ev => { const w = _perMatch[ev.matchId]; return w && w.badgeId === ev.badge.id; })
-      .sort((a,b) => b.when - a.when)
-      .forEach(ev => {
-        const gk = ev.matchId + '|' + ev.badge.id;
-        if(!_budget.has(gk)){
-          if(_budget.size >= NEWS_LIMITS.badgeUnlocked) return;
-          _budget.add(gk);
-        }
-        list.push(ev);
-      });
+    const list = whitelisted.sort((a,b) => b.when - a.when);
     list.forEach(ev => {
       const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
       const rarPrio = STORY_PRIO.badge_unlocked
@@ -16530,9 +16516,9 @@ function _buildStories(){
       if(_nemOpp){
         _bdesc = `5 Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
       } else if(ev.badge.id === 'games250' && typeof countGames === 'function'){
-        _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht jetzt bei ${countGames(ev.playerId, matches)} Spielen.`;
+        _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Spielen.`;
       } else if(ev.badge.id === 'wins200' && typeof countWins === 'function'){
-        _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält aktuell bei ${countWins(ev.playerId, matches)}.`;
+        _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).filter(m => _spGew(m, ev.playerId)).length}.`;
       } else {
         _bdesc = ev.badge.desc || 'Neue Auszeichnung freigeschaltet';
         if(!/[.!?]$/.test(_bdesc.trim())) _bdesc = _bdesc.trim() + '.';
@@ -16555,32 +16541,36 @@ function _buildStories(){
       if(NEWS_BADGE_WHITELIST.has(ev.badge.id)) return false;
       return _badgeTakt('common', _bRang(ev));
     });
-    const _markenTag = {};
+    const _markenPartie = {};
     _kleine.forEach(ev => {
-      const k = tagKey(ev.when.getTime());
-      (_markenTag[k] = _markenTag[k] || []).push(ev);
+      const k = ev.matchId ? 'm:' + ev.matchId : 't:' + tagKey(ev.when.getTime());
+      (_markenPartie[k] = _markenPartie[k] || []).push(ev);
     });
-    Object.keys(_markenTag).forEach(tag => {
-      const l = _markenTag[tag].slice().sort((a, b) => a.when - b.when);
+    Object.keys(_markenPartie).forEach(key => {
+      const l = _markenPartie[key].slice().sort((a, b) => a.when - b.when);
+      const tag = tagKey(l[l.length - 1].when.getTime());
       const namen = [...new Set(l.map(ev => nameOf(ev.playerId)))];
       const matchIds = [...new Set(l.map(ev => ev.matchId).filter(Boolean))];
       const gemeinsamesMatch = matchIds.length === 1
         && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
       const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
       stories.push({
-        id: 'badgemarken_' + tag,
+        id: gemeinsamesMatch ? 'badgemarken_match_' + gemeinsamesMatch
+                             : 'badgemarken_slot_' + tag,
         cat: 'badge',
         ic: (l.length === 1 && l[0].badge.ic) || 'medal',
         title: l.length === 1 ? zeile(l[0])
           : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
         desc: l.length === 1
           ? String(l[0].badge.desc || '').trim().replace(/([^.!?])$/, '$1.')
-          : `${l.length} Auszeichnungen an diesem Tag. ` + l.map(zeile).join(', ') + '.',
+          : `${l.length} Auszeichnungen in dieser Partie. ` + l.map(zeile).join(', ') + '.',
         when: l[l.length - 1].when,
         prio: STORY_PRIO.badge_marken,
         dataRef: {type:'badge_marken', tag,
                   playerIds:[...new Set(l.map(ev => ev.playerId))],
-                  causalKey:_storyGruppeKey('awards', tag),
+                  causalKey:gemeinsamesMatch
+                    ? _storyGruppeKey('match', gemeinsamesMatch)
+                    : _storyGruppeKey('awards', tag),
                   matchId: gemeinsamesMatch,
                   marken: l.map(ev => ({pid:ev.playerId, badgeId:ev.badge.id,
                                         name:ev.badge.name, rang:_bRang(ev),
@@ -16596,19 +16586,21 @@ function _buildStories(){
       A.forEach(a => B.forEach(b => {
         if(a === b) return;
         const k = a < b ? a+'|'+b : b+'|'+a;
-        if(!pairCnt[k]) pairCnt[k] = {n:0, last:m.created_at, aw:0};
+        if(!pairCnt[k]) pairCnt[k] = {n:0, last:m.created_at, t:mts(m), mid:m.id, aw:0};
         pairCnt[k].n++;
         const ersterAufA = (a < b ? a : b) === a;
         const aGewinnt = ersterAufA ? m.winner === 'A' : m.winner === 'B';
         if(aGewinnt) pairCnt[k].aw++;
-        if(m.created_at > pairCnt[k].last) pairCnt[k].last = m.created_at;
+        if(mts(m) >= pairCnt[k].t){
+          pairCnt[k].last = m.created_at; pairCnt[k].t = mts(m); pairCnt[k].mid = m.id;
+        }
       }));
     });
     const ranked = Object.entries(pairCnt)
       .filter(([k,v]) => v.n >= 50)
       .map(([k,v]) => {
         const [a,b] = k.split('|');
-        return {a, b, n: v.n, aw: v.aw, when: new Date(v.last)};
+        return {a, b, n: v.n, aw: v.aw, when: new Date(v.last), matchId:v.mid};
       })
       .filter(r => pm[r.a] && pm[r.b] && !pm[r.a].hidden && !pm[r.b].hidden)
       .sort((a,b) => b.n - a.n)
@@ -16628,7 +16620,8 @@ function _buildStories(){
         })(),
         when: r.when,
         prio: STORY_PRIO.rivalry + (r.n >= 200 ? 4 : r.n >= 100 ? 2 : 0),
-        dataRef: {type:'rivalry', a: r.a, b: r.b, n: r.n}
+        dataRef: {type:'rivalry', a: r.a, b: r.b, n: r.n,
+                  aWins:r.aw, bWins:r.n - r.aw, matchId:r.matchId}
       });
     });
   } catch(e){}
@@ -18983,13 +18976,63 @@ function _storyAbgemeldet(id){
 
 function _consolidateStories(list){
   if(!Array.isArray(list)) return [];
-  if(_cache._snapshotConsolFrom === list && Array.isArray(_cache._snapshotConsolList))
+  if(_cache._snapshotConsolFrom === list && _cache._snapshotConsolVersion === _cache.version
+     && _cache._snapshotConsolMatches === matches && Array.isArray(_cache._snapshotConsolList))
     return _cache._snapshotConsolList;
 
   const tafelTypen = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling','chronik_geholt']);
-  const vorbereitet = list.filter(s => !_storyAbgemeldet(s && s.id)).map(s => {
+  const matchById = new Map((matches || []).map(m => [m.id, m]));
+  const duellMoment = new Map(), duellAnzahl = new Map();
+  _spBasis().chrono.forEach(m => [m.a1,m.a2].forEach(a => [m.b1,m.b2].forEach(b => {
+    const paar = [a,b].sort().join('|'), n = (duellAnzahl.get(paar) || 0) + 1;
+    duellAnzahl.set(paar, n);
+    const key = paar + '|' + mts(m);
+    let l = duellMoment.get(key);
+    if(!l){ l = new Map(); duellMoment.set(key, l); }
+    l.set(n, m);
+  })));
+  const quelle = list.filter(s => !_storyAbgemeldet(s && s.id));
+  const marken = new Map(), normal = [];
+  quelle.forEach(s => {
+    const d = s.dataRef || {}, l = d.marken || [];
+    if(d.type !== 'badge_marken' || !l.length
+       || l.some(x => !(x.matchId || d.matchId))){ normal.push(s); return; }
+    l.forEach(x => {
+      const mid = x.matchId || d.matchId;
+      let g = marken.get(mid);
+      if(!g){ g = {mid, rep:s, werte:new Map(), ids:new Set()}; marken.set(mid, g); }
+      g.ids.add(s.id);
+      g.werte.set([x.pid,x.badgeId,x.rang].join('|'), Object.assign({}, x, {matchId:mid}));
+    });
+  });
+  marken.forEach(g => {
+    const s = g.rep, d = s.dataRef || {}, l = [...g.werte.values()];
+    const unveraendert = g.ids.size === 1 && l.length === (d.marken || []).length;
+    const ids = [...new Set(l.map(x => x.pid))];
+    const namen = ids.map(id => ((pmap()[id] || {}).name || '?'));
+    const mid = matchById.get(g.mid);
+    const zeit = mid ? new Date(mts(mid)) : s.when;
+    normal.push(Object.assign({}, s, {
+      id:unveraendert ? s.id : 'badgemarken_match_' + g.mid,
+      title:unveraendert ? s.title : l.length === 1
+        ? `${namen[0]} holt „${l[0].name}" zum ${l[0].rang}. Mal`
+        : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
+      desc:unveraendert ? s.desc : l.map(x =>
+        `${(pmap()[x.pid] || {}).name || '?'}: „${x.name}", ${x.rang}. Verleihung`).join('. ') + '.',
+      when:zeit,
+      dataRef:Object.assign({}, d, {matchId:g.mid, playerIds:ids, marken:l,
+        sourceStoryIds:[...g.ids], causalKey:_storyGruppeKey('match', g.mid)})
+    }));
+  });
+  const vorbereitet = normal.map(s => {
     const d = (s && s.dataRef) || {};
+    if(d.type === 'rivalry' && !d.matchId && d.a && d.b && Number(d.n) > 0){
+      const zeit = new Date(s.when).getTime();
+      const l = duellMoment.get([d.a,d.b].sort().join('|') + '|' + zeit);
+      const m = l && (l.get(Number(d.n)) || (l.size === 1 ? l.values().next().value : null));
+      if(m) return Object.assign({}, s, {dataRef:Object.assign({}, d, {matchId:m.id})});
+    }
     if(!tafelTypen.has(d.type)) return s;
     return Object.assign({}, s, {dataRef:Object.assign({}, d,
       {causalKey:'tafel:' + tagKey(s.when)})});
@@ -19003,6 +19046,8 @@ function _consolidateStories(list){
     return neu ? Object.assign({}, s, {when:new Date(neu)}) : s;
   }).sort((a, b) => new Date(b.when) - new Date(a.when));
   _cache._snapshotConsolFrom = list;
+  _cache._snapshotConsolVersion = _cache.version;
+  _cache._snapshotConsolMatches = matches;
   _cache._snapshotConsolList = aus;
   return aus;
 }
@@ -19094,7 +19139,8 @@ function _consolidateStoriesLegacy(list){
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
       const gk = d.badgeId + '|' + (d.matchId || '');
       let g = badgeGroups.get(gk);
-      if(!g){ g = { rep: s, pids: [], seen: new Set() }; badgeGroups.set(gk, g); slots.push({ b: gk }); }
+      if(!g){ g = { rep: s, pids: [], seen: new Set(), members:[] }; badgeGroups.set(gk, g); slots.push({ b: gk }); }
+      g.members.push(s);
       if(!g.seen.has(d.playerId)){ g.seen.add(d.playerId); g.pids.push(d.playerId); }
     } else if(GROUPABLE[d.type] && d.pid){
       const gk = d.type + '|' + (d.matchId || tagKey(s.when));
@@ -19133,7 +19179,7 @@ function _consolidateStoriesLegacy(list){
       result.push(Object.assign({}, rep, {
         id: 'badgegrp_' + d.badgeId + '_' + (d.matchId || ''),
         title: `${fmtNames(names)}: ${bn}`,
-        dataRef: Object.assign({}, d, { playerIds: g.pids })
+        dataRef: Object.assign({}, d, { playerIds: g.pids, memberIds:g.members.map(m => m.id) })
       }));
       continue;
     }
@@ -19158,7 +19204,7 @@ function _consolidateStoriesLegacy(list){
                     matchId:(rep.dataRef||{}).matchId || null,
                     playerIds: pids, frags,
                     memberIds: members.map(m => m.id),
-                    members: members.map(m => ({
+                    members: members.map(m => Object.assign({}, m.dataRef || {}, {
                       id: m.id,
                       type: (m.dataRef || {}).type,
                       pid: (m.dataRef || {}).pid || null,
@@ -19351,15 +19397,10 @@ function _consolidateStoriesLegacy(list){
   const _matchAchse = new Set();
   {
     const jeMatch = new Map();
-    const _negT = st => {
-      try { return (typeof _newsIstNegativ === 'function') && _newsIstNegativ(st); }
-      catch(e){ return false; }
-    };
     result.forEach((st, idx) => {
       const d = (st && st.dataRef) || {};
       if(_tafelAchse.has(st.id) || _achse.has(st.id)) return;
       if(!d.matchId || !SAMMEL_SPIEL.has(d.type)) return;
-      if(d.type !== 'spiel' && _negT(st)) return;
       let l = jeMatch.get(d.matchId);
       if(!l){ l = []; jeMatch.set(d.matchId, l); }
       l.push({st, idx});
@@ -19383,6 +19424,7 @@ function _consolidateStoriesLegacy(list){
     if(_sammelEinzeln(st, d)) return;
     if(_achse.has(st.id)) return;
     if(!SAMMEL_SPIEL.has(d.type)) return;
+    if(d.matchId) return;
     const mk = _minKey(st.when);
     let liste = spielMinuten.get(mk);
     if(!liste){ liste = []; spielMinuten.set(mk, liste); }
@@ -19647,6 +19689,9 @@ function _consolidateStoriesLegacy(list){
                 stufe: (kopf.dataRef||{}).stufe,
                 teile: teile.map(t => ({ic: t.ic, titel: _achseZeile(t),
                                         id: t.id,
+                                        sourceIds: (t.dataRef||{}).memberIds
+                                          || (t.dataRef||{}).sourceStoryIds || [t.id],
+                                        ref: t.dataRef || {},
                                         text: (art === 'spiel'
                                                && (t.dataRef || {}).type === 'spiel')
                                           ? '' : ((t.dataRef || {}).zeileText || t.desc),
@@ -19667,6 +19712,9 @@ function _consolidateStoriesLegacy(list){
                                               || (t.dataRef||{}).rarity === 'legendary'))
                                           ? ((t.dataRef||{}).rarity === 'legendary'
                                              ? 'Legendär' : 'Selten') : '',
+                                         neg: (function(){
+                                           try { return _newsIstNegativ(t); }
+                                           catch(e){ return false; } })(),
                                          brk: (function(){
                                            try { return _isBreaking(t); }
                                            catch(e){ return false; } })(),
@@ -20624,7 +20672,7 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
   };
   return `<div class="nf-sam">${zeige.map(t => {
     const ton = tafelTon(t);
-    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}${t.brk ? ' brk' : ''}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
+    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}${t.neg ? ' neg' : ''}${t.brk ? ' brk' : ''}" data-story-id="${esc(t.id || '')}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
     + `<span>${_newsBetont(t.titel || '')}</span>`
     + (t.brk ? `<b class="nf-sam-brk">Der Anlass</b>` : '')
     + (t.marke ? `<b class="nf-sam-k">${esc(t.marke)}</b>` : '')
@@ -20676,7 +20724,12 @@ function _newsSpielFakten(s){
   const d = s.dataRef || {};
   if(d.type !== 'sammel' || !Array.isArray(d.teile)) return [d];
   const idx = _newsRohIndex();
-  return d.teile.map(t => ((idx.get(t && t.id) || {}).dataRef) || {type: t && (t.typ || t.type)});
+  return d.teile.flatMap(t => {
+    const ref = (t && t.ref) || ((idx.get(t && t.id) || {}).dataRef)
+      || {type:t && (t.typ || t.type)};
+    return ref.type === 'group' && Array.isArray(ref.members)
+      ? ref.members.map(m => Object.assign({}, ref, m, {type:m.type || ref.sub})) : [ref];
+  });
 }
 function _newsPleitenVor(pid, m){
   const eig = matchesOfPlayer(pid, matches);
@@ -21917,7 +21970,9 @@ const SP_FORM = {
   tacho:{rang:20, ic:'target',
     wann:F => F.c != null && F.c >= 0.62 && F.diff < 6 ? {} : null,
     daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, pct:Math.round(F.c * 100), klar:F.diff >= 4}),
-    text:F => {
+    text:(F, x) => {
+      if(x && x.leicht) return {t:`${_spNl(F.W)} gewinnen mit leichtem Vorteil`,
+        d:`${F.hoch}:${F.tief} gegen ${_spNl(F.L)}. Vor der Partie lagen beide Teams nah beieinander.`};
       const w = F.W[0], als = _spEigene(w, F.m).slice(0, -1).filter(x => { const c = _spChance(x);
         return c != null && (_spGew(x, w) ? c : 1 - c) >= 0.62; });
       const g = als.filter(x => _spGew(x, w)).length;
@@ -22104,6 +22159,12 @@ function _spFormText(m){
 function _spScoreText(m){
   if(!_spIstFeld(m)) return null;
   const w = _spScoreWahl(m);
+  if(w && w.key === 'zeile') return SP_FORM.feld.text(_spFakten(m), {});
+  if(w && w.key === 'abstand'){
+    const F = _spFakten(m);
+    return {t:`${_spNl(F.W)} gewinnen mit ${F.diff} Toren Abstand`,
+      d:`${F.hoch}:${F.tief} gegen ${_spNl(F.L)}. Der Abstand ist die Geschichte dieser Partie.`};
+  }
   return w && SP_FORM[w.key] ? SP_FORM[w.key].text(_spFakten(m), w.x) : null;
 }
 function _spFormBild(m){
@@ -22273,11 +22334,28 @@ function _spScoreKandidaten(m){
   const transfer = _spTransferBefund(F);
   if(transfer) k.push({key:'transfer', x:transfer,
     rang:SP_FORM.transfer.rang + (transfer.platz === 1 ? 8 : 0)});
-  return k.concat([{key:'feld', x:{}, rang:SP_FORM.feld.rang}])
-    .sort((a, b) => b.rang - a.rang || a.key.localeCompare(b.key));
+  if(F.c != null && F.c >= .56 && !k.some(x => x.key === 'tacho'))
+    k.push({key:'tacho', x:{leicht:F.c < .62}, rang:14});
+  if(F.diff >= 3 && F.diff < 6) k.push({key:'abstand', x:{}, rang:13});
+  k.push({key:'zeile', x:{}, rang:10});
+  k.push({key:'feld', x:{}, rang:SP_FORM.feld.rang});
+  const jeKey = new Map();
+  k.forEach(x => { const alt = jeKey.get(x.key); if(!alt || x.rang > alt.rang) jeKey.set(x.key, x); });
+  return [...jeKey.values()].sort((a, b) => b.rang - a.rang || a.key.localeCompare(b.key));
 }
 function _spScoreWahl(m){
   const FB = _spFormBasis(), B = _spBasis();
+  const roh = Array.isArray(_cache._stories) ? _cache._stories : null;
+  if(FB.scoreFrom !== roh || FB.scoreVersion !== _cache.version){
+    FB.scoreFrom = roh; FB.scoreVersion = _cache.version;
+    FB.scorePublished = new Map();
+    (roh || []).forEach(s => {
+      const d = s.dataRef || {};
+      if(d.type === 'spiel' && d.matchId && d.visual && d.visual.version === 2
+         && d.visual.score && d.visual.score.key) FB.scorePublished.set(d.matchId, d.visual);
+    });
+    FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreBis = -1;
+  }
   let w = FB.scoreWahl && FB.scoreWahl.get(m.id);
   if(w) return w;
   if(!FB.scoreWahl){ FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreBis = -1; }
@@ -22285,9 +22363,26 @@ function _spScoreWahl(m){
   for(let j = FB.scoreBis + 1; j <= bis; j++){
     const x = B.chrono[j], spezial = _spScoreSpezial(x);
     FB.scoreBis = j;
+    const publiziert = FB.scorePublished.get(x.id);
+    if(publiziert){
+      const fest = {key:publiziert.score.key, x:{}};
+      FB.scoreWahl.set(x.id, fest); FB.scoreSpur.push(fest.key);
+      continue;
+    }
     if(spezial){
-      FB.scoreWahl.set(x.id, spezial);
-      FB.scoreSpur.push(spezial.key);
+      const spur = FB.scoreSpur;
+      w = spezial;
+      if(spur[spur.length - 1] === spezial.key){
+        const alt = _spScoreKandidaten(x).filter(c => c.key !== spezial.key)
+          .map(c => Object.assign({}, c, {eff:c.rang
+            - 8 * spur.slice(-2).filter(k => k === c.key).length
+            - 3 * spur.slice(-8).filter(k => k === c.key).length,
+            los:_spVisualHash(x.id + '|' + c.key)}))
+          .sort((a, b) => b.eff - a.eff || b.rang - a.rang || a.los - b.los)[0];
+        if(alt) w = alt;
+      }
+      FB.scoreWahl.set(x.id, w);
+      FB.scoreSpur.push(w.key);
       continue;
     }
     const spur = FB.scoreSpur, zuletzt = spur[spur.length - 1];
@@ -22300,7 +22395,7 @@ function _spScoreWahl(m){
     }).sort((a, b) => b.eff - a.eff || b.rang - a.rang || a.los - b.los);
     w = gewertet[0] || {key:'feld', x:{}, rang:SP_FORM.feld.rang};
     if(w.key === zuletzt){
-      const anders = gewertet.find(c => c.key !== zuletzt && c.eff >= w.eff - 2);
+      const anders = gewertet.find(c => c.key !== zuletzt);
       if(anders) w = anders;
     }
     FB.scoreWahl.set(x.id, w);
@@ -22310,9 +22405,12 @@ function _spScoreWahl(m){
 }
 function _spScoreSnapshot(m){
   const w = _spScoreWahl(m), c = _spChance(m);
+  const fest = _spFormBasis().scorePublished.get(m.id);
+  if(fest) return fest.score;
   if(w.key === 'aussenseiter') return {key:w.key, data:_spWippeDaten({m, c})};
   if(w.key === 'krimi') return {key:w.key, data:_spTafelDaten({m, c})};
   if(w.key === 'deutlich') return {key:w.key, data:_spZeileDaten(m)};
+  if(w.key === 'zeile' || w.key === 'abstand') return {key:w.key, data:_spZeileDaten(m)};
 
   const F = _spFakten(m);
   return {key:w.key, data:SP_FORM[w.key].daten(F, w.x)};
@@ -22357,6 +22455,14 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
     if(daten[a.key]) return {key:a.key, data:daten[a.key]()};
   }
 
+  const diff = Math.abs(m.score_a - m.score_b);
+  if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter')
+    return {key:'aussenseiter', data:_spWippeDaten({m, c})};
+  if(diff === 1 && scoreKey !== 'krimi')
+    return {key:'nerven', data:_spNervenDaten({m, c})};
+  if(diff >= 6 && scoreKey !== 'deutlich')
+    return {key:'verteilung', data:_spVerteilungDaten({m})};
+
   const F = _spFakten(m);
   const form = _spFormKand(m).find(k => SP_ANLASS_FORMEN.has(k.key));
   if(form) return {key:form.key, data:SP_FORM[form.key].daten(F, form.x)};
@@ -22366,11 +22472,14 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
 }
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);
+  const fest = _spFormBasis().scorePublished.get(m.id);
+  if(fest) return fest;
   return {version:2, score, occasion:_spAnlassSnapshot(m, fakten || [], score.key)};
 }
 function _spScoreBild(v){
   if(!v || !v.key) return '';
-  const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild};
+  const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild,
+    zeile:_spZeileBild, abstand:_spBandBild};
   if(spezial[v.key]) return spezial[v.key](v.data);
   return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](v.data) : '';
 }
@@ -22383,7 +22492,8 @@ function _spOccasionBild(v){
     wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,
     teamserie:_spDuoBild, medaille:_spMedailleBild,
     premiere:_spPremiereBild, rolle:_spRolleBild,
-    nerven:_spNervenBild, verteilung:_spVerteilungBild
+    nerven:_spNervenBild, verteilung:_spVerteilungBild,
+    aussenseiter:_spWippeBild
   };
   if(bild[v.key]) return bild[v.key](data);
   return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
@@ -23632,7 +23742,7 @@ function _newsDetailMitte(s){
           const uhr = t.ms ? _newsUhrzeit(t.ms) : '';
           const stand = zeileStand(t);
           const zeit = [uhr, stand].filter(Boolean).join(' · ');
-          return `<div class="nw-zeile"${
+          return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${
               (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf">${t.ic
                 ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}<span class="nw-label">${

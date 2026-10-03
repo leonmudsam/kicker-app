@@ -848,7 +848,9 @@ const SP_FORM = {
   tacho:{rang:20, ic:'target',
     wann:F => F.c != null && F.c >= 0.62 && F.diff < 6 ? {} : null,
     daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, pct:Math.round(F.c * 100), klar:F.diff >= 4}),
-    text:F => {
+    text:(F, x) => {
+      if(x && x.leicht) return {t:`${_spNl(F.W)} gewinnen mit leichtem Vorteil`,
+        d:`${F.hoch}:${F.tief} gegen ${_spNl(F.L)}. Vor der Partie lagen beide Teams nah beieinander.`};
       const w = F.W[0], als = _spEigene(w, F.m).slice(0, -1).filter(x => { const c = _spChance(x);
         return c != null && (_spGew(x, w) ? c : 1 - c) >= 0.62; });
       const g = als.filter(x => _spGew(x, w)).length;
@@ -1077,6 +1079,12 @@ function _spFormText(m){
 function _spScoreText(m){
   if(!_spIstFeld(m)) return null;
   const w = _spScoreWahl(m);
+  if(w && w.key === 'zeile') return SP_FORM.feld.text(_spFakten(m), {});
+  if(w && w.key === 'abstand'){
+    const F = _spFakten(m);
+    return {t:`${_spNl(F.W)} gewinnen mit ${F.diff} Toren Abstand`,
+      d:`${F.hoch}:${F.tief} gegen ${_spNl(F.L)}. Der Abstand ist die Geschichte dieser Partie.`};
+  }
   return w && SP_FORM[w.key] ? SP_FORM[w.key].text(_spFakten(m), w.x) : null;
 }
 function _spFormBild(m){
@@ -1261,16 +1269,41 @@ function _spScoreKandidaten(m){
   const transfer = _spTransferBefund(F);
   if(transfer) k.push({key:'transfer', x:transfer,
     rang:SP_FORM.transfer.rang + (transfer.platz === 1 ? 8 : 0)});
-  return k.concat([{key:'feld', x:{}, rang:SP_FORM.feld.rang}])
-    .sort((a, b) => b.rang - a.rang || a.key.localeCompare(b.key));
+  // Auch eine gewoehnliche Partie braucht eine echte Auswahl. Bisher blieb
+  // nach den strengen Statistikfiltern oft NUR das Spielfeld uebrig: drei
+  // normale Partien hintereinander ergaben damit dreimal dieselbe Grafik.
+  // Diese Grundformen zeigen immer wahre, aber verschiedene Seiten des Spiels.
+  if(F.c != null && F.c >= .56 && !k.some(x => x.key === 'tacho'))
+    k.push({key:'tacho', x:{leicht:F.c < .62}, rang:14});
+  if(F.diff >= 3 && F.diff < 6) k.push({key:'abstand', x:{}, rang:13});
+  k.push({key:'zeile', x:{}, rang:10});
+  k.push({key:'feld', x:{}, rang:SP_FORM.feld.rang});
+  const jeKey = new Map();
+  k.forEach(x => { const alt = jeKey.get(x.key); if(!alt || x.rang > alt.rang) jeKey.set(x.key, x); });
+  return [...jeKey.values()].sort((a, b) => b.rang - a.rang || a.key.localeCompare(b.key));
 }
 // Die fachlich staerkste passende Scoreform gewinnt. Variation ist ein
 // Abschlag fuer kuerzlich wirklich verwendete Formen, kein Zufallsgriff in
-// die ersten drei Kandidaten. So kann ein allgemeiner Tacho eine seltene
-// Abweichung nicht verdraengen, waehrend gleich gute Karten trotzdem nicht
-// direkt gleich aussehen.
+// die ersten drei Kandidaten. Nur fachlich passende Alternativen duerfen
+// wechseln; dieselbe Form steht nicht direkt hintereinander. Ein besonderer
+// Ausgang bleibt auch bei einem anderen Scorekopf als Anlass sichtbar.
 function _spScoreWahl(m){
   const FB = _spFormBasis(), B = _spBasis();
+  const roh = Array.isArray(_cache._stories) ? _cache._stories : null;
+  // Die Spur muss die publizierten Formen kennen. Eine Neuberechnung mit
+  // neuen Auswahlregeln zaehlte bisher fuer die alten Spielfeldkarten andere
+  // Formen und waehlte deshalb auch fuer die naechste Partie das Spielfeld.
+  // Ein Index pro Storybestand, danach ein chronologischer Durchlauf.
+  if(FB.scoreFrom !== roh || FB.scoreVersion !== _cache.version){
+    FB.scoreFrom = roh; FB.scoreVersion = _cache.version;
+    FB.scorePublished = new Map();
+    (roh || []).forEach(s => {
+      const d = s.dataRef || {};
+      if(d.type === 'spiel' && d.matchId && d.visual && d.visual.version === 2
+         && d.visual.score && d.visual.score.key) FB.scorePublished.set(d.matchId, d.visual);
+    });
+    FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreBis = -1;
+  }
   let w = FB.scoreWahl && FB.scoreWahl.get(m.id);
   if(w) return w;
   if(!FB.scoreWahl){ FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreBis = -1; }
@@ -1278,9 +1311,29 @@ function _spScoreWahl(m){
   for(let j = FB.scoreBis + 1; j <= bis; j++){
     const x = B.chrono[j], spezial = _spScoreSpezial(x);
     FB.scoreBis = j;
+    const publiziert = FB.scorePublished.get(x.id);
+    if(publiziert){
+      const fest = {key:publiziert.score.key, x:{}};
+      FB.scoreWahl.set(x.id, fest); FB.scoreSpur.push(fest.key);
+      continue;
+    }
     if(spezial){
-      FB.scoreWahl.set(x.id, spezial);
-      FB.scoreSpur.push(spezial.key);
+      // Auch zwei Krimis oder klare Siege brauchen nicht denselben Kopf.
+      // Die Besonderheit reist als Anlassgrafik darunter mit, statt dass
+      // die Abwechslung einen falschen Matchbefund erfindet.
+      const spur = FB.scoreSpur;
+      w = spezial;
+      if(spur[spur.length - 1] === spezial.key){
+        const alt = _spScoreKandidaten(x).filter(c => c.key !== spezial.key)
+          .map(c => Object.assign({}, c, {eff:c.rang
+            - 8 * spur.slice(-2).filter(k => k === c.key).length
+            - 3 * spur.slice(-8).filter(k => k === c.key).length,
+            los:_spVisualHash(x.id + '|' + c.key)}))
+          .sort((a, b) => b.eff - a.eff || b.rang - a.rang || a.los - b.los)[0];
+        if(alt) w = alt;
+      }
+      FB.scoreWahl.set(x.id, w);
+      FB.scoreSpur.push(w.key);
       continue;
     }
     const spur = FB.scoreSpur, zuletzt = spur[spur.length - 1];
@@ -1293,7 +1346,10 @@ function _spScoreWahl(m){
     }).sort((a, b) => b.eff - a.eff || b.rang - a.rang || a.los - b.los);
     w = gewertet[0] || {key:'feld', x:{}, rang:SP_FORM.feld.rang};
     if(w.key === zuletzt){
-      const anders = gewertet.find(c => c.key !== zuletzt && c.eff >= w.eff - 2);
+      // Der alte Zwei-Punkte-Korridor erlaubte trotz gueltiger Alternativen
+      // wiederholte Streudiagramme und Spielfelder. Eignung wurde bereits
+      // oben geprueft; unter diesen Kandidaten gilt der direkte Wechsel.
+      const anders = gewertet.find(c => c.key !== zuletzt);
       if(anders) w = anders;
     }
     FB.scoreWahl.set(x.id, w);
@@ -1303,9 +1359,12 @@ function _spScoreWahl(m){
 }
 function _spScoreSnapshot(m){
   const w = _spScoreWahl(m), c = _spChance(m);
+  const fest = _spFormBasis().scorePublished.get(m.id);
+  if(fest) return fest.score;
   if(w.key === 'aussenseiter') return {key:w.key, data:_spWippeDaten({m, c})};
   if(w.key === 'krimi') return {key:w.key, data:_spTafelDaten({m, c})};
   if(w.key === 'deutlich') return {key:w.key, data:_spZeileDaten(m)};
+  if(w.key === 'zeile' || w.key === 'abstand') return {key:w.key, data:_spZeileDaten(m)};
 
   const F = _spFakten(m);
   return {key:w.key, data:SP_FORM[w.key].daten(F, w.x)};
@@ -1350,6 +1409,16 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
     if(daten[a.key]) return {key:a.key, data:daten[a.key]()};
   }
 
+  // Hat ein wiederholter Sonderfall oben absichtlich eine neutrale Form,
+  // bleibt sein eigentlicher Anlass hier sichtbar.
+  const diff = Math.abs(m.score_a - m.score_b);
+  if(c != null && c < CHANCE_UPSET && scoreKey !== 'aussenseiter')
+    return {key:'aussenseiter', data:_spWippeDaten({m, c})};
+  if(diff === 1 && scoreKey !== 'krimi')
+    return {key:'nerven', data:_spNervenDaten({m, c})};
+  if(diff >= 6 && scoreKey !== 'deutlich')
+    return {key:'verteilung', data:_spVerteilungDaten({m})};
+
   const F = _spFakten(m);
   const form = _spFormKand(m).find(k => SP_ANLASS_FORMEN.has(k.key));
   if(form) return {key:form.key, data:SP_FORM[form.key].daten(F, form.x)};
@@ -1361,11 +1430,14 @@ function _spAnlassSnapshot(m, fakten, scoreKey){
 }
 function _spVisualSnapshot(m, fakten){
   const score = _spScoreSnapshot(m);
+  const fest = _spFormBasis().scorePublished.get(m.id);
+  if(fest) return fest;
   return {version:2, score, occasion:_spAnlassSnapshot(m, fakten || [], score.key)};
 }
 function _spScoreBild(v){
   if(!v || !v.key) return '';
-  const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild};
+  const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild,
+    zeile:_spZeileBild, abstand:_spBandBild};
   if(spezial[v.key]) return spezial[v.key](v.data);
   return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](v.data) : '';
 }
@@ -1378,7 +1450,8 @@ function _spOccasionBild(v){
     wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,
     teamserie:_spDuoBild, medaille:_spMedailleBild,
     premiere:_spPremiereBild, rolle:_spRolleBild,
-    nerven:_spNervenBild, verteilung:_spVerteilungBild
+    nerven:_spNervenBild, verteilung:_spVerteilungBild,
+    aussenseiter:_spWippeBild
   };
   if(bild[v.key]) return bild[v.key](data);
   return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';

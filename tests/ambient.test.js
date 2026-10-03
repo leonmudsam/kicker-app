@@ -737,8 +737,9 @@ const _takt = JSON.parse(K.eval(`JSON.stringify((function(){
   const roh = _buildStories();
   const einzel = roh.filter(s => (s.dataRef||{}).type === 'badge_unlocked');
   const sam = roh.filter(s => (s.dataRef||{}).type === 'badge_marken');
-  const jeTag = {};
-  sam.forEach(s => { jeTag[s.dataRef.tag] = (jeTag[s.dataRef.tag]||0) + 1; });
+  const jeMatch = {};
+  sam.forEach(s => { const mid = s.dataRef.matchId;
+    if(mid) jeMatch[mid] = (jeMatch[mid]||0) + 1; });
   const marken = [].concat.apply([], sam.map(s => s.dataRef.marken || []));
   return {
     legendaerImmer: [1,2,3,7,13,26].every(n => _badgeTakt('legendary', n) === true),
@@ -751,7 +752,8 @@ const _takt = JSON.parse(K.eval(`JSON.stringify((function(){
     einzelGewoehnlich: einzel.filter(s => rarityOf(s.dataRef.badgeId) === 'common'
       && !NEWS_BADGE_WHITELIST.has(s.dataRef.badgeId)).length,
     sammelKarten: sam.length,
-    proTagHoechstens1: Object.keys(jeTag).every(k => jeTag[k] === 1),
+    proMatchHoechstens1: Object.keys(jeMatch).every(k => jeMatch[k] === 1),
+    alleMitMatch: sam.every(s => !!s.dataRef.matchId),
     markenAufMarke: marken.every(m => NEWS_BADGE_MARKEN_KLEIN.indexOf(m.rang) >= 0),
     markenGewoehnlich: marken.every(m => rarityOf(m.badgeId) === 'common'),
     gruende: [...new Set(sam.map(s => (s.dataRef.causalKey||'').split(':')[0]))]
@@ -764,34 +766,36 @@ const _taktLauf = JSON.parse(K.eval(`JSON.stringify((function(){
   const alle = matches.slice();
   const tage = [...new Set(alle.map(m => tagKey(mts(m))))].sort()
     .filter(t => t >= '2026-07-28' && t <= '2026-08-26');
-  let karten = 0, mehrere = 0, falsch = 0, mehrfachTag = 0;
+  let karten = 0, mehrere = 0, falsch = 0, mehrfachMatch = 0;
   tage.forEach(t => {
     matches = alle.filter(m => mts(m) <= new Date(t + 'T23:59:59').getTime());
     invalidateCache();
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
     let roh = []; try { roh = _buildStories() || []; } catch(e){ return; }
     const sam = roh.filter(s => (s.dataRef||{}).type === 'badge_marken');
-    const jeTag = {};
+    const jeMatch = {};
     sam.forEach(s => {
       karten++;
-      jeTag[s.dataRef.tag] = (jeTag[s.dataRef.tag]||0) + 1;
+      const mid = s.dataRef.matchId;
+      if(mid) jeMatch[mid] = (jeMatch[mid]||0) + 1;
       const m = s.dataRef.marken || [];
       if(m.length > 1) mehrere++;
       const soll = [...new Set(m.map(x => x.pid))].sort().join(',');
-      if((s.dataRef.playerIds||[]).slice().sort().join(',') !== soll) falsch++;
+      if(!mid || m.some(x => x.matchId !== mid)
+         || (s.dataRef.playerIds||[]).slice().sort().join(',') !== soll) falsch++;
     });
-    mehrfachTag += Object.keys(jeTag).filter(k => jeTag[k] > 1).length;
+    mehrfachMatch += Object.keys(jeMatch).filter(k => jeMatch[k] > 1).length;
   });
   matches = alle; invalidateCache();
   _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
-  return {karten, mehrere, falsch, mehrfachTag};
+  return {karten, mehrere, falsch, mehrfachMatch};
 })())`));
-ok(_taktLauf.mehrere > 0, 'der Durchlauf trifft Karten mit mehreren Marken',
+ok(_taktLauf.karten > 0, 'der Durchlauf trifft kleine Marken aus konkreten Partien',
    _taktLauf.mehrere + ' von ' + _taktLauf.karten);
 ok(_taktLauf.falsch === 0, 'und jede nennt jeden, von dem sie erzaehlt',
    _taktLauf.falsch + ' unvollstaendig');
-ok(_taktLauf.mehrfachTag === 0, 'nie zwei solche Karten an einem Tag',
-   _taktLauf.mehrfachTag + ' Tage doppelt');
+ok(_taktLauf.mehrfachMatch === 0, 'nie zwei solche Karten an derselben Partie',
+   _taktLauf.mehrfachMatch + ' Partien doppelt');
 ok(_takt.legendaerImmer, 'eine legendaere Auszeichnung ist jedes Mal eine Nachricht');
 ok(_takt.seltenMarken, 'eine seltene beim ersten Mal und an den runden Marken');
 ok(_takt.kleinOhneErstes, 'eine gewoehnliche erst ab der fuenften Verleihung');
@@ -800,11 +804,53 @@ ok(_takt.einzelGewoehnlich === 0,
    _takt.einzelGewoehnlich + ' eigene Karten');
 ok(_takt.sammelKarten > 0, 'die kleinen Marken eines Tages werden ueberhaupt gemeldet',
    _takt.sammelKarten + ' Karten');
-ok(_takt.proTagHoechstens1 && _takt.gruende.join(',') === 'awards',
-   'je Spieltag EINE Karte, und ihr Grund sind die Auszeichnungen dieses Tages',
+ok(_takt.proMatchHoechstens1 && _takt.alleMitMatch && _takt.gruende.join(',') === 'match',
+   'je Partie hoechstens EINE kleine Markenmeldung, fest an dieses Match gebunden',
    JSON.stringify(_takt.gruende));
 ok(_takt.markenAufMarke && _takt.markenGewoehnlich,
    'darin steht nur eine gewoehnliche Auszeichnung auf einer runden Marke');
+
+const _alleVerleihungen = JSON.parse(K.eval(`JSON.stringify((function(){
+  const earned=getBadgeEarnedCache(), ordinal={}, erwartet=[];
+  const ab=Date.now()-7*86400000;
+  const chron=[...matches].sort((a,b)=>mts(a)-mts(b));
+  chron.forEach(m => (earned[m.id]||[]).forEach(e => {
+    const k=e.playerId+'|'+e.badge.id, n=ordinal[k]=(ordinal[k]||0)+1;
+    const rar=rarityOf(e.badge.id), wuerde=BADGE_WUERDE.has(e.badge.id);
+    if(mts(m)<ab || !pmap()[e.playerId]) return;
+    if((wuerde || _badgeTakt(rar,n))
+       && (rar==='legendary' || rar==='rare' || NEWS_BADGE_WHITELIST.has(e.badge.id)))
+      erwartet.push('badge_'+e.playerId+'_'+e.badge.id+'_'+m.id);
+  }));
+  const roh=_buildStories(), hat=new Set(roh.map(s=>s.id));
+  return {n:erwartet.length, fehlen:erwartet.filter(id=>!hat.has(id))};
+})())`));
+ok(_alleVerleihungen.n>0 && _alleVerleihungen.fehlen.length===0,
+   'der Generator behaelt alle newswuerdigen Auszeichnungsthemen jeder Partie',
+   _alleVerleihungen.fehlen.join(', ') || _alleVerleihungen.n+' Verleihungen');
+
+const _alteMarken = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p=matches.slice(-2), tag=tagKey(mts(p[1]));
+  const ms=p.map((m,i)=>({pid:m.a1,badgeId:'nail_biter',name:'Zittersieg',rang:5+i*5,matchId:m.id}));
+  const alt={id:'badgemarken_'+tag,title:'Zwei runde Marken',desc:'Zwei Auszeichnungen.',
+    cat:'badge',prio:39,when:new Date(mts(p[1])),dataRef:{type:'badge_marken',tag,marken:ms}};
+  const neu={id:'badgemarken_match_'+p[0].id,title:'Runde Marke',desc:'Eine Auszeichnung.',
+    cat:'badge',prio:39,when:new Date(mts(p[0])),
+    dataRef:{type:'badge_marken',matchId:p[0].id,marken:[ms[0]]}};
+  const erg=m=>({id:'spiel_'+m.id,title:'Ergebnis',desc:'10:5.',cat:'highlight',prio:41,
+    when:new Date(mts(m)),dataRef:{type:'spiel',matchId:m.id}});
+  const vorher=_storyStableJson(alt), out=_consolidateStories([alt,neu].concat(p.map(erg)));
+  const zeilen=out.flatMap(s=>(s.dataRef.teile||[]).filter(t=>t.typ==='badge_marken'));
+  return {karten:out.length, zeilen:zeilen.length,
+    richtig:zeilen.every(t=>t.ref.marken.every(m=>m.matchId===t.matchId)),
+    quellen:zeilen.flatMap(t=>t.sourceIds||[]),altId:alt.id,neuId:neu.id,
+    unveraendert:_storyStableJson(alt)===vorher};
+})())`));
+ok(_alteMarken.karten===2 && _alteMarken.zeilen===2 && _alteMarken.richtig
+   && _alteMarken.quellen.includes(_alteMarken.altId)
+   && _alteMarken.quellen.includes(_alteMarken.neuId) && _alteMarken.unveraendert,
+   'alte Tagesmarken gehen verlustfrei in ihre Partien auf, identische neue Marken erscheinen nur einmal',
+   JSON.stringify(_alteMarken));
 
 console.log('\n=== 9b. DIE EWIGE TAFEL MELDET SICH ===');
 // Der ganze Awards-Reiter kam im Feed nicht vor: wer einen Liga-Rekord
@@ -1552,12 +1598,12 @@ const _grp = JSON.parse(K.eval(`JSON.stringify((function(){
   ];
   const aus = _consolidateStories(liste);
   const sam = aus.find(x => (x.dataRef||{}).type === 'sammel');
-  return {karten:aus.map(x => x.id),
+  return {karten:aus.map(x => x.id), neg:sam ? (sam.dataRef.teile||[]).filter(t => t.neg).length : 0,
     titel: sam ? sam.title : '',
     zeilen: sam ? (sam.dataRef.teile||[]).map(t => t.id) : []};
 })())`));
-ok(_grp.zeilen.indexOf('g-ls') < 0 && _grp.karten.indexOf('g-ls') >= 0,
-   'eine Gruppe von Pleitenserien bleibt ihre eigene Karte',
+ok(_grp.zeilen.indexOf('g-ls') >= 0 && _grp.karten.length === 1 && _grp.neg === 1,
+   'eine Gruppe von Pleitenserien bleibt als negative Zeile derselben Matchkarte erhalten',
    _grp.zeilen.join(', ') + ' · Karten: ' + _grp.karten.join(', '));
 ok(/Siegesserie/.test(_grp.titel),
    'und die Schlagzeile nennt den Anlass der uebrigen Gruppe', _grp.titel);
@@ -1654,7 +1700,7 @@ const _spBand = JSON.parse(K.eval(`JSON.stringify((function(){
     (s.dataRef.teile||[]).forEach(t => {
       const tt = String(t.titel || '');
       if(String((t && (t.typ || t.type)) || '') === 'spiel'
-         && tt && band.indexOf(tt.slice(0, 18)) >= 0) doppelt.push(s.id + ' :: ' + tt);
+         && html.indexOf('data-story-id="' + esc(t.id) + '"') >= 0) doppelt.push(s.id + ' :: ' + tt);
     });
   });
   // Und der Filter gilt NUR fuer die Achse der Partie. Der Ergebnis-Strom
@@ -2043,9 +2089,17 @@ ok(_feed.rufe.length === 0,
 ok(_feed.haeufung.length === 0,
    'kein Story-Typ steht an einem Tag mehr als zweimal im Feed',
    _feed.haeufung.join(', ') || 'keiner');
-ok(_feed.doppelt.length > 0,
-   'gleiche Schlagzeilen unterschiedlicher Ereignisse bleiben im Feed',
-   _feed.doppelt.join(' | ') || 'keine');
+const _gleichtitel = JSON.parse(K.eval(`JSON.stringify((function(){
+  const p = matches.slice(-2), wann = new Date(mts(p[1]));
+  const l = p.map((m,i) => ({id:'gleich-'+i, title:'Dieselben Sieger',
+    desc:'Das Ergebnis ist 10:5.', when:wann, prio:41, cat:'highlight',
+    dataRef:{type:'spiel', matchId:m.id, playerIds:[m.a1,m.a2,m.b1,m.b2]}}));
+  const out = _consolidateStories(l);
+  return {ids:out.map(s => s.id), mids:out.map(s => s.dataRef.matchId)};
+})())`));
+ok(_gleichtitel.ids.length === 2 && new Set(_gleichtitel.mids).size === 2,
+   'zwei verschiedene Partien mit gleichem Titel und gleicher Minute bleiben zwei Karten',
+   _gleichtitel.ids.join(', '));
 
 // Serienmarken sind Ereignisse ihres auslösenden Matches. Sie dürfen nicht
 // rückwirkend verschwinden, nur weil der Spieler danach verloren hat.
@@ -2693,7 +2747,8 @@ const _dop = JSON.parse(K.eval(`JSON.stringify((function(){
   return {
     felsGesamt: titel.filter(t => t.indexOf('Der Fels') >= 0).length
               + zeilen.filter(t => t.indexOf('Der Fels') >= 0).length,
-    titelDoppelt: titel.filter((t, i) => t && titel.indexOf(t) !== i).length,
+    quellen: sicht.flatMap(s => (s.dataRef.teile || []).flatMap(t => t.sourceIds || [t.id]))
+      .filter(id => /^rek_fels_[1-4]$/.test(id)),
     zeilenDoppelt,
     minutenMitMehreren: Object.keys(proMin).filter(k => proMin[k] > 1).length,
     kollisionen
@@ -2701,8 +2756,8 @@ const _dop = JSON.parse(K.eval(`JSON.stringify((function(){
 })())`));
 ok(_dop.felsGesamt === 4, 'vier publizierte Meldungen bleiben vollstaendig erhalten',
    _dop.felsGesamt + ' mal im Feed');
-ok(_dop.titelDoppelt === 2, 'gleicher Wortlaut loescht keine andere Story',
-   _dop.titelDoppelt + ' doppelt');
+ok(new Set(_dop.quellen).size === 4, 'gleicher Wortlaut behaelt alle vier urspruenglichen Story-IDs',
+   _dop.quellen.join(', '));
 ok(_dop.zeilenDoppelt === 3, 'eine Sammelkarte behaelt jede Story-ID als Zeile',
    _dop.zeilenDoppelt + ' doppelt');
 ok(_dop.minutenMitMehreren === 0,
@@ -2768,6 +2823,10 @@ const _sub = JSON.parse(K.eval(`JSON.stringify((function(){
   sammel.filter(x => x.dataRef.quelle === 'spiel').forEach(x => {
     const t = x.dataRef.teile || [];
     t.forEach((z, i) => {
+      if(x.dataRef.matchId){
+        if(z.matchId !== x.dataRef.matchId) fremd.push(x.title + ' / ' + z.titel);
+        return;
+      }
       const andere = t.filter((_, j) => j !== i)
         .reduce((a, u) => a.concat(u.pids || []), []);
       if(!(z.pids || []).some(p => andere.indexOf(p) >= 0))
@@ -2806,7 +2865,7 @@ const _sub = JSON.parse(K.eval(`JSON.stringify((function(){
             .filter(z => !(z.pids||[]).length).length, 0)};
 })())`));
 ok(_sub.sammel > 0, 'es gibt Sammelkarten', _sub.sammel + '');
-ok(_sub.fremd.length === 0, 'jede Zeile eines Spiel-Buendels teilt einen Spieler mit dem Rest',
+ok(_sub.fremd.length === 0, 'jede Matchzeile gehoert zu ihrer Partie, Legacy-Gruppen teilen ihre Beteiligten',
    _sub.fremd.slice(0, 3).join(' | ') || 'keine fremde Zeile');
 // In der KARTE IHRER PARTIE steht sie mit — sonst stuende dasselbe Ergebnis
 // zweimal untereinander. In einem fremden Buendel nicht: „Nerven aus Stahl"
@@ -4656,9 +4715,8 @@ const _brkMit = JSON.parse(K.eval(`JSON.stringify((function(){
     title:'Eine seltene Auszeichnung', desc:'Drei Zittersiege in Folge.',
     dataRef:{type:'badge_unlocked', badgeId:'nerves_of_steel', rarity:'rare',
              matchId:m.id, playerIds:[players[4].id]}};
-  // Und eine negative Meldung auch nicht: „Absoluter Verlierer" haengt am
-  // selben 10:0 wie „Absoluter Sieger" und waere eine Zeile auf der Karte,
-  // die die Sieger feiert. Rot ist die Richtung, und eine Karte hat eine.
+  // Auch eine negative Meldung reist mit. Rot ist die Richtung ihrer Zeile,
+  // aber kein Grund, dasselbe Ergebnis auf einer zweiten Karte zu zeigen.
   const schlecht = {id:'badge_neg_x', cat:'badge', ic:'dizzy',
     when:new Date(mts(m)), prio:40,
     title:'Absoluter Verlierer', desc:'0:10 Niederlage.',
@@ -4669,7 +4727,10 @@ const _brkMit = JSON.parse(K.eval(`JSON.stringify((function(){
   const sa = a.filter(x => (x.dataRef||{}).type === 'sammel');
   const b = lauf([spitze, erg, selten]);
   const c = lauf([spitze, erg, schlecht]);
+  const cg = c.find(x => (x.dataRef||{}).type === 'sammel');
+  const cz = cg ? (cg.dataRef.teile || []) : [];
   return {negKarten:c.length, negEinzeln:c.filter(x => x.id === 'badge_neg_x').length,
+          negZeilen:cz.filter(x => x.neg).length, negTeile:cz.length,
           karten:a.length, sammel:sa.length,
           titel:sa.length ? sa[0].title : '',
           zeilen:sa.length ? (sa[0].dataRef.teile || []).length : 0,
@@ -4707,9 +4768,10 @@ ok(_brkMit.seltenZeile === 'Selten',
 ok(/seltene Auszeichnung/.test(_brkMit.seltenTitel),
    'die Schlagzeile nennt sie als seltene Auszeichnung',
    _brkMit.seltenTitel);
-ok(_brkMit.negKarten === 2 && _brkMit.negEinzeln === 1,
-   'und eine negative Meldung steht nicht auf der Karte, die die Sieger feiert',
-   _brkMit.negKarten + ' Karten');
+ok(_brkMit.negKarten === 1 && _brkMit.negEinzeln === 0
+   && _brkMit.negTeile === 3 && _brkMit.negZeilen === 1,
+   'und eine negative Meldung derselben Partie bleibt als rote Zeile in derselben Karte',
+   _brkMit.negKarten + ' Karten, ' + _brkMit.negZeilen + ' negative Zeilen');
 // ── Der Tafel-Moment ist lesbar, nicht vollstaendig ────────────────
 //    Gemessen am 28.09. trug er achtzehn Zeilen, davon elf Ausbauten, und
 //    der grosse Wert sagte „18 WECHSEL" — bei elf davon hat niemand
@@ -6457,7 +6519,8 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     const html = _newsCardHtmlM2(s, false, false);
     const basis = _newsSpielFakten(s).find(x => x.type === 'spiel') || {};
     const visual = basis.visual || {}, scoreKey = visual.score && visual.score.key;
-    const SCOREKL = Object.assign({krimi:'sp-at', aussenseiter:'sp-wp', deutlich:'sp-band'}, FORMKL);
+    const SCOREKL = Object.assign({krimi:'sp-at', aussenseiter:'sp-wp', deutlich:'sp-band',
+      zeile:'sp-zeile', abstand:'sp-band'}, FORMKL);
     const OCCKL = Object.assign({nerven:'sp-nv', verteilung:'sp-vt'}, FORM, FORMKL);
     const kl = SCOREKL[scoreKey], occ = visual.occasion && visual.occasion.key;
     if(visual.version !== 2 || !kl
@@ -6637,9 +6700,10 @@ ok(_bogen.wiederholt.length === 0,
 // Elo-Transfer nur in den obersten fuenf Prozent und mit Abstand zueinander.
 const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
   const reihe = [...matches].sort((a,b) => mts(a) - mts(b));
-  const zahl = {}, falsch = [], transferBei = [];
+  const zahl = {}, falsch = [], transferBei = [], spur = [];
   reihe.forEach((m, i) => {
     const w = _spScoreWahl(m), snap = _spScoreSnapshot(m);
+    spur.push(w.key);
     zahl[w.key] = (zahl[w.key] || 0) + 1;
     if(w.key === 'mosaik'){
       const d = snap.data || {}, h = _spScoreBild(snap);
@@ -6655,7 +6719,9 @@ const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
     }
   });
   const eng = transferBei.some((v, i) => i && v - transferBei[i - 1] < 5);
-  return {n:reihe.length, zahl, falsch, transfer:transferBei.length, eng};
+  const doppelt = spur.filter((k, i) => i && k === spur[i - 1]);
+  return {n:reihe.length, zahl, falsch, transfer:transferBei.length, eng,
+          doppelt:doppelt.length};
 })())`));
 ok(_scoreWahl.falsch.length === 0,
    'Mosaik und Elo-Transfer erscheinen nur mit einem belegten besonderen Anlass',
@@ -6663,6 +6729,99 @@ ok(_scoreWahl.falsch.length === 0,
 ok(_scoreWahl.transfer <= Math.ceil(_scoreWahl.n * .05) && !_scoreWahl.eng,
    'die Elo-Transfergrafik bleibt ein seltener Ausreisser und wiederholt sich nicht in kurzem Abstand',
    _scoreWahl.transfer + ' von ' + _scoreWahl.n + ', eng ' + _scoreWahl.eng);
+ok(_scoreWahl.doppelt === 0,
+   'neue Scoregrafiken wiederholen sich nicht direkt hintereinander',
+   _scoreWahl.doppelt + ' Wiederholungen · ' + JSON.stringify(_scoreWahl.zahl));
+
+// Die vorherigen Formen kommen aus dem veroeffentlichten Bestand. Zwei
+// alte Spielfelder muessen auch nach geaenderten Auswahlregeln als solche
+// zaehlen; die erste neue Karte bleibt nach zwei weiteren Partien bytegleich.
+const _publizierteForm = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle = matches, bestand = _cache._stories, letzte = alle[alle.length - 1];
+  const alt = alle.slice(-2).map(m => ({id:'spiel_'+m.id, when:new Date(mts(m)),
+    dataRef:{type:'spiel', matchId:m.id, visual:{version:2,
+      score:{key:'feld', data:_spFeldDaten({m,c:_spChance(m)})}, occasion:null}}}));
+  const neu = [8,5,5].map((score,i) => Object.assign({}, letzte, {
+    id:'variation-'+i, score_a:10, score_b:score, winner:'A',
+    created_at:new Date(mts(letzte)+(i+1)*60000).toISOString()}));
+  const stand = ms => { matches=ms; invalidateCache(); _cache._stories=alt.slice(); };
+  try {
+    stand(alle.concat(neu[0]));
+    const v = _spVisualSnapshot(neu[0], []), fest = _storyStableJson(v);
+    const s = {id:'spiel_'+neu[0].id, when:new Date(mts(neu[0])),
+      dataRef:{type:'spiel',matchId:neu[0].id,visual:v}};
+    matches=alle.concat(neu); invalidateCache(); _cache._stories=[s].concat(alt);
+    const spur = neu.map(m => _spVisualSnapshot(m, []).score.key);
+    const stabil = _storyStableJson(_spVisualSnapshot(neu[0], [])) === fest;
+    const vor = spur.join();
+    invalidateCache(); _cache._stories=[s].concat(alt);
+    const kalt = neu.map(m => _spVisualSnapshot(m, []).score.key).join();
+    return {spur, erster:v.score.key, stabil, kalt:vor===kalt,
+      alteFest:alt.every(s => _storyStableJson(_spScoreSnapshot(matches.find(m=>m.id===s.dataRef.matchId)))
+        === _storyStableJson(s.dataRef.visual.score))};
+  } finally { matches=alle; invalidateCache(); _cache._stories=bestand; }
+})())`));
+ok(_publizierteForm.erster !== 'feld' && new Set(_publizierteForm.spur).size >= 2
+   && _publizierteForm.spur.every((k,i,a) => !i || k !== a[i-1]),
+   'drei neue Testpartien beruecksichtigen die gespeicherten Spielfelder und variieren ihre Scoregrafik',
+   _publizierteForm.spur.join(' → '));
+ok(_publizierteForm.stabil && _publizierteForm.kalt && _publizierteForm.alteFest,
+   'publizierte Grafikdaten bleiben nach weiteren Partien und beim Kaltstart identisch');
+
+// Dieselbe Rivalitaets-ID wird mit dem naechsten Duell neu berechnet. Der
+// erste Snapshot muss an der alten Partie und seiner damaligen Zahl bleiben.
+const _duellFest = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle=matches, bestand=_cache._stories;
+  const r=_buildStories().find(s => (s.dataRef||{}).type==='rivalry');
+  if(!r) return {fehlt:true};
+  const alt=Object.assign({},r,{dataRef:Object.assign({},r.dataRef)});
+  const mid=alt.dataRef.matchId, basis=matches.find(m=>m.id===mid);
+  delete alt.dataRef.matchId;
+  const snapshot=_storyStableJson(alt);
+  const next=Object.assign({},basis,{id:'duell-naechstes',
+    created_at:new Date(mts(alle[alle.length-1])+60000).toISOString()});
+  const erg=m=>({id:'spiel_'+m.id,title:'Ergebnis',desc:'Das Ergebnis bleibt.',
+    cat:'highlight',prio:41,when:new Date(mts(m)),dataRef:{type:'spiel',matchId:m.id}});
+  try {
+    matches=alle.concat(next); invalidateCache();
+    const aktualisiert=Object.assign({},r,{when:new Date(mts(next)),
+      dataRef:Object.assign({},r.dataRef,{matchId:next.id,n:r.dataRef.n+1})});
+    const merged=_mergeStorySnapshots([alt,erg(basis)],[aktualisiert,erg(next)]);
+    _cache._stories=merged;
+    const karten=getStoriesCache();
+    const k=karten.find(s=>s.dataRef.matchId===mid);
+    const z=k && (k.dataRef.teile||[]).find(t=>t.id===r.id);
+    const letzte=karten.find(s=>s.dataRef.matchId===next.id);
+    return {fehlt:false,n:r.dataRef.n,stand:z && z.ref.n,match:z && z.matchId,mid,
+      gewandert:!!(letzte && (letzte.dataRef.teile||[]).some(t=>t.id===r.id)),
+      unveraendert:_storyStableJson(alt)===snapshot,
+      generatorMatch:!!r.dataRef.matchId};
+  } finally {matches=alle;invalidateCache();_cache._stories=bestand;}
+})())`));
+ok(!_duellFest.fehlt && _duellFest.generatorMatch && _duellFest.match===_duellFest.mid
+   && _duellFest.stand===_duellFest.n && !_duellFest.gewandert && _duellFest.unveraendert,
+   'eine Rivalitaetszahl bleibt nach dem naechsten Duell unveraendert an ihrer urspruenglichen Partie',
+   JSON.stringify(_duellFest));
+const _duellGleicheSekunde = JSON.parse(K.eval(`JSON.stringify((function(){
+  const alle=matches, bestand=_cache._stories;
+  const r=_buildStories().find(s=>(s.dataRef||{}).type==='rivalry');
+  if(!r) return {fehlt:true};
+  const basis=matches.find(m=>m.id===r.dataRef.matchId);
+  const alt=Object.assign({},r,{dataRef:Object.assign({},r.dataRef)});
+  delete alt.dataRef.matchId;
+  const next=Object.assign({},basis,{id:'duell-gleiche-sekunde'});
+  try {
+    matches=alle.concat(next); invalidateCache(); _cache._stories=[alt];
+    const angezeigt=_consolidateStories([alt])[0];
+    const neu=_buildStories().find(s=>s.id===r.id);
+    return {fehlt:false,alt:angezeigt.dataRef.matchId===basis.id,
+      neu:neu.dataRef.matchId===next.id,n:neu.dataRef.n===r.dataRef.n+1};
+  } finally {matches=alle;invalidateCache();_cache._stories=bestand;}
+})())`));
+ok(!_duellGleicheSekunde.fehlt && _duellGleicheSekunde.alt
+   && _duellGleicheSekunde.neu && _duellGleicheSekunde.n,
+   'zwei Duelle mit gleicher Sekunde bleiben anhand des historischen Duellstands getrennt',
+   JSON.stringify(_duellGleicheSekunde));
 // ── Die Formen der gewöhnlichen Partie über die ganze Liga [§C33] ────
 // Eine Partie ohne Anlass bekam immer dasselbe Spielfeld oder dieselbe
 // Ergebniszeile. Jetzt wählt `_spForm` aus dreizehn Formen. Geprüft wird
