@@ -18,10 +18,30 @@ function _newsSaveSeen(set){
     localStorage.setItem(NEWS_LS_SEEN, JSON.stringify(arr));
   } catch(e){}
 }
-function _newsMarkSeen(ids){
+// Die Ewige Tafel ist die einzige Karte, deren Tages-ID stabil bleibt,
+// waehrend sie im Lauf des Tages neue Wechsel aufnimmt. Fuer sie ist deshalb
+// nicht nur die ID, sondern die sichtbare Fassung der Lesebeleg. Sonst blieb
+// eine um weitere Rekorde ergaenzte Karte "gelesen", nur weil ihre fruehere
+// Fassung schon geoeffnet worden war.
+function _newsIstRollendeTafel(s){
+  const d = (s && s.dataRef) || {};
+  return d.type === 'sammel' && d.quelle === 'tafel' && Array.isArray(d.teile);
+}
+function _newsSeenKey(s){
+  if(!s || typeof s !== 'object') return String(s || '');
+  if(!_newsIstRollendeTafel(s)) return String(s.id || '');
+  const d = s.dataRef || {};
+  const letzter = d.teile.reduce((mx, t) => Math.max(mx, Number(t && t.ms) || 0),
+    new Date(s.when).getTime() || 0);
+  return `${s.id}@${letzter}@${d.teile.length}`;
+}
+function _newsMarkSeen(items){
   const seen = _newsLoadSeen();
-  const list = Array.isArray(ids) ? ids : [ids];
-  list.forEach(id => seen.add(id));
+  const list = Array.isArray(items) ? items : [items];
+  list.forEach(item => {
+    const key = _newsSeenKey(item);
+    if(key) seen.add(key);
+  });
   _newsSaveSeen(seen);
 }
 // Der Lesestand: der Zeitpunkt der neuesten Karte, die beim letzten
@@ -38,12 +58,17 @@ function _newsLesestand(){
 // markiert.
 function _newsGelesen(s, seen, stand){
   if(!s) return true;
-  if(seen && seen.has(s.id)) return true;
+  // Bei der rollenden Tages-Tafel darf eine gelesene alte Fassung die neue
+  // nicht verschlucken. Alle unveraenderlichen Stories behalten den billigen
+  // ID-Lookup und damit ihren bisherigen Lesestand.
+  const key = _newsSeenKey(s);
+  if(seen && seen.has(key)) return true;
+  if(!_newsIstRollendeTafel(s) && seen && seen.has(s.id)) return true;
   return !!stand && new Date(s.when).getTime() <= stand;
 }
 function _newsMarkAllSeen(){
   const stories = getStoriesCache();
-  _newsMarkSeen(stories.map(s => s.id));
+  _newsMarkSeen(stories);
   // Der Lesestand wandert auf die neueste Karte des Feeds. Alles, was
   // danach kommt, ist neu; alles davor ist gelesen, auch wenn es erst
   // spaeter im Feed erscheint.
@@ -980,7 +1005,7 @@ function _newsVerlustBand(s){
   return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
     + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
       `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
-      + `<em class="num">−${-x.d}</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      + `<em class="num">−${-x.d} P</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
       ? `<b class="nf-vl mehr">+${weg.length - 3}</b>` : ''}</span></div>`;
 }
 
@@ -1003,7 +1028,7 @@ function _newsSpielZahlen(s, anlass){
 // (`_newsRohIndex`), weil eine Sammelzeile nur Titel und Zeichen trägt.
 // Kopf und Fuß, die daraus entstehen, stehen in `30b-news-spieltag.js`.
 function _newsRohIndex(){
-  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  const roh = Array.isArray(_cache._stories) ? _cache._stories : [];
   let m = _newsRohMemo.get(roh);
   if(!m){ m = new Map(roh.map(x => [x.id, x])); _newsRohMemo.set(roh, m); }
   return m;
@@ -1090,7 +1115,7 @@ const NEWS_FADEN_ART = {
 };
 const _newsFadenMemo = new WeakMap();
 function _newsFaeden(cards){
-  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  const roh = Array.isArray(_cache._stories) ? _cache._stories : [];
   const alt = _newsFadenMemo.get(roh);
   if(alt && alt.m === matches && alt.n === cards.length) return alt.map;
   const map = new Map();
@@ -1931,7 +1956,7 @@ function _renderNewsFeed(){
     const el = ev.target.closest && ev.target.closest('[data-sid]');
     if(!el || !liste.contains(el)) return;
     const sid = el.dataset.sid;
-    _newsMarkSeen(sid);
+    _newsMarkSeen(stories.find(s => s.id === sid) || sid);
     el.classList.add('read'); el.classList.remove('important');
     el.querySelector('.nf-dot')?.remove();
     newsBadgeRefresh();

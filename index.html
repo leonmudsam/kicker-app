@@ -1978,7 +1978,7 @@
     filter:drop-shadow(0 0 5px rgba(247,207,74,.38))}
   .nf-gross .nf-h{font-size:19px;line-height:1.1;-webkit-line-clamp:5}
   .nf-gross .nf-d{font-size:12.5px;-webkit-line-clamp:6}
-  .nf-gross .nf-erg-sc{font-size:26px}
+  .nf-gross .nf-erg-sc{font-size:28px}
   .nf-gross .nf-wert b{font-size:34px}
   .nf-gross .nf-zb b{font-size:17px}
   .nf-gross{border-radius:14px}
@@ -2043,7 +2043,7 @@
   .nf-gr-l{display:flex;align-items:center;gap:6px;padding-top:1px}
   .nf-gr-l:has(.nf-wert):has(.nf-face),
   .nf-gr-l:not(.nf-duo):has(.nf-wert):has(.rav){flex-direction:column;
-    align-items:center;gap:5px;max-width:81px}
+    align-items:center;gap:0;max-width:81px}
   .nf-gr-l:has(.nf-wert):not(:has(.nf-face)):not(:has(.rav)){max-width:81px}
   .nf-gr-l:has(.nf-erf-z){flex-direction:column;align-items:center;gap:3px}
   .nf-erf-z{display:block;width:52px;height:52px}
@@ -2066,7 +2066,7 @@
     font-size:10.5px;font-weight:650;line-height:1.25;color:var(--muted);overflow-wrap:break-word}
   .nf-erg-s.w .nf-erg-team{color:var(--ink)}
   .nf-erg-s:not(.w) .nf-erg-avs{opacity:.55}
-  .nf-erg-sc{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:19px;
+  .nf-erg-sc{flex:0 0 auto;font-family:'Archivo Black',sans-serif;font-size:21px;
     letter-spacing:-.03em;display:flex;align-items:baseline;gap:1px}
   .nf-erg-sc b.w{color:var(--ink)} .nf-erg-sc b.v{color:var(--faint)}
   .nf-erg-sc i{font-style:normal;color:var(--faint);font-size:15px}
@@ -4210,7 +4210,7 @@
 .sp-z-n{display:flex;flex-direction:column;font-size:10.5px;line-height:1.3;color:var(--muted)}
 .sp-z-s.w .sp-z-n b{color:var(--ink)}
 .sp-z-sc{align-self:center}
-.sp-z-sc{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;letter-spacing:-.02em;color:var(--faint)}
+.sp-z-sc{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:25px;line-height:1;letter-spacing:-.03em;color:var(--faint);text-shadow:0 0 16px rgba(190,242,100,.12)}
 .sp-z-sc em{font-style:normal}.sp-z-sc em.w{color:var(--ink)}
 .sp-z-sc i{font-style:normal;margin:0 1px}
 
@@ -4508,7 +4508,7 @@
 .sp-band-s:not(.w) .sp-band-avs{opacity:.55}
 .sp-band-s.w .sp-z-n b{color:var(--ink)}
 .sp-band-m{align-self:center;display:flex;flex-direction:column;align-items:center;gap:5px}
-.sp-band-sc{font-family:'Archivo Black',sans-serif;font-size:24px;line-height:1;letter-spacing:-.02em;color:var(--faint)}
+.sp-band-sc{font-family:'Archivo Black',sans-serif;font-size:32px;line-height:1;letter-spacing:-.03em;color:var(--faint)}
 .sp-band-sc em{font-style:normal}.sp-band-sc em.w{color:var(--acid);text-shadow:0 0 14px rgba(190,242,100,.35)}
 .sp-band-sc i{font-style:normal;font-size:16px;margin:0 2px;vertical-align:3px}
 .sp-band-g{display:flex;gap:2px}
@@ -4556,7 +4556,7 @@
   background:radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.035),transparent 70%),var(--surface2);
   box-shadow:inset 0 0 0 1px var(--line2)}
 .sp-fk .av,.sp-nz .av{--av:20px;width:20px;height:20px;font-size:8px;box-shadow:0 0 0 2px var(--surface2);flex:0 0 auto}
-.sp-st{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:17px;letter-spacing:-.02em;line-height:1;color:var(--faint);white-space:nowrap}
+.sp-st{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:22px;letter-spacing:-.03em;line-height:1;color:var(--faint);white-space:nowrap}
 .sp-st em{font-style:normal;color:var(--ink)}
 .sp-nz{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;margin:6px 10px 0;font-size:10.5px;line-height:1.3;color:var(--muted)}
 .sp-nz > span{display:flex;flex-direction:column;min-width:0}
@@ -4572,8 +4572,12 @@
 .sp-mo-k > b{font:700 11px 'Sometype Mono',monospace;color:var(--ink2)}
 .sp-mo-k > span{font:600 8.5px 'Sometype Mono',monospace;color:var(--muted)}
 .sp-mo-k.jetzt{background:rgba(190,242,100,.14);box-shadow:inset 0 0 0 1.5px var(--acid)}
-.sp-mo-k.jetzt .sp-st{font-size:14px}
+.sp-mo-k.jetzt .sp-st{font-size:18px}
 .sp-mo-k.jetzt .sp-st em{color:var(--acid)}
+.sp-mo-a{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;
+  font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.sp-mo-a b{font-weight:700;color:var(--acid)}
+.sp-mo-a span{color:var(--muted);letter-spacing:0;text-transform:none;text-align:right}
 
 .sp-ta{display:grid;grid-template-columns:128px minmax(0,1fr);gap:10px;align-items:center}
 .sp-ta-u{display:flex;flex-direction:column;align-items:center}
@@ -4615,7 +4619,7 @@
 .sp-et-m > i{position:absolute;left:0;width:5px;height:5px;margin-top:-2.5px;border-radius:50%;background:var(--acid);opacity:0}
 .sp-et-m > b{position:relative;font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1;color:var(--acid)}
 .sp-et-m > span{position:relative;font:600 8px 'Sometype Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.sp-et-m .sp-st{position:relative;font-size:14px;margin-top:3px}
+.sp-et-m .sp-st{position:relative;font-size:18px;margin-top:3px}
 
 .sp-ch-d{display:grid;grid-template-columns:auto 96px auto;justify-content:center;align-items:center;gap:6px}
 .sp-ch-r{position:relative;width:96px;height:96px}
@@ -4640,7 +4644,7 @@
 .sp-gg-r i.w{background:rgba(190,242,100,.65)}
 .sp-gg-r i.jetzt{background:var(--acid);box-shadow:0 0 0 1.5px var(--surface2),0 0 0 2.5px var(--acid)}
 .sp-gg-h{display:flex;align-items:baseline;gap:5px;font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
-.sp-gg-h .sp-st{font-size:14px}
+.sp-gg-h .sp-st{font-size:18px}
 
 .sp-rv{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:6px}
 .sp-rv-c.re{opacity:.55}
@@ -4649,7 +4653,7 @@
 .sp-rv-t > i{font:600 8px 'Sometype Mono',monospace;font-style:normal;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
 .sp-rv-t.alt > b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:15px;color:var(--red);opacity:.85}
 .sp-rv-t.neu{box-shadow:0 0 0 1px rgba(190,242,100,.5)}
-.sp-rv-t.neu .sp-st{font-size:15px}
+.sp-rv-t.neu .sp-st{font-size:20px}
 .sp-rv-t.neu .sp-st em{color:var(--acid)}
 .sp-rv-p{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0}
 .sp-rv-p svg{width:100%;max-width:60px;overflow:visible}
@@ -4673,11 +4677,11 @@
 .sp-zu-k{display:flex;flex-wrap:wrap;align-items:center;gap:2px}
 .sp-zu-k i{width:8px;height:8px;border-radius:2px;background:var(--line2)}
 .sp-zu-k i.alt{background:var(--silber)}
-.sp-zu-k .sp-st{margin-left:4px;padding:2px 6px;border-radius:6px;font-size:13px;background:rgba(190,242,100,.12);box-shadow:inset 0 0 0 1px rgba(190,242,100,.4)}
+.sp-zu-k .sp-st{margin-left:4px;padding:2px 6px;border-radius:6px;font-size:17px;background:rgba(190,242,100,.12);box-shadow:inset 0 0 0 1px rgba(190,242,100,.4)}
 .sp-zu-k .sp-st em{color:var(--acid)}
 
 .sp-gf{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:end}
-.sp-gf > .sp-st{align-self:center;font-size:20px}
+.sp-gf > .sp-st{align-self:center;font-size:26px}
 .sp-gf-t{display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.6;min-width:0}
 .sp-gf-t.w{opacity:1}
 .sp-gf-ss{display:flex;justify-content:center;align-items:flex-end;gap:10px;height:96px}
@@ -4699,7 +4703,7 @@
 .sp-tr-z{font-size:12px;color:var(--muted)}
 .sp-tr-z b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;color:var(--acid);margin-right:3px}
 .sp-tr-j{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:var(--muted)}
-.sp-tr-j .sp-st{font-size:16px}
+.sp-tr-j .sp-st{font-size:20px}
 
 .sp-zw{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center}
 .sp-zw-l{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:var(--ink2);background:var(--surface);box-shadow:0 0 0 1px var(--line2)}
@@ -4971,7 +4975,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.02.148ac2ca';
+const BUILD_VERSION='2026.10.03.ae645d14';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5424,12 +5428,15 @@ function _merkeSim(sim){
 function getHistoryByMatchId(){
   const sim=getGlobalSim();
   const key='hist_'+matches.length+'_'+_cache.version;
-  if(_cache._historyByMatchIdKey===key) return _cache._historyByMatchId;
+  if(_cache._historyByMatchIdKey===key && _cache._historyByMatchIdSim===sim)
+    return _cache._historyByMatchId;
   const map=new Map();
-  for(let i=0; i<sim.history.length; i++){
-    map.set(sim.history[i].matchId, sim.history[i]);
+  const history=sim && Array.isArray(sim.history) ? sim.history : [];
+  for(let i=0; i<history.length; i++){
+    map.set(history[i].matchId, history[i]);
   }
   _cache._historyByMatchIdKey = key;
+  _cache._historyByMatchIdSim = sim;
   _cache._historyByMatchId = map;
   return map;
 }
@@ -15690,11 +15697,10 @@ const NEWS_LIMITS = {
   tagKarteMin: 2,
   tagKarteSpannung: 620,
   sperreTage: 3,
-  total: 120,
 };
 
 const NEWS_FENSTER_TAGE = 14;
-const NEWS_DB_ZEILEN = 500;
+const NEWS_DB_SEITENGROESSE = 500;
 
 const SAISON_ENDSPURT_ELO = 25;
 
@@ -15768,9 +15774,7 @@ const STORY_PRIO = {
 };
 const AMBIENT_PRIO_SPANNE = 7;
 
-const AMBIENT_SLOTS = [10, 19];
-const AMBIENT_ABEND_AB = 19;
-
+const AMBIENT_SLOTS = [15];
 const AMBIENT_SLOT_ROLLE = {
   form_best_wr:'stand', form_striker:'stand', form_defender:'stand',
   form_clutch:'stand', form_close_wins:'stand', form_most_active:'stand',
@@ -15788,7 +15792,7 @@ const AMBIENT_SLOT_ROLLE = {
   personal_grinder:'geschichte', insignium_stand:'geschichte', titelband_stand:'geschichte',
 };
 function _ambientRolleVon(key){ return AMBIENT_SLOT_ROLLE[key] || null; }
-function _ambientRolleFuerSlot(stunde){ return stunde < 15 ? 'stand' : 'geschichte'; }
+function _ambientRolleFuerSlot(){ return 'mix'; }
 const AMBIENT_COOLDOWN_DAYS = 7;
 const AMBIENT_RUBRIK_COOLDOWN_DAYS = 2;
 const AMBIENT_PLAYER_COOLDOWN_DAYS = 2;
@@ -16559,6 +16563,9 @@ function _buildStories(){
     Object.keys(_markenTag).forEach(tag => {
       const l = _markenTag[tag].slice().sort((a, b) => a.when - b.when);
       const namen = [...new Set(l.map(ev => nameOf(ev.playerId)))];
+      const matchIds = [...new Set(l.map(ev => ev.matchId).filter(Boolean))];
+      const gemeinsamesMatch = matchIds.length === 1
+        && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
       const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
       stories.push({
         id: 'badgemarken_' + tag,
@@ -16574,9 +16581,10 @@ function _buildStories(){
         dataRef: {type:'badge_marken', tag,
                   playerIds:[...new Set(l.map(ev => ev.playerId))],
                   causalKey:_storyGruppeKey('awards', tag),
-                  matchId: l.length === 1 ? l[0].matchId : null,
+                  matchId: gemeinsamesMatch,
                   marken: l.map(ev => ({pid:ev.playerId, badgeId:ev.badge.id,
-                                        name:ev.badge.name, rang:_bRang(ev)}))}
+                                        name:ev.badge.name, rang:_bRang(ev),
+                                        matchId:ev.matchId || null}))}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] badges', e); }
@@ -17045,7 +17053,8 @@ function _buildStories(){
       }
       if(art === 'normal' || art === 'eng'){
         let tx = null;
-        try { tx = _spFormText(m); } catch(e){ tx = null; }
+        try { tx = typeof _spScoreText === 'function' ? _spScoreText(m) : _spFormText(m); }
+        catch(e){ tx = null; }
         if(tx){ title = tx.t; desc = tx.d; }
       }
       stories.push({
@@ -17211,8 +17220,8 @@ function _buildStories(){
         cat: 'personal',
         ic: 'peak',
         title: `${nameOf(e.pid)} knackt ${e.mark} Elo`,
-        desc: `Zum ersten Mal über dieser Marke, und damit auf dem höchsten `
-            + `Stand der ganzen Laufbahn.`,
+        desc: `Der Sprung liegt ${e.mark - (cfg.start_elo ?? 1000)} Elo über dem `
+            + `Startwert und markiert den höchsten Stand der ganzen Laufbahn.`,
         when: new Date(e.when),
         prio: STORY_PRIO.milestone_elo + (e.mark >= (cfg.start_elo ?? 1000) + 500 ? 4 : 0),
         dataRef: {type:'milestone_elo', pid: e.pid, milestone: e.mark+' Elo', mark: e.mark, matchId: e.matchId}
@@ -17478,8 +17487,9 @@ function _buildStories(){
         if(art === 'gesteigert' && def.fenster) return;
         const altPids = ((a && a.pids) || []);
         const fall = art === 'geholt' ? _halterFall(altPids, n.pids) : art;
-        const wer = fall === 'dazu'
+        const wer = (fall === 'dazu' || fall === 'uebernommen')
           ? n.pids.filter(id => altPids.indexOf(id) < 0) : n.pids;
+        if(!wer.length) return;
         if(!wer.some(p => _amTag.has(p))) return;
         const _mid = _partieVon(wer);
         const neuN = wer.map(nameOf);
@@ -17811,9 +17821,24 @@ function _buildStories(){
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] insignium', e); }
 
   try {
-    const amb = _buildAmbientStories(now, pm, nameOf);
+    const amb = _buildAmbientStories(now, pm, nameOf, stories);
     for(const a of amb) stories.push(a);
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] ambient build failed', e); }
+
+  try {
+    const jeMatch = new Map();
+    stories.forEach(s => { const d = s.dataRef || {}; if(!d.matchId) return;
+      const l = jeMatch.get(d.matchId) || []; l.push(s); jeMatch.set(d.matchId, l); });
+    jeMatch.forEach((l, mid) => {
+      const basis = l.find(s => (s.dataRef || {}).type === 'spiel');
+      const m = matches.find(x => x.id === mid);
+      if(!basis || !m || (basis.dataRef || {}).visual || typeof _spVisualSnapshot !== 'function') return;
+      const visual = _spVisualSnapshot(m, l.map(s => s.dataRef || {}));
+      basis.dataRef = Object.assign({}, basis.dataRef, {visual,
+        scoreVisualKey:visual.score.key,
+        occasionVisualKey:visual.occasion ? visual.occasion.key : ''});
+    });
+  } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] visual snapshot failed', e); }
 
   stories.sort((a,b) => {
     const dt = b.when - a.when;
@@ -17821,39 +17846,10 @@ function _buildStories(){
     return b.prio - a.prio;
   });
 
-  const GEN_PFLICHT = new Set(['lead_change', 'season_endgame', 'season_recap',
-    'potd', 'potw', 'woche', 'chronik_monat', 'chronik_erstling',
-    'insignium_stufe', 'streak_record']);
-  const GEN_PARTIE = new Set(['win_streak', 'team_streak']);
-  const PER_PLAYER_LIMIT = 3;
-  const NEBENROLLEN_LIMIT = 5;
-  const perPlayer = {};
-  const imBild = {};
-  const deduped = [];
-  for(const s of stories){
-    const d = s.dataRef || {};
-    if(d.type === 'spiel' || d.type === 'runde'){ deduped.push(s); continue; }
-    const pid = d.pid || d.playerId || d.newLeader || null;
-    let gesichter = [];
-    try { gesichter = (typeof _newsPids === 'function') ? _newsPids(s) : []; } catch(e){ gesichter = []; }
-    const pflicht = GEN_PFLICHT.has(d.type) || (GEN_PARTIE.has(d.type) && !!d.matchId);
-    if(pid && !pflicht && d.rarity !== 'legendary' && gesichter.length
-       && gesichter.every(id => (imBild[id] || 0) >= NEBENROLLEN_LIMIT)) continue;
-    if(!pid || pflicht || d.rarity === 'legendary'){
-      gesichter.forEach(id => { imBild[id] = (imBild[id] || 0) + 1; });
-      deduped.push(s);
-      continue;
-    }
-    if(!perPlayer[pid]) perPlayer[pid] = 0;
-    if(perPlayer[pid] >= PER_PLAYER_LIMIT) continue;
-    perPlayer[pid]++;
-    gesichter.forEach(id => { imBild[id] = (imBild[id] || 0) + 1; });
-    deduped.push(s);
-  }
-  const _result = deduped.slice(0, NEWS_LIMITS.total);
   _cache._buildStoriesKey = _buildStoriesKey;
-  _cache._buildStoriesResult = _result;
-  return _result;
+  _cache._buildStoriesResult = stories;
+  return stories;
+
 }
 
 function _newsPeriodWinner(rangeMatches, minWins, mode){
@@ -17891,7 +17887,7 @@ function _newsPeriodWinner(rangeMatches, minWins, mode){
   return { winners: tied, main: top };
 }
 
-function _buildAmbientStories(now, pm, nameOf){
+function _buildAmbientStories(now, pm, nameOf, tagesStories){
   const out = [];
   if(!Array.isArray(AMBIENT_SLOTS) || !AMBIENT_SLOTS.length) return out;
   if(!_isAmbientDay(now)) return out;
@@ -17902,17 +17898,19 @@ function _buildAmbientStories(now, pm, nameOf){
   const _dayMs = 86400000;
   const dueSlots = [];
   const slotHours = AMBIENT_SLOTS.slice().sort((a, b) => a - b);
-  const _spieltage = new Set();
-  (matches || []).forEach(m => {
-    _spieltage.add(tagKey(m.created_at));
-  });
-  {
-    const dk = tagKey(now);
+  const tageMitMatch = new Set((matches || []).map(m => tagKey(m.created_at)));
+  const generation = Array.isArray(tagesStories) ? tagesStories : [];
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - NEWS_FENSTER_TAGE + 1);
+  for(let tag = new Date(start); tag <= now; tag.setDate(tag.getDate() + 1)){
+    const dk = tagKey(tag), istHeute = dk === tagKey(now);
     for(const slotHour of slotHours){
-      const faellig = new Date(now.getFullYear(), now.getMonth(), now.getDate(),
-                               slotHour, 0, 0, 0);
+      const faellig = new Date(tag.getFullYear(), tag.getMonth(), tag.getDate(), slotHour, 0, 0, 0);
       if(faellig.getTime() > now.getTime()) continue;
-      if(slotHour >= AMBIENT_ABEND_AB && _spieltage.has(dk)) continue;
+      if(!istHeute && tageMitMatch.has(dk)) continue;
+      if(istHeute && (matches || []).some(m => tagKey(m.created_at) === dk && mts(m) <= faellig.getTime())) continue;
+      const saisonEnde = generation.some(s => (s.dataRef || {}).type === 'season_recap'
+        && tagKey(s.when) === dk && new Date(s.when).getTime() <= faellig.getTime());
+      if(saisonEnde) continue;
       dueSlots.push({dateKey: dk, slotHour, when: faellig});
     }
   }
@@ -18000,7 +17998,7 @@ function _buildAmbientStories(now, pm, nameOf){
         if(pass < 2 && (usedRubriken.has(rubrikVon(t.key)) || recentRubriken.has(rubrikVon(t.key)))) continue;
         if(pass < 2){
           const r = _ambientRolleVon(t.key);
-          if(r && r !== rolle) continue;
+          if(rolle !== 'mix' && r && r !== rolle) continue;
         }
         let res = null;
         try { res = t.make(rng); } catch(e){ res = null; }
@@ -18300,6 +18298,42 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:'Rekord-Spieltag',
       desc:`Meiste Spiele an einem Tag: ${bn} Partien am ${p[2]}.${p[1]}.${p[0]}.`,
       vv: bn, vl:'Spiele' };
+  }});
+
+  T.push({ key:'history_week_volume', weight:2, make: rng => {
+    if(matches.length < 12) return null;
+    const wochen = {};
+    for(const m of matches){
+      const d = new Date(m.created_at), tag = (d.getDay() + 6) % 7;
+      const mo = new Date(d.getFullYear(), d.getMonth(), d.getDate() - tag);
+      const k = tagKey(mo);
+      if(!wochen[k]) wochen[k] = {n:0, von:mo};
+      wochen[k].n++;
+    }
+    const l = Object.values(wochen).sort((a, b) => b.n - a.n || a.von - b.von);
+    if(l.length < 3) return null;
+    const laut = l[0], still = l.slice().sort((a, b) => a.n - b.n || a.von - b.von)[0];
+    const x = rng() < .55 ? laut : still, istLaut = x === laut;
+    const bis = new Date(x.von.getFullYear(), x.von.getMonth(), x.von.getDate() + 6);
+    return {cat:'history', ic:istLaut ? 'flame' : 'calendar', prio:4,
+      title:istLaut ? 'Die spielreichste Woche bisher' : 'Die ruhigste Spielwoche bisher',
+      desc:`${x.n} ${x.n === 1 ? 'Partie' : 'Partien'} zwischen ${datumFmt(x.von, 'tm')} und ${datumFmt(bis, 'tm')}. `
+        + (istLaut ? `Der bisherige Wochenrekord.` : `Weniger wurde in keiner Woche mit Spielbetrieb gespielt.`),
+      vv:String(x.n), vl:'Partien'};
+  }});
+
+  T.push({ key:'record_spotlight', weight:2, make: rng => {
+    let byId = null;
+    try { byId = (allChronicles() || {}).byId; } catch(e){ return null; }
+    const l = Object.values(byId || {}).filter(r => r && r.pids && r.pids.length
+      && r.pids.some(pid => pm[pid] && !pm[pid].hidden));
+    if(!l.length) return null;
+    const r = l[Math.floor(rng() * l.length)], pids = r.pids.filter(pid => pm[pid] && !pm[pid].hidden);
+    const namen = pids.slice(0, 3).map(nameOf);
+    return {cat:'history', ic:r.ic || 'trophy', prio:5,
+      title:`Rekord im Fokus: ${r.name}`,
+      desc:`${_namenListe(namen)} ${pids.length === 1 ? 'hält' : 'halten'} diese Bestmarke. ${String(r.ev || r.cond || 'Der Beleg steht in der Ewigen Tafel.').replace(/\s*[·•]\s*/g, '. ')}`,
+      vv:String(r.val), vl:'Bestwert', dataRef:{ambientPids:pids.slice(0, 3), rekordId:r.id}};
   }});
 
   const _gsim = () => (typeof getGlobalSim === 'function') ? (getGlobalSim() || {}) : {};
@@ -18909,67 +18943,24 @@ function _ambientTemplatePool(now, pm, nameOf){
 
 function getStoriesCache(){
   const base = Array.isArray(_cache._stories) ? _cache._stories : [];
-  return _consolidateStories(_newsTexteAuffrischen(base)).slice(0, NEWS_LIMITS.total);
-}
-
-const STORY_LAEUFT_AB = new Set(['season_endgame']);
-
-function _newsPrio(s, frisch){
-  if(frisch && typeof frisch.prio === 'number') return frisch.prio;
-  const band = STORY_PRIO[(s && s.dataRef || {}).type];
-  return (typeof band === 'number') ? band : ((s && s.prio) | 0);
-}
-
-function _ambientSlotWhen(id){
-  const m = /^ambient_(\d{4})-(\d{2})-(\d{2})_(\d{1,2})$/.exec(String(id || ''));
-  if(!m) return null;
-  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], 0, 0, 0);
+  return _consolidateStories(_newsTexteAuffrischen(base));
 }
 
 function _newsTexteAuffrischen(list){
-  list = Array.isArray(list) ? list : [];
-  let frisch = null;
-  try { frisch = _buildStories(); } catch(e){ return list; }
-  if(!Array.isArray(frisch) || !frisch.length) return list;
-  if(_cache._frischVon === list && _cache._frischRoh === frisch) return _cache._frischAus;
-  const nach = new Map();
-  frisch.forEach(s => { if(s && s.id) nach.set(s.id, s); });
+  if(!Array.isArray(list)) return [];
+  if(_cache._ambientZeitFrom === list) return _cache._ambientZeitList;
   let geaendert = false;
-  const aus = [];
-  const vorhanden = new Set();
-  list.forEach(s => {
-    if(s && s.id) vorhanden.add(s.id);
-    const slot = s ? _ambientSlotWhen(s.id) : null;
-    if(slot && new Date(s.when).getTime() !== slot.getTime()){
-      geaendert = true;
-      s = Object.assign({}, s, {when: slot});
-    }
-    const n = s && s.id ? nach.get(s.id) : null;
-    const p = _newsPrio(s, n);
-    if(!n){
-      if(s && STORY_LAEUFT_AB.has((s.dataRef || {}).type)){ geaendert = true; return; }
-      if(p === s.prio){ aus.push(s); return; }
-      geaendert = true;
-      aus.push(Object.assign({}, s, {prio: p}));
-      return;
-    }
-    const refGleich = JSON.stringify(n.dataRef || {}) === JSON.stringify(s.dataRef || {});
-    if(n.title === s.title && n.desc === s.desc && p === s.prio
-       && (n.ic || s.ic) === s.ic && (n.cat || s.cat) === s.cat && refGleich){ aus.push(s); return; }
+  const aus = list.map(st => {
+    const m = /^ambient_(\d{4})-(\d{2})-(\d{2})_15$/.exec(String(st && st.id || ''));
+    if(!m) return st;
+    const slot = new Date(+m[1], +m[2] - 1, +m[3], 15, 0, 0, 0);
+    if(!Number.isFinite(slot.getTime()) || new Date(st.when).getTime() === slot.getTime()) return st;
     geaendert = true;
-    aus.push(Object.assign({}, s, {title: n.title, desc: n.desc, ic: n.ic || s.ic,
-                                   cat:n.cat || s.cat, prio: p,
-                                   dataRef: n.dataRef || s.dataRef}));
+    return Object.assign({}, st, {when:slot});
   });
-  const ab = Date.now() - NEWS_FENSTER_TAGE * 86400000;
-  frisch.forEach(s => {
-    if(!s || !s.id || vorhanden.has(s.id) || new Date(s.when).getTime() < ab) return;
-    vorhanden.add(s.id); aus.push(s); geaendert = true;
-  });
-  if(geaendert) aus.sort((a, b) => new Date(b.when) - new Date(a.when));
-  const ergebnis = geaendert ? aus : list;
-  _cache._frischVon = list; _cache._frischRoh = frisch; _cache._frischAus = ergebnis;
-  return ergebnis;
+  _cache._ambientZeitFrom = list;
+  _cache._ambientZeitList = geaendert ? aus : list;
+  return _cache._ambientZeitList;
 }
 
 const STORY_ABGEMELDET = [
@@ -18992,6 +18983,32 @@ function _storyAbgemeldet(id){
 
 function _consolidateStories(list){
   if(!Array.isArray(list)) return [];
+  if(_cache._snapshotConsolFrom === list && Array.isArray(_cache._snapshotConsolList))
+    return _cache._snapshotConsolList;
+
+  const tafelTypen = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
+    'insignium_stufe','chronik_erstling','chronik_geholt']);
+  const vorbereitet = list.filter(s => !_storyAbgemeldet(s && s.id)).map(s => {
+    const d = (s && s.dataRef) || {};
+    if(!tafelTypen.has(d.type)) return s;
+    return Object.assign({}, s, {dataRef:Object.assign({}, d,
+      {causalKey:'tafel:' + tagKey(s.when)})});
+  });
+  let aus = _consolidateStoriesLegacy(vorbereitet);
+
+  aus = aus.map(s => {
+    const d = (s && s.dataRef) || {};
+    if(d.type !== 'sammel' || d.quelle !== 'tafel' || !Array.isArray(d.teile)) return s;
+    const neu = d.teile.reduce((mx, t) => Math.max(mx, Number(t && t.ms) || 0), 0);
+    return neu ? Object.assign({}, s, {when:new Date(neu)}) : s;
+  }).sort((a, b) => new Date(b.when) - new Date(a.when));
+  _cache._snapshotConsolFrom = list;
+  _cache._snapshotConsolList = aus;
+  return aus;
+}
+
+function _consolidateStoriesLegacy(list){
+  if(!Array.isArray(list)) return [];
   if(_cache._consolFrom === list && Array.isArray(_cache._consolList)) return _cache._consolList;
   const pm = (typeof pmap === 'function') ? pmap() : {};
   const nameOf = pid => (pm[pid] && pm[pid].name) || '?';
@@ -18999,53 +19016,6 @@ function _consolidateStories(list){
   const TAG_PFLICHT = new Set(['potd', 'woche', 'chronik_monat', 'season_recap',
     'chronik_frei']);
 
-  const _lastMatchId = matches.length ? matches[matches.length-1].id : null;
-  let _rekJetzt = null;
-  const _rekHalter = id => {
-    if(_rekJetzt === null){ try { _rekJetzt = allChronicles().byId || {}; } catch(e){ _rekJetzt = {}; } }
-    const r = _rekJetzt[id];
-    return (r && Array.isArray(r.pids)) ? r.pids : null;
-  };
-  let _chrJetzt = null;
-  const _chrHalter = tid => {
-    if(_chrJetzt === null){
-      _chrJetzt = {};
-      try {
-        const h = seasonTitleHalter(currentSeason().id) || {};
-        Object.keys(h).forEach(id => { _chrJetzt[id] = (h[id].pids || []).slice(); });
-      } catch(e){}
-    }
-    return _chrJetzt[tid] || null;
-  };
-  const _rekUeberholt = new Set();
-  {
-    const SORTEN = {rekord_geholt:'rekordId', rekord_erstmals:'rekordId',
-                    rekord_gesteigert:'rekordId', chronik_geholt:'titleId'};
-    const _uTag = w => tagKey(w);
-    const proSache = new Map();
-    list.forEach(s => {
-      const d = (s && s.dataRef) || {};
-      const feld = SORTEN[d.type];
-      if(!feld || !d[feld]) return;
-      const k = feld + ':' + d[feld] + '@' + _uTag(s.when);
-      const arr = proSache.get(k) || [];
-      arr.push(s); proSache.set(k, arr);
-    });
-    proSache.forEach((arr, k) => {
-      if(arr.length < 2) return;
-      const ohneTag = k.slice(0, k.lastIndexOf('@'));
-      const [feld, id] = [ohneTag.slice(0, ohneTag.indexOf(':')), ohneTag.slice(ohneTag.indexOf(':') + 1)];
-      const jetzt = feld === 'rekordId' ? _rekHalter(id) : _chrHalter(id);
-      if(!jetzt) return;
-      const hat = new Set(jetzt);
-      const neuste = arr.reduce((a, b) => new Date(b.when) > new Date(a.when) ? b : a);
-      arr.forEach(s => {
-        if(s === neuste) return;
-        const genannt = (s.dataRef || {}).playerIds || [];
-        if(genannt.length && !genannt.every(p => hat.has(p))) _rekUeberholt.add(s.id);
-      });
-    });
-  }
   const BADGE_DECKT = {zu_null:['perfect_win'], upset:['upset_king'],
                        krimi:['krimi', 'nerves_of_steel', 'nail_biter'],
                        eng:['krimi', 'nerves_of_steel']};
@@ -19068,59 +19038,11 @@ function _consolidateStories(list){
     const set = _badgeJeMatch.get(d.matchId);
     return !!set && liste.some(b => set.has(b));
   };
-  const _tageMitNachricht = new Set();
-  list.forEach(s => { const d = (s && s.dataRef) || {};
-    if(d.type !== 'ambient' && d.type !== 'season_endgame' && !_storyAbgemeldet(s && s.id))
-      _tageMitNachricht.add(tagKey(s.when)); });
-  const src = list.filter(s => {
-    const d = (s && s.dataRef) || {};
-    if(_storyAbgemeldet(s && s.id)) return false;
-    if(d.type === 'ambient') return !_tageMitNachricht.has(tagKey(s.when));
-    if(d.type === 'dry_spell' && d.lastMatchId) return d.lastMatchId === _lastMatchId;
-    if(d.type === 'elo_record' && d.elo != null){
-      let jetzt = null;
-      try { jetzt = (_allTimeRecords().eloRec || {}).val; } catch(e){}
-      return jetzt == null || d.elo >= jetzt;
-    }
-    if(d.type === 'rekord_geholt'){
-      const a = (d.playerIds || []).slice().sort().join(',');
-      const b = (d.vorher || []).slice().sort().join(',');
-      if(b && a === b) return false;
-    }
-    if(_rekUeberholt.has(s.id)) return false;
-    return true;
-  });
+  const src = list.filter(s => !_storyAbgemeldet(s && s.id));
 
-  const HL_COVERS = {
-    win_streak:      { badges:['streak5','streak10','streak15','streak20'], by:'matchId' },
-    loss_streak:     { badges:['losing5'],                        by:'pid'     },
-  };
-  const suppressMatch = new Set();
-  const suppressPlayer = new Set();
+  const suppressMatch = new Set(), suppressPlayer = new Set();
   const rivalryMsPairs = new Set();
-  const giantSlayerMatches = new Set();
-  const winStreakPids = new Set();
-  const _serieMax = new Map();
-  for(const s of src){
-    const d = s.dataRef || {};
-    if(d.type !== 'win_streak' || !d.pid) continue;
-    const k = d.pid + '|' + (d.lauf || tagKey(s.when));
-    const n = Number(d.streak) || 0;
-    if(!(_serieMax.get(k) >= n)) _serieMax.set(k, n);
-  }
-  for(const s of src){
-    const d = s.dataRef || {};
-    if(d.type === 'rivalry_milestone' && d.a && d.b) rivalryMsPairs.add([d.a, d.b].sort().join('|'));
-    if(d.type === 'giant_slayer' && d.matchId) giantSlayerMatches.add(d.matchId);
-    if(d.type === 'win_streak' && d.pid) winStreakPids.add(d.pid + '|' + tagKey(s.when));
-    const rule = HL_COVERS[d.type];
-    if(!rule) continue;
-    const keyVal = rule.by === 'matchId' ? d.matchId : d.pid;
-    if(!keyVal) continue;
-    for(const b of rule.badges){
-      (rule.by === 'matchId' ? suppressMatch : suppressPlayer).add(b + '|' + keyVal);
-    }
-  }
+  const winStreakPids = new Set(), _serieMax = new Map();
 
   const GROUPABLE = {
     loss_streak:     { label:'Pechvögel',           ic:'dropDouble', frag:s=>`${nameOf(s.dataRef.pid)} (${s.dataRef.streak})`, desc:f=>`Niederlagen nacheinander: ${f}.` },
@@ -19144,7 +19066,7 @@ function _consolidateStories(list){
   };
   const seenContent = new Set();
   const seenTitel = new Set();
-  const _sperreMs = (NEWS_LIMITS.sperreTage || 0) * 86400000;
+  const _sperreMs = 0;
   const _OHNE_SPERRE = new Set(['ambient', 'sammel', 'season_endgame', 'spiel',
                                 'potd', 'woche', 'chronik_monat', 'season_recap', 'runde']);
   const _aussage = st => {
@@ -19178,10 +19100,9 @@ function _consolidateStories(list){
       const gk = d.type + '|' + (d.matchId || tagKey(s.when));
       let g = typeGroups.get(gk);
       if(!g){ g = { type:d.type, rep: s, members: [], seen: new Set() }; typeGroups.set(gk, g); slots.push({ t: gk }); }
-      if(!g.seen.has(d.pid)){ g.seen.add(d.pid); g.members.push(s); }
+      g.seen.add(d.pid); g.members.push(s);
     } else {
-      let _brkFrei = false;
-      try { _brkFrei = typeof _isBreaking === 'function' && _isBreaking(s); } catch(e){}
+      let _brkFrei = true;
       if(_istPartie(s)) _brkFrei = true;
       const ck = (s.title || '') + '\u0000' + (s.desc || '');
       if(!_brkFrei && seenContent.has(ck)){ verworfen.push(s); continue; }
@@ -19233,10 +19154,20 @@ function _consolidateStories(list){
         title: `${members.length} ${cfg.label}: ${fmtNames(names)}`,
         desc: cfg.desc(frags.join(', ')),
         when, prio,
-        dataRef: { type:'group', sub: g.type,
-                   matchId:(rep.dataRef||{}).matchId || null,
-                   playerIds: pids, frags }
-      });
+         dataRef: { type:'group', sub: g.type,
+                    matchId:(rep.dataRef||{}).matchId || null,
+                    playerIds: pids, frags,
+                    memberIds: members.map(m => m.id),
+                    members: members.map(m => ({
+                      id: m.id,
+                      type: (m.dataRef || {}).type,
+                      pid: (m.dataRef || {}).pid || null,
+                      playerIds: (m.dataRef || {}).playerIds || [],
+                      streak: (m.dataRef || {}).streak,
+                      title: m.title,
+                      desc: m.desc
+                    })) }
+       });
       continue;
     }
   }
@@ -19324,7 +19255,6 @@ function _consolidateStories(list){
   };
   const _sammelZeile = (g, st) => {
     const tk = String(st.title || '').trim();
-    if(tk && g.titel.has(tk)) return;
     if(tk) g.titel.add(tk);
     if(g.teile.length < (g.max || Infinity)) g.teile.push(st);
   };
@@ -19386,7 +19316,8 @@ function _consolidateStories(list){
     if(_tafelAchse.has(st.id)) return;
     if(_sammelEinzeln(st, d)) return;
     const pids = _pidsVon(st);
-    if(pids.length === 1 && ERFOLG_ART[d.type]) einzel.push({st, idx, d, pids});
+    if(pids.length === 1 && ERFOLG_ART[d.type] && !d.matchId)
+      einzel.push({st, idx, d, pids});
   });
   const _achse = new Map();
   const _achseBauen = (praefix, schluessel, art) => {
@@ -19745,7 +19676,7 @@ function _consolidateStories(list){
 
   const OHNE_DECKEL = new Set(['lead_change','elo_record','streak_record',
                                'season_endgame','ambient','group','runde']);
-  const NF_DECKEL = 2;
+  const NF_DECKEL = Number.POSITIVE_INFINITY;
   const _deckelSorte = s => {
     const d = (s && s.dataRef) || {};
     const t = d.type || '';
@@ -19822,6 +19753,7 @@ function _consolidateStories(list){
       _behalten.add(s.id);
     });
   });
+  entzerrt.forEach(s => _behalten.add(s.id));
   const fertig = entzerrt.filter(s => {
     if(_behalten.has(s.id)) return true;
     if(TAG_PFLICHT.has((s.dataRef || {}).type)) return true;
@@ -19876,13 +19808,32 @@ function _leerlauf(ms){
     else setTimeout(fertig, 0);
   });
 }
+
+const STORY_TAFEL_UPDATE = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
+  'insignium_stufe','chronik_erstling','chronik_geholt']);
+function _storyIstTafelUpdate(s, jetzt){
+  if(!s) return false;
+  const d = s.dataRef || s.data_ref || {};
+  const w = s.when || s.event_at;
+  if(!STORY_TAFEL_UPDATE.has(d.type) || !w) return false;
+  return tagKey(w) === tagKey(jetzt || new Date());
+}
+function _mergeStorySnapshots(bestand, neu, jetzt){
+  const byId = new Map();
+  (Array.isArray(bestand) ? bestand : []).forEach(s => { if(s && s.id) byId.set(s.id, s); });
+  (Array.isArray(neu) ? neu : []).forEach(s => {
+    if(!s || !s.id) return;
+    if(!byId.has(s.id) || _storyIstTafelUpdate(s, jetzt)) byId.set(s.id, s);
+  });
+  return [...byId.values()].sort((a, b) => new Date(b.when) - new Date(a.when));
+}
+
 async function syncStoriesViaDb(){
-  if(!Array.isArray(_cache._stories) || !_cache._stories.length){
-    try {
-      const vorher = await _loadStoriesFromDb();
-      if(Array.isArray(vorher)) _cache._stories = vorher;
-    } catch(e){}
-  }
+  let dbBestand = null;
+  try {
+    dbBestand = await _loadStoriesFromDb();
+    if(Array.isArray(dbBestand)) _cache._stories = dbBestand;
+  } catch(e){}
   await _leerlauf(1500);
   let generated = [];
   try { generated = _buildStories() || []; }
@@ -19890,10 +19841,10 @@ async function syncStoriesViaDb(){
 
   try {
     await _cleanupExpiredStoriesInDb();
-    await _uploadNewStoriesToDb(generated);
-    const fromDb = await _loadStoriesFromDb();
-    if(Array.isArray(fromDb)){
-      _cache._stories = fromDb;
+    await _uploadNewStoriesToDb(generated, dbBestand);
+    if(!Array.isArray(dbBestand)) dbBestand = await _loadStoriesFromDb();
+    if(Array.isArray(dbBestand)){
+      _cache._stories = _mergeStorySnapshots(dbBestand, generated, new Date());
       _ensureStoriesRealtime();
       _startNewsAutoSync();
       return;
@@ -19902,7 +19853,7 @@ async function syncStoriesViaDb(){
     if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] DB sync failed, falling back to in-memory', e?.message || e);
   }
 
-  _cache._stories = generated;
+  _cache._stories = _mergeStorySnapshots(_cache._stories, generated, new Date());
 }
 window.syncStoriesViaDb = syncStoriesViaDb;
 
@@ -19932,30 +19883,58 @@ function _rowToStory(r){
   };
 }
 
-async function _uploadNewStoriesToDb(stories){
+function _storyStableJson(v){
+  if(Array.isArray(v)) return '[' + v.map(_storyStableJson).join(',') + ']';
+  if(v && typeof v === 'object'){
+    if(v instanceof Date) return JSON.stringify(v.toISOString());
+    return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + _storyStableJson(v[k])).join(',') + '}';
+  }
+  return JSON.stringify(v);
+}
+function _storyPersistenzSignatur(s){
+  if(!s) return '';
+  return _storyStableJson({cat:s.cat, ic:s.ic || null, title:s.title, desc:s.desc,
+    dataRef:s.dataRef || {}, prio:s.prio | 0,
+    when:(s.when instanceof Date ? s.when : new Date(s.when)).toISOString()});
+}
+async function _uploadNewStoriesToDb(stories, bestand){
   if(!stories || !stories.length) return;
-  const rows = stories.map(_storyToRow);
+  const jetzt = new Date();
+  const bekannt = new Map((Array.isArray(bestand) ? bestand : []).map(s => [s.id, s]));
+  const normal = stories.filter(s => !_storyIstTafelUpdate(s, jetzt) && !bekannt.has(s.id)).map(_storyToRow);
+  const tafel = stories.filter(s => {
+    if(!_storyIstTafelUpdate(s, jetzt)) return false;
+    const alt = bekannt.get(s.id);
+    return !alt || _storyPersistenzSignatur(alt) !== _storyPersistenzSignatur(s);
+  }).map(_storyToRow);
   const BATCH_SIZE = 200;
-  for(let i = 0; i < rows.length; i += BATCH_SIZE){
-    const chunk = rows.slice(i, i + BATCH_SIZE);
-    const { error } = await sb.from('stories').upsert(chunk, {
-      onConflict: 'id',
-      ignoreDuplicates: true,
-    });
-    if(error) throw error;
+  for(const [rows, ignoreDuplicates] of [[normal, true], [tafel, false]]){
+    for(let i = 0; i < rows.length; i += BATCH_SIZE){
+      const chunk = rows.slice(i, i + BATCH_SIZE);
+      const { error } = await sb.from('stories').upsert(chunk, {
+        onConflict: 'id', ignoreDuplicates,
+      });
+      if(error) throw error;
+    }
   }
 }
 
 async function _loadStoriesFromDb(){
   const _ab = new Date(Date.now() - NEWS_FENSTER_TAGE * 86400000).toISOString();
-  const { data, error } = await sb.from('stories')
-    .select('*')
-    .gt('expires_at', new Date().toISOString())
-    .gte('event_at', _ab)
-    .order('event_at', { ascending: false })
-    .limit(NEWS_DB_ZEILEN);
-  if(error) throw error;
-  return (data || []).map(_rowToStory);
+  const rows = [];
+  for(let von = 0; ; von += NEWS_DB_SEITENGROESSE){
+    const { data, error } = await sb.from('stories')
+      .select('*')
+      .gt('expires_at', new Date().toISOString())
+      .gte('event_at', _ab)
+      .order('event_at', { ascending: false })
+      .range(von, von + NEWS_DB_SEITENGROESSE - 1);
+    if(error) throw error;
+    const seite = data || [];
+    rows.push(...seite);
+    if(seite.length < NEWS_DB_SEITENGROESSE) break;
+  }
+  return rows.map(_rowToStory);
 }
 
 async function _cleanupExpiredStoriesInDb(){
@@ -19978,6 +19957,10 @@ function _ensureStoriesRealtime(){
           { event: 'INSERT', schema: 'public', table: 'stories' },
           (payload) => { try { _onStoryRealtimeInsert(payload.new); }
                          catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] realtime insert failed', e); } })
+      .on('postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'stories' },
+          (payload) => { try { _onStoryRealtimeUpdate(payload.new); }
+                         catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] realtime update failed', e); } })
       .on('postgres_changes',
           { event: 'DELETE', schema: 'public', table: 'stories' },
           (payload) => { try { _onStoryRealtimeDelete(payload.old); }
@@ -20002,7 +19985,20 @@ function _onStoryRealtimeInsert(row){
   const story = _rowToStory(row);
   const next = _cache._stories.concat([story]);
   next.sort((a, b) => b.when - a.when);
-  _cache._stories = next.slice(0, 100);
+  _cache._stories = next;
+  _refreshOpenNewsViews();
+}
+
+function _onStoryRealtimeUpdate(row){
+  if(!row || !row.id) return;
+  const story = _rowToStory(row);
+  if(!_storyIstTafelUpdate(story, new Date())) return;
+  if(!Array.isArray(_cache._stories)) _cache._stories = [];
+  const alt = _cache._stories.findIndex(s => s.id === story.id);
+  const next = _cache._stories.slice();
+  if(alt >= 0) next[alt] = story; else next.push(story);
+  next.sort((a, b) => b.when - a.when);
+  _cache._stories = next;
   _refreshOpenNewsViews();
 }
 
@@ -20065,10 +20061,25 @@ function _newsSaveSeen(set){
     localStorage.setItem(NEWS_LS_SEEN, JSON.stringify(arr));
   } catch(e){}
 }
-function _newsMarkSeen(ids){
+function _newsIstRollendeTafel(s){
+  const d = (s && s.dataRef) || {};
+  return d.type === 'sammel' && d.quelle === 'tafel' && Array.isArray(d.teile);
+}
+function _newsSeenKey(s){
+  if(!s || typeof s !== 'object') return String(s || '');
+  if(!_newsIstRollendeTafel(s)) return String(s.id || '');
+  const d = s.dataRef || {};
+  const letzter = d.teile.reduce((mx, t) => Math.max(mx, Number(t && t.ms) || 0),
+    new Date(s.when).getTime() || 0);
+  return `${s.id}@${letzter}@${d.teile.length}`;
+}
+function _newsMarkSeen(items){
   const seen = _newsLoadSeen();
-  const list = Array.isArray(ids) ? ids : [ids];
-  list.forEach(id => seen.add(id));
+  const list = Array.isArray(items) ? items : [items];
+  list.forEach(item => {
+    const key = _newsSeenKey(item);
+    if(key) seen.add(key);
+  });
   _newsSaveSeen(seen);
 }
 function _newsLesestand(){
@@ -20076,12 +20087,14 @@ function _newsLesestand(){
 }
 function _newsGelesen(s, seen, stand){
   if(!s) return true;
-  if(seen && seen.has(s.id)) return true;
+  const key = _newsSeenKey(s);
+  if(seen && seen.has(key)) return true;
+  if(!_newsIstRollendeTafel(s) && seen && seen.has(s.id)) return true;
   return !!stand && new Date(s.when).getTime() <= stand;
 }
 function _newsMarkAllSeen(){
   const stories = getStoriesCache();
-  _newsMarkSeen(stories.map(s => s.id));
+  _newsMarkSeen(stories);
   const neuste = stories.reduce((mx, s) =>
     Math.max(mx, new Date(s.when).getTime() || 0), 0);
   if(neuste) try { localStorage.setItem(NEWS_LS_STAND, String(neuste)); } catch(e){}
@@ -20639,7 +20652,7 @@ function _newsVerlustBand(s){
   return `<div class="nf-verlust"><span class="nf-verlust-l">${svgI('trendDown')}Prestige</span>`
     + `<span class="nf-verlust-w">${weg.slice(0, 3).map(x =>
       `<b class="nf-vl">${rcpAvHtml(x.pid, 18, {})}<i>${esc(pm[x.pid].name)}</i>`
-      + `<em class="num">−${-x.d}</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
+      + `<em class="num">−${-x.d} P</em>${x.ab ? `<u>↓ ${esc(x.ab)}</u>` : ''}</b>`).join('')}${weg.length > 3
       ? `<b class="nf-vl mehr">+${weg.length - 3}</b>` : ''}</span></div>`;
 }
 
@@ -20653,7 +20666,7 @@ function _newsSpielZahlen(s, anlass){
 }
 
 function _newsRohIndex(){
-  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  const roh = Array.isArray(_cache._stories) ? _cache._stories : [];
   let m = _newsRohMemo.get(roh);
   if(!m){ m = new Map(roh.map(x => [x.id, x])); _newsRohMemo.set(roh, m); }
   return m;
@@ -20705,7 +20718,7 @@ const NEWS_FADEN_ART = {
 };
 const _newsFadenMemo = new WeakMap();
 function _newsFaeden(cards){
-  const roh = _newsTexteAuffrischen(Array.isArray(_cache._stories) ? _cache._stories : []);
+  const roh = Array.isArray(_cache._stories) ? _cache._stories : [];
   const alt = _newsFadenMemo.get(roh);
   if(alt && alt.m === matches && alt.n === cards.length) return alt.map;
   const map = new Map();
@@ -21279,7 +21292,7 @@ function _renderNewsFeed(){
     const el = ev.target.closest && ev.target.closest('[data-sid]');
     if(!el || !liste.contains(el)) return;
     const sid = el.dataset.sid;
-    _newsMarkSeen(sid);
+    _newsMarkSeen(stories.find(s => s.id === sid) || sid);
     el.classList.add('read'); el.classList.remove('important');
     el.querySelector('.nf-dot')?.remove();
     newsBadgeRefresh();
@@ -21697,7 +21710,7 @@ function _spDuoBild(d){
       <text x="28" y="32" text-anchor="middle">${Math.round(anteil * 100)} %</text></svg>
     <div class="sp-duo-r"><div class="sp-duo-k">${_spChips([d.A, d.B])}<em class="num">${_spZahl(d.laenge)} in Folge</em></div>
       <div class="sp-duo-l${d.laenge > 16 ? ' balken' : ''}">${lauf}</div></div></div>`
-    + _spUnter(`${_spUnd([d.A, d.B])} zusammen: ${_spZahl(d.w)} ${d.w === 1 ? 'Sieg' : 'Siege'}, ${_spZahl(d.l)} ${d.l === 1 ? 'Niederlage' : 'Niederlagen'}.`);
+    + _spUnter(`${d.nurAnlass ? 'Gemeinsam' : _spUnd([d.A, d.B]) + ' zusammen'}: ${_spZahl(d.w)} ${d.w === 1 ? 'Sieg' : 'Siege'}, ${_spZahl(d.l)} ${d.l === 1 ? 'Niederlage' : 'Niederlagen'}.`);
 }
 
 function _spKurveDaten(a){
@@ -21865,13 +21878,40 @@ const SP_RUND = new Set([5, 10, 15, 20, 25, 30, 40, 50, 60, 75, 100, 150, 200]);
 const _spMarke = n => n >= 50 && n % 50 === 0;
 const _spNl = ids => _namenListe(ids.map(_spName));
 
+function _spMosaikBefund(F){
+  if(F.hoch !== 10 || F.diff < 2 || F.diff > 5) return null;
+  const gesamt = F.vert.slice(1).reduce((s, n) => s + n, 0);
+  if(gesamt < 30) return null;
+  const n = F.vert[F.diff] || 0, max = Math.max(...F.vert.slice(1, 10));
+  const selten = n <= Math.max(2, Math.floor(gesamt * 0.04));
+  const haeufig = n === max && n / gesamt >= 0.18 && n >= 5 && n % 5 === 0;
+  const marke = n >= 10 && n % 10 === 0;
+  return selten || haeufig || marke
+    ? {grund:selten ? 'selten' : (haeufig ? 'haeufig' : 'marke')} : null;
+}
+function _spTransferBefund(F){
+  if(F.i < 60 || !Number.isFinite(F.gewinn)) return null;
+  const g = _spFormBasis().punkte.slice(0, F.i).map(p => p.g).filter(Number.isFinite);
+  const platz = 1 + g.filter(v => v >= F.gewinn).length;
+  const grenze = Math.max(1, Math.ceil((g.length + 1) * 0.05));
+  return platz <= grenze ? {platz, gesamt:g.length + 1} : null;
+}
+
 const SP_FORM = {
   mosaik:{rang:12, ic:'chartBar',
     wann:F => F.diff >= 2 && F.diff <= 3 && F.hoch === 10 ? {} : null,
-    daten:F => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, diff:F.diff, n:F.vert.slice(), mal:F.vert[F.diff]}),
-    text:F => {
+    gewicht:x => x.grund === 'selten' ? 28 : (x.grund === 'haeufig' ? 22 : 18),
+    daten:(F, x) => ({W:F.W, L:F.L, hoch:F.hoch, tief:F.tief, diff:F.diff,
+      n:F.vert.slice(), mal:F.vert[F.diff], grund:x.grund,
+      gesamt:F.vert.slice(1).reduce((s, n) => s + n, 0)}),
+    text:(F, x) => {
       const eig = _spEigene(F.W[0], F.m).filter(x => _spGew(x, F.W[0]) && Math.abs(x.score_a - x.score_b) === F.diff).length;
-      return {t:`${_spNl(F.W)} gewinnen das ${F.vert[F.diff]}. ${F.hoch}:${F.tief} der Liga`,
+      if(!x.grund) return {t:`${_spNl(F.W)} gewinnen das ${F.vert[F.diff]}. ${F.hoch}:${F.tief} der Liga`,
+        d:`Für ${_spName(F.W[0])} ist es der ${eig}. Sieg mit diesem Ergebnis.`};
+      const art = x.grund === 'selten' ? 'seltenen' : 'häufigsten';
+      return {t:x.grund === 'marke'
+          ? `${_spNl(F.W)} gewinnen das ${F.vert[F.diff]}. ${F.hoch}:${F.tief} der Liga`
+          : `${_spNl(F.W)} landen beim ${art} Ergebnis der Liga`,
         d:`Für ${_spName(F.W[0])} ist es der ${eig}. Sieg mit diesem Ergebnis.`};
     }},
   tacho:{rang:20, ic:'target',
@@ -22061,6 +22101,11 @@ function _spFormText(m){
   const w = _spForm(m);
   return SP_FORM[w.key].text(_spFakten(m), w.x);
 }
+function _spScoreText(m){
+  if(!_spIstFeld(m)) return null;
+  const w = _spScoreWahl(m);
+  return w && SP_FORM[w.key] ? SP_FORM[w.key].text(_spFakten(m), w.x) : null;
+}
 function _spFormBild(m){
   const w = _spForm(m), f = SP_FORM[w.key];
   return {key:w.key, glanz:w.key === 'zaehlwerk' || w.key === 'rueckkehr' || w.key === 'transfer' || (w.key === 'gegner' && w.x.fluch),
@@ -22071,7 +22116,13 @@ function _spMosaikBild(d){
   const sum = d.n.reduce((s, v) => s + v, 0) || 1, max = Math.max(1, ...d.n.slice(1));
   const feld = k => `<div class="sp-mo-k${k === d.diff ? ' jetzt' : ''}" style="--a:${(d.n[k] / max).toFixed(2)};--i:${10 - k}">`
     + (k === d.diff ? _spSt(d) : `<b class="num">10:${10 - k}</b>`) + `<span class="num">${_spZahl(Math.round(d.n[k] / sum * 100))} %</span></div>`;
+  const label = d.grund === 'selten' ? 'SELTENER AUSGANG'
+    : (d.grund === 'haeufig' ? 'HÄUFIGSTER AUSGANG' : 'RUNDE ERGEBNISMARKE');
+  const beleg = d.grund === 'marke'
+    ? `${_spZahl(d.mal)}. Partie mit diesem Abstand`
+    : `${_spZahl(d.mal)} von ${_spZahl(d.gesamt || sum)} Partien`;
   return `<div class="sp-fk sp-mo"><div class="sp-mo-g">${Array.from({length:10}, (_, i) => feld(10 - i)).join('')}</div>`
+    + (d.grund ? `<div class="sp-mo-a"><b>${label}</b><span>${beleg}</span></div>` : '')
     + _spNz(d.W, d.L) + `</div>`;
 }
 function _spTachoBild(d){
@@ -22113,9 +22164,9 @@ function _spChemieBild(d){
   const seg = d.folge.map((w, k) => `<circle r="${r}" cx="28" cy="28" class="${w ? 'w' : 'l'}${k === n - 1 ? ' jetzt' : ''}" `
     + `style="stroke-dasharray:${Math.max(0.5, l - 1.2).toFixed(2)} ${(U - l + 1.2).toFixed(2)};stroke-dashoffset:${(-l * k).toFixed(2)};--i:${k}"/>`).join('');
   return `<div class="sp-fk sp-ch"><div class="sp-ch-d">${_spWappen(d.A, 48)}<div class="sp-ch-r"><svg viewBox="0 0 56 56" aria-hidden="true">${seg}</svg>`
-    + `<span><b class="num">${_spZahl(d.s)}.</b><i>Sieg zu zweit</i></span></div>${_spWappen(d.B, 48)}</div>`
+    + `<span><b class="num">${_spZahl(d.s)}.</b><i>DUO-SIEG</i></span></div>${_spWappen(d.B, 48)}</div>`
     + `<div class="sp-ch-u">${_spSt(d)}<span><b class="num">${_spZahl(d.s)}</b> von <b class="num">${_spZahl(d.p)}</b> zusammen gewonnen</span></div></div>`
-    + _spNz([d.A, d.B], d.L);
+    + (d.nurAnlass ? '' : _spNz([d.A, d.B], d.L));
 }
 function _spGegnerBild(d){
   return `<div class="sp-fk sp-gg"><div class="sp-gg-p w">${_spWappen(d.w, 48)}</div>
@@ -22124,7 +22175,7 @@ function _spGegnerBild(d){
       <span class="sp-gg-r">${d.folge.map((w, k) => `<i class="${w ? 'w' : 'l'}${k === d.folge.length - 1 ? ' jetzt' : ''}" style="--i:${k}"></i>`).join('')}</span>
       <span class="sp-gg-h">heute ${_spSt(d)}</span></div>
     <div class="sp-gg-p">${_spWappen(d.l, 48)}</div></div>`
-    + _spNz(d.W, d.L);
+    + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
 function _spRevancheBild(d){
   return `<div class="sp-fk sp-rv"><span class="sp-rv-c">${_spChips(d.W)}</span>
@@ -22133,7 +22184,7 @@ function _spRevancheBild(d){
         <i>nach ${_spZahl(d.seit.n)} ${d.seit.e}</i></span>
       <span class="sp-rv-t neu"><i>jetzt</i>${_spSt(d)}</span></div>
     <span class="sp-rv-c re">${_spChips(d.L)}</span></div>`
-    + _spNz(d.W, d.L);
+    + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
 function _spGipfelBild(d){
   return `<div class="sp-fk sp-gp">${d.zeilen.map((z, k) => `<div class="sp-gp-z${z.w ? ' w' : ''}" style="--i:${k}">`
@@ -22146,7 +22197,7 @@ function _spRueckkehrBild(d){
   return `<div class="sp-fk sp-zu">${_spWappen(d.id, 48)}<div class="sp-zu-m">
       <span class="sp-zu-z"><b class="num">${_spZahl(d.tage)}</b> Tage ohne Partie</span>
       <span class="sp-zu-k">${Array.from({length:n}, (_, k) => `<i class="${k === 0 ? 'alt' : ''}" style="--i:${k}"></i>`).join('')}${_spSt(d)}</span></div></div>`
-    + _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`);
+    + (d.nurAnlass ? '' : _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`));
 }
 function _spGefaelleBild(d){
   const ids = d.W.concat(d.L), lo = Math.min(...ids.map(id => d.elo[id])), hi = Math.max(...ids.map(id => d.elo[id]));
@@ -22164,16 +22215,17 @@ function _spTagesringBild(d){
   return `<div class="sp-fk sp-tr"><div class="sp-tr-r"><svg viewBox="0 0 76 76" aria-hidden="true">${seg}</svg><span>${_spWappen(d.id, 48)}</span></div>
     <div class="sp-tr-t"><em>heute</em><span class="sp-tr-z"><b class="num">${_spZahl(s)}</b> von ${_spZahl(n)}</span>
       <span class="sp-tr-j">Partie ${_spZahl(n)} ${_spSt(d)}</span></div></div>`
-    + _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`);
+    + (d.nurAnlass ? '' : _spUnter(`${_spNb(d.id)} mit ${_spNb(d.mit)} gegen ${_spUnd(d.L)}.`));
 }
 function _spZaehlwerkBild(d){
   const z = String(d.wert).padStart(3, '0').split('');
+  const einheit = d.label || (d.wer ? (d.sieg ? 'Sieg' : 'Partie') : 'Partie der Liga');
   const rolle = c => `<span class="sp-zw-r" style="--z:${c}"><b>${c}</b></span>`;
   return `<div class="sp-fk sp-zw">${d.wer ? _spWappen(d.wer, 48) : `<span class="sp-zw-l">${svgI('ball')}</span>`}
     <div class="sp-zw-m"><span class="sp-zw-w num">${z.map(rolle).join('')}<b>.</b></span>
-      <span class="sp-zw-u">${d.wer ? (d.sieg ? 'Sieg' : 'Partie') + (_spPasst([d.wer], 12, true) ? ` von ${esc(_spName(d.wer))}` : '') : 'Partie der Liga'}</span></div>
+      <span class="sp-zw-u">${einheit + (!d.nurAnlass && d.wer && _spPasst([d.wer], 12, true) ? ` von ${esc(_spName(d.wer))}` : '')}</span></div>
     <div class="sp-zw-s">${_spSt(d)}</div></div>`
-    + _spNz(d.W, d.L);
+    + (d.nurAnlass ? '' : _spNz(d.W, d.L));
 }
 const SP_FORM_BILD = {mosaik:_spMosaikBild, tacho:_spTachoBild, streu:_spStreuBild, transfer:_spTransferBild,
   chemie:_spChemieBild, gegner:_spGegnerBild, revanche:_spRevancheBild, gipfel:_spGipfelBild,
@@ -22195,6 +22247,147 @@ const SP_FUSS = {
   teamserie:a => _spDuoBild(_spDuoDaten(a)), medaille:a => _spMedailleBild(_spMedailleDaten(a)),
   premiere:a => _spPremiereBild(a.x), rolle:a => _spRolleBild(a.x)
 };
+
+const SP_SCORE_FORMEN = new Set(['mosaik','tacho','streu','transfer','gefaelle','feld']);
+const SP_ANLASS_FORMEN = new Set(['chemie','gegner','revanche','gipfel','rueckkehr','tagesring','zaehlwerk']);
+function _spVisualHash(v){
+  let h = 2166136261 >>> 0, s = String(v || '');
+  for(let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+function _spScoreSpezial(m){
+  const c = _spChance(m), diff = Math.abs(m.score_a - m.score_b);
+  if(c != null && c < CHANCE_UPSET)
+    return {key:'aussenseiter', x:{c}};
+  if(diff === 1) return {key:'krimi', x:{c}};
+  if(diff >= 6) return {key:'deutlich', x:{}};
+  return null;
+}
+function _spScoreKandidaten(m){
+  const F = _spFakten(m);
+  const k = _spFormKand(m)
+    .filter(x => SP_SCORE_FORMEN.has(x.key) && !['feld','mosaik','transfer'].includes(x.key));
+  const mosaik = _spMosaikBefund(F);
+  if(mosaik) k.push({key:'mosaik', x:mosaik,
+    rang:Math.max(SP_FORM.mosaik.rang, SP_FORM.mosaik.gewicht(mosaik))});
+  const transfer = _spTransferBefund(F);
+  if(transfer) k.push({key:'transfer', x:transfer,
+    rang:SP_FORM.transfer.rang + (transfer.platz === 1 ? 8 : 0)});
+  return k.concat([{key:'feld', x:{}, rang:SP_FORM.feld.rang}])
+    .sort((a, b) => b.rang - a.rang || a.key.localeCompare(b.key));
+}
+function _spScoreWahl(m){
+  const FB = _spFormBasis(), B = _spBasis();
+  let w = FB.scoreWahl && FB.scoreWahl.get(m.id);
+  if(w) return w;
+  if(!FB.scoreWahl){ FB.scoreWahl = new Map(); FB.scoreSpur = []; FB.scoreBis = -1; }
+  const bis = B.idx.get(m.id);
+  for(let j = FB.scoreBis + 1; j <= bis; j++){
+    const x = B.chrono[j], spezial = _spScoreSpezial(x);
+    FB.scoreBis = j;
+    if(spezial){
+      FB.scoreWahl.set(x.id, spezial);
+      FB.scoreSpur.push(spezial.key);
+      continue;
+    }
+    const spur = FB.scoreSpur, zuletzt = spur[spur.length - 1];
+    const gewertet = _spScoreKandidaten(x).map(c => {
+      const zweimal = spur.slice(-2).filter(k => k === c.key).length;
+      const achtmal = spur.slice(-8).filter(k => k === c.key).length;
+      const zwoelfmal = c.key === 'transfer' ? spur.slice(-12).filter(k => k === c.key).length : 0;
+      return Object.assign({}, c, {eff:c.rang - 8 * zweimal - 3 * achtmal - 7 * zwoelfmal,
+        los:_spVisualHash(x.id + '|' + c.key)});
+    }).sort((a, b) => b.eff - a.eff || b.rang - a.rang || a.los - b.los);
+    w = gewertet[0] || {key:'feld', x:{}, rang:SP_FORM.feld.rang};
+    if(w.key === zuletzt){
+      const anders = gewertet.find(c => c.key !== zuletzt && c.eff >= w.eff - 2);
+      if(anders) w = anders;
+    }
+    FB.scoreWahl.set(x.id, w);
+    spur.push(w.key);
+  }
+  return FB.scoreWahl.get(m.id) || {key:'feld', x:{}, rang:SP_FORM.feld.rang};
+}
+function _spScoreSnapshot(m){
+  const w = _spScoreWahl(m), c = _spChance(m);
+  if(w.key === 'aussenseiter') return {key:w.key, data:_spWippeDaten({m, c})};
+  if(w.key === 'krimi') return {key:w.key, data:_spTafelDaten({m, c})};
+  if(w.key === 'deutlich') return {key:w.key, data:_spZeileDaten(m)};
+
+  const F = _spFakten(m);
+  return {key:w.key, data:SP_FORM[w.key].daten(F, w.x)};
+}
+function _spAnlassSnapshot(m, fakten, scoreKey){
+  const f = t => fakten.find(x => x.type === t), c = _spChance(m);
+  let a = null, x;
+  if((x = f('lead_change')) && x.newLeader) a = {key:'spitze', m, x};
+  else if((x = fakten.find(y => y.type === 'badge_unlocked'
+      && (y.rarity === 'rare' || y.rarity === 'legendary')
+      && !SP_ERGEBNIS_BADGE.has(y.badgeId))) && x.badgeId)
+    a = {key:'medaille', m, x:{pid:x.playerId, badgeId:x.badgeId}};
+  else if((x = f('streak_killer')) && x.victimPid) a = {key:'riss', m, x};
+  else if((x = f('jubilee')) && x.pid && x.total)
+    a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.total), label:'Partie'}};
+  else if((x = f('milestone_wins')) && x.pid)
+    a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Sieg'}};
+  else if((x = f('milestone_goals')) && x.pid)
+    a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:parseInt(x.milestone, 10), label:'Tor'}};
+  else if((x = f('milestone_elo')) && x.pid)
+    a = {key:'zaehlwerk', m, x:{wer:x.pid, wert:Number(x.mark) || parseInt(x.milestone, 10), label:'Elo'}};
+  else if((x = f('win_streak')) && x.streak) a = {key:'serie', m, x};
+  else if((x = f('team_streak')) && x.streak && x.a && x.b) a = {key:'teamserie', m, x};
+  else if((x = f('rivalry_milestone')) && x.a && x.b) a = {key:'duell', m, x};
+  if(!a){
+    const d = _spAnlassDaten(m, c);
+    if(['premiere','wende','rang','rolle'].includes(d.key)) a = d;
+  }
+  if(a){
+    if(a.key === 'zaehlwerk'){
+      const F = _spFakten(m);
+      return {key:a.key, data:{wer:a.x.wer, wert:a.x.wert, label:a.x.label,
+        W:F.W, L:F.L, hoch:F.hoch, tief:F.tief}};
+    }
+    const daten = {
+      spitze:() => _spTabelleDaten(a, true), rang:() => _spTabelleDaten(a, false),
+      serie:() => _spSerieDaten(a), wende:() => _spKurveDaten(a),
+      duell:() => _spDuellDaten(a), riss:() => _spRissDaten(a),
+      teamserie:() => _spDuoDaten(a), medaille:() => _spMedailleDaten(a),
+      premiere:() => a.x, rolle:() => a.x
+    };
+    if(daten[a.key]) return {key:a.key, data:daten[a.key]()};
+  }
+
+  const F = _spFakten(m);
+  const form = _spFormKand(m).find(k => SP_ANLASS_FORMEN.has(k.key));
+  if(form) return {key:form.key, data:SP_FORM[form.key].daten(F, form.x)};
+  if(scoreKey === 'krimi') return {key:'nerven', data:_spNervenDaten({m, c})};
+  if(scoreKey === 'deutlich') return {key:'verteilung', data:_spVerteilungDaten({m})};
+  return null;
+}
+function _spVisualSnapshot(m, fakten){
+  const score = _spScoreSnapshot(m);
+  return {version:2, score, occasion:_spAnlassSnapshot(m, fakten || [], score.key)};
+}
+function _spScoreBild(v){
+  if(!v || !v.key) return '';
+  const spezial = {krimi:_spTafelBild, aussenseiter:_spWippeBild, deutlich:_spBandBild};
+  if(spezial[v.key]) return spezial[v.key](v.data);
+  return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](v.data) : '';
+}
+function _spOccasionBild(v){
+  if(!v || !v.key) return '';
+  const data = v.data && typeof v.data === 'object'
+    ? Object.assign({}, v.data, {nurAnlass:true}) : v.data;
+  const bild = {
+    spitze:_spTabelleBild, rang:_spTabelleBild, serie:_spSerieBild,
+    wende:_spKurveBild, duell:_spDuellBild, riss:_spRissBild,
+    teamserie:_spDuoBild, medaille:_spMedailleBild,
+    premiere:_spPremiereBild, rolle:_spRolleBild,
+    nerven:_spNervenBild, verteilung:_spVerteilungBild
+  };
+  if(bild[v.key]) return bild[v.key](data);
+  return SP_FORM_BILD[v.key] ? SP_FORM_BILD[v.key](data) : '';
+}
 const SP_ZEIGT_ALLES = {chance:true, elo:true};
 const _spBildMemo = new WeakMap();
 function _spBild(s){
@@ -22204,6 +22397,17 @@ function _spBild(s){
   if(alt && alt.pl === players) return alt;
   let r = {kopf:'', fuss:'', zeigt:{}, key:'', form:'', glanz:false, pl:players};
   try {
+    const basis = _newsSpielFakten(s).find(x => x.type === 'spiel') || s.dataRef || {};
+    const v = basis.visual;
+    if(v && v.version === 2 && v.score){
+      const ok = v.occasion && v.occasion.key;
+      r = {key:ok || v.score.key, form:v.score.key,
+        glanz:['zaehlwerk','rueckkehr','transfer'].includes(ok || v.score.key),
+        kopf:_spScoreBild(v.score), fuss:_spOccasionBild(v.occasion),
+        zeigt:SP_ZEIGT_ALLES, pl:players};
+      proStand.set(s, r);
+      return r;
+    }
     const a = _spAnlass(s);
     if(a.key === 'feld'){
       const f = _spFormBild(a.m);

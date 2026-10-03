@@ -44,7 +44,7 @@
  *  LIGA-NEWS                                                 ⚑ HOTSPOT
  *    26-news-konstanten    §11.0    Kategorien, Limits, Badge-Whitelist
  *    27-news-generator     §11.1    Story-Generator + Meilenstein-Leitern
- *    28-news-ambient       §11.1b   Ambiente Fun-Facts (10-/19-Uhr-Slots)
+ *    28-news-ambient       §11.1b   Ambiente Fun-Facts (15-Uhr-Slot + Nachlauf)
  *    29-news-cache         §11.2,.8,.9  Cache, Realtime, Auto-Sync
  *    30-news-ui            §11.3–11.6b  Read-State, Badge, Toast, Popup, Feed
  *    31-news-detail        §11.7    Story-Detail je Typ

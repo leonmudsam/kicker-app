@@ -204,7 +204,7 @@ Der Funfact darf entstehen, wenn:
 - bis 15:00 Uhr noch keine Partie dieses Tages begonnen hat
 - bis 15:00 Uhr kein Saisonabschluss veröffentlicht wurde
 
-Wird der Funfact um 15:00 Uhr veröffentlicht und die erste Partie folgt um 15:20 Uhr, bleibt er unverändert bestehen. Öffnet jemand die App erst nach 15:00 Uhr, wird anhand des Zustands zum Slot entschieden. Vergangene Tage werden nicht rückwirkend gefüllt.
+Wird der Funfact um 15:00 Uhr veröffentlicht und die erste Partie folgt um 15:20 Uhr, bleibt er unverändert bestehen. Öffnet jemand die App erst nach 15:00 Uhr, wird anhand des Zustands zum Slot entschieden. Vergangene Tage im Feedfenster werden beim nächsten Öffnen rückwirkend um 15:00 Uhr gefüllt, sofern an dem jeweiligen Tag keine Partie und kein vorheriger Saisonabschluss lag. Das gilt auch nach mehreren Tagen ohne geöffneten Client.
 
 Bevorzugte Themen:
 
@@ -228,7 +228,7 @@ Ein negativer Wert in einer Tafel-Karte ist kein Elo-Verlust, sondern kann ein P
 
 Verbindliche Anzeige:
 
-- Beschriftung `Prestige-Saldo des Spieltags`
+- Beschriftung `Prestige`
 - Einheit `P`
 - rote negative Werte
 - optionaler Hinweis auf den Verlust einer Insignium-Stufe

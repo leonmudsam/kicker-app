@@ -3,8 +3,8 @@
 // Feed auch OHNE neue Matches lebendig wirkt.
 //
 // KERNPRINZIP (kein Spam, Cross-Device-konsistent):
-//   - RHYTHMUS (v9.7): zwei Fun Facts pro TAG, um 10:00 und 19:00. _isAmbientDay
-//     ist immer true; ein Slot entsteht erst ab seiner Uhrzeit.
+//   - RHYTHMUS: hoechstens ein Fun Fact pro Tag, fest um 15:00 Uhr.
+//     Verpasste stille Tage im Feed-Fenster werden beim naechsten Oeffnen gefuellt.
 //   - Story-ID ist tages+stunden-deterministisch: `ambient_<datum>_<stunde>`.
 //     → ON CONFLICT DO NOTHING beim Upload: der erste Insert gewinnt den
 //       Timestamp, alle Geräte sehen exakt dieselbe Story.
@@ -16,35 +16,29 @@
 //   - Die Inhalte stammen aus echten Daten (allPlayerStats, H2H-Map, Scores) —
 //     nichts wird erfunden. Liefert ein Template kein Ergebnis (zu wenig Daten),
 //     wird deterministisch das nächste genommen.
-function _buildAmbientStories(now, pm, nameOf){
+function _buildAmbientStories(now, pm, nameOf, tagesStories){
   const out = [];
   if(!Array.isArray(AMBIENT_SLOTS) || !AMBIENT_SLOTS.length) return out;
-  // v9.7: täglich, mehrere Slots (10:00 & 19:00). _isAmbientDay ist immer true.
+  // Taeglich; _isAmbientDay ist derzeit immer true.
   if(!_isAmbientDay(now)) return out;
 
   const templates = _ambientTemplatePool(now, pm, nameOf);
   if(!templates.length) return out;
 
-  // ── Ein Slot entsteht HEUTE oder gar nicht ───────────────────────────
-  // Ein Slot entsteht, wenn jemand die App nach seiner Uhrzeit öffnet. Wer
-  // abends nicht hineinsieht, verpasst den 19-Uhr-Slot — und einmal wurden
-  // deshalb die letzten drei Tage nachgetragen. Das war falsch: der Inhalt
-  // entstand aus den HEUTIGEN Zahlen und aus der Rotation, wie sie heute
-  // aussieht, und behauptete damit einen Stand, den es an jenem Tag nicht gab.
-  // Gemessen zog derselbe Slot zwei verschiedene Karten, je nachdem wann
-  // gefragt wurde. Nachgetragen wird deshalb nur, was zu HEUTE gehört.
+  // ── Fällige Slots samt Nachlauf ──────────────────────────────────────
+  // Ein Slot entsteht beim ersten Öffnen nach 15 Uhr. Wurde die Liga mehrere
+  // Tage nicht geöffnet, werden stille vergangene Tage des Feed-Fensters
+  // deterministisch nachgetragen. Tage mit Partien oder Saisonabschluss
+  // bleiben frei. Ein persistierter Slot wird nie neu gezogen.
   //
   // Der Zeitstempel ist die SLOT-STUNDE und nicht der Moment des Entstehens.
-  // Er war einmal `now`, und damit stand über dem Fun Fact des 19-Uhr-Slots
-  // „20:17", wenn die App um 20:17 geöffnet wurde, und über dem des
-  // 10-Uhr-Slots „10:30" — die Karte nannte die Uhrzeit ihres Lesers und
-  // nicht die ihres Slots. Schlimmer: `event_at` gewinnt beim ersten Insert
+  // Er war einmal `now`; damit nannte die Karte die Uhrzeit ihres Lesers und
+  // nicht 15:00. Schlimmer: `event_at` gewinnt beim ersten Insert
   // und gilt dann für alle Geräte, also hing die Stelle der Karte im Feed
   // daran, wer die App zuerst geöffnet hat. Die Slot-Stunde ist dagegen aus
   // der ID ableitbar und auf jedem Gerät dieselbe. Dass die Karte damit unter
-  // die Partien eines Spieltags rutscht, ist richtig und kein Problem: der
-  // Feed ist chronologisch [§C33], und an einem Tag mit echter Nachricht
-  // fällt der Fun Fact bei der Anzeige ohnehin weg.
+  // spätere Partien rutscht, ist richtig: der Feed ist chronologisch [§C33]
+  // und eine Partie nach 15 Uhr darf den publizierten Funfact nicht entfernen.
   //
   // Datum und Uhrzeit kommen aus DERSELBEN lokalen Zeit. Vorher stand im
   // Schlüssel das UTC-Datum, in `when` aber die lokale Slot-Zeit — zwischen
@@ -53,22 +47,23 @@ function _buildAmbientStories(now, pm, nameOf){
   const _dayMs = 86400000;
   const dueSlots = [];
   const slotHours = AMBIENT_SLOTS.slice().sort((a, b) => a - b);
-  // An welchen Tagen wurde gespielt? Der Abend-Slot schweigt dann.
-  // Keine der Partien hat je vor 10 Uhr angefangen, der Vormittags-Slot steht
-  // also immer vor dem Spieltag. Die letzte hat um 18 Uhr angefangen: um 19 Uhr
-  // ist der Spieltag vorbei, und dann ist alles von diesem Tag interessanter
-  // als eine Zahl, die seit Wochen gilt.
-  const _spieltage = new Set();
-  (matches || []).forEach(m => {
-    _spieltage.add(tagKey(m.created_at));
-  });
-  {
-    const dk = tagKey(now);
+  const tageMitMatch = new Set((matches || []).map(m => tagKey(m.created_at)));
+  const generation = Array.isArray(tagesStories) ? tagesStories : [];
+  // Fehlende stille Tage werden innerhalb des Feed-Fensters nachgetragen.
+  // Vergangene Tage sind nur still, wenn an ihnen gar nicht gespielt wurde.
+  // Heute entscheidet dagegen der Stand um exakt 15 Uhr: ein Match danach
+  // darf den zu diesem Zeitpunkt bereits publizierten Funfact nicht löschen.
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - NEWS_FENSTER_TAGE + 1);
+  for(let tag = new Date(start); tag <= now; tag.setDate(tag.getDate() + 1)){
+    const dk = tagKey(tag), istHeute = dk === tagKey(now);
     for(const slotHour of slotHours){
-      const faellig = new Date(now.getFullYear(), now.getMonth(), now.getDate(),
-                               slotHour, 0, 0, 0);
-      if(faellig.getTime() > now.getTime()) continue;   // Slot ist noch nicht fällig
-      if(slotHour >= AMBIENT_ABEND_AB && _spieltage.has(dk)) continue;
+      const faellig = new Date(tag.getFullYear(), tag.getMonth(), tag.getDate(), slotHour, 0, 0, 0);
+      if(faellig.getTime() > now.getTime()) continue;
+      if(!istHeute && tageMitMatch.has(dk)) continue;
+      if(istHeute && (matches || []).some(m => tagKey(m.created_at) === dk && mts(m) <= faellig.getTime())) continue;
+      const saisonEnde = generation.some(s => (s.dataRef || {}).type === 'season_recap'
+        && tagKey(s.when) === dk && new Date(s.when).getTime() <= faellig.getTime());
+      if(saisonEnde) continue;
       dueSlots.push({dateKey: dk, slotHour, when: faellig});
     }
   }
@@ -123,8 +118,7 @@ function _buildAmbientStories(now, pm, nameOf){
     const refMs = new Date(slot.dateKey + 'T00:00:00').getTime();
     // v9.11: Typ-Cooldown — was zuletzt lief, kommt nicht sofort wieder.
     const cooldownKeys = new Set();
-    // Innerhalb desselben Tages darf ein Typ nicht zweimal kommen, damit 10:00
-    // und 19:00 nie denselben Fun Fact zeigen.
+    // Innerhalb desselben Tages bleibt der Typ eindeutig.
     const usedToday = new Set();
     const usedRubriken = new Set();
     const recentRubriken = new Set();
@@ -190,9 +184,7 @@ function _buildAmbientStories(now, pm, nameOf){
       if(res){ chosenPflicht = res; chosenPflichtKey = t.key; break; }
     }
 
-    // Blickrichtung des Slots: 10:00 schaut nach vorn, 19:00 zurueck [§11.0].
-    // In den ersten beiden Durchgaengen zaehlt sie, im dritten nicht mehr —
-    // ein leerer Slot waere schlimmer als ein Fun Fact zur falschen Zeit.
+    // Der 15-Uhr-Slot mischt aktuelle Staende und Rueckblicke.
     const rolle = _ambientRolleFuerSlot(slot.slotHour);
     // Vier Durchgaenge. Die Paar-Sperre (derselbe Fakt ueber dieselbe Person
     // hoechstens einmal im Monat) gilt in den ersten dreien; erst der vierte
@@ -207,7 +199,7 @@ function _buildAmbientStories(now, pm, nameOf){
         if(pass < 2 && (usedRubriken.has(rubrikVon(t.key)) || recentRubriken.has(rubrikVon(t.key)))) continue;
         if(pass < 2){
           const r = _ambientRolleVon(t.key);
-          if(r && r !== rolle) continue;
+          if(rolle !== 'mix' && r && r !== rolle) continue;
         }
         let res = null;
         try { res = t.make(rng); } catch(e){ res = null; }
@@ -228,9 +220,8 @@ function _buildAmbientStories(now, pm, nameOf){
     }
     if(chosenPflicht){ chosen = chosenPflicht; chosenKey = chosenPflichtKey; }
     if(!chosen) continue;
-    // Sofort in die Historie eintragen: der zweite fällige Slot desselben Tages
-    // sieht diesen Eintrag und meidet Typ und Kopf — sonst zeigten 10 und 19 Uhr
-    // dieselbe Zahl.
+    // Sofort in die Historie eintragen: ein nachfolgender Backfill-Tag sieht
+    // diesen Eintrag bereits und meidet Typ und Kopf.
     history.push({day: slot.dateKey, ts: refMs, sub: chosenKey,
                   rubrik:rubrikVon(chosenKey), pids: pidsOf(chosen.dataRef)});
 
@@ -582,6 +573,46 @@ function _ambientTemplatePool(now, pm, nameOf){
       title:'Rekord-Spieltag',
       desc:`Meiste Spiele an einem Tag: ${bn} Partien am ${p[2]}.${p[1]}.${p[0]}.`,
       vv: bn, vl:'Spiele' };
+  }});
+
+  // Spielreichste oder ruhigste tatsächlich bespielte Kalenderwoche. Das
+  // erklärt den Rhythmus der Liga statt eine beliebige Einzelzahl zu ziehen.
+  T.push({ key:'history_week_volume', weight:2, make: rng => {
+    if(matches.length < 12) return null;
+    const wochen = {};
+    for(const m of matches){
+      const d = new Date(m.created_at), tag = (d.getDay() + 6) % 7;
+      const mo = new Date(d.getFullYear(), d.getMonth(), d.getDate() - tag);
+      const k = tagKey(mo);
+      if(!wochen[k]) wochen[k] = {n:0, von:mo};
+      wochen[k].n++;
+    }
+    const l = Object.values(wochen).sort((a, b) => b.n - a.n || a.von - b.von);
+    if(l.length < 3) return null;
+    const laut = l[0], still = l.slice().sort((a, b) => a.n - b.n || a.von - b.von)[0];
+    const x = rng() < .55 ? laut : still, istLaut = x === laut;
+    const bis = new Date(x.von.getFullYear(), x.von.getMonth(), x.von.getDate() + 6);
+    return {cat:'history', ic:istLaut ? 'flame' : 'calendar', prio:4,
+      title:istLaut ? 'Die spielreichste Woche bisher' : 'Die ruhigste Spielwoche bisher',
+      desc:`${x.n} ${x.n === 1 ? 'Partie' : 'Partien'} zwischen ${datumFmt(x.von, 'tm')} und ${datumFmt(bis, 'tm')}. `
+        + (istLaut ? `Der bisherige Wochenrekord.` : `Weniger wurde in keiner Woche mit Spielbetrieb gespielt.`),
+      vv:String(x.n), vl:'Partien'};
+  }});
+
+  // Ein Rekord aus dem echten Awards-Katalog, mit Halter und Beleg. So macht
+  // der Funfact zugleich auf eine Funktion der App aufmerksam.
+  T.push({ key:'record_spotlight', weight:2, make: rng => {
+    let byId = null;
+    try { byId = (allChronicles() || {}).byId; } catch(e){ return null; }
+    const l = Object.values(byId || {}).filter(r => r && r.pids && r.pids.length
+      && r.pids.some(pid => pm[pid] && !pm[pid].hidden));
+    if(!l.length) return null;
+    const r = l[Math.floor(rng() * l.length)], pids = r.pids.filter(pid => pm[pid] && !pm[pid].hidden);
+    const namen = pids.slice(0, 3).map(nameOf);
+    return {cat:'history', ic:r.ic || 'trophy', prio:5,
+      title:`Rekord im Fokus: ${r.name}`,
+      desc:`${_namenListe(namen)} ${pids.length === 1 ? 'hält' : 'halten'} diese Bestmarke. ${String(r.ev || r.cond || 'Der Beleg steht in der Ewigen Tafel.').replace(/\s*[·•]\s*/g, '. ')}`,
+      vv:String(r.val), vl:'Bestwert', dataRef:{ambientPids:pids.slice(0, 3), rekordId:r.id}};
   }});
 
   // ══ Neue lebendige Fun Facts (v9.1) ══
@@ -1200,9 +1231,8 @@ function _ambientTemplatePool(now, pm, nameOf){
 
 
   // ── Prestige & Insignium (§13.8/§13.9) ──────────────────────────────
-  // Fünf Karten, die das neue System sichtbar machen. Drei schauen nach
-  // vorn (10:00), zwei zurück (19:00) — die Zuordnung steht in
-  // AMBIENT_SLOT_ROLLE [§11.0]. `dataRef.prestige` sagt der Karte, dass
+  // Fünf Karten, die das neue System sichtbar machen. Der gemischte
+  // 15-Uhr-Slot rotiert zwischen Stand und Geschichte. `dataRef.prestige` sagt der Karte, dass
   // sie das Insignium des Spielers als Bild zeigen soll [§11.6b].
 
   T.push({ key:'prestige_fuehrung', weight:2, make: () => {
