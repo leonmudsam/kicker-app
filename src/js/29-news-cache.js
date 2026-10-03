@@ -28,7 +28,23 @@ function getStoriesCache(){
 // Auffrischungsname bleibt als Kompatibilitäts-API bestehen; Text, Zeitpunkt,
 // Priorität und dataRef werden beim Lesen nicht neu abgeleitet.
 function _newsTexteAuffrischen(list){
-  return Array.isArray(list) ? list : [];
+  if(!Array.isArray(list)) return [];
+  if(_cache._ambientZeitFrom === list) return _cache._ambientZeitList;
+  let geaendert = false;
+  const aus = list.map(st => {
+    const m = /^ambient_(\d{4})-(\d{2})-(\d{2})_15$/.exec(String(st && st.id || ''));
+    if(!m) return st;
+    // Aeltere Generatorfassungen verwendeten trotz korrekter Slot-ID den
+    // Zeitpunkt des naechsten Oeffnens. Inhalt und ID sind unveraenderliche
+    // Snapshots; nur die sichtbare Einsortierung gehoert fest auf 15:00 Uhr.
+    const slot = new Date(+m[1], +m[2] - 1, +m[3], 15, 0, 0, 0);
+    if(!Number.isFinite(slot.getTime()) || new Date(st.when).getTime() === slot.getTime()) return st;
+    geaendert = true;
+    return Object.assign({}, st, {when:slot});
+  });
+  _cache._ambientZeitFrom = list;
+  _cache._ambientZeitList = geaendert ? aus : list;
+  return _cache._ambientZeitList;
 }
 
 // ── Was der Generator nicht mehr erzeugt, verschwindet auch ──────────
@@ -766,7 +782,13 @@ function _consolidateStoriesLegacy(list){
     if(_tafelAchse.has(st.id)) return;
     if(_sammelEinzeln(st, d)) return;
     const pids = _pidsVon(st);
-    if(pids.length === 1 && ERFOLG_ART[d.type]) einzel.push({st, idx, d, pids});
+    // Was aus einer konkreten Partie kommt, gehoert zuerst und vollstaendig
+    // an die Karte dieser Partie. Die persoenliche Erfolgsachse zog bisher
+    // mehrere Meilensteine desselben Spielers vorher heraus; dadurch standen
+    // sie auf einer zweiten Karte oder fehlten im Sammelband des Ergebnisses.
+    // Nur Erfolge ohne Partie (etwa ein Monatsabschluss) brauchen diese Achse.
+    if(pids.length === 1 && ERFOLG_ART[d.type] && !d.matchId)
+      einzel.push({st, idx, d, pids});
   });
   const _achse = new Map();          // st.id → Gruppenschlüssel
   const _achseBauen = (praefix, schluessel, art) => {

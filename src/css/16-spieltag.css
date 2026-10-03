@@ -435,6 +435,10 @@
 .sp-mo-k.jetzt{background:rgba(190,242,100,.14);box-shadow:inset 0 0 0 1.5px var(--acid)}
 .sp-mo-k.jetzt .sp-st{font-size:18px}
 .sp-mo-k.jetzt .sp-st em{color:var(--acid)}
+.sp-mo-a{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:7px;
+  font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;text-transform:uppercase}
+.sp-mo-a b{font-weight:700;color:var(--acid)}
+.sp-mo-a span{color:var(--muted);letter-spacing:0;text-transform:none;text-align:right}
 
 /* Pflicht erfüllt: der Tacho und daneben der Stand. */
 .sp-ta{display:grid;grid-template-columns:128px minmax(0,1fr);gap:10px;align-items:center}

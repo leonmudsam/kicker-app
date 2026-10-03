@@ -989,6 +989,9 @@ function _buildStories(){
     Object.keys(_markenTag).forEach(tag => {
       const l = _markenTag[tag].slice().sort((a, b) => a.when - b.when);
       const namen = [...new Set(l.map(ev => nameOf(ev.playerId)))];
+      const matchIds = [...new Set(l.map(ev => ev.matchId).filter(Boolean))];
+      const gemeinsamesMatch = matchIds.length === 1
+        && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
       const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
       stories.push({
         id: 'badgemarken_' + tag,
@@ -1007,12 +1010,14 @@ function _buildStories(){
         dataRef: {type:'badge_marken', tag,
                   playerIds:[...new Set(l.map(ev => ev.playerId))],
                   causalKey:_storyGruppeKey('awards', tag),
-                  // Nur bei einer einzigen Marke gehoert die Karte zu einer
-                  // Partie. Sich aus mehreren eine auszusuchen ist genau der
-                  // Fehler, den die Tafel-Sammelkarte nicht macht [§C33].
-                  matchId: l.length === 1 ? l[0].matchId : null,
+                  // Mehrere Marken duerfen gemeinsam an eine Partie, wenn
+                  // wirklich jede aus genau dieser Partie stammt. Nur bei
+                  // verschiedenen Ausloesern bleibt die Tageskarte ohne
+                  // willkuerlich herausgegriffenen Spielstand.
+                  matchId: gemeinsamesMatch,
                   marken: l.map(ev => ({pid:ev.playerId, badgeId:ev.badge.id,
-                                        name:ev.badge.name, rang:_bRang(ev)}))}
+                                        name:ev.badge.name, rang:_bRang(ev),
+                                        matchId:ev.matchId || null}))}
       });
     });
   } catch(e){ if(NEWS_DEBUG || window.NEWS_DEBUG) console.warn('[news] badges', e); }
@@ -1633,7 +1638,8 @@ function _buildStories(){
       // sieht nur Partien bis zu dieser: der Wortlaut bleibt stehen.
       if(art === 'normal' || art === 'eng'){
         let tx = null;
-        try { tx = _spFormText(m); } catch(e){ tx = null; }
+        try { tx = typeof _spScoreText === 'function' ? _spScoreText(m) : _spFormText(m); }
+        catch(e){ tx = null; }
         if(tx){ title = tx.t; desc = tx.d; }
       }
       stories.push({

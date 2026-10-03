@@ -199,10 +199,10 @@ ok(_frost.n === asStored.length, 'die gespeicherten Fun Facts stehen im Feed',
 ok(_frost.geaendert.length === 0, 'die Auffrischung schreibt keinen Fun Fact um',
    _frost.geaendert.join(', ') || 'keiner');
 
-console.log('\n=== 4b. AUCH ALTE KARTEN BLEIBEN ZEIT-SNAPSHOTS ===');
-// Eine bereits persistierte Karte wird weder aus ihrer ID noch aus dem
-// Generator neu datiert. Neue Funfacts entstehen korrekt auf 15:00 Uhr; alte
-// Datenbankzeilen bleiben unangetastet.
+console.log('\n=== 4b. ALTE FUNFACTS STEHEN AM FESTEN 15-UHR-SLOT ===');
+// Alte Generatorfassungen speicherten bei korrekter 15-Uhr-ID teilweise den
+// Moment des naechsten Oeffnens. Der Inhalt bleibt ein Snapshot, die sichtbare
+// Zeit und Feed-Position werden aus der festen Slot-ID repariert.
 const _uhr = JSON.parse(K.eval(`JSON.stringify((function(){
   const alt = ${JSON.stringify(asStored)}.map(s => Object.assign({}, s, {
     // So stand es in der Datenbank: der Moment des ersten Oeffnens.
@@ -229,8 +229,8 @@ const _uhr = JSON.parse(K.eval(`JSON.stringify((function(){
     fremdUnberuehrt: !mitFremd
       || new Date(mitFremd.when).getTime() === `+NOW_MS+`};
 })())`));
-ok(_uhr.n === asStored.length && !_uhr.korrekt,
-   'ein gespeicherter Fun Fact behaelt als Snapshot auch seinen Zeitpunkt',
+ok(_uhr.n === asStored.length && _uhr.korrekt,
+   'ein gespeicherter 15-Uhr-Fun-Fact wird am festen Slot einsortiert',
    _uhr.stunden.join(' | '));
 ok(_uhr.fremdUnberuehrt,
    'jede andere Karte behaelt den Zeitpunkt der Datenbank');
@@ -505,6 +505,9 @@ const _sprint = JSON.parse(K.eval(`JSON.stringify((function(){
   };
   const hol = () => {
     _cache._buildStoriesKey = null; _cache._buildStoriesResult = null;
+    // CI startet diese Ableitung kalt. Ein schlanker Simulationsstand ohne
+    // history muss deshalb genauso funktionieren wie ein warmer Cache.
+    _cache._historyByMatchIdKey = null; _cache._historyByMatchId = null;
     return _buildStories().filter(s => (s.dataRef||{}).type === 'season_endgame');
   };
   try {
@@ -1558,6 +1561,35 @@ ok(_grp.zeilen.indexOf('g-ls') < 0 && _grp.karten.indexOf('g-ls') >= 0,
    _grp.zeilen.join(', ') + ' · Karten: ' + _grp.karten.join(', '));
 ok(/Siegesserie/.test(_grp.titel),
    'und die Schlagzeile nennt den Anlass der uebrigen Gruppe', _grp.titel);
+
+// Mehrere positive Meilensteine derselben Partie gehoeren an ihr Ergebnis.
+// Sie duerfen weder von der persoenlichen Erfolgsachse vorher herausgezogen
+// noch wegen einer festen Zeilenzahl verworfen werden.
+const _matchErfolge = JSON.parse(K.eval(`JSON.stringify((function(){
+  const m = matches[matches.length - 1], p = [m.a1, m.a2, m.b1, m.b2], t = mts(m);
+  const mk = (id, type, ref) => ({id, cat:'highlight', ic:'medal', prio:60,
+    when:new Date(t), title:id, desc:'Ein Ereignis mit 1 Zahl.',
+    dataRef:Object.assign({type, matchId:m.id, playerIds:[ref.pid]}, ref)});
+  const liste = [
+    {id:'me-spiel', cat:'highlight', ic:'ball', prio:41, when:new Date(t),
+      title:'Partie', desc:'Das Ergebnis lautet 10:5.',
+      dataRef:{type:'spiel', matchId:m.id, playerIds:p.slice(0,2)}},
+    mk('me-jubi','jubilee',{pid:p[0], total:100}),
+    mk('me-siege','milestone_wins',{pid:p[0], milestone:'50'}),
+    mk('me-tore','milestone_goals',{pid:p[1], milestone:'500'})
+  ];
+  _cache._consolFrom = null;
+  const aus = _consolidateStories(liste), sam = aus.find(s => (s.dataRef||{}).type === 'sammel');
+  const ids = sam ? (sam.dataRef.teile||[]).map(x => x.id) : [];
+  return {karten:aus.length, ids, matchId:sam && sam.dataRef.matchId, soll:m.id};
+})())`));
+ok(_matchErfolge.karten === 1 && _matchErfolge.ids.length === 4
+   && _matchErfolge.ids.every(id => ['me-spiel','me-jubi','me-siege','me-tore'].includes(id)),
+   'alle Meldungen derselben Partie werden auf ihrer Ergebniskarte zusammengefuehrt und keine verworfen',
+   _matchErfolge.karten + ' Karte, Zeilen: ' + _matchErfolge.ids.join(', '));
+ok(_matchErfolge.matchId === _matchErfolge.soll,
+   'das zusammengefuehrte Buendel behaelt die konkrete Partie fuer seine Scoregrafik',
+   String(_matchErfolge.matchId));
 
 // ── Ein gleitendes Fenster nennt den alten Wert nicht ────────────────
 // „Maxi, Julian, Jane und Johannes uebernehmen ‚Der Hoehenflug'. +10
@@ -5031,6 +5063,42 @@ ok(_stand.altGilt,
    'eine Karte, die spaeter mit altem Zeitpunkt auftaucht, gilt als gelesen');
 ok(!_stand.frischGilt, 'eine Karte nach dem Lesestand gilt als neu');
 
+// Die Ewige Tafel ist absichtlich eine rollende Tageskarte: ihre ID bleibt,
+// waehrend ein spaeterer Wechsel als neue Zeile dazukommt. Gelesen wird ihre
+// Fassung, nicht pauschal die ID des ganzen Tages.
+const _tafelLesestand = JSON.parse(K.eval(`JSON.stringify((function(){
+  localStorage.removeItem(NEWS_LS_SEEN);
+  localStorage.removeItem(NEWS_LS_STAND);
+  const t1 = new Date('2026-08-26T11:30:00Z').getTime();
+  const t2 = new Date('2026-08-26T12:15:00Z').getTime();
+  const alt = {id:'sammel_tafel_lesetest', when:new Date(t1),
+    dataRef:{type:'sammel', quelle:'tafel', teile:[{id:'rek_alt', ms:t1}]}};
+  _newsMarkSeen(alt);
+  const altGelesen = _newsGelesen(alt, _newsLoadSeen(), _newsLesestand());
+  const neu = {id:alt.id, when:new Date(t2),
+    dataRef:{type:'sammel', quelle:'tafel', teile:[
+      {id:'rek_alt', ms:t1}, {id:'rek_neu', ms:t2}
+    ]}};
+  const neuOffen = !_newsGelesen(neu, _newsLoadSeen(), _newsLesestand());
+  _newsMarkSeen(neu);
+  const neuGelesen = _newsGelesen(neu, _newsLoadSeen(), _newsLesestand());
+  const normalAlt = {id:'normale_story', when:new Date(t1), dataRef:{type:'spiel'}};
+  _newsMarkSeen(normalAlt);
+  const normalNeu = Object.assign({}, normalAlt, {when:new Date(t2)});
+  const normalBleibt = _newsGelesen(normalNeu, _newsLoadSeen(), _newsLesestand());
+  localStorage.removeItem(NEWS_LS_SEEN);
+  localStorage.removeItem(NEWS_LS_STAND);
+  return {altGelesen, neuOffen, neuGelesen, normalBleibt};
+})())`));
+ok(_tafelLesestand.altGelesen,
+   'die geoeffnete Fassung der Ewigen Tafel gilt als gelesen');
+ok(_tafelLesestand.neuOffen,
+   'eine spaeter aktualisierte Ewige Tafel wird wieder als neu markiert');
+ok(_tafelLesestand.neuGelesen,
+   'nach dem Oeffnen gilt genau die aktualisierte Tafel-Fassung als gelesen');
+ok(_tafelLesestand.normalBleibt,
+   'unveraenderliche Story-Snapshots behalten ihren Lesestand');
+
 // ── Jeder Text sagt, was passiert ist ───────────────────────────────
 //    Gemessen an allen Typen, die der Generator ueber vierzig Tage bildet.
 console.log('\n═══ JEDER TEXT SAGT, WAS PASSIERT IST ═══');
@@ -6372,7 +6440,7 @@ ok(_faden.endeOk && _faden.wendeOk,
 // wiederholt, was die Zeichnung zeigt.
 const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
   const karten = getStoriesCache().filter(s => _newsSorte(s) === 'spiel' && (s.dataRef||{}).matchId);
-  const falsch = [], formen = {}; let n = 0, feldN = 0;
+  const falsch = [], wiederholt = [], formen = {}; let n = 0, feldN = 0;
   const reihe = [...matches].sort((a, b) => mts(a) - mts(b));
   const gew = (pid, m) => (m.winner === 'A') === (m.a1 === pid || m.a2 === pid);
   const text = h => String(h).replace(/<[^>]+>/g, ' ').replace(/\\s+/g, ' ');
@@ -6398,6 +6466,11 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     if(occ && OCCKL[occ] && html.indexOf('class="' + OCCKL[occ]) < 0
        && html.indexOf('class="sp-fk ' + OCCKL[occ]) < 0){
       falsch.push(s.id + ' ohne gespeicherte Anlassgrafik ' + occ); return; }
+    if(occ && ['chemie','gegner','revanche','rueckkehr','tagesring','zaehlwerk'].includes(occ)){
+      const oh = _spOccasionBild(visual.occasion);
+      if(/class="sp-nz"/.test(oh)) wiederholt.push(s.id + ' ' + occ + ' wiederholt beide Teams');
+      if(occ === 'chemie' && /Sieg zu zweit/.test(oh)) wiederholt.push(s.id + ' Chemietext bricht um');
+    }
     const form = FORMKL[scoreKey] ? scoreKey : null;
     n++; formen[scoreKey] = (formen[scoreKey] || 0) + 1;
     if(html.indexOf('class="sp-feld') >= 0) feldN++;
@@ -6543,7 +6616,7 @@ const _bogen = JSON.parse(K.eval(`JSON.stringify((function(){
     return !gew(d.pid, m) || vorher.length < 20 || dort !== d.dort || dort / vorher.length >= 0.25
       || text(_spRolleBild(d)).indexOf(dort + ' von ' + vorher.length + ' Partien') < 0;
   }).map(x => x[0].id);
-  return {n, falsch, formen, spitze, feldN, rolle:{n:ro.length, falsch:roFalsch},
+  return {n, falsch, wiederholt, formen, spitze, feldN, rolle:{n:ro.length, falsch:roFalsch},
     gestellt: med.indexOf(esc(BADGES[0].name)) >= 0 && /zum 5\\. Mal/.test(text(med)),
     ser: ser.map(h => leer(h) + (/Marke (\\d+)/.exec(h) || [,'-'])[1])};
 })())`));
@@ -6555,6 +6628,41 @@ ok(_bogen.n > 0 && _bogen.falsch.length === 0,
 ok(_formZahl >= 6 && _formMax <= _bogen.n * 0.45,
    'die gespeicherten Scoregrafiken variieren deutlich statt fast immer Standard zu sein',
    JSON.stringify(_bogen.formen));
+ok(_bogen.wiederholt.length === 0,
+   'die Anlassgrafik wiederholt weder die Teamnamen des Scorekopfs noch den abgeschnittenen Duo-Text',
+   _bogen.wiederholt.join(' | ') || 'keine Doppelung');
+
+// Die neue Scoreebene hat einen strengeren Redaktionsfilter als die
+// historischen 13 Formen: Mosaik nur mit benanntem statistischem Befund,
+// Elo-Transfer nur in den obersten fuenf Prozent und mit Abstand zueinander.
+const _scoreWahl = JSON.parse(K.eval(`JSON.stringify((function(){
+  const reihe = [...matches].sort((a,b) => mts(a) - mts(b));
+  const zahl = {}, falsch = [], transferBei = [];
+  reihe.forEach((m, i) => {
+    const w = _spScoreWahl(m), snap = _spScoreSnapshot(m);
+    zahl[w.key] = (zahl[w.key] || 0) + 1;
+    if(w.key === 'mosaik'){
+      const d = snap.data || {}, h = _spScoreBild(snap);
+      if(!['selten','haeufig','marke'].includes(d.grund)
+         || !/SELTENER AUSGANG|HÄUFIGSTER AUSGANG|RUNDE ERGEBNISMARKE/.test(h))
+        falsch.push(m.id + ' Mosaik ohne Befund');
+    }
+    if(w.key === 'transfer'){
+      transferBei.push(i);
+      const b = _spTransferBefund(_spFakten(m));
+      if(!b || b.platz > Math.max(1, Math.ceil(b.gesamt * .05)))
+        falsch.push(m.id + ' Transfer ohne Ausreisser');
+    }
+  });
+  const eng = transferBei.some((v, i) => i && v - transferBei[i - 1] < 5);
+  return {n:reihe.length, zahl, falsch, transfer:transferBei.length, eng};
+})())`));
+ok(_scoreWahl.falsch.length === 0,
+   'Mosaik und Elo-Transfer erscheinen nur mit einem belegten besonderen Anlass',
+   _scoreWahl.falsch.join(' | ') || JSON.stringify(_scoreWahl.zahl));
+ok(_scoreWahl.transfer <= Math.ceil(_scoreWahl.n * .05) && !_scoreWahl.eng,
+   'die Elo-Transfergrafik bleibt ein seltener Ausreisser und wiederholt sich nicht in kurzem Abstand',
+   _scoreWahl.transfer + ' von ' + _scoreWahl.n + ', eng ' + _scoreWahl.eng);
 // ── Die Formen der gewöhnlichen Partie über die ganze Liga [§C33] ────
 // Eine Partie ohne Anlass bekam immer dasselbe Spielfeld oder dieselbe
 // Ergebniszeile. Jetzt wählt `_spForm` aus dreizehn Formen. Geprüft wird

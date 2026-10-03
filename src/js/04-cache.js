@@ -119,12 +119,20 @@ function _merkeSim(sim){
 function getHistoryByMatchId(){
   const sim=getGlobalSim();
   const key='hist_'+matches.length+'_'+_cache.version;
-  if(_cache._historyByMatchIdKey===key) return _cache._historyByMatchId;
+  if(_cache._historyByMatchIdKey===key && _cache._historyByMatchIdSim===sim)
+    return _cache._historyByMatchId;
   const map=new Map();
-  for(let i=0; i<sim.history.length; i++){
-    map.set(sim.history[i].matchId, sim.history[i]);
+  // Einige Vorschauen (und bewusst schlanke Tests) brauchen nur Elo und
+  // Saisonstaende und liefern deshalb keinen History-Block. Eine kalte
+  // Cache-Reihenfolge darf daraus keinen Absturz machen: ohne History gibt
+  // es schlicht keine per-Partie-Snapshots. Auf einem warmen Cache war der
+  // Fehler bisher zufaellig verdeckt.
+  const history=sim && Array.isArray(sim.history) ? sim.history : [];
+  for(let i=0; i<history.length; i++){
+    map.set(history[i].matchId, history[i]);
   }
   _cache._historyByMatchIdKey = key;
+  _cache._historyByMatchIdSim = sim;
   _cache._historyByMatchId = map;
   return map;
 }
