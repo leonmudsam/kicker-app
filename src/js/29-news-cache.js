@@ -116,16 +116,14 @@ function _storyAbgemeldet(id){
 //     Feed. Display-seitig wirkt es auf bestehende UND neue Rows.
 //   • "Welches Match ist DER Upset der Woche" ist zeitabhängig (wandert
 //     wöchentlich) und darf nicht fix in die DB gebrannt werden.
-// Regeln:
-//   (a) Gleicher Badge, im selben Match von MEHREREN Spielern → EINE Karte
-//       ("Leo & Maxi: Upset-König") statt einer pro Spieler.
-//   (b) Der upset_king GENAU des Matches, das schon als "Upset der Woche"-
-//       Highlight läuft → entfällt (sonst dasselbe Ereignis doppelt).
-// VERSCHIEDENE Badges desselben Matches (z.B. Legende UND Upset-König) bleiben
-// getrennt. Memoisiert per Eingabe-Referenz (billiger O(N)-Lauf).
+// Gleicher Badge im selben Match wird zuerst zur gemeinsamen Verleihungszeile.
+// Verschiedene Badges bleiben eigene Zeilen derselben Matchkarte. Kein
+// publiziertes Ereignis entfaellt wegen eines anderen Highlights.
+// Memoisiert je Eingabeliste, Matchreferenz und Cacheversion.
 function _consolidateStories(list){
   if(!Array.isArray(list)) return [];
-  if(_cache._snapshotConsolFrom === list && Array.isArray(_cache._snapshotConsolList))
+  if(_cache._snapshotConsolFrom === list && _cache._snapshotConsolVersion === _cache.version
+     && _cache._snapshotConsolMatches === matches && Array.isArray(_cache._snapshotConsolList))
     return _cache._snapshotConsolList;
 
   // Die Ewige Tafel ist die einzige rollende Tageskarte. Alle zugehörigen
@@ -134,8 +132,67 @@ function _consolidateStories(list){
   // Anlass und werden durch diesen Schritt nicht verändert.
   const tafelTypen = new Set(['rekord_erstmals','rekord_geholt','rekord_gesteigert',
     'insignium_stufe','chronik_erstling','chronik_geholt']);
-  const vorbereitet = list.filter(s => !_storyAbgemeldet(s && s.id)).map(s => {
+  const matchById = new Map((matches || []).map(m => [m.id, m]));
+  const duellMoment = new Map(), duellAnzahl = new Map();
+  _spBasis().chrono.forEach(m => [m.a1,m.a2].forEach(a => [m.b1,m.b2].forEach(b => {
+    const paar = [a,b].sort().join('|'), n = (duellAnzahl.get(paar) || 0) + 1;
+    duellAnzahl.set(paar, n);
+    const key = paar + '|' + mts(m);
+    let l = duellMoment.get(key);
+    if(!l){ l = new Map(); duellMoment.set(key, l); }
+    l.set(n, m);
+  })));
+  const quelle = list.filter(s => !_storyAbgemeldet(s && s.id));
+  const marken = new Map(), normal = [];
+  // Alte kleine Marken wurden je Tag gespeichert, neue je Partie. Die alten
+  // Snapshots bleiben erhalten: nur ihre Anzeige wird an den gespeicherten
+  // Ausloesern aufgeteilt. Identische alte/neue Marken werden einmal gezeigt
+  // und tragen alle Quell-IDs, statt beim Umstieg doppelt im Feed zu stehen.
+  quelle.forEach(s => {
+    const d = s.dataRef || {}, l = d.marken || [];
+    if(d.type !== 'badge_marken' || !l.length
+       || l.some(x => !(x.matchId || d.matchId))){ normal.push(s); return; }
+    l.forEach(x => {
+      const mid = x.matchId || d.matchId;
+      let g = marken.get(mid);
+      if(!g){ g = {mid, rep:s, werte:new Map(), ids:new Set()}; marken.set(mid, g); }
+      g.ids.add(s.id);
+      g.werte.set([x.pid,x.badgeId,x.rang].join('|'), Object.assign({}, x, {matchId:mid}));
+    });
+  });
+  marken.forEach(g => {
+    const s = g.rep, d = s.dataRef || {}, l = [...g.werte.values()];
+    const unveraendert = g.ids.size === 1 && l.length === (d.marken || []).length;
+    const ids = [...new Set(l.map(x => x.pid))];
+    const namen = ids.map(id => ((pmap()[id] || {}).name || '?'));
+    const mid = matchById.get(g.mid);
+    const zeit = mid ? new Date(mts(mid)) : s.when;
+    normal.push(Object.assign({}, s, {
+      id:unveraendert ? s.id : 'badgemarken_match_' + g.mid,
+      title:unveraendert ? s.title : l.length === 1
+        ? `${namen[0]} holt „${l[0].name}" zum ${l[0].rang}. Mal`
+        : `${_namenKurz(namen)} ${namen.length > 1 ? 'erreichen' : 'erreicht'} runde Marken`,
+      desc:unveraendert ? s.desc : l.map(x =>
+        `${(pmap()[x.pid] || {}).name || '?'}: „${x.name}", ${x.rang}. Verleihung`).join('. ') + '.',
+      when:zeit,
+      dataRef:Object.assign({}, d, {matchId:g.mid, playerIds:ids, marken:l,
+        sourceStoryIds:[...g.ids], causalKey:_storyGruppeKey('match', g.mid)})
+    }));
+  });
+  const vorbereitet = normal.map(s => {
     const d = (s && s.dataRef) || {};
+    // Alte Rivalitaets-Snapshots hatten nur eine Uhrzeit. Die Zahl blieb zwar
+    // im Text stehen, die Minuten-Buendelung heftete sie beim naechsten Laden
+    // aber an eine andere Partie. Aus ihrem eigenen Zeitpunkt die damalige
+    // Partie ableiten; Titel, Zahl und Zeitpunkt bleiben unveraendert.
+    if(d.type === 'rivalry' && !d.matchId && d.a && d.b && Number(d.n) > 0){
+      const zeit = new Date(s.when).getTime();
+      const l = duellMoment.get([d.a,d.b].sort().join('|') + '|' + zeit);
+      // Gleiche Sekunde ist nicht dieselbe Partie. Bei mehreren Kandidaten
+      // identifiziert nur der damalige Duellstand den urspruenglichen Match.
+      const m = l && (l.get(Number(d.n)) || (l.size === 1 ? l.values().next().value : null));
+      if(m) return Object.assign({}, s, {dataRef:Object.assign({}, d, {matchId:m.id})});
+    }
     if(!tafelTypen.has(d.type)) return s;
     return Object.assign({}, s, {dataRef:Object.assign({}, d,
       {causalKey:'tafel:' + tagKey(s.when)})});
@@ -152,6 +209,8 @@ function _consolidateStories(list){
     return neu ? Object.assign({}, s, {when:new Date(neu)}) : s;
   }).sort((a, b) => new Date(b.when) - new Date(a.when));
   _cache._snapshotConsolFrom = list;
+  _cache._snapshotConsolVersion = _cache.version;
+  _cache._snapshotConsolMatches = matches;
   _cache._snapshotConsolList = aus;
   return aus;
 }
@@ -379,7 +438,8 @@ function _consolidateStoriesLegacy(list){
       if(d.playerId && suppressPlayer.has(d.badgeId + '|' + d.playerId)) continue;
       const gk = d.badgeId + '|' + (d.matchId || '');
       let g = badgeGroups.get(gk);
-      if(!g){ g = { rep: s, pids: [], seen: new Set() }; badgeGroups.set(gk, g); slots.push({ b: gk }); }
+      if(!g){ g = { rep: s, pids: [], seen: new Set(), members:[] }; badgeGroups.set(gk, g); slots.push({ b: gk }); }
+      g.members.push(s);
       if(!g.seen.has(d.playerId)){ g.seen.add(d.playerId); g.pids.push(d.playerId); }
     } else if(GROUPABLE[d.type] && d.pid){
       // Ereignisse verschiedener Tage sind verschiedene Geschichten. Die
@@ -446,7 +506,7 @@ function _consolidateStoriesLegacy(list){
       result.push(Object.assign({}, rep, {
         id: 'badgegrp_' + d.badgeId + '_' + (d.matchId || ''),
         title: `${fmtNames(names)}: ${bn}`,
-        dataRef: Object.assign({}, d, { playerIds: g.pids })
+        dataRef: Object.assign({}, d, { playerIds: g.pids, memberIds:g.members.map(m => m.id) })
       }));
       continue;
     }
@@ -471,7 +531,7 @@ function _consolidateStoriesLegacy(list){
                     matchId:(rep.dataRef||{}).matchId || null,
                     playerIds: pids, frags,
                     memberIds: members.map(m => m.id),
-                    members: members.map(m => ({
+                    members: members.map(m => Object.assign({}, m.dataRef || {}, {
                       id: m.id,
                       type: (m.dataRef || {}).type,
                       pid: (m.dataRef || {}).pid || null,
@@ -839,21 +899,13 @@ function _consolidateStoriesLegacy(list){
   const _matchAchse = new Set();
   {
     const jeMatch = new Map();
-    // ── Rot ist eine Richtung, und eine Karte hat eine ──────────────
-    // Die Karte einer Partie erzaehlt von den Siegern. „Die Talfahrt" haengt
-    // am selben Spiel und gehoert dem Verlierer: gemessen stand
-    // „Auszeichnung in einer Partie fuer Anton, Maxi und Leon" ueber einer
-    // Schande, die nur Anton betrifft, waehrend Maxi und Leon gewonnen haben
-    // [§C25]. Eine negative Meldung bleibt deshalb ihre eigene Karte.
-    const _negT = st => {
-      try { return (typeof _newsIstNegativ === 'function') && _newsIstNegativ(st); }
-      catch(e){ return false; }
-    };
+    // Rot ist die Richtung einer Zeile, kein Grund fuer eine zweite Karte.
+    // Durststrecke, Rivalitaet, Serie und Ergebnis derselben Partie reisen
+    // gemeinsam; der Score steht einmal, jeder Anlass darunter einmal.
     result.forEach((st, idx) => {
       const d = (st && st.dataRef) || {};
       if(_tafelAchse.has(st.id) || _achse.has(st.id)) return;
       if(!d.matchId || !SAMMEL_SPIEL.has(d.type)) return;
-      if(d.type !== 'spiel' && _negT(st)) return;
       // ── Eine Partie, eine Karte ──────────────────────────────────
       // Eine seltene Auszeichnung blieb hier einzeln stehen, damit sie nicht
       // als Kleingedrucktes unter einer fremden Schlagzeile endet. Seit jede
@@ -891,6 +943,10 @@ function _consolidateStoriesLegacy(list){
     if(_sammelEinzeln(st, d)) return;
     if(_achse.has(st.id)) return;    // steht schon auf einer der neuen Karten
     if(!SAMMEL_SPIEL.has(d.type)) return;
+    // Zwei verschiedene Partien koennen denselben Minutenstempel haben.
+    // Eine bekannte Match-ID darf nie wieder auf die Minutenachse fallen,
+    // auch wenn die Partie nur genau eine Meldung besitzt.
+    if(d.matchId) return;
     const mk = _minKey(st.when);
     let liste = spielMinuten.get(mk);
     if(!liste){ liste = []; spielMinuten.set(mk, liste); }
@@ -1371,6 +1427,9 @@ function _consolidateStoriesLegacy(list){
                                          // Zusage: was einmal dastand, bleibt
                                          // stehen [§C33].
                                         id: t.id,
+                                        sourceIds: (t.dataRef||{}).memberIds
+                                          || (t.dataRef||{}).sourceStoryIds || [t.id],
+                                        ref: t.dataRef || {},
                                          // ── Das Ergebnis steht nicht dreimal ──
                                          // Die Zeile der Partie hiess „Leon
                                          // und Maxi setzen sich gegen Leo und
@@ -1432,6 +1491,12 @@ function _consolidateStoriesLegacy(list){
                                               || (t.dataRef||{}).rarity === 'legendary'))
                                           ? ((t.dataRef||{}).rarity === 'legendary'
                                              ? 'Legendär' : 'Selten') : '',
+                                         // Negative Ereignisse bleiben Teil
+                                         // derselben Partie, tragen in Karte
+                                         // und Blatt aber ihre rote Richtung.
+                                         neg: (function(){
+                                           try { return _newsIstNegativ(t); }
+                                           catch(e){ return false; } })(),
                                          // Der Anlass des Breaking. Ohne ihn
                                          // ist auf der lautesten Karte des
                                          // Feeds nicht zu sehen, warum sie
@@ -1698,8 +1763,8 @@ function _consolidateStoriesLegacy(list){
   // Partie, mit denselben vier Wappen und demselben Stand. Wer scrollt, liest
   // zwei Partien statt einer.
   //
-  // Zusammengelegt wird, wo es geht; was daneben stehen BLEIBT — eine negative
-  // Meldung hat ihre eigene Richtung [§C25] —, verzichtet auf das Band. Damit
+  // Matchmeldungen werden vollstaendig zusammengelegt. Nur alte oder nicht
+  // matchbezogene Kartenformen, die daneben bleiben, verzichten auf das Band. Damit
   // ist die Trennung eindeutig: eine Partie, ein Band. Die Karte behaelt ihr
   // Gesicht und im Blatt steht die Partie weiterhin.
   //

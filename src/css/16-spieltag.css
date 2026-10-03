@@ -48,9 +48,11 @@
 .sp-f-tor.l{left:0;border-radius:0 6px 6px 0}.sp-f-tor.r{right:0;border-radius:6px 0 0 6px}
 .sp-f-stange{position:absolute;top:0;bottom:0;width:2px;margin-left:-1px;background:linear-gradient(180deg,transparent,rgba(185,196,189,.16) 20%,rgba(185,196,189,.16) 80%,transparent)}
 .sp-f-sc{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px;margin-bottom:6px}
-.sp-f-sc b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:16px;color:var(--faint);padding:2px 9px;border-radius:9px;
+/* Der Stand ist die Aussage der Matchbuehne, nicht ein kleiner Feldaufkleber.
+   Er bleibt auch zwischen vier Wappen auf dem Telefon der Blickpunkt. */
+.sp-f-sc b{font-family:'Archivo Black',sans-serif;font-weight:400;font-size:26px;line-height:1.1;color:var(--muted);padding:4px 12px;border-radius:9px;
   background:var(--surface);box-shadow:0 0 0 1px var(--line2)}
-.sp-f-sc b em{font-style:normal}.sp-f-sc b em.w{color:var(--ink)}.sp-f-sc b i{font-style:normal;margin:0 1px}
+.sp-f-sc b em{font-style:normal}.sp-f-sc b em.w{color:var(--acid);text-shadow:0 0 14px rgba(190,242,100,.2)}.sp-f-sc b i{font-style:normal;margin:0 1px}
 .sp-f-sc span{font:600 8.5px 'Sometype Mono',monospace;letter-spacing:.06em;color:var(--muted);white-space:nowrap}
 .sp-f-reihe{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
 .sp-f-sp{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;padding:0 2px;text-align:center}

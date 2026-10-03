@@ -956,7 +956,7 @@ function _newsSammelBand(teile, kopfTitel, vollstaendig){
     // behauptete eine Dringlichkeit, die sie selbst nicht belegte. Sie
     // steht jetzt zuerst [§C33] und sagt es auch — Rot, weil das die
     // Richtung von Breaking ist [§C25].
-    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}${t.brk ? ' brk' : ''}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
+    return `<div class="nf-sam-z${ton ? ' nf-sam-'+ton : ''}${t.neg ? ' neg' : ''}${t.brk ? ' brk' : ''}" data-story-id="${esc(t.id || '')}"><i class="nf-sam-i">${svgI(t.ic || 'chartBar')}</i>`
     + `<span>${_newsBetont(t.titel || '')}</span>`
     + (t.brk ? `<b class="nf-sam-brk">Der Anlass</b>` : '')
     + (t.marke ? `<b class="nf-sam-k">${esc(t.marke)}</b>` : '')
@@ -1038,7 +1038,15 @@ function _newsSpielFakten(s){
   const d = s.dataRef || {};
   if(d.type !== 'sammel' || !Array.isArray(d.teile)) return [d];
   const idx = _newsRohIndex();
-  return d.teile.map(t => ((idx.get(t && t.id) || {}).dataRef) || {type: t && (t.typ || t.type)});
+  return d.teile.flatMap(t => {
+    const ref = (t && t.ref) || ((idx.get(t && t.id) || {}).dataRef)
+      || {type:t && (t.typ || t.type)};
+    // Eine Gruppenzeile traegt mehrere urspruengliche Ereignisse. Die
+    // Grafik darf deren Serienwerte nicht verlieren, weil im Rohindex nur
+    // die einzelnen IDs und keine kuenstliche Gruppen-ID stehen.
+    return ref.type === 'group' && Array.isArray(ref.members)
+      ? ref.members.map(m => Object.assign({}, ref, m, {type:m.type || ref.sub})) : [ref];
+  });
 }
 // Die Wende: wie viele Partien in Folge ein Sieger vor dieser verloren hat.
 // Gezählt wird rückwärts ab der Partie, nicht ab heute [§C33].

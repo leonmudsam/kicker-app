@@ -68,10 +68,10 @@ Stories derselben Partie sollen zu einer lesbaren Matchkarte zusammengeführt we
 - jedes Ereignis behält seine ID
 - jedes Ereignis bleibt als eigene Zeile oder im Detailblatt vollständig auffindbar
 - seltene und legendäre Auszeichnungen bleiben sichtbar gekennzeichnet
-- negative Geschichten werden nicht unter eine feiernde Siegerkarte gemischt
-- nicht sinnvoll zusammengehörige Geschichten bleiben eigene Karten
+- alle positiven und negativen Matchereignisse derselben konkreten Partie teilen eine Karte; negative Zeilen bleiben rot gekennzeichnet und nennen die tatsächlich Betroffenen
+- Geschichten verschiedener Partien und nicht matchbezogene Geschichten bleiben getrennt
 
-Ziel ist möglichst wenig Kartenrauschen, aber niemals Informationsverlust. Vier einzelne Karten zu einer Partie sind unerwünscht, wenn sie sinnvoll in einer Karte lesbar sind. Sind Ereignisse semantisch nicht vereinbar, dürfen es trotzdem mehrere Karten sein.
+Ziel ist möglichst wenig Kartenrauschen, aber niemals Informationsverlust. Die Partie ist das gemeinsame Subjekt: Serien, Durststrecken, Rivalitäten und sämtliche newswürdigen Auszeichnungen werden als Zeilen ihrer gemeinsamen Matchkarte gezeigt. Die Ewige Tafel bleibt ihr eigener Tagesstrom. Kein Anlass wird wegen seiner negativen Richtung oder eines Themenlimits verworfen.
 
 Verbindliche Gruppenschlüssel:
 
@@ -140,6 +140,10 @@ Die Auswahl darf nur Daten verwenden, die bis zu dieser Partie bekannt waren. Be
 - das Spielfeld als Rückfall, nicht als Standard für fast alles
 - seltene passende Formen nicht durch einen allgemeinen Anlass blockieren
 - Gleichstände deterministisch, beispielsweise über Match-ID, auflösen
+- für die Variationshistorie die tatsächlich veröffentlichten Grafikschlüssel verwenden; ältere Designs nicht nach den neuen Regeln neu bestimmen
+- eine andere Scoreform darf einen besonderen Ausgang nicht verschweigen: Krimi, Außenseitersieg oder klarer Sieg bleiben als Anlass beziehungsweise Ereigniszeile erkennbar
+
+Ein Mosaik braucht einen belegten Befund zur Ergebnisverteilung, nicht nur ein beliebiges Ergebnis. Elo-Transfer bleibt besonderen Elo-Ausreißern vorbehalten. Auch gewöhnliche Partien haben mehrere sachlich passende Grundformen; die Standardzeile ist kein Ersatz für eine sinnvolle Auswahl.
 
 Der Score ist wichtiger als dekorative Elemente. Er muss auch bei langen Namen und auf 288 beziehungsweise 360 Pixel breiten Ansichten sofort lesbar bleiben.
 
@@ -190,6 +194,8 @@ Alte Stories:
 - fehlende neue Felder deterministisch im Speicher ableiten
 - alte Datenbankzeilen nicht massenhaft umschreiben
 - niemals einen bestehenden alten Snapshot wegen der Migration löschen
+- ältere Tageskarten für kleine Auszeichnungen nur anhand ihrer gespeicherten Match-IDs aufteilen; identische alte/neue Marken einmal zeigen und sämtliche Quell-IDs erhalten
+- historische Rivalitätsstände an ihre ursprüngliche Partie binden, nicht an das jeweils jüngste Duell; gleiche Uhrzeiten anhand des damaligen Duellstands unterscheiden und bei unklarem Matchbezug nicht raten
 
 Eine später hinzugefügte Partie, eine neue Katalogreihenfolge oder ein neuer Bündelteil darf die gespeicherten Grafikschlüssel nicht verändern.
 
@@ -304,6 +310,9 @@ Mindestens folgende Regressionstests hinzufügen oder vorhandene entsprechend er
 - alle Scoreformen mit mindestens einem gültigen Beispiel rendern
 - Anlassgrafiken zusammen mit verschiedenen Scoreformen rendern
 - Sammelkarte aus Matchstory plus Serie plus Auszeichnung prüfen
+- Sammelkarte mit positiven und negativen Ereignissen sowie mehreren Auszeichnungsthemen derselben Partie prüfen
+- drei neue Partien nach zwei gespeicherten Spielfeldkarten: keine direkte Grafik-Wiederholung, alte Snapshots unverändert, identische Wahl beim Kaltstart
+- Rivalitätszahl nach späterem Duell und bei identischen Match-Zeitstempeln am ursprünglichen Match nachweisen
 - Multi-Match-Sammelkarte ohne falsches Ergebnis prüfen
 - aktuelle Tafel bei zwei Wechseln aktualisieren, Vortag unverändert lassen
 - Funfact vor und nach einem späteren Match prüfen

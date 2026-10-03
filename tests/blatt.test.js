@@ -1198,7 +1198,10 @@ const ok = (c, msg, det) => {
     // Runde ihre Tabelle.
     const BILD = ['nf-erg','nf-wert','nf-leiter','nf-bil','nf-ser','nf-sam',
                   'nf-zb','nf-wl','nf-duell-band','nf-bd','nf-gr-l','nf-face',
-                  'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg','sp-rq'];
+                  'sp-zeile','sp-feld','sp-at','sp-wp','sp-band','sp-rd-tafel','sp-tg','sp-rq',
+                  // V2 waehlt auch Mosaik, Tacho, Streuung und Gefaelle. Ihr
+                  // gemeinsamer Bildrahmen ist kein fehlender Textkarten-Kopf.
+                  'sp-fk'];
     arr.forEach(x => {
       host.innerHTML = x.html;
       const karte = host.querySelector('.nf-card');
@@ -2305,13 +2308,17 @@ const ok = (c, msg, det) => {
         r.fehler.forEach(f => fehler.push('Teil ' + i + ': ' + f));
         kleinste = Math.min(kleinste, r.kleinste);
       });
-      out[breite] = {n:host.children.length, fehler:[...new Set(fehler)], kleinste};
+      const feldScores = [...host.querySelectorAll('.sp-f-sc b')]
+        .map(el => parseFloat(getComputedStyle(el).fontSize));
+      out[breite] = {n:host.children.length, fehler:[...new Set(fehler)], kleinste,
+        feldScores, scoreMin:Math.min(...feldScores)};
       host.remove();
     });
     return out;
   }, PRUEFEN.toString());
-  ok(grenz[288].n >= 30 && grenz[288].fehler.length === 0 && grenz[360].fehler.length === 0,
-     'und mit Grenzwerten und langen Namen auch nicht, auf dem schmalsten Telefon wie auf einem gewöhnlichen',
+  ok(grenz[288].n >= 30 && grenz[288].fehler.length === 0 && grenz[360].fehler.length === 0
+     && [288,360].every(b => grenz[b].feldScores.length >= 2 && grenz[b].scoreMin >= 24),
+     'und mit Grenzwerten und langen Namen auch nicht, mit grossem Spielfeld-Score auf schmalen und gewöhnlichen Telefonen',
      grenz[288].fehler.concat(grenz[360].fehler).slice(0, 3).join(' | ')
        || grenz[288].n + ' Teile, kleinste Schrift ' + Math.min(grenz[288].kleinste, grenz[360].kleinste) + ' px');
   const fadenAuf = await page.evaluate(() => {
@@ -3226,19 +3233,30 @@ const ok = (c, msg, det) => {
   const serie = await page.evaluate(async () => {
     const K = window.__k.eval.bind(window.__k);
     const fehler = [];
-    const ids = K("getStoriesCache().filter(s => /^(loss_streak|win_streak|top_form)$/.test((s.dataRef||{}).type)).map(s => s.id)");
-    for(const id of ids){
-      const t = K('(getStoriesCache().find(s => s.id === ' + JSON.stringify(id) + ').dataRef || {}).type');
-      K('closeSheet(true); openNewsDetail(' + JSON.stringify(id) + ')');
-      const nd = document.getElementById('nd');
+    // Matchserien stehen jetzt in der gemeinsamen Partie-Karte. Ihre
+    // Einzelblaetter bleiben als Legacy-Pfad pruefbar: die Roh-Snapshots
+    // zeichnen, statt wegen korrekter Buendelung null Beispiele zu messen.
+    const beispiele = K(`_cache._stories.filter(s => /^(loss_streak|win_streak|top_form)$/.test((s.dataRef||{}).type))
+      .map(s => ({id:s.id, t:s.dataRef.type, mid:s.dataRef.matchId, html:_newsDetailBody(s)}))`);
+    const nd = document.createElement('div');
+    nd.style.width = '360px'; document.body.appendChild(nd);
+    for(const {id,t,mid,html} of beispiele){
+      nd.innerHTML = html;
       const punkte = [...nd.querySelectorAll('.nd-form-strip .nd-form-dot')];
       const letzter = punkte.length ? punkte[punkte.length - 1].classList.contains('w') : null;
       if(t === 'loss_streak' && letzter === true) fehler.push(id + ': Reihe endet mit Sieg');
       if(t === 'top_form' && letzter === false) fehler.push(id + ': Formkarte endet mit Pleite');
+      if(/^(loss_streak|win_streak)$/.test(t)){
+        const zeilen = nd.querySelector('.nd-pzl');
+        const ende = zeilen && zeilen.lastElementChild;
+        if(!ende || ende.dataset.mid !== mid) fehler.push(id + ': falsches Endspiel');
+        if(ende && (ende.classList.contains('w') !== (t === 'win_streak')))
+          fehler.push(id + ': falsche Richtung am Ende');
+      }
       if(/in Folge<\/div>/.test(nd.innerHTML) && /× (Niederlage|Sieg) in Folge/.test(nd.innerText)) fehler.push(id + ': Zahl dreimal');
     }
-    K('typeof closeNewsDetail === "function" && closeNewsDetail()');
-    return {n: ids.length, fehler};
+    nd.remove();
+    return {n: beispiele.length, fehler};
   });
   ok(serie.n > 0 && serie.fehler.length === 0,
      'das Blatt einer Serie zeigt den Stand ihrer Partie und die Zahl einmal',

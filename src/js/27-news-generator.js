@@ -823,21 +823,24 @@ function _buildStories(){
   try {
     const cutoff = now.getTime() - 7*86400000;
     const bMap = getBadgeEarnedCache();
+    const badgeMatches = new Map(matches.map(m => [m.id,m]));
     const events = [];
     for(const mid in bMap){
       const arr = bMap[mid];
       if(!arr || !arr.length) continue;
-      const matchObj = matches.find(m => m.id === mid);
+      const matchObj = badgeMatches.get(mid);
       if(!matchObj) continue;
       const t = mts(matchObj);
       if(t < cutoff) continue;
       arr.forEach(e => events.push({...e, when: new Date(matchObj.created_at), matchId: mid}));
     }
-    // Pro (Spieler, Badge-ID): nur das jüngste Event
+    // Die Partie ist die Identitaet einer Verleihung. Nur echte Doubletten
+    // desselben Events werden entfernt; eine spaetere Auszeichnung darf die
+    // fruehere nicht schon im Generator verdraengen.
     const dedupe = {};
     events.forEach(ev => {
-      const k = ev.playerId+'|'+ev.badge.id;
-      if(!dedupe[k] || dedupe[k].when < ev.when) dedupe[k] = ev;
+      const k = ev.playerId+'|'+ev.badge.id+'|'+ev.matchId;
+      if(!dedupe[k]) dedupe[k] = ev;
     });
     // Das WIEVIELTE Mal ist das? Gezählt über die ganze Laufbahn, nicht nur
     // über das Fenster von sieben Tagen — sonst wäre jede Auszeichnung
@@ -847,29 +850,25 @@ function _buildStories(){
     for(const mid in bMap){
       const arr = bMap[mid];
       if(!arr || !arr.length) continue;
-      const mo = matches.find(m => m.id === mid);
+      const mo = badgeMatches.get(mid);
       if(!mo) continue;
       const t = mts(mo);
       arr.forEach(e => {
         const k = e.playerId+'|'+e.badge.id;
-        (_bZeiten[k] = _bZeiten[k] || []).push(t);
+        (_bZeiten[k] = _bZeiten[k] || []).push({t,mid});
       });
     }
-    for(const k in _bZeiten) _bZeiten[k].sort((a,b) => a - b);
+    for(const k in _bZeiten) _bZeiten[k].sort((a,b) => a.t - b.t);
     const _bRang = ev => {
       const l = _bZeiten[ev.playerId+'|'+ev.badge.id] || [];
-      const i = l.indexOf(ev.when.getTime());
+      // Zwei Partien koennen dieselbe Sekunde tragen. Der Zeitstempel allein
+      // gab dann beiden Verleihungen denselben Rang und verschluckte Marken.
+      const i = l.findIndex(x => x.mid === ev.matchId);
       return i < 0 ? l.length : i + 1;
     };
-    // v9.5: Whitelist-Filter ZUERST, dann limitieren. Vorher wurde erst auf die
-    // 6 jüngsten Events geschnitten und danach gefiltert — häufige Common-Badges
-    // konnten so news-würdige (rare/negative) Badges aus dem Budget verdrängen.
-    // Jetzt zählt das Limit nur echte News, damit gewünschte Auszeichnungen
-    // (Nerven aus Stahl, 10er Serie, Losing Streak …) zuverlässig erscheinen.
-    // v8.1: nur seltene/besondere Badges erzeugen News (Common wäre Spam).
-    // v8.7: ALLE goldenen (legendary) und lilanen (rare) Badges sind News-würdig;
-    // zusätzlich die explizit gewhitelisteten Specials (seltene negative Badges).
-    const _rarRank = {legendary:4, rare:3, negative:2, common:1};
+    // Klasse und Verleihungsmarke entscheiden die Newswuerdigkeit, kein
+    // Mengenbudget. Gewoehnliche Marken werden unten gesammelt; seltene,
+    // legendaere und ausdruecklich gewaehlte negative Badges reisen mit.
     const whitelisted = Object.values(dedupe)
       .filter(ev => {
         if(!pm[ev.playerId]) return false;
@@ -884,43 +883,10 @@ function _buildStories(){
         if(!wuerde && !_badgeTakt(rar, _bRang(ev))) return false;
         return rar === 'legendary' || rar === 'rare' || NEWS_BADGE_WHITELIST.has(ev.badge.id);
       });
-    // v9.7: pro Match nur EIN Badge-THEMA als News. Mehrere verschiedene Badges
-    // aus demselben Spiel (z.B. „Klares Ding" + „Mauer") sagen im Grunde
-    // dasselbe über dieses eine Match aus → wir behalten nur das prominenteste
-    // (höchste Rarity, dann jüngstes) und vermeiden fast identische Doppel-News.
-    //
-    // v9.17 BUGFIX: Vorher wurde pro Match genau EIN EVENT behalten. Bei
-    // Team-Badges verdient aber das ganze Siegerteam dieselbe Auszeichnung —
-    // ein 10:0 schaltet „Absoluter Sieger" für BEIDE Sieger frei. Das zweite
-    // Event flog raus, die News nannte nur einen Namen. Jetzt wird pro Match nur
-    // die Badge-ID gewählt; ALLE Events dieser Badge-ID bleiben erhalten und
-    // _consolidateStories (§11.2) fasst sie zu EINER Karte mit beiden Spielern
-    // zusammen (die Gruppierung dort läuft über badgeId|matchId und kann das
-    // längst — ihr fehlte nur das zweite Event).
-    const _perMatch = {};       // matchId → {badgeId, _r, when}
-    whitelisted.forEach(ev => {
-      const mid = ev.matchId;
-      const r = _rarRank[(typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common'] || 1;
-      const cur = _perMatch[mid];
-      if(!cur || r > cur._r || (r === cur._r && ev.when > cur.when)){
-        _perMatch[mid] = {badgeId: ev.badge.id, _r: r, when: ev.when};
-      }
-    });
-    // Limit zählt EREIGNISSE (matchId|badgeId), nicht Spieler — ein Team-Badge
-    // mit zwei Siegern darf das Budget nicht doppelt verbrauchen.
-    const list = [];
-    const _budget = new Set();
-    whitelisted
-      .filter(ev => { const w = _perMatch[ev.matchId]; return w && w.badgeId === ev.badge.id; })
-      .sort((a,b) => b.when - a.when)
-      .forEach(ev => {
-        const gk = ev.matchId + '|' + ev.badge.id;
-        if(!_budget.has(gk)){
-          if(_budget.size >= NEWS_LIMITS.badgeUnlocked) return;
-          _budget.add(gk);
-        }
-        list.push(ev);
-      });
+    // Jede newswuerdige Verleihung wird gespeichert. Die Match-Zusammenfuehrung
+    // sorgt fuer eine Karte pro Partie; ein Themenlimit unterschlug dagegen
+    // weitere seltene Auszeichnungen und negative Ereignisse desselben Spiels.
+    const list = whitelisted.sort((a,b) => b.when - a.when);
     list.forEach(ev => {
       const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
       // `prio` sortiert den Feed nicht mehr — er steht chronologisch [§C33].
@@ -945,9 +911,9 @@ function _buildStories(){
         // hier ein zweites Mal, gleich darunter.
         _bdesc = `5 Pleiten in Folge gegen ${nameOf(_nemOpp)}.`;
       } else if(ev.badge.id === 'games250' && typeof countGames === 'function'){
-        _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht jetzt bei ${countGames(ev.playerId, matches)} Spielen.`;
+        _bdesc = `300 Partien am Kicker. ${nameOf(ev.playerId)} steht nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).length} Spielen.`;
       } else if(ev.badge.id === 'wins200' && typeof countWins === 'function'){
-        _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält aktuell bei ${countWins(ev.playerId, matches)}.`;
+        _bdesc = `300 Siege in der Karriere. ${nameOf(ev.playerId)} hält nach dieser Partie bei ${_spEigene(ev.playerId, badgeMatches.get(ev.matchId)).filter(m => _spGew(m, ev.playerId)).length}.`;
       } else {
         // Die Bedingung aus dem Katalog steht sonst ohne Punkt in der Karte:
         // sie ist dort eine Zelle in einem Raster, hier ist sie ein Satz.
@@ -965,14 +931,17 @@ function _buildStories(){
         dataRef: {type:'badge_unlocked', playerId: ev.playerId, badgeId: ev.badge.id, badgeName: ev.badge.name, matchId: ev.matchId, rarity: rar, nemesisOppId: _nemOpp || undefined}
       });
     });
-    // ── Die kleinen Marken eines Tages stehen zusammen ─────────────
+    // ── Die kleinen Marken einer Partie stehen zusammen ────────────
     // Eine gewoehnliche Auszeichnung kam im Feed gar nicht vor: nur
     // legendaer, selten und die gewhitelisteten Sonderfaelle bekamen eine
     // Karte. Damit fehlte genau das, was ein Spieler aus der unteren Haelfte
     // ueberhaupt erreicht. Einzeln koennen sie es nicht sein — gemessen
     // fallen an sieben der vierzehn Tage eine bis vier runde Marken, und vier
-    // Karten „X: Zittersieg" untereinander sind ein Protokoll. Also eine
-    // Karte je Tag (`awards:<Tag>`, [§11.0e]) und darin die Namen [§C33].
+    // Karten „X: Zittersieg" untereinander sind ein Protokoll. Sie werden
+    // deshalb je PARTIE gesammelt und gehen anschließend als eine Zeile in
+    // deren Matchkarte auf. Eine Tageskarte über mehrere Partien konnte
+    // keinem Ergebnis sauber zugeordnet werden und blieb als zweite Karte
+    // neben einem der beteiligten Spiele stehen.
     const _kleine = Object.values(dedupe).filter(ev => {
       if(!pm[ev.playerId]) return false;
       const rar = (typeof rarityOf === 'function') ? rarityOf(ev.badge.id) : 'common';
@@ -981,20 +950,22 @@ function _buildStories(){
       if(NEWS_BADGE_WHITELIST.has(ev.badge.id)) return false;
       return _badgeTakt('common', _bRang(ev));
     });
-    const _markenTag = {};
+    const _markenPartie = {};
     _kleine.forEach(ev => {
-      const k = tagKey(ev.when.getTime());
-      (_markenTag[k] = _markenTag[k] || []).push(ev);
+      const k = ev.matchId ? 'm:' + ev.matchId : 't:' + tagKey(ev.when.getTime());
+      (_markenPartie[k] = _markenPartie[k] || []).push(ev);
     });
-    Object.keys(_markenTag).forEach(tag => {
-      const l = _markenTag[tag].slice().sort((a, b) => a.when - b.when);
+    Object.keys(_markenPartie).forEach(key => {
+      const l = _markenPartie[key].slice().sort((a, b) => a.when - b.when);
+      const tag = tagKey(l[l.length - 1].when.getTime());
       const namen = [...new Set(l.map(ev => nameOf(ev.playerId)))];
       const matchIds = [...new Set(l.map(ev => ev.matchId).filter(Boolean))];
       const gemeinsamesMatch = matchIds.length === 1
         && l.every(ev => ev.matchId === matchIds[0]) ? matchIds[0] : null;
       const zeile = ev => `${nameOf(ev.playerId)} holt „${ev.badge.name}" zum ${_bRang(ev)}. Mal`;
       stories.push({
-        id: 'badgemarken_' + tag,
+        id: gemeinsamesMatch ? 'badgemarken_match_' + gemeinsamesMatch
+                             : 'badgemarken_slot_' + tag,
         cat: 'badge',
         ic: (l.length === 1 && l[0].badge.ic) || 'medal',
         title: l.length === 1 ? zeile(l[0])
@@ -1004,16 +975,14 @@ function _buildStories(){
         // fuer jede Auszeichnung gilt [§C33].
         desc: l.length === 1
           ? String(l[0].badge.desc || '').trim().replace(/([^.!?])$/, '$1.')
-          : `${l.length} Auszeichnungen an diesem Tag. ` + l.map(zeile).join(', ') + '.',
+          : `${l.length} Auszeichnungen in dieser Partie. ` + l.map(zeile).join(', ') + '.',
         when: l[l.length - 1].when,
         prio: STORY_PRIO.badge_marken,
         dataRef: {type:'badge_marken', tag,
                   playerIds:[...new Set(l.map(ev => ev.playerId))],
-                  causalKey:_storyGruppeKey('awards', tag),
-                  // Mehrere Marken duerfen gemeinsam an eine Partie, wenn
-                  // wirklich jede aus genau dieser Partie stammt. Nur bei
-                  // verschiedenen Ausloesern bleibt die Tageskarte ohne
-                  // willkuerlich herausgegriffenen Spielstand.
+                  causalKey:gemeinsamesMatch
+                    ? _storyGruppeKey('match', gemeinsamesMatch)
+                    : _storyGruppeKey('awards', tag),
                   matchId: gemeinsamesMatch,
                   marken: l.map(ev => ({pid:ev.playerId, badgeId:ev.badge.id,
                                         name:ev.badge.name, rang:_bRang(ev),
@@ -1032,21 +1001,23 @@ function _buildStories(){
       A.forEach(a => B.forEach(b => {
         if(a === b) return;
         const k = a < b ? a+'|'+b : b+'|'+a;
-        if(!pairCnt[k]) pairCnt[k] = {n:0, last:m.created_at, aw:0};
+        if(!pairCnt[k]) pairCnt[k] = {n:0, last:m.created_at, t:mts(m), mid:m.id, aw:0};
         pairCnt[k].n++;
         // Wer führt? Ohne diese Zahl sagte die Karte nur, dass es die
         // Paarung gibt. `aw` zählt aus Sicht des kleineren Ids.
         const ersterAufA = (a < b ? a : b) === a;
         const aGewinnt = ersterAufA ? m.winner === 'A' : m.winner === 'B';
         if(aGewinnt) pairCnt[k].aw++;
-        if(m.created_at > pairCnt[k].last) pairCnt[k].last = m.created_at;
+        if(mts(m) >= pairCnt[k].t){
+          pairCnt[k].last = m.created_at; pairCnt[k].t = mts(m); pairCnt[k].mid = m.id;
+        }
       }));
     });
     const ranked = Object.entries(pairCnt)
       .filter(([k,v]) => v.n >= 50)
       .map(([k,v]) => {
         const [a,b] = k.split('|');
-        return {a, b, n: v.n, aw: v.aw, when: new Date(v.last)};
+        return {a, b, n: v.n, aw: v.aw, when: new Date(v.last), matchId:v.mid};
       })
       .filter(r => pm[r.a] && pm[r.b] && !pm[r.a].hidden && !pm[r.b].hidden)
       .sort((a,b) => b.n - a.n)
@@ -1070,7 +1041,11 @@ function _buildStories(){
         })(),
         when: r.when,
         prio: STORY_PRIO.rivalry + (r.n >= 200 ? 4 : r.n >= 100 ? 2 : 0),
-        dataRef: {type:'rivalry', a: r.a, b: r.b, n: r.n}
+        // Der Stand gehoert genau der Partie, bis zu der er gezaehlt wurde.
+        // Ohne matchId wanderte dieselbe Zeile beim naechsten Duell von der
+        // alten Matchkarte zur neuen und aus 196 wurden dort 197 Duelle.
+        dataRef: {type:'rivalry', a: r.a, b: r.b, n: r.n,
+                  aWins:r.aw, bWins:r.n - r.aw, matchId:r.matchId}
       });
     });
   } catch(e){}

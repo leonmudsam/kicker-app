@@ -1503,7 +1503,7 @@ function _newsDetailMitte(s){
           const uhr = t.ms ? _newsUhrzeit(t.ms) : '';
           const stand = zeileStand(t);
           const zeit = [uhr, stand].filter(Boolean).join(' · ');
-          return `<div class="nw-zeile"${
+          return `<div class="nw-zeile${t.neg ? ' neg' : ''}"${
               (t.pids && t.pids[0]) ? ` data-pid="${esc(t.pids[0])}" style="cursor:pointer"` : ''}>
               <div class="nw-zeile-kopf">${t.ic
                 ? `<i class="nw-ic">${svgI(t.ic)}</i>` : ''}<span class="nw-label">${
