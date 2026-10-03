@@ -27,8 +27,6 @@ function invalidateCache(keys=null){
   if(!keys){
     // Kompletter Reset (z.B. nach Recalc)
     _cache={version:_cache.version};
-    _lastSimState=null;
-    _lastSimIndex=-1;
   } else if(Array.isArray(keys)){
     // Selektiv. Die abgeleiteten Caches (history/snap/rankSnap/matchesBySeason/
     // seasonRankings) sind alle version-gebunden — _cache.version++ oben reicht,
@@ -39,7 +37,7 @@ function invalidateCache(keys=null){
         delete _cache._playerAwards;  // playerAwards baut auf awardRankings auf
       }
       if(k==='stats') delete _cache._allStatsKey;
-      if(k==='global') { _lastSimState=null; _lastSimIndex=-1; }
+      if(k==='global') delete _cache._globalKey;
       if(k==='teams') delete _cache._teamDetail;
       if(k==='allTeamStats') delete _cache._allTeamStatsKey;
       if(k==='period'){ delete _cache._periodStatsKey; delete _cache._mperiod; } // v9.3: _mperiod-Dict nicht über Versionen anwachsen lassen
@@ -62,39 +60,15 @@ function invalidateCache(keys=null){
 
 
 
-// Speichert den letzten Sim-State + Index des letzten verarbeiteten Matches.
-// `_lastSimVersion` gehört dazu: nur wenn die Version dieselbe ist, darf der
-// Lauf inkrementell fortgesetzt werden. Sie stand dreihundert Zeilen weiter
-// unten und lebte allein vom Hoisting.
-let _lastSimState = null;
-let _lastSimIndex = -1;
-let _lastSimVersion = 0;
-
 function getGlobalSim(){
-  const key='global_'+matches.length+'_'+_cache.version;
-  if(_cache._globalKey===key) return _cache._globalSim;
-  
-  // Wenn nur neue Matches hinzugekommen sind: inkrementell weitermachen
-  if(_lastSimState && _lastSimIndex < matches.length && _cache.version === _lastSimVersion){
-    const newMatches = matches.slice(_lastSimIndex + 1);
-    if(newMatches.length > 0 && newMatches.length < 50){
-      // Inkrementell: nur neue Matches simulieren auf Basis des alten States
-      const sim = simulateElo(newMatches, {
-        initialState: _lastSimState,
-        initialCurSeason: _lastSimState.curSeason
-      });
-      _lastSimState = sim;
-      _lastSimIndex = matches.length - 1;
-      _merkeSim(sim);
-      return sim;
-    }
-  }
-  
-  // Fallback: komplette Neuberechnung (z.B. nach Recalc oder großem Update)
+  const key='global_'+matches.length+'_'+_cache.version+'_'+currentSeason().id;
+  if(_cache._globalKey===key && _cache._globalQuelle===matches
+     && _cache._globalSpieler===players && _cache._globalConfig===cfg) return _cache._globalSim;
+  // Ein normaler Match-Add invalidiert sowieso die Version. Der seltene
+  // inkrementelle Weg ohne Invalidierung hielt aber nur den neuesten
+  // History-Block und verlor Saison-/Team-Maps. Ein kompletter, gecachter
+  // DB-First-Lauf ist deshalb die einzige globale Quelle.
   const sim = simulateElo(matches);
-  _lastSimState = sim;
-  _lastSimIndex = matches.length - 1;
-  _lastSimVersion = _cache.version;
   _merkeSim(sim);
   return sim;
 }
@@ -102,7 +76,10 @@ function getGlobalSim(){
 // im selben Ablauf; eine Map, die nur in einem der beiden Zweige vergessen
 // wird, ist ein Fehler, den niemand sieht.
 function _merkeSim(sim){
-  _cache._globalKey = 'global_' + matches.length + '_' + _cache.version;
+  _cache._globalKey = 'global_' + matches.length + '_' + _cache.version + '_' + currentSeason().id;
+  _cache._globalQuelle = matches;
+  _cache._globalSpieler = players;
+  _cache._globalConfig = cfg;
   _cache._globalSim = sim;
   _cache._historyByMatchId = null;
   _cache._snapMap = null;
@@ -110,6 +87,60 @@ function _merkeSim(sim){
   _cache._matchesBySeason = null;
   _cache._rankSnapshots = null;
   _cache._streakSnap = null;
+  // Ein Monatswechsel kann den Sim ohne Versionswechsel erneuern. Ein
+  // alter abgeleiteter Key mit inzwischen leerem Wert ist dann kein Hit.
+  ['_historyByMatchIdKey','_historyByMatchIdSim','_snapMapKey',
+   '_seasonRankingsKey','_matchesBySeasonKey','_rankSnapshotsKey',
+   '_streakSnapKey'].forEach(k => { delete _cache[k]; });
+}
+
+// Historische Staende teilen dieselbe DB-First-Engine. Rekord-Kontext und
+// Saison-Peaks fragten denselben Prefix mit zwei frisch gebauten Arrays ab
+// und simulierten ihn deshalb zweimal. Die Anzahl der eingeschlossenen
+// Partien ist der kanonische Schluessel: zwischen zwei Partien ist jeder
+// Zeitschnitt derselbe Stand. Es entstehen keine neuen Formeln/Rundungen.
+// Die Simulationen sind nur lesbar; ein Aufrufer darf sie nicht veraendern.
+function _prefixSim(anzahl){
+  if(anzahl === matches.length) return getGlobalSim();
+  const key = anzahl + '_' + matches.length + '_' + _cache.version + '_' + currentSeason().id;
+  if(!_cache._prefixSim) _cache._prefixSim = {};
+  const hit = _cache._prefixSim[key];
+  if(hit && hit.quelle === matches && hit.spieler === players && hit.config === cfg) return hit.sim;
+  const sim = simulateElo(matches.slice(0, anzahl));
+  _cache._prefixSim[key] = {quelle:matches, spieler:players, config:cfg, sim};
+  _topfDeckel(_cache._prefixSim, 24);
+  return sim;
+}
+function getSimAt(bisMs){
+  const bis = _schnitt(bisMs);
+  if(!bis) return getGlobalSim();
+  // matches ist aus der DB aufsteigend sortiert. Die obere Grenze nimmt
+  // ALLE Partien am selben Zeitstempel mit, genau wie der bisherige Filter.
+  let lo = 0, hi = matches.length;
+  while(lo < hi){
+    const mitte = (lo + hi) >>> 1;
+    if(mts(matches[mitte]) <= bis) lo = mitte + 1;
+    else hi = mitte;
+  }
+  return _prefixSim(lo);
+}
+const _subsetSimMemo = new WeakMap();
+function getSimForMatches(quelle){
+  if(quelle === matches) return getGlobalSim();
+  const monat = currentSeason().id;
+  const hit = _subsetSimMemo.get(quelle);
+  if(hit && hit.version === _cache.version && hit.liga === matches
+     && hit.spieler === players && hit.config === cfg && hit.monat === monat) return hit.sim;
+  // Nur eine EXAKTE Anfangsfolge teilt den Prefix-Topf. Eine Saison, ein
+  // einzelner Spieler oder kopierte/edierte Match-Objekte sind eigene
+  // Daten. Ein Prefix, der mitten in gleichen Zeitstempeln endet, darf
+  // ebenfalls nicht ueber seinen letzten Index hinaus erweitert werden.
+  const prefix = quelle.length <= matches.length
+    && quelle.every((m, i) => m === matches[i]);
+  const sim = prefix ? _prefixSim(quelle.length) : simulateElo(quelle);
+  _subsetSimMemo.set(quelle, {version:_cache.version, liga:matches,
+    spieler:players, config:cfg, monat, sim});
+  return sim;
 }
 
 // ─── §2.2 Abgeleitete Sim-Maps (snapMap, historyByMatchId) ───────────
@@ -391,9 +422,22 @@ function getSeasonPlayerStats(seasonId){
 // ─── §2.5 Matches-pro-Saison Cache ───────────────────────────────────
 // Gruppiert alle Matches nach ihrer Saison-ID. Wird vom Award-Sammler-Badge
 // und potentiell weiteren Saison-aggregierenden Funktionen genutzt.
-function getMatchesBySeason(){
+const _matchesBySeasonMemo = new WeakMap();
+function getMatchesBySeason(matchSubset){
+  const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
+  if(quelle !== matches){
+    const hit = _matchesBySeasonMemo.get(quelle);
+    if(hit && hit.version === _cache.version && hit.liga === matches) return hit.wert;
+    const map={};
+    for(const m of quelle){
+      const sid=seasonOf(m.created_at).id;
+      (map[sid] || (map[sid]=[])).push(m);
+    }
+    _matchesBySeasonMemo.set(quelle, {version:_cache.version, liga:matches, wert:map});
+    return map;
+  }
   const key='msBySeason_'+matches.length+'_'+_cache.version;
-  if(_cache._matchesBySeasonKey===key) return _cache._matchesBySeason;
+  if(_cache._matchesBySeasonKey===key && _cache._matchesBySeasonQuelle===matches) return _cache._matchesBySeason;
   const map={};
   for(let i=0; i<matches.length; i++){
     const sid=seasonOf(matches[i].created_at).id;
@@ -401,6 +445,7 @@ function getMatchesBySeason(){
     map[sid].push(matches[i]);
   }
   _cache._matchesBySeasonKey=key;
+  _cache._matchesBySeasonQuelle=matches;
   _cache._matchesBySeason=map;
   return map;
 }

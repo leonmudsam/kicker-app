@@ -79,3 +79,77 @@ vor der jeweiligen Änderung nachweislich rot ausgeführt.
 Ohne Chromium wird die Browser-Suite sichtbar übersprungen. Das Messtool
 benötigt denselben vorhandenen Testbrowser. JSON-Messergebnisse in `dist/`
 sind lokale, nicht eingecheckte Artefakte.
+
+## Zweite Runde: Handy-CPU und gemeinsame Rechenquellen
+
+Vergleich dieser Runde: `2aa54b0`. Gleicher Chromium 151, 390 × 844 px,
+466 Partien und zwölf Spieler, diesmal mit vierfach gedrosselter CPU.
+Die Vergleichsfassung wurde über `KICKER_HTML=index.html` gemessen, bevor das
+neue Build in die Wurzel kopiert wurde. Vorher und nachher mit `--profil`.
+Die Drosselung simuliert keine konkrete Handy-Hardware oder Safari.
+
+Neu:
+
+- Historische Rekord-Kontexte und Saison-Peaks teilen exakte DB-First-Prefixe.
+  Im gesamten Messablauf sinkt die Zahl der Simulationen von 54 auf 38.
+  Saison-Auszeichnungen teilen außerdem ihre Monatsteilmengen, damit die
+  gemeinsamen Periodensieger nicht je Spieler neu gerechnet werden.
+- Der globale Cache hält eine vollständige History und alle Saison-/Team-Maps.
+  Ein Add ohne Versionswechsel verlor früher alte Maps im inkrementellen Weg.
+  Monatswechsel und Quellenersatz können keine leeren abgeleiteten Cache-Hits
+  hinterlassen. Historische Prefixe sind begrenzt, fremde Teilmengen WeakMaps.
+- Der aktuelle Monat ist ein einzelnes Memo mit Kalenderprüfung, kein pro
+  Lookup neu aufgebautes Objekt. Periodenstatistiken folgen der kanonischen
+  Zeitraumliste, einschließlich Tages-/Wochenwechsel und Saisonreset.
+- Spielerprofile verwenden gemeinsame chronologische Listen, binden nur ihre
+  eigenen Knöpfe und zeichnen ihre unteren Abschnitte bedarfsweise. Der Kopf
+  mit Aura und Wappen bleibt vollständig. Überhänge und horizontale Galerien
+  bleiben erhalten; ältere Browser behalten das vollständige Layout.
+- Blattnavigation und Wischabschlüsse sind an ihre Öffnungsnummer gebunden.
+  Ein alter Abschluss verändert kein später geöffnetes Blatt. Der Scrollreset
+  erfolgt vor dem neuen Markup, nicht zwischen zwei neuen Layout-Zuständen.
+- H2H-Listen werden auch bei Edit, Ausblenden und Löschen aktuell. Null als
+  gespeicherte Erwartung, abgeschalteter Spielbonus oder Verlustaufschlag
+  wird nicht mehr durch einen Standard ersetzt. Bestehende DB-Deltas werden
+  nicht neu berechnet oder überschrieben.
+- Prestige-Teilsummen verwenden zentral die vorhandene Restverteilung:
+  Auszeichnungen + Monatschroniken + Rekorde ergeben exakt den Gesamtwert,
+  in Story und Laufbahn gleich. Rohwerte und Gesamtformel bleiben unverändert.
+
+| Profilaufruf, JS + erstes Layout | Vorher | Nachher |
+|---|--:|--:|
+| kalt, Median | 350,8 ms | 310,7 ms |
+| wiederholt, Median | 64,5 ms | 36,0 ms |
+
+Eine Änderung des Scrollreset allein verschob Layout-Arbeit nur aus der
+JavaScript-Messung in das nächste Bild. Das wurde nicht als Gewinn gewertet;
+obige Zeiten schließen das erste Layout ein. Kopf und Saison-Galerie wurden
+auch visuell bei 390 px geprüft, jeder Abschnitt wird im Test hineingescrollt.
+
+### Grenzen der Messung
+
+Der kalte synchrone Story-Generator bleibt aufwendig: im Interaktionslauf
+1355,5 → 1177,8 ms; längster Task 1373 → 1196 ms. Das ist weniger Arbeit,
+aber **keine Lagfreiheit**. Kalte Liga-/Positionenaufrufe brauchen weiter
+mehrere hundert Millisekunden. Bei News-Öffnen ist kein verlässlicher weiterer
+Zeitgewinn nachgewiesen (längster Task 231 → 246 ms in diesen Läufen).
+Netzwerk, echte Touch-Scrollbilder, Schriftladen, Safari und physische Telefone
+sind damit nicht abgedeckt. Keine Garantie von durchgehend 60 Bildern/s.
+
+Das Messtool erfasst jetzt Bildabstände und Longtasks. Zeitwerte bleiben
+diagnostisch statt CI-Grenze. Profilzähler enthalten aufgerufene Unterfunktionen
+und dürfen nicht zu einer vermeintlichen Gesamtzeit addiert werden.
+
+```powershell
+node tools/performance.cjs --cpu=4 --mobil --profil --ausgabe=dist/mobil.json
+node tests/mobil.test.js
+node tests/prefix.test.js
+node tests/rechnen.test.js
+```
+
+Die neuen Suiten prüfen 21 UI-, 76 Prefix- und 36 Recheninvarianten am gebauten
+Ergebnis. `prefix` und `rechnen` laufen auch in CI ohne Chromium. Neue Fehler
+wurden gegen die Vergleichsfassung zunächst rot nachgewiesen; geprüft werden
+auch Bruchteile, gleiche Zeitstempel, Kalendergrenzen und direkte Quellenwechsel.
+`mobil` prüft tatsächliches Verhalten und Arbeitsmenge, keine empfindlichen
+Millisekundenlimits.

@@ -199,7 +199,7 @@ function _chronicleCtx(bisMs){
 
   const ms = (bisMs ? matches.filter(m => mts(m) <= bisMs) : matches.slice())
     .sort((a,b)=>mts(a)-mts(b));
-  const gSim = bisMs ? simulateElo(ms) : getGlobalSim();
+  const gSim = bisMs ? getSimAt(bisMs) : getGlobalSim();
   const pm = pmap();
   const P = {};
   const run = {}, runL = {};              // laufende Sieg-/Niederlagenserie

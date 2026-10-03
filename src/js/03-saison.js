@@ -32,8 +32,16 @@ function seasonOf(date){
   }
   return res;
 }
+let _currentSeasonMemo = null;
 function currentSeason(){
-  return seasonOf(new Date());
+  // Zehntausende warme Cache-Lookups lesen denselben Monat. Die Ortszeit
+  // wird weiter bei jedem Aufruf geprüft, aber Ergebnis und Label-Getter
+  // müssen nur bei einem echten Monatswechsel neu entstehen. Ein Eintrag,
+  // kein Timer und keine zweite Regel für den Saisonwechsel.
+  const d = new Date();
+  if(_currentSeasonMemo && _currentSeasonMemo.year === d.getFullYear()
+     && _currentSeasonMemo.month === d.getMonth()) return _currentSeasonMemo;
+  return (_currentSeasonMemo = seasonOf(d));
 }
 // Die Saison, die der LIGA-TAB gerade zeigt. Überall sonst gilt weiter
 // currentSeason() — Awards, News und Ambient sollen nicht mitwandern, nur

@@ -303,7 +303,9 @@ function simulateEloWithSliders(matchSubset, opts={}){
     const rawBase=k*((won?1:0)-exp); bd.rawBase=rawBase;
 
     // MoV
-    const mov=won?rawMov:(1+(rawMov-1)*(cfg.mov_loss_damp||0.5));
+    // Null ist ein gültiger Sliderwert: dann gibt es keinen MoV-Aufschlag
+    // bei Niederlagen. Nur eine fehlende Einstellung nutzt den Standard.
+    const mov=won?rawMov:(1+(rawMov-1)*(cfg.mov_loss_damp ?? 0.5));
     bd.movMult=mov; bd.movEffect=rawBase*mov-rawBase;
 
     // Win-Boost
@@ -365,7 +367,8 @@ function simulateEloWithSliders(matchSubset, opts={}){
     bd.posStrength=a; bd.posMult=posMult; bd.posEffect=afterMods*share*posMult-afterMods*share;
 
     // Match-Bonus
-    const mb=cfg.match_bonus||1.5;
+    // Der Spielbonus lässt sich abschalten; `||` aktivierte bei 0 wieder 1,5.
+    const mb=cfg.match_bonus ?? 1.5;
     bd.matchBonus=mb;
 
     // Finale Delta (NICHT GERUNDET)
@@ -501,14 +504,21 @@ function matchBreakdown(matchId){
 // Stand, sondern der Stand am Saisonende — sonst zeigte die Tabelle vom
 // Juni die Werte von heute.
 function periodPlayerStats(period, seasonId){
-  const sid=period==='season'?(seasonId||currentSeason().id):'';
-  const key='periodStats_'+period+'_'+sid+'_'+matches.length+'_'+_cache.version;
-  if(_cache._periodStatsKey===key) return _cache._periodStatsData;
+  const monat=currentSeason().id;
+  const sid=period==='season'?(seasonId||monat):'';
+  // Auch die absolute Elo neben einer unveränderten Allzeit-Bilanz folgt
+  // dem Saisonreset. Deren Quellenliste allein ändert sich dabei nicht.
+  const key='periodStats_'+period+'_'+sid+'_'+monat+'_'+matches.length+'_'+_cache.version;
+  // Die kanonische Periodenliste kennt Tages-/Wochenwechsel. Ihre Identität
+  // gehört zum Hit, sonst bleibt die Statistik ohne neue Partie im alten
+  // Zeitraum stehen. Kein zweiter Kalenderfilter mit leicht anderen Grenzen.
+  const quelle=matchesInPeriod(period, sid);
+  if(_cache._periodStatsKey===key && _cache._periodStatsQuelle===quelle) return _cache._periodStatsData;
   // EINE Wahrheit: alle Werte aus globalSim ableiten. Vorher gab es einen separaten
   // Sim für die Periode mit LEEREM Positions-Tracker → andere posBonus-Multiplikatoren
   // → andere Deltas → Anzeige "+X -Y" passte nicht zu "Elo" und Wochen-Werte
   // wichen vom Saison-Tab ab.
-  const ms=[...matchesInPeriod(period, sid)].sort((a,b)=>mts(a)-mts(b));
+  const ms=[...quelle].sort((a,b)=>mts(a)-mts(b));
   // Gecachter History-Lookup (Map) statt ad-hoc Object-Aufbau pro Aufruf
   const histById=getHistoryByMatchId();
   // Akkumulatoren initialisieren (nur für Spieler die in der Periode gespielt haben)
@@ -562,6 +572,7 @@ function periodPlayerStats(period, seasonId){
     };
   });
   _cache._periodStatsKey=key;
+  _cache._periodStatsQuelle=quelle;
   _cache._periodStatsData=result;
   return result;
 }

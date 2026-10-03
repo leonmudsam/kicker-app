@@ -52,6 +52,7 @@ function _animateSheetSwap(swapFn){
   const bg = document.getElementById('sheetBg');
   // Kein sichtbares Sheet oder schon eine Animation aktiv → sofort tauschen.
   if(!sheet || !bg || !bg.classList.contains('show') || _sheetAnimating){ swapFn(); return; }
+  const auf = sheet._auf;
   _sheetAnimating = true;
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
   sheet.classList.remove('is-dragging');
@@ -59,18 +60,25 @@ function _animateSheetSwap(swapFn){
   sheet.style.transition = 'transform .2s cubic-bezier(.4,0,1,1)';
   sheet.style.transform = 'translateY(100%)';
   _afterTransition(sheet, 'transform', 200, () => {
+    // Ein direkt geöffnetes oder geschlossenes Blatt gehört nicht mehr zu
+    // diesem Übergang. Auch das nächste Bild muss den Besitzer nachsehen.
+    if(sheet._auf !== auf) return;
     // 2) Der geparkte Zustand wird ZUERST gezeichnet, dann getauscht. Ohne
     //    das eigene Bild liegt der Block des Umbaus noch im Bild, in dem das
     //    Sheet unten ankommt, und der Sprung nach unten ruckelt am Ende.
     sheet.style.transition = 'none';
     requestAnimationFrame(() => {
+      if(sheet._auf !== auf) return;
       try { swapFn(); } catch(e){}
+      const neuAuf = sheet._auf;
+      _sheetAnimating = true;
       sheet.style.transform = 'translateY(100%)';
       void sheet.offsetWidth; // Reflow, damit die Aufwärts-Transition greift
       // 3) hochschieben (öffnen)
       sheet.style.transition = 'transform .3s cubic-bezier(.2,.8,.2,1)';
       sheet.style.transform = 'translateY(0)';
       _afterTransition(sheet, 'transform', 300, () => {
+        if(sheet._auf !== neuAuf) return;
         sheet.style.transition=''; sheet.style.transform=''; _sheetAnimating=false;
       });
     });
@@ -159,6 +167,12 @@ function openSheet(html, opts){
   // closeSheet dazwischen), zuerst dessen Swipe-Listener aufräumen — sonst
   // stapeln sich window-mousemove/mouseup-Listener und lecken.
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
+  // Zurücksetzen, solange der bisherige Inhalt noch gültig gezeichnet ist.
+  // Nach innerHTML erzwingt selbst scrollTop=0 das komplette neue Layout,
+  // bevor das Blatt überhaupt sichtbar ist. Das neue Blatt übernimmt null;
+  // beim Zurückgehen setzt closeSheet anschließend ausdrücklich den alten
+  // Stand. Keine spätere Aufgabe darf einen vom Nutzer gesetzten Stand nullen.
+  sheet.scrollTop = 0;
   // Griff und Schließen stehen in einer Leiste, die beim Scrollen oben
   // bleibt. Geschlossen wurde bisher nur durch Wischen, einen Tipp neben
   // das Blatt oder einen Knopf, den jedes Blatt selbst baute oder nicht —
@@ -167,13 +181,12 @@ function openSheet(html, opts){
   // wird — das Leeren, das Zuziehen per Wisch —, prüft sie und lässt ein
   // Blatt in Ruhe, das inzwischen neu aufgegangen ist.
   sheet._auf = (sheet._auf || 0) + 1;
+  _sheetAnimating = false;
+  sheet.style.transition=''; sheet.style.transform='';
+  bg.style.transition=''; bg.style.opacity='';
   sheet.innerHTML=`<div class="sheet-leiste"><div class="sheet-grab" id="sheetGrab"></div>`
     + `<button type="button" class="sheet-zu" id="sheetZu" aria-label="Schließen">${svgI('x')}</button></div>${html}`;
   document.getElementById('sheetZu').onclick = () => closeSheet(true);
-  // Scroll-Position zurücksetzen — sonst landet man im neuen Sheet dort, wo
-  // im vorigen Sheet (oder bei vorigem Öffnen desselben Sheets) gescrollt war.
-  // Muss nach innerHTML kommen, damit das Layout schon steht.
-  sheet.scrollTop = 0;
   schlittenFahren(sheet);
   bg.classList.add('show');
   sheet.classList.add('show');
@@ -217,6 +230,10 @@ function closeSheet(force){
 }
 function _sheetForceClose(sheet,bg){
   _sheetStack.length = 0; _sheetReopen = null;
+  // Schließen entzieht auch noch wartenden Navigations-/Wischabschlüssen
+  // den Besitz. Sie dürfen das zugeschobene Blatt nicht wieder öffnen.
+  sheet._auf = (sheet._auf || 0) + 1;
+  _sheetAnimating = false;
   // Swipe-Listener aufräumen
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
   const warOffen = sheet.classList.contains('show');
@@ -397,7 +414,8 @@ function bindSheetSwipe(){
       // Zwischenzeit ein neues Blatt aufgegangen, gehört es nicht dazu.
       const auf = sheet._auf;
       _afterTransition(sheet,'transform',280,()=>{
-        if(sheet._auf === auf) closeSheet();
+        if(sheet._auf !== auf) return;
+        closeSheet();
         sheet.style.transition='';
         bg.style.transition='';
       });
@@ -406,7 +424,9 @@ function bindSheetSwipe(){
       sheet.style.transform='translateY(0)';
       bg.style.transition='opacity .32s';
       bg.style.opacity='1';
+      const auf = sheet._auf;
       _afterTransition(sheet,'transform',320,()=>{
+        if(sheet._auf !== auf) return;
         sheet.style.transition='';
         bg.style.transition='';
       });
