@@ -343,12 +343,13 @@ function rarityOf(badgeId){ return BADGE_RARITY[badgeId] || 'common'; }
 const _seasonPeakSubsetMemo = new WeakMap();
 function seasonPeakElos(matchSubset){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
-  if(quelle !== matches && _seasonPeakSubsetMemo.has(quelle)) return _seasonPeakSubsetMemo.get(quelle);
+  const hit = quelle !== matches ? _seasonPeakSubsetMemo.get(quelle) : null;
+  if(hit && hit.version === _cache.version && hit.liga === matches) return hit.wert;
   const key='speak_'+matches.length+'_'+_cache.version;
   if(quelle === matches && _cache._seasonPeakKey===key) return _cache._seasonPeak;
   const hist = quelle === matches
     ? getHistoryByMatchId()
-    : new Map((simulateElo(quelle).history || []).map(h => [h.matchId, h]));
+    : new Map((getSimForMatches(quelle).history || []).map(h => [h.matchId, h]));
   const out={};
   quelle.forEach(m=>{
     const h=hist.get(m.id);
@@ -364,7 +365,7 @@ function seasonPeakElos(matchSubset){
     });
   });
   if(quelle === matches){ _cache._seasonPeakKey=key; _cache._seasonPeak=out; }
-  else _seasonPeakSubsetMemo.set(quelle, out);
+  else _seasonPeakSubsetMemo.set(quelle, {version:_cache.version, liga:matches, wert:out});
   return out;
 }
 
@@ -529,7 +530,7 @@ function won(id,m){const onA=(id===m.a1||id===m.a2);return (onA&&m.winner==='A')
 function goalsFor(id,m){return (id===m.a1||id===m.a2)?m.score_a:m.score_b;}
 function goalsAgainst(id,m){return (id===m.a1||id===m.a2)?m.score_b:m.score_a;}
 function shutout(id,m,myG,theirG){return goalsFor(id,m)===myG&&goalsAgainst(id,m)===theirG;}
-function myExp(id,m){const onA=(id===m.a1||id===m.a2);return onA?(m.exp_a||0.5):(1-(m.exp_a||0.5));}
+function myExp(id,m){const onA=(id===m.a1||id===m.a2);return onA?(m.exp_a??0.5):(1-(m.exp_a??0.5));}
 // Die Partien eines Spielers, in ihrer Reihenfolge. Zwanzig Zähler bauten
 // dieselbe Liste jedes Mal neu: ein Filter über ALLE Partien der Liga und ein
 // Sort obendrauf, je Zähler und je Spieler. Gemessen war das der größte Posten
@@ -820,11 +821,9 @@ function countOvertake(id,ms){
 // Pro qualifizierter Saison vergeben (mehrfach über Karriere).
 function countAwardCollector(id, matchSubset){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
-  const bySeason = quelle === matches ? getMatchesBySeason() : {};
-  if(quelle !== matches) quelle.forEach(m => {
-      const sid=(seasonOf(m.created_at)||{}).id;
-      if(sid) (bySeason[sid] || (bySeason[sid]=[])).push(m);
-    });
+  // Stabile Saison-Arrays fuer alle Spieler: die Perioden-Sieger haengen
+  // per WeakMap an deren Identitaet und brauchen je Monat nur einen Lauf.
+  const bySeason = getMatchesBySeason(quelle);
   let count=0;
   Object.values(bySeason).forEach(seasonMs=>{
     const potd=countDayWins(id,seasonMs);
@@ -1094,11 +1093,7 @@ function countCloseLossStreaks(id,ms,n){
 // sobald 3 erreicht → Saison qualifiziert, count++.
 function countMrDisaster(id, matchSubset){
   const quelle = Array.isArray(matchSubset) ? matchSubset : matches;
-  const bySeason = quelle === matches ? getMatchesBySeason() : {};
-  if(quelle !== matches) quelle.forEach(m => {
-      const sid=(seasonOf(m.created_at)||{}).id;
-      if(sid) (bySeason[sid] || (bySeason[sid]=[])).push(m);
-    });
+  const bySeason = getMatchesBySeason(quelle);
   let count = 0;
   Object.values(bySeason).forEach(seasonMs => {
     let disasters = 0;
@@ -1284,7 +1279,7 @@ function getBadgeEarnedCache(){
       const gf=onA?m.score_a:m.score_b;
       const ga=onA?m.score_b:m.score_a;
       const pos=id===m.a1?m.a1_pos:id===m.a2?m.a2_pos:id===m.b1?m.b1_pos:m.b2_pos;
-      const myExp=onA?(m.exp_a||0.5):(1-(m.exp_a||0.5));
+      const siegChance=myExp(id,m);
 
       // Werte VOR diesem Match sichern (für Schwellen-Checks)
       const pg=s.games, pw=s.wins, pAtkW=s.atkW, pDefW=s.defW, pAtkG=s.atkG, pDefG=s.defG;
@@ -1351,7 +1346,7 @@ function getBadgeEarnedCache(){
       if(w  && gf===10 && ga===9)                   fire('nail_biter');
       if(!w && gf===9  && ga===10)                  fire('bitter_loss');
       if(w  && pos==='def' && ga<=2)                fire('wall_badge');
-      if(w  && myExp<CHANCE_UPSET)                          fire('upset_king');
+      if(w  && siegChance<CHANCE_UPSET)                      fire('upset_king');
 
       // ── Mr. Perfect: 3× 10:0-Sieg in DERSELBEN Saison ──
       // Saison-IDs per seasonOf() bestimmen (sid-Format YYYY-MM). Counter pro

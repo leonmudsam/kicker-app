@@ -72,9 +72,12 @@ function showPlayer(id){
     : '';
   // Letzte 15 Spiele (chronologisch alt→neu) für die "Aktuelle Serie"-Card.
   // Ergänzt den bisherigen "letzte 5"-Form-Trail oben, der in der Header-Sektion bleibt.
-  const _last15 = matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
-    .sort((a,b)=>mts(b)-mts(a))
-    .slice(0,15).reverse();
+  // Der Badge-/Statistik-Kontext hält diese chronologische Sicht bereits.
+  // Nicht für 15 Punkte, fünf Punkte und das Peak-Datum die ganze Liga
+  // dreimal filtern und sortieren. Die gemeinsamen Arrays bleiben lesbar.
+  const playerMs = matchesOfPlayer(id, matches);
+  const seasonMs = matchesOfPlayer(id, matchesInSeason());
+  const _last15 = playerMs.slice(-15);
   const last15DotsHtml = _last15.map(m=>{
     const onA=(id===m.a1||id===m.a2);
     const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
@@ -82,8 +85,7 @@ function showPlayer(id){
   }).join('');
 
   // Form: letzte 5 Matches
-  const formMs=matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
-    .sort((a,b)=>mts(b)-mts(a)).slice(0,5).reverse();
+  const formMs=_last15.slice(-5);
   const formHtml=formMs.map(m=>{const onA=(id===m.a1||id===m.a2);
     const w=(onA&&m.winner==='A')||(!onA&&m.winner==='B');
     return `<div class="pd ${w?'w':'l'}"></div>`;}).join('');
@@ -91,8 +93,6 @@ function showPlayer(id){
   // Elo-Sparkline für die aktuelle Saison (zeigt Saison-Verlauf)
   let sparkHtml='';
   {
-    const seasonMs=matchesInSeason().filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
-      .sort((a,b)=>mts(a)-mts(b));
     if(seasonMs.length>=2){
       // FIX: Spark-Trace aus der echten Sim-History bauen, NICHT aus m.deltas (DB).
       // m.deltas kann durch Algo-Tweaks vs. live-Sim divergieren → Anzeige zeigt 222 Elo,
@@ -167,9 +167,7 @@ function showPlayer(id){
   {
     const histByMatch = getHistoryByMatchId();
     // Peak Saison: über alle Saison-Matches des Spielers in chronologischer Reihenfolge
-    const seasonMsForPeak = matchesInSeason()
-      .filter(m=>[m.a1,m.a2,m.b1,m.b2].includes(id))
-      .sort((a,b)=>mts(a)-mts(b));
+    const seasonMsForPeak = seasonMs;
     if(seasonMsForPeak.length){
       let v = cfg.start_elo, mx = v;
       for(const m of seasonMsForPeak){
@@ -187,8 +185,7 @@ function showPlayer(id){
       // Saison-Label des Peak-Matches finden (höchster eloAfter[id] über alle Matches).
       // Einmaliger O(n)-Scan beim Öffnen des Profils — getHistoryByMatchId ist gecached.
       let bestMatch = null, bestVal = -Infinity;
-      for(const m of matches){
-        if(![m.a1,m.a2,m.b1,m.b2].includes(id)) continue;
+      for(const m of playerMs){
         const h = histByMatch.get(m.id);
         if(!h || !h.eloAfter || h.eloAfter[id] === undefined) continue;
         if(h.eloAfter[id] > bestVal){
@@ -377,7 +374,7 @@ const rankProgHtml = rInfo ? `
   const _stufe = 'st-' + prestigeOf(id).insignie.key;
 
   openSheet(`
-   <div class="pp-root ${_stufe}" style="--ak:${_ton.c};--ak-rgb:${_ton.rgb}">
+   <div class="pp-root pp-player ${_stufe}" style="--ak:${_ton.c};--ak-rgb:${_ton.rgb}">
     <header class="pp-header ${tierClass}">
       <button class="pp-edit-btn" id="ppEditBtn" title="Profil bearbeiten">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -780,11 +777,12 @@ const rankProgHtml = rInfo ? `
   if(tp) tp.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   const tt=document.getElementById('ppTrTeam');
   if(tt) tt.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
-  document.querySelectorAll('.pp-trophies .pp-tr').forEach(el=>{
+  const profil = document.getElementById('sheet');
+  profil.querySelectorAll('.pp-trophies .pp-tr').forEach(el=>{
     el.onclick=()=>{ sheetNav(()=>showPlayerSeasons(id)); };
   });
   // Mate-Karten öffnen das Team-Profil (Spieler + Mate)
-  document.querySelectorAll('[data-team]').forEach(el=>{
+  profil.querySelectorAll('[data-team]').forEach(el=>{
     el.onclick=()=>{
       const [a,b]=el.dataset.team.split('|');
       if(!a||!b) return;
@@ -792,7 +790,7 @@ const rankProgHtml = rInfo ? `
     };
   });
   // Bilanzen-Zeilen öffnen das H2H-Sheet (Reihenfolge bewahren — Profil-Spieler zuerst)
-  document.querySelectorAll('[data-h2h]').forEach(el=>{
+  profil.querySelectorAll('[data-h2h]').forEach(el=>{
     el.onclick=()=>{
       const [a,b]=el.dataset.h2h.split('|');
       if(!a||!b) return;
@@ -800,7 +798,7 @@ const rankProgHtml = rInfo ? `
     };
   });
   // Lieblings-/Angstgegner-Karten öffnen das Gegner-Profil
-  document.querySelectorAll('.pp-r-rich[data-detail]').forEach(el=>{
+  profil.querySelectorAll('.pp-r-rich[data-detail]').forEach(el=>{
     el.onclick=()=>{
       const oid=el.dataset.detail;
       if(!oid) return;

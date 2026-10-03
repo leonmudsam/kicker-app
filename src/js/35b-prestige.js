@@ -421,9 +421,13 @@ function prestigeTabelle(bisMs){
     const quellen = az.concat(mo, re);
 
     const punkte = Math.round(pb + pm + pr);
+    // Dieselbe Restverteilung wie im Laufbahnblatt. Drei unabhängig
+    // gerundete Summen konnten zusammen einen Punkt mehr als der Kopf
+    // ergeben. Die Rohquellen und die Gesamtformel bleiben unverändert.
+    const teile = _prestigeRunden([pb, pm, pr], punkte, 1);
     out[p.id] = {
       pid:p.id, punkte,
-      teile:{auszeichnung:Math.round(pb), monat:Math.round(pm), rekord:Math.round(pr)},
+      teile:{auszeichnung:teile[0], monat:teile[1], rekord:teile[2]},
       zahlen:{auszeichnung:az.length, monat:mo.length, rekord:re.length},
       gesamt,
       quellen: quellen.sort((a,b) => b.p - a.p)
@@ -1380,7 +1384,7 @@ function showLaufbahn(pid){
   // Erst die drei Gruppensummen auf die Gesamtzahl abstimmen, dann in jeder
   // Gruppe die Posten auf ihre Gruppensumme. So passt jede Zeile zu der
   // Zahl über ihr und alles zusammen zur Zahl darunter.
-  const summen = _prestigeRunden(posten.map(qs => qs.reduce((a, q) => a + q.p, 0)), P.punkte, 1);
+  const summen = gruppen.map(g => P.teile[g.q]);
   const werte  = posten.map((qs, i) => _prestigeRunden(qs.map(q => q.p), summen[i], 0.1));
 
   // Zahlen mit einer Nachkommastelle, aber ohne die überflüssige Null:

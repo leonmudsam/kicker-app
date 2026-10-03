@@ -148,6 +148,15 @@
   .pp-form .pd.l{background:var(--red);box-shadow:0 0 9px rgba(240,86,106,.4)}
 
   .pp-sec{margin-top:18px;animation:ppFadeUp .45s cubic-bezier(.2,.7,.2,1) both}
+  /* Das lange Profil wurde beim Öffnen vollständig gezeichnet, auch weit
+     unter dem Bildschirmrand. Nur seine Abschnitte dürfen Layout auslassen;
+     Wappen/Aura im Kopf und andere Blätter bleiben unberührt. Überhänge der
+     Galerie und Schatten brauchen Platz außerhalb der Box. Ohne beide
+     Fähigkeiten bleibt der bewährte vollständige Layout-Weg erhalten. */
+  @supports (content-visibility:auto) and (overflow-clip-margin:20px){
+    #sheet .pp-player>.pp-sec{content-visibility:auto;
+      contain-intrinsic-size:auto 210px;overflow-clip-margin:20px}
+  }
   .pp-sec-title{display:flex;align-items:center;justify-content:space-between;
     margin-bottom:11px;padding:0 4px}
   .pp-sec-title .l{display:flex;align-items:center;gap:8px}

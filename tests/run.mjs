@@ -54,7 +54,7 @@ for(const f of suiten){
   }
   if(!ok && !uebersprungen){
     // Bei Rot die Fehlerzeilen zeigen, nicht die ganze Ausgabe.
-    const raus = (r.stdout || '').split('\n').filter(l => /✗|FEHLGESCHLAGEN|ABBRUCH/.test(l));
+    const raus = (r.stdout || '').split('\n').filter(l => /✗|FAIL|FEHLGESCHLAGEN|ABBRUCH/.test(l));
     (raus.length ? raus : [(r.stderr || '').trim().split('\n').slice(0, 12).join('\n')])
       .forEach(l => zeilen.push('      ' + l));
   }

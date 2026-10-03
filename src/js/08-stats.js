@@ -121,7 +121,7 @@ function teamDetail(p1,p2){
     const myGf=onA?m.score_a:m.score_b;
     const myGa=onA?m.score_b:m.score_a;
     const diff=myGf-myGa;
-    const expected=onA?(m.exp_a||0.5):(1-(m.exp_a||0.5));
+    const expected=myExp(ids[0],m);
     const t=mts(m);
 
     // Position von ids[0] in diesem Match bestimmen
@@ -402,7 +402,10 @@ function h2hDetail(idA, idB){
 // Sortiert nach Gesamt-Häufigkeit, gefiltert ≥ min Spiele.
 function playerH2HList(id, minTotal=3){
   if(!_cache._h2hList) _cache._h2hList = {};
-  const ckey = id+'|'+minTotal;
+  // Auch Edit, Löschen und ausgeblendete Spieler verändern diese Liste,
+  // ohne zwingend ihre Matchanzahl zu ändern. Die Version gehört deshalb
+  // wie beim Einzelduell in den Schlüssel; sonst blieb sie dauerhaft alt.
+  const ckey = id+'|'+minTotal+'_'+matches.length+'_'+_cache.version;
   if(_cache._h2hList[ckey]) return _cache._h2hList[ckey];
 
   const stats = {}; // otherId → {teamG, teamW, oppG, oppW}
@@ -435,6 +438,9 @@ function playerH2HList(id, minTotal=3){
     .map(([oid, s]) => ({oid, ...s, total: s.teamG + s.oppG}))
     .sort((a,b)=> b.total - a.total);
   _cache._h2hList[ckey] = out;
+  // Alte Versionsstände dürfen sich auf einem lange geöffneten Handy
+  // nicht unbegrenzt sammeln. Erst nach dem Einfügen deckeln: maximal 80.
+  _topfDeckel(_cache._h2hList, 80);
   return out;
 }
 

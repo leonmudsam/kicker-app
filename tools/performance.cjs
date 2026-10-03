@@ -1,5 +1,5 @@
 // Reproduzierbare lokale Messung mit den echten Liga-Fixtures, ohne Backend.
-// node tools/performance.cjs [--ausgabe=<Pfad.json>] [--profil]
+// node tools/performance.cjs [--ausgabe=<Pfad.json>] [--profil] [--cpu=4] [--mobil]
 // Gemessen wird synchrones JavaScript samt erstem Layout, kein Netzwerk.
 const fs=require('node:fs');
 const path=require('node:path');
@@ -52,7 +52,8 @@ const cases=[
   ['News',`_cache._stories=_buildStories();_cache._consolFrom=null;_cache._frischVon=null;`,'openNewsFeed()']
 ];
 const median=values=>values.sort((a,b)=>a-b)[Math.floor(values.length/2)];
-async function createHarness(){
+async function createHarness({cpu=1}={}){
+  if(!Number.isFinite(cpu) || cpu<1 || cpu>20) throw new Error('CPU-Faktor muss zwischen 1 und 20 liegen.');
   const browser=await chromium.launch();
   try{
     const page=await browser.newPage({viewport:{width:390,height:844}});
@@ -61,17 +62,22 @@ async function createHarness(){
     await page.addScriptTag({content:boot});await page.addScriptTag({content:code});
     const K=s=>page.evaluate(s=>window.__perfEval(s),s);
     await K(setup);
+    if(cpu!==1){
+      const cdp=await page.context().newCDPSession(page);
+      await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpu});
+    }
     return {browser,page,K,errors};
   }catch(e){await browser.close();throw e;}
 }
 module.exports={createHarness};
 if(require.main===module) (async()=>{
-  const {browser,page,K,errors}=await createHarness();
+  const cpu=Number((process.argv.find(a=>a.startsWith('--cpu='))||'--cpu=1').slice(6));
+  const {browser,page,K,errors}=await createHarness({cpu});
   try{
     const profiling=process.argv.includes('--profil');
     if(profiling) await K(`(() => {
       window.__perfZaehler={};
-      const names=['playerStats','getGlobalSim','getBadgeEarnedCache','prestigeTabelle','allChronicles','_chronicleCtx','_seasonTitleCtx','seasonTitles','getAllPlayerRanks','_spWappen','_newsCardHtmlM2','_newsFaeden','getCachedAwardRankings','_buildStories','getStoriesCache'];
+      const names=['playerStats','simulateElo','getGlobalSim','seasonPeakElos','_periodWinnerMap','getBadgeEarnedCache','prestigeTabelle','allChronicles','_chronicleCtx','_seasonTitleCtx','seasonTitles','getAllPlayerRanks','_spWappen','_newsCardHtmlM2','_newsFaeden','getCachedAwardRankings','_buildStories','getStoriesCache','openSheet','showPlayer'];
       for(const name of names){
         try{const fn=eval(name);if(typeof fn!=='function')continue;
           const wrapped=function(...args){const t=performance.now();try{return fn.apply(this,args)}finally{const z=window.__perfZaehler[name]||(window.__perfZaehler[name]={aufrufe:0,ms:0});z.aufrufe++;z.ms+=performance.now()-t;}};
@@ -79,7 +85,7 @@ if(require.main===module) (async()=>{
         }catch(e){}
       }
     })()`);
-    const result={partien:data.length,viewport:390,einheit:'ms · synchrones JS + erstes Layout · Median',messungen:[]};
+    const result={partien:data.length,viewport:390,cpuFaktor:cpu,browser:browser.version(),einheit:'ms · synchrones JS + erstes Layout · Median',messungen:[]};
     for(const [label,prepare,action] of cases){
       const cold=[],warm=[];let last;
       for(let i=0;i<3;i++){
@@ -90,6 +96,32 @@ if(require.main===module) (async()=>{
       }
       result.messungen.push({ansicht:label,kalt:+median(cold).toFixed(2),warm:+median(warm).toFixed(2)});
       console.log(label,JSON.stringify(result.messungen.at(-1)));
+    }
+    if(process.argv.includes('--mobil')){
+      result.interaktionen=[];
+      const actions=[
+        ['Tabwechsel',`closeSheet(true);tab='ranking';period='season';render();` ,`document.querySelector('[data-nav="history"]').click()`],
+        ['Profil erstmals',`closeSheet(true);tab='ranking';render();`, `showPlayer('${ids[8]}')`],
+        ['News öffnen',`closeSheet(true);_cache._stories=_buildStories();_cache._consolFrom=null;_cache._frischVon=null;`, 'openNewsFeed()'],
+        ['Generator kalt',`closeSheet(true);invalidateCache();`, '_buildStories()']
+      ];
+      for(const [ansicht,prepare,action] of actions){
+        await K(prepare);
+        const r=await K(`(async()=>{
+          const frames=[],tasks=[];let ende=false,last=performance.now();
+          const obs=new PerformanceObserver(list=>list.getEntries().forEach(e=>tasks.push(e.duration)));
+          obs.observe({type:'longtask',buffered:false});
+          const frame=t=>{frames.push(t-last);last=t;if(!ende)requestAnimationFrame(frame)};
+          last=await new Promise(requestAnimationFrame);requestAnimationFrame(frame);
+          await new Promise(requestAnimationFrame);
+          const t=performance.now();${action};void document.getElementById('sheet').offsetHeight;
+          void document.getElementById('main').offsetHeight;const synchron=performance.now()-t;
+          await new Promise(r=>setTimeout(r,900));ende=true;obs.disconnect();
+          return {synchron:+synchron.toFixed(2),laengstesBild:+Math.max(0,...frames).toFixed(2),
+            longTasks:tasks.length,laengsterTask:+Math.max(0,...tasks).toFixed(2)};
+        })()`);
+        result.interaktionen.push({ansicht,...r});console.log(ansicht,JSON.stringify(r));
+      }
     }
     if(profiling) result.profil=await page.evaluate(()=>window.__perfZaehler);
     if(errors.length) throw new Error(errors.join('\n'));
