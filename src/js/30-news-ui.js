@@ -1860,13 +1860,19 @@ function _renderNewsFeed(){
   // Die Tafel: ein Tageskopf, darunter alle Karten dieses Tages. Breaking
   // bleibt an seinem Platz in der Chronologie und wird nicht nach oben
   // gezogen — es trägt stattdessen einen roten Kopfbalken.
-  let listHtml, teileHtml = [], sofort = 0;
+  let listHtml, nachreichen = [];
   if(!cards.length){
     listHtml = '<div class="nf-empty">Keine Stories in dieser Auswahl.</div>';
   } else {
     // Über alle Karten des Feeds, nicht nur die des Filters: der Faden
     // gehört der Geschichte und nicht der Auswahl.
     const faeden = _newsFaeden(stories);
+    const jeTag = new Map();
+    stories.forEach(st => {
+      const k = tagKey(st.when);
+      if(!jeTag.has(k)) jeTag.set(k, []);
+      jeTag.get(k).push(st);
+    });
     const gruppen = [];
     cards.forEach(st => {
       const k = tagKey(st.when);
@@ -1874,11 +1880,11 @@ function _renderNewsFeed(){
       if(g && g.k === k) g.items.push(st);
       else gruppen.push({k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
     });
-    teileHtml = gruppen.map(g => {
+    gruppen.forEach(g => {
       const neu = g.items.filter(st => !gelesen(st)).length;
       // Die Wahl gehoert dem ganzen Tag, nicht dem aktiven Filter. Sonst
       // koennte dieselbe Tafel je Reiter eine andere „Karte des Tages" haben.
-      const alleDesTages = stories.filter(st => tagKey(st.when) === g.k);
+      const alleDesTages = jeTag.get(g.k) || [];
       const tagesKarte = _newsTagKarte(alleDesTages, g.k);
       // Der Kopf traegt Wochentag, Datum und die Zahl der Karten — sonst
       // nichts. Die Bilanz („3 Partien · 4 Spieler") und die Gesichter standen
@@ -1888,25 +1894,41 @@ function _renderNewsFeed(){
       // Der Tagesschluessel steht am Kopf: die Bilanz des Tages ist aus dem
       // Markup verschwunden, und ohne ihn liesse sich nicht mehr pruefen, ob
       // an diesem Tag ueberhaupt gespielt wurde.
-      return `<div class="nf-tag" data-tag="${esc(g.k)}">
+      const kopf = `<div class="nf-tag" data-tag="${esc(g.k)}">
         <div class="nf-tag-z1"><span class="nf-tag-wt">${esc(g.label)}</span>`
         + `<span class="nf-tag-dt">${esc(g.datum)}</span>`
         + `<span class="nf-tag-n${neu?' neu':''}">${neu ? neu + ' NEU' : g.items.length + (g.items.length===1?' KARTE':' KARTEN')}</span></div>`
-        + `</div>
-        <div class="nf-feed">${g.items.map(st =>
-            _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte,
-              _newsFadenHtml(faeden.get(st.id), stories))).join('')}</div>`;
+        + `</div>`;
+      // Keine fertig gezeichnete zweite Haelfte im Speicher: nur kleine
+      // Auftraege. Auch ein einzelner sehr grosser Tag bleibt teilbar.
+      for(let i = 0; i < g.items.length; i += 4){
+        const stapel = g.items.slice(i, i + 4), erster = i === 0;
+        nachreichen.push({tag:g.k, erster, kopf:erster ? kopf : '', anzahl:stapel.length,
+          html:() => stapel.map(st => _newsCardHtmlM2(st, gelesen(st),
+            st.id === tagesKarte, _newsFadenHtml(faeden.get(st.id), stories))).join('')});
+      }
     });
     // ── Zuerst, was man sieht ─────────────────────────────────────────
     // Der Feed trägt rund siebzig Karten und 3400 Knoten, und beim Öffnen
     // rechnete der Browser Stil und Layout für alle auf einmal: gemessen
     // 75 ms ohne und 350 ms mit gedrosselter CPU, und das Skript selbst war
-    // davon nicht einmal ein Zehntel. Gezeichnet werden zuerst die Tage, die
-    // die ersten Karten tragen (`NEWS_FEED_SOFORT`), der Rest kommt nach dem
-    // ersten Bild dazu (`_newsFeedRest`) — bevor man so weit scrollen kann.
-    let n = 0;
-    while(sofort < teileHtml.length && n < NEWS_FEED_SOFORT){ n += gruppen[sofort].items.length; sofort++; }
-    listHtml = teileHtml.slice(0, sofort).join('');
+    // davon nicht einmal ein Zehntel. Auch die Grafik-/Markup-Arbeit gehoert
+    // erst zu dem Teil, der dran ist. Vorher wurde ALLES gebaut und nur das
+    // Einfuegen vertagt. Zwoelf Karten zuerst, der Rest in kleinen Takten.
+    let n = 0, sofort = 0;
+    const oben = [];
+    while(sofort < nachreichen.length && n < NEWS_FEED_SOFORT){
+      const job = nachreichen[sofort++]; n += job.anzahl;
+      // Fortsetzung desselben Tages ohne zweiten Tageskopf/Feedcontainer.
+      if(job.erster){
+        if(oben.length) oben.push('</div>');
+        oben.push(job.kopf + `<div class="nf-feed" data-feed-tag="${esc(job.tag)}">`);
+      }
+      oben.push(job.html());
+    }
+    oben.push('</div>');
+    listHtml = oben.join('');
+    nachreichen = nachreichen.slice(sofort);
   }
 
   const datum = new Date().toLocaleDateString('de-DE',
@@ -1930,9 +1952,9 @@ function _renderNewsFeed(){
   `);
   const sheetEl = document.getElementById('sheet');
   const liste = sheetEl.querySelector('.nf-liste');
-  const rest = teileHtml.slice(sofort).join('');
-  _newsFeedOffen = rest && liste ? {liste, html:rest} : null;
-  if(_newsFeedOffen) requestAnimationFrame(() => setTimeout(_newsFeedRest, 0));
+  _newsFeedOffen = nachreichen.length && liste
+    ? {liste, jobs:nachreichen, index:0, version:_cache.version} : null;
+  if(_newsFeedOffen) _newsFeedPlan(_newsFeedOffen);
 
   // Filter-Click → re-render (billig, Daten aus Cache).
   const sheet = document.getElementById('sheet');
@@ -1976,9 +1998,35 @@ function _renderNewsFeed(){
 // fällt er weg: angehängt landete er sonst im nächsten Blatt.
 let _newsFeedOffen = null;
 const NEWS_FEED_SOFORT = 12;
-function _newsFeedRest(){
+function _newsFeedRest(alles = true){
   const o = _newsFeedOffen;
-  _newsFeedOffen = null;
-  if(o && o.liste.isConnected) o.liste.insertAdjacentHTML('beforeend', o.html);
+  if(!o) return;
+  if(!o.liste.isConnected || !_isNewsFeedOpen()){ _newsFeedOffen = null; return; }
+  if(o.version !== _cache.version){ _renderNewsFeed(); return; }
+  // Direkter Aufruf kann weiterhin vollstaendig fuellen (z.B. Geometrie-
+  // Pruefung). Automatisch hoechstens vier Karten je ruhigem Takt.
+  do {
+    const job = o.jobs[o.index++];
+    const ziel = job.erster ? o.liste : o.liste.querySelector(`[data-feed-tag="${job.tag}"]`);
+    if(!ziel){ _renderNewsFeed(); return; }
+    const html = job.html();
+    ziel.insertAdjacentHTML('beforeend', job.erster
+      ? job.kopf + `<div class="nf-feed" data-feed-tag="${esc(job.tag)}">${html}</div>` : html);
+  } while(alles && o.index < o.jobs.length);
+  if(o.index >= o.jobs.length) _newsFeedOffen = null;
+}
+function _newsFeedPlan(o){
+  requestAnimationFrame(() => {
+    // Ein Filterwechsel/Neuoeffnen hat einen eigenen Auftrag. Der alte
+    // Callback darf nicht versehentlich DIESE neue Liste nachreichen.
+    if(_newsFeedOffen !== o) return;
+    const zeichnen = () => {
+      if(_newsFeedOffen !== o) return;
+      _newsFeedRest(false);
+      if(_newsFeedOffen === o) _newsFeedPlan(o);
+    };
+    if(window.requestIdleCallback) window.requestIdleCallback(zeichnen, {timeout:100});
+    else setTimeout(zeichnen, 0);
+  });
 }
 

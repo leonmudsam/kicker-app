@@ -4982,7 +4982,7 @@ document.getElementById('app').style.display='block';
 document.getElementById('botnav').style.display='flex';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const BUILD_VERSION='2026.10.03.4073b78c';
+const BUILD_VERSION='2026.10.03.506a243f';
 function forceReload(){
   const u=new URL(location.href);
   u.searchParams.set('_cb',Date.now());
@@ -5324,7 +5324,8 @@ function matchesInSeason(seasonId){
 }
 
 function allPastSeasons(){
-  const key='allPastSeasons_'+matches.length+'_'+seasons.length+'_'+_cache.version;
+  const cur=currentSeason();
+  const key='allPastSeasons_'+cur.id+'_'+matches.length+'_'+seasons.length+'_'+_cache.version;
   if(_cache._allPastSeasonsKey===key) return _cache._allPastSeasonsData.slice();
 
   if(!matches.length) {
@@ -5333,7 +5334,7 @@ function allPastSeasons(){
     return [];
   }
   const first=new Date(matches[0].created_at);
-  const now=new Date(); const cur=currentSeason();
+  const now=new Date();
   const ids=[];
   let y=first.getFullYear(), m=first.getMonth();
   while(true){
@@ -5526,11 +5527,11 @@ const POSV_COLORS = [
 
 function getSeasonPositionHistory(seasonId){
   if(!seasonId) seasonId = currentSeason().id;
-  const key = 'posHist_'+seasonId+'_'+matches.length+'_'+_cache.version;
+  const isCurrent = (seasonId === currentSeason().id);
+  const key = 'posHist_'+seasonId+'_'+(isCurrent?tagKey(Date.now()):'fertig')+'_'+matches.length+'_'+_cache.version;
   if(_cache._posHistKey===key) return _cache._posHist;
 
   const sEnd = seasonEnd(seasonId);
-  const isCurrent = (seasonId === currentSeason().id);
   const sMatches = matchesInSeason(seasonId);
   const totalDays = sEnd.getDate();
 
@@ -5684,7 +5685,8 @@ function getSeasonRankingsCache(){
 function getCachedAwardRankings(period, sid){
   let cacheSuffix='';
   if(period==='season') cacheSuffix=sid||awSeasonId||currentSeason().id;
-  else if(period==='week') cacheSuffix=awWeekStart?('w'+new Date(awWeekStart).getTime()):'cur';
+  else if(period==='week') cacheSuffix=awWeekStart?('w'+new Date(awWeekStart).getTime()):('cur'+periodStart('week').getTime());
+  else if(period==='day') cacheSuffix=periodStart('day').getTime();
   const key=period+'_'+cacheSuffix+'_'+matches.length+'_'+_cache.version;
   if(!_cache._awards) _cache._awards={};
   if(_cache._awards[key]) return _cache._awards[key];
@@ -6419,16 +6421,40 @@ function gamesPlayed(id){return matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes
 
 let _lastLoadFingerprint = null;
 let _lastLoadDay = null;
-async function loadAll(){
+let _loadAllPromise = null;
+let _loadAllNochmals = false;
+function loadAll(opts){
+  if(_loadAllPromise){
+    if(!opts || opts.nachladen !== false) _loadAllNochmals = true;
+    return _loadAllPromise;
+  }
+  _loadAllPromise = (async()=>{
+    try {
+      do {
+        _loadAllNochmals = false;
+        await _loadAllDurchlauf();
+      } while(_loadAllNochmals);
+    } finally {
+      _loadAllPromise = null;
+    }
+  })();
+  return _loadAllPromise;
+}
+async function _loadAllDurchlauf(){
   setConn('verbinde…','load');
   try{
-    const [p,m,c,se]=await Promise.all([
+    const antworten=await Promise.allSettled([
       sb.from('players').select('*').order('elo',{ascending:false}),
       sb.from('matches').select('*').order('created_at',{ascending:true}),
       sb.from('config').select('*').eq('id',1).single(),
       sb.from('seasons').select('*').order('start_date',{ascending:false})
     ]);
-    if(p.error)throw p.error; if(m.error)throw m.error;
+    if(_loadAllNochmals) return;
+    for(const a of antworten){
+      if(a.status === 'rejected') throw a.reason;
+      if(a.value.error) throw a.value.error;
+    }
+    const [p,m,c,se]=antworten.map(a=>a.value);
     const _fp = JSON.stringify([p.data, m.data, c.data, se.data]);
     const _today = new Date().toDateString();
     if(_fp === _lastLoadFingerprint && _today === _lastLoadDay){
@@ -6488,6 +6514,7 @@ async function loadAll(){
     try { if(window.newsBadgeRefresh) window.newsBadgeRefresh(); } catch(e){}
     setTimeout(autoShowPotwRecap, 900);
   }catch(e){
+    _lastLoadFingerprint=null; _lastLoadDay=null;
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
     document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
       <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
@@ -6588,7 +6615,7 @@ function _recapMarkSeen(lsKey, sessKey){
 
 function _recapPosMiniSVG(ph){
   if(!ph || ph.empty) return '';
-  const key = 'recapPosMini_'+ph.seasonId+'_'+matches.length+'_'+_cache.version;
+  const key = 'recapPosMini_'+ph.seasonId+'_'+ph.lastDay+'_'+matches.length+'_'+_cache.version;
   if(_cache._recapPosMiniKey === key) return _cache._recapPosMini;
   const W=78, H=38, padX=3, padY=4;
   const N = ph.activeIds.length, days = ph.lastDay;
@@ -8153,7 +8180,9 @@ const NAV=[
   ['history','Verlauf',`<path d="M4 12a8 8 0 102.3-5.6"/><path d="M4 5v3.5h3.5"/><path d="M12 8v4l2.5 2"/>`]
 ];
 function renderNav(){
-  document.getElementById('botnav').innerHTML=NAV.map(([id,lb,ic])=>
+  const nav=document.getElementById('botnav');
+  if(!nav.firstElementChild || nav._navKnoop!==nav.firstElementChild){
+  nav.innerHTML=NAV.map(([id,lb,ic])=>
     `<button data-nav="${id}" class="${tab===id?'on':''}">
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">${ic}</svg></span>
       <span class="lb">${lb}</span></button>`).join('');
@@ -8161,15 +8190,28 @@ function renderNav(){
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
     awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
     window.scrollTo(0,0);render();});
+  nav._navKnoop=nav.firstElementChild;
+  }
+  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('on',tab===b.dataset.nav));
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
 }
 
 function render(){
   renderNav();
   const v={ranking:vRanking,positions:vPositions,awards:vAwards,teams:vTeams,history:vHistory,match:vMatch,settings:vSettings}[tab];
-  document.getElementById('main').innerHTML=`<section class="view active">${v()}</section>`;
-  bind();
-  schlittenFahren(document.getElementById('main'));
+  const root=document.getElementById('main');
+  const html=`<section class="view active">${v()}</section>`;
+  const behalten=tab!=='match' && tab!=='settings'
+    && root._renderVersion===_cache.version && root._renderHtml===html
+    && root._renderNode===root.firstElementChild && !!root.firstElementChild;
+  if(!behalten){
+    root.innerHTML=html;
+    bind();
+    root._renderHtml=html;
+    root._renderVersion=_cache.version;
+    root._renderNode=root.firstElementChild;
+  }
+  schlittenFahren(root);
 }
 
 let _schlittenVorher = null;
@@ -8205,15 +8247,16 @@ function periodStart(period){
 }
 function matchesInPeriod(period, seasonId){
   const sid=period==='season'?(seasonId||currentSeason().id):'';
-  const key='mperiod_'+period+'_'+sid+'_'+matches.length+'_'+_cache.version;
+  const start=period==='season'?null:periodStart(period);
+  const key='mperiod_'+period+'_'+sid+'_'+(start?start.getTime():'')+'_'+matches.length+'_'+_cache.version;
   if(!_cache._mperiod) _cache._mperiod={};
   if(_cache._mperiod[key]) return _cache._mperiod[key];
   _topfDeckel(_cache._mperiod, 40);
   let result;
   if(period==='season') result=matchesInSeason(sid);
   else{
-    const start=periodStart(period);
-    result=start?matches.filter(m=>new Date(m.created_at)>=start):matches;
+    const ab=start?start.getTime():null;
+    result=start?matches.filter(m=>mts(m)>=ab):matches;
   }
   _cache._mperiod[key]=result;
   return result;
@@ -21270,11 +21313,17 @@ function _renderNewsFeed(){
     }).join('')}
   </div>`;
 
-  let listHtml, teileHtml = [], sofort = 0;
+  let listHtml, nachreichen = [];
   if(!cards.length){
     listHtml = '<div class="nf-empty">Keine Stories in dieser Auswahl.</div>';
   } else {
     const faeden = _newsFaeden(stories);
+    const jeTag = new Map();
+    stories.forEach(st => {
+      const k = tagKey(st.when);
+      if(!jeTag.has(k)) jeTag.set(k, []);
+      jeTag.get(k).push(st);
+    });
     const gruppen = [];
     cards.forEach(st => {
       const k = tagKey(st.when);
@@ -21282,22 +21331,35 @@ function _renderNewsFeed(){
       if(g && g.k === k) g.items.push(st);
       else gruppen.push({k, label:_newsDayLabel(st.when), datum:_newsDayDate(st.when), items:[st]});
     });
-    teileHtml = gruppen.map(g => {
+    gruppen.forEach(g => {
       const neu = g.items.filter(st => !gelesen(st)).length;
-      const alleDesTages = stories.filter(st => tagKey(st.when) === g.k);
+      const alleDesTages = jeTag.get(g.k) || [];
       const tagesKarte = _newsTagKarte(alleDesTages, g.k);
-      return `<div class="nf-tag" data-tag="${esc(g.k)}">
+      const kopf = `<div class="nf-tag" data-tag="${esc(g.k)}">
         <div class="nf-tag-z1"><span class="nf-tag-wt">${esc(g.label)}</span>`
         + `<span class="nf-tag-dt">${esc(g.datum)}</span>`
         + `<span class="nf-tag-n${neu?' neu':''}">${neu ? neu + ' NEU' : g.items.length + (g.items.length===1?' KARTE':' KARTEN')}</span></div>`
-        + `</div>
-        <div class="nf-feed">${g.items.map(st =>
-            _newsCardHtmlM2(st, gelesen(st), st.id === tagesKarte,
-              _newsFadenHtml(faeden.get(st.id), stories))).join('')}</div>`;
+        + `</div>`;
+      for(let i = 0; i < g.items.length; i += 4){
+        const stapel = g.items.slice(i, i + 4), erster = i === 0;
+        nachreichen.push({tag:g.k, erster, kopf:erster ? kopf : '', anzahl:stapel.length,
+          html:() => stapel.map(st => _newsCardHtmlM2(st, gelesen(st),
+            st.id === tagesKarte, _newsFadenHtml(faeden.get(st.id), stories))).join('')});
+      }
     });
-    let n = 0;
-    while(sofort < teileHtml.length && n < NEWS_FEED_SOFORT){ n += gruppen[sofort].items.length; sofort++; }
-    listHtml = teileHtml.slice(0, sofort).join('');
+    let n = 0, sofort = 0;
+    const oben = [];
+    while(sofort < nachreichen.length && n < NEWS_FEED_SOFORT){
+      const job = nachreichen[sofort++]; n += job.anzahl;
+      if(job.erster){
+        if(oben.length) oben.push('</div>');
+        oben.push(job.kopf + `<div class="nf-feed" data-feed-tag="${esc(job.tag)}">`);
+      }
+      oben.push(job.html());
+    }
+    oben.push('</div>');
+    listHtml = oben.join('');
+    nachreichen = nachreichen.slice(sofort);
   }
 
   const datum = new Date().toLocaleDateString('de-DE',
@@ -21319,9 +21381,9 @@ function _renderNewsFeed(){
   `);
   const sheetEl = document.getElementById('sheet');
   const liste = sheetEl.querySelector('.nf-liste');
-  const rest = teileHtml.slice(sofort).join('');
-  _newsFeedOffen = rest && liste ? {liste, html:rest} : null;
-  if(_newsFeedOffen) requestAnimationFrame(() => setTimeout(_newsFeedRest, 0));
+  _newsFeedOffen = nachreichen.length && liste
+    ? {liste, jobs:nachreichen, index:0, version:_cache.version} : null;
+  if(_newsFeedOffen) _newsFeedPlan(_newsFeedOffen);
 
   const sheet = document.getElementById('sheet');
   sheet.querySelectorAll('.nf-chips button[data-f]').forEach(el => {
@@ -21354,10 +21416,32 @@ function _renderNewsFeed(){
 }
 let _newsFeedOffen = null;
 const NEWS_FEED_SOFORT = 12;
-function _newsFeedRest(){
+function _newsFeedRest(alles = true){
   const o = _newsFeedOffen;
-  _newsFeedOffen = null;
-  if(o && o.liste.isConnected) o.liste.insertAdjacentHTML('beforeend', o.html);
+  if(!o) return;
+  if(!o.liste.isConnected || !_isNewsFeedOpen()){ _newsFeedOffen = null; return; }
+  if(o.version !== _cache.version){ _renderNewsFeed(); return; }
+  do {
+    const job = o.jobs[o.index++];
+    const ziel = job.erster ? o.liste : o.liste.querySelector(`[data-feed-tag="${job.tag}"]`);
+    if(!ziel){ _renderNewsFeed(); return; }
+    const html = job.html();
+    ziel.insertAdjacentHTML('beforeend', job.erster
+      ? job.kopf + `<div class="nf-feed" data-feed-tag="${esc(job.tag)}">${html}</div>` : html);
+  } while(alles && o.index < o.jobs.length);
+  if(o.index >= o.jobs.length) _newsFeedOffen = null;
+}
+function _newsFeedPlan(o){
+  requestAnimationFrame(() => {
+    if(_newsFeedOffen !== o) return;
+    const zeichnen = () => {
+      if(_newsFeedOffen !== o) return;
+      _newsFeedRest(false);
+      if(_newsFeedOffen === o) _newsFeedPlan(o);
+    };
+    if(window.requestIdleCallback) window.requestIdleCallback(zeichnen, {timeout:100});
+    else setTimeout(zeichnen, 0);
+  });
 }
 
 
@@ -30845,7 +30929,7 @@ function _tickDaten(){
   if(document.hidden) return;
   if(document.getElementById('sheet').classList.contains('show')) return;
   if(tab === 'match') return;
-  loadAll();
+  loadAll({nachladen:false});
 }
 function _tickVersion(){ if(!document.hidden) checkForUpdate(); }
 

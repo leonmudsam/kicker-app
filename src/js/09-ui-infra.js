@@ -125,7 +125,11 @@ const NAV=[
   ['history','Verlauf',`<path d="M4 12a8 8 0 102.3-5.6"/><path d="M4 5v3.5h3.5"/><path d="M12 8v4l2.5 2"/>`]
 ];
 function renderNav(){
-  document.getElementById('botnav').innerHTML=NAV.map(([id,lb,ic])=>
+  const nav=document.getElementById('botnav');
+  // Die fuenf Knoepfe bleiben stehen: Fokus, Listener und SVGs muessen bei
+  // einem Filterwechsel nicht jedes Mal neu entstehen.
+  if(!nav.firstElementChild || nav._navKnoop!==nav.firstElementChild){
+  nav.innerHTML=NAV.map(([id,lb,ic])=>
     `<button data-nav="${id}" class="${tab===id?'on':''}">
       <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">${ic}</svg></span>
       <span class="lb">${lb}</span></button>`).join('');
@@ -141,6 +145,9 @@ function renderNav(){
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
     awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
     window.scrollTo(0,0);render();});
+  nav._navKnoop=nav.firstElementChild;
+  }
+  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('on',tab===b.dataset.nav));
   // FAB nur außerhalb des Match-Tabs sinnvoll: dort führt er auf die Seite,
   // auf der man schon ist, und lag über dem Knopf „Mischen".
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
@@ -149,9 +156,23 @@ function renderNav(){
 function render(){
   renderNav();
   const v={ranking:vRanking,positions:vPositions,awards:vAwards,teams:vTeams,history:vHistory,match:vMatch,settings:vSettings}[tab];
-  document.getElementById('main').innerHTML=`<section class="view active">${v()}</section>`;
-  bind();
-  schlittenFahren(document.getElementById('main'));
+  const root=document.getElementById('main');
+  const html=`<section class="view active">${v()}</section>`;
+  // Nur die letzte Anzeige, keine wachsende Sammlung von HTML je Filter.
+  // Die Vorlage wird weiter ausgewertet (auch zeitabhaengige Werte). Nur
+  // unveraendertes Markup UND dieselbe Datenversion duerfen Knoten/Bindings
+  // behalten. Formulare werden absichtlich immer frisch gebunden.
+  const behalten=tab!=='match' && tab!=='settings'
+    && root._renderVersion===_cache.version && root._renderHtml===html
+    && root._renderNode===root.firstElementChild && !!root.firstElementChild;
+  if(!behalten){
+    root.innerHTML=html;
+    bind();
+    root._renderHtml=html;
+    root._renderVersion=_cache.version;
+    root._renderNode=root.firstElementChild;
+  }
+  schlittenFahren(root);
 }
 
 // ── Der Schlitten fährt [§C27] ──────────────────────────────────────
@@ -205,7 +226,9 @@ function periodStart(period){
 // liefert der zweite Aufruf die Matches der ersten Saison zurück.
 function matchesInPeriod(period, seasonId){
   const sid=period==='season'?(seasonId||currentSeason().id):'';
-  const key='mperiod_'+period+'_'+sid+'_'+matches.length+'_'+_cache.version;
+  const start=period==='season'?null:periodStart(period);
+  // Tag/Woche koennen wechseln, ohne dass eine Partie oder Version folgt.
+  const key='mperiod_'+period+'_'+sid+'_'+(start?start.getTime():'')+'_'+matches.length+'_'+_cache.version;
   if(!_cache._mperiod) _cache._mperiod={};
   if(_cache._mperiod[key]) return _cache._mperiod[key];
   // Mit der Version im Schluessel waechst der Topf sonst ueber jede Version mit.
@@ -213,8 +236,8 @@ function matchesInPeriod(period, seasonId){
   let result;
   if(period==='season') result=matchesInSeason(sid);
   else{
-    const start=periodStart(period);
-    result=start?matches.filter(m=>new Date(m.created_at)>=start):matches;
+    const ab=start?start.getTime():null;
+    result=start?matches.filter(m=>mts(m)>=ab):matches;
   }
   _cache._mperiod[key]=result;
   return result;
