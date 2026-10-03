@@ -171,18 +171,22 @@
   .ui-switch:has(> button:nth-child(5).on),.ui-tabs:has(> button:nth-child(5).on){--i:4}
   .ui-switch:has(> button:nth-child(6).on),.ui-tabs:has(> button:nth-child(6).on){--i:5}
   .ui-switch:not(.roll),.ui-tabs:not(.roll){
-    --seg:calc((100% - 6px - (var(--n) - 1) * 2px) / var(--n));
-    --links:calc(3px + var(--i) * (var(--seg) + 2px))}
+    --seg:calc((100% - 6px - (var(--n) - 1) * 2px) / var(--n))}
   .ui-switch:not(.roll)::before,.ui-tabs:not(.roll)::after{content:"";position:absolute;
-    transition:left .3s cubic-bezier(.3,.7,.2,1),width .3s cubic-bezier(.3,.7,.2,1),opacity .2s}
-  .ui-switch:not(.roll)::before{top:3px;bottom:3px;left:var(--links);width:var(--seg);
+    transition:transform .3s cubic-bezier(.3,.7,.2,1),opacity .2s}
+  /* Die Box bleibt am Anfang stehen; nur ihre gezeichnete Lage fährt.
+     left/width als Animation berechneten in jedem Bild das Layout neu.
+     100% ist hier die eigene Segmentbreite, die Lücke kommt dazu. */
+  .ui-switch:not(.roll)::before{top:3px;bottom:3px;left:3px;width:var(--seg);
+    transform:translateX(calc(var(--i) * (100% + 2px)));
     border-radius:10px;background:linear-gradient(180deg,var(--surface3),var(--surface2));
     box-shadow:inset 0 0 0 1px var(--line2),0 4px 14px -6px rgba(0,0,0,.8)}
   /* Der Strich des äußeren Wählers sitzt unten im Schlitten. */
   .ui-switch:not(.roll)::after{content:"";position:absolute;bottom:6px;z-index:2;height:2px;
-    width:16px;border-radius:1px;background:var(--acid);
-    left:calc(var(--links) + var(--seg) / 2 - 8px);
-    transition:left .3s cubic-bezier(.3,.7,.2,1),opacity .2s}
+    width:var(--seg);border-radius:1px;
+    background:linear-gradient(var(--acid),var(--acid)) center / 16px 2px no-repeat;
+    left:3px;transform:translateX(calc(var(--i) * (100% + 2px)));
+    transition:transform .3s cubic-bezier(.3,.7,.2,1),opacity .2s}
   .ui-switch:not(:has(> button.on))::before,.ui-switch:not(:has(> button.on))::after,
   .ui-tabs:not(:has(> button.on))::after{opacity:0}
 
@@ -194,7 +198,8 @@
   .ui-tabs button{font-size:12.5px;padding:9px 5px 10px}
   .ui-tabs:not(.roll)::after{bottom:-1px;height:2px;border-radius:2px;background:var(--acid);
     box-shadow:0 0 10px rgba(190,242,100,.55);
-    left:calc(var(--links) + var(--seg) * .25);width:calc(var(--seg) * .5)}
+    left:calc(3px + var(--seg) * .25);width:calc(var(--seg) * .5);
+    transform:translateX(calc(var(--i) * (200% + 2px)))}
   /* Ab fünf Reitern wird die Schrift kleiner statt das Wort kürzer:
      „Prest…" und „Torbil…" sagten nicht mehr, wonach sortiert wird. */
   .ui-tabs:has(> button:nth-child(5)) button{font-size:11px;padding-inline:1px}

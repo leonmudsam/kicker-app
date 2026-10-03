@@ -5,7 +5,7 @@ const SETTINGS_HASH='03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c
 let settingsUnlocked=false;
 
 async function openSettingsLock(){
-  if(settingsUnlocked){tab='settings';render();window.scrollTo(0,0);return;}
+  if(settingsUnlocked){tab='settings';_renderNachEingabe();window.scrollTo(0,0);return;}
   // Create overlay
   const ov=document.createElement('div');
   ov.id='settingsLockOverlay';
@@ -41,7 +41,7 @@ async function openSettingsLock(){
     if(hash===SETTINGS_HASH){
       settingsUnlocked=true;
       ov.remove();
-      tab='settings';render();window.scrollTo(0,0);
+      tab='settings';_renderNachEingabe();window.scrollTo(0,0);
     } else {
       err.textContent='Falsches Passwort';
       inp.value='';
@@ -83,6 +83,6 @@ document.getElementById('settingsBtn').onclick=openSettingsLock;
   };
   btn.onclick = () => showPositionHistory();
 })();
-document.getElementById('logoHome').onclick=()=>{tab='ranking';period='season';ligaSeasonId=null;ligaSicht='spieler';rekKammer='';einblickOffen='';closeSheet(true);render();window.scrollTo(0,0);};
-document.getElementById('fab').onclick=()=>{tab='match';render();window.scrollTo(0,0);};
+document.getElementById('logoHome').onclick=()=>{tab='ranking';period='season';ligaSeasonId=null;ligaSicht='spieler';rekKammer='';einblickOffen='';closeSheet(true);_renderNachEingabe();window.scrollTo(0,0);};
+document.getElementById('fab').onclick=()=>{tab='match';_renderNachEingabe();window.scrollTo(0,0);};
 

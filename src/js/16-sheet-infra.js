@@ -37,21 +37,24 @@ let _sheetAnimating = false;
 // Element im Hintergrund-Tab), und dann dürfte das Sheet nie mehr zurück.
 function _afterTransition(el, prop, ms, fn){
   let fertig = false;
+  let rueckfall;
   const los = (e) => {
     if(e && e.target !== el) return;              // Kinder animieren mit
     if(e && e.propertyName && e.propertyName !== prop) return;
     if(fertig) return; fertig = true;
     el.removeEventListener('transitionend', los);
+    clearTimeout(rueckfall);
     fn();
   };
   el.addEventListener('transitionend', los);
-  setTimeout(los, ms + 60);
+  rueckfall = setTimeout(los, ms + 60);
 }
 function _animateSheetSwap(swapFn){
   const sheet = document.getElementById('sheet');
   const bg = document.getElementById('sheetBg');
   // Kein sichtbares Sheet oder schon eine Animation aktiv → sofort tauschen.
-  if(!sheet || !bg || !bg.classList.contains('show') || _sheetAnimating){ swapFn(); return; }
+  if(!sheet || !bg || !bg.classList.contains('show') || _sheetAnimating
+    || window.matchMedia('(prefers-reduced-motion:reduce)').matches){ swapFn(); return; }
   const auf = sheet._auf;
   _sheetAnimating = true;
   if(sheet._swipeCleanup){ sheet._swipeCleanup(); sheet._swipeCleanup=null; }
@@ -245,9 +248,13 @@ function _sheetForceClose(sheet,bg){
   // des Zuschiebens, sonst führe es leer hinunter, und nur, wenn in der
   // Zwischenzeit kein neues Blatt aufgegangen ist.
   const auf = sheet._auf;
-  if(warOffen) _afterTransition(sheet, 'transform', 340, () => {
-    if(sheet._auf === auf && !sheet.classList.contains('show')) sheet.innerHTML = '';
-  });
+  if(warOffen){
+    const leeren = () => {
+      if(sheet._auf === auf && !sheet.classList.contains('show')) sheet.innerHTML = '';
+    };
+    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches) leeren();
+    else _afterTransition(sheet, 'transform', 340, leeren);
+  }
   sheet.style.transform='';
   bg.style.opacity='';
   bg.classList.remove('show');
@@ -266,7 +273,36 @@ function bindSheetSwipe(){
   let startY=0, startX=0, startScrollTop=0, dragging=false;
   // Waagerecht oder senkrecht? Einmal je Berührung entschieden.
   let richtung='';
-  let lastY=0, lastT=0;
+  // Ein Zug kann schneller eintreffen als der Bildschirm zeichnet. Sein
+  // jüngster Stand wird nur einmal je Bild angewendet, niemals nach einem
+  // neuen Öffnen. Eingabe/Schließentscheidung bleiben sofort synchron.
+  const auf = sheet._auf;
+  let bild=0, zugWeg=0, proben=[], geste=0;
+  const bildAb = () => { if(bild){ cancelAnimationFrame(bild); bild=0; } };
+  const zugBild = (dy) => {
+    zugWeg=Math.max(0,dy)*0.88;
+    if(bild) return;
+    bild=requestAnimationFrame(()=>{
+      bild=0;
+      if(sheet._auf!==auf || !dragging) return;
+      sheet.style.transform=`translateY(${zugWeg}px)`;
+      bg.style.opacity=1-Math.min(zugWeg/300,1)*0.6;
+    });
+  };
+  const probe = (y) => {
+    const t=performance.now();
+    proben.push({y,t});
+    while(proben.length>2 && proben[1].t<t-100) proben.shift();
+    if(proben.length>32) proben.shift();
+  };
+  const tempo = (y) => {
+    const t=performance.now();
+    // Nur die letzte kurze Strecke zählt, nicht der Gesamtweg geteilt durch
+    // die Millisekunden seit touchmove. Letzteres schloss selbst langsame
+    // kurze Züge als angeblich schnellen Wisch; ein Abbruch schließt nie.
+    const p=proben.find(p=>p.t>=t-100);
+    return p ? Math.max(0,(y-p.y)/Math.max(1,t-p.t)) : 0;
+  };
   // Sheet-Close-Schwellen (kalibriert für versehentliche Touches vs echte Geste):
   // - CLOSE_THRESHOLD: lange, langsame Geste schließt erst nach 200 px Wegstrecke
   // - VELOCITY_THRESHOLD: 1.2 px/ms = echter Wisch (≈1200 px/s)
@@ -280,6 +316,9 @@ function bindSheetSwipe(){
 
   // ── TOUCH (Smartphone) ──
   const onTouchStart=(e)=>{
+    onTouchCancel();geste++;
+    if(e.touches.length!==1 || (e.target.closest
+      && e.target.closest('input,textarea,select,[contenteditable=""],[contenteditable="true"]'))) return;
     const touch=e.touches[0];
     startY=touch.clientY;
     startX=touch.clientX;
@@ -307,8 +346,7 @@ function bindSheetSwipe(){
     sheet._innerScrollEl = scrollEl;
     sheet._innerScrollTopStart = scrollEl.scrollTop;
     startScrollTop = sheet.scrollTop;
-    lastY=startY; lastT=Date.now();
-    dragging=false;
+    proben=[];probe(startY);
     // Der Zug-Lauscher kommt nur, wenn diese Geste das Blatt überhaupt
     // schließen kann: oben, ohne gescrollten Inhalt. Er ist nicht passiv,
     // weil er beim Ziehen `preventDefault` ruft, und ein nicht passiver
@@ -323,10 +361,11 @@ function bindSheetSwipe(){
   const zugAb = () => { if(zugHaengt){ sheet.removeEventListener('touchmove',onTouchMove); zugHaengt = false; } };
 
   const onTouchMove=(e)=>{
+    if(e.touches.length!==1){ onTouchCancel(); return; }
     const touch=e.touches[0];
     const dy=touch.clientY-startY;
     const dx=touch.clientX-startX;
-    lastY=touch.clientY; lastT=Date.now();
+    probe(touch.clientY);
     // (0) Wer quer wischt, meint nicht das Blatt. Ohne diese Sperre riss der
     //     Blatt-Zug jede waagerechte Bewegung an sich, sobald sie zwölf
     //     Pixel nach unten driftete — und weil er dabei preventDefault ruft,
@@ -339,7 +378,7 @@ function bindSheetSwipe(){
     //     Richtung.
     if(!dragging && !richtung && (Math.abs(dx)>6 || Math.abs(dy)>6))
       richtung = Math.abs(dx) > Math.abs(dy) ? 'quer' : 'hoch';
-    if(richtung==='quer') return;
+    if(richtung==='quer'){ zugAb(); return; }
     // (1) Wenn das äußere Sheet bereits gescrollt war → kein Swipe
     if(startScrollTop>0) return;
     // (2) Wenn ein INNERER Scroll-Container bereits gescrollt war → kein Swipe
@@ -348,24 +387,30 @@ function bindSheetSwipe(){
     //     hat innen hochgezogen, Browser scrollt die Liste runter) → auch
     //     kein Sheet-Swipe. Verhindert "Scroll-Ende → Sheet zieht mit".
     if(sheet._innerScrollEl && sheet._innerScrollEl !== sheet
-       && sheet._innerScrollEl.scrollTop > 0) return;
-    if(dy<0) return;
-    if(dy<DRAG_INTENT_THRESHOLD) return;
-    if(!dragging){ dragging=true; sheet.classList.add('is-dragging'); }
+       && sheet._innerScrollEl.scrollTop > 0){ zugAb(); return; }
+    if(dy<0 && !dragging){ zugAb(); return; }
+    if(dy<DRAG_INTENT_THRESHOLD && !dragging) return;
+    if(!dragging){ dragging=true; sheet.classList.add('is-dragging'); bg.style.transition='none'; }
     if(e.cancelable) e.preventDefault();
-    sheet.style.transform=`translateY(${dy*0.88}px)`;
-    bg.style.opacity=1-Math.min(dy*0.88/300,1)*0.6;
+    zugBild(dy);
   };
 
   const onTouchEnd=(e)=>{
+    bildAb();
     zugAb();
     if(!dragging){ sheet.classList.remove('is-dragging'); return; }
     dragging=false;
     sheet.classList.remove('is-dragging');
     const touch=e.changedTouches[0];
+    if(!touch){ snapOrClose(0,0); return; }
     const dy=touch.clientY-startY;
-    const velocity=Math.abs(dy)/(Date.now()-lastT+1);
-    snapOrClose(dy,velocity);
+    snapOrClose(dy,tempo(touch.clientY));
+  };
+  const onTouchCancel=()=>{
+    bildAb();zugAb();
+    const gezogen=dragging;
+    dragging=false;sheet.classList.remove('is-dragging');
+    if(gezogen) snapOrClose(0,0);
   };
 
   // ── MOUSE (Desktop) ──
@@ -373,34 +418,38 @@ function bindSheetSwipe(){
     // Nur auf dem Grab-Handle reagieren, nicht auf das gesamte Sheet
     const grab=document.getElementById('sheetGrab');
     if(!grab||!grab.contains(e.target)) return;
+    onTouchCancel();geste++;
     startY=e.clientY;
     startScrollTop=sheet.scrollTop;
-    lastY=startY; lastT=Date.now();
+    bildAb();proben=[];probe(startY);
     dragging=true;
     sheet.classList.add('is-dragging');
+    bg.style.transition='none';
     e.preventDefault();
   };
 
   const onMouseMove=(e)=>{
     if(!dragging) return;
     const dy=e.clientY-startY;
-    lastY=e.clientY; lastT=Date.now();
-    if(dy<0){ sheet.style.transform='translateY(0)'; return; }
-    sheet.style.transform=`translateY(${dy*0.88}px)`;
-    bg.style.opacity=1-Math.min(dy*0.88/300,1)*0.6;
+    probe(e.clientY);zugBild(dy);
   };
 
   const onMouseUp=(e)=>{
     if(!dragging) return;
+    bildAb();
     dragging=false;
     sheet.classList.remove('is-dragging');
     const dy=e.clientY-startY;
-    const velocity=Math.abs(dy)/(Date.now()-lastT+1);
-    snapOrClose(dy,velocity);
+    snapOrClose(dy,tempo(e.clientY));
   };
 
   // ── GEMEINSAME SNAP/CLOSE LOGIK ──
   function snapOrClose(dy,velocity){
+    if(window.matchMedia('(prefers-reduced-motion:reduce)').matches){
+      sheet.style.transform='';bg.style.opacity='';
+      if(dy>CLOSE_THRESHOLD || (velocity>VELOCITY_THRESHOLD && dy>=MIN_DY_FOR_VEL_CLOSE)) closeSheet();
+      return;
+    }
     if(dy>CLOSE_THRESHOLD || (velocity>VELOCITY_THRESHOLD && dy>=MIN_DY_FOR_VEL_CLOSE)){
       // Gibt es ein Eltern-Sheet? → NICHT hart schließen, sondern animiert eine
       // Ebene zurück (closeSheet → _animateSheetSwap übernimmt den Übergang).
@@ -413,8 +462,9 @@ function bindSheetSwipe(){
       // räumt auf und kann dabei einen Umbau auslösen [§C27]. Ist in der
       // Zwischenzeit ein neues Blatt aufgegangen, gehört es nicht dazu.
       const auf = sheet._auf;
+      const eigeneGeste = geste;
       _afterTransition(sheet,'transform',280,()=>{
-        if(sheet._auf !== auf) return;
+        if(sheet._auf !== auf || geste !== eigeneGeste) return;
         closeSheet();
         sheet.style.transition='';
         bg.style.transition='';
@@ -425,8 +475,9 @@ function bindSheetSwipe(){
       bg.style.transition='opacity .32s';
       bg.style.opacity='1';
       const auf = sheet._auf;
+      const eigeneGeste = geste;
       _afterTransition(sheet,'transform',320,()=>{
-        if(sheet._auf !== auf) return;
+        if(sheet._auf !== auf || geste !== eigeneGeste) return;
         sheet.style.transition='';
         bg.style.transition='';
       });
@@ -436,7 +487,7 @@ function bindSheetSwipe(){
   // Events registrieren
   sheet.addEventListener('touchstart',onTouchStart,{passive:true});
   sheet.addEventListener('touchend',onTouchEnd,{passive:true});
-  sheet.addEventListener('touchcancel',onTouchEnd,{passive:true});
+  sheet.addEventListener('touchcancel',onTouchCancel,{passive:true});
 
   // Mouse nur auf dem Grab-Handle
   sheet.addEventListener('mousedown',onMouseDown);
@@ -445,10 +496,12 @@ function bindSheetSwipe(){
 
   // Cleanup wenn Sheet geschlossen wird
   const cleanup=()=>{
+    bildAb();dragging=false;geste++;
+    sheet.classList.remove('is-dragging');
     sheet.removeEventListener('touchstart',onTouchStart);
     zugAb();
     sheet.removeEventListener('touchend',onTouchEnd);
-    sheet.removeEventListener('touchcancel',onTouchEnd);
+    sheet.removeEventListener('touchcancel',onTouchCancel);
     sheet.removeEventListener('mousedown',onMouseDown);
     window.removeEventListener('mousemove',onMouseMove);
     window.removeEventListener('mouseup',onMouseUp);

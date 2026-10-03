@@ -144,16 +144,66 @@ function renderNav(){
   document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{
     tab=b.dataset.nav;teamSearch='';ligaSeasonId=null;ligaSicht='spieler';
     awPeriod='season';awSeasonId=null;awWeekStart=null;rekKammer='';einblickOffen='';
-    window.scrollTo(0,0);render();});
+    window.scrollTo(0,0);_renderNachEingabe();});
   nav._navKnoop=nav.firstElementChild;
   }
-  document.querySelectorAll('[data-nav]').forEach(b=>b.classList.toggle('on',tab===b.dataset.nav));
+  document.querySelectorAll('[data-nav]').forEach(b=>{
+    const aktiv=tab===b.dataset.nav;
+    b.classList.toggle('on',aktiv);
+    if(aktiv)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');
+  });
   // FAB nur außerhalb des Match-Tabs sinnvoll: dort führt er auf die Seite,
   // auf der man schon ist, und lag über dem Knopf „Mischen".
   document.getElementById('fab').style.display = tab==='match' ? 'none' : 'grid';
 }
 
+function _eingabeOffen(){
+  const root=document.getElementById('main');
+  return (tab==='match' || tab==='settings') && root._renderTab===tab
+    && !!root.firstElementChild && root._renderNode===root.firstElementChild;
+}
+let _renderAuftrag=null;
+function _renderAuftragAbbrechen(){
+  const a=_renderAuftrag;
+  if(!a)return;
+  _renderAuftrag=null;
+  cancelAnimationFrame(a.frame);clearTimeout(a.timer);
+  a.root.inert=a.inert;
+  if(a.busy===null)a.root.removeAttribute('aria-busy');else a.root.setAttribute('aria-busy',a.busy);
+}
+function _renderNachEingabe(){
+  // Ein kalter Reiter kann länger als ein Bild rechnen. Der gewählte Knopf
+  // muss trotzdem sofort antworten. rAF ALLEIN liegt noch vor dem Malen:
+  // erst die Aufgabe danach baut die Ansicht. Mehrere Taps teilen einen
+  // Auftrag und zeichnen nur die letzte Absicht, nicht jede Zwischenstation.
+  renderNav();
+  const root=document.getElementById('main');
+  if(_renderAuftrag && _renderAuftrag.root!==root)_renderAuftragAbbrechen();
+  let a=_renderAuftrag;
+  if(!a){
+    a={root,inert:root.inert,busy:root.getAttribute('aria-busy'),frame:0,timer:0};
+    _renderAuftrag=a;
+    a.frame=requestAnimationFrame(()=>{
+      if(_renderAuftrag!==a)return;
+      a.timer=setTimeout(()=>{
+        if(_renderAuftrag!==a)return;
+        const aktuell=document.getElementById('main')===a.root;
+        _renderAuftragAbbrechen();
+        if(aktuell)render();
+      },0);
+    });
+  }
+  root.setAttribute('aria-busy','true');
+  // Nur beim Wechsel des Reiters: die alte Ergebnisliste darf kein Profil
+  // oder Match mehr öffnen. Filter derselben Ansicht bleiben bedienbar,
+  // damit ein zweiter schneller Tap seine erste Wahl ersetzen kann.
+  root.inert=root._renderTab!==tab || a.inert;
+}
+
 function render(){
+  // Direkte Aktualisierungen (z.B. Datenladen) besitzen Vorrang. Ein alter
+  // Frame darf danach weder Formulare ersetzen noch Eingaben wieder sperren.
+  _renderAuftragAbbrechen();
   renderNav();
   const v={ranking:vRanking,positions:vPositions,awards:vAwards,teams:vTeams,history:vHistory,match:vMatch,settings:vSettings}[tab];
   const root=document.getElementById('main');
@@ -172,6 +222,7 @@ function render(){
     root._renderVersion=_cache.version;
     root._renderNode=root.firstElementChild;
   }
+  root._renderTab=tab;
   schlittenFahren(root);
 }
 
