@@ -220,7 +220,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1054**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1061**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -347,6 +347,33 @@ Einstellungen sind ausgenommen. Die fünf Navigationsknöpfe werden einmal
 gebaut und gebunden, danach ändert sich nur ihre aktive Klasse. Kein
 unbegrenzter HTML-Cache je Ansicht oder Filter.
 
+Benutzerseitige Reiter-/Filterwechsel verwenden `_renderNachEingabe`:
+die Navigation antwortet synchron, genau ein Frame mit anschließender Aufgabe
+baut die zuletzt gewählte Ansicht. Während eines Reiterwechsels ist der alte
+Inhalt inert, Filter derselben Ansicht bleiben für die nächste Wahl bedienbar.
+Ein direktes `render` oder ein anderer Root entzieht dem alten Auftrag den
+Besitz und stellt die vorherige Eingabefreigabe wieder her. `aria-busy` und
+`aria-current` machen den Zustand auch ohne Farbe erkennbar. `bind` bindet nur
+den Hauptinhalt, keine Knöpfe eines gleichzeitig geöffneten Blatts.
+`_eingabeOffen` erkennt ein bereits aufgebautes lebendes Match-/Settingsformular:
+auch vorher gestartete Datenabrufe aktualisieren darin nur Daten und Vorschau,
+nicht den Eingabe-DOM. Abruffehler stehen als Hinweis statt anstelle des
+Formulars; freier, noch nicht ausgewählter Suchtext geht so nicht verloren.
+
+Die Match-Eingabe hält mit `_cache._matchInputMemo` genau das letzte
+`computeMatch`-Ergebnis, gebunden an Version, Monat, Aufstellung, Rollen,
+Stand und Quellenreferenzen. Chance, Vorschau und Speichern teilen diese
+Rechnung; die Formel wird nicht kopiert. Unveränderte Chancen behalten ihren
+DOM. Zustand, Stand und Speichergültigkeit antworten sofort, die Vorschau
+zeichnet höchstens einmal je Frame und prüft ihren Formular-Root. Die
+Teamsuche aktualisiert über `vTeams(true)` ausschließlich ihre Ergebnisliste
+aus derselben Vorlage, nicht das Eingabefeld. Cursor, Fokus und laufende
+IME-Komposition bleiben erhalten; alte Aufgaben verändern keinen neuen Reiter.
+Comboboxen unterstützen Pfeiltasten, Enter und Escape samt ARIA-Auswahl.
+Speichern hält eine sofortige Einzelsperre und einen Eingabesnapshot; eine
+verspätete Antwort löscht keinen zwischenzeitlich geänderten Entwurf. Ein
+bereits erfolgter Insert wird nach einem Folgefehler nicht erneut angeboten.
+
 Ein Topf mit einem Schlüssel, der die Version enthält, **wächst über die
 Versionen**: er braucht eine Obergrenze, ab der er geräumt wird. Sieben
 hatten keine — darunter der der Auszeichnungen, der zu jeder Version zwölf
@@ -467,9 +494,10 @@ derselben Aufgabe, und die neue Rangliste stand erst nach dem Generator auf
 dem Bildschirm. `tests/ambient` sieht nach, dass er im selben Aufruf nicht
 läuft.
 
-`_tickDaten` lässt außerdem ein offenes Blatt und den Eingabe-Tab in Ruhe:
+`_tickDaten` lässt außerdem ein offenes Blatt, den Eingabe-Tab und die
+Einstellungen in Ruhe:
 was man gerade unter den Fingern hat, wird nicht neu gezeichnet. `tests/blatt`
-misst alle vier Bedingungen.
+und `tests/bedienung` messen diese Bedingungen.
 
 > **Pflegepflicht.** Kommt ein Zeitgeber dazu oder ändert seine Bedingung,
 > steht das hier.
@@ -508,6 +536,9 @@ globalem Zustand ist.
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie, jede CSS-Variable, die auch gelesen wird, die Erklärung jeder Award-Kachel, die die Schwelle nennt, die gilt, und jede Schriftangabe mit einer Schriftfamilie dahinter, jedes Award-Zeichen, das im Katalog steht, das Podest, auf dem punktgleiche Halter denselben Platz tragen, und keinen Award, der wie eine Chronik heißt, die etwas anderes misst, und jede Award-Kachel, die Zahl und Einheit aus derselben Tabelle nennt wie Blatt und Profil, und jedes Zeichen, das seinen Strich aus einer Regel zieht, und den Beleg, der seine Stichprobe zählt, die Halter im Feld zeigt, den Vorsprung in Ergebnissen richtig zählt, ohne Statistiksprache auskommt und beim Bestwert endet, und den Knopf des Rekord-Blatts, der den Halter nennt, und die Meisterbühne, deren Tage an der Spitze und deren Titelrennen aus den rohen Partien nachgerechnet werden, samt Karte und Blatt des Meisters ohne Saison-ID und ohne Satzfragment, und jede Rekordkarte, deren Feldstreifen den Halter am Ende und den Ersten dahinter aus derselben Reihenfolge zeigt wie das Blatt, und die Auslieferung ohne Kommentare | 223 |
 | `ambient` | Story-Snapshots, verlustfreie Bündel samt positiven und negativen Matchanlässen, historische Duellzuordnung, heutige rollende Ewige Tafel, 15-Uhr-Funfacts samt Mehrtages-Backfill, Realtime-Schutz, getrennte Score-/Anlassgrafiken mit publizierter Variationsspur, visuelle Stabilität, Feed-Texte und Story-Details | 582 |
 | `leistung` | DOM- und Navigations-Wiederverwendung samt Fokus und frischer Datenversion, Kalenderwechsel ohne Datenänderung, tatsächlich verzögerter vollständiger Feed samt großem Spieltag, Tageskarte, Filter-, Versions- und Schließschutz, begrenzte Portionen und Idle-Rückfall, gebündelte Datenabfragen, Fehler/Teilantworten, Wiederholen und frischer Folgedurchlauf auch während der Story-Synchronisierung, und Polling ohne unnötigen Zusatzabruf oder Verhungern langsamer Abrufe | 49 |
+| `bedienung` | Sofortige Navigationsantwort vor dem teuren Render, nur die letzte schnelle Auswahl, inerte alte Reiter, Freigabe nach Zeichnen/Abbrechen, alte Frame-Aufträge ohne Besitz, aktuelle Datenversion, ARIA-Navigation und geschützte Einstellungen, freie Texte/Cursor/Fokus und Regler auch bei späten oder fehlerhaften Datenantworten | 16 |
+| `bewegung` | Ein Zeichenauftrag je Wischbild, echte kurze Wischgeschwindigkeit samt Pause und Wegschwellen, Abbruch/Zweitfinger, Eingabe- und Scrollbesitz, Rückzug, Maus, neue und geschlossene Blätter ohne alte Zugbilder, transformbasierte Wähler mit unveränderter Zielgeometrie, Bewegungsruhe, Scrollbegrenzung, Knopfgeste und sichtbarer Tastaturfokus | 24 |
+| `eingabe` | Eine kanonische Matchrechnung samt gültigem Memo, unverändertes Chancen-DOM, gebündelte Vorschau, unmittelbarer Stand und Gültigkeit, Eingabegrenzen, IME und Tastatur-/Pointerauswahl, stabile Teamsuche, alte Aufgaben, Einzelspeicherung, Fehlerfreigabe, Erfolg/Fehler nach Insert ohne Verlust neuer Entwürfe, Edit-Snapshot und eigene Blattbindungen | 42 |
 | `mobil` | Scrollreset vor neuem Markup, Blattstapel und Scroll-Restore, Besitzerprüfung jeder verspäteten Übergangs- und Wischphase, echtes verzögertes Leeren, auf das Profil begrenzte Knopfbindungen und bedarfsweises Layout samt unberührtem Wappen, erreichbaren Abschnitten und Handybreite — im Browser, ohne geräteabhängige Zeitgrenzen | 21 |
 | `prefix` | Vollständige kanonische Sim-Ergebnisse und History an exakten historischen Prefixen, gleichen Zeitstempeln, fremden Teilmengen und Array-Kopien, einmaliger Sim für Rekord und Saison-Peak, begrenzte Cache-Töpfe, Konfigurationswechsel, Edits, Adds mit und ohne Tick, Quellenidentität, Empty-State, stabile Saison-Gruppierungen, Monatsmemo und alle abgeleiteten Maps beim Kalenderwechsel — ohne Browser | 76 |
 | `rechnen` | Gültige Nullwerte und fehlende Defaults, unveränderte gespeicherte DB-Deltas trotz Sliderwechsel, einmaliges Runden neuer Deltas, zentrale Periodenquelle, H2H-Invalidierung bei Add/Edit/Hidden/Delete, Kalenderwechsel ohne neue Partie, identische Erwartung in Engine, Duo, Rollenwert und Badge-Trigger, Prestige-Gruppensummen und -Gesamtzahl sowie dieselbe Restverteilung in Laufbahn und Story — ohne Browser | 36 |
@@ -526,6 +557,9 @@ Rendern mit den echten 466 Fixture-Partien, lokal ohne Backend. Details und
 Vergleich stehen in `PERFORMANCE.md`.
 `--cpu=4 --mobil` ergänzt CPU-Drosselung, Bildabstände und Longtasks als
 Annäherung an schwächere Telefone, nicht als Garantie für reale Geräte.
+`node tools/interaktion.cjs --cpu=4` misst ergänzend schnelle Score-Tipps,
+Suchbuchstaben, kalte und schnelle Reiterwechsel sowie den Blattzug. Eingaben
+sind synthetisch gequeued; rAF-Gelegenheiten sind weder Hardware-FPS noch INP.
 
 > **Pflegepflicht.** Ändert sich eine Zahl in dieser Tabelle oder kommt eine
 > Suite dazu, wird die Tabelle im selben Commit nachgezogen.
@@ -609,7 +643,11 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   Zahl und Lage der Knöpfe (`:has`, `--n`, `--i`); weil jeder Wechsel die
   Ansicht neu zeichnet, merkt sich der Druck auf einen Knopf die alte Lage,
   und `schlittenFahren` (aus `render` und `openSheet`) lässt ihn von dort
-  anfahren — sonst spränge er. Ein Wähler mit verschieden breiten Knöpfen
+  anfahren — sonst spränge er. Die Box behält ihre feste Lage und Breite;
+  ausschließlich `transform` verschiebt sie. Animiertes `left`/`width`
+  löste sonst in jedem Bild ein neues Layout aus. Der Test misst die echte
+  Lage einschließlich Transformationsmatrix, nicht nur den CSS-Startpunkt.
+  Ein Wähler mit verschieden breiten Knöpfen
   trägt `.roll` und seinen Strich am Knopf; dort kann nichts gleiten. Der
   äußere Wähler ist die erste Wahl einer Seite: in der Liga der Zeitraum,
   der vorher als innere Ebene gleichrangig über „Spieler · Teams" und der
@@ -655,6 +693,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   SVG der Wappen. `_afterTransition` horcht auf `transitionend` des eigenen
   Elements und hält einen Timer als Rückfall, denn eine Transition, die nie
   startet, endet auch nie. `tests/blatt` misst den Abstand zwischen beidem.
+  **Der Finger besitzt den Zug.** Eingabefelder und bereits gescrollte
+  innere Listen gehören nicht der Schließgeste. Waagerechte/aufwärts gerichtete
+  Gesten lösen den nicht passiven Zug-Lauscher. Gezeichnet wird nur der
+  jüngste Stand einmal je Frame; Öffnen, Schließen, Abbruch oder ein zweiter
+  Finger entziehen alten Bildern den Besitz und entfernen `is-dragging`.
+  Wischgeschwindigkeit zählt die letzte kurze Strecke, nicht Gesamtweg geteilt
+  durch die Zeit seit der letzten Bewegung. Pause, Mindestweg und langer
+  langsamer Zug bleiben eigene Fälle. Bei Bewegungsruhe werden Blätter sofort
+  getauscht/geleert. Nur Knöpfe verzichten auf die Doppeltipp-Zoom-Geste;
+  Seitenzoom und natives Scrollen bleiben frei, Tastaturfokus ist sichtbar.
   Im Feed gliedert der **Tageskopf** (`.nf-tag`) die Tafel: Wochentag
   ausgeschrieben, Datum daneben, die Zahl der Karten rechts — und sonst
   nichts. Er trug zuerst die Schlagzeile der wichtigsten Karte, und

@@ -153,3 +153,73 @@ wurden gegen die Vergleichsfassung zunächst rot nachgewiesen; geprüft werden
 auch Bruchteile, gleiche Zeitstempel, Kalendergrenzen und direkte Quellenwechsel.
 `mobil` prüft tatsächliches Verhalten und Arbeitsmenge, keine empfindlichen
 Millisekundenlimits.
+
+## Dritte Runde: Eingaben und Bewegung
+
+Vergleich: `5cbcb75`, Chromium 151, 390 × 844 px, gleiche Fixture und CPU ×4.
+Drei Läufe je Aktion mit `tools/interaktion.cjs`. Eingaben stehen synthetisch
+per Timer in der Warteschlange. Handlerzeit, Eingaberückstau, Longtasks und
+rAF-Abstände sind getrennte Messwerte, keine echte Handy-FPS- oder INP-Messung.
+
+- Die Navigation quittiert Reiterwechsel vor dem teuren Neuzeichnen.
+  Auch schnelle Filterwechsel teilen einen Auftrag; nur das letzte Ziel wird gebaut.
+  Direktes Rendern und neue Roots entziehen alten Aufgaben den Besitz.
+- Match-Zustand, Score und Gültigkeit reagieren unmittelbar; Vorschauarbeit
+  wird je Bild zusammengefasst. Chance, Deltas und Speichern verwenden das
+  letzte kanonische `computeMatch`-Ergebnis, nicht separate Berechnungen.
+- Suchen behalten das Eingabefeld. Teams zeichnen nur passende Ergebnisse
+  aus derselben Vorlage; Cursor, Fokus und IME-Komposition bleiben erhalten.
+  Die Spielerauswahl hat Pfeiltasten-/Enter-/Escape- und Pointerbedienung.
+- Doppeltippen speichert nicht zweimal. Speicherantworten sind an ihren
+  Entwurf gebunden; neuere Eingaben bleiben auch nach Erfolg oder Fehler
+  erhalten. Bereits gestartete Datenabrufe ersetzen keine lebenden Formulare,
+  auch nicht bei Abruffehlern. Hauptansichtsbindungen bleiben im Hauptinhalt.
+- Segmentwähler bewegen ihre feste Box per `transform`, nicht per animiertem
+  `left`/`width`. Blattgesten bündeln Zeichnen je Frame, messen tatsächliche
+  kurze Wischgeschwindigkeit und behandeln Abbruch/Zweitfinger sicher.
+  Scrollbesitz, Bewegungsruhe und sichtbarer Tastaturfokus bleiben berücksichtigt.
+
+| Eingabediagnose | Vorher | Nachher |
+|---|--:|--:|
+| Zehn Score-Tipps: Handler-Median | 2,4 ms | 0,5 ms |
+| `computeMatch` dafür | 20 | 10 |
+| Schneller Score-Burst: Handler-Median | 1,2 ms | 0,3 ms |
+| Fünf schnelle Tababsichten: gebaute Ansichten | 5 | 2 |
+| Dabei maximaler Eingaberückstau | 610,3 ms | 350,6 ms |
+| Dabei Longtasks | 3 | 1 |
+| Isolierte Segmentbewegung: Layouts je 300-ms-Übergang | 18–19 | 0 |
+
+Die Segmentmessung isoliert einen Drei-Knopf-Wähler in derselben App-Hülle:
+vorher entstanden rund 6–8 ms Layoutarbeit je Bewegung, nachher keine.
+Das ist weniger Arbeit je Bild, kein pauschaler Nachweis höherer GPU-FPS.
+Score-Endstände, Speicherzustände, Navigationsziele und Eingabefokus stimmen
+in allen drei Diagnoseläufen. Bei 20 schnellen Score-Tipps entstehen jetzt
+je nach Framephase vier bis acht Berechnungen statt dreißig.
+
+### Verbleibende Grenzen
+
+Der kalte Positions-Klickhandler antwortet jetzt mit rund 0,8 statt 313,7 ms,
+aber sein nachgelagerter Render bleibt ein rund 291-ms-Longtask. Der größte
+rAF-Abstand bleibt rund 333 ms; die vollständige Ansicht erscheint dadurch
+nicht schneller. Zusammenfassen spart Zwischenansichten, beseitigt aber nicht
+die Kosten der endgültigen kalten Berechnung. Auch der zuvor dokumentierte
+kalte Story-Generator bleibt ein Engpass.
+
+Teamsuche vermeidet den vollständigen Render und erhält den Fokus; ein
+FPS-Gewinn ist dafür in diesen Läufen nicht nachgewiesen. Blattziehen und
+Spielersuche hatten bereits vorher keine Longtasks. Reale Telefone, Safari,
+Bildschirmtastaturen und Netzwerk sind nicht durch CPU-Drosselung ersetzbar;
+durchgehend 60 Bilder/s oder vollständige Lagfreiheit sind nicht zugesichert.
+
+```powershell
+node tools/interaktion.cjs --cpu=4 --runden=3 --ausgabe=dist/interaktion.json
+node tools/interaktion.cjs --cpu=4 --runden=3 --waehler-only --ausgabe=dist/waehler.json
+node tests/bedienung.test.js
+node tests/bewegung.test.js
+node tests/eingabe.test.js
+```
+
+Die drei neuen Suiten prüfen 16 Bedienungs-, 24 Bewegungs- und 42
+Eingabeinvarianten am gebauten Artefakt. Neue Zusicherungen wurden vor ihrer
+jeweiligen Behebung rot ausgeführt; Geometriegrenzen bleiben unverändert.
+Elo-/Prestigeformeln und publizierte Story-/Grafikentscheidungen sind unverändert.

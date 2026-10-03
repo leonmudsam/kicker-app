@@ -1,9 +1,12 @@
 // ╔═══ §5.4 ─── VIEW: TEAMS ────────────────────────────────────────────╗
 //     Team-Tab mit Team-Statistiken und Top-Teams.
 // ╚═════════════════════════════════════════════════════════════════════════╝
-function vTeams(){
+function vTeams(nurErgebnis=false){
   const T=teamStats().filter(t=>t.g>=4);
-  if(!T.length)return `<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${emptyState('handshake','Noch nicht genug Daten')}`;
+  if(!T.length){
+    const html=emptyState('handshake','Noch nicht genug Daten');
+    return nurErgebnis?{kopf:'Ab 4 gemeinsamen Spielen',html}:`<div class="view-head"><h2>Teams</h2><p>Ab 4 gemeinsamen Spielen</p></div>${html}`;
+  }
   const showBest=teamView!=='worst';
   
   // ═══ SORTIERUNG BASIEREND AUF teamSort VARIABLE ═══
@@ -119,8 +122,13 @@ function vTeams(){
   }).join('');
 
 
+  const ergebnis={kopf:`${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}`,
+    html:arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden')};
+  // Die Suche zeichnet nur die Ergebnisse. Keine zweite Filter-/Sortierformel
+  // und kein Ersetzen des Eingabefelds samt Fokus, Cursor oder IME-Komposition.
+  if(nurErgebnis) return ergebnis;
   return `
-    <div class="view-head"><h2>Teams</h2><p>${arrF.length} Duo${arrF.length===1?'':'s'}${_tq?' gefunden':' ab 4 gemeinsamen Spielen, über alle Partien'}</p></div>
+    <div class="view-head"><h2>Teams</h2><p id="teamCount">${ergebnis.kopf}</p></div>
     ${einblickHtml('netz', 'ab 4 Partien')}
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -137,7 +145,7 @@ function vTeams(){
       <button data-teamsort="gd" class="${teamSort==='gd'?'on':''}">Torbilanz</button>
       <button data-teamsort="elo" class="${teamSort==='elo'?'on':''}">Elo-Zuwachs</button>
     </div>
-    ${arrF.length ? `<div class="rlist">${rows}</div>` : emptyState('search','Keine Teams gefunden')}`;
+    <div id="teamResults">${ergebnis.html}</div>`;
 }
 
 
@@ -206,7 +214,7 @@ function vHistory(){
       <div style="flex-shrink:0;color:var(--muted);font-size:11px;font-family:'Sometype Mono',monospace;text-align:center;padding:0 2px;white-space:nowrap">
         <b style="color:var(--ink)">${currentPage+1}</b> / <b style="color:var(--ink)">${totalPages}</b>
       </div>
-      <button class="btn ghost sm" id="nextPageBtn" style="flex:1;min-width:0;padding:10px 8px;white-space:nowrap" ${currentPage>=(totalPages-1)?'disabled':''}>Weiter →</button>
+      <button class="btn ghost sm" id="nextPageBtn" data-historymax="${totalPages-1}" style="flex:1;min-width:0;padding:10px 8px;white-space:nowrap" ${currentPage>=(totalPages-1)?'disabled':''}>Weiter →</button>
     </div>
   ` : '';
 
@@ -424,17 +432,48 @@ function vSettings(){
 //     Achievement-Toasts (Badge-Trigger via getBadgeEarnedCache).
 // ╚═════════════════════════════════════════════════════════════════════════╝
 function readM(){
-  document.querySelectorAll('[data-p]').forEach(s=>M[s.dataset.p]=s.value);
-  document.querySelectorAll('[data-pos]').forEach(s=>M['p'+s.dataset.pos]=s.value);
+  const main=document.getElementById('main');if(!main) return;
+  main.querySelectorAll('[data-p]').forEach(s=>M[s.dataset.p]=s.value);
+  main.querySelectorAll('[data-pos]').forEach(s=>M['p'+s.dataset.pos]=s.value);
 }
 function validM(){const ids=[M.A1,M.A2,M.B1,M.B2];
   return !ids.some(x=>!x)&&new Set(ids).size===4&&M.sa!==M.sb
     &&M.pA1!==M.pA2&&M.pB1!==M.pB2;}
 function teamsFromM(){return{teamA:[{id:M.A1,pos:M.pA1},{id:M.A2,pos:M.pA2}],teamB:[{id:M.B1,pos:M.pB1},{id:M.B2,pos:M.pB2}]};}
+// Genau das letzte vollständige Eingabeergebnis, keine wachsende Sammlung
+// aller getesteten Aufstellungen. Die Rechnung bleibt computeMatch; Chance,
+// Vorschau und Speichern lesen dasselbe Ergebnis ohne eigene Elo-Formel.
+function _matchInputResult(){
+  const key=JSON.stringify([_cache.version,currentSeason().id,M.A1,M.A2,M.B1,M.B2,
+    M.pA1,M.pA2,M.pB1,M.pB2,M.sa,M.sb]);
+  const memo=_cache._matchInputMemo;
+  if(memo && memo.key===key && memo.matches===matches && memo.players===players && memo.cfg===cfg) return memo.result;
+  const {teamA,teamB}=teamsFromM();
+  const result=computeMatch(teamA,teamB,M.sa>M.sb?'A':'B',M.sa,M.sb);
+  _cache._matchInputMemo={key,matches,players,cfg,result};
+  return result;
+}
+let _matchPreviewPlan=null;
+function requestMatchPreview(){
+  const slot=document.getElementById('previewSlot'),save=document.getElementById('saveM');
+  if(!slot || !save) return;
+  // Validität und Zahlen antworten sofort; Wappen und analytische Vorschau
+  // höchstens einmal im nächsten Bild, immer für den letzten Eingabestand.
+  save.disabled=!!doSaveMatch._busy || !validM();
+  if(_matchPreviewPlan && _matchPreviewPlan.slot===slot) return;
+  if(_matchPreviewPlan) cancelAnimationFrame(_matchPreviewPlan.frame);
+  const plan={slot,frame:0};_matchPreviewPlan=plan;
+  plan.frame=requestAnimationFrame(()=>{
+    if(_matchPreviewPlan!==plan) return;
+    _matchPreviewPlan=null;
+    if(document.getElementById('previewSlot')===slot) updatePreview();
+  });
+}
 function updatePreview(){
+  if(_matchPreviewPlan){cancelAnimationFrame(_matchPreviewPlan.frame);_matchPreviewPlan=null;}
   const slot = document.getElementById('previewSlot');
   const save = document.getElementById('saveM');
-  if(!slot) return;
+  if(!slot || !save) return;
   const P = pmap();
   const gSim = getGlobalSim();
   const seasonElo = id => gSim.elo[id] ?? cfg.start_elo;
@@ -451,8 +490,12 @@ function updatePreview(){
   // stehen — nicht erst, wenn der Stand eingetragen ist: beim Aufstellen ist
   // sie die Frage, nach dem Spiel nur noch eine Zahl.
   const chanceSlot = document.getElementById('chanceSlot');
-  if(chanceSlot) chanceSlot.innerHTML = (ids.length === 4 && new Set(ids).size === 4
-    && M.pA1 !== M.pA2 && M.pB1 !== M.pB2) ? _matchChanceHtml() : '';
+  const aufgestellt=ids.length===4 && new Set(ids).size===4 && M.pA1!==M.pA2 && M.pB1!==M.pB2;
+  const c=aufgestellt?_matchInputResult():null;
+  if(chanceSlot){
+    const html=c?_matchChanceHtml(c.expA):'';
+    if(chanceSlot._matchChanceHtml!==html){chanceSlot.innerHTML=html;chanceSlot._matchChanceHtml=html;}
+  }
   if(new Set(ids).size !== ids.length){
     slot.innerHTML = `<div class="preview" style="color:var(--red);font-size:12px;text-align:center">Ein Spieler steht doppelt.</div>`;
     save.disabled = true; return;
@@ -467,7 +510,6 @@ function updatePreview(){
 
   const winner = M.sa > M.sb ? 'A' : 'B';
   const{teamA, teamB} = teamsFromM();
-  const c = computeMatch(teamA, teamB, winner, M.sa, M.sb);
   const line = s => {
     const d = c.res[s.id];
     return `<div class="delta-row">
@@ -489,7 +531,7 @@ function updatePreview(){
       ${line(teamB[0])}${line(teamB[1])}
     </div>
   </div>`;
-  save.disabled = false;
+  save.disabled = !!doSaveMatch._busy;
 }
 
 // ── Die Siegchance beim Aufstellen [§C27] ────────────────────────────
@@ -497,12 +539,8 @@ function updatePreview(){
 // dazu und der Balken der Vorschau, aus derselben Rechnung, mit der die
 // Partie danach gewertet wird (`computeMatch`). Ohne Erklärsatz — die Zahl
 // über zwei Teams erklärt sich selbst. Das Wort zeigt zum Favoriten.
-function _matchChanceHtml(){
-  let c;
-  try {
-    const {teamA, teamB} = teamsFromM();
-    c = computeMatch(teamA, teamB, 'A', 10, 0).expA;
-  } catch(e){ return ''; }
+function _matchChanceHtml(c){
+  if(c===undefined){try {c=_matchInputResult().expA;}catch(e){return '';}}
   if(c == null || !isFinite(c)) return '';
   const pA = Math.round(c * 100), pB = 100 - pA;
   const wort = chanceWort(Math.max(c, 1 - c));
@@ -513,12 +551,15 @@ function _matchChanceHtml(){
 }
 
 async function doSaveMatch(){
+  if(doSaveMatch._busy) return;
   readM(); if(!validM()){toast('Match unvollständig',true);return;}
+  const state=M,draft={...M},save=document.getElementById('saveM'),saveHtml=save?save.innerHTML:'';
+  doSaveMatch._busy=true;
+  if(save){save.disabled=true;save.setAttribute('aria-busy','true');save.textContent='Speichere…';}
+  let insertedRow=null;
+  try {
   const winner = M.sa > M.sb ? 'A' : 'B';
-  const{teamA, teamB} = teamsFromM();
-
-  // players.elo = Saison-Elo → direkt nutzen
-  const c = computeMatch(teamA, teamB, winner, M.sa, M.sb);
+  const c = _matchInputResult();
 
   const row = {
     a1:M.A1, a1_pos:M.pA1, a2:M.A2, a2_pos:M.pA2,
@@ -534,6 +575,7 @@ async function doSaveMatch(){
   // Fallback: falls select() nicht greift, created_at lokal setzen,
   // sonst fiele das frische Match aus matchesInSeason heraus.
   const savedRow = inserted || {...row, created_at:new Date().toISOString()};
+  insertedRow=savedRow;
 
   // Lokal updaten, dann über die EINE kanonische Engine neu berechnen.
   // persistRecalc schreibt atk, Match-Deltas und Saison-Elos konsistent.
@@ -559,12 +601,32 @@ async function doSaveMatch(){
     // Die Wirkung in der zweiten Zeile, und ein Weg zurück: wer sich beim
     // Stand vertippt hat, musste bisher die Partie suchen, öffnen und
     // löschen.
-    const sieger = winner === 'A' ? [M.A1, M.A2] : [M.B1, M.B2];
+    const sieger = winner === 'A' ? [row.a1,row.a2] : [row.b1,row.b2];
     toast('Match gespeichert', 'ok', {
       sub: sieger.map(pname).join(' & ') + ' gewinnen ' + standFuer(savedRow),
       aktion: {label:'Rückgängig', fn: () => partieLoeschen(savedRow.id)}});
   }
-  M = {A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
-  tab = 'ranking'; await loadAll();
+  // Ein während des Wartens geänderter Entwurf und ein bewusst gewechselter
+  // Reiter gehören dem Nutzer, nicht der verspäteten Speicherantwort.
+  if(M===state && Object.keys(draft).every(k=>M[k]===draft[k])){
+    M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
+    if(tab==='match') tab='ranking';
+  }
+  await loadAll();
+  } catch(e){
+    console.warn('Match speichern:',e);
+    // Nach erfolgreichem Insert ist die Partie schon gespeichert. Den alten
+    // Entwurf nicht als erneut speicherbare Kopie liegenlassen, falls nur
+    // das Nachladen oder eine Folgepersistenz fehlschlägt.
+    if(insertedRow && M===state && Object.keys(draft).every(k=>M[k]===draft[k])){
+      M={A1:'',A2:'',B1:'',B2:'',pA1:'atk',pA2:'def',pB1:'atk',pB2:'def',sa:0,sb:0};
+      if(tab==='match') render();
+    }
+    toast(insertedRow?'Match gespeichert. Nachladen fehlgeschlagen.':'Speichern fehlgeschlagen.',true);
+  } finally {
+    doSaveMatch._busy=false;
+    if(save && save.isConnected){save.removeAttribute('aria-busy');save.innerHTML=saveHtml;}
+    if(tab==='match') updatePreview();
+  }
 }
 

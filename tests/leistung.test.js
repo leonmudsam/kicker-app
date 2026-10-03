@@ -103,6 +103,9 @@ const ok=(c,msg)=>{checks++;if(!c)fails++;console.log((c?'  ok  ':'  ✗   ')+ms
     await K('closeSheet(true);_newsCardHtmlM2=window.__cardFn');
 
     // Vier Backend-Leseabfragen pro Durchlauf, niemals parallele Durchläufe.
+    // Der vorige DOM-Test stand in den Einstellungen. Hier wird bewusst
+    // eine Anzeige geprüft; Formulare werden bei Datenantworten geschont.
+    await K("tab='history';render()");
     await K(`window.__laden={q:[],aktiv:0,max:0,aufrufe:0,render:0,sync:0,p:[]};
       window.__from=sb.from;window.__render=render;window.__arch=autoArchiveSeasons;window.__sync=syncStoriesViaDb;
       render=()=>window.__laden.render++;autoArchiveSeasons=async()=>{};syncStoriesViaDb=async()=>{window.__laden.sync++};

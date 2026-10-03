@@ -12,7 +12,9 @@ function _tickDaten(){
   // Ein offenes Blatt und der Eingabe-Tab werden nicht unter den Fingern
   // neu gezeichnet — diese Bedingung stand schon immer im Takt.
   if(document.getElementById('sheet').classList.contains('show')) return;
-  if(tab === 'match') return;
+  // Auch ein Regler oder Passwort-/Konfigurationsfeld bleibt unter dem
+  // Finger stehen; explizites Speichern lädt weiterhin unmittelbar nach.
+  if(tab === 'match' || tab === 'settings') return;
   loadAll({nachladen:false});
 }
 function _tickVersion(){ if(!document.hidden) checkForUpdate(); }

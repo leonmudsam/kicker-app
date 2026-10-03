@@ -209,7 +209,7 @@ const ok = (c, msg, det) => {
   // waagerechte Scrollen still) und das Blatt verschieben.
   await K(`showLaufbahn(${JSON.stringify(IDS[8])})`);
   await page.waitForTimeout(400);
-  const gesten = await page.evaluate(() => {
+  const gesten = await page.evaluate(async () => {
     const sheet = document.getElementById('sheet');
     const ziel = document.querySelector('.lb-k') || sheet;
     const feuern = (typ, x, y) => {
@@ -220,12 +220,15 @@ const ok = (c, msg, det) => {
       ziel.dispatchEvent(ev);
       return ev;
     };
-    const wisch = (dx, dy) => {
+    const wisch = async (dx, dy) => {
       sheet.style.transform = '';
       feuern('touchstart', 200, 300);
       let verhindert = false;
       for(let i = 1; i <= 10; i++)
         if(feuern('touchmove', 200 + dx*i/10, 300 + dy*i/10).defaultPrevented) verhindert = true;
+      // Der Zug zeichnet nur den jüngsten Stand je Bild. Dieselbe Geste
+      // wird am gezeichneten Bild gemessen, nicht innerhalb ihres Aufrufs.
+      await new Promise(requestAnimationFrame);
       const zug = sheet.style.transform;
       feuern('touchend', 200 + dx, 300 + dy);
       sheet.style.transform = '';
@@ -234,13 +237,13 @@ const ok = (c, msg, det) => {
     return {
       // Ein Querwisch driftet fast immer nach unten — 22 px auf 140 sind
       // eine ruhige Hand, 40 auf 160 eine normale.
-      quer:      wisch(-140, 22),
-      querStark: wisch(-160, 40),
-      querZurueck: wisch(150, 30),
+      quer:      await wisch(-140, 22),
+      querStark: await wisch(-160, 40),
+      querZurueck: await wisch(150, 30),
       // Und das Blatt muss weiter zuziehen, sonst hat der Schutz zu viel
       // verboten.
-      runter:    wisch(8, 120),
-      schraeg:   wisch(60, 110)
+      runter:    await wisch(8, 120),
+      schraeg:   await wisch(60, 110)
     };
   });
   ['quer','querStark','querZurueck'].forEach(k => {
@@ -684,7 +687,23 @@ const ok = (c, msg, det) => {
     const K = s => window.__k.eval(s), w = ms => new Promise(r => setTimeout(r, ms));
     K('closeSheet(true); openNewsFeed()');
     const sofort = document.querySelectorAll('#sheet .nf-card').length;
-    await w(250);
+    const erwartet = sofort + K('_newsFeedOffen ? _newsFeedOffen.jobs.reduce((n,j)=>n+j.anzahl,0) : 0');
+    // Idle-Takte richten sich nach der Browserlast, nicht nach einer festen
+    // Zahl Millisekunden. Auf die vollständige Liste warten, ohne ihren
+    // synchronen Prüf-Flush aufzurufen und damit die Zusicherung zu umgehen.
+    await new Promise((resolve, reject) => {
+      const liste = document.querySelector('#sheet .nf-liste');
+      let timer;
+      const horch = new MutationObserver(() => {
+        if(!K('_newsFeedOffen === null')) return;
+        clearTimeout(timer); horch.disconnect(); resolve();
+      });
+      if(K('_newsFeedOffen === null')){ resolve(); return; }
+      horch.observe(liste, {childList:true, subtree:true});
+      // Nur ein Sicherheitsende für einen wirklich steckengebliebenen
+      // Auftrag, keine Zusicherung über die Geschwindigkeit eines Geräts.
+      timer = setTimeout(() => { horch.disconnect(); reject(new Error('Der Feed-Auftrag wird nicht vollständig fertig.')); }, 8000);
+    });
     const danach = document.querySelectorAll('#sheet .nf-card').length;
     const letzte = [...document.querySelectorAll('#sheet .nf-liste .nf-card')].pop();
     const titel = letzte ? (letzte.querySelector('.nf-h') || {}).textContent : '';
@@ -692,9 +711,10 @@ const ok = (c, msg, det) => {
     await w(400);
     const blatt = !!titel && ((document.getElementById('nd') || {}).innerText || '').indexOf(titel.trim().slice(0, 20)) >= 0;
     K('closeNewsDetail(); closeSheet(true)');
-    return {sofort, danach, blatt};
+    return {sofort, danach, erwartet, blatt};
   });
-  ok(feedTeil.sofort >= 8 && feedTeil.sofort <= 24 && feedTeil.danach > feedTeil.sofort * 2 && feedTeil.blatt,
+  ok(feedTeil.sofort >= 8 && feedTeil.sofort <= 15 && feedTeil.danach === feedTeil.erwartet
+     && feedTeil.danach > feedTeil.sofort * 2 && feedTeil.blatt,
      'der Feed zeichnet zuerst die oberen Tage und reicht den Rest nach dem ersten Bild nach',
      JSON.stringify(feedTeil));
   ok(feedOffen.offen === true, 'der offene News-Feed wird als offen erkannt',
@@ -2805,7 +2825,7 @@ const ok = (c, msg, det) => {
         const on = w.querySelector(':scope > button.on'); if(!on) return;
         const aussen = w.classList.contains('ui-switch');
         const cs = getComputedStyle(w, aussen ? '::before' : '::after');
-        const links = parseFloat(cs.left), breite = parseFloat(cs.width);
+        const links = parseFloat(cs.left) + new DOMMatrix(cs.transform).m41, breite = parseFloat(cs.width);
         const mitte = links + breite / 2, soll = on.offsetLeft + on.offsetWidth / 2;
         gemessen++;
         if(Math.abs(mitte - soll) > 1.5 || (aussen && Math.abs(breite - on.offsetWidth) > 1.5))
@@ -2819,10 +2839,24 @@ const ok = (c, msg, det) => {
     const ziel = document.querySelector('#main .ui-switch [data-period="all"]');
     ziel.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true}));
     ziel.click();
+    // Die Bedienung zeigt zuerst ihre Rückmeldung und zeichnet dann die
+    // neue Ansicht. Der Beobachter wartet genau auf deren Fertigmeldung,
+    // nicht eine feste Zeit, die schon das Gleiten verstreichen ließe.
+    await new Promise(resolve => {
+      const main = document.getElementById('main');
+      if(main.getAttribute('aria-busy') !== 'true'){ resolve(); return; }
+      const horch = new MutationObserver(() => {
+        if(main.getAttribute('aria-busy') === 'true') return;
+        horch.disconnect(); resolve();
+      });
+      horch.observe(main, {childList:true, attributes:true, attributeFilter:['aria-busy']});
+    });
     const w2 = document.querySelector('#main .ui-switch');
-    const start = parseFloat(getComputedStyle(w2, '::before').left);
+    const anfang = getComputedStyle(w2, '::before');
+    const start = parseFloat(anfang.left) + new DOMMatrix(anfang.transform).m41;
     await warte();
-    const ende = parseFloat(getComputedStyle(w2, '::before').left);
+    const fertig = getComputedStyle(w2, '::before');
+    const ende = parseFloat(fertig.left) + new DOMMatrix(fertig.transform).m41;
     // Die Tage des Monats als Zellen: so viele, wie der Monat hat, und der
     // heutige gerahmt.
     K("period='season';render()");
@@ -3474,18 +3508,29 @@ return JSON.stringify(funde,null,1);
   //    eine Zeile ohne Inhalt — gezeichnet wird erst beim Aufklappen —, auf
   //    bleibt er beim Neuzeichnen im selben Reiter, und ein neuer Reiter
   //    beginnt geschlossen. Offen liegt kein Text auf einem anderen.
-  const einblick = await page.evaluate((pruefenSrc) => {
+  const einblick = await page.evaluate(async (pruefenSrc) => {
     const pruefen = eval('(' + pruefenSrc + ')');
     const K = window.__k.eval.bind(window.__k);
     const out = {};
+    const gezeichnet = () => new Promise((resolve, reject) => {
+      const main = document.getElementById('main');
+      if(main.getAttribute('aria-busy') !== 'true'){ resolve(); return; }
+      let timer;
+      const horch = new MutationObserver(() => {
+        if(main.getAttribute('aria-busy') === 'true') return;
+        clearTimeout(timer); horch.disconnect(); resolve();
+      });
+      horch.observe(main, {childList:true, attributes:true, attributeFilter:['aria-busy']});
+      timer = setTimeout(() => { horch.disconnect(); reject(new Error('Der Reiterwechsel wird nicht fertig.')); }, 8000);
+    });
     // Im Liga-Reiter gibt es keinen: das Titelrennen war dieselbe Frage wie
     // der Positionsverlauf darunter.
     K(`closeSheet(true); tab='ranking'; period='season'; render(); 'x'`);
     out.liga = document.querySelectorAll('#main [data-einblick]').length;
-    [['positions', 'rollen'], ['teams', 'netz']].forEach(([t, key]) => {
+    for(const [t, key] of [['positions', 'rollen'], ['teams', 'netz']]){
       K(`closeSheet(true); tab='${t}'; period='season'; einblickOffen=''; render(); 'x'`);
       const box = document.querySelector('#main [data-einblick="' + key + '"]');
-      if(!box){ out[key] = {fehlt:true}; return; }
+      if(!box){ out[key] = {fehlt:true}; continue; }
       const zu = {h: box.getBoundingClientRect().height, leer: !box.querySelector('.einblick-i').innerHTML.trim()};
       box.querySelector('.einblick-k').click();
       document.getAnimations().forEach(a => { try { a.finish(); } catch(e){} });
@@ -3495,10 +3540,12 @@ return JSON.stringify(funde,null,1);
       K('render(); "x"');
       const nachRender = !!document.querySelector('#main [data-einblick="' + key + '"].auf svg');
       document.querySelector('.bnav [data-nav="history"], [data-nav="history"]').click();
+      await gezeichnet();
       document.querySelector('[data-nav="' + t + '"]').click();
+      await gezeichnet();
       const nachTab = !document.querySelector('#main [data-einblick="' + key + '"].auf');
       out[key] = {zu, auf, nachRender, nachTab};
-    });
+    }
     return out;
   }, PRUEFEN.toString());
   const _eb = [einblick.rollen, einblick.netz];

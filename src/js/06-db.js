@@ -135,7 +135,13 @@ async function _loadAllDurchlauf(){
     await autoArchiveSeasons();
     if(window._updateRecapBtn) window._updateRecapBtn();
     if(window._updatePosHistBtn) window._updatePosHistBtn();
-    render();
+    // Ein Abruf kann schon vor dem Öffnen der Eingabe begonnen haben. Die
+    // Daten werden frisch, das bestehende Formular aber nicht ersetzt:
+    // freier Suchtext steht nicht in M, und ein neuer DOM-Knoten verlöre
+    // Cursor, Bildschirmtastatur und den Regler unter dem Finger.
+    if(_eingabeOffen()){
+      if(tab==='match') requestMatchPreview();
+    }else render();
     // News-System v8.3: Stories aus DB synchronisieren.
     //   1. Generator erzeugt Story-Objekte aus Live-Daten
     //   2. INSERT ON CONFLICT DO NOTHING in Supabase
@@ -156,7 +162,8 @@ async function _loadAllDurchlauf(){
   }catch(e){
     _lastLoadFingerprint=null; _lastLoadDay=null;
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
-    document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
+    if(_eingabeOffen()) toast('Konnte nicht laden.',true);
+    else document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
       <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
   }
 }

@@ -58,6 +58,7 @@
      einmal Speicher und nicht je Ansicht. */
   will-change:transform;
   touch-action:pan-y;
+  overscroll-behavior-y:contain;
   user-select:none;
 }
 .sheet.show{transform:translateY(0)}
@@ -80,6 +81,10 @@
   /* Pulsierender Grab-Handle im Recap (signalisiert "ich bin wegziehbar") */
   @keyframes grabPulse { 0%,100%{opacity:.6;transform:scaleX(1)} 50%{opacity:1;transform:scaleX(1.4)} }
   .sheet-grab.grab-pulse{animation:grabPulse 1.6s ease-in-out 2}
+  @media(prefers-reduced-motion:reduce){
+    .sheet,.sheet-bg{transition:none !important}
+    .sheet.sheet-nudge,.sheet-grab.grab-pulse{animation:none}
+  }
   .sheet h3{font-family:'Archivo Black',sans-serif;font-size:23px;letter-spacing:-.02em}
   .sheet-sub{color:var(--muted);font-size:12px;margin-top:3px;font-family:'Sometype Mono',monospace}
   .dcell .dl{font-size:9.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}

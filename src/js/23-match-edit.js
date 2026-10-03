@@ -43,29 +43,38 @@ function showEditMatch(mid){
     else if(dup){ok=false;msg='Ein Spieler steht doppelt.';}
     else if(tie){ok=false;msg='Unentschieden ist nicht möglich.';}
     else if(samePosA||samePosB){ok=false;msg='Jedes Team braucht Sturm + Abwehr.';}
-    if(warn)warn.textContent=msg; document.getElementById('saveEdit').disabled=!ok;};
+    if(warn)warn.textContent=msg; document.getElementById('saveEdit').disabled=speichert||!ok;};
   document.querySelectorAll('[data-ep],[data-epos]').forEach(s=>s.onchange=()=>{readE();checkE();});
   document.querySelectorAll('[data-estep]').forEach(b=>b.onclick=()=>{const[k,d]=b.dataset.estep.split(',');
-    E[k]=Math.max(0,E[k]+(+d));document.getElementById(k==='sa'?'esvA':'esvB').textContent=E[k];checkE();});
+    E[k]=Math.max(0,Math.min(10,E[k]+(+d)));document.getElementById(k==='sa'?'esvA':'esvB').textContent=E[k];checkE();});
   document.getElementById('cancelEdit').onclick=()=>showMatchDetail(mid);
+  let speichert=false;
   document.getElementById('saveEdit').onclick=async()=>{
+    if(speichert) return;
     readE(); const ids=[E.A1,E.A2,E.B1,E.B2];
-    if(ids.some(x=>!x)||new Set(ids).size!==4||E.sa===E.sb){toast('Eingabe unvollständig',true);return;}
-    closeSheet(true); toast('Speichere & berechne neu…');
-    const winner=E.sa>E.sb?'A':'B';
+    if(ids.some(x=>!x)||new Set(ids).size!==4||E.sa===E.sb||E.pA1===E.pA2||E.pB1===E.pB2){toast('Eingabe unvollständig',true);return;}
+    const state=E,draft={...E},save=document.getElementById('saveEdit');
+    speichert=true;save.disabled=true;save.setAttribute('aria-busy','true');
+    toast('Speichere & berechne neu…');
+    const winner=draft.sa>draft.sb?'A':'B';
+    try {
     // Match-Zeile aktualisieren (Deltas folgen aus der Neuberechnung)
-    await sb.from('matches').update({
-      a1:E.A1,a1_pos:E.pA1,a2:E.A2,a2_pos:E.pA2,b1:E.B1,b1_pos:E.pB1,b2:E.B2,b2_pos:E.pB2,
-      score_a:E.sa,score_b:E.sb,winner
-    }).eq('id',E.id);
+    const {error}=await sb.from('matches').update({
+      a1:draft.A1,a1_pos:draft.pA1,a2:draft.A2,a2_pos:draft.pA2,b1:draft.B1,b1_pos:draft.pB1,b2:draft.B2,b2_pos:draft.pB2,
+      score_a:draft.sa,score_b:draft.sb,winner
+    }).eq('id',draft.id);
+    if(error){toast('Fehler: '+error.message,true);return;}
+    if(save.isConnected && E===state && Object.keys(draft).every(k=>E[k]===draft[k])) closeSheet(true);
     // lokale Kopie für die Neuberechnung anpassen
-    const updated=matches.map(x=>x.id===E.id
-      ?{...x,a1:E.A1,a1_pos:E.pA1,a2:E.A2,a2_pos:E.pA2,b1:E.B1,b1_pos:E.pB1,b2:E.B2,b2_pos:E.pB2,score_a:E.sa,score_b:E.sb,winner}
+    const updated=matches.map(x=>x.id===draft.id
+      ?{...x,a1:draft.A1,a1_pos:draft.pA1,a2:draft.A2,a2_pos:draft.pA2,b1:draft.B1,b1_pos:draft.pB1,b2:draft.B2,b2_pos:draft.pB2,score_a:draft.sa,score_b:draft.sb,winner}
       :x);
 
     invalidateCache(['global', 'stats', 'awards', 'teams', 'period', 'badges']);
     await persistRecalc(updated);
     toast('Gespeichert & neu berechnet','ok'); await loadAll();
+    } catch(e){console.warn('Match bearbeiten:',e);toast('Speichern oder Neuberechnen fehlgeschlagen.',true);}
+    finally{speichert=false;if(save.isConnected){save.removeAttribute('aria-busy');checkE();}}
   };
   checkE();
 }
