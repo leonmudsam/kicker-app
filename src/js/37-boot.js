@@ -13,7 +13,7 @@ function _tickDaten(){
   // neu gezeichnet — diese Bedingung stand schon immer im Takt.
   if(document.getElementById('sheet').classList.contains('show')) return;
   if(tab === 'match') return;
-  loadAll();
+  loadAll({nachladen:false});
 }
 function _tickVersion(){ if(!document.hidden) checkForUpdate(); }
 

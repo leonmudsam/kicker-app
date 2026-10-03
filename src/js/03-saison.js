@@ -154,7 +154,8 @@ function matchesInSeason(seasonId){
 }
 
 function allPastSeasons(){
-  const key='allPastSeasons_'+matches.length+'_'+seasons.length+'_'+_cache.version; // NEU: seasons.length im Key
+  const cur=currentSeason();
+  const key='allPastSeasons_'+cur.id+'_'+matches.length+'_'+seasons.length+'_'+_cache.version;
   if(_cache._allPastSeasonsKey===key) return _cache._allPastSeasonsData.slice();
 
   if(!matches.length) {
@@ -163,7 +164,7 @@ function allPastSeasons(){
     return [];
   }
   const first=new Date(matches[0].created_at);
-  const now=new Date(); const cur=currentSeason();
+  const now=new Date();
   const ids=[];
   let y=first.getFullYear(), m=first.getMonth();
   while(true){

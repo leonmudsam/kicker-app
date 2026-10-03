@@ -220,7 +220,7 @@ Daraus folgen drei harte Regeln:
    `12-insignium.css` stehen, sonst kippt das Wappen in der Ranglistenzeile.
 3. **Ein Bezeichner darf nur einmal auf oberster Ebene stehen.** Getrennte
    Dateien sehen unabhängig aus, teilen sich nach dem Zusammensetzen aber
-   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1047**) — und schlägt auch an, wenn einer
+   einen Gültigkeitsbereich. Wächter 4 zählt sie (aktuell **1051**) — und schlägt auch an, wenn einer
    davon nirgends mehr gerufen wird.
 
 ---
@@ -294,6 +294,23 @@ statt 27:4 und die Bilanz 110 Duelle statt 111. `tests/tafel` misst das nach.
 `tests/tafel` liest die ausgelieferte Datei und prüft die Regel für **jeden**
 Topf nach — Stichproben genügen dafür nicht, weil ein neuer Topf gerade der
 ist, an den niemand denkt.
+
+Kalenderabhängige Schlüssel tragen zusätzlich ihre echte Zeitgrenze:
+`matchesInPeriod` den Tages-/Wochenbeginn, `getCachedAwardRankings` die
+aktuelle Woche beziehungsweise den Tag, `allPastSeasons` den laufenden
+Monat und `getSeasonPositionHistory` den heutigen Tag, solange die Saison
+läuft. Die kleine Recap-Kurve trägt auch `ph.lastDay`. Ohne neue Partie darf
+der Cache keinen alten Tag oder noch laufenden Vormonat behaupten.
+`tests/leistung` prüft das mit unveränderter Datenversion.
+
+`render` merkt am `#main` ausschließlich das zuletzt gezeichnete Markup,
+seine `_cache.version` und den Root-Knoten. Gleiches Markup in derselben
+Version behält DOM, Fokus und Bindings; Vorlagen werden dennoch ausgewertet,
+damit zeitabhängige Anzeigeänderungen erkannt werden. Datenwechsel, andere
+Vorlagen und fremd ersetzter Inhalt erzwingen einen Umbau. Eingabe und
+Einstellungen sind ausgenommen. Die fünf Navigationsknöpfe werden einmal
+gebaut und gebunden, danach ändert sich nur ihre aktive Klasse. Kein
+unbegrenzter HTML-Cache je Ansicht oder Filter.
 
 Ein Topf mit einem Schlüssel, der die Version enthält, **wächst über die
 Versionen**: er braucht eine Obergrenze, ab der er geräumt wird. Sieben
@@ -395,6 +412,19 @@ Spieler und alle Partien; das im Hintergrund zu tun ist Mobilfunk und Akku
 für nichts, und ein PWA-Symbol bleibt tagelang offen. Der News-Autosync
 (`29-news-cache.js`) befolgt dieselbe Regel seit jeher.
 
+`loadAll` hält höchstens einen Durchlauf offen (`_loadAllPromise`). Weitere
+explizite Anforderungen setzen `_loadAllNochmals` und erhalten dieselbe Promise, die
+erst nach dem frischen Folgedurchlauf erfüllt ist. Nach jedem abgeschlossenen
+Abruf wird gegebenenfalls erneut geladen: Speichern darf nicht lediglich
+eine schon vorher gestartete Antwort erhalten. Alle vier Leseabfragen enden,
+auch bei einer Ablehnung; überholte Antworten leeren keine Caches und
+publizieren keine Stories. Fehlerhafte Teilantworten werden nicht eingebaut,
+und ein Fehler verwirft den Fingerprint, damit ein erneuter Versuch möglich
+bleibt. Unveränderte erfolgreiche Antworten behalten weiterhin den Cache.
+Reine Hintergrundticks verwenden `loadAll({nachladen:false})` und schließen
+sich nur an einen laufenden Abruf an. Sonst würde ein langsamer Abruf, der
+länger als dreißig Sekunden dauert, durch jeden Tick erneut verworfen.
+
 Kommen neue Daten, zeichnet `loadAll` zuerst und rechnet den News-Generator
 (kalt rund 370 ms) erst in einem ruhigen Moment danach (`_leerlauf` in
 `syncStoriesViaDb`, höchstens anderthalb Sekunden später): beides lief in
@@ -442,6 +472,7 @@ globalem Zustand ist.
 | `disziplinen` | Chronik-Katalog, Vergabe, Belege, Insignium-Leiter und -Grade, Prestige ausschließlich aus Auszeichnungen, Chroniken und Rekorden, paarweise gedämpfte Wiederholungen mit unbegrenzter Erreichbarkeit, den Skill-/Spielzahl-Vergleich, wertsortierte Wurzelstaffeln, nachvollziehbare Chronik-Werte und historische Saisonwürden, Katalog-Karten, historische Rekordlage je Monat, Positionsrekorde und die gemeinsame Wandler-Formel, die Fügungen, neutrale Sprache, Wochenherr, Spieltagssieger, Zähler der Auszeichnungen, Monatskatalog, Kurznamen, Ausschlag und Beinamen, die offene Kammer samt ihren Rennen, die gleitenden Fenster, den Halterdeckel, die Rohsicht, die nicht im Cache landet, die Bedingung samt Erklärung jedes Rekords, den Rekord, der ausser einem Fund immer vergeben ist, die zwei Hälften einer Rolle, die nicht demselben gehören, und die Schandtafel samt ihrer Verteilung, die eine Monatsquelle je Spieler und Monat und den Rekord, der mit dem Verlust wieder abgezogen wird, den Katalog der fünfundsechzig samt seinen fünf Kammern, Grundwerten, eindeutigen Zeichen und vollständigen Angaben, die festen Endfenster, den Serienstand vor der Partie, die Rekordlage ohne spätere Partien, die Gegenpaare mit derselben Mindestbasis, den Rekord ohne Wertlatte in Prozent, Elo oder Serienlänge, die gestrichenen Rekorde samt ihrer alten Karten und die Laufbahn aus lauter Niederlagen, die nichts gewinnt, den sichtbaren Text, der die App nicht erklärt, und die acht Rekorde aus engen Partien, Gegnerkreis, Niederlagen, Wiedersehen, Pleitenserie, Serienantwort, Pause und Rolle, jeder ein zweites Mal aus den rohen Partien nachgerechnet, die Beschreibung jeder Auszeichnung als Satz ohne Kürzel, die Einzahl, wo eins steht, „jeder" statt „mindestens 100 %" und keine Auszeichnung, die wie eine Rangstufe heißt, die Breaking-Grenze der beiden obersten Insignium-Stufen und den Schimmer, der mit der Leiter wächst, die Schwellen im Schritt von mindestens 500, drei verschiedene Zeichnungen je Stufe und die Rangfarbe, die in jedem Rang gezeichnet ist statt gefiltert, den dritten Grad, der nie mehr Steine oder Gold trägt als der erste der nächsten Stufe, und die Zeichnung, die keinen Filter trägt, und die Rangfarbe im Auge der Schnecke, die vom Zierkranz zum Lorbeerreif nicht verloren geht, und das Regelblatt, das jede legendäre Auszeichnung nach ihrem Startwert ordnet | 1456 |
 | `tafel` | Monatstafel, Liga-Ansichten, Rückblicke, Rekord-Blatt, Invarianten, die Töpfe nach einer neuen Partie, ihre Schlüssel und ihre Deckel, die toten CSS-Regeln, die toten Zeichen, die Schwellen und Nenner der Awards, den Zeitschnitt, der nichts abschneidet, den Kalendertag, der an einer Stelle gebildet wird, und den vollen Topf, der seinen ältesten Eintrag verliert, die Erwartungsformel und die Chancen-Linien, die zwei Rechnungen über die längste Serie, jede CSS-Variable, die auch gelesen wird, die Erklärung jeder Award-Kachel, die die Schwelle nennt, die gilt, und jede Schriftangabe mit einer Schriftfamilie dahinter, jedes Award-Zeichen, das im Katalog steht, das Podest, auf dem punktgleiche Halter denselben Platz tragen, und keinen Award, der wie eine Chronik heißt, die etwas anderes misst, und jede Award-Kachel, die Zahl und Einheit aus derselben Tabelle nennt wie Blatt und Profil, und jedes Zeichen, das seinen Strich aus einer Regel zieht, und den Beleg, der seine Stichprobe zählt, die Halter im Feld zeigt, den Vorsprung in Ergebnissen richtig zählt, ohne Statistiksprache auskommt und beim Bestwert endet, und den Knopf des Rekord-Blatts, der den Halter nennt, und die Meisterbühne, deren Tage an der Spitze und deren Titelrennen aus den rohen Partien nachgerechnet werden, samt Karte und Blatt des Meisters ohne Saison-ID und ohne Satzfragment, und jede Rekordkarte, deren Feldstreifen den Halter am Ende und den Ersten dahinter aus derselben Reihenfolge zeigt wie das Blatt, und die Auslieferung ohne Kommentare | 223 |
 | `ambient` | Story-Snapshots, verlustfreie Bündel samt positiven und negativen Matchanlässen, historische Duellzuordnung, heutige rollende Ewige Tafel, 15-Uhr-Funfacts samt Mehrtages-Backfill, Realtime-Schutz, getrennte Score-/Anlassgrafiken mit publizierter Variationsspur, visuelle Stabilität, Feed-Texte und Story-Details | 582 |
+| `leistung` | DOM- und Navigations-Wiederverwendung samt Fokus und frischer Datenversion, Kalenderwechsel ohne Datenänderung, tatsächlich verzögerter vollständiger Feed samt großem Spieltag, Tageskarte, Filter-, Versions- und Schließschutz, begrenzte Portionen und Idle-Rückfall, gebündelte Datenabfragen, Fehler/Teilantworten, Wiederholen und frischer Folgedurchlauf auch während der Story-Synchronisierung, und Polling ohne unnötigen Zusatzabruf oder Verhungern langsamer Abrufe | 49 |
 | `zeichen` | Feuer, Sterne, Wappen, Insignium-Leiter, die Aura der Meistertitel — mittig, ganz hinten, mit jedem Titel heller und ohne Licht im Gesicht —, Profilkopf, der gerechnete Reif und die Lage der verwiesenen Zeichnung, die 21 Zeichnungen der Leiter: mittig, spiegelgleich, mit freiem Loch, dem Reif auf derselben Höhe und nichts am Rand der Zeichenfläche, die Rangfarbe im Stein und die Lilie aus Metall, das Feuer der Ranglistenzeile in derselben Rangfarbe und mit demselben hellen Kern wie im Profil — **im echten Browser gemessen** | 89 |
 | `blatt` | Wem eine Wischgeste gehört, Laufbahn-Vitrine, das lesbare Regel-Popup und nachvollziehbare Chronik-Herunterrechnung, Wappenverläufe, Hintergrundtakt, Rekorde-Reiter, Tafel und spannendste Tageskarte, Story-Blätter, Rubrikband, Motive, ruhige Farbfamilien samt typ-eigenem Schimmer, Sorten, Ränder, Bewegung, Breaking, Chronik-Matrix, Leiter, gemeinsame Erfolge sowie Rollen-Gewichtung, Rangfarbe und Positionsstrahl bei 360 px, die Karte zweier verdrängter Ergebnisse, die Höhe einer großen Sammelkarte, der gemeinsame Breaking-Moment, der Inhaltstausch am Ende des Zuschiebens, das Wappen als Verweis auf sein Symbol und die Besitzleiste, die je Spieler dieselbe Zahl sagt wie das Podest, die fünf Kammern samt ihren Zählern und die Kammerleiste, die auf dem Telefon erreichbar bleibt, und die Bildzone jeder der zwölf Kartensorten, die der Schlagzeile nicht den Platz nimmt und ihr eigenes Bild nicht abschneidet, die Siegchance einer Partie auf ihrer Skala, die Elo-Wirkung je Spieler, das Blatt eines Tafel-Moments samt seiner Zahlenreihe und dem Weg zur nächsten Insignium-Schwelle, den Balken hinter jedem Verfolger, den Spieltag als Bahn, die Bildzone jeder Karte, den Balken, der aufwächst und bei Bewegungsruhe stillsteht, den Lichtlauf des Seltenen in seiner Familienfarbe, den Hinweis auf neue Stories mit Zahl, Lichtlauf und Ring, den Sieger im Verlauf hell unter seinem Tag und die Bilanz eines Duos als Balken, den Feed, der zuerst die oberen Tage zeichnet und den Rest nach dem ersten Bild nachreicht, die Anlass-Zeile eines gebündelten Breaking samt ihrer eigenen Kante und Fläche, und jedes Story-Blatt und jede Karte bei 360 px, jeden Reiter bei 360 px ohne Überlauf, jedes Gesicht mit mittigen Initialen, das Komma jeder Dezimalzahl in Reitern und Blättern, die Bilanz einer Ranglistenzeile und jeden Reiter, die nicht umbrechen oder abgeschnitten werden, jedes Blatt, das nicht über seinen Innenrand läuft und keine Achsenbeschriftung übereinanderlegt, jedes Gesicht in einem Blatt mit Größe, das Blatt einer Partie mit Siegern, Siegchance, einer Zeile je Spieler und Namen, die ins Profil führen, die Beziehung unter den Wappen eines Story-Blatts, die etwas sagt, das Blatt einer Serie am Stand ihrer Partie, jeden Kachelnamen ungekürzt und ohne ein Wort, das mitten durch bricht, den Feed, der Karten außerhalb des Bildschirms erst beim Hineinscrollen legt, dieselbe Sache unter demselben deutschen Namen ohne Anrede, den Knopf „Match eintragen", der auf der Match-Seite fehlt, jedes Award-Blatt mit ausgeschriebener Einheit, einer Serie ab dem zweiten Ergebnis, dem eigenen Stand zuerst, derselben Zahl für dieselbe Überraschung und derselben Spitze wie im Profil, und die Nebenwertungen der Liga und die zwei Aufstellungen eines Duos, die nicht abgeschnitten werden oder über den Rand laufen, den Schlitten jedes Segmentwählers unter seiner Wahl, der nach dem Neuzeichnen gleitet und bei Bewegungsruhe springt, und den Monat als Zellen, und jedes Blatt mit demselben Kopf, Schließen und höchstens einem gefüllten Knopf, die Bühne mit Gesichtern, den Hinweis mit Rolle und Rückgängig und die Bestätigung mit dem sicheren Knopf links, den Glanz, der nur dem Titel gehört und bei Bewegungsruhe ruht, und den Faden, der in seiner Karte bleibt, und den Faden, der öffnet, wohin er zeigt — **im echten Browser gemessen**, und die ganze Leiter in der Laufbahn, deren Felder die Vitrine auf ihre Stufe stellen, und die Meisterbühne bei 360 px, deren Strahlenkranz hinter dem Podest liegt und bei Bewegungsruhe mit den Linien stillsteht, und jedes Insignium in Liga, Positionen, Awards, Rekorden, Profil, Laufbahn und Feed, das unter keinem Filter und keiner Skalierung liegt und groß als Vektor, klein als Bild steht — auch die einundzwanzig Felder der ganzen Leiter —, und den Verlust in der Wirkung auf die Laufbahn: ein rotes Stück im Balken, ein Minus, der Fall unter die Schwelle und der geteilte Rekord, und jedes Wappenbild unter einer kurzen Adresse, und die Aura im Profilkopf, die einmal steht und nur transform und Deckkraft bewegt, und jede Karte am Spieltag und jede Runde, auf der kein Text auf einem anderen oder einem Gesicht liegt, keiner hinausragt, abgeschnitten, mit „…" gekürzt oder unter 8 px geschrumpft ist — im Feed und mit Grenzwerten und langen Namen bei 288 und 360 px, und die Einblicke als Zeile, die erst beim Aufklappen zeichnet, die Siegchance unter der Score-Karte, jede Begegnung im Direkten Vergleich, Woche und Tag im Rückblick samt dem Knopf der Story, die Kammerfelder und die Besitzleiste in ihrer Karte und den Positionsverlauf mit dem Titelrennen unter der Rangliste, und das Blatt einer Partie und ihres Bündels mit der Zeichnung der Karte als Bühne, ohne zweiten Stand, zweite Siegchance oder zweite Elo, ohne den Satz aus Siegchance und Elo, mit jeder übrigen Zeile des Bündels und mit den direkten Duellen aus den rohen Partien | 226 |
 | `archiv` | Einfrieren abgeschlossener Monate und den Profileintrag, der daraus gelesen wird | 9 |
@@ -449,6 +480,12 @@ globalem Zustand ist.
 
 Ohne Browser steigt `backup` mit Code 2 aus und wird als *übersprungen*
 geführt — sichtbar, aber nicht rot.
+
+`leistung` braucht ebenfalls Chromium. Zeitmessungen stehen bewusst nicht
+als harte CI-Grenzen in der Suite: sie prüft Arbeitsmenge und Gültigkeit.
+`node tools/performance.cjs --profil` misst dagegen kaltes und wiederholtes
+Rendern mit den echten 466 Fixture-Partien, lokal ohne Backend. Details und
+Vergleich stehen in `PERFORMANCE.md`.
 
 > **Pflegepflicht.** Ändert sich eine Zahl in dieser Tabelle oder kommt eine
 > Suite dazu, wird die Tabelle im selben Commit nachgezogen.
@@ -3480,11 +3517,16 @@ zitiert. Sie sind nicht Geschmack, sondern Absprache.
   `_newsFeedRest`). Auch mit `content-visibility` rechnete der Browser beim
   Öffnen Stil und Layout aller rund 3400 Knoten: gemessen 350 ms mit
   gedrosselter CPU, und das Skript selbst war davon kein Zehntel. Gezeichnet
-  werden zuerst die Tage, die die ersten zwölf Karten tragen, der Rest kommt
-  nach dem ersten Bild dazu — bevor man so weit scrollen kann; warm öffnet
-  der Feed damit in 195 statt 350 ms. Die Klicks hängen deshalb an der Liste
-  und nicht an jeder Karte, und steht die Liste nicht mehr im Dokument,
-  fällt der Rest weg, statt im nächsten Blatt zu landen.
+  werden zuerst rund zwölf Karten, auch bei einem sehr großen einzelnen
+  Spieltag. Der Rest wird nicht vorab als HTML gebaut: `_newsFeedPlan`
+  reicht nach einem Bild in ruhigen Takten höchstens vier Karten nach
+  (`requestIdleCallback` mit Zeitgrenze, sonst kurzer Timer). Tagesköpfe und
+  Tageskarten bleiben einmalig; die Wahl gilt weiterhin über alle Filter.
+  Ein Index je Tag ersetzt wiederholte Vollsuchen im Storybestand. Die Klicks
+  hängen an der Liste, nicht an jeder Karte. Alte Aufträge prüfen ihre
+  Identität, die offene Liste und Datenversion: kein Einfügen in ein neues
+  Blatt, einen neuen Filter oder nach dem Schließen. Ein direkter Aufruf von
+  `_newsFeedRest()` füllt für Geometrieprüfungen weiterhin vollständig.
   **Ein geschlossenes Blatt ist leer** (`_sheetForceClose`). Es liegt
   unter dem Bildschirmrand in einer eigenen Schicht und behielt seinen
   Inhalt, nach dem Feed 5400 Knoten, die jede Stilberechnung der Seite

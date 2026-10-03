@@ -254,11 +254,11 @@ const POSV_COLORS = [
 
 function getSeasonPositionHistory(seasonId){
   if(!seasonId) seasonId = currentSeason().id;
-  const key = 'posHist_'+seasonId+'_'+matches.length+'_'+_cache.version;
+  const isCurrent = (seasonId === currentSeason().id);
+  const key = 'posHist_'+seasonId+'_'+(isCurrent?tagKey(Date.now()):'fertig')+'_'+matches.length+'_'+_cache.version;
   if(_cache._posHistKey===key) return _cache._posHist;
 
   const sEnd = seasonEnd(seasonId);
-  const isCurrent = (seasonId === currentSeason().id);
   const sMatches = matchesInSeason(seasonId);
   const totalDays = sEnd.getDate(); // letzter Tag des Monats
 
@@ -444,7 +444,8 @@ function getSeasonRankingsCache(){
 function getCachedAwardRankings(period, sid){
   let cacheSuffix='';
   if(period==='season') cacheSuffix=sid||awSeasonId||currentSeason().id;
-  else if(period==='week') cacheSuffix=awWeekStart?('w'+new Date(awWeekStart).getTime()):'cur';
+  else if(period==='week') cacheSuffix=awWeekStart?('w'+new Date(awWeekStart).getTime()):('cur'+periodStart('week').getTime());
+  else if(period==='day') cacheSuffix=periodStart('day').getTime();
   const key=period+'_'+cacheSuffix+'_'+matches.length+'_'+_cache.version;
   if(!_cache._awards) _cache._awards={};
   if(_cache._awards[key]) return _cache._awards[key];

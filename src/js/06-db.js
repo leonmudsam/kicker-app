@@ -27,16 +27,51 @@ function gamesPlayed(id){return matches.filter(m=>[m.a1,m.a2,m.b1,m.b2].includes
 // erzwingt trotzdem einen vollen Durchlauf (Saison-/POTD-/Recap-Logik).
 let _lastLoadFingerprint = null;
 let _lastLoadDay = null;
-async function loadAll(){
+let _loadAllPromise = null;
+let _loadAllNochmals = false;
+// Sichtbarkeit, Polling und Speichern koennen gleichzeitig laden wollen.
+// Nur ein Durchlauf darf Daten einbauen; explizite Anforderungen verlangen
+// EINEN frischen Folgedurchlauf. Reines Polling schliesst sich dagegen an:
+// dauert ein Abruf laenger als der Takt, darf er nicht endlos veralten.
+function loadAll(opts){
+  if(_loadAllPromise){
+    if(!opts || opts.nachladen !== false) _loadAllNochmals = true;
+    return _loadAllPromise;
+  }
+  _loadAllPromise = (async()=>{
+    try {
+      do {
+        _loadAllNochmals = false;
+        await _loadAllDurchlauf();
+      } while(_loadAllNochmals);
+    } finally {
+      // Vor dem Erfuellen freigeben, ohne weitere finally-Microtask: eine
+      // neue Anforderung darf nicht an einen schon beendeten Lauf geraten.
+      _loadAllPromise = null;
+    }
+  })();
+  return _loadAllPromise;
+}
+async function _loadAllDurchlauf(){
   setConn('verbinde…','load');
   try{
-    const [p,m,c,se]=await Promise.all([
+    const antworten=await Promise.allSettled([
       sb.from('players').select('*').order('elo',{ascending:false}),
       sb.from('matches').select('*').order('created_at',{ascending:true}),
       sb.from('config').select('*').eq('id',1).single(),
       sb.from('seasons').select('*').order('start_date',{ascending:false})
     ]);
-    if(p.error)throw p.error; if(m.error)throw m.error;
+    // Waerend des Abrufs kam etwa eine Speicheranforderung hinzu. Dieser
+    // Zwischenstand ist ueberholt: keine Cache-Leerung, kein DOM-Umbau und
+    // keine Story-Publikation aus einer potentiell alten Antwort.
+    if(_loadAllNochmals) return;
+    // Auch bei einem abgelehnten Abruf erst alle vier beenden: sonst
+    // koennte ein Folgedurchlauf neben noch laufenden Restabfragen starten.
+    for(const a of antworten){
+      if(a.status === 'rejected') throw a.reason;
+      if(a.value.error) throw a.value.error;
+    }
+    const [p,m,c,se]=antworten.map(a=>a.value);
     const _fp = JSON.stringify([p.data, m.data, c.data, se.data]);
     const _today = new Date().toDateString();
     if(_fp === _lastLoadFingerprint && _today === _lastLoadDay){
@@ -119,6 +154,7 @@ async function loadAll(){
     // der Wochenliga erreichbar (showPotdRecap({force:true})).
     setTimeout(autoShowPotwRecap, 900);
   }catch(e){
+    _lastLoadFingerprint=null; _lastLoadDay=null;
     console.error(e); setConn('Verbindung fehlgeschlagen','bad');
     document.getElementById('main').innerHTML=`<div class="card"><div class="empty" style="color:var(--red)">
       <div class="ee"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="13"/><circle cx="12" cy="16.5" r=".6" fill="currentColor"/></svg></div>Konnte nicht laden.<br><span class="num" style="font-size:11px">${esc(e.message||e)}</span></div></div>`;
@@ -258,7 +294,7 @@ function _recapMarkSeen(lsKey, sessKey){
 // gebaut, danach reiner String-Return. Leerer String, wenn zu wenig Daten.
 function _recapPosMiniSVG(ph){
   if(!ph || ph.empty) return '';
-  const key = 'recapPosMini_'+ph.seasonId+'_'+matches.length+'_'+_cache.version;
+  const key = 'recapPosMini_'+ph.seasonId+'_'+ph.lastDay+'_'+matches.length+'_'+_cache.version;
   if(_cache._recapPosMiniKey === key) return _cache._recapPosMini;
   const W=78, H=38, padX=3, padY=4;
   const N = ph.activeIds.length, days = ph.lastDay;
